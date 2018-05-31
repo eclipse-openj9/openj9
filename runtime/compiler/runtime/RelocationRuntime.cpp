@@ -850,7 +850,7 @@ TR_RelocationRuntime::relocateMethodMetaData(UDATA codeRelocationAmount, UDATA d
       {
       TR_PersistentJittedBodyInfo *persistentBodyInfo = reinterpret_cast<TR_PersistentJittedBodyInfo *>( (_newPersistentInfo + sizeof(J9JITDataCacheHeader) ) );
       TR_PersistentMethodInfo *persistentMethodInfo = reinterpret_cast<TR_PersistentMethodInfo *>( (_newPersistentInfo + sizeof(J9JITDataCacheHeader) ) + sizeof(TR_PersistentJittedBodyInfo) );
-      if (_comp->getPersistentInfo()->getJaasMode() == CLIENT_MODE && !_comp->getCurrentMethod()->isInterpreted())
+      if (_comp->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE && !_comp->getCurrentMethod()->isInterpreted())
          {
          TR_PersistentMethodInfo *existingPersistentMethodInfo = _comp->getRecompilationInfo()->getExistingMethodInfo(_comp->getCurrentMethod());
          if (existingPersistentMethodInfo)
@@ -1498,14 +1498,14 @@ void TR_RelocationRuntime::addClazzRecord(uint8_t *ia, uint32_t bcIndex, TR_Opaq
 #endif
 
 void
-TR_JAASRelocationRuntime::initializeCacheDeltas()
+TR_JITaaSRelocationRuntime::initializeCacheDeltas()
    {
    _dataCacheDelta = 0;
    _codeCacheDelta = 0;
    }
 
 U_8 *
-TR_JAASRelocationRuntime::allocateSpaceInCodeCache(UDATA codeSize)
+TR_JITaaSRelocationRuntime::allocateSpaceInCodeCache(UDATA codeSize)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)_fe;
    TR::CodeCacheManager *manager = TR::CodeCacheManager::instance();
@@ -1536,7 +1536,7 @@ TR_JAASRelocationRuntime::allocateSpaceInCodeCache(UDATA codeSize)
 
    uint8_t *coldCode;
    U_8 *codeStart = manager->allocateCodeMemory(codeSize, 0, &_codeCache, &coldCode, false);
-   // JAAS FIXME: I think this code is needed too
+   // JITaaS FIXME: I think this code is needed too
 #if 0
    // FIXME: the GC may unload classes if code caches have been switched
    if (compThreadID >= 0 && fej9->getCompilationShouldBeInterruptedFlag())
@@ -1551,7 +1551,7 @@ TR_JAASRelocationRuntime::allocateSpaceInCodeCache(UDATA codeSize)
    }
 
 uint8_t *
-TR_JAASRelocationRuntime::allocateSpaceInDataCache(uintptr_t metaDataSize,
+TR_JITaaSRelocationRuntime::allocateSpaceInDataCache(uintptr_t metaDataSize,
                                                    uintptr_t type)
    {
    _metaDataAllocSize = TR_DataCacheManager::alignToMachineWord(metaDataSize);

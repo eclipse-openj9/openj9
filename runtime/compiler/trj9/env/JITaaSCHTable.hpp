@@ -1,5 +1,5 @@
-#ifndef JAAS_CHTABLE_H
-#define JAAS_CHTABLE_H
+#ifndef JITaaS_CHTABLE_H
+#define JITaaS_CHTABLE_H
 
 #include "compile/VirtualGuard.hpp"            // for TR_VirtualGuard
 #include "il/SymbolReference.hpp"              // for SymbolReference
@@ -48,9 +48,9 @@ using CHTableCommitData = std::tuple<
       uint8_t*>; // startPC
 
 
-bool jaasCHTableCommit(
+bool JITaaSCHTableCommit(
       TR::Compilation *comp,
       TR_MethodMetaData *metaData,
       CHTableCommitData &data);
 
-#endif // JAAS_CHTABLE_H
+#endif // JITaaS_CHTABLE_H

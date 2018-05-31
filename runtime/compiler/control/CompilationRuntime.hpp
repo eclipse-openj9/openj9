@@ -72,7 +72,7 @@ struct TR_JitPrivateConfig;
 struct TR_MethodToBeCompiled;
 template <typename T> class TR_PersistentArray;
 typedef J9JITExceptionTable TR_MethodMetaData;
-class ClientSessionHT; // JAAS TODO: maybe move all JAAS specific stuff in an extension for CompInfo
+class ClientSessionHT; // JITaaS TODO: maybe move all JITaaS specific stuff in an extension for CompInfo
 
 struct TR_SignatureCountPair
 {
@@ -459,13 +459,13 @@ public:
                                void *oldStartPC, TR_FrontEnd *vm=0, TR_MethodToBeCompiled *entry=NULL, TR::Compilation *comp=NULL);
    static void endMethodHandleThunkCompilation(J9VMThread *vmThread, TR_J9VMBase *trvm, uintptrj_t *handleRef, uintptrj_t *argRef, void *startPC);
 
-   static JAAS::J9ServerStream *getStream();
+   static JITaaS::J9ServerStream *getStream();
    static bool isInterpreted(J9Method *method) { return !isCompiled(method); }
    static bool isCompiled(J9Method *method)
       {
       if (auto stream = getStream())
          {
-         stream->write(JAAS::J9ServerMessageType::CompInfo_isCompiled, method);
+         stream->write(JITaaS::J9ServerMessageType::CompInfo_isCompiled, method);
          return std::get<0>(stream->read<bool>());
          }
       return (((uintptrj_t)method->extra) & J9_STARTPC_NOT_TRANSLATED) == 0;
@@ -474,7 +474,7 @@ public:
       {
       if (auto stream = getStream())
          {
-         stream->write(JAAS::J9ServerMessageType::CompInfo_isJNINative, method);
+         stream->write(JITaaS::J9ServerMessageType::CompInfo_isJNINative, method);
          return std::get<0>(stream->read<bool>());
          }
       // Note: This query is only concerned with the method to be compiled
@@ -486,7 +486,7 @@ public:
       {
       if (auto stream = getStream())
          {
-         stream->write(JAAS::J9ServerMessageType::CompInfo_getInvocationCount, method);
+         stream->write(JITaaS::J9ServerMessageType::CompInfo_getInvocationCount, method);
          return std::get<0>(stream->read<int32_t>());
          }
       if (((intptrj_t)method->extra & J9_STARTPC_NOT_TRANSLATED) == 0)
@@ -500,24 +500,24 @@ public:
       {
       if (auto stream = getStream())
          {
-         stream->write(JAAS::J9ServerMessageType::CompInfo_getJ9MethodExtra, method);
+         stream->write(JITaaS::J9ServerMessageType::CompInfo_getJ9MethodExtra, method);
          return (intptrj_t) std::get<0>(stream->read<uint64_t>());
          }
       return (intptrj_t)method->extra;
       }
    static int32_t getJ9MethodVMExtra(J9Method *method) {
-   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for jaas server");
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITaaS server");
       return (int32_t)((intptrj_t)method->extra);
       }
    static uint32_t getJ9MethodJITExtra(J9Method *method) {
-   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for jaas server");
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITaaS server");
       TR_ASSERT((intptrj_t)method->extra & J9_STARTPC_NOT_TRANSLATED, "MethodExtra Already Jitted!");
       return (uint32_t)((uintptrj_t)method->extra >> 32);
       }
    static void * getJ9MethodStartPC(J9Method *method) {
       if (auto stream = getStream())
          {
-         stream->write(JAAS::J9ServerMessageType::CompInfo_getJ9MethodStartPC, method);
+         stream->write(JITaaS::J9ServerMessageType::CompInfo_getJ9MethodStartPC, method);
          return std::get<0>(stream->read<void*>());
          }
       else
@@ -529,8 +529,8 @@ public:
    static void setJ9MethodExtra(J9Method *method, intptrj_t newValue) {
       if (auto stream = getStream())
          {
-         stream->write(JAAS::J9ServerMessageType::CompInfo_setJ9MethodExtra, method, (uint64_t) newValue);
-         std::get<0>(stream->read<JAAS::Void>());
+         stream->write(JITaaS::J9ServerMessageType::CompInfo_setJ9MethodExtra, method, (uint64_t) newValue);
+         std::get<0>(stream->read<JITaaS::Void>());
          }
       else
          {
@@ -538,16 +538,16 @@ public:
          }
       }
    static bool setJ9MethodExtraAtomic(J9Method *method, intptrj_t oldValue, intptrj_t newValue) {
-   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for jaas server");
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITaaS server");
       return oldValue == VM_AtomicSupport::lockCompareExchange((UDATA*)&method->extra, oldValue, newValue);
       }
    static bool setJ9MethodExtraAtomic(J9Method *method, intptrj_t newValue) {
-   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for jaas server");
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITaaS server");
       intptrj_t oldValue = (intptrj_t)method->extra;
       return setJ9MethodExtraAtomic(method, oldValue, newValue);
       }
    static bool setJ9MethodVMExtra(J9Method *method, int32_t value) {
-   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for jaas server");
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITaaS server");
       intptrj_t oldValue = (intptrj_t)method->extra;
       //intptrj_t newValue = oldValue & (intptrj_t)~J9_INVOCATION_COUNT_MASK;
       //newValue |= (intptrj_t)value;
@@ -558,7 +558,7 @@ public:
       {
       if (auto stream = getStream())
          {
-         stream->write(JAAS::J9ServerMessageType::CompInfo_setInvocationCount, method, newCount);
+         stream->write(JITaaS::J9ServerMessageType::CompInfo_setInvocationCount, method, newCount);
          return std::get<0>(stream->read<bool>());
          }
       newCount = (newCount << 1) | 1;
@@ -569,7 +569,7 @@ public:
    static bool setInvocationCount(J9Method *method, int32_t oldCount, int32_t newCount){
       if (auto stream = getStream())
          {
-         stream->write(JAAS::J9ServerMessageType::CompInfo_setInvocationCountAtomic, method, oldCount, newCount);
+         stream->write(JITaaS::J9ServerMessageType::CompInfo_setInvocationCountAtomic, method, oldCount, newCount);
          return std::get<0>(stream->read<bool>());
          }
       newCount = (newCount << 1) | 1;
@@ -589,7 +589,7 @@ public:
       return success;
       }
    static void setInitialInvocationCountUnsynchronized(J9Method *method, int32_t value) {
-   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for jaas server");
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITaaS server");
       value = (value << 1) | 1;
       if (value < 0)
           value = INT_MAX;
@@ -950,7 +950,7 @@ public:
    bool getSuspendThreadDueToLowPhysicalMemory() const { return _suspendThreadDueToLowPhysicalMemory; }
    void setSuspendThreadDueToLowPhysicalMemory(bool b) { _suspendThreadDueToLowPhysicalMemory = b; }
 
-   // for JaaS
+   // for JITaaS
    ClientSessionHT *getClientSessionHT() { return _clientSessionHT; }
    void setClientSessionHT(ClientSessionHT *ht) { _clientSessionHT = ht; }
    PersistentVector<TR_OpaqueClassBlock*> *getUnloadedClassesTempList() { return _unloadedClassesTempList; }
@@ -1148,11 +1148,11 @@ private:
    bool _suspendThreadDueToLowPhysicalMemory;
    TR_InterpreterSamplingTracking *_interpSamplTrackingInfo;
 
-   // JAAS hashtable that holds session information about JAAS clients
+   // JITaaS hashtable that holds session information about JITaaS clients
    ClientSessionHT *_clientSessionHT;
-   // JAAS list of classes unloaded 
+   // JITaaS list of classes unloaded 
    PersistentVector<TR_OpaqueClassBlock*> *_unloadedClassesTempList;
-   // JAAS table of newly extended classes
+   // JITaaS table of newly extended classes
    PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t> *_newlyExtendedClasses;
    uint8_t _chTableUpdateFlags;
    }; // CompilationInfo

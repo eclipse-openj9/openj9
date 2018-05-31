@@ -38,7 +38,7 @@
 
 namespace TR { class CompilationInfoPerThreadBase; }
 class TR_OptimizationPlan;
-namespace JAAS { class J9ServerStream; }
+namespace JITaaS { class J9ServerStream; }
 namespace TR { class Monitor; }
 struct J9JITConfig;
 struct J9VMThread;
@@ -117,7 +117,7 @@ struct TR_MethodToBeCompiled
    uint8_t                _weight; // Up to 256 levels of weight
    bool                   _hasIncrementedNumCompThreadsCompilingHotterMethods;
    uint8_t                _jitStateWhenQueued;
-   JAAS::J9ServerStream  *_stream; // a non-NULL field denotes a remote compilation request
+   JITaaS::J9ServerStream  *_stream; // a non-NULL field denotes a remote compilation request
    }; // TR_MethodToBeCompiled
 
 

@@ -100,9 +100,9 @@
 #include "runtime/ArtifactManager.hpp"
 #include "runtime/CodeCacheMemorySegment.hpp"
 #include "trj9/env/j9methodServer.hpp"
-#include "control/JaasCompilationThread.hpp"
-#include "env/JaasPersistentCHTable.hpp"
-#include "runtime/JaasIProfiler.hpp"
+#include "control/JITaaSCompilationThread.hpp"
+#include "env/JITaaSPersistentCHTable.hpp"
+#include "runtime/JITaaSIProfiler.hpp"
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 #include "j9jitnls.h"
@@ -370,8 +370,8 @@ TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
    if (getRampDownMCT())
       return TR_no;
 
-   // Always activate in JAAS server mode
-   if (getPersistentInfo()->getJaasMode() == SERVER_MODE)
+   // Always activate in JITaaS server mode
+   if (getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
       return TR_yes;
 
    // Do not activate if we already exceed the CPU enablement for compilation threads
@@ -629,13 +629,13 @@ void
 TR::CompilationInfoPerThread::cacheRemoteROMClass(J9Class *clazz, J9ROMClass *romClass, J9Method *methods, 
                                                   TR_OpaqueClassBlock *baseComponentClass, int32_t numDimensions)
    {
-   JaasHelpers::cacheRemoteROMClass(getClientData(), clazz, romClass, methods, baseComponentClass, numDimensions);
+   JITaaSHelpers::cacheRemoteROMClass(getClientData(), clazz, romClass, methods, baseComponentClass, numDimensions);
    }
 
 J9ROMClass *
 TR::CompilationInfoPerThread::getRemoteROMClassIfCached(J9Class *clazz)
    {
-   return JaasHelpers::getRemoteROMClassIfCached(getClientData(), clazz);
+   return JITaaSHelpers::getRemoteROMClassIfCached(getClientData(), clazz);
    }
 
 J9ROMClass *
@@ -647,7 +647,7 @@ TR::CompilationInfoPerThread::getAndCacheRemoteROMClass(J9Class *clazz, TR_Memor
       J9Method *methods;
       TR_OpaqueClassBlock *baseClass;
       int32_t numDims;
-      romClass = TR_ResolvedJ9JAASServerMethod::getRemoteROMClass(clazz, getStream(), trMemory ? trMemory : TR::comp()->trMemory(), &methods, &baseClass, &numDims);
+      romClass = TR_ResolvedJ9JITaaSServerMethod::getRemoteROMClass(clazz, getStream(), trMemory ? trMemory : TR::comp()->trMemory(), &methods, &baseClass, &numDims);
       cacheRemoteROMClass(clazz, romClass, methods, baseClass, numDims);
       }
    return romClass;
@@ -715,7 +715,7 @@ TR::CompilationInfoPerThread::relocateThunks()
       TR_J2IThunk *realThunk = (TR_J2IThunk *)((U_8 *)thunk - (U_8 *)TR::compInfoPT->reloRuntime()->aotMethodHeaderEntry()->compileMethodCodeStartPC + (U_8 *)TR::compInfoPT->reloRuntime()->newMethodCodeStart());
       char *signature = realThunk->terseSignature();
       void *vmHelper = j9ThunkInvokeExactHelperFromTerseSignature(fe->_jitConfig, strlen(signature), signature);
-      *(UDATA *)(realThunk->entryPoint() + 2) = (UDATA) vmHelper; // JAAS TODO: This is amd64 specific
+      *(UDATA *)(realThunk->entryPoint() + 2) = (UDATA) vmHelper; // JITaaS TODO: This is amd64 specific
       fe->setInvokeExactJ2IThunk(realThunk, TR::comp());
       }
    _invokeExactThunksToBeRelocated.clear();
@@ -825,13 +825,13 @@ TR::CompilationInfoPerThreadBase::CompilationInfoPerThreadBase(TR::CompilationIn
    _cachedClientDataPtr(nullptr)
    {
    TR_ASSERT(_compThreadId < MAX_TOTAL_COMP_THREADS, "Cannot have a compId greater than MAX_TOTAL_COMP_THREADS");
-   if (compInfo.getPersistentInfo()->getJaasMode() == NONJAAS_MODE)
+   if (compInfo.getPersistentInfo()->getJITaaSMode() == NONJITaaS_MODE)
       {
       _reloRuntime = new (PERSISTENT_NEW) TR_SharedCacheRelocationRuntime(jitConfig);
       }
    else
       {
-      _reloRuntime = new (PERSISTENT_NEW) TR_JAASRelocationRuntime(jitConfig);
+      _reloRuntime = new (PERSISTENT_NEW) TR_JITaaSRelocationRuntime(jitConfig);
       }
    }
 
@@ -908,7 +908,7 @@ TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &comp
    _lastTimeThreadWentToSleep = 0;
    _serverVM = nullptr;
 
-   if (compInfo.getPersistentInfo()->getJaasMode() == SERVER_MODE)
+   if (compInfo.getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
       {
       _classesThatShouldNotBeNewlyExtended = new (PERSISTENT_NEW) PersistentUnorderedSet<TR_OpaqueClassBlock*>(
          PersistentUnorderedSet<TR_OpaqueClassBlock*>::allocator_type(TR::Compiler->persistentAllocator()));
@@ -1337,7 +1337,7 @@ TR::CompilationInfo::getMethodBytecodeSize(const J9ROMMethod * romMethod)
    return (romMethod->bytecodeSizeHigh << 16) + romMethod->bytecodeSizeLow;
    }
 
-JAAS::J9ServerStream *
+JITaaS::J9ServerStream *
 TR::CompilationInfo::getStream()
    {
    return (TR::compInfoPT) ? TR::compInfoPT->getStream() : nullptr;
@@ -1348,7 +1348,7 @@ TR::CompilationInfo::getMethodBytecodeSize(J9Method* method)
    {
    if (auto stream = TR::CompilationInfo::getStream())
       {
-      stream->write(JAAS::J9ServerMessageType::CompInfo_getMethodBytecodeSize, method);
+      stream->write(JITaaS::J9ServerMessageType::CompInfo_getMethodBytecodeSize, method);
       return std::get<0>(stream->read<uint32_t>());
       }
    return getMethodBytecodeSize(J9_ROM_METHOD_FROM_RAM_METHOD(method));
@@ -1365,7 +1365,7 @@ TR::CompilationInfo::isJSR292(J9Method *j9method) // Check to see if the J9AccMe
    {
    if (auto stream = TR::CompilationInfo::getStream())
       {
-      stream->write(JAAS::J9ServerMessageType::CompInfo_isJSR292, j9method);
+      stream->write(JITaaS::J9ServerMessageType::CompInfo_isJSR292, j9method);
       return std::get<0>(stream->read<bool>());
       }
    return isJSR292(J9_ROM_METHOD_FROM_RAM_METHOD(j9method));
@@ -3062,13 +3062,13 @@ void TR::CompilationInfo::stopCompilationThreads()
       fprintf(stderr, "NumQueuePromotions=%u\n", _statNumQueuePromotions);
       }
 
-   if (feGetEnv("TR_PrintJaasIPMsgStats"))
+   if (feGetEnv("TR_PrintJITaaSIPMsgStats"))
       {
-      if (getPersistentInfo()->getJaasMode() == SERVER_MODE)
+      if (getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
          {
          TR_J9VMBase * vmj9 = (TR_J9VMBase *)(TR_J9VMBase::get(_jitConfig, 0));
-         TR_JaasIProfiler *jaasIProfiler = (TR_JaasIProfiler *)vmj9->getIProfiler();
-         jaasIProfiler->printStats();
+         TR_JITaaSIProfiler *JITaaSIProfiler = (TR_JITaaSIProfiler *)vmj9->getIProfiler();
+         JITaaSIProfiler->printStats();
          }
       }
 
@@ -3424,7 +3424,7 @@ IDATA J9THREAD_PROC protectedCompilationThreadProc(J9PortLibrary *, TR::Compilat
    return 0;
    }
 
-JAAS::J9ServerStream *
+JITaaS::J9ServerStream *
 TR::CompilationInfoPerThread::getStream()
    {
    return (_methodBeingCompiled) ? _methodBeingCompiled->_stream : nullptr;
@@ -4180,7 +4180,7 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
       }
 #endif
 
-   JAAS::J9ServerStream *rpc = static_cast<JAAS::J9ServerStream *>(extra);
+   JITaaS::J9ServerStream *rpc = static_cast<JITaaS::J9ServerStream *>(extra);
 
    // Add this method to the queue of methods waiting to be compiled.
    TR_MethodToBeCompiled *cur = NULL, *prev = NULL;
@@ -4202,7 +4202,7 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
       if (compMethod)
          {
          queueWeight += compMethod->_weight; // QW
-         // JAAS: Even if a method is already being compiled, we plan to recompile it for the new request
+         // JITaaS: Even if a method is already being compiled, we plan to recompile it for the new request
          if (!rpc && compMethod->getMethodDetails().sameAs(details, fe))
             {
             if (!compMethod->_unloadedMethod) // Redefinition; see cmvc 192606 and RTC 36898
@@ -4230,7 +4230,7 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
    // after the compilation completes and we have updated the J9Method etc.
    // in which case the compilation is already done and we should not even try to enqueue
 
-   // JAAS: Even if a method is already queued, we plan to recompile it for the new request
+   // JITaaS: Even if a method is already queued, we plan to recompile it for the new request
    if (!rpc && cur)
       {
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileRequest))
@@ -4757,7 +4757,7 @@ TR::CompilationInfo::getNextMethodToBeCompiled(TR::CompilationInfoPerThread *com
       if (compInfoPT->isDiagnosticThread() || // InstantReplay compilations must be processed immediatelly
          _methodQueue->_priority >= CP_SYNC_MIN ||       // sync comp
          _methodQueue->_methodIsInSharedCache == TR_yes || // very cheap relocation
-         getPersistentInfo()->getJaasMode() == SERVER_MODE) // compile right away in server mode
+         getPersistentInfo()->getJITaaSMode() == SERVER_MODE) // compile right away in server mode
          {
          m = _methodQueue;
          _methodQueue = _methodQueue->_next;
@@ -5156,7 +5156,7 @@ void *TR::CompilationInfo::compileRemoteMethod(J9VMThread * vmThread, TR::IlGene
 #endif // defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
 
 
-   CompilationPriority compPriority = CP_SYNC_NORMAL; // JAAS TODO: priority should come from the client
+   CompilationPriority compPriority = CP_SYNC_NORMAL; // JITaaS TODO: priority should come from the client
 
    TR_MethodToBeCompiled *entry =
       addMethodToBeCompiled(details, oldStartPC, compPriority, async,
@@ -6585,7 +6585,7 @@ bool isMethodIneligibleForAot(J9Method *method)
  * @param trMemory Reference to the TR_Memory associated with this compilation (input)
  * @param canDoRelocatableCompile Reference to a bool; indicates if the current compilation can be AOT compiled (output)
  * @param eligibleForRelocatableCompile Reference to a bool; Indicates if the current compilation is eligible for AOT (output)
- * @param eligibleForRemoteCompile Reference to a bool; Indicates if the current compilation is eligible for JAAS (output)
+ * @param eligibleForRemoteCompile Reference to a bool; Indicates if the current compilation is eligible for JITaaS (output)
  * @param reloRuntime Pointer to a TR_RelocationRuntime; NULL if JVM does not have AOT support (input)
  *
  * This method is used to perform a set of tasks needed before attempting a compilation.
@@ -6605,7 +6605,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
                                                       TR_RelocationRuntime *reloRuntime)
    {
    // Get the session info
-   // JAAS TODO: move this into the try/catch block Irwin is going to create
+   // JITaaS TODO: move this into the try/catch block Irwin is going to create
    if (entry->isRemoteCompReq())
       {
       uint64_t clientUID = entry->getClientUID();
@@ -6623,8 +6623,8 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          // Cache the session data in compInfoPTBase
          setClientData(clientSession);
 
-         if (TR::Options::getVerboseOption(TR_VerboseJaas))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Server cached clientSessionData=%p for clientUID=%llu compThreadID=%d",
+         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Server cached clientSessionData=%p for clientUID=%llu compThreadID=%d",
                clientSession, (unsigned long long)clientUID, getCompThreadId());
          // Release the compilationMonitor before calling cacheRemoteClass
          }
@@ -6829,12 +6829,12 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
                                                        bool eligibleForRelocatableCompile,
                                                        TR_RelocationRuntime *reloRuntime)
    {
-   // JAAS cleanup tasks
-   if (_compInfo.getPersistentInfo()->getJaasMode() == SERVER_MODE)
+   // JITaaS cleanup tasks
+   if (_compInfo.getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
       {
       ((TR::CompilationInfoPerThread*)this)->getClassesThatShouldNotBeNewlyExtended()->clear();
       }
-   else if (_compInfo.getPersistentInfo()->getJaasMode() == CLIENT_MODE)
+   else if (_compInfo.getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
       {
       TR::ClassTableCriticalSection commit(_vm);
 
@@ -6923,7 +6923,7 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
    else // compilation will not be retried, either because it succeeded or because we don't want to
       {
       TR_PersistentJittedBodyInfo *bodyInfo;
-      // JAAS: Can not acquire the jitted body info on the server
+      // JITaaS: Can not acquire the jitted body info on the server
       if (!entry->isRemoteCompReq() && entry->isDLTCompile() && !startPC && TR::CompilationInfo::isCompiled(method) && // DLT compilation that failed too many times
          (bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(method->extra)))  // do not use entry->_oldStartPC which is probably 0. Use the most up-to-date startPC
          bodyInfo->getMethodInfo()->setHasFailedDLTCompRetrials(true);
@@ -6943,7 +6943,7 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
       // AOT compilations can fail on purpose because we want to load
       // the AOT body later on. This case is signalled by having a metaData != 0
       // but a startPC == entry->_oldStartPC == 0
-      if (metaData && !entry->_oldStartPC && !startPC && _compInfo.getPersistentInfo()->getJaasMode() != SERVER_MODE)
+      if (metaData && !entry->_oldStartPC && !startPC && _compInfo.getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
          {
          TR_ASSERT(_vm->isAOT_DEPRECATED_DO_NOT_USE(), "compilationEnd() can fail only for relocating AOT compilations\n");
          TR_ASSERT(!entry->_oldStartPC, "We expect compilationEnd() to fail only for AOT compilations which are first time compilations\n");
@@ -6974,7 +6974,7 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
                }
             else
                {
-               if (_compInfo.getPersistentInfo()->getJaasMode() != SERVER_MODE)
+               if (_compInfo.getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
                   TR_ASSERT(false, "Unexpected value for method->extra = %p (method=%p)\n", TR::CompilationInfo::getJ9MethodExtra(method), method);
                }
             }
@@ -7060,8 +7060,8 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
       // Unreserve the code cache used for this compilation
       if (_compiler->getCurrentCodeCache())
          {
-         // For JAAS SERVER we should wipe this method from the code cache
-         if (_compInfo.getPersistentInfo()->getJaasMode() == SERVER_MODE)
+         // For JITaaS SERVER we should wipe this method from the code cache
+         if (_compInfo.getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
             _compiler->getCurrentCodeCache()->resetCodeCache();
             
          _compiler->getCurrentCodeCache()->unreserve();
@@ -7202,7 +7202,7 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
            || canDoRelocatableCompile
            || entry->isAotLoad()
           )
-          && (_compInfo.getPersistentInfo()->getJaasMode() == NONJAAS_MODE || eligibleForRemoteCompile)
+          && (_compInfo.getPersistentInfo()->getJITaaSMode() == NONJITaaS_MODE || eligibleForRemoteCompile)
 #if defined(TR_HOST_ARM)
           && !TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug)
 #endif
@@ -7393,7 +7393,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
       // filters to see if compilation is to be suppressed.
 
       TR_FilterBST *filterInfo = NULL;
-      // JAAS: methodCanBeCompiled check should have been done on the client, skip it on the server.
+      // JITaaS: methodCanBeCompiled check should have been done on the client, skip it on the server.
       if (!details.isRemoteMethod() && !that->methodCanBeCompiled(p->trMemory(), vm, compilee, filterInfo))
          {
          that->_methodBeingCompiled->_compErrCode = compilationRestrictedMethod;
@@ -7454,8 +7454,8 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                that->getCompThreadId());
 
 
-         // JAAS TODO determine if we care to support annotations
-         if (that->getCompilationInfo()->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+         // JITaaS TODO determine if we care to support annotations
+         if (that->getCompilationInfo()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
             options->setOption(TR_EnableAnnotations,false);
 
          // Determine if known annotations exist and if so, keep annotations enabled
@@ -7509,8 +7509,8 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
             TR_ASSERT(vm->isAOT_DEPRECATED_DO_NOT_USE(), "assertion failure");
 
-            // Do not delay relocations for JAAS_SERVER
-            if (that->getCompilationInfo()->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+            // Do not delay relocations for JITaaS_SERVER
+            if (that->getCompilationInfo()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
                options->setOption(TR_DisableDelayRelocationForAOTCompilations);
             }
 
@@ -7872,7 +7872,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             // update our cached CHTable
             if (details.isRemoteMethod() && !comp()->getOption(TR_DisableCHOpts))
                {
-               auto table = (TR_JaasServerPersistentCHTable*)compiler->getPersistentInfo()->getPersistentCHTable();
+               auto table = (TR_JITaaSServerPersistentCHTable*)compiler->getPersistentInfo()->getPersistentCHTable();
                table->doUpdate(compiler);
                }
 
@@ -8341,12 +8341,12 @@ TR::CompilationInfoPerThreadBase::compile(
          }
 
       // If we want to compile without VM access, now it's the time to release it
-      // For the JaaS client we must not enter this path. The class unload monitor 
+      // For the JITaaS client we must not enter this path. The class unload monitor 
       // will not be acquired/releases and we'll only release VMaccess when 
       // waiting for a reply from the server
       if (!compiler->getOption(TR_DisableNoVMAccess) &&
           !_methodBeingCompiled->_aotCodeToBeRelocated &&
-          compiler->getPersistentInfo()->getJaasMode() != CLIENT_MODE)
+          compiler->getPersistentInfo()->getJITaaSMode() != CLIENT_MODE)
          {
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
          bool doAcquireClassUnloadMonitor = true;
@@ -8366,12 +8366,12 @@ TR::CompilationInfoPerThreadBase::compile(
       // Compile the method
       //
 
-      // For AOT/JAAS we need to reserve a data cache to ensure contiguous memory
+      // For AOT/JITaaS we need to reserve a data cache to ensure contiguous memory
       // For TOSS_CODE we need to reserve a data cache so that we know what dataCache
       // to reset when throwing the data away
       //
       if ((_jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
-            || compiler->getPersistentInfo()->getJaasMode() != NONJAAS_MODE // JAAS FIXME: we need to reserve only for server mode
+            || compiler->getPersistentInfo()->getJITaaSMode() != NONJITaaS_MODE // JITaaS FIXME: we need to reserve only for server mode
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
             || vm.isAOT_DEPRECATED_DO_NOT_USE()
 #endif //endif J9VM_INTERP_AOT_COMPILE_SUPPORT
@@ -8437,7 +8437,7 @@ TR::CompilationInfoPerThreadBase::compile(
 
       intptr_t rtn = 0;
 
-      if (_compInfo.getPersistentInfo()->getJaasMode() != CLIENT_MODE)
+      if (_compInfo.getPersistentInfo()->getJITaaSMode() != CLIENT_MODE)
          {
          if (!_methodBeingCompiled->isAotLoad())
             {
@@ -8492,7 +8492,7 @@ TR::CompilationInfoPerThreadBase::compile(
             metaData = performAOTLoad(vmThread, compiler, compilee, &vm, method);
             }
          }
-      else if (_compInfo.getPersistentInfo()->getJaasMode() == CLIENT_MODE) // Jaas Client Mode
+      else if (_compInfo.getPersistentInfo()->getJITaaSMode() == CLIENT_MODE) // JITaaS Client Mode
          {
          metaData = remoteCompile(vmThread, compiler, compilee, method, details, this);
          }
@@ -8513,7 +8513,7 @@ TR::CompilationInfoPerThreadBase::compile(
                }                                     // and on the exception path we check haveLockedClassUnloadMonitor
             // Here the GC/HCR might happen
             }
-         if (compiler->getPersistentInfo()->getJaasMode() != CLIENT_MODE && !(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))
+         if (compiler->getPersistentInfo()->getJITaaSMode() != CLIENT_MODE && !(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))
             acquireVMAccessNoSuspend(vmThread);
 
          // The GC could have unloaded some classes when we released the classUnloadMonitor, or HCR could have kicked in
@@ -8550,7 +8550,7 @@ TR::CompilationInfoPerThreadBase::compile(
          }
 
       _methodBeingCompiled->_compErrCode = compilationOK;
-      if (!_methodBeingCompiled->isAotLoad() && _compInfo.getPersistentInfo()->getJaasMode() != CLIENT_MODE)
+      if (!_methodBeingCompiled->isAotLoad() && _compInfo.getPersistentInfo()->getJITaaSMode() != CLIENT_MODE)
          {
          class TraceMethodMetadata
             {
@@ -9336,7 +9336,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 
    if (details.isNewInstanceThunk())
       {
-      if (comp->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+      if (comp->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
          {
          J9::NewInstanceThunkDetails &mhDetails = static_cast<J9::NewInstanceThunkDetails &>(details);
          J9Class *clazz = mhDetails.classNeedingThunk();
@@ -9355,7 +9355,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
          }
 
       if (((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) ||
-           (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)) &&
+           (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)) &&
           comp)
          {
          if (jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
@@ -9378,7 +9378,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 #ifdef J9VM_JIT_DYNAMIC_LOOP_TRANSFER
       if (startPC)
          {
-         if (comp->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+         if (comp->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
             remoteCompilationEnd(details, jitConfig, fe, entry, comp);
          else
             {
@@ -9390,7 +9390,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
          }
 #endif // ifdef J9VM_JIT_DYNAMIC_LOOP_TRANSFER
       if (((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) ||
-           (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)) &&
+           (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)) &&
           comp)
          {
          if (jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
@@ -9416,7 +9416,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       {
       if (startPC)
          {
-         if (comp->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+         if (comp->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
             {
             remoteCompilationEnd(details, jitConfig, fe, entry, comp);
             }
@@ -9456,7 +9456,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       {
       //if (vmThread)
       TR_ASSERT(vmThread, "We must always have a vmThread in compilationEnd()\n");
-      if (comp->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+      if (comp->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
          {
          remoteCompilationEnd(details, jitConfig, fe, entry, comp);
          }
@@ -9508,7 +9508,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 
                aotMethodHeaderEntry->compileFirstClassLocation = (UDATA)jitConfig->javaVM->sharedClassConfig->cacheDescriptorList->romclassStartAddress;
                J9ROMMethod *romMethod = entry->isRemoteCompReq() ?
-                  ((TR_ResolvedJ9JAASServerMethod*)comp->getCurrentMethod())->romMethod() :
+                  ((TR_ResolvedJ9JITaaSServerMethod*)comp->getCurrentMethod())->romMethod() :
                   J9_ROM_METHOD_FROM_RAM_METHOD(method);
 
                if (safeToStore)
@@ -9863,9 +9863,9 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 
       if (entry && entry->_stream)
          {
-         if (TR::Options::getVerboseOption(TR_VerboseJaas))
+         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
             {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
                   "Server has failed to compile");
             }
          static bool breakAfterFailedCompile = feGetEnv("TR_breakAfterFailedCompile") != NULL;
@@ -9889,9 +9889,9 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 
       if (entry && entry->_stream)
          {
-         if (TR::Options::getVerboseOption(TR_VerboseJaas))
+         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
             {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
                   "Server has failed to recompile");
             }
          entry->_stream->finishCompilation(compilationNotNeeded);
@@ -9899,7 +9899,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       }
 
    if (((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) ||
-       (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)) &&
+       (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)) &&
        comp)
       {
       if (jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
@@ -10548,10 +10548,10 @@ TR::CompilationInfoPerThreadBase::processException(
       {
       _methodBeingCompiled->_compErrCode = compilationInterrupted;
       }
-   catch (const JAAS::StreamCancel &e)
+   catch (const JITaaS::StreamCancel &e)
       {
-      if (TR::Options::getVerboseOption(TR_VerboseJaas))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "JAAS StreamCancel: %s", e.what());
+      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS StreamCancel: %s", e.what());
       _methodBeingCompiled->_compErrCode = compilationInterrupted;
       }
    catch (const TR::UnimplementedOpCode &e)
@@ -10595,10 +10595,10 @@ TR::CompilationInfoPerThreadBase::processException(
          }
          Trc_JIT_compilationFailed(vmThread, compiler->signature(), -1);
       }
-   catch (const JAAS::StreamFailure &e)
+   catch (const JITaaS::StreamFailure &e)
       {
-      if (TR::Options::getVerboseOption(TR_VerboseJaas))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "JAAS StreamFailure: %s", e.what());
+      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS StreamFailure: %s", e.what());
       _methodBeingCompiled->_compErrCode = compilationInterrupted;
       }
    catch (...)

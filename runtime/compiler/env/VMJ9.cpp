@@ -2078,9 +2078,9 @@ TR_J9VMBase::allocateCodeMemory(TR::Compilation * comp, uint32_t warmCodeSize, u
    bool hadClassUnloadMonitor;
    bool hadVMAccess = releaseClassUnloadMonitorAndAcquireVMaccessIfNeeded(comp, &hadClassUnloadMonitor);
 
-   // Override contiguous allocation for the jaas client
+   // Override contiguous allocation for the JITaaS client
    bool useContiguousAllocation = needsContiguousAllocation();
-   useContiguousAllocation |= comp->getPersistentInfo()->getJaasMode() == CLIENT_MODE;
+   useContiguousAllocation |= comp->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE;
 
    uint8_t *warmCode = TR::CodeCacheManager::instance()->allocateCodeMemory(warmCodeSize, coldCodeSize, &codeCache, coldCode, useContiguousAllocation, isMethodHeaderNeeded);
 
@@ -3883,7 +3883,7 @@ TR_J9VMBase::tryToAcquireAccess(TR::Compilation * comp, bool *haveAcquiredVMAcce
    bool hasVMAccess;
    *haveAcquiredVMAccess = false;
 
-   // JAAS TODO: For now, we always take the "safe path" on the server
+   // JITaaS TODO: For now, we always take the "safe path" on the server
    if (TR::CompilationInfo::getStream())
       return false;
 
@@ -7410,7 +7410,7 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
          TR_RuntimeHelper vmCallHelper = TR::MethodSymbol::getVMCallHelperFor(method->returnType(), sym->isSynchronised(), false, comp);
          TR::SymbolReference *helperSymRef = comp->getSymRefTab()->findOrCreateRuntimeHelper(vmCallHelper, true, true, false);
          sym->setMethodAddress(helperSymRef->getMethodAddress());
-         // JAAS: store the helper reference number in the node for use in creating TR_HelperAddress relocation
+         // JITaaS: store the helper reference number in the node for use in creating TR_HelperAddress relocation
          callNode->getSymbolReference()->setReferenceNumber(helperSymRef->getReferenceNumber());
          return callNode;
          }

@@ -76,8 +76,8 @@
 #include "runtime/HWProfiler.hpp"
 #include "runtime/LMGuardedStorage.hpp"
 #include "env/SystemSegmentProvider.hpp"
-#include "control/JaasCompilationThread.hpp"
-#include "runtime/JaasIProfiler.hpp"
+#include "control/JITaaSCompilationThread.hpp"
+#include "runtime/JITaaSIProfiler.hpp"
 
 extern "C" {
 struct J9JavaVM;
@@ -606,9 +606,9 @@ static void jitHookVMInitialized(J9HookInterface * * hook, UDATA eventNum, void 
    {
    J9VMThread* vmThread = ((J9VMInitEvent *)eventData)->vmThread;
    TR::CompilationInfo *compInfo = getCompilationInfo(vmThread->javaVM->jitConfig);
-   if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+   if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
       {
-      fprintf(stderr, "\nJAAS server ready to accept incoming requests\n");
+      fprintf(stderr, "\nJITaaS server ready to accept incoming requests\n");
       j9thread_sleep(10000000000);
       }
    }
@@ -1959,20 +1959,20 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
       TR::CompilationInfo *compInfo = TR::CompilationInfo::get(context->javaVM->jitConfig);
       if (compInfo)
          {
-         static char * isPrintJaasMsgStats = feGetEnv("TR_PrintJaasMsgStats");
-         if (isPrintJaasMsgStats && compInfo->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
-            printJaasMsgStats(jitConfig);
+         static char * isPrintJITaaSMsgStats = feGetEnv("TR_PrintJITaaSMsgStats");
+         if (isPrintJITaaSMsgStats && compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+            printJITaaSMsgStats(jitConfig);
 
-         if (feGetEnv("TR_PrintJaasCHTableStats"))
-            printJaasCHTableStats(jitConfig, compInfo);
+         if (feGetEnv("TR_PrintJITaaSCHTableStats"))
+            printJITaaSCHTableStats(jitConfig, compInfo);
 
-         if (feGetEnv("TR_PrintJaasIPMsgStats"))
+         if (feGetEnv("TR_PrintJITaaSIPMsgStats"))
             {
-            if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+            if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
                {
                TR_J9VMBase * vmj9 = (TR_J9VMBase *)(TR_J9VMBase::get(context->javaVM->jitConfig, 0));
-               TR_JaasIProfiler *jaasIProfiler = (TR_JaasIProfiler *)vmj9->getIProfiler();
-               jaasIProfiler->printStats();
+               TR_JITaaSIProfiler *JITaaSIProfiler = (TR_JITaaSIProfiler *)vmj9->getIProfiler();
+               JITaaSIProfiler->printStats();
                }
             }
          }
@@ -2756,8 +2756,8 @@ static void jitHookClassUnload(J9HookInterface * * hookInterface, UDATA eventNum
    if (table)
       table->classGotUnloaded(fej9, clazz);
 
-   // Add to Jaas unload list
-   if (compInfo->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
+   // Add to JITaaS unload list
+   if (compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
       compInfo->getUnloadedClassesTempList()->push_back(clazz);
 
    }
@@ -3001,8 +3001,8 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
       methodCount = classPair->methodCount;
       methodList = classPair->methodList;
 
-      // Add to Jaas unload list
-      if (compInfo->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
+      // Add to JITaaS unload list
+      if (compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
          compInfo->getUnloadedClassesTempList()->push_back(staleClass);
 
       // Step 3  patch modified classes
@@ -3496,7 +3496,7 @@ static bool updateCHTable(J9VMThread * vmThread, J9Class  * cl)
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
 
    TR_PersistentCHTable * table = 0;
-   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts) && compInfo->getPersistentInfo()->getJaasMode() != SERVER_MODE)
+   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts) && compInfo->getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
       table = compInfo->getPersistentInfo()->getPersistentCHTable();
 
    TR_J9VMBase *vm = TR_J9VMBase::get(jitConfig, vmThread);
@@ -4049,7 +4049,7 @@ static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, 
    cl->newInstanceCount = options->getInitialCount();
 #endif
 
-   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts) && compInfo->getPersistentInfo()->getJaasMode() != SERVER_MODE)
+   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts) && compInfo->getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
       {
       TR_PersistentClassInfo *info = compInfo->getPersistentInfo()->getPersistentCHTable()->classGotLoaded(vm, clazz);
 
@@ -4195,7 +4195,7 @@ static void jitHookClassPreinitialize(J9HookInterface * * hookInterface, UDATA e
 
    jitAcquireClassTableMutex(vmThread);
 
-   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts) && compInfo->getPersistentInfo()->getJaasMode() != SERVER_MODE)
+   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts) && compInfo->getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
       {
       if (!initFailed && !compInfo->getPersistentInfo()->getPersistentCHTable()->classGotInitialized(vm, compInfo->persistentMemory(), clazz))
          initFailed = true;
@@ -4809,13 +4809,13 @@ void JitShutdown(J9JITConfig * jitConfig)
       j9tty_printf(PORTLIB, "\tNo prof. info because timestamp expired: %10d\n", TR_IProfiler::_STATS_timestampHasExpired);
       }
 
-   static char * isPrintJaasMsgStats = feGetEnv("TR_PrintJaasMsgStats");
-   if (isPrintJaasMsgStats && compInfo->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
-      printJaasMsgStats(jitConfig);
+   static char * isPrintJITaaSMsgStats = feGetEnv("TR_PrintJITaaSMsgStats");
+   if (isPrintJITaaSMsgStats && compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+      printJITaaSMsgStats(jitConfig);
 
-   static char * isPrintJaasCHTableStats = feGetEnv("TR_PrintJaasCHTableStats");
-   if (isPrintJaasCHTableStats)
-      printJaasCHTableStats(jitConfig, compInfo);
+   static char * isPrintJITaaSCHTableStats = feGetEnv("TR_PrintJITaaSCHTableStats");
+   if (isPrintJITaaSCHTableStats)
+      printJITaaSCHTableStats(jitConfig, compInfo);
 
    TRC_JIT_ShutDownEnd(vmThread, "end of JitShutdown function");
    }
@@ -6959,7 +6959,7 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
    jitConfig->samplerMonitor = NULL; // initialize this field just in case
    TR::CompilationInfo *compInfo = getCompilationInfo(jitConfig);
    compInfo->setSamplingThreadLifetimeState(TR::CompilationInfo::SAMPLE_THR_NOT_CREATED); // just in case
-   if (jitConfig->samplingFrequency && !vmj9->isAOT_DEPRECATED_DO_NOT_USE() && compInfo->getPersistentInfo()->getJaasMode() != SERVER_MODE)
+   if (jitConfig->samplingFrequency && !vmj9->isAOT_DEPRECATED_DO_NOT_USE() && compInfo->getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
       {
       if ((jitConfig->sampleInterruptHandlerKey = javaVM->internalVMFunctions->J9RegisterAsyncEvent(javaVM, jitMethodSampleInterrupt, NULL)) < 0)
          {
@@ -7034,9 +7034,9 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
       }
    else
       {
-      // Do not register the hook that sets method invocation counts in JAAS server mode
+      // Do not register the hook that sets method invocation counts in JITaaS server mode
       // This ensures that interpreter will not send methods for compilation
-      if (compInfo->getPersistentInfo()->getJaasMode() != SERVER_MODE)
+      if (compInfo->getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
          {
          if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_INITIALIZE_SEND_TARGET, jitHookInitializeSendTarget, OMR_GET_CALLSITE(), NULL))
             {
@@ -7090,13 +7090,13 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
          }
       }
    
-   if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+   if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
       {
       TR_Listener *listener = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener; 
       listener->startListenerThread(javaVM);
 
-      if (TR::Options::getVerboseOption(TR_VerboseJaas))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Started JaasServer listener thread: %p ", listener->getListenerThread());
+      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Started JITaaSServer listener thread: %p ", listener->getListenerThread());
 
       // Give the JIT a chance to do stuff after the VM is initialized
       if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_INITIALIZED, jitHookVMInitialized, OMR_GET_CALLSITE(), NULL))

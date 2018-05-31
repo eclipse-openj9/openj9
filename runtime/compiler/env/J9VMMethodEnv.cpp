@@ -26,7 +26,7 @@
 #include "env/VMMethodEnv.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
-#include "control/JaasCompilationThread.hpp"
+#include "control/JITaaSCompilationThread.hpp"
 #include "j9.h"
 #include "j9cfg.h"
 #include "jilconsts.h"
@@ -34,10 +34,10 @@
 
 J9ROMMethod *romMethodOfRamMethod(J9Method* method)
    {
-   if (!TR::CompilationInfo::getStream()) // If not JAAS server
+   if (!TR::CompilationInfo::getStream()) // If not JITaaS server
       return J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)method);
 
-   // else, JAAS
+   // else, JITaaS
    auto clientData = TR::compInfoPT->getClientData();
    J9ROMMethod *romMethod;
 
@@ -54,7 +54,7 @@ J9ROMMethod *romMethodOfRamMethod(J9Method* method)
    if (!romMethod)
       {
       auto stream = TR::CompilationInfo::getStream();
-      stream->write(JAAS::J9ServerMessageType::VM_getClassOfMethod, (TR_OpaqueMethodBlock*) method);
+      stream->write(JITaaS::J9ServerMessageType::VM_getClassOfMethod, (TR_OpaqueMethodBlock*) method);
       J9Class *clazz = (J9Class*) std::get<0>(stream->read<TR_OpaqueClassBlock *>());
       TR::compInfoPT->getAndCacheRemoteROMClass(clazz);
          {

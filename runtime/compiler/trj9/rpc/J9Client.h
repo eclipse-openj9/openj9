@@ -9,7 +9,7 @@
 #include "j9.h"
 #include "ilgen/J9IlGeneratorMethodDetails.hpp"
 
-namespace JAAS
+namespace JITaaS
 {
 
 class J9ClientStream
@@ -114,15 +114,15 @@ private:
          }
       }
 
-   std::unique_ptr<JAAS::J9CompileService::Stub> _stub;
+   std::unique_ptr<JITaaS::J9CompileService::Stub> _stub;
    std::unique_ptr<grpc::ClientContext> _ctx;
-   std::unique_ptr<JAAS::J9ClientReaderWriter> _stream;
+   std::unique_ptr<JITaaS::J9ClientReaderWriter> _stream;
    grpc::CompletionQueue _cq;
    uint32_t _msTimeout;
 
    // re-useable message objects
-   JAAS::J9ClientMessage _clientMsg;
-   JAAS::J9ServerMessage _serverMsg;
+   JITaaS::J9ClientMessage _clientMsg;
+   JITaaS::J9ServerMessage _serverMsg;
    };
 
 }

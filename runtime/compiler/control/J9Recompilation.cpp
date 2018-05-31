@@ -63,16 +63,16 @@ J9::Recompilation::setupMethodInfo()
    //
    TR_OptimizationPlan * optimizationPlan =  _compilation->getOptimizationPlan();
 
-   if (comp()->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+   if (comp()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
       {
       _methodInfo = new (PERSISTENT_NEW) TR_PersistentMethodInfo();
       if (!_methodInfo)
          {
          _compilation->failCompilation<std::bad_alloc>("Unable to allocate method info");
          }
-      auto curMethodRemoteMirror = static_cast<TR_ResolvedJ9JAASServerMethod *>(_compilation->getCurrentMethod())->getRemoteMirror();
+      auto curMethodRemoteMirror = static_cast<TR_ResolvedJ9JITaaSServerMethod *>(_compilation->getCurrentMethod())->getRemoteMirror();
       auto stream = TR::CompilationInfo::getStream();
-      stream->write(JAAS::J9ServerMessageType::Recompilation_getExistingMethodInfo, JAAS::Void());
+      stream->write(JITaaS::J9ServerMessageType::Recompilation_getExistingMethodInfo, JITaaS::Void());
       auto reply = stream->read<TR_PersistentMethodInfo>();
       *_methodInfo = std::get<0>(reply);
       }
@@ -732,7 +732,7 @@ TR_PersistentMethodInfo::setForSharedInfo(TR_PersistentProfileInfo** ptr, TR_Per
       TR_PersistentProfileInfo::decRefCount((TR_PersistentProfileInfo*)oldPtr);
    }
 
-// used for JaaS
+// used for JITaaS
 TR_PersistentJittedBodyInfo *
 J9::Recompilation::persistentJittedBodyInfoFromString(const std::string &bodyInfoStr, const std::string &methodInfoStr, TR_Memory *trMemory)
    {

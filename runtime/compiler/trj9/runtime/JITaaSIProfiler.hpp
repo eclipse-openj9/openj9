@@ -1,10 +1,10 @@
-#ifndef JAAS_IPROFILER_HPP
-#define JAAS_IPROFILER_HPP
+#ifndef JITaaS_IPROFILER_HPP
+#define JITaaS_IPROFILER_HPP
 
 #include "runtime/J9Profiler.hpp"
 #include "runtime/IProfiler.hpp"
 
-namespace JAAS
+namespace JITaaS
 {
 class J9ClientStream;
 }
@@ -25,15 +25,15 @@ struct TR_ContiguousIPMethodHashTableEntry
    TR_DummyBucket _otherBucket;
    };
 
-class TR_JaasIProfiler : public TR_IProfiler
+class TR_JITaaSIProfiler : public TR_IProfiler
    {
 public:
 
    TR_PERSISTENT_ALLOC(TR_Memory::IProfiler);
-   static TR_JaasIProfiler * allocate(J9JITConfig *jitConfig);
-   TR_JaasIProfiler(J9JITConfig *);
+   static TR_JITaaSIProfiler * allocate(J9JITConfig *jitConfig);
+   TR_JITaaSIProfiler(J9JITConfig *);
 
-   // Data accessors, overridden for JaaS
+   // Data accessors, overridden for JITaaS
    //
    virtual TR_IPMethodHashTableEntry *searchForMethodSample(TR_OpaqueMethodBlock *omb, int32_t bucket) override;
 
@@ -59,19 +59,19 @@ private:
    uint32_t _statsIProfilerInfoCachingFailures;
    };
 
-class TR_JaasClientIProfiler : public TR_IProfiler
+class TR_JITaaSClientIProfiler : public TR_IProfiler
    {
    public:
 
       TR_PERSISTENT_ALLOC(TR_Memory::IProfiler);
-      static TR_JaasClientIProfiler * allocate(J9JITConfig *jitConfig);
-      TR_JaasClientIProfiler(J9JITConfig *);
+      static TR_JITaaSClientIProfiler * allocate(J9JITConfig *jitConfig);
+      TR_JITaaSClientIProfiler(J9JITConfig *);
 
     
       uint32_t walkILTreeForIProfilingEntries(uintptrj_t *pcEntries, uint32_t &numEntries, TR_J9ByteCodeIterator *bcIterator,
                                               TR_OpaqueMethodBlock *method, TR_BitVector *BCvisit, bool &abort);
       uintptr_t serializeIProfilerMethodEntries(uintptrj_t *pcEntries, uint32_t numEntries, uintptr_t memChunk, uintptrj_t methodStartAddress);
-      void serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock*method, TR::Compilation *comp, JAAS::J9ClientStream *client);
+      void serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock*method, TR::Compilation *comp, JITaaS::J9ClientStream *client);
    };
 
 #endif

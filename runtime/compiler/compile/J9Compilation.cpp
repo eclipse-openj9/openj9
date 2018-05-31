@@ -65,7 +65,7 @@
  */
 bool firstCompileStarted = false;
 
-// TODO disabled to allow for JAAS
+// TODO disabled to allow for JITaaS
 /*
 void *operator new(size_t size)
    {
@@ -89,7 +89,7 @@ void *operator new(size_t size)
  * can't be used by JIT code, so we inject an assertion here.
  */
 
-// TODO disabled to allow for JAAS
+// TODO disabled to allow for JITaaS
 /*
 void operator delete(void *)
    {
@@ -543,7 +543,7 @@ J9::Compilation::canAllocateInlineOnStack(TR::Node* node, TR_OpaqueClassBlock* &
 
       if (auto stream = TR::CompilationInfo::getStream())
          {
-         stream->write(JAAS::J9ServerMessageType::CompInfo_isClassSpecial, clazz);
+         stream->write(JITaaS::J9ServerMessageType::CompInfo_isClassSpecial, clazz);
          if (std::get<0>(stream->read<bool>()))
              return -1;
          }

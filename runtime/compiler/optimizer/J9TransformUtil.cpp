@@ -1297,7 +1297,7 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Nod
    TR_ASSERT(node->getOpCode().isLoadIndirect(), "Expecting indirect load; found %s %p", node->getOpCode().getName(), node);
    TR_ASSERT(node->getNumChildren() == 1, "Expecting indirect load %s %p to have one child; actually has %d", node->getOpCode().getName(), node, node->getNumChildren());
 
-   if (comp->compileRelocatableCode() || comp->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+   if (comp->compileRelocatableCode() || comp->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
       {
       return false;
       }

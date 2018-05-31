@@ -325,7 +325,7 @@ class TR_PersistentJittedBodyInfo
    friend class TR_DebugExt;
 
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || (defined(TR_HOST_ARM))
-   friend void fixPersistentMethodInfo(void *table, bool isJAAS);
+   friend void fixPersistentMethodInfo(void *table, bool isJITaaS);
 #endif
 
    public:

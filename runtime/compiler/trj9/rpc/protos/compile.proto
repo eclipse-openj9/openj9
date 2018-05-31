@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package JAAS;
+package JITaaS;
 
 message Any
    {
@@ -28,7 +28,7 @@ enum J9ServerMessageType
    mirrorResolvedJ9Method = 1;
    get_params_to_construct_TR_j9method = 2;
 
-   // For TR_ResolvedJ9JAASServerMethod methods
+   // For TR_ResolvedJ9JITaaSServerMethod methods
    ResolvedMethod_isJNINative = 100;
    ResolvedMethod_isInterpreted = 101;
    ResolvedMethod_setRecognizedMethodInfo = 102;
@@ -227,13 +227,13 @@ enum J9ServerMessageType
    runFEMacro_invokeILGenMacros = 617;
    runFEMacro_derefUintptrjPtr = 618;
 
-   // for JaasPersistentCHTable
+   // for JITaaSPersistentCHTable
    CHTable_getAllClassInfo = 700;
    CHTable_getClassInfoUpdates = 701;
    CHTable_commit = 702;
    CHTable_clearReservable = 703;
 
-   // for JaasIProfiler
+   // for JITaaSIProfiler
    IProfiler_profilingSample = 800;
    IProfiler_searchForMethodSample = 801;
    IProfiler_getMaxCallCount = 802;

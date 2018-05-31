@@ -4132,7 +4132,7 @@ int32_t TR_MultipleCallTargetInliner::scaleSizeBasedOnBlockFrequency(int32_t byt
 
 bool TR_MultipleCallTargetInliner::isLargeCompiledMethod(TR_ResolvedMethod *calleeResolvedMethod, int32_t bytecodeSize, int32_t callerBlockFrequency)
    {
-   // JAAS TODO: remove this early return when jitted body info is working
+   // JITaaS TODO: remove this early return when jitted body info is working
    if (TR::CompilationInfo::getStream())
       return false;
 

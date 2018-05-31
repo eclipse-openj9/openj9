@@ -1,10 +1,10 @@
-#include "JaasPersistentCHTable.hpp"
+#include "JITaaSPersistentCHTable.hpp"
 #include "compile/Compilation.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "J9Server.h"
 #include "env/ClassTableCriticalSection.hpp"   // for ClassTableCriticalSection
 #include "control/CompilationThread.hpp"       // for TR::compInfoPT
-#include "control/JaasCompilationThread.hpp"   // for ClientSessionData
+#include "control/JITaaSCompilationThread.hpp"   // for ClientSessionData
 
 
 // plan: send the whole table once,
@@ -14,18 +14,18 @@
 
 // SERVER
 
-TR_JaasServerPersistentCHTable::TR_JaasServerPersistentCHTable(TR_PersistentMemory *trMemory)
+TR_JITaaSServerPersistentCHTable::TR_JITaaSServerPersistentCHTable(TR_PersistentMemory *trMemory)
    : TR_PersistentCHTable(trMemory)
    {
    }
 
-PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> &TR_JaasServerPersistentCHTable::getData(TR::Compilation *)
+PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> &TR_JITaaSServerPersistentCHTable::getData(TR::Compilation *)
    {
    auto &data = TR::compInfoPT->getClientData()->getCHTableClassMap();
    return data;
    }
 
-void TR_JaasServerPersistentCHTable::initializeIfNeeded(TR::Compilation *comp)
+void TR_JITaaSServerPersistentCHTable::initializeIfNeeded(TR::Compilation *comp)
    {
    if (comp->getOption(TR_DisableCHOpts))
       return;
@@ -35,7 +35,7 @@ void TR_JaasServerPersistentCHTable::initializeIfNeeded(TR::Compilation *comp)
       return;
 
    auto stream = TR::CompilationInfo::getStream();
-   stream->write(JAAS::J9ServerMessageType::CHTable_getAllClassInfo, JAAS::Void());
+   stream->write(JITaaS::J9ServerMessageType::CHTable_getAllClassInfo, JITaaS::Void());
    std::string rawData = std::get<0>(stream->read<std::string>());
    auto infos = FlatPersistentClassInfo::deserializeHierarchy(rawData);
    for (auto clazz : infos)
@@ -45,7 +45,7 @@ void TR_JaasServerPersistentCHTable::initializeIfNeeded(TR::Compilation *comp)
    CHTABLE_UPDATE_COUNTER(_numClassesUpdated, infos.size());
    }
 
-void TR_JaasServerPersistentCHTable::doUpdate(TR::Compilation *comp)
+void TR_JITaaSServerPersistentCHTable::doUpdate(TR::Compilation *comp)
    {
    if (comp->getOption(TR_DisableCHOpts))
       return;
@@ -56,7 +56,7 @@ void TR_JaasServerPersistentCHTable::doUpdate(TR::Compilation *comp)
       }
 
    auto stream = TR::CompilationInfo::getStream();
-   stream->write(JAAS::J9ServerMessageType::CHTable_getClassInfoUpdates, JAAS::Void());
+   stream->write(JITaaS::J9ServerMessageType::CHTable_getClassInfoUpdates, JITaaS::Void());
    auto recv = stream->read<std::string, std::string>();
    std::string &removeStr = std::get<0>(recv);
    std::string &modifyStr = std::get<1>(recv);
@@ -76,7 +76,7 @@ void TR_JaasServerPersistentCHTable::doUpdate(TR::Compilation *comp)
       //fprintf(stderr, "CHTable updated with %d bytes\n", modifyStr.size() + removeStr.size());
    }
 
-void TR_JaasServerPersistentCHTable::commitRemoves(TR::Compilation *comp, std::string &rawData)
+void TR_JITaaSServerPersistentCHTable::commitRemoves(TR::Compilation *comp, std::string &rawData)
    {
    auto &data = getData(comp);
    TR_OpaqueClassBlock **ptr = (TR_OpaqueClassBlock**)&rawData[0];
@@ -91,7 +91,7 @@ void TR_JaasServerPersistentCHTable::commitRemoves(TR::Compilation *comp, std::s
    CHTABLE_UPDATE_COUNTER(_numClassesRemoved, num);
    }
 
-void TR_JaasServerPersistentCHTable::commitModifications(TR::Compilation *comp, std::string &rawData)
+void TR_JITaaSServerPersistentCHTable::commitModifications(TR::Compilation *comp, std::string &rawData)
    {
    auto &data = getData(comp);
    std::unordered_map<TR_OpaqueClassBlock*, std::pair<FlatPersistentClassInfo*, TR_PersistentClassInfo*>> infoMap;
@@ -126,7 +126,7 @@ void TR_JaasServerPersistentCHTable::commitModifications(TR::Compilation *comp, 
          auto classInfo = findClassInfo(flat->_subClasses[i]);
 
          // For some reason the subclass info is still null sometimes. This may be indicative of a larger problem or it could be harmless.
-         // JAAS TODO: figure out why this is happening
+         // JITaaS TODO: figure out why this is happening
          //TR_ASSERT(classInfo, "subclass info cannot be null: ensure subclasses are loaded before superclass");
          if (classInfo)
             persist->addSubClass(classInfo);
@@ -138,7 +138,7 @@ void TR_JaasServerPersistentCHTable::commitModifications(TR::Compilation *comp, 
    }
 
 TR_PersistentClassInfo *
-TR_JaasServerPersistentCHTable::findClassInfo(TR_OpaqueClassBlock * classId)
+TR_JITaaSServerPersistentCHTable::findClassInfo(TR_OpaqueClassBlock * classId)
    {
    CHTABLE_UPDATE_COUNTER(_numQueries, 1);
    initializeIfNeeded(TR::comp());
@@ -150,7 +150,7 @@ TR_JaasServerPersistentCHTable::findClassInfo(TR_OpaqueClassBlock * classId)
    }
 
 TR_PersistentClassInfo *
-TR_JaasServerPersistentCHTable::findClassInfoAfterLocking(
+TR_JITaaSServerPersistentCHTable::findClassInfoAfterLocking(
       TR_OpaqueClassBlock *classId,
       TR::Compilation *comp,
       bool returnClassInfoForAOT)
@@ -166,7 +166,7 @@ TR_JaasServerPersistentCHTable::findClassInfoAfterLocking(
    }
 
 std::string
-TR_JaasClientPersistentCHTable::serializeRemoves()
+TR_JITaaSClientPersistentCHTable::serializeRemoves()
    {
    size_t outputSize = _remove.size() * sizeof(TR_OpaqueClassBlock*);
    std::string data(outputSize, '\0');
@@ -185,7 +185,7 @@ TR_JaasClientPersistentCHTable::serializeRemoves()
    }
 
 std::string
-TR_JaasClientPersistentCHTable::serializeModifications()
+TR_JITaaSClientPersistentCHTable::serializeModifications()
    {
    size_t numBytes = 0;
    for (auto classId : _dirty)
@@ -214,7 +214,7 @@ TR_JaasClientPersistentCHTable::serializeModifications()
    return data;
    }
 
-std::pair<std::string, std::string> TR_JaasClientPersistentCHTable::serializeUpdates()
+std::pair<std::string, std::string> TR_JITaaSClientPersistentCHTable::serializeUpdates()
    {
    TR::ClassTableCriticalSection serializeUpdates(TR::comp()->fe());
    std::string removes = serializeRemoves(); // must be called first
@@ -342,7 +342,7 @@ std::vector<TR_PersistentClassInfo*> FlatPersistentClassInfo::deserializeHierarc
 // CLIENT
 // TODO: check for race conditions with _dirty/_remove
 
-TR_JaasClientPersistentCHTable::TR_JaasClientPersistentCHTable(TR_PersistentMemory *trMemory)
+TR_JITaaSClientPersistentCHTable::TR_JITaaSClientPersistentCHTable(TR_PersistentMemory *trMemory)
    : TR_PersistentCHTable(trMemory)
    , _dirty(decltype(_dirty)::allocator_type(TR::Compiler->persistentAllocator()))
    , _remove(decltype(_remove)::allocator_type(TR::Compiler->persistentAllocator()))
@@ -350,13 +350,13 @@ TR_JaasClientPersistentCHTable::TR_JaasClientPersistentCHTable(TR_PersistentMemo
    }
 
 TR_PersistentClassInfo *
-TR_JaasClientPersistentCHTable::findClassInfoConst(TR_OpaqueClassBlock * classId)
+TR_JITaaSClientPersistentCHTable::findClassInfoConst(TR_OpaqueClassBlock * classId)
    {
    return TR_PersistentCHTable::findClassInfo(classId);
    }
 
 TR_PersistentClassInfo *
-TR_JaasClientPersistentCHTable::findClassInfoAfterLockingConst(
+TR_JITaaSClientPersistentCHTable::findClassInfoAfterLockingConst(
       TR_OpaqueClassBlock *classId,
       TR::Compilation *comp,
       bool returnClassInfoForAOT)
@@ -365,14 +365,14 @@ TR_JaasClientPersistentCHTable::findClassInfoAfterLockingConst(
    }
 
 TR_PersistentClassInfo *
-TR_JaasClientPersistentCHTable::findClassInfo(TR_OpaqueClassBlock * classId)
+TR_JITaaSClientPersistentCHTable::findClassInfo(TR_OpaqueClassBlock * classId)
    {
    markDirty(classId);
    return TR_PersistentCHTable::findClassInfo(classId);
    }
 
 TR_PersistentClassInfo *
-TR_JaasClientPersistentCHTable::findClassInfoAfterLocking(
+TR_JITaaSClientPersistentCHTable::findClassInfoAfterLocking(
       TR_OpaqueClassBlock *classId,
       TR::Compilation *comp,
       bool returnClassInfoForAOT)
@@ -381,7 +381,7 @@ TR_JaasClientPersistentCHTable::findClassInfoAfterLocking(
    }
 
 void
-TR_JaasClientPersistentCHTable::classGotUnloaded(
+TR_JITaaSClientPersistentCHTable::classGotUnloaded(
       TR_FrontEnd *fe,
       TR_OpaqueClassBlock *classId)
    {
@@ -389,7 +389,7 @@ TR_JaasClientPersistentCHTable::classGotUnloaded(
    }
 
 void
-TR_JaasClientPersistentCHTable::markSuperClassesAsDirty(
+TR_JITaaSClientPersistentCHTable::markSuperClassesAsDirty(
       TR_FrontEnd *fe,
       TR_OpaqueClassBlock *classId)
    {
@@ -417,7 +417,7 @@ TR_JaasClientPersistentCHTable::markSuperClassesAsDirty(
    }
 
 void
-TR_JaasClientPersistentCHTable::classGotUnloadedPost(
+TR_JITaaSClientPersistentCHTable::classGotUnloadedPost(
       TR_FrontEnd *fe,
       TR_OpaqueClassBlock *classId)
    {
@@ -427,7 +427,7 @@ TR_JaasClientPersistentCHTable::classGotUnloadedPost(
    }
 
 void
-TR_JaasClientPersistentCHTable::classGotRedefined(
+TR_JITaaSClientPersistentCHTable::classGotRedefined(
       TR_FrontEnd *fe,
       TR_OpaqueClassBlock *oldClassId,
       TR_OpaqueClassBlock *newClassId)
@@ -436,7 +436,7 @@ TR_JaasClientPersistentCHTable::classGotRedefined(
    }
 
 void
-TR_JaasClientPersistentCHTable::removeClass(
+TR_JITaaSClientPersistentCHTable::removeClass(
       TR_FrontEnd *fe,
       TR_OpaqueClassBlock *classId,
       TR_PersistentClassInfo *info,
@@ -455,7 +455,7 @@ TR_JaasClientPersistentCHTable::removeClass(
    }
 
 TR_PersistentClassInfo *
-TR_JaasClientPersistentCHTable::classGotLoaded(
+TR_JITaaSClientPersistentCHTable::classGotLoaded(
       TR_FrontEnd *fe,
       TR_OpaqueClassBlock *classId)
    {
@@ -464,7 +464,7 @@ TR_JaasClientPersistentCHTable::classGotLoaded(
    }
 
 bool
-TR_JaasClientPersistentCHTable::classGotInitialized(
+TR_JITaaSClientPersistentCHTable::classGotInitialized(
       TR_FrontEnd *fe,
       TR_PersistentMemory *persistentMemory,
       TR_OpaqueClassBlock *classId,
@@ -475,7 +475,7 @@ TR_JaasClientPersistentCHTable::classGotInitialized(
    }
 
 bool
-TR_JaasClientPersistentCHTable::classGotExtended(
+TR_JITaaSClientPersistentCHTable::classGotExtended(
       TR_FrontEnd *fe,
       TR_PersistentMemory *persistentMemory,
       TR_OpaqueClassBlock *superClassId,
@@ -486,19 +486,19 @@ TR_JaasClientPersistentCHTable::classGotExtended(
    }
 
 void
-TR_JaasClientPersistentCHTable::resetVisitedClasses() // highly time consumming
+TR_JITaaSClientPersistentCHTable::resetVisitedClasses() // highly time consumming
    {
    TR_ASSERT(false, "should not call resetVisitedClasses on client");
    }
 
 
 // these two tables should be mutually exclusive - we only keep the most recent entry.
-void TR_JaasClientPersistentCHTable::markForRemoval(TR_OpaqueClassBlock *clazz)
+void TR_JITaaSClientPersistentCHTable::markForRemoval(TR_OpaqueClassBlock *clazz)
    {
    _remove.insert(clazz);
    _dirty.erase(clazz);
    }
-void TR_JaasClientPersistentCHTable::markDirty(TR_OpaqueClassBlock *clazz)
+void TR_JITaaSClientPersistentCHTable::markDirty(TR_OpaqueClassBlock *clazz)
    {
    _dirty.insert(clazz);
    _remove.erase(clazz);

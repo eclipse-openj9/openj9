@@ -35,17 +35,17 @@ static int32_t J9THREAD_PROC listenerThreadProc(void * entryarg)
    listener->getListenerMonitor()->notifyAll();
    listener->getListenerMonitor()->exit();
    if (rc != JNI_OK)
-      return JNI_ERR; // attaching the JaaS Listener thread failed
+      return JNI_ERR; // attaching the JITaaS Listener thread failed
 
-   j9thread_set_name(j9thread_self(), "JaaS Server Listener");
+   j9thread_set_name(j9thread_self(), "JITaaS Server Listener");
 
-   JAAS::J9CompileServer server;
+   JITaaS::J9CompileServer server;
    J9CompileDispatcher handler(jitConfig, listenerThread);
    TR::PersistentInfo *info = getCompilationInfo(jitConfig)->getPersistentInfo();
-   server.buildAndServe(&handler, info->getJaasServerPort(), info->getJaasTimeout());
+   server.buildAndServe(&handler, info->getJITaaSServerPort(), info->getJITaaSTimeout());
 
-   if (TR::Options::getVerboseOption(TR_VerboseJaas))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Detaching JaasServer listening thread");
+   if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Detaching JITaaSServer listening thread");
 
    vm->internalVMFunctions->DetachCurrentThread((JavaVM *) vm);
    listener->setListenerThread(NULL);
@@ -64,10 +64,10 @@ void TR_Listener::startListenerThread(J9JavaVM *javaVM)
    UDATA priority;
    priority = J9THREAD_PRIORITY_NORMAL;
 
-   _listenerMonitor = TR::Monitor::create("JAAS-ListenerMonitor");
+   _listenerMonitor = TR::Monitor::create("JITaaS-ListenerMonitor");
    if (_listenerMonitor)
       {
-      // create the thread for listening to JaaS Client compilation request
+      // create the thread for listening to JITaaS Client compilation request
       const UDATA defaultOSStackSize = javaVM->defaultOSStackSize; //256KB stack size
       if (javaVM->internalVMFunctions->createThreadWithCategory(&_listenerOSThread, 
                                                                defaultOSStackSize,
@@ -77,7 +77,7 @@ void TR_Listener::startListenerThread(J9JavaVM *javaVM)
                                                                javaVM->jitConfig,
                                                                J9THREAD_CATEGORY_SYSTEM_JIT_THREAD))
          { // cannot create the listener thread
-         j9tty_printf(PORTLIB, "Error: Unable to create JaaS Listener Thread.\n"); 
+         j9tty_printf(PORTLIB, "Error: Unable to create JITaaS Listener Thread.\n"); 
          TR::Monitor::destroy(_listenerMonitor);
          _listenerMonitor = NULL;
          }
@@ -89,12 +89,12 @@ void TR_Listener::startListenerThread(J9JavaVM *javaVM)
          _listenerMonitor->exit();
          if (!getListenerThread())
             {
-            j9tty_printf(PORTLIB, "Error: JaaS Listener Thread attach failed.\n");
+            j9tty_printf(PORTLIB, "Error: JITaaS Listener Thread attach failed.\n");
             }
          }
       }
    else
       {
-      j9tty_printf(PORTLIB, "Error: Unable to create Jaas Listener Monitor\n");
+      j9tty_printf(PORTLIB, "Error: Unable to create JITaaS Listener Monitor\n");
       }
    }

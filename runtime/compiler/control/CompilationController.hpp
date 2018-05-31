@@ -62,7 +62,7 @@ class TR_MethodEvent
    J9VMThread * _vmThread;
    J9Class *    _classNeedingThunk; // for newInstanceImpl
    TR_Hotness   _nextOptLevel; // Used for HWP-based recompilation
-   TR_Hotness   _jaasClientOptLevel; // Used for jaas compilation
+   TR_Hotness   _JITaaSClientOptLevel; // Used for JITaaS compilation
    };
 
 

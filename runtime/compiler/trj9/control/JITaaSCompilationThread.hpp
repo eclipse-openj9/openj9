@@ -1,5 +1,5 @@
-#ifndef JAAS_COMPILATION_THREAD_H
-#define JAAS_COMPILATION_THREAD_H
+#ifndef JITaaS_COMPILATION_THREAD_H
+#define JITaaS_COMPILATION_THREAD_H
 
 #include <unordered_map>
 #include "control/CompilationThread.hpp"
@@ -105,15 +105,15 @@ class ClientSessionHT
 
 size_t methodStringLength(J9ROMMethod *);
 std::string packROMClass(J9ROMClass *, TR_Memory *);
-bool handleServerMessage(JAAS::J9ClientStream *, TR_J9VM *);
+bool handleServerMessage(JITaaS::J9ClientStream *, TR_J9VM *);
 TR_MethodMetaData *remoteCompile(J9VMThread *, TR::Compilation *, TR_ResolvedMethod *,
       J9Method *, TR::IlGeneratorMethodDetails &, TR::CompilationInfoPerThreadBase *);
 void remoteCompilationEnd(TR::IlGeneratorMethodDetails &details, J9JITConfig *jitConfig,
       TR_FrontEnd *fe, TR_MethodToBeCompiled *entry, TR::Compilation *comp);
-void printJaasMsgStats(J9JITConfig *);
-void printJaasCHTableStats(J9JITConfig *, TR::CompilationInfo *);
-void printJaasCacheStats(J9JITConfig *, TR::CompilationInfo *);
-class JaasHelpers
+void printJITaaSMsgStats(J9JITConfig *);
+void printJITaaSCHTableStats(J9JITConfig *, TR::CompilationInfo *);
+void printJITaaSCacheStats(J9JITConfig *, TR::CompilationInfo *);
+class JITaaSHelpers
    {
    public:
    static void cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass,

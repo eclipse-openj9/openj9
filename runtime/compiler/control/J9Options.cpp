@@ -1037,7 +1037,7 @@ bool J9::Options::showPID()
    return false;
    }
 
-static uint32_t getJaasTimeoutFromCommandLineOptions(char **options, char delimiter)
+static uint32_t getJITaaSTimeoutFromCommandLineOptions(char **options, char delimiter)
    {
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
 
@@ -1052,10 +1052,10 @@ static uint32_t getJaasTimeoutFromCommandLineOptions(char **options, char delimi
          j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED, "timeout=");
       }
    else
-      getCompilationInfo(jitConfig)->getPersistentInfo()->setJaasTimeout(timeout);
+      getCompilationInfo(jitConfig)->getPersistentInfo()->setJITaaSTimeout(timeout);
    }
 
-static void getJaasServerPortFromCommandLineOptions(char **options, char delimiter)
+static void getJITaaSServerPortFromCommandLineOptions(char **options, char delimiter)
    {
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
 
@@ -1070,7 +1070,7 @@ static void getJaasServerPortFromCommandLineOptions(char **options, char delimit
          j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED, "port=");
       }
    else
-      getCompilationInfo(jitConfig)->getPersistentInfo()->setJaasServerPort(port);
+      getCompilationInfo(jitConfig)->getPersistentInfo()->setJITaaSServerPort(port);
    }
 
 static void handleUnrecognizedCommandLineOptions(char **options, char delimiter)
@@ -2003,30 +2003,30 @@ J9::Options::fePreProcess(void * base)
          }
       }
 
-   // Check for option -XX:jaasClient and/or -XX:jaasServer
-   static bool jaasAlreadyParsed = false;
-   if (!jaasAlreadyParsed) // avoid processing twice for AOT and JIT and produce duplicate messages
+   // Check for option -XX:JITaaSClient and/or -XX:JITaaSServer
+   static bool JITaaSAlreadyParsed = false;
+   if (!JITaaSAlreadyParsed) // avoid processing twice for AOT and JIT and produce duplicate messages
       {
-      jaasAlreadyParsed = true;
-      char *xxJaasClientOption = "-XX:jaasClient";
-      char *xxJaasServerOption = "-XX:jaasServer";
-      int32_t xxJaasClientArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJaasClientOption, 0);
-      int32_t xxJaasServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJaasServerOption, 0);
+      JITaaSAlreadyParsed = true;
+      char *xxJITaaSClientOption = "-XX:JITaaSClient";
+      char *xxJITaaSServerOption = "-XX:JITaaSServer";
+      int32_t xxJITaaSClientArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITaaSClientOption, 0);
+      int32_t xxJITaaSServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITaaSServerOption, 0);
       // Check if option is at all specified
-      if (xxJaasClientArgIndex >= 0 || xxJaasServerArgIndex >= 0)
+      if (xxJITaaSClientArgIndex >= 0 || xxJITaaSServerArgIndex >= 0)
          {
-         if (xxJaasClientArgIndex > xxJaasServerArgIndex)   // client mode
+         if (xxJITaaSClientArgIndex > xxJITaaSServerArgIndex)   // client mode
             {
-            compInfo->getPersistentInfo()->setJaasMode(CLIENT_MODE);
+            compInfo->getPersistentInfo()->setJITaaSMode(CLIENT_MODE);
 
-            // parse -XX:jaasClient:server=<address/hostname>,port=<number> option if provided
-            char *xxJaasClientOptionWithArgs = "-XX:jaasClient:"; // tail colon indicates server and port are provided
-            xxJaasClientArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJaasClientOptionWithArgs, 0);
-            if (xxJaasClientArgIndex >= 0)
+            // parse -XX:JITaaSClient:server=<address/hostname>,port=<number> option if provided
+            char *xxJITaaSClientOptionWithArgs = "-XX:JITaaSClient:"; // tail colon indicates server and port are provided
+            xxJITaaSClientArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITaaSClientOptionWithArgs, 0);
+            if (xxJITaaSClientArgIndex >= 0)
                {
                // retrieve whole option part, i.e., server=<address/hostname>,port=<number>
                char *options = NULL;
-               GET_OPTION_OPTION(xxJaasClientArgIndex, ':', ':', &options);
+               GET_OPTION_OPTION(xxJITaaSClientArgIndex, ':', ':', &options);
 
                char *scanLimit = options + strlen(options);
                char delimiter = ',';
@@ -2036,12 +2036,12 @@ J9::Options::fePreProcess(void * base)
                   if (try_scan(&options, "server=")) // parse server=<address/hostname> option
                      {
                      char *address = scan_to_delim(PORTLIB, &options, delimiter);
-                     compInfo->getPersistentInfo()->setJaasServerAddress(address);
+                     compInfo->getPersistentInfo()->setJITaaSServerAddress(address);
                      }
                   else if (try_scan(&options, "port=")) // parse port=<number> option
-                     getJaasServerPortFromCommandLineOptions(&options, delimiter);
+                     getJITaaSServerPortFromCommandLineOptions(&options, delimiter);
                   else if (try_scan(&options, "timeout="))
-                     getJaasTimeoutFromCommandLineOptions(&options, delimiter);
+                     getJITaaSTimeoutFromCommandLineOptions(&options, delimiter);
                   else                                  // option not known
                      {
                      if (unRecognizedOptions != options) // try to loop through all known options
@@ -2057,16 +2057,16 @@ J9::Options::fePreProcess(void * base)
             }
          else                                               // server mode
             {
-            compInfo->getPersistentInfo()->setJaasMode(SERVER_MODE);
+            compInfo->getPersistentInfo()->setJITaaSMode(SERVER_MODE);
 
-            // parse -XX:jaasServer:port=<number> option if provided
-            char *xxJaasServerOptionWithArgs = "-XX:jaasServer:"; // tail colon indicates options are provided
-            xxJaasServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJaasServerOptionWithArgs, 0);
-            if (xxJaasServerArgIndex >= 0)
+            // parse -XX:JITaaSServer:port=<number> option if provided
+            char *xxJITaaSServerOptionWithArgs = "-XX:JITaaSServer:"; // tail colon indicates options are provided
+            xxJITaaSServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITaaSServerOptionWithArgs, 0);
+            if (xxJITaaSServerArgIndex >= 0)
                {
                // retrieve whole option part, i.e., port=<number>
                char *options = NULL;
-               GET_OPTION_OPTION(xxJaasServerArgIndex, ':', ':', &options);
+               GET_OPTION_OPTION(xxJITaaSServerArgIndex, ':', ':', &options);
 
                char *scanLimit = options + strlen(options);
                char delimiter = ',';
@@ -2074,9 +2074,9 @@ J9::Options::fePreProcess(void * base)
                while (options < scanLimit)
                   {
                   if (try_scan(&options, "port=")) // parse port=<number> option
-                     getJaasServerPortFromCommandLineOptions(&options, delimiter);
+                     getJITaaSServerPortFromCommandLineOptions(&options, delimiter);
                   else if (try_scan(&options, "timeout="))
-                     getJaasTimeoutFromCommandLineOptions(&options, delimiter);
+                     getJITaaSTimeoutFromCommandLineOptions(&options, delimiter);
                   else                                  // option not known
                      {
                      if (unRecognizedOptions != options) // try to loop through all known options
@@ -2091,14 +2091,14 @@ J9::Options::fePreProcess(void * base)
                }
             }
          }
-      if (compInfo->getPersistentInfo()->getJaasMode() != NONJAAS_MODE)
+      if (compInfo->getPersistentInfo()->getJITaaSMode() != NONJITaaS_MODE)
          {
-         // generate a random identifier for this JaaS instance.
+         // generate a random identifier for this JITaaS instance.
          // TODO: prevent collisions with some kind of atomic registration algo!
          std::random_device rd;
          std::mt19937_64 rng(rd());
          std::uniform_int_distribution<uint64_t> dist;
-         compInfo->getPersistentInfo()->setJaasId(dist(rng));
+         compInfo->getPersistentInfo()->setJITaaSId(dist(rng));
          }
       }
 
@@ -2223,16 +2223,16 @@ J9::Options::fePostProcessJIT(void * base)
       }
 
    TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
-   if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE ||
-       compInfo->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
+   if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE ||
+       compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
       {
       self()->setOption(TR_DisableSamplingJProfiling);
       self()->setOption(TR_DisableSharedCacheHints);
       self()->setIsVariableHeapBaseForBarrierRange0(true);
       self()->setOption(TR_DisableOSR);
-      self()->setOption(TR_DisableProfiling); // JAAS limitation, JIT profiling data is not available to remote compiles yet
-      self()->setOption(TR_DisableEDO); // JAAS limitation, EDO counters are not relocatable yet
-      if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+      self()->setOption(TR_DisableProfiling); // JITaaS limitation, JIT profiling data is not available to remote compiles yet
+      self()->setOption(TR_DisableEDO); // JITaaS limitation, EDO counters are not relocatable yet
+      if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
          {
          self()->setOption(TR_DisableKnownObjectTable);
          // The server can compile with VM access in hand because GC is not a factor here
@@ -2243,15 +2243,15 @@ J9::Options::fePostProcessJIT(void * base)
          }
       }
 
-   if (TR::Options::getVerboseOption(TR_VerboseJaas))
+   if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
       {
-      if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Jaas Server Mode. Port: %d",
-               compInfo->getPersistentInfo()->getJaasServerPort());
-      else if (compInfo->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Jaas Client Mode. Server address: %s port: %d",
-               compInfo->getPersistentInfo()->getJaasServerAddress().c_str(),
-               compInfo->getPersistentInfo()->getJaasServerPort());
+      if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS Server Mode. Port: %d",
+               compInfo->getPersistentInfo()->getJITaaSServerPort());
+      else if (compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS Client Mode. Server address: %s port: %d",
+               compInfo->getPersistentInfo()->getJITaaSServerAddress().c_str(),
+               compInfo->getPersistentInfo()->getJITaaSServerPort());
       }
 
    return true;

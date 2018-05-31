@@ -240,7 +240,7 @@ class CompilationInfoPerThreadBase
    static TR::FILE *getPerfFile() { return _perfFile; } // used on Linux for perl tool support
    static void setPerfFile(TR::FILE *f) { _perfFile = f; }
 
-   // JAAS
+   // JITaaS
    void                   setClientData(ClientSessionData *data) { _cachedClientDataPtr = data; }
    ClientSessionData     *getClientData() { return _cachedClientDataPtr; }
 
@@ -269,7 +269,7 @@ class CompilationInfoPerThreadBase
 
    static TR::FILE *_perfFile; // used on Linux for perl tool support
 
-   // JAAS
+   // JITaaS
    ClientSessionData * _cachedClientDataPtr;
 
 private:
@@ -390,10 +390,10 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    bool                   isDiagnosticThread() const { return _isDiagnosticThread; }
    CpuSelfThreadUtilization& getCompThreadCPU() { return _compThreadCPU; }
 
-   // JAAS
+   // JITaaS
    TR_J9ServerVM         *getServerVM() { return _serverVM; }
    void                   setServerVM(TR_J9ServerVM *vm) { _serverVM = vm; }
-   JAAS::J9ServerStream  *getStream();
+   JITaaS::J9ServerStream  *getStream();
    J9ROMClass            *getAndCacheRemoteROMClass(J9Class *, TR_Memory *trMemory=nullptr);
    J9ROMClass            *getRemoteROMClassIfCached(J9Class *);
    void                   cacheRemoteROMClass(J9Class *, J9ROMClass *, J9Method *, TR_OpaqueClassBlock *, int32_t);

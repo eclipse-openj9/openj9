@@ -6,7 +6,7 @@
 #include "rpc/ProtobufTypeConvert.hpp"
 #include "env/CHTable.hpp"
 
-namespace JAAS
+namespace JITaaS
 {
 
 class J9ServerStream

@@ -4,7 +4,7 @@
 #include "env/VerboseLog.hpp"
 
 bool
-JAAS::J9ServerStream::waitOnQueue()
+JITaaS::J9ServerStream::waitOnQueue()
    {
    void *tag;
    bool ok;
@@ -17,27 +17,27 @@ JAAS::J9ServerStream::waitOnQueue()
    }
 
 void
-JAAS::J9ServerStream::readBlocking()
+JITaaS::J9ServerStream::readBlocking()
    {
    auto tag = (void *)_streamNum;
    bool ok;
    _stream->Read(&_cMsg, tag);
    if (!waitOnQueue())
-      throw JAAS::StreamFailure("Server stream failure while doing readBlocking()");
+      throw JITaaS::StreamFailure("Server stream failure while doing readBlocking()");
    }
 
 void
-JAAS::J9ServerStream::writeBlocking()
+JITaaS::J9ServerStream::writeBlocking()
    {
    auto tag = (void *)_streamNum;
    bool ok;
    _stream->Write(_sMsg, tag);
    if (!waitOnQueue())
-      throw JAAS::StreamFailure("Server stream failure while doing writeBlocking()");
+      throw JITaaS::StreamFailure("Server stream failure while doing writeBlocking()");
    }
 
 void
-JAAS::J9ServerStream::finish()
+JITaaS::J9ServerStream::finish()
    {
    auto tag = (void *)_streamNum;
    bool ok;
@@ -48,7 +48,7 @@ JAAS::J9ServerStream::finish()
    }
 
 void
-JAAS::J9ServerStream::cancel()
+JITaaS::J9ServerStream::cancel()
    {
    auto tag = (void *)_streamNum;
    bool ok;
@@ -59,7 +59,7 @@ JAAS::J9ServerStream::cancel()
    }
 
 void
-JAAS::J9ServerStream::finishCompilation(uint32_t statusCode, std::string codeCache, std::string dataCache, CHTableCommitData chTableData, std::vector<TR_OpaqueClassBlock*> classesThatShouldNotBeNewlyExtended)
+JITaaS::J9ServerStream::finishCompilation(uint32_t statusCode, std::string codeCache, std::string dataCache, CHTableCommitData chTableData, std::vector<TR_OpaqueClassBlock*> classesThatShouldNotBeNewlyExtended)
    {
    try
       {
@@ -67,17 +67,17 @@ JAAS::J9ServerStream::finishCompilation(uint32_t statusCode, std::string codeCac
       finish();
       }
 
-   catch (const JAAS::StreamFailure &e)
+   catch (const JITaaS::StreamFailure &e)
       {
-      if (TR::Options::getVerboseOption(TR_VerboseJaas))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Server-Client stream failed before finishing");
+      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Server-Client stream failed before finishing");
       // Cleanup using cancel instead of finish
       cancel();
       }
    }
 
 void
-JAAS::J9ServerStream::acceptNewRPC()
+JITaaS::J9ServerStream::acceptNewRPC()
    {
    _ctx.reset(new grpc::ServerContext);
    _stream.reset(new J9ServerReaderWriter(_ctx.get()));
@@ -86,7 +86,7 @@ JAAS::J9ServerStream::acceptNewRPC()
    }
 
 void
-JAAS::J9ServerStream::drainQueue()
+JITaaS::J9ServerStream::drainQueue()
    {
    void *tag;
    bool ok;
@@ -95,7 +95,7 @@ JAAS::J9ServerStream::drainQueue()
    }
 
 void
-JAAS::J9CompileServer::buildAndServe(J9BaseCompileDispatcher *compiler, uint32_t port, uint32_t timeout)
+JITaaS::J9CompileServer::buildAndServe(J9BaseCompileDispatcher *compiler, uint32_t port, uint32_t timeout)
    {
    grpc::ServerBuilder builder;
    builder.AddListeningPort("0.0.0.0:" + std::to_string(port), grpc::InsecureServerCredentials());
@@ -107,12 +107,12 @@ JAAS::J9CompileServer::buildAndServe(J9BaseCompileDispatcher *compiler, uint32_t
    }
 
 void
-JAAS::J9CompileServer::serve(J9BaseCompileDispatcher *compiler, uint32_t timeout)
+JITaaS::J9CompileServer::serve(J9BaseCompileDispatcher *compiler, uint32_t timeout)
    {
    bool ok = false;
    void *tag;
 
-   // JAAS TODO: make this nicer; 7 should be stored in a const somewhere
+   // JITaaS TODO: make this nicer; 7 should be stored in a const somewhere
    for (size_t i = 0; i < 7; ++i)
       {
       _streams.push_back(std::unique_ptr<J9ServerStream>(new J9ServerStream(i, &_service, _notificationQueue.get(), timeout)));

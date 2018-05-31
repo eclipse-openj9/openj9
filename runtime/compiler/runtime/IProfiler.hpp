@@ -210,7 +210,7 @@ public:
    // returns the number of bytes the equivalent storage structure needs
    virtual uint32_t                   getBytesFootprint() = 0; 
 
-   // Serialization used for JaaS
+   // Serialization used for JITaaS
    // not sufficient for persisting to the shared cache
    virtual uint32_t canBeSerialized(TR::PersistentInfo *info) { return IPBC_ENTRY_CAN_PERSIST; }
    virtual void serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info) = 0;
@@ -573,7 +573,7 @@ public:
    bool postIprofilingBufferToWorkingQueue(J9VMThread * vmThread, const U_8* dataStart, UDATA size);
    // this is wapper of registered version, for the helper function, from JitRunTime
 
-   // Data accessors, overridden for JaaS
+   // Data accessors, overridden for JITaaS
    //
 
    // This method is used to search only the hash table

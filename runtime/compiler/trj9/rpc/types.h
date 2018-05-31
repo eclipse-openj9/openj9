@@ -5,7 +5,7 @@
 #include "rpc/gen/compile.grpc.pb.h"
 #include "infra/Assert.hpp"
 
-namespace JAAS
+namespace JITaaS
 {
    typedef grpc::Status Status;
    typedef grpc::ClientAsyncReaderWriter<J9ClientMessage, J9ServerMessage> J9ClientReaderWriter;

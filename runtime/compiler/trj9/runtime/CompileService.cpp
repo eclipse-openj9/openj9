@@ -1,7 +1,7 @@
 #include "runtime/CompileService.hpp"
 #include "j9.h"
 #include "control/CompilationRuntime.hpp"
-#include "control/JaasCompilationThread.hpp"
+#include "control/JITaaSCompilationThread.hpp"
 #include "env/j9methodServer.hpp"
 
 static J9Method *ramMethodFromRomMethod(J9JITConfig *jitConfig, J9VMThread *vmThread,
@@ -34,7 +34,7 @@ static J9Method *ramMethodFromRomMethod(J9JITConfig *jitConfig, J9VMThread *vmTh
 
 static void doRemoteCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
    J9ROMClass* romClass, const J9ROMMethod* romMethod,
-   J9Method* ramMethod, J9Class *clazz, JAAS::J9ServerStream *rpc, TR_Hotness optLevel,
+   J9Method* ramMethod, J9Class *clazz, JITaaS::J9ServerStream *rpc, TR_Hotness optLevel,
    TR::IlGeneratorMethodDetails *clientDetails,
    J9::IlGeneratorMethodDetailsType methodDetailsType,
    J9Method *methodsOfClass)
@@ -51,8 +51,8 @@ static void doRemoteCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
 
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
 
-   if (TR::Options::getVerboseOption(TR_VerboseJaas))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
+   if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
          "Server received request to compile %s.%s @ %s", className, methodName, TR::Compilation::getHotnessName(optLevel));
 
    TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
@@ -67,7 +67,7 @@ static void doRemoteCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
       event._oldStartPC = 0;
       event._vmThread = vmThread;
       event._classNeedingThunk = 0;
-      event._jaasClientOptLevel = optLevel;
+      event._JITaaSClientOptLevel = optLevel;
       bool newPlanCreated;
       IDATA result = 0;
       TR_OptimizationPlan *plan = TR::CompilationController::getCompilationStrategy()->processEvent(&event, &newPlanCreated);
@@ -89,14 +89,14 @@ static void doRemoteCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
             if (compErrCode == compilationInProgress)
                {
                // This should be the only path in which we do not call finish (the compilation thread will do that instead)
-               if (TR::Options::getVerboseOption(TR_VerboseJaas))
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
+               if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
                      "Server queued compilation for %s.%s", className, methodName);
                }
             else
                {
-               if (TR::Options::getVerboseOption(TR_VerboseJaas))
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
+               if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
                      "Server failed to queue compilation for %s.%s", className, methodName);
                fe->jitPersistentFree(romClass);
                rpc->finishCompilation(compErrCode);
@@ -104,8 +104,8 @@ static void doRemoteCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
             }
          else
             {
-            if (TR::Options::getVerboseOption(TR_VerboseJaas))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
+            if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
                   "Server failed to compile %s.%s because a new plan could not be created.", className, methodName);
             fe->jitPersistentFree(romClass);
             rpc->finishCompilation(compilationFailure);
@@ -113,8 +113,8 @@ static void doRemoteCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
          }
       else
          {
-         if (TR::Options::getVerboseOption(TR_VerboseJaas))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
+         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
                "Server failed to compile %s.%s because no memory was available to create an optimization plan.", className, methodName);
          fe->jitPersistentFree(romClass);
          rpc->finishCompilation(compilationFailure);
@@ -122,15 +122,15 @@ static void doRemoteCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
       }
    else // !method
       {
-      if (TR::Options::getVerboseOption(TR_VerboseJaas))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
+      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
             "Server couldn't find ramMethod for romMethod %s.%s .", className, methodName);
       fe->jitPersistentFree(romClass);
       rpc->finishCompilation(compilationFailure);
       }
    }
 
-void J9CompileDispatcher::compile(JAAS::J9ServerStream *stream)
+void J9CompileDispatcher::compile(JITaaS::J9ServerStream *stream)
    {
    try
       {
@@ -144,7 +144,7 @@ void J9CompileDispatcher::compile(JAAS::J9ServerStream *stream)
       uint64_t clientId = std::get<0>(req);
       stream->setClientId(clientId);
       std::string romClassStr = std::get<1>(req);
-      J9ROMClass *romClass = TR_ResolvedJ9JAASServerMethod::romClassFromString(romClassStr, fej9->_compInfo->persistentMemory());
+      J9ROMClass *romClass = TR_ResolvedJ9JITaaSServerMethod::romClassFromString(romClassStr, fej9->_compInfo->persistentMemory());
       uint32_t romMethodOffset = std::get<2>(req);
       J9ROMMethod *romMethod = (J9ROMMethod*)((uint8_t*) romClass + romMethodOffset);
       J9Method *ramMethod = std::get<3>(req);
@@ -167,8 +167,8 @@ void J9CompileDispatcher::compile(JAAS::J9ServerStream *stream)
          if (clientSession)
             {
             // Cache the ROMClass for the method to be compiled if not already cached
-            if (!JaasHelpers::getRemoteROMClassIfCached(clientSession, clazz))
-               JaasHelpers::cacheRemoteROMClass(clientSession, clazz, romClass, methodsOfClass, baseComponentClass, numDims);
+            if (!JITaaSHelpers::getRemoteROMClassIfCached(clientSession, clazz))
+               JITaaSHelpers::cacheRemoteROMClass(clientSession, clazz, romClass, methodsOfClass, baseComponentClass, numDims);
             // This could be an expensive operation and we are holding the compilation monitor
             // Maybe we should create another monitor
             if (unloadedClasses.size() != 0)
@@ -179,10 +179,10 @@ void J9CompileDispatcher::compile(JAAS::J9ServerStream *stream)
 
       doRemoteCompile(_jitConfig, _vmThread, romClass, romMethod, ramMethod, clazz, stream, opt, details, detailsType, methodsOfClass);
       }
-   catch (const JAAS::StreamFailure &e)
+   catch (const JITaaS::StreamFailure &e)
       {
-      if (TR::Options::getVerboseOption(TR_VerboseJaas))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Stream failed in server compilation dispatcher thread: %s", e.what());
+      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Stream failed in server compilation dispatcher thread: %s", e.what());
       stream->cancel();
       }
    }

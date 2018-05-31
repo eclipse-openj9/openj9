@@ -62,8 +62,8 @@ enum IprofilerStates {
    IPROFILING_STATE_OFF,
 };
 
-enum JaasModes {
-   NONJAAS_MODE = 0,
+enum JITaaSModes {
+   NONJITaaS_MODE = 0,
    CLIENT_MODE,
    SERVER_MODE,
 };
@@ -124,9 +124,9 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _gpuInitMonitor(NULL),
          _runtimeInstrumentationEnabled(false),
          _runtimeInstrumentationRecompilationEnabled(false),
-         _jaasMode(NONJAAS_MODE),
-         _jaasServerAddress("localhost"),
-         _jaasServerPort(38400),
+         _JITaaSMode(NONJITaaS_MODE),
+         _JITaaSServerAddress("localhost"),
+         _JITaaSServerPort(38400),
          _timeout(0),
       OMR::PersistentInfoConnector(pm)
       {}
@@ -287,17 +287,17 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    uint8_t _paddingBefore[128];
    int32_t _countForRecompile;
 
-   JaasModes getJaasMode() const { return _jaasMode;}
-   void setJaasMode(JaasModes m) { _jaasMode = m; }
-   std::string getJaasServerAddress() const { return _jaasServerAddress; }
-   void setJaasServerAddress(char *addr) { _jaasServerAddress = addr; }
-   uint32_t getJaasTimeout() { return _timeout; }
-   void setJaasTimeout(uint32_t t) { _timeout = t; }
-   uint32_t getJaasServerPort() const { return _jaasServerPort; }
-   void setJaasServerPort(uint32_t port) { _jaasServerPort = port; }
-   std::string getJaasServerConnectionInfo() const { return _jaasServerAddress + ":" + std::to_string(_jaasServerPort); }
-   uint64_t getJaasId() { return _jaasId; }
-   void setJaasId(uint64_t val) { _jaasId = val; }
+   JITaaSModes getJITaaSMode() const { return _JITaaSMode;}
+   void setJITaaSMode(JITaaSModes m) { _JITaaSMode = m; }
+   std::string getJITaaSServerAddress() const { return _JITaaSServerAddress; }
+   void setJITaaSServerAddress(char *addr) { _JITaaSServerAddress = addr; }
+   uint32_t getJITaaSTimeout() { return _timeout; }
+   void setJITaaSTimeout(uint32_t t) { _timeout = t; }
+   uint32_t getJITaaSServerPort() const { return _JITaaSServerPort; }
+   void setJITaaSServerPort(uint32_t port) { _JITaaSServerPort = port; }
+   std::string getJITaaSServerConnectionInfo() const { return _JITaaSServerAddress + ":" + std::to_string(_JITaaSServerPort); }
+   uint64_t getJITaaSId() { return _JITaaSId; }
+   void setJITaaSId(uint64_t val) { _JITaaSId = val; }
 
    private:
    TR_AddressSet *_unloadedClassAddresses;
@@ -381,10 +381,10 @@ class PersistentInfo : public OMR::PersistentInfoConnector
 
 
    int32_t _numLoadedClasses; ///< always increasing
-   JaasModes _jaasMode; // NONJAAS_MODE, CLIENT_MODE, SERVER_MODE
-   std::string _jaasServerAddress;
-   uint32_t _jaasServerPort;
-   uint64_t _jaasId;
+   JITaaSModes _JITaaSMode; // NONJITaaS_MODE, CLIENT_MODE, SERVER_MODE
+   std::string _JITaaSServerAddress;
+   uint32_t _JITaaSServerPort;
+   uint64_t _JITaaSId;
    uint32_t _timeout;
    };
 

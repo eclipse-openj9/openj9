@@ -1,5 +1,5 @@
-#ifndef JAAS_PERSISTENT_CHTABLE_H
-#define JAAS_PERSISTENT_CHTABLE_H
+#ifndef JITaaS_PERSISTENT_CHTABLE_H
+#define JITaaS_PERSISTENT_CHTABLE_H
 
 #include "env/PersistentCHTable.hpp"
 #include "env/PersistentCollections.hpp"
@@ -16,12 +16,12 @@
 #endif
 
 
-class TR_JaasServerPersistentCHTable : public TR_PersistentCHTable
+class TR_JITaaSServerPersistentCHTable : public TR_PersistentCHTable
    {
 public:
    TR_ALLOC(TR_Memory::PersistentCHTable)
 
-   TR_JaasServerPersistentCHTable(TR_PersistentMemory *);
+   TR_JITaaSServerPersistentCHTable(TR_PersistentMemory *);
 
    void initializeIfNeeded(TR::Compilation *comp);
    void doUpdate(TR::Compilation *comp);
@@ -46,12 +46,12 @@ private:
    PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> &getData(TR::Compilation *comp);
    };
 
-class TR_JaasClientPersistentCHTable : public TR_PersistentCHTable
+class TR_JITaaSClientPersistentCHTable : public TR_PersistentCHTable
    {
 public:
    TR_ALLOC(TR_Memory::PersistentCHTable)
 
-   TR_JaasClientPersistentCHTable(TR_PersistentMemory *);
+   TR_JITaaSClientPersistentCHTable(TR_PersistentMemory *);
 
    std::pair<std::string, std::string> serializeUpdates();
 
@@ -117,4 +117,4 @@ public:
    TR_OpaqueClassBlock                *_subClasses[0];
    };
 
-#endif // JAAS_PERSISTENT_CHTABLE_H
+#endif // JITaaS_PERSISTENT_CHTABLE_H

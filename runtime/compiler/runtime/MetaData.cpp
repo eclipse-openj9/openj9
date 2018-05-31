@@ -203,7 +203,7 @@ createExceptionTable(
          *(uint32_t *)cursor = e->_instructionEndPC, cursor += 4;
          *(uint32_t *)cursor = e->_instructionHandlerPC, cursor += 4;
          *(uint32_t *)cursor = e->_catchType, cursor += 4;
-         if (comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE() || comp->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+         if (comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE() || comp->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
             *(uintptrj_t *)cursor = (uintptrj_t)e->_byteCodeInfo.getCallerIndex(), cursor += sizeof(uintptrj_t);
          else
             *(uintptrj_t *)cursor = (uintptrj_t)e->_method->resolvedMethodAddress(), cursor += sizeof(uintptrj_t);
@@ -1114,7 +1114,7 @@ populateBodyInfo(
    //
    if (recompInfo)
       {
-      if (vm->isAOT_DEPRECATED_DO_NOT_USE() || comp->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+      if (vm->isAOT_DEPRECATED_DO_NOT_USE() || comp->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
          {
          // The allocation for the Persistent Method Info and the Persistent Jitted Body Info used to be allocated with the exception table.
          // Exception tables are now being reaped on method recompilation.  As these need to be persistent, we need to allocate them seperately.
@@ -1175,7 +1175,7 @@ populateBodyInfo(
       }
    else
       {
-      if (vm->isAOT_DEPRECATED_DO_NOT_USE() || comp->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+      if (vm->isAOT_DEPRECATED_DO_NOT_USE() || comp->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
          {
          J9JITDataCacheHeader *aotMethodHeader = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
          TR_AOTMethodHeader *aotMethodHeaderEntry =  (TR_AOTMethodHeader *)(aotMethodHeader + 1);
@@ -1254,7 +1254,7 @@ static void populateInlineCalls(
           traceMsg(comp, "inlineIdx %d, callSiteCursor %p, inlinedCallSite->methodInfo = %p\n", i, callSiteCursor, inlinedCallSite->_methodInfo);
           }
 
-      if (!vm->isAOT_DEPRECATED_DO_NOT_USE() && TR::comp()->getPersistentInfo()->getJaasMode() != SERVER_MODE) // For AOT, we should only have returned resolved info about a method if the method came from same class loaders.
+      if (!vm->isAOT_DEPRECATED_DO_NOT_USE() && TR::comp()->getPersistentInfo()->getJITaaSMode() != SERVER_MODE) // For AOT, we should only have returned resolved info about a method if the method came from same class loaders.
          {
          TR_OpaqueClassBlock *clazzOfInlinedMethod = vm->getClassFromMethodBlock(inlinedCallSite->_methodInfo);
          if (comp->fej9()->isUnloadAssumptionRequired(clazzOfInlinedMethod, comp->getCurrentMethod()))
@@ -1519,13 +1519,13 @@ createMethodMetaData(
       }
 
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
-   bool isJAASMode = comp->getPersistentInfo()->getJaasMode() == SERVER_MODE;
-   if (vm->isAOT_DEPRECATED_DO_NOT_USE() || isJAASMode)
+   bool isJITaaSMode = comp->getPersistentInfo()->getJITaaSMode() == SERVER_MODE;
+   if (vm->isAOT_DEPRECATED_DO_NOT_USE() || isJITaaSMode)
       {
       TR::CodeCache * codeCache = comp->getCurrentCodeCache(); // MCT
 
       /* Align code caches */
-      if (!isJAASMode)
+      if (!isJITaaSMode)
          codeCache->alignWarmCodeAlloc(3);
 
       J9JITDataCacheHeader *aotMethodHeader = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
@@ -1600,7 +1600,7 @@ createMethodMetaData(
    populateInlineCalls(comp, vm, data, callSiteCursor, numberOfMapBytes);
 
    if (!(vm->_jitConfig->runtimeFlags & J9JIT_TOSS_CODE) && !vm->isAOT_DEPRECATED_DO_NOT_USE() &&
-       comp->getPersistentInfo()->getJaasMode() != SERVER_MODE)
+       comp->getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
       {
       TR_TranslationArtifactManager *artifactManager = TR_TranslationArtifactManager::getGlobalArtifactManager();
       TR_TranslationArtifactManager::CriticalSection updateMetaData;

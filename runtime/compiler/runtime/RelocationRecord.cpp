@@ -1694,7 +1694,7 @@ TR_RelocationRecordBodyInfo::applyRelocation(TR_RelocationRuntime *reloRuntime, 
    {
    J9JITExceptionTable *exceptionTable = reloRuntime->exceptionTable();
    reloTarget->storeAddress((uint8_t *) exceptionTable->bodyInfo, reloLocation);
-   fixPersistentMethodInfo((void *)exceptionTable, reloRuntime->getPersistentInfo()->getJaasMode() == CLIENT_MODE);
+   fixPersistentMethodInfo((void *)exceptionTable, reloRuntime->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE);
    return 0;
    }
 
@@ -1727,8 +1727,8 @@ TR_RelocationRecordThunks::relocateAndRegisterThunk(
    uintptr_t cpIndex,
    uint8_t *reloLocation)
    {
-   // XXX: Currently all thinks are batch-relocated elsewhere for JAAS
-   if (reloRuntime->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
+   // XXX: Currently all thinks are batch-relocated elsewhere for JITaaS
+   if (reloRuntime->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
       {
       return 0;
       }

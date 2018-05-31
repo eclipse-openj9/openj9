@@ -28,12 +28,12 @@ private:
    };
 
 
-class J9CompileDispatcher : public JAAS::J9BaseCompileDispatcher
+class J9CompileDispatcher : public JITaaS::J9BaseCompileDispatcher
 {
 public:
    J9CompileDispatcher(J9JITConfig *jitConfig, J9VMThread *vmThread) : _jitConfig(jitConfig), _vmThread(vmThread) { }
 
-   void compile(JAAS::J9ServerStream *stream) override;
+   void compile(JITaaS::J9ServerStream *stream) override;
 
 private:
    J9JITConfig *_jitConfig;

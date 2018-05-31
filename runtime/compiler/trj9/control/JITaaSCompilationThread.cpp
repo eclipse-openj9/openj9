@@ -1,4 +1,4 @@
-#include "control/JaasCompilationThread.hpp"
+#include "control/JITaaSCompilationThread.hpp"
 #include "vmaccess.h"
 #include "runtime/J9VMAccess.hpp"
 #include "env/VMAccessCriticalSection.hpp"
@@ -6,16 +6,16 @@
 #include "compile/Compilation.hpp"
 #include "control/MethodToBeCompiled.hpp"
 #include "runtime/CodeCache.hpp"
-#include "env/JaasPersistentCHTable.hpp"
-#include "env/JaasCHTable.hpp"
+#include "env/JITaaSPersistentCHTable.hpp"
+#include "env/JITaaSCHTable.hpp"
 #include "env/ClassTableCriticalSection.hpp"   // for ClassTableCriticalSection
 #include "exceptions/RuntimeFailure.hpp"       // for CHTableCommitFailure
 #include "runtime/IProfiler.hpp"               // for TR_IProfiler
-#include "runtime/JaasIProfiler.hpp"           // for TR_ContiguousIPMethodHashTableEntry
+#include "runtime/JITaaSIProfiler.hpp"           // for TR_ContiguousIPMethodHashTableEntry
 #include "j9port.h" // for j9time_current_time_millis
 #include "env/j9methodServer.hpp"
 
-uint32_t serverMsgTypeCount[JAAS::J9ServerMessageType_ARRAYSIZE] = {};
+uint32_t serverMsgTypeCount[JITaaS::J9ServerMessageType_ARRAYSIZE] = {};
 
 size_t methodStringsLength(J9ROMMethod *method)
    {
@@ -30,7 +30,7 @@ size_t methodStringsLength(J9ROMMethod *method)
 // and signature are needed on the server but may be interned globally on the client.
 std::string packROMClass(J9ROMClass *origRomClass, TR_Memory *trMemory)
    {
-   //JAAS TODO: Add comments
+   //JITaaS TODO: Add comments
    J9UTF8 *className = J9ROMCLASS_CLASSNAME(origRomClass);
    size_t classNameSize = className->length + sizeof(U_16);
 
@@ -78,14 +78,14 @@ std::string packROMClass(J9ROMClass *origRomClass, TR_Memory *trMemory)
    return romClassStr;
    }
 
-void handler_IProfiler_profilingSample(JAAS::J9ClientStream *client, TR_J9VM *fe, TR::Compilation *comp)
+void handler_IProfiler_profilingSample(JITaaS::J9ClientStream *client, TR_J9VM *fe, TR::Compilation *comp)
    {
    auto recv = client->getRecvData<TR_OpaqueMethodBlock*, uint32_t, uintptrj_t>();
    auto method = std::get<0>(recv);
    auto bcIndex = std::get<1>(recv);
    auto data = std::get<2>(recv); // data==1 means 'send info for 1 bytecode'; data==0 means 'send info for entire method if possible'
 
-   TR_JaasClientIProfiler *iProfiler = (TR_JaasClientIProfiler *)fe->getIProfiler();
+   TR_JITaaSClientIProfiler *iProfiler = (TR_JITaaSClientIProfiler *)fe->getIProfiler();
 
    bool isCompiled = TR::CompilationInfo::isCompiled((J9Method*)method);
    bool isInProgress = comp->methodToBeCompiled()->getPersistentIdentifier() == method;
@@ -133,9 +133,9 @@ void handler_IProfiler_profilingSample(JAAS::J9ClientStream *client, TR_J9VM *fe
       }
    }
 
-bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
+bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
    {
-   using JAAS::J9ServerMessageType;
+   using JITaaS::J9ServerMessageType;
    TR::CompilationInfoPerThread *compInfoPT = fe->_compInfoPT;
    J9VMThread *vmThread = compInfoPT->getCompilationThread();
    TR_Memory  *trMemory = compInfoPT->getCompilation()->trMemory();
@@ -265,7 +265,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::VM_getSystemClassLoader:
          {
-         client->getRecvData<JAAS::Void>();
+         client->getRecvData<JITaaS::Void>();
          client->write(fe->getSystemClassLoader());
          }
          break;
@@ -316,7 +316,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::VM_getOverflowSafeAllocSize:
          {
-         client->getRecvData<JAAS::Void>();
+         client->getRecvData<JITaaS::Void>();
          client->write(static_cast<uint64_t>(fe->getOverflowSafeAllocSize()));
          }
          break;
@@ -511,7 +511,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          uintptrj_t fieldOffset = std::get<1>(recv);
          int64_t newValue = std::get<2>(recv);
          fe->setInt64FieldAt(objectPointer, fieldOffset, newValue);
-         client->write(JAAS::Void());
+         client->write(JITaaS::Void());
          }
          break;
       case J9ServerMessageType::VM_compareAndSwapInt64FieldAt:
@@ -538,7 +538,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::VM_getOffsetOfClassFromJavaLangClassField:
          {
-         client->getRecvData<JAAS::Void>();
+         client->getRecvData<JITaaS::Void>();
          client->write(fe->getOffsetOfClassFromJavaLangClassField());
          }
          break;
@@ -556,19 +556,19 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::VM_getProcessID:
          {
-         client->getRecvData<JAAS::Void>();
+         client->getRecvData<JITaaS::Void>();
          client->write(fe->getProcessID());
          }
          break;
       case J9ServerMessageType::VM_getIdentityHashSaltPolicy:
          {
-         client->getRecvData<JAAS::Void>();
+         client->getRecvData<JITaaS::Void>();
          client->write(fe->getIdentityHashSaltPolicy());
          }
          break;
       case J9ServerMessageType::VM_getOffsetOfJLThreadJ9Thread:
          {
-         client->getRecvData<JAAS::Void>();
+         client->getRecvData<JITaaS::Void>();
          client->write(fe->getOffsetOfJLThreadJ9Thread());
          }
          break;
@@ -601,7 +601,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          void *thunk = std::get<0>(recv);
          std::string signature = std::get<1>(recv);
          TR::compInfoPT->addThunkToBeRelocated(thunk, signature);
-         client->write(JAAS::Void());
+         client->write(JITaaS::Void());
          }
          break;
       case J9ServerMessageType::VM_setInvokeExactJ2IThunk:
@@ -609,7 +609,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          auto recv = client->getRecvData<void*>();
          void *thunk = std::get<0>(recv);
          TR::compInfoPT->addInvokeExactThunkToBeRelocated((TR_J2IThunk*) thunk);
-         client->write(JAAS::Void());
+         client->write(JITaaS::Void());
          }
          break;
       case J9ServerMessageType::VM_sameClassLoaders:
@@ -632,7 +632,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          fe->scanClassForReservation(clazz, comp);
-         auto table = (TR_JaasClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
+         auto table = (TR_JITaaSClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
          TR_PersistentClassInfo *info = table->findClassInfoAfterLockingConst(clazz, comp);
          client->write(info->isReservable());
          }
@@ -724,7 +724,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          TR_OpaqueClassBlock *clazz = std::get<0>(recv);
          uint32_t alignFromStart = std::get<1>(recv);
          fe->markClassForTenuredAlignment(comp, clazz, alignFromStart);
-         client->write(JAAS::Void());
+         client->write(JITaaS::Void());
          }
          break;
       case J9ServerMessageType::VM_getReferenceSlotsInClass:
@@ -780,7 +780,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          {
          TR_OpaqueMethodBlock *method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
          fe->revertToInterpreted(method);
-         client->write(JAAS::Void());
+         client->write(JITaaS::Void());
          }
          break;
       case J9ServerMessageType::VM_getLocationOfClassLoaderObjectPointer:
@@ -835,7 +835,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::VM_getObjectNewInstanceImplMethod:
          {
-         client->getRecvData<JAAS::Void>();
+         client->getRecvData<JITaaS::Void>();
          client->write(fe->getObjectNewInstanceImplMethod());
          }
          break;
@@ -903,8 +903,8 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          TR_OpaqueMethodBlock *method = std::get<0>(recv);
          auto *owningMethod = std::get<1>(recv);
          uint32_t vTableSlot = std::get<2>(recv);
-         TR_ResolvedJ9JAASServerMethodInfo methodInfo; 
-         TR_ResolvedJ9JAASServerMethod::createResolvedJ9MethodMirror(methodInfo, method, vTableSlot, owningMethod, fe, trMemory);
+         TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
+         TR_ResolvedJ9JITaaSServerMethod::createResolvedJ9MethodMirror(methodInfo, method, vTableSlot, owningMethod, fe, trMemory);
          
          client->write(methodInfo);
          }
@@ -1070,14 +1070,14 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
             {
             TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *) ramMethod;
            
-            TR_ResolvedJ9JAASServerMethodInfo methodInfo; 
-            TR_ResolvedJ9JAASServerMethod::createResolvedJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, (uint32_t) vTableIndex, owningMethod, fe, trMemory);
+            TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
+            TR_ResolvedJ9JITaaSServerMethod::createResolvedJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, (uint32_t) vTableIndex, owningMethod, fe, trMemory);
                         
             client->write(ramMethod, vTableIndex, resolvedInCP, methodInfo);
             }
          else
             {
-            client->write(ramMethod, vTableIndex, resolvedInCP, TR_ResolvedJ9JAASServerMethodInfo());
+            client->write(ramMethod, vTableIndex, resolvedInCP, TR_ResolvedJ9JITaaSServerMethodInfo());
             }
          }
          break;
@@ -1112,7 +1112,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          TR_ResolvedJ9Method *method = std::get<0>(recv);
          TR::RecognizedMethod rm = std::get<1>(recv);
          method->setRecognizedMethodInfo(rm);
-         client->write(JAAS::Void());
+         client->write(JITaaS::Void());
          }
          break;
       case J9ServerMessageType::ResolvedMethod_localName:
@@ -1369,14 +1369,14 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          TR_ResolvedJ9Method *mirror = std::get<0>(recv);
          uint32_t bcIndex = std::get<1>(recv);
          mirror->setWarmCallGraphTooBig(bcIndex, comp);
-         client->write(JAAS::Void());
+         client->write(JITaaS::Void());
          }
          break;
       case J9ServerMessageType::ResolvedMethod_setVirtualMethodIsOverridden:
          {
          TR_ResolvedJ9Method *mirror = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
          mirror->setVirtualMethodIsOverridden();
-         client->write(JAAS::Void());
+         client->write(JITaaS::Void());
          }
          break;
       case J9ServerMessageType::ResolvedMethod_addressContainingIsOverriddenBit:
@@ -1397,7 +1397,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          TR_ResolvedJ9Method *mirror = std::get<0>(recv);
          J9Class *clazz = std::get<1>(recv);
          mirror->setClassForNewInstance(clazz);
-         client->write(JAAS::Void());
+         client->write(JITaaS::Void());
          }
          break;
       case J9ServerMessageType::ResolvedMethod_getJittedBodyInfo:
@@ -1471,7 +1471,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          J9Method *method = std::get<0>(recv);
          uint64_t count = std::get<1>(recv);
          TR::CompilationInfo::setJ9MethodExtra(method, count);
-         client->write(JAAS::Void());
+         client->write(JITaaS::Void());
          }
          break;
       case J9ServerMessageType::CompInfo_isClassSpecial:
@@ -1854,8 +1854,8 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
 
       case J9ServerMessageType::CHTable_getAllClassInfo:
          {
-         client->getRecvData<JAAS::Void>();
-         auto table = (TR_JaasClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
+         client->getRecvData<JITaaS::Void>();
+         auto table = (TR_JITaaSClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
          TR_OpaqueClassBlock *rootClass = fe->getSystemClassFromClassName("java/lang/Object", 16);
          TR_PersistentClassInfo* result = table->findClassInfoAfterLockingConst(rootClass, comp, false);
          std::string encoded = FlatPersistentClassInfo::serializeHierarchy(result);
@@ -1864,8 +1864,8 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::CHTable_getClassInfoUpdates:
          {
-         client->getRecvData<JAAS::Void>();
-         auto table = (TR_JaasClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
+         client->getRecvData<JITaaS::Void>();
+         auto table = (TR_JITaaSClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
          auto encoded = table->serializeUpdates();
          client->write(encoded.first, encoded.second);
          }
@@ -1873,7 +1873,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
       case J9ServerMessageType::CHTable_clearReservable:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>());
-         auto table = (TR_JaasClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
+         auto table = (TR_JITaaSClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
          auto info = table->findClassInfoAfterLockingConst(clazz, comp);
          info->setReservable(false);
          }
@@ -1935,7 +1935,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       default:
          // It is vital that this remains a hard error during dev!
-         TR_ASSERT(false, "JAAS: handleServerMessage received an unknown message type");
+         TR_ASSERT(false, "JITaaS: handleServerMessage received an unknown message type");
       }
    return done;
    }
@@ -1951,10 +1951,10 @@ remoteCompile(
    )
    {
    TR_ASSERT(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS, "Client must work with VM access");
-   if (TR::Options::getVerboseOption(TR_VerboseJaas))
+   if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
       {
       TR_VerboseLog::writeLineLocked(
-         TR_Vlog_JAAS,
+         TR_Vlog_JITaaS,
          "Client sending compilation request to server for method %s @ %s.",
          compiler->signature(),
          compiler->getHotnessName()
@@ -1975,8 +1975,8 @@ remoteCompile(
    int32_t numDims = 0;
    TR_OpaqueClassBlock *baseComponentClass = compiler->fej9vm()->getBaseComponentClass((TR_OpaqueClassBlock *)clazz, numDims);
 
-   JAAS::J9ClientStream client(TR::comp()->getPersistentInfo()->getJaasServerConnectionInfo(),
-                               TR::comp()->getPersistentInfo()->getJaasTimeout());
+   JITaaS::J9ClientStream client(TR::comp()->getPersistentInfo()->getJITaaSServerConnectionInfo(),
+                               TR::comp()->getPersistentInfo()->getJITaaSTimeout());
 
    uint32_t statusCode = compilationFailure;
    std::string codeCacheStr;
@@ -1989,14 +1989,14 @@ remoteCompile(
       // message just in case we block in the wite operation   
       releaseVMAccess(vmThread);
 
-      client.buildCompileRequest(TR::comp()->getPersistentInfo()->getJaasId(), romClassStr, romMethodOffset, 
+      client.buildCompileRequest(TR::comp()->getPersistentInfo()->getJITaaSId(), romClassStr, romMethodOffset, 
                                  method, clazz, compiler->getMethodHotness(), detailsStr, details.getType(), 
                                  unloadedClasses, methodsOfClass, baseComponentClass, numDims);
       // re-acquire VM access and check for possible class unloading
       acquireVMAccessNoSuspend(vmThread);
       if (compInfoPT->compilationShouldBeInterrupted())
          {
-         // JAAS FIXME: The server is not informed that the client is going to abort
+         // JITaaS FIXME: The server is not informed that the client is going to abort
          // Is it better to let the code flow into handleServerMessage() wait for a 
          // query from the server and then abort sending a "cancel" message back?
          auto comp = compInfoPT->getCompilation();
@@ -2013,15 +2013,15 @@ remoteCompile(
       chTableData = std::get<3>(recv);
       classesThatShouldNotBeNewlyExtended = std::get<4>(recv);
       if (statusCode >= compilationMaxError)
-         throw JAAS::StreamTypeMismatch("Did not receive a valid TR_CompilationErrorCode as the final message on the stream.");
+         throw JITaaS::StreamTypeMismatch("Did not receive a valid TR_CompilationErrorCode as the final message on the stream.");
       }
-   catch (const JAAS::StreamFailure &e)
+   catch (const JITaaS::StreamFailure &e)
       {
-      if (TR::Options::getVerboseOption(TR_VerboseJaas))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, e.what());
-      compiler->failCompilation<JAAS::StreamFailure>(e.what());
+      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, e.what());
+      compiler->failCompilation<JITaaS::StreamFailure>(e.what());
       }
-   JAAS::Status status = client.waitForFinish();
+   JITaaS::Status status = client.waitForFinish();
    TR_MethodMetaData *metaData = NULL;
    if (status.ok() && (statusCode == compilationOK || statusCode == compilationNotNeeded))
       {
@@ -2040,10 +2040,10 @@ remoteCompile(
 
          if (!metaData)
             {
-            if (TR::Options::getVerboseOption(TR_VerboseJaas))
+            if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
                {
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
-                                              "JaaS Relocation failure: %d",
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
+                                              "JITaaS Relocation failure: %d",
                                               compInfoPT->reloRuntime()->returnCode());
                }
             }
@@ -2061,19 +2061,19 @@ remoteCompile(
                auto it = newlyExtendedClasses->find(clazz);
                if (it != newlyExtendedClasses->end() && (it->second & (1 << TR::compInfoPT->getCompThreadId())))
                   {
-                  if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJaas, TR_VerboseCompileEnd, TR_VerbosePerformance, TR_VerboseCompFailure))
+                  if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITaaS, TR_VerboseCompileEnd, TR_VerbosePerformance, TR_VerboseCompFailure))
                      TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Class that should not be newly extended was extended when compiling %s", compiler->signature());
                   compiler->failCompilation<J9::CHTableCommitFailure>("Class that should not be newly extended was extended");
                   }
                }
 
-            if (!jaasCHTableCommit(compiler, metaData, chTableData))
+            if (!JITaaSCHTableCommit(compiler, metaData, chTableData))
                {
 #ifdef COLLECT_CHTABLE_STATS
-               TR_JaasClientPersistentCHTable *table = (TR_JaasClientPersistentCHTable*) TR::comp()->getPersistentInfo()->getPersistentCHTable();
+               TR_JITaaSClientPersistentCHTable *table = (TR_JITaaSClientPersistentCHTable*) TR::comp()->getPersistentInfo()->getPersistentCHTable();
                table->_numCommitFailures += 1;
 #endif
-               if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJaas, TR_VerboseCompileEnd, TR_VerbosePerformance, TR_VerboseCompFailure))
+               if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITaaS, TR_VerboseCompileEnd, TR_VerbosePerformance, TR_VerboseCompFailure))
                   {
                   TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Failure while committing chtable for %s", compiler->signature());
                   }
@@ -2086,10 +2086,10 @@ remoteCompile(
          TR_ASSERT(!metaData->startColdPC, "coldPC should be null");
 
 
-         if (TR::Options::getVerboseOption(TR_VerboseJaas))
+         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
             {
             TR_VerboseLog::writeLineLocked(
-               TR_Vlog_JAAS,
+               TR_Vlog_JITaaS,
                "Client successfully loaded method %s @ %s following compilation request. [metaData=%p, startPC=%p]",
                compiler->signature(),
                compiler->getHotnessName(),
@@ -2099,11 +2099,11 @@ remoteCompile(
          }
       catch (const std::exception &e)
          {
-         // Log for JAAS mode and re-throw
-         if (TR::Options::getVerboseOption(TR_VerboseJaas))
+         // Log for JITaaS mode and re-throw
+         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
             {
             TR_VerboseLog::writeLineLocked(
-               TR_Vlog_JAAS,
+               TR_Vlog_JITaaS,
                "Client failed to load method %s @ %s following compilation request.",
                compiler->signature(),
                compiler->getHotnessName()
@@ -2114,7 +2114,7 @@ remoteCompile(
       }
    else
       {
-      compiler->failCompilation<TR::CompilationException>("JaaS compilation failed.");
+      compiler->failCompilation<TR::CompilationException>("JITaaS compilation failed.");
       }
    return metaData;
    }
@@ -2142,7 +2142,7 @@ remoteCompilationEnd(
 #endif
 
    TR_DataCache *dataCache = (TR_DataCache*)comp->getReservedDataCache();
-   TR_ASSERT(dataCache, "A dataCache must be reserved for JAAS compilations\n");
+   TR_ASSERT(dataCache, "A dataCache must be reserved for JITaaS compilations\n");
    J9JITDataCacheHeader *dataCacheHeader = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
    J9JITExceptionTable *metaData = TR::compInfoPT->getMetadata();
 
@@ -2165,34 +2165,34 @@ remoteCompilationEnd(
    entry->_stream->finishCompilation(compilationOK, codeCacheStr, dataCacheStr, chTableData,
                                      std::vector<TR_OpaqueClassBlock*>(classesThatShouldNotBeNewlyExtended->begin(), classesThatShouldNotBeNewlyExtended->end()));
 
-   if (TR::Options::getVerboseOption(TR_VerboseJaas))
+   if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
       {
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
                                      "Server has successfully compiled %s", entry->_compInfoPT->getCompilation()->signature());
       }
    }
 
-void printJaasMsgStats(J9JITConfig *jitConfig)
+void printJITaaSMsgStats(J9JITConfig *jitConfig)
    {
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
-   j9tty_printf(PORTLIB, "JAAS Server Message Type Statistics:\n");
+   j9tty_printf(PORTLIB, "JITaaS Server Message Type Statistics:\n");
    j9tty_printf(PORTLIB, "Type# #called TypeName\n");
-   const ::google::protobuf::EnumDescriptor *descriptor = JAAS::J9ServerMessageType_descriptor();
-   for (int i = 0; i < JAAS::J9ServerMessageType_ARRAYSIZE; ++i)
+   const ::google::protobuf::EnumDescriptor *descriptor = JITaaS::J9ServerMessageType_descriptor();
+   for (int i = 0; i < JITaaS::J9ServerMessageType_ARRAYSIZE; ++i)
       {
       if (serverMsgTypeCount[i] > 0)
          j9tty_printf(PORTLIB, "#%04d %7u %s\n", i, serverMsgTypeCount[i], descriptor->FindValueByNumber(i)->name().c_str());
       }
    }
 
-void printJaasCHTableStats(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo)
+void printJITaaSCHTableStats(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo)
    {
 #ifdef COLLECT_CHTABLE_STATS
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
-   j9tty_printf(PORTLIB, "JAAS CHTable Statistics:\n");
-   if (compInfo->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
+   j9tty_printf(PORTLIB, "JITaaS CHTable Statistics:\n");
+   if (compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
       {
-      TR_JaasClientPersistentCHTable *table = (TR_JaasClientPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
+      TR_JITaaSClientPersistentCHTable *table = (TR_JITaaSClientPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
       j9tty_printf(PORTLIB, "Num updates sent: %d (1 per compilation)\n", table->_numUpdates);
       if (table->_numUpdates)
          {
@@ -2202,9 +2202,9 @@ void printJaasCHTableStats(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo
          j9tty_printf(PORTLIB, "Total update bytes: %d. Compilation max: %d. Average per compilation: %f\n", table->_updateBytes, table->_maxUpdateBytes, table->_updateBytes / float(table->_numUpdates));
          }
       }
-   else if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+   else if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
       {
-      TR_JaasServerPersistentCHTable *table = (TR_JaasServerPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
+      TR_JITaaSServerPersistentCHTable *table = (TR_JITaaSServerPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
       j9tty_printf(PORTLIB, "Num updates received: %d (1 per compilation)\n", table->_numUpdates);
       if (table->_numUpdates)
          {
@@ -2217,10 +2217,10 @@ void printJaasCHTableStats(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo
 #endif
    }
 
-void printJaasCacheStats(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo)
+void printJITaaSCacheStats(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo)
    {
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
-   if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+   if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
       {
       auto clientSessionHT = compInfo->getClientSessionHT();
       clientSessionHT->printStats();
@@ -2245,8 +2245,8 @@ ClientSessionData::ClientSessionData(uint64_t clientUID) :
    _javaLangClassPtr = nullptr;
    _systemClassLoader = nullptr;
    _inUse = 1;
-   _romMapMonitor = TR::Monitor::create("JIT-JaaSROMMapMonitor");
-   _systemClassMapMonitor = TR::Monitor::create("JIT-JaaSystemClassMapMonitor");
+   _romMapMonitor = TR::Monitor::create("JIT-JITaaSROMMapMonitor");
+   _systemClassMapMonitor = TR::Monitor::create("JIT-JITaaSystemClassMapMonitor");
    }
 
 ClientSessionData::~ClientSessionData()
@@ -2280,8 +2280,8 @@ ClientSessionData::~ClientSessionData()
 void
 ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*> &classes)
    {
-   if (TR::Options::getVerboseOption(TR_VerboseJaas))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Server will process a list of %u unloaded classes for clientUID %llu", (unsigned)classes.size(), (unsigned long long)_clientUID);
+   if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Server will process a list of %u unloaded classes for clientUID %llu", (unsigned)classes.size(), (unsigned long long)_clientUID);
    OMR::CriticalSection processUnloadedClasses(getROMMapMonitor());
    for (TR_OpaqueClassBlock *clazz : classes)
       {
@@ -2432,13 +2432,13 @@ ClientSessionHT::findOrCreateClientSession(uint64_t clientUID)
       if (clientData)
          {
          _clientSessionMap[clientUID] = clientData;
-         if (TR::Options::getVerboseOption(TR_VerboseJaas))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Server allocated data for a new clientUID %llu", (unsigned long long)clientUID);
+         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Server allocated data for a new clientUID %llu", (unsigned long long)clientUID);
          }
       else
          {
-         if (TR::Options::getVerboseOption(TR_VerboseJaas))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "ERROR: Server could not allocate client session data");
+         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "ERROR: Server could not allocate client session data");
          }
       }
    return clientData;
@@ -2465,7 +2465,7 @@ ClientSessionHT::findClientSession(uint64_t clientUID)
    }
 
 ClientSessionHT::ClientSessionHT() : _clientSessionMap(decltype(_clientSessionMap)::allocator_type(TR::Compiler->persistentAllocator())),
-                                     TIME_BETWEEN_PURGES(1000*60*30), // JAAS TODO: this must come from options
+                                     TIME_BETWEEN_PURGES(1000*60*30), // JITaaS TODO: this must come from options
                                      OLD_AGE(1000*60*1000) // 1000 minutes
    {
    PORT_ACCESS_FROM_PORT(TR::Compiler->portLib);
@@ -2504,8 +2504,8 @@ ClientSessionHT::purgeOldDataIfNeeded()
          if (iter->second->getInUse() == 0 &&
              crtTime - iter->second->getTimeOflastAccess() > OLD_AGE)
             {
-            if (TR::Options::getVerboseOption(TR_VerboseJaas))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Server will purge session data for clientUID %llu", (unsigned long long)iter->first);
+            if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Server will purge session data for clientUID %llu", (unsigned long long)iter->first);
             iter->second->~ClientSessionData();
             TR_PersistentMemory::jitPersistentFree(iter->second); // delete the client data
             _clientSessionMap.erase(iter); // delete the mapping from the hashtable
@@ -2513,12 +2513,12 @@ ClientSessionHT::purgeOldDataIfNeeded()
          }
       _timeOfLastPurge = crtTime;
 
-      // JAAS TODO: keep stats on how many elements were purged
+      // JITaaS TODO: keep stats on how many elements were purged
       }
    }
 
 // to print these stats,
-// set the env var `TR_PrintJaasCacheStats=1`
+// set the env var `TR_PrintJITaaSCacheStats=1`
 // run the server with `-Xdump:jit:events=user`
 // then `kill -3` it when you want to print them 
 void
@@ -2534,7 +2534,7 @@ ClientSessionHT::printStats()
    }
 
 void 
-JaasHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass,
+JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass,
                                  J9Method *methods, TR_OpaqueClassBlock *baseComponentClass, int32_t numDimensions)
    {
    OMR::CriticalSection cacheRemoteROMClass(clientSessionData->getROMMapMonitor());
@@ -2550,7 +2550,7 @@ JaasHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *
 
 
 J9ROMClass *
-JaasHelpers::getRemoteROMClassIfCached(ClientSessionData *clientSessionData, J9Class *clazz)
+JITaaSHelpers::getRemoteROMClassIfCached(ClientSessionData *clientSessionData, J9Class *clazz)
    {
    OMR::CriticalSection getRemoteROMClass(clientSessionData->getROMMapMonitor());
    auto it = clientSessionData->getROMClassMap().find(clazz);

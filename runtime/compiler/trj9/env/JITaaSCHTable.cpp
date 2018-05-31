@@ -1,5 +1,5 @@
 #include "env/CHTable.hpp"
-#include "env/JaasPersistentCHTable.hpp"
+#include "env/JITaaSPersistentCHTable.hpp"
 #include "env/j9methodServer.hpp"
 #include "infra/List.hpp"                      // for TR::list
 #include "compile/VirtualGuard.hpp"            // for TR_VirtualGuard
@@ -8,11 +8,11 @@
 #include "env/VMAccessCriticalSection.hpp"     // for VMAccessCriticalSection
 
 void
-jaasCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<TR_VirtualGuardSite> &sites,
+JITaaSCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<TR_VirtualGuardSite> &sites,
                                TR_PersistentCHTable *table, TR::Compilation *comp);
 
 void
-jaasAddAnAssumptionForEachSubClass(TR_PersistentCHTable   *table,
+JITaaSAddAnAssumptionForEachSubClass(TR_PersistentCHTable   *table,
                                                 TR_PersistentClassInfo *clazz,
                                                 std::vector<TR_VirtualGuardSite> &list,
                                                 TR::Compilation *comp)
@@ -56,9 +56,9 @@ VirtualGuardInfoForCHTable getImportantVGuardInfo(TR::Compilation *comp, TR_Virt
    TR::ResolvedMethodSymbol *resolvedMethodSymbol = methodSymbol->getResolvedMethodSymbol();
    info._hasResolvedMethodSymbol = resolvedMethodSymbol != nullptr;
    info._cpIndex = symRef->getCPIndex();
-   info._owningMethod = static_cast<TR_ResolvedJ9JAASServerMethod*>(symRef->getOwningMethod(comp))->getRemoteMirror();
+   info._owningMethod = static_cast<TR_ResolvedJ9JITaaSServerMethod*>(symRef->getOwningMethod(comp))->getRemoteMirror();
    info._isInterface = methodSymbol->isInterface();
-   info._guardedMethod = resolvedMethodSymbol ? static_cast<TR_ResolvedJ9JAASServerMethod*>(resolvedMethodSymbol->getResolvedMethod())->getRemoteMirror() : nullptr;
+   info._guardedMethod = resolvedMethodSymbol ? static_cast<TR_ResolvedJ9JITaaSServerMethod*>(resolvedMethodSymbol->getResolvedMethod())->getRemoteMirror() : nullptr;
    info._offset = symRef->getOffset();
 
    info._isInlineGuard = vguard->isInlineGuard();
@@ -93,8 +93,8 @@ TR_CHTable::computeDataForCHTableCommit(TR::Compilation *comp)
    for (size_t i = 0; i < preXMethods.size(); i++)
       {
       TR_ResolvedMethod *method = _preXMethods->element(i);
-      TR_ResolvedJ9JAASServerMethod *jaasMethod = static_cast<TR_ResolvedJ9JAASServerMethod*>(method);
-      preXMethods[i] = jaasMethod->getRemoteMirror();
+      TR_ResolvedJ9JITaaSServerMethod *JITaaSMethod = static_cast<TR_ResolvedJ9JITaaSServerMethod*>(method);
+      preXMethods[i] = JITaaSMethod->getRemoteMirror();
       }
 
    cleanupNewlyExtendedInfo(comp);
@@ -163,7 +163,7 @@ void cleanupNewlyExtendedInfo(TR::Compilation *comp, std::vector<TR_OpaqueClassB
 
 
 
-bool jaasCHTableCommit(
+bool JITaaSCHTableCommit(
       TR::Compilation *comp,
       TR_MethodMetaData *metaData,
       CHTableCommitData &data)
@@ -185,7 +185,7 @@ bool jaasCHTableCommit(
    if (comp->getFailCHTableCommit())
       return false;
 
-   TR_JaasClientPersistentCHTable *table = (TR_JaasClientPersistentCHTable*) comp->getPersistentInfo()->getPersistentCHTable();
+   TR_JITaaSClientPersistentCHTable *table = (TR_JITaaSClientPersistentCHTable*) comp->getPersistentInfo()->getPersistentCHTable();
    TR_ResolvedMethod  *currentMethod = comp->getCurrentMethod();
    TR_Hotness hotness                = comp->getMethodHotness();
 
@@ -278,7 +278,7 @@ bool jaasCHTableCommit(
       {
       static bool dontGroupOSRAssumptions = (feGetEnv("TR_DontGroupOSRAssumptions") != NULL);
       //if (!dontGroupOSRAssumptions)
-         //jaasCommitOSRVirtualGuards(comp, vguards);
+         //JITaaSCommitOSRVirtualGuards(comp, vguards);
 
       for (auto &guard : vguards)
          {
@@ -295,12 +295,12 @@ bool jaasCHTableCommit(
             }
          // Commit the virtual guard itself
          //
-         jaasCommitVirtualGuard(&info, sites, table, comp);
+         JITaaSCommitVirtualGuard(&info, sites, table, comp);
 
          // Commit any inner guards that are assuming on this guard
          //
          for (auto &inner : innerAssumptions)
-            jaasCommitVirtualGuard(&inner, sites, table, comp);
+            JITaaSCommitVirtualGuard(&inner, sites, table, comp);
          }
       }
 
@@ -374,7 +374,7 @@ TR_CHTable::commitOSRVirtualGuards(TR::Compilation *comp, TR::list<TR_VirtualGua
    }
 */
 void
-jaasCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<TR_VirtualGuardSite> &sites,
+JITaaSCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<TR_VirtualGuardSite> &sites,
                                TR_PersistentCHTable *table, TR::Compilation *comp)
    {
    // If this is an OSR guard or another kind that has been marked as necessary to patch
@@ -517,7 +517,7 @@ jaasCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<TR_Vi
           (info->_testType == TR_VftTest && comp->fe()->classHasBeenExtended(implementer->containingClass())))
          nopAssumptionIsValid = false;
       else
-         jaasAddAnAssumptionForEachSubClass(table, table->findClassInfo(thisClass), sites, comp);
+         JITaaSAddAnAssumptionForEachSubClass(table, table->findClassInfo(thisClass), sites, comp);
       }
    else if (info->_kind == TR_NonoverriddenGuard && info->_testType != TR_VftTest)
       {
@@ -555,7 +555,7 @@ jaasCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<TR_Vi
       TR_OpaqueClassBlock *thisClass = info->_isInlineGuard ? thisClass = info->_thisClass
          : info->_guardedMethod->containingClass();
       if (table->findSingleAbstractImplementer(thisClass, info->_offset, owningMethod, comp, true))
-         jaasAddAnAssumptionForEachSubClass(table, table->findClassInfo(thisClass), sites, comp);
+         JITaaSAddAnAssumptionForEachSubClass(table, table->findClassInfo(thisClass), sites, comp);
       else
          nopAssumptionIsValid = false;
       }

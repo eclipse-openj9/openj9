@@ -1,6 +1,6 @@
 #include "rpc/ProtobufTypeConvert.hpp"
 
-namespace JAAS
+namespace JITaaS
    {
    uint64_t typeCount = 0;
    }

@@ -6,7 +6,7 @@
 #include <type_traits>
 #include "types.h"
 
-namespace JAAS
+namespace JITaaS
    {
    template <typename... Args>
    std::tuple<Args...> getArgs(const AnyData *message);

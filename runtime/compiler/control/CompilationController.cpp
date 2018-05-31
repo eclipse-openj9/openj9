@@ -263,10 +263,10 @@ TR_OptimizationPlan *TR::DefaultCompilationStrategy::processEvent(TR_MethodEvent
          }
          break;
       case TR_MethodEvent::RemoteCompilationRequest:
-         //compInfo->_stats._methodsCompiledOnCount++; // JAAS TODO: add a new statistic
+         //compInfo->_stats._methodsCompiledOnCount++; // JITaaS TODO: add a new statistic
 
-         hotnessLevel = event->_jaasClientOptLevel;
-         // JAAS TODO: allow the creation of a profiling body
+         hotnessLevel = event->_JITaaSClientOptLevel;
+         // JITaaS TODO: allow the creation of a profiling body
          plan = TR_OptimizationPlan::alloc(hotnessLevel);
          *newPlanCreated = true;
          break;

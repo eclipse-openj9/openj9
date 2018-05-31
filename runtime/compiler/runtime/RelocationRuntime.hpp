@@ -395,11 +395,11 @@ private:
       static const UDATA aotHeaderKeyLength;
 };
 
-class TR_JAASRelocationRuntime : public TR_RelocationRuntime {
+class TR_JITaaSRelocationRuntime : public TR_RelocationRuntime {
 public:
       TR_ALLOC(TR_Memory::Relocation)
       void * operator new(size_t, J9JITConfig *);
-      TR_JAASRelocationRuntime(J9JITConfig *jitCfg) : TR_RelocationRuntime(jitCfg) {}
+      TR_JITaaSRelocationRuntime(J9JITConfig *jitCfg) : TR_RelocationRuntime(jitCfg) {}
 private:
       virtual uint8_t * allocateSpaceInCodeCache(UDATA codeSize);
       virtual uint8_t * allocateSpaceInDataCache(UDATA metaDataSize, UDATA type);

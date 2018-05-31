@@ -1026,11 +1026,11 @@ J9::CodeGenerator::lowerTreeIfNeeded(
          if (!allowedToReserve)
             {
             persistentClassInfo->setReservable(false);
-            // This is currently the only place where this flag gets cleared. For JaaS, we should propagate it to the client,
+            // This is currently the only place where this flag gets cleared. For JITaaS, we should propagate it to the client,
             // to avoid having to call scanForNativeMethodsUntilMonitorNode again.
             if (auto stream = TR::CompilationInfo::getStream())
                {
-               stream->write(JAAS::J9ServerMessageType::CHTable_clearReservable, classPointer);
+               stream->write(JITaaS::J9ServerMessageType::CHTable_clearReservable, classPointer);
                // No response necessary - we can continue concurrently
                }
             }
@@ -2462,13 +2462,13 @@ J9::CodeGenerator::processRelocations()
    //Project neutral non-AOT processRelocation
    OMR::CodeGenerator::processRelocations();
 
-   bool isJAASMode = self()->comp()->getPersistentInfo()->getJaasMode() == SERVER_MODE;
+   bool isJITaaSMode = self()->comp()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE;
 
    int32_t missedSite = -1;
 
-   if (self()->comp()->compileRelocatableCode() || isJAASMode)
+   if (self()->comp()->compileRelocatableCode() || isJITaaSMode)
       {
-      if (!isJAASMode)
+      if (!isJITaaSMode)
          {
          uint32_t inlinedCallSize = self()->comp()->getNumInlinedCallSites();
 
@@ -2712,7 +2712,7 @@ J9::CodeGenerator::processRelocations()
 void J9::CodeGenerator::addExternalRelocation(TR::Relocation *r, char *generatingFileName, uintptr_t generatingLineNumber, TR::Node *node)
    {
    TR_ASSERT(generatingFileName, "External relocation location has improper NULL filename specified");
-   if (self()->comp()->compileRelocatableCode() || self()->comp()->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+   if (self()->comp()->compileRelocatableCode() || self()->comp()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
       {
       TR::RelocationDebugInfo *genData = new(self()->trHeapMemory()) TR::RelocationDebugInfo;
       genData->file = generatingFileName;
@@ -2725,7 +2725,7 @@ void J9::CodeGenerator::addExternalRelocation(TR::Relocation *r, char *generatin
 
 void J9::CodeGenerator::addExternalRelocation(TR::Relocation *r, TR::RelocationDebugInfo* info)
    {
-   if (self()->comp()->compileRelocatableCode() || self()->comp()->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+   if (self()->comp()->compileRelocatableCode() || self()->comp()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
       {
       TR_ASSERT(info, "External relocation location does not have associated debug information");
       r->setDebugInfo(info);
@@ -2764,7 +2764,7 @@ void
 J9::CodeGenerator::jitAddUnresolvedAddressMaterializationToPatchOnClassRedefinition(void *firstInstruction)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(self()->fe());
-   if (self()->comp()->compileRelocatableCode() || self()->comp()->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+   if (self()->comp()->compileRelocatableCode() || self()->comp()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
       {
       self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)firstInstruction, 0, TR_HCR, self()),
                                  __FILE__,__LINE__, NULL);

@@ -1,20 +1,20 @@
-#include "runtime/JaasIProfiler.hpp"
+#include "runtime/JITaaSIProfiler.hpp"
 #include "control/CompilationRuntime.hpp"
-#include "control/JaasCompilationThread.hpp"
+#include "control/JITaaSCompilationThread.hpp"
 #include "infra/CriticalSection.hpp" // for OMR::CriticalSection
 #include "trj9/ilgen/J9ByteCode.hpp"
 #include "trj9/ilgen/J9ByteCodeIterator.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "bcnames.h"
 
-TR_JaasIProfiler *
-TR_JaasIProfiler::allocate(J9JITConfig *jitConfig)
+TR_JITaaSIProfiler *
+TR_JITaaSIProfiler::allocate(J9JITConfig *jitConfig)
    {
-   TR_JaasIProfiler * profiler = new (PERSISTENT_NEW) TR_JaasIProfiler(jitConfig);
+   TR_JITaaSIProfiler * profiler = new (PERSISTENT_NEW) TR_JITaaSIProfiler(jitConfig);
    return profiler;
    }
 
-TR_JaasIProfiler::TR_JaasIProfiler(J9JITConfig *jitConfig)
+TR_JITaaSIProfiler::TR_JITaaSIProfiler(J9JITConfig *jitConfig)
    : TR_IProfiler(jitConfig), _statsIProfilerInfoFromCache(0), _statsIProfilerInfoMsgToClient(0),
    _statsIProfilerInfoReqNotCacheable(0), _statsIProfilerInfoIsEmpty(0), _statsIProfilerInfoCachingFailures(0)
    {
@@ -86,7 +86,7 @@ TR_ContiguousIPMethodHashTableEntry::serialize(TR_IPMethodHashTableEntry *entry)
    }
 
 TR_IPBytecodeHashTableEntry*
-TR_JaasIProfiler::ipBytecodeHashTableEntryFactory(TR_IPBCDataStorageHeader *storage, uintptrj_t pc, TR_Memory* mem, TR_AllocationKind allocKind)
+TR_JITaaSIProfiler::ipBytecodeHashTableEntryFactory(TR_IPBCDataStorageHeader *storage, uintptrj_t pc, TR_Memory* mem, TR_AllocationKind allocKind)
    {
    TR_IPBytecodeHashTableEntry *entry =  nullptr;
    uint32_t entryType = storage->ID;
@@ -116,14 +116,14 @@ TR_JaasIProfiler::ipBytecodeHashTableEntryFactory(TR_IPBCDataStorageHeader *stor
    }
 
 TR_IPMethodHashTableEntry *
-TR_JaasIProfiler::searchForMethodSample(TR_OpaqueMethodBlock *omb, int32_t bucket)
+TR_JITaaSIProfiler::searchForMethodSample(TR_OpaqueMethodBlock *omb, int32_t bucket)
    {
    auto stream = TR::CompilationInfo::getStream();
    if (!stream)
       {
       return nullptr;
       }
-   stream->write(JAAS::J9ServerMessageType::IProfiler_searchForMethodSample, omb, bucket);
+   stream->write(JITaaS::J9ServerMessageType::IProfiler_searchForMethodSample, omb, bucket);
    const std::string &entryStr = std::get<0>(stream->read<std::string>());
    if (entryStr.empty())
       {
@@ -135,12 +135,12 @@ TR_JaasIProfiler::searchForMethodSample(TR_OpaqueMethodBlock *omb, int32_t bucke
 
 // This method is used to search only the hash table
 TR_IPBytecodeHashTableEntry*
-TR_JaasIProfiler::profilingSample(uintptrj_t pc, uintptrj_t data, bool addIt, bool isRIData, uint32_t freq)
+TR_JITaaSIProfiler::profilingSample(uintptrj_t pc, uintptrj_t data, bool addIt, bool isRIData, uint32_t freq)
    {
    if (addIt)
       return nullptr; // Server should not create any samples
 
-   TR_ASSERT(false, "not implemented for JaaS");
+   TR_ASSERT(false, "not implemented for JITaaS");
    return nullptr;
    }
 
@@ -148,7 +148,7 @@ TR_JaasIProfiler::profilingSample(uintptrj_t pc, uintptrj_t data, bool addIt, bo
 
 // This method is used to search the hash table first, then the shared cache
 TR_IPBytecodeHashTableEntry*
-TR_JaasIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex,
+TR_JITaaSIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex,
                                   TR::Compilation *comp, uintptrj_t data, bool addIt)
    {
    if (addIt)
@@ -170,7 +170,7 @@ TR_JaasIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteCod
          // sanity check
          // Ask the client again and see if the two sources of information match
          auto stream = TR::CompilationInfo::getStream();
-         stream->write(JAAS::J9ServerMessageType::IProfiler_profilingSample, method, byteCodeIndex, (uintptrj_t)1);
+         stream->write(JITaaS::J9ServerMessageType::IProfiler_profilingSample, method, byteCodeIndex, (uintptrj_t)1);
          auto recv = stream->read<std::string, bool>();
          const std::string ipdata = std::get<0>(recv);
          bool wholeMethod = std::get<1>(recv); // indicates whether the client has sent info for entire method
@@ -186,7 +186,7 @@ TR_JaasIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteCod
    // Now ask the client
    //
    auto stream = TR::CompilationInfo::getStream();
-   stream->write(JAAS::J9ServerMessageType::IProfiler_profilingSample, method, byteCodeIndex, (uintptrj_t)0);
+   stream->write(JITaaS::J9ServerMessageType::IProfiler_profilingSample, method, byteCodeIndex, (uintptrj_t)0);
    auto recv = stream->read<std::string, bool>();
    const std::string ipdata = std::get<0>(recv);
    bool wholeMethod = std::get<1>(recv); // indicates whether the client sent info for entire method
@@ -301,15 +301,15 @@ TR_JaasIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteCod
    }
 
 int32_t
-TR_JaasIProfiler::getMaxCallCount()
+TR_JITaaSIProfiler::getMaxCallCount()
    {
    auto stream = TR::CompilationInfo::getStream();
-   stream->write(JAAS::J9ServerMessageType::IProfiler_getMaxCallCount, JAAS::Void());
+   stream->write(JITaaS::J9ServerMessageType::IProfiler_getMaxCallCount, JITaaS::Void());
    return std::get<0>(stream->read<int32_t>());
    }
 
 void
-TR_JaasIProfiler::printStats()
+TR_JITaaSIProfiler::printStats()
    {
    PORT_ACCESS_FROM_PORT(TR::Compiler->portLib);
    j9tty_printf(PORTLIB, "IProfilerInfoMsgToClient: %6u  IProfilerInfoMsgReplyIsEmpty: %6u\n", _statsIProfilerInfoMsgToClient, _statsIProfilerInfoIsEmpty);
@@ -321,14 +321,14 @@ TR_JaasIProfiler::printStats()
       }
    }
 
-TR_JaasClientIProfiler *
-TR_JaasClientIProfiler::allocate(J9JITConfig *jitConfig)
+TR_JITaaSClientIProfiler *
+TR_JITaaSClientIProfiler::allocate(J9JITConfig *jitConfig)
    {
-   TR_JaasClientIProfiler * profiler = new (PERSISTENT_NEW) TR_JaasClientIProfiler(jitConfig);
+   TR_JITaaSClientIProfiler * profiler = new (PERSISTENT_NEW) TR_JITaaSClientIProfiler(jitConfig);
    return profiler;
    }
 
-TR_JaasClientIProfiler::TR_JaasClientIProfiler(J9JITConfig *jitConfig)
+TR_JITaaSClientIProfiler::TR_JITaaSClientIProfiler(J9JITConfig *jitConfig)
    : TR_IProfiler(jitConfig)
    {
    }
@@ -350,7 +350,7 @@ TR_JaasClientIProfiler::TR_JaasClientIProfiler(J9JITConfig *jitConfig)
  * @return Number of bytes needed to store all IProfiler entries of this method
  */
 uint32_t
-TR_JaasClientIProfiler::walkILTreeForIProfilingEntries(uintptrj_t *pcEntries, uint32_t &numEntries, TR_J9ByteCodeIterator *bcIterator,
+TR_JITaaSClientIProfiler::walkILTreeForIProfilingEntries(uintptrj_t *pcEntries, uint32_t &numEntries, TR_J9ByteCodeIterator *bcIterator,
                                                        TR_OpaqueMethodBlock *method, TR_BitVector *BCvisit, bool &abort)
    {
    abort = false; // optimistic
@@ -438,7 +438,7 @@ TR_JaasClientIProfiler::walkILTreeForIProfilingEntries(uintptrj_t *pcEntries, ui
  * @return Total memory space used for serialization
  */
 uintptr_t
-TR_JaasClientIProfiler::serializeIProfilerMethodEntries(uintptrj_t *pcEntries, uint32_t numEntries,
+TR_JITaaSClientIProfiler::serializeIProfilerMethodEntries(uintptrj_t *pcEntries, uint32_t numEntries,
                                                         uintptr_t memChunk, uintptrj_t methodStartAddress)
    {
    uintptr_t crtAddr = memChunk;
@@ -464,7 +464,7 @@ TR_JaasClientIProfiler::serializeIProfilerMethodEntries(uintptrj_t *pcEntries, u
 
 // Code executed at the client to serialize IProfiler info for an entire method
 void
-TR_JaasClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock*method, TR::Compilation *comp, JAAS::J9ClientStream *client)
+TR_JITaaSClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock*method, TR::Compilation *comp, JITaaS::J9ClientStream *client)
    {
    TR::StackMemoryRegion stackMemoryRegion(*comp->trMemory());
    uint32_t numEntries = 0;
@@ -520,7 +520,7 @@ TR_JaasClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlo
    }
 
 void
-TR_JaasIProfiler::validateCachedIPEntry(TR_IPBytecodeHashTableEntry *entry, TR_IPBCDataStorageHeader *clientData, uintptrj_t methodStart, bool isMethodBeingCompiled, TR_OpaqueMethodBlock *method)
+TR_JITaaSIProfiler::validateCachedIPEntry(TR_IPBytecodeHashTableEntry *entry, TR_IPBCDataStorageHeader *clientData, uintptrj_t methodStart, bool isMethodBeingCompiled, TR_OpaqueMethodBlock *method)
    {
    if (!clientData)
       {
