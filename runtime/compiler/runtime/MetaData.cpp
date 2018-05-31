@@ -1149,6 +1149,7 @@ populateBodyInfo(
          TR_PersistentJittedBodyInfo *bodyInfoSrc = recompInfo->getJittedBodyInfo();
          TR_PersistentMethodInfo *methodInfoSrc = recompInfo->getMethodInfo();
          methodInfoSrc->setIsInDataCache(true);
+         bodyInfoSrc->setIsRemoteCompileBody(true);
          data->bodyInfo = locationPersistentJittedBodyInfo;
          TR_PersistentJittedBodyInfo *newBodyInfo = (TR_PersistentJittedBodyInfo *)locationPersistentJittedBodyInfo;
 
