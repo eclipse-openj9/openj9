@@ -2273,6 +2273,15 @@ ClientSessionData::~ClientSessionData()
       }
    for (auto it : _romClassMap)
       {
+      // If string cache exists, free it
+      auto *stringsCache = it.second._remoteROMStringsCache;
+      if (stringsCache)
+         {
+         stringsCache->~PersistentUnorderedMap<TR_RemoteROMStringKey, std::string>(); 
+         jitPersistentFree(stringsCache);
+         it.second._remoteROMStringsCache = nullptr;
+         }
+
       TR_Memory::jitPersistentFree(it.second.romClass);
       }
    }
@@ -2538,8 +2547,9 @@ JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class
                                  J9Method *methods, TR_OpaqueClassBlock *baseComponentClass, int32_t numDimensions)
    {
    OMR::CriticalSection cacheRemoteROMClass(clientSessionData->getROMMapMonitor());
-   clientSessionData->getROMClassMap().insert({ clazz,{ romClass, methods, baseComponentClass, numDimensions } });
+   clientSessionData->getROMClassMap().insert({ clazz,{ romClass, methods, baseComponentClass, numDimensions, nullptr} });
    uint32_t numMethods = romClass->romMethodCount;
+
    J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
    for (uint32_t i = 0; i < numMethods; i++)
       {

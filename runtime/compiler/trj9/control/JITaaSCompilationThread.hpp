@@ -5,6 +5,7 @@
 #include "control/CompilationThread.hpp"
 #include "rpc/J9Client.h"
 #include "env/PersistentCollections.hpp"
+#include "env/j9methodServer.hpp"
 
 class TR_PersistentClassInfo;
 class TR_IPBytecodeHashTableEntry;
@@ -21,6 +22,7 @@ class ClientSessionData
       // Fields meaningful for arrays
       TR_OpaqueClassBlock *baseComponentClass; 
       int32_t numDimensions;
+      PersistentUnorderedMap<TR_RemoteROMStringKey, std::string> *_remoteROMStringsCache; // cached strings from the client
       };
 
    struct J9MethodInfo

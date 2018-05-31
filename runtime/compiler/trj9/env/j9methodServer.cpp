@@ -3,6 +3,7 @@
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
 #include "control/MethodToBeCompiled.hpp"
+#include "control/JITaaSCompilationThread.hpp"
 
 J9ROMClass *
 TR_ResolvedJ9JITaaSServerMethod::romClassFromString(const std::string &romClassStr, TR_PersistentMemory *trMemory)
@@ -37,7 +38,6 @@ TR_ResolvedJ9JITaaSServerMethod::getRemoteROMClass(J9Class *clazz, JITaaS::J9Ser
 
 TR_ResolvedJ9JITaaSServerMethod::TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
    : TR_ResolvedJ9Method(fe, owningMethod)
-   _remoteROMStringsCache(decltype(_remoteROMStringsCache)::allocator_type(trMemory->heapMemoryRegion()))
    {
    TR_J9VMBase *j9fe = (TR_J9VMBase *)fe;
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get(j9fe->getJ9JITConfig());
@@ -54,7 +54,6 @@ TR_ResolvedJ9JITaaSServerMethod::TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethod
 
 TR_ResolvedJ9JITaaSServerMethod::TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, const TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
    : TR_ResolvedJ9Method(fe, owningMethod)
-   _remoteROMStringsCache(decltype(_remoteROMStringsCache)::allocator_type(trMemory->heapMemoryRegion()))
    {
    // Mirror has already been created, its parameters are passed in methodInfo
    TR_J9VMBase *j9fe = (TR_J9VMBase *)fe;
@@ -488,17 +487,41 @@ TR_ResolvedJ9JITaaSServerMethod::getRemoteROMString(int32_t &len, void *basePtr,
    key.basePtr = basePtr;
    key.offsets = offsetKey;
 
+   // initialize a table of remote ROM strings, if it hasn't been done yet
+   TR::CompilationInfoPerThread *threadCompInfo = _fe->_compInfoPT;
+   TR::Monitor *monitor = threadCompInfo->getClientData()->getROMMapMonitor();
+   monitor->enter();
+
+   auto &classMap = threadCompInfo->getClientData()->getROMClassMap();
+   auto gotClass = classMap.find(_ramClass);
+   TR_ASSERT(gotClass != classMap.end(), "J9Method is not in J9MethodMap");
+   auto &j9ClassInfo = gotClass->second;
+   auto &stringsCache = j9ClassInfo._remoteROMStringsCache; 
+
+   if (!stringsCache)
+      {
+      stringsCache = new (PERSISTENT_NEW) PersistentUnorderedMap<TR_RemoteROMStringKey, std::string>(PersistentUnorderedMap<TR_RemoteROMStringKey, std::string>::allocator_type(TR::Compiler->persistentAllocator()));
+      }
+
    // only make a query if a string hasn't been cached
-   auto got =_remoteROMStringsCache.find(key);
-   if(got == _remoteROMStringsCache.end())
+   auto gotStr = stringsCache->find(key);
+   if (gotStr == stringsCache->end())
       {
       size_t offsetFromROMClass = (uint8_t*) basePtr - (uint8_t*) romClassPtr();
-   std::string offsetsStr((char*) offsets.begin(), offsets.size() * sizeof(size_t));
-   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getRemoteROMString, _remoteMirror, offsetFromROMClass, offsetsStr);
+      std::string offsetsStr((char*) offsets.begin(), offsets.size() * sizeof(size_t));
+
+      // release the monitor before making a query
+      monitor->exit();
+      _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getRemoteROMString, _remoteMirror, offsetFromROMClass, offsetsStr);
       auto newStr = std::get<0>(_stream->read<std::string>());
-      got = _remoteROMStringsCache.insert({key, newStr}).first;
+
+      // reaquire the monitor
+      monitor->enter();
+      gotStr = stringsCache->insert({key, newStr}).first;
       }
-   std::string &str = got->second;
+   monitor->exit();
+   std::string &str = gotStr->second;
+   // set length, because it is a parameter that needs to be set
    len = str.length();
    return &str[0];
    }
@@ -959,8 +982,9 @@ TR_ResolvedJ9JITaaSServerMethod::setAttributes(TR_OpaqueMethodBlock * aMethod, T
    _name = J9ROMMETHOD_GET_NAME(_romClass, _romMethod);
    _signature = J9ROMMETHOD_GET_SIGNATURE(_romClass, _romMethod);
    parseSignature(trMemory);
-   _fullSignature = NULL;
+   _fullSignature = nullptr;
   
    setMandatoryRecognizedMethod(mandatoryRm);
    setRecognizedMethod(rm);
+
    }
