@@ -25,4 +25,5 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
   * ant 1.7.1 or above with ant-contrib.jar
   * make 3.81 or above (recommend make 4.1 or above on windows)
   * perl 5.10.1 or above with JSON and Text::CSV module installed
-  * wget 1.14 or above
+  * wget 1.14 or above (for platforms other than z/OS)
+  * curl (for z/OS only)
