@@ -148,7 +148,7 @@
 #define J9StaticFieldRefBaseType 0x1
 #define J9StaticFieldRefDouble 0x2
 #define J9StaticFieldRefFlagBits 0x1F
-#define J9StaticFieldRefIsolated 0x8
+#define J9StaticFieldRefBoolean 0x8
 #define J9StaticFieldRefPutResolved 0x10
 #define J9StaticFieldRefVolatile 0x4
 
