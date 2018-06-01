@@ -728,18 +728,11 @@ void TR::PPCJNILinkage::releaseVMAccessAtomicFree(TR::Node* callNode, TR::Regist
    generateTrg1ImmInstruction(cg(), TR::InstOpCode::li, callNode, tempReg1, 1);
    generateMemSrc1Instruction(cg(), TR::InstOpCode::Op_st, callNode, new (trHeapMemory()) TR::MemoryReference(metaReg, (int32_t)offsetof(struct J9VMThread, inNative), TR::Compiler->om.sizeofReferenceAddress(), cg()), tempReg1);
 #if !defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
-	generateInstruction(cg(), TR::InstOpCode::sync, callNode); // Necessary?
+	generateInstruction(cg(), TR::InstOpCode::sync, callNode);
 #endif /* !J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
    generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, tempReg1, new (trHeapMemory()) TR::MemoryReference(metaReg, fej9->thisThreadGetPublicFlagsOffset(), TR::Compiler->om.sizeofReferenceAddress(), cg()));
-   if (J9_PUBLIC_FLAGS_VM_ACCESS >= LOWER_IMMED && J9_PUBLIC_FLAGS_VM_ACCESS <= UPPER_IMMED)
-      generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::andi_r, callNode, tempReg2, tempReg1, cr0Reg, J9_PUBLIC_FLAGS_VM_ACCESS);
-   else
-      {
-      loadConstant(cg(), callNode, J9_PUBLIC_FLAGS_VM_ACCESS, tempReg2);
-      // FIXME: Apparently I'm the first one to ever use a Trg1Src2 record-form instruction...
-      // ctor for Trg1Src2 + condReg only has the preced form, if you don't pass a preceding instruction the following instruction will end up as the first instruction after the prologue
-      generateTrg1Src2Instruction(cg(), TR::InstOpCode::and_r, callNode, tempReg2, tempReg1, tempReg2, cr0Reg, /* FIXME */ cg()->getAppendInstruction());
-      }
+   TR_ASSERT_FATAL(J9_PUBLIC_FLAGS_VM_ACCESS >= LOWER_IMMED && J9_PUBLIC_FLAGS_VM_ACCESS <= UPPER_IMMED, "VM access bit must be immediate");
+   generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::Op_cmpli, callNode, cr0Reg, tempReg1, J9_PUBLIC_FLAGS_VM_ACCESS);
 
    TR::SymbolReference *jitReleaseVMAccessSymRef = comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getJittedMethodSymbol());
    TR::LabelSymbol *releaseVMAcessSnippetLabel = cg()->lookUpSnippet(TR::Snippet::IsHelperCall, jitReleaseVMAccessSymRef);
@@ -762,16 +755,11 @@ void TR::PPCJNILinkage::acquireVMAccessAtomicFree(TR::Node* callNode, TR::Regist
    generateTrg1ImmInstruction(cg(), TR::InstOpCode::li, callNode, tempReg1, 0);
    generateMemSrc1Instruction(cg(), TR::InstOpCode::Op_st, callNode, new (trHeapMemory()) TR::MemoryReference(metaReg, (int32_t)offsetof(struct J9VMThread, inNative), TR::Compiler->om.sizeofReferenceAddress(), cg()), tempReg1);
 #if !defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
-   generateInstruction(cg(), TR::InstOpCode::sync, callNode); // Necessary?
+   generateInstruction(cg(), TR::InstOpCode::sync, callNode);
 #endif /* !J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
    generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, tempReg1, new (trHeapMemory()) TR::MemoryReference(metaReg, fej9->thisThreadGetPublicFlagsOffset(), TR::Compiler->om.sizeofReferenceAddress(), cg()));
-   if (J9_PUBLIC_FLAGS_VM_ACCESS >= LOWER_IMMED && J9_PUBLIC_FLAGS_VM_ACCESS <= UPPER_IMMED)
-      generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::Op_cmpli, callNode, cr0Reg, tempReg1, J9_PUBLIC_FLAGS_VM_ACCESS);
-   else
-      {
-      loadConstant(cg(), callNode, J9_PUBLIC_FLAGS_VM_ACCESS, tempReg2);
-      generateTrg1Src2Instruction(cg(), TR::InstOpCode::Op_cmpli, callNode, cr0Reg, tempReg1, tempReg2);
-      }
+   TR_ASSERT_FATAL(J9_PUBLIC_FLAGS_VM_ACCESS >= LOWER_IMMED && J9_PUBLIC_FLAGS_VM_ACCESS <= UPPER_IMMED, "VM access bit must be immediate");
+   generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::Op_cmpli, callNode, cr0Reg, tempReg1, J9_PUBLIC_FLAGS_VM_ACCESS);
 
    TR::SymbolReference *jitAcquireVMAccessSymRef = comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getJittedMethodSymbol());
    TR::LabelSymbol *acquireVMAcessSnippetLabel = cg()->lookUpSnippet(TR::Snippet::IsHelperCall, jitAcquireVMAccessSymRef);
