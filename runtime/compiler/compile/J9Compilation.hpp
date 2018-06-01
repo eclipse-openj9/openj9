@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -258,7 +258,7 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    TR_OpaqueClassBlock *getSystemClassPointer() { return _SystemClassPointer; }
    TR_OpaqueClassBlock *getReferenceClassPointer() { return _ReferenceClassPointer; }
    TR_OpaqueClassBlock *getJITHelpersClassPointer() { return _JITHelpersClassPointer; }
-   TR_OpaqueClassBlock *getClassClassPointer();
+   TR_OpaqueClassBlock *getClassClassPointer(bool isVettedForAOT = false);
 
    // Monitors
    TR_Array<List<TR::RegisterMappedSymbol> * > & getMonitorAutos() { return _monitorAutos; }
@@ -342,6 +342,9 @@ private:
    TR_OpaqueClassBlock               *_SystemClassPointer;
    TR_OpaqueClassBlock               *_ReferenceClassPointer;
    TR_OpaqueClassBlock               *_JITHelpersClassPointer;
+
+   TR_OpaqueClassBlock               *_aotClassClassPointer;
+   bool                               _aotClassClassPointerInitialized;
 
    TR_Array<List<TR::RegisterMappedSymbol> *> _monitorAutos;
    TR::list<TR::SymbolReference*>             _monitorAutoSymRefsInCompiledMethod;

@@ -1224,7 +1224,7 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
         traceMsg(comp(),"Setting node %p as an unsafe static wrtbar\n",indirectAccessTreeTop->getNode());
      indirectAccessTreeTop->getNode()->setIsUnsafeStaticWrtBar(true);
      }
-   TR_OpaqueClassBlock *javaLangClass = comp()->fe()->getClassFromSignature("Ljava/lang/Class;",17, comp()->getCurrentMethod(),true);
+   TR_OpaqueClassBlock *javaLangClass = comp()->getClassClassPointer(/* isVettedForAOT = */ true);
    // If we are not able to get javaLangClass it is still inefficient to put direct Access far
    // So in that case we will generate lowTagCmpTest to branch to indirect access if true
    bool needNotLowTagged = javaLangClass != NULL  || conversionNeeded ;
