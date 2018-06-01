@@ -99,7 +99,7 @@
 #include "shcdatatypes.h" // for CompiledMethodWrapper
 #include "runtime/ArtifactManager.hpp"
 #include "runtime/CodeCacheMemorySegment.hpp"
-#include "trj9/env/j9methodServer.hpp"
+#include "env/j9methodServer.hpp"
 #include "control/JITaaSCompilationThread.hpp"
 #include "env/JITaaSPersistentCHTable.hpp"
 #include "runtime/JITaaSIProfiler.hpp"

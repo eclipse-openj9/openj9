@@ -336,7 +336,6 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/runtime/ArtifactManager.cpp \
     compiler/runtime/ClassUnloadAssumption.cpp \
     compiler/runtime/CRuntimeImpl.cpp \
-    compiler/runtime/CompileService.cpp \
     compiler/runtime/DataCache.cpp \
     compiler/runtime/GPUHelpers.cpp \
     compiler/runtime/HWProfiler.cpp \
@@ -374,15 +373,16 @@ JIT_PRODUCT_SOURCE_FILES+=\
     omr/compiler/runtime/OMRCodeCacheManager.cpp \
     omr/compiler/runtime/OMRCodeCacheMemorySegment.cpp \
     omr/compiler/runtime/OMRRuntimeAssumptions.cpp \
-    compiler/trj9/runtime/Listener.cpp \
-    compiler/trj9/env/VMJ9Server.cpp \
-    compiler/trj9/env/j9methodServer.cpp \
-    compiler/trj9/rpc/J9Server.cpp \
-    compiler/trj9/rpc/ProtobufTypeConvert.cpp \
-    compiler/trj9/control/JITaaSCompilationThread.cpp \
-    compiler/trj9/env/JITaaSPersistentCHTable.cpp \
-    compiler/trj9/env/JITaaSCHTable.cpp \
-    compiler/trj9/runtime/JITaaSIProfiler.cpp
+    compiler/runtime/Listener.cpp \
+    compiler/env/VMJ9Server.cpp \
+    compiler/env/j9methodServer.cpp \
+    compiler/rpc/J9Server.cpp \
+    compiler/rpc/ProtobufTypeConvert.cpp \
+    compiler/control/JITaaSCompilationThread.cpp \
+    compiler/env/JITaaSPersistentCHTable.cpp \
+    compiler/env/JITaaSCHTable.cpp \
+    compiler/runtime/JITaaSIProfiler.cpp \
+    compiler/runtime/CompileService.cpp
 
 -include $(JIT_MAKE_DIR)/files/extra.mk
 include $(JIT_MAKE_DIR)/files/host/$(HOST_ARCH).mk

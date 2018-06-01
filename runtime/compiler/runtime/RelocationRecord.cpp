@@ -473,7 +473,7 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
          reloRecord = new (storage) TR_RelocationRecordClassUnloadAssumption(reloRuntime, record);
          break;
       case TR_ClassUnload:
-         new (this) TR_RelocationRecordClassUnload();
+         reloRecord = new (storage) TR_RelocationRecordClassUnload(reloRuntime, record);
          break;
       default:
          // TODO: error condition

@@ -1141,6 +1141,7 @@ class TR_RelocationRecordClassUnload : public TR_RelocationRecord
    {
    public:
       TR_RelocationRecordClassUnload() {}
+      TR_RelocationRecordClassUnload(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
 
       virtual char *name();
 

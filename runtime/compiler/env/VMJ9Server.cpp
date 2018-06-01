@@ -2,12 +2,12 @@
 #include "VMJ9Server.hpp"
 #include "j9methodServer.hpp"
 #include "control/CompilationRuntime.hpp"
-#include "trj9/control/CompilationThread.hpp"
-#include "trj9/control/MethodToBeCompiled.hpp"
+#include "control/CompilationThread.hpp"
+#include "control/MethodToBeCompiled.hpp"
 #include "runtime/CodeCache.hpp"
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/CodeCacheExceptions.hpp"
-#include "trj9/control/JITaaSCompilationThread.hpp"
+#include "control/JITaaSCompilationThread.hpp"
 #include "env/PersistentCHTable.hpp"
 
 bool
@@ -1035,14 +1035,6 @@ TR_J9ServerVM::getBytecodePC(TR_OpaqueMethodBlock *method, TR_ByteCodeInfo &bcIn
    stream->write(JITaaS::J9ServerMessageType::VM_getBytecodePC, method);
    uintptrj_t methodStart = std::get<0>(stream->read<uintptrj_t>());
    return methodStart + (uintptrj_t)(bcInfo.getByteCodeIndex());
-   }
-
-TR_OpaqueClassBlock *
-TR_J9ServerVM::getClassFromStatic(void *staticAddress)
-   {
-   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getClassFromStatic, staticAddress);
-   return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    }
 
 bool

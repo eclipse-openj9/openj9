@@ -845,12 +845,6 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(TR::Compiler->mtd.bytecodeStart(method));
          }
          break;
-      case J9ServerMessageType::VM_getClassFromStatic:
-         {
-         void *staticAddress = std::get<0>(client->getRecvData<void *>());
-         client->write(fe->getClassFromStatic(staticAddress));
-         }
-         break;
       case J9ServerMessageType::VM_isClassLoadedBySystemClassLoader:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
@@ -2281,7 +2275,6 @@ ClientSessionData::~ClientSessionData()
          jitPersistentFree(stringsCache);
          it.second._remoteROMStringsCache = nullptr;
          }
-
       TR_Memory::jitPersistentFree(it.second.romClass);
       }
    }
@@ -2547,9 +2540,8 @@ JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class
                                  J9Method *methods, TR_OpaqueClassBlock *baseComponentClass, int32_t numDimensions)
    {
    OMR::CriticalSection cacheRemoteROMClass(clientSessionData->getROMMapMonitor());
-   clientSessionData->getROMClassMap().insert({ clazz,{ romClass, methods, baseComponentClass, numDimensions, nullptr} });
+   clientSessionData->getROMClassMap().insert({ clazz,{ romClass, methods, baseComponentClass, numDimensions, nullptr } });
    uint32_t numMethods = romClass->romMethodCount;
-
    J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
    for (uint32_t i = 0; i < numMethods; i++)
       {

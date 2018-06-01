@@ -2,8 +2,8 @@
 #include "control/CompilationRuntime.hpp"
 #include "control/JITaaSCompilationThread.hpp"
 #include "infra/CriticalSection.hpp" // for OMR::CriticalSection
-#include "trj9/ilgen/J9ByteCode.hpp"
-#include "trj9/ilgen/J9ByteCodeIterator.hpp"
+#include "ilgen/J9ByteCode.hpp"
+#include "ilgen/J9ByteCodeIterator.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "bcnames.h"
 
