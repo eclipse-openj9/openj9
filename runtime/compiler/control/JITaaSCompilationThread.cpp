@@ -979,20 +979,26 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fieldOffset, type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result);
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getResolvedStaticMethod:
+      case J9ServerMessageType::ResolvedMethod_getResolvedStaticMethodAndMirror:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, I_32>();
-         TR_ResolvedJ9Method *method = std::get<0>(recv);
+         auto *method = std::get<0>(recv);
          int32_t cpIndex = std::get<1>(recv);
          J9Method *ramMethod = nullptr;
             {
             TR::VMAccessCriticalSection resolveStaticMethodRef(fe);
             ramMethod = jitResolveStaticMethodRef(fe->vmThread(), method->cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
             }
-         client->write(ramMethod);
+        
+         // create a mirror right away
+         TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
+         if (ramMethod)
+            TR_ResolvedJ9JITaaSServerMethod::createResolvedJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, 0, method, fe, trMemory);
+
+         client->write(ramMethod, methodInfo);
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getResolvedSpecialMethod:
+      case J9ServerMessageType::ResolvedMethod_getResolvedSpecialMethodAndMirror:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, I_32, bool>();
          TR_ResolvedJ9Method *method = std::get<0>(recv);
@@ -1013,7 +1019,13 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
             ramMethod = jitResolveSpecialMethodRef(fe->vmThread(), method->cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
             tookBranch = true;
             }
-         client->write(ramMethod, unresolved, tookBranch);
+         
+         // create a mirror right away
+         TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
+         if (ramMethod)
+            TR_ResolvedJ9JITaaSServerMethod::createResolvedJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, 0, method, fe, trMemory);
+
+         client->write(ramMethod, unresolved, tookBranch, methodInfo);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_classCPIndexOfMethod:

@@ -236,8 +236,9 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedStaticMethod(TR::Compilation * comp,
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
    INCREMENT_COUNTER(_fe, totalStaticMethodRefs);
 
-   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedStaticMethod, _remoteMirror, cpIndex);
-   J9Method * ramMethod = std::get<0>(_stream->read<J9Method *>());
+   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedStaticMethodAndMirror, _remoteMirror, cpIndex);
+   auto recv = _stream->read<J9Method *, TR_ResolvedJ9JITaaSServerMethodInfo>();
+   J9Method * ramMethod = std::get<0>(recv); 
 
    bool skipForDebugging = false;
    if (isArchetypeSpecimen())
@@ -257,10 +258,11 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedStaticMethod(TR::Compilation * comp,
 
    if (ramMethod && !skipForDebugging)
       {
+      auto methodInfo = std::get<1>(recv);
       TR_AOTInliningStats *aotStats = NULL;
       if (comp->getOption(TR_EnableAOTStats))
          aotStats = & (((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->staticMethods);
-      resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, 0, ramMethod, unresolvedInCP, aotStats);
+      resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, 0, ramMethod, unresolvedInCP, aotStats, methodInfo);
       if (unresolvedInCP)
          *unresolvedInCP = false;
       }
@@ -287,8 +289,8 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedSpecialMethod(TR::Compilation * comp
    if (unresolvedInCP)
       *unresolvedInCP = true;
 
-   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedSpecialMethod, _remoteMirror, cpIndex, unresolvedInCP != nullptr);
-   auto recv = _stream->read<J9Method *, bool, bool>();
+   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedSpecialMethodAndMirror, _remoteMirror, cpIndex, unresolvedInCP != nullptr);
+   auto recv = _stream->read<J9Method *, bool, bool, TR_ResolvedJ9JITaaSServerMethodInfo>();
    J9Method * ramMethod = std::get<0>(recv);
    bool unresolved = std::get<1>(recv);
    bool tookBranch = std::get<2>(recv);
@@ -298,10 +300,11 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedSpecialMethod(TR::Compilation * comp
 
    if (tookBranch && ramMethod)
       {
+      auto methodInfo = std::get<3>(recv);
       TR_AOTInliningStats *aotStats = NULL;
       if (comp->getOption(TR_EnableAOTStats))
          aotStats = & (((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->specialMethods);
-      resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, 0, ramMethod, unresolvedInCP, aotStats);
+      resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, 0, ramMethod, unresolvedInCP, aotStats, methodInfo);
       if (unresolvedInCP)
          *unresolvedInCP = false;
       }

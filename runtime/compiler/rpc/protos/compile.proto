@@ -40,8 +40,8 @@ enum J9ServerMessageType
    ResolvedMethod_classOfStatic = 108;
    ResolvedMethod_startAddressForJNIMethod = 109;
    ResolvedMethod_fieldAttributes = 110;
-   ResolvedMethod_getResolvedStaticMethod = 111;
-   ResolvedMethod_getResolvedSpecialMethod = 112;
+   ResolvedMethod_getResolvedStaticMethodAndMirror = 111;
+   ResolvedMethod_getResolvedSpecialMethodAndMirror = 112;
    ResolvedMethod_classCPIndexOfMethod = 113;
    ResolvedMethod_startAddressForJittedMethod = 114;
    ResolvedMethod_localName = 115;
