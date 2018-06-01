@@ -7339,6 +7339,14 @@ TR_J9ByteCodeIlGenerator::storeArrayElement(TR::DataType dataType, TR::ILOpCodes
    {
    TR::Node * value = pop();
 
+   if (dataType == TR::Int8)
+      {
+      // The JVM specification states:
+      // If the arrayref refers to an array whose components are of type boolean, then the int value is narrowed by 
+      // taking the bitwise AND of value and 1; the result is stored as the component of the array indexed by index.
+      value = TR::Node::create(TR::band, 2, value, TR::Node::createConstOne(value, dataType));
+      }
+
    handlePendingPushSaveSideEffects(value);
 
    bool genSpineChecks = comp()->requiresSpineChecks();
