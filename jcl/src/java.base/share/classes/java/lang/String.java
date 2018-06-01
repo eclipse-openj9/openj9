@@ -2524,7 +2524,69 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	public boolean startsWith(String prefix, int start) {
 		return regionMatches(start, prefix, 0, prefix.lengthInternal());
 	}
+	
+/*[IF Java11]*/
+	/**
+	 * Strip leading and trailing white space from a string.
+	 * 
+	 * @return a substring of the original containing no leading
+	 * or trailing white space
+	 * 
+	 * @since 11
+	 */
+	public String strip() {
+		String result;
+		
+		if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
+			result = StringLatin1.strip(value);
+		} else {
+			result = StringUTF16.strip(value);
+		}
+		
+		return (result == null) ? this : result;
+	}
+	
+	/**
+	 * Strip leading white space from a string.
+	 * 
+	 * @return a substring of the original containing no leading
+	 * white space
+	 * 
+	 * @since 11
+	 */
+	public String stripLeading() {
+		String result;
+		
+		if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
+			result = StringLatin1.stripLeading(value);
+		} else {
+			result = StringUTF16.stripLeading(value);
+		}
 
+		return (result == null) ? this : result;
+	}
+	
+	/**
+	 * Strip trailing white space from a string.
+	 * 
+	 * @return a substring of the original containing no trailing
+	 * white space
+	 * 
+	 * @since 11
+	 */
+	public String stripTrailing() {
+		String result;
+		
+		if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
+			result = StringLatin1.stripTrailing(value);
+		} else {
+			result = StringUTF16.stripTrailing(value);
+		}
+		
+		return (result == null) ? this : result;
+	}
+/*[ENDIF]*/
+	
 	/**
 	 * Copies a range of characters into a new String.
 	 *

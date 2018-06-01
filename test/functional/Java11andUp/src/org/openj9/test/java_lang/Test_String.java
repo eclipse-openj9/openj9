@@ -34,6 +34,14 @@ import org.testng.log4testng.Logger;
  */
 public class Test_String {
 	public static Logger logger = Logger.getLogger(Test_String.class);
+	
+	/*
+	 * Useful variables for testing
+	 */
+	String empty = "";
+	String allWhiteSpace = "   ";
+	String latin1 = "abc123";
+	String nonLatin1 = "abc\u0153";
 
 	/*
 	 * Test Java 11 API String.valueOfCodePoint(codePoint)
@@ -69,9 +77,6 @@ public class Test_String {
 	 */
 	@Test(groups = { "level.sanity" })
 	public void testRepeat() {
-		String empty = "";
-		String latin1 = "abc123";
-		String nonLatin1 = "abc\u0153";
 		String str;
 
 		// Verify that correct strings are produced under normal conditions
@@ -99,5 +104,89 @@ public class Test_String {
 
 		// Verify that a reference to the instance that called the function is returned for count == 1
 		Assert.assertTrue(latin1.repeat(1) == latin1, "Should be identical on count 1");
+	}
+	
+	/*
+	 * Test Java 11 API String.strip
+	 */
+	@Test(groups = { "level.sanity" })
+	public void testStrip() {
+		// empty string parameter should return empty string
+		Assert.assertEquals(empty.strip(), empty, 
+				"strip: Striped empty string did not return an empty string.");
+		
+		// pass string with all white space
+		Assert.assertEquals(allWhiteSpace.strip(), empty, 
+				"strip: Striped all white space string did not return an empty string.");
+		
+		// pass in string without white space
+		Assert.assertEquals(latin1.strip(), latin1, 
+				"strip: Striped string with no leading/trailing white space did not return original string.");
+		Assert.assertSame(latin1.strip(), latin1,
+				"strip: Striped string with no leading/trailing white space returns same object.");
+
+		// pass in string with white space on either side
+		Assert.assertEquals((allWhiteSpace + latin1 + allWhiteSpace).strip(), latin1, 
+				"strip: Value of striped string with leading/trailing white space was unexpected.");
+		
+		// pass in string with white space on either side (special characters)
+		Assert.assertEquals((allWhiteSpace + nonLatin1 + allWhiteSpace).strip(), nonLatin1, 
+				"strip: Value of striped string with leading/trailing white space with non-Latin1 characters was unexpected.");
+	}
+	
+	/*
+	 * Test Java 11 API String.stripLeading
+	 */
+	@Test(groups = { "level.sanity" })
+	public void testStripLeading() {
+		// empty string parameter should return empty string
+		Assert.assertEquals(empty.stripLeading(), empty, 
+				"stripLeading: Striped empty string did not return an empty string.");
+		
+		// pass string with all white space
+		Assert.assertEquals(allWhiteSpace.stripLeading(), empty, 
+				"stripLeading: Striped all white space string did not return an empty string.");
+		
+		// pass in string without white space
+		Assert.assertEquals(latin1.stripLeading(), latin1, 
+				"stripLeading: Striped string with no leading/trailing white space did not return original string.");
+		Assert.assertSame(latin1.stripLeading(), latin1,
+				"strip: Striped string with no leading/trailing white space returns same object.");
+
+		// pass in string with white space on either side
+		Assert.assertEquals((allWhiteSpace + latin1 + allWhiteSpace).stripLeading(), latin1 + allWhiteSpace, 
+				"stripLeading: Value of striped string with leading/trailing white space was unexpected.");
+		
+		// pass in string with white space on either side (special characters)
+		Assert.assertEquals((allWhiteSpace + nonLatin1 + allWhiteSpace).stripLeading(), nonLatin1 + allWhiteSpace, 
+				"stripLeading: Value of striped string with leading/trailing white space with non-Latin1 characters was unexpected.");
+	}
+	
+	/*
+	 * Test Java 11 API String.stripTrailing
+	 */
+	@Test(groups = { "level.sanity" })
+	public void testStripTrailing() {
+		// empty string parameter should return empty string
+		Assert.assertEquals(empty.stripTrailing(), empty, 
+				"stripTrailing: Striped empty string did not return an empty string.");
+		
+		// pass string with all white space
+		Assert.assertEquals(allWhiteSpace.stripTrailing(), empty, 
+				"stripTrailing: Striped all white space string did not return an empty string.");
+		
+		// pass in string without white space
+		Assert.assertEquals(latin1.stripTrailing(), latin1, 
+				"stripTrailing: Striped string with no leading/trailing white space did not return original string.");
+		Assert.assertSame(latin1.stripTrailing(), latin1,
+				"strip: Striped string with no leading/trailing white space returns same object.");
+
+		// pass in string with white space on either side
+		Assert.assertEquals((allWhiteSpace + latin1 + allWhiteSpace).stripTrailing(), allWhiteSpace + latin1, 
+				"stripTrailing: Value of striped string with leading/trailing white space was unexpected.");
+
+		// pass in string with white space on either side (special characters)
+		Assert.assertEquals((allWhiteSpace + nonLatin1 + allWhiteSpace).stripTrailing(), allWhiteSpace + nonLatin1, 
+				"stripTrailing: Value of striped string with leading/trailing white space with non-Latin1 characters was unexpected.");
 	}
 }
