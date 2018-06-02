@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2017 IBM Corp. and others
+ * Copyright (c) 2010, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,7 +46,7 @@
 
 #define SRPHASHTABLE_CREATED_BY_SRPHASHTABLENEW 1
 #define SRPHASHTABLE_CREATED_BY_SRPHASHTABLENEWINREGION 2
-#define SRPHASHTABLE_CREATED_BY_SRPHASHTABLERECREATE 3
+#define SRPHASHTABLE_CREATED_BY_SRPHASHTABLERECREATE 4
 
 #define ROUND_TO_SIZEOF_UDATA(number) (((number) + (sizeof(UDATA) - 1)) & (~(sizeof(UDATA) - 1)))
 

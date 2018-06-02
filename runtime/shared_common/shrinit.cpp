@@ -3941,7 +3941,14 @@ j9shr_shutdown(J9JavaVM *vm)
 		}
 		j9mem_free_memory(vm->sharedCacheAPI);
 	}
-
+	if (vm->sharedInvariantInternTable != NULL) {
+		if (vm->sharedInvariantInternTable->sharedInvariantSRPHashtable != NULL) {
+			srpHashTableFree(vm->sharedInvariantInternTable->sharedInvariantSRPHashtable);
+			vm->sharedInvariantInternTable->sharedInvariantSRPHashtable = NULL;
+		}
+		j9mem_free_memory(vm->sharedInvariantInternTable);
+		vm->sharedInvariantInternTable = NULL;
+	}
 	if (vm->sharedClassConfig) {
 		J9SharedClassConfig* config = vm->sharedClassConfig;
 		struct J9Pool* cpCachePool = config->jclClasspathCache;
