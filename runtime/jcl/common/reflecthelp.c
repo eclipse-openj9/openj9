@@ -277,7 +277,7 @@ getMethodParametersAsArray(JNIEnv *env, jobject jlrExecutable)
 		jlrParameterClass = findClassAndCreateGlobalRef(env, "java/lang/reflect/Parameter");
 		if (NULL == jlrParameterClass) {
 			/* No trace point is needed. Exception trace point is thrown in findClassAndCreateGlobalRef */
-			goto error;
+			goto finished;
 		}
 		JCL_CACHE_SET(env, CLS_java_lang_reflect_Parameter, jlrParameterClass);
 	}
@@ -288,7 +288,7 @@ getMethodParametersAsArray(JNIEnv *env, jobject jlrExecutable)
 		initMethodID = (*env)->GetMethodID(env, jlrParameterClass, "<init>", "(Ljava/lang/String;ILjava/lang/reflect/Executable;I)V");
 		if (NULL == initMethodID) {
 			Trc_JCL_getMethodParametersAsArray_Failed_To_getMethodID_For_Parameter_init(env);
-			goto error;
+			goto finished;
 		}
 		JCL_CACHE_SET(env, MID_java_lang_reflect_Parameter_init, initMethodID);
 	}
@@ -313,6 +313,11 @@ getMethodParametersAsArray(JNIEnv *env, jobject jlrExecutable)
 		U_8 methodParametersLimit = computeArgCount(romMethod);
 		U_32 extMods = getExtendedModifiersDataFromROMMethod(romMethod);
 
+		if (NULL == parametersData) {
+			/* NULL return value from this method eventually JVM_GetMethodParameters triggers j.l.r.Executable.synthesizeAllParams() */
+			goto finished;
+		}
+		
 		if (J9_ARE_ANY_BITS_SET(extMods, CFR_METHOD_EXT_INVALID_CP_ENTRY)) {
 			parameterListOkay = FALSE;
 		}
@@ -323,7 +328,7 @@ getMethodParametersAsArray(JNIEnv *env, jobject jlrExecutable)
 		parametersArray = (*env)->NewObjectArray(env, numberOfParameters, jlrParameterClass, NULL);
 		if (NULL == parametersArray) {
 			Trc_JCL_getMethodParametersAsArray_Failed_To_Create_ParametersArray(env, numberOfParameters);
-			goto error;
+			goto finished;
 		}
 		Trc_JCL_getMethodParametersAsArray_Event5(env, parametersArray);
 		if ((NULL != parametersData) && (methodParametersLimit != parametersData->parameterCount)) {
@@ -351,7 +356,7 @@ getMethodParametersAsArray(JNIEnv *env, jobject jlrExecutable)
 								vmFuncs->setNativeOutOfMemoryError(vmThread, 0, 0);
 								vmFuncs->internalExitVMToJNI(vmThread);
 								Trc_JCL_getMethodParametersAsArray_Failed_To_Allocate_Memory_For_NameCharArray(env, utf8Length + 1);
-								goto error;
+								goto finished;
 							}
 						}
 						memcpy(nameCharArray, J9UTF8_DATA(nameUTF), utf8Length);
@@ -364,7 +369,7 @@ getMethodParametersAsArray(JNIEnv *env, jobject jlrExecutable)
 						}
 						if ((*env)->ExceptionCheck(env)) {
 							Trc_JCL_getMethodParametersAsArray_Failed_To_Create_NewStringUTF8(env, nameCharArray);
-							goto error;
+							goto finished;
 						}
 					} /* else anonymous parameter */
 				}
@@ -377,7 +382,7 @@ getMethodParametersAsArray(JNIEnv *env, jobject jlrExecutable)
 
 			if ((*env)->ExceptionCheck(env)) {
 				Trc_JCL_getMethodParametersAsArray_Failed_To_Create_java_lang_reflect_Parameter_Object(env, nameStr, flags, index);
-				goto error;
+				goto finished;
 			}
 			(*env)->SetObjectArrayElement(env, parametersArray, index, parameterObject);
 			(*env)->DeleteLocalRef(env, nameStr);
@@ -385,7 +390,7 @@ getMethodParametersAsArray(JNIEnv *env, jobject jlrExecutable)
 		}
 	}
 
-error:
+finished:
 	Trc_JCL_getMethodParametersAsArray_Exit(env, parametersArray);
 	return parametersArray;
 }
