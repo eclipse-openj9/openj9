@@ -23,6 +23,7 @@ class ClientSessionData
       TR_OpaqueClassBlock *baseComponentClass; 
       int32_t numDimensions;
       PersistentUnorderedMap<TR_RemoteROMStringKey, std::string> *_remoteROMStringsCache; // cached strings from the client
+      PersistentUnorderedMap<int32_t, std::string> *_fieldOrStaticNameCache;
       };
 
    struct J9MethodInfo

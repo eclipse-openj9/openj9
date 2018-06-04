@@ -4,6 +4,25 @@
 #include "env/j9method.h"
 #include "env/PersistentCollections.hpp"
 
+
+struct
+TR_J9MethodFieldAttributes
+   {
+   // for field attributes, use fieldOffset,
+   // for static attributes, use address
+   union
+      {
+      U_32 fieldOffset;
+      void *address;
+      };
+   TR::DataTypes type; 
+   bool volatileP;
+   bool isFinal;
+   bool isPrivate;
+   bool unresolvedInCP;
+   bool result;
+   };
+
 struct
 TR_ResolvedJ9JITaaSServerMethodInfoStruct
    {
@@ -140,6 +159,8 @@ private:
    char* getRemoteROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
    virtual char * fieldOrStaticName(I_32 cpIndex, int32_t & len, TR_Memory * trMemory, TR_AllocationKind kind = heapAlloc) override;
    void setAttributes(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, uint32_t vTableSlot, TR::CompilationInfoPerThread *threadCompInfo, const TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo);
+   UnorderedMap<uint32_t, TR_J9MethodFieldAttributes> _fieldAttributesCache; 
+   UnorderedMap<uint32_t, TR_J9MethodFieldAttributes> _staticAttributesCache; 
    };
 
 #endif // J9METHODSERVER_H

@@ -5,6 +5,17 @@
 #include "control/MethodToBeCompiled.hpp"
 #include "control/JITaaSCompilationThread.hpp"
 
+ClientSessionData::ClassInfo &
+getJ9ClassInfo(TR::CompilationInfoPerThread *threadCompInfo, J9Class *clazz)
+   {
+   // This function assumes that you are inside of _romMapMonitor
+   // Do not use it otherwise
+   auto &classMap = threadCompInfo->getClientData()->getROMClassMap();
+   auto gotClass = classMap.find(clazz);
+   TR_ASSERT(gotClass != classMap.end(), "J9Method is not in J9MethodMap");
+   return gotClass->second;
+   }
+
 J9ROMClass *
 TR_ResolvedJ9JITaaSServerMethod::romClassFromString(const std::string &romClassStr, TR_PersistentMemory *trMemory)
    {
@@ -37,7 +48,9 @@ TR_ResolvedJ9JITaaSServerMethod::getRemoteROMClass(J9Class *clazz, JITaaS::J9Ser
    }
 
 TR_ResolvedJ9JITaaSServerMethod::TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
-   : TR_ResolvedJ9Method(fe, owningMethod)
+   : TR_ResolvedJ9Method(fe, owningMethod),
+   _fieldAttributesCache(decltype(_fieldAttributesCache)::allocator_type(trMemory->heapMemoryRegion())),
+   _staticAttributesCache(decltype(_staticAttributesCache)::allocator_type(trMemory->heapMemoryRegion()))
    {
    TR_J9VMBase *j9fe = (TR_J9VMBase *)fe;
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get(j9fe->getJ9JITConfig());
@@ -53,7 +66,9 @@ TR_ResolvedJ9JITaaSServerMethod::TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethod
    }
 
 TR_ResolvedJ9JITaaSServerMethod::TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, const TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
-   : TR_ResolvedJ9Method(fe, owningMethod)
+   : TR_ResolvedJ9Method(fe, owningMethod),
+   _fieldAttributesCache(decltype(_fieldAttributesCache)::allocator_type(trMemory->heapMemoryRegion())),
+   _staticAttributesCache(decltype(_staticAttributesCache)::allocator_type(trMemory->heapMemoryRegion()))
    {
    // Mirror has already been created, its parameters are passed in methodInfo
    TR_J9VMBase *j9fe = (TR_J9VMBase *)fe;
@@ -108,15 +123,23 @@ TR_ResolvedJ9JITaaSServerMethod::getClassLoader()
 bool
 TR_ResolvedJ9JITaaSServerMethod::staticAttributes(TR::Compilation * comp, I_32 cpIndex, void * * address, TR::DataType * type, bool * volatileP, bool * isFinal, bool * isPrivate, bool isStore, bool * unresolvedInCP, bool needAOTValidation)
    {
-   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_staticAttributes, _remoteMirror, cpIndex, isStore, needAOTValidation);
-   auto recv = _stream->read<void*, TR::DataTypes, bool, bool, bool, bool, bool>();
-   *address = std::get<0>(recv);
-   *type = std::get<1>(recv);
-   *volatileP = std::get<2>(recv);
-   if (isFinal) *isFinal = std::get<3>(recv);
-   if (isPrivate) *isPrivate = std::get<4>(recv);
-   if (unresolvedInCP) *unresolvedInCP = std::get<5>(recv);
-   return std::get<6>(recv);
+   // only make a query if it's not in the cache
+   auto gotAttrs = _staticAttributesCache.find(cpIndex); 
+   if (gotAttrs == _staticAttributesCache.end())
+      {
+      _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_staticAttributes, _remoteMirror, cpIndex, isStore, needAOTValidation);
+      auto recv = _stream->read<TR_J9MethodFieldAttributes>();
+      gotAttrs = _staticAttributesCache.insert({cpIndex, std::get<0>(recv)}).first;
+      }
+   // access attributes from the cache
+   auto attrs = gotAttrs->second;
+   *address = attrs.address;
+   *type = attrs.type;
+   *volatileP = attrs.volatileP;
+   if (isFinal) *isFinal = attrs.isFinal;
+   if (isPrivate) *isPrivate = attrs.isFinal;
+   if (unresolvedInCP) *unresolvedInCP = attrs.isFinal;
+   return attrs.result;
    }
 
 TR_OpaqueClassBlock *
@@ -217,15 +240,24 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedVirtualMethod(TR::Compilation * comp
 bool
 TR_ResolvedJ9JITaaSServerMethod::fieldAttributes(TR::Compilation * comp, I_32 cpIndex, U_32 * fieldOffset, TR::DataType * type, bool * volatileP, bool * isFinal, bool * isPrivate, bool isStore, bool * unresolvedInCP, bool needAOTValidation)
    {
-   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_fieldAttributes, _remoteMirror, cpIndex, isStore, needAOTValidation);
-   auto recv = _stream->read<U_32, TR::DataTypes, bool, bool, bool, bool, bool>();
-   *fieldOffset = std::get<0>(recv);
-   *type = std::get<1>(recv);
-   *volatileP = std::get<2>(recv);
-   if (isFinal) *isFinal = std::get<3>(recv);
-   if (isPrivate) *isPrivate = std::get<4>(recv);
-   if (unresolvedInCP) *unresolvedInCP = std::get<5>(recv);
-   return std::get<6>(recv);
+   // look up attributes in a cache, make a query only if they are not cached
+   auto gotAttrs = _fieldAttributesCache.find(cpIndex); 
+   if (gotAttrs == _fieldAttributesCache.end())
+      {
+      _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_fieldAttributes, _remoteMirror, cpIndex, isStore, needAOTValidation);
+      auto recv = _stream->read<TR_J9MethodFieldAttributes>();
+      gotAttrs = _fieldAttributesCache.insert({cpIndex, std::get<0>(recv)}).first;
+      }
+   
+   // access attributes from the cache
+   auto attrs = gotAttrs->second;
+   *fieldOffset = attrs.fieldOffset;
+   *type = attrs.type;
+   *volatileP = attrs.volatileP;
+   if (isFinal) *isFinal = attrs.isFinal;
+   if (isPrivate) *isPrivate = attrs.isFinal;
+   if (unresolvedInCP) *unresolvedInCP = attrs.isFinal;
+   return attrs.result;
    }
 
 TR_ResolvedMethod *
@@ -489,44 +521,43 @@ TR_ResolvedJ9JITaaSServerMethod::getRemoteROMString(int32_t &len, void *basePtr,
    uint32_t offsetKey = (offsetFirst << 16) + offsetSecond;
    key.basePtr = basePtr;
    key.offsets = offsetKey;
-
-   // initialize a table of remote ROM strings, if it hasn't been done yet
+   
+   std::string *cachedStr = nullptr;
+   bool isCached = false;
    TR::CompilationInfoPerThread *threadCompInfo = _fe->_compInfoPT;
-   TR::Monitor *monitor = threadCompInfo->getClientData()->getROMMapMonitor();
-   monitor->enter();
-
-   auto &classMap = threadCompInfo->getClientData()->getROMClassMap();
-   auto gotClass = classMap.find(_ramClass);
-   TR_ASSERT(gotClass != classMap.end(), "J9Method is not in J9MethodMap");
-   auto &j9ClassInfo = gotClass->second;
-   auto &stringsCache = j9ClassInfo._remoteROMStringsCache; 
-
-   if (!stringsCache)
-      {
-      stringsCache = new (PERSISTENT_NEW) PersistentUnorderedMap<TR_RemoteROMStringKey, std::string>(PersistentUnorderedMap<TR_RemoteROMStringKey, std::string>::allocator_type(TR::Compiler->persistentAllocator()));
-      }
+   {
+      OMR::CriticalSection getRemoteROMClass(threadCompInfo->getClientData()->getROMMapMonitor()); 
+      auto &stringsCache = getJ9ClassInfo(threadCompInfo, _ramClass)._remoteROMStringsCache;
+      // initialize cache if it hasn't been done yet
+      if (!stringsCache)
+         {
+         stringsCache = new (PERSISTENT_NEW) PersistentUnorderedMap<TR_RemoteROMStringKey, std::string>(PersistentUnorderedMap<TR_RemoteROMStringKey, std::string>::allocator_type(TR::Compiler->persistentAllocator()));
+         }
+      auto gotStr = stringsCache->find(key);
+      if (gotStr != stringsCache->end())
+         {
+         cachedStr = &(gotStr->second);
+         isCached = true;
+         }
+   }
 
    // only make a query if a string hasn't been cached
-   auto gotStr = stringsCache->find(key);
-   if (gotStr == stringsCache->end())
+   if (!isCached)
       {
       size_t offsetFromROMClass = (uint8_t*) basePtr - (uint8_t*) romClassPtr();
       std::string offsetsStr((char*) offsets.begin(), offsets.size() * sizeof(size_t));
-
-      // release the monitor before making a query
-      monitor->exit();
+      
       _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getRemoteROMString, _remoteMirror, offsetFromROMClass, offsetsStr);
-      auto newStr = std::get<0>(_stream->read<std::string>());
-
-      // reaquire the monitor
-      monitor->enter();
-      gotStr = stringsCache->insert({key, newStr}).first;
+         {
+         // reaquire the monitor
+         OMR::CriticalSection getRemoteROMClass(threadCompInfo->getClientData()->getROMMapMonitor()); 
+         auto &stringsCache = getJ9ClassInfo(threadCompInfo, _ramClass)._remoteROMStringsCache;
+         cachedStr = &(stringsCache->insert({key, std::get<0>(_stream->read<std::string>())}).first->second);
+         }
       }
-   monitor->exit();
-   std::string &str = gotStr->second;
-   // set length, because it is a parameter that needs to be set
-   len = str.length();
-   return &str[0];
+
+   len = cachedStr->length();
+   return &(cachedStr->at(0));
    }
 
 // Takes a pointer to some data which is placed statically relative to the rom class,
@@ -654,12 +685,40 @@ TR_ResolvedJ9JITaaSServerMethod::fieldOrStaticName(I_32 cpIndex, int32_t & len, 
          }
       }
 
-   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_fieldOrStaticName, _remoteMirror, cpIndex);
-   std::string recv = std::get<0>(_stream->read<std::string>());
-   len = recv.length();
-   char * s = (char *)trMemory->allocateMemory(len, kind);
-   memcpy(s, &recv[0], len);
-   return s;
+   
+   std::string *cachedStr = nullptr;
+   bool isCached = false;
+   TR::CompilationInfoPerThread *threadCompInfo = _fe->_compInfoPT;
+   {
+      OMR::CriticalSection getRemoteROMClass(threadCompInfo->getClientData()->getROMMapMonitor()); 
+      auto &stringsCache = getJ9ClassInfo(threadCompInfo, _ramClass)._fieldOrStaticNameCache;
+      // initialize cache if it hasn't been done yet
+      if (!stringsCache)
+         {
+         stringsCache = new (PERSISTENT_NEW) PersistentUnorderedMap<int32_t, std::string>(PersistentUnorderedMap<TR_RemoteROMStringKey, std::string>::allocator_type(TR::Compiler->persistentAllocator()));
+         }
+      auto gotStr = stringsCache->find(cpIndex);
+      if (gotStr != stringsCache->end())
+         {
+         cachedStr = &(gotStr->second);
+         isCached = true;
+         }
+   }
+
+   // only make a query if a string hasn't been cached
+   if (!isCached)
+      {
+      _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_fieldOrStaticName, _remoteMirror, cpIndex);
+         {
+         // reaquire the monitor
+         OMR::CriticalSection getRemoteROMClass(threadCompInfo->getClientData()->getROMMapMonitor()); 
+         auto &stringsCache = getJ9ClassInfo(threadCompInfo, _ramClass)._fieldOrStaticNameCache;
+         cachedStr = &(stringsCache->insert({cpIndex, std::get<0>(_stream->read<std::string>())}).first->second);
+         }
+      }
+
+   len = cachedStr->length();
+   return &(cachedStr->at(0));
    }
 
 void *
@@ -847,7 +906,7 @@ bool
 TR_ResolvedJ9JITaaSServerMethod::isWarmCallGraphTooBig(uint32_t bcIndex, TR::Compilation *comp)
    {
    _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_isWarmCallGraphTooBig, _remoteMirror, bcIndex);
-   return std::get<0>(_stream->read<bool>());
+   return std::get<0>(_stream->read<bool>()); 
    }
 
 void
@@ -991,3 +1050,5 @@ TR_ResolvedJ9JITaaSServerMethod::setAttributes(TR_OpaqueMethodBlock * aMethod, T
    setRecognizedMethod(rm);
 
    }
+
+

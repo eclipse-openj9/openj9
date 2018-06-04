@@ -936,7 +936,8 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          bool volatileP, isFinal, isPrivate, unresolvedInCP;
          bool result = method->staticAttributes(comp, cpIndex, &address, &type, &volatileP, &isFinal,
                &isPrivate, isStore, &unresolvedInCP, needAOTValidation);
-         client->write(address, type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result);
+         TR_J9MethodFieldAttributes attrs = {{.address = address}, type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result};
+         client->write(attrs);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_getClassFromConstantPool:
@@ -976,7 +977,8 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          bool volatileP, isFinal, isPrivate, unresolvedInCP;
          bool result = method->fieldAttributes(comp, cpIndex, &fieldOffset, &type, &volatileP, &isFinal,
                &isPrivate, isStore, &unresolvedInCP, needAOTValidation);
-         client->write(fieldOffset, type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result);
+         TR_J9MethodFieldAttributes attrs = {{.fieldOffset = fieldOffset}, type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result};
+         client->write(attrs);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_getResolvedStaticMethodAndMirror:
@@ -2288,6 +2290,16 @@ ClientSessionData::~ClientSessionData()
          jitPersistentFree(stringsCache);
          it.second._remoteROMStringsCache = nullptr;
          }
+
+      // if fieldOrStaticNameCache exists, free it
+      auto *fieldOrStaticNameCache = it.second._fieldOrStaticNameCache;
+      if (fieldOrStaticNameCache)
+         {
+         fieldOrStaticNameCache->~PersistentUnorderedMap<int32_t, std::string>();
+         jitPersistentFree(fieldOrStaticNameCache);
+         it.second._fieldOrStaticNameCache = nullptr;
+         }
+
       TR_Memory::jitPersistentFree(it.second.romClass);
       }
    }
@@ -2553,7 +2565,7 @@ JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class
                                  J9Method *methods, TR_OpaqueClassBlock *baseComponentClass, int32_t numDimensions)
    {
    OMR::CriticalSection cacheRemoteROMClass(clientSessionData->getROMMapMonitor());
-   clientSessionData->getROMClassMap().insert({ clazz,{ romClass, methods, baseComponentClass, numDimensions, nullptr } });
+   clientSessionData->getROMClassMap().insert({ clazz,{ romClass, methods, baseComponentClass, numDimensions, nullptr, nullptr} });
    uint32_t numMethods = romClass->romMethodCount;
    J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
    for (uint32_t i = 0; i < numMethods; i++)
