@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1268,4 +1268,97 @@ J9NLS_CFR_ERR_MULTIPLE_ANNOTATION_ATTRIBUTES__ID.explanation=Class may have at m
 J9NLS_CFR_ERR_MULTIPLE_ANNOTATION_ATTRIBUTES__ID.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_MULTIPLE_ANNOTATION_ATTRIBUTES__ID.user_response=Contact the provider of the classfile for a corrected version.
 
+# END NON-TRANSLATABLE
+
+#Multiple nest mates attributes
+J9NLS_CFR_ERR_MULTIPLE_NEST_ATTRIBUTES=Viacero atrib\u00fatov partnerov vnorenia
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_MULTIPLE_NEST_ATTRIBUTES.explanation=Class can have at most one NestMate or MemberOfNeset attribute
+J9NLS_CFR_ERR_MULTIPLE_NEST_ATTRIBUTES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_MULTIPLE_NEST_ATTRIBUTES.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+#Nest members attribute name is not a utf8
+J9NLS_CFR_ERR_NEST_MEMBERS_NAME_NOT_CONSTANT_CLASS=\u010clen hostite\u013ea vnorenia atrib\u00fatu vnorenia mus\u00ed by\u0165 kon\u0161tantn\u00e1 trieda
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_NEST_MEMBERS_NAME_NOT_CONSTANT_CLASS.explanation=Member of nest attribute must be a constant class
+J9NLS_CFR_ERR_NEST_MEMBERS_NAME_NOT_CONSTANT_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_NEST_MEMBERS_NAME_NOT_CONSTANT_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+# Nest host attribute is not a constant class
+J9NLS_CFR_ERR_BAD_NEST_HOST_INDEX=Hostite\u013e vnorenia mus\u00ed by\u0165 kon\u0161tantn\u00e1 trieda
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_BAD_NEST_HOST_INDEX.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_BAD_NEST_HOST_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_BAD_NEST_HOST_INDEX.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+# <clinit> method at version 51.0 or above does not have static flag set
+J9NLS_CFR_ERR_CLINIT_NOT_STATIC=Met\u00f3da <clinit> nie je statick\u00e1
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_CLINIT_NOT_STATIC.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_CLINIT_NOT_STATIC.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_CLINIT_NOT_STATIC.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+# <clinit> method at version 51.0 must be void and take no arguments
+J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE=Met\u00f3da <clinit> m\u00e1 neplatn\u00fd podpis
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+# <init> method cannot be in an Interface in Java 9
+J9NLS_CFR_ERR_INIT_ILLEGAL_IN_INTERFACE=Rozhranie nem\u00f4\u017ee ma\u0165 met\u00f3du s n\u00e1zvom <init>
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_INIT_ILLEGAL_IN_INTERFACE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_INIT_ILLEGAL_IN_INTERFACE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_INIT_ILLEGAL_IN_INTERFACE.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE=Nezn\u00e1ma zna\u010dka kon\u0161tanty 19 v s\u00fabore tried
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE=Nezn\u00e1ma zna\u010dka kon\u0161tanty 20 v s\u00fabore tried
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53=Polo\u017eka oblasti kon\u0161t\u00e1nt je neplatn\u00e1 v s\u00faboroch tried s verziami men\u0161\u00edmi ako 53.0
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS=inform\u00e1cie o module nie s\u00fa trieda, preto\u017ee je nastaven\u00e9 access_flag ACC_MODULE
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55=Polo\u017eka oblasti kon\u0161t\u00e1nt je neplatn\u00e1 v s\u00faboroch tried s verziami men\u0161\u00edmi ako 55.0
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE

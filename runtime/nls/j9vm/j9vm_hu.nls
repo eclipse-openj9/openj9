@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1271,7 +1271,7 @@ J9NLS_VM_CHECK_DUMP_FULLCORE.system_action=The JVM continues to run
 J9NLS_VM_CHECK_DUMP_FULLCORE.user_response=Refer to the IBM SDK documentation
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CHECK_DUMP_COREPATTERN_PIPE=A(z) "%s" /proc/sys/kernel/core_pattern be\u00e1ll\u00edt\u00e1s szerint a rendszerki\u00edrat\u00e1sokat egy k\u00fcls\u0151 programhoz kell \u00e1tir\u00e1ny\u00edtani. Lehets\u00e9ges, hogy a JVM nem tudja azonos\u00edtani \u00e9s \u00e1tnevezni a t\u00e1rki\u00edrat\u00e1sokat.
+J9NLS_VM_CHECK_DUMP_COREPATTERN_PIPE=A(z) "%s" /proc/sys/kernel/core_pattern be\u00e1ll\u00edt\u00e1s szerint a t\u00e1rki\u00edrat\u00e1sokat egy k\u00fcls\u0151 programhoz kell \u00e1tir\u00e1ny\u00edtani. Lehets\u00e9ges, hogy a JVM nem tudja azonos\u00edtani \u00e9s \u00e1tnevezni a t\u00e1rki\u00edrat\u00e1sokat.
 # START NON-TRANSLATABLE
 J9NLS_VM_CHECK_DUMP_COREPATTERN_PIPE.explanation=The JVM has been started on a system with /proc/sys/kernel/core_pattern set to pipe core dumps to the command specified after the | character. The JVM may be unable to locate core dumps and rename them.
 J9NLS_VM_CHECK_DUMP_COREPATTERN_PIPE.system_action=The JVM continues to run. Message JVMPORT030W will be issued when a system dump is taken.
@@ -1439,6 +1439,7 @@ J9NLS_JIMAGE_INTF_LIBJIMAGE_OPEN_FAILED.user_response=None.
 
 J9NLS_JIMAGE_INTF_LIBJIMAGE_SYMBOL_LOOKUP_FAILED=A(z) %s szimb\u00f3lumot nem siker\u00fclt kikeresni a jimage k\u00f6nyvt\u00e1rban
 # START NON-TRANSLATABLE
+J9NLS_JIMAGE_INTF_LIBJIMAGE_SYMBOL_LOOKUP_FAILED.sample_input_1=JIMAGE_Open
 J9NLS_JIMAGE_INTF_LIBJIMAGE_SYMBOL_LOOKUP_FAILED.explanation=An internal error occurred in looking up symbol in jimage library.
 J9NLS_JIMAGE_INTF_LIBJIMAGE_SYMBOL_LOOKUP_FAILED.system_action=The JVM fails to startup if -XX:-UseJ9JImageReader is specified, otherwise it attempts to use internal jimage reader instead.
 J9NLS_JIMAGE_INTF_LIBJIMAGE_SYMBOL_LOOKUP_FAILED.user_response=None.
@@ -1453,6 +1454,7 @@ J9NLS_JIMAGE_INTF_SWITCHING_TO_J9JIMAGE_READER.user_response=None.
 
 J9NLS_VM_XPATCH_OPTION_VALUE_MISSING=Hib\u00e1s -Xpatch \u00e9rt\u00e9k; a(z) %s tulajdons\u00e1g \u00e9rt\u00e9ke nincs megadva
 # START NON-TRANSLATABLE
+J9NLS_VM_XPATCH_OPTION_VALUE_MISSING.sample_input_1=jdk.launcher.patch.0
 J9NLS_VM_XPATCH_OPTION_VALUE_MISSING.explanation=The value of specified option is not correct
 J9NLS_VM_XPATCH_OPTION_VALUE_MISSING.system_action=The JVM will exit.
 J9NLS_VM_XPATCH_OPTION_VALUE_MISSING.user_response=Specify the module name and its patch path with -Xpatch option and restart the JVM.
@@ -1460,6 +1462,8 @@ J9NLS_VM_XPATCH_OPTION_VALUE_MISSING.user_response=Specify the module name and i
 
 J9NLS_VM_XPATCH_OPTION_PATCH_PATH_MISSING=Hib\u00e1s -Xpatch \u00e9rt\u00e9k; a jav\u00edt\u00e1s \u00fatvonala nincs megadva a(z) %s=%s tulajdons\u00e1gban
 # START NON-TRANSLATABLE
+J9NLS_VM_XPATCH_OPTION_PATCH_PATH_MISSING.sample_input_1=jdk.launcher.patch.0
+J9NLS_VM_XPATCH_OPTION_PATCH_PATH_MISSING.sample_input_2=/home/user/patch
 J9NLS_VM_XPATCH_OPTION_PATCH_PATH_MISSING.explanation=The value of specified option is not correct
 J9NLS_VM_XPATCH_OPTION_PATCH_PATH_MISSING.system_action=The JVM will exit.
 J9NLS_VM_XPATCH_OPTION_PATCH_PATH_MISSING.user_response=Specify the module name and its patch path with -Xpatch option and restart the JVM.
@@ -1474,10 +1478,10 @@ J9NLS_VM_XXSHARED_CACHE_HARD_LIMIT_EQUALS_IGNORED.user_response=The -XX:SharedCa
 
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ=A(z) %2$.*1$s(%3$s) oszt\u00e1ly nem tudja el\u00e9rni a(z) %5$.*4$s(%6$s) oszt\u00e1lyt, mert a(z) %3$s nem olvassa a k\u00f6vetkez\u0151t: %6$s
 # START NON-TRANSLATABLE
-J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_1=3
+J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_1=18
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_2=com.greetings.Main
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_3=module com.greetings
-J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_4=3
+J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_4=9
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_5=com.hi.Hi
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_6=unnamed module @0x59fa1d9b
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.explanation=Module IllegalAccessError occurred.
@@ -1487,10 +1491,10 @@ J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.user_response=Refer IBM Java User Guide for 
 
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT=A(z) %2$.*1$s(%3$s) oszt\u00e1ly nem tudja el\u00e9rni a(z) %5$.*4$s(%6$s) oszt\u00e1lyt, mert a(z) %6$s nem export\u00e1lja a(z) %7$s csomagot ide: %3$s
 # START NON-TRANSLATABLE
-J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_1=3
+J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_1=18
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_2=com.greetings.Main
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_3=module com.greetings
-J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_4=3
+J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_4=9
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_5=com.hi.Hi
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_6=module com/hello
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_7=com/hello
@@ -1646,4 +1650,186 @@ J9NLS_VM_STACK_TRACE.sample_input_6=userSource.jar
 J9NLS_VM_STACK_TRACE.explanation=A single entry of a stack trace, with method, and source file.
 J9NLS_VM_STACK_TRACE.system_action=no action.
 J9NLS_VM_STACK_TRACE.user_response=no action.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_IDLE_TUNING_PLATFORM_OR_GC_POLICY_NOT_SUPPORTED=A GC \u00fcresj\u00e1rati optimaliz\u00e1l\u00e1s nem t\u00e1mogatott
+# START NON-TRANSLATABLE
+J9NLS_VM_IDLE_TUNING_PLATFORM_OR_GC_POLICY_NOT_SUPPORTED.explanation=The GC optimizations on idle are not supported on some platforms and GC policies.
+J9NLS_VM_IDLE_TUNING_PLATFORM_OR_GC_POLICY_NOT_SUPPORTED.system_action=The JVM will exit.
+J9NLS_VM_IDLE_TUNING_PLATFORM_OR_GC_POLICY_NOT_SUPPORTED.user_response=Refer to the documentation for supported platforms and GC policies.
+# END NON-TRANSLATABLE
+
+# first argument is the length of class name
+# second argument is the class name
+J9NLS_VM_CLASS_NOT_VALUE_CAPABLE=A feloldott %2$.*1$s oszt\u00e1ly nem \u00e9rt\u00e9kk\u00e9pes
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_NOT_VALUE_CAPABLE.explanation=Attempting to derive a value type from a class that is not value capable
+J9NLS_VM_CLASS_NOT_VALUE_CAPABLE.system_action=
+J9NLS_VM_CLASS_NOT_VALUE_CAPABLE.user_response=
+# END NON-TRANSLATABLE
+
+# first argument is the length of class name
+# second argument is the class name
+J9NLS_VM_DVT_NOT_SET=A(z) %2$.*1$s \u00e9rt\u00e9kk\u00e9pes oszt\u00e1lynak nincs sz\u00e1rmaztatott \u00e9rt\u00e9kt\u00edpusa
+# START NON-TRANSLATABLE
+J9NLS_VM_DVT_NOT_SET.explanation=The class is value capable, but no value type had been derived
+J9NLS_VM_DVT_NOT_SET.system_action=
+J9NLS_VM_DVT_NOT_SET.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL=K\u00eds\u00e9rlet t\u00f6rt\u00e9nt a(z) %2$.*1$s.%4$.*3$s static final mez\u0151 be\u00e1ll\u00edt\u00e1s\u00e1ra a(z) "%6$.*5$s" met\u00f3dusb\u00f3l, amely nem <clinit>
+# START NON-TRANSLATABLE
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.sample_input_1=3
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.sample_input_2=Bad
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.sample_input_3=1
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.sample_input_4=i
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.sample_input_5=3
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.sample_input_6=set
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.explanation=Attempt to set a static final field from a method other than <clinit>
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.system_action=IllegalAccessError is thrown
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.user_response=Modify source code to avoid the illegal access
+# END NON-TRANSLATABLE
+
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL=K\u00eds\u00e9rlet t\u00f6rt\u00e9nt a(z) %2$.*1$s.%4$.*3$s instance final mez\u0151 be\u00e1ll\u00edt\u00e1s\u00e1ra a(z) "%6$.*5$s" met\u00f3dusb\u00f3l, amely nem <init>
+# START NON-TRANSLATABLE
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.sample_input_1=3
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.sample_input_2=Bad
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.sample_input_3=1
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.sample_input_4=i
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.sample_input_5=3
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.sample_input_6=set
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.explanation=Attempt to set a non-static final field from a method other than <init>
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.system_action=IllegalAccessError is thrown
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.user_response=Modify source code to avoid the illegal access
+# END NON-TRANSLATABLE
+
+# First argument is class name length
+# Second argument is class name
+# Third argument is nest host name length
+# Fourth argument is nest host name
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER=A(z) %2$.*1$s oszt\u00e1lynak \u00e9s a(z) %4$.*3$s be\u00e1gyaz\u00e1si hosztj\u00e1nak azonos oszt\u00e1lybet\u00f6lt\u0151vel kell rendelkeznie.
+# START NON-TRANSLATABLE
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER.explanation=Class and nest host class were loaded with different class loaders.
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER.system_action=The JVM will throw a java/lang/VerifyError
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER.user_response=Load class and nest host class with same classloader.
+# END NON-TRANSLATABLE
+
+# First argument is class name length
+# Second argument is class name
+# Third argument is nest host name length
+# Fourth argument is nest host name
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE=A(z) %2$.*1$s oszt\u00e1lynak \u00e9s a(z) %4$.*3$s be\u00e1gyaz\u00e1si hosztj\u00e1nak azonos csomaggal kell rendelkeznie.
+# START NON-TRANSLATABLE
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE.explanation=Class and nest host class were loaded with different class loaders.
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE.system_action=The JVM will throw a java/lang/VerifyError
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE.user_response=Load class and nest host class with same classloader.
+# END NON-TRANSLATABLE
+
+# First argument is class name length
+# Second argument is class name
+# Third argument is nest host name length
+# Fourth argument is nest host name
+J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST=A(z) %2$.*1$s oszt\u00e1lyt ig\u00e9nyelnie kell a(z) %4$.*3$s be\u00e1gyaz\u00e1si hosztj\u00e1nak
+# START NON-TRANSLATABLE
+J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST.explanation=Class was not claimed by its nest host class.
+J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST.system_action=The JVM will throw a java/lang/VerifyError
+J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# First argument is the library name
+# Second argument is the module name
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL=Nem siker\u00fclt bet\u00f6lteni a(z) %2$s modul \u00e1ltal ig\u00e9nyelt %1$s f\u00fcggv\u00e9nyt\u00e1rat
+# START NON-TRANSLATABLE
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.sample_input_1=j9shr29
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.sample_input_2=openj9.sharedclasses
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.explanation=The JVM failed to load the library required by the specified module.
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.system_action=The JVM continues.
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.user_response=No action required if the specified library won't be referenced.
+# END NON-TRANSLATABLE
+
+# Message for LinkageError when a class loading constraint violation occurs when overriding a method
+# arguments 1 and 2 are the overridden method's class's name
+# arguments 3 and 4 are the overridden method name
+# arguments 5 and 6 are the overridden method's signature
+# arguments 7 and 8 are classloader name
+# argument 9 is the classloader's identity hashcode
+# arguments 10 and 11 are classloader's class
+# arguments 12 and 13 are the other classloader name
+# argument 14 is the other classloader's identity hashcode
+# arguments 15 and 16 are the other classloader's class
+# arguments 17 and 18 are the name of class being created
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION=bet\u00f6lt\u00e9si korl\u00e1ts\u00e9rt\u00e9s a(z) \"%2$.*1$s.%4$.*3$s%6$.*5$s\" met\u00f3dus fel\u00fclb\u00edr\u00e1l\u00e1sakor a(z) \"%18$.*17$s\" oszt\u00e1ly l\u00e9trehoz\u00e1sa sor\u00e1n: a(z) \"%8$.*7$s@%9$x\" bet\u00f6lt\u0151 a(z) \"%11$.*10$s\" oszt\u00e1lyban \u00e9s a(z) \"%13$.*12$s@%14$x\" bet\u00f6lt\u0151 a(z) \"%16$.*15$s\" oszt\u00e1lyban elt\u00e9r\u0151 t\u00edpus\u00fa met\u00f3dusal\u00e1\u00edr\u00e1sokat tartalmaznak
+# START NON-TRANSLATABLE
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_1=4
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_2=Main
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_3=4
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_4=method
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_5=15
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_6=()LLoadedTwice;
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_7=4
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_8=Main
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_9=2011a4e
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_10=8
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_11=Violator
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_12=6
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_13=Loader
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_14=200b50c
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_15=4
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_16=Main
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_17=4
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_18=Main
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.explanation=A class loading constraint has been violated.  The two class loader's have different classes for one of the class names in the signature.
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.system_action=A java/lang/LinkageError will be thrown
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.user_response=Examine the use of ClassLoaders to determine why a class of the same name is loaded in two different loaders
+# END NON-TRANSLATABLE
+
+# First argument is class name length
+# Second argument is class name
+# Third argument is nest host name length
+# Fourth argument is nest host name
+J9NLS_VM_NEST_HOST_FAILED_TO_LOAD=A(z) %2$.*1$s oszt\u00e1lynak be kell tudnia t\u00f6lteni a(z) %4$.*3$s be\u00e1gyaz\u00e1si hosztj\u00e1t.
+# START NON-TRANSLATABLE
+J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.explanation=Class and nest host class were loaded with different class loaders.
+J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.system_action=The JVM will throw a java/lang/IllegalAccessError
+J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.user_response=Load class and nest host class with same classloader.
+# END NON-TRANSLATABLE
+
+# No arguments
+J9NLS_VM_MODULE_IS_NULL=A module null.
+# START NON-TRANSLATABLE
+J9NLS_VM_MODULE_IS_NULL.explanation=Incoming module can't be NULL.
+J9NLS_VM_MODULE_IS_NULL.system_action=The JVM will throw a java/lang/NullPointerExceptions.
+J9NLS_VM_MODULE_IS_NULL.user_response=Don't pass a NULL module.
+# END NON-TRANSLATABLE
+
+# No arguments
+J9NLS_VM_MODULE_IS_UNNAMED=A modulnak nincs neve.
+# START NON-TRANSLATABLE
+J9NLS_VM_MODULE_IS_UNNAMED.explanation=Incoming module can't be unnamed.
+J9NLS_VM_MODULE_IS_UNNAMED.system_action=The JVM will throw a java/lang/IllegalArgumentExceptions.
+J9NLS_VM_MODULE_IS_UNNAMED.user_response=Don't pass a unnamed module.
+# END NON-TRANSLATABLE
+
+# No arguments
+J9NLS_VM_MODULE_NAME_IS_INVALID=A moduln\u00e9v \u00e9rv\u00e9nytelen.
+# START NON-TRANSLATABLE
+J9NLS_VM_MODULE_NAME_IS_INVALID.explanation=Incoming module name is invalid.
+J9NLS_VM_MODULE_NAME_IS_INVALID.system_action=The JVM will throw a java/lang/IllegalArgumentExceptions.
+J9NLS_VM_MODULE_NAME_IS_INVALID.user_response=Don't pass a module with invalid name.
+# END NON-TRANSLATABLE
+
+# No arguments
+J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE=Csak a bootstrap oszt\u00e1lybet\u00f6lt\u0151 defini\u00e1lhatja a java.base modult.
+# START NON-TRANSLATABLE
+J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE.explanation=Non-bootstrap classloader can't define module java.base.
+J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE.system_action=The JVM will throw a java/lang/LayerInstantiationException.
+J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE.user_response=Don't define module java.base.
+# END NON-TRANSLATABLE
+
+# No arguments
+J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA=Csak a bootstrap vagy platform oszt\u00e1lybet\u00f6lt\u0151 defini\u00e1lhatja a java vagy java.* csomagot.
+# START NON-TRANSLATABLE
+J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA.explanation=A classloader other than boostrap or platform classloader can't define package java or java.*.
+J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA.system_action=The JVM will throw a java/lang/LayerInstantiationException.
+J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA.user_response=Don't define package java or java.*.
 # END NON-TRANSLATABLE

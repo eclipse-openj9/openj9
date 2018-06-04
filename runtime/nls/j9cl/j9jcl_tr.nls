@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,6 +19,7 @@
 #
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 #
+
 
 # Externalised messages for the VM components of the JCL module.
 # New messages MUST be added at the end of this file.
@@ -406,3 +407,32 @@ J9NLS_JCL_OOM_NEW_GLOBAL_REF.explanation=The JVM was not able to allocate the na
 J9NLS_JCL_OOM_NEW_GLOBAL_REF.system_action=The JVM will exit unless the OutOfMemoryError is caught and recovered from.
 J9NLS_JCL_OOM_NEW_GLOBAL_REF.user_response=Ensure the process has enough native memory to run.
 # END NON-TRANSLATABLE
+
+# Message for IllegalArgumentException if host class and anonymous class are in different packages
+# argument 1 is the host class
+# argument 2 is the anonymous class
+
+J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES=%2$.*1$s anasistem s\u0131n\u0131f\u0131 ve %4$.*3$s anonim s\u0131n\u0131f\u0131 farkl\u0131 paketlerde
+# START NON-TRANSLATABLE
+J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES.sample_input_1=Foo
+J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES.sample_input_2=3
+J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES.sample_input_3=Bar
+J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES.sample_input_4=3
+J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES.explanation=NOTAG
+J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES.system_action=
+J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_NEST_MEMBER_CLAIMS_DIFFERENT_NEST_HOST=%4$.*3$s i\u00e7indeki %2$.*1$s yuva \u00fcyesi, farkl\u0131 bir yuva anasistemi (%6$.*5$s) bildiriyor
+# START NON-TRANSLATABLE
+J9NLS_JCL_NEST_MEMBER_CLAIMS_DIFFERENT_NEST_HOST.sample_input_1=Foobar
+J9NLS_JCL_NEST_MEMBER_CLAIMS_DIFFERENT_NEST_HOST.sample_input_2=6
+J9NLS_JCL_NEST_MEMBER_CLAIMS_DIFFERENT_NEST_HOST.sample_input_3=Baz
+J9NLS_JCL_NEST_MEMBER_CLAIMS_DIFFERENT_NEST_HOST.sample_input_4=3
+J9NLS_JCL_NEST_MEMBER_CLAIMS_DIFFERENT_NEST_HOST.sample_input_5=Foobar
+J9NLS_JCL_NEST_MEMBER_CLAIMS_DIFFERENT_NEST_HOST.sample_input_6=6
+J9NLS_JCL_NEST_MEMBER_CLAIMS_DIFFERENT_NEST_HOST.explanation=Nest host claims a nest member but the nest member claims a different nest host.
+J9NLS_JCL_NEST_MEMBER_CLAIMS_DIFFERENT_NEST_HOST.system_action=The JVM will throw an IncompatibleClassChangeError exception
+J9NLS_JCL_NEST_MEMBER_CLAIMS_DIFFERENT_NEST_HOST.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
