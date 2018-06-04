@@ -2522,6 +2522,12 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 *				when prefix is null
 	 */
 	public boolean startsWith(String prefix, int start) {
+		if (prefix.length() == 1) {
+			if (start < 0 || start >= this.length()) {
+				return false;
+			}
+			return charAtInternal(start) == prefix.charAtInternal(0);
+		}
 		return regionMatches(start, prefix, 0, prefix.lengthInternal());
 	}
 	
@@ -6566,6 +6572,12 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 *				when prefix is null
 	 */
 	public boolean startsWith(String prefix, int start) {
+		if (prefix.length() == 1) {
+			if (start < 0 || start >= this.length()) {
+				return false;
+			}
+			return charAtInternal(start) == prefix.charAtInternal(0);
+		}
 		return regionMatches(start, prefix, 0, prefix.lengthInternal());
 	}
 
