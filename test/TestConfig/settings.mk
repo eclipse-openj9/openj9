@@ -218,6 +218,16 @@ endif
 TEST_SKIP_STATUS=$@_SKIPPED
 
 #######################################
+# TEST_SETUP
+#######################################
+TEST_SETUP=$(JAVA_COMMAND) -Xshareclasses:destroyAll || echo "cache cleanup done"
+
+#######################################
+# TEST_TEARDOWN
+#######################################
+TEST_TEARDOWN=$(JAVA_COMMAND) -Xshareclasses:destroyAll || echo "cache cleanup done"
+
+#######################################
 # include configure makefile
 #######################################
 ifndef MACHINE_MK

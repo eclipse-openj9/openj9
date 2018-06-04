@@ -443,6 +443,8 @@ sub writeTargets {
 				}
 			}
 
+			print $fhOut "$indent\$(TEST_SETUP);\n";
+
 			print $fhOut "$indent\@echo \"variation: $var\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
 			print $fhOut "$indent\@echo \"JVM_OPTIONS: \$(JVM_OPTIONS)\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
 
@@ -451,6 +453,8 @@ sub writeTargets {
 			$command =~ s/\s+$//;
 
 			print $fhOut "$indent\{ \$(MKTREE) \$(REPORTDIR); \\\n$indent\$(CD) \$(REPORTDIR); \\\n$indent$command; \} 2>&1 | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
+
+			print $fhOut "$indent\$(TEST_TEARDOWN);\n";
 
 			if (defined($capabilityReqs)) {
 				foreach my $key (keys %capabilityReqs_Hash) {
