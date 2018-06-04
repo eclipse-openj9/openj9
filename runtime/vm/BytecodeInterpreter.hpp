@@ -7564,6 +7564,7 @@ done:
 		U_8 *sigData = NULL;
 		UDATA returnSlots = 0;
 		UDATA *bp = bpForCurrentBytecodedMethod(REGISTER_ARGS);
+		U_8 truncatedReturnBytecode = 0;
 		/* Check for synchronized */
 		if (romMethod->modifiers & J9AccSynchronized) {
 			IDATA monitorRC = exitObjectMonitor(REGISTER_ARGS, ((j9object_t*)bp)[1]);
@@ -7634,18 +7635,22 @@ done:
 			case 'B':
 				returnSlots = 1;
 				*(I_32*)_sp = (I_8)*(I_32*)_sp;
+				truncatedReturnBytecode = JBreturnB;
 				break;
 			case 'C':
 				returnSlots = 1;
 				*(I_32*)_sp = (U_16)*(I_32*)_sp;
+				truncatedReturnBytecode = JBreturnC;
 				break;
 			case 'S':
 				returnSlots = 1;
 				*(I_32*)_sp = (I_16)*(I_32*)_sp;
+				truncatedReturnBytecode = JBreturnS;
 				break;
 			case 'Z':
 				returnSlots = 1;
 				*(U_32*)_sp = 1 & *(U_32*)_sp;
+				truncatedReturnBytecode = JBreturnZ;
 				break;
 			default:
 				returnSlots = 1;
@@ -7663,13 +7668,22 @@ done:
 			if ((JBbreakpoint != *_pc) && (FALSE == isObjectConstructor)) {
 				/* Is this a clean return? */
 				if (returnSlots == (UDATA)(((UDATA*)j2iFrame) - _sp)) {
-					U_8 newBytecode = JBreturn0;
-					if (romMethod->modifiers & J9AccSynchronized) {
-						newBytecode = JBsyncReturn0;
-					} else if (isConstructor) {
-						newBytecode = JBreturnFromConstructor;
+					/* are we dealing with a case where we should use a truncated return bytecode? */
+					if (truncatedReturnBytecode != 0) {
+						/* we only want to update the bytecode for non-synchronized methods */
+						/* (synchronized returns will fall back to a generic return) */
+						if (!(romMethod->modifiers & J9AccSynchronized)) {
+							*_pc = truncatedReturnBytecode;
+						}
+					} else {
+						U_8 newBytecode = JBreturn0;
+						if (romMethod->modifiers & J9AccSynchronized) {
+							newBytecode = JBsyncReturn0;
+						} else if (isConstructor) {
+							newBytecode = JBreturnFromConstructor;
+						}
+						*_pc = (newBytecode + (U_8)returnSlots);
 					}
-					*_pc = (newBytecode + (U_8)returnSlots);
 				}
 			}
 			rc = j2iReturn(REGISTER_ARGS);
@@ -7682,13 +7696,22 @@ done:
 			if ((JBbreakpoint != *_pc) && (FALSE == isObjectConstructor)) {
 				/* Is this a clean return? */
 				if (returnSlots == (UDATA)(((UDATA*)frame) - _sp)) {
-					U_8 newBytecode = JBreturn0;
-					if (romMethod->modifiers & J9AccSynchronized) {
-						newBytecode = JBsyncReturn0;
-					} else if (isConstructor) {
-						newBytecode = JBreturnFromConstructor;
+					/* are we dealing with a case where we should use a truncated return bytecode? */
+					if (truncatedReturnBytecode != 0) {
+						/* we only want to update the bytecode for non-synchronized methods */
+						/* (synchronized returns will fall back to a generic return) */
+						if (!(romMethod->modifiers & J9AccSynchronized)) {
+							*_pc = truncatedReturnBytecode;
+						}
+					} else {
+						U_8 newBytecode = JBreturn0;
+						if (romMethod->modifiers & J9AccSynchronized) {
+							newBytecode = JBsyncReturn0;
+						} else if (isConstructor) {
+							newBytecode = JBreturnFromConstructor;
+						}
+						*_pc = (newBytecode + (U_8)returnSlots);
 					}
-					*_pc = (newBytecode + (U_8)returnSlots);
 				}
 			}
 			/* Collapse the frame and copy the return value */
