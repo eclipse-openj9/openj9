@@ -50,7 +50,7 @@
 <exclude id="-Xthr:secondarySpinForObjectMonitors on command line" platform="aix.*" shouldFix="false"><reason>Only for platforms that three tier spin is enabled</reason></exclude>
 
 <include id="-Xpreloaduser32" platform="win_x86.*" shouldFix="false"><reason>Only available on Windows platforms</reason></include>
-<include id="-Xpreloaduser32 -Xprotectcontiguous" platform="win_x86.*" shouldFix="false"><reason>Only available on Windows platforms</reason></include>
+<include id="-Xpreloaduser32 -Xprotectcontiguous" platform="none" shouldFix="true"><reason>Intermittent failures on Windows platforms and not available on other platforms</reason></include>
 <include id="-Xpreloaduser32 -Xnoprotectcontiguous" platform="win_x86.*" shouldFix="false"><reason>Only available on Windows platforms</reason></include>
 <include id="-Xnopreloaduser32" platform="win_x86.*" shouldFix="false"><reason>Only available on Windows platforms</reason></include>
 <include id="-Xnopreloaduser32 -Xprotectcontiguous" platform="win_x86.*" shouldFix="false"><reason>Only available on Windows platforms</reason></include>
