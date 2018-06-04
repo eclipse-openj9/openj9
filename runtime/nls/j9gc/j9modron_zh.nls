@@ -693,7 +693,7 @@ J9NLS_GC_UNABLE_TO_OPEN_FILE.sample_input_1=filename.log
 # END NON-TRANSLATABLE
 
 # Split heap error messages
-J9NLS_GC_FAILED_TO_ALLOCATE_OLD_SPACE=Failed to allocate old space
+J9NLS_GC_FAILED_TO_ALLOCATE_OLD_SPACE=\u65e0\u6cd5\u5206\u914d\u65e7\u7a7a\u95f4
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_ALLOCATE_OLD_SPACE.explanation=The size of the heap extent used for old space could not be reserved
 J9NLS_GC_FAILED_TO_ALLOCATE_OLD_SPACE.system_action=The JVM will terminate
@@ -952,5 +952,4 @@ J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN=z/OS \u4e0a\u4e0d\u
 J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN.explanation=The JVM was started with the -Xgc:preferredHeapBase option, which has no effect on z/OS.
 J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN.system_action=The JVM ignores the -Xgc:preferredHeapBase option.
 J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN.user_response=Refer to the IBM SDK documentation.
-
 # END NON-TRANSLATABLE
