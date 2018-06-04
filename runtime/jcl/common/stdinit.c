@@ -659,7 +659,7 @@ static char * addEndorsedBundles(J9PortLibrary *portLib, char *endorsedDir, char
 
 
 /**
-  * Initialize the com.ibm.oti.system.class.path system property by scanning the vm args and extracting 
+  * Initialize the BOOT_PATH_SYS_PROP (sun.boot.class.path) system property by scanning the vm args and extracting
   * the value of any -Xbootclasspath: argument.  If no bootpath is explicitly specified then use a default
   * value appropriate for this class library.
   * 
@@ -827,8 +827,7 @@ _end:
   *
   * @return 0 On success, non-zero otherwise.
   *
-  * @note Requires that the 'java.home' and 'com.ibm.oti.system.class.path' system properties 
-  *            have been set in the VMI.
+  * @note Requires that the 'java.home' system property has been set in the VMI.
   */
 static IDATA computeFinalBootstrapClassPath(J9JavaVM * vm)
 {

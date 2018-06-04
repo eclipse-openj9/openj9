@@ -374,37 +374,25 @@ private static void ensureProperties() {
 	
 	systemProperties = new Properties();
 
-	if (osEncoding != null)
+	if (osEncoding != null) {
 		systemProperties.put("os.encoding", osEncoding); //$NON-NLS-1$
+	}
 	/*[PR The launcher apparently needs sun.jnu.encoding property or it does not work]*/
 	systemProperties.put("ibm.system.encoding", platformEncoding); //$NON-NLS-1$
 	systemProperties.put("sun.jnu.encoding", platformEncoding); //$NON-NLS-1$
-	
 	systemProperties.put("file.encoding", fileEncoding); //$NON-NLS-1$
-
 	systemProperties.put("file.encoding.pkg", "sun.io"); //$NON-NLS-1$ //$NON-NLS-2$
-
-	/*[IF Sidecar19-SE]*/
-	systemProperties.put("java.specification.version", "9"); //$NON-NLS-1$ //$NON-NLS-2$
-	/*[ELSE]*/ 
-	systemProperties.put("java.specification.version", "1.8"); //$NON-NLS-1$ //$NON-NLS-2$
-	/*[ENDIF] Sidecar19-SE */
-	
-
 	systemProperties.put("java.specification.vendor", "Oracle Corporation"); //$NON-NLS-1$ //$NON-NLS-2$
 	systemProperties.put("java.specification.name", "Java Platform API Specification"); //$NON-NLS-1$ //$NON-NLS-2$
-
 	systemProperties.put("com.ibm.oti.configuration", "scar"); //$NON-NLS-1$
-	/*[IF] Clear
-	systemProperties.put("com.ibm.oti.configuration", "clear"); //$NON-NLS-1$
-	systemProperties.put("com.ibm.oti.configuration.dir", "jclClear"); //$NON-NLS-1$ //$NON-NLS-2$
-	/*[ENDIF]*/
 
 	String[] list = getPropertyList();
-	for (int i=0; i<list.length; i+=2) {
+	for (int i = 0; i < list.length; i += 2) {
 		String key = list[i];
 		/*[PR 100209] getPropertyList should use fewer local refs */
-		if (key == null) break;
+		if (key == null) {
+			break;
+		}
 		systemProperties.put(key, list[i+1]);
 	}
 	
