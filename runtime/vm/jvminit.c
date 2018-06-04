@@ -1288,7 +1288,8 @@ initializeClassPath(J9JavaVM *vm, char *classPath, U_8 classPathSeparator, U_16 
 	if (0 == classPathEntryCount) {
 		*classPathEntries = NULL;
 	} else {
-		UDATA classPathSize = (sizeof(J9ClassPathEntry) * classPathEntryCount) + classPathLength + classPathEntryCount; // classPathEntryCount is for number of null characters
+		/* classPathEntryCount is for number of null characters */
+		UDATA classPathSize = (sizeof(J9ClassPathEntry) * classPathEntryCount) + classPathLength + classPathEntryCount;
 		J9ClassPathEntry *cpEntries = j9mem_allocate_memory(classPathSize, OMRMEM_CATEGORY_VM);
 
 	        if (NULL == cpEntries) {
@@ -1849,7 +1850,7 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				}
 
 				if (J9_ARE_ANY_BITS_SET(vm->vmRuntimeStateListener.idleTuningFlags, J9_IDLE_TUNING_GC_ON_IDLE | J9_IDLE_TUNING_COMPACT_ON_IDLE)) {
-					vm->vmRuntimeStateListener.minIdleWaitTime = 180000; // in msecs
+					vm->vmRuntimeStateListener.minIdleWaitTime = 180000; /* in msecs */
 					vm->vmRuntimeStateListener.idleMinFreeHeap = 0;
 				}
 
@@ -1869,7 +1870,7 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 						goto _memParseError;
 					}
 
-					vm->vmRuntimeStateListener.minIdleWaitTime = (U_32)value * 1000; // convert to msecs
+					vm->vmRuntimeStateListener.minIdleWaitTime = (U_32)value * 1000; /* convert to msecs */
 				}
 
 				if ((argIndex = FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, VMOPT_XXIDLETUNINGMINFREEHEAPONIDLE_EQUALS, NULL)) >= 0) {
@@ -6489,56 +6490,46 @@ isPPC64bit() {
 	if (J9_ADDRMODE_64 != sysconf(_SC_AIX_KERNEL_BITMODE)) {
 		return FALSE;
 	}
-#endif /* AIXPPC */
-
-#if defined(LINUXPPC)
-#define CPU_NAME_SIZE 120
-	FILE * fp ;
-	char buffer[CPU_NAME_SIZE];
-	char *line_p;
+#else /* AIXPPC */
 	char *cpu_name = NULL;
-	char *position_l, *position_r;
-
-	fp = fopen("/proc/cpuinfo","r");
+	FILE *fp = fopen("/proc/cpuinfo", "r");
 
 	if (NULL == fp) {
 		return TRUE;
 	}
 
-	line_p = buffer;
-
 	while (!feof(fp)) {
-		fgets(line_p, CPU_NAME_SIZE, fp);
-		position_l = strstr(line_p, "cpu");
-		if (position_l) {
+#define CPU_NAME_SIZE 120
+		char buffer[CPU_NAME_SIZE];
+		char *position_l = NULL;
+		char *position_r = NULL;
+		if (NULL == fgets(buffer, CPU_NAME_SIZE, fp)) {
+			break;
+		}
+#undef CPU_NAME_SIZE
+		position_l = strstr(buffer, "cpu");
+		if (NULL != position_l) {
 			position_l = strchr(position_l, ':');
-			if (position_l == NULL) {
-				cpu_name = NULL; //setting cpu_name to null to denote default case
+			if (NULL == position_l) {
+				/* leave cpu_name NULL to denote default case */
 				break;
 			}
-			position_l++;
-			while (*(position_l) == ' ') {
-				position_l++;
-			}
+			do {
+				++position_l;
+			} while (' ' == *position_l);
 
-			position_r = strchr(line_p, '\n');
-			if (position_r == NULL) {
-				cpu_name = NULL; //setting cpu_name to null to denote default case
+			position_r = strchr(position_l, '\n');
+			if (NULL == position_r) {
+				/* leave cpu_name NULL to denote default case */
 				break;
 			}
-			while (*(position_r-1) == ' ') {
-				position_r--;
-			}
-
-			if (position_l >= position_r) {
-				cpu_name = NULL; //setting cpu_name to null to denote default case
-				break;
+			while (' ' == *(position_r - 1)) {
+				--position_r;
 			}
 
 			/* localize the cpu name */
 			cpu_name = position_l;
 			*position_r = '\000';
-
 			break;
 		}
 	}
@@ -6554,8 +6545,7 @@ isPPC64bit() {
 	if (0 == j9_cmdla_strnicmp(cpu_name, "82xx", 4))             return FALSE;
 	if (0 == j9_cmdla_strnicmp(cpu_name, "750FX", 5))            return FALSE;
 	if (0 == j9_cmdla_strnicmp(cpu_name, "604", 3))              return FALSE;
-#undef CPU_NAME_SIZE
-#endif /* LINUXPPC */
+#endif /* AIXPPC */
 
 	return TRUE;
 }
