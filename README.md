@@ -39,6 +39,30 @@ We're not sure which route you might have taken on your way here, but we're real
 
 Hopefully you're here because you want to get involved in the project? Read on ...
 
+What is Eclipse OpenJ9?
+=======================
+
+Eclipse OpenJ9 is an independent implementation of a Java Virtual Machine. "Independent implementation"
+means it was built using the Java Virtual Machine specification without using any code from any other Java
+Virtual Machine. 
+
+The OpenJ9 JVM combines with the Java Class libraries from OpenJDK to create a complete JDK tuned for
+footprint, performance, and reliability that is well suited for cloud deployments.
+
+The original source contribution to OpenJ9 came from the IBM "J9" JVM which has been used in production
+by thousands of Java applications for the last two decades.  In September 2017, IBM completed open sourcing
+the J9 JVM as "Eclipse OpenJ9" at the Eclipse Foundation. Significant parts of J9 are also open source
+at the [Eclipse OMR project](https://github.com/eclipse/omr). OpenJ9 has a permissive license (Apache
+License 2.0 or Eclipse Public License 2.0 with a secondary compatibility license for the OpenJDK project's
+GPLv2 license) that is designed to allow OpenJDK to be built with the OpenJ9 JVM.  Please see our
+[LICENSE file](https://github.com/eclipse/openj9/blob/master/LICENSE) for more details.
+
+Eclipse OpenJ9 is a source code project that can be built alongside Java class libraries.  Cross platform
+nightly and release binaries and docker containers for OpenJDK with OpenJ9, targeting several JDK levels
+(like JDK8, JDK10, etc.) are built by the [AdoptOpenJDK organization](https://github.com/adoptopenjdk)
+and can be downloaded from the [AdoptOpenJDK download site](https://adoptopenjdk.net/?variant=openjdk8-openj9)
+or on [DockerHub](https://hub.docker.com/search/?isAutomated=0&isOfficial=0&page=1&pullCount=0&q=openj9&starCount=0).
+
 What is the goal of the project?
 ================================
 
