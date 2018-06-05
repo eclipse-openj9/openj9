@@ -191,6 +191,24 @@ class TestConfigParser {
 					_currentOutput = null;
 				}
 
+			} else if (elementName.equalsIgnoreCase("saveoutput")) {
+				if (hasAllowedPlatform((String)attributes.get("platforms"))) {
+					String regex = (String)attributes.get("regex");
+					String javaUtilPattern = "no";
+					String showRegexMatch = "no";
+					if (null != attributes.get("showMatch")) {
+						showRegexMatch = (String)attributes.get("showMatch");
+					}
+					String caseSensitive = (String)attributes.get("caseSensitive");
+					String saveName = (String)attributes.get("saveName");
+					String splitIndex = (String)attributes.get("splitIndex");
+					String splitBy = (String)attributes.get("splitBy");
+					String type = (String)attributes.get("type");
+					_currentOutput = new SaveOutput( regex, javaUtilPattern, showRegexMatch, caseSensitive, type, saveName, splitIndex, splitBy);
+				} else {
+					_currentOutput = null;
+				}
+
 			} else if (elementName.equalsIgnoreCase("return")) {
 				if ((_currentTest != null) && (hasAllowedPlatform((String)attributes.get("platforms")))) {
 					String value = (String)attributes.get("value");
@@ -269,7 +287,7 @@ class TestConfigParser {
 					}
 					_isInNewCommandStanza = false;
 				}
-			} else if (elementName.equalsIgnoreCase("output")) {
+			} else if (elementName.equalsIgnoreCase("output") || elementName.equalsIgnoreCase("saveoutput")) {
 				// </output> - check to make sure _currentOutput is not null
 				// before proceeding - this may happen if the output tag was thrown out
 				// due to platform-dependency-incompatibilities
