@@ -22,6 +22,7 @@
 
 package org.openj9.test.java.lang.management;
 
+import org.openj9.test.util.VersionCheck;
 import org.testng.annotations.Test;
 import org.testng.log4testng.Logger;
 import org.testng.annotations.BeforeClass;
@@ -363,7 +364,7 @@ public class TestMonitorInfo {
 		CompositeType cType = createStackTraceElementCompositeTypeObject();
 		String[] names;
 		Object[] values;
-		if (TestMisc.isJava9) {
+		if (VersionCheck.major() >= 9) {
 			String[] namesTmp = TestMisc.getJava9STEMethodNames();
 			Object[] valuesTmp = {
 					new String("foo.bar.Blobby"),
@@ -401,7 +402,7 @@ public class TestMonitorInfo {
 		String[] typeNames;
 		String[] typeDescs;
 		OpenType[] typeTypes;
-		if (TestMisc.isJava9) {
+		if (VersionCheck.major() >= 9) {
 			String[] typeNamesTmp = TestMisc.getJava9STEMethodNames();
 			String[] typeDescsTmp = TestMisc.getJava9STEMethodNames();
 			OpenType[] typeTypesTmp = {

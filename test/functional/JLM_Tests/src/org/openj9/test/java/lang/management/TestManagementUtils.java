@@ -22,6 +22,7 @@
 
 package org.openj9.test.java.lang.management;
 
+import org.openj9.test.util.VersionCheck;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 import org.testng.log4testng.Logger;
@@ -234,7 +235,7 @@ public class TestManagementUtils {
 		// Null file name
 		StackTraceElement st = new StackTraceElement("foo.bar.DeclaringClass", "methodName", null, 42);
 		CompositeData cd = TestUtil.toCompositeData(st);
-		int numValues = TestMisc.isJava9 ? 8 : 5;
+		int numValues = (VersionCheck.major() >= 9) ? 8 : 5;
 
 		// Examine the returned CompositeData
 		AssertJUnit.assertEquals(numValues, cd.values().size());
