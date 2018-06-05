@@ -1042,7 +1042,7 @@ clearNonZAAPEligibleBit(JNIEnv *env, jclass nativeClass, const JNINativeMethod *
 	jint count = nativeMethodCount;
 	J9Class *j9clazz = NULL;
 
-	vmFuncs->internalAcquireVMAccess(vmThread);
+	vmFuncs->internalEnterVMFromJNI(vmThread);
 	j9clazz = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, J9_JNI_UNWRAP_REFERENCE(nativeClass));
 
 	while (0 < count) {
