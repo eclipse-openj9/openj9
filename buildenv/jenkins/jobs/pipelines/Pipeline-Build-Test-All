@@ -20,13 +20,14 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-def SDK_VERSIONS = ['8', '9', '10']
-def SPECS = ['linux_ppc-64_cmprssptrs_le',
-            'linux_390-64_cmprssptrs',
-            'aix_ppc-64_cmprssptrs',
-            'linux_x86-64_cmprssptrs',
-            'linux_x86-64',
-            'win_x86-64_cmprssptrs']
+def SPECS = ['aix_ppc-64_cmprssptrs'      : ['8', '9', '10'],
+             'linux_390-64_cmprssptrs'    : ['8', '9', '10'],
+             'linux_ppc-64_cmprssptrs_le' : ['8', '9', '10'],
+             'linux_x86-64'               : ['8', '9', '10'],
+             'linux_x86-64_cmprssptrs'    : ['8', '9', '10'],
+             'win_x86'                    : ['8'],
+             'win_x86-64_cmprssptrs'      : ['8', '9', '10']]
+
 
 def OPENJDK_REPOS = ['8': 'https://github.com/ibmruntimes/openj9-openjdk-jdk8.git',
                      '9': 'https://github.com/ibmruntimes/openj9-openjdk-jdk9.git',
@@ -56,22 +57,23 @@ timeout(time: 10, unit: 'HOURS') {
         // update build description
         currentBuild.description = "OpenJ9: ${OPENJ9_SHA}<br/>OMR: ${OMR_SHA}"
 
-        SDK_VERSIONS.each { SDK_VERSION ->
-            def OPENJDK_REPO = OPENJDK_REPOS["${SDK_VERSION}"]
-            def OPENJDK_BRANCH = OPENJDK_BRANCHES["${SDK_VERSION}"]
-            def OPENJDK_SHA = buildFile.get_sha(OPENJDK_REPO, OPENJDK_BRANCH)
+        echo "OPENJ9_SHA:${OPENJ9_SHA}"
+        echo "OMR_SHA:${OMR_SHA}"
 
-            // append OpenJDK SHA to the build description
-            currentBuild.description += "<br/>OpenJDK${SDK_VERSION}: ${OPENJDK_SHA}"
+        def OPENJDK_SHAS = [:]
+        OPENJDK_REPOS.each { RELEASE, REPO ->
+            OPENJDK_SHAS["${RELEASE}"] = buildFile.get_sha(REPO, OPENJDK_BRANCHES["${RELEASE}"])
 
-            echo "Building OpenJ9 extensions for OpenJDK${SDK_VERSION}"
-            echo "OPENJDK_REPO = ${OPENJDK_REPO}"
-            echo "OPENJDK_BRANCH = ${OPENJDK_BRANCH}"
-            echo "OPENJDK_SHA:${OPENJDK_SHA}"
-            echo "OPENJ9_SHA:${OPENJ9_SHA}"
-            echo "OMR_SHA:${OMR_SHA}"
+            currentBuild.description += "<br/>OpenJDK${RELEASE}: ${OPENJDK_SHAS[RELEASE]}"
+            echo "OPENJDK${RELEASE}_SHA:${OPENJDK_SHAS[RELEASE]}"
+        }
 
-            SPECS.each { SPEC ->
+        SPECS.each { SPEC, SDK_VERSIONS ->
+            SDK_VERSIONS.each { SDK_VERSION ->
+                def OPENJDK_REPO = OPENJDK_REPOS["${SDK_VERSION}"]
+                def OPENJDK_BRANCH = OPENJDK_BRANCHES["${SDK_VERSION}"]
+                def OPENJDK_SHA = OPENJDK_SHAS["${SDK_VERSION}"]
+
                 builds["build_JDK${SDK_VERSION} ${SPEC}"] = { build(OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA, SDK_VERSION, SPEC) }
              }
         }

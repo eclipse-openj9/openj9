@@ -34,13 +34,14 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
     - Linux s390x (zLinux)
     - Linux PPCLE (pLinux)
     - AIX PPC (aix)
-    - Windows (win)
+    - Windows 64 bits (win)
+    - Windows 32 bits (win32) - supported on JDK8 only
 - Current supported Java verisons are Java8 and Java9
 - OpenJ9 committers can request builds by commenting in a pull request
     - Format: `Jenkins <build type> <level> <platform(s)> <java version(s)>`
     - Build Types: compile,test
     - Levels: sanity,extended (only if Build Type is test)
-    - Platforms: xlinux,xlinuxlargeheap,zlinux,plinux,aix,win
+    - Platforms: xlinux,zlinux,plinux,aix,win,win32
     - Java Versions: jdk8,jdk9,jdk10
 - Note: You can use keyword `all` for level, platform or version
 
