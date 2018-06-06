@@ -295,7 +295,6 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    void setJITaaSTimeout(uint32_t t) { _timeout = t; }
    uint32_t getJITaaSServerPort() const { return _JITaaSServerPort; }
    void setJITaaSServerPort(uint32_t port) { _JITaaSServerPort = port; }
-   std::string getJITaaSServerConnectionInfo() const { return _JITaaSServerAddress + ":" + std::to_string(_JITaaSServerPort); }
    uint64_t getJITaaSId() { return _JITaaSId; }
    void setJITaaSId(uint64_t val) { _JITaaSId = val; }
 

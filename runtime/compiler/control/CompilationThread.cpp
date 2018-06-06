@@ -4452,17 +4452,20 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
          {
          // Must find one that is SUSPENDED/SUSPENDING
          TR::CompilationInfoPerThread *compInfoPT = getFirstSuspendedCompilationThread();
-         compInfoPT->resumeCompilationThread();
-         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads))
+         if (compInfoPT) // FIXME this is null sometimes during shutdown. Why??
             {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"t=%6u Activate compThread %d Qweight=%d active=%d",
-               (uint32_t)getPersistentInfo()->getElapsedTime(),
-               compInfoPT->getCompThreadId(),
-               getQueueWeight(),
-               getNumCompThreadsActive());
+            compInfoPT->resumeCompilationThread();
+            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads))
+               {
+               TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"t=%6u Activate compThread %d Qweight=%d active=%d",
+                  (uint32_t)getPersistentInfo()->getElapsedTime(),
+                  compInfoPT->getCompThreadId(),
+                  getQueueWeight(),
+                  getNumCompThreadsActive());
+               }
+            //fprintf(stderr, "Activate compthread %d: _numQueuedMethods=%d queueWeight=%d getNumCompThreadsJobless=%d numactive=%d\n",
+            //   compInfoPT->getCompThreadId(), _numQueuedMethods, _queueWeight, getNumCompThreadsJobless(), getNumCompThreadsActive());
             }
-         //fprintf(stderr, "Activate compthread %d: _numQueuedMethods=%d queueWeight=%d getNumCompThreadsJobless=%d numactive=%d\n",
-         //   compInfoPT->getCompThreadId(), _numQueuedMethods, _queueWeight, getNumCompThreadsJobless(), getNumCompThreadsActive());
          }
       }
 
@@ -7095,6 +7098,15 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
       TR_DataCacheManager::getManager()->makeDataCacheAvailable(_reservedDataCache);
       _reservedDataCache = NULL;
       }
+
+#ifdef JITAAS_USE_RAW_SOCKETS
+   // Delete server stream
+   if (_compInfo.getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+      {
+      entry->_stream->~J9ServerStream();
+      TR_Memory::jitPersistentFree(entry->_stream);
+      }
+#endif
 
    // The KOT needs to survive at least until we're done committing virtual guards
    //

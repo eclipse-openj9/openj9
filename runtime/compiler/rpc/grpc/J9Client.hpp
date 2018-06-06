@@ -4,7 +4,7 @@
 #include <grpc++/grpc++.h>
 #include <chrono>
 #include "compile/CompilationTypes.hpp"
-#include "rpc/types.h"
+#include "rpc/StreamTypes.hpp"
 #include "rpc/ProtobufTypeConvert.hpp"
 #include "j9.h"
 #include "ilgen/J9IlGeneratorMethodDetails.hpp"
@@ -15,8 +15,8 @@ namespace JITaaS
 class J9ClientStream
    {
 public:
-   J9ClientStream(std::string address, uint32_t timeout=0)
-      : _stub(J9CompileService::NewStub(grpc::CreateChannel(address, grpc::InsecureChannelCredentials()))),
+   J9ClientStream(std::string address, uint32_t port, uint32_t timeout=0)
+      : _stub(J9CompileService::NewStub(grpc::CreateChannel(address + ":" + std::to_string(port), grpc::InsecureChannelCredentials()))),
         _msTimeout(timeout)
       {}
 

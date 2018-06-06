@@ -2,7 +2,7 @@
 #define J9_SERVER_H
 
 #include <grpc++/grpc++.h>
-#include "rpc/types.h"
+#include "rpc/StreamTypes.hpp"
 #include "rpc/ProtobufTypeConvert.hpp"
 #include "env/CHTable.hpp"
 

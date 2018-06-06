@@ -1,4 +1,4 @@
-#include "rpc/J9Server.h"
+#include "rpc/J9Server.hpp"
 #include "VMJ9Server.hpp"
 #include "j9methodServer.hpp"
 #include "control/CompilationRuntime.hpp"

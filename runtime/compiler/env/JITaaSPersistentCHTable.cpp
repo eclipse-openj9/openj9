@@ -1,7 +1,7 @@
 #include "JITaaSPersistentCHTable.hpp"
 #include "compile/Compilation.hpp"
 #include "control/CompilationRuntime.hpp"
-#include "J9Server.h"
+#include "J9Server.hpp"
 #include "env/ClassTableCriticalSection.hpp"   // for ClassTableCriticalSection
 #include "control/CompilationThread.hpp"       // for TR::compInfoPT
 #include "control/JITaaSCompilationThread.hpp"   // for ClientSessionData

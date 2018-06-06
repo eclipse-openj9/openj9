@@ -1981,8 +1981,9 @@ remoteCompile(
    int32_t numDims = 0;
    TR_OpaqueClassBlock *baseComponentClass = compiler->fej9vm()->getBaseComponentClass((TR_OpaqueClassBlock *)clazz, numDims);
 
-   JITaaS::J9ClientStream client(TR::comp()->getPersistentInfo()->getJITaaSServerConnectionInfo(),
-                               TR::comp()->getPersistentInfo()->getJITaaSTimeout());
+   JITaaS::J9ClientStream client(compInfo->getPersistentInfo()->getJITaaSServerAddress(),
+                                 compInfo->getPersistentInfo()->getJITaaSServerPort(),
+                                 compInfo->getPersistentInfo()->getJITaaSTimeout());
 
    uint32_t statusCode = compilationFailure;
    std::string codeCacheStr;

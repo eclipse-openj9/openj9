@@ -1,7 +1,7 @@
 #ifndef COMPILE_SERVICE_H
 #define COMPILE_SERVICE_H
 
-#include "rpc/J9Server.h"
+#include "rpc/J9Server.hpp"
 #include "j9.h"
 #include "j9nonbuilder.h"
 #include "vmaccess.h"

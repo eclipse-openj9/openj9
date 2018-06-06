@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <utility>
 #include <type_traits>
-#include "types.h"
+#include "StreamTypes.hpp"
 
 namespace JITaaS
    {

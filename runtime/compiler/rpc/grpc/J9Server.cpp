@@ -1,5 +1,7 @@
+#ifdef JITAAS_USE_GRPC
+
 #include <chrono>
-#include "J9Server.h"
+#include "J9Server.hpp"
 #include "control/Options.hpp"
 #include "env/VerboseLog.hpp"
 
@@ -124,3 +126,5 @@ JITaaS::J9CompileServer::serve(J9BaseCompileDispatcher *compiler, uint32_t timeo
       compiler->compile(_streams[(size_t)tag].get());
       }
    }
+
+#endif

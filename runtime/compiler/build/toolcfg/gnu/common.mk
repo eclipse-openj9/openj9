@@ -486,6 +486,13 @@ PROTO_CMD?=protoc
 GRPC_CPP?=$(shell which grpc_cpp_plugin)
 
 # link grpc libraries
-SOLINK_SLINK+=grpc++ grpc gpr protobuf ssl
+ifdef JITAAS_USE_GRPC
+   SOLINK_SLINK+=grpc++ grpc gpr protobuf ssl
+   CXX_DEFINES+=JITAAS_USE_GRPC
+else
+   JITAAS_USE_RAW_SOCKETS=1
+   SOLINK_SLINK+=protobuf
+   CXX_DEFINES+=JITAAS_USE_RAW_SOCKETS
+endif
 
 CXX_DEFINES+=GOOGLE_PROTOBUF_NO_RTTI

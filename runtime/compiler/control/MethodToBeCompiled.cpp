@@ -26,7 +26,7 @@
 #include "control/CompilationRuntime.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 #include "j9.h"
-#include "rpc/J9Server.h" // for _stream
+#include "rpc/J9Server.hpp" // for _stream
 
 int16_t TR_MethodToBeCompiled::_globalIndex = 0;
 

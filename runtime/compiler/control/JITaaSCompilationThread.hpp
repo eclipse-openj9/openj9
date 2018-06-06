@@ -3,7 +3,7 @@
 
 #include <unordered_map>
 #include "control/CompilationThread.hpp"
-#include "rpc/J9Client.h"
+#include "rpc/J9Client.hpp"
 #include "env/PersistentCollections.hpp"
 #include "env/j9methodServer.hpp"
 

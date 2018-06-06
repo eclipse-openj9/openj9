@@ -1,5 +1,5 @@
 #include "runtime/Listener.hpp"
-#include "rpc/J9Server.h"
+#include "rpc/J9Server.hpp"
 #include "env/VMJ9.h"
 #include "runtime/CompileService.hpp"
 

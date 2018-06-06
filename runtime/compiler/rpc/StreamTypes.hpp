@@ -1,16 +1,17 @@
 #ifndef RPC_TYPES_H
 #define RPC_TYPES_H
 
-#include <grpc++/grpc++.h>
-#include "rpc/gen/compile.grpc.pb.h"
 #include "infra/Assert.hpp"
+
+#ifdef JITAAS_USE_GRPC
+#include "grpc/StreamTypes.hpp"
+#endif
+#ifdef JITAAS_USE_RAW_SOCKETS
+#include "raw/StreamTypes.hpp"
+#endif
 
 namespace JITaaS
 {
-   typedef grpc::Status Status;
-   typedef grpc::ClientAsyncReaderWriter<J9ClientMessage, J9ServerMessage> J9ClientReaderWriter;
-   typedef grpc::ServerAsyncReaderWriter<J9ServerMessage, J9ClientMessage> J9ServerReaderWriter;
-
    class StreamFailure: public virtual std::exception
       {
    public:
