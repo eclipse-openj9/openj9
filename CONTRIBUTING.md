@@ -90,7 +90,9 @@ Fixes: #1234
 Sign off on your commit in the footer. By doing this, you assert original
 authorship of the commit and that you are permitted to contribute it. This can
 be automatically added to your commit by passing `-s` to `git commit`, or by
-manually adding the following line to the footer of the commit.
+manually adding the following line to the footer of the commit. The footer must
+be separated from the preceeding body or header with a blank line, and there must
+not be a blank line following the footer.
 
 ```
 Signed-off-by: Full Name <email>
@@ -124,6 +126,7 @@ The guidelines are changed to:
   message.
 
 Closes: #124
+
 Signed-off-by: Robert Young <rwy0717@gmail.com>
 ```
 
