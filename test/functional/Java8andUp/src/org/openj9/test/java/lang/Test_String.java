@@ -580,6 +580,15 @@ public class Test_String {
 	}
 
 	/**
+	 * @tests java.lang.String#contentEquals(java.lang.StringBuffer)
+	 */
+	@Test
+	public void test_contentEquals() {
+		AssertJUnit.assertTrue("contentEquals: failed to return true with matching strings", hw1.contentEquals(new StringBuffer(hw2)));
+		AssertJUnit.assertFalse("contentEquals: failed to return false with non matching strings", hw1.contentEquals(new StringBuffer(hello1)));
+	}
+
+	/**
 	 * @tests java.lang.String#getBytes()
 	 */
 	@Test
