@@ -94,7 +94,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<property name="uma_make_cmd_cxx" value="tpf-g++"/>
 		<property name="uma_make_cmd_cxx_dll_ld" value="$(CC)"/>
 		<property name="uma_make_cmd_cxx_exe_ld" value="$(CC)"/>
-		<property name="uma_make_cmd_dll_ld" value="tpf-gcc"/>
+		<property name="uma_make_cmd_dll_ld" value="$(CC)"/>
 		<property name="uma_make_cmd_exe_ld" value="$(CC)"/>
 		<property name="uma_make_cmd_ranlib" value="tpf-ranlib"/>
 		<property name="uma_processor" value="s390"/>
