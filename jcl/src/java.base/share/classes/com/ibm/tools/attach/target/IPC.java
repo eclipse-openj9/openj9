@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.security.SecureRandom;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Random;
@@ -210,6 +211,16 @@ public class IPC {
 			}
 			return randomGen.nextInt();
 		}
+	}
+	
+	/**
+	 * Create a truly random string of hexadecimal characters with 64 bits of entropy.
+	 * This may be slow.
+	 * @return hexadecimal string
+	 */
+	public static String getRandomString() {
+		SecureRandom randomGenerator = new SecureRandom();
+		return Long.toHexString(randomGenerator.nextLong());
 	}
 
 	/**
