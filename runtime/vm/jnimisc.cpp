@@ -1031,7 +1031,7 @@ getStaticIntField(JNIEnv *env, jclass clazz, jfieldID fieldID)
 	if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_GET_STATIC_FIELD)) {
 		J9Method *method = findNativeMethodFrame(currentThread)->method;
 		if (NULL != method) {
-			ALWAYS_TRIGGER_J9HOOK_VM_GET_STATIC_FIELD(vm->hookInterface, currentThread, method, 0, valueAddress);
+			ALWAYS_TRIGGER_J9HOOK_VM_GET_STATIC_FIELD(vm->hookInterface, currentThread, method, 0, declaringClass, valueAddress);
 		}
 	}
 	bool isVolatile = J9_ARE_ANY_BITS_SET(modifiers, J9AccVolatile);
@@ -1059,7 +1059,7 @@ setStaticIntField(JNIEnv *env, jclass clazz, jfieldID fieldID, jint value)
 	if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_PUT_STATIC_FIELD)) {
 		J9Method *method = findNativeMethodFrame(currentThread)->method;
 		if (NULL != method) {
-			ALWAYS_TRIGGER_J9HOOK_VM_PUT_STATIC_FIELD(vm->hookInterface, currentThread, method, 0, valueAddress, (void*)&value);
+			ALWAYS_TRIGGER_J9HOOK_VM_PUT_STATIC_FIELD(vm->hookInterface, currentThread, method, 0, declaringClass, valueAddress, (void*)&value);
 		}
 	}
 	bool isVolatile = J9_ARE_ANY_BITS_SET(modifiers, J9AccVolatile);
@@ -1090,7 +1090,7 @@ getStaticLongField(JNIEnv *env, jclass clazz, jfieldID fieldID)
 	if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_GET_STATIC_FIELD)) {
 		J9Method *method = findNativeMethodFrame(currentThread)->method;
 		if (NULL != method) {
-			ALWAYS_TRIGGER_J9HOOK_VM_GET_STATIC_FIELD(vm->hookInterface, currentThread, method, 0, valueAddress);
+			ALWAYS_TRIGGER_J9HOOK_VM_GET_STATIC_FIELD(vm->hookInterface, currentThread, method, 0, declaringClass, valueAddress);
 		}
 	}
 	bool isVolatile = J9_ARE_ANY_BITS_SET(modifiers, J9AccVolatile);
@@ -1118,7 +1118,7 @@ setStaticDoubleFieldIndirect(JNIEnv *env, jobject clazz, jfieldID fieldID, void 
 	if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_PUT_STATIC_FIELD)) {
 		J9Method *method = findNativeMethodFrame(currentThread)->method;
 		if (NULL != method) {
-			ALWAYS_TRIGGER_J9HOOK_VM_PUT_STATIC_FIELD(vm->hookInterface, currentThread, method, 0, valueAddress, value);
+			ALWAYS_TRIGGER_J9HOOK_VM_PUT_STATIC_FIELD(vm->hookInterface, currentThread, method, 0, declaringClass, valueAddress, value);
 		}
 	}
 	bool isVolatile = J9_ARE_ANY_BITS_SET(modifiers, J9AccVolatile);
@@ -1149,7 +1149,7 @@ getStaticObjectField(JNIEnv *env, jclass clazz, jfieldID fieldID)
 	if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_GET_STATIC_FIELD)) {
 		J9Method *method = findNativeMethodFrame(currentThread)->method;
 		if (NULL != method) {
-			ALWAYS_TRIGGER_J9HOOK_VM_GET_STATIC_FIELD(vm->hookInterface, currentThread, method, 0, valueAddress);
+			ALWAYS_TRIGGER_J9HOOK_VM_GET_STATIC_FIELD(vm->hookInterface, currentThread, method, 0, declaringClass, valueAddress);
 		}
 	}
 	bool isVolatile = J9_ARE_ANY_BITS_SET(modifiers, J9AccVolatile);
@@ -1179,7 +1179,7 @@ setStaticObjectField(JNIEnv *env, jclass clazz, jfieldID fieldID, jobject value)
 		J9Method *method = findNativeMethodFrame(currentThread)->method;
 		if (NULL != method) {
 			j9object_t valueObject = (NULL == value) ? NULL : J9_JNI_UNWRAP_REFERENCE(value);
-			ALWAYS_TRIGGER_J9HOOK_VM_PUT_STATIC_FIELD(vm->hookInterface, currentThread, method, 0, valueAddress, (void*)&valueObject);
+			ALWAYS_TRIGGER_J9HOOK_VM_PUT_STATIC_FIELD(vm->hookInterface, currentThread, method, 0, declaringClass, valueAddress, (void*)&valueObject);
 		}
 	}
 	bool isVolatile = J9_ARE_ANY_BITS_SET(modifiers, J9AccVolatile);
