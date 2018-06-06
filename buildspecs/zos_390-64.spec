@@ -114,7 +114,6 @@
 		<project id="compiler"/>
 	</source>
 	<flags>
-		<flag id="interp_atomicFreeJni" value="true"/>
 		<flag id="arch_s390" value="true"/>
 		<flag id="build_SE6_package" value="true"/>
 		<flag id="build_autobuild" value="true"/>
