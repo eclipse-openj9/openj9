@@ -1148,7 +1148,7 @@ MM_RealtimeMarkingScheme::scanSoftReferenceObjects(MM_EnvironmentRealtime *env)
 		if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 			MM_ReferenceObjectList *referenceObjectList = &_gcExtensions->referenceObjectLists[listIndex];
 			referenceObjectList->startSoftReferenceProcessing();
-			processReferenceList(env, NULL, referenceObjectList->getPriorSoftList(), &gcEnv->_markJavaStats._weakReferenceStats);
+			processReferenceList(env, NULL, referenceObjectList->getPriorSoftList(), &gcEnv->_markJavaStats._softReferenceStats);
 			_scheduler->condYieldFromGC(env);
 		}
 	}
@@ -1166,7 +1166,7 @@ MM_RealtimeMarkingScheme::scanPhantomReferenceObjects(MM_EnvironmentRealtime *en
 		if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 			MM_ReferenceObjectList *referenceObjectList = &_gcExtensions->referenceObjectLists[listIndex];
 			referenceObjectList->startPhantomReferenceProcessing();
-			processReferenceList(env, NULL, referenceObjectList->getPriorPhantomList(), &gcEnv->_markJavaStats._weakReferenceStats);
+			processReferenceList(env, NULL, referenceObjectList->getPriorPhantomList(), &gcEnv->_markJavaStats._phantomReferenceStats);
 			_scheduler->condYieldFromGC(env);
 		}
 	}
