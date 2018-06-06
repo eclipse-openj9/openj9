@@ -39,7 +39,6 @@ import com.ibm.java.lang.management.internal.ManagementUtils;
 public class TestMisc {
 
 	private static Logger logger = Logger.getLogger(TestMisc.class);
-	public static final boolean isJava9 = "9".equalsIgnoreCase(System.getProperty("java.specification.version"));
 
 	@BeforeClass
 	protected void setUp() throws Exception {
