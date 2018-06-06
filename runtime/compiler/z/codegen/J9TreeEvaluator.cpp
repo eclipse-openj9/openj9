@@ -4353,7 +4353,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
          }
       scratch1Reg = cg->allocateRegister();
 
-      TR::RealRegister::RegNum scratch1RegAssignment;
+      TR::RealRegister::RegDep scratch1RegAssignment;
 #if defined(TR_TARGET_64BIT)
 #if defined(J9ZOS390)
       if (comp->getOption(TR_EnableRMODE64))
@@ -4361,7 +4361,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
          {
          // On 64-bit systems trampolines may kill the EP register so we need to add it to post-dependencies. If there
          // is no OOL path we need to assign any real register to scratch1Reg.
-         scratch1RegAssignment = (needsHelperCall) ?  cg->getEntryPointRegister() : TR::RealRegister::AssignAny;
+         scratch1RegAssignment = (needsHelperCall) ?  static_cast<TR::RealRegister::RegDep>(cg->getEntryPointRegister()) : TR::RealRegister::AssignAny;
          }
 #elif !defined(TR_TARGET_64BIT) || (defined(TR_TARGET_64BIT) && defined(J9ZOS390))
 #if (defined(TR_TARGET_64BIT) && defined(J9ZOS390))
