@@ -4776,6 +4776,7 @@ reservationLockEnter(TR::Node *node, int32_t lwOffset, TR::Register *objectClass
    conditions->getPostConditions()->getRegisterDependency(conditions->getAddCursorForPost() - 1)->setExcludeGPR0();
    addDependency(conditions, cndReg, TR::RealRegister::cr0, TR_CCR, cg);
    addDependency(conditions, valReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   addDependency(conditions, tempReg, TR::RealRegister::NoReg, TR_GPR, cg);
 
    if (!isPrimitive)
       {
