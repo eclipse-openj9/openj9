@@ -49,6 +49,8 @@ import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.spi.AttachProvider;
 
+import static org.openj9.test.util.FileUtilities.deleteRecursive;
+
 @Test(groups = { "level.extended" })
 @SuppressWarnings({"nls"})
 public class TestAttachErrorHandling extends AttachApiTest implements TestConstants {
@@ -93,7 +95,7 @@ public class TestAttachErrorHandling extends AttachApiTest implements TestConsta
 	}
 	
 	@Test
-	public void test_startupShutdownRobustness() {
+	public void test_startupShutdownRobustness() throws IOException {
 		File ipcDir=new File(System.getProperty("java.io.tmpdir"), testName);
 		ipcDir.mkdir();
 		File logDir=new File(System.getProperty("java.io.tmpdir"), testName+"_logs");
@@ -123,7 +125,7 @@ public class TestAttachErrorHandling extends AttachApiTest implements TestConsta
 	}
 
 	private void deleteIpcDirectories(File ipcDir,
-			ArrayList<TargetManager> targets) {
+			ArrayList<TargetManager> targets) throws IOException {
 		for (TargetManager victim: targets) {
 			String tgtId = victim.getTargetPid();
 			File targetDir = new File(ipcDir, victim.targetId);
