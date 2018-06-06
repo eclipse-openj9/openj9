@@ -154,6 +154,8 @@ bash configure --with-freemarker-jar=/root/freemarker.jar
 ```
 :warning: You must give an absolute path to freemarker.jar
 
+:pencil: If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
+
 ### 4. Build
 :penguin:
 Now you're ready to build OpenJDK V9 with OpenJ9:
@@ -256,6 +258,8 @@ bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar \
                --disable-warnings-as-errors
 ```
 where `<my_home_dir>` is the location where you stored **freemarker.jar** and `<cups_include_path>` is the absolute path to CUPS. For example `/opt/freeware/include`.
+
+:pencil: If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
 
 ### 4. build
 :blue_book:
@@ -377,6 +381,8 @@ bash configure --disable-warnings-as-errors \
 ```
 
 :pencil: Modify the paths for freemarker and freetype if you manually downloaded and unpacked these dependencies into different directories. If Java 8 is not available on the path, add the `--with-boot-jdk=<path_to_jdk8>` configuration option.
+
+:pencil: If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
 
 ### 4. build
 :ledger:
