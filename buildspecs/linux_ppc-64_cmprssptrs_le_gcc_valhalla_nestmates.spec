@@ -20,8 +20,9 @@ OpenJDK Assembly Exception [2].
 
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
-<spec xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.ibm.com/j9/builder/spec" xsi:schemaLocation="http://www.ibm.com/j9/builder/spec spec-v1.xsd" id="linux_ppc-64_cmprssptrs_le_valhalla_nestmates">
-	<name>Linux PPC LE 64bit Compressed Pointers Valhalla Nestmates</name>
+
+<spec xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.ibm.com/j9/builder/spec" xsi:schemaLocation="http://www.ibm.com/j9/builder/spec spec-v1.xsd" id="linux_ppc-64_cmprssptrs_le_gcc_valhalla_nestmates">
+	<name>Linux PPC LE 64bit GCC Compressed Pointers Valhalla Nestmates</name>
 	<asmBuilderName>LinuxPPC64LE</asmBuilderName>
 	<cpuArchitecture>ppc</cpuArchitecture>
 	<os>linux</os>
@@ -29,7 +30,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<defaultSizes>desktop (256M + big OS stack)</defaultSizes>
 	<priority>150</priority>
 	<owners>
-		<owner>Talia.McCormick@ibm.com</owner>
+		<owner>Jack.S.Lu@ibm.com</owner>
 	</owners>
 	<properties>
 		<property name="SE6_extension" value="tar.gz"/>
@@ -42,16 +43,16 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<property name="graph_commands.unix.remote_host" value=""/>
 		<property name="graph_datamines" value="commands.unix.datamine,site-ottawa.datamine,use.local.datamine"/>
 		<property name="graph_label.classlib" value="150"/>
-		<property name="graph_label.java5" value="j9vmxp64lecmprssptrs24"/>
-		<property name="graph_label.java6" value="pxp64lecmprssptrs60"/>
-		<property name="graph_label.java60_26" value="pxp64lecmprssptrs60_26"/>
+		<property name="graph_label.java5" value="j9vmxp64lecmprssptrs24_gcc"/>
+		<property name="graph_label.java6" value="pxp64lecmprssptrs60_gcc"/>
+		<property name="graph_label.java60_26" value="pxp64lecmprssptrs60_26_gcc"/>
 		<property name="graph_label.java6_rebuilt_extension" value="zip"/>
-		<property name="graph_label.java7" value="pxp64lecmprssptrs70"/>
-		<property name="graph_label.java70_27" value="pxp64lecmprssptrs70_27"/>
-		<property name="graph_label.java8" value="pxp64lecmprssptrs80"/>
-		<property name="graph_label.java9" value="pxp64lecmprssptrs90"/>
+		<property name="graph_label.java7" value="pxp64lecmprssptrs70_gcc"/>
+		<property name="graph_label.java70_27" value="pxp64lecmprssptrs70_27_gcc"/>
+		<property name="graph_label.java8" value="pxp64lecmprssptrs80_gcc"/>
+		<property name="graph_label.java9" value="pxp64lecmprssptrs90_gcc"/>
 		<property name="graph_label.osid" value="lnx"/>
-		<property name="graph_label.profile" value="_cmprssptrs_le"/>
+		<property name="graph_label.profile" value="_cmprssptrs_le_gcc"/>
 		<property name="graph_make_parallel_arg" value="-j `numberOfCPUs`"/>
 		<property name="graph_req.arch0" value="arch:ppcle"/>
 		<property name="graph_req.arch1" value=""/>
@@ -87,15 +88,15 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<property name="platform_arch" value="ppc64le"/>
 		<property name="svn_stream" value=""/>
 		<property name="uma_make_cmd_ar" value="ar"/>
-		<property name="uma_make_cmd_as" value="xlC_r"/>
-		<property name="uma_make_cmd_cc" value="xlC_r"/>
+		<property name="uma_make_cmd_as" value="as"/>
+		<property name="uma_make_cmd_cc" value="gcc"/>
 		<property name="uma_make_cmd_cpp" value="cpp"/>
-		<property name="uma_make_cmd_cxx" value="$(CC)"/>
-		<property name="uma_make_cmd_cxx_dll_ld" value="xlc_r"/>
+		<property name="uma_make_cmd_cxx" value="c++"/>
+		<property name="uma_make_cmd_cxx_dll_ld" value="c++"/>
 		<property name="uma_make_cmd_cxx_exe_ld" value="$(CC)"/>
-		<property name="uma_make_cmd_dll_ld" value="xlc_r"/>
-		<property name="uma_make_cmd_exe_ld" value="xlc_r"/>
-		<property name="uma_make_cmd_ppc_gcc_cxx" value="gcc"/>
+		<property name="uma_make_cmd_dll_ld" value="$(CC)"/>
+		<property name="uma_make_cmd_exe_ld" value="$(CC)"/>
+		<property name="uma_make_cmd_ppc_gcc_cxx" value="c++"/>
 		<property name="uma_make_cmd_ranlib" value="ranlib"/>
 		<property name="uma_processor" value="ppc,ppc64"/>
 		<property name="uma_type" value="unix,linux"/>
@@ -126,24 +127,26 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="build_java8" value="false"/>
 		<flag id="build_java9" value="false"/>
 		<flag id="build_product" value="false"/>
+		<flag id="build_openj9" value="false"/>
+		<flag id="build_openj9JDK8" value="false"/>
 		<flag id="build_stage_toronto_lab" value="true"/>
+		<flag id="env_gcc" value="true"/>
 		<flag id="env_hasFPU" value="true"/>
 		<flag id="env_littleEndian" value="true"/>
 		<flag id="env_sharedLibsCalleeGlobalTableSetup" value="true"/>
 		<flag id="env_sharedLibsUseGlobalTable" value="true"/>
 		<flag id="gc_batchClearTLH" value="true"/>
 		<flag id="gc_debugAsserts" value="true"/>
+		<flag id="gc_idleHeapManager" value="true"/>
 		<flag id="gc_inlinedAllocFields" value="true"/>
 		<flag id="gc_minimumObjectSize" value="true"/>
 		<flag id="gc_subpoolsAlias" value="true"/>
 		<flag id="graph_cmdLineTester" value="true"/>
-		<flag id="graph_compile" value="true"/>
-		<flag id="graph_enableModularityTesting" value="true"/>
-		<flag id="graph_enableTesting" value="true"/>
-		<flag id="graph_enableTesting_Java8" value="true"/>
+		<flag id="graph_compile" value="false"/>
+		<flag id="graph_enableTesting" value="false"/>
+		<flag id="graph_enableTesting_Java8" value="false"/>
 		<flag id="graph_j2seSanity" value="true"/>
 		<flag id="graph_jgrinder" value="true"/>
-		<flag id="graph_mirrorToPoughkeepsie" value="false"/>
 		<flag id="graph_plumhall" value="true"/>
 		<flag id="graph_useJTCTestingPlaylist" value="true"/>
 		<flag id="graph_verification" value="true"/>
@@ -257,8 +260,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="opt_stringCompression" value="true"/>
 		<flag id="opt_useFfi" value="true"/>
 		<flag id="opt_useFfiOnly" value="true"/>
-		<flag id="opt_valhallaValueTypes" value="false"/>
 		<flag id="opt_valhallaNestmates" value="true"/>
+		<flag id="opt_valhallaValueTypes" value="false"/>
 		<flag id="opt_zipSupport" value="true"/>
 		<flag id="opt_zlibCompression" value="true"/>
 		<flag id="opt_zlibSupport" value="true"/>
