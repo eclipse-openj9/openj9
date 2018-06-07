@@ -14334,16 +14334,14 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
       case TR::java_lang_String_andOR:
          return TR::TreeEvaluator::andORStringEvaluator(node, cg);
 
-      case TR::java_lang_String_toUpperHWOptimized:
-      case TR::java_lang_String_toUpperHWOptimizedDecompressed:
-         return TR::TreeEvaluator::decompressedStringToUpperCaseEvalutor(node, cg);
-      case TR::java_lang_String_toUpperHWOptimizedCompressed:
-         return TR::TreeEvaluator::compressedStringToUpperCaseEvalutor(node, cg);
-      case TR::java_lang_String_toLowerHWOptimized:
-      case TR::java_lang_String_toLowerHWOptimizedDecompressed:
-         return TR::TreeEvaluator::decompressedStringToLowerCaseEvalutor(node, cg);
-      case TR::java_lang_String_toLowerHWOptimizedCompressed:
-         return TR::TreeEvaluator::compressedStringToUpperCaseEvalutor(node, cg);
+      case TR::com_ibm_jit_JITHelpers_toUpperIntrinsicUTF16:
+         return TR::TreeEvaluator::toUpperIntrinsicUTF16Evaluator(node, cg);
+      case TR::com_ibm_jit_JITHelpers_toUpperIntrinsicLatin1:
+         return TR::TreeEvaluator::toUpperIntrinsicLatin1Evaluator(node, cg);
+      case TR::com_ibm_jit_JITHelpers_toLowerIntrinsicUTF16:
+         return TR::TreeEvaluator::toLowerIntrinsicUTF16Evaluator(node, cg);
+      case TR::com_ibm_jit_JITHelpers_toLowerIntrinsicLatin1:
+         return TR::TreeEvaluator::toLowerIntrinsicLatin1Evaluator(node, cg);
       default:
          break;
       }
@@ -14665,7 +14663,7 @@ class J9::X86::TreeEvaluator::CaseConversionManager {
 };
 
 TR::Register *
-J9::X86::TreeEvaluator::compressedStringToUpperCaseEvalutor(TR::Node *node, TR::CodeGenerator *cg)
+J9::X86::TreeEvaluator::toUpperIntrinsicLatin1Evaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    CaseConversionManager manager(true /* isCompressedString */, false /* toLowerCase */);
    return TR::TreeEvaluator::stringCaseConversionHelper(node, cg, manager);
@@ -14673,21 +14671,21 @@ J9::X86::TreeEvaluator::compressedStringToUpperCaseEvalutor(TR::Node *node, TR::
 
 
 TR::Register *
-J9::X86::TreeEvaluator::compressedStringToLowerCaseEvalutor(TR::Node *node, TR::CodeGenerator *cg)
+J9::X86::TreeEvaluator::toLowerIntrinsicLatin1Evaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    CaseConversionManager manager(true/* isCompressedString */, true /* toLowerCase */);
    return TR::TreeEvaluator::stringCaseConversionHelper(node, cg, manager);
    }
 
 TR::Register *
-J9::X86::TreeEvaluator::decompressedStringToUpperCaseEvalutor(TR::Node *node, TR::CodeGenerator *cg)
+J9::X86::TreeEvaluator::toUpperIntrinsicUTF16Evaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    CaseConversionManager manager(false /* isCompressedString */, false /* toLowerCase */);
    return TR::TreeEvaluator::stringCaseConversionHelper(node, cg, manager);
    }
 
 TR::Register *
-J9::X86::TreeEvaluator::decompressedStringToLowerCaseEvalutor(TR::Node *node, TR::CodeGenerator *cg)
+J9::X86::TreeEvaluator::toLowerIntrinsicUTF16Evaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    CaseConversionManager manager(false /* isCompressedString */, true /* toLowerCase */);
    return TR::TreeEvaluator::stringCaseConversionHelper(node, cg, manager);
@@ -14724,17 +14722,16 @@ TR::Register *
 J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGenerator *cg, CaseConversionManager &manager)
    {
    #define iComment(str) if (debug) debug->addInstructionComment(cursor, (const_cast<char*>(str)));
-   TR_ASSERT(node->getNumChildren() == 3, "node has incorrect number of children");
    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)14, (uint8_t)14, cg);
-   TR::Register *srcArray = cg->evaluate(node->getFirstChild());
+   TR::Register *srcArray = cg->evaluate(node->getChild(1));
    deps->addPostCondition(srcArray, TR::RealRegister::NoReg, cg);
    deps->addPreCondition(srcArray, TR::RealRegister::NoReg, cg);
 
-   TR::Register *dstArray = cg->evaluate(node->getSecondChild());
+   TR::Register *dstArray = cg->evaluate(node->getChild(2));
    deps->addPostCondition(dstArray, TR::RealRegister::NoReg, cg);
    deps->addPreCondition(dstArray, TR::RealRegister::NoReg, cg);
 
-   TR::Register *length = cg->intClobberEvaluate(node->getThirdChild());
+   TR::Register *length = cg->intClobberEvaluate(node->getChild(3));
    deps->addPostCondition(length, TR::RealRegister::NoReg, cg);
    deps->addPreCondition(length, TR::RealRegister::NoReg, cg);
 
@@ -14754,7 +14751,8 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
    TR_Debug *debug = cg->getDebug();
    TR::Instruction * cursor = NULL;
 
-   uint32_t strideSize = 16;
+   uint32_t strideSize = 16; 
+   uintptrj_t headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
 
    static uint16_t MINUS1[] =
       {
@@ -14789,11 +14787,7 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
 
    generateRegRegInstruction(MOVRegReg(), node, result, dstArray, cg);
 
-   // # charater to # byte conversion
-   if (!manager.isCompressedString()) // non compressedString using char[] which is 2 bytes per charactor
-      cursor = generateRegImmInstruction(SHLRegImm1(), node, length, 1, cg); iComment("# character to # byte conversion");
-
-   // initialize the loop counter
+   // initialize the loop counter 
    cursor = generateRegRegInstruction(XORRegReg(), node, counter, counter, cg); iComment("initialize loop counter");
 
    //calculate the residueStartLength. Later instructions compare the counter with this length and decide when to jump to the residue handling sequence
@@ -14815,7 +14809,7 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
    generateRegRegInstruction(CMPRegReg(), node, counter, residueStartLength, cg);
    generateLabelInstruction(JGE4, node, residueStartLabel, cg);
 
-   auto srcArrayMemRef = generateX86MemoryReference(srcArray, counter, 0, 0, cg);
+   auto srcArrayMemRef = generateX86MemoryReference(srcArray, counter, 0, headerSize, cg);
    generateRegMemInstruction(MOVDQURegMem, node, xmmRegArrayContentCopy0, srcArrayMemRef, cg);
 
    //detect invalid charactors
@@ -14847,7 +14841,7 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
       generateRegRegInstruction(manager.isCompressedString()? PSUBBRegReg: PSUBWRegReg, node,
                                 xmmRegArrayContentCopy2, xmmRegArrayContentCopy1, cg);
 
-   auto dstArrayMemRef = generateX86MemoryReference(dstArray, counter, 0, 0, cg);
+   auto dstArrayMemRef = generateX86MemoryReference(dstArray, counter, 0, headerSize, cg);
    generateMemRegInstruction(MOVDQUMemReg, node, dstArrayMemRef, xmmRegArrayContentCopy2, cg);
    generateRegImmInstruction(ADDRegImms(), node, counter, strideSize, cg);
    generateLabelInstruction(JMP4, node, caseConversionMainLoopLabel, cg);
@@ -14856,7 +14850,7 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
    generateLabelInstruction(LABEL, node, residueStartLabel, cg);
    generateRegRegInstruction(CMPRegReg(), node, counter, length, cg);
    generateLabelInstruction(JGE4, node, endLabel, cg);
-   srcArrayMemRef = generateX86MemoryReference(srcArray, counter, 0, 0, cg);
+   srcArrayMemRef = generateX86MemoryReference(srcArray, counter, 0, headerSize, cg);
    generateRegMemInstruction( manager.isCompressedString()? MOVZXReg4Mem1: MOVZXReg4Mem2, node, singleChar, srcArrayMemRef, cg);
 
    // use unsigned compare to detect invalid range
@@ -14880,7 +14874,7 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
 
    generateLabelInstruction(LABEL, node, storeToArrayLabel, cg);
 
-   dstArrayMemRef = generateX86MemoryReference(dstArray, counter, 0, 0, cg);
+   dstArrayMemRef = generateX86MemoryReference(dstArray, counter, 0, headerSize, cg);
    generateMemRegInstruction(manager.isCompressedString()? S1MemReg: S2MemReg, node, dstArrayMemRef, singleChar, cg);
    generateRegImmInstruction(ADDRegImms(), node, counter, manager.isCompressedString()? 1: 2, cg);
    generateLabelInstruction(JMP4, node, residueStartLabel, cg);
@@ -14906,9 +14900,10 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
    cg->stopUsingRegister(xmmRegArrayContentCopy2);
 
 
-   cg->decReferenceCount(node->getFirstChild());
-   cg->decReferenceCount(node->getSecondChild());
-   cg->decReferenceCount(node->getThirdChild());
+   cg->decReferenceCount(node->getChild(0));
+   cg->decReferenceCount(node->getChild(1));
+   cg->decReferenceCount(node->getChild(2));
+   cg->decReferenceCount(node->getChild(3));
    return result;
    }
 

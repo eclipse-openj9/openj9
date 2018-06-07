@@ -24,10 +24,13 @@ package org.openj9.test.com.ibm.jit;
 
 import org.testng.annotations.Test;
 import org.testng.AssertJUnit;
+import org.testng.Assert;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import com.ibm.jit.JITHelpers;
 import org.openj9.test.com.ibm.jit.Test_JITHelpersImpl;
+import java.util.Arrays;
+import java.lang.reflect.Field;
 
 
 @Test(groups = { "level.sanity" })
@@ -53,4 +56,207 @@ public class Test_JITHelpers {
 
 	}
 
+	private static final com.ibm.jit.JITHelpers helpers = getJITHelpers();
+	private static com.ibm.jit.JITHelpers getJITHelpers() {
+
+		try {
+			Field f = com.ibm.jit.JITHelpers.class.getDeclaredField("helpers");
+			f.setAccessible(true);
+			return (com.ibm.jit.JITHelpers) f.get(null);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException(e);
+		} catch (NoSuchFieldException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private static int[] edgecaseLengths = new int[]{0, 1, 4, 7, 8, 9, 15, 16, 17, 31, 32, 33};
+
+	private static char[] lowercaseLatin1Char = {0x6162, 0x6364, 0x6566, 0x6768, 0x696a, 0x6b6c, 0x6d6e, 0x6f70, 0x7172, 0x7374, 0x7576, 0x7778, 0x797a,
+		(char)0xe0e1, (char)0xe2e3, (char)0xe4e5, (char)0xe600};
+	private static char[] uppercaseLatin1Char = {0x4142, 0x4344, 0x4546, 0x4748, 0x494a, 0x4b4c, 0x4d4e, 0x4f50, 0x5152, 0x5354, 0x5556, 0x5758, 0x595a,
+		(char)0xc0c1, (char)0xc2c3, (char)0xc4c5, (char)0xc600};
+	private static char[] lowercaseUTF16Char = {0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f, 0x70, 0x71,
+		0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0xe0, 0xe1, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6};
+	private static char[] uppercaseUTF16Char = {0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f, 0x50, 0x51,
+		0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5a, 0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6};
+
+	private static byte[] lowercaseLatin1Byte = {0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f, 0x70, 0x71,
+		0x72, 0x73, 0x74, 0x75, 0x76,0x77, 0x78, 0x79, 0x7a, (byte)0xe0, (byte)0xe1, (byte)0xe2, (byte)0xe3, (byte)0xe4, (byte)0xe5, (byte)0xe6};
+	private static byte[] uppercaseLatin1Byte = {0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f, 0x50, 0x51,
+		0x52, 0x53, 0x54, 0x55, 0x56,0x57, 0x58, 0x59, 0x5a, (byte)0xc0, (byte)0xc1, (byte)0xc2, (byte)0xc3, (byte)0xc4, (byte)0xc5,(byte)0xc6};
+	private static byte[] lowercaseUTF16BigEndianByte = {0x00, 0x61, 0x0, 0x62, 0x0, 0x63, 0x0, 0x64, 0x0, 0x65, 0x0, 0x66, 0x0, 0x67, 0x0, 0x68, 0x0,
+		0x69, 0x0, 0x6a, 0x0, 0x6b, 0x0, 0x6c, 0x0, 0x6d, 0x0, 0x6e, 0x0, 0x6f, 0x0, 0x70, 0x0, 0x71, 0x0, 0x72, 0x0, 0x73, 0x0, 0x74, 0x0,
+		0x75, 0x0, 0x76, 0x0, 0x77, 0x0, 0x78, 0x0, 0x79, 0x0, 0x7a, 0x0, (byte)0xe0, 0x0, (byte)0xe1, 0x0, (byte)0xe2, 0x0, (byte)0xe3,
+		0x0, (byte)0xe4, 0x0, (byte)0xe5, 0x0, (byte)0xe6};
+	private static byte[] uppercaseUTF16BigEndianByte = {0x0, 0x41, 0x0, 0x42, 0x0, 0x43, 0x0, 0x44, 0x0, 0x45, 0x0, 0x46, 0x0, 0x47, 0x0, 0x48, 0x0,
+		0x49, 0x0, 0x4a, 0x0, 0x4b, 0x0,0x4c, 0x0, 0x4d, 0x0, 0x4e, 0x0, 0x4f, 0x0, 0x50, 0x0, 0x51, 0x0, 0x52, 0x0, 0x53, 0x0, 0x54, 0x0, 0x55, 0x0,
+		0x56, 0x0, 0x57, 0x0, 0x58, 0x0, 0x59, 0x0, 0x5a, 0x0, (byte)0xc0, 0x0, (byte)0xc1, 0x0, (byte)0xc2, 0x0, (byte)0xc3, 0x0, (byte)0xc4, 0x0,
+		(byte)0xc5, 0x0, (byte)0xc6};
+	private static byte[] lowercaseUTF16LittleEndianByte = {0x61, 0x0, 0x62, 0x0, 0x63, 0x0, 0x64, 0x0, 0x65, 0x0, 0x66, 0x0, 0x67, 0x0, 0x68, 0x0, 0x69,
+		0x0, 0x6a, 0x0, 0x6b, 0x0, 0x6c, 0x0, 0x6d, 0x0, 0x6e, 0x0, 0x6f, 0x0, 0x70, 0x0, 0x71, 0x0, 0x72, 0x0, 0x73, 0x0, 0x74, 0x0, 0x75, 0x0,
+		0x76, 0x0, 0x77, 0x0, 0x78, 0x0, 0x79, 0x0, 0x7a, 0x0, (byte)0xe0, 0x0, (byte)0xe1, 0x0, (byte)0xe2, 0x0, (byte)0xe3, 0x0, (byte)0xe4,
+		0x0, (byte)0xe5, 0x0, (byte)0xe6, 0x0};
+	private static byte[] uppercaseUTF16LittleEndianByte = {0x41, 0x0, 0x42, 0x0, 0x43, 0x0, 0x44, 0x0, 0x45, 0x0, 0x46, 0x0, 0x47, 0x0, 0x48, 0x0, 0x49, 0x0,
+		0x4a, 0x0, 0x4b, 0x0, 0x4c, 0x0, 0x4d, 0x0, 0x4e, 0x0, 0x4f, 0x0, 0x50, 0x0, 0x51, 0x0, 0x52, 0x0, 0x53, 0x0, 0x54, 0x0, 0x55, 0x0, 0x56, 0x0,
+		0x57, 0x0, 0x58, 0x0, 0x59, 0x0, 0x5a, 0x0, (byte)0xc0, 0x0, (byte)0xc1, 0x0, (byte)0xc2, 0x0, (byte)0xc3, 0x0, (byte)0xc4, 0x0, (byte)0xc5,
+		0x0, (byte)0xc6, 0x0};
+
+	/**
+	 * @tests com.ibm.jit.JITHelpers#(char[], char[], int)
+	 */
+    public static void test_toUpperIntrinsicUTF16() {
+		char[] buffer;
+
+		for (int j : edgecaseLengths){
+			buffer = new char[j];
+			if (helpers.toUpperIntrinsicUTF16(Arrays.copyOfRange(lowercaseUTF16Char, 0, j), buffer, j * 2)) {
+				Assert.assertTrue(Arrays.equals(buffer, Arrays.copyOfRange(uppercaseUTF16Char, 0, j)),
+					"UTF16 JITHelper upper case conversion with char arrays of " + j + " letters failed");
+			}
+        	buffer.getClass();
+		}
+	}
+
+	/**
+	 * @tests com.ibm.jit.JITHelpers#toUpperIntrinsicUTF16(byte[], byte[], int)
+	 */
+    public static void test_toUpperIntrinsicUTF16two() {
+		byte[] buffer;
+
+		for (int j : edgecaseLengths) {
+			buffer = new byte[j * 2];
+			if (helpers.toUpperIntrinsicUTF16(Arrays.copyOfRange(lowercaseUTF16BigEndianByte, 0, j * 2), buffer, j * 2)) {
+				Assert.assertTrue(Arrays.equals(buffer, Arrays.copyOfRange(uppercaseUTF16BigEndianByte, 0, j * 2)),
+					"UTF16 JITHelper upper case conversion with big endian byte arrays of " + j + " letters failed");
+			}
+			buffer.getClass();
+
+			if (helpers.toUpperIntrinsicUTF16(Arrays.copyOfRange(lowercaseUTF16LittleEndianByte, 0, j * 2), buffer, j * 2)) {
+				Assert.assertTrue(Arrays.equals(buffer, Arrays.copyOfRange(uppercaseUTF16LittleEndianByte, 0, j * 2)),
+					"UTF16 JITHelper upper case conversion with little endian byte arrays of " + j + " letters failed");
+			}
+        	buffer.getClass();
+		}
+	}
+
+	/**
+	 * @tests com.ibm.jit.JITHelpers#toLowerIntrinsicUTF16(char[], char[], int)
+	 */
+    public static void test_toLowerIntrinsicUTF16() {
+		char[] buffer;
+
+		for (int j : edgecaseLengths) {
+			buffer = new char[j];
+			if (helpers.toLowerIntrinsicUTF16(Arrays.copyOfRange(uppercaseUTF16Char, 0, j), buffer, j * 2)) {
+				Assert.assertTrue(Arrays.equals(buffer, Arrays.copyOfRange(lowercaseUTF16Char, 0, j)),
+					"UTF16 JITHelper lower case conversion with byte arrays of " + j + " letters failed");
+			}
+        	buffer.getClass();
+		}
+	}
+
+	/**
+	 * @tests com.ibm.jit.JITHelpers#toLowerIntrinsicUTF16(byte[], byte[], int)
+	 */
+    public static void test_toLowerIntrinsicUTF16two() {
+		byte[] buffer;
+
+		for (int j : edgecaseLengths) {
+			buffer = new byte[j * 2];
+			if (helpers.toLowerIntrinsicUTF16(Arrays.copyOfRange(uppercaseUTF16BigEndianByte, 0, j * 2), buffer, j * 2)) {
+				Assert.assertTrue(Arrays.equals(buffer, Arrays.copyOfRange(lowercaseUTF16BigEndianByte, 0, j * 2)),
+					"UTF16 JITHelper lower case conversion with big endian byte arrays of " + j + " letters failed");
+			}
+			buffer.getClass();
+
+			if (helpers.toLowerIntrinsicUTF16(Arrays.copyOfRange(uppercaseUTF16LittleEndianByte, 0, j * 2), buffer, j * 2)) {
+				Assert.assertTrue(Arrays.equals(buffer, Arrays.copyOfRange(lowercaseUTF16LittleEndianByte, 0, j * 2)),
+					"UTF16 JITHelper lower case conversion with little endian byte arrays of " + j + " letters failed");
+			}
+        	buffer.getClass();
+		}
+	}
+
+	/**
+	 * @tests com.ibm.jit.JITHelpers#toLowerIntrinsicLatin1(char[], char[], int)
+	 */
+    public static void test_toUpperIntrinsicLatin1() {
+		char[] buffer;
+		char[] source, converted;
+
+		for (int j : edgecaseLengths) {
+			source = Arrays.copyOfRange(lowercaseLatin1Char, 0, (j + 1) / 2);
+			converted = Arrays.copyOfRange(uppercaseLatin1Char, 0, (j + 1) / 2);
+
+			if (j % 2 == 1) {
+				source[source.length - 1] &= 0xff00;
+				converted[source.length - 1] &= 0xff00;
+			}
+
+			buffer = new char[(j + 1) / 2];
+			if (helpers.toUpperIntrinsicLatin1(source, buffer, j)) {
+				Assert.assertTrue(Arrays.equals(buffer, converted),
+					"Latin 1 JITHelper upper case conversion with char arrays of " + j + " letters failed");
+			}
+        	buffer.getClass();
+		}
+	}
+
+	/**
+	 * @tests com.ibm.jit.JITHelpers#toUpperIntrinsicLatin1(byte[], byte[], int)
+	 */
+    public static void test_toUpperIntrinsicLatin1two() {
+		byte[] buffer;
+
+		for (int j : edgecaseLengths) {
+			buffer = new byte[j];
+			if (helpers.toUpperIntrinsicLatin1(Arrays.copyOfRange(lowercaseLatin1Byte, 0, j), buffer, j)) {
+				Assert.assertTrue(Arrays.equals(buffer, Arrays.copyOfRange(uppercaseLatin1Byte, 0, j)),
+					"Latin 1 JITHelper upper case conversion with byte arrays of " + j + " letters failed");
+			}
+        	buffer.getClass();
+		}
+	}
+
+	/**
+	 * @tests com.ibm.jit.JITHelpers#toLowerIntrinsicLatin1(char[], char[], int)
+	 */
+    public static void test_toLowerIntrinsicLatin1() {
+		char[] buffer;
+		char[] source, converted;
+
+		for (int j : edgecaseLengths) {
+			source = Arrays.copyOfRange(uppercaseLatin1Char, 0, (j + 1) / 2);
+			converted = Arrays.copyOfRange(lowercaseLatin1Char, 0, (j + 1) / 2);
+
+			if (j % 2 == 1) {
+				source[source.length - 1] &= 0xff00;
+				converted[source.length - 1] &= 0xff00;
+			}
+
+			buffer = new char[(j + 1) / 2];
+			if (helpers.toLowerIntrinsicLatin1(source, buffer, j)) {
+				Assert.assertTrue(Arrays.equals(buffer, converted),
+					"Latin 1 JITHelper lower case conversion with char arrays of " + j + " letters failed");
+			}
+        	buffer.getClass();
+		}
+	}
+
+	/**
+	 * @tests com.ibm.jit.JITHelpers#toLowerIntrinsicLatin1(byte[], byte[], int)
+	 */
+    public static void test_toLowerIntrinsicLatin1two() {
+		byte[] buffer;
+
+		for (int j : edgecaseLengths) {
+			buffer = new byte[j];
+			if (helpers.toLowerIntrinsicLatin1(Arrays.copyOfRange(uppercaseLatin1Byte, 0, j), buffer, j)) {
+				Assert.assertTrue(Arrays.equals(buffer, Arrays.copyOfRange(lowercaseLatin1Byte, 0, j)),
+					"Latin 1 JITHelper lower case conversion with byte arrays of " + j + " letters failed");
+			}
+        	buffer.getClass();
+		}
+	}
 }
