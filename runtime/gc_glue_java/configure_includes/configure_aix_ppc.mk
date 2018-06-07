@@ -97,10 +97,10 @@ endif
 CONFIGURE_ARGS += libprefix=lib exeext= solibext=.so arlibext=.a objext=.o
 
 ifeq (default,$(origin CC))
-	CC=xlC_r
+	CC = xlC_r
 endif
 ifeq (default,$(origin CXX))
-	CXX=$(CC)
+	CXX = $(CC)
 endif
 
 CONFIGURE_ARGS += 'AS=$(AS)'
