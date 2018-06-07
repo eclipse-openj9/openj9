@@ -2979,7 +2979,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			byte[] sbValue = buffer.getValue();
 
 			if (coder == buffer.getCoder()) {
-				for (int i = 0; i < s1Length; ++i) {
+				for (int i = 0; i < s1Value.length; ++i) {
 					if (s1Value[i] != sbValue[i]) {
 						return false;
 					}
