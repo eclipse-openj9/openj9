@@ -1020,11 +1020,11 @@
 	</test>
 
 	<test>
-		<testCaseName>JCL_Test_JIT_Helper_SE80</testCaseName>
+		<testCaseName>JCL_Test_JITHelpers_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-Xbootclasspath/a:$(Q)$(TEST_RESROOT)$(D)TestResources.jar$(Q) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
-	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames JCL_TEST_JIT_Helper \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames JCL_TEST_JITHelpers \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
@@ -1040,11 +1040,11 @@
 	</test>
 
 	<test>
-		<testCaseName>JCL_Test_JIT_Helper</testCaseName>
+		<testCaseName>JCL_Test_JITHelpers</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) --add-exports=java.base/com.ibm.jit=ALL-UNNAMED \
-	-Xbootclasspath/a:$(Q)$(TEST_RESROOT)$(D)TestResources.jar$(Q) \
+	--add-opens=java.base/com.ibm.jit=ALL-UNNAMED -Xbootclasspath/a:$(Q)$(TEST_RESROOT)$(D)TestResources.jar$(Q) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
-	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames JCL_TEST_JIT_Helper \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames JCL_TEST_JITHelpers \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
