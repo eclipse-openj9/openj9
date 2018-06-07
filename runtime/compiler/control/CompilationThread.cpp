@@ -1975,6 +1975,11 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
    TR::IlGeneratorMethodDetails & details = entry->getMethodDetails();
    J9Method *method = details.getMethod();
 
+   // The JITaaS server should not retry compilations on it's own,
+   // it should let the client make that decision
+   if (entry->isRemoteCompReq())
+      return false;
+
    // when the compilation fails we might retry
    //
    if (entry->_compErrCode != compilationOK &&
@@ -2000,10 +2005,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
                entry->_doNotUseAotCodeFromSharedCache = true;
                // if this is a remote request, fail the compilation here so that it is retried on the client.
                // there is no point in doing a jit compilation on the server as it will be useless to the client.
-               if (entry->isRemoteCompReq())
-                  tryCompilingAgain = false;
-               else
-                  tryCompilingAgain = true;
+               tryCompilingAgain = true;
                break;
             //case compilationAotRelocationFailure:
             case compilationAotTrampolineReloFailure:
@@ -2018,10 +2020,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
             case compilationRecoverableTrampolineFailure:
             case compilationIllegalCodeCacheSwitch:
             case compilationRecoverableCodeCacheError:
-               if (entry->isRemoteCompReq())
-                  tryCompilingAgain = false;
-               else
-                  tryCompilingAgain = true;
+               tryCompilingAgain = true;
                break;
             case compilationExcessiveComplexity:
             case compilationHeapLimitExceeded:
@@ -2187,9 +2186,9 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
          }
       }//  if (entry->_compErrCode != compilationOK)
 
-    // don't carry the decision to generate AOT code to the next compilation
-    // because it may no longer be the right thing to do at that point
-    if (tryCompilingAgain)
+   // don't carry the decision to generate AOT code to the next compilation
+   // because it may no longer be the right thing to do at that point
+   if (tryCompilingAgain)
       entry->_useAotCompilation = false;
 
    return tryCompilingAgain;
