@@ -20,7 +20,6 @@ OpenJDK Assembly Exception [2].
 
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
-
 <spec xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.ibm.com/j9/builder/spec" xsi:schemaLocation="http://www.ibm.com/j9/builder/spec spec-v1.xsd" id="linux_ppc-64_cmprssptrs_le_gcc">
 	<name>Linux PPC LE 64bit GCC Compressed Pointers</name>
 	<asmBuilderName>LinuxPPC64LE</asmBuilderName>

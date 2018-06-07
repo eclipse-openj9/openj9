@@ -110,10 +110,10 @@ endif
 CONFIGURE_ARGS += libprefix=lib exeext= solibext=.so arlibext=.a objext=.o
 
 ifeq (default,$(origin CC))
-	CC=gcc
+	CC = gcc
 endif
 ifeq (default,$(origin CXX))
-	CXX=g++
+	CXX = g++
 endif
 
 CONFIGURE_ARGS += 'AR=$(AR)'
