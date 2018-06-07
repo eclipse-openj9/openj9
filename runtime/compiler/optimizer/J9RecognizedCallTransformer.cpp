@@ -48,8 +48,12 @@ void J9::RecognizedCallTransformer::processIntrinsicFunction(TR::TreeTop* treeto
    TR::TransformUtil::removeTree(comp(), treetop);
    }
 
+
 bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
    {
+   static bool disableARMMaxMin = true; // (feGetEnv("TR_DisableARMMaxMin") != NULL);
+   static bool disableARMFMaxMin = true; // (feGetEnv("TR_DisableARMFMaxMin") != NULL);
+
    auto node = treetop->getNode()->getFirstChild();
    switch(node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod())
       {
@@ -58,12 +62,23 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
       case TR::java_lang_Math_abs_L:
       case TR::java_lang_Math_abs_F:
       case TR::java_lang_Math_abs_D:
-         return TR::Compiler->target.cpu.isX86();
+         return TR::Compiler->target.cpu.isX86() ||
+            TR::Compiler->target.cpu.isZ();
       case TR::java_lang_Math_max_I:
       case TR::java_lang_Math_min_I:
       case TR::java_lang_Math_max_L:
       case TR::java_lang_Math_min_L:
-         return TR::Compiler->target.cpu.isX86() && !comp()->getOption(TR_DisableMaxMinOptimization);
+         return (TR::Compiler->target.cpu.isX86() ||
+            TR::Compiler->target.cpu.isPower() ||
+            TR::Compiler->target.cpu.isZ() ||
+            TR::Compiler->target.cpu.isARM() && !disableARMMaxMin) &&
+            !comp()->getOption(TR_DisableMaxMinOptimization);
+      case TR::java_lang_Math_max_F:
+      case TR::java_lang_Math_min_F:
+      case TR::java_lang_Math_max_D:
+      case TR::java_lang_Math_min_D:
+         return (TR::Compiler->target.cpu.isARM() && !disableARMMaxMin && !disableARMFMaxMin) &&
+            !comp()->getOption(TR_DisableMaxMinOptimization);
       default:
          return false;
       }
@@ -100,6 +115,18 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop* treetop)
          break;
       case TR::java_lang_Math_min_L:
          processIntrinsicFunction(treetop, node, TR::lmin);
+         break;
+      case TR::java_lang_Math_max_F:
+         processIntrinsicFunction(treetop, node, TR::fmax);
+         break;
+      case TR::java_lang_Math_min_F:
+         processIntrinsicFunction(treetop, node, TR::fmin);
+         break;
+      case TR::java_lang_Math_max_D:
+         processIntrinsicFunction(treetop, node, TR::dmax);
+         break;
+      case TR::java_lang_Math_min_D:
+         processIntrinsicFunction(treetop, node, TR::dmin);
          break;
       default:
          break;
