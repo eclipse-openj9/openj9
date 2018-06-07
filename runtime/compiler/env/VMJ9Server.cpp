@@ -767,7 +767,7 @@ TR_J9ServerVM::getResolvedVirtualMethod(TR_OpaqueClassBlock * classObject, I_32 
    }
 
 TR::CodeCache *
-TR_J9ServerVM::getDesignatedCodeCache(TR::Compilation *comp, size_t reqSize)
+TR_J9ServerVM::getDesignatedCodeCache(TR::Compilation *comp)
    {
    TR::CodeCache * codeCache = TR_J9VMBase::getDesignatedCodeCache(comp);
    
