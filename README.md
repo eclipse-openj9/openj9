@@ -37,7 +37,11 @@ We're not sure which route you might have taken on your way here, but we're real
 - [Build instructions](https://www.eclipse.org/openj9/oj9_build.html) - Here's how you can build an OpenJDK with OpenJ9 yourself.
 - [FAQ](https://www.eclipse.org/openj9/oj9_faq.html)
 
-Hopefully you're here because you want to get involved in the project? Read on ...
+If you're looking for ways to help out at the project (thanks!), we have:
+- [Beginner issues](https://github.com/eclipse/openj9/issues?q=is%3Aopen+is%3Aissue+label%3Abeginner)
+- [Help Wanted issues](https://github.com/eclipse/openj9/issues?utf8=%E2%9C%93&q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22)
+
+If you're here to learn more about the project, read on ...
 
 What is Eclipse OpenJ9?
 =======================
