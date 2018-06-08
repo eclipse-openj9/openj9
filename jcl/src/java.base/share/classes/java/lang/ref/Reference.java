@@ -235,4 +235,19 @@ public static void reachabilityFence(java.lang.Object ref) {
 }
 /*[ENDIF]*/
 
+/*[IF Java11]*/
+/**
+ * This method will always throw CloneNotSupportedException. A clone of this instance will not be returned 
+ * since a Reference cannot be cloned. Workaround is to create a new Reference.
+ * 
+ * @throws CloneNotSupportedException always since a Reference cannot be cloned
+ *
+ * @since 11
+ */
+@Override
+protected Object clone() throws CloneNotSupportedException {
+	/*[MSG "K0900", "Create a new Reference, since a Reference cannot be cloned."]*/
+	throw new CloneNotSupportedException(com.ibm.oti.util.Msg.getString("K0900")); //$NON-NLS-1$
+}
+/*[ENDIF] Java11 */
 }
