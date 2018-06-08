@@ -50,6 +50,15 @@ slack_channel: '#jenkins'
 build_job_prefix: 'Build-JDK-'
 sanity_job_prefix: 'Sanity-JDK-'
 extended_job_prefix: 'Extended-JDK-'
+build_discarder:
+  logs:
+    build: 20
+    pipeline: 20
+    pullRequest: 50
+  artifacts:
+    build: 10
+    pipeline: 0
+    pullRequest: 0
 #========================================#
 # Linux PPCLE 64bits Compressed Pointers
 #========================================#
