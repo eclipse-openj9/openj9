@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -90,8 +90,7 @@ J9::Z::CodeGenPhase::getName(TR::CodeGenPhase::PhaseValue phase)
       case UncommonBCDCHKAddressNodePhase:
          return "UncommonBCDCHKAddressNodePhase";
       default:
-	 // call parent class for common phases
-	 return J9::CodeGenPhase::getName(phase);
+	      return J9::CodeGenPhase::getName(phase);
       }
    }
 
