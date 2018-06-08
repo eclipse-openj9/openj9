@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2012 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -77,7 +77,11 @@ public class TestUnsafeAccessVolatile extends UnsafeTestBase {
 	public void testInstancePutBooleanVolatile() throws Exception {
 		testBoolean(new BooleanData(), VOLATILE);
 	}
-	
+
+	public void testInstancePutObjectVolatile() throws Exception {
+		testObject(new ObjectData(), VOLATILE);
+	}
+
 	// tests for testArrayPutXXXXVolatile
 	public void testArrayPutByteVolatile() throws Exception {
 		testByte(new byte[modelByte.length], VOLATILE);
@@ -109,6 +113,10 @@ public class TestUnsafeAccessVolatile extends UnsafeTestBase {
 	
 	public void testArrayPutBooleanVolatile() throws Exception {
 		testBoolean(new boolean[modelBoolean.length], VOLATILE);
+	}
+
+	public void testArrayPutObjectVolatile() throws Exception {
+		testObject(new Object[models.length], VOLATILE);
 	}
 
 	// tests for testStaticPutXXXXVolatile
@@ -143,7 +151,11 @@ public class TestUnsafeAccessVolatile extends UnsafeTestBase {
 	public void testStaticPutBooleanVolatile() throws Exception {
 		testBoolean(BooleanData.class, VOLATILE);
 	}
-	
+
+	public void testStaticPutObjectVolatile() throws Exception {
+		testObject(ObjectData.class, VOLATILE);
+	}
+
 	// tests for testObjectNullPutXXXXVolatile
 	public void testObjectNullPutByteVolatile() throws Exception {
 		testByteNative(VOLATILE);
@@ -209,7 +221,11 @@ public class TestUnsafeAccessVolatile extends UnsafeTestBase {
 	public void testInstanceGetBooleanVolatile() throws Exception {
 		testGetBoolean(new BooleanData(), VOLATILE);
 	}
-	
+
+	public void testInstanceGetObjectVolatile() throws Exception {
+		testGetObject(new ObjectData(), VOLATILE);
+	}
+
 	// tests for testArrayGetXXXXVolatile
 	public void testArrayGetByteVolatile() throws Exception {
 		testGetByte(new byte[modelByte.length], VOLATILE);
@@ -242,7 +258,11 @@ public class TestUnsafeAccessVolatile extends UnsafeTestBase {
 	public void testArrayGetBooleanVolatile() throws Exception {
 		testGetBoolean(new boolean[modelBoolean.length], VOLATILE);
 	}
-	
+
+	public void testArrayGetObjectVolatile() throws Exception {
+		testGetObject(new Object[models.length], VOLATILE);
+	}
+
 	// tests for testStaticGetXXXXVolatile
 	public void testStaticGetByteVolatile() throws Exception {
 		testGetByte(ByteData.class, VOLATILE);
@@ -274,5 +294,9 @@ public class TestUnsafeAccessVolatile extends UnsafeTestBase {
 	
 	public void testStaticGetBooleanVolatile() throws Exception {
 		testGetBoolean(BooleanData.class, VOLATILE);
+	}
+
+	public void testStaticGetObjectVolatile() throws Exception {
+		testGetObject(ObjectData.class, VOLATILE);
 	}
 }

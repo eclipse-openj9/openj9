@@ -180,6 +180,8 @@ jint JNICALL rc015(agentEnv * env, char * args);
 jint JNICALL rc016(agentEnv * env, char * args);
 jint JNICALL rc017(agentEnv * env, char * args);
 jint JNICALL rc018(agentEnv * env, char * args);
+jint JNICALL rc019a(agentEnv * env, char * args);
+jint JNICALL rc019b(agentEnv * env, char * args);
 jint JNICALL re001(agentEnv * env, char * args);
 jint JNICALL re002(agentEnv * env, char * args);
 jint JNICALL fr001(agentEnv * env, char * args);

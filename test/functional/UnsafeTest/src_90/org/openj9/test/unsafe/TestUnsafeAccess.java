@@ -41,6 +41,7 @@ public class TestUnsafeAccess extends UnsafeTestBase {
 	}
 	
 
+	/* test put instance */
 	public void testInstancePutByte() throws Exception {
 		testByte(new ByteData(), DEFAULT);
 	}
@@ -73,6 +74,11 @@ public class TestUnsafeAccess extends UnsafeTestBase {
 		testBoolean(new BooleanData(), DEFAULT);
 	}	
 
+	public void testInstancePutObject() throws Exception {
+		testObject(new ObjectData(), DEFAULT);
+	}
+
+	/* test put array */
 	public void testArrayPutByte() throws Exception {
 		testByte(new byte[modelByte.length], DEFAULT);
 	}
@@ -105,6 +111,11 @@ public class TestUnsafeAccess extends UnsafeTestBase {
 		testBoolean(new boolean[modelBoolean.length], DEFAULT);
 	}
 
+	public void testArrayPutObject() throws Exception {
+		testObject(new Object[models.length], DEFAULT);
+	}
+
+	/* test put static */
 	public void testStaticPutByte() throws Exception {
 		testByte(ByteData.class, DEFAULT);
 	}
@@ -135,8 +146,13 @@ public class TestUnsafeAccess extends UnsafeTestBase {
 	
 	public void testStaticPutBoolean() throws Exception {
 		testBoolean(BooleanData.class, DEFAULT);
-	}	
-	
+	}
+
+	public void testStaticPutObject() throws Exception {
+		testObject(ObjectData.class, DEFAULT);
+	}
+
+	/* test put null object */
 	public void testObjectNullPutByte() throws Exception {
 	
 		testByteNative(DEFAULT);
@@ -169,7 +185,8 @@ public class TestUnsafeAccess extends UnsafeTestBase {
 	public void testObjectNullPutBoolean() throws Exception {
 		testBooleanNative(DEFAULT);
 	}
-	
+
+	/* test put methods with no object input */
 	public void testPutByte() throws Exception {
 		String method = mTestName + "(long, value)";
 		testByteNative(method);
@@ -204,7 +221,8 @@ public class TestUnsafeAccess extends UnsafeTestBase {
 		String method = mTestName + "(long, value)";
 		testDoubleNative(method);
 	}
-	
+
+	/* get instance */
 	public void testInstanceGetByte() throws Exception {
 		testGetByte(new ByteData(), DEFAULT);
 	}
@@ -236,7 +254,12 @@ public class TestUnsafeAccess extends UnsafeTestBase {
 	public void testInstanceGetBoolean() throws Exception {
 		testGetBoolean(new BooleanData(), DEFAULT);
 	}
-	
+
+	public void testInstanceGetObject() throws Exception {
+		testGetObject(new ObjectData(), DEFAULT);
+	}
+
+	/* get array */
 	public void testArrayGetByte() throws Exception {
 		testGetByte(new byte[modelByte.length], DEFAULT);
 	}
@@ -268,7 +291,12 @@ public class TestUnsafeAccess extends UnsafeTestBase {
 	public void testArrayGetBoolean() throws Exception {
 		testGetBoolean(new boolean[modelBoolean.length], DEFAULT);
 	}
-	
+
+	public void testArrayGetObject() throws Exception {
+		testGetObject(new Object[models.length], DEFAULT);
+	}
+
+	/* get static */
 	public void testStaticGetByte() throws Exception {
 		testGetByte(ByteData.class, DEFAULT);
 	}
@@ -299,6 +327,10 @@ public class TestUnsafeAccess extends UnsafeTestBase {
 	
 	public void testStaticGetBoolean() throws Exception {
 		testGetBoolean(BooleanData.class, DEFAULT);
+	}
+
+	public void testStaticGetObject() throws Exception {
+		testGetObject(ObjectData.class, DEFAULT);
 	}
 	
 	/* Test behavior of jdk.internal.misc.Unsafe.defineAnonymousClass */

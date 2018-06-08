@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2012 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
 
+import org.testng.AssertJUnit;
 import org.testng.annotations.Factory;
 import org.testng.log4testng.Logger;
 
@@ -47,38 +48,35 @@ public class MainTester {
 		List<Object> result = new ArrayList<>();
 		result.add(new TestUnsafeAccess(scenario));
 		result.add(new TestUnsafeAccessVolatile(scenario));
+		result.add(new TestUnsafeAccessOpaque(scenario));
 		result.add(new TestUnsafeAccessOrdered(scenario));
+		result.add(new TestUnsafeAccessUnaligned(scenario));
 		result.add(new TestUnsafeSetMemory(scenario));
 		result.add(new TestUnsafeCopyMemory(scenario));
 		result.add(new TestUnsafePutGetAddress(scenario));
-		result.add(new TestCompareAndSwap(scenario));
+		result.add(new TestUnsafeCompareAndExchange(scenario));
+		result.add(new TestUnsafeCompareAndSet(scenario));
 		result.add(new TestUnsafeAllocateDirectByteBuffer(scenario));
+		result.add(new TestUnsafeGetAndOp(scenario));
 		return result.toArray();
 	}
 	
 	private static void compileClass() {
-		try {
-			String[] classNames = { "MainTester", "TestCompareAndSwap", "TestUnsafeAccess",
-					"TestUnsafeAccessVolatile", "UnsafeTestBase",
-					"TestUnsafeAllocateDirectByteBuffer" };
+		Class<?>[] classes = {MainTester.class, TestUnsafeAccess.class, TestUnsafeAccessOpaque.class,
+				TestUnsafeAccessOrdered.class, TestUnsafeAccessVolatile.class, TestUnsafeAllocateDirectByteBuffer.class,
+				TestUnsafeCopyMemory.class, TestUnsafeGetAndOp.class, TestUnsafePutGetAddress.class,
+				TestUnsafeCompareAndExchange.class, TestUnsafeCompareAndSet.class, TestUnsafeSetMemory.class, UnsafeTestBase.class,
+				TestUnsafeAccessUnaligned.class };
 
-			for (int i = 0; i < classNames.length; i++) {
-				Class clazz = Class.forName("org.openj9.test.unsafe."
-						+ classNames[i]);
-				if (clazz != null) {
-					if (Compiler.compileClass(clazz) == false) {
-						logger.error("Compilation of " + clazz.getName()
-								+ " failed -- aborting");
-					}else{
-						logger.debug("Compiler.compileClass( "+  clazz.getName() + " )");
-					}
-				} else {
-					logger.error("clazz is null");
-				}
+		for (int i = 0; i < classes.length; i++) {
+			Class clazz = classes[i];
+			if (Compiler.compileClass(clazz) == false) {
+				logger.error("Compilation of " + clazz.getName()
+						+ " failed -- aborting");
+				AssertJUnit.fail();
+			}else{
+				logger.debug("Compiler.compileClass( "+  clazz.getName() + " )");
 			}
-
-		} catch (ClassNotFoundException ex) {
-			logger.error(ex.toString(), ex);
 		}
 	}
 
