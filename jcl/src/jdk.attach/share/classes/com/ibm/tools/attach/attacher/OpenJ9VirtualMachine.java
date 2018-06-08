@@ -385,7 +385,7 @@ final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 
 				targetServer = new ServerSocket(0); /* select a free port */
 				portNumber = Integer.valueOf(targetServer.getLocalPort());
-				String key = Integer.toHexString((IPC.getRandomNumber()));
+				String key = IPC.getRandomString();
 				replyFile = new Reply(portNumber, key, TargetDirectory.getTargetDirectoryPath(descriptor.id()), descriptor.getUid());
 				try {
 					replyFile.writeReply();
