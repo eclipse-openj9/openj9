@@ -2867,7 +2867,7 @@ TR_J9VMBase::maybeHighlyPolymorphic(TR::Compilation *comp, TR_ResolvedMethod *ca
          int len = 1;
          traceMsg(comp, "maybeHighlyPolymorphic classOfMethod: %s yizhang\n", getClassNameChars(classOfMethod, len));
          TR_PersistentCHTable *chTable = comp->getPersistentInfo()->getPersistentCHTable();
-         if (chTable->hasTwoOrMoreCompiledImplementors(classOfMethod, cpIndex, caller, comp, warm))
+         if (chTable->hasThreeOrMoreCompiledImplementors(classOfMethod, cpIndex, caller, comp, warm))
             {
             return true;
             }
@@ -8590,6 +8590,11 @@ TR_J9VM::getPrimitiveArrayAllocationClass(J9Class *clazz)
    return (TR_OpaqueClassBlock *) clazz;
    }
 
+intptrj_t
+TR_J9VMBase::getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset)
+   {
+   return *(intptrj_t*) (((uint8_t *)clazz) + offset);
+   }
 
 
 //////////////////////////////////////////////////////////
