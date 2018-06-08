@@ -37,6 +37,49 @@ namespace J9 { typedef J9::Z::TreeEvaluator TreeEvaluatorConnector; }
 
 #include "compiler/codegen/J9TreeEvaluator.hpp"  // include parent
 
+
+
+//#define TRACE_EVAL
+#if defined(TRACE_EVAL)
+//
+// this is a handy thing to turn on if you want to figure out what the common
+// code generator is mapping nodes to and what is really being driven through
+// evaluation.
+// It is not on by default (too noisy and expensive) but can be enabled
+// by just defining TRACE_EVAL for this file
+//
+// If we wanted to enable this by default, it would make sense to create a
+// new 'phase' for debugging that could be queried and to have the macro
+// be a test of the tracing before making a function call out, e.g.
+// instead of PRINT_ME(...) we would have:
+// if (compilation->getOutFile() != NULL && compilation->getTraceEval())
+//   {
+//     print("iadd", compilation->getOutFile());
+//   }
+// and then traceEval would be a forced no-inline method
+//
+// Add another version of PRINT_ME, undef EVAL_BLOCK to go back to the old one
+#define EVAL_BLOCK
+#if defined (EVAL_BLOCK)
+#define PRINT_ME(string,node,cg) TR::Delimiter evalDelimiter(cg->comp(), cg->comp()->getOption(TR_TraceCG), "EVAL", string)
+#else
+void
+PRINT_ME(char * string, TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Compilation * compilation = cg->comp();
+   TR::FILE *outFile = compilation->getOutFile();
+   if (outFile != NULL)
+      {
+      diagnostic("EVAL: %s\n", string);
+      }
+   }
+#endif
+#else
+#define PRINT_ME(string,node,cg)
+#endif
+
+#define INSN_HEAP cg->trHeapMemory()
+
 namespace J9
 {
 
@@ -46,14 +89,6 @@ namespace Z
 class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    {
    public:
-
-   // Used for VPSOP in vector setSign operations
-   enum SignOperationType
-      {
-      maintain,     // maintain sign
-      complement,   // complement sign
-      setSign       // force positive or negative
-      };
 
    static TR::Register *wrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *iwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -78,6 +113,17 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *ArrayStoreCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *ArrayCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *conditionalHelperEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static float interpreterProfilingInstanceOfOrCheckCastTopProb(TR::CodeGenerator * cg, TR::Node * node);
+
+
+   /*           START BCD Evaluators          */
+   // Used for VPSOP in vector setSign operations
+   enum SignOperationType
+      {
+      maintain,     // maintain sign
+      complement,   // complement sign
+      setSign       // force positive or negative
+      };
 
    static TR::Register *df2zdEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *zd2ddEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -113,7 +159,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *zd2pdVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg);
 
    static bool isZonedOperationAnEffectiveNop(TR::Node * node, int32_t shiftAmount, bool isTruncation, TR_PseudoRegister *srcReg, bool isSetSign, int32_t sign,TR::CodeGenerator * cg);
-   static float interpreterProfilingInstanceOfOrCheckCastTopProb(TR::CodeGenerator * cg, TR::Node * node);
 
    
    static TR::Register *BCDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -127,7 +172,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
 
    static TR::Register *df2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *pd2ddEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::MemoryReference *getMemoryReferenceForSSFormat(TR::Node *node, TR::CodeGenerator * cg);
    static TR::Register *pd2iEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *pd2lEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *i2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -216,7 +260,10 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *pdclearEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *pdSetSignHelper(TR::Node *node, int32_t sign, TR::CodeGenerator *cg);
    static TR::Register *pdSetSignEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   /*           END BCD Evaluators          */
 
+
+   /*           START DFP evaluators          */
    static TR::Register *deconstEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *deloadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *destoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -284,6 +331,8 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *decleanEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *dd2iEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *de2iEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   /*           END DFP evaluators          */
+
 
    static TR::Register *countDigitsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static void          countDigitsHelper(TR::Node * node, TR::CodeGenerator * cg,
@@ -316,7 +365,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static void         restoreGPR7(TR::Node *node, TR::CodeGenerator *cg);   
    };
-
 }
 
 }

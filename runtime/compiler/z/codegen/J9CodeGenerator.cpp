@@ -45,6 +45,8 @@
 #include "z/codegen/S390GenerateInstructions.hpp"
 #include "z/codegen/S390Recompilation.hpp"
 #include "z/codegen/S390Register.hpp"
+#include "z/codegen/J9S390PrivateLinkage.hpp"
+#include "z/codegen/ReduceSynchronizedFieldLoad.hpp"
 
 #define OPT_DETAILS "O^O CODE GENERATION: "
 
@@ -3896,3 +3898,446 @@ J9::Z::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod me
    return false;
    }
 
+/* extern TreeEvaluator functions */
+extern TR::Register* inlineCurrentTimeMaxPrecision(TR::CodeGenerator* cg, TR::Node* node);
+extern TR::Register* inlineSinglePrecisionSQRT(TR::Node *node, TR::CodeGenerator *cg);
+extern TR::Register* VMinlineCompareAndSwap( TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic casOp, bool isObj);
+extern TR::Register* inlineAtomicOps(TR::Node *node, TR::CodeGenerator *cg, int8_t size, TR::MethodSymbol *method, bool isArray = false);
+extern TR::Register* inlineAtomicFieldUpdater(TR::Node *node, TR::CodeGenerator *cg, TR::MethodSymbol *method);
+extern TR::Register* inlineKeepAlive(TR::Node *node, TR::CodeGenerator *cg);
+extern TR::Register* inlineConcurrentHashMapTmPut(TR::Node *node, TR::CodeGenerator * cg);
+extern TR::Register* inlineConcurrentHashMapTmRemove(TR::Node *node, TR::CodeGenerator * cg);
+extern TR::Register* inlineConcurrentLinkedQueueTMOffer(TR::Node *node, TR::CodeGenerator *cg);
+extern TR::Register* inlineConcurrentLinkedQueueTMPoll(TR::Node *node, TR::CodeGenerator *cg);
+
+extern TR::Register* inlineStringHashCode(TR::Node *node, TR::CodeGenerator *cg, bool isCompressed);
+extern TR::Register* inlineUTF16BEEncodeSIMD(TR::Node *node, TR::CodeGenerator *cg);
+extern TR::Register* inlineUTF16BEEncode    (TR::Node *node, TR::CodeGenerator *cg);
+
+extern TR::Register *inlineHighestOneBit(TR::Node *node, TR::CodeGenerator *cg, bool isLong);
+extern TR::Register *inlineNumberOfLeadingZeros(TR::Node *node, TR::CodeGenerator * cg, bool isLong);
+extern TR::Register *inlineNumberOfTrailingZeros(TR::Node *node, TR::CodeGenerator *cg, int32_t subfconst);
+extern TR::Register *inlineTrailingZerosQuadWordAtATime(TR::Node *node, TR::CodeGenerator *cg);
+
+extern TR::Register *inlineLongReverseBytes(TR::Node *node, TR::CodeGenerator *cg);
+extern TR::Register *inlineIntegerReverseBytes(TR::Node *node, TR::CodeGenerator *cg);
+extern TR::Register *inlineShortReverseBytes(TR::Node *node, TR::CodeGenerator *cg);
+
+extern TR::Register *inlineBigDecimalConstructor(TR::Node *node, TR::CodeGenerator *cg, bool isLong, bool exp);
+extern TR::Register *inlineBigDecimalBinaryOp(TR::Node * node, TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op, bool scaled);
+extern TR::Register *inlineBigDecimalScaledDivide(TR::Node * node, TR::CodeGenerator *cg);
+extern TR::Register *inlineBigDecimalDivide(TR::Node * node, TR::CodeGenerator *cg);
+extern TR::Register *inlineBigDecimalRound(TR::Node * node, TR::CodeGenerator *cg);
+extern TR::Register *inlineBigDecimalCompareTo(TR::Node * node, TR::CodeGenerator * cg);
+extern TR::Register *inlineBigDecimalUnaryOp(TR::Node * node, TR::CodeGenerator * cg, TR::InstOpCode::Mnemonic op);
+extern TR::Register *inlineBigDecimalSetScale(TR::Node * node, TR::CodeGenerator * cg);
+extern TR::Register *inlineBigDecimalUnscaledValue(TR::Node * node, TR::CodeGenerator * cg);
+extern TR::Register *inlineBigDecimalFromPackedConverter(TR::Node * node, TR::CodeGenerator * cg);
+extern TR::Register *inlineBigDecimalToPackedConverter(TR::Node * node, TR::CodeGenerator * cg);
+
+extern TR::Register *inlineToUpper(TR::Node * node, TR::CodeGenerator * cg, bool isCompressedString);
+extern TR::Register *inlineToLower(TR::Node * node, TR::CodeGenerator * cg, bool isCompressedString);
+
+extern TR::Register *inlineDoubleMax(TR::Node *node, TR::CodeGenerator *cg);
+extern TR::Register *inlineDoubleMin(TR::Node *node, TR::CodeGenerator *cg);
+
+#define IS_OBJ      true
+#define IS_NOT_OBJ  false
+
+bool isKnownMethod(TR::MethodSymbol * methodSymbol)
+   {
+   return methodSymbol &&
+          (methodSymbol->getRecognizedMethod() == TR::java_lang_Math_sqrt ||
+           methodSymbol->getRecognizedMethod() == TR::java_lang_StrictMath_sqrt ||
+           methodSymbol->getRecognizedMethod() == TR::java_lang_Class_isAssignableFrom);
+   }
+
+bool
+J9::Z::CodeGenerator::inlineDirectCall(
+      TR::Node *node,
+      TR::Register *&resultReg)
+   {
+   TR::CodeGenerator *cg = self();
+   PRINT_ME("directCall", node, cg);
+
+   TR::MethodSymbol * methodSymbol = node->getSymbol()->getMethodSymbol();
+
+   TR::Compilation *comp = cg->comp();
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
+
+   // If the method to be called is marked as an inline method, see if it can
+   // actually be generated inline.
+   //
+   if (comp->getSymRefTab()->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::currentTimeMaxPrecisionSymbol))
+      {
+      resultReg = inlineCurrentTimeMaxPrecision(cg, node);
+      return true;
+      }
+   else if (comp->getSymRefTab()->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::singlePrecisionSQRTSymbol))
+      {
+      resultReg = inlineSinglePrecisionSQRT(node, cg);
+      return true;
+      }
+   else if (comp->getSymRefTab()->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::synchronizedFieldLoadSymbol))
+      {
+      ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(node, cg);
+      return true;
+      }
+
+   static const char * enableTRTRE = feGetEnv("TR_enableTRTRE");
+   switch (methodSymbol->getRecognizedMethod())
+      {
+      case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
+         // In Java9 this can be either the jdk.internal JNI method or the sun.misc Java wrapper.
+         // In Java8 it will be sun.misc which will contain the JNI directly.
+         // We only want to inline the JNI methods, so add an explicit test for isNative().
+         if (!methodSymbol->isNative())
+            break;
+
+         if ((!TR::Compiler->om.canGenerateArraylets() || node->isUnsafeGetPutCASCallOnNonArray()) && node->isSafeForCGToFastPathUnsafeCall())
+            {
+            resultReg = VMinlineCompareAndSwap(node, cg, TR::InstOpCode::CS, IS_NOT_OBJ);
+            return true;
+            }
+
+      case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
+         // As above, we only want to inline the JNI methods, so add an explicit test for isNative()
+         if (!methodSymbol->isNative())
+            break;
+
+         if (TR::Compiler->target.is64Bit() && (!TR::Compiler->om.canGenerateArraylets() || node->isUnsafeGetPutCASCallOnNonArray()) && node->isSafeForCGToFastPathUnsafeCall())
+            {
+            resultReg = VMinlineCompareAndSwap(node, cg, TR::InstOpCode::CSG, IS_NOT_OBJ);
+            return true;
+            }
+         // Too risky to do Long-31bit version now.
+         break;
+
+      case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
+         // As above, we only want to inline the JNI methods, so add an explicit test for isNative()
+         if (!methodSymbol->isNative())
+            break;
+
+         if ((!TR::Compiler->om.canGenerateArraylets() || node->isUnsafeGetPutCASCallOnNonArray()) && node->isSafeForCGToFastPathUnsafeCall())
+            {
+            resultReg = VMinlineCompareAndSwap(node, cg, (comp->useCompressedPointers() ? TR::InstOpCode::CS : TR::InstOpCode::getCmpAndSwapOpCode()), IS_OBJ);
+            return true;
+            }
+         break;
+
+      case TR::java_util_concurrent_atomic_Fences_reachabilityFence:
+      case TR::java_util_concurrent_atomic_Fences_orderAccesses:
+      case TR::java_util_concurrent_atomic_Fences_orderReads:
+      case TR::java_util_concurrent_atomic_Fences_orderWrites:
+         cg->decReferenceCount(node->getChild(0));
+         break;
+
+      case TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet:
+      case TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd:
+      case TR::java_util_concurrent_atomic_AtomicInteger_getAndIncrement:
+      case TR::java_util_concurrent_atomic_AtomicInteger_getAndDecrement:
+      case TR::java_util_concurrent_atomic_AtomicInteger_getAndSet:
+      case TR::java_util_concurrent_atomic_AtomicInteger_addAndGet:
+      case TR::java_util_concurrent_atomic_AtomicInteger_incrementAndGet:
+      case TR::java_util_concurrent_atomic_AtomicInteger_decrementAndGet:
+         resultReg = inlineAtomicOps(node, cg, 4, methodSymbol);
+         return true;
+         break;
+
+      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndAdd:
+      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndIncrement:
+      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndDecrement:
+      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndSet:
+      case TR::java_util_concurrent_atomic_AtomicIntegerArray_addAndGet:
+      case TR::java_util_concurrent_atomic_AtomicIntegerArray_incrementAndGet:
+      case TR::java_util_concurrent_atomic_AtomicIntegerArray_decrementAndGet:
+         resultReg = inlineAtomicOps(node, cg, 4, methodSymbol, true);
+         return true;
+         break;
+
+      case TR::java_util_concurrent_atomic_AtomicLong_addAndGet:
+      case TR::java_util_concurrent_atomic_AtomicLong_getAndAdd:
+      case TR::java_util_concurrent_atomic_AtomicLong_incrementAndGet:
+      case TR::java_util_concurrent_atomic_AtomicLong_getAndIncrement:
+      case TR::java_util_concurrent_atomic_AtomicLong_decrementAndGet:
+      case TR::java_util_concurrent_atomic_AtomicLong_getAndDecrement:
+         if (cg->checkFieldAlignmentForAtomicLong() &&
+             cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196) &&
+             (TR::Compiler->target.is64Bit() || TR::Compiler->target.isZOS()  ||
+              (cg->supportsHighWordFacility() && !comp->getOption(TR_DisableHighWordRA))))
+            {
+            resultReg = inlineAtomicOps(node, cg, 8, methodSymbol);  // LAAG on 31-bit linux must have HPR support
+            return true;
+            }
+         break;
+
+      case TR::java_util_concurrent_atomic_AtomicLongArray_addAndGet:
+      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndAdd:
+      case TR::java_util_concurrent_atomic_AtomicLongArray_incrementAndGet:
+      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndIncrement:
+      case TR::java_util_concurrent_atomic_AtomicLongArray_decrementAndGet:
+      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndDecrement:
+         if (cg->checkFieldAlignmentForAtomicLong() &&
+             cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196) &&
+             (TR::Compiler->target.is64Bit() || TR::Compiler->target.isZOS()  ||
+              (cg->supportsHighWordFacility() && !comp->getOption(TR_DisableHighWordRA))))
+            {
+            resultReg = inlineAtomicOps(node, cg, 8, methodSymbol);  // LAAG on 31-bit linux must have HPR support
+            return true;
+            }
+         break;
+
+      case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_incrementAndGet:
+      case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_decrementAndGet:
+      case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_addAndGet:
+      case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndIncrement:
+      case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndDecrement:
+      case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndAdd:
+         if (cg->getSupportsAtomicLoadAndAdd())
+            {
+            resultReg = inlineAtomicFieldUpdater(node, cg, methodSymbol);
+            return true;
+            }
+         break;
+
+      case TR::java_nio_Bits_keepAlive:
+      case TR::java_lang_ref_Reference_reachabilityFence:
+         resultReg = inlineKeepAlive(node, cg);
+         return true;
+
+      case TR::java_util_concurrent_ConcurrentHashMap_tmPut:
+         if (cg->getSupportsTM())
+            {
+            resultReg = inlineConcurrentHashMapTmPut(node, cg);
+            return true;
+            }
+         break;
+
+      case TR::java_util_concurrent_ConcurrentHashMap_tmRemove:
+         if (cg->getSupportsTM())
+            {
+            resultReg = inlineConcurrentHashMapTmRemove(node, cg);
+            return true;
+            }
+         break;
+
+      case TR::java_util_concurrent_ConcurrentLinkedQueue_tmOffer:
+         if (cg->getSupportsTM())
+            {
+            resultReg = inlineConcurrentLinkedQueueTMOffer(node, cg);
+            return true;
+            }
+         break;
+
+      case TR::java_util_concurrent_ConcurrentLinkedQueue_tmPoll:
+         if (cg->getSupportsTM())
+            {
+            resultReg = inlineConcurrentLinkedQueueTMPoll(node, cg);
+            return true;
+            }
+         break;
+       // HashCode routine for Compressed and Decompressed String Shares lot of code so combining them.
+      case TR::java_lang_String_hashCodeImplDecompressed:
+         if (!comp->getOption(TR_DisableSIMDStringHashCode))
+            {
+            if (cg->getSupportsVectorRegisters() && !TR::Compiler->om.canGenerateArraylets())
+               return resultReg = inlineStringHashCode(node, cg, false);
+            }
+         break;
+
+      case TR::java_lang_String_hashCodeImplCompressed:
+         if (!comp->getOption(TR_DisableSIMDStringHashCode)){
+            if (cg->getSupportsVectorRegisters() && !TR::Compiler->om.canGenerateArraylets()){
+                return resultReg = inlineStringHashCode(node, cg, true);
+            }
+         }
+        break;
+
+      case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Big:
+         return resultReg = comp->getOption(TR_DisableUTF16BEEncoder) ? inlineUTF16BEEncodeSIMD(node, cg)
+                                                                      : inlineUTF16BEEncode    (node, cg);
+         break;
+
+      case TR::com_ibm_dataaccess_ByteArrayUtils_trailingZerosQuadWordAtATime_:
+         // TODO (Nigel): Is this deprecated? If so can we remove this?
+         if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z10) && !comp->getOption(TR_DisableIntrinsics) && !comp->getOption(TR_DisableDAATrailingZero) && !TR::Compiler->om.canGenerateArraylets())
+            return resultReg = inlineTrailingZerosQuadWordAtATime(node, cg);
+         break;
+
+      default:
+         break;
+
+      }
+
+   switch (methodSymbol->getRecognizedMethod())
+      {
+      case TR::java_lang_Integer_highestOneBit:
+         resultReg = inlineHighestOneBit(node, cg, false);
+         return true;
+      case TR::java_lang_Integer_numberOfLeadingZeros:
+         resultReg = inlineNumberOfLeadingZeros(node, cg, false);
+         return true;
+      case TR::java_lang_Integer_numberOfTrailingZeros:
+         resultReg = inlineNumberOfTrailingZeros(node, cg, 32);
+         return true;
+      case TR::java_lang_Long_highestOneBit:
+         resultReg = inlineHighestOneBit(node, cg, true);
+         return true;
+      case TR::java_lang_Long_numberOfLeadingZeros:
+         resultReg = inlineNumberOfLeadingZeros(node, cg, true);
+         return true;
+      case TR::java_lang_Long_numberOfTrailingZeros:
+         resultReg = inlineNumberOfTrailingZeros(node, cg, 64);
+         return true;
+      default:
+         break;
+      }
+
+#ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
+   if (self()->inlineCryptoMethod(node, resultReg))
+      {
+      return true;
+      }
+#endif
+
+   if (cg->getSupportsInlineStringCaseConversion())
+      {
+      switch (methodSymbol->getRecognizedMethod())
+         {
+         case TR::java_lang_String_toUpperHWOptimized:
+         case TR::java_lang_String_toUpperHWOptimizedDecompressed:
+            resultReg = inlineToUpper(node, cg, false);
+            return true;
+         case TR::java_lang_String_toUpperHWOptimizedCompressed:
+            resultReg = inlineToUpper(node, cg, true);
+            return true;
+         case TR::java_lang_String_toLowerHWOptimized:
+         case TR::java_lang_String_toLowerHWOptimizedDecompressed:
+            resultReg = inlineToLower(node, cg, false);
+            return true;
+         case TR::java_lang_String_toLowerHWOptimizedCompressed:
+            resultReg = inlineToLower(node, cg, true);
+            return true;
+         default:
+            break;
+         }
+      }
+
+      if (!comp->getOption(TR_DisableSIMDDoubleMaxMin) && cg->getSupportsVectorRegisters())
+         {
+         switch (methodSymbol->getRecognizedMethod())
+            {
+            case TR::java_lang_Math_max_D:
+               resultReg = inlineDoubleMax(node, cg);
+               return true;
+            case TR::java_lang_Math_min_D:
+               resultReg = inlineDoubleMin(node, cg);
+               return true;
+            default:
+               break;
+            }
+         }
+
+     switch (methodSymbol->getRecognizedMethod())
+        {
+        case TR::java_lang_Long_reverseBytes:
+            resultReg = inlineLongReverseBytes(node, cg);
+            return true;
+        case TR::java_lang_Integer_reverseBytes:
+            resultReg = inlineIntegerReverseBytes(node, cg);
+            return true;
+        case TR::java_lang_Short_reverseBytes:
+            resultReg = inlineShortReverseBytes(node, cg);
+            return true;
+        default:
+           break;
+        }
+
+   if (!comp->compileRelocatableCode() && !comp->getOption(TR_DisableDFP) &&
+       TR::Compiler->target.cpu.getS390SupportsDFP())
+      {
+      TR_ASSERT( methodSymbol, "require a methodSymbol for DFP on Z\n");
+      if (methodSymbol)
+         {
+         switch(methodSymbol->getMandatoryRecognizedMethod())
+            {
+            case TR::java_math_BigDecimal_DFPIntConstructor:
+               resultReg = inlineBigDecimalConstructor(node, cg, false, false);
+               return true;
+            case TR::java_math_BigDecimal_DFPLongConstructor:
+               resultReg = inlineBigDecimalConstructor(node, cg, true, false);
+               return true;
+            case TR::java_math_BigDecimal_DFPLongExpConstructor:
+               resultReg = inlineBigDecimalConstructor(node, cg, true, true);
+               return true;
+            case TR::java_math_BigDecimal_DFPAdd:
+               resultReg = inlineBigDecimalBinaryOp(node, cg, TR::InstOpCode::ADTR, false);
+               return true;
+            case TR::java_math_BigDecimal_DFPSubtract:
+               resultReg = inlineBigDecimalBinaryOp(node, cg, TR::InstOpCode::SDTR, false);
+               return true;
+            case TR::java_math_BigDecimal_DFPMultiply:
+               resultReg = inlineBigDecimalBinaryOp(node, cg, TR::InstOpCode::MDTR, false);
+               return true;
+            case TR::java_math_BigDecimal_DFPScaledAdd:
+               resultReg = inlineBigDecimalBinaryOp(node, cg, TR::InstOpCode::ADTR, true);
+               return true;
+            case TR::java_math_BigDecimal_DFPScaledSubtract:
+               resultReg = inlineBigDecimalBinaryOp(node, cg, TR::InstOpCode::SDTR, true);
+               return true;
+            case TR::java_math_BigDecimal_DFPScaledMultiply:
+               resultReg = inlineBigDecimalBinaryOp(node, cg, TR::InstOpCode::MDTR, true);
+               return true;
+            case TR::java_math_BigDecimal_DFPRound:
+               resultReg = inlineBigDecimalRound(node, cg);
+               return true;
+            case TR::java_math_BigDecimal_DFPSignificance:
+               resultReg = inlineBigDecimalUnaryOp(node, cg, TR::InstOpCode::ESDTR);
+               return true;
+            case TR::java_math_BigDecimal_DFPExponent:
+               resultReg = inlineBigDecimalUnaryOp(node, cg, TR::InstOpCode::EEDTR);
+               return true;
+            case TR::java_math_BigDecimal_DFPCompareTo:
+               resultReg = inlineBigDecimalCompareTo(node, cg);
+               return true;
+            case TR::java_math_BigDecimal_DFPBCDDigits:
+               resultReg = inlineBigDecimalUnaryOp(node, cg, TR::InstOpCode::CUDTR);
+               return true;
+            case TR::java_math_BigDecimal_DFPUnscaledValue:
+               resultReg = inlineBigDecimalUnscaledValue(node, cg);
+               return true;
+            case TR::java_math_BigDecimal_DFPSetScale:
+               resultReg = inlineBigDecimalSetScale(node, cg);
+               return true;
+            case TR::java_math_BigDecimal_DFPDivide:
+               resultReg = inlineBigDecimalDivide(node, cg);
+               return true;
+            case TR::java_math_BigDecimal_DFPConvertPackedToDFP:
+            case TR::com_ibm_dataaccess_DecimalData_DFPConvertPackedToDFP:
+               resultReg = inlineBigDecimalFromPackedConverter(node, cg);
+               return true;
+            case TR::java_math_BigDecimal_DFPConvertDFPToPacked:
+            case TR::com_ibm_dataaccess_DecimalData_DFPConvertDFPToPacked:
+               resultReg = inlineBigDecimalToPackedConverter(node, cg);
+               return true;
+            default:
+               break;
+            }
+         }
+      }
+
+   TR::MethodSymbol * symbol = node->getSymbol()->castToMethodSymbol();
+   if ((symbol->isVMInternalNative() || symbol->isJITInternalNative()) || isKnownMethod(methodSymbol))
+      {
+      if (TR::TreeEvaluator::VMinlineCallEvaluator(node, false, cg))
+         {
+         resultReg = node->getRegister();
+         return true;
+         }
+      }
+
+   // No method specialization was done.
+   //
+   resultReg = NULL;
+   return false;
+   }
