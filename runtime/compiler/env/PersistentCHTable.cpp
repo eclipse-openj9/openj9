@@ -433,7 +433,7 @@ TR_PersistentCHTable::findSingleInterfaceImplementer(
    }
 
 bool
-TR_PersistentCHTable::hasTwoOrMoreCompiledImplementors(
+TR_PersistentCHTable::hasThreeOrMoreCompiledImplementors(
    TR_OpaqueClassBlock * thisClass, int32_t cpIndex, TR_ResolvedMethod * callerMethod, TR::Compilation * comp, TR_Hotness hotness, bool locked)
    {
    if (comp->getOption(TR_DisableCHOpts))
@@ -445,8 +445,8 @@ TR_PersistentCHTable::hasTwoOrMoreCompiledImplementors(
    TR_PersistentClassInfo * classInfo = findClassInfoAfterLocking(thisClass, comp, true);
    if (!classInfo) return false;
 
-   TR_ResolvedMethod *implArray[2];
-   return TR_ClassQueries::collectCompiledImplementorsCapped(classInfo,implArray,2,cpIndex,callerMethod,comp,hotness,locked) == 2;
+   TR_ResolvedMethod *implArray[3];
+   return TR_ClassQueries::collectCompiledImplementorsCapped(classInfo,implArray,3,cpIndex,callerMethod,comp,hotness,locked) == 3;
    }
 
 int32_t
