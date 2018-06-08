@@ -365,4 +365,5 @@ J9InternalVMFunctions J9InternalFunctions = {
 	registerOSHandler,
 	throwNativeOOMError,
 	throwNewJavaIoIOException,
+	getNumTargetProcessorsCommon
 };

@@ -5499,7 +5499,6 @@ JVM_RegisterUnsafeMethods(JNIEnv* env, jclass unsafeClz)
 jint JNICALL
 JVM_ActiveProcessorCount(void)
 {
-	PORT_ACCESS_FROM_JAVAVM(BFUjavaVM);
 	jint num;
 
 	Trc_SC_ActiveProcessorCount_Entry();
@@ -5509,10 +5508,7 @@ JVM_ActiveProcessorCount(void)
 	 * RTC 112959: [was 209402] Liberty JAX-RS Default Executor poor performance.  Match reference implementation behaviour
 	 * to return the bound CPUs rather than physical CPUs.
 	 */
-	num = (jint)j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
-	if (num < 1) {
-		num = 1;
-	}
+	num = (jint) ((J9JavaVM *) BFUjavaVM)->internalVMFunctions->getNumTargetProcessorsCommon((J9JavaVM *) BFUjavaVM);
 
 	Trc_SC_ActiveProcessorCount_Exit(num);
 

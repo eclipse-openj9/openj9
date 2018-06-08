@@ -3457,6 +3457,17 @@ setSystemPropertyValue(J9JavaVM * vm, J9VMSystemProperty * property, char * newV
 UDATA
 addSystemProperty(J9JavaVM * vm, const char* propName,  const char* propValue, UDATA flags);
 
+/**
+ * This function returns the number of available processors, taking into account resource limits
+ * (including cgroup limits if -XX:+UseContainerSupport is set).
+ * 
+ * @param [in] vm the J9JavaVM
+ * 
+ * @return the number of available processors.
+ */
+UDATA
+getNumTargetProcessorsCommon(J9JavaVM * vm);
+
 /* ---------------- vmruntimestate.c ---------------- */
 
 /**
