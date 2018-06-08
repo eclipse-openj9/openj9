@@ -61,6 +61,8 @@ public:
 
    TR::CodeGenerator *cg() {return _cg;}
 
+   static bool classAddressUsesReloRecordInfo() { return true; }
+
 private:
    static uint32_t _relocationTargetTypeToHeaderSizeMap[TR_NumExternalRelocationKinds];
 

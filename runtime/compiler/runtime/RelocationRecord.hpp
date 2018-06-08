@@ -1024,6 +1024,25 @@ class TR_RelocationRecordClassPointer : public TR_RelocationRecordPointer
       virtual void activatePointer(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
    };
 
+// Relocation record data to identify the class is as for TR_ClassPointer, but
+// patching in the value is done as though for TR_ClassAddress.
+class TR_RelocationRecordArbitraryClassAddress : public TR_RelocationRecordClassPointer
+   {
+   public:
+      TR_RelocationRecordArbitraryClassAddress() {}
+      TR_RelocationRecordArbitraryClassAddress(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordClassPointer(reloRuntime, record) {}
+      virtual char *name();
+
+      virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+      virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocationHigh, uint8_t *reloLocationLow);
+
+   protected:
+      virtual void activatePointer(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+
+   private:
+      void assertBootstrapLoader(TR_RelocationRuntime *reloRuntime, TR_OpaqueClassBlock *clazz);
+   };
+
 class TR_RelocationRecordMethodPointer : public TR_RelocationRecordPointer
    {
    public:
