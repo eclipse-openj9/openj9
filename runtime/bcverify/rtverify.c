@@ -460,6 +460,7 @@ verifyBytecodes (J9BytecodeVerificationData * verifyData)
 	UDATA errorTargetType = (UDATA)-1;
 	UDATA errorStackIndex = (UDATA)-1;
 	UDATA errorTempData = (UDATA)-1;
+	BOOLEAN isNextStack = FALSE;
 
 	Trc_RTV_verifyBytecodes_Entry(verifyData->vmStruct, 
 			(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_GET_NAME(romClass, romMethod)),
@@ -622,12 +623,18 @@ _inconsistentStack2:
 			 * it needs to step back by 1 slot to the actual data type to be manipulated by the opcode.
 			 */
 			errorStackIndex = (stackTop - liveStack->stackElements) - 1;
-			/* Always set to the location of the 1st data type on 'stack' to show up if stackTop <= stackBase */
-			if (stackTop <= stackBase) {
+			/* Always set to the location of the 1st data type on 'stack' to show up if stackTop <= stackBase
+			 * Note: this setup is disabled to avoid decoding the garbage data in the error messages
+			 * if the current stack frame is loaded from the next stack (without data on the stack)
+			 * of the stackmaps.
+			 */
+			if ((stackTop <= stackBase) && !isNextStack) {
 				errorStackIndex = stackBase - liveStack->stackElements;
 			}
 			goto _miscError;
 		}
+		/* Reset as the flag is only used for the current bytecode */
+		isNextStack = FALSE;
 
 		/* Format: 8bits action, 4bits type Y, 4bits type X */
 		type1 = (UDATA) J9JavaBytecodeVerificationTable[bc];
@@ -2264,6 +2271,7 @@ _newStack:
 				/* Load the next stack into the live stack */
 				SAVE_STACKTOP(liveStack, stackTop);
 				memcpy((UDATA *) liveStack, (UDATA *) currentMapData, verifyData->stackSize);
+				isNextStack = TRUE;
 				RELOAD_LIVESTACK;
 
 				/* Start with uninitialized_this flag for the current map data */
