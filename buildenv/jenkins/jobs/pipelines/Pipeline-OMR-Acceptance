@@ -80,6 +80,16 @@ timeout(time: 8, unit: 'HOURS') {
                  }
             }
 
+            // Note: we are doing this as a special case rather than include it in SPECS,
+            // because at the moment cmake builds are only supported on java 9.
+            // Also we dont want to bother running tests at the moment.
+            def CMAKE_SDK_VERSION = '9'
+            def SHAS = [:]
+            SHAS['OPENJ9'] = ALL_SHAS['OPENJ9']
+            SHAS['OMR'] = ALL_SHAS['OMR']
+            SHAS['OPENJDK'] = buildFile.get_sha(OPENJDK_REPOS[CMAKE_SDK_VERSION].repo, OPENJDK_REPOS[CMAKE_SDK_VERSION].branch)
+            JOBS["Build-TestJDK${CMAKE_SDK_VERSION}-linux_x86-64_cmprssptrs_cmake"] = { buildFile.workflow(CMAKE_SDK_VERSION as int, linux_x86-64_cmprssptrs_cmake, SHAS, OPENJDK_REPOS[CMAKE_SDK_VERSION].repo, OPENJDK_REPOS[CMAKE_SDK_VERSION].branch, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, 'none') }
+
             cleanWs()
         }
     }
