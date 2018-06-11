@@ -25,6 +25,7 @@ def SPECS = ['linux_ppc-64_cmprssptrs_le', 'linux_390-64_cmprssptrs', 'aix_ppc-6
 
 def OPENJDK_REPOS = [:]
 OPENJDK_REPOS['8'] = [repo: 'https://github.com/ibmruntimes/openj9-openjdk-jdk8.git', branch: 'openj9']
+OPENJDK_REPOS['9'] = [repo: 'https://github.com/ibmruntimes/openj9-openjdk-jdk9.git', branch: 'openj9']
 OPENJDK_REPOS['10'] = [repo: 'https://github.com/ibmruntimes/openj9-openjdk-jdk10.git', branch: 'openj9']
 
 def OPENJ9_REPO = 'https://github.com/eclipse/openj9.git'
