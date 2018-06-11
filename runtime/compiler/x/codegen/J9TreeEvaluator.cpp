@@ -754,11 +754,6 @@ static void genSuperClassInstanceOfTest(TR::Node        *node,
       instr=generateLabelInstruction(JE4, node, notInterfaceLabel, cg);
 
       // vm interface test
-      bool rematerializeVMThreadInSnippet = false;
-      static const char *allowVMThreadRemat = feGetEnv("TR_allowVMThreadRemat");
-
-      if (allowVMThreadRemat && cg->supportsFS0VMThreadRematerialization())
-         rematerializeVMThreadInSnippet = true;
 
       TR::LabelSymbol *callHelper = generateLabelSymbol(cg);
       TR::LabelSymbol *restartLabel = generateLabelSymbol(cg);
@@ -768,12 +763,12 @@ static void genSuperClassInstanceOfTest(TR::Node        *node,
       if (endLabel != NULL)
          {
          outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::icall, testerReg, callHelper,
-                                                                               endLabel, rematerializeVMThreadInSnippet, cg);
+                                                                               endLabel, false, cg);
          }
       else
          {
          outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::icall, testerReg, callHelper,
-                                                                               restartLabel, rematerializeVMThreadInSnippet, cg);
+                                                                               restartLabel, false, cg);
          }
 
       cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
@@ -4653,15 +4648,6 @@ TR::Register *J9::X86::TreeEvaluator::VMcheckcastEvaluator(TR::Node          *no
       numDeps++;
       }
 
-   bool rematerializeVMThreadInSnippet = false;
-
-   static const char *allowVMThreadRemat = feGetEnv("TR_allowVMThreadRemat");
-   if (allowVMThreadRemat && cg->supportsFS0VMThreadRematerialization())
-      {
-      rematerializeVMThreadInSnippet = true;
-      numDeps--; // remove vmThread (ebp) as dependency
-      }
-
    TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *fallThru   = generateLabelSymbol(cg);
    startLabel->setStartInternalControlFlow();
@@ -4678,7 +4664,7 @@ TR::Register *J9::X86::TreeEvaluator::VMcheckcastEvaluator(TR::Node          *no
    if (!(testCache && inlinedHelpers))
       {
       TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::call, NULL,
-                                                                                 callHelper, fallThru, rematerializeVMThreadInSnippet, cg );
+                                                                                 callHelper, fallThru, false, cg );
       cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
       cg->generateDebugCounter(
          outlinedHelperCall->getFirstInstruction(),
@@ -4875,8 +4861,9 @@ TR::Register *J9::X86::TreeEvaluator::VMcheckcastEvaluator(TR::Node          *no
       deps->addPostCondition(objectReg, TR::RealRegister::NoReg, cg);
    if (castClassReg)
       deps->addPostCondition(castClassReg, TR::RealRegister::NoReg, cg);
-   if (!rematerializeVMThreadInSnippet)
-      deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
+
+   deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
+
    if (objectClassReg)
       deps->addPostCondition(objectClassReg, TR::RealRegister::NoReg, cg);
    if (testerReg)
@@ -4998,8 +4985,6 @@ TR::Register *J9::X86::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node          
       performReferenceArrayTestInline = true;
       }
 
-   bool rematerializeVMThreadInSnippet = false;
-
    if (performEqualityTestInline || performSuperclassTestInline || testCache || performReferenceArrayTestInline)
       {
       TR::Register    *objectReg                           = cg->evaluate(objectRef);
@@ -5010,13 +4995,6 @@ TR::Register *J9::X86::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node          
       TR::RegisterDependencyConditions  *thirdChildDeps = NULL;
       List<TR::Register> popRegisters(cg->trMemory());
       uint32_t        numDeps                             = 2;
-
-      static const char *allowVMThreadRemat = feGetEnv("TR_allowVMThreadRemat");
-      if (allowVMThreadRemat && cg->supportsFS0VMThreadRematerialization())
-         {
-         rematerializeVMThreadInSnippet = true;
-         numDeps--; // remove vmThread (ebp) dependency
-         }
 
       TR_ASSERT(!performHelperCall || testCache, "We shouldn't be calling helper if we are here");
 
@@ -5142,7 +5120,7 @@ TR::Register *J9::X86::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node          
          if (!inlinedHelpers && !performReferenceArrayTestInline)
             {
             TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(instanceofNode, TR::icall, helperTargetReg, callHelper,
-                                                                                                           restartLabel, rematerializeVMThreadInSnippet, cg);
+                                                                                                           restartLabel, false, cg);
             cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
             cg->generateDebugCounter(
                outlinedHelperCall->getFirstInstruction(),
@@ -5261,8 +5239,7 @@ TR::Register *J9::X86::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node          
          else
             deps->addPostCondition(helperTargetReg, TR::RealRegister::NoReg, cg);
 
-      if (!rematerializeVMThreadInSnippet)
-         deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
+      deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
 
       if (testerReg)
          deps->addPostCondition(testerReg, TR::RealRegister::NoReg, cg);
@@ -5439,15 +5416,7 @@ J9::X86::TreeEvaluator::VMinstanceOfEvaluator(
       return targetReg;
       }
 
-   bool rematerializeVMThreadInSnippet = false;
    uint32_t     numDeps        = 3;
-
-   static const char *allowVMThreadRemat = feGetEnv("TR_allowVMThreadRemat");
-   if (allowVMThreadRemat && cg->supportsFS0VMThreadRematerialization())
-      {
-      rematerializeVMThreadInSnippet = true;
-      numDeps --;
-      }
 
    TR::Register *objectReg      = cg->evaluate(objectRef);
    TR::Register *castClassReg   = NULL;
@@ -5527,7 +5496,7 @@ J9::X86::TreeEvaluator::VMinstanceOfEvaluator(
       if (!inlinedHelpers && !performReferenceArrayTestInline)
          {
          TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::icall, targetReg, callHelper,
-                                                                                                        restartLabel, rematerializeVMThreadInSnippet, cg);
+                                                                                                        restartLabel, false, cg);
          cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
          cg->generateDebugCounter(
             outlinedHelperCall->getFirstInstruction(),
@@ -5662,8 +5631,9 @@ J9::X86::TreeEvaluator::VMinstanceOfEvaluator(
       deps->addPostCondition(objectClassReg, TR::RealRegister::NoReg, cg);
    if (testerReg)
       deps->addPostCondition(objectClassReg, TR::RealRegister::NoReg, cg);
-   if (!rematerializeVMThreadInSnippet)
-      deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
+
+   deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
+
    deps->addPostCondition(targetReg, TR::RealRegister::eax, cg);
 
    srm->addScratchRegistersToDependencyList(deps);
