@@ -3893,10 +3893,10 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
       }
    else // compilation failure
       {
-      // Update statistics regarding the reason for compilation failure
-      compInfo->updateCompilationErrorStats((TR_CompilationErrorCode)entry._compErrCode);
       compInfo->debugPrint("\tcompilation failed for method", details, compThread);
       }
+   // Update statistics regarding the compilation status (including compilationOK)
+   compInfo->updateCompilationErrorStats((TR_CompilationErrorCode)entry._compErrCode);
 
    // Copy this because it is needed later and entry may be recycled
    bool tryCompilingAgain = entry._tryCompilingAgain;
