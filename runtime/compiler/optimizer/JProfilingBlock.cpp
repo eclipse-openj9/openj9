@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,7 @@
 #include "runtime/J9Profiler.hpp"
 #include "control/Recompilation.hpp"              // for TR_Recompilation, etc
 #include "control/RecompilationInfo.hpp"              // for TR_Recompilation, etc
+#include "optimizer/TransformUtil.hpp"
 
 // Global thresholds for the number of method enters required to trip
 // method recompilation - these are adjusted in the JIT hook control logic
@@ -929,10 +930,7 @@ void TR_JProfilingBlock::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequ
       // construct call block
       TR::Block *callRecompileBlock = TR::Block::createEmptyBlock(node, comp(), UNKNOWN_COLD_BLOCK_COUNT);
       callRecompileBlock->setIsCold(true);
-      TR::Node *callNode = TR::Node::createWithSymRef(node, TR::icall, 2, comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_jitRetranslateCallerWithPrep, false, false, true));
-      callNode->setAndIncChild(0, TR::Node::createWithSymRef(node, TR::loadaddr, 0, comp()->getSymRefTab()->findOrCreateStartPCSymbolRef()));
-      callNode->setAndIncChild(1, TR::Node::createWithSymRef(node, TR::loadaddr, 0, comp()->getSymRefTab()->findOrCreateCompiledMethodSymbolRef()));
-      TR::TreeTop *callTree = TR::TreeTop::create(comp(), TR::Node::create(node, TR::treetop, 1, callNode));
+      TR::TreeTop *callTree = TR::TransformUtil::generateRetranslateCallerWithPrepTrees(node, TR_PersistentMethodInfo::RecompDueToJProfiling, comp());
       callTree->getNode()->setIsProfilingCode();
       callRecompileBlock->append(callTree);
       

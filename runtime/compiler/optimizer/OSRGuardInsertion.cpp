@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,6 +31,7 @@
 #include "optimizer/FearPointAnalysis.hpp"
 #include "optimizer/RematTools.hpp"
 #include "optimizer/HCRGuardAnalysis.hpp"
+#include "optimizer/TransformUtil.hpp"
 #include "ras/DebugCounter.hpp"
 
 static bool generatesFear(TR::Compilation *comp, TR_FearPointAnalysis &fearAnalysis, TR::Block *block)
@@ -323,6 +324,9 @@ int32_t TR_OSRGuardInsertion::insertOSRGuards(TR_BitVector &fearGeneratingNodes)
          // If something went wrong with bookkeeping, due to the nature of the implicit OSR point,
          // this will return false
          bool induceOSR = comp()->getMethodSymbol()->induceOSRAfter(cursor, nodeBCI, guard, false, 0, &cfgEnd);
+         if (induceOSR)
+            generateTriggeringRecompilationTrees(guard);
+
          if (trace())
             {
             if (induceOSR)
@@ -423,6 +427,9 @@ int32_t TR_OSRGuardInsertion::insertOSRGuards(TR_BitVector &fearGeneratingNodes)
                guard->getNode()->getSecondChild()->setByteCodeInfo(guardBCI);
 
                bool induceOSR = targetMethod->induceOSRAfter(inductionPoint, nodeBCI, guard, false, comp()->getOSRInductionOffset(cursor->getNode()), &cfgEnd);
+               if (induceOSR)
+                  generateTriggeringRecompilationTrees(guard);
+
                if (trace() && induceOSR)
                   traceMsg(comp(), "  OSR induction added successfully\n");
                else if (trace())
@@ -470,6 +477,17 @@ int32_t TR_OSRGuardInsertion::insertOSRGuards(TR_BitVector &fearGeneratingNodes)
    // After this pass adding potentialOSRPoints to HCR compiles is illegal and dangerous
    return 1;
 }
+
+
+void TR_OSRGuardInsertion::generateTriggeringRecompilationTrees(TR::TreeTop *osrGuard)
+   {
+   if (comp()->isRecompilationEnabled() && !comp()->getOption(TR_DisableRecompDueToInlinedMethodRedefinition))
+      {
+      TR::TreeTop *osrInduceBlockStart = osrGuard->getNode()->getBranchDestination();
+      TR::TreeTop *callTree = TR::TransformUtil::generateRetranslateCallerWithPrepTrees(osrInduceBlockStart->getNode(), TR_PersistentMethodInfo::RecompDueToInlinedMethodRedefinition, comp());
+      osrInduceBlockStart->insertTreeTopsAfterMe(callTree);
+      }
+   }
 
 /*
  * This will remat as many of the live symrefs across the guard as possible.
