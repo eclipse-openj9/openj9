@@ -1759,16 +1759,17 @@ old_slow_jitRetranslateCaller(J9VMThread *currentThread)
 void* J9FASTCALL
 old_slow_jitRetranslateCallerWithPreparation(J9VMThread *currentThread)
 {
-	OLD_SLOW_ONLY_JIT_HELPER_PROLOGUE(2);
+	OLD_SLOW_ONLY_JIT_HELPER_PROLOGUE(3);
 	DECLARE_JIT_PARM(J9Method*, method, 1);
 	DECLARE_JIT_PARM(void*, oldJITStartAddr, 2);
+	DECLARE_JIT_PARM(UDATA, reason, 3);
 	J9JavaVM *vm = currentThread->javaVM;
 	J9JITConfig *jitConfig = vm->jitConfig;
 	void *oldPC = currentThread->jitReturnAddress;
 	buildJITResolveFrameWithPC(currentThread, J9_SSF_JIT_RESOLVE_RUNTIME_HELPER, parmCount, false, 0, oldPC);
 	UDATA oldState = currentThread->omrVMThread->vmState;
 	currentThread->omrVMThread->vmState = J9VMSTATE_JIT_CODEGEN;
-	UDATA jitStartPC = jitConfig->retranslateWithPreparation(jitConfig, currentThread, method, oldJITStartAddr);
+	UDATA jitStartPC = jitConfig->retranslateWithPreparation(jitConfig, currentThread, method, oldJITStartAddr, reason);
 	currentThread->omrVMThread->vmState = oldState;
 	void *addr = restoreJITResolveFrame(currentThread, oldPC, true, false);
 	if (NULL == addr) {

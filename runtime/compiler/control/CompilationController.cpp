@@ -203,25 +203,19 @@ TR_OptimizationPlan *TR::DefaultCompilationStrategy::processEvent(TR_MethodEvent
          // For sync re-compilation we have attached a plan to the persistentBodyInfo
          bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(event->_oldStartPC);
          methodInfo = bodyInfo->getMethodInfo();
-         if (bodyInfo->getUsesJProfiling() && !bodyInfo->getIsProfilingBody())
+
+         if (methodInfo->getReasonForRecompilation() == TR_PersistentMethodInfo::RecompDueToInlinedMethodRedefinition ||
+             methodInfo->getReasonForRecompilation() == TR_PersistentMethodInfo::RecompDueToJProfiling)
             {
             hotnessLevel = bodyInfo->getHotness();
             plan = TR_OptimizationPlan::alloc(hotnessLevel);
             *newPlanCreated = true;
-            if (!methodInfo->getReasonForRecompilation())
-               methodInfo->setReasonForRecompilation(TR_PersistentMethodInfo::RecompDueToJProfiling);
             }
          else
             {
             hotnessLevel = TR::Recompilation::getNextCompileLevel(event->_oldStartPC);
             plan = TR_OptimizationPlan::alloc(hotnessLevel);
             *newPlanCreated = true;
-            if (bodyInfo->getUsesGCR())
-               {
-               // Most likely this compilation was triggered by GCR
-               if (!methodInfo->getReasonForRecompilation())
-                  methodInfo->setReasonForRecompilation(TR_PersistentMethodInfo::RecompDueToGCR);
-               }
             }
          
          TR_OptimizationPlan::_optimizationPlanMonitor->enter();
@@ -1480,7 +1474,15 @@ TR_OptimizationPlan *TR::ThresholdCompilationStrategy::processEvent(TR_MethodEve
          // For sync re-compilation we attach the plan to the persistentBodyInfo
          bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(event->_oldStartPC);
          methodInfo = bodyInfo->getMethodInfo();
-         if (methodInfo->getOptimizationPlan())
+
+         if (methodInfo->getReasonForRecompilation() == TR_PersistentMethodInfo::RecompDueToInlinedMethodRedefinition)
+            {
+            methodInfo->incrementNumberOfInlinedMethodRedefinition();
+            hotnessLevel = bodyInfo->getHotness();
+            plan = TR_OptimizationPlan::alloc(hotnessLevel);
+            *newPlanCreated = true;
+            }
+         else if (methodInfo->getOptimizationPlan())
             {
             TR_ASSERT(!TR::CompilationController::getCompilationInfo()->asynchronousCompilation(), "This case should happen only for sync recompilation");
             plan = methodInfo->getOptimizationPlan();

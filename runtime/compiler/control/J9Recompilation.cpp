@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -548,6 +548,7 @@ TR_PersistentMethodInfo::TR_PersistentMethodInfo(TR::Compilation *comp) :
    _bestProfileInfo(0),
    _optimizationPlan(0),
    _numberOfInvalidations(0),
+   _numberOfInlinedMethodRedefinition(0),
    _numPrexAssumptions(0)
    {
    if (comp->getOption(TR_EnableHCR) && !comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE())
@@ -585,6 +586,7 @@ TR_PersistentMethodInfo::TR_PersistentMethodInfo(TR_OpaqueMethodBlock *methodInf
    _bestProfileInfo(0),
    _optimizationPlan(0),
    _numberOfInvalidations(0),
+   _numberOfInlinedMethodRedefinition(0),
    _numPrexAssumptions(0)
    {
    }

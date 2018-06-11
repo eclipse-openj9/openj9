@@ -40,7 +40,19 @@
 #include "j9.h"
 #include "optimizer/OMROptimization_inlines.hpp"
 
-
+/*
+ * Generate trees for call to jitRetranslateCallerWithPrep to trigger recompilation from JIT-Compiled code.
+ */
+TR::TreeTop *
+J9::TransformUtil::generateRetranslateCallerWithPrepTrees(TR::Node *node, TR_PersistentMethodInfo::InfoBits reason, TR::Compilation *comp)
+   {
+   TR::Node *callNode = TR::Node::createWithSymRef(node, TR::icall, 3, comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_jitRetranslateCallerWithPrep, false, false, true));
+   callNode->setAndIncChild(0, TR::Node::create(node, TR::iconst, 0, reason));
+   callNode->setAndIncChild(1, TR::Node::createWithSymRef(node, TR::loadaddr, 0, comp->getSymRefTab()->findOrCreateStartPCSymbolRef()));
+   callNode->setAndIncChild(2, TR::Node::createWithSymRef(node, TR::loadaddr, 0, comp->getSymRefTab()->findOrCreateCompiledMethodSymbolRef()));
+   TR::TreeTop *tt = TR::TreeTop::create(comp, TR::Node::create(TR::treetop, 1, callNode));
+   return tt;
+   }
 
 TR::Node *
 J9::TransformUtil::generateArrayElementShiftAmountTrees(

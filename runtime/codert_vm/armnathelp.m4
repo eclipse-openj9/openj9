@@ -315,7 +315,7 @@ PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveHandleMethod,3)
 dnl Recompilation helpers
 
 SLOW_PATH_ONLY_HELPER(jitRetranslateCaller,2)
-SLOW_PATH_ONLY_HELPER(jitRetranslateCallerWithPreparation,2)
+SLOW_PATH_ONLY_HELPER(jitRetranslateCallerWithPreparation,3)
 SLOW_PATH_ONLY_HELPER(jitRetranslateMethod,3)
 
 dnl Exception throw helpers

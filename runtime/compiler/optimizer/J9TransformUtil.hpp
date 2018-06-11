@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,7 @@ namespace J9 { typedef J9::TransformUtil TransformUtilConnector; }
 
 #include "optimizer/OMRTransformUtil.hpp"
 #include "optimizer/Optimization.hpp"
+#include "control/RecompilationInfo.hpp"
 
 namespace TR { class Compilation; }
 namespace TR { class Node; }
@@ -45,6 +46,7 @@ namespace J9
 class OMR_EXTENSIBLE TransformUtil : public OMR::TransformUtilConnector
    {
 public:
+   static TR::TreeTop *generateRetranslateCallerWithPrepTrees(TR::Node *node, TR_PersistentMethodInfo::InfoBits reason, TR::Compilation *comp);
 
    static TR::Node *generateArrayElementShiftAmountTrees(
          TR::Compilation *comp,
