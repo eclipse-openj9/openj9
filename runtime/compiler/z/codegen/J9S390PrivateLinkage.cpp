@@ -241,19 +241,16 @@ TR::S390PrivateLinkage::initS390RealRegisterLinkage()
       }
 
    // meta data register
-   if (!comp()->getOption(TR_Enable390FreeVMThreadReg))
-      {
-      mdReal->setState(TR::RealRegister::Locked);
-      mdReal->setAssignedRegister(mdReal);
-      mdReal->setHasBeenAssignedInMethod(true);
+   mdReal->setState(TR::RealRegister::Locked);
+   mdReal->setAssignedRegister(mdReal);
+   mdReal->setHasBeenAssignedInMethod(true);
 
-      if (cg()->supportsHighWordFacility() && !comp()->getOption(TR_DisableHighWordRA) && TR::Compiler->target.is64Bit())
-         {
-         TR::RealRegister * tempHigh = toRealRegister(mdReal)->getHighWordRegister();
-         tempHigh->setState(TR::RealRegister::Locked);
-         tempHigh->setAssignedRegister(tempHigh);
-         tempHigh->setHasBeenAssignedInMethod(true);
-         }
+   if (cg()->supportsHighWordFacility() && !comp()->getOption(TR_DisableHighWordRA) && TR::Compiler->target.is64Bit())
+      {
+      TR::RealRegister * tempHigh = toRealRegister(mdReal)->getHighWordRegister();
+      tempHigh->setState(TR::RealRegister::Locked);
+      tempHigh->setAssignedRegister(tempHigh);
+      tempHigh->setHasBeenAssignedInMethod(true);
       }
 
    // additional (forced) restricted regs.
@@ -3213,15 +3210,7 @@ TR::Register * TR::J9S390JNILinkage::buildDirectDispatch(TR::Node * callNode)
    TR::RealRegister * javaLitPoolRealRegister = getLitPoolRealRegister();
 
    TR::Register * javaLitPoolVirtualRegister = javaLitPoolRealRegister;
-   TR::Register * methodMetaDataVirtualRegister;
-   if (comp()->getOption(TR_Enable390FreeVMThreadReg))
-     {
-     methodMetaDataVirtualRegister = codeGen->getVMThreadRegister();
-     }
-   else
-     {
-     methodMetaDataVirtualRegister = methodMetaDataRealRegister;
-     }
+   TR::Register * methodMetaDataVirtualRegister = methodMetaDataRealRegister;
 
    TR::Register * methodAddressReg = NULL;
    TR::Register * javaLitOffsetReg = NULL;
@@ -3807,7 +3796,6 @@ TR::S390PrivateLinkage::setupBuildArgForLinkage(TR::Node * callNode, TR_Dispatch
    {
    TR::CodeGenerator * codeGen = cg();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
-   TR::Register * methodMetaDataVirtualRegister = NULL;
    // call base class
    OMR::Z::Linkage::setupBuildArgForLinkage(callNode, dispatchType, deps, isFastJNI, isPassReceiver, killMask, GlobalRegDeps, hasGlRegDeps, systemLinkage);
 
@@ -3820,11 +3808,7 @@ TR::S390PrivateLinkage::setupBuildArgForLinkage(TR::Node * callNode, TR_Dispatch
 
    TR::S390PrivateLinkage * privateLinkage = (TR::S390PrivateLinkage *) cg()->getLinkage(TR_Private);
    TR::RealRegister * javaStackPointerRealRegister = privateLinkage->getStackPointerRealRegister();
-
-   if (cg()->comp()->getOption(TR_Enable390FreeVMThreadReg))
-     methodMetaDataVirtualRegister = codeGen->getVMThreadRegister();
-   else
-     methodMetaDataVirtualRegister = privateLinkage->getMethodMetaDataRealRegister();
+   TR::Register * methodMetaDataVirtualRegister = privateLinkage->getMethodMetaDataRealRegister();
 
    // store java stack pointer
    generateRXInstruction(codeGen, TR::InstOpCode::getStoreOpCode(), callNode, javaStackPointerRealRegister,
@@ -3888,12 +3872,7 @@ TR::S390PrivateLinkage::setupRegisterDepForLinkage(TR::Node * callNode, TR_Dispa
 
 
    /*****************/
-   TR::Register * methodMetaDataVirtualRegister = NULL;
-
-   if (comp()->getOption(TR_Enable390FreeVMThreadReg))
-     methodMetaDataVirtualRegister = codeGen->getVMThreadRegister();
-   else
-     methodMetaDataVirtualRegister = privateLinkage->getMethodMetaDataRealRegister();
+   TR::Register * methodMetaDataVirtualRegister = privateLinkage->getMethodMetaDataRealRegister();
 
 
    // This logic was originally in OMR::Z::Linkage::buildNativeDispatch and the condition is cg()->supportsJITFreeSystemStackPointer().
