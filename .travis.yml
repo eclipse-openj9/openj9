@@ -84,7 +84,6 @@ script:
   # Based on https://blog.travis-ci.com/2014-12-17-faster-builds-with-container-based-infrastructure/ travis container
   # builds have 2 cores and 4 gigs of memory.  Attempt to double provision the number of cores for the make...
   # Limit number of jobs to work around g++ internal compiler error.
-  - export UMA_WINDOWS_PARRALLEL_HACK=-j4
   - bash configure --with-freemarker-jar=$TRAVIS_BUILD_DIR/freemarker.jar --with-jobs=4 --with-num-cores=4 --enable-ccache --with-cmake --disable-ddr
   - make images EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"
   # Minimal sniff test - ensure java -version works.
