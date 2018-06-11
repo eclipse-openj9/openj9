@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2011, 2017 IBM Corp. and others
+ * Copyright (c) 2011, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -152,11 +152,20 @@ public class ZipFileManager extends CompressedFileManager {
 	
 	//zip files are hierarchical so this method maps the hierarchy in the zip onto the extraction directory
 	private File getExtractLocation(String path, File todir) throws IOException {
-		File folder = new File(todir.getCanonicalPath());		//make a copy so as to not accidentally change the parameter
+		String todirPath = todir.getCanonicalPath();
+		//make a copy so as to not accidentally change the parameter
+		File folder = new File(todirPath);
 		String npath = path.replace('\\', '/');
 		if((npath.length() > 2) && (npath.charAt(1) == ':')) {
 			npath = npath.substring(2);
 		}
+		
+		File tempFile = new File(todirPath, npath);
+		String tempFileString = tempFile.getCanonicalPath();
+		if (!tempFileString.startsWith(todirPath)) {
+			throw new IOException(tempFileString + " should be subdirectory of " + todirPath);
+		}
+		
 		String[] subdirs = npath.split("/");
 		for(int i = 0; i < subdirs.length - 1; i++) {
 			if(subdirs[i].length() > 0) {
