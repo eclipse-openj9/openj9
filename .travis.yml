@@ -23,7 +23,9 @@ os:
   - linux
 language: cpp
 sudo: false
-#cache: ccache # https://docs.travis-ci.com/user/caching/
+cache:
+  directories:
+    - $HOME/.ccache
 dist: trusty
 addons:
   apt:
