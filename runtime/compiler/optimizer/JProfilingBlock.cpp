@@ -924,7 +924,6 @@ void TR_JProfilingBlock::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequ
 
       TR::Block *guardBlock1 = TR::Block::createEmptyBlock(node, comp(), originalFirstBlock->getFrequency());
          {
-         //TR::SymbolReference *symRef = comp()->getSymRefTab()->createKnownStaticDataSymbolRef(blockFrequencyInfo->getEnableJProfilingRecompilation(), TR::Int32);
          TR::Node *enableLoad = TR::Node::createWithSymRef(node, TR::iload, 0, blockFrequencyInfo->getOrCreateSymRefForIsQueuedForRecompilation(comp()));
          TR::Node *enableTest = TR::Node::createif(TR::ificmpeq, enableLoad, TR::Node::iconst(node, -1), originalFirstBlock->getEntry());
          TR::TreeTop *enableTree = TR::TreeTop::create(comp(), enableTest);
