@@ -1138,29 +1138,31 @@ static jfieldID
 findWatchedField(J9VMThread *currentThread, J9JVMTIEnv * j9env, UDATA isWrite, UDATA isStatic, UDATA tag, J9Class * fieldClass)
 {
 	jfieldID result = NULL;
-	J9Class *declaringClass = NULL;
-	J9JVMTIWatchedClass *watchedClass = NULL;
-	UDATA index = findFieldIndexFromOffset(currentThread, fieldClass, tag, isStatic, &declaringClass);
-	watchedClass = hashTableFind(j9env->watchedClasses, &declaringClass);
-	if (NULL != watchedClass) {
-		UDATA *watchBits = (UDATA*)&watchedClass->watchBits;
-		UDATA found = FALSE;
-		if (J9JVMTI_CLASS_REQUIRES_ALLOCATED_J9JVMTI_WATCHED_FIELD_ACCESS_BITS(declaringClass)) {
-			watchBits = watchedClass->watchBits;
-		}
-		if (isWrite) {
-			found = watchBits[J9JVMTI_WATCHED_FIELD_ARRAY_INDEX(index)] & J9JVMTI_WATCHED_FIELD_MODIFICATION_BIT(index);
-		} else {
-			found = watchBits[J9JVMTI_WATCHED_FIELD_ARRAY_INDEX(index)] & J9JVMTI_WATCHED_FIELD_ACCESS_BIT(index);			
-		}
-		if (found) {
-			/* In order for a watch to have been placed, the fieldID for the field in question
-			 * must already have been created (it's a parameter to the JVMTI calls).
-			 */
-			void **jniIDs = declaringClass->jniIDs;
-			Assert_JVMTI_notNull(jniIDs);
-			result = (jfieldID)(jniIDs[index + declaringClass->romClass->romMethodCount]);
-			Assert_JVMTI_notNull(result);
+	if (J9_ARE_ANY_BITS_SET(fieldClass->classFlags, J9ClassHasWatchedFields)) {
+		J9Class *declaringClass = NULL;
+		J9JVMTIWatchedClass *watchedClass = NULL;
+		UDATA index = findFieldIndexFromOffset(currentThread, fieldClass, tag, isStatic, &declaringClass);
+		watchedClass = hashTableFind(j9env->watchedClasses, &declaringClass);
+		if (NULL != watchedClass) {
+			UDATA *watchBits = (UDATA*)&watchedClass->watchBits;
+			UDATA found = FALSE;
+			if (J9JVMTI_CLASS_REQUIRES_ALLOCATED_J9JVMTI_WATCHED_FIELD_ACCESS_BITS(declaringClass)) {
+				watchBits = watchedClass->watchBits;
+			}
+			if (isWrite) {
+				found = watchBits[J9JVMTI_WATCHED_FIELD_ARRAY_INDEX(index)] & J9JVMTI_WATCHED_FIELD_MODIFICATION_BIT(index);
+			} else {
+				found = watchBits[J9JVMTI_WATCHED_FIELD_ARRAY_INDEX(index)] & J9JVMTI_WATCHED_FIELD_ACCESS_BIT(index);			
+			}
+			if (found) {
+				/* In order for a watch to have been placed, the fieldID for the field in question
+				 * must already have been created (it's a parameter to the JVMTI calls).
+				 */
+				void **jniIDs = declaringClass->jniIDs;
+				Assert_JVMTI_notNull(jniIDs);
+				result = (jfieldID)(jniIDs[index + declaringClass->romClass->romMethodCount]);
+				Assert_JVMTI_notNull(result);
+			}
 		}
 	}
 	return result;

@@ -176,6 +176,17 @@ setFieldWatch(jvmtiEnv* env,
 				rc = JVMTI_ERROR_DUPLICATE;
 			} else {
 				*watchBits |= watchBit;
+				/* Tag this class and all its subclasses as having watched fields.
+				 * If this class is already tagged, so are the subclasses.
+				 */
+				if (J9_ARE_NO_BITS_SET(clazz->classFlags, J9ClassHasWatchedFields)) {
+					J9SubclassWalkState subclassState;
+					J9Class *subclass = allSubclassesStartDo(clazz, &subclassState, TRUE);
+					while (NULL != subclass) {
+						subclass->classFlags |= J9ClassHasWatchedFields;
+						subclass = allSubclassesNextDo(&subclassState);
+					}
+				}
 				if (J9_FSD_ENABLED(vm)) {
 					vm->jitConfig->jitDataBreakpointAdded(currentThread);
 				}
@@ -250,8 +261,9 @@ clearFieldWatch(jvmtiEnv* env,
 				if (J9_FSD_ENABLED(vm)) {
 					vm->jitConfig->jitDataBreakpointRemoved(currentThread);
 				}
-				/* Consider checking for any remaining watches on the class
-				 * and removing the hash table entry if there are none.
+				/* Consider checking for no remaining watches on the class
+				 * and removing the watched fields bit from the class (and
+				 * subclasses) and removing the hash table entry.
 				 */
 			}
 		}
