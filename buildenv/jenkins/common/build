@@ -277,6 +277,7 @@ def build_pr() {
     timeout(time: 6, unit: 'HOURS') {
         get_source()
         build()
+        archive()
     }
 }
 

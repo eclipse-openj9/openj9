@@ -117,20 +117,6 @@ def test_all() {
         compile()
         test()
         publish()
-
-        try {
-            cleanWs()
-        } catch(e) {
-            /*
-            *  If clean workspace fails on Windows, show
-            *  the running processes. This has benn added
-            *  in an attempt to help debug what may be
-            *  holding open the file(s).
-            */
-            echo e.toString()
-            echo e.printStackTrace()
-            sh "ps -ef"
-        }
     }
 }
 
