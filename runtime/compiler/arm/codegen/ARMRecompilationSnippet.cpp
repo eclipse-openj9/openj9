@@ -151,7 +151,7 @@ uint8_t *TR::ARMEDORecompilationSnippet::emitSnippetBody()
 
    // b distance
    *(int32_t *)buffer = 0x48000000 | (distance & 0x03ffffff);
-   cg()->addAOTRelocation(new TR::ExternalRelocation(buffer,
+   cg()->addExternalRelocation(new TR::ExternalRelocation(buffer,
                                                          (uint8_t *)induceRecompilationSymRef,
                                                          TR_HelperAddress), __FILE, __LINE__, getNode());
    buffer += ARM_INSTRUCTION_LENGTH;

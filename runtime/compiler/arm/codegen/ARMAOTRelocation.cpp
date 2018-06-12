@@ -30,7 +30,7 @@ void TR::ARMPairedRelocation::mapRelocation(TR::CodeGenerator *cg)
    
    if (TR::comp()->getOption(TR_AOT))
       {
-      cg->addAOTRelocation(
+      cg->addExternalRelocation(
          new (cg->trHeapMemory()) TR::ExternalOrderedPair32BitRelocation(
             getSourceInstruction()->getBinaryEncoding(),
             NULL,

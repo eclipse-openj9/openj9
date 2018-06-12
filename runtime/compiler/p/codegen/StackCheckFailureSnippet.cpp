@@ -169,7 +169,7 @@ uint8_t *TR::PPCStackCheckFailureSnippet::emitSnippetBody()
 
    // bl distance
    *(int32_t *)buffer = 0x48000001 | (distance & 0x03ffffff);
-   cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer,
+   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer,
                                                          (uint8_t *)sofRef,
                                                          TR_HelperAddress, cg()),
                         __FILE__, __LINE__, getNode());

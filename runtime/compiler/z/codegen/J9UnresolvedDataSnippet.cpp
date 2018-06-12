@@ -291,7 +291,7 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
    // address of constant pool
    *(uintptrj_t *) cursor = (uintptrj_t) getDataSymbolReference()->getOwningMethod(comp)->constantPool();
    AOTcgDiag1(comp, "add TR_ConstantPool cursor=%x\n", cursor);
-   cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, *(uint8_t **)cursor, getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_ConstantPool, cg()),
+   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, *(uint8_t **)cursor, getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_ConstantPool, cg()),
                              __FILE__, __LINE__, getNode());
    cursor += sizeof(uintptrj_t);
 

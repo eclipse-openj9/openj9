@@ -138,7 +138,7 @@ uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
 
       if (cg()->comp()->compileRelocatableCode() && label == NULL)
          {
-         cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,(uint8_t *)getSymbolReference(),TR_HelperAddress, cg()),
+         cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,(uint8_t *)getSymbolReference(),TR_HelperAddress, cg()),
                                 __FILE__, __LINE__, getNode());
          }
       }
