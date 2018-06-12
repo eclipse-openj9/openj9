@@ -420,7 +420,7 @@ public class StructureReader {
 		logger.logp(FINER,null,null,"ddrStringTableStart=0x{0}",Long.toHexString(ddrStringTableStart));
 
 		if(structures == null) {
-			//initialise the structure map with a sensible initial capacity
+			//initialize the structure map with a sensible initial capacity
 			structures = new HashMap<String, StructureDescriptor>(header.getStructureCount());
 		}
 

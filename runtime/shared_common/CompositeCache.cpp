@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1831,7 +1831,7 @@ SH_CompositeCacheImpl::next(J9VMThread* currentThread)
 }
 
 /**
- * Initialise ShcItem Block data.
+ * Initialize ShcItem Block data.
  *
  * Simply initializes an "item" to the values set. Hides the _commonCCInfo->vmID in the dataType.
  *

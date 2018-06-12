@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2014 IBM Corp. and others
+ * Copyright (c) 2014, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,9 +59,9 @@ typedef struct  UtTracePointIterator UtTracePointIterator;
  * This iterator can then be used to obtain trace point iterators over each
  * buffer in the file via calls to omr_trc_getTracePointIteratorForNextBuffer
  *
- * @param[in] portLib An initialised OMRPortLibrary structure.
+ * @param[in] portLib An initialized OMRPortLibrary structure.
  * @param[in] fileName The name of the trace file to open.
- * @param[in,out] iteratorPtr A pointer to a location where the initialised UtTraceFileIterator pointer can be stored.
+ * @param[in,out] iteratorPtr A pointer to a location where the initialized UtTraceFileIterator pointer can be stored.
  * @param[in] getFormatString A callback the formatter can use to obtain a format string for a trace point id in a named module.
  *
  * @return OMR_ERROR_NONE on success

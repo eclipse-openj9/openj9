@@ -3270,7 +3270,7 @@ jvmtiRegisterTracePointSubscriber(jvmtiEnv* env, char *description, jvmtiTraceSu
 
 		PORT_ACCESS_FROM_JAVAVM(vm);
 
-		/* Create and initialise wrapper structure. This is used in the function wrappers for the user callbacks */
+		/* Create and initialize wrapper structure. This is used in the function wrappers for the user callbacks */
 		UserDataWrapper *wrapper = j9mem_allocate_memory(sizeof(UserDataWrapper), J9MEM_CATEGORY_JVMTI);
 		if (wrapper == NULL) {
 			rc = JVMTI_ERROR_OUT_OF_MEMORY;

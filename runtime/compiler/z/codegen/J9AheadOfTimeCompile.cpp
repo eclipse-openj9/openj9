@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -99,14 +99,14 @@ void J9::Z::AheadOfTimeCompile::processRelocations()
          relocationDataCursor += 4;
          }
 
-      // set up pointers for each iterated relocation and initialise header
+      // set up pointers for each iterated relocation and initialize header
       TR::IteratedExternalRelocation *s;
       for (s = self()->getAOTRelocationTargets().getFirst();
            s != NULL;
            s = s->getNext())
          {
          s->setRelocationData(relocationDataCursor);
-         s->initialiseRelocation(_cg);
+         s->initializeRelocation(_cg);
          relocationDataCursor += s->getSizeOfRelocationData();
          }
       }
@@ -114,7 +114,7 @@ void J9::Z::AheadOfTimeCompile::processRelocations()
 
 uintptr_t findCorrectInlinedSiteIndex(void *constantPool, TR::Compilation *comp, uintptr_t currentInlinedSiteIndex);
 
-uint8_t *J9::Z::AheadOfTimeCompile::initialiseAOTRelocationHeader(TR::IteratedExternalRelocation *relocation)
+uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedExternalRelocation *relocation)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(_cg->fe());
    TR_SharedCache *sharedCache = fej9->sharedCache();
@@ -128,7 +128,7 @@ uint8_t *J9::Z::AheadOfTimeCompile::initialiseAOTRelocationHeader(TR::IteratedEx
 
    // size of relocation goes first in all types
    *(uint16_t *)cursor = relocation->getSizeOfRelocationData();
-   AOTcgDiag5(comp(), "initialiseAOTRelocationHeader cursor=%x size=%x wide=%x pair=%x kind=%x\n",
+   AOTcgDiag5(comp(), "initializeAOTRelocationHeader cursor=%x size=%x wide=%x pair=%x kind=%x\n",
       cursor, *(uint16_t *)cursor, relocation->needsWideOffsets(), relocation->isOrderedPair(), relocation->getTargetKind());
 
    cursor += 2;

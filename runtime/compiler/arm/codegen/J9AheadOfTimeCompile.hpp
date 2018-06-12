@@ -55,7 +55,7 @@ public:
    AheadOfTimeCompile(TR::CodeGenerator *cg);
 
    virtual void     processRelocations();
-   virtual uint8_t *initialiseAOTRelocationHeader(TR::IteratedExternalRelocation *relocation);
+   virtual uint8_t *initializeAOTRelocationHeader(TR::IteratedExternalRelocation *relocation);
 
    List<TR::ARMRelocation>& getRelocationList() {return _relocationList;}
 

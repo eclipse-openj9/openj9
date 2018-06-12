@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2014 IBM Corp. and others
+ * Copyright (c) 2008, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -622,7 +622,7 @@ testStringInternTableStressLocal(J9PortLibrary *portLib, UDATA numIterations)
 	J9UTF8 *utf8s[5000];
 	const UDATA utfs8Count = sizeof(utf8s)/sizeof(utf8s[0]);
 
-	/* Class loaders are not initialised as currently the StringInternTable only uses their addresses. */
+	/* Class loaders are not initialized as currently the StringInternTable only uses their addresses. */
 	J9ClassLoader classLoaders[25];
 	const UDATA classLoadersCount = sizeof(classLoaders)/sizeof(classLoaders[0]);
 
@@ -764,7 +764,7 @@ testStringInternTableStressShared(J9PortLibrary *portLib, UDATA numIterations)
 	J9UTF8 *utf8s[5000];
 	const UDATA utfs8Count = sizeof(utf8s)/sizeof(utf8s[0]);
 
-	/* Class loaders are not initialised as currently the StringInternTable only uses their addresses. */
+	/* Class loaders are not initialized as currently the StringInternTable only uses their addresses. */
 	J9ClassLoader classLoaders[25];
 	const UDATA classLoadersCount = sizeof(classLoaders)/sizeof(classLoaders[0]);
 

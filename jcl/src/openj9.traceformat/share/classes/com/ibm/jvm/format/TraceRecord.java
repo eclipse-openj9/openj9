@@ -240,7 +240,7 @@ public class TraceRecord implements Comparable {
         traceThread.addElement(this);
     }
 
-    /** Initialises static variables.
+    /** Initializes static variables.
      *
      *  <p>This is called each time the TraceFormatter is started, from the initStatics()
      *     method in TraceFormat.java</p>

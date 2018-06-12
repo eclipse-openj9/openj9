@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -191,8 +191,8 @@ dbgFindPatternInRange(U_8* pattern, UDATA patternLength, UDATA patternAlignment,
 		U_8*  lastByteToSearchWithinTheRegion = NULL;
 		UDATA bytesToSearchWithinTheRegion = 0;
 		UDATA bytesSearchedWithinTheRegion = 0;
-		dbgRegionIteratorState regionIteratorState; /* initialised by subsequent memset */
-		dbgRegion region; /* initialised by subsequent memset */
+		dbgRegionIteratorState regionIteratorState; /* initialized by subsequent memset */
+		dbgRegion region; /* initialized by subsequent memset */
 		IDATA result = 0;
 
 		memset (&regionIteratorState, 0, sizeof(dbgRegionIteratorState));

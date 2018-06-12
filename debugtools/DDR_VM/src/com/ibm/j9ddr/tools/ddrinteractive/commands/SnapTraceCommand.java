@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -82,7 +82,7 @@ public class SnapTraceCommand extends SnapBaseCommand {
 			} catch (CorruptDataException e) {
 				// Although we got a CDE some data may have been copied to the buffer.
 				// This appears to happen on z/OS when some of the buffer space is in a page of
-				// uninitialised memory. (See defect 185780.) In that case the missing data is
+				// uninitialized memory. (See defect 185780.) In that case the missing data is
 				// all 0's anyway.
 				out.println("Problem reading " + bufferSize + " bytes from 0x" +  Long.toHexString(address) + ". Trace file may contain partial or damaged data.");
 			}

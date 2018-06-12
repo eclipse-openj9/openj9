@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,7 +42,7 @@ public:
 	static IDATA getCacheStats(J9JavaVM* vm, const char* cacheDirName, const char* filePath, SH_OSCache_Info* returnVal, UDATA reason);
 	  
 	SH_OSCachemmap(J9PortLibrary* portlib, J9JavaVM* vm, const char* cacheDirName, const char* cacheName, J9SharedClassPreinitConfig* piconfig, IDATA numLocks,
-			UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, J9PortShcVersion* versionData, SH_OSCacheInitialiser* initialiser);
+			UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, J9PortShcVersion* versionData, SH_OSCacheInitializer* initializer);
 	/*This constructor should only be used by this class or its parent*/
 	SH_OSCachemmap() {};
 
@@ -56,7 +56,7 @@ public:
 	void *operator new(size_t sizeArg, void *memoryPtrArg) { return memoryPtrArg; };
 
 	virtual bool startup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirPerm, const char* cacheName, J9SharedClassPreinitConfig* piconfig, IDATA numLocks,
-			UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, UDATA storageKeyTesting, J9PortShcVersion* versionData, SH_OSCacheInitialiser* initialiser, UDATA reason);
+			UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, UDATA storageKeyTesting, J9PortShcVersion* versionData, SH_OSCacheInitializer* initializer, UDATA reason);
 
 	virtual IDATA destroy(bool suppressVerbose, bool isReset = false);
 
@@ -113,7 +113,7 @@ private:
 	I_32 updateLastDetachedTime();
 	I_32 createCacheHeader(OSCachemmap_header_version_current *cacheHeader, J9PortShcVersion* versionData);
 	bool setCacheLength(U_32 cacheSize, LastErrorInfo *lastErrorInfo);
-	I_32 initialiseDataHeader(SH_OSCacheInitialiser *initialiser);
+	I_32 initializeDataHeader(SH_OSCacheInitializer *initializer);
 	void detach();
 	
 	bool deleteCacheFile(LastErrorInfo *lastErrorInfo);

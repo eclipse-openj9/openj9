@@ -138,7 +138,7 @@ UDATA getUserExtendedPrivateAreaMemoryType();
 
 extern "C" {
 extern J9MemoryManagerFunctions MemoryManagerFunctions;
-extern void initialiseVerboseFunctionTableWithDummies(J9MemoryManagerVerboseInterface *table);
+extern void initializeVerboseFunctionTableWithDummies(J9MemoryManagerVerboseInterface *table);
 
 static void hookValidatorVMThreadCrash(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData);
 static bool gcInitializeVMHooks(MM_GCExtensionsBase *extensions);
@@ -2822,7 +2822,7 @@ gcInitializeDefaults(J9JavaVM* vm)
 		goto error;
 	}
 
-	initialiseVerboseFunctionTableWithDummies(&extensions->verboseFunctionTable);
+	initializeVerboseFunctionTableWithDummies(&extensions->verboseFunctionTable);
 
 	if (JNI_OK != gcParseCommandLineAndInitializeWithValues(vm, memoryParameterTable)) {
 		loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_INITIALIZE_PARSING_COMMAND_LINE, "Failed to initialize, parsing command line.");

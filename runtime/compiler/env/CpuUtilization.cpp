@@ -157,7 +157,7 @@ int32_t CpuUtilization::updateCpuUsageCircularBuffer(J9JITConfig *jitConfig)
 
 CpuUtilization::CpuUtilization(J9JITConfig *jitConfig):
 
-   // initialise usage to INITIAL_USAGE
+   // initialize usage to INITIAL_USAGE
    _cpuUsage    (INITIAL_USAGE),
    _vmCpuUsage  (INITIAL_USAGE),
    _avgCpuUsage (INITIAL_USAGE),

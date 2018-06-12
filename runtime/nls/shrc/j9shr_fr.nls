@@ -2462,7 +2462,7 @@ J9NLS_SHRC_M_FAILED_CREATE_HINTTABLE.system_action=The JVM fails to complete the
 J9NLS_SHRC_M_FAILED_CREATE_HINTTABLE.user_response=System is running low on memory resource for the JVM to work properly. Check system memory configuration. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_FAILED_INIT_SEGMENTS=impossible d'initialiser les segments de m\u00e9moire de classe du cachelet.
+J9NLS_SHRC_CM_FAILED_INIT_SEGMENTS=impossible d'initializer les segments de m\u00e9moire de classe du cachelet.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_FAILED_INIT_SEGMENTS.explanation=An error has occurred in shared class initialization.
 J9NLS_SHRC_CM_FAILED_INIT_SEGMENTS.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.

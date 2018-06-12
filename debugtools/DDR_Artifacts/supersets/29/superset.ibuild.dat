@@ -17612,7 +17612,7 @@ F|_dataSize|_dataSize|U32|const U32
 F|_dataStart|_dataStart|U8*|const U8*
 S|SH_CompiledMethodManagerImpl|SH_CompiledMethodManagerImplPointer|SH_CompiledMethodManager
 S|SH_CompiledMethodManager|SH_CompiledMethodManagerPointer|SH_ROMClassResourceManager
-S|SH_CompositeCacheImpl$SH_SharedCacheHeaderInit|SH_CompositeCacheImpl$SH_SharedCacheHeaderInitPointer|SH_OSCache$SH_OSCacheInitialiser
+S|SH_CompositeCacheImpl$SH_SharedCacheHeaderInit|SH_CompositeCacheImpl$SH_SharedCacheHeaderInitPointer|SH_OSCache$SH_OSCacheInitializer
 S|SH_CompositeCacheImpl|SH_CompositeCacheImplPointer|AbstractMemoryPermission
 F|_cacheFullFlags|_cacheFullFlags|UDATA|UDATA
 F|_cacheHeaderPageBytes|_cacheHeaderPageBytes|U32|U32
@@ -17712,7 +17712,7 @@ F|_portlib|_portlib|struct J9PortLibrary*|struct J9PortLibrary*
 F|_runtimeFlagsPtr|_runtimeFlagsPtr|U64*|U64*
 F|_state|_state|UDATA|UDATA
 F|_verboseFlags|_verboseFlags|UDATA|UDATA
-S|SH_OSCache$SH_OSCacheInitialiser|SH_OSCache$SH_OSCacheInitialiserPointer|
+S|SH_OSCache$SH_OSCacheInitializer|SH_OSCache$SH_OSCacheInitializerPointer|
 S|SH_OSCacheFile|SH_OSCacheFilePointer|SH_OSCache
 F|_fileHandle|_fileHandle|IDATA|IDATA
 S|SH_OSCache_Info|SH_OSCache_InfoPointer|
@@ -17739,7 +17739,7 @@ S|SH_OSCachesysv|SH_OSCachesysvPointer|SH_OSCache
 F|_attach_count|_attach_count|IDATA|IDATA
 F|_controlFileStatus|_controlFileStatus|struct J9ControlFileStatus|struct J9ControlFileStatus
 F|_groupPerm|_groupPerm|UDATA|UDATA
-F|_initialiser|_initialiser|class SH_OSCache$SH_OSCacheInitialiser*|class SH_OSCache::SH_OSCacheInitialiser*
+F|_initializer|_initializer|class SH_OSCache$SH_OSCacheInitializer*|class SH_OSCache::SH_OSCacheInitializer*
 F|_openSharedMemory|_openSharedMemory|bool|bool
 F|_semAccess|_semAccess|enum SH_SysvSemAccess|enum SH_SysvSemAccess
 F|_semFileName|_semFileName|U8*|char*

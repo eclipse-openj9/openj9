@@ -48,7 +48,7 @@ class OMR_EXTENSIBLE AheadOfTimeCompile : public J9::AheadOfTimeCompile
      AheadOfTimeCompile(TR::CodeGenerator *cg);
 
     virtual void     processRelocations();
-    virtual uint8_t *initialiseAOTRelocationHeader(TR::IteratedExternalRelocation *relocation);
+    virtual uint8_t *initializeAOTRelocationHeader(TR::IteratedExternalRelocation *relocation);
 
     TR::list<TR::S390Relocation*>& getRelocationList() {return _relocationList;}
 
