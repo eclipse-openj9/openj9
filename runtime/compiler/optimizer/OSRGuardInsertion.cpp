@@ -325,7 +325,7 @@ int32_t TR_OSRGuardInsertion::insertOSRGuards(TR_BitVector &fearGeneratingNodes)
          // this will return false
          bool induceOSR = comp()->getMethodSymbol()->induceOSRAfter(cursor, nodeBCI, guard, false, 0, &cfgEnd);
          if (induceOSR)
-            generateTriggeringRecompilationTrees(guard);
+            generateTriggeringRecompilationTrees(guard, TR_PersistentMethodInfo::RecompDueToInlinedMethodRedefinition);
 
          if (trace())
             {
@@ -428,7 +428,7 @@ int32_t TR_OSRGuardInsertion::insertOSRGuards(TR_BitVector &fearGeneratingNodes)
 
                bool induceOSR = targetMethod->induceOSRAfter(inductionPoint, nodeBCI, guard, false, comp()->getOSRInductionOffset(cursor->getNode()), &cfgEnd);
                if (induceOSR)
-                  generateTriggeringRecompilationTrees(guard);
+                  generateTriggeringRecompilationTrees(guard, TR_PersistentMethodInfo::RecompDueToInlinedMethodRedefinition);
 
                if (trace() && induceOSR)
                   traceMsg(comp(), "  OSR induction added successfully\n");
@@ -479,12 +479,12 @@ int32_t TR_OSRGuardInsertion::insertOSRGuards(TR_BitVector &fearGeneratingNodes)
 }
 
 
-void TR_OSRGuardInsertion::generateTriggeringRecompilationTrees(TR::TreeTop *osrGuard)
+void TR_OSRGuardInsertion::generateTriggeringRecompilationTrees(TR::TreeTop *osrGuard, TR_PersistentMethodInfo::InfoBits reason)
    {
    if (comp()->isRecompilationEnabled() && !comp()->getOption(TR_DisableRecompDueToInlinedMethodRedefinition))
       {
       TR::TreeTop *osrInduceBlockStart = osrGuard->getNode()->getBranchDestination();
-      TR::TreeTop *callTree = TR::TransformUtil::generateRetranslateCallerWithPrepTrees(osrInduceBlockStart->getNode(), TR_PersistentMethodInfo::RecompDueToInlinedMethodRedefinition, comp());
+      TR::TreeTop *callTree = TR::TransformUtil::generateRetranslateCallerWithPrepTrees(osrInduceBlockStart->getNode(), reason, comp());
       osrInduceBlockStart->insertTreeTopsAfterMe(callTree);
       }
    }
