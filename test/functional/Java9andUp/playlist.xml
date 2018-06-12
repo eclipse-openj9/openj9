@@ -335,34 +335,4 @@
 			<subset>SE110</subset>
 		</subsets>
 	</test>
-	
-	<test>
-		<testCaseName>MethodVisibilityTests</testCaseName>
-		<!--  Don't put generaltest.jar on the classpath.  
-		Doing so makes test packages visible when they
-		should be isolated by modules. This means we also need a custom 
-		testng control file. -->
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-		-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(Q) \
-		--module-path $(TEST_RESROOT)$(D)module_bin:$(TESTNG) \
-		--add-modules org.openj9test.modularity.testerModule \
-		--add-exports org.openj9test.modularity.testerModule/org.openj9.test.modularity.tests=ALL-UNNAMED \
-		-Dorg.openj9.test.module.path=$(TEST_RESROOT)$(D)module_bin \
-		org.testng.TestNG methodvisibilitytests.xml \
-		-testnames MethodVisibilityTests \
-		-groups $(TEST_GROUP) \
-		-excludegroups $(DEFAULT_EXCLUDE); \
-		$(TEST_STATUS)</command>
-		<levels>
-			<level>extended</level>
-		</levels>
-		<groups>
-			<group>functional</group>
-		</groups>
-		<subsets>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
-		</subsets>
-	</test>
 </playlist>
