@@ -68,9 +68,11 @@ You can also request a Pull Request build from the extensions repos or openj9-om
 ##### Dependent Changes
 
 - If you have dependent change(s) in either eclipse/omr, eclipse/openj9-omr, or ibmruntimes/openj9-openjdk-jdk\*, you can build & test with all needed changes
-- Request a build by including the PR ref in your trigger comment
+- Request a build by including the PR ref or branch name in your trigger comment
 - Ex. Dependent change in OMR Pull Request `#123`
     - `Jenkins test sanity depends eclipse/omr#123`
+- Ex. Dependent change in eclipse/omr master branch (useful if a dependent OMR PR is already merged)
+    - `Jenkins test sanity depends eclipse/omr#master`
 - Ex. Dependent change in OpenJ9-OMR Pull Request `#456`
     - `Jenkins test sanity depends eclipse/openj9-omr#456`
 - Ex. Dependent change in OpenJDK Pull Request `#789`
