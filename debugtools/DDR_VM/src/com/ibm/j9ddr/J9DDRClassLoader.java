@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -192,7 +192,7 @@ public class J9DDRClassLoader extends SecureClassLoader {
 	private byte[] getClazz(String binaryName) throws ClassNotFoundException {
 		//make sure that we have a reader available
 		if(reader == null) {		
-			throw new IllegalStateException("The structure reader has not been initialised");
+			throw new IllegalStateException("The structure reader has not been initialized");
 		}
 		
 		try {

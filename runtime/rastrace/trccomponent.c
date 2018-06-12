@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,13 +45,13 @@ static char *UT_MISSING_TRACE_FORMAT = "  Tracepoint format not in dat file";
 #define MAX_QUALIFIED_NAME_LENGTH 16
 
 omr_error_t
-initialiseComponentData(UtComponentData **componentDataPtr, UtModuleInfo *moduleInfo, const char *componentName)
+initializeComponentData(UtComponentData **componentDataPtr, UtModuleInfo *moduleInfo, const char *componentName)
 {
 	PORT_ACCESS_FROM_PORT(UT_GLOBAL(portLibrary));
 
 	UtComponentData *componentData = (UtComponentData *) j9mem_allocate_memory(sizeof(UtComponentData), OMRMEM_CATEGORY_TRACE );
 
-	UT_DBGOUT(2, ("<UT> initialiseComponentData: %s\n", componentName));
+	UT_DBGOUT(2, ("<UT> initializeComponentData: %s\n", componentName));
 	if ( componentData == NULL){
 		UT_DBGOUT(1, ("<UT> Unable to allocate componentData for %s\n", componentName));
 		return OMR_ERROR_OUT_OF_NATIVE_MEMORY;
@@ -101,7 +101,7 @@ initialiseComponentData(UtComponentData **componentDataPtr, UtModuleInfo *module
 	componentData->prev = NULL;
 	
 	*componentDataPtr = componentData;
-	UT_DBGOUT(2, ("<UT> initialiseComponentData complete: %s\n", componentName));
+	UT_DBGOUT(2, ("<UT> initializeComponentData complete: %s\n", componentName));
 
 	return OMR_ERROR_NONE;
 }
@@ -151,12 +151,12 @@ freeComponentData(UtComponentData *componentDataPtr){
 }
 
 omr_error_t
-initialiseComponentList(UtComponentList **componentListPtr)
+initializeComponentList(UtComponentList **componentListPtr)
 {
 	PORT_ACCESS_FROM_PORT(UT_GLOBAL(portLibrary));
 
 	UtComponentList *componentList = (UtComponentList *)j9mem_allocate_memory( sizeof(UtComponentList), OMRMEM_CATEGORY_TRACE);
-	UT_DBGOUT(2, ("<UT> initialiseComponentList: %p\n", componentListPtr));
+	UT_DBGOUT(2, ("<UT> initializeComponentList: %p\n", componentListPtr));
 	if ( componentList == NULL){
 		UT_DBGOUT(1, ("<UT> Unable to allocate component list\n" ));
 		return OMR_ERROR_OUT_OF_NATIVE_MEMORY;
@@ -167,7 +167,7 @@ initialiseComponentList(UtComponentList **componentListPtr)
 	componentList->deferredConfigInfoHead = NULL;
 
 	*componentListPtr = componentList;
-	UT_DBGOUT(2, ("<UT> initialiseComponentList: %p completed\n", componentListPtr));
+	UT_DBGOUT(2, ("<UT> initializeComponentList: %p completed\n", componentListPtr));
 	return OMR_ERROR_NONE;
 }
 

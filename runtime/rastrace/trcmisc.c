@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2014 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -319,7 +319,7 @@ addTraceConfig(UtThreadData **thr, const char *cmd)
 			tmp->next = cfg;
 		}
 
-		/* We should update the trace header here (if it has already been initialised) to
+		/* We should update the trace header here (if it has already been initialized) to
 		 * reflect the change in trace settings.
 		 * Unfortunately it may be in use by a snap dump or we may have returned a pointer to
 		 * it via trcGetTraceMetadata so freeing it or nulling it is unsafe.

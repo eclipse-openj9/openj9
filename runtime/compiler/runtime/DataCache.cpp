@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -153,7 +153,7 @@ TR_DataCacheManager::TR_DataCacheManager(J9JITConfig *jitConfig, TR::Monitor *mo
 #if defined(DATA_CACHE_DEBUG)
    if (!_newImplementation)
       fprintf(stderr, "Old data cache implementation enabled");
-   fprintf(stderr, "Initialised the data cache manager with a quantum size of %d with a minimum of %d quanta per allocation.\n", _quantumSize, _minQuanta);
+   fprintf(stderr, "Initialized the data cache manager with a quantum size of %d with a minimum of %d quanta per allocation.\n", _quantumSize, _minQuanta);
 #endif
    }
 

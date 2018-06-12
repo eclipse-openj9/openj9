@@ -25,6 +25,7 @@
 #include <stdint.h>                           // for int32_t
 #include "optimizer/Optimization.hpp"         // for Optimization
 #include "optimizer/OptimizationManager.hpp"  // for OptimizationManager
+#include "control/RecompilationInfo.hpp"
 
 namespace TR { class Block; }
 
@@ -48,6 +49,6 @@ class TR_OSRGuardInsertion : public TR::Optimization
    void removeHCRGuards(TR_BitVector &fearGeneratingNodes);
    int32_t insertOSRGuards(TR_BitVector &fearGeneratingNodes);
    void performRemat(TR::TreeTop *osrPoint, TR::TreeTop *osrGuard, TR::TreeTop *rematDest);
-   void generateTriggeringRecompilationTrees(TR::TreeTop *osrGuard);
+   void generateTriggeringRecompilationTrees(TR::TreeTop *osrGuard, TR_PersistentMethodInfo::InfoBits reason);
    };
 #endif

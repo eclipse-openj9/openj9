@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2014 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -611,7 +611,7 @@ public class TracePoint{
 		// Flag as unreachable so prevent bogus warnings during static code analysis.
 		output.write("\t\t\t\tTrace_Unreachable(); \\");
 		output.newLine();
-		// Write early assert case for when trace is not initialised.
+		// Write early assert case for when trace is not initialized.
 		// Important - this case does not cause the assert to trigger vm exit.
 		// If an assert is hit before trace starts we just print it to stderr.
 		output.write("\t\t\t} else { \\");

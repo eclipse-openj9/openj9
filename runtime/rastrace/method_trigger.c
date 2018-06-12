@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2017 IBM Corp. and others
+ * Copyright (c) 2014, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -228,7 +228,7 @@ addMethodBlockEntry(J9VMThread *thr, J9Method *method, RasTriggerMethodRule * ru
 		dbg_err_printf(1, PORTLIB, "<UT> Out of memory processing trigger property.");
 	} else {
 		/*
-		 * Initialise the RasTriggeredMethodBlock
+		 * Initialize the RasTriggeredMethodBlock
 		 */
 		memset(tmb, '\0', sizeof(RasTriggeredMethodBlock));
 		tmb->next = NULL;
@@ -390,7 +390,7 @@ setMethod(J9JavaVM *vm, const char *value, BOOLEAN atRuntime)
 				}
 
 				/*
-				 * Initialise some fields in the new RasMethodTable.
+				 * Initialize some fields in the new RasMethodTable.
 				 */
 				if (i < count) {
 					mt->next = mt + 1;
@@ -637,10 +637,10 @@ addTriggeredMethodSpec(J9VMThread *thr, const char *ptrMethodSpec, const struct 
 		 * Now populate the RasTriggerMethodRule
 		 */
 
-		/* initialise header */
+		/* initialize header */
 		memset(methodRule, '\0', sizeof(RasTriggerMethodRule));
 
-		/* initialise body */
+		/* initialize body */
 		methodRule->next = NULL; /* next method rule           */
 		methodRule->tmbChain = NULL; /* method block entry chain   */
 		methodRule->methodTable = mt; /* method spec etc            */

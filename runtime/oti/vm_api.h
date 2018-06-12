@@ -2170,7 +2170,7 @@ fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9R
 
 /**
 * @brief Iterate over fields of the specified class in JVMTI order.
-* @param state[in/out]  the walk state that was initialised via fieldOffsetsStartDo()
+* @param state[in/out]  the walk state that was initialized via fieldOffsetsStartDo()
 * @return J9ROMFieldOffsetWalkResult *
 */
 J9ROMFieldOffsetWalkResult *
@@ -2189,7 +2189,7 @@ fullTraversalFieldOffsetsStartDo(J9JavaVM *vm, J9Class *clazz, J9ROMFullTraversa
 
 /**
 * @brief Fully traverse the fields of the specified class and its superclasses.
-* @param state[in/out]  the walk state that was initialised via fullTraversalFieldOffsetsStartDo()
+* @param state[in/out]  the walk state that was initialized via fullTraversalFieldOffsetsStartDo()
 * @return J9ROMFieldShape *
 */
 J9ROMFieldShape *

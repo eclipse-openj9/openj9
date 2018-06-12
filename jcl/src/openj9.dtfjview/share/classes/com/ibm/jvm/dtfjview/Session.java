@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -216,7 +216,7 @@ public class Session implements ISession {
 		isInteractiveSession = (args.get(ARG_CMDFILE) == null) && (commands.isEmpty());		//interactive if no commands have been supplied
 		//create a console context which will allow other commands such as the open command to function
 		ctxroot = new CombinedContext(0, 0, null, null, null, null, -1);
-		initialiseContext(ctxroot);
+		initializeContext(ctxroot);
 		currentContext = ctxroot;			//default to the root context at startup
 	
 		// Set system property to switch off additional DDR processing for Node.JS
@@ -231,7 +231,7 @@ public class Session implements ISession {
 	}
 	
 	//initializes the supplied context with its starting parameters and property values
-	private void initialiseContext(IDTFJContext ctx) {
+	private void initializeContext(IDTFJContext ctx) {
 		ctx.refresh();
 		ctx.getProperties().put(SESSION_PROPERTY, this);
 		for(String key : variables.keySet()) {

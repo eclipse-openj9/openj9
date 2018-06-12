@@ -1233,7 +1233,7 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 			}
 		}
 	} else {
-		/* the iterator didn't initialise so no user limits to print */
+		/* the iterator didn't initialize so no user limits to print */
 		_OutputStream.writeCharacters("2CIULIMITERR   Not supported on this platform\n");
 	}
 

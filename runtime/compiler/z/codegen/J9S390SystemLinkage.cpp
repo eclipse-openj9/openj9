@@ -99,7 +99,7 @@ TR::J9S390zLinuxSystemLinkage::generateInstructionsForCall(TR::Node * callNode,
    /*
     * for AOT we create a relocation where uint8_t  *_targetAddress is set to callNode->getSymbolReference(),
     * _targetAddress is used in different relocation types, where sometimes it's an actual address and sometimes (eg. TR_HelperAddress) it's a symref
-    *  for cases when _targetAddress is actually a symref we cast it back to symref in TR::AheadOfTimeCompile::initialiseAOTRelocationHeader
+    *  for cases when _targetAddress is actually a symref we cast it back to symref in TR::AheadOfTimeCompile::initializeAOTRelocationHeader
     *
     * In this case
     * generateRegLitRefInstruction creates a ConstantDataSnippet with reloType: TR_HelperAddress, which creates a 32Bit/64Bit ExternalRelocation
@@ -310,7 +310,7 @@ TR::J9S390zOSSystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR:
    /*
     * for AOT we create a relocation where uint8_t  *_targetAddress is set to callNode->getSymbolReference(),
     * _targetAddress is used in different relocation types, where sometimes it's an actual address and sometimes (eg. TR_HelperAddress) it's a symref
-    *  for cases when _targetAddress is actually a symref we cast it back to symref in TR::AheadOfTimeCompile::initialiseAOTRelocationHeader
+    *  for cases when _targetAddress is actually a symref we cast it back to symref in TR::AheadOfTimeCompile::initializeAOTRelocationHeader
     *
     * In this case
     * generateRegLitRefInstruction creates a ConstantDataSnippet with reloType: TR_HelperAddress, which creates a 32Bit/64Bit ExternalRelocation

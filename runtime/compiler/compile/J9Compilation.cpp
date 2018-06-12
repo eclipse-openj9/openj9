@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,6 +38,7 @@
 #include "control/Options_inlines.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
+#include "env/j9method.h"
 #include "env/TRMemory.hpp"
 #include "env/VMJ9.h"
 #include "env/VMAccessCriticalSection.hpp"
@@ -174,6 +175,9 @@ J9::Compilation::Compilation(
    _SystemClassPointer   = fe->getClassFromSignature("Ljava/lang/System;", 18, compilee);
    _ReferenceClassPointer = fe->getClassFromSignature("Ljava/lang/ref/Reference;", 25, compilee);
    _JITHelpersClassPointer = fe->getClassFromSignature("Lcom/ibm/jit/JITHelpers;", 24, compilee);
+
+   _aotClassClassPointer = NULL;
+   _aotClassClassPointerInitialized = false;
 
    _aotGuardPatchSites = new (m->trHeapMemory()) TR::list<TR_AOTGuardSite*>(getTypedAllocator<TR_AOTGuardSite*>(self()->allocator()));
 
@@ -1144,9 +1148,36 @@ J9::Compilation::addAsMonitorAuto(TR::SymbolReference* symRef, bool dontAddIfDLT
    }
 
 TR_OpaqueClassBlock *
-J9::Compilation::getClassClassPointer()
+J9::Compilation::getClassClassPointer(bool isVettedForAOT)
    {
-   return _ObjectClassPointer ? self()->fe()->getClassClassPointer(_ObjectClassPointer) : 0;
+   if (!isVettedForAOT)
+      return _ObjectClassPointer ? self()->fe()->getClassClassPointer(_ObjectClassPointer) : 0;
+
+   if (_aotClassClassPointerInitialized)
+      return _aotClassClassPointer;
+
+   _aotClassClassPointerInitialized = true;
+
+   bool jlObjectVettedForAOT = true;
+   TR_OpaqueClassBlock *jlObject = self()->fej9()->getClassFromSignature(
+      "Ljava/lang/Object;",
+      18,
+      self()->getCurrentMethod(),
+      jlObjectVettedForAOT);
+
+   if (jlObject == NULL)
+      return NULL;
+
+   TR_OpaqueClassBlock *jlClass = self()->fe()->getClassClassPointer(jlObject);
+   if (jlClass == NULL)
+      return NULL;
+
+   TR_ResolvedJ9Method *method = (TR_ResolvedJ9Method*)self()->getCurrentMethod();
+   if (!method->validateArbitraryClass(self(), (J9Class*)jlClass))
+      return NULL;
+
+   _aotClassClassPointer = jlClass;
+   return jlClass;
    }
 
 /*
