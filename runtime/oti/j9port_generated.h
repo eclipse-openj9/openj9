@@ -926,6 +926,7 @@ extern J9_CFUNC int32_t j9port_isCompatible(struct J9PortLibraryVersion *expecte
 #define j9sysinfo_set_limit(param1,param2) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_set_limit(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2)
 #define j9sysinfo_get_processing_capacity() privatePortLibrary->sysinfo_get_processing_capacity(privatePortLibrary)
 #define j9sysinfo_get_number_CPUs_by_type(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_get_number_CPUs_by_type(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
+#define j9sysinfo_set_number_user_specified_CPUs(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_set_number_user_specified_CPUs(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
 #define j9sysinfo_get_cwd(param1,param2) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_get_cwd(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2)
 #define j9sysinfo_get_tmp(param1,param2,param3) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_get_tmp(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2,param3)
 #define j9sysinfo_get_open_file_count(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_get_open_file_count(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)

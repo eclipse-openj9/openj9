@@ -5108,6 +5108,9 @@ JavaCoreDumpWriter::writeCPUinfo(void)
 {
 	PORT_ACCESS_FROM_PORT(_PortLibrary);
 
+	UDATA bound = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_BOUND);
+	UDATA target = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
+
 	_OutputStream.writeCharacters(
 			"NULL           \n");
 	_OutputStream.writeCharacters(
@@ -5120,10 +5123,18 @@ JavaCoreDumpWriter::writeCPUinfo(void)
 	_OutputStream.writeInteger(j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_ONLINE), "%i\n");
 	_OutputStream.writeCharacters(
 			"2CIBOUNDCPU    Bound CPUs: ");
-	_OutputStream.writeInteger(j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_BOUND), "%i\n");
+	_OutputStream.writeInteger(bound, "%i\n");
+	_OutputStream.writeCharacters(
+			"2CIACTIVECPU   Active CPUs: ");
+	if (bound != target) {
+		_OutputStream.writeInteger(target, "%i\n");
+	} else {
+		/* target is not being overridden by active CPUs, so print 0 */
+		_OutputStream.writeCharacters("0\n");
+	}
 	_OutputStream.writeCharacters(
 			"2CITARGETCPU   Target CPUs: ");
-	_OutputStream.writeInteger(j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET), "%i\n");
+	_OutputStream.writeInteger(target, "%i\n");
 
 	return;
 }
