@@ -390,6 +390,13 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->getObjectClass(objectPointer));
          }
          break;
+      case J9ServerMessageType::VM_getStaticReferenceFieldAtAddress:
+         {
+         TR::VMAccessCriticalSection getStaticReferenceFieldAtAddress(fe);
+         uintptrj_t fieldAddress = std::get<0>(client->getRecvData<uintptrj_t>());
+         client->write(fe->getStaticReferenceFieldAtAddress(fieldAddress));
+         }
+         break;
       case J9ServerMessageType::VM_stackWalkerMaySkipFrames:
          {
          auto recv = client->getRecvData<TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *>();

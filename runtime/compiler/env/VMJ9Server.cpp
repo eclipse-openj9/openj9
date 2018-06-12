@@ -497,6 +497,14 @@ TR_J9ServerVM::getObjectClass(uintptrj_t objectPointer)
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    }
 
+uintptrj_t
+TR_J9ServerVM::getStaticReferenceFieldAtAddress(uintptrj_t fieldAddress)
+   {
+   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITaaS::J9ServerMessageType::VM_getStaticReferenceFieldAtAddress, fieldAddress);
+   return std::get<0>(stream->read<uintptrj_t>());
+   }
+
 bool
 TR_J9ServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *clazz)
    {

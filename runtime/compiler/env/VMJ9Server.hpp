@@ -65,6 +65,8 @@ public:
    virtual bool isPrimitiveArray(TR_OpaqueClassBlock *clazz) override;
    virtual uint32_t getAllocationSize(TR::StaticSymbol *classSym, TR_OpaqueClassBlock *clazz) override;
    virtual TR_OpaqueClassBlock * getObjectClass(uintptrj_t objectPointer) override;
+   virtual uintptrj_t getStaticReferenceFieldAtAddress(uintptrj_t fieldAddress) override;
+
    virtual bool stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *clazz) override;
    virtual bool hasFinalFieldsInClass(TR_OpaqueClassBlock *clazz) override;
    virtual const char *sampleSignature(TR_OpaqueMethodBlock * aMethod, char *buf, int32_t bufLen, TR_Memory *memory) override;

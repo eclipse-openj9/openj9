@@ -86,6 +86,7 @@ enum J9ServerMessageType
    VM_isClassArray = 205;
    VM_transformJlrMethodInvoke = 206;
 //   VM_isAbstractClass = 207;
+   VM_getStaticReferenceFieldAtAddress = 207;
    VM_getSystemClassFromClassName = 208;
    VM_isMethodEnterTracingEnabled = 209;
    VM_isMethodExitTracingEnabled = 210;
