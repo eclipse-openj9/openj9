@@ -903,16 +903,6 @@ TR_JProfilingBlock::generateBlockRawCountCalculationNode(TR::Compilation *comp, 
  */   
 void TR_JProfilingBlock::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequencyInfo, TR_BitVector **componentCounters)
    {
-   // add invocation check to the top of the method
-   int32_t *thresholdLocation = NULL;
-   if (comp()->getMethodSymbol()->mayHaveNestedLoops())
-      thresholdLocation = &nestedLoopRecompileThreshold;
-   else if (comp()->getMethodSymbol()->mayHaveLoops())
-      thresholdLocation = &loopRecompileThreshold;
-   else
-      thresholdLocation = &recompileThreshold;
-
-
    int32_t startBlockNumber = comp()->getStartBlock()->getNumber();
    blockFrequencyInfo->setEntryBlockNumber(startBlockNumber);
 
@@ -931,11 +921,11 @@ void TR_JProfilingBlock::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequ
          guardBlock1->append(enableTree);
          }
 
-      int32_t profilingCompileThreshold2 = comp()->getOptions()->getJProfilingMethodRecompThreshold();
+      static int32_t profilingCompileThreshold = comp()->getOptions()->getJProfilingMethodRecompThreshold();
 
-      traceMsg(comp(),"Profiling Compile Threshold for method = %d\n", profilingCompileThreshold2);
+      traceMsg(comp(),"Profiling Compile Threshold for method = %d\n", profilingCompileThreshold);
       TR::Block *guardBlock2 = TR::Block::createEmptyBlock(node, comp(), originalFirstBlock->getFrequency());
-      TR::Node *recompThreshold = TR::Node::iconst(node, profilingCompileThreshold2);
+      TR::Node *recompThreshold = TR::Node::iconst(node, profilingCompileThreshold);
       TR::Node *cmpFlagNode = TR::Node::createif(TR::ificmplt, root, recompThreshold, originalFirstBlock->getEntry());
       TR::TreeTop *cmpFlag = TR::TreeTop::create(comp(), cmpFlagNode);
       cmpFlagNode->setIsProfilingCode();
