@@ -37,6 +37,8 @@
 	<property name="src_current" location="./src_current"/>
 	<property name="src_latest" location="./src_latest"/>
 	<property name="TestUtilities" location="../TestUtilities/src"/>
+	<property name="module_bin" location="./module_bin"/>
+	<property name="dest_module_bin" location="${DEST}/module_bin"/>
 	<property name="build" location="./bin"/>
 	<property name="transformerListener" location="${TEST_ROOT}/Utils/src"/>
 
@@ -89,7 +91,48 @@
 		</if>
 	</target>
 
-	<target name="dist" depends="compile,dist_functional" description="generate the distribution" >
+	<target name="build_moduletest" depends="init" description="Create the modules for the modularity tests " >
+		<if> <!-- These tests are not supported for build 148 -->
+			<equals arg1="${JCL_VERSION}" arg2="latest"/>
+			<then>
+			<mkdir dir="${dest_module_bin}"/>
+			<copy todir="${module_bin}">
+				<fileset dir="${src}/../modules"  includes="*org.*/*"/>
+			</copy>
+			<property name="MODULE_NAME_ROOT" value="org.openj9test.modularity"/>
+			<property name="MODULE_PATH_ROOT" value="org/openj9/test/modularity"/>
+			<for list="A,B,C,D" param="mod">
+			  <sequential>
+				<copy todir="${module_bin}/${MODULE_NAME_ROOT}.module@{mod}">
+					<fileset dir="${build}"  includes="org/openj9/test/modularity/pkg@{mod}*/*"/>
+				</copy>
+			  </sequential>
+			</for>		
+			<copy todir="${module_bin}/${MODULE_NAME_ROOT}.common">
+				<fileset dir="${build}"  includes="${MODULE_PATH_ROOT}/common/*"/>
+			</copy>
+			<copy todir="${module_bin}/${MODULE_NAME_ROOT}.testerModule">
+				<fileset dir="${build}"  includes="${MODULE_PATH_ROOT}/tests/*"/>
+			</copy>
+	
+			<for list="common,moduleD,moduleC,moduleB,moduleA,testerModule" param="mod">
+			  <sequential>
+				<javac srcdir="${module_bin}/${MODULE_NAME_ROOT}.@{mod}" 
+					destdir="${module_bin}/${MODULE_NAME_ROOT}.@{mod}" 
+					debug="true" fork="true" executable="${compiler.javac}" 
+					includeAntRuntime="false" encoding="ISO-8859-1">
+					<compilerarg line="-p ${module_bin}:${TEST_ROOT}/TestConfig/lib/testng.jar"/>
+				</javac>
+			  </sequential>
+			</for>	
+			<exec executable="${JAVA_BIN}/java" failonerror="true">
+				<arg line="-jar ${TEST_ROOT}/TestConfig/lib/asmtools.jar jasm -d ${module_bin}/${MODULE_NAME_ROOT}.testerModule ${src_latest}/${MODULE_PATH_ROOT}/tests/MethodHandleTester.jasm"/>
+			</exec>
+			</then>
+		</if>
+	</target>
+
+	<target name="dist" depends="compile,build_moduletest,dist_functional" description="generate the distribution" >
 		<mkdir dir="${DEST}"/>
 		<jar jarfile="${DEST}/GeneralTest.jar" filesonly="true">
 			<fileset dir="${build}"/>
@@ -99,6 +142,16 @@
 			<fileset dir="${src}/../" includes="*.xml" />
 			<fileset dir="${src}/../" includes="*.mk" />
 		</copy>
+		<if> <!-- These tests are not supported for build 148 -->
+			<equals arg1="${JCL_VERSION}" arg2="latest"/>
+			<then>
+				<echo>copy ${module_bin} to ${dest_module_bin}</echo>
+				<mkdir dir="${dest_module_bin}"/>
+				<copy todir="${dest_module_bin}">
+					<fileset dir="${module_bin}"/>
+				</copy>
+			</then>
+		</if>
 	</target>
 	
 	<target name="build" >
@@ -114,6 +167,7 @@
 
 	<target name="clean" depends="dist" description="clean up" >
 		<!-- Delete the ${build} directory trees -->
+		<delete dir="${module_bin}"/>
 		<delete dir="${build}"/>
 	</target>
 </project>
