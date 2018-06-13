@@ -137,8 +137,8 @@ TR_ResolvedJ9JITaaSServerMethod::staticAttributes(TR::Compilation * comp, I_32 c
    *type = attrs.type;
    *volatileP = attrs.volatileP;
    if (isFinal) *isFinal = attrs.isFinal;
-   if (isPrivate) *isPrivate = attrs.isFinal;
-   if (unresolvedInCP) *unresolvedInCP = attrs.isFinal;
+   if (isPrivate) *isPrivate = attrs.isPrivate;
+   if (unresolvedInCP) *unresolvedInCP = attrs.unresolvedInCP;
    return attrs.result;
    }
 
@@ -255,8 +255,8 @@ TR_ResolvedJ9JITaaSServerMethod::fieldAttributes(TR::Compilation * comp, I_32 cp
    *type = attrs.type;
    *volatileP = attrs.volatileP;
    if (isFinal) *isFinal = attrs.isFinal;
-   if (isPrivate) *isPrivate = attrs.isFinal;
-   if (unresolvedInCP) *unresolvedInCP = attrs.isFinal;
+   if (isPrivate) *isPrivate = attrs.isPrivate;
+   if (unresolvedInCP) *unresolvedInCP = attrs.unresolvedInCP;
    return attrs.result;
    }
 
