@@ -203,7 +203,7 @@ endif
 #######################################
 # include openj9 specific settings
 #######################################
-ifeq ($(JAVA_IMPL), openj9)
+ifeq ($(JAVA_IMPL), $(filter $(JAVA_IMPL),openj9 ibm))
 	include $(TEST_ROOT)$(D)TestConfig$(D)openj9Settings.mk
 endif
 

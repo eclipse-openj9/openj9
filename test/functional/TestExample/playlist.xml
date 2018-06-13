@@ -43,6 +43,7 @@
 		</groups>
 		<impls>
 			<impl>openj9</impl>
+			<impl>ibm</impl>
 			<impl>hotspot</impl>
 		</impls>
 		<subsets>
