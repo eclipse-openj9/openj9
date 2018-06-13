@@ -212,7 +212,6 @@ getPrimitiveField(JNIEnv *env, jobject obj, jfieldID fieldID)
 
 
 	object = J9_JNI_UNWRAP_REFERENCE(obj);
-	FieldEvents::triggerGetEvents(vmThread, j9FieldID, object);
 
 	{
 		valueOffset += J9_OBJECT_HEADER_SIZE;
@@ -223,6 +222,7 @@ getPrimitiveField(JNIEnv *env, jobject obj, jfieldID fieldID)
 		VM_AtomicSupport::readBarrier();
 	}
 
+	FieldEvents::triggerGetEvents(vmThread, j9FieldID, object);
 	VM_VMAccess::inlineExitVMToJNI(vmThread);
 	return value;
 }
@@ -295,7 +295,6 @@ putPrimitiveField(JNIEnv *env, jobject obj, jfieldID fieldID, ValueType value)
 	VM_VMAccess::inlineEnterVMFromJNI(vmThread);
 
 	object = J9_JNI_UNWRAP_REFERENCE(obj);
-	FieldEvents::triggerSetEvents(vmThread, j9FieldID, object, &value);
 
 	if (j9FieldID->field->modifiers & J9AccVolatile) {
 		VM_AtomicSupport::writeBarrier();
@@ -310,6 +309,7 @@ putPrimitiveField(JNIEnv *env, jobject obj, jfieldID fieldID, ValueType value)
 		VM_AtomicSupport::readWriteBarrier();
 	}
 
+	FieldEvents::triggerSetEvents(vmThread, j9FieldID, object, &value);
 	VM_VMAccess::inlineExitVMToJNI(vmThread);
 }
 
@@ -383,7 +383,6 @@ getObjectField(JNIEnv *env, jobject obj, jfieldID fieldID)
 	VM_VMAccess::inlineEnterVMFromJNI(vmThread);
 
 	object = J9_JNI_UNWRAP_REFERENCE(obj);
-	FieldEvents::triggerGetEvents(vmThread, j9FieldID, object);
 
 	{
 		valueOffset += J9_OBJECT_HEADER_SIZE;
@@ -396,6 +395,7 @@ getObjectField(JNIEnv *env, jobject obj, jfieldID fieldID)
 
 	valueRef = VM_VMHelpers::createLocalRef(env, value);
 
+	FieldEvents::triggerGetEvents(vmThread, j9FieldID, object);
 	VM_VMAccess::inlineExitVMToJNI(vmThread);
 	return valueRef;
 }
@@ -418,7 +418,6 @@ setObjectField(JNIEnv *env, jobject obj, jfieldID fieldID, jobject valueRef)
 
 	/* A NULL value is ok */
 	value = (NULL == valueRef)? NULL : (j9object_t)J9_JNI_UNWRAP_REFERENCE(valueRef);
-	FieldEvents::triggerSetEvents(vmThread, j9FieldID, object, &value);
 
 	if (j9FieldID->field->modifiers & J9AccVolatile) {
 		VM_AtomicSupport::writeBarrier();
@@ -433,6 +432,7 @@ setObjectField(JNIEnv *env, jobject obj, jfieldID fieldID, jobject valueRef)
 		VM_AtomicSupport::readWriteBarrier();
 	}
 
+	FieldEvents::triggerSetEvents(vmThread, j9FieldID, object, &value);
 	VM_VMAccess::inlineExitVMToJNI(vmThread);
 }
 

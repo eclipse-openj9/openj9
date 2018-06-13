@@ -30,6 +30,7 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
 - Current supported test levels are functional sanity and functional extended
 - Current available platforms are 
     - Linux x86 (xLinux)
+    - Linux x86 largeheap/non-compressed refs (xlinuxlargeheap)
     - Linux s390x (zLinux)
     - Linux PPCLE (pLinux)
     - AIX PPC (aix)
@@ -39,7 +40,7 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
     - Format: `Jenkins <build type> <level> <platform(s)> <java version(s)>`
     - Build Types: compile,test
     - Levels: sanity,extended (only if Build Type is test)
-    - Platforms: xlinux,zlinux,plinux,aix,win
+    - Platforms: xlinux,xlinuxlargeheap,zlinux,plinux,aix,win
     - Java Versions: jdk8,jdk9,jdk10
 - Note: You can use keyword `all` for level, platform or version
 
