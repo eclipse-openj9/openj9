@@ -55,7 +55,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.CountDownLatch;
-import java.util.Random;
 
 import org.openj9.test.management.util.*;
 import com.ibm.lang.management.*;
@@ -87,7 +86,7 @@ public class JvmCpuMonitorMXBeanTest {
 	 * @param args
 	 */
 	@Test
-	public void runJvmCpuMonitorMXBeanTest() {
+	public void runJvmCpuMonitorMXBeanTest() throws IOException {
 		int retryCounter = 0;
 		boolean localTest = true;
 		boolean isConnected = false;
@@ -407,7 +406,7 @@ public class JvmCpuMonitorMXBeanTest {
 	/**
 	 * Internal function: Starts a remote server to connect to.
 	 */
-	private static void startRemoteMonitor() {
+	private static void startRemoteMonitor() throws IOException {
 		logger.info("Starting Remote Server to Monitor!");
 
 		ArrayList<String> argBuffer = new ArrayList<String>();
@@ -417,8 +416,8 @@ public class JvmCpuMonitorMXBeanTest {
 		 * for its existence on the file-system. When this goes missing, it implies the child
 		 * process is up and running.
 		 */
-		Random randomGenerator = new Random();
-		String tmpName = System.getProperty("java.io.tmpdir") + fs + randomGenerator.nextInt(10000) + ".lock";
+		File file = File.createTempFile("tmp", ".lock");
+		String tmpName = file.getAbsolutePath();
 
 		String javaExec = System.getProperty("java.home") + fs + "bin" + fs + "java";
 		argBuffer.add(javaExec);

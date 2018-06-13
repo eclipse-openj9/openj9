@@ -155,14 +155,15 @@
 /* @ddr_namespace: map_to_type=J9JavaClassFlags */
 
 /* Constants from J9JavaClassFlags */
+#define J9ClassDoNotAttemptToSetInitCache 0x1
+#define J9ClassHasIllegalFinalFieldModifications 0x2
+#define J9ClassReusedStatics 0x4
 #define J9ClassContainsJittedMethods 0x8
 #define J9ClassContainsMethodsPresentInMCCHash 0x10
 #define J9ClassGCScanned 0x20
 #define J9ClassIsAnonymous 0x40
 #define J9ClassIsDerivedValueType 0x80
-#define J9ClassDoNotAttemptToSetInitCache 0x1
-#define J9ClassHasIllegalFinalFieldModifications 0x2
-#define J9ClassReusedStatics 0x4
+#define J9ClassHasWatchedFields 0x100
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
 
