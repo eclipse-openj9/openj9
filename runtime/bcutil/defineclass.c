@@ -743,7 +743,11 @@ callDynamicLoader(J9JavaVM * vm, J9LoadROMClassData *loadData, U_8 * intermediat
 			localBuffer);
 
 	/* The module of a class transformed by a JVMTI agent needs access to unnamed modules */
-	if (classFileBytesReplacedByRIA || classFileBytesReplacedByRCA) {
+	if (
+			(J2SE_VERSION(vm) >= J2SE_19)
+			&& (classFileBytesReplacedByRIA || classFileBytesReplacedByRCA)
+			&& (NULL != loadData->romClass)
+	) {
 		J9VMThread *currentThread = vm->internalVMFunctions->currentVMThread(vm);
 		J9Module *module = vm->internalVMFunctions->findModuleForPackage(currentThread, loadData->classLoader,
 				loadData->className, (U_32) packageNameLength(loadData->romClass));
