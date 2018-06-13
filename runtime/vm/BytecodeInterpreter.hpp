@@ -6092,13 +6092,15 @@ retry:
 		valueAddress = J9STATICADDRESS(flagsAndClass, valueOffset);
 #if defined(DO_HOOKS)
 		if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_GET_STATIC_FIELD)) {
-			updateVMStruct(REGISTER_ARGS);
 			J9Class *fieldClass = (J9Class*)(classAndFlags & ~(UDATA)J9StaticFieldRefFlagBits);
-			ALWAYS_TRIGGER_J9HOOK_VM_GET_STATIC_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, fieldClass, valueAddress);
-			VMStructHasBeenUpdated(REGISTER_ARGS);
-			if (immediateAsyncPending()) {
-				rc = GOTO_ASYNC_CHECK;
-				goto done;
+			if (J9_ARE_ANY_BITS_SET(fieldClass->classFlags, J9ClassHasWatchedFields)) {
+				updateVMStruct(REGISTER_ARGS);
+				ALWAYS_TRIGGER_J9HOOK_VM_GET_STATIC_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, fieldClass, valueAddress);
+				VMStructHasBeenUpdated(REGISTER_ARGS);
+				if (immediateAsyncPending()) {
+					rc = GOTO_ASYNC_CHECK;
+					goto done;
+				}
 			}
 		}
 #endif
@@ -6181,13 +6183,15 @@ retry:
 		valueAddress = J9STATICADDRESS(flagsAndClass, valueOffset);
 #if defined(DO_HOOKS)
 		if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_PUT_STATIC_FIELD)) {
-			updateVMStruct(REGISTER_ARGS);
 			J9Class *fieldClass = (J9Class*)(classAndFlags & ~(UDATA)J9StaticFieldRefFlagBits);
-			ALWAYS_TRIGGER_J9HOOK_VM_PUT_STATIC_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, fieldClass, valueAddress, _sp);
-			VMStructHasBeenUpdated(REGISTER_ARGS);
-			if (immediateAsyncPending()) {
-				rc = GOTO_ASYNC_CHECK;
-				goto done;
+			if (J9_ARE_ANY_BITS_SET(fieldClass->classFlags, J9ClassHasWatchedFields)) {
+				updateVMStruct(REGISTER_ARGS);
+				ALWAYS_TRIGGER_J9HOOK_VM_PUT_STATIC_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, fieldClass, valueAddress, _sp);
+				VMStructHasBeenUpdated(REGISTER_ARGS);
+				if (immediateAsyncPending()) {
+					rc = GOTO_ASYNC_CHECK;
+					goto done;
+				}
 			}
 		}
 #endif
@@ -6252,22 +6256,24 @@ retry:
 			if (NULL == objectref) {
 				rc = THROW_NPE;
 			} else {
-				bool isVolatile = (0 != (flags & J9AccVolatile));
 #if defined(DO_HOOKS)
 				if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_GET_FIELD)) {
-					updateVMStruct(REGISTER_ARGS);
-					ALWAYS_TRIGGER_J9HOOK_VM_GET_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, objectLocation, valueOffset);
-					VMStructHasBeenUpdated(REGISTER_ARGS);
-					if (immediateAsyncPending()) {
-						rc = GOTO_ASYNC_CHECK;
-						goto done;
+					if (J9_ARE_ANY_BITS_SET(J9OBJECT_CLAZZ(_currentThread, objectref)->classFlags, J9ClassHasWatchedFields)) {
+						updateVMStruct(REGISTER_ARGS);
+						ALWAYS_TRIGGER_J9HOOK_VM_GET_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, objectLocation, valueOffset);
+						VMStructHasBeenUpdated(REGISTER_ARGS);
+						if (immediateAsyncPending()) {
+							rc = GOTO_ASYNC_CHECK;
+							goto done;
+						}
+						objectref = *objectLocation;
 					}
-					objectref = *objectLocation;
 				}
 #endif
 
 				{
 					UDATA const newValueOffset = valueOffset + J9_OBJECT_HEADER_SIZE;
+					bool isVolatile = (0 != (flags & J9AccVolatile));
 					if (flags & J9FieldSizeDouble) {
 						_sp += (slotsToPop - 2);
 						*(U_64*)_sp = _objectAccessBarrier.inlineMixedObjectReadU64(_currentThread, objectref, newValueOffset, isVolatile);
@@ -6340,13 +6346,16 @@ retry:
 #if defined(DO_HOOKS)
 		if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_PUT_FIELD)) {
 			j9object_t  *objAddress = (j9object_t*)_sp + ((flags & J9FieldSizeDouble) ? 2 : 1);
-			if (NULL != *objAddress) {
-				updateVMStruct(REGISTER_ARGS);
-				ALWAYS_TRIGGER_J9HOOK_VM_PUT_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, objAddress, valueOffset, _sp);
-				VMStructHasBeenUpdated(REGISTER_ARGS);
-				if (immediateAsyncPending()) {
-					rc = GOTO_ASYNC_CHECK;
-					goto done;
+			j9object_t objectref = *objAddress;
+			if (NULL != objectref) {
+				if (J9_ARE_ANY_BITS_SET(J9OBJECT_CLAZZ(_currentThread, objectref)->classFlags, J9ClassHasWatchedFields)) {
+					updateVMStruct(REGISTER_ARGS);
+					ALWAYS_TRIGGER_J9HOOK_VM_PUT_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, objAddress, valueOffset, _sp);
+					VMStructHasBeenUpdated(REGISTER_ARGS);
+					if (immediateAsyncPending()) {
+						rc = GOTO_ASYNC_CHECK;
+						goto done;
+					}
 				}
 			}
 		}
