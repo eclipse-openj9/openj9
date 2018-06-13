@@ -2806,7 +2806,7 @@ retry:
 	}
 
 	if (NULL != result) {
-		UDATA classFlags = result->classFlags;
+		U_32 classFlags = result->classFlags;
 		if (NULL != superclass) {
 			/* Watched fields tag is inherited from the superclass */
 			classFlags |= (superclass->classFlags & J9ClassHasWatchedFields);
