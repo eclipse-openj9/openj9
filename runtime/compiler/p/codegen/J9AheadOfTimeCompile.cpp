@@ -227,6 +227,9 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          TR::SymbolReference *tempSR = (TR::SymbolReference *) recordInfo->data1;
          uint8_t flags = (uint8_t) recordInfo->data3;
 
+         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
+         *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
+
          if (TR::Compiler->target.is64Bit())
             {
             *(uint64_t *) cursor = (uint64_t) findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(),
@@ -242,9 +245,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
             }
          else
             {
-            TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
-            *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
-
             *(uint32_t *) cursor = (uint32_t) findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(),
                                                                           comp, recordInfo->data2); //inlineSiteIndex
 
@@ -502,6 +502,37 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          cursor += SIZEPOINTER;
 
          TR_OpaqueClassBlock *j9class = (TR_OpaqueClassBlock *) aconstNode->getAddress();
+
+         void *loaderForClazz = fej9->getClassLoader(j9class);
+         void *classChainIdentifyingLoaderForClazz = sharedCache->persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazz);
+         uintptrj_t classChainOffsetInSharedCache = (uintptrj_t) sharedCache->offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazz);
+         *(uintptrj_t *)cursor = classChainOffsetInSharedCache;
+         cursor += SIZEPOINTER;
+
+         cursor = emitClassChainOffset(cursor, j9class);
+         }
+         break;
+
+      case TR_ArbitraryClassAddress:
+         {
+         // ExternalRelocation data is as expected for TR_ClassAddress
+         auto recordInfo = (TR_RelocationRecordInformation *)relocation->getTargetAddress();
+         auto symRef = (TR::SymbolReference *)recordInfo->data1;
+         auto sym = symRef->getSymbol()->castToStaticSymbol();
+         auto j9class = (TR_OpaqueClassBlock *)sym->getStaticAddress();
+         uint8_t flags = (uint8_t)recordInfo->data3;
+         uintptr_t inlinedSiteIndex = findCorrectInlinedSiteIndex(
+            symRef->getOwningMethod(comp)->constantPool(),
+            comp,
+            recordInfo->data2);
+
+         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
+         *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
+
+         // Data identifying the class is as though for TR_ClassPointer
+         // (TR_RelocationRecordPointerBinaryTemplate)
+         *(uintptrj_t *)cursor = inlinedSiteIndex;
+         cursor += SIZEPOINTER;
 
          void *loaderForClazz = fej9->getClassLoader(j9class);
          void *classChainIdentifyingLoaderForClazz = sharedCache->persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazz);
@@ -833,6 +864,9 @@ uint32_t J9::Power::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_
    32,                                       // TR_VirtualRamMethodConst               = 53
    40,                                       // TR_InlinedInterfaceMethod              = 54
    40,                                       // TR_InlinedVirtualMethod                = 55
+   0,                                        // TR_NativeMethodAbsolute                = 56,
+   0,                                        // TR_NativeMethodRelative                = 57,
+   32,                                       // TR_ArbitraryClassAddress               = 58,
    };
 #else
 uint32_t J9::Power::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_NumExternalRelocationKinds] =
@@ -893,6 +927,9 @@ uint32_t J9::Power::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_
    16,                                       // TR_VirtualRamMethodConst               = 53
    20,                                       // TR_InlinedInterfaceMethod              = 54
    20,                                       // TR_InlinedVirtualMethod                = 55
+   0,                                        // TR_NativeMethodAbsolute                = 56,
+   0,                                        // TR_NativeMethodRelative                = 57,
+   16,                                       // TR_ArbitraryClassAddress               = 58,
    };
 
 #endif

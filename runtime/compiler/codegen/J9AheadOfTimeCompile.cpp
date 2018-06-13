@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -634,6 +634,7 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                }
             break;
 
+         case TR_ArbitraryClassAddress:
          case TR_ClassPointer:
             cursor++;           // unused field
             if (is64BitTarget)
@@ -943,5 +944,23 @@ J9::AheadOfTimeCompile::dumpRelocationData()
          }
 
       traceMsg(self()->comp(), "\n");
+      }
+   }
+
+void J9::AheadOfTimeCompile::interceptAOTRelocation(TR::ExternalRelocation *relocation)
+   {
+   OMR::AheadOfTimeCompile::interceptAOTRelocation(relocation);
+
+   if (relocation->getTargetKind() == TR_ClassAddress)
+      {
+      TR::SymbolReference *symRef = NULL;
+      void *p = relocation->getTargetAddress();
+      if (TR::AheadOfTimeCompile::classAddressUsesReloRecordInfo())
+         symRef = (TR::SymbolReference*)((TR_RelocationRecordInformation*)p)->data1;
+      else
+         symRef = (TR::SymbolReference*)p;
+
+      if (symRef->getCPIndex() == -1)
+         relocation->setTargetKind(TR_ArbitraryClassAddress);
       }
    }

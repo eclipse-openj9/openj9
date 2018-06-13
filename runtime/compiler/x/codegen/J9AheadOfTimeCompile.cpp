@@ -186,6 +186,32 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
+      case TR_ArbitraryClassAddress:
+         {
+         // ExternalRelocation data is as expected for TR_ClassAddress
+         auto symRef = (TR::SymbolReference *)relocation->getTargetAddress();
+         auto sym = symRef->getSymbol()->castToStaticSymbol();
+         auto j9class = (TR_OpaqueClassBlock *)sym->getStaticAddress();
+         uintptr_t inlinedSiteIndex = findCorrectInlinedSiteIndex(
+            symRef->getOwningMethod(comp)->constantPool(),
+            comp,
+            (uintptr_t)relocation->getTargetAddress2());
+
+         // Data identifying the class is as though for TR_ClassPointer
+         // (TR_RelocationRecordPointerBinaryTemplate)
+         *(uintptrj_t *)cursor = inlinedSiteIndex;
+         cursor += SIZEPOINTER;
+
+         void *loaderForClazz = fej9->getClassLoader(j9class);
+         void *classChainIdentifyingLoaderForClazz = sharedCache->persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazz);
+         uintptrj_t classChainOffsetInSharedCache = (uintptrj_t) sharedCache->offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazz);
+         *(uintptrj_t *)cursor = classChainOffsetInSharedCache;
+         cursor += SIZEPOINTER;
+
+         cursor = self()->emitClassChainOffset(cursor, j9class);
+         }
+         break;
+
       case TR_InlinedStaticMethodWithNopGuard:
       case TR_InlinedSpecialMethodWithNopGuard:
       case TR_InlinedVirtualMethodWithNopGuard:
@@ -635,6 +661,9 @@ uint32_t J9::X86::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_Nu
    32,                                              // TR_VirtualRamMethodConst               = 53
    40,                                              // TR_InlinedInterfaceMethod              = 54
    40,                                              // TR_InlinedVirtualMethod                = 55
+   0,                                               // TR_NativeMethodAbsolute                = 56,
+   0,                                               // TR_NativeMethodRelative                = 57,
+   32,                                              // TR_ArbitraryClassAddress               = 58,
 
 #else
 
@@ -694,6 +723,9 @@ uint32_t J9::X86::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_Nu
    16,                                              // TR_VirtualRamMethodConst               = 53
    20,                                              // TR_InlinedInterfaceMethod              = 54
    20,                                              // TR_InlinedVirtualMethod                = 55
+   0,                                               // TR_NativeMethodAbsolute                = 56,
+   0,                                               // TR_NativeMethodRelative                = 57,
+   16,                                              // TR_ArbitraryClassAddress               = 58,
 #endif
    };
 

@@ -55,6 +55,8 @@ class OMR_EXTENSIBLE AheadOfTimeCompile : public J9::AheadOfTimeCompile
    virtual void     processRelocations();
    virtual uint8_t *initializeAOTRelocationHeader(TR::IteratedExternalRelocation *relocation);
 
+   static bool classAddressUsesReloRecordInfo() { return true; }
+
    private:
    TR::CodeGenerator *_cg;
    static uint32_t _relocationTargetTypeToHeaderSizeMap[TR_NumExternalRelocationKinds];
