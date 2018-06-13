@@ -39,6 +39,7 @@
 #include "il/Node_inlines.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/symbol/LabelSymbol.hpp"
+#include "il/symbol/StaticSymbol.hpp"
 
 #define  NON_HELPER         0
 
@@ -196,7 +197,11 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          {
          TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation*) relocation->getTargetAddress();
          TR::SymbolReference *tempSR = (TR::SymbolReference *) recordInfo->data1;
+
+         // These flags are unused at the moment. If they're needed later,
+         // they'll be needed for TR_ArbitraryClassAddress as well
          uint8_t flags = (uint8_t) recordInfo->data3;
+
          uintptr_t inlinedSiteIndex = findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), comp, recordInfo->data2);
 
          *(uintptrj_t *)cursor = inlinedSiteIndex; // inlinedSiteIndex
@@ -363,6 +368,36 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          //traceMsg(comp(),"classChainIdentifyingLoaderForClazz %p\n", classChainIdentifyingLoaderForClazz);
          uintptrj_t classChainOffsetInSharedCache = (uintptrj_t) sharedCache->offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazz);
          //traceMsg(comp(),"classChainOffsetInSharedCache %p\n", classChainOffsetInSharedCache);
+         *(uintptrj_t *)cursor = classChainOffsetInSharedCache;
+         cursor += SIZEPOINTER;
+
+         cursor = self()->emitClassChainOffset(cursor, j9class);
+         }
+         break;
+
+      case TR_ArbitraryClassAddress:
+         {
+         // ExternalRelocation data is as expected for TR_ClassAddress
+         auto recordInfo =
+            (TR_RelocationRecordInformation*)relocation->getTargetAddress();
+
+         auto symRef = (TR::SymbolReference *)recordInfo->data1;
+         auto sym = symRef->getSymbol()->castToStaticSymbol();
+         auto j9class = (TR_OpaqueClassBlock *)sym->getStaticAddress();
+         // flags stored in data3 are currently unused
+         uintptr_t inlinedSiteIndex = findCorrectInlinedSiteIndex(
+            symRef->getOwningMethod(comp)->constantPool(),
+            comp,
+            recordInfo->data2);
+
+         // Data identifying the class is as though for TR_ClassPointer
+         // (TR_RelocationRecordPointerBinaryTemplate)
+         *(uintptrj_t *)cursor = inlinedSiteIndex;
+         cursor += SIZEPOINTER;
+
+         void *loaderForClazz = fej9->getClassLoader(j9class);
+         void *classChainIdentifyingLoaderForClazz = sharedCache->persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazz);
+         uintptrj_t classChainOffsetInSharedCache = (uintptrj_t) sharedCache->offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazz);
          *(uintptrj_t *)cursor = classChainOffsetInSharedCache;
          cursor += SIZEPOINTER;
 
@@ -679,6 +714,9 @@ uint32_t J9::ARM::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_Nu
    16,                                       // TR_VirtualRamMethodConst               = 53
    20,                                       // TR_InlinedInterfaceMethod              = 54
    20,                                       // TR_InlinedVirtualMethod                = 55
+   0,                                        // TR_NativeMethodAbsolute                = 56,
+   0,                                        // TR_NativeMethodRelative                = 57,
+   16,                                       // TR_ArbitraryClassAddress               = 58,
    };
 
 

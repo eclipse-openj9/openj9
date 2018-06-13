@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -255,6 +255,9 @@ TR_PPC64RelocationTarget::storeAddressSequence(uint8_t *address, uint8_t *reloLo
          patchAddr4 = (uint16_t *)&patchAddr[3];
          break;
          }
+
+      default:
+         TR_ASSERT_FATAL(false, "unrecognized sequence number %d\n", seqNumber);
       }
 
    *patchAddr1 |= value1;
@@ -287,7 +290,6 @@ TR_PPCRelocationTarget::isOrderedPairRelocation(TR_RelocationRecord *reloRecord,
       {
       case TR_AbsoluteMethodAddressOrderedPair:
       case TR_ConstantPoolOrderedPair:
-      case TR_ClassAddress:
       case TR_ClassObject:
       case TR_MethodObject:
          return true;
@@ -305,6 +307,7 @@ TR_PPC32RelocationTarget::isOrderedPairRelocation(TR_RelocationRecord *reloRecor
       case TR_ConstantPoolOrderedPair:
       case TR_ClassAddress:
       case TR_ClassObject:
+      case TR_ArbitraryClassAddress:
       case TR_MethodObject:
       case TR_ArrayCopyHelper:
       case TR_ArrayCopyToc:

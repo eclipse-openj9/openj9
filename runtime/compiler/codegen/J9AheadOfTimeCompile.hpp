@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,6 +52,14 @@ class OMR_EXTENSIBLE AheadOfTimeCompile : public OMR::AheadOfTimeCompileConnecto
    uint8_t* emitClassChainOffset(uint8_t* cursor, TR_OpaqueClassBlock* classToRemember);
    
    void dumpRelocationData();
+
+   static void interceptAOTRelocation(TR::ExternalRelocation *relocation);
+
+   /**
+    * Return true if an ExternalRelocation of kind TR_ClassAddress is expected
+    * to contain a pointer to TR_RelocationRecordInformation.
+    */
+   static bool classAddressUsesReloRecordInfo() { return false; }
    };
 
 }

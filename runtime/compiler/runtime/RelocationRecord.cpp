@@ -443,6 +443,9 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
       case TR_ClassPointer:
          reloRecord = new (storage) TR_RelocationRecordClassPointer(reloRuntime, record);
          break;
+      case TR_ArbitraryClassAddress:
+         reloRecord = new (storage) TR_RelocationRecordArbitraryClassAddress(reloRuntime, record);
+         break;
       case TR_MethodPointer:
          reloRecord = new (storage) TR_RelocationRecordMethodPointer(reloRuntime, record);
          break;
@@ -1606,7 +1609,7 @@ TR_RelocationRecordClassObject::applyRelocation(TR_RelocationRuntime *reloRuntim
       RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tapplyRelocation: hcr enabled, registered class redefinition site\n");
       }
 
-   reloTarget->storeAddress((uint8_t *)newAddress, reloLocation);
+   reloTarget->storeAddressSequence((uint8_t *)newAddress, reloLocation, reloFlags(reloTarget));
    return 0;
    }
 
@@ -3248,6 +3251,62 @@ TR_RelocationRecordClassPointer::activatePointer(TR_RelocationRuntime *reloRunti
    TR_ASSERT((void*)reloPrivateData->_pointer == (void*)reloPrivateData->_clazz, "Pointer differs from class pointer");
    if (TR::CodeGenerator::wantToPatchClassPointer(reloRuntime->comp(), reloPrivateData->_clazz, reloLocation))
       registerHCRAssumption(reloRuntime, reloLocation);
+   }
+
+// TR_ArbitraryClassAddress
+char *
+TR_RelocationRecordArbitraryClassAddress::name()
+   {
+   return "TR_ArbitraryClassAddress";
+   }
+
+int32_t
+TR_RelocationRecordArbitraryClassAddress::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+   {
+   TR_RelocationRecordPointerPrivateData *reloPrivateData = &(privateData()->pointer);
+   TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock*)reloPrivateData->_pointer;
+   assertBootstrapLoader(reloRuntime, clazz);
+   reloTarget->storeAddressSequence((uint8_t*)clazz, reloLocation, reloFlags(reloTarget));
+   // No need to activatePointer(). See its definition below.
+   return 0;
+   }
+
+int32_t
+TR_RelocationRecordArbitraryClassAddress::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocationHigh, uint8_t *reloLocationLow)
+   {
+   TR_RelocationRecordPointerPrivateData *reloPrivateData = &(privateData()->pointer);
+   TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock*)reloPrivateData->_pointer;
+   assertBootstrapLoader(reloRuntime, clazz);
+   reloTarget->storeAddress((uint8_t*)clazz, reloLocationHigh, reloLocationLow, reloFlags(reloTarget));
+   // No need to activatePointer(). See its definition below.
+   return 0;
+   }
+
+void
+TR_RelocationRecordArbitraryClassAddress::activatePointer(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+   {
+   // applyRelocation() for this class doesn't activatePointer(), because it's
+   // unnecessary. Class pointers are stable through redefinitions, and this
+   // relocation is only valid for classes loaded by the bootstrap loader,
+   // which can't be unloaded.
+   //
+   // This non-implementation is here to ensure that we don't create runtime
+   // assumptions that are inappropriate to the code layout, which may be
+   // different from the layout expected for other "pointer" relocations.
+
+   TR_ASSERT_FATAL(
+      false,
+      "TR_RelocationRecordArbitraryClassAddress::activatePointer() is unimplemented\n");
+   }
+
+void
+TR_RelocationRecordArbitraryClassAddress::assertBootstrapLoader(TR_RelocationRuntime *reloRuntime, TR_OpaqueClassBlock *clazz)
+   {
+   void *loader = reloRuntime->fej9()->getClassLoader(clazz);
+   void *bootstrapLoader = reloRuntime->javaVM()->systemClassLoader;
+   TR_ASSERT_FATAL(
+      loader == bootstrapLoader,
+      "TR_ArbitraryClassAddress relocation must use bootstrap loader\n");
    }
 
 // TR_MethodPointer
