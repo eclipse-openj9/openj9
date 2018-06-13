@@ -156,30 +156,30 @@ private:
 		ws->skipCount = 0;
 	}
 public:
-	static void triggerGetEvents(J9VMThread *vmThread, J9JNIFieldID *j9FieldID, j9object_t object)
+	static void triggerGetEvents(J9VMThread *vmThread, J9JNIFieldID *j9FieldID, jobject ref)
 	{
 		J9JavaVM *vm = vmThread->javaVM;
 	
 		if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_GET_FIELD)) {
-			if (J9_ARE_ANY_BITS_SET(J9OBJECT_CLAZZ(currentThread, object)->classFlags, J9ClassHasWatchedFields)) {
+			if (J9_ARE_ANY_BITS_SET(J9OBJECT_CLAZZ(currentThread, J9_JNI_UNWRAP_REFERENCE(ref))->classFlags, J9ClassHasWatchedFields)) {
 				J9StackWalkState *walkState = vmThread->stackWalkState;
 
 				initWalkState(vmThread, walkState);
 				vmThread->javaVM->walkStackFrames(vmThread, walkState);
 
 				if (NULL != walkState->method) {
-					ALWAYS_TRIGGER_J9HOOK_VM_GET_FIELD(vm->hookInterface, vmThread, walkState->method, 0, &object, j9FieldID->offset);
+					ALWAYS_TRIGGER_J9HOOK_VM_GET_FIELD(vm->hookInterface, vmThread, walkState->method, 0, (j9object_t*)ref, j9FieldID->offset);
 				}
 			}
 		}
 	}
 
-	static void triggerSetEvents(J9VMThread *vmThread, J9JNIFieldID *j9FieldID, j9object_t object, void *pvalue)
+	static void triggerSetEvents(J9VMThread *vmThread, J9JNIFieldID *j9FieldID, jobject ref, void *pvalue)
 	{
 		J9JavaVM *vm = vmThread->javaVM;
 
 		if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_PUT_FIELD)) {
-			if (J9_ARE_ANY_BITS_SET(J9OBJECT_CLAZZ(currentThread, object)->classFlags, J9ClassHasWatchedFields)) {
+			if (J9_ARE_ANY_BITS_SET(J9OBJECT_CLAZZ(currentThread, J9_JNI_UNWRAP_REFERENCE(ref))->classFlags, J9ClassHasWatchedFields)) {
 				J9StackWalkState *walkState = vmThread->stackWalkState;
 
 				initWalkState(vmThread, walkState);
@@ -187,7 +187,7 @@ public:
 				vmThread->javaVM->walkStackFrames(vmThread, walkState);
 
 				if (NULL != walkState->method) {
-					ALWAYS_TRIGGER_J9HOOK_VM_PUT_FIELD(vm->hookInterface, vmThread, walkState->method, 0, &object, j9FieldID->offset, pvalue);
+					ALWAYS_TRIGGER_J9HOOK_VM_PUT_FIELD(vm->hookInterface, vmThread, walkState->method, 0, (j9object_t*)ref, j9FieldID->offset, pvalue);
 				}
 			}
 		}
@@ -210,9 +210,8 @@ getPrimitiveField(JNIEnv *env, jobject obj, jfieldID fieldID)
 
 	VM_VMAccess::inlineEnterVMFromJNI(vmThread);
 
-
+	FieldEvents::triggerGetEvents(vmThread, j9FieldID, obj);
 	object = J9_JNI_UNWRAP_REFERENCE(obj);
-	FieldEvents::triggerGetEvents(vmThread, j9FieldID, object);
 
 	{
 		valueOffset += J9_OBJECT_HEADER_SIZE;
@@ -294,8 +293,8 @@ putPrimitiveField(JNIEnv *env, jobject obj, jfieldID fieldID, ValueType value)
 
 	VM_VMAccess::inlineEnterVMFromJNI(vmThread);
 
+	FieldEvents::triggerSetEvents(vmThread, j9FieldID, obj, &value);
 	object = J9_JNI_UNWRAP_REFERENCE(obj);
-	FieldEvents::triggerSetEvents(vmThread, j9FieldID, object, &value);
 
 	if (j9FieldID->field->modifiers & J9AccVolatile) {
 		VM_AtomicSupport::writeBarrier();
@@ -382,8 +381,8 @@ getObjectField(JNIEnv *env, jobject obj, jfieldID fieldID)
 
 	VM_VMAccess::inlineEnterVMFromJNI(vmThread);
 
+	FieldEvents::triggerGetEvents(vmThread, j9FieldID, obj);
 	object = J9_JNI_UNWRAP_REFERENCE(obj);
-	FieldEvents::triggerGetEvents(vmThread, j9FieldID, object);
 
 	{
 		valueOffset += J9_OBJECT_HEADER_SIZE;
@@ -414,11 +413,10 @@ setObjectField(JNIEnv *env, jobject obj, jfieldID fieldID, jobject valueRef)
 
 	VM_VMAccess::inlineEnterVMFromJNI(vmThread);
 
-	object = J9_JNI_UNWRAP_REFERENCE(obj);
-
 	/* A NULL value is ok */
+	FieldEvents::triggerSetEvents(vmThread, j9FieldID, obj, (NULL == valueRef)? NULL : (void*)valueRef);
+	object = J9_JNI_UNWRAP_REFERENCE(obj);
 	value = (NULL == valueRef)? NULL : (j9object_t)J9_JNI_UNWRAP_REFERENCE(valueRef);
-	FieldEvents::triggerSetEvents(vmThread, j9FieldID, object, &value);
 
 	if (j9FieldID->field->modifiers & J9AccVolatile) {
 		VM_AtomicSupport::writeBarrier();
