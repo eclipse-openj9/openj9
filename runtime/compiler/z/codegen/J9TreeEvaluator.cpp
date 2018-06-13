@@ -1349,12 +1349,8 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
             // STC  r3,0x0(r1,r2)
             uintptr_t cardSize = comp->getOptions()->getGcCardSize();
             int32_t shiftValue = TR::TreeEvaluator::checkNonNegativePowerOfTwo((int32_t) cardSize);
-            TR::Register * mdReg, *cardOffReg;
-            cardOffReg = temp1Reg;
-            if (!comp->getOption(TR_Enable390FreeVMThreadReg))
-               mdReg = cg->getMethodMetaDataRealRegister();
-            else
-               mdReg = cg->getVMThreadRegister();
+            TR::Register * cardOffReg = temp1Reg;
+            TR::Register * mdReg = cg->getMethodMetaDataRealRegister();
 
             // If conditions are NULL, we handle early assignment here.
             // O.w. caller is responsible for handling early assignment and making sure GPR1, GPR2 and RAREG are
@@ -1491,11 +1487,8 @@ VMCardCheckEvaluator(
          uintptr_t cardSize = comp->getOptions()->getGcCardSize();
          int32_t shiftValue = TR::TreeEvaluator::checkNonNegativePowerOfTwo((int32_t) cardSize);
 
-         TR::Register * mdReg, *cardOffReg;
-         if (!comp->getOption(TR_Enable390FreeVMThreadReg))
-            mdReg = cg->getMethodMetaDataRealRegister();
-         else
-            mdReg = cg->getVMThreadRegister();
+         TR::Register * cardOffReg;
+         TR::Register * mdReg = cg->getMethodMetaDataRealRegister();
 
          if (!clobberDstReg)
             cardOffReg = tempReg;
@@ -1592,7 +1585,6 @@ VMwrtbarEvaluator(
       conditions->addPostCondition(owningObjectReg, TR::RealRegister::GPR1);
       conditions->addPostCondition(srcReg, TR::RealRegister::GPR2);
       conditions->addPostCondition(epReg, cg->getEntryPointRegister());
-      cg->addVMThreadPostCondition(conditions, NULL);
       if (srcNonNull == false)
          {
          // If object is NULL, done
@@ -1608,7 +1600,6 @@ VMwrtbarEvaluator(
    else if (doCrdMrk)  // -Xgc:optavgpause, concurrent marking only
       {
       conditions->addPostCondition(owningObjectReg, TR::RealRegister::AssignAny);
-      cg->addVMThreadPostCondition(conditions, NULL);
       VMCardCheckEvaluator(node, owningObjectReg, NULL, conditions, cg, true, doneLabel);
       }
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, doneLabel, conditions);
@@ -2152,7 +2143,7 @@ J9::Z::TreeEvaluator::checkcastAndNULLCHKEvaluator(TR::Node * node, TR::CodeGene
    }
 
 /**   \brief Generates helper call sequence for all VMNew nodes.
- *  
+ *
  *    \param node
  *       A new allocation node for which helper call is going to be generated
  *
@@ -2167,7 +2158,7 @@ J9::Z::TreeEvaluator::checkcastAndNULLCHKEvaluator(TR::Node * node, TR::CodeGene
  *
  *    \return
  *       A register that contains return value from helper.
- *    
+ *
  *    \details
  *       Generates a helper call sequence for all new allocation nodes. It also handles special cases where we need to generate 64-bit extended children of call node
  */
@@ -2196,7 +2187,7 @@ J9::Z::TreeEvaluator::generateHelperCallForVMNewEvaluators(TR::Node *node, TR::C
       //   ->secondChild
       //   #ENDIF
       // If we generate i2l node, we need to artificially set reference count of node to 1.
-      // After helper call is generated we decrese reference count of this node so that a register will be marked dead for RA. 
+      // After helper call is generated we decrese reference count of this node so that a register will be marked dead for RA.
       TR::Node *secondChild = node->getSecondChild();
       if (TR::Compiler->target.is64Bit())
          {
@@ -2412,7 +2403,7 @@ J9::Z::TreeEvaluator::DIVCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       // [0x0000020007522994] (  0)  DIVCHK #11[0x000002000752293c]  Method[jitThrowArithmeticException]
       // [0x0000020007522904] (  2)    irem   <flags:"0x8000" (simpleDivCheck )/>
       // [0x000002000752262c] (  1)      iand   <flags:"0x1100" (X>=0 cannotOverflow )/>
-      //                      (  3)        ==>icall at [0x00000200075223f8] (in GPR_0049)   <flags:"0x30" (arithmeticPreference invalid8BitGlobalRegister vmThreadRequired )/>
+      //                      (  3)        ==>icall at [0x00000200075223f8] (in GPR_0049)   <flags:"0x30" (arithmeticPreference invalid8BitGlobalRegister)/>
       // [0x00000200075225f4] (  1)        iconst 0x7fffffff   <flags:"0x104" (X!=0 X>=0 )/>
       // [0x00000200075228cc] (  1)      iiload #251[0x000002000745c940]+12  Shadow[<array-size>]   <flags:"0x1100" (X>=0 cannotOverflow )/>
       // [0x00000200074665d0] (  1)        l2a
@@ -3787,7 +3778,7 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
    TR::Node * firstChild = node->getFirstChild();
    TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
    // As arguments to ArrayStoreCHKEvaluator helper function is children of first child,
-   // We need to create a dummy call node for helper call with children containing arguments to helper call. 
+   // We need to create a dummy call node for helper call with children containing arguments to helper call.
    bool doWrtBar = (gcMode == TR_WrtbarOldCheck ||
                     gcMode == TR_WrtbarCardMarkAndOldCheck ||
                     gcMode == TR_WrtbarAlways);
@@ -4030,7 +4021,6 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
          generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, srcReg, mr2);
       }
 
-   cg->addVMThreadPostCondition(conditions, NULL);
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, doneLabel, conditions);
 
    if (comp->useCompressedPointers() && firstChild->getOpCode().isIndirect())
@@ -4274,8 +4264,6 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
       {
       conditions->addPostCondition(litPoolReg, TR::RealRegister::AssignAny);
       }
-
-   cg->addVMThreadPostCondition(conditions, NULL);
 
    if (nullTestRequired && needsResult)
       {
@@ -4727,7 +4715,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
 static TR::Register *
 reservationLockEnter(TR::Node *node, int32_t lwOffset, TR::Register *objectClassReg, TR::CodeGenerator *cg, TR::S390CHelperLinkage *helperLink)
    {
-   TR::Register *objReg, *monitorReg, *metaReg, *valReg, *tempReg;
+   TR::Register *objReg, *monitorReg, *valReg, *tempReg;
    TR::Register *EPReg, *returnAddressReg;
    TR::LabelSymbol *resLabel, *callLabel, *doneLabel;
    TR::Instruction *instr;
@@ -4743,10 +4731,7 @@ reservationLockEnter(TR::Node *node, int32_t lwOffset, TR::Register *objectClass
    else
       objReg = node->getFirstChild()->getRegister();
 
-   if (!comp->getOption(TR_Enable390FreeVMThreadReg))
-      metaReg = cg->getMethodMetaDataRealRegister();
-   else
-      metaReg = cg->getVMThreadRegister();
+   TR::Register *metaReg = cg->getMethodMetaDataRealRegister();
 
    monitorReg = cg->allocateRegister();
    valReg = cg->allocateRegister();
@@ -4958,7 +4943,7 @@ reservationLockEnter(TR::Node *node, int32_t lwOffset, TR::Register *objectClass
 static TR::Register *
 reservationLockExit(TR::Node *node, int32_t lwOffset, TR::Register *objectClassReg, TR::CodeGenerator *cg, TR::S390CHelperLinkage *helperLink )
    {
-   TR::Register *objReg, *monitorReg, *metaReg, *valReg, *tempReg;
+   TR::Register *objReg, *monitorReg, *valReg, *tempReg;
    TR::Register *EPReg, *returnAddressReg;
    TR::LabelSymbol *resLabel, *callLabel, *doneLabel;
    TR::Instruction *instr;
@@ -4974,10 +4959,7 @@ reservationLockExit(TR::Node *node, int32_t lwOffset, TR::Register *objectClassR
    else
       objReg = node->getFirstChild()->getRegister();
 
-   if (!comp->getOption(TR_Enable390FreeVMThreadReg))
-      metaReg = cg->getMethodMetaDataRealRegister();
-   else
-      metaReg = cg->getVMThreadRegister();
+   TR::Register *metaReg = cg->getMethodMetaDataRealRegister();
 
    monitorReg = cg->allocateRegister();
    valReg = cg->allocateRegister();
@@ -5443,7 +5425,7 @@ void genInstanceOfDynamicCacheAndHelperCall(TR::Node *node, TR::CodeGenerator *c
       TR_ASSERT_FATAL(maxOnsiteCacheSlots <= 7, "Maximum 7 slots per site allowed because we use a fixed stack allocated buffer to construct the snippet\n");
       UDATA initialSnippet[16] = { static_cast<UDATA>(addressSize) };
       dynamicCacheSnippet = (TR::S390WritableDataSnippet*)cg->CreateConstant(node, initialSnippet, requestedBytes, true);
-      
+
       int32_t currentIndex = maxOnsiteCacheSlots > 1 ? addressSize : 0;
       dynamicCacheReg = srm->findOrCreateScratchRegister();
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, dynamicCacheTestLabel);
@@ -5495,11 +5477,11 @@ void genInstanceOfDynamicCacheAndHelperCall(TR::Node *node, TR::CodeGenerator *c
                }
             }
          else
-            {  
+            {
             generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, trueLabel);
             generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, cachedObjectClass, 1, TR::InstOpCode::COND_BE, falseLabel, false, false);
             }
-         
+
          if (gotoNextTest && gotoNextTest != helperCallLabel)
             generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, gotoNextTest);
          currentIndex += (cacheCastClass? 2: 1)*addressSize;
@@ -5520,7 +5502,7 @@ void genInstanceOfDynamicCacheAndHelperCall(TR::Node *node, TR::CodeGenerator *c
        *                   OILL objClassReg,1
        * skipSettingBitForFalseResult:
        *               Case - 1 : maxOnsiteCacheSlots = 1
-       *                   STG objClassReg, @(dynamicCacheReg)    
+       *                   STG objClassReg, @(dynamicCacheReg)
        *                   if (cacheCastClass)
        *                      STG castClassReg, @(dynamicCacheReg,addressSize)
        *               Case - 2 : maxOnsiteCacheSlots > 1
@@ -5534,7 +5516,7 @@ void genInstanceOfDynamicCacheAndHelperCall(TR::Node *node, TR::CodeGenerator *c
        * skipResetOffset:
        *                   STG offsetReg,@(dynamicCacheReg) -> End of Internal Control Flow
        *                   LT resultReg,helperReturnReg
-       */  
+       */
    TR_S390OutOfLineCodeSection *outlinedSlowPath = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(helperCallLabel, doneLabel, cg);
    cg->getS390OutOfLineCodeSectionList().push_front(outlinedSlowPath);
       outlinedSlowPath->swapInstructionListsWithCompilation();
@@ -5562,7 +5544,7 @@ void genInstanceOfDynamicCacheAndHelperCall(TR::Node *node, TR::CodeGenerator *c
          // NOTE: In OOL helper call is not within ICF hence we can avoid passing dependency to helper call dispatch function and stretching it to merge label.
          // Although internal control flow starts after returning from helper we need to define starting point and ending point of internal control flow.
          cursor->setStartInternalControlFlow();
-         generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, offsetRegister, generateS390MemoryReference(dynamicCacheReg,0,cg));    
+         generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, offsetRegister, generateS390MemoryReference(dynamicCacheReg,0,cg));
          generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, objClassReg, generateS390MemoryReference(dynamicCacheReg,offsetRegister,0,cg));
          if (cacheCastClass)
             generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, castClassReg, generateS390MemoryReference(dynamicCacheReg,offsetRegister,addressSize,cg));
@@ -5599,7 +5581,7 @@ void genInstanceOfDynamicCacheAndHelperCall(TR::Node *node, TR::CodeGenerator *c
       else
          generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, branchLabel);
       }
-   
+
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, doneLabel);
    outlinedSlowPath->swapInstructionListsWithCompilation();
    if (!needResult)
@@ -5823,13 +5805,13 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator2(TR::Node * node, TR::CodeGen
                else
                   temp = generateRILInstruction(cg, TR::InstOpCode::LARL, node, arbitraryClassReg1, profiledClassesList[numPICs].profiledClass);
 
-               // Adding profiled class to the static PIC slots.  
+               // Adding profiled class to the static PIC slots.
                if (fej9->isUnloadAssumptionRequired((TR_OpaqueClassBlock *)(profiledClassesList[numPICs].profiledClass), comp->getCurrentMethod()))
                   comp->getStaticPICSites()->push_front(temp);
-               // Adding profiled class to static HCR PIC sites.               
+               // Adding profiled class to static HCR PIC sites.
                if (cg->wantToPatchClassPointer(profiledClassesList[numPICs].profiledClass, node))
                   comp->getStaticHCRPICSites()->push_front(temp);
-               
+
                if (profiledClassesList[numPICs].isProfiledClassInstanceOfCastClass)
                   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpRegOpCode(), node, arbitraryClassReg1, objClassReg, TR::InstOpCode::COND_BE, trueLabel, false, false);
                else
@@ -5923,7 +5905,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator2(TR::Node * node, TR::CodeGen
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, oppositeResultLabel);
       generateRIInstruction(cg,TR::InstOpCode::getLoadHalfWordImmOpCode(),node,resultReg,static_cast<int32_t>(!initialResult));
       }
-   
+
    TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(graDeps, 0, 4+srm->numAvailableRegisters(), cg);
    if (objClassReg)
       conditions->addPostCondition(objClassReg, TR::RealRegister::AssignAny);
@@ -6225,10 +6207,10 @@ J9::Z::TreeEvaluator::VMcheckcastEvaluator2(TR::Node * node, TR::CodeGenerator *
             dynamicCastClass = genInstanceOfOrCheckcastSuperClassTest(node, cg, objClassReg, castClassReg, castClassDepth, callLabel, NULL, srm);
             /* outlinedSlowPath will be non-NULL if we have a higher probability of ClassEqualityTest succeeding.
              * In such cases we will do rest of the tests in OOL section, and as such we need to skip the helper call
-             * if the result of SuperClassTest is true and branch to resultLabel which will branch back to the doneLabel from OOL code. 
+             * if the result of SuperClassTest is true and branch to resultLabel which will branch back to the doneLabel from OOL code.
              * In normal cases SuperClassTest will be inlined with doneLabel as fallThroughLabel so we need to branch to callLabel to generate CastClassException
-             * through helper call if result of SuperClassTest turned out to be false. 
-             */ 
+             * through helper call if result of SuperClassTest turned out to be false.
+             */
             cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, outlinedSlowPath != NULL ? TR::InstOpCode::COND_BE : TR::InstOpCode::COND_BNE, node, outlinedSlowPath ? resultLabel : callLabel);
             break;
             }
@@ -6260,7 +6242,7 @@ J9::Z::TreeEvaluator::VMcheckcastEvaluator2(TR::Node * node, TR::CodeGenerator *
                // Adding profiled classes to HCR PIC sites
                if (cg->wantToPatchClassPointer(profiledClassesList[numPICs].profiledClass, node))
                   comp->getStaticHCRPICSites()->push_front(temp);
-               
+
                temp = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpRegOpCode(), node, arbitraryClassReg1, objClassReg, TR::InstOpCode::COND_BE, resultLabel, false, false);
                numPICs++;
                }
@@ -6346,7 +6328,7 @@ J9::Z::TreeEvaluator::VMcheckcastEvaluator2(TR::Node * node, TR::CodeGenerator *
       //Follwing code is needed to put the Helper Call Outlined.
       if (!comp->getOption(TR_DisableOOL) && !outlinedSlowPath)
          {
-         // As SuperClassTest is the costliest test and is guaranteed to give results for checkCast node. Hence it will always be second last test 
+         // As SuperClassTest is the costliest test and is guaranteed to give results for checkCast node. Hence it will always be second last test
          // in iter array followed by GoToFalse as last test for checkCastNode
          if ( *(iter-1) != SuperClassTest)
             generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, callLabel);
@@ -6505,7 +6487,6 @@ J9::Z::TreeEvaluator::VMcheckcastEvaluator(TR::Node * node, TR::CodeGenerator * 
    conditions->addPostCondition(castClassReg, TR::RealRegister::GPR1);
    conditions->addPostCondition(scratch1Reg, cg->getReturnAddressRegister());
    conditions->addPostCondition(objClassReg, cg->getEntryPointRegister());
-   cg->addVMThreadPostCondition(conditions, NULL);
 
    // Add in compareRef if is happens to not already be inserted
    //
@@ -6736,7 +6717,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register            *objectClassReg            = NULL;
    TR::Register            *lookupOffsetReg           = NULL;
    TR::Register            *tempRegister              = NULL;
-   TR::Register            *metaReg                   = NULL;
+   TR::Register            *metaReg                   = cg->getMethodMetaDataRealRegister();
    TR::Register            *wasteReg                  = NULL;
    TR::Register            *lockPreservingReg         = NULL;
    TR::Register            *dummyResultReg               = NULL;
@@ -6781,14 +6762,8 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    bool isAOT = comp->getOption(TR_AOT);
    TR_Debug * debugObj = cg->getDebug();
 
-   if (!comp->getOption(TR_Enable390FreeVMThreadReg))
-      metaReg = cg->getMethodMetaDataRealRegister();
-   else
-      metaReg = cg->getVMThreadRegister();
-
    conditions->addPostCondition(objReg, TR::RealRegister::AssignAny);
    conditions->addPostCondition(monitorReg, TR::RealRegister::AssignAny);
-   cg->addVMThreadPostCondition(conditions, NULL);
 
    static const char * peekFirst = feGetEnv("TR_PeekingMonEnter");
    // This debug option is for printing the locking mechanism.
@@ -7177,7 +7152,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
    TR::Register      *lookupOffsetReg     = NULL;
    TR::Register      *tempRegister        = NULL;
    TR::Register      *monitorReg          = cg->allocateRegister();
-   TR::Register      *metaReg             = NULL;
+   TR::Register      *metaReg             = cg->getMethodMetaDataRealRegister();
    TR::Register      *scratchRegister     = NULL;
    TR::Instruction         *startICF                  = NULL;
    bool disableOOL  = comp->getOption(TR_DisableOOL);
@@ -7218,16 +7193,9 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
    bool normalLockWithReservationPreserving     = false;
    bool simpleLocking                           = false;
 
-   if (!comp->getOption(TR_Enable390FreeVMThreadReg))
-      metaReg = cg->getMethodMetaDataRealRegister();
-   else
-      metaReg = cg->getVMThreadRegister();
-
-
 
    conditions->addPostCondition(objReg, TR::RealRegister::AssignAny);
    conditions->addPostCondition(monitorReg, TR::RealRegister::AssignAny);
-   cg->addVMThreadPostCondition(conditions, NULL);
 
 
 #if defined (J9VM_THR_LOCK_NURSERY)
@@ -7636,11 +7604,7 @@ genHeapAlloc(TR::Node * node, TR::Instruction *& iCursor, bool isVariableLen, TR
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    if (!TR::Options::getCmdLineOptions()->realTimeGC())
       {
-      TR::Register *metaReg;
-      if (!comp->getOption(TR_Enable390FreeVMThreadReg))
-         metaReg = cg->getMethodMetaDataRealRegister();
-      else
-         metaReg = cg->getVMThreadRegister();
+      TR::Register *metaReg = cg->getMethodMetaDataRealRegister();
 
       // bool sizeInReg = (isVariableLen || (allocSize > MAX_IMMEDIATE_VAL));
 
@@ -7897,15 +7861,10 @@ genInitObjectHeader(TR::Node * node, TR::Instruction *& iCursor, TR_OpaqueClassB
       J9ROMClass *romClass = 0;
       int32_t staticFlag = 0;
       uint32_t orFlag = 0;
-      TR::Register *metaReg;
+      TR::Register *metaReg = cg->getMethodMetaDataRealRegister();
       TR_ASSERT(classAddress, "Cannot have a null OpaqueClassBlock\n");
       romClass = TR::Compiler->cls.romClassOf(classAddress);
       staticFlag = romClass->instanceShape;
-
-      if (!comp->getOption(TR_Enable390FreeVMThreadReg))
-         metaReg = cg->getMethodMetaDataRealRegister();
-      else
-         metaReg = cg->getVMThreadRegister();
 
       // a pointer to the virtual register that will actually hold the class pointer.
       TR::Register * clzReg = classReg;
@@ -9104,7 +9063,6 @@ J9::Z::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *c
    deps->addPostConditionIfNotAlreadyInserted(object2Reg, TR::RealRegister::AssignAny);  // 1st and 2nd object may be the same.
    deps->addPostCondition(tempReg, TR::RealRegister::AssignAny);
    deps->addPostCondition(tempClassReg, TR::RealRegister::AssignAny);
-   cg->addVMThreadPostCondition(deps, NULL);
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, fallThrough, deps);
 
    cg->stopUsingRegister(tempClassReg);
@@ -9400,13 +9358,8 @@ J9::Z::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node* node, TR::Register
    // 5) dstAddr
    // 6) num of slots
    // 7) VM referenceArrayCopy func desc
-   TR::Register *metaReg;
-   if (!comp->getOption(TR_Enable390FreeVMThreadReg))
-      metaReg  = cg->getMethodMetaDataRealRegister();
-   else
-      {
-      metaReg = cg->getVMThreadRegister();
-      }
+   TR::Register *metaReg = cg->getMethodMetaDataRealRegister();
+
    if (sspRegReal->getState() != TR::RealRegister::Locked)
       {
        deps->addPreCondition(sspReg, TR::RealRegister::GPR4);
@@ -9423,12 +9376,6 @@ J9::Z::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node* node, TR::Register
 
    TR::Instruction *inst = generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, metaReg,
          generateS390MemoryReference(sspReg, offset+0*ptrSize, cg));
-   if (comp->getOption(TR_Enable390FreeVMThreadReg))
-      {
-      TR::RegisterDependencyConditions *vmThreadConds = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1,0, cg);
-      cg->addVMThreadPreCondition(vmThreadConds, NULL);
-      inst->setDependencyConditions(vmThreadConds);
-      }
    generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, srcObjReg,
          generateS390MemoryReference(sspReg, offset+1*ptrSize, cg));
    generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, dstObjReg,
@@ -9468,7 +9415,6 @@ J9::Z::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node* node, TR::Register
    deps->addPostCondition(rcReg,  linkage->getIntegerReturnRegister());
    deps->addPostCondition(raReg,  linkage->getReturnAddressRegister());
    deps->addPostCondition(tmpReg, linkage->getEntryPointRegister());
-   cg->addVMThreadPostCondition(deps, NULL);
 
    TR::Instruction *gcPoint =
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, callLabel);
@@ -9753,7 +9699,7 @@ static TR::Register *VMinlineCompareAndSwap(
 
       auto guardedLoadMnemonic = usingCompressedPointers ? TR::InstOpCode::LLGFSG : TR::InstOpCode::LGG;
 
-      // Compare-And-Swap on object reference, while primarily is a store operation, it is also an implicit read (it 
+      // Compare-And-Swap on object reference, while primarily is a store operation, it is also an implicit read (it
       // reads the existing value to be compared with a provided compare value, before the store itself), hence needs
       // a read barrier
       generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
@@ -9775,7 +9721,6 @@ static TR::Register *VMinlineCompareAndSwap(
    TR::RegisterDependencyConditions* cond = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);
    cond->addPostCondition(resultReg, TR::RealRegister::AssignAny);
 
-   cg->addVMThreadPostCondition(cond, NULL);
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, doneLabel, cond);
 
    // Do wrtbar for Objects
@@ -12365,28 +12310,6 @@ TR_J9VMBase::generateBinaryEncodingPrologue(
       {
       data->estimate = data->cursorInstruction->estimateBinaryLength(data->estimate);
       data->cursorInstruction = data->cursorInstruction->getNext();
-      }
-
-   // Emit the spill instruction to set up the vmThread reloads if needed
-   // (i.e., if the vmThread was ever spilled to make room for another register)
-   //
-   // TODO take this part out when doing IL level vm thread work
-   //
-   if (comp->getOption(TR_Enable390FreeVMThreadReg))
-      {
-      TR::Instruction *vmThreadSpillCursor = cg->getVMThreadSpillInstruction();
-      if (vmThreadSpillCursor && cg->getVMThreadRegister()->getBackingStorage())
-         {
-         if (vmThreadSpillCursor == (TR::Instruction *)0xffffffff ||
-             comp->mayHaveLoops())
-            {
-            vmThreadSpillCursor = data->cursorInstruction;
-            }
-
-         TR::MemoryReference * tempMR = generateS390MemoryReference(vmThreadSpillCursor->getNode(), cg->getVMThreadRegister()->getBackingStorage()->getSymbolReference(), cg);
-         TR::RealRegister::RegNum vmThreadIndex = cg->getS390PrivateLinkage()->getMethodMetaDataRegister();
-         generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), vmThreadSpillCursor->getNode(), cg->getS390Linkage()->getS390RealRegister(vmThreadIndex), tempMR, vmThreadSpillCursor);
-         }
       }
 
    TR::Instruction* cursor = data->cursorInstruction;

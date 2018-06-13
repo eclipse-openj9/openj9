@@ -215,11 +215,7 @@ TR::J9S390zLinuxSystemLinkage::performCallNativeFunctionForLinkage(TR::Node * ca
    TR::RealRegister * javaStackPointerRealRegister = privateLinkage->getStackPointerRealRegister();
 
    // get methodMetaDataVirtualRegister
-   TR::Register * methodMetaDataVirtualRegister = NULL;
-   if (codeGen->comp()->getOption(TR_Enable390FreeVMThreadReg))
-     methodMetaDataVirtualRegister = codeGen->getVMThreadRegister();
-   else
-     methodMetaDataVirtualRegister = privateLinkage->getMethodMetaDataRealRegister();
+   TR::Register * methodMetaDataVirtualRegister = privateLinkage->getMethodMetaDataRealRegister();
 
    // restore java stack pointer
    generateRXInstruction(codeGen, TR::InstOpCode::getLoadOpCode(), callNode, javaStackPointerRealRegister,
@@ -278,7 +274,6 @@ TR::J9S390zOSSystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR:
    TR::Compilation *comp = codeGen->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(codeGen->fe());
    // privateLinkage refers to linkage of caller
-   TR::Register * methodMetaDataVirtualRegister;
    TR::Linkage * privateLinkage;
 
    privateLinkage = (TR::S390PrivateLinkage *) cg()->getLinkage(TR_Private);
@@ -371,14 +366,8 @@ TR::J9S390zOSSystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR:
                systemEntryPointRegister, generateS390MemoryReference(methodAddressReg, 16, codeGen));
       }
    // call the JNI function
-   if (comp->getOption(TR_Enable390FreeVMThreadReg))
-       {
-       methodMetaDataVirtualRegister = cg()->getVMThreadRegister();
-       }
-   else
-       {
-       methodMetaDataVirtualRegister = ((TR::S390PrivateLinkage *) privateLinkage)->getMethodMetaDataRealRegister();
-       }
+   TR::Register * methodMetaDataVirtualRegister = ((TR::S390PrivateLinkage *) privateLinkage)->getMethodMetaDataRealRegister();
+
    if (cg()->supportsJITFreeSystemStackPointer())
       {
       auto* systemSPOffsetMR = generateS390MemoryReference(methodMetaDataVirtualRegister, static_cast<int32_t>(fej9->thisThreadGetSystemSPOffset()), codeGen);
@@ -465,11 +454,7 @@ TR::J9S390zOSSystemLinkage::performCallNativeFunctionForLinkage(TR::Node * callN
    TR::RealRegister * javaStackPointerRealRegister = privateLinkage->getStackPointerRealRegister();
 
    // get methodMetaDataVirtualRegister
-   TR::Register * methodMetaDataVirtualRegister = NULL;
-   if (codeGen->comp()->getOption(TR_Enable390FreeVMThreadReg))
-     methodMetaDataVirtualRegister = codeGen->getVMThreadRegister();
-   else
-     methodMetaDataVirtualRegister = privateLinkage->getMethodMetaDataRealRegister();
+   TR::Register * methodMetaDataVirtualRegister = privateLinkage->getMethodMetaDataRealRegister();
 
    // restore java stack pointer
    generateRXInstruction(codeGen, TR::InstOpCode::getLoadOpCode(), callNode, javaStackPointerRealRegister,

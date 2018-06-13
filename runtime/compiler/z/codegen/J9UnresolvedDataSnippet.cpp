@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -171,9 +171,6 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
 
    //Grab the snippet's start point
    getSnippetLabel()->setCodeLocation(cursor);
-
-   //load vm thread into gpr13
-   cursor = generateLoadVMThreadInstruction(cg(), cursor);
 
    //  setup the address of the picbuilder function
 
@@ -416,7 +413,6 @@ J9::Z::UnresolvedDataSnippet::getLength(int32_t  estimatedSnippetStart)
    {
    // *this   swipeable for debugger
    uint32_t length = (TR::Compiler->target.is64Bit() ? (14 + 5 * sizeof(uintptrj_t)) : (12 + 5 * sizeof(uintptrj_t)));
-   length += getLoadVMThreadInstructionLength(cg());
    // For instance snippets, we have the out-of-line sequence
    if (isInstanceData())
       length += (TR::Compiler->target.is64Bit()) ? 36 : 28;
@@ -436,8 +432,6 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
 
    uint8_t * bufferPos = snippet->getSnippetLabel()->getCodeLocation();
    printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, "Unresolved Data Snippet");
-
-   bufferPos = printLoadVMThreadInstruction(pOutFile, bufferPos);
 
    bufferPos = printRuntimeInstrumentationOnOffInstruction(pOutFile, bufferPos, false); // RIOFF
 

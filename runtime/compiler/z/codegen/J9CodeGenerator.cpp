@@ -161,22 +161,6 @@ J9::Z::CodeGenerator::CodeGenerator() :
    if (!comp->getOption(TR_DisableBDLLVersioning))
       cg->setSupportsBigDecimalLongLookasideVersioning();
 
-   // Allocate a virtual register for the VM thread & link the virtual & real registers together
-   // TODO: take this part out when doing IL level VM thread work.  It is codegen level VM Thread work
-   if (comp->getOption(TR_Enable390FreeVMThreadReg))
-      {
-      TR::Register *vmThreadRegister = cg->setVMThreadRegister(cg->allocateRegister());
-      if (cg->needsVMThreadDependency())
-         {
-         TR::RealRegister::RegNum vmThreadIndex = cg->getS390PrivateLinkage()->getMethodMetaDataRegister();
-         TR::RealRegister *vmThreadReal = cg->getS390Linkage()->getS390RealRegister(vmThreadIndex);
-         vmThreadRegister->setAssignedRegister(vmThreadReal);
-         vmThreadRegister->setAssociation(vmThreadIndex);
-         vmThreadReal->setAssignedRegister(vmThreadRegister);
-         vmThreadReal->setState(TR::RealRegister::Assigned);
-         }
-      }
-
    // RI support
    if (TR::Options::getCmdLineOptions()->getOption(TR_HWProfilerDisableRIOverPrivateLinkage)
        && comp->getPersistentInfo()->isRuntimeInstrumentationEnabled()
@@ -3834,19 +3818,19 @@ J9::Z::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod me
    if (!self()->comp()->compileRelocatableCode() && !self()->comp()->getOption(TR_DisableDFP) && TR::Compiler->target.cpu.getS390SupportsDFP())
       {
       if (method == TR::java_math_BigDecimal_DFPIntConstructor ||
-          method == TR::java_math_BigDecimal_DFPLongConstructor || 
+          method == TR::java_math_BigDecimal_DFPLongConstructor ||
           method == TR::java_math_BigDecimal_DFPLongExpConstructor ||
           method == TR::java_math_BigDecimal_DFPAdd ||
           method == TR::java_math_BigDecimal_DFPSubtract ||
           method == TR::java_math_BigDecimal_DFPMultiply ||
-          method == TR::java_math_BigDecimal_DFPDivide || 
+          method == TR::java_math_BigDecimal_DFPDivide ||
           method == TR::java_math_BigDecimal_DFPScaledAdd ||
           method == TR::java_math_BigDecimal_DFPScaledSubtract ||
           method == TR::java_math_BigDecimal_DFPScaledMultiply ||
           method == TR::java_math_BigDecimal_DFPScaledDivide ||
-          method == TR::java_math_BigDecimal_DFPRound || 
+          method == TR::java_math_BigDecimal_DFPRound ||
           method == TR::java_math_BigDecimal_DFPSetScale ||
-          method == TR::java_math_BigDecimal_DFPCompareTo || 
+          method == TR::java_math_BigDecimal_DFPCompareTo ||
           method == TR::java_math_BigDecimal_DFPSignificance ||
           method == TR::java_math_BigDecimal_DFPExponent ||
           method == TR::java_math_BigDecimal_DFPBCDDigits ||
