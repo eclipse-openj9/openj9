@@ -290,6 +290,13 @@ def set_job_names() {
 * Initializes all of the required variables for a Jenkins job by given job type.
 */
 def set_job_variables(job_type) {
+    // check mandatory parameters if any
+    try {
+        validate_arguments(ARGS)
+    } catch(MissingPropertyException e){
+        // ignore when ARGS is not set
+    }
+
     // initialize VARIABLES
     parse_variables_file()
 
@@ -326,6 +333,34 @@ def set_job_variables(job_type) {
         default:
             error("Unknown Jenkins job type!")
     }
+}
+
+/*
+* Checks if mandatory arguments are set.
+*/
+def validate_arguments(ARGS) {
+    for (arg in ARGS) {
+        if (!params.get(arg)) {
+            error("Must specify ${arg}")
+        }
+
+        if (arg == 'PLATFORM') {
+            // set SPEC - a groovy variable - here
+            // SPEC cannot be a build parameter because build parameters are
+            // exported as environment variables and it will overwrite the
+            // make SPEC variable set in the configure phase in build.build() method
+            SPEC = params.get(arg)
+        }
+    }
+}
+
+/*
+* Prints the error stack trace.
+*/
+def printStackTrace(e) {
+    def writer = new StringWriter()
+    e.printStackTrace(new PrintWriter(writer))
+    echo e.toString()
 }
 
 return this
