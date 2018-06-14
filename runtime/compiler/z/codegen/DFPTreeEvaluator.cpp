@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,6 +40,7 @@
 #include "z/codegen/S390GenerateInstructions.hpp"
 #include "z/codegen/S390Snippets.hpp"
 #include "z/codegen/TRSystemLinkage.hpp"
+#include "z/codegen/J9TreeEvaluator.hpp"
 
 /**
   Notes to use when re-opening DFP on Z work later on:
@@ -1702,5 +1703,1876 @@ inlineBigDecimalToPackedConverter(
    // return the long value in a register
    node->setRegister(retRegister);
    return retRegister;
+   }
+
+
+inline TR::Register *
+dfp2fpHelper(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Node * firstChild = node->getFirstChild();
+   TR::Register * srcReg = cg->evaluate(firstChild);
+
+   TR::DataType srcType = firstChild -> getDataType();
+   TR::DataType tgtType = node -> getDataType();
+
+   TR::Register *r0Reg = cg->allocateRegister();
+   TR::Register *r1Reg = cg->allocateRegister();
+   TR::RegisterDependencyConditions * deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(3, 6, cg);
+   deps->addPreCondition(r0Reg, TR::RealRegister::GPR0);
+   deps->addPostCondition(r0Reg, TR::RealRegister::GPR0);
+   deps->addPostCondition(r1Reg, TR::RealRegister::GPR1);
+
+   TR::Register * srcCopy;
+   TR::Register * lowSrcReg;
+   TR::Register * highSrcReg;
+   if (srcType == TR::DecimalLongDouble)
+      {
+      lowSrcReg = cg->allocateRegister(TR_FPR);
+      highSrcReg = cg->allocateRegister(TR_FPR);
+      deps->addPreCondition(highSrcReg, TR::RealRegister::FPR4);
+      deps->addPostCondition(highSrcReg, TR::RealRegister::FPR4);
+      deps->addPreCondition(lowSrcReg, TR::RealRegister::FPR6);
+      deps->addPostCondition(lowSrcReg, TR::RealRegister::FPR6);
+      srcCopy = cg->allocateFPRegisterPair(lowSrcReg, highSrcReg);
+      }
+   else
+      {
+      srcCopy = cg->allocateRegister(TR_FPR);
+      deps->addPreCondition(srcCopy, TR::RealRegister::FPR4);
+      deps->addPostCondition(srcCopy, TR::RealRegister::FPR4);
+      }
+
+   TR::InstOpCode::Mnemonic loadOp;
+   if (srcType == TR::Float || srcType == TR::DecimalFloat)
+      loadOp = TR::InstOpCode::LER;
+   else if (srcType == TR::Double || srcType == TR::DecimalDouble)
+      loadOp = TR::InstOpCode::LDR;
+   else // must be long double
+      loadOp = TR::InstOpCode::LXR;
+
+   generateRRInstruction(cg, loadOp, node, srcCopy, srcReg);
+
+   TR::Register * tgtCopy;
+   TR::Register * lowTgtCopy;
+   TR::Register * highTgtCopy;
+   if (tgtType == TR::DecimalLongDouble)
+      {
+      lowTgtCopy = cg->allocateRegister(TR_FPR);
+      highTgtCopy = cg->allocateRegister(TR_FPR);
+      deps->addPostCondition(highTgtCopy, TR::RealRegister::FPR0);
+      deps->addPostCondition(lowTgtCopy, TR::RealRegister::FPR2);
+      tgtCopy = cg->allocateFPRegisterPair(lowTgtCopy, highTgtCopy);
+      }
+   else
+      {
+      tgtCopy = cg->allocateRegister(TR_FPR);
+      deps->addPostCondition(tgtCopy, TR::RealRegister::FPR0);
+      }
+
+   // The conversion operation is specified by the function code in general register 0
+   // condition code is set to indicate the result. When there are no exceptional
+   // conditions, condition code 0 is set. When an IEEE nontrap exception is recognized, condition
+   // code 1 is set. When an IEEE trap exception with alternate action is recognized, condition code 2
+   // is set. A 32-bit return code is placed in bits 32-63 of general register 1; bits 0-31 of
+   // general register 1 remain unchanged.
+
+   // For the PFPO-convert-floatingpoint-radix operation, the second operand is converted
+   // to the format of the first operand and placed at the first-operand location, a return code is placed in
+   // bits 32-63 of general register 1, and the condition code is set to indicate whether an exceptional condition
+   // was recognized.  The first and second operands are in implicit floatingpoint registers. The first operand
+   // is in FPR0 (paired with FPR2 for extended). The second operand is in FPR4 (paired with FPR6 for extended).
+/*******************************************************
+     bit 32: test bit
+               0 -- operation is performed based on bit 33-63 (must be valid values);
+               1 -- operation is not performed, but set condition code, but, instead, the
+                    condition code is set to indicate whether these bits specify a valid and installed function;
+      bits 33-39:   specify the operation type. Only one operation type is currently defined: 01, hex,
+                    is PFPO Convert Floating-Point Radix.
+      bits 40-47:   PFPO-operand-format code for operand 1
+      bits 48-55:   PFPO-operand-format code for operand 2
+      bits 56:      Inexact-suppression control
+      bits 57:      Alternate-exception-action control
+      bits 58-59:   Target-radix-dependent controls
+      bits 60-63:   PFPO rounding method
+**********************************************************/
+   int32_t funcCode = 0x01 << 24;   // perform radix convertion
+   int32_t srcTypeCode, tgtTypeCode;
+   switch (tgtType)
+      {
+      case TR::DecimalFloat:
+         tgtTypeCode = 0x8;
+         break;
+      case TR::DecimalDouble:
+         tgtTypeCode = 0x9;
+         break;
+      case TR::DecimalLongDouble:
+         tgtTypeCode = 0xA;
+         break;
+      case TR::Float:
+         tgtTypeCode = 0x5;
+         break;
+      case TR::Double:
+         tgtTypeCode = 0x6;
+         break;
+      default:
+         TR_ASSERT( 0, "Error: unsupported target data type for PFPO");
+         break;
+      }
+   funcCode |= tgtTypeCode << 16;
+
+   switch (srcType)
+      {
+      case TR::DecimalFloat:
+         srcTypeCode = 0x8;
+         break;
+      case TR::DecimalDouble:
+         srcTypeCode = 0x9;
+         break;
+      case TR::DecimalLongDouble:
+         srcTypeCode = 0xA;
+         break;
+      case TR::Float:
+         srcTypeCode = 0x5;
+         break;
+      case TR::Double:
+         srcTypeCode = 0x6;
+         break;
+      default:
+         TR_ASSERT( 0, "Error: unsupported src data type for PFPO");
+         break;
+      }
+
+   funcCode |= srcTypeCode << 8;
+
+
+   generateRILInstruction(cg, TR::InstOpCode::IILF, node, r0Reg, funcCode);
+
+   generateS390EInstruction(cg, TR::InstOpCode::PFPO, node, tgtCopy, r1Reg, srcCopy, r0Reg, deps);
+
+   cg->stopUsingRegister(r0Reg);
+   cg->stopUsingRegister(r1Reg);
+   cg->stopUsingRegister(srcCopy);
+   cg->decReferenceCount(firstChild);
+   node->setRegister(tgtCopy);
+   return tgtCopy;
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::df2fEvaluator( TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return dfp2fpHelper(node, cg);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::f2dfEvaluator( TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return dfp2fpHelper(node, cg);
+   }
+
+/**
+ * Convert Decimal float/Double/LongDouble to signed long int in 32 bit mode;
+ */
+inline TR::Register *
+dfp2l(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Node * firstChild = node->getFirstChild();
+   TR::Register * srcReg = cg->evaluate(firstChild);
+   TR::Register * targetReg;
+   TR::Register * tempDDReg;
+   TR::Register * evenReg = cg->allocateRegister();
+   TR::Register * oddReg = cg->allocateRegister();
+   targetReg = cg->allocateConsecutiveRegisterPair(oddReg, evenReg);
+
+   TR::InstOpCode::Mnemonic convertOpCode;
+   switch (firstChild->getDataType())
+      {
+      case TR::DecimalFloat:
+         convertOpCode = TR::InstOpCode::CGDTR;
+         tempDDReg = cg->allocateRegister(TR_FPR);
+         break;
+      case TR::DecimalDouble:
+         convertOpCode = TR::InstOpCode::CGDTR;
+         tempDDReg = srcReg;
+         break;
+      case TR::DecimalLongDouble:
+         convertOpCode = TR::InstOpCode::CGXTR;
+         tempDDReg = srcReg;
+         break;
+      default:
+         TR_ASSERT( 0, "dfpToLong: unsupported opcode\n");
+         break;
+      }
+
+   // Float to double
+    if (firstChild->getDataType() == TR::DecimalFloat)
+        generateRRFInstruction(cg, TR::InstOpCode::LDETR, node, tempDDReg, srcReg, 0, false);
+
+   TR::RegisterDependencyConditions * deps = NULL;
+   deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);
+   TR::Register * tempReg = cg->allocate64bitRegister();
+   deps->addPostCondition(tempReg, TR::RealRegister::GPR0);
+
+   generateRRFInstruction(cg, convertOpCode, node, tempReg, tempDDReg, 0x9, true);
+
+   generateRRInstruction(cg, TR::InstOpCode::LR, node, targetReg->getLowOrder(), tempReg);
+   generateRSInstruction(cg, TR::InstOpCode::SRLG, node, tempReg, tempReg, 32);
+   generateRRInstruction(cg, TR::InstOpCode::LR, node, targetReg->getHighOrder(), tempReg);
+
+   cg->decReferenceCount(firstChild);
+   cg->stopUsingRegister(tempReg);
+   if (firstChild->getDataType() == TR::DecimalFloat)
+     cg->stopUsingRegister(tempDDReg);
+
+   node->setRegister(targetReg);
+   return targetReg;
+
+   }
+
+/**
+ * Convert Decimal float/Double/LongDouble to signed long int in 64 bit mode;
+ */
+inline TR::Register *
+dfp2l64(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Node * firstChild = node->getFirstChild();
+   TR::Register * srcReg = cg->evaluate(firstChild);
+   TR::Register * tempDDReg = NULL;
+   TR::Register * targetReg = cg->allocate64bitRegister();
+
+   TR::InstOpCode::Mnemonic convertOpCode;
+   switch (firstChild->getDataType())
+      {
+      case TR::DecimalFloat:
+         convertOpCode = TR::InstOpCode::CGDTR;
+         tempDDReg = cg->allocateRegister(TR_FPR);
+         break;
+      case TR::DecimalDouble:
+         convertOpCode = TR::InstOpCode::CGDTR;
+         tempDDReg = srcReg;
+         break;
+      case TR::DecimalLongDouble:
+         convertOpCode = TR::InstOpCode::CGXTR;
+         tempDDReg = srcReg;
+         break;
+      default:
+         TR_ASSERT( 0, "dfpToLong: unsupported opcode\n");
+         break;
+      }
+
+   // Float to double
+    if (firstChild->getDataType() == TR::DecimalFloat)
+        generateRRFInstruction(cg, TR::InstOpCode::LDETR, node, tempDDReg, srcReg, 0, false);
+
+   generateRRFInstruction(cg, convertOpCode, node, targetReg, tempDDReg, 0x9, true);
+
+   cg->decReferenceCount(firstChild);
+   if (firstChild->getDataType() == TR::DecimalFloat)
+     cg->stopUsingRegister(tempDDReg);
+
+   node->setRegister(targetReg);
+   return targetReg;
+   }
+
+/**
+ * Convert Decimal float/Double/LongDouble to unsigned long int in 32 bit mode;
+ */
+inline TR::Register *
+dfp2lu(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Node * firstChild = node->getFirstChild();
+   TR::Register * srcReg = cg->evaluate(firstChild);
+   TR::Register * tempDDReg;
+   TR::Register * tempDEReg = cg->allocateFPRegisterPair();
+   TR::Register * tempMaxReg = cg->allocateFPRegisterPair();
+   TR::Register * evenReg = cg->allocateRegister();
+   TR::Register * oddReg = cg->allocateRegister();
+   TR::Register * targetReg = cg->allocateConsecutiveRegisterPair(oddReg, evenReg);
+   TR::Compilation *comp = cg->comp();
+
+   uint8_t m4 =0x0;
+   TR::InstOpCode::Mnemonic convertOpCode;
+   switch (firstChild->getDataType())
+      {
+      case TR::DecimalFloat:
+         tempDDReg = cg->allocateRegister(TR_FPR);
+         generateRRFInstruction(cg, TR::InstOpCode::LDETR, node, tempDDReg, srcReg, m4, false);
+         generateRRFInstruction(cg, TR::InstOpCode::LXDTR, node, tempDEReg, tempDDReg, m4, false);
+         break;
+      case TR::DecimalDouble:
+         generateRRFInstruction(cg, TR::InstOpCode::LXDTR, node, tempDEReg, srcReg, m4, false);
+         break;
+      case TR::DecimalLongDouble:
+         generateRRInstruction(cg, TR::InstOpCode::LXR, node, tempDEReg, srcReg);
+         break;
+      default:
+         TR_ASSERT( 0, "dfpTolu: unsupported opcode\n");
+         break;
+      }
+
+   // subtract (INTMAX + 1) from the decimal float operand
+   int64_t value1 = 0x2208000000000000LL;
+   int64_t value2 = 0x948DF20DA5CFD42ELL;
+
+   size_t offset1 = cg->fe()->findOrCreateLiteral(comp, &value1, 8);
+   size_t offset2 = cg->fe()->findOrCreateLiteral(comp, &value2, 8);
+
+   TR::Register * litReg = cg->allocateRegister();
+   generateLoadLiteralPoolAddress(cg, node, litReg);
+
+   TR::MemoryReference * mrHi = new (cg->trHeapMemory()) TR::MemoryReference(litReg, offset1, cg);
+   TR::MemoryReference * mrLo = new (cg->trHeapMemory()) TR::MemoryReference(litReg, offset2, cg);
+
+   generateRXInstruction(cg, TR::InstOpCode::LD, node, tempMaxReg->getHighOrder(), mrHi);
+   generateRXInstruction(cg, TR::InstOpCode::LD, node, tempMaxReg->getLowOrder(), mrLo);
+
+   generateRRRInstruction(cg, TR::InstOpCode::SXTR, node, tempDEReg, tempDEReg, tempMaxReg);
+
+   // now convert from Decimal128 to long long
+   TR::RegisterDependencyConditions * deps = NULL;
+   deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);
+   TR::Register * tempLReg = cg->allocate64bitRegister();
+   deps->addPostCondition(tempLReg, TR::RealRegister::GPR0);
+
+   generateRRFInstruction(cg, TR::InstOpCode::CGXTR, node, tempLReg, tempDEReg, 0xB, true);
+
+   generateRRInstruction(cg, TR::InstOpCode::LR, node, targetReg->getLowOrder(), tempLReg);
+   generateRSInstruction(cg, TR::InstOpCode::SRLG, node, tempLReg, tempLReg, 32);
+   generateRRInstruction(cg, TR::InstOpCode::LR, node, targetReg->getHighOrder(), tempLReg);
+
+   // add back (INTMAX + 1)
+   generateRILInstruction(cg, TR::InstOpCode::XILF, node, targetReg->getHighOrder(), 0x80000000);
+
+   cg->decReferenceCount(firstChild);
+   if (firstChild->getDataType() == TR::DecimalFloat)
+     cg->stopUsingRegister(tempDDReg);
+
+   cg->stopUsingRegister(tempDEReg);
+   cg->stopUsingRegister(tempMaxReg);
+   cg->stopUsingRegister(tempLReg);
+   mrHi->stopUsingMemRefRegister(cg);
+   mrLo->stopUsingMemRefRegister(cg);
+   node->setRegister(targetReg);
+   return targetReg;
+   }
+
+/**
+ * Convert Decimal float/Double/LongDouble to signed long int in 64 bit mode;
+ */
+inline TR::Register *
+dfp2lu64(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Node * firstChild = node->getFirstChild();
+   TR::Register * srcReg = cg->evaluate(firstChild);
+   TR::Register * tempDDReg = NULL;
+   TR::Register * targetReg = cg->allocate64bitRegister();
+
+   TR::InstOpCode::Mnemonic convertOpCode;
+   switch (firstChild->getDataType())
+      {
+      case TR::DecimalFloat:
+         convertOpCode = TR::InstOpCode::CGDTR;
+         tempDDReg = cg->allocateRegister(TR_FPR);
+         break;
+      case TR::DecimalDouble:
+         convertOpCode = TR::InstOpCode::CGDTR;
+         tempDDReg = srcReg;
+         break;
+      case TR::DecimalLongDouble:
+         convertOpCode = TR::InstOpCode::CGXTR;
+         tempDDReg = srcReg;
+         break;
+      default:
+         TR_ASSERT( 0, "dfpToLong: unsupported opcode\n");
+         break;
+      }
+
+   // Float to double
+    if (firstChild->getDataType() == TR::DecimalFloat)
+        generateRRFInstruction(cg, TR::InstOpCode::LDETR, node, tempDDReg, srcReg, 0, false);
+
+   generateRRFInstruction(cg, convertOpCode, node, targetReg, tempDDReg, 0x9, true);
+
+   cg->decReferenceCount(firstChild);
+   if (firstChild->getDataType() == TR::DecimalFloat)
+     cg->stopUsingRegister(tempDDReg);
+
+   node->setRegister(targetReg);
+   return targetReg;
+
+   }
+
+/**
+ * Convert to signed long to Decimal float/Double/LongDouble in 32bit mode
+ */
+inline TR::Register *
+l2dfp(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Node * firstChild = node->getFirstChild();
+   TR::Register * srcReg = cg->evaluate(firstChild);
+
+   TR::Register * targetReg;
+
+   TR::InstOpCode::Mnemonic convertOpCode;
+   bool isFloatTgt = false;
+   if( node->getDataType() != TR::DecimalLongDouble)
+      targetReg = cg->allocateRegister(TR_FPR);
+   else
+      targetReg = cg->allocateFPRegisterPair();
+
+   TR::Register *tempReg = cg->allocate64bitRegister();
+   TR::RegisterDependencyConditions * deps = NULL;
+   deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);
+   deps->addPostCondition(tempReg, TR::RealRegister::GPR0);
+
+   generateRSInstruction(cg, TR::InstOpCode::SLLG, node, tempReg, srcReg->getHighOrder(), 32);
+   generateRRInstruction(cg, TR::InstOpCode::OR, node, tempReg, srcReg->getLowOrder());
+
+   switch (node->getDataType())
+      {
+      case TR::DecimalDouble  :
+         convertOpCode = TR::InstOpCode::CDGTR;
+         break;
+      case TR::DecimalLongDouble  :
+         convertOpCode = TR::InstOpCode::CXGTR;
+         break;
+      default         :
+         TR_ASSERT( 0,"l2dfp: unsupported data types");
+         return NULL;
+      }
+   //convert to DFP
+   generateRRInstruction(cg, convertOpCode, node, targetReg, tempReg);
+   //clear upper 32bit for r0
+   generateRSInstruction(cg, TR::InstOpCode::SRLG, node, tempReg, tempReg, 32);
+   cg->stopUsingRegister(tempReg);
+   node->setRegister(targetReg);
+   cg->decReferenceCount(firstChild);
+   return targetReg;
+   }
+
+/**
+ * Convert to signed long to Decimal float/Double/LongDouble in 64bit mode
+ */
+inline TR::Register *
+l2dfp64(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Node * firstChild = node->getFirstChild();
+   TR::Register * srcReg = cg->evaluate(firstChild);
+
+   TR::Register * targetReg;
+
+   TR::InstOpCode::Mnemonic convertOpCode;
+   bool isFloatTgt = false;
+   if( node->getDataType() != TR::DecimalLongDouble)
+      targetReg = cg->allocateRegister(TR_FPR);
+   else
+      targetReg = cg->allocateFPRegisterPair();
+
+   switch (node->getDataType())
+      {
+      case TR::DecimalDouble  :
+         convertOpCode = TR::InstOpCode::CDGTR;
+         break;
+      case TR::DecimalLongDouble  :
+         convertOpCode = TR::InstOpCode::CXGTR;
+         break;
+      default         :
+         TR_ASSERT( 0,"l2dfp: unsupported data types");
+         return NULL;
+      }
+   //convert to DFP
+   generateRRInstruction(cg, convertOpCode, node, targetReg, srcReg);
+   node->setRegister(targetReg);
+   cg->decReferenceCount(firstChild);
+   return targetReg;
+   }
+
+/**
+ * Convert to unsigned long to Decimal float/Double/LongDouble in 32bit mode
+ */
+inline TR::Register *
+lu2dfp(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Node * firstChild = node->getFirstChild();
+   TR::Register * srcReg = cg->evaluate(firstChild);
+   TR::Register * tempDEReg = NULL;
+   TR::Compilation *comp = cg->comp();
+
+   TR::Register *tempReg = cg->allocate64bitRegister();
+   TR::RegisterDependencyConditions * deps = NULL;
+   deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);
+   deps->addPostCondition(tempReg, TR::RealRegister::GPR0);
+
+   // subtract (INTMAX + 1) from the upper 32 bit register using x_or operation.
+   generateRSInstruction(cg, TR::InstOpCode::SLLG, node, tempReg, srcReg->getHighOrder(), 32);
+   generateRILInstruction(cg, TR::InstOpCode::XIHF, node, tempReg, 0x80000000);
+   generateRRInstruction(cg, TR::InstOpCode::OR, node, tempReg, srcReg->getLowOrder());
+
+   TR::Register * targetReg;
+   if( node->getDataType() != TR::DecimalLongDouble)
+      {
+      targetReg = cg->allocateRegister(TR_FPR);
+      tempDEReg = cg->allocateFPRegisterPair();
+      generateRRInstruction(cg, TR::InstOpCode::CXGTR, node, tempDEReg, tempReg);
+      }
+   else
+      {
+      targetReg = cg->allocateFPRegisterPair();
+      generateRRInstruction(cg, TR::InstOpCode::CXGTR, node, targetReg, tempReg);
+      }
+
+   // add back (INTMAX + 1)
+   int64_t value1 = 0x2208000000000000LL;
+   int64_t value2 = 0x948DF20DA5CFD42ELL;
+
+   size_t offset1 = cg->fe()->findOrCreateLiteral(comp, &value1, 8);
+   size_t offset2 = cg->fe()->findOrCreateLiteral(comp, &value2, 8);
+
+   TR::Register * litReg = cg->allocateRegister();
+   generateLoadLiteralPoolAddress(cg, node, litReg);
+
+   TR::MemoryReference * mrHi = new (cg->trHeapMemory()) TR::MemoryReference(litReg, offset1, cg);
+   TR::MemoryReference * mrLo = new (cg->trHeapMemory()) TR::MemoryReference(litReg, offset2, cg);
+
+   TR::Register * tempMaxReg = cg->allocateFPRegisterPair();
+   generateRXInstruction(cg, TR::InstOpCode::LD, node, tempMaxReg->getHighOrder(), mrHi);
+   generateRXInstruction(cg, TR::InstOpCode::LD, node, tempMaxReg->getLowOrder(), mrLo);
+
+   TR::Register * tempTgtReg = NULL;
+
+   if( node->getDataType() != TR::DecimalLongDouble)
+      {
+      generateRRRInstruction(cg, TR::InstOpCode::AXTR, node, tempDEReg, tempDEReg, tempMaxReg);
+      uint8_t m3 = 0x0, m4 =0x0;
+
+      tempTgtReg = cg->allocateFPRegisterPair();
+      generateRRFInstruction(cg, TR::InstOpCode::LDXTR, node, tempTgtReg, tempDEReg, m3, m4);
+      generateRRInstruction(cg, TR::InstOpCode::LDR, node, targetReg, tempTgtReg->getHighOrder());
+      }
+   else
+      generateRRRInstruction(cg, TR::InstOpCode::AXTR, node, targetReg, targetReg, tempMaxReg);
+
+   //clear upper 32bit
+   generateRSInstruction(cg, TR::InstOpCode::SRLG, node, tempReg, tempReg, 32);
+
+   cg->stopUsingRegister(tempReg);
+   cg->stopUsingRegister(tempMaxReg);
+   mrHi->stopUsingMemRefRegister(cg);
+   mrLo->stopUsingMemRefRegister(cg);
+   if( node->getDataType() != TR::DecimalLongDouble)
+      {
+      cg->stopUsingRegister(tempDEReg);
+      cg->stopUsingRegister(tempTgtReg);
+      }
+
+   node->setRegister(targetReg);
+   cg->decReferenceCount(firstChild);
+   return targetReg;
+   }
+
+/**
+ * Convert to unsigned long to Decimal float/Double/LongDouble in 64bit mode
+ */
+inline TR::Register *
+lu2dfp64(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Node * firstChild = node->getFirstChild();
+   TR::Register * srcReg = cg->evaluate(firstChild);
+   TR::Register * tempReg = cg->allocateRegister();
+   TR::Register * tempDEReg = NULL;
+   TR::Compilation *comp = cg->comp();
+
+   generateRRInstruction(cg, TR::InstOpCode::LGR, node, tempReg, srcReg);
+   // subtract (INTMAX + 1) from the upper 32 bit register using x_or operation.
+   generateRILInstruction(cg, TR::InstOpCode::XIHF, node, tempReg, 0x80000000);
+
+   TR::Register * targetReg;
+   if( node->getDataType() != TR::DecimalLongDouble)
+      {
+      targetReg = cg->allocateRegister(TR_FPR);
+      tempDEReg = cg->allocateFPRegisterPair();
+      generateRRInstruction(cg, TR::InstOpCode::CXGTR, node, tempDEReg, tempReg);
+      }
+   else
+      {
+      targetReg = cg->allocateFPRegisterPair();
+      generateRRInstruction(cg, TR::InstOpCode::CXGTR, node, targetReg, tempReg);
+      }
+
+   // add back (INTMAX + 1)
+   int64_t value1 = 0x2208000000000000LL;
+   int64_t value2 = 0x948DF20DA5CFD42ELL;
+
+   size_t offset1 = cg->fe()->findOrCreateLiteral(comp, &value1, 8);
+   size_t offset2 = cg->fe()->findOrCreateLiteral(comp, &value2, 8);
+
+   TR::Register * litReg = cg->allocateRegister();
+   generateLoadLiteralPoolAddress(cg, node, litReg);
+
+   TR::MemoryReference * mrHi = new (cg->trHeapMemory()) TR::MemoryReference(litReg, offset1, cg);
+   TR::MemoryReference * mrLo = new (cg->trHeapMemory()) TR::MemoryReference(litReg, offset2, cg);
+
+   TR::Register * tempMaxReg = cg->allocateFPRegisterPair();
+   generateRXInstruction(cg, TR::InstOpCode::LD, node, tempMaxReg->getHighOrder(), mrHi);
+   generateRXInstruction(cg, TR::InstOpCode::LD, node, tempMaxReg->getLowOrder(), mrLo);
+   TR::Register * tempTgtReg = NULL;
+
+   if( node->getDataType() != TR::DecimalLongDouble)
+      {
+      generateRRRInstruction(cg, TR::InstOpCode::AXTR, node, tempDEReg, tempDEReg, tempMaxReg);
+      uint8_t m3 = 0x0, m4 =0x0;
+      tempTgtReg = cg->allocateFPRegisterPair();
+      generateRRFInstruction(cg, TR::InstOpCode::LDXTR, node, tempTgtReg, tempDEReg, m3, m4);
+      generateRRInstruction(cg, TR::InstOpCode::LDR, node, targetReg, tempTgtReg->getHighOrder());
+      }
+   else
+      generateRRRInstruction(cg, TR::InstOpCode::AXTR, node, targetReg, targetReg, tempMaxReg);
+
+   cg->stopUsingRegister(tempReg);
+   cg->stopUsingRegister(tempMaxReg);
+   mrHi->stopUsingMemRefRegister(cg);
+   mrLo->stopUsingMemRefRegister(cg);
+   if( node->getDataType() != TR::DecimalLongDouble)
+      {
+      cg->stopUsingRegister(tempDEReg);
+      cg->stopUsingRegister(tempTgtReg);
+      }
+
+   node->setRegister(targetReg);
+   cg->decReferenceCount(firstChild);
+   return targetReg;
+   }
+
+/************************************************************************************************
+Convert Decimal float/Double/LongDouble to fixed number i.e. int,short,byte, or char
+Conversion is performed in compliance with what's described in 'zOS XLC V1R10 Language Reference'
+  -  Floating-point (binary or decimal) to integer conversion
+     The fractional part is discarded (i.e., the value is truncated toward zero).
+     If the value of the integral part cannot be represented by the integer type,
+     the result is one of the following:
+       - If the integer type is unsigned, the result is the largest representable number if the
+           floating-point number is positive, or 0 otherwise.
+       - If the integer type is signed, the result is the most negative or positive representable
+           number according to the sign of the floating-point number
+currently tobey follows this rule for DFP to singned/unsigned int, but seems not for short/byte types
+     where the upper bits are simple choped off, i think it's just a bug in tobey
+
+     DFP to fixed type conversions are expanded in WCode IlGen phase, so don't need it here anymore
+inline TR::Register *
+dfpToFixed(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR_ASSERT( 0,"Error: dfpToFixed() -- should not be here ");
+   return NULL;
+   }
+
+************************************************************************************************/
+
+/**
+ * Convert to Decimal Double/LongDouble from fixed number i.e. int,short,byte, or char
+ */
+inline TR::Register *
+fixedToDFP(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Node * firstChild = node->getFirstChild();
+   TR::Register * srcRegister = cg->evaluate(firstChild);
+
+   TR::Register * targetRegister;
+   TR::Register * lowReg, * highReg;
+
+   TR::InstOpCode::Mnemonic convertOpCode;
+   // convert the srcRegister value to appropriate type, if needed
+   int32_t nshift = 0;
+   bool isSrcUnsigned = false;
+   bool isFloatTgt = false;
+   if( node->getDataType() != TR::DecimalLongDouble)
+      targetRegister = cg->allocateRegister(TR_FPR);
+   else
+      {
+      lowReg = cg->allocateRegister(TR_FPR);
+      highReg = cg->allocateRegister(TR_FPR);
+      targetRegister = cg->allocateFPRegisterPair(lowReg, highReg);
+      }
+
+   TR::Register *tempReg = cg->allocate64bitRegister();
+   TR::RegisterDependencyConditions * deps = NULL;
+   if (TR::Compiler->target.is32Bit())
+      {
+      deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);
+      deps->addPostCondition(tempReg, TR::RealRegister::GPR0);
+      }
+
+   switch (node->getOpCodeValue())
+     {
+     case TR::b2df:
+     case TR::b2dd:
+     case TR::b2de:
+     case TR::s2df:
+     case TR::s2dd:
+     case TR::s2de:
+     case TR::i2df:
+     case TR::i2dd:
+     case TR::i2de:
+         generateRRInstruction(cg, TR::InstOpCode::LGFR, node, tempReg,srcRegister);
+         break;
+     case TR::bu2df:
+     case TR::bu2dd:
+     case TR::bu2de:
+         nshift = 56;
+         break;
+     case TR::su2df:
+     case TR::su2dd:
+     case TR::su2de:
+         nshift = 48;
+         break;
+     case TR::iu2df:
+     case TR::iu2dd:
+     case TR::iu2de:
+         nshift = 32;
+         isSrcUnsigned = true;
+         generateRSInstruction(cg, TR::InstOpCode::SLLG, node, tempReg, srcRegister, nshift);
+         generateRSInstruction(cg, TR::InstOpCode::SRLG, node, tempReg, tempReg, nshift);
+         break;
+      default:
+         TR_ASSERT( 0, "fixedToDFP: unsupported opcode\n");
+         break;
+      }
+   switch (node->getDataType())
+      {
+      case TR::DecimalDouble  :
+         convertOpCode = TR::InstOpCode::CDGTR;
+         break;
+      case TR::DecimalLongDouble  :
+         convertOpCode = TR::InstOpCode::CXGTR;
+         break;
+      default         :
+         TR_ASSERT(false, "should be unreachable");
+         return NULL;
+      }
+   //convert to DFP
+   generateRRInstruction(cg, convertOpCode, node, targetRegister, tempReg);
+   cg->stopUsingRegister(tempReg);
+   node->setRegister(targetRegister);
+   cg->decReferenceCount(firstChild);
+   return targetRegister;
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::i2ddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return fixedToDFP(node,cg);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::dd2lEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit()) ? dfp2l64(node,cg) : dfp2l(node,cg);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::dd2luEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit()) ? dfp2lu64(node,cg) : dfp2lu(node,cg);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::l2ddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit()) ? l2dfp64(node,cg) : l2dfp(node,cg);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::lu2ddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit()) ? lu2dfp64(node,cg) : lu2dfp(node,cg);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::df2ddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Node * firstChild = node->getFirstChild();
+   TR::Register * targetReg = cg->allocateRegister(TR_FPR);
+   TR::Register * srcReg = cg->evaluate(firstChild);
+
+   uint8_t m4 =0x0;
+   generateRRFInstruction(cg, TR::InstOpCode::LDETR, node, targetReg, srcReg, m4, false);
+   node->setRegister(targetReg);
+   cg->decReferenceCount(firstChild);
+   cg->stopUsingRegister(srcReg);
+   return targetReg;
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::df2deEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Node * firstChild = node->getFirstChild();
+   TR::Register * tmpReg = cg->allocateRegister(TR_FPR);
+   TR::Register * targetReg = cg->allocateFPRegisterPair();
+   TR::Register * srcReg = cg->evaluate(firstChild);
+   uint8_t m4 =0x0;
+   generateRRFInstruction(cg, TR::InstOpCode::LDETR, node, tmpReg, srcReg, m4, false);
+   generateRRFInstruction(cg, TR::InstOpCode::LXDTR, node, targetReg, tmpReg, m4, false);
+   cg->stopUsingRegister(srcReg);
+   cg->stopUsingRegister(tmpReg);
+   cg->decReferenceCount(firstChild);
+   node->setRegister(targetReg);
+   return targetReg;
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::dd2dfEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Node * firstChild = node->getFirstChild();
+   TR::Register * targetReg = cg->allocateRegister(TR_FPR);
+   TR::Register * srcReg = cg->evaluate(firstChild);
+   uint8_t m3 =0x0, m4 =0x0;
+   generateRRFInstruction(cg, TR::InstOpCode::LEDTR, node, targetReg, srcReg, m3, m4);
+   node->setRegister(targetReg);
+   cg->decReferenceCount(firstChild);
+   cg->stopUsingRegister(srcReg);
+   return targetReg;
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::dd2deEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Node * firstChild = node->getFirstChild();
+   TR::Register * targetReg = cg->allocateFPRegisterPair();
+   TR::Register * srcReg = cg->evaluate(firstChild);
+   uint8_t m4 =0x0;
+   generateRRFInstruction(cg, TR::InstOpCode::LXDTR, node, targetReg, srcReg, m4, false);
+   node->setRegister(targetReg);
+   cg->decReferenceCount(firstChild);
+   cg->stopUsingRegister(srcReg);
+   return targetReg;
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::de2dxHelperAndSetRegister(TR::Register *targetReg, TR::Register *srcReg, TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR_ASSERT(node->getDataType() == TR::DecimalDouble || node->getDataType() == TR::DecimalFloat,"expecting node %s (%p) dataType to be DecimalDouble or DecimalFloat\n",node->getOpCode().getName(),node);
+   uint8_t m3 = 0x0;
+   uint8_t m4 = 0x0;
+   generateRRFInstruction(cg, TR::InstOpCode::LDXTR, node, targetReg, srcReg, m3, m4);
+   if (node->getDataType() == TR::DecimalFloat)
+      generateRRFInstruction(cg, TR::InstOpCode::LEDTR, node, targetReg->getHighOrder(), targetReg->getHighOrder(), m3, m4);
+
+   // The converted dd value is in the high order part of targetReg but the low order and the reg pair itself
+   // have to be killed -- in order to do this the high is first set on the node and then the low and pair are
+   // killed by calling stopUsingRegister.
+   TR::Register *newTargetReg = node->setRegister(targetReg->getHighOrder());
+   cg->stopUsingRegister(targetReg);
+   targetReg = newTargetReg;
+   return targetReg;
+   }
+
+/**
+ * Handles TR::de2dd, TR::de2df
+ */
+TR::Register *
+J9::Z::TreeEvaluator::de2ddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Node * firstChild = node->getFirstChild();
+   TR::Register * srcReg = cg->evaluate(firstChild);
+   TR::Register * targetReg = cg->allocateFPRegisterPair();
+   targetReg = de2dxHelperAndSetRegister(targetReg, srcReg, node, cg);
+   cg->decReferenceCount(firstChild);
+   return targetReg;
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::dfaddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Register* sreg1 = cg->fprClobberEvaluate(node->getFirstChild());
+   TR::Register* sreg2 = cg->fprClobberEvaluate(node->getSecondChild());
+   TR::Register* treg = cg->allocateRegister(TR_FPR);
+   TR::Register* resReg = cg->allocateRegister(TR_FPR);
+
+   generateRRFInstruction(cg, TR::InstOpCode::LDETR, node, sreg1, sreg1, 0, false);
+   generateRRFInstruction(cg, TR::InstOpCode::LDETR, node, sreg2, sreg2, 0, false);
+
+   // Extract FPC and save in register
+   TR::Register * fpcReg = cg->allocateRegister();
+   generateRRInstruction(cg, TR::InstOpCode::EFPC, node, fpcReg, fpcReg);
+
+   generateRSInstruction(cg, TR::InstOpCode::SRL, node, fpcReg, 4);
+   generateRILInstruction(cg, TR::InstOpCode::NILF, node, fpcReg, 0x07);
+
+   // set DFP rounding mode before arith op...
+   TR::MemoryReference * rmMR = generateS390MemoryReference(0x07, cg);
+   generateSInstruction(cg, TR::InstOpCode::SRNMT, node, rmMR);
+
+   generateRRRInstruction(cg, TR::InstOpCode::ADTR, node, treg, sreg1, sreg2);
+   generateRSInstruction(cg, TR::InstOpCode::SLL, node, fpcReg, 4);
+
+   TR::Register *tmpReg = cg->allocateRegister();
+   generateRRInstruction(cg, TR::InstOpCode::EFPC, node, tmpReg, tmpReg);
+
+   generateRIInstruction(cg, TR::InstOpCode::NILL, node, tmpReg, 0xFF8F);
+
+   generateRRInstruction(cg, TR::InstOpCode::OR, node, fpcReg, tmpReg);
+   // reset FPC reg
+   generateRRInstruction(cg, TR::InstOpCode::SFPC, node, fpcReg, fpcReg);
+
+   // reround  to 7 digit significance before the double->float conversion
+   TR::Register * precReg = cg->allocateRegister();
+   generateRIInstruction(cg, TR::InstOpCode::LA, node, precReg, 0x7);
+
+   generateRRFInstruction(cg, TR::InstOpCode::RRDTR, node, resReg, precReg, treg, USE_CURRENT_DFP_ROUNDING_MODE);
+
+   generateRRFInstruction(cg, TR::InstOpCode::LEDTR, node, resReg, resReg, 0, false);
+
+   cg->decReferenceCount(node->getFirstChild());
+   cg->decReferenceCount(node->getSecondChild());
+   cg->stopUsingRegister(sreg1);
+   cg->stopUsingRegister(sreg2);
+   cg->stopUsingRegister(fpcReg);
+   cg->stopUsingRegister(tmpReg);
+   cg->stopUsingRegister(treg);
+   cg->stopUsingRegister(precReg);
+   node->setRegister(resReg);
+   return node->getRegister();
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ddaddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Register* sreg1 = cg->evaluate(node->getFirstChild());
+   TR::Register* sreg2 = cg->evaluate(node->getSecondChild());
+   TR::Register* treg = cg->allocateRegister(TR_FPR);
+
+   generateRRRInstruction(cg, TR::InstOpCode::ADTR, node, treg, sreg1, sreg2);
+   cg->decReferenceCount(node->getFirstChild());
+   cg->decReferenceCount(node->getSecondChild());
+   node->setRegister(treg);
+   return node->getRegister();
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::deaddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Register* sreg1 = cg->evaluate(node->getFirstChild());
+   TR::Register* sreg2 = cg->evaluate(node->getSecondChild());
+   TR::Register* treg = cg->allocateFPRegisterPair();
+
+   generateRRRInstruction(cg, TR::InstOpCode::AXTR, node, treg, sreg1, sreg2);
+   cg->decReferenceCount(node->getFirstChild());
+   cg->decReferenceCount(node->getSecondChild());
+   node->setRegister(treg);
+   return node->getRegister();
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::dfsubEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Register* sreg1 = cg->fprClobberEvaluate(node->getFirstChild());
+   TR::Register* sreg2 = cg->fprClobberEvaluate(node->getSecondChild());
+   TR::Register* treg = cg->allocateRegister(TR_FPR);
+
+   generateRRFInstruction(cg, TR::InstOpCode::LDETR, node, sreg1, sreg1, 0, false);
+   generateRRFInstruction(cg, TR::InstOpCode::LDETR, node, sreg2, sreg2, 0, false);
+
+   generateRRRInstruction(cg, TR::InstOpCode::SDTR, node, treg, sreg1, sreg2);
+   generateRRFInstruction(cg, TR::InstOpCode::LEDTR, node, treg, treg, 0, false);
+   cg->decReferenceCount(node->getFirstChild());
+   cg->decReferenceCount(node->getSecondChild());
+   cg->stopUsingRegister(sreg1);
+   cg->stopUsingRegister(sreg2);
+   node->setRegister(treg);
+   return node->getRegister();
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ddsubEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Register* sreg1 = cg->evaluate(node->getFirstChild());
+   TR::Register* sreg2 = cg->evaluate(node->getSecondChild());
+   TR::Register* treg = cg->allocateRegister(TR_FPR);
+
+   generateRRRInstruction(cg, TR::InstOpCode::SDTR, node, treg, sreg1, sreg2);
+   cg->decReferenceCount(node->getFirstChild());
+   cg->decReferenceCount(node->getSecondChild());
+   node->setRegister(treg);
+   return node->getRegister();
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::desubEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Register* sreg1 = cg->evaluate(node->getFirstChild());
+   TR::Register* sreg2 = cg->evaluate(node->getSecondChild());
+   TR::Register* treg = cg->allocateFPRegisterPair();
+
+   generateRRRInstruction(cg, TR::InstOpCode::SXTR, node, treg, sreg1, sreg2);
+   cg->decReferenceCount(node->getFirstChild());
+   cg->decReferenceCount(node->getSecondChild());
+   node->setRegister(treg);
+   return node->getRegister();
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::dfmulEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Register* sreg1 = cg->fprClobberEvaluate(node->getFirstChild());
+   TR::Register* sreg2 = cg->fprClobberEvaluate(node->getSecondChild());
+   TR::Register* treg = cg->allocateRegister(TR_FPR);
+
+   generateRRFInstruction(cg, TR::InstOpCode::LDETR, node, sreg1, sreg1, 0, false);
+   generateRRFInstruction(cg, TR::InstOpCode::LDETR, node, sreg2, sreg2, 0, false);
+
+   generateRRRInstruction(cg, TR::InstOpCode::MDTR, node, treg, sreg1, sreg2);
+   generateRRFInstruction(cg, TR::InstOpCode::LEDTR, node, treg, treg, 0, false);
+   cg->decReferenceCount(node->getFirstChild());
+   cg->decReferenceCount(node->getSecondChild());
+   cg->stopUsingRegister(sreg1);
+   cg->stopUsingRegister(sreg2);
+   node->setRegister(treg);
+   return node->getRegister();
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ddmulEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Register* sreg1 = cg->evaluate(node->getFirstChild());
+   TR::Register* sreg2 = cg->evaluate(node->getSecondChild());
+   TR::Register* treg = cg->allocateRegister(TR_FPR);
+
+   generateRRRInstruction(cg, TR::InstOpCode::MDTR, node, treg, sreg1, sreg2);
+   cg->decReferenceCount(node->getFirstChild());
+   cg->decReferenceCount(node->getSecondChild());
+   node->setRegister(treg);
+   return node->getRegister();
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::demulEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Register* sreg1 = cg->evaluate(node->getFirstChild());
+   TR::Register* sreg2 = cg->evaluate(node->getSecondChild());
+   TR::Register* treg = cg->allocateFPRegisterPair();
+
+   generateRRRInstruction(cg, TR::InstOpCode::MXTR, node, treg, sreg1, sreg2);
+   cg->decReferenceCount(node->getFirstChild());
+   cg->decReferenceCount(node->getSecondChild());
+   node->setRegister(treg);
+   return node->getRegister();
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::dfdivEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Register* sreg1, *sreg2, *treg;
+
+   // Clobber since we'll need to lengthen to perform 64-bit math
+   if (node->getDataType() == TR::DecimalFloat)
+      {
+      sreg1 = cg->fprClobberEvaluate(node->getFirstChild());
+      sreg2 = cg->fprClobberEvaluate(node->getSecondChild());
+      }
+   else
+      {
+      sreg1 = cg->evaluate(node->getFirstChild());
+      sreg2 = cg->evaluate(node->getSecondChild());
+      }
+
+   if (node->getDataType() == TR::DecimalLongDouble)
+      treg = cg->allocateFPRegisterPair();
+   else
+      treg = cg->allocateRegister(TR_FPR);
+
+   // Lengthen to 64 bits
+   if (node->getDataType() == TR::DecimalFloat)
+      {
+      generateRRFInstruction(cg, TR::InstOpCode::LDETR, node, sreg1, sreg1, 0, false);
+      generateRRFInstruction(cg, TR::InstOpCode::LDETR, node, sreg2, sreg2, 0, false);
+      }
+
+   // RTC 91058: The COBOL runtime was previously setting the IEEE divide-by-zero mask
+   // on when it was first brought up, so COBOL programs would terminate with an
+   // expection on a divide by zero. In a mixed-language environment, other languages
+   // might want to handle the exception instead of terminate. To accommodate this,
+   // the runtime will no longer set the divide-by-zero mask. COBOL programs will then
+   // need to ensure the mask is on exactly when an exception would be hit.
+   //
+   // So, we insert code here that compares the divisor to zero, and if it is zero, we
+   // turn the mask on before executing the divide.
+   TR::Compilation *comp = cg->comp();
+   bool checkDivisorForZero = comp->getOption(TR_ForceIEEEDivideByZeroException);
+   if (checkDivisorForZero)
+      {
+      TR::LabelSymbol *oolEntryPoint = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+      TR::LabelSymbol *oolReturnPoint = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+      TR::LabelSymbol * cflowRegionStart   = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+      TR::LabelSymbol * cflowRegionEnd     = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+
+      TR::Register *IMzMaskReg = cg->allocate64bitRegister();
+
+      TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);
+      deps->addPostCondition(IMzMaskReg, TR::RealRegister::AssignAny);
+
+      // Load and test the divisor; branch to the OOL sequence if zero
+      if (node->getDataType() == TR::DecimalLongDouble)
+         generateRREInstruction(cg, TR::InstOpCode::LTXTR, node, sreg2, sreg2);
+      else
+         generateRREInstruction(cg, TR::InstOpCode::LTDTR, node, sreg2, sreg2);
+
+      cflowRegionStart->setStartInternalControlFlow();
+      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cflowRegionStart, deps);
+
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, oolEntryPoint);
+
+      // Start OOL sequence
+      TR_S390OutOfLineCodeSection *oolHelper = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(oolEntryPoint, oolReturnPoint, cg);
+      cg->getS390OutOfLineCodeSectionList().push_front(oolHelper);
+      oolHelper->swapInstructionListsWithCompilation();
+      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, oolEntryPoint);
+
+      // Turn on the divide-by-zero exception flag (second bit from the left in the FPC dword)
+      int32_t IMzMask = 0x40000000;
+      generateRILInstruction(cg, TR::InstOpCode::LGFI, node, IMzMaskReg, IMzMask);
+      generateRREInstruction(cg, TR::InstOpCode::SFPC, node, IMzMaskReg, IMzMaskReg);
+      cg->stopUsingRegister(IMzMaskReg);
+
+      // End OOL sequence
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, oolReturnPoint);
+      oolHelper->swapInstructionListsWithCompilation();
+      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, oolReturnPoint);
+
+      cflowRegionEnd->setEndInternalControlFlow();
+      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cflowRegionEnd, deps);
+      }
+
+   if (node->getDataType() == TR::DecimalLongDouble)
+      generateRRRInstruction(cg, TR::InstOpCode::DXTR, node, treg, sreg1, sreg2);
+   else
+      generateRRRInstruction(cg, TR::InstOpCode::DDTR, node, treg, sreg1, sreg2);
+
+   // Shorten the result to 32 bits
+   if (node->getDataType() == TR::DecimalFloat)
+      generateRRFInstruction(cg, TR::InstOpCode::LEDTR, node, treg, treg, 0, false);
+
+   cg->decReferenceCount(node->getFirstChild());
+   cg->decReferenceCount(node->getSecondChild());
+
+   if (node->getDataType() == TR::DecimalFloat)
+      {
+      cg->stopUsingRegister(sreg1);
+      cg->stopUsingRegister(sreg2);
+      }
+
+   node->setRegister(treg);
+   return node->getRegister();
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ifddcmpeqEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, TR::InstOpCode::COND_BE, false);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ifddcmpneEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, TR::InstOpCode::COND_BNE, false);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ifddcmpltEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BL, TR::InstOpCode::COND_BH, false);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ifddcmpgeEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNL, TR::InstOpCode::COND_BNH, false);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ifddcmpgtEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BH, TR::InstOpCode::COND_BL, false);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ifddcmpleEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNH, TR::InstOpCode::COND_BNL, false);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ifddcmpequEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, TR::InstOpCode::COND_BE, true);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ifddcmpneuEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, TR::InstOpCode::COND_BNE, true);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ifddcmpltuEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BL, TR::InstOpCode::COND_BH, true);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ifddcmpgeuEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNL, TR::InstOpCode::COND_BNH, true);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ifddcmpgtuEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BH, TR::InstOpCode::COND_BL, true);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ifddcmpleuEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return generateS390CompareBranch(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNH, TR::InstOpCode::COND_BNL, true);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ddcmpeqEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, TR::InstOpCode::COND_BE, false);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ddcmpneEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, TR::InstOpCode::COND_BNE, false);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ddcmpltEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BL, TR::InstOpCode::COND_BH, false);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ddcmpgeEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNL, TR::InstOpCode::COND_BNH, false);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ddcmpgtEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BH, TR::InstOpCode::COND_BL, false);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ddcmpleEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNH, TR::InstOpCode::COND_BNL, false);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ddcmpequEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, TR::InstOpCode::COND_BE, true);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ddcmpneuEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, TR::InstOpCode::COND_BNE, true);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ddcmpltuEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BL, TR::InstOpCode::COND_BH, true);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ddcmpgeuEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNL, TR::InstOpCode::COND_BNH, true);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ddcmpgtuEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BH, TR::InstOpCode::COND_BL, true);
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ddcmpleuEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return generateS390CompareBool(node, cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNH, TR::InstOpCode::COND_BNL, true);
+   }
+
+
+/**
+ * ddneg handles all decimal DFP types
+ */
+TR::Register *
+J9::Z::TreeEvaluator::ddnegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Node *firstChild = node->getFirstChild();
+
+   TR::Register *srcReg = cg->evaluate(firstChild);
+   TR::Register *targetReg;
+
+   if (node->getDataType()==TR::DecimalLongDouble)
+      {
+      if (cg->canClobberNodesRegister(firstChild))
+         targetReg = srcReg;
+      else
+         targetReg = cg->allocateFPRegisterPair();
+      generateRRInstruction(cg, TR::InstOpCode::LCDFR, node, targetReg->getHighOrder(), srcReg->getHighOrder());
+
+      if (!cg->canClobberNodesRegister(firstChild))
+         generateRRInstruction(cg, TR::InstOpCode::LDR, node, targetReg->getLowOrder(), srcReg->getLowOrder());
+      }
+   else
+      {
+      if (cg->canClobberNodesRegister(firstChild))
+         targetReg = srcReg;
+      else
+         targetReg = cg->allocateRegister(TR_FPR);
+      generateRRInstruction(cg, TR::InstOpCode::LCDFR, node, targetReg, srcReg);
+      }
+
+   node->setRegister(targetReg);
+   cg->decReferenceCount(firstChild);
+   return targetReg;
+   }
+
+/**
+ * Handles TR::ddInsExp, TR::deInsExp
+ */
+TR::Register *
+J9::Z::TreeEvaluator::ddInsExpEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR_ASSERT(node->getOpCodeValue() == TR::ddInsExp || node->getOpCodeValue() == TR::deInsExp,"expecting op to be ddInsExp or deInsExp and not %d\n",node->getOpCodeValue());
+
+   TR::Node *biasedExpNode = node->getSecondChild();
+   TR::Node *srcNode = node->getFirstChild();
+   TR::Register *srcReg = cg->evaluate(srcNode);
+
+   TR::Register *targetReg = NULL;
+   if(node->getDataType() == TR::DecimalLongDouble)
+      targetReg = cg->allocateFPRegisterPair();
+   else
+      targetReg = cg->allocateRegister(TR_FPR);
+
+   TR::RegisterDependencyConditions *deps = NULL;
+   TR::Register *biasedExpReg = NULL;
+   if (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit())
+      {
+      TR_ASSERT(biasedExpNode->getOpCode().getSize() == 8,"expecting a biasedExpNode of size 8 and not size %d\n",biasedExpNode->getOpCode().getSize());
+      biasedExpReg = cg->evaluate(biasedExpNode);
+      }
+   else
+      {
+      TR_ASSERT(biasedExpNode->getOpCode().getSize() == 4,"expecting a biasedExpNode of size 4 and not size %d\n",biasedExpNode->getOpCode().getSize());
+      // need to ensure biasedExpReg is allocated as a 64 bit register so localRA will spill/reload all 64 bits if needed
+      if (biasedExpNode->getOpCode().isLoadConst())
+         {
+         // manually check for a constant so a single LGHI/LGFI can be used vs LHI+LGFR if evaluate is just called
+         int64_t biasedExpValue = biasedExpNode->get64bitIntegralValue();
+         if (biasedExpValue >= MIN_IMMEDIATE_VAL && biasedExpValue <= MAX_IMMEDIATE_VAL)
+            {
+            biasedExpReg = cg->allocate64bitRegister();
+            generateRIInstruction(cg, TR::InstOpCode::LGHI, node, biasedExpReg, (int32_t)biasedExpValue);
+            }
+         else if (biasedExpValue >= GE_MIN_IMMEDIATE_VAL && biasedExpValue <= GE_MAX_IMMEDIATE_VAL)
+            {
+            biasedExpReg = cg->allocate64bitRegister();
+            generateRILInstruction(cg, TR::InstOpCode::LGFI, node, biasedExpReg, static_cast<int32_t>(biasedExpValue));
+            }
+         }
+
+      if (biasedExpReg == NULL)
+         {
+         TR::Register *biasedExpReg32 = cg->evaluate(biasedExpNode);
+         biasedExpReg = cg->allocate64bitRegister();
+         generateRRInstruction(cg, TR::InstOpCode::LGFR, node, biasedExpReg, biasedExpReg32);
+         }
+      // the 64 bit registers biasedExpReg is going to be clobbered and R0 is safe to clobber regardless of the hgpr (use64BitRegsOn32Bit) setting
+      deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);
+      deps->addPostCondition(biasedExpReg, TR::RealRegister::GPR0);
+      }
+
+   TR::Instruction *inst = generateRRFInstruction(cg, (node->getDataType() == TR::DecimalLongDouble ? TR::InstOpCode::IEXTR : TR::InstOpCode::IEDTR), node, targetReg, biasedExpReg, srcReg);
+   if (deps)
+      inst->setDependencyConditions(deps);
+
+   cg->decReferenceCount(srcNode);
+   cg->decReferenceCount(biasedExpNode);
+   node->setRegister(targetReg);
+   return targetReg;
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::dffloorEvaluator(TR::Node *node, TR::CodeGenerator * cg)
+   {
+   TR::Register* srcReg = cg->evaluate(node->getFirstChild());
+   TR::Register* trgReg = cg->allocateRegister(TR_FPR);
+
+   generateRRFInstruction(cg, TR::InstOpCode::LDETR, node, trgReg, srcReg, 0, false);
+   generateRRFInstruction(cg, TR::InstOpCode::FIDTR, node, trgReg, trgReg, (uint8_t)9, (uint8_t)0); //  mask3=9 round to 0, mask4=0
+   generateRRFInstruction(cg, TR::InstOpCode::LEDTR, node, trgReg, trgReg, 0, false);
+
+   cg->decReferenceCount(node->getFirstChild());
+   node->setRegister(trgReg);
+   return trgReg;
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::ddfloorEvaluator(TR::Node *node, TR::CodeGenerator * cg)
+   {
+   TR::Register* srcReg = cg->evaluate(node->getFirstChild());
+   TR::Register* trgReg = cg->allocateRegister(TR_FPR);
+
+   generateRRFInstruction(cg, TR::InstOpCode::FIDTR, node, trgReg, srcReg, (uint8_t)9, (uint8_t)0); //  mask3=9 round to 0, mask4=0
+
+   cg->decReferenceCount(node->getFirstChild());
+   node->setRegister(trgReg);
+   return trgReg;
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::defloorEvaluator(TR::Node *node, TR::CodeGenerator * cg)
+   {
+   TR::Register* srcReg = cg->evaluate(node->getFirstChild());
+   TR::Register * trgReg = cg->allocateFPRegisterPair();
+
+   generateRRFInstruction(cg, TR::InstOpCode::FIXTR, node, trgReg, srcReg, (uint8_t)9, (uint8_t)0); //  mask3=9 round to 0, mask4=0
+
+   cg->decReferenceCount(node->getFirstChild());
+   node->setRegister(trgReg);
+   return trgReg;
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::deconstEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+#ifdef SUPPORT_DFP
+   TR::Register * highReg = cg->allocateRegister(TR_FPR);
+   TR::Register * lowReg = cg->allocateRegister(TR_FPR);
+   TR::Register * targetReg = cg->allocateFPRegisterPair(lowReg, highReg);
+
+   long double value = node->getLongDouble();
+   typedef struct
+      {
+      double dH;
+      double dL;
+      } twoDblType;
+   union
+      {
+      twoDblType dd;
+      long double ldbl;
+      } udd;
+
+   udd.ldbl = value;
+   generateS390ImmOp(cg, TR::InstOpCode::LD, node, highReg, udd.dd.dH);
+   generateS390ImmOp(cg, TR::InstOpCode::LD, node, lowReg, udd.dd.dL);
+
+   node->setRegister(targetReg);
+   return targetReg;
+#else
+   TR_ASSERT_FATAL(false, "No evaulator available for deconst if SUPPORT_DFP is not set");
+   return NULL;
+#endif
+   }
+
+inline TR::Register *
+deloadHelper(TR::Node * node, TR::CodeGenerator * cg, TR::MemoryReference * srcMR)
+   {
+   TR::MemoryReference * loMR = srcMR;
+   TR::MemoryReference * hiMR;
+   if (loMR == NULL)
+      {
+      loMR = generateS390MemoryReference(node, cg);
+      }
+   hiMR = generateS390MemoryReference(*loMR, 8, cg);
+   // FP reg pairs for long double: FPR0 & FPR2, FPR4 & FPR6, FPR1 & FPR3, FPR5 & FPR7 etc..
+   TR::Register * lowReg = cg->allocateRegister(TR_FPR);
+   TR::Register * highReg = cg->allocateRegister(TR_FPR);
+   TR::Register * targetReg = cg->allocateFPRegisterPair(lowReg, highReg);
+
+   generateRXInstruction(cg, TR::InstOpCode::LD, node, highReg, loMR);
+   loMR->stopUsingMemRefRegister(cg);
+   generateRXInstruction(cg, TR::InstOpCode::LD, node, lowReg, hiMR);
+   hiMR->stopUsingMemRefRegister(cg);
+   node->setRegister(targetReg);
+   return targetReg;
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::deloadEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return deloadHelper(node, cg, NULL);
+   }
+
+inline TR::MemoryReference *
+destoreHelper(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Node * valueChild;
+   if (node->getOpCode().isIndirect())
+      {
+      valueChild = node->getSecondChild();
+      }
+   else
+      {
+      valueChild = node->getFirstChild();
+      }
+  // source returns a reg pair, so... TODO
+  TR::Register * srcReg = cg->evaluate(valueChild);
+
+   TR::MemoryReference * loMR = generateS390MemoryReference(node, cg);
+   TR::MemoryReference * hiMR = generateS390MemoryReference(*loMR, 8, cg);
+
+   generateRXInstruction(cg, TR::InstOpCode::STD, node, srcReg->getHighOrder(), loMR);
+   loMR->stopUsingMemRefRegister(cg);
+   generateRXInstruction(cg, TR::InstOpCode::STD, node, srcReg->getLowOrder(), hiMR);
+   hiMR->stopUsingMemRefRegister(cg);
+
+   cg->decReferenceCount(valueChild);
+
+   return loMR;
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::destoreEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   destoreHelper(node, cg);
+   return NULL;
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::deRegLoadEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Register * globalReg = node->getRegister();
+
+   if (globalReg == NULL)
+      {
+      TR::Register * lowReg = cg->allocateRegister(TR_FPR);
+      TR::Register * highReg = cg->allocateRegister(TR_FPR);
+      globalReg = cg->allocateFPRegisterPair(lowReg, highReg);
+
+      node->setRegister(globalReg);
+      }
+   return globalReg;
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::deRegStoreEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Node * child = node->getFirstChild();
+   TR::Register * globalReg = cg->evaluate(child);
+   cg->decReferenceCount(child);
+   return globalReg;
+   }
+
+/**
+ * Handles DFP setNegative ops
+ */
+TR::Register *
+J9::Z::TreeEvaluator::ddSetNegativeEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+    {
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Register * sourceReg = cg->evaluate(firstChild);
+   TR::Register * targetReg = NULL;
+
+   if (node->getDataType()==TR::DecimalLongDouble)
+      {
+      targetReg = cg->allocateFPRegisterPair();
+      generateRRInstruction(cg, TR::InstOpCode::LNDFR, node, targetReg->getHighOrder(), sourceReg->getHighOrder());
+      generateRRInstruction(cg, TR::InstOpCode::LDR, node, targetReg->getLowOrder(), sourceReg->getLowOrder());
+      }
+   else
+      {
+      targetReg = cg->allocateRegister(TR_FPR);
+      generateRRInstruction(cg, TR::InstOpCode::LNDFR, node, targetReg, sourceReg);
+      }
+
+   node->setRegister(targetReg);
+   cg->decReferenceCount(firstChild);
+   return node->getRegister();
+    }
+
+/**
+ * Handles DFP shl ops
+ */
+TR::Register *
+J9::Z::TreeEvaluator::ddshlEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+    {
+   TR::Node *numNode = node->getChild(0);
+   TR::Node *shiftNode = node->getChild(1);
+
+   TR::Register *numReg = cg->evaluate(numNode);
+   TR::Register *targetReg;
+   unsigned int shift = (int32_t)shiftNode->get64bitIntegralValue();
+   cg->decReferenceCount(shiftNode);
+   TR::MemoryReference *shiftRef = generateS390MemoryReference(shift, cg);
+
+   // Float to double
+    if (node->getDataType() == TR::DecimalFloat)
+        generateRRFInstruction(cg, TR::InstOpCode::LDETR, node, numReg, numReg, 0, false);
+
+   if (node->getDataType()==TR::DecimalLongDouble)
+    {
+    targetReg = cg->allocateFPRegisterPair();
+      generateRXFInstruction(cg, TR::InstOpCode::SLXT, node, targetReg, numReg, shiftRef);
+    }
+    else
+    {
+      targetReg = cg->allocateRegister(TR_FPR);
+      generateRXFInstruction(cg, TR::InstOpCode::SLDT, node, targetReg, numReg, shiftRef);
+    }
+
+    // Double to float
+    if (node->getDataType() == TR::DecimalFloat)
+        generateRRFInstruction(cg, TR::InstOpCode::LEDTR, node, targetReg, targetReg, 0, false);
+
+   node->setRegister(targetReg);
+   cg->decReferenceCount(numNode);
+   return node->getRegister();
+    }
+
+/**
+ * Handles DFP shr ops
+ */
+TR::Register *
+J9::Z::TreeEvaluator::ddshrEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+    {
+   TR::Node *numNode = node->getChild(0);
+   TR::Node *shiftNode = node->getChild(1);
+
+   TR::Register *numReg = cg->evaluate(numNode);
+   TR::Register *targetReg;
+   unsigned int shift = (int32_t)shiftNode->get64bitIntegralValue();
+   cg->decReferenceCount(shiftNode);
+   TR::MemoryReference *shiftRef = generateS390MemoryReference(shift, cg);
+
+   // Float to double
+    if (node->getDataType() == TR::DecimalFloat)
+        generateRRFInstruction(cg, TR::InstOpCode::LDETR, node, numReg, numReg, 0, false);
+
+   if (node->getDataType()==TR::DecimalLongDouble)
+    {
+    targetReg = cg->allocateFPRegisterPair();
+      generateRXFInstruction(cg, TR::InstOpCode::SRXT, node, targetReg, numReg, shiftRef);
+    }
+   else
+    {
+      targetReg = cg->allocateRegister(TR_FPR);
+      generateRXFInstruction(cg, TR::InstOpCode::SRDT, node, targetReg, numReg, shiftRef);
+    }
+
+    // Double to float
+    if (node->getDataType() == TR::DecimalFloat)
+        generateRRFInstruction(cg, TR::InstOpCode::LEDTR, node, targetReg, targetReg, 0, false);
+
+   node->setRegister(targetReg);
+   cg->decReferenceCount(numNode);
+   return node->getRegister();
+    }
+
+/**
+ * Handles DFP shr rounded
+ */
+TR::Register *
+J9::Z::TreeEvaluator::ddshrRoundedEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   // This opcode is a replacement for pdshr (with round = 5); a ddshrRounded would get created by converting a pdshr to ddshrRound.
+   // The assumption is thus made here that the value is represented with exponent 0. Thus, to get the correct results, we modify the
+   // exponent and then use quantize to convert back to a number with exponent 0, rounding in the process.
+   // eg. 1234567 (exp=0) shifted right by 2:
+   // Set the exponent to -2: 1234567 (exp=-2), or 12345.67
+   // Quantize to a value with exponent 0 using the value 1 (exp=0): the 6 causes a round up, so the result is 12346 (exp=0).
+   // Using the rounding method "round to nearest with ties away from 0" gives the "round half away from zero" behaviour used
+   // in Cobol and works with negative numbers (since the sign bit is separate and not even considered with that rounding
+   // mode): -1234567 shifted right two will be -12346.
+   TR::Node *numNode = node->getChild(0);
+   TR::Node *shiftNode = node->getChild(1);
+   TR::Node *roundQuantumNode = node->getChild(2);
+
+   TR::Register *numReg = cg->evaluate(numNode);
+   TR::Register *targetReg;
+
+   // Get the shift amount and set the exponent: for shift right of two, the exponent will become -2
+   int32_t shift = (int32_t)shiftNode->get64bitIntegralValue();
+   if (node->getDataType()==TR::DecimalLongDouble)
+      shift = TR_DECIMAL_LONG_DOUBLE_BIAS - shift;
+   else
+      shift = TR_DECIMAL_DOUBLE_BIAS - shift;
+
+   TR::Register *biasedExpReg = cg->allocate64bitRegister();
+   generateRIInstruction(cg, TR::InstOpCode::LGHI, node, biasedExpReg, shift);
+
+   // Float to double
+   if (node->getDataType() == TR::DecimalFloat)
+      generateRRFInstruction(cg, TR::InstOpCode::LDETR, node, numReg, numReg, 0, false);
+
+   if (node->getDataType()==TR::DecimalLongDouble)
+      {
+      TR::RegisterDependencyConditions *deps = NULL;
+      if (TR::Compiler->target.is32Bit() && !cg->use64BitRegsOn32Bit())
+         {
+         deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);
+         deps->addPostCondition(biasedExpReg, TR::RealRegister::GPR0);
+         }
+
+      targetReg = cg->allocateFPRegisterPair();
+      TR::Instruction *inst = generateRRFInstruction(cg, TR::InstOpCode::IEXTR, node, targetReg, biasedExpReg, numReg);
+
+      if (deps)
+         inst->setDependencyConditions(deps);
+      }
+   else
+      {
+      targetReg = cg->allocateRegister(TR_FPR);
+      generateRRFInstruction(cg, TR::InstOpCode::IEDTR, node, targetReg, biasedExpReg, numReg);
+      }
+
+   cg->decReferenceCount(shiftNode);
+
+    // Round, using the quantize instruction
+   TR::Register *constReg = cg->evaluate(roundQuantumNode);
+   if (node->getDataType() == TR::DecimalLongDouble)
+      generateRRFInstruction(cg, TR::InstOpCode::QAXTR, node, targetReg, constReg, targetReg, 0xC);
+   else
+      generateRRFInstruction(cg, TR::InstOpCode::QADTR, node, targetReg, constReg, targetReg, 0xC);
+
+   cg->decReferenceCount(roundQuantumNode);
+
+   // Double to float
+   if (node->getDataType() == TR::DecimalFloat)
+      generateRRFInstruction(cg, TR::InstOpCode::LEDTR, node, targetReg, targetReg, 0, false);
+
+   node->setRegister(targetReg);
+   cg->stopUsingRegister(biasedExpReg);
+   cg->decReferenceCount(numNode);
+   return node->getRegister();
+   }
+
+/**
+ * Handles DFP modify precision ops
+ */
+TR::Register *
+J9::Z::TreeEvaluator::ddModifyPrecisionEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+    {
+   TR::Node *numNode = node->getChild(0);
+   TR::Register *numReg = cg->evaluate(numNode);
+   TR::Register *targetReg;
+
+   // To set precision to p, shift left by maximum_precision - p (shifting out all but p digits of the original), then shift right by the same amount
+   unsigned int newP = node->getDFPPrecision();
+   if (node->getDataType() == TR::DecimalLongDouble)
+      newP = TR::DataType::getMaxExtendedDFPPrecision() - newP;
+   else
+      newP = TR::DataType::getMaxLongDFPPrecision() - newP;
+   TR::MemoryReference *shiftRef = generateS390MemoryReference(newP, cg);
+
+   // Float to double
+    if (node->getDataType() == TR::DecimalFloat)
+        generateRRFInstruction(cg, TR::InstOpCode::LDETR, node, numReg, numReg, 0, false);
+
+   if (node->getDataType()==TR::DecimalLongDouble)
+    {
+    targetReg = cg->allocateFPRegisterPair();
+      generateRXFInstruction(cg, TR::InstOpCode::SLXT, node, targetReg, numReg, shiftRef);
+      shiftRef = generateS390MemoryReference(newP, cg);
+      generateRXFInstruction(cg, TR::InstOpCode::SRXT, node, targetReg, targetReg, shiftRef);
+    }
+   else
+    {
+      targetReg = cg->allocateRegister(TR_FPR);
+      generateRXFInstruction(cg, TR::InstOpCode::SLDT, node, targetReg, numReg, shiftRef);
+      shiftRef = generateS390MemoryReference(newP, cg);
+      generateRXFInstruction(cg, TR::InstOpCode::SRDT, node, targetReg, targetReg, shiftRef);
+    }
+
+    // Double to float
+    if (node->getDataType() == TR::DecimalFloat)
+        generateRRFInstruction(cg, TR::InstOpCode::LEDTR, node, targetReg, targetReg, 0, false);
+
+   node->setRegister(targetReg);
+   cg->decReferenceCount(numNode);
+   return node->getRegister();
+    }
+
+TR::Register *
+J9::Z::TreeEvaluator::ddcleanEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Register* sreg = cg->evaluate(node->getFirstChild());
+   TR::Register* zreg = cg->allocateRegister(TR_FPR);
+   TR::Register* treg = cg->allocateRegister(TR_FPR);
+
+   // the below sequence will change a -0 to +0 and leave all other values unchanged
+   generateRRRInstruction(cg, TR::InstOpCode::SDTR, node, zreg, sreg, sreg);
+   generateRRRInstruction(cg, TR::InstOpCode::ADTR, node, treg, sreg, zreg);
+
+   cg->decReferenceCount(node->getFirstChild());
+   cg->stopUsingRegister(zreg);
+   node->setRegister(treg);
+   return node->getRegister();
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::decleanEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Register* sreg = cg->evaluate(node->getFirstChild());
+   TR::Register* zreg = cg->allocateFPRegisterPair();
+   TR::Register* treg = cg->allocateFPRegisterPair();
+
+   // the below sequence will change a -0 to +0 and leave all other values unchanged
+   generateRRRInstruction(cg, TR::InstOpCode::SXTR, node, zreg, sreg, sreg);
+   generateRRRInstruction(cg, TR::InstOpCode::AXTR, node, treg, sreg, zreg);
+
+   cg->decReferenceCount(node->getFirstChild());
+   cg->stopUsingRegister(zreg);
+   node->setRegister(treg);
+   return node->getRegister();
+   }
+
+TR::Register *
+J9::Z::TreeEvaluator::dd2iEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Node * firstChild = node->getFirstChild();
+   TR::Register * srcReg = cg->evaluate(firstChild);
+   TR::Register * tempDDReg = NULL;
+   TR::Register * targetReg = cg->allocate64bitRegister();
+
+   TR::InstOpCode::Mnemonic convertOpCode;
+   switch (firstChild->getDataType())
+      {
+      case TR::DecimalFloat:
+         convertOpCode = TR::InstOpCode::CGDTR;
+         tempDDReg = cg->allocateRegister(TR_FPR);
+         break;
+      case TR::DecimalDouble:
+         convertOpCode = TR::InstOpCode::CGDTR;
+         tempDDReg = srcReg;
+         break;
+      case TR::DecimalLongDouble:
+         convertOpCode = TR::InstOpCode::CGXTR;
+         tempDDReg = srcReg;
+         break;
+      default:
+         TR_ASSERT( 0, "dfpToLong: unsupported opcode\n");
+         break;
+      }
+
+   // Float to double
+    if (firstChild->getDataType() == TR::DecimalFloat)
+        generateRRFInstruction(cg, TR::InstOpCode::LDETR, node, tempDDReg, srcReg, 0, false);
+
+   generateRRFInstruction(cg, convertOpCode, node, targetReg, tempDDReg, 0x9, true);
+
+   cg->decReferenceCount(firstChild);
+   if (firstChild->getDataType() == TR::DecimalFloat)
+     cg->stopUsingRegister(tempDDReg);
+
+   node->setRegister(targetReg);
+   return targetReg;
    }
 

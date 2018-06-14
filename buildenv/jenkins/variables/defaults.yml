@@ -242,3 +242,20 @@ win_x86-64_cmprssptrs:
       8: 'hw.arch.x86 && sw.os.windows'
       9: 'hw.arch.x86 && sw.os.windows'
       10: 'hw.arch.x86 && sw.os.windows'
+#========================================#
+# Windows x86 32bits 
+#========================================#
+win_x86:
+  boot_jdk:
+    8: '/cygdrive/c/openjdk/jdk7'
+  release:
+    8: 'windows-x86-normal-server-release'
+  extra_configure_options:
+    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib32 --with-target-bits=32 --disable-ccache'
+  freemarker: '/cygdrive/c/openjdk/freemarker.jar'
+  openjdk_reference_repo: 'C:\openjdk\openjdk_cache'
+  node_labels:
+    build:
+      8: 'hw.arch.x86 && sw.os.windows'
+    test:
+      8: 'hw.arch.x86 && sw.os.windows'

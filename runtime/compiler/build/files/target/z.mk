@@ -68,6 +68,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/z/codegen/J9S390Snippet.cpp \
     compiler/z/codegen/J9S390SystemLinkage.cpp \
     compiler/z/codegen/J9TreeEvaluator.cpp \
+    compiler/z/codegen/J9BCDTreeEvaluator.cpp \
     compiler/z/codegen/J9UnresolvedDataSnippet.cpp \
     compiler/z/codegen/J9ZSnippet.cpp \
     compiler/z/codegen/ReduceSynchronizedFieldLoad.cpp \

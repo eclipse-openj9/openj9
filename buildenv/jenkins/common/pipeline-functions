@@ -173,7 +173,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
                 //  - switch to use AdoptOpenJDK test pipelines for JDK8 and we will switch for JDK10 next step
                 //  - OpenJ9 test pipelines will be completely removed once we switch to use AdoptOpenJDK test pipelines
                 case "_sanity":
-                    if (SPEC.contains("win") || SDK_VERSION == "9") || SDK_VERSION == "10") {
+                    if (SPEC.contains("win") || SDK_VERSION == "9" || SDK_VERSION == "10") {
                         TARGET_NAMES = ["Sanity"]
                     } else {
                         TARGET_NAMES = ["Sanity", "sanity.functional", "sanity.system"]
