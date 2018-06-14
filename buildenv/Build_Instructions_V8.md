@@ -366,8 +366,8 @@ msbuild.exe C:/temp/freetype/builds/windows/vc2010/freetype.vcxproj /p:PlatformT
 2) Win 32-bit
 ```
 cd c:\temp
-msbuild.exe C:/temp/freetype/builds/win32/vc2010/freetype.vcxproj /p:PlatformToolset=v100 /p:Configuration="Release Multithreaded" /p:PlatformTarget=x86 /p:ConfigurationType=DynamicLibrary /p:TargetName=freetype /p:OutDir="C:/temp/freetype/lib32/" /p:IntDir="C:/temp/freetype/obj32/" > freetype.log
-msbuild.exe C:/temp/freetype/builds/win32/vc2010/freetype.vcxproj /p:PlatformToolset=v100 /p:Configuration="Release Multithreaded" /p:PlatformTarget=x86 /p:ConfigurationType=StaticLibrary /p:TargetName=freetype /p:OutDir="C:/temp/freetype/lib32/" /p:IntDir="C:/temp/freetype/obj32/" >> freetype.log
+msbuild.exe C:/temp/freetype/builds/windows/vc2010/freetype.vcxproj /p:PlatformToolset=v100 /p:Configuration="Release Multithreaded" /p:PlatformTarget=x86 /p:ConfigurationType=DynamicLibrary /p:TargetName=freetype /p:OutDir="C:/temp/freetype/lib32/" /p:IntDir="C:/temp/freetype/obj32/" > freetype.log
+msbuild.exe C:/temp/freetype/builds/windows/vc2010/freetype.vcxproj /p:PlatformToolset=v100 /p:Configuration="Release Multithreaded" /p:PlatformTarget=x86 /p:ConfigurationType=StaticLibrary /p:TargetName=freetype /p:OutDir="C:/temp/freetype/lib32/" /p:IntDir="C:/temp/freetype/obj32/" >> freetype.log
 ```
 :pencil: Check the `freetype.log` for errors.
 
@@ -407,7 +407,7 @@ bash configure --disable-ccache \
                --with-freemarker-jar=/cygdrive/c/temp/freemarker.jar \
                --with-freetype-include=/cygdrive/c/temp/freetype/include \
                --with-freetype-lib=/cygdrive/c/temp/freetype/lib32  \
-               --target=x86 --with-target-bits=32
+               --with-target-bits=32
 ```
 :pencil: Modify the paths for freemarker and freetype if you manually downloaded and unpacked these dependencies into different directories.
 
