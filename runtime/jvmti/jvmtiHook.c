@@ -2429,6 +2429,8 @@ jvmtiHookCheckForDataBreakpoint(J9HookInterface** hook, UDATA eventNum, void* ev
 						}
 					}
 					index += 1;
+					descriptionsRemaining -= 1;
+					descriptionBits >>= J9JVMTI_WATCHED_FIELD_BITS_PER_FIELD;
 				}
 				watchedClass = hashTableNextDo(&walkState);
 			}
