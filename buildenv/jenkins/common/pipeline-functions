@@ -199,7 +199,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
                 testjobs["${TEST_JOB_NAME}"] = {
                     // run tests against the SDK build in the upstream job: Build-JDK${SDK_VERSION}-${SPEC}
                     jobs["${TEST_JOB_NAME}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.TEST_NODE, SHAS['OPENJ9'])
-                    echo "JOB: ${TEST_JOB_NAME} PASSED in: ${jobs[${TEST_JOB_NAME}].getDurationString()}"
+                    echo "JOB: ${TEST_JOB_NAME} PASSED in: ${jobs[TEST_JOB_NAME].getDurationString()}"
                 }
             }
         }
