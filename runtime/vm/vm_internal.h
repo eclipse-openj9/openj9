@@ -97,6 +97,18 @@ fieldIndexTableNew(J9JavaVM* vm, J9PortLibrary *portLib);
 void
 fieldIndexTableFree(J9JavaVM* vm);
 
+/* ---------------- jnimisc.c ---------------- */
+
+/**
+ * Find the J9SFJNINativeMethodFrame representing the current native.
+ *
+ * @param currentThread[in] the current J9VMThread
+ *
+ * @returns the native method frame
+ */
+J9SFJNINativeMethodFrame*
+findNativeMethodFrame(J9VMThread *currentThread);
+
 /* ---------------- jniinv.c ---------------- */
 
 /**

@@ -908,19 +908,17 @@ jvmtiHookFieldAccess(J9HookInterface** hook, UDATA eventNum, void* eventData, vo
 	if (callback != NULL) {
 		UDATA tag;
 		jfieldID fieldID;
-		j9object_t * objectSlot;
+		j9object_t object;
 		J9Method * method;
 		IDATA location;
 		J9VMThread * currentThread;
 		J9Class * clazz;
-		UDATA isStatic;
 
 		if (eventNum == J9HOOK_VM_GET_FIELD) {
 			J9VMGetFieldEvent * data = eventData;
 
-			isStatic = FALSE;
-			objectSlot = data->objectAddress;
-			clazz = J9OBJECT_CLAZZ(data->currentThread, *objectSlot);
+			object = data->object;
+			clazz = J9OBJECT_CLAZZ(data->currentThread, object);
 			tag = data->offset;
 			method = data->method;
 			location = data->location;
@@ -928,8 +926,7 @@ jvmtiHookFieldAccess(J9HookInterface** hook, UDATA eventNum, void* eventData, vo
 		} else {
 			J9VMGetStaticFieldEvent * data = eventData;
 
-			isStatic = TRUE;
-			objectSlot = NULL;
+			object = NULL;
 			clazz = data->declaringClass;
 			tag = (UDATA) data->fieldAddress;
 			method = data->method;
@@ -939,7 +936,7 @@ jvmtiHookFieldAccess(J9HookInterface** hook, UDATA eventNum, void* eventData, vo
 
 		/* Current thread has VM access, and the field watch list is only modified under exclusive */
 
-		fieldID = findWatchedField(currentThread, j9env, FALSE, isStatic, tag, clazz);
+		fieldID = findWatchedField(currentThread, j9env, FALSE, J9HOOK_VM_GET_FIELD != eventNum, tag, clazz);
 
 		/* If the current field is not being watched, do nothing */
 
@@ -948,18 +945,18 @@ jvmtiHookFieldAccess(J9HookInterface** hook, UDATA eventNum, void* eventData, vo
 			UDATA hadVMAccess;
 			UDATA javaOffloadOldState = 0;
 
-			if (prepareForEvent(j9env, currentThread, currentThread, JVMTI_EVENT_FIELD_ACCESS, &threadRef, &hadVMAccess, TRUE, (objectSlot == NULL) ? 1 : 2, &javaOffloadOldState)) {
+			if (prepareForEvent(j9env, currentThread, currentThread, JVMTI_EVENT_FIELD_ACCESS, &threadRef, &hadVMAccess, TRUE, (object == NULL) ? 1 : 2, &javaOffloadOldState)) {
 				J9JavaVM * vm = currentThread->javaVM;
 				jmethodID methodID;
 				j9object_t * classRef = (j9object_t*) currentThread->arg0EA;
 				j9object_t * objectRef;
 				J9Class* clazz;
 
-				if (objectSlot == NULL) {
+				if (object == NULL) {
 					objectRef = NULL;
 				} else {
 					objectRef = (j9object_t*) (currentThread->arg0EA - 1);
-					*objectRef = *objectSlot;
+					*objectRef = object;
 				}
 				clazz = getCurrentClass(((J9JNIFieldID *) fieldID)->declaringClass);
 				*classRef = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
@@ -967,6 +964,11 @@ jvmtiHookFieldAccess(J9HookInterface** hook, UDATA eventNum, void* eventData, vo
 				vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 				if (methodID != NULL) {
 					callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, methodID, (jlocation) location, (jclass) classRef, (jobject) objectRef, fieldID);
+				}
+				vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+				if (NULL != object) {
+					J9VMGetFieldEvent* data = eventData;
+					data->object = *objectRef;
 				}
 				finishedEvent(currentThread, JVMTI_EVENT_FIELD_ACCESS, hadVMAccess, javaOffloadOldState);
 			}
@@ -992,33 +994,30 @@ jvmtiHookFieldModification(J9HookInterface** hook, UDATA eventNum, void* eventDa
 	if (callback != NULL) {
 		UDATA tag;
 		jfieldID fieldID;
-		j9object_t * objectSlot;
+		j9object_t object;
 		J9Method * method;
 		IDATA location;
 		J9VMThread * currentThread;
 		void * valueAddress;
 		J9Class * clazz;
-		UDATA isStatic;
 
 		if (eventNum == J9HOOK_VM_PUT_FIELD) {
 			J9VMPutFieldEvent * data = eventData;
 
-			isStatic = FALSE;
-			objectSlot = data->objectAddress;
-			clazz = J9OBJECT_CLAZZ(data->currentThread, *objectSlot);
+			object = data->object;
+			clazz = J9OBJECT_CLAZZ(data->currentThread, object);
 			tag = data->offset;
-			valueAddress = data->valueAddress;
+			valueAddress = &(data->newValue);
 			currentThread = data->currentThread;
 			method = data->method;
 			location = data->location;
 		} else {
 			J9VMPutStaticFieldEvent * data = eventData;
 
-			isStatic = TRUE;
-			objectSlot = NULL;
+			object = NULL;
 			clazz = data->declaringClass;
 			tag = (UDATA) data->fieldAddress;
-			valueAddress = data->valueAddress;
+			valueAddress = &(data->newValue);
 			currentThread = data->currentThread;
 			method = data->method;
 			location = data->location;
@@ -1026,7 +1025,7 @@ jvmtiHookFieldModification(J9HookInterface** hook, UDATA eventNum, void* eventDa
 
 		/* Current thread has VM access, and the field watch list is only modified under exclusive */
 
-		fieldID = findWatchedField(currentThread, j9env, TRUE, isStatic, tag, clazz);
+		fieldID = findWatchedField(currentThread, j9env, TRUE, J9HOOK_VM_PUT_FIELD != eventNum, tag, clazz);
 
 		/* If the current field is not being watched, do nothing */
 
@@ -1045,7 +1044,7 @@ jvmtiHookFieldModification(J9HookInterface** hook, UDATA eventNum, void* eventDa
 					++refCount;
 				}
 			}
-			if (objectSlot != NULL) {
+			if (object != NULL) {
 				++refCount;
 			}
 			if (prepareForEvent(j9env, currentThread, currentThread, JVMTI_EVENT_FIELD_MODIFICATION, &threadRef, &hadVMAccess, TRUE, refCount, &javaOffloadOldState)) {
@@ -1057,11 +1056,11 @@ jvmtiHookFieldModification(J9HookInterface** hook, UDATA eventNum, void* eventDa
 				jvalue newValue;
 				j9object_t * jvalueStorage = (j9object_t*) currentThread->arg0EA - 1;
 
-				if (objectSlot == NULL) {
+				if (object == NULL) {
 					objectRef = NULL;
 				} else {
 					objectRef = jvalueStorage--;
-					*objectRef = *objectSlot;
+					*objectRef = object;
 				}
 				fillInJValue(signatureType, &newValue, valueAddress, jvalueStorage);
 				clazz = getCurrentClass(((J9JNIFieldID *) fieldID)->declaringClass);
@@ -1070,6 +1069,16 @@ jvmtiHookFieldModification(J9HookInterface** hook, UDATA eventNum, void* eventDa
 				vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 				if (methodID != NULL) {
 					callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, methodID, (jlocation) location, (jclass) classRef, (jobject) objectRef, fieldID, signatureType, newValue);
+				}
+				vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+				if (NULL != object) {
+					J9VMPutFieldEvent* data = eventData;
+					data->object = *objectRef;
+				}
+				if (signatureType == 'L') {
+					if (*((void **) valueAddress) != NULL) {
+						*(j9object_t*)valueAddress = *jvalueStorage;
+					}
 				}
 				finishedEvent(currentThread, JVMTI_EVENT_FIELD_MODIFICATION, hadVMAccess, javaOffloadOldState);
 			}
