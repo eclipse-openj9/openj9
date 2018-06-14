@@ -47,7 +47,7 @@ $(UMA_EXETARGET): $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
 UMA_BEGIN_DASH_L =
 UMA_END_DASH_L =
 
-UMA_EXE_POSTFIX_FLAGS +=-lm -liconv -lc -ldl -lutil -Wl,-rpath,\$$ORIGIN
+UMA_EXE_POSTFIX_FLAGS += -lm -liconv -lc -ldl -lutil -Wl,-rpath,\$$ORIGIN
 
 <#if uma.spec.processor.amd64>
   UMA_MASM2GAS_FLAGS += --64
@@ -58,7 +58,7 @@ ifndef UMA_DO_NOT_OPTIMIZE_CCODE
     UMA_OPTIMIZATION_CFLAGS += ${uma.spec.properties.uma_optimization_cflags.value}
   <#else>
     <#if uma.spec.processor.amd64>
-      UMA_OPTIMIZATION_CFLAGS +=-O3 -fno-strict-aliasing
+      UMA_OPTIMIZATION_CFLAGS += -O3 -fno-strict-aliasing
     <#else>
       UMA_OPTIMIZATION_CFLAGS += -O
     </#if>
@@ -67,7 +67,7 @@ ifndef UMA_DO_NOT_OPTIMIZE_CCODE
     UMA_OPTIMIZATION_CXXFLAGS += ${uma.spec.properties.uma_optimization_cxxflags.value}
   <#else>
     <#if uma.spec.processor.amd64>
-      UMA_OPTIMIZATION_CXXFLAGS +=-O3 -fno-strict-aliasing
+      UMA_OPTIMIZATION_CXXFLAGS += -O3 -fno-strict-aliasing
       <#if uma.spec.flags.env_littleEndian.enabled && uma.spec.type.linux>
         UMA_OPTIMIZATION_CXXFLAGS += -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1
       </#if>
@@ -84,7 +84,7 @@ CFLAGS += $(UMA_OPTIMIZATION_CFLAGS)
 CXXFLAGS += $(UMA_OPTIMIZATION_CXXFLAGS)
 
 <#if uma.spec.flags.env_gcc.enabled>
-  CXXFLAGS +=-fno-exceptions -fno-threadsafe-statics
+  CXXFLAGS += -fno-exceptions -fno-threadsafe-statics
 </#if>
 
 ifdef j9vm_uma_gnuDebugSymbols
@@ -99,9 +99,9 @@ endif
   CXXFLAGS += -MMD
 </#if>
 
-CFLAGS +=-DOSX -D_REENTRANT -D_FILE_OFFSET_BITS=64
-CXXFLAGS +=-DOSX -D_REENTRANT -D_FILE_OFFSET_BITS=64
-CPPFLAGS +=-DOSX -D_REENTRANT
+CFLAGS += -DOSX -D_REENTRANT -D_FILE_OFFSET_BITS=64
+CXXFLAGS += -DOSX -D_REENTRANT -D_FILE_OFFSET_BITS=64
+CPPFLAGS += -DOSX -D_REENTRANT
 
 <#-- Add Position Indepdent compile flag -->
 CFLAGS += -fPIC
@@ -114,17 +114,13 @@ ifdef j9vm_uma_supportsIpv6
 endif
 
 <#if uma.spec.processor.amd64>
-  CFLAGS +=-DJ9HAMMER -m64
-  CXXFLAGS +=-DJ9HAMMER -m64
-  CPPFLAGS +=-DJ9HAMMER -m64
+  CFLAGS += -DJ9HAMMER -m64
+  CXXFLAGS += -DJ9HAMMER -m64
+  CPPFLAGS += -DJ9HAMMER -m64
 </#if>
 
-UMA_DLL_LINK_FLAGS +=-shared -install_name lib$(UMA_TARGET_NAME).dylib
-ifdef UMA_USING_LD_TO_LINK
-  UMA_DLL_LINK_FLAGS += origin -rpath \$$ORIGIN --disable-new-dtags
-else
-  UMA_DLL_LINK_FLAGS += -Xlinker -rpath -Xlinker \$$ORIGIN
-endif
+UMA_DLL_LINK_FLAGS += -shared -install_name lib$(UMA_TARGET_NAME).dylib
+UMA_DLL_LINK_FLAGS += -Xlinker -rpath -Xlinker \$$ORIGIN
 
 UMA_DLL_LINK_POSTFLAGS += $(UMA_LINK_STATIC_LIBRARIES)
 UMA_DLL_LINK_POSTFLAGS += $(UMA_LINK_SHARED_LIBRARIES)
@@ -144,14 +140,14 @@ UMA_DLL_LINK_POSTFLAGS += -lm
 
 ifdef UMA_TREAT_WARNINGS_AS_ERRORS
   ifndef UMA_SUPPRESS_WARNINGS_AS_ERRORS
-    CFLAGS +=-Wimplicit -Wreturn-type -Werror
-    CXXFLAGS +=-Wreturn-type -Werror
+    CFLAGS += -Wimplicit -Wreturn-type -Werror
+    CXXFLAGS += -Wreturn-type -Werror
   endif
 endif
 
 ifdef UMA_ENABLE_ALL_WARNINGS
   ifndef UMA_SUPPRESS_ALL_WARNINGS
     CFLAGS += -Wall
-    CXXFLAGS +=-Wall -Wno-non-virtual-dtor
+    CXXFLAGS += -Wall -Wno-non-virtual-dtor
   endif
 endif

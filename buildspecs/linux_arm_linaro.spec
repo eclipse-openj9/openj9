@@ -107,7 +107,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<property name="uma_make_cmd_as" value="$(OPENJ9_CC_PREFIX)-as"/>
 		<property name="uma_make_cmd_cc" value="$(OPENJ9_CC_PREFIX)-gcc"/>
 		<property name="uma_make_cmd_cpp" value="$(OPENJ9_CC_PREFIX)-cpp -E -P"/>
-		<property name="uma_make_cmd_cxx" value="$(OPENJ9_CC_PREFIX)-c++"/>
+		<property name="uma_make_cmd_cxx" value="$(OPENJ9_CC_PREFIX)-g++"/>
 		<property name="uma_make_cmd_cxx_dll_ld" value="$(CC)"/>
 		<property name="uma_make_cmd_cxx_exe_ld" value="$(CC)"/>
 		<property name="uma_make_cmd_dll_ld" value="$(CC)"/>
