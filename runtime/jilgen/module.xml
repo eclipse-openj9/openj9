@@ -23,9 +23,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 <module>
 	<artifact type="executable" name="constgen">
 		<options>
-			<option name="isCPlusPlus">
-				<exclude-if condition="spec.linux_ppc.*"/>
-			</option>
+			<option name="isCPlusPlus"/>
 			<option name="doesNotRequireCMAIN"/>
 		</options>
 		<phase>core j2se</phase>

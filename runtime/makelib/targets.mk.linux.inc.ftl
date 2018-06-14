@@ -21,11 +21,11 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 -->
 
 <#if uma.spec.processor.arm>
-ARM_ARCH_FLAGS := -march=armv6 -marm -mfpu=vfp -mfloat-abi=hard
-OPENJ9_CC_PREFIX ?= bcm2708hardfp
-OBJCOPY := $(OPENJ9_CC_PREFIX)-objcopy
+  ARM_ARCH_FLAGS := -march=armv6 -marm -mfpu=vfp -mfloat-abi=hard
+  OPENJ9_CC_PREFIX ?= bcm2708hardfp
+  OBJCOPY := $(OPENJ9_CC_PREFIX)-objcopy
 <#else>
-OBJCOPY := objcopy
+  OBJCOPY := objcopy
 </#if>
 
 <#assign lib_target_rule>
@@ -156,8 +156,8 @@ GNU89 inline semantics. -fgnu89-inline option is appended to CFLAGS
 to allow compilation with GCC versions greater than 5 and GNU89 inline
 semantics. Reference - https://gcc.gnu.org/gcc-5/porting_to.html.
 -->
-GCCVERSIONGTEQ5 := $(shell expr `gcc -dumpversion | cut -f1 -d.` \>= 5)
-ifeq "$(GCCVERSIONGTEQ5)" "1"
+GCCVERSIONGTEQ5 := $(shell expr `gcc -dumpversion | cut -f1 -d.` '>=' 5)
+ifeq (1,$(GCCVERSIONGTEQ5))
   CFLAGS += -fgnu89-inline
 endif
 
@@ -264,7 +264,7 @@ CPPFLAGS += -DLINUX -D_REENTRANT
     PPC_GCC_CXXFLAGS += -fPIC
   endif
 <#else>
-  <#-- Used for GOT's under 4k, should we just go -fPIC for everyone? -->
+  <#-- Used for GOTs under 4k, should we just go -fPIC for everyone? -->
   CFLAGS += -fpic
   CXXFLAGS += -fpic
 </#if>
@@ -274,9 +274,9 @@ ifdef j9vm_uma_supportsIpv6
   CXXFLAGS += -DIPv6_FUNCTION_SUPPORT
   CPPFLAGS += -DIPv6_FUNCTION_SUPPORT
   <#if uma.spec.processor.ppc>
-  ifdef USE_PPC_GCC
-    PPC_GCC_CXXFLAGS += -DIPv6_FUNCTION_SUPPORT
-  endif
+    ifdef USE_PPC_GCC
+      PPC_GCC_CXXFLAGS += -DIPv6_FUNCTION_SUPPORT
+    endif
   </#if>
 endif
 
@@ -357,29 +357,14 @@ endif
   UMA_DLL_LINK_POSTFLAGS += -lm -lpthread -lc -Wl,-z,origin,-rpath,\$$ORIGIN,--disable-new-dtags,-rpath-link,$(UMA_PATH_TO_ROOT)
 <#else>
   UMA_DLL_LINK_FLAGS += -shared
-  ifdef UMA_USING_LD_TO_LINK
-    UMA_DLL_LINK_FLAGS+=-Map $(UMA_TARGET_NAME).map
-    UMA_DLL_LINK_FLAGS+=--version-script $(UMA_TARGET_NAME).exp
-    UMA_DLL_LINK_FLAGS+=-soname=$(UMA_DLLFILENAME)
-    UMA_DLL_LINK_FLAGS+=-z origin -rpath \$$ORIGIN --disable-new-dtags
-  else
   UMA_DLL_LINK_FLAGS += -Wl,-Map=$(UMA_TARGET_NAME).map
   UMA_DLL_LINK_FLAGS += -Wl,--version-script,$(UMA_TARGET_NAME).exp
   UMA_DLL_LINK_FLAGS += -Wl,-soname=$(UMA_DLLFILENAME)
   UMA_DLL_LINK_FLAGS += -Xlinker -z -Xlinker origin -Xlinker -rpath -Xlinker \$$ORIGIN -Xlinker --disable-new-dtags
-endif
 
-ifdef UMA_USING_LD_TO_LINK
-  UMA_DLL_LINK_POSTFLAGS += --start-group
-else
   UMA_DLL_LINK_POSTFLAGS += -Xlinker --start-group
-endif
   UMA_DLL_LINK_POSTFLAGS += $(UMA_LINK_STATIC_LIBRARIES)
-ifdef UMA_USING_LD_TO_LINK
-  UMA_DLL_LINK_POSTFLAGS += --end-group
-else
   UMA_DLL_LINK_POSTFLAGS += -Xlinker --end-group
-endif
   UMA_DLL_LINK_POSTFLAGS += $(UMA_LINK_SHARED_LIBRARIES)
 
   ifdef j9vm_uma_gnuDebugSymbols

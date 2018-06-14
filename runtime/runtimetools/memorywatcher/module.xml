@@ -30,9 +30,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<artifact type="shared" name="memorywatcher" loadgroup="">
 		<options>
 			<option name="dllDescription" data="TOOLS_MEMORY_WATCHER"/>
-			<option name="isCPlusPlus">
-				<include-if condition="spec.zos_390.*"/>
-			</option>
+			<option name="isCPlusPlus"/>
 		</options>
 		<phase>core</phase>
 		<exports>

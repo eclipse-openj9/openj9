@@ -24,9 +24,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<artifact type="executable" name="dyntest" >
 		<include-if condition="spec.flags.module_porttest" />
 		<options>
-			<option name="isCPlusPlus">
-				<include-if condition="spec.zos.*"/>
-			</option>
+			<option name="isCPlusPlus"/>
 			<option name="dumpMasterPrimitiveTable"/>
 		</options>
 		<phase>util</phase>

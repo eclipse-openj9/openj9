@@ -118,31 +118,16 @@ ifdef j9vm_env_data64
 endif
 
 UMA_DLL_LINK_FLAGS += -shared
-ifdef UMA_USING_LD_TO_LINK
-  UMA_DLL_LINK_FLAGS += -Map $(UMA_TARGET_NAME).map
-  UMA_DLL_LINK_FLAGS += --version-script $(UMA_TARGET_NAME).exp
-  UMA_DLL_LINK_FLAGS += -soname=$(UMA_DLLFILENAME)
-  UMA_DLL_LINK_FLAGS += -z origin -rpath \$$ORIGIN -disable-new-dtags
-else
-  UMA_DLL_LINK_FLAGS += -Wl,-Map=$(UMA_TARGET_NAME).map
-  UMA_DLL_LINK_FLAGS += -Wl,--version-script,$(UMA_TARGET_NAME).exp
-  UMA_DLL_LINK_FLAGS += -Wl,-soname=$(UMA_DLLFILENAME)
-  UMA_DLL_LINK_FLAGS += -Wl,--eh-frame-hdr
-  UMA_DLL_LINK_FLAGS += -Wl,-script=/ztpf/commit/base/util/tools/tpfscript
-  UMA_DLL_LINK_FLAGS += -Xlinker -z -Xlinker origin -Xlinker -rpath -Xlinker \$$ORIGIN -Xlinker -disable-new-dtags
-endif
+UMA_DLL_LINK_FLAGS += -Wl,-Map=$(UMA_TARGET_NAME).map
+UMA_DLL_LINK_FLAGS += -Wl,--version-script,$(UMA_TARGET_NAME).exp
+UMA_DLL_LINK_FLAGS += -Wl,-soname=$(UMA_DLLFILENAME)
+UMA_DLL_LINK_FLAGS += -Wl,--eh-frame-hdr
+UMA_DLL_LINK_FLAGS += -Wl,-script=/ztpf/commit/base/util/tools/tpfscript
+UMA_DLL_LINK_FLAGS += -Xlinker -z -Xlinker origin -Xlinker -rpath -Xlinker \$$ORIGIN -Xlinker -disable-new-dtags
 
-ifdef UMA_USING_LD_TO_LINK
-  UMA_DLL_LINK_POSTFLAGS += --start-group
-else
-  UMA_DLL_LINK_POSTFLAGS += -Xlinker --start-group
-endif
+UMA_DLL_LINK_POSTFLAGS += -Xlinker --start-group
 UMA_DLL_LINK_POSTFLAGS += $(UMA_LINK_STATIC_LIBRARIES)
-ifdef UMA_USING_LD_TO_LINK
-  UMA_DLL_LINK_POSTFLAGS+=--end-group
-else
-  UMA_DLL_LINK_POSTFLAGS += -Xlinker --end-group
-endif
+UMA_DLL_LINK_POSTFLAGS += -Xlinker --end-group
 UMA_DLL_LINK_POSTFLAGS += $(UMA_LINK_SHARED_LIBRARIES)
 
 ifdef j9vm_uma_gnuDebugSymbols
