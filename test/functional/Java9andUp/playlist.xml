@@ -226,6 +226,7 @@
 	<test>
 		<testCaseName>constantPoolTagTests</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames constantPoolTagTests \
