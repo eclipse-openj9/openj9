@@ -65,14 +65,6 @@ public class DefineAnonClass {
 		return unsafe.defineAnonymousClass(hostClass, bytes, cpPatches);
 	}
 
-
-	static public Class<?> defineClass(String className, String byteCodePath, ClassLoader loader, ProtectionDomain pD) throws Throwable {
-		byte[] bytes = getClassBytes(byteCodePath);
-
-		Class<?> newClass = unsafe.defineClass(className, bytes, 0, bytes.length, loader, pD);
-		return newClass;
-	}
-
 	static public byte[] getClassBytes(String fileName) {
 		String classFile = fileName.replace(".", "/")+ ".class";
 		InputStream classStream = null;
