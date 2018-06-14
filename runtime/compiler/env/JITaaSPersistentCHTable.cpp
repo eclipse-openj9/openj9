@@ -432,7 +432,9 @@ TR_JITaaSClientPersistentCHTable::classGotRedefined(
       TR_OpaqueClassBlock *oldClassId,
       TR_OpaqueClassBlock *newClassId)
    {
-   TR_ASSERT(false, "redefining classes is currently not supported");
+   TR_PersistentCHTable::classGotRedefined(fe, oldClassId, newClassId);
+   markDirty(oldClassId);
+   markDirty(newClassId);
    }
 
 void
