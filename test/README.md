@@ -142,7 +142,7 @@ compare behaviour against a particular implementation.
 
 JAVA_VERSION=[SE80|SE90|SE100|SE110|Panama|Valhalla] (SE90 default value)
 
-JAVA_IMPL=[openj9|hotspot|sap] (openj9 default value)
+JAVA_IMPL=[openj9|ibm|hotspot|sap] (openj9 default value)
 
 ```
     export JAVA_VERSION=SE80
