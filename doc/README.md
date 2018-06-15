@@ -24,13 +24,17 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 Documentation
 =============
 
-This directory contains documentation about various components in OpenJ9
-
-* **`compiler`**: Documentation about the compiler technology, codenamed
-  Testarossa. 
+This directory contains the following types of documentation:
 
 * **`processes`**: Documentation about the processes used in OpenJ9.
 
-Much documentation about OpenJ9 is best considered in tandem with the
+* **`release-notes`**: Release notes for different releases of OpenJ9.
+
+* **`compiler`**: Documentation about the compiler technology, codenamed
+  Testarossa.
+
+* **`diagnostics`**: Documentation about the diagnostic component of OpenJ9.
+
+Documentation about OpenJ9 technology or components is best considered in tandem with the
 [documentation from Eclipse OMR](https://github.com/eclipse/omr/tree/master/doc),
 as OpenJ9 is built upon the foundational technologies provided by OMR.
