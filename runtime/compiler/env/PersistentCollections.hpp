@@ -25,5 +25,9 @@ using UnorderedMapAllocator = TR::typed_allocator<std::pair<const T, U>, TR::Reg
 template<typename T, typename U>
 using UnorderedMap = std::unordered_map<T, U, std::hash<T>, std::equal_to<T>, UnorderedMapAllocator<T, U>>;
 
+template<typename T>
+using VectorAllocator = TR::typed_allocator<T, TR::Region&>;
+template<typename T>
+using Vector = std::vector<T, VectorAllocator<T>>;
 
 #endif

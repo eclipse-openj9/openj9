@@ -34,6 +34,14 @@ TR_J9ServerVM::getSuperClass(TR_OpaqueClassBlock *classPointer)
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    }
 
+std::vector<TR_OpaqueClassBlock *>
+TR_J9ServerVM::getSuperClassChain(TR_OpaqueClassBlock *clazz)
+   {
+   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITaaS::J9ServerMessageType::VM_getSuperClassChain, clazz);
+   return std::get<0>(stream->read<std::vector<TR_OpaqueClassBlock *>>());;
+   }
+
 TR_Method *
 TR_J9ServerVM::createMethod(TR_Memory * trMemory, TR_OpaqueClassBlock * clazz, int32_t refOffset)
    {
@@ -358,6 +366,8 @@ TR_J9ServerVM::compiledAsDLTBefore(TR_ResolvedMethod *method)
    return 0;
 #endif
    }
+
+
 /*
 char *
 TR_J9ServerVM::getClassNameChars(TR_OpaqueClassBlock * ramClass, int32_t & length)

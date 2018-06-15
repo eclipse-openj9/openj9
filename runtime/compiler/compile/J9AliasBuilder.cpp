@@ -83,8 +83,14 @@ J9::AliasBuilder::methodAliases(TR::SymbolReference *symRef)
          {
          TR_BitVector *result          = NULL;
          TR_BitVector *allocatedResult = NULL;
-         for (TR_OpaqueClassBlock *clazz = method->getResolvedMethod()->containingClass(); clazz; clazz = comp()->fe()->getSuperClass(clazz))
+
+         TR_OpaqueClassBlock *containingClass = method->getResolvedMethod()->containingClass();
+         std::vector<TR_OpaqueClassBlock *> superClasses = ((TR_J9VM *) comp()->fe())->getSuperClassChain(containingClass);
+         // add containing class to the list of superclasses at the beginning, it's also needed here
+         superClasses.insert(superClasses.begin(), containingClass);
+         for (auto it = superClasses.begin(); it != superClasses.end(); it++)
             {
+            TR_OpaqueClassBlock *clazz = *it;
             int32_t clazzNameLen;
             char   *clazzName = TR::Compiler->cls.classNameChars(comp(), clazz, clazzNameLen);
 

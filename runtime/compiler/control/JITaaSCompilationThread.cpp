@@ -296,6 +296,12 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->compiledAsDLTBefore(clazz));
          }
          break;
+      case J9ServerMessageType::VM_getSuperClassChain:
+         {
+         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(fe->getSuperClassChain(clazz));
+         }
+         break;
       case J9ServerMessageType::VM_getComponentClassFromArrayClass:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());

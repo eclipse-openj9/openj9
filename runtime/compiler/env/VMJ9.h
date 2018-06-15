@@ -45,6 +45,7 @@
 #include "infra/Array.hpp"
 #include "env/CompilerEnv.hpp"
 #include "runtime/Listener.hpp"
+#include "env/PersistentCollections.hpp"
 
 class TR_CallStack;
 namespace TR { class CompilationInfo; }
@@ -1063,6 +1064,7 @@ public:
 
 
    virtual TR_OpaqueClassBlock *             getSuperClass(TR_OpaqueClassBlock *classPointer);
+   virtual std::vector<TR_OpaqueClassBlock *> getSuperClassChain(TR_OpaqueClassBlock *clazz);
    virtual bool               isUnloadAssumptionRequired(TR_OpaqueClassBlock *, TR_ResolvedMethod *);
 
    virtual TR_OpaqueClassBlock * getClassClassPointer(TR_OpaqueClassBlock *);
