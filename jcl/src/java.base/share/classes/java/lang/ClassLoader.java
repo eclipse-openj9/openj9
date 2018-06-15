@@ -1551,8 +1551,10 @@ public final Package[] getDefinedPackages() {
  *
  * @param		name		The name of the package to find
  * @return		The package requested, or null
- * 
+/*[IF Sidecar19-SE]
+ *
  * @deprecated Use getDefinedPackage(String)
+/*[ENDIF]
  */
 /*[IF Sidecar19-SE]*/
 @Deprecated(forRemoval=false, since="9")
