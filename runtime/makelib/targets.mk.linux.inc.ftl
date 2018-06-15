@@ -151,15 +151,21 @@ CXXFLAGS += $(UMA_OPTIMIZATION_CXXFLAGS)
   endif
 </#if>
 
-<#-- GCC versions greater than 5 default to GNU11 but OpenJ9 uses
-GNU89 inline semantics. -fgnu89-inline option is appended to CFLAGS
-to allow compilation with GCC versions greater than 5 and GNU89 inline
-semantics. Reference - https://gcc.gnu.org/gcc-5/porting_to.html.
+<#--
+OpenJ9 uses GNU89 inline semantics, but GCC versions 5 and newer default
+to GNU11 inline semantics. The option '-fgnu89-inline' is appended to CFLAGS
+to allow compilation with newer GCC versions.
+
+Reference - https://gcc.gnu.org/gcc-5/porting_to.html.
 -->
-GCCVERSIONGTEQ5 := $(shell expr `gcc -dumpversion | cut -f1 -d.` '>=' 5)
-ifeq (1,$(GCCVERSIONGTEQ5))
+<#if uma.spec.flags.env_gcc.enabled || !uma.spec.processor.ppc>
+# If $(CC) doesn't accept the '-dumpversion' option, assume it's not GCC versions 5 or newer. 
+GCC_MAJOR_VERSION := $(shell ($(CC) -dumpversion 2>/dev/null || echo 1) | cut -d. -f1)
+
+ifeq (,$(findstring $(GCC_MAJOR_VERSION),1 2 3 4))
   CFLAGS += -fgnu89-inline
 endif
+</#if>
 
 <#if !uma.spec.processor.ppc>
   CXXFLAGS += -fno-exceptions -fno-rtti -fno-threadsafe-statics
