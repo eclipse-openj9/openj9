@@ -192,7 +192,7 @@ SH_OSCache::getCacheDir(J9PortLibrary* portLibrary, const char* ctrlDirName, cha
 	appendBaseDir = (NULL == ctrlDirName) || (J9PORT_SHR_CACHE_TYPE_NONPERSISTENT == cacheType) || (J9PORT_SHR_CACHE_TYPE_SNAPSHOT == cacheType);
 	rc = j9shmem_getDir(ctrlDirName, appendBaseDir, buffer, bufferSize);
 	if (rc == -1) {
-		Trc_SHR_OSC_getCacheDir_j9shmem_getDir_failed();
+		Trc_SHR_OSC_getCacheDir_j9shmem_getDir_failed1(ctrlDirName);
 		return -1;
 	}
 
