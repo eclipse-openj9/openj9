@@ -646,7 +646,7 @@
 	</test>
 	
 	<test id="Test 42: LIR 1445.1 : Debug Area PrintStats Test : Create a test cache with -Xscdmx3m & java core with -Xnolinenumbers" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ -Xdump:java:events=vmstop,file=javacore.txt -Xscdmx3m $currentMode$ $CP_HANOI$ $PROGRAM_HANOI$</command>
+		<command>$JAVA_EXE$ -Xdump:java:events=vmstop,file=javacore.txt -Xscmx16m -Xscdmx3m $currentMode$ $CP_HANOI$ $PROGRAM_HANOI$</command>
 		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
 
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
@@ -1005,9 +1005,9 @@
 		<output type="required" caseSensitive="yes" regex="no" showMatch="yes" platforms="NON_64BIT_PLATFORMS">XX:SharedCacheHardLimit=16M</output>
 
 		<output type="success" caseSensitive="yes" regex="no" showMatch="yes" platforms="$64BIT_PLATFORMS$">SH_OSCachemmap::startup: Successfully set cache length to 314572800</output>
+		<output type="success" caseSensitive="yes" regex="no" showMatch="yes" platforms="$64BIT_PLATFORMS$">SH_OSCachemmap::startup: Successfully set cache length to 67108864</output>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes" platforms="$64BIT_PLATFORMS$">OSCache startup.*length=314572800 create=1</output>
-		<output type="required" caseSensitive="yes" regex="no" showMatch="yes" platforms="$64BIT_PLATFORMS$">XX:SharedCacheHardLimit=300M</output>
-		<output type="required" caseSensitive="yes" regex="no" showMatch="yes" platforms="$64BIT_PLATFORMS$">Xscmx64M</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes" platforms="$64BIT_PLATFORMS$">(XX:SharedCacheHardLimit=300M(.)*[\n\r](.)*Xscmx64M|XX:SharedCacheHardLimit=64M)</output>
 		
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
