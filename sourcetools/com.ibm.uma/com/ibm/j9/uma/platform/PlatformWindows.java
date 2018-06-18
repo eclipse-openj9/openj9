@@ -38,6 +38,8 @@ import com.ibm.uma.util.FileAssistant;
 public class PlatformWindows extends PlatformImplementation {
 	
 	static final String DEFAULT_RC_PRODUCT_NAME="IBM SDK, Java(tm) 2 Technology Edition";
+	/* version number with dots seperating four parts */
+	static final String OPENJDK_VERSION_NUMBER_FOUR_POSITIONS = System.getenv("OPENJDK_VERSION_NUMBER_FOUR_POSITIONS");
 	
 	public PlatformWindows( IConfiguration buildSpec ) {
 		super(buildSpec);
@@ -186,9 +188,6 @@ public class PlatformWindows extends PlatformImplementation {
 			productName = DEFAULT_RC_PRODUCT_NAME;
 		}
 		
-		int buildIdLow = Integer.parseInt(getBuildId()) & 0xffff;
-		int buildIdHigh = Integer.parseInt(getBuildId()) >> 16;
-		
 		buffer.append(
 				"\n" +
 		"#include <windows.h>\n");
@@ -198,8 +197,8 @@ public class PlatformWindows extends PlatformImplementation {
 				"#include \"j9version.h\"\n" +
 				"\n" +
 				"VS_VERSION_INFO VERSIONINFO\n" +
-				" FILEVERSION " + getMajorVersion() + "," + getMinorVersion()+ ","+ buildIdHigh +"," + buildIdLow + "\n" +
-				" PRODUCTVERSION " + getMajorVersion() + "," + getMinorVersion()+ ","+ buildIdHigh +"," + buildIdLow + "\n" +
+				" FILEVERSION " + OPENJDK_VERSION_NUMBER_FOUR_POSITIONS.replace(".", ",") + "\n" +
+				" PRODUCTVERSION " + OPENJDK_VERSION_NUMBER_FOUR_POSITIONS.replace(".", ",") + "\n" +
 				" FILEFLAGSMASK 0x3fL\n" +
 				" FILEFLAGS 0x0L\n" +
 				" FILEOS VOS_NT_WINDOWS32\n" +
@@ -212,12 +211,12 @@ public class PlatformWindows extends PlatformImplementation {
 				"		BEGIN\n" +
 				"			VALUE \"CompanyName\", \"International Business Machines Corporation\\0\"\n" +
 				"			VALUE \"FileDescription\", \"WebSphere Studio Device Developer\\0\"\n" +
-				"			VALUE \"FileVersion\", \"R" + getMajorVersion() + "." + getMinorVersion()+ " (\" EsBuildVersionString \")\\0\"\n" +
+				"			VALUE \"FileVersion\", \"" + OPENJDK_VERSION_NUMBER_FOUR_POSITIONS + "\\0\"\n" +
 				"			VALUE \"InternalName\", \"" + getTargetNameWithRelease(artifact) + "\\0\"\n" +
 				"			VALUE \"LegalCopyright\", \" Copyright (c) 1991, " + calendar.get(Calendar.YEAR) + " IBM Corp. and others\\0\"\n" +
 				"			VALUE \"OriginalFilename\", \"" + getTargetNameWithRelease(artifact) + ".dll\\0\"\n" +
 				"			VALUE \"ProductName\", \"" + productName + "\\0\"\n" +
-				"			VALUE \"ProductVersion\", \"R" + getMajorVersion() + "." + getMinorVersion()+ "\\0\"\n" +
+				"			VALUE \"ProductVersion\", \"" + OPENJDK_VERSION_NUMBER_FOUR_POSITIONS + "\\0\"\n" +
 				"		END\n" +
 				"	END\n" +
 				"	BLOCK \"VarFileInfo\"\n" +
@@ -517,8 +516,6 @@ public class PlatformWindows extends PlatformImplementation {
 		if (productName == null ) {
 			productName = DEFAULT_RC_PRODUCT_NAME;
 		}
-		int buildIdLow = Integer.parseInt(getBuildId()) & 0xffff;
-		int buildIdHigh = Integer.parseInt(getBuildId()) >> 16;
 		
 		buffer.append(
 				"\n" +
@@ -529,8 +526,8 @@ public class PlatformWindows extends PlatformImplementation {
 				"#include \"j9version.h\"\n" +
 				"\n" +
 				"VS_VERSION_INFO VERSIONINFO\n" +
-				" FILEVERSION " + getMajorVersion() + "," + getMinorVersion()+ ","+ buildIdHigh +"," + buildIdLow + "\n" +
-				" PRODUCTVERSION " + getMajorVersion() + "," + getMinorVersion()+ ","+ buildIdHigh +"," + buildIdLow + "\n" +
+				" FILEVERSION " + OPENJDK_VERSION_NUMBER_FOUR_POSITIONS.replace(".", ",") + "\n" +
+				" PRODUCTVERSION " + OPENJDK_VERSION_NUMBER_FOUR_POSITIONS.replace(".", ",") + "\n" +
 				" FILEFLAGSMASK 0x3fL\n" +
 				" FILEFLAGS 0x0L\n" +
 				" FILEOS VOS_NT_WINDOWS32\n" +
@@ -543,12 +540,12 @@ public class PlatformWindows extends PlatformImplementation {
 				"		BEGIN\n" +
 				"			VALUE \"CompanyName\", \"International Business Machines Corporation\\0\"\n" +
 				"			VALUE \"FileDescription\", \"J9 Virtual Machine Runtime\\0\"\n" +
-				"			VALUE \"FileVersion\", \"R" + getMajorVersion() + "." + getMinorVersion()+ " (\" EsBuildVersionString \")\\0\"\n" +
+				"			VALUE \"FileVersion\", \"" + OPENJDK_VERSION_NUMBER_FOUR_POSITIONS + "\\0\"\n" +
 				"			VALUE \"InternalName\", \"" + getTargetNameWithRelease(artifact) + "\\0\"\n" +
 				"			VALUE \"LegalCopyright\", \" Copyright (c) 1991, " + calendar.get(Calendar.YEAR) + " IBM Corp. and others\\0\"\n" +
 				"			VALUE \"OriginalFilename\", \"" + getTargetNameWithRelease(artifact) + ".dll\\0\"\n" +
 				"			VALUE \"ProductName\", \"" + productName + "\\0\"\n" +
-				"			VALUE \"ProductVersion\", \"R" + getMajorVersion() + "." + getMinorVersion()+ "\\0\"\n" +
+				"			VALUE \"ProductVersion\", \"" + OPENJDK_VERSION_NUMBER_FOUR_POSITIONS + "\\0\"\n" +
 				"		END\n" +
 				"	END\n" +
 				"	BLOCK \"VarFileInfo\"\n" +
