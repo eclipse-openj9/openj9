@@ -6626,7 +6626,8 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          // Try to purge old data
          _compInfo.getClientSessionHT()->purgeOldDataIfNeeded();
          // Search the hashtable
-         ClientSessionData *clientSession = _compInfo.getClientSessionHT()->findOrCreateClientSession(clientUID);
+         ClientSessionData *clientSession = _compInfo.getClientSessionHT()->findClientSession(clientUID);
+         TR_ASSERT(clientSession, "client session should have been created earlier in CompileService.cpp");
 
          // we should probably abort this compilation if we cannot get memory and clientSession==NULL
          // Cache the session data in compInfoPTBase

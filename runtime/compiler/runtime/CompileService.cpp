@@ -133,6 +133,7 @@ static void doRemoteCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
 
 void J9CompileDispatcher::compile(JITaaS::J9ServerStream *stream)
    {
+   char * clientOptions = nullptr;
    try
       {
       auto req = stream->read<uint64_t, std::string, uint32_t, J9Method *, J9Class*, TR_Hotness, std::string, 
@@ -145,9 +146,7 @@ void J9CompileDispatcher::compile(JITaaS::J9ServerStream *stream)
       uint64_t clientId = std::get<0>(req);
       stream->setClientId(clientId);
       std::string romClassStr = std::get<1>(req);
-      J9ROMClass *romClass = TR_ResolvedJ9JITaaSServerMethod::romClassFromString(romClassStr, fej9->_compInfo->persistentMemory());
       uint32_t romMethodOffset = std::get<2>(req);
-      J9ROMMethod *romMethod = (J9ROMMethod*)((uint8_t*) romClass + romMethodOffset);
       J9Method *ramMethod = std::get<3>(req);
       J9Class *clazz = std::get<4>(req);
       TR_Hotness opt = std::get<5>(req);
@@ -162,27 +161,34 @@ void J9CompileDispatcher::compile(JITaaS::J9ServerStream *stream)
       std::string clientOptionsStr = std::get<12>(req);
 
       size_t clientOptionsSize = clientOptionsStr.size();
-      char * clientOptions = new (PERSISTENT_NEW) char[clientOptionsSize];
+      clientOptions = new (PERSISTENT_NEW) char[clientOptionsSize];
       memcpy(clientOptions, clientOptionsStr.data(), clientOptionsSize);
 
-      // If new classes have been unloaded at the client, 
-      // delete relevant entries from the persistent caches we hold per client
-      //if (unloadedClasses.size() != 0)
+      J9ROMClass *romClass = nullptr;
          {
          OMR::CriticalSection compilationMonitorLock(compInfo->getCompilationMonitor());
-         auto clientSession = compInfo->getClientSessionHT()->findClientSession(clientId); // cannot throw
-         if (clientSession)
+         auto clientSession = compInfo->getClientSessionHT()->findOrCreateClientSession(clientId);
+         if (!clientSession)
+            throw std::bad_alloc();
+
+         // Get the ROMClass for the method to be compiled if it is already cached
+         // Or read it from the compilation request and cache it otherwise
+         if (!(romClass = JITaaSHelpers::getRemoteROMClassIfCached(clientSession, clazz)))
             {
-            // Cache the ROMClass for the method to be compiled if not already cached
-            if (!JITaaSHelpers::getRemoteROMClassIfCached(clientSession, clazz))
-               JITaaSHelpers::cacheRemoteROMClass(clientSession, clazz, romClass, methodsOfClass, baseComponentClass, numDims);
-            // This could be an expensive operation and we are holding the compilation monitor
-            // Maybe we should create another monitor
-            if (unloadedClasses.size() != 0)
-               clientSession->processUnloadedClasses(unloadedClasses);
-            clientSession->decInUse();
+            romClass = TR_ResolvedJ9JITaaSServerMethod::romClassFromString(romClassStr, fej9->_compInfo->persistentMemory());
+            JITaaSHelpers::cacheRemoteROMClass(clientSession, clazz, romClass, methodsOfClass, baseComponentClass, numDims);
             }
+
+         // If new classes have been unloaded at the client, 
+         // delete relevant entries from the persistent caches we hold per client
+         // This could be an expensive operation and we are holding the compilation monitor
+         // Maybe we should create another monitor
+         if (unloadedClasses.size() != 0)
+            clientSession->processUnloadedClasses(unloadedClasses);
+
+         clientSession->decInUse();
          }
+      J9ROMMethod *romMethod = (J9ROMMethod*)((uint8_t*) romClass + romMethodOffset);
 
       doRemoteCompile(_jitConfig, _vmThread, romClass, romMethod, ramMethod, clazz, stream, opt, details, detailsType, methodsOfClass, clientOptions, clientOptionsSize);
       }
@@ -191,5 +197,15 @@ void J9CompileDispatcher::compile(JITaaS::J9ServerStream *stream)
       if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Stream failed in server compilation dispatcher thread: %s", e.what());
       stream->cancel();
+      if (clientOptions)
+         TR_Memory::jitPersistentFree(clientOptions);
+      }
+   catch (const std::bad_alloc &e)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Server out of memory in compilation dispatcher thread: %s", e.what());
+      stream->finishCompilation(compilationLowPhysicalMemory);
+      if (clientOptions)
+         TR_Memory::jitPersistentFree(clientOptions);
       }
    }
