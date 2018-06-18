@@ -108,6 +108,10 @@
 		<export name="Java_com_ibm_jvmti_tests_redefineClasses_rc016_redefineClass"/>
 		<export name="Java_com_ibm_jvmti_tests_redefineClasses_rc017_redefineMultipleClass"/>
 		<export name="Java_com_ibm_jvmti_tests_redefineClasses_rc018_redefineClass"/>
+		<export name="Java_com_ibm_jvmti_tests_redefineClasses_rc019a_redefineClass"/>
+		<export name="Java_com_ibm_jvmti_tests_redefineClasses_rc019a_getValue"/>
+		<export name="Java_com_ibm_jvmti_tests_redefineClasses_rc019b_redefineClass"/>
+		<export name="Java_com_ibm_jvmti_tests_redefineClasses_rc019b_getValue"/>
 		<export name="Java_com_ibm_jvmti_tests_getPotentialCapabilities_gpc001_verifyOnLoadCapabilities"/>
 		<export name="Java_com_ibm_jvmti_tests_getPotentialCapabilities_gpc001_verifyLiveCapabilities"/>
 		<export name="Java_com_ibm_jvmti_tests_getPotentialCapabilities_gpc002_verifyCapabilityRetention"/>

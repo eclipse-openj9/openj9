@@ -138,7 +138,7 @@ UDATA getUserExtendedPrivateAreaMemoryType();
 
 extern "C" {
 extern J9MemoryManagerFunctions MemoryManagerFunctions;
-extern void initialiseVerboseFunctionTableWithDummies(J9MemoryManagerVerboseInterface *table);
+extern void initializeVerboseFunctionTableWithDummies(J9MemoryManagerVerboseInterface *table);
 
 static void hookValidatorVMThreadCrash(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData);
 static bool gcInitializeVMHooks(MM_GCExtensionsBase *extensions);
@@ -2587,6 +2587,45 @@ setDefaultConfigOptions(MM_GCExtensions *extensions, bool scavenge, bool concurr
 #endif /* defined(J9VM_GC_LARGE_OBJECT_AREA) */
 }
 
+void
+setConfigOptionsForNoGc(MM_GCExtensions *extensions)
+{
+	/* noScavenger noConcurrentMark noConcurrentSweep, noLOA */
+#if defined(J9VM_GC_MODRON_SCAVENGER)
+	extensions->configurationOptions._forceOptionScavenge  = true;
+	extensions->scavengerEnabled = false;
+#endif /* defined(J9VM_GC_MODRON_SCAVENGER) */
+#if defined (OMR_GC_MODRON_CONCURRENT_MARK)
+	extensions->configurationOptions._forceOptionConcurrentMark = true;
+	extensions->concurrentMark = false;
+#endif /* defined (OMR_GC_MODRON_CONCURRENT_MARK) */
+#if defined(J9VM_GC_CONCURRENT_SWEEP)
+	extensions->configurationOptions._forceOptionConcurrentSweep = true;
+	extensions->concurrentSweep = false;
+#endif /* defined(J9VM_GC_CONCURRENT_SWEEP) */
+#if defined(J9VM_GC_LARGE_OBJECT_AREA)
+	extensions->configurationOptions._forceOptionLargeObjectArea = true;
+	extensions->largeObjectArea = false;
+#endif /* defined(J9VM_GC_LARGE_OBJECT_AREA) */
+	/* 1 gcThread */
+	extensions->gcThreadCountForced = true;
+	extensions->gcThreadCount = 1;
+
+	extensions->packetListSplit = 1;
+	extensions->cacheListSplit = 1;
+	extensions->splitFreeListSplitAmount = 1;
+	extensions->objectListFragmentCount = 1;
+
+	/* disable excessiveGC */
+	extensions->excessiveGCEnabled._wasSpecified = true;
+	extensions->excessiveGCEnabled._valueSpecified = false;
+	/* disable estimate fragmentation */
+	extensions->estimateFragmentation = 0;
+	extensions->processLargeAllocateStats = false;
+	/* disable system gc */
+	extensions->disableExplicitGC = true;
+}
+
 /**
  * Create proper configuration for SE based on options
  * @param env pointer to Environment
@@ -2712,6 +2751,14 @@ configurateGCWithPolicyAndOptions(OMR_VM* omrVM)
 		result = MM_ConfigurationIncrementalGenerational::newInstance(&env);
 		break;
 
+	case gc_policy_nogc:
+		extensions->gcModeString = "-Xgcpolicy:nogc";
+		omrVM->gcPolicy = J9_GC_POLICY_NOGC;
+		/* noScavenge, noConcurrentMark, noConcurrentSweep, noLOA */
+		setConfigOptionsForNoGc(extensions);
+		result = configurateGCWithPolicyAndOptionsStandard(&env);
+		break;
+
 	case gc_policy_undefined:
 	default:
 		/* Undefined or unknown GC policy */
@@ -2775,7 +2822,7 @@ gcInitializeDefaults(J9JavaVM* vm)
 		goto error;
 	}
 
-	initialiseVerboseFunctionTableWithDummies(&extensions->verboseFunctionTable);
+	initializeVerboseFunctionTableWithDummies(&extensions->verboseFunctionTable);
 
 	if (JNI_OK != gcParseCommandLineAndInitializeWithValues(vm, memoryParameterTable)) {
 		loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_INITIALIZE_PARSING_COMMAND_LINE, "Failed to initialize, parsing command line.");

@@ -82,10 +82,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<include path="../jcl" type="relativepath"/>
 			<include path="harmony_include"/>
 			<include path="bcverify"/>
-			<include path="../compiler/trj9/runtime" type="relativepath">
+			<include path="../compiler/runtime" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
-			<include path="../compiler/trj9" type="relativepath">
+			<include path="../compiler" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
 			<include path="$(OMR_DIR)/compiler" type="relativepath">
@@ -263,9 +263,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<include-if condition="spec.flags.module_ddr"/>
 		<exclude-if condition="spec.flags.opt_useOmrDdr"/>
 		<options>
-			<option name="isCPlusPlus">
-				<exclude-if condition="spec.linux_ppc.*"/>
-			</option>
+			<option name="isCPlusPlus"/>
 			<option name="doesNotRequireCMAIN"/>
 		</options>
 		<phase>core j2se</phase>

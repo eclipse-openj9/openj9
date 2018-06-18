@@ -747,7 +747,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved) {
 			}
 
 			/* Note - verboseStruct not needed for modron verbose gc */
-			initialiseVerboseFunctionTable(vm);
+			initializeVerboseFunctionTable(vm);
 
 			verbosegclogIndex = FIND_AND_CONSUME_ARG( OPTIONAL_LIST_MATCH, OPT_XVERBOSEGCLOG, NULL );
 			if (verbosegclogIndex >= 0) {
@@ -793,7 +793,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved) {
 			break;
 
 		case POST_INIT_STAGE:
-			initialiseVerboseFunctionTable(vm);
+			initializeVerboseFunctionTable(vm);
 			break;
 
 		case LIBRARIES_ONUNLOAD :

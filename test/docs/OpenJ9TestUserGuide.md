@@ -48,7 +48,7 @@ tools should be installed on your test machine to run tests.
     JAVA_BIN=<path to JDK bin directory that you wish to test>
     SPEC=[linux_x86-64|linux_x86-64_cmprssptrs|...] (platform on which to test)
     JAVA_VERSION=[SE80|SE90|SE100|SE110|Panama|Valhalla] (SE90 default value)
-    JAVA_IMPL=[openj9|hotspot|sap] (openj9 default value)
+    JAVA_IMPL=[openj9|ibm|hotspot|sap] (openj9 default value)
     BUILD_LIST=<comma separated projects to be compiled and executed> (default to all projects)
     ```
 

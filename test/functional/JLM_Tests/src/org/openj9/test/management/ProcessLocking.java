@@ -23,9 +23,6 @@ package org.openj9.test.management;
 
 import java.io.*;
 import java.io.BufferedReader;
-import java.io.RandomAccessFile;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 
 import org.testng.log4testng.Logger;
 
@@ -35,9 +32,6 @@ public class ProcessLocking {
 
 	private String tmpdir;
 	private File file;
-	private RandomAccessFile randomAccessFile;
-	private FileChannel fileChannel;
-	private FileLock fileLock;
 	private InputStream in;
 	private InputStreamReader inStream;
 	private BufferedReader br;
@@ -45,8 +39,6 @@ public class ProcessLocking {
 	public ProcessLocking(String filename) {
 		try {
 			file = new File(filename);
-			randomAccessFile = new RandomAccessFile(file, "rw");
-			fileChannel = randomAccessFile.getChannel();
 		} catch (Exception e) {
 			logger.error("Unexpected exception occured " + e.getMessage(), e);
 		}

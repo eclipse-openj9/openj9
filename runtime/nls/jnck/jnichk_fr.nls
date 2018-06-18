@@ -606,7 +606,7 @@ J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE.user_response=Check and correct the JNI 
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE=Avertissement JNI dans %1$s : L'argument #%2$d est une signature de zone mal form\u00e9e (\"%3$s\")
+J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE=Avertissement JNI dans %1$s : L'argument #%2$d est une signature de champ mal form\u00e9e (\"%3$s\")
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE.sample_input_1=methodName
 J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE.sample_input_2=3
@@ -727,7 +727,7 @@ J9NLS_JNICHK_ARRAY_MEMORY_NOT_RELEASED.user_response=Check and correct the JNI a
 # END NON-TRANSLATABLE
 
 # JNI and JNI_COMMIT are not translatable
-J9NLS_JNICHK_IGNORING_JNI_COMMIT=Conseil JNI dans %1$s : JNI_COMMIT a \u00e9t\u00e9 indiqu\u00e9 mais ne sera pas pris en compte.\nPuisque %2$s a renvoy\u00e9 le contenu r\u00e9el du tableau, la m\u00e9moire tampon ne sera plus valide apr\u00e8s cet appel. Il se peut que ce ne soit pas l'objectif vis\u00e9.
+J9NLS_JNICHK_IGNORING_JNI_COMMIT=Conseil JNI dans %1$s : JNI_COMMIT a \u00e9t\u00e9 indiqu\u00e9 mais ne sera pas pris en compte.\nPuisque %2$s a renvoy\u00e9 le contenu r\u00e9el du tableau, le tampon ne sera plus valide apr\u00e8s cet appel. Il se peut que ce ne soit pas l'objectif vis\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_IGNORING_JNI_COMMIT.sample_input_1=methodName
 J9NLS_JNICHK_IGNORING_JNI_COMMIT.sample_input_2=methodName2
@@ -748,7 +748,7 @@ J9NLS_JNICHK_IGNORING_JNI_ABORT.system_action=The JVM continues.
 J9NLS_JNICHK_IGNORING_JNI_ABORT.user_response=Check and correct the JNI application code if necessary.
 # END NON-TRANSLATABLE
 
-J9NLS_JNICHK_CONSIDER_JNI_ABORT=Conseil JNI dans %s : La m\u00e9moire tampon semble ne pas \u00eatre modifi\u00e9e. Utilisez JNI_ABORT au lieu du mode 0.
+J9NLS_JNICHK_CONSIDER_JNI_ABORT=Conseil JNI dans %s : le tampon semble ne pas \u00eatre modifi\u00e9. Utilisez JNI_ABORT au lieu du mode 0.
 J9NLS_JNICHK_CONSIDER_JNI_ABORT.sample_input_1=methodName
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_CONSIDER_JNI_ABORT.explanation=The named JNI function was called with a mode parameter set to 0.

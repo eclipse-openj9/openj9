@@ -32,6 +32,8 @@
 
 #define J9_EXCLUSIVE_SLOW_TOLERANCE_REALTIME 5
 #define J9_EXCLUSIVE_SLOW_TOLERANCE_STANDARD 50
+#define J9_EXCLUSIVE_SLOW_REASON_JNICRITICAL 1
+#define J9_EXCLUSIVE_SLOW_REASON_EXCLUSIVE   2
 
 class VM_VMAccess
 {
@@ -314,7 +316,7 @@ public:
 	 * @parm[in] timeNow the value returned from updateExclusiveVMAccessStats
 	 */
 	static VMINLINE void
-	respondToExclusiveRequest(J9VMThread* currentThread, J9JavaVM *vm, J9PortLibrary *portLibrary, U_64 timeNow)
+	respondToExclusiveRequest(J9VMThread *currentThread, J9JavaVM *vm, J9PortLibrary *portLibrary, U_64 timeNow, UDATA reason)
 	{
 		PORT_ACCESS_FROM_PORT(portLibrary);
 		U_64 const timeTaken = j9time_hires_delta(vm->omrVM->exclusiveVMAccessStats.startTime, timeNow, J9PORT_TIME_DELTA_IN_MILLISECONDS);
@@ -323,7 +325,7 @@ public:
 			slowTolerance = J9_EXCLUSIVE_SLOW_TOLERANCE_REALTIME;
 		}
 		if (timeTaken > slowTolerance) {
-			TRIGGER_J9HOOK_VM_SLOW_EXCLUSIVE(vm->hookInterface, currentThread, (UDATA) timeTaken);
+			TRIGGER_J9HOOK_VM_SLOW_EXCLUSIVE(vm->hookInterface, currentThread, (UDATA) timeTaken, reason);
 		}
 		omrthread_monitor_notify_all(vm->exclusiveAccessMutex);
 	}

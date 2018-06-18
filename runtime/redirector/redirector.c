@@ -109,6 +109,7 @@ typedef enum gc_policy{
 	GC_POLICY_GENCON,
 	GC_POLICY_BALANCED,
 	GC_POLICY_METRONOME,
+	GC_POLICY_NOGC
 } gc_policy;
 
 #ifdef LINUX
@@ -538,6 +539,12 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 		int i = 0;
 
 		gcPolicyString = findStartOfMostRightOption(envOptions, gcPolicyOption);
+		if (NULL == gcPolicyString) {
+			if (hasEnvOption(envOptions, "-XX:+UseNoGC")) {
+				gcPolicyString = "nogc";
+			}
+		}
+
 		if (NULL != gcPolicyString) {
 			parseGCPolicy(gcPolicyString + gcPolicyOptionLength, &gcPolicy);
 		}
@@ -706,10 +713,20 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 
 		/* direct user to OpenJ9 build configurations to properly generate the requested build. */
 		if (DEFAULT_DIR == basePointer) {
-			fprintf(stdout, "Compile with configuration option --with-noncompressedrefs to generate a non-compressedrefs build.\n");
+			fprintf(stdout,
+					"This JVM package only includes the '-Xcompressedrefs' configuration. Please run "
+					"the VM without specifying the '-Xnocompressedrefs' option or by specifying the "
+					"'-Xcompressedrefs' option.\nTo compile the other configuration, please run configure "
+					"with '--with-noncompressedrefs.\n"
+			);
 		}
 		if (COMPRESSEDREFS_DIR == basePointer) {
-			fprintf(stdout, "Compile without configuration option --with-noncompressedrefs to generate a compressedrefs build.\n");
+			fprintf(stdout,
+					"This JVM package only includes the '-Xnocompressedrefs' configuration. Please run "
+					"the VM without specifying the '-Xcompressedrefs' option or by specifying the "
+					"'-Xnocompressedrefs' option.\nTo compile the other configuration, please run configure "
+					"without '--with-noncompressedrefs.\n"
+			);
 		}
 		exit(-1);
 	}
@@ -1505,6 +1522,7 @@ static BOOLEAN parseGCPolicy(char *buffer, int *value)
 			"gencon",
 			"balanced",
 			"metronome",
+			"nogc",
 			NULL,
 	};
 

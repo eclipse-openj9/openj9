@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corp. and others
+ * Copyright (c) 2007, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,7 @@ public class TitleTagParser extends TagParser implements ITitleTypes {
 	}
 
 	/**
-	 * Initialise parser with rules for the TITLE section in the javacore
+	 * Initialize parser with rules for the TITLE section in the javacore
 	 */
 	protected void initTagAttributeRules() {
 

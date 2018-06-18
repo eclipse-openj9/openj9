@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -221,11 +221,11 @@ J9NLS_RI_RUNDUMPROUTINE_NOT_SUPPORTED.user_response=Remove the JVMRI RunDumpRout
 # END NON-TRANSLATABLE
 
 # JVMRI is not translatable
-J9NLS_RI_INITIALISE_CANT_ALLOCATE_MONITOR=\u043f\u0440\u0438 \u0438\u043d\u0438\u0446\u0438\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u0438 JVMRI \u043d\u0435 \u0443\u0434\u0430\u0435\u0442\u0441\u044f \u0432\u044b\u0434\u0435\u043b\u0438\u0442\u044c \u043c\u043e\u043d\u0438\u0442\u043e\u0440 \u0434\u0430\u043c\u043f\u0430 jvmri
+J9NLS_RI_INITIALIZE_CANT_ALLOCATE_MONITOR=\u043f\u0440\u0438 \u0438\u043d\u0438\u0446\u0438\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u0438 JVMRI \u043d\u0435 \u0443\u0434\u0430\u0435\u0442\u0441\u044f \u0432\u044b\u0434\u0435\u043b\u0438\u0442\u044c \u043c\u043e\u043d\u0438\u0442\u043e\u0440 \u0434\u0430\u043c\u043f\u0430 jvmri
 # START NON-TRANSLATABLE
-J9NLS_RI_INITIALISE_CANT_ALLOCATE_MONITOR.explanation=The JVM failed to initialise the JVMRI interface because the JVM was unable to allocate a monitor.
-J9NLS_RI_INITIALISE_CANT_ALLOCATE_MONITOR.system_action=The JVM terminates.
-J9NLS_RI_INITIALISE_CANT_ALLOCATE_MONITOR.user_response=Investigate process memory usage and retry.
+J9NLS_RI_INITIALIZE_CANT_ALLOCATE_MONITOR.explanation=The JVM failed to initialize the JVMRI interface because the JVM was unable to allocate a monitor.
+J9NLS_RI_INITIALIZE_CANT_ALLOCATE_MONITOR.system_action=The JVM terminates.
+J9NLS_RI_INITIALIZE_CANT_ALLOCATE_MONITOR.user_response=Investigate process memory usage and retry.
 # END NON-TRANSLATABLE
 
 # jvmri->TraceRegister, jvmri->TraceDeregister, TraceListener and JVMRAS_VERSION_1_5 are not translatable

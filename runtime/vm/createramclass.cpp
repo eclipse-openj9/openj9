@@ -2374,7 +2374,7 @@ fail:
 			 *            + AccClassHasJDBCNatives (set during native method binding, not inherited)
 			 *           + AccClassGCSpecial (set during internal class load hook and inherited)
 			 *
-			 *         + AccClassNeedsPerTenantInitialization (from romClass->extraModifiers and inherited)
+			 *         + AccClassIsContended (from romClass->extraModifiers and inherited)
 			 *        + AccClassHasFinalFields (from romClass->extraModifiers and inherited)
 			 *       + AccClassHotSwappedOut (not set during creation, not inherited)
 			 *      + AccClassDying (not set during creation, inherited but that can't actually occur)
@@ -2384,18 +2384,18 @@ fail:
 			 *  + AccClassFinalizeNeeded (from romClass->extraModifiers and inherited, cleared for empty finalize)
 			 * + AccClassCloneable (from romClass->extraModifiers and inherited)
 
-			 * extendedClassFlags - what does each bit represent?
+			 * classFlags - what does each bit represent?
 			 *
 			 * 0000 0000 0000 0000 0000 0000 0000 0000
 			 *                                       + DoNotAttemptToSetInitCache
-			 *                                      + Unused
-			 *                                     + ClassReusedStatics
-			 *                                    + ClassContainsJittedMethods
+			 *                                      + HasIllegalFinalFieldModifications
+			 *                                     + ReusedStatics
+			 *                                    + ContainsJittedMethods
 			 *
-			 *                                  + ClassContainsMethodsPresentInMCCHash
-			 *                                 + ClassGCScanned
-			 *                                + ClassIsAnonymous
-			 *                               + Unused
+			 *                                  + ContainsMethodsPresentInMCCHash
+			 *                                 + GCScanned
+			 *                                + IsAnonymous
+			 *                               + J9ClassHasWatchedFields (inherited)
 			 *
 			 *                             + Unused
 			 *                            + Unused
@@ -2805,14 +2805,22 @@ retry:
 		goto retry;
 	}
 
-	if ((NULL != result) && (0 != (J9_FINDCLASS_FLAG_ANON & options))) {
-		/* if anonClass replace classLoader with hostClassLoader, no one can know about anonClassLoader */
-		result->classLoader = hostClassLoader;
-		if (NULL != result->classObject) {
-			/* no object is created when doing hotswapping */
-			J9VMJAVALANGCLASS_SET_CLASSLOADER(vmThread, result->classObject, hostClassLoader->classLoaderObject);
+	if (NULL != result) {
+		U_32 classFlags = result->classFlags;
+		if (NULL != superclass) {
+			/* Watched fields tag is inherited from the superclass */
+			classFlags |= (superclass->classFlags & J9ClassHasWatchedFields);
 		}
-		result->classFlags |= J9ClassIsAnonymous;
+		if (0 != (J9_FINDCLASS_FLAG_ANON & options)) {
+			/* if anonClass replace classLoader with hostClassLoader, no one can know about anonClassLoader */
+			result->classLoader = hostClassLoader;
+			if (NULL != result->classObject) {
+				/* no object is created when doing hotswapping */
+				J9VMJAVALANGCLASS_SET_CLASSLOADER(vmThread, result->classObject, hostClassLoader->classLoaderObject);
+			}
+			classFlags |= J9ClassIsAnonymous;
+		}
+		result->classFlags = classFlags;
 	}
 
 	return result;

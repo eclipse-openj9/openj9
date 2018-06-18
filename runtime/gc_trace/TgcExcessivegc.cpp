@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -90,8 +90,8 @@ tgcHookExcessiveGCRaised(J9HookInterface** hook, UDATA eventNum, void* eventData
 }
 
 /**
- * Initialise excessive tgc tracing.
- * Initialises the TgcExcessiveGCExtensions object associated with excessive GC  tgc tracing. Attaches hooks
+ * Initialize excessive tgc tracing.
+ * Initializes the TgcExcessiveGCExtensions object associated with excessive GC  tgc tracing. Attaches hooks
  * to the appropriate functions handling events used by excessive GC tgc tracing. 
  */
 bool

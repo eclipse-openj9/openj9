@@ -131,7 +131,8 @@ sub generateOnDir {
 				$JCL_VERSION = "latest";
 			}
 			# temporarily exclude projects for CCM build (i.e., when JCL_VERSION is latest)
-			my $latestDisabledDir = "jvmtitests proxyFieldAccess dumpromtests jep178staticLinkingTest pltest Panama NativeTest SharedCPEntryInvokerTests classvertest";
+			my $latestDisabledDir = "proxyFieldAccess dumpromtests jep178staticLinkingTest pltest Panama NativeTest";
+
 			# Temporarily exclude SVT_Modularity tests from integration build where we are still using b148 JCL level
 			my $currentDisableDir= "SVT_Modularity OpenJ9_Jsr_292_API";
 			$tempExclude = (($JCL_VERSION eq "latest") and ($latestDisabledDir =~ /\Q$entry\E/ )) or (($JCL_VERSION eq "current") and ($currentDisableDir =~ /\Q$entry\E/ ));

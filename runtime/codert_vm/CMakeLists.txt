@@ -43,7 +43,7 @@ target_include_directories(j9codert_vm
 	${CMAKE_CURRENT_BINARY_DIR}
     ${j9vm_SOURCE_DIR}/gc_include
     ${omr_SOURCE_DIR}/gc/include
-	${j9vm_SOURCE_DIR}/compiler/trj9/runtime/
+	${j9vm_SOURCE_DIR}/compiler/runtime/
 )
 
 if(OMR_ARCH_X86)

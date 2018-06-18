@@ -1661,18 +1661,18 @@ J9NLS_VM_IDLE_TUNING_PLATFORM_OR_GC_POLICY_NOT_SUPPORTED.user_response=Refer to 
 
 # first argument is the length of class name
 # second argument is the class name
-J9NLS_VM_CLASS_NOT_VALUE_CAPABLE=The resolved class %2$.*1$s is not value capable
+J9NLS_VM_CLASS_NOT_VALUE_CAPABLE=
 # START NON-TRANSLATABLE
-J9NLS_VM_CLASS_NOT_VALUE_CAPABLE.explanation=Attempting to derive a value type from a class that is not value capable
+J9NLS_VM_CLASS_NOT_VALUE_CAPABLE.explanation=NOTAG
 J9NLS_VM_CLASS_NOT_VALUE_CAPABLE.system_action=
 J9NLS_VM_CLASS_NOT_VALUE_CAPABLE.user_response=
 # END NON-TRANSLATABLE
 
 # first argument is the length of class name
 # second argument is the class name
-J9NLS_VM_DVT_NOT_SET=The value capable class %2$.*1$s does not have a derived value type
+J9NLS_VM_DVT_NOT_SET=
 # START NON-TRANSLATABLE
-J9NLS_VM_DVT_NOT_SET.explanation=The class is value capable, but no value type had been derived
+J9NLS_VM_DVT_NOT_SET.explanation=NOTAG
 J9NLS_VM_DVT_NOT_SET.system_action=
 J9NLS_VM_DVT_NOT_SET.user_response=
 # END NON-TRANSLATABLE

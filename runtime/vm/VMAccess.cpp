@@ -370,7 +370,7 @@ void   internalAcquireVMAccessNoMutexWithMask(J9VMThread * vmThread, UDATA haltM
 					slowTolerance = J9_EXCLUSIVE_SLOW_TOLERANCE_REALTIME;
 				}
 				if (timeTaken > slowTolerance) {
-					TRIGGER_J9HOOK_VM_SLOW_EXCLUSIVE(vm->hookInterface, vmThread, (UDATA) timeTaken);
+					TRIGGER_J9HOOK_VM_SLOW_EXCLUSIVE(vm->hookInterface, vmThread, (UDATA) timeTaken, J9_EXCLUSIVE_SLOW_REASON_JNICRITICAL);
 				}
 				omrthread_monitor_notify_all(vm->exclusiveAccessMutex);
 			}
@@ -437,7 +437,7 @@ static void  internalReleaseVMAccessNoMutexNoCheck(J9VMThread * vmThread)
 
 			--vm->exclusiveAccessResponseCount;
 			if (vm->exclusiveAccessResponseCount == 0) {
-				VM_VMAccess::respondToExclusiveRequest(vmThread, vm, PORTLIB, timeNow);
+				VM_VMAccess::respondToExclusiveRequest(vmThread, vm, PORTLIB, timeNow, J9_EXCLUSIVE_SLOW_REASON_EXCLUSIVE);
 			}
 		}
 		if (J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_REQUEST_SAFE_POINT)) {

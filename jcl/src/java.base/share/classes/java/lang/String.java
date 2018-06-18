@@ -2524,7 +2524,69 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	public boolean startsWith(String prefix, int start) {
 		return regionMatches(start, prefix, 0, prefix.lengthInternal());
 	}
+	
+/*[IF Java11]*/
+	/**
+	 * Strip leading and trailing white space from a string.
+	 * 
+	 * @return a substring of the original containing no leading
+	 * or trailing white space
+	 * 
+	 * @since 11
+	 */
+	public String strip() {
+		String result;
+		
+		if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
+			result = StringLatin1.strip(value);
+		} else {
+			result = StringUTF16.strip(value);
+		}
+		
+		return (result == null) ? this : result;
+	}
+	
+	/**
+	 * Strip leading white space from a string.
+	 * 
+	 * @return a substring of the original containing no leading
+	 * white space
+	 * 
+	 * @since 11
+	 */
+	public String stripLeading() {
+		String result;
+		
+		if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
+			result = StringLatin1.stripLeading(value);
+		} else {
+			result = StringUTF16.stripLeading(value);
+		}
 
+		return (result == null) ? this : result;
+	}
+	
+	/**
+	 * Strip trailing white space from a string.
+	 * 
+	 * @return a substring of the original containing no trailing
+	 * white space
+	 * 
+	 * @since 11
+	 */
+	public String stripTrailing() {
+		String result;
+		
+		if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
+			result = StringLatin1.stripTrailing(value);
+		} else {
+			result = StringUTF16.stripTrailing(value);
+		}
+		
+		return (result == null) ? this : result;
+	}
+/*[ENDIF]*/
+	
 	/**
 	 * Copies a range of characters into a new String.
 	 *
@@ -2917,7 +2979,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			byte[] sbValue = buffer.getValue();
 
 			if (coder == buffer.getCoder()) {
-				for (int i = 0; i < s1Length; ++i) {
+				for (int i = 0; i < s1Value.length; ++i) {
 					if (s1Value[i] != sbValue[i]) {
 						return false;
 					}
@@ -3847,7 +3909,49 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		}
 		return string;
 	}
-	/*[ENDIF] Java11*/
+
+	/**
+	 * Returns a string whose value is the concatenation of this string repeated
+	 * count times. 
+	 * 
+	 * @param count
+	 *            a positive integer indicating the number of times to be repeated
+	 * @return a string whose value is the concatenation of this string repeated count times
+	 * @throws IllegalArgumentException
+	 *             if the count is negative
+	 * @since 11
+	 */
+	public String repeat(int count) {
+		if (count < 0) {
+			throw new IllegalArgumentException();
+		} else if (count == 0 || isEmpty()) {
+			return "";
+		} else if (count == 1) {
+			return this;
+		}
+
+		int length = lengthInternal();
+		int repeatlen = length * count;
+
+		if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
+			byte[] buffer = new byte[repeatlen];
+
+			for (int i = 0; i < count; i++) {
+				compressedArrayCopy(value, 0, buffer, i * length, length);				
+			}
+
+			return new String(buffer, LATIN1);
+		} else {
+			byte[] buffer = new byte[repeatlen * 2];
+
+			for (int i = 0; i < count; i++) {
+				decompressedArrayCopy(value, 0, buffer, i * length, length);				
+			}
+				
+			return new String(buffer, UTF16);
+		}
+	}
+	/*[ENDIF] Java11 */
 
 /*[ELSE] Sidecar19-SE*/
 	// DO NOT CHANGE OR MOVE THIS LINE

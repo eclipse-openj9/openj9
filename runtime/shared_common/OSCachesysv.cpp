@@ -77,11 +77,11 @@
  * \args J9OSCACHE_OPEN_MODE_TRY_READONLY_ON_FAIL - if the cache could not be opened read/write - try readonly
  * \args J9OSCACHE_OPEN_MODE_GROUPACCESS - creates a cache with group access
  * @param [in]  versionData Version data of the cache to connect to
- * @param [in]  i Pointer to an initialiser to be used to initialise the data
+ * @param [in]  i Pointer to an initializer to be used to initialize the data
  * 				area of a new cache
  */
 SH_OSCachesysv::SH_OSCachesysv(J9PortLibrary* portLibrary, J9JavaVM* vm, const char* cachedirname, const char* cacheName, J9SharedClassPreinitConfig* piconfig, IDATA numLocks,
-		UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, J9PortShcVersion* versionData, SH_OSCache::SH_OSCacheInitialiser* i)
+		UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, J9PortShcVersion* versionData, SH_OSCache::SH_OSCacheInitializer* i)
 {
 	Trc_SHR_OSC_Constructor_Entry(cacheName, piconfig->sharedClassCacheSize, createFlag);
 	initialize(portLibrary, NULL, OSCACHE_CURRENT_CACHE_GEN);
@@ -90,7 +90,7 @@ SH_OSCachesysv::SH_OSCachesysv(J9PortLibrary* portLibrary, J9JavaVM* vm, const c
 }
 
 /**
- * Method to initialise object variables
+ * Method to initialize object variables
  * 
  * @param [in]  portLib  The Port library
  * @param [in]  memForConstructor  Pointer to the memory to build the OSCachemmap into
@@ -135,7 +135,7 @@ SH_OSCachesysv::initialize(J9PortLibrary* portLib, char* memForConstructor, UDAT
  * \args J9OSCACHE_OPEN_MODE_TRY_READONLY_ON_FAIL - if the cache could not be opened read/write - try readonly
  * \args J9OSCACHE_OPEN_MODE_GROUPACCESS - creates a cache with group access
  * @param [in]  versionData Version data of the cache to connect to
- * @param [in]  i Pointer to an initialiser to be used to initialise the data
+ * @param [in]  i Pointer to an initializer to be used to initialize the data
  * 				area of a new cache
  * @param [in]  reason Reason for starting up the cache. Not used for non-persistent cache startup
  * 
@@ -143,7 +143,7 @@ SH_OSCachesysv::initialize(J9PortLibrary* portLib, char* memForConstructor, UDAT
  */
 bool
 SH_OSCachesysv::startup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirPerm, const char* cacheName, J9SharedClassPreinitConfig* piconfig, IDATA numLocks, UDATA create,
-		UDATA verboseFlags_, U_64 runtimeFlags_, I_32 openMode, UDATA storageKeyTesting, J9PortShcVersion* versionData, SH_OSCache::SH_OSCacheInitialiser* i, UDATA reason)
+		UDATA verboseFlags_, U_64 runtimeFlags_, I_32 openMode, UDATA storageKeyTesting, J9PortShcVersion* versionData, SH_OSCache::SH_OSCacheInitializer* i, UDATA reason)
 {
 	IDATA retryCount;
 	IDATA shsemrc = 0;
@@ -165,7 +165,7 @@ SH_OSCachesysv::startup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirPer
 	
 	versionData->cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
 	_cacheSize = (piconfig!= NULL) ? (U_32)piconfig->sharedClassCacheSize : (U_32)defaultCacheSize;
-	_initialiser = i;
+	_initializer = i;
 	_totalNumSems = numLocks + 1;		/* +1 because of header mutex */
 	_userSemCntr = 0;
 	retryCount=J9SH_OSCACHE_RETRYMAX;
@@ -919,8 +919,8 @@ SH_OSCachesysv::initializeHeader(const char* cacheDirName, J9PortShcVersion* ver
 	/* jump over to the data area*/
 	region = SHM_DATASTARTFROMHEADER(myHeader);
 
-	if(_initialiser != NULL) { 
-		_initialiser->init((char*)region, dataLength, (I_32)_config->sharedClassMinAOTSize, (I_32)_config->sharedClassMaxAOTSize, (I_32)_config->sharedClassMinJITSize, (I_32)_config->sharedClassMaxJITSize, readWriteBytes, softMaxSize);
+	if(_initializer != NULL) { 
+		_initializer->init((char*)region, dataLength, (I_32)_config->sharedClassMinAOTSize, (I_32)_config->sharedClassMaxAOTSize, (I_32)_config->sharedClassMinJITSize, (I_32)_config->sharedClassMaxJITSize, readWriteBytes, softMaxSize);
 	}
 
 	if (J9_ARE_NO_BITS_SET(_runtimeFlags, J9SHR_RUNTIMEFLAG_RESTORE)) {
@@ -2677,13 +2677,13 @@ SH_OSCachesysv::getAttachedMemory()
  * @param[in] vm The current J9JavaVM
  * @param[in] cacheName The name of the cache
  * @param[in] numLocks The number of locks to be initialized
- * @param[in] i Pointer to an initialiser to be used to initialise the data area of the new cache
+ * @param[in] i Pointer to an initializer to be used to initialize the data area of the new cache
  * @param[in, out] cacheExist True if the cache to be restored already exits, false otherwise
  *
  * @return 0 on success and -1 on failure
  */
 IDATA
-SH_OSCachesysv::restoreFromSnapshot(J9JavaVM* vm, const char* cacheName, UDATA numLocks, SH_OSCache::SH_OSCacheInitialiser* i, bool* cacheExist)
+SH_OSCachesysv::restoreFromSnapshot(J9JavaVM* vm, const char* cacheName, UDATA numLocks, SH_OSCache::SH_OSCacheInitializer* i, bool* cacheExist)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	IDATA rc = 0;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -105,7 +105,7 @@ j9shmem_open(struct J9PortLibrary *portLibrary, const char* cacheDirName, uintpt
 		secattr.lpSecurityDescriptor=&secdes;
 		secattr.bInheritHandle = FALSE; 
 
-		/* Initialise the creationMutex */
+		/* Initialize the creationMutex */
 		Trc_PRT_shmem_j9shmem_open_globalMutexCreate();
 		PPG_shmem_creationMutex = CreateMutex(&secattr, FALSE, J9PORT_SHMEM_CREATIONMUTEX);
 		lastError = GetLastError();

@@ -134,7 +134,8 @@ static void jvmtiHookVMStarted (J9HookInterface** hook, UDATA eventNum, void* ev
 static void jvmtiHookModuleSystemStarted (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static void jvmtiHookClassFileLoadHook (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static void jvmtiHookResourceExhausted(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
-static jfieldID findWatchedField (J9JVMTIEnv * j9env, UDATA watchFlag, UDATA tag, J9Class * fieldClass);
+static UDATA findFieldIndexFromOffset(J9VMThread *currentThread, J9Class *clazz, UDATA offset, UDATA isStatic, J9Class **declaringClass);
+static jfieldID findWatchedField (J9VMThread *currentThread, J9JVMTIEnv * j9env, UDATA isWrite, UDATA isStatic, UDATA tag, J9Class * fieldClass);
 static void jvmtiHookGetEnv (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static void jvmtiHookVmDumpStart (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static void jvmtiHookVmDumpEnd (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
@@ -911,13 +912,15 @@ jvmtiHookFieldAccess(J9HookInterface** hook, UDATA eventNum, void* eventData, vo
 		J9Method * method;
 		IDATA location;
 		J9VMThread * currentThread;
-		J9Class * objectClass;
+		J9Class * clazz;
+		UDATA isStatic;
 
 		if (eventNum == J9HOOK_VM_GET_FIELD) {
 			J9VMGetFieldEvent * data = eventData;
 
+			isStatic = FALSE;
 			objectSlot = data->objectAddress;
-			objectClass = J9OBJECT_CLAZZ(data->currentThread, *objectSlot);
+			clazz = J9OBJECT_CLAZZ(data->currentThread, *objectSlot);
 			tag = data->offset;
 			method = data->method;
 			location = data->location;
@@ -925,8 +928,9 @@ jvmtiHookFieldAccess(J9HookInterface** hook, UDATA eventNum, void* eventData, vo
 		} else {
 			J9VMGetStaticFieldEvent * data = eventData;
 
+			isStatic = TRUE;
 			objectSlot = NULL;
-			objectClass = NULL;
+			clazz = data->declaringClass;
 			tag = (UDATA) data->fieldAddress;
 			method = data->method;
 			location = data->location;
@@ -935,7 +939,7 @@ jvmtiHookFieldAccess(J9HookInterface** hook, UDATA eventNum, void* eventData, vo
 
 		/* Current thread has VM access, and the field watch list is only modified under exclusive */
 
-		fieldID = findWatchedField(j9env, J9JVMTI_WATCH_FIELD_ACCESS, tag, objectClass);
+		fieldID = findWatchedField(currentThread, j9env, FALSE, isStatic, tag, clazz);
 
 		/* If the current field is not being watched, do nothing */
 
@@ -993,13 +997,15 @@ jvmtiHookFieldModification(J9HookInterface** hook, UDATA eventNum, void* eventDa
 		IDATA location;
 		J9VMThread * currentThread;
 		void * valueAddress;
-		J9Class * objectClass;
+		J9Class * clazz;
+		UDATA isStatic;
 
 		if (eventNum == J9HOOK_VM_PUT_FIELD) {
 			J9VMPutFieldEvent * data = eventData;
 
+			isStatic = FALSE;
 			objectSlot = data->objectAddress;
-			objectClass = J9OBJECT_CLAZZ(data->currentThread, *objectSlot);
+			clazz = J9OBJECT_CLAZZ(data->currentThread, *objectSlot);
 			tag = data->offset;
 			valueAddress = data->valueAddress;
 			currentThread = data->currentThread;
@@ -1008,8 +1014,9 @@ jvmtiHookFieldModification(J9HookInterface** hook, UDATA eventNum, void* eventDa
 		} else {
 			J9VMPutStaticFieldEvent * data = eventData;
 
+			isStatic = TRUE;
 			objectSlot = NULL;
-			objectClass = NULL;
+			clazz = data->declaringClass;
 			tag = (UDATA) data->fieldAddress;
 			valueAddress = data->valueAddress;
 			currentThread = data->currentThread;
@@ -1019,7 +1026,7 @@ jvmtiHookFieldModification(J9HookInterface** hook, UDATA eventNum, void* eventDa
 
 		/* Current thread has VM access, and the field watch list is only modified under exclusive */
 
-		fieldID = findWatchedField(j9env, J9JVMTI_WATCH_FIELD_MODIFICATION, tag, objectClass);
+		fieldID = findWatchedField(currentThread, j9env, TRUE, isStatic, tag, clazz);
 
 		/* If the current field is not being watched, do nothing */
 
@@ -1086,39 +1093,80 @@ jvmtiHookRequiredDebugAttributes(J9HookInterface** hook, UDATA eventNum, void* e
 	TRACE_JVMTI_EVENT_RETURN(jvmtiHookRequiredDebugAttributes);
 }
 
-
-static jfieldID
-findWatchedField(J9JVMTIEnv * j9env, UDATA watchFlag, UDATA tag, J9Class * fieldClass)
+static UDATA
+findFieldIndexFromOffset(J9VMThread *currentThread, J9Class *clazz, UDATA offset, UDATA isStatic, J9Class **declaringClass)
 {
-	jfieldID result = NULL;
-	J9JVMTIWatchedField * watchedField;
-	pool_state poolState;
-
-	/* Scan currently watched fields for one matching the tag and static/instance flag */
-
-	watchedField = pool_startDo(j9env->watchedFieldPool, &poolState);
-	while (watchedField != NULL) {
-		J9JNIFieldID * fieldID = (J9JNIFieldID *) watchedField->fieldID;
-
-		if ((watchedField->flags & watchFlag) != 0) {
-			if (fieldClass == NULL) {
-				if (((fieldID->field->modifiers & J9AccStatic) != 0) && ((((UDATA) fieldID->declaringClass->ramStatics) + fieldID->offset) == tag)) {
-					result = (jfieldID) fieldID;
-					break;
-				}
-			} else {
-				if (((fieldID->field->modifiers & J9AccStatic) == 0) && (fieldID->offset == tag) && isSameOrSuperClassOf(fieldID->declaringClass,fieldClass)) {
-					result = (jfieldID) fieldID;
-					break;
+	UDATA index = 0;
+	J9JavaVM * const vm = currentThread->javaVM;
+	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
+	U_32 const walkFlags = J9VM_FIELD_OFFSET_WALK_INCLUDE_STATIC | J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE;
+	U_32 staticBit = 0;
+	if (isStatic) {
+		staticBit = J9AccStatic;
+		offset -= (UDATA)clazz->ramStatics;
+	}
+	for(;;) {
+		J9ROMClass * const romClass = clazz->romClass;
+		J9Class * const superclazz = GET_SUPERCLASS(clazz);
+		J9ROMFieldOffsetWalkState state;
+		J9ROMFieldOffsetWalkResult *result = vmFuncs->fieldOffsetsStartDo(vm, romClass, superclazz, &state, walkFlags);
+		while (NULL != result->field) {
+			if (staticBit == (result->field->modifiers & J9AccStatic)) {
+				if (offset == result->offset) {
+					if (NULL != declaringClass) {
+						*declaringClass = clazz;
+					}
+					goto done;
 				}
 			}
+			index += 1;
+			result = vmFuncs->fieldOffsetsNextDo(&state);
 		}
-		watchedField = pool_nextDo(&poolState);
+		/* Static fields must be found in the input class */
+		Assert_JVMTI_false(isStatic);
+		/* Instance fields may come from any superclass */
+		clazz = superclazz;
+		Assert_JVMTI_notNull(clazz);
+		/* Start the index counting again for each superclass */
+		index = 0;
 	}
-
-	return result;
+done:
+	return index;
 }
 
+static jfieldID
+findWatchedField(J9VMThread *currentThread, J9JVMTIEnv * j9env, UDATA isWrite, UDATA isStatic, UDATA tag, J9Class * fieldClass)
+{
+	jfieldID result = NULL;
+	if (J9_ARE_ANY_BITS_SET(fieldClass->classFlags, J9ClassHasWatchedFields)) {
+		J9Class *declaringClass = NULL;
+		J9JVMTIWatchedClass *watchedClass = NULL;
+		UDATA index = findFieldIndexFromOffset(currentThread, fieldClass, tag, isStatic, &declaringClass);
+		watchedClass = hashTableFind(j9env->watchedClasses, &declaringClass);
+		if (NULL != watchedClass) {
+			UDATA *watchBits = (UDATA*)&watchedClass->watchBits;
+			UDATA found = FALSE;
+			if (J9JVMTI_CLASS_REQUIRES_ALLOCATED_J9JVMTI_WATCHED_FIELD_ACCESS_BITS(declaringClass)) {
+				watchBits = watchedClass->watchBits;
+			}
+			if (isWrite) {
+				found = watchBits[J9JVMTI_WATCHED_FIELD_ARRAY_INDEX(index)] & J9JVMTI_WATCHED_FIELD_MODIFICATION_BIT(index);
+			} else {
+				found = watchBits[J9JVMTI_WATCHED_FIELD_ARRAY_INDEX(index)] & J9JVMTI_WATCHED_FIELD_ACCESS_BIT(index);			
+			}
+			if (found) {
+				/* In order for a watch to have been placed, the fieldID for the field in question
+				 * must already have been created (it's a parameter to the JVMTI calls).
+				 */
+				void **jniIDs = declaringClass->jniIDs;
+				Assert_JVMTI_notNull(jniIDs);
+				result = (jfieldID)(jniIDs[index + declaringClass->romClass->romMethodCount]);
+				Assert_JVMTI_notNull(result);
+			}
+		}
+	}
+	return result;
+}
 
 static void
 jvmtiHookVMShutdownLast(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
@@ -2325,56 +2373,73 @@ jvmtiHookCheckForDataBreakpoint(J9HookInterface** hook, UDATA eventNum, void* ev
 
 	j9env = pool_startDo(jvmtiData->environments, &envPoolState);
 	while (j9env != NULL) {
-		J9JVMTIWatchedField * watchedField;
-		pool_state watchPoolState;
-
 		/* CMVC 196966: only inspect live (not disposed) environments */
 		if (0 == (j9env->flags & J9JVMTIENV_FLAG_DISPOSED)) {
-			omrthread_monitor_enter(j9env->mutex);
-			watchedField = pool_startDo(j9env->watchedFieldPool, &watchPoolState);
-			while (watchedField != NULL) {
-				J9JNIFieldID * fieldID = (J9JNIFieldID *) watchedField->fieldID;
-				J9ROMFieldShape * romField = fieldID->field;
+			J9HashTableState walkState;
+			J9JVMTIWatchedClass *watchedClass = hashTableStartDo(j9env->watchedClasses, &walkState);
+			while (NULL != watchedClass) {
+				J9Class *clazz = watchedClass->clazz;
+				J9ROMClass *romClass = clazz->romClass;
+				UDATA fieldCount = romClass->romFieldCount;
+				UDATA *watchBits = (UDATA*)&watchedClass->watchBits;
+				UDATA index = 0;
+				UDATA descriptionsRemaining = 0;
+				UDATA descriptionBits = 0;
+				if (fieldCount > J9JVMTI_WATCHED_FIELDS_PER_UDATA) {
+					watchBits = watchedClass->watchBits;				
+				}
+				while (index < fieldCount) {
+					if (0 == descriptionsRemaining) {
+						descriptionsRemaining = J9JVMTI_WATCHED_FIELDS_PER_UDATA;
+						descriptionBits = *watchBits++;
+					}
+					if (descriptionBits & (data->isStore ? 2 : 1)) {
+						/* In order for a watch to have been placed, the fieldID for the field in question
+						 * must already have been created (it's a parameter to the JVMTI calls).
+						 */
+						void **jniIDs = clazz->jniIDs;
+						J9JNIFieldID *fieldID = NULL;
+						J9ROMFieldShape * romField = NULL;
+						Assert_JVMTI_notNull(jniIDs);
+						fieldID = (J9JNIFieldID*)(jniIDs[index + clazz->romClass->romMethodCount]);
+						Assert_JVMTI_notNull(fieldID);
+						romField = fieldID->field;
+						if ((romField->modifiers & J9AccStatic) == (data->isStatic ? J9AccStatic : 0)) {
+							if (data->resolvedField == NULL) {
+								J9UTF8 * romFieldClassName = J9ROMCLASS_CLASSNAME(fieldID->declaringClass->romClass);
 
-				if ((romField->modifiers & J9AccStatic) == (data->isStatic ? J9AccStatic : 0)) {
-					if (watchedField->flags & (data->isStore ? J9JVMTI_WATCH_FIELD_MODIFICATION : J9JVMTI_WATCH_FIELD_ACCESS)) {
-						if (data->resolvedField == NULL) {
-							J9UTF8 * romFieldClassName = J9ROMCLASS_CLASSNAME(fieldID->declaringClass->romClass);
+								if (J9UTF8_EQUALS(resolveClassName, romFieldClassName)) {
+									J9UTF8 * romFieldName = J9ROMFIELDSHAPE_NAME(romField);
 
-							if (J9UTF8_EQUALS(resolveClassName, romFieldClassName)) {
-								J9UTF8 * romFieldName = J9ROMFIELDSHAPE_NAME(romField);
+									if (J9UTF8_EQUALS(resolveName, romFieldName)) {
+										J9UTF8 * romFieldSig = J9ROMFIELDSHAPE_SIGNATURE(romField);
 
-								if (J9UTF8_EQUALS(resolveName, romFieldName)) {
-									J9UTF8 * romFieldSig = J9ROMFIELDSHAPE_SIGNATURE(romField);
-
-									if (J9UTF8_EQUALS(resolveSig, romFieldSig)) {
-										data->result = J9_JIT_RESOLVE_FAIL_COMPILE;
-										break;
+										if (J9UTF8_EQUALS(resolveSig, romFieldSig)) {
+											data->result = J9_JIT_RESOLVE_FAIL_COMPILE;
+											goto done;
+										}
 									}
 								}
-							}
-						} else {
-							if (data->resolvedField == romField) {
-								data->result = J9_JIT_RESOLVE_FAIL_COMPILE;
-								break;
+							} else {
+								if (data->resolvedField == romField) {
+									data->result = J9_JIT_RESOLVE_FAIL_COMPILE;
+									goto done;
+								}
 							}
 						}
 					}
+					index += 1;
+					descriptionsRemaining -= 1;
+					descriptionBits >>= J9JVMTI_WATCHED_FIELD_BITS_PER_FIELD;
 				}
-
-				watchedField = pool_nextDo(&watchPoolState);
-			}
-			omrthread_monitor_exit(j9env->mutex);
-
-			if (data->result == J9_JIT_RESOLVE_FAIL_COMPILE) {
-				break;
+				watchedClass = hashTableNextDo(&walkState);
 			}
 		}
 		j9env = pool_nextDo(&envPoolState);
 	}
-
 	omrthread_monitor_exit(jvmtiData->mutex);
 
+done:
 	TRACE_JVMTI_EVENT_RETURN(jvmtiHookCheckForDataBreakpoint);
 }
 
@@ -3088,29 +3153,18 @@ removeUnloadedAgentBreakpoints(J9JVMTIEnv * j9env, J9VMThread * currentThread, J
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
 
-#if (defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)) 
 static void
 removeUnloadedFieldWatches(J9JVMTIEnv * j9env, J9Class * unloadedClass)
 {
-	J9JVMTIWatchedField * watchedField;
-	pool_state poolState;
-
-	/* Remove all watches for fields within the unloaded class */
-
-	watchedField = pool_startDo(j9env->watchedFieldPool, &poolState);
-	while (watchedField != NULL) {
-		J9JNIFieldID * fieldID = (J9JNIFieldID *) watchedField->fieldID;
-
-		if (fieldID->declaringClass == unloadedClass) {
-			pool_removeElement(j9env->watchedFieldPool, watchedField);
+	J9HashTableState walkState;
+	J9JVMTIWatchedClass *watchedClass = hashTableStartDo(j9env->watchedClasses, &walkState);
+	while (NULL != watchedClass) {
+		if (unloadedClass == watchedClass->clazz) {
+			hashTableDoRemove(&walkState);
 		}
-
-		watchedField = pool_nextDo(&poolState);
+		watchedClass = hashTableNextDo(&walkState);
 	}
 }
-
-
-#endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
 
 #if defined(J9VM_INTERP_NATIVE_SUPPORT)

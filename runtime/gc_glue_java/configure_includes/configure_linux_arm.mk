@@ -41,16 +41,16 @@ ifneq (,$(findstring linux_arm, $(SPEC)))
 endif
 
 ifeq (default,$(origin AS))
-	AS=$(OPENJ9_CC_PREFIX)-as
+	AS = $(OPENJ9_CC_PREFIX)-as
 endif
 ifeq (default,$(origin CC))
-	CC=$(OPENJ9_CC_PREFIX)-gcc
+	CC = $(OPENJ9_CC_PREFIX)-gcc
 endif
 ifeq (default,$(origin CXX))
-	CXX=$(OPENJ9_CC_PREFIX)-g++
+	CXX = $(OPENJ9_CC_PREFIX)-g++
 endif
 ifeq (default,$(origin AR))
-	AR=$(OPENJ9_CC_PREFIX)-ar
+	AR = $(OPENJ9_CC_PREFIX)-ar
 endif
 
 CONFIGURE_ARGS += 'AS=$(AS)'

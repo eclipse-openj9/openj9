@@ -154,6 +154,8 @@ bash configure --with-freemarker-jar=/root/freemarker.jar
 ```
 :warning: You must give an absolute path to freemarker.jar
 
+:pencil: If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
+
 ### 4. Build
 :penguin:
 Now you're ready to build OpenJDK V8 with OpenJ9:
@@ -256,6 +258,8 @@ bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar \
                --disable-warnings-as-errors
 ```
 where `<my_home_dir>` is the location where you stored **freemarker.jar** and `<cups_include_path>` is the absolute path to CUPS. For example `/opt/freeware/include`.
+
+:pencil: If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
 
 ### 4. build
 :blue_book:
@@ -362,8 +366,8 @@ msbuild.exe C:/temp/freetype/builds/windows/vc2010/freetype.vcxproj /p:PlatformT
 2) Win 32-bit
 ```
 cd c:\temp
-msbuild.exe C:/temp/freetype/builds/win32/vc2010/freetype.vcxproj /p:PlatformToolset=v100 /p:Configuration="Release Multithreaded" /p:PlatformTarget=x86 /p:ConfigurationType=DynamicLibrary /p:TargetName=freetype /p:OutDir="C:/temp/freetype/lib32/" /p:IntDir="C:/temp/freetype/obj32/" > freetype.log
-msbuild.exe C:/temp/freetype/builds/win32/vc2010/freetype.vcxproj /p:PlatformToolset=v100 /p:Configuration="Release Multithreaded" /p:PlatformTarget=x86 /p:ConfigurationType=StaticLibrary /p:TargetName=freetype /p:OutDir="C:/temp/freetype/lib32/" /p:IntDir="C:/temp/freetype/obj32/" >> freetype.log
+msbuild.exe C:/temp/freetype/builds/windows/vc2010/freetype.vcxproj /p:PlatformToolset=v100 /p:Configuration="Release Multithreaded" /p:PlatformTarget=x86 /p:ConfigurationType=DynamicLibrary /p:TargetName=freetype /p:OutDir="C:/temp/freetype/lib32/" /p:IntDir="C:/temp/freetype/obj32/" > freetype.log
+msbuild.exe C:/temp/freetype/builds/windows/vc2010/freetype.vcxproj /p:PlatformToolset=v100 /p:Configuration="Release Multithreaded" /p:PlatformTarget=x86 /p:ConfigurationType=StaticLibrary /p:TargetName=freetype /p:OutDir="C:/temp/freetype/lib32/" /p:IntDir="C:/temp/freetype/obj32/" >> freetype.log
 ```
 :pencil: Check the `freetype.log` for errors.
 
@@ -403,9 +407,11 @@ bash configure --disable-ccache \
                --with-freemarker-jar=/cygdrive/c/temp/freemarker.jar \
                --with-freetype-include=/cygdrive/c/temp/freetype/include \
                --with-freetype-lib=/cygdrive/c/temp/freetype/lib32  \
-               --target=x86 --with-target-bits=32
+               --with-target-bits=32
 ```
 :pencil: Modify the paths for freemarker and freetype if you manually downloaded and unpacked these dependencies into different directories.
+
+:pencil: If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
 
 ### 4. build
 :ledger:

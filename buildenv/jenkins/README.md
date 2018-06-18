@@ -30,16 +30,18 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
 - Current supported test levels are functional sanity and functional extended
 - Current available platforms are 
     - Linux x86 (xLinux)
+    - Linux x86 largeheap/non-compressed refs (xlinuxlargeheap)
     - Linux s390x (zLinux)
     - Linux PPCLE (pLinux)
     - AIX PPC (aix)
-    - Windows (win)
+    - Windows 64 bits (win)
+    - Windows 32 bits (win32) - supported on JDK8 only
 - Current supported Java verisons are Java8 and Java9
 - OpenJ9 committers can request builds by commenting in a pull request
     - Format: `Jenkins <build type> <level> <platform(s)> <java version(s)>`
     - Build Types: compile,test
     - Levels: sanity,extended (only if Build Type is test)
-    - Platforms: xlinux,zlinux,plinux,aix,win
+    - Platforms: xlinux,zlinux,plinux,aix,win,win32
     - Java Versions: jdk8,jdk9,jdk10
 - Note: You can use keyword `all` for level, platform or version
 
@@ -68,9 +70,11 @@ You can also request a Pull Request build from the extensions repos or openj9-om
 ##### Dependent Changes
 
 - If you have dependent change(s) in either eclipse/omr, eclipse/openj9-omr, or ibmruntimes/openj9-openjdk-jdk\*, you can build & test with all needed changes
-- Request a build by including the PR ref in your trigger comment
+- Request a build by including the PR ref or branch name in your trigger comment
 - Ex. Dependent change in OMR Pull Request `#123`
     - `Jenkins test sanity depends eclipse/omr#123`
+- Ex. Dependent change in eclipse/omr master branch (useful if a dependent OMR PR is already merged)
+    - `Jenkins test sanity depends eclipse/omr#master`
 - Ex. Dependent change in OpenJ9-OMR Pull Request `#456`
     - `Jenkins test sanity depends eclipse/openj9-omr#456`
 - Ex. Dependent change in OpenJDK Pull Request `#789`
@@ -87,6 +91,34 @@ You can also request a Pull Request build from the extensions repos or openj9-om
 
 - To trigger a Copyright Check
    - `Jenkins copyright check`
+
+##### PullRequest Trigger Regexes
+Having a complicated regex in the pull request trigger is what allows us to launch exactly the right combination of builds we need without having to make several trigger comments. The following are examples of what regexes we use in the various jobs.
+
+- Openj9 Repo
+    - Compile
+        - Any platform
+            - jdk8/10
+                - `.*\bjenkins\s+compile\b\s*($|\n|depends\s+.*|(all|([a-z]+,)*win(,[a-z]+)*)\s*($|\n|depends\s+.*|all|(jdk[0-9]+,)*jdk8(,jdk[0-9]+)*)(\s+depends.*)?)`
+            - jdk9
+                - `.*\bjenkins\s+compile\b\s*(all|([a-z]+,)*win(,[a-z]+)*\s*(jdk[0-9]+,)*jdk9(,jdk[0-9]+)*(\s+depends.*)?)`
+
+    - Sanity/Extended
+        - Any platform
+            - jdk8/10
+                - `.*\bjenkins\s+test\s+(all|sanity)\b\s*($|\n|depends\s+.*|(all|([a-z]+,)*xlinux(,[a-z]+)*)\s*($|\n|depends\s+.*|all|(jdk[0-9]+,)*jdk9(,jdk[0-9]+)*)(\s+depends.*)?)`
+            - jdk9
+                - `.*\bjenkins\s+test\s+(all|sanity)\b\s*(all|([a-z]+,)*xlinux(,[a-z]+)*\s*(jdk[0-9]+,)*jdk9(,jdk[0-9]+)*(\s+depends.*)?)`
+
+- OpenJDK Extensions repos
+    - Compile
+        - Any Platform
+            - `.*\bjenkins\s+compile\b\s*($|\n|depends\s+.*|(all|([a-z]+,)*aix(,[a-z]+)*)\s*($|\n|depends\s+.*|all|jdk10)(\s+depends.*)?)`
+    - Sanity/Extended
+        - Any Platform
+            - `.*\bjenkins\s+test\s+(all|sanity)\b\s*($|\n|depends\s+.*|(all|([a-z]+,)*aix(,[a-z]+)*)\s*($|\n|depends\s+.*|all|jdk10)(\s+depends.*)?)`
+
+##### Note: JDK9 is different because we don't include them in the `all` trigger anymore. You must request it explicitly
 
 ### Overview of Builds
 

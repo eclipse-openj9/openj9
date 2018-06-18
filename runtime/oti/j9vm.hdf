@@ -256,6 +256,7 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<struct>J9VMSlowExclusiveEvent</struct>
 		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
 		<data type="UDATA" name="timeTaken" description="time in ms it took this thread to respond" />
+		<data type="UDATA" name="reason" description="the cause of slow" />
 	</event>
 
 	<event>
@@ -612,6 +613,7 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
 		<data type="struct J9Method*" name = "method" description="current method" />
 		<data type="IDATA" name = "location" description="current pc offset" />
+		<data type="struct J9Class*" name = "declaringClass" description="declaring class of the static field" />
 		<data type="void*" name="fieldAddress" description="an indirect pointer to the static field being read" />
 	</event>
 
@@ -626,6 +628,7 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
 		<data type="struct J9Method*" name = "method" description="current method" />
 		<data type="IDATA" name = "location" description="current pc offset" />
+		<data type="struct J9Class*" name = "declaringClass" description="declaring class of the static field" />
 		<data type="void*" name="fieldAddress" description="an indirect pointer to the static field being written" />
 		<data type="void*" name="valueAddress" description="a pointer to the value which is about to be stored" />
 	</event>

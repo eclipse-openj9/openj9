@@ -155,14 +155,15 @@
 /* @ddr_namespace: map_to_type=J9JavaClassFlags */
 
 /* Constants from J9JavaClassFlags */
+#define J9ClassDoNotAttemptToSetInitCache 0x1
+#define J9ClassHasIllegalFinalFieldModifications 0x2
+#define J9ClassReusedStatics 0x4
 #define J9ClassContainsJittedMethods 0x8
 #define J9ClassContainsMethodsPresentInMCCHash 0x10
 #define J9ClassGCScanned 0x20
 #define J9ClassIsAnonymous 0x40
 #define J9ClassIsDerivedValueType 0x80
-#define J9ClassDoNotAttemptToSetInitCache 0x1
-#define J9ClassHasIllegalFinalFieldModifications 0x2
-#define J9ClassReusedStatics 0x4
+#define J9ClassHasWatchedFields 0x100
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
 
@@ -329,10 +330,10 @@
 #define J9_ROMCLASS_OPTINFO_VERIFY_EXCLUDE 0x4000
 #define J9_ROMCLASS_OPTINFO_CLASS_ANNOTATION_INFO 0x8000
 #define J9_ROMCLASS_OPTINFO_VARIABLE_TABLE_HAS_GENERIC 0x10000
-#define J9_ROMCLASS_OPTINFO_HAS_AUTO_TENANT_SCOPE_FIELD 0x20000
-#define J9_ROMCLASS_OPTINFO_HAS_TCLINIT 0x40000
-#define J9_ROMCLASS_OPTINFO_HAS_ISOLATED_FIELDS 0x80000
-#define J9_ROMCLASS_OPTINFO_IS_FILTER_CLASS 0x100000
+#define J9_ROMCLASS_OPTINFO_UNUSED_20000 0x20000
+#define J9_ROMCLASS_OPTINFO_UNUSED_40000 0x40000
+#define J9_ROMCLASS_OPTINFO_UNUSED_80000 0x80000
+#define J9_ROMCLASS_OPTINFO_UNUSED_100000 0x100000
 #define J9_ROMCLASS_OPTINFO_UNUSED 0x200000
 #define J9_ROMCLASS_OPTINFO_TYPE_ANNOTATION_INFO 0x400000
 
@@ -3164,7 +3165,6 @@ typedef struct J9ClassLoader {
 	struct J9HashTable* classLocationHashTable;
 } J9ClassLoader;
 
-#define J9CLASSLOADER_TENANT_SHARING_CLASSLOADER  0x200
 #define J9CLASSLOADER_SHARED_CLASSES_ENABLED  8
 #define J9CLASSLOADER_SUBSET_VISIBILITY  64
 #define J9CLASSLOADER_PARALLEL_CAPABLE  0x100
@@ -3174,7 +3174,6 @@ typedef struct J9ClassLoader {
 #define J9CLASSLOADER_INVARIANTS_SHARABLE  4
 #define J9CLASSLOADER_CLASSPATH_SET  2
 #define J9CLASSLOADER_CONTAINS_JITTED_METHODS  16
-#define J9CLASSLOADER_AUTO_TENANT_SCOPE_FIELD_ENABLED  0x80
 
 #define J9CLASSLOADER_CLASSLOADEROBJECT(vmThread, object) J9VMTHREAD_JAVAVM(vmThread)->memoryManagerFunctions->j9gc_objaccess_readObjectFromInternalVMSlot((vmThread), (j9object_t*)&((object)->classLoaderObject))
 #define J9CLASSLOADER_SET_CLASSLOADEROBJECT(vmThread, object, value) J9VMTHREAD_JAVAVM(vmThread)->memoryManagerFunctions->j9gc_objaccess_storeObjectToInternalVMSlot((vmThread), (j9object_t*)&((object)->classLoaderObject), (value))
@@ -3745,7 +3744,7 @@ typedef struct J9JITConfig {
 	void  ( *jitOSRUnpatchMethod)(struct J9VMThread * currentThread, struct J9JITExceptionTable * metaData, U_8 * pc) ;
 	void*  ( *jitOSRGetPatchPoint)(struct J9JITExceptionTable * metaData, void * stackMap) ;
 	IDATA  ( *jitCanResumeAtOSRPoint)(struct J9VMThread * currentThread, struct J9JITExceptionTable * metaData, U_8 * pc) ;
-	IDATA  ( *retranslateWithPreparation)(struct J9JITConfig *jitConfig, struct J9VMThread *vmStruct, J9Method *method, void *oldStartPC) ;
+	IDATA  ( *retranslateWithPreparation)(struct J9JITConfig *jitConfig, struct J9VMThread *vmStruct, J9Method *method, void *oldStartPC, UDATA reason) ;
 	void* j2iInvokeWithArguments;
 	void*  ( *translateMethodHandle)(struct J9VMThread *currentThread, j9object_t methodHandle, j9object_t arg, U_32 flags) ;
 	void* i2jMHTransition;
@@ -4100,7 +4099,7 @@ typedef struct J9AOTConfig {
 	void  ( *jitOSRUnpatchMethod)(struct J9VMThread * currentThread, struct J9JITExceptionTable * metaData, U_8 * pc) ;
 	void*  ( *jitOSRGetPatchPoint)(struct J9JITExceptionTable * metaData, void * stackMap) ;
 	IDATA  ( *jitCanResumeAtOSRPoint)(struct J9VMThread * currentThread, struct J9JITExceptionTable * metaData, U_8 * pc) ;
-	IDATA  ( *retranslateWithPreparation)(struct J9JITConfig *jitConfig, struct J9VMThread *vmStruct, J9Method *method, void *oldStartPC) ;
+	IDATA  ( *retranslateWithPreparation)(struct J9JITConfig *jitConfig, struct J9VMThread *vmStruct, J9Method *method, void *oldStartPC, UDATA reason) ;
 	void* j2iInvokeWithArguments;
 	void*  ( *translateMethodHandle)(struct J9VMThread *currentThread, j9object_t methodHandle, j9object_t arg, U_32 flags) ;
 	void* i2jMHTransition;
@@ -4267,6 +4266,7 @@ typedef struct J9MemoryManagerFunctions {
 	UDATA  ( *allocateMemoryForSublistFragment)(void *vmThread, J9VMGC_SublistFragment *fragmentPrimitive) ;
 	UDATA  ( *j9gc_heap_free_memory)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_heap_total_memory)(struct J9JavaVM *javaVM) ;
+	UDATA  ( *j9gc_is_garbagecollection_disabled)(struct J9JavaVM *javaVM) ;
 	UDATA ( *j9gc_allsupported_memorypools)(struct J9JavaVM* javaVM);
 	UDATA ( *j9gc_allsupported_garbagecollectors)(struct J9JavaVM* javaVM);
 	const char* ( *j9gc_pool_name)(struct J9JavaVM* javaVM, UDATA poolID);

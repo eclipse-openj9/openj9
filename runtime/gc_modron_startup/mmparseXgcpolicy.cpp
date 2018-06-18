@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,6 +44,12 @@ isOptthruputGCPolicySupported(MM_GCExtensions *extensions)
 	return true;
 #endif /* J9VM_GC_MODRON_STANDARD */
 	return false;
+}
+
+bool MMINLINE
+isNoGcGCPolicySupported(MM_GCExtensions *extensions)
+{
+	return true;
 }
 
 bool MMINLINE
@@ -97,6 +103,7 @@ isBalancedGCPolicySupported(MM_GCExtensions *extensions)
 
 /**
  * Consume -Xgcpolicy: arguments.
+ * support -XX:+UseNoGC option for compatibility
  * 
  * For compatibility with previous versions multiple gc policy specifications allowed:
  * last one wins
@@ -109,6 +116,7 @@ gcParseXgcpolicy(MM_GCExtensions *extensions)
 	bool enableUnsupported = false;
 	
 	IDATA xgcpolicyIndex = FIND_ARG_IN_VMARGS_FORWARD( STARTSWITH_MATCH, "-Xgcpolicy:", NULL );
+	IDATA lastXgcpolicyIndex = 0;
 	while (xgcpolicyIndex >= 0) {
 		char *policy = NULL;
 		GET_OPTION_VALUE( xgcpolicyIndex, ':', &policy);
@@ -121,40 +129,55 @@ gcParseXgcpolicy(MM_GCExtensions *extensions)
 			} else if (0 == strcmp("disableUnsupported", policy)) {
 				CONSUME_ARG(vmArgs, xgcpolicyIndex);
 				enableUnsupported = false;
-			} else if (0 == strcmp("optthruput", policy)) {
-				if (isOptthruputGCPolicySupported(extensions) || enableUnsupported) {
-					CONSUME_ARG(vmArgs, xgcpolicyIndex);
-					extensions->configurationOptions._gcPolicy = gc_policy_optthruput;
-				}
-			} else if (0 == strcmp("subpool", policy)) {
-				if (isSubpoolAliasGCPolicySupported(extensions) || enableUnsupported) {
-					CONSUME_ARG(vmArgs, xgcpolicyIndex);
-					/* subpool is not supported anymore, use optthruput instead */
-					extensions->configurationOptions._gcPolicy = gc_policy_optthruput;
-				}
-			} else if (0 == strcmp("optavgpause", policy)) {
-				if (isOptavgpauseGCPolicySupported(extensions) || enableUnsupported) {
-					CONSUME_ARG(vmArgs, xgcpolicyIndex);
-					extensions->configurationOptions._gcPolicy = gc_policy_optavgpause;
-				}
-			} else if (0 == strcmp("gencon", policy)) {
-				if (isGenconGCPolicySupported(extensions) || enableUnsupported) {
-					CONSUME_ARG(vmArgs, xgcpolicyIndex);
-					extensions->configurationOptions._gcPolicy = gc_policy_gencon;
-				}
-			} else if (0 == strcmp("metronome", policy)) {
-				if (isMetronomeGCPolicySupported(extensions) || enableUnsupported) {
-					CONSUME_ARG(vmArgs, xgcpolicyIndex);
-					extensions->configurationOptions._gcPolicy = gc_policy_metronome;
-				}
-			} else if (0 == strcmp("balanced", policy)) {
-				if (isBalancedGCPolicySupported(extensions) || enableUnsupported) {
-					CONSUME_ARG(vmArgs, xgcpolicyIndex);
-					extensions->configurationOptions._gcPolicy = gc_policy_balanced;
+			} else {
+				lastXgcpolicyIndex = xgcpolicyIndex;
+				if (0 == strcmp("optthruput", policy)) {
+					if (isOptthruputGCPolicySupported(extensions) || enableUnsupported) {
+						CONSUME_ARG(vmArgs, xgcpolicyIndex);
+						extensions->configurationOptions._gcPolicy = gc_policy_optthruput;
+					}
+				} else if (0 == strcmp("subpool", policy)) {
+					if (isSubpoolAliasGCPolicySupported(extensions) || enableUnsupported) {
+						CONSUME_ARG(vmArgs, xgcpolicyIndex);
+						/* subpool is not supported anymore, use optthruput instead */
+						extensions->configurationOptions._gcPolicy = gc_policy_optthruput;
+					}
+				} else if (0 == strcmp("optavgpause", policy)) {
+					if (isOptavgpauseGCPolicySupported(extensions) || enableUnsupported) {
+						CONSUME_ARG(vmArgs, xgcpolicyIndex);
+						extensions->configurationOptions._gcPolicy = gc_policy_optavgpause;
+					}
+				} else if (0 == strcmp("gencon", policy)) {
+					if (isGenconGCPolicySupported(extensions) || enableUnsupported) {
+						CONSUME_ARG(vmArgs, xgcpolicyIndex);
+						extensions->configurationOptions._gcPolicy = gc_policy_gencon;
+					}
+				} else if (0 == strcmp("metronome", policy)) {
+					if (isMetronomeGCPolicySupported(extensions) || enableUnsupported) {
+						CONSUME_ARG(vmArgs, xgcpolicyIndex);
+						extensions->configurationOptions._gcPolicy = gc_policy_metronome;
+					}
+				} else if (0 == strcmp("balanced", policy)) {
+					if (isBalancedGCPolicySupported(extensions) || enableUnsupported) {
+						CONSUME_ARG(vmArgs, xgcpolicyIndex);
+						extensions->configurationOptions._gcPolicy = gc_policy_balanced;
+					}
+				} else if (0 == strcmp("nogc", policy)) {
+					if (isNoGcGCPolicySupported(extensions) || enableUnsupported) {
+						CONSUME_ARG(vmArgs, xgcpolicyIndex);
+						extensions->configurationOptions._gcPolicy = gc_policy_nogc;
+					}
 				}
 			}
 		}
 		
 		xgcpolicyIndex = FIND_NEXT_ARG_IN_VMARGS_FORWARD( STARTSWITH_MATCH, "-Xgcpolicy:", NULL, xgcpolicyIndex);
+	}
+
+	IDATA xxUseNoGCIndex = FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, "-XX:+UseNoGC", NULL);
+	if (xxUseNoGCIndex > lastXgcpolicyIndex) {
+		if (isNoGcGCPolicySupported(extensions) || enableUnsupported) {
+			extensions->configurationOptions._gcPolicy = gc_policy_nogc;
+		}
 	}
 }

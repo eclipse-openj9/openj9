@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -224,9 +224,9 @@ public class Main {
 		dumpSplash();
 		
 		if ( jitVersionFile.equals("") ) {
-			File tempJitVersionFile = new File(rootDir + "/compiler/trj9/build/version.h");
+			File tempJitVersionFile = new File(rootDir + "/compiler/build/version.h");
 			if(tempJitVersionFile.exists() && !tempJitVersionFile.isDirectory()) {
-				jitVersionFile = rootDir + "/compiler/trj9/build/version.h";
+				jitVersionFile = rootDir + "/compiler/build/version.h";
 				System.out.print("Using version.h as the jitVersionFile\n");
 			} else {
 				tempJitVersionFile = new File(rootDir + "/jit.version");

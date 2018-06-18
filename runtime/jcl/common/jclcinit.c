@@ -78,17 +78,15 @@ jint computeFullVersionString(J9JavaVM* vm)
 
 #if defined(J9VM_INTERP_NATIVE_SUPPORT)
 	J9JITConfig *jitConfig = vm->jitConfig;
+	jitEnabled = "dis";
+	aotEnabled = "dis";
 
 	if (NULL != jitConfig) {
 		if (J9_ARE_ALL_BITS_SET(jitConfig->runtimeFlags, J9JIT_JIT_ATTACHED)) {
 			jitEnabled = "en";
-		} else {
-			jitEnabled = "dis";
 		}
 		if (J9_ARE_ALL_BITS_SET(jitConfig->runtimeFlags, J9JIT_AOT_ATTACHED)) {
 			aotEnabled = "en";
-		} else {
-			aotEnabled = "dis";
 		}
 	}
 	#define JIT_INFO " (JIT %sabled, AOT %sabled)\nOpenJ9   - "
@@ -446,6 +444,7 @@ static const J9IntConstantMapping intVMConstants[] = {
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_GC_POLICY_GENCON, J9_GC_POLICY_GENCON },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_GC_POLICY_BALANCED, J9_GC_POLICY_BALANCED },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_GC_POLICY_METRONOME, J9_GC_POLICY_METRONOME },
+		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_GC_POLICY_NOGC, J9_GC_POLICY_NOGC },
 
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_JAVA_CLASS_RAM_SHAPE_SHIFT, J9_JAVA_CLASS_RAM_SHAPE_SHIFT },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_OBJECT_HEADER_SHAPE_MASK, OBJECT_HEADER_SHAPE_MASK },

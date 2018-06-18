@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.security.SecureRandom;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Random;
@@ -211,6 +212,16 @@ public class IPC {
 			return randomGen.nextInt();
 		}
 	}
+	
+	/**
+	 * Create a truly random string of hexadecimal characters with 64 bits of entropy.
+	 * This may be slow.
+	 * @return hexadecimal string
+	 */
+	public static String getRandomString() {
+		SecureRandom randomGenerator = new SecureRandom();
+		return Long.toHexString(randomGenerator.nextLong());
+	}
 
 	/**
 	 * generate a level 1 tracepoint with a status code and message.
@@ -286,6 +297,12 @@ public class IPC {
 		}
 	}
 
+	private static void printMessageWithHeader(String msg, PrintStream log) {
+		tracepoint(TRACEPOINT_STATUS_LOGGING, msg);
+		printLogMessageHeader(log);
+		log.println(msg);
+	}
+
 	/**
 	 * Print the information about a throwable, including the exact class,
 	 * message, and stack trace.
@@ -294,14 +311,12 @@ public class IPC {
 	 * @note nothing is printed if logging is disabled
 	 */
 	public synchronized static void logMessage(String msg, Throwable thrown) {
-		try (PrintStream log = getLogStream()) {
-			if (!Objects.isNull(log)) {
-				tracepoint(TRACEPOINT_STATUS_LOGGING, msg);
-				printLogMessageHeader(log);
-				log.println(msg);
-				thrown.printStackTrace(log);
-				log.flush();
-			}
+		@SuppressWarnings("resource") /* this will be closed when the VM exits */
+		PrintStream log = getLogStream();
+		if (!Objects.isNull(log)) {
+			printMessageWithHeader(msg, log);
+			thrown.printStackTrace(log);
+			log.flush();
 		}
 	}
 
@@ -312,13 +327,11 @@ public class IPC {
 	 * @note no message is printed if logging is disabled
 	 */
 	private synchronized static void printLogMessage(final String msg) {
-		try (PrintStream log = getLogStream()) {
-			if (!Objects.isNull(log)) {
-				tracepoint(TRACEPOINT_STATUS_LOGGING, msg);
-				printLogMessageHeader(log);
-				log.println(msg);
-				log.flush();
-			}
+		@SuppressWarnings("resource") /* this will be closed when the VM exits */
+		PrintStream log = getLogStream();
+		if (!Objects.isNull(log)) {
+			printMessageWithHeader(msg, log);
+			log.flush();
 		}
 	}
 

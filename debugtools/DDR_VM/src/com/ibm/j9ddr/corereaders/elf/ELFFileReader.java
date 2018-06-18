@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2014 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -156,7 +156,7 @@ public abstract class ELFFileReader
 			this._file = file;
 			sourceName = file.getAbsolutePath();
 			this.baseOffset = offset;
-			initialiseReader(offset);
+			initializeReader(offset);
 		} catch ( IOException e ) {
 			// Don't leak file handles if we fail to create this reader.
 			if( is != null ) {
@@ -183,14 +183,14 @@ public abstract class ELFFileReader
 		is = in;
 		this.baseOffset = offset;
 		sourceName = "internal data stream";
-		initialiseReader(offset);
+		initializeReader(offset);
 	}
 	
 	public String getSourceName() {
 		return sourceName;
 	}
 	
-	private void initialiseReader(long offset) throws IOException, InvalidDumpFormatException {
+	private void initializeReader(long offset) throws IOException, InvalidDumpFormatException {
 		is.seek(offset);
 		readHeader();
 		readSectionHeader();
@@ -499,7 +499,7 @@ public abstract class ELFFileReader
 			
 			// - Sections are only loaded if they are contained in a program header.
 			// - NOBITS sections (.bss) occupy space in memory but not in the library
-			//   (since they define sections that are generally initialised to 0's).
+			//   (since they define sections that are generally initialized to 0's).
 			// - entry.address == 0 (sh_addr) also indicates a section that isn't loaded
 			// - entry.size == 0 is always true for the first (null) section header
 			if (!sectionHeaderMapsToProgramHeader(entry) || entry.isNoBits()

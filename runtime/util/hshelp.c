@@ -419,13 +419,7 @@ fixJNIMethodID(J9VMThread *currentThread, J9Method *oldMethod, J9Method *newMeth
 			}
 		}
 		newJNIIDs[getMethodIndex(newMethod)] = oldMethodID;
-
-		if (extensionsUsed) {
-			vmFuncs->initializeMethodID(currentThread, oldMethodID, newMethod);
-		} else {
-			/* update only method, vtable index always remains the same */
-			oldMethodID->method = newMethod;
-		}
+		vmFuncs->initializeMethodID(currentThread, oldMethodID, newMethod);
 	}
 done:
 	return rc;
@@ -3326,7 +3320,7 @@ verifyNewClasses(J9VMThread * currentThread, jint class_count, J9JVMTIClassPair 
 	}
 
 	/* CMVC 192547 : bytecode verification is usually done at runtime verification phase during ram class initialisation,
-	 * but since we're retransforming a class and the ram class is already initialised, manually run bytecode verification on
+	 * but since we're retransforming a class and the ram class is already initialized, manually run bytecode verification on
 	 * all the newly created ROM classes.
 	 */
 	for (i = 0; i < class_count; ++i) {

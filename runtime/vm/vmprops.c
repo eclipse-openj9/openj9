@@ -742,6 +742,11 @@ initializeSystemProperties(J9JavaVM * vm)
 		goto fail;
 	}
 
+	rc = addSystemProperty(vm, "java.specification.version", specificationVersion, 0);
+	if (J9SYSPROP_ERROR_NONE != rc) {
+		goto fail;
+	}
+	
 	rc = addSystemProperty(vm, "java.vm.specification.version", specificationVersion, 0);
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto fail;

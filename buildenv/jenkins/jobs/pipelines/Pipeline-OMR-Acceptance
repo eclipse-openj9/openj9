@@ -21,10 +21,11 @@
  *******************************************************************************/
 
 def SDK_VERSIONS = ['8', '10']
-def SPECS = ['linux_ppc-64_cmprssptrs_le', 'linux_390-64_cmprssptrs', 'aix_ppc-64_cmprssptrs', 'linux_x86-64_cmprssptrs', 'linux_x86-64']
+def SPECS = ['linux_ppc-64_cmprssptrs_le', 'linux_390-64_cmprssptrs', 'aix_ppc-64_cmprssptrs', 'linux_x86-64_cmprssptrs', 'linux_x86-64', 'win_x86-64_cmprssptrs']
 
 def OPENJDK_REPOS = [:]
 OPENJDK_REPOS['8'] = [repo: 'https://github.com/ibmruntimes/openj9-openjdk-jdk8.git', branch: 'openj9']
+OPENJDK_REPOS['9'] = [repo: 'https://github.com/ibmruntimes/openj9-openjdk-jdk9.git', branch: 'openj9']
 OPENJDK_REPOS['10'] = [repo: 'https://github.com/ibmruntimes/openj9-openjdk-jdk10.git', branch: 'openj9']
 
 def OPENJ9_REPO = 'https://github.com/eclipse/openj9.git'
@@ -33,7 +34,7 @@ def OPENJ9_BRANCH = 'master'
 def OMR_REPO = 'https://github.com/eclipse/openj9-omr.git'
 def OMR_BRANCH = 'master'
 
-TESTS_TARGETS = '_sanity'
+TESTS_TARGETS = '_sanity.tmp'
 
 def JOBS = [:]
 def ALL_SHAS = [:]
@@ -79,6 +80,16 @@ timeout(time: 8, unit: 'HOURS') {
                     JOBS["Build-Test-JDK${SDK_VERSION}-${SPEC}"] = { buildFile.workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, TESTS_TARGETS) }
                  }
             }
+
+            // Note: we are doing this as a special case rather than include it in SPECS,
+            // because at the moment cmake builds are only supported on java 9.
+            // Also we dont want to bother running tests at the moment.
+            def CMAKE_SDK_VERSION = '9'
+            def SHAS = [:]
+            SHAS['OPENJ9'] = ALL_SHAS['OPENJ9']
+            SHAS['OMR'] = ALL_SHAS['OMR']
+            SHAS['OPENJDK'] = buildFile.get_sha(OPENJDK_REPOS[CMAKE_SDK_VERSION].repo, OPENJDK_REPOS[CMAKE_SDK_VERSION].branch)
+            JOBS["Build-TestJDK${CMAKE_SDK_VERSION}-linux_x86-64_cmprssptrs_cmake"] = { buildFile.workflow(CMAKE_SDK_VERSION as int, 'linux_x86-64_cmprssptrs_cmake', SHAS, OPENJDK_REPOS[CMAKE_SDK_VERSION].repo, OPENJDK_REPOS[CMAKE_SDK_VERSION].branch, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, 'none') }
 
             cleanWs()
         }

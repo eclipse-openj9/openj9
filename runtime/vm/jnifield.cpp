@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2017 IBM Corp. and others
+ * Copyright (c) 2012, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -159,16 +159,17 @@ public:
 	static void triggerGetEvents(J9VMThread *vmThread, J9JNIFieldID *j9FieldID, j9object_t object)
 	{
 		J9JavaVM *vm = vmThread->javaVM;
-		J9HookInterface **vmHook = vm->internalVMFunctions->getVMHookInterface(vm);
+	
+		if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_GET_FIELD)) {
+			if (J9_ARE_ANY_BITS_SET(J9OBJECT_CLAZZ(currentThread, object)->classFlags, J9ClassHasWatchedFields)) {
+				J9StackWalkState *walkState = vmThread->stackWalkState;
 
-		if ((*vmHook)->J9HookIsEnabled(vmHook, J9HOOK_VM_GET_FIELD)) {
-			J9StackWalkState *walkState = vmThread->stackWalkState;
+				initWalkState(vmThread, walkState);
+				vmThread->javaVM->walkStackFrames(vmThread, walkState);
 
-			initWalkState(vmThread, walkState);
-			vmThread->javaVM->walkStackFrames(vmThread, walkState);
-
-			if (NULL != walkState->method) {
-				TRIGGER_J9HOOK_VM_GET_FIELD(vmThread->javaVM->hookInterface, vmThread, walkState->method, 0, &object, j9FieldID->offset);
+				if (NULL != walkState->method) {
+					ALWAYS_TRIGGER_J9HOOK_VM_GET_FIELD(vm->hookInterface, vmThread, walkState->method, 0, &object, j9FieldID->offset);
+				}
 			}
 		}
 	}
@@ -176,17 +177,18 @@ public:
 	static void triggerSetEvents(J9VMThread *vmThread, J9JNIFieldID *j9FieldID, j9object_t object, void *pvalue)
 	{
 		J9JavaVM *vm = vmThread->javaVM;
-		J9HookInterface **vmHook = vm->internalVMFunctions->getVMHookInterface(vm);
 
-		if ((*vmHook)->J9HookIsEnabled(vmHook, J9HOOK_VM_PUT_FIELD)) {
-			J9StackWalkState *walkState = vmThread->stackWalkState;
+		if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_PUT_FIELD)) {
+			if (J9_ARE_ANY_BITS_SET(J9OBJECT_CLAZZ(currentThread, object)->classFlags, J9ClassHasWatchedFields)) {
+				J9StackWalkState *walkState = vmThread->stackWalkState;
 
-			initWalkState(vmThread, walkState);
+				initWalkState(vmThread, walkState);
 
-			vmThread->javaVM->walkStackFrames(vmThread, walkState);
+				vmThread->javaVM->walkStackFrames(vmThread, walkState);
 
-			if (NULL != walkState->method) {
-				TRIGGER_J9HOOK_VM_PUT_FIELD(vmThread->javaVM->hookInterface, vmThread, walkState->method, 0, &object, j9FieldID->offset, pvalue);
+				if (NULL != walkState->method) {
+					ALWAYS_TRIGGER_J9HOOK_VM_PUT_FIELD(vm->hookInterface, vmThread, walkState->method, 0, &object, j9FieldID->offset, pvalue);
+				}
 			}
 		}
 

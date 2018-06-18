@@ -195,12 +195,6 @@ TR_HOST=TR_HOST_S390
 </#if>
 </#if>
 
-<#if uma.spec.properties.use_ld_to_link.defined>
-ifndef UMA_IS_C_PLUS_PLUS
-  UMA_USING_LD_TO_LINK=1
-endif
-</#if>
-
 <#if uma.spec.type.windows>
 # definitions for UMA_CPU
 # can be overriden by makefile including this one.

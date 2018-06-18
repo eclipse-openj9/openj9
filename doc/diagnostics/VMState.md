@@ -80,7 +80,7 @@ active component is likely to be in the compiler initialization or
 the IL generator.
 
 [2]: https://github.com/eclipse/omr/blob/master/compiler/optimizer/Optimizations.hpp
-[3]: https://github.com/eclipse/openj9/blob/master/runtime/compiler/trj9/codegen/J9CodeGenPhaseEnum.hpp
+[3]: https://github.com/eclipse/openj9/blob/master/runtime/compiler/codegen/J9CodeGenPhaseEnum.hpp
 
 ## Finding the VM state examples
 
