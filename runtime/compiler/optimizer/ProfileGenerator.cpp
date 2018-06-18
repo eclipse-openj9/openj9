@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,7 +58,7 @@
 #include "optimizer/TransformUtil.hpp"         // for calculateElementAddress
 
 #define OPT_DETAILS "O^O PROFILE GENERATOR: "
-#define MAX_NUMBER_OF_ALLOWED_NODES 30000
+#define MAX_NUMBER_OF_ALLOWED_NODES 90000
 
 #ifdef DEBUG
 // Define range of asyncs to become split points, for debugging.

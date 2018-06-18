@@ -74,7 +74,6 @@
 
 extern TR::Register *addConstantToLong(TR::Node * node, TR::Register *srcReg, int64_t value, TR::Register *trgReg, TR::CodeGenerator *cg);
 extern TR::Register *addConstantToInteger(TR::Node * node, TR::Register *trgReg, TR::Register *srcReg, int32_t value, TR::CodeGenerator *cg);
-extern void addPrefetch(TR::CodeGenerator *cg, TR::Node *node, TR::Register *targetRegister);
 
 static const char *ppcSupportsReadMonitors = feGetEnv("TR_ppcSupportReadMonitors");
 
@@ -1171,11 +1170,7 @@ TR::Register *J9::Power::TreeEvaluator::iwrtbarEvaluator(TR::Node *node, TR::Cod
             postSyncConditions(node, cg, sourceRegister, tempMR, TR::InstOpCode::sync, lazyVolatile);
          }
 
-      if ((TR::Compiler->target.is32Bit() || (TR::Compiler->target.is64Bit() && comp->useCompressedPointers() && (TR::Compiler->om.compressedReferenceShiftOffset() == 0))) && comp->getMethodHotness() >= scorching
-            && TR::Compiler->target.cpu.id() >= TR_PPCp6)
-         {
-         addPrefetch(cg, node, sourceRegister);
-         }
+      cg->insertPrefetchIfNecessary(node, sourceRegister);
 
       VMwrtbarEvaluator(node, sourceRegister, destinationRegister, NULL, NULL, NULL, secondChild->isNonNull(), true, usingCompressedPointers, cg, flagsReg);
       }
