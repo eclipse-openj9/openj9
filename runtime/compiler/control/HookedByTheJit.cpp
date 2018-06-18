@@ -6554,6 +6554,9 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
          // number of processors might change
          if (crtTime > lastProcNumCheck + 300000) // every 5 mins
             {
+            if (trPersistentMemory && TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJitMemory))
+               trPersistentMemory->printMemStatsToVlog();
+
             // time to reevaluate the number of processors
             compInfo->computeAndCacheCpuEntitlement();
             uint32_t tempProc = compInfo->getNumTargetCPUs(); // TODO is this needed?
