@@ -38,7 +38,9 @@
 
 #include "OSCachesysv.hpp"
 #include "OSCachemmap.hpp"
+#if defined(J9SHR_CACHELET_SUPPORT)
 #include "OSCachevmem.hpp"
+#endif /* J9SHR_CACHELET_SUPPORT */
 #include "CacheMap.hpp"
 
 /**

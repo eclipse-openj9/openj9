@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -103,9 +103,9 @@ private:
 	IDATA scCollectHashes(J9VMThread* currentThread, SH_CompositeCache* cachelet, CacheletHints* hints);
 	static UDATA scCollectHashOfEntry(void* entry, void* userData);
 	static UDATA scCountCacheletHashes(void* entry, void* userData);
-#endif
-	
+
 	bool _allCacheletsStarted;
+#endif /* J9SHR_CACHELET_SUPPORT */
 };
 
 #endif /* SCOPEMANAGERIMPL_H_INCLUDED */
