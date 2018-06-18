@@ -294,7 +294,9 @@ protected:
 
 private:
 	UDATA _state;
+#if defined(J9SHR_CACHELET_SUPPORT)
 	bool _allCacheletsStarted;
+#endif
 	
 	const char* _managerType;
 
