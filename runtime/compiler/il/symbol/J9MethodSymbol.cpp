@@ -353,6 +353,8 @@ J9::MethodSymbol::safeToSkipDivChecks()
 static TR::RecognizedMethod canSkipCheckCasts[] =
    {
    TR::java_util_ArrayList_ensureCapacity,
+   TR::java_util_HashMap_resize,
+   TR::java_util_HashMapHashIterator_nextNode,
    TR::java_util_Hashtable_clone,
    TR::java_util_Hashtable_putAll,
    TR::unknownMethod

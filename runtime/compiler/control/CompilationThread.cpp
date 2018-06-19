@@ -2713,6 +2713,13 @@ void TR::CompilationInfo::stopCompilationThreads()
          fprintf(stderr, "Allocated memory for profile info = %d KB\n", getJProfilerThread()->getProfileInfoFootprint()/1024);
       }
 
+   static char * printPersistentMem = feGetEnv("TR_PrintPersistentMem");
+   if (printPersistentMem)
+      {
+      if (trPersistentMemory)
+         trPersistentMemory->printMemStats();
+      }
+
    TR_DataCacheManager::getManager()->printStatistics();
 
    bool aotStatsEnabled = TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableAOTStats);

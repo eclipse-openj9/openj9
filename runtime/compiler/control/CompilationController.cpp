@@ -205,7 +205,7 @@ TR_OptimizationPlan *TR::DefaultCompilationStrategy::processEvent(TR_MethodEvent
          methodInfo = bodyInfo->getMethodInfo();
 
          if (methodInfo->getReasonForRecompilation() == TR_PersistentMethodInfo::RecompDueToInlinedMethodRedefinition ||
-             methodInfo->getReasonForRecompilation() == TR_PersistentMethodInfo::RecompDueToJProfiling)
+             (methodInfo->getReasonForRecompilation() == TR_PersistentMethodInfo::RecompDueToJProfiling && !bodyInfo->getIsProfilingBody())) // if the recompilation is triggered from a JProfiling block but not in a profiled compilation keep the current compilation level unchanged
             {
             hotnessLevel = bodyInfo->getHotness();
             plan = TR_OptimizationPlan::alloc(hotnessLevel);
