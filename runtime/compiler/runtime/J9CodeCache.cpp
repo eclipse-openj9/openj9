@@ -160,6 +160,7 @@ J9::CodeCache::initialize(TR::CodeCacheManager *manager,
 
    if (!self()->OMR::CodeCache::initialize(manager, codeCacheSegment, codeCacheSizeAllocated, hashEntrySlab))
       return false;
+   self()->setInitialAllocationPointers();
 
    _manager->reportCodeLoadEvents();
 
@@ -597,6 +598,12 @@ J9::CodeCache::adjustTrampolineReservation(TR_OpaqueMethodBlock *method,
 void
 J9::CodeCache::onFSDDecompile()
    {
+   self()->resetTrampolines();
+   }
+
+void
+J9::CodeCache::resetTrampolines()
+   {
    TR_ASSERT(_manager->codeCacheConfig().needsMethodTrampolines(), "Attempting to purge trampolines when they do not exist");
 
    OMR::CodeCacheHashEntry *entry, *next;
@@ -645,6 +652,7 @@ J9::CodeCache::onFSDDecompile()
    }
 
 
+
 //------------------------------ reserveUnresolvedTrampoline ----------------
 // Find or create a reservation for an unresolved method trampoline.
 // Method must be called with VM access in hand to prevent unloading
@@ -688,6 +696,35 @@ J9::CodeCache::reserveUnresolvedTrampoline(void *cp, int32_t cpIndex)
       }
 
    return retValue;
+   }
+
+
+
+void
+J9::CodeCache::setInitialAllocationPointers()
+   {
+   _warmCodeAllocBase = _warmCodeAlloc;
+   _coldCodeAllocBase = _coldCodeAlloc;
+   }
+
+void
+J9::CodeCache::resetAllocationPointers()
+   {
+   // Compute how much memory we give back to update the free space in the repository
+   size_t warmSize = _warmCodeAlloc - _warmCodeAllocBase;
+   size_t coldSize = _coldCodeAllocBase - _coldCodeAlloc;
+   size_t freedSpace = warmSize + coldSize;
+   _manager->increaseFreeSpaceInCodeCacheRepository(freedSpace);
+   _warmCodeAlloc = _warmCodeAllocBase;
+   _coldCodeAlloc = _coldCodeAllocBase;
+   }
+
+void
+J9::CodeCache::resetCodeCache()
+   {
+   self()->resetAllocationPointers();
+   if (_manager->codeCacheConfig().needsMethodTrampolines())
+      self()->resetTrampolines();
    }
 
 

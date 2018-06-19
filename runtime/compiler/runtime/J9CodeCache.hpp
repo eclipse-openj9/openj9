@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -94,7 +94,29 @@ public:
                                                           int32_t cpIndex);
 
    OMR::CodeCacheHashEntry *  findUnresolvedMethod(void *constPool, int32_t constPoolIndex);
+ 
 
+  /**
+   * @brief Restore warmCodeAlloc/coldCodeAlloc and trampoline pointers to their initial positions
+   */
+   void resetCodeCache();
+
+   private:
+   /**
+    * @brief Restore trampoline pointers to their initial positions
+    */
+   void resetTrampolines();
+   /**
+   * @brief Remember the initial position of warmCodeAlloc/coldCodeAlloc pointers
+   */
+   void setInitialAllocationPointers();
+   /**
+   * @brief Restore warmCodeAlloc/coldCodeAlloc pointers to their initial positions
+   */
+   void resetAllocationPointers();
+
+   uint8_t * _warmCodeAllocBase; // used to reset the allocation pointers to initial values
+   uint8_t * _coldCodeAllocBase;
    };
 
 
