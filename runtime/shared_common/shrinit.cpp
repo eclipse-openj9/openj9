@@ -1381,7 +1381,7 @@ hookFindSharedClass(J9HookInterface** hookInterface, UDATA eventNum, void* voidD
 		UDATA pathEntryCount = eventData->entryCount;
 
 		if (J2SE_VERSION(vm) >= J2SE_19) {
-			if ((eventData->classloader == vm->systemClassLoader)) {
+			if (eventData->classloader == vm->systemClassLoader) {
 				isBootLoader = true;
 				pathEntryCount += 1;
 				classpath = getBootstrapClasspathItem(currentThread, vm->modulesPathEntry, pathEntryCount);
