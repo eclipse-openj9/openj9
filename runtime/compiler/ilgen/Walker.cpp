@@ -5924,6 +5924,8 @@ TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
    {
    _staticFieldReferenceEncountered = true;
    TR::SymbolReference * symRef = symRefTab()->findOrCreateStaticSymbol(_methodSymbol, cpIndex, false);
+   if (comp()->getOption(TR_TraceILGen))
+      traceMsg(comp(), "load static symref %d created with knownObjectIndex %d", symRef->getReferenceNumber(), symRef->getKnownObjectIndex());
    TR::StaticSymbol *      symbol = symRef->getSymbol()->castToStaticSymbol();
    TR_ASSERT(symbol, "Didn't geta static symbol.");
 
