@@ -31,8 +31,8 @@
 	<variable name="currentMode" value=" "/>
 
 	<!-- Our test modes for this suite -->
-	<variable name="mode204" value="-Xshareclasses"/>
-	<variable name="mode205" value="-Xshareclasses:noClasspathCacheing"/>
+	<variable name="mode204" value="-Xshareclasses:name=HelperCompatabilityTests"/>
+	<variable name="mode205" value="-Xshareclasses:name=HelperCompatabilityTests,noClasspathCacheing"/>
 
 	<!-- Set variables up -->
 	<variable name="JAVAC_DIR" value="$JDK_HOME$/bin"/>
@@ -63,7 +63,7 @@
 	</test>
 	
 	<test id="destroy cache" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<command>$JAVA_EXE$ -Xshareclasses:name=HelperCompatabilityTests,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
@@ -80,7 +80,7 @@
 	</test>
 	
 	<test id="destroy cache" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<command>$JAVA_EXE$ -Xshareclasses:name=HelperCompatabilityTests,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
@@ -97,7 +97,7 @@
 	</test>
 	
 	<test id="destroy cache" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<command>$JAVA_EXE$ -Xshareclasses:name=HelperCompatabilityTests,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
@@ -114,7 +114,7 @@
 	</test>
 	
 	<test id="destroy cache" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<command>$JAVA_EXE$ -Xshareclasses:name=HelperCompatabilityTests,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
@@ -131,7 +131,7 @@
 	</test>
 	
 	<test id="destroy cache" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<command>$JAVA_EXE$ -Xshareclasses:name=HelperCompatabilityTests,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
@@ -148,7 +148,7 @@
 	</test>
 	
 	<test id="destroy cache" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<command>$JAVA_EXE$ -Xshareclasses:name=HelperCompatabilityTests,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
@@ -165,7 +165,7 @@
 	</test>
 	
 	<test id="destroy cache" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<command>$JAVA_EXE$ -Xshareclasses:name=HelperCompatabilityTests,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
@@ -182,7 +182,7 @@
 	</test>
 	
 	<test id="destroy cache" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<command>$JAVA_EXE$ -Xshareclasses:name=HelperCompatabilityTests,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
@@ -199,7 +199,7 @@
 	</test>
 	
 	<test id="destroy cache 9" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<command>$JAVA_EXE$ -Xshareclasses:name=HelperCompatabilityTests,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
@@ -216,7 +216,7 @@
 	</test>
 	
 	<test id="destroy cache" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<command>$JAVA_EXE$ -Xshareclasses:name=HelperCompatabilityTests,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
@@ -233,7 +233,7 @@
 	</test>
 	
 	<test id="destroy cache 11" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<command>$JAVA_EXE$ -Xshareclasses:name=HelperCompatabilityTests,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
@@ -250,7 +250,7 @@
 	</test>
 	
 	<test id="destroy cache" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<command>$JAVA_EXE$ -Xshareclasses:name=HelperCompatabilityTests,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
@@ -267,7 +267,7 @@
 	</test>
 	
 	<test id="destroy cache" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<command>$JAVA_EXE$ -Xshareclasses:name=HelperCompatabilityTests,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
@@ -284,7 +284,7 @@
 	</test>
 	
 	<test id="destroy cache" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<command>$JAVA_EXE$ -Xshareclasses:name=HelperCompatabilityTests,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
@@ -301,7 +301,7 @@
 	</test>
 	
 	<test id="destroy cache" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<command>$JAVA_EXE$ -Xshareclasses:name=HelperCompatabilityTests,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
@@ -318,7 +318,7 @@
 	</test>
 	
 	<test id="destroy cache" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<command>$JAVA_EXE$ -Xshareclasses:name=HelperCompatabilityTests,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
