@@ -1610,28 +1610,6 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				goto _memParseError;
 			}
 
-			/* Set entitled CPUs as early as possible, i.e. as soon as PORT_LIBRARY_GUARANTEED */
-			do {
-				UDATA value = 0;
-
-				/* Check for presence of -Xentitledcpus command line argument */
-				argIndex = FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, VMOPT_XENTITLEDCPUS, NULL);
-				if (argIndex >= 0) {
-
-					/* Get value -Xentitledcpus */
-					char* optName = VMOPT_XENTITLEDCPUS;
-					parseError = GET_INTEGER_VALUE(argIndex, optName, value);
-					if (OPTION_OK != parseError) {
-						parseErrorOption = VMOPT_XENTITLEDCPUS;
-						goto _memParseError;
-					}
-				}
-
-				/* Set Port library entitled CPUs to current value (0 or from command line argument) */
-				j9sysinfo_set_number_entitled_CPUs(value);
-			} while(0);
-
-
 			/* -Xits option is not being used anymore. We find and consume it for backward compatibility. */
 			/* Otherwise, usage of this option would not be recognised and warning would be printed.  */
 			FIND_AND_CONSUME_ARG(EXACT_MEMORY_MATCH, VMOPT_XITS, NULL);

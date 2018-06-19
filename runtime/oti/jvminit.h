@@ -461,8 +461,6 @@ enum INIT_STAGE {
 #define MAPOPT_XSHARECLASSES_UTILITIES "-Xshareclasses:utilities"
 #define MAPOPT_XSHARECLASSES_NONFATAL "-Xshareclasses:nonfatal"
 
-#define VMOPT_XENTITLEDCPUS "-Xentitledcpus"
-
 #define VMOPT_XXDUMPLOADEDCLASSLIST "-XX:DumpLoadedClassList"
 
 #define VMOPT_XXIDLETUNINGMINIDLEWATITIME_EQUALS "-XX:IdleTuningMinIdleWaitTime="
