@@ -1431,12 +1431,14 @@ private Method throwExceptionOrReturnNull(boolean throwException, String name, C
 Method getMethodHelper(
 	boolean throwException, boolean forDeclaredMethod, List<Method> methodList, String name, Class<?>... parameterTypes)
 	throws NoSuchMethodException {
-	Method result, bestCandidate;
-	int maxDepth;
+	Method result;
+	Method bestCandidate;
 	String strSig;
 	
 	/*[PR CMVC 114820, CMVC 115873, CMVC 116166] add reflection cache */
-	if (parameterTypes == null) parameterTypes = EmptyParameters;
+	if (parameterTypes == null) {
+		parameterTypes = EmptyParameters;
+	}
 	if (methodList == null) {
 		// getDeclaredPublicMethods() has to go through all methods anyway
 		Method cachedMethod = lookupCachedMethod(name, parameterTypes);
@@ -1498,37 +1500,32 @@ Method getMethodHelper(
 	 * since the spec requires that we only weigh multiple matches against
 	 * each other if they are in the same class, on subsequent calls we call
 	 * getDeclaredMethodImpl on the declaring class of the first hit.
-	 * If more than one match is found, the code below selects the
-	 * candidate method whose return type has the largest depth. This case
-	 * is expected to occur only in certain JCK tests, as most Java
-	 * compilers will refuse to produce a class file with multiple methods
-	 * of the same name differing only in return type.
-	 * 
-	 * Selecting by largest depth is one possible algorithm that satisfies the
-	 * spec.
+	 * If more than one match is found, more specific method is selected.
+	 * For methods with same signature (name, parameter types) but different return types,
+	 * Method N with return type S is more specific than M with return type R if:
+	 * S is the same as or a subtype of R.
+	 * Otherwise, the result method is chosen arbitrarily from specific methods.
 	 */
 	bestCandidate = result;
-	maxDepth = result.getReturnType().getClassDepth();
 	Class<?> declaringClass = forDeclaredMethod ? this : result.getDeclaringClass();
-	while( true ) {
+	while (true) {
 		result = declaringClass.getDeclaredMethodImpl(name, parameterTypes, strSig, result);
-		if( result == null ) {
+		if (result == null) {
 			break;
 		}
-		boolean	publicMethod = ((result.getModifiers() & Modifier.PUBLIC) != 0);
+		boolean publicMethod = ((result.getModifiers() & Modifier.PUBLIC) != 0);
 		if ((methodList != null) && publicMethod) {
 			methodList.add(result);
 		}
-		
 		if (forDeclaredMethod || publicMethod) {
-			int resultDepth = result.getReturnType().getClassDepth(); 
-			if( resultDepth > maxDepth ) {
+			// bestCandidate and result have same declaringClass.
+			Class<?> candidateRetType = bestCandidate.getReturnType();
+			Class<?> resultRetType = result.getReturnType();
+			if ((candidateRetType != resultRetType) && candidateRetType.isAssignableFrom(resultRetType)) {
 				bestCandidate = result;
-				maxDepth = resultDepth;
 			}
 		}
 	}
-
 	return cacheMethod(bestCandidate);
 }
 
@@ -3424,17 +3421,6 @@ public boolean isLocalClass() {
 public boolean isMemberClass() {
 	return getEnclosingObjectClass() == null && getDeclaringClass() != null;
 }
-
-/**
- * Return the depth in the class hierarchy of the receiver.
- * Base type classes and Object return 0.
- * 
- * @return receiver's class depth
- * 
- * @see #getDeclaredMethod
- * @see #getMethod
- */
-private native int getClassDepth();
 
 /**
  * Compute the signature for get*Method()
