@@ -1332,6 +1332,7 @@ obj:;
 			cleanUpForFramePop(REGISTER_ARGS, bp);
 			/* Return from this frame */
 			if (bp == _currentThread->j2iFrame) {
+				pushForceEarlyReturnValue(REGISTER_ARGS);
 				rc = j2iReturn(REGISTER_ARGS);
 			} else {
 				J9SFStackFrame *frame = ((J9SFStackFrame*)(bp + 1)) - 1;
@@ -1339,8 +1340,8 @@ obj:;
 				_literals = frame->savedCP;
 				_pc = frame->savedPC + 3;
 				_arg0EA = frame->savedA0;
+				pushForceEarlyReturnValue(REGISTER_ARGS);
 			}
-			pushForceEarlyReturnValue(REGISTER_ARGS);
 		}
 		return rc;
 	}
