@@ -1260,8 +1260,6 @@ static const char * nvvmOpCodeNames[] =
    NULL,          // TR::pdshl
    NULL,          // TR::pdshrSetSign
    NULL,          // TR::pdshlSetSign
-   NULL,          // TR::pdshrPreserveSign
-   NULL,          // TR::pdshlPreserveSign
    NULL,          // TR::pdshlOverflow
    NULL,          // TR::pdchk
    NULL,          // TR::pd2i
@@ -1284,15 +1282,10 @@ static const char * nvvmOpCodeNames[] =
    NULL,          // TR::pdcmpge
    NULL,          // TR::pdcmpgt
    NULL,          // TR::pdcmple
-   NULL,          // TR::pdcheck
-   NULL,          // TR::pdfix
    NULL,          // TR::pdclean
-   NULL,          // TR::pdexp
-   NULL,          // TR::pduexp
    NULL,          // TR::pdclear
    NULL,          // TR::pdclearSetSign
    NULL,          // TR::pdSetSign
-   NULL,          // TR::pddivrem
    NULL,          // TR::pdModifyPrecision
    NULL,          // TR::pd2df
    NULL,          // TR::pd2dfAbs
