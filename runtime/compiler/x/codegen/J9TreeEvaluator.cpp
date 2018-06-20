@@ -754,11 +754,6 @@ static void genSuperClassInstanceOfTest(TR::Node        *node,
       instr=generateLabelInstruction(JE4, node, notInterfaceLabel, cg);
 
       // vm interface test
-      bool rematerializeVMThreadInSnippet = false;
-      static const char *allowVMThreadRemat = feGetEnv("TR_allowVMThreadRemat");
-
-      if (allowVMThreadRemat && cg->supportsFS0VMThreadRematerialization())
-         rematerializeVMThreadInSnippet = true;
 
       TR::LabelSymbol *callHelper = generateLabelSymbol(cg);
       TR::LabelSymbol *restartLabel = generateLabelSymbol(cg);
@@ -768,12 +763,12 @@ static void genSuperClassInstanceOfTest(TR::Node        *node,
       if (endLabel != NULL)
          {
          outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::icall, testerReg, callHelper,
-                                                                               endLabel, rematerializeVMThreadInSnippet, cg);
+                                                                               endLabel, false, cg);
          }
       else
          {
          outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::icall, testerReg, callHelper,
-                                                                               restartLabel, rematerializeVMThreadInSnippet, cg);
+                                                                               restartLabel, false, cg);
          }
 
       cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
@@ -2027,8 +2022,6 @@ TR::Register *J9::X86::i386::TreeEvaluator::conditionalHelperEvaluator(TR::Node 
       temp.integerCompareAnalyser(testNode, CMP4RegReg, CMP4RegMem, CMP4MemReg);
       }
 
-   cg->setVMThreadRequired(true);
-
    TR::LabelSymbol *startLabel   = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
    TR::LabelSymbol *reStartLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
    TR::LabelSymbol *snippetLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
@@ -2046,7 +2039,6 @@ TR::Register *J9::X86::i386::TreeEvaluator::conditionalHelperEvaluator(TR::Node 
    cg->addSnippet(snippet);
 
    generateLabelInstruction(LABEL, node, reStartLabel, true, cg);
-   cg->setVMThreadRequired(false);
    cg->decReferenceCount(testNode);
    return NULL;
    }
@@ -2175,8 +2167,6 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
       temp.integerCompareAnalyser(testNode, CMPRegReg(testIs64Bit), CMPRegMem(testIs64Bit), CMPMemReg(testIs64Bit));
       }
 
-   cg->setVMThreadRequired(true);
-
    TR::LabelSymbol *startLabel   = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
    TR::LabelSymbol *reStartLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
    TR::LabelSymbol *snippetLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
@@ -2249,7 +2239,6 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
       generateLabelInstruction(LABEL, node, reStartLabel, true, cg);
       }
 
-   cg->setVMThreadRequired(false);
    cg->decReferenceCount(testNode);
    return NULL;
    }
@@ -2380,8 +2369,6 @@ TR::Register *J9::X86::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::Co
    {
    // Generate the test and branch for async message processing.
    //
-   cg->setVMThreadRequired(true);
-
    TR::Node *compareNode = node->getFirstChild();
    TR::Node *secondChild = compareNode->getSecondChild();
    TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
@@ -2437,7 +2424,6 @@ TR::Register *J9::X86::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::Co
    endControlFlowLabel->setEndInternalControlFlow();
    generateLabelInstruction(LABEL, node, endControlFlowLabel, true, cg);
 
-   cg->setVMThreadRequired(false);
    cg->decReferenceCount(compareNode);
 
    return NULL;
@@ -3293,9 +3279,6 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGe
    TR::Instruction *instr;
    TR::Compilation *comp = cg->comp();
 
-   if (needsVMThread)
-      cg->setVMThreadRequired(true);
-
    bool skippedComparison = false;
    bool jumpOnOppositeCondition = false;
    if (firstChild->getOpCode().isLoadConst())
@@ -3347,9 +3330,6 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGe
                                                      false,
                                                      ! needsVMThread));
 
-   if (needsVMThread)
-      cg->setVMThreadRequired(false);
-
    if (node->hasFoldedImplicitNULLCHK())
       {
       TR::Instruction *faultingInstruction = cg->getImplicitExceptionPoint();
@@ -3387,9 +3367,6 @@ TR::Register *J9::X86::TreeEvaluator::ArrayCopyBNDCHKEvaluator(TR::Node *node, T
    bool needsVMThread = !cg->allowVMThreadRematerialization() ||
                         node->hasFoldedImplicitNULLCHK() ||
                         !cg->getSupportsVMThreadGRA();
-
-   if (needsVMThread)
-      cg->setVMThreadRequired(true);
 
    if (firstChild->getOpCode().isLoadConst())
       {
@@ -3430,9 +3407,6 @@ TR::Register *J9::X86::TreeEvaluator::ArrayCopyBNDCHKEvaluator(TR::Node *node, T
                                                              instr,
                                                              false,
                                                              ! needsVMThread));
-
-   if (needsVMThread)
-      cg->setVMThreadRequired(false);
 
    return NULL;
    }
@@ -3597,8 +3571,6 @@ TR::Register *J9::X86::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR:
    // Generate up-front array store checks to avoid calling out to the helper.
    //
    // -------------------------------------------------------------------------
-
-   cg->setVMThreadRequired(true);
 
    TR::LabelSymbol *postASCLabel = NULL;
    if (nopASC)
@@ -3826,8 +3798,6 @@ TR::Register *J9::X86::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR:
       generateLabelInstruction(LABEL, node, doneLabel, deps, cg);
       }
 
-   cg->setVMThreadRequired(false);
-
    if (usingCompressedPointers)
       {
       cg->decReferenceCount(firstChild->getSecondChild());
@@ -3869,9 +3839,6 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node
       indexChild = node->getChild(2);
       }
 
-   bool needsVMThread = !cg->allowVMThreadRematerialization() ||
-                        !cg->getSupportsVMThreadGRA();
-
    // Perform a bound check.
    //
    // Value propagation or profile-directed optimization may have determined
@@ -3879,9 +3846,6 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node
    // iconst.  In this case, make sure that the constant is the second child.
    //
    TR_X86OpCodes branchOpCode;
-
-   if (needsVMThread)
-      cg->setVMThreadRequired(true);
 
    // For primitive stores anchored under the check node, we must evaluate the source node
    // before the bound check branch so that its available to the snippet.  We can make
@@ -4071,9 +4035,6 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node
 
    arrayletOI->setMainlinePathRegisterUsageList(mainlineRUL);
 
-   if (needsVMThread)
-      cg->setVMThreadRequired(false);
-
    if (node->hasFoldedImplicitNULLCHK())
       {
       if (faultingInstruction)
@@ -4211,8 +4172,6 @@ TR::Register *J9::X86::TreeEvaluator::atccheckEvaluator(TR::Node *node, TR::Code
    TR::Node *pendingAIELoad = node->getChild(0);
    TR_ASSERT(pendingAIELoad->getOpCodeValue() == TR::aload, "atccheck first child should be a compare test");
 
-   cg->setVMThreadRequired(true);
-
    TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *doneLabel  = generateLabelSymbol(cg);
 
@@ -4240,8 +4199,6 @@ TR::Register *J9::X86::TreeEvaluator::atccheckEvaluator(TR::Node *node, TR::Code
 
    // and we're done
    generateLabelInstruction(LABEL, node, doneLabel, deps, cg);
-
-   cg->setVMThreadRequired(false);
 
    cg->decReferenceCount(pendingAIELoad);
 
@@ -4691,18 +4648,6 @@ TR::Register *J9::X86::TreeEvaluator::VMcheckcastEvaluator(TR::Node          *no
       numDeps++;
       }
 
-   bool rematerializeVMThreadInSnippet = false;
-
-   static const char *allowVMThreadRemat = feGetEnv("TR_allowVMThreadRemat");
-   if (allowVMThreadRemat && cg->supportsFS0VMThreadRematerialization())
-      {
-      rematerializeVMThreadInSnippet = true;
-      numDeps--; // remove vmThread (ebp) as dependency
-      }
-
-   if (!rematerializeVMThreadInSnippet)
-      cg->setVMThreadRequired(true);
-
    TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *fallThru   = generateLabelSymbol(cg);
    startLabel->setStartInternalControlFlow();
@@ -4719,7 +4664,7 @@ TR::Register *J9::X86::TreeEvaluator::VMcheckcastEvaluator(TR::Node          *no
    if (!(testCache && inlinedHelpers))
       {
       TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::call, NULL,
-                                                                                 callHelper, fallThru, rematerializeVMThreadInSnippet, cg );
+                                                                                 callHelper, fallThru, false, cg );
       cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
       cg->generateDebugCounter(
          outlinedHelperCall->getFirstInstruction(),
@@ -4916,8 +4861,9 @@ TR::Register *J9::X86::TreeEvaluator::VMcheckcastEvaluator(TR::Node          *no
       deps->addPostCondition(objectReg, TR::RealRegister::NoReg, cg);
    if (castClassReg)
       deps->addPostCondition(castClassReg, TR::RealRegister::NoReg, cg);
-   if (!rematerializeVMThreadInSnippet)
-      deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
+
+   deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
+
    if (objectClassReg)
       deps->addPostCondition(objectClassReg, TR::RealRegister::NoReg, cg);
    if (testerReg)
@@ -4935,9 +4881,6 @@ TR::Register *J9::X86::TreeEvaluator::VMcheckcastEvaluator(TR::Node          *no
    deps->stopAddingConditions();
    generateLabelInstruction(LABEL, node, fallThru, deps, cg);
    srm->stopUsingRegisters();
-
-   if (!rematerializeVMThreadInSnippet)
-      cg->setVMThreadRequired(false);
 
    if (objectClassReg)
       cg->stopUsingRegister(objectClassReg);
@@ -5042,8 +4985,6 @@ TR::Register *J9::X86::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node          
       performReferenceArrayTestInline = true;
       }
 
-   bool rematerializeVMThreadInSnippet = false;
-
    if (performEqualityTestInline || performSuperclassTestInline || testCache || performReferenceArrayTestInline)
       {
       TR::Register    *objectReg                           = cg->evaluate(objectRef);
@@ -5054,13 +4995,6 @@ TR::Register *J9::X86::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node          
       TR::RegisterDependencyConditions  *thirdChildDeps = NULL;
       List<TR::Register> popRegisters(cg->trMemory());
       uint32_t        numDeps                             = 2;
-
-      static const char *allowVMThreadRemat = feGetEnv("TR_allowVMThreadRemat");
-      if (allowVMThreadRemat && cg->supportsFS0VMThreadRematerialization())
-         {
-         rematerializeVMThreadInSnippet = true;
-         numDeps--; // remove vmThread (ebp) dependency
-         }
 
       TR_ASSERT(!performHelperCall || testCache, "We shouldn't be calling helper if we are here");
 
@@ -5099,9 +5033,6 @@ TR::Register *J9::X86::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node          
       TR::LabelSymbol *superClassTestNext = NULL;
 
       generateLabelInstruction(LABEL, node, startLabel, cg);
-
-      if (!rematerializeVMThreadInSnippet)
-         cg->setVMThreadRequired(true);
 
       TR::LabelSymbol *trueLabel, *falseLabel;
       if (branchOnTrue)
@@ -5189,7 +5120,7 @@ TR::Register *J9::X86::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node          
          if (!inlinedHelpers && !performReferenceArrayTestInline)
             {
             TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(instanceofNode, TR::icall, helperTargetReg, callHelper,
-                                                                                                           restartLabel, rematerializeVMThreadInSnippet, cg);
+                                                                                                           restartLabel, false, cg);
             cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
             cg->generateDebugCounter(
                outlinedHelperCall->getFirstInstruction(),
@@ -5308,8 +5239,7 @@ TR::Register *J9::X86::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node          
          else
             deps->addPostCondition(helperTargetReg, TR::RealRegister::NoReg, cg);
 
-      if (!rematerializeVMThreadInSnippet)
-         deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
+      deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
 
       if (testerReg)
          deps->addPostCondition(testerReg, TR::RealRegister::NoReg, cg);
@@ -5318,9 +5248,6 @@ TR::Register *J9::X86::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node          
       deps->stopAddingConditions();
       generateLabelInstruction(LABEL, node, fallThru, deps, cg);
       srm->stopUsingRegisters();
-
-      if (!rematerializeVMThreadInSnippet)
-         cg->setVMThreadRequired(false);
 
       if (!popRegisters.isEmpty())
          {
@@ -5489,18 +5416,7 @@ J9::X86::TreeEvaluator::VMinstanceOfEvaluator(
       return targetReg;
       }
 
-   bool rematerializeVMThreadInSnippet = false;
    uint32_t     numDeps        = 3;
-
-   static const char *allowVMThreadRemat = feGetEnv("TR_allowVMThreadRemat");
-   if (allowVMThreadRemat && cg->supportsFS0VMThreadRematerialization())
-      {
-      rematerializeVMThreadInSnippet = true;
-      numDeps --;
-      }
-
-   if (!rematerializeVMThreadInSnippet)
-      cg->setVMThreadRequired(true);
 
    TR::Register *objectReg      = cg->evaluate(objectRef);
    TR::Register *castClassReg   = NULL;
@@ -5580,7 +5496,7 @@ J9::X86::TreeEvaluator::VMinstanceOfEvaluator(
       if (!inlinedHelpers && !performReferenceArrayTestInline)
          {
          TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::icall, targetReg, callHelper,
-                                                                                                        restartLabel, rematerializeVMThreadInSnippet, cg);
+                                                                                                        restartLabel, false, cg);
          cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
          cg->generateDebugCounter(
             outlinedHelperCall->getFirstInstruction(),
@@ -5703,9 +5619,6 @@ J9::X86::TreeEvaluator::VMinstanceOfEvaluator(
       generateRegRegInstruction(XOR4RegReg, node, targetReg, targetReg, cg);
       }
 
-   if (!rematerializeVMThreadInSnippet)
-      cg->setVMThreadRequired(false);
-
    numDeps += srm->numAvailableRegisters();
    TR::RegisterDependencyConditions  *deps = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)numDeps, cg);
    if (testCache && inlinedHelpers)
@@ -5718,8 +5631,9 @@ J9::X86::TreeEvaluator::VMinstanceOfEvaluator(
       deps->addPostCondition(objectClassReg, TR::RealRegister::NoReg, cg);
    if (testerReg)
       deps->addPostCondition(objectClassReg, TR::RealRegister::NoReg, cg);
-   if (!rematerializeVMThreadInSnippet)
-      deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
+
+   deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
+
    deps->addPostCondition(targetReg, TR::RealRegister::eax, cg);
 
    srm->addScratchRegistersToDependencyList(deps);
@@ -6156,7 +6070,6 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
 
    generatePrefetchAfterHeaderAccess (node, objectReg, cg);
 
-   cg->setVMThreadRequired(true);
    cg->setImplicitExceptionPoint(NULL);
 
    TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
@@ -6511,8 +6424,6 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    }
 #endif
 
-   cg->setVMThreadRequired(false);
-
    cg->decReferenceCount(objectRef);
    cg->stopUsingRegister(eaxReal);
    if (scratchReg)
@@ -6659,7 +6570,6 @@ TR::Register *J9::X86::TreeEvaluator::VMmonexitEvaluator(TR::Node          *node
    TR::Register *tempReg   = NULL;
    uint32_t     numDeps   = 2; // objectReg, ebp
 
-   cg->setVMThreadRequired(true);
    cg->setImplicitExceptionPoint(NULL);
    TR::Register *vmThreadReg = cg->getVMThreadRegister();
 
@@ -7065,8 +6975,6 @@ TR::Register *J9::X86::TreeEvaluator::VMmonexitEvaluator(TR::Node          *node
       generateMemRegInstruction(SMemReg(),node, tempMR2, objectReg, cg);
       }
 #endif
-
-   cg->setVMThreadRequired(false);
 
    if (eaxReal)
       cg->stopUsingRegister(eaxReal);
@@ -9081,8 +8989,6 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
    if (!disableOutlinedNew && performTransformation(comp, "O^O OUTLINED NEW: outlining %s %p, size %d\n", node->getOpCode().getName(), node, allocationSize))
       outlineNew = true;
 
-   cg->setVMThreadRequired(true);
-
    TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *fallThru = generateLabelSymbol(cg);
    startLabel->setStartInternalControlFlow();
@@ -9481,8 +9387,6 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
       {
       genInitObjectHeader(node, clazz, classReg, targetReg, tempReg, monitorSlotIsInitialized, cg);
       }
-
-   cg->setVMThreadRequired(false);
 
    if (fej9->inlinedAllocationsMustBeVerified() && (node->getOpCodeValue() == TR::New ||
                                                         node->getOpCodeValue() == TR::anewarray) )
@@ -11327,10 +11231,8 @@ inlineNanoTime(
          return false;
       // Leave space on the stack for the 64-bit result
       //
-      cg->setVMThreadRequired(true);
       temp2 = cg->allocateRegister();
       generateRegMemInstruction(L4RegMem, node, temp2, generateX86MemoryReference(vmThreadReg, offsetof(J9VMThread, javaVM), cg), cg);
-      cg->setVMThreadRequired(false);
       generateRegMemInstruction(L4RegMem, node, temp2, generateX86MemoryReference(temp2, offsetof(J9JavaVM, portLibrary), cg), cg);
       generateRegInstruction(PUSHReg, node, espReal, cg);
       generateRegInstruction(PUSHReg, node, temp2, cg);
@@ -12891,8 +12793,6 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
                   numDeps ++;
                   }
 
-               cg->setVMThreadRequired(true);
-
                TR::RegisterDependencyConditions  *deps = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)numDeps, cg);
                deps->addPostCondition(nativeThreadReg, TR::RealRegister::NoReg, cg);
                if (TR::Compiler->target.is32Bit())
@@ -12937,8 +12837,6 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
                   doneLabel->setEndInternalControlFlow();
                   generateLabelInstruction(LABEL, node, doneLabel, deps, cg);
                   }
-
-               cg->setVMThreadRequired(false);
 
                if (TR::Compiler->target.is32Bit())
                   {
@@ -14353,9 +14251,6 @@ void J9::X86::TreeEvaluator::VMwrtbarWithStoreEvaluator(
       storeInstr = doReferenceStore(node, storeMR, translatedSourceReg, usingCompressedPointers, cg);
       }
 
-
-   cg->setVMThreadRequired(true);
-
    if (comp->getOptions()->alwaysCallWriteBarrier() && !isRealTimeGC)
       {
       TR::RegisterDependencyConditions *deps = NULL;
@@ -14434,8 +14329,6 @@ void J9::X86::TreeEvaluator::VMwrtbarWithStoreEvaluator(
          }
       }
 
-   cg->setVMThreadRequired(false);
-
    // Realtime GCs must do the write barrier first and then the store.
    //
    if (isRealTimeGC)
@@ -14503,11 +14396,9 @@ VMgenerateCatchBlockBBStartPrologue(
       TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
       TR::LabelSymbol *restartLabel = generateLabelSymbol(cg);
 
-      cg->setVMThreadRequired(true);
       generateMemInstruction(DEC4Mem, node, generateX86MemoryReference((intptrj_t)comp->getRecompilationInfo()->getCounterAddress(), cg), cg);
       generateLabelInstruction(JE4, node, snippetLabel, cg);
       generateLabelInstruction(LABEL, node, restartLabel, cg);
-      cg->setVMThreadRequired(false);
       cg->addSnippet(new (cg->trHeapMemory()) TR::X86ForceRecompilationSnippet(cg, node, restartLabel, snippetLabel));
       }
 
@@ -15042,14 +14933,14 @@ J9::X86::TreeEvaluator::compressStringEvaluator(
    }
 
 /*
- * The CaseConversionManager is used to store info about the conversion. It defines the lower bound and upper bound value depending on 
+ * The CaseConversionManager is used to store info about the conversion. It defines the lower bound and upper bound value depending on
  * whether it's a toLower or toUpper case conversion. It also chooses byte or word data type depending on whether it's compressed string or not.
  * The stringCaseConversionHelper queries the manager for those info when generating the actual instructions.
  */
 class J9::X86::TreeEvaluator::CaseConversionManager {
    public:
    CaseConversionManager(bool isCompressedString, bool toLowerCase):_isCompressedString(isCompressedString), _toLowerCase(toLowerCase)
-      { 
+      {
       if (isCompressedString)
          {
          static uint8_t UPPERCASE_A_ASCII_MINUS1_bytes[] =
@@ -15230,7 +15121,7 @@ static TR::Register* allocateRegAndAddCondition(TR::CodeGenerator *cg, TR::Regis
  *   2. vectorized case conversion loop
  *   3. handle residue with non vectorized case conversion loop
  *   4. handle invalid case
- * 
+ *
  * \param node
  * \param cg
  * \param manager Contains info about the conversion: whether it's toUpper or toLower conversion, the valid range of characters, etc
@@ -15271,7 +15162,7 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
    TR_Debug *debug = cg->getDebug();
    TR::Instruction * cursor = NULL;
 
-   uint32_t strideSize = 16; 
+   uint32_t strideSize = 16;
 
    static uint16_t MINUS1[] =
       {
@@ -15280,18 +15171,18 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
       };
 
    TR::LabelSymbol *failLabel = generateLabelSymbol(cg);
-   // Under decompressed string case for 32bits platforms, bail out if string is larger than INT_MAX32/2 since # charater to # byte 
+   // Under decompressed string case for 32bits platforms, bail out if string is larger than INT_MAX32/2 since # charater to # byte
    // conversion will cause overflow.
    if (!TR::Compiler->target.is64Bit() && !manager.isCompressedString())
       {
       generateRegImmInstruction(CMPRegImm4(), node, length, (uint16_t) 0x8000, cg);
-      generateLabelInstruction(JGE4, node, failLabel, cg); 
+      generateLabelInstruction(JGE4, node, failLabel, cg);
       }
 
    // 1. preparation (load value into registers, calculate length etc)
    auto lowerBndMinus1 = generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, manager.getLowerBndMinus1()), cg);
    cursor = generateRegMemInstruction(MOVDQURegMem, node, xmmRegLowerBndMinus1, lowerBndMinus1, cg); iComment("lower bound ascii value minus one");
- 
+
    auto upperBnd = generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, manager.getUpperBnd()), cg);
    cursor = generateRegMemInstruction(MOVDQURegMem, node, xmmRegUpperBnd, upperBnd, cg); iComment("upper bound ascii value");
 
@@ -15310,10 +15201,10 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
    if (!manager.isCompressedString()) // non compressedString using char[] which is 2 bytes per charactor
       cursor = generateRegImmInstruction(SHLRegImm1(), node, length, 1, cg); iComment("# character to # byte conversion");
 
-   // initialize the loop counter 
+   // initialize the loop counter
    cursor = generateRegRegInstruction(XORRegReg(), node, counter, counter, cg); iComment("initialize loop counter");
 
-   //calculate the residueStartLength. Later instructions compare the counter with this length and decide when to jump to the residue handling sequence 
+   //calculate the residueStartLength. Later instructions compare the counter with this length and decide when to jump to the residue handling sequence
    generateRegRegInstruction(MOVRegReg(), node, residueStartLength, length, cg);
    generateRegImmInstruction(SUBRegImms(), node, residueStartLength, strideSize-1, cg);
 
@@ -15338,9 +15229,9 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
    //detect invalid charactors
    generateRegRegInstruction(MOVDQURegReg, node, xmmRegArrayContentCopy1, xmmRegArrayContentCopy0, cg);
    generateRegRegInstruction(MOVDQURegReg, node, xmmRegArrayContentCopy2, xmmRegArrayContentCopy0, cg);
-   cursor = generateRegRegInstruction(manager.isCompressedString()? PCMPGTBRegReg: PCMPGTWRegReg, node, 
+   cursor = generateRegRegInstruction(manager.isCompressedString()? PCMPGTBRegReg: PCMPGTWRegReg, node,
                              xmmRegArrayContentCopy1, xmmRegMinus1, cg); iComment(" > -1");
-   cursor = generateRegRegInstruction(manager.isCompressedString()? PCMPGTBRegReg: PCMPGTWRegReg, node, 
+   cursor = generateRegRegInstruction(manager.isCompressedString()? PCMPGTBRegReg: PCMPGTWRegReg, node,
                              xmmRegArrayContentCopy2, xmmRegAsciiUpperBnd, cg); iComment(" > maximum ascii value");
    cursor = generateRegRegInstruction(PANDNRegReg, node, xmmRegArrayContentCopy2, xmmRegArrayContentCopy1, cg); iComment(" >-1 && !(> maximum ascii value) valid when all bits are set");
    cursor = generateRegRegInstruction(PXORRegReg, node, xmmRegArrayContentCopy2, xmmRegMinus1, cg); iComment("reverse all bits");
@@ -15350,25 +15241,25 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
    //calculate case conversion with vector registers
    generateRegRegInstruction(MOVDQURegReg, node, xmmRegArrayContentCopy1, xmmRegArrayContentCopy0, cg);
    generateRegRegInstruction(MOVDQURegReg, node, xmmRegArrayContentCopy2, xmmRegArrayContentCopy0, cg);
-   cursor = generateRegRegInstruction(manager.isCompressedString()? PCMPGTBRegReg: PCMPGTWRegReg, node, 
+   cursor = generateRegRegInstruction(manager.isCompressedString()? PCMPGTBRegReg: PCMPGTWRegReg, node,
                              xmmRegArrayContentCopy0, xmmRegLowerBndMinus1, cg);  iComment(manager.toLowerCase() ? " > 'A-1'" : "> 'a-1'");
-   cursor = generateRegRegInstruction(manager.isCompressedString()? PCMPGTBRegReg: PCMPGTWRegReg, node, 
+   cursor = generateRegRegInstruction(manager.isCompressedString()? PCMPGTBRegReg: PCMPGTWRegReg, node,
                              xmmRegArrayContentCopy1, xmmRegUpperBnd, cg);  iComment(manager.toLowerCase()? " > 'Z'" : " > 'z'");
    cursor = generateRegRegInstruction(PANDNRegReg, node, xmmRegArrayContentCopy1, xmmRegArrayContentCopy0, cg);  iComment(const_cast<char*> (manager.toLowerCase()? " >='A' && !( >'Z')": " >='a' && !( >'z')"));
    generateRegRegInstruction(PANDRegReg, node, xmmRegArrayContentCopy1, xmmRegConversionDiff, cg);
 
    if (manager.toLowerCase())
-      generateRegRegInstruction(manager.isCompressedString()? PADDBRegReg: PADDWRegReg, node, 
+      generateRegRegInstruction(manager.isCompressedString()? PADDBRegReg: PADDWRegReg, node,
                                 xmmRegArrayContentCopy2, xmmRegArrayContentCopy1, cg);
-   else 
-      generateRegRegInstruction(manager.isCompressedString()? PSUBBRegReg: PSUBWRegReg, node, 
+   else
+      generateRegRegInstruction(manager.isCompressedString()? PSUBBRegReg: PSUBWRegReg, node,
                                 xmmRegArrayContentCopy2, xmmRegArrayContentCopy1, cg);
 
    auto dstArrayMemRef = generateX86MemoryReference(dstArray, counter, 0, 0, cg);
    generateMemRegInstruction(MOVDQUMemReg, node, dstArrayMemRef, xmmRegArrayContentCopy2, cg);
    generateRegImmInstruction(ADDRegImms(), node, counter, strideSize, cg);
    generateLabelInstruction(JMP4, node, caseConversionMainLoopLabel, cg);
-   
+
    // 3. handle residue with non vectorized case conversion loop
    generateLabelInstruction(LABEL, node, residueStartLabel, cg);
    generateRegRegInstruction(CMPRegReg(), node, counter, length, cg);
@@ -15387,8 +15278,8 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
    generateLabelInstruction(JA4, node, storeToArrayLabel, cg);
 
    if (manager.toLowerCase())
-      generateRegMemInstruction(LEARegMem(), 
-                                node, 
+      generateRegMemInstruction(LEARegMem(),
+                                node,
                                 singleChar,
                                 generateX86MemoryReference(singleChar, 0x20, cg),
                                 cg);

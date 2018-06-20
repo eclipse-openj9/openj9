@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -85,8 +85,6 @@ TR::IA32J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, bool spillFPReg
       }
 #endif
 
-   cg()->setVMThreadRequired(true);
-
    TR::RealRegister    *stackPointerReg = machine()->getX86RealRegister(TR::RealRegister::esp);
    TR::SymbolReference *methodSymRef    = callNode->getSymbolReference();
    TR::MethodSymbol    *methodSymbol    = callNode->getSymbol()->castToMethodSymbol();
@@ -96,8 +94,6 @@ TR::IA32J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, bool spillFPReg
       diagnostic("Building call site for %s\n", methodSymbol->getMethod()->signature(trMemory()));
 
    TR::X86VFPDedicateInstruction  *vfpDedicateInstruction = generateVFPDedicateInstruction(machine()->getX86RealRegister(TR::RealRegister::ebx), callNode, cg());
-
-   cg()->setVMThreadRequired(true);
 
    TR::J9LinkageUtils::switchToMachineCStack(callNode, cg());
 
@@ -151,7 +147,6 @@ TR::IA32J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, bool spillFPReg
    TR::J9LinkageUtils::switchToJavaStack(callNode, cg());
 
    generateVFPReleaseInstruction(vfpDedicateInstruction, callNode, cg());
-   cg()->setVMThreadRequired(false);
 
    // Label denoting end of dispatch code sequence; dependencies are on
    // this label rather than on the call
@@ -192,8 +187,6 @@ TR::IA32J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, bool spillFPReg
 
    if (cg()->enableRegisterAssociations())
       associatePreservedRegisters(deps, returnReg);
-
-   cg()->setVMThreadRequired(false);
 
    return returnReg;
    }
