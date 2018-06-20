@@ -7458,7 +7458,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
          TR_ASSERT(p->_optimizationPlan, "Must have an optimization plan");
 
-         TR::CompilationInfo *compInfo;
+         TR::CompilationInfo *compInfo = TR::CompilationInfo::get(jitConfig);
          // JITaaS: There is client side options, skip the setup options process
          if (that->_methodBeingCompiled->_clientOptions != nullptr)
             {
@@ -7493,7 +7493,6 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                }
 
             // Set jitDump specific options
-            compInfo = TR::CompilationInfo::get(jitConfig);
             TR::CompilationInfoPerThread *threadCompInfo = compInfo ? compInfo->getCompInfoForThread(vmThread) : NULL;
             if (threadCompInfo &&
                 threadCompInfo->isDiagnosticThread() &&
