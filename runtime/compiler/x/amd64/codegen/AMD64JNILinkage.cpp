@@ -1499,8 +1499,6 @@ TR::Register *TR::AMD64JNILinkage::buildDirectJNIDispatch(TR::Node *callNode)
 
    populateJNIDispatchInfo();
 
-   cg()->setVMThreadRequired(true);
-
    static char * disablePureFn = feGetEnv("TR_DISABLE_PURE_FUNC_RECOGNITION");
    if (!isGPUHelper)
       {
@@ -1694,8 +1692,6 @@ TR::Register *TR::AMD64JNILinkage::buildDirectJNIDispatch(TR::Node *callNode)
    TR::LabelSymbol *restartLabel = generateLabelSymbol(cg());
    restartLabel->setEndInternalControlFlow();
    generateLabelInstruction(LABEL, callNode, restartLabel, _JNIDispatchInfo.mergeLabelPostDeps, cg());
-
-   cg()->setVMThreadRequired(false);
 
    return _JNIDispatchInfo.JNIReturnRegister;
    }

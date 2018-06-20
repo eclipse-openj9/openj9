@@ -1402,9 +1402,20 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Nod
             }
          else if (isFinalFieldPointingAtNativeStruct(symRef, comp))
             {
-            // Representable native structs are handled before now.  All
-            // remaining natives are hopeless.
-            return false;
+            if (symRef->getReferenceNumber() - comp->getSymRefTab()->getNumHelperSymbols() == TR::SymbolReferenceTable::ramStaticsFromClassSymbol)
+               {
+               uintptrj_t value = *(uintptrj_t*)fieldAddress;
+               if (changeIndirectLoadIntoConst(node, TR::aconst, removedNode, comp))
+                  {
+                  node->setAddress(value);
+                  }
+               }
+            else
+               {
+               // Representable native structs are handled before now.  All
+               // remaining natives are hopeless.
+               return false;
+               }
             }
          else if (symRef->getSymbol()->isCollectedReference())
             {
