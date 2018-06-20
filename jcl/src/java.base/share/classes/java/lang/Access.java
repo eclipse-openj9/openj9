@@ -60,6 +60,10 @@ import sun.misc.JavaLangAccess;
 import sun.reflect.ConstantPool;
 /*[ENDIF]*/
 
+/*[IF Java11]*/
+import java.nio.charset.Charset;
+/*[ENDIF]*/
+
 /**
  * Helper class to allow privileged access to classes
  * from outside the java.lang package.  The sun.misc.SharedSecrets class 
@@ -362,6 +366,12 @@ final class Access implements JavaLangAccess {
 	public void blockedOn(Interruptible interruptible) {
 		Thread.blockedOn(interruptible);
 	}
+        public String newStringNoRepl(byte[] bytes, Charset charset) {
+                return StringCoding.newStringNoRepl(bytes, charset);
+        }
+        public byte[] getBytesNoRepl(String str, Charset charset) {
+                return StringCoding.getBytesNoRepl(str, charset);
+        }
 /*[ENDIF]*/
 	
 /*[ENDIF] Sidecar19-SE */
