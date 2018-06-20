@@ -8592,11 +8592,6 @@ TR_J9VM::getPrimitiveArrayAllocationClass(J9Class *clazz)
    return (TR_OpaqueClassBlock *) clazz;
    }
 
-intptrj_t
-TR_J9VMBase::getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset)
-   {
-   return *(intptrj_t*) (((uint8_t *)clazz) + offset);
-   }
 
 
 //////////////////////////////////////////////////////////
