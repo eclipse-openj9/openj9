@@ -2427,22 +2427,42 @@ TR_J9InlinerPolicy::skipHCRGuardForCallee(TR_ResolvedMethod *callee)
    // TODO: This is a very hacky way of avoiding HCR guards on sensitive String Compression methods which allows idiom
    // recognition to work. It also avoids unnecessary block splitting in performance sensitive methods for String
    // operations that are quite common. Can we do something better?
-   bool skipHCRGuardsForStringCompression =
-         callee->getRecognizedMethod() == TR::java_lang_String_charAtInternal_I ||
-         callee->getRecognizedMethod() == TR::java_lang_String_charAtInternal_IB ||
-         callee->getRecognizedMethod() == TR::java_lang_String_lengthInternal ||
-         callee->getRecognizedMethod() == TR::java_lang_String_isCompressed ||
-         callee->getRecognizedMethod() == TR::java_lang_StringBuffer_capacityInternal ||
-         callee->getRecognizedMethod() == TR::java_lang_StringBuffer_lengthInternalUnsynchronized ||
-         callee->getRecognizedMethod() == TR::java_lang_StringBuilder_capacityInternal ||
-         callee->getRecognizedMethod() == TR::java_lang_StringBuilder_lengthInternal;
+   TR::RecognizedMethod rm = callee->getRecognizedMethod();
+   switch (rm)
+      {
+      case TR::java_lang_String_charAtInternal_I:
+      case TR::java_lang_String_charAtInternal_IB:
+      case TR::java_lang_String_lengthInternal:
+      case TR::java_lang_String_isCompressed:
+      case TR::java_lang_StringBuffer_capacityInternal:
+      case TR::java_lang_StringBuffer_lengthInternalUnsynchronized:
+      case TR::java_lang_StringBuilder_capacityInternal:
+      case TR::java_lang_StringBuilder_lengthInternal:
+         return true;
+      default:
+         break;
+      }
 
    // Certain JSR292 methods are also ignored here as they are internal to the JIT and therefore cannot be
    // redefined
-   bool skipHCRGuardsForJSR292 =
-      callee->convertToMethod()->getMandatoryRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress;
+   TR::RecognizedMethod mandatoryRM = callee->convertToMethod()->getMandatoryRecognizedMethod();
+   if (mandatoryRM == TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress)
+      return true;
 
-   return skipHCRGuardsForStringCompression || skipHCRGuardsForJSR292;
+   // VarHandle operation methods are also ignored here as they are implementation detail and are not expected to be redefined.
+   if (TR_J9MethodBase::isVarHandleOperationMethod(mandatoryRM))
+      return true;
+
+   // Check if the class of the method is internal to our VM
+   int32_t length = callee->classNameLength();
+   char* className = callee->classNameChars();
+
+   if (length == 29 && !strncmp(className, "java/lang/invoke/DirectHandle", length))
+      return true;
+   else if (length == 32 && !strncmp(className, "java/lang/invoke/PrimitiveHandle", length))
+      return true;
+
+   return false;
    }
 
 TR_J9InlinerPolicy::TR_J9InlinerPolicy(TR::Compilation *comp)

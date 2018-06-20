@@ -3701,6 +3701,12 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {  TR::unknownMethod}
       };
 
+   static X PrimitiveHandleMethods[] =
+      {
+      {x(TR::java_lang_invoke_PrimitiveHandle_initializeClassIfRequired,  "initializeClassIfRequired",       "()V")},
+      {  TR::unknownMethod}
+      };
+
    static X VarHandleMethods[] =
       {
       // Recognized method only works for resovled methods
@@ -3842,6 +3848,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {
       {x(TR::java_lang_invoke_DirectHandle_isAlreadyCompiled,   "isAlreadyCompiled",  "(J)Z")},
       {x(TR::java_lang_invoke_DirectHandle_compiledEntryPoint,  "compiledEntryPoint", "(J)J")},
+      {x(TR::java_lang_invoke_DirectHandle_nullCheckIfRequired,  "nullCheckIfRequired", "(Ljava/lang/Object;)V")},
       {  TR::unknownMethod}
       };
 
@@ -4258,6 +4265,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
    static Y class32[] =
       {
       { "java/lang/invoke/MutableCallSite", MutableCallSiteMethods },
+      { "java/lang/invoke/PrimitiveHandle", PrimitiveHandleMethods },
       { "com/ibm/dataaccess/PackedDecimal", DataAccessPackedDecimalMethods },
       { 0 }
       };
