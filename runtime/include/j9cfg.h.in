@@ -252,6 +252,7 @@ extern "C" {
 #cmakedefine J9VM_OPT_USE_FFI_ONLY
 #cmakedefine J9VM_OPT_VALHALLA_MVT
 #cmakedefine J9VM_OPT_VALHALLA_NESTMATES
+#cmakedefine J9VM_OPT_VALHALLA_VALUE_TYPES
 #cmakedefine J9VM_OPT_VEE_SUPPORT
 #cmakedefine J9VM_OPT_VM_LOCAL_STORAGE
 #cmakedefine J9VM_OPT_ZERO

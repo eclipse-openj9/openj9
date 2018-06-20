@@ -70,3 +70,4 @@ RuntimeInvisibleParameterAnnotations, CFR_ATTRIBUTE_RuntimeInvisibleParameterAnn
 MethodParameters, CFR_ATTRIBUTE_MethodParameters, CFR_ATTRIBUTE_MethodParameters
 NestMembers, CFR_ATTRIBUTE_NestMembers, CFR_ATTRIBUTE_NestMembers
 NestHost, CFR_ATTRIBUTE_NestHost, CFR_ATTRIBUTE_NestHost
+ValueTypes, CFR_ATTRIBUTE_ValueTypes, CFR_ATTRIBUTE_ValueTypes

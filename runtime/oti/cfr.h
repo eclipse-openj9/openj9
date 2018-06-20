@@ -233,6 +233,7 @@ typedef struct J9CfrAttribute {
 #define CFR_ATTRIBUTE_MethodParameters 24
 #define CFR_ATTRIBUTE_NestMembers 25
 #define CFR_ATTRIBUTE_NestHost 26
+#define CFR_ATTRIBUTE_ValueTypes 27
 #define CFR_ATTRIBUTE_StrippedLocalVariableTypeTable  122
 #define CFR_ATTRIBUTE_StrippedSourceDebugExtension  123
 #define CFR_ATTRIBUTE_StrippedInnerClasses  124
@@ -496,6 +497,17 @@ typedef struct J9CfrAttributeNestMembers {
 	U_16* classes;
 } J9CfrAttributeNestMembers;
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+typedef struct J9CfrAttributeValueTypeClasses {
+	U_8 tag;
+	U_16 nameIndex;
+	U_32 length;
+	UDATA romAddress;
+	U_16 numberOfClasses;
+	U_16* classes;
+} J9CfrAttributeValueTypeClasses;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 typedef struct J9CfrAttributeUnknown {
     U_8 tag;

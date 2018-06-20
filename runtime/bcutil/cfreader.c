@@ -148,6 +148,10 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 	J9CfrAttributeNestHost *nestHost;
 	J9CfrAttributeNestMembers *nestMembers;
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	J9CfrAttributeValueTypeClasses *valueTypeClasses;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+
 	U_32 name, length;
 	U_32 tag, errorCode, offset;
 	U_8 *end;
@@ -167,6 +171,9 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	BOOLEAN nestAttributeRead = FALSE;
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	BOOLEAN valueTypesAttributeRead = FALSE;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 	if (NULL != syntheticFound) {
 		*syntheticFound = FALSE;
@@ -814,6 +821,40 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 			break;
 		}
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case CFR_ATTRIBUTE_ValueTypes: {
+			U_16 numberOfClasses;
+
+			if (valueTypesAttributeRead) {
+				errorCode = J9NLS_CFR_ERR_MULTIPLE_VALUE_TYPES_ATTRIBUTES__ID;
+				offset = address;
+				goto _errorFound;
+			}
+
+			if (!ALLOC(valueTypeClasses, J9CfrAttributeValueTypeClasses)) {
+				return -2;
+			}
+
+			valueTypesAttributeRead = TRUE;
+			attrib = (J9CfrAttribute*)valueTypeClasses;
+
+			CHECK_EOF(2);
+			NEXT_U16(numberOfClasses, index);
+			valueTypeClasses->numberOfClasses = numberOfClasses;
+
+			if (!ALLOC_ARRAY(valueTypeClasses->classes, numberOfClasses, U_16)) {
+				return -2;
+			}
+
+			CHECK_EOF(2 * numberOfClasses);
+
+			for (j = 0; j < numberOfClasses; j++) {
+				NEXT_U16(valueTypeClasses->classes[j], index);
+			}
+			break;
+		}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 		case CFR_ATTRIBUTE_StrippedLineNumberTable:
 		case CFR_ATTRIBUTE_StrippedLocalVariableTable:
@@ -2102,6 +2143,24 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 			break;
 		}
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case CFR_ATTRIBUTE_ValueTypes: {
+			U_16 valueTypeClassCount = ((J9CfrAttributeValueTypeClasses*)attrib)->numberOfClasses;
+			for (j = 0; j < valueTypeClassCount; j++) {
+				value = ((J9CfrAttributeValueTypeClasses*)attrib)->classes[j];
+				if ((0 == value) || (value > cpCount)) {
+					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
+					goto _errorFound;
+				}
+				if (CFR_CONSTANT_Class != cpBase[value].tag) {
+					errorCode = J9NLS_CFR_ERR_VALUE_TYPE_CLASS_NOT_CONSTANT_CLASS__ID;
+					goto _errorFound;
+				}
+			}
+			break;
+		}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 		case CFR_ATTRIBUTE_StackMap: /* CLDC StackMap attribute - not supported in J2SE */
 		case CFR_ATTRIBUTE_Synthetic:
