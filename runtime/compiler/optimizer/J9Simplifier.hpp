@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -86,15 +86,6 @@ class Simplifier : public OMR::Simplifier
     * \return Node that points to the transformed subtree
     */
    TR::Node *convertNanoTime(TR::Node * node, TR::Block * block);
-
-   /*! \brief Fold long store of currentTimeMillis to use address of destination as an argument
-    *
-    * \param node The "System.currentTimeMillis()" lcall node
-    * \param block The corresponding basic block
-    *
-    * \return Node that points to the transformed subtree
-    */
-   TR::Node *foldLongStoreOfCurrentTimeMillis(TR::Node * node, TR::Block * block);
    };
 
 }

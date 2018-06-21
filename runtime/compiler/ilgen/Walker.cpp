@@ -5326,36 +5326,6 @@ break
          else if (resolvedMethodSymbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_getAddressAsPrimitive64)
             isCallAddressAsPrimitive64 = true;
          }
-
-      ///if (!strncmp(comp()->getCurrentMethod()->nameChars(), "hashCodeImpl", 12) &&
-      ///       isCallGetLength)
-      if (_methodSymbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_hashCodeImpl)
-         {
-         if (isCallGetLength)
-            {
-            // fold away Array.getLength because its guaranteed that the parm is an array
-            //
-            TR::Node::recreate(callNode, TR::arraylength);
-            callNode->setArrayStride(sizeof(intptrj_t));
-            if (treeTopNode->getOpCode().isResolveOrNullCheck())
-               {
-               TR::Node::recreate(treeTopNode, TR::NULLCHK);
-               treeTopNode->setSymbolReference(comp()->getSymRefTab()->findOrCreateNullCheckSymbolRef(_methodSymbol));
-               }
-            }
-         else if (isCallAddressAsPrimitive32)
-            {
-            // the first child is a instance of JITHelpers, should be removed since the new node is no longer a method call
-            callNode->removeChild(0);
-            TR::Node::recreate(callNode, TR::a2i);
-            }
-         else if (isCallAddressAsPrimitive64)
-            {
-            // the first child is a instance of JITHelpers, should be removed since the new node is no longer a method call
-            callNode->removeChild(0);
-            TR::Node::recreate(callNode, TR::a2l);
-            }
-         }
       }
 
    if (resolvedMethodSymbol &&
