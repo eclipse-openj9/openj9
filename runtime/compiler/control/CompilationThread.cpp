@@ -3582,7 +3582,7 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    // Pin the class of the method being compiled to prevent it from being unloaded
    //
    // This conversion is safe. The macro J9VM_J9CLASS_TO_HEAPCLASS will not make a conversion if Classes on Heap is not enabled.
-   PUSH_OBJECT_IN_SPECIAL_FRAME(compThread, J9VM_J9CLASS_TO_HEAPCLASS(details.getClass()));
+   jobject classObject = compThread->javaVM->internalVMFunctions->j9jni_createLocalRef((JNIEnv*)compThread, J9VM_J9CLASS_TO_HEAPCLASS(details.getClass()));
 
    // Do the hack for newInstance thunks
    // Also make the method appear as interpreted, otherwise we might want to access recompilation info
@@ -3614,7 +3614,7 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    void *startPC = compile(compThread, &entry, scratchSegmentProvider);
 
    // Unpin the class
-   POP_OBJECT_IN_SPECIAL_FRAME(compThread);
+   compThread->javaVM->internalVMFunctions->j9jni_deleteLocalRef((JNIEnv*)compThread, classObject);
 
    // Update how many compilation threads are working on hot/scorching methods
    if (entry._hasIncrementedNumCompThreadsCompilingHotterMethods)
