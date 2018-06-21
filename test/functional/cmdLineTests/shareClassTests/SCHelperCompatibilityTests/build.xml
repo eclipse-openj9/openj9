@@ -22,14 +22,14 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-<project name="SCHelperCompatabilityTests" default="build" basedir=".">
+<project name="SCHelperCompatibilityTests" default="build" basedir=".">
 	<taskdef resource="net/sf/antcontrib/antlib.xml" />
 	<description>
-		Build SCHelperCompatabilityTests
+		Build SCHelperCompatibilityTests
 	</description>
 
 	<!-- set properties for this build -->
-	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/shareClassTests/SCHelperCompatabilityTests" />
+	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/shareClassTests/SCHelperCompatibilityTests" />
 	<property name="PROJECT_ROOT" location="." />
 	<property name="src" location="."/>
 	<property name="build" location="./bin"/>
@@ -65,55 +65,55 @@
 		<if>
 			<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
 			<then>
-				<javac srcdir="${build}" includes="PartitioningURLClassPathHelperURLHelperStaleEntryCompatabilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+				<javac srcdir="${build}" includes="PartitioningURLClassPathHelperURLHelperStaleEntryCompatibilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
 					<src path="${SharedClassUtils_srddir}"/>
 				</javac>
-				<javac srcdir="${build}" includes="PartitioningURLHelperURLClassPathHelperStaleEntryCompatabilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+				<javac srcdir="${build}" includes="PartitioningURLHelperURLClassPathHelperStaleEntryCompatibilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
 					<src path="${SharedClassUtils_srddir}"/>
 				</javac>
-				<javac srcdir="${build}" includes="TokenIncompatabilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+				<javac srcdir="${build}" includes="TokenIncompatibilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
 					<src path="${SharedClassUtils_srddir}"/>
 				</javac>
-				<javac srcdir="${build}" includes="URLClassPathHelperURLHelperCompatabilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+				<javac srcdir="${build}" includes="URLClassPathHelperURLHelperCompatibilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
 					<src path="${SharedClassUtils_srddir}"/>
 				</javac>
-				<javac srcdir="${build}" includes="URLClassPathHelperURLHelperStaleEntryCompatabilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+				<javac srcdir="${build}" includes="URLClassPathHelperURLHelperStaleEntryCompatibilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
 					<src path="${SharedClassUtils_srddir}"/>
 				</javac>
-				<javac srcdir="${build}" includes="URLHelperURLClassPathHelperCompatabilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+				<javac srcdir="${build}" includes="URLHelperURLClassPathHelperCompatibilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
 					<src path="${SharedClassUtils_srddir}"/>
 				</javac>
-				<javac srcdir="${build}" includes="URLHelperURLClassPathHelperStaleEntryCompatabilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+				<javac srcdir="${build}" includes="URLHelperURLClassPathHelperStaleEntryCompatibilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
 					<src path="${SharedClassUtils_srddir}"/>
 				</javac>
 			</then>
 			<else>
 				<property name="addExports" value="--add-modules openj9.sharedclasses --add-exports java.base/com.ibm.oti.util=ALL-UNNAMED" />
-				<javac srcdir="${build}" includes="PartitioningURLClassPathHelperURLHelperStaleEntryCompatabilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+				<javac srcdir="${build}" includes="PartitioningURLClassPathHelperURLHelperStaleEntryCompatibilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
 					<src path="${SharedClassUtils_srddir}"/>
 					<compilerarg line='${addExports}' />
 				</javac>
-				<javac srcdir="${build}" includes="PartitioningURLHelperURLClassPathHelperStaleEntryCompatabilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+				<javac srcdir="${build}" includes="PartitioningURLHelperURLClassPathHelperStaleEntryCompatibilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
 					<src path="${SharedClassUtils_srddir}"/>
 					<compilerarg line='${addExports}' />
 				</javac>
-				<javac srcdir="${build}" includes="TokenIncompatabilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+				<javac srcdir="${build}" includes="TokenIncompatibilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
 					<src path="${SharedClassUtils_srddir}"/>
 					<compilerarg line='${addExports}' />
 				</javac>
-				<javac srcdir="${build}" includes="URLClassPathHelperURLHelperCompatabilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+				<javac srcdir="${build}" includes="URLClassPathHelperURLHelperCompatibilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
 					<src path="${SharedClassUtils_srddir}"/>
 					<compilerarg line='${addExports}' />
 				</javac>
-				<javac srcdir="${build}" includes="URLClassPathHelperURLHelperStaleEntryCompatabilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+				<javac srcdir="${build}" includes="URLClassPathHelperURLHelperStaleEntryCompatibilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
 					<src path="${SharedClassUtils_srddir}"/>
 					<compilerarg line='${addExports}' />
 				</javac>
-				<javac srcdir="${build}" includes="URLHelperURLClassPathHelperCompatabilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+				<javac srcdir="${build}" includes="URLHelperURLClassPathHelperCompatibilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
 					<src path="${SharedClassUtils_srddir}"/>	
 					<compilerarg line='${addExports}' />
 				</javac>
-				<javac srcdir="${build}" includes="URLHelperURLClassPathHelperStaleEntryCompatabilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+				<javac srcdir="${build}" includes="URLHelperURLClassPathHelperStaleEntryCompatibilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
 					<src path="${SharedClassUtils_srddir}"/>
 					<compilerarg line='${addExports}' />
 				</javac>
@@ -131,7 +131,7 @@
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">
-		<jar jarfile="${DEST}/HelperCompatabilityTests.jar" filesonly="true">
+		<jar jarfile="${DEST}/HelperCompatibilityTests.jar" filesonly="true">
 			<fileset dir="${build}" />
 		</jar>
 		<copy todir="${DEST}">

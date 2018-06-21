@@ -24,14 +24,14 @@
 
 <!DOCTYPE suite SYSTEM "excludes.dtd">
 <?xml:stylesheet type="text/xsl" href="excludes.xsl" ?>
-<suite id="HelperCompatabilityTest Excluded Test Case List">
-	<exclude id="HelperCompatabilityTest 9" platform="current" shouldFix="true">
+<suite id="HelperCompatibilityTest Excluded Test Case List">
+	<exclude id="HelperCompatibilityTest 9" platform="current" shouldFix="true">
 			<reason>The result on IBM SDK is incorrect due to JCL patch of zip Hook, we should not find classes from SCC after jar are updated. See StaleClassPathTest5.sh</reason>
 	</exclude>
 	<exclude id="destroy cache 9" platform="current" shouldFix="true">
 			<reason>The result on IBM SDK is incorrect due to JCL patch of zip Hook, we should not find classes from SCC after jar are updated</reason>
 	</exclude>
-	<exclude id="HelperCompatabilityTest 11" platform="current" shouldFix="true">
+	<exclude id="HelperCompatibilityTest 11" platform="current" shouldFix="true">
 			<reason>The result on IBM SDK is incorrect due to JCL patch of zip Hook, we should not find classes from SCC after jar are updated. See StaleClassPathTest5.sh</reason>
 	</exclude>
 	<exclude id="destroy cache 11" platform="current" shouldFix="true">
