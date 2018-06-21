@@ -5260,7 +5260,7 @@ preloadUser32Dll(J9JavaVM *vm)
 		}
 		LoadLibrary(USER32_DLL);
 		if (0 != contiguousRegionStart) {
-			VirtualFree((LPVOID)contiguousRegionStart, contiguousRegionSize, MEM_RELEASE);
+			VirtualFree((LPVOID)contiguousRegionStart, 0, MEM_RELEASE);
 		}
 	}
 
