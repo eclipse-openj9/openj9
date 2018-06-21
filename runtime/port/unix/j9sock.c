@@ -47,9 +47,9 @@
 #include <arpa/inet.h>
 #endif
 
-#if defined(J9ZTPF)
+#if defined(J9ZTPF) || defined(OSX)
 #undef GLIBC_R
-#endif /* defined(J9ZTPF) */
+#endif /* defined(J9ZTPF) || defined(OSX) */
 
 #if defined(J9ZOS390)
 #include "atoe.h"
@@ -57,8 +57,10 @@
 
 #if defined(LINUX) || defined(OSX)
 #include <poll.h>
+#if defined(LINUX)
 #define IPV6_FLOWINFO_SEND      33
 #define HAS_RTNETLINK 1
+#endif /* defined(LINUX) */
 #endif /* defined(LINUX) || defined(OSX) */
 
 #if defined(HAS_RTNETLINK)
@@ -1225,14 +1227,14 @@ j9sock_getaddrinfo_name(struct J9PortLibrary *portLibrary, j9addrinfo_t handle, 
 int32_t
 j9sock_gethostbyaddr(struct J9PortLibrary *portLibrary, char *addr, int32_t length, int32_t type, j9hostent_t handle)
 {
-#if defined(J9ZTPF)
+#if defined(J9ZTPF) || defined(OSX) /* TODO: OSX: Revisit this after java -version works */ 
     int herr = NO_RECOVERY;
     OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 
     J9SOCKDEBUGH("<gethostbyaddr failed, err=%d>\n", herr);
     return omrerror_set_last_error(herr, findHostError(herr));
 
-#else /* defined(J9ZTPF) */
+#else /* defined(J9ZTPF) || defined(OX) */
 
 #if !HOSTENT_DATA_R
 	OSHOSTENT *result;
@@ -1347,6 +1349,10 @@ j9sock_gethostbyaddr(struct J9PortLibrary *portLibrary, char *addr, int32_t leng
 int32_t
 j9sock_gethostbyname(struct J9PortLibrary *portLibrary, const char *name, j9hostent_t handle)
 {
+#if defined(OSX) /* TODO: OSX: Revisit this after java -version works */
+	return -1;
+#else /* OSX */
+
 #if !HOSTENT_DATA_R
 	OSHOSTENT *result;
 #endif
@@ -1440,6 +1446,7 @@ j9sock_gethostbyname(struct J9PortLibrary *portLibrary, const char *name, j9host
 #undef hostentBuffer
 
 	return 0;
+#endif /* !OSX */
 }
 
 
@@ -1494,11 +1501,11 @@ j9sock_getnameinfo(struct J9PortLibrary *portLibrary, j9sockaddr_t in_addr, int3
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 	/* On z/TPF we don't support this option of returning the host name from the in_addr */
-#if defined(J9ZTPF)
+#if defined(J9ZTPF) || defined(OSX) /* TODO: OSX: Revisit this after java -version works */
 	int herr = NO_RECOVERY;
 	J9SOCKDEBUGH( "<gethostbyaddr failed, err=%d>\n", herr);
 	return omrerror_set_last_error(herr, findHostError(herr));
-#else /* defined(J9ZTPF) */
+#else /* defined(J9ZTPF) || defined(OSX) */
 /* If we have the IPv6 functions available we will call them, otherwise we'll call the IPv4 function */
 #ifdef IPv6_FUNCTION_SUPPORT
 	int rc = 0;
@@ -2417,7 +2424,7 @@ j9sock_select(struct J9PortLibrary *portLibrary, int32_t nfds, j9fdset_t readfd,
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 	int32_t rc = 0;
-#if !defined(LINUX) && !defined(OSX)	
+#if !defined(LINUX) && !defined(OSX)
 	int32_t result = 0;
 #endif /* !defined(LINUX) && !defined(OSX) */
 
