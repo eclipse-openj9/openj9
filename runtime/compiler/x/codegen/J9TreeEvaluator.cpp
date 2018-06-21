@@ -197,8 +197,8 @@ static TR_OutlinedInstructions *generateArrayletReference(
             cg, node->getSymbolReference(),
             boundCheckFailureLabel,
             checkInstruction,
-            false,
-            false));
+            false
+            ));
 
       // -------------------------------------------------------------------------
       // The array has a spine.  Do a bound check on its true length.
@@ -224,8 +224,8 @@ static TR_OutlinedInstructions *generateArrayletReference(
             cg, node->getSymbolReference(),
             boundCheckFailureLabel,
             checkInstruction,
-            false,
-            false));
+            false
+            ));
       }
 
    // -------------------------------------------------------------------------
@@ -2742,12 +2742,8 @@ TR::Register *J9::X86::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(
       TR::Snippet *snippet;
       if (opCode.isCall() || !needResolution || TR::Compiler->target.is64Bit()) //TODO:AMD64: Implement the "withresolve" version
          {
-         if (cg->supportsFS0VMThreadRematerialization() && cg->allowVMThreadRematerialization())
-            snippet = new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg, node->getSymbolReference(),
-                                                                    snippetLabel, appendTo, false, true);
-         else
-            snippet = new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg, node->getSymbolReference(),
-                                                                    snippetLabel, appendTo);
+         snippet = new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg, node->getSymbolReference(),
+                                                                 snippetLabel, appendTo);
          }
       else
          {
@@ -3322,8 +3318,8 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGe
    cg->addSnippet(new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg, node->getSymbolReference(),
                                                      boundCheckFailureLabel,
                                                      instr,
-                                                     false,
-                                                     false));
+                                                     false
+                                                     ));
 
    if (node->hasFoldedImplicitNULLCHK())
       {
@@ -3395,8 +3391,8 @@ TR::Register *J9::X86::TreeEvaluator::ArrayCopyBNDCHKEvaluator(TR::Node *node, T
       cg->addSnippet(new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg, node->getSymbolReference(),
                                                              boundCheckFailureLabel,
                                                              instr,
-                                                             false,
-                                                             false));
+                                                             false
+                                                             ));
 
    return NULL;
    }
@@ -10048,7 +10044,7 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayStoreCheckArrayCopyEvaluator(TR::No
    instr = generateLabelInstruction (JNE4, node, snippetLabel, true, cg);
    snippet = new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg,
       comp->getSymRefTab()->findOrCreateArrayStoreExceptionSymbolRef(comp->getJittedMethodSymbol()),
-      snippetLabel, instr, false, false);
+      snippetLabel, instr, false);
    cg->addSnippet(snippet);
 
    return NULL;

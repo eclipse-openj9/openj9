@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,7 +46,6 @@ class X86CheckFailureSnippet : public TR::Snippet
    TR::SymbolReference *_destination;
    TR::Instruction     *_checkInstruction;
    bool                _requiresFPstackPop;
-   bool                _mustRematerializeVMThreadFromFS;
    uint8_t             _breakOnThrowType;
 
    public:
@@ -57,13 +56,11 @@ class X86CheckFailureSnippet : public TR::Snippet
       TR::LabelSymbol      * lab,
       TR::Instruction     * checkInstruction,
       bool                 popFPstack = false,
-      bool                 mustRematerializeVMThreadFromFS = false,
       uint8_t              breakOnThrowType = 0)
       : TR::Snippet(cg, checkInstruction->getNode(), lab, dest->canCauseGC()),
         _destination(dest),
         _checkInstruction(checkInstruction),
         _requiresFPstackPop(popFPstack),
-        _mustRematerializeVMThreadFromFS(mustRematerializeVMThreadFromFS),
         _breakOnThrowType(breakOnThrowType)
       {
       // No registers preserved at this call
@@ -81,7 +78,6 @@ class X86CheckFailureSnippet : public TR::Snippet
    TR::Instruction *setCheckInstruction(TR::Instruction *ci) {return (_checkInstruction = ci);}
 
    bool getRequiredFPstackPop() { return _requiresFPstackPop; }
-   bool getMustRematerializeVMThreadFromFS() { return _mustRematerializeVMThreadFromFS; }
 
    virtual uint8_t *emitSnippetBody();
    uint8_t *emitCheckFailureSnippetBody(uint8_t *buffer);
@@ -117,15 +113,13 @@ class X86BoundCheckWithSpineCheckSnippet : public TR::X86CheckFailureSnippet
       TR::LabelSymbol      *snippetLabel,
       TR::LabelSymbol      *restartLabel,
       TR::Instruction     *checkInstruction,
-      bool                popFPstack = false,
-      bool                rematerializeVMThread = false) :
+      bool                popFPstack = false) :
          TR::X86CheckFailureSnippet(
             cg,
             bndchkSymRef,
             snippetLabel,
             checkInstruction,
-            popFPstack,
-            rematerializeVMThread),
+            popFPstack),
             _restartLabel(restartLabel)
             {
             }
@@ -154,15 +148,13 @@ class X86SpineCheckSnippet : public TR::X86CheckFailureSnippet
       TR::LabelSymbol      *snippetLabel,
       TR::LabelSymbol      *restartLabel,
       TR::Instruction     *checkInstruction,
-      bool                popFPstack = false,
-      bool                rematerializeVMThread = false) :
+      bool                popFPstack = false) :
          TR::X86CheckFailureSnippet(
             cg,
             bndchkSymRef,
             snippetLabel,
             checkInstruction,
-            popFPstack,
-            rematerializeVMThread),
+            popFPstack),
             _restartLabel(restartLabel)
             {
             }
