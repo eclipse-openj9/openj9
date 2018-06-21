@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,7 +64,7 @@ uint32_t TR::X86CheckFailureSnippet::getLength(int32_t estimatedSnippetStart)
       }
 
    }
-   return (_requiresFPstackPop ? 11 : 9) + (_mustRematerializeVMThreadFromFS ? 10 : 0) + breakSize;
+   return (_requiresFPstackPop ? 11 : 9) + breakSize;
    }
 
 uint8_t *TR::X86CheckFailureSnippet::emitSnippetBody()
@@ -93,17 +93,6 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86CheckFailureSnippet * snippet)
       trfprintf(pOutFile, "fstp\tst(0)\t\t%s Discard top of FP stack",
                     commentString());
       bufferPos += 2;
-      }
-
-   if (snippet->getMustRematerializeVMThreadFromFS())
-      {
-      printPrefix(pOutFile, NULL, bufferPos, 7);
-      trfprintf(pOutFile, "mov ebp, dword ptr fs:[0]");
-      bufferPos += 7;
-      printPrefix(pOutFile, NULL, bufferPos, 3);
-      trfprintf(pOutFile, "mov ebp, dword ptr [ebp+8]\t\t%s Rematerialize vmThread ptr",
-                    commentString());
-      bufferPos += 3;
       }
 
    printPrefix(pOutFile, NULL, bufferPos, 5);
@@ -156,17 +145,6 @@ uint8_t *TR::X86CheckFailureSnippet::emitCheckFailureSnippetBody(uint8_t *buffer
       {
       *buffer++ = 0xdd;  // FSTP st0,st0
       *buffer++ = 0xd8;
-      }
-
-   if (_mustRematerializeVMThreadFromFS)
-      {
-      // This sequence only works for 32-bit Windows!
-      // mov ebp,dword ptr fs:[0] ; 64 8b 2d 00 00 00 00
-      TR_ASSERT(cg()->supportsFS0VMThreadRematerialization() && cg()->allowVMThreadRematerialization(), "assertion failure");
-      *buffer++ = 0x64; *buffer++ = 0x8b; *buffer++ = 0x2d;
-      *buffer++ = 0x00; *buffer++ = 0x00; *buffer++ = 0x00; *buffer++ = 0x00;
-      // mov ebp,dword ptr [ebp+8] ; 8b 6d 08
-      *buffer++ = 0x8b; *buffer++ = 0x6d; *buffer++ = 0x08;
       }
 
    *buffer++ = 0xe8; // CallImm4

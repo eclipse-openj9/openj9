@@ -389,6 +389,16 @@ private:
 
    // OSR
    TR::NodeChecklist                *_processedOSRNodes;
+
+   // DecimalFormatPeephole
+   struct methodRenamePair{
+      char* srcMethodSignature;
+      char* dstMethodSignature;
+   };
+
+   static const int32_t              _numDecFormatRenames = 9;
+   static struct methodRenamePair    _decFormatRenames[_numDecFormatRenames];
+   TR::SymbolReference               *_decFormatRenamesDstSymRef[_numDecFormatRenames];
    };
 
 #endif

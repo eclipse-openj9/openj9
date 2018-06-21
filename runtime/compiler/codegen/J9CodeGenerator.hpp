@@ -98,8 +98,6 @@ public:
 
    void splitWarmAndColdBlocks(); // J9 & Z
 
-   void detectEndOfVMThreadGlobalRegisterLiveRange(TR::Block *block); // J9 & X86?
-
    void allocateLinkageRegisters();
 
    TR::Linkage *createLinkageForCompilation();
@@ -369,7 +367,7 @@ public:
    // Determines whether high-resolution timer can be used to implement java/lang/System.currentTimeMillis()
    bool getSupportsMaxPrecisionMilliTime() {return _j9Flags.testAny(SupportsMaxPrecisionMilliTime);}
    void setSupportsMaxPrecisionMilliTime() {_j9Flags.set(SupportsMaxPrecisionMilliTime);}
-   
+
    /** \brief
     *    Determines whether the code generator supports inlining of java/lang/String.toUpperCase() and toLowerCase()
     */
@@ -392,7 +390,7 @@ private:
       {
       HasFixedFrameC_CallingConvention    = 0x00000001,
       SupportsMaxPrecisionMilliTime       = 0x00000002,
-      SupportsInlineStringCaseConversion  = 0x00000004 /*! codegen inlining of Java string case conversion */ 
+      SupportsInlineStringCaseConversion  = 0x00000004 /*! codegen inlining of Java string case conversion */
       };
 
    flags32_t _j9Flags;
