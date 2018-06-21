@@ -192,16 +192,13 @@ static TR_OutlinedInstructions *generateArrayletReference(
 
       checkInstruction = generateLabelInstruction(JNE4, node, boundCheckFailureLabel, cg);
 
-      bool needsVMThread = needsBoundCheck &&
-         (!cg->allowVMThreadRematerialization() || !cg->getSupportsVMThreadGRA());
-
       cg->addSnippet(
          new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(
             cg, node->getSymbolReference(),
             boundCheckFailureLabel,
             checkInstruction,
-            false,
-            !needsVMThread));
+            false
+            ));
 
       // -------------------------------------------------------------------------
       // The array has a spine.  Do a bound check on its true length.
@@ -227,8 +224,8 @@ static TR_OutlinedInstructions *generateArrayletReference(
             cg, node->getSymbolReference(),
             boundCheckFailureLabel,
             checkInstruction,
-            false,
-            !needsVMThread));
+            false
+            ));
       }
 
    // -------------------------------------------------------------------------
@@ -2745,12 +2742,8 @@ TR::Register *J9::X86::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(
       TR::Snippet *snippet;
       if (opCode.isCall() || !needResolution || TR::Compiler->target.is64Bit()) //TODO:AMD64: Implement the "withresolve" version
          {
-         if (cg->supportsFS0VMThreadRematerialization() && cg->allowVMThreadRematerialization())
-            snippet = new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg, node->getSymbolReference(),
-                                                                    snippetLabel, appendTo, false, true);
-         else
-            snippet = new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg, node->getSymbolReference(),
-                                                                    snippetLabel, appendTo);
+         snippet = new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg, node->getSymbolReference(),
+                                                                 snippetLabel, appendTo);
          }
       else
          {
@@ -3266,8 +3259,6 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGe
    {
    TR::Node *firstChild    = node->getFirstChild();
    TR::Node *secondChild   = node->getSecondChild();
-   bool     needsVMThread = !cg->allowVMThreadRematerialization() ||
-                                !cg->getSupportsVMThreadGRA();
 
    // Perform a bound check.
    //
@@ -3285,7 +3276,7 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGe
       {
       if (secondChild->getOpCode().isLoadConst() && firstChild->getInt() <= secondChild->getInt())
          {
-         instr = generateLabelInstruction(JMP4, node, boundCheckFailureLabel, needsVMThread, cg);
+         instr = generateLabelInstruction(JMP4, node, boundCheckFailureLabel, true, cg);
          cg->decReferenceCount(firstChild);
          cg->decReferenceCount(secondChild);
          }
@@ -3296,7 +3287,7 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGe
             node->swapChildren();
             TR::TreeEvaluator::compareIntegersForOrder(node, cg);
             node->swapChildren();
-            instr = generateLabelInstruction(JAE4, node, boundCheckFailureLabel, needsVMThread, cg);
+            instr = generateLabelInstruction(JAE4, node, boundCheckFailureLabel, true, cg);
             }
          else
             skippedComparison = true;
@@ -3307,7 +3298,7 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGe
       if (!isConditionCodeSetForCompare(node, &jumpOnOppositeCondition))
          {
          TR::TreeEvaluator::compareIntegersForOrder(node, cg);
-         instr = generateLabelInstruction(JBE4, node, boundCheckFailureLabel, needsVMThread, cg);
+         instr = generateLabelInstruction(JBE4, node, boundCheckFailureLabel, true, cg);
          }
       else
          skippedComparison = true;
@@ -3316,9 +3307,9 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGe
    if (skippedComparison)
       {
       if (jumpOnOppositeCondition)
-         instr = generateLabelInstruction(JAE4, node, boundCheckFailureLabel, needsVMThread, cg);
+         instr = generateLabelInstruction(JAE4, node, boundCheckFailureLabel, true, cg);
       else
-         instr = generateLabelInstruction(JBE4, node, boundCheckFailureLabel, needsVMThread, cg);
+         instr = generateLabelInstruction(JBE4, node, boundCheckFailureLabel, true, cg);
 
       cg->decReferenceCount(firstChild);
       cg->decReferenceCount(secondChild);
@@ -3327,8 +3318,8 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGe
    cg->addSnippet(new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg, node->getSymbolReference(),
                                                      boundCheckFailureLabel,
                                                      instr,
-                                                     false,
-                                                     ! needsVMThread));
+                                                     false
+                                                     ));
 
    if (node->hasFoldedImplicitNULLCHK())
       {
@@ -3363,11 +3354,6 @@ TR::Register *J9::X86::TreeEvaluator::ArrayCopyBNDCHKEvaluator(TR::Node *node, T
    TR::LabelSymbol *boundCheckFailureLabel = generateLabelSymbol(cg);
    TR::Instruction *instr;
 
-   // vmThread required in BNDCHK's mainline code.
-   bool needsVMThread = !cg->allowVMThreadRematerialization() ||
-                        node->hasFoldedImplicitNULLCHK() ||
-                        !cg->getSupportsVMThreadGRA();
-
    if (firstChild->getOpCode().isLoadConst())
       {
       if (secondChild->getOpCode().isLoadConst())
@@ -3376,7 +3362,7 @@ TR::Register *J9::X86::TreeEvaluator::ArrayCopyBNDCHKEvaluator(TR::Node *node, T
             {
             // Check will always fail, just jump to failure snippet
             //
-            instr = generateLabelInstruction(JMP4, node, boundCheckFailureLabel, needsVMThread, cg);
+            instr = generateLabelInstruction(JMP4, node, boundCheckFailureLabel, true, cg);
             }
          else
             {
@@ -3392,21 +3378,21 @@ TR::Register *J9::X86::TreeEvaluator::ArrayCopyBNDCHKEvaluator(TR::Node *node, T
          node->swapChildren();
          TR::TreeEvaluator::compareIntegersForOrder(node, cg);
          node->swapChildren();
-         instr = generateLabelInstruction(JG4, node, boundCheckFailureLabel, needsVMThread, cg);
+         instr = generateLabelInstruction(JG4, node, boundCheckFailureLabel, true, cg);
          }
       }
    else
       {
       TR::TreeEvaluator::compareIntegersForOrder(node, cg);
-      instr = generateLabelInstruction(JL4, node, boundCheckFailureLabel, needsVMThread, cg);
+      instr = generateLabelInstruction(JL4, node, boundCheckFailureLabel, true, cg);
       }
 
    if (instr)
       cg->addSnippet(new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg, node->getSymbolReference(),
                                                              boundCheckFailureLabel,
                                                              instr,
-                                                             false,
-                                                             ! needsVMThread));
+                                                             false
+                                                             ));
 
    return NULL;
    }
@@ -10055,11 +10041,10 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayStoreCheckArrayCopyEvaluator(TR::No
 
    generateRegImmInstruction(CMP4RegImm4, node, checkFailureIndexReg, (uint32_t)-1, cg);
    cg->decReferenceCount(callNode);
-   bool rematerializeVMThreadInSnippet = (cg->allowVMThreadRematerialization() && cg->getSupportsVMThreadGRA()) ? true : false;
-   instr = generateLabelInstruction (JNE4, node, snippetLabel, !rematerializeVMThreadInSnippet, cg);
+   instr = generateLabelInstruction (JNE4, node, snippetLabel, true, cg);
    snippet = new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg,
       comp->getSymRefTab()->findOrCreateArrayStoreExceptionSymbolRef(comp->getJittedMethodSymbol()),
-      snippetLabel, instr, false, rematerializeVMThreadInSnippet);
+      snippetLabel, instr, false);
    cg->addSnippet(snippet);
 
    return NULL;

@@ -7898,10 +7898,6 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
          else
             {
             comp->cg()->setInlinedGetCurrentThreadMethod();
-
-            if (comp->cg()->getSupportsVMThreadGRA())
-               comp->cg()->resetSupportsVMThreadGRA();
-
             TR::Node::recreate(callNode, TR::aload);
             callNode->setSymbolReference(comp->getSymRefTab()->findOrCreateCurrentThreadSymbolRef());
 
