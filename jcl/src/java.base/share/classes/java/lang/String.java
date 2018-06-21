@@ -5879,14 +5879,16 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 */
 	public int hashCode() {
 		if (hashCode == 0) {
-			// Check if the String is compressed
-			if (enableCompression && (compressionFlag == null || count >= 0)) {
-				hashCode = hashCodeImplCompressed(value, 0, lengthInternal());
-			} else {
-				hashCode = hashCodeImplDecompressed(value, 0, lengthInternal());
+			int length = lengthInternal();
+			if (length > 0) {
+				// Check if the String is compressed
+				if (enableCompression && (compressionFlag == null || count >= 0)) {
+					hashCode = hashCodeImplCompressed(value, 0, length);
+				} else {
+					hashCode = hashCodeImplDecompressed(value, 0, length);
+				}
 			}
 		}
-
 		return hashCode;
 	}
 

@@ -11565,18 +11565,115 @@ static bool inlineObjectHashCode(TR::Node *node, bool isIndirect)
 // jl serial_loop
 //
 // end_label
-static bool
-inlineStringHashCode(
-      TR::Node *node,
-      bool isIndirect,
-      TR::CodeGenerator *cg,
-      bool isCompressed)
+static TR::Register* inlineStringHashCode(TR::Node* node, bool isCompressed, TR::CodeGenerator* cg)
    {
    TR::Compilation *comp = cg->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
+   static auto UseOldStringHashCode = (bool)feGetEnv("TR_UseOldStringHashCode");
 
-   if (isIndirect)
-      diagnostic("String.hashCode called indirectly by %s\n", comp->signature());
+   if (comp->getOption(TR_DisableSIMDStringHashCode) || TR::Compiler->om.canGenerateArraylets() || !cg->getX86ProcessorInfo().supportsSSE4_1())
+      {
+      return NULL;
+      }
+   else if (!UseOldStringHashCode)
+      {
+      TR_ASSERT(node->getChild(1)->getOpCodeValue() == TR::iconst && node->getChild(1)->getInt() == 0, "String hashcode offset can only be const zero.");
+
+      const int size = 4;
+      auto shift = isCompressed ? 0 : 1;
+
+      auto address = cg->evaluate(node->getChild(0));
+      auto length = cg->evaluate(node->getChild(2));
+      auto index = cg->allocateRegister();
+      auto hash = cg->allocateRegister();
+      auto tmp = cg->allocateRegister();
+      auto hashXMM = cg->allocateRegister(TR_VRF);
+      auto tmpXMM = cg->allocateRegister(TR_VRF);
+      auto multiplierXMM = cg->allocateRegister(TR_VRF);
+
+      auto begLabel = generateLabelSymbol(cg);
+      auto endLabel = generateLabelSymbol(cg);
+      auto loopLabel = generateLabelSymbol(cg);
+      begLabel->setStartInternalControlFlow();
+      endLabel->setEndInternalControlFlow();
+      auto deps = generateRegisterDependencyConditions((uint8_t)6, (uint8_t)6, cg);
+      deps->addPreCondition(address, TR::RealRegister::NoReg, cg);
+      deps->addPreCondition(index, TR::RealRegister::NoReg, cg);
+      deps->addPreCondition(length, TR::RealRegister::NoReg, cg);
+      deps->addPreCondition(multiplierXMM, TR::RealRegister::NoReg, cg);
+      deps->addPreCondition(tmpXMM, TR::RealRegister::NoReg, cg);
+      deps->addPreCondition(hashXMM, TR::RealRegister::NoReg, cg);
+      deps->addPostCondition(address, TR::RealRegister::NoReg, cg);
+      deps->addPostCondition(index, TR::RealRegister::NoReg, cg);
+      deps->addPostCondition(length, TR::RealRegister::NoReg, cg);
+      deps->addPostCondition(multiplierXMM, TR::RealRegister::NoReg, cg);
+      deps->addPostCondition(tmpXMM, TR::RealRegister::NoReg, cg);
+      deps->addPostCondition(hashXMM, TR::RealRegister::NoReg, cg);
+
+      generateRegRegInstruction(MOV4RegReg, node, index, length, cg);
+      generateRegImmInstruction(AND4RegImms, node, index, size-1, cg); // mod size
+      generateRegMemInstruction(CMOVE4RegMem, node, index, generateX86MemoryReference(cg->findOrCreate4ByteConstant(node, size), cg), cg);
+
+      // Prepend zeros
+      {
+      static uint64_t MASKDECOMPRESSED[] = { 0x0000000000000000ULL, 0xffffffffffffffffULL };
+      static uint64_t MASKCOMPRESSED[]   = { 0xffffffff00000000ULL, 0x0000000000000000ULL };
+      generateRegMemInstruction(isCompressed ? MOVDRegMem : MOVQRegMem, node, hashXMM, generateX86MemoryReference(address, index, shift, -(size << shift) + TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
+      generateRegMemInstruction(LEARegMem(), node, tmp, generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, isCompressed ? MASKCOMPRESSED : MASKDECOMPRESSED), cg), cg);
+
+      auto mr = generateX86MemoryReference(tmp, index, shift, 0, cg);
+      if (cg->getX86ProcessorInfo().supportsAVX())
+         {
+         generateRegMemInstruction(PANDRegMem, node, hashXMM, mr, cg);
+         }
+      else
+         {
+         generateRegMemInstruction(MOVDQURegMem, node, tmpXMM, mr, cg);
+         generateRegRegInstruction(PANDRegReg, node, hashXMM, tmpXMM, cg);
+         }
+      generateRegRegInstruction(isCompressed ? PMOVZXBDRegReg : PMOVZXWDRegReg, node, hashXMM, hashXMM, cg);
+      }
+
+      // Reduction Loop
+      {
+      static uint32_t multiplier[] = { 31*31*31*31, 31*31*31*31, 31*31*31*31, 31*31*31*31 };
+      generateLabelInstruction(LABEL, node, begLabel, cg);
+      generateRegRegInstruction(CMP4RegReg, node, index, length, cg);
+      generateLabelInstruction(JGE4, node, endLabel, cg);
+      generateRegMemInstruction(MOVDQURegMem, node, multiplierXMM, generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, multiplier), cg), cg);
+      generateLabelInstruction(LABEL, node, loopLabel, cg);
+      generateRegRegInstruction(PMULLDRegReg, node, hashXMM, multiplierXMM, cg);
+      generateRegMemInstruction(isCompressed ? PMOVZXBDRegMem : PMOVZXWDRegMem, node, tmpXMM, generateX86MemoryReference(address, index, shift, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
+      generateRegImmInstruction(ADD4RegImms, node, index, 4, cg);
+      generateRegRegInstruction(PADDDRegReg, node, hashXMM, tmpXMM, cg);
+      generateRegRegInstruction(CMP4RegReg, node, index, length, cg);
+      generateLabelInstruction(JL4, node, loopLabel, cg);
+      generateLabelInstruction(LABEL, node, endLabel, deps, cg);
+      }
+      
+      // Finalization
+      {
+      static uint32_t multiplier[] = { 31*31*31, 31*31, 31, 1 };
+      generateRegMemInstruction(PMULLDRegMem, node, hashXMM, generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, multiplier), cg), cg);
+      generateRegRegImmInstruction(PSHUFDRegRegImm1, node, tmpXMM, hashXMM, 0x0e, cg);
+      generateRegRegInstruction(PADDDRegReg, node, hashXMM, tmpXMM, cg);
+      generateRegRegImmInstruction(PSHUFDRegRegImm1, node, tmpXMM, hashXMM, 0x01, cg);
+      generateRegRegInstruction(PADDDRegReg, node, hashXMM, tmpXMM, cg);
+      }
+      
+      generateRegRegInstruction(MOVDReg4Reg, node, hash, hashXMM, cg);
+
+      cg->stopUsingRegister(index);
+      cg->stopUsingRegister(tmp);
+      cg->stopUsingRegister(hashXMM);
+      cg->stopUsingRegister(tmpXMM);
+      cg->stopUsingRegister(multiplierXMM);
+
+      node->setRegister(hash);
+      cg->decReferenceCount(node->getChild(0));
+      cg->recursivelyDecReferenceCount(node->getChild(1));
+      cg->decReferenceCount(node->getChild(2));
+      return hash;
+      }
    else
       {
       TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
@@ -11734,9 +11831,8 @@ inlineStringHashCode(
       cg->stopUsingRegister(xmm0);
       cg->stopUsingRegister(xmm1);
       cg->stopUsingRegister(xmm2);
-      return true;
+      return hashReg;
       }
-   return false;
    }
 
 static bool
@@ -12476,18 +12572,6 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
             {
             if (debug("testObjecthashCode"))
                callWasInlined = inlineObjectHashCode(node, isIndirect);
-            break;
-            }
-         case TR::java_lang_String_hashCodeImplDecompressed:
-            {
-            if (!comp->getOption(TR_DisableSIMDStringHashCode) && cg->getX86ProcessorInfo().supportsSSE4_1()&& !TR::Compiler->om.canGenerateArraylets())
-               callWasInlined = inlineStringHashCode(node, isIndirect, cg, false);
-            break;
-            }
-         case TR::java_lang_String_hashCodeImplCompressed:
-            {
-            if (!comp->getOption(TR_DisableSIMDStringHashCode) && cg->getX86ProcessorInfo().supportsSSE4_1()&& !TR::Compiler->om.canGenerateArraylets())
-               callWasInlined = inlineStringHashCode(node, isIndirect, cg, true);
             break;
             }
          case TR::java_lang_Class_isAssignableFrom:
@@ -14017,6 +14101,14 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
       case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Little:
          return TR::TreeEvaluator::encodeUTF16Evaluator(node, cg);
 
+      case TR::java_lang_String_hashCodeImplDecompressed:
+         returnRegister = inlineStringHashCode(node, false, cg);
+         callInlined = (returnRegister != NULL);
+         break;
+      case TR::java_lang_String_hashCodeImplCompressed:
+         returnRegister = inlineStringHashCode(node, true, cg);
+         callInlined = (returnRegister != NULL);
+         break;
       default:
          break;
       }
@@ -14084,8 +14176,6 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
       case TR::java_util_concurrent_atomic_Fences_reachabilityFence:
       case TR::sun_nio_ch_NativeThread_current:
       case TR::sun_misc_Unsafe_copyMemory:
-      case TR::java_lang_String_hashCodeImplCompressed:
-      case TR::java_lang_String_hashCodeImplDecompressed:
          if (TR::TreeEvaluator::VMinlineCallEvaluator(node, false, cg))
             {
             returnRegister = node->getRegister();
