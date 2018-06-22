@@ -6187,7 +6187,7 @@ retry:
 			J9Class *fieldClass = (J9Class*)(classAndFlags & ~(UDATA)J9StaticFieldRefFlagBits);
 			if (J9_ARE_ANY_BITS_SET(fieldClass->classFlags, J9ClassHasWatchedFields)) {
 				updateVMStruct(REGISTER_ARGS);
-				ALWAYS_TRIGGER_J9HOOK_VM_PUT_STATIC_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, fieldClass, valueAddress, _sp);
+				ALWAYS_TRIGGER_J9HOOK_VM_PUT_STATIC_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, fieldClass, valueAddress, *(U_64*)_sp);
 				VMStructHasBeenUpdated(REGISTER_ARGS);
 				if (immediateAsyncPending()) {
 					rc = GOTO_ASYNC_CHECK;
@@ -6261,7 +6261,7 @@ retry:
 				if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_GET_FIELD)) {
 					if (J9_ARE_ANY_BITS_SET(J9OBJECT_CLAZZ(_currentThread, objectref)->classFlags, J9ClassHasWatchedFields)) {
 						updateVMStruct(REGISTER_ARGS);
-						ALWAYS_TRIGGER_J9HOOK_VM_GET_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, objectLocation, valueOffset);
+						ALWAYS_TRIGGER_J9HOOK_VM_GET_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, objectref, valueOffset);
 						VMStructHasBeenUpdated(REGISTER_ARGS);
 						if (immediateAsyncPending()) {
 							rc = GOTO_ASYNC_CHECK;
@@ -6346,12 +6346,11 @@ retry:
 		}
 #if defined(DO_HOOKS)
 		if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_PUT_FIELD)) {
-			j9object_t  *objAddress = (j9object_t*)_sp + ((flags & J9FieldSizeDouble) ? 2 : 1);
-			j9object_t objectref = *objAddress;
+			j9object_t objectref = ((j9object_t*)_sp)[(flags & J9FieldSizeDouble) ? 2 : 1];
 			if (NULL != objectref) {
 				if (J9_ARE_ANY_BITS_SET(J9OBJECT_CLAZZ(_currentThread, objectref)->classFlags, J9ClassHasWatchedFields)) {
 					updateVMStruct(REGISTER_ARGS);
-					ALWAYS_TRIGGER_J9HOOK_VM_PUT_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, objAddress, valueOffset, _sp);
+					ALWAYS_TRIGGER_J9HOOK_VM_PUT_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, objectref, valueOffset, *(U_64*)_sp);
 					VMStructHasBeenUpdated(REGISTER_ARGS);
 					if (immediateAsyncPending()) {
 						rc = GOTO_ASYNC_CHECK;
