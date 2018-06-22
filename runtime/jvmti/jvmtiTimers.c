@@ -208,8 +208,9 @@ jvmtiGetAvailableProcessors(jvmtiEnv* env,
 
 	ENSURE_NON_NULL(processor_count_ptr);
 
-	cpuCount = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_ONLINE);
-	*processor_count_ptr = ((cpuCount == 0) ? 1 : (jint) cpuCount);
+	/* This implementation should be kept consistent with JVM_ActiveProcessorCount */
+	cpuCount = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
+	*processor_count_ptr = ((cpuCount < 1) ? 1 : (jint) cpuCount);
 	rc = JVMTI_ERROR_NONE;
 
 done:
