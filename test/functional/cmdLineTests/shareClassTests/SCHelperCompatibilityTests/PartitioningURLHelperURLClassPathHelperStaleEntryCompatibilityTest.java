@@ -26,8 +26,8 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.Properties;
 
-import CustomClassloaders.CustomURLClassLoader;
-import CustomClassloaders.CustomURLLoader;
+import CustomClassloaders.CustomPartitioningURLClassLoader;
+import CustomClassloaders.CustomPartitioningURLLoader;
 import Utilities.StringManipulator;
 import Utilities.TestClass;
 import Utilities.URLClassPathCreator;
@@ -35,18 +35,18 @@ import Utilities.URLClassPathCreator;
 /**
  * @author Matthew Kilner
  */
-public class URLHelperURLClassPathHelperStaleEntryCompatabilityTest {
+public class PartitioningURLHelperURLClassPathHelperStaleEntryCompatibilityTest {
 
 	StringManipulator manipulator = new StringManipulator();
 	
 	public static void main(String[] args) {
 	
-		if(args.length != 2){
+		if(args.length != 4){
 			System.out.println("\n Incorrect usage");
 			System.out.println("\n Please specifiy -testfile <filename> -javacdir <path to javac>");
 		}
 		
-		URLHelperURLClassPathHelperStaleEntryCompatabilityTest test = new URLHelperURLClassPathHelperStaleEntryCompatabilityTest();
+		PartitioningURLHelperURLClassPathHelperStaleEntryCompatibilityTest test = new PartitioningURLHelperURLClassPathHelperStaleEntryCompatibilityTest();
 		
 		String testFile = args[1];
 		String javacdir = args[3];
@@ -73,8 +73,10 @@ public class URLHelperURLClassPathHelperStaleEntryCompatabilityTest {
 		
 		int maxClassesToLoad = 0;		
 		String[] urls = new String[numberOfUrls];
+		String [] partitionStrings = new String[numberOfUrls];
 		for(int index = 0; index < numberOfUrls; index++){
 			urls[index] = props.getProperty("Url"+index);
+			partitionStrings[index] = props.getProperty("urlPartition"+index);
 			String ctl = props.getProperty("NumberOfClassesToLoad"+index);
 			Integer intctl = new Integer(ctl);
 			maxClassesToLoad = ((intctl.intValue() > maxClassesToLoad) ? intctl.intValue() : maxClassesToLoad);
@@ -93,6 +95,7 @@ public class URLHelperURLClassPathHelperStaleEntryCompatabilityTest {
 		}
 		
 		String classPath = props.getProperty("Classpath");
+		String partition = props.getProperty("Partition");
 		
 		String ctf = props.getProperty("NumberOfClassesToFind");
 		Integer intctf = new Integer(ctf);
@@ -112,7 +115,7 @@ public class URLHelperURLClassPathHelperStaleEntryCompatabilityTest {
 		
 		String batchFile = props.getProperty("BatchFileToRun");
 
-		boolean passed = executeTest(urls, classesToLoad, classPath, classesToFind, results, batchFile, foundAt, javacpath);
+		boolean passed = executeTest(urls, partitionStrings, classesToLoad, classPath, partition, classesToFind, results, batchFile, foundAt, javacpath);
 		
 		if(passed){
 			System.out.println("\nTEST PASSED");
@@ -121,7 +124,7 @@ public class URLHelperURLClassPathHelperStaleEntryCompatabilityTest {
 		}
 	}
 
-	private boolean executeTest(String[] urls, String[][] classesToLoad, String classPath, String[] classesToFind, String[] results, String batchFile, String[] foundAt, String javacpath) {
+	private boolean executeTest(String[] urls, String[] partitionStrings, String[][] classesToLoad, String classPath, String partition, String[] classesToFind, String[] results, String batchFile, String[] foundAt, String javacpath) {
 		
 		String urlsString = urls[0];
 		for(int index = 1; index < urls.length; index++){
@@ -132,11 +135,12 @@ public class URLHelperURLClassPathHelperStaleEntryCompatabilityTest {
 		URLClassPathCreator creator = new URLClassPathCreator(urlsString);
 		URL[] urlPath;
 		urlPath = creator.createURLClassPath();
-		CustomURLLoader[] loaderArray = new CustomURLLoader[urls.length];
+		CustomPartitioningURLLoader[] loaderArray = new CustomPartitioningURLLoader[urls.length];
 		
 		for(int urlIndex = 0; urlIndex < urls.length; urlIndex++){
+			loaderArray[urlIndex] = new CustomPartitioningURLLoader(urlPath, this.getClass().getClassLoader());
+			loaderArray[urlIndex].setPartition(partitionStrings[urlIndex]);
 			for(int classIndex = 0; classIndex < classesToLoad[urlIndex].length; classIndex++){
-				loaderArray[urlIndex] = new CustomURLLoader(urlPath, this.getClass().getClassLoader());
 				String classToLoad = classesToLoad[urlIndex][classIndex];
 				if(classToLoad != null){
 					loaderArray[urlIndex].loadClassFrom(classToLoad, urlIndex);
@@ -144,7 +148,9 @@ public class URLHelperURLClassPathHelperStaleEntryCompatabilityTest {
 			}
 		}
 		
-		runBatchFile(batchFile, javacpath);
+		if(0 != batchFile.length()){
+			runBatchFile(batchFile, javacpath);
+		}
 		
 		boolean result = true;
 		
@@ -152,7 +158,8 @@ public class URLHelperURLClassPathHelperStaleEntryCompatabilityTest {
 		URL[] urlPath2;
 		urlPath2 = creator2.createURLClassPath();
 		
-		CustomURLClassLoader cl = new CustomURLClassLoader(urlPath2, this.getClass().getClassLoader());
+		CustomPartitioningURLClassLoader cl = new CustomPartitioningURLClassLoader(urlPath2, this.getClass().getClassLoader());
+		cl.setPartition(partition);
 		for(int classIndex = 0; classIndex < classesToLoad.length; classIndex++){
 			String classToFind = classesToFind[classIndex];
 			String expectedResult = results[classIndex];
@@ -161,36 +168,12 @@ public class URLHelperURLClassPathHelperStaleEntryCompatabilityTest {
 				if(!(expectedResult.equals(testResult))){
 					System.out.println("\nFailure finding class: "+classToFind+" result: "+testResult+" expecting: "+expectedResult);
 					result = false;
-				}else {
+				} else {
 					if(testResult.equals("true")){
 						result = validateReturnedClass(classToFind, foundAt[classIndex], cl);
 					}
 				}
 			}
-		}
-		return result;
-	}
-	
-	boolean validateReturnedClass(String className, String foundAt, CustomURLClassLoader loader){
-		boolean result = false;
-		Class classData = null;
-		classData = loader.getClassFromCache(className);
-		if(null != classData){
-			Object o = null;
-			try{
-				o = classData.newInstance();
-			} catch(Exception e){
-				e.printStackTrace();
-			}
-			TestClass tc = (TestClass)o;
-			String classLocation = tc.getLocation();
-			if(classLocation.equals(foundAt)){
-				result = true;
-			} else {
-				System.out.println("\nClass location: "+classLocation+" expecting: "+foundAt);
-			}
-		} else {
-			System.out.println("\nCould not get class data from cache");
 		}
 		return result;
 	}
@@ -218,5 +201,27 @@ public class URLHelperURLClassPathHelperStaleEntryCompatabilityTest {
 		} catch (Exception e){
 			e.printStackTrace();
 		}
+	}
+	
+	boolean validateReturnedClass(String className, String foundAt, CustomPartitioningURLClassLoader loader){
+		boolean result = false;
+		Class classData = null;
+		classData = loader.getClassFromCache(className);
+		if(null != classData){
+			Object o = null;
+			try{
+				o = classData.newInstance();
+			} catch(Exception e){
+				e.printStackTrace();
+			}
+			TestClass tc = (TestClass)o;
+			String classLocation = tc.getLocation();
+			if(classLocation.equals(foundAt)){
+				result = true;
+			} else {
+				System.out.println("\nClass location: "+classLocation+" expecting: "+foundAt);
+			}
+		}
+		return result;
 	}
 }

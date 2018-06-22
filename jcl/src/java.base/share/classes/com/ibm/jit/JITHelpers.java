@@ -474,6 +474,24 @@ public final class JITHelpers {
 		}
 	}
 
+	public int findElementFromArray(Object array, byte ch, int offset, int length) {
+		for (int i = offset; i < length; i++) {
+			if(getByteFromArrayByIndex(array, i) == ch) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	public int findElementFromArray(Object array, char ch, int offset, int length) {
+		for (int i = offset; i < length; i++) {
+			if(getCharFromArrayByIndex(array, i) == ch) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
 	/*
 	 * Constants for optimizedClone
 	 */

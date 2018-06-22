@@ -19,38 +19,41 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.Properties;
 
-import CustomClassloaders.CustomURLClassLoader;
-import CustomClassloaders.CustomURLLoader;
+import CustomClassloaders.CustomPartitioningURLClassLoader;
+import CustomClassloaders.CustomPartitioningURLLoader;
 import Utilities.StringManipulator;
 import Utilities.URLClassPathCreator;
 
 /**
  * @author Matthew Kilner
  */
-public class URLClassPathHelperURLHelperCompatabilityTest {
+public class PartitioningURLClassPathHelperURLHelperStaleEntryCompatibilityTest {
 
 	StringManipulator manipulator = new StringManipulator();
 	
 	public static void main(String[] args) {
 	
-		if(args.length != 2){
+		if(args.length != 4){
 			System.out.println("\n Incorrect usage");
-			System.out.println("\n Please specifiy -testfile <filename>");
+			System.out.println("\n Please specifiy -testfile <filename> -javacdir <path to javac>");
 		}
 		
-		URLClassPathHelperURLHelperCompatabilityTest test = new URLClassPathHelperURLHelperCompatabilityTest();
+		PartitioningURLClassPathHelperURLHelperStaleEntryCompatibilityTest test = new PartitioningURLClassPathHelperURLHelperStaleEntryCompatibilityTest();
 		
 		String testFile = args[1];
+		String javacdir = args[3];
 		
-		test.run(testFile);
+		test.run(testFile, javacdir);
 		
 	}
 	
-	public void run(String testFile){
+	public void run(String testFile, String javacpath){
 		
 		Properties props = new Properties();
 		try{
@@ -63,6 +66,7 @@ public class URLClassPathHelperURLHelperCompatabilityTest {
 		}
 		
 		String classPath = props.getProperty("Classpath");
+		String partition = props.getProperty("Partition");
 		
 		String ctl = props.getProperty("NumberOfClassesToLoad");
 		Integer intctl = new Integer(ctl);
@@ -80,11 +84,13 @@ public class URLClassPathHelperURLHelperCompatabilityTest {
 		
 		int maxClassesToFind = 0;		
 		String[] urls = new String[numberOfUrls];
+		String [] partitionStrings = new String[numberOfUrls];
 		for(int index = 0; index < numberOfUrls; index++){
 			urls[index] = props.getProperty("Url"+index);
+			partitionStrings[index] = props.getProperty("urlPartition"+index);
 			String ctf = props.getProperty("NumberOfClassesToFind"+index);
-			Integer intctf = new Integer(ctf);
-			maxClassesToFind = ((intctf.intValue() > maxClassesToFind) ? intctf.intValue() : maxClassesToFind);
+			Integer intctf = new Integer(ctl);
+			maxClassesToFind = ((intctl.intValue() > maxClassesToFind) ? intctl.intValue() : maxClassesToFind);
 		}
 		
 		String[][] classesToFind = new String[numberOfUrls][maxClassesToFind];
@@ -102,7 +108,9 @@ public class URLClassPathHelperURLHelperCompatabilityTest {
 			}
 		}
 		
-		boolean passed = executeTest(classPath, classesToLoad, urls, classesToFind, results);
+		String batchFile = props.getProperty("BatchFileToRun");
+		
+		boolean passed = executeTest(classPath, partition,  classesToLoad, urls, partitionStrings, classesToFind, results, batchFile, javacpath);
 		
 		if(passed){
 			System.out.println("\nTEST PASSED");
@@ -111,13 +119,14 @@ public class URLClassPathHelperURLHelperCompatabilityTest {
 		}
 	}
 
-	private boolean executeTest(String classPath, String[] classesToLoad, String[] urls, String[][] classesToFind, String[][] results) {
+	private boolean executeTest(String classPath, String partition, String[] classesToLoad, String[] urls, String[] partitionStrings, String[][] classesToFind, String[][] results, String batchFile, String javacpath) {
 		
 		URLClassPathCreator creator = new URLClassPathCreator(classPath);
 		URL[] urlPath;
 		urlPath = creator.createURLClassPath();
 		
-		CustomURLClassLoader cl = new CustomURLClassLoader(urlPath, this.getClass().getClassLoader());
+		CustomPartitioningURLClassLoader cl = new CustomPartitioningURLClassLoader(urlPath, this.getClass().getClassLoader());
+		cl.setPartition(partition);
 		for(int classIndex = 0; classIndex < classesToLoad.length; classIndex++){
 			String classToLoad = classesToLoad[classIndex];
 			if (classToLoad != null){
@@ -129,19 +138,24 @@ public class URLClassPathHelperURLHelperCompatabilityTest {
 			}
 		}
 		
+		if(0 != batchFile.length()){
+			runBatchFile(batchFile, javacpath);
+		}
+		
 		String urlsString = urls[0];
 		for(int index = 1; index < urls.length; index++){
 			urlsString = new StringBuffer(urls[index].length() + 1).append(urlsString).append(urls[index]).toString();
 		}
-		System.out.println("\n** urlsString: "+urlsString);
+		
 		URLClassPathCreator creator2 = new URLClassPathCreator(urlsString);
 		URL[] urlPath2;
 		urlPath2 = creator2.createURLClassPath();
-		CustomURLLoader urlcl = new CustomURLLoader(urlPath2, this.getClass().getClassLoader());
+		CustomPartitioningURLLoader urlcl = new CustomPartitioningURLLoader(urlPath2, this.getClass().getClassLoader());
 		
 		boolean result = true;
 		
 		for(int urlIndex = 0; urlIndex < urls.length; urlIndex++){
+			urlcl.setPartition(partitionStrings[urlIndex]);
 			for(int classIndex = 0; classIndex < classesToFind[urlIndex].length; classIndex++){
 				String classToFind = classesToFind[urlIndex][classIndex];
 				String expectedResult = results[urlIndex][classIndex];
@@ -155,5 +169,30 @@ public class URLClassPathHelperURLHelperCompatabilityTest {
 			}
 		}
 		return result;
+	}
+	
+	private void runBatchFile(String batch, String javacpath){
+		String command = new StringBuffer(batch.length()+javacpath.length()+1).append(batch).append(" ").append(javacpath).toString();
+		System.out.println("\n** Running: "+command);
+		String s = null;
+		try{
+			Process p = Runtime.getRuntime().exec(command);
+			
+			BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+			BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+			
+			System.out.println("Here is the standard output of the command:\n");
+            while ((s = stdInput.readLine()) != null) {
+                System.out.println(s);
+            }
+            
+            System.out.println("Here is the standard error of the command (if any):\n");
+            while ((s = stdError.readLine()) != null) {
+                System.out.println(s);
+            }
+			
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 	}
 }
