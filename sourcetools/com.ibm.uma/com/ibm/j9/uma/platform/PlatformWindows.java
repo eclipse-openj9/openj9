@@ -191,9 +191,8 @@ public class PlatformWindows extends PlatformImplementation {
 		
 		buffer.append(
 				"\n" +
-		"#include <windows.h>\n");
-		writeResourceFileDefines(buffer);
-		buffer.append(
+				"#include <windows.h>\n" + 
+				"#include <winver.h>\n" + 
 				"#include \"j9cfg.h\"\n" +
 				"#include \"j9version.h\"\n" +
 				"\n" +
@@ -492,18 +491,6 @@ public class PlatformWindows extends PlatformImplementation {
 			break;
 		}
 	}
-	
-	final protected void writeResourceFileDefines(StringBuffer buffer) throws UMAException {
-		String ceOsType = replaceMacro("uma_ce_os_type");
-		if ( ceOsType!=null && ceOsType.equalsIgnoreCase("Palm-size PC 2.11") ) {
-			buffer.append("#define VS_VERSION_INFO 1\n" +
-					"#define VOS_NT_WINDOWS32 0x00040004L\n" +
-					"#define VFT_APP 0x00000001L\n" +
-					"#define VFT_DLL 0x00000002L\n");
-		} else {
-			buffer.append("#include <winver.h>\n");
-		}
-	}
 
 	// TODO: move to template file
 	void writeSharedLibResourceFile(Artifact artifact) throws UMAException {
@@ -522,9 +509,8 @@ public class PlatformWindows extends PlatformImplementation {
 		
 		buffer.append(
 				"\n" +
-		"#include <windows.h>\n" );
-		writeResourceFileDefines(buffer);
-		buffer.append(
+				"#include <windows.h>\n" + 
+				"#include <winver.h>\n" + 
 				"#include \"j9cfg.h\"\n" +
 				"#include \"j9version.h\"\n" +
 				"\n" +
