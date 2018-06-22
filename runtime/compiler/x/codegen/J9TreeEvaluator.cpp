@@ -11873,6 +11873,138 @@ TR::Register *intOrLongClobberEvaluate(
       }
    }
 
+static TR::Register* inlineFindElementFromArray(TR::Node* node, TR::CodeGenerator* cg)
+   {
+   static uint8_t MASKOFSIZEONE[] =
+      {
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      };
+   static uint8_t MASKOFSIZETWO[] =
+      {
+      0x00, 0x01, 0x00, 0x01,
+      0x00, 0x01, 0x00, 0x01,
+      0x00, 0x01, 0x00, 0x01,
+      0x00, 0x01, 0x00, 0x01,
+      };
+
+   uint8_t width = 16;
+   uint8_t shift = 0;
+   uint8_t* shuffleMask = NULL;
+   auto compareOp = BADIA32Op;
+   switch(node->getSymbol()->castToMethodSymbol()->getMethod()->parmType(1))
+      {
+      case TR::Int8:
+         shuffleMask = MASKOFSIZEONE;
+         compareOp = PCMPEQBRegReg;
+         shift = 0;
+         break;
+      case TR::Int16:
+         shuffleMask = MASKOFSIZETWO;
+         compareOp = PCMPEQWRegReg;
+         shift = 1;
+         break;
+      default:
+         TR_ASSERT(0, "Incorrect value parameter type!");
+      }
+
+   auto address = cg->evaluate(node->getChild(1));
+   auto value = cg->evaluate(node->getChild(2));
+   auto offset = cg->evaluate(node->getChild(3));
+   auto size = cg->evaluate(node->getChild(4));
+
+   auto ECX = cg->allocateRegister();
+   auto result = cg->allocateRegister();
+   auto scratch = cg->allocateRegister();
+   auto scratchXMM = cg->allocateRegister(TR_VRF);
+   auto valueXMM = cg->allocateRegister(TR_VRF);
+
+   auto dependencies = generateRegisterDependencyConditions((uint8_t)7, (uint8_t)7, cg);
+   dependencies->addPreCondition(ECX, TR::RealRegister::ecx, cg);
+   dependencies->addPreCondition(address, TR::RealRegister::NoReg, cg);
+   dependencies->addPreCondition(size, TR::RealRegister::NoReg, cg);
+   dependencies->addPreCondition(result, TR::RealRegister::NoReg, cg);
+   dependencies->addPreCondition(scratch, TR::RealRegister::NoReg, cg);
+   dependencies->addPreCondition(scratchXMM, TR::RealRegister::NoReg, cg);
+   dependencies->addPreCondition(valueXMM, TR::RealRegister::NoReg, cg);
+   dependencies->addPostCondition(ECX, TR::RealRegister::ecx, cg);
+   dependencies->addPostCondition(address, TR::RealRegister::NoReg, cg);
+   dependencies->addPostCondition(size, TR::RealRegister::NoReg, cg);
+   dependencies->addPostCondition(result, TR::RealRegister::NoReg, cg);
+   dependencies->addPostCondition(scratch, TR::RealRegister::NoReg, cg);
+   dependencies->addPostCondition(scratchXMM, TR::RealRegister::NoReg, cg);
+   dependencies->addPostCondition(valueXMM, TR::RealRegister::NoReg, cg);
+
+   auto begLabel = generateLabelSymbol(cg);
+   auto endLabel = generateLabelSymbol(cg);
+   auto loopLabel = generateLabelSymbol(cg);
+   begLabel->setStartInternalControlFlow();
+   endLabel->setEndInternalControlFlow();
+
+   generateRegRegInstruction(MOVDRegReg4, node, valueXMM, value, cg);
+   generateRegMemInstruction(PSHUFBRegMem, node, valueXMM, generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, shuffleMask), cg), cg);
+
+   generateRegRegInstruction(MOV4RegReg, node, result, offset, cg);
+
+   generateLabelInstruction(LABEL, node, begLabel, cg);
+   generateRegMemInstruction(LEARegMem(), node, scratch, generateX86MemoryReference(address, result, shift, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
+   generateRegRegInstruction(MOVRegReg(), node, ECX, scratch, cg);
+   generateRegImmInstruction(ANDRegImms(), node, scratch, ~(width - 1), cg);
+   generateRegImmInstruction(ANDRegImms(), node, ECX, width - 1, cg);
+   generateLabelInstruction(JE1, node, loopLabel, cg);
+
+   generateRegMemInstruction(MOVDQURegMem, node, scratchXMM, generateX86MemoryReference(scratch, 0, cg), cg);
+   generateRegRegInstruction(compareOp, node, scratchXMM, valueXMM, cg);
+   generateRegRegInstruction(PMOVMSKB4RegReg, node, scratch, scratchXMM, cg);
+   generateRegInstruction(SHR4RegCL, node, scratch, cg);
+   generateRegRegInstruction(TEST4RegReg, node, scratch, scratch, cg);
+   generateLabelInstruction(JNE1, node, endLabel, cg);
+   if (shift)
+      {
+      generateRegImmInstruction(SHR4RegImm1, node, ECX, shift, cg);
+      }
+   generateRegImmInstruction(ADD4RegImms, node, result, width >> shift, cg);
+   generateRegRegInstruction(SUB4RegReg, node, result, ECX, cg);
+   generateRegRegInstruction(CMP4RegReg, node, result, size, cg);
+   generateLabelInstruction(JGE1, node, endLabel, cg);
+
+   generateLabelInstruction(LABEL, node, loopLabel, cg);
+   generateRegMemInstruction(MOVDQURegMem, node, scratchXMM, generateX86MemoryReference(address, result, shift, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
+   generateRegRegInstruction(compareOp, node, scratchXMM, valueXMM, cg);
+   generateRegRegInstruction(PMOVMSKB4RegReg, node, scratch, scratchXMM, cg);
+   generateRegRegInstruction(TEST4RegReg, node, scratch, scratch, cg);
+   generateLabelInstruction(JNE1, node, endLabel, cg);
+   generateRegImmInstruction(ADD4RegImms, node, result, width >> shift, cg);
+   generateRegRegInstruction(CMP4RegReg, node, result, size, cg);
+   generateLabelInstruction(JL1, node, loopLabel, cg);
+   generateLabelInstruction(LABEL, node, endLabel, dependencies, cg);
+
+   generateRegRegInstruction(BSF4RegReg, node, scratch, scratch, cg);
+   if (shift)
+      {
+      generateRegImmInstruction(SHR4RegImm1, node, scratch, shift, cg);
+      }
+   generateRegRegInstruction(ADDRegReg(), node, result, scratch, cg);
+   generateRegRegInstruction(CMPRegReg(), node, result, size, cg);
+   generateRegMemInstruction(CMOVGERegMem(), node, result, generateX86MemoryReference(TR::Compiler->target.is32Bit() ? cg->findOrCreate4ByteConstant(node, -1) : cg->findOrCreate8ByteConstant(node, -1), cg), cg);
+
+   cg->stopUsingRegister(ECX);
+   cg->stopUsingRegister(scratch);
+   cg->stopUsingRegister(scratchXMM);
+   cg->stopUsingRegister(valueXMM);
+
+
+   node->setRegister(result);
+   cg->recursivelyDecReferenceCount(node->getChild(0));
+   cg->decReferenceCount(node->getChild(1));
+   cg->decReferenceCount(node->getChild(2));
+   cg->decReferenceCount(node->getChild(3));
+   cg->decReferenceCount(node->getChild(4));
+   return result;
+   }
+
 /** Replaces a call to an Unsafe CAS method with inline instructions.
    @return true if the call was replaced, false if it was not.
 
@@ -14097,6 +14229,11 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
 
    switch (symbol->getMandatoryRecognizedMethod())
       {
+      case TR::com_ibm_jit_JITHelpers_findElementFromArray:
+         if (TR::Compiler->om.canGenerateArraylets() || !cg->getX86ProcessorInfo().supportsSSSE3())
+            break;
+         else
+            return inlineFindElementFromArray(node, cg);
       case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Big:
       case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Little:
          return TR::TreeEvaluator::encodeUTF16Evaluator(node, cg);
