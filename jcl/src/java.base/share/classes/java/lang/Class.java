@@ -139,16 +139,16 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	static final Class<?>[] EmptyParameters = new Class<?>[0];
 	
 	/*[PR VMDESIGN 485]*/
-	private long vmRef;
-	private ClassLoader classLoader;
+	private transient long vmRef;
+	private transient ClassLoader classLoader;
 
 	/*[IF Sidecar19-SE]*/
-	private Module module;
+	private transient Module module;
 	/*[ENDIF]*/
 
 	/*[PR CMVC 125822] Move RAM class fields onto the heap to fix hotswap crash */
-	private ProtectionDomain protectionDomain;
-	private String classNameString;
+	private transient ProtectionDomain protectionDomain;
+	private transient String classNameString;
 
 	private static final class AnnotationVars {
 		AnnotationVars() {}
@@ -178,9 +178,9 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	private transient EnumVars<T> enumVars;
 	private static long enumVarsOffset = -1;
 	
-	J9VMInternals.ClassInitializationLock initializationLock;
+	transient J9VMInternals.ClassInitializationLock initializationLock;
 	
-	private Object methodHandleCache;
+	private transient Object methodHandleCache;
 	
 	/*[PR Jazz 85476] Address locking contention on classRepository in getGeneric*() methods */
 	private transient ClassRepositoryHolder classRepoHolder;
@@ -1863,7 +1863,7 @@ private static String getNonArrayClassPackageName(Class<?> clz) {
 	String name = clz.getName();
 	int index = name.lastIndexOf('.');
 	if (index >= 0) {
-		return name.substring(0, index);
+		return name.substring(0, index).intern();
 	}
 	return ""; //$NON-NLS-1$
 }
