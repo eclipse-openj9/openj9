@@ -33,7 +33,7 @@ import Utilities.URLClassPathCreator;
 /**
  * @author Matthew Kilner
  */
-public class URLHelperURLClassPathHelperCompatabilityTest {
+public class URLHelperURLClassPathHelperCompatibilityTest {
 
 	StringManipulator manipulator = new StringManipulator();
 	
@@ -44,7 +44,7 @@ public class URLHelperURLClassPathHelperCompatabilityTest {
 			System.out.println("\n Please specifiy -testfile <filename>");
 		}
 		
-		URLHelperURLClassPathHelperCompatabilityTest test = new URLHelperURLClassPathHelperCompatabilityTest();
+		URLHelperURLClassPathHelperCompatibilityTest test = new URLHelperURLClassPathHelperCompatibilityTest();
 		
 		String testFile = args[1];
 		

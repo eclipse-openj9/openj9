@@ -33,7 +33,7 @@ import Utilities.URLClassPathCreator;
 /**
  * @author Matthew Kilner
  */
-public class URLClassPathHelperURLHelperStaleEntryCompatabilityTest {
+public class URLClassPathHelperURLHelperStaleEntryCompatibilityTest {
 
 	StringManipulator manipulator = new StringManipulator();
 	
@@ -44,7 +44,7 @@ public class URLClassPathHelperURLHelperStaleEntryCompatabilityTest {
 			System.out.println("\n Please specifiy -testfile <filename> -javacdir <path to javac>");
 		}
 		
-		URLClassPathHelperURLHelperStaleEntryCompatabilityTest test = new URLClassPathHelperURLHelperStaleEntryCompatabilityTest();
+		URLClassPathHelperURLHelperStaleEntryCompatibilityTest test = new URLClassPathHelperURLHelperStaleEntryCompatibilityTest();
 		
 		String testFile = args[1];
 		String javacdir = args[3];
