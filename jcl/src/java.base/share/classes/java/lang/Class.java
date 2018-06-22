@@ -139,16 +139,16 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	static final Class<?>[] EmptyParameters = new Class<?>[0];
 	
 	/*[PR VMDESIGN 485]*/
-	private long vmRef;
-	private ClassLoader classLoader;
+	private transient long vmRef;
+	private transient ClassLoader classLoader;
 
 	/*[IF Sidecar19-SE]*/
-	private Module module;
+	private transient Module module;
 	/*[ENDIF]*/
 
 	/*[PR CMVC 125822] Move RAM class fields onto the heap to fix hotswap crash */
-	private ProtectionDomain protectionDomain;
-	private String classNameString;
+	private transient ProtectionDomain protectionDomain;
+	private transient String classNameString;
 
 	private static final class AnnotationVars {
 		AnnotationVars() {}
@@ -178,9 +178,9 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	private transient EnumVars<T> enumVars;
 	private static long enumVarsOffset = -1;
 	
-	J9VMInternals.ClassInitializationLock initializationLock;
+	transient J9VMInternals.ClassInitializationLock initializationLock;
 	
-	private Object methodHandleCache;
+	private transient Object methodHandleCache;
 	
 	/*[PR Jazz 85476] Address locking contention on classRepository in getGeneric*() methods */
 	private transient ClassRepositoryHolder classRepoHolder;
@@ -1431,12 +1431,14 @@ private Method throwExceptionOrReturnNull(boolean throwException, String name, C
 Method getMethodHelper(
 	boolean throwException, boolean forDeclaredMethod, List<Method> methodList, String name, Class<?>... parameterTypes)
 	throws NoSuchMethodException {
-	Method result, bestCandidate;
-	int maxDepth;
+	Method result;
+	Method bestCandidate;
 	String strSig;
 	
 	/*[PR CMVC 114820, CMVC 115873, CMVC 116166] add reflection cache */
-	if (parameterTypes == null) parameterTypes = EmptyParameters;
+	if (parameterTypes == null) {
+		parameterTypes = EmptyParameters;
+	}
 	if (methodList == null) {
 		// getDeclaredPublicMethods() has to go through all methods anyway
 		Method cachedMethod = lookupCachedMethod(name, parameterTypes);
@@ -1498,37 +1500,32 @@ Method getMethodHelper(
 	 * since the spec requires that we only weigh multiple matches against
 	 * each other if they are in the same class, on subsequent calls we call
 	 * getDeclaredMethodImpl on the declaring class of the first hit.
-	 * If more than one match is found, the code below selects the
-	 * candidate method whose return type has the largest depth. This case
-	 * is expected to occur only in certain JCK tests, as most Java
-	 * compilers will refuse to produce a class file with multiple methods
-	 * of the same name differing only in return type.
-	 * 
-	 * Selecting by largest depth is one possible algorithm that satisfies the
-	 * spec.
+	 * If more than one match is found, more specific method is selected.
+	 * For methods with same signature (name, parameter types) but different return types,
+	 * Method N with return type S is more specific than M with return type R if:
+	 * S is the same as or a subtype of R.
+	 * Otherwise, the result method is chosen arbitrarily from specific methods.
 	 */
 	bestCandidate = result;
-	maxDepth = result.getReturnType().getClassDepth();
 	Class<?> declaringClass = forDeclaredMethod ? this : result.getDeclaringClass();
-	while( true ) {
+	while (true) {
 		result = declaringClass.getDeclaredMethodImpl(name, parameterTypes, strSig, result);
-		if( result == null ) {
+		if (result == null) {
 			break;
 		}
-		boolean	publicMethod = ((result.getModifiers() & Modifier.PUBLIC) != 0);
+		boolean publicMethod = ((result.getModifiers() & Modifier.PUBLIC) != 0);
 		if ((methodList != null) && publicMethod) {
 			methodList.add(result);
 		}
-		
 		if (forDeclaredMethod || publicMethod) {
-			int resultDepth = result.getReturnType().getClassDepth(); 
-			if( resultDepth > maxDepth ) {
+			// bestCandidate and result have same declaringClass.
+			Class<?> candidateRetType = bestCandidate.getReturnType();
+			Class<?> resultRetType = result.getReturnType();
+			if ((candidateRetType != resultRetType) && candidateRetType.isAssignableFrom(resultRetType)) {
 				bestCandidate = result;
-				maxDepth = resultDepth;
 			}
 		}
 	}
-
 	return cacheMethod(bestCandidate);
 }
 
@@ -1866,7 +1863,7 @@ private static String getNonArrayClassPackageName(Class<?> clz) {
 	String name = clz.getName();
 	int index = name.lastIndexOf('.');
 	if (index >= 0) {
-		return name.substring(0, index);
+		return name.substring(0, index).intern();
 	}
 	return ""; //$NON-NLS-1$
 }
@@ -3424,17 +3421,6 @@ public boolean isLocalClass() {
 public boolean isMemberClass() {
 	return getEnclosingObjectClass() == null && getDeclaringClass() != null;
 }
-
-/**
- * Return the depth in the class hierarchy of the receiver.
- * Base type classes and Object return 0.
- * 
- * @return receiver's class depth
- * 
- * @see #getDeclaredMethod
- * @see #getMethod
- */
-private native int getClassDepth();
 
 /**
  * Compute the signature for get*Method()
