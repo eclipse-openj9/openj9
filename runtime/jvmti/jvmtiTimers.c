@@ -201,15 +201,12 @@ jvmtiGetAvailableProcessors(jvmtiEnv* env,
 {
 	jvmtiError rc;
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	PORT_ACCESS_FROM_JAVAVM(vm);
-	UDATA cpuCount;
 
 	Trc_JVMTI_jvmtiGetAvailableProcessors_Entry(env);
 
 	ENSURE_NON_NULL(processor_count_ptr);
 
-	cpuCount = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_ONLINE);
-	*processor_count_ptr = ((cpuCount == 0) ? 1 : (jint) cpuCount);
+	*processor_count_ptr = (jint) vm->internalVMFunctions->getNumTargetProcessorsCommon(vm);
 	rc = JVMTI_ERROR_NONE;
 
 done:

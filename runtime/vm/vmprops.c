@@ -1417,3 +1417,24 @@ getMUtf8String(J9JavaVM * vm, const char *userString, UDATA stringLength) {
 	}
 	return result;
 }
+
+/**
+ * This function returns the number of available processors, taking into account resource limits
+ * (including cgroup limits if -XX:+UseContainerSupport is set).
+ * 
+ * @param [in] vm the J9JavaVM
+ * 
+ * @return the number of available processors.
+ */
+UDATA
+getNumTargetProcessorsCommon(J9JavaVM * vm) {
+	UDATA cpuCount;
+	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	cpuCount = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
+	if (cpuCount == 0) {
+		return 1;
+	} else {
+		return cpuCount;
+	}
+}
