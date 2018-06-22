@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -128,6 +128,7 @@ private:
 	void writeInterfaces(Cursor *cursor, bool markAndCountOnly);
 	void writeInnerClasses(Cursor *cursor, bool markAndCountOnly);
 	void writeNestMembers(Cursor *cursor, bool markAndCountOnly);
+	void writeValueTypeClasses(Cursor *cursor, bool markAndCountOnly);
 	void writeNameAndSignatureBlock(Cursor *cursor);
 	void writeMethods(Cursor *cursor, Cursor *lineNumberCursor, Cursor *variableInfoCursor, bool markAndCountOnly);
 	void writeMethodDebugInfo(ClassFileOracle::MethodIterator *methodIterator,  Cursor *lineNumberCursor, Cursor *variableInfoCursor, bool markAndCountOnly, bool existHasDebugInformation);
@@ -160,6 +161,9 @@ private:
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	UDATA _nestMembersSRPKey;
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	UDATA _valueTypeClassesSRPKey;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	UDATA _optionalInfoSRPKey;
 	UDATA _stackMapsSRPKey;
 	UDATA _enclosingMethodSRPKey;

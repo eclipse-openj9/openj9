@@ -148,6 +148,9 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	_nestMembersCount(0),
 	_nestHost(0),
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	_valueTypeClassCount(0),
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	_maxBranchCount(1), /* This is required to support buffer size calculations for stackmap support code */
 	_outerClassNameIndex(0),
 	_simpleNameIndex(0),
@@ -175,6 +178,9 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	_nestMembers(NULL),
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	_valueTypeClasses(NULL),
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	_isClassContended(false),
 	_isInnerClass(false)
 {
@@ -492,6 +498,19 @@ ClassFileOracle::walkAttributes()
 			break;
 		}
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case CFR_ATTRIBUTE_ValueTypes:
+			_valueTypeClasses = (J9CfrAttributeValueTypeClasses *)attrib;
+			_valueTypeClassCount = _valueTypeClasses->numberOfClasses;
+			/* The classRefs are never resolved & therefore do not need to
+			 * be kept in the constant pool.
+			 */
+			for (U_16 i = 0; i < _valueTypeClassCount; i++) {
+				U_16 classNameIndex = UTF8_INDEX_FROM_CLASS_INDEX(_classFile->constantPool, _valueTypeClasses->classes[i]);
+				markConstantUTF8AsReferenced(classNameIndex);
+			}
+			break;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		default:
 			Trc_BCU_ClassFileOracle_walkAttributes_UnknownAttribute((U_32)attrib->tag, (U_32)getUTF8Length(attrib->nameIndex), getUTF8Data(attrib->nameIndex), attrib->length);
 			break;

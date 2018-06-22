@@ -299,6 +299,9 @@ ROMClassWriter::ROMClassWriter(BufferManager *bufferManager, ClassFileOracle *cl
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	_nestMembersSRPKey(srpKeyProducer->generateKey()),
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	_valueTypeClassesSRPKey(srpKeyProducer->generateKey()),
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	_optionalInfoSRPKey(srpKeyProducer->generateKey()),
 	_enclosingMethodSRPKey(srpKeyProducer->generateKey()),
 	_sourceDebugExtensionSRPKey(srpKeyProducer->generateKey()),
@@ -405,6 +408,11 @@ ROMClassWriter::writeROMClass(Cursor *cursor,
 		cursor->writeSRP(_staticSplitTableSRPKey, Cursor::SRP_TO_GENERIC);
 		cursor->writeSRP(_specialSplitTableSRPKey, Cursor::SRP_TO_GENERIC);
 		cursor->writeSRP(_varHandleMethodTypeLookupTableSRPKey, Cursor::SRP_TO_GENERIC);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		cursor->writeU16(_classFileOracle->getValueTypeClassCount(), Cursor::GENERIC);
+		cursor->writeU16(0, Cursor::GENERIC); /* padding */
+		cursor->writeSRP(_valueTypeClassesSRPKey, Cursor::SRP_TO_GENERIC);
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		cursor->padToAlignment(sizeof(U_64), Cursor::GENERIC);
 	}
 
@@ -428,6 +436,9 @@ ROMClassWriter::writeROMClass(Cursor *cursor,
 	writeVarHandleMethodTypeLookupTable(cursor, markAndCountOnly);
 	writeStaticSplitTable(cursor, markAndCountOnly);
 	writeSpecialSplitTable(cursor, markAndCountOnly);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	writeValueTypeClasses(cursor, markAndCountOnly);
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	cursor->padToAlignment(sizeof(U_64), Cursor::GENERIC); // TODO why U_64 alignment and not U_32
 
 	/*
@@ -718,6 +729,15 @@ public:
 		}
 	}
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	void writeValueTypeClasses()
+	{
+		if (!_markAndCountOnly) {
+			_classFileOracle->valueTypesDo(this); /* visitConstantPoolIndex */
+		}
+	}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES*/
 
 	void writeInterfaces()
 	{
@@ -1083,6 +1103,17 @@ ROMClassWriter::writeNestMembers(Cursor *cursor, bool markAndCountOnly)
 	Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size).writeNestMembers();
 }
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+void
+ROMClassWriter::writeValueTypeClasses(Cursor *cursor, bool markAndCountOnly)
+{
+	cursor->mark(_valueTypeClassesSRPKey);
+	UDATA size = UDATA(_classFileOracle->getValueTypeClassCount()) * sizeof(J9SRP);
+	CheckSize _(cursor,size);
+	Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size).writeValueTypeClasses();
+}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 void
 ROMClassWriter::writeNameAndSignatureBlock(Cursor *cursor)

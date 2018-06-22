@@ -809,6 +809,19 @@ class NameAndTypeIterator
 	}
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	void valueTypesDo(ConstantPoolIndexVisitor *visitor)
+	{
+		if (NULL != _valueTypeClasses) {
+			U_16 valueTypeClassCount = getValueTypeClassCount();
+			for (U_16 i = 0; i < valueTypeClassCount; i++) {
+				U_16 valueTypeUTF8 = UTF8_INDEX_FROM_CLASS_INDEX(_classFile->constantPool, _valueTypeClasses->classes[i]);
+				visitor->visitConstantPoolIndex(valueTypeUTF8);
+			}
+		}
+	}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+
 	/*
 	 * Iterate over the bootstrap methods and their arguments.
 	 */
@@ -856,6 +869,9 @@ class NameAndTypeIterator
 	U_16 getNestMembersCount() const { return _nestMembersCount; }
 	U_16 getNestHostNameIndex() const { return _nestHost; }
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	U_16 getValueTypeClassCount() const { return _valueTypeClassCount; }
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	U_16 getMajorVersion() const { return _classFile->majorVersion; }
 	U_16 getMinorVersion() const { return _classFile->minorVersion; }
 	U_32 getMaxBranchCount() const { return _maxBranchCount; }
@@ -976,6 +992,9 @@ private:
 	U_16 _nestMembersCount;
 	U_16 _nestHost;
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	U_16 _valueTypeClassCount;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	U_32 _maxBranchCount;
 	U_16 _outerClassNameIndex;
 	U_16 _simpleNameIndex;
@@ -1008,6 +1027,9 @@ private:
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	J9CfrAttributeNestMembers *_nestMembers;
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	J9CfrAttributeValueTypeClasses *_valueTypeClasses;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 	void walkHeader();
 	void walkFields();
