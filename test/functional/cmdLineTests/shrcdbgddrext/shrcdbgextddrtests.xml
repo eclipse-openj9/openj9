@@ -1,0 +1,459 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2018, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+ 
+<suite id="J9 shared cache dbgext Tests" timeout="600">
+
+ <variable name="NONREALTIMESPECS" value="aix.*,win.*,zos.*,linux(?!.*hrt).*" />
+ <variable name="REALTIMESPECS" value=".*_hrt" />
+ 
+ <variable name="CP" value="-cp $UTILSJAR$" />
+ <variable name="PROGRAM" value="org.openj9.test.ivj.Hanoi 2" />
+ <variable name="PROGRAM1" value="SystemProperties" />
+ <variable name="CACHENAME" value="shareddbgext" />
+ <variable name="DUMPFILE1" value="j9core1.dmp" />
+ <variable name="DUMPFILE1a" value="j9core1a.dmp" />
+ <variable name="DUMPFILE1b" value="j9core1b.dmp" />
+ <variable name="DUMPFILE2" value="j9core2.dmp" />
+ <variable name="DUMPFILE2a" value="j9core2a.dmp" />
+ <variable name="DUMPFILE2b" value="j9core2b.dmp" />
+ <variable name="DUMPDIR" value="dumpdir" />
+ <variable name="XDUMP" value="-Xdump:system:file=$DUMPFILE1$,events=vmstop" />
+ <variable name="XDUMP2" value="-Xdump:system:file=$DUMPFILE2$,events=vmstop" />
+
+ <!-- override the JDMPVIEW_EXE command on win32 since jdmpview.exe is failing on Windows XP - CMVC 200287 -->
+ <variable name="JDMPVIEW_EXE" value="$EXE$ com.ibm.jvm.dtfjview.DTFJView" platforms="win_x86-32" />
+
+ <!-- override the -Xdump command on z/OS -->
+ <variable name="XDUMP" value="-Xdump:system:opts=IEATDUMP,dsn=%uid.J9CORE1.DMP,events=vmstop,request=exclusive+compact" platforms="zos.*" />
+ <variable name="XDUMP2" value="-Xdump:system:opts=IEATDUMP,dsn=%uid.J9CORE2.DMP,events=vmstop,request=exclusive+compact" platforms="zos.*" />
+
+ <variable name="SHARECLASSESOPTION" value="-Xshareclasses:name=$CACHENAME$,reset,modified=mod1" platforms="$NONREALTIMESPECS$" />
+ <variable name="SHARECLASSESOPTION" value="-Xshareclasses:name=$CACHENAME$,grow,reset,modified=mod1" platforms="$REALTIMESPECS$" />
+ <variable name="JIT_OPTIONS" value="-Xjit:disableAsyncCompilation,disableInlining -Xaot:forceaot,count=1,disableAsyncCompilation,disableInlining" />
+
+
+ 
+ <test id="Create new shared cache with partition">
+  <command>$EXE$ $JIT_OPTIONS$ $SHARECLASSESOPTION$ $CP$ $PROGRAM$</command>
+  <output regex="no" type="success">Puzzle solved!</output>
+ </test>
+ 
+ <test id="Add another class in the cache" platforms="$NONREALTIMESPECS$">
+  <command>$EXE$ $JIT_OPTIONS$ -Xshareclasses:name=$CACHENAME$ $PROGRAM1$</command>
+  <output regex="no" type="success">OpenJ9</output>
+ </test>
+ 
+ <exec command="touch $PROGRAM1$.class" platforms="$NONREALTIMESPECS$"/>
+
+ <test id="Mark previous class entry as stale" platforms="$NONREALTIMESPECS$">
+  <command>$EXE$ $JIT_OPTIONS$ -Xshareclasses:name=$CACHENAME$ $PROGRAM1$</command>
+  <output regex="no" type="success">OpenJ9</output>
+ </test>
+ 
+ <test id="Create core file">
+  <exec command="tso delete J9CORE1.DMP.*" platforms="zos_390-64.*" />
+  <exec command="tso delete J9CORE1.DMP" platforms="zos_390-31.*" />
+  <exec command="rm -f $DUMPFILE1$" />
+  <command>$EXE$ -Xshareclasses:name=$CACHENAME$ $CP$ $XDUMP$ $PROGRAM$</command>
+  <output regex="no" type="success">Moved disk 0 to 1</output>
+  <output regex="no" type="success">System dump written</output>
+  <!-- check for unexpected core dumps -->
+  <output regex="no" type="failure">0001.dmp</output>
+ </test>
+
+ <test id="Remove shared cache">
+  <command>$EXE$ -Xshareclasses:name=$CACHENAME$,destroy</command>
+  <output regex="no" type="success">destroyed</output>
+ </test>
+
+ <test id="Check whether dump file exist">
+  <exec command="sh" capture="LOGNAME" platforms="zos.*" >
+    <arg>-c</arg>
+    <arg>echo $$LOGNAME</arg>
+  </exec>
+  <exec command="cp //'$LOGNAME$.J9CORE1.DMP.X001' $DUMPFILE1a$" platforms="zos_390-64.*" />
+  <exec command="cp //'$LOGNAME$.J9CORE1.DMP.X002' $DUMPFILE1b$" platforms="zos_390-64.*" />
+  <exec command="sh $CONCAT$ $DUMPFILE1a$ $DUMPFILE1b$ $DUMPFILE1$" platforms="zos_390-64.*" />
+  <exec command="cp //'$LOGNAME$.J9CORE1.DMP' $DUMPFILE1$" platforms="zos_390-31.*" />
+  <exec command="tso delete J9CORE1.DMP.*" platforms="zos_390-64.*" />
+  <exec command="tso delete J9CORE1.DMP" platforms="zos_390-31.*" />
+  <command>ls</command>
+  <output regex="no" type="success">$DUMPFILE1$</output>
+ </test>
+ 
+ <test id="Run !shrc">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE1$</arg>
+                <input>!shrc</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success">!shrc stats</output>
+  <output regex="no" type="required">!shrc allstats</output>
+  <output regex="no" type="required">!shrc rcstats</output>
+  <output regex="no" type="required">!shrc cpstats</output>
+  <output regex="no" type="required">!shrc orphanstats</output>
+  <output regex="no" type="required">!shrc scopestats</output>
+  <output regex="no" type="required">!shrc bytestats</output>
+  <output regex="no" type="required">!shrc invaotstats</output>
+  <output regex="no" type="required">!shrc findclass</output>
+  <output regex="no" type="required">!shrc findclassp</output>
+  <output regex="no" type="required">!shrc aotstats</output>
+  <output regex="no" type="required">!shrc findaot</output>
+  <output regex="no" type="required">!shrc findaotp</output>
+  <output regex="no" type="required">!shrc incache</output>
+  <output regex="no" type="required">!shrc method</output>
+  <output regex="no" type="required">!shrc jitpstats</output>
+  <output regex="no" type="required">!shrc findjitp</output>
+  <output regex="no" type="required">!shrc findjitpp</output>
+  <output regex="no" type="required">!shrc rtflags</output>
+  <output regex="no" type="failure">no shared cache</output>
+  <output regex="no" type="failure">unable to read</output>
+  <output regex="no" type="failure">could not read</output>
+  <output regex="no" type="failure">dump event</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+ </test>
+
+ <test id="Run !shrc stats">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE1$</arg>
+                <input>!shrc stats</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success" platforms="$NONREALTIMESPECS$">4 orphans</output>
+  <output regex="no" type="success" platforms="$REALTIMESPECS$">3 orphans</output>
+  <output regex="no" type="required" platforms="$REALTIMESPECS$">Cachelet</output>
+  <output regex="no" type="required" platforms="$REALTIMESPECS$">CACHELET count</output>
+  <output regex="no" type="required" platforms="$REALTIMESPECS$">0 AOT</output>
+  <output regex="no" type="required" platforms="$REALTIMESPECS$">AOT data length 0</output>
+  <output regex="no" type="required" platforms="$REALTIMESPECS$">JITPROFILE data length 0</output>
+  <output regex="no" type="failure">no shared cache</output>
+  <output regex="no" type="failure">unable to read</output>
+  <output regex="no" type="failure">could not read</output>
+  <output regex="no" type="failure">dump event</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+ </test>
+
+ <test id="Run !shrc allstats">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE1$</arg>
+                <input>!shrc allstats</input>
+                <input>quit</input>
+        </command>
+        
+  <output regex="no" type="success">SCOPE !</output>
+  <output regex="no" type="required">ROMCLASS:</output>
+  <output regex="no" type="required" platforms="$NONREALTIMESPECS$">AOT data !</output>
+  <output regex="no" type="required">BYTEDATA Summary</output>
+  <output regex="no" type="required">DEBUG Area Summary</output>
+  <output regex="no" type="required">CLASSPATH</output>
+  <output regex="no" type="required">JITHINT</output>
+  <output regex="no" type="required">ZIPCACHE</output>
+  <output regex="no" type="required">ORPHAN:</output>
+  <output regex="no" type="required">LineNumberTable bytes</output>
+  <output regex="no" type="required">LocalVariableTable bytes</output>
+  <output regex="no" type="failure">no shared cache</output>
+  <output regex="no" type="failure">unable to read</output>
+  <output regex="no" type="failure">could not read</output>
+  <output regex="no" type="failure">dump event</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+ </test>
+
+ <test id="Run !shrc rcstats">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE1$</arg>
+                <input>!shrc rcstats</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success">ROMCLASS: org/openj9/test/ivj/Disk</output>
+  <!-- Expect a stale entry for ROMClass for $PROGRAM1$.class (which is SystemProperties.class) as we touched the class earlier -->
+  <output regex="yes" javaUtilPattern="yes" type="required" platforms="$NONREALTIMESPECS$">(.)*ROMCLASS: SystemProperties(.)* !STALE!</output>
+  <output regex="no" type="failure">no shared cache</output>
+  <output regex="no" type="failure">unable to read</output>
+  <output regex="no" type="failure">could not read</output>
+  <output regex="no" type="failure">dump event</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+ </test>
+ 
+ <test id="Run !shrc stalestats">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE1$</arg>
+                <input>!shrc stalestats</input>
+                <input>quit</input>
+        </command>
+  <!-- Expect a stale entry for ROMClass for $PROGRAM1$.class (which is SystemProperties.class) as we touched the class earlier -->
+  <output regex="yes" javaUtilPattern="yes" type="success" platforms="$NONREALTIMESPECS$">(.)*ROMCLASS: SystemProperties(.)*!STALE!</output>
+  <output regex="no" type="required" platforms="$NONREALTIMESPECS$">stale bytes</output>
+
+  <output regex="no" type="failure">no shared cache</output>
+  <output regex="no" type="failure">unable to read</output>
+  <output regex="no" type="failure">could not read</output>
+  <output regex="no" type="failure">dump event</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+ </test>
+
+ <test id="Run !shrc cpstats">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE1$</arg>
+                <input>!shrc cpstats</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success">utils.jar</output>
+  <output regex="no" type="failure">no shared cache</output>
+  <output regex="no" type="failure">unable to read</output>
+  <output regex="no" type="failure">could not read</output>
+  <output regex="no" type="failure">dump event</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+ </test>
+
+ <test id="Run !shrc orphanstats">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE1$</arg>
+                <input>!shrc orphanstats</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success">ORPHAN: org/openj9/test/ivj/Disk</output>
+  <output regex="no" type="failure">no shared cache</output>
+  <output regex="no" type="failure">unable to read</output>
+  <output regex="no" type="failure">could not read</output>
+  <output regex="no" type="failure">dump event</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+ </test>
+
+ <test id="Run !shrc scopestats">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE1$</arg>
+                <input>!shrc scopestats</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success">rt.jar</output>
+  <output regex="no" type="success">utils.jar</output>
+  <output regex="no" type="success">lib/modules</output>
+  <output regex="no" type="success">lib\modules</output>
+  <output regex="no" type="failure">no shared cache</output>
+  <output regex="no" type="failure">unable to read</output>
+  <output regex="no" type="failure">could not read</output>
+  <output regex="no" type="failure">dump event</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+ </test>
+
+ <test id="Run !shrc bytesstats">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE1$</arg>
+                <input>!shrc bytestats</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success">BYTEDATA</output>
+  <output regex="no" type="failure">UNKNOWN(</output>
+  <output regex="no" type="failure">no shared cache</output>
+  <output regex="no" type="failure">unable to read</output>
+  <output regex="no" type="failure">could not read</output>
+  <output regex="no" type="failure">dump event</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+ </test>
+
+ <test id="Run !shrc findclass">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE1$</arg>
+                <input>!shrc findclass org/openj9/test/ivj/Disk</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success">ROMCLASS: org/openj9/test/ivj/Disk</output>
+  <output regex="no" type="failure">no shared cache</output>
+  <output regex="no" type="failure">unable to read</output>
+  <output regex="no" type="failure">could not read</output>
+  <output regex="no" type="failure">dump event</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+ </test>
+
+ <test id="Run !shrc findclass for modcontext">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE1$</arg>
+                <input>!shrc findclass java/lang/Object</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success">mod1</output>
+  <output regex="no" type="required" platforms="$NONREALTIMESPECS$">2:</output>
+  <output regex="no" type="failure">no shared cache</output>
+  <output regex="no" type="failure">unable to read</output>
+  <output regex="no" type="failure">could not read</output>
+  <output regex="no" type="failure">dump event</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+ </test>
+
+ <test id="Run !shrc findclassp">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE1$</arg>
+                <input>!shrc findclassp org/openj9/test/ivj</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success">ROMCLASS: org/openj9/test/ivj/Disk</output>
+  <output regex="no" type="failure">no shared cache</output>
+  <output regex="no" type="failure">unable to read</output>
+  <output regex="no" type="failure">could not read</output>
+  <output regex="no" type="failure">dump event</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+ </test>
+
+ <test id="Run !shrc aotstats">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE1$</arg>
+                <input>!shrc aotstats</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success" platforms="$NONREALTIMESPECS$">AOT data !</output>
+  <output regex="no" type="success" platforms="$REALTIMESPECS$">No entry found in the cache</output>
+  <output regex="no" type="failure">no shared cache</output>
+  <output regex="no" type="failure">unable to read</output>
+  <output regex="no" type="failure">could not read</output>
+  <output regex="no" type="failure">dump event</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+ </test>
+
+ <test id="Run !shrc findaot">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE1$</arg>
+  <!-- "solve" is the core method in Hanoi -->
+                <input>!shrc findaot solve</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success" platforms="$NONREALTIMESPECS$">solve(ILorg/openj9/test/ivj/Post</output>
+  <output regex="no" type="success" platforms="$REALTIMESPECS$">No entry found in the cache</output>
+  <output regex="no" type="failure">no shared cache</output>
+  <output regex="no" type="failure">unable to read</output>
+  <output regex="no" type="failure">could not read</output>
+  <output regex="no" type="failure">dump event</output>
+   <output regex="no" type="failure">DDRInteractiveCommandException</output>
+ </test>
+
+ <test id="Run !shrc findaotp">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE1$</arg>
+                <input>!shrc findaotp sol</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success" platforms="$NONREALTIMESPECS$">solve(ILorg/openj9/test/ivj/Post</output>
+  <output regex="no" type="success" platforms="$REALTIMESPECS$">No entry found in the cache</output>
+  <output regex="no" type="failure">no shared cache</output>
+  <output regex="no" type="failure">unable to read</output>
+  <output regex="no" type="failure">could not read</output>
+  <output regex="no" type="failure">dump event</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+ </test>
+
+ <test id="Run !shrc incache 256">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE1$</arg>
+                <input>!shrc incache 256</input>
+                <input>quit</input>
+        </command>
+  <output regex="yes" javaUtilPattern="yes" type="success">0x(0)*100 is not in the shared cache</output>
+  <output regex="no" type="failure">no shared cache</output>
+  <output regex="no" type="failure">unable to read</output>
+  <output regex="no" type="failure">could not read</output>
+  <output regex="no" type="failure">dump event</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+ </test>
+
+ <test id="Run !shrc method 256">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE1$</arg>
+                <input>!shrc method 256</input>
+                <input>quit</input>
+        </command>
+  <output regex="yes" javaUtilPattern="yes" type="success">!j9rommethod 0x(0)*100 not found in cache</output>
+  <output regex="no" type="failure">no shared cache</output>
+  <output regex="no" type="failure">unable to read</output>
+  <output regex="no" type="failure">could not read</output>
+  <output regex="no" type="failure">dump event</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+ </test>
+
+ <test id="Run !shrc rtflags">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE1$</arg>
+                <input>!shrc rtflags</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success">Printing the shared classes runtime flags</output>
+  <output regex="no" type="required">RUNTIMEFLAG</output>
+  <output regex="no" type="failure">Type !shrc to see all the valid options</output>
+  <output regex="no" type="failure">no shared cache</output>
+  <output regex="no" type="failure">unable to read</output>
+  <output regex="no" type="failure">could not read</output>
+  <output regex="no" type="failure">dump event</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+ </test>
+
+<!-- Add JIT/JIT data  related testcases below, All AOT related testcases should be added before this line -->
+
+ <test id="Create core file for JIT profile tests">
+  <exec command="tso delete J9CORE2.DMP.*" platforms="zos_390-64.*" />
+  <exec command="tso delete J9CORE2.DMP" platforms="zos_390-31.*" />
+  <exec command="rm -f $DUMPFILE2$" />
+  <command>$EXE$  -Xjit:disableAsyncCompilation,count=20 $SHARECLASSESOPTION$ $CP$ $XDUMP2$ $PROGRAM$</command>
+  <output regex="no" type="success">Moved disk 0 to 1</output>
+  <output regex="no" type="success">System dump written</output>
+  <!-- check for unexpected core dumps  -->
+  <output regex="no" type="failure">0001.dmp</output>
+ </test>
+
+ <test id="Remove shared cache created for JIT profile tests">
+  <command>$EXE$ -Xshareclasses:name=$CACHENAME$,destroy</command>
+  <output regex="no" type="success">destroyed</output>
+ </test>
+
+ <test id="Check whether dump file exist in JIT profile tests">
+  <exec command="sh" capture="LOGNAME" platforms="zos.*" >
+    <arg>-c</arg>
+    <arg>echo $$LOGNAME</arg>
+  </exec>
+  <exec command="cp //'$LOGNAME$.J9CORE2.DMP.X001' $DUMPFILE2a$" platforms="zos_390-64.*" />
+  <exec command="cp //'$LOGNAME$.J9CORE2.DMP.X002' $DUMPFILE2b$" platforms="zos_390-64.*" />
+  <exec command="sh $CONCAT$ $DUMPFILE2a$ $DUMPFILE2b$ $DUMPFILE2$" platforms="zos_390-64.*" />
+  <exec command="cp //'$LOGNAME$.J9CORE2.DMP' $DUMPFILE2$" platforms="zos_390-31.*" />
+  <exec command="tso delete J9CORE2.DMP.*" platforms="zos_390-64.*" />
+  <exec command="tso delete J9CORE2.DMP" platforms="zos_390-31.*" />
+  <command>ls</command>
+  <output regex="no" type="success">$DUMPFILE2$</output>
+ </test>
+
+ <test id="Run !shrc jitpstats">
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE2$</arg>
+                <input>!shrc jitpstats</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success" platforms="$NONREALTIMESPECS$">JITPROFILE data !</output>
+  <output regex="no" type="success" platforms="$REALTIMESPECS$">No entry found in the cache</output>
+  <output regex="no" type="required">JITPROFILE data length</output>
+  <output regex="no" type="failure">no shared cache</output>
+  <output regex="no" type="failure">unable to read</output>
+  <output regex="no" type="failure">could not read</output>
+  <output regex="no" type="failure">dump event</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+ </test>
+
+</suite>
