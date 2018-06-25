@@ -548,7 +548,8 @@ public class PointerGenerator {
 				continue;
 			}
 
-			int type = typeManager.getType(fieldDescriptor.getType());
+			String typeName = fieldDescriptor.getType();
+			int type = typeManager.getType(typeName);
 			switch (type) {
 			case TYPE_STRUCTURE:
 				writeStructureMethod(writer, structure, fieldDescriptor);
@@ -611,7 +612,6 @@ public class PointerGenerator {
 				writeEnumPointerMethod(writer, structure, fieldDescriptor);
 				break;
 			case TYPE_BITFIELD:
-				String typeName = fieldDescriptor.getType();
 				int colonIndex = typeName.indexOf(':');
 				if (colonIndex == -1) {
 					throw new IllegalArgumentException(String.format("%s is not a bitfield", fieldDescriptor));
@@ -619,10 +619,10 @@ public class PointerGenerator {
 				writeBitFieldMethod(writer, structure, fieldDescriptor, type, fieldDescriptor.getName());
 				break;
 			default:
-				if ((type >= TYPE_SIMPLE_MIN) && (type <= TYPE_SIMPLE_MAX)) {
+				if ((TYPE_SIMPLE_MIN <= type) && (type <= TYPE_SIMPLE_MAX)) {
 					writeSimpleTypeMethod(writer, structure, fieldDescriptor, type);
 				} else {
-					String error = String.format("Unhandled structure type: %s->%s %s", structure.getPointerName(), fieldDescriptor.getName(), fieldDescriptor.getType());
+					String error = String.format("Unhandled structure type: %s->%s %s", structure.getPointerName(), fieldDescriptor.getName(), typeName);
 					System.out.println(error);
 				}
 				break;
@@ -635,7 +635,7 @@ public class PointerGenerator {
 		String offsetConstant = getOffsetConstant(fieldDescriptor);
 		String pointerType = wide ? "WideSelfRelativePointer" : "SelfRelativePointer";
 		if (cacheFields) {
-			writer.format("\tprivate %s %s_cache ;%n", pointerType, getter);
+			writer.format("\tprivate %s %s_cache;%n", pointerType, getter);
 		}
 		writeMethodSignature(writer, pointerType, getter, fieldDescriptor, true);
 		if (cacheFields) {
@@ -690,8 +690,8 @@ public class PointerGenerator {
 	 *
 	 * You only have to add methods that would be generated but need to be altered
 	 * by the user to contain a different return type.
-	 * 
-	 * Also removes anonymous fields generated on AIX which start with illegal 
+	 *
+	 * Also removes anonymous fields generated on AIX which start with illegal
 	 * characters (#)
 	 *
 	 * There is likely a MUCH better way to do this.
@@ -819,10 +819,12 @@ public class PointerGenerator {
 		String getter = fieldDescriptor.getName();
 		String offsetConstant = getOffsetConstant(fieldDescriptor);
 		String pointerType = getPointerType(fieldDescriptor.getType());
+		String returnType = generalizeSimplePointer(pointerType);
+
 		if (cacheFields) {
-			writer.format("\tprivate %s %s_cache ;%n", pointerType, getter);
+			writer.format("\tprivate %s %s_cache;%n", pointerType, getter);
 		}
-		writeMethodSignature(writer, pointerType, getter, fieldDescriptor, true);
+		writeMethodSignature(writer, returnType, getter, fieldDescriptor, true);
 		if (cacheFields) {
 			writer.format("\t\tif (CACHE_FIELDS) {%n");
 			writer.format("\t\t\tif (%s_cache == null) {%n", getter);
@@ -840,32 +842,19 @@ public class PointerGenerator {
 		writeEAMethod(writer, "PointerPointer", structure, fieldDescriptor);
 	}
 
-//	private String getSRPPointerType(FieldDescriptor fieldDescriptor) {
-//		String type = fieldDescriptor.getType();
-//		int start = type.indexOf('(') + 1;
-//		int end = type.lastIndexOf(')');
-//		String srpType = type.substring(start, end);
-//		if (srpType.contains("SRP")) {
-//			// NestedSRP
-//			return srpType;
-//		} else {
-//			return srpType + "Pointer";
-//		}
-//	}
+	private static String getPointerType(String type) {
+		type = ConstPattern.matcher(type).replaceAll("");
 
-	private String getPointerType(String type) {
-		if (type.indexOf("**") != -1) {
+		int firstStar = type.indexOf('*');
+
+		if (type.indexOf('*', firstStar + 1) > 0) {
+			// two or more levels of indirection
 			return "PointerPointer";
 		}
 
-		int index = type.indexOf("const ");
-		if (index != -1) {
-			type = type.substring(index + "const ".length());
-		}
+		type = type.substring(0, firstStar).trim();
 
-		index = type.indexOf('*');
-		type = type.substring(0, index).trim();
-		return type.toUpperCase().substring(0, 1) + type.substring(1) + "Pointer";
+		return type.substring(0, 1).toUpperCase() + type.substring(1) + "Pointer";
 	}
 
 	private int errorCount = 0;
@@ -891,11 +880,11 @@ public class PointerGenerator {
 		}
 	}
 
-	private String getEnumType(String enumDeclaration) {
+	private static String getEnumType(String enumDeclaration) {
 		int start = 0;
 		int end = enumDeclaration.length();
 
-		if (enumDeclaration.startsWith("enum")) {
+		if (enumDeclaration.startsWith("enum ")) {
 			start = "enum ".length();
 		}
 
@@ -941,29 +930,8 @@ public class PointerGenerator {
 			// Not implemented
 			break;
 
-		case TYPE_STRUCTURE: {
-			// TODO : this snippet should be commonized
-			int start;
-
-			start = componentType.indexOf("struct ");
-			if (start >= 0) {
-				start += "struct ".length();
-			} else {
-				start = componentType.indexOf("class ");
-				if (start >= 0) {
-					start += "class ".length();
-				} else {
-					start = componentType.indexOf("enum ");
-					if (start >= 0) {
-						start += "enum ".length();
-					} else {
-						//Typedef'd structure name
-						start = 0;
-					}
-				}
-			}
-			return componentType.substring(start, componentType.length()).trim() + "Pointer";
-		}
+		case TYPE_STRUCTURE:
+			return removeTypeTags(componentType) + "Pointer";
 
 		case TYPE_FJ9OBJECT:
 			return "ObjectReferencePointer";
@@ -975,7 +943,7 @@ public class PointerGenerator {
 			return "ObjectMonitorReferencePointer";
 
 		default:
-			if ((arrayType >= TYPE_SIMPLE_MIN) && (arrayType < TYPE_SIMPLE_MAX)) {
+			if ((TYPE_SIMPLE_MIN <= arrayType) && (arrayType <= TYPE_SIMPLE_MAX)) {
 				return componentType + "Pointer";
 			}
 		}
@@ -1088,7 +1056,7 @@ public class PointerGenerator {
 		String enumType = getEnumType(type.substring(0, type.indexOf('*')));
 
 		if (cacheFields) {
-			writer.format("\tprivate %s %s_cache ;%n", pointerType, getter);
+			writer.format("\tprivate %s %s_cache;%n", pointerType, getter);
 		}
 		writeMethodSignature(writer, pointerType, getter, fieldDescriptor, true);
 		if (cacheFields) {
@@ -1133,14 +1101,47 @@ public class PointerGenerator {
 		writeEAMethod(writer, "FloatPointer", structure, fieldDescriptor);
 	}
 
+	/*
+	 * The new DDR tooling doesn't always distinguish between IDATA and I32 or I64
+	 * or between UDATA and U32 or U64. Thus the return types of accessor methods
+	 * must be more general to be compatible with the pointer types derived from
+	 * both 32-bit and 64-bit core files. This generalization must occur even for
+	 * the pointer stubs generated from this code so that incompatibilities will
+	 * be discovered at build time, rather than at run time.
+	 */
+	private static String generalizeSimpleType(String type) {
+		if ("I32".equals(type) || "I64".equals(type)) {
+			return "IDATA";
+		} else if ("U32".equals(type) || "U64".equals(type)) {
+			return "UDATA";
+		} else {
+			return type;
+		}
+	}
+
+	/*
+	 * Like generalizeSimpleType() above, but for pointer types.
+	 */
+	private static String generalizeSimplePointer(String type) {
+		if ("I32Pointer".equals(type) || "I64Pointer".equals(type)) {
+			return "IDATAPointer";
+		} else if ("U32Pointer".equals(type) || "U64Pointer".equals(type)) {
+			return "UDATAPointer";
+		} else {
+			return type;
+		}
+	}
+
 	private void writeSimpleTypeMethod(PrintWriter writer, StructureDescriptor structure, FieldDescriptor fieldDescriptor, int type) {
 		String getter = fieldDescriptor.getName();
 		String offsetConstant = getOffsetConstant(fieldDescriptor);
 		String typeString = fieldDescriptor.getType();
+		String returnType = generalizeSimpleType(typeString);
+
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", typeString, getter);
 		}
-		writeMethodSignature(writer, typeString, getter, fieldDescriptor, true);
+		writeMethodSignature(writer, returnType, getter, fieldDescriptor, true);
 		if (cacheFields) {
 			writer.format("\t\tif (CACHE_FIELDS) {%n");
 			writer.format("\t\t\tif (%s_cache == null) {%n", getter);
@@ -1156,7 +1157,15 @@ public class PointerGenerator {
 		writeMethodClose(writer);
 
 		/* Now write an EA method to return the address of the slot */
-		writeEAMethod(writer, fieldDescriptor.getType() + "Pointer", structure, fieldDescriptor);
+		writeEAMethod(writer, returnType + "Pointer", structure, fieldDescriptor);
+	}
+
+	private static final Pattern ConstPattern = Pattern.compile("\\s*\\bconst\\s+");
+
+	private static final Pattern TypeTagPattern = Pattern.compile("\\s*\\b(class|enum|struct)\\s+");
+
+	private static String removeTypeTags(String type) {
+		return TypeTagPattern.matcher(type).replaceAll("").trim();
 	}
 
 	private void writeSRPMethod(PrintWriter writer, StructureDescriptor structure, FieldDescriptor fieldDescriptor, boolean isWide) {
@@ -1164,11 +1173,12 @@ public class PointerGenerator {
 		String offsetConstant = getOffsetConstant(fieldDescriptor);
 		String typeString = fieldDescriptor.getType();
 		final String prefix = isWide ? "J9WSRP" : "J9SRP";
+		final int prefixLength = prefix.length();
 		final String getAtOffsetFunction = isWide ? "getPointerAtOffset" : "getIntAtOffset";
 		String referencedTypeString = null;
 
-		if (typeString.startsWith(prefix + "(")) {
-			referencedTypeString = typeString.substring(prefix.length() + 1, typeString.length() - 1);
+		if (typeString.startsWith(prefix) && typeString.startsWith("(", prefixLength)) {
+			referencedTypeString = typeString.substring(prefixLength + 1, typeString.length() - 1);
 		} else {
 			referencedTypeString = "void";
 		}
@@ -1178,7 +1188,7 @@ public class PointerGenerator {
 		String pointerType = null;
 		switch (type) {
 		case TYPE_STRUCTURE:
-			pointerType = referencedTypeString.substring("struct ".length()) + "Pointer";
+			pointerType = removeTypeTags(referencedTypeString) + "Pointer";
 			break;
 		case TYPE_VOID:
 			pointerType = "VoidPointer";
@@ -1190,10 +1200,10 @@ public class PointerGenerator {
 			pointerType = "WideSelfRelativePointer";
 			break;
 		default:
-			if ((type >= TYPE_SIMPLE_MIN) && (type <= TYPE_SIMPLE_MAX)) {
+			if ((TYPE_SIMPLE_MIN <= type) && (type <= TYPE_SIMPLE_MAX)) {
 				pointerType = getPointerType(referencedTypeString + "*");
 			} else {
-				throw new RuntimeException("Unexpected SRP reference type: " + type + " from " + fieldDescriptor.getType());
+				throw new RuntimeException("Unexpected SRP reference type: " + type + " from " + typeString);
 			}
 			break;
 		}
@@ -1229,27 +1239,8 @@ public class PointerGenerator {
 
 	private void writeStructurePointerMethod(PrintWriter writer, StructureDescriptor structure, FieldDescriptor fieldDescriptor) {
 		String type = fieldDescriptor.getType();
-		int start;
-
-		start = type.indexOf("struct ");
-		if (start >= 0) {
-			start += "struct ".length();
-		} else {
-			start = type.indexOf("class ");
-			if (start >= 0) {
-				start += "class ".length();
-			} else {
-				start = type.indexOf("enum ");
-				if (start >= 0) {
-					start += "enum ".length();
-				} else {
-					//Typedef'd structure name
-					start = 0;
-				}
-			}
-		}
-
-		String returnType = type.substring(start, type.indexOf('*')) + "Pointer";
+		String targetType = type.substring(0, type.indexOf('*'));
+		String returnType = removeTypeTags(targetType) + "Pointer";
 		String getter = fieldDescriptor.getName();
 		String offsetConstant = getOffsetConstant(fieldDescriptor);
 		if (cacheFields) {
@@ -1403,26 +1394,13 @@ public class PointerGenerator {
 	}
 
 	private void writeStructureMethod(PrintWriter writer, StructureDescriptor structure, FieldDescriptor fieldDescriptor) {
-		String returnType;
 		String type = fieldDescriptor.getType();
-		int start;
+		String returnType;
 
 		if (type.equals("void")) {
 			returnType = "VoidPointer";
 		} else {
-			start = type.indexOf("struct ");
-			if (start >= 0) {
-				start += "struct ".length();
-			} else {
-				start = type.indexOf("class ");
-				if (start >= 0) {
-					start += "class ".length();
-				} else {
-					//Trim nothing - is an typedef'd structure name
-					start = 0;
-				}
-			}
-			returnType = type.substring(start) + "Pointer";
+			returnType = removeTypeTags(type) + "Pointer";
 		}
 
 		String getter = fieldDescriptor.getName();
