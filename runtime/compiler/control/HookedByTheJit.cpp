@@ -2993,17 +2993,17 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
    classPair = classList;
    for (i = 0; i < classCount; i++)
       {
+      // Add to JITaaS unload list
+      if (compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+         compInfo->getUnloadedClassesTempList()->push_back((TR_OpaqueClassBlock *) classPair->oldClass);
+
       freshClass = ((TR_J9VMBase *)fe)->convertClassPtrToClassOffset(classPair->newClass);
       if (VM_PASSES_SAME_CLASS_TWICE)
          staleClass = ((TR_J9VMBase *)fe)->convertClassPtrToClassOffset(((J9Class*)freshClass)->replacedClass);
       else
          staleClass = ((TR_J9VMBase *)fe)->convertClassPtrToClassOffset(classPair->oldClass);
       methodCount = classPair->methodCount;
-      methodList = classPair->methodList;
-
-      // Add to JITaaS unload list
-      if (compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
-         compInfo->getUnloadedClassesTempList()->push_back(staleClass);
+      methodList = classPair->methodList; 
 
       // Step 3  patch modified classes
       if (rat)

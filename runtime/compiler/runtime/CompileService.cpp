@@ -170,7 +170,16 @@ void J9CompileDispatcher::compile(JITaaS::J9ServerStream *stream)
          auto clientSession = compInfo->getClientSessionHT()->findOrCreateClientSession(clientId);
          if (!clientSession)
             throw std::bad_alloc();
-
+         
+         // If new classes have been unloaded at the client, 
+         // delete relevant entries from the persistent caches we hold per client
+         // This could be an expensive operation and we are holding the compilation monitor
+         // Maybe we should create another monitor.
+         // 
+         // Redefined classes are marked as unloaded, since they need to be cleared
+         // from the ROM class cache.
+         if (unloadedClasses.size() != 0)
+            clientSession->processUnloadedClasses(unloadedClasses);
          // Get the ROMClass for the method to be compiled if it is already cached
          // Or read it from the compilation request and cache it otherwise
          if (!(romClass = JITaaSHelpers::getRemoteROMClassIfCached(clientSession, clazz)))
@@ -178,13 +187,6 @@ void J9CompileDispatcher::compile(JITaaS::J9ServerStream *stream)
             romClass = TR_ResolvedJ9JITaaSServerMethod::romClassFromString(romClassStr, fej9->_compInfo->persistentMemory());
             JITaaSHelpers::cacheRemoteROMClass(clientSession, clazz, romClass, methodsOfClass, baseComponentClass, numDims);
             }
-
-         // If new classes have been unloaded at the client, 
-         // delete relevant entries from the persistent caches we hold per client
-         // This could be an expensive operation and we are holding the compilation monitor
-         // Maybe we should create another monitor
-         if (unloadedClasses.size() != 0)
-            clientSession->processUnloadedClasses(unloadedClasses);
 
          clientSession->decInUse();
          }
