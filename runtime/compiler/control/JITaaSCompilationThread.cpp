@@ -14,6 +14,7 @@
 #include "runtime/JITaaSIProfiler.hpp"           // for TR_ContiguousIPMethodHashTableEntry
 #include "j9port.h" // for j9time_current_time_millis
 #include "env/j9methodServer.hpp"
+#include "exceptions/AOTFailure.hpp" // for AOTFailure
 
 uint32_t serverMsgTypeCount[JITaaS::J9ServerMessageType_ARRAYSIZE] = {};
 
@@ -2069,8 +2070,11 @@ remoteCompile(
                                               "JITaaS Relocation failure: %d",
                                               compInfoPT->reloRuntime()->returnCode());
                }
+            // relocation failed, fail compilation
+            compInfoPT->getMethodBeingCompiled()->_compErrCode = compInfoPT->reloRuntime()->returnCode();
+            compiler->failCompilation<J9::AOTRelocationFailed>("Failed to relocate");
             }
-         TR_ASSERT(metaData, "relocation must succeed");
+         // TR_ASSERT(metaData, "relocation must succeed");
 
          if (!TR::comp()->getOption(TR_DisableCHOpts))
             {
@@ -2137,7 +2141,8 @@ remoteCompile(
       }
    else
       {
-      compiler->failCompilation<TR::CompilationException>("JITaaS compilation failed.");
+      compInfoPT->getMethodBeingCompiled()->_compErrCode = statusCode;
+      compiler->failCompilation<JITaaS::ServerCompFailure>("JITaaS compilation failed.");
       }
    return metaData;
    }

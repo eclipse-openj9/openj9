@@ -2019,6 +2019,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
                   entry->_doNotUseAotCodeFromSharedCache = true;
                // Intentionally fall through next case
             case compilationInterrupted:
+            case compilationStreamFailure:
             case compilationCodeReservationFailure:
             case compilationRecoverableTrampolineFailure:
             case compilationIllegalCodeCacheSwitch:
@@ -10626,7 +10627,12 @@ TR::CompilationInfoPerThreadBase::processException(
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS StreamFailure: %s", e.what());
-      _methodBeingCompiled->_compErrCode = compilationInterrupted;
+      _methodBeingCompiled->_compErrCode = compilationStreamFailure;
+      }
+   catch (const JITaaS::ServerCompFailure &e)
+      {
+      // no need to set error code here because error code is set
+      // in remoteCompile when the compilation failed
       }
    catch (...)
       {

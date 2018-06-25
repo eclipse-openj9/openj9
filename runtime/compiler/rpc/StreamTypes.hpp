@@ -39,6 +39,16 @@ namespace JITaaS
    public:
       StreamArityMismatch(std::string message) : StreamFailure(message) { TR_ASSERT(false, "arity mismatch"); }
       };
+
+   class ServerCompFailure: public virtual std::exception
+      {
+   public:
+      ServerCompFailure() : _message("Generic JITaaS server compilation failure") { }
+      ServerCompFailure(std::string message) : _message(message) { }
+      virtual const char* what() const throw() { return _message.c_str(); }
+   private:
+      std::string _message;
+      };
 }
 
 #endif // RPC_TYPES_H
