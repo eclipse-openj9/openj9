@@ -954,39 +954,7 @@ SH_OSCache::getHeaderFieldAddressForGen(void* header, UDATA headerGen, UDATA fie
 IDATA
 SH_OSCache::getHeaderFieldOffsetForGen(UDATA headerGen, UDATA fieldID)
 {
-	switch(headerGen) {
-	case OSCACHE_CURRENT_CACHE_GEN :
-	case 34:
-	case 33:
-	case 32:
-	case 31:
-	case 30:
-	case 29:
-	case 28:
-	case 27:
-	case 26:
-	case 25:
-	case 24:
-	case 23:
-	case 22:
-	case 21:
-	case 20:
-	case 19:
-	case 18:
-	case 17:
-	case 16:
-	case 15:
-	case 14:
-	case 13:
-	case 12:
-	case 11:
-	case 10:
-	case 9 :
-	case 8 :
-	case 7 :
-	case 6 :
-	case 5 :
-	{
+	if ((4 < headerGen) && (headerGen <= OSCACHE_CURRENT_CACHE_GEN)) {
 		switch (fieldID) {
 		case OSCACHE_HEADER_FIELD_SIZE :
 			return offsetof(OSCache_header_version_current, size);
@@ -1001,12 +969,10 @@ SH_OSCache::getHeaderFieldOffsetForGen(UDATA headerGen, UDATA fieldID)
 		case OSCACHE_HEADER_FIELD_CACHE_INIT_COMPLETE :
 			return offsetof(OSCache_header_version_current, cacheInitComplete);
 		default :
-			break;
 			/* Should never happen */
+			break;
 		}
-	}
-	case 4 :
-	{
+	} else if (4 == headerGen) {
 		switch (fieldID) {
 		case OSCACHE_HEADER_FIELD_SIZE :
 			return offsetof(OSCache_header_version_G04, size);
@@ -1021,12 +987,10 @@ SH_OSCache::getHeaderFieldOffsetForGen(UDATA headerGen, UDATA fieldID)
 		case OSCACHE_HEADER_FIELD_CACHE_INIT_COMPLETE :
 			return offsetof(OSCache_header_version_G04, cacheInitComplete);
 		default :
-			break;
 			/* Should never happen */
+			break;
 		}
-	}
-	case 3 :
-	{
+	} else if (3 == headerGen) {
 		switch (fieldID) {
 		case OSCACHE_HEADER_FIELD_SIZE :
 			return offsetof(OSCache_header_version_G03, size);
@@ -1039,13 +1003,9 @@ SH_OSCache::getHeaderFieldOffsetForGen(UDATA headerGen, UDATA fieldID)
 		case OSCACHE_HEADER_FIELD_BUILDID :
 			return offsetof(OSCache_header_version_G03, buildID);
 		default :
-			break;
 			/* Should never happen */
+			break;
 		}
-	}
-	default :
-		break;
-		/* Should never happen */
 	}
 	Trc_SHR_Assert_ShouldNeverHappen();
 	return 0;
