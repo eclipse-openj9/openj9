@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,7 +62,7 @@ public class LinearDumper implements IClassWalkCallbacks {
 	 * @author jeanpb
 	 *
 	 */
-	public class J9ClassRegion implements Comparable<J9ClassRegion> {
+	public static class J9ClassRegion implements Comparable<J9ClassRegion> {
 		public J9ClassRegion(AbstractPointer slotPtr, SlotType type, String name,
 				String additionalInfo, long length, long offset, boolean computePadding) {
 			this.slotPtr = slotPtr;
@@ -149,8 +149,9 @@ public class LinearDumper implements IClassWalkCallbacks {
 		public boolean getComputePadding() {
 			return computePadding;
 		}
-	};
-	public class J9ClassRegionNode implements Comparable<J9ClassRegionNode>{
+	}
+
+	public static class J9ClassRegionNode implements Comparable<J9ClassRegionNode>{
 		private J9ClassRegion nodeValue;
 		private LinkedList<J9ClassRegionNode> children;
 		public J9ClassRegionNode(J9ClassRegion nodeValue) {
@@ -175,7 +176,7 @@ public class LinearDumper implements IClassWalkCallbacks {
 				return 0;
 			}
 		}
-	};
+	}
 
 	private List<J9ClassRegion> classRegions = new LinkedList<J9ClassRegion>();
 	private long firstJ9_ROM_UTF8 = Long.MAX_VALUE;
@@ -543,7 +544,7 @@ public class LinearDumper implements IClassWalkCallbacks {
 			break;
 		default:
 			String detail = "";
-			slotAddress = region.getSlotPtr().at(0).longValue();
+			slotAddress = UDATAPointer.cast(region.getSlotPtr()).at(0).longValue();
 			long slotAddressOriginal = slotAddress;
 			if ((null != region.additionalInfo) && (region.additionalInfo.length() != 0)) {
 				if ("classAndFlags".equals(region.name) && (UDATA.MASK != slotAddress) ) {

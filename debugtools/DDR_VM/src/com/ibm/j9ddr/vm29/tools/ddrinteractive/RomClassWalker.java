@@ -98,6 +98,7 @@ import com.ibm.j9ddr.vm29.types.I32;
 import com.ibm.j9ddr.vm29.types.U16;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.U64;
+import com.ibm.j9ddr.vm29.types.UDATA;
 
 /**
  * Walk every slot and sections of a ROMClass
@@ -320,7 +321,7 @@ public class RomClassWalker extends ClassWalker {
 		int fieldLength = 0;
 		
 		U32Pointer initialValue;
-		U32 modifiers;
+		UDATA modifiers;
 		
 		J9ROMNameAndSignaturePointer fieldNAS = field.nameAndSignature();
 		classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, fieldNAS.nameEA(), "name");
@@ -712,7 +713,7 @@ public class RomClassWalker extends ClassWalker {
 	}
 	void allSlotsInIntermediateClassDataDo () throws CorruptDataException
 	{
-		U32 count = romClass.intermediateClassDataLength();
+		UDATA count = romClass.intermediateClassDataLength();
 		if (count.gt(0)) {
 			U8Pointer cursor = romClass.intermediateClassData();
 			String j9xHelp = "!j9x "+cursor.getHexAddress()+","+count.getHexValue();

@@ -135,12 +135,12 @@ public class OptInfo {
 		return ROMHelp.getMethodDebugInfoFromROMMethod(ROMHelp.getOriginalROMMethod(method));
 	}
 	
-	private static SelfRelativePointer getSRPPtr(U32Pointer ptr, U32 flags, long option) {
+	private static SelfRelativePointer getSRPPtr(U32Pointer ptr, UDATA flags, long option) {
 		if ((!(flags.anyBitsIn(option))) || (ptr.isNull())) {
 			return SelfRelativePointer.NULL;
 		}
 
-		return SelfRelativePointer.cast(ptr.add(countBits(COUNT_MASK(flags, option)) - 1));
+		return SelfRelativePointer.cast(ptr.add(countBits(COUNT_MASK(new U32(flags), option)) - 1));
 	}
 
 	public static int countBits(U32 word) {
@@ -177,7 +177,7 @@ public class OptInfo {
 	}
 
 	public static U32 COUNT_MASK(U32 value, long mask) {
-		return (value.bitAnd(((mask) << 1) - 1));
+		return value.bitAnd((mask << 1) - 1);
 	}
 
 	public static String getSourceFileNameForROMClass(J9ROMClassPointer romClass) throws CorruptDataException {

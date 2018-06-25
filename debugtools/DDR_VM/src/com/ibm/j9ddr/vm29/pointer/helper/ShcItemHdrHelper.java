@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@ import com.ibm.j9ddr.vm29.types.U32;
 public class ShcItemHdrHelper {
 	/* ->itemLen should never be set or read without these macros as the lower bit is used to indicate staleness */
 	public static U32 CCITEMLEN(ShcItemHdrPointer ptr) throws CorruptDataException {
-		return ptr.itemLen().bitAnd(0xFFFFFFFE);
+		return new U32(ptr.itemLen()).bitAnd(0xFFFFFFFE);
 	}
 	
 	// #define CCITEM(ih) (((U_8*)(ih)) - (CCITEMLEN(ih) - sizeof(ShcItemHdr)))
