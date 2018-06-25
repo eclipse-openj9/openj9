@@ -1328,7 +1328,7 @@ J9::SymbolReferenceTable::findOrCreateStaticSymbol(TR::ResolvedMethodSymbol * ow
       TR::VMAccessCriticalSection getObjectReferenceLocation(comp());
       if (*((uintptrj_t*)dataAddress) != NULL)
          {
-         TR_OpaqueClassBlock *declaringClass = TR::Compiler->cls.objectClass(comp(), *((uintptrj_t*)dataAddress));
+         TR_OpaqueClassBlock *declaringClass = owningMethod->getDeclaringClassFromFieldOrStatic(comp(), cpIndex);
          if (declaringClass)
             {
             int32_t clazzNameLength = 0;
