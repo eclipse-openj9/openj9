@@ -31,6 +31,9 @@
 		<export name="JNI_GetDefaultJavaVMInitArgs"/>
 		<export name="_JVM_GetCallerClass@4" />
 		<export name="JVM_BeforeHalt" />
+		<export name="JVM_GetNestHost" />
+		<export name="JVM_GetNestMembers" />
+		<export name="JVM_AreNestMates" />
 	</exports>
 
 	<artifact type="shared" name="jvm" scope="jdk11" loadgroup="top" buildlocal="true" appendrelease="false">
@@ -73,13 +76,13 @@
 			<vpath pattern="j7vmi.c" path="../j9vm" augmentObjects="true" augmentIncludes="true" type="relativepath"/>
 			<vpath pattern="j8vmi.c" path="../j9vm" augmentObjects="true" augmentIncludes="true" type="relativepath"/>
 			<vpath pattern="j9memcategories.c" path="../j9vm" augmentObjects="true" augmentIncludes="true" type="relativepath"/>
-			<vpath pattern="java9vmi.c" path="../j9vm" augmentObjects="true" augmentIncludes="true" type="relativepath"/>
+			<vpath pattern="java11vmi.c" path="../j9vm" augmentObjects="true" augmentIncludes="true" type="relativepath"/>
 			<vpath pattern="jvm.c" path="../j9vm" augmentObjects="true" augmentIncludes="true" type="relativepath"/>
 			<vpath pattern="ut_j9scar.c" path="../j9vm" augmentObjects="true" augmentIncludes="true" type="relativepath"/>
 			<vpath pattern="vmi.c" path="../j9vm" augmentObjects="true" augmentIncludes="true" type="relativepath"/>
 		</vpaths>
 		<objects>
-			<object name="java9vmi"/>
+			<object name="java11vmi"/>
 			<object name="j8vmi"/>
 			<object name="j7vmi"/>
 			<object name="j7verify"/>

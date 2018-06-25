@@ -313,3 +313,9 @@ _X(JVM_WaitForReferencePendingList,JNICALL,false,void ,JNIEnv *env)
 _X(JVM_GetNanoTimeAdjustment,JNICALL,true,jlong ,JNIEnv *env, jclass clazz, jlong offsetSeconds)
 _IF([defined(J9VM_JCL_SE11)],
 	[_X(JVM_BeforeHalt,JNICALL,false,void,void)])
+_IF([defined(J9VM_JCL_SE11)],
+	[_X(JVM_GetNestHost,JNICALL,false,jclass,JNIEnv *env,jclass clz)])
+_IF([defined(J9VM_JCL_SE11)],
+	[_X(JVM_GetNestMembers,JNICALL,false,jobjectArray,JNIEnv *env,jclass clz)])
+_IF([defined(J9VM_JCL_SE11)],
+	[_X(JVM_AreNestMates,JNICALL,false,jboolean,JNIEnv *env,jclass clzOne, jclass clzTwo)])

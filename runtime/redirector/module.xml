@@ -33,6 +33,9 @@
 	<exports group="jdk11">
 		<export name="_JVM_GetCallerClass@4" />
 		<export name="JVM_BeforeHalt" />
+		<export name="JVM_GetNestHost" />
+		<export name="JVM_GetNestMembers" />
+		<export name="JVM_AreNestMates" />
 	</exports>
 	<exports group="prejdk11">
 		<export name="_JVM_GetCallerClass@8" />
