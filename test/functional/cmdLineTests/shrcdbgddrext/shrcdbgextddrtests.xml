@@ -77,7 +77,7 @@
   <exec command="tso delete J9CORE1.DMP.*" platforms="zos_390-64.*" />
   <exec command="tso delete J9CORE1.DMP" platforms="zos_390-31.*" />
   <exec command="rm -f $DUMPFILE1$" />
-  <command>$EXE$ -Xshareclasses:name=$CACHENAME$ $CP$ $XDUMP$ $PROGRAM$</command>
+  <command>$EXE$ -Xshareclasses:name=$CACHENAME$ $CP$ $XDUMP$ -Xmx256m $PROGRAM$</command>
   <output regex="no" type="success">Moved disk 0 to 1</output>
   <output regex="no" type="success">System dump written</output>
   <!-- check for unexpected core dumps -->
@@ -413,7 +413,7 @@
   <exec command="tso delete J9CORE2.DMP.*" platforms="zos_390-64.*" />
   <exec command="tso delete J9CORE2.DMP" platforms="zos_390-31.*" />
   <exec command="rm -f $DUMPFILE2$" />
-  <command>$EXE$  -Xjit:disableAsyncCompilation,count=20 $SHARECLASSESOPTION$ $CP$ $XDUMP2$ $PROGRAM$</command>
+  <command>$EXE$  -Xjit:disableAsyncCompilation,count=20 $SHARECLASSESOPTION$ $CP$ $XDUMP2$ -Xmx256ms $PROGRAM$</command>
   <output regex="no" type="success">Moved disk 0 to 1</output>
   <output regex="no" type="success">System dump written</output>
   <!-- check for unexpected core dumps  -->
