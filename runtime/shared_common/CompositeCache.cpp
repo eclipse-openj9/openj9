@@ -2218,7 +2218,7 @@ SH_CompositeCacheImpl::testAndSetWriteHash(J9VMThread *currentThread, UDATA hash
 		 */
 		setWriteHash(currentThread, hashValue);
 	} else
-	if ((maskedHash == (cacheValue & WRITEHASH_MASK))) {
+	if (maskedHash == (cacheValue & WRITEHASH_MASK)) {
 		UDATA vmInCache = (cacheValue >> WRITEHASH_SHIFT);
 
 		if (vmInCache != _commonCCInfo->vmID) {

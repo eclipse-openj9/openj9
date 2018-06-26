@@ -114,7 +114,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 				<include-if condition="spec.linux_x86.* and spec.flags.J9VM_ENV_DATA64"/>
 				<include-if condition="spec.osx_x86.* and spec.flags.J9VM_ENV_DATA64"/>
 			</vpath>
-			<vpath pattern="unsafeHelper.s" path="xa64" augmentObjects="true" type="relativepath">
+			<vpath pattern="unsafeHelper.m4" path="xa64" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.linux_x86.* and spec.flags.J9VM_ENV_DATA64"/>
 				<include-if condition="spec.osx_x86.* and spec.flags.J9VM_ENV_DATA64"/>
 			</vpath>
