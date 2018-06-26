@@ -253,20 +253,6 @@ TR::S390PrivateLinkage::initS390RealRegisterLinkage()
       tempHigh->setHasBeenAssignedInMethod(true);
       }
 
-   // additional (forced) restricted regs.
-   // Similar code in TR_S390Machine::initializeGlobalRegisterTable() for GRA tables
-
-   for (icount = TR::RealRegister::FirstGPR; icount < TR::RealRegister::LastGPR; ++icount)
-      {
-      TR::RealRegister * regReal = cg()->machine()->getS390RealRegister(icount);
-      if (cg()->machine()->isRestrictedReg(regReal->getRegisterNumber()))
-         {
-         regReal->setState(TR::RealRegister::Locked);
-         regReal->setAssignedRegister(regReal);
-         regReal->setHasBeenAssignedInMethod(true);
-         }
-      }
-
    if (cg()->supportsHighWordFacility() && !comp()->getOption(TR_DisableHighWordRA))
       {
       for (icount = TR::RealRegister::FirstHPR; icount <= TR::RealRegister::LastHPR; ++icount)
