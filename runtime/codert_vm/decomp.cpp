@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1348,31 +1348,48 @@ freeDecompilationRecord(J9VMThread * decompileThread, J9JITDecompilationInfo * i
 void  
 jitDataBreakpointAdded(J9VMThread * currentThread)
 {
+	J9JavaVM *vm = currentThread->javaVM;
+	J9JITConfig *jitConfig = vm->jitConfig;
+
 	/* We have exclusive */
 
 	Trc_Decomp_jitDataBreakpointAdded_Entry(currentThread);
 
-	++(currentThread->javaVM->jitConfig->dataBreakpointCount);
+	++(jitConfig->dataBreakpointCount);
 
-	/* Remove all breakpoints before resetting the methods */
+	/* In normal mode (where the JIT does not generate code to trigger field watch events), every addition
+	 * of a watch must discard all compiled code.  In the new mode where the JIT does generate watch triggers,
+	 * Only the addition of the first watch requires discarding compiled code.  From then on, the JIT will
+	 * generate the appropriate code, so no discarding is required.  See jitDataBreakpointAdded regarding
+	 * transitioning back out of this mode.
+	 */
+	bool inlineWatches = J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_JIT_INLINE_WATCHES);
+	if (!inlineWatches || !jitConfig->inlineFieldWatches) {
+		/* Remove all breakpoints before resetting the methods */
 
-	removeAllBreakpoints(currentThread);
+		removeAllBreakpoints(currentThread);
 
-	/* Toss the compilation queue */
+		/* Toss the compilation queue */
 
-	currentThread->javaVM->jitConfig->jitClassesRedefined(currentThread, 0, NULL);
+		jitConfig->jitClassesRedefined(currentThread, 0, NULL);
 
-	/* Find every method which has been translated and mark it for retranslation */
+		/* Find every method which has been translated and mark it for retranslation */
 
-	jitResetAllMethods(currentThread);
+		jitResetAllMethods(currentThread);
 
-	/* Reinstall the breakpoints */
+		/* Reinstall the breakpoints */
 
-	reinstallAllBreakpoints(currentThread);
+		reinstallAllBreakpoints(currentThread);
 
-	/* Mark every JIT method in every stack for decompilation */
+		/* Mark every JIT method in every stack for decompilation */
 
-	decompileAllMethodsInAllStacks(currentThread, JITDECOMP_DATA_BREAKPOINT);
+		decompileAllMethodsInAllStacks(currentThread, JITDECOMP_DATA_BREAKPOINT);
+
+		if (inlineWatches) {
+			/* Make all future compilations inline the field watch code */
+			jitConfig->inlineFieldWatches = TRUE;
+		}
+	}
 
 	Trc_Decomp_jitDataBreakpointAdded_Exit(currentThread);
 }
@@ -1381,23 +1398,30 @@ jitDataBreakpointAdded(J9VMThread * currentThread)
 void  
 jitDataBreakpointRemoved(J9VMThread * currentThread)
 {
+	J9JavaVM *vm = currentThread->javaVM;
+
 	/* We have exclusive */
 
 	Trc_Decomp_jitDataBreakpointRemoved_Entry(currentThread);
 
-	--(currentThread->javaVM->jitConfig->dataBreakpointCount);
+	--(vm->jitConfig->dataBreakpointCount);
 
-	/* Remove all breakpoints before resetting the methods */
+	/* For now, once the JIT is in field watch mode, it stays that way forever, even if all current
+	 * watches are removed.  This may change in the future.
+	 */
+	if (J9_ARE_NO_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_JIT_INLINE_WATCHES)) {
+		/* Remove all breakpoints before resetting the methods */
 
-	removeAllBreakpoints(currentThread);
+		removeAllBreakpoints(currentThread);
 
-	/* Find every method which has been prevented from being translated and mark it for retranslation */
+		/* Find every method which has been prevented from being translated and mark it for retranslation */
 
-	jitResetAllUntranslateableMethods(currentThread);
+		jitResetAllUntranslateableMethods(currentThread);
 
-	/* Reinstall the breakpoints */
+		/* Reinstall the breakpoints */
 
-	reinstallAllBreakpoints(currentThread);
+		reinstallAllBreakpoints(currentThread);
+	}
 
 	Trc_Decomp_jitDataBreakpointRemoved_Exit(currentThread);
 }

@@ -661,6 +661,10 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitNewInstanceImplAccessCheck", offsetof(J9JITConfig, old_slow_jitNewInstanceImplAccessCheck)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitTranslateNewInstanceMethod", offsetof(J9JITConfig, old_slow_jitTranslateNewInstanceMethod)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitReportFinalFieldModified", offsetof(J9JITConfig, old_slow_jitReportFinalFieldModified)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitReportInstanceFieldRead", offsetof(J9JITConfig, old_slow_jitReportInstanceFieldRead)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitReportInstanceFieldWrite", offsetof(J9JITConfig, old_slow_jitReportInstanceFieldWrite)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitReportStaticFieldRead", offsetof(J9JITConfig, old_slow_jitReportStaticFieldRead)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitReportStaticFieldWrite", offsetof(J9JITConfig, old_slow_jitReportStaticFieldWrite)) |
 
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_fast_jitNewObject", offsetof(J9JITConfig, fast_jitNewObject)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_fast_jitNewObjectNoZeroInit", offsetof(J9JITConfig, fast_jitNewObjectNoZeroInit)) |
@@ -705,6 +709,17 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 
 			/* J9SFJNICallInFrame */
 			writeConstant(OMRPORTLIB, fd, "J9TR_J9SFJNICallInFrame_exitAddress", offsetof(J9SFJNICallInFrame, exitAddress)) |
+
+			/* J9JITWatchedInstanceFieldData */
+			writeConstant(OMRPORTLIB, fd, "J9TR_J9JITWatchedInstanceFieldData_method", offsetof(J9JITWatchedInstanceFieldData, method)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_J9JITWatchedInstanceFieldData_location", offsetof(J9JITWatchedInstanceFieldData, location)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_J9JITWatchedInstanceFieldData_offset", offsetof(J9JITWatchedInstanceFieldData, offset)) |
+
+			/* J9JITWatchedStaticFieldData */
+			writeConstant(OMRPORTLIB, fd, "J9TR_J9JITWatchedStaticFieldData_method", offsetof(J9JITWatchedStaticFieldData, method)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_J9JITWatchedStaticFieldData_location", offsetof(J9JITWatchedStaticFieldData, location)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_J9JITWatchedStaticFieldData_fieldAddress", offsetof(J9JITWatchedStaticFieldData, fieldAddress)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_J9JITWatchedStaticFieldData_fieldClass", offsetof(J9JITWatchedStaticFieldData, fieldClass)) |
 
 			/* General constants */
 			writeConstant(OMRPORTLIB, fd, "J9TR_bcloop_execute_bytecode", J9_BCLOOP_EXECUTE_BYTECODE) |

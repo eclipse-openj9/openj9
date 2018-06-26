@@ -2944,6 +2944,10 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 			vm->extendedRuntimeFlags |= (J9_EXTENDED_RUNTIME_OSR_SAFE_POINT| J9_EXTENDED_RUNTIME_OSR_SAFE_POINT_FV);
 		} else if (0 == strcmp(testString, VMOPT_XXDISABLEOSRSAFEPOINTFV)) {
 			vm->extendedRuntimeFlags &= ~(UDATA)J9_EXTENDED_RUNTIME_OSR_SAFE_POINT_FV;
+		} else if (0 == strcmp(testString, VMOPT_XXENABLEJITWATCH)) {
+			vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_JIT_INLINE_WATCHES;
+		} else if (0 == strcmp(testString, VMOPT_XXDISABLEJITWATCH)) {
+			vm->extendedRuntimeFlags &= ~(UDATA)J9_EXTENDED_RUNTIME_JIT_INLINE_WATCHES;
 		}
 		/* -Xbootclasspath and -Xbootclasspath/p are not supported from Java 9 onwards */
 		if (J2SE_VERSION(vm) >= J2SE_19) {
