@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -782,7 +782,7 @@ TR_CallSiteInfo * TR_CallSiteInfo::getCurrent(TR::Compilation *comp)
 class TR_AccessedProfileInfo
    {
    public:
-   typedef TR::typed_allocator<std::pair<TR_ResolvedMethod*, TR_PersistentProfileInfo*>, TR::Region&> InfoMapAllocator;
+   typedef TR::typed_allocator<std::pair< TR_ResolvedMethod* const, TR_PersistentProfileInfo*>, TR::Region&> InfoMapAllocator;
    typedef std::less<TR_ResolvedMethod*> InfoMapComparator;
    typedef std::map<TR_ResolvedMethod*, TR_PersistentProfileInfo*, InfoMapComparator, InfoMapAllocator> InfoMap;
 

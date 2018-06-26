@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,10 +55,10 @@ template <class T> class List;
 template <class T> class ListElement;
 
 /**
- * Old versions of XLC cannot determine uintptr_t is equivalent
- * to uint32_t or uint64_t.
+ * Clang and old versions of XLC cannot determine uintptr_t is 
+ * equivalent to uint32_t or uint64_t.
  */
-#if defined(TR_HOST_POWER) || defined(TR_HOST_S390)
+#if defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(OSX)
 #if TR_HOST_64BIT
 typedef uint64_t ProfileAddressType;
 #else
