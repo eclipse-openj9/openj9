@@ -5356,7 +5356,11 @@ typedef struct J9JavaVM {
 	struct J9HashTable* classLoadingConstraints;
 	UDATA* vTableScratch;
 	UDATA vTableScratchSize;
+#if defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR)
 	omrthread_rwmutex_t classUnloadMutex;
+#else
+	omrthread_monitor_t classUnloadMutex;
+#endif
 	UDATA java2J9ThreadPriorityMap[11];
 	UDATA j9Thread2JavaPriorityMap[12];
 	UDATA priorityAsyncEventDispatch;
