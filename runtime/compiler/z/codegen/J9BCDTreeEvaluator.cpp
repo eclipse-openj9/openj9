@@ -224,7 +224,7 @@ J9::Z::TreeEvaluator::ud2pdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
    if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() &&
-           !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) ||
+           !cg->comp()->getOption(TR_DisableVectorBCD) ||
            isVectorBCDEnv)
       {
       targetReg = ud2pdVectorEvaluatorHelper(node, cg);
@@ -350,7 +350,7 @@ J9::Z::TreeEvaluator::udsl2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    //at this point targetReg is PseudoRegister that has converted Packed decimal value.
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
    if (TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() &&
-           !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) ||
+           !cg->comp()->getOption(TR_DisableVectorBCD) ||
            isVectorBCDEnv)
       {
       TR::Register * pdVectorTargetReg = cg->allocateRegister(TR_VRF);
@@ -392,7 +392,7 @@ J9::Z::TreeEvaluator::pd2udslEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR_StorageReference* pdStorageRef = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !comp->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       // Perform an intermediate vector store. See pd2udVectorEvaluateHelper().
       TR::Register* pdValueReg = cg->evaluate(childNode);
@@ -555,7 +555,7 @@ J9::Z::TreeEvaluator::pd2udEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    cg->traceBCDEntry("pd2ud",node);
    TR::Register* targetReg = NULL;
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       targetReg = pd2udVectorEvaluatorHelper(node, cg);
       }
@@ -1582,7 +1582,7 @@ J9::Z::TreeEvaluator::zd2pdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register* targetReg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       targetReg = zd2pdVectorEvaluatorHelper(node, cg);
       }
@@ -1959,7 +1959,7 @@ J9::Z::TreeEvaluator::pd2zdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
    if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() &&
-           !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) ||
+           !cg->comp()->getOption(TR_DisableVectorBCD) ||
            isVectorBCDEnv)
       {
       targetReg = pd2zdVectorEvaluatorHelper(node, cg);
@@ -2568,7 +2568,7 @@ J9::Z::TreeEvaluator::BCDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
    bool isEnableVectorBCD = TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility()
-                               && !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD)
+                               && !cg->comp()->getOption(TR_DisableVectorBCD)
                                || isVectorBCDEnv;
 
    // Validate PD operations under BCDCHK node
@@ -2768,7 +2768,7 @@ J9::Z::TreeEvaluator::pdcmpeqEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR::Register *targetReg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       targetReg = pdcmpVectorEvaluatorHelper(node, cg);
       }
@@ -2791,7 +2791,7 @@ J9::Z::TreeEvaluator::pdcmpneEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR::Register *targetReg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       targetReg = pdcmpVectorEvaluatorHelper(node, cg);
       }
@@ -2814,7 +2814,7 @@ J9::Z::TreeEvaluator::pdcmpltEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR::Register *targetReg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       targetReg = pdcmpVectorEvaluatorHelper(node, cg);
       }
@@ -2836,7 +2836,7 @@ TR::Register *J9::Z::TreeEvaluator::pdcmpgeEvaluator(TR::Node *node, TR::CodeGen
    TR::Register *targetReg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       targetReg = pdcmpVectorEvaluatorHelper(node, cg);
       }
@@ -2858,7 +2858,7 @@ TR::Register *J9::Z::TreeEvaluator::pdcmpgtEvaluator(TR::Node *node, TR::CodeGen
    TR::Register *targetReg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       targetReg = pdcmpVectorEvaluatorHelper(node, cg);
       }
@@ -2880,7 +2880,7 @@ TR::Register *J9::Z::TreeEvaluator::pdcmpleEvaluator(TR::Node *node, TR::CodeGen
    TR::Register *targetReg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       targetReg = pdcmpVectorEvaluatorHelper(node, cg);
       }
@@ -3733,7 +3733,7 @@ J9::Z::TreeEvaluator::pd2iEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register * reg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       reg = generateVectorPackedToBinaryConversion(node, TR::InstOpCode::VCVB, cg);
       }
@@ -3755,7 +3755,7 @@ J9::Z::TreeEvaluator::pd2lEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register * reg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       reg = generateVectorPackedToBinaryConversion(node, TR::InstOpCode::VCVBG, cg);
       }
@@ -4067,7 +4067,7 @@ J9::Z::TreeEvaluator::i2pdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register * reg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       reg = generateVectorBinaryToPackedConversion(node, TR::InstOpCode::VCVD, cg);
       }
@@ -4088,7 +4088,7 @@ J9::Z::TreeEvaluator::l2pdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register * reg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       reg = generateVectorBinaryToPackedConversion(node, TR::InstOpCode::VCVDG, cg);
       }
@@ -4658,7 +4658,7 @@ TR::Register *J9::Z::TreeEvaluator::pdloadEvaluator(TR::Node *node, TR::CodeGene
    cg->generateDebugCounter(TR::DebugCounter::debugCounterName(cg->comp(), "PD-Op/%s", node->getOpCode().getName()),
                             1, TR::DebugCounter::Cheap);
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if((TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv) &&
+   if((TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv) &&
            (node->getOpCodeValue() == TR::pdload || node->getOpCodeValue() == TR::pdloadi))
       {
       reg = pdloadVectorEvaluatorHelper(node, cg);
@@ -4973,7 +4973,7 @@ J9::Z::TreeEvaluator::pdstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg)
                             1, TR::DebugCounter::Cheap);
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
    if((TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() &&
-       !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) ||
+       !cg->comp()->getOption(TR_DisableVectorBCD) ||
        isVectorBCDEnv) &&
            (node->getOpCodeValue() == TR::pdstore || node->getOpCodeValue() == TR::pdstorei))
       {
@@ -6217,7 +6217,7 @@ J9::Z::TreeEvaluator::pdSetSignEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    cg->decReferenceCount(signNode);
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       targetReg = vectorPerformSignOperationHelper(node,
                                                    cg,
@@ -6400,7 +6400,7 @@ J9::Z::TreeEvaluator::pdchkEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
    if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() &&
-           !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) ||
+           !cg->comp()->getOption(TR_DisableVectorBCD) ||
            isVectorBCDEnv)
       {
       pdReg = cg->evaluate(pdloadNode);
@@ -6459,7 +6459,7 @@ J9::Z::TreeEvaluator::pdaddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register * reg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       reg = pdArithmeticVectorEvaluatorHelper(node, TR::InstOpCode::VAP, cg);
       }
@@ -6481,7 +6481,7 @@ J9::Z::TreeEvaluator::pdsubEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register * reg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       reg = pdArithmeticVectorEvaluatorHelper(node, TR::InstOpCode::VSP, cg);
       }
@@ -6720,7 +6720,7 @@ J9::Z::TreeEvaluator::pdmulEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
    if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() &&
-           !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) ||
+           !cg->comp()->getOption(TR_DisableVectorBCD) ||
            isVectorBCDEnv)
       {
       reg = pdArithmeticVectorEvaluatorHelper(node, TR::InstOpCode::VMP, cg);
@@ -6819,7 +6819,7 @@ J9::Z::TreeEvaluator::pddivremEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register * reg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       reg = pddivremVectorEvaluatorHelper(node, cg);
       }
@@ -7055,7 +7055,7 @@ J9::Z::TreeEvaluator::pdshrEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    static char* isEnableVectorBCD = feGetEnv("TR_enableVectorBCD");
    if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() &&
-           !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) ||
+           !cg->comp()->getOption(TR_DisableVectorBCD) ||
            isEnableVectorBCD)
       {
       targetReg = pdshrVectorEvaluatorHelper(node, cg);
@@ -7266,7 +7266,7 @@ J9::Z::TreeEvaluator::pdModifyPrecisionEvaluator(TR::Node * node, TR::CodeGenera
 
    static char* isEnableVectorBCD = feGetEnv("TR_enableVectorBCD");
    if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() &&
-           !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD)
+           !cg->comp()->getOption(TR_DisableVectorBCD)
            || isEnableVectorBCD)
       {
       int32_t targetPrec = node->getDecimalPrecision();
@@ -7313,7 +7313,7 @@ J9::Z::TreeEvaluator::pdshlEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    static char* isEnableVectorBCD = feGetEnv("TR_enableVectorBCD");
    if(TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() &&
-           !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) ||
+           !cg->comp()->getOption(TR_DisableVectorBCD) ||
            isEnableVectorBCD)
       {
       targetReg = pdshlVectorEvaluatorHelper(node, cg);

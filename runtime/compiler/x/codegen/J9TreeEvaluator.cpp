@@ -6439,7 +6439,7 @@ void J9::X86::TreeEvaluator::generateValueTracingCode(
    TR::Register      *valueReg,
    TR::CodeGenerator *cg)
    {
-   if (!TR::Options::getCmdLineOptions()->getOption(TR_EnableValueTracing))
+   if (!cg->comp()->getOption(TR_EnableValueTracing))
       return;
    // the code requires that the caller has vmThread in EBP as well as
    // that the caller has already setup internal control flow
@@ -6468,7 +6468,7 @@ void J9::X86::TreeEvaluator::generateValueTracingCode(
    TR::Register      *valueRegLow,
    TR::CodeGenerator *cg)
    {
-   if (!TR::Options::getCmdLineOptions()->getOption(TR_EnableValueTracing))
+   if (!cg->comp()->getOption(TR_EnableValueTracing))
       return;
 
    // the code requires that the caller has vmThread in EBP as well as
@@ -9709,7 +9709,7 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
       // --------------------------------------------
 
 
-      if (!(TR::Options::getCmdLineOptions()->getOption(TR_DisableArrayStoreCheckOpts)) && node->getArrayComponentClassInNode() )
+      if (!(comp->getOption(TR_DisableArrayStoreCheckOpts)) && node->getArrayComponentClassInNode() )
          {
          TR_OpaqueClassBlock *arrayComponentClass = (TR_OpaqueClassBlock *) node->getArrayComponentClassInNode();
          if (TR::Compiler->target.is64Bit())
@@ -12839,7 +12839,7 @@ void J9::X86::TreeEvaluator::VMwrtbarRealTimeWithoutStoreEvaluator(
             TR::DebugCounter::debugCounterName(comp, "helperCalls/%s/(%s)/%d/%d", node->getOpCode().getName(), comp->signature(), node->getByteCodeInfo().getCallerIndex(), node->getByteCodeInfo().getByteCodeIndex()),
             1, TR::DebugCounter::Cheap);
 
-      if (TR::Options::getCmdLineOptions()->getOption(TR_CountWriteBarriersRT))
+      if (comp->getOption(TR_CountWriteBarriersRT))
          {
          TR::MemoryReference *barrierCountMR = generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, debugEventData6), cg);
          generateMemInstruction(INCMem(TR::Compiler->target.is64Bit()), node, barrierCountMR, cg);
