@@ -24,7 +24,7 @@ ARGS = ['SDK_VERSION', 'PLATFORM']
 
 timeout(time: 10, unit: 'HOURS') {
     timestamps {
-        node('master') {
+        node('worker') {
             try{
                 retry(5){
                     checkout scm
