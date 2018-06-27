@@ -878,17 +878,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	}
 
 	/**
-	 * Creates a new string from the with specified length
-	 *
-	 * @param numChars
-	 *			  length of new string
-	 */
-	private String(int numChars) {
-		value = new byte[numChars * 2];
-		coder = UTF16;
-	}
-
-	/**
 	 * Creates a string from the contents of a StringBuffer.
 	 *
 	 * @param buffer
@@ -4719,22 +4708,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		value = string.value;
 		count = string.count;
 		hashCode = string.hashCode;
-	}
-
-	/**
-	 * Creates a new string from the with specified length
-	 *
-	 * @param numChars
-	 *			  length of new string
-	 */
-	private String(int numChars) {
-		if (enableCompression) {
-			value = new char[numChars];
-			count = numChars | uncompressedBit;
-		} else {
-			value = new char[numChars];
-			count = numChars;
-		}
 	}
 
 	/**
