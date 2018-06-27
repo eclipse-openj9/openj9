@@ -111,6 +111,15 @@ public:
    int32_t flagValueForPrimitiveTypeCheck(TR::Compilation *comp);
    int32_t flagValueForArrayCheck(TR::Compilation *comp);
    int32_t flagValueForFinalizerCheck(TR::Compilation *comp);
+   
+   /**
+    * Get the virtual function table entry at a specific offset from the class
+    *
+    * @param clazz The RAM class pointer to read from
+    * @param offset An offset into the virtual function table (VFT) of clazz
+    * @return The entry point of the method at the given offset
+    */
+   intptrj_t getVFTEntry(TR::Compilation *comp, TR_OpaqueClassBlock* clazz, int32_t offset);
    };
 
 }
