@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,6 +21,10 @@
  *******************************************************************************/
 #ifndef JPROFILINGBLOCK_INCL
 #define JPROFILINGBLOCK_INCL
+
+#ifdef OMRZTPF
+#define __TPF_DO_NOT_MAP_ATOE_REMOVE
+#endif
 
 #include <stdint.h>                           // for int32_t
 #include <queue>
