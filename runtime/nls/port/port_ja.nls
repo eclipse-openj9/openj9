@@ -273,7 +273,7 @@ J9NLS_PORT_SHARED_OPENED_STALE_SEM.sample_input_1=dummy.tmp
 J9NLS_PORT_SHARED_OPENED_STALE_SEM.sample_input_2=0001
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_ZOS_64_APPENDING_XDS=\u8907\u6570\u30d1\u30fc\u30c4\u30fb\u30c0\u30f3\u30d7\u3092\u4f7f\u7528\u53ef\u80fd\u306b\u3059\u308b\u305f\u3081\u306b\u3001\u30e6\u30fc\u30b6\u30fc\u6307\u5b9a\u306e\u30c0\u30f3\u30d7\u30fb\u30c6\u30f3\u30d7\u30ec\u30fc\u30c8\u306b .X&DS \u3092\u8ffd\u52a0\u3057\u3066\u3044\u307e\u3059\u3002
+J9NLS_PORT_ZOS_64_APPENDING_XDS=\u8907\u6570\u30d1\u30fc\u30c4\u30fb\u30c0\u30f3\u30d7\u3092\u6709\u52b9\u306b\u3059\u308b\u305f\u3081\u306b\u3001\u30e6\u30fc\u30b6\u30fc\u6307\u5b9a\u306e\u30c0\u30f3\u30d7\u30fb\u30c6\u30f3\u30d7\u30ec\u30fc\u30c8\u306b .X&DS \u3092\u8ffd\u52a0\u3057\u3066\u3044\u307e\u3059\u3002
 # START NON-TRANSLATABLE
 J9NLS_PORT_ZOS_64_APPENDING_XDS.explanation=The user has specified a dump template (via -Xdump:system:file= or using the JAVA_DUMP_TDUMP_PATTERN environment variable). The maximum amount of data that can be dumped to a single IEATDUMP file is 2 gigabytes. For address spaces large than 2 gigabyes, zOS generates multiple dump files. To do this, the suffix &DS needs to be in the dump name, it will be replaced with a counter identifying which part of the dump is in the file. If the user does not add it, the JVM appends it to the dump template.
 J9NLS_PORT_ZOS_64_APPENDING_XDS.system_action=The JVM will add .X&DS to the dump template and continue to run.

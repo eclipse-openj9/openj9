@@ -412,7 +412,7 @@ J9NLS_JCL_OOM_NEW_GLOBAL_REF.user_response=Ensure the process has enough native 
 # argument 1 is the host class
 # argument 2 is the anonymous class
 
-J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES=La classe host %2$.*1$s e la classe anonima %4$.*3$s sono in differenti package
+J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES=La classe host %2$.*1$s e la classe anonima %4$.*3$s sono in pacchetti differenti
 # START NON-TRANSLATABLE
 J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES.sample_input_1=Foo
 J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES.sample_input_2=3
@@ -423,7 +423,7 @@ J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES.system_action=
 J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_NEST_MEMBER_CLAIMS_DIFFERENT_NEST_HOST=Il membro nest %2$.*1$s in %4$.*3$s dichiara un differente host nest di %6$.*5$s
+J9NLS_JCL_NEST_MEMBER_CLAIMS_DIFFERENT_NEST_HOST=Il membro nest %2$.*1$s in %4$.*3$s dichiara un host nest differente di %6$.*5$s
 # START NON-TRANSLATABLE
 J9NLS_JCL_NEST_MEMBER_CLAIMS_DIFFERENT_NEST_HOST.sample_input_1=Foobar
 J9NLS_JCL_NEST_MEMBER_CLAIMS_DIFFERENT_NEST_HOST.sample_input_2=6
