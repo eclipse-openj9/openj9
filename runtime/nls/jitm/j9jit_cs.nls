@@ -40,7 +40,7 @@ J9NLS_J9JIT_390_UNSUPPORTED_HARDWARE.system_action=The compiler will not generat
 J9NLS_J9JIT_390_UNSUPPORTED_HARDWARE.user_response=Check the SDK and Runtime Environment Guide for a list of supported hardware.
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_STORE_FULL=Ve sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd nen\u00ed m\u00edsto pro k\u00f3d AOT. Nov\u00fd k\u00f3d AOT nebude generov\u00e1n.
+J9NLS_RELOCATABLE_CODE_STORE_FULL=Ve sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd nen\u00ed prostor pro k\u00f3d AOT. Nov\u00fd k\u00f3d AOT nebude generov\u00e1n.
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_STORE_FULL.explanation=The AOT section of the shared class cache is full.
 J9NLS_RELOCATABLE_CODE_STORE_FULL.system_action=The compiler will stop generating AOT code. The AOT code already stored in the shared class cache will continue to be used.
