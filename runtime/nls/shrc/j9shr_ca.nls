@@ -2096,7 +2096,7 @@ J9NLS_SHRC_SHRINIT_CACHERETRANSFORMED_INFO.system_action=
 J9NLS_SHRC_SHRINIT_CACHERETRANSFORMED_INFO.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH=Inhabilita mem\u00f2ria cau de classes bootclasspath
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH=Inhabilita l'emmagatzematge en mem\u00f2ria cau de classes bootclasspath
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH.system_action=
@@ -5994,7 +5994,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_REVALIDATE_AOT_METHODS.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS=Imprimiu els m\u00e8todes AOT que coincideixin amb les especificacions de m\u00e8todes.\n\
-\t<method_specification> es defineix de la manera seg\u00fcent: [!]{*|[*]<nom_paquet/nom_classe>[*]}[.{*|[*]<nom_m\u00e8tode>[*]}[({*|[*]<par\u00e0metres>[*]})]].
+\t<especificaci\u00f3_m\u00e8tode> es defineix de la manera seg\u00fcent: [!]{*|[*]<nom_paquet/nom_classe>[*]}[.{*|[*]<nom_m\u00e8tode>[*]}[({*|[*]<par\u00e0metres>[*]})]].
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.system_action=
@@ -6635,7 +6635,7 @@ J9NLS_SHRC_CC_INCORRECT_BUILDID.system_action=The JVM fails to complete the requ
 J9NLS_SHRC_CC_INCORRECT_BUILDID.user_response=Use a JVM which matches the build ID of the existing cache.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1=Inhabilita mem\u00f2ria cau de classes carregada pel carregador de classes de bootstrap.
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1=Inhabilita l'emmagatzematge en mem\u00f2ria cau de les classes carregades pel carregador de classes de bootstrap.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.system_action=

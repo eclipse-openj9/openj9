@@ -918,7 +918,7 @@ J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1=\  -Xscmx<x>       Ustawienie wielko\u015bci (lub mi\u0119kkiej warto\u015bci maksymalnej, je\u015bli podano opcj\u0119-XX:SharedCacheHardLimit=) nowej wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas na <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1=\  -Xscmx<x>       Ustawienie wielko\u015bci (lub mi\u0119kkiej warto\u015bci maksymalnej, je\u015bli podano opcj\u0119 -XX:SharedCacheHardLimit=) nowej wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1.system_action=

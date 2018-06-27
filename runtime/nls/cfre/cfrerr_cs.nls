@@ -898,7 +898,7 @@ J9NLS_CFR_ERR_LOCAL_VARIABLE_SIGNATURE_NOT_UTF8.user_response=Contact the provid
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS=neplatn\u00e9 modifik\u00e1tory metody
+J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS=nep\u0159\u00edpustn\u00e9 modifik\u00e1tory metody
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1208,7 +1208,7 @@ J9NLS_CFR_ERR_METHOD_PARAMETER_NAME_NOT_UTF8.user_response=Contact the provider 
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_INTERFACE_METHOD_JAVA_8=Neplatn\u00e9 modifik\u00e1tory pro metodu rozhran\u00ed.
+J9NLS_CFR_ERR_INTERFACE_METHOD_JAVA_8=Nep\u0159\u00edpustn\u00e9 modifik\u00e1tory pro metodu rozhran\u00ed.
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_INTERFACE_METHOD_JAVA_8.explanation=See the JVM spec for details of the allowed interface method modifiers
 J9NLS_CFR_ERR_INTERFACE_METHOD_JAVA_8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1271,7 +1271,7 @@ J9NLS_CFR_ERR_MULTIPLE_ANNOTATION_ATTRIBUTES__ID.user_response=Contact the provi
 # END NON-TRANSLATABLE
 
 #Multiple nest mates attributes
-J9NLS_CFR_ERR_MULTIPLE_NEST_ATTRIBUTES=V\u00edce atribut\u016f t\u00fdkaj\u00edc\u00edch se vno\u0159en\u00ed
+J9NLS_CFR_ERR_MULTIPLE_NEST_ATTRIBUTES=V\u00edce atribut\u016f t\u00fdkaj\u00edc\u00edch se prvk\u016f vno\u0159en\u00ed
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_MULTIPLE_NEST_ATTRIBUTES.explanation=Class can have at most one NestMate or MemberOfNeset attribute
 J9NLS_CFR_ERR_MULTIPLE_NEST_ATTRIBUTES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1280,7 +1280,7 @@ J9NLS_CFR_ERR_MULTIPLE_NEST_ATTRIBUTES.user_response=Contact the provider of the
 # END NON-TRANSLATABLE
 
 #Nest members attribute name is not a utf8
-J9NLS_CFR_ERR_NEST_MEMBERS_NAME_NOT_CONSTANT_CLASS=\u010clen hostitele vno\u0159en\u00ed pro atributu vno\u0159en\u00ed mus\u00ed b\u00fdt konstantn\u00ed t\u0159\u00edda.
+J9NLS_CFR_ERR_NEST_MEMBERS_NAME_NOT_CONSTANT_CLASS=\u010clen hostitele vno\u0159en\u00ed pro atribut vno\u0159en\u00ed mus\u00ed b\u00fdt konstantn\u00ed t\u0159\u00edda.
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_NEST_MEMBERS_NAME_NOT_CONSTANT_CLASS.explanation=Member of nest attribute must be a constant class
 J9NLS_CFR_ERR_NEST_MEMBERS_NAME_NOT_CONSTANT_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1307,7 +1307,7 @@ J9NLS_CFR_ERR_CLINIT_NOT_STATIC.user_response=Contact the provider of the classf
 # END NON-TRANSLATABLE
 
 # <clinit> method at version 51.0 must be void and take no arguments
-J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE=Metoda <clinit> m\u00e1 neplatn\u00fd podpis.
+J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE=Metoda <clinit> m\u00e1 nep\u0159\u00edpustn\u00fd podpis.
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
