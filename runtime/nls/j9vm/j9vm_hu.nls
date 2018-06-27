@@ -940,7 +940,7 @@ J9NLS_VM_THREAD_PREVENTING_SHUTDOWN.sample_input_1=Attach API
 # arguments 12 and 13 are the other classloader name
 # argument 14 is the other classloader's identity hashcode
 # arguments 15 and 16 are the other classloader's class
-J9NLS_VM_LOADING_CONSTRAINT_SIG_VIOLATION=bet\u00f6lt\u00e9si korl\u00e1ts\u00e9rt\u00e9s a(z) \"%2$.*1$s.%4$.*3$s%6$.*5$s\" met\u00f3dus felold\u00e1sakor: a(z) \"%8$.*7$s@%9$x\" bet\u00f6lt\u0151 a(z) \"%11$.*10$s\" oszt\u00e1lyban \u00e9s a(z) \"%13$.*12$s@%14$x\" bet\u00f6lt\u0151 a(z) \"%16$.*15$s\" oszt\u00e1lyban elt\u00e9r\u0151 t\u00edpus\u00fa met\u00f3dusal\u00e1\u00edr\u00e1sokat tartalmaznak
+J9NLS_VM_LOADING_CONSTRAINT_SIG_VIOLATION=bet\u00f6lt\u00e9si korl\u00e1ts\u00e9rt\u00e9s a(z) \"%2$.*1$s.%4$.*3$s%6$.*5$s\" met\u00f3dus felold\u00e1sakor: a(z) \"%8$.*7$s@%9$x\" bet\u00f6lt\u0151 a(z) \"%11$.*10$s\" oszt\u00e1lyban \u00e9s a(z) \"%13$.*12$s@%14$x\" bet\u00f6lt\u0151 a(z) \"%16$.*15$s\" oszt\u00e1lyban elt\u00e9r\u0151 t\u00edpus\u00fa met\u00f3dusal\u00e1\u00edr\u00e1sokat tartalmaz
 # START NON-TRANSLATABLE
 J9NLS_VM_LOADING_CONSTRAINT_SIG_VIOLATION.sample_input_1=4
 J9NLS_VM_LOADING_CONSTRAINT_SIG_VIOLATION.sample_input_2=Main
@@ -1271,7 +1271,7 @@ J9NLS_VM_CHECK_DUMP_FULLCORE.system_action=The JVM continues to run
 J9NLS_VM_CHECK_DUMP_FULLCORE.user_response=Refer to the IBM SDK documentation
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CHECK_DUMP_COREPATTERN_PIPE=A(z) "%s" /proc/sys/kernel/core_pattern be\u00e1ll\u00edt\u00e1s szerint a t\u00e1rki\u00edrat\u00e1sokat egy k\u00fcls\u0151 programhoz kell \u00e1tir\u00e1ny\u00edtani. Lehets\u00e9ges, hogy a JVM nem tudja azonos\u00edtani \u00e9s \u00e1tnevezni a t\u00e1rki\u00edrat\u00e1sokat.
+J9NLS_VM_CHECK_DUMP_COREPATTERN_PIPE=A(z) "%s" /proc/sys/kernel/core_pattern be\u00e1ll\u00edt\u00e1s szerint a rendszermem\u00f3ria-ki\u00edrat\u00e1sokat egy k\u00fcls\u0151 programhoz kell \u00e1tir\u00e1ny\u00edtani. Lehets\u00e9ges, hogy a JVM nem tudja azonos\u00edtani \u00e9s \u00e1tnevezni a rendszermem\u00f3ria-ki\u00edrat\u00e1sokat.
 # START NON-TRANSLATABLE
 J9NLS_VM_CHECK_DUMP_COREPATTERN_PIPE.explanation=The JVM has been started on a system with /proc/sys/kernel/core_pattern set to pipe core dumps to the command specified after the | character. The JVM may be unable to locate core dumps and rename them.
 J9NLS_VM_CHECK_DUMP_COREPATTERN_PIPE.system_action=The JVM continues to run. Message JVMPORT030W will be issued when a system dump is taken.
@@ -1279,7 +1279,7 @@ J9NLS_VM_CHECK_DUMP_COREPATTERN_PIPE.user_response=Refer to the IBM SDK document
 J9NLS_VM_CHECK_DUMP_COREPATTERN_PIPE.sample_input_1=|/usr/libexec/abrt-hook-ccpp %s %c %p %u %g %t e
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CHECK_DUMP_COREPATTERN_FORMAT=A(z) "%s" /proc/sys/kernel/core_pattern be\u00e1ll\u00edt\u00e1s form\u00e1tum karaktersorozatot hat\u00e1roz meg a t\u00e1rki\u00edrat\u00e1sok \u00e1tnevez\u00e9s\u00e9hez. Lehets\u00e9ges, hogy a JVM nem tudja azonos\u00edtani \u00e9s \u00e1tnevezni a t\u00e1rki\u00edrat\u00e1sokat.
+J9NLS_VM_CHECK_DUMP_COREPATTERN_FORMAT=A(z) "%s" /proc/sys/kernel/core_pattern be\u00e1ll\u00edt\u00e1s form\u00e1tum karaktersorozatot hat\u00e1roz meg a rendszermem\u00f3ria-ki\u00edrat\u00e1sok \u00e1tnevez\u00e9s\u00e9hez. Lehets\u00e9ges, hogy a JVM nem tudja azonos\u00edtani \u00e9s \u00e1tnevezni a rendszermem\u00f3ria-ki\u00edrat\u00e1sokat.
 # START NON-TRANSLATABLE
 J9NLS_VM_CHECK_DUMP_COREPATTERN_FORMAT.explanation=The JVM has been started on a system with /proc/sys/kernel/core_pattern set to rename core dumps. The JVM may be unable to locate core dumps
 J9NLS_VM_CHECK_DUMP_COREPATTERN_FORMAT.system_action=The JVM continues to run
@@ -1729,7 +1729,7 @@ J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE.user_response=Load class and nest host 
 # Second argument is class name
 # Third argument is nest host name length
 # Fourth argument is nest host name
-J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST=A(z) %2$.*1$s oszt\u00e1lyt ig\u00e9nyelnie kell a(z) %4$.*3$s be\u00e1gyaz\u00e1si hosztj\u00e1nak
+J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST=A(z) %2$.*1$s oszt\u00e1lyt a(z) %4$.*3$s be\u00e1gyaz\u00e1si hosztja kell, hogy ig\u00e9nyelje
 # START NON-TRANSLATABLE
 J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST.explanation=Class was not claimed by its nest host class.
 J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST.system_action=The JVM will throw a java/lang/VerifyError
@@ -1758,7 +1758,7 @@ J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.user_response=No action required if 
 # argument 14 is the other classloader's identity hashcode
 # arguments 15 and 16 are the other classloader's class
 # arguments 17 and 18 are the name of class being created
-J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION=bet\u00f6lt\u00e9si korl\u00e1ts\u00e9rt\u00e9s a(z) \"%2$.*1$s.%4$.*3$s%6$.*5$s\" met\u00f3dus fel\u00fclb\u00edr\u00e1l\u00e1sakor a(z) \"%18$.*17$s\" oszt\u00e1ly l\u00e9trehoz\u00e1sa sor\u00e1n: a(z) \"%8$.*7$s@%9$x\" bet\u00f6lt\u0151 a(z) \"%11$.*10$s\" oszt\u00e1lyban \u00e9s a(z) \"%13$.*12$s@%14$x\" bet\u00f6lt\u0151 a(z) \"%16$.*15$s\" oszt\u00e1lyban elt\u00e9r\u0151 t\u00edpus\u00fa met\u00f3dusal\u00e1\u00edr\u00e1sokat tartalmaznak
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION=bet\u00f6lt\u00e9si korl\u00e1ts\u00e9rt\u00e9s a(z) \"%2$.*1$s.%4$.*3$s%6$.*5$s\" met\u00f3dus fel\u00fclb\u00edr\u00e1l\u00e1sakor: a(z) \"%8$.*7$s@%9$x\" bet\u00f6lt\u0151 a(z) \"%11$.*10$s\" oszt\u00e1lyban \u00e9s a(z) \"%13$.*12$s@%14$x\" bet\u00f6lt\u0151 a(z) \"%16$.*15$s\" oszt\u00e1lyban elt\u00e9r\u0151 t\u00edpus\u00fa met\u00f3dusal\u00e1\u00edr\u00e1sokat tartalmaz
 # START NON-TRANSLATABLE
 J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_1=4
 J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_2=Main

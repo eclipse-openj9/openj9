@@ -1271,7 +1271,7 @@ J9NLS_CFR_ERR_MULTIPLE_ANNOTATION_ATTRIBUTES__ID.user_response=Contact the provi
 # END NON-TRANSLATABLE
 
 #Multiple nest mates attributes
-J9NLS_CFR_ERR_MULTIPLE_NEST_ATTRIBUTES=Atributos de compa\u00f1eros de anidado m\u00faltiples
+J9NLS_CFR_ERR_MULTIPLE_NEST_ATTRIBUTES=Atributos m\u00faltiples de pareja de anidado
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_MULTIPLE_NEST_ATTRIBUTES.explanation=Class can have at most one NestMate or MemberOfNeset attribute
 J9NLS_CFR_ERR_MULTIPLE_NEST_ATTRIBUTES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
