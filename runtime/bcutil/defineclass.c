@@ -953,7 +953,7 @@ createErrorMessage(J9VMThread *vmStruct, J9ROMClass *anonROMClass, J9ROMClass *h
 		/* Anonymous class name has trailing digits. Example - "test/DummyClass/00000000442F098".
 		 * The code below removes the trailing digits, "/00000000442F098", from the anonymous class name.
 		 */
-		UDATA anonClassNameLength = J9UTF8_LENGTH(anonClassName) - 1;
+		IDATA anonClassNameLength = J9UTF8_LENGTH(anonClassName) - 1;
 		for (; anonClassNameLength >= 0; anonClassNameLength--) {
 			if (anonClassNameData[anonClassNameLength] == '/') {
 				break;
