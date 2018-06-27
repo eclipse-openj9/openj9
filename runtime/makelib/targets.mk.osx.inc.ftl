@@ -83,9 +83,7 @@ endif
 CFLAGS += $(UMA_OPTIMIZATION_CFLAGS)
 CXXFLAGS += $(UMA_OPTIMIZATION_CXXFLAGS)
 
-<#if uma.spec.flags.env_gcc.enabled>
-  CXXFLAGS += -fno-exceptions -fno-threadsafe-statics
-</#if>
+CXXFLAGS += -fno-rtti -fno-exceptions -fno-threadsafe-statics
 
 ifdef j9vm_uma_gnuDebugSymbols
   CFLAGS += -g
