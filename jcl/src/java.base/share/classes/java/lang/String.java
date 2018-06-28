@@ -1964,20 +1964,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				// Check if the String is compressed
 				if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
 					if (c <= 255) {
-						byte b = (byte) c;
-
-						for (int i = start; i < len; ++i) {
-							if (helpers.getByteFromArrayByIndex(array, i) == b) {
-								return i;
-							}
-						}
+						return helpers.findElementFromArray(array, (byte)c, start, len);
 					}
 				} else {
-					for (int i = start; i < len; ++i) {
-						if (helpers.getCharFromArrayByIndex(array, i) == c) {
-							return i;
-						}
-					}
+					return helpers.findElementFromArray(array, (char)c, start, len);
 				}
 			} else if (c <= Character.MAX_CODE_POINT) {
 				for (int i = start; i < len; ++i) {
@@ -5879,14 +5869,16 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 */
 	public int hashCode() {
 		if (hashCode == 0) {
-			// Check if the String is compressed
-			if (enableCompression && (compressionFlag == null || count >= 0)) {
-				hashCode = hashCodeImplCompressed(value, 0, lengthInternal());
-			} else {
-				hashCode = hashCodeImplDecompressed(value, 0, lengthInternal());
+			int length = lengthInternal();
+			if (length > 0) {
+				// Check if the String is compressed
+				if (enableCompression && (compressionFlag == null || count >= 0)) {
+					hashCode = hashCodeImplCompressed(value, 0, length);
+				} else {
+					hashCode = hashCodeImplDecompressed(value, 0, length);
+				}
 			}
 		}
-
 		return hashCode;
 	}
 
@@ -5958,20 +5950,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				// Check if the String is compressed
 				if (enableCompression && (null == compressionFlag || count >= 0)) {
 					if (c <= 255) {
-						byte b = (byte) c;
-
-						for (int i = start; i < len; ++i) {
-							if (helpers.getByteFromArrayByIndex(array, i) == b) {
-								return i;
-							}
-						}
+						return helpers.findElementFromArray(array, (byte)c, start, len);
 					}
 				} else {
-					for (int i = start; i < len; ++i) {
-						if (array[i] == c) {
-							return i;
-						}
-					}
+					return helpers.findElementFromArray(array, (char)c, start, len);
 				}
 			} else if (c <= Character.MAX_CODE_POINT) {
 				for (int i = start; i < len; ++i) {

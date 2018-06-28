@@ -18,23 +18,6 @@
 #
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 
-# This .gitattributes file will cause all text files EXCEPT for
-# those specifically listed below to be encoded as EBCDIC.
-# Selected binary files will not be translated at all.
-
-# The default for text files
-* git-encoding=iso8859-1 working-tree-encoding=ibm-1047
-
-# Specific types of files remain as ASCII
-*.xml git-encoding=iso8859-1 working-tree-encoding=iso8859-1
-*.dtd git-encoding=iso8859-1 working-tree-encoding=iso8859-1
-*.xsd git-encoding=iso8859-1 working-tree-encoding=iso8859-1
-buildspecs/* git-encoding=iso8859-1 working-tree-encoding=iso8859-1
-
-# git's files (which MUST be ASCII)
-.gitattributes git-encoding=iso8859-1 working-tree-encoding=iso8859-1
-.gitignore git-encoding=iso8859-1 working-tree-encoding=iso8859-1
-
 # Binary files
 *.jpg git-encoding=BINARY working-tree-encoding=BINARY
 *.png git-encoding=BINARY working-tree-encoding=BINARY

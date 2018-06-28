@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,7 +52,6 @@ class OMR_EXTENSIBLE CodeGenPhase: public OMR::CodeGenPhaseConnector
    static void performPopulateOSRBufferPhase(TR::CodeGenerator * cg, TR::CodeGenPhase *);
    static void performMoveUpArrayLengthStoresPhase(TR::CodeGenerator * cg, TR::CodeGenPhase *);
    static void performInsertEpilogueYieldPointsPhase(TR::CodeGenerator * cg, TR::CodeGenPhase *);
-   static void performDetectEndOfVMThreadGlobalRegisterLiveRangePhase(TR::CodeGenerator * cg, TR::CodeGenPhase *);
    static void performCompressedReferenceRematerializationPhase(TR::CodeGenerator * cg, TR::CodeGenPhase *);
    static void performSplitWarmAndColdBlocksPhase(TR::CodeGenerator * cg, TR::CodeGenPhase *);
    static void performIdentifyUnneededByteConvsPhase(TR::CodeGenerator * cg, TR::CodeGenPhase *);

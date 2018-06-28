@@ -192,16 +192,13 @@ static TR_OutlinedInstructions *generateArrayletReference(
 
       checkInstruction = generateLabelInstruction(JNE4, node, boundCheckFailureLabel, cg);
 
-      bool needsVMThread = needsBoundCheck &&
-         (!cg->allowVMThreadRematerialization() || !cg->getSupportsVMThreadGRA());
-
       cg->addSnippet(
          new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(
             cg, node->getSymbolReference(),
             boundCheckFailureLabel,
             checkInstruction,
-            false,
-            !needsVMThread));
+            false
+            ));
 
       // -------------------------------------------------------------------------
       // The array has a spine.  Do a bound check on its true length.
@@ -227,8 +224,8 @@ static TR_OutlinedInstructions *generateArrayletReference(
             cg, node->getSymbolReference(),
             boundCheckFailureLabel,
             checkInstruction,
-            false,
-            !needsVMThread));
+            false
+            ));
       }
 
    // -------------------------------------------------------------------------
@@ -754,11 +751,6 @@ static void genSuperClassInstanceOfTest(TR::Node        *node,
       instr=generateLabelInstruction(JE4, node, notInterfaceLabel, cg);
 
       // vm interface test
-      bool rematerializeVMThreadInSnippet = false;
-      static const char *allowVMThreadRemat = feGetEnv("TR_allowVMThreadRemat");
-
-      if (allowVMThreadRemat && cg->supportsFS0VMThreadRematerialization())
-         rematerializeVMThreadInSnippet = true;
 
       TR::LabelSymbol *callHelper = generateLabelSymbol(cg);
       TR::LabelSymbol *restartLabel = generateLabelSymbol(cg);
@@ -768,12 +760,12 @@ static void genSuperClassInstanceOfTest(TR::Node        *node,
       if (endLabel != NULL)
          {
          outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::icall, testerReg, callHelper,
-                                                                               endLabel, rematerializeVMThreadInSnippet, cg);
+                                                                               endLabel, false, cg);
          }
       else
          {
          outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::icall, testerReg, callHelper,
-                                                                               restartLabel, rematerializeVMThreadInSnippet, cg);
+                                                                               restartLabel, false, cg);
          }
 
       cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
@@ -2027,8 +2019,6 @@ TR::Register *J9::X86::i386::TreeEvaluator::conditionalHelperEvaluator(TR::Node 
       temp.integerCompareAnalyser(testNode, CMP4RegReg, CMP4RegMem, CMP4MemReg);
       }
 
-   cg->setVMThreadRequired(true);
-
    TR::LabelSymbol *startLabel   = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
    TR::LabelSymbol *reStartLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
    TR::LabelSymbol *snippetLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
@@ -2046,7 +2036,6 @@ TR::Register *J9::X86::i386::TreeEvaluator::conditionalHelperEvaluator(TR::Node 
    cg->addSnippet(snippet);
 
    generateLabelInstruction(LABEL, node, reStartLabel, true, cg);
-   cg->setVMThreadRequired(false);
    cg->decReferenceCount(testNode);
    return NULL;
    }
@@ -2175,8 +2164,6 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
       temp.integerCompareAnalyser(testNode, CMPRegReg(testIs64Bit), CMPRegMem(testIs64Bit), CMPMemReg(testIs64Bit));
       }
 
-   cg->setVMThreadRequired(true);
-
    TR::LabelSymbol *startLabel   = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
    TR::LabelSymbol *reStartLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
    TR::LabelSymbol *snippetLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
@@ -2249,7 +2236,6 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
       generateLabelInstruction(LABEL, node, reStartLabel, true, cg);
       }
 
-   cg->setVMThreadRequired(false);
    cg->decReferenceCount(testNode);
    return NULL;
    }
@@ -2380,8 +2366,6 @@ TR::Register *J9::X86::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::Co
    {
    // Generate the test and branch for async message processing.
    //
-   cg->setVMThreadRequired(true);
-
    TR::Node *compareNode = node->getFirstChild();
    TR::Node *secondChild = compareNode->getSecondChild();
    TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
@@ -2437,7 +2421,6 @@ TR::Register *J9::X86::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::Co
    endControlFlowLabel->setEndInternalControlFlow();
    generateLabelInstruction(LABEL, node, endControlFlowLabel, true, cg);
 
-   cg->setVMThreadRequired(false);
    cg->decReferenceCount(compareNode);
 
    return NULL;
@@ -2759,12 +2742,8 @@ TR::Register *J9::X86::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(
       TR::Snippet *snippet;
       if (opCode.isCall() || !needResolution || TR::Compiler->target.is64Bit()) //TODO:AMD64: Implement the "withresolve" version
          {
-         if (cg->supportsFS0VMThreadRematerialization() && cg->allowVMThreadRematerialization())
-            snippet = new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg, node->getSymbolReference(),
-                                                                    snippetLabel, appendTo, false, true);
-         else
-            snippet = new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg, node->getSymbolReference(),
-                                                                    snippetLabel, appendTo);
+         snippet = new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg, node->getSymbolReference(),
+                                                                 snippetLabel, appendTo);
          }
       else
          {
@@ -3280,8 +3259,6 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGe
    {
    TR::Node *firstChild    = node->getFirstChild();
    TR::Node *secondChild   = node->getSecondChild();
-   bool     needsVMThread = !cg->allowVMThreadRematerialization() ||
-                                !cg->getSupportsVMThreadGRA();
 
    // Perform a bound check.
    //
@@ -3293,16 +3270,13 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGe
    TR::Instruction *instr;
    TR::Compilation *comp = cg->comp();
 
-   if (needsVMThread)
-      cg->setVMThreadRequired(true);
-
    bool skippedComparison = false;
    bool jumpOnOppositeCondition = false;
    if (firstChild->getOpCode().isLoadConst())
       {
       if (secondChild->getOpCode().isLoadConst() && firstChild->getInt() <= secondChild->getInt())
          {
-         instr = generateLabelInstruction(JMP4, node, boundCheckFailureLabel, needsVMThread, cg);
+         instr = generateLabelInstruction(JMP4, node, boundCheckFailureLabel, true, cg);
          cg->decReferenceCount(firstChild);
          cg->decReferenceCount(secondChild);
          }
@@ -3313,7 +3287,7 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGe
             node->swapChildren();
             TR::TreeEvaluator::compareIntegersForOrder(node, cg);
             node->swapChildren();
-            instr = generateLabelInstruction(JAE4, node, boundCheckFailureLabel, needsVMThread, cg);
+            instr = generateLabelInstruction(JAE4, node, boundCheckFailureLabel, true, cg);
             }
          else
             skippedComparison = true;
@@ -3324,7 +3298,7 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGe
       if (!isConditionCodeSetForCompare(node, &jumpOnOppositeCondition))
          {
          TR::TreeEvaluator::compareIntegersForOrder(node, cg);
-         instr = generateLabelInstruction(JBE4, node, boundCheckFailureLabel, needsVMThread, cg);
+         instr = generateLabelInstruction(JBE4, node, boundCheckFailureLabel, true, cg);
          }
       else
          skippedComparison = true;
@@ -3333,9 +3307,9 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGe
    if (skippedComparison)
       {
       if (jumpOnOppositeCondition)
-         instr = generateLabelInstruction(JAE4, node, boundCheckFailureLabel, needsVMThread, cg);
+         instr = generateLabelInstruction(JAE4, node, boundCheckFailureLabel, true, cg);
       else
-         instr = generateLabelInstruction(JBE4, node, boundCheckFailureLabel, needsVMThread, cg);
+         instr = generateLabelInstruction(JBE4, node, boundCheckFailureLabel, true, cg);
 
       cg->decReferenceCount(firstChild);
       cg->decReferenceCount(secondChild);
@@ -3344,11 +3318,8 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGe
    cg->addSnippet(new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg, node->getSymbolReference(),
                                                      boundCheckFailureLabel,
                                                      instr,
-                                                     false,
-                                                     ! needsVMThread));
-
-   if (needsVMThread)
-      cg->setVMThreadRequired(false);
+                                                     false
+                                                     ));
 
    if (node->hasFoldedImplicitNULLCHK())
       {
@@ -3383,14 +3354,6 @@ TR::Register *J9::X86::TreeEvaluator::ArrayCopyBNDCHKEvaluator(TR::Node *node, T
    TR::LabelSymbol *boundCheckFailureLabel = generateLabelSymbol(cg);
    TR::Instruction *instr;
 
-   // vmThread required in BNDCHK's mainline code.
-   bool needsVMThread = !cg->allowVMThreadRematerialization() ||
-                        node->hasFoldedImplicitNULLCHK() ||
-                        !cg->getSupportsVMThreadGRA();
-
-   if (needsVMThread)
-      cg->setVMThreadRequired(true);
-
    if (firstChild->getOpCode().isLoadConst())
       {
       if (secondChild->getOpCode().isLoadConst())
@@ -3399,7 +3362,7 @@ TR::Register *J9::X86::TreeEvaluator::ArrayCopyBNDCHKEvaluator(TR::Node *node, T
             {
             // Check will always fail, just jump to failure snippet
             //
-            instr = generateLabelInstruction(JMP4, node, boundCheckFailureLabel, needsVMThread, cg);
+            instr = generateLabelInstruction(JMP4, node, boundCheckFailureLabel, true, cg);
             }
          else
             {
@@ -3415,24 +3378,21 @@ TR::Register *J9::X86::TreeEvaluator::ArrayCopyBNDCHKEvaluator(TR::Node *node, T
          node->swapChildren();
          TR::TreeEvaluator::compareIntegersForOrder(node, cg);
          node->swapChildren();
-         instr = generateLabelInstruction(JG4, node, boundCheckFailureLabel, needsVMThread, cg);
+         instr = generateLabelInstruction(JG4, node, boundCheckFailureLabel, true, cg);
          }
       }
    else
       {
       TR::TreeEvaluator::compareIntegersForOrder(node, cg);
-      instr = generateLabelInstruction(JL4, node, boundCheckFailureLabel, needsVMThread, cg);
+      instr = generateLabelInstruction(JL4, node, boundCheckFailureLabel, true, cg);
       }
 
    if (instr)
       cg->addSnippet(new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg, node->getSymbolReference(),
                                                              boundCheckFailureLabel,
                                                              instr,
-                                                             false,
-                                                             ! needsVMThread));
-
-   if (needsVMThread)
-      cg->setVMThreadRequired(false);
+                                                             false
+                                                             ));
 
    return NULL;
    }
@@ -3597,8 +3557,6 @@ TR::Register *J9::X86::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR:
    // Generate up-front array store checks to avoid calling out to the helper.
    //
    // -------------------------------------------------------------------------
-
-   cg->setVMThreadRequired(true);
 
    TR::LabelSymbol *postASCLabel = NULL;
    if (nopASC)
@@ -3826,8 +3784,6 @@ TR::Register *J9::X86::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR:
       generateLabelInstruction(LABEL, node, doneLabel, deps, cg);
       }
 
-   cg->setVMThreadRequired(false);
-
    if (usingCompressedPointers)
       {
       cg->decReferenceCount(firstChild->getSecondChild());
@@ -3869,9 +3825,6 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node
       indexChild = node->getChild(2);
       }
 
-   bool needsVMThread = !cg->allowVMThreadRematerialization() ||
-                        !cg->getSupportsVMThreadGRA();
-
    // Perform a bound check.
    //
    // Value propagation or profile-directed optimization may have determined
@@ -3879,9 +3832,6 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node
    // iconst.  In this case, make sure that the constant is the second child.
    //
    TR_X86OpCodes branchOpCode;
-
-   if (needsVMThread)
-      cg->setVMThreadRequired(true);
 
    // For primitive stores anchored under the check node, we must evaluate the source node
    // before the bound check branch so that its available to the snippet.  We can make
@@ -4071,9 +4021,6 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node
 
    arrayletOI->setMainlinePathRegisterUsageList(mainlineRUL);
 
-   if (needsVMThread)
-      cg->setVMThreadRequired(false);
-
    if (node->hasFoldedImplicitNULLCHK())
       {
       if (faultingInstruction)
@@ -4211,8 +4158,6 @@ TR::Register *J9::X86::TreeEvaluator::atccheckEvaluator(TR::Node *node, TR::Code
    TR::Node *pendingAIELoad = node->getChild(0);
    TR_ASSERT(pendingAIELoad->getOpCodeValue() == TR::aload, "atccheck first child should be a compare test");
 
-   cg->setVMThreadRequired(true);
-
    TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *doneLabel  = generateLabelSymbol(cg);
 
@@ -4240,8 +4185,6 @@ TR::Register *J9::X86::TreeEvaluator::atccheckEvaluator(TR::Node *node, TR::Code
 
    // and we're done
    generateLabelInstruction(LABEL, node, doneLabel, deps, cg);
-
-   cg->setVMThreadRequired(false);
 
    cg->decReferenceCount(pendingAIELoad);
 
@@ -4691,18 +4634,6 @@ TR::Register *J9::X86::TreeEvaluator::VMcheckcastEvaluator(TR::Node          *no
       numDeps++;
       }
 
-   bool rematerializeVMThreadInSnippet = false;
-
-   static const char *allowVMThreadRemat = feGetEnv("TR_allowVMThreadRemat");
-   if (allowVMThreadRemat && cg->supportsFS0VMThreadRematerialization())
-      {
-      rematerializeVMThreadInSnippet = true;
-      numDeps--; // remove vmThread (ebp) as dependency
-      }
-
-   if (!rematerializeVMThreadInSnippet)
-      cg->setVMThreadRequired(true);
-
    TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *fallThru   = generateLabelSymbol(cg);
    startLabel->setStartInternalControlFlow();
@@ -4719,7 +4650,7 @@ TR::Register *J9::X86::TreeEvaluator::VMcheckcastEvaluator(TR::Node          *no
    if (!(testCache && inlinedHelpers))
       {
       TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::call, NULL,
-                                                                                 callHelper, fallThru, rematerializeVMThreadInSnippet, cg );
+                                                                                 callHelper, fallThru, false, cg );
       cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
       cg->generateDebugCounter(
          outlinedHelperCall->getFirstInstruction(),
@@ -4916,8 +4847,9 @@ TR::Register *J9::X86::TreeEvaluator::VMcheckcastEvaluator(TR::Node          *no
       deps->addPostCondition(objectReg, TR::RealRegister::NoReg, cg);
    if (castClassReg)
       deps->addPostCondition(castClassReg, TR::RealRegister::NoReg, cg);
-   if (!rematerializeVMThreadInSnippet)
-      deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
+
+   deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
+
    if (objectClassReg)
       deps->addPostCondition(objectClassReg, TR::RealRegister::NoReg, cg);
    if (testerReg)
@@ -4935,9 +4867,6 @@ TR::Register *J9::X86::TreeEvaluator::VMcheckcastEvaluator(TR::Node          *no
    deps->stopAddingConditions();
    generateLabelInstruction(LABEL, node, fallThru, deps, cg);
    srm->stopUsingRegisters();
-
-   if (!rematerializeVMThreadInSnippet)
-      cg->setVMThreadRequired(false);
 
    if (objectClassReg)
       cg->stopUsingRegister(objectClassReg);
@@ -5042,8 +4971,6 @@ TR::Register *J9::X86::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node          
       performReferenceArrayTestInline = true;
       }
 
-   bool rematerializeVMThreadInSnippet = false;
-
    if (performEqualityTestInline || performSuperclassTestInline || testCache || performReferenceArrayTestInline)
       {
       TR::Register    *objectReg                           = cg->evaluate(objectRef);
@@ -5054,13 +4981,6 @@ TR::Register *J9::X86::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node          
       TR::RegisterDependencyConditions  *thirdChildDeps = NULL;
       List<TR::Register> popRegisters(cg->trMemory());
       uint32_t        numDeps                             = 2;
-
-      static const char *allowVMThreadRemat = feGetEnv("TR_allowVMThreadRemat");
-      if (allowVMThreadRemat && cg->supportsFS0VMThreadRematerialization())
-         {
-         rematerializeVMThreadInSnippet = true;
-         numDeps--; // remove vmThread (ebp) dependency
-         }
 
       TR_ASSERT(!performHelperCall || testCache, "We shouldn't be calling helper if we are here");
 
@@ -5099,9 +5019,6 @@ TR::Register *J9::X86::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node          
       TR::LabelSymbol *superClassTestNext = NULL;
 
       generateLabelInstruction(LABEL, node, startLabel, cg);
-
-      if (!rematerializeVMThreadInSnippet)
-         cg->setVMThreadRequired(true);
 
       TR::LabelSymbol *trueLabel, *falseLabel;
       if (branchOnTrue)
@@ -5189,7 +5106,7 @@ TR::Register *J9::X86::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node          
          if (!inlinedHelpers && !performReferenceArrayTestInline)
             {
             TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(instanceofNode, TR::icall, helperTargetReg, callHelper,
-                                                                                                           restartLabel, rematerializeVMThreadInSnippet, cg);
+                                                                                                           restartLabel, false, cg);
             cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
             cg->generateDebugCounter(
                outlinedHelperCall->getFirstInstruction(),
@@ -5308,8 +5225,7 @@ TR::Register *J9::X86::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node          
          else
             deps->addPostCondition(helperTargetReg, TR::RealRegister::NoReg, cg);
 
-      if (!rematerializeVMThreadInSnippet)
-         deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
+      deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
 
       if (testerReg)
          deps->addPostCondition(testerReg, TR::RealRegister::NoReg, cg);
@@ -5318,9 +5234,6 @@ TR::Register *J9::X86::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node          
       deps->stopAddingConditions();
       generateLabelInstruction(LABEL, node, fallThru, deps, cg);
       srm->stopUsingRegisters();
-
-      if (!rematerializeVMThreadInSnippet)
-         cg->setVMThreadRequired(false);
 
       if (!popRegisters.isEmpty())
          {
@@ -5489,18 +5402,7 @@ J9::X86::TreeEvaluator::VMinstanceOfEvaluator(
       return targetReg;
       }
 
-   bool rematerializeVMThreadInSnippet = false;
    uint32_t     numDeps        = 3;
-
-   static const char *allowVMThreadRemat = feGetEnv("TR_allowVMThreadRemat");
-   if (allowVMThreadRemat && cg->supportsFS0VMThreadRematerialization())
-      {
-      rematerializeVMThreadInSnippet = true;
-      numDeps --;
-      }
-
-   if (!rematerializeVMThreadInSnippet)
-      cg->setVMThreadRequired(true);
 
    TR::Register *objectReg      = cg->evaluate(objectRef);
    TR::Register *castClassReg   = NULL;
@@ -5580,7 +5482,7 @@ J9::X86::TreeEvaluator::VMinstanceOfEvaluator(
       if (!inlinedHelpers && !performReferenceArrayTestInline)
          {
          TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::icall, targetReg, callHelper,
-                                                                                                        restartLabel, rematerializeVMThreadInSnippet, cg);
+                                                                                                        restartLabel, false, cg);
          cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
          cg->generateDebugCounter(
             outlinedHelperCall->getFirstInstruction(),
@@ -5703,9 +5605,6 @@ J9::X86::TreeEvaluator::VMinstanceOfEvaluator(
       generateRegRegInstruction(XOR4RegReg, node, targetReg, targetReg, cg);
       }
 
-   if (!rematerializeVMThreadInSnippet)
-      cg->setVMThreadRequired(false);
-
    numDeps += srm->numAvailableRegisters();
    TR::RegisterDependencyConditions  *deps = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)numDeps, cg);
    if (testCache && inlinedHelpers)
@@ -5718,8 +5617,9 @@ J9::X86::TreeEvaluator::VMinstanceOfEvaluator(
       deps->addPostCondition(objectClassReg, TR::RealRegister::NoReg, cg);
    if (testerReg)
       deps->addPostCondition(objectClassReg, TR::RealRegister::NoReg, cg);
-   if (!rematerializeVMThreadInSnippet)
-      deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
+
+   deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
+
    deps->addPostCondition(targetReg, TR::RealRegister::eax, cg);
 
    srm->addScratchRegistersToDependencyList(deps);
@@ -6156,7 +6056,6 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
 
    generatePrefetchAfterHeaderAccess (node, objectReg, cg);
 
-   cg->setVMThreadRequired(true);
    cg->setImplicitExceptionPoint(NULL);
 
    TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
@@ -6511,8 +6410,6 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    }
 #endif
 
-   cg->setVMThreadRequired(false);
-
    cg->decReferenceCount(objectRef);
    cg->stopUsingRegister(eaxReal);
    if (scratchReg)
@@ -6659,7 +6556,6 @@ TR::Register *J9::X86::TreeEvaluator::VMmonexitEvaluator(TR::Node          *node
    TR::Register *tempReg   = NULL;
    uint32_t     numDeps   = 2; // objectReg, ebp
 
-   cg->setVMThreadRequired(true);
    cg->setImplicitExceptionPoint(NULL);
    TR::Register *vmThreadReg = cg->getVMThreadRegister();
 
@@ -7065,8 +6961,6 @@ TR::Register *J9::X86::TreeEvaluator::VMmonexitEvaluator(TR::Node          *node
       generateMemRegInstruction(SMemReg(),node, tempMR2, objectReg, cg);
       }
 #endif
-
-   cg->setVMThreadRequired(false);
 
    if (eaxReal)
       cg->stopUsingRegister(eaxReal);
@@ -9081,8 +8975,6 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
    if (!disableOutlinedNew && performTransformation(comp, "O^O OUTLINED NEW: outlining %s %p, size %d\n", node->getOpCode().getName(), node, allocationSize))
       outlineNew = true;
 
-   cg->setVMThreadRequired(true);
-
    TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *fallThru = generateLabelSymbol(cg);
    startLabel->setStartInternalControlFlow();
@@ -9481,8 +9373,6 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
       {
       genInitObjectHeader(node, clazz, classReg, targetReg, tempReg, monitorSlotIsInitialized, cg);
       }
-
-   cg->setVMThreadRequired(false);
 
    if (fej9->inlinedAllocationsMustBeVerified() && (node->getOpCodeValue() == TR::New ||
                                                         node->getOpCodeValue() == TR::anewarray) )
@@ -10151,11 +10041,10 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayStoreCheckArrayCopyEvaluator(TR::No
 
    generateRegImmInstruction(CMP4RegImm4, node, checkFailureIndexReg, (uint32_t)-1, cg);
    cg->decReferenceCount(callNode);
-   bool rematerializeVMThreadInSnippet = (cg->allowVMThreadRematerialization() && cg->getSupportsVMThreadGRA()) ? true : false;
-   instr = generateLabelInstruction (JNE4, node, snippetLabel, !rematerializeVMThreadInSnippet, cg);
+   instr = generateLabelInstruction (JNE4, node, snippetLabel, true, cg);
    snippet = new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg,
       comp->getSymRefTab()->findOrCreateArrayStoreExceptionSymbolRef(comp->getJittedMethodSymbol()),
-      snippetLabel, instr, false, rematerializeVMThreadInSnippet);
+      snippetLabel, instr, false);
    cg->addSnippet(snippet);
 
    return NULL;
@@ -11327,10 +11216,8 @@ inlineNanoTime(
          return false;
       // Leave space on the stack for the 64-bit result
       //
-      cg->setVMThreadRequired(true);
       temp2 = cg->allocateRegister();
       generateRegMemInstruction(L4RegMem, node, temp2, generateX86MemoryReference(vmThreadReg, offsetof(J9VMThread, javaVM), cg), cg);
-      cg->setVMThreadRequired(false);
       generateRegMemInstruction(L4RegMem, node, temp2, generateX86MemoryReference(temp2, offsetof(J9JavaVM, portLibrary), cg), cg);
       generateRegInstruction(PUSHReg, node, espReal, cg);
       generateRegInstruction(PUSHReg, node, temp2, cg);
@@ -11379,28 +11266,11 @@ inlineNanoTime(
    }
 #endif
 
-
 enum TR_InlinedMathFunctions
    {
-   TR_Max_I    = 0,
-   TR_Min_I    = 1,
-   TR_Abs_I    = 2,
-   TR_Max_L    = 3,
-   TR_Min_L    = 4,
-   TR_Abs_L    = 5,
-   TR_Abs_F    = 6,
-   TR_Abs_D    = 7
+   TR_Abs_I = 0,
+   TR_Abs_L = 1,
    };
-
-
-
-#if !defined(_LONG_LONG) && !defined(LINUX)
-#define DOUBLE_NEGATIVE_ZERO 0x8000000000000000L
-#define FLOAT_NEGATIVE_ZERO  0x80000000
-#else
-#define DOUBLE_NEGATIVE_ZERO 0x8000000000000000LL
-#define FLOAT_NEGATIVE_ZERO  0x80000000
-#endif
 
 static bool
 inlineSimpleMathFunction(
@@ -11410,67 +11280,6 @@ inlineSimpleMathFunction(
    {
    switch(func)
       {
-      case TR_Max_I:
-      case TR_Min_I:
-         {
-         if (!cg->supportsCMOV())
-            return false;
-
-         TR::Node *firstChild = node->getFirstChild();
-         TR::Node *secondChild = node->getSecondChild();
-         TR::Register *resultReg = cg->allocateRegister(), *firstReg, *secondReg;
-
-         firstReg = cg->evaluate(firstChild);
-         secondReg = cg->evaluate(secondChild);
-
-         TR_ASSERT(firstReg && secondReg, "We should've had both operands in registers by now.");
-
-         generateRegRegInstruction(MOV4RegReg, node, resultReg, firstReg, cg);
-         generateRegRegInstruction(CMP4RegReg, node, resultReg, secondReg, cg);
-         if (func == TR_Min_I)
-            generateRegRegInstruction(CMOVG4RegReg, node, resultReg, secondReg, cg);
-         else
-            generateRegRegInstruction(CMOVL4RegReg, node, resultReg, secondReg, cg);
-
-         node->setRegister(resultReg);
-         cg->decReferenceCount(firstChild);
-         cg->decReferenceCount(secondChild);
-
-         return true;
-         }
-
-      case TR_Max_L:
-      case TR_Min_L:
-         {
-         if (TR::Compiler->target.is32Bit())
-            return false;
-
-         if (!cg->supportsCMOV())
-            return false;
-
-         TR::Node *firstChild = node->getFirstChild();
-         TR::Node *secondChild = node->getSecondChild();
-         TR::Register *resultReg = cg->allocateRegister(), *firstReg, *secondReg;
-
-         firstReg = cg->evaluate(firstChild);
-         secondReg = cg->evaluate(secondChild);
-
-         TR_ASSERT(firstReg && secondReg, "We should've had both operands in registers by now.");
-
-         generateRegRegInstruction(MOV8RegReg, node, resultReg, firstReg, cg);
-         generateRegRegInstruction(CMP8RegReg, node, resultReg, secondReg, cg);
-         if (func == TR_Min_L)
-            generateRegRegInstruction(CMOVG8RegReg, node, resultReg, secondReg, cg);
-         else
-            generateRegRegInstruction(CMOVL8RegReg, node, resultReg, secondReg, cg);
-
-         node->setRegister(resultReg);
-         cg->decReferenceCount(firstChild);
-         cg->decReferenceCount(secondChild);
-
-         return true;
-         }
-
       case TR_Abs_I:
          {
          TR::Node *firstChild = node->getFirstChild();
@@ -11533,61 +11342,6 @@ inlineSimpleMathFunction(
          return true;
          }
 
-      case TR_Abs_F:
-      case TR_Abs_D:
-         {
-         if (TR::Compiler->target.is32Bit())
-            return false;
-
-         TR::Node     *operand        = NULL;
-         TR::Node     *firstChild     = NULL;
-
-         if (node->getNumChildren() == 1)
-            {
-            operand = node->getFirstChild();
-            }
-         else
-            {
-            firstChild = node->getFirstChild();
-            operand    = node->getSecondChild();
-            }
-
-         TR::Register *targetRegister = NULL;
-         TR::Register *opRegister     = cg->evaluate(operand);
-
-         TR_ASSERT(opRegister->getKind() == TR_FPR, "floating point ABS is only supported for SSE instructions");
-
-         TR::IA32ConstantDataSnippet *cds = NULL;
-         TR_X86OpCodes andOpCode, movOpCode;
-         targetRegister = cg->allocateRegister(TR_FPR);
-
-         if (func == TR_Abs_F)
-            {
-            cds = cg->findOrCreate4ByteConstant(node, FLOAT_NEGATIVE_ZERO);
-            movOpCode = MOVSSRegMem;
-            andOpCode = ANDNPSRegReg;
-            targetRegister->setIsSinglePrecision();
-            }
-         else
-            {
-            cds = cg->findOrCreate8ByteConstant(node, DOUBLE_NEGATIVE_ZERO);
-            movOpCode = MOVSDRegMem;
-            andOpCode = ANDNPDRegReg;
-            }
-
-         TR::MemoryReference *constMR = generateX86MemoryReference(cds, cg);
-
-         generateRegMemInstruction(movOpCode, node, targetRegister, constMR, cg);
-         generateRegRegInstruction(andOpCode, node, targetRegister, opRegister, cg);
-
-         node->setRegister(targetRegister);
-         if (firstChild)
-            cg->recursivelyDecReferenceCount(firstChild);
-
-         cg->decReferenceCount(operand);
-
-         return true;
-         }
       default:
          {
          TR_ASSERT(0,"Undefined simple math function");
@@ -11596,46 +11350,6 @@ inlineSimpleMathFunction(
       }
    return false;
    }
-
-
-static bool inlineMathLog(TR::Node *node, TR::CodeGenerator *cg)
-   {
-
-   // The base 'e' logarithm can be implemented with a faster X87
-   // instruction sequence:
-   //
-   //    fldln2
-   //    movsd [tempMR], xmm0
-   //    fld [tempMR]
-   //    fyl2x
-   //    fstp [tempMR]
-   //    movsd xmm0, [tempMR]
-   //
-
-   TR::Register *firstChildReg = cg->evaluate(node->getFirstChild());
-
-   generateInstruction(FLDLN2, node, cg);
-
-   TR::MemoryReference *tempMR = cg->machine()->getDummyLocalMR(TR::Double);
-   generateMemRegInstruction(MOVSDMemReg, node, tempMR, firstChildReg, cg);
-
-   tempMR = cg->machine()->getDummyLocalMR(TR::Double);
-   generateMemInstruction(DLDMem, node, tempMR, cg);
-   generateInstruction(FYL2X, node, cg);
-
-   tempMR = cg->machine()->getDummyLocalMR(TR::Double);
-   generateMemInstruction(DSTPMemReg, node, tempMR, cg);
-
-   tempMR = cg->machine()->getDummyLocalMR(TR::Double);
-   TR::Register *targetReg = cg->allocateRegister(TR_FPR);
-   generateRegMemInstruction(MOVSDRegMem, node, targetReg, tempMR, cg);
-
-   node->setRegister(targetReg);
-   cg->decReferenceCount(node->getFirstChild());
-
-   return true;
-   }
-
 
 static bool
 inlineMathSQRT(
@@ -11851,18 +11565,115 @@ static bool inlineObjectHashCode(TR::Node *node, bool isIndirect)
 // jl serial_loop
 //
 // end_label
-static bool
-inlineStringHashCode(
-      TR::Node *node,
-      bool isIndirect,
-      TR::CodeGenerator *cg,
-      bool isCompressed)
+static TR::Register* inlineStringHashCode(TR::Node* node, bool isCompressed, TR::CodeGenerator* cg)
    {
    TR::Compilation *comp = cg->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
+   static auto UseOldStringHashCode = (bool)feGetEnv("TR_UseOldStringHashCode");
 
-   if (isIndirect)
-      diagnostic("String.hashCode called indirectly by %s\n", comp->signature());
+   if (comp->getOption(TR_DisableSIMDStringHashCode) || TR::Compiler->om.canGenerateArraylets() || !cg->getX86ProcessorInfo().supportsSSE4_1())
+      {
+      return NULL;
+      }
+   else if (!UseOldStringHashCode)
+      {
+      TR_ASSERT(node->getChild(1)->getOpCodeValue() == TR::iconst && node->getChild(1)->getInt() == 0, "String hashcode offset can only be const zero.");
+
+      const int size = 4;
+      auto shift = isCompressed ? 0 : 1;
+
+      auto address = cg->evaluate(node->getChild(0));
+      auto length = cg->evaluate(node->getChild(2));
+      auto index = cg->allocateRegister();
+      auto hash = cg->allocateRegister();
+      auto tmp = cg->allocateRegister();
+      auto hashXMM = cg->allocateRegister(TR_VRF);
+      auto tmpXMM = cg->allocateRegister(TR_VRF);
+      auto multiplierXMM = cg->allocateRegister(TR_VRF);
+
+      auto begLabel = generateLabelSymbol(cg);
+      auto endLabel = generateLabelSymbol(cg);
+      auto loopLabel = generateLabelSymbol(cg);
+      begLabel->setStartInternalControlFlow();
+      endLabel->setEndInternalControlFlow();
+      auto deps = generateRegisterDependencyConditions((uint8_t)6, (uint8_t)6, cg);
+      deps->addPreCondition(address, TR::RealRegister::NoReg, cg);
+      deps->addPreCondition(index, TR::RealRegister::NoReg, cg);
+      deps->addPreCondition(length, TR::RealRegister::NoReg, cg);
+      deps->addPreCondition(multiplierXMM, TR::RealRegister::NoReg, cg);
+      deps->addPreCondition(tmpXMM, TR::RealRegister::NoReg, cg);
+      deps->addPreCondition(hashXMM, TR::RealRegister::NoReg, cg);
+      deps->addPostCondition(address, TR::RealRegister::NoReg, cg);
+      deps->addPostCondition(index, TR::RealRegister::NoReg, cg);
+      deps->addPostCondition(length, TR::RealRegister::NoReg, cg);
+      deps->addPostCondition(multiplierXMM, TR::RealRegister::NoReg, cg);
+      deps->addPostCondition(tmpXMM, TR::RealRegister::NoReg, cg);
+      deps->addPostCondition(hashXMM, TR::RealRegister::NoReg, cg);
+
+      generateRegRegInstruction(MOV4RegReg, node, index, length, cg);
+      generateRegImmInstruction(AND4RegImms, node, index, size-1, cg); // mod size
+      generateRegMemInstruction(CMOVE4RegMem, node, index, generateX86MemoryReference(cg->findOrCreate4ByteConstant(node, size), cg), cg);
+
+      // Prepend zeros
+      {
+      static uint64_t MASKDECOMPRESSED[] = { 0x0000000000000000ULL, 0xffffffffffffffffULL };
+      static uint64_t MASKCOMPRESSED[]   = { 0xffffffff00000000ULL, 0x0000000000000000ULL };
+      generateRegMemInstruction(isCompressed ? MOVDRegMem : MOVQRegMem, node, hashXMM, generateX86MemoryReference(address, index, shift, -(size << shift) + TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
+      generateRegMemInstruction(LEARegMem(), node, tmp, generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, isCompressed ? MASKCOMPRESSED : MASKDECOMPRESSED), cg), cg);
+
+      auto mr = generateX86MemoryReference(tmp, index, shift, 0, cg);
+      if (cg->getX86ProcessorInfo().supportsAVX())
+         {
+         generateRegMemInstruction(PANDRegMem, node, hashXMM, mr, cg);
+         }
+      else
+         {
+         generateRegMemInstruction(MOVDQURegMem, node, tmpXMM, mr, cg);
+         generateRegRegInstruction(PANDRegReg, node, hashXMM, tmpXMM, cg);
+         }
+      generateRegRegInstruction(isCompressed ? PMOVZXBDRegReg : PMOVZXWDRegReg, node, hashXMM, hashXMM, cg);
+      }
+
+      // Reduction Loop
+      {
+      static uint32_t multiplier[] = { 31*31*31*31, 31*31*31*31, 31*31*31*31, 31*31*31*31 };
+      generateLabelInstruction(LABEL, node, begLabel, cg);
+      generateRegRegInstruction(CMP4RegReg, node, index, length, cg);
+      generateLabelInstruction(JGE4, node, endLabel, cg);
+      generateRegMemInstruction(MOVDQURegMem, node, multiplierXMM, generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, multiplier), cg), cg);
+      generateLabelInstruction(LABEL, node, loopLabel, cg);
+      generateRegRegInstruction(PMULLDRegReg, node, hashXMM, multiplierXMM, cg);
+      generateRegMemInstruction(isCompressed ? PMOVZXBDRegMem : PMOVZXWDRegMem, node, tmpXMM, generateX86MemoryReference(address, index, shift, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
+      generateRegImmInstruction(ADD4RegImms, node, index, 4, cg);
+      generateRegRegInstruction(PADDDRegReg, node, hashXMM, tmpXMM, cg);
+      generateRegRegInstruction(CMP4RegReg, node, index, length, cg);
+      generateLabelInstruction(JL4, node, loopLabel, cg);
+      generateLabelInstruction(LABEL, node, endLabel, deps, cg);
+      }
+      
+      // Finalization
+      {
+      static uint32_t multiplier[] = { 31*31*31, 31*31, 31, 1 };
+      generateRegMemInstruction(PMULLDRegMem, node, hashXMM, generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, multiplier), cg), cg);
+      generateRegRegImmInstruction(PSHUFDRegRegImm1, node, tmpXMM, hashXMM, 0x0e, cg);
+      generateRegRegInstruction(PADDDRegReg, node, hashXMM, tmpXMM, cg);
+      generateRegRegImmInstruction(PSHUFDRegRegImm1, node, tmpXMM, hashXMM, 0x01, cg);
+      generateRegRegInstruction(PADDDRegReg, node, hashXMM, tmpXMM, cg);
+      }
+      
+      generateRegRegInstruction(MOVDReg4Reg, node, hash, hashXMM, cg);
+
+      cg->stopUsingRegister(index);
+      cg->stopUsingRegister(tmp);
+      cg->stopUsingRegister(hashXMM);
+      cg->stopUsingRegister(tmpXMM);
+      cg->stopUsingRegister(multiplierXMM);
+
+      node->setRegister(hash);
+      cg->decReferenceCount(node->getChild(0));
+      cg->recursivelyDecReferenceCount(node->getChild(1));
+      cg->decReferenceCount(node->getChild(2));
+      return hash;
+      }
    else
       {
       TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
@@ -12020,9 +11831,8 @@ inlineStringHashCode(
       cg->stopUsingRegister(xmm0);
       cg->stopUsingRegister(xmm1);
       cg->stopUsingRegister(xmm2);
-      return true;
+      return hashReg;
       }
-   return false;
    }
 
 static bool
@@ -12061,6 +11871,138 @@ TR::Register *intOrLongClobberEvaluate(
       TR_ASSERT(!getNodeIs64Bit(node, cg), "nodeIs64Bit must be consistent with node size");
       return cg->intClobberEvaluate(node);
       }
+   }
+
+static TR::Register* inlineFindElementFromArray(TR::Node* node, TR::CodeGenerator* cg)
+   {
+   static uint8_t MASKOFSIZEONE[] =
+      {
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      };
+   static uint8_t MASKOFSIZETWO[] =
+      {
+      0x00, 0x01, 0x00, 0x01,
+      0x00, 0x01, 0x00, 0x01,
+      0x00, 0x01, 0x00, 0x01,
+      0x00, 0x01, 0x00, 0x01,
+      };
+
+   uint8_t width = 16;
+   uint8_t shift = 0;
+   uint8_t* shuffleMask = NULL;
+   auto compareOp = BADIA32Op;
+   switch(node->getSymbol()->castToMethodSymbol()->getMethod()->parmType(1))
+      {
+      case TR::Int8:
+         shuffleMask = MASKOFSIZEONE;
+         compareOp = PCMPEQBRegReg;
+         shift = 0;
+         break;
+      case TR::Int16:
+         shuffleMask = MASKOFSIZETWO;
+         compareOp = PCMPEQWRegReg;
+         shift = 1;
+         break;
+      default:
+         TR_ASSERT(0, "Incorrect value parameter type!");
+      }
+
+   auto address = cg->evaluate(node->getChild(1));
+   auto value = cg->evaluate(node->getChild(2));
+   auto offset = cg->evaluate(node->getChild(3));
+   auto size = cg->evaluate(node->getChild(4));
+
+   auto ECX = cg->allocateRegister();
+   auto result = cg->allocateRegister();
+   auto scratch = cg->allocateRegister();
+   auto scratchXMM = cg->allocateRegister(TR_VRF);
+   auto valueXMM = cg->allocateRegister(TR_VRF);
+
+   auto dependencies = generateRegisterDependencyConditions((uint8_t)7, (uint8_t)7, cg);
+   dependencies->addPreCondition(ECX, TR::RealRegister::ecx, cg);
+   dependencies->addPreCondition(address, TR::RealRegister::NoReg, cg);
+   dependencies->addPreCondition(size, TR::RealRegister::NoReg, cg);
+   dependencies->addPreCondition(result, TR::RealRegister::NoReg, cg);
+   dependencies->addPreCondition(scratch, TR::RealRegister::NoReg, cg);
+   dependencies->addPreCondition(scratchXMM, TR::RealRegister::NoReg, cg);
+   dependencies->addPreCondition(valueXMM, TR::RealRegister::NoReg, cg);
+   dependencies->addPostCondition(ECX, TR::RealRegister::ecx, cg);
+   dependencies->addPostCondition(address, TR::RealRegister::NoReg, cg);
+   dependencies->addPostCondition(size, TR::RealRegister::NoReg, cg);
+   dependencies->addPostCondition(result, TR::RealRegister::NoReg, cg);
+   dependencies->addPostCondition(scratch, TR::RealRegister::NoReg, cg);
+   dependencies->addPostCondition(scratchXMM, TR::RealRegister::NoReg, cg);
+   dependencies->addPostCondition(valueXMM, TR::RealRegister::NoReg, cg);
+
+   auto begLabel = generateLabelSymbol(cg);
+   auto endLabel = generateLabelSymbol(cg);
+   auto loopLabel = generateLabelSymbol(cg);
+   begLabel->setStartInternalControlFlow();
+   endLabel->setEndInternalControlFlow();
+
+   generateRegRegInstruction(MOVDRegReg4, node, valueXMM, value, cg);
+   generateRegMemInstruction(PSHUFBRegMem, node, valueXMM, generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, shuffleMask), cg), cg);
+
+   generateRegRegInstruction(MOV4RegReg, node, result, offset, cg);
+
+   generateLabelInstruction(LABEL, node, begLabel, cg);
+   generateRegMemInstruction(LEARegMem(), node, scratch, generateX86MemoryReference(address, result, shift, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
+   generateRegRegInstruction(MOVRegReg(), node, ECX, scratch, cg);
+   generateRegImmInstruction(ANDRegImms(), node, scratch, ~(width - 1), cg);
+   generateRegImmInstruction(ANDRegImms(), node, ECX, width - 1, cg);
+   generateLabelInstruction(JE1, node, loopLabel, cg);
+
+   generateRegMemInstruction(MOVDQURegMem, node, scratchXMM, generateX86MemoryReference(scratch, 0, cg), cg);
+   generateRegRegInstruction(compareOp, node, scratchXMM, valueXMM, cg);
+   generateRegRegInstruction(PMOVMSKB4RegReg, node, scratch, scratchXMM, cg);
+   generateRegInstruction(SHR4RegCL, node, scratch, cg);
+   generateRegRegInstruction(TEST4RegReg, node, scratch, scratch, cg);
+   generateLabelInstruction(JNE1, node, endLabel, cg);
+   if (shift)
+      {
+      generateRegImmInstruction(SHR4RegImm1, node, ECX, shift, cg);
+      }
+   generateRegImmInstruction(ADD4RegImms, node, result, width >> shift, cg);
+   generateRegRegInstruction(SUB4RegReg, node, result, ECX, cg);
+   generateRegRegInstruction(CMP4RegReg, node, result, size, cg);
+   generateLabelInstruction(JGE1, node, endLabel, cg);
+
+   generateLabelInstruction(LABEL, node, loopLabel, cg);
+   generateRegMemInstruction(MOVDQURegMem, node, scratchXMM, generateX86MemoryReference(address, result, shift, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
+   generateRegRegInstruction(compareOp, node, scratchXMM, valueXMM, cg);
+   generateRegRegInstruction(PMOVMSKB4RegReg, node, scratch, scratchXMM, cg);
+   generateRegRegInstruction(TEST4RegReg, node, scratch, scratch, cg);
+   generateLabelInstruction(JNE1, node, endLabel, cg);
+   generateRegImmInstruction(ADD4RegImms, node, result, width >> shift, cg);
+   generateRegRegInstruction(CMP4RegReg, node, result, size, cg);
+   generateLabelInstruction(JL1, node, loopLabel, cg);
+   generateLabelInstruction(LABEL, node, endLabel, dependencies, cg);
+
+   generateRegRegInstruction(BSF4RegReg, node, scratch, scratch, cg);
+   if (shift)
+      {
+      generateRegImmInstruction(SHR4RegImm1, node, scratch, shift, cg);
+      }
+   generateRegRegInstruction(ADDRegReg(), node, result, scratch, cg);
+   generateRegRegInstruction(CMPRegReg(), node, result, size, cg);
+   generateRegMemInstruction(CMOVGERegMem(), node, result, generateX86MemoryReference(TR::Compiler->target.is32Bit() ? cg->findOrCreate4ByteConstant(node, -1) : cg->findOrCreate8ByteConstant(node, -1), cg), cg);
+
+   cg->stopUsingRegister(ECX);
+   cg->stopUsingRegister(scratch);
+   cg->stopUsingRegister(scratchXMM);
+   cg->stopUsingRegister(valueXMM);
+
+
+   node->setRegister(result);
+   cg->recursivelyDecReferenceCount(node->getChild(0));
+   cg->decReferenceCount(node->getChild(1));
+   cg->decReferenceCount(node->getChild(2));
+   cg->decReferenceCount(node->getChild(3));
+   cg->decReferenceCount(node->getChild(4));
+   return result;
    }
 
 /** Replaces a call to an Unsafe CAS method with inline instructions.
@@ -12343,361 +12285,6 @@ inlineCompareAndSwapNative(
    return true;
    }
 
-static TR::MemoryReference* obtainfieldRM(TR::Node* node, TR::MethodSymbol* method, TR::Register* receiver, TR::Register* index, TR::CodeGenerator* cg)
-   {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
-   char* className = NULL;
-   char* fieldSig = NULL;
-   uint8_t indexShift = 0;
-
-   switch (method->getRecognizedMethod())
-      {
-      case TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet:
-         className = "Ljava/util/concurrent/atomic/AtomicBoolean;";
-         fieldSig = "I";  // not a typo, the field is int
-         break;
-      case TR::java_util_concurrent_atomic_AtomicInteger_getAndSet:
-      case TR::java_util_concurrent_atomic_AtomicInteger_addAndGet:
-      case TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd:
-      case TR::java_util_concurrent_atomic_AtomicInteger_incrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicInteger_getAndIncrement:
-      case TR::java_util_concurrent_atomic_AtomicInteger_decrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicInteger_getAndDecrement:
-         className = "Ljava/util/concurrent/atomic/AtomicInteger;";
-         fieldSig = "I";
-         break;
-      case TR::java_util_concurrent_atomic_AtomicLong_getAndSet:
-      case TR::java_util_concurrent_atomic_AtomicLong_addAndGet:
-      case TR::java_util_concurrent_atomic_AtomicLong_getAndAdd:
-      case TR::java_util_concurrent_atomic_AtomicLong_incrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicLong_getAndIncrement:
-      case TR::java_util_concurrent_atomic_AtomicLong_decrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicLong_getAndDecrement:
-         className = "Ljava/util/concurrent/atomic/AtomicLong;";
-         fieldSig = "J";
-         break;
-      case TR::java_util_concurrent_atomic_AtomicReference_getAndSet:
-         className = "Ljava/util/concurrent/atomic/AtomicReference;";
-         fieldSig = "Ljava/lang/Object;";
-         break;
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndSet:
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_incrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndIncrement:
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_decrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndDecrement:
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_addAndGet:
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndAdd:
-         className = "Ljava/util/concurrent/atomic/AtomicIntegerArray;";
-         fieldSig = "[I";
-         indexShift = 4;
-         break;
-      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndSet:
-      case TR::java_util_concurrent_atomic_AtomicLongArray_incrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndIncrement:
-      case TR::java_util_concurrent_atomic_AtomicLongArray_decrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndDecrement:
-      case TR::java_util_concurrent_atomic_AtomicLongArray_addAndGet:
-      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndAdd:
-         className = "Ljava/util/concurrent/atomic/AtomicLongArray;";
-         fieldSig = "[J";
-         indexShift = 8;
-         break;
-      case TR::java_util_concurrent_atomic_AtomicReferenceArray_getAndSet:
-         className = "Ljava/util/concurrent/atomic/AtomicReferenceArray;";
-         fieldSig = "Ljava/lang/Object;";
-         indexShift = TR::Compiler->target.is64Bit() ? 8 : 4;
-         break;
-      default:
-         TR_ASSERT(0, "Unknown atomic operation method\n");
-         return NULL;
-      }
-
-   // obtain object address
-   TR_ResolvedMethod* owningMethod = node->getSymbolReference()->getOwningMethod(cg->comp());
-   if(indexShift) // array
-      {
-      // get the address of array, and load the address to receiver; the original receiver address is not needed anymore
-      intptrj_t fieldOffset = fej9->getInstanceFieldOffsetIncludingHeader(className, "array", fieldSig, owningMethod);
-      generateRegMemInstruction(LRegMem(), node, receiver, generateX86MemoryReference(receiver, fieldOffset, cg), cg);
-      // then find the actual element, note that at this point, the receiver register holds the address to the array
-      return generateX86MemoryReference(receiver, index, indexShift, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg);
-      }
-   else // not array
-      {
-      intptrj_t fieldOffset = fej9->getInstanceFieldOffsetIncludingHeader(className, "value", fieldSig, owningMethod);
-      return generateX86MemoryReference(receiver, fieldOffset, cg);
-      }
-   }
-
-static bool generateAtomicMemRegOps(TR::Node* node, TR::MethodSymbol* method, TR_X86OpCodes op, bool returnNewValue, bool isArray, bool isConstantParam, int32_t immi, TR::CodeGenerator* cg)
-   {
-   // FIVE steps to generate atomic code
-   // 1. Obtain field address           => fieldRM
-   // 2. Obtain value                   => value = evaluate(child) OR 1 OR -1
-   // 3. Copy value if needed           => copy = value
-   // 4. lock xadd / xchg               => lock add /xchg [fieldRM] value
-   // 5. add to return valual if needed => lea value, [value+copy]
-
-   // Step 1
-   TR::Register* receiver = cg->evaluate(node->getFirstChild());
-   TR::Register* index = NULL;
-   if (isArray)
-      {
-      index = cg->evaluate(node->getChild(1)); // first param is the array index
-      }
-   TR::MemoryReference* fieldRM = obtainfieldRM(node, method, receiver, index, cg);
-
-   // Step 2
-   TR::Register* value = NULL;
-   if (isConstantParam) // value to be added not a immidiate
-      {
-      value = TR::TreeEvaluator::loadConstant(node, immi, TR_RematerializableInt, cg);
-      }
-   else
-      {
-      value = intOrLongClobberEvaluate(node->getLastChild(), getNodeIs64Bit(node, cg), cg);
-      }
-
-   // Step 3
-   TR::Register* tmp = NULL;
-   if (returnNewValue && !isConstantParam)
-      {
-      tmp = cg->allocateRegister();
-      generateRegRegInstruction(MOVRegReg(), node, tmp, value, cg);
-      }
-
-   // Step 4
-   generateMemRegInstruction(op, node, fieldRM, value, cg);
-
-   // Step 5
-   if (returnNewValue)
-      {
-      if (isConstantParam)
-         {
-         generateRegMemInstruction(LEARegMem(), node, value, generateX86MemoryReference(value, immi, cg), cg);
-         }
-      else
-         {
-         generateRegMemInstruction(LEARegMem(), node, value, generateX86MemoryReference(value, tmp, 0, cg), cg);
-         cg->stopUsingRegister(tmp);
-         }
-      }
-
-   // Return result
-   node->setRegister(value);
-
-   // Clean up children nodes
-   for (uint16_t i = 0; i < node->getNumChildren(); i++)
-      {
-      cg->decReferenceCount(node->getChild(i));
-      }
-   return true;
-   }
-static bool inlineAtomicOps(TR::Node* node, TR::MethodSymbol* method, TR::CodeGenerator* cg)
-   {
-   if (cg->comp()->getOption(TR_TraceCG))
-      {
-      traceMsg(cg->comp(),
-               "O^O: Inlining recognized atomic primitive 0x%08x: %s.%s%s\n",
-               method->getRecognizedMethod(),
-               method->getMethod()->classNameChars(),
-               method->getMethod()->nameChars(),
-               method->getMethod()->signatureChars());
-      }
-
-   if(TR::Compiler->om.canGenerateArraylets())
-      {
-      // arraylet accesses are not done properly in the fast path for Atomic*Array below
-      switch (method->getRecognizedMethod())
-         {
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndAdd:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndIncrement:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndDecrement:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndSet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_addAndGet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_incrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_decrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_addAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_decrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndAdd:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndDecrement:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndIncrement:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndSet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_incrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicReferenceArray_getAndSet:
-            if (cg->comp()->getOption(TR_TraceCG))
-              {
-              traceMsg(cg->comp(), "Inlining aborted since OM can generate arraylets\n");
-              }
-            return false;
-         default:
-            break;
-         }
-      }
-
-   if (TR::Compiler->target.is32Bit())
-      {
-      switch (method->getRecognizedMethod())
-         {
-         case TR::java_util_concurrent_atomic_AtomicLong_addAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLong_decrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLong_getAndAdd:
-         case TR::java_util_concurrent_atomic_AtomicLong_getAndDecrement:
-         case TR::java_util_concurrent_atomic_AtomicLong_getAndIncrement:
-         case TR::java_util_concurrent_atomic_AtomicLong_getAndSet:
-         case TR::java_util_concurrent_atomic_AtomicLong_incrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_addAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_decrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndAdd:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndDecrement:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndIncrement:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndSet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_incrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicReferenceArray_getAndSet:
-            if (cg->comp()->getOption(TR_TraceCG))
-               {
-               traceMsg(cg->comp(), "Inlining aborted since inlining 64-bit primitive on 32-bit platform is not supported\n");
-               }
-            return false;
-         default:
-            break;
-         }
-      }
-
-   switch (method->getRecognizedMethod())
-      {
-      // no optimization for now since instanceof checks for the updaters make it non trivial to simply reduce to an instruction; maybe a tagged field updater (non null and no type check read)
-      case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndAdd:
-      case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndIncrement:
-      case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndDecrement:
-      case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndSet:
-      case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_addAndGet:
-      case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_incrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_decrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_addAndGet:
-      case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_decrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_getAndAdd:
-      case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_getAndDecrement:
-      case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_getAndIncrement:
-      case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_getAndSet:
-      case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_incrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicReferenceFieldUpdater_getAndSet:
-         if (cg->comp()->getOption(TR_TraceCG))
-            {
-            traceMsg(cg->comp(), "Inlining aborted since inlining field updater is not supported\n");
-            }
-         return false;
-      default:
-         break;
-      }
-
-   switch (method->getRecognizedMethod())
-      {
-      case TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet:
-         // Note that boolean is represented by int
-         return generateAtomicMemRegOps(node, method, XCHG4MemReg, false, false, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd:
-         return generateAtomicMemRegOps(node, method, LXADD4MemReg, false, false, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicInteger_getAndIncrement:
-         return generateAtomicMemRegOps(node, method, LXADD4MemReg, false, false, true, 1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicInteger_getAndDecrement:
-         return generateAtomicMemRegOps(node, method, LXADD4MemReg, false, false, true, -1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicInteger_getAndSet:
-         return generateAtomicMemRegOps(node, method, XCHG4MemReg, false, false, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicInteger_addAndGet:
-         return generateAtomicMemRegOps(node, method, LXADD4MemReg, true, false, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicInteger_incrementAndGet:
-         return generateAtomicMemRegOps(node, method, LXADD4MemReg, true, false, true, 1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicInteger_decrementAndGet:
-         return generateAtomicMemRegOps(node, method, LXADD4MemReg, true, false, true, -1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLong_addAndGet:
-         return generateAtomicMemRegOps(node, method, LXADD8MemReg, true, false, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLong_decrementAndGet:
-         return generateAtomicMemRegOps(node, method, LXADD8MemReg, true, false, true, -1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLong_getAndAdd:
-         return generateAtomicMemRegOps(node, method, LXADD8MemReg, false, false, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLong_getAndDecrement:
-         return generateAtomicMemRegOps(node, method, LXADD8MemReg, false, false, true, -1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLong_getAndIncrement:
-         return generateAtomicMemRegOps(node, method, LXADD8MemReg, false, false, true, 1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLong_getAndSet:
-         return generateAtomicMemRegOps(node, method, XCHG8MemReg, false, false, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLong_incrementAndGet:
-         return generateAtomicMemRegOps(node, method, LXADD8MemReg, true, false, true, 1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicReference_getAndSet:
-         return generateAtomicMemRegOps(node, method, TR::Compiler->target.is64Bit() ? XCHG8MemReg : XCHG4MemReg, false, false, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndAdd:
-         return generateAtomicMemRegOps(node, method, LXADD4MemReg, false, true, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndIncrement:
-         return generateAtomicMemRegOps(node, method, LXADD4MemReg, false, true, true, 1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndDecrement:
-         return generateAtomicMemRegOps(node, method, LXADD4MemReg, false, true, true, -1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndSet:
-         return generateAtomicMemRegOps(node, method, XCHG4MemReg, false, true, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_addAndGet:
-         return generateAtomicMemRegOps(node, method, LXADD4MemReg, true, true, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_incrementAndGet:
-         return generateAtomicMemRegOps(node, method, LXADD4MemReg, true, true, true, 1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_decrementAndGet:
-         return generateAtomicMemRegOps(node, method, LXADD4MemReg, true, true, true, -1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLongArray_addAndGet:
-         return generateAtomicMemRegOps(node, method, LXADD8MemReg, true, true, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLongArray_decrementAndGet:
-         return generateAtomicMemRegOps(node, method, LXADD8MemReg, true, true, true, -1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndAdd:
-         return generateAtomicMemRegOps(node, method, LXADD8MemReg, false, true, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndDecrement:
-         return generateAtomicMemRegOps(node, method, LXADD8MemReg, false, true, true, -1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndIncrement:
-         return generateAtomicMemRegOps(node, method, LXADD8MemReg, false, true, true, 1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndSet:
-         return generateAtomicMemRegOps(node, method, XCHG8MemReg, false, true, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLongArray_incrementAndGet:
-         return generateAtomicMemRegOps(node, method, LXADD8MemReg, true, true, true, 1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicReferenceArray_getAndSet:
-         return generateAtomicMemRegOps(node, method, TR::Compiler->target.is64Bit() ? XCHG8MemReg : XCHG4MemReg, false, true, false, 0, cg);
-
-      default:
-         if (cg->comp()->getOption(TR_TraceCG))
-            {
-            traceMsg(cg->comp(), "WARNING: Trying to inline an unsupported method (0x%08x), abort.\n", method->getRecognizedMethod());
-            }
-         TR_ASSERT(0, "Trying to inline an unsupported method, abort.");
-         return false;
-      }
-   }
-
-
 static bool
 inlineIsAssignableFrom(
       TR::Node *node,
@@ -12891,8 +12478,6 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
                   numDeps ++;
                   }
 
-               cg->setVMThreadRequired(true);
-
                TR::RegisterDependencyConditions  *deps = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)numDeps, cg);
                deps->addPostCondition(nativeThreadReg, TR::RealRegister::NoReg, cg);
                if (TR::Compiler->target.is32Bit())
@@ -12937,8 +12522,6 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
                   doneLabel->setEndInternalControlFlow();
                   generateLabelInstruction(LABEL, node, doneLabel, deps, cg);
                   }
-
-               cg->setVMThreadRequired(false);
 
                if (TR::Compiler->target.is32Bit())
                   {
@@ -13015,40 +12598,11 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
                return inlineCompareAndSwapNative(node, (TR::Compiler->target.is64Bit() && !comp->useCompressedPointers()) ? 8 : 4, true, cg);
             }
             break;
-         case TR::java_lang_Integer_rotateLeft:
-            {
-            TR::TreeEvaluator::integerRolEvaluator(node, cg);
-            return true;
-            }
-         case TR::java_lang_Math_log:
-            {
-            return inlineMathLog(node, cg);
-            }
 
          case TR::java_lang_Math_sqrt:
          case TR::java_lang_StrictMath_sqrt:
             {
             return inlineMathSQRT(node, cg);
-            }
-
-         case TR::java_lang_Math_max_I:
-            {
-            return inlineSimpleMathFunction(TR_Max_I, node, cg);
-            }
-
-         case TR::java_lang_Math_min_I:
-            {
-            return inlineSimpleMathFunction(TR_Min_I, node, cg);
-            }
-
-         case TR::java_lang_Math_max_L:
-            {
-            return inlineSimpleMathFunction(TR_Max_L, node, cg);
-            }
-
-         case TR::java_lang_Math_min_L:
-            {
-            return inlineSimpleMathFunction(TR_Min_L, node, cg);
             }
 
          case TR::java_lang_Math_abs_I:
@@ -13061,15 +12615,6 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
             return inlineSimpleMathFunction(TR_Abs_L, node, cg);
             }
 
-         case TR::java_lang_Math_abs_F:
-            {
-            return inlineSimpleMathFunction(TR_Abs_F, node, cg);
-            }
-
-         case TR::java_lang_Math_abs_D:
-            {
-            return inlineSimpleMathFunction(TR_Abs_D, node, cg);
-            }
          case TR::java_lang_Long_reverseBytes:
          case TR::java_lang_Integer_reverseBytes:
          case TR::java_lang_Short_reverseBytes:
@@ -13126,53 +12671,6 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
             break;
             }
 
-         case TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet:
-         case TR::java_util_concurrent_atomic_AtomicInteger_addAndGet:
-         case TR::java_util_concurrent_atomic_AtomicInteger_decrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd:
-         case TR::java_util_concurrent_atomic_AtomicInteger_getAndDecrement:
-         case TR::java_util_concurrent_atomic_AtomicInteger_getAndIncrement:
-         case TR::java_util_concurrent_atomic_AtomicInteger_getAndSet:
-         case TR::java_util_concurrent_atomic_AtomicInteger_incrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_addAndGet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_decrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndAdd:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndDecrement:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndIncrement:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndSet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_incrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_addAndGet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_decrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndAdd:
-         case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndDecrement:
-         case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndIncrement:
-         case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndSet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_incrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_addAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_decrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndAdd:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndDecrement:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndIncrement:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndSet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_incrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_addAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_decrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_getAndAdd:
-         case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_getAndDecrement:
-         case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_getAndIncrement:
-         case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_getAndSet:
-         case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_incrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLong_addAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLong_decrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLong_getAndAdd:
-         case TR::java_util_concurrent_atomic_AtomicLong_getAndDecrement:
-         case TR::java_util_concurrent_atomic_AtomicLong_getAndIncrement:
-         case TR::java_util_concurrent_atomic_AtomicLong_getAndSet:
-         case TR::java_util_concurrent_atomic_AtomicLong_incrementAndGet:
-            {
-            return inlineAtomicOps(node, methodSymbol, cg);
-            break;
-            }
         case TR::java_lang_Object_clone:
            {
            return (objectCloneEvaluator(node, cg) != NULL);
@@ -13206,18 +12704,6 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
             {
             if (debug("testObjecthashCode"))
                callWasInlined = inlineObjectHashCode(node, isIndirect);
-            break;
-            }
-         case TR::java_lang_String_hashCodeImplDecompressed:
-            {
-            if (!comp->getOption(TR_DisableSIMDStringHashCode) && cg->getX86ProcessorInfo().supportsSSE4_1()&& !TR::Compiler->om.canGenerateArraylets())
-               callWasInlined = inlineStringHashCode(node, isIndirect, cg, false);
-            break;
-            }
-         case TR::java_lang_String_hashCodeImplCompressed:
-            {
-            if (!comp->getOption(TR_DisableSIMDStringHashCode) && cg->getX86ProcessorInfo().supportsSSE4_1()&& !TR::Compiler->om.canGenerateArraylets())
-               callWasInlined = inlineStringHashCode(node, isIndirect, cg, true);
             break;
             }
          case TR::java_lang_Class_isAssignableFrom:
@@ -14353,9 +13839,6 @@ void J9::X86::TreeEvaluator::VMwrtbarWithStoreEvaluator(
       storeInstr = doReferenceStore(node, storeMR, translatedSourceReg, usingCompressedPointers, cg);
       }
 
-
-   cg->setVMThreadRequired(true);
-
    if (comp->getOptions()->alwaysCallWriteBarrier() && !isRealTimeGC)
       {
       TR::RegisterDependencyConditions *deps = NULL;
@@ -14434,8 +13917,6 @@ void J9::X86::TreeEvaluator::VMwrtbarWithStoreEvaluator(
          }
       }
 
-   cg->setVMThreadRequired(false);
-
    // Realtime GCs must do the write barrier first and then the store.
    //
    if (isRealTimeGC)
@@ -14503,11 +13984,9 @@ VMgenerateCatchBlockBBStartPrologue(
       TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
       TR::LabelSymbol *restartLabel = generateLabelSymbol(cg);
 
-      cg->setVMThreadRequired(true);
       generateMemInstruction(DEC4Mem, node, generateX86MemoryReference((intptrj_t)comp->getRecompilationInfo()->getCounterAddress(), cg), cg);
       generateLabelInstruction(JE4, node, snippetLabel, cg);
       generateLabelInstruction(LABEL, node, restartLabel, cg);
-      cg->setVMThreadRequired(false);
       cg->addSnippet(new (cg->trHeapMemory()) TR::X86ForceRecompilationSnippet(cg, node, restartLabel, snippetLabel));
       }
 
@@ -14750,10 +14229,23 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
 
    switch (symbol->getMandatoryRecognizedMethod())
       {
+      case TR::com_ibm_jit_JITHelpers_findElementFromArray:
+         if (TR::Compiler->om.canGenerateArraylets() || !cg->getX86ProcessorInfo().supportsSSSE3())
+            break;
+         else
+            return inlineFindElementFromArray(node, cg);
       case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Big:
       case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Little:
          return TR::TreeEvaluator::encodeUTF16Evaluator(node, cg);
 
+      case TR::java_lang_String_hashCodeImplDecompressed:
+         returnRegister = inlineStringHashCode(node, false, cg);
+         callInlined = (returnRegister != NULL);
+         break;
+      case TR::java_lang_String_hashCodeImplCompressed:
+         returnRegister = inlineStringHashCode(node, true, cg);
+         callInlined = (returnRegister != NULL);
+         break;
       default:
          break;
       }
@@ -14806,16 +14298,9 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
 
          break;
 
-      case TR::java_lang_Integer_rotateLeft:
       case TR::java_lang_Math_sqrt:
       case TR::java_lang_StrictMath_sqrt:
-      case TR::java_lang_Math_max_I:
-      case TR::java_lang_Math_min_I:
-      case TR::java_lang_Math_max_L:
-      case TR::java_lang_Math_min_L:
       case TR::java_lang_Math_abs_L:
-      case TR::java_lang_Math_abs_D:
-      case TR::java_lang_Math_abs_F:
       case TR::java_lang_Math_abs_I:
       case TR::java_lang_Long_reverseBytes:
       case TR::java_lang_Integer_reverseBytes:
@@ -14828,8 +14313,6 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
       case TR::java_util_concurrent_atomic_Fences_reachabilityFence:
       case TR::sun_nio_ch_NativeThread_current:
       case TR::sun_misc_Unsafe_copyMemory:
-      case TR::java_lang_String_hashCodeImplCompressed:
-      case TR::java_lang_String_hashCodeImplDecompressed:
          if (TR::TreeEvaluator::VMinlineCallEvaluator(node, false, cg))
             {
             returnRegister = node->getRegister();
@@ -15042,14 +14525,14 @@ J9::X86::TreeEvaluator::compressStringEvaluator(
    }
 
 /*
- * The CaseConversionManager is used to store info about the conversion. It defines the lower bound and upper bound value depending on 
+ * The CaseConversionManager is used to store info about the conversion. It defines the lower bound and upper bound value depending on
  * whether it's a toLower or toUpper case conversion. It also chooses byte or word data type depending on whether it's compressed string or not.
  * The stringCaseConversionHelper queries the manager for those info when generating the actual instructions.
  */
 class J9::X86::TreeEvaluator::CaseConversionManager {
    public:
    CaseConversionManager(bool isCompressedString, bool toLowerCase):_isCompressedString(isCompressedString), _toLowerCase(toLowerCase)
-      { 
+      {
       if (isCompressedString)
          {
          static uint8_t UPPERCASE_A_ASCII_MINUS1_bytes[] =
@@ -15230,7 +14713,7 @@ static TR::Register* allocateRegAndAddCondition(TR::CodeGenerator *cg, TR::Regis
  *   2. vectorized case conversion loop
  *   3. handle residue with non vectorized case conversion loop
  *   4. handle invalid case
- * 
+ *
  * \param node
  * \param cg
  * \param manager Contains info about the conversion: whether it's toUpper or toLower conversion, the valid range of characters, etc
@@ -15271,7 +14754,7 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
    TR_Debug *debug = cg->getDebug();
    TR::Instruction * cursor = NULL;
 
-   uint32_t strideSize = 16; 
+   uint32_t strideSize = 16;
 
    static uint16_t MINUS1[] =
       {
@@ -15280,18 +14763,18 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
       };
 
    TR::LabelSymbol *failLabel = generateLabelSymbol(cg);
-   // Under decompressed string case for 32bits platforms, bail out if string is larger than INT_MAX32/2 since # charater to # byte 
+   // Under decompressed string case for 32bits platforms, bail out if string is larger than INT_MAX32/2 since # charater to # byte
    // conversion will cause overflow.
    if (!TR::Compiler->target.is64Bit() && !manager.isCompressedString())
       {
       generateRegImmInstruction(CMPRegImm4(), node, length, (uint16_t) 0x8000, cg);
-      generateLabelInstruction(JGE4, node, failLabel, cg); 
+      generateLabelInstruction(JGE4, node, failLabel, cg);
       }
 
    // 1. preparation (load value into registers, calculate length etc)
    auto lowerBndMinus1 = generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, manager.getLowerBndMinus1()), cg);
    cursor = generateRegMemInstruction(MOVDQURegMem, node, xmmRegLowerBndMinus1, lowerBndMinus1, cg); iComment("lower bound ascii value minus one");
- 
+
    auto upperBnd = generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, manager.getUpperBnd()), cg);
    cursor = generateRegMemInstruction(MOVDQURegMem, node, xmmRegUpperBnd, upperBnd, cg); iComment("upper bound ascii value");
 
@@ -15310,10 +14793,10 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
    if (!manager.isCompressedString()) // non compressedString using char[] which is 2 bytes per charactor
       cursor = generateRegImmInstruction(SHLRegImm1(), node, length, 1, cg); iComment("# character to # byte conversion");
 
-   // initialize the loop counter 
+   // initialize the loop counter
    cursor = generateRegRegInstruction(XORRegReg(), node, counter, counter, cg); iComment("initialize loop counter");
 
-   //calculate the residueStartLength. Later instructions compare the counter with this length and decide when to jump to the residue handling sequence 
+   //calculate the residueStartLength. Later instructions compare the counter with this length and decide when to jump to the residue handling sequence
    generateRegRegInstruction(MOVRegReg(), node, residueStartLength, length, cg);
    generateRegImmInstruction(SUBRegImms(), node, residueStartLength, strideSize-1, cg);
 
@@ -15338,9 +14821,9 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
    //detect invalid charactors
    generateRegRegInstruction(MOVDQURegReg, node, xmmRegArrayContentCopy1, xmmRegArrayContentCopy0, cg);
    generateRegRegInstruction(MOVDQURegReg, node, xmmRegArrayContentCopy2, xmmRegArrayContentCopy0, cg);
-   cursor = generateRegRegInstruction(manager.isCompressedString()? PCMPGTBRegReg: PCMPGTWRegReg, node, 
+   cursor = generateRegRegInstruction(manager.isCompressedString()? PCMPGTBRegReg: PCMPGTWRegReg, node,
                              xmmRegArrayContentCopy1, xmmRegMinus1, cg); iComment(" > -1");
-   cursor = generateRegRegInstruction(manager.isCompressedString()? PCMPGTBRegReg: PCMPGTWRegReg, node, 
+   cursor = generateRegRegInstruction(manager.isCompressedString()? PCMPGTBRegReg: PCMPGTWRegReg, node,
                              xmmRegArrayContentCopy2, xmmRegAsciiUpperBnd, cg); iComment(" > maximum ascii value");
    cursor = generateRegRegInstruction(PANDNRegReg, node, xmmRegArrayContentCopy2, xmmRegArrayContentCopy1, cg); iComment(" >-1 && !(> maximum ascii value) valid when all bits are set");
    cursor = generateRegRegInstruction(PXORRegReg, node, xmmRegArrayContentCopy2, xmmRegMinus1, cg); iComment("reverse all bits");
@@ -15350,25 +14833,25 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
    //calculate case conversion with vector registers
    generateRegRegInstruction(MOVDQURegReg, node, xmmRegArrayContentCopy1, xmmRegArrayContentCopy0, cg);
    generateRegRegInstruction(MOVDQURegReg, node, xmmRegArrayContentCopy2, xmmRegArrayContentCopy0, cg);
-   cursor = generateRegRegInstruction(manager.isCompressedString()? PCMPGTBRegReg: PCMPGTWRegReg, node, 
+   cursor = generateRegRegInstruction(manager.isCompressedString()? PCMPGTBRegReg: PCMPGTWRegReg, node,
                              xmmRegArrayContentCopy0, xmmRegLowerBndMinus1, cg);  iComment(manager.toLowerCase() ? " > 'A-1'" : "> 'a-1'");
-   cursor = generateRegRegInstruction(manager.isCompressedString()? PCMPGTBRegReg: PCMPGTWRegReg, node, 
+   cursor = generateRegRegInstruction(manager.isCompressedString()? PCMPGTBRegReg: PCMPGTWRegReg, node,
                              xmmRegArrayContentCopy1, xmmRegUpperBnd, cg);  iComment(manager.toLowerCase()? " > 'Z'" : " > 'z'");
    cursor = generateRegRegInstruction(PANDNRegReg, node, xmmRegArrayContentCopy1, xmmRegArrayContentCopy0, cg);  iComment(const_cast<char*> (manager.toLowerCase()? " >='A' && !( >'Z')": " >='a' && !( >'z')"));
    generateRegRegInstruction(PANDRegReg, node, xmmRegArrayContentCopy1, xmmRegConversionDiff, cg);
 
    if (manager.toLowerCase())
-      generateRegRegInstruction(manager.isCompressedString()? PADDBRegReg: PADDWRegReg, node, 
+      generateRegRegInstruction(manager.isCompressedString()? PADDBRegReg: PADDWRegReg, node,
                                 xmmRegArrayContentCopy2, xmmRegArrayContentCopy1, cg);
-   else 
-      generateRegRegInstruction(manager.isCompressedString()? PSUBBRegReg: PSUBWRegReg, node, 
+   else
+      generateRegRegInstruction(manager.isCompressedString()? PSUBBRegReg: PSUBWRegReg, node,
                                 xmmRegArrayContentCopy2, xmmRegArrayContentCopy1, cg);
 
    auto dstArrayMemRef = generateX86MemoryReference(dstArray, counter, 0, 0, cg);
    generateMemRegInstruction(MOVDQUMemReg, node, dstArrayMemRef, xmmRegArrayContentCopy2, cg);
    generateRegImmInstruction(ADDRegImms(), node, counter, strideSize, cg);
    generateLabelInstruction(JMP4, node, caseConversionMainLoopLabel, cg);
-   
+
    // 3. handle residue with non vectorized case conversion loop
    generateLabelInstruction(LABEL, node, residueStartLabel, cg);
    generateRegRegInstruction(CMPRegReg(), node, counter, length, cg);
@@ -15387,8 +14870,8 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
    generateLabelInstruction(JA4, node, storeToArrayLabel, cg);
 
    if (manager.toLowerCase())
-      generateRegMemInstruction(LEARegMem(), 
-                                node, 
+      generateRegMemInstruction(LEARegMem(),
+                                node,
                                 singleChar,
                                 generateX86MemoryReference(singleChar, 0x20, cg),
                                 cg);

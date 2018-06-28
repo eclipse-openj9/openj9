@@ -3589,6 +3589,10 @@ typedef struct J9JITConfig {
 	void *c_jitDecompileBeforeMethodMonitorEnter;
 	void *c_jitDecompileAfterAllocation;
 	void *c_jitDecompileAfterMonitorEnter;
+	void *old_slow_jitReportInstanceFieldRead;
+	void *old_slow_jitReportInstanceFieldWrite;
+	void *old_slow_jitReportStaticFieldRead;
+	void *old_slow_jitReportStaticFieldWrite;
 	struct J9MemorySegment* codeCache;
 	struct J9MemorySegment* dataCache;
 	struct J9MemorySegmentList* codeCacheList;
@@ -3732,6 +3736,7 @@ typedef struct J9JITConfig {
 	IDATA  ( *compileClass)(struct J9VMThread *jitConfig, jclass clazz) ;
 	IDATA  ( *compileClasses)(struct J9VMThread *jitConfig, const char * pattern) ;
 	UDATA fsdEnabled;
+	UDATA inlineFieldWatches;
 	void  ( *jitFramePopNotificationAdded)(struct J9VMThread * currentThread, J9StackWalkState * walkState, UDATA inlineDepth) ;
 	void  ( *jitStackLocalsModified)(struct J9VMThread * currentThread, J9StackWalkState * walkState) ;
 	void  ( *jitReportDynamicCodeLoadEvents)(struct J9VMThread * currentThread) ;
@@ -3944,6 +3949,10 @@ typedef struct J9AOTConfig {
 	void *c_jitDecompileBeforeMethodMonitorEnter;
 	void *c_jitDecompileAfterAllocation;
 	void *c_jitDecompileAfterMonitorEnter;
+	void *old_slow_jitReportInstanceFieldRead;
+	void *old_slow_jitReportInstanceFieldWrite;
+	void *old_slow_jitReportStaticFieldRead;
+	void *old_slow_jitReportStaticFieldWrite;
 	struct J9MemorySegment* codeCache;
 	struct J9MemorySegment* dataCache;
 	struct J9MemorySegmentList* codeCacheList;
@@ -4087,6 +4096,7 @@ typedef struct J9AOTConfig {
 	IDATA  ( *compileClass)(struct J9VMThread *jitConfig, jclass clazz) ;
 	IDATA  ( *compileClasses)(struct J9VMThread *jitConfig, const char * pattern) ;
 	UDATA fsdEnabled;
+	UDATA inlineFieldWatches;
 	void  ( *jitFramePopNotificationAdded)(struct J9VMThread * currentThread, J9StackWalkState * walkState, UDATA inlineDepth) ;
 	void  ( *jitStackLocalsModified)(struct J9VMThread * currentThread, J9StackWalkState * walkState) ;
 	void  ( *jitReportDynamicCodeLoadEvents)(struct J9VMThread * currentThread) ;
@@ -5346,7 +5356,11 @@ typedef struct J9JavaVM {
 	struct J9HashTable* classLoadingConstraints;
 	UDATA* vTableScratch;
 	UDATA vTableScratchSize;
+#if defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR)
 	omrthread_rwmutex_t classUnloadMutex;
+#else
+	omrthread_monitor_t classUnloadMutex;
+#endif
 	UDATA java2J9ThreadPriorityMap[11];
 	UDATA j9Thread2JavaPriorityMap[12];
 	UDATA priorityAsyncEventDispatch;
@@ -5493,11 +5507,28 @@ typedef struct J9JavaVM {
 #define J9VM_DEBUG_ATTRIBUTE_UNUSED_0x800000  0x800000
 #define J9VM_DEFLATION_POLICY_NEVER  0
 
+/* Data block for JIT instance field watch reporting */
+
+typedef struct J9JITWatchedInstanceFieldData {
+	J9Method *method;		/* Currently executing method */
+	UDATA location;			/* Bytecode PC index */
+	UDATA offset;			/* Field offset (not including header) */
+} J9JITWatchedInstanceFieldData;
+
+/* Data block for JIT instance field watch reporting */
+
+typedef struct J9JITWatchedStaticFieldData {
+	J9Method *method;		/* Currently executing method */
+	UDATA location;			/* Bytecode PC index */
+	void *fieldAddress;		/* Address of static field storage */
+	J9Class *fieldClass;	/* Declaring class of static field */
+} J9JITWatchedStaticFieldData;
+
+/* The C stack frame in which compiled code runs */
+
 #if J9_INLINE_JNI_MAX_ARG_COUNT != 32
 #error Math is depending on J9_INLINE_JNI_MAX_ARG_COUNT being 32
 #endif
-
-/* The C stack frame in which compiled code runs */
 
 typedef struct J9CInterpreterStackFrame {
 #if defined(J9VM_ARCH_S390)

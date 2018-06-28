@@ -442,7 +442,63 @@ public class Test_Class {
 			}
 		}
 	}
+	@Test
+	public void test_getMethods_subtest6() throws Exception {
+		TestSpecificMethodsCL tsmcl = new TestSpecificMethodsCL();
+		Class<?> clz = tsmcl.loadClass("TestSpecificMethods");
+		Method specificMethod = clz.getDeclaredMethod("foo");
+		Assert.assertEquals(java.util.List.class, specificMethod.getReturnType(), 
+			"Expected method return type: " + java.util.List.class + " but got: " + specificMethod.getReturnType());
+	}
+	@Test
+	public void test_getMethods_subtest7() throws Exception {
+		TestSpecificMethodsCL	tsmcl = new TestSpecificMethodsCL();
+		Class<?> clz = tsmcl.loadClass("TestSpecificMethods");
+		Method specificMethod = clz.getMethod("foo");
+		Assert.assertEquals(java.util.List.class, specificMethod.getReturnType(), 
+			"Expected method return type: " + java.util.List.class + " but got: " + specificMethod.getReturnType());
+	}
+	
+	class TestSpecificMethodsCL extends ClassLoader {
+		public Class<?> findClass(String name) throws ClassNotFoundException {
+			if (name.equalsIgnoreCase("TestSpecificMethods")) {
+				byte[] classFile = generateSpecificMethodsClz();
+				return defineClass(name, classFile, 0, classFile.length);
+			}
+			throw new ClassNotFoundException(name);
+		}
+		
+		/*
+		 * public class TestSpecificMethods {
+		 * 	public java.util.Collection foo();
+		 * 	public java.util.List foo();
+		 * }
+		 */
+		
+		private byte[] generateSpecificMethodsClz() {
+			ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
+			MethodVisitor mv;
+			
+			cw.visit(V1_8, ACC_PUBLIC + ACC_SUPER, "TestSpecificMethods", null, "java/lang/Object", null);
+			mv = cw.visitMethod(ACC_PUBLIC, "foo", "()Ljava/util/Collection;", null, null);
+			mv.visitCode();
+			mv.visitInsn(ACONST_NULL);
+			mv.visitInsn(ARETURN);
+			mv.visitMaxs(1,1);
+			mv.visitEnd();
 
+			mv = cw.visitMethod(ACC_PUBLIC, "foo", "()Ljava/util/List;", null, null);
+			mv.visitCode();
+			mv.visitInsn(ACONST_NULL);
+			mv.visitInsn(ARETURN);
+			mv.visitMaxs(1,1);
+			mv.visitEnd();
+			
+			cw.visitEnd();
+			return cw.toByteArray();
+		}
+	}
+	
 	static String[] concatenateObjectMethods(String methodList[]) {
 		final String[] jlobjectMethods = new String[] {
 				objectClass + ".equals(java.lang.Object)boolean",
@@ -848,13 +904,13 @@ public class Test_Class {
 	 */
 	@Test
 	public void test_getDeclaredClasses() {
-		int len = 65;
+		int len = 66;
 		// Test for method java.lang.Class [] java.lang.Class.getDeclaredClasses()
 		Class[] declaredClasses = Test_Class.class.getDeclaredClasses();
 		if (declaredClasses.length != len) {
 			for (int i = 0; i < declaredClasses.length; i++)
 				logger.debug("declared[" + i + "]: " + declaredClasses[i]);
-			Assert.fail("Incorrect class array returned: expected 65 but returned " + declaredClasses.length);
+			Assert.fail("Incorrect class array returned: expected 66 but returned " + declaredClasses.length);
 		}
 	}
 

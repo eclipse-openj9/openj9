@@ -30,13 +30,13 @@ import Utilities.URLClassPathCreator;
 /**
  * @author Matthew Kilner
  */
-public class TokenIncompatabilityTest {
+public class TokenIncompatibilityTest {
 	
 	StringManipulator manipulator = new StringManipulator();
 
 	public static void main(String[] args) {
 		
-		TokenIncompatabilityTest test = new TokenIncompatabilityTest();
+		TokenIncompatibilityTest test = new TokenIncompatibilityTest();
 		
 		test.run();
 	}

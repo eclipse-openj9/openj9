@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,7 +71,7 @@ JIT_HELPER(jitFindFieldSignatureClass);  // asm calling-convention helper
 JIT_HELPER(jitHandleArrayIndexOutOfBoundsTrap);  // asm calling-convention helper
 JIT_HELPER(jitHandleIntegerDivideByZeroTrap);  // asm calling-convention helper
 JIT_HELPER(jitHandleNullPointerExceptionTrap);  // asm calling-convention helper
-JIT_HELPER(jitHandleBusErrorTrap);  // asm calling-convention helper
+JIT_HELPER(jitHandleInternalErrorTrap);  // asm calling-convention helper
 JIT_HELPER(jitInduceOSRAtCurrentPC);  // asm calling-convention helper
 JIT_HELPER(jitInstanceOf);  // asm calling-convention helper
 JIT_HELPER(jitInterpretNewInstanceMethod);  // asm calling-convention helper
@@ -120,7 +120,6 @@ JIT_HELPER(jitThrowArrayStoreExceptionWithIP);  // asm calling-convention helper
 JIT_HELPER(jitThrowCurrentException);  // asm calling-convention helper
 JIT_HELPER(jitThrowException);  // asm calling-convention helper
 JIT_HELPER(jitThrowExceptionInInitializerError);  // asm calling-convention helper
-JIT_HELPER(jitThrowExceptionOutsideLockedRegion);  // asm calling-convention helper
 JIT_HELPER(jitThrowIllegalAccessError);  // asm calling-convention helper
 JIT_HELPER(jitThrowIncompatibleClassChangeError);  // asm calling-convention helper
 JIT_HELPER(jitThrowInstantiationException);  // asm calling-convention helper
@@ -154,6 +153,12 @@ JIT_HELPER(jitReportExceptionCatch);  // asm calling-convention helper
 JIT_HELPER(jitANewArrayNoZeroInit);  // asm calling-convention helper
 JIT_HELPER(jitNewArrayNoZeroInit);  // asm calling-convention helper
 JIT_HELPER(jitNewObjectNoZeroInit);  // asm calling-convention helper
+JIT_HELPER(jitReportFinalFieldModified); // asm calling-convention helper
+JIT_HELPER(jitReportInstanceFieldRead); // asm calling-convention helper
+JIT_HELPER(jitReportInstanceFieldWrite); // asm calling-convention helper
+JIT_HELPER(jitReportStaticFieldRead); // asm calling-convention helper
+JIT_HELPER(jitReportStaticFieldWrite); // asm calling-convention helper
+
 #ifdef __cplusplus
 }
 #endif

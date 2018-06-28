@@ -5993,7 +5993,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_REVALIDATE_AOT_METHODS.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS=Imprima los m\u00e9todos AOT que coincidan con las especificaciones de m\u00e9todo.\n\
-\t<especificaci\u00f3n_de_m\u00e9todo> se define como: [!]{*|[*]<nombrepaquete/nombreclase>[*]}[.{*|[*]<nombrem\u00e9todo>[*]}[({*|[*]<par\u00e1metros>[*]})]].
+\t<especificaci\u00f3n_m\u00e9todo> se define como: [!]{*|[*]<nombrepaquete/nombreclase>[*]}[.{*|[*]<nombrem\u00e9todo>[*]}[({*|[*]<par\u00e1metros>[*]})]].
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.system_action=
@@ -6007,7 +6007,7 @@ J9NLS_SHRC_CM_PRINTSTATS_INVALIDATED.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_INVALIDATED.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION=Uso: %s{<m\u00e9todo_especificaci\u00f3n>[,<m\u00e9todo_especificaci\u00f3n>]}
+J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION=Uso: %s{<especificaci\u00f3n_m\u00e9todo>[,<especificaci\u00f3n_m\u00e9todo>]}
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.sample_input_1=findAotMethods=
 J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.explanation=NOTAG
@@ -6015,7 +6015,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=El formato de la especificaci\u00f3n de m\u00e9todo es [!]{*|[*]<nombrepaquete/nombreclase>[*]}[.{*|[*]<nombrem\u00e9todo>[*]}[({*|[*]<par\u00e1metros>[*]})]], p.ej.:\n \n \t-Xshareclasses:name=Cache1,%sjava/util/HashMap.hash(Ljava/lang/Object;)\n
+J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=El formato de <especificaci\u00f3n_m\u00e9todo> es [!]{*|[*]<nombrepaquete/nombreclase>[*]}[.{*|[*]<nombrem\u00e9todo>[*]}[({*|[*]<par\u00e1metros>[*]})]], p.ej.:\n \n \t-Xshareclasses:name=Cache1,%sjava/util/HashMap.hash(Ljava/lang/Object;)\n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC.sample_input_1=findAotMethods=
 J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC.explanation=NOTAG

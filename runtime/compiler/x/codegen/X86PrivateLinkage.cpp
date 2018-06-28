@@ -1477,8 +1477,6 @@ TR::X86PrivateLinkage::buildDirectDispatch(
       generateInstruction(FPREGSPILL, callNode, fpSpillDependency, cg());
       }
 
-   cg()->setVMThreadRequired(true);
-
    // Remember where internal control flow region should start,
    // and create labels
    //
@@ -1537,8 +1535,6 @@ TR::X86PrivateLinkage::buildDirectDispatch(
 
    if (cg()->enableRegisterAssociations() && !callNode->getSymbol()->castToMethodSymbol()->preservesAllRegisters())
       associatePreservedRegisters(site.getPostConditionsUnderConstruction(), returnRegister);
-
-   cg()->setVMThreadRequired(false);
 
    return returnRegister;
    }
@@ -2023,8 +2019,6 @@ TR::Register *TR::X86PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
       generateInstruction(FPREGSPILL, callNode, fpSpillDependency, cg());
       }
 
-   cg()->setVMThreadRequired(true);
-
    // If receiver could be NULL, must evaluate it before the call
    // so any exception occurs before the call.
    // Might as well do it outside the internal control flow.
@@ -2276,7 +2270,6 @@ TR::Register *TR::X86PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
    if (cg()->enableRegisterAssociations())
       associatePreservedRegisters(site.getPostConditionsUnderConstruction(), returnRegister);
 
-   cg()->setVMThreadRequired(false);
    cg()->setImplicitExceptionPoint(site.getImplicitExceptionPoint());
 
    return returnRegister;

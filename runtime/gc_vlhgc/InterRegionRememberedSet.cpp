@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -424,6 +424,16 @@ MM_InterRegionRememberedSet::releaseCardBufferControlBlockList(MM_EnvironmentVLH
 }
 
 void
+MM_InterRegionRememberedSet::releaseCardBufferControlBlockListForThread(MM_EnvironmentVLHGC* env, MM_EnvironmentVLHGC* threadEnv)
+{
+	threadEnv->_rsclBufferControlBlockCount -= releaseCardBufferControlBlockList(env, threadEnv->_rsclBufferControlBlockHead, threadEnv->_rsclBufferControlBlockTail);
+	Assert_MM_true(0 == threadEnv->_rsclBufferControlBlockCount);
+	threadEnv->_rsclBufferControlBlockHead = NULL;
+	threadEnv->_rsclBufferControlBlockTail = NULL;
+	threadEnv->_lastOverflowedRsclWithReleasedBuffers = NULL;
+}
+
+void
 MM_InterRegionRememberedSet::releaseCardBufferControlBlockLocalPools(MM_EnvironmentVLHGC* env)
 {
 	GC_VMThreadListIterator vmThreadListIterator((J9JavaVM *)env->getLanguageVM());
@@ -433,20 +443,12 @@ MM_InterRegionRememberedSet::releaseCardBufferControlBlockLocalPools(MM_Environm
 	while((aThread = vmThreadListIterator.nextVMThread()) != NULL) {
 		MM_EnvironmentVLHGC *threadEnvironment = MM_EnvironmentVLHGC::getEnvironment(aThread);
 		if (GC_SLAVE_THREAD == threadEnvironment->getThreadType()) {
-			threadEnvironment->_rsclBufferControlBlockCount -= releaseCardBufferControlBlockList(env, threadEnvironment->_rsclBufferControlBlockHead, threadEnvironment->_rsclBufferControlBlockTail);
-			Assert_MM_true(0 == threadEnvironment->_rsclBufferControlBlockCount);
-			threadEnvironment->_rsclBufferControlBlockHead = NULL;
-			threadEnvironment->_rsclBufferControlBlockTail = NULL;
-			threadEnvironment->_lastOverflowedRsclWithReleasedBuffers = NULL;
+			releaseCardBufferControlBlockListForThread(env, threadEnvironment);
 		}
 	}
 
 	/* do the same for master-GC-thread */
-	env->_rsclBufferControlBlockCount -= releaseCardBufferControlBlockList(env, env->_rsclBufferControlBlockHead, env->_rsclBufferControlBlockTail);
-	Assert_MM_true(0 == env->_rsclBufferControlBlockCount);
-	env->_rsclBufferControlBlockHead = NULL;
-	env->_rsclBufferControlBlockTail = NULL;
-	env->_lastOverflowedRsclWithReleasedBuffers = NULL;
+	releaseCardBufferControlBlockListForThread(env, env);
 
 	_overflowedListHead = NULL;
 	_overflowedListTail = NULL;
@@ -743,10 +745,7 @@ MM_InterRegionRememberedSet::clearFromRegionReferencesForCompact(MM_EnvironmentV
 		clearFromRegionReferencesForCompactDirect(env);
 	}
 
-	env->_rsclBufferControlBlockCount -= releaseCardBufferControlBlockList(env, env->_rsclBufferControlBlockHead, env->_rsclBufferControlBlockTail);
-	Assert_MM_true(0 == env->_rsclBufferControlBlockCount);
-	env->_rsclBufferControlBlockHead = NULL;
-	env->_rsclBufferControlBlockTail = NULL;
+	releaseCardBufferControlBlockListForThread(env, env);
 }
 
 void
@@ -896,10 +895,7 @@ MM_InterRegionRememberedSet::clearFromRegionReferencesForMark(MM_EnvironmentVLHG
 		clearFromRegionReferencesForMarkDirect(env);
 	}
 
-	env->_rsclBufferControlBlockCount -= releaseCardBufferControlBlockList(env, env->_rsclBufferControlBlockHead, env->_rsclBufferControlBlockTail);
-	Assert_MM_true(0 == env->_rsclBufferControlBlockCount);
-	env->_rsclBufferControlBlockHead = NULL;
-	env->_rsclBufferControlBlockTail = NULL;
+	releaseCardBufferControlBlockListForThread(env, env);
 }
 
 void
