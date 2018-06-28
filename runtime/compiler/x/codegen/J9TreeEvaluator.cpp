@@ -11567,14 +11567,11 @@ static bool inlineObjectHashCode(TR::Node *node, bool isIndirect)
 // end_label
 static TR::Register* inlineStringHashCode(TR::Node* node, bool isCompressed, TR::CodeGenerator* cg)
    {
-   TR::Compilation *comp = cg->comp();
-   static auto UseOldStringHashCode = (bool)feGetEnv("TR_UseOldStringHashCode");
-
-   if (comp->getOption(TR_DisableSIMDStringHashCode) || TR::Compiler->om.canGenerateArraylets() || !cg->getX86ProcessorInfo().supportsSSE4_1())
+   if (cg->comp()->getOption(TR_DisableSIMDStringHashCode) || TR::Compiler->om.canGenerateArraylets() || !cg->getX86ProcessorInfo().supportsSSE4_1())
       {
       return NULL;
       }
-   else if (!UseOldStringHashCode)
+   else
       {
       TR_ASSERT(node->getChild(1)->getOpCodeValue() == TR::iconst && node->getChild(1)->getInt() == 0, "String hashcode offset can only be const zero.");
 
@@ -11673,165 +11670,6 @@ static TR::Register* inlineStringHashCode(TR::Node* node, bool isCompressed, TR:
       cg->recursivelyDecReferenceCount(node->getChild(1));
       cg->decReferenceCount(node->getChild(2));
       return hash;
-      }
-   else
-      {
-      TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
-      TR::LabelSymbol *endLabel = generateLabelSymbol(cg);
-      TR::LabelSymbol *SSELabel = generateLabelSymbol(cg);
-      TR::LabelSymbol *SerialLabel = generateLabelSymbol(cg);
-      TR::LabelSymbol *SerialLoopLabel = generateLabelSymbol(cg);
-      TR::LabelSymbol *SSEReduceLabel = generateLabelSymbol(cg);
-      startLabel->setStartInternalControlFlow();
-      endLabel->setEndInternalControlFlow();
-
-      // get register for value, offset, count
-      TR::Node *valueNode = node->getFirstChild();
-      TR::Node *offsetNode = node->getSecondChild();
-      TR::Node *countNode = node->getThirdChild();
-
-      TR::Register *valueReg = cg->evaluate(valueNode);
-      // Use clobber evaluator because we're going to write to indexReg so we need a copy if it's not the last time it's used,
-      // which is what clobber evaluator does
-      TR::Register *indexReg = intOrLongClobberEvaluate(offsetNode, getNodeIs64Bit(offsetNode, cg) , cg);
-      TR::Register *countReg = cg->evaluate(countNode);
-      TR::Register *endReg = cg->allocateRegister();
-      TR::Register *hashReg = cg->allocateRegister();
-      TR::Register *tempReg = cg->allocateRegister();
-      TR::Register *xmm0 = cg->allocateRegister(TR_FPR);
-      TR::Register *xmm1 = cg->allocateRegister(TR_FPR);
-      TR::Register *xmm2 = cg->allocateRegister(TR_FPR);
-
-      generateLabelInstruction(LABEL, node, startLabel, cg);
-      // endReg = countReg + indexReg
-      generateRegRegInstruction(MOVRegReg(), node, endReg, countReg, cg);
-      generateRegRegInstruction(ADDRegReg(), node, endReg, indexReg, cg);
-      // zero out hashReg with xor
-      generateRegRegInstruction(XORRegReg(), node, hashReg, hashReg, cg);
-      generateRegImmInstruction(CMPRegImm4(), node, countReg, 0x4, cg);
-      cg->stopUsingRegister(countReg);
-      generateLabelInstruction(JL4, node, SerialLabel, cg);
-
-      // SSE version
-      // xmm2 = load 4 chars and expand into 4 int
-      // decrease endReg by 3 so that the SSE loop will always operate on 4 available characters
-      generateRegImmInstruction(SUBRegImms(), node, endReg, 3, cg);
-      // 31^4 = 923521
-      int vector1[4] = {923521, 923521, 923521, 923521};
-      TR::IA32ConstantDataSnippet *vector1Snippet   = cg->findOrCreate16ByteConstant(node, vector1);
-      TR::MemoryReference       *vector1MR = generateX86MemoryReference(vector1Snippet, cg);
-      generateRegMemInstruction(MOVAPSRegMem, node, xmm0, vector1MR, cg);
-      generateRegRegInstruction(XORPSRegReg, node, xmm1, xmm1, cg);
-
-      generateLabelInstruction(LABEL, node, SSELabel, cg);
-
-      // move 4 bytes (4 1-byte characters) to xmm2. Stride shift = 0 (each element in valueReg is 1 byte)
-      if(isCompressed)
-            generateRegMemInstruction(MOVSSRegMem,
-                                    node,
-                                    xmm2,
-                                    generateX86MemoryReference(valueReg, indexReg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg),
-                                    cg);
-      // move 8 bytes (4 2-byte characters) to xmm2. Stride shift = 1 (each element in valueReg is 2 bytes. Used with indexReg for correct traversal)
-      else
-            generateRegMemInstruction(MOVSDRegMem,
-                                    node,
-                                    xmm2,
-                                    generateX86MemoryReference(valueReg, indexReg, 1, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg),
-                                    cg);
-      // xmm1 = xmm1 * xmm0
-      generateRegRegInstruction(PMULLDRegReg, node, xmm1, xmm0, cg);
-
-      // movzxwd xmm2, xmm2
-      // zero extend each of the 4 bytes
-      if(isCompressed)
-            generateRegRegInstruction(PMOVZXBDRegReg, node, xmm2, xmm2, cg);
-      // zero extend each of the 4 words
-      else
-            generateRegRegInstruction(PMOVZXWDRegReg, node, xmm2, xmm2, cg);
-
-      // xmm1 = xmm1 + xmm2
-      generateRegRegInstruction(PADDDRegReg, node, xmm1, xmm2, cg);
-
-      //    i = i + 4;
-      //    cmp i, end -3
-      //    jle SSEloop
-      generateRegImmInstruction(ADDRegImms(), node, indexReg, 4, cg);
-      generateRegRegInstruction(CMPRegReg(), node, indexReg, endReg, cg);
-      generateLabelInstruction(JL4, node, SSELabel, cg);
-
-      // xmm0 = load 16 bytes align [31^3, 31^2, 31, 1]
-      // xmm1 = xmm1 * xmm0      value containst [a0, a1, a2, a3]
-      // xmm0 = xmm1
-      // xmm0 = xmm0 >> 64 bits
-      // xmm1 = xmm1 + xmm0       reduce add [a0+a2, a1+a3, .., ...]
-      // xmm0 = xmm1
-      // xmm0 = xmm0 >> 32 bits
-      // xmm1 = xmm1 + xmm0       reduce add [a0+a2 + a1+a3, .., .., ..]
-      // movd xmm1, GPR1
-
-      generateLabelInstruction(LABEL, node, SSEReduceLabel, cg);
-      int vector2[4] = {29791, 961, 31, 1};
-      TR::IA32ConstantDataSnippet *vector2Snippet   = cg->findOrCreate16ByteConstant(node, vector2);
-      TR::MemoryReference       *vector2MR = generateX86MemoryReference(vector2Snippet, cg);
-      generateRegMemInstruction(MOVAPSRegMem, node, xmm0, vector2MR, cg);
-      generateRegRegInstruction(PMULLDRegReg, node, xmm1, xmm0, cg);
-      generateRegRegInstruction(MOVAPDRegReg, node, xmm0, xmm1, cg);
-      generateRegImmInstruction(PSRLDQRegImm1, node, xmm0, 0x8, cg);
-      generateRegRegInstruction(PADDDRegReg, node, xmm1, xmm0, cg);
-      generateRegRegInstruction(MOVAPDRegReg, node, xmm0, xmm1, cg);
-      generateRegImmInstruction(PSRLDQRegImm1, node, xmm0, 0x4, cg);
-      generateRegRegInstruction(PADDDRegReg, node, xmm1, xmm0, cg);
-      generateRegRegInstruction(MOVDReg4Reg, node, hashReg, xmm1, cg);
-      generateRegImmInstruction(ADDRegImms(), node, endReg, 3, cg);
-
-      // Serial label
-      generateLabelInstruction(LABEL, node, SerialLabel, cg);
-      generateRegRegInstruction(CMPRegReg(), node, indexReg, endReg, cg);
-      generateLabelInstruction(JGE4, node, endLabel, cg);
-      generateLabelInstruction(LABEL, node, SerialLoopLabel, cg);
-      generateRegRegInstruction(MOV4RegReg, node, tempReg, hashReg, cg);
-      generateRegImmInstruction(SHL4RegImm1, node, hashReg, 5, cg);
-      generateRegRegInstruction(SUB4RegReg, node, hashReg, tempReg, cg);
-
-      if(isCompressed)
-            generateRegMemInstruction(MOVZXReg4Mem1,
-                                    node,
-                                    tempReg,
-                                    generateX86MemoryReference(valueReg, indexReg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg),
-                                    cg);
-      else
-            generateRegMemInstruction(MOVZXReg4Mem2,
-                                    node,
-                                    tempReg,
-                                    generateX86MemoryReference(valueReg, indexReg, 1, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg),
-                                    cg);
-
-      generateRegRegInstruction(ADD4RegReg, node, hashReg, tempReg, cg);
-      generateRegInstruction(INCReg(TR::Compiler->target.is64Bit()), node, indexReg, cg);
-      generateRegRegInstruction(CMPRegReg(), node, indexReg, endReg, cg);
-      generateLabelInstruction(JL4, node, SerialLoopLabel, cg);
-
-      TR::RegisterDependencyConditions  *dependencies = generateRegisterDependencyConditions((uint8_t)0, 6, cg);
-      dependencies->addPostCondition(valueReg, TR::RealRegister::NoReg, cg);
-      dependencies->addPostCondition(indexReg, TR::RealRegister::NoReg, cg);
-      dependencies->addPostCondition(countReg, TR::RealRegister::NoReg, cg);
-      dependencies->addPostCondition(endReg, TR::RealRegister::NoReg, cg);
-      dependencies->addPostCondition(hashReg, TR::RealRegister::NoReg, cg);
-      dependencies->addPostCondition(tempReg, TR::RealRegister::NoReg, cg);
-      generateLabelInstruction(LABEL, node, endLabel, dependencies, cg);
-      node->setRegister(hashReg);
-      cg->decReferenceCount(valueNode);
-      cg->decReferenceCount(offsetNode);
-      cg->decReferenceCount(countNode);
-      cg->stopUsingRegister(tempReg);
-      cg->stopUsingRegister(indexReg);
-      cg->stopUsingRegister(valueReg);
-      cg->stopUsingRegister(endReg);
-      cg->stopUsingRegister(xmm0);
-      cg->stopUsingRegister(xmm1);
-      cg->stopUsingRegister(xmm2);
-      return hashReg;
       }
    }
 
