@@ -77,17 +77,11 @@ RUN cd /root \
   && rm -f freemarker.tgz
 
 # Download and install boot JDK from AdoptOpenJDK
-# Currently, no JDK10 with OpenJ9 releases are available at AdoptOpenJDK. 
-# So, the AdoptOpenJDK API can't be used to download a boot JDK. 
-# A nightly JDK10 OpenJ9 build is currently used as the boot JDK. 
-# Once JDK10 OpenJ9 releases are available, the following link can be used 
-# to download the JDK10 OpenJ9 boot JDK: 
-# https://api.adoptopenjdk.net/openjdk10-openj9/releases/x64_linux/latest/binary
 RUN cd /root \
-  && wget -O bootjdk10.tar.gz https://github.com/AdoptOpenJDK/openjdk10-openj9-nightly/releases/download/jdk-10%2B46-20180509/OpenJDK10-OPENJ9_x64_Linux_20180509.tar.gz \
+  && wget -O bootjdk10.tar.gz https://api.adoptopenjdk.net/openjdk10-openj9/nightly/x64_linux/latest/binary \
   && tar -xzf bootjdk10.tar.gz \
   && rm -f bootjdk10.tar.gz \
-  && ls | grep -i jdk | xargs -I % sh -c 'mv % bootjdk10'
+  && mv $(ls | grep -i jdk) bootjdk10
 
 # Set environment variable JAVA_HOME, and prepend ${JAVA_HOME}/bin to PATH
 ENV JAVA_HOME="/root/bootjdk10"
