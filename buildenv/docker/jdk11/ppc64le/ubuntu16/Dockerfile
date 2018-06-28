@@ -32,14 +32,14 @@ RUN apt-get update \
   && add-apt-repository ppa:ubuntu-toolchain-r/test \
   && apt-get update \
   && apt-get install -qq -y --no-install-recommends \
-    gcc-7 \
-    g++-7 \
     autoconf \
     ca-certificates \
     ccache \
-    cmake \
     cpio \
+    cmake \
     file \
+    g++-7 \
+    gcc-7 \
     git \
     git-core \
     libasound2-dev \
@@ -61,6 +61,11 @@ RUN apt-get update \
     unzip \
     wget \
     zip \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install optional tools
+RUN apt-get update \
+  && apt-get install -qq -y --no-install-recommends \
     vim \
   && rm -rf /var/lib/apt/lists/*
 
@@ -78,7 +83,7 @@ RUN cd /root \
 
 # Download and install boot JDK from AdoptOpenJDK
 RUN cd /root \
-  && wget -O bootjdk10.tar.gz https://api.adoptopenjdk.net/openjdk10-openj9/nightly/x64_linux/latest/binary \
+  && wget -O bootjdk10.tar.gz https://api.adoptopenjdk.net/openjdk10-openj9/nightly/ppc64le_linux/latest/binary \
   && tar -xzf bootjdk10.tar.gz \
   && rm -f bootjdk10.tar.gz \
   && mv $(ls | grep -i jdk) bootjdk10
