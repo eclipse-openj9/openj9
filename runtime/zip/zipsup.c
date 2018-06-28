@@ -350,7 +350,7 @@ zip_getZipComment(J9PortLibrary* portLib, J9ZipFile *zipFile, U_8 ** commentStri
 			size += MIN_ZIPFILE_SIZE;
 		}
 
-		if (j9file_read( zipFile->fd, buffer, (IDATA) size) != size)  {
+		if (j9file_read( zipFile->fd, buffer, (IDATA)size) != (IDATA)size)  {
 			zipFile->pointer = -1;
 			EXIT();
 			return ZIP_ERR_FILE_READ_ERROR;
@@ -538,7 +538,7 @@ I_32 scanForCentralEnd(J9PortLibrary* portLib, J9ZipFile *zipFile, J9ZipCentralE
 			 */
 			size += MIN_ZIPFILE_SIZE;
 		}
-		if (j9file_read( zipFile->fd, buffer, (IDATA) size) != size)  {
+		if (j9file_read( zipFile->fd, buffer, (IDATA)size) != (IDATA)size)  {
 				zipFile->pointer = -1;
 				return ZIP_ERR_FILE_READ_ERROR;
 		}
