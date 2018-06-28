@@ -1797,4 +1797,22 @@ JVM_BeforeHalt()
 {
 	/* To be implemented via https://github.com/eclipse/openj9/issues/1459 */
 }
+JNIEXPORT jclass JNICALL
+JVM_GetNestHost(JNIEnv *env, jclass clz)
+{
+	assert(!"JVM_GetNestHost unimplemented");
+	return NULL;
+}
+JNIEXPORT jobjectArray JNICALL
+JVM_GetNestMembers(JNIEnv *env, jclass clz)
+{
+	assert(!"JVM_GetNestMembers unimplemented");
+	return NULL;
+}
+JNIEXPORT jboolean JNICALL
+JVM_AreNestMates(JNIEnv *env, jclass clzOne, jclass clzTwo)
+{
+	assert(!"JVM_AreNestMates unimplemented");
+	return JNI_FALSE;
+}
 #endif /* J9VM_JCL_SE11 */
