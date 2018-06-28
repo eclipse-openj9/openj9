@@ -1498,7 +1498,7 @@ Candidate *TR_EscapeAnalysis::createCandidateIfValid(TR::Node *node, TR_OpaqueCl
       // Don't convert double-word arrays if platform does not have double-word aligned stacks
       // will handle stack alignment later
       else if (!comp()->cg()->getHasDoubleWordAlignedStack() &&
-                node->getOpCodeValue() == TR::newarray && !comp()->getOptions()->getOption(TR_EnableSIMDLibrary))
+                node->getOpCodeValue() == TR::newarray && !comp()->getOption(TR_EnableSIMDLibrary))
          {
          TR::Node *typeNode = node->getSecondChild();
          if (typeNode->getInt() == 7 || typeNode->getInt() == 11)

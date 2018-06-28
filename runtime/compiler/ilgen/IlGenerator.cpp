@@ -366,10 +366,10 @@ TR_J9ByteCodeIlGenerator::genILFromByteCodes()
 
    prependEntryCode(blocks(0));
 
-   if (!comp()->getOptions()->getOption(TR_DisableGuardedCountingRecompilations) &&
+   if (!comp()->getOption(TR_DisableGuardedCountingRecompilations) &&
        comp()->getRecompilationInfo() && comp()->getRecompilationInfo()->shouldBeCompiledAgain() &&
        !comp()->getRecompilationInfo()->isRecompilation() && // only do it for first time compilations
-       (!comp()->getPersistentInfo()->_countForRecompile || comp()->getOptions()->getOption(TR_EnableMultipleGCRPeriods)) &&
+       (!comp()->getPersistentInfo()->_countForRecompile || comp()->getOption(TR_EnableMultipleGCRPeriods)) &&
        comp()->isOutermostMethod() &&
        comp()->getOptions()->getInsertGCRTrees() &&
        !comp()->isDLT() && !method()->isJNINative())
@@ -1212,7 +1212,7 @@ TR_J9ByteCodeIlGenerator::createGeneratedFirstBlock()
 bool
 TR_J9ByteCodeIlGenerator::hasFPU()
    {
-   bool result = !comp()->getOptions()->getOption(TR_DisableFPCodeGen) ? TR::Compiler->target.cpu.hasFPU() : false;
+   bool result = !comp()->getOption(TR_DisableFPCodeGen) ? TR::Compiler->target.cpu.hasFPU() : false;
    return result;
    }
 
