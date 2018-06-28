@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,10 +37,11 @@ class BlockParents;
 class TR_JProfilingBlock : public TR::Optimization
    {
    protected:
-   typedef TR::typed_allocator<std::pair<int32_t, TR::Block *>, TR::Region & > BlockContainerAllocator;
-   typedef std::vector<std::pair<int32_t, TR::Block *>, BlockContainerAllocator > BlockQueueContainer;
-   typedef std::greater<std::pair<int32_t, TR::Block *>> BlockQueueCompare;
-   typedef std::priority_queue< size_t, BlockQueueContainer, BlockQueueCompare > BlockPriorityQueue;
+   typedef std::pair<int32_t, TR::Block*> BlockQueueItem;
+   typedef TR::typed_allocator<BlockQueueItem, TR::Region&> BlockContainerAllocator;
+   typedef std::vector<BlockQueueItem, BlockContainerAllocator> BlockQueueContainer;
+   typedef std::greater<BlockQueueItem> BlockQueueCompare;
+   typedef std::priority_queue<BlockQueueItem,BlockQueueContainer,BlockQueueCompare> BlockPriorityQueue;
 
    public:
    static int32_t nestedLoopRecompileThreshold;
