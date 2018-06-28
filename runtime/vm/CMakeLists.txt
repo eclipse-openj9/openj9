@@ -137,9 +137,13 @@ if(OMR_ARCH_X86)
 		DEPENDS xa64/stackswap.m4 run_constgen
 		COMMAND m4 -I ${CMAKE_CURRENT_SOURCE_DIR}/../oti ${CMAKE_CURRENT_SOURCE_DIR}/xa64/stackswap.m4 > stackswap.s
 	)
+	add_custom_command(OUTPUT unsafeHelper.s
+		DEPENDS xa64/unsafeHelper.m4 run_constgen
+		COMMAND m4 -I ${CMAKE_CURRENT_SOURCE_DIR}/../oti ${CMAKE_CURRENT_SOURCE_DIR}/xa64/unsafeHelper.m4 > unsafeHelper.s
+	)
 	target_sources(j9vm
 		PRIVATE
-		xa64/unsafeHelper.s
+		unsafeHelper.s
 		xcinterp.s
 		stackswap.s
 	)

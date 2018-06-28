@@ -41,7 +41,7 @@
 	<echo value="#######################################################"/>
 	<echo value=" "/>
 		
-	<!-- Run HelperCompatabilityTests -->	
+	<!-- Run HelperCompatibilityTests -->	
 	
 	<exec command="$JAVA_EXE$ -Xshareclasses:destroyAll" quiet="false"/>
 	

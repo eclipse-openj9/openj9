@@ -267,6 +267,7 @@ jitCTInstanceOf (J9Class *instanceClass, J9Class *castClass)
 IDATA  
 jitCTResolveInstanceFieldRefWithMethod (J9VMThread *vmStruct, J9Method *method, UDATA fieldIndex, UDATA resolveFlags, J9ROMFieldShape **resolvedField)
 {
+	J9JavaVM *vm = vmStruct->javaVM;
 	J9ConstantPool *constantPool = J9_CP_FROM_METHOD(method);
 	IDATA result = 0;
 	UDATA resolveFlagsBuffer = 0;
@@ -276,22 +277,27 @@ jitCTResolveInstanceFieldRefWithMethod (J9VMThread *vmStruct, J9Method *method, 
 	if (0 != resolveFlags) {
 		resolveFlagsBuffer |= J9_RESOLVE_FLAG_FIELD_SETTER;
 	}
-	result = vmStruct->javaVM->internalVMFunctions->resolveInstanceFieldRefInto(
+	result = vm->internalVMFunctions->resolveInstanceFieldRefInto(
 			vmStruct, method, constantPool, fieldIndex, resolveFlagsBuffer, &resolvedFieldBuffer, NULL);
 
 	if (-1 != result) {
 		*resolvedField = resolvedFieldBuffer;
 	}
-#if defined (J9VM_JIT_FULL_SPEED_DEBUG)
-	ALWAYS_TRIGGER_J9HOOK_JIT_CHECK_FOR_DATA_BREAKPOINT(vmStruct->javaVM->jitConfig->hookInterface,
-			vmStruct,
-			result,	/* can be modified */
-			fieldIndex,
-			constantPool,
-			*resolvedField,
-			0,
-			resolveFlags);
-#endif
+
+	/* If the JIT is generating inline field watch notification code, there is no need to fail the
+	 * compilation when watches are in place.
+	 */
+	if (J9_ARE_NO_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_JIT_INLINE_WATCHES)) {
+		ALWAYS_TRIGGER_J9HOOK_JIT_CHECK_FOR_DATA_BREAKPOINT(vm->jitConfig->hookInterface,
+				vmStruct,
+				result,	/* can be modified */
+				fieldIndex,
+				constantPool,
+				*resolvedField,
+				0,
+				resolveFlags);
+	}
+
 	return result;
 }
 
@@ -307,6 +313,7 @@ jitCTResolveInstanceFieldRefWithMethod (J9VMThread *vmStruct, J9Method *method, 
 void* 
 jitCTResolveStaticFieldRefWithMethod (J9VMThread *vmStruct, J9Method *method, UDATA fieldIndex, UDATA resolveFlags, J9ROMFieldShape **resolvedField)
 {
+	J9JavaVM *vm = vmStruct->javaVM;
 	J9ConstantPool *constantPool = J9_CP_FROM_METHOD(method);
 	UDATA result = 0;
 	UDATA resolveFlagsBuffer = 0;
@@ -316,22 +323,27 @@ jitCTResolveStaticFieldRefWithMethod (J9VMThread *vmStruct, J9Method *method, UD
 	if (0 != resolveFlags) {
 		resolveFlagsBuffer |= J9_RESOLVE_FLAG_FIELD_SETTER;
 	}
-	result = (UDATA) vmStruct->javaVM->internalVMFunctions->resolveStaticFieldRefInto(
+	result = (UDATA) vm->internalVMFunctions->resolveStaticFieldRefInto(
 			vmStruct, method, constantPool, fieldIndex, resolveFlagsBuffer, &resolvedFieldBuffer, NULL);
 
 	if (0 != result) {
 		*resolvedField = resolvedFieldBuffer;
 	}
-#if defined (J9VM_JIT_FULL_SPEED_DEBUG)
-	ALWAYS_TRIGGER_J9HOOK_JIT_CHECK_FOR_DATA_BREAKPOINT(vmStruct->javaVM->jitConfig->hookInterface,
-			vmStruct,
-			result,	/* can be modified */
-			fieldIndex,
-			constantPool,
-			*resolvedField,
-			1,
-			resolveFlags);
-#endif
+
+	/* If the JIT is generating inline field watch notification code, there is no need to fail the
+	 * compilation when watches are in place.
+	 */
+	if (J9_ARE_NO_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_JIT_INLINE_WATCHES)) {
+		ALWAYS_TRIGGER_J9HOOK_JIT_CHECK_FOR_DATA_BREAKPOINT(vm->jitConfig->hookInterface,
+				vmStruct,
+				result,	/* can be modified */
+				fieldIndex,
+				constantPool,
+				*resolvedField,
+				1,
+				resolveFlags);
+	}
+
 	return (void* ) result;
 }
 

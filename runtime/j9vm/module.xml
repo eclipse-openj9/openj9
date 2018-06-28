@@ -85,7 +85,7 @@
 			</vpath>
 		</vpaths>
 		<objects>
-			<object name="java9vmi"/>
+			<object name="java11vmi"/>
 			<object name="j8vmi"/>
 			<object name="j7vmi"/>
 			<object name="j7verify"/>

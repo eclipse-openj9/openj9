@@ -396,14 +396,13 @@ J9::X86::CodeGenerator::enableAESInHardwareTransformations()
 bool
 J9::X86::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod method)
    {
-   if ((method==TR::java_lang_Object_clone) ||
-      (method==TR::java_lang_Integer_rotateLeft))
+   switch (method)
       {
-      return true;
-      }
-   else
-      {
-      return false;
+      case TR::java_lang_Object_clone:
+      case TR::com_ibm_jit_JITHelpers_findElementFromArray:
+         return true;
+      default:
+         return false;
       }
    }
 

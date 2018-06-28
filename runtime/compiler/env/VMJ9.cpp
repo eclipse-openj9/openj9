@@ -3166,12 +3166,14 @@ int TR_J9VMBase::checkInlineableTarget (TR_CallTarget* target, TR_CallSite* call
          resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_MutableCallSite_getTarget ||
          resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_DirectHandle_invokeExact ||
          resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_InterfaceHandle_invokeExact ||
-         resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_VirtualHandle_invokeExact
+         resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_VirtualHandle_invokeExact ||
+         TR_J9MethodBase::isVarHandleOperationMethod(resolvedMethod->getRecognizedMethod())
          )
          {
          if ( resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress ||
              resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_MutableCallSite_getTarget ||
              resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_asType ||
+             TR_J9MethodBase::isVarHandleOperationMethod(resolvedMethod->getRecognizedMethod()) ||
              resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_DirectHandle_invokeExact ||
              resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_InterfaceHandle_invokeExact ||
              resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_VirtualHandle_invokeExact
@@ -7896,10 +7898,6 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
          else
             {
             comp->cg()->setInlinedGetCurrentThreadMethod();
-
-            if (comp->cg()->getSupportsVMThreadGRA())
-               comp->cg()->resetSupportsVMThreadGRA();
-
             TR::Node::recreate(callNode, TR::aload);
             callNode->setSymbolReference(comp->getSymRefTab()->findOrCreateCurrentThreadSymbolRef());
 
@@ -8590,11 +8588,6 @@ TR_J9VM::getPrimitiveArrayAllocationClass(J9Class *clazz)
    return (TR_OpaqueClassBlock *) clazz;
    }
 
-intptrj_t
-TR_J9VMBase::getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset)
-   {
-   return *(intptrj_t*) (((uint8_t *)clazz) + offset);
-   }
 
 
 //////////////////////////////////////////////////////////

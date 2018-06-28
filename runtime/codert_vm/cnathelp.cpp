@@ -2787,6 +2787,92 @@ old_slow_jitReportFinalFieldModified(J9VMThread *currentThread)
 	return addr;
 }
 
+void* J9FASTCALL
+old_slow_jitReportInstanceFieldRead(J9VMThread *currentThread)
+{
+	OLD_SLOW_ONLY_JIT_HELPER_PROLOGUE(2);
+	DECLARE_JIT_PARM(J9JITWatchedInstanceFieldData*, dataBlock, 1);
+	DECLARE_JIT_PARM(j9object_t, object, 2);
+	J9JavaVM *vm = currentThread->javaVM;
+	void *addr = NULL;
+
+	if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_GET_FIELD)) {
+		if (J9_ARE_ANY_BITS_SET(J9OBJECT_CLAZZ(currentThread, object)->classFlags, J9ClassHasWatchedFields)) {
+			void* oldPC = buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
+			ALWAYS_TRIGGER_J9HOOK_VM_GET_FIELD(vm->hookInterface, currentThread, dataBlock->method, dataBlock->location, object, dataBlock->offset);
+			addr = restoreJITResolveFrame(currentThread, oldPC, true, false);
+		}
+	}
+
+	SLOW_JIT_HELPER_EPILOGUE();
+	return addr;
+}
+
+void* J9FASTCALL
+old_slow_jitReportInstanceFieldWrite(J9VMThread *currentThread)
+{
+	OLD_SLOW_ONLY_JIT_HELPER_PROLOGUE(3);
+	DECLARE_JIT_PARM(J9JITWatchedInstanceFieldData*, dataBlock, 1);
+	DECLARE_JIT_PARM(j9object_t, object, 2);
+	DECLARE_JIT_PARM(void*, valuePointer, 3);
+	J9JavaVM *vm = currentThread->javaVM;
+	void *addr = NULL;
+
+	if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_PUT_FIELD)) {
+		if (J9_ARE_ANY_BITS_SET(J9OBJECT_CLAZZ(currentThread, object)->classFlags, J9ClassHasWatchedFields)) {
+			void* oldPC = buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
+			ALWAYS_TRIGGER_J9HOOK_VM_PUT_FIELD(vm->hookInterface, currentThread, dataBlock->method, dataBlock->location, object, dataBlock->offset, *(U_64*)valuePointer);
+			addr = restoreJITResolveFrame(currentThread, oldPC, true, false);
+		}
+	}
+
+	SLOW_JIT_HELPER_EPILOGUE();
+	return addr;
+}
+
+void* J9FASTCALL
+old_slow_jitReportStaticFieldRead(J9VMThread *currentThread)
+{
+	OLD_SLOW_ONLY_JIT_HELPER_PROLOGUE(1);
+	DECLARE_JIT_PARM(J9JITWatchedStaticFieldData*, dataBlock, 1);
+	J9JavaVM *vm = currentThread->javaVM;
+	void *addr = NULL;
+
+	if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_GET_STATIC_FIELD)) {
+		J9Class *fieldClass = dataBlock->fieldClass;
+		if (J9_ARE_ANY_BITS_SET(fieldClass->classFlags, J9ClassHasWatchedFields)) {
+			void* oldPC = buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
+			ALWAYS_TRIGGER_J9HOOK_VM_GET_STATIC_FIELD(vm->hookInterface, currentThread, dataBlock->method, dataBlock->location, fieldClass, dataBlock->fieldAddress);
+			addr = restoreJITResolveFrame(currentThread, oldPC, true, false);
+		}
+	}
+
+	SLOW_JIT_HELPER_EPILOGUE();
+	return addr;
+}
+
+void* J9FASTCALL
+old_slow_jitReportStaticFieldWrite(J9VMThread *currentThread)
+{
+	OLD_SLOW_ONLY_JIT_HELPER_PROLOGUE(2);
+	DECLARE_JIT_PARM(J9JITWatchedStaticFieldData*, dataBlock, 1);
+	DECLARE_JIT_PARM(void*, valuePointer, 2);
+	J9JavaVM *vm = currentThread->javaVM;
+	void *addr = NULL;
+
+	if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_PUT_STATIC_FIELD)) {
+		J9Class *fieldClass = dataBlock->fieldClass;
+		if (J9_ARE_ANY_BITS_SET(fieldClass->classFlags, J9ClassHasWatchedFields)) {
+			void* oldPC = buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
+			ALWAYS_TRIGGER_J9HOOK_VM_PUT_STATIC_FIELD(vm->hookInterface, currentThread, dataBlock->method, dataBlock->location, fieldClass, dataBlock->fieldAddress, *(U_64*)valuePointer);
+			addr = restoreJITResolveFrame(currentThread, oldPC, true, false);
+		}
+	}
+
+	SLOW_JIT_HELPER_EPILOGUE();
+	return addr;
+}
+
 void
 initPureCFunctionTable(J9JavaVM *vm)
 {
@@ -2922,6 +3008,10 @@ initPureCFunctionTable(J9JavaVM *vm)
 	jitConfig->c_jitDecompileBeforeMethodMonitorEnter = (void*)c_jitDecompileBeforeMethodMonitorEnter;
 	jitConfig->c_jitDecompileAfterAllocation = (void*)c_jitDecompileAfterAllocation;
 	jitConfig->c_jitDecompileAfterMonitorEnter = (void*)c_jitDecompileAfterMonitorEnter;
+	jitConfig->old_slow_jitReportInstanceFieldRead = (void*)old_slow_jitReportInstanceFieldRead;
+	jitConfig->old_slow_jitReportInstanceFieldWrite = (void*)old_slow_jitReportInstanceFieldWrite;
+	jitConfig->old_slow_jitReportStaticFieldRead = (void*)old_slow_jitReportStaticFieldRead;
+	jitConfig->old_slow_jitReportStaticFieldWrite = (void*)old_slow_jitReportStaticFieldWrite;
 }
 
 } /* extern "C" */

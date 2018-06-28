@@ -28,7 +28,7 @@ import org.testng.annotations.*;
 import org.testng.log4testng.Logger;
 import org.testng.*;
 
-import sun.misc.Unsafe;
+import jdk.internal.misc.Unsafe;
 
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.ModuleVisitor;

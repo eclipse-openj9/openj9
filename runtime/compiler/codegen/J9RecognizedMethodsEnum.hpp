@@ -664,6 +664,7 @@
 
    com_ibm_jit_JITHelpers_is32Bit,
    com_ibm_jit_JITHelpers_isArray,
+   com_ibm_jit_JITHelpers_findElementFromArray,
    com_ibm_jit_JITHelpers_getJ9ClassFromObject32,
    com_ibm_jit_JITHelpers_getJ9ClassFromObject64,
    com_ibm_jit_JITHelpers_getNumBitsInReferenceField,
@@ -934,6 +935,7 @@
    java_lang_invoke_ComputedCalls_dispatchJ9Method,
    java_lang_invoke_ComputedCalls_dispatchVirtual,
    java_lang_invoke_DirectHandle_compiledEntryPoint,
+   java_lang_invoke_DirectHandle_nullCheckIfRequired,
    java_lang_invoke_DirectHandle_directCall,
    java_lang_invoke_DirectHandle_invokeExact,
    java_lang_invoke_DirectHandle_isAlreadyCompiled,
@@ -983,6 +985,7 @@
    java_lang_invoke_MethodHandle_invokeWithArgumentsHelper,
    java_lang_invoke_MethodHandles_getStackClass,
    java_lang_invoke_MethodHandle_undoCustomizationLogic,
+   java_lang_invoke_PrimitiveHandle_initializeClassIfRequired,
    java_lang_invoke_MutableCallSite_getTarget,
    java_lang_invoke_PermuteHandle_permuteArgs,
    java_lang_invoke_SpreadHandle_arrayArg,

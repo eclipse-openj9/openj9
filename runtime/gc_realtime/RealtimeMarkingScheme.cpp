@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1159,7 +1159,8 @@ void
 MM_RealtimeMarkingScheme::scanPhantomReferenceObjects(MM_EnvironmentRealtime *env)
 {
 	GC_Environment *gcEnv = env->getGCEnvironment();
-	Assert_MM_true(gcEnv->_referenceObjectBuffer->isEmpty());
+	/* unfinalized processing may discover more phantom reference objects */
+	gcEnv->_referenceObjectBuffer->flush(env);
 	const UDATA maxIndex = MM_HeapRegionDescriptorRealtime::getReferenceObjectListCount(env);
 	UDATA listIndex;
 	for (listIndex = 0; listIndex < maxIndex; ++listIndex) {

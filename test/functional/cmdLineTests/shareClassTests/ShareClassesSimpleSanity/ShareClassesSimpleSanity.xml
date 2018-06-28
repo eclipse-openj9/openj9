@@ -43,7 +43,7 @@
 	<echo value="#######################################################"/>
 	<echo value=" "/>
 		
-	<!-- Run HelperCompatabilityTests -->	
+	<!-- Run HelperCompatibilityTests -->	
 	
 	<test id="Simple Sanity Initial Cleanup" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,destroy</command>

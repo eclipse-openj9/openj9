@@ -209,6 +209,7 @@ int32_t TR_EscapeAnalysis::perform()
       _maxInlinedBytecodeSize = 4000 - nodeCount;
       }
 
+   TR_ASSERT_FATAL(_maxSniffDepth < 16, "The argToCall and nonThisArgToCall flags are 16 bits - a depth limit greater than 16 will not fit in these flags");
    if (getLastRun())
       _maxPassNumber = 0; // Notwithstanding our heursitics, if this is the last run, our max "pass number" is zero (which is the first pass)
 

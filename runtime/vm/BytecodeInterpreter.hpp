@@ -1332,6 +1332,7 @@ obj:;
 			cleanUpForFramePop(REGISTER_ARGS, bp);
 			/* Return from this frame */
 			if (bp == _currentThread->j2iFrame) {
+				pushForceEarlyReturnValue(REGISTER_ARGS);
 				rc = j2iReturn(REGISTER_ARGS);
 			} else {
 				J9SFStackFrame *frame = ((J9SFStackFrame*)(bp + 1)) - 1;
@@ -1339,8 +1340,8 @@ obj:;
 				_literals = frame->savedCP;
 				_pc = frame->savedPC + 3;
 				_arg0EA = frame->savedA0;
+				pushForceEarlyReturnValue(REGISTER_ARGS);
 			}
-			pushForceEarlyReturnValue(REGISTER_ARGS);
 		}
 		return rc;
 	}
@@ -2704,15 +2705,6 @@ done:
 		returnObjectFromINL(REGISTER_ARGS, simpleName, 1);
 done:
 		return rc;
-	}
-
-	/* java.lang.Class: private native int getClassDepth(); */
-	VMINLINE VM_BytecodeAction
-	inlClassGetClassDepth(REGISTER_ARGS_LIST)
-	{
-		J9Class *receiverClazz = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, *(j9object_t*)_sp);
-		returnSingleFromINL(REGISTER_ARGS, (I_32)(J9CLASS_DEPTH(receiverClazz)), 1);
-		return EXECUTE_BYTECODE;
 	}
 
 	/* java.lang.System: public static native void arraycopy(Object src, int srcPos, Object dest, int destPos, int length); */
@@ -6186,7 +6178,7 @@ retry:
 			J9Class *fieldClass = (J9Class*)(classAndFlags & ~(UDATA)J9StaticFieldRefFlagBits);
 			if (J9_ARE_ANY_BITS_SET(fieldClass->classFlags, J9ClassHasWatchedFields)) {
 				updateVMStruct(REGISTER_ARGS);
-				ALWAYS_TRIGGER_J9HOOK_VM_PUT_STATIC_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, fieldClass, valueAddress, _sp);
+				ALWAYS_TRIGGER_J9HOOK_VM_PUT_STATIC_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, fieldClass, valueAddress, *(U_64*)_sp);
 				VMStructHasBeenUpdated(REGISTER_ARGS);
 				if (immediateAsyncPending()) {
 					rc = GOTO_ASYNC_CHECK;
@@ -6260,7 +6252,7 @@ retry:
 				if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_GET_FIELD)) {
 					if (J9_ARE_ANY_BITS_SET(J9OBJECT_CLAZZ(_currentThread, objectref)->classFlags, J9ClassHasWatchedFields)) {
 						updateVMStruct(REGISTER_ARGS);
-						ALWAYS_TRIGGER_J9HOOK_VM_GET_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, objectLocation, valueOffset);
+						ALWAYS_TRIGGER_J9HOOK_VM_GET_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, objectref, valueOffset);
 						VMStructHasBeenUpdated(REGISTER_ARGS);
 						if (immediateAsyncPending()) {
 							rc = GOTO_ASYNC_CHECK;
@@ -6345,12 +6337,11 @@ retry:
 		}
 #if defined(DO_HOOKS)
 		if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_PUT_FIELD)) {
-			j9object_t  *objAddress = (j9object_t*)_sp + ((flags & J9FieldSizeDouble) ? 2 : 1);
-			j9object_t objectref = *objAddress;
+			j9object_t objectref = ((j9object_t*)_sp)[(flags & J9FieldSizeDouble) ? 2 : 1];
 			if (NULL != objectref) {
 				if (J9_ARE_ANY_BITS_SET(J9OBJECT_CLAZZ(_currentThread, objectref)->classFlags, J9ClassHasWatchedFields)) {
 					updateVMStruct(REGISTER_ARGS);
-					ALWAYS_TRIGGER_J9HOOK_VM_PUT_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, objAddress, valueOffset, _sp);
+					ALWAYS_TRIGGER_J9HOOK_VM_PUT_FIELD(_vm->hookInterface, _currentThread, _literals, _pc - _literals->bytecodes, objectref, valueOffset, *(U_64*)_sp);
 					VMStructHasBeenUpdated(REGISTER_ARGS);
 					if (immediateAsyncPending()) {
 						rc = GOTO_ASYNC_CHECK;
@@ -8437,7 +8428,6 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_VM_INITIALIZE_CLASS_LOADER),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_VM_GET_CLASS_PATH_ENTRY_TYPE),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_VM_IS_BOOTSTRAP_CLASS_LOADER),
-		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_CLASS_DEPTH),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ALLOCATE_INSTANCE),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_INTERNALS_PREPARE_CLASS_IMPL),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_ATTACHMENT_LOADAGENTLIBRARYIMPL),
@@ -8982,8 +8972,6 @@ runMethod: {
 		PERFORM_ACTION(inlVMGetClassPathEntryType(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_VM_IS_BOOTSTRAP_CLASS_LOADER):
 		PERFORM_ACTION(inlVMIsBootstrapClassLoader(REGISTER_ARGS));
-	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_CLASS_DEPTH):
-		PERFORM_ACTION(inlClassGetClassDepth(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ALLOCATE_INSTANCE):
 		PERFORM_ACTION(inlUnsafeAllocateInstance(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_INTERNALS_PREPARE_CLASS_IMPL):
