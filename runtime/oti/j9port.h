@@ -635,6 +635,18 @@ typedef struct J9CacheInfoQuery {
 #define SIG_RI_INTERRUPT (SIGRTMIN+SIG_RI_INTERRUPT_INDEX)
 #endif
 
+typedef struct J9CgroupMetricElement {
+	char *key;
+	char value[128];
+	char *units;
+} J9CgroupMetricElement;
+
+typedef struct J9CgroupMetricIteratorState {
+	uint32_t count;
+	uint32_t numElements;
+	uint64_t subsystemid;
+} J9CgroupMetricIteratorState;
+
 /* include the generated Port header here (at the end of the file since it relies on some defines from within this file) */
 #include "j9port_generated.h"
 
@@ -732,6 +744,7 @@ typedef struct J9CacheInfoQuery {
 #define J9PORT_ERROR_VMEM_INSUFFICENT_RESOURCES OMRPORT_ERROR_VMEM_INSUFFICENT_RESOURCES
 #define J9PORT_ERROR_VMEM_INSUFFICENT_RESOURCES OMRPORT_ERROR_VMEM_INSUFFICENT_RESOURCES
 #define J9PORT_ERROR_NOT_SUPPORTED_ON_THIS_PLATFORM OMRPORT_ERROR_NOT_SUPPORTED_ON_THIS_PLATFORM
+#define J9PORT_ERROR_SYSINFO_CGROUP_SUBSYSTEM_UNAVAILABLE OMRPORT_ERROR_SYSINFO_CGROUP_SUBSYSTEM_UNAVAILABLE
 
 #define J9PORT_TTY_OUT OMRPORT_TTY_OUT
 #define J9PORT_TTY_ERR OMRPORT_TTY_ERR

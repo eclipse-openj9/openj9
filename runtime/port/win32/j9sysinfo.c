@@ -390,3 +390,20 @@ j9sysinfo_get_cache_info(struct J9PortLibrary *portLibrary, const J9CacheInfoQue
 	Trc_PRT_sysinfo_get_cache_info_exit(result);
 	return result;
 }
+
+int32_t
+j9sysinfo_cgroup_subsystem_iterator_init(struct J9PortLibrary *portLibrary, uint64_t subsystem, J9CgroupMetricIteratorState *state) {
+	return J9PORT_ERROR_SYSINFO_CGROUP_SUBSYSTEM_UNAVAILABLE;
+}
+
+BOOLEAN
+j9sysinfo_cgroup_subsystem_iterator_hasNext(struct J9PortLibrary *portLibrary, J9CgroupMetricIteratorState *state)
+{
+	return FALSE;
+}
+
+int32_t
+j9sysinfo_cgroup_subsystem_iterator_next(struct J9PortLibrary *portLibrary, J9CgroupMetricIteratorState *state, J9CgroupMetricElement *cgroupElement)
+{
+	return J9PORT_ERROR_SYSINFO_CGROUP_SUBSYSTEM_UNAVAILABLE;
+}

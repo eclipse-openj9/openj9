@@ -45,6 +45,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <sys/types.h>
+#include "j9port.h"
 #if defined(J9OS_I5)
 #include "Xj9I5OSInterface.H"
 #endif
@@ -209,6 +210,42 @@ typedef struct wpar_info_format_t {
 #include "omrportptb.h"
 #include "ut_j9prt.h"
 
+typedef struct J9CgroupMetricMap{
+	char *metricFilename;
+	char *metricTag;
+	char *metricKeyInFile;
+	char *metricUnit;
+} J9CgroupMetricMap;
+
+static struct J9CgroupMetricMap j9CgroupMemoryMetricMap[] = {
+	{"memory.limit_in_bytes", "Memory Limit", NULL, "bytes"},
+	{"memory.memsw.limit_in_bytes", "Memory + Swap Limit", NULL, "bytes"},
+	{"memory.usage_in_bytes", "Memory Usage", NULL, "bytes"},
+	{"memory.memsw.usage_in_bytes", "Memory +Swap Usage", NULL, "bytes"},
+	{"memory.failcnt", "Memory Failcnt", NULL, ""},
+	{"memory.memsw.failcnt", "Memory +Swap Failcnt", NULL, ""},
+	{"memory.max_usage_in_bytes", "Memory Max Usage", NULL, "bytes"},
+	{"memory.memsw.max_usage_in_bytes", "Memory + Swap Max Usage", NULL, "bytes"},
+	{"memory.oom_control", "OOM Kill Disable", "oom_kill_disable", ""},
+	{"memory.oom_control", "Under OOM", "under_oom", ""}
+};
+
+static struct J9CgroupMetricMap j9CgroupCpuMetricMap[] = {
+	{"cpu.cfs_period_us", "CPU Period", NULL, "microseconds"},
+	{"cpu.cfs_quota_us", "CPU Quota", NULL, "microseconds"},
+	{"cpu.shares", "CPU Shares", NULL, ""},
+	{"cpu.stat", "Periods", "nr_periods", ""},
+	{"cpu.stat", "Throttle", "nr_throttled", ""},
+	{"cpu.stat", "Throttle Time", "throttled_time", ""}
+};
+
+static struct J9CgroupMetricMap j9CgroupCpusetMetricMap[] = {
+	{"cpuset.cpu_exclusive", "CpuSet CPU exclusive", NULL, ""},
+	{"cpuset.mem_exclusive", "CpuSet Mem exclusive", NULL, ""},
+	{"cpuset.cpus", "CpuSet CPUs", NULL, ""},
+	{"cpuset.mems", "CpuSet Mems", NULL, ""}
+};
+
 #if defined(J9ZOS390)
 #include <sys/ps.h>
 #include <sys/types.h>
@@ -226,6 +263,10 @@ typedef struct wpar_info_format_t {
 
 static int32_t getCacheSize(J9PortLibrary *portLibrary, const int32_t cpu, const int32_t level,
 	const int32_t cacheType, const J9CacheQueryCommand query);
+
+#if defined(LINUX) && !defined(J9ZTPF)
+static int32_t readCgroupSubsystemFile(struct J9PortLibrary *portLibrary, FILE *file, char *value);
+#endif /* defined(LINUX) && !defined(J9ZTPF) */
 
 #if defined(LINUXPPC)
 static intptr_t getLinuxPPCDescription(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc);
@@ -1550,3 +1591,124 @@ j9sysinfo_get_cache_info(struct J9PortLibrary *portLibrary, const J9CacheInfoQue
 	Trc_PRT_sysinfo_get_cache_info_exit(result);
 	return result;
 }
+
+int32_t
+j9sysinfo_cgroup_subsystem_iterator_init(struct J9PortLibrary *portLibrary, uint64_t subsystem, J9CgroupMetricIteratorState *state)
+{
+	Assert_PRT_true(NULL != state);
+	state->count = 0;
+	switch (subsystem) {
+		case OMR_CGROUP_SUBSYSTEM_MEMORY :
+			 state->numElements = sizeof(j9CgroupMemoryMetricMap) / sizeof(j9CgroupMemoryMetricMap[0]);
+			 state->subsystemid = OMR_CGROUP_SUBSYSTEM_MEMORY;
+			 break;
+		case OMR_CGROUP_SUBSYSTEM_CPU :
+			 state->numElements = sizeof(j9CgroupCpuMetricMap) / sizeof(j9CgroupCpuMetricMap[0]);
+			 state->subsystemid = OMR_CGROUP_SUBSYSTEM_CPU;
+			 break;
+		case OMR_CGROUP_SUBSYSTEM_CPUSET :
+			 state->numElements = sizeof(j9CgroupCpusetMetricMap) / sizeof(j9CgroupCpusetMetricMap[0]);
+			 state->subsystemid = OMR_CGROUP_SUBSYSTEM_CPUSET;
+			 break;
+		default :
+			return J9PORT_ERROR_SYSINFO_NOT_SUPPORTED;
+	}
+	return 0;
+}
+
+BOOLEAN
+j9sysinfo_cgroup_subsystem_iterator_hasNext(struct J9PortLibrary *portLibrary, J9CgroupMetricIteratorState *state)
+{
+	return (state->count < state->numElements);
+}
+
+int32_t
+j9sysinfo_cgroup_subsystem_iterator_next(struct J9PortLibrary *portLibrary, J9CgroupMetricIteratorState *state, J9CgroupMetricElement *cgroupElement)
+{
+	int32_t rc = J9PORT_ERROR_SYSINFO_CGROUP_SUBSYSTEM_UNAVAILABLE;
+	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
+	switch (state->subsystemid) {
+		case OMR_CGROUP_SUBSYSTEM_MEMORY :
+			cgroupElement->key = j9CgroupMemoryMetricMap[state->count].metricTag;
+			cgroupElement->units = j9CgroupMemoryMetricMap[state->count].metricUnit;
+			rc = omrsysinfo_get_handle_cgroup_subsystem_file(OMR_CGROUP_SUBSYSTEM_MEMORY, j9CgroupMemoryMetricMap[state->count].metricFilename, cgroupElement->value);
+			if (j9CgroupMemoryMetricMap[state->count].metricKeyInFile != NULL) {
+				char delim[] = "\n";
+				char space[] = " ";
+				char *part = strtok(cgroupElement->value, delim);
+				int j = 1;
+				while(part != NULL)
+				{
+					if(strstr(part, j9CgroupMemoryMetricMap[state->count].metricKeyInFile) != NULL) {
+						char *subpart = strtok(part, space);
+						while (subpart != NULL) {
+							if (j == 2) {
+								strcpy(cgroupElement->value, subpart);
+							}
+							subpart = strtok(NULL, space);
+							j++;
+						}
+					}		
+					part = strtok(NULL, delim);
+				}
+			}
+			state->count = state->count + 1;
+			break;
+		case OMR_CGROUP_SUBSYSTEM_CPU :
+			cgroupElement->key = j9CgroupCpuMetricMap[state->count].metricTag;
+			cgroupElement->units = j9CgroupCpuMetricMap[state->count].metricUnit;
+			rc = omrsysinfo_get_handle_cgroup_subsystem_file(OMR_CGROUP_SUBSYSTEM_CPU, j9CgroupCpuMetricMap[state->count].metricFilename, cgroupElement->value);
+			if (j9CgroupCpuMetricMap[state->count].metricKeyInFile != NULL) {
+				char delim[] = "\n";
+				char space[] = " ";
+				char *part = strtok(cgroupElement->value, delim);
+				int j = 1;
+				while(part != NULL)
+				{
+					if(strstr(part, j9CgroupCpuMetricMap[state->count].metricKeyInFile) != NULL) {
+						char *subpart = strtok(part, space);
+						while (subpart != NULL) {
+							if (j == 2) {
+								strcpy(cgroupElement->value, subpart);
+							}
+							subpart = strtok(NULL, space);
+							j++;
+						}
+					}		
+					part = strtok(NULL, delim);
+				}
+			}
+			state->count = state->count + 1;
+			break;
+		case OMR_CGROUP_SUBSYSTEM_CPUSET :
+			cgroupElement->key = j9CgroupCpusetMetricMap[state->count].metricTag;
+			cgroupElement->units = j9CgroupCpusetMetricMap[state->count].metricUnit;
+			rc = omrsysinfo_get_handle_cgroup_subsystem_file(OMR_CGROUP_SUBSYSTEM_CPUSET, j9CgroupCpusetMetricMap[state->count].metricFilename,  cgroupElement->value);
+			if (j9CgroupCpusetMetricMap[state->count].metricKeyInFile != NULL) {
+				char delim[] = "\n";
+				char space[] = " ";
+				char *part = strtok(cgroupElement->value, delim);
+				int j = 1;
+				while(part != NULL)
+				{
+					if(strstr(part, j9CgroupCpusetMetricMap[state->count].metricKeyInFile) != NULL) {
+						char *subpart = strtok(part, space);
+						while (subpart != NULL) {
+							if (j == 2) {
+								strcpy(cgroupElement->value, subpart);
+							}
+							subpart = strtok(NULL, space);
+							j++;
+						}
+					}		
+					part = strtok(NULL, delim);
+				}
+			}
+			state->count = state->count + 1;
+			break;
+		default:
+			rc = J9PORT_ERROR_SYSINFO_CGROUP_SUBSYSTEM_UNAVAILABLE;
+	}
+	return rc;
+}
+
