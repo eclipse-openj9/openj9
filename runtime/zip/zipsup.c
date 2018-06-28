@@ -90,7 +90,7 @@ void* zdataalloc (void* opaque, U_32 items, U_32 size);
 static I_32 getZipEntryUsingDirectory(J9PortLibrary *portLib, J9ZipFile *zipFile, J9ZipEntry *entry,
 		const char *fileName, IDATA fileNameLength, BOOLEAN readDataPointer);
 static BOOLEAN isSeekFailure(I_64 seekResult, I_64 expectedValue);
-static BOOLEAN isOutside4Gig(int64_t value);
+static BOOLEAN isOutside4Gig(I_64 value);
 
 #if defined(J9VM_THR_PREEMPTIVE)
 #include "omrthread.h"
@@ -200,7 +200,7 @@ isSeekFailure(I_64 seekResult, I_64 expectedValue) {
  * @return true if seekResult is negative or larger than the maximum U_32 positive value
  */
 static VMINLINE BOOLEAN
-isOutside4Gig(int64_t value) {
+isOutside4Gig(I_64 value) {
 	return (value < 0) || (value > UINT32_MAX);
 }
 
@@ -288,9 +288,9 @@ zip_getZipComment(J9PortLibrary* portLib, J9ZipFile *zipFile, U_8 ** commentStri
 	I_32 state = 0;
 	U_32 dataSize;
 	I_64 seekResult;
-	int64_t fileSize = 0;
-	int64_t bytesAlreadyRead = 0;
-	int64_t rBytes = 0;
+	I_64 fileSize = 0;
+	I_64 bytesAlreadyRead = 0;
+	I_64 rBytes = 0;
 	I_16 commentOffsetFromEnd = 0;
 	BOOLEAN readFromEnd = TRUE;
 	I_16 loopCount = 0;
@@ -310,8 +310,8 @@ zip_getZipComment(J9PortLibrary* portLib, J9ZipFile *zipFile, U_8 ** commentStri
 	fileSize = seekResult;
 	zipFile->pointer = (U_32) fileSize;
 	while (TRUE)  {
-		int64_t size = 0;
-		int64_t i = 0;
+		I_64 size = 0;
+		I_64 i = 0;
 		/* Fill the buffer. */
 		if (bytesAlreadyRead == fileSize) {
 			if (fileSize == MIN_ZIPFILE_SIZE) {
@@ -350,7 +350,7 @@ zip_getZipComment(J9PortLibrary* portLib, J9ZipFile *zipFile, U_8 ** commentStri
 			size += MIN_ZIPFILE_SIZE;
 		}
 
-		if (j9file_read( zipFile->fd, buffer, (intptr_t) size) != size)  {
+		if (j9file_read( zipFile->fd, buffer, (IDATA) size) != size)  {
 			zipFile->pointer = -1;
 			EXIT();
 			return ZIP_ERR_FILE_READ_ERROR;
@@ -491,11 +491,11 @@ I_32 scanForCentralEnd(J9PortLibrary* portLib, J9ZipFile *zipFile, J9ZipCentralE
 	U_8 *current;
 	U_8 buffer[SCAN_CHUNK_SIZE + MIN_ZIPFILE_SIZE];
 	I_32 state = 0;
-	int64_t size = 0;
+	I_64 size = 0;
 	U_32 dataSize = 0;
 	I_64 seekResult;
-	int64_t fileSize = 0;
-	int64_t bytesAlreadyRead = 0;
+	I_64 fileSize = 0;
+	I_64 bytesAlreadyRead = 0;
 	BOOLEAN readFromEnd = TRUE;
 
 
@@ -510,7 +510,7 @@ I_32 scanForCentralEnd(J9PortLibrary* portLib, J9ZipFile *zipFile, J9ZipCentralE
 	zipFile->pointer = (U_32) fileSize;
 
 	while(TRUE)  {
-		int64_t i;
+		I_64 i;
 		/* Fill the buffer. */
 		if (bytesAlreadyRead == fileSize)  {
 			zipFile->pointer = -1;
@@ -538,7 +538,7 @@ I_32 scanForCentralEnd(J9PortLibrary* portLib, J9ZipFile *zipFile, J9ZipCentralE
 			 */
 			size += MIN_ZIPFILE_SIZE;
 		}
-		if (j9file_read( zipFile->fd, buffer, (intptr_t) size) != size)  {
+		if (j9file_read( zipFile->fd, buffer, (IDATA) size) != size)  {
 				zipFile->pointer = -1;
 				return ZIP_ERR_FILE_READ_ERROR;
 		}
@@ -630,9 +630,9 @@ I_32 scanForDataDescriptor(J9PortLibrary* portLib, J9ZipFile *zipFile, J9ZipEntr
 
 	/* Scan until we find PK^G^H (otherwise it's an error). */
 	while(1)	{
-		int64_t i = 0;
+		I_64 i = 0;
 		/* Fill the buffer. */
-		int64_t size = j9file_read( zipFile->fd, buffer, SCAN_CHUNK_SIZE);
+		I_64 size = j9file_read( zipFile->fd, buffer, SCAN_CHUNK_SIZE);
 		if(size == 0) {
 			return ZIP_ERR_FILE_CORRUPT;
 		} else if(size < 0) {
@@ -804,7 +804,7 @@ static I_32 zip_populateCache(J9PortLibrary* portLib, J9ZipFile *zipFile, J9ZipC
 	}
 	
 	while(unreadSize)  {
-		int64_t readResult = 0;
+		I_64 readResult = 0;
 		/* Read as much as needed into buffer. */
 		bytesToRead = bufferSize-bufferedSize;
 		if (bytesToRead > unreadSize)  bytesToRead = unreadSize;
@@ -979,12 +979,12 @@ readZipEntry(J9PortLibrary * portLib, J9ZipFile * zipFile, J9ZipEntry * zipEntry
 	U_8 buffer[46 + 128];
 	U_8 *current;
 	U_32 sig;
-	int64_t readLength = 0;
+	I_64 readLength = 0;
 	I_64 seekResult;
-	int64_t readResult= 0;
+	I_64 readResult= 0;
 	U_8 *readBuffer;
 	IDATA currentEntryPointer, localEntryPointer;
-	int64_t headerSize;
+	I_64 headerSize;
 
   retry:
 	if (entryStart)
@@ -1007,14 +1007,14 @@ readZipEntry(J9PortLibrary * portLib, J9ZipFile * zipFile, J9ZipEntry * zipEntry
 	if (readLength <= sizeof(buffer)) {
 		current = buffer;
 	} else {
-		current = readBuffer = j9mem_allocate_memory((intptr_t) readLength, J9MEM_CATEGORY_VM_JCL);
+		current = readBuffer = j9mem_allocate_memory((IDATA) readLength, J9MEM_CATEGORY_VM_JCL);
 		if (!readBuffer)
 			return ZIP_ERR_OUT_OF_MEMORY;
 	}
 
 	currentEntryPointer = localEntryPointer = zipFile->pointer;
 
-	readResult = j9file_read(zipFile->fd, current, (intptr_t) readLength);
+	readResult = j9file_read(zipFile->fd, current, (IDATA) readLength);
 	if ((readResult < 22) || (filename && !(readResult == readLength || (findDirectory && readResult == (readLength-1))))) {
 		/* We clearly didn't get enough bytes */
 		result = ZIP_ERR_FILE_READ_ERROR;
@@ -1111,12 +1111,12 @@ readZipEntry(J9PortLibrary * portLib, J9ZipFile * zipFile, J9ZipEntry * zipEntry
 	if (readLength > zipEntry->filenameLength) {
 		readLength = zipEntry->filenameLength;
 	}
-	memcpy(zipEntry->filename, current, (intptr_t) readLength);
+	memcpy(zipEntry->filename, current, (IDATA) readLength);
 
 	/* Read the rest of the filename if necessary.  Allocate space in J9ZipEntry for it! */
 	if (readLength < zipEntry->filenameLength) {
 		readResult = j9file_read(zipFile->fd, zipEntry->filename + readLength,
-				(intptr_t) (zipEntry->filenameLength - readLength));
+				(IDATA) (zipEntry->filenameLength - readLength));
 		if (readResult != (zipEntry->filenameLength - readLength)) {
 			result = ZIP_ERR_FILE_READ_ERROR;
 			goto finished;
@@ -1732,8 +1732,8 @@ getZipEntryUsingDirectory(J9PortLibrary *portLib, J9ZipFile *zipFile, J9ZipEntry
 	U_8 defaultBuffer[128]; /* must be at least CENTRAL_FILEHEADER_SIZE */
 	U_8 *readBuffer = defaultBuffer;
 	U_16 entryCount = 0;
-	int64_t nextEntryPointer = 0;
-	int64_t offsetCorrection = 0; /* this is the size of any crud before the first local file header */
+	I_64 nextEntryPointer = 0;
+	I_64 offsetCorrection = 0; /* this is the size of any crud before the first local file header */
 
 	if (fileNameLength > sizeof(defaultBuffer)) {
 		readBuffer = j9mem_allocate_memory(fileNameLength, J9MEM_CATEGORY_VM_JCL);
@@ -1870,7 +1870,7 @@ I_32 zip_getZipEntryData(J9PortLibrary* portLib, J9ZipFile* zipFile, J9ZipEntry*
 	}
 
 	if(entry->compressionMethod == ZIP_CM_Stored) {
-		intptr_t readResult = 0;
+		IDATA readResult = 0;
 		/* No compression - just read the data in. */
 		if (zipFile->pointer != entry->dataPointer)  {
 			zipFile->pointer = (U_32) entry->dataPointer;
@@ -2043,7 +2043,7 @@ I_32 zip_getZipEntryExtraField(J9PortLibrary* portLib, J9ZipFile* zipFile, J9Zip
 	I_32 result;
 	U_8* extraFieldBuffer;
 	I_64 seekResult;
-	intptr_t readResult = 0;
+	IDATA readResult = 0;
 
 	ENTER();
 
@@ -2128,7 +2128,7 @@ I_32 zip_getZipEntryComment(J9PortLibrary * portLib, J9ZipFile * zipFile, J9ZipE
 	I_32 result;
 	U_8 *fileCommentBuffer;
 	I_64 seekResult;
-	intptr_t readResult = 0;
+	IDATA readResult = 0;
 
 	ENTER();
 
