@@ -56,7 +56,6 @@ class TR_JProfilingValue : public TR::Optimization
       TR::Node *value,
       TR_AbstractHashTableProfilerInfo *table,
       TR::Node *optionalTest = NULL,
-      TR::Node *fallbackValue = NULL,
       bool extendBlocks = true,
       bool trace = false);
 
