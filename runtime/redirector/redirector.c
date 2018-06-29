@@ -112,7 +112,7 @@ typedef enum gc_policy{
 	GC_POLICY_NOGC
 } gc_policy;
 
-#ifdef LINUX
+#if defined(LINUX) || defined(OSX)
 /* defining _GNU_SOURCE allows the use of dladdr() in dlfcn.h */
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
@@ -1216,7 +1216,7 @@ getjvmBin(BOOLEAN removeSubdir)
 }
 #endif
 
-#if defined(LINUX) && !defined(J9ZTPF)
+#if (defined(LINUX) || defined(OSX)) && !defined(J9ZTPF)
 static J9StringBuffer*
 getjvmBin(BOOLEAN removeSubdir)
 {
@@ -1238,7 +1238,7 @@ getjvmBin(BOOLEAN removeSubdir)
 
 	return buffer;
 }
-#endif /* defined(LINUX) && !defined(J9ZTPF) */
+#endif /* (defined(LINUX) || defined(OSX)) && !defined(J9ZTPF) */
 
 #ifdef AIXPPC
 static J9StringBuffer*
