@@ -100,3 +100,5 @@ End User issues
 To indicate an issue has been raised by an end user or affects the User-experience rather than being a developer-centric issue.
 
 * `userRaised`
+* `svtRaised`: Indicate an issue was raised for an AdoptOpenJDK 3rd party issue or the OpenJ9 system verification test (svt).
+
