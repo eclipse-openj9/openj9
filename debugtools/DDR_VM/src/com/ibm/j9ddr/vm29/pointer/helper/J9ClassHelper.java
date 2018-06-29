@@ -273,7 +273,7 @@ public class J9ClassHelper
 
 		if (!J9ROMClassHelper.isArray(clazz.romClass())) {
 			// Fragment 1. RAM methods + extended method block
-			U32 ramMethodsSize = clazz.romClass().romMethodCount().mult((int)J9Method.SIZEOF);
+			UDATA ramMethodsSize = clazz.romClass().romMethodCount().mult((int)J9Method.SIZEOF);
 			size = size.add(ramMethodsSize);
 			if (vm.runtimeFlags().allBitsIn(J9Consts.J9_RUNTIME_EXTENDED_METHOD_BLOCK)) {
 				UDATA extendedMethodBlockSize = Scalar.roundToSizeofUDATA(new UDATA(clazz.romClass().romMethodCount()));
@@ -292,7 +292,7 @@ public class J9ClassHelper
 			}
 
 			// Fragment 5. Static slots
-			U32 staticSlotCount = clazz.romClass().objectStaticCount().add(clazz.romClass().singleScalarStaticCount());
+			UDATA staticSlotCount = clazz.romClass().objectStaticCount().add(clazz.romClass().singleScalarStaticCount());
 			if (J9BuildFlags.env_data64) {
 				staticSlotCount = staticSlotCount.add(clazz.romClass().doubleScalarStaticCount());
 			} else {
@@ -301,7 +301,7 @@ public class J9ClassHelper
 			size = size.add(Scalar.convertSlotsToBytes(new UDATA(staticSlotCount)));
 			
 			// Fragment 6. Constant pool
-			U32 constantPoolSlotCount = clazz.romClass().ramConstantPoolCount().mult(2);
+			UDATA constantPoolSlotCount = clazz.romClass().ramConstantPoolCount().mult(2);
 			size = size.add(Scalar.convertSlotsToBytes(new UDATA(constantPoolSlotCount)));
 		}
 		
@@ -384,7 +384,7 @@ public class J9ClassHelper
 		if (J9ClassHelper.isArrayClass(j9class)) {
 			J9ArrayClassPointer arrayClass = J9ArrayClassPointer.cast(j9class);
 			
-			U32 modifiers = arrayClass.leafComponentType().romClass().modifiers();
+			UDATA modifiers = arrayClass.leafComponentType().romClass().modifiers();
 
 			//OR in the bogus Sun bits
 			modifiers = modifiers.bitOr(J9JavaAccessFlags.J9AccAbstract);
@@ -392,7 +392,7 @@ public class J9ClassHelper
 			
 			return modifiers.intValue();
 		} else {
-			U32 modifiers = j9class.romClass().modifiers();
+			UDATA modifiers = j9class.romClass().modifiers();
 			
 			if (j9class.romClass().outerClassName().notNull()) {
 				modifiers = j9class.romClass().memberAccessFlags();
@@ -411,7 +411,7 @@ public class J9ClassHelper
 	}
 	
 	public static U32 extendedClassFlags(J9ClassPointer j9class) throws CorruptDataException {
-		return j9class.classFlags();
+		return new U32(j9class.classFlags());
 	}
 
 	public static UDATA classFlags(J9ClassPointer j9class) throws CorruptDataException {

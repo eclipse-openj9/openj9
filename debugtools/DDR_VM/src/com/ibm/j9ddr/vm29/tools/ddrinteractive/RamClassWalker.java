@@ -366,7 +366,7 @@ public class RamClassWalker extends ClassWalker {
 				J9RAMStaticFieldRefPointer staticRef = J9RAMStaticFieldRefPointer.cast(cpEntry);
 				
 				/* if the field ref is resolved static, it has 'flagsAndClass', for other cases (unresolved and resolved instance) it has 'flags'. */
-				if ((staticRef.flagsAndClass().longValue() > 0) && (staticRef.valueOffset().longValue() != -1)) {
+				if ((staticRef.flagsAndClass().longValue() > 0) && !staticRef.valueOffset().eq(UDATA.MAX)) {
 					classWalkerCallback.addSlot(clazz, SlotType.J9_IDATA, staticRef.flagsAndClassEA(), "flagsAndClass");
 				} else {
 					classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, ref.flagsEA(), "flags");
@@ -425,7 +425,7 @@ public class RamClassWalker extends ClassWalker {
 			J9ROMFieldShapePointer field = fields.getField();
 			
 			String info = fields.getName();
-			U32 modifiers = field.modifiers();
+			UDATA modifiers = field.modifiers();
 			UDATAPointer fieldAddress = ramClass.ramStatics().addOffset(fields.getOffsetOrAddress());
 			
 			String additionalInfo = modifiers.anyBitsIn(J9FieldFlagObject) ? "!j9object" : "";
@@ -437,7 +437,7 @@ public class RamClassWalker extends ClassWalker {
 			}
 		}
 		
-		U32 staticSlotCount = ramClass.romClass().objectStaticCount().add(ramClass.romClass().singleScalarStaticCount());
+		UDATA staticSlotCount = ramClass.romClass().objectStaticCount().add(ramClass.romClass().singleScalarStaticCount());
 		if (J9BuildFlags.env_data64) {
 			staticSlotCount = staticSlotCount.add(ramClass.romClass().doubleScalarStaticCount());
 		} else {
