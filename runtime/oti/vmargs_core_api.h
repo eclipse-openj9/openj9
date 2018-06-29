@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -85,8 +85,8 @@ addXOptionsFile(J9PortLibrary* portLib, const char *xOptionsfileArg, J9JavaVMArg
  * @param parseOptionsFileFlag Set to false to ignore embedded -Xoptionsfile arguments
  * @return number of arguments on success, negative on error
  */
-IDATA
-parseOptionsBuffer(J9PortLibrary* portLib, char* argumentBuffer, J9JavaVMArgInfoList *vmArgumentsList, UDATA verboseFlags, BOOLEAN parseOptionsFileFlag);
+intptr_t
+parseOptionsBuffer(J9PortLibrary* portLib, char* argumentBuffer, J9JavaVMArgInfoList *vmArgumentsList, uintptr_t verboseFlags, BOOLEAN parseOptionsFileFlag);
 
 /**
  * Scan fileText containing multiple options to find the options and add them to the list.
@@ -98,33 +98,7 @@ parseOptionsBuffer(J9PortLibrary* portLib, char* argumentBuffer, J9JavaVMArgInfo
  * @return 0 on success, negative on error
  */
 intptr_t
-parseOptionsBuffer(J9PortLibrary* portLib, char* argumentBuffer, J9JavaVMArgInfoList *vmArgumentsList, uintptr_t verboseFlags, BOOLEAN parseOptionsFileFlag);
-
-/**
- * Scan an argument buffer containing multiple options to find the options and add them to the list.
- * The argument buffer must point to an allocated section of memory.  It will be freed if no valid arguments
- * other than -Xoptionsfile are found. Its contents may be changed.
- * @param portLib port library
- * @param argumentBuffer buffer holding the raw string
- * @param vmArgumentsList list of arguments so far.
- * @param verboseFlags turn on verbosity
- * @param parseOptionsFileFlag Set to false to ignore embedded -Xoptionsfile arguments
- * @return number of arguments on success, negative on error
- */
-IDATA
-parseOptionsBuffer(J9PortLibrary* portLib, char* argumentBuffer, J9JavaVMArgInfoList *vmArgumentsList, UDATA verboseFlags, BOOLEAN parseOptionsFileFlag);
-
-/**
- * Scan fileText containing multiple options to find the options and add them to the list.
- * The argument buffer  contents may be changed.
- * @param portLib port library
- * @param fileText buffer holding the raw string
- * @param vmArgumentsList list of arguments so far.
- * @param verboseFlags turn on verbosity
- * @return 0 on success, negative on error
- */
-IDATA
-parseOptionsFileText(J9PortLibrary* portLibrary, const char* fileText, J9JavaVMArgInfoList *vmArgumentsList, UDATA verboseFlags);
+parseOptionsFileText(J9PortLibrary* portLibrary, const char* fileText, J9JavaVMArgInfoList *vmArgumentsList, uintptr_t verboseFlags);
 
 /**
  * Parses the Hypervisor Environment Variable string into a J9JavaVMArgInfoList list
