@@ -1100,12 +1100,6 @@ Java_com_ibm_lang_management_internal_UnixExtendedOperatingSystem_getOpenFileDes
 jobject JNICALL
 Java_com_ibm_virtualization_management_internal_GuestOS_retrieveProcessorUsageImpl(JNIEnv *env, jobject beanInstance, jobject procUsageObject);
 
-/* mgmtprocessor.c */
-extern J9_CFUNC jint JNICALL
-Java_com_ibm_lang_management_internal_ProcessorMXBeanImpl_getNumberCPUsImpl (JNIEnv *env, jobject instance, jint type);
-extern J9_CFUNC void JNICALL
-Java_com_ibm_lang_management_internal_ProcessorMXBeanImpl_setNumberEntitledCPUsImpl (JNIEnv *env, jobject instance, jint number);
-
 /* com_ibm_jvm_Stats.c */
 void JNICALL
 Java_com_ibm_jvm_Stats_getStats(JNIEnv *env, jobject obj);
