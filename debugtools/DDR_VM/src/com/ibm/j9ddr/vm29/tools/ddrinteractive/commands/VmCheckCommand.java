@@ -478,8 +478,8 @@ public class VmCheckCommand extends Command
 			}
 		}
 
-		U32 ramConstantPoolCount = romClass.ramConstantPoolCount();
-		U32 romConstantPoolCount = romClass.romConstantPoolCount();
+		UDATA ramConstantPoolCount = romClass.ramConstantPoolCount();
+		UDATA romConstantPoolCount = romClass.romConstantPoolCount();
 		if (ramConstantPoolCount.gt(romConstantPoolCount)) {
 			reportError(out, "ramConstantPoolCount=%d > romConstantPoolCount=%d for romClass=0x%s", ramConstantPoolCount.longValue(), romConstantPoolCount.longValue(), Long.toHexString(romClass.getAddress()));
 		}

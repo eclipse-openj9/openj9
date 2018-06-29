@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,12 +37,12 @@ public class ByteDataWrapperHelper {
 	
 //	#define BDWEXTBLOCK(bdw) J9SHR_READMEM((bdw)->externalBlockOffset)
 	public static I32 BDWEXTBLOCK(ByteDataWrapperPointer ptr) throws CorruptDataException {
-		return ptr.externalBlockOffset();
+		return new I32(ptr.externalBlockOffset());
 	}	
 
 //	#define BDWLEN(bdw) J9SHR_READMEM((bdw)->dataLength)	
 	public static U32 BDWLEN(ByteDataWrapperPointer ptr) throws CorruptDataException {
-		return ptr.dataLength();
+		return new U32(ptr.dataLength());
 	}
 	
 //	#define BDWTYPE(bdw)  J9SHR_READMEM((bdw)->dataType)

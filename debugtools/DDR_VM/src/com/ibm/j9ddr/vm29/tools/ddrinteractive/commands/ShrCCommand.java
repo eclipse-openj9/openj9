@@ -305,7 +305,7 @@ public class ShrCCommand extends Command
 
 				} else if (args[0].equals("rtflags")) {
 					if (sharedClassConfig.notNull()) {
-						U64 runtimeFlags = sharedClassConfig.runtimeFlags();
+						UDATA runtimeFlags = sharedClassConfig.runtimeFlags();
 						CommandUtils.dbgPrint(out,"Printing the shared classes runtime flags %s\n", runtimeFlags.getHexValue());
 						printShCFlags(out, runtimeFlags, "RUNTIMEFLAG");
 					}
@@ -421,7 +421,7 @@ public class ShrCCommand extends Command
 			}
 			if (cacheName != null) cacheNameString = cacheName; 
 			VoidPointer headerStart = osCache._headerStart();
-			U32 cacheSize = osCache._cacheSize();
+			UDATA cacheSize = osCache._cacheSize();
 			CommandUtils.dbgPrint(out, "Cache start 0x%x size %d\n", headerStart.getAddress(), cacheSize.longValue());
 			File outFile = new File(cacheDir, cacheNameString);
 			CommandUtils.dbgPrint(out, "Writing cache to %s\n", outFile.getAbsolutePath());
@@ -1338,15 +1338,15 @@ public class ShrCCommand extends Command
 		}
 		
 		public U32 getTotalBytes() throws CorruptDataException {
-			return this.header.totalBytes();
+			return new U32(this.header.totalBytes());
 		}
 		
 		public U32 getSoftMaxBytes() throws CorruptDataException {
-			return this.header.softMaxBytes();
+			return new U32(this.header.softMaxBytes());
 		}
 		
 		public U32 getReadWriteBytes() throws CorruptDataException {
-			return this.header.readWriteBytes();
+			return new U32(this.header.readWriteBytes());
 		}
 		
 		public UDATA getReadWritePtr() throws CorruptDataException {
@@ -1426,11 +1426,11 @@ public class ShrCCommand extends Command
 		}
 		
 		public I32 getMinAOT() throws CorruptDataException {
-			return this.header.minAOT();
+			return new I32(this.header.minAOT());
 		}
 		
 		public I32 getMinJIT() throws CorruptDataException {
-			return this.header.minJIT();
+			return new I32(this.header.minJIT());
 		}
 		
 		public UDATA getAotBytes() throws CorruptDataException {
@@ -1934,7 +1934,7 @@ public class ShrCCommand extends Command
 					if (type.eq(TYPE_CACHELET)) {
 						CacheletWrapperPointer cw = CacheletWrapperPointer.cast(ShcItemHelper.ITEMDATA(walk));
 						J9SharedCacheHeaderPointer header = J9SharedCacheHeaderPointer.cast(CacheletWrapperHelper.CLETDATA(cw));
-						U32 totalBytes = header.totalBytes();
+						UDATA totalBytes = header.totalBytes();
 						UDATA updatePtr = UDATA.cast(header).add(header.updateSRP());
 						UDATA metadataEnd = UDATA.cast(header).add(totalBytes);
 

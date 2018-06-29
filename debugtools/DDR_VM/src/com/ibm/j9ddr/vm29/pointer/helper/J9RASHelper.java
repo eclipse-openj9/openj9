@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,22 +26,22 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9RASPointer;
 
 public class J9RASHelper {
-	
+
 	private static J9JavaVMPointer cachedVM = null;
-	
+
 	public static J9JavaVMPointer getVM(J9RASPointer rasptr) throws CorruptDataException {
-		if (null != cachedVM) {
-			return cachedVM;
+		if (null == cachedVM) {
+			cachedVM = J9JavaVMPointer.cast(rasptr.vm());
 		}
-		cachedVM = J9JavaVMPointer.cast(rasptr.vm());
 		return cachedVM;
 	}
-	
+
 	public static void setCachedVM(J9JavaVMPointer vm) {
 		cachedVM = vm;
 	}
-	
+
 	public static J9JavaVMPointer getCachedVM() {
 		return cachedVM;
 	}
+
 }

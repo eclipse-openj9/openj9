@@ -44,7 +44,6 @@ import static com.ibm.j9ddr.vm29.structure.J9ROMMethodHandleRef.MH_REF_PUTSTATIC
 
 import java.io.PrintStream;
 
-
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.j9.ConstantPoolHelpers;
 import com.ibm.j9ddr.vm29.j9.J9ROMFieldShapeIterator;
@@ -93,7 +92,7 @@ import com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags;
 import com.ibm.j9ddr.vm29.types.U16;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.U8;
-
+import com.ibm.j9ddr.vm29.types.UDATA;
 
 public class J9BCUtil {
 	private static final String nl = System.getProperty("line.separator");
@@ -608,7 +607,7 @@ public class J9BCUtil {
 			}
 		}
 
-		U32 romFieldCount = romClass.romFieldCount();
+		UDATA romFieldCount = romClass.romFieldCount();
 		out.append(String.format("Fields (%d):" + nl, romFieldCount.longValue()));
 
 		J9ROMFieldShapeIterator iterator = new J9ROMFieldShapeIterator(romClass.romFields(), romFieldCount);
@@ -759,7 +758,7 @@ public class J9BCUtil {
 	private static void dumpSourceDebugExtension(PrintStream out, J9ROMClassPointer romClass, long flags) throws CorruptDataException {
 		if (J9BuildFlags.opt_debugInfoServer) {
 			U8Pointer current;
-			U32 temp;
+			UDATA temp;
 
 			if ((flags & J9BCTranslationData.BCT_StripDebugAttributes) == 0) {
 				J9SourceDebugExtensionPointer sde = OptInfo.getSourceDebugExtensionForROMClass(romClass);
