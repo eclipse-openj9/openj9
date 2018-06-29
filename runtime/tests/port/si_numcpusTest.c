@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,34 +27,6 @@
  * $Date: 2012-08-28 17:00:47 $
  */
 #include "testHelpers.h"
-
-/**
- * Set/get entitled CPUs. Validate number set == number returned.
- *
- * @param[in] portLibrary The port library under test
- *
- * @return TEST_PASSED on success, TEST_FAILED on failure
- */
-int j9sysinfo_numcpus_test1 (J9PortLibrary* portLibrary)
-{
-#define J9SYSINFO_NUMCPUS_TEST1_ENTITLED 500
-	PORT_ACCESS_FROM_PORT(portLibrary);
-	const char* testName = "j9sysinfo_numcpus_test1";
-	UDATA numEntitledCPUs = 0;
-
-	j9sysinfo_set_number_entitled_CPUs(J9SYSINFO_NUMCPUS_TEST1_ENTITLED);
-	numEntitledCPUs = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_ENTITLED);
-
-	outputComment(PORTLIB,"Set and get number of entitled CPUs.\n");
-	outputComment(PORTLIB,"	Expected: %d\n", J9SYSINFO_NUMCPUS_TEST1_ENTITLED);
-	outputComment(PORTLIB,"	Result:   %d\n", numEntitledCPUs);
-
-	if (J9SYSINFO_NUMCPUS_TEST1_ENTITLED != numEntitledCPUs) {
-		outputErrorMessage(PORTTEST_ERROR_ARGS, "\tj9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_ENTITLED) returned different value than expected.\n");
-	}
-
-    return reportTestExit(portLibrary, testName);
-}
 
 /**
  * Get number of physical CPUs. Validate number > 0.
@@ -118,8 +90,7 @@ int j9sysinfo_numcpus_test4 (J9PortLibrary* portLibrary, UDATA boundTest)
 }
 
 /**
- * Set entitled = number of physical CPUs. get target number of CPUs.
- * Validate target is OMR_MIN(physical, bound).
+ * Get number of target and bound CPUs. Validate target is bound
  *
  * @param[in] portLibrary The port library under test
  *
@@ -129,52 +100,17 @@ int j9sysinfo_numcpus_test5 (J9PortLibrary* portLibrary)
 {
 	PORT_ACCESS_FROM_PORT(portLibrary);
 	const char* testName = "j9sysinfo_numcpus_test5";
-	UDATA numberPhysicalCPUs = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_PHYSICAL);
+
 	UDATA numberBoundCPUs = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_BOUND);
-	UDATA numberEntitledCPUs = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_ENTITLED);
 	UDATA targetNumberCPUs = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
-	UDATA minimum = 0;
 
-	j9sysinfo_set_number_entitled_CPUs(numberPhysicalCPUs);
-
-	outputComment(PORTLIB,"\nSet number of entitled CPUs to number of physical CPUs.\n");
 	outputComment(PORTLIB,"Get target number of CPUs.\n");
-	outputComment(PORTLIB,"	Expected: OMR_MIN(%d, %d)\n", numberEntitledCPUs, numberBoundCPUs);
-	outputComment(PORTLIB,"	Result:   %d\n", targetNumberCPUs);
+	outputComment(PORTLIB,"Get bound number of CPUs.\n");
+	outputComment(PORTLIB,"Expected target: %d\n", numberBoundCPUs);
+	outputComment(PORTLIB,"Result:   %d\n", targetNumberCPUs);
 
-	/* Get minimum of numberEntitledCPUs and numberBoundCPUs */
-	minimum = OMR_MIN(numberEntitledCPUs, numberBoundCPUs);
-
-	if (minimum != targetNumberCPUs) {
-		outputErrorMessage(PORTTEST_ERROR_ARGS, "\tTarget number of CPUs is not OMR_MIN(entitled, bound).\n");
-	}
-
-	return reportTestExit(portLibrary, testName);
-}
-
-/**
- * Set entitled to 1. get target number of CPUs. Validate number is 1.
- *
- * @param[in] portLibrary The port library under test
- *
- * @return TEST_PASSED on success, TEST_FAILED on failure
- */
-int j9sysinfo_numcpus_test6 (J9PortLibrary* portLibrary)
-{
-#define J9SYSINFO_NUMCPUS_TEST6_ENTITLED 1
-	PORT_ACCESS_FROM_PORT(portLibrary);
-	const char* testName = "j9sysinfo_numcpus_test6";
-	UDATA targetNumberCPUs = 0;
-
-	j9sysinfo_set_number_entitled_CPUs(J9SYSINFO_NUMCPUS_TEST6_ENTITLED);
-	targetNumberCPUs = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
-
-	outputComment(PORTLIB,"\nSet number of entitled CPUs to %d. Get target number of CPUs.\n", J9SYSINFO_NUMCPUS_TEST6_ENTITLED);
-	outputComment(PORTLIB,"	Expected: %d\n", J9SYSINFO_NUMCPUS_TEST6_ENTITLED);
-	outputComment(PORTLIB,"	Result:   %d\n", targetNumberCPUs);
-
-	if (J9SYSINFO_NUMCPUS_TEST6_ENTITLED != targetNumberCPUs) {
-		outputErrorMessage(PORTTEST_ERROR_ARGS, "\tTarget number of CPUs is not equal to entitled CPUs (%d).\n", J9SYSINFO_NUMCPUS_TEST6_ENTITLED);
+	if (numberBoundCPUs != targetNumberCPUs) {
+		outputErrorMessage(PORTTEST_ERROR_ARGS, "\tTarget number of CPUs is not equal to bound number of CPUs.\n");
 	}
 
 	return reportTestExit(portLibrary, testName);
@@ -257,7 +193,7 @@ int j9sysinfo_numcpus_test9 (J9PortLibrary* portLibrary)
  * Measure run time for getting number of CPUs 10000 times.
  *
  * @param[in] portLibrary The port library under test
- * @param[in] type The type of CPU number to query (physical, bound, entitled, target).
+ * @param[in] type The type of CPU number to query (physical, online, bound, target).
  *
  * @return TEST_PASSED on success, TEST_FAILED on failure
  */
@@ -288,9 +224,6 @@ int j9sysinfo_numcpus_runTime(J9PortLibrary* portLibrary, UDATA type)
     	break;
     case J9PORT_CPU_BOUND:
     	testType = "bound";
-    	break;
-    case J9PORT_CPU_ENTITLED:
-    	testType = "entitled";
     	break;
     case J9PORT_CPU_TARGET:
     	testType = "target";
@@ -476,11 +409,9 @@ j9sysinfo_numcpus_runTests(struct J9PortLibrary *portLibrary, UDATA userSpecific
 		}
 	}
 
-	rc |= j9sysinfo_numcpus_test1(portLibrary);
 	rc |= j9sysinfo_numcpus_test3(portLibrary);
 	rc |= j9sysinfo_numcpus_test4(portLibrary, boundCPUs);
 	rc |= j9sysinfo_numcpus_test5(portLibrary);
-	rc |= j9sysinfo_numcpus_test6(portLibrary);
 	rc |= j9sysinfo_numcpus_test7(portLibrary);
 	rc |= j9sysinfo_numcpus_test8(portLibrary);
 	rc |= j9sysinfo_numcpus_test9(portLibrary);
