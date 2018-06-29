@@ -27,9 +27,9 @@ changequote(`[',`]')dnl
 #include <io.h>
 #endif /* WIN32 */
 
-#if defined(AIXPPC) || defined(J9ZOS390) || defined(LINUX)
+#if defined(AIXPPC) || defined(J9ZOS390) || defined(LINUX) || defined(OSX)
 #include <dlfcn.h>
-#endif /* AIXPPC || J9ZOS390 || LINUX */
+#endif /* AIXPPC || J9ZOS390 || LINUX || OSX */
 
 
 #include "j9.h"
