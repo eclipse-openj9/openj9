@@ -22,6 +22,12 @@
 #
 SHELL=/bin/sh
 
+# z/TPF only has one s390x configuration:
+#  - HOST_ARCH=z, HOST_BITS=64, OS=ztpf, C_COMPILER=tpf-gcc
+# Applicable conditionals to the above fields have been left in this file to
+# maintain similarity with Linux, while other architecture-dependent flags
+# have been removed for simplicity.
+
 #
 # These are the prefixes and suffixes that all GNU tools use for things
 #
@@ -70,90 +76,48 @@ GENERATE_VERSION_SCRIPT?=$(JIT_SCRIPT_DIR)/generateVersion.pl
 # This is the command to check Z assembly files
 ZASM_SCRIPT?=$(JIT_SCRIPT_DIR)/s390m4check.pl
 
+# Set up z/TPF directories and flags
+# Note: -isystem $(TPF_ROOT) is used for a2e calls to opensource functions
+TPF_ROOT ?= /ztpf/java/bld/jvm/userfiles /ztpf/svtcur/redhat/all /ztpf/commit
+
+TPF_INCLUDES := $(foreach d,$(TPF_ROOT),-I$d/base/a2e/headers)
+TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-I$d/base/include)
+TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-I$d/opensource/include)
+TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-I$d/opensource/include46/g++)
+TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-I$d/opensource/include46/g++/backward)
+TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-I$d/noship/include)
+TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-isystem $d/opensource/include)
+TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-isystem $d/noship/include)
+TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-isystem $d)
+
+TPF_FLAGS += -fexec-charset=ISO-8859-1 -fmessage-length=0 -funsigned-char -fverbose-asm -fno-builtin-abort -fno-builtin-exit -fno-builtin-sprintf -ffloat-store -gdwarf-2 -Wno-format-extra-args -Wno-int-to-pointer-cast -Wno-unused-but-set-variable -Wno-write-strings
+
 #
 # First setup C and C++ compilers. 
 #
 #     Note: "CX" means both C and C++
 #
 
-
 CX_DEFINES+=\
     $(PRODUCT_DEFINES) \
     $(HOST_DEFINES) \
     $(TARGET_DEFINES) \
+    SUPPORTS_THREAD_LOCAL \
     _LONG_LONG
-
-# Next, setup the z/TPF include directories (-isystem and -I)
-# commit will always be the base root includes.
-# On top of that, the buildtype will either be an svt or user defined.
-# Note, the CX_FLAGS:  -isystem $(ZTPF_INCL) -isystem $(ZTPF_ROOT) are
-# used for the a2e's library calls to opensource functions
-ZTPF_ROOT?=/ztpf/commit
-BUILDTYPE?=user
-
-ifeq ($(BUILDTYPE),svt)
-    ZTPF_INCL=/ztpf/svtcur/redhat/all
-endif
-
-ifeq ($(BUILDTYPE),user)
-    ZTPF_INCL=/projects/jvmport/userfiles
-endif
-
-CX_FLAGS+=\
-     -I$(ZTPF_INCL)/base/a2e/headers -I$(ZTPF_ROOT)/base/a2e/headers \
-     -isystem $(ZTPF_INCL)/opensource/include -isystem $(ZTPF_ROOT)/opensource/include \
-     -isystem $(ZTPF_INCL)/opensource/include46/g++ -isystem $(ZTPF_ROOT)/opensource/include46/g++ \
-     -isystem $(ZTPF_INCL)/opensource/include46/g++/backward -isystem $(ZTPF_ROOT)/opensource/include46/g++/backward \
-     -isystem $(ZTPF_INCL) -isystem $(ZTPF_ROOT) \
-     -isystem $(ZTPF_INCL)/base/include -isystem $(ZTPF_ROOT)/base/include \
-     -isystem $(ZTPF_INCL)/noship/include -isystem $(ZTPF_ROOT)/noship/include \
-     -I$(ZTPF_INCL)/base/include -I$(ZTPF_ROOT)/base/include \
-     -I$(ZTPF_INCL)/opensource/include -I$(ZTPF_ROOT)/opensource/include \
-     -I$(ZTPF_INCL)/opensource/include46/g++ -I$(ZTPF_ROOT)/opensource/include46/g++ \
-     -I$(ZTPF_INCL)/opensource/include46/g++/backward -I$(ZTPF_ROOT)/opensource/include46/g++/backward \
-     -I$(ZTPF_INCL)/base/include -I$(ZTPF_ROOT)/base/include
 
 # Explicitly set the C standard we compile against
 C_FLAGS+=\
-    -std=gnu89 \
-    -fPIC \
-    -fexec-charset=ISO-8859-1 \
-    -fmessage-length=0 \
-    -funsigned-char \
-    -Wno-format-extra-args \
-    -fverbose-asm \
-    -fno-builtin-abort \
-    -fno-builtin-exit \
-    -ffloat-store \
-    -Wreturn-type \
-    -Wno-unused \
-    -Wno-uninitialized \
-    -Wno-parentheses
+    -std=gnu89
 
 CX_FLAGS+=\
-    -D_TPF_SOURCE \
-    -DJ9ZTPF \
-    -DOMRZTPF \
-    -DLINUX \
-    -DZTPF_POSIX_SOCKET \
-    -DTR_HOST_S390 \
-    -DTR_TARGET_S390 \
-    -DTR_HOST_64BIT \
-    -DTR_TARGET_64BIT \
-    -DBITVECTOR_64BIT \
-    -DFULL_ANSI \
-    -DMAXMOVE \
-    -DIBM_ATOE \
-    -D_GNU_SOURCE \
-    -D_PORTABLE_TPF_SIGINFO \
+    $(TPF_INCLUDES) \
+    $(TPF_FLAGS) \
     -fomit-frame-pointer \
     -fasynchronous-unwind-tables \
     -Wreturn-type \
     -fno-dollars-in-identifiers
 
 CXX_FLAGS+=\
-    -DSUPPORTS_THREAD_LOCAL \
-    -D_ZTPF_WANTS_ATOE_FUNCTIONALITY \
     -std=c++0x \
     -fno-rtti \
     -fno-threadsafe-statics \
@@ -168,11 +132,13 @@ CX_DEFAULTOPT=-O3
 CX_OPTFLAG?=$(CX_DEFAULTOPT)
 CX_FLAGS_PROD+=$(CX_OPTFLAG)
 
-   #
-   # z/TPF is a 64 bit host.
-   #
-   CX_DEFINES+=S390 S39064 FULL_ANSI MAXMOVE J9VM_TIERED_CODE_CACHE
-   CX_FLAGS+=-fPIC -fno-strict-aliasing -march=$(ARCHLEVEL) -mtune=$(TUNELEVEL) -mzarch
+ifeq ($(HOST_ARCH),z)
+    ifeq ($(HOST_BITS),64)
+        CX_DEFINES+=S390 S39064 FULL_ANSI MAXMOVE J9VM_TIERED_CODE_CACHE
+        CX_DEFINES+=_GNU_SOURCE IBM_ATOE _TPF_SOURCE ZTPF_POSIX_SOCKET J9ZTPF OMRZTPF
+        CX_FLAGS+=-fPIC -fno-strict-aliasing -march=$(ARCHLEVEL) -mtune=$(TUNELEVEL) -mzarch
+    endif
+endif
 
 ifeq ($(BUILD_CONFIG),debug)
     CX_DEFINES+=$(CX_DEFINES_DEBUG)
@@ -207,7 +173,11 @@ S_DEFINES_DEBUG+=DEBUG
 S_FLAGS+=--noexecstack
 S_FLAGS_DEBUG+=--gstabs
 
-S_FLAGS+=-march=$(ARCHLEVEL) -mzarch
+ifeq ($(HOST_ARCH),z)
+    ifeq ($(HOST_BITS),64)
+        S_FLAGS+=-march=$(ARCHLEVEL) -mzarch
+    endif
+endif
 
 ifeq ($(BUILD_CONFIG),debug)
     S_DEFINES+=$(S_DEFINES_DEBUG)
@@ -266,14 +236,12 @@ SOLINK_FLAGS_PROD+=-Wl,-S
 SOLINK_LIBPATH+=$(PRODUCT_LIBPATH)
 SOLINK_SLINK+=$(PRODUCT_SLINK) j9thr$(J9_VERSION) j9hookable$(J9_VERSION)
 
+# CTIS needs to be linked before CISO from sysroot for gettimeofday
 ifeq ($(HOST_ARCH),z)
-    ifeq ($(HOST_BITS),32)
-        SOLINK_FLAGS+=-m31
-        SOLINK_SLINK+=stdc++
-    endif
-    
     ifeq ($(HOST_BITS),64)
-        SOLINK_SLINK+=stdc++
+        SOLINK_SLINK+=gcc
+        SOLINK_SLINK+=CTOE
+        SOLINK_SLINK+=CTIS
     endif
 endif
 
@@ -295,9 +263,13 @@ ifeq ($(BUILD_CONFIG),debug)
 endif
 
 SOLINK_EXTRA_ARGS+=-Wl,--version-script=$(SOLINK_VERSION_SCRIPT)
-
-ifeq ($(LIBCXX_STATIC),1)
-    SOLINK_FLAGS+=-static-libstdc++
-endif
+SOLINK_EXTRA_ARGS+=-Wl,-Map=j9jit.map
+SOLINK_EXTRA_ARGS+=-Wl,-entry=0
+SOLINK_EXTRA_ARGS+=-Wl,-script=$(word 1,$(wildcard $(foreach d,$(TPF_ROOT),$d/base/util/tools/tpfscript)))
+SOLINK_EXTRA_ARGS+=-Wl,-soname=libj9jit29.so
+SOLINK_EXTRA_ARGS+=-Wl,--as-needed
+SOLINK_EXTRA_ARGS+=-Wl,--eh-frame-hdr
+SOLINK_EXTRA_ARGS+=$(foreach d,$(TPF_ROOT),-L$d/base/lib)
+SOLINK_EXTRA_ARGS+=$(foreach d,$(TPF_ROOT),-L$d/opensource/stdlib)
 
 SOLINK_FLAGS+=$(SOLINK_FLAGS_EXTRA)

@@ -335,7 +335,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<artifact type="target" name="run_j9ddrgen">
 		<include-if condition="spec.flags.module_ddr"/>
 		<exclude-if condition="spec.flags.opt_useOmrDdr"/>
-		<exclude-if condition="spec.linux_ztpf.*"/>
 		<phase>core j2se</phase>
 		<dependencies>
 			<dependency name="j9ddrgen"/>
@@ -343,9 +342,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<commands>
 			<command line="cd $(UMA_PATH_TO_ROOT) &amp;&amp; ./j9ddrgen" type="all">
 				<exclude-if condition="spec.linux_arm.*"/>
+				<exclude-if condition="spec.linux_ztpf.*"/>
 			</command>
 			<command line="cd $(UMA_PATH_TO_ROOT) &amp;&amp; qemu-arm -r '9' ./j9ddrgen" type="all">
 				<include-if condition="spec.linux_arm.*"/>
+			</command>
+			<command line="cd $(UMA_PATH_TO_ROOT); if [ -x ../build_j9ddrgen.sh ] &amp;&amp; [ ! -e ../j9ddrgen.completed ] ; then ../build_j9ddrgen.sh ; fi" type="all">
+				<include-if condition="spec.linux_ztpf.*"/>
 			</command>
 		</commands>
 	</artifact>
