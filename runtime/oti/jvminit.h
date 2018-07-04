@@ -462,6 +462,8 @@ enum INIT_STAGE {
 #define MAPOPT_XSHARE_AUTO "-Xshare:auto"
 #define MAPOPT_XSHARECLASSES_UTILITIES "-Xshareclasses:utilities"
 #define MAPOPT_XSHARECLASSES_NONFATAL "-Xshareclasses:nonfatal"
+#define MAPOPT_XXDISABLEEXPLICITGC "-XX:+DisableExplicitGC"
+#define MAPOPT_XXENABLEEXPLICITGC "-XX:-DisableExplicitGC"
 
 #define VMOPT_XXDUMPLOADEDCLASSLIST "-XX:DumpLoadedClassList"
 

@@ -3752,6 +3752,14 @@ registerVMCmdLineMappings(J9JavaVM* vm)
 	if (registerCmdLineMapping(vm, MAPOPT_XSHARE_AUTO, MAPOPT_XSHARECLASSES_NONFATAL, EXACT_MAP_NO_OPTIONS) == RC_FAILED) {
 		return RC_FAILED;
 	}
+	/* Map -XX:+DisableExplicitGC to -Xdisableexplicitgc */
+	if (registerCmdLineMapping(vm, MAPOPT_XXDISABLEEXPLICITGC, "-Xdisableexplicitgc", EXACT_MAP_NO_OPTIONS) == RC_FAILED) {
+		return RC_FAILED;
+	}
+	/* Map -XX:+EnableExplicitGC to -Xenableexplicitgc */
+	if (registerCmdLineMapping(vm, MAPOPT_XXENABLEEXPLICITGC, "-Xenableexplicitgc", EXACT_MAP_NO_OPTIONS) == RC_FAILED) {
+		return RC_FAILED;
+	}
 
 	return 0;
 }
