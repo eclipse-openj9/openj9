@@ -297,12 +297,6 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->compiledAsDLTBefore(clazz));
          }
          break;
-      case J9ServerMessageType::VM_getSuperClassChain:
-         {
-         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(fe->getSuperClassChain(clazz));
-         }
-         break;
       case J9ServerMessageType::VM_getComponentClassFromArrayClass:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
@@ -922,8 +916,9 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          J9Class *clazz = std::get<0>(client->getRecvData<J9Class *>());
          J9Method *methodsOfClass = (J9Method*) fe->getMethods((TR_OpaqueClassBlock*) clazz);
          int32_t numDims = 0;
-         TR_OpaqueClassBlock * baseClass = fe->getBaseComponentClass((TR_OpaqueClassBlock *)clazz, numDims);
-         client->write(packROMClass(clazz->romClass, trMemory), methodsOfClass, baseClass, numDims);
+         TR_OpaqueClassBlock *baseClass = fe->getBaseComponentClass((TR_OpaqueClassBlock *) clazz, numDims);
+         TR_OpaqueClassBlock *parentClass = fe->getSuperClass((TR_OpaqueClassBlock *) clazz);
+         client->write(packROMClass(clazz->romClass, trMemory), methodsOfClass, baseClass, numDims, parentClass);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_isJNINative:
@@ -1995,7 +1990,8 @@ remoteCompile(
    compInfo->getUnloadedClassesTempList()->clear();
    J9Method *methodsOfClass = (J9Method*) compiler->fej9vm()->getMethods((TR_OpaqueClassBlock*) clazz);
    int32_t numDims = 0;
-   TR_OpaqueClassBlock *baseComponentClass = compiler->fej9vm()->getBaseComponentClass((TR_OpaqueClassBlock *)clazz, numDims);
+   TR_OpaqueClassBlock *baseComponentClass = compiler->fej9vm()->getBaseComponentClass((TR_OpaqueClassBlock *) clazz, numDims);
+   TR_OpaqueClassBlock *parentClass = compiler->fej9vm()->getSuperClass((TR_OpaqueClassBlock *) clazz);
    std::string optionsStr = TR::Options::packOptions(compiler->getOptions());
 
    JITaaS::J9ClientStream client(compInfo->getPersistentInfo()->getJITaaSServerAddress(),
@@ -2015,7 +2011,7 @@ remoteCompile(
 
       client.buildCompileRequest(TR::comp()->getPersistentInfo()->getJITaaSId(), romClassStr, romMethodOffset, 
                                  method, clazz, compiler->getMethodHotness(), detailsStr, details.getType(), 
-                                 unloadedClasses, methodsOfClass, baseComponentClass, numDims, optionsStr);
+                                 unloadedClasses, methodsOfClass, baseComponentClass, numDims, parentClass, optionsStr);
       // re-acquire VM access and check for possible class unloading
       acquireVMAccessNoSuspend(vmThread);
       if (compInfoPT->compilationShouldBeInterrupted())
@@ -2581,10 +2577,12 @@ ClientSessionHT::printStats()
 
 void 
 JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass,
-                                 J9Method *methods, TR_OpaqueClassBlock *baseComponentClass, int32_t numDimensions)
+                                 J9Method *methods, TR_OpaqueClassBlock *baseComponentClass, int32_t numDimensions,
+                                 TR_OpaqueClassBlock *parentClass)
    {
    OMR::CriticalSection cacheRemoteROMClass(clientSessionData->getROMMapMonitor());
-   clientSessionData->getROMClassMap().insert({ clazz,{ romClass, methods, baseComponentClass, numDimensions, nullptr, nullptr} });
+   clientSessionData->getROMClassMap().insert({ clazz, { romClass, methods, baseComponentClass, numDimensions, 
+      nullptr, nullptr, parentClass} });
    uint32_t numMethods = romClass->romMethodCount;
    J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
    for (uint32_t i = 0; i < numMethods; i++)

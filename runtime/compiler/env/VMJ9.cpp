@@ -6522,19 +6522,6 @@ TR_J9VM::getSuperClass(TR_OpaqueClassBlock * classPointer)
    return convertClassPtrToClassOffset(classDepth >= 0 ? clazz->superclasses[classDepth]: 0);
    }
 
-std::vector<TR_OpaqueClassBlock *>
-TR_J9VM::getSuperClassChain(TR_OpaqueClassBlock *clazz)
-   {
-   std::vector<TR_OpaqueClassBlock *> superClasses;
-   superClasses.reserve(TR::Compiler->cls.classDepthOf(clazz));
-         
-   for (TR_OpaqueClassBlock *curClazz = getSuperClass(clazz); curClazz; curClazz = getSuperClass(curClazz))
-      {
-      superClasses.push_back(curClazz);
-      }
-   return superClasses;
-   }
-
 bool
 TR_J9VMBase::sameClassLoaders(TR_OpaqueClassBlock * class1, TR_OpaqueClassBlock * class2)
    {

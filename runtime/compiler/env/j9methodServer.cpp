@@ -36,14 +36,15 @@ romMethodAtClassIndex(J9ROMClass *romClass, uint64_t methodIndex)
    }
 
 J9ROMClass *
-TR_ResolvedJ9JITaaSServerMethod::getRemoteROMClass(J9Class *clazz, JITaaS::J9ServerStream *stream, TR_Memory *trMemory, J9Method **methods, TR_OpaqueClassBlock ** baseClass, int32_t *numDims)
+TR_ResolvedJ9JITaaSServerMethod::getRemoteROMClass(J9Class *clazz, JITaaS::J9ServerStream *stream, TR_Memory *trMemory, J9Method **methods, TR_OpaqueClassBlock **baseClass, int32_t *numDims, TR_OpaqueClassBlock **parentClass)
    {
    stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getRemoteROMClassAndMethods, clazz);
-   auto recv  = stream->read<std::string, J9Method*, TR_OpaqueClassBlock*, int32_t>();
+   auto recv  = stream->read<std::string, J9Method*, TR_OpaqueClassBlock*, int32_t, TR_OpaqueClassBlock *>();
    auto &str  = std::get<0>(recv);
    *methods   = std::get<1>(recv);
    *baseClass = std::get<2>(recv);
    *numDims   = std::get<3>(recv);
+   *parentClass = std::get<4>(recv);
    return romClassFromString(str, trMemory->trPersistentMemory());
    }
 

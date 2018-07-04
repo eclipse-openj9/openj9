@@ -24,6 +24,7 @@ class ClientSessionData
       int32_t numDimensions;
       PersistentUnorderedMap<TR_RemoteROMStringKey, std::string> *_remoteROMStringsCache; // cached strings from the client
       PersistentUnorderedMap<int32_t, std::string> *_fieldOrStaticNameCache;
+      TR_OpaqueClassBlock *parentClass;
       };
 
    struct J9MethodInfo
@@ -120,7 +121,8 @@ class JITaaSHelpers
    {
    public:
    static void cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass,
-      J9Method *methods, TR_OpaqueClassBlock *baseComponentClass, int32_t numDimensions);
+      J9Method *methods, TR_OpaqueClassBlock *baseComponentClass, int32_t numDimensions, 
+      TR_OpaqueClassBlock *parentClass);
    static J9ROMClass *getRemoteROMClassIfCached(ClientSessionData *clientSessionData, J9Class *clazz);
    };
 

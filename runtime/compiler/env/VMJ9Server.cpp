@@ -29,17 +29,20 @@ TR_J9ServerVM::isClassLibraryClass(TR_OpaqueClassBlock *clazz)
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getSuperClass(TR_OpaqueClassBlock *classPointer)
    {
+   // first, check if the superclass is already cached
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) classPointer);
+      if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+         {
+         return it->second.parentClass;
+         }
+      }
+
+   // otherwise, make a query to the client (should happen very infrequently)
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_getSuperClass, classPointer);
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
-   }
-
-std::vector<TR_OpaqueClassBlock *>
-TR_J9ServerVM::getSuperClassChain(TR_OpaqueClassBlock *clazz)
-   {
-   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getSuperClassChain, clazz);
-   return std::get<0>(stream->read<std::vector<TR_OpaqueClassBlock *>>());;
    }
 
 TR_Method *

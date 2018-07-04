@@ -74,7 +74,7 @@ class TR_ResolvedJ9JITaaSServerMethod : public TR_ResolvedJ9Method
 public:
    TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
    TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, const TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
-   static J9ROMClass * getRemoteROMClass(J9Class *, JITaaS::J9ServerStream *stream, TR_Memory *trMemory, J9Method **methods, TR_OpaqueClassBlock ** baseClass, int32_t *numDims);
+   static J9ROMClass * getRemoteROMClass(J9Class *, JITaaS::J9ServerStream *stream, TR_Memory *trMemory, J9Method **methods, TR_OpaqueClassBlock ** baseClass, int32_t *numDims, TR_OpaqueClassBlock **parentClass);
    static J9ROMClass * romClassFromString(const std::string &romClassStr, TR_PersistentMemory *trMemory);
 
    virtual J9ROMClass *romClassPtr() override;

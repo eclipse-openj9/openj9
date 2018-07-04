@@ -103,7 +103,6 @@ enum J9ServerMessageType
    VM_classHasBeenReplaced = 221;
    VM_classHasBeenExtended = 222;
    VM_compiledAsDLTBefore = 223;
-   VM_getSuperClassChain = 224;
 //   VM_getClassNameChars = 224;
    VM_getOverflowSafeAllocSize = 225;
    VM_isThunkArchetype = 226;
