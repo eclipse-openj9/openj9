@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -244,12 +244,12 @@ static JITINLINE int compareMapTableEntries(UDATA key, TR_MapTableEntry * ent)
 
 static JITINLINE void * mapSearch(UDATA key, TR_MapTableEntry * base, size_t num)
    {
-   size_t delta = max(num / 2, 1);
+   size_t delta = OMR_MAX(num / 2, 1);
    size_t pos = delta;
    while(1)
       {
       TR_MapTableEntry * pivot = base + pos;
-      delta = max(delta / 2, 1);
+      delta = OMR_MAX(delta / 2, 1);
       switch (compareMapTableEntries(key, pivot))
          {
          case -1:
