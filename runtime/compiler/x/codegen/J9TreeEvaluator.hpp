@@ -113,10 +113,10 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *compressStringEvaluator(TR::Node *node, TR::CodeGenerator *cg, bool japaneseMethod);
    static TR::Register *compressStringNoCheckEvaluator(TR::Node *node, TR::CodeGenerator *cg, bool japaneseMethod);
    static TR::Register *andORStringEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *toUpperIntrinsicUTF16Evaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *toLowerIntrinsicUTF16Evaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *toUpperIntrinsicLatin1Evaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *toLowerIntrinsicLatin1Evaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *decompressedStringToUpperCaseEvalutor(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *decompressedStringToLowerCaseEvalutor(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *compressedStringToUpperCaseEvalutor(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *compressedStringToLowerCaseEvalutor(TR::Node *node, TR::CodeGenerator *cg);
 
    class CaseConversionManager;
    static TR::Register *stringCaseConversionHelper(TR::Node *node, TR::CodeGenerator *cg, CaseConversionManager& manager);

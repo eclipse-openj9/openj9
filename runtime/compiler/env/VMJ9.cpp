@@ -3085,10 +3085,12 @@ bool TR_J9VMBase::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, 
                dontInlineRecognizedMethod = true;
                }
             break;
-         case TR::com_ibm_jit_JITHelpers_toUpperIntrinsicLatin1:
-         case TR::com_ibm_jit_JITHelpers_toLowerIntrinsicLatin1:
-         case TR::com_ibm_jit_JITHelpers_toUpperIntrinsicUTF16:
-         case TR::com_ibm_jit_JITHelpers_toLowerIntrinsicUTF16:
+         case TR::java_lang_String_toUpperHWOptimizedCompressed:
+         case TR::java_lang_String_toLowerHWOptimizedCompressed:
+         case TR::java_lang_String_toUpperHWOptimizedDecompressed:
+         case TR::java_lang_String_toLowerHWOptimizedDecompressed:
+         case TR::java_lang_String_toUpperHWOptimized:
+         case TR::java_lang_String_toLowerHWOptimized:
             if(comp->cg()->getSupportsInlineStringCaseConversion())
                {
                dontInlineRecognizedMethod = true;
@@ -3330,10 +3332,12 @@ int TR_J9VMBase::checkInlineableTarget (TR_CallTarget* target, TR_CallSite* call
 #endif
 
    if (
-       rm == TR::com_ibm_jit_JITHelpers_toUpperIntrinsicLatin1 ||
-       rm == TR::com_ibm_jit_JITHelpers_toLowerIntrinsicUTF16 ||
-       rm == TR::com_ibm_jit_JITHelpers_toUpperIntrinsicLatin1 ||
-       rm == TR::com_ibm_jit_JITHelpers_toLowerIntrinsicUTF16 ||
+       rm == TR::java_lang_String_toUpperHWOptimizedCompressed ||
+       rm == TR::java_lang_String_toLowerHWOptimizedDecompressed ||
+       rm == TR::java_lang_String_toLowerHWOptimized ||
+       rm == TR::java_lang_String_toUpperHWOptimizedCompressed ||
+       rm == TR::java_lang_String_toLowerHWOptimizedDecompressed ||
+       rm == TR::java_lang_String_toLowerHWOptimized ||
 
        rm == TR::java_lang_String_compressedArrayCopy_BIBII ||
        rm == TR::java_lang_String_compressedArrayCopy_BICII ||
