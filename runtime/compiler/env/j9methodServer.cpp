@@ -243,6 +243,84 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedVirtualMethod(TR::Compilation * comp
    }
 
 bool
+TR_ResolvedJ9JITaaSServerMethod::fieldsAreSame(int32_t cpIndex1, TR_ResolvedMethod *m2, int32_t cpIndex2, bool &sigSame)
+   {
+   TR_ResolvedJ9JITaaSServerMethod *serverMethod2 = static_cast<TR_ResolvedJ9JITaaSServerMethod*>(m2);
+   if (getClassLoader() != serverMethod2->getClassLoader())
+      return false;
+
+   if (cpIndex1 == -1 || cpIndex2 == -1)
+      return false;
+
+   if (cpIndex1 == cpIndex2 && ramMethod() == serverMethod2->ramMethod())
+      return true;
+   
+   int32_t sig1Len = 0, sig2Len = 0;
+   char *signature1 = fieldOrStaticSignatureChars(cpIndex1, sig1Len);
+   char *signature2 = serverMethod2->fieldOrStaticSignatureChars(cpIndex2, sig2Len);
+   
+   int32_t name1Len = 0, name2Len = 0;
+   char *name1 = fieldOrStaticNameChars(cpIndex1, name1Len);
+   char *name2 = serverMethod2->fieldOrStaticNameChars(cpIndex2, name2Len);
+
+   if (sig1Len == sig2Len && !memcmp(signature1, signature2, sig1Len) &&
+       name1Len == name2Len && !memcmp(name1, name2, name1Len))
+      {
+      int32_t class1Len = 0, class2Len = 0;
+      char *declaringClassName1 = classNameOfFieldOrStatic(cpIndex1, class1Len);
+      char *declaringClassName2 = serverMethod2->classNameOfFieldOrStatic(cpIndex2, class2Len);
+
+      if (class1Len == class2Len && !memcmp(declaringClassName1, declaringClassName2, class1Len))
+          return true;
+      }
+   else
+      {
+      sigSame = false;
+      }
+   return false;
+   }
+
+bool
+TR_ResolvedJ9JITaaSServerMethod::staticsAreSame(int32_t cpIndex1, TR_ResolvedMethod *m2, int32_t cpIndex2, bool &sigSame)
+   {
+   TR_ResolvedJ9JITaaSServerMethod *serverMethod2 = static_cast<TR_ResolvedJ9JITaaSServerMethod*>(m2);
+   if (getClassLoader() != serverMethod2->getClassLoader())
+      return false;
+
+   if (cpIndex1 == -1 || cpIndex2 == -1)
+      return false;
+
+   if (cpIndex1 == cpIndex2 && ramMethod() == serverMethod2->ramMethod())
+      return true;
+   
+   // the client version of this method compares the addresses of values first, which we cannot do on the server. 
+   // skipping that step affects performance, but does not affect correctness. 
+   int32_t sig1Len = 0, sig2Len = 0;
+   char *signature1 = fieldOrStaticSignatureChars(cpIndex1, sig1Len);
+   char *signature2 = serverMethod2->fieldOrStaticSignatureChars(cpIndex2, sig2Len);
+   
+   int32_t name1Len = 0, name2Len = 0;
+   char *name1 = fieldOrStaticNameChars(cpIndex1, name1Len);
+   char *name2 = serverMethod2->fieldOrStaticNameChars(cpIndex2, name2Len);
+
+   if (sig1Len == sig2Len && !memcmp(signature1, signature2, sig1Len) &&
+       name1Len == name2Len && !memcmp(name1, name2, name1Len))
+      {
+      int32_t class1Len = 0, class2Len = 0;
+      char *declaringClassName1 = classNameOfFieldOrStatic(cpIndex1, class1Len);
+      char *declaringClassName2 = serverMethod2->classNameOfFieldOrStatic(cpIndex2, class2Len);
+
+      if (class1Len == class2Len && !memcmp(declaringClassName1, declaringClassName2, class1Len))
+          return true;
+      }
+   else
+      {
+      sigSame = false;
+      }
+   return false;
+   }
+
+bool
 TR_ResolvedJ9JITaaSServerMethod::fieldAttributes(TR::Compilation * comp, I_32 cpIndex, U_32 * fieldOffset, TR::DataType * type, bool * volatileP, bool * isFinal, bool * isPrivate, bool isStore, bool * unresolvedInCP, bool needAOTValidation)
    {
    // look up attributes in a cache, make a query only if they are not cached

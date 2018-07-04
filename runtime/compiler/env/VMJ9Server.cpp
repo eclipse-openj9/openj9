@@ -322,8 +322,21 @@ TR_J9ServerVM::jitFieldsAreSame(TR_ResolvedMethod * method1, I_32 cpIndex1, TR_R
    TR_ResolvedMethod *clientMethod1 = serverMethod1->getRemoteMirror();
    TR_ResolvedMethod *clientMethod2 = serverMethod2->getRemoteMirror();
 
-   stream->write(JITaaS::J9ServerMessageType::VM_jitFieldsAreSame, clientMethod1, cpIndex1, clientMethod2, cpIndex2, isStatic);
-   return std::get<0>(stream->read<bool>());
+   bool result = false;
+
+   bool sigSame = true;
+   if (serverMethod1->fieldsAreSame(cpIndex1, serverMethod2, cpIndex2, sigSame))
+      result = true;
+   else
+      {
+      if (sigSame)
+         {
+         // if name and signature comparison is inconclusive, make a remote call 
+         stream->write(JITaaS::J9ServerMessageType::VM_jitFieldsAreSame, clientMethod1, cpIndex1, clientMethod2, cpIndex2, isStatic);
+         result = std::get<0>(stream->read<bool>());
+         }
+      }
+   return result;
    }
 
 bool
@@ -336,9 +349,22 @@ TR_J9ServerVM::jitStaticsAreSame(TR_ResolvedMethod *method1, I_32 cpIndex1, TR_R
    TR_ResolvedJ9JITaaSServerMethod *serverMethod2 = static_cast<TR_ResolvedJ9JITaaSServerMethod*>(method2);
    TR_ResolvedMethod *clientMethod1 = serverMethod1->getRemoteMirror();
    TR_ResolvedMethod *clientMethod2 = serverMethod2->getRemoteMirror();
+   
+   bool result = false;
 
-   stream->write(JITaaS::J9ServerMessageType::VM_jitStaticsAreSame, clientMethod1, cpIndex1, clientMethod2, cpIndex2);
-   return std::get<0>(stream->read<bool>());
+   bool sigSame = true;
+   if (serverMethod1->staticsAreSame(cpIndex1, serverMethod2, cpIndex2, sigSame))
+      result = true;
+   else
+      {
+      if (sigSame)
+         {
+         // if name and signature comparison is inconclusive, make a remote call 
+         stream->write(JITaaS::J9ServerMessageType::VM_jitStaticsAreSame, clientMethod1, cpIndex1, clientMethod2, cpIndex2);
+         result = std::get<0>(stream->read<bool>());
+         }
+      }
+   return result;
    }
 
 TR_OpaqueClassBlock *
