@@ -1122,12 +1122,15 @@
    com_ibm_gpu_Kernel_syncThreads,
 
    // Vectorized toUpper and toLowerCase from j.l.String
+   // Current only supported on z
    // toUpper method for prototype so j.l.S.toUpper doesn't get messed up
-   com_ibm_jit_JITHelpers_supportsIntrinsicCaseConversion,
-   com_ibm_jit_JITHelpers_toUpperIntrinsicLatin1,
-   com_ibm_jit_JITHelpers_toUpperIntrinsicUTF16,
-   com_ibm_jit_JITHelpers_toLowerIntrinsicLatin1,
-   com_ibm_jit_JITHelpers_toLowerIntrinsicUTF16,
+   java_lang_String_StrHWAvailable,
+   java_lang_String_toUpperHWOptimizedCompressed,
+   java_lang_String_toUpperHWOptimizedDecompressed,
+   java_lang_String_toUpperHWOptimized,
+   java_lang_String_toLowerHWOptimizedCompressed,
+   java_lang_String_toLowerHWOptimizedDecompressed,
+   java_lang_String_toLowerHWOptimized,
 
    // SIMD intrinsics built-in methods
    com_ibm_simd_VectorBase_vectorHWAvailable,

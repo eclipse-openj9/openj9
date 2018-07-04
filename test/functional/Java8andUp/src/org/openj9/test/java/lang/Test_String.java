@@ -1114,37 +1114,6 @@ public class Test_String {
 	public void test_toLowerCase() {
 		AssertJUnit.assertTrue("toLowerCase case conversion did not succeed", hwuc.toLowerCase().equals(hwlc));
 
-		// Long strings and strings of lengths near multiples of 16 bytes to test vector HW acceleration edge cases.
-		Assert.assertEquals("THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG".toLowerCase(), "the quick brown fox jumps over the lazy dog",
-			"toLowerCase case conversion failed");
-		Assert.assertEquals("".toLowerCase(), "",
-			"toLowerCase case conversion failed");
-		Assert.assertEquals("A".toLowerCase(), "a",
-			"toLowerCase case conversion failed");
-		Assert.assertEquals("ABCD".toLowerCase(), "abcd",
-			"toLowerCase case conversion failed");
-		Assert.assertEquals("ABCDEFG".toLowerCase(), "abcdefg",
-			"toLowerCase case conversion failed");
-		Assert.assertEquals("ABCDEFGH".toLowerCase(), "abcdefgh",
-			"toLowerCase case conversion failed");
-		Assert.assertEquals("ABCDEFGHI".toLowerCase(), "abcdefghi",
-			"toLowerCase case conversion failed");
-		Assert.assertEquals("ABCDEFGHIJKLMNO".toLowerCase(), "abcdefghijklmno",
-			"toLowerCase case conversion failed");
-		Assert.assertEquals("ABCDEFGHIJKLMNOP".toLowerCase(), "abcdefghijklmnop",
-			"toLowerCase case conversion failed");
-		Assert.assertEquals("ABCDEFGHIJKLMNOPQ".toLowerCase(), "abcdefghijklmnopq",
-			"toLowerCase case conversion failed");
-		Assert.assertEquals("ABCDEFGHIJKLMNOPQRSTUVWXYZ\u00C0\u00C1\u00c2\u00C3\u00C4".toLowerCase(),
-			"abcdefghijklmnopqrstuvwxyz\u00E0\u00E1\u00E2\u00E3\u00E4",
-			"toLowerCase case conversion failed");
-		Assert.assertEquals("ABCDEFGHIJKLMNOPQRSTUVWXYZ\u00C0\u00C1\u00c2\u00C3\u00C4\u00C5".toLowerCase(),
-			"abcdefghijklmnopqrstuvwxyz\u00E0\u00E1\u00E2\u00E3\u00E4\u00E5",
-			"toLowerCase case conversion failed");
-		Assert.assertEquals("ABCDEFGHIJKLMNOPQRSTUVWXYZ\u00C0\u00C1\u00c2\u00C3\u00C4\u00C5\u00C6".toLowerCase(),
-			"abcdefghijklmnopqrstuvwxyz\u00E0\u00E1\u00E2\u00E3\u00E4\u00E5\u00E6",
-			"toLowerCase case conversion failed");
-
 		/* [PR 111901] toLowerCase(), toUpperCase() should use codePoints */
 		for (int i = 0x10000; i < 0x10FFFF; i++) {
 			StringBuilder builder = new StringBuilder();
@@ -1408,37 +1377,6 @@ public class Test_String {
 
 		AssertJUnit.assertTrue("Wrong conversion", "\u00df".toUpperCase().equals("SS"));
 
-		// Long strings and strings of lengths near multiples of 16 bytes to test vector HW acceleration edge cases.
-		Assert.assertEquals("the quick brown fox jumps over the lazy dog".toUpperCase(), "THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG",
-			"toUpperCase case conversion failed");
-		Assert.assertEquals("".toUpperCase(), "",
-			"toUpperCase case conversion failed");
-		Assert.assertEquals("a".toUpperCase(), "A",
-			"toUpperCase case conversion failed");
-		Assert.assertEquals("abcd".toUpperCase(), "ABCD",
-			"toUpperCase case conversion failed");
-		Assert.assertEquals("abcdefg".toUpperCase(), "ABCDEFG",
-			"toUpperCase case conversion failed");
-		Assert.assertEquals("abcdefgh".toUpperCase(), "ABCDEFGH",
-			"toUpperCase case conversion failed");
-		Assert.assertEquals("abcdefghi".toUpperCase(), "ABCDEFGHI",
-			"toUpperCase case conversion failed");
-		Assert.assertEquals("abcdefghijklmno".toUpperCase(), "ABCDEFGHIJKLMNO",
-			"toUpperCase case conversion failed");
-		Assert.assertEquals("abcdefghijklmnop".toUpperCase(), "ABCDEFGHIJKLMNOP",
-			"toUpperCase case conversion failed");
-		Assert.assertEquals("abcdefghijklmnopq".toUpperCase(), "ABCDEFGHIJKLMNOPQ",
-			"toUpperCase case conversion failed");
-		Assert.assertEquals("abcdefghijklmnopqrstuvwxyz\u00E0\u00E1\u00E2\u00E3\u00E4".toUpperCase(),
-			"ABCDEFGHIJKLMNOPQRSTUVWXYZ\u00C0\u00C1\u00c2\u00C3\u00C4",
-			"toUpperCase case conversion failed");
-		Assert.assertEquals("abcdefghijklmnopqrstuvwxyz\u00E0\u00E1\u00E2\u00E3\u00E4\u00E5".toUpperCase(),
-			"ABCDEFGHIJKLMNOPQRSTUVWXYZ\u00C0\u00C1\u00c2\u00C3\u00C4\u00C5",
-			"toUpperCase case conversion failed");
-		Assert.assertEquals("abcdefghijklmnopqrstuvwxyz\u00E0\u00E1\u00E2\u00E3\u00E4\u00E5\u00E6".toUpperCase(),
-			"ABCDEFGHIJKLMNOPQRSTUVWXYZ\u00C0\u00C1\u00c2\u00C3\u00C4\u00C5\u00C6",
-			"toUpperCase case conversion failed");
-
 		/*
 		 * [PR CMVC 79544 "a\u00df\u1f56".toUpperCase() throws
 		 * IndexOutOfBoundsException
@@ -1508,6 +1446,7 @@ public class Test_String {
 					us_result.charAt(us_result.length() - 1) == '\u0307');
 		}
 	}
+
 
 	/**
 	 * @tests java.util.Locale#getLanguage()

@@ -217,7 +217,7 @@
 			<class name="org.openj9.test.vm.Test_VM"/>
 		</classes>
 	</test>
-	<test name="JCL_TEST_JITHelpers">
+	<test name="JCL_TEST_JIT_Helper">
 		<classes>
 			<class name="org.openj9.test.com.ibm.jit.Test_JITHelpers"/>
 		</classes>
