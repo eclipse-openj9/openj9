@@ -9382,54 +9382,59 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mn
    TR::Node* oldVNode   = node->getChild(3);
    TR::Node* newVNode   = node->getChild(4);
 
-   bool usingCompressedPointers = false;
-   TR::Node *translatedNode = newVNode;
-   if (isObj && comp->useCompressedPointers() &&
-         translatedNode->getOpCodeValue() == TR::l2i)
+   // The card mark write barrier helper expects the source register to be a decompressed reference. As such if the
+   // value we are storing (last argument) has been lowered we must extract the decompressed reference from the
+   // compression sequence.
+   bool isValueCompressedReference = false;
+
+   TR::Node* decompressedValueNode = newVNode;
+
+   if (isObj && comp->useCompressedPointers() && decompressedValueNode->getOpCodeValue() == TR::l2i)
       {
-      // pattern match the sequence
-      //  icall                         <- node
-      //     thisNode
-      //     objNode
-      //     offsetNode
-      //     l2i                        <- oldVNode
-      //        lushr
-      //           a2l
-      //              oldValue
-      //           iconst shftKonst
-      //     l2i                        <- newVNode
-      //        lushr
-      //           a2l
-      //              newValue
-      //           iconst shftKonst
+      // Pattern match the sequence:
       //
-      ////usingCompressedPointers = true;
+      //  <node>
+      //    <thisNode>
+      //    <objNode>
+      //    <offsetNode>
+      //    <oldVNode>
+      //    l2i
+      //      lushr
+      //        a2l
+      //          <decompressedValueNode>
+      //        iconst
 
-      if (translatedNode->getOpCode().isConversion())
-         translatedNode = translatedNode->getFirstChild();
-      if (translatedNode->getOpCode().isRightShift()) // optional
-         translatedNode = translatedNode->getFirstChild();
-
-      bool usingLowMemHeap = false;
-      if (TR::Compiler->vm.heapBaseAddress() == 0 ||
-             newVNode->isNull())
-         usingLowMemHeap = true;
-
-      if (translatedNode->getOpCode().isSub() || usingLowMemHeap)
-         usingCompressedPointers = true;
-
-      if (usingCompressedPointers)
+      if (decompressedValueNode->getOpCode().isConversion())
          {
-         while ((translatedNode->getNumChildren() > 0) && (translatedNode->getOpCodeValue() != TR::a2l))
-            translatedNode = translatedNode->getFirstChild();
-         if (translatedNode->getOpCodeValue() == TR::a2l)
-            translatedNode = translatedNode->getFirstChild();
-         // artificially bump up the refCount on the value so
-         // that different registers are allocated for the actual
-         // and compressed values. this is done so that the VMwrtbarEvaluator
-         // uses the uncompressed value
-         //
-         translatedNode->incReferenceCount();
+         decompressedValueNode = decompressedValueNode->getFirstChild();
+         }
+
+      if (decompressedValueNode->getOpCode().isRightShift())
+         {
+         decompressedValueNode = decompressedValueNode->getFirstChild();
+         }
+
+      if (decompressedValueNode->getOpCode().isSub() || TR::Compiler->vm.heapBaseAddress() == 0 || newVNode->isNull())
+         {
+         isValueCompressedReference = true;
+         }
+
+      if (isValueCompressedReference)
+         {
+         while ((decompressedValueNode->getNumChildren() > 0) && (decompressedValueNode->getOpCodeValue() != TR::a2l))
+            {
+            decompressedValueNode = decompressedValueNode->getFirstChild();
+            }
+
+         if (decompressedValueNode->getOpCodeValue() == TR::a2l)
+            {
+            decompressedValueNode = decompressedValueNode->getFirstChild();
+            }
+
+         // Artificially bump the reference count on the value so that different registers are allocated for the
+         // compressed and decompressed values. This is done so that the card mark write barrier helper uses the
+         // decompressed value.
+         decompressedValueNode->incReferenceCount();
          }
       }
 
@@ -9439,9 +9444,12 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mn
    oldVReg = cg->gprClobberEvaluate(oldVNode);  //  CS oldReg, newReg, OFF(objReg)
    newVReg = cg->evaluate(newVNode);                    //    oldReg is clobbered
 
-   TR::Register * compressedRegister = newVReg;
-   if (usingCompressedPointers)
-      compressedRegister = cg->evaluate(translatedNode);
+   TR::Register* compressedValueRegister = newVReg;
+
+   if (isValueCompressedReference)
+      {
+      compressedValueRegister = cg->evaluate(decompressedValueNode);
+      }
 
    bool needsDup = false;
 
@@ -9450,8 +9458,8 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mn
       // Make a copy of the register - reg deps later on expect them in different registers.
       newVReg = cg->allocateCollectedReferenceRegister();
       generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, newVReg, objReg);
-      if (!usingCompressedPointers)
-         compressedRegister = newVReg;
+      if (!isValueCompressedReference)
+         compressedValueRegister = newVReg;
 
       needsDup = true;
       }
@@ -9497,7 +9505,7 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mn
       {
       TR::Register* tempReadBarrier = cg->allocateRegister();
 
-      auto guardedLoadMnemonic = usingCompressedPointers ? TR::InstOpCode::LLGFSG : TR::InstOpCode::LGG;
+      auto guardedLoadMnemonic = comp->useCompressedPointers() ? TR::InstOpCode::LLGFSG : TR::InstOpCode::LGG;
 
       // Compare-And-Swap on object reference, while primarily is a store operation, it is also an implicit read (it
       // reads the existing value to be compared with a provided compare value, before the store itself), hence needs
@@ -9538,10 +9546,10 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mn
       TR::Register *raReg = cg->allocateRegister();
       TR::RegisterDependencyConditions* condWrtBar = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 5, cg);
       condWrtBar->addPostCondition(objReg, TR::RealRegister::GPR1);
-      if (compressedRegister != newVReg)
+      if (compressedValueRegister != newVReg)
          condWrtBar->addPostCondition(newVReg, TR::RealRegister::AssignAny); //defect 92001
-      if (compressedRegister != objReg)  // add this because I got conflicting dependencies on GPR1 and GPR2!
-         condWrtBar->addPostCondition(compressedRegister, TR::RealRegister::GPR2); //defect 92001
+      if (compressedValueRegister != objReg)  // add this because I got conflicting dependencies on GPR1 and GPR2!
+         condWrtBar->addPostCondition(compressedValueRegister, TR::RealRegister::GPR2); //defect 92001
       condWrtBar->addPostCondition(epReg, cg->getEntryPointRegister());
       condWrtBar->addPostCondition(raReg, cg->getReturnAddressRegister());
       // Cardmarking is not inlined for gencon. Consider doing so when perf issue arises.
@@ -9554,7 +9562,7 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mn
             wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreGenerationalSymbolRef(comp->getMethodSymbol());
          else
             wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef(comp->getMethodSymbol());
-         VMnonNullSrcWrtBarCardCheckEvaluator(node, objReg, compressedRegister, epReg, raReg, doneLabelWrtBar, wbRef, condWrtBar, cg, false);
+         VMnonNullSrcWrtBarCardCheckEvaluator(node, objReg, compressedValueRegister, epReg, raReg, doneLabelWrtBar, wbRef, condWrtBar, cg, false);
          }
 
       else if (doCrdMrk)
@@ -9591,8 +9599,8 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mn
       cg->stopUsingRegister(scratchReg);
       }
 
-   if (usingCompressedPointers)
-      cg->decReferenceCount(translatedNode);
+   if (isValueCompressedReference)
+      cg->decReferenceCount(decompressedValueNode);
 
    node->setRegister(resultReg);
    return resultReg;
