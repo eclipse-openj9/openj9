@@ -33,6 +33,9 @@ public class U64 extends UDATA {
 
 	public U64(long value) {
 		super(value);
+		// When working with 32-bit core files, the constructor for UDATA
+		// will truncate the value to 32 bits: we need all 64-bits here.
+		this.data = value;
 	}
 	
 	public U64(Scalar parameter) {
