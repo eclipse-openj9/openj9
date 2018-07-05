@@ -82,11 +82,8 @@
 #include "codegen/IA32PrivateLinkage.hpp"
 #endif
 
-#ifdef WINDOWS
-#include <windows.h>
-#else
+#ifdef LINUX
 #include <time.h>
-#include <sys/time.h>
 #endif
 
 #define NUM_PICS 3
@@ -10193,7 +10190,7 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::
    }
 
 
-
+#ifdef LINUX
 #if defined(TR_TARGET_32BIT)
 static void
 addFPXMMDependencies(
@@ -10220,36 +10217,6 @@ addFPXMMDependencies(
 #endif
 
 #define J9TIME_NANOSECONDS_PER_SECOND ((I_64) 1000000000)
-
-#if defined(WINDOWS)
-bool getWindowsNanoMultiplier(uint32_t &multiplier)
-   {
-   LARGE_INTEGER freq;
-   uint32_t hiresClockFrequency;
-   if (QueryPerformanceFrequency(&freq))
-      {
-      hiresClockFrequency = freq.QuadPart;
-      }
-   else
-      {
-      hiresClockFrequency = 1000; /* GetTickCount() returns millis */
-      }
-
-   multiplier = 1;
-   if (hiresClockFrequency < J9TIME_NANOSECONDS_PER_SECOND)
-      {
-      multiplier = (J9TIME_NANOSECONDS_PER_SECOND / hiresClockFrequency);
-      return true;
-      }
-   else if (hiresClockFrequency > J9TIME_NANOSECONDS_PER_SECOND)
-      {
-      return false;
-      }
-
-   return true;
-   }
-#endif /* WINDOWS */
-
 #if defined(TR_TARGET_64BIT)
 static bool
 inlineNanoTime(
@@ -10261,17 +10228,6 @@ inlineNanoTime(
 
    if (debug("traceInlInlining"))
       diagnostic("nanoTime called by %s\n", comp->signature());
-
-#if defined(WINDOWS)
-   static uint32_t multiplier=1;
-   //if (!getWindowsNanoMultiplier(multiplier))
-   //   return false;
-
-   // nano time is currently disabled on Windows, we need port library call to
-   // get the multiplier since because of CPU power states the frequency reported will vary
-   // and the timestamp will be caclulated incorrectly.
-   return false;
-#endif /* WINDOWS */
 
    if (fej9->supportsFastNanoTime())
       {  // Fully Inlined Version
@@ -10292,7 +10248,6 @@ inlineNanoTime(
          resultAddress = NULL;
          }
 
-#if defined(LINUX) || defined(OSX)
       TR::SymbolReference *gtod = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_AMD64clockGetTime,false,false,false);
       TR::Node *timevalNode = TR::Node::createWithSymRef(node, TR::loadaddr, 0, cg->getNanoTimeTemp());
       TR::Node *clockSourceNode = TR::Node::create(node, TR::iconst, 0, CLOCK_MONOTONIC);
@@ -10300,16 +10255,6 @@ inlineNanoTime(
       // TODO: Use performCall
       TR::Linkage *linkage = cg->getLinkage(gtod->getSymbol()->getMethodSymbol()->getLinkageConvention());
       linkage->buildDirectDispatch(callNode, false);
-#else
-      TR::SymbolReference *gtod = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_AMD64QueryPerformanceCounter,false,false,false);
-      TR::Node *timevalNode = TR::Node::createWithSymRef(node, TR::loadaddr, 0, cg->getNanoTimeTemp());
-      TR::Node *callNode    = TR::Node::createWithSymRef(TR::icall, 1, 1, timevalNode, gtod);
-      // TODO: Use performCall
-      TR::Linkage *linkage = cg->getLinkage(gtod->getSymbol()->getMethodSymbol()->getLinkageConvention());
-      TR::Register *testreg = linkage->buildDirectDispatch(callNode, false);
-#endif
-
-#if defined(LINUX) || defined(OSX)
 
       TR::Register *result  = cg->allocateRegister();
       TR::Register *reg     = cg->allocateRegister();
@@ -10329,45 +10274,6 @@ inlineNanoTime(
       generateRegMemInstruction(LEA8RegMem, node, result, generateX86MemoryReference(reg, result, 0, cg), cg);
 
       cg->stopUsingRegister(reg);
-
-
-#elif defined(WINDOWS)
-      TR::LabelSymbol *tickCountLabel    = generateLabelSymbol(cg);
-      TR::LabelSymbol *StartLabel        = generateLabelSymbol(cg);
-      TR::LabelSymbol *reStartLabel    = generateLabelSymbol(cg);
-      StartLabel->setStartInternalControlFlow();
-      reStartLabel->setEndInternalControlFlow();
-
-      generateRegRegInstruction(TEST1RegReg, node, testreg, testreg, cg);
-
-      cg->stopUsingRegister(testreg);
-
-      generateLabelInstruction(LABEL, node, StartLabel, cg);
-
-      TR::Register *result  = cg->allocateRegister();
-
-      generateLabelInstruction(JE4, node, tickCountLabel, cg);
-
-      TR::MemoryReference *time = generateX86MemoryReference(timevalNode, cg, false);
-      generateRegMemInstruction(L8RegMem, node, result, time, cg);
-
-      generateLabelInstruction(LABEL, node, reStartLabel, cg);
-
-      generateRegRegImmInstruction(IMUL8RegRegImm4, node, result, result, multiplier, cg);
-
-      //Outlined Code get tick count
-      gtod = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_AMD64GetTickCount,false,false,false);
-
-      TR::Node *callNode2 = TR::Node::createWithSymRef(node, TR::icall, 0, gtod);
-
-      TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(callNode2, TR::icall, result, tickCountLabel, reStartLabel, MOVZXReg8Reg4, cg);
-      cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
-      cg->generateDebugCounter(
-         outlinedHelperCall->getFirstInstruction(),
-         TR::DebugCounter::debugCounterName(comp, "helperCalls/%s/(%s)/%d/%d", node->getOpCode().getName(), comp->signature(), node->getByteCodeInfo().getCallerIndex(), node->getByteCodeInfo().getByteCodeIndex()),
-         1, TR::DebugCounter::Cheap);
-
-#endif
 
       // Store the result to memory if necessary
       if (resultAddress)
@@ -10394,7 +10300,6 @@ inlineNanoTime(
       }
    }
 #else // !64bit
-
 static bool
 inlineNanoTime(
       TR::Node *node,
@@ -10410,18 +10315,6 @@ inlineNanoTime(
    TR::Register *vmThreadReg = cg->getVMThreadRegister();
    TR::Register *temp2 = 0;
 
-#if defined(WINDOWS)
-   static uint32_t multiplier=1;
-   //if (!getWindowsNanoMultiplier(multiplier))
-   //   return false;
-
-   // nano time is currently disabled on Windows, we need port library call to
-   // get the multiplier since because of CPU power states the frequency reported will vary
-   // and the timestamp will be caclulated incorrectly.
-   return false;
-
-#endif /* WINDOWS */
-
    if (fej9->supportsFastNanoTime())
       {
       TR::Register *resultAddress;
@@ -10429,9 +10322,7 @@ inlineNanoTime(
          {
          resultAddress = cg->evaluate(node->getFirstChild());
          generateRegInstruction(PUSHReg,  node, resultAddress, cg);
-         #if defined(LINUX) || defined (OSX)
          generateImmInstruction(PUSHImm4, node, CLOCK_MONOTONIC, cg);
-         #endif /* defined(LINUX) || defined(OSX) */
          }
       else
          {
@@ -10440,17 +10331,12 @@ inlineNanoTime(
 
          generateRegImmInstruction(SUB4RegImms, node, espReal, 8, cg);
 
-         #if defined(LINUX) || defined(OSX)
          resultAddress = cg->allocateRegister();
          generateRegRegInstruction(MOV4RegReg, node, resultAddress, espReal, cg); // save away esp before the push
          generateRegInstruction(PUSHReg,  node, resultAddress, cg);
          generateImmInstruction(PUSHImm4, node, CLOCK_MONOTONIC, cg);
          cg->stopUsingRegister(resultAddress);
          resultAddress = espReal;
-         #elif defined(WINDOWS)
-         resultAddress = espReal;
-         generateRegInstruction(PUSHReg,  node, resultAddress, cg);
-         #endif /* defined(LINUX) || defined(OSX) */
          }
 
       // Force the FP register stack to be spilled.
@@ -10463,42 +10349,6 @@ inlineNanoTime(
          }
 
       // 64-bit issues on the call instructions below
-      #ifdef WINDOWS
-
-      TR::LabelSymbol *tickCountLabel    = generateLabelSymbol(cg);
-      TR::LabelSymbol *StartLabel        = generateLabelSymbol(cg);
-      TR::LabelSymbol *reStartLabel    = generateLabelSymbol(cg);
-      StartLabel->setStartInternalControlFlow();
-      reStartLabel->setEndInternalControlFlow();
-
-      int32_t extraFPDeps = (uint8_t)(TR::RealRegister::LastXMMR - TR::RealRegister::FirstXMMR+1);
-      TR::RegisterDependencyConditions  *deps = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)4 + extraFPDeps, cg);
-      TR::Register *eaxReal = cg->allocateRegister();
-      deps->addPostCondition(eaxReal, TR::RealRegister::eax, cg);
-      TR::Register *temp1 = cg->allocateRegister();
-      deps->addPostCondition(temp1, TR::RealRegister::edx, cg);
-      cg->stopUsingRegister(temp1);
-      temp1 = cg->allocateRegister();
-      deps->addPostCondition(temp1, TR::RealRegister::ecx, cg);
-      cg->stopUsingRegister(temp1);
-      deps->addPostCondition(cg->getMethodMetaDataRegister(), TR::RealRegister::ebp, cg);
-
-      // add the XMM dependendencies
-      addFPXMMDependencies(cg, deps);
-      deps->stopAddingConditions();
-
-      TR::X86ImmInstruction  *callInstr = generateImmInstruction(CALLImm4, node, (int32_t)&QueryPerformanceCounter, deps, cg);
-      callInstr->setAdjustsFramePointerBy(-4);
-
-      generateRegRegInstruction(TEST1RegReg, node, eaxReal, eaxReal, cg);
-
-      cg->stopUsingRegister(eaxReal);
-
-      generateLabelInstruction(LABEL, node, StartLabel, cg);
-
-      generateLabelInstruction(JE4, node, tickCountLabel, cg);
-
-      #elif defined(LINUX) || defined(OSX)
 
       // Build register dependencies and call the method in the system library
       // directly. Since this is a "C"-style call, ebx, esi and edi are preserved
@@ -10556,9 +10406,6 @@ inlineNanoTime(
       cg->stopUsingRegister(edxReal);
       cg->stopUsingRegister(reglow);
 
-
-      #endif /* defined(LINUX) || defined(OSX) */
-
       TR::Register *lowReg = cg->allocateRegister();
       TR::Register *highReg = cg->allocateRegister();
 
@@ -10584,49 +10431,6 @@ inlineNanoTime(
          TR::RegisterPair *result = cg->allocateRegisterPair(lowReg, highReg);
          node->setRegister(result);
          }
-
-#ifdef WINDOWS
-         generateLabelInstruction(LABEL, node, reStartLabel, cg);
-
-         eaxReal = cg->allocateRegister();
-         TR::Register *edxReal = cg->allocateRegister();
-
-         TR::RegisterDependencyConditions  *dep1 = generateRegisterDependencyConditions((uint8_t)2, 4, cg);
-         dep1->addPreCondition(eaxReal, TR::RealRegister::eax, cg);
-         dep1->addPreCondition(edxReal, TR::RealRegister::edx, cg);
-         dep1->addPostCondition(eaxReal, TR::RealRegister::eax, cg);
-         dep1->addPostCondition(edxReal, TR::RealRegister::edx, cg);
-         dep1->addPostCondition(lowReg, TR::RealRegister::NoReg, cg);
-         dep1->addPostCondition(highReg, TR::RealRegister::NoReg, cg);
-         dep1->stopAddingConditions();
-
-         generateRegImmInstruction(MOV4RegImm4, node, eaxReal, multiplier, cg);
-         generateRegRegInstruction(MUL4AccReg, node, eaxReal, lowReg, dep1, cg);
-         generateRegRegImmInstruction(IMUL4RegRegImm4, node, highReg, highReg, multiplier, cg);
-
-         generateRegRegInstruction(MOV4RegReg, node, lowReg, eaxReal, cg);
-         generateRegRegInstruction(ADD4RegReg, node, highReg, edxReal, cg);
-
-         cg->stopUsingRegister(eaxReal);
-         cg->stopUsingRegister(edxReal);
-
-          //Outlined Code get tick count
-
-         TR::SymbolReference *gtod = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_IA32GetTickCount,false,false,false);
-         TR::Node *callNode2    = TR::Node::createWithSymRef(node, TR::icall, 0, gtod);
-         TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(callNode2, TR::icall, node->getRegister()->getLowOrder(), tickCountLabel, reStartLabel, cg);
-         cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
-         outlinedHelperCall->swapInstructionListsWithCompilation();
-         generateRegImmInstruction(cg->getFirstInstruction(), ADD4RegImm4, espReal,8, cg);
-         generateRegRegInstruction(cg->getAppendInstruction()->getPrev()->getPrev(), XOR4RegReg, node->getRegister()->getHighOrder(), node->getRegister()->getHighOrder(), cg);
-         outlinedHelperCall->swapInstructionListsWithCompilation();
-         cg->generateDebugCounter(
-            outlinedHelperCall->getFirstInstruction(),
-            TR::DebugCounter::debugCounterName(comp, "helperCalls/%s/(%s)/%d/%d", node->getOpCode().getName(), comp->signature(), node->getByteCodeInfo().getCallerIndex(), node->getByteCodeInfo().getByteCodeIndex()),
-            1, TR::DebugCounter::Cheap);
-
-#endif
-
       }
    else
       {
@@ -10688,6 +10492,7 @@ inlineNanoTime(
    return true;
    }
 #endif
+#endif // LINUX
 
 static bool
 inlineMathSQRT(
@@ -11845,12 +11650,14 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
       {
       switch (resolvedMethodSymbol->getRecognizedMethod())
          {
+#ifdef LINUX
          case TR::java_lang_System_nanoTime:
             {
             TR_ASSERT(!isIndirect, "Indirect call to nanoTime");
             callWasInlined = inlineNanoTime(node, cg);
             break;
             }
+#endif
          case TR::java_lang_Class_isAssignableFrom:
             {
             callWasInlined = inlineIsAssignableFrom(node, cg);

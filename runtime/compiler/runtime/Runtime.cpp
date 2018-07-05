@@ -22,10 +22,7 @@
 
 #ifdef TR_HOST_X86
 #if defined(LINUX)
-#include <sys/time.h>   // for gettimeofday
 #include <time.h>       // for clock_gettime
-#elif defined(WINDOWS)
-#include <windows.h>    // for GetSystemTimeAsFileTime
 #endif
 #endif   // TR_HOST_X86
 
@@ -1176,9 +1173,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
 #endif
 #if defined(LINUX)
    SET(TR_AMD64clockGetTime,                          (void *)clock_gettime, TR_System);
-#elif defined(WINDOWS)
-   SET(TR_AMD64QueryPerformanceCounter,               (void *)QueryPerformanceCounter, TR_System);
-   SET(TR_AMD64GetTickCount,                          (void *)GetTickCount,            TR_System);
 #endif
    SET(TR_AMD64currentTimeMillis,                          (void *)OMRPORT_FROM_J9PORT(jitConfig->javaVM->portLibrary)->time_current_time_millis, TR_Helper);
    SET(TR_AMD64JitMonitorEnterReserved,                    (void *)jitMonitorEnterReserved,                    TR_CHelper);
@@ -1255,9 +1249,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_IA32encodeUTF16Little,                      (void *)_encodeUTF16Little,         TR_Helper);
 
    SET(TR_jitAddPicToPatchOnClassUnload,              (void *) jitAddPicToPatchOnClassUnload, TR_Helper);
-#if defined(WINDOWS)
-   SET(TR_IA32GetTickCount,                           (void *)GetTickCount, TR_System);
-#endif
    SET(TR_IA32interpreterUnresolvedVTableSlotGlue,    (void *)resolveAndPopulateVTableDispatch, TR_Helper);
 
    SET(TR_IA32JitMonitorEnterReserved,                    (void *)jitMonitorEnterReserved,                    TR_CHelper);
