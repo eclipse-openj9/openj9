@@ -2245,6 +2245,11 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			break;
 
 		case ABOUT_TO_BOOTSTRAP :
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
+			if (0 != initializeExclusiveAccess(vm)) {
+				goto _error;
+			}
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 			TRIGGER_J9HOOK_VM_ABOUT_TO_BOOTSTRAP(vm->hookInterface, vm->mainThread);
 			/* At this point, the decision about which interpreter to use has been made */
 			vm->bytecodeLoop = J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_DEBUG_MODE)
@@ -3328,15 +3333,6 @@ threadInitStages(J9JavaVM* vm, IDATA stage, void* reserved)
 				loadInfo->fatalErrorStr = "cannot parse -Xjni:";
 				return returnVal;
 			}
-
-#if defined(J9VM_THR_ASYNC_NAME_UPDATE)
-			vm->threadNameHandlerKey = J9RegisterAsyncEvent(vm, setThreadNameAsyncHandler, vm);
-			if (vm->threadNameHandlerKey < 0) {
-				loadInfo->fatalErrorStr = "cannot initialize threadNameHandlerKey";
-				goto _error;
-			}
-#endif /* J9VM_THR_ASYNC_NAME_UPDATE */
-
 			break;
 		case HEAP_STRUCTURES_INITIALIZED :
 			break;
@@ -3351,6 +3347,14 @@ threadInitStages(J9JavaVM* vm, IDATA stage, void* reserved)
 		case JIT_INITIALIZED :
 			break;
 		case ABOUT_TO_BOOTSTRAP :
+#if defined(J9VM_THR_ASYNC_NAME_UPDATE)
+			vm->threadNameHandlerKey = J9RegisterAsyncEvent(vm, setThreadNameAsyncHandler, vm);
+			if (vm->threadNameHandlerKey < 0) {
+				loadInfo = FIND_DLL_TABLE_ENTRY( FUNCTION_THREAD_INIT );
+				loadInfo->fatalErrorStr = "cannot initialize threadNameHandlerKey";
+				goto _error;
+			}
+#endif /* J9VM_THR_ASYNC_NAME_UPDATE */
 			break;
 		case JCL_INITIALIZED :
 			break;
@@ -5332,12 +5336,6 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	newSignalAction.sa_handler = SIG_IGN;
 	OMRSIG_SIGACTION(SIGPIPE,&newSignalAction,(struct sigaction *)vm->originalSIGPIPESignalAction);
 #endif
-
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
-	if (0 != initializeExclusiveAccess(vm)) {
-		goto error;
-	}
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 
 #ifdef J9VM_OPT_SIDECAR
 	vm->j2seVersion = initArgs->j2seVersion;
