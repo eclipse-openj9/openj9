@@ -10259,7 +10259,7 @@ addFPXMMDependencies(
 
 #define J9TIME_NANOSECONDS_PER_SECOND ((I_64) 1000000000)
 
-#ifndef LINUX
+#if defined(WINDOWS)
 bool getWindowsNanoMultiplier(uint32_t &multiplier)
    {
    LARGE_INTEGER freq;
@@ -10286,7 +10286,7 @@ bool getWindowsNanoMultiplier(uint32_t &multiplier)
 
    return true;
    }
-#endif
+#endif /* WINDOWS */
 
 #if defined(TR_TARGET_64BIT)
 static bool
@@ -10300,7 +10300,7 @@ inlineNanoTime(
    if (debug("traceInlInlining"))
       diagnostic("nanoTime called by %s\n", comp->signature());
 
-#if !defined(LINUX)
+#if defined(WINDOWS)
    static uint32_t multiplier=1;
    //if (!getWindowsNanoMultiplier(multiplier))
    //   return false;
@@ -10309,7 +10309,7 @@ inlineNanoTime(
    // get the multiplier since because of CPU power states the frequency reported will vary
    // and the timestamp will be caclulated incorrectly.
    return false;
-#endif
+#endif /* WINDOWS */
 
    if (fej9->supportsFastNanoTime())
       {  // Fully Inlined Version
@@ -10330,7 +10330,7 @@ inlineNanoTime(
          resultAddress = NULL;
          }
 
-#if defined(LINUX)
+#if defined(LINUX) || defined(OSX)
       TR::SymbolReference *gtod = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_AMD64clockGetTime,false,false,false);
       TR::Node *timevalNode = TR::Node::createWithSymRef(node, TR::loadaddr, 0, cg->getNanoTimeTemp());
       TR::Node *clockSourceNode = TR::Node::create(node, TR::iconst, 0, CLOCK_MONOTONIC);
@@ -10347,7 +10347,7 @@ inlineNanoTime(
       TR::Register *testreg = linkage->buildDirectDispatch(callNode, false);
 #endif
 
-#if defined(LINUX)
+#if defined(LINUX) || defined(OSX)
 
       TR::Register *result  = cg->allocateRegister();
       TR::Register *reg     = cg->allocateRegister();
@@ -10369,7 +10369,7 @@ inlineNanoTime(
       cg->stopUsingRegister(reg);
 
 
-#else
+#elif defined(WINDOWS)
       TR::LabelSymbol *tickCountLabel    = generateLabelSymbol(cg);
       TR::LabelSymbol *StartLabel        = generateLabelSymbol(cg);
       TR::LabelSymbol *reStartLabel    = generateLabelSymbol(cg);
@@ -10448,7 +10448,7 @@ inlineNanoTime(
    TR::Register *vmThreadReg = cg->getVMThreadRegister();
    TR::Register *temp2 = 0;
 
-#if !defined(LINUX)
+#if defined(WINDOWS)
    static uint32_t multiplier=1;
    //if (!getWindowsNanoMultiplier(multiplier))
    //   return false;
@@ -10458,7 +10458,7 @@ inlineNanoTime(
    // and the timestamp will be caclulated incorrectly.
    return false;
 
-#endif
+#endif /* WINDOWS */
 
    if (fej9->supportsFastNanoTime())
       {
@@ -10467,9 +10467,9 @@ inlineNanoTime(
          {
          resultAddress = cg->evaluate(node->getFirstChild());
          generateRegInstruction(PUSHReg,  node, resultAddress, cg);
-         #ifdef LINUX
+         #if defined(LINUX) || defined (OSX)
          generateImmInstruction(PUSHImm4, node, CLOCK_MONOTONIC, cg);
-         #endif
+         #endif /* defined(LINUX) || defined(OSX) */
          }
       else
          {
@@ -10478,17 +10478,17 @@ inlineNanoTime(
 
          generateRegImmInstruction(SUB4RegImms, node, espReal, 8, cg);
 
-         #ifdef LINUX
+         #if defined(LINUX) || defined(OSX)
          resultAddress = cg->allocateRegister();
          generateRegRegInstruction(MOV4RegReg, node, resultAddress, espReal, cg); // save away esp before the push
          generateRegInstruction(PUSHReg,  node, resultAddress, cg);
          generateImmInstruction(PUSHImm4, node, CLOCK_MONOTONIC, cg);
          cg->stopUsingRegister(resultAddress);
          resultAddress = espReal;
-         #else
+         #elif defined(WINDOWS)
          resultAddress = espReal;
          generateRegInstruction(PUSHReg,  node, resultAddress, cg);
-         #endif
+         #endif /* defined(LINUX) || defined(OSX) */
          }
 
       // Force the FP register stack to be spilled.
@@ -10536,7 +10536,7 @@ inlineNanoTime(
 
       generateLabelInstruction(JE4, node, tickCountLabel, cg);
 
-      #elif defined (LINUX)
+      #elif defined(LINUX) || defined(OSX)
 
       // Build register dependencies and call the method in the system library
       // directly. Since this is a "C"-style call, ebx, esi and edi are preserved
@@ -10595,7 +10595,7 @@ inlineNanoTime(
       cg->stopUsingRegister(reglow);
 
 
-      #endif
+      #endif /* defined(LINUX) || defined(OSX) */
 
       TR::Register *lowReg = cg->allocateRegister();
       TR::Register *highReg = cg->allocateRegister();
