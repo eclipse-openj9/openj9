@@ -3161,18 +3161,7 @@ bool TR_MultipleCallTargetInliner::inlineCallTargets(TR::ResolvedMethodSymbol *c
          // dont inline into cold blocks
          if (block->isCold() || !block->getExceptionPredecessors().empty())
             {
-            TR::RecognizedMethod rm = callerSymbol->getRecognizedMethod();
-            if (rm == TR::com_ibm_jit_JITHelpers_hashCodeImpl)
-               {
-               //printf("cold block in %s\n", sig);
-               heuristicTrace(tracer(),"METHOD: %s NOT marking cold block: parent=%p\n", tracer()->traceSignature(callerSymbol), parent);
-               }
-            else
-               {
-               //tt = block->getExit();
-               //continue;
-               isCold = true;
-               }
+            isCold = true;
             }
 
          // FIXME: the following assumes that catch blocks are at the end of the method
