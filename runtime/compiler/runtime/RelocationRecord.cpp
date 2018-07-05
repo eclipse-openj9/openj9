@@ -220,6 +220,15 @@ struct TR_RelocationRecordEmitClassBinaryTemplate : public TR_RelocationRecordWi
 #endif
    };
 
+struct TR_RelocationRecordDebugCounterBinaryTemplate : public TR_RelocationRecordWithInlinedSiteIndexBinaryTemplate
+   {
+   UDATA _bcIndex;
+   UDATA _offsetOfNameString;
+   UDATA _delta;
+   UDATA _fidelity;
+   UDATA _staticDelta;
+   };
+
 
 // TR_RelocationRecordGroup
 
@@ -451,6 +460,9 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
          break;
       case TR_EmitClass:
          reloRecord = new (storage) TR_RelocationRecordEmitClass(reloRuntime, record);
+         break;
+      case TR_DebugCounter:
+         reloRecord = new (storage) TR_RelocationRecordDebugCounter(reloRuntime, record);
          break;
       default:
          // TODO: error condition
@@ -3394,4 +3406,130 @@ TR_RelocationRecordEmitClass::applyRelocation(TR_RelocationRuntime *reloRuntime,
 
    reloRuntime->addClazzRecord(reloLocation, reloPrivateData->_bcIndex, reloPrivateData->_method);
    return 0;
+   }
+
+
+char *
+TR_RelocationRecordDebugCounter::name()
+   {
+   return "TR_RelocationRecordDebugCounter";
+   }
+
+int32_t
+TR_RelocationRecordDebugCounter::bytesInHeaderAndPayload()
+   {
+   return sizeof(TR_RelocationRecordDebugCounterBinaryTemplate);
+   }
+
+void
+TR_RelocationRecordDebugCounter::preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget)
+   {
+   TR_RelocationRecordDebugCounterPrivateData *reloPrivateData = &(privateData()->debugCounter);
+
+   IDATA callerIndex = (IDATA)inlinedSiteIndex(reloTarget);
+   if (callerIndex != -1)
+      {
+      reloPrivateData->_method = getInlinedSiteMethod(reloRuntime, callerIndex);
+      }
+   else
+      {
+      reloPrivateData->_method = NULL;
+      }
+
+   reloPrivateData->_bcIndex     = reloTarget->loadSigned32b((uint8_t *) &(((TR_RelocationRecordDebugCounterBinaryTemplate *)_record)->_bcIndex));
+   reloPrivateData->_delta       = reloTarget->loadSigned32b((uint8_t *) &(((TR_RelocationRecordDebugCounterBinaryTemplate *)_record)->_delta));
+   reloPrivateData->_fidelity    = reloTarget->loadUnsigned8b((uint8_t *) &(((TR_RelocationRecordDebugCounterBinaryTemplate *)_record)->_fidelity));
+   reloPrivateData->_staticDelta = reloTarget->loadSigned32b((uint8_t *) &(((TR_RelocationRecordDebugCounterBinaryTemplate *)_record)->_staticDelta));
+
+   UDATA offset                  = (UDATA)reloTarget->loadPointer((uint8_t *) &(((TR_RelocationRecordDebugCounterBinaryTemplate *)_record)->_offsetOfNameString));
+   reloPrivateData->_name        =  reloRuntime->fej9()->sharedCache()->getDebugCounterName(offset);
+   }
+
+int32_t
+TR_RelocationRecordDebugCounter::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+   {
+   TR::DebugCounterBase *counter = findOrCreateCounter(reloRuntime);
+   if (counter == NULL)
+      {
+      /*
+       * We don't have to return -1 here and fail the relocation. We can always just allocate some memory
+       * and patch the update location to that. However, given that it's likely that the developer wishes
+       * to have debug counters run, it's probably better to fail the relocation.
+       *
+       */
+      return -1;
+      }
+
+   // Update Counter Location
+   reloTarget->storeAddressSequence((uint8_t *)counter->getBumpCountAddress(), reloLocation, reloFlags(reloTarget));
+
+   return 0;
+   }
+
+int32_t
+TR_RelocationRecordDebugCounter::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocationHigh, uint8_t *reloLocationLow)
+   {
+   TR::DebugCounterBase *counter = findOrCreateCounter(reloRuntime);
+   if (counter == NULL)
+      {
+      /*
+       * We don't have to return -1 here and fail the relocation. We can always just allocate some memory
+       * and patch the update location to that. However, given that it's likely that the developer wishes
+       * to have debug counters run, it's probably better to fail the relocation.
+       *
+       */
+      return -1;
+      }
+
+   // Update Counter Location
+   reloTarget->storeAddress((uint8_t *)counter->getBumpCountAddress(), reloLocationHigh, reloLocationLow, reloFlags(reloTarget));
+
+   return 0;
+   }
+
+TR::DebugCounterBase *
+TR_RelocationRecordDebugCounter::findOrCreateCounter(TR_RelocationRuntime *reloRuntime)
+   {
+   TR::DebugCounterBase *counter = NULL;
+   TR_RelocationRecordDebugCounterPrivateData *reloPrivateData = &(privateData()->debugCounter);
+   TR::Compilation *comp = reloRuntime->comp();
+   bool isAggregateCounter = reloPrivateData->_delta == 0 ? false : true;
+
+   if (reloPrivateData->_name == NULL ||
+       (isAggregateCounter && reloPrivateData->_method == (TR_OpaqueMethodBlock *)-1))
+      {
+      return NULL;
+      }
+
+   // Find or Create Debug Counter
+   if (isAggregateCounter)
+      {
+      counter = comp->getPersistentInfo()->getDynamicCounters()->findAggregation(reloPrivateData->_name, strlen(reloPrivateData->_name));
+      if (!counter)
+         {
+         TR::DebugCounterAggregation *aggregatedCounters = comp->getPersistentInfo()->getDynamicCounters()->createAggregation(comp, reloPrivateData->_name);
+         if (aggregatedCounters)
+            {
+            aggregatedCounters->aggregateStandardCounters(comp,
+                                                          reloPrivateData->_method,
+                                                          reloPrivateData->_bcIndex,
+                                                          reloPrivateData->_name,
+                                                          reloPrivateData->_delta,
+                                                          reloPrivateData->_fidelity,
+                                                          reloPrivateData->_staticDelta);
+            if (!aggregatedCounters->hasAnyCounters())
+               return NULL;
+            }
+         counter = aggregatedCounters;
+         }
+      }
+   else
+      {
+      counter = TR::DebugCounter::getDebugCounter(comp,
+                                                  reloPrivateData->_name,
+                                                  reloPrivateData->_fidelity,
+                                                  reloPrivateData->_staticDelta);
+      }
+
+   return counter;
    }
