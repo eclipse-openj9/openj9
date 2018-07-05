@@ -2476,7 +2476,6 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {
       {TR::java_lang_Object_init,                 6,    "<init>", (int16_t)-1,    "*"},
       {x(TR::java_lang_Object_getClass,             "getClass",             "()Ljava/lang/Class;")},
-      {x(TR::java_lang_Object_hashCodeImpl,         "hashCode",         "()I")},
       {x(TR::java_lang_Object_clone,                "clone",                "()Ljava/lang/Object;")},
       {x(TR::java_lang_Object_newInstancePrototype, "newInstancePrototype", "(Ljava/lang/Class;)Ljava/lang/Object;")},
       {x(TR::java_lang_Object_getAddressAsPrimitive, "getAddressAsPrimitive", "(Ljava/lang/Object;)I")},
@@ -3260,7 +3259,6 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {x(TR::com_ibm_jit_JITHelpers_getClassFromJ9Class64,                    "getClassFromJ9Class64", "(J)Ljava/lang/Class;")},
       {x(TR::com_ibm_jit_JITHelpers_getAddressAsPrimitive64,                  "getAddressAsPrimitive64", "(Ljava/lang/Object;)J")},
 #endif
-      {x(TR::com_ibm_jit_JITHelpers_hashCodeImpl,                             "hashCodeImpl", "(Ljava/lang/Object;)I")},
       {x(TR::com_ibm_jit_JITHelpers_getSuperclass,                            "getSuperclass", "(Ljava/lang/Class;)Ljava/lang/Class;")},
       {x(TR::com_ibm_jit_JITHelpers_optimizedClone,                           "optimizedClone", "(Ljava/lang/Object;)Ljava/lang/Object;")},
       {x(TR::com_ibm_jit_JITHelpers_getPackedDataSizeFromJ9Class32,           "getPackedDataSizeFromJ9Class32", "(I)I")},
@@ -4596,12 +4594,18 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
          }
       }
 
-   if (TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug) &&
-       ((rm == TR::com_ibm_jit_JITHelpers_hashCodeImpl) ||
-        (rm == TR::com_ibm_jit_JITHelpers_getSuperclass) ||
-        (rm == TR::com_ibm_jit_DecimalFormatHelper_formatAsDouble) ||
-        (rm == TR::com_ibm_jit_DecimalFormatHelper_formatAsFloat)))
-      return;
+   if (TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug))
+      {
+      switch (rm)
+         {
+         case TR::com_ibm_jit_JITHelpers_getSuperclass:
+         case TR::com_ibm_jit_DecimalFormatHelper_formatAsDouble:
+         case TR::com_ibm_jit_DecimalFormatHelper_formatAsFloat:
+            return;
+         default:
+            break;
+         }
+      }
 
    if ( isMethodInValidLibrary(fej9(),this) &&
         !failBecauseOfHCR) // With HCR, non-native methods can change, so we shouldn't "recognize" them
@@ -4619,10 +4623,6 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
       if (disableRecMethods && fej9()->isAOT_DEPRECATED_DO_NOT_USE()) // AOT_JIT_GAP
          {
          switch (rm) {
-#if defined(TR_TARGET_X86)
-            case TR::java_lang_System_currentTimeMillis: // This needs AOT relocation. For now, only implemented on x86
-#endif
-            //|| rm == TR::java_lang_J9VMInternals_identityHashCode
             case TR::java_lang_Thread_currentThread:
             case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
             case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
@@ -4800,7 +4800,6 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
             case TR::java_lang_Object_clone:
 
             case TR::java_lang_System_nanoTime:
-            case TR::java_lang_Object_hashCodeImpl:
             case TR::java_lang_String_hashCodeImplCompressed:
             case TR::java_lang_String_hashCodeImplDecompressed:
             case TR::sun_nio_ch_NativeThread_current:

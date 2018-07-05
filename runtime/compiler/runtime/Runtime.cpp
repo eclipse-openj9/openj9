@@ -1179,10 +1179,8 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_AMD64doAESENCDecrypt,                       (void *)_doAESENCDecrypt,           TR_Helper);
 #endif
 #if defined(LINUX)
-   SET(TR_AMD64getTimeOfDay,                          (void *)gettimeofday,  TR_System);
    SET(TR_AMD64clockGetTime,                          (void *)clock_gettime, TR_System);
 #elif defined(WINDOWS)
-   SET(TR_AMD64GetSystemTimeAsFileTime,               (void *)GetSystemTimeAsFileTime, TR_System);
    SET(TR_AMD64QueryPerformanceCounter,               (void *)QueryPerformanceCounter, TR_System);
    SET(TR_AMD64GetTickCount,                          (void *)GetTickCount,            TR_System);
 #endif
@@ -1279,12 +1277,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_IA32JitMethodMonitorExitPreservingReservation,  (void *)jitMethodMonitorExitPreservingReservation,  TR_CHelper);
    SET(TR_IA32JitMethodMonitorExitReservedPrimitive,      (void *)jitMethodMonitorExitReservedPrimitive,      TR_CHelper);
    SET(TR_IA32JitMethodMonitorExitReserved,               (void *)jitMethodMonitorExitReserved,               TR_CHelper);
-#if defined(LINUX)
-   SET(TR_IA32getTimeOfDay,                           (void *)gettimeofday, TR_System);
-#elif defined(WINDOWS)
-   SET(TR_IA32GetSystemTimeAsFileTime,                (void *)GetSystemTimeAsFileTime, TR_System);
-#endif
-
 
 #endif
 #elif defined(TR_HOST_POWER)

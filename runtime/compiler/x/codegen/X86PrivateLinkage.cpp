@@ -1734,8 +1734,7 @@ void TR::X86CallSite::computeProfiledTargets()
             }
 
          if (!topValue && !callNode->getSymbolReference()->isUnresolved() &&
-              ((callNode->getSymbol()->castToMethodSymbol()->getRecognizedMethod() == TR::java_lang_Object_hashCodeImpl) ||
-              (callNode->getSymbol()->castToMethodSymbol()->getRecognizedMethod() == TR::java_lang_Object_clone)))
+             (callNode->getSymbol()->castToMethodSymbol()->getRecognizedMethod() == TR::java_lang_Object_clone))
             topValue = (uintptrj_t) comp()->getObjectClassPointer();
 
          if (topValue)
