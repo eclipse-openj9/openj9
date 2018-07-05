@@ -121,14 +121,16 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
    const bool is32BitLock = TR::Compiler->target.is32Bit() || generateCompressedLockWord;
    const bool is32BitLoad = J9::DataType::getSize(loadNode->getDataType()) == 4;
 
-   bool lockRegisterRequires32BitLogicalSignExtension = false;
-   bool loadRegisterRequires32BitLogicalSignExtension = false;
+   bool lockRegisterRequiresZeroExt = false;
+   bool loadRegisterRequiresZeroExt = false;
+   bool loadRegisterRequiresSignExt = false;
 
    if (is32BitLock && is32BitLoad)
       {
       generateSSFInstruction(cg, TR::InstOpCode::LPD, node, registerPair, loadMemoryReference, lockMemoryReference);
 
-      loadRegisterRequires32BitLogicalSignExtension = loadNode->isZeroExtendedTo64BitAtSource();
+      loadRegisterRequiresZeroExt = loadNode->isZeroExtendedTo64BitAtSource();
+      loadRegisterRequiresSignExt = loadNode->isSignExtendedTo64BitAtSource();
       }
    else
       {
@@ -150,7 +152,7 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
             // This is because we must use LPDG to load a 32-bit value using displacement -4
             TR_ASSERT_SAFE_FATAL((lockWordOffset & 3) == 0, "Lockword must be aligned on a word boundary\n");
 
-            lockRegisterRequires32BitLogicalSignExtension = true;
+            lockRegisterRequiresZeroExt = true;
             alignedLockMemoryReference = generateS390MemoryReference(*lockMemoryReference, -4, cg);
             }
          }
@@ -170,7 +172,9 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
             // This is because we must use LPDG to load a 32-bit value using displacement -4
             TR_ASSERT_SAFE_FATAL((loadMemoryReference->getOffset() & 3) == 0, "Field must be aligned on a word boundary\n");
 
-            loadRegisterRequires32BitLogicalSignExtension = loadNode->isZeroExtendedTo64BitAtSource();
+            loadRegisterRequiresZeroExt = loadNode->isZeroExtendedTo64BitAtSource();
+            loadRegisterRequiresSignExt = loadNode->isSignExtendedTo64BitAtSource();
+
             alignedLoadMemoryReference = generateS390MemoryReference(*loadMemoryReference, -4, cg);
             }
          }
@@ -192,16 +196,20 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
          }
       }
 
-   if (lockRegisterRequires32BitLogicalSignExtension)
+   if (lockRegisterRequiresZeroExt)
       {
       generateRREInstruction(cg, TR::InstOpCode::LLGFR, node, lockRegister, lockRegister);
       }
 
-   if (loadRegisterRequires32BitLogicalSignExtension)
+   if (loadRegisterRequiresZeroExt)
       {
       generateRREInstruction(cg, TR::InstOpCode::LLGFR, node, loadRegister, loadRegister);
       }
 
+   if (loadRegisterRequiresSignExt)
+      {
+      generateRRInstruction(cg, TR::InstOpCode::LGFR, node, loadRegister, loadRegister);
+      }
 
    // LPD sets condition code 3 if the pair as not loaded by means of interlocked fetch
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BO, node, slowPathLabel);
