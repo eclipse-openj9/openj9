@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,8 +67,13 @@ checkJ9VMThreadSanity(J9JavaVM *vm)
 	do {
 		verifyJ9VMThread(vm, thread);
 
-		if (J9_PUBLIC_FLAGS_VM_ACCESS == (DBG_ARROW(thread, publicFlags) & J9_PUBLIC_FLAGS_VM_ACCESS)) {
-			numberOfThreadsWithVMAccess++;
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+		if (!DBG_ARROW(thread, inNative))
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+		{
+			if (J9_PUBLIC_FLAGS_VM_ACCESS == (DBG_ARROW(thread, publicFlags) & J9_PUBLIC_FLAGS_VM_ACCESS)) {
+				numberOfThreadsWithVMAccess++;
+			}
 		}
 
 		count++;
