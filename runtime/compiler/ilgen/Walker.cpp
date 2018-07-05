@@ -5023,7 +5023,7 @@ break
          }
       }
 
-   if(symbol->getRecognizedMethod() == TR::java_lang_String_StrHWAvailable)
+   if(symbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_supportsIntrinsicCaseConversion)
       {
       if (cg()->getSupportsInlineStringCaseConversion())
          constToLoad = 1;
@@ -5035,12 +5035,10 @@ break
       }
 
    if (cg()->getSupportsInlineStringCaseConversion() &&
-         (symbol->getRecognizedMethod() == TR::java_lang_String_toUpperHWOptimizedCompressed ||
-            symbol->getRecognizedMethod() == TR::java_lang_String_toLowerHWOptimizedCompressed ||
-            symbol->getRecognizedMethod() == TR::java_lang_String_toUpperHWOptimizedDecompressed ||
-            symbol->getRecognizedMethod() == TR::java_lang_String_toLowerHWOptimizedDecompressed ||
-            symbol->getRecognizedMethod() == TR::java_lang_String_toUpperHWOptimized ||
-            symbol->getRecognizedMethod() == TR::java_lang_String_toLowerHWOptimized))
+         (symbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_toUpperIntrinsicLatin1 ||
+            symbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_toLowerIntrinsicLatin1 ||
+            symbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_toUpperIntrinsicUTF16 ||
+            symbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_toLowerIntrinsicUTF16))
       {
       isDirectCall = true;
       }
