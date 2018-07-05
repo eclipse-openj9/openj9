@@ -39,7 +39,7 @@ public class PlatformWindows extends PlatformImplementation {
 	
 	static final String DEFAULT_RC_PRODUCT_NAME="IBM SDK, Java(tm) 2 Technology Edition";
 	/* version number with dots seperating four parts */
-	static final String OPENJDK_VERSION_NUMBER_FOUR_POSITIONS = System.getenv("OPENJDK_VERSION_NUMBER_FOUR_POSITIONS");
+	static String OPENJDK_VERSION_NUMBER_FOUR_POSITIONS = System.getenv("OPENJDK_VERSION_NUMBER_FOUR_POSITIONS");
 	
 	public PlatformWindows( IConfiguration buildSpec ) {
 		super(buildSpec);
@@ -196,8 +196,8 @@ public class PlatformWindows extends PlatformImplementation {
 				"#include \"j9version.h\"\n" +
 				"\n" +
 				"VS_VERSION_INFO VERSIONINFO\n" +
-				" FILEVERSION " + OPENJDK_VERSION_NUMBER_FOUR_POSITIONS.replace(".", ",") + "\n" +
-				" PRODUCTVERSION " + OPENJDK_VERSION_NUMBER_FOUR_POSITIONS.replace(".", ",") + "\n" +
+				" FILEVERSION " + getFourPosVersionNumber().replace(".", ",") + "\n" +
+				" PRODUCTVERSION " + getFourPosVersionNumber().replace(".", ",") + "\n" +
 				" FILEFLAGSMASK 0x3fL\n" +
 				" FILEFLAGS 0x0L\n" +
 				" FILEOS VOS_NT_WINDOWS32\n" +
@@ -210,12 +210,12 @@ public class PlatformWindows extends PlatformImplementation {
 				"		BEGIN\n" +
 				"			VALUE \"CompanyName\", \"International Business Machines Corporation\\0\"\n" +
 				"			VALUE \"FileDescription\", \"WebSphere Studio Device Developer\\0\"\n" +
-				"			VALUE \"FileVersion\", \"" + OPENJDK_VERSION_NUMBER_FOUR_POSITIONS + "\\0\"\n" +
+				"			VALUE \"FileVersion\", \"" + getFourPosVersionNumber() + "\\0\"\n" +
 				"			VALUE \"InternalName\", \"" + getTargetNameWithRelease(artifact) + "\\0\"\n" +
 				"			VALUE \"LegalCopyright\", \" Copyright (c) 1991, " + calendar.get(Calendar.YEAR) + " IBM Corp. and others\\0\"\n" +
 				"			VALUE \"OriginalFilename\", \"" + getTargetNameWithRelease(artifact) + ".dll\\0\"\n" +
 				"			VALUE \"ProductName\", \"" + productName + "\\0\"\n" +
-				"			VALUE \"ProductVersion\", \"" + OPENJDK_VERSION_NUMBER_FOUR_POSITIONS + "\\0\"\n" +
+				"			VALUE \"ProductVersion\", \"" + getFourPosVersionNumber() + "\\0\"\n" +
 				"		END\n" +
 				"	END\n" +
 				"	BLOCK \"VarFileInfo\"\n" +
@@ -236,6 +236,14 @@ public class PlatformWindows extends PlatformImplementation {
 
 		fa.writeToDisk();
 
+	}
+	
+	private String getFourPosVersionNumber() {
+		if (null == OPENJDK_VERSION_NUMBER_FOUR_POSITIONS) {
+			String VERSION_MAJOR = System.getenv("VERSION_MAJOR");
+			OPENJDK_VERSION_NUMBER_FOUR_POSITIONS = VERSION_MAJOR + ".0.0.0";
+		}
+		return OPENJDK_VERSION_NUMBER_FOUR_POSITIONS;
 	}
 	
 	protected void writeExecutableResourceFileExtraCommands(StringBuffer buffer) {
@@ -512,8 +520,8 @@ public class PlatformWindows extends PlatformImplementation {
 				"#include \"j9version.h\"\n" +
 				"\n" +
 				"VS_VERSION_INFO VERSIONINFO\n" +
-				" FILEVERSION " + OPENJDK_VERSION_NUMBER_FOUR_POSITIONS.replace(".", ",") + "\n" +
-				" PRODUCTVERSION " + OPENJDK_VERSION_NUMBER_FOUR_POSITIONS.replace(".", ",") + "\n" +
+				" FILEVERSION " + getFourPosVersionNumber().replace(".", ",") + "\n" +
+				" PRODUCTVERSION " + getFourPosVersionNumber().replace(".", ",") + "\n" +
 				" FILEFLAGSMASK 0x3fL\n" +
 				" FILEFLAGS 0x0L\n" +
 				" FILEOS VOS_NT_WINDOWS32\n" +
@@ -526,12 +534,12 @@ public class PlatformWindows extends PlatformImplementation {
 				"		BEGIN\n" +
 				"			VALUE \"CompanyName\", \"International Business Machines Corporation\\0\"\n" +
 				"			VALUE \"FileDescription\", \"J9 Virtual Machine Runtime\\0\"\n" +
-				"			VALUE \"FileVersion\", \"" + OPENJDK_VERSION_NUMBER_FOUR_POSITIONS + "\\0\"\n" +
+				"			VALUE \"FileVersion\", \"" + getFourPosVersionNumber() + "\\0\"\n" +
 				"			VALUE \"InternalName\", \"" + getTargetNameWithRelease(artifact) + "\\0\"\n" +
 				"			VALUE \"LegalCopyright\", \" Copyright (c) 1991, " + calendar.get(Calendar.YEAR) + " IBM Corp. and others\\0\"\n" +
 				"			VALUE \"OriginalFilename\", \"" + getTargetNameWithRelease(artifact) + ".dll\\0\"\n" +
 				"			VALUE \"ProductName\", \"" + productName + "\\0\"\n" +
-				"			VALUE \"ProductVersion\", \"" + OPENJDK_VERSION_NUMBER_FOUR_POSITIONS + "\\0\"\n" +
+				"			VALUE \"ProductVersion\", \"" + getFourPosVersionNumber() + "\\0\"\n" +
 				"		END\n" +
 				"	END\n" +
 				"	BLOCK \"VarFileInfo\"\n" +
