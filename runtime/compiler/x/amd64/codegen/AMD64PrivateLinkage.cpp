@@ -1500,11 +1500,7 @@ void TR::AMD64PrivateLinkage::buildVirtualOrComputedCall(TR::X86CallSite &site, 
 
    if (methodSymRef->getSymbol()->castToMethodSymbol()->isComputed())
       {
-      TR::Node *addressChild = site.getCallNode()->getFirstChild();
-      //if (addressChild->getRegister() || addressChild->getReferenceCount() >= 2) // TODO:JSR292: Try to avoid the explicit load
-         buildVFTCall(site, CALLReg, doneLabel, site.evaluateVFT(), NULL);
-      //else
-         //buildVFTCall(site, CALLMem, doneLabel, NULL, generateX86MemoryReference(site.getCallNode(), cg()));
+      buildVFTCall(site, CALLReg, site.evaluateVFT(), NULL);
       }
    else if (evaluateVftEarly)
       {
@@ -1515,7 +1511,7 @@ void TR::AMD64PrivateLinkage::buildVirtualOrComputedCall(TR::X86CallSite &site, 
       {
       // Call through VFT
       //
-      buildVFTCall(site, CALLMem, doneLabel, NULL, generateX86MemoryReference(site.evaluateVFT(), methodSymRef->getOffset(), cg()));
+      buildVFTCall(site, CALLMem, NULL, generateX86MemoryReference(site.evaluateVFT(), methodSymRef->getOffset(), cg()));
       }
    else
       {

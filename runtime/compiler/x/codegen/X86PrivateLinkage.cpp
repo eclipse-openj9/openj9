@@ -2484,10 +2484,8 @@ bool TR::X86PrivateLinkage::buildVirtualGuard(TR::X86CallSite &site, TR::LabelSy
       }
    }
 
-TR::Instruction *TR::X86PrivateLinkage::buildVFTCall(TR::X86CallSite &site, TR_X86OpCode dispatchOp, TR::LabelSymbol *doneLabel, TR::Register *targetAddressReg, TR::MemoryReference *targetAddressMemref, TR::Instruction *goodPlaceForAMiniTrampoline)
+TR::Instruction *TR::X86PrivateLinkage::buildVFTCall(TR::X86CallSite &site, TR_X86OpCode dispatchOp, TR::Register *targetAddressReg, TR::MemoryReference *targetAddressMemref)
    {
-   // TODO: Remove doneLabel argument.  It's not used, and it's puzzling to the caller.
-
    TR::Node *callNode = site.getCallNode();
    if (cg()->enableSinglePrecisionMethods() &&
        comp()->getJittedMethodSymbol()->usesSinglePrecisionMode())
@@ -2533,24 +2531,12 @@ TR::Instruction *TR::X86PrivateLinkage::buildVFTCall(TR::X86CallSite &site, TR_X
          TR::LabelSymbol *jmpLabel   = TR::LabelSymbol::create(cg()->trHeapMemory(),cg());
          callInstr = generateLabelInstruction(CALLImm4, callNode, jmpLabel, cg());
 
-         // Jump (either outlined or as a mini-trampoline)
+         // Jump outlined
          //
-         TR_OutlinedInstructions *outlined;
-         TR::Instruction *cursor = goodPlaceForAMiniTrampoline;
-         if (goodPlaceForAMiniTrampoline)
-            {
-            outlined = NULL;
-            }
-         else
-            {
-            outlined = new (cg()->trHeapMemory()) TR_OutlinedInstructions(jmpLabel, cg());
-            cg()->getOutlinedInstructionsList().push_front(outlined);
-            outlined->swapInstructionListsWithCompilation();
-            }
-         cursor = generateLabelInstruction(cursor, LABEL,  jmpLabel, cg()); cursor->setNode(callNode);
-         cursor = generateRegInstruction  (cursor, JMPReg, targetAddressReg, cg());
-         if (outlined)
-            outlined->swapInstructionListsWithCompilation();
+         {
+         TR_OutlinedInstructionsGenerator og(jmpLabel, callNode, cg());
+         generateRegInstruction(JMPReg, callNode, targetAddressReg, cg());
+         }
 
          // The targetAddressReg doesn't appear to be used in mainline code, so
          // register assignment may do weird things like spill it.  We'd prefer it
@@ -2948,7 +2934,7 @@ void TR::X86PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86CallSi
    TR::Instruction *lastITableDispatchStart = generateLabelInstruction(  LABEL, callNode, lastITableDispatchLabel, cg());
    generateRegImmInstruction( MOV4RegImm4, callNode, vtableIndexReg, fej9->getITableEntryJitVTableOffset(), cg());
    generateRegMemInstruction( SUBRegMem(), callNode, vtableIndexReg, generateX86MemoryReference(scratchReg, fej9->convertITableIndexToOffset(itableIndex), cg()), cg());
-   buildVFTCall(site,         JMPMem, doneLabel, NULL, generateX86MemoryReference(vftReg, vtableIndexReg, 0, cg()));
+   buildVFTCall(site,         JMPMem, NULL, generateX86MemoryReference(vftReg, vtableIndexReg, 0, cg()));
 
    // Without PIC slots, lastITableDispatchStart takes the place of various "first instruction" pointers
    //
