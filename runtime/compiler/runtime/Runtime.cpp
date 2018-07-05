@@ -2042,6 +2042,7 @@ bool isOrderedPair(U_8 recordType)
       case TR_RamMethodSequence:
       case TR_BodyInfoAddressLoad:
       case TR_DataAddress:
+      case TR_DebugCounter:
 #endif
          isOrderedPair = true;
          break;
