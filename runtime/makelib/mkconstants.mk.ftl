@@ -30,9 +30,8 @@ endif
 export VERSION_MAJOR
 
 # Define full Java Version
-ifndef OPENJDK_VERSION_NUMBER_FOUR_POSITIONS
-$(error OPENJDK_VERSION_NUMBER_FOUR_POSITIONS is not set from extensions code)
-endif
+# For internal builds java version is based off VERSION_MAJOR
+OPENJDK_VERSION_NUMBER_FOUR_POSITIONS ?= $(VERSION_MAJOR).0.0.0
 export OPENJDK_VERSION_NUMBER_FOUR_POSITIONS
 
 # Define a default target of the root directory for all targets.
