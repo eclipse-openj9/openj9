@@ -2972,13 +2972,6 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {x(TR::java_lang_String_compress,            "compress",            "([C[BII)I")},
       {x(TR::java_lang_String_compressNoCheck,     "compressNoCheck",     "([C[BII)V")},
       {x(TR::java_lang_String_andOR,               "andOR",               "([CII)I")},
-      {x(TR::java_lang_String_toUpperHWOptimizedCompressed,  "toUpperHWOptimizedCompressed",  "(Ljava/lang/String;)Z")},
-      {x(TR::java_lang_String_toUpperHWOptimizedDecompressed,"toUpperHWOptimizedDecompressed","(Ljava/lang/String;)Z")},
-      {x(TR::java_lang_String_toUpperHWOptimized,  "toUpperHWOptimized","(Ljava/lang/String;)Z")},
-      {x(TR::java_lang_String_toLowerHWOptimizedCompressed,  "toLowerHWOptimizedCompressed",  "(Ljava/lang/String;)Z")},
-      {x(TR::java_lang_String_toLowerHWOptimizedDecompressed,"toLowerHWOptimizedDecompressed",  "(Ljava/lang/String;)Z")},
-      {x(TR::java_lang_String_toLowerHWOptimized,  "toLowerHWOptimized",  "(Ljava/lang/String;)Z")},
-      {x(TR::java_lang_String_StrHWAvailable,      "StrHWAvailable", "()Z")},
       {x(TR::java_lang_String_unsafeCharAt,        "unsafeCharAt",        "(I)C")},
       {x(TR::java_lang_String_split_str_int,       "split",               "(Ljava/lang/String;I)[Ljava/lang/String;")},
       {x(TR::java_lang_String_getChars_charArray,  "getChars",            "(II[CI)V")},
@@ -3321,7 +3314,16 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {x(TR::com_ibm_jit_JITHelpers_byteToCharUnsigned,                       "byteToCharUnsigned", "(B)C")},
       {x(TR::com_ibm_jit_JITHelpers_acmplt,                                   "acmplt", "(Ljava/lang/Object;Ljava/lang/Object;)Z")},
       {x(TR::com_ibm_jit_JITHelpers_getClassInitializeStatus,                 "getClassInitializeStatus", "(Ljava/lang/Class;)I")},
-      {  TR::unknownMethod}
+      {x(TR::com_ibm_jit_JITHelpers_supportsIntrinsicCaseConversion,          "supportsIntrinsicCaseConversion", "()Z")},
+      {x(TR::com_ibm_jit_JITHelpers_toUpperIntrinsicLatin1,                   "toUpperIntrinsicLatin1", "([B[BI)Z")},
+      {x(TR::com_ibm_jit_JITHelpers_toUpperIntrinsicLatin1,                   "toUpperIntrinsicLatin1", "([C[CI)Z")},
+      {x(TR::com_ibm_jit_JITHelpers_toLowerIntrinsicLatin1,                   "toLowerIntrinsicLatin1", "([B[BI)Z")},
+      {x(TR::com_ibm_jit_JITHelpers_toLowerIntrinsicLatin1,                   "toLowerIntrinsicLatin1", "([C[CI)Z")},
+      {x(TR::com_ibm_jit_JITHelpers_toUpperIntrinsicUTF16,                    "toUpperIntrinsicUTF16", "([B[BI)Z")},
+      {x(TR::com_ibm_jit_JITHelpers_toUpperIntrinsicUTF16,                    "toUpperIntrinsicUTF16", "([C[CI)Z")},
+      {x(TR::com_ibm_jit_JITHelpers_toLowerIntrinsicUTF16,                    "toLowerIntrinsicUTF16", "([B[BI)Z")},
+      {x(TR::com_ibm_jit_JITHelpers_toLowerIntrinsicUTF16,                    "toLowerIntrinsicUTF16", "([C[CI)Z")},
+      { TR::unknownMethod}
       };
 
    static X StringUTF16Methods[] =

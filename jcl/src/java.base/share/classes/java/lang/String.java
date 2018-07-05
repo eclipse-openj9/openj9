@@ -71,7 +71,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 /*[IF Sidecar19-SE]*/
 	// DO NOT CHANGE OR MOVE THIS LINE
 	// IT MUST BE THE FIRST THING IN THE INITIALIZATION
-	private static final boolean STRING_OPT_IN_HW = StrCheckHWAvailable();
 	private static final long serialVersionUID = -6849794470754667710L;
 
 	/**
@@ -876,17 +875,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		value = string.value;
 		coder = string.coder;
 		hashCode = string.hashCode;
-	}
-
-	/**
-	 * Creates a new string from the with specified length
-	 *
-	 * @param numChars
-	 *			  length of new string
-	 */
-	private String(int numChars) {
-		value = new byte[numChars * 2];
-		coder = UTF16;
 	}
 
 	/**
@@ -2709,15 +2697,26 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			return this;
 		}
 
-		if (StrHWAvailable() && language == "en") { //$NON-NLS-1$
-			String output = new String(lengthInternal());
-			if (toLowerHWOptimized(output))
-				return output;
-		}
+		int sLength = lengthInternal();
 
 		if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
+
+			if (helpers.supportsIntrinsicCaseConversion() && language == "en") { //$NON-NLS-1$
+				byte[] output = new byte[sLength << coder];
+
+				if (helpers.toLowerIntrinsicLatin1(value, output, sLength)) {
+					return new String(output, LATIN1);
+				}
+			}
 			return StringLatin1.toLowerCase(this, value, locale);
 		} else {
+			if (helpers.supportsIntrinsicCaseConversion() && language == "en") { //$NON-NLS-1$
+				byte[] output = new byte[sLength << coder];
+
+				if (helpers.toLowerIntrinsicUTF16(value, output, sLength * 2)) {
+					return new String(output, UTF16);
+				}
+			}
 			return StringUTF16.toLowerCase(this, value, locale);
 		}
 	}
@@ -2755,15 +2754,26 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			return this;
 		}
 
-		if (StrHWAvailable() && language == "en") { //$NON-NLS-1$
-		   String output = new String(lengthInternal()); 
-		   if (toUpperHWOptimized(output))
-				return output;
-		}
+		int sLength = lengthInternal();
 
 		if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
+
+			if (helpers.supportsIntrinsicCaseConversion() && language == "en") { //$NON-NLS-1$
+				byte[] output = new byte[sLength << coder];
+
+				if (helpers.toUpperIntrinsicLatin1(value, output, sLength)) {
+					return new String(output, LATIN1);
+				}
+			}
 			return StringLatin1.toUpperCase(this, value, locale);
 		} else {
+			if (helpers.supportsIntrinsicCaseConversion() && language == "en") { //$NON-NLS-1$
+				byte[] output = new byte[sLength << coder];
+
+				if (helpers.toUpperIntrinsicUTF16(value, output, sLength * 2)) {
+					return new String(output, UTF16);
+				}
+			}
 			return StringUTF16.toUpperCase(this, value, locale);
 		}
 	}
@@ -3811,33 +3821,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		return stringJoiner.toString();
 	}
 
-	// DO NOT MODIFY THIS METHOD
-	/*
-	 * The method is only called once to setup the flag DFP_HW_AVAILABLE Return value true - when JIT compiled this method, replaces it with loadconst
-	 * 1 if -Xjit:disableHWAcceleratedStringCaseConv hasn't been supplied false - if still interpreting this method or disabled by VM option
-	 */
-	private final static boolean StrCheckHWAvailable() {
-		return false;
-	}
-
-	// DO NOT MODIFY THIS METHOD
-	/*
-	 * Return value true - when JIT compiled this method, replaces it with loadconst 1 if -Xjit:disableHWAcceleratedStringCaseConv hasn't been supplied
-	 * false - if still interpreting this method or disabled by VM option
-	 */
-	private final static boolean StrHWAvailable() {
-		return STRING_OPT_IN_HW;
-	}
-
-	// DO NOT CHANGE CONTENTS OF THESE METHODS
-	private final boolean toUpperHWOptimized(String input) {
-		return false;
-	}
-
-	private final boolean toLowerHWOptimized(String input) {
-		return false;
-	}
-	
 	static void checkBoundsBeginEnd(int begin, int end, int length) {
 		if ((begin >= 0) && (begin <= end) && (end <= length)) {
 			return;
@@ -3946,7 +3929,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 /*[ELSE] Sidecar19-SE*/
 	// DO NOT CHANGE OR MOVE THIS LINE
 	// IT MUST BE THE FIRST THING IN THE INITIALIZATION
-	private static final boolean STRING_OPT_IN_HW = StrCheckHWAvailable();
 	private static final long serialVersionUID = -6849794470754667710L;
 
 	/**
@@ -4726,22 +4708,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		value = string.value;
 		count = string.count;
 		hashCode = string.hashCode;
-	}
-
-	/**
-	 * Creates a new string from the with specified length
-	 *
-	 * @param numChars
-	 *			  length of new string
-	 */
-	private String(int numChars) {
-		if (enableCompression) {
-			value = new char[numChars];
-			count = numChars | uncompressedBit;
-		} else {
-			value = new char[numChars];
-			count = numChars;
-		}
 	}
 
 	/**
@@ -6745,10 +6711,20 @@ written authorization of the copyright holder.
 			return this;
 		}
 
-		if (StrHWAvailable() && language == "en") { //$NON-NLS-1$
-			String output = new String(lengthInternal());
-			if (toLowerHWOptimized(output))
-				return output;
+		if (helpers.supportsIntrinsicCaseConversion() && language == "en") { //$NON-NLS-1$
+			int sLength = lengthInternal();
+
+			if (enableCompression && (null == compressionFlag || count >= 0)) {
+				char[] output = new char[(sLength + 1) / 2];
+				if (helpers.toLowerIntrinsicLatin1(value, output, sLength)) {
+					return new String(output, 0, sLength, true);
+				}
+			} else {
+				char[] output = new char[sLength];
+				if (helpers.toLowerIntrinsicUTF16(value, output, sLength * 2)) {
+					return new String(output, 0, sLength, false);
+				}
+			}
 		}
 
 		return toLowerCaseCore(language);
@@ -7070,10 +7046,20 @@ written authorization of the copyright holder.
 			return this;
 		}
 
-		if (StrHWAvailable() && language == "en") { //$NON-NLS-1$
-		   String output = new String(lengthInternal()); 
-		   if (toUpperHWOptimized(output))
-				return output;
+		if (helpers.supportsIntrinsicCaseConversion() && language == "en") { //$NON-NLS-1$
+			int sLength = lengthInternal();
+
+			if (enableCompression && (null == compressionFlag || count >= 0)) {
+				char[] output = new char[(sLength + 1) / 2];
+				if (helpers.toUpperIntrinsicLatin1(value, output, sLength)){
+					return new String(output, 0, sLength, true);
+				}
+			} else {
+				char[] output = new char[sLength];
+				if (helpers.toUpperIntrinsicUTF16(value, output, sLength * 2)){
+					return new String(output, 0, sLength, false);
+				}
+			}
 		}
 
 		return toUpperCaseCore(language);
@@ -8268,33 +8254,6 @@ written authorization of the copyright holder.
 		}
 
 		return stringJoiner.toString();
-	}
-
-	// DO NOT MODIFY THIS METHOD
-	/*
-	 * The method is only called once to setup the flag DFP_HW_AVAILABLE Return value true - when JIT compiled this method, replaces it with loadconst
-	 * 1 if -Xjit:disableHWAcceleratedStringCaseConv hasn't been supplied false - if still interpreting this method or disabled by VM option
-	 */
-	private final static boolean StrCheckHWAvailable() {
-		return false;
-	}
-
-	// DO NOT MODIFY THIS METHOD
-	/*
-	 * Return value true - when JIT compiled this method, replaces it with loadconst 1 if -Xjit:disableHWAcceleratedStringCaseConv hasn't been supplied
-	 * false - if still interpreting this method or disabled by VM option
-	 */
-	private final static boolean StrHWAvailable() {
-		return STRING_OPT_IN_HW;
-	}
-
-	// DO NOT CHANGE CONTENTS OF THESE METHODS
-	private final boolean toUpperHWOptimized(String input) {
-		return false;
-	}
-
-	private final boolean toLowerHWOptimized(String input) {
-		return false;
 	}
 
 /*[ENDIF] Sidecar19-SE*/
