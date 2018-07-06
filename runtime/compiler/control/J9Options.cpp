@@ -243,6 +243,8 @@ int32_t J9::Options::_dltPostponeThreshold = 2;
 int32_t J9::Options::_expensiveCompWeight = TR::CompilationInfo::JSR292_WEIGHT;
 int32_t J9::Options::_jProfilingEnablementSampleThreshold = 10000;
 
+bool J9::Options::_aggressiveLockReservation = false;
+
 //************************************************************************
 //
 // Options handling - the following code implements the VM-specific

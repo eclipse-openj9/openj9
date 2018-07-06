@@ -410,4 +410,7 @@
 	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_CLASSLOADER_TYPE_OTHERS" signature="I"/>
 	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_CLASSLOADER_TYPE_BOOT" signature="I"/>
 	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_CLASSLOADER_TYPE_PLATFORM" signature="I"/>
+
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9CLASS_RESERVABLE_LOCK_WORD_INIT" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="OBJECT_HEADER_LOCK_RESERVED" signature="I"/>
 </vmconstantpool>

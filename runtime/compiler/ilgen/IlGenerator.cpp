@@ -148,9 +148,6 @@ TR_J9ByteCodeIlGenerator::genIL()
          }
       }
 
-   if (comp()->getOption(TR_ReservingLocks) && comp()->getCurrentMethod()->isSynchronized())
-      fej9()->scanClassForReservation(comp()->getCurrentMethod()->containingClass(), comp());
-
    /*
     * If we're generating IL for DecimalformatHelper.formatAsDouble(Float), replace
     * the necessary fields, statics, and methods appropriately.  This is part of
