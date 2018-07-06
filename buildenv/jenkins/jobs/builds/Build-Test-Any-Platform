@@ -74,7 +74,7 @@ timeout(time: 10, unit: 'HOURS') {
         } else {
             checkout scm
             testFile = load 'buildenv/jenkins/common/test'
-
+            cleanWs()
             if (params.UPSTREAM_JOB_NAME && params.UPSTREAM_JOB_NUMBER) {
                 // test pipeline: fetch resources from upstream job, run tests,
                 // archive results, clean up
