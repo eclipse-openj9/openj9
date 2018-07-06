@@ -410,26 +410,4 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</objects>
 	</artifact>
 
-	<artifact type="target" name="omrddrgen">
-		<include-if condition="spec.flags.module_ddr and spec.flags.opt_useOmrDdr"/>
-		<dependencies>
-			<dependency name="phase_core"/>
-			<dependency name="phase_j2se"/>
-			<dependency name="phase_util"/>
-			<dependency name="win">
-				<include-if condition="spec.flags.module_windbg and not spec.flags.J9VM_ENV_DATA64" />
-			</dependency>
-			<dependency name="win_64">
-				<include-if condition="spec.flags.module_windbg and spec.flags.J9VM_ENV_DATA64" />
-			</dependency>
-			<dependency name="jvmtitest">
-				<include-if condition="spec.win_.*"/>
-			</dependency>
-		</dependencies>
-		<commands>
-			<command line="$(MAKE) -C ddr -f run_omrddrgen.mk" type="all"/>
-			<command line="$(MAKE) -C ddr -f run_omrddrgen.mk clean" type="clean"/>
-		</commands>
-	</artifact>
-
 </module>
