@@ -24,11 +24,15 @@
 </#list>
 
 # Define the Java Version we are compiling
-VERSION_MAJOR?=8
+ifndef VERSION_MAJOR
+$(error VERSION_MAJOR is not set from extensions code)
+endif
 export VERSION_MAJOR
 
 # Define full Java Version
-OPENJDK_VERSION_NUMBER_FOUR_POSITIONS?=8.0.0.0
+ifndef OPENJDK_VERSION_NUMBER_FOUR_POSITIONS
+$(error OPENJDK_VERSION_NUMBER_FOUR_POSITIONS is not set from extensions code)
+endif
 export OPENJDK_VERSION_NUMBER_FOUR_POSITIONS
 
 # Define a default target of the root directory for all targets.
