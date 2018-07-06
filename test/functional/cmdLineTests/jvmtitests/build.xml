@@ -33,6 +33,8 @@
 	<property name="src" location="./src"/>
 	<property name="src_current" location="./src_current"/>
 	<property name="src_latest" location="./src_latest"/>
+	<property name="src_80" location="./src_80"/>
+	<property name="src_90" location="./src_90"/>
 	<property name="build" location="./bin"/>
 	<property name="asm.jar" location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
 
@@ -52,8 +54,9 @@
 		<if>
 			<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
 			<then>
-				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+				<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src}" />
+					<src path="${src_80}"/>
 					<classpath>
 						<pathelement location="${asm.jar}" />
 						<pathelement location="${JAVA_BIN}/../../lib/tools.jar" />
@@ -61,7 +64,7 @@
 				</javac>
 			</then>
 			<else>
-				<property name="addExports" value="--add-exports java.base/jdk.internal.module=ALL-UNNAMED --add-exports java.base/com.ibm.tools.attach.target=ALL-UNNAMED --add-exports java.base/com.ibm.tools.attach=ALL-UNNAMED" />
+				<property name="addExports" value="--add-exports java.base/jdk.internal.module=ALL-UNNAMED --add-exports java.base/com.ibm.tools.attach.target=ALL-UNNAMED --add-exports java.base/com.ibm.tools.attach=ALL-UNNAMED --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED" />
 				<if>
 					<equals arg1="${JCL_VERSION}" arg2="latest"/>
 					<then>
@@ -73,8 +76,9 @@
 						<property name="excludeFile" value="" />
 					</else>
 				</if>
-				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+				<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src}"/>
+					<src path="${src_90}"/>
 					<src path="${extraSrc}"/>
 					<exclude name="${excludeFile}" />
 					<compilerarg line="${addExports}" />
