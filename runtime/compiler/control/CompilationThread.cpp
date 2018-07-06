@@ -7122,6 +7122,11 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
    if (_compiler && _compiler->getKnownObjectTable())
       _compiler->freeKnownObjectTable();
 
+   if (_compiler && _compiler->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+      {
+      _compiler->getOptions()->closeLogFileForClientOptions();
+      }
+
    if (_compiler)
       _compiler->~Compilation();
 
@@ -7318,6 +7323,11 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
 
       Trc_JIT_outOfMemory(vmThread);
 
+      if (getCompilation() && getCompilation()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+         {
+         getCompilation()->getOptions()->closeLogFileForClientOptions();
+         }
+
       if (getCompilation())
          {
          getCompilation()->~Compilation();
@@ -7467,6 +7477,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
          if (that->_methodBeingCompiled->_clientOptions != nullptr)
             {
             options = TR::Options::unpackOptions(that->_methodBeingCompiled->_clientOptions, that->_methodBeingCompiled->_clientOptionsSize, p->trMemory());
+            options->setLogFileForClientOptions();
             }
          else
             {
@@ -8010,6 +8021,11 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
       Trc_JIT_outOfMemory(vmThread);
 
+      if (compiler && compiler->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+         {
+         compiler->getOptions()->closeLogFileForClientOptions();
+         }
+
       if (compiler)
          {
          compiler->~Compilation();
@@ -8284,31 +8300,35 @@ TR::CompilationInfoPerThreadBase::compile(
             ((TR_CreateDebug_t)_jitConfig->tracingHook)(compiler)
          );
 
-      // Print compiling method
-      //
-      struct CompilationTrace
+      // JITaaS: should not do this in client mode as the client doesn't compile anything
+      if (compiler->getPersistentInfo()->getJITaaSMode() != CLIENT_MODE)
          {
-         CompilationTrace(TR::Compilation &compiler) : _compiler(compiler)
+         // Print compiling method
+         //
+         struct CompilationTrace
             {
-            TR_ASSERT(_compiler.getHotnessName(_compiler.getMethodHotness()), "expected to have a hotness string");
-            if (_compiler.getOutFile() != NULL && _compiler.getOption(TR_TraceAll))
-               traceMsg(&_compiler, "<compile\n"
-                       "\tmethod=\"%s\"\n"
-                       "\thotness=\"%s\"\n"
-                       "\tisProfilingCompile=%d>\n",
-                       _compiler.signature(),
-                       _compiler.getHotnessName(_compiler.getMethodHotness()),
-                       _compiler.isProfilingCompilation());
-            }
-         ~CompilationTrace() throw()
-            {
-            if (_compiler.getOutFile() != NULL && _compiler.getOption(TR_TraceAll))
-               traceMsg(&_compiler, "</compile>\n\n");
-            }
-      private:
-         TR::Compilation &_compiler;
-         };
-      CompilationTrace compilationTrace(*compiler);
+            CompilationTrace(TR::Compilation &compiler) : _compiler(compiler)
+               {
+               TR_ASSERT(_compiler.getHotnessName(_compiler.getMethodHotness()), "expected to have a hotness string");
+               if (_compiler.getOutFile() != NULL && _compiler.getOption(TR_TraceAll))
+                  traceMsg(&_compiler, "<compile\n"
+                          "\tmethod=\"%s\"\n"
+                          "\thotness=\"%s\"\n"
+                          "\tisProfilingCompile=%d>\n",
+                          _compiler.signature(),
+                          _compiler.getHotnessName(_compiler.getMethodHotness()),
+                          _compiler.isProfilingCompilation());
+               }
+            ~CompilationTrace() throw()
+               {
+               if (_compiler.getOutFile() != NULL && _compiler.getOption(TR_TraceAll))
+                  traceMsg(&_compiler, "</compile>\n\n");
+               }
+         private:
+            TR::Compilation &_compiler;
+            };
+         CompilationTrace compilationTrace(*compiler);
+         }
 
       if (TR::Options::isAnyVerboseOptionSet(TR_VerbosePerformance, TR_VerboseCompileStart))
          {
@@ -8716,7 +8736,10 @@ TR::CompilationInfoPerThreadBase::compile(
             }
          }
 
-      logCompilationSuccess(vmThread, vm, method, scratchSegmentProvider, compilee, compiler, metaData, optimizationPlan);
+      if (_compInfo.getPersistentInfo()->getJITaaSMode() != CLIENT_MODE)
+         {
+         logCompilationSuccess(vmThread, vm, method, scratchSegmentProvider, compilee, compiler, metaData, optimizationPlan);
+         }
       TRIGGER_J9HOOK_JIT_COMPILING_END(_jitConfig->hookInterface, vmThread, method);
       }
    catch (const std::exception &e)

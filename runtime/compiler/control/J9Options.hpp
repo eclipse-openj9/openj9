@@ -285,6 +285,8 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
 
    static uintptr_t _mandatoryCodeCacheAddress;
 
+   static uint32_t _compilationSequenceNumber;
+
    static void  printPID();
 
 
@@ -317,6 +319,8 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static std::string packOptions(TR::Options *origOptions);
    static TR::Options *unpackOptions(char *clientOptions, size_t clientOptionsSize, TR_Memory *trMemory);
    static uint8_t *appendContent(char * &charPtr, uint8_t * curPos, size_t length);
+   void setLogFileForClientOptions();
+   void closeLogFileForClientOptions();
 
    bool  fePreProcess(void *base);
    bool  fePostProcessAOT(void *base);

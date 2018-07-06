@@ -249,6 +249,8 @@ bool J9::Options::_aggressiveLockReservation = false;
 
 uintptr_t J9::Options::_mandatoryCodeCacheAddress = 0;
 
+uint32_t J9::Options::_compilationSequenceNumber = 0;
+
 //************************************************************************
 //
 // Options handling - the following code implements the VM-specific
@@ -2623,6 +2625,7 @@ J9::Options::printPID()
    ((TR_J9VMBase *)_fe)->printPID();
    }
 
+void getTRPID(char *buf);
 // Packs a TR::Options object into a std::string to be transfered to the server
 std::string
 J9::Options::packOptions(TR::Options *origOptions)
@@ -2632,8 +2635,18 @@ J9::Options::packOptions(TR::Options *origOptions)
    size_t blockShufflingSequenceLength = 0;
    size_t induceOSRLength = 0;
 
+   char buf[1025];
    if (origOptions->_logFileName)
-      logFileNameLength = strlen(origOptions->_logFileName) + 1;
+      {
+      char pidBuf[20];
+      memset(pidBuf, 0, 20);
+      getTRPID(pidBuf);
+      logFileNameLength = strlen(origOptions->_logFileName) + strlen(pidBuf) + 2;
+      if (logFileNameLength > 1025)
+         logFileNameLength = 1025;
+      snprintf(buf, logFileNameLength, "%s.%s", origOptions->_logFileName, pidBuf);
+      origOptions->_logFileName = buf;
+      }
    if (origOptions->_suffixLogsFormat)
       suffixLogsFormatLength = strlen(origOptions->_suffixLogsFormat) + 1;
    if (origOptions->_blockShufflingSequence)
@@ -2725,6 +2738,41 @@ J9::Options::appendContent(char * &charPtr, uint8_t * curPos, size_t length)
    return curPos += length;
    }
 
+TR_Debug *createDebugObject(TR::Compilation *);
+// JITaaS: create a log file for each client compilation request
+// Side effect: set _logFile
+void
+J9::Options::setLogFileForClientOptions()
+   {
+   if (self()->_logFileName)
+      {
+      _fe->acquireLogMonitor();
+      _compilationSequenceNumber++;
+      self()->setOption(TR_EnablePIDExtension, false);
+
+      self()->openLogFile(_compilationSequenceNumber);
+      if (_logFile != NULL)
+         {
+         J9JITConfig *jitConfig = (J9JITConfig*)_feBase;
+         if (!jitConfig->tracingHook)
+            {
+            jitConfig->tracingHook = (void*) (TR_CreateDebug_t)createDebugObject;
+            suppressLogFileBecauseDebugObjectNotCreated(false);
+            _hasLogFile = true;
+            }
+         }
+      _fe->releaseLogMonitor();
+      }
+   }
+
+void
+J9::Options::closeLogFileForClientOptions()
+   {
+   if (self()->_logFile)
+      {
+      TR::Options::closeLogFile(_fe, self()->_logFile);
+      }
+   }
 #if 0
 char*
 J9::Options::setCounts()
