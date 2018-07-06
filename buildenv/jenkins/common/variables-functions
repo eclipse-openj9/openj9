@@ -199,9 +199,12 @@ def get_user_credentials_id(KEY) {
 */
 def set_node(job_type) {
     // fetch labels for given platform/spec
-    NODE = (!params.NODE) ? get_value(VARIABLES."${SPEC}".node_labels."${job_type}", SDK_VERSION) : params.NODE
+    NODE = params.NODE
     if (!NODE) {
-        error("Cannot find label value matching JOB_TYPE:'${job_type}' SPEC:'${SPEC}' and SDK_VERSION:'${SDK_VERSION}'")
+        NODE = get_value(VARIABLES."${SPEC}".node_labels."${job_type}", SDK_VERSION)
+        if (!NODE) {
+            error("Cannot find label value matching JOB_TYPE:'${job_type}' SPEC:'${SPEC}' and SDK_VERSION:'${SDK_VERSION}'")
+        }
     }
 }
 
