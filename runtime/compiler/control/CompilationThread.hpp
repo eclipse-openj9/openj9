@@ -404,6 +404,8 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    void                   relocateThunks();
    PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> & getCustomClassByNameMap() { return _customClassByNameMap; }
    PersistentUnorderedSet<TR_OpaqueClassBlock*> *getClassesThatShouldNotBeNewlyExtended() { return _classesThatShouldNotBeNewlyExtended; }
+   uint32_t               getLastLocalGCCounter() { return _lastLocalGCCounter; }
+   uint32_t               updateLastLocalGCCounter(); 
 
    private:
    J9::J9SegmentCache initializeSegmentCache(J9::J9SegmentProvider &segmentProvider);
@@ -429,6 +431,8 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    // The cache only lives during a compilation due to class unloading concerns
    PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> _customClassByNameMap;
    PersistentUnorderedSet<TR_OpaqueClassBlock*> *_classesThatShouldNotBeNewlyExtended;
+   uint32_t               _lastLocalGCCounter;
+
    }; // CompilationInfoPerThread
 
 extern thread_local TR::CompilationInfoPerThread * compInfoPT;

@@ -12095,3 +12095,9 @@ bool TR::CompilationInfo::canProcessJProfilingRequest()
       return true;
       }
    }
+
+uint32_t
+TR::CompilationInfoPerThread::updateLastLocalGCCounter()
+   {
+   _lastLocalGCCounter = getCompilationInfo()->getLocalGCCounter();
+   }

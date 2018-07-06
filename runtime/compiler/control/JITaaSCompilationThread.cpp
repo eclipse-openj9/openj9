@@ -147,9 +147,11 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
    TR_ASSERT(TR::MonitorTable::get()->getClassUnloadMonitorHoldCount(compInfoPT->getCompThreadId()) == 0, "Must not hold classUnloadMonitor");
    TR::MonitorTable *table = TR::MonitorTable::get();
    TR_ASSERT(table && table->isThreadInSafeMonitorState(vmThread), "Must not hold any monitors when waiting for server");
+
    releaseVMAccess(vmThread);
 
    auto response = client->read();
+
 
    // re-acquire VM access and check for possible class unloading
    acquireVMAccessNoSuspend(vmThread);
@@ -498,6 +500,13 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::VM_getInt32FieldAt:
          {
+         if (compInfoPT->getLastLocalGCCounter() != compInfoPT->getCompilationInfo()->getLocalGCCounter())
+            {
+            // GC happened, fail compilation
+            auto comp = compInfoPT->getCompilation();
+            comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted due to GC");
+            }
+
          auto recv = client->getRecvData<uintptrj_t, uintptrj_t>();
          uintptrj_t objectPointer = std::get<0>(recv);
          uintptrj_t fieldOffset = std::get<1>(recv);
@@ -534,6 +543,13 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::VM_getArrayLengthInElements:
          {
+         if (compInfoPT->getLastLocalGCCounter() != compInfoPT->getCompilationInfo()->getLocalGCCounter())
+            {
+            // GC happened, fail compilation
+            auto comp = compInfoPT->getCompilation();
+            comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted due to GC");
+            }
+
          uintptrj_t objectPointer = std::get<0>(client->getRecvData<uintptrj_t>());
          client->write(fe->getArrayLengthInElements(objectPointer));
          }
@@ -1568,6 +1584,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
       case J9ServerMessageType::runFEMacro_derefUintptrjPtr:
          {
          TR::VMAccessCriticalSection deref(fe);
+         compInfoPT->updateLastLocalGCCounter();
          client->write(*std::get<0>(client->getRecvData<uintptrj_t*>()));
          }
          break;
@@ -1575,6 +1592,14 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          {
          auto recv = client->getRecvData<uintptrj_t>();
          TR::VMAccessCriticalSection invokeILGenMacrosInvokeExactAndFixup(fe);
+
+         if (compInfoPT->getLastLocalGCCounter() != compInfoPT->getCompilationInfo()->getLocalGCCounter())
+            {
+            // GC happened, fail compilation
+            auto comp = compInfoPT->getCompilation();
+            comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted due to GC");
+            }
+
          uintptrj_t methodHandle = std::get<0>(recv);
          uintptrj_t methodDescriptorRef = fe->getReferenceField(fe->getReferenceField(
             methodHandle,
@@ -1858,6 +1883,13 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::runFEMacro_invokeILGenMacros:
          {
+         if (compInfoPT->getLastLocalGCCounter() != compInfoPT->getCompilationInfo()->getLocalGCCounter())
+            {
+            // GC happened, fail compilation
+            auto comp = compInfoPT->getCompilation();
+            comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted due to GC");
+            }
+
          uintptrj_t methodHandle = std::get<0>(client->getRecvData<uintptrj_t>());
          TR::VMAccessCriticalSection invokeILGenMacros(fe);
          uintptrj_t arguments = fe->getReferenceField(fe->getReferenceField(
@@ -2039,6 +2071,7 @@ remoteCompile(
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, e.what());
+      
       compiler->failCompilation<JITaaS::StreamFailure>(e.what());
       }
    JITaaS::Status status = client.waitForFinish();

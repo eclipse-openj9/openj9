@@ -967,6 +967,8 @@ public:
    void markCHTableUpdateDone(uint8_t threadId) { _chTableUpdateFlags |= 1 << threadId; }
    void resetCHTableUpdateDone(uint8_t threadId) { _chTableUpdateFlags &= ~(1 << threadId); }
    uint8_t getCHTableUpdateDone() { return _chTableUpdateFlags; }
+   uint32_t getLocalGCCounter() { return _localGCCounter; }
+   void incrementLocalGCCounter() { _localGCCounter++; }
 
    static int32_t         VERY_SMALL_QUEUE;
    static int32_t         SMALL_QUEUE;
@@ -1155,6 +1157,8 @@ private:
    // JITaaS table of newly extended classes
    PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t> *_newlyExtendedClasses;
    uint8_t _chTableUpdateFlags;
+   // number of local gc cycles done
+   uint32_t _localGCCounter = 0;
    }; // CompilationInfo
 }
 
