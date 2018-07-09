@@ -366,7 +366,7 @@ TR::Register * caseConversionHelper(TR::Node* node, TR::CodeGenerator* cg, bool 
    // VLL and VSTL take an index, not a count, so subtract the count by 1
    generateRILInstruction(cg, TR::InstOpCode::SLFI, node, loadLength, 1);
 
-   generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, charBufferVector, loadLength, generateS390MemoryReference(sourceRegister, addressOffset, headerSize, cg));
+   generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, charBufferVector, loadLength, generateS390MemoryReference(sourceRegister, headerSize, cg));
 
    // Check for invalid characters, go to fallback individual character conversion implementation
    if (!isCompressedString)
@@ -379,7 +379,7 @@ TR::Register * caseConversionHelper(TR::Node* node, TR::CodeGenerator* cg, bool 
    generateVRRcInstruction(cg, isToUpper ? TR::InstOpCode::VS : TR::InstOpCode::VA, node, modifiedCaseVector, charBufferVector, charOffsetVector, 0x0, 0x0, elementSizeMask);
    generateVRReInstruction(cg, TR::InstOpCode::VSEL, node, modifiedCaseVector, modifiedCaseVector, charBufferVector, selectionVector);
 
-   generateVRSbInstruction(cg, TR::InstOpCode::VSTL, node, modifiedCaseVector, loadLength, generateS390MemoryReference(destRegister, addressOffset, headerSize, cg), 0);
+   generateVRSbInstruction(cg, TR::InstOpCode::VSTL, node, modifiedCaseVector, loadLength, generateS390MemoryReference(destRegister, headerSize, cg), 0);
 
    // Increment index by the remainder then add 1, since the loadLength contains the highest index, we must go one past that
    generateRIEInstruction(cg, TR::InstOpCode::AHIK, node, addressOffset, loadLength, 1);
