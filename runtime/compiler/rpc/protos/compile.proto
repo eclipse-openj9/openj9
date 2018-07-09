@@ -203,6 +203,7 @@ enum J9ServerMessageType
    ClassEnv_iTableOf = 406;
    ClassEnv_iTableNext = 407;
    ClassEnv_iTableRomClass = 408;
+   ClassEnv_getITable = 409;
 
    // For TR_J9SharedCache
    SharedCache_getClassChainOffsetInSharedCache = 500;

@@ -36,6 +36,7 @@ namespace J9 { typedef J9::ClassEnv ClassEnvConnector; }
 #include "infra/Annotations.hpp"
 #include "env/jittypes.h"
 #include "j9.h"
+#include <vector>
 
 namespace TR { class SymbolReference; }
 
@@ -66,6 +67,7 @@ public:
    J9ITable *iTableOf(TR_OpaqueClassBlock * clazz);
    J9ITable *iTableNext(J9ITable *current);
    J9ROMClass *iTableRomClass(J9ITable *current);
+   std::vector<TR_OpaqueClassBlock *> getITable(TR_OpaqueClassBlock *clazz);
 
    J9Class **superClassesOf(TR_OpaqueClassBlock * clazz);
 

@@ -3,6 +3,7 @@
 #include "control/CompilationRuntime.hpp"
 #include "control/JITaaSCompilationThread.hpp"
 #include "env/j9methodServer.hpp"
+#include "env/PersistentCollections.hpp"
 
 static J9Method *ramMethodFromRomMethod(J9JITConfig *jitConfig, J9VMThread *vmThread,
                                        const J9ROMClass* romClass, const J9ROMMethod* romMethod,
@@ -138,8 +139,8 @@ void J9CompileDispatcher::compile(JITaaS::J9ServerStream *stream)
       {
       auto req = stream->read<uint64_t, std::string, uint32_t, J9Method *, J9Class*, TR_Hotness, std::string, 
                               J9::IlGeneratorMethodDetailsType, std::vector<TR_OpaqueClassBlock*>, J9Method*,
-                              TR_OpaqueClassBlock *, int32_t,
-                              TR_OpaqueClassBlock *, std::string>();
+                              TR_OpaqueClassBlock *, int32_t, TR_OpaqueClassBlock *, 
+                              std::vector<TR_OpaqueClassBlock *>, std::string>();
 
       PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
       TR_J9VMBase *fej9 = TR_J9VMBase::get(_jitConfig, _vmThread);
@@ -160,8 +161,11 @@ void J9CompileDispatcher::compile(JITaaS::J9ServerStream *stream)
       TR_OpaqueClassBlock *baseComponentClass = std::get<10>(req);
       int32_t numDims = std::get<11>(req);
       TR_OpaqueClassBlock *parentClass = std::get<12>(req);
-
-      std::string clientOptionsStr = std::get<13>(req);
+      std::vector<TR_OpaqueClassBlock *> tmpInterfaces = std::get<13>(req); 
+      auto interfaces = new (PERSISTENT_NEW) PersistentVector<TR_OpaqueClassBlock *>
+         (tmpInterfaces.begin(), tmpInterfaces.end(),
+          PersistentVector<TR_OpaqueClassBlock *>::allocator_type(TR::Compiler->persistentAllocator()));
+      std::string clientOptionsStr = std::get<14>(req);
 
       size_t clientOptionsSize = clientOptionsStr.size();
       clientOptions = new (PERSISTENT_NEW) char[clientOptionsSize];
@@ -188,7 +192,7 @@ void J9CompileDispatcher::compile(JITaaS::J9ServerStream *stream)
          if (!(romClass = JITaaSHelpers::getRemoteROMClassIfCached(clientSession, clazz)))
             {
             romClass = TR_ResolvedJ9JITaaSServerMethod::romClassFromString(romClassStr, fej9->_compInfo->persistentMemory());
-            JITaaSHelpers::cacheRemoteROMClass(clientSession, clazz, romClass, methodsOfClass, baseComponentClass, numDims, parentClass);
+            JITaaSHelpers::cacheRemoteROMClass(clientSession, clazz, romClass, methodsOfClass, baseComponentClass, numDims, parentClass, interfaces);
             }
 
          clientSession->decInUse();

@@ -29,7 +29,8 @@ TR_J9ServerVM::isClassLibraryClass(TR_OpaqueClassBlock *clazz)
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getSuperClass(TR_OpaqueClassBlock *classPointer)
    {
-   // first, check if the superclass is already cached
+   // first, check if the superclass is already cached,
+   // which is always true when the class is loaded
       {
       OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
       auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) classPointer);
@@ -42,7 +43,7 @@ TR_J9ServerVM::getSuperClass(TR_OpaqueClassBlock *classPointer)
    // otherwise, make a query to the client (should happen very infrequently)
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_getSuperClass, classPointer);
-   return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+   return std::get<0>(stream->read<TR_OpaqueClassBlock *>()); 
    }
 
 TR_Method *
@@ -75,15 +76,22 @@ TR_J9ServerVM::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_Opaque
 
 TR_YesNoMaybe
 TR_J9ServerVM::isInstanceOf(TR_OpaqueClassBlock *a, TR_OpaqueClassBlock *b, bool objectTypeIsFixed, bool castTypeIsFixed, bool optimizeForAOT)
-   {
-   // When the two classes are the same we can avoid a remote message
-   // This optimization cuts 70% of the remote messages
-   if (a == b)
-      return castTypeIsFixed ? TR_yes : TR_maybe;
+   { 
+   // use instanceOfOrCheckCast to get the result, because
+   // their logic is mostly the same, remote call might be made from there
+   J9Class * objectClass   = (J9Class *) a;
+   J9Class * castTypeClass = (J9Class *) b;
+   bool objectClassIsInstanceOfCastTypeClass = instanceOfOrCheckCast(objectClass, castTypeClass);
 
-   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_isInstanceOf, a, b, objectTypeIsFixed, castTypeIsFixed, optimizeForAOT);
-   return std::get<0>(stream->read<TR_YesNoMaybe>());
+   if (objectClassIsInstanceOfCastTypeClass)
+      return castTypeIsFixed ? TR_yes : TR_maybe;
+   else if (objectTypeIsFixed && !objectClassIsInstanceOfCastTypeClass)
+      return TR_no;
+   else if (!isInterfaceClass(b) && !isInterfaceClass(a) &&
+         !objectClassIsInstanceOfCastTypeClass &&
+         !instanceOfOrCheckCast(castTypeClass, objectClass))
+      return TR_no;
+   return TR_maybe;
    }
 /*
 bool
@@ -1131,6 +1139,59 @@ TR_J9ServerVM::isClassArray(TR_OpaqueClassBlock *klass)
 bool
 TR_J9ServerVM::instanceOfOrCheckCast(J9Class *instanceClass, J9Class* castClass)
    {
+   if (instanceClass == castClass)
+      return true;
+
+   // When castClass is an ancestor/interface of class instanceClass, can avoid a remote message,
+   // since superclasses and interfaces are cached on the server
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) instanceClass);
+      if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+         {
+         TR_OpaqueClassBlock *instanceClassOffset = (TR_OpaqueClassBlock *) instanceClass;
+         TR_OpaqueClassBlock *castClassOffset = (TR_OpaqueClassBlock *) castClass; 
+
+         // this sometimes results in remote messages, but it happens relatively infrequently
+         for (TR_OpaqueClassBlock *clazz = getSuperClass(instanceClassOffset); clazz; clazz = getSuperClass(clazz))
+            if (clazz == castClassOffset)
+               return true;
+
+         // castClass is an interface, check the cached iTable
+         if (isInterfaceClass(castClassOffset))
+            {
+            auto interfaces = it->second.interfaces;
+            return std::find(interfaces->begin(), interfaces->end(), castClassOffset) != interfaces->end();
+            }
+
+         if (isClassArray(instanceClassOffset) && isClassArray(castClassOffset))
+            {
+            int instanceNumDims = 0, castNumDims = 0;
+            // these are the leaf classes of the arrays, unless the leaf class is primitive.
+            // in that case, return values are one-dimensional arrays, and 
+            // instanceNumDims is 1 less than the actual number of array dimensions
+            instanceClassOffset = getBaseComponentClass(instanceClassOffset, instanceNumDims);
+            castClassOffset = getBaseComponentClass(castClassOffset, castNumDims);
+                       
+            if (instanceNumDims < castNumDims)
+               return false;
+            if (instanceNumDims != 0 && instanceNumDims == castNumDims)
+               return instanceOfOrCheckCast((J9Class *) instanceClassOffset, (J9Class *) castClassOffset);
+
+            // reached when (instanceNumDims > castNumDims), or when one of the arrays contains primitive values.
+            // to correctly deal with these cases on the server, need to call
+            // getComponentFromArrayClass multiple times, or getLeafComponentTypeFromArrayClass.
+            // each call requires a remote message, faster and easier to call instanceOfOrCheckCast on the client
+            JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+            stream->write(JITaaS::J9ServerMessageType::VM_instanceOfOrCheckCast, instanceClass, castClass);
+            return std::get<0>(stream->read<bool>());
+            }
+         // instance class is cached, and all of the checks failed, cast is invalid
+         return false;
+         }
+      }
+
+   // instance class is not cached, make a remote call
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_instanceOfOrCheckCast, instanceClass, castClass);
    return std::get<0>(stream->read<bool>());

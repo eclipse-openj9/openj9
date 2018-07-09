@@ -36,15 +36,19 @@ romMethodAtClassIndex(J9ROMClass *romClass, uint64_t methodIndex)
    }
 
 J9ROMClass *
-TR_ResolvedJ9JITaaSServerMethod::getRemoteROMClass(J9Class *clazz, JITaaS::J9ServerStream *stream, TR_Memory *trMemory, J9Method **methods, TR_OpaqueClassBlock **baseClass, int32_t *numDims, TR_OpaqueClassBlock **parentClass)
+TR_ResolvedJ9JITaaSServerMethod::getRemoteROMClass(J9Class *clazz, JITaaS::J9ServerStream *stream, TR_Memory *trMemory, J9Method **methods, TR_OpaqueClassBlock **baseClass, int32_t *numDims, TR_OpaqueClassBlock **parentClass, PersistentVector<TR_OpaqueClassBlock *> **interfaces)
    {
    stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getRemoteROMClassAndMethods, clazz);
-   auto recv  = stream->read<std::string, J9Method*, TR_OpaqueClassBlock*, int32_t, TR_OpaqueClassBlock *>();
+   auto recv  = stream->read<std::string, J9Method*, TR_OpaqueClassBlock*, int32_t, TR_OpaqueClassBlock *, std::vector<TR_OpaqueClassBlock *>>();
    auto &str  = std::get<0>(recv);
    *methods   = std::get<1>(recv);
    *baseClass = std::get<2>(recv);
    *numDims   = std::get<3>(recv);
    *parentClass = std::get<4>(recv);
+   std::vector<TR_OpaqueClassBlock *> tmpInterfaces = std::get<5>(recv); 
+   *interfaces = new (PERSISTENT_NEW) PersistentVector<TR_OpaqueClassBlock *>
+      (tmpInterfaces.begin(), tmpInterfaces.end(),
+       PersistentVector<TR_OpaqueClassBlock *>::allocator_type(TR::Compiler->persistentAllocator()));
    return romClassFromString(str, trMemory->trPersistentMemory());
    }
 

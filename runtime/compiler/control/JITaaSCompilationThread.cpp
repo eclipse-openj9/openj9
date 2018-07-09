@@ -934,7 +934,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          int32_t numDims = 0;
          TR_OpaqueClassBlock *baseClass = fe->getBaseComponentClass((TR_OpaqueClassBlock *) clazz, numDims);
          TR_OpaqueClassBlock *parentClass = fe->getSuperClass((TR_OpaqueClassBlock *) clazz);
-         client->write(packROMClass(clazz->romClass, trMemory), methodsOfClass, baseClass, numDims, parentClass);
+         client->write(packROMClass(clazz->romClass, trMemory), methodsOfClass, baseClass, numDims, parentClass, TR::Compiler->cls.getITable((TR_OpaqueClassBlock *) clazz));
          }
          break;
       case J9ServerMessageType::ResolvedMethod_isJNINative:
@@ -1566,6 +1566,12 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(TR::Compiler->cls.iTableRomClass(clazz));
          }
          break;
+      case J9ServerMessageType::ClassEnv_getITable:
+         {
+         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(TR::Compiler->cls.getITable(clazz));
+         }
+         break;
       case J9ServerMessageType::ClassEnv_indexedSuperClassOf:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, size_t>();
@@ -2024,6 +2030,7 @@ remoteCompile(
    int32_t numDims = 0;
    TR_OpaqueClassBlock *baseComponentClass = compiler->fej9vm()->getBaseComponentClass((TR_OpaqueClassBlock *) clazz, numDims);
    TR_OpaqueClassBlock *parentClass = compiler->fej9vm()->getSuperClass((TR_OpaqueClassBlock *) clazz);
+   std::vector<TR_OpaqueClassBlock *> interfaces = TR::Compiler->cls.getITable((TR_OpaqueClassBlock *) clazz);
    std::string optionsStr = TR::Options::packOptions(compiler->getOptions());
 
    JITaaS::J9ClientStream client(compInfo->getPersistentInfo()->getJITaaSServerAddress(),
@@ -2043,7 +2050,7 @@ remoteCompile(
 
       client.buildCompileRequest(TR::comp()->getPersistentInfo()->getJITaaSId(), romClassStr, romMethodOffset, 
                                  method, clazz, compiler->getMethodHotness(), detailsStr, details.getType(), 
-                                 unloadedClasses, methodsOfClass, baseComponentClass, numDims, parentClass, optionsStr);
+                                 unloadedClasses, methodsOfClass, baseComponentClass, numDims, parentClass, interfaces, optionsStr);
       // re-acquire VM access and check for possible class unloading
       acquireVMAccessNoSuspend(vmThread);
       if (compInfoPT->compilationShouldBeInterrupted())
@@ -2483,6 +2490,9 @@ ClientSessionData::ClassInfo::freeClassInfo()
       _fieldOrStaticNameCache->~PersistentUnorderedMap<int32_t, std::string>();
       jitPersistentFree(_fieldOrStaticNameCache);
       }
+   // free cached interfaces
+   interfaces->~PersistentVector<TR_OpaqueClassBlock *>();
+   jitPersistentFree(interfaces);
    }
 
 ClientSessionHT*
@@ -2612,11 +2622,11 @@ ClientSessionHT::printStats()
 void 
 JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass,
                                  J9Method *methods, TR_OpaqueClassBlock *baseComponentClass, int32_t numDimensions,
-                                 TR_OpaqueClassBlock *parentClass)
+                                 TR_OpaqueClassBlock *parentClass, PersistentVector<TR_OpaqueClassBlock *> *interfaces)
    {
    OMR::CriticalSection cacheRemoteROMClass(clientSessionData->getROMMapMonitor());
    clientSessionData->getROMClassMap().insert({ clazz, { romClass, methods, baseComponentClass, numDimensions, 
-      nullptr, nullptr, parentClass} });
+      nullptr, nullptr, parentClass, interfaces} });
    uint32_t numMethods = romClass->romMethodCount;
    J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
    for (uint32_t i = 0; i < numMethods; i++)

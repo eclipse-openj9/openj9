@@ -159,6 +159,23 @@ J9::ClassEnv::iTableRomClass(J9ITable *current)
    return current->interfaceClass->romClass;
    }
 
+std::vector<TR_OpaqueClassBlock *>
+J9::ClassEnv::getITable(TR_OpaqueClassBlock *clazz)
+   {
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      // this normally shouldn't be called from the server,
+      // because it will have a cached table
+      stream->write(JITaaS::J9ServerMessageType::ClassEnv_getITable, clazz);
+      return std::get<0>(stream->read<std::vector<TR_OpaqueClassBlock *>>());
+      }
+   std::vector<TR_OpaqueClassBlock *> iTableSerialization;
+   iTableSerialization.reserve((TR::Compiler->cls.romClassOf(clazz)->interfaceCount));
+   for (J9ITable *iTableCur = TR::Compiler->cls.iTableOf(clazz); iTableCur; iTableCur = iTableCur->next)
+      iTableSerialization.push_back((TR_OpaqueClassBlock *) iTableCur->interfaceClass);
+   return iTableSerialization;
+   }
+
 bool
 J9::ClassEnv::isStringClass(TR_OpaqueClassBlock *clazz)
    {

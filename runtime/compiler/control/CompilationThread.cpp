@@ -637,10 +637,10 @@ void TR::CompilationInfo::freeCompilationInfo(J9JITConfig *jitConfig)
 void
 TR::CompilationInfoPerThread::cacheRemoteROMClass(J9Class *clazz, J9ROMClass *romClass, J9Method *methods, 
                                                   TR_OpaqueClassBlock *baseComponentClass, int32_t numDimensions,
-                                                  TR_OpaqueClassBlock *parentClass)
+                                                  TR_OpaqueClassBlock *parentClass, PersistentVector<TR_OpaqueClassBlock *> *interfaces)
    {
    JITaaSHelpers::cacheRemoteROMClass(getClientData(), clazz, romClass, methods, baseComponentClass,
-                                      numDimensions, parentClass);
+                                      numDimensions, parentClass, interfaces);
    }
 
 J9ROMClass *
@@ -659,8 +659,9 @@ TR::CompilationInfoPerThread::getAndCacheRemoteROMClass(J9Class *clazz, TR_Memor
       TR_OpaqueClassBlock *baseClass;
       int32_t numDims;
       TR_OpaqueClassBlock *parentClass;
-      romClass = TR_ResolvedJ9JITaaSServerMethod::getRemoteROMClass(clazz, getStream(), trMemory ? trMemory : TR::comp()->trMemory(), &methods, &baseClass, &numDims, &parentClass);
-      cacheRemoteROMClass(clazz, romClass, methods, baseClass, numDims, parentClass);
+      PersistentVector<TR_OpaqueClassBlock *> *interfaces;
+      romClass = TR_ResolvedJ9JITaaSServerMethod::getRemoteROMClass(clazz, getStream(), trMemory ? trMemory : TR::comp()->trMemory(), &methods, &baseClass, &numDims, &parentClass, &interfaces);
+      cacheRemoteROMClass(clazz, romClass, methods, baseClass, numDims, parentClass, interfaces);
       }
    return romClass;
    }
