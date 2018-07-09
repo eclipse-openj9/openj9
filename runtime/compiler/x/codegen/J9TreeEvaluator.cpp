@@ -10689,91 +10689,6 @@ inlineNanoTime(
    }
 #endif
 
-enum TR_InlinedMathFunctions
-   {
-   TR_Abs_I = 0,
-   TR_Abs_L = 1,
-   };
-
-static bool
-inlineSimpleMathFunction(
-      TR_InlinedMathFunctions func,
-      TR::Node *node,
-      TR::CodeGenerator *cg)
-   {
-   switch(func)
-      {
-      case TR_Abs_I:
-         {
-         TR::Node *firstChild = node->getFirstChild();
-         TR::Register *resultReg = cg->allocateRegister(), *firstReg, *tempReg;
-
-         if (firstChild->getOpCode().isLoadConst())
-            {
-            int32_t value = firstChild->getInt();
-            if (value<0) value = -value;
-
-            generateRegImmInstruction(MOV4RegImm4, node, resultReg, value, cg);
-            node->setRegister(resultReg);
-            cg->decReferenceCount(firstChild);
-            }
-         else
-            {
-            firstReg = cg->evaluate(firstChild);
-            generateRegRegInstruction(MOV4RegReg, node, resultReg, firstReg, cg);
-            if (!firstChild->isNonNegative())
-               {
-                  tempReg = cg->allocateRegister();
-               generateRegRegInstruction(MOV4RegReg, node, tempReg, resultReg, cg);
-               generateRegImmInstruction(SAR4RegImm1, node, tempReg, sizeof(int32_t)*8-1, cg);
-               generateRegRegInstruction(XOR4RegReg, node, resultReg, tempReg, cg);
-               generateRegRegInstruction(SUB4RegReg, node, resultReg, tempReg, cg);
-               cg->stopUsingRegister(tempReg);
-               }
-
-            node->setRegister(resultReg);
-            cg->decReferenceCount(firstChild);
-            }
-
-         return true;
-         }
-
-      case TR_Abs_L:
-         {
-         if (TR::Compiler->target.is32Bit())
-            return false;
-
-         TR::Node *firstChild = node->getFirstChild();
-         TR::Register *resultReg = cg->allocateRegister(), *firstReg, *tempReg;
-
-         firstReg = cg->evaluate(firstChild);
-         generateRegRegInstruction(MOV8RegReg, node, resultReg, firstReg, cg);
-
-         if (!firstChild->isNonNegative())
-            {
-               tempReg = cg->allocateRegister();
-            generateRegRegInstruction(MOV8RegReg, node, tempReg, resultReg, cg);
-            generateRegImmInstruction(SAR8RegImm1, node, tempReg, sizeof(int64_t)*8-1, cg);
-            generateRegRegInstruction(XOR8RegReg, node, resultReg, tempReg, cg);
-            generateRegRegInstruction(SUB8RegReg, node, resultReg, tempReg, cg);
-            cg->stopUsingRegister(tempReg);
-            }
-
-         node->setRegister(resultReg);
-         cg->decReferenceCount(firstChild);
-
-         return true;
-         }
-
-      default:
-         {
-         TR_ASSERT(0,"Undefined simple math function");
-         return false;
-         }
-      }
-   return false;
-   }
-
 static bool
 inlineMathSQRT(
       TR::Node *node,
@@ -11855,16 +11770,6 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
          case TR::java_lang_StrictMath_sqrt:
             {
             return inlineMathSQRT(node, cg);
-            }
-
-         case TR::java_lang_Math_abs_I:
-            {
-            return inlineSimpleMathFunction(TR_Abs_I, node, cg);
-            }
-
-         case TR::java_lang_Math_abs_L:
-            {
-            return inlineSimpleMathFunction(TR_Abs_L, node, cg);
             }
 
          case TR::java_lang_Long_reverseBytes:
@@ -13483,8 +13388,6 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
 
       case TR::java_lang_Math_sqrt:
       case TR::java_lang_StrictMath_sqrt:
-      case TR::java_lang_Math_abs_L:
-      case TR::java_lang_Math_abs_I:
       case TR::java_lang_Long_reverseBytes:
       case TR::java_lang_Integer_reverseBytes:
       case TR::java_lang_Short_reverseBytes:
