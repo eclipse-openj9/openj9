@@ -90,6 +90,16 @@ endif
 export JVM_VERSION:=$(JVM_VERSION)
 endif
 
+ifneq (,$(findstring win,$(SPEC)))
+P=;
+D=\\
+EXECUTABLE_SUFFIX=.exe
+RUN_SCRIPT="cmd /c" 
+RUN_SCRIPT_STRING=$(RUN_SCRIPT)
+SCRIPT_SUFFIX=.bat
+PROPS_DIR=props_win
+endif
+
 # Environment variable OSTYPE is set to cygwin if running under cygwin.
 ifndef CYGWIN
 	OSTYPE?=$(shell echo $$OSTYPE)
@@ -98,18 +108,6 @@ ifndef CYGWIN
 	else
 		CYGWIN:=0
 	endif
-endif
-
-ifneq (,$(findstring win,$(SPEC)))
-P=;
-ifneq ($(CYGWIN),1)
-	D=\\
-endif
-EXECUTABLE_SUFFIX=.exe
-RUN_SCRIPT="cmd /c" 
-RUN_SCRIPT_STRING=$(RUN_SCRIPT)
-SCRIPT_SUFFIX=.bat
-PROPS_DIR=props_win
 endif
 
 ifeq ($(CYGWIN),1)
