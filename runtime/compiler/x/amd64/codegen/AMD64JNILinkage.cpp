@@ -1282,23 +1282,17 @@ void TR::AMD64JNILinkage::checkForJNIExceptions(TR::Node *callNode)
 
    TR::Instruction *instr = generateLabelInstruction(JNE4, callNode, snippetLabel, cg());
 
-   TR_RuntimeHelper helper;
    uint32_t gcMap = _systemLinkage->getProperties().getPreservedRegisterMapForGC();
    if (TR::Compiler->target.is32Bit())
       {
       gcMap |= (_JNIDispatchInfo.argSize<<14);
-      helper = TR_IA32jitThrowCurrentException;
-      }
-   else
-      {
-      helper = TR_AMD64jitThrowCurrentException;
       }
 
    instr->setNeedsGCMap(gcMap);
 
    TR::Snippet *snippet =
       new (trHeapMemory()) TR::X86CheckFailureSnippet(cg(),
-                                     cg()->symRefTab()->findOrCreateRuntimeHelper(helper, false, false, false),
+                                     cg()->symRefTab()->findOrCreateRuntimeHelper(TR_throwCurrentException, false, false, false),
                                      snippetLabel,
                                      instr,
                                      _JNIDispatchInfo.requiresFPstackPop);

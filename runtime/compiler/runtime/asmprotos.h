@@ -112,7 +112,6 @@ JIT_HELPER(jitRetranslateCaller);  // asm calling-convention helper
 JIT_HELPER(jitRetranslateCallerWithPreparation);  // asm calling-convention helper
 JIT_HELPER(jitRetranslateMethod);  // asm calling-convention helper
 JIT_HELPER(jitStackOverflow);  // asm calling-convention helper
-JIT_HELPER(jitThrowAbstractMethodError);  // asm calling-convention helper
 JIT_HELPER(jitThrowArithmeticException);  // asm calling-convention helper
 JIT_HELPER(jitThrowArrayIndexOutOfBounds);  // asm calling-convention helper
 JIT_HELPER(jitThrowArrayStoreException);  // asm calling-convention helper
@@ -120,8 +119,6 @@ JIT_HELPER(jitThrowArrayStoreExceptionWithIP);  // asm calling-convention helper
 JIT_HELPER(jitThrowCurrentException);  // asm calling-convention helper
 JIT_HELPER(jitThrowException);  // asm calling-convention helper
 JIT_HELPER(jitThrowExceptionInInitializerError);  // asm calling-convention helper
-JIT_HELPER(jitThrowIllegalAccessError);  // asm calling-convention helper
-JIT_HELPER(jitThrowIncompatibleClassChangeError);  // asm calling-convention helper
 JIT_HELPER(jitThrowInstantiationException);  // asm calling-convention helper
 JIT_HELPER(jitThrowNullPointerException);  // asm calling-convention helper
 JIT_HELPER(jitThrowWrongMethodTypeException);  // asm calling-convention helper

@@ -888,7 +888,7 @@ TR::Register *TR::IA32PrivateLinkage::buildJNIDispatch(TR::Node *callNode)
 
       TR::Snippet *snippet = new (trHeapMemory()) TR::X86CheckFailureSnippet(
             cg(),
-            cg()->symRefTab()->findOrCreateRuntimeHelper(TR_IA32jitThrowCurrentException, false, false, false),
+            cg()->symRefTab()->findOrCreateRuntimeHelper(TR_throwCurrentException, false, false, false),
             snippetLabel,
             instr,
             requiresFPstackPop
