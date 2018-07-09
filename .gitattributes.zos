@@ -33,6 +33,7 @@ buildspecs/* git-encoding=iso8859-1 working-tree-encoding=iso8859-1
 
 # git's files (which MUST be ASCII)
 .gitattributes git-encoding=iso8859-1 working-tree-encoding=iso8859-1
+.gitattributes.zos git-encoding=iso8859-1 working-tree-encoding=iso8859-1
 .gitignore git-encoding=iso8859-1 working-tree-encoding=iso8859-1
 
 # Binary files
