@@ -34,6 +34,9 @@ public class I64 extends IDATA {
 	// Constructors
 	public I64(long value) {
 		super(value);
+		// When working with 32-bit core files, the constructor for IDATA
+		// will truncate the value to 32 bits: we need all 64-bits here.
+		this.data = value;
 	}
 	
 	public I64(Scalar parameter) {
@@ -144,6 +147,12 @@ public class I64 extends IDATA {
 		}
 
 		return value;
+	}
+
+	public long longValue() {
+		// When working with 32-bit core files, IDATA.longValue() will
+		// truncate the value to 32 bits: we must return all 64-bits here.
+		return data;
 	}
 
 	// bitOr
