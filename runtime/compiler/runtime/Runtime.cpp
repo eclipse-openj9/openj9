@@ -1049,6 +1049,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_releaseVMAccess,            (void *)jitReleaseVMAccess,            TR_Helper);
 #endif
    SET(TR_throwCurrentException,      (void *)jitThrowCurrentException,      TR_Helper);
+   SET(TR_throwClassCastException,    (void *)jitThrowClassCastException,    TR_Helper);
 
    SET(TR_newInstanceImplAccessCheck, (void *)jitNewInstanceImplAccessCheck,         TR_Helper);
 
