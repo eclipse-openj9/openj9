@@ -56,9 +56,6 @@ j9jit_files(
 	p/runtime/Math.spp
 	p/runtime/PicBuilder.spp
 	p/runtime/PPCRelocationTarget.cpp
-	p/runtime/J9PPCCrypto.spp
-	p/runtime/J9PPCSHA.spp
-	p/runtime/J9PPCEC.spp
 	p/runtime/Recomp.cpp
 	p/runtime/Recompilation.spp
 	p/runtime/PPCHWProfiler.cpp

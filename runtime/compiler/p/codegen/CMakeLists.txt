@@ -23,9 +23,7 @@
 j9jit_files(
 	p/codegen/J9UnresolvedDataSnippet.cpp
 	p/codegen/J9CodeGenerator.cpp
-	p/codegen/CryptoCodeGenerator.cpp
 	p/codegen/J9TreeEvaluator.cpp
-	p/codegen/CryptoEvaluator.cpp
 	p/codegen/GenerateInstructions.cpp
 	p/codegen/J9PPCSnippet.cpp
 	p/codegen/J9AheadOfTimeCompile.cpp
