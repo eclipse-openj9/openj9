@@ -633,17 +633,21 @@ class TR_BlockFrequencyInfo
    int32_t getFrequencyInfo(TR::Block *block, TR::Compilation *comp);
    int32_t getFrequencyInfo(TR_ByteCodeInfo &bci, TR::Compilation *comp, bool normalizeForCallers = true, bool trace = true);
    void    setCounterDerivationInfo(TR_BitVector **counterDerivationInfo) { _counterDerivationInfo = counterDerivationInfo; }
+   TR_BitVector ** getCounterDerivativeInfo() { return _counterDerivationInfo; }
    void    setEntryBlockNumber(int32_t number) { _entryBlockNumber = number; }
    bool    isJProfilingData() { return _counterDerivationInfo != NULL; }
    static int32_t *getEnableJProfilingRecompilation() { return &_enableJProfilingRecompilation; }
    static void    enableJProfilingRecompilation() { _enableJProfilingRecompilation = -1; }
+   void setIsQueuedForRecompilation() { _isQueuedForRecompilation = -1; }
+   int32_t *getIsQueuedForRecompilation() { return &_isQueuedForRecompilation; }
+   TR::SymbolReference *getOrCreateSymRefForIsQueuedForRecompilation(TR::Compilation *comp);
 
    void dumpInfo(TR::FILE *);
 
    int32_t getCallCount();
    int32_t getMaxRawCount(int32_t callerIndex);
    int32_t getMaxRawCount();
-
+   int32_t getOriginalBlockNumberToGetRawCount(TR_ByteCodeInfo &bci, TR::Compilation *comp);
    private:
    int32_t getRawCount(TR::ResolvedMethodSymbol *resolvedMethod, TR_ByteCodeInfo &bci, TR_CallSiteInfo *callSiteInfo, int64_t maxCount, TR::Compilation *comp);
    int32_t getRawCount(TR_ByteCodeInfo &bci, TR_CallSiteInfo *callSiteInfo, int64_t maxCount, TR::Compilation *comp);
@@ -660,6 +664,9 @@ class TR_BlockFrequencyInfo
    TR_BitVector    ** _counterDerivationInfo;
    int32_t         _entryBlockNumber;
    static int32_t  _enableJProfilingRecompilation;
+   // Following flag is checked at runtime to know if we have queued this method for recompilation and skip the profiling code
+   int32_t         _isQueuedForRecompilation;
+   TR::SymbolReference *_isQueuedForRecompilationSymRef;
    };
 
 TR_BlockFrequencyInfo * TR_BlockFrequencyInfo::get(TR_PersistentProfileInfo * profileInfo)

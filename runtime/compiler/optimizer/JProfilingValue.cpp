@@ -507,6 +507,9 @@ TR_JProfilingValue::addProfilingTrees(
 
    // Split after the store
    TR::Block *quickTest = originalBlock->split(storeValue->getNextTreeTop(), cfg, true, true);
+   const char * const name = TR::DebugCounter::debugCounterName(comp,
+      "profilingValue/%s/n%dn",
+      comp->signature(),value->getGlobalIndex());
 
    /********************* fallback Block *********************/
 
@@ -562,6 +565,7 @@ TR_JProfilingValue::addProfilingTrees(
    TR::Node *checkKey = TR::Node::createif(comp->il.opCodeForIfCompareNotEquals(roundedType), quickTestValue,
       loadValue(comp, roundedType, address, index, systemConst(example, table->getKeysOffset())));
    TR::TreeTop *checkKeyTree = TR::TreeTop::create(comp, quickTest->getEntry(), checkKey);
+   TR::DebugCounter::prependDebugCounter(comp, name, quickTest->getEntry()->getNextTreeTop());
 
    /********************* quickInc Block *********************/
    // If we aren't extending the blocks, anchor stores for the table address and the value
@@ -593,6 +597,21 @@ TR_JProfilingValue::addProfilingTrees(
 
    // Split the block again, after the increment, so cold paths can merge back
    TR::Block *mainlineReturn = quickInc->split(incTree->getNextTreeTop(), cfg, true, true);
+
+   // Test field isQueuedForRecompilation of BlockFrequencyInfo for profiling compilations.
+   // If we have already queued this method for recompilation means we have enough profiling data
+   // s.t we can skip running this code.
+   static bool disableSkipProfilingCode = (feGetEnv("TR_DisableSkipProfilingValueCode") != NULL);
+   if (comp->isProfilingCompilation() && !disableSkipProfilingCode)
+      {
+      TR_PersistentProfileInfo *profileInfo = comp->getRecompilationInfo()->findOrCreateProfileInfo();
+      TR_BlockFrequencyInfo *bfi = TR_BlockFrequencyInfo::get(profileInfo);
+      TR::Node *loadIsQueuedForRecompilation = TR::Node::createWithSymRef(value, TR::iload, 0, bfi->getOrCreateSymRefForIsQueuedForRecompilation(comp));
+      TR::Node *checkIfQueueForRecompilation = TR::Node::createif(TR::ificmpeq, loadIsQueuedForRecompilation, TR::Node::iconst(value, -1), mainlineReturn->getEntry());
+      TR::TreeTop *checkIfNeedToProfileValue = TR::TreeTop::create(comp, checkIfQueueForRecompilation);
+      originalBlock->append(checkIfNeedToProfileValue);
+      cfg->addEdge(originalBlock, mainlineReturn);
+      }
 
    /********************* slowTest Block *********************/
    TR::Block *slowTest = TR::Block::createEmptyBlock(comp, MAX_COLD_BLOCK_COUNT + 1);

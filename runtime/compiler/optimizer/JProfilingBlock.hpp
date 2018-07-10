@@ -51,7 +51,6 @@ class TR_JProfilingBlock : public TR::Optimization
    static int32_t nestedLoopRecompileThreshold;
    static int32_t loopRecompileThreshold;
    static int32_t recompileThreshold;
-   static int32_t profilingCompileThreshold;
    TR_JProfilingBlock(TR::OptimizationManager *manager)
       : TR::Optimization(manager)
       {}
@@ -62,7 +61,7 @@ class TR_JProfilingBlock : public TR::Optimization
 
    virtual int32_t perform();
    virtual const char * optDetailString() const throw();
-
+   static TR::Node *generateBlockRawCountCalculationNode(TR::Compilation *comp, int32_t blockNumber, TR::Node *node, TR_BlockFrequencyInfo *bfi, TR_BitVector **componentCounters = NULL);
    protected:
    void computeMinimumSpanningTree(BlockParents &parents, BlockPriorityQueue &Q, TR::StackMemoryRegion &stackMemoryRegion);
    int32_t processCFGForCounting(BlockParents &parent, TR::BlockChecklist &countedBlocks, TR::CFGEdge &loopBack);

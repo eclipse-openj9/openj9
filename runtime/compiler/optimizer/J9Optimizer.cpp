@@ -72,6 +72,7 @@
 #include "optimizer/OSRGuardRemoval.hpp"
 #include "optimizer/JProfilingBlock.hpp"
 #include "optimizer/JProfilingValue.hpp"
+#include "optimizer/JProfilingRecompLoopTest.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "optimizer/UnsafeFastPath.hpp"
 #include "optimizer/VarHandleTransformer.hpp"
@@ -279,6 +280,7 @@ static const OptimizationStrategy coldStrategyOpts[] =
    { OMR::rematerialization                                                     },
    { OMR::compactNullChecks,                         OMR::IfEnabled                  },
    { OMR::signExtendLoadsGroup,                      OMR::IfEnabled                  },
+   { OMR::jProfilingRecompLoopTest,                  OMR::IfLoops                    },
    { OMR::jProfilingValue,                           OMR::MustBeDone                 },
    { OMR::trivialDeadTreeRemoval,                                               },
    { OMR::cheapTacticalGlobalRegisterAllocatorGroup, OMR::IfAOTAndEnabled            },
@@ -364,6 +366,7 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::globalDeadStoreElimination,                OMR::IfVoluntaryOSR            },
    { OMR::arraysetStoreElimination                                              },
    { OMR::checkcastAndProfiledGuardCoalescer                                    },
+   { OMR::jProfilingRecompLoopTest,                  OMR::IfLoops                    },
    { OMR::jProfilingValue,                           OMR::MustBeDone                 },
    { OMR::cheapTacticalGlobalRegisterAllocatorGroup, OMR::IfEnabled                  },
    { OMR::globalDeadStoreGroup,                                                 },
@@ -398,6 +401,7 @@ static const OptimizationStrategy reducedWarmStrategyOpts[] =
    { OMR::localCSE                                                              },
    { OMR::treeSimplification,                        OMR::MarkLastRun                 },
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // cleanup at the end
+   { OMR::jProfilingRecompLoopTest,                  OMR::IfLoops                    },
    { OMR::jProfilingValue,                           OMR::MustBeDone                 },
    { OMR::cheapTacticalGlobalRegisterAllocatorGroup, OMR::IfEnabled                  },
    { OMR::endOpts                                                               }
@@ -459,6 +463,7 @@ const OptimizationStrategy hotStrategyOpts[] =
    { OMR::localValuePropagation,                 OMR::MarkLastRun              },
    { OMR::arraycopyTransformation      },
    { OMR::checkcastAndProfiledGuardCoalescer                              },
+   { OMR::jProfilingRecompLoopTest,              OMR::IfLoops                  },
    { OMR::jProfilingValue,                           OMR::MustBeDone           },
    { OMR::tacticalGlobalRegisterAllocatorGroup,  OMR::IfEnabled                },
    { OMR::globalDeadStoreElimination,            OMR::IfMoreThanOneBlock       }, // global dead store removal
@@ -708,6 +713,7 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // cleanup at the end
    { OMR::treeSimplification,                        OMR::IfEnabledMarkLastRun       }, // Simplify non-normalized address computations introduced by prefetch insertion
    { OMR::trivialDeadTreeRemoval,                    OMR::IfEnabled                  }, // final cleanup before opcode expansion
+   { OMR::jProfilingRecompLoopTest,                  OMR::IfLoops                    },
    { OMR::jProfilingValue,                           OMR::MustBeDone                 },
    { OMR::cheapTacticalGlobalRegisterAllocatorGroup, OMR::IfEnabled                  },
    { OMR::globalDeadStoreGroup,                                                 },
@@ -811,6 +817,8 @@ J9::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *method
       new (comp->allocator()) TR::OptimizationManager(self(), TR_OSRGuardRemoval::create, OMR::osrGuardRemoval);
    _opts[OMR::jProfilingBlock] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_JProfilingBlock::create, OMR::jProfilingBlock);
+   _opts[OMR::jProfilingRecompLoopTest] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR_JProfilingRecompLoopTest::create, OMR::jProfilingRecompLoopTest);
    _opts[OMR::jProfilingValue] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_JProfilingValue::create, OMR::jProfilingValue);
    // NOTE: Please add new J9 optimizations here!

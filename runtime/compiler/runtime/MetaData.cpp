@@ -462,7 +462,7 @@ createInternalPtrStackMapInJ9Format(
       totalPointers++;
       }
 
-   if (totalPointers >= fej9->maxInternalPlusPinningArrayPointers(comp))
+   if (totalPointers >= fej9->maxInternalPlusPinningArrayPointers(comp) && !comp->isProfilingCompilation())
       {
       comp->failCompilation<TR::ExcessiveComplexity>("Failed to create Internal Ptr Stack Map in J9 Format");
       }

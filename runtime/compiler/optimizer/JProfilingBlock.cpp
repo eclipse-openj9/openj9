@@ -35,13 +35,13 @@
 #include "control/Recompilation.hpp"              // for TR_Recompilation, etc
 #include "control/RecompilationInfo.hpp"              // for TR_Recompilation, etc
 #include "optimizer/TransformUtil.hpp"
+#include "optimizer/Structure.hpp"
 
 // Global thresholds for the number of method enters required to trip
 // method recompilation - these are adjusted in the JIT hook control logic
 int32_t TR_JProfilingBlock::nestedLoopRecompileThreshold = 10;
 int32_t TR_JProfilingBlock::loopRecompileThreshold = 250;
 int32_t TR_JProfilingBlock::recompileThreshold = 500;
-int32_t TR_JProfilingBlock::profilingCompileThreshold = 2;
 
 /**
  * Prim's algorithm to compute a Minimum Spanning Tree traverses the edges of the tree
@@ -825,50 +825,35 @@ void TR_JProfilingBlock::dumpCounterDependencies(TR_BitVector **componentCounter
       traceMsg(comp(), "\n");
       }
    }
-
-/**
- * Add runtime tests to the start of the method to trigger method reccompilation once the
- * appropriate number of method entries has occurred as determined by the raw block
- * count of the first block of the method.
- */   
-void TR_JProfilingBlock::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequencyInfo, TR_BitVector **componentCounters)
+/**   \brief Creates a node that calculates the raw count of passed block from the stored static block frequency counters
+ *    \param comp Current compilation object
+ *    \param blockNumber Number of a block for which we need to generate frequency calculation node
+ *    \param bfi TR_BlockFrequencyInfo containing all counter data
+ *    \param componentCounters Array of BitVectors containing data to calculate block frequency for each block
+ *    \return root A node that loads/adds/subtracts the static block counter to calculate raw frequency of corresponding block
+ */
+TR::Node*
+TR_JProfilingBlock::generateBlockRawCountCalculationNode(TR::Compilation *comp, int32_t blockNumber, TR::Node *node, TR_BlockFrequencyInfo *bfi, TR_BitVector **componentCounters)
    {
-   // add invocation check to the top of the method
-   int32_t *thresholdLocation = NULL;
-   if (comp()->getMethodSymbol()->mayHaveNestedLoops())
-      thresholdLocation = &nestedLoopRecompileThreshold;
-   else if (comp()->getMethodSymbol()->mayHaveLoops())
-      thresholdLocation = &loopRecompileThreshold;
-   else
-      thresholdLocation = &recompileThreshold;
-
-   // Profiling compilations have a lower threshold, so that less time is
-   // spent running the high overhead implementation
-   if (comp()->isProfilingCompilation())
-      thresholdLocation = &profilingCompileThreshold;
-
-   int32_t startBlockNumber = comp()->getStartBlock()->getNumber();
-   blockFrequencyInfo->setEntryBlockNumber(startBlockNumber);
-
-   TR::Node *node = comp()->getMethodSymbol()->getFirstTreeTop()->getNode();
-
-   if (componentCounters[startBlockNumber * 2] && (((uintptr_t)componentCounters[startBlockNumber * 2]) & 0x1 == 1 || !componentCounters[startBlockNumber * 2]->isEmpty()))
+   if (componentCounters == NULL)
+      componentCounters = bfi->getCounterDerivativeInfo();
+   TR::Node *root = NULL;
+   if (blockNumber > -1 && (componentCounters[blockNumber * 2]
+      && ((((uintptr_t)componentCounters[blockNumber * 2]) & 0x1 == 1)
+      || !componentCounters[blockNumber * 2]->isEmpty())))
       {
-      TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "jprofiling.instrument/success/(%s)", comp()->signature()));
-      comp()->getFlowGraph()->setStructure(NULL);
-      // add the positive counters
       TR::Node *addRoot = NULL;
-      if (((uintptr_t)componentCounters[startBlockNumber * 2]) & 0x1 == 1)
+      if (((uintptr_t)componentCounters[blockNumber * 2]) & 0x1 == 1)
          {
-         TR::SymbolReference *symRef = comp()->getSymRefTab()->createKnownStaticDataSymbolRef(blockFrequencyInfo->getFrequencyForBlock(((uintptr_t)componentCounters[startBlockNumber * 2]) >> 1), TR::Int32);
+         TR::SymbolReference *symRef = comp->getSymRefTab()->createKnownStaticDataSymbolRef(bfi->getFrequencyForBlock(((uintptr_t)componentCounters[blockNumber * 2]) >> 1), TR::Int32);
          addRoot = TR::Node::createWithSymRef(node, TR::iload, 0, symRef);
          }
       else
          {
-         TR_BitVectorIterator addBVI(*(componentCounters[startBlockNumber * 2]));
+         TR_BitVectorIterator addBVI(*(componentCounters[blockNumber * 2]));
          while (addBVI.hasMoreElements())
             {
-            TR::SymbolReference *symRef = comp()->getSymRefTab()->createKnownStaticDataSymbolRef(blockFrequencyInfo->getFrequencyForBlock(addBVI.getNextElement()), TR::Int32);
+            TR::SymbolReference *symRef = comp->getSymRefTab()->createKnownStaticDataSymbolRef(bfi->getFrequencyForBlock(addBVI.getNextElement()), TR::Int32);
             TR::Node *counterLoad = TR::Node::createWithSymRef(node, TR::iload, 0, symRef);
             if (addRoot)
                addRoot = TR::Node::create(node, TR::iadd, 2, addRoot, counterLoad);
@@ -877,19 +862,19 @@ void TR_JProfilingBlock::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequ
             }
          }
       TR::Node *subRoot = NULL;
-      if (componentCounters[startBlockNumber * 2 + 1] != NULL)
+      if (componentCounters[blockNumber * 2 +1] != NULL)
          {
-         if (((uintptr_t)componentCounters[startBlockNumber * 2 + 1]) & 0x1 == 1)
+         if (((uintptr_t)componentCounters[blockNumber *2 + 1]) & 0x1 == 1)
             {
-            TR::SymbolReference *symRef = comp()->getSymRefTab()->createKnownStaticDataSymbolRef(blockFrequencyInfo->getFrequencyForBlock(((uintptr_t)componentCounters[startBlockNumber * 2 + 1]) >> 1), TR::Int32);
+            TR::SymbolReference *symRef = comp->getSymRefTab()->createKnownStaticDataSymbolRef(bfi->getFrequencyForBlock(((uintptr_t)componentCounters[blockNumber * 2 + 1]) >> 1), TR::Int32);
             subRoot = TR::Node::createWithSymRef(node, TR::iload, 0, symRef);
             }
          else
             {
-            TR_BitVectorIterator subBVI(*(componentCounters[startBlockNumber * 2 + 1]));
+            TR_BitVectorIterator subBVI(*(componentCounters[blockNumber * 2 + 1]));
             while (subBVI.hasMoreElements())
                {
-               TR::SymbolReference *symRef = comp()->getSymRefTab()->createKnownStaticDataSymbolRef(blockFrequencyInfo->getFrequencyForBlock(subBVI.getNextElement()), TR::Int32);
+               TR::SymbolReference *symRef = comp->getSymRefTab()->createKnownStaticDataSymbolRef(bfi->getFrequencyForBlock(subBVI.getNextElement()), TR::Int32);
                TR::Node *counterLoad = TR::Node::createWithSymRef(node, TR::iload, 0, symRef);
                if (subRoot)
                   {
@@ -902,37 +887,59 @@ void TR_JProfilingBlock::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequ
                }
             }
          }
-      TR::Node *root = addRoot;
+      root = addRoot;
       if (subRoot)
          {
          root = TR::Node::create(node, TR::isub, 2, root, subRoot);
          }
+      }
+   return root;
+   }
 
+/**
+ * Add runtime tests to the start of the method to trigger method reccompilation once the
+ * appropriate number of method entries has occurred as determined by the raw block
+ * count of the first block of the method.
+ */   
+void TR_JProfilingBlock::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequencyInfo, TR_BitVector **componentCounters)
+   {
+   int32_t startBlockNumber = comp()->getStartBlock()->getNumber();
+   blockFrequencyInfo->setEntryBlockNumber(startBlockNumber);
+
+   TR::Node *node = comp()->getMethodSymbol()->getFirstTreeTop()->getNode();
+   TR::Node *root = generateBlockRawCountCalculationNode(comp(), startBlockNumber, node, blockFrequencyInfo, componentCounters);
+   if (root != NULL)
+      {
       TR::Block * originalFirstBlock = comp()->getStartBlock();
 
       TR::Block *guardBlock1 = TR::Block::createEmptyBlock(node, comp(), originalFirstBlock->getFrequency());
          {
-         TR::SymbolReference *symRef = comp()->getSymRefTab()->createKnownStaticDataSymbolRef(blockFrequencyInfo->getEnableJProfilingRecompilation(), TR::Int32);
-         TR::Node *enableLoad = TR::Node::createWithSymRef(node, TR::iload, 0, symRef);
-         TR::Node *enableTest = TR::Node::createif(TR::ificmpeq, enableLoad, TR::Node::iconst(node, 0), originalFirstBlock->getEntry());
+         TR::Node *enableLoad = TR::Node::createWithSymRef(node, TR::iload, 0, blockFrequencyInfo->getOrCreateSymRefForIsQueuedForRecompilation(comp()));
+         TR::Node *enableTest = TR::Node::createif(TR::ificmpeq, enableLoad, TR::Node::iconst(node, -1), originalFirstBlock->getEntry());
          TR::TreeTop *enableTree = TR::TreeTop::create(comp(), enableTest);
          enableTest->setIsProfilingCode();
          guardBlock1->append(enableTree);
          }
 
+      static int32_t profilingCompileThreshold = comp()->getOptions()->getJProfilingMethodRecompThreshold();
+
+      traceMsg(comp(),"Profiling Compile Threshold for method = %d\n", profilingCompileThreshold);
       TR::Block *guardBlock2 = TR::Block::createEmptyBlock(node, comp(), originalFirstBlock->getFrequency());
-      TR::Node *recompThreshold = TR::Node::createWithSymRef(node, TR::iload, 0, comp()->getSymRefTab()->createKnownStaticDataSymbolRef(thresholdLocation, TR::Int32));
+      TR::Node *recompThreshold = TR::Node::iconst(node, profilingCompileThreshold);
       TR::Node *cmpFlagNode = TR::Node::createif(TR::ificmplt, root, recompThreshold, originalFirstBlock->getEntry());
       TR::TreeTop *cmpFlag = TR::TreeTop::create(comp(), cmpFlagNode);
       cmpFlagNode->setIsProfilingCode();
       guardBlock2->append(cmpFlag);
 
       // construct call block
+      const char * const dc1 = TR::DebugCounter::debugCounterName(comp(),
+         "methodRecomp/(%s)", comp()->signature());
       TR::Block *callRecompileBlock = TR::Block::createEmptyBlock(node, comp(), UNKNOWN_COLD_BLOCK_COUNT);
       callRecompileBlock->setIsCold(true);
       TR::TreeTop *callTree = TR::TransformUtil::generateRetranslateCallerWithPrepTrees(node, TR_PersistentMethodInfo::RecompDueToJProfiling, comp());
       callTree->getNode()->setIsProfilingCode();
       callRecompileBlock->append(callTree);
+      TR::DebugCounter::prependDebugCounter(comp(), dc1, callTree);
       
       comp()->getRecompilationInfo()->getJittedBodyInfo()->setUsesJProfiling();
       TR::CFG *cfg = comp()->getFlowGraph();
@@ -1156,8 +1163,7 @@ int32_t TR_JProfilingBlock::perform()
       
    // dump counter dependency information
    if (trace())
-      dumpCounterDependencies(componentCounters);
-
+      dumpCounterDependencies(componentCounters); 
    // modify the method to add tests to trigger recompilation at runtime
    addRecompilationTests(blockFrequencyInfo, componentCounters);
    return 1;
