@@ -1698,7 +1698,7 @@ void TR::X86CallSite::computeProfiledTargets()
        (callNode->getSymbolReference() != comp()->getSymRefTab()->findObjectNewInstanceImplSymbol()) &&
        callNode->getOpCode().isIndirect())
       {
-      if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableInterpreterProfiling) &&
+      if (!comp()->getOption(TR_DisableInterpreterProfiling) &&
           TR_ValueProfileInfoManager::get(comp()))
          {
          TR::Node *callNode = getCallNode();

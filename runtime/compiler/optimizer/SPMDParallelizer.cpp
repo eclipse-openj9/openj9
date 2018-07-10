@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3389,7 +3389,7 @@ TR_SPMDKernelParallelizer::perform()
    TR_HashTab* reductionOperationsHashTab = new (comp()->trStackMemory()) TR_HashTab(comp()->trMemory(), stackAlloc);
 
   //TODO: make independent of GPU
-   if ((!comp()->getOptions()->getOption(TR_DisableAutoSIMD) &&
+   if ((!comp()->getOption(TR_DisableAutoSIMD) &&
         comp()->cg()->getSupportsAutoSIMD()) ||
         comp()->getOptions()->getEnableGPU(TR_EnableGPU))
       collectParallelLoops(root, simdLoops, reductionOperationsHashTab, useDefInfo);
@@ -4188,7 +4188,7 @@ TR_SPMDKernelParallelizer::collectParallelLoops(TR_RegionStructure *region,
    TR_HashId id = 0;
 
    if (isSPMDKernelLoop(region, comp()) ||
-       (!comp()->getOptions()->getOption(TR_DisableAutoSIMD) &&
+       (!comp()->getOption(TR_DisableAutoSIMD) &&
         comp()->cg()->getSupportsAutoSIMD() &&
         isPerfectNest(region, comp()) &&
         checkDataLocality(region, useNodesOfDefsInLoop, defsInLoop, comp(), useDefInfo, reductionHashTab) &&
