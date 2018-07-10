@@ -1909,57 +1909,21 @@ SH_OSCachesysv::getSysvHeaderFieldAddressForGen(void* header, UDATA headerGen, U
 IDATA 
 SH_OSCachesysv::getSysvHeaderFieldOffsetForGen(UDATA headerGen, UDATA fieldID)
 {
-	switch(headerGen) {
-	case OSCACHE_CURRENT_CACHE_GEN :
-	case 34:
-	case 33:
-	case 32:
-	case 31:
-	case 30:
-	case 29:
-	case 28:
-	case 27:
-	case 26:
-	case 25:
-	case 24:
-	case 23:
-    case 22:
-    case 21:
-	case 20:
-	case 19:
-	case 18:
-	case 17:
-	case 16:
-	case 15:
-	case 14:
-	case 13:
-	case 12:
-	case 11:
-	case 10:
-	case 9 :
-	case 8 :
-	case 7 :
-	case 6 :
-	case 5 :
-	{
+	if ((4 < headerGen) && (headerGen <= OSCACHE_CURRENT_CACHE_GEN)) {
 		switch (fieldID) {
 		case OSCACHESYSV_HEADER_FIELD_IN_DEFAULT_CONTROL_DIR :
 			return offsetof(OSCachesysv_header_version_current, inDefaultControlDir);
 		default :
 			return offsetof(OSCachesysv_header_version_current, oscHdr) + getHeaderFieldOffsetForGen(headerGen, fieldID);
 		}
-	}
-	case 4 :
-	{
+	} else if (4 == headerGen) {
 		switch (fieldID) {
 		case OSCACHESYSV_HEADER_FIELD_IN_DEFAULT_CONTROL_DIR :
 			return offsetof(OSCachesysv_header_version_G04, inDefaultControlDir);
 		default :
 			return offsetof(OSCachesysv_header_version_G04, oscHdr) + getHeaderFieldOffsetForGen(headerGen, fieldID);
 		}
-	}
-	case 3 :
-	{
+	} else if (3 == headerGen) {
 		switch (fieldID) {
 		case OSCACHESYSV_HEADER_FIELD_IN_DEFAULT_CONTROL_DIR :
 			return offsetof(OSCachesysv_header_version_G03, inDefaultControlDir);
@@ -1968,10 +1932,6 @@ SH_OSCachesysv::getSysvHeaderFieldOffsetForGen(UDATA headerGen, UDATA fieldID)
 		default :
 			return offsetof(OSCachesysv_header_version_G03, oscHdr) + getHeaderFieldOffsetForGen(headerGen, fieldID);
 		}
-	}
-	default :
-		break;
-		/* Should never happen */
 	}
 	Trc_SHR_Assert_ShouldNeverHappen();
 	return 0;
