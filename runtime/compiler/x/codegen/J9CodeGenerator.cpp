@@ -371,7 +371,7 @@ J9::X86::CodeGenerator::nopsAlsoProcessedByRelocations()
 bool
 J9::X86::CodeGenerator::enableAESInHardwareTransformations()
    {
-   if (TR::CodeGenerator::getX86ProcessorInfo().supportsAESNI() && !self()->comp()->getOptions()->getOption(TR_DisableAESInHardware) && !self()->comp()->getCurrentMethod()->isJNINative())
+   if (TR::CodeGenerator::getX86ProcessorInfo().supportsAESNI() && !self()->comp()->getOption(TR_DisableAESInHardware) && !self()->comp()->getCurrentMethod()->isJNINative())
       return true;
    else
       return false;

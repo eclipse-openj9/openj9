@@ -2780,7 +2780,7 @@ static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *src, TR::Regi
    generateTrg1Src2Instruction(cg,TR::InstOpCode::Op_cmpl, node, cndReg, t1Reg, t3Reg);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, toWB, cndReg);
 
-   if ((!TR::Options::getCmdLineOptions()->getOption(TR_DisableArrayStoreCheckOpts)) && node->getArrayComponentClassInNode())
+   if ((!comp->getOption(TR_DisableArrayStoreCheckOpts)) && node->getArrayComponentClassInNode())
       {
       TR_OpaqueClassBlock *castClass = (TR_OpaqueClassBlock *) node->getArrayComponentClassInNode();
 

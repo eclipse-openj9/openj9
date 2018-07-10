@@ -7465,7 +7465,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             // Check to see if there is sufficient physical memory available for this compilation
             // Temporarily only do this for JSR292 compilations
             if (TR::CompilationInfo::isJSR292(details.getMethod())
-                || TR::Options::getCmdLineOptions()->getOption(TR_EnableSelfTuningScratchMemoryUsageBeforeCompile))
+                || compiler->getOption(TR_EnableSelfTuningScratchMemoryUsageBeforeCompile))
                {
                bool incompleteInfo = false;
                int64_t physicalLimitB_64bit = compInfo->computeFreePhysicalLimitAndAbortCompilationIfLow(compiler,
@@ -7486,7 +7486,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                         // If we weren't able to get all the memory information
                         // only lower the limit for JSR292 compilations
                         if (TR::CompilationInfo::isJSR292(details.getMethod())
-                            && TR::Options::getCmdLineOptions()->getOption(TR_EnableSelfTuningScratchMemoryUsageBeforeCompile))
+                            && compiler->getOption(TR_EnableSelfTuningScratchMemoryUsageBeforeCompile))
                            {
                            proposedScratchMemoryLimitB = (physicalLimitB >= scratchSegmentProvider.allocationLimit()
                                                           ? physicalLimitB
@@ -7501,7 +7501,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                            }
                         else // Not enough physical memory to use even a regular scratch space limit
                            {
-                           if (TR::Options::getCmdLineOptions()->getOption(TR_EnableSelfTuningScratchMemoryUsageBeforeCompile))
+                           if (compiler->getOption(TR_EnableSelfTuningScratchMemoryUsageBeforeCompile))
                               {
                               proposedScratchMemoryLimitB = (physicalLimitB >= TR::Options::getScratchSpaceLowerBound()
                                                              ? physicalLimitB
@@ -7958,7 +7958,7 @@ TR::CompilationInfoPerThreadBase::compile(
                );
             }
 
-         if (compiler->getOptions()->getOption(TR_AlwaysSafeFatal)) {
+         if (compiler->getOption(TR_AlwaysSafeFatal)) {
             TR_ASSERT_SAFE_FATAL(false, "alwaysSafeFatal set");
              TR_VerboseLog::writeLineLocked(
                TR_Vlog_INFO ,
@@ -7968,7 +7968,7 @@ TR::CompilationInfoPerThreadBase::compile(
                );
          }
 
-         if (compiler->getOptions()->getOption(TR_AlwaysFatalAssert)) {
+         if (compiler->getOption(TR_AlwaysFatalAssert)) {
             TR_ASSERT_FATAL(false, "alwaysFatalAssert set");
          }
 

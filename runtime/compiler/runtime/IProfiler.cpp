@@ -370,7 +370,7 @@ TR_IProfiler::persistIprofileInfo(TR::ResolvedMethodSymbol *resolvedMethodSymbol
    if (TR::Options::sharedClassCache()        // shared classes must be enabled
       && !comp->getOption(TR_DisablePersistIProfile) &&
       isIProfilingEnabled() &&
-      (!SCfull || !TR::Options::getCmdLineOptions()->getOption(TR_DisableUpdateJITBytesSize)))
+      (!SCfull || !comp->getOption(TR_DisableUpdateJITBytesSize)))
       {
       TR_J9VMBase *fej9 = (TR_J9VMBase *)_vm;
       J9SharedClassConfig * scConfig = _compInfo->getJITConfig()->javaVM->sharedClassConfig;
@@ -489,7 +489,7 @@ TR_IProfiler::persistIprofileInfo(TR::ResolvedMethodSymbol *resolvedMethodSymbol
 
                if (SCfull &&
                    bytesToPersist &&
-                   !TR::Options::getCmdLineOptions()->getOption(TR_DisableUpdateJITBytesSize))
+                   !comp->getOption(TR_DisableUpdateJITBytesSize))
                   {
                   _compInfo->increaseUnstoredBytes(0, bytesToPersist);
                   }

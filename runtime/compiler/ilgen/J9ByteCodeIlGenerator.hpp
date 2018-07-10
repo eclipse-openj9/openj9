@@ -76,7 +76,7 @@ public:
    bool                      inliningCheckIfFinalizeObjectIsBeneficial()
    {
        return (comp()->getOption(TR_FullSpeedDebug) || comp()->getOptLevel() <= cold ||
-         (!comp()->getOptions()->getOption(TR_DisableInlineCheckIfFinalizeObject) && fej9()->isBenefitInliningCheckIfFinalizeObject()) ||
+         (!comp()->getOption(TR_DisableInlineCheckIfFinalizeObject) && fej9()->isBenefitInliningCheckIfFinalizeObject()) ||
            (comp()->getCurrentMethod()->isConstructor() && !comp()->getCurrentMethod()->isFinal()));
    }
    virtual TR::ResolvedMethodSymbol *methodSymbol() const { return _methodSymbol;}

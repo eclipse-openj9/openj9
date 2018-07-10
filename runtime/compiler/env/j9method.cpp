@@ -1116,7 +1116,7 @@ TR_ResolvedJ9MethodBase::isInlineable(TR::Compilation *comp)
 
 static intptrj_t getInitialCountForMethod(TR_ResolvedMethod *m, TR::Compilation *comp)
    {
-   TR::Options * options = comp->getOptions()->getCmdLineOptions();
+   TR::Options * options = comp->getOptions();
 
    intptrj_t initialCount = m->hasBackwardBranches() ? options->getInitialBCount() : options->getInitialCount();
 
@@ -1132,7 +1132,7 @@ static intptrj_t getInitialCountForMethod(TR_ResolvedMethod *m, TR::Compilation 
           // Do not change the counts on zos at the moment since the shared cache capacity is higher on this platform
           // and by increasing counts we could end up significantly impacting startup
 #else
-          bool startupTimeMatters = TR::Options::isQuickstartDetected() || TR::Options::getCmdLineOptions()->getOption(TR_UseLowerMethodCounts);
+          bool startupTimeMatters = TR::Options::isQuickstartDetected() || comp->getOption(TR_UseLowerMethodCounts);
 
           if (!startupTimeMatters)
              {
@@ -1222,14 +1222,13 @@ TR_ResolvedJ9MethodBase::isCold(TR::Compilation * comp, bool isIndirectCall, TR:
 
    intptrj_t count = getInvocationCount();
 
-   TR::Options * options = comp->getOptions()->getCmdLineOptions();
    intptrj_t initialCount = getInitialCountForMethod(this, comp);
 
    if (count < 0 || count > initialCount)
       return false;
 
    // if compiling a BigDecimal method, block isn't cold
-   if ((!options->getOption(TR_DisableDFP) && !comp->getOptions()->getAOTCmdLineOptions()->getOption(TR_DisableDFP)) &&
+   if ((!comp->getOption(TR_DisableDFP)) &&
        (
 #ifdef TR_TARGET_S390
        TR::Compiler->target.cpu.getS390SupportsDFP() ||
@@ -2054,8 +2053,7 @@ TR_ResolvedRelocatableJ9Method::createResolvedMethodFromJ9Method(TR::Compilation
    if (dontInline)
       return NULL;
 
-   if (TR::Options::getCmdLineOptions()->getOption(TR_DisableDFP) ||
-       TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableDFP) ||
+   if (comp->getOption(TR_DisableDFP) ||
        (!(TR::Compiler->target.cpu.supportsDecimalFloatingPoint()
 #ifdef TR_TARGET_S390
        || TR::Compiler->target.cpu.getS390SupportsDFP()
