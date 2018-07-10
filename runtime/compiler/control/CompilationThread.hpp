@@ -405,7 +405,7 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> & getCustomClassByNameMap() { return _customClassByNameMap; }
    PersistentUnorderedSet<TR_OpaqueClassBlock*> *getClassesThatShouldNotBeNewlyExtended() { return _classesThatShouldNotBeNewlyExtended; }
    uint32_t               getLastLocalGCCounter() { return _lastLocalGCCounter; }
-   uint32_t               updateLastLocalGCCounter(); 
+   void                   updateLastLocalGCCounter(); 
 
    private:
    J9::J9SegmentCache initializeSegmentCache(J9::J9SegmentProvider &segmentProvider);
