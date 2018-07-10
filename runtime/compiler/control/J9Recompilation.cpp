@@ -207,6 +207,10 @@ J9::Recompilation::beforeOptimization()
    //
    if (self()->isProfilingCompilation()) // this asks the bodyInfo
       {
+      // JProfiling should not use either sampling or counting mechanism to trip recompilation.
+      // Even though _useSampling is set to true here, at the end of compilation we disable sampling
+      // causing us to rely only on the in-body recompilation test that relies on block frequency counter
+      // to trip recompilation making sure we have enough profiling data to use in recompilation.
       _useSampling = _compilation->getProfilingMode() != JitProfiling;
       self()->findOrCreateProfileInfo()->setProfilingCount     (DEFAULT_PROFILING_COUNT);
       self()->findOrCreateProfileInfo()->setProfilingFrequency (DEFAULT_PROFILING_FREQUENCY);
