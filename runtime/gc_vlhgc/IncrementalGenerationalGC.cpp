@@ -654,6 +654,9 @@ MM_IncrementalGenerationalGC::initializeTaxationThreshold(MM_EnvironmentVLHGC *e
 
 	/* we need to calculate the taxation threshold after the initial heap inflation, which happens before collectorStartup */
 	_taxationThreshold = _schedulingDelegate.getInitialTaxationThreshold(env);
+	/* initialize GMP Kickoff Headroom Region Count */
+	_schedulingDelegate.initializeKickoffHeadroom(env);
+
 
 	UDATA minimumKickOff = extensions->regionSize * 2;
 	if (_taxationThreshold < minimumKickOff) {

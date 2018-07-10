@@ -54,8 +54,8 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
    switch(node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod())
       {
       case TR::java_lang_Integer_rotateLeft:
-      //case TR::java_lang_Math_abs_I: TODO OMR's iabs evaluator does not fully comply Java Specs
-      //case TR::java_lang_Math_abs_L: TODO OMR's labs evaluator does not fully comply Java Specs
+      case TR::java_lang_Math_abs_I:
+      case TR::java_lang_Math_abs_L:
       case TR::java_lang_Math_abs_F:
       case TR::java_lang_Math_abs_D:
          return TR::Compiler->target.cpu.isX86();

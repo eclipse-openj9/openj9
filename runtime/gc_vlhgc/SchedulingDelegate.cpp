@@ -288,7 +288,6 @@ MM_SchedulingDelegate::partialGarbageCollectCompleted(MM_EnvironmentVLHGC *env, 
 	measureConsumptionForPartialGC(env, reclaimableRegions, defragmentReclaimableRegions);
 	calculateAutomaticGMPIntermission(env);
 	calculateEdenSize(env);
-	
 	estimateMacroDefragmentationWork(env);
 	
 	/* Calculate the time spent in the current Partial GC */
@@ -599,7 +598,7 @@ MM_SchedulingDelegate::estimatePartialGCsRemaining(MM_EnvironmentVLHGC *env) con
 
 			/* Calculate the number of regions that we need for copy forward destination */
 			double survivorRegions = _averageSurvivorSetRegionCount;
-			Trc_MM_SchedulingDelegate_estimatePartialGCsRemaining_survivorNeeds(env->getLanguageVMThread(), (UDATA)_averageSurvivorSetRegionCount, MM_GCExtensions::getExtensions(env)->tarokKickoffHeadroomRegionCount, (UDATA)survivorRegions);
+			Trc_MM_SchedulingDelegate_estimatePartialGCsRemaining_survivorNeeds(env->getLanguageVMThread(), (UDATA)_averageSurvivorSetRegionCount, MM_GCExtensions::getExtensions(env)->tarokKickoffHeadroomInBytes, (UDATA)survivorRegions);
 
 			double freeRegions = (double)((MM_GlobalAllocationManagerTarok *)_extensions->globalAllocationManager)->getFreeRegionCount();
 
@@ -712,6 +711,40 @@ MM_SchedulingDelegate::getDefragmentEmptinessThreshold(MM_EnvironmentVLHGC *env)
 
 }
 
+UDATA
+MM_SchedulingDelegate::estimateTotalFreeMemory(MM_EnvironmentVLHGC *env, UDATA freeRegionMemory, UDATA defragmentedMemory, UDATA reservedFreeMemory)
+{
+	UDATA estimatedFreeMemory = 0;
+
+	/* Adjust estimatedFreeMemory - we are only interested in area that shortfall can be fed from.
+	 * Thus exclude reservedFreeMemory(Eden and Survivor size).
+	 */
+	estimatedFreeMemory = MM_Math::saturatingSubtract(defragmentedMemory + freeRegionMemory, reservedFreeMemory);
+
+	Trc_MM_SchedulingDelegate_estimateTotalFreeMemory(env->getLanguageVMThread(), estimatedFreeMemory, reservedFreeMemory, defragmentedMemory, freeRegionMemory);
+	return estimatedFreeMemory;
+}
+
+UDATA
+MM_SchedulingDelegate::calculateKickoffHeadroom(MM_EnvironmentVLHGC *env, UDATA totalFreeMemory)
+{
+	if (_extensions->tarokForceKickoffHeadroomInBytes) {
+		return _extensions->tarokKickoffHeadroomInBytes;
+	}
+	UDATA newHeadroom = totalFreeMemory * _extensions->tarokKickoffHeadroomRegionRate / 100;
+	Trc_MM_SchedulingDelegate_calculateKickoffHeadroom(env->getLanguageVMThread(), _extensions->tarokKickoffHeadroomInBytes, newHeadroom);
+	_extensions->tarokKickoffHeadroomInBytes = newHeadroom;
+	return newHeadroom;
+}
+
+UDATA
+MM_SchedulingDelegate::initializeKickoffHeadroom(MM_EnvironmentVLHGC *env)
+{
+	/* totoal free memory = total heap size - eden size */
+	UDATA totalFreeMemory = _regionManager->getTotalHeapSize() - getCurrentEdenSizeInBytes(env);
+	return calculateKickoffHeadroom(env, totalFreeMemory);
+}
+
 void
 MM_SchedulingDelegate::calculatePGCCompactionRate(MM_EnvironmentVLHGC *env, UDATA edenSizeInBytes)
 {
@@ -784,12 +817,18 @@ MM_SchedulingDelegate::calculatePGCCompactionRate(MM_EnvironmentVLHGC *env, UDAT
 		}
 	}
 
-	/* Adjust estimatedFreeMemory - we are only interested in area that shortfall can be fed from.
-	 * Thus exclude Eden and Survivor size. Survivor space needs to accommodate for Nursery set, Dynamic collection set and Compaction set
+	/* Survivor space needs to accommodate for Nursery set, Dynamic collection set and Compaction set
 	 */
-	UDATA surivivorSize = (UDATA)(regionSize * (_averageSurvivorSetRegionCount + _extensions->tarokKickoffHeadroomRegionCount));
+	/* estimate totalFreeMemory for recalculating kickoffHeadroomRegionCount */	 
+	UDATA surivivorSize = (UDATA)(regionSize * _averageSurvivorSetRegionCount);
 	UDATA reservedFreeMemory = edenSizeInBytes + surivivorSize;
-	estimatedFreeMemory = MM_Math::saturatingSubtract(defragmentedMemory + freeRegionMemory, reservedFreeMemory);
+	estimatedFreeMemory = estimateTotalFreeMemory(env, freeRegionMemory, defragmentedMemory, reservedFreeMemory);
+	calculateKickoffHeadroom(env, estimatedFreeMemory);
+
+	/* estimate totalFreeMemory for recalculating PGCCompactionRate with tarokKickoffHeadroomInBytes */
+	reservedFreeMemory += _extensions->tarokKickoffHeadroomInBytes;
+	estimatedFreeMemory = estimateTotalFreeMemory(env, freeRegionMemory, defragmentedMemory, reservedFreeMemory);
+
 	double bytesDiscardedPerByteCopied = (_averageCopyForwardBytesCopied > 0.0) ? (_averageCopyForwardBytesDiscarded / _averageCopyForwardBytesCopied) : 0.0;
 	double estimatedFreeMemoryDiscarded = (double)totalLiveDataInCollectableRegions * bytesDiscardedPerByteCopied;
 	double recoverableFreeMemory = (double)estimatedFreeMemory - estimatedFreeMemoryDiscarded;
@@ -920,7 +959,7 @@ MM_SchedulingDelegate::calculateAutomaticGMPIntermission(MM_EnvironmentVLHGC *en
 		}
 	}
 
-	Trc_MM_SchedulingDelegate_calculateAutomaticGMPIntermission_Exit(env->getLanguageVMThread(), _remainingGMPIntermissionIntervals);
+	Trc_MM_SchedulingDelegate_calculateAutomaticGMPIntermission_1_Exit(env->getLanguageVMThread(), _remainingGMPIntermissionIntervals, _extensions->tarokKickoffHeadroomInBytes);
 }
 
 void
@@ -1063,7 +1102,7 @@ MM_SchedulingDelegate::calculateGlobalMarkIncrementHeadroom(MM_EnvironmentVLHGC 
 	UDATA headroomIncrements = 0;
 
 	if (_regionConsumptionRate > 0.0) {
-		double headroomRegions = (double) _extensions->tarokKickoffHeadroomRegionCount;
+		double headroomRegions = (double) _extensions->tarokKickoffHeadroomInBytes / _regionManager->getRegionSize();
 		double headroomPartialGCs = headroomRegions / _regionConsumptionRate;
 		double headroomGlobalMarkIncrements = headroomPartialGCs * (double)_extensions->tarokPGCtoGMPDenominator / (double)_extensions->tarokPGCtoGMPNumerator;
 		headroomIncrements = (UDATA) ceil(headroomGlobalMarkIncrements);
