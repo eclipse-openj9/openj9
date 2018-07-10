@@ -237,9 +237,26 @@ private:
 	 */
 	double calculateAverageCopyForwardRate(MM_EnvironmentVLHGC *env);
 
+	/**
+	 * Estimate total free memory
+	 * @param env[in] the master GC thread
+	 * @oaram freeRegionMemory[in]
+	 * @param defragmentedMemory[in]
+	 * @oaram reservedFreeMemory[in]
+	 * @return total free memory(bytes)
+	 */
+	UDATA estimateTotalFreeMemory(MM_EnvironmentVLHGC *env, UDATA freeRegionMemory, UDATA defragmentedMemory, UDATA reservedFreeMemory);
+
+	/**
+	 * Calculate GMP Kickoff Headroom In Bytes
+	 * the
+	 */
+	UDATA calculateKickoffHeadroom(MM_EnvironmentVLHGC *env, UDATA totalFreeMemory);
+
 protected:
 	
 public:
+	UDATA initializeKickoffHeadroom(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Calculate the allocation threshold for the first taxation period. This should be called

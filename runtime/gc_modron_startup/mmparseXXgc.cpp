@@ -310,11 +310,25 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 
-		if (try_scan(&scan_start, "tarokKickoffHeadroomRegionCount=")) {
-			if(!scan_udata_memory_size_helper(vm, &scan_start, &(extensions->tarokKickoffHeadroomRegionCount), "tarokKickoffHeadroomRegionCount=")) {
+		if (try_scan(&scan_start, "tarokKickoffHeadroomRegionRate=")) {
+			if(!scan_u32_helper(vm, &scan_start, &(extensions->tarokKickoffHeadroomRegionRate), "tarokKickoffHeadroomRegionRate=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}
+			if (50 < extensions->tarokKickoffHeadroomRegionRate) {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "tarokKickoffHeadroomRegionRate=", (UDATA)0, (UDATA)50);
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			continue;
+		}
+
+		if (try_scan(&scan_start, "tarokKickoffHeadroomInBytes=")) {
+			if(!scan_udata_memory_size_helper(vm, &scan_start, &(extensions->tarokKickoffHeadroomInBytes), "tarokKickoffHeadroomInBytes=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			extensions->tarokForceKickoffHeadroomInBytes = true;
 			continue;
 		}
 
