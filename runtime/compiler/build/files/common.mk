@@ -358,6 +358,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/runtime/Runtime.cpp \
     compiler/runtime/RuntimeAssumptions.cpp \
     compiler/runtime/SignalHandler.c \
+    compiler/runtime/SymbolValidationManager.cpp \
     compiler/runtime/Trampoline.cpp \
     compiler/runtime/ValueProfiler.cpp \
     compiler/runtime/codertinit.cpp \

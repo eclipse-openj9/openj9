@@ -193,7 +193,7 @@ TR_J9VMBase::getCompThreadIDForVMThread(void *vmThread)
 
 
 bool
-TR_J9VMBase::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass)
+TR_J9VM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass)
    {
    if(!method)
       return false;
@@ -212,7 +212,7 @@ TR_J9VMBase::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueCla
       }
 
    if ( ( vmThread()->javaVM->jlrAccessibleObject != NULL) &&
-          isInstanceOf( methodClass, (TR_OpaqueClassBlock*) J9VM_J9CLASS_FROM_JCLASS(vmThread(), vmThread()->javaVM->jlrAccessibleObject),false) )
+          TR_J9VM::isInstanceOf( methodClass, (TR_OpaqueClassBlock*) J9VM_J9CLASS_FROM_JCLASS(vmThread(), vmThread()->javaVM->jlrAccessibleObject),false) )
       {
       return true;
       }
@@ -220,13 +220,13 @@ TR_J9VMBase::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueCla
 
 #if defined(J9VM_OPT_SIDECAR)
    if ( ( vmThread()->javaVM->srMethodAccessor != NULL) &&
-          isInstanceOf(methodClass, (TR_OpaqueClassBlock*) J9VM_J9CLASS_FROM_JCLASS(vmThread(), vmThread()->javaVM->srMethodAccessor), false) )
+          TR_J9VM::isInstanceOf(methodClass, (TR_OpaqueClassBlock*) J9VM_J9CLASS_FROM_JCLASS(vmThread(), vmThread()->javaVM->srMethodAccessor), false) )
       {
       return true;
       }
 
    if ( ( vmThread()->javaVM->srConstructorAccessor != NULL) &&
-          isInstanceOf(methodClass, (TR_OpaqueClassBlock*) J9VM_J9CLASS_FROM_JCLASS(vmThread(), vmThread()->javaVM->srConstructorAccessor), false) )
+          TR_J9VM::isInstanceOf(methodClass, (TR_OpaqueClassBlock*) J9VM_J9CLASS_FROM_JCLASS(vmThread(), vmThread()->javaVM->srConstructorAccessor), false) )
       {
       return true;
       }
@@ -6540,13 +6540,13 @@ TR_J9VMBase::getResolvedMethods(TR_Memory * trMemory, TR_OpaqueClassBlock * clas
       }
    }
 
-
-TR_ResolvedMethod *
-TR_J9VMBase::getResolvedMethodForNameAndSignature(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer,
-                                                  const char* methodName, const char *signature)
+/*
+ * Should be called with VMAccess
+ */
+TR_OpaqueMethodBlock *
+TR_J9VMBase::getMatchingMethodFromNameAndSignature(TR_OpaqueClassBlock * classPointer,
+                                                   const char* methodName, const char *signature, bool validate)
    {
-   TR::VMAccessCriticalSection vmCS(this); // Prevent HCR
-   TR_ResolvedMethod *rm = NULL;
    size_t nameLength = strlen(methodName);
    size_t sigLength = strlen(signature);
 
@@ -6555,6 +6555,8 @@ TR_J9VMBase::getResolvedMethodForNameAndSignature(TR_Memory * trMemory, TR_Opaqu
    uint32_t numMethods = getNumMethods(classPointer);
 
    J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
+
+   TR_OpaqueMethodBlock *method = NULL;
 
    // Iterate over all romMethods until the desired one is found
    for (uint32_t i = 0; i < numMethods; i++)
@@ -6566,11 +6568,25 @@ TR_J9VMBase::getResolvedMethodForNameAndSignature(TR_Memory * trMemory, TR_Opaqu
          memcmp(utf8Data(mName), methodName, nameLength) == 0 &&
          memcmp(utf8Data(mSig), signature, sigLength) == 0)
          {
-         rm = createResolvedMethod(trMemory, (TR_OpaqueMethodBlock *)(j9Methods + i), 0);
+         method = (TR_OpaqueMethodBlock *)(j9Methods + i);
          break;
          }
       romMethod = nextROMMethod(romMethod);
       }
+
+   return method;
+   }
+
+TR_ResolvedMethod *
+TR_J9VMBase::getResolvedMethodForNameAndSignature(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer,
+                                                  const char* methodName, const char *signature)
+   {
+   TR::VMAccessCriticalSection vmCS(this); // Prevent HCR
+   TR_ResolvedMethod *rm = NULL;
+
+   TR_OpaqueMethodBlock *method = getMatchingMethodFromNameAndSignature(classPointer, methodName, signature);
+   if (method)
+      rm = createResolvedMethod(trMemory, method, 0);
 
    return rm;
    }
@@ -6798,13 +6814,12 @@ TR_J9VM::getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer)
 #define LOOKUP_OPTION_NO_THROW 8192
 
 TR_OpaqueMethodBlock *
-TR_J9VM::getMethodFromName(char *className, char *methodName, char *signature, TR_OpaqueMethodBlock *callingMethod)
+TR_J9VM::getMethodFromName(char *className, char *methodName, char *signature, J9ConstantPool *constantPool)
    {
    TR::VMAccessCriticalSection getMethodFromName(this);
    J9Class *methodClass = 0;
-   if (callingMethod)
+   if (constantPool)
       {
-      J9ConstantPool * constantPool = (J9ConstantPool *) (J9_CP_FROM_METHOD((J9Method*)callingMethod));
       methodClass = jitGetClassFromUTF8(vmThread(), constantPool, className, strlen(className));
       }
    if (!methodClass) // try the system class loader
@@ -6814,9 +6829,25 @@ TR_J9VM::getMethodFromName(char *className, char *methodName, char *signature, T
          className, strlen(className));
       }
    TR_OpaqueMethodBlock * result = NULL;
+   /*
+    * Call the TR_J9VM version of getMethodFromClass since at this point,
+    * the methodClass may have never been seen before; if we call the
+    * TR_J9SharedCacheVM version, the validation manager could assert.
+    */
    if (methodClass)
-      result = (TR_OpaqueMethodBlock *)getMethodFromClass((TR_OpaqueClassBlock *)methodClass, methodName, signature);
+      result = (TR_OpaqueMethodBlock *)TR_J9VM::getMethodFromClass((TR_OpaqueClassBlock *)methodClass, methodName, signature);
    return result;
+   }
+
+TR_OpaqueMethodBlock *
+TR_J9VM::getMethodFromName(char *className, char *methodName, char *signature, TR_OpaqueMethodBlock *callingMethod)
+   {
+   J9ConstantPool *cp = NULL;
+
+   if (callingMethod)
+      cp = (J9ConstantPool *) (J9_CP_FROM_METHOD((J9Method*)callingMethod));
+
+   return getMethodFromName(className, methodName, signature, cp);
    }
 
 /** \brief
@@ -7206,8 +7237,14 @@ TR_J9VM::getClassFromSignature(const char * sig, int32_t sigLength, TR_ResolvedM
 TR_OpaqueClassBlock *
 TR_J9VM::getClassFromSignature(const char * sig, int32_t sigLength, TR_OpaqueMethodBlock * method, bool isVettedForAOT)
    {
-   TR::VMAccessCriticalSection getClassFromSignature(this);
    J9ConstantPool * constantPool = (J9ConstantPool *) (J9_CP_FROM_METHOD((J9Method*)method));
+   return getClassFromSignature(sig, sigLength, constantPool);
+   }
+
+TR_OpaqueClassBlock *
+TR_J9VM::getClassFromSignature(const char * sig, int32_t sigLength, J9ConstantPool * constantPool)
+   {
+   TR::VMAccessCriticalSection getClassFromSignature(this);
    J9Class * j9class = NULL;
    TR_OpaqueClassBlock * returnValue = NULL;
 
@@ -7716,34 +7753,7 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
                   callerClass = (J9Class*) callerMethodSymbol->getResolvedMethod()->classOfMethod();
                   }
 
-                  {
-                  TR::VMAccessCriticalSection jlrMethodInvoke(this);
-
-                  if (vmThread()->javaVM->jlrMethodInvoke == NULL)
-                     return 0;
-
-                  skipFrame = false;
-                  skipFrame = (vmThread()->javaVM->jlrMethodInvoke == callerMethod);
-                  if (!skipFrame)
-                     skipFrame = (vmThread()->javaVM->jlrAccessibleObject != NULL) &&
-                                  isInstanceOf((TR_OpaqueClassBlock*) callerClass,
-                                               (TR_OpaqueClassBlock*) J9VM_J9CLASS_FROM_JCLASS(vmThread(), vmThread()->javaVM->jlrAccessibleObject),
-                                               false);
-#if defined(J9VM_OPT_SIDECAR)
-                  if (!skipFrame)
-                     skipFrame = (vmThread()->javaVM->srMethodAccessor != NULL) &&
-                                  isInstanceOf((TR_OpaqueClassBlock*) callerClass,
-                                               (TR_OpaqueClassBlock*) J9VM_J9CLASS_FROM_JCLASS(vmThread(), vmThread()->javaVM->srMethodAccessor),
-                                               false);
-                  if (!skipFrame)
-                     skipFrame = (vmThread()->javaVM->srConstructorAccessor != NULL) &&
-                                  isInstanceOf((TR_OpaqueClassBlock*) callerClass,
-                                               (TR_OpaqueClassBlock*) J9VM_J9CLASS_FROM_JCLASS(vmThread(), vmThread()->javaVM->srConstructorAccessor),
-                                               false);
-#endif // J9VM_OPT_SIDECAR
-
-                  }
-
+               skipFrame = stackWalkerMaySkipFrames((TR_OpaqueMethodBlock *)callerMethod, (TR_OpaqueClassBlock *)callerClass);
 
                if (!skipFrame && inlineDepth == stackDepth)
                   break;
@@ -8531,6 +8541,12 @@ TR_J9SharedCacheVM::isClassVisible(TR_OpaqueClassBlock * sourceClass, TR_OpaqueC
    }
 
 bool
+TR_J9SharedCacheVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass)
+   {
+   return false;
+   }
+
+bool
 TR_J9SharedCacheVM::isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method)
    {
    // We want to return the same answer as TR_J9VMBase unless we want to force it to allow tracing
@@ -8883,6 +8899,13 @@ TR_J9SharedCacheVM::isReferenceArray(TR_OpaqueClassBlock *classPointer)
       return TR_J9VMBase::isReferenceArray(classPointer);
 
    return false;
+   }
+
+TR_OpaqueClassBlock *
+TR_J9SharedCacheVM::getClassClassPointer(TR_OpaqueClassBlock *objectClassPointer)
+   {
+   TR_OpaqueClassBlock *ccPointer = TR_J9VM::getClassClassPointer(objectClassPointer);
+   return ccPointer;
    }
 
 TR_OpaqueMethodBlock *

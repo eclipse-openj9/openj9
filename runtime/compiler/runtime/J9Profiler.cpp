@@ -898,6 +898,7 @@ TR_ValueProfiler::addListOrArrayProfilingTrees(
       {
       TR::Node *bdarg = TR::Node::aconst(node, (uintptrj_t)_bdClass) ;
       bdarg->setIsClassPointerConstant(true);
+      comp()->verifySymbolHasBeenValidated(static_cast<void *>(_bdClass));
 
       call->setAndIncChild(childNum++, bdarg);
       call->setAndIncChild(childNum++, TR::Node::create(node, TR::iconst, 0, scaleOffset));

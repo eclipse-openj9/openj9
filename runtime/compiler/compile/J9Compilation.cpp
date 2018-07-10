@@ -170,12 +170,15 @@ J9::Compilation::Compilation(
    _profileInfo(NULL),
    _skippedJProfilingBlock(false)
    {
-   _ObjectClassPointer   = fe->getClassFromSignature("Ljava/lang/Object;", 18, compilee);
-   _RunnableClassPointer = fe->getClassFromSignature("Ljava/lang/Runnable;", 20, compilee);
-   _StringClassPointer   = fe->getClassFromSignature("Ljava/lang/String;", 18, compilee);
-   _SystemClassPointer   = fe->getClassFromSignature("Ljava/lang/System;", 18, compilee);
-   _ReferenceClassPointer = fe->getClassFromSignature("Ljava/lang/ref/Reference;", 25, compilee);
-   _JITHelpersClassPointer = fe->getClassFromSignature("Lcom/ibm/jit/JITHelpers;", 24, compilee);
+   _symbolValidationManager = new (region()) TR::SymbolValidationManager(region());
+   if (compileRelocatableCode() && getOption(TR_UseSymbolValidationManager))
+      {
+      bool validated = false;
+      validated = _symbolValidationManager->addRootClassRecord(compilee->classOfMethod());
+      TR_ASSERT_FATAL(validated, "addRootClassRecord should not fail!\n");
+      validated = _symbolValidationManager->addMethodFromClassRecord(compilee->getNonPersistentIdentifier(), compilee->classOfMethod(), static_cast<uint32_t>(-1));
+      TR_ASSERT_FATAL(validated, "addMethodFromClassRecord should not fail!\n");
+      }
 
    _aotClassClassPointer = NULL;
    _aotClassClassPointerInitialized = false;
@@ -188,6 +191,13 @@ J9::Compilation::Compilation(
       _hiresTimeForPreviousCallingContext = TR::Compiler->vm.getHighResClock(self());
 
    _profileInfo = new (m->trHeapMemory()) TR_AccessedProfileInfo(heapMemoryRegion);
+
+   _ObjectClassPointer   = fe->getClassFromSignature("Ljava/lang/Object;", 18, compilee);
+   _RunnableClassPointer = fe->getClassFromSignature("Ljava/lang/Runnable;", 20, compilee);
+   _StringClassPointer   = fe->getClassFromSignature("Ljava/lang/String;", 18, compilee);
+   _SystemClassPointer   = fe->getClassFromSignature("Ljava/lang/System;", 18, compilee);
+   _ReferenceClassPointer = fe->getClassFromSignature("Ljava/lang/ref/Reference;", 25, compilee);
+   _JITHelpersClassPointer = fe->getClassFromSignature("Lcom/ibm/jit/JITHelpers;", 24, compilee);
    }
 
 J9::Compilation::~Compilation()
