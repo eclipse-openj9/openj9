@@ -182,9 +182,11 @@ void completeInitialization() {
 	// Get the java.system.class.loader
 	/*[PR CMVC 99755] Implement -Djava.system.class.loader option */
 	contextClassLoader = ClassLoader.getSystemClassLoader();
-	/*[IF Sidecar19-SE]*/
+	/*[IF Sidecar19-SE|Sidecar19-SE-OpenJ9]*/
 	jdk.internal.misc.VM.initLevel(4);
-	/*[ENDIF]*/ // Sidecar19-SE
+	/*[ELSE]*/ // Sidecar19-SE|Sidecar19-SE-OpenJ9
+	sun.misc.VM.booted();
+	/*[ENDIF]*/ // Sidecar19-SE|Sidecar19-SE-OpenJ9
 	/*[IF Sidecar19-SE|Sidecar18-SE-OpenJ9]*/
 	System.startSNMPAgent();
 	/*[ENDIF]*/ // Sidecar19-SE|Sidecar18-SE-OpenJ9
