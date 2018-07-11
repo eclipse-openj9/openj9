@@ -2329,27 +2329,7 @@ ClientSessionData::~ClientSessionData()
          }
       }
    for (auto it : _romClassMap)
-      {
-      // If string cache exists, free it
-      auto *stringsCache = it.second._remoteROMStringsCache;
-      if (stringsCache)
-         {
-         stringsCache->~PersistentUnorderedMap<TR_RemoteROMStringKey, std::string>(); 
-         jitPersistentFree(stringsCache);
-         it.second._remoteROMStringsCache = nullptr;
-         }
-
-      // if fieldOrStaticNameCache exists, free it
-      auto *fieldOrStaticNameCache = it.second._fieldOrStaticNameCache;
-      if (fieldOrStaticNameCache)
-         {
-         fieldOrStaticNameCache->~PersistentUnorderedMap<int32_t, std::string>();
-         jitPersistentFree(fieldOrStaticNameCache);
-         it.second._fieldOrStaticNameCache = nullptr;
-         }
-
-      TR_Memory::jitPersistentFree(it.second.romClass);
-      }
+      _romClassMap.erase(it.first);
    }
 
 void
@@ -2393,7 +2373,7 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
             }
          
          }
-      TR_Memory::jitPersistentFree(romClass);
+      
       _romClassMap.erase(it);
       }
    }
@@ -2483,6 +2463,23 @@ ClientSessionData::printStats()
    j9tty_printf(PORTLIB, "\tTotal size of cached ROM classes + methods: %d bytes\n", total);
    }
 
+ClientSessionData::ClassInfo::~ClassInfo()
+   {
+   TR_Memory::jitPersistentFree(romClass);
+   // If string cache exists, free it
+   if (_remoteROMStringsCache)
+      {
+      _remoteROMStringsCache->~PersistentUnorderedMap<TR_RemoteROMStringKey, std::string>();
+      jitPersistentFree(_remoteROMStringsCache);
+      }
+
+   // if fieldOrStaticNameCache exists, free it
+   if (_fieldOrStaticNameCache)
+      {
+      _fieldOrStaticNameCache->~PersistentUnorderedMap<int32_t, std::string>();
+      jitPersistentFree(_fieldOrStaticNameCache);
+      }
+   }
 
 ClientSessionHT*
 ClientSessionHT::allocate()

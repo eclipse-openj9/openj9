@@ -17,6 +17,7 @@ class ClientSessionData
    public:
    struct ClassInfo
       {
+      ~ClassInfo();
       J9ROMClass *romClass; // romClass content exists in persistentMemory at the server
       J9Method *methodsOfClass;
       // Fields meaningful for arrays
