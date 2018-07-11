@@ -48,7 +48,6 @@ void J9::RecognizedCallTransformer::processIntrinsicFunction(TR::TreeTop* treeto
    TR::TransformUtil::removeTree(comp(), treetop);
    }
 
-
 bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
    {
    auto node = treetop->getNode()->getFirstChild();
@@ -65,11 +64,7 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
       case TR::java_lang_Math_min_I:
       case TR::java_lang_Math_max_L:
       case TR::java_lang_Math_min_L:
-         return (TR::Compiler->target.cpu.isX86() ||
-            TR::Compiler->target.cpu.isPower() ||
-            TR::Compiler->target.cpu.isZ() ||
-            TR::Compiler->target.cpu.isARM()) &&
-            !comp()->getOption(TR_DisableMaxMinOptimization);
+         return !comp()->getOption(TR_DisableMaxMinOptimization);
       case TR::java_lang_Math_max_F:
       case TR::java_lang_Math_min_F:
       case TR::java_lang_Math_max_D:
