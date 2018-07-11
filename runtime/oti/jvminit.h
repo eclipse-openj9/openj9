@@ -508,7 +508,6 @@ enum INIT_STAGE {
 #define SYSPROP_JDK_MODULE_UPGRADE_PATH "jdk.module.upgrade.path"
 #define SYSPROP_JDK_MODULE_PATH "jdk.module.path"
 #define SYSPROP_JDK_MODULE_ADDMODS "jdk.module.addmods."
-#define SYSPROP_JDK_MODULE_ADDMODS_B136 "jdk.module.addmods"	/* to be removed when b148+ become default level */
 #define SYSPROP_JDK_MODULE_LIMITMODS "jdk.module.limitmods"
 #define SYSPROP_JDK_MODULE_ADDREADS "jdk.module.addreads."
 #define SYSPROP_JDK_MODULE_ADDEXPORTS "jdk.module.addexports."
