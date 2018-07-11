@@ -51,9 +51,6 @@ void J9::RecognizedCallTransformer::processIntrinsicFunction(TR::TreeTop* treeto
 
 bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
    {
-   static bool disableARMMaxMin = true; // (feGetEnv("TR_DisableARMMaxMin") != NULL);
-   static bool disableARMFMaxMin = true; // (feGetEnv("TR_DisableARMFMaxMin") != NULL);
-
    auto node = treetop->getNode()->getFirstChild();
    switch(node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod())
       {
@@ -71,13 +68,13 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
          return (TR::Compiler->target.cpu.isX86() ||
             TR::Compiler->target.cpu.isPower() ||
             TR::Compiler->target.cpu.isZ() ||
-            TR::Compiler->target.cpu.isARM() && !disableARMMaxMin) &&
+            TR::Compiler->target.cpu.isARM()) &&
             !comp()->getOption(TR_DisableMaxMinOptimization);
       case TR::java_lang_Math_max_F:
       case TR::java_lang_Math_min_F:
       case TR::java_lang_Math_max_D:
       case TR::java_lang_Math_min_D:
-         return (TR::Compiler->target.cpu.isARM() && !disableARMMaxMin && !disableARMFMaxMin) &&
+         return (TR::Compiler->target.cpu.isARM()) &&
             !comp()->getOption(TR_DisableMaxMinOptimization);
       default:
          return false;
