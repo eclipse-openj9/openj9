@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,6 +49,7 @@ extern "C" {
 #define CLS_ERROR_INTERNAL 					JVMTI_ERROR_INTERNAL
 #define CLS_ERROR_CLASS_LOADER_UNSUPPORTED	JVMTI_ERROR_CLASS_LOADER_UNSUPPORTED
 #define CLS_ERROR_ILLEGAL_ARGUMENT			JVMTI_ERROR_ILLEGAL_ARGUMENT
+#define CLS_ERROR_NOT_FOUND					JVMTI_ERROR_NOT_FOUND
 
 #ifdef __cplusplus
 }
