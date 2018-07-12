@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,7 +61,15 @@ J9SigQuitStartup(J9JavaVM * vm)
 		return 0;
 	}
 
-	if (j9sig_set_async_signal_handler(sigQuitWrapper, vm, J9PORT_SIG_FLAG_SIGQUIT)) {
+	/* SIGQUIT is only available on Unix platforms. On Windows, SIGBREAK
+	 * is the SIGQUIT equivalent.
+	 */
+#if defined(WIN32)
+	if (j9sig_set_async_signal_handler(sigQuitWrapper, vm, J9PORT_SIG_FLAG_SIGBREAK))
+#else /* defined(WIN32) */
+	if (j9sig_set_async_signal_handler(sigQuitWrapper, vm, J9PORT_SIG_FLAG_SIGQUIT))
+#endif /* defined(WIN32) */
+	{
 		Trc_JCL_J9SigQuitStartup_Failure();
 		return JNI_ERR;
 	}
