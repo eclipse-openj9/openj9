@@ -4163,8 +4163,6 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
 
    TR_Method * calledMethod = symbol->getMethod();
    int32_t numArgs = calledMethod->numberOfExplicitParameters() + (isStatic ? 0 : 1);
-   static bool disableARMMaxMin = true; // (feGetEnv("TR_DisableARMMaxMin") != NULL);
-   static bool disableARMFMaxMin = true; // (feGetEnv("TR_DisableARMFMaxMin") != NULL);
 
    TR::ILOpCodes opcode = TR::BadILOp;
    switch (symbol->getRecognizedMethod())
@@ -4175,53 +4173,6 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
          break;
       default:
          break;
-      }
-
-   if (TR::Compiler->target.cpu.isPower() || (!disableARMMaxMin && TR::Compiler->target.cpu.isARM())) // TODO: implement max/min opcodes on all platforms
-      {
-
-      switch (symbol->getRecognizedMethod())
-         {
-         case TR::java_lang_Math_max_I:
-            opcode = TR::imax;
-            break;
-         case TR::java_lang_Math_min_I:
-            opcode = TR::imin;
-            break;
-         case TR::java_lang_Math_max_L:
-            opcode = TR::lmax;
-            break;
-         case TR::java_lang_Math_min_L:
-            opcode = TR::lmin;
-            break;
-         case TR::java_lang_Math_max_F:
-            if (!disableARMFMaxMin && TR::Compiler->target.cpu.isARM())
-               opcode = TR::fmax;
-            break;
-         case TR::java_lang_Math_min_F:
-            if (!disableARMFMaxMin && TR::Compiler->target.cpu.isARM())
-               opcode = TR::fmin;
-            break;
-         case TR::java_lang_Math_max_D:
-            if (!disableARMFMaxMin && TR::Compiler->target.cpu.isARM())
-               opcode = TR::dmax;
-            break;
-         case TR::java_lang_Math_min_D:
-            if (!disableARMFMaxMin && TR::Compiler->target.cpu.isARM())
-               opcode = TR::dmin;
-            break;
-         default:
-         	break;
-         }
-      }
-
-   if (opcode != TR::BadILOp)
-      {
-      TR::Node * node = TR::Node::create(opcode, 2);
-      node->setAndIncChild(0, pop());
-      node->setAndIncChild(1, pop());
-      push(node);
-      return node;
       }
 
    if (comp()->cg()->getSupportsBitOpCodes() && !comp()->getOption(TR_DisableBitOpcode))
