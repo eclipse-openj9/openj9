@@ -11,9 +11,9 @@ getJ9ClassInfo(TR::CompilationInfoPerThread *threadCompInfo, J9Class *clazz)
    // This function assumes that you are inside of _romMapMonitor
    // Do not use it otherwise
    auto &classMap = threadCompInfo->getClientData()->getROMClassMap();
-   auto gotClass = classMap.find(clazz);
-   TR_ASSERT(gotClass != classMap.end(), "J9Method is not in J9MethodMap");
-   return gotClass->second;
+   auto it = classMap.find(clazz);
+   TR_ASSERT(it != classMap.end(), "ClassInfo is not in the class map");
+   return it->second;
    }
 
 J9ROMClass *
@@ -1016,7 +1016,7 @@ TR_ResolvedJ9JITaaSServerMethod::setAttributes(TR_OpaqueMethodBlock * aMethod, T
 
    _romClass = threadCompInfo->getAndCacheRemoteROMClass(_ramClass, trMemory);
    _romMethod = romMethodAtClassIndex(_romClass, methodInfoStruct.methodIndex);
-   _romLiterals = (J9ROMConstantPoolItem *) ((UDATA)romClassPtr() + sizeof(J9ROMClass));
+   _romLiterals = (J9ROMConstantPoolItem *) ((UDATA) _romClass + sizeof(J9ROMClass));
 
    _vTableSlot = vTableSlot;
    _j9classForNewInstance = nullptr;

@@ -39,7 +39,7 @@ J9ROMMethod *romMethodOfRamMethod(J9Method* method)
 
    // else, JITaaS
    auto clientData = TR::compInfoPT->getClientData();
-   J9ROMMethod *romMethod;
+   J9ROMMethod *romMethod = nullptr;
 
    // check if the method is already cached
       {
@@ -60,7 +60,9 @@ J9ROMMethod *romMethodOfRamMethod(J9Method* method)
          {
          OMR::CriticalSection romCache(clientData->getROMMapMonitor());
          auto &map = clientData->getJ9MethodMap();
-         romMethod = map[(J9Method*) method]._romMethod;
+         auto it = map.find((J9Method *) method);
+         if (it != map.end())
+            romMethod = it->second._romMethod;
          }
       }
    TR_ASSERT(romMethod, "Should have acquired romMethod");
