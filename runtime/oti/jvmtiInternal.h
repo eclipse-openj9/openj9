@@ -549,20 +549,33 @@ typedef struct jvmtiGcp_translation {
 #define IBMJVMTI_EXTENDED_CALLSTACK     1
 #define IBMJVMTI_UNEXTENDED_CALLSTACK   0
 
+/* The brace mismatches in the macros below are due to the usage pattern:
+ *
+ * JVMTI_ENVIRONMENTS_DO(jvmtiData, j9env) {
+ * 		...use j9env...
+ * 		JVMTI_ENVIRONMENTS_NEXT_DO(jvmtiData, j9env);
+ * }
+ *
+ */
+
 #define JVMTI_ENVIRONMENTS_DO(jvmtiData, j9env) \
 	(j9env) = (jvmtiData)->environmentsHead; \
-	while (((j9env) != NULL) && (0 == ((j9env)->flags & J9JVMTIENV_FLAG_DISPOSED)))
+	while ((j9env) != NULL) { \
+		if (0 == ((j9env)->flags & J9JVMTIENV_FLAG_DISPOSED))
 
 #define JVMTI_ENVIRONMENTS_NEXT_DO(jvmtiData, j9env) \
-	(j9env) = (j9env)->linkNext
+		} \
+		(j9env) = (j9env)->linkNext
 	
 #define JVMTI_ENVIRONMENTS_REVERSE_DO(jvmtiData, j9env) \
 	(j9env) = (jvmtiData)->environmentsTail; \
-	while (((j9env) != NULL) && (0 == ((j9env)->flags & J9JVMTIENV_FLAG_DISPOSED)))
+	while ((j9env) != NULL) { \
+		if (0 == ((j9env)->flags & J9JVMTIENV_FLAG_DISPOSED))
 
 #define JVMTI_ENVIRONMENTS_REVERSE_NEXT_DO(jvmtiData, j9env) \
-	(j9env) = (j9env)->linkPrevious
-	
+		} \
+		(j9env) = (j9env)->linkPrevious
+
 #define PORT_ACCESS_FROM_JVMTI(env) PORT_ACCESS_FROM_JAVAVM(((J9JVMTIEnv *) (env))->vm)
 
 #endif     /* jvmtiInternal_h */

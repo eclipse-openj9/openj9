@@ -199,6 +199,8 @@
 		<export name="Java_com_ibm_jvmti_tests_modularityTests_mt001_addModuleOpens" />
 		<export name="Java_com_ibm_jvmti_tests_modularityTests_mt001_addModuleProvides" />
 		<export name="Java_com_ibm_jvmti_tests_nestMatesRedefinition_nmr001_redefineClass" />
+		<export name="Java_com_ibm_jvmti_tests_setNativeMethodPrefix_snmp001_setPrefix" />
+		<export name="Java_com_ibm_jvmti_tests_setNativeMethodPrefix_snmp001_nat" />
 	</exports>
 
 	<artifact type="shared" name="jvmtitest" bundle="jvmti_test" appendrelease="false">

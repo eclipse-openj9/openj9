@@ -164,6 +164,8 @@ add_library(jvmti_test_src STATIC
 	com/ibm/jvmti/tests/verboseGC/vgc001.c
 
 	com/ibm/jvmti/tests/vmDump/vmd001.c
+
+	com/ibm/jvmti/tests/setNativeMethodPrefix/snmp001.c
 )
 
 
