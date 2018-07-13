@@ -200,6 +200,7 @@
    java_lang_String_getChars_byteArray,
 
    java_lang_StringUTF16_getChar,
+   java_lang_StringUTF16_toBytes,
 
    java_lang_StringBuffer_append,
    java_lang_StringBuffer_capacityInternal,
