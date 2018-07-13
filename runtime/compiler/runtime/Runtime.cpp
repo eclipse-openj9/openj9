@@ -1063,9 +1063,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
 #endif
    SET(TR_throwCurrentException,      (void *)jitThrowCurrentException,      TR_Helper);
 
-   SET(TR_IncompatibleClassChangeError,(void *)jitThrowIncompatibleClassChangeError, TR_Helper);
-   SET(TR_AbstractMethodError,        (void *)jitThrowAbstractMethodError,           TR_Helper);
-   SET(TR_IllegalAccessError,         (void *)jitThrowIllegalAccessError,            TR_Helper);
    SET(TR_newInstanceImplAccessCheck, (void *)jitNewInstanceImplAccessCheck,         TR_Helper);
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
@@ -1161,7 +1158,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_AMD64icallVMprJavaSendVirtualF,             (void *)icallVMprJavaSendVirtualF, TR_Helper);
    SET(TR_AMD64icallVMprJavaSendVirtualD,             (void *)icallVMprJavaSendVirtualD, TR_Helper);
 
-   SET(TR_AMD64jitThrowCurrentException,              (void *)jitThrowCurrentException,       TR_Helper);
    SET(TR_AMD64jitCollapseJNIReferenceFrame,          (void *)jitCollapseJNIReferenceFrame,   TR_Helper);
 
    SET(TR_AMD64compressString,                        (void *)_compressString,            TR_Helper);
@@ -1231,7 +1227,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_X86interpreterAddressStaticGlue,            (void *)interpreterEAXStaticGlue,        TR_Helper);
    SET(TR_X86interpreterSyncAddressStaticGlue,        (void *)interpreterSyncEAXStaticGlue,    TR_Helper);
 
-   SET(TR_IA32jitThrowCurrentException,               (void *)jitThrowCurrentException,        TR_Helper);
    SET(TR_IA32jitCollapseJNIReferenceFrame,           (void *)jitCollapseJNIReferenceFrame,    TR_Helper);
 
    SET(TR_IA32floatRemainder,                         (void *)_X87floatRemainder,  TR_Helper);
