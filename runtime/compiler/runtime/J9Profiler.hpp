@@ -637,6 +637,8 @@ class TR_BlockFrequencyInfo
    bool    isJProfilingData() { return _counterDerivationInfo != NULL; }
    static int32_t *getEnableJProfilingRecompilation() { return &_enableJProfilingRecompilation; }
    static void    enableJProfilingRecompilation() { _enableJProfilingRecompilation = -1; }
+   void setIsQueuedForRecompilation() { _isQueuedForRecompilation = -1; }
+   int32_t *getIsQueuedForRecompilation() { return &_isQueuedForRecompilation; }
 
    void dumpInfo(TR::FILE *);
 
@@ -660,6 +662,8 @@ class TR_BlockFrequencyInfo
    TR_BitVector    ** _counterDerivationInfo;
    int32_t         _entryBlockNumber;
    static int32_t  _enableJProfilingRecompilation;
+   // Following flag is checked at runtime to know if we have queued this method for recompilation and skip the profiling code
+   int32_t         _isQueuedForRecompilation;
    };
 
 TR_BlockFrequencyInfo * TR_BlockFrequencyInfo::get(TR_PersistentProfileInfo * profileInfo)
