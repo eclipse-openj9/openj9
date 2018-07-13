@@ -220,6 +220,18 @@ J9::Simplifier::unaryCancelOutWithChild(TR::Node *node, TR::Node *firstChild, TR
    }
 
 bool
+J9::Simplifier::isRecognizedFMAMethod(TR::Node *node)
+   {
+   TR::Symbol *symbol = node->getSymbol();
+   TR::MethodSymbol *methodSymbol = symbol ? symbol->castToMethodSymbol() : NULL;
+   return (methodSymbol &&
+           (methodSymbol->getRecognizedMethod() == TR::java_lang_Math_fma_F ||
+            methodSymbol->getRecognizedMethod() == TR::java_lang_Math_fma_D ||           
+            methodSymbol->getRecognizedMethod() == TR::java_lang_StrictMath_fma_F ||
+            methodSymbol->getRecognizedMethod() == TR::java_lang_StrictMath_fma_D));
+   }
+
+bool
 J9::Simplifier::isRecognizedPowMethod(TR::Node *node)
    {
    TR::Symbol *symbol = node->getSymbol();
@@ -267,6 +279,156 @@ J9::Simplifier::foldAbs(TR::Node *node)
    }
 
 TR::Node *
+J9::Simplifier::foldFMAFloat(TR::Node *node)
+   {
+   TR::Node *firstChild = node->getChild(0);
+   TR::Node *secondChild = node->getChild(1);
+   TR::Node *thirdChild = node->getChild(2);
+
+   if(firstChild->getOpCode().isLoadConst() && 
+      secondChild->getOpCode().isLoadConst() && 
+      thirdChild->getOpCode().isLoadConst())
+      {
+      union
+         {
+         int32_t bits;
+         float value;
+         } a, b, c, d;
+      // d = a*b + c
+      a.value = firstChild->getFloat();
+      b.value = secondChild->getFloat();
+      c.value = thirdChild->getFloat();
+
+      bool aIsNan = ((a.bits & 0x7f800000) == 0x7f800000) && ((a.bits & 0x007fffff) != 0);
+      bool bIsNan = ((b.bits & 0x7f800000) == 0x7f800000) && ((b.bits & 0x007fffff) != 0);
+      bool cIsNan = ((c.bits & 0x7f800000) == 0x7f800000) && ((c.bits & 0x007fffff) != 0);
+      bool aIsInf = ((a.bits & 0x7fffffff) == 0x7f800000);
+      bool bIsInf = ((b.bits & 0x7fffffff) == 0x7f800000);
+      bool cIsPosInf = ((c.bits & 0xffffffff) == 0x7f800000);
+      bool cIsNegInf = ((c.bits & 0xffffffff) == 0xff800000);
+      bool aIsZero = (a.bits & 0x7fffffff) == 0;
+      bool bIsZero = (b.bits & 0x7fffffff) == 0;
+
+      if(aIsNan || bIsNan || cIsNan)
+         {
+         if(performTransformation(comp(), "%sFolded fma with any argument NaN on node [%p] to NaN\n", optDetailString(), node))
+            {
+            // result is NaN
+            d.bits = 0x7ff00000;
+            }
+         }
+      else if((aIsInf && bIsZero) || (aIsZero && bIsInf))
+         {
+         if(performTransformation(comp(), "%sFolded fma with (Inf*0)+c on node [%p] to NaN\n", optDetailString(), node))
+            {
+            // result is NaN
+            d.bits = 0x7ff00000;
+            }
+         }
+      else if((aIsInf && !bIsZero && !bIsNan) ||
+              (bIsInf && !aIsZero && !aIsNan))
+         {
+         bool mulIsPositiveInf = ((a.bits & 0x80000000) ^ (b.bits & 0x80000000)) == 0;
+         if((mulIsPositiveInf && cIsNegInf) || (!mulIsPositiveInf && cIsPosInf))
+            {
+            if(performTransformation(comp(), "%sFolded fma with (Inf)+(-Inf) or (-Inf)+(Inf) on node [%p] to NaN\n", optDetailString(), node))
+               {
+               // result is NaN
+               d.bits = 0x7ff00000;
+               }
+            }
+         else 
+            {
+            d.value = TR::Compiler->arith.floatAddFloat(TR::Compiler->arith.floatMultiplyFloat(a.value, b.value), c.value);
+            }
+         }
+      else
+         {
+         d.value = TR::Compiler->arith.floatAddFloat(TR::Compiler->arith.floatMultiplyFloat(a.value, b.value), c.value);
+         }
+         
+      foldFloatConstant(node, d.value, (TR::Simplifier *) this);
+      }
+
+   return node;
+   }
+
+TR::Node *
+J9::Simplifier::foldFMADouble(TR::Node *node)
+   {
+   TR::Node *firstChild = node->getChild(0);
+   TR::Node *secondChild = node->getChild(1);
+   TR::Node *thirdChild = node->getChild(2);
+
+   if(firstChild->getOpCode().isLoadConst() && 
+      secondChild->getOpCode().isLoadConst() && 
+      thirdChild->getOpCode().isLoadConst())
+      {
+      union
+         {
+         int64_t bits;
+         double value;
+         } a, b, c, d;
+      // d = a*b + c
+      a.value = firstChild->getDouble();
+      b.value = secondChild->getDouble();
+      c.value = thirdChild->getDouble();
+
+      bool aIsNan = ((a.bits & 0x7ff0000000000000) == 0x7ff0000000000000) && ((a.bits & 0x000fffffffffffff) != 0);
+      bool bIsNan = ((b.bits & 0x7ff0000000000000) == 0x7ff0000000000000) && ((b.bits & 0x000fffffffffffff) != 0);
+      bool cIsNan = ((c.bits & 0x7ff0000000000000) == 0x7ff0000000000000) && ((c.bits & 0x000fffffffffffff) != 0);
+      bool aIsInf = ((a.bits & 0x7fffffffffffffff) == 0x7ff0000000000000);
+      bool bIsInf = ((b.bits & 0x7fffffffffffffff) == 0x7ff0000000000000);
+      bool cIsPosInf = (c.bits == 0x7ff0000000000000);
+      bool cIsNegInf = (c.bits == 0xfff0000000000000);
+      bool aIsZero = (a.bits & 0x7fffffffffffffff) == 0;
+      bool bIsZero = (b.bits & 0x7fffffffffffffff) == 0;
+
+      if(aIsNan || bIsNan || cIsNan)
+         {
+         if(performTransformation(comp(), "%sFolded fma with any argument NaN on node [%p] to NaN\n", optDetailString(), node))
+            {
+            // result is NaN
+            d.bits = 0x7ff8000000000000;
+            }
+         }
+      else if((aIsInf && bIsZero) || (aIsZero && bIsInf))
+         {
+         if(performTransformation(comp(), "%sFolded fma with (Inf*0)+c on node [%p] to NaN\n", optDetailString(), node))
+            {
+            // result is NaN
+            d.bits = 0x7ff8000000000000;
+            }
+         }
+      else if((aIsInf && !bIsZero && !bIsNan) ||
+              (bIsInf && !aIsZero && !aIsNan))
+         {
+         bool mulIsPositive = ((a.bits & 0x8000000000000000) ^ (b.bits & 0x8000000000000000) == 0);
+         if((mulIsPositive && cIsNegInf) || (!mulIsPositive && cIsPosInf))
+            {
+            if(performTransformation(comp(), "%sFolded fma with (Inf)+(-Inf) or (-Inf)+(Inf) on node [%p] to NaN\n", optDetailString(), node))
+               {
+               // result is NaN
+               d.bits = 0x7ff8000000000000;
+               };
+            }
+         else 
+            {
+            d.value = TR::Compiler->arith.doubleAddDouble(TR::Compiler->arith.doubleMultiplyDouble(a.value, b.value), c.value);
+            }
+         }
+      else
+         {
+         d.value = TR::Compiler->arith.doubleAddDouble(TR::Compiler->arith.doubleMultiplyDouble(a.value, b.value), c.value);
+         }
+      
+      foldDoubleConstant(node, d.value, (TR::Simplifier *) this);
+      }
+
+   return node;
+   }
+
+TR::Node *
 J9::Simplifier::simplifyiCallMethods(TR::Node * node, TR::Block * block)
    {
    if (isRecognizedAbsMethod(node))
@@ -299,6 +461,13 @@ J9::Simplifier::simplifyiCallMethods(TR::Node * node, TR::Block * block)
          {
          foldDoubleConstant(node, 10000.0, (TR::Simplifier *) this);
          }
+      }
+   else if (isRecognizedFMAMethod(node))
+      {
+      if (node->getOpCode().isFloat())
+         node = foldFMAFloat(node);
+      else 
+         node = foldFMADouble(node);
       }
 
    return node;
