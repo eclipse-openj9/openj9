@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1643,7 +1643,8 @@ TR_BlockFrequencyInfo::TR_BlockFrequencyInfo(TR_CallSiteInfo *callSiteInfo, int3
    _blocks(blocks),
    _frequencies(frequencies),
    _counterDerivationInfo(NULL),
-   _entryBlockNumber(-1)
+   _entryBlockNumber(-1),
+   _isQueuedForRecompilation(0)
    {
    }
 
@@ -1668,7 +1669,8 @@ TR_BlockFrequencyInfo::TR_BlockFrequencyInfo(
       NULL
       ),
    _counterDerivationInfo(NULL),
-   _entryBlockNumber(-1)
+   _entryBlockNumber(-1),
+   _isQueuedForRecompilation(0)
    {
    for (size_t i = 0; i < _numBlocks; ++i)
       {
