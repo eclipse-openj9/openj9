@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -182,7 +182,7 @@ TR::Instruction *TR_X86Recompilation::generatePrologue(TR::Instruction *cursor)
          else
             {
             // This only applies to JitProfiling, as JProfiling uses sampling
-            TR_ASSERT(_compilation->getProfilingMode() == JitProfiling, "JProfiling should use sampling to trigger recompilation");
+            TR_ASSERT(_compilation->getProfilingMode() == JitProfiling, "JProfiling should not use counting mechanism to trigger recompilation");
             cursor = new (trHeapMemory()) TR::X86MemImmInstruction(cursor, CMP4MemImms, mRef, 0, cg());
             }
 
