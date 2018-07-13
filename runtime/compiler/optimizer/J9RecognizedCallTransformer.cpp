@@ -54,6 +54,7 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
    switch(node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod())
       {
       case TR::java_lang_Integer_rotateLeft:
+      case TR::java_lang_Long_rotateLeft:
       case TR::java_lang_Math_abs_I:
       case TR::java_lang_Math_abs_L:
       case TR::java_lang_Math_abs_F:
@@ -77,6 +78,9 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop* treetop)
       {
       case TR::java_lang_Integer_rotateLeft:
          processIntrinsicFunction(treetop, node, TR::irol);
+         break;
+      case TR::java_lang_Long_rotateLeft:
+         processIntrinsicFunction(treetop, node, TR::lrol);
          break;
       case TR::java_lang_Math_abs_I:
          processIntrinsicFunction(treetop, node, TR::iabs);
