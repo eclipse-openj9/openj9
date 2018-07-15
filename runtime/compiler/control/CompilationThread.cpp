@@ -7482,6 +7482,12 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             }
          else
             {
+            // JITaaS: we want to suppress log file for client mode
+            // Client will get the log files from server.
+            if (that->getCompilationInfo()->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+               {
+               TR::Options::suppressLogFileBecauseDebugObjectNotCreated();
+               }
             // Set up options for this compilation. An option subset might apply
             // to the method, either via an option set index in the limitfile or
             // via a regular expression that matches the method.

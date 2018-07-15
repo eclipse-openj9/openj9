@@ -2042,6 +2042,7 @@ remoteCompile(
    std::string dataCacheStr;
    CHTableCommitData chTableData;
    std::vector<TR_OpaqueClassBlock*> classesThatShouldNotBeNewlyExtended;
+   std::string logFileStr;
    try
       {
       // release VM access just before sending the compilation request
@@ -2065,12 +2066,13 @@ remoteCompile(
          }
 
       while(!handleServerMessage(&client, compiler->fej9vm()));
-      auto recv = client.getRecvData<uint32_t, std::string, std::string, CHTableCommitData, std::vector<TR_OpaqueClassBlock*>>();
+      auto recv = client.getRecvData<uint32_t, std::string, std::string, CHTableCommitData, std::vector<TR_OpaqueClassBlock*>, std::string>();
       statusCode = std::get<0>(recv);
       codeCacheStr = std::get<1>(recv);
       dataCacheStr = std::get<2>(recv);
       chTableData = std::get<3>(recv);
       classesThatShouldNotBeNewlyExtended = std::get<4>(recv);
+      logFileStr = std::get<5>(recv);
       if (statusCode >= compilationMaxError)
          throw JITaaS::StreamTypeMismatch("Did not receive a valid TR_CompilationErrorCode as the final message on the stream.");
       }
@@ -2148,6 +2150,7 @@ remoteCompile(
 
          TR_ASSERT(!metaData->startColdPC, "coldPC should be null");
 
+         compiler->getOptions()->writeLogFileFromServer(logFileStr);
 
          if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
             {
@@ -2226,8 +2229,12 @@ remoteCompilationEnd(
       }
 
    auto classesThatShouldNotBeNewlyExtended = TR::compInfoPT->getClassesThatShouldNotBeNewlyExtended();
+
+   // pack log file to send to client
+   std::string logFileStr = TR::Options::packLogFile(comp->getOutFile());
+
    entry->_stream->finishCompilation(compilationOK, codeCacheStr, dataCacheStr, chTableData,
-                                     std::vector<TR_OpaqueClassBlock*>(classesThatShouldNotBeNewlyExtended->begin(), classesThatShouldNotBeNewlyExtended->end()));
+                                     std::vector<TR_OpaqueClassBlock*>(classesThatShouldNotBeNewlyExtended->begin(), classesThatShouldNotBeNewlyExtended->end()), logFileStr);
 
    if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
       {

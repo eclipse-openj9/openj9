@@ -120,6 +120,7 @@ void remoteCompilationEnd(TR::IlGeneratorMethodDetails &details, J9JITConfig *ji
 void printJITaaSMsgStats(J9JITConfig *);
 void printJITaaSCHTableStats(J9JITConfig *, TR::CompilationInfo *);
 void printJITaaSCacheStats(J9JITConfig *, TR::CompilationInfo *);
+
 class JITaaSHelpers
    {
    public:

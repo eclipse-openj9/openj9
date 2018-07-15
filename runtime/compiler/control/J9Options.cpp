@@ -2665,16 +2665,18 @@ J9::Options::packOptions(TR::Options *origOptions)
    size_t blockShufflingSequenceLength = 0;
    size_t induceOSRLength = 0;
 
-   char buf[1025];
+   char buf[FILENAME_MAX_SIZE];
+   char * origLogFileName = NULL;
    if (origOptions->_logFileName)
       {
+      origLogFileName = origOptions->_logFileName;
       char pidBuf[20];
       memset(pidBuf, 0, 20);
       getTRPID(pidBuf);
-      logFileNameLength = strlen(origOptions->_logFileName) + strlen(pidBuf) + 2;
-      if (logFileNameLength > 1025)
-         logFileNameLength = 1025;
-      snprintf(buf, logFileNameLength, "%s.%s", origOptions->_logFileName, pidBuf);
+      logFileNameLength = strlen(origOptions->_logFileName) + strlen(".") + strlen(pidBuf) + strlen(".server") + 1;
+      if (logFileNameLength > FILENAME_MAX_SIZE)
+         logFileNameLength = FILENAME_MAX_SIZE;
+      snprintf(buf, logFileNameLength, "%s.%s.server", origOptions->_logFileName, pidBuf);
       origOptions->_logFileName = buf;
       }
    if (origOptions->_suffixLogsFormat)
@@ -2712,6 +2714,7 @@ J9::Options::packOptions(TR::Options *origOptions)
    std::string optionsStr(totalSize, '\0');
    TR::Options * options = (TR::Options *)optionsStr.data();
    memcpy(options, origOptions, sizeof(TR::Options));
+   origOptions->_logFileName = origLogFileName;
 
    uint8_t *curPos = ((uint8_t *)options) + sizeof(TR::Options);
 
@@ -2802,6 +2805,26 @@ J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR_Mem
    return options;
    }
 
+std::string
+J9::Options::packLogFile(TR::FILE *fp)
+   {
+   if (fp == NULL)
+      return "";
+   const size_t size = 4096; // 4kb
+   char buf[size + 1];
+   ::rewind(fp->_stream);
+   std::string logFileStr("");
+   int readSize;
+   do {
+      readSize = ::fread(buf, 1, size, fp->_stream);
+      buf[readSize] = '\0';
+      logFileStr.append(buf);
+   } while (readSize == size);
+
+   logFileStr.append("</jitlog>\n");
+   return logFileStr;
+   }
+
 uint8_t *
 J9::Options::appendContent(char * &charPtr, uint8_t * curPos, size_t length)
    {
@@ -2817,11 +2840,12 @@ J9::Options::appendContent(char * &charPtr, uint8_t * curPos, size_t length)
 
 TR_Debug *createDebugObject(TR::Compilation *);
 // JITaaS: create a log file for each client compilation request
+// Used by JITaaSServer
 // Side effect: set _logFile
 void
 J9::Options::setLogFileForClientOptions()
    {
-   if (self()->_logFileName)
+   if (_logFileName)
       {
       _fe->acquireLogMonitor();
       _compilationSequenceNumber++;
@@ -2842,14 +2866,51 @@ J9::Options::setLogFileForClientOptions()
       }
    }
 
+// JITaaS: close log file
+// Used by JITaaSServer
 void
 J9::Options::closeLogFileForClientOptions()
    {
-   if (self()->_logFile)
+   if (_logFile)
       {
-      TR::Options::closeLogFile(_fe, self()->_logFile);
+      TR::Options::closeLogFile(_fe, _logFile);
+      _logFile = NULL;
       }
    }
+
+// JITaaS: create a log file on the client side
+// Used by JITaaSClient
+void
+J9::Options::writeLogFileFromServer(const std::string& logFileContent)
+   {
+   if (logFileContent.empty() || !_logFileName)
+      return;
+
+   char buf[FILENAME_MAX_SIZE];
+   _fe->acquireLogMonitor();
+   snprintf(buf, sizeof(buf), "%s.%d", _logFileName, ++_compilationSequenceNumber);
+   _fe->releaseLogMonitor();
+
+   int32_t len = strlen(buf);
+   // maximum length for suffix (dot + 8-digit date + dot + 6-digit time + dot + 5-digit pid + null terminator)
+   int32_t MAX_SUFFIX_LENGTH = 23;
+   if (len + MAX_SUFFIX_LENGTH > FILENAME_MAX_SIZE)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Trace log not genereted due to filename being too long");
+         }
+      return; // may overflow the buffer
+      }
+   char tmp[FILENAME_MAX_SIZE];
+   char * filename = _fe->getFormattedName(tmp, FILENAME_MAX_SIZE, buf, _suffixLogsFormat, true);
+
+   TR::FILE *logFile = trfopen(filename, "wb", false);
+   ::fputs(logFileContent.c_str(), logFile->_stream);
+   trfflush(logFile);
+   trfclose(logFile);
+   }
+
 #if 0
 char*
 J9::Options::setCounts()

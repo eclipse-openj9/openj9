@@ -316,11 +316,14 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static char *limitfileOption(char *option, void *, TR::OptionTable *entry);
    static char *versionOption(char *option, void *, TR::OptionTable *entry);
 
+   static const size_t FILENAME_MAX_SIZE = 1025;
    static std::string packOptions(TR::Options *origOptions);
    static TR::Options *unpackOptions(char *clientOptions, size_t clientOptionsSize, TR_Memory *trMemory);
    static uint8_t *appendContent(char * &charPtr, uint8_t * curPos, size_t length);
+   static std::string packLogFile(TR::FILE *fp);
    void setLogFileForClientOptions();
    void closeLogFileForClientOptions();
+   void writeLogFileFromServer(const std::string& logFileContent);
 
    bool  fePreProcess(void *base);
    bool  fePostProcessAOT(void *base);
