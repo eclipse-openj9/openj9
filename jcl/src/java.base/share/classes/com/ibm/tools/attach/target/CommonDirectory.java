@@ -328,10 +328,10 @@ public abstract class CommonDirectory {
 				|| MASTER_NOTIFIER.equalsIgnoreCase(dirMemberName));
 	}
 
-	/*
-	 * look for leftover files and directories from previous VMs
+	/**
+	 * Look for and delete leftover files and directories from previous VMs
+	 * @param myId VMID of the current.  Set to non-null to prevent deleting own directory.
 	 */
-	/*[PR Jazz 37778 deleteStaleDirectories was always called with checkProcess=true */
 	static void deleteStaleDirectories(String myId) {
 		long myUid = IPC.getUid();
 		File[] vmDirs = getCommonDirFileObject().listFiles(new DirectorySampler());
