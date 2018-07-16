@@ -239,5 +239,6 @@ jint JNICALL rnwr001(agentEnv * agent_env, char * args);
 jint JNICALL aln001(agentEnv * agent_env, char * args);
 jint JNICALL mt001(agentEnv * agent_env, char * args);
 jint JNICALL nmr001(agentEnv * agent_env, char * args);
+jint JNICALL snmp001(agentEnv * agent_env, char * args);
 
 #endif /*JVMTI_TEST_H_*/
