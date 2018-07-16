@@ -22,6 +22,10 @@
 #ifndef JPROFILINGBLOCK_INCL
 #define JPROFILINGBLOCK_INCL
 
+#ifdef OMRZTPF
+#define __TPF_DO_NOT_MAP_ATOE_REMOVE
+#endif
+
 #include <stdint.h>                           // for int32_t
 #include <queue>
 #include <vector>

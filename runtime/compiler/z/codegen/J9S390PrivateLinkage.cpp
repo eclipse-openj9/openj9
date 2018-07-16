@@ -2145,8 +2145,8 @@ TR::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDe
             }
 
          if (!performGuardedDevirtualization &&
-             !TR::Options::getCmdLineOptions()->getOption(TR_DisableInterpreterProfiling) &&
-             TR::Options::getCmdLineOptions()->getOption(TR_enableProfiledDevirtualization) &&
+             !comp()->getOption(TR_DisableInterpreterProfiling) &&
+             comp()->getOption(TR_enableProfiledDevirtualization) &&
              TR_ValueProfileInfoManager::get(comp()) && resolvedMethod
              )
             {

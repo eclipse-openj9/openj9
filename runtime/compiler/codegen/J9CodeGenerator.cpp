@@ -4416,7 +4416,7 @@ void
 J9::CodeGenerator::createHWPRecords()
    {
    if (self()->comp()->getPersistentInfo()->isRuntimeInstrumentationEnabled() &&
-       TR::Options::getCmdLineOptions()->getOption(TR_EnableHardwareProfileIndirectDispatch))
+       self()->comp()->getOption(TR_EnableHardwareProfileIndirectDispatch))
       {
       self()->comp()->fej9()->createHWProfilerRecords(self()->comp());
       }

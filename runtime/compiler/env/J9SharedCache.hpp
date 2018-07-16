@@ -69,6 +69,9 @@ public:
 
    UDATA *rememberClass(J9Class *clazz, bool create=true);
 
+   UDATA rememberDebugCounterName(const char *name);
+   const char *getDebugCounterName(UDATA offset);
+
    bool classMatchesCachedVersion(J9Class *clazz, UDATA *chainData=NULL);
    bool classMatchesCachedVersion(TR_OpaqueClassBlock *classPtr, UDATA *chainData=NULL)
       {

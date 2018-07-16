@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,7 @@ package com.ibm.j9ddr.vm29.types;
 
 import com.ibm.j9ddr.InvalidDataTypeException;
 
-public class U64 extends UScalar {
+public class U64 extends UDATA {
 
 	// Constants
 	public static final int SIZEOF = 8;
@@ -33,6 +33,9 @@ public class U64 extends UScalar {
 
 	public U64(long value) {
 		super(value);
+		// When working with 32-bit core files, the constructor for UDATA
+		// will truncate the value to 32 bits: we need all 64-bits here.
+		this.data = value;
 	}
 	
 	public U64(Scalar parameter) {
@@ -44,7 +47,11 @@ public class U64 extends UScalar {
 	public U64 add(int number) {
 		return new U64(data + number);
 	}
-	
+
+	public U64 add(long number) {
+		return new U64(data + number);
+	}
+
 	public U64 add(UScalar parameter) {
 		return add(new U64(parameter));
 	}
@@ -62,7 +69,11 @@ public class U64 extends UScalar {
 	public U64 sub(int number) {
 		return new U64(data - number);
 	}
-	
+
+	public U64 sub(long number) {
+		return new U64(data - number);
+	}
+
 	public U64 sub(UScalar parameter) {
 		return sub(new U64(parameter));
 	}
@@ -87,21 +98,24 @@ public class U64 extends UScalar {
 		return sub(new U64(parameter));
 	}
 
-	
 	public int intValue() {
-		if (super.intValue() < 0) {
-			throw new InvalidDataTypeException("U_64 contains value larger than Integer.MAX_VALUE");
-		} else {
-			return super.intValue();
+		long value = data;
+
+		if (value < 0 || value > Integer.MAX_VALUE) {
+			throw new InvalidDataTypeException("U64 contains value larger than Integer.MAX_VALUE");
 		}
+
+		return (int) value;
 	}
 	
 	public long longValue() {
-		if (super.longValue() < 0) {
-			throw new InvalidDataTypeException("U_64 contains value larger than Long.MAX_VALUE");
-		} else {
-			return super.longValue();
+		long value = data;
+
+		if (value < 0) {
+			throw new InvalidDataTypeException("U64 contains value larger than Long.MAX_VALUE");
 		}
+
+		return value;
 	}
 	
 	// bitOr
@@ -229,22 +243,20 @@ public class U64 extends UScalar {
 	public U64 mult(int parameter) {
 		return new U64(data * parameter);
 	}
-	
+
+	public U64 mult(long parameter) {
+		return new U64(data * parameter);
+	}
+
 	@Override
 	public boolean eq(Scalar parameter) {
-		if (parameter instanceof U64) {
-			return data == parameter.data;
-		} else if (parameter.isSigned()) {
+		if (parameter.isSigned()) {
 			return this.eq(new U64(parameter));
 		} else {
-			if (data < 0) {
-				return false;
-			} else {
-				return longValue() == parameter.longValue();
-			}
+			return data == parameter.data;
 		}
 	}
-	
+
 	@Override
 	public int sizeof()
 	{

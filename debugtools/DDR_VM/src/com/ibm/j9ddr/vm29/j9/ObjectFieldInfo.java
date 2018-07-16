@@ -280,7 +280,7 @@ public class ObjectFieldInfo {
 
 		Iterable <J9ROMFieldShapePointer>  fields = new J9ROMFieldShapeIterator(romClass.romFields(), romClass.romFieldCount());
 		for  (J9ROMFieldShapePointer f: fields) {
-			U32 modifiers = f.modifiers();
+			UDATA modifiers = f.modifiers();
 			if (!modifiers.anyBitsIn(J9AccStatic) ) {
 
 				if (modifiers.anyBitsIn(J9FieldFlagObject)) {
@@ -305,7 +305,7 @@ public class ObjectFieldInfo {
 		hiddenFieldCount = 0;
 		for (HiddenInstanceField hiddenField : hiddenFieldList) {
 			if (hiddenField.className() == null || className.equals(hiddenField.className())) {
-				U32 modifiers = hiddenField.shape().modifiers();
+				UDATA modifiers = hiddenField.shape().modifiers();
 				if (modifiers.anyBitsIn(J9FieldFlagObject)) {
 					totalObjectCount += 1;
 				} else if (modifiers.anyBitsIn(J9FieldSizeDouble)) {

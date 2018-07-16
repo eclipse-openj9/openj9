@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,8 +21,7 @@
  *******************************************************************************/
 package com.ibm.j9ddr.vm29.types;
 
-
-public class I32 extends IScalar {
+public class I32 extends IDATA {
 	
 	// Constants
 	public static final int SIZEOF = 4;
@@ -54,8 +53,8 @@ public class I32 extends IScalar {
 		return add (new I32(parameter));
 	}
 	
-	public U32 add(U32 parameter) {
-		return new U32(this).add(parameter);
+	public I32 add(U32 parameter) {
+		return new I32(this).add(parameter);
 	}
 
 	public boolean eq(U32 parameter) {
@@ -112,8 +111,8 @@ public class I32 extends IScalar {
 		return sub (new I32(parameter));
 	}
 	
-	public U32 sub(U32 parameter) {
-		return new U32(this).sub(parameter);
+	public I32 sub(U32 parameter) {
+		return new I32(this).sub(parameter);
 	}
 	
 	public U64 sub(U64 parameter) {
@@ -143,7 +142,11 @@ public class I32 extends IScalar {
 	public IDATA sub(IDATA parameter) {
 		return new IDATA(this).sub(parameter);
 	}
-	
+
+	public int intValue() {
+		return (int) data;
+	}
+
 	public long longValue() {
 		return (int) data;
 	}
@@ -166,8 +169,8 @@ public class I32 extends IScalar {
 		return bitOr (new I32(parameter));
 	}
 	
-	public U32 bitOr(U32 parameter) {
-		return new U32(this).bitOr(parameter);
+	public I32 bitOr(U32 parameter) {
+		return new I32(this).bitOr(parameter);
 	}
 	
 	public U64 bitOr(U64 parameter) {
@@ -254,8 +257,8 @@ public class I32 extends IScalar {
 		return bitAnd (new I32(parameter));
 	}
 	
-	public U32 bitAnd(U32 parameter) {
-		return new U32(this).bitAnd(parameter);
+	public I32 bitAnd(U32 parameter) {
+		return new I32(this).bitAnd(parameter);
 	}
 	
 	public U64 bitAnd(U64 parameter) {

@@ -129,6 +129,16 @@ struct TR_RelocationRecordEmitClassPrivateData
    TR_OpaqueMethodBlock *_method;
    };
 
+struct TR_RelocationRecordDebugCounterPrivateData
+   {
+   int32_t _bcIndex;
+   int32_t _delta;
+   int8_t  _fidelity;
+   int32_t _staticDelta;
+   TR_OpaqueMethodBlock *_method;
+   const char *_name;
+   };
+
 union TR_RelocationRecordPrivateData
    {
    TR_RelocationRecordHelperAddressPrivateData helperAddress;
@@ -141,6 +151,7 @@ union TR_RelocationRecordPrivateData
    TR_RelocationRecordPointerPrivateData pointer;
    TR_RelocationRecordMethodCallPrivateData methodCall;
    TR_RelocationRecordEmitClassPrivateData emitClass;
+   TR_RelocationRecordDebugCounterPrivateData debugCounter;
    };
 
 // TR_RelocationRecord is the base class for all relocation records.  It is used for all queries on relocation
@@ -1072,6 +1083,24 @@ class TR_RelocationRecordEmitClass : public TR_RelocationRecordWithInlinedSiteIn
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
 
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+   };
+
+class TR_RelocationRecordDebugCounter : public TR_RelocationRecordWithInlinedSiteIndex
+   {
+   public:
+      TR_RelocationRecordDebugCounter() {}
+      TR_RelocationRecordDebugCounter(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordWithInlinedSiteIndex(reloRuntime, record) {}
+      virtual char *name();
+
+      virtual int32_t bytesInHeaderAndPayload();
+
+      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
+
+      virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+      virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocationHigh, uint8_t *reloLocationLow);
+
+   private:
+      TR::DebugCounterBase *findOrCreateCounter(TR_RelocationRuntime *reloRuntime);
    };
 
 #endif   // RELOCATION_RECORD_INCL

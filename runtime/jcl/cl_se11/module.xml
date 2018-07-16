@@ -34,6 +34,7 @@
 	<xi:include href="../uma/se8_exports.xml"></xi:include>
 	<xi:include href="../uma/se829_exports.xml"></xi:include>
 	<xi:include href="../uma/se9_exports.xml"></xi:include>
+	<xi:include href="../uma/se11_exports.xml"></xi:include>
 
 	<xi:include href="../uma/vendor_jcl_exports.xml">
 		<xi:fallback/>

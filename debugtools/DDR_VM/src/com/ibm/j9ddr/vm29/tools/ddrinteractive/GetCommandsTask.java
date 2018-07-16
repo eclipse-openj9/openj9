@@ -44,6 +44,8 @@ import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.DumpAllRegionsCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.DumpAllRomClassLinearCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.DumpAllSegmentsCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.DumpContendedLoadTable;
+import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.DumpModuleReadsCommand;
+import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.DumpModuleExportsCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.DumpRamClassLinearCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.DumpRomClassCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.DumpRomClassLinearCommand;
@@ -179,6 +181,8 @@ public class GetCommandsTask extends BaseJVMCommands implements IBootstrapRunnab
 		toPassBack.add(new CPDescriptionCommand());
 		toPassBack.add(new FindAllModulesCommand());
 		toPassBack.add(new FindModuleByNameCommand());
+		toPassBack.add(new DumpModuleExportsCommand());
+		toPassBack.add(new DumpModuleReadsCommand());
 
 		loadPlugins(toPassBack, loader);
 

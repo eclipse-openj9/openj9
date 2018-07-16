@@ -117,7 +117,6 @@
    java_lang_Math_tanh,
    java_lang_Object_init,
    java_lang_Object_getClass,
-   java_lang_Object_hashCodeImpl,
    java_lang_Object_clone,
    java_lang_Object_newInstancePrototype,
    java_lang_Object_getAddressAsPrimitive,
@@ -696,7 +695,6 @@
    com_ibm_jit_JITHelpers_getClassFromJ9Class64,
    com_ibm_jit_JITHelpers_getAddressAsPrimitive32,
    com_ibm_jit_JITHelpers_getAddressAsPrimitive64,
-   com_ibm_jit_JITHelpers_hashCodeImpl,
    com_ibm_jit_JITHelpers_optimizedClone,
    com_ibm_jit_JITHelpers_getSuperclass,
    com_ibm_jit_JITHelpers_getPackedDataSizeFromJ9Class32,
@@ -1122,15 +1120,12 @@
    com_ibm_gpu_Kernel_syncThreads,
 
    // Vectorized toUpper and toLowerCase from j.l.String
-   // Current only supported on z
    // toUpper method for prototype so j.l.S.toUpper doesn't get messed up
-   java_lang_String_StrHWAvailable,
-   java_lang_String_toUpperHWOptimizedCompressed,
-   java_lang_String_toUpperHWOptimizedDecompressed,
-   java_lang_String_toUpperHWOptimized,
-   java_lang_String_toLowerHWOptimizedCompressed,
-   java_lang_String_toLowerHWOptimizedDecompressed,
-   java_lang_String_toLowerHWOptimized,
+   com_ibm_jit_JITHelpers_supportsIntrinsicCaseConversion,
+   com_ibm_jit_JITHelpers_toUpperIntrinsicLatin1,
+   com_ibm_jit_JITHelpers_toUpperIntrinsicUTF16,
+   com_ibm_jit_JITHelpers_toLowerIntrinsicLatin1,
+   com_ibm_jit_JITHelpers_toLowerIntrinsicUTF16,
 
    // SIMD intrinsics built-in methods
    com_ibm_simd_VectorBase_vectorHWAvailable,

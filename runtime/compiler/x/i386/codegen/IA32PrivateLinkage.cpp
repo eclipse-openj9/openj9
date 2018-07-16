@@ -888,7 +888,7 @@ TR::Register *TR::IA32PrivateLinkage::buildJNIDispatch(TR::Node *callNode)
 
       TR::Snippet *snippet = new (trHeapMemory()) TR::X86CheckFailureSnippet(
             cg(),
-            cg()->symRefTab()->findOrCreateRuntimeHelper(TR_IA32jitThrowCurrentException, false, false, false),
+            cg()->symRefTab()->findOrCreateRuntimeHelper(TR_throwCurrentException, false, false, false),
             snippetLabel,
             instr,
             requiresFPstackPop
@@ -1528,7 +1528,7 @@ void TR::IA32PrivateLinkage::buildVirtualOrComputedCall(
       TR::Register *targetAddress = site.evaluateVFT();
       if (targetAddress->getRegisterPair())
          targetAddress = targetAddress->getRegisterPair()->getLowOrder();
-      buildVFTCall(site, CALLReg, doneLabel, targetAddress, NULL);
+      buildVFTCall(site, CALLReg, targetAddress, NULL);
       }
    else if (resolvedSite && site.resolvedVirtualShouldUseVFTCall())
       {
@@ -1539,7 +1539,7 @@ void TR::IA32PrivateLinkage::buildVirtualOrComputedCall(
       if (!resolvedSite)
          offset = 0;
 
-      buildVFTCall(site, CALLMem, doneLabel, NULL, generateX86MemoryReference(site.evaluateVFT(), offset, cg()));
+      buildVFTCall(site, CALLMem, NULL, generateX86MemoryReference(site.evaluateVFT(), offset, cg()));
       }
    else
       {

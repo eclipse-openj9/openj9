@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2014 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -144,9 +144,9 @@ public class LocalMap
 	{
 		public final int seekLocals;
 		
-		public final U32 programCounter;
+		public final int programCounter;
 		
-		public BranchState(U32 programCounter, int seekLocals)
+		public BranchState(int programCounter, int seekLocals)
 		{
 			this.seekLocals = seekLocals;
 			this.programCounter = programCounter;
@@ -276,7 +276,7 @@ public class LocalMap
 						
 							/* Collect up any locals that were unknown in the covered exception range. */
 							unknownLocals = 0;
-							for (U32 j = handler.startPC(); j.lt(handler.endPC()); j = j.add(1)) {
+							for (UDATA j = handler.startPC(); j.lt(handler.endPC()); j = j.add(1)) {
 								unknownLocals |= unknownsByPC[j.intValue()];
 							}
 						
@@ -475,7 +475,7 @@ public class LocalMap
 
 					case 1:			/* ifs */
 						offset = new I32(new I16(PARAM_16(bcIndex, 1)));
-						branchStack.push(new BranchState(new U32(pc).add(offset),seekLocals));
+						branchStack.push(new BranchState(pc + offset.intValue(), seekLocals));
 						/* fall through */
 						
 					case 6:		/* invokes */
@@ -499,7 +499,7 @@ public class LocalMap
 							return 0;
 						}
 						BranchState newBranch = branchStack.pop();
-						pc = newBranch.programCounter.intValue();
+						pc = newBranch.programCounter;
 						seekLocals = newBranch.seekLocals;
 						
 						/* Don't look for already known locals */
@@ -531,7 +531,7 @@ public class LocalMap
 							bcIndex = bcIndex.add(temp1);
 							offset = new I32(PARAM_32(bcIndex,0));
 							bcIndex = bcIndex.add(4);
-							branchStack.add(new BranchState(new U32(pc).add(offset),seekLocals));
+							branchStack.add(new BranchState(pc + offset.intValue(), seekLocals));
 						}
 
 						/* finally continue at the default switch case */
@@ -544,7 +544,7 @@ public class LocalMap
 						return 0;
 					}
 					BranchState newBranch = branchStack.pop();
-					pc = newBranch.programCounter.intValue();
+					pc = newBranch.programCounter;
 					seekLocals = newBranch.seekLocals;
 					
 					/* Don't look for already known locals */

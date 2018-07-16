@@ -366,7 +366,7 @@ bool
 J9::Power::CodeGenerator::enableAESInHardwareTransformations()
    {
    if ( (TR::Compiler->target.cpu.getPPCSupportsAES() || (TR::Compiler->target.cpu.getPPCSupportsVMX() && TR::Compiler->target.cpu.getPPCSupportsVSX())) &&
-         !self()->comp()->getOptions()->getOption(TR_DisableAESInHardware))
+         !self()->comp()->getOption(TR_DisableAESInHardware))
       return true;
    else
       return false;

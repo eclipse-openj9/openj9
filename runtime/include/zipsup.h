@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -97,9 +97,9 @@ typedef struct J9ZipEntry {
     U_8* filename;
     U_8* extraField;
     U_8* fileComment;
-    I_32 dataPointer;
-    I_32 filenamePointer;
-    I_32 extraFieldPointer;
+    U_32 dataPointer;
+    U_32 filenamePointer;
+    U_32 extraFieldPointer;
     I_32 fileCommentPointer;
     U_32 compressedSize;
     U_32 uncompressedSize;
@@ -122,7 +122,7 @@ typedef struct J9ZipFile {
     struct J9ZipCache* cache;
     void* cachePool;
     IDATA fd;
-    I_32 pointer;
+    U_32 pointer;
     U_8 internalFilename[80];
     U_8 type;
 } J9ZipFile;

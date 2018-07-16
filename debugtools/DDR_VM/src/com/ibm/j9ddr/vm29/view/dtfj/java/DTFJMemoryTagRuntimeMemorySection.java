@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2014 IBM Corp. and others
+ * Copyright (c) 2010, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +28,7 @@ import com.ibm.dtfj.java.JavaRuntimeMemoryCategory;
 import com.ibm.dtfj.java.JavaRuntimeMemorySection;
 import com.ibm.j9ddr.view.dtfj.J9DDRDTFJUtils;
 import com.ibm.j9ddr.vm29.pointer.generated.J9MemTagPointer;
-import com.ibm.j9ddr.vm29.types.U32;
+import com.ibm.j9ddr.vm29.types.UDATA;
 import com.ibm.j9ddr.vm29.view.dtfj.DTFJContext;
 
 import static com.ibm.j9ddr.vm29.structure.J9PortLibrary.J9MEMTAG_EYECATCHER_ALLOC_HEADER;
@@ -55,7 +55,7 @@ public class DTFJMemoryTagRuntimeMemorySection extends DTFJJavaRuntimeMemorySect
 	public int getAllocationType()
 	{
 		try {
-			U32 eyeCatcher = memoryTag.eyeCatcher();
+			UDATA eyeCatcher = memoryTag.eyeCatcher();
 			
 			if (eyeCatcher.eq(J9MEMTAG_EYECATCHER_ALLOC_HEADER)) {
 				return JavaRuntimeMemorySection.ALLOCATION_TYPE_MALLOC_LIVE; 

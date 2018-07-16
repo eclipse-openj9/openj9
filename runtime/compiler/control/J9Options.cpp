@@ -1922,10 +1922,6 @@ J9::Options::fePreProcess(void * base)
    self()->setMaxOnsiteCacheSlotForInstanceOf(4);
 #endif
 
-   // TODO: Disable string case conversion acceleration temporarily as the code generators need to be updated to 
-   // support the new String object layout
-   self()->setOption(TR_DisableSIMDStringCaseConv);
-
    // Process the deterministic mode
    if (TR::Options::_deterministicMode == -1) // not yet set
       {

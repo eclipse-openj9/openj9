@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2016 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,6 @@
  * for JCL. The valid types are (defined in j9port.h):
  *  - PHYSICAL: Number of physical CPU's on this platform
  * 	- BOUND: Number of physical CPU's bound to this process
- * 	- ENTITLED: Number of CPU's the user has specified should be used by the process
  * 	- TARGET: Number of CPU's that should be used by the process. This is OMR_MIN(BOUND, ENTITLED).
  *
  * @param[in] type Flag to indicate the information type (see function description).
@@ -45,18 +44,4 @@ Java_com_ibm_lang_management_internal_ProcessorMXBeanImpl_getNumberCPUsImpl(JNIE
 	PORT_ACCESS_FROM_ENV(env);
 	toReturn = (jint) j9sysinfo_get_number_CPUs_by_type((UDATA) type);
 	return toReturn;
-}
-
-/**
- * Makes the Port Library function j9sysinfo_set_number_entitled_CPUs(number) available
- * for JCL.
- *
- * @param[in] number Number of entitled CPUs (non-negative).
- */
-void JNICALL
-Java_com_ibm_lang_management_internal_ProcessorMXBeanImpl_setNumberEntitledCPUsImpl(JNIEnv *env, jobject o, jint number)
-{
-	PORT_ACCESS_FROM_ENV(env);
-	j9sysinfo_set_number_entitled_CPUs((UDATA) number);
-	return;
 }

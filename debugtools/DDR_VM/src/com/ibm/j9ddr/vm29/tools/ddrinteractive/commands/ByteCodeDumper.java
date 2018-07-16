@@ -501,7 +501,7 @@ public class ByteCodeDumper {
 
 				/* dump declaringClassName and signature */
 				J9ROMMethodRefPointer romMethodRef = J9ROMMethodRefPointer.cast(info);
-				U32 classRefCPIndex = romMethodRef.classRefCPIndex();
+				UDATA classRefCPIndex = romMethodRef.classRefCPIndex();
 				J9ROMConstantPoolItemPointer cpItem = constantPool.add(classRefCPIndex);
 				J9ROMClassRefPointer romClassRef = J9ROMClassRefPointer.cast(cpItem);
 

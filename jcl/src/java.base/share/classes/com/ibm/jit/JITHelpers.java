@@ -166,6 +166,100 @@ public final class JITHelpers {
 
 
 	/*
+	 * To be recognized by the JIT and returns true if the hardware supports SIMD case conversion.
+	 */
+	public boolean supportsIntrinsicCaseConversion() {
+		return false;
+	}
+
+	/**
+	 * To be used by the JIT when performing SIMD upper case conversion with Latin 1 strings.
+	 * @param value the underlying array for the source string.
+	 * @param output a new array which will be used for the converted string.
+	 * @param length the number of bytes used to represent the string.
+	 * @return True if intrinsic conversion was successful, false if fallback conversion must be used.
+	 */
+	public boolean toUpperIntrinsicLatin1(byte[] value, byte[] output, int length) {
+		return false;
+	}
+
+	/**
+	 * To be used by the JIT when performing SIMD lower case conversion with Latin 1 strings.
+	 * @param value the underlying array for the source string.
+	 * @param output a new array which will be used for the converted string.
+	 * @param length the number of bytes used to represent the string.
+	 * @return True if intrinsic conversion was successful, false if fallback conversion must be used.
+	 */
+	public boolean toLowerIntrinsicLatin1(byte[] value, byte[] output, int length) {
+		return false;
+	}
+
+	/**
+	 * To be used by the JIT when performing SIMD upper case conversion with UTF16 strings.
+	 * @param value the underlying array for the source string.
+	 * @param output a new array which will be used for the converted string.
+	 * @param length the number of bytes used to represent the string.
+	 * @return True if intrinsic conversion was successful, false if fallback conversion must be used.
+	 */
+	public boolean toUpperIntrinsicUTF16(byte[] value, byte[] output, int length) {
+		return false;
+	}
+
+	/**
+	 * To be used by the JIT when performing SIMD lower case conversion with UTF16 strings.
+	 * @param value the underlying array for the source string.
+	 * @param output a new array which will be used for the converted string.
+	 * @param length the number of bytes used to represent the string.
+	 * @return True if intrinsic conversion was successful, false if fallback conversion must be used.
+	 */
+	public boolean toLowerIntrinsicUTF16(byte[] value, byte[] output, int length) {
+		return false;
+	}
+	/**
+	 * To be used by the JIT when performing SIMD upper case conversion with Latin 1 strings.
+	 * @param value the underlying array for the source string.
+	 * @param output a new array which will be used for the converted string.
+	 * @param length the number of bytes used to represent the string.
+	 * @return True if intrinsic conversion was successful, false if fallback conversion must be used.
+	 */
+	public boolean toUpperIntrinsicLatin1(char[] value, char[] output, int length) {
+		return false;
+	}
+
+	/**
+	 * To be used by the JIT when performing SIMD lower case conversion with Latin 1 strings.
+	 * @param value the underlying array for the source string.
+	 * @param output a new array which will be used for the converted string.
+	 * @param length the number of bytes used to represent the string.
+	 * @return True if intrinsic conversion was successful, false if fallback conversion must be used.
+	 */
+	public boolean toLowerIntrinsicLatin1(char[] value, char[] output, int length) {
+		return false;
+	}
+
+	/**
+	 * To be used by the JIT when performing SIMD upper case conversion with UTF16 strings.
+	 * @param value the underlying array for the source string.
+	 * @param output a new array which will be used for the converted string.
+	 * @param length the number of bytes used to represent the string.
+	 * @return True if intrinsic conversion was successful, false if fallback conversion must be used.
+	 */
+	public boolean toUpperIntrinsicUTF16(char[] value, char[] output, int length) {
+		return false;
+	}
+
+	/**
+	 * To be used by the JIT when performing SIMD lower case conversion with UTF16 strings.
+	 * @param value the underlying array for the source string.
+	 * @param output a new array which will be used for the converted string.
+	 * @param length the number of bytes used to represent the string.
+	 * @return True if intrinsic conversion was successful, false if fallback conversion must be used.
+	 */
+	public boolean toLowerIntrinsicUTF16(char[] value, char[] output, int length) {
+		return false;
+	}
+
+	/*
 	 * sun.misc.Unsafe.get* and put* have to generate internal control flow for correctness due to different object shapes. The JIT emitted sequences
 	 * checks for and handles: 1) standard fields in normal objects 2) static fields from classes 3) entries from arrays This sequence is branchy and
 	 * hard for us to optimize. The better solution in cases where we know the type of object is to use case specific accessors which are the methods

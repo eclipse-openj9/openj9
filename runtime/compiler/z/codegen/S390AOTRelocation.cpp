@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,7 @@
 #include "env/jittypes.h"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/symbol/StaticSymbol.hpp"
 #include "z/codegen/S390Instruction.hpp"
 #include "env/VMJ9.h"
 
@@ -123,6 +124,18 @@ void TR::S390EncodingRelocation::addRelocation(TR::CodeGenerator *cg, uint8_t *c
          cg->addAOTRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)(intptr_t) *((uint32_t*) cursor), TR_BodyInfoAddress, cg),
                            file, line, node);
          }
+      }
+   else if (_reloType==TR_DebugCounter)
+      {
+      TR::DebugCounterBase *counter = cg->comp()->getCounterFromStaticAddress(_symbolReference);
+      if (counter == NULL)
+         {
+         cg->comp()->failCompilation<TR::CompilationException>("Could not generate relocation for debug counter in TR::S390EncodingRelocation::addRelocation\n");
+         }
+      TR::DebugCounter::generateRelocation(cg->comp(),
+                                           cursor,
+                                           node,
+                                           counter);
       }
    else
       {

@@ -1087,7 +1087,7 @@ slow_jitMonitorEnterImpl(J9VMThread *currentThread, bool forMethod)
 			Assert_CodertVM_false(NULL == inlineMap);
 			if ((NULL == getJitInlinedCallInfo(metaData)) || (NULL == getFirstInlinedCallSite(metaData, inlineMap))) {
 				J9SFJITResolveFrame *resolveFrame = (J9SFJITResolveFrame*)currentThread->sp;
-				resolveFrame->specialFrameFlags = (resolveFrame->specialFrameFlags &~J9_STACK_FLAGS_JIT_RESOLVE_FRAME) | J9_STACK_FLAGS_JIT_FAILED_METHOD_MONITOR_ENTER_RESOLVE;
+				resolveFrame->specialFrameFlags = (resolveFrame->specialFrameFlags & ~J9_STACK_FLAGS_JIT_FRAME_SUB_TYPE_MASK) | J9_STACK_FLAGS_JIT_FAILED_METHOD_MONITOR_ENTER_RESOLVE;
 			}
 		}
 		addr = setNativeOutOfMemoryErrorFromJIT(currentThread, J9NLS_VM_FAILED_TO_ALLOCATE_MONITOR);

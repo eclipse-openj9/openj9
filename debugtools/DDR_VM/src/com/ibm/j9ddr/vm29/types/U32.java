@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,7 @@ package com.ibm.j9ddr.vm29.types;
 
 import com.ibm.j9ddr.InvalidDataTypeException;
 
-public class U32 extends UScalar {
+public class U32 extends UDATA {
 	// Constants
 	public static final int SIZEOF = 4;
 	public static final long MASK = 0xFFFFFFFFL;
@@ -50,7 +50,11 @@ public class U32 extends UScalar {
 	public U32 add(UScalar parameter) {
 		return add(new U32(parameter));
 	}
-	
+
+	public U32 add(I32 parameter) {
+		return new U32(data + parameter.data);
+	}
+
 	public U32 add(U32 parameter) {
 		return new U32(data + parameter.data);
 	}
@@ -121,16 +125,18 @@ public class U32 extends UScalar {
 		return new I64(this).sub(parameter);
 	}
 	
-	public IDATA sub(IDATA parameter) {
-		return new IDATA(this).sub(parameter);
+	public UDATA sub(IDATA parameter) {
+		return new UDATA(this).sub(parameter);
 	}
 	
 	public int intValue() {
-		if (super.intValue() < 0) {
-			throw new InvalidDataTypeException("U_32 contains value larger than Integer.MAX_VALUE");
-		} else {
-			return super.intValue();
+		long value = data;
+
+		if (value < 0 || value > Integer.MAX_VALUE) {
+			throw new InvalidDataTypeException("U32 contains value larger than Integer.MAX_VALUE");
 		}
+
+		return (int) value;
 	}
 	
 	// bitOr
@@ -167,8 +173,8 @@ public class U32 extends UScalar {
 		return new I64(this).bitOr(parameter);
 	}
 	
-	public IDATA bitOr(IDATA parameter) {
-		return new IDATA(this).bitOr(parameter);
+	public UDATA bitOr(IDATA parameter) {
+		return new UDATA(this).bitOr(parameter);
 	}
 	
 	// bitXor
@@ -239,8 +245,8 @@ public class U32 extends UScalar {
 		return new I64(this).bitAnd(parameter);
 	}
 	
-	public IDATA bitAnd(IDATA parameter) {
-		return new IDATA(this).bitAnd(parameter);
+	public UDATA bitAnd(IDATA parameter) {
+		return new UDATA(this).bitAnd(parameter);
 	}
 	
 	// leftShift

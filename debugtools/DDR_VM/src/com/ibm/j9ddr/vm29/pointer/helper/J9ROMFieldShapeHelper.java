@@ -57,7 +57,7 @@ public class J9ROMFieldShapeHelper {
 	public static UDATA romFieldSizeOf(J9ROMFieldShapePointer fieldShapePointer) throws CorruptDataException 
 	{
 		long size = J9ROMFieldShape.SIZEOF;
-		U32 modifiers = fieldShapePointer.modifiers();
+		UDATA modifiers = fieldShapePointer.modifiers();
 		
 		if ((modifiers.anyBitsIn(J9FieldFlagConstant))) {	
 			size += ((modifiers.allBitsIn(J9FieldSizeDouble)) ? U64.SIZEOF : U32.SIZEOF);

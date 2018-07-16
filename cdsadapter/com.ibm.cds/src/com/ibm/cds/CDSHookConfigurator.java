@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2006, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,34 +19,29 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-// The SDK version and repository must be updated once the openj9-openjdk-jdk11
-// is available 
-SDK_VERSION = '10'
-SPEC = 'linux_ppc-64_cmprssptrs_le_valhalla_nestmates'
-TEST_TARGET = '_sanity'
 
-timeout(time: 10, unit: 'HOURS') {
-    node('master') {
-        retry(5){
-            checkout scm
-        }
-        variableFile = load 'buildenv/jenkins/common/variables-functions'
-        variableFile.set_job_variables('pullRequest')
-        cleanWs()
-    }
+package com.ibm.cds;
 
-    node("${NODE}") {
-        checkout scm
-        buildfile = load 'buildenv/jenkins/common/build'
-        testfile = load 'buildenv/jenkins/common/test'
-        cleanWs()
+import org.eclipse.osgi.internal.hookregistry.HookConfigurator;
+import org.eclipse.osgi.internal.hookregistry.HookRegistry;
 
-        // Build
-        buildfile.build_pr()
+public class CDSHookConfigurator implements HookConfigurator {
+	//////////////// HookConfigurator //////////////////
+	static public boolean 	SUPPRESS_ERROR_REPORTING = "true".equals(System.getProperty("ibm.cds.suppresserrors"));
+	public void addHooks(HookRegistry hookRegistry) {
+		try {
+			Class.forName("com.ibm.oti.shared.SharedClassHelperFactory");
+		} catch (ClassNotFoundException e) {
+			// not running on J9
+			if (!SUPPRESS_ERROR_REPORTING) {
+				System.err.println("The IBM Class Sharing Adaptor will not work in this configuration.");
+				System.err.println("You are not running on a J9 Java VM.");
+			}
+			return;
+		}
+		CDSHookImpls hooks = new CDSHookImpls();
+		hookRegistry.addClassLoaderHook(hooks);
+		hookRegistry.addBundleFileWrapperFactoryHook(hooks);
+	}
 
-        // Test
-        testfile.test_all()
-        
-        cleanWs()
-    }
 }

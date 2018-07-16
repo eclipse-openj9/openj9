@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -99,7 +99,7 @@ j9shsem_test2(J9PortLibrary *portLibrary)
 	PORT_ACCESS_FROM_PORT(portLibrary);
 	const char* testName = "j9shsem_test2";
 
-#if defined(LINUX) | defined(J9ZOS390) | defined(AIXPPC)
+#if defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX)
 	/*
 	 * test check that after deleting with j9shsem_destroy
 	 * the next call to j9shsem_open() results in J9PORT_INFO_SHSEM_CREATED
@@ -250,7 +250,7 @@ j9shsem_test4(J9PortLibrary *portLibrary, char* argv0)
 	PORT_ACCESS_FROM_PORT(portLibrary);
 	const char* testName = "j9shsem_test4";
 
-#if defined(LINUX) | defined(J9ZOS390) | defined(AIXPPC)
+#if defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX)
 	J9PortShSemParameters params;
 	char baseDir[J9SH_MAXPATH];
 	struct j9shsem_handle *childrensemaphore=NULL;
@@ -393,7 +393,7 @@ j9shsem_test5(J9PortLibrary *portLibrary)
 	PORT_ACCESS_FROM_PORT(portLibrary);
 	const char* testName = "j9shsem_test5";
 
-#if defined(LINUX) | defined(J9ZOS390) | defined(AIXPPC)
+#if defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX)
 	/* UNIX only
 	 * test that our code can handle missing basefile
 	 * If someone has deleted the baseFile by mistake, we should be able to recreate/open the old area without problem.
@@ -572,7 +572,7 @@ cleanup:
 }
 
 
-#if defined(LINUX) | defined(J9ZOS390) | defined(AIXPPC)
+#if defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX)
 
 static void test7_cleanup(J9PortLibrary *portLibrary,
 		J9PortShSemParameters *params, struct j9shsem_handle* myhandleA,
@@ -628,7 +628,7 @@ int j9shsem_test7(J9PortLibrary *portLibrary) {
 	PORT_ACCESS_FROM_PORT(portLibrary);
 	const char* testName = "j9shsem_test7";
 
-#if defined(LINUX) | defined(J9ZOS390) | defined(AIXPPC)
+#if defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX)
 	IDATA rc;
 	/* UNIX only
 	 * test that retaining the basefile prevents semaphore leaks

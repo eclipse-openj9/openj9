@@ -36,6 +36,7 @@
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/SymbolReference.hpp"
+#include "ras/DebugCounter.hpp"
 #include "runtime/CodeCacheConfig.hpp"
 #include "runtime/CodeCacheManager.hpp"
 
@@ -594,6 +595,31 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
+      case TR_DebugCounter:
+         {
+         TR::DebugCounterBase *counter = (TR::DebugCounterBase *) relocation->getTargetAddress();
+         if (!counter || !counter->getReloData() || !counter->getName())
+            comp->failCompilation<TR::CompilationException>("Failed to generate debug counter relo data");
+
+         TR::DebugCounterReloData *counterReloData = counter->getReloData();
+
+         uintptrj_t offset = (uintptrj_t)fej9->sharedCache()->rememberDebugCounterName(counter->getName());
+
+         *(uintptrj_t *)cursor = (uintptrj_t)counterReloData->_callerIndex;
+         cursor += SIZEPOINTER;
+         *(uintptrj_t *)cursor = (uintptrj_t)counterReloData->_bytecodeIndex;
+         cursor += SIZEPOINTER;
+         *(uintptrj_t *)cursor = offset;
+         cursor += SIZEPOINTER;
+         *(uintptrj_t *)cursor = (uintptrj_t)counterReloData->_delta;
+         cursor += SIZEPOINTER;
+         *(uintptrj_t *)cursor = (uintptrj_t)counterReloData->_fidelity;
+         cursor += SIZEPOINTER;
+         *(uintptrj_t *)cursor = (uintptrj_t)counterReloData->_staticDelta;
+         cursor += SIZEPOINTER;
+         }
+         break;
+
       default:
       	return cursor;
       }
@@ -664,7 +690,7 @@ uint32_t J9::X86::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_Nu
    0,                                               // TR_NativeMethodAbsolute                = 56,
    0,                                               // TR_NativeMethodRelative                = 57,
    32,                                              // TR_ArbitraryClassAddress               = 58,
-
+   56,                                              // TR_DebugCounter                        = 59
 #else
 
    12,                                              // TR_ConstantPool                        = 0
@@ -726,6 +752,7 @@ uint32_t J9::X86::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_Nu
    0,                                               // TR_NativeMethodAbsolute                = 56,
    0,                                               // TR_NativeMethodRelative                = 57,
    16,                                              // TR_ArbitraryClassAddress               = 58,
+   28                                               // TR_DebugCounter                        = 59
 #endif
    };
 
