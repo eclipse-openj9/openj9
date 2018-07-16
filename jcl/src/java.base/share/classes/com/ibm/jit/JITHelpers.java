@@ -647,7 +647,10 @@ public final class JITHelpers {
 		// is effectively the cloned objects initialization
 		int lockOffset = unsafe.getInt(j9clazz + VM.J9CLASS_LOCK_OFFSET_OFFSET);
 		if (lockOffset != 0) {
-			putIntInObject(destObj, lockOffset, 0);
+			int flags = getClassFlagsFromJ9Class32(j9clazz);
+			boolean reservable = (flags & VM.J9CLASS_RESERVABLE_LOCK_WORD_INIT) != 0;
+			int lwValue = reservable ? VM.OBJECT_HEADER_LOCK_RESERVED : 0;
+			putIntInObject(destObj, lockOffset, lwValue);
 		}
 		unsafe.storeFence();
 	}
@@ -703,11 +706,14 @@ public final class JITHelpers {
 		// is effectively the cloned objects initialization
 		long lockOffset = unsafe.getLong(j9clazz + VM.J9CLASS_LOCK_OFFSET_OFFSET);
 		if (lockOffset != 0) {
+			int flags = getClassFlagsFromJ9Class64(j9clazz);
+			boolean reservable = (flags & VM.J9CLASS_RESERVABLE_LOCK_WORD_INIT) != 0;
+			int lwValue = reservable ? VM.OBJECT_HEADER_LOCK_RESERVED : 0;
 			if (SLOT_SIZE == 4) {
 				// for compressed reference, the LockWord is 4 bytes
-				putIntInObject(destObj, lockOffset, 0);
+				putIntInObject(destObj, lockOffset, lwValue);
 			} else {
-				putLongInObject(destObj, lockOffset, 0);
+				putLongInObject(destObj, lockOffset, lwValue);
 			}
 		}
 		unsafe.storeFence();
@@ -782,7 +788,10 @@ public final class JITHelpers {
 			}
 			long lockOffset = unsafe.getInt(j9clazz + VM.J9CLASS_LOCK_OFFSET_OFFSET);
 			if (lockOffset != 0) {
-				unsafe.putInt(clnObj, lockOffset, 0);
+				int flags = getClassFlagsFromJ9Class32(j9clazz);
+				boolean reservable = (flags & VM.J9CLASS_RESERVABLE_LOCK_WORD_INIT) != 0;
+				int lwValue = reservable ? VM.OBJECT_HEADER_LOCK_RESERVED : 0;
+				unsafe.putInt(clnObj, lockOffset, lwValue);
 			}
 		} else {
 			long j9clazz = unsafe.getLong(clnClass, JLCLASS_J9CLASS_OFFSET);
@@ -822,11 +831,14 @@ public final class JITHelpers {
 			}
 			long lockOffset = unsafe.getLong(j9clazz + VM.J9CLASS_LOCK_OFFSET_OFFSET);
 			if (lockOffset != 0) {
+				int flags = getClassFlagsFromJ9Class64(j9clazz);
+				boolean reservable = (flags & VM.J9CLASS_RESERVABLE_LOCK_WORD_INIT) != 0;
+				int lwValue = reservable ? VM.OBJECT_HEADER_LOCK_RESERVED : 0;
 				if (SLOT_SIZE == 4) {
 					// for compressed reference, the LockWord is 4 bytes
-					unsafe.putInt(clnObj, lockOffset, 0);
+					unsafe.putInt(clnObj, lockOffset, lwValue);
 				} else {
-					unsafe.putLong(clnObj, lockOffset, 0);
+					unsafe.putLong(clnObj, lockOffset, lwValue);
 				}
 			}
 		}

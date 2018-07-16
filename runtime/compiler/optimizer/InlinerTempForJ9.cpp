@@ -4496,12 +4496,6 @@ bool TR_J9InlinerPolicy::canInlineMethodWhileInstrumenting(TR_ResolvedMethod *me
    else return true;
    }
 
-void TR_J9InlinerUtil::collectCalleeMethodClassInfo(TR_ResolvedMethod *calleeMethod)
-   {
-   if (comp()->getOption(TR_ReservingLocks) && calleeMethod->isSynchronized())
-      comp()->fej9()->scanClassForReservation(calleeMethod->containingClass(), comp());
-   }
-
 void
 TR_J9InlinerUtil::refineInlineGuard(TR::Node *callNode, TR::Block *&block1, TR::Block *&block2,
                   bool &appendTestToBlock1, TR::ResolvedMethodSymbol * callerSymbol, TR::TreeTop *cursorTree,

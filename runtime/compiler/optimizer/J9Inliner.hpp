@@ -142,7 +142,6 @@ class TR_J9InlinerUtil: public OMR_InlinerUtil
       virtual void computeMethodBranchProfileInfo (TR::Block * cfgBlock, TR_CallTarget* calltarget, TR::ResolvedMethodSymbol* callerSymbol);
       virtual int32_t getCallCount(TR::Node *callNode);
       virtual TR_InnerPreexistenceInfo *createInnerPrexInfo(TR::Compilation * c, TR::ResolvedMethodSymbol *methodSymbol, TR_CallStack *callStack, TR::TreeTop *callTree, TR::Node *callNode, TR_VirtualGuardKind guardKind);
-      virtual void collectCalleeMethodClassInfo(TR_ResolvedMethod *calleeMethod);
       virtual void estimateAndRefineBytecodeSize(TR_CallSite* callsite, TR_CallTarget* target, TR_CallStack *callStack, int32_t &bytecodeSize);
       virtual TR_TransformInlinedFunction *getTransformInlinedFunction(TR::ResolvedMethodSymbol *, TR::ResolvedMethodSymbol *, TR::Block *, TR::TreeTop *,
                                   TR::Node *, TR_ParameterToArgumentMapper &, TR_VirtualGuardSelection *, List<TR::SymbolReference> &,

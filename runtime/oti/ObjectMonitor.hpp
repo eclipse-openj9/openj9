@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -230,14 +230,22 @@ done:
 	 * @param currentThread[in] the current J9VMThread
 	 * @param lockEA[in] the location of the lockword
 	 * @param readBeforeCAS[in] Controls whether a pre-read occurs before the CAS attempt (default false)
+	 * @param lock[in] the value expected in lockEA when uncontended - either 0 or OBJECT_HEADER_LOCK_RESERVED
 	 *
 	 * @returns	true if the lock was acquired, false if not
 	 */
 	static VMINLINE bool
-	inlineFastInitAndEnterMonitor(J9VMThread *currentThread, j9objectmonitor_t volatile *lockEA, bool readBeforeCAS = false)
+	inlineFastInitAndEnterMonitor(J9VMThread *currentThread, j9objectmonitor_t volatile *lockEA, bool readBeforeCAS = false, j9objectmonitor_t lock = 0)
 	{
 		bool locked = false;
-		if (0 == compareAndSwapLockword(lockEA, 0, (j9objectmonitor_t)(UDATA)currentThread, readBeforeCAS)) {
+		j9objectmonitor_t mine = (j9objectmonitor_t)(UDATA)currentThread;
+		if (0 != lock) {
+			/* Monitor is reservable. Make a reservation to give long-lived
+			 * objects a chance even if first locked in the interpreter
+			 */
+			mine |= (lock | OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT);
+		}
+		if (lock == compareAndSwapLockword(lockEA, lock, mine, readBeforeCAS)) {
 			VM_AtomicSupport::monitorEnterBarrier();
 			locked = true;
 		}
