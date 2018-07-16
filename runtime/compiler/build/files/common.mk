@@ -323,6 +323,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/infra/J9Monitor.cpp \
     compiler/infra/J9MonitorTable.cpp \
     compiler/infra/RWMonitor.cpp \
+    compiler/optimizer/BoolArrayStoreTransformer.cpp \
     compiler/optimizer/EstimateCodeSize.cpp \
     compiler/optimizer/InlinerTempForJ9.cpp \
     compiler/optimizer/InterProceduralAnalyzer.cpp \
