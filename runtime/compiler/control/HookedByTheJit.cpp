@@ -4046,6 +4046,12 @@ void lowerCompilationLimitsOnLowVirtualMemory(TR::CompilationInfo *compInfo, J9V
 
 J9Method * getNewInstancePrototype(J9VMThread * context);
 
+static void getClassNameIfNecessary(TR_J9VMBase *vm, TR_OpaqueClassBlock *clazz, char *&className, int32_t &len)
+   {
+   if (className == NULL)
+      className = vm->getClassNameChars(clazz, len);
+   }
+
 static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
    {
    J9VMInternalClassLoadEvent * classLoadEvent = (J9VMInternalClassLoadEvent *)eventData;
@@ -4101,11 +4107,12 @@ static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, 
    J9ClassLoader *classLoader = cl->classLoader;
 
    bool p = TR::Options::getVerboseOption(TR_VerboseHookDetailsClassLoading);
+   char * className = NULL;
+   int32_t classNameLen = -1;
    if (p)
       {
-      int32_t len;
-      char * className = vm->getClassNameChars(clazz, len);
-      TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "--load-- loader %p, class %p : %.*s\n", classLoader, cl, len, className);
+      getClassNameIfNecessary(vm, clazz, className, classNameLen);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "--load-- loader %p, class %p : %.*s\n", classLoader, cl, classNameLen, className);
       }
 
    // add the newInstance hook
@@ -4202,6 +4209,49 @@ static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, 
    //    allocFailed = !compInfo->getPersistentInfo()->ensureUnloadedAddressSetsAreInitialized();
 
    classLoadEvent->failed = allocFailed;
+
+   // Determine whether this class gets lock reservation
+   if (options->getOption(TR_ReservingLocks))
+      {
+      TR_J9VMBase *fej9 = (TR_J9VMBase *)(TR_J9VMBase::get(jitConfig, 0));
+      int lwOffset = fej9->getByteOffsetToLockword(clazz);
+      if (lwOffset > 0)
+         {
+         bool reserve = options->getOption(TR_ReserveAllLocks);
+
+         if (!reserve && ((J9JavaVM *)vmThread->javaVM)->systemClassLoader == classLoader)
+            {
+            getClassNameIfNecessary(vm, clazz, className, classNameLen);
+            if (classNameLen == 22 && !strncmp(className, "java/lang/StringBuffer", 22))
+               reserve = true;
+            else if (classNameLen == 16 && !strncmp(className, "java/util/Random", 16))
+               reserve = true;
+            }
+
+         TR::SimpleRegex *resRegex = options->getLockReserveClass();
+         if (!reserve && resRegex != NULL)
+            {
+            getClassNameIfNecessary(vm, clazz, className, classNameLen);
+            if (TR::SimpleRegex::match(resRegex, className))
+               reserve = true;
+            }
+
+         if (reserve)
+            {
+            TR_PersistentClassInfo *classInfo = compInfo
+               ->getPersistentInfo()
+               ->getPersistentCHTable()
+               ->findClassInfoAfterLocking(clazz, vm);
+
+            if (classInfo != NULL)
+               {
+               classInfo->setReservable();
+               if (!TR::Options::_aggressiveLockReservation)
+                  J9CLASS_EXTENDED_FLAGS_SET(cl, J9ClassReservableLockWordInit);
+               }
+            }
+         }
+      }
 
    jitReleaseClassTableMutex(vmThread);
 

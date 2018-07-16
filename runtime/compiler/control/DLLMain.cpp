@@ -62,6 +62,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
 
    IDATA tlhPrefetch = 0;
    IDATA notlhPrefetch = 0;
+   IDATA lockReservation = 0;
    IDATA argIndexXjit = 0;
    IDATA argIndexXaot = 0;
    IDATA argIndexXnojit = 0;
@@ -110,7 +111,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
          argIndexServer = FIND_AND_CONSUME_ARG( EXACT_MATCH, "-server", 0);
          tlhPrefetch = FIND_AND_CONSUME_ARG(EXACT_MATCH, "-XtlhPrefetch", 0);
          notlhPrefetch = FIND_AND_CONSUME_ARG(EXACT_MATCH, "-XnotlhPrefetch", 0);
-         FIND_AND_CONSUME_ARG(EXACT_MATCH, "-XlockReservation", 0);
+         lockReservation = FIND_AND_CONSUME_ARG(EXACT_MATCH, "-XlockReservation", 0);
          FIND_AND_CONSUME_ARG(EXACT_MEMORY_MATCH, "-Xcodecache", 0);
          FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, "-XjniAcc:", 0);
          FIND_AND_CONSUME_ARG(EXACT_MEMORY_MATCH, "-Xcodecachetotal", 0);
@@ -145,6 +146,16 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
             {
             TR::Options::_bigAppThreshold = 1;
             }
+
+#ifdef TR_HOST_X86
+         // By default, disallow reservation of objects' monitors for which a
+         // previous reservation has been cancelled (issue #1124). But allow it
+         // again if -XlockReservation was specified.
+         TR::Options::_aggressiveLockReservation = lockReservation >= 0;
+#else
+         // Keep the always aggressive behaviour until codegen is adjusted.
+         TR::Options::_aggressiveLockReservation = true;
+#endif
 
          /* setup field to indicate whether we will allow JIT compilation */
          if (argIndexXjit >= argIndexXnojit)

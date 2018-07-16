@@ -4619,15 +4619,20 @@ TR::TreeTop* TR_J9VMBase::initializeClazzFlagsMonitorFields(TR::Compilation* com
       {
       // Initialize the monitor field
       //
-      if (TR::Compiler->target.is64Bit() && generateCompressedLockWord())
+      int32_t lwInitialValue = 0;
+      if (J9CLASS_EXTENDED_FLAGS(ramClass) & J9ClassReservableLockWordInit)
+         lwInitialValue = OBJECT_HEADER_LOCK_RESERVED;
+
+      if (!TR::Compiler->target.is64Bit() || generateCompressedLockWord())
          {
-         node = TR::Node::create(allocationNode, TR::iconst, 0, 0);
+         node = TR::Node::iconst(allocationNode, lwInitialValue);
          node = TR::Node::createWithSymRef(TR::istorei, 2, 2, allocationNode, node,
             comp->getSymRefTab()->findOrCreateGenericIntNonArrayShadowSymbolReference(lwOffset));
          }
       else
          {
-         node = TR::Node::createWithSymRef(TR::astorei, 2, 2, allocationNode, TR::Node::aconst(allocationNode, 0),
+         node = TR::Node::lconst(allocationNode, lwInitialValue);
+         node = TR::Node::createWithSymRef(TR::lstorei, 2, 2, allocationNode, node,
             comp->getSymRefTab()->findOrCreateGenericIntNonArrayShadowSymbolReference(lwOffset));
          }
       prevTree = TR::TreeTop::create(comp, prevTree, node);
@@ -6561,127 +6566,6 @@ TR_OpaqueClassBlock *
 TR_J9VMBase::getProfiledClassFromProfiledInfo(TR_ExtraAddressInfo *profiledInfo)
    {
    return (TR_OpaqueClassBlock *)(profiledInfo->_value);
-   }
-
-
-#define SMALL_METHOD_SIZE 15
-#define DEBUG_RESERVATION_SCAN 0
-void
-TR_J9VMBase::scanClassForReservation (TR_OpaqueClassBlock *classPointer, TR::Compilation *comp)
-   {
-   J9Method * resolvedMethods = (J9Method *) getMethods(classPointer);
-   TR_PersistentClassInfo * persistentClassInfo =
-      comp->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(classPointer, comp);
-   uint32_t i;
-   uint32_t numMethods = getNumMethods(classPointer);
-   int32_t  numSynchronizedMethods  = 0;
-   int32_t  synchronizedMethodsSize = 0;
-   int32_t  numNonSynchronizedMethods = 0; // excluding constructors
-   int32_t  numSmallNonSynchronizedMethods = 0;
-   int32_t  numSmallSynchronizedMethods = 0;
-
-   if (!persistentClassInfo || persistentClassInfo->isScannedForReservation())
-      return;
-
-   bool candidateClass = false;
-   for (i=0;i<numMethods;i++)
-      {
-      J9Method *resolvedMethod = &(resolvedMethods[i]);
-      int32_t methodSize = TR::Compiler->mtd.bytecodeSize((TR_OpaqueMethodBlock *)resolvedMethod);
-      J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)resolvedMethod);
-
-      if (romMethod->modifiers & J9AccSynchronized)
-         {
-         numSynchronizedMethods ++;
-         synchronizedMethodsSize += methodSize;
-         if (methodSize < SMALL_METHOD_SIZE)
-            numSmallSynchronizedMethods ++;
-         }
-      else
-         {
-         J9UTF8 *name = J9ROMMETHOD_GET_NAME(J9_CLASS_FROM_METHOD(resolvedMethod)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(resolvedMethod));
-
-         if (J9UTF8_LENGTH(name) == 6)
-            {
-            char s[10];
-            sprintf(s, "%.*s",
-                    J9UTF8_LENGTH(name), J9UTF8_DATA(name));
-            if (strncmp(s, "<init>", 6))
-               {
-               numNonSynchronizedMethods ++;
-               if (methodSize < SMALL_METHOD_SIZE)
-                  numSmallNonSynchronizedMethods ++;
-               }
-            }
-         else
-            {
-            numNonSynchronizedMethods ++;
-            if (methodSize < SMALL_METHOD_SIZE)
-               numSmallNonSynchronizedMethods ++;
-            }
-         }
-
-      if (DEBUG_RESERVATION_SCAN && candidateClass)
-         {
-         char s[4096];
-         J9UTF8 *name;
-         J9UTF8 *signature;
-         J9UTF8 *className;
-         getClassNameSignatureFromMethod(resolvedMethod, className, name, signature);
-
-
-         sprintf(s, "%.*s%.*s",
-                 J9UTF8_LENGTH(name), J9UTF8_DATA(name),
-                 J9UTF8_LENGTH(signature), J9UTF8_DATA(signature));
-         fprintf(stderr, "Method: %s [%s] size %d\n", s,
-                (romMethod->modifiers & J9AccSynchronized) ? "synchronized" : "",
-                 methodSize);
-         }
-      }
-
-   if (DEBUG_RESERVATION_SCAN && candidateClass)
-      {
-      fprintf(stderr, "Total number of methods: %d\n", numMethods);
-      fprintf(stderr, "Total number of synchronized methods: %d\n", numSynchronizedMethods);
-      fprintf(stderr, "Total number of non-synchronized methods: %d\n", numNonSynchronizedMethods);
-      fprintf(stderr, "Total number of small synchronized methods: %d\n", numSmallSynchronizedMethods);
-      fprintf(stderr, "Total number of small non-synchronized methods: %d\n", numSmallNonSynchronizedMethods);
-      fprintf(stderr, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
-      fprintf(stderr, "\n\n");
-      }
-
-   persistentClassInfo->setScannedForReservation();
-   int lwOffset = getByteOffsetToLockword(classPointer);
-
-   if ((numSynchronizedMethods>0) &&
-       (lwOffset > 0))
-      {
-      char s[4096];
-      J9UTF8 * className = J9ROMCLASS_CLASSNAME(((J9Class *)classPointer)->romClass);
-      int32_t len = J9UTF8_LENGTH(className);
-      sprintf(s, "%.*s", J9UTF8_LENGTH(className), utf8Data(className));
-
-      if (!strncmp(s, "java/util/Random", 16) || !strncmp(s, "java/lang/StringBuffer", 22) /* ||
-          (numNonSynchronizedMethods >0 &&
-           ((numSmallNonSynchronizedMethods == 0) ||
-            (numSmallSynchronizedMethods >= numSmallNonSynchronizedMethods)))*/)
-         persistentClassInfo->setReservable();
-
-      // if lockReserveClass is used, set all the specified classes to be reservable
-      TR::SimpleRegex * regex = comp->getOptions()->getLockReserveClass();
-      if(regex && TR::SimpleRegex::match(regex, s))
-        persistentClassInfo->setReservable();
-
-      if (DEBUG_RESERVATION_SCAN && persistentClassInfo->isReservable())
-         {
-         char s[4096];
-         J9UTF8 * className = J9ROMCLASS_CLASSNAME(((J9Class *)classPointer)->romClass);
-         int32_t len = J9UTF8_LENGTH(className);
-         sprintf(s, "%.*s", J9UTF8_LENGTH(className), utf8Data(className));
-         printf("*****!*!*!*!*!*!*  Reservable class %s\n", s);
-         }
-
-      }
    }
 
 uint32_t
@@ -8994,11 +8878,6 @@ TR_ResolvedMethod *
 TR_J9SharedCacheVM::getObjectNewInstanceImplMethod(TR_Memory *)
    {
    return NULL;
-   }
-
-void
-TR_J9SharedCacheVM::scanClassForReservation(TR_OpaqueClassBlock *classPointer, TR::Compilation *comp)
-   {
    }
 
 ////////////////// Under evaluation

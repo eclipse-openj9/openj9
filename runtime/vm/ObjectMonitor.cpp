@@ -292,7 +292,9 @@ objectMonitorEnterNonBlocking(J9VMThread *currentThread, j9object_t object)
 		} else {
 #if defined(J9VM_THR_LOCK_NURSERY)
 			/* check to see if object is unlocked (JIT did not do initial inline sequence due to insufficient static type info) */
-			if ((0 == lock) && VM_ObjectMonitor::inlineFastInitAndEnterMonitor(currentThread, lwEA)) {
+			if ((0 == (lock & ~OBJECT_HEADER_LOCK_RESERVED)) &&
+				VM_ObjectMonitor::inlineFastInitAndEnterMonitor(currentThread, lwEA, false, lock)
+			) {
 				/* compare and swap succeeded - barrier already performed */
 			} else
 #endif /* J9VM_THR_LOCK_NURSERY */
