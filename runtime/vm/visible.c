@@ -30,11 +30,6 @@
 #include "vm_internal.h"
 #include "j9protos.h"
 
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
-static UDATA loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options);
-#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
-
-
 IDATA
 checkModuleAccess(J9VMThread *currentThread, J9JavaVM* vm, J9ROMClass* srcRomClass, J9Module* srcModule, J9ROMClass* destRomClass, J9Module* destModule, UDATA destPackageID, UDATA lookupOptions)
 {
@@ -190,52 +185,55 @@ _exit:
 }
 
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
-static UDATA
+UDATA
 loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options)
 {
-	J9Class *nestHost = NULL;
 	UDATA result = J9_VISIBILITY_ALLOWED;
-	J9ROMClass *romClass = clazz->romClass;
-	J9UTF8 *nestHostName = J9ROMCLASS_NESTHOSTNAME(romClass);
+	if (NULL == clazz->nestHost) {
+		J9Class *nestHost = NULL;
+		J9ROMClass *romClass = clazz->romClass;
+		J9UTF8 *nestHostName = J9ROMCLASS_NESTHOSTNAME(romClass);
 
-	/* If no nest host is named, class is own nest host */
-	if (NULL == nestHostName) {
-		nestHost = clazz;
-	} else {
-		UDATA classLoadingFlags = 0;
-		if (J9_ARE_NO_BITS_SET(options, J9_LOOK_NO_THROW)) {
-			classLoadingFlags = J9_FINDCLASS_FLAG_THROW_ON_FAIL;
-		}
-
-		nestHost = internalFindClassUTF8(vmThread, J9UTF8_DATA(nestHostName), J9UTF8_LENGTH(nestHostName), clazz->classLoader, classLoadingFlags);
-
-		/* Nest host must be successfully loaded by the same classloader in the same package & verify the nest member */
-		if (NULL == nestHost) {
-			result = J9_VISIBILITY_NEST_HOST_LOADING_FAILURE_ERROR;
-		} else if (clazz->packageID != nestHost->packageID) {
-			result = J9_VISIBILITY_NEST_HOST_DIFFERENT_PACKAGE_ERROR;
+		/* If no nest host is named, class is own nest host */
+		if (NULL == nestHostName) {
+			nestHost = clazz;
 		} else {
-			/* The nest host must have a nestmembers attribute that claims this class. */
-			J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
-			J9SRP *nestMembers = J9ROMCLASS_NESTMEMBERS(nestHost->romClass);
-			U_16 nestMemberCount = nestHost->romClass->nestMemberCount;
-			U_16 i = 0;
+			UDATA classLoadingFlags = 0;
+			if (J9_ARE_NO_BITS_SET(options, J9_LOOK_NO_THROW)) {
+				classLoadingFlags = J9_FINDCLASS_FLAG_THROW_ON_FAIL;
+			}
 
-			result = J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR;
-			for (i = 0; i < nestMemberCount; i++) {
-				J9UTF8 *nestMemberName = NNSRP_GET(nestMembers[i], J9UTF8*);
-				if (J9UTF8_EQUALS(className, nestMemberName)) {
-					result = J9_VISIBILITY_ALLOWED;
-					break;
+			nestHost = internalFindClassUTF8(vmThread, J9UTF8_DATA(nestHostName), J9UTF8_LENGTH(nestHostName), clazz->classLoader, classLoadingFlags);
+
+			/* Nest host must be successfully loaded by the same classloader in the same package & verify the nest member */
+			if (NULL == nestHost) {
+				result = J9_VISIBILITY_NEST_HOST_LOADING_FAILURE_ERROR;
+			} else if (clazz->packageID != nestHost->packageID) {
+				result = J9_VISIBILITY_NEST_HOST_DIFFERENT_PACKAGE_ERROR;
+			} else {
+				/* The nest host must have a nestmembers attribute that claims this class. */
+				J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
+				J9SRP *nestMembers = J9ROMCLASS_NESTMEMBERS(nestHost->romClass);
+				U_16 nestMemberCount = nestHost->romClass->nestMemberCount;
+				U_16 i = 0;
+
+				result = J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR;
+				for (i = 0; i < nestMemberCount; i++) {
+					J9UTF8 *nestMemberName = NNSRP_GET(nestMembers[i], J9UTF8*);
+					if (J9UTF8_EQUALS(className, nestMemberName)) {
+						result = J9_VISIBILITY_ALLOWED;
+						break;
+					}
 				}
 			}
 		}
+
+		/* If a problem occurred in nest host verification then the nest host value is invalid */
+		if  ((J9_VISIBILITY_ALLOWED == result) && (NULL != nestHost)) {
+			clazz->nestHost = nestHost;
+		}
 	}
 
-	/* If a problem occurred in nest host verification then the nest host value is invalid */
-	if  ((J9_VISIBILITY_ALLOWED == result) && (nestHost != NULL)) {
-		clazz->nestHost = nestHost;
-	}
 	return result;
 }
 #endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */

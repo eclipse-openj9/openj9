@@ -366,4 +366,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	registerOSHandler,
 	throwNativeOOMError,
 	throwNewJavaIoIOException,
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+	loadAndVerifyNestHost,
+#endif
 };
