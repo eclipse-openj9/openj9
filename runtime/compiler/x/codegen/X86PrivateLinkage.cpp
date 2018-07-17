@@ -683,30 +683,8 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
 
    // Note that the return address doesn't appear here because it is allocated by the call instruction
    //
-   int32_t allocSize = localSize
-      + ( _properties.getUsesPushesForPreservedRegs()? 0 : preservedRegsSize )
+   int32_t allocSize = localSize + preservedRegsSize
       + ( _properties.getReservesOutgoingArgsInPrologue()? outgoingArgSize : 0 );
-
-   static char *preservedRegisterPushThresholdStr = feGetEnv("TR_preservedRegisterPushThreshold");
-   static int32_t preservedRegisterPushThreshold = preservedRegisterPushThresholdStr? atoi(preservedRegisterPushThresholdStr) : 1;
-   bool preservedRegStoresWillNeed4ByteDisplacements = (preservedRegsSize > 0) && (outgoingArgSize + preservedRegsSize >= 128);
-   if (TR::Compiler->target.is64Bit() && !comp()->getOption(TR_DisableProloguePushes) && (comp()->getOptLevel() <= warm))
-      {
-      // TODO: It would be cleaner to have ia32 use setPushPreservedRegisters
-      // unconditionally, since the fact is that ia32 does use push instructions.
-      // As it is, the PushPreservedRegisters paths haven't been written with
-      // ia32 in mind.
-
-      if (  preservedRegStoresWillNeed4ByteDisplacements // size-wise, pushes always win in this case
-         || preservedRegsSize >= preservedRegisterPushThreshold * TR::Compiler->om.sizeofReferenceAddress())
-         {
-         if (performTransformation(comp(), "O^O PRESERVED REGS: use pushes to preserve %d bytes of registers\n", preservedRegsSize))
-            {
-            cg()->setPushPreservedRegisters();
-            allocSize = localSize;
-            }
-         }
-      }
 
       {
       int32_t frameSize = localSize + preservedRegsSize + ( _properties.getReservesOutgoingArgsInPrologue()? outgoingArgSize : 0 );
@@ -1084,11 +1062,6 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
       allocateSize += cg()->getStackFramePaddingSizeInBytes();
       }
 
-   if (cg()->pushPreservedRegisters() && _properties.getReservesOutgoingArgsInPrologue() && outgoingArgSize)
-      {
-      allocateSize += outgoingArgSize;
-      }
-
    if (allocateSize)
       {
       const TR_X86OpCodes subOp = (allocateSize <= 127)? SUBRegImms() : SUBRegImm4();
@@ -1134,7 +1107,7 @@ bool TR::X86PrivateLinkage::needsFrameDeallocation()
    //
    TR::ResolvedMethodSymbol *bodySymbol   = comp()->getJittedMethodSymbol();
    int32_t localSize = _properties.getOffsetToFirstLocal() - bodySymbol->getLocalMappingCursor();
-   int32_t allocSize = _properties.getUsesPushesForPreservedRegs()? localSize : cg()->getFrameSizeInBytes();
+   int32_t allocSize = cg()->getFrameSizeInBytes();
 
    if (!_properties.getAlwaysDedicateFramePointerRegister() &&
          allocSize == 0)
@@ -1159,20 +1132,11 @@ void TR::X86PrivateLinkage::createEpilogue(TR::Instruction *cursor)
    TR::ResolvedMethodSymbol *bodySymbol   = comp()->getJittedMethodSymbol();
 
    const int32_t localSize = _properties.getOffsetToFirstLocal() - bodySymbol->getLocalMappingCursor();
-         int32_t allocSize = _properties.getUsesPushesForPreservedRegs()? localSize : cg()->getFrameSizeInBytes() - cg()->getStackFramePaddingSizeInBytes();
+         int32_t allocSize = cg()->getFrameSizeInBytes() - cg()->getStackFramePaddingSizeInBytes();
 
    cursor = cg()->generateDebugCounter(cursor, "cg.epilogues", 1, TR::DebugCounter::Expensive);
 
    int32_t deallocateSize = 0;
-   if (cg()->pushPreservedRegisters())
-      {
-      // Deallocate outgoing arg area in preparation to pop preserved regs
-      //
-      allocSize = localSize;
-      const uint32_t outgoingArgSize = cg()->getLargestOutgoingArgSize();
-      deallocateSize += outgoingArgSize;
-      }
-
    // Deallocate padding
    if (cg()->getStackFramePaddingSizeInBytes())
       {
@@ -1262,7 +1226,7 @@ bool TR::X86PrivateLinkage::mapPreservedRegistersToStackOffsets(
    // return true or false depending on whether
    // the linkage uses pushes for preserved regs
    //
-   return getProperties().getUsesPushesForPreservedRegs();
+   return false;
    }
 
 TR::Register *
