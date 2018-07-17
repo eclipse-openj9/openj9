@@ -60,28 +60,13 @@ linux_ppc-64_cmprssptrs_le:
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
     build:
-      8: 'ppcle'
-      9: 'ppcle'
-      10: 'ppcle'
+      8: 'hw.arch.ppc64le && sw.os.ubuntu'
+      9: 'hw.arch.ppc64le && sw.os.ubuntu'
+      10: 'hw.arch.ppc64le && sw.os.ubuntu'
     test:
-      8: 'ppcle'
-      9: 'ppcle'
-      10: 'ppcle'
-#========================================#
-# Linux PPCLE 64bits Compressed Pointers Valhalla Nestmates
-#========================================#
-linux_ppc-64_cmprssptrs_le_valhalla_nestmates:
-  boot_jdk:
-    10: '/usr/lib/jvm/adoptojdk-java-ppc64le-90'
-  release:
-    10: 'linux-ppc64le-normal-server-release'
-  freemarker: '/home/jenkins/freemarker.jar'
-  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
-  node_labels:
-    build:
-      10: 'ppcle'
-    test:
-      10: 'ppcle'
+      8: 'hw.arch.ppc64le && sw.os.ubuntu'
+      9: 'hw.arch.ppc64le && sw.os.ubuntu'
+      10: 'hw.arch.ppc64le && sw.os.ubuntu'
 #========================================#
 # Linux S390 64bits Compressed Pointers
 # Note: boot_jdk 8 must use an Adopt JDK8 build rather than an 
@@ -100,13 +85,13 @@ linux_390-64_cmprssptrs:
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
     build:
-      8: '390'
-      9: '390'
-      10: '390'
+      8: 'hw.arch.s390x && sw.os.ubuntu'
+      9: 'hw.arch.s390x && sw.os.ubuntu'
+      10: 'hw.arch.s390x && sw.os.ubuntu'
     test:
-      8: '390'
-      9: '390'
-      10: '390'
+      8: 'hw.arch.s390x && sw.os.ubuntu'
+      9: 'hw.arch.s390x && sw.os.ubuntu'
+      10: 'hw.arch.s390x && sw.os.ubuntu'
 #========================================#
 # AIX PPC 64bits Compressed Pointers
 #========================================#
@@ -123,13 +108,13 @@ aix_ppc-64_cmprssptrs:
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
     build:
-      8: 'aix'
-      9: 'aix'
-      10: 'aix'
+      8: 'hw.arch.ppc && sw.os.aix'
+      9: 'hw.arch.ppc && sw.os.aix'
+      10: 'hw.arch.ppc && sw.os.aix'
     test:
-      8: 'aix'
-      9: 'aix'
-      10: 'aix'
+      8: 'hw.arch.ppc && sw.os.aix'
+      9: 'hw.arch.ppc && sw.os.aix'
+      10: 'hw.arch.ppc && sw.os.aix'
   extra_configure_options:
     8: '--with-cups-include=/opt/freeware/include --with-extra-ldflags=-lpthread --with-extra-cflags=-lpthread --with-extra-cxxflags=-lpthread DF=/usr/sysv/bin/df --disable-ccache --with-jobs=8'
     9: '--with-cups-include=/opt/freeware/include --with-extra-ldflags=-lpthread --with-extra-cflags=-lpthread --with-extra-cxxflags=-lpthread DF=/usr/sysv/bin/df --disable-warnings-as-errors --with-jobs=8'
@@ -150,13 +135,13 @@ linux_x86-64_cmprssptrs:
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
     build:
-      8: 'hw.arch.x86 && sw.os.ubuntu.16'
-      9: 'hw.arch.x86 && sw.os.ubuntu.16'
-      10: 'hw.arch.x86 && sw.os.ubuntu.16'
+      8: 'hw.arch.x86 && sw.os.ubuntu'
+      9: 'hw.arch.x86 && sw.os.ubuntu'
+      10: 'hw.arch.x86 && sw.os.ubuntu'
     test:
-      8: 'hw.arch.x86 && sw.os.ubuntu.16'
-      9: 'hw.arch.x86 && sw.os.ubuntu.16'
-      10: 'hw.arch.x86 && sw.os.ubuntu.16'
+      8: 'hw.arch.x86 && sw.os.ubuntu'
+      9: 'hw.arch.x86 && sw.os.ubuntu'
+      10: 'hw.arch.x86 && sw.os.ubuntu'
 #========================================#
 # Linux x86 64bits Compressed Pointers /w CMake
 #========================================#
@@ -173,13 +158,13 @@ linux_x86-64_cmprssptrs_cmake:
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
     build:
-      8: 'hw.arch.x86 && sw.os.ubuntu.16'
-      9: 'hw.arch.x86 && sw.os.ubuntu.16'
-      10: 'hw.arch.x86 && sw.os.ubuntu.16'
+      8: 'hw.arch.x86 && sw.os.ubuntu'
+      9: 'hw.arch.x86 && sw.os.ubuntu'
+      10: 'hw.arch.x86 && sw.os.ubuntu'
     test:
-      8: 'hw.arch.x86 && sw.os.ubuntu.16'
-      9: 'hw.arch.x86 && sw.os.ubuntu.16'
-      10: 'hw.arch.x86 && sw.os.ubuntu.16'
+      8: 'hw.arch.x86 && sw.os.ubuntu'
+      9: 'hw.arch.x86 && sw.os.ubuntu'
+      10: 'hw.arch.x86 && sw.os.ubuntu'
   extra_configure_options:
     8: '--with-cmake --disable-ddr'
     9: '--with-cmake --disable-ddr'
@@ -204,13 +189,13 @@ linux_x86-64:
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
     build:
-      8: 'hw.arch.x86 && sw.os.ubuntu.16'
-      9: 'hw.arch.x86 && sw.os.ubuntu.16'
-      10: 'hw.arch.x86 && sw.os.ubuntu.16'
+      8: 'hw.arch.x86 && sw.os.ubuntu'
+      9: 'hw.arch.x86 && sw.os.ubuntu'
+      10: 'hw.arch.x86 && sw.os.ubuntu'
     test:
-      8: 'hw.arch.x86 && sw.os.ubuntu.16'
-      9: 'hw.arch.x86 && sw.os.ubuntu.16'
-      10: 'hw.arch.x86 && sw.os.ubuntu.16'
+      8: 'hw.arch.x86 && sw.os.ubuntu'
+      9: 'hw.arch.x86 && sw.os.ubuntu'
+      10: 'hw.arch.x86 && sw.os.ubuntu'
   extra_configure_options:
     8: '--with-noncompressedrefs'
     9: '--with-noncompressedrefs'
