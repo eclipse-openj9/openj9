@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -165,6 +165,29 @@ class TR_PatchMultipleNOPedGuardSitesOnClassRedefinition : public TR::PatchMulti
       TR_FrontEnd *fe, TR_PersistentMemory *pm, TR_OpaqueClassBlock *clazz, TR::PatchSites *sites, OMR::RuntimeAssumption **sentinel);
    virtual TR_RuntimeAssumptionKind getAssumptionKind() { return RuntimeAssumptionOnClassRedefinitionNOP; }
    void setKey(uintptrj_t newKey) {_key = newKey;}
+   };
+
+class TR_PatchNOPedGuardSiteOnStaticFinalFieldModification : public TR::PatchNOPedGuardSite
+   {
+   protected:
+   TR_PatchNOPedGuardSiteOnStaticFinalFieldModification(TR_PersistentMemory *pm, TR_OpaqueClassBlock *clazz,
+                                             uint8_t *loc, uint8_t *dest)
+      : TR::PatchNOPedGuardSite(pm, (uintptrj_t)clazz, RuntimeAssumptionOnStaticFinalFieldModification, loc, dest) {}
+   public:
+   static TR_PatchNOPedGuardSiteOnStaticFinalFieldModification *make(
+      TR_FrontEnd *fe, TR_PersistentMemory *pm, TR_OpaqueClassBlock *clazz, uint8_t *loc, uint8_t *dest, OMR::RuntimeAssumption **sentinel);
+   virtual TR_RuntimeAssumptionKind getAssumptionKind() { return RuntimeAssumptionOnStaticFinalFieldModification; }
+   };
+
+class TR_PatchMultipleNOPedGuardSitesOnStaticFinalFieldModification : public TR::PatchMultipleNOPedGuardSites
+   {
+   protected:
+   TR_PatchMultipleNOPedGuardSitesOnStaticFinalFieldModification(TR_PersistentMemory *pm, TR_OpaqueClassBlock *clazz, TR::PatchSites *sites)
+      : TR::PatchMultipleNOPedGuardSites(pm, (uintptrj_t)clazz, RuntimeAssumptionOnStaticFinalFieldModification, sites) {}
+   public:
+   static TR_PatchMultipleNOPedGuardSitesOnStaticFinalFieldModification *make(
+      TR_FrontEnd *fe, TR_PersistentMemory *pm, TR_OpaqueClassBlock *clazz, TR::PatchSites *sites, OMR::RuntimeAssumption **sentinel);
+   virtual TR_RuntimeAssumptionKind getAssumptionKind() { return RuntimeAssumptionOnStaticFinalFieldModification; }
    };
 
 class TR_PatchNOPedGuardSiteOnMutableCallSiteChange : public TR::PatchNOPedGuardSite

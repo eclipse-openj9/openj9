@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,6 +66,7 @@ public:
 
    bool isStringClass(uintptrj_t objectPointer);
 
+   bool classHasIllegalStaticFinalFieldModification(TR_OpaqueClassBlock * clazzPointer);
    bool isAbstractClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazzPointer);
    bool isInterfaceClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazzPointer);
    bool isPrimitiveClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazz);

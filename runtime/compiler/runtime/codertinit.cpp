@@ -100,6 +100,8 @@ extern "C" void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount
 
 extern "C" void jitMethodBreakpointed(J9VMThread * currentThread, J9Method *j9method);
 
+extern "C" void jitIllegalFinalFieldModification(J9VMThread *currentThread, J9Class *fieldClass);
+
 extern "C" void jitDiscardPendingCompilationsOfNatives(J9VMThread *vmThread, J9Class *clazz);
 
 #if defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER)
@@ -480,6 +482,7 @@ void codert_init_helpers_and_targets(J9JITConfig * jitConfig, char isSMP)
 #endif
    jitConfig->jitDiscardPendingCompilationsOfNatives = jitDiscardPendingCompilationsOfNatives;
    jitConfig->jitMethodBreakpointed = jitMethodBreakpointed;
+   jitConfig->jitIllegalFinalFieldModification = jitIllegalFinalFieldModification;
 
    initializeCodertFunctionTable(javaVM);
 
