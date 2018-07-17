@@ -381,6 +381,39 @@ TR::Register *TR::IA32JNILinkage::buildJNIDispatch(TR::Node *callNode)
 
    if (dropVMAccess)
       {
+#ifdef J9VM_INTERP_ATOMIC_FREE_JNI
+      generateMemImmInstruction(S4MemImm4,
+                                callNode,
+                                generateX86MemoryReference(ebpReal, offsetof(struct J9VMThread, inNative), cg()),
+                                1,
+                                cg());
+
+#if !defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
+      TR::MemoryReference *mr = generateX86MemoryReference(espReal, intptrj_t(0), cg());
+      mr->setRequiresLockPrefix();
+      generateMemImmInstruction(OR4MemImms, callNode, mr, 0, cg());
+#endif /* !J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
+
+      TR::LabelSymbol *longReleaseSnippetLabel = generateLabelSymbol(cg());
+      TR::LabelSymbol *longReleaseRestartLabel = generateLabelSymbol(cg());
+
+      static_assert(J9_PUBLIC_FLAGS_VM_ACCESS <= 0x7fffffff, "VM access bit must be immediate");
+      generateMemImmInstruction(CMP4MemImm4,
+                                callNode,
+                                generateX86MemoryReference(ebpReal, fej9->thisThreadGetPublicFlagsOffset(), cg()),
+                                J9_PUBLIC_FLAGS_VM_ACCESS,
+                                cg());
+      generateLabelInstruction(JNE4, callNode, longReleaseSnippetLabel, cg());
+
+      cg()->addSnippet(
+         new (trHeapMemory()) TR::X86HelperCallSnippet(
+            cg(),
+            callNode,
+            longReleaseRestartLabel,
+            longReleaseSnippetLabel,
+            comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getMethodSymbol())));
+      generateLabelInstruction(LABEL, callNode, longReleaseRestartLabel, cg());
+#else
       // Release vm access (spin lock).
       //
       generateRegMemInstruction(
@@ -426,6 +459,7 @@ TR::Register *TR::IA32JNILinkage::buildJNIDispatch(TR::Node *callNode)
       generateLabelInstruction(JNE4, callNode, pauseSnippetLabel, cg());
 
       generateLabelInstruction(LABEL, callNode, longReleaseRestartLabel, cg());
+#endif // J9VM_INTERP_ATOMIC_FREE_JNI
       }
    // Load machine bp esp + fej9->thisThreadGetMachineBPOffset() + argSize
    //
@@ -523,6 +557,40 @@ TR::Register *TR::IA32JNILinkage::buildJNIDispatch(TR::Node *callNode)
       {
       // Re-acquire vm access.
       //
+#ifdef J9VM_INTERP_ATOMIC_FREE_JNI
+      generateMemImmInstruction(S4MemImm4,
+                                callNode,
+                                generateX86MemoryReference(ebpReal, offsetof(struct J9VMThread, inNative), cg()),
+                                0,
+                                cg());
+
+#if !defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
+      TR::MemoryReference *mr = generateX86MemoryReference(espReal, intptrj_t(0), cg());
+      mr->setRequiresLockPrefix();
+      generateMemImmInstruction(OR4MemImms, callNode, mr, 0, cg());
+#endif /* !J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
+
+      TR::LabelSymbol *longAcquireSnippetLabel = generateLabelSymbol(cg());
+      TR::LabelSymbol *longAcquireRestartLabel = generateLabelSymbol(cg());
+
+      static_assert(J9_PUBLIC_FLAGS_VM_ACCESS <= 0x7fffffff, "VM access bit must be immediate");
+      generateMemImmInstruction(CMP4MemImm4,
+                                callNode,
+                                generateX86MemoryReference(ebpReal, fej9->thisThreadGetPublicFlagsOffset(), cg()),
+                                J9_PUBLIC_FLAGS_VM_ACCESS,
+                                cg());
+      generateLabelInstruction(JNE4, callNode, longAcquireSnippetLabel, cg());
+
+      cg()->addSnippet(
+         new (trHeapMemory()) TR::X86HelperCallSnippet(
+            cg(),
+            callNode,
+            longAcquireRestartLabel,
+            longAcquireSnippetLabel,
+            comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getMethodSymbol())));
+
+      generateLabelInstruction(LABEL, callNode, longAcquireRestartLabel, cg());
+#else
       generateRegRegInstruction(XOR4RegReg, callNode, eaxReal, eaxReal, cg());
       generateRegImmInstruction(MOV4RegImm4, callNode, ediReal, fej9->constAcquireVMAccessOutOfLineMask(), cg());
 
@@ -552,6 +620,7 @@ TR::Register *TR::IA32JNILinkage::buildJNIDispatch(TR::Node *callNode)
                )
             );
       generateLabelInstruction(LABEL, callNode, longReacquireRestartLabel, cg());
+#endif // J9VM_INTERP_ATOMIC_FREE_JNI
       }
 
    if (TR::Address == resolvedMethod->returnType() && wrapRefs)
