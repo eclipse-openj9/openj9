@@ -43,6 +43,7 @@ target_include_directories(jvm_redirect
 		"${j9vm_SOURCE_DIR}/j9vm"
 		"${j9vm_BINARY_DIR}/j9vm"
 )
+target_compile_definitions(jvm_redirect PRIVATE J9VM_JAVA_VERSION=148)
 set_target_properties(jvm_redirect PROPERTIES LIBRARY_OUTPUT_NAME jvm)
 
 ################################################################################
@@ -62,6 +63,7 @@ target_include_directories(jvm_b150_redirect
 		"${j9vm_SOURCE_DIR}/j9vm"
 		"${j9vm_BINARY_DIR}/j9vm"
 )
+target_compile_definitions(jvm_b150_redirect PRIVATE J9VM_JAVA_VERSION=150)
 set_target_properties(jvm_b150_redirect PROPERTIES LIBRARY_OUTPUT_NAME jvm_b150)
 
 ################################################################################
@@ -81,6 +83,7 @@ target_include_directories(jvm_b156_redirect
 		"${j9vm_SOURCE_DIR}/j9vm"
 		"${j9vm_BINARY_DIR}/j9vm"
 )
+target_compile_definitions(jvm_b156_redirect PRIVATE J9VM_JAVA_VERSION=156)
 set_target_properties(jvm_b156_redirect PROPERTIES LIBRARY_OUTPUT_NAME jvm_b156)
 
 
