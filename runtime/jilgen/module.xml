@@ -98,6 +98,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<command line="cd $(UMA_PATH_TO_ROOT) &amp;&amp; qemu-arm -r '9' ./constgen" type="all">
 				<include-if condition="spec.linux_arm.*"/>
 			</command>
+			<command line="cd $(UMA_PATH_TO_ROOT); if [ -x ../build_constgen.sh ] &amp;&amp; [ ! -e ../constgen.completed ] ; then ../build_constgen.sh ; fi" type="all">
+				<include-if condition="spec.linux_ztpf.*"/>
+			</command>
 		</commands>
 	</artifact>
 </module>
