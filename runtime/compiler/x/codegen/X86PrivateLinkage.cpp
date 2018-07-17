@@ -620,9 +620,6 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
 
    TR_DebugFrameSegmentInfo *debugFrameSlotInfo=NULL;
 #endif
-   // Decide whether to use outlined prologue
-   //
-   bool disableOutlinedPrologue = !comp()->getOption(TR_EnableOutlinedPrologues);
    bool trace = comp()->getOption(TR_TraceCG);
 
    TR::RealRegister  *espReal      = machine()->getX86RealRegister(TR::RealRegister::esp);
@@ -726,18 +723,6 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
                   _properties.getRetAddressWidth());
       }
 
-   if (!disableOutlinedPrologue && comp()->getOptLevel() >= hot)
-      {
-      // If we're spending lots of time in this method, chances are its
-      // prologues don't matter because we spend so much time running the body,
-      // so there's no benefit to the extra path length that outlined prologues add.
-      //
-      if (trace)
-         traceMsg(comp(), "OUTLINED PROLOGUES: Disable because opt level is %s\n", comp()->getHotnessName());
-      disableOutlinedPrologue = true;
-      cursor = cg()->generateDebugCounter(cursor, TR::DebugCounter::debugCounterName(comp(), "cg.prologues:refusedToOutline/optLevel/%s",comp()->getHotnessName()), 1, TR::DebugCounter::Undetermined);
-      }
-
    uint32_t numLocals              = localSize >> getProperties().getParmSlotShift();
    uint32_t numRegsPreservedOOL    = preservedRegsSize >> getProperties().getParmSlotShift();
    uint32_t numPreservesOmitted = 0;
@@ -766,113 +751,12 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
          }
       }
 
-   bool outlinedPrologueWillPreserveRegisters = true;
-   if (!disableOutlinedPrologue && (preservationMask & (preservationMask+1)) != 0)
-      {
-      // Rather than try to communicate which regs to preserve, we'll preserve them inline.
-      //
-      if (trace)
-         traceMsg(comp(), "OUTLINED PROLOGUES: Disable because we're not preserving the first N preserved registers (mask=%x)\n", preservationMask);
-      disableOutlinedPrologue = true;
-      cursor = cg()->generateDebugCounter(cursor, "cg.prologues:refusedToOutline/discontiguousPreserves", 1, TR::DebugCounter::Undetermined);
-      }
-
-   static char *outlinedPrologueSlotThresholdStr = feGetEnv("TR_outlinedPrologueSlotThreshold");
-   static int32_t outlinedPrologueSlotThreshold = outlinedPrologueSlotThresholdStr? atoi(outlinedPrologueSlotThresholdStr) : 0;
-   if (!disableOutlinedPrologue && numRegsPreservedOOL < outlinedPrologueSlotThreshold)
-      {
-      if (trace)
-         traceMsg(comp(), "OUTLINED PROLOGUES: Disable because extra path length is not worthwhile for %d preserved regs (threshold=%d)\n", numRegsPreservedOOL, outlinedPrologueSlotThreshold);
-      disableOutlinedPrologue = true;
-      cursor = cg()->generateDebugCounter(cursor, TR::DebugCounter::debugCounterName(comp(), "cg.prologues:refusedToOutline/belowSlotThreshold/numPreserved=%d", numRegsPreservedOOL), 1, TR::DebugCounter::Undetermined);
-      }
-
    // Here we conservatively assume there is a call in this method that will require space for its return address
    const int32_t peakSize = localSize + preservedRegsSize + outgoingArgSize + _properties.getPointerSize();
-
-   if (!disableOutlinedPrologue && (peakSize - localSize - preservedRegsSize >= STACKCHECKBUFFER))
-      {
-      // Too much stack space required beyond what outlined prologue will check for.
-      // The outlined overflow check is unsuitable.
-      //
-      if (trace)
-         traceMsg(comp(), "OUTLINED PROLOGUES: Disable because outlined overflow check is unsuitable for frames requiring %d bytes below the preserved registers\n", peakSize - localSize - preservedRegsSize);
-      disableOutlinedPrologue = true;
-      cursor = cg()->generateDebugCounter(cursor, TR::DebugCounter::debugCounterName(comp(), "cg.prologues:refusedToOutline/hugeOutgoingArgArea/numBytes=%d", outgoingArgSize), 1, TR::DebugCounter::Undetermined);
-      }
-
-   if (!disableOutlinedPrologue && comp()->getOption(TR_FullSpeedDebug))
-      {
-      // We haven't done the work to ensure FSD is compatible with outlined prologues.
-      //
-      if (trace)
-         traceMsg(comp(), "OUTLINED PROLOGUES: Not supported in FSD\n");
-      disableOutlinedPrologue = true;
-      cursor = cg()->generateDebugCounter(cursor, "cg.prologues:refusedToOutline/FSD", 1, TR::DebugCounter::Undetermined);
-      }
-
-   if (!disableOutlinedPrologue && (comp()->getOption(TR_PaintAllocatedFrameSlotsDead) || comp()->getOption(TR_PaintAllocatedFrameSlotsFauxObject)))
-      {
-      // Painting has to occur between buying the frame and saving preserved
-      // regs. Since both of these are done by the outlined-prologue helper,
-      // there's no correct place to do it if we're using the helper.
-      //
-      if (trace)
-      traceMsg(comp(), "OUTLINED PROLOGUES: Not supported with frame slot painting\n");
-      disableOutlinedPrologue = true;
-      cursor = cg()->generateDebugCounter(cursor, "cg.prologues:refusedToOutline/slotPainting", 1, TR::DebugCounter::Undetermined);
-      }
-
 
    bool doOverflowCheck = !comp()->isDLT();
 
    TR::Instruction *stackOverflowInstruction = NULL;
-
-#ifdef TR_TARGET_64BIT
-   if (!disableOutlinedPrologue)
-      {
-      if (performTransformation(comp(), "O^O OUTLINED PROLOGUES: Outline with %d autos and %d regs preserved out of line\n", numLocals, numRegsPreservedOOL))
-         {
-         // Ok, we're committed to outlining the prologue now
-         //
-         doOverflowCheck = false;                      // Outlined prologue does the overflow check
-         cg()->setPushPreservedRegisters();              // Outlined prologue doesn't allocate outgoing arg area, so it's acting like it's pushing preserved regs
-         uint32_t omittedPreservesSize = numPreservesOmitted * TR::Compiler->om.sizeofReferenceAddress();
-         allocSize = localSize + omittedPreservesSize; // Stack pointer bump is done out of line, but it behaves as though it buys this much
-
-         // If the stack overflow check fails, the outlined prologue code will dork the
-         // return address to point here
-         //
-         stackOverflowInstruction = cursor;
-         stackOverflowInstruction->setNeedsGCMap(); // Outlined prologue will set the return address to point here when calling jitStackOverflow
-
-         // Outlined prologue takes a descriptor argument in r8.
-         //
-         // NOTE!  Outlined prologue code knows the length of this instruction.
-         // If you modify it, fix the outlined prologue helper to match.
-         //
-         TR::RealRegister *descriptorReg = machine()->getX86RealRegister(TR::RealRegister::r8); // Must use r8 since we can do a stack overflow check and restart, and the overflow helper uses rdi
-         TR::RealRegister *spReg         = machine()->getX86RealRegister(TR::RealRegister::esp);
-         intptrj_t descriptor = -(intptrj_t)(allocSize);
-         if (descriptor == 0)
-            {
-            cursor = generateRegRegInstruction(cursor, MOVRegReg(), descriptorReg, spReg, cg());
-            }
-         else
-            {
-            cursor = generateRegMemInstruction(cursor, LEARegMem(), descriptorReg,
-               generateX86MemoryReference(spReg, -(intptrj_t)(allocSize), cg()), cg());
-            }
-         }
-      else
-         {
-         disableOutlinedPrologue = true;
-         cursor = cg()->generateDebugCounter(cursor, "cg.prologues:refusedToOutline/performTransformation", 1, TR::DebugCounter::Undetermined);
-         if (trace)
-            traceMsg(comp(), "OUTLINED PROLOGUES: Disabled by performTransformation\n");
-         }
-      }
-#endif
 
    // Small: entire stack usage fits in STACKCHECKBUFFER, so if sp is within
    // the soft limit before buying the frame, then the whole frame will fit
@@ -892,10 +776,9 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
 
    if (trace)
       {
-      traceMsg(comp(), "\nFrame size: %c%c%c locals=%d frame=%d peak=%d%s\n",
+      traceMsg(comp(), "\nFrame size: %c%c%c locals=%d frame=%d peak=%d\n",
          frameIsSmall? 'S':'-', frameIsMedium? 'M':'-', frameIsLarge? 'L':'-',
-         localSize, cg()->getFrameSizeInBytes(), peakSize,
-         disableOutlinedPrologue? "" : " using outlined prologue");
+         localSize, cg()->getFrameSizeInBytes(), peakSize);
       }
 
 #if defined(DEBUG)
@@ -965,7 +848,6 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
       if (frameIsLarge && doOverflowCheck)
          {
          TR_ASSERT(minInstructionSize <= 5, "Can't guarantee LEA instruction will be at least %d bytes", minInstructionSize);
-         TR_ASSERT(disableOutlinedPrologue, "Frame using outlined prologue should never qualify as large");
 
          // For large frames, there are no shortcuts.  Explicitly compute the
          // maximum extent of the stack pointer and make sure there's enough
@@ -978,7 +860,7 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
          minInstructionSize = 0; // The LEA satisfies the constraint
          }
 
-      doAllocateFrameSpeculatively = frameIsMedium && disableOutlinedPrologue;
+      doAllocateFrameSpeculatively = frameIsMedium;
 
       if (doAllocateFrameSpeculatively)
          {
@@ -1045,132 +927,89 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
 
    bodySymbol->setProloguePushSlots(preservedRegsSize / properties.getPointerSize());
 
-   if (disableOutlinedPrologue)
+   //
+   // Inline prologue logic
+   //
+   TR::Instruction *outlineablePortionStart = cursor;
+
+   // Allocate the stack frame
+   //
+   if (allocSize == 0)
       {
-      //
-      // Inline prologue logic
-      //
-      TR::Instruction *outlineablePortionStart = cursor;
-
-      // Allocate the stack frame
-      //
-      if (allocSize == 0)
-         {
-         // No need to do anything
-         }
-      else if (!doAllocateFrameSpeculatively)
-         {
-         TR_ASSERT(minInstructionSize <= 5, "Can't guarantee SUB instruction will be at least %d bytes", minInstructionSize);
-         const TR_X86OpCodes subOp = (allocSize <= 127 && getMinimumFirstInstructionSize() <= 3)? SUBRegImms() : SUBRegImm4();
-         cursor = new (trHeapMemory()) TR::X86RegImmInstruction(cursor, subOp, espReal, allocSize, cg());
-         }
-
-      //Support to paint allocated frame slots.
-      //
-      if (( comp()->getOption(TR_PaintAllocatedFrameSlotsDead) || comp()->getOption(TR_PaintAllocatedFrameSlotsFauxObject) )  && allocSize!=0)
-         {
-          uint32_t paintValue32 = 0;
-          uint64_t paintValue64 = 0;
-
-          TR::RealRegister *paintReg = NULL;
-          TR::RealRegister *frameSlotIndexReg = machine()->getX86RealRegister(TR::RealRegister::edi);
-          uint32_t paintBound = 0;
-          uint32_t paintSlotsOffset = 0;
-          uint32_t paintSize = allocSize-sizeof(uintptrj_t);
-
-          //Paint the slots with deadf00d
-          //
-          if (comp()->getOption(TR_PaintAllocatedFrameSlotsDead))
-             {
-             if (TR::Compiler->target.is64Bit())
-                paintValue64 = (uint64_t)CONSTANT64(0xdeadf00ddeadf00d);
-             else
-                paintValue32 = 0xdeadf00d;
-             }
-          //Paint stack slots with a arbitrary object aligned address.
-          //
-          else
-             {
-              if (TR::Compiler->target.is64Bit())
-                 {
-                  paintValue64 = ((uintptrj_t) ((uintptrj_t)comp()->getOptions()->getHeapBase() + (uintptrj_t) 4096));
-                 }
-              else
-                 {
-                 paintValue32 = ((uintptrj_t) ((uintptrj_t)comp()->getOptions()->getHeapBase() + (uintptrj_t) 4096));
-                 }
-             }
-
-          TR::LabelSymbol   *startLabel = generateLabelSymbol(cg());
-
-          //Load the 64 bit paint value into a paint reg.
-#ifdef TR_TARGET_64BIT
-          paintReg = machine()->getX86RealRegister(TR::RealRegister::r8);
-          cursor = new (trHeapMemory()) TR::AMD64RegImm64Instruction(cursor, MOV8RegImm64, paintReg, paintValue64, cg());
-#endif
-
-          //Perform the paint.
-          //
-          cursor = new (trHeapMemory()) TR::X86RegImmInstruction(cursor, MOVRegImm4(), frameSlotIndexReg, paintSize, cg());
-          cursor = new (trHeapMemory()) TR::X86LabelInstruction(cursor, LABEL, startLabel, cg());
-          if (TR::Compiler->target.is64Bit())
-             cursor = new (trHeapMemory()) TR::X86MemRegInstruction(cursor, S8MemReg, generateX86MemoryReference(espReal, frameSlotIndexReg, 0,(uint8_t) paintSlotsOffset, cg()), paintReg, cg());
-          else
-             cursor = new (trHeapMemory()) TR::X86MemImmInstruction(cursor, SMemImm4(), generateX86MemoryReference(espReal, frameSlotIndexReg, 0,(uint8_t) paintSlotsOffset, cg()), paintValue32, cg());
-          cursor = new (trHeapMemory()) TR::X86RegImmInstruction(cursor, SUBRegImms(), frameSlotIndexReg, sizeof(intptr_t),cg());
-          cursor = new (trHeapMemory()) TR::X86RegImmInstruction(cursor, CMPRegImm4(), frameSlotIndexReg, paintBound, cg());
-          cursor = new (trHeapMemory()) TR::X86LabelInstruction(cursor, JGE4, startLabel,cg());
-          }
-
-      // Save preserved regs
-      //
-      cursor = savePreservedRegisters(cursor);
-
-      // Insert some counters
-      //
-      cursor = cg()->generateDebugCounter(cursor, "cg.prologues:#preserved", preservedRegsSize >> getProperties().getParmSlotShift(), TR::DebugCounter::Expensive);
-      cursor = cg()->generateDebugCounter(cursor, "cg.prologues:inline", 1, TR::DebugCounter::Expensive);
+      // No need to do anything
       }
-   else
+   else if (!doAllocateFrameSpeculatively)
       {
-      // Outlined prologue logic
+      TR_ASSERT(minInstructionSize <= 5, "Can't guarantee SUB instruction will be at least %d bytes", minInstructionSize);
+      const TR_X86OpCodes subOp = (allocSize <= 127 && getMinimumFirstInstructionSize() <= 3)? SUBRegImms() : SUBRegImm4();
+      cursor = new (trHeapMemory()) TR::X86RegImmInstruction(cursor, subOp, espReal, allocSize, cg());
+      }
+
+   //Support to paint allocated frame slots.
+   //
+   if (( comp()->getOption(TR_PaintAllocatedFrameSlotsDead) || comp()->getOption(TR_PaintAllocatedFrameSlotsFauxObject) )  && allocSize!=0)
+      {
+      uint32_t paintValue32 = 0;
+      uint64_t paintValue64 = 0;
+
+      TR::RealRegister *paintReg = NULL;
+      TR::RealRegister *frameSlotIndexReg = machine()->getX86RealRegister(TR::RealRegister::edi);
+      uint32_t paintBound = 0;
+      uint32_t paintSlotsOffset = 0;
+      uint32_t paintSize = allocSize-sizeof(uintptrj_t);
+
+      //Paint the slots with deadf00d
       //
-      static const TR_RuntimeHelper outlinedPrologueHelpers[] =
+      if (comp()->getOption(TR_PaintAllocatedFrameSlotsDead))
          {
-         TR_outlinedPrologue_0preserved,
-         TR_outlinedPrologue_1preserved,
-         TR_outlinedPrologue_2preserved,
-         TR_outlinedPrologue_3preserved,
-         TR_outlinedPrologue_4preserved,
-         TR_outlinedPrologue_5preserved,
-         TR_outlinedPrologue_6preserved,
-         TR_outlinedPrologue_7preserved,
-         TR_outlinedPrologue_8preserved,
-         };
-
-      cursor = generateHelperCallInstruction(cursor, outlinedPrologueHelpers[numRegsPreservedOOL], cg());
-
-      int32_t  numSlotsPushedOutOfLime = numRegsPreservedOOL;
-      cursor = new (cg()->trHeapMemory()) TR::X86VFPCallCleanupInstruction(cursor, allocSize + numSlotsPushedOutOfLime * getProperties().getParmSlotSize(), cg());
-
-      if (outlinedPrologueWillPreserveRegisters)
-         {
-         cursor = cg()->generateDebugCounter(cursor, "cg.prologues:outlined", 1, TR::DebugCounter::Undetermined);
-         cursor = cg()->generateDebugCounter(cursor, "cg.prologues:outlined:#preservesOOL", numRegsPreservedOOL, TR::DebugCounter::Undetermined);
-         cursor = cg()->generateDebugCounter(cursor, "cg.prologues:outlined:#preservesOmitted", numPreservesOmitted, TR::DebugCounter::Undetermined);
+         if (TR::Compiler->target.is64Bit())
+            paintValue64 = (uint64_t)CONSTANT64(0xdeadf00ddeadf00d);
+         else
+            paintValue32 = 0xdeadf00d;
          }
+      //Paint stack slots with a arbitrary object aligned address.
+      //
       else
          {
-         cursor = cg()->generateDebugCounter(cursor, TR::DebugCounter::debugCounterName(comp(), "cg.prologues:outlined/inlinePushes/numPreserved=%d", numRegsPreservedOOL), 1, TR::DebugCounter::Undetermined);
-         cursor = savePreservedRegisters(cursor); // Have to do it inline
+         if (TR::Compiler->target.is64Bit())
+            {
+            paintValue64 = ((uintptrj_t) ((uintptrj_t)comp()->getOptions()->getHeapBase() + (uintptrj_t) 4096));
+            }
+         else
+            {
+            paintValue32 = ((uintptrj_t) ((uintptrj_t)comp()->getOptions()->getHeapBase() + (uintptrj_t) 4096));
+            }
          }
-      if (atlas && atlas->getInternalPointerMap())
-         {
-         // These are a hassle to disable
-         //cursor = cg()->generateDebugCounter(cursor, "cg.prologues:outlined:withInternalPointers", 1, TR::DebugCounter::Moderate);
-         //cursor = cg()->generateDebugCounter(cursor, "cg.prologues:outlined:withInternalPointers:#initializedSlots", numLocals, TR::DebugCounter::Moderate);
-         }
+
+      TR::LabelSymbol   *startLabel = generateLabelSymbol(cg());
+
+      //Load the 64 bit paint value into a paint reg.
+#ifdef TR_TARGET_64BIT
+       paintReg = machine()->getX86RealRegister(TR::RealRegister::r8);
+       cursor = new (trHeapMemory()) TR::AMD64RegImm64Instruction(cursor, MOV8RegImm64, paintReg, paintValue64, cg());
+#endif
+
+      //Perform the paint.
+      //
+      cursor = new (trHeapMemory()) TR::X86RegImmInstruction(cursor, MOVRegImm4(), frameSlotIndexReg, paintSize, cg());
+      cursor = new (trHeapMemory()) TR::X86LabelInstruction(cursor, LABEL, startLabel, cg());
+      if (TR::Compiler->target.is64Bit())
+         cursor = new (trHeapMemory()) TR::X86MemRegInstruction(cursor, S8MemReg, generateX86MemoryReference(espReal, frameSlotIndexReg, 0,(uint8_t) paintSlotsOffset, cg()), paintReg, cg());
+      else
+         cursor = new (trHeapMemory()) TR::X86MemImmInstruction(cursor, SMemImm4(), generateX86MemoryReference(espReal, frameSlotIndexReg, 0,(uint8_t) paintSlotsOffset, cg()), paintValue32, cg());
+      cursor = new (trHeapMemory()) TR::X86RegImmInstruction(cursor, SUBRegImms(), frameSlotIndexReg, sizeof(intptr_t),cg());
+      cursor = new (trHeapMemory()) TR::X86RegImmInstruction(cursor, CMPRegImm4(), frameSlotIndexReg, paintBound, cg());
+      cursor = new (trHeapMemory()) TR::X86LabelInstruction(cursor, JGE4, startLabel,cg());
       }
+
+   // Save preserved regs
+   //
+   cursor = savePreservedRegisters(cursor);
+
+   // Insert some counters
+   //
+   cursor = cg()->generateDebugCounter(cursor, "cg.prologues:#preserved", preservedRegsSize >> getProperties().getParmSlotShift(), TR::DebugCounter::Expensive);
+   cursor = cg()->generateDebugCounter(cursor, "cg.prologues:inline", 1, TR::DebugCounter::Expensive);
 
    // Initialize any local pointers that could otherwise confuse the GC.
    //
