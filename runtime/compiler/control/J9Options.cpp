@@ -2626,6 +2626,36 @@ J9::Options::printPID()
    }
 
 void getTRPID(char *buf);
+
+void
+appendRegex(TR::SimpleRegex *&regexPtr, uint8_t *&curPos)
+   {
+   if (!regexPtr)
+      return;
+   size_t len = regexPtr->regexStrLen();
+   memcpy(curPos, regexPtr->regexStr(), len);
+   TR_ASSERT(curPos[len - 1], "not expecting null terminator");
+   regexPtr = (TR::SimpleRegex*) ((uint8_t*)curPos - (uint8_t *)&regexPtr);
+   curPos[len] = '\0';
+   curPos += len + 1;
+   }
+
+void
+unpackRegex(TR::SimpleRegex *&regexPtr)
+   {
+   if (!regexPtr)
+      return;
+   char *str = (char*)((uintptrj_t)&regexPtr + (uintptrj_t)regexPtr);
+   regexPtr = TR::SimpleRegex::create(str);
+   }
+
+void
+addRegexStringSize(TR::SimpleRegex *regexPtr, size_t &len)
+   {
+   if (regexPtr)
+      len += regexPtr->regexStrLen() + 1;
+   }
+
 // Packs a TR::Options object into a std::string to be transfered to the server
 std::string
 J9::Options::packOptions(TR::Options *origOptions)
@@ -2656,9 +2686,34 @@ J9::Options::packOptions(TR::Options *origOptions)
 
    size_t totalSize = sizeof(TR::Options) + logFileNameLength + suffixLogsFormatLength + blockShufflingSequenceLength + induceOSRLength;
 
+   addRegexStringSize(origOptions->_disabledOptTransformations, totalSize);
+   addRegexStringSize(origOptions->_disabledInlineSites, totalSize);
+   addRegexStringSize(origOptions->_disabledOpts, totalSize);
+   addRegexStringSize(origOptions->_optsToTrace, totalSize);
+   addRegexStringSize(origOptions->_dontInline, totalSize);
+   addRegexStringSize(origOptions->_onlyInline, totalSize);
+   addRegexStringSize(origOptions->_tryToInline, totalSize);
+   addRegexStringSize(origOptions->_slipTrap, totalSize);
+   addRegexStringSize(origOptions->_lockReserveClass, totalSize);
+   addRegexStringSize(origOptions->_breakOnOpts, totalSize);
+   addRegexStringSize(origOptions->_breakOnCreate, totalSize);
+   addRegexStringSize(origOptions->_debugOnCreate, totalSize);
+   addRegexStringSize(origOptions->_breakOnThrow, totalSize);
+   addRegexStringSize(origOptions->_breakOnPrint, totalSize);
+   addRegexStringSize(origOptions->_enabledStaticCounterNames, totalSize);
+   addRegexStringSize(origOptions->_enabledDynamicCounterNames, totalSize);
+   addRegexStringSize(origOptions->_counterHistogramNames, totalSize);
+   addRegexStringSize(origOptions->_verboseOptTransformationsRegex, totalSize);
+   addRegexStringSize(origOptions->_packedTest, totalSize);
+   addRegexStringSize(origOptions->_memUsage, totalSize);
+   addRegexStringSize(origOptions->_classesWithFolableFinalFields, totalSize);
+   addRegexStringSize(origOptions->_disabledIdiomPatterns, totalSize);
+
    std::string optionsStr(totalSize, '\0');
    TR::Options * options = (TR::Options *)optionsStr.data();
    memcpy(options, origOptions, sizeof(TR::Options));
+
+   uint8_t *curPos = ((uint8_t *)options) + sizeof(TR::Options);
 
    options->_optionSets = NULL;
    options->_startOptions = NULL;
@@ -2668,35 +2723,34 @@ J9::Options::packOptions(TR::Options *origOptions)
    options->_customStrategy = NULL;
    options->_customStrategySize = 0;
    options->_countString = NULL;
-   options->_traceForCodeMining = NULL;
-   options->_disabledOptTransformations = NULL;
-   options->_disabledInlineSites = NULL;
-   options->_disabledOpts = NULL;
-   options->_optsToTrace = NULL;
-   options->_dontInline = NULL;
-   options->_onlyInline = NULL;
-   options->_tryToInline = NULL;
-   options->_slipTrap = NULL;
-   options->_lockReserveClass = NULL;
-   options->_breakOnOpts = NULL;
-   options->_breakOnCreate = NULL;
-   options->_debugOnCreate = NULL;
-   options->_breakOnThrow = NULL;
-   options->_breakOnPrint = NULL;
-   options->_enabledStaticCounterNames = NULL;
-   options->_enabledDynamicCounterNames = NULL;
-   options->_counterHistogramNames = NULL;
-   options->_verboseOptTransformationsRegex = NULL;
-   options->_packedTest = NULL;
-   options->_memUsage = NULL;
-   options->_classesWithFolableFinalFields = NULL;
-   options->_disabledIdiomPatterns = NULL;
+   appendRegex(options->_traceForCodeMining, curPos);
+   appendRegex(options->_disabledOptTransformations, curPos);
+   appendRegex(options->_disabledInlineSites, curPos);
+   appendRegex(options->_disabledOpts, curPos);
+   appendRegex(options->_optsToTrace, curPos);
+   appendRegex(options->_dontInline, curPos);
+   appendRegex(options->_onlyInline, curPos);
+   appendRegex(options->_tryToInline, curPos);
+   appendRegex(options->_slipTrap, curPos);
+   appendRegex(options->_lockReserveClass, curPos);
+   appendRegex(options->_breakOnOpts, curPos);
+   appendRegex(options->_breakOnCreate, curPos);
+   appendRegex(options->_debugOnCreate, curPos);
+   appendRegex(options->_breakOnThrow, curPos);
+   appendRegex(options->_breakOnPrint, curPos);
+   appendRegex(options->_enabledStaticCounterNames, curPos);
+   appendRegex(options->_enabledDynamicCounterNames, curPos);
+   appendRegex(options->_counterHistogramNames, curPos);
+   appendRegex(options->_verboseOptTransformationsRegex, curPos);
+   appendRegex(options->_packedTest, curPos);
+   appendRegex(options->_memUsage, curPos);
+   appendRegex(options->_classesWithFolableFinalFields, curPos);
+   appendRegex(options->_disabledIdiomPatterns, curPos);
    options->_osVersionString = NULL;
    options->_logListForOtherCompThreads = NULL;
    options->_objectFileName = NULL;
 
 
-   uint8_t *curPos = ((uint8_t *)options) + sizeof(TR::Options);
    curPos = appendContent(options->_logFileName, curPos, logFileNameLength);
    curPos = appendContent(options->_suffixLogsFormat, curPos, suffixLogsFormatLength);
    curPos = appendContent(options->_blockShufflingSequence, curPos, blockShufflingSequenceLength);
@@ -2721,6 +2775,29 @@ J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR_Mem
       options->_blockShufflingSequence = (char *)((uint8_t *)&(options->_blockShufflingSequence) + (ptrdiff_t)options->_blockShufflingSequence);
    if (options->_induceOSR)
       options->_induceOSR = (char *)((uint8_t *)&(options->_induceOSR) + (ptrdiff_t)options->_induceOSR);
+
+   unpackRegex(options->_disabledOptTransformations);
+   unpackRegex(options->_disabledInlineSites);
+   unpackRegex(options->_disabledOpts);
+   unpackRegex(options->_optsToTrace);
+   unpackRegex(options->_dontInline);
+   unpackRegex(options->_onlyInline);
+   unpackRegex(options->_tryToInline);
+   unpackRegex(options->_slipTrap);
+   unpackRegex(options->_lockReserveClass);
+   unpackRegex(options->_breakOnOpts);
+   unpackRegex(options->_breakOnCreate);
+   unpackRegex(options->_debugOnCreate);
+   unpackRegex(options->_breakOnThrow);
+   unpackRegex(options->_breakOnPrint);
+   unpackRegex(options->_enabledStaticCounterNames);
+   unpackRegex(options->_enabledDynamicCounterNames);
+   unpackRegex(options->_counterHistogramNames);
+   unpackRegex(options->_verboseOptTransformationsRegex);
+   unpackRegex(options->_packedTest);
+   unpackRegex(options->_memUsage);
+   unpackRegex(options->_classesWithFolableFinalFields);
+   unpackRegex(options->_disabledIdiomPatterns);
 
    return options;
    }
