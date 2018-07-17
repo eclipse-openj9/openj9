@@ -49,6 +49,10 @@ else
 	JAVA := $(if $(J9_ROOT),java8,$(DEV_TOOLS)\ibm-jdk-1.8.0\bin\java)
 endif
 
+ifdef VERSION_MAJOR
+	EXTRA_CMAKE_ARGS += -DJ9VM_JAVA_VERSION=$(VERSION_MAJOR)
+endif
+
 default : all
 
 all : ddr tools
