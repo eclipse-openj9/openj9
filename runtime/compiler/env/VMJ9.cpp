@@ -3102,6 +3102,21 @@ bool TR_J9VMBase::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, 
                break;
                }
          case TR::java_lang_String_hashCodeImplDecompressed:
+            /*
+             * X86 and z want to avoid inlining both java_lang_String_hashCodeImplDecompressed and java_lang_String_hashCodeImplCompressed
+             * so they can be recognized and replaced with a custom fast implementation.
+             * Power currently only has the custom fast implementation for java_lang_String_hashCodeImplDecompressed.
+             * As a result, Power only wants to prevent inlining of java_lang_String_hashCodeImplDecompressed.
+             * When Power gets a fast implementation of TR::java_lang_String_hashCodeImplCompressed, this case can be merged into the case
+             * for java_lang_String_hashCodeImplCompressed instead of using a fallthrough.
+             */
+            if (!TR::Compiler->om.canGenerateArraylets() &&
+                TR::Compiler->target.cpu.isPower() && TR::Compiler->target.cpu.id() >= TR_PPCp8 && getPPCSupportsVSXRegisters() && !comp->compileRelocatableCode())
+                  {
+                  dontInlineRecognizedMethod = true;
+                  break;
+                  }
+            // Intentional fallthrough here.
          case TR::java_lang_String_hashCodeImplCompressed:
             if (!TR::Compiler->om.canGenerateArraylets()){
                if ((TR::Compiler->target.cpu.isX86() && getX86SupportsSSE4_1()) ||
