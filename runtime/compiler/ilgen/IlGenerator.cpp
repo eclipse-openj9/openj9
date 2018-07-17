@@ -254,23 +254,26 @@ bool TR_J9ByteCodeIlGenerator::internalGenIL()
 
             if (doIt)
                {
-               if (recognizedMethod == TR::java_lang_ClassLoader_callerClassLoader
-                  )
+               if (recognizedMethod == TR::java_lang_ClassLoader_callerClassLoader)
                   {
-                  createGeneratedFirstBlock();
                   // check for bootstrap classloader, if so
                   // return null (see semantics of ClassLoader.callerClassLoader())
                   //
                   if (fej9()->isClassLoadedBySystemClassLoader(caller->classOfMethod()))
                      {
+                     createGeneratedFirstBlock();
                      loadConstant(TR::aconst, (void *)0);
+                     genTreeTop(TR::Node::create(method()->returnOpCode(), 1, pop()));
+                     return true;
                      }
-                  else
+                  // JITaaS FIXME: Bypass bug where this doesn't work if it's not the system class loader.
+                  else if (comp()->getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
                      {
+                     createGeneratedFirstBlock();
                      loadSymbol(TR::aload, symRefTab()->findOrCreateClassLoaderSymbolRef(caller));
+                     genTreeTop(TR::Node::create(method()->returnOpCode(), 1, pop()));
+                     return true;
                      }
-                  genTreeTop(TR::Node::create(method()->returnOpCode(), 1, pop()));
-                  return true;
                   }
                if (recognizedMethod == TR::com_ibm_oti_vm_VM_callerClass)
                   {
