@@ -30,9 +30,21 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.security.SecureRandom;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Random;
+
+import static java.nio.file.attribute.PosixFilePermission.GROUP_READ;
+import static java.nio.file.attribute.PosixFilePermission.GROUP_WRITE;
+import static java.nio.file.attribute.PosixFilePermission.OTHERS_READ;
+import static java.nio.file.attribute.PosixFilePermission.OTHERS_WRITE;
 
 /**
  * Utility class for operating system calls
@@ -49,7 +61,13 @@ public class IPC {
 	static final int TRACEPOINT_STATUS_OOM_DURING_WAIT = -2;
 	static final int TRACEPOINT_STATUS_OOM_DURING_TERMINATE = -3;
 	static final String LOCAL_CONNECTOR_ADDRESS = "com.sun.management.jmxremote.localConnectorAddress"; //$NON-NLS-1$
+	private static final EnumSet<PosixFilePermission> NON_OWNER_READ_WRITE =
+				EnumSet.of(GROUP_READ, GROUP_WRITE, OTHERS_READ, OTHERS_WRITE);
 
+	/**
+	 * True if operating system is Windows.
+	 */
+	public static boolean isWindows = false;
 
 	private static Random randomGen; /* Cleanup. this is used by multiple threads */
 	static  PrintStream logStream; /* cleanup.  Used by multiple threads */
@@ -89,6 +107,43 @@ public class IPC {
 	}
 
 	static native int mkdirWithPermissionsImpl(String absolutePath, int perms);
+
+	/**
+	 * Ensure that a file or directory is not readable or writable by others
+	 * and is owned by the current user.
+	 * @param filePath File or directory path
+	 * @throws IOException if the access or ownership is wrong
+	 */
+	public static void checkOwnerAccessOnly(String filePath) throws IOException {
+		final long myUid = getUid();
+		/* Ensure file is owned by current user, or current user is root */
+		final long fileOwner = CommonDirectory.getFileOwner(filePath);
+		if ((0 != myUid) && (fileOwner != myUid)) {
+			logMessage("Wrong permissions or ownership for ", filePath); //$NON-NLS-1$
+			/*[MSG "K0803", "File {0} is owned by {1}, should be owned by current user"]*/
+			throw new IOException(com.ibm.oti.util.Msg.getString("K0803", filePath, Long.valueOf(fileOwner)));//$NON-NLS-1$
+		}
+		if (!isWindows) {
+			try {
+				/* ensure that the directory is not readable or writable by others */
+				Set<PosixFilePermission> actualPermissions =
+						Files.getPosixFilePermissions(Paths.get(filePath), LinkOption.NOFOLLOW_LINKS);
+				actualPermissions.retainAll(NON_OWNER_READ_WRITE);
+				if (!actualPermissions.isEmpty()) {
+					final String permissionString = Files.getPosixFilePermissions(Paths.get(filePath), LinkOption.NOFOLLOW_LINKS).toString();
+					logMessage("Wrong permissions: " +permissionString + " for ", filePath); //$NON-NLS-1$ //$NON-NLS-2$
+					/*[MSG "K0805", "{0} has permissions {1}, should have owner access only"]*/
+					throw new IOException(com.ibm.oti.util.Msg.getString("K0805", filePath, permissionString));//$NON-NLS-1$
+				}
+			} catch (UnsupportedOperationException e) {
+				String osName = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("os.name"); //$NON-NLS-1$
+				if ((null != osName) && !osName.startsWith("Windows")) { //$NON-NLS-1$
+					/*[MSG "K0806", "Cannot verify permissions {0}"]*/
+					throw new IOException(com.ibm.oti.util.Msg.getString("K0806", filePath), e); //$NON-NLS-1$
+				}
+			}
+		}
+	}
 
 	/*[PR Jazz 30075] setupSemaphore was re-doing what createDirectoryAndSemaphore (now called prepareCommonDirectory) did already */
 
@@ -167,11 +222,29 @@ public class IPC {
 
 	private static native int processExistsImpl(long pid);
 
-	static void createFileWithPermissions(String path, int perms)
-			throws IOException {
-		int rc = createFileWithPermissionsImpl(path, perms);
+	/**
+	 * Create a new file with specified the permissions (to override umask) and close it.
+	 * If the file exists, delete it.
+	 * @param path file system path
+	 * @param mode file access permissions (posix format) for the new file
+	 * @throws IOException if the file exists and cannot be removed, or 
+	 * a new file cannot be created with the specified permission
+	 */
+	static void createNewFileWithPermissions(File theFile, int perms) throws IOException {
+		final String filePathString = theFile.getAbsolutePath();
+		if (theFile.exists()) {
+			IPC.logMessage("Found existing file ", filePathString); //$NON-NLS-1$
+			if (!theFile.delete()) {
+				IPC.logMessage("Cannot delete existing file ", filePathString); //$NON-NLS-1$
+				/*[MSG "K0807", "Cannot delete file {0}"]*/
+				throw (new IOException(com.ibm.oti.util.Msg.getString("K0807", filePathString))); //$NON-NLS-1$
+			}
+		}
+		int rc = createFileWithPermissionsImpl(theFile.getAbsolutePath(), perms);
 		if (JNI_OK != rc) {
-			throw new IOException(path);
+			IPC.logMessage("Cannot create new file ", filePathString); //$NON-NLS-1$
+			/*[MSG "K0808", "Cannot create new file {0}"]*/
+			throw (new IOException(com.ibm.oti.util.Msg.getString("K0808", filePathString))); //$NON-NLS-1$
 		}
 	}
 
