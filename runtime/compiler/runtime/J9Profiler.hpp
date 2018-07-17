@@ -640,15 +640,17 @@ class TR_BlockFrequencyInfo
    void setIsQueuedForRecompilation() { _isQueuedForRecompilation = -1; }
    int32_t *getIsQueuedForRecompilation() { return &_isQueuedForRecompilation; }
 
+   TR::Node* generateBlockRawCountCalculationSubTree(TR::Compilation *comp, int32_t blockNumber, TR::Node *node);
+   TR::Node* generateBlockRawCountCalculationSubTree(TR::Compilation *comp, TR::Node *node, bool trace);
    void dumpInfo(TR::FILE *);
 
    int32_t getCallCount();
    int32_t getMaxRawCount(int32_t callerIndex);
    int32_t getMaxRawCount();
-
    private:
    int32_t getRawCount(TR::ResolvedMethodSymbol *resolvedMethod, TR_ByteCodeInfo &bci, TR_CallSiteInfo *callSiteInfo, int64_t maxCount, TR::Compilation *comp);
    int32_t getRawCount(TR_ByteCodeInfo &bci, TR_CallSiteInfo *callSiteInfo, int64_t maxCount, TR::Compilation *comp);
+   int32_t getOriginalBlockNumberToGetRawCount(TR_ByteCodeInfo &bci, TR::Compilation *comp, bool trace);
 
    TR_CallSiteInfo * _callSiteInfo;
    int32_t const _numBlocks;
