@@ -37,7 +37,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>Valhalla</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 </playlist>
