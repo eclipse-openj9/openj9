@@ -338,16 +338,6 @@ JIT_HELPER(interpreterSyncXMM0DStaticGlue);
 JIT_HELPER(methodHandleJ2IGlue);
 JIT_HELPER(methodHandleJ2I_unwrapper);
 
-JIT_HELPER(outlinedPrologue_0preserved);
-JIT_HELPER(outlinedPrologue_1preserved);
-JIT_HELPER(outlinedPrologue_2preserved);
-JIT_HELPER(outlinedPrologue_3preserved);
-JIT_HELPER(outlinedPrologue_4preserved);
-JIT_HELPER(outlinedPrologue_5preserved);
-JIT_HELPER(outlinedPrologue_6preserved);
-JIT_HELPER(outlinedPrologue_7preserved);
-JIT_HELPER(outlinedPrologue_8preserved);
-
 // --------------------------------------------------------------------------------
 //                                    IA32
 // --------------------------------------------------------------------------------
@@ -1190,16 +1180,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
 
    SET(TR_methodHandleJ2IGlue,                        (void *)methodHandleJ2IGlue,       TR_Helper);
    SET(TR_methodHandleJ2I_unwrapper,                  (void *)methodHandleJ2I_unwrapper, TR_Helper);
-
-   SET(TR_outlinedPrologue_0preserved,                (void *)outlinedPrologue_0preserved, TR_Helper);
-   SET(TR_outlinedPrologue_1preserved,                (void *)outlinedPrologue_1preserved, TR_Helper);
-   SET(TR_outlinedPrologue_2preserved,                (void *)outlinedPrologue_2preserved, TR_Helper);
-   SET(TR_outlinedPrologue_3preserved,                (void *)outlinedPrologue_3preserved, TR_Helper);
-   SET(TR_outlinedPrologue_4preserved,                (void *)outlinedPrologue_4preserved, TR_Helper);
-   SET(TR_outlinedPrologue_5preserved,                (void *)outlinedPrologue_5preserved, TR_Helper);
-   SET(TR_outlinedPrologue_6preserved,                (void *)outlinedPrologue_6preserved, TR_Helper);
-   SET(TR_outlinedPrologue_7preserved,                (void *)outlinedPrologue_7preserved, TR_Helper);
-   SET(TR_outlinedPrologue_8preserved,                (void *)outlinedPrologue_8preserved, TR_Helper);
 
 #else // AMD64
 
