@@ -17,7 +17,8 @@ class ClientSessionData
    public:
    struct ClassInfo
       {
-      ~ClassInfo();
+      void freeClassInfo(); // this method is in place of a destructor. We can't have destructor
+      // becaues it would be called after inserting ClassInfo into the ROM map, freeing romClass
       J9ROMClass *romClass; // romClass content exists in persistentMemory at the server
       J9Method *methodsOfClass;
       // Fields meaningful for arrays

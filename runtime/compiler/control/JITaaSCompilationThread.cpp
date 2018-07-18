@@ -2329,7 +2329,10 @@ ClientSessionData::~ClientSessionData()
          }
       }
    for (auto it : _romClassMap)
+      {
+      it.second.freeClassInfo();
       _romClassMap.erase(it.first);
+      }
    }
 
 void
@@ -2373,7 +2376,7 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
             }
          
          }
-      
+      it->second.freeClassInfo();
       _romClassMap.erase(it);
       }
    }
@@ -2463,7 +2466,8 @@ ClientSessionData::printStats()
    j9tty_printf(PORTLIB, "\tTotal size of cached ROM classes + methods: %d bytes\n", total);
    }
 
-ClientSessionData::ClassInfo::~ClassInfo()
+void
+ClientSessionData::ClassInfo::freeClassInfo()
    {
    TR_Memory::jitPersistentFree(romClass);
    // If string cache exists, free it
