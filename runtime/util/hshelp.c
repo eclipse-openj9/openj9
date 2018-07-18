@@ -1229,7 +1229,7 @@ fixVTables_forNormalRedefine(J9VMThread *currentThread, J9HashTable *classPairs,
 			Trc_hshelp_fixVTables_Search(currentThread, i,
 						classPair->replacementClass.ramClass ? classPair->replacementClass.ramClass : classPair->originalRAMClass,
 						methodPair.oldMethod, getMethodName(methodPair.oldMethod),
-						vm->jitConfig ? oldJitVTable[-i] : 0, vm->jitConfig ? newJitVTable[-i] : 0);
+						vm->jitConfig ? oldJitVTable[0 - i] : 0, vm->jitConfig ? newJitVTable[0 - i] : 0);
 #endif
 
 			result = hashTableFind(methodPairs, &methodPair);
@@ -1249,10 +1249,10 @@ fixVTables_forNormalRedefine(J9VMThread *currentThread, J9HashTable *classPairs,
 						 * We do not need to remap the order here because we're making the newVTable/newJitVTable
 						 * have the same order of the oldVTable/oldJitVTable.
 						 */
-						newJitVTable[-i] = oldJitVTable[-i];
+						newJitVTable[0 - i] = oldJitVTable[0 - i];
 						Trc_hshelp_fixVTables_jitVTableReplace(currentThread, i);
 					} else {
-						vmFuncs->fillJITVTableSlot(currentThread, &newJitVTable[-i], result->newMethod);
+						vmFuncs->fillJITVTableSlot(currentThread, &newJitVTable[0 - i], result->newMethod);
 					}
 				}
 #endif
