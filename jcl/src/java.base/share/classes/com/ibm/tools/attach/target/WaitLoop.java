@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar16]*/
 package com.ibm.tools.attach.target;
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,6 +23,8 @@ package com.ibm.tools.attach.target;
  *******************************************************************************/
 
 import java.io.IOException;
+import static com.ibm.tools.attach.target.IPC.loggingStatus;
+import static com.ibm.tools.attach.target.IPC.LOGGING_DISABLED;
 
 final class WaitLoop extends Thread {
 
@@ -44,7 +46,7 @@ final class WaitLoop extends Thread {
 	private Attachment waitForNotification(boolean retry) throws IOException {
 		Object myIN = AttachHandler.mainHandler.getIgnoreNotification();
 
-		if (IPC.loggingEnabled ) {
+		if (LOGGING_DISABLED != loggingStatus) {
 			IPC.logMessage("iteration ", AttachHandler.notificationCount," waitForNotification ignoreNotification entering"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 
@@ -53,11 +55,11 @@ final class WaitLoop extends Thread {
 		 * We cannot use the file locking trick that the potential target VMs use since this VM holds the file locks.
 		 */
 		synchronized (myIN) {
-			if (IPC.loggingEnabled ) {
+			if (LOGGING_DISABLED != loggingStatus) {
 				IPC.logMessage("iteration ", AttachHandler.notificationCount, " waitForNotification ignoreNotification entered"); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 		}
-		if (IPC.loggingEnabled ) {
+		if (LOGGING_DISABLED != loggingStatus) {
 			IPC.logMessage("iteration ", AttachHandler.notificationCount, " waitForNotification starting wait"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		
@@ -66,7 +68,7 @@ final class WaitLoop extends Thread {
 			status = CommonDirectory.waitSemaphore(AttachHandler.vmId);
 			AttachHandler.endWaitingForSemaphore();
 		}
-		if (IPC.loggingEnabled ) {
+		if (LOGGING_DISABLED != loggingStatus) {
 			IPC.logMessage("iteration ", AttachHandler.notificationCount, " waitForNotification ended wait"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 
@@ -76,7 +78,7 @@ final class WaitLoop extends Thread {
 			 * to avoid waking other processes.
 			 */
 			if (AttachHandler.getDoCancelNotify()) {
-				if (IPC.loggingEnabled ) {
+				if (LOGGING_DISABLED != loggingStatus) {
 					IPC.logMessage("iteration ", AttachHandler.notificationCount, " waitForNotification cancelNotify"); //$NON-NLS-1$ //$NON-NLS-2$
 				}
 				CommonDirectory.cancelNotify(AttachHandler.getNumberOfTargets());
@@ -126,14 +128,14 @@ final class WaitLoop extends Thread {
 			/* cannot create the target directory,so shut down the attach API */
 			AttachHandler.mainHandler.terminate(false); /* no need to notify myself */
 		}
-		if (IPC.loggingEnabled ) {
+		if (LOGGING_DISABLED != loggingStatus) {
 			IPC.logMessage("checkReplyAndCreateAttachment iteration "+ AttachHandler.notificationCount+" waitForNotification obtainLock"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		if (!AttachHandler.mainHandler.syncFileLock.lockFile(true)) { /* the sync file is missing. */
 			TargetDirectory.createMySyncFile();
 			/* don't bother locking this since the attacher will not have locked it. */
 		} else {
-			if (IPC.loggingEnabled ) {
+			if (LOGGING_DISABLED != loggingStatus) {
 				IPC.logMessage("iteration ", AttachHandler.notificationCount," checkReplyAndCreateAttachment releaseLock"); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 			AttachHandler.mainHandler.syncFileLock.unlockFile();

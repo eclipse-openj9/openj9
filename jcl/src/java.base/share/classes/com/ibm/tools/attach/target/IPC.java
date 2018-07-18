@@ -63,15 +63,27 @@ public class IPC {
 	static final String LOCAL_CONNECTOR_ADDRESS = "com.sun.management.jmxremote.localConnectorAddress"; //$NON-NLS-1$
 	private static final EnumSet<PosixFilePermission> NON_OWNER_READ_WRITE =
 				EnumSet.of(GROUP_READ, GROUP_WRITE, OTHERS_READ, OTHERS_WRITE);
-
+	static final int LOGGING_UNKNOWN = 0;
+	static final int LOGGING_DISABLED = 1;
+	static final int LOGGING_ENABLED = 2;
 	/**
 	 * True if operating system is Windows.
 	 */
 	public static boolean isWindows = false;
 
 	private static Random randomGen; /* Cleanup. this is used by multiple threads */
-	static  PrintStream logStream; /* cleanup.  Used by multiple threads */
-	static volatile boolean loggingEnabled; /* set at initialization time and not changed */
+	
+	/* loggingStatus may be seen to be LOGGING_ENABLED before logStream is initialized,
+	 * so use logStream inside a synchronized (IPC.accessorMutex) block.
+	 */
+	static  PrintStream logStream;
+	
+	/* loggingStatus is set at initialization time to LOGGING_DISABLED or LOGGING_ENABLED 
+	 * and not changed thereafter.
+	 * This can be safely tested by any thread against LOGGING_DISABLED.  If it is not equal, then 
+	 * isLoggingEnabled() will check the actual status in a thread-safe manner.
+	 */
+	static int loggingStatus = LOGGING_UNKNOWN; /* set at initialization time and not changed */
 	static String defaultVmId;
 
 	/**
@@ -219,6 +231,27 @@ public class IPC {
 		int rc = processExistsImpl(pid);
 		return (rc > 0);
 	}
+	
+	/**
+	 * Check if attach API initialization has enabled logging.
+	 * Logging is enabled or disabled once, and remains enabled or disabled for the duration of the process.
+	 * @return true if logging is definitely enabled, false if is not initialized or is disabled.
+	 */
+	private static boolean isLoggingEnabled() {
+		boolean result = false;
+		if (LOGGING_DISABLED == loggingStatus) {
+			result = false;
+		} else if (LOGGING_ENABLED == loggingStatus) {
+			result = true;
+		} else synchronized (accessorMutex) {
+			/* 
+			 * We may be initializing.  If so, wait until initialization is complete.  
+			 * Otherwise, assume logging is disabled.
+			 */
+			result = (LOGGING_ENABLED == loggingStatus);			
+		}
+		return result;
+	}
 
 	private static native int processExistsImpl(long pid);
 
@@ -310,7 +343,7 @@ public class IPC {
 	 * @param msg message to print
 	 */
 	public static void logMessage(final String msg) {
-		if (loggingEnabled ) {
+		if (isLoggingEnabled()) {
 			printLogMessage(msg);
 		}
 	}
@@ -323,7 +356,7 @@ public class IPC {
 	 * @param string2 concatenated to second argument
 	 */
 	public static void logMessage(String string1, String string2) {
-		if (loggingEnabled ) {
+		if (isLoggingEnabled()) {
 			printLogMessage(string1+string2);
 		}
 	}
@@ -336,7 +369,7 @@ public class IPC {
 	 * @param int1 concatenated to second argument
 	 */
 	public static void logMessage(String string1, int int1) {
-		if (loggingEnabled ) {
+		if (isLoggingEnabled()) {
 			printLogMessage(string1+Integer.toString(int1));
 		}
 	}
@@ -350,7 +383,7 @@ public class IPC {
 	 * @param string2 second string
 	 */
 	public static void logMessage(String string1, int int1, String string2) {
-		if (loggingEnabled ) {
+		if (isLoggingEnabled()) {
 			printLogMessage(string1+Integer.toString(int1)+string2);
 		}
 	}
@@ -365,15 +398,9 @@ public class IPC {
 	 * @param string3 third string
 	 */
 	public static void logMessage(String string1, int int1, String string2, String string3) {
-		if (loggingEnabled ) {
+		if (isLoggingEnabled()) {
 			printLogMessage(string1+Integer.toString(int1)+string2+string3);
 		}
-	}
-
-	private static void printMessageWithHeader(String msg, PrintStream log) {
-		tracepoint(TRACEPOINT_STATUS_LOGGING, msg);
-		printLogMessageHeader(log);
-		log.println(msg);
 	}
 
 	/**
@@ -383,29 +410,42 @@ public class IPC {
 	 * @param thrown throwable
 	 * @note nothing is printed if logging is disabled
 	 */
-	public synchronized static void logMessage(String msg, Throwable thrown) {
-		@SuppressWarnings("resource") /* this will be closed when the VM exits */
-		PrintStream log = getLogStream();
-		if (!Objects.isNull(log)) {
-			printMessageWithHeader(msg, log);
-			thrown.printStackTrace(log);
-			log.flush();
+	public static void logMessage(String msg, Throwable thrown) {
+		synchronized (accessorMutex) {
+			if (isLoggingEnabled()) {
+				printMessageWithHeader(msg, logStream);
+				thrown.printStackTrace(logStream);
+				logStream.flush();
+			}
 		}
 	}
 
 	/**
 	 * Print a message to the log file with time and thread information.
 	 * Also send the raw message to a tracepoint.
+	 * Call this only if isLoggingEnabled() has returned true.
 	 * @param msg message to print
 	 * @note no message is printed if logging is disabled
 	 */
-	private synchronized static void printLogMessage(final String msg) {
-		@SuppressWarnings("resource") /* this will be closed when the VM exits */
-		PrintStream log = getLogStream();
-		if (!Objects.isNull(log)) {
-			printMessageWithHeader(msg, log);
-			log.flush();
+	private static void printLogMessage(final String msg) {
+		synchronized (accessorMutex) {
+			if (!Objects.isNull(logStream)) {
+				printMessageWithHeader(msg, logStream);
+				logStream.flush();
+			}
 		}
+	}
+
+	/**
+	 * Print a message to the logging stream with metadata.
+	 * This must be called in a synchronized block.
+	 * @param msg Message to print
+	 * @param log output stream.
+	 */
+	static void printMessageWithHeader(String msg, PrintStream log) {
+		tracepoint(TRACEPOINT_STATUS_LOGGING, msg);
+		printLogMessageHeader(log);
+		log.println(msg);
 	}
 
 	/**
@@ -430,20 +470,12 @@ public class IPC {
 	}
 	
 	static final class syncObject {
+		/* empty */
 	}
-	private static final syncObject accessorMutex = new syncObject();
-
-	private static PrintStream getLogStream() {
-		synchronized(accessorMutex) {
-			return logStream;
-		}
-	}
-
-	static void setLogStream(PrintStream log) {
-		synchronized(accessorMutex) {
-			IPC.logStream = log;
-		}
-	}
+	/**
+	 * For mutual exclusion to IPC objects.
+	 */
+	public static final syncObject accessorMutex = new syncObject();
 
 	static void setDefaultVmId(String id) { /* use this while until the real vmId is set, since they will usually be the same */
 		defaultVmId = id;

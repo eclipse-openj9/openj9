@@ -1,6 +1,10 @@
 /*[INCLUDE-IF Sidecar16]*/
 package com.ibm.tools.attach.target;
 
+import static com.ibm.tools.attach.target.IPC.LOGGING_DISABLED;
+import static com.ibm.tools.attach.target.IPC.LOGGING_ENABLED;
+import static com.ibm.tools.attach.target.IPC.loggingStatus;
+
 /*******************************************************************************
  * Copyright (c) 2009, 2018 IBM Corp. and others
  *
@@ -114,7 +118,6 @@ public class AttachHandler extends Thread {
 	/* only the attach handler thread uses syncFileLock */
 	/* [PR Jazz 30075] Make syncFileLock an instance variable since it is accessed only by the attachHandler singleton. */
 	FileLock syncFileLock;
-	private PrintStream logStream; 
 
 	/**
 	 * Keep the constructor private
@@ -203,7 +206,7 @@ public class AttachHandler extends Thread {
 				/* The following code needs to hold the lock, so go for a blocking lock. */
 				CommonDirectory.obtainMasterLock();
 			}
-			if (IPC.loggingEnabled ) {
+			if (LOGGING_DISABLED != loggingStatus) {
 				IPC.logMessage("AttachHandler obtained master lock"); //$NON-NLS-1$
 			}
 			CommonDirectory.createNotificationFile();
@@ -287,15 +290,17 @@ public class AttachHandler extends Thread {
 		if (null == nameProperty) {
 			nameProperty = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("sun.java.command"); //$NON-NLS-1$
 		}
-		
-		if ((null == IPC.logStream) && (null != loggingProperty)
-				&& loggingProperty.equalsIgnoreCase("yes")) { //$NON-NLS-1$
-			File logFile = new File(logName + pidProperty + ".log"); //$NON-NLS-1$
-			logStream = new PrintStream(logFile);
-			IPC.setLogStream(logStream);
-			IPC.loggingEnabled = true;
-			IPC.setDefaultVmId(pidProperty);
-			IPC.logMessage("AttachHandler initialize"); //$NON-NLS-1$
+		synchronized (IPC.accessorMutex) {
+			if ((null == IPC.logStream) && (null != loggingProperty)
+					&& loggingProperty.equalsIgnoreCase("yes")) { //$NON-NLS-1$
+				File logFile = new File(logName + pidProperty + ".log"); //$NON-NLS-1$
+				IPC.logStream = new PrintStream(logFile);
+				IPC.setDefaultVmId(pidProperty);
+				IPC.printMessageWithHeader("AttachHandler initialized", IPC.logStream); //$NON-NLS-1$
+				loggingStatus = LOGGING_ENABLED;
+			} else {
+				loggingStatus = LOGGING_DISABLED;			
+			}			
 		}
 		
 		
@@ -352,7 +357,7 @@ public class AttachHandler extends Thread {
 				addAttachment(at);
 				at.start();
 			}
-		} else if (IPC.loggingEnabled ) {
+		} else if (LOGGING_DISABLED != loggingStatus) {
 			IPC.logMessage("connectToAttacher ", notificationCount, " waitForNotification no reply file"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		return at;
@@ -365,8 +370,8 @@ public class AttachHandler extends Thread {
 	 */
 	protected boolean terminate(boolean wakeHandler) {
 		
-		if (IPC.loggingEnabled ) {
-			IPC.logMessage("AttachHandler terminate: Attach API is being shut down"); //$NON-NLS-1$
+		if (LOGGING_DISABLED != loggingStatus) {
+		IPC.logMessage("AttachHandler terminate: Attach API is being shut down"); //$NON-NLS-1$
 		}
 		
 		synchronized (stateSync) {
@@ -385,12 +390,12 @@ public class AttachHandler extends Thread {
 		}
 		currentAttachThread.interrupt(); /* do this after we change the attachState */
 		if (wakeHandler) {
-			if (IPC.loggingEnabled ) {
+			if (LOGGING_DISABLED != loggingStatus) {
 				IPC.logMessage("AttachHandler terminate removing contents of directory : ", TargetDirectory.getTargetDirectoryPath(getVmId())); //$NON-NLS-1$
 			}
 			TargetDirectory.deleteMyFiles(); /*[PR Jazz 58094] Leave the directory to keep the census accurate but prevent attachments */
 		} else {
-			if (IPC.loggingEnabled ) {
+			if (LOGGING_DISABLED != loggingStatus) {
 				IPC.logMessage("AttachHandler terminate removing directory : ", TargetDirectory.getTargetDirectoryPath(getVmId())); //$NON-NLS-1$
 			}
 			TargetDirectory.deleteMyDirectory(false);
@@ -441,7 +446,7 @@ public class AttachHandler extends Thread {
 		}
 		if (!isWaitingForSemaphore()) {
 			wakeHandler = false; /* The wait loop is already shutting down */
-			if (IPC.loggingEnabled ) {
+			if (LOGGING_DISABLED != loggingStatus) {
 				IPC.logMessage("VM already notified for termination, abandoning master lock"); //$NON-NLS-1$
 			}
 			if (gotLock) {
@@ -456,7 +461,7 @@ public class AttachHandler extends Thread {
 
 		if (gotLock) {	
 			try {
-				if (IPC.loggingEnabled ) {
+				if (LOGGING_DISABLED != loggingStatus) {
 					IPC.logMessage("AttachHandler terminate obtained master lock"); //$NON-NLS-1$
 				}
 				/*
@@ -493,7 +498,7 @@ public class AttachHandler extends Thread {
 				}
 			} finally {
 				CommonDirectory.releaseMasterLock();
-				if (IPC.loggingEnabled ) {
+				if (LOGGING_DISABLED != loggingStatus) {
 					IPC.logMessage("AttachHandler terminate released master lock"); //$NON-NLS-1$
 				}
 			}
@@ -518,7 +523,7 @@ public class AttachHandler extends Thread {
 				Thread.currentThread().setName("Attach API teardown"); //$NON-NLS-1$
 				/* Set  the current thread as a System Thread */
 				com.ibm.oti.vm.VM.markCurrentThreadAsSystem();
-				if (IPC.loggingEnabled ) {
+				if (LOGGING_DISABLED != loggingStatus) {
 					IPC.logMessage("shutting down attach API"); //$NON-NLS-1$
 				}
 				if (null == mainHandler) {
@@ -563,23 +568,27 @@ public class AttachHandler extends Thread {
 					if (CommonDirectory.tryObtainMasterLock()) {
 						/* if this fails, then another process became active after the VMs were counted */
 						CommonDirectory.destroySemaphore();
-						if (IPC.loggingEnabled ) {
+						if (LOGGING_DISABLED != loggingStatus) {
 							IPC.logMessage("AttachHandler destroyed semaphore"); //$NON-NLS-1$
 						}
 						CommonDirectory.releaseMasterLock();
 					} else {
-						if (IPC.loggingEnabled ) {
+						if (LOGGING_DISABLED != loggingStatus) {
 							IPC.logMessage("could not obtain lock, semaphore not destroyed"); //$NON-NLS-1$
 						}
 						CommonDirectory.closeSemaphore();
 					}
 				} else {
 					CommonDirectory.closeSemaphore();
-					if (IPC.loggingEnabled ) {
+					if (LOGGING_DISABLED != loggingStatus) {
 						IPC.logMessage("AttachHandler closed semaphore"); //$NON-NLS-1$ 
 					}
 				}
-				if (null != IPC.logStream) { /* defer closing the file as long as possible */
+				if (null != IPC.logStream) {
+					/* 
+					 * Defer closing the file as long as possible.
+					 * logStream is a PrintStream, which never throws IOException, so any further writes will be silently ignored.
+					 */
 					IPC.logStream.close();
 				}
 			} catch (OutOfMemoryError e) {

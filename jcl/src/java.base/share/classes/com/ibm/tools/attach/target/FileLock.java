@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.util.TimerTask;
+import static com.ibm.tools.attach.target.IPC.LOGGING_DISABLED;
+import static com.ibm.tools.attach.target.IPC.loggingStatus;
 
 public final class FileLock {
 	long fileDescriptor;
@@ -63,7 +65,7 @@ public final class FileLock {
 	 * @note locking and unlocking must be done by the same thread.
 	 */
 	public boolean lockFile(boolean blocking) throws IOException {
-		if (IPC.loggingEnabled ) {
+		if (LOGGING_DISABLED != loggingStatus) {
 			IPC.logMessage(blocking? "locking file ": "non-blocking locking file ", lockFilepath);  //$NON-NLS-1$//$NON-NLS-2$
 		}
 		
@@ -123,7 +125,7 @@ public final class FileLock {
 	 * Release the lock on a file.
 	 */
 	public void unlockFile() {
-		if (IPC.loggingEnabled ) {
+		if (LOGGING_DISABLED != loggingStatus) {
 			IPC.logMessage("unlocking file ", lockFilepath);  //$NON-NLS-1$
 		}
 		java.nio.channels.FileLock lockObjectCopy = lockObject;

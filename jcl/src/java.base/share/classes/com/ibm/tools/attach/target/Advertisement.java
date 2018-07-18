@@ -27,6 +27,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+import static com.ibm.tools.attach.target.IPC.loggingStatus;
+import static com.ibm.tools.attach.target.IPC.LOGGING_DISABLED;
 
 public final class Advertisement {
 	private static final String KEY_ATTACH_NOTIFICATION_SYNC = "attachNotificationSync"; //$NON-NLS-1$
@@ -209,7 +211,7 @@ public final class Advertisement {
 			}
 			
 			advertOutputStream.write(advertContent.toString().getBytes("ISO8859_1")); //$NON-NLS-1$
-			if (IPC.loggingEnabled ) {
+			if (LOGGING_DISABLED != loggingStatus) {
 				IPC.logMessage("createAdvertisementFile ", advertFile.getAbsolutePath()); //$NON-NLS-1$
 			}
 		}
