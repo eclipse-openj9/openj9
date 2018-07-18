@@ -34,6 +34,7 @@ target_sources(jvm_common INTERFACE
 	${CMAKE_CURRENT_SOURCE_DIR}/j8vmi.c
 	${CMAKE_CURRENT_SOURCE_DIR}/j9memcategories.c
 	${CMAKE_CURRENT_SOURCE_DIR}/java11vmi.c
+	${CMAKE_CURRENT_SOURCE_DIR}/javanextvmi.c
 	${CMAKE_CURRENT_SOURCE_DIR}/jvm.c
 	${CMAKE_CURRENT_SOURCE_DIR}/vmi.c
 	#TODO this is gross

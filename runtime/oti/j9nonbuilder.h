@@ -2104,7 +2104,8 @@ typedef struct J9BCTranslationData {
 #define BCT_Java9MajorVersionShifted  0x35000000
 #define BCT_Java10MajorVersionShifted 0x36000000
 #define BCT_Java11MajorVersionShifted 0x37000000
-#define BCT_JavaMaxMajorVersionShifted BCT_Java11MajorVersionShifted
+#define BCT_Java12MajorVersionShifted 0x38000000
+#define BCT_JavaMaxMajorVersionShifted BCT_Java12MajorVersionShifted
 
 #define BCT_ActionUnused  6
 #define BCT_ErrFallOffLastInstruction  8
