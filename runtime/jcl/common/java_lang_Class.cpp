@@ -1049,10 +1049,10 @@ Java_java_lang_Class_getVirtualMethodCountImpl(JNIEnv *env, jobject recv)
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(recv));
-	/* slot 0 contains size of vtable, slot 1 contains the unresolved method stub */
-	UDATA *vTable = (UDATA*)(clazz + 1);
-	UDATA count = vTable[0] - 1;
-	J9Method **vTableMethods = (J9Method**)(vTable + 2);
+
+	J9VTableHeader *vTableHeader = J9VTABLE_HEADER_FROM_RAM_CLASS(clazz);
+	UDATA count = vTableHeader->size;
+	J9Method **vTableMethods = J9VTABLE_FROM_HEADER(vTableHeader);
 	/* assuming constant number of public final methods in java.lang.Object */
 	jint result = 6;
 	for (UDATA index = 0; index < count; ++index) {
@@ -1096,10 +1096,9 @@ Java_java_lang_Class_getVirtualMethodsImpl(JNIEnv *env, jobject recv, jobject ar
 
 	/* First walk the vTable */
 	{
-		/* slot 0 contains size of vtable, slot 1 contains the unresolved method stub */
-		UDATA *vTable = (UDATA*)(clazz + 1);
-		UDATA vTableSize = vTable[0] - 1;
-		J9Method **vTableMethods = (J9Method**)(vTable + 2);
+		J9VTableHeader *vTableHeader = J9VTABLE_HEADER_FROM_RAM_CLASS(clazz);
+		UDATA vTableSize = vTableHeader->size;
+		J9Method **vTableMethods = J9VTABLE_FROM_HEADER(vTableHeader);
 		for (UDATA progress = 0; ((progress < vTableSize) && (numMethodFound < count)); ++progress) {
 			J9Method *currentMethod = vTableMethods[progress];
 			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(currentMethod);
