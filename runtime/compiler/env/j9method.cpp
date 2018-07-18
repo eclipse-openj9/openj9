@@ -3231,6 +3231,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {
       {x(TR::com_ibm_jit_JITHelpers_is32Bit,                                  "is32Bit", "()Z")},
       {x(TR::com_ibm_jit_JITHelpers_isArray,                                  "isArray", "(Ljava/lang/Object;)Z")},
+      {  TR::com_ibm_jit_JITHelpers_findElementFromArray,                 20, "findElementFromArray", (int16_t)-1, "*" },
 #ifdef TR_TARGET_32BIT
       {x(TR::com_ibm_jit_JITHelpers_getJ9ClassFromObject32,                   "getJ9ClassFromObject32", "(Ljava/lang/Object;)I")},
       {x(TR::com_ibm_jit_JITHelpers_getJ9ClassFromClass32,                    "getJ9ClassFromClass32", "(Ljava/lang/Class;)I")},
