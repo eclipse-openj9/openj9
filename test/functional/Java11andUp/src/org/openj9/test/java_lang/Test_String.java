@@ -189,4 +189,29 @@ public class Test_String {
 		Assert.assertEquals((allWhiteSpace + nonLatin1 + allWhiteSpace).stripTrailing(), allWhiteSpace + nonLatin1, 
 				"stripTrailing: Value of striped string with leading/trailing white space with non-Latin1 characters was unexpected.");
 	}
+
+	/*
+	 * Test Java 11 API String.isBlank
+	 */
+	@Test(groups = { "level.sanity" })
+	public void testIsblank() {
+		// pass empty string
+		Assert.assertTrue(empty.isBlank(),
+				"isBlank: failed to return true on empty string.");
+
+		// pass string with all white space
+		Assert.assertTrue(allWhiteSpace.isBlank(),
+				"isBlank: failed to return true on all white space string.");
+
+		// pass non-blank strings
+		Assert.assertFalse(latin1.isBlank(),
+				"isBlank: failed to return false on non-blank latin1 string.");
+		Assert.assertFalse(nonLatin1.isBlank(),
+				"isBlank: failed to return false on non-blank non-latin1 string.");
+
+		Assert.assertFalse((allWhiteSpace + latin1).isBlank(),
+				"isBlank: failed to return false on non-blank latin1 string with leading white space.");
+		Assert.assertFalse((allWhiteSpace + nonLatin1).isBlank(),
+				"isBlank: failed to return false on non-blank non-latin1 string with leading white space.");
+	}
 }
