@@ -1887,6 +1887,7 @@ static TR_CompilationErrorCode recompileMethodForLog(
    TR::CompilationInfo *compInfo,
    TR_J9VMBase        *frontendOfThread,
    TR_Hotness          optimizationLevel,
+   bool                profilingCompile,
    void               *oldStartPC,
    TR::FILE *logFile
    )
@@ -1902,6 +1903,9 @@ static TR_CompilationErrorCode recompileMethodForLog(
    TR_OptimizationPlan *plan = TR_OptimizationPlan::alloc(optimizationLevel);
    if (!plan)
       return compilationFailure;
+
+   if (profilingCompile)
+      plan->setInsertInstrumentation(true);
 
    // pass the log file to the compilation
    plan->setLogCompilation(logFile);
@@ -2158,6 +2162,7 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
                compInfo,
                frontendOfThread,
                jittedMethodsOnStack[i]._optLevel,
+               false,
                jittedMethodsOnStack[i]._oldStartPC,
                logFile
                );
@@ -2222,6 +2227,7 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
                   compInfo,
                   frontendOfThread,
                   (TR_Hotness)comp->getOptLevel(),
+                  comp->isProfilingCompilation(),
                   oldStartPC,
                   logFile
                   );
