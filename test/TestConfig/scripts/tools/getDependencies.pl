@@ -104,6 +104,12 @@ my %asmtools = (
 	fname => 'asmtools.jar',
 	sha1 => 'd57dfcdd591635d31372cfcc18474a8ca6442171'
 );
+# this is needed for JDK11 and up
+my %jaxb_api = (
+	url => 'http://central.maven.org/maven2/javax/xml/bind/jaxb-api/2.3.0/jaxb-api-2.3.0.jar',
+	fname => 'jaxb-api.jar',
+	sha1 => '61dab99f547e2110e42e35f659d9ba27bd00108c'
+);
 
 # Put all dependent jars hash to array to prepare dowloading
 my @jars_info = (
@@ -114,7 +120,8 @@ my @jars_info = (
 	\%junit4,
 	\%testng,
 	\%jcommander,
-	\%asmtools
+	\%asmtools,
+	\%jaxb_api
 );
 
 print "-------------------------------------------- \n";

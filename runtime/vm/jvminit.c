@@ -1528,8 +1528,7 @@ processMemoryInterleaveOptions(J9JavaVM * vm) {
 			enabled = TRUE;
 		}
 	}
-	j9port_control(J9PORT_CTLDATA_VMEM_NUMA_ENABLE, enabled? 1 : 0);
-	omrthread_numa_set_enabled(enabled);
+	j9port_control(J9PORT_CTLDATA_VMEM_NUMA_INTERLEAVE_MEM, enabled? 1 : 0);
 }
 
 static VMINLINE  void
