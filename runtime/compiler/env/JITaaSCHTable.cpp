@@ -133,13 +133,26 @@ TR_CHTable::computeDataForCHTableCommit(TR::Compilation *comp)
    TR::list<TR_VirtualGuardSite*> &sideEffectPatchSites = *comp->getSideEffectGuardPatchSites();
    std::vector<TR_VirtualGuardSite> sideEffectPatchSitesVec;
    for (TR_VirtualGuardSite *site : sideEffectPatchSites)
-      {
       sideEffectPatchSitesVec.push_back(*site);
-      }
+
+   FlatClassLoadCheck compClassesThatShouldNotBeLoaded;
+   for (TR_ClassLoadCheck * clc = comp->getClassesThatShouldNotBeLoaded()->getFirst(); clc; clc = clc->getNext())
+      compClassesThatShouldNotBeLoaded.emplace_back(std::string(clc->_name, clc->_length));
+
+   FlatClassExtendCheck compClassesThatShouldNotBeNewlyExtended;
+   for (TR_ClassExtendCheck * cec = comp->getClassesThatShouldNotBeNewlyExtended()->getFirst(); cec; cec = cec->getNext())
+      compClassesThatShouldNotBeNewlyExtended.emplace_back(cec->_clazz);
 
    uint8_t *startPC = comp->cg()->getCodeStart();
 
-   return std::make_tuple(classes, classesThatShouldNotBeNewlyExtended, preXMethods, sideEffectPatchSitesVec, serialVGuards, startPC);
+   return std::make_tuple(classes,
+                          classesThatShouldNotBeNewlyExtended,
+                          preXMethods,
+                          sideEffectPatchSitesVec,
+                          serialVGuards,
+                          compClassesThatShouldNotBeLoaded,
+                          compClassesThatShouldNotBeNewlyExtended,
+                          startPC);
    }
 
 // Must hold classTableMonitor when calling this method
@@ -173,7 +186,9 @@ bool JITaaSCHTableCommit(
    std::vector<TR_ResolvedMethod*> &preXMethods = std::get<2>(data);
    std::vector<TR_VirtualGuardSite> &sideEffectPatchSites = std::get<3>(data);
    std::vector<VirtualGuardForCHTable> &vguards = std::get<4>(data);
-   uint8_t *serverStartPC = std::get<5>(data);
+   FlatClassLoadCheck &compClassesThatShouldNotBeLoaded = std::get<5>(data);
+   FlatClassExtendCheck &compClassesThatShouldNotBeNewlyExtended = std::get<6>(data);
+   uint8_t *serverStartPC = std::get<7>(data);
    uint8_t *startPC = (uint8_t*) metaData->startPC;
 
    if (comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE())
@@ -304,20 +319,26 @@ bool JITaaSCHTableCommit(
          }
       }
 
-   if (!sideEffectPatchSites.empty())
+   TR::list<TR_VirtualGuardSite*> *sites = comp->getSideEffectGuardPatchSites();
+   sites->clear();
+   for (auto site : sideEffectPatchSites)
       {
-      TR::list<TR_VirtualGuardSite*> *sites = comp->getSideEffectGuardPatchSites();
-      sites->clear();
-      for (auto site : sideEffectPatchSites)
-         {
-         TR_VirtualGuardSite *newSite = new /* (PERSISTENT_NEW)*/ (comp->trHeapMemory()) TR_VirtualGuardSite;
-         newSite->setDestination(site.getDestination() - serverStartPC + startPC);
-         newSite->setLocation(site.getLocation() - serverStartPC + startPC);
-         sites->push_front(newSite);
-         }
-      table->commitSideEffectGuards(comp);
+      TR_VirtualGuardSite *newSite = new (comp->trHeapMemory()) TR_VirtualGuardSite;
+      newSite->setDestination(site.getDestination() - serverStartPC + startPC);
+      newSite->setLocation(site.getLocation() - serverStartPC + startPC);
+      sites->push_front(newSite);
       }
+   comp->getClassesThatShouldNotBeLoaded()->setFirst(nullptr); // clear
+   comp->getClassesThatShouldNotBeNewlyExtended()->setFirst(nullptr); // clear
+   for (auto &clc : compClassesThatShouldNotBeLoaded)
+      comp->getClassesThatShouldNotBeLoaded()->add(new (comp->trHeapMemory()) TR_ClassLoadCheck(&clc[0], clc.size()));
+   for (auto &cec : compClassesThatShouldNotBeNewlyExtended)
+      comp->getClassesThatShouldNotBeNewlyExtended()->add(new (comp->trHeapMemory()) TR_ClassExtendCheck(cec));
 
+   table->commitSideEffectGuards(comp);
+
+   // Clear again because string pointers are only valid in this block
+   comp->getClassesThatShouldNotBeLoaded()->setFirst(nullptr);
 
    return true;
    }

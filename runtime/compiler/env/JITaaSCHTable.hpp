@@ -39,12 +39,17 @@ struct VirtualGuardInfoForCHTable
 
 using VirtualGuardForCHTable = std::tuple<VirtualGuardInfoForCHTable, std::vector<TR_VirtualGuardSite>, std::vector<VirtualGuardInfoForCHTable>>;
 
+using FlatClassLoadCheck = std::vector<std::string>;
+using FlatClassExtendCheck = std::vector<TR_OpaqueClassBlock*>;
+
 using CHTableCommitData = std::tuple<
       std::vector<TR_OpaqueClassBlock*>, // classes
       std::vector<TR_OpaqueClassBlock*>, // classesThatShouldNotBeNewlyExtended
       std::vector<TR_ResolvedMethod*>, // preXMethods
       std::vector<TR_VirtualGuardSite>, // sideEffectPatchSites
       std::vector<VirtualGuardForCHTable>, // vguards
+      FlatClassLoadCheck, // comp->getClassesThatShouldNotBeLoaded
+      FlatClassExtendCheck, // comp->getClassesThatShouldNotBeNewlyExtended
       uint8_t*>; // startPC
 
 
