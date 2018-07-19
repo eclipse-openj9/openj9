@@ -22,7 +22,6 @@
 package jit.test.jitt.exceptions;
 
 import jit.test.jitt.*;
-import java.*;
 import java.io.*;
 import org.testng.annotations.Test;
 import org.testng.log4testng.Logger;
