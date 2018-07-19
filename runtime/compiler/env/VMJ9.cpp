@@ -3094,6 +3094,12 @@ bool TR_J9VMBase::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, 
                dontInlineRecognizedMethod = true;
                break;
                }
+         case TR::com_ibm_jit_JITHelpers_findElementFromArray:
+            if (comp->cg()->getSupportsInlineStringIndexOf())
+            {
+               dontInlineRecognizedMethod = true;
+               break;
+            }
          case TR::java_lang_Math_max_D:
          case TR::java_lang_Math_min_D:
             if(comp->cg()->getSupportsVectorRegisters() && !comp->getOption(TR_DisableSIMDDoubleMaxMin))

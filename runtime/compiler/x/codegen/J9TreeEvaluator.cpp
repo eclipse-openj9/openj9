@@ -13273,7 +13273,7 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
    switch (symbol->getMandatoryRecognizedMethod())
       {
       case TR::com_ibm_jit_JITHelpers_findElementFromArray:
-         if (TR::Compiler->om.canGenerateArraylets() || !cg->getX86ProcessorInfo().supportsSSSE3())
+         if (!cg->getSupportsInlineStringIndexOf())
             break;
          else
             return inlineFindElementFromArray(node, cg);

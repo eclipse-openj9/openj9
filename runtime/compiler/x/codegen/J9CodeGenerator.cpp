@@ -84,6 +84,13 @@ J9::X86::CodeGenerator::CodeGenerator() :
        !TR::Compiler->om.canGenerateArraylets())
       cg->setSupportsInlineStringCaseConversion();
 
+   if (cg->getX86ProcessorInfo().supportsSSE3() &&
+       !comp->getOption(TR_DisableFastStringIndexOf) &&
+       !TR::Compiler->om.canGenerateArraylets())
+      {
+      cg->setSupportsInlineStringIndexOf();
+      }
+
    if (comp->generateArraylets() && !comp->getOptions()->realTimeGC())
       {
       cg->setSupportsStackAllocationOfArraylets();
@@ -383,7 +390,6 @@ J9::X86::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod 
    switch (method)
       {
       case TR::java_lang_Object_clone:
-      case TR::com_ibm_jit_JITHelpers_findElementFromArray:
          return true;
       default:
          return false;
