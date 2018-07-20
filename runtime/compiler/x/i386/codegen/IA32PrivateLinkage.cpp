@@ -50,16 +50,7 @@
 TR::IA32PrivateLinkage::IA32PrivateLinkage(TR::CodeGenerator *cg)
    : TR::X86PrivateLinkage(cg)
    {
-   // for shrinkwrapping, we cannot use pushes for the
-   // preserved regs. pushes/pops need to be in sequence
-   // and this is not compatible with shrinkwrapping as
-   // registers need not be saved/restored in sequence
-   //
-   if (cg->comp()->getOption(TR_DisableShrinkWrapping))
-      _properties._properties = UsesPushesForPreservedRegs;
-   else
-      _properties._properties = 0;
-
+   _properties._properties = 0;
    _properties._registerFlags[TR::RealRegister::NoReg] = 0;
    _properties._registerFlags[TR::RealRegister::eax]   = IntegerReturn;
    _properties._registerFlags[TR::RealRegister::ebx]   = Preserved;
@@ -214,51 +205,33 @@ TR::Instruction *TR::IA32PrivateLinkage::restorePreservedRegister(TR::Instructio
 //
 TR::Instruction *TR::IA32PrivateLinkage::savePreservedRegisters(TR::Instruction *cursor)
    {
-   if (_properties.getUsesPushesForPreservedRegs())
-      {
-      for (int32_t pindex = _properties.getMaxRegistersPreservedInPrologue()-1;
-           pindex >= 0;
-           pindex--)
-         {
-         TR::RealRegister::RegNum idx = _properties.getPreservedRegister((uint32_t)pindex);
-         TR::RealRegister *reg = machine()->getX86RealRegister(idx);
-         if (reg->getHasBeenAssignedInMethod() && reg->getState() != TR::RealRegister::Locked)
-            {
-            cursor = new (trHeapMemory()) TR::X86RegInstruction(cursor, PUSHReg, reg, cg());
-            }
-         }
-      }
-   else
-      {
-      // for shrinkwrapping
-      TR::ResolvedMethodSymbol *bodySymbol  = comp()->getJittedMethodSymbol();
-      const int32_t          localSize   = _properties.getOffsetToFirstLocal() - bodySymbol->getLocalMappingCursor();
-      const int32_t          pointerSize = _properties.getPointerSize();
+   TR::ResolvedMethodSymbol *bodySymbol  = comp()->getJittedMethodSymbol();
+   const int32_t          localSize   = _properties.getOffsetToFirstLocal() - bodySymbol->getLocalMappingCursor();
+   const int32_t          pointerSize = _properties.getPointerSize();
 
-      int32_t offsetCursor = -localSize - _properties.getPointerSize();
-      int32_t numPreserved = getProperties().getMaxRegistersPreservedInPrologue();
-      TR_BitVector *p              = cg()->getPreservedRegsInPrologue();
+   int32_t offsetCursor = -localSize - _properties.getPointerSize();
+   int32_t numPreserved = getProperties().getMaxRegistersPreservedInPrologue();
+   TR_BitVector *p              = cg()->getPreservedRegsInPrologue();
 
-      for (int32_t pindex = numPreserved-1;
-            pindex >= 0;
-            pindex--)
+   for (int32_t pindex = numPreserved-1;
+         pindex >= 0;
+         pindex--)
+      {
+      TR::RealRegister::RegNum idx = _properties.getPreservedRegister((uint32_t)pindex);
+      TR::RealRegister *reg = machine()->getX86RealRegister(idx);
+      if (reg->getHasBeenAssignedInMethod() && reg->getState() != TR::RealRegister::Locked)
          {
-         TR::RealRegister::RegNum idx = _properties.getPreservedRegister((uint32_t)pindex);
-         TR::RealRegister *reg = machine()->getX86RealRegister(idx);
-         if (reg->getHasBeenAssignedInMethod() && reg->getState() != TR::RealRegister::Locked)
+         if (!p || p->get(idx))
             {
-            if (!p || p->get(idx))
-               {
-               cursor = generateMemRegInstruction(
-                           cursor,
-                           S4MemReg,
-                           generateX86MemoryReference(machine()->getX86RealRegister(TR::RealRegister::vfp), offsetCursor, cg()),
-                           reg,
-                           cg()
-                           );
-               }
-            offsetCursor -= pointerSize;
+            cursor = generateMemRegInstruction(
+                        cursor,
+                        S4MemReg,
+                        generateX86MemoryReference(machine()->getX86RealRegister(TR::RealRegister::vfp), offsetCursor, cg()),
+                        reg,
+                        cg()
+                        );
             }
+         offsetCursor -= pointerSize;
          }
       }
    return cursor;
@@ -266,51 +239,32 @@ TR::Instruction *TR::IA32PrivateLinkage::savePreservedRegisters(TR::Instruction 
 
 TR::Instruction *TR::IA32PrivateLinkage::restorePreservedRegisters(TR::Instruction *cursor)
    {
-   if (_properties.getUsesPushesForPreservedRegs())
-      {
-      for (int32_t pindex = 0;
-           pindex < _properties.getMaxRegistersPreservedInPrologue();
-           pindex++)
-         {
-         TR::RealRegister::RegNum idx = _properties.getPreservedRegister((uint32_t)pindex);
-         TR::RealRegister *reg = machine()->getX86RealRegister(idx);
-         if (reg->getHasBeenAssignedInMethod())
-            {
-            cursor = new (trHeapMemory()) TR::X86RegInstruction(cursor, POPReg, reg, cg());
-            }
-         }
-      }
-   else
-      {
-      // for shrinkwrapping
-      TR::ResolvedMethodSymbol *bodySymbol  = comp()->getJittedMethodSymbol();
-      const int32_t          localSize   = _properties.getOffsetToFirstLocal() - bodySymbol->getLocalMappingCursor();
-      const int32_t          pointerSize = _properties.getPointerSize();
+   TR::ResolvedMethodSymbol *bodySymbol  = comp()->getJittedMethodSymbol();
+   const int32_t          localSize   = _properties.getOffsetToFirstLocal() - bodySymbol->getLocalMappingCursor();
+   const int32_t          pointerSize = _properties.getPointerSize();
 
-
-      int32_t offsetCursor = -localSize - _properties.getPointerSize();
-      int32_t numPreserved = getProperties().getMaxRegistersPreservedInPrologue();
-      TR_BitVector *p              = cg()->getPreservedRegsInPrologue();
-      for (int32_t pindex = numPreserved-1;
-            pindex >= 0;
-            pindex--)
+   int32_t offsetCursor = -localSize - _properties.getPointerSize();
+   int32_t numPreserved = getProperties().getMaxRegistersPreservedInPrologue();
+   TR_BitVector *p              = cg()->getPreservedRegsInPrologue();
+   for (int32_t pindex = numPreserved-1;
+        pindex >= 0;
+        pindex--)
+      {
+      TR::RealRegister::RegNum idx = _properties.getPreservedRegister((uint32_t)pindex);
+      TR::RealRegister *reg = machine()->getX86RealRegister(idx);
+      if (reg->getHasBeenAssignedInMethod())
          {
-         TR::RealRegister::RegNum idx = _properties.getPreservedRegister((uint32_t)pindex);
-         TR::RealRegister *reg = machine()->getX86RealRegister(idx);
-         if (reg->getHasBeenAssignedInMethod())
+         if (!p || p->get(idx))
             {
-            if (!p || p->get(idx))
-               {
-               cursor = generateRegMemInstruction(
-                           cursor,
-                           L4RegMem,
-                           reg,
-                           generateX86MemoryReference(machine()->getX86RealRegister(TR::RealRegister::vfp), offsetCursor, cg()),
-                           cg()
-                           );
-               }
-            offsetCursor -= pointerSize;
+            cursor = generateRegMemInstruction(
+                        cursor,
+                        L4RegMem,
+                        reg,
+                        generateX86MemoryReference(machine()->getX86RealRegister(TR::RealRegister::vfp), offsetCursor, cg()),
+                        cg()
+                        );
             }
+         offsetCursor -= pointerSize;
          }
       }
    return cursor;
