@@ -344,6 +344,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	findModuleForPackage,
 	findModuleInfoForModule,
 	findClassLocationForClass,
+	getJimModules,
 	initializeClassPath,
 	initializeClassPathEntry,
 	setBootLoaderModulePatchPaths,

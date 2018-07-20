@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,8 +75,6 @@ UDATA initializeVMThreading(J9JavaVM *vm)
 		omrthread_monitor_init_with_name(&vm->osrGlobalBufferLock, 0, "OSR global buffer lock") ||
 
 		omrthread_monitor_init_with_name(&vm->nativeLibraryMonitor, 0, "JNI native library loading lock") ||
-
-		omrthread_monitor_init_with_name(&vm->jlmModulesInitMutex, 0, "Lock for jlmModules global ref") ||
 
 		omrthread_monitor_init_with_name(&vm->vmRuntimeStateListener.runtimeStateListenerMutex, 0, "VM state notification mutex") ||
 
@@ -154,7 +152,6 @@ void terminateVMThreading(J9JavaVM *vm)
 	if (vm->asyncEventMutex) omrthread_monitor_destroy(vm->asyncEventMutex);
 	if (vm->osrGlobalBufferLock) omrthread_monitor_destroy(vm->osrGlobalBufferLock);
 	if (vm->nativeLibraryMonitor) omrthread_monitor_destroy(vm->nativeLibraryMonitor);
-	if (vm->jlmModulesInitMutex) omrthread_monitor_destroy(vm->jlmModulesInitMutex);
 	if (vm->vmRuntimeStateListener.runtimeStateListenerMutex) omrthread_monitor_destroy(vm->vmRuntimeStateListener.runtimeStateListenerMutex);
 
 	destroyMonitorTable(vm);
