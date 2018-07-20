@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -325,14 +325,14 @@ TR::S390J9CallSnippet::emitSnippetBody()
    // Method address
    *(uintptrj_t *) cursor = (uintptrj_t) glueRef->getMethodAddress();
    AOTcgDiag1(comp, "add TR_AbsoluteHelperAddress cursor=%x\n", cursor);
-   cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)glueRef, TR_AbsoluteHelperAddress, cg()),
+   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)glueRef, TR_AbsoluteHelperAddress, cg()),
                              __FILE__, __LINE__, callNode);
    cursor += sizeof(uintptrj_t);
 
    // Store the code cache RA
    *(uintptrj_t *) cursor = (uintptrj_t) getCallRA();
    AOTcgDiag1(comp, "add TR_AbsoluteMethodAddress cursor=%x\n", cursor);
-   cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_AbsoluteMethodAddress, cg()),
+   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_AbsoluteMethodAddress, cg()),
                           __FILE__, __LINE__, callNode);
    cursor += sizeof(uintptrj_t);
 
@@ -351,7 +351,7 @@ TR::S390J9CallSnippet::emitSnippetBody()
             {
             //TODO check what happens when we pass -1 to jitAddPicToPatchOnClassRedefinition an dif it's correct in this case
             cg()->jitAddPicToPatchOnClassRedefinition((void*)-1, (void *)cursor, true);
-            cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)cursor, NULL,
+            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)cursor, NULL,
                                     TR_HCR, cg()),__FILE__, __LINE__, getNode());
             }
          }
@@ -361,7 +361,7 @@ TR::S390J9CallSnippet::emitSnippetBody()
          if (comp->getOption(TR_EnableHCR))
             cg()->jitAddPicToPatchOnClassRedefinition((void *)methodSymbol->getMethodAddress(), (void *)cursor);
          AOTcgDiag1(comp, "add TR_MethodObject cursor=%x\n", cursor);
-         cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) callNode->getSymbolReference(), getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_MethodObject, cg()),
+         cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) callNode->getSymbolReference(), getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_MethodObject, cg()),
                                    __FILE__, __LINE__, callNode);
          }
       }
@@ -421,19 +421,19 @@ TR::S390UnresolvedCallSnippet::emitSnippetBody()
    if (comp->getOption(TR_EnableRMODE64))
 #endif
       {
-      cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, *(uint8_t **)cursor, getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, 
+      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, *(uint8_t **)cursor, getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, 
          TR_Trampolines, cg()),
          __FILE__, __LINE__,getNode());
       }
 #if defined(J9ZOS390)
    else
       {
-      cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, *(uint8_t **)cursor, getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_ConstantPool, cg()),
+      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, *(uint8_t **)cursor, getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_ConstantPool, cg()),
          __FILE__, __LINE__, getNode());
       }
 #endif
 #else
-   cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, *(uint8_t **)cursor, getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_ConstantPool, cg()),
+   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, *(uint8_t **)cursor, getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_ConstantPool, cg()),
       __FILE__, __LINE__, getNode());
 #endif
 
@@ -504,21 +504,21 @@ TR::S390VirtualUnresolvedSnippet::emitSnippetBody()
    // Method address
    *(uintptrj_t *) cursor = (uintptrj_t) glueRef->getMethodAddress();
    AOTcgDiag1(comp, "add TR_AbsoluteHelperAddress cursor=%x\n", cursor);
-   cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)glueRef, TR_AbsoluteHelperAddress, cg()),
+   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)glueRef, TR_AbsoluteHelperAddress, cg()),
                              __FILE__, __LINE__, callNode);
    cursor += sizeof(uintptrj_t);
 
    // Store the code cache RA
    *(uintptrj_t *) cursor = (uintptrj_t) getCallRA();
    AOTcgDiag1(comp, "add TR_AbsoluteMethodAddress cursor=%x\n", cursor);
-   cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_AbsoluteMethodAddress, cg()),
+   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_AbsoluteMethodAddress, cg()),
                              __FILE__, __LINE__, callNode);
    cursor += sizeof(uintptrj_t);
 
    *(uintptrj_t *) cursor = (uintptrj_t) callNode->getSymbolReference()->getOwningMethod(comp)->constantPool();
 
    AOTcgDiag1(comp, "add TR_Thunks cursor=%x\n", cursor);
-   cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, *(uint8_t **)cursor, getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_Thunks, cg()),
+   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, *(uint8_t **)cursor, getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_Thunks, cg()),
                              __FILE__, __LINE__, callNode);
 
    cursor += sizeof(uintptrj_t);
@@ -529,7 +529,7 @@ TR::S390VirtualUnresolvedSnippet::emitSnippetBody()
 
    *(uintptrj_t *) cursor = (uintptrj_t) (getPatchVftInstruction()->getBinaryEncoding());
    AOTcgDiag1(comp, "add TR_AbsoluteMethodAddress cursor=%x\n", cursor);
-   cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_AbsoluteMethodAddress, cg()),
+   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_AbsoluteMethodAddress, cg()),
                           __FILE__, __LINE__, callNode);
    cursor += sizeof(uintptrj_t);
 
@@ -649,7 +649,7 @@ TR::S390InterfaceCallSnippet::emitSnippetBody()
 
    *(int32_t *) cursor = (int32_t)((destAddr - (intptrj_t)(cursor - 2)) / 2);
    AOTcgDiag1(comp, " add TR_HelperAddress cursor=%x\n", cursor);
-   cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t*) glueRef, TR_HelperAddress, cg()),
+   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t*) glueRef, TR_HelperAddress, cg()),
             __FILE__, __LINE__, getNode());
    cursor += sizeof(int32_t);
 

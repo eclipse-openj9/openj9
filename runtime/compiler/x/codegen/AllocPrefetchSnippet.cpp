@@ -90,7 +90,7 @@ uint8_t *TR::X86AllocPrefetchSnippet::emitSnippetBody()
       disp32 = cg()->branchDisplacementToHelperOrTrampoline(buffer+4, helperSymRef);
       if (fej9->helpersNeedRelocation())
          {
-         cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer,
+         cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer,
                                                                                 (uint8_t *)helperSymRef,
                                                                                 TR_HelperAddress,
                                                                                 cg()),

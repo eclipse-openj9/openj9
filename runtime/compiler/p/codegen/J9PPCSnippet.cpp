@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1548,7 +1548,7 @@ uint8_t *TR::PPCReadMonitorSnippet::emitSnippetBody()
 
    if (comp->compileRelocatableCode())
       {
-      cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer,(uint8_t *)getMonitorEnterHelper(),TR_HelperAddress, cg()),
+      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer,(uint8_t *)getMonitorEnterHelper(),TR_HelperAddress, cg()),
                                 __FILE__, __LINE__, getNode());
       }
 
@@ -1722,7 +1722,7 @@ uint8_t *TR::PPCHeapAllocSnippet::emitSnippetBody()
    *(int32_t *)buffer |= distance & 0x03FFFFFC;
    if (cg()->comp()->compileRelocatableCode())
       {
-      cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer, (uint8_t*) getDestination(), TR_HelperAddress, cg()),
+      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer, (uint8_t*) getDestination(), TR_HelperAddress, cg()),
                              __FILE__,
                              __LINE__,
                              getNode());

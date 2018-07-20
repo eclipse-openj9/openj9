@@ -4844,7 +4844,7 @@ TR_J9VMBase::needsInvokeExactJ2IThunk(TR::Node *callNode, TR::Compilation *comp)
          || method->isArchetypeSpecimen()))
       {
       if (isAOT_DEPRECATED_DO_NOT_USE()) // While we're here... we need an AOT relocation for this call
-         comp->cg()->addAOTRelocation(new (comp->trHeapMemory()) TR::ExternalRelocation(NULL, (uint8_t *)callNode, (uint8_t *)methodSymbol->getMethod()->signatureChars(), TR_J2IThunks, comp->cg()), __FILE__, __LINE__, callNode);
+         comp->cg()->addExternalRelocation(new (comp->trHeapMemory()) TR::ExternalRelocation(NULL, (uint8_t *)callNode, (uint8_t *)methodSymbol->getMethod()->signatureChars(), TR_J2IThunks, comp->cg()), __FILE__, __LINE__, callNode);
 
       // We need a j2i thunk when this call executes, in case the target MH has
       // no invokeExact thunk yet.
