@@ -257,7 +257,7 @@ public class MethodHandles {
 				handle = handle.asFixedArity(); // remove unnecessary varargsCollector from the middle of the MH chain.
 				handle = convertToVarargsIfRequired(handle.bindTo(receiver));
 			}
-			checkAccess(handle);
+			checkAccess(handle, false);
 			checkSecurity(handle.getDefc(), receiverClass, handle.getModifiers());
 			
 			handle = SecurityFrameInjector.wrapHandleWithInjectedSecurityFrameIfRequired(this, handle);
@@ -337,7 +337,7 @@ public class MethodHandles {
 			return false;
 		}
 		
-		void checkAccess(MethodHandle handle) throws IllegalAccessException {
+		void checkAccess(MethodHandle handle, boolean skipAccessCheckPara) throws IllegalAccessException {
 			if (INTERNAL_PRIVILEGED == accessMode) {
 				// Full access for use by MH implementation.
 				return;
@@ -347,11 +347,11 @@ public class MethodHandles {
 				throw new IllegalAccessException(this.toString());
 			}
 
-			checkAccess(handle.getDefc(), handle.getMethodName(), handle.getModifiers(), handle);
+			checkAccess(handle.getDefc(), handle.getMethodName(), handle.getModifiers(), handle, skipAccessCheckPara);
 		}
 		
 		/*[IF Sidecar19-SE]*/
-		void checkAccess(VarHandle handle) throws IllegalAccessException {
+		void checkAccess(VarHandle handle, boolean reflectiveAccess) throws IllegalAccessException {
 			if (INTERNAL_PRIVILEGED == accessMode) {
 				// Full access for use by MH implementation.
 				return;
@@ -361,7 +361,7 @@ public class MethodHandles {
 				throw new IllegalAccessException(this.toString());
 			}
 			
-			checkAccess(handle.getDefiningClass(), handle.getFieldName(), handle.getModifiers(), null);
+			checkAccess(handle.getDefiningClass(), handle.getFieldName(), handle.getModifiers(), null, reflectiveAccess);
 		}
 		
 		void checkAccess(Class<?> clazz) throws IllegalAccessException {
@@ -389,14 +389,15 @@ public class MethodHandles {
 		 * 				 The object is always {@link MethodHandle} in the current implementation, so in order 
 		 * 				 to avoid extra type checking, the parameter is {@link MethodHandle}. If we need to
 		 * 				 handle {@link VarHandle} in the future, the type can be {@link Object}.
+		 * @param skipAccessCheckPara skip access check for MethodType parameters
 		 * @throws IllegalAccessException If the member is not accessible.
 		 * @throws IllegalAccessError If a handle argument or return type is not accessible.
 		 */
-		private void checkAccess(Class<?> targetClass, String name, int memberModifiers, MethodHandle handle) throws IllegalAccessException {
+		private void checkAccess(Class<?> targetClass, String name, int memberModifiers, MethodHandle handle, boolean skipAccessCheckPara) throws IllegalAccessException {
 			checkClassAccess(targetClass);
 
 			/*[IF Sidecar19-SE]*/
-			if (null != handle) {
+			if (null != handle && !skipAccessCheckPara) {
 				MethodType type = handle.type();
 				Module accessModule = accessClass.getModule();
 
@@ -580,7 +581,7 @@ public class MethodHandles {
 					/*[MSG "K0586", "Lookup class ({0}) must be the same as or subclass of the current class ({1})"]*/
 					throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K0586", accessClass, handleDefc)); //$NON-NLS-1$
 				}
-				checkAccess(handle);
+				checkAccess(handle, false);
 				checkSecurity(handleDefc, clazz, handle.getModifiers());
 				handle = SecurityFrameInjector.wrapHandleWithInjectedSecurityFrameIfRequired(this, handle);
 			} catch (DefaultMethodConflictException e) {
@@ -641,7 +642,7 @@ public class MethodHandles {
 				handle = new DirectHandle(clazz, methodName, type, MethodHandle.KIND_STATIC, null);
 				handle = HandleCache.putMethodInPerClassCache(cache, methodName, type, convertToVarargsIfRequired(handle));
 			}
-			checkAccess(handle);
+			checkAccess(handle, false);
 			checkSecurity(handle.getDefc(), clazz, handle.getModifiers());
 			/* Static check is performed by native code */
 			handle = SecurityFrameInjector.wrapHandleWithInjectedSecurityFrameIfRequired(this, handle);
@@ -717,7 +718,7 @@ public class MethodHandles {
 				HandleCache.putMethodInPerClassCache(cache, methodName, type, handle);
 			}
 			handle = restrictReceiver(handle);
-			checkAccess(handle);
+			checkAccess(handle, false);
 			checkSecurity(handle.getDefc(), clazz, handle.getModifiers());
 			handle = SecurityFrameInjector.wrapHandleWithInjectedSecurityFrameIfRequired(this, handle);
 			return handle;
@@ -924,7 +925,7 @@ public class MethodHandles {
 				handle = new FieldGetterHandle(clazz, fieldName, fieldType, accessClass);
 				HandleCache.putFieldInPerClassCache(cache, fieldName, fieldType, handle);
 			}
-			checkAccess(handle);
+			checkAccess(handle, false);
 			checkSecurity(handle.getDefc(), clazz, handle.getModifiers());
 			return handle;
 		}
@@ -951,7 +952,7 @@ public class MethodHandles {
 				handle = new StaticFieldGetterHandle(clazz, fieldName, fieldType, accessClass);
 				HandleCache.putFieldInPerClassCache(cache, fieldName, fieldType, handle);
 			}
-			checkAccess(handle);
+			checkAccess(handle, false);
 			checkSecurity(handle.getDefc(), clazz, handle.getModifiers());
 			return handle;
 		}
@@ -986,7 +987,7 @@ public class MethodHandles {
 				/*[MSG "K05cf", "illegal setter on final field"]*/
 				throw new IllegalAccessException(Msg.getString("K05cf")); //$NON-NLS-1$
 			}
-			checkAccess(handle);
+			checkAccess(handle, false);
 			checkSecurity(handle.getDefc(), clazz, handle.getModifiers());
 			return handle;
 		}
@@ -1021,7 +1022,7 @@ public class MethodHandles {
 				/*[MSG "K05cf", "illegal setter on final field"]*/
 				throw new IllegalAccessException(Msg.getString("K05cf")); //$NON-NLS-1$
 			}
-			checkAccess(handle);
+			checkAccess(handle, false);
 			checkSecurity(handle.getDefc(), clazz, handle.getModifiers());
 			return handle;
 		}
@@ -1235,7 +1236,7 @@ public class MethodHandles {
 			
 			if (!method.isAccessible()) {
 				handle = restrictReceiver(handle);
-				checkAccess(handle);
+				checkAccess(handle, true);
 			}
 			
 			handle = SecurityFrameInjector.wrapHandleWithInjectedSecurityFrameIfRequired(this, handle);
@@ -1319,7 +1320,7 @@ public class MethodHandles {
 			} 
 			
 			if (!method.isAccessible()) {
-				checkAccess(handle);
+				checkAccess(handle, true);
 			}
 			
 			return handle;
@@ -1350,7 +1351,7 @@ public class MethodHandles {
 				}
 				handle = HandleCache.putMethodInPerClassCache(cache, "<init>", type, convertToVarargsIfRequired(handle)); //$NON-NLS-1$
 			}
-			checkAccess(handle);
+			checkAccess(handle, false);
 			checkSecurity(handle.getDefc(), declaringClass, handle.getModifiers());
 			return handle;
 		}
@@ -1382,7 +1383,7 @@ public class MethodHandles {
 			}
 			
 			if (!method.isAccessible()) {
-				checkAccess(handle);
+				checkAccess(handle, true);
 			}
 			
 			handle = SecurityFrameInjector.wrapHandleWithInjectedSecurityFrameIfRequired(this, handle);
@@ -1427,7 +1428,7 @@ public class MethodHandles {
 				HandleCache.putFieldInPerClassCache(cache, fieldName, fieldType, handle);
 			}			
 			if (!field.isAccessible()) {
-				checkAccess(handle);
+				checkAccess(handle, true);
 			}
 			return handle;
 		}
@@ -1478,7 +1479,7 @@ public class MethodHandles {
 			}
 			
 			if (!field.isAccessible()) {
-				checkAccess(handle);
+				checkAccess(handle, true);
 			}
 			return handle;
 		}
@@ -1503,7 +1504,7 @@ public class MethodHandles {
 				}
 			}
 			try {
-				checkAccess(target);
+				checkAccess(target, false);
 				checkSecurity(target.getDefc(), target.getReferenceClass(), target.getModifiers());
 			} catch (IllegalAccessException e) {
 				throw new IllegalArgumentException(e);
@@ -1674,7 +1675,7 @@ public class MethodHandles {
 				} else {
 					handle = new InstanceFieldVarHandle(definingClass, name, type, this.accessClass);
 				}
-				checkAccess(handle);
+				checkAccess(handle, false);
 				checkSecurity(definingClass, definingClass, handle.getModifiers());
 				return handle;
 			} catch (NoSuchFieldError e) {
@@ -1710,7 +1711,7 @@ public class MethodHandles {
 				handle = new InstanceFieldVarHandle(field, field.getDeclaringClass(), field.getType());
 			}
 			
-			checkAccess(handle);
+			checkAccess(handle, true);
 			checkSecurity(handle.getDefiningClass(), handle.getDefiningClass(), handle.modifiers);
 			
 			return handle;

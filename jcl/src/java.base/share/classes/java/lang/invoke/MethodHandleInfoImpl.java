@@ -93,7 +93,7 @@ final class MethodHandleInfoImpl implements MethodHandleInfo {
 			throw new NullPointerException();
 		}
 		try {
-			lookup.checkAccess(mh);
+			lookup.checkAccess(mh, false);
 		} catch (IllegalAccessException e) {
 			/*[MSG "K0583", "The Member is not accessible to the Lookup object"]*/
 			IllegalArgumentException x = new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0583")); //$NON-NLS-1$
