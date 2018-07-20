@@ -1797,6 +1797,8 @@ JVM_BeforeHalt()
 {
 	/* To be implemented via https://github.com/eclipse/openj9/issues/1459 */
 }
+#endif /* J9VM_JCL_SE11 */
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
 JNIEXPORT jclass JNICALL
 JVM_GetNestHost(JNIEnv *env, jclass clz)
 {
@@ -1809,10 +1811,56 @@ JVM_GetNestMembers(JNIEnv *env, jclass clz)
 	assert(!"JVM_GetNestMembers unimplemented");
 	return NULL;
 }
+/**
+ * Check if two classes belong to the same nest
+ *
+ * @param [in] env pointer to JNIEnv
+ * @param [in] jClassOne Class object 1
+ * @param [in] jClassTwo Class object 2
+ *
+ * @return JNI_TRUE if classes belong to the same nest, JNI_FALSE otherwise
+ */
 JNIEXPORT jboolean JNICALL
-JVM_AreNestMates(JNIEnv *env, jclass clzOne, jclass clzTwo)
+JVM_AreNestMates(JNIEnv *env, jclass jClassOne, jclass jClassTwo)
 {
-	assert(!"JVM_AreNestMates unimplemented");
-	return JNI_FALSE;
+	jboolean result = JNI_FALSE;
+
+	if ((NULL != jClassOne) && (NULL != jClassTwo)) {
+		j9object_t clazzObjectOne = NULL;
+		j9object_t clazzObjectTwo = NULL;
+		J9VMThread *currentThread = (J9VMThread*)env;
+		J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+		clazzObjectOne = J9_JNI_UNWRAP_REFERENCE(jClassOne);
+		clazzObjectTwo = J9_JNI_UNWRAP_REFERENCE(jClassTwo);
+
+		if (clazzObjectOne == clazzObjectTwo) {
+			result = JNI_TRUE;
+		} else {
+			J9Class *clazzOne = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, clazzObjectOne);
+			J9Class *clazzTwo = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, clazzObjectTwo);
+
+			if (NULL == clazzOne->nestHost) {
+				if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, clazzOne, J9_LOOK_NO_THROW)) {
+					goto done;
+				}
+			}
+
+			if (NULL == clazzTwo->nestHost) {
+				if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, clazzTwo, J9_LOOK_NO_THROW)) {
+					goto done;
+				}
+			}
+
+			if (clazzOne->nestHost == clazzTwo->nestHost) {
+				result = JNI_TRUE;
+			}
+		}
+done:
+		vmFuncs->internalExitVMToJNI(currentThread);
+	}
+
+	return result;
 }
-#endif /* J9VM_JCL_SE11 */
+#endif /* J9VM_OPT_VALHALLA_NESTMATES */
