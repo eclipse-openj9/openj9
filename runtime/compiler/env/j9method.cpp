@@ -3326,6 +3326,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
    static X StringUTF16Methods[] =
       {
       { x(TR::java_lang_StringUTF16_getChar,                                  "getChar", "([BI)C")},
+      { x(TR::java_lang_StringUTF16_toBytes,                                  "toBytes", "([CII)[B")},
       { TR::unknownMethod }
       };
 
