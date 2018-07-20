@@ -3053,6 +3053,24 @@ trace(J9VMThread *vmStruct);
 
 #endif /* J9VM_INTERP_TRACING || INTERP_UPDATE_VMCTRACING */ /* End File Level Build Flags */
 
+/* ---------------- visible.c ---------------- */
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+/**
+ * Loads the nest host and ensures that the nest host belongs
+ * to the same runtime package as the class. This function requires
+ * VMAccess
+ *
+ * @param vmThread handle to vmThread
+ * @param clazz the class to search the nest host
+ * @param options lookup options
+ *
+ * @return 	J9_VISIBILITY_ALLOWED if success,
+ * 			J9_VISIBILITY_NEST_HOST_LOADING_FAILURE_ERROR if failed to load nesthost,
+ * 			J9_VISIBILITY_NEST_HOST_DIFFERENT_PACKAGE_ERROR if nesthost is not in the same runtime package
+ */
+UDATA
+loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options);
+#endif /* J9VM_OPT_VALHALLA_NESTMATES */
 
 /* ---------------- VMAccess.cpp ---------------- */
 
