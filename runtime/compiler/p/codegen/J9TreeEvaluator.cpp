@@ -6577,7 +6577,7 @@ TR::Register *outlinedHelperNewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       TR_ExternalRelocationTargetKind reloKind = opCode == TR::New ? TR_VerifyClassObjectForAlloc : TR_VerifyRefArrayForAlloc;
 
       TR::Relocation *r = new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(firstInstruction, (uint8_t *) classSymRef, (uint8_t *) recordInfo, reloKind, cg);
-      cg->addAOTRelocation(r, __FILE__, __LINE__, node);
+      cg->addExternalRelocation(r, __FILE__, __LINE__, node);
       }
 
    return objectReg;
@@ -7129,7 +7129,7 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
             reloKind = TR_VerifyRefArrayForAlloc;
             }
 
-         cg->addAOTRelocation(new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(firstInstruction, (uint8_t *) classSymRef, (uint8_t *) recordInfo, reloKind, cg),
+         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(firstInstruction, (uint8_t *) classSymRef, (uint8_t *) recordInfo, reloKind, cg),
                   __FILE__, __LINE__, node);
          }
 
@@ -12450,7 +12450,7 @@ TR::Instruction *loadAddressRAM32(TR::CodeGenerator *cg, TR::Node * node, int32_
          TR_ASSERT(0,"JNI relocation not supported.");
          }
       if(isAOT)
-         cg->addAOTRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation((uint8_t *)cursor, (uint8_t *) node->getSymbolReference(),
+         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation((uint8_t *)cursor, (uint8_t *) node->getSymbolReference(),
                node ? (uint8_t *)(intptr_t)node->getInlinedSiteIndex() : (uint8_t *)-1,
                   (TR_ExternalRelocationTargetKind) reloType, cg),
                   __FILE__, __LINE__, node);
@@ -12492,7 +12492,7 @@ TR::Instruction *loadAddressRAM(TR::CodeGenerator *cg, TR::Node * node, intptrj_
          TR_ASSERT(0,"JNI relocation not supported.");
          }
       if(isAOT)
-         cg->addAOTRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation((uint8_t *)cursor, (uint8_t *) node->getSymbolReference(),
+         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation((uint8_t *)cursor, (uint8_t *) node->getSymbolReference(),
                node ? (uint8_t *)(intptr_t)node->getInlinedSiteIndex() : (uint8_t *)-1,
                   (TR_ExternalRelocationTargetKind) reloType, cg),
                   __FILE__,__LINE__, node);
@@ -12538,7 +12538,7 @@ TR::Instruction *loadAddressJNI32(TR::CodeGenerator *cg, TR::Node * node, int32_
          TR_ASSERT(0,"JNI relocation not supported.");
          }
       if(isAOT)
-         cg->addAOTRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation((uint8_t *)cursor, (uint8_t *) node->getSymbolReference(),
+         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation((uint8_t *)cursor, (uint8_t *) node->getSymbolReference(),
                node ? (uint8_t *)(intptr_t)node->getInlinedSiteIndex() : (uint8_t *)-1,
                   (TR_ExternalRelocationTargetKind) reloType, cg),
                   __FILE__, __LINE__, node);
@@ -12580,7 +12580,7 @@ TR::Instruction *loadAddressJNI(TR::CodeGenerator *cg, TR::Node * node, intptrj_
          TR_ASSERT(0,"JNI relocation not supported.");
          }
       if(isAOT)
-         cg->addAOTRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation((uint8_t *)cursor, (uint8_t *) node->getSymbolReference(),
+         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation((uint8_t *)cursor, (uint8_t *) node->getSymbolReference(),
                node ? (uint8_t *)(intptr_t)node->getInlinedSiteIndex() : (uint8_t *)-1,
                   (TR_ExternalRelocationTargetKind) reloType, cg),
                   __FILE__,__LINE__, node);

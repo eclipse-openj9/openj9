@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,7 +61,7 @@ uint8_t *TR::PPCRecompilationSnippet::emitSnippetBody()
 
    // bl distance
    *(int32_t *)buffer = 0x48000001 | (distance & 0x03ffffff);
-   cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer,(uint8_t *)countingRecompMethodSymRef,TR_HelperAddress, cg()),
+   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer,(uint8_t *)countingRecompMethodSymRef,TR_HelperAddress, cg()),
                           __FILE__,
                           __LINE__,
                           getNode());

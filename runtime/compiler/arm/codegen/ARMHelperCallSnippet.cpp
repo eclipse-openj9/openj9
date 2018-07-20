@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,7 +53,7 @@ uint8_t *TR::ARMHelperCallSnippet::emitSnippetBody()
    *(int32_t *)buffer = 0xea000000 | ((distance >> 2)& 0x00ffffff);
    if (_restartLabel != NULL)
       *(int32_t *)buffer |= 0x01000000;
-   cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(
+   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(
                              buffer,
                              (uint8_t *)getDestination(),
                              TR_HelperAddress, cg()), __FILE__, __LINE__, getNode());

@@ -2599,7 +2599,7 @@ J9::CodeGenerator::processRelocations()
             case TR_CheckMethodEnter:
             case TR_CheckMethodExit:
             case TR_HCR:
-               self()->addAOTRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)(*it)->getLocation(),
+               self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)(*it)->getLocation(),
                                                                                 (uint8_t *)(*it)->getDestination(),
                                                                                 type, self()),
                                 __FILE__, __LINE__, NULL);
@@ -2657,7 +2657,7 @@ J9::CodeGenerator::processRelocations()
 
             TR_ASSERT(siteIndex < (int32_t) self()->comp()->getNumInlinedCallSites(), "did not find AOTClassInfo %p method in inlined site table", *info);
 
-            self()->addAOTRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(NULL,
+            self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(NULL,
                                                                              (uint8_t *)(intptr_t)siteIndex,
                                                                              (uint8_t *)(*info),
                                                                              (*info)->_reloKind, self()),
@@ -2678,7 +2678,7 @@ J9::CodeGenerator::processRelocations()
 
             while (currentSite)
                {
-               self()->addAOTRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(currentSite->location,
+               self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(currentSite->location,
                                                                                 currentSite->destination,
                                                                                 currentSite->guard,
                                                                                 currentSite->reloType, self()),
@@ -2693,7 +2693,7 @@ J9::CodeGenerator::processRelocations()
       self()->getAheadOfTimeCompile()->processRelocations();
       }
 
-   for (auto aotIterator = self()->getAOTRelocationList().begin(); aotIterator != self()->getAOTRelocationList().end(); ++aotIterator)
+   for (auto aotIterator = self()->getExternalRelocationList().begin(); aotIterator != self()->getExternalRelocationList().end(); ++aotIterator)
       {
       // Traverse the AOT/external labels
 	  (*aotIterator)->apply(self());
@@ -2704,9 +2704,9 @@ void J9::CodeGenerator::addProjectSpecializedRelocation(uint8_t *location, uint8
       TR_ExternalRelocationTargetKind kind, char *generatingFileName, uintptr_t generatingLineNumber, TR::Node *node)
    {
    (target2 == NULL) ?
-         self()->addAOTRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(location, target, kind, self()),
+         self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(location, target, kind, self()),
                generatingFileName, generatingLineNumber, node) :
-         self()->addAOTRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(location, target, target2, kind, self()),
+         self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(location, target, target2, kind, self()),
                generatingFileName, generatingLineNumber, node);
    }
 
@@ -2714,16 +2714,16 @@ void J9::CodeGenerator::addProjectSpecializedRelocation(TR::Instruction *instr, 
       TR_ExternalRelocationTargetKind kind, char *generatingFileName, uintptr_t generatingLineNumber, TR::Node *node)
    {
    (target2 == NULL) ?
-         self()->addAOTRelocation(new (self()->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(instr, target, kind, self()),
+         self()->addExternalRelocation(new (self()->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(instr, target, kind, self()),
                generatingFileName, generatingLineNumber, node) :
-         self()->addAOTRelocation(new (self()->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(instr, target, target2, kind, self()),
+         self()->addExternalRelocation(new (self()->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(instr, target, target2, kind, self()),
                generatingFileName, generatingLineNumber, node);
    }
 
 void J9::CodeGenerator::addProjectSpecializedPairRelocation(uint8_t *location, uint8_t *location2, uint8_t *target,
       TR_ExternalRelocationTargetKind kind, char *generatingFileName, uintptr_t generatingLineNumber, TR::Node *node)
    {
-   self()->addAOTRelocation(new (self()->trHeapMemory()) TR::ExternalOrderedPair32BitRelocation(location, location2, target, kind, self()),
+   self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalOrderedPair32BitRelocation(location, location2, target, kind, self()),
          generatingFileName, generatingLineNumber, node);
    }
 
@@ -2733,7 +2733,7 @@ J9::CodeGenerator::jitAddUnresolvedAddressMaterializationToPatchOnClassRedefinit
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(self()->fe());
    if (self()->comp()->compileRelocatableCode())
       {
-      self()->addAOTRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)firstInstruction, 0, TR_HCR, self()),
+      self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)firstInstruction, 0, TR_HCR, self()),
                                  __FILE__,__LINE__, NULL);
       }
    else
