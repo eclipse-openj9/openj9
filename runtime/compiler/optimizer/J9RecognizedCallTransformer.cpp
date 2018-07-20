@@ -103,7 +103,7 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
       case TR::java_lang_Math_min_L:
          return !comp()->getOption(TR_DisableMaxMinOptimization);
       case TR::java_lang_StringUTF16_toBytes:
-         return true;
+         return !comp()->compileRelocatableCode();
       default:
          return false;
       }
