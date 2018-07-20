@@ -1538,7 +1538,7 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
             _bcIndex += 3;
             break;
             }
-            
+
          case J9BCgenericReturn:
          case J9BCReturnC:
          case J9BCReturnS:
@@ -6483,10 +6483,9 @@ TR_J9ByteCodeIlGenerator::genMonitorEnter()
 void
 TR_J9ByteCodeIlGenerator::genMonitorExit(bool isReturn)
    {
-   TR::SymbolReference * monitorExitSymbolRef =
-      isReturn && isOutermostMethod() ?
-         symRefTab()->findOrCreateMethodMonitorExitSymbolRef(_methodSymbol) :
-         symRefTab()->findOrCreateMonitorExitSymbolRef(_methodSymbol);
+   TR::SymbolReference * monitorExitSymbolRef = isReturn ?
+      symRefTab()->findOrCreateMethodMonitorExitSymbolRef(_methodSymbol) :
+      symRefTab()->findOrCreateMonitorExitSymbolRef(_methodSymbol);
 
    TR::Node * node = pop();
 
@@ -6853,15 +6852,15 @@ TR_J9ByteCodeIlGenerator::genReturn(TR::ILOpCodes nodeop, bool monitorExit)
          case J9BCReturnC:
             returnChild = TR::Node::create(TR::su2i, 1, TR::Node::create(TR::i2s, 1, returnChild));
             break;
-            
+
          case J9BCReturnS:
             returnChild = TR::Node::create(TR::s2i, 1, TR::Node::create(TR::i2s, 1, returnChild));
             break;
-            
+
          case J9BCReturnB:
             returnChild = TR::Node::create(TR::b2i, 1, TR::Node::create(TR::i2b, 1, returnChild));
             break;
-            
+
          case J9BCReturnZ:
             returnChild = TR::Node::create(TR::iand, 2, returnChild, TR::Node::iconst(1));
             break;

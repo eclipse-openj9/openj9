@@ -987,10 +987,7 @@ TR_J9ByteCodeIlGenerator::prependEntryCode(TR::Block * firstBlock)
       loadMonitorArg();
 
       TR::Node * firstChild = pop();
-      TR::SymbolReference * monEnterSymRef =
-         isOutermostMethod() ?
-           symRefTab()->findOrCreateMethodMonitorEntrySymbolRef(_methodSymbol) :
-           symRefTab()->findOrCreateMonitorEntrySymbolRef(_methodSymbol);
+      TR::SymbolReference * monEnterSymRef = symRefTab()->findOrCreateMethodMonitorEntrySymbolRef(_methodSymbol);
 
       if (TR::Compiler->cls.classesOnHeap())
          {
