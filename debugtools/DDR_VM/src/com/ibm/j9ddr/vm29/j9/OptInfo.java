@@ -50,6 +50,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9SourceDebugExtensionPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9UTF8Pointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9MethodDebugInfoHelper;
+import com.ibm.j9ddr.vm29.pointer.helper.J9ROMClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 import com.ibm.j9ddr.vm29.structure.J9MethodDebugInfo;
 import com.ibm.j9ddr.vm29.types.U32;
@@ -220,7 +221,7 @@ public class OptInfo {
 	}
 
 	private static VoidPointer getStructure(J9ROMClassPointer romClass, long option) throws CorruptDataException {
-		SelfRelativePointer ptr = getSRPPtr(romClass.optionalInfo(), romClass.optionalFlags(), option);
+		SelfRelativePointer ptr = getSRPPtr(J9ROMClassHelper.optionalInfo(romClass), romClass.optionalFlags(), option);
 		if (!ptr.isNull()) {
 			return VoidPointer.cast(ptr.get());
 		} 
@@ -228,7 +229,7 @@ public class OptInfo {
 	}
 
 	public static J9SourceDebugExtensionPointer getSourceDebugExtensionForROMClass(J9ROMClassPointer romClass) throws CorruptDataException {
-		SelfRelativePointer srpPtr = getSRPPtr(romClass.optionalInfo(), romClass.optionalFlags(), J9_ROMCLASS_OPTINFO_SOURCE_DEBUG_EXTENSION);
+		SelfRelativePointer srpPtr = getSRPPtr(J9ROMClassHelper.optionalInfo(romClass), romClass.optionalFlags(), J9_ROMCLASS_OPTINFO_SOURCE_DEBUG_EXTENSION);
 		if (!srpPtr.isNull()) {
 			return J9SourceDebugExtensionPointer.cast(srpPtr.get());
 		}

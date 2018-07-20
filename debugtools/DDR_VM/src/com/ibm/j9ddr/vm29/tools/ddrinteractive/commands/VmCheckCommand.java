@@ -453,7 +453,7 @@ public class VmCheckCommand extends Command
 				verifyAddressInSegment(out, vm, segment, address, "romClass->innerClasses");
 			}
 
-			U32Pointer cpShapeDescription = romClass.cpShapeDescription();
+			U32Pointer cpShapeDescription = J9ROMClassHelper.cpShapeDescription(romClass);
 
 			/* TODO: is !isNull() check required or not? */
 			if (!cpShapeDescription.isNull()) {

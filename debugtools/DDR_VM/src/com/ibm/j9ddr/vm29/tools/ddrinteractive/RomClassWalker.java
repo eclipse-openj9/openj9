@@ -581,33 +581,26 @@ public class RomClassWalker extends ClassWalker {
 	}
 	void allSlotsInCPShapeDescriptionDo() throws CorruptDataException
 	{
-		int i, count;
-		U32Pointer cpShapeDescription = romClass.cpShapeDescription();
+		U32Pointer cpShapeDescription = J9ROMClassHelper.cpShapeDescription(romClass);
 		final int romConstantPoolCount = romClass.romConstantPoolCount().intValue();
-		
-		count = (romConstantPoolCount + (U32.SIZEOF * 2) - 1) / (U32.SIZEOF * 2);
+		int count = (romConstantPoolCount + (U32.SIZEOF * 2) - 1) / (U32.SIZEOF * 2);
 
 		classWalkerCallback.addSection(clazz, cpShapeDescription, count * U32.SIZEOF, "cpShapeDescription", true);
-		for (i = 0; i < count; i++) {
+		for (int i = 0; i < count; i++) {
 			classWalkerCallback.addSlot(clazz, SlotType.J9_U32, cpShapeDescription.add(i), "cpShapeDescriptionU32");
 			//callbacks.slotCallback(romClass, J9ROM_U32, &cpShapeDescription[i], "cpShapeDescriptionU32", userData);
 		}
 	}
 	private void allSlotsInConstantPoolDo() throws CorruptDataException
 	{
-		J9ROMConstantPoolItemPointer constantPool;
-		int index;
-		U32Pointer cpShapeDescription;
-		int constPoolCount;
+		J9ROMConstantPoolItemPointer constantPool = J9ROMClassHelper.constantPool(romClass);
+		U32Pointer cpShapeDescription = J9ROMClassHelper.cpShapeDescription(romClass);
 
-		constantPool = J9ROMClassHelper.constantPool(romClass);
-		cpShapeDescription = romClass.cpShapeDescription();
-		
 		if (cpShapeDescription.isNull()) {
 			return;
 		}
 		
-		constPoolCount = romClass.romConstantPoolCount().intValue();
+		int constPoolCount = romClass.romConstantPoolCount().intValue();
 		PointerPointer cpEntry = PointerPointer.cast(J9ROMClassHelper.constantPool(romClass));
 		
 		// The spaces at the end of "Constant Pool" are important since the
@@ -615,7 +608,7 @@ public class RomClassWalker extends ClassWalker {
 		// by address and size, but when they are equal they are sorted by
 		// longest name and "Constant Pool" has to come first
 		classWalkerCallback.addSection(clazz, constantPool, constPoolCount * U64.SIZEOF, "constantPool              ", true);
-		for (index = 0; index < constPoolCount; index++) {
+		for (int index = 0; index < constPoolCount; index++) {
 			long shapeDesc = ConstantPoolHelpers.J9_CP_TYPE(cpShapeDescription, index);
 			if (shapeDesc == J9CPTYPE_CLASS) {
 				J9ROMStringRefPointer ref = J9ROMStringRefPointer.cast(cpEntry);
@@ -674,7 +667,7 @@ public class RomClassWalker extends ClassWalker {
 	}
 	void allSlotsInOptionalInfoDo() throws CorruptDataException
 	{
-		U32Pointer optionalInfo = romClass.optionalInfo();
+		U32Pointer optionalInfo = J9ROMClassHelper.optionalInfo(romClass);
 		SelfRelativePointer cursor = SelfRelativePointer.cast(optionalInfo);
 
 		if (romClass.optionalFlags().anyBitsIn(J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_SOURCE_FILE_NAME)) {

@@ -82,6 +82,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ROMFieldShapePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VTableHeaderPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
+import com.ibm.j9ddr.vm29.pointer.helper.J9ROMClassHelper;
 import com.ibm.j9ddr.vm29.structure.J9Class;
 import com.ibm.j9ddr.vm29.structure.J9Consts;
 import com.ibm.j9ddr.vm29.structure.J9ITable;
@@ -281,7 +282,7 @@ public class RamClassWalker extends ClassWalker {
 		final int constPoolCount = romClass.ramConstantPoolCount().intValue();
 		final J9ConstantPoolPointer cpp = J9ConstantPoolPointer.cast(ramClass.ramConstantPool());
 
-		U32Pointer cpDescriptionSlots = romClass.cpShapeDescription();
+		U32Pointer cpDescriptionSlots = J9ROMClassHelper.cpShapeDescription(romClass);
 		PointerPointer cpEntry = PointerPointer.cast(ramClass.ramConstantPool());
 		long cpDescription = 0;
 		long cpEntryCount = ramClass.romClass().ramConstantPoolCount().longValue();
