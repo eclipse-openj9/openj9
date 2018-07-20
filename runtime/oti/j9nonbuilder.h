@@ -4815,6 +4815,7 @@ typedef struct J9InternalVMFunctions {
 	struct J9Module* ( *findModuleForPackage)(struct J9VMThread *currentThread, struct J9ClassLoader *classLoader, U_8 *packageName, U_32 packageNameLen);
 	struct J9ModuleExtraInfo* ( *findModuleInfoForModule)(struct J9VMThread *currentThread, struct J9ClassLoader *classLoader, J9Module *j9module);
 	struct J9ClassLocation* ( *findClassLocationForClass)(struct J9VMThread *currentThread, struct J9Class *clazz);
+	jclass ( *getJimModules) (struct J9VMThread *currentThread);
 	UDATA ( *initializeClassPath)(struct J9JavaVM *vm, char *classPath, U_8 classPathSeparator, U_16 cpFlags, BOOLEAN initClassPathEntry, struct J9ClassPathEntry **classPathEntries);
 	IDATA ( *initializeClassPathEntry) (struct J9JavaVM * javaVM, struct J9ClassPathEntry *cpEntry);
 	BOOLEAN ( *setBootLoaderModulePatchPaths)(struct J9JavaVM * javaVM, struct J9Module * j9module, const char * moduleName);
@@ -5468,7 +5469,6 @@ typedef struct J9JavaVM {
 	struct J9Module *javaBaseModule;
 	struct J9Module *unamedModuleForSystemLoader;
 	J9ClassPathEntry *modulesPathEntry;
-	omrthread_monitor_t jlmModulesInitMutex;
 	jclass jimModules;
 	jmethodID addReads;
 	jmethodID addExports;

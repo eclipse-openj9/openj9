@@ -472,6 +472,14 @@ addToBootstrapClassLoaderSearch(J9JavaVM * vm, const char * pathSegment, UDATA c
 UDATA
 addToSystemClassLoaderSearch(J9JavaVM * vm, const char* pathSegment, UDATA classLoaderType, BOOLEAN enforceJarRestriction);
 
+/**
+ * @brief Get a reference to jdk.internal.module.Modules.
+ * @param *currentThread
+ * @return class reference or null if error.
+ */
+
+jclass
+getJimModules(J9VMThread *currentThread);
 /* ---------------- description.c ---------------- */
 
 /**

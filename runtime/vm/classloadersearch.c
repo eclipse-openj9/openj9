@@ -34,6 +34,8 @@
 
 static UDATA addToSystemProperty(J9JavaVM * vm, const char * propertyName, const char * segment);
 static UDATA addZipToLoader(J9JavaVM * vm, const char * filename, J9ClassLoader * classLoader, BOOLEAN enforceJarRestriction);
+#define INSTRUMENT_MODULE "java.instrument"
+static UDATA loadModule(J9JavaVM *vm, const char *moduleName, jobject *modulePtr);
 
 
 /**
@@ -226,6 +228,8 @@ addZipToLoader(J9JavaVM * vm, const char * filename, J9ClassLoader * classLoader
 			(*env)->CallVoidMethod(env, classLoaderRef, mid, filenameString);
 			if ((*env)->ExceptionCheck(env)) {
 				rc = CLS_ERROR_OUT_OF_MEMORY;
+			} else if (J2SE_SHAPE(vm) >= J2SE_SHAPE_B165) {
+				rc = loadModule(vm, INSTRUMENT_MODULE, NULL);
 			}
 	cleanup:
 			(*env)->ExceptionClear(env);
@@ -235,5 +239,83 @@ addZipToLoader(J9JavaVM * vm, const char * filename, J9ClassLoader * classLoader
 		}
 	}
 
+	return rc;
+}
+
+jclass
+getJimModules(J9VMThread *currentThread)
+{
+	J9JavaVM *vm = NULL;
+	vm = currentThread->javaVM;
+	if (NULL == vm->jimModules) {
+		const J9InternalVMFunctions *vmFuncs = NULL;
+		/* no need for mutual exclusion since repeating this is harmless */
+		J9Class *j9JimModules = NULL;
+		internalEnterVMFromJNI(currentThread);
+		vmFuncs = vm->internalVMFunctions;
+		j9JimModules = vmFuncs->internalFindKnownClass(currentThread,
+				J9VMCONSTANTPOOL_JDKINTERNALMODULEMODULES,
+				J9_FINDKNOWNCLASS_FLAG_INITIALIZE | J9_FINDKNOWNCLASS_FLAG_NON_FATAL);
+		if (NULL != j9JimModules) {
+			/*
+			 * The address of j9class->classObject is considered to be a JNI global reference.
+			 * Note that the class in question is not a candidate for unloading.
+			 */
+			vm->jimModules = (jclass)&j9JimModules->classObject;
+		} else {
+			currentThread->currentException = NULL;
+			currentThread->privateFlags &= ~J9_PRIVATE_FLAGS_REPORT_EXCEPTION_THROW;
+		}
+		internalExitVMToJNI(currentThread);
+	}
+	return vm->jimModules;
+}
+
+/**
+ * Loads the named module using jdk.internal.module.Modules.loadModule()
+ *
+ * @param [in] vm pointer to JVM
+ * @param [in] moduleName name of module to load
+ * @param [out] modulePtr pointer to return module object.  May be null.
+ *
+ * @return CLS_ERROR_NONE on success, other value on failure
+ */
+static UDATA
+loadModule(J9JavaVM *vm, const char *moduleName, jobject *modulePtr)
+{
+	UDATA rc = CLS_ERROR_NONE;
+	J9VMThread *currentThread = currentVMThread(vm);
+	JNIEnv *env = (JNIEnv *) currentThread;
+	jstring moduleNameString = (*env)->NewStringUTF(env, moduleName);
+	jclass jimModules = getJimModules(currentThread);
+	jobject vmModule = NULL;
+	jmethodID loadModule = NULL;
+
+	if (NULL == moduleNameString) {
+		rc = CLS_ERROR_OUT_OF_MEMORY;
+		goto done;
+	}
+	if (NULL == jimModules) {
+		rc = CLS_ERROR_NOT_FOUND;
+		goto done;
+	}
+
+	if (NULL != modulePtr) {
+		*modulePtr = NULL;
+	}
+
+	loadModule = (*env)->GetStaticMethodID(env, jimModules, "loadModule", "(Ljava/lang/String;)Ljava/lang/Module;");
+	if (NULL == loadModule) {
+		rc = CLS_ERROR_NOT_FOUND;
+		goto done;
+	}
+
+	vmModule = (*env)->CallStaticObjectMethod(env, jimModules, loadModule, moduleNameString);
+	if ((*env)->ExceptionOccurred(env)) {
+		rc = CLS_ERROR_INTERNAL;
+	} else if (NULL != modulePtr) {
+		*modulePtr = vmModule;
+	}
+done:
 	return rc;
 }
