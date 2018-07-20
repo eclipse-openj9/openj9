@@ -201,6 +201,7 @@ class MM_VerboseHandlerOutput=void
 class WriteOnceCompactTableEntry=void
 
 /* OMR / Java glue */
+GC_ArrayletObjectModel=GC_ArrayObjectModel
 languageobjectptr_t=struct J9Object*
 omrobjectptr_t=struct J9Object*
 omrarrayptr_t=struct J9IndexableObject*
