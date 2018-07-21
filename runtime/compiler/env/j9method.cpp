@@ -6068,7 +6068,7 @@ TR_ResolvedJ9Method::getResolvedInterfaceMethodOffset(TR_OpaqueClassBlock * clas
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
    // the classObject is the fixed type of the this pointer.  The result of this method is going to be
    // used to call the interface function directly.
-   UDATA vTableIndex = 0;
+   UDATA vTableOffset = 0;
 #if TURN_OFF_INLINING
    return 0;
 #else
@@ -6077,10 +6077,10 @@ TR_ResolvedJ9Method::getResolvedInterfaceMethodOffset(TR_OpaqueClassBlock * clas
 
       {
       TR::VMAccessCriticalSection getResolvedInterfaceMethodOffset(fej9());
-      vTableIndex = jitGetInterfaceVTableIndexFromCP(_fe->vmThread(), cp(), cpIndex, TR::Compiler->cls.convertClassOffsetToClassPtr(classObject));
+      vTableOffset = jitGetInterfaceVTableOffsetFromCP(_fe->vmThread(), cp(), cpIndex, TR::Compiler->cls.convertClassOffsetToClassPtr(classObject));
       }
 
-   return (J9JIT_INTERP_VTABLE_OFFSET - vTableIndex);
+   return (J9JIT_INTERP_VTABLE_OFFSET - vTableOffset);
 #endif
    }
 
@@ -6255,29 +6255,29 @@ TR_ResolvedJ9Method::getResolvedVirtualMethod(TR::Compilation * comp, I_32 cpInd
       {
       // only call the resolve if unresolved
       J9Method * ramMethod = 0;
-      UDATA vTableIndex = (((J9RAMVirtualMethodRef*) literals())[cpIndex]).methodIndexAndArgCount;
-      vTableIndex >>= 8;
-      if ((J9JIT_INTERP_VTABLE_OFFSET + sizeof(uintptrj_t)) == vTableIndex)
+      UDATA vTableOffset = (((J9RAMVirtualMethodRef*) literals())[cpIndex]).methodIndexAndArgCount;
+      vTableOffset >>= 8;
+      if (J9VTABLE_INITIAL_VIRTUAL_OFFSET == vTableOffset)
          {
          TR::VMAccessCriticalSection resolveVirtualMethodRef(fej9());
-         vTableIndex = _fe->_vmFunctionTable->resolveVirtualMethodRefInto(_fe->vmThread(), cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME, &ramMethod, NULL);
+         vTableOffset = _fe->_vmFunctionTable->resolveVirtualMethodRefInto(_fe->vmThread(), cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME, &ramMethod, NULL);
          }
       else
          {
          // go fishing for the J9Method...
          uint32_t classIndex = ((J9ROMMethodRef *) cp()->romConstantPool)[cpIndex].classRefCPIndex;
          J9Class * classObject = (((J9RAMClassRef*) literals())[classIndex]).value;
-         ramMethod = *(J9Method **)((char *)classObject + vTableIndex);
+         ramMethod = *(J9Method **)((char *)classObject + vTableOffset);
          if (unresolvedInCP)
             *unresolvedInCP = false;
          }
 
-      if (vTableIndex)
+      if (vTableOffset)
          {
          TR_AOTInliningStats *aotStats = NULL;
          if (comp->getOption(TR_EnableAOTStats))
             aotStats = & (((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->virtualMethods);
-         resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, vTableIndex, ramMethod, unresolvedInCP, aotStats);
+         resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, vTableOffset, ramMethod, unresolvedInCP, aotStats);
          }
       }
 

@@ -3902,7 +3902,7 @@ fillJITVTableSlot(J9VMThread *vmStruct, UDATA *currentSlot, J9Method *currentMet
  * @return UDATA
  */
 UDATA
-getVTableIndexForMethod(J9Method * method, J9Class *clazz, J9VMThread *vmThread);
+getVTableOffsetForMethod(J9Method * method, J9Class *clazz, J9VMThread *vmThread);
 
 j9object_t
 resolveMethodTypeRef(J9VMThread *vmThread, J9ConstantPool *constantPool, UDATA cpIndex, UDATA resolveFlags);

@@ -1235,7 +1235,7 @@ resolveSpecialSplitMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA 
 UDATA   
 resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags, J9Method **resolvedMethod, J9RAMVirtualMethodRef *ramCPEntry)
 {
-	UDATA vTableIndex = 0;
+	UDATA vTableOffset = 0;
 	J9ROMMethodRef *romMethodRef;
 	J9Class *resolvedClass;
 	J9JavaVM *vm = vmStruct->javaVM;
@@ -1349,8 +1349,8 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 					/* Overwriting NULL with an immortal pointer, so no exception can occur */
 					J9STATIC_OBJECT_STORE(vmStruct, clazz, methodTypeObjectP, methodType);
 
-					/* Record vTableIndex for the exit tracepoint. */
-					vTableIndex = methodTypeIndex;
+					/* Record vTableOffset for the exit tracepoint. */
+					vTableOffset = methodTypeIndex;
 				}
 
 				goto done;
@@ -1526,15 +1526,15 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 		/* If method is NULL, the exception has already been set. */
 		if (method != NULL) {
 			/* Fill in the constant pool entry. Don't bother checking for failure on the vtable index, since we know the method is there. */
-			vTableIndex = getVTableIndexForMethod(method, resolvedClass, vmStruct);
-			if (vTableIndex == 0) {
+			vTableOffset = getVTableOffsetForMethod(method, resolvedClass, vmStruct);
+			if (vTableOffset == 0) {
 				if (!jitFlags && (0 == (J9_RESOLVE_FLAG_NO_THROW_ON_FAIL & resolveFlags))) {
 					j9object_t errorString = methodToString(vmStruct, method);
 					setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, (UDATA *)errorString);
 				}
 			} else {
 				if (ramCPEntry != NULL) {
-					UDATA argSlotCount = vTableIndex << 8;
+					UDATA argSlotCount = vTableOffset << 8;
 					J9RAMVirtualMethodRef *ramVirtualMethodRef = (J9RAMVirtualMethodRef *)&ramCP[cpIndex];
 					UDATA oldArgCount = ramVirtualMethodRef->methodIndexAndArgCount & 255;
 					argSlotCount |= oldArgCount;
@@ -1551,8 +1551,8 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 #if defined(J9VM_OPT_METHOD_HANDLE)
 done:
 #endif /* J9VM_OPT_METHOD_HANDLE */
-	Trc_VM_resolveVirtualMethodRef_Exit(vmStruct, vTableIndex);
-	return vTableIndex;
+	Trc_VM_resolveVirtualMethodRef_Exit(vmStruct, vTableOffset);
+	return vTableOffset;
 }
 
 	
