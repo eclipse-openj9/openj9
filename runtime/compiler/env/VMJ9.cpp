@@ -6005,7 +6005,7 @@ int32_t
 TR_J9VMBase::getInterpreterVTableSlot(TR_OpaqueMethodBlock * mBlock, TR_OpaqueClassBlock * clazz)
    {
    TR::VMAccessCriticalSection getInterpreterVTableSlot(this);
-   int32_t result =  vmThread()->javaVM->internalVMFunctions->getVTableIndexForMethod((J9Method*)mBlock, (J9Class*)clazz, vmThread());
+   int32_t result =  vmThread()->javaVM->internalVMFunctions->getVTableOffsetForMethod((J9Method*)mBlock, (J9Class*)clazz, vmThread());
    return result;
    }
 int32_t

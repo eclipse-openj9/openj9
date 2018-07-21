@@ -696,10 +696,10 @@ done:
 	j2iVirtualMethod(REGISTER_ARGS_LIST, j9object_t receiver, UDATA interfaceVTableIndex)
 	{
 		void* const jitReturnAddress = VM_JITInterface::peekJITReturnAddress(_currentThread, _sp);
-		UDATA jitVTableIndex = VM_JITInterface::jitVTableIndex(jitReturnAddress, interfaceVTableIndex);
-		UDATA vTableIndex = sizeof(J9Class) - jitVTableIndex;
+		UDATA jitVTableOffset = VM_JITInterface::jitVTableIndex(jitReturnAddress, interfaceVTableIndex);
+		UDATA vTableOffset = sizeof(J9Class) - jitVTableOffset;
 		J9Class *clazz = J9OBJECT_CLAZZ(_currentThread, receiver);
-		return *(J9Method**)((UDATA)clazz + vTableIndex);
+		return *(J9Method**)((UDATA)clazz + vTableOffset);
 	}
 
 	VMINLINE void
@@ -6414,7 +6414,7 @@ done:
 			/* Resolution exceptions must be thrown first, so check if methodRef 
 			 * is resolved before throwing NPE on receiver.
 			 */
-			if (methodIndex != (sizeof(J9Class) + sizeof(UDATA))) {
+			if (methodIndex != J9VTABLE_INITIAL_VIRTUAL_OFFSET) {
 				rc = THROW_NPE;
 			} else {
 				_sendMethod = (J9Method *)_vm->initialMethods.initialVirtualMethod;
