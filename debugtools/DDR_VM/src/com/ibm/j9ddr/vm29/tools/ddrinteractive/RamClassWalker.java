@@ -49,6 +49,7 @@ import java.util.Iterator;
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.tools.ddrinteractive.Context;
 import com.ibm.j9ddr.vm29.types.I64;
+import com.ibm.j9ddr.vm29.j9.AlgorithmVersion;
 import com.ibm.j9ddr.vm29.j9.DataType;
 import com.ibm.j9ddr.vm29.j9.J9ObjectFieldOffset;
 import com.ibm.j9ddr.vm29.j9.J9ObjectFieldOffsetIterator;
@@ -78,6 +79,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9RAMStaticMethodRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9RAMStringRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMFieldShapePointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9VTableHeaderPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.structure.J9Class;
@@ -95,6 +97,7 @@ import com.ibm.j9ddr.vm29.structure.J9RAMMethodTypeRef;
 import com.ibm.j9ddr.vm29.structure.J9RAMStaticMethodRef;
 import com.ibm.j9ddr.vm29.structure.J9RAMStringRef;
 import com.ibm.j9ddr.vm29.structure.J9ROMFieldOffsetWalkState;
+import com.ibm.j9ddr.vm29.structure.J9VTableHeader;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.IClassWalkCallbacks.SlotType;
 import com.ibm.j9ddr.vm29.types.Scalar;
 import com.ibm.j9ddr.vm29.types.U32;
@@ -485,31 +488,59 @@ public class RamClassWalker extends ClassWalker {
 	}
 
 	private void allSlotsInVTableDo() throws CorruptDataException {
-		UDATAPointer vTable = J9ClassHelper.vTable(ramClass);
-		final long vTableSlots = Math.max(1,vTable.at(0).longValue());
+		/* Check vTable algorithm version */
+		if (AlgorithmVersion.getVersionOf(AlgorithmVersion.VTABLE_VERSION).getAlgorithmVersion() >= 1) {
+			J9VTableHeaderPointer vTableHeader = J9ClassHelper.vTableHeader(ramClass);
+			final long vTableMethods = vTableHeader.size().longValue();
+			long vTableSize = UDATA.SIZEOF;
+			UDATAPointer vTable = J9ClassHelper.vTable(vTableHeader);
 
-		classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, vTable, "VTable size");
-		
-		for (int i = 1; i < vTableSlots; i++) {
-			/*
-			 * The first method is a magic method. It's enough of a j9method to
-			 * be able to run the resolve code for unresolved virtual references
-			 * it doesn't have a rom method associated with it, so there's no
-			 * name, etc. The only information about that method is the methodRunAddress.
-			 */
-			classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, vTable.add(i), ((i == 1) ? "magic " : "") + "method", "!j9method");
+			classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, vTableHeader, "VTable size");
+			
+			if (vTableMethods > 0) {
+				vTableSize = J9VTableHeader.SIZEOF + (vTableMethods * UDATA.SIZEOF);
+				/* First print the vTableHeader default methods */
+				classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, vTableHeader.initialVirtualMethod(), "magic method", "!j9method");
+				for (int i = 0; i < vTableMethods; i++) {
+					classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, vTable.add(i), "method", "!j9method");
+				}
+			}
+			classWalkerCallback.addSection(clazz, vTableHeader, vTableSize, "vTable", true);
+		} else {
+			UDATAPointer vTable = J9ClassHelper.oldVTable(ramClass);
+			final long vTableSlots = Math.max(1,vTable.at(0).longValue());
+
+			classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, vTable, "VTable size");
+
+			for (int i = 1; i <= vTableSlots; i++) {
+				/*
+				 * The first method is a magic method. It's enough of a j9method to
+				 * be able to run the resolve code for unresolved virtual references
+				 * it doesn't have a rom method associated with it, so there's no
+				 * name, etc. The only information about that method is the methodRunAddress.
+				 */
+				classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, vTable.add(i), ((i == 1) ? "magic " : "") + "method", "!j9method");
+			}
+			classWalkerCallback.addSection(clazz, vTable, vTableSlots * UDATA.SIZEOF, "vTable", true);
 		}
 		
-		classWalkerCallback.addSection(clazz, ramClass.add(1), vTableSlots * UDATA.SIZEOF, "vTable", true);
 	}
 
 	private void allSlotsInJitVTablesDo() throws CorruptDataException {
 		J9JavaVMPointer vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
 		if(!vm.jitConfig().isNull()) {
-			final long jitvTableSlots = J9ClassHelper.vTable(ramClass).at(0).longValue();
-			final long jitvTableSlotsLength = jitvTableSlots * UDATA.SIZEOF;
-			
+			long jitvTableSlots;
+			long jitvTableSlotsLength;
 
+			/* Check vTable algorithm version */
+			if (AlgorithmVersion.getVersionOf(AlgorithmVersion.VTABLE_VERSION).getAlgorithmVersion() >= 1) {
+				jitvTableSlots = J9ClassHelper.vTableHeader(ramClass).size().longValue();
+				jitvTableSlotsLength = ((jitvTableSlots - 1) * UDATA.SIZEOF) + J9VTableHeader.SIZEOF;
+			} else {
+				jitvTableSlots = J9ClassHelper.oldVTable(ramClass).at(0).longValue();
+				jitvTableSlotsLength = jitvTableSlots * UDATA.SIZEOF;
+			}
+			
 			for (int i = 0; i < jitvTableSlots; i++) {
 				classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, UDATAPointer.cast(ramClass.subOffset(jitvTableSlotsLength)).add(i), "send target", "");
 			}
