@@ -735,7 +735,7 @@ Java_java_lang_invoke_PrimitiveHandle_setVMSlotAndRawModifiersFromSpecialHandle(
 	J9JavaVM *vm = vmThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	jboolean result = JNI_FALSE;
-	UDATA vtableIndex;
+	UDATA vtableOffset;
 	j9object_t specialHandleObject;
 	J9Method *method;
 	j9object_t classObject;
@@ -753,9 +753,9 @@ Java_java_lang_invoke_PrimitiveHandle_setVMSlotAndRawModifiersFromSpecialHandle(
 	if (j9class == NULL) {
 		goto _done;
 	}
-	vtableIndex = vmFuncs->getVTableIndexForMethod(method, j9class, vmThread);
-	if (vtableIndex != 0) {
-		J9VMJAVALANGINVOKEPRIMITIVEHANDLE_SET_VMSLOT(vmThread, J9_JNI_UNWRAP_REFERENCE(handle), vtableIndex);
+	vtableOffset = vmFuncs->getVTableOffsetForMethod(method, j9class, vmThread);
+	if (vtableOffset != 0) {
+		J9VMJAVALANGINVOKEPRIMITIVEHANDLE_SET_VMSLOT(vmThread, J9_JNI_UNWRAP_REFERENCE(handle), vtableOffset);
 		J9VMJAVALANGINVOKEPRIMITIVEHANDLE_SET_RAWMODIFIERS(vmThread, J9_JNI_UNWRAP_REFERENCE(handle), J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers);
 		result = JNI_TRUE;
 	}
