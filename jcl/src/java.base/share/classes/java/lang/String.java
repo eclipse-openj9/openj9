@@ -2563,6 +2563,26 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		
 		return (result == null) ? this : result;
 	}
+
+	/**
+	 * Determine if the string contains only white space characters. 
+	 * 
+	 * @return true if the string is empty or contains only white space
+	 * characters, otherwise false.
+	 * 
+	 * @since 11
+	 */
+	public boolean isBlank() {
+		int index;
+
+		if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
+			index = StringLatin1.indexOfNonWhitespace(value);
+		} else {
+			index = StringUTF16.indexOfNonWhitespace(value);
+		}
+		
+		return index >= lengthInternal();
+	}
 /*[ENDIF]*/
 	
 	/**
