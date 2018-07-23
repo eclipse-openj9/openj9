@@ -49,8 +49,8 @@ else
 	JAVA := $(if $(J9_ROOT),java8,$(DEV_TOOLS)\ibm-jdk-1.8.0\bin\java)
 endif
 
-ifdef VERSION_MAJOR
-	EXTRA_CMAKE_ARGS += -DJ9VM_JAVA_VERSION=$(VERSION_MAJOR)
+ifneq (,$(VERSION_MAJOR))
+	EXTRA_CMAKE_ARGS += -DJAVA_SPEC_VERSION=$(VERSION_MAJOR)
 endif
 
 default : all
@@ -170,6 +170,9 @@ UMA_TOOL     := $(JAVA) -cp "sourcetools/lib/om.jar$(PATHSEP)$(FREEMARKER_JAR)$(
 UMA_OPTIONS  := -rootDir . -configDir $(SPEC_DIR) -buildSpecId $(SPEC)
 UMA_OPTIONS  += -buildId $(BUILD_ID) -buildTag $(J9VM_SHA) -jvf compiler/jit.version
 UMA_OPTIONS  += $(UMA_OPTIONS_EXTRA)
+ifneq (,$(VERSION_MAJOR))
+UMA_OPTIONS  += -M JAVA_SPEC_VERSION=$(VERSION_MAJOR)
+endif
 # JAZZ 90097 Don't build executables in OMR because, on Windows, UMA generates .rc files for these executables
 # that require j9version.h, a JVM header file. j9version.h is not available in the include path for OMR modules.
 # This is a temporary workaround. It can be removed after UMA is no longer used to generate files for OMR, and the
