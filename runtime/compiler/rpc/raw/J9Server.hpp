@@ -76,7 +76,7 @@ public:
       {
       }
 
-   void buildAndServe(J9BaseCompileDispatcher *compiler, uint32_t port, uint32_t timeout);
+   void buildAndServe(J9BaseCompileDispatcher *compiler, TR::PersistentInfo *info);
 
 private:
    void serve(J9BaseCompileDispatcher *compiler, uint32_t timeout);

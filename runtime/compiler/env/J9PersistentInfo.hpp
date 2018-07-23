@@ -34,6 +34,7 @@ namespace J9 { typedef J9::PersistentInfo PersistentInfoConnector; }
 
 #include <stdint.h>
 #include <string>
+#include <vector>
 #include "env/jittypes.h"
 
 
@@ -289,7 +290,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
 
    JITaaSModes getJITaaSMode() const { return _JITaaSMode;}
    void setJITaaSMode(JITaaSModes m) { _JITaaSMode = m; }
-   std::string getJITaaSServerAddress() const { return _JITaaSServerAddress; }
+   const std::string &getJITaaSServerAddress() const { return _JITaaSServerAddress; }
    void setJITaaSServerAddress(char *addr) { _JITaaSServerAddress = addr; }
    uint32_t getJITaaSTimeout() { return _timeout; }
    void setJITaaSTimeout(uint32_t t) { _timeout = t; }
@@ -297,6 +298,12 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    void setJITaaSServerPort(uint32_t port) { _JITaaSServerPort = port; }
    uint64_t getJITaaSId() { return _JITaaSId; }
    void setJITaaSId(uint64_t val) { _JITaaSId = val; }
+   const std::vector<std::string> &getJITaaSSslKeys() { return _sslKeys; }
+   void addJITaaSSslKey(std::string key) { _sslKeys.push_back(key); }
+   const std::vector<std::string> &getJITaaSSslCerts() { return _sslCerts; }
+   void addJITaaSSslCert(std::string cert) { _sslCerts.push_back(cert); }
+   const std::string &getJITaaSSslRootCerts() { return _sslRootCerts; }
+   void setJITaaSSslRootCerts(std::string cert) { _sslRootCerts = cert; }
 
    private:
    TR_AddressSet *_unloadedClassAddresses;
@@ -385,6 +392,12 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    uint32_t _JITaaSServerPort;
    uint64_t _JITaaSId;
    uint32_t _timeout;
+   std::string _sslRootCerts;
+   // SoA key pairs
+   // We use std::vector here to avoid an annoying include loop.
+   // Don't do this! Use PersistentVector instead.
+   std::vector<std::string> _sslKeys;
+   std::vector<std::string> _sslCerts;
    };
 
 }

@@ -16,7 +16,7 @@
 namespace JITaaS
 {
 
-int openConnection(std::string &address, uint32_t port, uint32_t timeoutMs)
+int openConnection(const std::string &address, uint32_t port, uint32_t timeoutMs)
    {
    // TODO consider using newer API like getaddrinfo to support IPv6
    struct hostent *entSer;
@@ -75,8 +75,9 @@ int openConnection(std::string &address, uint32_t port, uint32_t timeoutMs)
    return sockfd;
    }
 
-J9ClientStream::J9ClientStream(std::string address, uint32_t port, uint32_t timeout)
-   : _timeout(timeout), _connfd(openConnection(address, port, timeout)),
+J9ClientStream::J9ClientStream(TR::PersistentInfo *info)
+   : _timeout(info->getJITaaSTimeout()),
+   _connfd(openConnection(info->getJITaaSServerAddress(), info->getJITaaSServerPort(), info->getJITaaSTimeout())),
    _inputStream(_connfd), _outputStream(_connfd)
    {
    }

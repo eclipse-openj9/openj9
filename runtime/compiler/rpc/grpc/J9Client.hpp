@@ -15,10 +15,28 @@ namespace JITaaS
 class J9ClientStream
    {
 public:
-   J9ClientStream(std::string address, uint32_t port, uint32_t timeout=0)
-      : _stub(J9CompileService::NewStub(grpc::CreateChannel(address + ":" + std::to_string(port), grpc::InsecureChannelCredentials()))),
-        _msTimeout(timeout)
-      {}
+   J9ClientStream(TR::PersistentInfo *info)
+      {
+      _msTimeout = info->getJITaaSTimeout();
+      uint32_t port = info->getJITaaSServerPort();
+      const std::string &address = info->getJITaaSServerAddress();
+      auto &sslKeys = info->getJITaaSSslKeys();
+      auto &sslCerts = info->getJITaaSSslCerts();
+      auto &sslRootCerts = info->getJITaaSSslRootCerts();
+      bool useSSL =  sslKeys.size() || sslCerts.size() || sslRootCerts.size();
+      grpc::SslCredentialsOptions sslOpts;
+      if (useSSL)
+         {
+         TR_ASSERT(sslCerts.size() <= 1 && sslKeys.size() <= 1, "doesn't make sense have multiple ssl keys for the client");
+         if (sslCerts.size() > 0)
+            sslOpts.pem_cert_chain = sslCerts[0];
+         if (sslKeys.size() > 0)
+            sslOpts.pem_private_key = sslKeys[0];
+         sslOpts.pem_root_certs = sslRootCerts;
+         }
+      auto creds = useSSL ? grpc::SslCredentials(sslOpts) : grpc::InsecureChannelCredentials();
+      _stub = J9CompileService::NewStub(grpc::CreateChannel(address + ":" + std::to_string(port), creds));
+      }
 
 
    template <typename... T>

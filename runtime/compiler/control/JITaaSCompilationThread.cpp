@@ -2033,9 +2033,7 @@ remoteCompile(
    std::vector<TR_OpaqueClassBlock *> interfaces = TR::Compiler->cls.getITable((TR_OpaqueClassBlock *) clazz);
    std::string optionsStr = TR::Options::packOptions(compiler->getOptions());
 
-   JITaaS::J9ClientStream client(compInfo->getPersistentInfo()->getJITaaSServerAddress(),
-                                 compInfo->getPersistentInfo()->getJITaaSServerPort(),
-                                 compInfo->getPersistentInfo()->getJITaaSTimeout());
+   JITaaS::J9ClientStream client(compInfo->getPersistentInfo());
 
    uint32_t statusCode = compilationFailure;
    std::string codeCacheStr;

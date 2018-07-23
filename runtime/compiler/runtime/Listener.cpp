@@ -42,7 +42,7 @@ static int32_t J9THREAD_PROC listenerThreadProc(void * entryarg)
    JITaaS::J9CompileServer server;
    J9CompileDispatcher handler(jitConfig, listenerThread);
    TR::PersistentInfo *info = getCompilationInfo(jitConfig)->getPersistentInfo();
-   server.buildAndServe(&handler, info->getJITaaSServerPort(), info->getJITaaSTimeout());
+   server.buildAndServe(&handler, info);
 
    if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Detaching JITaaSServer listening thread");

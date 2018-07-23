@@ -97,14 +97,29 @@ JITaaS::J9ServerStream::drainQueue()
    }
 
 void
-JITaaS::J9CompileServer::buildAndServe(J9BaseCompileDispatcher *compiler, uint32_t port, uint32_t timeout)
+JITaaS::J9CompileServer::buildAndServe(J9BaseCompileDispatcher *compiler, TR::PersistentInfo *info)
    {
    grpc::ServerBuilder builder;
-   builder.AddListeningPort("0.0.0.0:" + std::to_string(port), grpc::InsecureServerCredentials());
+   auto &sslKeys = info->getJITaaSSslKeys();
+   auto &sslCerts = info->getJITaaSSslCerts();
+   auto &sslRootCerts = info->getJITaaSSslRootCerts();
+   bool useSSL =  sslKeys.size() || sslCerts.size() || sslRootCerts.size();
+   grpc::SslServerCredentialsOptions sslOpts(GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_AND_VERIFY);
+   if (useSSL)
+      {
+      sslOpts.pem_key_cert_pairs.reserve(sslKeys.size());
+      TR_ASSERT_FATAL(sslKeys.size() == sslCerts.size(), "expecting the same number of keys and certs");
+      for (size_t i = 0; i < sslKeys.size(); i++)
+         sslOpts.pem_key_cert_pairs.emplace_back(grpc::SslServerCredentialsOptions::PemKeyCertPair { sslKeys.at(i), sslCerts.at(i) });
+      sslOpts.pem_root_certs = sslRootCerts;
+      }
+   auto creds = useSSL ? grpc::SslServerCredentials(sslOpts) : grpc::InsecureServerCredentials();
+   uint32_t port = info->getJITaaSServerPort();
+   builder.AddListeningPort("0.0.0.0:" + std::to_string(port), creds);
    builder.RegisterService(&_service);
    _notificationQueue = builder.AddCompletionQueue();
-
    _server = builder.BuildAndStart();
+   uint32_t timeout = info->getJITaaSTimeout();
    serve(compiler, timeout);
    }
 

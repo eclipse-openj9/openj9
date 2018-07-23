@@ -1039,40 +1039,29 @@ bool J9::Options::showPID()
    return false;
    }
 
-static uint32_t getJITaaSTimeoutFromCommandLineOptions(char **options, char delimiter)
+static bool getJITaaSNumericOptionFromCommandLineOptions(char **options, char delimiter, char *option, uint32_t *out)
    {
+   if (!try_scan(options, option))
+      return false;
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
 
    char *startChar = scan_to_delim(PORTLIB, options, delimiter);
-   uint32_t timeout = 0;
-   UDATA scanResult = scan_u32(&startChar, &timeout);
+   uint32_t value = 0;
+   UDATA scanResult = scan_u32(&startChar, &value);
+   j9mem_free_memory(startChar);
    if (scanResult != 0)
       {
       if (scanResult == 1)
-         j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JIT_OPTIONS_MUST_BE_NUMBER, "timeout=");
+         j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JIT_OPTIONS_MUST_BE_NUMBER, option);
       else
-         j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED, "timeout=");
+         j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED, option);
+      return false;
       }
    else
-      getCompilationInfo(jitConfig)->getPersistentInfo()->setJITaaSTimeout(timeout);
-   }
-
-static void getJITaaSServerPortFromCommandLineOptions(char **options, char delimiter)
-   {
-   PORT_ACCESS_FROM_JITCONFIG(jitConfig);
-
-   char *portChar = scan_to_delim(PORTLIB, options, delimiter);
-   uint32_t port = 0;
-   UDATA scanResult = scan_u32(&portChar, &port);
-   if (scanResult != 0)
       {
-      if (scanResult == 1)
-         j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JIT_OPTIONS_MUST_BE_NUMBER, "port=");
-      else
-         j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED, "port=");
+      *out = value;
+      return true;
       }
-   else
-      getCompilationInfo(jitConfig)->getPersistentInfo()->setJITaaSServerPort(port);
    }
 
 static void handleUnrecognizedCommandLineOptions(char **options, char delimiter)
@@ -1092,7 +1081,68 @@ static void handleUnrecognizedCommandLineOptions(char **options, char delimiter)
       j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT, *options);
 
    // skip this unknown option to search for any known options left
-   scan_to_delim(PORTLIB, options, delimiter);
+   j9mem_free_memory(scan_to_delim(PORTLIB, options, delimiter));
+   }
+
+static std::string readFileToString(char *fileName)
+   {
+   I_32 fileId = j9jit_fopen_existing(fileName);
+   if (fileId == -1)
+      return "";
+   char buf[4096];
+   std::string fileStr;
+   int readSize;
+   do {
+      readSize = j9jit_fread(fileId, buf, sizeof buf);
+      fileStr.append(buf, readSize);
+   } while (readSize == sizeof buf);
+   j9jit_fcloseId(fileId);
+   return fileStr;
+   }
+
+static bool JITaaSParseOptionsCommon(char **options, char delimiter, TR::CompilationInfo *compInfo, char **unRecognizedOptions)
+   {
+   PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+
+   uint32_t port, timeout;
+   if (try_scan(options, "sslKey="))
+      {
+      char * fileName = scan_to_delim(PORTLIB, options, delimiter);
+      std::string key = readFileToString(fileName);
+      j9mem_free_memory(fileName);
+      if (!key.empty())
+         compInfo->getPersistentInfo()->addJITaaSSslKey(key);
+      }
+   else if (try_scan(options, "sslCert="))
+      {
+      char * fileName = scan_to_delim(PORTLIB, options, delimiter);
+      std::string cert = readFileToString(fileName);
+      j9mem_free_memory(fileName);
+      if (!cert.empty())
+         compInfo->getPersistentInfo()->addJITaaSSslCert(cert);
+      }
+   else if (try_scan(options, "sslRootCerts="))
+      {
+      char * fileName = scan_to_delim(PORTLIB, options, delimiter);
+      std::string cert = readFileToString(fileName);
+      j9mem_free_memory(fileName);
+      compInfo->getPersistentInfo()->setJITaaSSslRootCerts(cert);
+      }
+   else if (getJITaaSNumericOptionFromCommandLineOptions(options, delimiter, "port=", &port))
+      compInfo->getPersistentInfo()->setJITaaSServerPort(port);
+   else if (getJITaaSNumericOptionFromCommandLineOptions(options, delimiter, "timeout=", &timeout))
+      compInfo->getPersistentInfo()->setJITaaSTimeout(timeout);
+   else // option not known
+      {
+      if (*unRecognizedOptions != *options)
+         {
+         *unRecognizedOptions = *options;
+         handleUnrecognizedCommandLineOptions(options, delimiter);
+         }
+      else // no more known options, break the loop
+         return false;
+      }
+   return true;
    }
 
 bool
@@ -2039,21 +2089,10 @@ J9::Options::fePreProcess(void * base)
                      {
                      char *address = scan_to_delim(PORTLIB, &options, delimiter);
                      compInfo->getPersistentInfo()->setJITaaSServerAddress(address);
+                     j9mem_free_memory(address);
                      }
-                  else if (try_scan(&options, "port=")) // parse port=<number> option
-                     getJITaaSServerPortFromCommandLineOptions(&options, delimiter);
-                  else if (try_scan(&options, "timeout="))
-                     getJITaaSTimeoutFromCommandLineOptions(&options, delimiter);
-                  else                                  // option not known
-                     {
-                     if (unRecognizedOptions != options) // try to loop through all known options
-                        {
-                        unRecognizedOptions = options;
-                        handleUnrecognizedCommandLineOptions(&options, delimiter);
-                        }
-                     else // no more known options, break the loop
-                        break;
-                     }
+                  else if (!JITaaSParseOptionsCommon(&options, delimiter, compInfo, &unRecognizedOptions))
+                     break;
                   }
                }
             }
@@ -2073,23 +2112,7 @@ J9::Options::fePreProcess(void * base)
                char *scanLimit = options + strlen(options);
                char delimiter = ',';
                char *unRecognizedOptions = NULL;
-               while (options < scanLimit)
-                  {
-                  if (try_scan(&options, "port=")) // parse port=<number> option
-                     getJITaaSServerPortFromCommandLineOptions(&options, delimiter);
-                  else if (try_scan(&options, "timeout="))
-                     getJITaaSTimeoutFromCommandLineOptions(&options, delimiter);
-                  else                                  // option not known
-                     {
-                     if (unRecognizedOptions != options) // try to loop through all known options
-                        {
-                        unRecognizedOptions = options;
-                        handleUnrecognizedCommandLineOptions(&options, delimiter);
-                        }
-                     else // no more known options, break the loop
-                        break;
-                     }
-                  }
+               while (options < scanLimit && JITaaSParseOptionsCommon(&options, delimiter, compInfo, &unRecognizedOptions));
                }
             }
          }

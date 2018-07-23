@@ -16,7 +16,7 @@ using namespace google;
 class J9ClientStream
    {
 public:
-   J9ClientStream(std::string address, uint32_t port, uint32_t timeout=0);
+   J9ClientStream(TR::PersistentInfo *info);
    ~J9ClientStream();
 
    template <typename... T>

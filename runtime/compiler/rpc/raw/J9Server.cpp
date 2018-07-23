@@ -91,8 +91,10 @@ J9ServerStream::finishCompilation(uint32_t statusCode, std::string codeCache, st
    }
 
 void
-J9CompileServer::buildAndServe(J9BaseCompileDispatcher *compiler, uint32_t port, uint32_t timeoutMs)
+J9CompileServer::buildAndServe(J9BaseCompileDispatcher *compiler, TR::PersistentInfo *info)
    {
+   uint32_t port = info->getJITaaSServerPort();
+   uint32_t timeoutMs = info->getJITaaSTimeout();
    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
    if (sockfd < 0)
       {
