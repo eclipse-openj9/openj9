@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,9 +73,17 @@
 
 /* PR 94621 - the following defines are used to determine how gethostby*_r calls should be handled.*/
 /* HOSTENT_DATA_R: if the HOSTENT_DATA structure is used */
-#define HOSTENT_DATA_R (defined(AIXPPC))
+#if defined(AIXPPC)
+#define HOSTENT_DATA_R 1
+#else
+#define HOSTENT_DATA_R 0
+#endif
 /* GLIBC_R: uses the GLIBC versions */
-#define GLIBC_R (defined(LINUX))
+#if defined(LINUX)
+#define GLIBC_R 1
+#else
+#define GLIBC_R 0
+#endif
 /* OTHER_R: everything else */
 #define OTHER_R ((!HOSTENT_DATA_R)&&(!GLIBC_R))
 
