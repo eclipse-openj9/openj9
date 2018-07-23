@@ -4837,9 +4837,6 @@ typedef struct J9InternalVMFunctions {
 	IDATA ( *registerOSHandler)(struct J9JavaVM *vm, U_32 signal, void *newOSHandler, void **oldOSHandler);
 	void ( *throwNativeOOMError)(JNIEnv *env, U_32 moduleName, U_32 messageNumber);
 	void ( *throwNewJavaIoIOException)(JNIEnv *env, const char *message);
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
-	UDATA ( *loadAndVerifyNestHost)(struct J9VMThread *vmThread, struct J9Class *clazz, UDATA options);
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
 } J9InternalVMFunctions;
 
 
