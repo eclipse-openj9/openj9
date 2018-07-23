@@ -471,6 +471,17 @@ UNUSED(jitFindFieldSignatureClass)
 UNUSED(icallVMprJavaSendInvokeWithArgumentsHelperL)
 UNUSED(j2iInvokeWithArguments)
 
+START_PROC(jitThrowClassCastException)
+	FASTCALL_EXTERN(impl_jitClassCastException,1)
+	pop uword ptr J9TR_VMThread_jitReturnAddress[_rbp]
+	pop uword ptr J9TR_VMThread_floatTemp1[_rbp]
+	pop uword ptr J9TR_VMThread_floatTemp2[_rbp]
+	SWITCH_TO_C_STACK
+	SAVE_ALL_REGS
+	FASTCALL_C_WITH_VMTHREAD(impl_jitClassCastException)
+	jmp _rax
+END_PROC(jitThrowClassCastException)
+
 dnl Switch from the C stack to the java stack and jump via tempSlot
 
 START_PROC(jitRunOnJavaStack)

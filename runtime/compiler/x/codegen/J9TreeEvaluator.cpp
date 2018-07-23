@@ -1841,22 +1841,23 @@ static bool generateSingleProfiledCacheTest (
 extern void TEMPORARY_initJ9X86TreeEvaluatorTable(TR::CodeGenerator *cg)
    {
    TR_TreeEvaluatorFunctionPointer *tet = cg->getTreeEvaluatorTable();
-
+   static const auto ForceOldInstanceOf = (bool)feGetEnv("TR_ForceOldInstanceOf");
+   static const auto ForceOldCheckCast = (bool)feGetEnv("TR_ForceOldCheckCast");
    tet[TR::wrtbar] =                TR::TreeEvaluator::writeBarrierEvaluator;
    tet[TR::wrtbari] =               TR::TreeEvaluator::writeBarrierEvaluator;
    tet[TR::monent] =                TR::TreeEvaluator::monentEvaluator;
    tet[TR::monexit] =               TR::TreeEvaluator::monexitEvaluator;
    tet[TR::monexitfence] =          TR::TreeEvaluator::monexitfenceEvaluator;
    tet[TR::asynccheck] =            TR::TreeEvaluator::asynccheckEvaluator;
-   tet[TR::instanceof] =            TR::TreeEvaluator::instanceofEvaluator;
-   tet[TR::checkcast] =             TR::TreeEvaluator::checkcastEvaluator;
-   tet[TR::checkcastAndNULLCHK] =   TR::TreeEvaluator::checkcastAndNULLCHKEvaluator;
+   tet[TR::instanceof] =            ForceOldInstanceOf ? TR::TreeEvaluator::instanceofEvaluator          : TR::TreeEvaluator::checkcastinstanceofEvaluator;
+   tet[TR::checkcast] =             ForceOldCheckCast  ? TR::TreeEvaluator::checkcastEvaluator           : TR::TreeEvaluator::checkcastinstanceofEvaluator;
+   tet[TR::checkcastAndNULLCHK] =   ForceOldCheckCast  ? TR::TreeEvaluator::checkcastAndNULLCHKEvaluator : TR::TreeEvaluator::checkcastinstanceofEvaluator;
    tet[TR::New] =                   TR::TreeEvaluator::newEvaluator;
    tet[TR::newarray] =              TR::TreeEvaluator::newEvaluator;
    tet[TR::anewarray] =             TR::TreeEvaluator::newEvaluator;
    tet[TR::variableNew] =           TR::TreeEvaluator::newEvaluator;
    tet[TR::variableNewArray] =      TR::TreeEvaluator::newEvaluator;
-   tet[TR::multianewarray]        = TR::TreeEvaluator::multianewArrayEvaluator;
+   tet[TR::multianewarray] =        TR::TreeEvaluator::multianewArrayEvaluator;
    tet[TR::arraylength] =           TR::TreeEvaluator::arraylengthEvaluator;
    tet[TR::lookup] =                TR::TreeEvaluator::lookupEvaluator;
    tet[TR::exceptionRangeFence] =   TR::TreeEvaluator::exceptionRangeFenceEvaluator;
@@ -4501,7 +4502,360 @@ TR::Register *J9::X86::TreeEvaluator::longBitCount(TR::Node *node, TR::CodeGener
 
 
 // ----------------------------------------------------------------------------
+inline void generateLoadJ9Class(TR::Node* node, TR::Register* j9class, TR::Register* object, TR::CodeGenerator* cg)
+   {
+   auto use64BitClasses = TR::Compiler->target.is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
+   auto instr = generateRegMemInstruction(LRegMem(use64BitClasses), node, j9class, generateX86MemoryReference(object, TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
+   if (node->getOpCodeValue() == TR::checkcastAndNULLCHK)
+      {
+      cg->setImplicitExceptionPoint(instr);
+      instr->setNeedsGCMap(0xFF00FFFF);
+      instr->setNode(cg->comp()->findNullChkInfo(node));
+      }
+   auto mask = TR::Compiler->om.maskOfObjectVftField();
+   if (~mask != 0)
+      {
+      generateRegImmInstruction(~mask <= 127 ? ANDRegImms(use64BitClasses) : ANDRegImm4(use64BitClasses), node, j9class, mask, cg);
+      }
+   }
 
+inline void generateInlinedCheckCastOrInstanceOfForInterface(TR::Node* node, TR_OpaqueClassBlock* clazz, TR::CodeGenerator* cg, bool isCheckCast)
+   {
+   TR_ASSERT(clazz && TR::Compiler->cls.isInterfaceClass(cg->comp(), clazz), "Not a compile-time known Interface.");
+
+   auto use64BitClasses = TR::Compiler->target.is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
+
+   auto j9class = cg->allocateRegister();
+   auto tmp     = use64BitClasses ? cg->allocateRegister() : NULL;
+
+   auto deps = generateRegisterDependencyConditions((uint8_t)2, (uint8_t)2, cg);
+   deps->addPreCondition(j9class, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(j9class, TR::RealRegister::NoReg, cg);
+   if (tmp)
+      {
+      deps->addPreCondition(tmp, TR::RealRegister::NoReg, cg);
+      deps->addPostCondition(tmp, TR::RealRegister::NoReg, cg);
+      }
+   deps->stopAddingConditions();
+
+   auto begLabel = generateLabelSymbol(cg);
+   auto endLabel = generateLabelSymbol(cg);
+   begLabel->setStartInternalControlFlow();
+   endLabel->setEndInternalControlFlow();
+
+   auto iTableLookUpPathLabel = generateLabelSymbol(cg);
+   auto iTableLookUpFailLabel = generateLabelSymbol(cg);
+   auto iTableLoopLabel       = generateLabelSymbol(cg);
+
+   generateRegRegInstruction(MOVRegReg(), node, j9class, node->getChild(0)->getRegister(), cg);
+   generateLabelInstruction(LABEL, node, begLabel, cg);
+
+   // Null test
+   if (!node->getChild(0)->isNonNull())
+      {
+      // j9class contains the object at this point, reusing the register as object is no longer used after this point.
+      generateRegRegInstruction(TESTRegReg(), node, j9class, j9class, cg);
+      generateLabelInstruction(JE4, node, endLabel, cg);
+      }
+
+   // Load J9Class
+   generateLoadJ9Class(node, j9class, j9class, cg);
+
+   // Profiled call site cache
+   uintptrj_t guessClass = 0;
+   TR_OpaqueClassBlock* guessClassArray[NUM_PICS];
+   auto num_PICs = TR::TreeEvaluator::interpreterProfilingInstanceOfOrCheckCastInfo(cg, node, guessClassArray);
+   for (uint8_t i = 0; i < num_PICs; i++)
+      {
+      if (instanceOfOrCheckCast((J9Class*)guessClassArray[i], (J9Class*)clazz))
+         {
+         guessClass = (uintptrj_t)guessClassArray[i];
+         }
+      }
+   // Call site cache
+   auto cache = sizeof(J9Class*) == 4 ? cg->create4ByteData(node, (uint32_t)guessClass) : cg->create8ByteData(node, (uint64_t)guessClass);
+   cache->setClassAddress(true);
+   generateRegMemInstruction(CMPRegMem(use64BitClasses), node, j9class, generateX86MemoryReference(cache, cg), cg);
+   generateLabelInstruction(JNE4, node, iTableLookUpPathLabel, cg);
+
+   // I-Table lookup
+      {
+      TR_OutlinedInstructionsGenerator og(iTableLookUpPathLabel, node, cg);
+      auto itable = j9class; // re-use the j9class register to perform itable lookup
+
+      generateRegInstruction(PUSHReg, node, j9class, cg);
+
+      // Save VFP
+      auto vfp = generateVFPSaveInstruction(node, cg);
+
+      // Obtain I-Table
+      generateRegMemInstruction(LRegMem(), node, itable, generateX86MemoryReference(j9class, offsetof(J9Class, iTable), cg), cg);
+      if (tmp)
+         {
+         generateRegImm64Instruction(MOV8RegImm64, node, tmp, (uintptrj_t)clazz, cg, TR_ClassAddress);
+         }
+
+      // Loop through I-Table
+      generateLabelInstruction(LABEL, node, iTableLoopLabel, cg);
+      generateRegRegInstruction(TESTRegReg(), node, itable, itable, cg);
+      generateLabelInstruction(JE4, node, iTableLookUpFailLabel, cg);
+      auto interfaceMR = generateX86MemoryReference(itable, offsetof(J9ITable, interfaceClass), cg);
+      if (tmp)
+         {
+         generateMemRegInstruction(CMP8MemReg, node, interfaceMR, tmp, cg);
+         }
+      else
+         {
+         generateMemImmSymInstruction(CMP4MemImm4, node, interfaceMR, (uintptrj_t)clazz, node->getChild(1)->getSymbolReference(), cg);
+         }
+      generateRegMemInstruction(LRegMem(), node, itable, generateX86MemoryReference(itable, offsetof(J9ITable, next), cg), cg);
+      generateLabelInstruction(JNE4, node, iTableLoopLabel, cg);
+
+      // Found from I-Table
+      generateMemInstruction(POPMem, node, generateX86MemoryReference(cache, cg), cg); // j9class
+      if (!isCheckCast)
+         {
+         generateInstruction(STC, node, cg);
+         }
+      generateLabelInstruction(JMP4, node, endLabel, cg);
+
+      // Not found
+      generateVFPRestoreInstruction(vfp, node, cg);
+      generateLabelInstruction(LABEL, node, iTableLookUpFailLabel, cg);
+      if (isCheckCast)
+         {
+         if (tmp)
+            {
+            generateRegInstruction(PUSHReg, node, tmp, cg);
+            }
+         else
+            {
+            generateImmInstruction(PUSHImm4, node, (int32_t)(uintptr_t)clazz, cg);
+            }
+         auto call = generateHelperCallInstruction(node, TR_throwClassCastException, NULL, cg);
+         call->setNeedsGCMap(0xFF00FFFF);
+         call->setAdjustsFramePointerBy(-2*sizeof(void*));
+         }
+      else
+         {
+         generateRegInstruction(POPReg, node, j9class, cg);
+         generateLabelInstruction(JMP4, node, endLabel, cg);
+         }
+      }
+
+   // Succeed
+   if (!isCheckCast)
+      {
+      generateInstruction(STC, node, cg);
+      }
+   generateLabelInstruction(LABEL, node, endLabel, deps, cg);
+
+   cg->stopUsingRegister(j9class);
+   if (tmp)
+      {
+      cg->stopUsingRegister(tmp);
+      }
+   }
+
+inline void generateInlinedCheckCastOrInstanceOfForClass(TR::Node* node, TR_OpaqueClassBlock* clazz, TR::CodeGenerator* cg, bool isCheckCast)
+   {
+   auto fej9 = (TR_J9VMBase*)(cg->fe());
+   auto use64BitClasses = TR::Compiler->target.is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
+
+   auto clazzData = use64BitClasses ? cg->create8ByteData(node, (uint64_t)(uintptr_t)clazz) : NULL;
+   if (clazzData)
+      {
+      clazzData->setClassAddress(true);
+      }
+
+   auto j9class = cg->allocateRegister();
+   auto tmp = cg->allocateRegister();
+
+   auto deps = generateRegisterDependencyConditions((uint8_t)2, (uint8_t)2, cg);
+   deps->addPreCondition(tmp, TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(j9class, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(tmp, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(j9class, TR::RealRegister::NoReg, cg);
+
+   auto begLabel = generateLabelSymbol(cg);
+   auto endLabel = generateLabelSymbol(cg);
+   begLabel->setStartInternalControlFlow();
+   endLabel->setEndInternalControlFlow();
+
+   auto successLabel = isCheckCast ? endLabel : generateLabelSymbol(cg);
+   auto failLabel    = isCheckCast ? generateLabelSymbol(cg) : endLabel;
+
+   generateRegRegInstruction(MOVRegReg(), node, j9class, node->getChild(0)->getRegister(), cg);
+   generateLabelInstruction(LABEL, node, begLabel, cg);
+
+   // Null test
+   if (!node->getChild(0)->isNonNull() && node->getOpCodeValue() != TR::checkcastAndNULLCHK)
+      {
+      // j9class contains the object at this point, reusing the register as object is no longer used after this point.
+      generateRegRegInstruction(TESTRegReg(), node, j9class, j9class, cg);
+      generateLabelInstruction(JE4, node, endLabel, cg);
+      }
+
+   // Load J9Class
+   generateLoadJ9Class(node, j9class, j9class, cg);
+
+   // Equality test
+   if (!fej9->isAbstractClass(clazz))
+      {
+      if (use64BitClasses)
+         {
+         generateRegMemInstruction(CMP8RegMem, node, j9class, generateX86MemoryReference(clazzData, cg), cg);
+         }
+      else
+         {
+         generateRegImmInstruction(CMP4RegImm4, node, j9class, (uintptrj_t)clazz, cg);
+         }
+      if (!fej9->isClassFinal(clazz))
+         {
+         generateLabelInstruction(JE4, node, successLabel, cg);
+         }
+      }
+   // at this point, ZF == 1 indicates success
+
+   // Superclass test
+   if (!fej9->isClassFinal(clazz))
+      {
+      auto depth = TR::Compiler->cls.classDepthOf(clazz);
+      if (depth >= cg->comp()->getOptions()->_minimumSuperclassArraySize)
+         {
+         static_assert(J9_JAVA_CLASS_DEPTH_MASK == 0xffff, "J9_JAVA_CLASS_DEPTH_MASK must be 0xffff");
+         auto depthMR = generateX86MemoryReference(j9class, offsetof(J9Class, classDepthAndFlags), cg);
+         generateMemImmInstruction(CMP2MemImm2, node, depthMR, depth, cg);
+         if (!isCheckCast)
+            {
+            // Need ensure CF is cleared before reaching to fail label
+            auto outlineLabel = generateLabelSymbol(cg);
+            generateLabelInstruction(JBE4, node, outlineLabel, cg);
+
+            TR_OutlinedInstructionsGenerator og(outlineLabel, node, cg);
+            generateInstruction(CLC, node, cg);
+            generateLabelInstruction(JMP4, node, failLabel, cg);
+            }
+         else
+            {
+            generateLabelInstruction(JBE4, node, failLabel, cg);
+            }
+         }
+
+      generateRegMemInstruction(LRegMem(), node, tmp, generateX86MemoryReference(j9class, offsetof(J9Class, superclasses), cg), cg);
+      auto offset = depth * sizeof(J9Class*);
+      TR_ASSERT(IS_32BIT_SIGNED(offset), "The offset to superclass is unreasonably large.");
+      auto superclass = generateX86MemoryReference(tmp, offset, cg);
+      if (use64BitClasses)
+         {
+         generateRegMemInstruction(L8RegMem, node, tmp, superclass, cg);
+         generateRegMemInstruction(CMP8RegMem, node, tmp, generateX86MemoryReference(clazzData, cg), cg);
+         }
+      else
+         {
+         generateMemImmInstruction(CMP4MemImm4, node, superclass, (int32_t)(uintptr_t)clazz, cg);
+         }
+      }
+   // at this point, ZF == 1 indicates success
+
+   // Branch to success/fail path
+   if (!isCheckCast)
+      {
+      generateInstruction(CLC, node, cg);
+      }
+   generateLabelInstruction(JNE4, node, failLabel, cg);
+
+   // Set CF to report success
+   if (!isCheckCast)
+      {
+      generateLabelInstruction(LABEL, node, successLabel, cg);
+      generateInstruction(STC, node, cg);
+      }
+
+   // Throw exception for CheckCast
+   if (isCheckCast)
+      {
+      TR_OutlinedInstructionsGenerator og(failLabel, node, cg);
+
+      generateRegInstruction(PUSHReg, node, j9class, cg);
+      if (use64BitClasses)
+         {
+         generateMemInstruction(PUSHMem, node, generateX86MemoryReference(clazzData, cg), cg);
+         }
+      else
+         {
+         generateImmInstruction(PUSHImm4, node, (int32_t)(uintptr_t)clazz, cg);
+         }
+      auto call = generateHelperCallInstruction(node, TR_throwClassCastException, NULL, cg);
+      call->setNeedsGCMap(0xFF00FFFF);
+      call->setAdjustsFramePointerBy(-2*sizeof(void*));
+      }
+
+   // Succeed
+   generateLabelInstruction(LABEL, node, endLabel, deps, cg);
+
+   cg->stopUsingRegister(j9class);
+   cg->stopUsingRegister(tmp);
+   }
+
+TR::Register *J9::X86::TreeEvaluator::checkcastinstanceofEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   bool isCheckCast = false;
+   switch (node->getOpCodeValue())
+      {
+      case TR::checkcast:
+      case TR::checkcastAndNULLCHK:
+         isCheckCast = true;
+         break;
+      case TR::instanceof:
+         isCheckCast = false;
+         break;
+      default:
+         TR_ASSERT(false, "Incorrect Op Code %d.", node->getOpCodeValue());
+         break;
+      }
+   auto clazz = TR::TreeEvaluator::getCastClassAddress(node->getChild(1));
+   if (clazz &&
+       !TR::Compiler->cls.isClassArray(cg->comp(), clazz) && // not yet optimized
+       !cg->comp()->compileRelocatableCode() && // TODO subsequent PR will support AOT
+       !cg->comp()->getOption(TR_DisableInlineCheckCast))
+      {
+      cg->evaluate(node->getChild(0));
+      if (TR::Compiler->cls.isInterfaceClass(cg->comp(), clazz))
+         {
+         generateInlinedCheckCastOrInstanceOfForInterface(node, clazz, cg, isCheckCast);
+         }
+      else
+         {
+         generateInlinedCheckCastOrInstanceOfForClass(node, clazz, cg, isCheckCast);
+         }
+      if (!isCheckCast)
+         {
+         auto result = cg->allocateRegister();
+         generateRegInstruction(SETB1Reg, node, result, cg);
+         generateRegRegInstruction(MOVZXReg4Reg1, node, result, result, cg);
+         node->setRegister(result);
+         }
+      cg->decReferenceCount(node->getChild(0));
+      cg->recursivelyDecReferenceCount(node->getChild(1));
+      }
+   else
+      {
+      if (node->getOpCodeValue() == TR::checkcastAndNULLCHK)
+         {
+         auto object = cg->evaluate(node->getChild(0));
+         // Just touch the memory in case this is a NULL pointer and we need to throw
+         // the exception after the checkcast. If the checkcast was combined with nullpointer
+         // there's nobody after the checkcast to throw the exception.
+         auto instr = generateMemImmInstruction(TEST1MemImm1, node, generateX86MemoryReference(object, TR::Compiler->om.offsetOfObjectVftField(), cg), 0, cg);
+         cg->setImplicitExceptionPoint(instr);
+         instr->setNeedsGCMap(0xFF00FFFF);
+         instr->setNode(cg->comp()->findNullChkInfo(node));
+         }
+      TR::TreeEvaluator::performHelperCall(node, NULL, isCheckCast ? TR::call : TR::icall, false, cg);
+      }
+   return node->getRegister();
+   }
 
 TR::Register *J9::X86::TreeEvaluator::VMcheckcastEvaluator(TR::Node          *node,
                                                        TR::CodeGenerator *cg)
