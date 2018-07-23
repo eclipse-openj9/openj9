@@ -767,9 +767,6 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
   			if (scan_udata(&scan_start, &maxSpinThreads)) {
   				goto _error;
   			}
-  			if (maxSpinThreads < OMRTHREAD_MINIMUM_SPIN_THREADS) {
-  				goto _error;
-  			}
   			**(UDATA**)omrthread_global("maxSpinThreads") = maxSpinThreads;
   			continue;
   		}
