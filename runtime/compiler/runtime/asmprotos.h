@@ -118,6 +118,7 @@ JIT_HELPER(jitThrowArrayStoreException);  // asm calling-convention helper
 JIT_HELPER(jitThrowArrayStoreExceptionWithIP);  // asm calling-convention helper
 JIT_HELPER(jitThrowCurrentException);  // asm calling-convention helper
 JIT_HELPER(jitThrowException);  // asm calling-convention helper
+JIT_HELPER(jitThrowClassCastException);  // asm calling-convention helper
 JIT_HELPER(jitThrowExceptionInInitializerError);  // asm calling-convention helper
 JIT_HELPER(jitThrowInstantiationException);  // asm calling-convention helper
 JIT_HELPER(jitThrowNullPointerException);  // asm calling-convention helper
