@@ -656,7 +656,6 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
    //
    uint32_t preservedRegsSize = 0;
    uint32_t registerSaveDescription = 0; // bit N corresponds to real reg N, with 1=preserved
-   uint32_t preservationMask        = 0; // bit N corresponds to _preservedRegisters[N], with 1=preserved
 
    // Preserved register index
    for (int32_t pindex = 0; pindex < properties.getMaxRegistersPreservedInPrologue(); pindex++)
@@ -666,7 +665,6 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
          {
          preservedRegsSize += properties.getPointerSize();
          registerSaveDescription |= reg->getRealRegisterMask();
-         preservationMask |= (1<<pindex);
          }
       }
 
@@ -701,40 +699,11 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
                   _properties.getRetAddressWidth());
       }
 
-   uint32_t numLocals              = localSize >> getProperties().getParmSlotShift();
-   uint32_t numRegsPreservedOOL    = preservedRegsSize >> getProperties().getParmSlotShift();
-   uint32_t numPreservesOmitted = 0;
-
-   TR_BitVector *preservedRegsInPrologue = cg()->getPreservedRegsInPrologue();
-   if (preservedRegsInPrologue)
-      {
-      for (int32_t pindex = _properties.getMaxRegistersPreservedInPrologue()-1;
-           pindex >= 0;
-           pindex--)
-         {
-         uint32_t pbit = 1 << pindex;
-         if ((preservationMask & pbit) == 0)
-            continue; // We're not preserving this one anyway
-
-         TR::RealRegister::RegNum reg = _properties.getPreservedRegister((uint32_t)pindex);
-         if (preservedRegsInPrologue->get(reg))
-            break;    // Found the first register we truly need to preserve in the prologue, so we're done
-
-         if (performTransformation(comp(), "O^O OUTLINED PROLOGUES: Preserved reg #%d has been shrinkwrapped, so no need to save it in outlined prologue\n", pindex))
-            {
-            numPreservesOmitted++;
-            numRegsPreservedOOL--;
-            preservationMask &= ~pbit;
-            }
-         }
-      }
 
    // Here we conservatively assume there is a call in this method that will require space for its return address
-   const int32_t peakSize = localSize + preservedRegsSize + outgoingArgSize + _properties.getPointerSize();
+   const int32_t peakSize = allocSize + _properties.getPointerSize();
 
    bool doOverflowCheck = !comp()->isDLT();
-
-   TR::Instruction *stackOverflowInstruction = NULL;
 
    // Small: entire stack usage fits in STACKCHECKBUFFER, so if sp is within
    // the soft limit before buying the frame, then the whole frame will fit
@@ -749,13 +718,12 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
    // if for no other reason than that's the one used for asyncchecks.)
    //
    const bool frameIsSmall  = peakSize < STACKCHECKBUFFER;
-   const bool frameIsMedium = !frameIsSmall && (peakSize - allocSize) < STACKCHECKBUFFER;
-   const bool frameIsLarge  = !frameIsSmall && !frameIsMedium;
-
+   const bool frameIsMedium = !frameIsSmall;
+   
    if (trace)
       {
-      traceMsg(comp(), "\nFrame size: %c%c%c locals=%d frame=%d peak=%d\n",
-         frameIsSmall? 'S':'-', frameIsMedium? 'M':'-', frameIsLarge? 'L':'-',
+      traceMsg(comp(), "\nFrame size: %c%c locals=%d frame=%d peak=%d\n",
+         frameIsSmall? 'S':'-', frameIsMedium? 'M':'-',
          localSize, cg()->getFrameSizeInBytes(), peakSize);
       }
 
@@ -823,21 +791,6 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
 
       TR::RealRegister *cmpRegister = espReal;
 
-      if (frameIsLarge && doOverflowCheck)
-         {
-         TR_ASSERT(minInstructionSize <= 5, "Can't guarantee LEA instruction will be at least %d bytes", minInstructionSize);
-
-         // For large frames, there are no shortcuts.  Explicitly compute the
-         // maximum extent of the stack pointer and make sure there's enough
-         // room for it.
-         //
-         cmpRegister = scratchReg;
-         cursor = new (trHeapMemory()) TR::X86RegMemInstruction(cursor,
-            LEARegMem(), cmpRegister, generateX86MemoryReference(espReal, -peakSize, cg()), cg());
-
-         minInstructionSize = 0; // The LEA satisfies the constraint
-         }
-
       doAllocateFrameSpeculatively = frameIsMedium;
 
       if (doAllocateFrameSpeculatively)
@@ -904,11 +857,6 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
       }
 
    bodySymbol->setProloguePushSlots(preservedRegsSize / properties.getPointerSize());
-
-   //
-   // Inline prologue logic
-   //
-   TR::Instruction *outlineablePortionStart = cursor;
 
    // Allocate the stack frame
    //
@@ -998,15 +946,13 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
       TR::RealRegister *loopReg = machine()->getX86RealRegister(properties.getIntegerScratchRegister(1));
 
       int32_t numReferenceLocalSlotsToInitialize = atlas->getNumberOfSlotsToBeInitialized();
-      int32_t numInternalPointerSlotsToInitialize;
+      int32_t numInternalPointerSlotsToInitialize = 0;
 
       if (atlas->getInternalPointerMap())
          {
          numInternalPointerSlotsToInitialize = atlas->getNumberOfDistinctPinningArrays() +
                                                atlas->getInternalPointerMap()->getNumInternalPointers();
          }
-      else
-         numInternalPointerSlotsToInitialize = 0;
 
       if (numReferenceLocalSlotsToInitialize > 0 || numInternalPointerSlotsToInitialize > 0)
          {
@@ -2297,7 +2243,7 @@ TR::Instruction *TR::X86PrivateLinkage::buildVFTCall(TR::X86CallSite &site, TR_X
    if (cg()->enableSinglePrecisionMethods() &&
        comp()->getJittedMethodSymbol()->usesSinglePrecisionMode())
       {
-      TR::IA32ConstantDataSnippet *cds = cg()->findOrCreate2ByteConstant(callNode, DOUBLE_PRECISION_ROUND_TO_NEAREST);
+      auto cds = cg()->findOrCreate2ByteConstant(callNode, DOUBLE_PRECISION_ROUND_TO_NEAREST);
       generateMemInstruction(LDCWMem, callNode, generateX86MemoryReference(cds, cg()), cg());
       }
 
@@ -2387,7 +2333,7 @@ TR::Instruction *TR::X86PrivateLinkage::buildVFTCall(TR::X86CallSite &site, TR_X
    if (cg()->enableSinglePrecisionMethods() &&
        comp()->getJittedMethodSymbol()->usesSinglePrecisionMode())
       {
-      TR::IA32ConstantDataSnippet *cds = cg()->findOrCreate2ByteConstant(callNode, SINGLE_PRECISION_ROUND_TO_NEAREST);
+      auto cds = cg()->findOrCreate2ByteConstant(callNode, SINGLE_PRECISION_ROUND_TO_NEAREST);
       generateMemInstruction(LDCWMem, callNode, generateX86MemoryReference(cds, cg()), cg());
       }
 
@@ -2775,7 +2721,7 @@ void TR::X86PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86CallSi
       {
       TR_ASSERT(TR::Compiler->target.is64Bit(), "Only 64-bit path should reach here.");
       TR::Register *interfaceClassReg = vtableIndexReg;
-      TR::IA32ConstantDataSnippet *cds = cg()->findOrCreate8ByteConstant(site.getCallNode(), (intptrj_t)declaringClass);
+      auto cds = cg()->findOrCreate8ByteConstant(site.getCallNode(), (intptrj_t)declaringClass);
       TR::MemoryReference *interfaceClassAddr = generateX86MemoryReference(cds, cg());
       generateRegMemInstruction(LRegMem(), callNode, interfaceClassReg, interfaceClassAddr, cg());
       generateMemRegInstruction(CMPMemReg(),
