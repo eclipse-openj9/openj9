@@ -2297,7 +2297,7 @@ TR::Instruction *TR::X86PrivateLinkage::buildVFTCall(TR::X86CallSite &site, TR_X
    if (cg()->enableSinglePrecisionMethods() &&
        comp()->getJittedMethodSymbol()->usesSinglePrecisionMode())
       {
-      TR::IA32ConstantDataSnippet *cds = cg()->findOrCreate2ByteConstant(callNode, DOUBLE_PRECISION_ROUND_TO_NEAREST);
+      auto cds = cg()->findOrCreate2ByteConstant(callNode, DOUBLE_PRECISION_ROUND_TO_NEAREST);
       generateMemInstruction(LDCWMem, callNode, generateX86MemoryReference(cds, cg()), cg());
       }
 
@@ -2387,7 +2387,7 @@ TR::Instruction *TR::X86PrivateLinkage::buildVFTCall(TR::X86CallSite &site, TR_X
    if (cg()->enableSinglePrecisionMethods() &&
        comp()->getJittedMethodSymbol()->usesSinglePrecisionMode())
       {
-      TR::IA32ConstantDataSnippet *cds = cg()->findOrCreate2ByteConstant(callNode, SINGLE_PRECISION_ROUND_TO_NEAREST);
+      auto cds = cg()->findOrCreate2ByteConstant(callNode, SINGLE_PRECISION_ROUND_TO_NEAREST);
       generateMemInstruction(LDCWMem, callNode, generateX86MemoryReference(cds, cg()), cg());
       }
 
@@ -2775,7 +2775,7 @@ void TR::X86PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86CallSi
       {
       TR_ASSERT(TR::Compiler->target.is64Bit(), "Only 64-bit path should reach here.");
       TR::Register *interfaceClassReg = vtableIndexReg;
-      TR::IA32ConstantDataSnippet *cds = cg()->findOrCreate8ByteConstant(site.getCallNode(), (intptrj_t)declaringClass);
+      auto cds = cg()->findOrCreate8ByteConstant(site.getCallNode(), (intptrj_t)declaringClass);
       TR::MemoryReference *interfaceClassAddr = generateX86MemoryReference(cds, cg());
       generateRegMemInstruction(LRegMem(), callNode, interfaceClassReg, interfaceClassAddr, cg());
       generateMemRegInstruction(CMPMemReg(),

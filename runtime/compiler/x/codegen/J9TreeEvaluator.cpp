@@ -6559,7 +6559,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
 
 #if defined(TRACE_LOCK_RESERVATION)
       {
-      TR::IA32ConstantDataSnippet *cds = cg->findOrCreate4ByteConstant(node, (int)node);
+      auto cds = cg->findOrCreate4ByteConstant(node, (int)node);
       TR::MemoryReference *tempMR = generateX86MemoryReference(cds, cg);
 
       TR::X86MemImmInstruction  * instr;
@@ -6580,7 +6580,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
       generateMemRegInstruction(SMemReg(),node, tempMR, eaxReal, cg);
       generateMemRegInstruction(SMemReg(),node, tempMR1, eaxReal, cg);
 
-      TR::IA32ConstantDataSnippet *cds1 = cg->findOrCreate4ByteConstant(node, (int)node+2);
+      auto cds1 = cg->findOrCreate4ByteConstant(node, (int)node+2);
       TR::MemoryReference *tempMR3 = generateX86MemoryReference(cds1, cg);
       TR::SymbolReference *tempRef2 = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), TR_UInt32);
       TR::MemoryReference *tempMR2 = generateX86MemoryReference(tempRef2, cg);
@@ -6815,7 +6815,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
 
 #if defined(TRACE_LOCK_RESERVATION)
    {
-   TR::IA32ConstantDataSnippet *cds = cg->findOrCreate4ByteConstant(node, (int)node+1);
+   auto cds = cg->findOrCreate4ByteConstant(node, (int)node+1);
    TR::MemoryReference *tempMR = generateX86MemoryReference(cds, cg);
 
    TR::X86RegMemInstruction  *instr;
@@ -6833,7 +6833,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    generateMemRegInstruction(SMemReg(),node, tempMR, eaxReal, cg);
    generateMemRegInstruction(SMemReg(),node, tempMR1, eaxReal, cg);
 
-   TR::IA32ConstantDataSnippet *cds1 = cg->findOrCreate4ByteConstant(node, (int)node+2);
+   auto cds1 = cg->findOrCreate4ByteConstant(node, (int)node+2);
    TR::MemoryReference *tempMR3 = generateX86MemoryReference(cds1, cg);
    TR::SymbolReference *tempRef2 = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), TR_UInt32);
    TR::MemoryReference *tempMR2 = generateX86MemoryReference(tempRef2, cg);
@@ -7237,7 +7237,7 @@ TR::Register *J9::X86::TreeEvaluator::VMmonexitEvaluator(TR::Node          *node
       if (reservingLock)
          {
 #if defined(TRACE_LOCK_RESERVATION)
-         TR::IA32ConstantDataSnippet *cds = cg->findOrCreate4ByteConstant(node, (int)node);
+         auto cds = cg->findOrCreate4ByteConstant(node, (int)node);
          TR::MemoryReference *tempMR = generateX86MemoryReference(cds, cg);
 
          if (TR::Compiler->target.is64Bit() && fej9->generateCompressedLockWord())
@@ -7254,7 +7254,7 @@ TR::Register *J9::X86::TreeEvaluator::VMmonexitEvaluator(TR::Node          *node
          generateMemRegInstruction(SMemReg(),node, tempMR, tempReg, cg);
          generateMemRegInstruction(SMemReg(),node, tempMR1, tempReg, cg);
 
-         TR::IA32ConstantDataSnippet *cds1 = cg->findOrCreate4ByteConstant(node, (int)node+2);
+         auto cds1 = cg->findOrCreate4ByteConstant(node, (int)node+2);
          TR::MemoryReference *tempMR3 = generateX86MemoryReference(cds1, cg);
          TR::SymbolReference *tempRef2 = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), TR_UInt32);
          TR::MemoryReference *tempMR2 = generateX86MemoryReference(tempRef2, cg);
@@ -7389,7 +7389,7 @@ TR::Register *J9::X86::TreeEvaluator::VMmonexitEvaluator(TR::Node          *node
 #if defined(TRACE_LOCK_RESERVATION)
    if (reservingLock)
       {
-      TR::IA32ConstantDataSnippet *cds = cg->findOrCreate4ByteConstant(node, (int)node+1);
+      auto cds = cg->findOrCreate4ByteConstant(node, (int)node+1);
       TR::MemoryReference *tempMR = generateX86MemoryReference(cds, cg);
 
       cg->setImplicitExceptionPoint(generateRegMemInstruction(
@@ -7402,7 +7402,7 @@ TR::Register *J9::X86::TreeEvaluator::VMmonexitEvaluator(TR::Node          *node
       generateMemRegInstruction(SMemReg(),node, tempMR, tempReg, cg);
       generateMemRegInstruction(SMemReg(),node, tempMR1, tempReg, cg);
 
-      TR::IA32ConstantDataSnippet *cds1 = cg->findOrCreate4ByteConstant(node, (int)node+2);
+      auto cds1 = cg->findOrCreate4ByteConstant(node, (int)node+2);
       TR::MemoryReference *tempMR3 = generateX86MemoryReference(cds1, cg);
       TR::SymbolReference *tempRef2 = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), TR_UInt32);
       TR::MemoryReference *tempMR2 = generateX86MemoryReference(tempRef2, cg);
@@ -11070,7 +11070,7 @@ inlineMathSQRT(
          d.doubleVal = sqrt(d.doubleVal);
          }
 
-      TR::IA32ConstantDataSnippet *cds = cg->findOrCreate8ByteConstant(operand, d.rawBits);
+      auto cds = cg->findOrCreate8ByteConstant(operand, d.rawBits);
 
       if (cg->useSSEForDoublePrecision())
          {
