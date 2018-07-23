@@ -35,18 +35,27 @@
 
 
 /**
+ * If condyOnly flag is not set:
  * @return the next object slot in the constant pool
  * @return NULL if there are no more object references
+ *
+ * If condyOnly flag is set and Java version is SE11 and above:
+ * @return the next Condy reference from the constant pool
+ * @return NULL if there are no more references
  */
 j9object_t *
-GC_ConstantPoolObjectSlotIterator::nextSlot()
-{
+GC_ConstantPoolObjectSlotIterator::nextSlot() {
+	/* Return NULL if _condyOnly is true but system is not condy-enabled */
+	if (_condyOnly && !_condyEnabled) {
+		return NULL;
+	}
 	U_32 slotType;
 	j9object_t *slotPtr;
 	j9object_t *result = NULL;
+	bool nextSlot = true;
 
-	while(_cpEntryCount) {
-		if(0 == _cpDescriptionIndex) {
+	while (_cpEntryCount) {
+		if (0 == _cpDescriptionIndex) {
 			_cpDescription = *_cpDescriptionSlots;
 			_cpDescriptionSlots += 1;
 			_cpDescriptionIndex = J9_CP_DESCRIPTIONS_PER_U32;
@@ -55,15 +64,17 @@ GC_ConstantPoolObjectSlotIterator::nextSlot()
 		slotType = _cpDescription & J9_CP_DESCRIPTION_MASK;
 		slotPtr = _cpEntry;
 
-		/* Adjust the CP slot and description information */
-		_cpEntry = (j9object_t *)( ((U_8 *)_cpEntry) + sizeof(J9RAMConstantPoolItem) );
-		_cpEntryCount -= 1;
-
-		_cpDescription >>= J9_CP_BITS_PER_DESCRIPTION;
-		_cpDescriptionIndex -= 1;
-
-		/* Determine if the slot should be processed */
-		switch (slotType) {
+		/* If _condyOnly is TRUE, return the next constant dynamic slot in constant pool
+		 * Otherwise return the next object */
+		if (_condyOnly) {
+			/* Determine if the slot is constant dynamic */
+			if (slotType == J9CPTYPE_CONSTANT_DYNAMIC) {
+				result = scanCondySlot(slotPtr, &nextSlot);
+				break;
+			}
+		} else {
+			/* Determine if the slot should be processed */
+			switch (slotType) {
 			case J9CPTYPE_STRING: /* fall through */
 			case J9CPTYPE_ANNOTATION_UTF8:
 				result = &(((J9RAMStringRef *) slotPtr)->stringObject);
@@ -75,19 +86,30 @@ GC_ConstantPoolObjectSlotIterator::nextSlot()
 				result = &(((J9RAMMethodHandleRef *) slotPtr)->methodHandle);
 				break;
 			case J9CPTYPE_CONSTANT_DYNAMIC:
-				if (NULL != ((J9RAMConstantDynamicRef *) slotPtr)->value) {
-					result = &(((J9RAMConstantDynamicRef *) slotPtr)->value);
-				} else {
-					result = &(((J9RAMConstantDynamicRef *) slotPtr)->exception);
-				}
+				result = scanCondySlot(slotPtr, &nextSlot);
 				break;
 			default:
-				continue;
+				break;
+			}
+
 		}
 
-		return result;
+		if (nextSlot) {
+			/* Adjust the CP slot and description information */
+			_cpEntry = (j9object_t *) (((U_8 *) _cpEntry)
+					+ sizeof(J9RAMConstantPoolItem));
+			_cpEntryCount -= 1;
+
+			_cpDescription >>= J9_CP_BITS_PER_DESCRIPTION;
+			_cpDescriptionIndex -= 1;
+		}
+
+		if (NULL != result) {
+			break;
+		}
+
 	}
-	return NULL;
+	return result;
 }
 
 bool
