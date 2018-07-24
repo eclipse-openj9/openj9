@@ -480,8 +480,6 @@ inlineFindElementFromArray(TR::Node * node, TR::CodeGenerator * cg)
    const int8_t sizeOfVector = 16;
    const bool is64 = TR::Compiler->target.is64Bit();
 
-   TR::Instruction* cursor;
-
    TR::RegisterDependencyConditions * regDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 8, cg);
    regDeps->addPostCondition(address, TR::RealRegister::AssignAny);
    regDeps->addPostCondition(loopCounter, TR::RealRegister::AssignAny);
@@ -515,7 +513,7 @@ inlineFindElementFromArray(TR::Node * node, TR::CodeGenerator * cg)
 
    generateRRInstruction(cg, TR::InstOpCode::LR, node, loadLength, size);
    generateRILInstruction(cg, TR::InstOpCode::NILF, node, loadLength, 0xF);
-   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, fullVectorLabel);
+   TR::Instruction* cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, fullVectorLabel);
 
    cursor->setStartInternalControlFlow();
 
