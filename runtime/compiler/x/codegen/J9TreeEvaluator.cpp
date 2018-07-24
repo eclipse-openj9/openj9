@@ -11016,17 +11016,15 @@ static TR::Register* intrinsicIndexOf(TR::Node* node, TR::CodeGenerator* cg, boo
    auto compareOp = BADIA32Op;
    if(isCompressed)
       {
-      case TR::Int8:
-         shuffleMask = MASKOFSIZEONE;
-         compareOp = PCMPEQBRegReg;
-         shift = 0;
+      shuffleMask = MASKOFSIZEONE;
+      compareOp = PCMPEQBRegReg;
+      shift = 0;
       }
    else
       {
-      case TR::Int16:
-         shuffleMask = MASKOFSIZETWO;
-         compareOp = PCMPEQWRegReg;
-         shift = 1;
+      shuffleMask = MASKOFSIZETWO;
+      compareOp = PCMPEQWRegReg;
+      shift = 1;
       }
 
    auto address = cg->evaluate(node->getChild(1));
