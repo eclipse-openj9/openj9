@@ -2087,7 +2087,7 @@ initializeMethodID(J9VMThread * currentThread, J9JNIMethodID * methodID, J9Metho
 			 */
 			vTableIndex = getITableIndexForMethod(method, NULL) | J9_JNI_MID_INTERFACE;
 		} else {
-			vTableIndex = getVTableIndexForMethod(method, declaringClass, currentThread);
+			vTableIndex = getVTableOffsetForMethod(method, declaringClass, currentThread);
 		}
 	}
 
