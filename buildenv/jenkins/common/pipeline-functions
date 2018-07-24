@@ -174,10 +174,6 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
         def targets = TESTS_TARGETS.split(",")
         targets.each { target ->
             switch (target.trim().toLowerCase()) {
-                // Due to the following reason, OpenJ9 test pipelines are still used temporarily: 
-                //  - waiting for wins machine configuration to be finalized (https://github.com/AdoptOpenJDK/openjdk-tests/issues/407)
-                //  - there is no need to enable JDK9 as it is not supported anymore (https://github.com/eclipse/openj9/issues/2020)
-                //  - OpenJ9 test pipelines will be completely removed once we switch to use AdoptOpenJDK test pipelines
                 case "_sanity":
                     if (SPEC.contains("win") || SDK_VERSION == "9") {
                         TARGET_NAMES = ["Sanity"]
