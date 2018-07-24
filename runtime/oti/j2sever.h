@@ -34,6 +34,7 @@
 #define J2SE_19   0x0900
 #define J2SE_V10  0x0A00            /* This refers Java 10 */
 #define J2SE_V11  0x0B00            /* This refers Java 11 */
+#define J2SE_V12  0x0C00            /* This refers Java 12 */
 /* Shared class cache is using JAVA_SPEC_VERSION_FROM_J2SE(j2seVersion) to get the Java version.
  * So bits 9 to 16 of the J2SE constant should match the java version number.
  */
@@ -45,8 +46,10 @@
 	#define J2SE_LATEST  J2SE_19
 #elif JAVA_SPEC_VERSION == 10
 	#define J2SE_LATEST  J2SE_V10
-#else
+#elif JAVA_SPEC_VERSION == 11
 	#define J2SE_LATEST  J2SE_V11
+#else
+	#define J2SE_LATEST  J2SE_V12
 #endif
 
 /**
@@ -81,8 +84,9 @@
 #define J2SE_SHAPE_B165    		0x60000
 #define J2SE_SHAPE_V10			0x70000
 #define J2SE_SHAPE_V11			0x80000
-#define J2SE_SHAPE_RAWPLUSJ9	0x80000
-#define J2SE_SHAPE_RAW	 		0x90000
+#define J2SE_SHAPE_V12			0x90000
+#define J2SE_SHAPE_RAWPLUSJ9	0xA0000
+#define J2SE_SHAPE_RAW	 		0xB0000
 #define J2SE_SHAPE_MASK 		0xF0000
 #define J2SE_SHAPE_SHIFT		16
 #define J2SE_JAVA_SPEC_VERSION_SHIFT 8
