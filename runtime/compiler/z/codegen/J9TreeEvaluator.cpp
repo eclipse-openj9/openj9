@@ -477,7 +477,7 @@ inlineFindElementFromArray(TR::Node * node, TR::CodeGenerator * cg)
    bool isCompressed = node->getSymbol()->castToMethodSymbol()->getMethod()->parmType(1) == TR::Int8;
    const int elementSizeMask = isCompressed ? 0x0 : 0x1;   // byte or halfword mask
    uintptrj_t headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
-   const int8_t sizeOfVector = 16;
+   const int8_t sizeOfVector = cg->machine()->getVRFSize();
    const bool is64 = TR::Compiler->target.is64Bit();
 
    TR::RegisterDependencyConditions * regDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 8, cg);
