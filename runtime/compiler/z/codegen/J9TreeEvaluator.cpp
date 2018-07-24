@@ -566,9 +566,9 @@ inlineFindElementFromArray(TR::Node * node, TR::CodeGenerator * cg)
    generateRRInstruction(cg, TR::InstOpCode::AR, node, indexRegister, scratch);
 
    if (!isCompressed)
-   {
-   generateRSInstruction(cg, TR::InstOpCode::SRL, node, indexRegister, indexRegister, 1);
-   }
+      {
+      generateRSInstruction(cg, TR::InstOpCode::SRL, node, indexRegister, indexRegister, 1);
+      }
 
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, doneLabel, regDeps);
    doneLabel->setEndInternalControlFlow();
