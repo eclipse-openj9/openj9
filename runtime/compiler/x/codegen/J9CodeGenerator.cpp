@@ -84,7 +84,7 @@ J9::X86::CodeGenerator::CodeGenerator() :
        !TR::Compiler->om.canGenerateArraylets())
       cg->setSupportsInlineStringCaseConversion();
 
-   if (cg->getX86ProcessorInfo().supportsSSE3() &&
+   if (cg->getX86ProcessorInfo().supportsSSSE3() &&
        !comp->getOption(TR_DisableFastStringIndexOf) &&
        !TR::Compiler->om.canGenerateArraylets())
       {
