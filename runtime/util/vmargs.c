@@ -72,6 +72,8 @@
 #endif
 #endif /* !defined(J9JAVA_PATH_SEPARATOR) */
 #define JAVA_HOME_EQUALS "-Djava.home="
+#define IBM_BOOTSTRAP_LIBRARY_PATH_EQUALS "-Dcom.ibm.oti.vm.bootstrap.library.path="
+#define SUN_BOOT_LIBRARY_PATH_EQUALS "-Dsun.boot.library.path="
 #define JAVA_LIB_PATH_EQUALS "-Djava.library.path="
 #define JAVA_EXT_DIRS_EQUALS "-Djava.ext.dirs="
 #define JAVA_USER_DIR_EQUALS "-Duser.dir="
@@ -770,7 +772,32 @@ addXjcl(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA j2s
 }
 
 IDATA
-addBootLibraryPath(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, char *propertyNameEquals, char *j9binPath, char *jrebinPath)
+addSunBootLibraryPath(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, char *jrebinPath)
+{
+	char *optionsArgumentBuffer = NULL;
+	size_t argumentLength = 0;
+	J9JavaVMArgInfo *optArg = NULL;
+	PORT_ACCESS_FROM_PORT(portLib);
+
+	argumentLength = strlen(SUN_BOOT_LIBRARY_PATH_EQUALS) + strlen(jrebinPath) + 1; /* adds the space for the terminating null */
+	optionsArgumentBuffer = j9mem_allocate_memory(argumentLength, OMRMEM_CATEGORY_VM);
+
+	if (NULL == optionsArgumentBuffer) {
+		return -1;
+	}
+
+	j9str_printf(PORTLIB, optionsArgumentBuffer, argumentLength, "%s%s", SUN_BOOT_LIBRARY_PATH_EQUALS, jrebinPath);
+
+	optArg = newJavaVMArgInfo(vmArgumentsList, optionsArgumentBuffer, ARG_MEMORY_ALLOCATION|CONSUMABLE_ARG);
+	if (NULL == optArg) {
+		j9mem_free_memory(optionsArgumentBuffer);
+		return -1;
+	}
+	return 0;
+}
+
+IDATA
+addBootstrapLibraryPath(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, char *j9binPath, char *jrebinPath)
 {
 	char *optionsArgumentBuffer = NULL;
 	/* argumentLength include the space for the \0 because of the sizeof() */
@@ -778,14 +805,14 @@ addBootLibraryPath(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList
 	J9JavaVMArgInfo *optArg = NULL;
 	PORT_ACCESS_FROM_PORT(portLib);
 
-	argumentLength = strlen(propertyNameEquals) + strlen(j9binPath) + sizeof(J9JAVA_PATH_SEPARATOR) + strlen(jrebinPath); /* the sizeof operation adds the space for the terminating null */
+	argumentLength = strlen(IBM_BOOTSTRAP_LIBRARY_PATH_EQUALS) + strlen(j9binPath) + sizeof(J9JAVA_PATH_SEPARATOR) + strlen(jrebinPath); /* the sizeof operation adds the space for the terminating null */
 	optionsArgumentBuffer = j9mem_allocate_memory(argumentLength, OMRMEM_CATEGORY_VM);
 
 	if (NULL == optionsArgumentBuffer) {
 		return -1;
 	}
 
-	j9str_printf(PORTLIB, optionsArgumentBuffer, argumentLength, "%s%s" J9JAVA_PATH_SEPARATOR "%s", propertyNameEquals, j9binPath, jrebinPath);
+	j9str_printf(PORTLIB, optionsArgumentBuffer, argumentLength, "%s%s" J9JAVA_PATH_SEPARATOR "%s", IBM_BOOTSTRAP_LIBRARY_PATH_EQUALS, j9binPath, jrebinPath);
 
 	optArg = newJavaVMArgInfo(vmArgumentsList, optionsArgumentBuffer, ARG_MEMORY_ALLOCATION|CONSUMABLE_ARG);
 	if (NULL == optArg) {
