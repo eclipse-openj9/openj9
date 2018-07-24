@@ -4229,7 +4229,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
          }
       }
 
-   if (cg->getSupportsInlineStringIndexOf())
+   if (cg->getSupportsInlineStringIndexOf() && methodSymbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_findElementFromArray)
       {
       resultReg = inlineFindElementFromArray(node, cg);
       return true;
