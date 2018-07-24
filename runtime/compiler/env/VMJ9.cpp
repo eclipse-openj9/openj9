@@ -3094,7 +3094,8 @@ bool TR_J9VMBase::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, 
                dontInlineRecognizedMethod = true;
                }
             break;
-         case TR::com_ibm_jit_JITHelpers_findElementFromArray:
+         case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1:
+         case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
             if (comp->cg()->getSupportsInlineStringIndexOf())
                {
                dontInlineRecognizedMethod = true;

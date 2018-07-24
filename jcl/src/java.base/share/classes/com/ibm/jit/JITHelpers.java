@@ -568,7 +568,7 @@ public final class JITHelpers {
 		}
 	}
 
-	public int findElementFromArray(Object array, byte ch, int offset, int length) {
+	public int intrinsicIndexOfLatin1(Object array, byte ch, int offset, int length) {
 		for (int i = offset; i < length; i++) {
 			if(getByteFromArrayByIndex(array, i) == ch) {
 				return i;
@@ -577,7 +577,7 @@ public final class JITHelpers {
 		return -1;
 	}
 
-	public int findElementFromArray(Object array, char ch, int offset, int length) {
+	public int intrinsicIndexOfUTF16(Object array, char ch, int offset, int length) {
 		for (int i = offset; i < length; i++) {
 			if(getCharFromArrayByIndex(array, i) == ch) {
 				return i;

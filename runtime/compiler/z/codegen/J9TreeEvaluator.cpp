@@ -446,7 +446,7 @@ TR::Register * caseConversionHelper(TR::Node* node, TR::CodeGenerator* cg, bool 
    }
 
 extern TR::Register *
-inlineFindElementFromArray(TR::Node * node, TR::CodeGenerator * cg)
+intrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isCompressed)
    {
    cg->generateDebugCounter("z13/simd/indexOf", 1, TR::DebugCounter::Free);
 
@@ -474,7 +474,6 @@ inlineFindElementFromArray(TR::Node * node, TR::CodeGenerator * cg)
    TR::LabelSymbol* failureLabel = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
    TR::LabelSymbol* doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
 
-   bool isCompressed = node->getSymbol()->castToMethodSymbol()->getMethod()->parmType(1) == TR::Int8;
    const int elementSizeMask = isCompressed ? 0x0 : 0x1;   // byte or halfword mask
    uintptrj_t headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
    const int8_t sizeOfVector = cg->machine()->getVRFSize();

@@ -10993,7 +10993,7 @@ TR::Register *intOrLongClobberEvaluate(
       }
    }
 
-static TR::Register* inlineFindElementFromArray(TR::Node* node, TR::CodeGenerator* cg)
+static TR::Register* intrinsicIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isCompressed)
    {
    static uint8_t MASKOFSIZEONE[] =
       {
@@ -11014,20 +11014,19 @@ static TR::Register* inlineFindElementFromArray(TR::Node* node, TR::CodeGenerato
    uint8_t shift = 0;
    uint8_t* shuffleMask = NULL;
    auto compareOp = BADIA32Op;
-   switch(node->getSymbol()->castToMethodSymbol()->getMethod()->parmType(1))
+   if(isCompressed)
       {
       case TR::Int8:
          shuffleMask = MASKOFSIZEONE;
          compareOp = PCMPEQBRegReg;
          shift = 0;
-         break;
+      }
+   else
+      {
       case TR::Int16:
          shuffleMask = MASKOFSIZETWO;
          compareOp = PCMPEQWRegReg;
          shift = 1;
-         break;
-      default:
-         TR_ASSERT(0, "Incorrect value parameter type!");
       }
 
    auto address = cg->evaluate(node->getChild(1));
@@ -13272,11 +13271,16 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
 
    switch (symbol->getMandatoryRecognizedMethod())
       {
-      case TR::com_ibm_jit_JITHelpers_findElementFromArray:
+      case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1:
          if (!cg->getSupportsInlineStringIndexOf())
             break;
          else
-            return inlineFindElementFromArray(node, cg);
+            return intrinsicIndexOf(node, cg, true);
+      case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
+         if (!cg->getSupportsInlineStringIndexOf())
+            break;
+         else
+            return intrinsicIndexOf(node, cg, false);
       case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Big:
       case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Little:
          return TR::TreeEvaluator::encodeUTF16Evaluator(node, cg);

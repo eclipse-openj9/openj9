@@ -3944,7 +3944,7 @@ extern TR::Register *inlineBigDecimalToPackedConverter(TR::Node * node, TR::Code
 extern TR::Register *toUpperIntrinsic(TR::Node * node, TR::CodeGenerator * cg, bool isCompressedString);
 extern TR::Register *toLowerIntrinsic(TR::Node * node, TR::CodeGenerator * cg, bool isCompressedString);
 
-extern TR::Register *inlineFindElementFromArray(TR::Node * node, TR::CodeGenerator * cg);
+extern TR::Register *intrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isCompressed);
 
 extern TR::Register *inlineDoubleMax(TR::Node *node, TR::CodeGenerator *cg);
 extern TR::Register *inlineDoubleMin(TR::Node *node, TR::CodeGenerator *cg);
@@ -4229,10 +4229,19 @@ J9::Z::CodeGenerator::inlineDirectCall(
          }
       }
 
-   if (cg->getSupportsInlineStringIndexOf() && methodSymbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_findElementFromArray)
+   if (cg->getSupportsInlineStringIndexOf())
       {
-      resultReg = inlineFindElementFromArray(node, cg);
-      return true;
+         switch (methodSymbol->getRecognizedMethod())
+            {
+            case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1:
+               resultReg = intrinsicIndexOf(node, cg, true);
+               return true;
+            case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
+               resultReg = intrinsicIndexOf(node, cg, false);
+               return true;
+            default:
+               break;
+            }
       }
 
       if (!comp->getOption(TR_DisableSIMDDoubleMaxMin) && cg->getSupportsVectorRegisters())
