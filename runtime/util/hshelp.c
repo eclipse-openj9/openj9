@@ -1596,7 +1596,7 @@ reresolveHotSwappedConstantPool(J9ConstantPool * ramConstantPool, J9VMThread * c
 						romMethodRef = ((J9ROMMethodRef *) romConstantPool) + i;
 						nas = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
 						((J9RAMMethodRef *) ramConstantPool)[i].method = vm->initialMethods.initialSpecialMethod;
-						((J9RAMMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = (J9VTABLE_INITIAL_VIRTUAL_OFFSET << 8) +
+						((J9RAMMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = ((sizeof(J9Class) + sizeof(UDATA)) << 8) +
 							getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas)));
 					} else {
 						/* Try to resolve as virtual and as special */
@@ -1615,7 +1615,7 @@ reresolveHotSwappedConstantPool(J9ConstantPool * ramConstantPool, J9VMThread * c
 						romMethodRef = ((J9ROMMethodRef *) romConstantPool) + i;
 						nas = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
 						/* Set methodIndex to initial virtual method, just as we do in internalRunPreInitInstructions() */
-						((J9RAMStaticMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = (J9VTABLE_INITIAL_VIRTUAL_OFFSET << 8) +
+						((J9RAMStaticMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = ((sizeof(J9Class) + sizeof(UDATA)) << 8) +
 							getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas)));
 						((J9RAMStaticMethodRef *) ramConstantPool)[i].method = vm->initialMethods.initialStaticMethod;
 					} else {
