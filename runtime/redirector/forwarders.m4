@@ -319,3 +319,5 @@ _IF([defined(J9VM_JCL_SE11)],
 	[_X(JVM_GetNestMembers,JNICALL,false,jobjectArray,JNIEnv *env,jclass clz)])
 _IF([defined(J9VM_JCL_SE11)],
 	[_X(JVM_AreNestMates,JNICALL,false,jboolean,JNIEnv *env,jclass clzOne, jclass clzTwo)])
+_IF([defined(J9VM_JCL_SE12)],
+	[_X(JVM_InitializeFromArchive, JNICALL, false, void, JNIEnv *env, jclass clz)])

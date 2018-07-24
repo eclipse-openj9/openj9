@@ -1475,12 +1475,13 @@ bail:
  * "9[.x.x]"   --- Java 9, 'J2SE_19 | J2SE_SHAPE_B165';
  * "10[.x.x]"  --- Java 10, 'J2SE_V10 | J2SE_SHAPE_V10';
  * "11[.x.x]"  --- Java 11, 'J2SE_V11 | J2SE_SHAPE_V11';
+ * "12[.x.x]"  --- Java 12, 'J2SE_V12 | J2SE_SHAPE_V12';
  * Others      --- Latest Java, 'J2SE_LATEST | J2SE_SHAPE_LATEST'.
  * Otherwise, 0 is returned.
  *
  * @return 'J2SE_18 | J2SE_SHAPE_OPENJDK', 'J2SE_19 | J2SE_SHAPE_B165',
  *         'J2SE_V10 | J2SE_SHAPE_V10', 'J2SE_V11 | J2SE_SHAPE_V11',
- *         'J2SE_LATEST | J2SE_SHAPE_LATEST' 
+ *         'J2SE_V12 | J2SE_SHAPE_V12', 'J2SE_LATEST | J2SE_SHAPE_LATEST'
  *         according to the 'JAVA_VERSION' value found in 'release';
  *         or 0 if otherwise.
  */
@@ -1516,6 +1517,10 @@ getVersionFromReleaseFile(void)
 			} else if (!strncmp(version, JAVA_VERSION_11, sizeof(JAVA_VERSION_11) - 1)) {
 #undef   JAVA_VERSION_11
 				finalVersion = J2SE_V11 | J2SE_SHAPE_V11;
+#define	 JAVA_VERSION_12 "\"12" /* its usual format is "12[.x.x]" */
+			} else if (!strncmp(version, JAVA_VERSION_12, sizeof(JAVA_VERSION_12) - 1)) {
+#undef   JAVA_VERSION_12
+				finalVersion = J2SE_V12 | J2SE_SHAPE_V12;
 			} else {
 				/* Assume latest Java version and shape */
 				finalVersion = J2SE_LATEST | J2SE_SHAPE_LATEST;
