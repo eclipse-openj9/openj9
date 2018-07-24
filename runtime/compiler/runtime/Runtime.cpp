@@ -156,7 +156,8 @@ void* TR_RuntimeHelperTable::translateAddress(void * a)
    {
    return
 #if defined(J9ZOS390)
-       // In ZOS, Entrypoint address is stored at offset 0x14 from the function descriptor
+       // In ZOS, Entrypoint address is stored at an offset from the function descriptor
+       // The offset is 20 and 24 for 32-bit and 64-bit z/OS, respectively. See J9FunctionDescriptor_T.
        // In zLinux, Entrypoint address is same as the function descriptor
        TOC_UNWRAP_ADDRESS(a);
 #elif defined(TR_HOST_POWER) && (defined(TR_HOST_64BIT) || defined(AIXPPC)) && !defined(__LITTLE_ENDIAN__)
@@ -164,6 +165,27 @@ void* TR_RuntimeHelperTable::translateAddress(void * a)
 #else // defined(TR_HOST_POWER) && !defined(__LITTLE_ENDIAN__)
       a;
 #endif // defined(TR_HOST_POWER) && !defined(__LITTLE_ENDIAN__)
+   }
+
+void* TR_RuntimeHelperTable::getFunctionPointer(TR_RuntimeHelper h)
+   {
+   if (h < TR_numRuntimeHelpers && (_linkage[h] == TR_CHelper || _linkage[h] == TR_Helper))
+      return _helpers[h];
+   else
+      return reinterpret_cast<void*>(TR_RuntimeHelperTable::INVALID_FUNCTION_POINTER);
+   }
+
+void* TR_RuntimeHelperTable::getFunctionEntryPointOrConst(TR_RuntimeHelper h)
+   {
+   if (h < TR_numRuntimeHelpers)
+      {
+      if (_linkage[h] == TR_CHelper || _linkage[h] == TR_Helper)
+         return translateAddress(_helpers[h]);
+      else
+         return _helpers[h];
+      }
+   else
+      return reinterpret_cast<void*>(TR_RuntimeHelperTable::INVALID_FUNCTION_POINTER);
    }
 
 #if defined(TR_HOST_S390)
@@ -1598,15 +1620,15 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    if (0)
       {
       TR_RuntimeHelper h = TR_jitAddPicToPatchOnClassUnload;
-      void * a  = runtimeHelpers.getAddress(h);
+      void * a  = runtimeHelpers.getFunctionEntryPointOrConst(h);
       fprintf(stderr,"jitAddPicToPatchOnClassUnload= _helpers[%d]=0x%p ep=0x%p\n",h,a, TOC_UNWRAP_ADDRESS(a));
 
       h = TR_S390interfaceCallHelperMultiSlots;
-      a  = runtimeHelpers.getAddress(h);
+      a  = runtimeHelpers.getFunctionEntryPointOrConst(h);
       fprintf(stderr,"TR_S390interfaceCallHelperMultiSlots= _helpers[%d]=0x%p \n",h,a);
 
       h = TR_S390interfaceCallHelperSingleDynamicSlot;
-      a  = runtimeHelpers.getAddress(h);
+      a  = runtimeHelpers.getFunctionEntryPointOrConst(h);
       fprintf(stderr,"TR_S390interfaceCallHelperSingleDynamicSlot= _helpers[%d]=0x%p \n",h,a);
       }
 #endif
