@@ -1122,7 +1122,7 @@ extern J9_CFUNC struct J9Class*  jitGetInterfaceITableIndexFromCP (J9VMThread *v
 extern J9_CFUNC void  jitAcquireClassTableMutex (J9VMThread *vmThread);
 extern J9_CFUNC void*  jitCTResolveStaticFieldRefWithMethod (J9VMThread *vmStruct, J9Method *method, UDATA fieldIndex, UDATA resolveFlags, J9ROMFieldShape **resolvedField);
 extern J9_CFUNC void  jitReleaseClassTableMutex (J9VMThread *vmThread);
-extern J9_CFUNC UDATA  jitGetInterfaceVTableIndexFromCP (J9VMThread *vmThread, J9ConstantPool *constantPool, UDATA cpIndex, J9Class* lookupClass);
+extern J9_CFUNC UDATA  jitGetInterfaceVTableOffsetFromCP (J9VMThread *vmThread, J9ConstantPool *constantPool, UDATA cpIndex, J9Class* lookupClass);
 extern J9_CFUNC void  jitParseSignature (const J9UTF8 *signature, U_8 *paramBuffer, UDATA *paramElements, UDATA *parmSlots);
 extern J9_CFUNC UDATA jitMethodEnterTracingEnabled(J9VMThread *currentThread, J9Method *method);
 extern J9_CFUNC UDATA jitMethodExitTracingEnabled(J9VMThread *currentThread, J9Method *method);

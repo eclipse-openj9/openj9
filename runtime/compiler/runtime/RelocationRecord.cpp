@@ -1128,7 +1128,7 @@ TR_RelocationRecordConstantPoolWithIndex::getVirtualMethodFromCP(TR_RelocationRu
 
       {
       TR::VMAccessCriticalSection getVirtualMethodFromCP(reloRuntime->fej9());
-      UDATA vTableIndex = javaVM->internalVMFunctions->resolveVirtualMethodRefInto(javaVM->internalVMFunctions->currentVMThread(javaVM),
+      UDATA vTableOffset = javaVM->internalVMFunctions->resolveVirtualMethodRefInto(javaVM->internalVMFunctions->currentVMThread(javaVM),
                                                                                    cp,
                                                                                    cpIndex,
                                                                                    J9_RESOLVE_FLAG_AOT_LOAD_TIME,
