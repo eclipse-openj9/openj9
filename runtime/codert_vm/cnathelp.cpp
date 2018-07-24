@@ -1000,12 +1000,12 @@ old_slow_jitLookupInterfaceMethod(J9VMThread *currentThread)
 	UDATA cpIndex = indexAndLiteralsEA[-1];
 	J9Class *interfaceClass = ((J9Class**)indexAndLiteralsEA)[0];
 	UDATA methodIndex = indexAndLiteralsEA[1];
-	UDATA vTableOffset = VM_VMHelpers::convertITableIndexToVTableOffset(currentThread, receiverClass, interfaceClass, methodIndex, ramConstantPool, cpIndex);
+	UDATA vTableIndex = VM_VMHelpers::convertITableIndexToVTableIndex(currentThread, receiverClass, interfaceClass, methodIndex, ramConstantPool, cpIndex);
 	buildJITResolveFrameWithPC(currentThread, J9_SSF_JIT_RESOLVE_INTERFACE_LOOKUP, parmCount, true, 0, jitEIP);
-	if (0 == vTableOffset) {
+	if (0 == vTableIndex) {
 		setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, NULL);
 	} else {
-		J9Method* method = *(J9Method**)((UDATA)receiverClass + vTableOffset);
+		J9Method* method = *(J9Method**)((UDATA)receiverClass + vTableIndex);
 		TIDY_BEFORE_THROW();
 		currentThread->javaVM->internalVMFunctions->setIllegalAccessErrorNonPublicInvokeInterface(currentThread, method);
 	}
@@ -1028,12 +1028,12 @@ old_fast_jitLookupInterfaceMethod(J9VMThread *currentThread)
 	UDATA cpIndex = indexAndLiteralsEA[-1];
 	J9Class *interfaceClass = ((J9Class**)indexAndLiteralsEA)[0];
 	UDATA methodIndex = indexAndLiteralsEA[1];
-	UDATA vTableOffset = VM_VMHelpers::convertITableIndexToVTableOffset(currentThread, receiverClass, interfaceClass, methodIndex, ramConstantPool, cpIndex);
-	if (0 != vTableOffset) {
-		J9Method* method = *(J9Method**)((UDATA)receiverClass + vTableOffset);
+	UDATA vTableIndex = VM_VMHelpers::convertITableIndexToVTableIndex(currentThread, receiverClass, interfaceClass, methodIndex, ramConstantPool, cpIndex);
+	if (0 != vTableIndex) {
+		J9Method* method = *(J9Method**)((UDATA)receiverClass + vTableIndex);
 		if (J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers, J9AccPublic)) {
 			slowPath = NULL;
-			JIT_RETURN_UDATA(vTableOffset);
+			JIT_RETURN_UDATA(vTableIndex);
 		}
 	}
 	return slowPath;
@@ -1589,8 +1589,8 @@ retry:
 	J9ConstantPool *ramConstantPool = ((J9ConstantPool**)indexAndLiteralsEA)[0];
 	UDATA cpIndex = indexAndLiteralsEA[1];
 	J9RAMVirtualMethodRef *ramMethodRef = (J9RAMVirtualMethodRef*)ramConstantPool + cpIndex;
-	UDATA vTableOffset = ramMethodRef->methodIndexAndArgCount >> 8;
-	if (J9VTABLE_INITIAL_VIRTUAL_OFFSET == vTableOffset) {
+	UDATA vTableIndex = ramMethodRef->methodIndexAndArgCount >> 8;
+	if ((sizeof(J9Class) + sizeof(UDATA)) == vTableIndex) {
 		buildJITResolveFrameWithPC(currentThread, J9_SSF_JIT_RESOLVE_VIRTUAL_METHOD, parmCount, true, 0, jitEIP);
 		currentThread->javaVM->internalVMFunctions->resolveVirtualMethodRef(currentThread, ramConstantPool, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE, NULL);
 		addr = restoreJITResolveFrame(currentThread, jitEIP);
@@ -1599,7 +1599,7 @@ retry:
 		}
 		goto retry;
 	}
-	JIT_RETURN_UDATA(sizeof(J9Class) - vTableOffset);
+	JIT_RETURN_UDATA(sizeof(J9Class) - vTableIndex);
 done:
 	SLOW_JIT_HELPER_EPILOGUE();
 	return addr;
@@ -2431,15 +2431,15 @@ old_slow_icallVMprJavaSendPatchupVirtual(J9VMThread *currentThread)
 	J9JavaVM *vm = currentThread->javaVM;
 	J9JITConfig *jitConfig = vm->jitConfig;
 	void *jitReturnAddress = currentThread->jitReturnAddress;
-	UDATA jitVTableOffset = VM_JITInterface::jitVTableIndex(jitReturnAddress, interfaceVTableIndex);
+	UDATA jitVTableIndex = VM_JITInterface::jitVTableIndex(jitReturnAddress, interfaceVTableIndex);
 	J9Class *clazz = J9OBJECT_CLAZZ(currentThread, receiver);
-	UDATA interpVTableOffset = sizeof(J9Class) - jitVTableOffset;
-	J9Method *method = *(J9Method**)((UDATA)clazz + interpVTableOffset);
+	UDATA interpVTableIndex = sizeof(J9Class) - jitVTableIndex;
+	J9Method *method = *(J9Method**)(interpVTableIndex + (UDATA)clazz);
 	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 	J9ROMNameAndSignature *nas = &romMethod->nameAndSignature;
 	UDATA const thunk = (UDATA)jitConfig->thunkLookUpNameAndSig(jitConfig, nas);
 	UDATA const patchup = (UDATA)jitConfig->patchupVirtual;
-	UDATA *jitVTableSlot = (UDATA*)((UDATA)clazz + jitVTableOffset);
+	UDATA *jitVTableSlot = (UDATA*)(jitVTableIndex + (UDATA)clazz);
 	VM_AtomicSupport::lockCompareExchange(jitVTableSlot, patchup, thunk);
 	currentThread->tempSlot = thunk;
 }
@@ -2689,12 +2689,12 @@ fast_jitLookupInterfaceMethod(J9VMThread *currentThread, J9Class *receiverClass,
 	UDATA cpIndex = indexAndLiteralsEA[-1];
 	J9Class *interfaceClass = ((J9Class**)indexAndLiteralsEA)[0];
 	UDATA methodIndex = indexAndLiteralsEA[1];
-	UDATA vTableOffset = VM_VMHelpers::convertITableIndexToVTableOffset(currentThread, receiverClass, interfaceClass, methodIndex, ramConstantPool, cpIndex);
-	if (0 != vTableOffset) {
-		J9Method* method = *(J9Method**)((UDATA)receiverClass + vTableOffset);
+	UDATA vTableIndex = VM_VMHelpers::convertITableIndexToVTableIndex(currentThread, receiverClass, interfaceClass, methodIndex, ramConstantPool, cpIndex);
+	if (0 != vTableIndex) {
+		J9Method* method = *(J9Method**)((UDATA)receiverClass + vTableIndex);
 		if (J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers, J9AccPublic)) {
 			slowPath = NULL;
-			JIT_RETURN_UDATA(vTableOffset);
+			JIT_RETURN_UDATA(vTableIndex);
 		}
 	}
 	return slowPath;

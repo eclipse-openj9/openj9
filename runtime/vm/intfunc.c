@@ -112,7 +112,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	jniPopFrame,
 	resolveVirtualMethodRef,
 	resolveInterfaceMethodRef,
-	getVTableOffsetForMethod,
+	getVTableIndexForMethod,
 	checkVisibility,
 	sendClinit,
 	freeStackWalkCaches,
