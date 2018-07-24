@@ -507,8 +507,8 @@ inlineFindElementFromArray(TR::Node * node, TR::CodeGenerator * cg)
 
    if (!isCompressed)
       {
-      generateRSInstruction(cg, TR::InstOpCode::SLLK, node, size, size, 1);
-      generateRSInstruction(cg, TR::InstOpCode::SLLK, node, indexRegister, indexRegister, 1);
+      generateRSInstruction(cg, TR::InstOpCode::SLL, node, size, 1);
+      generateRSInstruction(cg, TR::InstOpCode::SLL, node, indexRegister, 1);
       }
 
    generateRRInstruction(cg, TR::InstOpCode::LR, node, loadLength, size);
