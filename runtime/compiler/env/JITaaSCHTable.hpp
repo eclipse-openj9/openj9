@@ -32,6 +32,8 @@ struct VirtualGuardInfoForCHTable
    int32_t _offset;
    bool _hasResolvedMethodSymbol;
 
+   // for BreakpointGuard
+   TR_ResolvedMethod *_inlinedResolvedMethod;
    // these two are hoisted up into a tuple for serialization
    //std::vector<TR_VirtualGuardSite> _nopSites;
    //std::vector<VirtualGuardInfoForCHTable> _innerAssumptions;

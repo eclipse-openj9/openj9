@@ -76,6 +76,10 @@ VirtualGuardInfoForCHTable getImportantVGuardInfo(TR::Compilation *comp, TR_Virt
    info._mutableCallSiteObject = info._kind == TR_MutableCallSiteTargetGuard ? vguard->mutableCallSiteObject() : nullptr;
    info._mutableCallSiteEpoch = info._kind == TR_MutableCallSiteTargetGuard ? vguard->mutableCallSiteEpoch() : -1;
 
+   info._inlinedResolvedMethod = info._kind == TR_BreakpointGuard
+      ? static_cast<TR_ResolvedJ9JITaaSServerMethod *>(comp->getInlinedResolvedMethod(info._calleeIndex))->getRemoteMirror()
+      : nullptr;
+
    return info;
    }
 
@@ -511,7 +515,7 @@ JITaaSCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<TR_
       {
       if (comp->getOption(TR_DisableNopBreakpointGuard))
          return;
-      TR_ResolvedMethod *breakpointedMethod = comp->getInlinedResolvedMethod(info->_calleeIndex);
+      TR_ResolvedMethod *breakpointedMethod = info->_inlinedResolvedMethod;
       TR_OpaqueMethodBlock *method = breakpointedMethod->getPersistentIdentifier();
       if (comp->fej9()->isMethodBreakpointed(method))
          nopAssumptionIsValid = false;
