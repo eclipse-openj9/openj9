@@ -1050,9 +1050,9 @@ done:
 	 * @returns the vTable index (0 indicates the mapping failed)
 	 */
 	static VMINLINE UDATA
-	convertITableIndexToVTableOffset(J9VMThread *currentThread, J9Class *receiverClass, J9Class *interfaceClass, UDATA iTableIndex, J9ConstantPool *ramConstantPool, UDATA cpIndex)
+	convertITableIndexToVTableIndex(J9VMThread *currentThread, J9Class *receiverClass, J9Class *interfaceClass, UDATA iTableIndex, J9ConstantPool *ramConstantPool, UDATA cpIndex)
 	{
-		UDATA vTableOffset = 0;
+		UDATA vTableIndex = 0;
 		J9ITable * iTable = receiverClass->lastITable;
 		if (interfaceClass == iTable->interfaceClass) {
 			goto foundITable;
@@ -1063,7 +1063,7 @@ done:
 			if (interfaceClass == iTable->interfaceClass) {
 				receiverClass->lastITable = iTable;
 foundITable:
-				vTableOffset = ((UDATA*)(iTable + 1))[iTableIndex];
+				vTableIndex = ((UDATA*)(iTable + 1))[iTableIndex];
 				goto done;
 			}
 			iTable = iTable->next;
@@ -1076,10 +1076,10 @@ foundITable:
 				J9ROMMETHODREF_NAMEANDSIGNATURE(((J9ROMMethodRef*)ramConstantPool->romConstantPool + cpIndex)),
 				NULL,
 				J9_LOOK_VIRTUAL);
-			vTableOffset = J9_VM_FUNCTION(currentThread, getVTableOffsetForMethod)(method, receiverClass, currentThread);
+			vTableIndex = J9_VM_FUNCTION(currentThread, getVTableIndexForMethod)(method, receiverClass, currentThread);
 		}
 done:
-		return vTableOffset;
+		return vTableIndex;
 	}
 
 	/**
