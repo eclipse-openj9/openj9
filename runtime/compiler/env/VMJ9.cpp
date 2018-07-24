@@ -3092,21 +3092,21 @@ bool TR_J9VMBase::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, 
             if(comp->cg()->getSupportsInlineStringCaseConversion())
                {
                dontInlineRecognizedMethod = true;
-               break;
                }
+            break;
          case TR::com_ibm_jit_JITHelpers_findElementFromArray:
             if (comp->cg()->getSupportsInlineStringIndexOf())
                {
                dontInlineRecognizedMethod = true;
-               break;
                }
+            break;
          case TR::java_lang_Math_max_D:
          case TR::java_lang_Math_min_D:
             if(comp->cg()->getSupportsVectorRegisters() && !comp->getOption(TR_DisableSIMDDoubleMaxMin))
                {
                dontInlineRecognizedMethod = true;
-               break;
                }
+            break;
          case TR::java_lang_String_hashCodeImplDecompressed:
          case TR::java_lang_String_hashCodeImplCompressed:
             if (!TR::Compiler->om.canGenerateArraylets()){
