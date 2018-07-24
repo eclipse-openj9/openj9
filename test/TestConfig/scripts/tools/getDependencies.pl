@@ -1,24 +1,25 @@
 #!/usr/bin/perl
+
 ##############################################################################
-#  Copyright (c) 2016, 2018 IBM Corp. and others
+# Copyright (c) 2016, 2018 IBM Corp. and others
 #
-#  This program and the accompanying materials are made available under
-#  the terms of the Eclipse Public License 2.0 which accompanies this
-#  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
-#  or the Apache License, Version 2.0 which accompanies this distribution and
-#  is available at https://www.apache.org/licenses/LICENSE-2.0.
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
 #
-#  This Source Code may also be made available under the following
-#  Secondary Licenses when the conditions for such availability set
-#  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
-#  General Public License, version 2 with the GNU Classpath
-#  Exception [1] and GNU General Public License, version 2 with the
-#  OpenJDK Assembly Exception [2].
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
 #
-#  [1] https://www.gnu.org/software/classpath/license.html
-#  [2] http://openjdk.java.net/legal/assembly-exception.html
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
 #
-#  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ##############################################################################
 
 use strict;
@@ -29,38 +30,38 @@ use File::Copy;
 use File::Spec;
 use File::Path qw(make_path);
 
-#define test src root path
+# define test src root path
 my $path;
-#define task
+# define task
 my $task = "default";
-#define os
+# define os
 my $os;
 
-GetOptions ("path=s"	=>	\$path,
-			"task=s"	=>	\$task,
-			"os=s"		=>	\$os)
-or die("Error in command line arguments\n");
+GetOptions ("path=s" => \$path,
+			"task=s" => \$task,
+			"os=s"   => \$os)
+	or die("Error in command line arguments\n");
 
 if (not defined $path) {
-	die "ERROR: Download path not defined! \n"
+	die "ERROR: Download path not defined!\n"
 }
 
-if ( ! -d $path ) {
-	print "$path does not exist, creating one. \n";
+if (! -d $path) {
+	print "$path does not exist, creating one.\n";
 	my $isCreated = make_path($path, {chmod => 0777, verbose => 1,});
 }
 
 if (not defined $os) {
-	die "ERROR: os not defined! \n"
+	die "ERROR: os not defined!\n"
 }
 
-#define directory path separator
+# define directory path separator
 my $sep = File::Spec->catfile('', '');
 
-print "-------------------------------------------- \n";
-print "path is set to $path \n";
-print "task is set to $task \n";
-print "os is set to $os \n";
+print "--------------------------------------------\n";
+print "path is set to $path\n";
+print "task is set to $task\n";
+print "os   is set to $os\n";
 
 # Define a a hash for each dependent jar
 # Contents in the hash should be: url => , fname =>, sha1 =>
@@ -102,7 +103,7 @@ my %jcommander = (
 my %asmtools = (
 	url => 'https://ci.adoptopenjdk.net/view/Dependencies/job/asmtools/lastSuccessfulBuild/artifact/asmtools.jar',
 	fname => 'asmtools.jar',
-	sha1 => 'd57dfcdd591635d31372cfcc18474a8ca6442171'
+	sha1 => '04cf07c584121c2e5a3d1dad2839fc8ab4828b6d'
 );
 # this is needed for JDK11 and up
 my %jaxb_api = (
@@ -124,66 +125,60 @@ my @jars_info = (
 	\%jaxb_api
 );
 
-print "-------------------------------------------- \n";
-print "Starting download third party dependent jars \n";
-print "-------------------------------------------- \n";
-if ( $task eq "default" ) {
+print "--------------------------------------------\n";
+print "Starting download third party dependent jars\n";
+print "--------------------------------------------\n";
 
-	print "downloading dependent third party jars to $path \n";
-	my $sha = Digest::SHA->new();
-	my $digest;
+if ($task eq "clean") {
+	my $output = `rm $path/*.jar`;
+	print "cleaning jar task completed.\n"
+} elsif ($task eq "default") {
+	print "downloading dependent third party jars to $path\n";
 	for my $i (0 .. $#jars_info) {
 		my $url = $jars_info[$i]{url};
 		my $filename = $path . $sep . $jars_info[$i]{fname};
+		my $sha = Digest::SHA->new("sha1");
+		my $digest = "";
 
-		if ( -e $filename) {
-			print "$filename exits, skip downloading \n"
-		} else {
-			print "downloading $url \n";
-			my $output;
-			if ($os eq 'os.zos') {
-				$output = qx{curl -k -o $filename $url 2>&1};
-			} else {
-				$output = qx{wget --no-check-certificate --quiet --output-document=$filename $url 2>&1};
-			}
-			if ($? == 0 ) {
-				print "--> file downloaded to $filename \n";
-			} else {
-				print $output;
-				my $returnCode = $? ;
-				unlink $filename or die "Can't delete '$filename': $! \n";
-				die "ERROR: downloading $url failed, return code: $returnCode \n";
-			}
+		if (-e $filename) {
+			$sha->addfile($filename);
+			$digest = $sha->hexdigest;
 		}
 
-		# TODO check asmtools.jar file
-		if (index($jars_info[$i]{fname}, "asmtools") != -1) {
+		if ($digest eq $jars_info[$i]{sha1}) {
+			print "$filename exists with correct hash, not downloading\n";
 			next;
 		}
-		
+
+		print "downloading $url\n";
+		my $output;
+		if ($os eq 'os.zos') {
+			$output = qx{curl -k -o $filename $url 2>&1};
+		} else {
+			$output = qx{wget --no-check-certificate --quiet --output-document=$filename $url 2>&1};
+		}
+		my $returnCode = $?;
+		if ($returnCode == 0) {
+			print "--> file downloaded to $filename\n";
+		} else {
+			print $output;
+			unlink $filename or die "Can't delete '$filename': $!\n";
+			die "ERROR: downloading $url failed, return code: $returnCode\n";
+		}
+
 		# validate dependencies sha1 sum
+		$sha = Digest::SHA->new("sha1");
 		$sha->addfile($filename);
-		$digest = $sha->hexdigest ;
-		
-		# sha is different on window machine, skip the check for window or windows with cygwin for now
-		if ($os ne 'os.win') {
-			if ( $digest ne $jars_info[$i]{sha1}) {
-				print "Expected sha1 is: $jars_info[$i]{sha1}, \n";
-				print "Actual sha1 is  : $digest. \n";
-				print "Please delete $filename and rerun the program!";
-				die "ERROR: sha1 sum check error. \n";
-			}
+		$digest = $sha->hexdigest;
+
+		if ($digest ne $jars_info[$i]{sha1}) {
+			print "Expected sha1 is: $jars_info[$i]{sha1},\n";
+			print "Actual sha1 is  : $digest.\n";
+			print "Please delete $filename and rerun the program!";
+			die "ERROR: sha1 checksum error.\n";
 		}
 	}
-	print "downloaded dependent third party jars successfully \n";
-
+	print "downloaded dependent third party jars successfully\n";
 } else {
-	if ( $task eq "clean" ) {
-		my $output = `rm $path/*.jar `;
-		print "cleaning jar task completed. \n"
-	} else {
-		die "ERROR: task unsatisfied! \n";
-	}
+	die "ERROR: task unsatisfied!\n";
 }
-
-
