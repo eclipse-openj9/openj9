@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -506,6 +506,26 @@ UDATA jitPPCHandler(J9VMThread* vmThread, U_32 sigType, void* sigInfo)
 		iarPtr = (UDATA *) infoValue;
 
 		exceptionTable = jitConfig->jitGetExceptionTableFromPC(vmThread, *iarPtr);
+
+		if( !exceptionTable && J9PORT_SIG_FLAG_SIGBUS == sigType ){
+		   // We might be in a jit helper routine (like arraycopy) so look at the link register as well...
+		   UDATA *lrPtr;
+		   infoType = j9sig_info(sigInfo, J9PORT_SIG_CONTROL, J9PORT_SIG_CONTROL_POWERPC_LR, &infoName, &infoValue);
+		   if (infoType != J9PORT_SIG_VALUE_ADDRESS) {
+		      return J9PORT_SIG_EXCEPTION_CONTINUE_SEARCH;
+		   }
+		   lrPtr = (UDATA *) infoValue;
+		   exceptionTable = jitConfig->jitGetExceptionTableFromPC(vmThread, *lrPtr);
+		   if (exceptionTable) {
+				vmThread->jitException = (J9Object *) (*lrPtr);  /* the lr points at the instruction after the helper call */
+#if (defined(LINUXPPC64) && !defined(__LITTLE_ENDIAN__)) || defined(AIXPPC)
+				*iarPtr = *(UDATA*) ((void *) &jitHandleInternalErrorTrap);  /* get routine address from TOC entry */
+#else
+				*iarPtr = (UDATA) ((void *) &jitHandleInternalErrorTrap);
+#endif
+				return J9PORT_SIG_EXCEPTION_CONTINUE_EXECUTION;
+		   }
+		}
 
 		if (exceptionTable) {
 			if (J9PORT_SIG_FLAG_SIGBUS == sigType) {
