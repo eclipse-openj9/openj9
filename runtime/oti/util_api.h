@@ -2621,24 +2621,6 @@ isModuleDefined(J9VMThread * currentThread, J9Module * fromModule);
  * @param[in] currentThread the current J9VMThread
  * @param[in] fromModule the module containing the package
  * @param[in] packageName the package to be checked if it is exported to toModule
- * @param[in] toModule the module to be checked if the package is exported to it
- * @param[in] toUnnamed the flag indicating if toModule is an unnamed module
- * @param[in] errCode the status code returned
- *
- * @return true if the package is exported to toModule, false if otherwise
- */
-BOOLEAN
-#if J9VM_JAVA9_BUILD >= 156
-isPackageExportedToModule(J9VMThread * currentThread, J9Module * fromModule, const char *packageName, J9Module * toModule, BOOLEAN toUnnamed, UDATA * errCode);
-#else /* J9VM_JAVA9_BUILD >= 156 */
-isPackageExportedToModule(J9VMThread * currentThread, J9Module * fromModule, j9object_t packageName, J9Module * toModule, BOOLEAN toUnnamed, UDATA * errCode);
-#endif /* J9VM_JAVA9_BUILD >= 156 */
-/**
- * Determine if a package within fromModule is exported to toModule
- *
- * @param[in] currentThread the current J9VMThread
- * @param[in] fromModule the module containing the package
- * @param[in] packageName the package to be checked if it is exported to toModule
  * @param[in] len length of the package name to be checked
  * @param[in] toModule the module to be checked if the package is exported to it
  * @param[in] toUnnamed the flag indicating if toModule is an unnamed module

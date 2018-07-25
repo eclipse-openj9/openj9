@@ -281,7 +281,6 @@ _IF([defined(J9VM_JAVA9_BUILD) && (J9VM_JAVA9_BUILD >= 156)],
 	[_X(JVM_AddModuleExportsToAll,JNICALL,false,void ,JNIEnv arg0, jobject arg1, const char *arg2, jobject arg3)])
 _X(JVM_AddReadsModule,JNICALL,false,void ,JNIEnv arg0, jobject arg1, jobject arg2)
 _X(JVM_CanReadModule,JNICALL,false,jboolean ,JNIEnv arg0, jobject arg1, jobject arg2)
-_X(JVM_IsExportedToModule,JNICALL,false,jboolean ,JNIEnv arg0, jobject arg1, jstring arg2, jobject arg3)
 _IF([(!defined(J9VM_JAVA9_BUILD)) || (J9VM_JAVA9_BUILD < 156)],
 	[_X(JVM_AddModulePackage,JNICALL,false,void ,JNIEnv arg0, jobject arg1, jstring arg2)])
 _IF([defined(J9VM_JAVA9_BUILD) && (J9VM_JAVA9_BUILD >= 156)],
