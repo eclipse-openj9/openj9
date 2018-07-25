@@ -1167,7 +1167,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
 #if defined(LINUX)
    SET(TR_AMD64clockGetTime,                          (void *)clock_gettime, TR_System);
 #endif
-   SET(TR_AMD64currentTimeMillis,                          (void *)OMRPORT_FROM_J9PORT(jitConfig->javaVM->portLibrary)->time_current_time_millis, TR_Helper);
    SET(TR_AMD64JitMonitorEnterReserved,                    (void *)jitMonitorEnterReserved,                    TR_CHelper);
    SET(TR_AMD64JitMonitorEnterReservedPrimitive,           (void *)jitMonitorEnterReservedPrimitive,           TR_CHelper);
    SET(TR_AMD64JitMonitorEnterPreservingReservation,       (void *)jitMonitorEnterPreservingReservation,       TR_CHelper);
