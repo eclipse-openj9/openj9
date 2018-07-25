@@ -143,7 +143,7 @@ public:
 	 */
 	void releaseExclusiveVMAccess();
 
-	uintptr_t relinquishExclusiveVMAccess(bool *deferredVMAccessRelease = NULL);
+	uintptr_t relinquishExclusiveVMAccess();
 
 	void assumeExclusiveVMAccess(uintptr_t exclusiveCount);
 
