@@ -25,7 +25,6 @@ set(CMAKE_SHARED_LIBRARY_SUFFIX ${J9VM_OLD_SHARED_SUFFIX})
 
 set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}/generated.c" PROPERTIES GENERATED TRUE)
 
-
 ################################################################################
 # Redirector
 ################################################################################
@@ -43,7 +42,7 @@ target_include_directories(jvm_redirect
 		"${j9vm_SOURCE_DIR}/j9vm"
 		"${j9vm_BINARY_DIR}/j9vm"
 )
-target_compile_definitions(jvm_redirect PRIVATE J9VM_JAVA_VERSION=148)
+target_compile_definitions(jvm_redirect PRIVATE J9VM_JAVA9_BUILD=148)
 set_target_properties(jvm_redirect PROPERTIES LIBRARY_OUTPUT_NAME jvm)
 
 ################################################################################
@@ -63,7 +62,7 @@ target_include_directories(jvm_b150_redirect
 		"${j9vm_SOURCE_DIR}/j9vm"
 		"${j9vm_BINARY_DIR}/j9vm"
 )
-target_compile_definitions(jvm_b150_redirect PRIVATE J9VM_JAVA_VERSION=150)
+target_compile_definitions(jvm_b150_redirect PRIVATE J9VM_JAVA9_BUILD=150)
 set_target_properties(jvm_b150_redirect PROPERTIES LIBRARY_OUTPUT_NAME jvm_b150)
 
 ################################################################################
@@ -83,10 +82,8 @@ target_include_directories(jvm_b156_redirect
 		"${j9vm_SOURCE_DIR}/j9vm"
 		"${j9vm_BINARY_DIR}/j9vm"
 )
-target_compile_definitions(jvm_b156_redirect PRIVATE J9VM_JAVA_VERSION=156)
+target_compile_definitions(jvm_b156_redirect PRIVATE J9VM_JAVA9_BUILD=156)
 set_target_properties(jvm_b156_redirect PROPERTIES LIBRARY_OUTPUT_NAME jvm_b156)
-
-
 
 install(
 	TARGETS jvm_b150_redirect jvm_b156_redirect jvm_redirect

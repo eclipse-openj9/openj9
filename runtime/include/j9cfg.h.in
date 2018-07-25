@@ -36,14 +36,13 @@ extern "C" {
 
 #define J9_COPYRIGHT_STRING "(c) Copyright 1991, ${J9VM_CURRENT_YEAR} IBM Corp. and others."
 
-/* undef these flags temporarily so they do not conflict with the version defined in omrcfg.h */
-#undef EsVersionMajor
 #define EsVersionMajor ${J9VM_VERSION_MAJOR}
-#undef EsVersionMinor
 #define EsVersionMinor ${J9VM_VERSION_MINOR}0
 
 #define EsVersionString "${J9VM_VERSION}"
 #define EsExtraVersionString ""
+
+#define JAVA_SPEC_VERSION ${JAVA_SPEC_VERSION}
 
 /*  Note: The following defines record flags used to build VM.  */
 /*  Changing them here does not remove the feature and may cause linking problems. */
