@@ -64,7 +64,7 @@ public class StructureReader {
 	public static final Class<?>[] STRUCTURE_CONSTRUCTOR_SIGNATURE = new Class[] {Long.TYPE};
 	public static final byte BIT_FIELD_FORMAT_LITTLE_ENDIAN = 1;
 	public static final byte BIT_FIELD_FORMAT_BIG_ENDIAN = 2;
-	public static final int BIT_FIELD_CELL_SIZE = 32;
+	public static final int BIT_FIELD_CELL_SIZE = 64;
 
 	public static final String ALIAS_MAP_RESOURCE = "com/ibm/j9ddr/StructureAliases%d.dat";
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,55 +39,61 @@ import com.ibm.j9ddr.StructureReader.StructureDescriptor;
  * DDR_VM/lib
  * 
  * @author adam
- *
  */
 public class BytecodeGenerator implements Opcodes {
+
 	public static byte[] getClassBytes(StructureDescriptor structure, String fullClassName) throws ClassNotFoundException {
 		// The className we are trying to load is FooOffsets.
 		// The structure name stored in the reader is Foo
-		
+
 		ClassWriter cw = new ClassWriter(0);
-		MethodVisitor mv;
 		FieldVisitor fv;
-		int bitFieldBitCount = 0;
-				
+
 		// Class definition
 		cw.visit(V1_5, ACC_PUBLIC + ACC_FINAL + ACC_SUPER, fullClassName, null, "java/lang/Object", null);
-		
+
 		// Constants
-		
+
 		// SIZEOF
-		
 		fv = cw.visitField(ACC_PUBLIC + ACC_FINAL + ACC_STATIC, "SIZEOF", "J", null, Long.valueOf(structure.getSizeOf()));
+		fv.visitEnd();
 		
-		// Declared Constants
-		for(ConstantDescriptor constantDescriptor : structure.getConstants()) {
+		// Declared constants
+		for (ConstantDescriptor constantDescriptor : structure.getConstants()) {
 			fv = cw.visitField(ACC_PUBLIC + ACC_FINAL + ACC_STATIC, constantDescriptor.getName(), "J", null, Long.valueOf(constantDescriptor.getValue()));
 			fv.visitEnd();
 		}
-		
-		// Offset Fields
+
+		// Offset fields
+		int bitFieldBitCount = 0;
 		for (FieldDescriptor field : structure.getFields()) {
 			String fieldName = field.getName();
 			String type = field.getType();
-			int colonIndex = type.replace("::", "__").indexOf(':');		//make sure match a bit-field, not a C++ namespace
+			int fieldOffset = field.getOffset();
+			int colonIndex = type.replace("::", "__").indexOf(':'); // make sure match a bit-field, not a C++ namespace
 			if (colonIndex != -1) {
 				// Bitfield
-				String getter = fieldName;
 				int bitSize = Integer.parseInt(type.substring(colonIndex + 1).trim());
-				
+
+				/*
+				 * Newer blobs have accurate offsets of bitfields; adjust bitFieldBitCount
+				 * to account for any fields preceding this field. In older blobs the byte
+				 * offset of a bitfield is always zero, so this has no effect.
+				 */
+				bitFieldBitCount = Math.max(bitFieldBitCount, fieldOffset * Byte.SIZE);
+
 				if (bitSize > (StructureReader.BIT_FIELD_CELL_SIZE - (bitFieldBitCount % StructureReader.BIT_FIELD_CELL_SIZE))) {
-					throw new InternalError(String.format("Bitfield %s->%s must not span cells", structure.getName(), type));
+					throw new InternalError(String.format("Bitfield %s->%s must not span cells", structure.getName(), fieldName));
 				}
 
 				// s field
-				String name = String.format("_%s_s_", getter);
+				String name = String.format("_%s_s_", fieldName);
 				fv = cw.visitField(ACC_PUBLIC + ACC_FINAL + ACC_STATIC, name, "I", null, Integer.valueOf(bitFieldBitCount));
 				fv.visitEnd();
 
 				// b field
-				name = String.format("_%s_b_", getter);
-				fv = cw.visitField(ACC_PUBLIC + ACC_FINAL + ACC_STATIC, name, "I", null, new Integer(bitSize));
+				name = String.format("_%s_b_", fieldName);
+				fv = cw.visitField(ACC_PUBLIC + ACC_FINAL + ACC_STATIC, name, "I", null, Integer.valueOf(bitSize));
 				fv.visitEnd();
 				
 				bitFieldBitCount += bitSize;
@@ -96,20 +102,22 @@ public class BytecodeGenerator implements Opcodes {
 				String name = String.format("_%sOffset_", fieldName);
 				
 				// Offset fields
-				fv = cw.visitField(ACC_PUBLIC + ACC_FINAL + ACC_STATIC, name, "I", null, Integer.valueOf(field.getOffset()));
+				fv = cw.visitField(ACC_PUBLIC + ACC_FINAL + ACC_STATIC, name, "I", null, Integer.valueOf(fieldOffset));
 				fv.visitEnd();
 			}
 		}
-		
-		mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
+
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
+
 		mv.visitCode();
 		mv.visitVarInsn(ALOAD, 0);
-		mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V");
+		mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
 		mv.visitInsn(RETURN);
 		mv.visitMaxs(1, 1);
 		mv.visitEnd();
-		
+
 		cw.visitEnd();
 		return cw.toByteArray();
 	}
+
 }
