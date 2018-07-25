@@ -584,16 +584,6 @@ gcStartupHeapManagement(J9JavaVM *javaVM)
 		result = JNI_ENOMEM;
 	}
 
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
-	/* If not explicitly set, concurrent phase of CS runs with 1/2 the thread count (relative to STW phases thread count,
-	 * which just have been initialized by the dispatcher) */
-	if (!extensions->concurrentScavengerBackgroundThreadsForced) {
-		extensions->concurrentScavengerBackgroundThreads = OMR_MAX(1, extensions->dispatcher->threadCount() / 2);
-	} else if (extensions->concurrentScavengerBackgroundThreads > extensions->dispatcher->threadCount()) {
-		extensions->concurrentScavengerBackgroundThreads = extensions->dispatcher->threadCount();
-	}
-#endif
-
 	if (JNI_OK != result) {
 		PORT_ACCESS_FROM_JAVAVM(javaVM);
 		extensions->getGlobalCollector()->collectorShutdown(extensions);
