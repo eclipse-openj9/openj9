@@ -24,16 +24,16 @@
 </#list>
 
 # Define the Java Version we are compiling
+export VERSION_MAJOR
 ifndef VERSION_MAJOR
 $(error VERSION_MAJOR is not set from extensions code)
 endif
-export VERSION_MAJOR
 
 # Define full Java Version
+export OPENJDK_VERSION_NUMBER_FOUR_POSITIONS
 ifndef OPENJDK_VERSION_NUMBER_FOUR_POSITIONS
 $(error OPENJDK_VERSION_NUMBER_FOUR_POSITIONS is not set from extensions code)
 endif
-export OPENJDK_VERSION_NUMBER_FOUR_POSITIONS
 
 # Define a default target of the root directory for all targets.
 ifndef UMA_TARGET_PATH
