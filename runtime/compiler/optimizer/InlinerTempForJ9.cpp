@@ -379,7 +379,8 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
       case TR::com_ibm_jit_JITHelpers_compareAndSwapLongInArray:
       case TR::com_ibm_jit_JITHelpers_compareAndSwapObjectInArray:
       case TR::com_ibm_jit_JITHelpers_jitHelpers:
-      case TR::com_ibm_jit_JITHelpers_findElementFromArray:
+      case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1:
+      case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
       case TR::java_lang_String_charAtInternal_I:
       case TR::java_lang_String_charAtInternal_IB:
       case TR::java_lang_String_length:
