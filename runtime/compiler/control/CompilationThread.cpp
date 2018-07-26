@@ -8743,10 +8743,7 @@ TR::CompilationInfoPerThreadBase::compile(
             }
          }
 
-      if (_compInfo.getPersistentInfo()->getJITaaSMode() != CLIENT_MODE)
-         {
-         logCompilationSuccess(vmThread, vm, method, scratchSegmentProvider, compilee, compiler, metaData, optimizationPlan);
-         }
+      logCompilationSuccess(vmThread, vm, method, scratchSegmentProvider, compilee, compiler, metaData, optimizationPlan);
       TRIGGER_J9HOOK_JIT_COMPILING_END(_jitConfig->hookInterface, vmThread, method);
       }
    catch (const std::exception &e)
