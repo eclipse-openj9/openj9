@@ -57,10 +57,6 @@
 	<exclude id="nmr001" platform="all">
 		<reason>Nestmates are not enabled on java8</reason>
 	</exclude>
-
-	<exclude id="ta001" platform="win.*|.*ppc.*|linux_390.*" shouldFix="true">
-		<reason>https://github.com/eclipse/openj9/issues/2009</reason>
-	</exclude>
 </suite>
 
 
