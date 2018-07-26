@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,8 +36,7 @@ typedef struct riControlBlock {
    uint64_t limitAddr;
 
    /* Word 6 - Flags */
-   uint32_t pad28:28;
-   uint32_t suspensionControl:1;
+   uint32_t pad29:29;
    uint32_t reportingGroupSize:3;
 
    /* Word 7 */
@@ -60,14 +59,18 @@ typedef struct riControlBlock {
    uint32_t branchOnCondAsOtherTypeBrranches:1;
    uint32_t RIEmit:1;
    uint32_t TXAbort:1;
-   uint32_t pad3:2;
+
+   uint32_t guardedStorage:1;
+   uint32_t pad3:1;
    /* Branch Prediction Controls */
    uint32_t bp_notTakenButPredictedTaken:1;
    uint32_t bp_takenButPredictedNotTaken:1;
    uint32_t bp_takenButWrongTarget:1;
    uint32_t bp_notTAkenButWrongTarget:1;
 
-   uint32_t pad4:2;
+   /* Suppression Controls */
+   uint32_t suppressPrimaryCPU:1;
+   uint32_t suppressSecondaryCPU:1;
 
    uint32_t DCacheMissExtra:1;
    uint32_t cacheLatencyLevelOverride:1;
