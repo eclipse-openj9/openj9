@@ -673,7 +673,6 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
    // Compute frame size
    //
    // allocSize: bytes to be subtracted from the stack pointer when allocating the frame
-   // frameSize: total bytes of stack the prologue consumes
    // peakSize:  maximum bytes of stack this method might consume before encountering another stack check
    //
    const int32_t localSize = _properties.getOffsetToFirstLocal() - bodySymbol->getLocalMappingCursor();
@@ -681,9 +680,6 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
 
    // Note that the return address doesn't appear here because it is allocated by the call instruction
    //
-   int32_t allocSize = localSize + preservedRegsSize
-      + ( _properties.getReservesOutgoingArgsInPrologue()? outgoingArgSize : 0 );
-
       {
       int32_t frameSize = localSize + preservedRegsSize + ( _properties.getReservesOutgoingArgsInPrologue()? outgoingArgSize : 0 );
       uint32_t stackSize = frameSize + _properties.getRetAddressWidth();
@@ -698,7 +694,7 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
                   _properties.getOutgoingArgAlignment(),
                   _properties.getRetAddressWidth());
       }
-
+   auto allocSize = cg()->getFrameSizeInBytes();
 
    // Here we conservatively assume there is a call in this method that will require space for its return address
    const int32_t peakSize = allocSize + _properties.getPointerSize();
@@ -1001,19 +997,6 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
          }
       }
 
-    int32_t allocateSize = 0;
-   // Add paddings
-   if (cg()->getStackFramePaddingSizeInBytes())
-      {
-      allocateSize += cg()->getStackFramePaddingSizeInBytes();
-      }
-
-   if (allocateSize)
-      {
-      const TR_X86OpCodes subOp = (allocateSize <= 127)? SUBRegImms() : SUBRegImm4();
-      cursor = new (trHeapMemory()) TR::X86RegImmInstruction(cursor, subOp, espReal, allocateSize, cg());
-      }
-
 #if defined(DEBUG)
    debugFrameSlotInfo = new (trHeapMemory()) TR_DebugFrameSegmentInfo(comp(),
       -localSize - preservedRegsSize - outgoingArgSize,
@@ -1049,19 +1032,9 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
 // for shrinkwrapping
 bool TR::X86PrivateLinkage::needsFrameDeallocation()
    {
-   // frame needs a deallocation if allocSize == 0
+   // frame needs a deallocation if FrameSize == 0
    //
-   TR::ResolvedMethodSymbol *bodySymbol   = comp()->getJittedMethodSymbol();
-   int32_t localSize = _properties.getOffsetToFirstLocal() - bodySymbol->getLocalMappingCursor();
-   int32_t allocSize = cg()->getFrameSizeInBytes();
-
-   if (!_properties.getAlwaysDedicateFramePointerRegister() &&
-         allocSize == 0)
-      {
-      return true;
-      }
-
-   return false;
+   return !_properties.getAlwaysDedicateFramePointerRegister() && cg()->getFrameSizeInBytes() == 0;
    }
 
 TR::Instruction *TR::X86PrivateLinkage::deallocateFrameIfNeeded(TR::Instruction *cursor, int32_t size)
@@ -1072,32 +1045,9 @@ TR::Instruction *TR::X86PrivateLinkage::deallocateFrameIfNeeded(TR::Instruction 
 
 void TR::X86PrivateLinkage::createEpilogue(TR::Instruction *cursor)
    {
-   TR::RealRegister    *espReal      = machine()->getX86RealRegister(TR::RealRegister::esp);
-   TR::RealRegister    *framePointer = machine()->getX86RealRegister(TR::RealRegister::vfp);
-   const TR::RealRegister::RegNum noReg = TR::RealRegister::NoReg;
-   TR::ResolvedMethodSymbol *bodySymbol   = comp()->getJittedMethodSymbol();
-
-   const int32_t localSize = _properties.getOffsetToFirstLocal() - bodySymbol->getLocalMappingCursor();
-         int32_t allocSize = cg()->getFrameSizeInBytes() - cg()->getStackFramePaddingSizeInBytes();
+   TR::RealRegister* espReal = machine()->getX86RealRegister(TR::RealRegister::esp);
 
    cursor = cg()->generateDebugCounter(cursor, "cg.epilogues", 1, TR::DebugCounter::Expensive);
-
-   int32_t deallocateSize = 0;
-   // Deallocate padding
-   if (cg()->getStackFramePaddingSizeInBytes())
-      {
-      deallocateSize += cg()->getStackFramePaddingSizeInBytes();
-      if (comp()->getOption(TR_TraceCG))
-         {
-         traceMsg(comp(), "Bytes of stack frame padding to be deallocated %d\n", cg()->getStackFramePaddingSizeInBytes());
-         }
-      }
-
-   if (deallocateSize)
-      {
-      TR_X86OpCodes op = (deallocateSize <= 127) ? ADDRegImms() : ADDRegImm4();
-      cursor = new (trHeapMemory()) TR::X86RegImmInstruction(cursor, op, espReal, deallocateSize, cg());
-      }
 
    // Restore preserved regs
    //
@@ -1105,29 +1055,25 @@ void TR::X86PrivateLinkage::createEpilogue(TR::Instruction *cursor)
 
    // Deallocate the stack frame
    //
-   bool needsDeallocationForShrinkWrapping = false;
    if (_properties.getAlwaysDedicateFramePointerRegister())
       {
       // Restore stack pointer from frame pointer
       //
-      cursor = new (trHeapMemory()) TR::X86RegRegInstruction(cursor, MOVRegReg(), espReal, machine()->getX86RealRegister(_properties.getFramePointerRegister()), cg());
-      cursor = new (trHeapMemory()) TR::X86RegInstruction(cursor, POPReg, machine()->getX86RealRegister(_properties.getFramePointerRegister()), cg());
-      }
-   else if (allocSize == 0)
-      {
-      // No need to do anything
-      if (cg()->getShrinkWrappingDone())
-         needsDeallocationForShrinkWrapping = true;
+      cursor = generateRegRegInstruction(cursor, MOVRegReg(), espReal, machine()->getX86RealRegister(_properties.getFramePointerRegister()), cg());
+      cursor = generateRegInstruction(cursor, POPReg, machine()->getX86RealRegister(_properties.getFramePointerRegister()), cg());
       }
    else
       {
-      TR_X86OpCodes op = (allocSize <= 127) ? ADDRegImms() : ADDRegImm4();
-      cursor = new (trHeapMemory()) TR::X86RegImmInstruction(cursor, op, espReal, allocSize, cg());
+      auto frameSize = cg()->getFrameSizeInBytes();
+      if (frameSize != 0)
+         {
+         cursor = generateRegImmInstruction(cursor, (frameSize <= 127) ? ADDRegImms() : ADDRegImm4(), espReal, frameSize, cg());
+         }
       }
 
    if (cursor->getNext()->getOpCodeValue() == RETImm2)
       {
-      toIA32ImmInstruction(cursor->getNext())->setSourceImmediate(bodySymbol->getNumParameterSlots() << getProperties().getParmSlotShift());
+      toIA32ImmInstruction(cursor->getNext())->setSourceImmediate(comp()->getJittedMethodSymbol()->getNumParameterSlots() << getProperties().getParmSlotShift());
       }
    }
 

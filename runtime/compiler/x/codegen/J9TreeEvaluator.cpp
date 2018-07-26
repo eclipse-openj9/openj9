@@ -9288,7 +9288,6 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
 
    bool realTimeGC = comp->getOptions()->realTimeGC();
    bool generateArraylets = comp->generateArraylets();
-   bool outlineNew = false;
 
    TR::Register *segmentReg      = NULL;
    TR::Register *tempReg         = NULL;
@@ -9394,43 +9393,6 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
          }
       }
 
-   bool disableOutlinedNew = comp->getOption(TR_DisableOutlinedNew);
-
-   if (generateArraylets)
-      {
-      if (comp->getOption(TR_TraceCG))
-         traceMsg(comp, "OUTLINED NEW: Disable for %s %p because outlined allocation can't deal with arraylets\n", node->getOpCode().getName(), node);
-      disableOutlinedNew = true;
-      cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "cg.new/refusedToOutline/arraylets/%s", node->getOpCode().getName()), 1, TR::DebugCounter::Undetermined);
-      }
-   else if (comp->getMethodHotness() > warm)
-      {
-      if (comp->getOption(TR_TraceCG))
-         traceMsg(comp, "OUTLINED NEW: Disable for %p because opt level is %s\n", node, comp->getHotnessName());
-      disableOutlinedNew = true;
-      cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "cg.new/refusedToOutline/optlevel/%s", comp->getHotnessName()), 1, TR::DebugCounter::Undetermined);
-      }
-   else if (objectSize !=0 && objectSize <=0x40)
-      {
-      if (comp->getOption(TR_TraceCG))
-         traceMsg(comp, "OUTLINED NEW: Disable for %p because allocation size is small %d\n", node, objectSize);
-
-      disableOutlinedNew = true;
-      }
-   else if (comp->getDebug() &&
-            comp->getOptions()->getPackedTestRegex() &&
-            TR::SimpleRegex::match(comp->getOptions()->getPackedTestRegex(), "disablePackedOutlineNew"))
-      {
-      disableOutlinedNew = true;
-      }
-   else if(!comp->getOption(TR_EnableOutlinedNew) && cg->getX86ProcessorInfo().isGenuineIntel() && !cg->getX86ProcessorInfo().isIntelOldMachine())
-      {
-      disableOutlinedNew = true; //disable outlinednew for new machines
-      }
-
-   if (!disableOutlinedNew && performTransformation(comp, "O^O OUTLINED NEW: outlining %s %p, size %d\n", node->getOpCode().getName(), node, allocationSize))
-      outlineNew = true;
-
    TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *fallThru = generateLabelSymbol(cg);
    startLabel->setStartInternalControlFlow();
@@ -9523,104 +9485,15 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
    if (skipOutlineZeroInit && !performTransformation(comp, "O^O OUTLINED NEW: skip outlined zero init on %s %p\n", cg->getDebug()->getName(node), node))
       skipOutlineZeroInit = false;
 
-   if (skipOutlineZeroInit)
+   // Faster inlined sequence.  It does not understand arraylet shapes yet.
+   //
+   if (canUseFastInlineAllocation)
       {
-      // The NoZeroInit outlined allocation causes sanity failures.  If we
-      // can't do outlined allocation without zero init, just do it inline instead.
-      // TODO: Figure this out and fix it.
-      //
-      outlineNew = false;
-      if (comp->getOption(TR_TraceCG))
-         traceMsg(comp, "OUTLINED NEW: Disable for %p because we can't do it without zero-init\n", node);
-      disableOutlinedNew = true;
-      cg->generateDebugCounter("cg.new/refusedToOutline/noZeroInitBug", 1, TR::DebugCounter::Undetermined);
-      }
-
-   if (outlineNew)
-      {
-      // Detect overflow in array size and let jitNewArray JIT helper handle overflow
-      //
-      if (sizeReg && !node->getFirstChild()->isNonNegative())
-         {
-         TR::Register *elementCountReg = sizeReg;
-         uintptrj_t maxObjectSize = cg->getMaxObjectSizeGuaranteedNotToOverflow();
-         uintptrj_t maxObjectSizeInElements = maxObjectSize / elementSize;
-         // 64 bit and max array size is larger than 0x7fffffff
-         if (TR::Compiler->target.is64Bit() && !(maxObjectSizeInElements > 0 && maxObjectSizeInElements <= (uintptrj_t)INT_MAX))
-            {
-            generateRegImm64Instruction(MOV8RegImm64, node, tempReg, maxObjectSizeInElements, cg);
-            generateRegRegInstruction(CMP8RegReg, node, elementCountReg, tempReg, cg);
-            }
-         else
-            {
-            generateRegImmInstruction(CMPRegImm4(), node, elementCountReg, (int32_t)maxObjectSizeInElements, cg);
-            }
-         generateLabelInstruction(JAE4, node, failLabel, cg);
-         }
-
-      if (sizeReg)
-         {
-         int32_t round = (elementSize < fej9->getObjectAlignmentInBytes()) ?
-        		 fej9->getObjectAlignmentInBytes() : 0;
-         int32_t disp = round ? (round-1) : 0;
-
-         // Now compute size of object in bytes
-         //
-         generateRegMemInstruction(LEARegMem(),
-                                   node,
-                                   segmentReg,
-                                   generateX86MemoryReference(NULL,
-                                                              sizeReg,
-                                                              TR::MemoryReference::convertMultiplierToStride(elementSize),
-                                                              allocationSize + disp, cg), cg);
-         if (round)
-            {
-            generateRegImmInstruction(ANDRegImms(), node, segmentReg, -round, cg);
-            }
-         }
-      else
-         {
-         // make sure the allocationSize is aligned
-         //
-         allocationSize = (allocationSize + fej9->getObjectAlignmentInBytes()-1) & (-fej9->getObjectAlignmentInBytes());
-         generateRegImmInstruction(MOV4RegImm4, node, segmentReg, allocationSize, cg);
-         }
-
-      if (skipOutlineZeroInit)
-         {
-         TR_RuntimeHelper helper;
-         if (isArrayNew && sizeReg)
-            helper = TR_X86OutlinedNewArrayNoZeroInit;
-         else
-            helper = TR_X86OutlinedNewNoZeroInit;
-         cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "cg.new/outlined/noZeroInit/%s", node->getOpCode().getName()), 1, TR::DebugCounter::Undetermined);
-         generateHelperCallInstruction(node, helper, NULL, cg)->setAdjustsFramePointerBy(0);
-         }
-      else
-         {
-         TR_RuntimeHelper helper;
-         if (isArrayNew && sizeReg)
-            helper = TR_X86OutlinedNewArray;
-         else
-            helper = TR_X86OutlinedNew;
-         cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "cg.new/outlined/zeroInit/%s", node->getOpCode().getName()), 1, TR::DebugCounter::Undetermined);
-         generateHelperCallInstruction(node, helper, NULL, cg)->setAdjustsFramePointerBy(0);
-         }
-      generateRegRegInstruction(TESTRegReg(), node, targetReg, targetReg, cg);
-      generateLabelInstruction(JE4, node, failLabel, cg);
+      genHeapAlloc2(node, clazz, allocationSize, elementSize, sizeReg, targetReg, segmentReg, tempReg, failLabel, cg);
       }
    else
       {
-      // Faster inlined sequence.  It does not understand arraylet shapes yet.
-      //
-      if (canUseFastInlineAllocation)
-         {
-         genHeapAlloc2(node, clazz, allocationSize, elementSize, sizeReg, targetReg, segmentReg, tempReg, failLabel, cg);
-         }
-      else
-         {
-         genHeapAlloc(node, clazz, allocationSize, elementSize, sizeReg, targetReg, segmentReg, tempReg, failLabel, cg);
-         }
+      genHeapAlloc(node, clazz, allocationSize, elementSize, sizeReg, targetReg, segmentReg, tempReg, failLabel, cg);
       }
 
    // --------------------------------------------------------------------------------
@@ -9647,7 +9520,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
             maxZeroInitWordsPerIteration = MAX_ZERO_INIT_WORDS_PER_ITERATION; // Use default value
          }
 
-      if (initInfo && initInfo->zeroInitSlots && !outlineNew)
+      if (initInfo && initInfo->zeroInitSlots)
          {
          // If there are too many words to be individually initialized, initialize
          // them all
@@ -9742,7 +9615,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
             monitorSlotIsInitialized = true;
          }
       else if ((!initInfo || initInfo->numZeroInitSlots > 0) &&
-               !node->canSkipZeroInitialization() && !outlineNew)
+               !node->canSkipZeroInitialization())
          {
          // Initialize all slots
          //
@@ -9773,7 +9646,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
             // for non-native 64-bit targets where the discontiguous length slot is already initialized
             // via the contiguous length slot.
             //
-            if (node->getOpCodeValue() != TR::New && !outlineNew &&
+            if (node->getOpCodeValue() != TR::New &&
                 (TR::Compiler->target.is32Bit() || comp->useCompressedPointers()))
                {
                generateMemImmInstruction(SMemImm4(), node,
@@ -9878,11 +9751,6 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
          numDeps += 2;
       }
 
-   if (outlineNew)
-      {
-      numDeps++;
-      }
-
    // Create dependencies for the allocation registers here.
    // The size and class registers, if they exist, must be the first
    // dependencies since the heap allocation snippet needs to find them to grab
@@ -9898,7 +9766,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
    deps->addPostCondition(targetReg, TR::RealRegister::eax, cg);
    deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
 
-   if (useRepInstruction || outlineNew)
+   if (useRepInstruction)
       {
       deps->addPostCondition(tempReg, TR::RealRegister::ecx, cg);
       deps->addPostCondition(segmentReg, TR::RealRegister::edi, cg);
@@ -9914,13 +9782,6 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
       {
       deps->addPostCondition(scratchReg, TR::RealRegister::NoReg, cg);
       cg->stopUsingRegister(scratchReg);
-      }
-
-   if (outlineNew)
-      {
-      TR::Register *dummyReg = cg->allocateRegister();
-      deps->addPostCondition(dummyReg, TR::RealRegister::esi, cg);
-      cg->stopUsingRegister(dummyReg);
       }
 
    if (outlinedHelperCall)

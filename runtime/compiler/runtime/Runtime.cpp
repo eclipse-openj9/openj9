@@ -291,8 +291,6 @@ JIT_HELPER(prefetchTLH);
 JIT_HELPER(newPrefetchTLH);
 JIT_HELPER(outlinedNewObject);
 JIT_HELPER(outlinedNewArray);
-JIT_HELPER(outlinedNewObjectNoZeroInit);
-JIT_HELPER(outlinedNewArrayNoZeroInit);
 
 JIT_HELPER(_arrayTranslateTRTO);
 JIT_HELPER(_arrayTranslateTROTNoBreak);
@@ -1113,10 +1111,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_X86interpreterUnresolvedFieldGlue,                (void *)interpreterUnresolvedFieldGlue,                TR_Helper);
    SET(TR_X86interpreterUnresolvedFieldSetterGlue,          (void *)interpreterUnresolvedFieldSetterGlue,          TR_Helper);
 
-   SET(TR_X86OutlinedNew,                (void *)outlinedNewObject,           TR_Helper);
-   SET(TR_X86OutlinedNewArray,           (void *)outlinedNewArray,            TR_Helper);
-   SET(TR_X86OutlinedNewNoZeroInit,      (void *)outlinedNewObjectNoZeroInit, TR_Helper);
-   SET(TR_X86OutlinedNewArrayNoZeroInit, (void *)outlinedNewArrayNoZeroInit,  TR_Helper);
    SET(TR_X86prefetchTLH,                (void *)prefetchTLH,                 TR_Helper);
    SET(TR_X86newPrefetchTLH,             (void *)newPrefetchTLH,              TR_Helper);
    SET(TR_X86CodeCachePrefetchHelper,    (void *)prefetchTLH,                 TR_Helper); // needs to be set while compiling
