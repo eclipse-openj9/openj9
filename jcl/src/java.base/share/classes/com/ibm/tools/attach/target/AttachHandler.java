@@ -402,17 +402,17 @@ public class AttachHandler extends Thread {
 		}
 		FileLock.shutDown();
 		
-		boolean destroySemaphore = terminateWaitLoop(wakeHandler);
-		return destroySemaphore;
+		return terminateWaitLoop(wakeHandler, 0);
 	}
 
 	/**
 	 * Shut down the wait loop thread and determine if we still require the semaphore.
 	 * @param wakeHandler true if the wait loop is waiting for a notification
+	 * @param retryNumber indicates how many times we have tried to shut down the wait loop
 	 * @return true if there are no other VMs using the semaphore
 	 */
 	/*[PR Jazz 50781: CMVC 201366: OTT:Attach API wait loop still alive after shutdown hooks ]*/
-	private static boolean terminateWaitLoop(boolean wakeHandler) {
+	static boolean terminateWaitLoop(boolean wakeHandler, int retryNumber) {
 		boolean gotLock = false;
 		boolean destroySemaphore = false;
 		/*[PR CMVC 187777 : non-clean shutdown in life cycle tests]*/
@@ -459,7 +459,11 @@ public class AttachHandler extends Thread {
 				if (IPC.loggingEnabled ) {
 					IPC.logMessage("AttachHandler terminate obtained master lock"); //$NON-NLS-1$
 				}
-				int numTargets = CommonDirectory.countTargetDirectories();
+				/*
+				 * If one or more directories is deleted, the target count is wrong and the wait loop may
+				 * not be notified.  If the terminate fails, try adding extra counts to the semaphore.
+				 */
+				int numTargets = CommonDirectory.countTargetDirectories() + retryNumber;
 				setNumberOfTargets(numTargets);
 				if (numTargets <= 1) {
 					/* 
@@ -535,12 +539,14 @@ public class AttachHandler extends Thread {
 					 * In that case, the join is redundant but harmless. 
 					 */
 					int timeout = 100;
+					int retryNumber = 0;
 					while (System.nanoTime() < shutdownDeadlineNs) {
 						currentAttachThread.join(timeout); /* timeout in milliseconds */
 						if (currentAttachThread.getState() != Thread.State.TERMINATED) {
-							IPC.logMessage("Timeout waiting for wait loop termination.  Retry"); //$NON-NLS-1$
+							IPC.logMessage("Timeout waiting for wait loop termination.  Retry #"+retryNumber); //$NON-NLS-1$
 							timeout *= 2;
-							AttachHandler.terminateWaitLoop(true);
+							AttachHandler.terminateWaitLoop(true, retryNumber);
+							++retryNumber;
 						} else {
 							break;
 						}
