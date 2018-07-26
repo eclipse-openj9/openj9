@@ -959,6 +959,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
 #endif
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || (defined(TR_HOST_S390) && defined(J9VM_JIT_NEW_DUAL_HELPERS))
    SET(TR_instanceOf,                 (void *)fast_jitInstanceOf,        TR_CHelper);
+   SET(TR_checkAssignable,            (void *)fast_jitCheckAssignable,   TR_CHelper);
 #else
    SET(TR_instanceOf,                 (void *)jitInstanceOf,             TR_Helper);
 #endif
