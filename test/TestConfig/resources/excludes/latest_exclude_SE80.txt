@@ -24,4 +24,3 @@
 
 org.openj9.test.vmArguments.VmArgumentTests:testCrNocr																	244 generic-all
 j9vm.test.softmx.SoftmxRemoteTest																						480 generic-all
-org.openj9.test.attachAPI.TestAttachErrorHandling:test_startupShutdownRobustness										2047 generic-all
