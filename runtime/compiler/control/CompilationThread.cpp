@@ -1946,7 +1946,7 @@ void TR::CompilationInfo::invalidateRequestsForUnloadedMethods(TR_OpaqueClassBlo
 // Side-effects: may change entry->_compErrorCode
 bool TR::CompilationInfo::shouldAbortCompilation(TR_MethodToBeCompiled *entry, TR::PersistentInfo *persistentInfo)
    {
-   if (entry->isRemoteCompReq())
+   if (entry->isOutOfProcessCompReq())
       return false; // will abort at the client
 
    if (entry->_unloadedMethod) // method was unloaded while we were trying to compile it
@@ -1984,7 +1984,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
 
    // The JITaaS server should not retry compilations on it's own,
    // it should let the client make that decision
-   if (entry->isRemoteCompReq())
+   if (entry->isOutOfProcessCompReq())
       return false;
 
    // when the compilation fails we might retry
@@ -3830,7 +3830,7 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    //
    // This conversion is safe. The macro J9VM_J9CLASS_TO_HEAPCLASS will not make a conversion if Classes on Heap is not enabled.
    jobject classObject = NULL;
-   if (!entry.isRemoteCompReq())
+   if (!entry.isOutOfProcessCompReq())
       classObject = compThread->javaVM->internalVMFunctions->j9jni_createLocalRef((JNIEnv*)compThread, J9VM_J9CLASS_TO_HEAPCLASS(details.getClass()));
 
    // Do the hack for newInstance thunks
@@ -3853,7 +3853,7 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    TR_ASSERT(entry._optimizationPlan, "Must have an optimization plan");
 
    // The server should not adjust the opt plan requested by the client.
-   if (!entry.isRemoteCompReq())
+   if (!entry.isOutOfProcessCompReq())
       TR::CompilationController::getCompilationStrategy()->adjustOptimizationPlan(&entry, 0);
 
    shouldAddToUpgradeQueue = entry._optimizationPlan->shouldAddToUpgradeQueue();
@@ -3866,7 +3866,7 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    void *startPC = compile(compThread, &entry, scratchSegmentProvider);
 
    // Unpin the class
-   if (!entry.isRemoteCompReq())
+   if (!entry.isOutOfProcessCompReq())
       compThread->javaVM->internalVMFunctions->j9jni_deleteLocalRef((JNIEnv*)compThread, classObject);
    else
       _customClassByNameMap.clear(); // reset before next compilation starts
@@ -4053,7 +4053,7 @@ bool
 TR::CompilationInfoPerThread::shouldPerformCompilation(TR_MethodToBeCompiled &entry)
    {
    TR::CompilationInfo *compInfo = getCompilationInfo();
-   if (entry.isRemoteCompReq())
+   if (entry.isOutOfProcessCompReq())
       return true;
    TR::IlGeneratorMethodDetails &details = entry.getMethodDetails();
    J9Method *method = details.getMethod();
@@ -6620,7 +6620,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
    {
    // Get the session info
    // JITaaS TODO: move this into the try/catch block Irwin is going to create
-   if (entry->isRemoteCompReq())
+   if (entry->isOutOfProcessCompReq())
       {
       uint64_t clientUID = entry->getClientUID();
          {
@@ -6651,7 +6651,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
    entry->_doAotLoad = false;
 
    if (entry->_methodIsInSharedCache == TR_yes &&    // possible AOT load
-      (entry->isRemoteCompReq() || !TR::CompilationInfo::isCompiled(method)) &&
+      (entry->isOutOfProcessCompReq() || !TR::CompilationInfo::isCompiled(method)) &&
       !entry->_doNotUseAotCodeFromSharedCache &&
       !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoLoadAOT) &&
       !(jitConfig->runtimeFlags & J9JIT_TOSS_CODE))
@@ -6665,7 +6665,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          setCompilationShouldBeInterrupted(0); // zero the flag because createResolvedMethod calls
                                                // acquire/releaseVMaccessIfNeeded and may see the flag set by previous compilation
          TR_FilterBST *filter = NULL;
-         TR_J9VMBase *fe = entry->isRemoteCompReq() ?
+         TR_J9VMBase *fe = entry->isOutOfProcessCompReq() ?
             TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::J9_SERVER_VM) :
             TR_J9VMBase::get(_jitConfig, vmThread);
 
@@ -6684,7 +6684,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          {
          // Find the AOT body in the SCC
          //
-         *aotCachedMethod = entry->isRemoteCompReq() ?
+         *aotCachedMethod = entry->isOutOfProcessCompReq() ?
          findAotBodyInSCC(vmThread, entry->getMethodDetails().getRomMethod()) :
          findAotBodyInSCC(vmThread, method);
          if (*aotCachedMethod)
@@ -6770,7 +6770,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       // Decide if we want an AOT vm or not
       if (sharedClassTest)
          {
-         if (TR::Options::getAOTCmdLineOptions()->getOption(TR_ForceAOT) || entry->isRemoteCompReq())
+         if (TR::Options::getAOTCmdLineOptions()->getOption(TR_ForceAOT) || entry->isOutOfProcessCompReq())
             {
             canDoRelocatableCompile = true;
             }
@@ -6939,7 +6939,7 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
       {
       TR_PersistentJittedBodyInfo *bodyInfo;
       // JITaaS: Can not acquire the jitted body info on the server
-      if (!entry->isRemoteCompReq() && entry->isDLTCompile() && !startPC && TR::CompilationInfo::isCompiled(method) && // DLT compilation that failed too many times
+      if (!entry->isOutOfProcessCompReq() && entry->isDLTCompile() && !startPC && TR::CompilationInfo::isCompiled(method) && // DLT compilation that failed too many times
          (bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(method->extra)))  // do not use entry->_oldStartPC which is probably 0. Use the most up-to-date startPC
          bodyInfo->getMethodInfo()->setHasFailedDLTCompRetrials(true);
 
@@ -6996,7 +6996,7 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
          }
 
       if (!metaData && !entry->_oldStartPC && // First time compilation failed
-         !entry->isRemoteCompReq())
+         !entry->isOutOfProcessCompReq())
          {
          if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompFailure))
             {
@@ -7349,7 +7349,7 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
    vmThread->jitMethodToBeCompiled = NULL;
 
    // Reset the pointer to the cached client session data
-   if (entry->isRemoteCompReq() && getClientData())
+   if (entry->isOutOfProcessCompReq() && getClientData())
       {
       // We have the compilation monitor so it's safe to access the inUse counter
       getClientData()->decInUse();
@@ -7473,9 +7473,9 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
          TR_ASSERT(p->_optimizationPlan, "Must have an optimization plan");
 
-         TR::CompilationInfo *compInfo = TR::CompilationInfo::get(jitConfig);
+         TR::CompilationInfo *compInfo = &that->_compInfo;
          // JITaaS: There is client side options, skip the setup options process
-         if (that->_methodBeingCompiled->_clientOptions != nullptr)
+         if (that->_methodBeingCompiled->_clientOptions != NULL)
             {
             options = TR::Options::unpackOptions(that->_methodBeingCompiled->_clientOptions, that->_methodBeingCompiled->_clientOptionsSize, p->trMemory());
             options->setLogFileForClientOptions();
@@ -7558,7 +7558,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                TR_ASSERT(vm->isAOT_DEPRECATED_DO_NOT_USE(), "assertion failure");
 
                // Do not delay relocations for JITaaS_SERVER
-               if (that->getCompilationInfo()->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+               if (that->getCompilationInfo()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
                   options->setOption(TR_DisableDelayRelocationForAOTCompilations);
                }
 
@@ -8472,7 +8472,7 @@ TR::CompilationInfoPerThreadBase::compile(
             }
          }
 
-      if (vm.isAOT_DEPRECATED_DO_NOT_USE() || _methodBeingCompiled->isRemoteCompReq())
+      if (vm.isAOT_DEPRECATED_DO_NOT_USE() || _methodBeingCompiled->isOutOfProcessCompReq())
          {
          TR_DataCache *dataCache = (TR_DataCache*)compiler->getReservedDataCache();
          TR_ASSERT(dataCache, "Must have a reserved dataCache for AOT compilations");
@@ -9568,7 +9568,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                codeSize  = aotMethodHeaderEntry->compileMethodCodeSize;
 
                aotMethodHeaderEntry->compileFirstClassLocation = (UDATA)jitConfig->javaVM->sharedClassConfig->cacheDescriptorList->romclassStartAddress;
-               J9ROMMethod *romMethod = entry->isRemoteCompReq() ?
+               J9ROMMethod *romMethod = entry->isOutOfProcessCompReq() ?
                   ((TR_ResolvedJ9JITaaSServerMethod*)comp->getCurrentMethod())->romMethod() :
                   J9_ROM_METHOD_FROM_RAM_METHOD(method);
 
@@ -9619,7 +9619,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 
                TR_Debug *debug = TR::Options::getDebug();
                bool canRelocateMethod = false;
-               if (entry->isRemoteCompReq())
+               if (entry->isOutOfProcessCompReq())
                   canRelocateMethod = false;
                else if (debug)
                   {
@@ -9789,7 +9789,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                               }
                            }
                         }
-                     if (!entry->isRemoteCompReq())
+                     if (!entry->isOutOfProcessCompReq())
                         jitMethodTranslated(vmThread, method, startPC);
                      }
                   else
@@ -9919,7 +9919,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       {
       // Tell the VM that a non-compiled method failed translation
       //
-      if (vmThread && entry && !entry->isRemoteCompReq())
+      if (vmThread && entry && !entry->isOutOfProcessCompReq())
          jitMethodFailedTranslation(vmThread, method);
 
       if (entry && entry->_stream)

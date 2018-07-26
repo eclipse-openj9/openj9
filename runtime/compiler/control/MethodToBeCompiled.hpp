@@ -61,7 +61,7 @@ struct TR_MethodToBeCompiled
    void releaseSlotMonitor(J9VMThread *vmThread);
    void setAotCodeToBeRelocated(const void *m);
    bool isAotLoad() const { return _doAotLoad; }
-   bool isRemoteCompReq() const { return _stream != nullptr; }
+   bool isOutOfProcessCompReq() const { return _stream != nullptr; }
    uint64_t getClientUID() const;
 
    TR_MethodToBeCompiled *_next;
