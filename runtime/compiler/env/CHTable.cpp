@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -426,32 +426,34 @@ TR_CHTable::commitVirtualGuard(TR_VirtualGuard *info, List<TR_VirtualGuardSite> 
    // If this is an OSR guard or another kind that has been marked as necessary to patch
    // in OSR, add a runtime assumption for every class that generated fear
    //
-   static bool dontGroupOSRAssumptions = (feGetEnv("TR_DontGroupOSRAssumptions") != NULL);
-   if (dontGroupOSRAssumptions && (info->getKind() == TR_OSRGuard || info->mergedWithOSRGuard()))
+   if (info->getKind() == TR_OSRGuard || info->mergedWithOSRGuard())
       {
-      TR_Array<TR_OpaqueClassBlock*> *clazzes = comp->getClassesForOSRRedefinition();
-      if (clazzes)
+      static bool dontGroupOSRAssumptions = (feGetEnv("TR_DontGroupOSRAssumptions") != NULL);
+      if (dontGroupOSRAssumptions)
          {
-         ListIterator<TR_VirtualGuardSite> it(&sites);
-         for (TR_VirtualGuardSite *site = it.getFirst(); site; site = it.getNext())
+         TR_Array<TR_OpaqueClassBlock*> *clazzes = comp->getClassesForOSRRedefinition();
+         if (clazzes)
             {
-            for (uint32_t i = 0; i < clazzes->size(); ++i)
-               TR_PatchNOPedGuardSiteOnClassRedefinition
-                  ::make(comp->fe(), comp->trPersistentMemory(), (*clazzes)[i], site->getLocation(), site->getDestination(), comp->getMetadataAssumptionList());
+            ListIterator<TR_VirtualGuardSite> it(&sites);
+            for (TR_VirtualGuardSite *site = it.getFirst(); site; site = it.getNext())
+               {
+               for (uint32_t i = 0; i < clazzes->size(); ++i)
+                  TR_PatchNOPedGuardSiteOnClassRedefinition
+                     ::make(comp->fe(), comp->trPersistentMemory(), (*clazzes)[i], site->getLocation(), site->getDestination(), comp->getMetadataAssumptionList());
 
-            if (clazzes->size() > 0)
-               comp->setHasClassRedefinitionAssumptions();
+               if (clazzes->size() > 0)
+                  comp->setHasClassRedefinitionAssumptions();
+               }
             }
          }
 
-      // If this was an OSR guard, there is nothing left to do
-      if (info->getKind() == TR_OSRGuard)
+      // if it's not real OSR guard then we need to register
+      // both the OSR site and the guard
+      if (!info->mergedWithOSRGuard())
+         return;
+      if (!info->isNopable())
          return;
       }
-
-   // OSR guards are specially handled
-   if (!dontGroupOSRAssumptions && info->getKind() == TR_OSRGuard)
-      return;
 
    TR::SymbolReference      *symRef               = info->getSymbolReference();
    TR::MethodSymbol         *methodSymbol         = symRef->getSymbol()->castToMethodSymbol();
