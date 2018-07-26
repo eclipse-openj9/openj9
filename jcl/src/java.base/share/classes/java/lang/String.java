@@ -1956,10 +1956,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				// Check if the String is compressed
 				if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
 					if (c <= 255) {
-						return helpers.findElementFromArray(array, (byte)c, start, len);
+						return helpers.intrinsicIndexOfLatin1(array, (byte)c, start, len);
 					}
 				} else {
-					return helpers.findElementFromArray(array, (char)c, start, len);
+					return helpers.intrinsicIndexOfUTF16(array, (char)c, start, len);
 				}
 			} else if (c <= Character.MAX_CODE_POINT) {
 				for (int i = start; i < len; ++i) {
@@ -5958,10 +5958,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				// Check if the String is compressed
 				if (enableCompression && (null == compressionFlag || count >= 0)) {
 					if (c <= 255) {
-						return helpers.findElementFromArray(array, (byte)c, start, len);
+						return helpers.intrinsicIndexOfLatin1(array, (byte)c, start, len);
 					}
 				} else {
-					return helpers.findElementFromArray(array, (char)c, start, len);
+					return helpers.intrinsicIndexOfUTF16(array, (char)c, start, len);
 				}
 			} else if (c <= Character.MAX_CODE_POINT) {
 				for (int i = start; i < len; ++i) {

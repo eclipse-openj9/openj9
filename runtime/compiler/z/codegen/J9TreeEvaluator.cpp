@@ -446,6 +446,148 @@ TR::Register * caseConversionHelper(TR::Node* node, TR::CodeGenerator* cg, bool 
    }
 
 extern TR::Register *
+intrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isCompressed)
+   {
+   cg->generateDebugCounter("z13/simd/indexOf", 1, TR::DebugCounter::Free);
+
+   TR::Register* address = cg->evaluate(node->getChild(1));
+   TR::Register* value = cg->evaluate(node->getChild(2));
+   TR::Register* index = cg->evaluate(node->getChild(3));
+   TR::Register* size = cg->gprClobberEvaluate(node->getChild(4));
+
+   // load length isn't used after loop, size must is adjusted to become bytes left
+   TR::Register* loopCounter = size;
+   TR::Register* loadLength = cg->allocateRegister();
+   TR::Register* indexRegister = cg->allocateRegister();
+   TR::Register* offsetAddress = cg->allocateRegister();
+   TR::Register* scratch = offsetAddress;
+
+   TR::Register* charBufferVector = cg->allocateRegister(TR_VRF);
+   TR::Register* resultVector = cg->allocateRegister(TR_VRF);
+   TR::Register* valueVector = cg->allocateRegister(TR_VRF);
+
+   TR::LabelSymbol* loopLabel = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
+   TR::LabelSymbol* fullVectorLabel = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
+   TR::LabelSymbol* notFoundInResidue = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
+   TR::LabelSymbol* foundLabel = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
+   TR::LabelSymbol* foundLabelExtractedScratch = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
+   TR::LabelSymbol* failureLabel = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
+   TR::LabelSymbol* doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
+
+   const int elementSizeMask = isCompressed ? 0x0 : 0x1;   // byte or halfword mask
+   uintptrj_t headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+   const int8_t sizeOfVector = cg->machine()->getVRFSize();
+   const bool is64 = TR::Compiler->target.is64Bit();
+
+   TR::RegisterDependencyConditions * regDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 8, cg);
+   regDeps->addPostCondition(address, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(loopCounter, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(indexRegister, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(loadLength, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(offsetAddress, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(charBufferVector, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(resultVector, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(valueVector, TR::RealRegister::AssignAny);
+
+   generateVRRfInstruction(cg, TR::InstOpCode::VLVGP, node, valueVector, index, value);
+   generateVRIcInstruction(cg, TR::InstOpCode::VREP, node, valueVector, valueVector, (sizeOfVector / (1 << elementSizeMask)) - 1, elementSizeMask);
+   generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, resultVector, 0, 0);
+   generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, charBufferVector, 0, 0);
+
+   if (is64)
+      {
+      generateRREInstruction(cg, TR::InstOpCode::LLGFR, node, indexRegister, index);
+      } 
+   else 
+      {
+      generateRRInstruction(cg, TR::InstOpCode::LR, node, indexRegister, index);
+      }
+   generateRRInstruction(cg, TR::InstOpCode::SR, node, size, index);
+
+   if (!isCompressed)
+      {
+      generateRSInstruction(cg, TR::InstOpCode::SLL, node, size, 1);
+      generateRSInstruction(cg, TR::InstOpCode::SLL, node, indexRegister, 1);
+      }
+
+   generateRRInstruction(cg, TR::InstOpCode::LR, node, loadLength, size);
+   generateRILInstruction(cg, TR::InstOpCode::NILF, node, loadLength, 0xF);
+   TR::Instruction* cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, fullVectorLabel);
+
+   cursor->setStartInternalControlFlow();
+
+   // VLL takes an index, not a count, so subtract 1 from the count
+   generateRILInstruction(cg, TR::InstOpCode::SLFI, node, loadLength, 1);
+
+   generateRXInstruction(cg, TR::InstOpCode::LA, node, offsetAddress, generateS390MemoryReference(address, indexRegister, headerSize, cg));
+   generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, charBufferVector, loadLength, generateS390MemoryReference(offsetAddress, 0, cg));
+
+   generateVRRbInstruction(cg, TR::InstOpCode::VFEE, node, resultVector, charBufferVector, valueVector, 0x1, elementSizeMask);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK1, node, notFoundInResidue);
+
+   generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, scratch, resultVector, generateS390MemoryReference(7, cg), 0);
+   generateRIEInstruction(cg, TR::InstOpCode::CRJ, node, scratch, loadLength, foundLabelExtractedScratch, TR::InstOpCode::COND_BNH);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, notFoundInResidue);
+
+   // Increment index by loaded length + 1, since we subtracted 1 earlier
+   generateRIEInstruction(cg, TR::InstOpCode::AHIK, node, loadLength, loadLength, 1);
+   generateRRInstruction(cg, TR::InstOpCode::AR, node, indexRegister, loadLength);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, fullVectorLabel);
+
+   generateRIEInstruction(cg, TR::InstOpCode::CIJ, node, size, sizeOfVector, failureLabel, TR::InstOpCode::COND_BL);
+
+   // Set loopcounter to 1/16 of the length, remainder has already been accounted for
+   generateRSInstruction(cg, TR::InstOpCode::SRL, node, loopCounter, loopCounter, 4);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, loopLabel);
+
+   generateVRXInstruction(cg, TR::InstOpCode::VL, node, charBufferVector, generateS390MemoryReference(address, indexRegister, headerSize, cg));
+
+   generateVRRbInstruction(cg, TR::InstOpCode::VFEE, node, resultVector, charBufferVector, valueVector, 0x1, elementSizeMask);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK4, node, foundLabel);
+
+   generateRILInstruction(cg, TR::InstOpCode::AFI, node, indexRegister, sizeOfVector);
+
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRCT, node, loopCounter, loopLabel);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, failureLabel);
+   generateRIInstruction(cg, TR::InstOpCode::LHI, node, indexRegister, 0xFFFF);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_B, node, doneLabel);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, foundLabel);
+   generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, scratch, resultVector, generateS390MemoryReference(7, cg), 0);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, foundLabelExtractedScratch);
+   generateRRInstruction(cg, TR::InstOpCode::AR, node, indexRegister, scratch);
+
+   if (!isCompressed)
+      {
+      generateRSInstruction(cg, TR::InstOpCode::SRL, node, indexRegister, indexRegister, 1);
+      }
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, doneLabel, regDeps);
+   doneLabel->setEndInternalControlFlow();
+
+   cg->stopUsingRegister(loopCounter);
+   cg->stopUsingRegister(loadLength);
+   cg->stopUsingRegister(offsetAddress);
+
+   cg->stopUsingRegister(charBufferVector);
+   cg->stopUsingRegister(resultVector);
+   cg->stopUsingRegister(valueVector);
+
+   node->setRegister(indexRegister);
+   cg->recursivelyDecReferenceCount(node->getChild(0));
+   cg->decReferenceCount(node->getChild(1));
+   cg->decReferenceCount(node->getChild(2));
+   cg->decReferenceCount(node->getChild(3));
+   cg->decReferenceCount(node->getChild(4));
+   return indexRegister;
+   }
+
+extern TR::Register *
 toUpperIntrinsic(TR::Node *node, TR::CodeGenerator *cg, bool isCompressedString)
    {
    cg->generateDebugCounter("z13/simd/toUpper", 1, TR::DebugCounter::Free);

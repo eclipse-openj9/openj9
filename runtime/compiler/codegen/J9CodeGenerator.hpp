@@ -377,6 +377,16 @@ public:
     */
    void setSupportsInlineStringCaseConversion() { return _j9Flags.set(SupportsInlineStringCaseConversion);}
 
+   /** \brief
+    *    Determines whether the code generator supports inlining of java/lang/String.indexOf()
+    */
+   bool getSupportsInlineStringIndexOf() { return _j9Flags.testAny(SupportsInlineStringIndexOf);}
+
+   /** \brief
+    *    The code generator supports inlining of java/lang/String.indexOf()
+    */
+   void setSupportsInlineStringIndexOf() { return _j9Flags.set(SupportsInlineStringIndexOf);}
+
    /**
     * \brief
     *    The number of nodes between a monext and the next monent before
@@ -390,7 +400,8 @@ private:
       {
       HasFixedFrameC_CallingConvention    = 0x00000001,
       SupportsMaxPrecisionMilliTime       = 0x00000002,
-      SupportsInlineStringCaseConversion  = 0x00000004 /*! codegen inlining of Java string case conversion */
+      SupportsInlineStringCaseConversion  = 0x00000004, /*! codegen inlining of Java string case conversion */
+      SupportsInlineStringIndexOf         = 0x00000008 /*! codegen inlining of Java string index of */
       };
 
    flags32_t _j9Flags;

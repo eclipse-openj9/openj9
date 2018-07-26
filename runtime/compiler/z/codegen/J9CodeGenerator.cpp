@@ -109,6 +109,12 @@ J9::Z::CodeGenerator::CodeGenerator() :
    if (cg->getSupportsVectorRegisters() && !comp->getOption(TR_DisableSIMDStringCaseConv))
       cg->setSupportsInlineStringCaseConversion();
 
+   if (cg->getSupportsVectorRegisters() && !comp->getOption(TR_DisableFastStringIndexOf) &&
+       !TR::Compiler->om.canGenerateArraylets())
+      {
+      cg->setSupportsInlineStringIndexOf();
+      }
+
    // Let's turn this on.  There is more work needed in the opt
    // to catch the case where the BNDSCHK is inserted after
    //
@@ -3938,6 +3944,8 @@ extern TR::Register *inlineBigDecimalToPackedConverter(TR::Node * node, TR::Code
 extern TR::Register *toUpperIntrinsic(TR::Node * node, TR::CodeGenerator * cg, bool isCompressedString);
 extern TR::Register *toLowerIntrinsic(TR::Node * node, TR::CodeGenerator * cg, bool isCompressedString);
 
+extern TR::Register *intrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isCompressed);
+
 extern TR::Register *inlineDoubleMax(TR::Node *node, TR::CodeGenerator *cg);
 extern TR::Register *inlineDoubleMin(TR::Node *node, TR::CodeGenerator *cg);
 
@@ -4219,6 +4227,21 @@ J9::Z::CodeGenerator::inlineDirectCall(
          default:
             break;
          }
+      }
+
+   if (cg->getSupportsInlineStringIndexOf())
+      {
+         switch (methodSymbol->getRecognizedMethod())
+            {
+            case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1:
+               resultReg = intrinsicIndexOf(node, cg, true);
+               return true;
+            case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
+               resultReg = intrinsicIndexOf(node, cg, false);
+               return true;
+            default:
+               break;
+            }
       }
 
       if (!comp->getOption(TR_DisableSIMDDoubleMaxMin) && cg->getSupportsVectorRegisters())
