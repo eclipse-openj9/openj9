@@ -59,6 +59,8 @@ type:_UNWIND_CODE
 type:UNWIND_INFO
 type:PUNWIND_INFO
 type:_UNWIND_INFO
+type:PSLIST_HEADER
+type:_SLIST_HEADER
 
 # Ignore one (or all) of sets of types whose names differ only in case
 # (so we don't try to create Java source files whose names differ only

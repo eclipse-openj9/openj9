@@ -422,6 +422,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<dependency name="win_64">
 				<include-if condition="spec.flags.module_windbg and spec.flags.J9VM_ENV_DATA64" />
 			</dependency>
+			<dependency name="jvmtitest">
+				<include-if condition="spec.win_.*"/>
+			</dependency>
 		</dependencies>
 		<commands>
 			<command line="$(MAKE) -C ddr -f run_omrddrgen.mk" type="all"/>
