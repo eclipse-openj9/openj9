@@ -41,7 +41,7 @@ static J9Method*
 findFieldContext(J9VMThread *currentThread, IDATA *pcOffset)
 {
 	IDATA bytecodePCOffset = 0;
-	J9Method *method = findNativeMethodFrame(currentThread)->method;
+	J9Method *method = VM_VMHelpers::findNativeMethodFrame(currentThread)->method;
 	if (NULL == method) {
 		J9StackWalkState *walkState = currentThread->stackWalkState;
 		walkState->walkThread = currentThread;
