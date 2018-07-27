@@ -61,7 +61,9 @@ struct TR_MethodToBeCompiled
    void releaseSlotMonitor(J9VMThread *vmThread);
    void setAotCodeToBeRelocated(const void *m);
    bool isAotLoad() const { return _doAotLoad; }
-   bool isOutOfProcessCompReq() const { return _stream != nullptr; }
+   bool isRemoteCompReq() const { return _remoteCompReq; } // at the client
+   void setRemoteCompReq() { _remoteCompReq = true; }
+   bool isOutOfProcessCompReq() const { return _stream != nullptr; } // at the server
    uint64_t getClientUID() const;
 
    TR_MethodToBeCompiled *_next;
@@ -117,7 +119,8 @@ struct TR_MethodToBeCompiled
    uint8_t                _weight; // Up to 256 levels of weight
    bool                   _hasIncrementedNumCompThreadsCompilingHotterMethods;
    uint8_t                _jitStateWhenQueued;
-   JITaaS::J9ServerStream  *_stream; // a non-NULL field denotes a remote compilation request
+   bool                   _remoteCompReq; // comp request should be sent remotely to JITaaS server
+   JITaaS::J9ServerStream  *_stream; // a non-NULL field denotes an out-of-process compilation request
    char                  *_clientOptions;
    size_t                _clientOptionsSize;
    }; // TR_MethodToBeCompiled

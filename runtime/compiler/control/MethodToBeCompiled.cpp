@@ -80,6 +80,7 @@ void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails & details, v
    _entryIsCountedAsInvRequest = false;
    _GCRrequest = false;
 
+   _remoteCompReq = false;
    _stream = nullptr;
    _methodIsInSharedCache = TR_maybe;
    _clientOptions = nullptr;

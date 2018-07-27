@@ -850,7 +850,8 @@ TR_RelocationRuntime::relocateMethodMetaData(UDATA codeRelocationAmount, UDATA d
       {
       TR_PersistentJittedBodyInfo *persistentBodyInfo = reinterpret_cast<TR_PersistentJittedBodyInfo *>( (_newPersistentInfo + sizeof(J9JITDataCacheHeader) ) );
       TR_PersistentMethodInfo *persistentMethodInfo = reinterpret_cast<TR_PersistentMethodInfo *>( (_newPersistentInfo + sizeof(J9JITDataCacheHeader) ) + sizeof(TR_PersistentJittedBodyInfo) );
-      if (_comp->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE && !_comp->getCurrentMethod()->isInterpreted())
+
+      if (_comp->isRemoteCompilation() && !_comp->getCurrentMethod()->isInterpreted())
          {
          TR_PersistentMethodInfo *existingPersistentMethodInfo = _comp->getRecompilationInfo()->getExistingMethodInfo(_comp->getCurrentMethod());
          if (existingPersistentMethodInfo)

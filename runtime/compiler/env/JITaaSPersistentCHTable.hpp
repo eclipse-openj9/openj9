@@ -57,8 +57,6 @@ public:
 
    virtual TR_PersistentClassInfo * findClassInfo(TR_OpaqueClassBlock * classId);
    virtual TR_PersistentClassInfo * findClassInfoAfterLocking(TR_OpaqueClassBlock * classId, TR::Compilation *, bool returnClassInfoForAOT = false);
-   TR_PersistentClassInfo * findClassInfoConst(TR_OpaqueClassBlock * classId);
-   TR_PersistentClassInfo * findClassInfoAfterLockingConst(TR_OpaqueClassBlock * classId, TR::Compilation *, bool returnClassInfoForAOT = false);
 
    virtual TR_PersistentClassInfo *classGotLoaded(TR_FrontEnd *, TR_OpaqueClassBlock *classId);
    virtual bool classGotInitialized(TR_FrontEnd *fe, TR_PersistentMemory *persistentMemory, TR_OpaqueClassBlock *classId, TR_PersistentClassInfo *clazz);
@@ -67,10 +65,8 @@ public:
    virtual void classGotUnloadedPost(TR_FrontEnd *fe, TR_OpaqueClassBlock *classId);
    virtual void removeClass(TR_FrontEnd *, TR_OpaqueClassBlock *classId, TR_PersistentClassInfo *info, bool removeInfo);
    virtual bool classGotExtended(TR_FrontEnd *vm, TR_PersistentMemory *, TR_OpaqueClassBlock *superClassId, TR_OpaqueClassBlock *subClassId);
-   virtual void resetVisitedClasses(); // highly time consumming
 
-   virtual void markSuperClassesAsDirty(TR_FrontEnd *fe, TR_OpaqueClassBlock *classId);
-
+  
 #ifdef COLLECT_CHTABLE_STATS
    uint32_t _numUpdates; // aka numCompilations
    uint32_t _numCommitFailures;
@@ -81,6 +77,7 @@ public:
 #endif
 
 private:
+   void markSuperClassesAsDirty(TR_FrontEnd *fe, TR_OpaqueClassBlock *classId);
    void markForRemoval(TR_OpaqueClassBlock *clazz);
    void markDirty(TR_OpaqueClassBlock *clazz);
 

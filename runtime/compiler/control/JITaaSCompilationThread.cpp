@@ -657,7 +657,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          fe->scanClassForReservation(clazz, comp);
          auto table = (TR_JITaaSClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
-         TR_PersistentClassInfo *info = table->findClassInfoAfterLockingConst(clazz, comp);
+         TR_PersistentClassInfo *info = table->findClassInfoAfterLocking(clazz, comp);
          client->write(info->isReservable());
          }
          break;
@@ -1912,7 +1912,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->getRecvData<JITaaS::Void>();
          auto table = (TR_JITaaSClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
          TR_OpaqueClassBlock *rootClass = fe->getSystemClassFromClassName("java/lang/Object", 16);
-         TR_PersistentClassInfo* result = table->findClassInfoAfterLockingConst(rootClass, comp, false);
+         TR_PersistentClassInfo* result = table->findClassInfoAfterLocking(rootClass, comp, false);
          std::string encoded = FlatPersistentClassInfo::serializeHierarchy(result);
          client->write(encoded);
          }
@@ -1929,7 +1929,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>());
          auto table = (TR_JITaaSClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
-         auto info = table->findClassInfoAfterLockingConst(clazz, comp);
+         auto info = table->findClassInfoAfterLocking(clazz, comp);
          info->setReservable(false);
          }
          break;

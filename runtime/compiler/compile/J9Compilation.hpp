@@ -287,6 +287,12 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    //
    bool supportsQuadOptimization();
 
+   // JITaaS
+   bool isOutOfProcessCompilation() const { return _outOfProcessCompilation; } // server side
+   void setOutOfProcessCompilation() { _outOfProcessCompilation = true; }
+   bool isRemoteCompilation() const { return _remoteCompilation; } // client side
+   void setRemoteCompilation() { _remoteCompilation = true; }
+
 private:
 
    J9VMThread *_j9VMThread;
@@ -360,6 +366,13 @@ private:
    TR_AccessedProfileInfo *_profileInfo;
 
    bool _skippedJProfilingBlock;
+
+   // The following flag is set when this compilation is performed in a
+   // VM that does not have the runtime part (server side in JITaaS)
+   bool _outOfProcessCompilation; 
+   // The following flag is set when a request to complete this compilation
+   // has been sent to a remote VM (client side in JITaaS)
+   bool _remoteCompilation; 
    };
 
 }

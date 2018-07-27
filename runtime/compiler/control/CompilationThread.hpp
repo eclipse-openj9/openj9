@@ -160,7 +160,6 @@ class CompilationInfoPerThreadBase
                             TR_Memory &trMemory,
                             bool &canDoRelocatableCompile,
                             bool &eligibleForRelocatableCompile,
-                            bool &eligibleForRemoteCompile,
                             TR_RelocationRuntime *reloRuntime);
 
    void *postCompilationTasks(J9VMThread * vmThread,

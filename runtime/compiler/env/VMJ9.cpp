@@ -2079,6 +2079,7 @@ TR_J9VMBase::allocateCodeMemory(TR::Compilation * comp, uint32_t warmCodeSize, u
    bool hadVMAccess = releaseClassUnloadMonitorAndAcquireVMaccessIfNeeded(comp, &hadClassUnloadMonitor);
 
    // Override contiguous allocation for the JITaaS client
+   // JITaaS FIXME: why do we need contiguous allocation at the client?
    bool useContiguousAllocation = needsContiguousAllocation();
    useContiguousAllocation |= comp->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE;
 

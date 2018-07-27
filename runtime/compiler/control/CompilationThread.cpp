@@ -6597,9 +6597,8 @@ bool isMethodIneligibleForAot(J9Method *method)
  * @param method Pointer to the J9Method (input)
  * @param aotCachedMethod Pointer to a pointer to the AOT code to be relocated (if it exists) (output)
  * @param trMemory Reference to the TR_Memory associated with this compilation (input)
- * @param canDoRelocatableCompile Reference to a bool; indicates if the current compilation can be AOT compiled (output)
+ * @param canDoRelocatableCompile Reference to a bool; Indicates if the current compilation satisfies requirements for being AOT compiled (output)
  * @param eligibleForRelocatableCompile Reference to a bool; Indicates if the current compilation is eligible for AOT (output)
- * @param eligibleForRemoteCompile Reference to a bool; Indicates if the current compilation is eligible for JITaaS (output)
  * @param reloRuntime Pointer to a TR_RelocationRuntime; NULL if JVM does not have AOT support (input)
  *
  * This method is used to perform a set of tasks needed before attempting a compilation.
@@ -6615,11 +6614,10 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
                                                       TR_Memory &trMemory,
                                                       bool &canDoRelocatableCompile,
                                                       bool &eligibleForRelocatableCompile,
-                                                      bool &eligibleForRemoteCompile,
                                                       TR_RelocationRuntime *reloRuntime)
    {
-   // Get the session info
-   // JITaaS TODO: move this into the try/catch block Irwin is going to create
+   // For out-of-process compilations (at the JITaaS server) we
+   // must find and cache the session UID for the client
    if (entry->isOutOfProcessCompReq())
       {
       uint64_t clientUID = entry->getClientUID();
@@ -6651,23 +6649,23 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
    entry->_doAotLoad = false;
 
    if (entry->_methodIsInSharedCache == TR_yes &&    // possible AOT load
-      (entry->isOutOfProcessCompReq() || !TR::CompilationInfo::isCompiled(method)) &&
+      !TR::CompilationInfo::isCompiled(method) &&
       !entry->_doNotUseAotCodeFromSharedCache &&
       !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoLoadAOT) &&
       !(jitConfig->runtimeFlags & J9JIT_TOSS_CODE))
       {
       // Determine whether the compilation filters allows me to relocate
+      // Filters should not be applied to out-of-process compilations
+      // because decisions on what needs to be compiled are done at the client
       //
       TR_Debug *debug = TR::Options::getDebug();
       bool canRelocateMethod = true;
-      if (debug)
+      if (debug && !entry->isOutOfProcessCompReq())
          {
          setCompilationShouldBeInterrupted(0); // zero the flag because createResolvedMethod calls
                                                // acquire/releaseVMaccessIfNeeded and may see the flag set by previous compilation
          TR_FilterBST *filter = NULL;
-         TR_J9VMBase *fe = entry->isOutOfProcessCompReq() ?
-            TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::J9_SERVER_VM) :
-            TR_J9VMBase::get(_jitConfig, vmThread);
+         TR_J9VMBase *fe = TR_J9VMBase::get(_jitConfig, vmThread);
 
          if (NULL == fe)
             {
@@ -6676,7 +6674,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
            
          TR_ResolvedMethod *resolvedMethod = fe->createResolvedMethod(&trMemory, (TR_OpaqueMethodBlock *)method);
          if (!debug->methodCanBeRelocated(&trMemory, resolvedMethod, filter) ||
-            !debug->methodCanBeCompiled(&trMemory, resolvedMethod, filter))
+             !debug->methodCanBeCompiled(&trMemory, resolvedMethod, filter))
             canRelocateMethod = false;
          }
 
@@ -6684,11 +6682,12 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          {
          // Find the AOT body in the SCC
          //
-         *aotCachedMethod = entry->isOutOfProcessCompReq() ?
-         findAotBodyInSCC(vmThread, entry->getMethodDetails().getRomMethod()) :
-         findAotBodyInSCC(vmThread, method);
+         *aotCachedMethod = entry->isOutOfProcessCompReq() ? // NOTE: AOT loads at the server are not yet working
+            findAotBodyInSCC(vmThread, entry->getMethodDetails().getRomMethod()) :
+            findAotBodyInSCC(vmThread, method);
          if (*aotCachedMethod)
             {
+            // All conditions are met for doing an AOT load. Mark this fact on the entry.
             entry->_doAotLoad = true;
             entry->setAotCodeToBeRelocated(*aotCachedMethod);
             reloRuntime->setReloStartTime(getTimeWhenCompStarted());
@@ -6730,14 +6729,10 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
    if (!entry->isAotLoad())
       {
       // Determine if we need to perform an AOT compilation
-      // If yes, then change the type of the method and generate an AOT cookie
       //
       TR::IlGeneratorMethodDetails & details = entry->getMethodDetails();
 
-      eligibleForRemoteCompile = true; // Everything, yay!
-
-      if (_compInfo.getPersistentInfo()->getJITaaSMode() == NONJITaaS_MODE) {
-         eligibleForRelocatableCompile =
+      eligibleForRelocatableCompile =
             TR::Options::sharedClassCache() &&
             !details.isNewInstanceThunk() &&
             !entry->isJNINative() &&
@@ -6748,8 +6743,8 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             reloRuntime->isRomClassForMethodInSharedCache(method, javaVM) &&
             !isMethodIneligibleForAot(method) &&
             (!TR::Options::getAOTCmdLineOptions()->getOption(TR_AOTCompileOnlyFromBootstrap) ||
-               TR_J9VMBase::get(jitConfig, vmThread)->isClassLibraryMethod((TR_OpaqueMethodBlock *)method), true);
-      }
+               TR_J9VMBase::get(jitConfig, vmThread)->isClassLibraryMethod((TR_OpaqueMethodBlock *)method), true) &&
+            _compInfo.getPersistentInfo()->getJITaaSMode() == NONJITaaS_MODE; // do not allow AOT compilations in JITaaS
 
       bool sharedClassTest = eligibleForRelocatableCompile &&
          !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoStoreAOT);
@@ -6783,24 +6778,60 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             }
          }
       }
-   if (eligibleForRemoteCompile && entry->_stream)
-      {
-      _vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::J9_SERVER_VM);
-      entry->_useAotCompilation = false;
-      }
-   else if (canDoRelocatableCompile)
+
+   // If we are allowed to do relocatable compilations, just do it
+   // Note that currently we don't support out-of-process relocatable compilations
+   if (canDoRelocatableCompile)
       {
       _vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::AOT_VM);
       entry->_useAotCompilation = true;
       }
+   else if (entry->isOutOfProcessCompReq())
+      {
+      _vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::J9_SERVER_VM);
+      entry->_useAotCompilation = false;
+      }
    else
       {
+      bool doLocalCompilation = false;
+      if (_compInfo.getPersistentInfo()->getJITaaSMode() == CLIENT_MODE && 
+         /* TODO: getOption->(TR_AllowLocalCompilationsInJITaaSClient) && */
+         TR::Options::canJITCompile()) // If -Xnojit we cannot do JIT compilations
+         {
+         static char *localColdCompilations = feGetEnv("TR_LocalColdCompilations");
+         // We could perform JIT compilations locally or remotely
+         // As a heuristic, cold compilations should be performed locally because
+         // they are supposed to be cheap with respect to memory and CPU.
+         //
+         if (entry->_optimizationPlan->getOptLevel() <= cold && localColdCompilations)
+            doLocalCompilation = true;
+
+         // In another heuristic we could downgrade all first time compilations
+         // that happen during startup.
+         if (false)
+            {
+            if (!TR::CompilationInfo::isCompiled(method) &&  //recompilations should be sent remotely
+               !TR::Options::getCmdLineOptions()->getOption(TR_DontDowngradeToCold) &&
+               !TR::Options::getCmdLineOptions()->getOption(TR_DisableUpgradingColdCompilations) &&
+               TR::Options::getCmdLineOptions()->allowRecompilation() &&
+               entry->_optimizationPlan->getOptLevel() == warm)
+               {
+               doLocalCompilation = true;
+               entry->_optimizationPlan->setOptLevel(cold);
+               entry->_optimizationPlan->setOptLevelDowngraded(true);
+               // JITaaS TODO: queue a remote upgrade right away, but at a lower priority
+               // If so, disable GCR trees for those cold compilations.
+               }
+            }
+         }
+      if (!doLocalCompilation)
+         entry->setRemoteCompReq();
+ 
       _vm = TR_J9VMBase::get(_jitConfig, vmThread); // This is used for JIT compilations and AOT loads
       entry->_useAotCompilation = false;
       }
+  
 
-   // For AOT compilation generate method cookie to pass into compiler
-   //
    if (_vm->isAOT_DEPRECATED_DO_NOT_USE())
       {
       // In some circumstances AOT compilations are performed at warm
@@ -6851,20 +6882,29 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
       }
    else if (_compInfo.getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
       {
-      TR::ClassTableCriticalSection commit(_vm);
-
-      // clear bit for this compilation
-      _compInfo.resetCHTableUpdateDone(getCompThreadId());
-
-      // freshen up newlyExtendedClasses
-      auto newlyExtendedClasses = _compInfo.getNewlyExtendedClasses();
-      for (auto it = newlyExtendedClasses->begin(); it != newlyExtendedClasses->end();)
+      if (entry->isRemoteCompReq())
          {
-         it->second &= _compInfo.getCHTableUpdateDone();
-         if (it->second)
-            ++it;
-         else
-            it = newlyExtendedClasses->erase(it);
+         TR::ClassTableCriticalSection commit(_vm);
+
+         // clear bit for this compilation
+         _compInfo.resetCHTableUpdateDone(getCompThreadId());
+
+         // freshen up newlyExtendedClasses
+         auto newlyExtendedClasses = _compInfo.getNewlyExtendedClasses();
+         for (auto it = newlyExtendedClasses->begin(); it != newlyExtendedClasses->end();)
+            {
+            it->second &= _compInfo.getCHTableUpdateDone();
+            if (it->second)
+               ++it;
+            else
+               it = newlyExtendedClasses->erase(it);
+            }
+         }
+      else // client executing a compilation locally
+         {
+         // The bit for this compilation thread should be 0 because we never sent any updates to the server
+         TR_ASSERT((_compInfo.getCHTableUpdateDone() & (1 << getCompThreadId())) == 0, 
+            "For local compilations _chTableUpdateFlags should not have the bit set for this comp ID");
          }
       }
 
@@ -7207,7 +7247,7 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
 
       preCompilationTasks(vmThread, javaVM, entry,
                           method, &aotCachedMethod, trMemory,
-                          canDoRelocatableCompile, eligibleForRelocatableCompile, eligibleForRemoteCompile,
+                          canDoRelocatableCompile, eligibleForRelocatableCompile, 
                           reloRuntime);
 
       CompileParameters compParam(
@@ -7223,15 +7263,15 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
 
    if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
       TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH,
-         "Compilation thread executing compile(): j9method=%p isAotLoad=%d canDoRelocatableCompile=%d eligibleForRelocatableCompile=%d eligibleForRemoteCompile=%d _doNotUseAotCodeFromSharedCache=%d AOTfe=%d isDLT=%d",
-          method, entry->isAotLoad(), canDoRelocatableCompile, eligibleForRelocatableCompile, eligibleForRemoteCompile, entry->_doNotUseAotCodeFromSharedCache, _vm->isAOT_DEPRECATED_DO_NOT_USE(), entry->isDLTCompile());
+         "Compilation thread executing compile(): j9method=%p isAotLoad=%d canDoRelocatableCompile=%d eligibleForRelocatableCompile=%d isRemoteCompReq=%d _doNotUseAotCodeFromSharedCache=%d AOTfe=%d isDLT=%d",
+          method, entry->isAotLoad(), canDoRelocatableCompile, eligibleForRelocatableCompile, entry->isRemoteCompReq(), entry->_doNotUseAotCodeFromSharedCache, _vm->isAOT_DEPRECATED_DO_NOT_USE(), entry->isDLTCompile());
 
       if (
           (TR::Options::canJITCompile()
            || canDoRelocatableCompile
            || entry->isAotLoad()
+           || entry->isRemoteCompReq()
           )
-          && (_compInfo.getPersistentInfo()->getJITaaSMode() == NONJITaaS_MODE || (entry->isAotLoad() || eligibleForRemoteCompile))
 #if defined(TR_HOST_ARM)
           && !TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug)
 #endif
@@ -7474,9 +7514,10 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
          TR_ASSERT(p->_optimizationPlan, "Must have an optimization plan");
 
          TR::CompilationInfo *compInfo = &that->_compInfo;
-         // JITaaS: There is client side options, skip the setup options process
+         // If the options come from a remote party, skip the setup options process
          if (that->_methodBeingCompiled->_clientOptions != NULL)
             {
+            TR_ASSERT(that->_methodBeingCompiled->isOutOfProcessCompReq(), "Options are already provided only for JITaaS server");
             options = TR::Options::unpackOptions(that->_methodBeingCompiled->_clientOptions, that->_methodBeingCompiled->_clientOptionsSize, p->trMemory());
             options->setLogFileForClientOptions();
             }
@@ -7484,7 +7525,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             {
             // JITaaS: we want to suppress log file for client mode
             // Client will get the log files from server.
-            if (that->getCompilationInfo()->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+            if (that->_methodBeingCompiled->isRemoteCompReq())
                {
                TR::Options::suppressLogFileBecauseDebugObjectNotCreated();
                }
@@ -7504,7 +7545,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
 
             // JITaaS TODO determine if we care to support annotations
-            if (that->getCompilationInfo()->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+            if (that->_methodBeingCompiled->isRemoteCompReq())
                options->setOption(TR_EnableAnnotations,false);
 
             // Determine if known annotations exist and if so, keep annotations enabled
@@ -7905,6 +7946,12 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                p->_dispatchRegion,
                p->trMemory(),
                p->_optimizationPlan);
+
+         // JITaaS TODO: put info in optPlan so that compilation constructor can do this
+         if (that->_methodBeingCompiled->isRemoteCompReq())
+            compiler->setRemoteCompilation();
+         else if (that->_methodBeingCompiled->isOutOfProcessCompReq())
+            compiler->setOutOfProcessCompilation();
 
          p->trMemory()->setCompilation(compiler);
          that->setCompilation(compiler);
@@ -8307,8 +8354,7 @@ TR::CompilationInfoPerThreadBase::compile(
             ((TR_CreateDebug_t)_jitConfig->tracingHook)(compiler)
          );
 
-      // JITaaS: should not do this in client mode as the client doesn't compile anything
-      if (compiler->getPersistentInfo()->getJITaaSMode() != CLIENT_MODE)
+      if (! _methodBeingCompiled->isRemoteCompReq()) // remote compilations are performed elsewhere
          {
          // Print compiling method
          //
@@ -8400,11 +8446,11 @@ TR::CompilationInfoPerThreadBase::compile(
 
       // If we want to compile without VM access, now it's the time to release it
       // For the JITaaS client we must not enter this path. The class unload monitor 
-      // will not be acquired/releases and we'll only release VMaccess when 
+      // will not be acquired/released and we'll only release VMaccess when 
       // waiting for a reply from the server
       if (!compiler->getOption(TR_DisableNoVMAccess) &&
           !_methodBeingCompiled->_aotCodeToBeRelocated &&
-          compiler->getPersistentInfo()->getJITaaSMode() != CLIENT_MODE)
+          !_methodBeingCompiled->isRemoteCompReq())
          {
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
          bool doAcquireClassUnloadMonitor = true;
@@ -8495,7 +8541,7 @@ TR::CompilationInfoPerThreadBase::compile(
 
       intptr_t rtn = 0;
 
-      if (_compInfo.getPersistentInfo()->getJITaaSMode() != CLIENT_MODE || _methodBeingCompiled->isAotLoad())
+      if (!_methodBeingCompiled->isRemoteCompReq() || _methodBeingCompiled->isAotLoad())
          {
          if (!_methodBeingCompiled->isAotLoad())
             {
@@ -8550,7 +8596,7 @@ TR::CompilationInfoPerThreadBase::compile(
             metaData = performAOTLoad(vmThread, compiler, compilee, &vm, method);
             }
          }
-      else if (_compInfo.getPersistentInfo()->getJITaaSMode() == CLIENT_MODE) // JITaaS Client Mode
+      else if (_methodBeingCompiled->isRemoteCompReq()) // JITaaS Client Mode
          {
          metaData = remoteCompile(vmThread, compiler, compilee, method, details, this);
          }
@@ -8571,7 +8617,7 @@ TR::CompilationInfoPerThreadBase::compile(
                }                                     // and on the exception path we check haveLockedClassUnloadMonitor
             // Here the GC/HCR might happen
             }
-         if (compiler->getPersistentInfo()->getJITaaSMode() != CLIENT_MODE && !(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))
+         if (!_methodBeingCompiled->isRemoteCompReq() && !(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))
             acquireVMAccessNoSuspend(vmThread);
 
          // The GC could have unloaded some classes when we released the classUnloadMonitor, or HCR could have kicked in
@@ -8608,7 +8654,7 @@ TR::CompilationInfoPerThreadBase::compile(
          }
 
       _methodBeingCompiled->_compErrCode = compilationOK;
-      if (!_methodBeingCompiled->isAotLoad() && _compInfo.getPersistentInfo()->getJITaaSMode() != CLIENT_MODE)
+      if (!_methodBeingCompiled->isAotLoad() && !_methodBeingCompiled->isRemoteCompReq())
          {
          class TraceMethodMetadata
             {
@@ -8744,6 +8790,7 @@ TR::CompilationInfoPerThreadBase::compile(
          }
 
       logCompilationSuccess(vmThread, vm, method, scratchSegmentProvider, compilee, compiler, metaData, optimizationPlan);
+
       TRIGGER_J9HOOK_JIT_COMPILING_END(_jitConfig->hookInterface, vmThread, method);
       }
    catch (const std::exception &e)
@@ -10314,6 +10361,9 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
 
             if (_methodBeingCompiled->_reqFromJProfilingQueue)
                TR_VerboseLog::write(" JPQ");
+
+            if (_methodBeingCompiled->isRemoteCompReq())
+               TR_VerboseLog::write(" remote");
 
             if (TR::Options::getVerboseOption(TR_VerboseGc))
                {

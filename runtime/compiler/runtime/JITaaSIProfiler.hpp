@@ -66,7 +66,10 @@ class TR_JITaaSClientIProfiler : public TR_IProfiler
       TR_PERSISTENT_ALLOC(TR_Memory::IProfiler);
       static TR_JITaaSClientIProfiler * allocate(J9JITConfig *jitConfig);
       TR_JITaaSClientIProfiler(J9JITConfig *);
-
+      // NOTE: since the JITaaS client can act as a regular JVM compiling methods 
+      // locally, we must not change the behavior of functions used in TR_IProfiler
+      // Thus, any virtual function here must call the corresponding method in
+      // the base class. It may be better not to override any methods though
     
       uint32_t walkILTreeForIProfilingEntries(uintptrj_t *pcEntries, uint32_t &numEntries, TR_J9ByteCodeIterator *bcIterator,
                                               TR_OpaqueMethodBlock *method, TR_BitVector *BCvisit, bool &abort);

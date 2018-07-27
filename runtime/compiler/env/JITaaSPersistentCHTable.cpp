@@ -350,21 +350,6 @@ TR_JITaaSClientPersistentCHTable::TR_JITaaSClientPersistentCHTable(TR_Persistent
    }
 
 TR_PersistentClassInfo *
-TR_JITaaSClientPersistentCHTable::findClassInfoConst(TR_OpaqueClassBlock * classId)
-   {
-   return TR_PersistentCHTable::findClassInfo(classId);
-   }
-
-TR_PersistentClassInfo *
-TR_JITaaSClientPersistentCHTable::findClassInfoAfterLockingConst(
-      TR_OpaqueClassBlock *classId,
-      TR::Compilation *comp,
-      bool returnClassInfoForAOT)
-   {
-   return TR_PersistentCHTable::findClassInfoAfterLocking(classId, comp, returnClassInfoForAOT);
-   }
-
-TR_PersistentClassInfo *
 TR_JITaaSClientPersistentCHTable::findClassInfo(TR_OpaqueClassBlock * classId)
    {
    markDirty(classId);
@@ -485,12 +470,6 @@ TR_JITaaSClientPersistentCHTable::classGotExtended(
    {
    markDirty(superClassId);
    return TR_PersistentCHTable::classGotExtended(fe, persistentMemory, superClassId, subClassId);
-   }
-
-void
-TR_JITaaSClientPersistentCHTable::resetVisitedClasses() // highly time consumming
-   {
-   TR_ASSERT(false, "should not call resetVisitedClasses on client");
    }
 
 

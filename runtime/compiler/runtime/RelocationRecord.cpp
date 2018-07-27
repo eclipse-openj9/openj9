@@ -1730,7 +1730,8 @@ TR_RelocationRecordThunks::relocateAndRegisterThunk(
    uint8_t *reloLocation)
    {
    // XXX: Currently all thunks are batch-relocated elsewhere for JITaaS
-   if (reloRuntime->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE && !reloRuntime->fej9()->_compInfoPT->getMethodBeingCompiled()->isAotLoad())
+   if (reloRuntime->fej9()->_compInfoPT->getMethodBeingCompiled()->isRemoteCompReq() && 
+      !reloRuntime->fej9()->_compInfoPT->getMethodBeingCompiled()->isAotLoad())
       {
       return 0;
       }
