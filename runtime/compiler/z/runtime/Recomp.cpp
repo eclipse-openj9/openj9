@@ -283,7 +283,7 @@ J9::Recompilation::methodHasBeenRecompiled(void * oldStartPC, void * newStartPC,
 
       patchAddr = (intptrj_t *) ((uint8_t *) oldStartPC + -(startPCToAsmOffset + requiredPad));
       oldAsmAddr = *patchAddr;
-      newAsmAddr = (intptrj_t) runtimeHelpers.getAddress(TR_S390samplingPatchCallSite);
+      newAsmAddr = (intptrj_t) runtimeHelpers.getFunctionEntryPointOrConst(TR_S390samplingPatchCallSite);
 
       if (debug("traceRecompilation"))
          {
