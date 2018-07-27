@@ -36,7 +36,7 @@ typedef struct riControlBlock {
    uint64_t limitAddr;
 
    /* Word 6 - Flags */
-   uint32_t pad29:29;
+   uint32_t padAtWord6Bit0:29;
    uint32_t reportingGroupSize:3;
 
    /* Word 7 */
@@ -51,7 +51,7 @@ typedef struct riControlBlock {
    uint32_t RInext:1;
    /* MAE - Max Address exceeded bit */
    uint32_t MAE:1;
-   uint32_t pad2:2;
+   uint32_t padAtWord7Bit6:2;
    /* Branch Controls */
    uint32_t callTypeBranches:1;
    uint32_t returnTypeBranches:1;
@@ -61,7 +61,7 @@ typedef struct riControlBlock {
    uint32_t TXAbort:1;
 
    uint32_t guardedStorage:1;
-   uint32_t pad3:1;
+   uint32_t padAtWord7Bit15:1;
    /* Branch Prediction Controls */
    uint32_t bp_notTakenButPredictedTaken:1;
    uint32_t bp_takenButPredictedNotTaken:1;
