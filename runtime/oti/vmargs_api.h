@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -122,17 +122,27 @@ IDATA
 addXjcl(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA j2seVersion);
 
 /*
- * Add argument to set com.ibm.oti.vm.bootstrap.library.path or sun.boot.library.path
+ * Add argument to set com.ibm.oti.vm.bootstrap.library.path
  * This allocates memory for the options string and contents of the file
  * @param portLib port library
  * @param vmArgumentsList current list of arguments
- * @param propertyNameEquals -D<property name>=
  * @param j9binPath path to library directory
  * @param jrebinPath path to library directory
  * @return 0 on success, negative value on failure
  */
 IDATA
-addBootLibraryPath(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, char *propertyNameEquals, char *j9binPath, char *jrebinPath);
+addBootstrapLibraryPath(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, char *j9binPath, char *jrebinPath);
+
+/*
+ * Add argument to set sun.boot.library.path
+ * This allocates memory for the options string and contents of the file
+ * @param portLib port library
+ * @param vmArgumentsList current list of arguments
+ * @param jrebinPath path to library directory
+ * @return 0 on success, negative value on failure
+ */
+IDATA
+addSunBootLibraryPath(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, char *jrebinPath);
 
 /**
  * Add argument to set java.library.path

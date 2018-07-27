@@ -2145,10 +2145,8 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 				/* Add the default options file */
 				(0 != addOptionsDefaultFile(&j9portLibrary, &vmArgumentsList, optionsDefaultFileLocation, localVerboseLevel))
 				|| (0 != addXjcl(&j9portLibrary, &vmArgumentsList, j2seVersion))
-				|| (0 != addBootLibraryPath(&j9portLibrary, &vmArgumentsList, "-Dcom.ibm.oti.vm.bootstrap.library.path=",
-						jvmBufferData(j9binBuffer), jvmBufferData(jrebinBuffer)))
-				|| (0 != addBootLibraryPath(&j9portLibrary, &vmArgumentsList, "-Dsun.boot.library.path=",
-						jvmBufferData(j9binBuffer), jvmBufferData(jrebinBuffer)))
+				|| (0 != addBootstrapLibraryPath(&j9portLibrary, &vmArgumentsList, jvmBufferData(j9binBuffer), jvmBufferData(jrebinBuffer)))
+				|| (0 != addSunBootLibraryPath(&j9portLibrary, &vmArgumentsList, jvmBufferData(jrebinBuffer)))
 				|| (0 != addJavaLibraryPath(&j9portLibrary, &vmArgumentsList, argEncoding, jvmInSubdir,
 						jvmBufferData(j9binBuffer), jvmBufferData(jrebinBuffer),
 						libpathValue, ldLibraryPathValue))
