@@ -121,12 +121,6 @@ fetchArrayClass(J9VMThread *currentThread, J9Class *elementTypeClass)
 	return resultClass;
 }
 
-J9SFJNINativeMethodFrame*
-findNativeMethodFrame(J9VMThread *currentThread)
-{
-	return (J9SFJNINativeMethodFrame*)((UDATA)currentThread->sp + (UDATA)currentThread->literals);
-}
-
 /**
  * Find the J9ClassLoader to use for the currently-running native method.
  *
@@ -141,7 +135,7 @@ getCurrentClassLoader(J9VMThread *currentThread)
 {
 	J9JavaVM *vm = currentThread->javaVM;
 	J9ClassLoader *classLoader = NULL;
-	J9SFJNINativeMethodFrame *nativeMethodFrame = findNativeMethodFrame(currentThread);
+	J9SFJNINativeMethodFrame *nativeMethodFrame = VM_VMHelpers::findNativeMethodFrame(currentThread);
 	J9Method *nativeMethod = nativeMethodFrame->method;
 	/* JNI 1.2 says: if there is no current native method, use the appClassLoader */
 	if (NULL == nativeMethod) {
@@ -975,7 +969,7 @@ jniResetStackReferences(JNIEnv *env)
 {
 	J9VMThread *currentThread = (J9VMThread*)env;
 	Assert_VM_mustHaveVMAccess(currentThread);
-	J9SFJNINativeMethodFrame *nativeMethodFrame = findNativeMethodFrame(currentThread);
+	J9SFJNINativeMethodFrame *nativeMethodFrame = VM_VMHelpers::findNativeMethodFrame(currentThread);
 	UDATA flags = nativeMethodFrame->specialFrameFlags;
 	if (J9_ARE_ANY_BITS_SET(flags, J9_SSF_CALL_OUT_FRAME_ALLOC)) {
 		jniPopFrame(currentThread, JNIFRAME_TYPE_INTERNAL);

@@ -1417,6 +1417,19 @@ exit:
 			}
 		}
 	}
+
+	/**
+	 * Find the J9SFJNINativeMethodFrame representing the current native.
+	 *
+	 * @param currentThread[in] the current J9VMThread
+	 *
+	 * @returns the native method frame
+	 */
+	static VMINLINE J9SFJNINativeMethodFrame*
+	findNativeMethodFrame(J9VMThread *currentThread)
+	{
+		return (J9SFJNINativeMethodFrame*)((UDATA)currentThread->sp + (UDATA)currentThread->literals);
+	}
 };
 
 #endif /* VMHELPERS_HPP_ */
