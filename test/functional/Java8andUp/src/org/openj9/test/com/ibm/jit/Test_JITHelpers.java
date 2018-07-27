@@ -102,6 +102,8 @@ public class Test_JITHelpers {
 		0x57, 0x0, 0x58, 0x0, 0x59, 0x0, 0x5a, 0x0, (byte)0xc0, 0x0, (byte)0xc1, 0x0, (byte)0xc2, 0x0, (byte)0xc3, 0x0, (byte)0xc4, 0x0, (byte)0xc5,
 		0x0, (byte)0xc6, 0x0};
 
+	private static int[] indexes = new int[]{0, 1, 4, 7, 8, 9, 15, 16, 17, 31, 32};
+
 	/**
 	 * @tests com.ibm.jit.JITHelpers#(char[], char[], int)
 	 */
@@ -258,5 +260,75 @@ public class Test_JITHelpers {
 			}
         	buffer.getClass();
 		}
+	}
+
+	/**
+	 * @tests com.ibm.jit.JITHelpers#intrinsicIndexOfLatin1(Object, byte, int, int)
+	 */
+	public static void test_intrinsicIndexOfLatin1() {
+		byte lowerLetter;
+		byte upperLetter;
+		int lowerResult;
+		int upperResult;
+
+		for (int i : indexes) {
+			for (int j : indexes) {
+				lowerLetter = lowercaseLatin1Byte[j];
+				lowerResult = helpers.intrinsicIndexOfLatin1(lowercaseLatin1Byte, lowerLetter, i, lowercaseLatin1Byte.length);
+
+				if (j >= i) {
+					Assert.assertEquals(lowerResult, j, "intrinsicIndexOfLatin1 returned incorrect result on a char array of lowercase letters");
+				} else {
+					Assert.assertEquals(lowerResult, -1, "intrinsicIndexOfLatin1 returned incorrect result on a char array of lowercase letters");
+				}
+
+				upperLetter = uppercaseLatin1Byte[j];
+				upperResult = helpers.intrinsicIndexOfLatin1(uppercaseLatin1Byte, upperLetter, i, uppercaseLatin1Byte.length);
+
+				if (j >= i) {
+					Assert.assertEquals(upperResult, j, "intrinsicIndexOfLatin1 returned incorrect result on a char array of uppercase letters");
+				} else {
+					Assert.assertEquals(upperResult, -1, "intrinsicIndexOfLatin1 returned incorrect result on a char array of uppercase letters");
+				}
+			}
+		}
+
+		Assert.assertEquals(helpers.intrinsicIndexOfLatin1(lowercaseLatin1Byte, (byte)0x00, 0, lowercaseLatin1Byte.length), -1,
+		    "intrinsicIndexOfLatin1 return incorrect result when passed a null character");
+	}
+
+	/**
+	 * @tests com.ibm.jit.JITHelpers#intrinsicIndexOfUTF16(Object, char, int, int)
+	 */
+	public static void test_intrinsicIndexOfUTF16() {
+		char lowerLetter;
+		char upperLetter;
+		int lowerResult;
+		int upperResult;
+
+		for (int i : indexes) {
+			for (int j : indexes) {
+				lowerLetter = lowercaseUTF16Char[j];
+				lowerResult = helpers.intrinsicIndexOfUTF16(lowercaseUTF16Char, lowerLetter, i, lowercaseUTF16Char.length);
+
+				if (j >= i) {
+					Assert.assertEquals(lowerResult, j, "intrinsicIndexOfUTF16 returned incorrect result on a char array of lowercase letters");
+				} else {
+					Assert.assertEquals(lowerResult, -1, "intrinsicIndexOfUTF16 returned incorrect result on a char array of lowercase letters");
+				}
+
+				upperLetter = uppercaseUTF16Char[j];
+				upperResult = helpers.intrinsicIndexOfUTF16(uppercaseUTF16Char, upperLetter, i, uppercaseUTF16Char.length);
+
+				if (j >= i) {
+					Assert.assertEquals(upperResult, j, "intrinsicIndexOfUTF16 returned incorrect result on a char array of uppercase letters");
+				} else {
+					Assert.assertEquals(upperResult, -1, "intrinsicIndexOfUTF16 returned incorrect result on a char array of uppercase letters");
+				}
+			}
+		}
+
+		Assert.assertEquals(helpers.intrinsicIndexOfUTF16(lowercaseUTF16Char, (char)0x0000, 0, lowercaseUTF16Char.length), -1,
+		    "intrinsicIndexOfUTF16 return incorrect result when passed a null character");
 	}
 }
