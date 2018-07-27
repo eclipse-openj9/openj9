@@ -221,6 +221,7 @@ public class Test_String {
 				"isBlank: failed to return false on non-blank latin1 string with leading white space.");
 		Assert.assertFalse((allWhiteSpace + nonLatin1).isBlank(),
 				"isBlank: failed to return false on non-blank non-latin1 string with leading white space.");
+	}
 	 
 	/*	
 	 * Test Java 11 API String.lines
