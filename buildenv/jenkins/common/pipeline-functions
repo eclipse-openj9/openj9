@@ -129,7 +129,6 @@ def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, VA
 def build_with_slack(JOB_NAME, PARAMETERS) {
     def DOWNSTREAM_JOB_NUMBER = ''
     def DOWNSTREAM_JOB_URL = ''
-    def MESSAGE = ''
     def JOB = build job: JOB_NAME, parameters: PARAMETERS, propagate: false
 
     if (JOB.resultIsWorseOrEqualTo('UNSTABLE')) {
@@ -143,11 +142,19 @@ def build_with_slack(JOB_NAME, PARAMETERS) {
         } catch (err) {
             echo "Couldn't retrieve downstream failed job url"
         }
-        MESSAGE = "Downstream job ${JOB_NAME} did not pass. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
-        if (SLACK_CHANNEL) {
-            slackSend channel: SLACK_CHANNEL, color: 'danger', message: "Failure in: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)\nDownstream Job: ${JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)"
+        
+        if (JOB.result == "FAILURE"){
+        	if (SLACK_CHANNEL) {
+        		slackSend channel: SLACK_CHANNEL, color: 'danger', message: "Failure in: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)\nDownstream Job: ${JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)"
+        	}
+        	error "Downstream job ${JOB_NAME} did not pass. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
+        } else if (JOB.result == "UNSTABLE") {
+        	echo "WARNING: Downstream job ${JOB_NAME} is unstable. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
+        	currentBuild.result = "UNSTABLE"
+        	if (SLACK_CHANNEL) {
+        		slackSend channel: SLACK_CHANNEL, color: 'warning', message: "Unstable: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)\nDownstream Job: ${JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)"
+        	}
         }
-        error MESSAGE
     } 
     return JOB
 }
@@ -170,20 +177,19 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
                 // Due to the following reason, OpenJ9 test pipelines are still used temporarily: 
                 //  - waiting for wins machine configuration to be finalized (https://github.com/AdoptOpenJDK/openjdk-tests/issues/407)
                 //  - there is no need to enable JDK9 as it is not supported anymore (https://github.com/eclipse/openj9/issues/2020)
-                //  - switch to use AdoptOpenJDK test pipelines for JDK8 and we will switch for JDK10 next step
                 //  - OpenJ9 test pipelines will be completely removed once we switch to use AdoptOpenJDK test pipelines
                 case "_sanity":
-                    if (SPEC.contains("win") || SDK_VERSION == "9" || SDK_VERSION == "10") {
+                    if (SPEC.contains("win") || SDK_VERSION == "9") {
                         TARGET_NAMES = ["Sanity"]
                     } else {
-                        TARGET_NAMES = ["Sanity", "sanity.functional", "sanity.system"]
+                        TARGET_NAMES = ["sanity.functional", "sanity.system"]
                     }
                     break
                 case "_extended":
-                    if (SPEC.contains("win") || SDK_VERSION == "9" || SDK_VERSION == "10") {
+                    if (SPEC.contains("win") || SDK_VERSION == "9") {
                         TARGET_NAMES = ["Extended"]
                     } else {
-                        TARGET_NAMES = ["Extended", "extended.functional"]
+                        TARGET_NAMES = ["extended.functional"]
                     }
                     break
                 // temporary for OMR acceptance. This should be removed once we completely switch to AdoptOpenJDK test Jenkins file

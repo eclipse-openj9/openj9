@@ -264,27 +264,27 @@ TR::Register *TR::PPCJNILinkage::buildDirectDispatch(TR::Node *callNode)
          targetAddress = (uintptrj_t)((TR::Compiler->target.cpu.id() >= TR_PPCp8 && TR::Compiler->target.cpu.getPPCSupportsVSX())?crc32_vpmsum:crc32_no_vpmsum);
 
          // Assuming pre/postCondition have the same index, we use preCondition to map
-         TR_PPCRegisterDependencyMap map(deps->getPreConditions()->getRegisterDependency(0), deps->getAddCursorForPre());
+         OMR::RegisterDependencyMap map(deps->getPreConditions()->getRegisterDependency(0), deps->getAddCursorForPre());
          for (int32_t cnt=0; cnt < deps->getAddCursorForPre(); cnt++)
             map.addDependency(deps->getPreConditions()->getRegisterDependency(cnt), cnt);
          
          TR::Register *addrArg, *posArg, *lenArg, *wasteArg;
          if (crc32m2)
             {
-            addrArg = map.getVirtualWithTarget(TR::RealRegister::gr4);
-            posArg = map.getVirtualWithTarget(TR::RealRegister::gr5);
-            lenArg = map.getVirtualWithTarget(TR::RealRegister::gr6);
+            addrArg = map.getSourceWithTarget(TR::RealRegister::gr4);
+            posArg = map.getSourceWithTarget(TR::RealRegister::gr5);
+            lenArg = map.getSourceWithTarget(TR::RealRegister::gr6);
 
             generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addi2, callNode, addrArg, addrArg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
             }
          
          if (crc32m3)
             {
-            addrArg = map.getVirtualWithTarget(TR::Compiler->target.is64Bit()?(TR::RealRegister::gr4):(TR::RealRegister::gr5));
-            posArg = map.getVirtualWithTarget(TR::Compiler->target.is64Bit()?(TR::RealRegister::gr5):(TR::RealRegister::gr6));
-            lenArg = map.getVirtualWithTarget(TR::Compiler->target.is64Bit()?(TR::RealRegister::gr6):(TR::RealRegister::gr7));
+            addrArg = map.getSourceWithTarget(TR::Compiler->target.is64Bit()?(TR::RealRegister::gr4):(TR::RealRegister::gr5));
+            posArg = map.getSourceWithTarget(TR::Compiler->target.is64Bit()?(TR::RealRegister::gr5):(TR::RealRegister::gr6));
+            lenArg = map.getSourceWithTarget(TR::Compiler->target.is64Bit()?(TR::RealRegister::gr6):(TR::RealRegister::gr7));
             if (!TR::Compiler->target.is64Bit())
-               wasteArg = map.getVirtualWithTarget(TR::RealRegister::gr4);
+               wasteArg = map.getSourceWithTarget(TR::RealRegister::gr4);
             }
          generateTrg1Src2Instruction(cg(), TR::InstOpCode::add, callNode, addrArg, addrArg, posArg);
 

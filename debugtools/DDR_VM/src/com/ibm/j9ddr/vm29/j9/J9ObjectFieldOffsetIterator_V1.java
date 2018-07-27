@@ -99,8 +99,6 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 	private int hiddenInstanceFieldWalkIndex = -1;
 	private ArrayList<HiddenInstanceField> hiddenInstanceFieldList = new ArrayList<HiddenInstanceField>();
 
-	@SuppressWarnings("unused")
-
 	private static final UDATA NO_LOCKWORD_NEEDED = new UDATA(-1);
 	private static final UDATA LOCKWORD_NEEDED = new UDATA(-2);
 
@@ -117,7 +115,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 	
 	private void init() throws CorruptDataException {
 		calculateInstanceSize(romClass, superClazz); //initInstanceSize(romClass, superClazz);
-		romFieldsShapeIterator = new J9ROMFieldShapeIterator(romClass.romFields(), romClass.romFieldCount());		
+		romFieldsShapeIterator = new J9ROMFieldShapeIterator(romClass.romFields(), romClass.romFieldCount());
 	}
 	
 	private void nextField() throws CorruptDataException {
@@ -163,7 +161,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 
 		while (romFieldsShapeIterator.hasNext()) {
 			J9ROMFieldShapePointer localField = (J9ROMFieldShapePointer) romFieldsShapeIterator.next();
-			U32 modifiers = localField.modifiers();
+			UDATA modifiers = localField.modifiers();
 
 			/* count the index for jvmti */
 			index = index.add(1);
@@ -365,7 +363,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 			}
 
 			for (HiddenInstanceField hiddenField: hiddenInstanceFieldList) {
-				U32 modifiers = hiddenField.shape().modifiers();
+				UDATA modifiers = hiddenField.shape().modifiers();
 
 				if (modifiers.allBitsIn(J9FieldFlagObject)) {
 					if (useBackfillForObject) {

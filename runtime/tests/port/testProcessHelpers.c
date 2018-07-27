@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,7 @@
 #include <Windows.h>
 #endif
 
-#if defined(LINUX) | defined(J9ZOS390) | defined(AIXPPC)
+#if defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX)
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -51,9 +51,9 @@
 #define PORTTEST_PROCESS_HELPERS_DEBUG
 #endif
 
-#if defined(LINUX) | defined(J9ZOS390) | defined(AIXPPC)
+#if defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX)
 
-#if defined(__GNU_LIBRARY__) && !defined(_SEM_SEMUN_UNDEFINED)
+#if (defined(__GNU_LIBRARY__) && !defined(_SEM_SEMUN_UNDEFINED)) || defined(OSX)
 /* union semun is defined by including <sys/sem.h> */
 #else
 /* according to X/OPEN we have to define it ourselves */
@@ -448,7 +448,7 @@ SleepFor(IDATA second)
 {
 #if defined(WIN32)
 	Sleep((DWORD)second*1000);
-#elif defined(LINUX) | defined(J9ZOS390) | defined(AIXPPC)
+#elif defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX)
 	sleep(second);
 #endif
 }

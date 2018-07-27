@@ -1004,7 +1004,7 @@ removeSuffix(char *string, const char *suffix)
 }
 #endif /* J9VM_JAVA9_BUILD < 150 */
 
-#if defined(J9UNIX) || defined(J9ZOS390)
+#if defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
 static BOOLEAN 
 preloadLibraries(void)
 {
@@ -1475,12 +1475,13 @@ bail:
  * "9[.x.x]"   --- Java 9, 'J2SE_19 | J2SE_SHAPE_B165';
  * "10[.x.x]"  --- Java 10, 'J2SE_V10 | J2SE_SHAPE_V10';
  * "11[.x.x]"  --- Java 11, 'J2SE_V11 | J2SE_SHAPE_V11';
+ * "12[.x.x]"  --- Java 12, 'J2SE_V12 | J2SE_SHAPE_V12';
  * Others      --- Latest Java, 'J2SE_LATEST | J2SE_SHAPE_LATEST'.
  * Otherwise, 0 is returned.
  *
  * @return 'J2SE_18 | J2SE_SHAPE_OPENJDK', 'J2SE_19 | J2SE_SHAPE_B165',
  *         'J2SE_V10 | J2SE_SHAPE_V10', 'J2SE_V11 | J2SE_SHAPE_V11',
- *         'J2SE_LATEST | J2SE_SHAPE_LATEST' 
+ *         'J2SE_V12 | J2SE_SHAPE_V12', 'J2SE_LATEST | J2SE_SHAPE_LATEST'
  *         according to the 'JAVA_VERSION' value found in 'release';
  *         or 0 if otherwise.
  */
@@ -1516,6 +1517,10 @@ getVersionFromReleaseFile(void)
 			} else if (!strncmp(version, JAVA_VERSION_11, sizeof(JAVA_VERSION_11) - 1)) {
 #undef   JAVA_VERSION_11
 				finalVersion = J2SE_V11 | J2SE_SHAPE_V11;
+#define	 JAVA_VERSION_12 "\"12" /* its usual format is "12[.x.x]" */
+			} else if (!strncmp(version, JAVA_VERSION_12, sizeof(JAVA_VERSION_12) - 1)) {
+#undef   JAVA_VERSION_12
+				finalVersion = J2SE_V12 | J2SE_SHAPE_V12;
 			} else {
 				/* Assume latest Java version and shape */
 				finalVersion = J2SE_LATEST | J2SE_SHAPE_LATEST;
@@ -3999,7 +4004,7 @@ JVM_Available(jint descriptor, jlong* bytes)
 #if defined(J9UNIX) && !defined(J9ZTPF)
 		struct stat64 tempStat;
 #endif
-#if defined(J9ZOS390) || defined(J9ZTPF)
+#if defined(J9ZOS390) || defined(J9ZTPF) || defined(OSX)
 		struct stat tempStat;
 #endif
 #if defined(LINUX)
@@ -4162,7 +4167,7 @@ JVM_Lseek(jint descriptor, jlong bytesToSeek, jint origin)
 #else
 	result = _lseeki64(descriptor, bytesToSeek, origin);
 #endif
-#elif defined(J9UNIX) || defined(J9ZOS390)
+#elif defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
 #if defined(LINUX) && !defined(J9VM_ENV_DATA64)
 
 #if __GLIBC_PREREQ(2,4)
@@ -4243,7 +4248,7 @@ JVM_Open(const char* filename, jint flags, jint mode)
 	struct stat64 tempStat;
 	int doUnlink;
 #endif
-#if defined(J9ZOS390) || defined(J9ZTPF)
+#if defined(J9ZOS390) || defined(J9ZTPF) || defined(OSX)
 	struct stat tempStat;
 	int doUnlink;
 #endif
@@ -4259,8 +4264,12 @@ JVM_Open(const char* filename, jint flags, jint mode)
 #endif
 #endif
 
-#if defined(J9UNIX) || defined(J9ZOS390)
+#if defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
+#if defined(OSX)
+#define EXTRA_OPEN_FLAGS 0
+#else
 #define EXTRA_OPEN_FLAGS O_LARGEFILE
+#endif /* defined(OSX) */
 
 #ifndef O_DSYNC
 #define O_DSYNC O_SYNC
@@ -4272,7 +4281,7 @@ JVM_Open(const char* filename, jint flags, jint mode)
 #else /* !defined(J9ZTPF) */
     flags &= (O_CREAT | O_APPEND | O_RDONLY | O_RDWR | O_TRUNC | O_WRONLY | O_EXCL | O_NOCTTY | O_NONBLOCK | O_SYNC | O_DSYNC);
 #endif /* defined(J9ZTPF) */
-#endif
+#endif /* defined(J9UNIX) || defined(J9ZOS390) || defined(OSX) */
 
 	/* For some reason, although JVM_NativePath is called on the filenames, some of them seem to
 		get mangled between JVM_NativePath being called and JVM_open being called */
@@ -4357,7 +4366,7 @@ JVM_Sync(jint descriptor)
 #else
 	result = _commit(descriptor);
 #endif
-#elif defined(J9UNIX) || defined(J9ZOS390)
+#elif defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
 	result = fsync(descriptor);
 #else
 #error No JVM_Sync implementation
@@ -5397,8 +5406,9 @@ JVM_Timeout(jint descriptor, jint timeout)
 	struct fd_set fdset;
 #endif
 
-#if defined(J9UNIX) || defined(J9ZOS390)
-	jint returnVal, crazyCntr=10;
+#if defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
+	jint returnVal = 0; 
+	jint crazyCntr = 10;
 	fd_set fdset;
 #endif
 
@@ -5416,7 +5426,7 @@ JVM_Timeout(jint descriptor, jint timeout)
         } else  {
                 result = select(0, &fdset, 0, 0, &tval);
         }
-#elif defined(J9UNIX) || defined(J9ZOS390)
+#elif defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
 	do {
 		crazyCntr--;
 		returnVal = select(descriptor+1, &fdset, 0, 0, &tval);
@@ -5508,6 +5518,8 @@ JVM_ActiveProcessorCount(void)
 	 * Runtime.availableProcessors() by specification returns a number greater or equal to 1.
 	 * RTC 112959: [was 209402] Liberty JAX-RS Default Executor poor performance.  Match reference implementation behaviour
 	 * to return the bound CPUs rather than physical CPUs.
+	 *
+	 * This implementation should be kept consistent with jvmtiGetAvailableProcessors
 	 */
 	num = (jint)j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
 	if (num < 1) {

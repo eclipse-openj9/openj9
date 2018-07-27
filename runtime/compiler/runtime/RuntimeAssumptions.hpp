@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -121,9 +121,6 @@ class TR_PersistentClassInfo : public TR_Link0<TR_PersistentClassInfo>
    int16_t getNumPrexAssumptions() { return _prexAssumptions; }
    void incNumPrexAssumptions() { _prexAssumptions++; }
 
-   void setScannedForReservation(bool v = true)   { _flags.set(_isScannedForReservation, v); }
-   bool isScannedForReservation()                 { return _flags.testAny(_isScannedForReservation); }
-
    void setReservable(bool v = true)              { _flags.set(_isReservable, v); }
    bool isReservable()                            { return _flags.testAny(_isReservable); }
 
@@ -153,7 +150,6 @@ class TR_PersistentClassInfo : public TR_Link0<TR_PersistentClassInfo>
 
    enum // flag bits
       {
-      _isScannedForReservation              = 0x01,
       _isReservable                         = 0x02,
       _containsRecognizedAnnotations        = 0x04,
       _alreadyScannedForAnnotations         = 0x08,

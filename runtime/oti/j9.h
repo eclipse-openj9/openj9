@@ -301,4 +301,16 @@ static const struct { \
 #define J9_VM_FUNCTION_VIA_JAVAVM(javaVM, function) ((javaVM)->internalVMFunctions->function)
 #endif /* J9_INTERNAL_TO_VM */
 
+/* Macros for VTable */
+#define J9VTABLE_HEADER_FROM_RAM_CLASS(clazz) ((J9VTableHeader *)(((J9Class *)(clazz)) + 1))
+#define J9VTABLE_FROM_HEADER(vtableHeader) ((J9Method **)(((J9VTableHeader *)(vtableHeader)) + 1))
+#define J9VTABLE_FROM_RAM_CLASS(clazz) J9VTABLE_FROM_HEADER(J9VTABLE_HEADER_FROM_RAM_CLASS(clazz))
+#define J9VTABLE_OFFSET_FROM_INDEX(index) (sizeof(J9Class) + sizeof(J9VTableHeader) + ((index) * sizeof(UDATA)))
+
+/* VTable constants offset */
+#define J9VTABLE_INITIAL_VIRTUAL_OFFSET (sizeof(J9Class) + offsetof(J9VTableHeader, initialVirtualMethod))
+
+/* Skip Interpreter VTable header */
+#define JIT_VTABLE_START_ADDRESS(clazz) ((UDATA *)(clazz) - (sizeof(J9VTableHeader) / sizeof(UDATA)))
+
 #endif /* J9_H */

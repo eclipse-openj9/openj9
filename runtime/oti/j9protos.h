@@ -1122,7 +1122,7 @@ extern J9_CFUNC struct J9Class*  jitGetInterfaceITableIndexFromCP (J9VMThread *v
 extern J9_CFUNC void  jitAcquireClassTableMutex (J9VMThread *vmThread);
 extern J9_CFUNC void*  jitCTResolveStaticFieldRefWithMethod (J9VMThread *vmStruct, J9Method *method, UDATA fieldIndex, UDATA resolveFlags, J9ROMFieldShape **resolvedField);
 extern J9_CFUNC void  jitReleaseClassTableMutex (J9VMThread *vmThread);
-extern J9_CFUNC UDATA  jitGetInterfaceVTableIndexFromCP (J9VMThread *vmThread, J9ConstantPool *constantPool, UDATA cpIndex, J9Class* lookupClass);
+extern J9_CFUNC UDATA  jitGetInterfaceVTableOffsetFromCP (J9VMThread *vmThread, J9ConstantPool *constantPool, UDATA cpIndex, J9Class* lookupClass);
 extern J9_CFUNC void  jitParseSignature (const J9UTF8 *signature, U_8 *paramBuffer, UDATA *paramElements, UDATA *parmSlots);
 extern J9_CFUNC UDATA jitMethodEnterTracingEnabled(J9VMThread *currentThread, J9Method *method);
 extern J9_CFUNC UDATA jitMethodExitTracingEnabled(J9VMThread *currentThread, J9Method *method);
@@ -1163,13 +1163,14 @@ extern J9_CFUNC UDATA  jitTranslateMethod (J9VMThread *vmThread, J9Method *metho
 extern J9_CFUNC U_8*  compressUTF8 (J9VMThread * vmThread, U_8 * data, UDATA length, UDATA * compressedLength);
 extern J9_CFUNC jlong  JNICALL getStaticLongField (JNIEnv *env, jclass clazz, jfieldID fieldID);
 extern J9_CFUNC void  JNICALL setStaticIntField (JNIEnv *env, jclass clazz, jfieldID fieldID, jint value);
+extern J9_CFUNC void  JNICALL setStaticFloatField (JNIEnv *env, jclass cls, jfieldID fieldID, jfloat value);
+extern J9_CFUNC void  JNICALL setStaticDoubleField (JNIEnv *env, jclass cls, jfieldID fieldID, jdouble value);
+extern J9_CFUNC void  JNICALL setStaticLongField (JNIEnv *env, jclass cls, jfieldID fieldID, jlong value);
 extern J9_CFUNC void  JNICALL getStringUTFRegion (JNIEnv *env, jstring str, jsize start, jsize len, char *buf);
 extern J9_CFUNC jint  JNICALL getStaticIntField (JNIEnv *env, jclass clazz, jfieldID fieldID);
 extern J9_CFUNC void  JNICALL releaseStringChars (JNIEnv *env, jstring string, const jchar * chars);
 extern J9_CFUNC void  JNICALL releaseStringCharsUTF (JNIEnv *env, jstring string, const char * chars);
-extern J9_CFUNC void  JNICALL setDoubleFieldIndirect (JNIEnv *env, jobject obj, jfieldID fieldID, void *value);
 extern J9_CFUNC jint  JNICALL unregisterNatives (JNIEnv *env, jclass clazz);
-extern J9_CFUNC void  JNICALL setStaticDoubleFieldIndirect (JNIEnv *env, jobject obj, jfieldID fieldID, void *value);
 extern J9_CFUNC struct J9Method*  findJNIMethod (J9VMThread* vmStruct, J9Class* clazz, char* name, char* signature);
 extern J9_CFUNC jfloat  JNICALL getStaticFloatField (JNIEnv *env, jclass clazz, jfieldID fieldID);
 extern J9_CFUNC void  JNICALL deleteLocalRef (JNIEnv *env, jobject localRef);

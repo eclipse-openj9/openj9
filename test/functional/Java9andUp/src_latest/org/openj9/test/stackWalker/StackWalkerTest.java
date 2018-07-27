@@ -260,15 +260,18 @@ public class StackWalkerTest {
 				if (null != d) {
 					StackTraceElement e = f.toStackTraceElement();
 					String modName = d.name();
+					String expectedName = e.getModuleName();
 					if (null != modName) {
-						assertEquals(modName, e.getModuleName(), "Wrong module name");
+						assertEquals(modName, expectedName, "Wrong module name");
 					}
 					Optional<Version> modVersion = d.version();
 					if (modVersion.isPresent()) {
-						assertEquals(modVersion.get(), e.getModuleVersion(), "Wrong module version");
+						String actualVersion = modVersion.get().toString();
+						String expectedVersion = e.getModuleVersion();
+						assertEquals(actualVersion, expectedVersion, "Wrong module version");
 					}
 					if (f.getDeclaringClass() == Thread.class) {
-						assertEquals("java.base", e.getModuleName(), "Wrong module name");
+						assertEquals("java.base", expectedName, "Wrong module name");
 					}
 				}
 			}

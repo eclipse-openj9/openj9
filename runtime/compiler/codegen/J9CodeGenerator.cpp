@@ -2371,7 +2371,7 @@ J9::CodeGenerator::populateOSRBuffer()
        * dead slots are bookkept together with shared slots under involuntary OSR
        * increase this number to indicate the existence of entries for dead slots
        */
-      if (osrMethodData->hasSlotSharingOrDeadSlotsInfo() && numOfSymsThatShareSlot == 0) 
+      if (osrMethodData->hasSlotSharingOrDeadSlotsInfo() && numOfSymsThatShareSlot == 0)
          numOfSymsThatShareSlot++;
 
       osrMethodData->setNumOfSymsThatShareSlot(numOfSymsThatShareSlot);
@@ -2599,7 +2599,7 @@ J9::CodeGenerator::processRelocations()
             case TR_CheckMethodEnter:
             case TR_CheckMethodExit:
             case TR_HCR:
-               self()->addAOTRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)(*it)->getLocation(),
+               self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)(*it)->getLocation(),
                                                                                 (uint8_t *)(*it)->getDestination(),
                                                                                 type, self()),
                                 __FILE__, __LINE__, NULL);
@@ -2657,7 +2657,7 @@ J9::CodeGenerator::processRelocations()
 
             TR_ASSERT(siteIndex < (int32_t) self()->comp()->getNumInlinedCallSites(), "did not find AOTClassInfo %p method in inlined site table", *info);
 
-            self()->addAOTRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(NULL,
+            self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(NULL,
                                                                              (uint8_t *)(intptr_t)siteIndex,
                                                                              (uint8_t *)(*info),
                                                                              (*info)->_reloKind, self()),
@@ -2678,7 +2678,7 @@ J9::CodeGenerator::processRelocations()
 
             while (currentSite)
                {
-               self()->addAOTRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(currentSite->location,
+               self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(currentSite->location,
                                                                                 currentSite->destination,
                                                                                 currentSite->guard,
                                                                                 currentSite->reloType, self()),
@@ -2693,7 +2693,7 @@ J9::CodeGenerator::processRelocations()
       self()->getAheadOfTimeCompile()->processRelocations();
       }
 
-   for (auto aotIterator = self()->getAOTRelocationList().begin(); aotIterator != self()->getAOTRelocationList().end(); ++aotIterator)
+   for (auto aotIterator = self()->getExternalRelocationList().begin(); aotIterator != self()->getExternalRelocationList().end(); ++aotIterator)
       {
       // Traverse the AOT/external labels
 	  (*aotIterator)->apply(self());
@@ -2704,9 +2704,9 @@ void J9::CodeGenerator::addProjectSpecializedRelocation(uint8_t *location, uint8
       TR_ExternalRelocationTargetKind kind, char *generatingFileName, uintptr_t generatingLineNumber, TR::Node *node)
    {
    (target2 == NULL) ?
-         self()->addAOTRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(location, target, kind, self()),
+         self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(location, target, kind, self()),
                generatingFileName, generatingLineNumber, node) :
-         self()->addAOTRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(location, target, target2, kind, self()),
+         self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(location, target, target2, kind, self()),
                generatingFileName, generatingLineNumber, node);
    }
 
@@ -2714,16 +2714,16 @@ void J9::CodeGenerator::addProjectSpecializedRelocation(TR::Instruction *instr, 
       TR_ExternalRelocationTargetKind kind, char *generatingFileName, uintptr_t generatingLineNumber, TR::Node *node)
    {
    (target2 == NULL) ?
-         self()->addAOTRelocation(new (self()->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(instr, target, kind, self()),
+         self()->addExternalRelocation(new (self()->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(instr, target, kind, self()),
                generatingFileName, generatingLineNumber, node) :
-         self()->addAOTRelocation(new (self()->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(instr, target, target2, kind, self()),
+         self()->addExternalRelocation(new (self()->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(instr, target, target2, kind, self()),
                generatingFileName, generatingLineNumber, node);
    }
 
 void J9::CodeGenerator::addProjectSpecializedPairRelocation(uint8_t *location, uint8_t *location2, uint8_t *target,
       TR_ExternalRelocationTargetKind kind, char *generatingFileName, uintptr_t generatingLineNumber, TR::Node *node)
    {
-   self()->addAOTRelocation(new (self()->trHeapMemory()) TR::ExternalOrderedPair32BitRelocation(location, location2, target, kind, self()),
+   self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalOrderedPair32BitRelocation(location, location2, target, kind, self()),
          generatingFileName, generatingLineNumber, node);
    }
 
@@ -2733,7 +2733,7 @@ J9::CodeGenerator::jitAddUnresolvedAddressMaterializationToPatchOnClassRedefinit
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(self()->fe());
    if (self()->comp()->compileRelocatableCode())
       {
-      self()->addAOTRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)firstInstruction, 0, TR_HCR, self()),
+      self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)firstInstruction, 0, TR_HCR, self()),
                                  __FILE__,__LINE__, NULL);
       }
    else
@@ -3698,165 +3698,6 @@ J9::CodeGenerator::genSymRefStoreToArray(
    }
 
 
-// J9, x86?
-//
-void
-J9::CodeGenerator::detectEndOfVMThreadGlobalRegisterLiveRange(TR::Block *b)
-   {
-   if (b != b->startOfExtendedBlock()) // Skip extensions
-       return;
-
-   TR::Node * glRegDeps = NULL;
-   TR::CFGEdge *relevantEdge = NULL;
-   bool vmThreadLiveOnEntry = false;
-   TR::TreeTop * startTT = b->getEntry();
-   TR::Node * startNode = startTT->getNode();
-
-   if (startNode->getNumChildren() > 0)
-      {
-      glRegDeps = startNode->getFirstChild();
-      TR_ASSERT(glRegDeps->getOpCodeValue() == TR::GlRegDeps, "expected TR::GlRegDeps");
-      for (int32_t i = glRegDeps->getNumChildren() - 1; i >= 0; --i)
-         {
-         TR::Node * dep = glRegDeps->getChild(i);
-
-         if (dep->getGlobalRegisterNumber() == self()->comp()->cg()->getVMThreadGlobalRegisterNumber())
-            {
-            vmThreadLiveOnEntry = true;
-            break;
-            }
-
-         if (dep->getType().isInt64() && TR::Compiler->target.is32Bit())
-            {
-            if (dep->getHighGlobalRegisterNumber() == self()->comp()->cg()->getVMThreadGlobalRegisterNumber())
-               {
-               vmThreadLiveOnEntry = true;
-               break;
-               }
-            }
-         }
-      }
-
-   if (!vmThreadLiveOnEntry)
-      {
-      if (debug("traceGRA_Split"))
-         diagnostic("\nConsidering block_%d for splitting", b->getNumber());
-
-      for (auto e = b->getPredecessors().begin(); e != b->getPredecessors().end();)
-         {
-         TR::CFGEdge * current = *(e++);
-         TR::Block * pred = toBlock(current->getFrom());
-         if (pred == self()->comp()->getFlowGraph()->getStart())
-            continue;
-
-         bool vmThreadLiveOnEntryInPred = false;
-         TR::Block *extendedPred = pred->startOfExtendedBlock();
-         TR::TreeTop *predStartTT = extendedPred->getEntry();
-         TR::Node *predStartNode = predStartTT->getNode();
-         if (predStartNode->getNumChildren() > 0)
-            {
-            TR::Node * predGlRegDeps = predStartNode->getFirstChild();
-            TR_ASSERT(predGlRegDeps->getOpCodeValue() == TR::GlRegDeps, "expected TR::GlRegDeps");
-            for (int32_t i = predGlRegDeps->getNumChildren() - 1; i >= 0; --i)
-               {
-               TR::Node * dep = predGlRegDeps->getChild(i);
-
-               if (dep->getGlobalRegisterNumber() == self()->comp()->cg()->getVMThreadGlobalRegisterNumber())
-                  {
-                  vmThreadLiveOnEntryInPred = true;
-                  break;
-                  }
-
-               if (dep->getType().isInt64() && TR::Compiler->target.is32Bit())
-                  {
-                  if (dep->getHighGlobalRegisterNumber() == self()->comp()->cg()->getVMThreadGlobalRegisterNumber())
-                     {
-                     vmThreadLiveOnEntryInPred = true;
-                     break;
-                     }
-                  }
-               }
-            }
-
-         bool vmThreadLiveOnExitInPred = false;
-
-         TR::TreeTop *exitTree = predStartTT->getExtendedBlockExitTreeTop();
-         TR::TreeTop *cursorExit;
-         TR::Block *cursorBlock = extendedPred;
-         do
-            {
-            TR::CFGEdgeList & cursorSuccessors = cursorBlock->getSuccessors();
-            for (auto e = cursorSuccessors.begin(); e != cursorSuccessors.end(); ++e)
-               {
-               TR::Block *succ = (*e)->getTo()->asBlock();
-
-               TR::TreeTop *succStartTT = succ->getEntry();
-
-               if (succStartTT)
-                  {
-                  TR::Node *succStartNode = succStartTT->getNode();
-                  if (succStartNode->getNumChildren() > 0)
-                     {
-                     TR::Node * succGlRegDeps = succStartNode->getFirstChild();
-                     TR_ASSERT(succGlRegDeps->getOpCodeValue() == TR::GlRegDeps, "expected TR::GlRegDeps");
-                     for (int32_t i = succGlRegDeps->getNumChildren() - 1; i >= 0; --i)
-                        {
-                        TR::Node * dep = succGlRegDeps->getChild(i);
-
-                        if (dep->getGlobalRegisterNumber() == self()->comp()->cg()->getVMThreadGlobalRegisterNumber())
-                           {
-                           vmThreadLiveOnExitInPred = true;
-                           break;
-                           }
-
-                        if (dep->getType().isInt64() && TR::Compiler->target.is32Bit())
-                           {
-                           if (dep->getHighGlobalRegisterNumber() == self()->comp()->cg()->getVMThreadGlobalRegisterNumber())
-                              {
-                              vmThreadLiveOnExitInPred = true;
-                              break;
-                              }
-                           }
-                        }
-                     }
-                  }
-               }
-
-            cursorExit = cursorBlock->getExit();
-            cursorBlock = cursorBlock->getNextBlock();
-            }
-         while (exitTree != cursorExit);
-
-
-         if (vmThreadLiveOnEntryInPred || vmThreadLiveOnExitInPred)
-            {
-            relevantEdge = current;
-            if (relevantEdge->mustRestoreVMThreadRegister())
-               continue;
-
-            if (!(b->getPredecessors().size() == 1) /* && !toBlock(relevantEdge->getFrom())->getSuccessors().size() == 1) */)
-               {
-               TR::Block *newBlock = pred->splitEdge(pred, b, self()->comp());
-               if (debug("traceGRA_Split"))
-                  diagnostic("\nSplitting edge, create new intermediate block_%d", newBlock->getNumber());
-
-               newBlock->takeGlRegDeps(self()->comp(), glRegDeps);
-
-               relevantEdge = newBlock->getPredecessors().front();
-               }
-            relevantEdge->setMustRestoreVMThreadRegister(true);
-
-            if (debug("vmThreadGRA"))
-               {
-               diagnostic("\nmustRestoreVMThreadRegister to ebp on entry to block_%d on edge from block_%d going to block_%d\n",
-                           toBlock(relevantEdge->getTo())->getNumber(), toBlock(relevantEdge->getFrom())->getNumber(), b->getNumber());
-               }
-            }
-         }
-      }
-   }
-
-
 bool
 J9::CodeGenerator::collectSymRefs(
       TR::Node *node,
@@ -4575,7 +4416,7 @@ void
 J9::CodeGenerator::createHWPRecords()
    {
    if (self()->comp()->getPersistentInfo()->isRuntimeInstrumentationEnabled() &&
-       TR::Options::getCmdLineOptions()->getOption(TR_EnableHardwareProfileIndirectDispatch))
+       self()->comp()->getOption(TR_EnableHardwareProfileIndirectDispatch))
       {
       self()->comp()->fej9()->createHWProfilerRecords(self()->comp());
       }

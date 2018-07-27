@@ -1100,38 +1100,30 @@ void TR::AMD64JNILinkage::acquireVMAccess(TR::Node *callNode)
 void TR::AMD64JNILinkage::releaseVMAccessAtomicFree(TR::Node *callNode)
    {
    TR::Register *vmThreadReg = cg()->getMethodMetaDataRegister();
-   TR::Register *scratchReg1 = cg()->allocateRegister();
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
 
    generateMemImmInstruction(S8MemImm4,
-           callNode,
-           generateX86MemoryReference(vmThreadReg, offsetof(struct J9VMThread, inNative), cg()),
-           1,
-           cg());
+                             callNode,
+                             generateX86MemoryReference(vmThreadReg, offsetof(struct J9VMThread, inNative), cg()),
+                             1,
+                             cg());
 
 #if !defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
-   TR::RealRegister *stackReg = cg()->machine()->getX86RealRegister(TR::RealRegister::esp);
-   TR::MemoryReference *mr = generateX86MemoryReference(stackReg, intptrj_t(0), cg());
-
-   // TODO: Other places in the JIT use OR4MemImms.  OR8MemImms is used here for complete consistency
-   // with the interpreter implementation.  Perhaps both should change.
+   TR::MemoryReference *mr = generateX86MemoryReference(cg()->machine()->getX86RealRegister(TR::RealRegister::esp), intptrj_t(0), cg());
    mr->setRequiresLockPrefix();
-   generateMemImmInstruction(OR8MemImms, callNode, mr, 0, cg());
-   cg()->stopUsingRegister(stackReg);
+   generateMemImmInstruction(OR4MemImms, callNode, mr, 0, cg());
 #endif /* !J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
-
-   generateRegMemInstruction(LRegMem(),
-                             callNode,
-                             scratchReg1,
-                             generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetPublicFlagsOffset(), cg()),
-                             cg());
 
    TR::LabelSymbol *longReleaseSnippetLabel = generateLabelSymbol(cg());
    TR::LabelSymbol *longReleaseRestartLabel = generateLabelSymbol(cg());
 
-   TR_ASSERT_FATAL(J9_PUBLIC_FLAGS_VM_ACCESS <= 0x7fffffff, "VM access bit must be immediate");
-   generateRegImmInstruction(CMP4RegImm4, callNode, scratchReg1, J9_PUBLIC_FLAGS_VM_ACCESS, cg());
+   static_assert(J9_PUBLIC_FLAGS_VM_ACCESS <= 0x7fffffff, "VM access bit must be immediate");
+   generateMemImmInstruction(CMP4MemImm4,
+                             callNode,
+                             generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetPublicFlagsOffset(), cg()),
+                             J9_PUBLIC_FLAGS_VM_ACCESS,
+                             cg());
    generateLabelInstruction(JNE4, callNode, longReleaseSnippetLabel, cg());
 
    cg()->addSnippet(
@@ -1142,21 +1134,13 @@ void TR::AMD64JNILinkage::releaseVMAccessAtomicFree(TR::Node *callNode)
          longReleaseSnippetLabel,
          comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getMethodSymbol())));
 
-   int32_t numDeps = 1;
-   TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(numDeps, numDeps, cg());
-   deps->addPreCondition(scratchReg1, TR::RealRegister::eax, cg());
-   deps->addPostCondition(scratchReg1, TR::RealRegister::eax, cg());
-   cg()->stopUsingRegister(scratchReg1);
-   deps->stopAddingConditions();
-
-   generateLabelInstruction(LABEL, callNode, longReleaseRestartLabel, deps, cg());
+   generateLabelInstruction(LABEL, callNode, longReleaseRestartLabel, cg());
    }
 
 
 void TR::AMD64JNILinkage::acquireVMAccessAtomicFree(TR::Node *callNode)
    {
    TR::Register *vmThreadReg = cg()->getMethodMetaDataRegister();
-   TR::Register *scratchReg1 = cg()->allocateRegister();
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
 
@@ -1167,27 +1151,20 @@ void TR::AMD64JNILinkage::acquireVMAccessAtomicFree(TR::Node *callNode)
                              cg());
 
 #if !defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
-   TR::RealRegister *stackReg = cg()->machine()->getX86RealRegister(TR::RealRegister::esp);
-   TR::MemoryReference *mr = generateX86MemoryReference(stackReg, intptrj_t(0), cg());
-
-   // TODO: Other places in the JIT use OR4MemImms.  OR8MemImms is used here for complete consistency
-   // with the interpreter implementation.  Perhaps both should change.
+   TR::MemoryReference *mr = generateX86MemoryReference(cg()->machine()->getX86RealRegister(TR::RealRegister::esp), intptrj_t(0), cg());
    mr->setRequiresLockPrefix();
-   generateMemImmInstruction(OR8MemImms, callNode, mr, 0, cg());
-   cg()->stopUsingRegister(stackReg);
+   generateMemImmInstruction(OR4MemImms, callNode, mr, 0, cg());
 #endif /* !J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
-
-   generateRegMemInstruction(LRegMem(),
-                             callNode,
-                             scratchReg1,
-                             generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetPublicFlagsOffset(), cg()),
-                             cg());
 
    TR::LabelSymbol *longAcquireSnippetLabel = generateLabelSymbol(cg());
    TR::LabelSymbol *longAcquireRestartLabel = generateLabelSymbol(cg());
 
-   TR_ASSERT_FATAL(J9_PUBLIC_FLAGS_VM_ACCESS <= 0x7fffffff, "VM access bit must be immediate");
-   generateRegImmInstruction(CMP4RegImm4, callNode, scratchReg1, J9_PUBLIC_FLAGS_VM_ACCESS, cg());
+   static_assert(J9_PUBLIC_FLAGS_VM_ACCESS <= 0x7fffffff, "VM access bit must be immediate");
+   generateMemImmInstruction(CMP4MemImm4,
+                             callNode,
+                             generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetPublicFlagsOffset(), cg()),
+                             J9_PUBLIC_FLAGS_VM_ACCESS,
+                             cg());
    generateLabelInstruction(JNE4, callNode, longAcquireSnippetLabel, cg());
 
    cg()->addSnippet(
@@ -1198,14 +1175,7 @@ void TR::AMD64JNILinkage::acquireVMAccessAtomicFree(TR::Node *callNode)
          longAcquireSnippetLabel,
          comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getMethodSymbol())));
 
-   int32_t numDeps = 1;
-   TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(numDeps, numDeps, cg());
-   deps->addPreCondition(scratchReg1, TR::RealRegister::eax, cg());
-   deps->addPostCondition(scratchReg1, TR::RealRegister::eax, cg());
-   cg()->stopUsingRegister(scratchReg1);
-   deps->stopAddingConditions();
-
-   generateLabelInstruction(LABEL, callNode, longAcquireRestartLabel, deps, cg());
+   generateLabelInstruction(LABEL, callNode, longAcquireRestartLabel, cg());
    }
 
 
@@ -1282,23 +1252,17 @@ void TR::AMD64JNILinkage::checkForJNIExceptions(TR::Node *callNode)
 
    TR::Instruction *instr = generateLabelInstruction(JNE4, callNode, snippetLabel, cg());
 
-   TR_RuntimeHelper helper;
    uint32_t gcMap = _systemLinkage->getProperties().getPreservedRegisterMapForGC();
    if (TR::Compiler->target.is32Bit())
       {
       gcMap |= (_JNIDispatchInfo.argSize<<14);
-      helper = TR_IA32jitThrowCurrentException;
-      }
-   else
-      {
-      helper = TR_AMD64jitThrowCurrentException;
       }
 
    instr->setNeedsGCMap(gcMap);
 
    TR::Snippet *snippet =
       new (trHeapMemory()) TR::X86CheckFailureSnippet(cg(),
-                                     cg()->symRefTab()->findOrCreateRuntimeHelper(helper, false, false, false),
+                                     cg()->symRefTab()->findOrCreateRuntimeHelper(TR_throwCurrentException, false, false, false),
                                      snippetLabel,
                                      instr,
                                      _JNIDispatchInfo.requiresFPstackPop);
@@ -1499,8 +1463,6 @@ TR::Register *TR::AMD64JNILinkage::buildDirectJNIDispatch(TR::Node *callNode)
 
    populateJNIDispatchInfo();
 
-   cg()->setVMThreadRequired(true);
-
    static char * disablePureFn = feGetEnv("TR_DISABLE_PURE_FUNC_RECOGNITION");
    if (!isGPUHelper)
       {
@@ -1694,8 +1656,6 @@ TR::Register *TR::AMD64JNILinkage::buildDirectJNIDispatch(TR::Node *callNode)
    TR::LabelSymbol *restartLabel = generateLabelSymbol(cg());
    restartLabel->setEndInternalControlFlow();
    generateLabelInstruction(LABEL, callNode, restartLabel, _JNIDispatchInfo.mergeLabelPostDeps, cg());
-
-   cg()->setVMThreadRequired(false);
 
    return _JNIDispatchInfo.JNIReturnRegister;
    }

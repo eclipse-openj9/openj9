@@ -1528,8 +1528,7 @@ processMemoryInterleaveOptions(J9JavaVM * vm) {
 			enabled = TRUE;
 		}
 	}
-	j9port_control(J9PORT_CTLDATA_VMEM_NUMA_ENABLE, enabled? 1 : 0);
-	omrthread_numa_set_enabled(enabled);
+	j9port_control(J9PORT_CTLDATA_VMEM_NUMA_INTERLEAVE_MEM, enabled? 1 : 0);
 }
 
 static VMINLINE  void
@@ -1609,28 +1608,6 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				parseErrorOption = VMOPT_XMSCL;
 				goto _memParseError;
 			}
-
-			/* Set entitled CPUs as early as possible, i.e. as soon as PORT_LIBRARY_GUARANTEED */
-			do {
-				UDATA value = 0;
-
-				/* Check for presence of -Xentitledcpus command line argument */
-				argIndex = FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, VMOPT_XENTITLEDCPUS, NULL);
-				if (argIndex >= 0) {
-
-					/* Get value -Xentitledcpus */
-					char* optName = VMOPT_XENTITLEDCPUS;
-					parseError = GET_INTEGER_VALUE(argIndex, optName, value);
-					if (OPTION_OK != parseError) {
-						parseErrorOption = VMOPT_XENTITLEDCPUS;
-						goto _memParseError;
-					}
-				}
-
-				/* Set Port library entitled CPUs to current value (0 or from command line argument) */
-				j9sysinfo_set_number_entitled_CPUs(value);
-			} while(0);
-
 
 			/* -Xits option is not being used anymore. We find and consume it for backward compatibility. */
 			/* Otherwise, usage of this option would not be recognised and warning would be printed.  */
@@ -2267,6 +2244,11 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			break;
 
 		case ABOUT_TO_BOOTSTRAP :
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
+			if (0 != initializeExclusiveAccess(vm)) {
+				goto _error;
+			}
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 			TRIGGER_J9HOOK_VM_ABOUT_TO_BOOTSTRAP(vm->hookInterface, vm->mainThread);
 			/* At this point, the decision about which interpreter to use has been made */
 			vm->bytecodeLoop = J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_DEBUG_MODE)
@@ -2944,6 +2926,10 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 			vm->extendedRuntimeFlags |= (J9_EXTENDED_RUNTIME_OSR_SAFE_POINT| J9_EXTENDED_RUNTIME_OSR_SAFE_POINT_FV);
 		} else if (0 == strcmp(testString, VMOPT_XXDISABLEOSRSAFEPOINTFV)) {
 			vm->extendedRuntimeFlags &= ~(UDATA)J9_EXTENDED_RUNTIME_OSR_SAFE_POINT_FV;
+		} else if (0 == strcmp(testString, VMOPT_XXENABLEJITWATCH)) {
+			vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_JIT_INLINE_WATCHES;
+		} else if (0 == strcmp(testString, VMOPT_XXDISABLEJITWATCH)) {
+			vm->extendedRuntimeFlags &= ~(UDATA)J9_EXTENDED_RUNTIME_JIT_INLINE_WATCHES;
 		}
 		/* -Xbootclasspath and -Xbootclasspath/p are not supported from Java 9 onwards */
 		if (J2SE_VERSION(vm) >= J2SE_19) {
@@ -3346,15 +3332,6 @@ threadInitStages(J9JavaVM* vm, IDATA stage, void* reserved)
 				loadInfo->fatalErrorStr = "cannot parse -Xjni:";
 				return returnVal;
 			}
-
-#if defined(J9VM_THR_ASYNC_NAME_UPDATE)
-			vm->threadNameHandlerKey = J9RegisterAsyncEvent(vm, setThreadNameAsyncHandler, vm);
-			if (vm->threadNameHandlerKey < 0) {
-				loadInfo->fatalErrorStr = "cannot initialize threadNameHandlerKey";
-				goto _error;
-			}
-#endif /* J9VM_THR_ASYNC_NAME_UPDATE */
-
 			break;
 		case HEAP_STRUCTURES_INITIALIZED :
 			break;
@@ -3369,6 +3346,14 @@ threadInitStages(J9JavaVM* vm, IDATA stage, void* reserved)
 		case JIT_INITIALIZED :
 			break;
 		case ABOUT_TO_BOOTSTRAP :
+#if defined(J9VM_THR_ASYNC_NAME_UPDATE)
+			vm->threadNameHandlerKey = J9RegisterAsyncEvent(vm, setThreadNameAsyncHandler, vm);
+			if (vm->threadNameHandlerKey < 0) {
+				loadInfo = FIND_DLL_TABLE_ENTRY( FUNCTION_THREAD_INIT );
+				loadInfo->fatalErrorStr = "cannot initialize threadNameHandlerKey";
+				goto _error;
+			}
+#endif /* J9VM_THR_ASYNC_NAME_UPDATE */
 			break;
 		case JCL_INITIALIZED :
 			break;
@@ -3768,6 +3753,14 @@ registerVMCmdLineMappings(J9JavaVM* vm)
 	}
 	/* Map -Xshare:auto to -Xshareclasses:nonfatal */
 	if (registerCmdLineMapping(vm, MAPOPT_XSHARE_AUTO, MAPOPT_XSHARECLASSES_NONFATAL, EXACT_MAP_NO_OPTIONS) == RC_FAILED) {
+		return RC_FAILED;
+	}
+	/* Map -XX:+DisableExplicitGC to -Xdisableexplicitgc */
+	if (registerCmdLineMapping(vm, MAPOPT_XXDISABLEEXPLICITGC, "-Xdisableexplicitgc", EXACT_MAP_NO_OPTIONS) == RC_FAILED) {
+		return RC_FAILED;
+	}
+	/* Map -XX:+EnableExplicitGC to -Xenableexplicitgc */
+	if (registerCmdLineMapping(vm, MAPOPT_XXENABLEEXPLICITGC, "-Xenableexplicitgc", EXACT_MAP_NO_OPTIONS) == RC_FAILED) {
 		return RC_FAILED;
 	}
 
@@ -5260,7 +5253,7 @@ preloadUser32Dll(J9JavaVM *vm)
 		}
 		LoadLibrary(USER32_DLL);
 		if (0 != contiguousRegionStart) {
-			VirtualFree((LPVOID)contiguousRegionStart, contiguousRegionSize, MEM_RELEASE);
+			VirtualFree((LPVOID)contiguousRegionStart, 0, MEM_RELEASE);
 		}
 	}
 
@@ -5342,12 +5335,6 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	newSignalAction.sa_handler = SIG_IGN;
 	OMRSIG_SIGACTION(SIGPIPE,&newSignalAction,(struct sigaction *)vm->originalSIGPIPESignalAction);
 #endif
-
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
-	if (0 != initializeExclusiveAccess(vm)) {
-		goto error;
-	}
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 
 #ifdef J9VM_OPT_SIDECAR
 	vm->j2seVersion = initArgs->j2seVersion;

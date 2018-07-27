@@ -1538,7 +1538,7 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
             _bcIndex += 3;
             break;
             }
-            
+
          case J9BCgenericReturn:
          case J9BCReturnC:
          case J9BCReturnS:
@@ -4163,8 +4163,6 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
 
    TR_Method * calledMethod = symbol->getMethod();
    int32_t numArgs = calledMethod->numberOfExplicitParameters() + (isStatic ? 0 : 1);
-   static bool disableARMMaxMin = true; // (feGetEnv("TR_DisableARMMaxMin") != NULL);
-   static bool disableARMFMaxMin = true; // (feGetEnv("TR_DisableARMFMaxMin") != NULL);
 
    TR::ILOpCodes opcode = TR::BadILOp;
    switch (symbol->getRecognizedMethod())
@@ -4175,53 +4173,6 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
          break;
       default:
          break;
-      }
-
-   if (TR::Compiler->target.cpu.isPower() || (!disableARMMaxMin && TR::Compiler->target.cpu.isARM())) // TODO: implement max/min opcodes on all platforms
-      {
-
-      switch (symbol->getRecognizedMethod())
-         {
-         case TR::java_lang_Math_max_I:
-            opcode = TR::imax;
-            break;
-         case TR::java_lang_Math_min_I:
-            opcode = TR::imin;
-            break;
-         case TR::java_lang_Math_max_L:
-            opcode = TR::lmax;
-            break;
-         case TR::java_lang_Math_min_L:
-            opcode = TR::lmin;
-            break;
-         case TR::java_lang_Math_max_F:
-            if (!disableARMFMaxMin && TR::Compiler->target.cpu.isARM())
-               opcode = TR::fmax;
-            break;
-         case TR::java_lang_Math_min_F:
-            if (!disableARMFMaxMin && TR::Compiler->target.cpu.isARM())
-               opcode = TR::fmin;
-            break;
-         case TR::java_lang_Math_max_D:
-            if (!disableARMFMaxMin && TR::Compiler->target.cpu.isARM())
-               opcode = TR::dmax;
-            break;
-         case TR::java_lang_Math_min_D:
-            if (!disableARMFMaxMin && TR::Compiler->target.cpu.isARM())
-               opcode = TR::dmin;
-            break;
-         default:
-         	break;
-         }
-      }
-
-   if (opcode != TR::BadILOp)
-      {
-      TR::Node * node = TR::Node::create(opcode, 2);
-      node->setAndIncChild(0, pop());
-      node->setAndIncChild(1, pop());
-      push(node);
-      return node;
       }
 
    if (comp()->cg()->getSupportsBitOpCodes() && !comp()->getOption(TR_DisableBitOpcode))
@@ -5023,7 +4974,7 @@ break
          }
       }
 
-   if(symbol->getRecognizedMethod() == TR::java_lang_String_StrHWAvailable)
+   if(symbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_supportsIntrinsicCaseConversion)
       {
       if (cg()->getSupportsInlineStringCaseConversion())
          constToLoad = 1;
@@ -5035,12 +4986,10 @@ break
       }
 
    if (cg()->getSupportsInlineStringCaseConversion() &&
-         (symbol->getRecognizedMethod() == TR::java_lang_String_toUpperHWOptimizedCompressed ||
-            symbol->getRecognizedMethod() == TR::java_lang_String_toLowerHWOptimizedCompressed ||
-            symbol->getRecognizedMethod() == TR::java_lang_String_toUpperHWOptimizedDecompressed ||
-            symbol->getRecognizedMethod() == TR::java_lang_String_toLowerHWOptimizedDecompressed ||
-            symbol->getRecognizedMethod() == TR::java_lang_String_toUpperHWOptimized ||
-            symbol->getRecognizedMethod() == TR::java_lang_String_toLowerHWOptimized))
+         (symbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_toUpperIntrinsicLatin1 ||
+            symbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_toLowerIntrinsicLatin1 ||
+            symbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_toUpperIntrinsicUTF16 ||
+            symbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_toLowerIntrinsicUTF16))
       {
       isDirectCall = true;
       }
@@ -5325,36 +5274,6 @@ break
             isCallAddressAsPrimitive32 = true;
          else if (resolvedMethodSymbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_getAddressAsPrimitive64)
             isCallAddressAsPrimitive64 = true;
-         }
-
-      ///if (!strncmp(comp()->getCurrentMethod()->nameChars(), "hashCodeImpl", 12) &&
-      ///       isCallGetLength)
-      if (_methodSymbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_hashCodeImpl)
-         {
-         if (isCallGetLength)
-            {
-            // fold away Array.getLength because its guaranteed that the parm is an array
-            //
-            TR::Node::recreate(callNode, TR::arraylength);
-            callNode->setArrayStride(sizeof(intptrj_t));
-            if (treeTopNode->getOpCode().isResolveOrNullCheck())
-               {
-               TR::Node::recreate(treeTopNode, TR::NULLCHK);
-               treeTopNode->setSymbolReference(comp()->getSymRefTab()->findOrCreateNullCheckSymbolRef(_methodSymbol));
-               }
-            }
-         else if (isCallAddressAsPrimitive32)
-            {
-            // the first child is a instance of JITHelpers, should be removed since the new node is no longer a method call
-            callNode->removeChild(0);
-            TR::Node::recreate(callNode, TR::a2i);
-            }
-         else if (isCallAddressAsPrimitive64)
-            {
-            // the first child is a instance of JITHelpers, should be removed since the new node is no longer a method call
-            callNode->removeChild(0);
-            TR::Node::recreate(callNode, TR::a2l);
-            }
          }
       }
 
@@ -5924,6 +5843,8 @@ TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
    {
    _staticFieldReferenceEncountered = true;
    TR::SymbolReference * symRef = symRefTab()->findOrCreateStaticSymbol(_methodSymbol, cpIndex, false);
+   if (comp()->getOption(TR_TraceILGen))
+      traceMsg(comp(), "load static symref %d created with knownObjectIndex %d", symRef->getReferenceNumber(), symRef->getKnownObjectIndex());
    TR::StaticSymbol *      symbol = symRef->getSymbol()->castToStaticSymbol();
    TR_ASSERT(symbol, "Didn't geta static symbol.");
 
@@ -6562,10 +6483,9 @@ TR_J9ByteCodeIlGenerator::genMonitorEnter()
 void
 TR_J9ByteCodeIlGenerator::genMonitorExit(bool isReturn)
    {
-   TR::SymbolReference * monitorExitSymbolRef =
-      isReturn && isOutermostMethod() ?
-         symRefTab()->findOrCreateMethodMonitorExitSymbolRef(_methodSymbol) :
-         symRefTab()->findOrCreateMonitorExitSymbolRef(_methodSymbol);
+   TR::SymbolReference * monitorExitSymbolRef = isReturn ?
+      symRefTab()->findOrCreateMethodMonitorExitSymbolRef(_methodSymbol) :
+      symRefTab()->findOrCreateMonitorExitSymbolRef(_methodSymbol);
 
    TR::Node * node = pop();
 
@@ -6932,15 +6852,15 @@ TR_J9ByteCodeIlGenerator::genReturn(TR::ILOpCodes nodeop, bool monitorExit)
          case J9BCReturnC:
             returnChild = TR::Node::create(TR::su2i, 1, TR::Node::create(TR::i2s, 1, returnChild));
             break;
-            
+
          case J9BCReturnS:
             returnChild = TR::Node::create(TR::s2i, 1, TR::Node::create(TR::i2s, 1, returnChild));
             break;
-            
+
          case J9BCReturnB:
             returnChild = TR::Node::create(TR::b2i, 1, TR::Node::create(TR::i2b, 1, returnChild));
             break;
-            
+
          case J9BCReturnZ:
             returnChild = TR::Node::create(TR::iand, 2, returnChild, TR::Node::iconst(1));
             break;

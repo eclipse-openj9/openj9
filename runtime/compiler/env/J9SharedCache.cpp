@@ -526,6 +526,39 @@ TR_J9SharedCache::rememberClass(J9Class *clazz, bool create)
    return chainData;
    }
 
+UDATA
+TR_J9SharedCache::rememberDebugCounterName(const char *name)
+   {
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
+   J9VMThread *vmThread = fej9->getCurrentVMThread();
+
+   J9SharedDataDescriptor dataDescriptor;
+   dataDescriptor.address = (U_8*)name;
+   dataDescriptor.length  = (strlen(name) + 1); // +1 for the \0 terminator
+   dataDescriptor.type    = J9SHR_DATA_TYPE_JITHINT;
+   dataDescriptor.flags   = J9SHRDATA_NOT_INDEXED;
+
+   const U_8 *data = sharedCacheConfig()->storeSharedData(vmThread,
+                                        (const char*)NULL,
+                                        0,
+                                        &dataDescriptor);
+
+   UDATA offset = data ? (UDATA)offsetInSharedCacheFromPointer((void *)data) : (UDATA)-1;
+
+   //printf("\nrememberDebugCounterName: Tried to store %s (%p), data=%p, offset=%p\n", name, name, data, offset);
+
+   return offset;
+   }
+
+const char *
+TR_J9SharedCache::getDebugCounterName(UDATA offset)
+   {
+   const char *name = (offset != (UDATA)-1) ? (const char *)pointerFromOffsetInSharedCache((void *)offset) : NULL;
+
+   //printf("\ngetDebugCounterName: Tried to find %p, name=%s (%p)\n", offset, (name ? name : ""), name);
+
+   return name;
+   }
 
 uint32_t
 TR_J9SharedCache::numInterfacesImplemented(J9Class *clazz)

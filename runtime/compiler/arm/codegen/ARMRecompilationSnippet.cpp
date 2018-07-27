@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -151,7 +151,7 @@ uint8_t *TR::ARMEDORecompilationSnippet::emitSnippetBody()
 
    // b distance
    *(int32_t *)buffer = 0x48000000 | (distance & 0x03ffffff);
-   cg()->addAOTRelocation(new TR::ExternalRelocation(buffer,
+   cg()->addExternalRelocation(new TR::ExternalRelocation(buffer,
                                                          (uint8_t *)induceRecompilationSymRef,
                                                          TR_HelperAddress), __FILE, __LINE__, getNode());
    buffer += ARM_INSTRUCTION_LENGTH;

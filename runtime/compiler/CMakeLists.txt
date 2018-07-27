@@ -101,14 +101,16 @@ set(REMOVED_OMR_FILES
 	${omr_SOURCE_DIR}/compiler/infra/OMRMonitor.cpp
 	${omr_SOURCE_DIR}/compiler/runtime/Trampoline.cpp
 	${omr_SOURCE_DIR}/compiler/runtime/Runtime.cpp
-	${omr_SOURCE_DIR}/compiler/ilgen/IlBuilder.cpp
-	${omr_SOURCE_DIR}/compiler/ilgen/IlValue.cpp
 	${omr_SOURCE_DIR}/compiler/ilgen/IlInjector.cpp
-	${omr_SOURCE_DIR}/compiler/ilgen/MethodBuilder.cpp
-	${omr_SOURCE_DIR}/compiler/ilgen/BytecodeBuilder.cpp
-	${omr_SOURCE_DIR}/compiler/ilgen/TypeDictionary.cpp
-	${omr_SOURCE_DIR}/compiler/ilgen/ThunkBuilder.cpp
-	${omr_SOURCE_DIR}/compiler/ilgen/VirtualMachineOperandStack.cpp
+	${omr_SOURCE_DIR}/compiler/ilgen/OMRBytecodeBuilder.cpp
+	${omr_SOURCE_DIR}/compiler/ilgen/OMRIlBuilder.cpp
+	${omr_SOURCE_DIR}/compiler/ilgen/OMRIlValue.cpp
+	${omr_SOURCE_DIR}/compiler/ilgen/OMRMethodBuilder.cpp
+	${omr_SOURCE_DIR}/compiler/ilgen/OMRThunkBuilder.cpp
+	${omr_SOURCE_DIR}/compiler/ilgen/OMRTypeDictionary.cpp
+	${omr_SOURCE_DIR}/compiler/ilgen/OMRVirtualMachineOperandArray.cpp
+	${omr_SOURCE_DIR}/compiler/ilgen/OMRVirtualMachineOperandStack.cpp
+	${omr_SOURCE_DIR}/compiler/ilgen/OMRVirtualMachineState.cpp
 )
 
 # Extra defines not provided by the create_omr_compiler_library call

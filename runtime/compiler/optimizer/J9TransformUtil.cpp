@@ -39,6 +39,22 @@
 #include "ras/DebugCounter.hpp"
 #include "j9.h"
 #include "optimizer/OMROptimization_inlines.hpp"
+#include "optimizer/Structure.hpp"
+
+/**
+ * Walks the TR_RegionStructure counting loops to get the nesting depth of the block
+ */ 
+int32_t J9::TransformUtil::getLoopNestingDepth(TR::Compilation *comp, TR::Block *block)
+   {
+   TR_RegionStructure *region = block->getParentStructureIfExists(comp->getFlowGraph());
+   int32_t nestingDepth = 0;
+   while (region && region->isNaturalLoop())
+      {
+      nestingDepth++;
+      region = region->getParent();
+      }
+   return nestingDepth;
+   }
 
 /*
  * Generate trees for call to jitRetranslateCallerWithPrep to trigger recompilation from JIT-Compiled code.
@@ -405,7 +421,7 @@ static void *dereferenceStructPointerChain(void *baseStruct, TR::Node *baseNode,
    return NULL;
    }
 
-static bool foldFinalFieldsIn(TR_OpaqueClassBlock *clazz, char *className, int32_t classNameLength, bool isStatic, TR::Compilation *comp)
+bool J9::TransformUtil::foldFinalFieldsIn(TR_OpaqueClassBlock *clazz, char *className, int32_t classNameLength, bool isStatic, TR::Compilation *comp)
    {
    TR::SimpleRegex *classRegex = comp->getOptions()->getClassesWithFoldableFinalFields();
    if (classRegex)
@@ -434,7 +450,7 @@ static bool foldFinalFieldsIn(TR_OpaqueClassBlock *clazz, char *className, int32
       return true;
 
    static char *enableJCLFolding = feGetEnv("TR_EnableJCLStaticFinalFieldFolding");
-   if ((enableJCLFolding || TR::Options::getCmdLineOptions()->getOption(TR_AggressiveOpts))
+   if ((enableJCLFolding || comp->getOption(TR_AggressiveOpts))
        && isStatic
        && comp->fej9()->isClassLibraryClass(clazz)
        && comp->fej9()->isClassInitialized(clazz))
@@ -443,6 +459,17 @@ static bool foldFinalFieldsIn(TR_OpaqueClassBlock *clazz, char *className, int32
          return false;
       return true;
       }
+
+   static char *enableAggressiveFolding = feGetEnv("TR_EnableAggressiveStaticFinalFieldFolding");
+   if (enableAggressiveFolding
+      && isStatic
+      && comp->fej9()->isClassInitialized(clazz))
+      {
+      if (classNameLength == 16 && !strncmp(className, "java/lang/System", 16))
+         return false;
+      return true;
+      }
+
    return false;
    }
 
@@ -1391,9 +1418,20 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Nod
             }
          else if (isFinalFieldPointingAtNativeStruct(symRef, comp))
             {
-            // Representable native structs are handled before now.  All
-            // remaining natives are hopeless.
-            return false;
+            if (symRef->getReferenceNumber() - comp->getSymRefTab()->getNumHelperSymbols() == TR::SymbolReferenceTable::ramStaticsFromClassSymbol)
+               {
+               uintptrj_t value = *(uintptrj_t*)fieldAddress;
+               if (changeIndirectLoadIntoConst(node, TR::aconst, removedNode, comp))
+                  {
+                  node->setAddress(value);
+                  }
+               }
+            else
+               {
+               // Representable native structs are handled before now.  All
+               // remaining natives are hopeless.
+               return false;
+               }
             }
          else if (symRef->getSymbol()->isCollectedReference())
             {

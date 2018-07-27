@@ -24,13 +24,12 @@
 # Note as cache varaiables these can be overridden on the command line when invoking cmake
 # Using the syntax `-D<VAR_NAME>=<VALUE>`
 
-
-set(J9VM_JAVA_VERSION "9" CACHE STRING "Version of Java to build")
-# Limit `J9VM_JAVA_VERSION` to values of 8 or 9
+set(JAVA_SPEC_VERSION "9" CACHE STRING "Version of Java to build")
+# Limit `JAVA_SPEC_VERSION` to values of 8 or 9
 # TODO: this is only a gui thing. It doesnt actually do proper enforcement
 # TODO: need to add support for 10 and 11
-set_property(CACHE J9VM_JAVA_VERSION PROPERTY STRINGS "8" "9")
+set_property(CACHE JAVA_SPEC_VERSION PROPERTY STRINGS "8" "9")
 
 set(J9VM_VERSION_MAJOR 2 CACHE STRING "")
-set(J9VM_VERSION_MINOR ${J9VM_JAVA_VERSION} CACHE INERNAL "")
+set(J9VM_VERSION_MINOR 9 CACHE INERNAL "")
 set(J9VM_VERSION ${J9VM_VERSION_MAJOR}.${J9VM_VERSION_MINOR})

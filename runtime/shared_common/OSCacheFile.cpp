@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -456,39 +456,7 @@ SH_OSCacheFile::getMmapHeaderFieldAddressForGen(void* header, UDATA headerGen, U
 IDATA 
 SH_OSCacheFile::getMmapHeaderFieldOffsetForGen(UDATA headerGen, UDATA fieldID)
 {
-	switch(headerGen) {
-	case OSCACHE_CURRENT_CACHE_GEN :
-	case 34:
-	case 33:
-	case 32:
-	case 31:
-	case 30:
-	case 29:
-	case 28:
-	case 27:
-	case 26:
-	case 25:
-	case 24:
-	case 23:
-    case 22:
-    case 21:
-	case 20:
-	case 19:
-	case 18:
-	case 17:
-	case 16:
-	case 15:
-	case 14:
-	case 13:
-	case 12:
-	case 11:
-	case 10:
-	case 9 :
-	case 8 :
-	case 7 :
-	case 6 :
-	case 5 :
-	{
+	if ((4 < headerGen) && (headerGen <= OSCACHE_CURRENT_CACHE_GEN)) {
 		switch (fieldID) {
 		case OSCACHEMMAP_HEADER_FIELD_CREATE_TIME :
 			return offsetof(OSCachemmap_header_version_current, createTime);
@@ -511,9 +479,7 @@ SH_OSCacheFile::getMmapHeaderFieldOffsetForGen(UDATA headerGen, UDATA fieldID)
 			}
 		}
 		}
-	}
-	case 4 :
-	{
+	} else if (4 == headerGen) {
 		switch (fieldID) {
 		case OSCACHEMMAP_HEADER_FIELD_CREATE_TIME :
 			return offsetof(OSCachemmap_header_version_G04, createTime);
@@ -536,9 +502,7 @@ SH_OSCacheFile::getMmapHeaderFieldOffsetForGen(UDATA headerGen, UDATA fieldID)
 			}
 		}
 		}
-	}
-	case 3 :
-	{
+	} else if (3 == headerGen) {
 		switch (fieldID) {
 		case OSCACHEMMAP_HEADER_FIELD_CREATE_TIME :
 			return offsetof(OSCachemmap_header_version_G03, createTime);
@@ -563,10 +527,6 @@ SH_OSCacheFile::getMmapHeaderFieldOffsetForGen(UDATA headerGen, UDATA fieldID)
 			}
 		}
 		}
-	}
-	default :
-		break;
-		/* Should never happen */
 	}
 	Trc_SHR_Assert_ShouldNeverHappen();
 	return 0;

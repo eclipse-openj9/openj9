@@ -683,7 +683,6 @@ static void dumpAttribute(J9CfrClassFile* classfile, J9CfrAttribute* attrib, U_3
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 
 		case CFR_ATTRIBUTE_LineNumberTable:
-			(J9CfrAttributeLineNumberTable*)attrib;
 			for(i = 0; i < ((J9CfrAttributeLineNumberTable*)attrib)->lineNumberTableLength; i++)
 			{
 				for(j = 0; j < tabLevel + 1; j++) j9tty_printf( PORTLIB, "  ");
@@ -692,7 +691,6 @@ static void dumpAttribute(J9CfrClassFile* classfile, J9CfrAttribute* attrib, U_3
 			break;
 
 		case CFR_ATTRIBUTE_LocalVariableTable:
-			(J9CfrAttributeLocalVariableTable*)attrib;
 			for(i = 0; i < ((J9CfrAttributeLocalVariableTable*)attrib)->localVariableTableLength; i++)
 			{
 				index = ((J9CfrAttributeLocalVariableTable*)attrib)->localVariableTable[i].nameIndex;
@@ -712,7 +710,6 @@ static void dumpAttribute(J9CfrClassFile* classfile, J9CfrAttribute* attrib, U_3
 			break;
 
 		case CFR_ATTRIBUTE_LocalVariableTypeTable:
-			(J9CfrAttributeLocalVariableTypeTable*)attrib;
 			for(i = 0; i < ((J9CfrAttributeLocalVariableTypeTable*)attrib)->localVariableTypeTableLength; i++)
 			{
 				index = ((J9CfrAttributeLocalVariableTypeTable*)attrib)->localVariableTypeTable[i].nameIndex;
@@ -2395,7 +2392,7 @@ static I_32 processAllFiles(char** files, U_32 flags)
 	PORT_ACCESS_FROM_PORT(portLib);
 
 	i = 0;
-	while(currentFile = files[i++])
+	while(NULL != (currentFile = files[i++]))
 	{
 		if(j9file_attr(currentFile) == EsIsDir)
 		{
@@ -3255,9 +3252,9 @@ static void sun_formatBytecode(J9CfrClassFile* classfile, J9CfrMethod* method, B
 						string = classfile->constantPool[cpIndex].bytes;
 						j = 0;
 						index = 0;
-						while(ch2 = string[j++]) if(ch2 == '/') index = j;
+						while('\0' != (ch2 = string[j++])) if(ch2 == '/') index = j;
 						j = index;
-						while(ch2 = string[j++]) j9tty_output_char(ch2);
+						while('\0' != (ch2 = string[j++])) j9tty_output_char(ch2);
 						break;
 
 					case 'C':
@@ -3265,7 +3262,7 @@ static void sun_formatBytecode(J9CfrClassFile* classfile, J9CfrMethod* method, B
 						cpIndex = classfile->constantPool[classfile->thisClass].slot1;
 						string = classfile->constantPool[cpIndex].bytes;
 						j = 0;
-						while(ch2 = string[j++])
+						while('\0' != (ch2 = string[j++]))
 						{
 							if(ch2 == '/') j9tty_output_char('.');
 							else j9tty_output_char(ch2);
@@ -3282,7 +3279,7 @@ static void sun_formatBytecode(J9CfrClassFile* classfile, J9CfrMethod* method, B
 						/* method signature */
 						string = classfile->constantPool[method->descriptorIndex].bytes;
 						j = 0;
-						while(ch2 = string[j++])
+						while('\0' != (ch2 = string[j++]))
 						{
 							if(ch2 == '/') j9tty_output_char('.');
 							else j9tty_output_char(ch2);
@@ -3546,7 +3543,7 @@ cpAscii:
 											case CFR_CONSTANT_Class:
 												string = classfile->constantPool[info->slot1].bytes;
 												j = 0;
-												while(ch2 = string[j++])
+												while('\0' != (ch2 = string[j++]))
 												{
 													if(ch2 == '/') j9tty_output_char('.');
 													else j9tty_output_char(ch2);
@@ -3559,7 +3556,7 @@ cpAscii:
 												cpIndex = classfile->constantPool[info->slot1].slot1;
 												string = classfile->constantPool[cpIndex].bytes;
 												j = 0;
-												while(ch2 = string[j++])
+												while('\0' != (ch2 = string[j++]))
 												{
 													if(ch2 == '/') j9tty_output_char('.');
 													else j9tty_output_char(ch2);
@@ -3570,7 +3567,7 @@ cpAscii:
 												cpIndex = classfile->constantPool[info->slot2].slot2;
 												string = classfile->constantPool[cpIndex].bytes;
 												j = 0;
-												while(ch2 = string[j++])
+												while('\0' != (ch2 = string[j++]))
 												{
 													if(ch2 == '/') j9tty_output_char('.');
 													else j9tty_output_char(ch2);
@@ -4128,7 +4125,7 @@ static void sun_formatClass(J9CfrClassFile* classfile, char *formatString, IDATA
 						string = classfile->constantPool[cpIndex].bytes;
 						j = 0;
 						index = 0;
-						while(ch2 = string[j++]) if(ch2 == '/') index = j - 1;
+						while('\0' != (ch2 = string[j++])) if(ch2 == '/') index = j - 1;
 						j = 0;
 						while(j < index)
 						{
@@ -4144,9 +4141,9 @@ static void sun_formatClass(J9CfrClassFile* classfile, char *formatString, IDATA
 						string = classfile->constantPool[cpIndex].bytes;
 						j = 0;
 						index = 0;
-						while(ch2 = string[j++]) if(ch2 == '/') index = j;
+						while('\0' != (ch2 = string[j++])) if(ch2 == '/') index = j;
 						j = index;
-						while(ch2 = string[j++]) j9tty_output_char(ch2);
+						while('\0' != (ch2 = string[j++])) j9tty_output_char(ch2);
 						break;
 
 					case 'C':
@@ -4154,7 +4151,7 @@ static void sun_formatClass(J9CfrClassFile* classfile, char *formatString, IDATA
 						cpIndex = classfile->constantPool[classfile->thisClass].slot1;
 						string = classfile->constantPool[cpIndex].bytes;
 						j = 0;
-						while(ch2 = string[j++])
+						while('\0' != (ch2 = string[j++]))
 						{
 							if(ch2 == '/') j9tty_output_char('.');
 							else j9tty_output_char(ch2);
@@ -4168,7 +4165,7 @@ static void sun_formatClass(J9CfrClassFile* classfile, char *formatString, IDATA
 							cpIndex = classfile->constantPool[classfile->superClass].slot1;
 							string = classfile->constantPool[cpIndex].bytes;
 							j = 0;
-							while(ch2 = string[j++])
+							while('\0' != (ch2 = string[j++]))
 							{
 								if(ch2 == '/') j9tty_output_char('.');
 								else j9tty_output_char(ch2);
@@ -4184,7 +4181,7 @@ static void sun_formatClass(J9CfrClassFile* classfile, char *formatString, IDATA
 							cpIndex = classfile->constantPool[cpIndex].slot1;
 							string = classfile->constantPool[cpIndex].bytes;
 							k = 0;
-							while(ch2 = string[k++])
+							while('\0' != (ch2 = string[k++]))
 							{
 								if(ch2 == '/') j9tty_output_char('.');
 								else j9tty_output_char(ch2);
@@ -4312,9 +4309,9 @@ static void sun_formatField(J9CfrClassFile* classfile, J9CfrField* field, char *
 						string = classfile->constantPool[cpIndex].bytes;
 						j = 0;
 						index = 0;
-						while(ch2 = string[j++]) if(ch2 == '/') index = j;
+						while('\0' != (ch2 = string[j++])) if(ch2 == '/') index = j;
 						j = index;
-						while(ch2 = string[j++]) j9tty_output_char(ch2);
+						while('\0' != (ch2 = string[j++])) j9tty_output_char(ch2);
 						break;
 
 					case 'C':
@@ -4322,7 +4319,7 @@ static void sun_formatField(J9CfrClassFile* classfile, J9CfrField* field, char *
 						cpIndex = classfile->constantPool[classfile->thisClass].slot1;
 						string = classfile->constantPool[cpIndex].bytes;
 						j = 0;
-						while(ch2 = string[j++])
+						while('\0' != (ch2 = string[j++]))
 						{
 							if(ch2 == '/') j9tty_output_char('.');
 							else j9tty_output_char(ch2);
@@ -4339,7 +4336,7 @@ static void sun_formatField(J9CfrClassFile* classfile, J9CfrField* field, char *
 						/* type signature */
 						string = classfile->constantPool[field->descriptorIndex].bytes;
 						j = 0;
-						while(ch2 = string[j++])
+						while('\0' != (ch2 = string[j++]))
 						{
 							if(ch2 == '/') j9tty_output_char('.');
 							else j9tty_output_char(ch2);
@@ -4558,9 +4555,9 @@ static void sun_formatMethod(J9CfrClassFile* classfile, J9CfrMethod* method, cha
 						string = classfile->constantPool[cpIndex].bytes;
 						j = 0;
 						index = 0;
-						while(ch2 = string[j++]) if(ch2 == '/') index = j;
+						while('\0' != (ch2 = string[j++])) if(ch2 == '/') index = j;
 						j = index;
-						while(ch2 = string[j++]) j9tty_output_char(ch2);
+						while('\0' != (ch2 = string[j++])) j9tty_output_char(ch2);
 						break;
 
 					case 'C':
@@ -4568,7 +4565,7 @@ static void sun_formatMethod(J9CfrClassFile* classfile, J9CfrMethod* method, cha
 						cpIndex = classfile->constantPool[classfile->thisClass].slot1;
 						string = classfile->constantPool[cpIndex].bytes;
 						j = 0;
-						while(ch2 = string[j++])
+						while('\0' != (ch2 = string[j++]))
 						{
 							if(ch2 == '/') j9tty_output_char('.');
 							else j9tty_output_char(ch2);
@@ -4585,7 +4582,7 @@ static void sun_formatMethod(J9CfrClassFile* classfile, J9CfrMethod* method, cha
 						/* method signature */
 						string = classfile->constantPool[method->descriptorIndex].bytes;
 						j = 0;
-						while(ch2 = string[j++])
+						while('\0' != (ch2 = string[j++]))
 						{
 							if(ch2 == '/') j9tty_output_char('.');
 							else j9tty_output_char(ch2);
@@ -4728,7 +4725,7 @@ static void sun_formatMethod(J9CfrClassFile* classfile, J9CfrMethod* method, cha
 							index = classfile->constantPool[exceptions->exceptionIndexTable[j]].slot1;
 							string = classfile->constantPool[index].bytes;
 							k = 0;
-							while(ch2 = string[k++])
+							while('\0' != (ch2 = string[k++]))
 							{
 								if(ch2 == '/') j9tty_output_char('.');
 								else j9tty_output_char(ch2);

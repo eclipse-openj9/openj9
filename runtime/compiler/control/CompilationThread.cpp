@@ -2713,6 +2713,13 @@ void TR::CompilationInfo::stopCompilationThreads()
          fprintf(stderr, "Allocated memory for profile info = %d KB\n", getJProfilerThread()->getProfileInfoFootprint()/1024);
       }
 
+   static char * printPersistentMem = feGetEnv("TR_PrintPersistentMem");
+   if (printPersistentMem)
+      {
+      if (trPersistentMemory)
+         trPersistentMemory->printMemStats();
+      }
+
    TR_DataCacheManager::getManager()->printStatistics();
 
    bool aotStatsEnabled = TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableAOTStats);
@@ -3582,7 +3589,7 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    // Pin the class of the method being compiled to prevent it from being unloaded
    //
    // This conversion is safe. The macro J9VM_J9CLASS_TO_HEAPCLASS will not make a conversion if Classes on Heap is not enabled.
-   PUSH_OBJECT_IN_SPECIAL_FRAME(compThread, J9VM_J9CLASS_TO_HEAPCLASS(details.getClass()));
+   jobject classObject = compThread->javaVM->internalVMFunctions->j9jni_createLocalRef((JNIEnv*)compThread, J9VM_J9CLASS_TO_HEAPCLASS(details.getClass()));
 
    // Do the hack for newInstance thunks
    // Also make the method appear as interpreted, otherwise we might want to access recompilation info
@@ -3614,7 +3621,7 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    void *startPC = compile(compThread, &entry, scratchSegmentProvider);
 
    // Unpin the class
-   POP_OBJECT_IN_SPECIAL_FRAME(compThread);
+   compThread->javaVM->internalVMFunctions->j9jni_deleteLocalRef((JNIEnv*)compThread, classObject);
 
    // Update how many compilation threads are working on hot/scorching methods
    if (entry._hasIncrementedNumCompThreadsCompilingHotterMethods)
@@ -7458,7 +7465,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             // Check to see if there is sufficient physical memory available for this compilation
             // Temporarily only do this for JSR292 compilations
             if (TR::CompilationInfo::isJSR292(details.getMethod())
-                || TR::Options::getCmdLineOptions()->getOption(TR_EnableSelfTuningScratchMemoryUsageBeforeCompile))
+                || compiler->getOption(TR_EnableSelfTuningScratchMemoryUsageBeforeCompile))
                {
                bool incompleteInfo = false;
                int64_t physicalLimitB_64bit = compInfo->computeFreePhysicalLimitAndAbortCompilationIfLow(compiler,
@@ -7479,7 +7486,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                         // If we weren't able to get all the memory information
                         // only lower the limit for JSR292 compilations
                         if (TR::CompilationInfo::isJSR292(details.getMethod())
-                            && TR::Options::getCmdLineOptions()->getOption(TR_EnableSelfTuningScratchMemoryUsageBeforeCompile))
+                            && compiler->getOption(TR_EnableSelfTuningScratchMemoryUsageBeforeCompile))
                            {
                            proposedScratchMemoryLimitB = (physicalLimitB >= scratchSegmentProvider.allocationLimit()
                                                           ? physicalLimitB
@@ -7494,7 +7501,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                            }
                         else // Not enough physical memory to use even a regular scratch space limit
                            {
-                           if (TR::Options::getCmdLineOptions()->getOption(TR_EnableSelfTuningScratchMemoryUsageBeforeCompile))
+                           if (compiler->getOption(TR_EnableSelfTuningScratchMemoryUsageBeforeCompile))
                               {
                               proposedScratchMemoryLimitB = (physicalLimitB >= TR::Options::getScratchSpaceLowerBound()
                                                              ? physicalLimitB
@@ -7951,7 +7958,7 @@ TR::CompilationInfoPerThreadBase::compile(
                );
             }
 
-         if (compiler->getOptions()->getOption(TR_AlwaysSafeFatal)) {
+         if (compiler->getOption(TR_AlwaysSafeFatal)) {
             TR_ASSERT_SAFE_FATAL(false, "alwaysSafeFatal set");
              TR_VerboseLog::writeLineLocked(
                TR_Vlog_INFO ,
@@ -7961,7 +7968,7 @@ TR::CompilationInfoPerThreadBase::compile(
                );
          }
 
-         if (compiler->getOptions()->getOption(TR_AlwaysFatalAssert)) {
+         if (compiler->getOption(TR_AlwaysFatalAssert)) {
             TR_ASSERT_FATAL(false, "alwaysFatalAssert set");
          }
 

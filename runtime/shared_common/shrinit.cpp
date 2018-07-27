@@ -80,6 +80,7 @@ extern "C" {
 
 
 #define SHRINIT_NAMEBUF_SIZE 256
+#define SHRINIT_LOW_FREE_DISK_SIZE ((U_64)6 * 1024 * 1024 * 1024)
 
 #define SHARED_STRING_POOL_KEY "j9stringpuddle"
 #define SHARED_STRING_POOL_KEY_LENGTH 14
@@ -380,6 +381,7 @@ static void adjustCacheSizes(J9PortLibrary* portlib, UDATA verboseFlags, J9Share
 static IDATA checkIfCacheExists(J9JavaVM* vm, const char* ctrlDirName, char* cacheDirName, const char* cacheName, J9PortShcVersion* versionData, U_32 cacheType);
 static bool isClassFromPatchedModule(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader);
 static J9Module* getModule(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader);
+static bool isFreeDiskSpaceLow(J9JavaVM *vm, U_64* maxsize);
 
 typedef struct J9SharedVerifyStringTable {
 	void *romClassAreaStart;
@@ -1379,7 +1381,7 @@ hookFindSharedClass(J9HookInterface** hookInterface, UDATA eventNum, void* voidD
 		UDATA pathEntryCount = eventData->entryCount;
 
 		if (J2SE_VERSION(vm) >= J2SE_19) {
-			if ((eventData->classloader == vm->systemClassLoader)) {
+			if (eventData->classloader == vm->systemClassLoader) {
 				isBootLoader = true;
 				pathEntryCount += 1;
 				classpath = getBootstrapClasspathItem(currentThread, vm->modulesPathEntry, pathEntryCount);
@@ -2720,13 +2722,19 @@ ensureCorrectCacheSizes(J9JavaVM *vm, J9PortLibrary* portlib, U_64 runtimeFlags,
 		*cacheSize = J9_SHARED_CLASS_CACHE_MAX_SIZE;
 	}
 
+	U_64 maxSize = 0;
 	if (J9PORT_SHR_CACHE_TYPE_NONPERSISTENT == getCacheTypeFromRuntimeFlags(runtimeFlags)) {
-		U_64 maxSize = 0;
-
 		if ((J9PORT_LIMIT_LIMITED == j9sysinfo_get_limit(J9PORT_RESOURCE_SHARED_MEMORY, &maxSize))
 			&& (*cacheSize > maxSize)
 		) {
 			adjustCacheSizes(portlib, verboseFlags, piconfig, maxSize);
+		}
+	} else {
+		if (is64BitPlatDefaultSize) {
+			if (isFreeDiskSpaceLow(vm, &maxSize)) {
+				Trc_SHR_Assert_True(*cacheSize > maxSize);
+				adjustCacheSizes(portlib, verboseFlags, piconfig, maxSize);
+			}
 		}
 	}
 
@@ -4847,6 +4855,47 @@ getModule(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9ClassLo
 		}
 	}
 	return module;
+}
+
+
+/**
+ * This function returns if the system is running low on free disk space
+ * @param[in] vm The current J9JavaVM
+ * @param[out] maxsize The maximum shared cache size allowed if the free disk space is low.
+ * 
+ * @return False if the space free disk space >= SHRINIT_LOW_DISK_SIZE. True otherwise.
+ */
+static bool
+isFreeDiskSpaceLow(J9JavaVM *vm, U_64* maxsize)
+{
+	char cacheDirName[J9SH_MAXPATH];
+	memset(cacheDirName, 0, J9SH_MAXPATH);
+	bool ret = true;
+	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	if (-1 == SH_OSCache::getCacheDir(PORTLIB, vm->sharedCacheAPI->ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_PERSISTENT)) {
+		Trc_SHR_INIT_isFreeDiskSpaceLow_getDirFailed();
+		goto done;
+	}
+	/* check for free disk space */
+	J9FileStatFilesystem fileStatFilesystem;
+	if (0 == j9file_stat_filesystem(cacheDirName, 0, &fileStatFilesystem)) {
+		if (fileStatFilesystem.freeSizeBytes >= SHRINIT_LOW_FREE_DISK_SIZE) {
+			ret = false;
+		} else {
+			Trc_SHR_INIT_isFreeDiskSpaceLow_DiskSpaceLow(fileStatFilesystem.freeSizeBytes);
+		}
+	} else {
+		I_32 errorno = j9error_last_error_number();
+		const char * errormsg = j9error_last_error_message();
+		Trc_SHR_INIT_isFreeDiskSpaceLow_StatFileSystemFailed(cacheDirName, errorno, errormsg);
+	}
+done:
+	if (ret) {
+		*maxsize = J9_SHARED_CLASS_CACHE_DEFAULT_SOFTMAX_SIZE_64BIT_PLATFORM;
+		Trc_SHR_INIT_isFreeDiskSpaceLow_SetMaxSize(*maxsize);
+	}
+	return ret;
 }
 
 } /* extern "C" */

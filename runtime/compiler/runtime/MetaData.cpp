@@ -1435,8 +1435,8 @@ createMethodMetaData(
 
    int32_t bytecodePCToIAMapOffset = -1;
    if (comp->getPersistentInfo()->isRuntimeInstrumentationEnabled() &&
-       TR::Options::getCmdLineOptions()->getOption(TR_EnableHardwareProfileIndirectDispatch) &&
-       TR::Options::getCmdLineOptions()->getOption(TR_EnableMetadataBytecodePCToIAMap))
+       comp->getOption(TR_EnableHardwareProfileIndirectDispatch) &&
+       comp->getOption(TR_EnableMetadataBytecodePCToIAMap))
       {
       // Array of TR_HWPBytecodePCToIAMap structs
       // The first element is a special; it contains the size of the array and an eyecatcher
@@ -1699,8 +1699,8 @@ createMethodMetaData(
       }
 
    if (comp->getPersistentInfo()->isRuntimeInstrumentationEnabled() &&
-       TR::Options::getCmdLineOptions()->getOption(TR_EnableHardwareProfileIndirectDispatch) &&
-       TR::Options::getCmdLineOptions()->getOption(TR_EnableMetadataBytecodePCToIAMap))
+       comp->getOption(TR_EnableHardwareProfileIndirectDispatch) &&
+       comp->getOption(TR_EnableMetadataBytecodePCToIAMap))
       {
       void *bytecodePCToIAMapLocation = (void *)((uint8_t*)data + bytecodePCToIAMapOffset);
       data->riData = bytecodePCToIAMapLocation;

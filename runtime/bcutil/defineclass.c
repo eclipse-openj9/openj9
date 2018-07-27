@@ -528,7 +528,9 @@ internalLoadROMClass(J9VMThread * vmThread, J9LoadROMClassData *loadData, J9Tran
 
 	/* Determine allowed class file version */
 #ifdef J9VM_OPT_SIDECAR
-	if (J2SE_VERSION(vm) >= J2SE_V11) {
+	if (J2SE_VERSION(vm) >= J2SE_V12) {
+		translationFlags |= BCT_Java12MajorVersionShifted;
+	} else if (J2SE_VERSION(vm) >= J2SE_V11) {
 		translationFlags |= BCT_Java11MajorVersionShifted;
 	} else if (J2SE_VERSION(vm) >= J2SE_V10) {
 		translationFlags |= BCT_Java10MajorVersionShifted;
@@ -953,7 +955,7 @@ createErrorMessage(J9VMThread *vmStruct, J9ROMClass *anonROMClass, J9ROMClass *h
 		/* Anonymous class name has trailing digits. Example - "test/DummyClass/00000000442F098".
 		 * The code below removes the trailing digits, "/00000000442F098", from the anonymous class name.
 		 */
-		UDATA anonClassNameLength = J9UTF8_LENGTH(anonClassName) - 1;
+		IDATA anonClassNameLength = J9UTF8_LENGTH(anonClassName) - 1;
 		for (; anonClassNameLength >= 0; anonClassNameLength--) {
 			if (anonClassNameData[anonClassNameLength] == '/') {
 				break;

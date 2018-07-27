@@ -856,7 +856,7 @@ TR_HWProfiler::createRecords(TR::Compilation *comp)
                                                                 relocationTargetKind,
                                                                 cg);
 
-         cg->addAOTRelocation(relocation, __FILE__, __LINE__, node);
+         cg->addExternalRelocation(relocation, __FILE__, __LINE__, node);
          }
       }
    }

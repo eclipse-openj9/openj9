@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -362,7 +362,7 @@ uint8_t *TR::PPCCallSnippet::emitSnippetBody()
    // we use "b" for induceOSR because we want the helper to think that it's been called from the mainline code and not from the snippet.
    int32_t branchInstruction = (runtimeHelper == TR_induceOSRAtCurrentPC) ? 0x48000000 : 0x48000001;
    *(int32_t *)cursor = branchInstruction | (distance & 0x03fffffc);
-   cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,(uint8_t *)glueRef,TR_HelperAddress, cg()),
+   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,(uint8_t *)glueRef,TR_HelperAddress, cg()),
       __FILE__, __LINE__, callNode);
 
    cursor += PPC_INSTRUCTION_LENGTH;
@@ -387,7 +387,7 @@ uint8_t *TR::PPCCallSnippet::emitSnippetBody()
       {
       // Store the code cache RA
       *(intptrj_t *)cursor = (intptrj_t)getCallRA();
-      cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,NULL,TR_AbsoluteMethodAddress, cg()),
+      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,NULL,TR_AbsoluteMethodAddress, cg()),
             __FILE__, __LINE__, callNode);
 
       cursor += TR::Compiler->om.sizeofReferenceAddress();
@@ -403,7 +403,7 @@ uint8_t *TR::PPCCallSnippet::emitSnippetBody()
          if (comp->getOption(TR_EnableHCR))
             {
             cg()->jitAddPicToPatchOnClassRedefinition((void*)-1, (void *)cursor, true);
-            cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)cursor, NULL,(uint8_t *)needsFullSizeRuntimeAssumption,
+            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)cursor, NULL,(uint8_t *)needsFullSizeRuntimeAssumption,
                                                                                          TR_HCR, cg()),__FILE__, __LINE__,
                                    getNode());
             }
@@ -414,7 +414,7 @@ uint8_t *TR::PPCCallSnippet::emitSnippetBody()
          if (comp->getOption(TR_EnableHCR))
             cg()->jitAddPicToPatchOnClassRedefinition((void *)methodSymbol->getMethodAddress(), (void *)cursor);
 
-         cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)methodSymRef,
+         cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)methodSymRef,
                                                                                  getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
                                                                                  TR_MethodObject, cg()),
                                       __FILE__, __LINE__, callNode);
@@ -487,7 +487,7 @@ uint8_t *TR::PPCUnresolvedCallSnippet::emitSnippetBody()
       traceMsg(comp, "</relocatableDataTrampolinesCG>\n");
       }
 
-   cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
          *(uint8_t **)cursor,
          getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
          TR_Trampolines, cg()),
@@ -538,13 +538,13 @@ uint8_t *TR::PPCVirtualUnresolvedSnippet::emitSnippetBody()
 
    // bl glueRef
    *(int32_t *)cursor = 0x48000001 | (distance & 0x03fffffc);
-   cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,(uint8_t *)glueRef,TR_HelperAddress, cg()),
+   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,(uint8_t *)glueRef,TR_HelperAddress, cg()),
       __FILE__, __LINE__, callNode);
    cursor += 4;
 
    // Store the code cache RA
    *(intptrj_t *)cursor = (intptrj_t)getReturnLabel()->getCodeLocation();
-   cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,NULL,TR_AbsoluteMethodAddress, cg()),
+   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,NULL,TR_AbsoluteMethodAddress, cg()),
          __FILE__, __LINE__, callNode);
 
    cursor += TR::Compiler->om.sizeofReferenceAddress();
@@ -553,7 +553,7 @@ uint8_t *TR::PPCVirtualUnresolvedSnippet::emitSnippetBody()
    *(intptrj_t *)cursor = (intptrj_t)callNode->getSymbolReference()->getOwningMethod(comp)->constantPool();
 
    // Use methodSymRef info to generate thunk relo for AOT shared classes
-   cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
                                                                                 *(uint8_t **)cursor,
                                                                                 getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
                                                                                 TR_Thunks, cg()),
@@ -608,7 +608,7 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
 
    // bl glueRef
    *(int32_t *)cursor = 0x48000001 | (distance & 0x03fffffc);
-   cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)glueRef, TR_HelperAddress, cg()),
+   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)glueRef, TR_HelperAddress, cg()),
                              __FILE__, __LINE__, callNode);
    blAddress = cursor;
    cursor += PPC_INSTRUCTION_LENGTH;
@@ -634,7 +634,7 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
    if (cg()->comp()->compileRelocatableCode())
       {
       // Use methodSymRef info to generate thunk relo for AOT shared classes
-      cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,*(uint8_t **)cursor,
+      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,*(uint8_t **)cursor,
                                                                                    getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,TR_Thunks, cg()),
                                    __FILE__, __LINE__, callNode);
       }
@@ -684,7 +684,7 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
             }
          else
             {
-            cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(getUpperInstruction(),
+            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(getUpperInstruction(),
                (uint8_t *)(addrValue),
                (uint8_t *)fixedSequence4,
                TR_FixedSequenceAddress2,
@@ -702,7 +702,7 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
       *patchAddress2 |= (int32_t)(intptrj_t)cursor & 0x0000ffff;
       TR_RelocationRecordInformation *recordInfo = ( TR_RelocationRecordInformation *)comp->trMemory()->allocateMemory(sizeof( TR_RelocationRecordInformation), heapAlloc);
       recordInfo->data3 = orderedPairSequence1;
-      cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalOrderedPair32BitRelocation((uint8_t *)patchAddress1,
+      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalOrderedPair32BitRelocation((uint8_t *)patchAddress1,
          (uint8_t *)patchAddress2,
          (uint8_t *)recordInfo,
          TR_AbsoluteMethodAddressOrderedPair, cg()),
@@ -717,11 +717,11 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
    *(intptrj_t *)(cursor+3*TR::Compiler->om.sizeofReferenceAddress()) = (intptrj_t)blAddress;
 
    // Register for relation of the 1st target addess
-   cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor+TR::Compiler->om.sizeofReferenceAddress(), NULL, TR_AbsoluteMethodAddress, cg()),
+   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor+TR::Compiler->om.sizeofReferenceAddress(), NULL, TR_AbsoluteMethodAddress, cg()),
          __FILE__, __LINE__, callNode);
 
    // Register for relaction of the 2nd target address
-   cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor+3*TR::Compiler->om.sizeofReferenceAddress(), NULL, TR_AbsoluteMethodAddress, cg()),
+   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor+3*TR::Compiler->om.sizeofReferenceAddress(), NULL, TR_AbsoluteMethodAddress, cg()),
          __FILE__, __LINE__, callNode);
 
    return(cursor + 4*TR::Compiler->om.sizeofReferenceAddress());

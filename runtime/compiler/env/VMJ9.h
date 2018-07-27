@@ -970,8 +970,6 @@ public:
 
    virtual int32_t maxInternalPlusPinningArrayPointers(TR::Compilation* comp);
 
-   virtual void scanClassForReservation(TR_OpaqueClassBlock *,  TR::Compilation *comp);
-
    virtual void *getSystemClassLoader();
 
    virtual TR_EstimateCodeSize *getCodeEstimator( TR::Compilation *comp);
@@ -1004,8 +1002,6 @@ public:
 
    virtual void *getLocationOfClassLoaderObjectPointer(TR_OpaqueClassBlock *classPointer);
    virtual bool isMethodBreakpointed(TR_OpaqueMethodBlock *method);
-
-   virtual intptrj_t getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset);
 
    protected:
 #if defined(TR_TARGET_S390)
@@ -1137,7 +1133,6 @@ public:
    virtual TR_OpaqueClassBlock *getClassOfMethod(TR_OpaqueMethodBlock *method);
    virtual void               getResolvedMethods(TR_Memory *, TR_OpaqueClassBlock *, List<TR_ResolvedMethod> *);
    virtual TR_ResolvedMethod *getResolvedMethodForNameAndSignature(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer, const char* methodName, const char *signature);
-   virtual void               scanClassForReservation(TR_OpaqueClassBlock *,  TR::Compilation *comp);
    virtual uint32_t           getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, char * fieldName,
                                                      uint32_t fieldLen, char * sig, uint32_t sigLen, UDATA options);
 #if defined(TR_TARGET_S390)

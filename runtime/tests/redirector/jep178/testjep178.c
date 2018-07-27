@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2017 IBM Corp. and others
+ * Copyright (c) 2014, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -203,7 +203,7 @@ int main(int argc, char ** argv, char ** envp)
 	/* Open a handle to the jvm's shared library. */
 #if defined(WIN32)
 	handle = LoadLibrary(buffer);
-#elif defined(LINUX) || defined(AIXPPC)
+#elif defined(LINUX) || defined(AIXPPC) || defined(OSX)
 	handle = dlopen(buffer, RTLD_NOW);
 #else /* ZOS */
 	handle = dllload(buffer);
@@ -217,7 +217,7 @@ int main(int argc, char ** argv, char ** envp)
 	/* Lookup for the virtual machine entry point routine. */
 #if defined(WIN32)
 	createJavaVM = (createJVMFP) GetProcAddress((HINSTANCE)handle, "JNI_CreateJavaVM");
-#elif defined(LINUX) || defined(AIXPPC)
+#elif defined(LINUX) || defined(AIXPPC) || defined(OSX)
 	createJavaVM = (createJVMFP) dlsym(handle, "JNI_CreateJavaVM");
 #else /* Z/OS */
 	createJavaVM = (createJVMFP) dllqueryfn(handle, "JNI_CreateJavaVM");
@@ -297,7 +297,7 @@ fail:
 	if (NULL != handle) {
 #if defined(WIN32)
 		FreeLibrary(handle);
-#elif defined(LINUX) || defined(AIXPPC)
+#elif defined(LINUX) || defined(AIXPPC) || defined(OSX)
 		dlclose(handle);
 #else /* Z/OS */
 		dllfree(handle);

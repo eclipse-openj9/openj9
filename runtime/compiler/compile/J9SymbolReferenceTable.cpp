@@ -33,6 +33,7 @@
 #include "env/PersistentInfo.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "env/TRMemory.hpp"                    // for TR_HeapMemory, etc
+#include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
 #include "env/j9method.h"
 #include "env/jittypes.h"
@@ -49,6 +50,7 @@
 #include "infra/List.hpp"                      // for List, ListIterator, etc
 #include "runtime/RuntimeAssumptions.hpp"
 #include "env/PersistentCHTable.hpp"
+#include "optimizer/J9TransformUtil.hpp"
 
 J9::SymbolReferenceTable::SymbolReferenceTable(size_t sizeHint, TR::Compilation *c) :
    OMR::SymbolReferenceTableConnector(sizeHint, c),
@@ -1016,7 +1018,16 @@ J9::SymbolReferenceTable::findOrCreateStringSymbol(TR::ResolvedMethodSymbol * ow
       }
    else
       {
-      symRef = findOrCreateCPSymbol(owningMethodSymbol, cpIndex, TR::Address, true, stringConst);
+      TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN;
+      if (!comp()->compileRelocatableCode())
+         {
+         TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
+         if (knot)
+            {
+            knownObjectIndex = knot->getIndexAt((uintptrj_t*)stringConst);
+            }
+         }
+      symRef = findOrCreateCPSymbol(owningMethodSymbol, cpIndex, TR::Address, true, stringConst, knownObjectIndex);
       }
    TR::StaticSymbol * sym = (TR::StaticSymbol *)symRef->getSymbol();
    sym->setConstString();
@@ -1308,7 +1319,33 @@ J9::SymbolReferenceTable::findOrCreateStaticSymbol(TR::ResolvedMethodSymbol * ow
    if (sharesSymbol)
       symRef->setReallySharesSymbol();
 
-   symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), cpIndex, unresolvedIndex);
+   TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN;
+   if (resolved
+       && isFinal
+       && type == TR::Address
+       && !comp()->compileRelocatableCode())
+      {
+      TR::VMAccessCriticalSection getObjectReferenceLocation(comp());
+      if (*((uintptrj_t*)dataAddress) != NULL)
+         {
+         TR_OpaqueClassBlock *declaringClass = owningMethod->getDeclaringClassFromFieldOrStatic(comp(), cpIndex);
+         if (declaringClass)
+            {
+            int32_t clazzNameLength = 0;
+            char *clazzName = comp()->fej9()->getClassNameChars(declaringClass, clazzNameLength);
+            if (J9::TransformUtil::foldFinalFieldsIn(declaringClass, clazzName, clazzNameLength, true, comp()))
+               {
+               TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
+               if (knot)
+                  {
+                  knownObjectIndex = knot->getIndexAt((uintptrj_t*)dataAddress);
+                  }
+               }
+            }
+         }
+      }
+   symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), cpIndex, unresolvedIndex, knownObjectIndex);
+
    checkUserField(symRef);
 
    if (sharesSymbol)

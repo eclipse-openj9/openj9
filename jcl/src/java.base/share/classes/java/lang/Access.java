@@ -48,6 +48,10 @@ import sun.reflect.annotation.AnnotationType;
 import java.lang.Module;
 import java.util.Iterator;
 import java.util.List;
+/*[IF Java11]*/
+import java.nio.charset.Charset;
+import java.nio.charset.CharacterCodingException;
+/*[ENDIF]*/
 /*[ELSE]
 import java.lang.reflect.Module;
 /*[ENDIF]*/
@@ -361,6 +365,12 @@ final class Access implements JavaLangAccess {
 /*[IF Java11]*/
 	public void blockedOn(Interruptible interruptible) {
 		Thread.blockedOn(interruptible);
+	}
+	public byte[] getBytesNoRepl(String str, Charset charset) throws CharacterCodingException {
+		return StringCoding.getBytesNoRepl(str, charset);
+	}
+	public String newStringNoRepl(byte[] bytes, Charset charset) throws CharacterCodingException {
+		return StringCoding.newStringNoRepl(bytes, charset);
 	}
 /*[ENDIF]*/
 	

@@ -472,6 +472,14 @@ addToBootstrapClassLoaderSearch(J9JavaVM * vm, const char * pathSegment, UDATA c
 UDATA
 addToSystemClassLoaderSearch(J9JavaVM * vm, const char* pathSegment, UDATA classLoaderType, BOOLEAN enforceJarRestriction);
 
+/**
+ * @brief Get a reference to jdk.internal.module.Modules.
+ * @param *currentThread
+ * @return class reference or null if error.
+ */
+
+jclass
+getJimModules(J9VMThread *currentThread);
 /* ---------------- description.c ---------------- */
 
 /**
@@ -3045,6 +3053,24 @@ trace(J9VMThread *vmStruct);
 
 #endif /* J9VM_INTERP_TRACING || INTERP_UPDATE_VMCTRACING */ /* End File Level Build Flags */
 
+/* ---------------- visible.c ---------------- */
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+/**
+ * Loads the nest host and ensures that the nest host belongs
+ * to the same runtime package as the class. This function requires
+ * VMAccess
+ *
+ * @param vmThread handle to vmThread
+ * @param clazz the class to search the nest host
+ * @param options lookup options
+ *
+ * @return 	J9_VISIBILITY_ALLOWED if success,
+ * 			J9_VISIBILITY_NEST_HOST_LOADING_FAILURE_ERROR if failed to load nesthost,
+ * 			J9_VISIBILITY_NEST_HOST_DIFFERENT_PACKAGE_ERROR if nesthost is not in the same runtime package
+ */
+UDATA
+loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options);
+#endif /* J9VM_OPT_VALHALLA_NESTMATES */
 
 /* ---------------- VMAccess.cpp ---------------- */
 
@@ -3876,7 +3902,7 @@ fillJITVTableSlot(J9VMThread *vmStruct, UDATA *currentSlot, J9Method *currentMet
  * @return UDATA
  */
 UDATA
-getVTableIndexForMethod(J9Method * method, J9Class *clazz, J9VMThread *vmThread);
+getVTableOffsetForMethod(J9Method * method, J9Class *clazz, J9VMThread *vmThread);
 
 j9object_t
 resolveMethodTypeRef(J9VMThread *vmThread, J9ConstantPool *constantPool, UDATA cpIndex, UDATA resolveFlags);

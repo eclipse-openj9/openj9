@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1922,7 +1922,7 @@ void verifyFindValidPageSizeOutput(struct J9PortLibrary *portLibrary,
 	}
 }
 
-#if (defined(LINUX) && !defined(LINUXPPC)) || defined(WIN32)
+#if (defined(LINUX) && !defined(LINUXPPC)) || defined(WIN32) || defined(OSX)
 
 static int
 j9vmem_testFindValidPageSize_impl(struct J9PortLibrary *portLibrary, char *testName)
@@ -2040,7 +2040,7 @@ int
 j9vmem_testFindValidPageSize(struct J9PortLibrary *portLibrary)
 {
 
-#if defined(LINUX)
+#if defined(LINUX) || defined(OSX)
 #define J9PORT_VMEM_PAGESIZE_COUNT 5	/* This should be same as defined in port/unix_include/j9portpg.h */
 #elif defined(WIN32)
 #define J9PORT_VMEM_PAGESIZE_COUNT 3	/* This should be same as defined in port/win32_include/j9portpg.h */

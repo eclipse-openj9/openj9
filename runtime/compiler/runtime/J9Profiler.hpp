@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -637,16 +637,20 @@ class TR_BlockFrequencyInfo
    bool    isJProfilingData() { return _counterDerivationInfo != NULL; }
    static int32_t *getEnableJProfilingRecompilation() { return &_enableJProfilingRecompilation; }
    static void    enableJProfilingRecompilation() { _enableJProfilingRecompilation = -1; }
+   void setIsQueuedForRecompilation() { _isQueuedForRecompilation = -1; }
+   int32_t *getIsQueuedForRecompilation() { return &_isQueuedForRecompilation; }
 
+   TR::Node* generateBlockRawCountCalculationSubTree(TR::Compilation *comp, int32_t blockNumber, TR::Node *node);
+   TR::Node* generateBlockRawCountCalculationSubTree(TR::Compilation *comp, TR::Node *node, bool trace);
    void dumpInfo(TR::FILE *);
 
    int32_t getCallCount();
    int32_t getMaxRawCount(int32_t callerIndex);
    int32_t getMaxRawCount();
-
    private:
    int32_t getRawCount(TR::ResolvedMethodSymbol *resolvedMethod, TR_ByteCodeInfo &bci, TR_CallSiteInfo *callSiteInfo, int64_t maxCount, TR::Compilation *comp);
    int32_t getRawCount(TR_ByteCodeInfo &bci, TR_CallSiteInfo *callSiteInfo, int64_t maxCount, TR::Compilation *comp);
+   int32_t getOriginalBlockNumberToGetRawCount(TR_ByteCodeInfo &bci, TR::Compilation *comp, bool trace);
 
    TR_CallSiteInfo * _callSiteInfo;
    int32_t const _numBlocks;
@@ -660,6 +664,8 @@ class TR_BlockFrequencyInfo
    TR_BitVector    ** _counterDerivationInfo;
    int32_t         _entryBlockNumber;
    static int32_t  _enableJProfilingRecompilation;
+   // Following flag is checked at runtime to know if we have queued this method for recompilation and skip the profiling code
+   int32_t         _isQueuedForRecompilation;
    };
 
 TR_BlockFrequencyInfo * TR_BlockFrequencyInfo::get(TR_PersistentProfileInfo * profileInfo)
@@ -782,7 +788,7 @@ TR_CallSiteInfo * TR_CallSiteInfo::getCurrent(TR::Compilation *comp)
 class TR_AccessedProfileInfo
    {
    public:
-   typedef TR::typed_allocator<std::pair<TR_ResolvedMethod*, TR_PersistentProfileInfo*>, TR::Region&> InfoMapAllocator;
+   typedef TR::typed_allocator<std::pair< TR_ResolvedMethod* const, TR_PersistentProfileInfo*>, TR::Region&> InfoMapAllocator;
    typedef std::less<TR_ResolvedMethod*> InfoMapComparator;
    typedef std::map<TR_ResolvedMethod*, TR_PersistentProfileInfo*, InfoMapComparator, InfoMapAllocator> InfoMap;
 

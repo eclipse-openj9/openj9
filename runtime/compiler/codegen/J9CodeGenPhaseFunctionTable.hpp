@@ -32,7 +32,6 @@
    TR::CodeGenPhase::performPopulateOSRBufferPhase,                                          //PopulateOSRBufferPhase
    TR::CodeGenPhase::performMoveUpArrayLengthStoresPhase,                                    //MoveUpArrayLengthStoresPhase
    TR::CodeGenPhase::performInsertEpilogueYieldPointsPhase,                                  //InsertEpilogueYieldPointsPhase
-   TR::CodeGenPhase::performDetectEndOfVMThreadGlobalRegisterLiveRangePhase,                 //DetectEndOfVMThreadGlobalRegisterLiveRangePhase
    TR::CodeGenPhase::performCompressedReferenceRematerializationPhase,
    TR::CodeGenPhase::performSplitWarmAndColdBlocksPhase,
    TR::CodeGenPhase::performIdentifyUnneededByteConvsPhase,                                  //IdentifyUnneededByteConvsPhase

@@ -28,6 +28,9 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.testng.log4testng.Logger;
 
+import java.util.Iterator;
+import java.util.stream.Stream;
+
 /**
  * This test Java.lang.String API added in Java 11 and later version.
  *
@@ -42,6 +45,11 @@ public class Test_String {
 	String allWhiteSpace = "   ";
 	String latin1 = "abc123";
 	String nonLatin1 = "abc\u0153";
+	String latin1WithTerm = "one\ntwo\rthree\r\nfour";
+	String[] latin1LinesArray = {"one", "two", "three", "four"};
+	String nonLatin1WithTerm = "\u0153\n\u0154\r\u0155\r\n\u0156";
+	String[] nonLatin1LinesArray = {"\u0153", "\u0154", "\u0155", "\u0156"};
+	String emptyWithTerm = "\n";
 
 	/*
 	 * Test Java 11 API String.valueOfCodePoint(codePoint)
@@ -188,5 +196,75 @@ public class Test_String {
 		// pass in string with white space on either side (special characters)
 		Assert.assertEquals((allWhiteSpace + nonLatin1 + allWhiteSpace).stripTrailing(), allWhiteSpace + nonLatin1, 
 				"stripTrailing: Value of striped string with leading/trailing white space with non-Latin1 characters was unexpected.");
+	}
+
+	/*
+	 * Test Java 11 API String.isBlank
+	 */
+	@Test(groups = { "level.sanity" })
+	public void testIsblank() {
+		// pass empty string
+		Assert.assertTrue(empty.isBlank(),
+				"isBlank: failed to return true on empty string.");
+
+		// pass string with all white space
+		Assert.assertTrue(allWhiteSpace.isBlank(),
+				"isBlank: failed to return true on all white space string.");
+
+		// pass non-blank strings
+		Assert.assertFalse(latin1.isBlank(),
+				"isBlank: failed to return false on non-blank latin1 string.");
+		Assert.assertFalse(nonLatin1.isBlank(),
+				"isBlank: failed to return false on non-blank non-latin1 string.");
+
+		Assert.assertFalse((allWhiteSpace + latin1).isBlank(),
+				"isBlank: failed to return false on non-blank latin1 string with leading white space.");
+		Assert.assertFalse((allWhiteSpace + nonLatin1).isBlank(),
+				"isBlank: failed to return false on non-blank non-latin1 string with leading white space.");
+	 
+	/*	
+	 * Test Java 11 API String.lines
+	 */
+	@Test(groups = { "level.sanity" })
+	public void testLines() {
+		Stream<String> ss;
+		Iterator<String> iter;
+		String s;
+		int i;
+
+		// ensure latin1 and nonLatin1 properly breaks apart strings by line terminators
+		ss = latin1WithTerm.lines();
+		iter = ss.iterator();
+		i = 0;
+		while (iter.hasNext()) {
+			s = iter.next();
+			Assert.assertEquals(s, latin1LinesArray[i],
+					"lines: Failed to break apart latin1 string by line terminators - failed on " + latin1LinesArray[i]);
+			i++;
+		}
+
+		ss = nonLatin1WithTerm.lines();
+		iter = ss.iterator();
+		i = 0;
+		while (iter.hasNext()) {
+			s = iter.next();
+			Assert.assertEquals(s, nonLatin1LinesArray[i],
+					"lines: Failed to break apart latin1 string by line terminators - failed on " + nonLatin1LinesArray[i]);
+			i++;
+		}
+
+		// pass in string with only one line terminator - should return empty string
+		ss = emptyWithTerm.lines();
+		Assert.assertEquals(ss.findAny().get(), "",
+					"lines: Failed to get empty string from string with a single line terminator.");
+
+		// pass in empty string
+		try {
+			ss = empty.lines();
+			s = ss.findAny().get();
+			Assert.fail("Failed to throw exception on get non-existent value - empty string.");
+		} catch (java.util.NoSuchElementException e) {
+			// Expected exception
+		}
 	}
 }

@@ -144,8 +144,12 @@ public class AttachHandler extends Thread {
 		/*[PR Jazz 59196 LIR: Disable attach API by default on z/OS (31972)]*/
 		boolean enableAttach = true;
 		String osName = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("os.name"); //$NON-NLS-1$
-		if ((null != osName) && (osName.equalsIgnoreCase("z/OS"))) { //$NON-NLS-1$
-			enableAttach = false;
+		if (null != osName) {
+			if (osName.equalsIgnoreCase("z/OS")) { //$NON-NLS-1$
+				enableAttach = false;
+			} else if (osName.startsWith("Windows")) { //$NON-NLS-1$
+				IPC.isWindows = true;
+			}
 		}
 		/* the system property overrides the default */
 		String enableAttachProp = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("com.ibm.tools.attach.enable");  //$NON-NLS-1$
@@ -335,7 +339,9 @@ public class AttachHandler extends Thread {
 	 * @throws IOException if there is a problem reading the reply file.
 	 */
 	public Attachment connectToAttacher() throws IOException {
-		Reply attacherReply = Reply.readReply(TargetDirectory.getTargetDirectoryPath(AttachHandler.getVmId()));
+		String targetDirectoryPath = TargetDirectory.getTargetDirectoryPath(AttachHandler.getVmId());
+		IPC.checkOwnerAccessOnly(targetDirectoryPath);
+		Reply attacherReply = Reply.readReply(targetDirectoryPath);
 		Attachment at = null;
 		if (null != attacherReply) {
 			int portNumber = attacherReply.getPortNumber();
@@ -396,17 +402,17 @@ public class AttachHandler extends Thread {
 		}
 		FileLock.shutDown();
 		
-		boolean destroySemaphore = terminateWaitLoop(wakeHandler);
-		return destroySemaphore;
+		return terminateWaitLoop(wakeHandler, 0);
 	}
 
 	/**
 	 * Shut down the wait loop thread and determine if we still require the semaphore.
 	 * @param wakeHandler true if the wait loop is waiting for a notification
+	 * @param retryNumber indicates how many times we have tried to shut down the wait loop
 	 * @return true if there are no other VMs using the semaphore
 	 */
 	/*[PR Jazz 50781: CMVC 201366: OTT:Attach API wait loop still alive after shutdown hooks ]*/
-	private static boolean terminateWaitLoop(boolean wakeHandler) {
+	static boolean terminateWaitLoop(boolean wakeHandler, int retryNumber) {
 		boolean gotLock = false;
 		boolean destroySemaphore = false;
 		/*[PR CMVC 187777 : non-clean shutdown in life cycle tests]*/
@@ -453,7 +459,11 @@ public class AttachHandler extends Thread {
 				if (IPC.loggingEnabled ) {
 					IPC.logMessage("AttachHandler terminate obtained master lock"); //$NON-NLS-1$
 				}
-				int numTargets = CommonDirectory.countTargetDirectories();
+				/*
+				 * If one or more directories is deleted, the target count is wrong and the wait loop may
+				 * not be notified.  If the terminate fails, try adding extra counts to the semaphore.
+				 */
+				int numTargets = CommonDirectory.countTargetDirectories() + retryNumber;
 				setNumberOfTargets(numTargets);
 				if (numTargets <= 1) {
 					/* 
@@ -529,12 +539,14 @@ public class AttachHandler extends Thread {
 					 * In that case, the join is redundant but harmless. 
 					 */
 					int timeout = 100;
+					int retryNumber = 0;
 					while (System.nanoTime() < shutdownDeadlineNs) {
 						currentAttachThread.join(timeout); /* timeout in milliseconds */
 						if (currentAttachThread.getState() != Thread.State.TERMINATED) {
-							IPC.logMessage("Timeout waiting for wait loop termination.  Retry"); //$NON-NLS-1$
+							IPC.logMessage("Timeout waiting for wait loop termination.  Retry #"+retryNumber); //$NON-NLS-1$
 							timeout *= 2;
-							AttachHandler.terminateWaitLoop(true);
+							AttachHandler.terminateWaitLoop(true, retryNumber);
+							++retryNumber;
 						} else {
 							break;
 						}

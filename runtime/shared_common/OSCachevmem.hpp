@@ -63,6 +63,9 @@ public:
 	virtual bool startup(const char* ctrlDirName, UDATA cacheDirPerm, const char* cacheName, J9SharedClassPreinitConfig* piconfig, IDATA numLocks,
 			UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, UDATA storageKeyTesting, J9PortShcVersion* versionData, SH_OSCacheInitializer* initializer, UDATA reason);
 
+	/* Work around compile error on mac osx due to hiding the other startup api */
+	using SH_OSCache::startup;
+
 	virtual IDATA destroy(bool suppressVerbose, bool isReset);
 
 	virtual void cleanup();

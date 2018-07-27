@@ -391,6 +391,10 @@ MM_IncrementalGenerationalGC::masterThreadGarbageCollect(MM_EnvironmentBase *env
 	 * allow concurrent operations.
 	 */
 	_forceConcurrentTermination = false;
+
+	/* Release any resources that might be bound to this master thread,
+	 * since it may be implicit and change for other phases of the cycle */
+	_interRegionRememberedSet->releaseCardBufferControlBlockListForThread(env, env);
 }
 
 void
@@ -650,6 +654,9 @@ MM_IncrementalGenerationalGC::initializeTaxationThreshold(MM_EnvironmentVLHGC *e
 
 	/* we need to calculate the taxation threshold after the initial heap inflation, which happens before collectorStartup */
 	_taxationThreshold = _schedulingDelegate.getInitialTaxationThreshold(env);
+	/* initialize GMP Kickoff Headroom Region Count */
+	_schedulingDelegate.initializeKickoffHeadroom(env);
+
 
 	UDATA minimumKickOff = extensions->regionSize * 2;
 	if (_taxationThreshold < minimumKickOff) {
@@ -1590,11 +1597,7 @@ MM_IncrementalGenerationalGC::incrementRegionAges(MM_EnvironmentVLHGC *env, UDAT
 	/* Overflowing stable regions releases buffers to thread local pool. Move them now to the locked global pool.
 	 * (if this is run in context of non-GC thread there will be not further opportinities to do it).
 	 */
-	env->_rsclBufferControlBlockCount -= _interRegionRememberedSet->releaseCardBufferControlBlockList(env, env->_rsclBufferControlBlockHead, env->_rsclBufferControlBlockTail);
-	Assert_MM_true(0 == env->_rsclBufferControlBlockCount);
-	env->_rsclBufferControlBlockHead = NULL;
-	env->_rsclBufferControlBlockTail = NULL;
-
+	_interRegionRememberedSet->releaseCardBufferControlBlockListForThread(env, env);
 }
 
 void 
@@ -1713,8 +1716,6 @@ MM_IncrementalGenerationalGC::declareAllRegionsAsMarked(MM_EnvironmentVLHGC *env
 bool
 MM_IncrementalGenerationalGC::isMarked(void *objectPtr)
 {
-	/* NOTE:  we shouldn't be using this entry-point for checking if an object is marked if we are currently within a cycle (the caller should use the mark map that they are working on) */
-	Assert_MM_false(_masterGCThread.isGarbageCollectInProgress());
 	/* the mark map used for PGC should be the most accurate */
 	return _markMapManager->getPartialGCMap()->isBitSet(static_cast<J9Object*>(objectPtr));
 }
@@ -2045,6 +2046,10 @@ MM_IncrementalGenerationalGC::masterThreadConcurrentCollect(MM_EnvironmentBase *
 	_persistentGlobalMarkPhaseState._vlhgcCycleStats.merge(&static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats);
 
 	env->_cycleState = NULL;
+
+	/* Release any resources that might be bound to this master thread,
+	 * since it may be implicit and more importantly change for other phases of the cycle */
+	_interRegionRememberedSet->releaseCardBufferControlBlockListForThread(env, env);
 	
 	/* return the number of bytes scanned since the caller needs to pass it into postConcurrentUpdateStatsAndReport for stats reporting */
 	return bytesConcurrentlyScanned;

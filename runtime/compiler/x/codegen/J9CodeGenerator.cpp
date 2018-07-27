@@ -84,6 +84,13 @@ J9::X86::CodeGenerator::CodeGenerator() :
        !TR::Compiler->om.canGenerateArraylets())
       cg->setSupportsInlineStringCaseConversion();
 
+   if (cg->getX86ProcessorInfo().supportsSSSE3() &&
+       !comp->getOption(TR_DisableFastStringIndexOf) &&
+       !TR::Compiler->om.canGenerateArraylets())
+      {
+      cg->setSupportsInlineStringIndexOf();
+      }
+
    if (comp->generateArraylets() && !comp->getOptions()->realTimeGC())
       {
       cg->setSupportsStackAllocationOfArraylets();
@@ -119,22 +126,6 @@ J9::X86::CodeGenerator::CodeGenerator() :
          {
          cg->setSupportsJavaFloatSemantics();
          }
-      }
-
-   // We do not support fast CTM in mimic interpreter stack mode because it causes problems when
-   // a stack slot is shared between a reference and a long value. The specific case is that there is
-   // a reference value in a stack slot first and then there is supposed to be the long value that is
-   // the result from a fast CTM call. At the point where we store the CTM value into the stack slot as a long
-   // code we have in CodeGenerator.cpp for mimicing interpreter stack and getting GC maps right should
-   // reset the stack map bit for the reference value that used to be there so that we do not crash during GC.
-   // However if we do fast CTM this store is not present in the IL, instead we get the address of the long slot
-   // passed to the fast CTM call; while the fast CTM helper does effectively do a store this store is not visible in the
-   // IL and so the stack map bit does not get reset leading to a crash in the GC later on, when it sees a long value
-   // in what looks like a collected slot (but ought not to be at that program point).
-   //
-   if (!comp->getOption(TR_MimicInterpreterFrameShape))
-      {
-      cg->setSupportsFastCTM();
       }
 
    /*
@@ -269,7 +260,7 @@ J9::X86::CodeGenerator::beginInstructionSelection()
    //
    if (self()->enableSinglePrecisionMethods() && comp->getJittedMethodSymbol()->usesSinglePrecisionMode())
       {
-      TR::IA32ConstantDataSnippet * cds = self()->findOrCreate2ByteConstant(startNode, SINGLE_PRECISION_ROUND_TO_NEAREST);
+      auto cds = self()->findOrCreate2ByteConstant(startNode, SINGLE_PRECISION_ROUND_TO_NEAREST);
       generateMemInstruction(LDCWMem, startNode, generateX86MemoryReference(cds, self()), self());
       }
    }
@@ -294,7 +285,7 @@ J9::X86::CodeGenerator::endInstructionSelection()
       TR_ASSERT(self()->getLastCatchAppendInstruction(),
              "endInstructionSelection() ==> Could not find the dummy finally block!\n");
 
-      TR::IA32ConstantDataSnippet * cds = self()->findOrCreate2ByteConstant(self()->getLastCatchAppendInstruction()->getNode(), DOUBLE_PRECISION_ROUND_TO_NEAREST);
+      auto cds = self()->findOrCreate2ByteConstant(self()->getLastCatchAppendInstruction()->getNode(), DOUBLE_PRECISION_ROUND_TO_NEAREST);
       generateMemInstruction(self()->getLastCatchAppendInstruction(), LDCWMem, generateX86MemoryReference(cds, self()), self());
       }
    }
@@ -387,7 +378,7 @@ J9::X86::CodeGenerator::nopsAlsoProcessedByRelocations()
 bool
 J9::X86::CodeGenerator::enableAESInHardwareTransformations()
    {
-   if (TR::CodeGenerator::getX86ProcessorInfo().supportsAESNI() && !self()->comp()->getOptions()->getOption(TR_DisableAESInHardware) && !self()->comp()->getCurrentMethod()->isJNINative())
+   if (TR::CodeGenerator::getX86ProcessorInfo().supportsAESNI() && !self()->comp()->getOption(TR_DisableAESInHardware) && !self()->comp()->getCurrentMethod()->isJNINative())
       return true;
    else
       return false;
@@ -396,14 +387,12 @@ J9::X86::CodeGenerator::enableAESInHardwareTransformations()
 bool
 J9::X86::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod method)
    {
-   if ((method==TR::java_lang_Object_clone) ||
-      (method==TR::java_lang_Integer_rotateLeft))
+   switch (method)
       {
-      return true;
-      }
-   else
-      {
-      return false;
+      case TR::java_lang_Object_clone:
+         return true;
+      default:
+         return false;
       }
    }
 

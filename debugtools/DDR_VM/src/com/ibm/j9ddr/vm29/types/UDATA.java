@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -94,13 +94,15 @@ public class UDATA extends UScalar {
 	public UDATA sub(IDATA parameter) {
 		return this.sub(new UDATA(parameter));
 	}
-	
+
 	public int intValue() {
-		if (super.intValue() < 0) {
+		long value = data;
+
+		if (value < 0 || value > Integer.MAX_VALUE) {
 			throw new InvalidDataTypeException("UDATA contains value larger than Integer.MAX_VALUE");
-		} else {
-			return super.intValue();
 		}
+
+		return (int) value;
 	}
 	
 	// bitOr

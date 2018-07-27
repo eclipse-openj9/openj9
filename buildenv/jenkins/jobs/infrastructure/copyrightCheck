@@ -29,10 +29,17 @@ timeout(time: 6, unit: 'HOURS') {
     stage('Copyright Check') {
         node ('worker') {
             timestamps {
-                git url: SRC_REPO
-                sh "git fetch --tags --progress origin +refs/pull/*:refs/remotes/origin/pr/*"
-                sh "git checkout --detach ${sha1}"
-                sh 'git fetch origin'
+                checkout changelog: false, poll: false,
+                        scm: [$class: 'GitSCM',
+                            branches: [[name: sha1]],
+                            doGenerateSubmoduleConfigurations: false,
+                            extensions: [[$class: 'CloneOption',
+                                            depth: 0,
+                                            noTags: false,
+                                            reference: '/home/jenkins/openjdk_cache',
+                                            shallow: false]],
+                            userRemoteConfigs: [[refspec: "+refs/pull/${ghprbPullId}/*:refs/remotes/origin/pr/${ghprbPullId}/* +refs/heads/${ghprbTargetBranch}:refs/remotes/origin/${ghprbTargetBranch}",
+                                                    url: SRC_REPO]]]
                 FILES = sh (
                     script: "git diff -C --diff-filter=ACM --name-only origin/${ghprbTargetBranch} HEAD",
                     returnStdout: true

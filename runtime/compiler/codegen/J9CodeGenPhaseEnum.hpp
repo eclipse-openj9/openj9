@@ -34,7 +34,6 @@
    PopulateOSRBufferPhase,
    MoveUpArrayLengthStoresPhase,
    InsertEpilogueYieldPointsPhase,
-   DetectEndOfVMThreadGlobalRegisterLiveRangePhase,
    CompressedReferenceRematerializationPhase,
    SplitWarmAndColdBlocksPhase,
    IdentifyUnneededByteConvsPhase,

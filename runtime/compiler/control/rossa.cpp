@@ -292,6 +292,12 @@ j9jit_testarossa_err(
             if (fe->isAsyncCompilation())
                return 0; // early return because the method is queued for compilation
             }
+         // If PersistentJittedBody contains the profile Info and has BlockFrequencyInfo, it will set the 
+         // isQueuedForRecompilation field which can be used by the jitted code at runtime to skip the profiling
+         // code if it has made request to recompile this method. 
+         if (jbi->getProfileInfo() != NULL && jbi->getProfileInfo()->getBlockFrequencyInfo() != NULL)
+            jbi->getProfileInfo()->getBlockFrequencyInfo()->setIsQueuedForRecompilation();
+
          event._eventType = TR_MethodEvent::OtherRecompilationTrigger;
          }
       }

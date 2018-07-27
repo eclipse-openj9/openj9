@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2018, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "excludes.dtd">
+<?xml:stylesheet type="text/xsl" href="excludes.xsl" ?>
+
+<suite id="jvmtitest">
+
+	<!-- Define exclude configs here (all & platform names are parsed for free by harness) -->
+	<platform id="all"/>
+	<platform id="aix_ppc-64"/>
+	<platform id="win_x86_newrom"/>
+
+	<!-- AIX64 - The test creates thousands of threads without exhausting its available heap. Probably due to some sort of lazy stack mapping on the OS side -->
+	<exclude id="re002" platform="all" shouldFix="true">
+		<reason>No reliable cross-platform way of simulating this condition</reason>
+	</exclude>
+
+	<exclude id="gts001" platform="all" shouldFix="true">
+		<reason>Test is not very robust at the moment. Time dependency might cause it to fail</reason>
+	</exclude>
+	
+	<exclude id="mt001" platform="latest" shouldFix="true">
+		<reason>Test doesn't work for b149 and later. Issue: </reason>
+	</exclude>
+	
+	<exclude id="fer001" platform="all" shouldFix="true">
+		<reason>Testcase deadlocks due to bogus locking, replaced by fer003. keep fer001 for component debugging</reason>
+	</exclude>
+
+	<!-- Windows IA32 New ROMClass Builder - the test requires retransform support, which will be implemented under JAZZ 19331 -->
+	<exclude id="gpc002" platform="win_x86_newrom" shouldFix="true" expiry="Oct 8 2009">
+		<reason>Testcase requires retransform support, which will be implemented under JAZZ 19331</reason>
+	</exclude>
+
+	<exclude id="nmr001" platform="all">
+		<reason>Nestmates are not enabled on java10</reason>
+	</exclude>
+	
+
+</suite>

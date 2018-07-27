@@ -182,9 +182,11 @@ void completeInitialization() {
 	// Get the java.system.class.loader
 	/*[PR CMVC 99755] Implement -Djava.system.class.loader option */
 	contextClassLoader = ClassLoader.getSystemClassLoader();
-	/*[IF Sidecar19-SE]*/
+	/*[IF Sidecar19-SE|Sidecar19-SE-OpenJ9]*/
 	jdk.internal.misc.VM.initLevel(4);
-	/*[ENDIF]*/ // Sidecar19-SE
+	/*[ELSE]*/ // Sidecar19-SE|Sidecar19-SE-OpenJ9
+	sun.misc.VM.booted();
+	/*[ENDIF]*/ // Sidecar19-SE|Sidecar19-SE-OpenJ9
 	/*[IF Sidecar19-SE|Sidecar18-SE-OpenJ9]*/
 	System.startSNMPAgent();
 	/*[ENDIF]*/ // Sidecar19-SE|Sidecar18-SE-OpenJ9
@@ -536,6 +538,7 @@ public int countStackFrames() {
  */
 public static native Thread currentThread();
 
+/*[IF !Java11]*/
 /**
  * 	Destroys the receiver without any monitor cleanup. Not implemented.
  * 
@@ -550,6 +553,7 @@ public void destroy() {
 	/*[PR 121318] Should throw NoSuchMethodError */
 	throw new NoSuchMethodError();
 }
+/*[ENDIF]*/
 
 
 /**
@@ -1124,6 +1128,7 @@ public final void stop() {
 	}
 }
 
+/*[IF !Java11]*/
 /**
  * Throws UnsupportedOperationException.
  *
@@ -1139,6 +1144,7 @@ public final void stop() {
 public final void stop(Throwable throwable) {
 	throw new UnsupportedOperationException();
  }
+/*[ENDIF]*/
 
 private final synchronized void stopWithThrowable(Throwable throwable) {
 	checkAccess();

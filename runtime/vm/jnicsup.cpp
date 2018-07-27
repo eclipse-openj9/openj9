@@ -78,8 +78,6 @@ static jint JNICALL ensureLocalCapacityWrapper (JNIEnv *env, jint capacity);
 #if (defined(J9VM_INTERP_FLOAT_SUPPORT))
 static jfloatArray JNICALL newFloatArray (JNIEnv *env, jsize length);
 static jdoubleArray JNICALL newDoubleArray (JNIEnv *env, jsize length);
-static void JNICALL setStaticFloatField (JNIEnv *env, jclass cls, jfieldID fieldID, jfloat value);
-static void JNICALL setStaticDoubleField (JNIEnv *env, jclass cls, jfieldID fieldID, jdouble value);
 #endif /* J9VM_INTERP_FLOAT_SUPPORT */
 
 #if  !defined(J9VM_INTERP_MINIMAL_JNI)
@@ -104,7 +102,6 @@ static void JNICALL deleteGlobalRef (JNIEnv *env, jobject globalRef);
 static jweak JNICALL newWeakGlobalRef (JNIEnv *env, jobject localOrGlobalRef);
 static jbooleanArray JNICALL newBooleanArray (JNIEnv *env, jsize length);
 static jobject allocateGlobalRef (JNIEnv *env, jobject localOrGlobalRef, jboolean isWeak);
-static void JNICALL setStaticLongField (JNIEnv *env, jclass cls, jfieldID fieldID, jlong value);
 static void ensurePendingJNIException (JNIEnv* env);
 static void deallocateGlobalRef (JNIEnv *env, jobject weakOrStrongGlobalRef, jboolean isWeak);
 static jobject JNICALL newLocalRef (JNIEnv *env, jobject object);
@@ -235,32 +232,6 @@ static jobject JNICALL newObjectV(JNIEnv *env, jclass clazz, jmethodID methodID,
 	}
 	return obj;
 }
-
-
-
-#if (defined(J9VM_INTERP_FLOAT_SUPPORT))
-static void JNICALL setStaticDoubleField(JNIEnv *env, jclass cls, jfieldID fieldID, jdouble value)
-{
-	setStaticDoubleFieldIndirect(env, cls, fieldID, &value);
-}
-
-#endif /* J9VM_INTERP_FLOAT_SUPPORT */
-
-
-#if (defined(J9VM_INTERP_FLOAT_SUPPORT))
-static void JNICALL setStaticFloatField(JNIEnv *env, jclass cls, jfieldID fieldID, jfloat value)
-{
-	setStaticIntField(env, cls, fieldID, *(jint*)&value);
-}
-
-#endif /* J9VM_INTERP_FLOAT_SUPPORT */
-
-
-static void JNICALL setStaticLongField(JNIEnv *env, jclass cls, jfieldID fieldID, jlong value)
-{
-	setStaticDoubleFieldIndirect(env, cls, fieldID, &value);
-}
-
 
 
 void JNICALL OMRNORETURN fatalError(JNIEnv *env, const char *msg)
@@ -2116,7 +2087,7 @@ initializeMethodID(J9VMThread * currentThread, J9JNIMethodID * methodID, J9Metho
 			 */
 			vTableIndex = getITableIndexForMethod(method, NULL) | J9_JNI_MID_INTERFACE;
 		} else {
-			vTableIndex = getVTableIndexForMethod(method, declaringClass, currentThread);
+			vTableIndex = getVTableOffsetForMethod(method, declaringClass, currentThread);
 		}
 	}
 

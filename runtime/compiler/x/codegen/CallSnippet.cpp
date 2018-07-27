@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,7 +47,7 @@ uint8_t *TR::X86PicDataSnippet::encodeConstantPoolInfo(uint8_t *cursor)
    if (_thunkAddress)
       {
       TR_ASSERT(TR::Compiler->target.is64Bit(), "expecting a 64-bit target for thunk relocations");
-      cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
                                                                              *(uint8_t **)cursor,
                                                                              _startOfPicInstruction->getNode() ? (uint8_t *)_startOfPicInstruction->getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
                                                                              TR_Thunks, cg()),
@@ -57,7 +57,7 @@ uint8_t *TR::X86PicDataSnippet::encodeConstantPoolInfo(uint8_t *cursor)
       }
    else
       {
-      cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
                                                                                   (uint8_t *)cpAddr,
                                                                                    _startOfPicInstruction->getNode() ? (uint8_t *)_startOfPicInstruction->getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
                                                                                    TR_ConstantPool,
@@ -107,7 +107,7 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
       disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor+4, _dispatchSymRef);
       *(int32_t *)cursor = disp32;
 
-      cg()->addAOTRelocation(new (cg()->trHeapMemory())
+      cg()->addExternalRelocation(new (cg()->trHeapMemory())
          TR::ExternalRelocation(cursor,
                                     (uint8_t *)_dispatchSymRef,
                                     TR_HelperAddress,
@@ -249,7 +249,7 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
       disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor+4, _dispatchSymRef);
       *(int32_t *)cursor = disp32;
 
-      cg()->addAOTRelocation(new (cg()->trHeapMemory())
+      cg()->addExternalRelocation(new (cg()->trHeapMemory())
          TR::ExternalRelocation(cursor,
                                     (uint8_t *)_dispatchSymRef,
                                     TR_HelperAddress,
@@ -313,7 +313,7 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
       disp32 = cg()->branchDisplacementToHelperOrTrampoline(picSlotCursor+4, resolveSlotHelperSymRef);
       *(int32_t *)picSlotCursor = disp32;
 
-      cg()->addAOTRelocation(new (cg()->trHeapMemory())
+      cg()->addExternalRelocation(new (cg()->trHeapMemory())
          TR::ExternalRelocation(picSlotCursor,
                                     (uint8_t *)resolveSlotHelperSymRef,
                                     TR_HelperAddress,
@@ -329,7 +329,7 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
             disp32 = cg()->branchDisplacementToHelperOrTrampoline(picSlotCursor+4, populateSlotHelperSymRef);
             *(int32_t *)picSlotCursor = disp32;
 
-            cg()->addAOTRelocation(new (cg()->trHeapMemory())
+            cg()->addExternalRelocation(new (cg()->trHeapMemory())
                TR::ExternalRelocation(picSlotCursor,
                                           (uint8_t *)populateSlotHelperSymRef,
                                           TR_HelperAddress,
@@ -751,7 +751,7 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor+4, helperSymRef);
       *(int32_t *)cursor = disp32;
 
-      cg()->addAOTRelocation(new (cg()->trHeapMemory())
+      cg()->addExternalRelocation(new (cg()->trHeapMemory())
          TR::ExternalRelocation(cursor,
                                     (uint8_t *)helperSymRef,
                                     TR_HelperAddress,
@@ -781,7 +781,7 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor+4, helperSymRef);
       *(int32_t *)cursor = disp32;
 
-      cg()->addAOTRelocation(new (cg()->trHeapMemory())
+      cg()->addExternalRelocation(new (cg()->trHeapMemory())
          TR::ExternalRelocation(cursor,
                                     (uint8_t *)helperSymRef,
                                     TR_HelperAddress,
@@ -808,7 +808,7 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
             TR_ConstantPool,
             cg());
 
-      cg()->addAOTRelocation(relocation, __FILE__, __LINE__, getNode());
+      cg()->addExternalRelocation(relocation, __FILE__, __LINE__, getNode());
       cursor += sizeof(intptrj_t);
 
       // DD cpIndex
@@ -885,7 +885,7 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor+4, dispatchSymRef);
       *(int32_t *)cursor = disp32;
 
-      cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
                                                             (uint8_t *)dispatchSymRef,
                                                             TR_HelperAddress,
                                                             cg()),  __FILE__, __LINE__, getNode());
@@ -953,7 +953,7 @@ uint8_t *TR::X86UnresolvedVirtualCallSnippet::emitSnippetBody()
    TR::SymbolReference *glueSymRef =
       cg()->symRefTab()->findOrCreateRuntimeHelper(TR_IA32interpreterUnresolvedVTableSlotGlue, false, false, false);
    uint8_t *glueAddress = (uint8_t *)glueSymRef->getMethodAddress();
-   cg()->addAOTRelocation(new (comp->trHeapMemory()) TR::ExternalRelocation(cursor,
+   cg()->addExternalRelocation(new (comp->trHeapMemory()) TR::ExternalRelocation(cursor,
                                                                                      (uint8_t *)glueSymRef,
                                                                                      TR_HelperAddress,
                                                                                      cg()),
@@ -970,7 +970,7 @@ uint8_t *TR::X86UnresolvedVirtualCallSnippet::emitSnippetBody()
    //
    uintptrj_t cpAddr = (uintptrj_t)_methodSymRef->getOwningMethod(comp)->constantPool();
    *(intptrj_t *)cursor = cpAddr;
-   cg()->addAOTRelocation(
+   cg()->addExternalRelocation(
       new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
                                                             (uint8_t *)cpAddr,
                                                             getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,

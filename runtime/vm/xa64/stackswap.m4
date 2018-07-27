@@ -1,4 +1,4 @@
-dnl Copyright (c) 2017, 2017 IBM Corp. and others
+dnl Copyright (c) 2017, 2018 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -18,44 +18,51 @@ dnl [2] http://openjdk.java.net/legal/assembly-exception.html
 dnl
 dnl SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 
-include(jilvalues.m4)
+include(xhelpers.m4)
+
+	FILE_START
+
 
 eqS_swapStacksAndRunHandler = 33
 eqSR_swapStacksAndRunHandler = 6
 eqSRS_swapStacksAndRunHandler = 48
 eqSS_swapStacksAndRunHandler = 264
-        .globl vmSignalHandler
-        .globl swapStacksAndRunHandler
-        .type swapStacksAndRunHandler,@function
+        DECLARE_PUBLIC(vmSignalHandler)
+        DECLARE_PUBLIC(swapStacksAndRunHandler)
 
-        .text
-        .align 4
-swapStacksAndRunHandler:
+dnl Intel syntax: instruction dest source
+START_PROC(swapStacksAndRunHandler)
         nop
-        push %rbp
-        mov %rsp, %rbp
-        push %rbx
-        push %r12
-        push %r13
-        push %r14
-        push %r15
-        sub $264, %rsp
-        movq %rbp, 8(%rsp)
-        movq %rsp, %r12
-        movq J9TR_VMThread_entryLocalStorage(%rcx), %rax
-        movq J9TR_ELS_machineSPSaveSlot(%rax), %rsp
-        xor %rax, %rax
-        movq 8(%rsp), %rbp
+        push rbp
+        mov rbp, rsp
+        push rbx
+        push r12
+        push r13
+        push r14
+        push r15
+        sub rsp,264
+        mov 8[rsp], rbp
+        mov r12, rsp
+        mov rax, J9TR_VMThread_entryLocalStorage[rcx]
+        mov rsp, J9TR_ELS_machineSPSaveSlot[rax]
+        xor rax, rax
+        mov rbp, 8[rsp]
+ifdef({OSX},{
+        call C_FUNCTION_SYMBOL(vmSignalHandler)
+},{
         call vmSignalHandler@PLT
+})
+dnl XMM registers are not saved / restored.  Does that matter here?
         nop
-        movq %r12, %rsp
-        add $264, %rsp
-        pop %r15
-        pop %r14
-        pop %r13
-        pop %r12
-        pop %rbx
-        pop %rbp
+        mov rsp, r12
+        add rsp,264
+        pop r15
+        pop r14
+        pop r13
+        pop r12
+        pop rbx
+        pop rbp
         ret
-END_swapStacksAndRunHandler:
-        .size swapStacksAndRunHandler,END_swapStacksAndRunHandler - swapStacksAndRunHandler
+END_PROC(swapStacksAndRunHandler)
+
+	FILE_END

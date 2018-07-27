@@ -6638,7 +6638,7 @@ J9NLS_SHRC_CC_INCORRECT_BUILDID.system_action=The JVM fails to complete the requ
 J9NLS_SHRC_CC_INCORRECT_BUILDID.user_response=Use a JVM which matches the build ID of the existing cache.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1=A bootstrap oszt\u00e1lybet\u00f6llt\u0151 \u00e1ltal bet\u00f6lt\u00f6tt oszt\u00e1lyok gyos\u00edt\u00f3t\u00e1raz\u00e1s\u00e1nak letilt\u00e1sa.
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1=A bootstrap oszt\u00e1lybet\u00f6lt\u0151 \u00e1ltal bet\u00f6lt\u00f6tt oszt\u00e1lyok gyos\u00edt\u00f3t\u00e1raz\u00e1s\u00e1nak letilt\u00e1sa.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.system_action=

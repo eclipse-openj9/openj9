@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -328,16 +328,6 @@ J9::Simplifier::simplifylCallMethods(TR::Node * node, TR::Block * block)
             }
          }
       }
-   else if (comp()->cg()->getSupportsFastCTM() && node->getNumChildren() == 0 && node->getReferenceCount() == 2)
-      {
-      TR::ResolvedMethodSymbol * methodSymbol = node->getSymbol()->getResolvedMethodSymbol();
-      if (methodSymbol &&
-          (methodSymbol->getRecognizedMethod() == TR::java_lang_System_currentTimeMillis) &&
-           (methodSymbol->isVMInternalNative() || methodSymbol->isJITInternalNative()))
-         {
-         node = foldLongStoreOfCurrentTimeMillis(node, block);
-         }
-      }
    else
       {
       TR::MethodSymbol * symbol = node->getSymbol()->castToMethodSymbol();
@@ -481,77 +471,6 @@ TR::Node *J9::Simplifier::convertNanoTime(TR::Node * node, TR::Block * block)
          }
 
       _alteredBlock = true;
-      }
-   return node;
-   }
-
-TR::Node *J9::Simplifier::foldLongStoreOfCurrentTimeMillis(TR::Node * node, TR::Block * block)
-   {
-   // Walk the block to find this node
-   //
-   TR::TreeTop * tt;
-   TR::TreeTop * exitTree = block->getExit();
-   for (tt = block->getEntry(); tt != exitTree; tt = tt->getNextRealTreeTop())
-      {
-      if (((tt->getNode()->getOpCodeValue() == TR::treetop) || (tt->getNode()->getOpCodeValue() == TR::ResolveCHK)) &&
-          tt->getNode()->getFirstChild() == node)
-          break;
-      }
-
-   if (tt != exitTree) // found the call tree
-      {
-      // check if the next tree top is a [i]lstore with this value
-      //
-      TR::Node * nextNode = tt->getNextRealTreeTop()->getNode();
-      TR::ILOpCodes opCode  = nextNode->getOpCodeValue();
-      if ((opCode == TR::lstorei || opCode == TR::lstore) &&
-          nextNode->getOpCode().hasSymbolReference() &&
-          !nextNode->mightHaveVolatileSymbolReference())
-         {
-         TR::Node *valueChild;
-         TR::Node * addressChild;
-         if (opCode == TR::lstorei)
-            {
-            valueChild   = nextNode->getSecondChild();
-            addressChild = nextNode->getFirstChild();
-            }
-         else
-            {
-            valueChild   = nextNode->getFirstChild();
-            addressChild = 0;
-            }
-
-         if (node == valueChild &&
-             performTransformation(comp(), "%sFolded long store of currentTimeMillis to use address of destination as argument on node [%p]\n", optDetailString(), node))
-            {
-            node->setNumChildren(1);
-            TR::Node * storeAddressNode;
-            if (addressChild)
-               {
-               if (TR::Compiler->target.is64Bit())
-                  {
-                  TR::Node* offsetNode = TR::Node::create(node, TR::lconst);
-                  offsetNode->setLongInt((int64_t)nextNode->getSymbolReference()->getOffset());
-                  storeAddressNode = TR::Node::create(TR::aladd, 2, addressChild, offsetNode);
-                  }
-               else
-                  {
-                  storeAddressNode = TR::Node::create(TR::aiadd, 2, addressChild,
-                                                  TR::Node::create(node, TR::iconst, 0, (int32_t)nextNode->getSymbolReference()->getOffset()));
-                  }
-               }
-            else
-               {
-               storeAddressNode = TR::Node::create(node, TR::loadaddr);
-               storeAddressNode->setSymbolReference(nextNode->getSymbolReference());
-               }
-
-            node->setAndIncChild(0, storeAddressNode);
-            nextNode->setNOPLongStore(true);
-            //_invalidateUseDefInfo = true;
-            _alteredBlock = true;
-            }
-         }
       }
    return node;
    }

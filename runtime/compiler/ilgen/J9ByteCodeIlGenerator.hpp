@@ -76,7 +76,7 @@ public:
    bool                      inliningCheckIfFinalizeObjectIsBeneficial()
    {
        return (comp()->getOption(TR_FullSpeedDebug) || comp()->getOptLevel() <= cold ||
-         (!comp()->getOptions()->getOption(TR_DisableInlineCheckIfFinalizeObject) && fej9()->isBenefitInliningCheckIfFinalizeObject()) ||
+         (!comp()->getOption(TR_DisableInlineCheckIfFinalizeObject) && fej9()->isBenefitInliningCheckIfFinalizeObject()) ||
            (comp()->getCurrentMethod()->isConstructor() && !comp()->getCurrentMethod()->isFinal()));
    }
    virtual TR::ResolvedMethodSymbol *methodSymbol() const { return _methodSymbol;}
@@ -389,6 +389,16 @@ private:
 
    // OSR
    TR::NodeChecklist                *_processedOSRNodes;
+
+   // DecimalFormatPeephole
+   struct methodRenamePair{
+      char* srcMethodSignature;
+      char* dstMethodSignature;
+   };
+
+   static const int32_t              _numDecFormatRenames = 9;
+   static struct methodRenamePair    _decFormatRenames[_numDecFormatRenames];
+   TR::SymbolReference               *_decFormatRenamesDstSymRef[_numDecFormatRenames];
    };
 
 #endif

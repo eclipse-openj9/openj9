@@ -381,6 +381,10 @@ DUAL_MODE_HELPER_NO_RETURN_VALUE(jitTypeCheckArrayStore,2)
 DUAL_MODE_HELPER_NO_RETURN_VALUE(jitTypeCheckArrayStoreWithNullCheck,2)
 FAST_PATH_ONLY_HELPER(jitObjectHashCode,1)
 SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitReportFinalFieldModified,1)
+SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitReportInstanceFieldRead,2)
+SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitReportInstanceFieldWrite,3)
+SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitReportStaticFieldRead,1)
+SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitReportStaticFieldWrite,2)
 
 dnl Trap handlers
 
@@ -466,6 +470,17 @@ UNUSED(jitPreJNICallOffloadCheck)
 UNUSED(jitFindFieldSignatureClass)
 UNUSED(icallVMprJavaSendInvokeWithArgumentsHelperL)
 UNUSED(j2iInvokeWithArguments)
+
+START_PROC(jitThrowClassCastException)
+	FASTCALL_EXTERN(impl_jitClassCastException,1)
+	pop uword ptr J9TR_VMThread_jitReturnAddress[_rbp]
+	pop uword ptr J9TR_VMThread_floatTemp1[_rbp]
+	pop uword ptr J9TR_VMThread_floatTemp2[_rbp]
+	SWITCH_TO_C_STACK
+	SAVE_ALL_REGS
+	FASTCALL_C_WITH_VMTHREAD(impl_jitClassCastException)
+	jmp _rax
+END_PROC(jitThrowClassCastException)
 
 dnl Switch from the C stack to the java stack and jump via tempSlot
 

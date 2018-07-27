@@ -42,6 +42,10 @@ import java.util.stream.IntStream;
 import sun.misc.Unsafe;
 /*[ENDIF] Sidecar19-SE*/
 
+/*[IF Java11]*/
+import java.util.stream.Stream;
+/*[ENDIF] Java11*/
+
 /**
  * Strings are objects which represent immutable arrays of characters.
  *
@@ -71,7 +75,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 /*[IF Sidecar19-SE]*/
 	// DO NOT CHANGE OR MOVE THIS LINE
 	// IT MUST BE THE FIRST THING IN THE INITIALIZATION
-	private static final boolean STRING_OPT_IN_HW = StrCheckHWAvailable();
 	private static final long serialVersionUID = -6849794470754667710L;
 
 	/**
@@ -876,17 +879,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		value = string.value;
 		coder = string.coder;
 		hashCode = string.hashCode;
-	}
-
-	/**
-	 * Creates a new string from the with specified length
-	 *
-	 * @param numChars
-	 *			  length of new string
-	 */
-	private String(int numChars) {
-		value = new byte[numChars * 2];
-		coder = UTF16;
 	}
 
 	/**
@@ -1964,20 +1956,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				// Check if the String is compressed
 				if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
 					if (c <= 255) {
-						byte b = (byte) c;
-
-						for (int i = start; i < len; ++i) {
-							if (helpers.getByteFromArrayByIndex(array, i) == b) {
-								return i;
-							}
-						}
+						return helpers.intrinsicIndexOfLatin1(array, (byte)c, start, len);
 					}
 				} else {
-					for (int i = start; i < len; ++i) {
-						if (helpers.getCharFromArrayByIndex(array, i) == c) {
-							return i;
-						}
-					}
+					return helpers.intrinsicIndexOfUTF16(array, (char)c, start, len);
 				}
 			} else if (c <= Character.MAX_CODE_POINT) {
 				for (int i = start; i < len; ++i) {
@@ -2585,8 +2567,46 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		
 		return (result == null) ? this : result;
 	}
-/*[ENDIF]*/
-	
+
+	/**
+	 * Determine if the string contains only white space characters. 
+	 * 
+	 * @return true if the string is empty or contains only white space
+	 * characters, otherwise false.
+	 * 
+	 * @since 11
+	 */
+	public boolean isBlank() {
+		int index;
+
+		if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
+			index = StringLatin1.indexOfNonWhitespace(value);
+		} else {
+			index = StringUTF16.indexOfNonWhitespace(value);
+		}
+		
+		return index >= lengthInternal();
+	}
+
+	/**
+	 * Returns a stream of substrings extracted from this string partitioned by line terminators.
+	 * 
+	 * Line terminators recognized are line feed "\n", carriage return "\r", and carriage return
+	 * followed by line feed "\r\n".
+	 * 
+	 * @return the stream of this string's substrings partitioned by line terminators 
+	 * 
+	 * @since 11
+	 */
+	public Stream<String> lines() {
+		if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
+			return StringLatin1.lines(value);
+		} else {
+			return StringUTF16.lines(value);
+		}
+	}
+/*[ENDIF] Java11*/
+
 	/**
 	 * Copies a range of characters into a new String.
 	 *
@@ -2719,15 +2739,26 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			return this;
 		}
 
-		if (StrHWAvailable() && language == "en") { //$NON-NLS-1$
-			String output = new String(lengthInternal());
-			if (toLowerHWOptimized(output))
-				return output;
-		}
+		int sLength = lengthInternal();
 
 		if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
+
+			if (helpers.supportsIntrinsicCaseConversion() && language == "en") { //$NON-NLS-1$
+				byte[] output = new byte[sLength << coder];
+
+				if (helpers.toLowerIntrinsicLatin1(value, output, sLength)) {
+					return new String(output, LATIN1);
+				}
+			}
 			return StringLatin1.toLowerCase(this, value, locale);
 		} else {
+			if (helpers.supportsIntrinsicCaseConversion() && language == "en") { //$NON-NLS-1$
+				byte[] output = new byte[sLength << coder];
+
+				if (helpers.toLowerIntrinsicUTF16(value, output, sLength * 2)) {
+					return new String(output, UTF16);
+				}
+			}
 			return StringUTF16.toLowerCase(this, value, locale);
 		}
 	}
@@ -2765,15 +2796,26 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			return this;
 		}
 
-		if (StrHWAvailable() && language == "en") { //$NON-NLS-1$
-		   String output = new String(lengthInternal()); 
-		   if (toUpperHWOptimized(output))
-				return output;
-		}
+		int sLength = lengthInternal();
 
 		if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
+
+			if (helpers.supportsIntrinsicCaseConversion() && language == "en") { //$NON-NLS-1$
+				byte[] output = new byte[sLength << coder];
+
+				if (helpers.toUpperIntrinsicLatin1(value, output, sLength)) {
+					return new String(output, LATIN1);
+				}
+			}
 			return StringLatin1.toUpperCase(this, value, locale);
 		} else {
+			if (helpers.supportsIntrinsicCaseConversion() && language == "en") { //$NON-NLS-1$
+				byte[] output = new byte[sLength << coder];
+
+				if (helpers.toUpperIntrinsicUTF16(value, output, sLength * 2)) {
+					return new String(output, UTF16);
+				}
+			}
 			return StringUTF16.toUpperCase(this, value, locale);
 		}
 	}
@@ -3821,33 +3863,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		return stringJoiner.toString();
 	}
 
-	// DO NOT MODIFY THIS METHOD
-	/*
-	 * The method is only called once to setup the flag DFP_HW_AVAILABLE Return value true - when JIT compiled this method, replaces it with loadconst
-	 * 1 if -Xjit:disableHWAcceleratedStringCaseConv hasn't been supplied false - if still interpreting this method or disabled by VM option
-	 */
-	private final static boolean StrCheckHWAvailable() {
-		return false;
-	}
-
-	// DO NOT MODIFY THIS METHOD
-	/*
-	 * Return value true - when JIT compiled this method, replaces it with loadconst 1 if -Xjit:disableHWAcceleratedStringCaseConv hasn't been supplied
-	 * false - if still interpreting this method or disabled by VM option
-	 */
-	private final static boolean StrHWAvailable() {
-		return STRING_OPT_IN_HW;
-	}
-
-	// DO NOT CHANGE CONTENTS OF THESE METHODS
-	private final boolean toUpperHWOptimized(String input) {
-		return false;
-	}
-
-	private final boolean toLowerHWOptimized(String input) {
-		return false;
-	}
-	
 	static void checkBoundsBeginEnd(int begin, int end, int length) {
 		if ((begin >= 0) && (begin <= end) && (end <= length)) {
 			return;
@@ -3956,7 +3971,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 /*[ELSE] Sidecar19-SE*/
 	// DO NOT CHANGE OR MOVE THIS LINE
 	// IT MUST BE THE FIRST THING IN THE INITIALIZATION
-	private static final boolean STRING_OPT_IN_HW = StrCheckHWAvailable();
 	private static final long serialVersionUID = -6849794470754667710L;
 
 	/**
@@ -4736,22 +4750,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		value = string.value;
 		count = string.count;
 		hashCode = string.hashCode;
-	}
-
-	/**
-	 * Creates a new string from the with specified length
-	 *
-	 * @param numChars
-	 *			  length of new string
-	 */
-	private String(int numChars) {
-		if (enableCompression) {
-			value = new char[numChars];
-			count = numChars | uncompressedBit;
-		} else {
-			value = new char[numChars];
-			count = numChars;
-		}
 	}
 
 	/**
@@ -5879,14 +5877,16 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 */
 	public int hashCode() {
 		if (hashCode == 0) {
-			// Check if the String is compressed
-			if (enableCompression && (compressionFlag == null || count >= 0)) {
-				hashCode = hashCodeImplCompressed(value, 0, lengthInternal());
-			} else {
-				hashCode = hashCodeImplDecompressed(value, 0, lengthInternal());
+			int length = lengthInternal();
+			if (length > 0) {
+				// Check if the String is compressed
+				if (enableCompression && (compressionFlag == null || count >= 0)) {
+					hashCode = hashCodeImplCompressed(value, 0, length);
+				} else {
+					hashCode = hashCodeImplDecompressed(value, 0, length);
+				}
 			}
 		}
-
 		return hashCode;
 	}
 
@@ -5958,20 +5958,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				// Check if the String is compressed
 				if (enableCompression && (null == compressionFlag || count >= 0)) {
 					if (c <= 255) {
-						byte b = (byte) c;
-
-						for (int i = start; i < len; ++i) {
-							if (helpers.getByteFromArrayByIndex(array, i) == b) {
-								return i;
-							}
-						}
+						return helpers.intrinsicIndexOfLatin1(array, (byte)c, start, len);
 					}
 				} else {
-					for (int i = start; i < len; ++i) {
-						if (array[i] == c) {
-							return i;
-						}
-					}
+					return helpers.intrinsicIndexOfUTF16(array, (char)c, start, len);
 				}
 			} else if (c <= Character.MAX_CODE_POINT) {
 				for (int i = start; i < len; ++i) {
@@ -6763,10 +6753,20 @@ written authorization of the copyright holder.
 			return this;
 		}
 
-		if (StrHWAvailable() && language == "en") { //$NON-NLS-1$
-			String output = new String(lengthInternal());
-			if (toLowerHWOptimized(output))
-				return output;
+		if (helpers.supportsIntrinsicCaseConversion() && language == "en") { //$NON-NLS-1$
+			int sLength = lengthInternal();
+
+			if (enableCompression && (null == compressionFlag || count >= 0)) {
+				char[] output = new char[(sLength + 1) / 2];
+				if (helpers.toLowerIntrinsicLatin1(value, output, sLength)) {
+					return new String(output, 0, sLength, true);
+				}
+			} else {
+				char[] output = new char[sLength];
+				if (helpers.toLowerIntrinsicUTF16(value, output, sLength * 2)) {
+					return new String(output, 0, sLength, false);
+				}
+			}
 		}
 
 		return toLowerCaseCore(language);
@@ -7088,10 +7088,20 @@ written authorization of the copyright holder.
 			return this;
 		}
 
-		if (StrHWAvailable() && language == "en") { //$NON-NLS-1$
-		   String output = new String(lengthInternal()); 
-		   if (toUpperHWOptimized(output))
-				return output;
+		if (helpers.supportsIntrinsicCaseConversion() && language == "en") { //$NON-NLS-1$
+			int sLength = lengthInternal();
+
+			if (enableCompression && (null == compressionFlag || count >= 0)) {
+				char[] output = new char[(sLength + 1) / 2];
+				if (helpers.toUpperIntrinsicLatin1(value, output, sLength)){
+					return new String(output, 0, sLength, true);
+				}
+			} else {
+				char[] output = new char[sLength];
+				if (helpers.toUpperIntrinsicUTF16(value, output, sLength * 2)){
+					return new String(output, 0, sLength, false);
+				}
+			}
 		}
 
 		return toUpperCaseCore(language);
@@ -8286,33 +8296,6 @@ written authorization of the copyright holder.
 		}
 
 		return stringJoiner.toString();
-	}
-
-	// DO NOT MODIFY THIS METHOD
-	/*
-	 * The method is only called once to setup the flag DFP_HW_AVAILABLE Return value true - when JIT compiled this method, replaces it with loadconst
-	 * 1 if -Xjit:disableHWAcceleratedStringCaseConv hasn't been supplied false - if still interpreting this method or disabled by VM option
-	 */
-	private final static boolean StrCheckHWAvailable() {
-		return false;
-	}
-
-	// DO NOT MODIFY THIS METHOD
-	/*
-	 * Return value true - when JIT compiled this method, replaces it with loadconst 1 if -Xjit:disableHWAcceleratedStringCaseConv hasn't been supplied
-	 * false - if still interpreting this method or disabled by VM option
-	 */
-	private final static boolean StrHWAvailable() {
-		return STRING_OPT_IN_HW;
-	}
-
-	// DO NOT CHANGE CONTENTS OF THESE METHODS
-	private final boolean toUpperHWOptimized(String input) {
-		return false;
-	}
-
-	private final boolean toLowerHWOptimized(String input) {
-		return false;
 	}
 
 /*[ENDIF] Sidecar19-SE*/

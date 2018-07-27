@@ -112,7 +112,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	jniPopFrame,
 	resolveVirtualMethodRef,
 	resolveInterfaceMethodRef,
-	getVTableIndexForMethod,
+	getVTableOffsetForMethod,
 	checkVisibility,
 	sendClinit,
 	freeStackWalkCaches,
@@ -344,6 +344,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	findModuleForPackage,
 	findModuleInfoForModule,
 	findClassLocationForClass,
+	getJimModules,
 	initializeClassPath,
 	initializeClassPathEntry,
 	setBootLoaderModulePatchPaths,
@@ -365,4 +366,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	registerOSHandler,
 	throwNativeOOMError,
 	throwNewJavaIoIOException,
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+	loadAndVerifyNestHost,
+#endif
 };

@@ -94,7 +94,7 @@ J9::AheadOfTimeCompile::dumpRelocationData()
       traceMsg(self()->comp(), "\n\nRelocation Record Generation Info\n");
       traceMsg(self()->comp(), "%-35s %-32s %-5s %-9s %-10s %-8s\n", "Type", "File", "Line","Offset(M)","Offset(PC)", "Node");
 
-      TR::list<TR::Relocation*>& aotRelocations = self()->comp()->cg()->getAOTRelocationList();
+      TR::list<TR::Relocation*>& aotRelocations = self()->comp()->cg()->getExternalRelocationList();
       //iterate over aotRelocations
       if (!aotRelocations.empty())
          {
@@ -937,6 +937,41 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   }
                }
             break;
+         case TR_DebugCounter:
+            cursor ++;
+            if (is64BitTarget)
+               {
+               cursor += 4;     // padding
+               ep1 = cursor;    // inlinedSiteIndex
+               ep2 = cursor+8;  // bcIndex
+               ep3 = cursor+16; // offsetOfNameString
+               ep4 = cursor+24; // delta
+               ep5 = cursor+40; // staticDelta
+               cursor += 48;
+               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+               if (isVerbose)
+                  {
+                  traceMsg(self()->comp(), "\n Debug Counter: Inlined site index = %d, bcIndex = %d, offsetOfNameString = %p, delta = %d, staticDelta = %d",
+                                   *(int64_t *)ep1, *(int32_t *)ep2, *(UDATA *)ep3, *(int32_t *)ep4, *(int32_t *)ep5);
+                  }
+               }
+            else
+               {
+               ep1 = cursor;    // inlinedSiteIndex
+               ep2 = cursor+4;  // bcIndex
+               ep3 = cursor+8;  // offsetOfNameString
+               ep4 = cursor+12; // delta
+               ep5 = cursor+20; // staticDelta
+               cursor += 24;
+               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+               if (isVerbose)
+                  {
+                  traceMsg(self()->comp(), "\n Debug Counter: Inlined site index = %d, bcIndex = %d, offsetOfNameString = %p, delta = %d, staticDelta = %d",
+                                   *(int32_t *)ep1, *(int32_t *)ep2, *(UDATA *)ep3, *(int32_t *)ep4, *(int32_t *)ep5);
+                  }
+               }
+            break;
+
          default:
             traceMsg(self()->comp(), "Unknown Relocation type = %d\n", kind);
             TR_ASSERT(false, "should be unreachable");

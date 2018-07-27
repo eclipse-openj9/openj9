@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2016 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -305,20 +305,22 @@ Java_com_ibm_jvm_Dump_setDumpOptionsImpl (JNIEnv *env, jclass clazz, jstring jop
 		memset(optsBuffer, 0, optsLength+1);
 
 		(*env)->GetStringUTFRegion(env, jopts, 0, optsLength, optsBuffer);
+		if (!(*env)->ExceptionCheck(env)) {
 
-		/* Pass option to the dump facade */
-		result = vm->j9rasDumpFunctions->setDumpOption(vm, optsBuffer);
+			/* Pass option to the dump facade */
+			result = vm->j9rasDumpFunctions->setDumpOption(vm, optsBuffer);
 
-		/* Map back to exception */
-		if (OMR_ERROR_NONE != result) {
-    		raiseExceptionFor(env, result);
-    	}
+			/* Map back to exception */
+			if (OMR_ERROR_NONE != result) {
+				raiseExceptionFor(env, result);
+			}
+		}
 	} else {
 		jclass exceptionClass = (*env)->FindClass(env, "java/lang/OutOfMemoryError");
 		 if (exceptionClass != NULL) {
 			 (*env)->ThrowNew(env, exceptionClass, "Out of memory setting dump options");
 		 }
-		 /* Just return if we can't load the exception class. */
+		 /* Just return if we can't load the exception class as an exception will be pending. */
 	}
 
 	if( optsBuffer != NULL ) {
@@ -327,7 +329,7 @@ Java_com_ibm_jvm_Dump_setDumpOptionsImpl (JNIEnv *env, jclass clazz, jstring jop
 #else
 	jclass exceptionClass = (*env)->FindClass(env, "java/lang/RuntimeException");
 	if (exceptionClass == 0) {
-		/* Just return if we can't load the exception class. */
+		/* Just return if we can't load the exception class as an exception will be pending. */
 		return JNI_ERR;
 	}
 	(*env)->ThrowNew(env, exceptionClass, "Dumps not supported in this configuration");

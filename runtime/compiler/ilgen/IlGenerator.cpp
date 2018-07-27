@@ -108,7 +108,10 @@ TR_J9ByteCodeIlGenerator::TR_J9ByteCodeIlGenerator(
          }
       _argPlaceholderSignatureOffset = curArg - signatureChars;
       }
-
+   for( int i=0 ; i < _numDecFormatRenames ; i++ )
+      { 
+      _decFormatRenamesDstSymRef[i] = NULL;
+      }
    if (comp->getOption(TR_EnableOSR)
        && !comp->isPeekingMethod()
        && comp->isOSRTransitionTarget(TR::postExecutionOSR)
@@ -144,9 +147,6 @@ TR_J9ByteCodeIlGenerator::genIL()
             }
          }
       }
-
-   if (comp()->getOption(TR_ReservingLocks) && comp()->getCurrentMethod()->isSynchronized())
-      fej9()->scanClassForReservation(comp()->getCurrentMethod()->containingClass(), comp());
 
    /*
     * If we're generating IL for DecimalformatHelper.formatAsDouble(Float), replace
@@ -208,9 +208,9 @@ bool TR_J9ByteCodeIlGenerator::internalGenIL()
             }
          }
 
-      if (recognizedMethod == TR::java_lang_String_StrHWAvailable && !TR::Compiler->om.canGenerateArraylets())
+      if (recognizedMethod == TR::com_ibm_jit_JITHelpers_supportsIntrinsicCaseConversion && !TR::Compiler->om.canGenerateArraylets())
          {
-         if (performTransformation(comp(), "O^O IlGenerator: Generate java/lang/String.StrHWAvailable\n"))
+         if (performTransformation(comp(), "O^O IlGenerator: Generate com/ibm/jit/JITHelpers.supportsIntrinsicCaseConversion\n"))
             {
             genHWOptimizedStrProcessingAvailable();
             return true;
@@ -363,10 +363,10 @@ TR_J9ByteCodeIlGenerator::genILFromByteCodes()
 
    prependEntryCode(blocks(0));
 
-   if (!comp()->getOptions()->getOption(TR_DisableGuardedCountingRecompilations) &&
+   if (!comp()->getOption(TR_DisableGuardedCountingRecompilations) &&
        comp()->getRecompilationInfo() && comp()->getRecompilationInfo()->shouldBeCompiledAgain() &&
        !comp()->getRecompilationInfo()->isRecompilation() && // only do it for first time compilations
-       (!comp()->getPersistentInfo()->_countForRecompile || comp()->getOptions()->getOption(TR_EnableMultipleGCRPeriods)) &&
+       (!comp()->getPersistentInfo()->_countForRecompile || comp()->getOption(TR_EnableMultipleGCRPeriods)) &&
        comp()->isOutermostMethod() &&
        comp()->getOptions()->getInsertGCRTrees() &&
        !comp()->isDLT() && !method()->isJNINative())
@@ -987,10 +987,7 @@ TR_J9ByteCodeIlGenerator::prependEntryCode(TR::Block * firstBlock)
       loadMonitorArg();
 
       TR::Node * firstChild = pop();
-      TR::SymbolReference * monEnterSymRef =
-         isOutermostMethod() ?
-           symRefTab()->findOrCreateMethodMonitorEntrySymbolRef(_methodSymbol) :
-           symRefTab()->findOrCreateMonitorEntrySymbolRef(_methodSymbol);
+      TR::SymbolReference * monEnterSymRef = symRefTab()->findOrCreateMethodMonitorEntrySymbolRef(_methodSymbol);
 
       if (TR::Compiler->cls.classesOnHeap())
          {
@@ -1209,7 +1206,7 @@ TR_J9ByteCodeIlGenerator::createGeneratedFirstBlock()
 bool
 TR_J9ByteCodeIlGenerator::hasFPU()
    {
-   bool result = !comp()->getOptions()->getOption(TR_DisableFPCodeGen) ? TR::Compiler->target.cpu.hasFPU() : false;
+   bool result = !comp()->getOption(TR_DisableFPCodeGen) ? TR::Compiler->target.cpu.hasFPU() : false;
    return result;
    }
 
@@ -2086,32 +2083,25 @@ TR_J9ByteCodeIlGenerator::inlineJitCheckIfFinalizeObject(TR::Block *firstBlock)
 
 //A structure to hold the names of all methods in DecimalFormatHelper that we need to replace with other
 //methods.
-typedef struct {
-   char* srcMethodSignature;
-   char* dstMethodSignature;
-   TR::SymbolReference* dstSymRef;
-} methodRenamePair;
-
-static const int32_t numDecFormatRenames = 9;
-static methodRenamePair decFormatRenames[numDecFormatRenames] =
-   { {"com/ibm/jit/DecimalFormatHelper$FieldPosition.setBeginIndex(I)V", "java/text/FieldPosition.setBeginIndex(I)V", NULL},
-     {"com/ibm/jit/DecimalFormatHelper$FieldPosition.setEndIndex(I)V", "java/text/FieldPosition.setEndIndex(I)V", NULL},
-     {"com/ibm/jit/DecimalFormatHelper$FieldPosition.getFieldDelegate()Lcom/ibm/jit/DecimalFormatHelper$FieldDelegate;", "java/text/FieldPosition.getFieldDelegate()Ljava/text/Format$FieldDelegate;", NULL},
-     {"com/ibm/jit/DecimalFormatHelper$FieldPosition.getFieldAttribute()Ljava/text/Format$Field;", "java/text/FieldPosition.getFieldAttribute()Ljava/text/Format$Field;", NULL},
-     {"com/ibm/jit/DecimalFormatHelper$DigitList.isZero()Z", "java/text/DigitList.isZero()Z", NULL},
-     {"com/ibm/jit/DecimalFormatHelper$DigitList.set(ZJ)V", "java/text/DigitList.set(ZJ)V", NULL},
-     {"com/ibm/jit/DecimalFormatHelper.isGroupingUsed(Ljava/text/NumberFormat;)Z", "java/text/NumberFormat.isGroupingUsed()Z", NULL},
-     {"com/ibm/jit/DecimalFormatHelper.getBigDecimalMultiplier(Ljava/text/DecimalFormat;)Ljava/math/BigDecimal;", "java/text/DecimalFormat.getBigDecimalMultiplier()Ljava/math/BigDecimal;", NULL},
-     {"com/ibm/jit/DecimalFormatHelper.subformat(Ljava/text/DecimalFormat;Ljava/lang/StringBuffer;Lcom/ibm/jit/DecimalFormatHelper$FieldDelegate;ZZIIII)Ljava/lang/StringBuffer;", "java/text/DecimalFormat.subformat(Ljava/lang/StringBuffer;Ljava/text/Format$FieldDelegate;ZZIIII)Ljava/lang/StringBuffer;", NULL},
+struct TR_J9ByteCodeIlGenerator::methodRenamePair TR_J9ByteCodeIlGenerator::_decFormatRenames[_numDecFormatRenames] =
+   { {"com/ibm/jit/DecimalFormatHelper$FieldPosition.setBeginIndex(I)V", "java/text/FieldPosition.setBeginIndex(I)V"},
+     {"com/ibm/jit/DecimalFormatHelper$FieldPosition.setEndIndex(I)V", "java/text/FieldPosition.setEndIndex(I)V"},
+     {"com/ibm/jit/DecimalFormatHelper$FieldPosition.getFieldDelegate()Lcom/ibm/jit/DecimalFormatHelper$FieldDelegate;", "java/text/FieldPosition.getFieldDelegate()Ljava/text/Format$FieldDelegate;"},
+     {"com/ibm/jit/DecimalFormatHelper$FieldPosition.getFieldAttribute()Ljava/text/Format$Field;", "java/text/FieldPosition.getFieldAttribute()Ljava/text/Format$Field;"},
+     {"com/ibm/jit/DecimalFormatHelper$DigitList.isZero()Z", "java/text/DigitList.isZero()Z"},
+     {"com/ibm/jit/DecimalFormatHelper$DigitList.set(ZJ)V", "java/text/DigitList.set(ZJ)V"},
+     {"com/ibm/jit/DecimalFormatHelper.isGroupingUsed(Ljava/text/NumberFormat;)Z", "java/text/NumberFormat.isGroupingUsed()Z"},
+     {"com/ibm/jit/DecimalFormatHelper.getBigDecimalMultiplier(Ljava/text/DecimalFormat;)Ljava/math/BigDecimal;", "java/text/DecimalFormat.getBigDecimalMultiplier()Ljava/math/BigDecimal;"},
+     {"com/ibm/jit/DecimalFormatHelper.subformat(Ljava/text/DecimalFormat;Ljava/lang/StringBuffer;Lcom/ibm/jit/DecimalFormatHelper$FieldDelegate;ZZIIII)Ljava/lang/StringBuffer;", "java/text/DecimalFormat.subformat(Ljava/lang/StringBuffer;Ljava/text/Format$FieldDelegate;ZZIIII)Ljava/lang/StringBuffer;"},
    };
 
 //Replaces all methods and fields in DecimalFormatHelper.format routine with appropriate methods and fields.
 //returns true if all methods and fields are replaced successfully
 bool TR_J9ByteCodeIlGenerator::replaceMembersOfFormat()
    {
-   for (int i =0; i < numDecFormatRenames; i++)
+   for (int i =0; i < _numDecFormatRenames; i++)
       {
-      decFormatRenames[i].dstSymRef = fej9()->findOrCreateMethodSymRef(comp(), _methodSymbol, decFormatRenames[i].dstMethodSignature);
+      _decFormatRenamesDstSymRef[i] = fej9()->findOrCreateMethodSymRef(comp(), _methodSymbol, _decFormatRenames[i].dstMethodSignature);
       }
 
    bool successful = true;
@@ -2136,15 +2126,15 @@ bool TR_J9ByteCodeIlGenerator::replaceMethods(TR::TreeTop *tt, TR::Node *node)
    TR_Method * method = node->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethod();
    //I use heapAlloc because this function is called many times for a small set of methods.
    const char* nodeName = method->signature(trMemory(), heapAlloc);
-   for (int i = 0; i < numDecFormatRenames; i++)
+   for (int i = 0; i < _numDecFormatRenames; i++)
       {
-      if (!strcmp(nodeName, decFormatRenames[i].srcMethodSignature))
+      if (!strcmp(nodeName, _decFormatRenames[i].srcMethodSignature))
          if (performTransformation(comp(), "%sreplaced %s by %s in [%p]\n",
-                                     OPT_DETAILS, decFormatRenames[i].srcMethodSignature, decFormatRenames[i].dstMethodSignature, node))
+                                     OPT_DETAILS, _decFormatRenames[i].srcMethodSignature, _decFormatRenames[i].dstMethodSignature, node))
             {
-            if (decFormatRenames[i].dstSymRef == NULL)
+            if (_decFormatRenamesDstSymRef[i] == NULL)
                return false;
-            node->setSymbolReference(decFormatRenames[i].dstSymRef);
+            node->setSymbolReference(_decFormatRenamesDstSymRef[i]);
             return true;
             }
          else

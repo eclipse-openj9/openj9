@@ -24,7 +24,7 @@
 
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TestConfig/playlist.xsd">
 	<test>
-		<testCaseName>cmdLineTester_callsitedbgddrext</testCaseName>
+		<testCaseName>cmdLineTester_callsitedbgddrext_ibm_zos</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
@@ -38,11 +38,75 @@
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)callsiteddrtests.xml$(Q) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
-		<!-- temporarily disable this test on aix, win, zos github.com/eclipse/openj9/issues/1511 -->
-		<platformRequirements>^os.aix,^os.win,^os.zos</platformRequirements>
+		<platformRequirements>os.zos</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
+		<impls>
+			<impl>ibm</impl>
+		</impls>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>SE80</subset>
+		</subsets>
+	</test>
+
+	<test>
+		<testCaseName>cmdLineTester_callsitedbgddrext_ibm</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(MKTREE) $(REPORTDIR); \
+	cd $(REPORTDIR); \
+	perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl zos ; \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \
+	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
+	-DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' \
+	-DJDMPVIEW_EXE=$(Q)$(JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)callsiteddrtests.xml$(Q) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
+	${TEST_STATUS}</command>
+		<platformRequirements>^os.zos</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<impls>
+			<impl>ibm</impl>
+		</impls>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>SE80</subset>
+			<subset>SE90</subset>
+		</subsets>
+	</test>
+	
+	<test>
+		<testCaseName>cmdLineTester_callsitedbgddrext_openj9</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(MKTREE) $(REPORTDIR); \
+	cd $(REPORTDIR); \
+	perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl zos ; \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \
+	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
+	-DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' \
+	-DJDMPVIEW_EXE=$(Q)$(JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)callsiteddrtests.xml$(Q) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
+	${TEST_STATUS}</command>
+		<!-- temporarily disable this test on AIX, z/OS; github.com/eclipse/openj9/issues/1511 -->
+		<platformRequirements>^os.aix,^os.zos</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
 		<groups>
 			<group>functional</group>
 		</groups>

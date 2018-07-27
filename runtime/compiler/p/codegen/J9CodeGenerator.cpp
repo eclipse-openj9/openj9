@@ -366,9 +366,374 @@ bool
 J9::Power::CodeGenerator::enableAESInHardwareTransformations()
    {
    if ( (TR::Compiler->target.cpu.getPPCSupportsAES() || (TR::Compiler->target.cpu.getPPCSupportsVMX() && TR::Compiler->target.cpu.getPPCSupportsVSX())) &&
-         !self()->comp()->getOptions()->getOption(TR_DisableAESInHardware))
+         !self()->comp()->getOption(TR_DisableAESInHardware))
       return true;
    else
       return false;
+   }
+
+void
+J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register *targetRegister)
+   {
+   static bool disableHotFieldPrefetch = (feGetEnv("TR_DisableHotFieldPrefetch") != NULL);
+   static bool disableHotFieldNextElementPrefetch  = (feGetEnv("TR_DisableHotFieldNextElementPrefetch") != NULL);
+   static bool disableTreeMapPrefetch  = (feGetEnv("TR_DisableTreeMapPrefetch") != NULL);
+   static bool disableStringObjPrefetch = (feGetEnv("TR_DisableStringObjPrefetch") != NULL);
+   bool optDisabled = false;
+
+   if (node->getOpCodeValue() == TR::aloadi ||
+        (TR::Compiler->target.is64Bit() &&
+         comp()->useCompressedPointers() &&
+         node->getOpCodeValue() == TR::l2a &&
+         comp()->getMethodHotness() >= scorching &&
+         TR::Compiler->om.compressedReferenceShiftOffset() == 0 &&
+         TR::Compiler->target.cpu.id() >= TR_PPCp6)
+      )
+      {
+      int32_t prefetchOffset = comp()->findPrefetchInfo(node);
+      TR::Node *firstChild = node->getFirstChild();
+
+      if (!disableHotFieldPrefetch && prefetchOffset >= 0) // Prefetch based on hot field information
+         {
+         bool canSkipNullChk = false;
+         static bool disableDelayPrefetch = (feGetEnv("TR_DisableDelayPrefetch") != NULL);
+         TR::LabelSymbol *endCtrlFlowLabel = generateLabelSymbol(self());
+         TR::Node *topNode = self()->getCurrentEvaluationTreeTop()->getNode();
+         // Search the current block for a check for NULL
+         TR::TreeTop *tt = self()->getCurrentEvaluationTreeTop()->getNextTreeTop();
+         TR::Node *checkNode = NULL;
+
+         while (!disableDelayPrefetch && tt && (tt->getNode()->getOpCodeValue() != TR::BBEnd))
+            {
+            checkNode = tt->getNode();
+            if (checkNode->getOpCodeValue() == TR::ifacmpeq &&
+                checkNode->getFirstChild() == node &&
+                checkNode->getSecondChild()->getDataType() == TR::Address &&
+                checkNode->getSecondChild()->isZero())
+               {
+               canSkipNullChk = true;
+               }
+            tt = tt->getNextTreeTop();
+            }
+
+         if (!canSkipNullChk)
+            {
+            TR::Register *condReg = self()->allocateRegister(TR_CCR);
+            TR::LabelSymbol *startCtrlFlowLabel = generateLabelSymbol(self());
+            startCtrlFlowLabel->setStartInternalControlFlow();
+            endCtrlFlowLabel->setEndInternalControlFlow();
+            generateLabelInstruction(self(), TR::InstOpCode::label, node, startCtrlFlowLabel);
+
+            // check for null
+            generateTrg1Src1ImmInstruction(self(), TR::InstOpCode::cmpli4, node, condReg, targetRegister, NULLVALUE);
+            generateConditionalBranchInstruction(self(), TR::InstOpCode::beql, node, endCtrlFlowLabel, condReg);
+
+            TR::Register *tempReg = self()->allocateRegister();
+            TR::RegisterDependencyConditions *deps = new (self()->trHeapMemory()) TR::RegisterDependencyConditions(1, 2, self()->trMemory());
+            deps->addPostCondition(tempReg, TR::RealRegister::NoReg);
+            addDependency(deps, condReg, TR::RealRegister::NoReg, TR_CCR, self());
+
+            if (TR::Compiler->target.is64Bit() && !comp()->useCompressedPointers())
+               {
+               TR::MemoryReference *tempMR = new (self()->trHeapMemory()) TR::MemoryReference(targetRegister, prefetchOffset, 8, self());
+               generateTrg1MemInstruction(self(), TR::InstOpCode::ld, node, tempReg, tempMR);
+               }
+            else
+               {
+               TR::MemoryReference *tempMR = new (self()->trHeapMemory()) TR::MemoryReference(targetRegister, prefetchOffset, 4, self());
+               generateTrg1MemInstruction(self(), TR::InstOpCode::lwz, node, tempReg, tempMR);
+               }
+
+            TR::MemoryReference *targetMR = new (self()->trHeapMemory()) TR::MemoryReference(tempReg, (int32_t)0, 4, self());
+            targetMR->forceIndexedForm(node, self());
+            generateMemInstruction(self(), TR::InstOpCode::dcbt, node, targetMR);
+
+            self()->stopUsingRegister(tempReg);
+            self()->stopUsingRegister(condReg);
+            }
+         else
+            {
+            // Delay the dcbt to after the null check and fall through to the next block's treetop.
+            TR::TreeTop *useTree = tt->getNextTreeTop();
+            TR_ASSERT(useTree->getNode()->getOpCodeValue() == TR::BBStart, "Expecting a BBStart on the fall through\n");
+            TR::Node *useNode = useTree->getNode();
+            TR::Block *bb = useNode->getBlock();
+            if (bb->isExtensionOfPreviousBlock()) // Survived the null check
+               {
+               TR_PrefetchInfo *pf = new (self()->trHeapMemory())TR_PrefetchInfo(self()->getCurrentEvaluationTreeTop(), useTree, node, useNode, prefetchOffset, false);
+               comp()->removeExtraPrefetchInfo(useNode);
+               comp()->getExtraPrefetchInfo().push_front(pf);
+               }
+            }
+
+         // Do a prefetch on the next element of the array
+         // if the pointer came from an array.  Seems to give no gain at all, disabled until later
+         TR::Register *pointerReg = NULL;
+         bool fromRegLoad = false;
+         if (!disableHotFieldNextElementPrefetch)
+            {
+            // 32bit
+            if (TR::Compiler->target.is32Bit())
+               {
+               if (!(firstChild->getOpCodeValue() == TR::aiadd &&
+                     firstChild->getFirstChild() &&
+                     firstChild->isInternalPointer()) &&
+                   !(firstChild->getOpCodeValue() == TR::aRegLoad &&
+                     firstChild->getSymbolReference()->getSymbol()->isInternalPointer()))
+                  {
+                  optDisabled = true;
+                  }
+               else
+                  {
+                  fromRegLoad = (firstChild->getOpCodeValue() == TR::aRegLoad);
+                  pointerReg = fromRegLoad ? firstChild->getRegister() : self()->allocateRegister();
+                  if (!fromRegLoad)
+                     {
+                     // Case for aiadd, there should be 2 children
+                     TR::Node *baseObject = firstChild->getFirstChild();
+                     TR::Register *baseReg = (baseObject) ? baseObject->getRegister() : NULL;
+                     TR::Node *indexObject = firstChild->getSecondChild();
+                     TR::Register *indexReg = (indexObject) ? indexObject->getRegister() : NULL;
+                     // If the index is constant we just grab it
+                     if (indexObject->getOpCode().isLoadConst())
+                        {
+                        int32_t len = indexObject->getInt();
+                        if (len >= LOWER_IMMED && len <= UPPER_IMMED)
+                           generateTrg1Src1ImmInstruction(self(), TR::InstOpCode::addi, node, pointerReg, baseReg, len);
+                        else
+                           {
+                           indexReg = self()->allocateRegister();
+                           loadConstant(self(), node, len, indexReg);
+                           generateTrg1Src2Instruction(self(), TR::InstOpCode::add, node, pointerReg, baseReg, indexReg);
+                           self()->stopUsingRegister(indexReg);
+                           }
+                        }
+                     else
+                        generateTrg1Src2Instruction(self(), TR::InstOpCode::add, node, pointerReg, baseReg, indexReg);
+                     }
+                  }
+               }
+            // 64bit CR
+            else if (TR::Compiler->target.is64Bit() && comp()->useCompressedPointers())
+               {
+               if (!(firstChild->getOpCodeValue() == TR::iu2l &&
+                     firstChild->getFirstChild() &&
+                     firstChild->getFirstChild()->getOpCodeValue() == TR::iloadi &&
+                     firstChild->getFirstChild()->getNumChildren() == 1))
+                  {
+                  optDisabled = true;
+                  }
+               else
+                  {
+                  fromRegLoad = true;
+                  pointerReg = firstChild->getFirstChild()->getFirstChild()->getRegister();
+                  }
+               }
+            // 64bit - TODO
+            else
+               optDisabled = true;
+            }
+
+         if (!optDisabled)
+            {
+            TR::Register *condReg = self()->allocateRegister(TR_CCR);
+            TR::Register *tempReg = self()->allocateRegister();
+
+            // 32 bit only.... For -Xgc:noconcurrentmark, heapBase will be 0 and heapTop will be ok
+            // Otherwise, for a 2.25Gb or bigger heap, heapTop will be 0.  Relying on correct JIT initialization
+            uintptr_t heapTop = comp()->getOptions()->getHeapTop() ? comp()->getOptions()->getHeapTop() : 0xFFFFFFFF;
+
+            if (pointerReg && (heapTop > comp()->getOptions()->getHeapBase()))  // Check for gencon
+               {
+               TR::Register *temp3Reg = self()->allocateRegister();
+               static bool prefetch2Ahead = (feGetEnv("TR_Prefetch2Ahead") != NULL);
+               if (TR::Compiler->target.is64Bit() && !comp()->useCompressedPointers())
+                  {
+                  if (!prefetch2Ahead)
+                     generateTrg1MemInstruction(self(), TR::InstOpCode::ld, node, temp3Reg, new (self()->trHeapMemory()) TR::MemoryReference(pointerReg, (int32_t)TR::Compiler->om.sizeofReferenceField(), 8, self()));
+                  else
+                     generateTrg1MemInstruction(self(), TR::InstOpCode::ld, node, temp3Reg, new (self()->trHeapMemory()) TR::MemoryReference(pointerReg, (int32_t)(TR::Compiler->om.sizeofReferenceField()*2), 8, self()));
+                  }
+               else
+                  {
+                  if (!prefetch2Ahead)
+                     generateTrg1MemInstruction(self(), TR::InstOpCode::lwz, node, temp3Reg, new (self()->trHeapMemory()) TR::MemoryReference(pointerReg, (int32_t)TR::Compiler->om.sizeofReferenceField(), 4, self()));
+                  else
+                     generateTrg1MemInstruction(self(), TR::InstOpCode::lwz, node, temp3Reg, new (self()->trHeapMemory()) TR::MemoryReference(pointerReg, (int32_t)(TR::Compiler->om.sizeofReferenceField()*2), 4, self()));
+                  }
+
+               if (comp()->getOptions()->getHeapBase() != NULL)
+                  {
+                  loadAddressConstant(self(), node, (intptrj_t)(comp()->getOptions()->getHeapBase()), tempReg);
+                  generateTrg1Src2Instruction(self(), TR::InstOpCode::cmpl4, node, condReg, temp3Reg, tempReg);
+                  generateConditionalBranchInstruction(self(), TR::InstOpCode::blt, node, endCtrlFlowLabel, condReg);
+                  }
+               if (heapTop != 0xFFFFFFFF)
+                  {
+                  loadAddressConstant(self(), node, (intptrj_t)(heapTop-prefetchOffset), tempReg);
+                  generateTrg1Src2Instruction(self(), TR::InstOpCode::cmpl4, node, condReg, temp3Reg, tempReg);
+                  generateConditionalBranchInstruction(self(), TR::InstOpCode::bgt, node, endCtrlFlowLabel, condReg);
+                  }
+               TR::MemoryReference *targetMR = new (self()->trHeapMemory()) TR::MemoryReference(temp3Reg, (int32_t)0, 4, self());
+               targetMR->forceIndexedForm(node, self());
+               generateMemInstruction(self(), TR::InstOpCode::dcbt, node, targetMR); // use dcbt for prefetch next element
+
+               self()->stopUsingRegister(temp3Reg);
+               }
+
+            if (!fromRegLoad)
+               self()->stopUsingRegister(pointerReg);
+            self()->stopUsingRegister(tempReg);
+            self()->stopUsingRegister(condReg);
+            }
+            generateLabelInstruction(self(), TR::InstOpCode::label, node, endCtrlFlowLabel);
+         }
+
+      // Try prefetch all string objects, no apparent gain.  Disabled for now.
+      if (!disableStringObjPrefetch && 0 &&
+         node->getSymbolReference() &&
+         !node->getSymbolReference()->isUnresolved() &&
+         (node->getSymbolReference()->getSymbol()->getKind() == TR::Symbol::IsShadow) &&
+         (node->getSymbolReference()->getCPIndex() >= 0))
+         {
+         int32_t len;
+         const char *fieldName = node->getSymbolReference()->getOwningMethod(comp())->fieldSignatureChars(
+            node->getSymbolReference()->getCPIndex(), len);
+
+         if (fieldName && strstr(fieldName, "Ljava/lang/String;"))
+            {
+            TR::MemoryReference *targetMR = new (self()->trHeapMemory()) TR::MemoryReference(targetRegister, (int32_t)0, 4, self());
+            targetMR->forceIndexedForm(node, self());
+            generateMemInstruction(self(), TR::InstOpCode::dcbt, node, targetMR);
+            }
+         }
+      }
+
+   if (node->getOpCodeValue() == TR::aloadi ||
+      (TR::Compiler->target.is64Bit() && comp()->useCompressedPointers() && node->getOpCodeValue() == TR::iloadi && comp()->getMethodHotness() >= hot))
+      {
+      TR::Node *firstChild = node->getFirstChild();
+      optDisabled = false;
+      if (!disableTreeMapPrefetch)
+         {
+         // 32bit
+         if (TR::Compiler->target.is32Bit())
+            {
+            if (!(firstChild &&
+                firstChild->getOpCodeValue() == TR::aiadd &&
+                firstChild->isInternalPointer() &&
+                (strstr(comp()->fe()->sampleSignature(node->getOwningMethod(), 0, 0, self()->trMemory()),"java/util/TreeMap$UnboundedValueIterator.next()")
+                || strstr(comp()->fe()->sampleSignature(node->getOwningMethod(), 0, 0, self()->trMemory()),"java/util/ArrayList$Itr.next()"))
+               ))
+               {
+               optDisabled = true;
+               }
+            }
+         // 64bit cr
+         else if (TR::Compiler->target.is64Bit() && comp()->useCompressedPointers())
+            {
+            if (!(firstChild &&
+                firstChild->getOpCodeValue() == TR::aladd &&
+                firstChild->isInternalPointer() &&
+                (strstr(comp()->fe()->sampleSignature(node->getOwningMethod(), 0, 0, self()->trMemory()),"java/util/TreeMap$UnboundedValueIterator.next()")
+                || strstr(comp()->fe()->sampleSignature(node->getOwningMethod(), 0, 0, self()->trMemory()),"java/util/ArrayList$Itr.next()"))
+               ))
+               {
+               optDisabled = true;
+               }
+            }
+         }
+
+      if (!optDisabled)
+         {
+         int32_t loopSize = 0;
+         int32_t prefetchElementStride = 1;
+         TR::Block *b = self()->getCurrentEvaluationBlock();
+         TR_BlockStructure *blockStructure = b->getStructureOf();
+         if (blockStructure)
+            {
+            TR_Structure *containingLoop = blockStructure->getContainingLoop();
+            if (containingLoop)
+               {
+               TR_ScratchList<TR::Block> blocksInLoop(comp()->trMemory());
+
+               containingLoop->getBlocks(&blocksInLoop);
+               ListIterator<TR::Block> blocksIt(&blocksInLoop);
+               TR::Block *nextBlock;
+               for (nextBlock = blocksIt.getCurrent(); nextBlock; nextBlock=blocksIt.getNext())
+                  {
+                  loopSize += nextBlock->getNumberOfRealTreeTops();
+                  }
+               }
+            }
+
+         if (comp()->useCompressedPointers())
+            {
+            prefetchElementStride = 2;
+            }
+         else
+            {
+            if (loopSize < 200) //comp()->useCompressedPointers() is false && loopSize < 200.
+               {
+               prefetchElementStride = 4;
+               }
+            else if (loopSize < 300) //comp()->useCompressedPointers() is false && loopsize >=200 && loopsize < 300.
+               {
+               prefetchElementStride = 2;
+               }
+            //If comp()->useCompressedPointers() is false and loopsize >= 300, prefetchElementStride does not get changed.
+            }
+
+         // Look at the aiadd's children
+         TR::Node *baseObject = firstChild->getFirstChild();
+         TR::Register *baseReg = (baseObject) ? baseObject->getRegister() : NULL;
+         TR::Node *indexObject = firstChild->getSecondChild();
+         TR::Register *indexReg = (indexObject) ? indexObject->getRegister() : NULL;
+         if (baseReg && indexReg && loopSize > 0)
+            {
+            TR::Register *tempReg = self()->allocateRegister();
+            generateTrg1Src1ImmInstruction(self(), TR::InstOpCode::addi, node, tempReg, indexReg, (int32_t)(prefetchElementStride * TR::Compiler->om.sizeofReferenceField()));
+            if (TR::Compiler->target.is64Bit() && !comp()->useCompressedPointers())
+               {
+               TR::MemoryReference *targetMR = new (self()->trHeapMemory()) TR::MemoryReference(baseReg, tempReg, 8, self());
+               generateTrg1MemInstruction(self(), TR::InstOpCode::ld, node, tempReg, targetMR);
+               }
+            else
+               {
+               TR::MemoryReference *targetMR = new (self()->trHeapMemory()) TR::MemoryReference(baseReg, tempReg, 4, self());
+               generateTrg1MemInstruction(self(), TR::InstOpCode::lwz, node, tempReg, targetMR);
+               }
+
+            if (comp()->useCompressedPointers())
+               {
+               generateShiftLeftImmediateLong(self(), node, tempReg, tempReg, TR::Compiler->om.compressedReferenceShiftOffset());
+               }
+            TR::MemoryReference *target2MR =  new (self()->trHeapMemory()) TR::MemoryReference(tempReg, 0, 4, self());
+            target2MR->forceIndexedForm(node, self());
+            generateMemInstruction(self(), TR::InstOpCode::dcbt, node, target2MR);
+            self()->stopUsingRegister(tempReg);
+            }
+         }
+      }
+   else if (node->getOpCodeValue() == TR::wrtbari &&
+            comp()->getMethodHotness() >= scorching &&
+            TR::Compiler->target.cpu.id() >= TR_PPCp6 &&
+              (TR::Compiler->target.is32Bit() ||
+                (TR::Compiler->target.is64Bit() &&
+                 comp()->useCompressedPointers() &&
+                 TR::Compiler->om.compressedReferenceShiftOffset() == 0
+                )
+              )
+           )
+      {
+      // Take the source register of the store and apply on the prefetchOffset right away
+      int32_t prefetchOffset = comp()->findPrefetchInfo(node);
+      if (prefetchOffset >= 0)
+         {
+         TR::MemoryReference *targetMR = new (self()->trHeapMemory()) TR::MemoryReference(targetRegister, prefetchOffset, TR::Compiler->om.sizeofReferenceAddress(), self());
+         targetMR->forceIndexedForm(node, self());
+         generateMemInstruction(self(), TR::InstOpCode::dcbt, node, targetMR);
+         }
+      }
    }
 

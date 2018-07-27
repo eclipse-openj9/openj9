@@ -226,14 +226,14 @@ extern _ENTRY globalLeConditionHandlerENTRY;
 #endif /* J9VM_PORT_ZOS_CEEHDLRSUPPORT */
 
 static VMINLINE J9Method*
-mapVirtualMethod(J9VMThread *currentThread, J9Method *method, UDATA vTableIndex, J9Class *receiverClass)
+mapVirtualMethod(J9VMThread *currentThread, J9Method *method, UDATA vTableOffset, J9Class *receiverClass)
 {
-	if (J9_ARE_ANY_BITS_SET(vTableIndex, J9_JNI_MID_INTERFACE)) {
-		UDATA iTableIndex = vTableIndex & ~(UDATA)J9_JNI_MID_INTERFACE;
+	if (J9_ARE_ANY_BITS_SET(vTableOffset, J9_JNI_MID_INTERFACE)) {
+		UDATA iTableIndex = vTableOffset & ~(UDATA)J9_JNI_MID_INTERFACE;
 		J9Class *interfaceClass = J9_CLASS_FROM_METHOD(method);
 		// TODO: should this code be handling Object methods?
-		// refactor VMHelpers convertITableIndexToVTableIndex to take NAS?
-		vTableIndex = 0;
+		// refactor VMHelpers convertITableIndexToVTableOffset to take NAS?
+		vTableOffset = 0;
 		J9ITable * iTable = receiverClass->lastITable;
 		if (interfaceClass == iTable->interfaceClass) {
 			goto foundITable;
@@ -243,14 +243,14 @@ mapVirtualMethod(J9VMThread *currentThread, J9Method *method, UDATA vTableIndex,
 			if (interfaceClass == iTable->interfaceClass) {
 				receiverClass->lastITable = iTable;
 foundITable:
-				vTableIndex = ((UDATA*)(iTable + 1))[iTableIndex];
+				vTableOffset = ((UDATA*)(iTable + 1))[iTableIndex];
 				break;
 			}
 			iTable = iTable->next;
 		}
 	}
-	if (0 != vTableIndex) {
-		method = *(J9Method**)(((UDATA)receiverClass) + vTableIndex);
+	if (0 != vTableOffset) {
+		method = *(J9Method**)(((UDATA)receiverClass) + vTableOffset);
 	}
 	return method;
 }
@@ -429,9 +429,9 @@ sendLoadClass(J9VMThread *currentThread, j9object_t classLoaderObject, j9object_
 	J9VMEntryLocalStorage newELS;
 	if (buildCallInStackFrame(currentThread, &newELS, true, false)) {
 		/* Run the method from the vTable */
-		UDATA vTableIndex = J9VMJAVALANGCLASSLOADER_LOADCLASS_REF(currentThread->javaVM)->methodIndexAndArgCount >> 8;
+		UDATA vTableOffset = J9VMJAVALANGCLASSLOADER_LOADCLASS_REF(currentThread->javaVM)->methodIndexAndArgCount >> 8;
 		J9Class *classLoaderClass = J9OBJECT_CLAZZ(currentThread, classLoaderObject);
-		J9Method *method = *(J9Method**)(((UDATA)classLoaderClass) + vTableIndex);
+		J9Method *method = *(J9Method**)(((UDATA)classLoaderClass) + vTableOffset);
 		*--currentThread->sp = (UDATA)classLoaderObject;
 		*--currentThread->sp = (UDATA)classNameObject;
 		currentThread->returnValue = J9_BCLOOP_RUN_METHOD;

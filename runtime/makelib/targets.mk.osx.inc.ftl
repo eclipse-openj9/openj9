@@ -83,9 +83,7 @@ endif
 CFLAGS += $(UMA_OPTIMIZATION_CFLAGS)
 CXXFLAGS += $(UMA_OPTIMIZATION_CXXFLAGS)
 
-<#if uma.spec.flags.env_gcc.enabled>
-  CXXFLAGS += -fno-exceptions -fno-threadsafe-statics
-</#if>
+CXXFLAGS += -fno-rtti -fno-exceptions -fno-threadsafe-statics
 
 ifdef j9vm_uma_gnuDebugSymbols
   CFLAGS += -g
@@ -119,7 +117,8 @@ endif
   CPPFLAGS += -DJ9HAMMER -m64
 </#if>
 
-UMA_DLL_LINK_FLAGS += -shared -install_name lib$(UMA_TARGET_NAME).dylib
+# https://stackoverflow.com/questions/21907504/how-to-compile-shared-lib-with-clang-on-osx
+UMA_DLL_LINK_FLAGS += -shared -undefined dynamic_lookup -install_name lib$(UMA_TARGET_NAME).dylib
 UMA_DLL_LINK_FLAGS += -Xlinker -rpath -Xlinker \$$ORIGIN
 
 UMA_DLL_LINK_POSTFLAGS += $(UMA_LINK_STATIC_LIBRARIES)

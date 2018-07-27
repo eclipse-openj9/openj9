@@ -166,6 +166,100 @@ public final class JITHelpers {
 
 
 	/*
+	 * To be recognized by the JIT and returns true if the hardware supports SIMD case conversion.
+	 */
+	public boolean supportsIntrinsicCaseConversion() {
+		return false;
+	}
+
+	/**
+	 * To be used by the JIT when performing SIMD upper case conversion with Latin 1 strings.
+	 * @param value the underlying array for the source string.
+	 * @param output a new array which will be used for the converted string.
+	 * @param length the number of bytes used to represent the string.
+	 * @return True if intrinsic conversion was successful, false if fallback conversion must be used.
+	 */
+	public boolean toUpperIntrinsicLatin1(byte[] value, byte[] output, int length) {
+		return false;
+	}
+
+	/**
+	 * To be used by the JIT when performing SIMD lower case conversion with Latin 1 strings.
+	 * @param value the underlying array for the source string.
+	 * @param output a new array which will be used for the converted string.
+	 * @param length the number of bytes used to represent the string.
+	 * @return True if intrinsic conversion was successful, false if fallback conversion must be used.
+	 */
+	public boolean toLowerIntrinsicLatin1(byte[] value, byte[] output, int length) {
+		return false;
+	}
+
+	/**
+	 * To be used by the JIT when performing SIMD upper case conversion with UTF16 strings.
+	 * @param value the underlying array for the source string.
+	 * @param output a new array which will be used for the converted string.
+	 * @param length the number of bytes used to represent the string.
+	 * @return True if intrinsic conversion was successful, false if fallback conversion must be used.
+	 */
+	public boolean toUpperIntrinsicUTF16(byte[] value, byte[] output, int length) {
+		return false;
+	}
+
+	/**
+	 * To be used by the JIT when performing SIMD lower case conversion with UTF16 strings.
+	 * @param value the underlying array for the source string.
+	 * @param output a new array which will be used for the converted string.
+	 * @param length the number of bytes used to represent the string.
+	 * @return True if intrinsic conversion was successful, false if fallback conversion must be used.
+	 */
+	public boolean toLowerIntrinsicUTF16(byte[] value, byte[] output, int length) {
+		return false;
+	}
+	/**
+	 * To be used by the JIT when performing SIMD upper case conversion with Latin 1 strings.
+	 * @param value the underlying array for the source string.
+	 * @param output a new array which will be used for the converted string.
+	 * @param length the number of bytes used to represent the string.
+	 * @return True if intrinsic conversion was successful, false if fallback conversion must be used.
+	 */
+	public boolean toUpperIntrinsicLatin1(char[] value, char[] output, int length) {
+		return false;
+	}
+
+	/**
+	 * To be used by the JIT when performing SIMD lower case conversion with Latin 1 strings.
+	 * @param value the underlying array for the source string.
+	 * @param output a new array which will be used for the converted string.
+	 * @param length the number of bytes used to represent the string.
+	 * @return True if intrinsic conversion was successful, false if fallback conversion must be used.
+	 */
+	public boolean toLowerIntrinsicLatin1(char[] value, char[] output, int length) {
+		return false;
+	}
+
+	/**
+	 * To be used by the JIT when performing SIMD upper case conversion with UTF16 strings.
+	 * @param value the underlying array for the source string.
+	 * @param output a new array which will be used for the converted string.
+	 * @param length the number of bytes used to represent the string.
+	 * @return True if intrinsic conversion was successful, false if fallback conversion must be used.
+	 */
+	public boolean toUpperIntrinsicUTF16(char[] value, char[] output, int length) {
+		return false;
+	}
+
+	/**
+	 * To be used by the JIT when performing SIMD lower case conversion with UTF16 strings.
+	 * @param value the underlying array for the source string.
+	 * @param output a new array which will be used for the converted string.
+	 * @param length the number of bytes used to represent the string.
+	 * @return True if intrinsic conversion was successful, false if fallback conversion must be used.
+	 */
+	public boolean toLowerIntrinsicUTF16(char[] value, char[] output, int length) {
+		return false;
+	}
+
+	/*
 	 * sun.misc.Unsafe.get* and put* have to generate internal control flow for correctness due to different object shapes. The JIT emitted sequences
 	 * checks for and handles: 1) standard fields in normal objects 2) static fields from classes 3) entries from arrays This sequence is branchy and
 	 * hard for us to optimize. The better solution in cases where we know the type of object is to use case specific accessors which are the methods
@@ -474,6 +568,24 @@ public final class JITHelpers {
 		}
 	}
 
+	public int intrinsicIndexOfLatin1(Object array, byte ch, int offset, int length) {
+		for (int i = offset; i < length; i++) {
+			if(getByteFromArrayByIndex(array, i) == ch) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	public int intrinsicIndexOfUTF16(Object array, char ch, int offset, int length) {
+		for (int i = offset; i < length; i++) {
+			if(getCharFromArrayByIndex(array, i) == ch) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
 	/*
 	 * Constants for optimizedClone
 	 */
@@ -535,7 +647,10 @@ public final class JITHelpers {
 		// is effectively the cloned objects initialization
 		int lockOffset = unsafe.getInt(j9clazz + VM.J9CLASS_LOCK_OFFSET_OFFSET);
 		if (lockOffset != 0) {
-			putIntInObject(destObj, lockOffset, 0);
+			int flags = getClassFlagsFromJ9Class32(j9clazz);
+			boolean reservable = (flags & VM.J9CLASS_RESERVABLE_LOCK_WORD_INIT) != 0;
+			int lwValue = reservable ? VM.OBJECT_HEADER_LOCK_RESERVED : 0;
+			putIntInObject(destObj, lockOffset, lwValue);
 		}
 		unsafe.storeFence();
 	}
@@ -591,11 +706,14 @@ public final class JITHelpers {
 		// is effectively the cloned objects initialization
 		long lockOffset = unsafe.getLong(j9clazz + VM.J9CLASS_LOCK_OFFSET_OFFSET);
 		if (lockOffset != 0) {
+			int flags = getClassFlagsFromJ9Class64(j9clazz);
+			boolean reservable = (flags & VM.J9CLASS_RESERVABLE_LOCK_WORD_INIT) != 0;
+			int lwValue = reservable ? VM.OBJECT_HEADER_LOCK_RESERVED : 0;
 			if (SLOT_SIZE == 4) {
 				// for compressed reference, the LockWord is 4 bytes
-				putIntInObject(destObj, lockOffset, 0);
+				putIntInObject(destObj, lockOffset, lwValue);
 			} else {
-				putLongInObject(destObj, lockOffset, 0);
+				putLongInObject(destObj, lockOffset, lwValue);
 			}
 		}
 		unsafe.storeFence();
@@ -670,7 +788,10 @@ public final class JITHelpers {
 			}
 			long lockOffset = unsafe.getInt(j9clazz + VM.J9CLASS_LOCK_OFFSET_OFFSET);
 			if (lockOffset != 0) {
-				unsafe.putInt(clnObj, lockOffset, 0);
+				int flags = getClassFlagsFromJ9Class32(j9clazz);
+				boolean reservable = (flags & VM.J9CLASS_RESERVABLE_LOCK_WORD_INIT) != 0;
+				int lwValue = reservable ? VM.OBJECT_HEADER_LOCK_RESERVED : 0;
+				unsafe.putInt(clnObj, lockOffset, lwValue);
 			}
 		} else {
 			long j9clazz = unsafe.getLong(clnClass, JLCLASS_J9CLASS_OFFSET);
@@ -710,11 +831,14 @@ public final class JITHelpers {
 			}
 			long lockOffset = unsafe.getLong(j9clazz + VM.J9CLASS_LOCK_OFFSET_OFFSET);
 			if (lockOffset != 0) {
+				int flags = getClassFlagsFromJ9Class64(j9clazz);
+				boolean reservable = (flags & VM.J9CLASS_RESERVABLE_LOCK_WORD_INIT) != 0;
+				int lwValue = reservable ? VM.OBJECT_HEADER_LOCK_RESERVED : 0;
 				if (SLOT_SIZE == 4) {
 					// for compressed reference, the LockWord is 4 bytes
-					unsafe.putInt(clnObj, lockOffset, 0);
+					unsafe.putInt(clnObj, lockOffset, lwValue);
 				} else {
-					unsafe.putLong(clnObj, lockOffset, 0);
+					unsafe.putLong(clnObj, lockOffset, lwValue);
 				}
 			}
 		}

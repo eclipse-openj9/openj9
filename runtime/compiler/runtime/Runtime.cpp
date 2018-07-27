@@ -22,10 +22,7 @@
 
 #ifdef TR_HOST_X86
 #if defined(LINUX)
-#include <sys/time.h>   // for gettimeofday
 #include <time.h>       // for clock_gettime
-#elif defined(WINDOWS)
-#include <windows.h>    // for GetSystemTimeAsFileTime
 #endif
 #endif   // TR_HOST_X86
 
@@ -294,8 +291,6 @@ JIT_HELPER(prefetchTLH);
 JIT_HELPER(newPrefetchTLH);
 JIT_HELPER(outlinedNewObject);
 JIT_HELPER(outlinedNewArray);
-JIT_HELPER(outlinedNewObjectNoZeroInit);
-JIT_HELPER(outlinedNewArrayNoZeroInit);
 
 JIT_HELPER(_arrayTranslateTRTO);
 JIT_HELPER(_arrayTranslateTROTNoBreak);
@@ -340,16 +335,6 @@ JIT_HELPER(interpreterSyncXMM0DStaticGlue);
 
 JIT_HELPER(methodHandleJ2IGlue);
 JIT_HELPER(methodHandleJ2I_unwrapper);
-
-JIT_HELPER(outlinedPrologue_0preserved);
-JIT_HELPER(outlinedPrologue_1preserved);
-JIT_HELPER(outlinedPrologue_2preserved);
-JIT_HELPER(outlinedPrologue_3preserved);
-JIT_HELPER(outlinedPrologue_4preserved);
-JIT_HELPER(outlinedPrologue_5preserved);
-JIT_HELPER(outlinedPrologue_6preserved);
-JIT_HELPER(outlinedPrologue_7preserved);
-JIT_HELPER(outlinedPrologue_8preserved);
 
 // --------------------------------------------------------------------------------
 //                                    IA32
@@ -1062,10 +1047,10 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_releaseVMAccess,            (void *)jitReleaseVMAccess,            TR_Helper);
 #endif
    SET(TR_throwCurrentException,      (void *)jitThrowCurrentException,      TR_Helper);
+#if defined (TR_HOST_X86)
+   SET(TR_throwClassCastException,    (void *)jitThrowClassCastException,    TR_Helper);
+#endif
 
-   SET(TR_IncompatibleClassChangeError,(void *)jitThrowIncompatibleClassChangeError, TR_Helper);
-   SET(TR_AbstractMethodError,        (void *)jitThrowAbstractMethodError,           TR_Helper);
-   SET(TR_IllegalAccessError,         (void *)jitThrowIllegalAccessError,            TR_Helper);
    SET(TR_newInstanceImplAccessCheck, (void *)jitNewInstanceImplAccessCheck,         TR_Helper);
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
@@ -1126,10 +1111,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_X86interpreterUnresolvedFieldGlue,                (void *)interpreterUnresolvedFieldGlue,                TR_Helper);
    SET(TR_X86interpreterUnresolvedFieldSetterGlue,          (void *)interpreterUnresolvedFieldSetterGlue,          TR_Helper);
 
-   SET(TR_X86OutlinedNew,                (void *)outlinedNewObject,           TR_Helper);
-   SET(TR_X86OutlinedNewArray,           (void *)outlinedNewArray,            TR_Helper);
-   SET(TR_X86OutlinedNewNoZeroInit,      (void *)outlinedNewObjectNoZeroInit, TR_Helper);
-   SET(TR_X86OutlinedNewArrayNoZeroInit, (void *)outlinedNewArrayNoZeroInit,  TR_Helper);
    SET(TR_X86prefetchTLH,                (void *)prefetchTLH,                 TR_Helper);
    SET(TR_X86newPrefetchTLH,             (void *)newPrefetchTLH,              TR_Helper);
    SET(TR_X86CodeCachePrefetchHelper,    (void *)prefetchTLH,                 TR_Helper); // needs to be set while compiling
@@ -1161,7 +1142,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_AMD64icallVMprJavaSendVirtualF,             (void *)icallVMprJavaSendVirtualF, TR_Helper);
    SET(TR_AMD64icallVMprJavaSendVirtualD,             (void *)icallVMprJavaSendVirtualD, TR_Helper);
 
-   SET(TR_AMD64jitThrowCurrentException,              (void *)jitThrowCurrentException,       TR_Helper);
    SET(TR_AMD64jitCollapseJNIReferenceFrame,          (void *)jitCollapseJNIReferenceFrame,   TR_Helper);
 
    SET(TR_AMD64compressString,                        (void *)_compressString,            TR_Helper);
@@ -1179,14 +1159,8 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_AMD64doAESENCDecrypt,                       (void *)_doAESENCDecrypt,           TR_Helper);
 #endif
 #if defined(LINUX)
-   SET(TR_AMD64getTimeOfDay,                          (void *)gettimeofday,  TR_System);
    SET(TR_AMD64clockGetTime,                          (void *)clock_gettime, TR_System);
-#elif defined(WINDOWS)
-   SET(TR_AMD64GetSystemTimeAsFileTime,               (void *)GetSystemTimeAsFileTime, TR_System);
-   SET(TR_AMD64QueryPerformanceCounter,               (void *)QueryPerformanceCounter, TR_System);
-   SET(TR_AMD64GetTickCount,                          (void *)GetTickCount,            TR_System);
 #endif
-   SET(TR_AMD64currentTimeMillis,                          (void *)OMRPORT_FROM_J9PORT(jitConfig->javaVM->portLibrary)->time_current_time_millis, TR_Helper);
    SET(TR_AMD64JitMonitorEnterReserved,                    (void *)jitMonitorEnterReserved,                    TR_CHelper);
    SET(TR_AMD64JitMonitorEnterReservedPrimitive,           (void *)jitMonitorEnterReservedPrimitive,           TR_CHelper);
    SET(TR_AMD64JitMonitorEnterPreservingReservation,       (void *)jitMonitorEnterPreservingReservation,       TR_CHelper);
@@ -1202,16 +1176,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
 
    SET(TR_methodHandleJ2IGlue,                        (void *)methodHandleJ2IGlue,       TR_Helper);
    SET(TR_methodHandleJ2I_unwrapper,                  (void *)methodHandleJ2I_unwrapper, TR_Helper);
-
-   SET(TR_outlinedPrologue_0preserved,                (void *)outlinedPrologue_0preserved, TR_Helper);
-   SET(TR_outlinedPrologue_1preserved,                (void *)outlinedPrologue_1preserved, TR_Helper);
-   SET(TR_outlinedPrologue_2preserved,                (void *)outlinedPrologue_2preserved, TR_Helper);
-   SET(TR_outlinedPrologue_3preserved,                (void *)outlinedPrologue_3preserved, TR_Helper);
-   SET(TR_outlinedPrologue_4preserved,                (void *)outlinedPrologue_4preserved, TR_Helper);
-   SET(TR_outlinedPrologue_5preserved,                (void *)outlinedPrologue_5preserved, TR_Helper);
-   SET(TR_outlinedPrologue_6preserved,                (void *)outlinedPrologue_6preserved, TR_Helper);
-   SET(TR_outlinedPrologue_7preserved,                (void *)outlinedPrologue_7preserved, TR_Helper);
-   SET(TR_outlinedPrologue_8preserved,                (void *)outlinedPrologue_8preserved, TR_Helper);
 
 #else // AMD64
 
@@ -1233,7 +1197,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_X86interpreterAddressStaticGlue,            (void *)interpreterEAXStaticGlue,        TR_Helper);
    SET(TR_X86interpreterSyncAddressStaticGlue,        (void *)interpreterSyncEAXStaticGlue,    TR_Helper);
 
-   SET(TR_IA32jitThrowCurrentException,               (void *)jitThrowCurrentException,        TR_Helper);
    SET(TR_IA32jitCollapseJNIReferenceFrame,           (void *)jitCollapseJNIReferenceFrame,    TR_Helper);
 
    SET(TR_IA32floatRemainder,                         (void *)_X87floatRemainder,  TR_Helper);
@@ -1262,9 +1225,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_IA32encodeUTF16Little,                      (void *)_encodeUTF16Little,         TR_Helper);
 
    SET(TR_jitAddPicToPatchOnClassUnload,              (void *) jitAddPicToPatchOnClassUnload, TR_Helper);
-#if defined(WINDOWS)
-   SET(TR_IA32GetTickCount,                           (void *)GetTickCount, TR_System);
-#endif
    SET(TR_IA32interpreterUnresolvedVTableSlotGlue,    (void *)resolveAndPopulateVTableDispatch, TR_Helper);
 
    SET(TR_IA32JitMonitorEnterReserved,                    (void *)jitMonitorEnterReserved,                    TR_CHelper);
@@ -1279,12 +1239,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_IA32JitMethodMonitorExitPreservingReservation,  (void *)jitMethodMonitorExitPreservingReservation,  TR_CHelper);
    SET(TR_IA32JitMethodMonitorExitReservedPrimitive,      (void *)jitMethodMonitorExitReservedPrimitive,      TR_CHelper);
    SET(TR_IA32JitMethodMonitorExitReserved,               (void *)jitMethodMonitorExitReserved,               TR_CHelper);
-#if defined(LINUX)
-   SET(TR_IA32getTimeOfDay,                           (void *)gettimeofday, TR_System);
-#elif defined(WINDOWS)
-   SET(TR_IA32GetSystemTimeAsFileTime,                (void *)GetSystemTimeAsFileTime, TR_System);
-#endif
-
 
 #endif
 #elif defined(TR_HOST_POWER)
@@ -2050,6 +2004,7 @@ bool isOrderedPair(U_8 recordType)
       case TR_RamMethodSequence:
       case TR_BodyInfoAddressLoad:
       case TR_DataAddress:
+      case TR_DebugCounter:
 #endif
          isOrderedPair = true;
          break;

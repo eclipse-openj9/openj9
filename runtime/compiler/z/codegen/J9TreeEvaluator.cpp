@@ -211,405 +211,391 @@ doubleMaxMinHelper(TR::Node *node, TR::CodeGenerator *cg, bool isMaxOp)
    return node->getRegister();
    }
 
-
-/**
- * This evaluator is used to perform string toUpper and toLower conversion.
- *
- * This JIT HW optimized conversion helper is deisgned to convert strings that contains only valid characters, as
- * specified by the ranges below:
- *
- * 1. Lower case English letters a-z [0x61, 0x7a] and their corresponding A-Z range [0x41, 0x5a]
- * 2. Lower case Latin letters [0xe0, 0xfe], excluding the multiplication sign 0xf7. The corresponding capital Latin letters are in [0xc0, 0xde] excluding the division sign 0xd7
- *
- * Invalid char range is defined as:
- * A). For both toUpper and toLower conversion, a string contains invalid char if it contains anything above 0x00ff.
- *
- * If a string contains characters (char above 0x00fe), HW optimized routine will return NULL and fall back to the software implementation, which is able to convert a broader range of characters.
- *
- * This helper is broken up into 6 sections:
- * 1. Setup
- *       Registers
- *       Ranges for vector char search
- *       Dependencies
- *       Zero out registers
- * 2. Length calculations
- *       Align to 16
- *       Get residue (if any)
- * 3. Process residue (since < 16 is probably the most common case)
- * 4. Process 16 bytes at a time in a loop
- * 5. Handle invalid codepoints
- * 6. Cleanup
- *
- * This does not support discontiguous arrays (..no reason we can't) and the check is done in ILGen/Walker
- */
-extern TR::Register *
-caseConversionHelper(TR::Node *node, TR::CodeGenerator *cg, bool isToUpper, bool isCompressedString)
+  /** \brief
+   *     Attempts to use vector registers to perform SIMD conversion of characters from lowercase to uppercase.
+   *
+   *  \detail
+   *     Uses vector registers to convert 16 bytes at a time.
+   *
+   *  \param node
+   *     The node representing the HW optimized toUpper and toLower recognized calls.
+   *
+   *  \param cg
+   *     The code generator used to generate the instructions.
+   *
+   *  \param isToUpper
+   *     Boolean representing case conversion, either to upper or to lower.
+   *
+   *  \param isCompressedString
+   *     Boolean representing the string's compression.
+   *
+   *  \return
+   *     A register containing the return value of the Java call. The return value
+   *     will be 1 if the entire contents of the input array was translated and 0 if
+   *     we were unable to translate the entire contents of the array (up to the specified length).
+   */
+TR::Register * caseConversionHelper(TR::Node* node, TR::CodeGenerator* cg, bool isToUpper, bool isCompressedString)
    {
-   #define iComment(str) if (debug) debug->addInstructionComment(cursor, (str));
+   TR::Register* sourceRegister = cg->evaluate(node->getChild(1));
+   TR::Register* destRegister = cg->evaluate(node->getChild(2));
+   TR::Register* lengthRegister = cg->gprClobberEvaluate(node->getChild(3));
 
-   // Usually just 2 children...
-   TR_ASSERT(node->getNumChildren() >= 1  || node->getNumChildren() <= 2, "node has incorrect number of children");
+   TR::Register* addressOffset = cg->allocateRegister();
+   TR::Register* loadLength = cg->allocateRegister();
+   // Loopcounter register for number of 16 byte conversions, when it is used, the length is not needed anymore
+   TR::Register* loopCounter = lengthRegister;
 
+   TR::Register* charBufferVector = cg->allocateRegister(TR_VRF);
+   TR::Register* selectionVector = cg->allocateRegister(TR_VRF);
+   TR::Register* modifiedCaseVector = cg->allocateRegister(TR_VRF);
+   TR::Register* charOffsetVector = cg->allocateRegister(TR_VRF);
+   TR::Register* alphaRangeVector = cg->allocateRegister(TR_VRF);
+   TR::Register* alphaCondVector = cg->allocateRegister(TR_VRF);
+   TR::Register* invalidRangeVector = cg->allocateRegister(TR_VRF);
+   TR::Register* invalidCondVector = cg->allocateRegister(TR_VRF);
 
-   /* ===================== Step 1: SETUP  =====================*/
+   TR::LabelSymbol* fullVectorConversion = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
+   TR::LabelSymbol* doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
+   TR::LabelSymbol* success = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
+   TR::LabelSymbol* handleInvalidChars = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
+   TR::LabelSymbol* loop = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
 
+   TR::Instruction* cursor;
 
-   TR::Register      * rSrcBase      = cg->evaluate(node->getFirstChild());      // Source object
-   TR::Register      * rTgtBase      = cg->evaluate(node->getSecondChild());     // Target object
+   const int elementSizeMask = (isCompressedString) ? 0x0 : 0x1;    // byte or halfword mask
+   const int8_t sizeOfVector = 16;
+   const bool is64 = TR::Compiler->target.is64Bit();
+   uintptrj_t headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
 
-   TR::Register      * rSrcValIdx    = cg->allocateRegister();                   // Used to iterate over input (and output since they overlap)
-   TR::Register      * rSrcVal       = cg->allocateRegister();                   // The actual char array storing the contents of j.l.S.value of input String
-   TR::Register      * rTgtVal       = cg->allocateRegister();                   // The actual char array storing the contents of j.l.S.value of output String
+   TR::RegisterDependencyConditions * regDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 13, cg);
+   regDeps->addPostCondition(sourceRegister, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(destRegister, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(lengthRegister, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(addressOffset, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(loadLength, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(charBufferVector, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(selectionVector, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(modifiedCaseVector, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(charOffsetVector, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(alphaRangeVector, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(alphaCondVector, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(invalidRangeVector, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(invalidCondVector, TR::RealRegister::AssignAny);
 
-   TR::Register      * rLen          = cg->allocateRegister();                   // Number of code-points j.l.S.value.length. Not to be confused with length of the String
-   TR::Register      * rResidue      = cg->allocateRegister();                   // Residue after alignment of length to 16
-   TR::Register      * rLoopCounter    = rLen;
+   generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, addressOffset, addressOffset);
 
-   TR::Register      * vTmp          = cg->allocateRegister(TR_VRF);             // Temp buffer to store result of VSTRC
-   TR::Register      * vCaseBuf      = cg->allocateRegister(TR_VRF);             // upper or lower case depending on context
-   TR::Register      * vBuf          = cg->allocateRegister(TR_VRF);             // Temp buffer used to store output of upper/lower case conversion
-   TR::Register      * vAlphaRange   = cg->allocateRegister(TR_VRF);             // Alpha range char: the upper/lower limit that VSTRC should be used for comparison
-   TR::Register      * vAlphaCntrl   = cg->allocateRegister(TR_VRF);             // Alpha range control : the control bits (refer to zPoPs) to let VSTRC know what kind of comparison to make (lt/gt/eq etc)
-   TR::Register      * vInvalidRange = cg->allocateRegister(TR_VRF);             // Invalid code-point range: the "mu" code-point and everyone above 0xFE
-   TR::Register      * vInvalidCntrl = cg->allocateRegister(TR_VRF);             // Invalid code-point control
-   TR::Register      * vOffset       = cg->allocateRegister(TR_VRF);             // Constant positive integral offset between upper/lower code-points for Unicode
+   generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, alphaRangeVector, 0, 0);
+   generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, alphaCondVector, 0, 0);
+   generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, invalidRangeVector, 0, 0);
+   generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, invalidCondVector, 0, 0);
 
-   TR_Debug          * debug         = cg->getDebug();
-   TR::Compilation   * comp          = cg->comp();
-
-   const int          sizeOfVector                  = 16;                        // in Bytes. Should really make this dynamic (i.e read from some machine() query since this can increase in future)
-   const int          numPostDeps                   = 15;
-   const int          caseOffset                    = 0x20;
-   const int          elementSizeMask               = (isCompressedString) ? 0x0 : 0x1;    // byte or halfword
-
-   TR::Instruction*   cursor                        = NULL;
-   bool               usesCompressedrefs            = comp->useCompressedPointers();
-   int32_t            shiftAmount                   = TR::Compiler->om.compressedReferenceShift();
-   const int          offsetOfContigField           = cg->fej9()->getOffsetOfContiguousArraySizeField();
-   const int          offsetOfDiscontigField        = cg->fej9()->getOffsetOfDiscontiguousArraySizeField();
-   const bool         is64                          = TR::Compiler->target.is64Bit();
-
-   TR::RegisterDependencyConditions * regDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, numPostDeps, cg);
-
-   regDeps->addPostCondition(rSrcVal       ,TR::RealRegister::AssignAny);
-   regDeps->addPostCondition(rSrcBase      ,TR::RealRegister::AssignAny);
-   regDeps->addPostCondition(rTgtBase      ,TR::RealRegister::AssignAny);
-   regDeps->addPostCondition(rTgtVal       ,TR::RealRegister::AssignAny);
-   regDeps->addPostCondition(rSrcValIdx    ,TR::RealRegister::AssignAny);
-
-   regDeps->addPostCondition(rLen          ,TR::RealRegister::AssignAny);
-   regDeps->addPostCondition(rResidue      ,TR::RealRegister::AssignAny);
-
-   regDeps->addPostCondition(vTmp          ,TR::RealRegister::AssignAny);
-   regDeps->addPostCondition(vCaseBuf      ,TR::RealRegister::AssignAny);
-   regDeps->addPostCondition(vBuf          ,TR::RealRegister::AssignAny);
-
-   regDeps->addPostCondition(vOffset       ,TR::RealRegister::AssignAny);
-   regDeps->addPostCondition(vAlphaRange   ,TR::RealRegister::AssignAny);
-   regDeps->addPostCondition(vAlphaCntrl   ,TR::RealRegister::AssignAny);
-
-   regDeps->addPostCondition(vInvalidRange ,TR::RealRegister::AssignAny);
-   regDeps->addPostCondition(vInvalidCntrl ,TR::RealRegister::AssignAny);
-
-   if (cg->supportsHighWordFacility() &&
-           !comp->getOption(TR_DisableHighWordRA) &&
-           TR::Compiler->target.is64Bit())
+   // Letters a-z (0x61-0x7A) when to upper and A-Z (0x41-0x5A) when to lower
+   generateVRIaInstruction (cg, TR::InstOpCode::VLEIH, node, alphaRangeVector, isToUpper ? 0x617A : 0x415A, 0x0);
+   // Characters àáâãäåæçèéêëìíîïðñòóôõö (0xE0-0xF6) when to upper and ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ (0xC0-0xD6) when to lower
+   generateVRIaInstruction (cg, TR::InstOpCode::VLEIH, node, alphaRangeVector, isToUpper ? 0xE0F6 : 0xC0D6, 0x1);
+   // Characters øùúûüýþ (0xF8-0xFE) when to upper and ØÙÚÛÜÝÞ (0xD8-0xDE) when to lower
+   generateVRIaInstruction (cg, TR::InstOpCode::VLEIH, node, alphaRangeVector, isToUpper ? 0xF8FE : 0xD8DE, 0X2);
+   if (!isCompressedString)
       {
-      rResidue->setIs64BitReg(true);
-      rLen->setIs64BitReg(true);
-      rSrcValIdx->setIs64BitReg(true);
-      rTgtVal->setIs64BitReg(true);
-      rSrcVal->setIs64BitReg(true);
+      generateVRRaInstruction(cg, TR::InstOpCode::VUPLH, node, alphaRangeVector, alphaRangeVector, 0, 0, 0, 0);
       }
 
-   // byte [] java.lang.String.value   the raw byte array
-   // int     java.lang.String.count   the count i.e num of characters. A Unicode point is 1 character. Surrogate's are 2 characters.
-   // valueConentOffset                the offset of actual content in a char array.
-   int32_t stringValOffset, stringCountOffset, valueContentOffset;
-
-   // TODO (Filip): This is a workaround for Java 829 performance as we switched to using a byte[] backing array in String*. Remove this workaround once obsolete.
-   TR_OpaqueClassBlock *stringClass = cg->fej9()->getClassFromSignature("Ljava/lang/String;", strlen("Ljava/lang/String;"), comp->getCurrentMethod(), true);
-
-   if (cg->fej9()->getInstanceFieldOffset(stringClass, "value", "[B") != ~0)
+   // Condition codes for >= (bits 0 and 2) and <= (bits 0 and 1)
+   if (isCompressedString)
       {
-      stringValOffset = cg->fej9()->getInstanceFieldOffsetIncludingHeader("Ljava/lang/String;", "value", "[B", comp->getCurrentMethod());
+      generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, alphaCondVector, 0XA0C0, 0X0);
+      generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, alphaCondVector, 0XA0C0, 0X1);
+      generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, alphaCondVector, 0XA0C0, 0X2);
       }
    else
       {
-      stringValOffset = cg->fej9()->getInstanceFieldOffsetIncludingHeader("Ljava/lang/String;", "value", "[C", comp->getCurrentMethod());
+      generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, alphaCondVector, 0XA000, 0X0);
+      generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, alphaCondVector, 0XC000, 0X1);
+      generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, alphaCondVector, 0XA000, 0X2);
+      generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, alphaCondVector, 0XC000, 0X3);
+      generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, alphaCondVector, 0XA000, 0X4);
+      generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, alphaCondVector, 0XC000, 0X5);
       }
 
-   stringCountOffset  = cg->fej9()->getInstanceFieldOffsetIncludingHeader("Ljava/lang/String;", "count", "I" , comp->getCurrentMethod());
-   valueContentOffset = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
-
-   TR::LabelSymbol * processNext16Bytes = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol * doneLabel          = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol * handleInvalidChars = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol * coreLoopSetup      = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-
-   // Load this.value for source string and target string
-   if (usesCompressedrefs)
+   // Can't toUpper \u00df (capital sharp s) nor \u00b5 (mu) with a simple addition of 0x20
+   // Condition code equal for capital sharp and mu (bit 0=0x80) and greater than (bit 2=0x20) for codes larger than 0xFF
+   if (isToUpper)
       {
-      cursor =               generateRXInstruction          (cg, TR::InstOpCode::LLGF, node, rSrcVal, generateS390MemoryReference(rSrcBase, stringValOffset, cg));
-      if (shiftAmount != 0 ) generateRSInstruction          (cg, TR::InstOpCode::SLLG, node, rSrcVal, rSrcVal, shiftAmount);
+      if (isCompressedString)
+         {
+         generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidRangeVector, 0xdfdf, 0x0);
+         generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidRangeVector, 0xb5b5, 0x1);
 
-      cursor =               generateRXInstruction          (cg, TR::InstOpCode::LLGF, node, rTgtVal, generateS390MemoryReference(rTgtBase, stringValOffset, cg));
-      if (shiftAmount != 0 ) generateRSInstruction          (cg, TR::InstOpCode::SLLG, node, rTgtVal, rTgtVal, shiftAmount);
+         generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidCondVector, 0x8080, 0x0);
+         generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidCondVector, 0x8080, 0x1);
+         }
+      else
+         {
+         generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidRangeVector, 0xdfdf, 0x0);
+         generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidRangeVector, 0xb5b5, 0x1);
+         generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidRangeVector, 0xffff, 0x2);
+         generateVRRaInstruction(cg, TR::InstOpCode::VUPLH, node, invalidRangeVector, invalidRangeVector, 0, 0, 0, 0);
+
+         generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidCondVector, 0x8000, 0x0);
+         generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidCondVector, 0x8000, 0x1);
+         generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidCondVector, 0x8000, 0x2);
+         generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidCondVector, 0x8000, 0x3);
+         generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidCondVector, 0x2000, 0x4);
+         generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidCondVector, 0x2000, 0x5);
+         }
       }
-   else
+   else if (!isToUpper && !isCompressedString)
       {
-      cursor =               generateRXInstruction          (cg, TR::InstOpCode::getLoadOpCode(), node, rSrcVal, generateS390MemoryReference(rSrcBase, stringValOffset, cg));
-      cursor =               generateRXInstruction          (cg, TR::InstOpCode::getLoadOpCode(), node, rTgtVal, generateS390MemoryReference(rTgtBase, stringValOffset, cg));
-      }                                                                                                                                                                                iComment("<- output.value");
+      // to lower is only invalid when values are greater than 0xFF
+      generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidRangeVector, 0x00FF, 0x0);
+      generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidRangeVector, 0x00FF, 0x1);
 
-   // Load this.count. Skip 0 check since since that in done in Java
-   cursor =                  generateRXInstruction          (cg, is64 ? TR::InstOpCode::LLGF : TR::InstOpCode::L, node, rLen, generateS390MemoryReference(rSrcBase, stringCountOffset, cg));                     iComment("<- input.count");
-
-   // Bail out if string is larger than INT_MAX32/2 since # string to # byte conversion will cause overflow.
-   // We could have used 64 bit reg instructions and reg for 31bit JVM with proper sign/zero extension,
-   // but using this keeps the icache footprint down by a little bit. Also enables us to use the HPRs.
-   if (!is64)
-      {
-      cursor =               generateRIInstruction          (cg, TR::InstOpCode::TMLH, node, rLen, (uint16_t) 0x8000);
-      cursor =               generateS390BranchInstruction  (cg, TR::InstOpCode::BRC , TR::InstOpCode::COND_MASK2, node, handleInvalidChars);
-      cursor->setStartInternalControlFlow();
-      }
-
-   // Update output.count
-   cursor =                  generateRXInstruction          (cg, TR::InstOpCode::ST, node, rLen, generateS390MemoryReference(rTgtBase, stringCountOffset, cg));                                              iComment("<- output.count");
-
-   // Conservatively zero out the ranges but we definitely need to zero out the control.
-                             generateVRIaInstruction		(cg, TR::InstOpCode::VGBM, node, vAlphaRange  , 0, 0 /*unused*/);
-                             generateVRIaInstruction		(cg, TR::InstOpCode::VGBM, node, vAlphaCntrl  , 0, 0 /*unused*/);
-                             generateVRIaInstruction		(cg, TR::InstOpCode::VGBM, node, vInvalidCntrl, 0, 0 /*unused*/);
-                             generateVRIaInstruction		(cg, TR::InstOpCode::VGBM, node, vInvalidRange, 0, 0 /*unused*/);
-
-
-   /* ===================== Step 1: Setup  (alphabet and control ranges) =====================*/
-   /*
-    * alphaRange   = isToUpper ? 0x0061007a00e000f600f800feL : 0x0041005a00c000d600d800deL;
-    * alphaCntrl   =             0xa000c000a000c00000a000c0L;
-    *
-    * invalidRange =             0x00ff00ff00000000L
-    * invalidCntrl =             0x2000200000000000L
-    *
-    *  This works like x <= val AND val <= y OR m <= val AND val <= n where x, y, m, n are valid alphabet range chars and
-    *  val = any element sized val in vector buffer
-    *  For the invalid case, we do p = val OR p > q; where p and q are the invalid ranges and val = any element sized val in vector buffer
-    *
-    *  The following vAlphaRange, vInvalidRange, and vAlphaCntrl setup instructions load 16 byte ranges used for
-    *  our VSTRC's without reading from memory.
-    *  Encode ranges within the instructions instead of loading from memory since that will need relocation for AOT
-    *  Problem with this setup is the inability to reduce WAW's by annulling in h/w.
-    */
-   cursor =                  generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vAlphaRange, isToUpper ? 0x617a : 0x415a, 0x0);
-                             generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vAlphaRange, isToUpper ? 0xe0f6 : 0xc0d6, 0x1);
-                             generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vAlphaRange, isToUpper ? 0xf8fe : 0xd8de, 0x2);       iComment("alphabet ranges");
-   if(!isCompressedString)
-      {
-                             generateVRRaInstruction        (cg, TR::InstOpCode::VUPLH, node, vAlphaRange, vAlphaRange, 0, 0, 0, 0);
+      generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidCondVector, 0x2000, 0x0);
+      generateVRIaInstruction(cg, TR::InstOpCode::VLEIH, node, invalidCondVector, 0x2000, 0x1);
       }
 
-   if(isCompressedString)
-      {
-      cursor =               generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vAlphaCntrl, 0xa0c0, 0x0);            iComment("alphabet control. >='s and <='s");
-                             generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vAlphaCntrl, 0xa0c0, 0x1);
-                             generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vAlphaCntrl, 0xa0c0, 0x2);
-      }
-   else
-      {
-      cursor =               generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vAlphaCntrl, 0xa000, 0x0);            iComment("alphabet control. >='s and <='s");
-                             generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vAlphaCntrl, 0xc000, 0x1);
-                             generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vAlphaCntrl, 0xa000, 0x2);
-                             generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vAlphaCntrl, 0xc000, 0x3);
-                             generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vAlphaCntrl, 0xa000, 0x4);
-                             generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vAlphaCntrl, 0xc000, 0x5);
-      }
+   // Constant value of 0x20, used to convert between upper and lower
+   generateVRIaInstruction(cg, TR::InstOpCode::VREPI, node, charOffsetVector, static_cast<uint16_t>(0x20), elementSizeMask);
 
-   // Can't toUpper \u00df (capital sharp s) nor \u00b5 (mu). Applicable to both compressed and decompressed toUpper.
-   // \u00df  toUpper becomes -> \u0053 \u0053
-   // \u00b5  toUpper becomes -> \u039c
-   if(isToUpper && isCompressedString)
+   generateRRInstruction(cg, TR::InstOpCode::LR, node, loadLength, lengthRegister);
+   generateRILInstruction(cg, TR::InstOpCode::NILF, node, loadLength, 0xF);
+   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, fullVectorConversion);
+
+   cursor->setStartInternalControlFlow();
+
+   // VLL and VSTL take an index, not a count, so subtract the count by 1
+   generateRILInstruction(cg, TR::InstOpCode::SLFI, node, loadLength, 1);
+
+   generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, charBufferVector, loadLength, generateS390MemoryReference(sourceRegister, headerSize, cg));
+
+   // Check for invalid characters, go to fallback individual character conversion implementation
+   if (!isCompressedString)
       {
-       // Compressed string toUpper
-       cursor =              generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vInvalidRange, 0xdfdf, 0x0);         iComment("invalid alphabet range");
-                             generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vInvalidRange, 0xb5b5, 0x1);
-
-       cursor =              generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vInvalidCntrl, 0x8080, 0x0);           iComment("invalid alphabet range control");
-                             generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vInvalidCntrl, 0x8080, 0x1);
-      }
-   else if(isToUpper && !isCompressedString)
-      {
-       // Decompressed string toUpper
-       cursor =              generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vInvalidRange, 0xdfdf, 0x0);          iComment("invalid alphabet range");
-                             generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vInvalidRange, 0xb5b5, 0x1);
-                             generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vInvalidRange, 0xffff, 0x2);
-                             generateVRRaInstruction        (cg, TR::InstOpCode::VUPLH, node, vInvalidRange, vInvalidRange, 0, 0, 0, 0);
-
-
-       cursor =              generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vInvalidCntrl, 0x8000, 0x0);           iComment("invalid alphabet range control");
-                             generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vInvalidCntrl, 0x8000, 0x1);
-                             generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vInvalidCntrl, 0x8000, 0x2);
-                             generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vInvalidCntrl, 0x8000, 0x3);
-                             generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vInvalidCntrl, 0x2000, 0x4);
-                             generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vInvalidCntrl, 0x2000, 0x5);
-      }
-   else if(!isToUpper && !isCompressedString)
-      {
-       // Decompressed strings toLower. Only need to make sure that no character is above 0xff
-      cursor =               generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vInvalidRange, 0x00ff, 0x0);              iComment("invalid alphabet range");
-                             generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vInvalidRange, 0x00ff, 0x1);
-
-      cursor =               generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vInvalidCntrl, 0x2000, 0x0);              iComment("invalid alphabet control");
-                             generateVRIaInstruction        (cg, TR::InstOpCode::VLEIH, node, vInvalidCntrl, 0x2000, 0x1);
+      generateVRRdInstruction(cg, TR::InstOpCode::VSTRC, node, selectionVector, charBufferVector, invalidRangeVector, invalidCondVector, 0x1 , elementSizeMask);
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, handleInvalidChars);
       }
 
-   // Constant used to convert to upper/lower for Unicode code-points. This is a vector of halfwords 0x0020.
-   cursor =                  generateVRIaInstruction        (cg, TR::InstOpCode::VREPI, node, vOffset, static_cast<uint16_t>(caseOffset), elementSizeMask);         iComment("offset to add/subtract lower<->upper conv");
+   generateVRRdInstruction(cg, TR::InstOpCode::VSTRC, node, selectionVector, charBufferVector, alphaRangeVector, alphaCondVector, 0x4, elementSizeMask);
+   generateVRRcInstruction(cg, isToUpper ? TR::InstOpCode::VS : TR::InstOpCode::VA, node, modifiedCaseVector, charBufferVector, charOffsetVector, 0x0, 0x0, elementSizeMask);
+   generateVRReInstruction(cg, TR::InstOpCode::VSEL, node, modifiedCaseVector, modifiedCaseVector, charBufferVector, selectionVector);
 
+   generateVRSbInstruction(cg, TR::InstOpCode::VSTL, node, modifiedCaseVector, loadLength, generateS390MemoryReference(destRegister, headerSize, cg), 0);
 
-   /* ===================== Step 2: Length calculations (rResidue and 16-byte alignment) =====================*/
+   // Increment index by the remainder then add 1, since the loadLength contains the highest index, we must go one past that
+   generateRIEInstruction(cg, TR::InstOpCode::AHIK, node, addressOffset, loadLength, 1);
 
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, fullVectorConversion);
 
-   // Add string val offset to save additions in core loop
-   cursor =                  generateRXInstruction          (cg, TR::InstOpCode::getLoadAddressOpCode(), node, rSrcVal, generateS390MemoryReference(rSrcVal, NULL, valueContentOffset, cg), cursor);    iComment("source.val += strValOffset + source.offset");
-   cursor =                  generateRXInstruction          (cg, TR::InstOpCode::getLoadAddressOpCode(), node, rTgtVal, generateS390MemoryReference(rTgtVal, valueContentOffset, cg), cursor);          iComment("tgt.val += strValOffset");
+   generateRIEInstruction(cg, TR::InstOpCode::CIJ, node, lengthRegister, sizeOfVector, success, TR::InstOpCode::COND_BL);
 
-   // The core loop works in multiples of 16 so we need to align the length to 16, and also load the rResidue so we can operate on them separately
-   if(!isCompressedString)
+   // Set the loopCounter to the amount of groups of 16 bytes left, ignoring already accounted for remainder
+   generateRSInstruction(cg, TR::InstOpCode::SRL, node, loopCounter, loopCounter, 4);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, loop);
+
+   generateVRXInstruction(cg, TR::InstOpCode::VL, node, charBufferVector, generateS390MemoryReference(sourceRegister, addressOffset, headerSize, cg));
+
+   if (!isCompressedString)
       {
-       // convert num_of_char to num_of_bytes we need to process
-      cursor =               generateRSInstruction          (cg, TR::InstOpCode::getShiftLeftLogicalSingleOpCode(), node, rLen, rLen, 1);                                                                  iComment("string length : char -> bytes");
-      }
-   cursor =                  generateRRInstruction          (cg, TR::InstOpCode::getLoadRegOpCode(), node, rResidue, rLen);
-   cursor =                  generateRILInstruction         (cg, TR::InstOpCode::NILF, node, rResidue, 0xF);                                                                                                 iComment("calc residue (can eq length if length < 16)");
-   cursor =                  generateS390BranchInstruction  (cg, TR::InstOpCode::BRC , TR::InstOpCode::COND_BZ, node, coreLoopSetup);                                                                            iComment("len perfect multiple of 16, goto main loop (rare)");
-
-   // We already set start ICF at the branch after the TMLH so don't do it here, to prevent nested ICF issues
-   if (is64)
-      cursor->setStartInternalControlFlow();
-
-   // VLL and VSTL are provided with an index not with a count (length) so we need to offset by 1.
-   cursor =                 generateRILInstruction          (cg, TR::InstOpCode::getSubtractLogicalImmOpCode(), node, rResidue, 1);                                                                         iComment("adjust residue for VLL/VSTL (length -> index)");
-
-   /* ===================== Step 3: Residue processing =====================*/
-
-
-   // This is the core case conv logic. Since we unroll the loop to a multiple of 16, we need to handle residue here.
-   // Residue is also length if length < 16
-   // We could have handled residue in the hot-loop by using VSTL always, but that comes at the expense of having a VLGV + mul x 2 in the hot-path
-
-   // Process residue
-   cursor =                  generateVRSbInstruction        (cg, TR::InstOpCode::VLL, node, vBuf, rResidue, generateS390MemoryReference(rSrcVal, 0, cg));                                                    iComment("====== PROCESS RESIDUE ======");
-
-   // Check for invalid characters
-   if(!isCompressedString)
-      {
-      cursor =               generateVRRdInstruction        (cg, TR::InstOpCode::VSTRC, node, vTmp, vBuf, vInvalidRange, vInvalidCntrl, 0x1, elementSizeMask);                                                           iComment("check for invalid codepoints");
-      cursor =               generateS390BranchInstruction  (cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, handleInvalidChars);
+      generateVRRdInstruction(cg, TR::InstOpCode::VSTRC, node, selectionVector, charBufferVector, invalidRangeVector, invalidCondVector, 0x1 , elementSizeMask);
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, handleInvalidChars);
       }
 
-   // Check for alphabets that whose case we can convert
-   cursor =                  generateVRRdInstruction        (cg, TR::InstOpCode::VSTRC, node, vTmp, vBuf, vAlphaRange, vAlphaCntrl, 0x4, elementSizeMask);                                                               iComment("search for case to convert");
-   cursor =                  generateVRRcInstruction        (cg, isToUpper ? TR::InstOpCode::VS : TR::InstOpCode::VA, node, vCaseBuf, vBuf, vOffset, 0x0, 0x0, elementSizeMask);                                             iComment("offset for case conversion");
+   generateVRRdInstruction(cg, TR::InstOpCode::VSTRC, node, selectionVector, charBufferVector, alphaRangeVector, alphaCondVector, 0x4, elementSizeMask);
+   generateVRRcInstruction(cg, isToUpper ? TR::InstOpCode::VS : TR::InstOpCode::VA, node, modifiedCaseVector, charBufferVector, charOffsetVector, 0x0, 0x0, elementSizeMask);
+   generateVRReInstruction(cg, TR::InstOpCode::VSEL, node, modifiedCaseVector, modifiedCaseVector, charBufferVector, selectionVector);
 
-   // Merge the case converted characters with the non-case converted characters and write to output String
-   cursor =                  generateVRReInstruction        (cg, TR::InstOpCode::VSEL, node, vCaseBuf, vCaseBuf, vBuf, vTmp);                                                                                iComment("only replace converted chars");
-   cursor =                  generateVRSbInstruction        (cg, TR::InstOpCode::VSTL, node, vCaseBuf, rResidue, generateS390MemoryReference(rTgtVal, 0, cg), 0);
+   generateVRXInstruction(cg, TR::InstOpCode::VST, node, modifiedCaseVector, generateS390MemoryReference(destRegister, addressOffset, headerSize, cg), 0);
 
-   // If len =< 16 then we're done else continue to main loop that does 16 byte at a time
-   cursor =                  generateRIEInstruction         (cg, is64 ? TR::InstOpCode::CGIJ : TR::InstOpCode::CIJ, node, rLen, (int8_t) sizeOfVector, doneLabel, TR::InstOpCode::COND_BNH);                         iComment("len <= 16 ? we're done..")
-   cursor =                  generateRILInstruction         (cg, is64 ? TR::InstOpCode::ALGFI : TR::InstOpCode::ALFI, node, rResidue, 1);                                                                        iComment("re-adjust residue for VLL/VSTL (length -> index)");
+   generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, addressOffset, generateS390MemoryReference(addressOffset, sizeOfVector, cg));
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRCT, node, loopCounter, loop);
 
-   /* ===================== Step 4.0: Setup for core-loop =====================*/
+   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, success);
 
-   // lazy evaluation done for loop counter since it isn't needed for strlen < 16
-   cursor =                  generateS390LabelInstruction   (cg, TR::InstOpCode::LABEL, node, coreLoopSetup);                                                                                                iComment("====== LOOP SETUP ======");
-   cursor =                  generateRSInstruction          (cg, TR::InstOpCode::getShiftRightLogicalSingleOpCode(), node, rLen, rLen, 4);                                                 iComment("reduce len to multiple of 16 (loop counter)");
+   generateRIInstruction(cg, TR::InstOpCode::LHI, node, lengthRegister, 1);
 
-   // We do this so we can move src index and target index together. It also saves the need of an additional register at the cost of an extra cycle.
-   // The index will begin at 0 and increment in multiples of 16
-   cursor =                  generateRXInstruction          (cg, TR::InstOpCode::getLoadAddressOpCode(), node, rSrcVal, generateS390MemoryReference(rSrcVal, rResidue, 0, cg));                            iComment("source.val += residue");
-   cursor =                  generateRXInstruction          (cg, TR::InstOpCode::getLoadAddressOpCode(), node, rTgtVal, generateS390MemoryReference(rTgtVal, rResidue, 0 ,cg));                            iComment("tgt.val += residue");
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, doneLabel);
 
-   // Start with index=0 into the src array
-   cursor =                  generateRRInstruction          (cg, TR::InstOpCode::getXORRegOpCode(), node, rSrcValIdx, rSrcValIdx);                                                                         iComment("reset srx/tgt index");
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, handleInvalidChars);
+   cg->generateDebugCounter(isToUpper? "z13/simd/toUpper/null"  : "z13/simd/toLower/null", 1, TR::DebugCounter::Cheap);
+   generateRRInstruction(cg, TR::InstOpCode::XR, node, lengthRegister, lengthRegister);
 
-   /* ===================== Step 4: Core loop - 16 byte at a time processing =====================*/
-
-   cursor =                  generateS390LabelInstruction   (cg, TR::InstOpCode::LABEL, node, processNext16Bytes);                                                                                           iComment("====== CORE LOOP ======");
-   cursor =                  generateVRXInstruction         (cg, TR::InstOpCode::VL, node, vBuf, generateS390MemoryReference(rSrcVal, rSrcValIdx, 0, cg));
-
-   // Check for invalid characters
-   if(!isCompressedString)
-      {
-      cursor =               generateVRRdInstruction        (cg, TR::InstOpCode::VSTRC, node, vTmp, vBuf, vInvalidRange, vInvalidCntrl, 0x1 , elementSizeMask);                                                          iComment("check for invalid codepoints");
-      cursor =               generateS390BranchInstruction  (cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, handleInvalidChars);
-      }
-
-   // Check for alphabets whose case we can convert
-   cursor =                  generateVRRdInstruction        (cg, TR::InstOpCode::VSTRC, node, vTmp, vBuf, vAlphaRange, vAlphaCntrl, 0x4, elementSizeMask);                                                               iComment("search for case to convert");
-   cursor =                  generateVRRcInstruction        (cg, isToUpper ? TR::InstOpCode::VS : TR::InstOpCode::VA, node, vCaseBuf, vBuf, vOffset, 0x0, 0x0, elementSizeMask);                                             iComment("offset for case conversion");
-
-   // Merge the case converted characters with the non-case converted characters and write to output String
-   cursor =                  generateVRReInstruction        (cg, TR::InstOpCode::VSEL, node, vCaseBuf, vCaseBuf, vBuf, vTmp);                                                                                iComment("only replace converted chars");
-   cursor =                  generateVRXInstruction         (cg, TR::InstOpCode::VST, node, vCaseBuf, generateS390MemoryReference(rTgtVal, rSrcValIdx, 0, cg), 0, cursor);
-
-   // Increment source index by 16, decrement loop counter by 1 and start over if needed
-   cursor =                  generateRXInstruction          (cg, TR::InstOpCode::getLoadAddressOpCode(), node, rSrcValIdx, generateS390MemoryReference(rSrcValIdx, sizeOfVector, cg), cursor);             iComment("src/dst index + = 16");
-   cursor =                  generateS390BranchInstruction  (cg, TR::InstOpCode::BRCT, node, rLoopCounter, processNext16Bytes);                                                                              iComment("iter-- and branch if not 0");
-
-   cursor =                  generateS390BranchInstruction  (cg, TR::InstOpCode::BRC , TR::InstOpCode::COND_BRC, node, doneLabel);                                                                               iComment("skip over invalid char handling");
-
-   /* ===================== Step 5: Invalid codepoint (and discontiguous array) handling - return null reference to Java =====================*/
-
-   cursor =                  generateS390LabelInstruction   (cg, TR::InstOpCode::LABEL, node, handleInvalidChars);                                                                                           iComment("====== INVALID CHAR HANDLING ======");
-   cg->generateDebugCounter(isToUpper? "z13/simd/toUpper/null" : "z13/simd/toLower/null", 1, TR::DebugCounter::Cheap);
-
-   cursor =                  generateRRInstruction          (cg, TR::InstOpCode::getXORRegOpCode(), node, rTgtBase, rTgtBase);
-
-
-   /* ===================== Step 6: Done - Perform cleanup =====================*/
-
-   cursor =                  generateS390LabelInstruction   (cg, TR::InstOpCode::LABEL, node, doneLabel);
+   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, doneLabel, regDeps);
    cursor->setEndInternalControlFlow();
-   cursor->setDependencyConditions(regDeps);
 
-   cg->stopUsingRegister(rSrcVal);
-   cg->stopUsingRegister(rTgtVal);
-   cg->stopUsingRegister(rSrcValIdx);
+   cg->stopUsingRegister(addressOffset);
+   cg->stopUsingRegister(loadLength);
 
-   cg->stopUsingRegister(rLen);
-   cg->stopUsingRegister(rResidue);
+   cg->stopUsingRegister(charBufferVector);
+   cg->stopUsingRegister(selectionVector);
+   cg->stopUsingRegister(modifiedCaseVector);
+   cg->stopUsingRegister(charOffsetVector);
+   cg->stopUsingRegister(alphaRangeVector);
+   cg->stopUsingRegister(alphaCondVector);
+   cg->stopUsingRegister(invalidRangeVector);
+   cg->stopUsingRegister(invalidCondVector);
 
-   cg->stopUsingRegister(vTmp);
-   cg->stopUsingRegister(vCaseBuf);
-   cg->stopUsingRegister(vBuf);
-   cg->stopUsingRegister(vAlphaRange);
-   cg->stopUsingRegister(vOffset);
-   cg->stopUsingRegister(vAlphaCntrl);
-   cg->stopUsingRegister(vInvalidRange);
-   cg->stopUsingRegister(vInvalidCntrl);
+   node->setRegister(lengthRegister);
 
-
-   node->setRegister(rTgtBase);
-
-   cg->decReferenceCount(node->getFirstChild());
-   cg->decReferenceCount(node->getSecondChild());
+   cg->decReferenceCount(node->getChild(0));
+   cg->decReferenceCount(node->getChild(1));
+   cg->decReferenceCount(node->getChild(2));
+   cg->decReferenceCount(node->getChild(3));
 
    return node->getRegister();
-   #undef iComment
    }
 
 extern TR::Register *
-inlineToUpper(TR::Node *node, TR::CodeGenerator *cg, bool isCompressedString)
+intrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isCompressed)
+   {
+   cg->generateDebugCounter("z13/simd/indexOf", 1, TR::DebugCounter::Free);
+
+   TR::Register* address = cg->evaluate(node->getChild(1));
+   TR::Register* value = cg->evaluate(node->getChild(2));
+   TR::Register* index = cg->evaluate(node->getChild(3));
+   TR::Register* size = cg->gprClobberEvaluate(node->getChild(4));
+
+   // load length isn't used after loop, size must is adjusted to become bytes left
+   TR::Register* loopCounter = size;
+   TR::Register* loadLength = cg->allocateRegister();
+   TR::Register* indexRegister = cg->allocateRegister();
+   TR::Register* offsetAddress = cg->allocateRegister();
+   TR::Register* scratch = offsetAddress;
+
+   TR::Register* charBufferVector = cg->allocateRegister(TR_VRF);
+   TR::Register* resultVector = cg->allocateRegister(TR_VRF);
+   TR::Register* valueVector = cg->allocateRegister(TR_VRF);
+
+   TR::LabelSymbol* loopLabel = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
+   TR::LabelSymbol* fullVectorLabel = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
+   TR::LabelSymbol* notFoundInResidue = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
+   TR::LabelSymbol* foundLabel = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
+   TR::LabelSymbol* foundLabelExtractedScratch = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
+   TR::LabelSymbol* failureLabel = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
+   TR::LabelSymbol* doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
+
+   const int elementSizeMask = isCompressed ? 0x0 : 0x1;   // byte or halfword mask
+   uintptrj_t headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+   const int8_t sizeOfVector = cg->machine()->getVRFSize();
+   const bool is64 = TR::Compiler->target.is64Bit();
+
+   TR::RegisterDependencyConditions * regDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 8, cg);
+   regDeps->addPostCondition(address, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(loopCounter, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(indexRegister, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(loadLength, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(offsetAddress, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(charBufferVector, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(resultVector, TR::RealRegister::AssignAny);
+   regDeps->addPostCondition(valueVector, TR::RealRegister::AssignAny);
+
+   generateVRRfInstruction(cg, TR::InstOpCode::VLVGP, node, valueVector, index, value);
+   generateVRIcInstruction(cg, TR::InstOpCode::VREP, node, valueVector, valueVector, (sizeOfVector / (1 << elementSizeMask)) - 1, elementSizeMask);
+   generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, resultVector, 0, 0);
+   generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, charBufferVector, 0, 0);
+
+   if (is64)
+      {
+      generateRREInstruction(cg, TR::InstOpCode::LLGFR, node, indexRegister, index);
+      } 
+   else 
+      {
+      generateRRInstruction(cg, TR::InstOpCode::LR, node, indexRegister, index);
+      }
+   generateRRInstruction(cg, TR::InstOpCode::SR, node, size, index);
+
+   if (!isCompressed)
+      {
+      generateRSInstruction(cg, TR::InstOpCode::SLL, node, size, 1);
+      generateRSInstruction(cg, TR::InstOpCode::SLL, node, indexRegister, 1);
+      }
+
+   generateRRInstruction(cg, TR::InstOpCode::LR, node, loadLength, size);
+   generateRILInstruction(cg, TR::InstOpCode::NILF, node, loadLength, 0xF);
+   TR::Instruction* cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, fullVectorLabel);
+
+   cursor->setStartInternalControlFlow();
+
+   // VLL takes an index, not a count, so subtract 1 from the count
+   generateRILInstruction(cg, TR::InstOpCode::SLFI, node, loadLength, 1);
+
+   generateRXInstruction(cg, TR::InstOpCode::LA, node, offsetAddress, generateS390MemoryReference(address, indexRegister, headerSize, cg));
+   generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, charBufferVector, loadLength, generateS390MemoryReference(offsetAddress, 0, cg));
+
+   generateVRRbInstruction(cg, TR::InstOpCode::VFEE, node, resultVector, charBufferVector, valueVector, 0x1, elementSizeMask);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK1, node, notFoundInResidue);
+
+   generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, scratch, resultVector, generateS390MemoryReference(7, cg), 0);
+   generateRIEInstruction(cg, TR::InstOpCode::CRJ, node, scratch, loadLength, foundLabelExtractedScratch, TR::InstOpCode::COND_BNH);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, notFoundInResidue);
+
+   // Increment index by loaded length + 1, since we subtracted 1 earlier
+   generateRIEInstruction(cg, TR::InstOpCode::AHIK, node, loadLength, loadLength, 1);
+   generateRRInstruction(cg, TR::InstOpCode::AR, node, indexRegister, loadLength);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, fullVectorLabel);
+
+   generateRIEInstruction(cg, TR::InstOpCode::CIJ, node, size, sizeOfVector, failureLabel, TR::InstOpCode::COND_BL);
+
+   // Set loopcounter to 1/16 of the length, remainder has already been accounted for
+   generateRSInstruction(cg, TR::InstOpCode::SRL, node, loopCounter, loopCounter, 4);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, loopLabel);
+
+   generateVRXInstruction(cg, TR::InstOpCode::VL, node, charBufferVector, generateS390MemoryReference(address, indexRegister, headerSize, cg));
+
+   generateVRRbInstruction(cg, TR::InstOpCode::VFEE, node, resultVector, charBufferVector, valueVector, 0x1, elementSizeMask);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK4, node, foundLabel);
+
+   generateRILInstruction(cg, TR::InstOpCode::AFI, node, indexRegister, sizeOfVector);
+
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRCT, node, loopCounter, loopLabel);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, failureLabel);
+   generateRIInstruction(cg, TR::InstOpCode::LHI, node, indexRegister, 0xFFFF);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_B, node, doneLabel);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, foundLabel);
+   generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, scratch, resultVector, generateS390MemoryReference(7, cg), 0);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, foundLabelExtractedScratch);
+   generateRRInstruction(cg, TR::InstOpCode::AR, node, indexRegister, scratch);
+
+   if (!isCompressed)
+      {
+      generateRSInstruction(cg, TR::InstOpCode::SRL, node, indexRegister, indexRegister, 1);
+      }
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, doneLabel, regDeps);
+   doneLabel->setEndInternalControlFlow();
+
+   cg->stopUsingRegister(loopCounter);
+   cg->stopUsingRegister(loadLength);
+   cg->stopUsingRegister(offsetAddress);
+
+   cg->stopUsingRegister(charBufferVector);
+   cg->stopUsingRegister(resultVector);
+   cg->stopUsingRegister(valueVector);
+
+   node->setRegister(indexRegister);
+   cg->recursivelyDecReferenceCount(node->getChild(0));
+   cg->decReferenceCount(node->getChild(1));
+   cg->decReferenceCount(node->getChild(2));
+   cg->decReferenceCount(node->getChild(3));
+   cg->decReferenceCount(node->getChild(4));
+   return indexRegister;
+   }
+
+extern TR::Register *
+toUpperIntrinsic(TR::Node *node, TR::CodeGenerator *cg, bool isCompressedString)
    {
    cg->generateDebugCounter("z13/simd/toUpper", 1, TR::DebugCounter::Free);
    return caseConversionHelper(node, cg, true, isCompressedString);
    }
 
 extern TR::Register *
-inlineToLower(TR::Node *node, TR::CodeGenerator *cg, bool isCompressedString)
+toLowerIntrinsic(TR::Node *node, TR::CodeGenerator *cg, bool isCompressedString)
    {
    cg->generateDebugCounter("z13/simd/toLower", 1, TR::DebugCounter::Free);
    return caseConversionHelper(node, cg, false, isCompressedString);
@@ -8726,7 +8712,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             reloKind = TR_VerifyRefArrayForAlloc;
             }
 
-         cg->addAOTRelocation(new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(firstInstruction,
+         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(firstInstruction,
                      (uint8_t *) classSymRef,
                      (uint8_t *) recordInfo,
                      reloKind, cg),
@@ -9538,54 +9524,59 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mn
    TR::Node* oldVNode   = node->getChild(3);
    TR::Node* newVNode   = node->getChild(4);
 
-   bool usingCompressedPointers = false;
-   TR::Node *translatedNode = newVNode;
-   if (isObj && comp->useCompressedPointers() &&
-         translatedNode->getOpCodeValue() == TR::l2i)
+   // The card mark write barrier helper expects the source register to be a decompressed reference. As such if the
+   // value we are storing (last argument) has been lowered we must extract the decompressed reference from the
+   // compression sequence.
+   bool isValueCompressedReference = false;
+
+   TR::Node* decompressedValueNode = newVNode;
+
+   if (isObj && comp->useCompressedPointers() && decompressedValueNode->getOpCodeValue() == TR::l2i)
       {
-      // pattern match the sequence
-      //  icall                         <- node
-      //     thisNode
-      //     objNode
-      //     offsetNode
-      //     l2i                        <- oldVNode
-      //        lushr
-      //           a2l
-      //              oldValue
-      //           iconst shftKonst
-      //     l2i                        <- newVNode
-      //        lushr
-      //           a2l
-      //              newValue
-      //           iconst shftKonst
+      // Pattern match the sequence:
       //
-      ////usingCompressedPointers = true;
+      //  <node>
+      //    <thisNode>
+      //    <objNode>
+      //    <offsetNode>
+      //    <oldVNode>
+      //    l2i
+      //      lushr
+      //        a2l
+      //          <decompressedValueNode>
+      //        iconst
 
-      if (translatedNode->getOpCode().isConversion())
-         translatedNode = translatedNode->getFirstChild();
-      if (translatedNode->getOpCode().isRightShift()) // optional
-         translatedNode = translatedNode->getFirstChild();
-
-      bool usingLowMemHeap = false;
-      if (TR::Compiler->vm.heapBaseAddress() == 0 ||
-             newVNode->isNull())
-         usingLowMemHeap = true;
-
-      if (translatedNode->getOpCode().isSub() || usingLowMemHeap)
-         usingCompressedPointers = true;
-
-      if (usingCompressedPointers)
+      if (decompressedValueNode->getOpCode().isConversion())
          {
-         while ((translatedNode->getNumChildren() > 0) && (translatedNode->getOpCodeValue() != TR::a2l))
-            translatedNode = translatedNode->getFirstChild();
-         if (translatedNode->getOpCodeValue() == TR::a2l)
-            translatedNode = translatedNode->getFirstChild();
-         // artificially bump up the refCount on the value so
-         // that different registers are allocated for the actual
-         // and compressed values. this is done so that the VMwrtbarEvaluator
-         // uses the uncompressed value
-         //
-         translatedNode->incReferenceCount();
+         decompressedValueNode = decompressedValueNode->getFirstChild();
+         }
+
+      if (decompressedValueNode->getOpCode().isRightShift())
+         {
+         decompressedValueNode = decompressedValueNode->getFirstChild();
+         }
+
+      if (decompressedValueNode->getOpCode().isSub() || TR::Compiler->vm.heapBaseAddress() == 0 || newVNode->isNull())
+         {
+         isValueCompressedReference = true;
+         }
+
+      if (isValueCompressedReference)
+         {
+         while ((decompressedValueNode->getNumChildren() > 0) && (decompressedValueNode->getOpCodeValue() != TR::a2l))
+            {
+            decompressedValueNode = decompressedValueNode->getFirstChild();
+            }
+
+         if (decompressedValueNode->getOpCodeValue() == TR::a2l)
+            {
+            decompressedValueNode = decompressedValueNode->getFirstChild();
+            }
+
+         // Artificially bump the reference count on the value so that different registers are allocated for the
+         // compressed and decompressed values. This is done so that the card mark write barrier helper uses the
+         // decompressed value.
+         decompressedValueNode->incReferenceCount();
          }
       }
 
@@ -9595,9 +9586,12 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mn
    oldVReg = cg->gprClobberEvaluate(oldVNode);  //  CS oldReg, newReg, OFF(objReg)
    newVReg = cg->evaluate(newVNode);                    //    oldReg is clobbered
 
-   TR::Register * compressedRegister = newVReg;
-   if (usingCompressedPointers)
-      compressedRegister = cg->evaluate(translatedNode);
+   TR::Register* compressedValueRegister = newVReg;
+
+   if (isValueCompressedReference)
+      {
+      compressedValueRegister = cg->evaluate(decompressedValueNode);
+      }
 
    bool needsDup = false;
 
@@ -9606,8 +9600,8 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mn
       // Make a copy of the register - reg deps later on expect them in different registers.
       newVReg = cg->allocateCollectedReferenceRegister();
       generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, newVReg, objReg);
-      if (!usingCompressedPointers)
-         compressedRegister = newVReg;
+      if (!isValueCompressedReference)
+         compressedValueRegister = newVReg;
 
       needsDup = true;
       }
@@ -9653,7 +9647,7 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mn
       {
       TR::Register* tempReadBarrier = cg->allocateRegister();
 
-      auto guardedLoadMnemonic = usingCompressedPointers ? TR::InstOpCode::LLGFSG : TR::InstOpCode::LGG;
+      auto guardedLoadMnemonic = comp->useCompressedPointers() ? TR::InstOpCode::LLGFSG : TR::InstOpCode::LGG;
 
       // Compare-And-Swap on object reference, while primarily is a store operation, it is also an implicit read (it
       // reads the existing value to be compared with a provided compare value, before the store itself), hence needs
@@ -9694,10 +9688,10 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mn
       TR::Register *raReg = cg->allocateRegister();
       TR::RegisterDependencyConditions* condWrtBar = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 5, cg);
       condWrtBar->addPostCondition(objReg, TR::RealRegister::GPR1);
-      if (compressedRegister != newVReg)
+      if (compressedValueRegister != newVReg)
          condWrtBar->addPostCondition(newVReg, TR::RealRegister::AssignAny); //defect 92001
-      if (compressedRegister != objReg)  // add this because I got conflicting dependencies on GPR1 and GPR2!
-         condWrtBar->addPostCondition(compressedRegister, TR::RealRegister::GPR2); //defect 92001
+      if (compressedValueRegister != objReg)  // add this because I got conflicting dependencies on GPR1 and GPR2!
+         condWrtBar->addPostCondition(compressedValueRegister, TR::RealRegister::GPR2); //defect 92001
       condWrtBar->addPostCondition(epReg, cg->getEntryPointRegister());
       condWrtBar->addPostCondition(raReg, cg->getReturnAddressRegister());
       // Cardmarking is not inlined for gencon. Consider doing so when perf issue arises.
@@ -9710,7 +9704,7 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mn
             wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreGenerationalSymbolRef(comp->getMethodSymbol());
          else
             wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef(comp->getMethodSymbol());
-         VMnonNullSrcWrtBarCardCheckEvaluator(node, objReg, compressedRegister, epReg, raReg, doneLabelWrtBar, wbRef, condWrtBar, cg, false);
+         VMnonNullSrcWrtBarCardCheckEvaluator(node, objReg, compressedValueRegister, epReg, raReg, doneLabelWrtBar, wbRef, condWrtBar, cg, false);
          }
 
       else if (doCrdMrk)
@@ -9747,8 +9741,8 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mn
       cg->stopUsingRegister(scratchReg);
       }
 
-   if (usingCompressedPointers)
-      cg->decReferenceCount(translatedNode);
+   if (isValueCompressedReference)
+      cg->decReferenceCount(decompressedValueNode);
 
    node->setRegister(resultReg);
    return resultReg;

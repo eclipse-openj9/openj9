@@ -209,6 +209,7 @@ int32_t TR_EscapeAnalysis::perform()
       _maxInlinedBytecodeSize = 4000 - nodeCount;
       }
 
+   TR_ASSERT_FATAL(_maxSniffDepth < 16, "The argToCall and nonThisArgToCall flags are 16 bits - a depth limit greater than 16 will not fit in these flags");
    if (getLastRun())
       _maxPassNumber = 0; // Notwithstanding our heursitics, if this is the last run, our max "pass number" is zero (which is the first pass)
 
@@ -1497,7 +1498,7 @@ Candidate *TR_EscapeAnalysis::createCandidateIfValid(TR::Node *node, TR_OpaqueCl
       // Don't convert double-word arrays if platform does not have double-word aligned stacks
       // will handle stack alignment later
       else if (!comp()->cg()->getHasDoubleWordAlignedStack() &&
-                node->getOpCodeValue() == TR::newarray && !comp()->getOptions()->getOption(TR_EnableSIMDLibrary))
+                node->getOpCodeValue() == TR::newarray && !comp()->getOption(TR_EnableSIMDLibrary))
          {
          TR::Node *typeNode = node->getSecondChild();
          if (typeNode->getInt() == 7 || typeNode->getInt() == 11)

@@ -30,9 +30,30 @@ my $javaCmd = join(' ', @ARGV);
 
 my ($in, $out, $err);
 
-my $perlPid = open3($in, $out, $err, $javaCmd);
+my $perlPid;
 
-my $javaPid = <$out>;
+my $javaPid;
+
+if ($^O eq 'cygwin') {
+	open3($in, $out, $err, $javaCmd);
+	$javaPid = <$out>;
+	# Command gets the list of PIDs of the Java processes system is running
+	$perlPid = `wmic process where "name='java.exe'" get ProcessID`;
+	print $in "getPid finished";
+	# String trim both sides of javaPid and perlPid for the index check
+	$javaPid =~ s/^\s+|\s+$//g;
+	$perlPid =~ s/^\s+|\s+$//g;
+	# After trimming, check if javaPid is in the list of PIDs system returns
+	# index() would return an index if it is in the list, return -1 otherwise
+	# (PASS if not -1)
+	if (index($perlPid, $javaPid) != -1) {
+		$perlPid = $javaPid;
+	}
+} else {
+	$perlPid = open3($in, $out, $err, $javaCmd);
+	$javaPid = <$out>;
+	print $in "getPid finished";
+}
 
 if ($perlPid == $javaPid) {
 	print "PASS: RuntimeMXBean.getPid() returned correct PID.";

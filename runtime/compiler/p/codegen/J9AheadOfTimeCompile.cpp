@@ -38,6 +38,7 @@
 #include "il/Node_inlines.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/symbol/LabelSymbol.hpp"
+#include "ras/DebugCounter.hpp"
 
 J9::Power::AheadOfTimeCompile::AheadOfTimeCompile(TR::CodeGenerator *cg) :
          J9::AheadOfTimeCompile(_relocationTargetTypeToHeaderSizeMap, cg->comp()),
@@ -54,10 +55,10 @@ void J9::Power::AheadOfTimeCompile::processRelocations()
    for (auto iterator = getRelocationList().begin(); iterator != getRelocationList().end(); ++iterator)
       (*iterator)->mapRelocation(_cg);
 
-   auto aotIterator = _cg->getAOTRelocationList().begin();
-   while (aotIterator != _cg->getAOTRelocationList().end())
+   auto aotIterator = _cg->getExternalRelocationList().begin();
+   while (aotIterator != _cg->getExternalRelocationList().end())
       {
-	  (*aotIterator)->addAOTRelocation(_cg);
+	  (*aotIterator)->addExternalRelocation(_cg);
       ++aotIterator;
       }
 
@@ -801,6 +802,35 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          }
          break;
 
+      case TR_DebugCounter:
+         {
+         TR::DebugCounterBase *counter = (TR::DebugCounterBase *) relocation->getTargetAddress();
+         if (!counter || !counter->getReloData() || !counter->getName())
+            comp->failCompilation<TR::CompilationException>("Failed to generate debug counter relo data");
+
+         TR::DebugCounterReloData *counterReloData = counter->getReloData();
+
+         uintptrj_t offset = (uintptrj_t)fej9->sharedCache()->rememberDebugCounterName(counter->getName());
+
+         uint8_t flags = (uint8_t)counterReloData->_seqKind;
+         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
+         *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
+
+         *(uintptrj_t *)cursor = (uintptrj_t)counterReloData->_callerIndex;
+         cursor += SIZEPOINTER;
+         *(uintptrj_t *)cursor = (uintptrj_t)counterReloData->_bytecodeIndex;
+         cursor += SIZEPOINTER;
+         *(uintptrj_t *)cursor = offset;
+         cursor += SIZEPOINTER;
+         *(uintptrj_t *)cursor = (uintptrj_t)counterReloData->_delta;
+         cursor += SIZEPOINTER;
+         *(uintptrj_t *)cursor = (uintptrj_t)counterReloData->_fidelity;
+         cursor += SIZEPOINTER;
+         *(uintptrj_t *)cursor = (uintptrj_t)counterReloData->_staticDelta;
+         cursor += SIZEPOINTER;
+         }
+         break;
+
       }
    return cursor;
    }
@@ -867,6 +897,7 @@ uint32_t J9::Power::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_
    0,                                        // TR_NativeMethodAbsolute                = 56,
    0,                                        // TR_NativeMethodRelative                = 57,
    32,                                       // TR_ArbitraryClassAddress               = 58,
+   56,                                       // TR_DebugCounter                        = 59
    };
 #else
 uint32_t J9::Power::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_NumExternalRelocationKinds] =
@@ -930,6 +961,7 @@ uint32_t J9::Power::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_
    0,                                        // TR_NativeMethodAbsolute                = 56,
    0,                                        // TR_NativeMethodRelative                = 57,
    16,                                       // TR_ArbitraryClassAddress               = 58,
+   28                                        // TR_DebugCounter                        = 59
    };
 
 #endif

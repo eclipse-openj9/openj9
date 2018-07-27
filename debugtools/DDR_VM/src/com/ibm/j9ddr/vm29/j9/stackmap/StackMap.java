@@ -256,7 +256,7 @@ public class StackMap
 			//Scratch storage is held on-heap in stack data structures and managed inside mapStack.
 			
 			//Build map array - one slot for every PC in method
-			length = (UDATA) J9_BYTECODE_SIZE_FROM_ROM_METHOD(romMethod);
+			length = J9_BYTECODE_SIZE_FROM_ROM_METHOD(romMethod);
 			
 			stackStructSize = romMethod.maxStack();
 			

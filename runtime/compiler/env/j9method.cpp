@@ -1116,7 +1116,7 @@ TR_ResolvedJ9MethodBase::isInlineable(TR::Compilation *comp)
 
 static intptrj_t getInitialCountForMethod(TR_ResolvedMethod *m, TR::Compilation *comp)
    {
-   TR::Options * options = comp->getOptions()->getCmdLineOptions();
+   TR::Options * options = comp->getOptions();
 
    intptrj_t initialCount = m->hasBackwardBranches() ? options->getInitialBCount() : options->getInitialCount();
 
@@ -1132,7 +1132,7 @@ static intptrj_t getInitialCountForMethod(TR_ResolvedMethod *m, TR::Compilation 
           // Do not change the counts on zos at the moment since the shared cache capacity is higher on this platform
           // and by increasing counts we could end up significantly impacting startup
 #else
-          bool startupTimeMatters = TR::Options::isQuickstartDetected() || TR::Options::getCmdLineOptions()->getOption(TR_UseLowerMethodCounts);
+          bool startupTimeMatters = TR::Options::isQuickstartDetected() || comp->getOption(TR_UseLowerMethodCounts);
 
           if (!startupTimeMatters)
              {
@@ -1222,14 +1222,13 @@ TR_ResolvedJ9MethodBase::isCold(TR::Compilation * comp, bool isIndirectCall, TR:
 
    intptrj_t count = getInvocationCount();
 
-   TR::Options * options = comp->getOptions()->getCmdLineOptions();
    intptrj_t initialCount = getInitialCountForMethod(this, comp);
 
    if (count < 0 || count > initialCount)
       return false;
 
    // if compiling a BigDecimal method, block isn't cold
-   if ((!options->getOption(TR_DisableDFP) && !comp->getOptions()->getAOTCmdLineOptions()->getOption(TR_DisableDFP)) &&
+   if ((!comp->getOption(TR_DisableDFP)) &&
        (
 #ifdef TR_TARGET_S390
        TR::Compiler->target.cpu.getS390SupportsDFP() ||
@@ -2054,8 +2053,7 @@ TR_ResolvedRelocatableJ9Method::createResolvedMethodFromJ9Method(TR::Compilation
    if (dontInline)
       return NULL;
 
-   if (TR::Options::getCmdLineOptions()->getOption(TR_DisableDFP) ||
-       TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableDFP) ||
+   if (comp->getOption(TR_DisableDFP) ||
        (!(TR::Compiler->target.cpu.supportsDecimalFloatingPoint()
 #ifdef TR_TARGET_S390
        || TR::Compiler->target.cpu.getS390SupportsDFP()
@@ -2476,7 +2474,6 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {
       {TR::java_lang_Object_init,                 6,    "<init>", (int16_t)-1,    "*"},
       {x(TR::java_lang_Object_getClass,             "getClass",             "()Ljava/lang/Class;")},
-      {x(TR::java_lang_Object_hashCodeImpl,         "hashCode",         "()I")},
       {x(TR::java_lang_Object_clone,                "clone",                "()Ljava/lang/Object;")},
       {x(TR::java_lang_Object_newInstancePrototype, "newInstancePrototype", "(Ljava/lang/Class;)Ljava/lang/Object;")},
       {x(TR::java_lang_Object_getAddressAsPrimitive, "getAddressAsPrimitive", "(Ljava/lang/Object;)I")},
@@ -2972,13 +2969,6 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {x(TR::java_lang_String_compress,            "compress",            "([C[BII)I")},
       {x(TR::java_lang_String_compressNoCheck,     "compressNoCheck",     "([C[BII)V")},
       {x(TR::java_lang_String_andOR,               "andOR",               "([CII)I")},
-      {x(TR::java_lang_String_toUpperHWOptimizedCompressed,  "toUpperHWOptimizedCompressed",  "(Ljava/lang/String;)Z")},
-      {x(TR::java_lang_String_toUpperHWOptimizedDecompressed,"toUpperHWOptimizedDecompressed","(Ljava/lang/String;)Z")},
-      {x(TR::java_lang_String_toUpperHWOptimized,  "toUpperHWOptimized","(Ljava/lang/String;)Z")},
-      {x(TR::java_lang_String_toLowerHWOptimizedCompressed,  "toLowerHWOptimizedCompressed",  "(Ljava/lang/String;)Z")},
-      {x(TR::java_lang_String_toLowerHWOptimizedDecompressed,"toLowerHWOptimizedDecompressed",  "(Ljava/lang/String;)Z")},
-      {x(TR::java_lang_String_toLowerHWOptimized,  "toLowerHWOptimized",  "(Ljava/lang/String;)Z")},
-      {x(TR::java_lang_String_StrHWAvailable,      "StrHWAvailable", "()Z")},
       {x(TR::java_lang_String_unsafeCharAt,        "unsafeCharAt",        "(I)C")},
       {x(TR::java_lang_String_split_str_int,       "split",               "(Ljava/lang/String;I)[Ljava/lang/String;")},
       {x(TR::java_lang_String_getChars_charArray,  "getChars",            "(II[CI)V")},
@@ -3241,29 +3231,34 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {
       {x(TR::com_ibm_jit_JITHelpers_is32Bit,                                  "is32Bit", "()Z")},
       {x(TR::com_ibm_jit_JITHelpers_isArray,                                  "isArray", "(Ljava/lang/Object;)Z")},
-      {x(TR::com_ibm_jit_JITHelpers_getJ9ClassFromObject64,                   "getJ9ClassFromObject64", "(Ljava/lang/Object;)J")},
+      {x(TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1,                   "intrinsicIndexOfLatin1", "(Ljava/lang/Object;BII)I")},
+      {x(TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16,                    "intrinsicIndexOfUTF16", "(Ljava/lang/Object;CII)I")},
+#ifdef TR_TARGET_32BIT
       {x(TR::com_ibm_jit_JITHelpers_getJ9ClassFromObject32,                   "getJ9ClassFromObject32", "(Ljava/lang/Object;)I")},
       {x(TR::com_ibm_jit_JITHelpers_getJ9ClassFromClass32,                    "getJ9ClassFromClass32", "(Ljava/lang/Class;)I")},
-      {x(TR::com_ibm_jit_JITHelpers_getJ9ClassFromClass64,                    "getJ9ClassFromClass64", "(Ljava/lang/Class;)J")},
       {x(TR::com_ibm_jit_JITHelpers_getBackfillOffsetFromJ9Class32,           "getBackfillOffsetFromJ9Class32", "(I)I")},
-      {x(TR::com_ibm_jit_JITHelpers_getBackfillOffsetFromJ9Class64,           "getBackfillOffsetFromJ9Class64", "(J)J")},
       {x(TR::com_ibm_jit_JITHelpers_getRomClassFromJ9Class32,                 "getRomClassFromJ9Class32", "(I)I")},
-      {x(TR::com_ibm_jit_JITHelpers_getRomClassFromJ9Class64,                 "getRomClassFromJ9Class64", "(J)J")},
       {x(TR::com_ibm_jit_JITHelpers_getArrayShapeFromRomClass32,              "getArrayShapeFromRomClass32", "(I)I")},
-      {x(TR::com_ibm_jit_JITHelpers_getArrayShapeFromRomClass64,              "getArrayShapeFromRomClass64", "(J)I")},
       {x(TR::com_ibm_jit_JITHelpers_getSuperClassesFromJ9Class32,             "getSuperClassesFromJ9Class32", "(I)I")},
-      {x(TR::com_ibm_jit_JITHelpers_getSuperClassesFromJ9Class64,             "getSuperClassesFromJ9Class64", "(J)J")},
       {x(TR::com_ibm_jit_JITHelpers_getClassDepthAndFlagsFromJ9Class32,       "getClassDepthAndFlagsFromJ9Class32", "(I)I")},
-      {x(TR::com_ibm_jit_JITHelpers_getClassDepthAndFlagsFromJ9Class64,       "getClassDepthAndFlagsFromJ9Class64", "(J)J")},
       {x(TR::com_ibm_jit_JITHelpers_getClassFlagsFromJ9Class32,               "getClassFlagsFromJ9Class32", "(I)I")},
-      {x(TR::com_ibm_jit_JITHelpers_getClassFlagsFromJ9Class64,               "getClassFlagsFromJ9Class64", "(J)I")},
       {x(TR::com_ibm_jit_JITHelpers_getModifiersFromRomClass32,               "getModifiersFromRomClass32", "(I)I")},
-      {x(TR::com_ibm_jit_JITHelpers_getModifiersFromRomClass64,               "getModifiersFromRomClass64", "(J)I")},
       {x(TR::com_ibm_jit_JITHelpers_getClassFromJ9Class32,                    "getClassFromJ9Class32", "(I)Ljava/lang/Class;")},
-      {x(TR::com_ibm_jit_JITHelpers_getClassFromJ9Class64,                    "getClassFromJ9Class64", "(J)Ljava/lang/Class;")},
       {x(TR::com_ibm_jit_JITHelpers_getAddressAsPrimitive32,                  "getAddressAsPrimitive32", "(Ljava/lang/Object;)I")},
+#endif
+#ifdef TR_TARGET_64BIT
+      {x(TR::com_ibm_jit_JITHelpers_getJ9ClassFromObject64,                   "getJ9ClassFromObject64", "(Ljava/lang/Object;)J")},
+      {x(TR::com_ibm_jit_JITHelpers_getJ9ClassFromClass64,                    "getJ9ClassFromClass64", "(Ljava/lang/Class;)J")},
+      {x(TR::com_ibm_jit_JITHelpers_getBackfillOffsetFromJ9Class64,           "getBackfillOffsetFromJ9Class64", "(J)J")},
+      {x(TR::com_ibm_jit_JITHelpers_getRomClassFromJ9Class64,                 "getRomClassFromJ9Class64", "(J)J")},
+      {x(TR::com_ibm_jit_JITHelpers_getArrayShapeFromRomClass64,              "getArrayShapeFromRomClass64", "(J)I")},
+      {x(TR::com_ibm_jit_JITHelpers_getSuperClassesFromJ9Class64,             "getSuperClassesFromJ9Class64", "(J)J")},
+      {x(TR::com_ibm_jit_JITHelpers_getClassDepthAndFlagsFromJ9Class64,       "getClassDepthAndFlagsFromJ9Class64", "(J)J")},
+      {x(TR::com_ibm_jit_JITHelpers_getClassFlagsFromJ9Class64,               "getClassFlagsFromJ9Class64", "(J)I")},
+      {x(TR::com_ibm_jit_JITHelpers_getModifiersFromRomClass64,               "getModifiersFromRomClass64", "(J)I")},
+      {x(TR::com_ibm_jit_JITHelpers_getClassFromJ9Class64,                    "getClassFromJ9Class64", "(J)Ljava/lang/Class;")},
       {x(TR::com_ibm_jit_JITHelpers_getAddressAsPrimitive64,                  "getAddressAsPrimitive64", "(Ljava/lang/Object;)J")},
-      {x(TR::com_ibm_jit_JITHelpers_hashCodeImpl,                             "hashCodeImpl", "(Ljava/lang/Object;)I")},
+#endif
       {x(TR::com_ibm_jit_JITHelpers_getSuperclass,                            "getSuperclass", "(Ljava/lang/Class;)Ljava/lang/Class;")},
       {x(TR::com_ibm_jit_JITHelpers_optimizedClone,                           "optimizedClone", "(Ljava/lang/Object;)Ljava/lang/Object;")},
       {x(TR::com_ibm_jit_JITHelpers_getPackedDataSizeFromJ9Class32,           "getPackedDataSizeFromJ9Class32", "(I)I")},
@@ -3317,12 +3312,22 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {x(TR::com_ibm_jit_JITHelpers_byteToCharUnsigned,                       "byteToCharUnsigned", "(B)C")},
       {x(TR::com_ibm_jit_JITHelpers_acmplt,                                   "acmplt", "(Ljava/lang/Object;Ljava/lang/Object;)Z")},
       {x(TR::com_ibm_jit_JITHelpers_getClassInitializeStatus,                 "getClassInitializeStatus", "(Ljava/lang/Class;)I")},
-      {  TR::unknownMethod}
+      {x(TR::com_ibm_jit_JITHelpers_supportsIntrinsicCaseConversion,          "supportsIntrinsicCaseConversion", "()Z")},
+      {x(TR::com_ibm_jit_JITHelpers_toUpperIntrinsicLatin1,                   "toUpperIntrinsicLatin1", "([B[BI)Z")},
+      {x(TR::com_ibm_jit_JITHelpers_toUpperIntrinsicLatin1,                   "toUpperIntrinsicLatin1", "([C[CI)Z")},
+      {x(TR::com_ibm_jit_JITHelpers_toLowerIntrinsicLatin1,                   "toLowerIntrinsicLatin1", "([B[BI)Z")},
+      {x(TR::com_ibm_jit_JITHelpers_toLowerIntrinsicLatin1,                   "toLowerIntrinsicLatin1", "([C[CI)Z")},
+      {x(TR::com_ibm_jit_JITHelpers_toUpperIntrinsicUTF16,                    "toUpperIntrinsicUTF16", "([B[BI)Z")},
+      {x(TR::com_ibm_jit_JITHelpers_toUpperIntrinsicUTF16,                    "toUpperIntrinsicUTF16", "([C[CI)Z")},
+      {x(TR::com_ibm_jit_JITHelpers_toLowerIntrinsicUTF16,                    "toLowerIntrinsicUTF16", "([B[BI)Z")},
+      {x(TR::com_ibm_jit_JITHelpers_toLowerIntrinsicUTF16,                    "toLowerIntrinsicUTF16", "([C[CI)Z")},
+      { TR::unknownMethod}
       };
 
    static X StringUTF16Methods[] =
       {
       { x(TR::java_lang_StringUTF16_getChar,                                  "getChar", "([BI)C")},
+      { x(TR::java_lang_StringUTF16_toBytes,                                  "toBytes", "([CII)[B")},
       { TR::unknownMethod }
       };
 
@@ -3701,6 +3706,12 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {  TR::unknownMethod}
       };
 
+   static X PrimitiveHandleMethods[] =
+      {
+      {x(TR::java_lang_invoke_PrimitiveHandle_initializeClassIfRequired,  "initializeClassIfRequired",       "()V")},
+      {  TR::unknownMethod}
+      };
+
    static X VarHandleMethods[] =
       {
       // Recognized method only works for resovled methods
@@ -3842,6 +3853,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {
       {x(TR::java_lang_invoke_DirectHandle_isAlreadyCompiled,   "isAlreadyCompiled",  "(J)Z")},
       {x(TR::java_lang_invoke_DirectHandle_compiledEntryPoint,  "compiledEntryPoint", "(J)J")},
+      {x(TR::java_lang_invoke_DirectHandle_nullCheckIfRequired,  "nullCheckIfRequired", "(Ljava/lang/Object;)V")},
       {  TR::unknownMethod}
       };
 
@@ -4258,6 +4270,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
    static Y class32[] =
       {
       { "java/lang/invoke/MutableCallSite", MutableCallSiteMethods },
+      { "java/lang/invoke/PrimitiveHandle", PrimitiveHandleMethods },
       { "com/ibm/dataaccess/PackedDecimal", DataAccessPackedDecimalMethods },
       { 0 }
       };
@@ -4582,12 +4595,18 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
          }
       }
 
-   if (TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug) &&
-       ((rm == TR::com_ibm_jit_JITHelpers_hashCodeImpl) ||
-        (rm == TR::com_ibm_jit_JITHelpers_getSuperclass) ||
-        (rm == TR::com_ibm_jit_DecimalFormatHelper_formatAsDouble) ||
-        (rm == TR::com_ibm_jit_DecimalFormatHelper_formatAsFloat)))
-      return;
+   if (TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug))
+      {
+      switch (rm)
+         {
+         case TR::com_ibm_jit_JITHelpers_getSuperclass:
+         case TR::com_ibm_jit_DecimalFormatHelper_formatAsDouble:
+         case TR::com_ibm_jit_DecimalFormatHelper_formatAsFloat:
+            return;
+         default:
+            break;
+         }
+      }
 
    if ( isMethodInValidLibrary(fej9(),this) &&
         !failBecauseOfHCR) // With HCR, non-native methods can change, so we shouldn't "recognize" them
@@ -4605,10 +4624,6 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
       if (disableRecMethods && fej9()->isAOT_DEPRECATED_DO_NOT_USE()) // AOT_JIT_GAP
          {
          switch (rm) {
-#if defined(TR_TARGET_X86)
-            case TR::java_lang_System_currentTimeMillis: // This needs AOT relocation. For now, only implemented on x86
-#endif
-            //|| rm == TR::java_lang_J9VMInternals_identityHashCode
             case TR::java_lang_Thread_currentThread:
             case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
             case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
@@ -4786,7 +4801,6 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
             case TR::java_lang_Object_clone:
 
             case TR::java_lang_System_nanoTime:
-            case TR::java_lang_Object_hashCodeImpl:
             case TR::java_lang_String_hashCodeImplCompressed:
             case TR::java_lang_String_hashCodeImplDecompressed:
             case TR::sun_nio_ch_NativeThread_current:
@@ -6055,7 +6069,7 @@ TR_ResolvedJ9Method::getResolvedInterfaceMethodOffset(TR_OpaqueClassBlock * clas
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
    // the classObject is the fixed type of the this pointer.  The result of this method is going to be
    // used to call the interface function directly.
-   UDATA vTableIndex = 0;
+   UDATA vTableOffset = 0;
 #if TURN_OFF_INLINING
    return 0;
 #else
@@ -6064,10 +6078,10 @@ TR_ResolvedJ9Method::getResolvedInterfaceMethodOffset(TR_OpaqueClassBlock * clas
 
       {
       TR::VMAccessCriticalSection getResolvedInterfaceMethodOffset(fej9());
-      vTableIndex = jitGetInterfaceVTableIndexFromCP(_fe->vmThread(), cp(), cpIndex, TR::Compiler->cls.convertClassOffsetToClassPtr(classObject));
+      vTableOffset = jitGetInterfaceVTableOffsetFromCP(_fe->vmThread(), cp(), cpIndex, TR::Compiler->cls.convertClassOffsetToClassPtr(classObject));
       }
 
-   return (J9JIT_INTERP_VTABLE_OFFSET - vTableIndex);
+   return (J9JIT_INTERP_VTABLE_OFFSET - vTableOffset);
 #endif
    }
 
@@ -6242,29 +6256,29 @@ TR_ResolvedJ9Method::getResolvedVirtualMethod(TR::Compilation * comp, I_32 cpInd
       {
       // only call the resolve if unresolved
       J9Method * ramMethod = 0;
-      UDATA vTableIndex = (((J9RAMVirtualMethodRef*) literals())[cpIndex]).methodIndexAndArgCount;
-      vTableIndex >>= 8;
-      if ((J9JIT_INTERP_VTABLE_OFFSET + sizeof(uintptrj_t)) == vTableIndex)
+      UDATA vTableOffset = (((J9RAMVirtualMethodRef*) literals())[cpIndex]).methodIndexAndArgCount;
+      vTableOffset >>= 8;
+      if (J9VTABLE_INITIAL_VIRTUAL_OFFSET == vTableOffset)
          {
          TR::VMAccessCriticalSection resolveVirtualMethodRef(fej9());
-         vTableIndex = _fe->_vmFunctionTable->resolveVirtualMethodRefInto(_fe->vmThread(), cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME, &ramMethod, NULL);
+         vTableOffset = _fe->_vmFunctionTable->resolveVirtualMethodRefInto(_fe->vmThread(), cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME, &ramMethod, NULL);
          }
       else
          {
          // go fishing for the J9Method...
          uint32_t classIndex = ((J9ROMMethodRef *) cp()->romConstantPool)[cpIndex].classRefCPIndex;
          J9Class * classObject = (((J9RAMClassRef*) literals())[classIndex]).value;
-         ramMethod = *(J9Method **)((char *)classObject + vTableIndex);
+         ramMethod = *(J9Method **)((char *)classObject + vTableOffset);
          if (unresolvedInCP)
             *unresolvedInCP = false;
          }
 
-      if (vTableIndex)
+      if (vTableOffset)
          {
          TR_AOTInliningStats *aotStats = NULL;
          if (comp->getOption(TR_EnableAOTStats))
             aotStats = & (((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->virtualMethods);
-         resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, vTableIndex, ramMethod, unresolvedInCP, aotStats);
+         resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, vTableOffset, ramMethod, unresolvedInCP, aotStats);
          }
       }
 

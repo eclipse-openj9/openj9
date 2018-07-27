@@ -38,6 +38,7 @@
 
 	<!--Properties for this particular build-->
 	<property name="src" location="./src" />
+	<property name="src_80" location="./src_80" />
 	<property name="build" location="./bin" />
 	<property name="transformerListener" location="${TEST_ROOT}/Utils/src"/>
 
@@ -76,16 +77,34 @@
 			<include name="ParentOfChild.java" />
 		</javac>
 
+		<property name="addExports" value="--add-modules openj9.sharedclasses --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-exports java.base/com.ibm.oti.util=ALL-UNNAMED --add-exports=java.management/com.ibm.java.lang.management.internal=ALL-UNNAMED --add-exports=jdk.management/com.ibm.lang.management.internal=ALL-UNNAMED" />
+
 		<if>
 			<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
 			<then>
-				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
+				<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
+					<src path="${src}" />
+					<src path="${src_80}" />
 					<src path="${excludeFiles}"/>
 				</javac>
 			</then>
+			<elseif>
+					<matches string="${JAVA_VERSION}" pattern="^SE(9|10)0$$" />
+				<then>
+					<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
+						<src path="${src}" />
+						<src path="${src_80}" />
+						<src path="${excludeFiles}"/>
+						<!-- 133609: ClassPathSettingClassLoaderTest failed in SE90 -->
+						<exclude name="**/ClassPathSettingClassLoader.java" />
+						<exclude name="**/ClassPathSettingClassLoaderTest.java" />
+						<compilerarg line='${addExports}' />
+					</javac>
+				</then>
+			</elseif>
 			<else>
-				<property name="addExports" value="--add-modules openj9.sharedclasses --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-exports java.base/com.ibm.oti.util=ALL-UNNAMED --add-exports=java.management/com.ibm.java.lang.management.internal=ALL-UNNAMED --add-exports=jdk.management/com.ibm.lang.management.internal=ALL-UNNAMED" />
-				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
+				<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
+					<src path="${src}" />
 					<src path="${excludeFiles}"/>
 					<!-- 133609: ClassPathSettingClassLoaderTest failed in SE90 -->
 					<exclude name="**/ClassPathSettingClassLoader.java" />

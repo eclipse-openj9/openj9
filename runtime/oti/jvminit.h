@@ -359,6 +359,8 @@ enum INIT_STAGE {
 #define VMOPT_XXDISABLEOSRSAFEPOINT "-XX:-OSRSafePoint"
 #define VMOPT_XXENABLEOSRSAFEPOINTFV "-XX:+OSRSafePointFV"
 #define VMOPT_XXDISABLEOSRSAFEPOINTFV "-XX:-OSRSafePointFV"
+#define VMOPT_XXENABLEJITWATCH "-XX:+JITInlineWatches"
+#define VMOPT_XXDISABLEJITWATCH "-XX:-JITInlineWatches"
 
 #define VMOPT_XX_NOSUBALLOC32BITMEM "-XXnosuballoc32bitmem"
 
@@ -460,8 +462,8 @@ enum INIT_STAGE {
 #define MAPOPT_XSHARE_AUTO "-Xshare:auto"
 #define MAPOPT_XSHARECLASSES_UTILITIES "-Xshareclasses:utilities"
 #define MAPOPT_XSHARECLASSES_NONFATAL "-Xshareclasses:nonfatal"
-
-#define VMOPT_XENTITLEDCPUS "-Xentitledcpus"
+#define MAPOPT_XXDISABLEEXPLICITGC "-XX:+DisableExplicitGC"
+#define MAPOPT_XXENABLEEXPLICITGC "-XX:-DisableExplicitGC"
 
 #define VMOPT_XXDUMPLOADEDCLASSLIST "-XX:DumpLoadedClassList"
 
@@ -506,7 +508,6 @@ enum INIT_STAGE {
 #define SYSPROP_JDK_MODULE_UPGRADE_PATH "jdk.module.upgrade.path"
 #define SYSPROP_JDK_MODULE_PATH "jdk.module.path"
 #define SYSPROP_JDK_MODULE_ADDMODS "jdk.module.addmods."
-#define SYSPROP_JDK_MODULE_ADDMODS_B136 "jdk.module.addmods"	/* to be removed when b148+ become default level */
 #define SYSPROP_JDK_MODULE_LIMITMODS "jdk.module.limitmods"
 #define SYSPROP_JDK_MODULE_ADDREADS "jdk.module.addreads."
 #define SYSPROP_JDK_MODULE_ADDEXPORTS "jdk.module.addexports."
