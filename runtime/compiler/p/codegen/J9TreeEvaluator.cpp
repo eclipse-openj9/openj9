@@ -12112,7 +12112,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
          return true;
 
       case TR::java_lang_String_hashCodeImplDecompressed:
-         if (TR::Compiler->target.cpu.id() >= TR_PPCp8 && TR::Compiler->target.cpu.getPPCSupportsVSX() && !cg->comp()->compileRelocatableCode())
+         if (!TR::Compiler->om.canGenerateArraylets() && TR::Compiler->target.cpu.id() >= TR_PPCp8 && TR::Compiler->target.cpu.getPPCSupportsVSX() && !cg->comp()->compileRelocatableCode())
             {
             resultReg = inlineStringHashcode(node, cg);
             return true;
