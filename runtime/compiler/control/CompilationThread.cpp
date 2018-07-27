@@ -6793,39 +6793,40 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       }
    else
       {
-      bool doLocalCompilation = false;
-      if (_compInfo.getPersistentInfo()->getJITaaSMode() == CLIENT_MODE && 
-         /* TODO: getOption->(TR_AllowLocalCompilationsInJITaaSClient) && */
-         TR::Options::canJITCompile()) // If -Xnojit we cannot do JIT compilations
+      if (_compInfo.getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
          {
-         static char *localColdCompilations = feGetEnv("TR_LocalColdCompilations");
-         // We could perform JIT compilations locally or remotely
-         // As a heuristic, cold compilations should be performed locally because
-         // they are supposed to be cheap with respect to memory and CPU.
-         //
-         if (entry->_optimizationPlan->getOptLevel() <= cold && localColdCompilations)
-            doLocalCompilation = true;
-
-         // In another heuristic we could downgrade all first time compilations
-         // that happen during startup.
-         if (false)
+         bool doLocalCompilation = false;
+         if (TR::Options::canJITCompile()) /* TODO: && getOption->(TR_AllowLocalCompilationsInJITaaSClient)*/
             {
-            if (!TR::CompilationInfo::isCompiled(method) &&  //recompilations should be sent remotely
-               !TR::Options::getCmdLineOptions()->getOption(TR_DontDowngradeToCold) &&
-               !TR::Options::getCmdLineOptions()->getOption(TR_DisableUpgradingColdCompilations) &&
-               TR::Options::getCmdLineOptions()->allowRecompilation() &&
-               entry->_optimizationPlan->getOptLevel() == warm)
-               {
+            static char *localColdCompilations = feGetEnv("TR_LocalColdCompilations");
+            // We could perform JIT compilations locally or remotely
+            // As a heuristic, cold compilations should be performed locally because
+            // they are supposed to be cheap with respect to memory and CPU.
+            //
+            if (entry->_optimizationPlan->getOptLevel() <= cold && localColdCompilations)
                doLocalCompilation = true;
-               entry->_optimizationPlan->setOptLevel(cold);
-               entry->_optimizationPlan->setOptLevelDowngraded(true);
-               // JITaaS TODO: queue a remote upgrade right away, but at a lower priority
-               // If so, disable GCR trees for those cold compilations.
+
+            // In another heuristic we could downgrade all first time compilations
+            // that happen during startup.
+            if (false)
+               {
+               if (!TR::CompilationInfo::isCompiled(method) &&  //recompilations should be sent remotely
+                  !TR::Options::getCmdLineOptions()->getOption(TR_DontDowngradeToCold) &&
+                  !TR::Options::getCmdLineOptions()->getOption(TR_DisableUpgradingColdCompilations) &&
+                  TR::Options::getCmdLineOptions()->allowRecompilation() &&
+                  entry->_optimizationPlan->getOptLevel() == warm)
+                  {
+                  doLocalCompilation = true;
+                  entry->_optimizationPlan->setOptLevel(cold);
+                  entry->_optimizationPlan->setOptLevelDowngraded(true);
+                  // JITaaS TODO: queue a remote upgrade right away, but at a lower priority
+                  // If so, disable GCR trees for those cold compilations.
+                  }
                }
             }
+         if (!doLocalCompilation)
+            entry->setRemoteCompReq();
          }
-      if (!doLocalCompilation)
-         entry->setRemoteCompReq();
  
       _vm = TR_J9VMBase::get(_jitConfig, vmThread); // This is used for JIT compilations and AOT loads
       entry->_useAotCompilation = false;
