@@ -327,7 +327,7 @@ J9::Z::CodeGenerator::lowerTreesPostChildrenVisit(TR::Node * parent, TR::TreeTop
 
    // J9, Z
    //
-   if (self()->codegenSupportsLoadlessBNDCheck() &&
+   if (codegenSupportsLoadlessBNDCheck() &&
       parent->getOpCode().isBndCheck() &&
       (parent->getFirstChild()->getOpCode().isLoadVar() ||
       parent->getSecondChild()->getOpCode().isLoadVar()))

@@ -245,7 +245,7 @@ J9::Power::CodeGenerator::lowerTreeIfNeeded(
 
    if ((node->getOpCode().isLeftShift() ||
         node->getOpCode().isRightShift() || node->getOpCode().isRotate()) &&
-       self()->needsNormalizationBeforeShifts() &&
+       needsNormalizationBeforeShifts() &&
        !node->isNormalizedShift())
       {
       TR::Node *second = node->getSecondChild();
