@@ -12902,17 +12902,107 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
 
       generateLabelInstruction(JNE4, node, inlineCardMarkLabel, cg);
 
-      inlineCardMarkPath = new (cg->trHeapMemory()) TR_OutlinedInstructions(inlineCardMarkLabel, cg);
-      cg->getOutlinedInstructionsList().push_front(inlineCardMarkPath);
-      inlineCardMarkPath->swapInstructionListsWithCompilation();
+      // Dirty the card table.
+      //
+      TR_OutlinedInstructionsGenerator og(inlineCardMarkLabel, node, cg);
+      TR::Register *tempReg = srm->findOrCreateScratchRegister();
 
-      generateLabelInstruction(NULL, LABEL, inlineCardMarkLabel, cg)->setNode(node);
+      generateRegRegInstruction(MOVRegReg(),  node, tempReg, owningObjectReg, cg);
+
+      if (comp->getOptions()->isVariableHeapBaseForBarrierRange0())
+         {
+         TR::MemoryReference *vhbMR =
+         generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, heapBaseForBarrierRange0), cg);
+         generateRegMemInstruction(SUBRegMem(), node, tempReg, vhbMR, cg);
+         }
+      else
+         {
+         uintptr_t chb = comp->getOptions()->getHeapBaseForBarrierRange0();
+
+         if (TR::Compiler->target.is64Bit() && (!IS_32BIT_SIGNED(chb) || TR::Compiler->om.nativeAddressesCanChangeSize()))
+            {
+            TR::Register *chbReg = srm->findOrCreateScratchRegister();
+            generateRegImm64Instruction(MOV8RegImm64, node, chbReg, chb, cg, TR_HEAP_BASE_FOR_BARRIER_RANGE);
+            generateRegRegInstruction(SUBRegReg(), node, tempReg, chbReg, cg);
+            srm->reclaimScratchRegister(chbReg);
+            }
+         else
+            {
+            generateRegImmInstruction(SUBRegImm4(), node, tempReg, (int32_t)chb, cg, TR_HEAP_BASE_FOR_BARRIER_RANGE);
+            }
+         }
+
+      if (doIsDestAHeapObjectCheck)
+         {
+         cardMarkDoneLabel = doIsDestInOldSpaceCheck ? generateLabelSymbol(cg) : doneLabel;
+
+         if (comp->getOptions()->isVariableHeapSizeForBarrierRange0())
+            {
+            TR::MemoryReference *vhsMR =
+               generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, heapSizeForBarrierRange0), cg);
+            generateRegMemInstruction(CMPRegMem(), node, tempReg, vhsMR, cg);
+            }
+         else
+            {
+            uintptr_t chs = comp->getOptions()->getHeapSizeForBarrierRange0();
+
+            if (TR::Compiler->target.is64Bit() && (!IS_32BIT_SIGNED(chs) || TR::Compiler->om.nativeAddressesCanChangeSize()))
+               {
+               TR::Register *chsReg = srm->findOrCreateScratchRegister();
+               generateRegImm64Instruction(MOV8RegImm64, node, chsReg, chs, cg, TR_HEAP_SIZE_FOR_BARRIER_RANGE);
+               generateRegRegInstruction(CMPRegReg(), node, tempReg, chsReg, cg);
+               srm->reclaimScratchRegister(chsReg);
+               }
+            else
+               {
+               generateRegImmInstruction(CMPRegImm4(), node, tempReg, (int32_t)chs, cg, TR_HEAP_SIZE_FOR_BARRIER_RANGE);
+               }
+            }
+
+         generateLabelInstruction(JAE4, node, cardMarkDoneLabel, cg);
+         }
+
+      generateRegImmInstruction(SHRRegImm1(), node, tempReg, comp->getOptions()->getHeapAddressToCardAddressShift(), cg);
+
+      // Mark the card
+      //
+      const uint8_t dirtyCard = 1;
+
+      TR::MemoryReference *cardTableMR;
+
+      if (comp->getOptions()->isVariableActiveCardTableBase())
+         {
+         TR::MemoryReference *actbMR =
+            generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, activeCardTableBase), cg);
+         generateRegMemInstruction(ADDRegMem(), node, tempReg, actbMR, cg);
+         cardTableMR = generateX86MemoryReference(tempReg, 0, cg);
+         }
+      else
+         {
+         uintptr_t actb = comp->getOptions()->getActiveCardTableBase();
+
+         if (TR::Compiler->target.is64Bit() && (!IS_32BIT_SIGNED(actb) || TR::Compiler->om.nativeAddressesCanChangeSize()))
+            {
+            TR::Register *tempReg3 = srm->findOrCreateScratchRegister();
+               generateRegImm64Instruction(MOV8RegImm64, node, tempReg3, actb, cg, TR_ACTIVE_CARD_TABLE_BASE);
+            cardTableMR = generateX86MemoryReference(tempReg3, tempReg, 0, cg);
+            srm->reclaimScratchRegister(tempReg3);
+            }
+         else
+            {
+            cardTableMR = generateX86MemoryReference(NULL, tempReg, 0, (int32_t)actb, cg);
+            cardTableMR->setReloKind(TR_ACTIVE_CARD_TABLE_BASE);
+            }
+         }
+
+      generateMemImmInstruction(S1MemImm1, node, cardTableMR, dirtyCard, cg);
+      srm->reclaimScratchRegister(tempReg);
+      generateLabelInstruction(JMP4, node, doneLabel, cg);
       }
-
-   // Dirty the card table.
-   //
-   if (doInlineCardMarkingWithoutOldSpaceCheck && (doCheckConcurrentMarkActive || !dirtyCardTableOutOfLine))
+   else if (doInlineCardMarkingWithoutOldSpaceCheck && !dirtyCardTableOutOfLine)
       {
+      // Dirty the card table.
+      //
       TR::Register *tempReg = srm->findOrCreateScratchRegister();
 
       generateRegRegInstruction(MOVRegReg(),  node, tempReg, owningObjectReg, cg);
@@ -13006,12 +13096,6 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
       generateMemImmInstruction(S1MemImm1, node, cardTableMR, dirtyCard, cg);
 
       srm->reclaimScratchRegister(tempReg);
-
-      if (dirtyCardTableOutOfLine)
-         {
-         generateLabelInstruction(JMP4, node, doneLabel, cg);
-         inlineCardMarkPath->swapInstructionListsWithCompilation();
-         }
       }
 
    if (doIsDestAHeapObjectCheck && doIsDestInOldSpaceCheck)
