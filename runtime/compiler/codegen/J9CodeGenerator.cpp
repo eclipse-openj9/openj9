@@ -3197,15 +3197,15 @@ J9::CodeGenerator::rematerializeCompressedRefs(
       ((node->getFirstChild()->getOpCodeValue() == TR::ladd &&
        node->getFirstChild()->containsCompressionSequence()) ||
        ((node->getFirstChild()->getOpCodeValue() == TR::lshl) &&
-        (self()->canFoldLargeOffsetInAddressing() || (TR::Compiler->vm.heapBaseAddress() == 0)) &&
-        self()->isAddressScaleIndexSupported((1 << TR::Compiler->om.compressedReferenceShiftOffset())))))
+        (canFoldLargeOffsetInAddressing() || (TR::Compiler->vm.heapBaseAddress() == 0)) &&
+        isAddressScaleIndexSupported((1 << TR::Compiler->om.compressedReferenceShiftOffset())))))
       {
       if (parent &&
           (node->getReferenceCount() > 1) &&
           ((parent->getOpCode().isStoreIndirect() && (childNum == 0)) ||
            parent->getOpCode().isLoadVar() ||
            (self()->getSupportsConstantOffsetInAddressing() && parent->getOpCode().isArrayRef() &&
-            (self()->canFoldLargeOffsetInAddressing() || parent->getSecondChild()->getOpCode().isLoadConst()))) &&
+            (canFoldLargeOffsetInAddressing() || parent->getSecondChild()->getOpCode().isLoadConst()))) &&
           performTransformation(self()->comp(), "%sRematerializing node %p(%s) in decompression sequence\n", OPT_DETAILS, node, node->getOpCode().getName()))
          {
          if ((node->getReferenceCount() > 1) &&
@@ -3252,7 +3252,7 @@ J9::CodeGenerator::rematerializeCompressedRefs(
             // on x86, prevent remat of the l2a again thereby allowing
             // nodes to use the result of the add already done
             //
-            if (!self()->canFoldLargeOffsetInAddressing())
+            if (!canFoldLargeOffsetInAddressing())
                {
                if (!rematerializedNodes->find(node))
                   rematerializedNodes->add(node);
@@ -3264,7 +3264,7 @@ J9::CodeGenerator::rematerializeCompressedRefs(
 
          if (parent &&
              ((parent->getOpCode().isArrayRef() &&
-               !self()->canFoldLargeOffsetInAddressing() &&
+               !canFoldLargeOffsetInAddressing() &&
                !parent->getSecondChild()->getOpCode().isLoadConst()) ||
                !self()->getSupportsConstantOffsetInAddressing()) &&
               performTransformation(self()->comp(), "%sYanking %p(%s) in decompression sequence\n", OPT_DETAILS, node, node->getOpCode().getName()))
@@ -3904,7 +3904,7 @@ J9::CodeGenerator::allocateLinkageRegisters()
 
    TR::Delimiter d(self()->comp(), self()->comp()->getOptions()->getAnyOption(TR_TraceOptDetails|TR_CountOptTransformations), "AllocateLinkageRegisters");
 
-   if (!self()->prepareForGRA())
+   if (!prepareForGRA())
       {
       dumpOptDetails(self()->comp(), "  prepareForGRA failed -- giving up\n");
       return;
