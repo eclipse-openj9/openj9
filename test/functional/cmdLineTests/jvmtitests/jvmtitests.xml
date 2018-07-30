@@ -274,6 +274,11 @@
 		<return type="success" value="0"/>
 	</test>
 
+	<test id="snmp001">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:snmp001 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
 	<test id="ts001">
 		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:ts001 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
 		<return type="success" value="0"/>

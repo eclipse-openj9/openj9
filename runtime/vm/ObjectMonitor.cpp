@@ -292,7 +292,9 @@ objectMonitorEnterNonBlocking(J9VMThread *currentThread, j9object_t object)
 		} else {
 #if defined(J9VM_THR_LOCK_NURSERY)
 			/* check to see if object is unlocked (JIT did not do initial inline sequence due to insufficient static type info) */
-			if ((0 == lock) && VM_ObjectMonitor::inlineFastInitAndEnterMonitor(currentThread, lwEA)) {
+			if ((0 == (lock & ~OBJECT_HEADER_LOCK_RESERVED)) &&
+				VM_ObjectMonitor::inlineFastInitAndEnterMonitor(currentThread, lwEA, false, lock)
+			) {
 				/* compare and swap succeeded - barrier already performed */
 			} else
 #endif /* J9VM_THR_LOCK_NURSERY */
@@ -487,20 +489,24 @@ spinOnTryEnter(J9VMThread *currentThread, J9ObjectMonitor *objectMonitor, j9obje
 	}
 #endif /* OMR_THR_JLM */
 
+#if defined(OMR_THR_THREE_TIER_LOCKING) && defined(OMR_THR_SPIN_WAKE_CONTROL)
+	bool tryEnterSpin = true;
+	if (monitor->spinThreads < lib->maxSpinThreads) {
+		VM_AtomicSupport::add(&monitor->spinThreads, 1);
+	} else {
+		tryEnterSpinCount1 = 1;
+		tryEnterSpinCount2 = 1;
+		tryEnterYieldCount = 1;
+		tryEnterSpin = false;
+	}
+#endif /* defined(OMR_THR_THREE_TIER_LOCKING) && defined(OMR_THR_SPIN_WAKE_CONTROL) */
+
 	/* Need to store the original value of tryEnterSpinCount2 since it gets overridden during non-nested spinning */
 	UDATA tryEnterSpinCount2Init = tryEnterSpinCount2;
 
 	UDATA _tryEnterYieldCount = tryEnterYieldCount;
 	UDATA _tryEnterSpinCount2 = tryEnterSpinCount2;
 
-#if defined(OMR_THR_THREE_TIER_LOCKING) && defined(OMR_THR_SPIN_WAKE_CONTROL)
-	if (monitor->spinThreads < lib->maxSpinThreads) {
-		VM_AtomicSupport::add(&monitor->spinThreads, 1);
-	} else {
-		goto exit;
-	}
-#endif /* defined(OMR_THR_THREE_TIER_LOCKING) && defined(OMR_THR_SPIN_WAKE_CONTROL) */
-	
 	/* we have the monitor object from the lock word so prime the cache with the monitor so we do not later look it up from the monitor table */
 #if defined(J9VM_THR_LOCK_NURSERY)
 	cacheObjectMonitorForLookup(vm, currentThread, objectMonitor);
@@ -592,10 +598,11 @@ update_jlm:
 #endif /* OMR_THR_JLM */
 
 #if defined(OMR_THR_THREE_TIER_LOCKING) && defined(OMR_THR_SPIN_WAKE_CONTROL)
-	VM_AtomicSupport::subtract(&monitor->spinThreads, 1);
-
-exit:
+	if (tryEnterSpin) {
+		VM_AtomicSupport::subtract(&monitor->spinThreads, 1);
+	}
 #endif /* defined(OMR_THR_THREE_TIER_LOCKING) && defined(OMR_THR_SPIN_WAKE_CONTROL) */
+
 	return rc;
 }
 

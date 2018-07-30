@@ -84,6 +84,13 @@ J9::X86::CodeGenerator::CodeGenerator() :
        !TR::Compiler->om.canGenerateArraylets())
       cg->setSupportsInlineStringCaseConversion();
 
+   if (cg->getX86ProcessorInfo().supportsSSSE3() &&
+       !comp->getOption(TR_DisableFastStringIndexOf) &&
+       !TR::Compiler->om.canGenerateArraylets())
+      {
+      cg->setSupportsInlineStringIndexOf();
+      }
+
    if (comp->generateArraylets() && !comp->getOptions()->realTimeGC())
       {
       cg->setSupportsStackAllocationOfArraylets();
@@ -253,7 +260,7 @@ J9::X86::CodeGenerator::beginInstructionSelection()
    //
    if (self()->enableSinglePrecisionMethods() && comp->getJittedMethodSymbol()->usesSinglePrecisionMode())
       {
-      TR::IA32ConstantDataSnippet * cds = self()->findOrCreate2ByteConstant(startNode, SINGLE_PRECISION_ROUND_TO_NEAREST);
+      auto cds = self()->findOrCreate2ByteConstant(startNode, SINGLE_PRECISION_ROUND_TO_NEAREST);
       generateMemInstruction(LDCWMem, startNode, generateX86MemoryReference(cds, self()), self());
       }
    }
@@ -278,7 +285,7 @@ J9::X86::CodeGenerator::endInstructionSelection()
       TR_ASSERT(self()->getLastCatchAppendInstruction(),
              "endInstructionSelection() ==> Could not find the dummy finally block!\n");
 
-      TR::IA32ConstantDataSnippet * cds = self()->findOrCreate2ByteConstant(self()->getLastCatchAppendInstruction()->getNode(), DOUBLE_PRECISION_ROUND_TO_NEAREST);
+      auto cds = self()->findOrCreate2ByteConstant(self()->getLastCatchAppendInstruction()->getNode(), DOUBLE_PRECISION_ROUND_TO_NEAREST);
       generateMemInstruction(self()->getLastCatchAppendInstruction(), LDCWMem, generateX86MemoryReference(cds, self()), self());
       }
    }
@@ -383,7 +390,6 @@ J9::X86::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod 
    switch (method)
       {
       case TR::java_lang_Object_clone:
-      case TR::com_ibm_jit_JITHelpers_findElementFromArray:
          return true;
       default:
          return false;

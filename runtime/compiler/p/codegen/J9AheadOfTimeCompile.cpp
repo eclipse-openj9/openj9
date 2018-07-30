@@ -55,10 +55,10 @@ void J9::Power::AheadOfTimeCompile::processRelocations()
    for (auto iterator = getRelocationList().begin(); iterator != getRelocationList().end(); ++iterator)
       (*iterator)->mapRelocation(_cg);
 
-   auto aotIterator = _cg->getAOTRelocationList().begin();
-   while (aotIterator != _cg->getAOTRelocationList().end())
+   auto aotIterator = _cg->getExternalRelocationList().begin();
+   while (aotIterator != _cg->getExternalRelocationList().end())
       {
-	  (*aotIterator)->addAOTRelocation(_cg);
+	  (*aotIterator)->addExternalRelocation(_cg);
       ++aotIterator;
       }
 

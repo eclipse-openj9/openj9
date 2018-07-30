@@ -115,6 +115,10 @@ public final class VM {
 	public static final int J9_CLASSLOADER_TYPE_BOOT;
 	public static final int J9_CLASSLOADER_TYPE_PLATFORM;
 	
+	/* Lock reservation */
+	public static final int J9CLASS_RESERVABLE_LOCK_WORD_INIT;
+	public static final int OBJECT_HEADER_LOCK_RESERVED;
+
 	private static String[] cachedVMArgs;
 	/*[PR CMVC 189091] Perf: EnumSet.allOf() is slow */
 	/*[PR CMVC 191554] Provide access to ClassLoader methods to improve performance */
@@ -184,6 +188,9 @@ public final class VM {
 		J9_CLASSLOADER_TYPE_OTHERS = 0;
 		J9_CLASSLOADER_TYPE_BOOT = 0;
 		J9_CLASSLOADER_TYPE_PLATFORM = 0;
+
+		J9CLASS_RESERVABLE_LOCK_WORD_INIT = 0;
+		OBJECT_HEADER_LOCK_RESERVED = 0;
 }
 /**
  * Prevents this class from being instantiated.

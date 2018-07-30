@@ -148,9 +148,6 @@ TR_J9ByteCodeIlGenerator::genIL()
          }
       }
 
-   if (comp()->getOption(TR_ReservingLocks) && comp()->getCurrentMethod()->isSynchronized())
-      fej9()->scanClassForReservation(comp()->getCurrentMethod()->containingClass(), comp());
-
    /*
     * If we're generating IL for DecimalformatHelper.formatAsDouble(Float), replace
     * the necessary fields, statics, and methods appropriately.  This is part of
@@ -990,10 +987,7 @@ TR_J9ByteCodeIlGenerator::prependEntryCode(TR::Block * firstBlock)
       loadMonitorArg();
 
       TR::Node * firstChild = pop();
-      TR::SymbolReference * monEnterSymRef =
-         isOutermostMethod() ?
-           symRefTab()->findOrCreateMethodMonitorEntrySymbolRef(_methodSymbol) :
-           symRefTab()->findOrCreateMonitorEntrySymbolRef(_methodSymbol);
+      TR::SymbolReference * monEnterSymRef = symRefTab()->findOrCreateMethodMonitorEntrySymbolRef(_methodSymbol);
 
       if (TR::Compiler->cls.classesOnHeap())
          {

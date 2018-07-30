@@ -798,7 +798,7 @@ TR::TreeTop *TR_StringPeepholes::detectFormatPattern(TR::TreeTop *tt, TR::TreeTo
                                  SPH_DecimalFormatHelper_formatAsFloat;
 
          TR::SymbolReference *callSymRef = findSymRefForOptMethod (bdMethod);
-         if (callSymRef && performTransformation(comp(), "%ssimplified number format pattern from node [%p] to [%p] \n", optDetailString(), firstTree->getNode(), tt->getNode()))
+         if (nextNode->getSecondChild() == node && callSymRef && performTransformation(comp(), "%ssimplified number format pattern from node [%p] to [%p] \n", optDetailString(), firstTree->getNode(), tt->getNode()))
             {
             TR::TreeTop *prevTree = firstTree->getPrevTreeTop();
             TR::TreeTop *treeAfterLast = tt->getNextTreeTop();

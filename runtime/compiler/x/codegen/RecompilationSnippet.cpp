@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -98,7 +98,7 @@ uint8_t *TR::X86RecompilationSnippet::emitSnippetBody()
       TR_ASSERT(IS_32BIT_RIP(helperAddress, buffer+4), "Local helper trampoline should be reachable directly.\n");
       }
    *(int32_t *)buffer = ((uint8_t*)helperAddress - buffer) - 4;
-   cg()->addAOTRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer,
+   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer,
                                                          (uint8_t *)_destination,
                                                          TR_HelperAddress, cg()),
                                                          __FILE__, __LINE__, getNode());

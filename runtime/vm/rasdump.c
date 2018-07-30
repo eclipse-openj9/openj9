@@ -392,6 +392,8 @@ j9rasSetServiceLevel(J9JavaVM *vm, const char *runtimeVersion) {
 		javaVersion = "JRE 10";
 	} else if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_V11) {
 		javaVersion = "JRE 11";
+	} else if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_V12) {
+		javaVersion = "JRE 12";
 	} else {
 		javaVersion = "UNKNOWN";
 	}

@@ -124,6 +124,7 @@ static jvmtiTest jvmtiTestList[] =
 	{ "rbc001",   rbc001,   "com.ibm.jvmti.tests.redefineBreakpointCombo.rbc001", "Test Redefine-breakpoint combination"},
 	{ "mt001",   mt001,   "com.ibm.jvmti.tests.modularityTests.mt001", "Test Modularity functions"},
 	{ "nmr001",     nmr001,    "com.ibm.jvmti.tests.nestMatesRedefinition.nmr001", "Test nestmates redefinition"},
+	{ "snmp001",     snmp001,    "com.ibm.jvmti.tests.setNativeMethodPrefix.snmp001", "Tests setting a native method prefix and disposing a subsequent environment"},
 	{ NULL, NULL, NULL, NULL }
 };
 

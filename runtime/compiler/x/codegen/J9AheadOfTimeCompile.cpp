@@ -51,7 +51,7 @@ void J9::X86::AheadOfTimeCompile::processRelocations()
        && TR::CodeCacheManager::instance()->codeCacheConfig().needsMethodTrampolines()
        && _cg->getPicSlotCount())
       {
-      _cg->addAOTRelocation(new (_cg->trHeapMemory()) TR::ExternalRelocation(NULL,
+      _cg->addExternalRelocation(new (_cg->trHeapMemory()) TR::ExternalRelocation(NULL,
                                                                                  (uint8_t *)_cg->getPicSlotCount(),
                                                                                  TR_PicTrampolines, _cg),
                             __FILE__,
@@ -60,8 +60,8 @@ void J9::X86::AheadOfTimeCompile::processRelocations()
       }
 
 
-   for (auto aotIterator = _cg->getAOTRelocationList().begin(); aotIterator != _cg->getAOTRelocationList().end(); ++aotIterator)
-	  (*aotIterator)->addAOTRelocation(_cg);
+   for (auto aotIterator = _cg->getExternalRelocationList().begin(); aotIterator != _cg->getExternalRelocationList().end(); ++aotIterator)
+	  (*aotIterator)->addExternalRelocation(_cg);
 
    TR::IteratedExternalRelocation *r;
    for (r = self()->getAOTRelocationTargets().getFirst();

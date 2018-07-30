@@ -94,9 +94,6 @@ ifeq ($(UMA_TARGET_TYPE),EXE)
   UMA_EXETARGET:=$(UMA_TARGET_PATH)$(UMA_TARGET_NAME)$(UMA_DOT_EXE)
 endif
 
-CFLAGS+=-DJAVA_SPEC_VERSION=$(VERSION_MAJOR)
-CXXFLAGS+=-DJAVA_SPEC_VERSION=$(VERSION_MAJOR)
-CPPFLAGS+=-DJAVA_SPEC_VERSION=$(VERSION_MAJOR)
 ifdef OPENJ9_BUILD
 CFLAGS+=-DOPENJ9_BUILD
 CXXFLAGS+=-DOPENJ9_BUILD
@@ -161,29 +158,31 @@ CPPFLAGS+=$(UMA_C_INCLUDES)
 </#if>
 <#if  uma.spec.type.ztpf &&  uma.spec.properties.crossCompilerPath.defined>
 # Put the required z/TPF tools on the path.
-PATH:=${uma.spec.properties.crossCompilerPath.value}:<#noparse>${PATH}</#noparse>
+space :=
+space +=
+PATH := $(subst $(space),:,$(foreach d,$(TPF_ROOT),$d/linux/bin)):/opt/gcc/java46/bin:<#noparse>$(PATH)</#noparse>
+
+TPF_INCLUDES := $(foreach d,$(TPF_ROOT),-I$d/base/a2e/headers)
+TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-I$d/base/include)
+TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-I$d/opensource/include)
+TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-I$d/opensource/include46/g++)
+TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-I$d/opensource/include46/g++/backward)
+TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-I$d/noship/include)
+TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-isystem $d/opensource/include)
+TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-isystem $d/noship/include)
+TPF_INCLUDES += $(foreach d,$(TPF_ROOT),-isystem $d)
+
+TPF_FLAGS := -D_GNU_SOURCE -DIBM_ATOE -D_TPF_SOURCE -DZTPF_POSIX_SOCKET -DJ9ZTPF
+TPF_FLAGS += -fexec-charset=ISO-8859-1 -fmessage-length=0 -funsigned-char -fverbose-asm -fno-builtin-abort -fno-builtin-exit -fno-builtin-sprintf -ffloat-store -gdwarf-2 -Wno-format-extra-args -Wno-int-to-pointer-cast -Wno-unknown-pragmas -Wno-unused-but-set-variable -Wno-write-strings
+TPF_FLAGS += -Wno-unused
+TPF_FLAGS += -fno-delete-null-pointer-checks
 </#if>
 
 <#if uma.spec.type.ztpf && uma.spec.properties.tpfRoot.defined  && uma.spec.properties.tpfProj.defined>
-# Put the proper directories based on cur||commit||svt value in the includes path.
-UMA_ZTPF_ROOT:=${uma.spec.properties.tpfRoot.value}
-UMA_PROJ_ROOT:=${uma.spec.properties.tpfProj.value}
 
-CPATH+=/ztpf/$(UMA_ZTPF_ROOT)/local_mod/base/include:/ztpf/$(UMA_ZTPF_ROOT)/base/include:/ztpf/$(UMA_ZTPF_ROOT)/local_mod/opensource/include:/ztpf/$(UMA_ZTPF_ROOT)/opensource/include:/ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++:/ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++/backward:/ztpf/$(UMA_ZTPF_ROOT)/local_mod:/ztpf/$(UMA_ZTPF_ROOT)/base/include
-export $(CPATH)
-
-C_INCLUDE_PATH+=/ztpf/$(UMA_ZTPF_ROOT)/local_mod/base/include:/ztpf/$(UMA_ZTPF_ROOT)/base/include:/ztpf/$(UMA_ZTPF_ROOT)/local_mod/opensource/include:/ztpf/$(UMA_ZTPF_ROOT)/opensource/include:/ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++:/ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++/backward:/ztpf/$(UMA_ZTPF_ROOT)/local_mod:/ztpf/$(UMA_ZTPF_ROOT)/base/include
-export $(C_INCLUDE_PATH)
-
-UMA_ZTPF_INCLUDES:= -D_TPF_SOURCE -DJ9ZTPF -DLINUX -DS390 -DS39064 -DFULL_ANSI -DMAXMOVE -DZTPF_POSIX_SOCKET -fPIC -fno-strict-aliasing -D_GNU_SOURCE -fexec-charset=ISO-8859-1 -fmessage-length=0 -funsigned-char -Wno-format-extra-args  -fverbose-asm -fno-builtin-abort -fno-builtin-exit -fno-builtin-sprintf -fno-builtin-isdigit -ffloat-store -DIBM_ATOE -fno-strict-aliasing -Wno-unknown-pragmas -Wreturn-type -Wno-unused -Wno-uninitialized -Wno-parentheses -gdwarf-2 -D_PORTABLE_TPF_SIGINFO -I$(UMA_PROJ_ROOT)/base/a2e/headers -I/ztpf/$(UMA_ZTPF_ROOT)/base/a2e/headers -I$(UMA_PROJ_ROOT)/base/include -I/ztpf/$(UMA_ZTPF_ROOT)/base/include -I$(UMA_PROJ_ROOT)/opensource/include -I/ztpf/$(UMA_ZTPF_ROOT)/opensource/include -isystem $(UMA_PROJ_ROOT)/base/a2e/headers -isystem /ztpf/$(UMA_ZTPF_ROOT)/base/a2e/headers -isystem $(UMA_PROJ_ROOT)/base/include -isystem /ztpf/$(UMA_ZTPF_ROOT)/base/include -isystem $(UMA_PROJ_ROOT)/opensource/include -isystem /ztpf/$(UMA_ZTPF_ROOT)/opensource/include -isystem $(UMA_PROJ_ROOT)/noship/include -isystem /ztpf/$(UMA_ZTPF_ROOT)/noship/include -isystem /ztpf/$(UMA_ZTPF_ROOT) -iquote ../include
-#Lotsa opensource include files need to be defined as system headers to gcc, well, tpf-g++ at least in order to avoid
-#compile errors.
-UMA_ZTPF_CXX_INCLUDES:= -D_TPF_SOURCE -DJ9ZTPF -DLINUX -DS390 -DS39064 -DFULL_ANSI -DMAXMOVE -DZTPF_POSIX_SOCKET -fPIC -fno-strict-aliasing -D_GNU_SOURCE -fexec-charset=ISO-8859-1 -fmessage-length=0 -funsigned-char -Wno-format-extra-args  -fverbose-asm -fno-builtin-abort -fno-builtin-exit -fno-builtin-sprintf -fno-builtin-isdigit -ffloat-store -DIBM_ATOE -fno-strict-aliasing -Wno-unknown-pragmas -Wreturn-type -Wno-unused -Wno-uninitialized -Wno-parentheses -gdwarf-2 -D_PORTABLE_TPF_SIGINFO -I$(UMA_PROJ_ROOT)/base/a2e/headers -I/ztpf/$(UMA_ZTPF_ROOT)/base/a2e/headers -I$(UMA_PROJ_ROOT)/base/include -I/ztpf/$(UMA_ZTPF_ROOT)/base/include -I$(UMA_PROJ_ROOT)/opensource/include -I/ztpf/$(UMA_ZTPF_ROOT)/opensource/include -I$(UMA_PROJ_ROOT)/opensource/include46/g++ -I/ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++ -I$(UMA_PROJ_ROOT)/opensource/include46/g++/backward -I/ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++/backward -isystem $(UMA_PROJ_ROOT)/base/a2e/headers -isystem /ztpf/$(UMA_ZTPF_ROOT)/base/a2e/headers -isystem $(UMA_PROJ_ROOT)/base/include -isystem /ztpf/$(UMA_ZTPF_ROOT)/base/include -isystem $(UMA_PROJ_ROOT)/opensource/include -isystem /ztpf/$(UMA_ZTPF_ROOT)/opensource/include -isystem $(UMA_PROJ_ROOT)/opensource/include46/g++ -isystem /ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++ -isystem $(UMA_PROJ_ROOT)/opensource/include46/g++/backward -isystem /ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++/backward -isystem $(UMA_PROJ_ROOT)/noship/include -isystem /ztpf/$(UMA_ZTPF_ROOT)/noship/include -isystem /ztpf/$(UMA_ZTPF_ROOT)
-
-CFLAGS+=$(UMA_ZTPF_INCLUDES)
+CFLAGS += $(TPF_FLAGS) $(TPF_INCLUDES) -iquote ../include
+CXXFLAGS += $(TPF_FLAGS) $(TPF_INCLUDES)
 CPPFLAGS+= -I$(UMA_PATH_TO_ROOT)oti
-CXXFLAGS+=$(UMA_ZTPF_CXX_INCLUDES)
-
 
 # Add these flags now since we're using a z/tpf spec file.
 UMA_C_INCLUDES:=$(addprefix $(UMA_C_INCLUDE_PREFIX),$(UMA_INCLUDES)) $(UMA_C_INCLUDES)
@@ -191,14 +190,11 @@ CFLAGS+=$(UMA_C_INCLUDES)
 CXXFLAGS+=$(UMA_C_INCLUDES)
 CPPFLAGS+=$(UMA_C_INCLUDES)
 
-#USE projects directory for "temporarily" built libraries we might need
-UMA_LINK_PATH+=-L/ztpf/$(UMA_ZTPF_ROOT)/opensource/stdlib
-UMA_LINK_PATH+=-L/ztpf/$(UMA_ZTPF_ROOT)/opensource/glibc/lib
-UMA_LINK_PATH+=-L/ztpf/$(UMA_ZTPF_ROOT)/base/lib
-UMA_LINK_PATH+=-L/ztpf/$(UMA_ZTPF_ROOT)/base/stdlib
-UMA_LINK_PATH+=-L/ztpf/$(UMA_ZTPF_ROOT)/bss/stdlib
-UMA_LINK_PATH+=-L/ztpf/$(UMA_ZTPF_ROOT)/base/oco/stdlib
+UMA_LINK_PATH += $(foreach d,$(TPF_ROOT),-L$d/base/lib)
+UMA_LINK_PATH += $(foreach d,$(TPF_ROOT),-L$d/opensource/stdlib)
+
 </#if>
+
 <#if uma.spec.type.windows>
 ifdef USE_MINGW
   MINGW_CXXFLAGS+=$(UMA_C_INCLUDES)
@@ -242,8 +238,11 @@ endif
 UMA_LINK_PATH+=-L. -L$(UMA_PATH_TO_ROOT) -L$(UMA_PATH_TO_ROOT)lib/
 UMA_BUILD_LIBRARIES:=$(foreach lib,$(UMA_LIBRARIES),$(if $($(lib)_alllib),$(lib)))
 UMA_LINK_PATH+=$(foreach lib,$(UMA_BUILD_LIBRARIES),-L$($(lib)_path))
-# Remove duplicate paths
+<#if !uma.spec.type.ztpf>
+# Remove duplicate paths and sort, but don't do this for z/TPF because z/TPF is
+# sensitive to link order for some scenarios.
 UMA_LINK_PATH:=$(sort $(UMA_LINK_PATH))
+</#if>
 </#if>
 
 CFLAGS+=$(A_CFLAGS)
@@ -288,20 +287,19 @@ ASFLAGS+=$(VMASMDEBUG)
 </#if>
 <#if uma.spec.type.ztpf>
 #we may need absolute path for debugger and would have to update $@ to include an obj dir: $(PWD)/$@
-LIBCDEFS := $(wildcard /ztpf/$(UMA_ZTPF_ROOT)/base/lib/libCDEFSFORASM.so)
+LIBCDEFS := $(word 1,$(wildcard $(foreach d,$(TPF_ROOT),$d/base/lib/libCDEFSFORASM.so)))
 
 # compilation rule for C files.
 %$(UMA_DOT_O): %.c
 ###	$(CC) $(CFLAGS) -c -o $@ $< > $*.asmlist
 	$(CC) $(CFLAGS) -c -Wa,-alshd=$*.lst -o $@ $<
-
-	tpfobjpp -O $(if $(filter -O%,$(CFLAGS)),$(patsubst -%,%,$(filter -O%,$(CFLAGS))),O3) -g  $(if $(filter -g2,$(CFLAGS)),$(patsubst -%,%,$(filter -g2,$(CFLAGS))),gNotApplicable) -c PUT14.1  $@
+	tpfobjpp -O $(if $(filter -O%,$(CFLAGS)),$(patsubst -%,%,$(filter -O%,$(CFLAGS))),O3) -g $(if $(filter -g2,$(CFLAGS)),$(patsubst -%,%,$(filter -g2,$(CFLAGS))),gNotApplicable) $@
 
 # compilation rule for C++ files.
 %$(UMA_DOT_O): %.cpp
 ###	$(CXX) $(CXXFLAGS) -c $< > $*.asmlist
 	$(CXX) $(CXXFLAGS) -c -Wa,-alshd=$*.lst -o $@ $<
-	tpfobjpp -O $(if $(filter -O%,$(CXXFLAGS)),$(patsubst -%,%,$(filter -O%,$(CXXFLAGS))),O3) -g  $(if $(filter -g2,$(CXXFLAGS)),$(patsubst -%,%,$(filter -g2,$(CXXFLAGS))),gNotApplicable) -c PUT14.1  $@
+	tpfobjpp -O $(if $(filter -O%,$(CXXFLAGS)),$(patsubst -%,%,$(filter -O%,$(CXXFLAGS))),O3) -g $(if $(filter -g2,$(CXXFLAGS)),$(patsubst -%,%,$(filter -g2,$(CXXFLAGS))),gNotApplicable) $@
 
 # compilation rule for precompiled listings, for C and C++ files.
 %$(UMA_DOT_I): %.c
@@ -380,7 +378,7 @@ LIBCDEFS := $(wildcard /ztpf/$(UMA_ZTPF_ROOT)/base/lib/libCDEFSFORASM.so)
 <#elseif uma.spec.type.ztpf>
 %$(UMA_DOT_O): %.s
 	$(AS) $(ASFLAGS) -alshd=$*.lst -o $@ $<
-	tpfobjpp -O ONotApplicable -g gNotApplicable -c PUT14.1  -f $(LIBCDEFS) $@
+	tpfobjpp -O ONotApplicable -g gNotApplicable -f $(LIBCDEFS) $@
 <#else>
 %$(UMA_DOT_O): %.s
 	$(AS) $(ASFLAGS) -o $@ $<
@@ -397,7 +395,7 @@ LIBCDEFS := $(wildcard /ztpf/$(UMA_ZTPF_ROOT)/base/lib/libCDEFSFORASM.so)
 	perl $(UMA_PATH_TO_ROOT)compiler/makelib/masm2gas.pl $(UMA_MASM2GAS_FLAGS) $(UMA_C_INCLUDES) $*.asm
 	$(AS) $(ASFLAGS) -alshd=$*.lst -o $*.o $*.s
 	-rm $*.s
-	tpfobjpp -O ONotApplicable -g gNotApplicable -c PUT14.1  -f $(LIBCDEFS) $@
+	tpfobjpp -O ONotApplicable -g gNotApplicable -f $(LIBCDEFS) $@
 <#else>
 %$(UMA_DOT_O): %.asm
 	perl $(UMA_PATH_TO_ROOT)makelib/masm2gas.pl $(UMA_MASM2GAS_FLAGS) $(UMA_C_INCLUDES) $*.asm
@@ -487,7 +485,7 @@ UMA_PASM_INCLUDES:=$(addprefix -I ,$(UMA_INCLUDES))
 	m4 $(CPPFLAGS_NOCOV) $(UMA_M4_FLAGS) $*.m4 > $*.s
 	$(AS) $(ASFLAGS) -alshd=$*.lst $*.s
 	-rm $*.s
-	tpfobjpp -O ONotApplicable -g gNotApplicable -c PUT14.1  -f $(LIBCDEFS) $@
+	tpfobjpp -O ONotApplicable -g gNotApplicable -f $(LIBCDEFS) $@
 </#if>
 
 <#if uma.spec.type.windows>
@@ -598,6 +596,9 @@ ifndef UMA_NO_CLEAN_TARGET
 clean:
 	$(RM) $(UMA_OBJECTS) $(UMA_BYPRODUCTS) $(TARGETS)
 	-$(RM) *.d $(UMA_OBJECTS:$(UMA_DOT_O)=.i)
+<#if uma.spec.type.ztpf>
+	-$(RM) *.d $(UMA_OBJECTS:$(UMA_DOT_O)=.lst)
+</#if>
 <#if uma.spec.type.windows>
 	$(RM) *.pdb
 </#if>

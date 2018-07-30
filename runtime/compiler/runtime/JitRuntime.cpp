@@ -1246,18 +1246,7 @@ void initializeJitRuntimeHelperTable(char isSMP)
    SET(TR_S390jitProfileStringValueC,           (void *)_jitProfileStringValue,     TR_Helper);
    SET(TR_S390induceRecompilation,              (void *)_induceRecompilation,       TR_Helper);
    SET_CONST(TR_S390induceRecompilation_unwrapper, (void *) induceRecompilation_unwrapper);
-
-// Set the Address Enviroment pointer.  Same for all routines from
-// same library, so doesn't matter which routine, but currently only
-// used when calling jitProfile* in zOS, so use one of them
-#ifdef J9ZOS390
-#define TRS390_TOC_UNWRAP_ENV(wrappedPointer) (((J9FunctionDescriptor_T *) (wrappedPointer))->ada)
-#else
-#define TRS390_TOC_UNWRAP_ENV(wrappedPointer) 0xdeafbeef
-#endif
-   SET_CONST(TR_S390CEnvironmentAddress,(void *)TRS390_TOC_UNWRAP_ENV((void *)_jitProfileValue));
-
-
+   SET_CONST(TR_S390CEnvironmentAddress,(void *)TOC_UNWRAP_ENV((void *)_jitProfileValue));
 
 #endif
 

@@ -200,6 +200,7 @@
    java_lang_String_getChars_byteArray,
 
    java_lang_StringUTF16_getChar,
+   java_lang_StringUTF16_toBytes,
 
    java_lang_StringBuffer_append,
    java_lang_StringBuffer_capacityInternal,
@@ -663,7 +664,8 @@
 
    com_ibm_jit_JITHelpers_is32Bit,
    com_ibm_jit_JITHelpers_isArray,
-   com_ibm_jit_JITHelpers_findElementFromArray,
+   com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1,
+   com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16,
    com_ibm_jit_JITHelpers_getJ9ClassFromObject32,
    com_ibm_jit_JITHelpers_getJ9ClassFromObject64,
    com_ibm_jit_JITHelpers_getNumBitsInReferenceField,

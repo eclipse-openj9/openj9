@@ -67,8 +67,8 @@ void J9::Z::AheadOfTimeCompile::processRelocations()
 	   (*iterator)->mapRelocation(_cg);
       }
 
-   for (auto aotIterator = _cg->getAOTRelocationList().begin(); aotIterator != _cg->getAOTRelocationList().end(); ++aotIterator)
-	  (*aotIterator)->addAOTRelocation(_cg);
+   for (auto aotIterator = _cg->getExternalRelocationList().begin(); aotIterator != _cg->getExternalRelocationList().end(); ++aotIterator)
+	  (*aotIterator)->addExternalRelocation(_cg);
 
    for (r = self()->getAOTRelocationTargets().getFirst();
         r != NULL;

@@ -94,7 +94,7 @@ J9::AheadOfTimeCompile::dumpRelocationData()
       traceMsg(self()->comp(), "\n\nRelocation Record Generation Info\n");
       traceMsg(self()->comp(), "%-35s %-32s %-5s %-9s %-10s %-8s\n", "Type", "File", "Line","Offset(M)","Offset(PC)", "Node");
 
-      TR::list<TR::Relocation*>& aotRelocations = self()->comp()->cg()->getAOTRelocationList();
+      TR::list<TR::Relocation*>& aotRelocations = self()->comp()->cg()->getExternalRelocationList();
       //iterate over aotRelocations
       if (!aotRelocations.empty())
          {

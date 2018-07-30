@@ -1933,6 +1933,115 @@ TR_BlockFrequencyInfo::getRawCount(TR::ResolvedMethodSymbol *resolvedMethod, TR_
    return frequency;
    }
 
+/**   \brief Returns block number of the original block in which current byteCodeInfo was created.
+ *    \details
+ *          It finds the byte code info of the start of the block in which passed bci was originally
+ *          created and returns the block number of that block from the stored information.
+ *          It is useful when we are trying to associate the profiling information with the node which might
+ *          have moved to different blocks with different bci
+ *    \param bci TR_ByteCodeInfo for which original block number is searched for
+ *    \param comp Current compilation object
+ *    \return block number of the original block bci belongs to.
+ *            WARNING: If consumer of this API uses this to to get the profiled data in later compilation and
+ *            requested BCI was not inlined before, it returns -1.
+ */
+int32_t
+TR_BlockFrequencyInfo::getOriginalBlockNumberToGetRawCount(TR_ByteCodeInfo &bci, TR::Compilation *comp, bool trace)
+   {
+   int32_t callerIndex = bci.getCallerIndex();
+   TR::ResolvedMethodSymbol *resolvedMethod = callerIndex < 0 ? comp->getMethodSymbol() : comp->getInlinedResolvedMethodSymbol(callerIndex);
+   int32_t byteCodeToSearch = resolvedMethod->getProfilingByteCodeIndex(bci.getByteCodeIndex());
+   TR_ByteCodeInfo searchBCI = bci;
+   searchBCI.setByteCodeIndex(byteCodeToSearch);
+   bool currentCallSiteInfo = TR_CallSiteInfo::getCurrent(comp) == _callSiteInfo; 
+   for (auto i=0; i < _numBlocks; ++i)
+      {
+      if (currentCallSiteInfo && _callSiteInfo->hasSameBytecodeInfo(_blocks[i], searchBCI, comp) ||
+            (!currentCallSiteInfo && _blocks[i].getCallerIndex() == searchBCI.getCallerIndex() && _blocks[i].getByteCodeIndex() == searchBCI.getByteCodeIndex()))
+         {
+         if (trace)
+            traceMsg(comp, "Get frequency from original block_%d\n", i);
+         return i;
+         }
+      }
+   return -1;
+   }
+/**   \brief Using stored static blocl frequency counters creates a node that calculates the raw count of block in which passed node belongs to
+ *    \param comp Current compilation object
+ *    \return root A node that loads/adds/subtracts the static block counter to calculate raw frequency of corresponding block
+ */
+TR::Node*
+TR_BlockFrequencyInfo::generateBlockRawCountCalculationSubTree(TR::Compilation *comp, TR::Node *node, bool trace)
+   {
+   return generateBlockRawCountCalculationSubTree(comp, getOriginalBlockNumberToGetRawCount(node->getByteCodeInfo(), comp, trace), node);
+   }
+/**   \brief Creates a node that calculates the raw count of passed block from the stored static block frequency counters
+ *    \param comp Current compilation object
+ *    \param blockNumber Number of a block for which we need to generate frequency calculation node
+ *    \return root A node that loads/adds/subtracts the static block counter to calculate raw frequency of corresponding block
+ */
+TR::Node*
+TR_BlockFrequencyInfo::generateBlockRawCountCalculationSubTree(TR::Compilation *comp, int32_t blockNumber, TR::Node *node)
+   {
+   TR::Node *root = NULL;
+   if (blockNumber > -1 && (_counterDerivationInfo[blockNumber * 2]
+      && ((((uintptr_t)_counterDerivationInfo[blockNumber * 2]) & 0x1 == 1)
+      || !_counterDerivationInfo[blockNumber * 2]->isEmpty())))
+      {
+      TR::Node *addRoot = NULL;
+      if (((uintptr_t)_counterDerivationInfo[blockNumber * 2]) & 0x1 == 1)
+         {
+         TR::SymbolReference *symRef = comp->getSymRefTab()->createKnownStaticDataSymbolRef(getFrequencyForBlock(((uintptr_t)_counterDerivationInfo[blockNumber * 2]) >> 1), TR::Int32);
+         addRoot = TR::Node::createWithSymRef(node, TR::iload, 0, symRef);
+         }
+      else
+         {
+         TR_BitVectorIterator addBVI(*(_counterDerivationInfo[blockNumber * 2]));
+         while (addBVI.hasMoreElements())
+            {
+            TR::SymbolReference *symRef = comp->getSymRefTab()->createKnownStaticDataSymbolRef(getFrequencyForBlock(addBVI.getNextElement()), TR::Int32);
+            TR::Node *counterLoad = TR::Node::createWithSymRef(node, TR::iload, 0, symRef);
+            if (addRoot)
+               addRoot = TR::Node::create(node, TR::iadd, 2, addRoot, counterLoad);
+            else
+               addRoot = counterLoad;
+            }
+         }
+      TR::Node *subRoot = NULL;
+      if (_counterDerivationInfo[blockNumber * 2 +1] != NULL)
+         {
+         if (((uintptr_t)_counterDerivationInfo[blockNumber *2 + 1]) & 0x1 == 1)
+            {
+            TR::SymbolReference *symRef = comp->getSymRefTab()->createKnownStaticDataSymbolRef(getFrequencyForBlock(((uintptr_t)_counterDerivationInfo[blockNumber * 2 + 1]) >> 1), TR::Int32);
+            subRoot = TR::Node::createWithSymRef(node, TR::iload, 0, symRef);
+            }
+         else
+            {
+            TR_BitVectorIterator subBVI(*(_counterDerivationInfo[blockNumber * 2 + 1]));
+            while (subBVI.hasMoreElements())
+               {
+               TR::SymbolReference *symRef = comp->getSymRefTab()->createKnownStaticDataSymbolRef(getFrequencyForBlock(subBVI.getNextElement()), TR::Int32);
+               TR::Node *counterLoad = TR::Node::createWithSymRef(node, TR::iload, 0, symRef);
+               if (subRoot)
+                  {
+                  subRoot = TR::Node::create(node, TR::isub, 2, subRoot, counterLoad);
+                  }
+               else
+                  {
+                  subRoot = counterLoad;
+                  }
+               }
+            }
+         }
+      root = addRoot;
+      if (subRoot)
+         {
+         root = TR::Node::create(node, TR::isub, 2, root, subRoot);
+         }
+      }
+   return root;
+   }
+
 int32_t
 TR_BlockFrequencyInfo::getRawCount(TR_ByteCodeInfo &bci, TR_CallSiteInfo *callSiteInfo, int64_t maxCount, TR::Compilation *comp)
    {

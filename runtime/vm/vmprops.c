@@ -612,10 +612,15 @@ initializeSystemProperties(J9JavaVM * vm)
 			break;
 			
 		case J2SE_V11:
-			/* FALLTHROUGH */
-		default:
 			classVersion = "55.0";
 			specificationVersion = "11";
+			break;
+
+		case J2SE_V12:
+			/* FALLTHROUGH */
+		default:
+			classVersion = "56.0";
+			specificationVersion = "12";
 			break;
 	}
 	rc = addSystemProperty(vm, "java.class.version", classVersion, 0);

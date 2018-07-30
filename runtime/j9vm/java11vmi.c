@@ -1296,78 +1296,6 @@ JVM_CanReadModule(JNIEnv * env, jobject askModule, jobject srcModule)
 	return (jboolean)canRead;
 }
 
-/**
- * Check whether a module is exporting a package to another module
- *      
- * @throws IllegalArgumentException is thrown if
- * 1. Either toModule or fromModule does not exist
- * 2. Package is syntactically incorrect
- * 3. Package is not in fromModule
- *
- * @param env Java env pointer
- * @param fromModule module that may have exported the package
- * @param package name of the package in question
- * @param toModule module for which package may have been exported to
- * 
- * @return If package is valid then this returns TRUE if fromModule exports 
- * package to toModule, if fromModule and toModule are the same module, or if 
- * package is exported without qualification.
- */
-jboolean JNICALL
-JVM_IsExportedToModule(JNIEnv * env, jobject fromModule, jstring package, jobject toModule)
-{
-	J9VMThread * const currentThread = (J9VMThread*)env;
-	J9JavaVM const * const vm = currentThread->javaVM;
-	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
-	BOOLEAN isExported = FALSE;
-
-	vmFuncs->internalEnterVMFromJNI(currentThread);
-#if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
-	omrthread_monitor_enter(vm->classLoaderModuleAndLocationMutex);
-#else
-	f_monitorEnter(vm->classLoaderModuleAndLocationMutex);
-#endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
-	{
-		UDATA rc = ERRCODE_GENERAL_FAILURE;
-
-		J9Module * const j9FromMod = getJ9Module(currentThread, fromModule);
-		J9Module * const j9ToMod = getJ9Module(currentThread, toModule);
-		BOOLEAN const toUnnamed = isModuleUnnamed(currentThread, J9_JNI_UNWRAP_REFERENCE(toModule));
-		j9object_t pkgObject = J9_JNI_UNWRAP_REFERENCE(package);
-#if J9VM_JAVA9_BUILD >= 156
-		PORT_ACCESS_FROM_VMC(currentThread);
-		char buf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
-		char *nameUTF = NULL;
-		nameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
-			currentThread, pkgObject, J9_STR_NULL_TERMINATE_RESULT, "", 0, buf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
-		if (NULL == nameUTF) {
-			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
-			goto done;
-		}
-		isExported = isPackageExportedToModule(currentThread, j9FromMod, nameUTF, j9ToMod, toUnnamed, &rc);
-		if (nameUTF != buf) {
-			j9mem_free_memory(nameUTF);
-		}
-#else /* J9VM_JAVA9_BUILD >= 156 */
-		isExported = isPackageExportedToModule(currentThread, j9FromMod, pkgObject, j9ToMod, toUnnamed, &rc);
-#endif /* J9VM_JAVA9_BUILD >= 156 */
-		if (ERRCODE_SUCCESS != rc) {
-			throwExceptionHelper(currentThread, rc);
-		}
-	}
-#if J9VM_JAVA9_BUILD >= 156
-done:
-#endif
-#if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
-	omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
-#else
-	f_monitorExit(vm->classLoaderModuleAndLocationMutex);
-#endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
-	vmFuncs->internalExitVMToJNI(currentThread);
-
-	return (jboolean)isExported;
-}
-
 static void
 #if J9VM_JAVA9_BUILD >= 156
 trcModulesAddModulePackage(J9VMThread *currentThread, J9Module *j9mod, const char *package)
@@ -1809,10 +1737,61 @@ JVM_GetNestMembers(JNIEnv *env, jclass clz)
 	assert(!"JVM_GetNestMembers unimplemented");
 	return NULL;
 }
+/**
+ * Check if two classes belong to the same nest
+ *
+ * @param [in] env pointer to JNIEnv
+ * @param [in] jClassOne Class object 1
+ * @param [in] jClassTwo Class object 2
+ *
+ * @return JNI_TRUE if classes belong to the same nest, JNI_FALSE otherwise
+ */
 JNIEXPORT jboolean JNICALL
-JVM_AreNestMates(JNIEnv *env, jclass clzOne, jclass clzTwo)
+JVM_AreNestMates(JNIEnv *env, jclass jClassOne, jclass jClassTwo)
 {
-	assert(!"JVM_AreNestMates unimplemented");
+#ifdef J9VM_OPT_VALHALLA_NESTMATES
+	jboolean result = JNI_FALSE;
+
+	if ((NULL != jClassOne) && (NULL != jClassTwo)) {
+		j9object_t clazzObjectOne = NULL;
+		j9object_t clazzObjectTwo = NULL;
+		J9VMThread *currentThread = (J9VMThread*)env;
+		J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+		clazzObjectOne = J9_JNI_UNWRAP_REFERENCE(jClassOne);
+		clazzObjectTwo = J9_JNI_UNWRAP_REFERENCE(jClassTwo);
+
+		if (clazzObjectOne == clazzObjectTwo) {
+			result = JNI_TRUE;
+		} else {
+			J9Class *clazzOne = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, clazzObjectOne);
+			J9Class *clazzTwo = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, clazzObjectTwo);
+
+			if (NULL == clazzOne->nestHost) {
+				if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, clazzOne, J9_LOOK_NO_THROW)) {
+					goto done;
+				}
+			}
+
+			if (NULL == clazzTwo->nestHost) {
+				if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, clazzTwo, J9_LOOK_NO_THROW)) {
+					goto done;
+				}
+			}
+
+			if (clazzOne->nestHost == clazzTwo->nestHost) {
+				result = JNI_TRUE;
+			}
+		}
+done:
+		vmFuncs->internalExitVMToJNI(currentThread);
+	}
+
+	return result;
+#else
+	assert(!"JVM_GetNestMembers unimplemented");
 	return JNI_FALSE;
+#endif /* J9VM_OPT_VALHALLA_NESTMATES */
 }
 #endif /* J9VM_JCL_SE11 */

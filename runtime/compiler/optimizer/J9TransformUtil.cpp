@@ -39,6 +39,22 @@
 #include "ras/DebugCounter.hpp"
 #include "j9.h"
 #include "optimizer/OMROptimization_inlines.hpp"
+#include "optimizer/Structure.hpp"
+
+/**
+ * Walks the TR_RegionStructure counting loops to get the nesting depth of the block
+ */ 
+int32_t J9::TransformUtil::getLoopNestingDepth(TR::Compilation *comp, TR::Block *block)
+   {
+   TR_RegionStructure *region = block->getParentStructureIfExists(comp->getFlowGraph());
+   int32_t nestingDepth = 0;
+   while (region && region->isNaturalLoop())
+      {
+      nestingDepth++;
+      region = region->getParent();
+      }
+   return nestingDepth;
+   }
 
 /*
  * Generate trees for call to jitRetranslateCallerWithPrep to trigger recompilation from JIT-Compiled code.

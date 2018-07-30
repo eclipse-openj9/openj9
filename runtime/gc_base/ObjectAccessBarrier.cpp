@@ -38,6 +38,7 @@
 #include "MemorySpace.hpp"
 #include "VMThreadListIterator.hpp"
 #include "ModronAssertions.h"
+#include "VMHelpers.hpp"
 
 
 
@@ -1354,7 +1355,8 @@ MM_ObjectAccessBarrier::cloneObject(J9VMThread *vmThread, J9Object *srcObject, J
 		hashCode = _extensions->objectModel.getObjectHashCode(vmThread->javaVM, destObject);
 	}	
 	
-	UDATA *descriptionPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(srcObject)->instanceDescription;
+	J9Class *clazz = J9GC_J9OBJECT_CLAZZ(srcObject);
+	UDATA *descriptionPtr = (UDATA *)clazz->instanceDescription;
 	UDATA descriptionBits;
 	if(((UDATA)descriptionPtr) & 1) {
 		descriptionBits = ((UDATA)descriptionPtr) >> 1;
@@ -1394,10 +1396,14 @@ MM_ObjectAccessBarrier::cloneObject(J9VMThread *vmThread, J9Object *srcObject, J
 	}
 
 #if defined(J9VM_THR_LOCK_NURSERY)
-	/* zero lockword, if present */
+	/* initialize lockword, if present */
 	lockwordAddress = getLockwordAddress(vmThread, destObject);
 	if (NULL != lockwordAddress) {
-		*lockwordAddress = 0;
+		if (J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(clazz), J9ClassReservableLockWordInit)) {
+			*lockwordAddress = OBJECT_HEADER_LOCK_RESERVED;
+		} else {
+			*lockwordAddress = 0;
+		}
 	}
 #endif /* J9VM_THR_LOCK_NURSERY */
 
@@ -2020,23 +2026,10 @@ MM_ObjectAccessBarrier::setOwnableSynchronizerLink(j9object_t object, j9object_t
 	*ownableSynchronizerLink = convertTokenFromPointer(value);
 }
 
-/**
- * This is copy of function from jnimisc.cpp
- *
- * Find the J9SFJNINativeMethodFrame representing the current native.
- * @param currentThread[in] the current J9VMThread
- * @returns the native method frame
- */
-static J9SFJNINativeMethodFrame*
-findNativeMethodFrame(J9VMThread *currentThread)
-{
-	return (J9SFJNINativeMethodFrame*)((UDATA)currentThread->sp + (UDATA)currentThread->literals);
-}
-
 void
 MM_ObjectAccessBarrier::printNativeMethod(J9VMThread* vmThread)
 {
-	J9SFJNINativeMethodFrame *nativeMethodFrame = findNativeMethodFrame(vmThread);
+	J9SFJNINativeMethodFrame *nativeMethodFrame = VM_VMHelpers::findNativeMethodFrame(vmThread);
 	J9Method *method = nativeMethodFrame->method;
 	J9JavaVM *javaVM = vmThread->javaVM;
 	PORT_ACCESS_FROM_JAVAVM(javaVM);

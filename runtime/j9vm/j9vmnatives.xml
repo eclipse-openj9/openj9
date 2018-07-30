@@ -283,7 +283,6 @@
 		<export name="JVM_AddModuleExportsToAll"/>
 		<export name="JVM_AddReadsModule"/>
 		<export name="JVM_CanReadModule"/>
-		<export name="JVM_IsExportedToModule"/>
 		<export name="JVM_AddModulePackage"/>
 		<export name="JVM_AddModuleExportsToAllUnnamed"/>
 		<export name="JVM_SetBootLoaderUnnamedModule"/>

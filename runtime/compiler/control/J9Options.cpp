@@ -243,6 +243,8 @@ int32_t J9::Options::_dltPostponeThreshold = 2;
 int32_t J9::Options::_expensiveCompWeight = TR::CompilationInfo::JSR292_WEIGHT;
 int32_t J9::Options::_jProfilingEnablementSampleThreshold = 10000;
 
+bool J9::Options::_aggressiveLockReservation = false;
+
 //************************************************************************
 //
 // Options handling - the following code implements the VM-specific
@@ -2128,7 +2130,7 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    if (vm->isAOT_DEPRECATED_DO_NOT_USE() || (jitConfig->runtimeFlags & J9JIT_TOSS_CODE))
       return true;
 
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI) && !defined(TR_HOST_S390) && !defined(TR_HOST_POWER) && !(defined(TR_HOST_X86) && defined(TR_HOST_64BIT))
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI) && !defined(TR_HOST_S390) && !defined(TR_HOST_POWER) && !defined(TR_HOST_X86)
     // Atomic-free JNI dispatch needs codegen support, currently only prototyped on a few platforms
    setOption(TR_DisableDirectToJNI);
 #endif

@@ -97,6 +97,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *VMmonexitEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *checkcastinstanceofEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static void asyncGCMapCheckPatching(TR::Node *node, TR::CodeGenerator *cg, TR::LabelSymbol *snippetLabel);
    static void inlineRecursiveMonitor(TR::Node *node, TR::CodeGenerator *cg, TR::LabelSymbol *startLabel, TR::LabelSymbol *snippetLabel, TR::LabelSymbol *JITMonitorEnterSnippetLabel, TR::Register *objectReg, int lwoffset, TR::LabelSymbol *snippetRestartLabel, bool reservingLock);
    static void transactionalMemoryJITMonitorEntry(TR::Node *node, TR::CodeGenerator *cg, TR::LabelSymbol *startLabel, TR::LabelSymbol *snippetLabel, TR::LabelSymbol *JITMonitorEnterSnippetLabel, TR::Register *objectReg, int lwoffset);

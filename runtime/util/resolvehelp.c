@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,9 +55,9 @@ getMethodForSpecialSend(J9VMThread *vmStruct, J9Class *currentClass, J9Class *re
 			 * is not in the vTable cannot be overridden, so we can just run it.
 			 */
 			J9InternalVMFunctions *vmFuncs = vmStruct->javaVM->internalVMFunctions;
-			UDATA vTableIndex = vmFuncs->getVTableIndexForMethod(method, resolvedClass, vmStruct);
+			UDATA vTableOffset = vmFuncs->getVTableOffsetForMethod(method, resolvedClass, vmStruct);
 
-			if (vTableIndex != 0) {
+			if (vTableOffset != 0) {
 				J9Class *superclass = currentClass->superclasses[currentDepth - 1];
 
 				if (isInterfaceMethod) {
@@ -66,17 +66,18 @@ getMethodForSpecialSend(J9VMThread *vmStruct, J9Class *currentClass, J9Class *re
 					 * 1) Find the vtable index for J9Method in the resolved class.
 					 * 2) Using the vtable index to get the J9Method at that index in the current class.
 					 * 3) Walk the current class vtable backwards to find the most "recent" override of that method
-					 * 4) Lookup the method at vtableIndex in currentClass's super class
+					 * 4) Lookup the method at vTableOffset in currentClass's super class
 					 */
-					UDATA superVTableSize = (*(UDATA*)(superclass + 1) * sizeof(UDATA)) + sizeof(J9Class);
-					method = *(J9Method **)(((UDATA)currentClass) + vTableIndex);
-					vTableIndex = vmFuncs->getVTableIndexForMethod(method, currentClass, vmStruct);
+					J9VTableHeader * superVTable = J9VTABLE_HEADER_FROM_RAM_CLASS(superclass);
+					UDATA superVTableEnd = J9VTABLE_OFFSET_FROM_INDEX(superVTable->size);
+					method = *(J9Method **)(((UDATA)currentClass) + vTableOffset);
+					vTableOffset = vmFuncs->getVTableOffsetForMethod(method, currentClass, vmStruct);
 					/* We may have looked up a J9Method from an interface due to either defender methods
 					 * or the method not being implemented in the class.  If that's the case, we need
 					 * to ensure we don't read a non-existent vtable slot.  The found method is the correct one
 					 */
-					if ((vTableIndex > 0) && (vTableIndex <= superVTableSize)) {
-						method = *(J9Method **)(((UDATA)superclass) + vTableIndex);
+					if ((vTableOffset > 0) && (vTableOffset < superVTableEnd)) {
+						method = *(J9Method **)(((UDATA)superclass) + vTableOffset);
 					}
 				} else {
 					/* In order to support non-vTable methods in a super invoke, perform the lookup rather than

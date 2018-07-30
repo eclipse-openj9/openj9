@@ -43,16 +43,22 @@ ifdef j9vm_uma_gnuDebugSymbols
 endif
 </#assign>
 
+UMA_BEGIN_DASH_L=-Xlinker --start-group
+UMA_END_DASH_L=-Xlinker --end-group
+
 <#assign exe_target_rule>
 $(UMA_EXETARGET) : $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
 	$(UMA_EXE_LD) $(UMA_EXE_PREFIX_FLAGS) $(UMA_LINK_PATH) $(VMLINK) \
 	$(UMA_OBJECTS) \
+	$(word 1,$(wildcard $(foreach d,$(TPF_ROOT),$d/base/obj/crt0.o))) \
 	$(UMA_BEGIN_DASH_L) \
 	$(UMA_LINK_STATIC_LIBRARIES) \
 	$(UMA_END_DASH_L) \
 	$(UMA_LINK_SHARED_LIBRARIES) \
 	-o $@ $(UMA_EXE_POSTFIX_FLAGS)
 </#assign>
+
+TPF_ROOT ?= /ztpf/java/bld/jvm/userfiles /ztpf/svtcur/redhat/all /ztpf/commit
 
 ifndef j9vm_env_data64
   J9M31 = -m31
@@ -118,51 +124,58 @@ ifdef j9vm_env_data64
 endif
 
 UMA_DLL_LINK_FLAGS += -shared
-UMA_DLL_LINK_FLAGS += -Wl,-Map=$(UMA_TARGET_NAME).map
-UMA_DLL_LINK_FLAGS += -Wl,--version-script,$(UMA_TARGET_NAME).exp
-UMA_DLL_LINK_FLAGS += -Wl,-soname=$(UMA_DLLFILENAME)
-UMA_DLL_LINK_FLAGS += -Wl,--eh-frame-hdr
-UMA_DLL_LINK_FLAGS += -Wl,-script=/ztpf/commit/base/util/tools/tpfscript
-UMA_DLL_LINK_FLAGS += -Xlinker -z -Xlinker origin -Xlinker -rpath -Xlinker \$$ORIGIN -Xlinker -disable-new-dtags
+ifdef UMA_USING_LD_TO_LINK
+  UMA_DLL_LINK_FLAGS+=-Map $(UMA_TARGET_NAME).map
+  UMA_DLL_LINK_FLAGS+=--version-script $(UMA_TARGET_NAME).exp
+  UMA_DLL_LINK_FLAGS+=-soname=$(UMA_DLLFILENAME)
+  UMA_DLL_LINK_FLAGS+=-z origin -rpath \$$ORIGIN --disable-new-dtags
+else
+  UMA_DLL_LINK_FLAGS+=-Wl,-Map=$(UMA_TARGET_NAME).map
+  UMA_DLL_LINK_FLAGS+=-Wl,--version-script,$(UMA_TARGET_NAME).exp
+  UMA_DLL_LINK_FLAGS+=-Wl,-soname=$(UMA_DLLFILENAME)
+  UMA_DLL_LINK_FLAGS+=-Xlinker -z -Xlinker origin -Xlinker -rpath -Xlinker \$$ORIGIN -Xlinker --disable-new-dtags
+  UMA_DLL_LINK_FLAGS+=-Wl,-entry=0
+  UMA_DLL_LINK_FLAGS+=-Wl,-script=$(word 1,$(wildcard $(foreach d,$(TPF_ROOT),$d/base/util/tools/tpfscript)))
+  UMA_DLL_LINK_FLAGS+=-Wl,--as-needed
+  UMA_DLL_LINK_FLAGS+=-Wl,--eh-frame-hdr
+endif
 
-UMA_DLL_LINK_POSTFLAGS += -Xlinker --start-group
-UMA_DLL_LINK_POSTFLAGS += $(UMA_LINK_STATIC_LIBRARIES)
-UMA_DLL_LINK_POSTFLAGS += -Xlinker --end-group
-UMA_DLL_LINK_POSTFLAGS += $(UMA_LINK_SHARED_LIBRARIES)
+ifdef UMA_USING_LD_TO_LINK
+  UMA_DLL_LINK_POSTFLAGS+=--start-group
+else
+  UMA_DLL_LINK_POSTFLAGS+=-Xlinker --start-group
+endif
+
+UMA_DLL_LINK_POSTFLAGS+=$(UMA_LINK_STATIC_LIBRARIES)
+ifdef UMA_USING_LD_TO_LINK
+  UMA_DLL_LINK_POSTFLAGS+=--end-group
+else
+  UMA_DLL_LINK_POSTFLAGS+=-Xlinker --end-group
+endif
+
+UMA_DLL_LINK_POSTFLAGS+=$(UMA_LINK_SHARED_LIBRARIES)
+
+# CTIS needs to be linked before CISO from sysroot for gettimeofday
+UMA_DLL_LINK_POSTFLAGS+=-lgcc
+UMA_DLL_LINK_POSTFLAGS+=-lCTOE
+UMA_DLL_LINK_POSTFLAGS+=-lCTIS
 
 ifdef j9vm_uma_gnuDebugSymbols
   UMA_DLL_LINK_POSTFLAGS += -g
 endif
 
-UMA_DLL_LINK_POSTFLAGS += -lCTOE
-UMA_DLL_LINK_POSTFLAGS += -lCISO
-UMA_DLL_LINK_POSTFLAGS += -lCIV1
-UMA_DLL_LINK_POSTFLAGS += -lCLC1
-UMA_DLL_LINK_POSTFLAGS += -lCTIS
-UMA_DLL_LINK_POSTFLAGS += -lCLBM
-UMA_DLL_LINK_POSTFLAGS += -lCTAL
-UMA_DLL_LINK_POSTFLAGS += -lCFVS
-UMA_DLL_LINK_POSTFLAGS += -lCTBX
-UMA_DLL_LINK_POSTFLAGS += -lCTXO
-UMA_DLL_LINK_POSTFLAGS += -lCTDF
-UMA_DLL_LINK_POSTFLAGS += -lCOMX
-UMA_DLL_LINK_POSTFLAGS += -lCOMS
-UMA_DLL_LINK_POSTFLAGS += -lCTHD
-ifdef UMA_IS_C_PLUS_PLUS
-  UMA_DLL_LINK_POSTFLAGS += -lCPP1
-endif
-UMA_DLL_LINK_POSTFLAGS += -lCTAD
-UMA_DLL_LINK_POSTFLAGS += -lTPFSTUB
-
 UMA_DLL_LINK_POSTFLAGS += -Xlinker -z -Xlinker origin
 UMA_DLL_LINK_POSTFLAGS += -Xlinker -rpath -Xlinker \$$ORIGIN -Xlinker -disable-new-dtags
 UMA_DLL_LINK_POSTFLAGS += -Xlinker -rpath-link -Xlinker $(UMA_PATH_TO_ROOT)
 
-UMA_EXE_POSTFIX_FLAGS += -Wl,-Map -Wl,$(UMA_TARGET_NAME).map
+UMA_EXE_PREFIX_FLAGS += -Wl,-Map=$(UMA_TARGET_NAME).map
+UMA_EXE_POSTFIX_FLAGS += -Wl,-entry=_start
+UMA_EXE_POSTFIX_FLAGS += -Wl,-script=$(word 1,$(wildcard $(foreach d,$(TPF_ROOT),$d/base/util/tools/tpfscript)))
+UMA_EXE_POSTFIX_FLAGS += -Wl,-soname=$(UMA_TARGET_NAME)
 UMA_EXE_POSTFIX_FLAGS += -Wl,--as-needed
 UMA_EXE_POSTFIX_FLAGS += -Wl,--eh-frame-hdr
-UMA_EXE_POSTFIX_FLAGS += -Wl,-entry=0
-UMA_EXE_POSTFIX_FLAGS += -Wl,-script=/ztpf/commit/base/util/tools/tpfscript
+UMA_EXE_POSTFIX_FLAGS += -lgcc
+UMA_EXE_POSTFIX_FLAGS += -lCTOE
 
 ifdef j9vm_jit_32bitUses64bitRegisters
   UMA_M4_FLAGS += -DJ9VM_JIT_32BIT_USES64BIT_REGISTERS

@@ -3092,16 +3092,38 @@ bool TR_J9VMBase::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, 
             if(comp->cg()->getSupportsInlineStringCaseConversion())
                {
                dontInlineRecognizedMethod = true;
-               break;
                }
+            break;
+         case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1:
+         case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
+            if (comp->cg()->getSupportsInlineStringIndexOf())
+               {
+               dontInlineRecognizedMethod = true;
+               }
+            break;
          case TR::java_lang_Math_max_D:
          case TR::java_lang_Math_min_D:
             if(comp->cg()->getSupportsVectorRegisters() && !comp->getOption(TR_DisableSIMDDoubleMaxMin))
                {
                dontInlineRecognizedMethod = true;
-               break;
                }
+            break;
          case TR::java_lang_String_hashCodeImplDecompressed:
+            /*
+             * X86 and z want to avoid inlining both java_lang_String_hashCodeImplDecompressed and java_lang_String_hashCodeImplCompressed
+             * so they can be recognized and replaced with a custom fast implementation.
+             * Power currently only has the custom fast implementation for java_lang_String_hashCodeImplDecompressed.
+             * As a result, Power only wants to prevent inlining of java_lang_String_hashCodeImplDecompressed.
+             * When Power gets a fast implementation of TR::java_lang_String_hashCodeImplCompressed, this case can be merged into the case
+             * for java_lang_String_hashCodeImplCompressed instead of using a fallthrough.
+             */
+            if (!TR::Compiler->om.canGenerateArraylets() &&
+                TR::Compiler->target.cpu.isPower() && TR::Compiler->target.cpu.id() >= TR_PPCp8 && getPPCSupportsVSXRegisters() && !comp->compileRelocatableCode())
+                  {
+                  dontInlineRecognizedMethod = true;
+                  break;
+                  }
+            // Intentional fallthrough here.
          case TR::java_lang_String_hashCodeImplCompressed:
             if (!TR::Compiler->om.canGenerateArraylets()){
                if ((TR::Compiler->target.cpu.isX86() && getX86SupportsSSE4_1()) ||
@@ -3285,6 +3307,7 @@ int TR_J9VMBase::checkInlineableTarget (TR_CallTarget* target, TR_CallSite* call
       case TR::com_ibm_jit_JITHelpers_getJ9ClassFromObject64:
       case TR::com_ibm_jit_JITHelpers_getClassInitializeStatus:
       case TR::java_lang_StringUTF16_getChar:
+      case TR::java_lang_StringUTF16_toBytes:
       case TR::java_lang_invoke_MethodHandle_asType_instance:
             return DontInline_Callee;
       default:
@@ -4619,15 +4642,20 @@ TR::TreeTop* TR_J9VMBase::initializeClazzFlagsMonitorFields(TR::Compilation* com
       {
       // Initialize the monitor field
       //
-      if (TR::Compiler->target.is64Bit() && generateCompressedLockWord())
+      int32_t lwInitialValue = 0;
+      if (J9CLASS_EXTENDED_FLAGS(ramClass) & J9ClassReservableLockWordInit)
+         lwInitialValue = OBJECT_HEADER_LOCK_RESERVED;
+
+      if (!TR::Compiler->target.is64Bit() || generateCompressedLockWord())
          {
-         node = TR::Node::create(allocationNode, TR::iconst, 0, 0);
+         node = TR::Node::iconst(allocationNode, lwInitialValue);
          node = TR::Node::createWithSymRef(TR::istorei, 2, 2, allocationNode, node,
             comp->getSymRefTab()->findOrCreateGenericIntNonArrayShadowSymbolReference(lwOffset));
          }
       else
          {
-         node = TR::Node::createWithSymRef(TR::astorei, 2, 2, allocationNode, TR::Node::aconst(allocationNode, 0),
+         node = TR::Node::lconst(allocationNode, lwInitialValue);
+         node = TR::Node::createWithSymRef(TR::lstorei, 2, 2, allocationNode, node,
             comp->getSymRefTab()->findOrCreateGenericIntNonArrayShadowSymbolReference(lwOffset));
          }
       prevTree = TR::TreeTop::create(comp, prevTree, node);
@@ -4839,7 +4867,7 @@ TR_J9VMBase::needsInvokeExactJ2IThunk(TR::Node *callNode, TR::Compilation *comp)
          || method->isArchetypeSpecimen()))
       {
       if (isAOT_DEPRECATED_DO_NOT_USE()) // While we're here... we need an AOT relocation for this call
-         comp->cg()->addAOTRelocation(new (comp->trHeapMemory()) TR::ExternalRelocation(NULL, (uint8_t *)callNode, (uint8_t *)methodSymbol->getMethod()->signatureChars(), TR_J2IThunks, comp->cg()), __FILE__, __LINE__, callNode);
+         comp->cg()->addExternalRelocation(new (comp->trHeapMemory()) TR::ExternalRelocation(NULL, (uint8_t *)callNode, (uint8_t *)methodSymbol->getMethod()->signatureChars(), TR_J2IThunks, comp->cg()), __FILE__, __LINE__, callNode);
 
       // We need a j2i thunk when this call executes, in case the target MH has
       // no invokeExact thunk yet.
@@ -5999,7 +6027,7 @@ int32_t
 TR_J9VMBase::getInterpreterVTableSlot(TR_OpaqueMethodBlock * mBlock, TR_OpaqueClassBlock * clazz)
    {
    TR::VMAccessCriticalSection getInterpreterVTableSlot(this);
-   int32_t result =  vmThread()->javaVM->internalVMFunctions->getVTableIndexForMethod((J9Method*)mBlock, (J9Class*)clazz, vmThread());
+   int32_t result =  vmThread()->javaVM->internalVMFunctions->getVTableOffsetForMethod((J9Method*)mBlock, (J9Class*)clazz, vmThread());
    return result;
    }
 int32_t
@@ -6561,127 +6589,6 @@ TR_OpaqueClassBlock *
 TR_J9VMBase::getProfiledClassFromProfiledInfo(TR_ExtraAddressInfo *profiledInfo)
    {
    return (TR_OpaqueClassBlock *)(profiledInfo->_value);
-   }
-
-
-#define SMALL_METHOD_SIZE 15
-#define DEBUG_RESERVATION_SCAN 0
-void
-TR_J9VMBase::scanClassForReservation (TR_OpaqueClassBlock *classPointer, TR::Compilation *comp)
-   {
-   J9Method * resolvedMethods = (J9Method *) getMethods(classPointer);
-   TR_PersistentClassInfo * persistentClassInfo =
-      comp->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(classPointer, comp);
-   uint32_t i;
-   uint32_t numMethods = getNumMethods(classPointer);
-   int32_t  numSynchronizedMethods  = 0;
-   int32_t  synchronizedMethodsSize = 0;
-   int32_t  numNonSynchronizedMethods = 0; // excluding constructors
-   int32_t  numSmallNonSynchronizedMethods = 0;
-   int32_t  numSmallSynchronizedMethods = 0;
-
-   if (!persistentClassInfo || persistentClassInfo->isScannedForReservation())
-      return;
-
-   bool candidateClass = false;
-   for (i=0;i<numMethods;i++)
-      {
-      J9Method *resolvedMethod = &(resolvedMethods[i]);
-      int32_t methodSize = TR::Compiler->mtd.bytecodeSize((TR_OpaqueMethodBlock *)resolvedMethod);
-      J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)resolvedMethod);
-
-      if (romMethod->modifiers & J9AccSynchronized)
-         {
-         numSynchronizedMethods ++;
-         synchronizedMethodsSize += methodSize;
-         if (methodSize < SMALL_METHOD_SIZE)
-            numSmallSynchronizedMethods ++;
-         }
-      else
-         {
-         J9UTF8 *name = J9ROMMETHOD_GET_NAME(J9_CLASS_FROM_METHOD(resolvedMethod)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(resolvedMethod));
-
-         if (J9UTF8_LENGTH(name) == 6)
-            {
-            char s[10];
-            sprintf(s, "%.*s",
-                    J9UTF8_LENGTH(name), J9UTF8_DATA(name));
-            if (strncmp(s, "<init>", 6))
-               {
-               numNonSynchronizedMethods ++;
-               if (methodSize < SMALL_METHOD_SIZE)
-                  numSmallNonSynchronizedMethods ++;
-               }
-            }
-         else
-            {
-            numNonSynchronizedMethods ++;
-            if (methodSize < SMALL_METHOD_SIZE)
-               numSmallNonSynchronizedMethods ++;
-            }
-         }
-
-      if (DEBUG_RESERVATION_SCAN && candidateClass)
-         {
-         char s[4096];
-         J9UTF8 *name;
-         J9UTF8 *signature;
-         J9UTF8 *className;
-         getClassNameSignatureFromMethod(resolvedMethod, className, name, signature);
-
-
-         sprintf(s, "%.*s%.*s",
-                 J9UTF8_LENGTH(name), J9UTF8_DATA(name),
-                 J9UTF8_LENGTH(signature), J9UTF8_DATA(signature));
-         fprintf(stderr, "Method: %s [%s] size %d\n", s,
-                (romMethod->modifiers & J9AccSynchronized) ? "synchronized" : "",
-                 methodSize);
-         }
-      }
-
-   if (DEBUG_RESERVATION_SCAN && candidateClass)
-      {
-      fprintf(stderr, "Total number of methods: %d\n", numMethods);
-      fprintf(stderr, "Total number of synchronized methods: %d\n", numSynchronizedMethods);
-      fprintf(stderr, "Total number of non-synchronized methods: %d\n", numNonSynchronizedMethods);
-      fprintf(stderr, "Total number of small synchronized methods: %d\n", numSmallSynchronizedMethods);
-      fprintf(stderr, "Total number of small non-synchronized methods: %d\n", numSmallNonSynchronizedMethods);
-      fprintf(stderr, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
-      fprintf(stderr, "\n\n");
-      }
-
-   persistentClassInfo->setScannedForReservation();
-   int lwOffset = getByteOffsetToLockword(classPointer);
-
-   if ((numSynchronizedMethods>0) &&
-       (lwOffset > 0))
-      {
-      char s[4096];
-      J9UTF8 * className = J9ROMCLASS_CLASSNAME(((J9Class *)classPointer)->romClass);
-      int32_t len = J9UTF8_LENGTH(className);
-      sprintf(s, "%.*s", J9UTF8_LENGTH(className), utf8Data(className));
-
-      if (!strncmp(s, "java/util/Random", 16) || !strncmp(s, "java/lang/StringBuffer", 22) /* ||
-          (numNonSynchronizedMethods >0 &&
-           ((numSmallNonSynchronizedMethods == 0) ||
-            (numSmallSynchronizedMethods >= numSmallNonSynchronizedMethods)))*/)
-         persistentClassInfo->setReservable();
-
-      // if lockReserveClass is used, set all the specified classes to be reservable
-      TR::SimpleRegex * regex = comp->getOptions()->getLockReserveClass();
-      if(regex && TR::SimpleRegex::match(regex, s))
-        persistentClassInfo->setReservable();
-
-      if (DEBUG_RESERVATION_SCAN && persistentClassInfo->isReservable())
-         {
-         char s[4096];
-         J9UTF8 * className = J9ROMCLASS_CLASSNAME(((J9Class *)classPointer)->romClass);
-         int32_t len = J9UTF8_LENGTH(className);
-         sprintf(s, "%.*s", J9UTF8_LENGTH(className), utf8Data(className));
-         printf("*****!*!*!*!*!*!*  Reservable class %s\n", s);
-         }
-
-      }
    }
 
 uint32_t
@@ -8994,11 +8901,6 @@ TR_ResolvedMethod *
 TR_J9SharedCacheVM::getObjectNewInstanceImplMethod(TR_Memory *)
    {
    return NULL;
-   }
-
-void
-TR_J9SharedCacheVM::scanClassForReservation(TR_OpaqueClassBlock *classPointer, TR::Compilation *comp)
-   {
    }
 
 ////////////////// Under evaluation

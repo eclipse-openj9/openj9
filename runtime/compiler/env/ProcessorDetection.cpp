@@ -562,6 +562,16 @@ TR_J9VMBase::getPPCProcessorType()
    return portLibCall_getProcessorType();
    }
 
+bool
+TR_J9VMBase::getPPCSupportsVSXRegisters()
+   {
+#if defined(TR_TARGET_POWER)
+   return TR::Compiler->target.cpu.getPPCSupportsVSX();
+#else
+   return false;
+#endif // TR_TARGET_POWER
+   }
+
 // -----------------------------------------------------------------------------
 
 extern TR_X86CPUIDBuffer *queryX86TargetCPUID(void * javaVM);

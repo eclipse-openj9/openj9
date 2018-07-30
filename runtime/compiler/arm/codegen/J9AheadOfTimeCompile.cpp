@@ -64,9 +64,9 @@ void J9::ARM::AheadOfTimeCompile::processRelocations()
       relocation->mapRelocation(self()->cg());
       }
 
-   for (auto aotIterator = self()->cg()->getAOTRelocationList().begin(); aotIterator != self()->cg()->getAOTRelocationList().end(); ++aotIterator)
+   for (auto aotIterator = self()->cg()->getExternalRelocationList().begin(); aotIterator != self()->cg()->getExternalRelocationList().end(); ++aotIterator)
       {
-	  (*aotIterator)->addAOTRelocation(self()->cg());
+	  (*aotIterator)->addExternalRelocation(self()->cg());
       }
 
    for (r = self()->getAOTRelocationTargets().getFirst();

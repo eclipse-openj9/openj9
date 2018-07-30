@@ -273,6 +273,7 @@ public:
    static TR_J9VMBase * get(J9JITConfig *, J9VMThread *, VM_TYPE vmType=DEFAULT_VM);
    static char *getJ9FormattedName(J9JITConfig *, J9PortLibrary *, char *, int32_t, char *, char *, bool suffix=false);
    static TR_Processor getPPCProcessorType();
+   virtual bool getPPCSupportsVSXRegisters();
    static void initializeX86ProcessorInfo(J9JITConfig *);
 
    static bool isBigDecimalClass(J9UTF8 * className);
@@ -970,8 +971,6 @@ public:
 
    virtual int32_t maxInternalPlusPinningArrayPointers(TR::Compilation* comp);
 
-   virtual void scanClassForReservation(TR_OpaqueClassBlock *,  TR::Compilation *comp);
-
    virtual void *getSystemClassLoader();
 
    virtual TR_EstimateCodeSize *getCodeEstimator( TR::Compilation *comp);
@@ -1135,7 +1134,6 @@ public:
    virtual TR_OpaqueClassBlock *getClassOfMethod(TR_OpaqueMethodBlock *method);
    virtual void               getResolvedMethods(TR_Memory *, TR_OpaqueClassBlock *, List<TR_ResolvedMethod> *);
    virtual TR_ResolvedMethod *getResolvedMethodForNameAndSignature(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer, const char* methodName, const char *signature);
-   virtual void               scanClassForReservation(TR_OpaqueClassBlock *,  TR::Compilation *comp);
    virtual uint32_t           getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, char * fieldName,
                                                      uint32_t fieldLen, char * sig, uint32_t sigLen, UDATA options);
 #if defined(TR_TARGET_S390)

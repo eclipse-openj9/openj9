@@ -1,4 +1,4 @@
-; Copyright (c) 2000, 2017 IBM Corp. and others
+; Copyright (c) 2000, 2018 IBM Corp. and others
 ;
 ; This program and the accompanying materials are made available under
 ; the terms of the Eclipse Public License 2.0 which accompanies this
@@ -109,7 +109,23 @@ endm
 TryLock macro
     push _rbp
     lea  _rbp, [_rbp + eq_J9Monitor_RESINCBits] ; make thread ID + RES + INC_DEC value
-    xor  _rax, _rax                             ; make eax 0 for the compare and exchange
+
+    ; Set _rax to the lock word value that allows a monitor to be reserved (the
+    ; reservation bit by default, or 0 for -XlockReservation). This value is
+    ; provided to the reserving monent helper as the third argument. Calling
+    ; conventions differ...
+    ifdef TR_HOST_32BIT
+        ; 32-bit always uses fastcall. This is the only argument on the stack.
+        ; Stack offsets: +0 saved ebp, +4 return address, +8 argument
+        mov eax, dword ptr [esp+8]
+    else
+        ifdef UseFastCall
+            mov rax, r8
+        else
+            mov rax, rdx
+        endif
+    endif
+
     ifdef ASM_J9VM_INTERP_SMALL_MONITOR_SLOT
         lock cmpxchg [_rcx],  ebp               ; try taking the lock
     else
@@ -136,11 +152,19 @@ MonitorEnterReserved macro
     and  _rax, eq_J9Monitor_CountsClearMask         ; clear the count bits
     jnz  trylock                                    ; if any bit is set we don't have it reserved by the same thread, or not reserved at all
     add  dword ptr [_rcx], eq_J9Monitor_IncDecValue ; add 1 to the reservation count
-    ret
+    ifdef TR_HOST_32BIT
+        ret 4
+    else
+        ret
+    endif
   trylock:
     TryLock
     jne  fallback                                   ; call out to VM if we couldn't take the lock, which means it's not reserved for us
-    ret
+    ifdef TR_HOST_32BIT
+        ret 4
+    else
+        ret
+    endif
   fallback:
 endm
 
@@ -173,11 +197,19 @@ MonitorEnterReservedPrimitive macro
     xor  _rax, eq_J9Monitor_RESBit          ; mask RES bit
     and  _rax, eq_J9Monitor_CNTFLCClearMask ; clear the count bits
     jnz  trylock                            ; if any bit is set we don't have it reserved by the same thread, or not reserved at all
-    ret
+    ifdef TR_HOST_32BIT
+        ret 4
+    else
+        ret
+    endif
   trylock:
     TryLock
     jne  fallback                           ; call out to VM if we couldn't take the lock, which means it's not reserved for us
-    ret
+    ifdef TR_HOST_32BIT
+        ret 4
+    else
+        ret
+    endif
   fallback:
 endm
 
@@ -250,7 +282,6 @@ MonitorReservationFunction macro Name, Fallback, Template
   else
     &Name proc near
   endif
-    ExternHelper &Fallback
     &Template
     ifdef UseFastCall
         mov  _rcx, _rbp ; restore the first param - vmthread
@@ -265,10 +296,34 @@ else
 _TEXT segment para use32 public 'CODE'
 endif
 
-MonitorReservationFunction jitMonitorEnterReserved,                    jitMonitorEntry,       MonitorEnterReserved
-MonitorReservationFunction jitMethodMonitorEnterReserved,              jitMethodMonitorEntry, MonitorEnterReserved
-MonitorReservationFunction jitMonitorEnterReservedPrimitive,           jitMonitorEntry,       MonitorEnterReservedPrimitive
-MonitorReservationFunction jitMethodMonitorEnterReservedPrimitive,     jitMethodMonitorEntry, MonitorEnterReservedPrimitive
+ifdef TR_HOST_64BIT
+    entryFallback equ jitMonitorEntry
+    methodEntryFallback equ jitMethodMonitorEntry
+else
+    entryFallback proc near
+        ; jitMonitorEntry won't clean up the extra argument
+        pop eax
+        mov dword ptr [esp], eax
+        jmp jitMonitorEntry
+    entryFallback endp
+
+    methodEntryFallback proc near
+        ; jitMethodMonitorEntry won't clean up the extra argument
+        pop eax
+        mov dword ptr [esp], eax
+        jmp jitMethodMonitorEntry
+    methodEntryFallback endp
+endif
+
+ExternHelper jitMonitorEntry
+ExternHelper jitMethodMonitorEntry
+ExternHelper jitMonitorExit
+ExternHelper jitMethodMonitorExit
+
+MonitorReservationFunction jitMonitorEnterReserved,                    entryFallback,         MonitorEnterReserved
+MonitorReservationFunction jitMethodMonitorEnterReserved,              methodEntryFallback,   MonitorEnterReserved
+MonitorReservationFunction jitMonitorEnterReservedPrimitive,           entryFallback,         MonitorEnterReservedPrimitive
+MonitorReservationFunction jitMethodMonitorEnterReservedPrimitive,     methodEntryFallback,   MonitorEnterReservedPrimitive
 MonitorReservationFunction jitMonitorEnterPreservingReservation,       jitMonitorEntry,       MonitorEnterPreservingReservation
 MonitorReservationFunction jitMethodMonitorEnterPreservingReservation, jitMethodMonitorEntry, MonitorEnterPreservingReservation
 

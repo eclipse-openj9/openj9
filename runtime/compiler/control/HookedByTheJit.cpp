@@ -1887,6 +1887,7 @@ static TR_CompilationErrorCode recompileMethodForLog(
    TR::CompilationInfo *compInfo,
    TR_J9VMBase        *frontendOfThread,
    TR_Hotness          optimizationLevel,
+   bool                profilingCompile,
    void               *oldStartPC,
    TR::FILE *logFile
    )
@@ -1902,6 +1903,9 @@ static TR_CompilationErrorCode recompileMethodForLog(
    TR_OptimizationPlan *plan = TR_OptimizationPlan::alloc(optimizationLevel);
    if (!plan)
       return compilationFailure;
+
+   if (profilingCompile)
+      plan->setInsertInstrumentation(true);
 
    // pass the log file to the compilation
    plan->setLogCompilation(logFile);
@@ -2158,6 +2162,7 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
                compInfo,
                frontendOfThread,
                jittedMethodsOnStack[i]._optLevel,
+               false,
                jittedMethodsOnStack[i]._oldStartPC,
                logFile
                );
@@ -2222,6 +2227,7 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
                   compInfo,
                   frontendOfThread,
                   (TR_Hotness)comp->getOptLevel(),
+                  comp->isProfilingCompilation(),
                   oldStartPC,
                   logFile
                   );
@@ -3272,12 +3278,11 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
       {
       J9Class * superCl = cl->superclasses[classDepth];
 
-      intptrj_t methodCount =  *((intptrj_t *)(superCl +1))-1;      //Vtable starts at end of j9class. First entry is num methods in vtable
-      J9Method ** superVTable = (J9Method **)((char *)superCl + sizeof(J9Class));   // a pointer to an array of j9method pointers (the vtable!)
-      J9Method ** subVTable = (J9Method **)((char *)cl + sizeof(J9Class));
+      J9VTableHeader * superVTableHeader = J9VTABLE_HEADER_FROM_RAM_CLASS(superCl);
+      intptrj_t methodCount =  (intptrj_t)superVTableHeader->size;
+      J9Method ** superVTable = J9VTABLE_FROM_HEADER(superVTableHeader);
+      J9Method ** subVTable = J9VTABLE_FROM_RAM_CLASS(cl);
 
-      subVTable+=2;                                          // second entry in vtable is magic and want to skip over it as well
-      superVTable+=2;
       intptrj_t methodIndex=0;
 
       while(methodCount--)
@@ -3516,6 +3521,7 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
 
                //Updating all grandparent classes overridden bits
                J9Class * tempsuperCl;
+               J9VTableHeader * tempsuperVTableHeader;
                J9Method ** tempsuperVTable;
                J9Method * tempsuperMethod;
                intptrj_t tempmethodCount;
@@ -3523,11 +3529,13 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
                   {
 
                   tempsuperCl = cl->superclasses[k];
-                  tempmethodCount =  *((intptrj_t *)(tempsuperCl +1))-1;
+                  tempsuperVTableHeader = J9VTABLE_HEADER_FROM_RAM_CLASS(tempsuperCl);
+                  tempmethodCount =  (intptrj_t)tempsuperVTableHeader->size;
+
                   if(methodIndex>= tempmethodCount)  //we are outside the grandparent's vft slots
                      break;
-                  tempsuperVTable = (J9Method **)((char *)tempsuperCl + sizeof(J9Class));
-                  tempsuperVTable+=2;
+
+                  tempsuperVTable = J9VTABLE_FROM_HEADER(tempsuperVTableHeader);
                   tempsuperVTable = tempsuperVTable + methodIndex;
                   tempsuperMethod= *tempsuperVTable;
                   jitUpdateMethodOverride(vm, cl, tempsuperMethod,subMethod);
@@ -3557,6 +3565,7 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
 
             //Updating all grandparent classes overridden bits
             J9Class * tempsuperCl;
+            J9VTableHeader * tempsuperVTableHeader;
             J9Method ** tempsuperVTable;
             J9Method * tempsuperMethod;
             intptrj_t tempmethodCount;
@@ -3564,11 +3573,13 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
                {
 
                tempsuperCl = cl->superclasses[k];
-               tempmethodCount =  *((intptrj_t *)(tempsuperCl +1))-1;
+               tempsuperVTableHeader = J9VTABLE_HEADER_FROM_RAM_CLASS(tempsuperCl);
+               tempmethodCount =  (intptrj_t)tempsuperVTableHeader->size;
+
                if(methodIndex >= tempmethodCount) //we are outside the grandparent's vft slots
                   break;
-               tempsuperVTable = (J9Method **)((char *)tempsuperCl + sizeof(J9Class));
-               tempsuperVTable+=2;
+
+               tempsuperVTable = J9VTABLE_FROM_HEADER(tempsuperVTableHeader);
                tempsuperVTable = tempsuperVTable + methodIndex;
                tempsuperMethod= *tempsuperVTable;
 
@@ -4046,6 +4057,12 @@ void lowerCompilationLimitsOnLowVirtualMemory(TR::CompilationInfo *compInfo, J9V
 
 J9Method * getNewInstancePrototype(J9VMThread * context);
 
+static void getClassNameIfNecessary(TR_J9VMBase *vm, TR_OpaqueClassBlock *clazz, char *&className, int32_t &len)
+   {
+   if (className == NULL)
+      className = vm->getClassNameChars(clazz, len);
+   }
+
 static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
    {
    J9VMInternalClassLoadEvent * classLoadEvent = (J9VMInternalClassLoadEvent *)eventData;
@@ -4101,11 +4118,12 @@ static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, 
    J9ClassLoader *classLoader = cl->classLoader;
 
    bool p = TR::Options::getVerboseOption(TR_VerboseHookDetailsClassLoading);
+   char * className = NULL;
+   int32_t classNameLen = -1;
    if (p)
       {
-      int32_t len;
-      char * className = vm->getClassNameChars(clazz, len);
-      TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "--load-- loader %p, class %p : %.*s\n", classLoader, cl, len, className);
+      getClassNameIfNecessary(vm, clazz, className, classNameLen);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "--load-- loader %p, class %p : %.*s\n", classLoader, cl, classNameLen, className);
       }
 
    // add the newInstance hook
@@ -4202,6 +4220,49 @@ static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, 
    //    allocFailed = !compInfo->getPersistentInfo()->ensureUnloadedAddressSetsAreInitialized();
 
    classLoadEvent->failed = allocFailed;
+
+   // Determine whether this class gets lock reservation
+   if (options->getOption(TR_ReservingLocks))
+      {
+      TR_J9VMBase *fej9 = (TR_J9VMBase *)(TR_J9VMBase::get(jitConfig, 0));
+      int lwOffset = fej9->getByteOffsetToLockword(clazz);
+      if (lwOffset > 0)
+         {
+         bool reserve = options->getOption(TR_ReserveAllLocks);
+
+         if (!reserve && ((J9JavaVM *)vmThread->javaVM)->systemClassLoader == classLoader)
+            {
+            getClassNameIfNecessary(vm, clazz, className, classNameLen);
+            if (classNameLen == 22 && !strncmp(className, "java/lang/StringBuffer", 22))
+               reserve = true;
+            else if (classNameLen == 16 && !strncmp(className, "java/util/Random", 16))
+               reserve = true;
+            }
+
+         TR::SimpleRegex *resRegex = options->getLockReserveClass();
+         if (!reserve && resRegex != NULL)
+            {
+            getClassNameIfNecessary(vm, clazz, className, classNameLen);
+            if (TR::SimpleRegex::match(resRegex, className))
+               reserve = true;
+            }
+
+         if (reserve)
+            {
+            TR_PersistentClassInfo *classInfo = compInfo
+               ->getPersistentInfo()
+               ->getPersistentCHTable()
+               ->findClassInfoAfterLocking(clazz, vm);
+
+            if (classInfo != NULL)
+               {
+               classInfo->setReservable();
+               if (!TR::Options::_aggressiveLockReservation)
+                  J9CLASS_EXTENDED_FLAGS_SET(cl, J9ClassReservableLockWordInit);
+               }
+            }
+         }
+      }
 
    jitReleaseClassTableMutex(vmThread);
 

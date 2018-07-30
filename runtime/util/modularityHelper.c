@@ -116,16 +116,6 @@ getPackageDefinition(J9VMThread *currentThread, J9Module *fromModule, j9object_t
 	return retval;
 }
 
-BOOLEAN
-#if J9VM_JAVA9_BUILD >= 156
-isPackageExportedToModule(J9VMThread *currentThread, J9Module *fromModule, const char *packageName, J9Module *toModule, BOOLEAN toUnnamed, UDATA *errCode)
-#else /* J9VM_JAVA9_BUILD >= 156 */
-isPackageExportedToModule(J9VMThread *currentThread, J9Module *fromModule, j9object_t packageName, J9Module *toModule, BOOLEAN toUnnamed, UDATA *errCode)
-#endif /* J9VM_JAVA9_BUILD >= 156 */
-{
-	return isPackageExportedToModuleHelper(currentThread, fromModule, getPackageDefinition(currentThread, fromModule, packageName, errCode), toModule, toUnnamed);
-}
-
 J9Package*
 #if J9VM_JAVA9_BUILD >= 156
 hashPackageTableAt(J9VMThread *currentThread, J9ClassLoader *classLoader, const char *packageName)

@@ -26,10 +26,14 @@ openjdk_repo:
   8: 'https://github.com/ibmruntimes/openj9-openjdk-jdk8.git'
   9: 'https://github.com/ibmruntimes/openj9-openjdk-jdk9.git'
   10: 'https://github.com/ibmruntimes/openj9-openjdk-jdk10.git'
+  11: 'https://github.com/ibmruntimes/openj9-openjdk-jdk11.git'
+  next: 'https://github.com/ibmruntimes/openj9-openjdk-jdk.git'
 openjdk_branch:
   8: 'openj9'
   9: 'openj9'
   10: 'openj9'
+  11: 'openj9'
+  next: 'openj9-jdk'
 #========================================#
 # Miscellaneous settings
 #========================================#
@@ -37,6 +41,8 @@ jdk_image_dir:
   8: 'j2sdk-image'
   9: 'jdk'
   10: 'jdk'
+  11: 'jdk'
+  next: 'jdk'
 credentials:
   github: 'b6987280-6402-458f-bdd6-7affc2e360d4'
 test_dependencies_job_name: 'test.getDependency'
@@ -52,36 +58,29 @@ linux_ppc-64_cmprssptrs_le:
     8: '/usr/lib/jvm/java-7-openjdk-ppc64el'
     9: '/usr/lib/jvm/adoptojdk-java-ppc64le-80'
     10: '/usr/lib/jvm/adoptojdk-java-ppc64le-90'
+    11: '/usr/lib/jvm/adoptojdk-java-10'
+    next: '/usr/lib/jvm/adoptojdk-java-10'
   release:
     8: 'linux-ppc64-normal-server-release'
     9: 'linux-ppc64le-normal-server-release'
     10: 'linux-ppc64le-normal-server-release'
+    11: 'linux-ppc64le-normal-server-release'
+    next: 'linux-ppc64le-normal-server-release'
   freemarker: '/home/jenkins/freemarker.jar'
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
     build:
-      8: 'ppcle'
-      9: 'ppcle'
-      10: 'ppcle'
+      8: 'hw.arch.ppc64le && sw.os.ubuntu'
+      9: 'hw.arch.ppc64le && sw.os.ubuntu'
+      10: 'hw.arch.ppc64le && sw.os.ubuntu'
+      11: 'hw.arch.ppc64le && sw.os.ubuntu'
+      next: 'hw.arch.ppc64le && sw.os.ubuntu'
     test:
-      8: 'ppcle'
-      9: 'ppcle'
-      10: 'ppcle'
-#========================================#
-# Linux PPCLE 64bits Compressed Pointers Valhalla Nestmates
-#========================================#
-linux_ppc-64_cmprssptrs_le_valhalla_nestmates:
-  boot_jdk:
-    10: '/usr/lib/jvm/adoptojdk-java-ppc64le-90'
-  release:
-    10: 'linux-ppc64le-normal-server-release'
-  freemarker: '/home/jenkins/freemarker.jar'
-  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
-  node_labels:
-    build:
-      10: 'ppcle'
-    test:
-      10: 'ppcle'
+      8: 'hw.arch.ppc64le && sw.os.ubuntu'
+      9: 'hw.arch.ppc64le && sw.os.ubuntu'
+      10: 'hw.arch.ppc64le && sw.os.ubuntu'
+      11: 'hw.arch.ppc64le && sw.os.ubuntu'
+      next: 'hw.arch.ppc64le && sw.os.ubuntu'
 #========================================#
 # Linux S390 64bits Compressed Pointers
 # Note: boot_jdk 8 must use an Adopt JDK8 build rather than an 
@@ -92,21 +91,29 @@ linux_390-64_cmprssptrs:
     8: '/usr/lib/jvm/adoptojdk-java-s390x-80'
     9: '/usr/lib/jvm/adoptojdk-java-s390x-80'
     10: '/usr/lib/jvm/adoptojdk-java-s390x-90'
+    11: '/usr/lib/jvm/adoptojdk-java-10'
+    next: '/usr/lib/jvm/adoptojdk-java-10'
   release:
     8: 'linux-s390x-normal-server-release'
     9: 'linux-s390x-normal-server-release'
     10: 'linux-s390x-normal-server-release'
+    11: 'linux-s390x-normal-server-release'
+    next: 'linux-s390x-normal-server-release'
   freemarker: '/home/jenkins/freemarker.jar'
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
     build:
-      8: '390'
-      9: '390'
-      10: '390'
+      8: 'hw.arch.s390x && sw.os.ubuntu'
+      9: 'hw.arch.s390x && sw.os.ubuntu'
+      10: 'hw.arch.s390x && sw.os.ubuntu'
+      11: 'hw.arch.s390x && sw.os.ubuntu'
+      next: 'hw.arch.s390x && sw.os.ubuntu'
     test:
-      8: '390'
-      9: '390'
-      10: '390'
+      8: 'hw.arch.s390x && sw.os.ubuntu'
+      9: 'hw.arch.s390x && sw.os.ubuntu'
+      10: 'hw.arch.s390x && sw.os.ubuntu'
+      11: 'hw.arch.s390x && sw.os.ubuntu'
+      next: 'hw.arch.s390x && sw.os.ubuntu'
 #========================================#
 # AIX PPC 64bits Compressed Pointers
 #========================================#
@@ -115,25 +122,35 @@ aix_ppc-64_cmprssptrs:
     8: '/usr/java7'
     9: '/usr/java8_64'
     10: '/usr/java9_64'
+    11: '/usr/java10_64'
+    next: '/usr/java10_64'
   release:
     8: 'aix-ppc64-normal-server-release'
     9: 'aix-ppc64-normal-server-release'
     10: 'aix-ppc64-normal-server-release'
+    11: 'aix-ppc64-normal-server-release'
+    next: 'aix-ppc64-normal-server-release'
   freemarker: '/home/jenkins/freemarker.jar'
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
     build:
-      8: 'aix'
-      9: 'aix'
-      10: 'aix'
+      8: 'hw.arch.ppc && sw.os.aix'
+      9: 'hw.arch.ppc && sw.os.aix'
+      10: 'hw.arch.ppc && sw.os.aix'
+      11: 'hw.arch.ppc && sw.os.aix'
+      next: 'hw.arch.ppc && sw.os.aix'
     test:
-      8: 'aix'
-      9: 'aix'
-      10: 'aix'
+      8: 'hw.arch.ppc && sw.os.aix'
+      9: 'hw.arch.ppc && sw.os.aix'
+      10: 'hw.arch.ppc && sw.os.aix'
+      11: 'hw.arch.ppc && sw.os.aix'
+      next: 'hw.arch.ppc && sw.os.aix'
   extra_configure_options:
     8: '--with-cups-include=/opt/freeware/include --with-extra-ldflags=-lpthread --with-extra-cflags=-lpthread --with-extra-cxxflags=-lpthread DF=/usr/sysv/bin/df --disable-ccache --with-jobs=8'
     9: '--with-cups-include=/opt/freeware/include --with-extra-ldflags=-lpthread --with-extra-cflags=-lpthread --with-extra-cxxflags=-lpthread DF=/usr/sysv/bin/df --disable-warnings-as-errors --with-jobs=8'
     10: '--with-cups-include=/opt/freeware/include --with-extra-ldflags=-lpthread --with-extra-cflags=-lpthread --with-extra-cxxflags=-lpthread DF=/usr/sysv/bin/df --disable-warnings-as-errors --with-jobs=8'
+    11: '--with-cups-include=/opt/freeware/include --with-extra-ldflags=-lpthread --with-extra-cflags=-lpthread --with-extra-cxxflags=-lpthread DF=/usr/sysv/bin/df --disable-warnings-as-errors --with-jobs=8'
+    next: '--with-cups-include=/opt/freeware/include --with-extra-ldflags=-lpthread --with-extra-cflags=-lpthread --with-extra-cxxflags=-lpthread DF=/usr/sysv/bin/df --disable-warnings-as-errors --with-jobs=8'
 #========================================#
 # Linux x86 64bits Compressed Pointers
 #========================================#
@@ -142,21 +159,29 @@ linux_x86-64_cmprssptrs:
     8: '/usr/lib/jvm/java-7-openjdk-amd64'
     9: '/usr/lib/jvm/adoptojdk-java-80'
     10: '/usr/lib/jvm/adoptojdk-java-90'
+    11: '/usr/lib/jvm/adoptojdk-java-10'
+    next: '/usr/lib/jvm/adoptojdk-java-10'
   release:
     8: 'linux-x86_64-normal-server-release'
     9: 'linux-x86_64-normal-server-release'
     10: 'linux-x86_64-normal-server-release'
+    11: 'linux-x86_64-normal-server-release'
+    next: 'linux-x86_64-normal-server-release'
   freemarker: '/home/jenkins/freemarker.jar'
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
     build:
-      8: 'hw.arch.x86 && sw.os.ubuntu.16'
-      9: 'hw.arch.x86 && sw.os.ubuntu.16'
-      10: 'hw.arch.x86 && sw.os.ubuntu.16'
+      8: 'hw.arch.x86 && sw.os.ubuntu'
+      9: 'hw.arch.x86 && sw.os.ubuntu'
+      10: 'hw.arch.x86 && sw.os.ubuntu'
+      11: 'hw.arch.x86 && sw.os.ubuntu'
+      next: 'hw.arch.x86 && sw.os.ubuntu'
     test:
-      8: 'hw.arch.x86 && sw.os.ubuntu.16'
-      9: 'hw.arch.x86 && sw.os.ubuntu.16'
-      10: 'hw.arch.x86 && sw.os.ubuntu.16'
+      8: 'hw.arch.x86 && sw.os.ubuntu'
+      9: 'hw.arch.x86 && sw.os.ubuntu'
+      10: 'hw.arch.x86 && sw.os.ubuntu'
+      11: 'hw.arch.x86 && sw.os.ubuntu'
+      next: 'hw.arch.x86 && sw.os.ubuntu'
 #========================================#
 # Linux x86 64bits Compressed Pointers /w CMake
 #========================================#
@@ -165,29 +190,41 @@ linux_x86-64_cmprssptrs_cmake:
     8: '/usr/lib/jvm/java-7-openjdk-amd64'
     9: '/usr/lib/jvm/adoptojdk-java-80'
     10: '/usr/lib/jvm/adoptojdk-java-90'
+    11: '/usr/lib/jvm/adoptojdk-java-10'
+    next: '/usr/lib/jvm/adoptojdk-java-10'
   release:
     8: 'linux-x86_64-normal-server-release'
     9: 'linux-x86_64-normal-server-release'
     10: 'linux-x86_64-normal-server-release'
+    11: 'linux-x86_64-normal-server-release'
+    next: 'linux-x86_64-normal-server-release'
   freemarker: '/home/jenkins/freemarker.jar'
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
     build:
-      8: 'hw.arch.x86 && sw.os.ubuntu.16'
-      9: 'hw.arch.x86 && sw.os.ubuntu.16'
-      10: 'hw.arch.x86 && sw.os.ubuntu.16'
+      8: 'hw.arch.x86 && sw.os.ubuntu'
+      9: 'hw.arch.x86 && sw.os.ubuntu'
+      10: 'hw.arch.x86 && sw.os.ubuntu'
+      11: 'hw.arch.x86 && sw.os.ubuntu'
+      next: 'hw.arch.x86 && sw.os.ubuntu'
     test:
-      8: 'hw.arch.x86 && sw.os.ubuntu.16'
-      9: 'hw.arch.x86 && sw.os.ubuntu.16'
-      10: 'hw.arch.x86 && sw.os.ubuntu.16'
+      8: 'hw.arch.x86 && sw.os.ubuntu'
+      9: 'hw.arch.x86 && sw.os.ubuntu'
+      10: 'hw.arch.x86 && sw.os.ubuntu'
+      11: 'hw.arch.x86 && sw.os.ubuntu'
+      next: 'hw.arch.x86 && sw.os.ubuntu'
   extra_configure_options:
     8: '--with-cmake --disable-ddr'
     9: '--with-cmake --disable-ddr'
     10: '--with-cmake --disable-ddr'
+    11: '--with-cmake --disable-ddr'
+    next: '--with-cmake --disable-ddr'
   extra_make_options:
     8: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
     9: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
     10: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
+    11: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
+    next: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
 #========================================#
 # Linux x86 64bits Large Heap
 #========================================#
@@ -196,25 +233,35 @@ linux_x86-64:
     8: '/usr/lib/jvm/java-7-openjdk-amd64'
     9: '/usr/lib/jvm/adoptojdk-java-80'
     10: '/usr/lib/jvm/adoptojdk-java-90'
+    11: '/usr/lib/jvm/adoptojdk-java-10'
+    next: '/usr/lib/jvm/adoptojdk-java-10'
   release:
     8: 'linux-x86_64-normal-server-release'
     9: 'linux-x86_64-normal-server-release'
     10: 'linux-x86_64-normal-server-release'
+    11: 'linux-x86_64-normal-server-release'
+    next: 'linux-x86_64-normal-server-release'
   freemarker: '/home/jenkins/freemarker.jar'
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
     build:
-      8: 'hw.arch.x86 && sw.os.ubuntu.16'
-      9: 'hw.arch.x86 && sw.os.ubuntu.16'
-      10: 'hw.arch.x86 && sw.os.ubuntu.16'
+      8: 'hw.arch.x86 && sw.os.ubuntu'
+      9: 'hw.arch.x86 && sw.os.ubuntu'
+      10: 'hw.arch.x86 && sw.os.ubuntu'
+      11: 'hw.arch.x86 && sw.os.ubuntu'
+      next: 'hw.arch.x86 && sw.os.ubuntu'
     test:
-      8: 'hw.arch.x86 && sw.os.ubuntu.16'
-      9: 'hw.arch.x86 && sw.os.ubuntu.16'
-      10: 'hw.arch.x86 && sw.os.ubuntu.16'
+      8: 'hw.arch.x86 && sw.os.ubuntu'
+      9: 'hw.arch.x86 && sw.os.ubuntu'
+      10: 'hw.arch.x86 && sw.os.ubuntu'
+      11: 'hw.arch.x86 && sw.os.ubuntu'
+      next: 'hw.arch.x86 && sw.os.ubuntu'
   extra_configure_options:
     8: '--with-noncompressedrefs'
     9: '--with-noncompressedrefs'
     10: '--with-noncompressedrefs'
+    11: '--with-noncompressedrefs'
+    next: '--with-noncompressedrefs'
 #========================================#
 # Windows x86 64bits Compressed Pointers
 #========================================#
@@ -223,25 +270,35 @@ win_x86-64_cmprssptrs:
     8: '/cygdrive/c/openjdk/jdk7'
     9: '/cygdrive/c/openjdk/jdk8'
     10: '/cygdrive/c/openjdk/jdk9'
+    11: '/cygdrive/c/openjdk/jdk10'
+    next: '/cygdrive/c/openjdk/jdk10'
   release:
     8: 'windows-x86_64-normal-server-release'
     9: 'windows-x86_64-normal-server-release'
     10: 'windows-x86_64-normal-server-release'
+    11: 'windows-x86_64-normal-server-release'
+    next: 'windows-x86_64-normal-server-release'
   freemarker: '/cygdrive/c/openjdk/freemarker.jar'
   openjdk_reference_repo: 'C:\openjdk\openjdk_cache'
   extra_configure_options:
     8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --disable-ccache'
     9: '--with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-toolchain-version=2013 --disable-ccache'
     10: '--with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-toolchain-version=2013 --disable-ccache'
+    11: '--with-toolchain-version=2013 --disable-ccache'
+    next: '--with-toolchain-version=2013 --disable-ccache'
   node_labels:
     build:
       8: 'hw.arch.x86 && sw.os.windows'
       9: 'hw.arch.x86 && sw.os.windows'
       10: 'hw.arch.x86 && sw.os.windows'
+      11: 'hw.arch.x86 && sw.os.windows'
+      next: 'hw.arch.x86 && sw.os.windows'
     test:
       8: 'hw.arch.x86 && sw.os.windows'
       9: 'hw.arch.x86 && sw.os.windows'
       10: 'hw.arch.x86 && sw.os.windows'
+      11: 'hw.arch.x86 && sw.os.windows'
+      next: 'hw.arch.x86 && sw.os.windows'
 #========================================#
 # Windows x86 32bits 
 #========================================#

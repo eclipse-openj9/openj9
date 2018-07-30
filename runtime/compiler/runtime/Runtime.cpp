@@ -22,10 +22,7 @@
 
 #ifdef TR_HOST_X86
 #if defined(LINUX)
-#include <sys/time.h>   // for gettimeofday
 #include <time.h>       // for clock_gettime
-#elif defined(WINDOWS)
-#include <windows.h>    // for GetSystemTimeAsFileTime
 #endif
 #endif   // TR_HOST_X86
 
@@ -159,7 +156,8 @@ void* TR_RuntimeHelperTable::translateAddress(void * a)
    {
    return
 #if defined(J9ZOS390)
-       // In ZOS, Entrypoint address is stored at offset 0x14 from the function descriptor
+       // In ZOS, Entrypoint address is stored at an offset from the function descriptor
+       // The offset is 20 and 24 for 32-bit and 64-bit z/OS, respectively. See J9FunctionDescriptor_T.
        // In zLinux, Entrypoint address is same as the function descriptor
        TOC_UNWRAP_ADDRESS(a);
 #elif defined(TR_HOST_POWER) && (defined(TR_HOST_64BIT) || defined(AIXPPC)) && !defined(__LITTLE_ENDIAN__)
@@ -167,6 +165,27 @@ void* TR_RuntimeHelperTable::translateAddress(void * a)
 #else // defined(TR_HOST_POWER) && !defined(__LITTLE_ENDIAN__)
       a;
 #endif // defined(TR_HOST_POWER) && !defined(__LITTLE_ENDIAN__)
+   }
+
+void* TR_RuntimeHelperTable::getFunctionPointer(TR_RuntimeHelper h)
+   {
+   if (h < TR_numRuntimeHelpers && (_linkage[h] == TR_CHelper || _linkage[h] == TR_Helper))
+      return _helpers[h];
+   else
+      return reinterpret_cast<void*>(TR_RuntimeHelperTable::INVALID_FUNCTION_POINTER);
+   }
+
+void* TR_RuntimeHelperTable::getFunctionEntryPointOrConst(TR_RuntimeHelper h)
+   {
+   if (h < TR_numRuntimeHelpers)
+      {
+      if (_linkage[h] == TR_CHelper || _linkage[h] == TR_Helper)
+         return translateAddress(_helpers[h]);
+      else
+         return _helpers[h];
+      }
+   else
+      return reinterpret_cast<void*>(TR_RuntimeHelperTable::INVALID_FUNCTION_POINTER);
    }
 
 #if defined(TR_HOST_S390)
@@ -294,8 +313,6 @@ JIT_HELPER(prefetchTLH);
 JIT_HELPER(newPrefetchTLH);
 JIT_HELPER(outlinedNewObject);
 JIT_HELPER(outlinedNewArray);
-JIT_HELPER(outlinedNewObjectNoZeroInit);
-JIT_HELPER(outlinedNewArrayNoZeroInit);
 
 JIT_HELPER(_arrayTranslateTRTO);
 JIT_HELPER(_arrayTranslateTROTNoBreak);
@@ -340,16 +357,6 @@ JIT_HELPER(interpreterSyncXMM0DStaticGlue);
 
 JIT_HELPER(methodHandleJ2IGlue);
 JIT_HELPER(methodHandleJ2I_unwrapper);
-
-JIT_HELPER(outlinedPrologue_0preserved);
-JIT_HELPER(outlinedPrologue_1preserved);
-JIT_HELPER(outlinedPrologue_2preserved);
-JIT_HELPER(outlinedPrologue_3preserved);
-JIT_HELPER(outlinedPrologue_4preserved);
-JIT_HELPER(outlinedPrologue_5preserved);
-JIT_HELPER(outlinedPrologue_6preserved);
-JIT_HELPER(outlinedPrologue_7preserved);
-JIT_HELPER(outlinedPrologue_8preserved);
 
 // --------------------------------------------------------------------------------
 //                                    IA32
@@ -1062,6 +1069,9 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_releaseVMAccess,            (void *)jitReleaseVMAccess,            TR_Helper);
 #endif
    SET(TR_throwCurrentException,      (void *)jitThrowCurrentException,      TR_Helper);
+#if defined (TR_HOST_X86)
+   SET(TR_throwClassCastException,    (void *)jitThrowClassCastException,    TR_Helper);
+#endif
 
    SET(TR_newInstanceImplAccessCheck, (void *)jitNewInstanceImplAccessCheck,         TR_Helper);
 
@@ -1123,10 +1133,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_X86interpreterUnresolvedFieldGlue,                (void *)interpreterUnresolvedFieldGlue,                TR_Helper);
    SET(TR_X86interpreterUnresolvedFieldSetterGlue,          (void *)interpreterUnresolvedFieldSetterGlue,          TR_Helper);
 
-   SET(TR_X86OutlinedNew,                (void *)outlinedNewObject,           TR_Helper);
-   SET(TR_X86OutlinedNewArray,           (void *)outlinedNewArray,            TR_Helper);
-   SET(TR_X86OutlinedNewNoZeroInit,      (void *)outlinedNewObjectNoZeroInit, TR_Helper);
-   SET(TR_X86OutlinedNewArrayNoZeroInit, (void *)outlinedNewArrayNoZeroInit,  TR_Helper);
    SET(TR_X86prefetchTLH,                (void *)prefetchTLH,                 TR_Helper);
    SET(TR_X86newPrefetchTLH,             (void *)newPrefetchTLH,              TR_Helper);
    SET(TR_X86CodeCachePrefetchHelper,    (void *)prefetchTLH,                 TR_Helper); // needs to be set while compiling
@@ -1176,11 +1182,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
 #endif
 #if defined(LINUX)
    SET(TR_AMD64clockGetTime,                          (void *)clock_gettime, TR_System);
-#elif defined(WINDOWS)
-   SET(TR_AMD64QueryPerformanceCounter,               (void *)QueryPerformanceCounter, TR_System);
-   SET(TR_AMD64GetTickCount,                          (void *)GetTickCount,            TR_System);
 #endif
-   SET(TR_AMD64currentTimeMillis,                          (void *)OMRPORT_FROM_J9PORT(jitConfig->javaVM->portLibrary)->time_current_time_millis, TR_Helper);
    SET(TR_AMD64JitMonitorEnterReserved,                    (void *)jitMonitorEnterReserved,                    TR_CHelper);
    SET(TR_AMD64JitMonitorEnterReservedPrimitive,           (void *)jitMonitorEnterReservedPrimitive,           TR_CHelper);
    SET(TR_AMD64JitMonitorEnterPreservingReservation,       (void *)jitMonitorEnterPreservingReservation,       TR_CHelper);
@@ -1196,16 +1198,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
 
    SET(TR_methodHandleJ2IGlue,                        (void *)methodHandleJ2IGlue,       TR_Helper);
    SET(TR_methodHandleJ2I_unwrapper,                  (void *)methodHandleJ2I_unwrapper, TR_Helper);
-
-   SET(TR_outlinedPrologue_0preserved,                (void *)outlinedPrologue_0preserved, TR_Helper);
-   SET(TR_outlinedPrologue_1preserved,                (void *)outlinedPrologue_1preserved, TR_Helper);
-   SET(TR_outlinedPrologue_2preserved,                (void *)outlinedPrologue_2preserved, TR_Helper);
-   SET(TR_outlinedPrologue_3preserved,                (void *)outlinedPrologue_3preserved, TR_Helper);
-   SET(TR_outlinedPrologue_4preserved,                (void *)outlinedPrologue_4preserved, TR_Helper);
-   SET(TR_outlinedPrologue_5preserved,                (void *)outlinedPrologue_5preserved, TR_Helper);
-   SET(TR_outlinedPrologue_6preserved,                (void *)outlinedPrologue_6preserved, TR_Helper);
-   SET(TR_outlinedPrologue_7preserved,                (void *)outlinedPrologue_7preserved, TR_Helper);
-   SET(TR_outlinedPrologue_8preserved,                (void *)outlinedPrologue_8preserved, TR_Helper);
 
 #else // AMD64
 
@@ -1255,9 +1247,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_IA32encodeUTF16Little,                      (void *)_encodeUTF16Little,         TR_Helper);
 
    SET(TR_jitAddPicToPatchOnClassUnload,              (void *) jitAddPicToPatchOnClassUnload, TR_Helper);
-#if defined(WINDOWS)
-   SET(TR_IA32GetTickCount,                           (void *)GetTickCount, TR_System);
-#endif
    SET(TR_IA32interpreterUnresolvedVTableSlotGlue,    (void *)resolveAndPopulateVTableDispatch, TR_Helper);
 
    SET(TR_IA32JitMonitorEnterReserved,                    (void *)jitMonitorEnterReserved,                    TR_CHelper);
@@ -1625,15 +1614,15 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    if (0)
       {
       TR_RuntimeHelper h = TR_jitAddPicToPatchOnClassUnload;
-      void * a  = runtimeHelpers.getAddress(h);
+      void * a  = runtimeHelpers.getFunctionEntryPointOrConst(h);
       fprintf(stderr,"jitAddPicToPatchOnClassUnload= _helpers[%d]=0x%p ep=0x%p\n",h,a, TOC_UNWRAP_ADDRESS(a));
 
       h = TR_S390interfaceCallHelperMultiSlots;
-      a  = runtimeHelpers.getAddress(h);
+      a  = runtimeHelpers.getFunctionEntryPointOrConst(h);
       fprintf(stderr,"TR_S390interfaceCallHelperMultiSlots= _helpers[%d]=0x%p \n",h,a);
 
       h = TR_S390interfaceCallHelperSingleDynamicSlot;
-      a  = runtimeHelpers.getAddress(h);
+      a  = runtimeHelpers.getFunctionEntryPointOrConst(h);
       fprintf(stderr,"TR_S390interfaceCallHelperSingleDynamicSlot= _helpers[%d]=0x%p \n",h,a);
       }
 #endif

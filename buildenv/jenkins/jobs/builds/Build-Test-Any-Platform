@@ -65,25 +65,26 @@ timeout(time: 10, unit: 'HOURS') {
             }
         }
     }
-
-    node("${NODE}") {
-        if (!run_tests()) {
-            // build or pull request compile only pipeline: compile, archive,
-            // clean up
-            buildFile.build_all()
-        } else {
-            checkout scm
-            testFile = load 'buildenv/jenkins/common/test'
-            cleanWs()
-            if (params.UPSTREAM_JOB_NAME && params.UPSTREAM_JOB_NUMBER) {
-                // test pipeline: fetch resources from upstream job, run tests,
-                // archive results, clean up
-                testFile.test_all_with_fetch()
-            } else {
-                // pull request pipeline: compile, run tests, archive results,
+    stage ('Queue') {
+        node("${NODE}") {
+            if (!run_tests()) {
+                // build or pull request compile only pipeline: compile, archive,
                 // clean up
-                buildFile.build_pr()
-                testFile.test_all()
+                buildFile.build_all()
+            } else {
+                checkout scm
+                testFile = load 'buildenv/jenkins/common/test'
+                cleanWs()
+                if (params.UPSTREAM_JOB_NAME && params.UPSTREAM_JOB_NUMBER) {
+                    // test pipeline: fetch resources from upstream job, run tests,
+                    // archive results, clean up
+                    testFile.test_all_with_fetch()
+                } else {
+                    // pull request pipeline: compile, run tests, archive results,
+                    // clean up
+                    buildFile.build_pr()
+                    testFile.test_all()
+                }
             }
         }
     }
