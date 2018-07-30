@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -211,9 +211,9 @@ public:
    virtual uint32_t                   getBytesFootprint() = 0; 
 
    virtual uint32_t canBePersisted(uintptrj_t cacheStartAddress, uintptrj_t cacheSize, TR::PersistentInfo *info) { return IPBC_ENTRY_CAN_PERSIST; }
-   virtual void createPersistentCopy(uintptrj_t cacheStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)  = 0;
-   virtual void loadFromPersistentCopy(TR_IPBCDataStorageHeader * storage, TR::Compilation *comp, uintptrj_t cacheStartAddress) {};
-   virtual void copyFromEntry(TR_IPBytecodeHashTableEntry * originalEntry, TR::Compilation *comp) {};
+   virtual void createPersistentCopy(uintptrj_t cacheStartAddress, uintptrj_t cacheSize, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)  = 0;
+   virtual void loadFromPersistentCopy(TR_IPBCDataStorageHeader * storage, TR::Compilation *comp, uintptrj_t cacheStartAddress) {}
+   virtual void copyFromEntry(TR_IPBytecodeHashTableEntry * originalEntry, TR::Compilation *comp) {}
    void clearEntryFlags(){ _entryFlags = 0;};
    void setPersistentEntryRead(){ _entryFlags |= TR_IPBC_PERSISTENT_ENTRY_READ;};
    bool isPersistentEntryRead(){ return (_entryFlags & TR_IPBC_PERSISTENT_ENTRY_READ) != 0;};
@@ -302,7 +302,7 @@ public:
    virtual TR_IPBCDataFourBytes  *asIPBCDataFourBytes() { return this; }
    virtual uint32_t getBytesFootprint() {return sizeof (TR_IPBCDataFourBytesStorage);}
 
-   virtual void createPersistentCopy(uintptrj_t cacheStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
+   virtual void createPersistentCopy(uintptrj_t cacheStartAddress, uintptrj_t cacheSize, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
    virtual void loadFromPersistentCopy(TR_IPBCDataStorageHeader * storage, TR::Compilation *comp, uintptrj_t cacheStartAddress);
    int16_t getSumBranchCount();
    virtual void copyFromEntry(TR_IPBytecodeHashTableEntry * originalEntry, TR::Compilation *comp);
@@ -357,7 +357,7 @@ public:
    virtual TR_IPBCDataEightWords  *asIPBCDataEightWords() { return this; }
    virtual uint32_t getBytesFootprint() {return sizeof(TR_IPBCDataEightWordsStorage);}
 
-   virtual void createPersistentCopy(uintptrj_t cacheStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
+   virtual void createPersistentCopy(uintptrj_t cacheStartAddress, uintptrj_t cacheSize, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
    virtual void loadFromPersistentCopy(TR_IPBCDataStorageHeader * storage, TR::Compilation *comp, uintptrj_t cacheStartAddress);
    virtual int32_t getSumSwitchCount();
    virtual void copyFromEntry(TR_IPBytecodeHashTableEntry * originalEntry, TR::Compilation *comp);
@@ -405,7 +405,7 @@ public:
    virtual uint32_t getBytesFootprint() {return sizeof (TR_IPBCDataCallGraphStorage);}
 
    virtual uint32_t canBePersisted(uintptrj_t cacheStartAddress, uintptrj_t cacheSize, TR::PersistentInfo *info);
-   virtual void createPersistentCopy(uintptrj_t cacheStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
+   virtual void createPersistentCopy(uintptrj_t cacheStartAddress, uintptrj_t cacheSize, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
    virtual void loadFromPersistentCopy(TR_IPBCDataStorageHeader * storage, TR::Compilation *comp, uintptrj_t cacheStartAddress);
    virtual void copyFromEntry(TR_IPBytecodeHashTableEntry * originalEntry, TR::Compilation *comp);
 
@@ -636,7 +636,7 @@ private:
    TR_IPBCDataCallGraph* getCGProfilingData(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation *comp);
 
    uintptrj_t createBalancedBST(uintptrj_t *pcEntries, int32_t low, int32_t high, uintptrj_t memChunk,
-                                TR::Compilation *comp, uintptrj_t cacheStartAddress);
+                                TR::Compilation *comp, uintptrj_t cacheStartAddress, uintptrj_t cacheSize);
    uint32_t walkILTreeForEntries(uintptrj_t *pcEntries, uint32_t &numEntries, TR_J9ByteCodeIterator *bcIterator, TR_OpaqueMethodBlock *method, TR::Compilation *comp,
                                  uintptrj_t cacheOffset, uintptrj_t cacheSize, vcount_t visitCount, int32_t callerIndex, TR_BitVector *BCvisit, bool &abort);
 
