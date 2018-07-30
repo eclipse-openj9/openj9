@@ -354,7 +354,7 @@ wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemark
 - Install Visual Studio by running the file `vs2013.exe` (There is no special step required for downloading/installing VS2017. Please follow the guide of the downloaded installer to install all required components, especially for VC compiler).
 
 Not all of the shared libraries that are included with Visual Studio are registered during installation.
-In particular, the `msdia120.dll` libraries must be registered manually.
+In particular, the `msdia120.dll`(VS2013) or `msdia140.dll`(VS2017) libraries must be registered manually.
 To do so, execute the following from a command prompt:
 
 **VS2013**
@@ -364,8 +364,8 @@ regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio 12.0\DIA SDK\bin\amd64\
 ```
 **VS2017**
 ```
-regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\DIA SDK\bin\msdia140.dll"
-regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\DIA SDK\bin\amd64\msdia140.dll"
+regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\DIA SDK\bin\msdia140.dll"
+regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\DIA SDK\bin\amd64\msdia140.dll"
 ```
 
 - To unpack the Freemarker and Freetype compressed files, run:
