@@ -107,7 +107,7 @@ public class Test_JITHelpers {
 	/**
 	 * @tests com.ibm.jit.JITHelpers#(char[], char[], int)
 	 */
-    public static void test_toUpperIntrinsicUTF16() {
+	public static void test_toUpperIntrinsicUTF16() {
 		char[] buffer;
 
 		for (int j : edgecaseLengths){
@@ -116,14 +116,14 @@ public class Test_JITHelpers {
 				Assert.assertTrue(Arrays.equals(buffer, Arrays.copyOfRange(uppercaseUTF16Char, 0, j)),
 					"UTF16 JITHelper upper case conversion with char arrays of " + j + " letters failed");
 			}
-        	buffer.getClass();
+			buffer.getClass();
 		}
 	}
 
 	/**
 	 * @tests com.ibm.jit.JITHelpers#toUpperIntrinsicUTF16(byte[], byte[], int)
 	 */
-    public static void test_toUpperIntrinsicUTF16two() {
+	public static void test_toUpperIntrinsicUTF16two() {
 		byte[] buffer;
 
 		for (int j : edgecaseLengths) {
@@ -138,14 +138,14 @@ public class Test_JITHelpers {
 				Assert.assertTrue(Arrays.equals(buffer, Arrays.copyOfRange(uppercaseUTF16LittleEndianByte, 0, j * 2)),
 					"UTF16 JITHelper upper case conversion with little endian byte arrays of " + j + " letters failed");
 			}
-        	buffer.getClass();
+			buffer.getClass();
 		}
 	}
 
 	/**
 	 * @tests com.ibm.jit.JITHelpers#toLowerIntrinsicUTF16(char[], char[], int)
 	 */
-    public static void test_toLowerIntrinsicUTF16() {
+	public static void test_toLowerIntrinsicUTF16() {
 		char[] buffer;
 
 		for (int j : edgecaseLengths) {
@@ -154,14 +154,14 @@ public class Test_JITHelpers {
 				Assert.assertTrue(Arrays.equals(buffer, Arrays.copyOfRange(lowercaseUTF16Char, 0, j)),
 					"UTF16 JITHelper lower case conversion with byte arrays of " + j + " letters failed");
 			}
-        	buffer.getClass();
+			buffer.getClass();
 		}
 	}
 
 	/**
 	 * @tests com.ibm.jit.JITHelpers#toLowerIntrinsicUTF16(byte[], byte[], int)
 	 */
-    public static void test_toLowerIntrinsicUTF16two() {
+	public static void test_toLowerIntrinsicUTF16two() {
 		byte[] buffer;
 
 		for (int j : edgecaseLengths) {
@@ -176,14 +176,14 @@ public class Test_JITHelpers {
 				Assert.assertTrue(Arrays.equals(buffer, Arrays.copyOfRange(lowercaseUTF16LittleEndianByte, 0, j * 2)),
 					"UTF16 JITHelper lower case conversion with little endian byte arrays of " + j + " letters failed");
 			}
-        	buffer.getClass();
+			buffer.getClass();
 		}
 	}
 
 	/**
 	 * @tests com.ibm.jit.JITHelpers#toLowerIntrinsicLatin1(char[], char[], int)
 	 */
-    public static void test_toUpperIntrinsicLatin1() {
+	public static void test_toUpperIntrinsicLatin1() {
 		char[] buffer;
 		char[] source, converted;
 
@@ -201,14 +201,14 @@ public class Test_JITHelpers {
 				Assert.assertTrue(Arrays.equals(buffer, converted),
 					"Latin 1 JITHelper upper case conversion with char arrays of " + j + " letters failed");
 			}
-        	buffer.getClass();
+			buffer.getClass();
 		}
 	}
 
 	/**
 	 * @tests com.ibm.jit.JITHelpers#toUpperIntrinsicLatin1(byte[], byte[], int)
 	 */
-    public static void test_toUpperIntrinsicLatin1two() {
+	public static void test_toUpperIntrinsicLatin1two() {
 		byte[] buffer;
 
 		for (int j : edgecaseLengths) {
@@ -217,14 +217,14 @@ public class Test_JITHelpers {
 				Assert.assertTrue(Arrays.equals(buffer, Arrays.copyOfRange(uppercaseLatin1Byte, 0, j)),
 					"Latin 1 JITHelper upper case conversion with byte arrays of " + j + " letters failed");
 			}
-        	buffer.getClass();
+			buffer.getClass();
 		}
 	}
 
 	/**
 	 * @tests com.ibm.jit.JITHelpers#toLowerIntrinsicLatin1(char[], char[], int)
 	 */
-    public static void test_toLowerIntrinsicLatin1() {
+	public static void test_toLowerIntrinsicLatin1() {
 		char[] buffer;
 		char[] source, converted;
 
@@ -242,14 +242,14 @@ public class Test_JITHelpers {
 				Assert.assertTrue(Arrays.equals(buffer, converted),
 					"Latin 1 JITHelper lower case conversion with char arrays of " + j + " letters failed");
 			}
-        	buffer.getClass();
+			buffer.getClass();
 		}
 	}
 
 	/**
 	 * @tests com.ibm.jit.JITHelpers#toLowerIntrinsicLatin1(byte[], byte[], int)
 	 */
-    public static void test_toLowerIntrinsicLatin1two() {
+	public static void test_toLowerIntrinsicLatin1two() {
 		byte[] buffer;
 
 		for (int j : edgecaseLengths) {
@@ -258,7 +258,7 @@ public class Test_JITHelpers {
 				Assert.assertTrue(Arrays.equals(buffer, Arrays.copyOfRange(lowercaseLatin1Byte, 0, j)),
 					"Latin 1 JITHelper lower case conversion with byte arrays of " + j + " letters failed");
 			}
-        	buffer.getClass();
+			buffer.getClass();
 		}
 	}
 
