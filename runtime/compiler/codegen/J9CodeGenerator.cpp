@@ -1437,7 +1437,7 @@ J9::CodeGenerator::zeroOutAutoOnEdge(
 void
 J9::CodeGenerator::doInstructionSelection()
    {
-   self()->setNextAvailableBlockIndex(self()->comp()->getFlowGraph()->getNextNodeNumber() + 1);
+   setNextAvailableBlockIndex(comp()->getFlowGraph()->getNextNodeNumber() + 1);
 
    J9::SetMonitorStateOnBlockEntry::LiveMonitorStacks liveMonitorStacks(
       (J9::SetMonitorStateOnBlockEntry::LiveMonitorStacksComparator()),
