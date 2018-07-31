@@ -56,7 +56,7 @@ import static com.ibm.oti.util.Msg.getString;
  * Handles the initiator end of an attachment to a target VM
  * 
  */
-final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
+public final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 
 	/* 
 	 * The expected string is "ATTACH_CONNECTED <32 bit hexadecimal key>". 
