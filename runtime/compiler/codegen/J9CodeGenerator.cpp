@@ -1597,7 +1597,7 @@ J9::CodeGenerator::doInstructionSelection()
          fixedUpBlock = false;
          TR::Block *block = node->getBlock();
          self()->setCurrentEvaluationBlock(block);
-         self()->setCurrentBlockIndex(block->getNumber());
+         setCurrentBlockIndex(block->getNumber());
          self()->resetMethodModifiedByRA();
 
          liveMonitorStack = (liveMonitorStacks.find(block->getNumber()) != liveMonitorStacks.end()) ?
