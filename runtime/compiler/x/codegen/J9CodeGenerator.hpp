@@ -67,6 +67,11 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
 
    bool suppressInliningOfRecognizedMethod(TR::RecognizedMethod method);
 
+   /** \brief
+    *     Determines whether the code generator supports inlining of java/lang/Class.isAssignableFrom
+    */
+   bool supportsInliningOfIsAssignableFrom();
+
    /*
     * \brief Reserve space in the code cache for a specified number of trampolines.
     *        This is useful for inline caches where the methods are not yet known at

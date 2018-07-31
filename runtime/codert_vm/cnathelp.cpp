@@ -2518,6 +2518,18 @@ fast_jitInstanceOf(J9VMThread *currentThread, J9Class *castClass, j9object_t obj
 }
 
 UDATA J9FASTCALL
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
+/* TODO Will be cleaned once all platforms adopt the correct parameter order */
+fast_jitCheckAssignable(J9VMThread *currentThread, J9Class *clazz, J9Class *castClass)
+#else /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
+fast_jitCheckAssignable(J9VMThread *currentThread, J9Class *castClass, J9Class *clazz)
+#endif /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
+{
+	JIT_HELPER_PROLOGUE();
+	return VM_VMHelpers::inlineCheckCast(clazz, castClass) ? 1 : 0;
+}
+
+UDATA J9FASTCALL
 fast_jitObjectHashCode(J9VMThread *currentThread, j9object_t object)
 {
 	JIT_HELPER_PROLOGUE();
