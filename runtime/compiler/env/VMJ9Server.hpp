@@ -62,6 +62,7 @@ public:
    virtual int32_t getByteOffsetToLockword(TR_OpaqueClassBlock * clazz) override;
    virtual bool isString(TR_OpaqueClassBlock * clazz) override;
    virtual void * getMethods(TR_OpaqueClassBlock * clazz) override;
+   virtual void getResolvedMethods(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer, List<TR_ResolvedMethod> * resolvedMethodsInClass) override;
    //virtual uint32_t getNumMethods(TR_OpaqueClassBlock * clazz) override;
    //virtual uint32_t getNumInnerClasses(TR_OpaqueClassBlock * clazz) override;
    virtual bool isPrimitiveArray(TR_OpaqueClassBlock *clazz) override;

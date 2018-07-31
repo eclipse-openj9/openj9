@@ -555,6 +555,23 @@ TR_J9ServerVM::getMethods(TR_OpaqueClassBlock * clazz)
    stream->write(JITaaS::J9ServerMessageType::VM_getMethods, clazz);
    return std::get<0>(stream->read<void *>());
    }
+
+void
+TR_J9ServerVM::getResolvedMethods(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer, List<TR_ResolvedMethod> * resolvedMethodsInClass)
+   {
+   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITaaS::J9ServerMessageType::VM_getResolvedMethodsAndMirror, classPointer);
+   auto recv = stream->read<J9Method *, std::vector<TR_ResolvedJ9JITaaSServerMethodInfo>>();
+   J9Method *methods = std::get<0>(recv);
+   auto &methodsInfo = std::get<1>(recv);
+   for (int i = 0; i < methodsInfo.size(); ++i)
+      {
+      // create resolved methods, using information from mirrors
+      auto resolvedMethod = new (trMemory->trHeapMemory()) TR_ResolvedJ9JITaaSServerMethod((TR_OpaqueMethodBlock *) &(methods[i]), this, trMemory, methodsInfo[i], 0);
+      resolvedMethodsInClass->add(resolvedMethod);
+      }
+   }
+
 /*uint32_t
 TR_J9ServerVM::getNumMethods(TR_OpaqueClassBlock * clazz)
    {

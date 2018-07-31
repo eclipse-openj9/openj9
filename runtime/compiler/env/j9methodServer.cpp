@@ -137,6 +137,9 @@ TR_ResolvedJ9JITaaSServerMethod::getDeclaringClassFromFieldOrStatic(TR::Compilat
 TR_OpaqueClassBlock *
 TR_ResolvedJ9JITaaSServerMethod::classOfStatic(I_32 cpIndex, bool returnClassForAOT)
    {
+   // if method is unresolved, return right away
+   if (cpIndex < 0)
+      return nullptr;
    _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_classOfStatic, _remoteMirror, cpIndex, returnClassForAOT);
    return std::get<0>(_stream->read<TR_OpaqueClassBlock *>());
    }
@@ -464,10 +467,11 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedInterfaceMethod(I_32 cpIndex, UDATA 
 TR_ResolvedMethod *
 TR_ResolvedJ9JITaaSServerMethod::getResolvedInterfaceMethod(TR::Compilation * comp, TR_OpaqueClassBlock * classObject, I_32 cpIndex)
    {
-   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedInterfaceMethod_3, getPersistentIdentifier(), classObject, cpIndex);
-   auto recv = _stream->read<bool, J9Method*>();
+   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedInterfaceMethodAndMirror_3, getPersistentIdentifier(), classObject, cpIndex, _remoteMirror);
+   auto recv = _stream->read<bool, J9Method*, TR_ResolvedJ9JITaaSServerMethodInfo>();
    bool resolved = std::get<0>(recv);
    J9Method *ramMethod = std::get<1>(recv);
+   auto &methodInfo = std::get<2>(recv);
 
    // If the method ref is unresolved, the bytecodes of the ramMethod will be NULL.
    // IFF resolved, then we can look at the rest of the ref.
@@ -477,7 +481,7 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedInterfaceMethod(TR::Compilation * co
       TR_AOTInliningStats *aotStats = NULL;
       if (comp->getOption(TR_EnableAOTStats))
          aotStats = & (((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->interfaceMethods);
-      TR_ResolvedMethod *m = createResolvedMethodFromJ9Method(comp, cpIndex, 0, ramMethod, NULL, aotStats);
+      TR_ResolvedMethod *m = createResolvedMethodFromJ9Method(comp, cpIndex, 0, ramMethod, NULL, aotStats, methodInfo);
 
       TR_OpaqueClassBlock *c = NULL;
       if (m)

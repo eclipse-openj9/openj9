@@ -388,6 +388,24 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->getMethods(clazz));
          }
          break;
+      case J9ServerMessageType::VM_getResolvedMethodsAndMirror:
+         {
+         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         uint32_t numMethods = fe->getNumMethods(clazz);
+         J9Method *methods = (J9Method *) fe->getMethods(clazz);
+
+         // create mirrors and put methodInfo for each method in a vector to be sent to the server
+         std::vector<TR_ResolvedJ9JITaaSServerMethodInfo> methodsInfo;
+         methodsInfo.reserve(numMethods);
+         for (int i = 0; i < numMethods; ++i)
+            {
+            TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
+            TR_ResolvedJ9JITaaSServerMethod::createResolvedJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) &(methods[i]), 0, 0, fe, trMemory);
+            methodsInfo.push_back(methodInfo);
+            }
+         client->write(methods, methodsInfo);
+         }
+         break;
       case J9ServerMessageType::VM_isPrimitiveArray:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
@@ -1192,15 +1210,22 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(clazz, pITableIndex);
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getResolvedInterfaceMethod_3:
+      case J9ServerMessageType::ResolvedMethod_getResolvedInterfaceMethodAndMirror_3:
          {
-         auto recv = client->getRecvData<TR_OpaqueMethodBlock*, TR_OpaqueClassBlock*, I_32>();
+         auto recv = client->getRecvData<TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *, I_32, TR_ResolvedJ9Method *>();
          auto method = std::get<0>(recv);
          auto clazz = std::get<1>(recv);
          auto cpIndex = std::get<2>(recv);
+         auto owningMethod = std::get<3>(recv);
          J9Method * ramMethod = (J9Method *)fe->getResolvedInterfaceMethod(method, clazz, cpIndex);
          bool resolved = ramMethod && J9_BYTECODE_START_FROM_RAM_METHOD(ramMethod);
-         client->write(resolved, ramMethod);
+
+         // create a mirror right away
+         TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
+         if (resolved)
+            TR_ResolvedJ9JITaaSServerMethod::createResolvedJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, 0, owningMethod, fe, trMemory);
+
+         client->write(resolved, ramMethod, methodInfo);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_getResolvedInterfaceMethodOffset:

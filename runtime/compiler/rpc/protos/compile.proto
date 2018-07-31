@@ -48,7 +48,7 @@ enum J9ServerMessageType
    ResolvedMethod_getResolvedVirtualMethodAndMirror = 116;
    ResolvedMethod_virtualMethodIsOverridden = 117;
    ResolvedMethod_getResolvedInterfaceMethod_2 = 118; // arity 2
-   ResolvedMethod_getResolvedInterfaceMethod_3 = 119; // arity 3
+   ResolvedMethod_getResolvedInterfaceMethodAndMirror_3 = 119; // arity 3
    ResolvedMethod_getResolvedInterfaceMethodOffset = 120;
    ResolvedMethod_getUnresolvedStaticMethodInCP = 121;
    ResolvedMethod_isSubjectToPhaseChange = 122;
@@ -182,69 +182,70 @@ enum J9ServerMessageType
    VM_instanceOfOrCheckCast = 297;
    VM_getNewArrayTypeFromClass = 298;
    VM_getConstantPoolFromClass = 299;
+   VM_getResolvedMethodsAndMirror = 300;
 
    // For static TR::CompilationInfo methods
-   CompInfo_isCompiled = 300;
-   CompInfo_getInvocationCount = 301;
-   CompInfo_setInvocationCount = 302;
-   CompInfo_getJ9MethodExtra = 303;
-   CompInfo_isJNINative = 304;
-   CompInfo_isJSR292 = 305;
-   CompInfo_getMethodBytecodeSize = 306;
-   CompInfo_setJ9MethodExtra = 307;
-   CompInfo_setInvocationCountAtomic = 308;
-   CompInfo_isClassSpecial = 309;
-   CompInfo_getJ9MethodStartPC = 310;
+   CompInfo_isCompiled = 400;
+   CompInfo_getInvocationCount = 401;
+   CompInfo_setInvocationCount = 402;
+   CompInfo_getJ9MethodExtra = 403;
+   CompInfo_isJNINative = 404;
+   CompInfo_isJSR292 = 405;
+   CompInfo_getMethodBytecodeSize = 406;
+   CompInfo_setJ9MethodExtra = 407;
+   CompInfo_setInvocationCountAtomic = 408;
+   CompInfo_isClassSpecial = 409;
+   CompInfo_getJ9MethodStartPC = 410;
 
-   // For J9::ClassEnv Methods
-   ClassEnv_classFlagsValue = 400;
-   ClassEnv_classDepthOf = 401;
-   ClassEnv_classInstanceSize = 402;
-//   ClassEnv_romClassOf = 403;
-   ClassEnv_superClassesOf = 404;
-   ClassEnv_indexedSuperClassOf = 405;
-   ClassEnv_iTableOf = 406;
-   ClassEnv_iTableNext = 407;
-   ClassEnv_iTableRomClass = 408;
-   ClassEnv_getITable = 409;
+   // For J109::ClassEnv Methods
+   ClassEnv_classFlagsValue = 500;
+   ClassEnv_classDepthOf = 501;
+   ClassEnv_classInstanceSize = 502;
+//   ClassEnv_romClassOf = 503;
+   ClassEnv_superClassesOf = 504;
+   ClassEnv_indexedSuperClassOf = 505;
+   ClassEnv_iTableOf = 506;
+   ClassEnv_iTableNext = 507;
+   ClassEnv_iTableRomClass = 508;
+   ClassEnv_getITable = 509;
 
    // For TR_J9SharedCache
-   SharedCache_getClassChainOffsetInSharedCache = 500;
+   SharedCache_getClassChainOffsetInSharedCache = 600;
 
    // For runFEMacro
-   runFEMacro_invokeCollectHandleNumArgsToCollect = 600;
-   runFEMacro_invokeExplicitCastHandleConvertArgs = 601;
-   runFEMacro_targetTypeL = 602;
-   runFEMacro_invokeILGenMacrosInvokeExactAndFixup = 603;
-   runFEMacro_invokeArgumentMoverHandlePermuteArgs = 604;
-   runFEMacro_invokePermuteHandlePermuteArgs = 605;
-   runFEMacro_invokeGuardWithTestHandleNumGuardArgs = 606;
-   runFEMacro_invokeInsertHandle = 607;
-   runFEMacro_invokeDirectHandleDirectCall = 608;
-   runFEMacro_invokeSpreadHandleArrayArg = 609;
-   runFEMacro_invokeSpreadHandle = 610;
-   runFEMacro_invokeFoldHandle = 611;
-   runFEMacro_invokeFoldHandle2 = 612;
-   runFEMacro_invokeFinallyHandle = 613;
-   runFEMacro_invokeFilterArgumentsHandle = 614;
-   runFEMacro_invokeFilterArgumentsHandle2 = 615;
-   runFEMacro_invokeCatchHandle = 616;
-   runFEMacro_invokeILGenMacros = 617;
-   runFEMacro_derefUintptrjPtr = 618;
+   runFEMacro_invokeCollectHandleNumArgsToCollect = 700;
+   runFEMacro_invokeExplicitCastHandleConvertArgs = 701;
+   runFEMacro_targetTypeL = 702;
+   runFEMacro_invokeILGenMacrosInvokeExactAndFixup = 703;
+   runFEMacro_invokeArgumentMoverHandlePermuteArgs = 704;
+   runFEMacro_invokePermuteHandlePermuteArgs = 705;
+   runFEMacro_invokeGuardWithTestHandleNumGuardArgs = 706;
+   runFEMacro_invokeInsertHandle = 707;
+   runFEMacro_invokeDirectHandleDirectCall = 708;
+   runFEMacro_invokeSpreadHandleArrayArg = 709;
+   runFEMacro_invokeSpreadHandle = 710;
+   runFEMacro_invokeFoldHandle = 711;
+   runFEMacro_invokeFoldHandle2 = 712;
+   runFEMacro_invokeFinallyHandle = 713;
+   runFEMacro_invokeFilterArgumentsHandle = 714;
+   runFEMacro_invokeFilterArgumentsHandle2 = 715;
+   runFEMacro_invokeCatchHandle = 716;
+   runFEMacro_invokeILGenMacros = 717;
+   runFEMacro_derefUintptrjPtr = 718;
 
    // for JITaaSPersistentCHTable
-   CHTable_getAllClassInfo = 700;
-   CHTable_getClassInfoUpdates = 701;
-   CHTable_commit = 702;
-   CHTable_clearReservable = 703;
+   CHTable_getAllClassInfo = 800;
+   CHTable_getClassInfoUpdates = 801;
+   CHTable_commit = 802;
+   CHTable_clearReservable = 803;
 
    // for JITaaSIProfiler
-   IProfiler_profilingSample = 800;
-   IProfiler_searchForMethodSample = 801;
-   IProfiler_getMaxCallCount = 802;
+   IProfiler_profilingSample = 900;
+   IProfiler_searchForMethodSample = 901;
+   IProfiler_getMaxCallCount = 902;
 
-   Recompilation_getExistingMethodInfo = 900;
-   Recompilation_getJittedBodyInfoFromPC = 901;
+   Recompilation_getExistingMethodInfo = 1000;
+   Recompilation_getJittedBodyInfoFromPC = 1001;
    }
 
 message J9ServerMessage
