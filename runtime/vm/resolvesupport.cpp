@@ -1525,24 +1525,42 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 
 		/* If method is NULL, the exception has already been set. */
 		if (method != NULL) {
-			/* Fill in the constant pool entry. Don't bother checking for failure on the vtable index, since we know the method is there. */
-			vTableOffset = getVTableOffsetForMethod(method, resolvedClass, vmStruct);
-			if (vTableOffset == 0) {
-				if (!jitFlags && (0 == (J9_RESOLVE_FLAG_NO_THROW_ON_FAIL & resolveFlags))) {
-					j9object_t errorString = methodToString(vmStruct, method);
-					setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, (UDATA *)errorString);
-				}
-			} else {
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+			J9ROMMethod* romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+			if (J9_ARE_ALL_BITS_SET(romMethod->modifiers, J9AccPrivate)) {
+				/* Private method found, will not be in vTable, point vTable index to invokePrivate */
 				if (ramCPEntry != NULL) {
-					UDATA argSlotCount = vTableOffset << 8;
-					J9RAMVirtualMethodRef *ramVirtualMethodRef = (J9RAMVirtualMethodRef *)&ramCP[cpIndex];
-					UDATA oldArgCount = ramVirtualMethodRef->methodIndexAndArgCount & 255;
-					argSlotCount |= oldArgCount;
-					ramCPEntry->methodIndexAndArgCount = argSlotCount;
+					ramCPEntry->method = method;
+					UDATA methodIndexAndArgCount = J9VTABLE_INVOKE_PRIVATE_OFFSET << 8;
+					methodIndexAndArgCount |= (ramCPEntry->methodIndexAndArgCount & 255);
+					ramCPEntry->methodIndexAndArgCount = methodIndexAndArgCount;
 				}
 				if (resolvedMethod != NULL) {
 					/* save away method for callee */
 					*resolvedMethod = method;
+				}
+			} else
+#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+			{
+				/* Fill in the constant pool entry. Don't bother checking for failure on the vtable index, since we know the method is there. */
+				vTableOffset = getVTableOffsetForMethod(method, resolvedClass, vmStruct);
+				if (vTableOffset == 0) {
+					if (!jitFlags && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL)) {
+						j9object_t errorString = methodToString(vmStruct, method);
+						setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, (UDATA *)errorString);
+					}
+				} else {
+					if (ramCPEntry != NULL) {
+						UDATA argSlotCount = vTableOffset << 8;
+						J9RAMVirtualMethodRef *ramVirtualMethodRef = (J9RAMVirtualMethodRef *)&ramCP[cpIndex];
+						UDATA oldArgCount = ramVirtualMethodRef->methodIndexAndArgCount & 255;
+						argSlotCount |= oldArgCount;
+						ramCPEntry->methodIndexAndArgCount = argSlotCount;
+					}
+					if (resolvedMethod != NULL) {
+						/* save away method for callee */
+						*resolvedMethod = method;
+					}
 				}
 			}
 		}
