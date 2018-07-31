@@ -27,6 +27,7 @@ import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.tools.ddrinteractive.Context;
 import com.ibm.j9ddr.tools.ddrinteractive.DDRInteractiveCommandException;
 import com.ibm.j9ddr.tools.ddrinteractive.Command;
+import com.ibm.j9ddr.vm29.j9.AlgorithmVersion;
 import com.ibm.j9ddr.vm29.j9.ConstantPoolHelpers;
 import com.ibm.j9ddr.vm29.j9.DataType;
 import com.ibm.j9ddr.vm29.j9.ROMHelp;
@@ -52,6 +53,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ROMMethodPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9TranslationBufferSetPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9UTF8Pointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMThreadPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9VTableHeaderPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9MethodHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
@@ -701,11 +703,23 @@ public class VmCheckCommand extends Command
 	}
 	
 	private boolean findMethodInVTable(J9MethodPointer method, J9ClassPointer classPointer) throws CorruptDataException {
-		UDATAPointer vTable = J9ClassHelper.vTable(classPointer);
-		long vTableSize = vTable.at(0).longValue();
+		UDATAPointer vTable;
+		long vTableSize;
+		long vTableIndex;
 
-		/* skip magic first entry */
-		for (long vTableIndex = 2; vTableIndex <= vTableSize + 1; vTableIndex++) {
+		if (AlgorithmVersion.getVersionOf(AlgorithmVersion.VTABLE_VERSION).getAlgorithmVersion() >= 1) {
+			J9VTableHeaderPointer vTableHeader = J9ClassHelper.vTableHeader(classPointer);
+			vTableSize = vTableHeader.size().longValue();
+			vTable = J9ClassHelper.vTable(vTableHeader);
+			vTableIndex = 0;
+		} else {
+			vTable = J9ClassHelper.oldVTable(classPointer);
+			vTableSize = vTable.at(0).longValue() + 1;
+			vTableIndex = 2;
+		}
+		
+
+		for (; vTableIndex < vTableSize; vTableIndex++) {
 			//System.out.printf("%d COMP 0x%s vs. 0x%s\n", (int)vTableIndex, Long.toHexString(method.getAddress()), Long.toHexString(vTable.at(vTableIndex).longValue()));
 			if (method.eq(J9MethodPointer.cast(vTable.at(vTableIndex)))) {
 				return true;
