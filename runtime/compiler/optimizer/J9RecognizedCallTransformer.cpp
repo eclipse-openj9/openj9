@@ -48,6 +48,24 @@ void J9::RecognizedCallTransformer::processIntrinsicFunction(TR::TreeTop* treeto
    TR::TransformUtil::removeTree(comp(), treetop);
    }
 
+void J9::RecognizedCallTransformer::process_java_lang_Class_IsAssignableFrom(TR::TreeTop* treetop, TR::Node* node)
+   {
+   auto toClass = node->getChild(0);
+   auto fromClass = node->getChild(1);
+   auto nullchk = comp()->getSymRefTab()->findOrCreateNullCheckSymbolRef(comp()->getMethodSymbol());
+   treetop->insertBefore(TR::TreeTop::create(comp(), TR::Node::createWithSymRef(TR::NULLCHK, 1, 1, TR::Node::create(node, TR::PassThrough, 1, toClass), nullchk)));
+   treetop->insertBefore(TR::TreeTop::create(comp(), TR::Node::createWithSymRef(TR::NULLCHK, 1, 1, TR::Node::create(node, TR::PassThrough, 1, fromClass), nullchk)));
+
+   TR::Node::recreate(treetop->getNode(), TR::treetop);
+   node->setSymbolReference(comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_checkAssignable, false, false, false));
+   node->setAndIncChild(0, TR::Node::createWithSymRef(TR::aloadi, 1, 1, toClass, comp()->getSymRefTab()->findOrCreateClassFromJavaLangClassSymbolRef()));
+   node->setAndIncChild(1, TR::Node::createWithSymRef(TR::aloadi, 1, 1, fromClass, comp()->getSymRefTab()->findOrCreateClassFromJavaLangClassSymbolRef()));
+   node->swapChildren();
+
+   toClass->recursivelyDecReferenceCount();
+   fromClass->recursivelyDecReferenceCount();
+   }
+
 void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::TreeTop* treetop, TR::Node* node)
    {
    TR_J9VMBase* fej9 = static_cast<TR_J9VMBase*>(comp()->fe());
@@ -89,14 +107,15 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
    auto node = treetop->getNode()->getFirstChild();
    switch(node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod())
       {
+      case TR::java_lang_Class_isAssignableFrom:
+         return cg()->supportsInliningOfIsAssignableFrom();
       case TR::java_lang_Integer_rotateLeft:
       case TR::java_lang_Long_rotateLeft:
       case TR::java_lang_Math_abs_I:
       case TR::java_lang_Math_abs_L:
       case TR::java_lang_Math_abs_F:
       case TR::java_lang_Math_abs_D:
-         return TR::Compiler->target.cpu.isX86() ||
-            TR::Compiler->target.cpu.isZ();
+         return TR::Compiler->target.cpu.isX86() || TR::Compiler->target.cpu.isZ();
       case TR::java_lang_Math_max_I:
       case TR::java_lang_Math_min_I:
       case TR::java_lang_Math_max_L:
@@ -114,6 +133,9 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop* treetop)
    auto node = treetop->getNode()->getFirstChild();
    switch(node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod())
       {
+      case TR::java_lang_Class_isAssignableFrom:
+         process_java_lang_Class_IsAssignableFrom(treetop, node);
+         break;
       case TR::java_lang_Integer_rotateLeft:
          processIntrinsicFunction(treetop, node, TR::irol);
          break;

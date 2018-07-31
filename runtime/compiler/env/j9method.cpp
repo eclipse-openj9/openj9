@@ -4560,8 +4560,15 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
          }
       }
    #if defined(TR_HOST_X86)
-      if ( convertToMethod()->getRecognizedMethod() == TR::java_lang_System_nanoTime )
-         _jniTargetAddress = NULL;
+      switch (convertToMethod()->getRecognizedMethod())
+         {
+         case TR::java_lang_Class_isAssignableFrom:
+         case TR::java_lang_System_nanoTime:
+            _jniTargetAddress = NULL;
+            break;
+         default:
+            break;
+         }
    #endif
    }
 

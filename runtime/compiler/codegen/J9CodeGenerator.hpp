@@ -356,6 +356,11 @@ public:
    bool supportsMethodEntryPadding();
 
    /** \brief
+    *     Determines whether the code generator supports inlining of java/lang/Class.isAssignableFrom
+    */
+   bool supportsInliningOfIsAssignableFrom() { return false; } // no virt, default
+
+   /** \brief
     *     Determines whether the code generator must generate the switch to interpreter snippet in the preprologue.
     */
    bool mustGenerateSwitchToInterpreterPrePrologue();
@@ -401,7 +406,7 @@ private:
       HasFixedFrameC_CallingConvention    = 0x00000001,
       SupportsMaxPrecisionMilliTime       = 0x00000002,
       SupportsInlineStringCaseConversion  = 0x00000004, /*! codegen inlining of Java string case conversion */
-      SupportsInlineStringIndexOf         = 0x00000008 /*! codegen inlining of Java string index of */
+      SupportsInlineStringIndexOf         = 0x00000008, /*! codegen inlining of Java string index of */
       };
 
    flags32_t _j9Flags;
