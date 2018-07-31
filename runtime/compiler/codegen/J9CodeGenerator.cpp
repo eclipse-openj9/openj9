@@ -2462,7 +2462,7 @@ J9::CodeGenerator::processRelocations()
    //Project neutral non-AOT processRelocation
    OMR::CodeGenerator::processRelocations();
 
-   bool isJITaaSMode = self()->comp()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE;
+   bool isJITaaSMode = comp()->isOutOfProcessCompilation();
 
    int32_t missedSite = -1;
 

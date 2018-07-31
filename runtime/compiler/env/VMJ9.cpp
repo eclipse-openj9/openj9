@@ -3470,7 +3470,7 @@ TR_J9VMBase::lowerMethodHook(TR::Compilation * comp, TR::Node * root, TR::TreeTo
       //    iconst J9HOOK_FLAG_HOOKED
       //
       TR::StaticSymbol * addressSym = TR::StaticSymbol::create(comp->trHeapMemory(),TR::Address);
-      addressSym->setStaticAddress(&vmThread()->javaVM->hookInterface.flags[event]);
+      addressSym->setStaticAddress(getStaticHookAddress(event));
 
       TR::TreeTop * hookedTest =  TR::TreeTop::create(comp,
          TR::Node::createif(TR::ificmpne,
@@ -3564,6 +3564,12 @@ U_8 *
 TR_J9VMBase::fetchMethodExtendedFlagsPointer(J9Method *method)
    {
    return fetchMethodExtendedFlagsPointer(method);
+   }
+
+void *
+TR_J9VMBase::getStaticHookAddress(int32_t event)
+   {
+   return &vmThread()->javaVM->hookInterface.flags[event]; 
    }
 
 static void lowerContiguousArrayLength(TR::Compilation *comp, TR::Node *root)

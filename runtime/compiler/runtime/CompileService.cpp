@@ -137,35 +137,26 @@ void J9CompileDispatcher::compile(JITaaS::J9ServerStream *stream)
    char * clientOptions = nullptr;
    try
       {
-      auto req = stream->read<uint64_t, std::string, uint32_t, J9Method *, J9Class*, TR_Hotness, std::string, 
-                              J9::IlGeneratorMethodDetailsType, std::vector<TR_OpaqueClassBlock*>, J9Method*,
-                              TR_OpaqueClassBlock *, int32_t, TR_OpaqueClassBlock *, 
-                              std::vector<TR_OpaqueClassBlock *>, std::string>();
+      auto req = stream->read<uint64_t, uint32_t, J9Method *, J9Class*, TR_Hotness, std::string, 
+                              J9::IlGeneratorMethodDetailsType, std::vector<TR_OpaqueClassBlock*>,
+                              JITaaSHelpers::ClassInfoTuple, std::string>();
 
       PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
       TR_J9VMBase *fej9 = TR_J9VMBase::get(_jitConfig, _vmThread);
       TR_J9SharedCache *cache = fej9->sharedCache();
       uint64_t clientId = std::get<0>(req);
       stream->setClientId(clientId);
-      std::string romClassStr = std::get<1>(req);
-      uint32_t romMethodOffset = std::get<2>(req);
-      J9Method *ramMethod = std::get<3>(req);
-      J9Class *clazz = std::get<4>(req);
-      TR_Hotness opt = std::get<5>(req);
-      std::string detailsStr = std::get<6>(req);
+      uint32_t romMethodOffset = std::get<1>(req);
+      J9Method *ramMethod = std::get<2>(req);
+      J9Class *clazz = std::get<3>(req);
+      TR_Hotness opt = std::get<4>(req);
+      std::string detailsStr = std::get<5>(req);
       TR::IlGeneratorMethodDetails *details = (TR::IlGeneratorMethodDetails*) &detailsStr[0];
-      auto detailsType = std::get<7>(req);
+      auto detailsType = std::get<6>(req);
       TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
-      auto &unloadedClasses = std::get<8>(req);
-      J9Method *methodsOfClass = std::get<9>(req);
-      TR_OpaqueClassBlock *baseComponentClass = std::get<10>(req);
-      int32_t numDims = std::get<11>(req);
-      TR_OpaqueClassBlock *parentClass = std::get<12>(req);
-      std::vector<TR_OpaqueClassBlock *> tmpInterfaces = std::get<13>(req); 
-      auto interfaces = new (PERSISTENT_NEW) PersistentVector<TR_OpaqueClassBlock *>
-         (tmpInterfaces.begin(), tmpInterfaces.end(),
-          PersistentVector<TR_OpaqueClassBlock *>::allocator_type(TR::Compiler->persistentAllocator()));
-      std::string clientOptionsStr = std::get<14>(req);
+      auto &unloadedClasses = std::get<7>(req);
+      auto &classInfoTuple = std::get<8>(req);
+      std::string clientOptionsStr = std::get<9>(req);
 
       size_t clientOptionsSize = clientOptionsStr.size();
       clientOptions = new (PERSISTENT_NEW) char[clientOptionsSize];
@@ -191,13 +182,14 @@ void J9CompileDispatcher::compile(JITaaS::J9ServerStream *stream)
          // Or read it from the compilation request and cache it otherwise
          if (!(romClass = JITaaSHelpers::getRemoteROMClassIfCached(clientSession, clazz)))
             {
-            romClass = TR_ResolvedJ9JITaaSServerMethod::romClassFromString(romClassStr, fej9->_compInfo->persistentMemory());
-            JITaaSHelpers::cacheRemoteROMClass(clientSession, clazz, romClass, methodsOfClass, baseComponentClass, numDims, parentClass, interfaces);
+            romClass = JITaaSHelpers::romClassFromString(std::get<0>(classInfoTuple), fej9->_compInfo->persistentMemory());
+            JITaaSHelpers::cacheRemoteROMClass(clientSession, clazz, romClass, &classInfoTuple);
             }
 
          clientSession->decInUse();
          }
       J9ROMMethod *romMethod = (J9ROMMethod*)((uint8_t*) romClass + romMethodOffset);
+      J9Method *methodsOfClass = std::get<1>(classInfoTuple);
 
       doRemoteCompile(_jitConfig, _vmThread, romClass, romMethod, ramMethod, clazz, stream, opt, details, detailsType, methodsOfClass, clientOptions, clientOptionsSize);
       }

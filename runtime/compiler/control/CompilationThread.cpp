@@ -634,15 +634,6 @@ void TR::CompilationInfo::freeCompilationInfo(J9JITConfig *jitConfig)
    rawAllocator.deallocate(compilationRuntime);
    }
 
-void
-TR::CompilationInfoPerThread::cacheRemoteROMClass(J9Class *clazz, J9ROMClass *romClass, J9Method *methods, 
-                                                  TR_OpaqueClassBlock *baseComponentClass, int32_t numDimensions,
-                                                  TR_OpaqueClassBlock *parentClass, PersistentVector<TR_OpaqueClassBlock *> *interfaces)
-   {
-   JITaaSHelpers::cacheRemoteROMClass(getClientData(), clazz, romClass, methods, baseComponentClass,
-                                      numDimensions, parentClass, interfaces);
-   }
-
 J9ROMClass *
 TR::CompilationInfoPerThread::getRemoteROMClassIfCached(J9Class *clazz)
    {
@@ -655,13 +646,9 @@ TR::CompilationInfoPerThread::getAndCacheRemoteROMClass(J9Class *clazz, TR_Memor
    auto romClass = getRemoteROMClassIfCached(clazz);
    if (romClass == nullptr)
       {
-      J9Method *methods;
-      TR_OpaqueClassBlock *baseClass;
-      int32_t numDims;
-      TR_OpaqueClassBlock *parentClass;
-      PersistentVector<TR_OpaqueClassBlock *> *interfaces;
-      romClass = TR_ResolvedJ9JITaaSServerMethod::getRemoteROMClass(clazz, getStream(), trMemory ? trMemory : TR::comp()->trMemory(), &methods, &baseClass, &numDims, &parentClass, &interfaces);
-      cacheRemoteROMClass(clazz, romClass, methods, baseClass, numDims, parentClass, interfaces);
+      JITaaSHelpers::ClassInfoTuple classInfoTuple;
+      romClass = JITaaSHelpers::getRemoteROMClass(clazz, getStream(), trMemory ? trMemory : TR::comp()->trMemory(), &classInfoTuple);
+      JITaaSHelpers::cacheRemoteROMClass(getClientData(), clazz, romClass, &classInfoTuple);
       }
    return romClass;
    }

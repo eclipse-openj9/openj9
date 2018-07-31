@@ -150,7 +150,15 @@ TR_J9ServerVM::getSystemClassFromClassName(const char * name, int32_t length, bo
 bool
 TR_J9ServerVM::isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method)
    {
-   return false; // JITaaS TODO: eliminate this workaround when we cache info about methodEnter/Exit tracing
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it = _compInfoPT->getClientData()->getJ9MethodMap().find((J9Method*) method);
+      if (it != _compInfoPT->getClientData()->getJ9MethodMap().end())
+         {
+         return it->second._isMethodEnterTracingEnabled;
+         }
+      }
+
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_isMethodEnterTracingEnabled, method);
    return std::get<0>(stream->read<bool>());
@@ -159,10 +167,52 @@ TR_J9ServerVM::isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method)
 bool
 TR_J9ServerVM::isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method)
    {
-   return false; // JITaaS TODO: eliminate this workaround when we cache info about methodEnter/Exit tracing
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it = _compInfoPT->getClientData()->getJ9MethodMap().find((J9Method*) method);
+      if (it != _compInfoPT->getClientData()->getJ9MethodMap().end())
+         {
+         return it->second._isMethodExitTracingEnabled;
+         }
+      }
+
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_isMethodExitTracingEnabled, method);
    return std::get<0>(stream->read<bool>());
+   }
+
+bool
+TR_J9ServerVM::canMethodEnterEventBeHooked()
+   {
+   auto clientData = _compInfoPT->getClientData();
+   if (clientData->_canMethodEnterEventBeHooked == TR_yes)
+      return true;
+   if(clientData->_canMethodEnterEventBeHooked == TR_no)
+      return false;
+
+   // first time the method is called, ask the client and cache the result
+   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITaaS::J9ServerMessageType::VM_canMethodEnterEventBeHooked, JITaaS::Void());
+   bool canBeHooked = std::get<0>(stream->read<bool>());
+   clientData->_canMethodEnterEventBeHooked = canBeHooked ? TR_yes : TR_no;
+   return canBeHooked;
+   }
+
+bool
+TR_J9ServerVM::canMethodExitEventBeHooked()
+   {
+   auto clientData = _compInfoPT->getClientData();
+   if (clientData->_canMethodExitEventBeHooked == TR_yes)
+      return true;
+   if(clientData->_canMethodExitEventBeHooked == TR_no)
+      return false;
+
+   // first time the method is called, ask the client and cache the result
+   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITaaS::J9ServerMessageType::VM_canMethodExitEventBeHooked, JITaaS::Void());
+   bool canBeHooked = std::get<0>(stream->read<bool>());
+   clientData->_canMethodExitEventBeHooked = canBeHooked ? TR_yes : TR_no;
+   return canBeHooked;
    }
 
 TR_OpaqueClassBlock *
@@ -1045,6 +1095,14 @@ TR_J9ServerVM::fetchMethodExtendedFlagsPointer(J9Method *method)
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_fetchMethodExtendedFlagsPointer, method);
    return std::get<0>(stream->read<U_8 *>());
+   }
+
+void *
+TR_J9ServerVM::getStaticHookAddress(int32_t event)
+   {
+   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITaaS::J9ServerMessageType::VM_getStaticHookAddress, event);
+   return std::get<0>(stream->read<void *>());
    }
 
 bool

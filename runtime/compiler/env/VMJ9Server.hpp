@@ -36,6 +36,8 @@ public:
    virtual TR_OpaqueClassBlock * getSystemClassFromClassName(const char * name, int32_t length, bool isVettedForAOT) override;
    virtual bool isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method) override;
    virtual bool isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method) override;
+   virtual bool canMethodEnterEventBeHooked() override;
+   virtual bool canMethodExitEventBeHooked() override;
    virtual TR_OpaqueClassBlock * getClassClassPointer(TR_OpaqueClassBlock *objectClassPointer) override;
    virtual void * getClassLoader(TR_OpaqueClassBlock * classPointer) override;
    virtual TR_OpaqueClassBlock * getClassOfMethod(TR_OpaqueMethodBlock *method) override;
@@ -121,6 +123,7 @@ public:
    virtual bool isOwnableSyncClass(TR_OpaqueClassBlock *clazz) override;
    virtual TR_OpaqueClassBlock * getClassFromMethodBlock(TR_OpaqueMethodBlock *method) override;
    virtual U_8 * fetchMethodExtendedFlagsPointer(J9Method *method) override;
+   virtual void * getStaticHookAddress(int32_t event) override;
    virtual bool stringEquals(TR::Compilation *comp, uintptrj_t* stringLocation1, uintptrj_t*stringLocation2, int32_t& result) override;
    virtual bool getStringHashCode(TR::Compilation *comp, uintptrj_t* stringLocation, int32_t& result) override;
    virtual int32_t getLineNumberForMethodAndByteCodeIndex(TR_OpaqueMethodBlock *method, int32_t bcIndex) override;

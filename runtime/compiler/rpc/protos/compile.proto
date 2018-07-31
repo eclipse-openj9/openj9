@@ -108,11 +108,14 @@ enum J9ServerMessageType
    VM_isThunkArchetype = 226;
    VM_printTruncatedSignature = 227;
 //   VM_isPrimitiveClass = 228;
+   VM_getStaticHookAddress = 228;
    VM_isClassInitialized = 229;
    VM_getOSRFrameSizeInBytes = 230;
    VM_getByteOffsetToLockword = 231;
    VM_isString1 = 232;
    VM_getMethods = 233;
+   VM_canMethodEnterEventBeHooked = 234;
+   VM_canMethodExitEventBeHooked = 235;
    //VM_getNumMethods = 234;
    //VM_getNumInnerClasses = 235;
    VM_isPrimitiveArray = 236;

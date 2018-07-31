@@ -63,11 +63,13 @@ VirtualGuardInfoForCHTable getImportantVGuardInfo(TR::Compilation *comp, TR_Virt
 
    info._isInlineGuard = vguard->isInlineGuard();
    TR_DevirtualizedCallInfo *dc;
-   info._guardedMethodThisClass = vguard->isInlineGuard()
-      ? vguard->getThisClass()
-      : ((dc = comp->findDevirtualizedCall(vguard->getCallNode()))
-         ? dc->_thisType
-         : resolvedMethodSymbol->getResolvedMethod()->classOfMethod());
+   
+   if (resolvedMethodSymbol)
+      info._guardedMethodThisClass = vguard->isInlineGuard()
+         ? vguard->getThisClass()
+         : ((dc = comp->findDevirtualizedCall(vguard->getCallNode()))
+            ? dc->_thisType
+            : resolvedMethodSymbol->getResolvedMethod()->classOfMethod());
 
    info._thisClass = vguard->getThisClass();
    info._mergedWithHCRGuard = vguard->mergedWithHCRGuard();

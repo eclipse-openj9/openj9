@@ -3,7 +3,7 @@
 
 #include "env/j9method.h"
 #include "env/PersistentCollections.hpp"
-
+#include "control/JITaaSCompilationThread.hpp"
 
 struct
 TR_J9MethodFieldAttributes
@@ -42,9 +42,6 @@ TR_ResolvedJ9JITaaSServerMethodInfoStruct
    J9ClassLoader *classLoader;
    }; 
 
-// The last 2 strings are serialized versions of jittedBodyInfo and persistentMethodInfo
-typedef std::tuple<TR_ResolvedJ9JITaaSServerMethodInfoStruct, std::string, std::string> TR_ResolvedJ9JITaaSServerMethodInfo;
-
 struct
 TR_RemoteROMStringKey
    {
@@ -69,13 +66,14 @@ namespace std {
   };
 }
 
+// The last 2 strings are serialized versions of jittedBodyInfo and persistentMethodInfo
+typedef std::tuple<TR_ResolvedJ9JITaaSServerMethodInfoStruct, std::string, std::string> TR_ResolvedJ9JITaaSServerMethodInfo;
+
 class TR_ResolvedJ9JITaaSServerMethod : public TR_ResolvedJ9Method
    {
 public:
    TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
    TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, const TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
-   static J9ROMClass * getRemoteROMClass(J9Class *, JITaaS::J9ServerStream *stream, TR_Memory *trMemory, J9Method **methods, TR_OpaqueClassBlock ** baseClass, int32_t *numDims, TR_OpaqueClassBlock **parentClass, PersistentVector<TR_OpaqueClassBlock *> **interfaces);
-   static J9ROMClass * romClassFromString(const std::string &romClassStr, TR_PersistentMemory *trMemory);
 
    virtual J9ROMClass *romClassPtr() override;
    virtual J9RAMConstantPoolItem *literals() override;

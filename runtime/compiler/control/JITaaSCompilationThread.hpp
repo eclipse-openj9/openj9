@@ -5,10 +5,10 @@
 #include "control/CompilationThread.hpp"
 #include "rpc/J9Client.hpp"
 #include "env/PersistentCollections.hpp"
-#include "env/j9methodServer.hpp"
 
 class TR_PersistentClassInfo;
 class TR_IPBytecodeHashTableEntry;
+struct TR_RemoteROMStringKey;
 
 using IPTable_t = PersistentUnorderedMap<uint32_t, TR_IPBytecodeHashTableEntry*>;
 
@@ -36,6 +36,8 @@ class ClientSessionData
       // The following is a hashtable that maps a bcIndex to IProfiler data
       // The hashtable is created on demand (nullptr means it is missing)
       IPTable_t *_IPData;
+      bool _isMethodEnterTracingEnabled;
+      bool _isMethodExitTracingEnabled;
       };
 
    TR_PERSISTENT_ALLOC(TR_Memory::ClientSessionData)
@@ -65,6 +67,8 @@ class ClientSessionData
 
    void printStats();
 
+   TR_YesNoMaybe _canMethodEnterEventBeHooked;
+   TR_YesNoMaybe _canMethodExitEventBeHooked;
    private:
    uint64_t _clientUID; // for RAS
    int64_t  _timeOfLastAccess; // in ms
@@ -121,13 +125,19 @@ void printJITaaSMsgStats(J9JITConfig *);
 void printJITaaSCHTableStats(J9JITConfig *, TR::CompilationInfo *);
 void printJITaaSCacheStats(J9JITConfig *, TR::CompilationInfo *);
 
+
+
 class JITaaSHelpers
    {
    public:
-   static void cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass,
-      J9Method *methods, TR_OpaqueClassBlock *baseComponentClass, int32_t numDimensions,
-      TR_OpaqueClassBlock *parentClass, PersistentVector<TR_OpaqueClassBlock *> *);
+   // NOTE: when adding new elements to this tuple, add them to the end,
+   // to not mess with the established order.
+   using ClassInfoTuple = std::tuple<std::string, J9Method *, TR_OpaqueClassBlock *, int32_t, TR_OpaqueClassBlock *, std::vector<TR_OpaqueClassBlock *>, std::vector<std::tuple<bool, bool>>>;
+   static ClassInfoTuple packRemoteROMClassInfo(J9Class *clazz, TR_J9VM *fe, TR_Memory *trMemory);
+   static void cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple);
    static J9ROMClass *getRemoteROMClassIfCached(ClientSessionData *clientSessionData, J9Class *clazz);
+   static J9ROMClass * getRemoteROMClass(J9Class *, JITaaS::J9ServerStream *stream, TR_Memory *trMemory, ClassInfoTuple *classInfoTuple);
+   static J9ROMClass * romClassFromString(const std::string &romClassStr, TR_PersistentMemory *trMemory);
    };
 
 #endif
