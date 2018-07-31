@@ -49,10 +49,10 @@ jvmtiSetEventCallbacks(jvmtiEnv* env,
 			JVMTI_ERROR(JVMTI_ERROR_ILLEGAL_ARGUMENT);
 		}
 
-		/* Assume jvmtiEventCallbacks always reflects the largest possible callback table (most current version) */
+		/* Ignore any callbacks which exceed the size of the table of the latest known version in this VM */
 
 		if (size_of_callbacks > sizeof(jvmtiEventCallbacks)) {
-			JVMTI_ERROR(JVMTI_ERROR_ILLEGAL_ARGUMENT);
+			size_of_callbacks = sizeof(jvmtiEventCallbacks);
 		}
 
 		size_of_callbacks /= sizeof(void *);
