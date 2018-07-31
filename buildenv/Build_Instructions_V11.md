@@ -326,9 +326,7 @@ You must install a number of software dependencies to create a suitable build en
 Note:
 mingw-w64 must be installed if compiling with VS2017 in that the current version of cygwin has not yet integrated the latest changes of mingw-w64 for the moment. Meanwhile, add the binary path of mingw-w64 to the `PATH` environment variable. e.g.
 ```
-set PATH=C:\mingw-w64\x86_64-8.1.0-win32-seh-rt_v6-rev0\mingw64\bin;%PATH%
-or
-export PATH="C:\mingw-w64\x86_64-8.1.0-win32-seh-rt_v6-rev0\mingw64\bin;$PATH" (in Cygwin)
+export PATH="/cygdrive/c/mingw-w64/x86_64-8.1.0-win32-seh-rt_v6-rev0/mingw64/bin/:$PATH" (in Cygwin)
 ```
 
 Update your `LIB` and `INCLUDE` environment variables to provide a path to the Windows debugging tools with the following commands:
