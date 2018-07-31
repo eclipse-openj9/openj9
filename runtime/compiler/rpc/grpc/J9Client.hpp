@@ -15,6 +15,9 @@ namespace JITaaS
 class J9ClientStream
    {
 public:
+   // nothing to do (used only for raw sockets)
+   static void static_init(TR::PersistentInfo *info) {}
+
    J9ClientStream(TR::PersistentInfo *info)
       {
       _msTimeout = info->getJITaaSTimeout();

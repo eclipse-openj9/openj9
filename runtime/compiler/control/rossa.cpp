@@ -1605,6 +1605,9 @@ onLoadInternal(
 
       compInfo->setNewlyExtendedClasses(new (PERSISTENT_NEW) PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t>(
          PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t>::allocator_type(TR::Compiler->persistentAllocator())));
+
+      // Try to initialize SSL
+      JITaaS::J9ClientStream::static_init(compInfo->getPersistentInfo());
       }
 
 #if defined(TR_HOST_S390)

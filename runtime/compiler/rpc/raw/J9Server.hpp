@@ -2,31 +2,34 @@
 #define J9_SERVER_H
 
 #include <google/protobuf/io/zero_copy_stream_impl.h>
+#include <openssl/ssl.h>
 #include "rpc/StreamTypes.hpp"
 #include "rpc/ProtobufTypeConvert.hpp"
+#include "rpc/raw/J9Stream.hpp"
 #include "env/CHTable.hpp"
+
+class SSLOutputStream;
+class SSLInputStream;
 
 namespace JITaaS
 {
-using namespace google;
-
-class J9ServerStream
+class J9ServerStream : J9Stream
    {
 public:
-   J9ServerStream(int connfd, uint32_t timeout);
-   ~J9ServerStream();
+   J9ServerStream(int connfd, BIO *ssl, uint32_t timeout);
+   virtual ~J9ServerStream() {}
 
    template <typename ...T>
    void write(J9ServerMessageType type, T... args)
       {
       setArgs<T...>(_sMsg.mutable_data(), args...);
       _sMsg.set_type(type);
-      writeBlocking();
+      writeBlocking(_sMsg);
       }
    template <typename ...T>
    std::tuple<T...> read()
       {
-      readBlocking();
+      readBlocking(_cMsg);
       if (!_cMsg.status())
          throw StreamCancel();
       return getArgs<T...>(_cMsg.mutable_data());
@@ -45,19 +48,9 @@ public:
 
 private:
    void finish();
-   void readBlocking();
-   void writeBlocking();
 
-   int _connfd; // connection file descriptor
    uint32_t _msTimeout;
    uint64_t _clientId;
-
-   // re-usable message objects
-   J9ServerMessage _sMsg;
-   J9ClientMessage _cMsg;
-
-   protobuf::io::FileInputStream _inputStream;
-   protobuf::io::FileOutputStream _outputStream;
    };
 
 //

@@ -2,22 +2,26 @@
 #define J9_CLIENT_H
 
 #include <google/protobuf/io/zero_copy_stream_impl.h>
-#include <chrono>
+#include <openssl/ssl.h>
 #include "compile/CompilationTypes.hpp"
 #include "rpc/StreamTypes.hpp"
 #include "rpc/ProtobufTypeConvert.hpp"
 #include "j9.h"
 #include "ilgen/J9IlGeneratorMethodDetails.hpp"
+#include "rpc/raw/J9Stream.hpp"
+
+class SSLOutputStream;
+class SSLInputStream;
 
 namespace JITaaS
 {
-using namespace google;
-
-class J9ClientStream
+class J9ClientStream : J9Stream
    {
 public:
+   static void static_init(TR::PersistentInfo *info);
+
    J9ClientStream(TR::PersistentInfo *info);
-   ~J9ClientStream();
+   virtual ~J9ClientStream() {}
 
    template <typename... T>
    void buildCompileRequest(T... args)
@@ -32,12 +36,16 @@ public:
       {
       _cMsg.set_status(true);
       setArgs<T...>(_cMsg.mutable_data(), args...);
-      writeBlocking();
+      writeBlocking(_cMsg);
       }
 
    void writeError();
 
-   J9ServerMessageType read();
+   J9ServerMessageType read()
+      {
+      readBlocking(_sMsg);
+      return _sMsg.type();
+      }
 
    template <typename ...T>
    std::tuple<T...> getRecvData()
@@ -48,17 +56,9 @@ public:
    void shutdown();
 
 private:
-   void writeBlocking();
-
    uint32_t _timeout;
-   int _connfd;
 
-   // re-useable message objects
-   JITaaS::J9ClientMessage _cMsg;
-   JITaaS::J9ServerMessage _sMsg;
-
-   protobuf::io::FileInputStream _inputStream;
-   protobuf::io::FileOutputStream _outputStream;
+   static SSL_CTX *_sslCtx;
    };
 
 }
