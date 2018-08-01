@@ -240,15 +240,11 @@ void mapLibraryToPlatformName(const char *inPath, char *outPath) {
 #else
 	strcpy(outPath, "lib");
 	strcat(outPath,inPath);
-#ifdef HP720
-	strcat(outPath, ".sl");
-#else
-#ifdef AIXPPC
+#if defined(AIXPPC)
 	strcat(outPath, ".a");
-#else
-	strcat(outPath, ".so");
-#endif
-#endif
+#else /* AIXPPC */
+	strcat(outPath, J9PORT_LIBRARY_SUFFIX);
+#endif /* AIXPPC */
 #endif
 }
 
