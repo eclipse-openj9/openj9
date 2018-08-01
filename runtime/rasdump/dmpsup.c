@@ -44,8 +44,6 @@
 #include "ut_j9dmp.h"
 #undef _UTE_STATIC_
 
-#define VMOPT_XDUMP  "-Xdump"
-
 /* Abort data */
 static J9JavaVM *cachedVM = NULL;
 
@@ -632,7 +630,7 @@ configureDumpAgents(J9JavaVM *vm)
 	}
 
 	/* Re-process active agent options (L..R) to do deletes and replace any options killed by a delete that
-	 * preceeded them. */
+	 * preceded them. */
 	for (i = 0; i < agentNum; i++) {
 		if (agentOpts[i].kind == J9RAS_DUMP_OPT_DISABLED) continue;
 		if (agentOpts[i].pass != J9RAS_DUMP_OPTS_PASS_ONE) continue;
@@ -1254,14 +1252,13 @@ initDumpDirectory(J9JavaVM *vm)
 {
 	IDATA xdumpIndex = 0;
 	omr_error_t retVal = OMR_ERROR_NONE;
-	char *optionString = NULL;
-
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	/* -Xdump:directory */
 	xdumpIndex = FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, VMOPT_XDUMP ":directory", NULL);
 	if ( xdumpIndex >= 0 )
 	{
+		char *optionString = NULL;
 		GET_OPTION_VALUE(xdumpIndex, '=', &optionString);
 		if( !optionString ) {
 			printDumpUsage(vm);
