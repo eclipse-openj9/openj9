@@ -68,6 +68,17 @@
 #define J9PORT_CAPABILITY_CAN_RESERVE_SPECIFIC_ADDRESS 2
 #define J9PORT_CAPABILITY_ALLOCATE_TOP_DOWN 4
 
+#if defined(WIN32)
+#define J9PORT_LIBRARY_SUFFIX ".dll"
+#elif defined(OSX)
+#define J9PORT_LIBRARY_SUFFIX ".dylib"
+#elif defined(LINUX) || defined(AIXPPC) || defined(J9ZOS390)
+#define J9PORT_LIBRARY_SUFFIX ".so"
+#else
+#error "J9PORT_LIBRARY_SUFFIX must be defined"
+#endif
+
+
 /**
  * @name Shared Semaphore Success flags
  * @anchor PortSharedSemaphoreSuccessFlags
