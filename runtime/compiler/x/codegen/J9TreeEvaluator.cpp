@@ -4504,9 +4504,24 @@ TR::Register *J9::X86::TreeEvaluator::longBitCount(TR::Node *node, TR::CodeGener
 // ----------------------------------------------------------------------------
 inline void generateLoadJ9Class(TR::Node* node, TR::Register* j9class, TR::Register* object, TR::CodeGenerator* cg)
    {
+   bool needsNULLCHK = false;
+   switch (node->getOpCodeValue())
+      {
+      case TR::checkcastAndNULLCHK:
+         needsNULLCHK = true;
+         break;
+      case TR::checkcast:
+      case TR::instanceof:
+         break;
+      case TR::icall: // TR_checkAssignable
+         return; // j9class register already holds j9class
+      default:
+         TR_ASSERT(false, "Incorrect Op Code %d.", node->getOpCodeValue());
+         break;
+      }
    auto use64BitClasses = TR::Compiler->target.is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
    auto instr = generateRegMemInstruction(LRegMem(use64BitClasses), node, j9class, generateX86MemoryReference(object, TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
-   if (node->getOpCodeValue() == TR::checkcastAndNULLCHK)
+   if (needsNULLCHK)
       {
       cg->setImplicitExceptionPoint(instr);
       instr->setNeedsGCMap(0xFF00FFFF);
@@ -4634,7 +4649,7 @@ inline void generateInlinedCheckCastOrInstanceOfForInterface(TR::Node* node, TR_
             }
          auto call = generateHelperCallInstruction(node, TR_throwClassCastException, NULL, cg);
          call->setNeedsGCMap(0xFF00FFFF);
-         call->setAdjustsFramePointerBy(-2*sizeof(void*));
+         call->setAdjustsFramePointerBy(-2*(int32_t)sizeof(J9Class*));
          }
       else
          {
@@ -4788,7 +4803,7 @@ inline void generateInlinedCheckCastOrInstanceOfForClass(TR::Node* node, TR_Opaq
          }
       auto call = generateHelperCallInstruction(node, TR_throwClassCastException, NULL, cg);
       call->setNeedsGCMap(0xFF00FFFF);
-      call->setAdjustsFramePointerBy(-2*sizeof(void*));
+      call->setAdjustsFramePointerBy(-2*(int32_t)sizeof(J9Class*));
       }
 
    // Succeed
@@ -4808,7 +4823,7 @@ TR::Register *J9::X86::TreeEvaluator::checkcastinstanceofEvaluator(TR::Node *nod
          isCheckCast = true;
          break;
       case TR::instanceof:
-         isCheckCast = false;
+      case TR::icall: // TR_checkAssignable
          break;
       default:
          TR_ASSERT(false, "Incorrect Op Code %d.", node->getOpCodeValue());
@@ -4818,7 +4833,8 @@ TR::Register *J9::X86::TreeEvaluator::checkcastinstanceofEvaluator(TR::Node *nod
    if (clazz &&
        !TR::Compiler->cls.isClassArray(cg->comp(), clazz) && // not yet optimized
        !cg->comp()->compileRelocatableCode() && // TODO subsequent PR will support AOT
-       !cg->comp()->getOption(TR_DisableInlineCheckCast))
+       !cg->comp()->getOption(TR_DisableInlineCheckCast)  &&
+       !cg->comp()->getOption(TR_DisableInlineInstanceOf))
       {
       cg->evaluate(node->getChild(0));
       if (TR::Compiler->cls.isInterfaceClass(cg->comp(), clazz))
@@ -13481,6 +13497,17 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
       return returnRegister;
       }
 #endif
+
+   if (symbol->isHelper())
+      {
+      switch (symRef->getReferenceNumber())
+         {
+         case TR_checkAssignable:
+            return TR::TreeEvaluator::checkcastinstanceofEvaluator(node, cg);
+         default:
+            break;
+         }
+      }
 
    switch (symbol->getMandatoryRecognizedMethod())
       {
