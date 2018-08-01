@@ -265,6 +265,7 @@ enum INIT_STAGE {
 #define VMOPT_XMXCL "-Xmxcl"
 #define VMOPT_XDUMP  "-Xdump"
 #define VMOPT_XDUMP_NONE  "-Xdump:none"
+#define VMOPT_XDUMP_DIRECTORY_EQUALS  "-Xdump:directory="
 #define VMOPT_XARGENCODING "-Xargencoding"
 #define VMOPT_XARGENCODINGCOLON "-Xargencoding:"
 #define VMOPT_XARGENCODINGUTF8 "-Xargencoding:utf8"
@@ -464,6 +465,7 @@ enum INIT_STAGE {
 #define MAPOPT_XSHARECLASSES_NONFATAL "-Xshareclasses:nonfatal"
 #define MAPOPT_XXDISABLEEXPLICITGC "-XX:+DisableExplicitGC"
 #define MAPOPT_XXENABLEEXPLICITGC "-XX:-DisableExplicitGC"
+#define MAPOPT_XXHEAPDUMPPATH_EQUALS "-XX:HeapDumpPath="
 
 #define VMOPT_XXDUMPLOADEDCLASSLIST "-XX:DumpLoadedClassList"
 

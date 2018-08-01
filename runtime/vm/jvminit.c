@@ -3763,6 +3763,10 @@ registerVMCmdLineMappings(J9JavaVM* vm)
 	if (registerCmdLineMapping(vm, MAPOPT_XXENABLEEXPLICITGC, "-Xenableexplicitgc", EXACT_MAP_NO_OPTIONS) == RC_FAILED) {
 		return RC_FAILED;
 	}
+	/* Map -XX:HeapDumpPath= to -Xdump:directory= */
+	if (registerCmdLineMapping(vm, MAPOPT_XXHEAPDUMPPATH_EQUALS, VMOPT_XDUMP_DIRECTORY_EQUALS, EXACT_MAP_WITH_OPTIONS) == RC_FAILED) {
+		return RC_FAILED;
+	}
 
 	return 0;
 }
