@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -179,7 +179,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 
 #if !defined(WIN32) && !defined(WIN64)
 				/* Get platform default cache directory */
-				rc = j9shmem_getDir(NULL, TRUE, defaultCacheDir, J9SH_MAXPATH);
+				rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, defaultCacheDir, J9SH_MAXPATH);
 				if (-1 == rc) {
 					SHRCLSSUP_ERR_TRACE(verboseFlags, J9NLS_SHRC_SHRCLSSUP_FAILURE_GET_DEFAULT_DIR_FAILED);
 					Trc_SHR_Assert_ShouldNeverHappen();

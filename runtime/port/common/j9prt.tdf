@@ -1,5 +1,5 @@
 //*******************************************************************************
-// Copyright (c) 2015, 2017 IBM Corp. and others
+// Copyright (c) 2015, 2018 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2126,3 +2126,10 @@ TraceException=Trc_PRT_process_machine_speed_file_path_is_malformed Group=j9hype
 TraceException=Trc_PRT_get_hypfs_attribute_file_path_size_exceeds_limit Group=j9hypervisor Overhead=1 Level=1 NoEnv Template="get_hypfs_attribute: the size of file path exceeds the limit, %zu >= %zu, ret=%d"
 TraceException=Trc_PRT_read_hypfs_data_file_path_size_exceeds_limit Group=j9hypervisor Overhead=1 Level=1 NoEnv Template="read_hypfs_data: the size of file path exceeds the limit, %zu >= %zu, ret=%d"
 TraceException=Trc_PRT_check_and_update_stat_file_path_size_exceeds_limit Group=j9hypervisor Overhead=1 Level=1 NoEnv Template="check_and_update_stat: the size of file path exceeds the limit, %zu >= %zu, ret=%d"
+
+TraceException=Trc_PRT_j9shmem_getDir_tryHomeDirFailed_homeDirTooLong Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_getDir: The length of the environment variable HOME is %zu, it should be greater than 0 and less than %zu"
+TraceException=Trc_PRT_j9shmem_getDir_tryHomeDirFailed_getEnvHomeFailed Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_getDir: omrsysinfo_get_env() failed to get environment variable HOME"
+TraceException=Trc_PRT_j9shmem_getDir_tryHomeDirFailed_pw_dirDirTooLong Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_getDir: The length of the home directory is %zu, it should be greater than 0 and less than %zu"
+TraceException=Trc_PRT_j9shmem_getDir_tryHomeDirFailed_getpwuidFailed Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_getDir: getpwuid() returns NULL"
+TraceException=Trc_PRT_j9shmem_getDir_tryHomeDirFailed_homeOnNFS Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_getDir: User's home directory %s is on a network file system"
+TraceException=Trc_PRT_j9shmem_getDir_tryHomeDirFailed_cannotStat Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_getDir: omrfile_stat() failed on the user's home directory %s"

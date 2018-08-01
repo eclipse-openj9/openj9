@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,7 +47,7 @@ testOSCache(J9JavaVM* vm, struct j9cmdlineOptions *arg, const char *cmdline)
 		} else if(NULL != (result = strstr(cmdline, OSCACHETESTMMAP_CMDLINE_PREFIX))) {
 			return SH_OSCacheTestMmap::runTests(vm, arg, result);
 		} else if(NULL != (result = strstr(cmdline, OSCACHETESTMISC_CMDLINE_PREFIX))) {
-			return SH_OSCacheTestMisc::runTests(PORTLIB, arg, result);
+			return SH_OSCacheTestMisc::runTests(vm, arg, result);
 		}
 		return -1;
 	}
@@ -71,13 +71,13 @@ testOSCache(J9JavaVM* vm, struct j9cmdlineOptions *arg, const char *cmdline)
 }
 
 IDATA
-testOSCacheMisc(J9PortLibrary *portLibrary, struct j9cmdlineOptions *arg, const char *cmdline)
+testOSCacheMisc(J9JavaVM *vm, struct j9cmdlineOptions *arg, const char *cmdline)
 {
-	PORT_ACCESS_FROM_PORT(portLibrary);
+	PORT_ACCESS_FROM_JAVAVM(vm);
 	IDATA rc = PASS;
 	j9tty_printf(PORTLIB,"testOSCacheMisc started\n");
 	/* Run the misc tests */
-	rc |= SH_OSCacheTestMisc::runTests(PORTLIB, arg, cmdline);
+	rc |= SH_OSCacheTestMisc::runTests(vm, arg, cmdline);
 	if (rc == PASS) {
 		j9tty_printf(PORTLIB, "testOSCacheMisc: PASSED\n");
 	} else {

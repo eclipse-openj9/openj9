@@ -68,7 +68,7 @@ CacheDirPerm::getTempCacheDir(I_32 cacheType, bool useDefaultDir)
 
 	memset(cacheDir, 0, J9SH_MAXPATH);
 	memset(parentDir, 0, J9SH_MAXPATH);
-	rc = j9shmem_getDir(NULL, useDefaultDir ? TRUE : FALSE, baseDir, J9SH_MAXPATH);
+	rc = j9shmem_getDir(NULL, useDefaultDir ? J9SHMEM_GETDIR_APPEND_BASEDIR : 0, baseDir, J9SH_MAXPATH);
 	if (-1 == rc) {
 		ERRPRINTF("Failed to get a temporary directory\n");
 		rc = FAIL;

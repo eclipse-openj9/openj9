@@ -50,7 +50,7 @@
 
 static IDATA setupArguments(struct j9cmdlineOptions* startupOptions,JavaVMInitArgs* vm_args,void **vmOptionsTable, BOOLEAN useXshareclasses, BOOLEAN enablebci);
 IDATA testOSCache(J9JavaVM* vm, struct j9cmdlineOptions *arg, const char *cmdline);
-IDATA testOSCacheMisc(J9PortLibrary *portLibrary, struct j9cmdlineOptions *arg, const char *cmdline);
+IDATA testOSCacheMisc(J9JavaVM *vm, struct j9cmdlineOptions *arg, const char *cmdline);
 IDATA testClasspathCache(J9JavaVM* vm);
 IDATA testCompositeCache(J9JavaVM* vm);
 IDATA testClasspathItem(J9JavaVM* vm);
@@ -354,7 +354,7 @@ signalProtectedMain(struct J9PortLibrary *portLibrary, void * vargs)
 #endif
 
 	HEADING(PORTLIB, "OSCacheMisc Test");
-	rc |= testOSCacheMisc(PORTLIB, args, argv[i]);
+	rc |= testOSCacheMisc(vm, args, argv[i]);
 
 	if ( (*((JavaVM*)vm))->DestroyJavaVM((JavaVM*)vm) != JNI_OK ) {
 		args->shutdownPortLib = FALSE;
