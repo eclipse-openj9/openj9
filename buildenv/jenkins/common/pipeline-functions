@@ -189,7 +189,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
                     if (SPEC.contains("win") || SDK_VERSION == "9") {
                         TARGET_NAMES = ["Extended"]
                     } else {
-                        TARGET_NAMES = ["extended.functional"]
+                        TARGET_NAMES = ["extended.functional", "extended.system"]
                     }
                     break
                 // temporary for OMR acceptance. This should be removed once we completely switch to AdoptOpenJDK test Jenkins file
