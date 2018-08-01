@@ -227,7 +227,7 @@ void TR_ReadSampleRequestsHistory::advanceEpoch() // performed by sampling threa
 
 uintptrj_t
 TR_IProfiler::createBalancedBST(uintptrj_t *pcEntries, int32_t low, int32_t high, uintptrj_t memChunk,
-                                TR::Compilation *comp, uintptrj_t cacheStartAddress)
+                                TR::Compilation *comp, uintptrj_t cacheStartAddress, uintptrj_t cacheSize)
    {
    if (high < low)
       return NULL;
@@ -236,10 +236,10 @@ TR_IProfiler::createBalancedBST(uintptrj_t *pcEntries, int32_t low, int32_t high
    int32_t middle = (high+low)/2;
    TR_IPBytecodeHashTableEntry *entry = profilingSample (pcEntries[middle], 0, false);
    uint32_t bytes = entry->getBytesFootprint();
-   entry->createPersistentCopy(cacheStartAddress, storage, _compInfo->getPersistentInfo());
+   entry->createPersistentCopy(cacheStartAddress, cacheSize, storage, _compInfo->getPersistentInfo());
 
    uintptrj_t leftChild = createBalancedBST(pcEntries, low, middle-1,
-                                            memChunk + bytes, comp, cacheStartAddress);
+                                            memChunk + bytes, comp, cacheStartAddress, cacheSize);
 
    if (leftChild)
       {
@@ -248,7 +248,7 @@ TR_IProfiler::createBalancedBST(uintptrj_t *pcEntries, int32_t low, int32_t high
       }
 
    uintptrj_t rightChild = createBalancedBST(pcEntries, middle+1, high,
-                                             memChunk + bytes + leftChild, comp, cacheStartAddress);
+                                             memChunk + bytes + leftChild, comp, cacheStartAddress, cacheSize);
    if (rightChild)
       {
       TR_ASSERT(bytes + leftChild < 1 << 16, "Error storing iprofile information: right child too far away"); // current size of right child
@@ -445,7 +445,7 @@ TR_IProfiler::persistIprofileInfo(TR::ResolvedMethodSymbol *resolvedMethodSymbol
                   fprintf(stderr, "\n");
 #endif
                   void * memChunk = comp->trMemory()->allocateMemory(bytesFootprint, stackAlloc);
-                  intptrj_t bytes = createBalancedBST(pcEntries, 0, numEntries-1, (uintptrj_t) memChunk, comp, cacheOffset);
+                  intptrj_t bytes = createBalancedBST(pcEntries, 0, numEntries-1, (uintptrj_t) memChunk, comp, cacheOffset, cacheSize);
                   TR_ASSERT(bytes == bytesFootprint, "BST doesn't match expected footprint");
 
 
@@ -2656,7 +2656,7 @@ TR_IPBCDataFourBytes::operator new (size_t size) throw()
    }
 
 void
-TR_IPBCDataFourBytes::createPersistentCopy(uintptrj_t cacheStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)
+TR_IPBCDataFourBytes::createPersistentCopy(uintptrj_t cacheStartAddress, uintptrj_t cacheSize, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)
    {
    TR_IPBCDataFourBytesStorage * store = (TR_IPBCDataFourBytesStorage *) storage;
    storage->pc = _pc - cacheStartAddress;
@@ -2703,7 +2703,7 @@ TR_IPBCDataEightWords::operator new (size_t size) throw()
    }
 
 void
-TR_IPBCDataEightWords::createPersistentCopy(uintptrj_t cacheStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)
+TR_IPBCDataEightWords::createPersistentCopy(uintptrj_t cacheStartAddress, uintptrj_t cacheSize, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)
    {
    TR_IPBCDataEightWordsStorage * store = (TR_IPBCDataEightWordsStorage *) storage;
    storage->pc = _pc - cacheStartAddress;
@@ -2996,7 +2996,7 @@ TR_IPBCDataCallGraph::canBePersisted(uintptrj_t cacheStartAddress, uintptrj_t ca
             }
 
          uintptrj_t romClass = (uintptrj_t) clazz->romClass;
-         if (romClass < cacheStartAddress || romClass > cacheStartAddress+cacheSize)
+         if (romClass < cacheStartAddress || romClass >= cacheStartAddress+cacheSize)
             {
             releaseEntry(); // release the lock on the entry
             return IPBC_ENTRY_PERSIST_NOTINSCC;
@@ -3008,7 +3008,7 @@ TR_IPBCDataCallGraph::canBePersisted(uintptrj_t cacheStartAddress, uintptrj_t ca
    }
 
 void
-TR_IPBCDataCallGraph::createPersistentCopy(uintptrj_t cacheStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)
+TR_IPBCDataCallGraph::createPersistentCopy(uintptrj_t cacheStartAddress, uintptrj_t cacheSize, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)
    {
    TR_IPBCDataCallGraphStorage * store = (TR_IPBCDataCallGraphStorage *) storage;
    storage->pc = _pc - cacheStartAddress;
@@ -3020,11 +3020,43 @@ TR_IPBCDataCallGraph::createPersistentCopy(uintptrj_t cacheStartAddress, TR_IPBC
       J9Class *clazz = (J9Class *) _csInfo.getClazz(i);
       if (clazz)
          {
-         TR_ASSERT(!info->isUnloadedClass(clazz, true), "cannot store unloaded class");
-         uintptrj_t romClass = (uintptrj_t) clazz->romClass;
-         TR_ASSERT(romClass >= cacheStartAddress, "expect the rom class to be in the shared class");
-         store->_csInfo.setClazz(i, (romClass - cacheStartAddress));
-         TR_ASSERT(_csInfo.getClazz(i), "Race condition detected: cached value=%p, pc=%p", clazz, _pc);
+         bool isUnloadedClass = info->isUnloadedClass(clazz, true);
+         TR_ASSERT(!isUnloadedClass, "cannot store unloaded class");
+
+         if (!isUnloadedClass)
+            {
+            uintptrj_t romClass = (uintptrj_t) clazz->romClass;
+
+            /*
+             * The following race is possible:
+             *
+             * 1. Thread 1 calls TR_IPBCDataCallGraph::canBePersisted on Entry A, which succeeds.
+             *    However, at least one class in the list is NULL.
+             * 2. Thread 2 calls TR_IPBCDataCallGraph::setData on Entry A, which also succeeds,
+             *    setting one of the classes that was previous NULL to something non-NULL.
+             * 3. Thread 1 calls TR_IPBCDataCallGraph::createPersistentCopy. Normally if a class
+             *    in the list is NULL, the value stored is also NULL. However, because Thread 2
+             *    updated some previously NULL class, Thread 1 will compute the difference of
+             *    (ramClass->romClass - startOfSCC) and potentially get a value that's bigger than the SCC.
+             *
+             * Because locking the entry in TR_IPBCDataCallGraph::setData would negatively impact
+             * performance, in order to prevent an issue in loadFromPersistentCopy, check again whether
+             * the romClass is within the SCC.
+             */
+            if (romClass >= cacheStartAddress && romClass < (cacheStartAddress+cacheSize))
+               {
+               store->_csInfo.setClazz(i, (romClass - cacheStartAddress));
+               TR_ASSERT(_csInfo.getClazz(i), "Race condition detected: cached value=%p, pc=%p", clazz, _pc);
+               }
+            else
+               {
+               store->_csInfo.setClazz(i, 0);
+               }
+            }
+         else
+            {
+            store->_csInfo.setClazz(i, 0);
+            }
          }
       else
          {
