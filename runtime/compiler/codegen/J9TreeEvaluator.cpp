@@ -243,7 +243,8 @@ uint32_t J9::TreeEvaluator::calculateInstanceOfOrCheckCastSequences(TR::Node *in
    //
    else if (castClassSymRef->isUnresolved())
       {
-      traceMsg(cg->comp(),"Cast Class unresolved\n");
+      if (cg->comp()->getOption(TR_TraceCG))
+         traceMsg(cg->comp(),"Cast Class unresolved\n");
       if (mayBeNull)
          sequences[i++] = NullTest;
       sequences[i++] = ClassEqualityTest;
