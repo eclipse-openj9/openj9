@@ -1085,7 +1085,7 @@ obj:;
 	enterObjectMonitor(REGISTER_ARGS_LIST, j9object_t obj)
 	{
 		IDATA rc = (IDATA)obj;
-		if (!VM_ObjectMonitor::inlineFastObjectMonitorEnter(_currentThread, obj)) {
+		if (true || !VM_ObjectMonitor::inlineFastObjectMonitorEnter(_currentThread, obj)) {
 			rc = objectMonitorEnterNonBlocking(_currentThread, obj);
 			if (1 == rc) {
 				updateVMStruct(REGISTER_ARGS);

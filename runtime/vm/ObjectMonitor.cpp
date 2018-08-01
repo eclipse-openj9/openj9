@@ -32,6 +32,7 @@
 #include "VMHelpers.hpp"
 #include "AtomicSupport.hpp"
 #include "ObjectMonitor.hpp"
+#include <immintrin.h>
 
 extern "C" {
 
@@ -459,6 +460,12 @@ spinOnTryEnter(J9VMThread *currentThread, J9ObjectMonitor *objectMonitor, j9obje
 	UDATA tryEnterSpinCount2 = vm->thrMaxTryEnterSpins2BeforeBlocking;
 	UDATA tryEnterYieldCount = vm->thrMaxTryEnterYieldsBeforeBlocking;
 	UDATA const tryEnterNestedSpinning = vm->thrTryEnterNestedSpinning;
+
+	if (J9_LOCK_IS_INFLATED(*lwEA)) {
+		if (true == startTransaction(monitor, osThread)) {
+			return true;
+		}
+	}
 
 #if defined(J9VM_INTERP_CUSTOM_SPIN_OPTIONS)
 	J9Class *ramClass = J9OBJECT_CLAZZ(currentThread, object);
