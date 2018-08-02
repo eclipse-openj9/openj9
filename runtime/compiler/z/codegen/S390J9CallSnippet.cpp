@@ -671,8 +671,8 @@ void
 TR_Debug::print(TR::FILE *pOutFile, TR::S390UnresolvedCallSnippet * snippet)
    {
    uint8_t * bufferPos = snippet->getSnippetLabel()->getCodeLocation() + snippet->getLength(0)
-                         - sizeof(intptrj_t) - 4            // 2 DC's at end of this snippet.
-                         - (4 - snippet->getPadBytes());    // padding
+                         - sizeof(intptrj_t) - sizeof(int32_t)            // 2 DC's at end of this snippet.
+                         - (sizeof(intptrj_t) - snippet->getPadBytes());    // padding
 
    TR::SymbolReference * methodSymRef = snippet->getNode()->getSymbolReference();
 
@@ -736,7 +736,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390VirtualUnresolvedSnippet * snippet)
 
    printPrefix(pOutFile, NULL, bufferPos, 4);
    trfprintf(pOutFile, "DC   \t%p\t\t# Method Address", *((uintptrj_t *)bufferPos));
-   bufferPos += 4;
+   bufferPos += sizeof(intptrj_t);
 
    printPrefix(pOutFile, NULL, bufferPos, sizeof(intptrj_t));
    trfprintf(pOutFile, "DC   \t%p \t\t# Call Site RA", snippet->getCallRA());

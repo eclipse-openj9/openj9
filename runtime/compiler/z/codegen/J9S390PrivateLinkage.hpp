@@ -122,18 +122,6 @@ protected:
    TR::RegisterDependencyConditions * dependencies, int32_t argSize);
 
    virtual void mapIncomingParms(TR::ResolvedMethodSymbol *method);
-
-   void callPreJNICallOffloadCheck(TR::Node * callNode);
-   void callPostJNICallOffloadCheck(TR::Node * callNode);
-   void collapseJNIReferenceFrame(TR::Node * callNode, TR::RealRegister * javaStackPointerRealRegister,
-      TR::Register * javaLitPoolVirtualRegister, TR::Register * tempReg);
-
-   void setupJNICallOutFrame(TR::Node * callNode,
-      TR::RealRegister * javaStackPointerRealRegister,
-      TR::Register * methodMetaDataVirtualRegister,
-      TR::LabelSymbol * returnFromJNICallLabel,
-      TR::S390JNICallDataSnippet *jniCallDataSnippet);
-
    };
 
 
@@ -151,31 +139,6 @@ public:
       setProperty(ParmsInReverseOrder);
       }
    };
-
-class J9S390JNILinkage : public TR::S390PrivateLinkage
-   {
-public:
-
-   J9S390JNILinkage(TR::CodeGenerator * cg, TR_S390LinkageConventions elc=TR_JavaPrivate, TR_LinkageConventions lc=TR_J9JNILinkage);
-   virtual TR::Register * buildDirectDispatch(TR::Node * callNode);
-
-   void checkException(TR::Node * callNode, TR::Register *methodMetaDataVirtualRegister, TR::Register * tempReg);
-   void releaseVMAccessMask(TR::Node * callNode, TR::Register * methodMetaDataVirtualRegister,
-         TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg, TR::S390JNICallDataSnippet * jniCallDataSnippet, TR::RegisterDependencyConditions * deps);
-   void acquireVMAccessMask(TR::Node * callNode, TR::Register * javaLitPoolVirtualRegister,
-      TR::Register * methodMetaDataVirtualRegister, TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg);
-
-#ifdef J9VM_INTERP_ATOMIC_FREE_JNI
-   void releaseVMAccessMaskAtomicFree(TR::Node * callNode,
-                                      TR::Register * methodMetaDataVirtualRegister,
-                                      TR::Register * tempReg1);
-
-   void acquireVMAccessMaskAtomicFree(TR::Node * callNode,
-                                      TR::Register * methodMetaDataVirtualRegister,
-                                      TR::Register * tempReg1);
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
-   };
-
 }
 
 #endif /* J9S390PRIVATELINKAGE_INCL */
