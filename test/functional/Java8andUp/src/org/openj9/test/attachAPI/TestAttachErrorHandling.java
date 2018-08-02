@@ -34,6 +34,7 @@ import java.io.OutputStreamWriter;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Random;
 
@@ -127,11 +128,18 @@ public class TestAttachErrorHandling extends AttachApiTest implements TestConsta
 	private void deleteIpcDirectories(File ipcDir,
 			ArrayList<TargetManager> targets) throws IOException {
 		for (TargetManager victim: targets) {
-			String tgtId = victim.getTargetPid();
-			File targetDir = new File(ipcDir, victim.targetId);
+			if (Objects.isNull(victim)) {
+				continue;
+			}
+			final String targetId = victim.targetId;
+			if (Objects.isNull(targetId)) {
+				continue;
+			}
+			File targetDir = new File(ipcDir, targetId);
 			if (targetDir.exists()) {
-				logger.debug("delete "+tgtId);
-				deleteRecursive(targetDir);
+				logger.debug("delete "+victim.getTargetPid());
+				/* note that the error recovery mechanisms may recreate files */
+				deleteRecursive(targetDir, false);
 			}
 		}
 	}
@@ -149,7 +157,7 @@ public class TestAttachErrorHandling extends AttachApiTest implements TestConsta
 			String line;
 			while (null != (line = logReader.readLine())) {
 				boolean error = line.contains("Attach API not terminated");
-				AssertJUnit.assertFalse("Wait loop not terminated", error);
+				AssertJUnit.assertFalse("target "+ targetPid + ": wait loop not terminated", error);
 			}
 			logReader.close();
 		} catch (IOException e) {
@@ -411,7 +419,7 @@ public class TestAttachErrorHandling extends AttachApiTest implements TestConsta
 	}
 
 	private File createStaleDirectory(TargetManager tgt, String staleName) {
-		tgt.syncWithTarget();
+		AssertJUnit.assertTrue("target process did not launch",tgt.syncWithTarget());
 
 		File targetDir = new File(commonDirectory, tgt.targetId);
 		AssertJUnit.assertTrue(
@@ -460,7 +468,7 @@ public class TestAttachErrorHandling extends AttachApiTest implements TestConsta
 	 *            Number of clones
 	 */
 	private void cloneTargetDirectory(TargetManager tgt, int cloneCount) {
-		tgt.syncWithTarget();
+		AssertJUnit.assertTrue("target process did not launch",tgt.syncWithTarget());
 
 		File targetDir = new File(commonDirectory, tgt.targetId);
 		AssertJUnit.assertTrue(

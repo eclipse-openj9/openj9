@@ -24,6 +24,7 @@ package org.openj9.test.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 
 public class FileUtilities {
 
@@ -34,20 +35,31 @@ public class FileUtilities {
 	 * @throws IOException if the directory is inaccessible or cannot be deleted.
 	 */
 	public static void deleteRecursive(File root) throws IOException {
+		deleteRecursive(root, true);
+	}
+	
+	/**
+	 * Delete root and its contents, if root is a directory.
+	 * If root does not exist, this exits silently.
+	 * @param root Starting point of the deletion.
+	 * @param failOnError throw exception if there is a failure
+	 * @throws IOException if the directory is inaccessible or cannot be deleted and failOnError is true.
+	 */
+	public static void deleteRecursive(File root, boolean failOnError) throws IOException {
 		final String rootPath = root.getAbsolutePath();
-		if (root.exists()) {
+		if (Objects.nonNull(rootPath) && root.exists()) {
 			if (root.isDirectory()) {
 				File[] children = root.listFiles();
 				if (null != children) {
 					for (File c : children) {
-						deleteRecursive(c);
+						deleteRecursive(c, failOnError);
 					}
-				} else {
+				} else if (failOnError) {
 					throw new IOException("Error listing files in  "  //$NON-NLS-1$
 							+ rootPath);
 				}
 			}
-			if (!root.delete()) {
+			if (!root.delete() && failOnError) {
 				throw new IOException("Error deleting "  //$NON-NLS-1$
 						+ rootPath);			
 			}
