@@ -65,6 +65,7 @@ import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.FindPatternCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.FindStackValueCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.FindVMCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.GCCheckCommand;
+import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.GetNestCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.HashCodeCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.J9ClassShapeCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.J9MemTagCommands;
@@ -189,6 +190,7 @@ public class GetCommandsTask extends BaseJVMCommands implements IBootstrapRunnab
 		toPassBack.add(new FindAllReadsCommand());
 		toPassBack.add(new DumpModuleDirectedExportsCommand());
 		toPassBack.add(new DumpAllClassesInModuleCommand());
+		toPassBack.add(new GetNestCommand());
 
 		loadPlugins(toPassBack, loader);
 
