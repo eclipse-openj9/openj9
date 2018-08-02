@@ -695,11 +695,21 @@ done:
 	VMINLINE J9Method*
 	j2iVirtualMethod(REGISTER_ARGS_LIST, j9object_t receiver, UDATA interfaceVTableIndex)
 	{
+		J9Method *method = NULL;
 		void* const jitReturnAddress = VM_JITInterface::peekJITReturnAddress(_currentThread, _sp);
 		UDATA jitVTableOffset = VM_JITInterface::jitVTableIndex(jitReturnAddress, interfaceVTableIndex);
-		UDATA vTableOffset = sizeof(J9Class) - jitVTableOffset;
-		J9Class *clazz = J9OBJECT_CLAZZ(_currentThread, receiver);
-		return *(J9Method**)((UDATA)clazz + vTableOffset);
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+		if (J9_ARE_ANY_BITS_SET(jitVTableOffset, J9_VTABLE_INDEX_DIRECT_METHOD_FLAG)) {
+			/* Nestmates: vtable index is really a J9Method to directly invoke */
+			method = (J9Method*)(jitVTableOffset & ~J9_VTABLE_INDEX_DIRECT_METHOD_FLAG);
+		} else
+#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+		{
+			UDATA vTableOffset = sizeof(J9Class) - jitVTableOffset;
+			J9Class *clazz = J9OBJECT_CLAZZ(_currentThread, receiver);
+			method = *(J9Method**)((UDATA)clazz + vTableOffset);
+		}
+		return method;
 	}
 
 	VMINLINE void
