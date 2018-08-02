@@ -1865,6 +1865,25 @@ UDATA TR_J9VMBase::thisThreadGetOSRReturnAddressOffset()
    return offsetof(J9VMThread, osrReturnAddress);
    }
 
+#if defined(TR_TARGET_S390)
+/**
+ * @brief TDB is Transaction Diagnostic Block used for Transactional Memory Debugging.
+ * It is a 256 Byte block stored in the J9VMThread and must be 8 byte boundary aligned.
+ */
+uint16_t TR_J9VMBase::thisThreadGetTDBOffset()
+   {
+#if !defined(J9ZTPF)
+   // This assume is valid to confirm the TDB is on an 8 byte boundary because we know the VMThread is already aligned on a 256 byte boundary
+   // If this assume fails, then that means someone modified the J9VMThread structure which has thrown off the alignment.
+   TR_ASSERT(offsetof(J9VMThread, transactionDiagBlock) % 8 == 0, "The Transaction Diagnostic Block must be aligned on a doubleword i.e. 8 byte boundary");
+   return offsetof(J9VMThread, transactionDiagBlock);
+#else
+   Assert_JIT_unreachable();
+   return 0;
+#endif
+   }
+#endif
+
 /**
  * @brief Returns offset from the current thread to the intermediate result field.
  * The field contains intermediate result from the latest guarded load during concurrent scavenge.
