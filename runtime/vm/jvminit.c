@@ -1609,6 +1609,21 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				goto _memParseError;
 			}
 
+			/* Set user-specified CPUs as early as possible, i.e. as soon as PORT_LIBRARY_GUARANTEED */
+			argIndex = FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, VMOPT_XXACTIVEPROCESSORCOUNT_EQUALS, NULL);
+			if (argIndex >= 0) {
+				UDATA value = 0;
+				char *optname = VMOPT_XXACTIVEPROCESSORCOUNT_EQUALS;
+
+				parseError = GET_INTEGER_VALUE(argIndex, optname, value);
+				if (OPTION_OK != parseError) {
+					parseErrorOption = VMOPT_XXACTIVEPROCESSORCOUNT_EQUALS;
+					goto _memParseError;
+				}
+
+				j9sysinfo_set_number_user_specified_CPUs(value);
+			}
+
 			/* -Xits option is not being used anymore. We find and consume it for backward compatibility. */
 			/* Otherwise, usage of this option would not be recognised and warning would be printed.  */
 			FIND_AND_CONSUME_ARG(EXACT_MEMORY_MATCH, VMOPT_XITS, NULL);
@@ -1883,7 +1898,7 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 					uint64_t subsystemsAvailable = omrsysinfo_cgroup_get_available_subsystems();
 					Trc_VM_CgroupSubsystemsNotEnabled(vm->mainThread, subsystemsAvailable, subsystemsEnabled);
 				}
-			} 
+			}
 
 			break;
 

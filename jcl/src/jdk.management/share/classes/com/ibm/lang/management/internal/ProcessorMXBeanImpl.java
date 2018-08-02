@@ -117,4 +117,32 @@ public final class ProcessorMXBeanImpl implements ProcessorMXBean {
 	public int getNumberTargetCPUs() {
 		return getNumberCPUsImpl(TARGET);
 	}
+	
+	/**
+	 * @param number
+	 * 			The number of CPUs to specify the process to use. The process
+	 * 			will behave as if <code>number</code> CPUs are available. If
+	 *			this is set to 0, it will reset the number of CPUs specified
+	 *			and the JVM will use the the number of CPUs detected on the system.
+	 * 
+	 * @see #setNumberActiveCPUs(int)
+	 */
+	private native void setNumberActiveCPUsImpl(int number);
+
+	/**
+	 * {@inheritDoc}
+	 */
+		@Override
+	public void setNumberActiveCPUs(int number) throws IllegalArgumentException {
+		SecurityManager security = System.getSecurityManager();
+		if (security != null) {
+			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
+		}
+
+		if (0 > number) {
+			/*[MSG "K0567", "Number of entitled CPUs cannot be negative."]*/
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0567")); //$NON-NLS-1$
+		}
+		setNumberActiveCPUsImpl(number);
+	}
 }

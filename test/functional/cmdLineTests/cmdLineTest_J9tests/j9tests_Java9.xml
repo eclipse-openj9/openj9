@@ -417,13 +417,37 @@
   <output type="success" regex="yes">$NOSCHEDCOMPAT$</output>
   <return type="required" value="0" />
  </test>
- 
+
+ <test id="Test -XX:ActiveProcessorCount option accepted">
+  <command>$EXE$ -XX:ActiveProcessorCount=5 $VERSION$ </command>
+  <output regex="no" type="success">version</output>
+  <output regex="no" type="failure">JVMJ9VM013W</output>
+ </test>
+
+ <test id="Test -XX:ActiveProcessorCount negative value">
+  <command>$EXE$ -XX:ActiveProcessorCount=-1 $VERSION$ </command>
+  <output regex="no" type="success">JVMJ9VM013W</output>
+  <output regex="no" type="failure">version</output>
+ </test>
+
+ <test id="Test -XX:ActiveProcessorCount non-numeric value">
+  <command>$EXE$ -XX:ActiveProcessorCount=Z $VERSION$ </command>
+  <output regex="no" type="success">JVMJ9VM013W</output>
+  <output regex="no" type="failure">version</output>
+ </test>
+
+ <test id="Test -XX:ActiveProcessorCount alphanumeric value">
+  <command>$EXE$ -XX:ActiveProcessorCount=123Z $VERSION$ </command>
+  <output regex="no" type="success">JVMJ9VM013W</output>
+  <output regex="no" type="failure">version</output>
+ </test>
+
  <test id="Verify -XX:+VMLockClassLoader sets the flag">
   <command>$EXE$ $CP$ -XX:-VMLockClassLoader -XX:+VMLockClassLoader -Xtrace:print=j9vm.463 $TARGET$</command>
   <output type="required" regex="yes">.*locking enabled.*</output>
   <return type="success" value="0" />
  </test>
- 
+
  <test id="Verify -XX:-VMLockClassLoader clears the flag">
   <command>$EXE$ $CP$ -XX:+VMLockClassLoader -XX:-VMLockClassLoader -Xtrace:print=j9vm.463 $TARGET$</command>
   <output type="required" regex="yes">.*locking disabled.*</output>

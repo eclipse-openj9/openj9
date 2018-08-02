@@ -1154,6 +1154,29 @@ Java_com_ibm_lang_management_internal_JvmCpuMonitor_getThreadCategoryImpl(JNIEnv
 jint JNICALL
 Java_com_ibm_oti_vm_VM_markCurrentThreadAsSystemImpl(JNIEnv *env);
 
+/* mgmtprocessor.c */
+/**
+ * Makes the Port Library function j9sysinfo_get_number_CPUs_by_type(type) available
+ * for JCL. The valid types are (defined in j9port.h):
+ *  - PHYSICAL: Number of physical CPU's on this platform
+ * 	- BOUND: Number of physical CPU's bound to this process
+ * 	- TARGET: Number of CPU's that should be used by the process. This is normally BOUND, but is overridden by ActiveCPUs if set.
+ *
+ * @param[in] type Flag to indicate the information type (see function description).
+ *
+ * @return The number of CPUs, qualified by the argument <code>type</code>.
+ */
+jint JNICALL
+Java_com_ibm_lang_management_internal_ProcessorMXBeanImpl_getNumberCPUsImpl(JNIEnv *env, jobject o, jint type);
+/**
+ * Makes the Port Library function j9sysinfo_set_number_user_specified_CPUs(number) available
+ * for JCL.
+ *
+ * @param[in] number Number of user-specified active CPUs (non-negative).
+ */
+void JNICALL
+Java_com_ibm_lang_management_internal_ProcessorMXBeanImpl_setNumberActiveCPUsImpl(JNIEnv *env, jobject o, jint number);
+
 #ifdef __cplusplus
 }
 #endif
