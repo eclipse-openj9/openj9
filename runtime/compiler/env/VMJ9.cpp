@@ -4326,12 +4326,6 @@ TR_J9VMBase::canRecompileMethodWithMatchingPersistentMethodInfo(TR::Compilation 
           );                     // TODO: Why does this assume sometimes fail in HCR mode?
    }
 
-void
-TR_J9VMBase::abortCompilationIfLowFreePhysicalMemory(TR::Compilation *comp, size_t sizeToAllocate)
-   {
-   bool incompleteInfo;
-   _compInfo->computeFreePhysicalLimitAndAbortCompilationIfLow(comp, incompleteInfo, sizeToAllocate);
-   }
 
 //
 // A few predicates describing shadow symbols that we can reason about at

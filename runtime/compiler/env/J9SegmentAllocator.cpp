@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,6 +50,33 @@ J9MemorySegment *
 SegmentAllocator::allocate(const size_t segmentSize, const std::nothrow_t &tag) throw()
    {
    size_t const alignedSize = pageAlign(segmentSize);
+
+   // If low on physical memory we may want to return NULL when allocating scratch segments
+   if (_segmentType & MEMORY_TYPE_JIT_SCRATCH_SPACE)
+      {
+      bool incomplete;
+      TR::CompilationInfo *compInfo = TR::CompilationInfo::get(_javaVM.jitConfig);
+      uint64_t freePhysicalMemory = compInfo->computeAndCacheFreePhysicalMemory(incomplete, 20);
+      if (freePhysicalMemory != OMRPORT_MEMINFO_NOT_AVAILABLE && !incomplete)
+         {
+         if (freePhysicalMemory < (TR::Options::getSafeReservePhysicalMemoryValue() + segmentSize))
+            {
+            // Set a flag that will determine one compilation thread to suspend itself
+            // Even if multiple threads enter his path we still want to suspend only
+            // one thread, not several. This is why we use a flag and not a counter.
+            //
+            // We allow a small race condition: it is possible that between the test
+            // for available physical memory and setting of the flag below, another
+            // compilation thread has suspended itself and reset the flag. The code 
+            // below is going to set the flag again, possibly resulting into two
+            // compilation threads being suspended. This is still fine, because, if
+            // needed, a new compilation thread will be activated when a compilation
+            // request is queued
+            compInfo->setSuspendThreadDueToLowPhysicalMemory(true);
+            return NULL;
+            }
+         }
+      }
    J9MemorySegment * newSegment =
       _javaVM.internalVMFunctions->allocateMemorySegment(
          &_javaVM,
