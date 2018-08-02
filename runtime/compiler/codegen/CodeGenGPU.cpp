@@ -66,6 +66,13 @@ static const char * nvvmOpCodeNames[] =
    "load",          // TR::bload
    "load",          // TR::sload
    "load",          // TR::lload
+   "rdbar",         // TR::irdbar
+   "rdbar",         // TR::frdbar
+   "rdbar",         // TR::drdbar
+   "rdbar",         // TR::ardbar
+   "rdbar",         // TR::brdbar
+   "rdbar",         // TR::srdbar
+   "rdbar",         // TR::lload
    "load",          // TR::iloadi
    "load",          // TR::floadi
    "load",          // TR::dloadi
@@ -73,6 +80,13 @@ static const char * nvvmOpCodeNames[] =
    "load",          // TR::bloadi
    "load",          // TR::sloadi
    "load",          // TR::lloadi
+   "rdbar",         // TR::irdbari
+   "rdbar",         // TR::frdbari
+   "rdbar",         // TR::drdbari
+   "rdbar",         // TR::ardbari
+   "rdbar",         // TR::brdbari
+   "rdbar",         // TR::srdbari
+   "rdbar",         // TR::lrdbari
 
    "store",          // TR::istore
    "store",          // TR::lstore
