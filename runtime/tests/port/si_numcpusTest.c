@@ -35,10 +35,10 @@
  *
  * @return TEST_PASSED on success, TEST_FAILED on failure
  */
-int j9sysinfo_numcpus_test3 (J9PortLibrary* portLibrary)
+int j9sysinfo_numcpus_test1 (J9PortLibrary* portLibrary)
 {
 	PORT_ACCESS_FROM_PORT(portLibrary);
-	const char* testName = "j9sysinfo_numcpus_test3";
+	const char* testName = "j9sysinfo_numcpus_test1";
 	UDATA numberPhysicalCPUs = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_PHYSICAL);
 
 	outputComment(PORTLIB,"\n");
@@ -61,10 +61,10 @@ int j9sysinfo_numcpus_test3 (J9PortLibrary* portLibrary)
  *
  * @return TEST_PASSED on success, TEST_FAILED on failure
  */
-int j9sysinfo_numcpus_test4 (J9PortLibrary* portLibrary, UDATA boundTest)
+int j9sysinfo_numcpus_test2 (J9PortLibrary* portLibrary, UDATA boundTest)
 {
 	PORT_ACCESS_FROM_PORT(portLibrary);
-	const char* testName = "j9sysinfo_numcpus_test4";
+	const char* testName = "j9sysinfo_numcpus_test2";
 	UDATA numberPhysicalCPUs = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_ONLINE);
 	UDATA numberBoundCPUs = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_BOUND);
 
@@ -96,10 +96,10 @@ int j9sysinfo_numcpus_test4 (J9PortLibrary* portLibrary, UDATA boundTest)
  *
  * @return TEST_PASSED on success, TEST_FAILED on failure
  */
-int j9sysinfo_numcpus_test5 (J9PortLibrary* portLibrary)
+int j9sysinfo_numcpus_test3 (J9PortLibrary* portLibrary)
 {
 	PORT_ACCESS_FROM_PORT(portLibrary);
-	const char* testName = "j9sysinfo_numcpus_test5";
+	const char* testName = "j9sysinfo_numcpus_test3";
 
 	UDATA numberBoundCPUs = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_BOUND);
 	UDATA targetNumberCPUs = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
@@ -117,16 +117,75 @@ int j9sysinfo_numcpus_test5 (J9PortLibrary* portLibrary)
 }
 
 /**
+ * Get inital target number of CPUS. Set user-specified to 3, then to 0. Get target number of CPUs. Validate number equals initial value.
+ *
+ * @param[in] portLibrary The port library under test
+ *
+ * @return TEST_PASSED on success, TEST_FAILED on failure
+ */
+int j9sysinfo_numcpus_test4 (J9PortLibrary* portLibrary)
+{
+#define J9SYSINFO_NUMCPUS_TEST4_SPECIFIED 3
+	PORT_ACCESS_FROM_PORT(portLibrary);
+	const char* testName = "j9sysinfo_numcpus_test4";
+	UDATA targetNumberCPUsOriginal = 0;
+	UDATA targetNumberCPUs = 0;
+
+	targetNumberCPUsOriginal = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
+	j9sysinfo_set_number_user_specified_CPUs(J9SYSINFO_NUMCPUS_TEST4_SPECIFIED);
+	j9sysinfo_set_number_user_specified_CPUs(0);
+	targetNumberCPUs = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
+
+	outputComment(PORTLIB,"\nSet number of entitled CPUs to %d, then to 0. Get target number of CPUs.\n", J9SYSINFO_NUMCPUS_TEST4_SPECIFIED);
+	outputComment(PORTLIB,"	Expected: %d\n", targetNumberCPUsOriginal);
+	outputComment(PORTLIB,"	Result:   %d\n", targetNumberCPUs);
+
+	if (targetNumberCPUsOriginal != targetNumberCPUs) {
+		outputErrorMessage(PORTTEST_ERROR_ARGS, "\tTarget number of CPUs is not equal to the initial value (%d).\n", targetNumberCPUsOriginal);
+	}
+
+	return reportTestExit(portLibrary, testName);
+}
+
+/**
+ * Set user-specified to 10. get target number of CPUs. Validate number is 10.
+ *
+ * @param[in] portLibrary The port library under test
+ *
+ * @return TEST_PASSED on success, TEST_FAILED on failure
+ */
+int j9sysinfo_numcpus_test5 (J9PortLibrary* portLibrary)
+{
+#define J9SYSINFO_NUMCPUS_TEST5_SPECIFIED 10
+	PORT_ACCESS_FROM_PORT(portLibrary);
+	const char* testName = "j9sysinfo_numcpus_test5";
+	UDATA targetNumberCPUs = 0;
+
+	j9sysinfo_set_number_user_specified_CPUs(J9SYSINFO_NUMCPUS_TEST5_SPECIFIED);
+	targetNumberCPUs = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
+
+	outputComment(PORTLIB,"\nSet number of entitled CPUs to %d. Get target number of CPUs.\n", J9SYSINFO_NUMCPUS_TEST5_SPECIFIED);
+	outputComment(PORTLIB,"	Expected: %d\n", J9SYSINFO_NUMCPUS_TEST5_SPECIFIED);
+	outputComment(PORTLIB,"	Result:   %d\n", targetNumberCPUs);
+
+	if (J9SYSINFO_NUMCPUS_TEST5_SPECIFIED != targetNumberCPUs) {
+		outputErrorMessage(PORTTEST_ERROR_ARGS, "\tTarget number of CPUs is not equal to entitled CPUs (%d).\n", J9SYSINFO_NUMCPUS_TEST5_SPECIFIED);
+	}
+
+	return reportTestExit(portLibrary, testName);
+}
+
+/**
  * Get number of online CPUs. Validate number > 0.
  *
  * @param[in] portLibrary The port library under test
  *
  * @return TEST_PASSED on success, TEST_FAILED on failure
  */
-int j9sysinfo_numcpus_test7 (J9PortLibrary* portLibrary)
+int j9sysinfo_numcpus_test6 (J9PortLibrary* portLibrary)
 {
 	PORT_ACCESS_FROM_PORT(portLibrary);
-	const char* testName = "j9sysinfo_numcpus_test7";
+	const char* testName = "j9sysinfo_numcpus_test6";
 	UDATA numberOnlineCPUs = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_ONLINE);
 
 	outputComment(PORTLIB,"\n");
@@ -148,10 +207,10 @@ int j9sysinfo_numcpus_test7 (J9PortLibrary* portLibrary)
  *
  * @return TEST_PASSED on success, TEST_FAILED on failure
  */
-int j9sysinfo_numcpus_test8 (J9PortLibrary* portLibrary)
+int j9sysinfo_numcpus_test7 (J9PortLibrary* portLibrary)
 {
 	PORT_ACCESS_FROM_PORT(portLibrary);
-	const char* testName = "j9sysinfo_numcpus_test8";
+	const char* testName = "j9sysinfo_numcpus_test7";
 	UDATA numberOnlineCPUs = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_ONLINE);
 	UDATA numberPhysicalCPUs = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_PHYSICAL);
 
@@ -171,10 +230,10 @@ int j9sysinfo_numcpus_test8 (J9PortLibrary* portLibrary)
  *
  * @return TEST_PASSED on success, TEST_FAILED on failure
  */
-int j9sysinfo_numcpus_test9 (J9PortLibrary* portLibrary)
+int j9sysinfo_numcpus_test8 (J9PortLibrary* portLibrary)
 {
 	PORT_ACCESS_FROM_PORT(portLibrary);
-	const char* testName = "j9sysinfo_numcpus_test9";
+	const char* testName = "j9sysinfo_numcpus_test8";
 	UDATA result = j9sysinfo_get_number_CPUs_by_type(500);
 
 	outputComment(PORTLIB,"\n");
@@ -409,12 +468,14 @@ j9sysinfo_numcpus_runTests(struct J9PortLibrary *portLibrary, UDATA userSpecific
 		}
 	}
 
+	rc |= j9sysinfo_numcpus_test1(portLibrary);
+	rc |= j9sysinfo_numcpus_test2(portLibrary, boundCPUs);
 	rc |= j9sysinfo_numcpus_test3(portLibrary);
-	rc |= j9sysinfo_numcpus_test4(portLibrary, boundCPUs);
+	rc |= j9sysinfo_numcpus_test4(portLibrary);
 	rc |= j9sysinfo_numcpus_test5(portLibrary);
+	rc |= j9sysinfo_numcpus_test6(portLibrary);
 	rc |= j9sysinfo_numcpus_test7(portLibrary);
 	rc |= j9sysinfo_numcpus_test8(portLibrary);
-	rc |= j9sysinfo_numcpus_test9(portLibrary);
 	rc |= j9sysinfo_numcpus_runTime(portLibrary, J9PORT_CPU_PHYSICAL);
 	rc |= j9sysinfo_numcpus_runTime(portLibrary, J9PORT_CPU_ONLINE);
 	rc |= j9sysinfo_numcpus_runTime(portLibrary, J9PORT_CPU_BOUND);

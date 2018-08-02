@@ -293,6 +293,7 @@
 	<export name="Java_com_ibm_virtualization_management_internal_HypervisorMXBeanImpl_getVendorImpl"/>
 	
 	<export name="Java_com_ibm_lang_management_internal_ProcessorMXBeanImpl_getNumberCPUsImpl"/>
+	<export name="Java_com_ibm_lang_management_internal_ProcessorMXBeanImpl_setNumberActiveCPUsImpl"/>
 
 	<export name="Java_sun_reflect_ConstantPool_getSize0" />
 	<export name="Java_sun_reflect_ConstantPool_getClassAt0" />
