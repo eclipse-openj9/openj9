@@ -485,7 +485,7 @@ bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
              persistentInfo->getElapsedTime() < (uint64_t)persistentInfo->getClassLoadingPhaseGracePeriod())
             {
             }
-         else 
+         else
             {
             // Downgrade during CLP when queue grows too large
             if ((persistentInfo->isClassLoadingPhase() && getNumQueuedFirstTimeCompilations() > TR::Options::_qsziThresholdToDowngradeDuringCLP) ||
@@ -495,7 +495,7 @@ bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
                  // Downgrade if compilation queue grows too much during startup
                 (_jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP &&
                  getMethodQueueSize() >= TR::Options::_qszThresholdToDowngradeOptLevelDuringStartup) ||
-                 // Downgrade if AOT and startup, 
+                 // Downgrade if AOT and startup,
                 (TR::Options::getCmdLineOptions()->sharedClassCache() &&
                  _jitConfig->javaVM->phase == J9VM_PHASE_STARTUP &&
                  !TR::Options::getCmdLineOptions()->getOption(TR_DisableDowngradeToColdOnVMPhaseStartup))
@@ -3495,7 +3495,7 @@ TR::CompilationInfoPerThread::processEntries()
           * Memory is hopelessly fragmented: stop all compilations
           */
          compInfo->getPersistentInfo()->setDisableFurtherCompilation(true);
-         if (TR::Options::getVerboseOption(TR_VerboseCompilationThreads) || 
+         if (TR::Options::getVerboseOption(TR_VerboseCompilationThreads) ||
              TR::Options::getVerboseOption(TR_VerbosePerformance) ||
              TR::Options::getVerboseOption(TR_VerboseCompFailure))
             {
@@ -3504,7 +3504,7 @@ TR::CompilationInfoPerThread::processEntries()
          compInfo->purgeMethodQueue(compilationVirtualAddressExhaustion);
          // Must change the state to prevent an infinite loop
          // Change it to COMPTHREAD_SIGNAL_WAIT because the compilation queue is empty
-         setCompilationThreadState(COMPTHREAD_SIGNAL_WAIT); 
+         setCompilationThreadState(COMPTHREAD_SIGNAL_WAIT);
          }
       }
    }
@@ -7505,14 +7505,14 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                // If we were able to get the memory information
                if (physicalLimit != OMRPORT_MEMINFO_NOT_AVAILABLE)
                   {
-                  // If the proposed scratch space limit is greater than the available 
+                  // If the proposed scratch space limit is greater than the available
                   // physical memory, we need to lower the scratch space limit
                   if (proposedScratchMemoryLimit > physicalLimit)
                      {
                      if (incompleteInfo)
                         {
                         // If we weren't able to get all the memory information
-                        // only lower the limit for JSR292 compilations, 
+                        // only lower the limit for JSR292 compilations,
                         // but not beyond the default value for scratch memory
                         if (TR::CompilationInfo::isJSR292(details.getMethod()))
                            {
@@ -7528,7 +7528,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                      }
                   }
                }
-            
+
             // Cap the limit for JIT to 4GB
             size_t proposedCapped = proposedScratchMemoryLimit > UINT_MAX ? UINT_MAX : (size_t)proposedScratchMemoryLimit;
             scratchSegmentProvider.setAllocationLimit(proposedCapped);
@@ -7823,9 +7823,9 @@ TR::CompilationInfoPerThreadBase::compile(
                 );
          bool incomplete;
          uint64_t freePhysicalMemorySizeB = _compInfo.computeAndCacheFreePhysicalMemory(incomplete);
-        
+
          if (freePhysicalMemorySizeB != OMRPORT_MEMINFO_NOT_AVAILABLE)
-            { 
+            {
             TR_VerboseLog::writeLineLocked(
                TR_Vlog_COMPSTART,
                "(%s%s) Compiling %s %s %s j9m=%p t=%llu compThread=%d memLimit=%zu KB freePhysicalMemory=%llu MB",
@@ -7893,6 +7893,13 @@ TR::CompilationInfoPerThreadBase::compile(
          releaseVMAccess(vmThread);
          // GC can go ahead now.
          }
+
+      // Field watch can change from being disabled to enabled when program is running
+      // When the change happens, all the methods on stack are decompiled and those in
+      // the compilation queue are invalidated. Set the option here to guarantee the
+      // mode is correctly detected.
+      if (_jitConfig->inlineFieldWatches)
+         compiler->setOption(TR_EnableFieldWatch);
 
       // Compile the method
       //
@@ -10559,7 +10566,7 @@ TR::CompilationInfo::computeAndCacheFreePhysicalMemory(bool &incompleteInfo, int
          // time to recompute freePhysicalMemory
          bool incomplete;
          uint64_t freeMem = computeFreePhysicalMemory(incomplete);
-         
+
          // Cache the computed value for future reference
          // Synchronization issues can be ignored here
          _cachedIncompleteFreePhysicalMemory = incomplete;
@@ -10608,7 +10615,7 @@ TR::CompilationInfo::computeFreePhysicalLimitAndAbortCompilationIfLow(TR::Compil
       }
    return freePhysicalMemorySizeB;
    }
-    
+
 
 
 //===========================================================

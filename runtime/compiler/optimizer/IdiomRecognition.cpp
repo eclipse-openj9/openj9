@@ -2302,6 +2302,9 @@ TR_CISCNode *
 TR_CISCTransformer::addAllSubNodes(TR_CISCGraph *const graph, TR::Block *const block, TR::TreeTop *const top,
                                    TR::Node *const parent, TR::Node *const node, const int32_t dagId)
    {
+   // TODO: teach idiomRecognition about rdbar opcodes
+   if (node->getOpCode().isReadBar())
+      return 0;
    int32_t i;
    int32_t numChildren = node->getNumChildren();
    TR_ScratchList<TR_CISCNode> childList(trMemory());

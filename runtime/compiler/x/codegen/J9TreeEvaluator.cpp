@@ -1624,8 +1624,9 @@ TR::Register *J9::X86::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(
       usingCompressedPointers = true;
 
       TR::ILOpCodes loadOp = comp->il.opCodeForIndirectLoad(TR::Int32);
+      TR::ILOpCodes loadOpRdbar = comp->il.opCodeForIndirectReadBarrier(TR::Int32);
 
-      while (firstChild->getOpCodeValue() != loadOp)
+      while ((firstChild->getOpCodeValue() != loadOp) && (firstChild->getOpCodeValue() != loadOpRdbar))
          firstChild = firstChild->getFirstChild();
       reference = firstChild->getFirstChild();
       }

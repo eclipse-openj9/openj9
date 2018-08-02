@@ -366,8 +366,8 @@ private:
    //
    bool                              _suppressSpineChecks;
 
-   bool                              _generateWriteBarriers;
-   vcount_t                           _blockAddedVisitCount;
+   bool                              _generateWriteBarriersForGC;
+   vcount_t                          _blockAddedVisitCount;
    bool                              _noLookahead;
    bool                              _thisChanged;
    TR_InlineBlocks                  *_blocksToInline;

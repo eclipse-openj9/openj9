@@ -931,7 +931,6 @@ J9::TransformUtil::transformIndirectLoad(TR::Compilation *comp, TR::Node *node)
                   uintptrj_t baseObjectRef = baseObject->getSymbol()->isStatic() ?
                                              comp->fej9()->getStaticReferenceFieldAtAddress((uintptrj_t)baseObjectRefLocation) :
                                              *baseObjectRefLocation;
-
                   node->getAndDecChild(0);
                   node->setNumChildren(0);
                   switch (loadType)
@@ -1102,6 +1101,9 @@ J9::TransformUtil::transformDirectLoad(TR::Compilation *comp, TR::Node *node)
          if (performTransformation(comp, "O^O transformDirectLoad: turn [%p] %s %s into load const\n", node, node->getOpCode().getName(), symRef->getName(comp->getDebug())))
             {
             TR::VMAccessCriticalSection isConsitble(comp->fej9());
+            for (int i=0; i < node->getNumChildren(); i++)
+               node->getAndDecChild(i);
+            node->setNumChildren(0);
             switch (loadType)
                {
                case TR::Int8:
@@ -1150,6 +1152,9 @@ J9::TransformUtil::transformDirectLoad(TR::Compilation *comp, TR::Node *node)
             default:
                if (performTransformation(comp, "O^O transformDirectLoad: [%p] field is null - change to aconst NULL\n", node))
                   {
+                  for (int i=0; i < node->getNumChildren(); i++)
+                     node->getAndDecChild(i);
+                  node->setNumChildren(0);
                   TR::Node::recreate(node, TR::aconst);
                   node->setAddress(0);
                   node->setIsNull(true);

@@ -50,7 +50,7 @@ TR_J9ByteCodeIlGenerator::TR_J9ByteCodeIlGenerator(
      _symRefTab(symRefTab),
      _classLookaheadSymRefTab(NULL),
      _blockAddedVisitCount(comp->incVisitCount()),
-     _generateWriteBarriers(comp->getOptions()->getGcMode() != TR_WrtbarNone),
+     _generateWriteBarriersForGC(comp->getOptions()->getGcMode() != TR_WrtbarNone),
      _suppressSpineChecks(false),
      _implicitMonitorExits(comp->trMemory()),
      _finalizeCallsBeforeReturns(comp->trMemory()),

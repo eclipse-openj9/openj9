@@ -351,7 +351,7 @@ J9::CodeGenerator::lowerCompressedRefs(
 
       // base object
       address = loadOrStoreNode->getFirstChild();
-      loadOrStoreOp = TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() ? self()->comp()->il.opCodeForIndirectReadBarrier(TR::Int32) :
+      loadOrStoreOp = TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() || loadOrStoreNode->getOpCode().isReadBar() ? self()->comp()->il.opCodeForIndirectReadBarrier(TR::Int32) :
                                                                                    self()->comp()->il.opCodeForIndirectLoad(TR::Int32);
       }
    else if ((loadOrStoreNode->getOpCode().isStoreIndirect() ||
@@ -2758,16 +2758,17 @@ J9::CodeGenerator::compressedReferenceRematerialization()
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(self()->fe());
 
    static bool disableRematforCP = feGetEnv("TR_DisableWrtBarOpt") != NULL;
+   bool generateReadBarrier = comp()->getOption(TR_EnableFieldWatch);
 
-   if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
-      {
-      // We need this restriction because the compressedrefs remat opt
-      // removes decompression/compression sequences from loads/stores where there doesn't exist
-      // a gc point between the load and the store, and the load doesn't need to be dereferenced.
-      // In Guarded Storage, we can't not do a guarded load because the object that is loaded may
-      // not be in the root set, and as a consequence, may get moved.
+   // The compressedrefs remat opt removes decompression/compression sequences from
+   // loads/stores where there doesn't exist a gc point between the load and the store,
+   // and the load doesn't need to be dereferenced.
+   // The opt needs to be disabled for the following cases:
+   // 1. In Guarded Storage, we can't not do a guarded load because the object that is loaded may
+   // not be in the root set, and as a consequence, may get moved.
+   // 2. For read barriers, the vmhelpers are GC points and therefore the object might be moved
+   if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() || generateReadBarrier)
       disableRematforCP = true;
-      }
 
    // no need to rematerialize for lowMemHeap
    if (self()->comp()->useCompressedPointers() &&
