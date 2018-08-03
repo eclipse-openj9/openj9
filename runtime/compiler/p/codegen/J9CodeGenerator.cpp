@@ -180,7 +180,7 @@ J9::Power::CodeGenerator::generateBinaryEncodingPrologue(
       {
       if (comp->getOption(TR_FullSpeedDebug) || comp->getOption(TR_SupportSwitchToInterpreter))
          {
-         self()->generateSwitchToInterpreterPrePrologue(NULL, comp->getStartTree()->getNode());
+         generateSwitchToInterpreterPrePrologue(NULL, comp->getStartTree()->getNode());
          }
       else
          {
