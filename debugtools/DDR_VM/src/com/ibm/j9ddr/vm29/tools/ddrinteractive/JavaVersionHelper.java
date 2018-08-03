@@ -28,7 +28,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
 /**
- * JavaVersionHelper helps check if the JVM version is new enough
+ * JavaVersionHelper helps check if the JVM version is new enough for the modularity DDR commands
  */
 public class JavaVersionHelper 
 {

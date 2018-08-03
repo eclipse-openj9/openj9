@@ -29,13 +29,20 @@ import com.ibm.j9ddr.tools.ddrinteractive.CommandUtils;
 import com.ibm.j9ddr.tools.ddrinteractive.Context;
 import com.ibm.j9ddr.tools.ddrinteractive.DDRInteractiveCommandException;
 import com.ibm.j9ddr.vm29.j9.DataType;
+import com.ibm.j9ddr.vm29.j9.HashTable;
+import com.ibm.j9ddr.vm29.j9.ModuleHashTable;
 import com.ibm.j9ddr.vm29.j9.ObjectModel;
+import com.ibm.j9ddr.vm29.j9.PackageHashTable;
 import com.ibm.j9ddr.vm29.j9.Pool;
 import com.ibm.j9ddr.vm29.j9.SlotIterator;
+import com.ibm.j9ddr.vm29.j9.gc.GCClassLoaderIterator;
+import com.ibm.j9ddr.vm29.pointer.generated.J9ClassLoaderPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9HashTablePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ModulePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9PackagePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9PoolPointer;
+import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.JavaVersionHelper;
@@ -68,28 +75,15 @@ public class DumpModuleExportsCommand extends Command
 		try {
 			J9JavaVMPointer vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
 			if (JavaVersionHelper.ensureJava9AndUp(vm, out)) {
+				GCClassLoaderIterator iterator = GCClassLoaderIterator.from();
 				String targetModuleAddress = args[0];
-				J9PoolPointer pool = vm.modularityPool();
-				Pool<J9ModulePointer> packagePool = Pool.fromJ9Pool(pool, J9ModulePointer.class);
-				SlotIterator<J9ModulePointer> poolIterator = packagePool.iterator();
-				J9ModulePointer ptr = null;
-				J9PackagePointer packagePtr = null;
-				while (poolIterator.hasNext()) {
-					ptr = poolIterator.next();
-					/*
-					 * Since both packages and modules could be in the pool, the
-					 * iterator checks on the region and make sure that it is
-					 * pointing to a package. (For modules, the first field must
-					 * be in heap since it is an object while for j9package it
-					 * is a J9UTF8.)
-					 */
-					if (!ObjectModel.isPointerInHeap(vm, ptr.moduleName())) {
-						packagePtr = J9PackagePointer.cast(ptr);
-						/*
-						 * Iterate through the packages and if the package's
-						 * exported module name matches the target module,
-						 * output its address.
-						 */
+				while (iterator.hasNext()) {
+					J9ClassLoaderPointer classLoaderPointer = iterator.next();
+					HashTable<J9PackagePointer> packageHashTable = PackageHashTable
+							.fromJ9HashTable(classLoaderPointer.packageHashTable());
+					SlotIterator<J9PackagePointer> slotIterator = packageHashTable.iterator();
+					while (slotIterator.hasNext()) {
+						J9PackagePointer packagePtr = slotIterator.next();
 						if (packagePtr.module().getHexAddress().equals(targetModuleAddress)) {
 							String packageName = J9UTF8Helper.stringValue(packagePtr.packageName());
 							String hexAddress = packagePtr.getHexAddress();

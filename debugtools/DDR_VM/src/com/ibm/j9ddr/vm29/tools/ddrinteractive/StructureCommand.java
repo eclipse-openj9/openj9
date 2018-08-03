@@ -61,6 +61,7 @@ import com.ibm.j9ddr.vm29.tools.ddrinteractive.structureformat.extensions.J9Meth
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.structureformat.extensions.J9ModuleStructureFormatter;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.structureformat.extensions.J9ObjectFieldFormatter;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.structureformat.extensions.J9ObjectStructureFormatter;
+import com.ibm.j9ddr.vm29.tools.ddrinteractive.structureformat.extensions.J9PackageStructureFormatter;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.structureformat.extensions.J9ROMMethodStructureFormatter;
 
 /**
@@ -91,6 +92,7 @@ public class StructureCommand extends BaseStructureCommand
 		registerStructureFormatter(new J9MethodStructureFormatter());
 		registerStructureFormatter(new J9ROMMethodStructureFormatter());
 		registerStructureFormatter(new J9ModuleStructureFormatter());
+		registerStructureFormatter(new J9PackageStructureFormatter());
 	}
 
 	private void loadDefaultFormatters() 
