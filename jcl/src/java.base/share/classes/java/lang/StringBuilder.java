@@ -2261,7 +2261,49 @@ public StringBuilder append(CharSequence sequence, int start, int end) {
 	if (sequence == null) {
 		return append(String.valueOf(sequence), start, end);
 	} else if (sequence instanceof String) {
-		return append(((String)sequence).substring(start, end));
+		String sequenceString = (String) sequence;
+		if (start >= 0 && start <= end && end <= sequenceString.lengthInternal()) {
+
+			int currentLength = lengthInternal();
+			int currentCapacity = capacityInternal();
+			int newLength = currentLength + end - start;
+
+			if (String.enableCompression) {
+
+				// Check if the StringBuilder is compressed
+				if (count >= 0 && sequenceString.isCompressed()) {
+					if (newLength > currentCapacity) {
+						ensureCapacityImpl(newLength);
+					}
+					
+					sequenceString.getBytes(start, end, value, currentLength);
+					count = newLength;
+				} else {
+					// Check if the StringBuilder is compressed
+					if (count >= 0) {
+						decompress(newLength);
+						currentCapacity = capacityInternal();
+					}
+					
+					if (newLength > currentCapacity) {
+						ensureCapacityImpl(newLength);
+					}
+					
+					sequenceString.getCharsNoBoundChecks(start, end, value, currentLength);
+					count = newLength | uncompressedBit;
+				}
+			} else {
+				if (newLength > currentCapacity) {
+					ensureCapacityImpl(newLength);
+				}
+				
+				sequenceString.getCharsNoBoundChecks(start, end, value, currentLength);
+				count = newLength;
+			}
+			return this;
+		} else {
+			throw new IndexOutOfBoundsException();
+		}
 	} else if (start >= 0 && end >= 0 && start <= end && end <= sequence.length()) {
 		if (sequence instanceof StringBuffer) {
 			synchronized (sequence) {
