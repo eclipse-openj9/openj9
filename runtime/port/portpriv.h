@@ -242,6 +242,12 @@ extern J9_CFUNC int32_t
 j9sysinfo_get_hw_info(struct J9PortLibrary *portLibrary, uint32_t infoType, char * buf, uint32_t bufLen);
 extern J9_CFUNC int32_t
 j9sysinfo_get_cache_info(struct J9PortLibrary *portLibrary, const J9CacheInfoQuery * query);
+extern J9_CFUNC int32_t
+j9sysinfo_cgroup_subsystem_iterator_init(struct J9PortLibrary *portLibrary, uint64_t subsystem, J9CgroupMetricIteratorState *state);
+extern J9_CFUNC BOOLEAN
+j9sysinfo_cgroup_subsystem_iterator_hasNext(struct J9PortLibrary *portLibrary, J9CgroupMetricIteratorState *state);
+extern J9_CFUNC int32_t
+j9sysinfo_cgroup_subsystem_iterator_next(struct J9PortLibrary *portLibrary, J9CgroupMetricIteratorState *state, J9CgroupMetricElement *cgroupElement);
 extern J9_CFUNC uintptr_t
 j9sysinfo_get_processing_capacity (struct J9PortLibrary *portLibrary);
 extern J9_CFUNC uintptr_t

@@ -314,6 +314,7 @@ private :
 	IDATA       getOwnedObjectMonitors       (J9VMThread* vmThread, J9ObjectMonitorInfo* monitorInfos);
 	void 		writeJavaLangThreadInfo		 (J9VMThread* vmThread);
 	void		writeCPUinfo				 (void);
+	void 		writeCgroupInfo				 (void);
 	void 		writeThreadsWithNativeStacks(void);
 	void 		writeThreadsJavaOnly(void);
 	void        writeThreadTime              (const char * timerName, I_64 nanoTime);
@@ -1335,6 +1336,9 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 
 	/* Write section for entitled CPU information */
 	writeCPUinfo();
+
+	/* Write section for Cgroup information */
+	writeCgroupInfo();
 
 	/* Write the section trailer */
 	_OutputStream.writeCharacters(
@@ -5137,6 +5141,69 @@ JavaCoreDumpWriter::writeCPUinfo(void)
 	_OutputStream.writeInteger(target, "%i\n");
 
 	return;
+}
+
+void
+JavaCoreDumpWriter::writeCgroupInfo(void)
+{
+	OMRPORT_ACCESS_FROM_J9PORT(_PortLibrary);
+	BOOLEAN isCgroupSystemAvailable = omrsysinfo_cgroup_is_system_available();
+	if (isCgroupSystemAvailable) {
+		OMRCgroupEntry *entryhead = omrsysinfo_get_cgroup_entry_list();
+		OMRCgroupEntry *cgEntry = entryhead;
+		OMRCgroupEntry *nextEntry = NULL;
+		int32_t rc = 0;
+		char *tag = (char *)"2CICGRPINFO";
+		BOOLEAN inContainer = FALSE;
+		rc = omrsysinfo_is_running_in_container(&inContainer);
+		if (0 == rc) {
+			_OutputStream.writeCharacters("NULL 	Running in container : ");
+			_OutputStream.writeVPrintf("%s", inContainer ? "TRUE\n" : "FALSE\n");
+		}
+		uint64_t systemsAvailable = omrsysinfo_cgroup_get_enabled_subsystems();
+		_OutputStream.writeCharacters("NULL 	Using Cgroup Limits : ");
+		if (systemsAvailable > 0){
+			_OutputStream.writeCharacters("TRUE\n");
+		} else {
+			_OutputStream.writeCharacters("FALSE\n");
+		}
+		if (NULL != cgEntry) {
+			_OutputStream.writeCharacters("1CICGRPINFO	Cgroup Information \n");
+			PORT_ACCESS_FROM_PORT(_PortLibrary);
+			do {
+				nextEntry = cgEntry->next;
+				_OutputStream.writeCharacters("2CICGRPINFO		subsystem : ");
+				_OutputStream.writeCharacters(cgEntry->subsystem);
+				_OutputStream.writeCharacters("\n");
+				_OutputStream.writeCharacters("2CICGRPINFO		cgroup name : ");
+				_OutputStream.writeCharacters(cgEntry->cgroup);
+				_OutputStream.writeCharacters("\n");
+				J9CgroupMetricElement cgroupElement;
+				J9CgroupMetricIteratorState cgroupState;
+				rc = j9sysinfo_cgroup_subsystem_iterator_init(cgEntry->flag, &cgroupState);
+				if (0 == rc) {
+					if (0 != cgroupState.numElements) {
+						/* print the data in columns */
+						while (j9sysinfo_cgroup_subsystem_iterator_hasNext(&cgroupState)) {
+							rc = j9sysinfo_cgroup_subsystem_iterator_next(&cgroupState, &cgroupElement);
+							_OutputStream.writeCharacters(tag);
+							_OutputStream.writeCharacters("			");
+							_OutputStream.writeCharacters(cgroupElement.key);
+							_OutputStream.writeCharacters(" : ");
+							_OutputStream.writeCharacters(cgroupElement.value);
+							_OutputStream.writeCharacters(" ");
+							_OutputStream.writeCharacters(cgroupElement.units);
+							_OutputStream.writeCharacters("\n");
+						}	
+					}
+				}
+				cgEntry = nextEntry;
+			} while (cgEntry != entryhead);
+		} else {
+			_OutputStream.writeCharacters("NULL 	Cgroup Information \n");
+		}
+	}
+	
 }
 
 /**************************************************************************************************/

@@ -50,6 +50,9 @@ static J9PortLibrary MasterPortLibraryTable = {
 	j9sysinfo_processor_has_feature, /* sysinfo_processor_has_feature */
 	j9sysinfo_get_hw_info, /* sysinfo_get_hw_info */
 	j9sysinfo_get_cache_info, /* sysinfo_get_cache_info */
+	j9sysinfo_cgroup_subsystem_iterator_init, /* sysinfo_cgroup_subsystem_iterator_init */
+	j9sysinfo_cgroup_subsystem_iterator_hasNext, /* sysinfo_cgroup_subsystem_iterator_hasNext */
+	j9sysinfo_cgroup_subsystem_iterator_next, /* sysinfo_cgroup_subsystem_iterator_next */
 	j9sock_startup, /* sock_startup */
 	j9sock_shutdown, /* sock_shutdown */
 	j9sock_htons, /* sock_htons */
