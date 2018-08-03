@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -389,4 +389,22 @@ j9sysinfo_get_cache_info(struct J9PortLibrary *portLibrary, const J9CacheInfoQue
 	}
 	Trc_PRT_sysinfo_get_cache_info_exit(result);
 	return result;
+}
+
+int32_t
+j9sysinfo_cgroup_subsystem_iterator_init(struct J9PortLibrary *portLibrary, uint64_t subsystem, struct J9CgroupMetricIteratorState *state)
+{
+	return J9PORT_ERROR_SYSINFO_CGROUP_SUBSYSTEM_UNAVAILABLE;
+}
+
+BOOLEAN
+j9sysinfo_cgroup_subsystem_iterator_hasNext(struct J9PortLibrary *portLibrary, const struct J9CgroupMetricIteratorState *state)
+{
+	return FALSE;
+}
+
+int32_t
+j9sysinfo_cgroup_subsystem_iterator_next(struct J9PortLibrary *portLibrary, struct J9CgroupMetricIteratorState *state, struct J9CgroupMetricElement *metricElement, BOOLEAN *printUnits)
+{
+	return J9PORT_ERROR_SYSINFO_CGROUP_SUBSYSTEM_UNAVAILABLE;
 }

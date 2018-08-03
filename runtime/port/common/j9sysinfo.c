@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -193,4 +193,43 @@ j9sysinfo_get_hw_info(struct J9PortLibrary *portLibrary, uint32_t infoType,
 IDATA
 j9sysinfo_get_cache_info(struct J9PortLibrary *portLibrary, struct const J9CacheInfoQuery * query) {
 	return J9PORT_ERROR_SYSINFO_NOT_SUPPORTED;
+}
+
+/**
+ * Initiates the J9CgroupMetricIteratorState attributes depending on subsystem
+ * @param[in] portLibrary The Port Library instance
+ * @param[in] subsystem It represents which Cgroup Subsystem state should be initiated
+ * @param[in] state Instance of the struct J9CgroupMetricIteratorState which gets initiated basing on the subsystem
+ * @return 0 on success error code on failure
+ */
+int32_t
+j9sysinfo_cgroup_subsystem_iterator_init(struct J9PortLibrary *portLibrary, uint64_t subsystem, struct J9CgroupMetricIteratorState *state)
+{
+	return J9PORT_ERROR_SYSINFO_CGROUP_SUBSYSTEM_UNAVAILABLE;
+}
+
+/**
+ * Checks if there is any attribute left to be read in the list of subsystem attributes
+ * @param[in] portLibrary The Port Library instance
+ * @param[in] state Instance of the struct J9CgroupMetricIteratorState which is used to check if we reached end of list
+ * @return TRUE if there are any attributes left and FALSE if we reached end of list
+ */
+BOOLEAN
+j9sysinfo_cgroup_subsystem_iterator_hasNext(struct J9PortLibrary *portLibrary, const struct J9CgroupMetricIteratorState *state)
+{
+	return FALSE;
+}
+
+/**
+ * Reads the Cgroup file and loads the key, value and units to the structure J9CgroupMetricElement and updates the state count
+ * @param[in] portLibrary The Port Library instance
+ * @param[in] state Instance of the struct J9CgroupMetricIteratorState which is used to update the count
+ * @param[in] metricElement Instance of the struct J9CgroupMetricElement which holds the key, value and units of the read Cgroup subsystem attribute
+ * @param[in] printUnits updated to TRUE if the attribute is set and can display units, FALSE otherwise
+ * @return 0 on success and error code on failure
+ */
+int32_t
+j9sysinfo_cgroup_subsystem_iterator_next(struct J9PortLibrary *portLibrary, struct J9CgroupMetricIteratorState *state, struct J9CgroupMetricElement *metricElement, BOOLEAN *printUnits)
+{
+	return J9PORT_ERROR_SYSINFO_CGROUP_SUBSYSTEM_UNAVAILABLE;
 }
