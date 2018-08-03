@@ -22,88 +22,76 @@
 package com.ibm.j9ddr.vm29.tools.ddrinteractive.commands;
 
 import java.io.PrintStream;
+import java.util.Iterator;
 
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.tools.ddrinteractive.Command;
+import com.ibm.j9ddr.tools.ddrinteractive.CommandUtils;
 import com.ibm.j9ddr.tools.ddrinteractive.Context;
 import com.ibm.j9ddr.tools.ddrinteractive.DDRInteractiveCommandException;
 import com.ibm.j9ddr.util.PatternString;
 import com.ibm.j9ddr.vm29.j9.DataType;
-import com.ibm.j9ddr.vm29.j9.HashTable;
-import com.ibm.j9ddr.vm29.j9.ModuleHashTable;
-import com.ibm.j9ddr.vm29.j9.SlotIterator;
-import com.ibm.j9ddr.vm29.j9.gc.GCClassLoaderIterator;
+import com.ibm.j9ddr.vm29.j9.walkers.ClassIterator;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassLoaderPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ModulePointer;
+import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.JavaVersionHelper;
 
 /**
- * FindModuleByName command find the modules corresponding to its module name
+ * DumpModuleExports command dumps all modules that the package is exported to
  * 
  * Example:
- * 			!findmodulebyname java.base
+ *    !dumpallclassesinmodule 0x000001305F471528
  * Example output: 
- * 			Searching for modules named 'java.base' in VM=13053677e00
- *			java.base			!j9module 0x00000130550C7E88
- *			Found 1 module(s) named java.base
+ *    com/ibm/jvm/Trace    !j9class 0x000000000015A800
+ *    com/ibm/jvm/TracePermission    !j9class 0x000000000015AA00
+ *    Found 2 loaded classes in !j9module 0x000001305F471528
  */
-public class FindModuleByNameCommand extends Command
+public class DumpAllClassesInModuleCommand extends Command
 {
-	public FindModuleByNameCommand()
-	{
-		addCommand("findmodulebyname", "<moduleName>", "find the modules corresponding to a name pattern (e.g. 'java.*')");
-	}
 
-	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException
+	public DumpAllClassesInModuleCommand()
 	{
-		if (args.length == 0) {
-			printUsage(out);
+		addCommand("dumpallclassesinmodule", "<moduleAddress>", "dump all loaded classes in the target module");
+	}
+	
+	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException 
+	{
+		if (args.length != 1) {
+			CommandUtils.dbgPrint(out, "Usage: !dumpallclassesinmodule <moduleAddress>\n");
 			return;
 		}
 		try {
 			J9JavaVMPointer vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
 			if (JavaVersionHelper.ensureJava9AndUp(vm, out)) {
-				GCClassLoaderIterator iterator = GCClassLoaderIterator.from();
+				String targetModuleAddress = args[0];
+				J9ModulePointer modulePtr = J9ModulePointer.cast(Long.decode(targetModuleAddress));
+				J9ClassLoaderPointer classLoaderPtr = modulePtr.classLoader();
+				Iterator<J9ClassPointer> iterator = ClassIterator.fromJ9Classloader(classLoaderPtr);
+				J9ClassPointer classPtr = null;
 
 				int hitCount = 0;
-				String searchModuleName = args[0];
-				PatternString pattern = new PatternString(searchModuleName);
-
-				out.printf("Searching for modules named '%s' in VM=%s%n", searchModuleName,
-						Long.toHexString(vm.getAddress()));
+				PatternString pattern = new PatternString(targetModuleAddress);
 
 				while (iterator.hasNext()) {
-					J9ClassLoaderPointer classLoaderPointer = iterator.next();
-					HashTable<J9ModulePointer> moduleHashTable = ModuleHashTable
-							.fromJ9HashTable(classLoaderPointer.moduleHashTable());
-					SlotIterator<J9ModulePointer> slotIterator = moduleHashTable.iterator();
-					while (slotIterator.hasNext()) {
-						J9ModulePointer modulePtr = slotIterator.next();
-						String moduleName = J9ObjectHelper.stringValue(modulePtr.moduleName());
-						if (pattern.isMatch(moduleName)) {
-							hitCount++;
-							String hexAddress = modulePtr.getHexAddress();
-							out.printf("%-30s !j9module %s%n", moduleName, hexAddress);
-						}
+					classPtr = iterator.next();
+					String moduleAddr = classPtr.module().getHexAddress();
+					if (pattern.isMatch(moduleAddr)) {
+						String className = J9ClassHelper.getName(classPtr);
+						String classAddress = classPtr.getHexAddress();
+						hitCount++;
+						out.printf("%-30s !j9class %s%n", className, classAddress);
 					}
 				}
-				out.printf("Found %d module(s) named '%s'%n", hitCount, searchModuleName);
+
+				out.printf("Found %d loaded classes in !j9module %s\n", hitCount, targetModuleAddress);
 			}
 		} catch (CorruptDataException e) {
 			throw new DDRInteractiveCommandException(e);
 		}
-	}
-
-	/**
-	 * Prints the usage for the findmodulebyname command.
-	 *
-	 * @param out The PrintStream the usage statement prints to
-	 */
-	private void printUsage(PrintStream out) 
-	{
-		out.println("findmodulebyname <moduleNamePattern> - find the modules corresponding to a name pattern (e.g. 'java.*')");
 	}
 }
