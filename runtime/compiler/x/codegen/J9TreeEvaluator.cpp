@@ -4715,7 +4715,7 @@ inline void generateInlinedCheckCastOrInstanceOfForClass(TR::Node* node, TR_Opaq
    generateLoadJ9Class(node, j9class, j9class, cg);
 
    // Equality test
-   if (!fej9->isAbstractClass(clazz))
+   if (!fej9->isAbstractClass(clazz) || node->getOpCodeValue() == TR::icall/*TR_checkAssignable*/)
       {
       if (use64BitClasses)
          {
