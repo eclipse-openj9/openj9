@@ -9550,7 +9550,8 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
          // TODO:JSR292: Handle compile failures gracefully
          if (entry && entry->_stream)
             {
-            entry->_stream->finishCompilation(compilationFailure);
+            int8_t compErrCode = entry->_compInfoPT->_methodBeingCompiled->_compErrCode;
+            entry->_stream->finishCompilation(compErrCode);
             }
          }
       return startPC;
@@ -9980,7 +9981,8 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                  fprintf(stderr, "\n=== Failed to compile %s  ===\n", comp->signature());
                  TR::Compiler->debug.breakPoint();
             }
-         entry->_stream->finishCompilation(compilationFailure);
+         int8_t compErrCode = entry->_compInfoPT->_methodBeingCompiled->_compErrCode;
+         entry->_stream->finishCompilation(compErrCode);
          }
       }
    else
