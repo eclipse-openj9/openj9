@@ -1,6 +1,8 @@
 /*[INCLUDE-IF Sidecar16]*/
 package com.ibm.tools.attach.attacher;
 
+import java.io.ByteArrayInputStream;
+
 /*******************************************************************************
  * Copyright (c) 2009, 2018 IBM Corp. and others
  *
@@ -25,7 +27,9 @@ package com.ibm.tools.attach.attacher;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.OutputStream;
+import java.lang.management.ThreadInfo;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
@@ -45,6 +49,10 @@ import com.ibm.tools.attach.target.IPC;
 import com.ibm.tools.attach.target.Reply;
 import com.ibm.tools.attach.target.Response;
 import com.ibm.tools.attach.target.TargetDirectory;
+import com.ibm.tools.attach.target.diagnostics.data.ClassInfoResponse;
+import com.ibm.tools.attach.target.diagnostics.data.CompilationInfoResponse;
+import com.ibm.tools.attach.target.diagnostics.data.GCInfoResponse;
+import com.ibm.tools.attach.target.diagnostics.data.ThreadInfoResponse;
 import com.sun.tools.attach.AttachOperationFailedException;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.AgentInitializationException;
@@ -542,6 +550,180 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 		}
 		return result;
 
+	}
+
+	/**
+	 * @return information about jit-compilation in vm
+	 * @throws IOException in case of any io error
+	 * @throws ClassNotFoundException in case of deserialization error
+	 */
+	public CompilationInfoResponse getCompilationInfo() throws IOException, ClassNotFoundException {
+		if (!targetAttached) {
+			/*[MSG "K0544", "Target not attached"]*/
+			throw new IOException(getString("K0544")); //$NON-NLS-1$
+		}
+
+		AttachmentConnection.streamSend(commandStream, Command.GET_COMPILATIONINFO);
+
+		String bytes = AttachmentConnection.streamReceiveString(responseStream);
+		AttachmentConnection.streamSend(commandStream, Response.ACK); // sends ACK
+
+		byte data[] = AttachmentConnection.streamReceiveRawBytes(responseStream, Integer.parseInt(bytes));
+		
+		ByteArrayInputStream bis = new ByteArrayInputStream(data);
+		ObjectInputStream ois = new ObjectInputStream(bis);
+		CompilationInfoResponse result = (CompilationInfoResponse) ois.readObject();
+		return result;
+	}
+	
+	/**
+	 * @return information about amount of loaded and unloaded classes 
+	 * @throws IOException in case of any io error
+	 * @throws ClassNotFoundException in case of deserialization error
+	 */
+	public ClassInfoResponse getClassInfo() throws IOException, ClassNotFoundException {
+		if (!targetAttached) {
+			/*[MSG "K0544", "Target not attached"]*/
+			throw new IOException(getString("K0544")); //$NON-NLS-1$
+		}
+		
+		AttachmentConnection.streamSend(commandStream, Command.GET_CLASSESINFO);
+
+		String bytes = AttachmentConnection.streamReceiveString(responseStream);
+		AttachmentConnection.streamSend(commandStream, Response.ACK); // sends ACK
+
+		byte data[] = AttachmentConnection.streamReceiveRawBytes(responseStream, Integer.parseInt(bytes));
+		
+		ByteArrayInputStream bis = new ByteArrayInputStream(data);
+		ObjectInputStream ois = new ObjectInputStream(bis);
+		ClassInfoResponse result = (ClassInfoResponse) ois.readObject();
+		return result;
+	}
+
+	/**
+	 * @return information about memory usage and GC activity
+	 * @throws IOException in case of any io error
+	 * @throws ClassNotFoundException in case of deserialization error
+	 */
+	public GCInfoResponse getGCInfo() throws IOException, ClassNotFoundException {
+		if (!targetAttached) {
+			/*[MSG "K0544", "Target not attached"]*/
+			throw new IOException(getString("K0544")); //$NON-NLS-1$
+		}
+		
+		AttachmentConnection.streamSend(commandStream, Command.GET_GCINFO);
+
+		String bytes = AttachmentConnection.streamReceiveString(responseStream);
+		AttachmentConnection.streamSend(commandStream, Response.ACK); // sends ACK
+		
+		byte data[] = AttachmentConnection.streamReceiveRawBytes(responseStream, Integer.parseInt(bytes));
+		
+		ByteArrayInputStream bis = new ByteArrayInputStream(data);
+		ObjectInputStream ois = new ObjectInputStream(bis);
+		GCInfoResponse result = (GCInfoResponse) ois.readObject();
+		return result;
+	}
+
+	/**
+	 * Get current thread dump
+	 * @param lockedMonitors include information about locked monitors
+	 * @param lockedSynchronizers include information about locked synchronizers 
+	 * @return thread dump
+	 * @throws IOException in case of any io error
+	 * @throws ClassNotFoundException in case of deserialization error
+	 */
+	public ThreadInfoResponse[] getThreadDump(boolean lockedMonitors, boolean lockedSynchronizers) throws IOException, ClassNotFoundException {
+		if (!targetAttached) {
+			/*[MSG "K0544", "Target not attached"]*/
+			throw new IOException(getString("K0544")); //$NON-NLS-1$
+		}
+		AttachmentConnection.streamSend(commandStream, Command.GET_THREADDUMP);
+		AttachmentConnection.streamReceiveString(responseStream);  // receives ACK
+		AttachmentConnection.streamSend(commandStream, String.valueOf(lockedMonitors));
+		AttachmentConnection.streamReceiveString(responseStream);  // receives ACK		
+		AttachmentConnection.streamSend(commandStream, String.valueOf(lockedSynchronizers));
+		
+		String bytes = AttachmentConnection.streamReceiveString(responseStream);
+		AttachmentConnection.streamSend(commandStream, Response.ACK); // sends ACK
+
+		byte data[] = AttachmentConnection.streamReceiveRawBytes(responseStream, Integer.parseInt(bytes));
+		
+		ByteArrayInputStream bis = new ByteArrayInputStream(data);
+		ObjectInputStream ois = new ObjectInputStream(bis);
+		ThreadInfoResponse infos[] = (ThreadInfoResponse[]) ois.readObject();
+		return infos;
+	}
+	
+	/**
+	 * Trigger OpenJ9 to make a javadump
+	 * @param filename file to store information. if null or empty filename will be generated
+	 * @return filename that contains javadump
+	 * @throws IOException in case of any io error
+	 */
+	public String triggerJavaDump(String filename) throws IOException {
+		if (!targetAttached) {
+			/*[MSG "K0544", "Target not attached"]*/
+			throw new IOException(getString("K0544")); //$NON-NLS-1$
+		}
+		AttachmentConnection.streamSend(commandStream, Command.TRIGGER_JAVADUMP);
+		AttachmentConnection.streamReceiveString(responseStream);  // receives ACK
+		AttachmentConnection.streamSend(commandStream, filename);
+		String result = AttachmentConnection.streamReceiveString(responseStream);
+		return result;
+	}
+	
+	/**
+	 * Trigger OpenJ9 to make a systemdump
+	 * @param filename file to store information. if null or empty filename will be generated
+	 * @return filename that contains systemdump
+	 * @throws IOException in case of any io error
+	 */
+	public String triggerSystemDump(String filename) throws IOException {
+		if (!targetAttached) {
+			/*[MSG "K0544", "Target not attached"]*/
+			throw new IOException(getString("K0544")); //$NON-NLS-1$
+		}
+		AttachmentConnection.streamSend(commandStream, Command.TRIGGER_SYSTEMDUMP);
+		AttachmentConnection.streamReceiveString(responseStream);  // receives ACK
+		AttachmentConnection.streamSend(commandStream, filename);
+		String result = AttachmentConnection.streamReceiveString(responseStream);
+		return result;
+	}
+	
+	/**
+	 * Trigger OpenJ9 to make a heapdump
+	 * @param filename file to store information. if null or empty filename will be generated
+	 * @return filename that contains heapdump
+	 * @throws IOException in case of any io error
+	 */
+	public String triggerHeapDump(String filename) throws IOException {
+		if (!targetAttached) {
+			/*[MSG "K0544", "Target not attached"]*/
+			throw new IOException(getString("K0544")); //$NON-NLS-1$
+		}
+		AttachmentConnection.streamSend(commandStream, Command.TRIGGER_HEAPDUMP);
+		AttachmentConnection.streamReceiveString(responseStream);  // receives ACK
+		AttachmentConnection.streamSend(commandStream, filename);
+		String result = AttachmentConnection.streamReceiveString(responseStream);
+		return result;
+	}
+	
+	/**
+	 * Trigger OpenJ9 to make a snapdump
+	 * @param filename file to store information. if null or empty filename will be generated
+	 * @return filename that contains snapdump
+	 * @throws IOException in case of any io error
+	 */
+	public String triggerSnapDump(String filename) throws IOException {
+		if (!targetAttached) {
+			/*[MSG "K0544", "Target not attached"]*/
+			throw new IOException(getString("K0544")); //$NON-NLS-1$
+		}
+		AttachmentConnection.streamSend(commandStream, Command.TRIGGER_SNAPDUMP);
+		AttachmentConnection.streamReceiveString(responseStream);  // receives ACK
+		AttachmentConnection.streamSend(commandStream, filename);
+		String result = AttachmentConnection.streamReceiveString(responseStream);
+		return result;
 	}
 
 	/**

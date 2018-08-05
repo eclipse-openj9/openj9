@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 
 /**
  * 
@@ -79,6 +80,31 @@ public final class AttachmentConnection {
 		}
 		return msg.toByteArray();
 	}
+	
+	/**
+	 * Read bytes from stream
+	 * @param channel input stream
+	 * @param amount number of bytes to receive
+	 * @return array of bytes, that were read from input stream. size of array might be smaller than expected
+	 * @throws IOException if file closed before data received
+	 */
+	public static byte[] streamReceiveRawBytes(InputStream channel, int amount) throws IOException {
+		byte data[] = new byte[amount];
+		int readed = channel.read(data, 0, data.length);
+		while(data.length>readed) {
+			int count = channel.read(data, readed, data.length-readed);
+			if(count < 0)
+			{
+				break;
+			}
+			
+			readed += count;
+		}
+		
+		byte result[] = new byte[readed];
+		System.arraycopy(data, 0, result, 0, readed);
+		return result;
+	}
 
 	/**
 	 * Read unlimited-length message until null byte or EOF found. Use this only if you trust the sender.
@@ -129,7 +155,7 @@ public final class AttachmentConnection {
 	public static String streamReceiveString(InputStream channel) throws IOException {
 		return streamReceiveString(channel, 0);
 	}
-
+	
 	/**
 	 * Convert a byte buffer to a string with the preferred encoding
 	 * @param msgBuff raw bytes

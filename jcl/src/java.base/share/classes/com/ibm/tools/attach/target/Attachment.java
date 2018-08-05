@@ -23,10 +23,13 @@
 package com.ibm.tools.attach.target;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.lang.management.ThreadInfo;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
@@ -35,6 +38,16 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Objects;
 import java.util.Properties;
+
+import com.ibm.tools.attach.target.diagnostics.TriggerJavaDumpCommand;
+import com.ibm.tools.attach.target.diagnostics.TriggerSnapDumpCommand;
+import com.ibm.tools.attach.target.diagnostics.TriggerSystemDumpCommand;
+import com.ibm.tools.attach.target.diagnostics.GetClassesInfoCommand;
+import com.ibm.tools.attach.target.diagnostics.GetCompilerInfoCommand;
+import com.ibm.tools.attach.target.diagnostics.GetGCInfoCommand;
+import com.ibm.tools.attach.target.diagnostics.GetThreadDumpCommand;
+import com.ibm.tools.attach.target.diagnostics.TriggerHeapDumpCommand;
+
 /*[IF Sidecar19-SE]*/
 import jdk.internal.vm.VMSupport;
 /*[ELSE] Sidecar19-SE
@@ -198,6 +211,22 @@ final class Attachment extends Thread implements Response {
 					AttachmentConnection.streamSend(respStream, Response.ERROR
 							+ " " + attachError); //$NON-NLS-1$
 				}
+			} else if (cmd.startsWith(Command.GET_COMPILATIONINFO)) {
+				new GetCompilerInfoCommand().execute(cmdStream, respStream);
+			} else if (cmd.startsWith(Command.GET_GCINFO)) {
+				new GetGCInfoCommand().execute(cmdStream, respStream);
+			} else if (cmd.startsWith(Command.GET_CLASSESINFO)) {
+				new GetClassesInfoCommand().execute(cmdStream, respStream);
+			} else if (cmd.startsWith(Command.GET_THREADDUMP)) {
+				new GetThreadDumpCommand().execute(cmdStream, respStream);
+			} else if (cmd.startsWith(Command.TRIGGER_JAVADUMP)) {
+				new TriggerJavaDumpCommand().execute(cmdStream, respStream);
+			} else if (cmd.startsWith(Command.TRIGGER_SYSTEMDUMP)) {
+				new TriggerSystemDumpCommand().execute(cmdStream, respStream);
+			} else if (cmd.startsWith(Command.TRIGGER_HEAPDUMP)) {
+				new TriggerHeapDumpCommand().execute(cmdStream, respStream);
+			} else if (cmd.startsWith(Command.TRIGGER_SNAPDUMP)) {
+				new TriggerSnapDumpCommand().execute(cmdStream, respStream);
 			} else if (cmd.startsWith(Command.GET_SYSTEM_PROPERTIES)) {
 				replyWithProperties(com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties());
 			} else if (cmd.startsWith(Command.GET_AGENT_PROPERTIES)) {
