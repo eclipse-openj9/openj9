@@ -160,8 +160,7 @@
 	-config $(Q)$(TEST_RESROOT)$(D)jvmtitests_extended.xml$(Q) \
 	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JAVA_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
-		<!-- temporarily disable this test on win until the issue is fixed: https://github.com/eclipse/openj9/issues/2129 -->
-		<platformRequirements>^arch.390,^os.win</platformRequirements>
+		<platformRequirements>^arch.390</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
