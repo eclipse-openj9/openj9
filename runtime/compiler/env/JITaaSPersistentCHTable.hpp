@@ -26,8 +26,8 @@ public:
    void initializeIfNeeded(TR::Compilation *comp);
    void doUpdate(TR::Compilation *comp);
 
-   virtual TR_PersistentClassInfo * findClassInfo(TR_OpaqueClassBlock * classId);
-   virtual TR_PersistentClassInfo * findClassInfoAfterLocking(TR_OpaqueClassBlock * classId, TR::Compilation *, bool returnClassInfoForAOT = false);
+   virtual TR_PersistentClassInfo * findClassInfo(TR_OpaqueClassBlock * classId) override;
+   virtual TR_PersistentClassInfo * findClassInfoAfterLocking(TR_OpaqueClassBlock * classId, TR::Compilation *, bool returnClassInfoForAOT = false) override;
 
 #ifdef COLLECT_CHTABLE_STATS
    // Statistical counters
@@ -55,16 +55,16 @@ public:
 
    std::pair<std::string, std::string> serializeUpdates();
 
-   virtual TR_PersistentClassInfo * findClassInfo(TR_OpaqueClassBlock * classId);
-   virtual TR_PersistentClassInfo * findClassInfoAfterLocking(TR_OpaqueClassBlock * classId, TR::Compilation *, bool returnClassInfoForAOT = false);
+   virtual TR_PersistentClassInfo * findClassInfo(TR_OpaqueClassBlock * classId) override;
+   virtual TR_PersistentClassInfo * findClassInfoAfterLocking(TR_OpaqueClassBlock * classId, TR::Compilation *, bool returnClassInfoForAOT = false) override;
 
-   virtual TR_PersistentClassInfo *classGotLoaded(TR_FrontEnd *, TR_OpaqueClassBlock *classId);
-   virtual bool classGotInitialized(TR_FrontEnd *fe, TR_PersistentMemory *persistentMemory, TR_OpaqueClassBlock *classId, TR_PersistentClassInfo *clazz);
-   virtual void classGotRedefined(TR_FrontEnd *vm, TR_OpaqueClassBlock *oldClassId, TR_OpaqueClassBlock *newClassId);
-   virtual void classGotUnloaded(TR_FrontEnd *fe, TR_OpaqueClassBlock *classId);
-   virtual void classGotUnloadedPost(TR_FrontEnd *fe, TR_OpaqueClassBlock *classId);
-   virtual void removeClass(TR_FrontEnd *, TR_OpaqueClassBlock *classId, TR_PersistentClassInfo *info, bool removeInfo);
-   virtual bool classGotExtended(TR_FrontEnd *vm, TR_PersistentMemory *, TR_OpaqueClassBlock *superClassId, TR_OpaqueClassBlock *subClassId);
+   virtual TR_PersistentClassInfo *classGotLoaded(TR_FrontEnd *, TR_OpaqueClassBlock *classId) override;
+   virtual bool classGotInitialized(TR_FrontEnd *fe, TR_PersistentMemory *persistentMemory, TR_OpaqueClassBlock *classId, TR_PersistentClassInfo *clazz) override;
+   virtual void classGotRedefined(TR_FrontEnd *vm, TR_OpaqueClassBlock *oldClassId, TR_OpaqueClassBlock *newClassId) override;
+   virtual void classGotUnloaded(TR_FrontEnd *fe, TR_OpaqueClassBlock *classId) override;
+   virtual void classGotUnloadedPost(TR_FrontEnd *fe, TR_OpaqueClassBlock *classId) override;
+   virtual void removeClass(TR_FrontEnd *, TR_OpaqueClassBlock *classId, TR_PersistentClassInfo *info, bool removeInfo) override;
+   virtual bool classGotExtended(TR_FrontEnd *vm, TR_PersistentMemory *, TR_OpaqueClassBlock *superClassId, TR_OpaqueClassBlock *subClassId) override;
 
   
 #ifdef COLLECT_CHTABLE_STATS
