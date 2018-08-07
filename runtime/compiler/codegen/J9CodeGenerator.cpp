@@ -3030,7 +3030,7 @@ J9::CodeGenerator::compressedReferenceRematerialization()
       if (self()->comp()->getOption(TR_TraceCG))
          self()->comp()->dumpMethodTrees("Trees after this remat phase", self()->comp()->getMethodSymbol());
 
-      if (self()->shouldYankCompressedRefs())
+      if (shouldYankCompressedRefs())
          {
          visitCount = self()->comp()->incVisitCount();
          vcount_t secondVisitCount = self()->comp()->incVisitCount();
