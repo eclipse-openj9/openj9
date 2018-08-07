@@ -507,6 +507,7 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_VMThread_entryLocalStorage", offsetof(J9VMThread, entryLocalStorage)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_VMThread_stackWalkState", offsetof(J9VMThread, stackWalkState)) |
 #if defined(OMR_GC_CONCURRENT_SCAVENGER) && defined(J9VM_ARCH_S390)
+			writeConstant(OMRPORTLIB, fd, "J9TR_VMThread_gsParameters_GSECI", offsetof(J9VMThread, gsParameters) + 2) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_VMThread_gsParameters_returnAddr", offsetof(J9VMThread, gsParameters.returnAddr)) |
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
