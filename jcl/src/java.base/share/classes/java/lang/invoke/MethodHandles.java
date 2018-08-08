@@ -351,7 +351,7 @@ public class MethodHandles {
 		}
 		
 		/*[IF Sidecar19-SE]*/
-		void checkAccess(VarHandle handle, boolean reflectiveAccess) throws IllegalAccessException {
+		void checkAccess(VarHandle handle, boolean skipAccessCheckPara) throws IllegalAccessException {
 			if (INTERNAL_PRIVILEGED == accessMode) {
 				// Full access for use by MH implementation.
 				return;
@@ -361,7 +361,7 @@ public class MethodHandles {
 				throw new IllegalAccessException(this.toString());
 			}
 			
-			checkAccess(handle.getDefiningClass(), handle.getFieldName(), handle.getModifiers(), null, reflectiveAccess);
+			checkAccess(handle.getDefiningClass(), handle.getFieldName(), handle.getModifiers(), null, skipAccessCheckPara);
 		}
 		
 		void checkAccess(Class<?> clazz) throws IllegalAccessException {
@@ -537,8 +537,8 @@ public class MethodHandles {
 				}
 			}
 			
-			/*[MSG "K0587", "'{0}' no access to: '{1}'"]*/
-			throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K0587", accessClass.getName(), targetClass.getName()));  //$NON-NLS-1$
+			/*[MSG "K0675", "Class '{0}' no access to: class '{1}'"]*/
+			throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K0675", accessClass.getName(), targetClass.getName()));  //$NON-NLS-1$
 		}
 		
 		private void checkSpecialAccess(Class<?> callerClass) throws IllegalAccessException {
@@ -726,6 +726,19 @@ public class MethodHandles {
 
 		/*[IF Sidecar19-SE]*/
 		/**
+		 * Get module name for exception messages.
+		 * Returns the string representation of this module in case it is a unnamed module.
+		 * @param module target module
+		 * @return A String of module name or the string representation of a unnamed module
+		 */
+		private static String getModuleName(Module module) {
+			String moduleName = module.getName();
+			if (moduleName == null) {
+				moduleName = module.toString();
+			}
+			return moduleName;
+		}
+		/**
 		 * Check if targetClass is in a package visible from the accessModule
 		 * @param accessMode access mode of the lookup object
 		 * @param accessModule module of the referring class
@@ -740,16 +753,20 @@ public class MethodHandles {
 				if ((UNCONDITIONAL & accessMode) == UNCONDITIONAL) {
 					/* publicLookup objects can see all unconditionally exported packages. */
 					if (!targetModule.isExported(targetClassPackageName)) {
-						/*[MSG "K0587", "'{0}' no access to: '{1}'"]*/
-						throw new IllegalAccessException(Msg.getString("K0587", accessModule.getName(), targetClassPackageName)); //$NON-NLS-1$
+						/*[MSG "K0676", "Module '{0}' no access to: package '{1}' which is not exported by module '{2}'"]*/
+						throw new IllegalAccessException(Msg.getString("K0587", getModuleName(accessModule), targetClassPackageName, getModuleName(targetModule))); //$NON-NLS-1$
 					}
 				} else if (!(
-						Objects.equals(accessModule, targetModule)
-						|| (targetModule.isExported(targetClassPackageName, accessModule) && accessModule.canRead(targetModule)))
-						) {
-					/*[MSG "K0587", "'{0}' no access to: '{1}'"]*/
-					String message = Msg.getString("K0587", accessModule.getName(), targetClassPackageName); //$NON-NLS-1$
-					throw new IllegalAccessException(message);
+					Objects.equals(accessModule, targetModule)
+					|| (targetModule.isExported(targetClassPackageName, accessModule) && accessModule.canRead(targetModule)))
+				) {
+					if (!targetModule.isExported(targetClassPackageName, accessModule)) {
+						/*[MSG "K0677", "Module '{0}' no access to: package '{1}' which is not exported by module '{2}' to module '{0}'"]*/
+						throw new IllegalAccessException(Msg.getString("K0677", getModuleName(accessModule), targetClassPackageName, getModuleName(targetModule))); //$NON-NLS-1$
+					}
+					// here accessModule.canRead(targetModule) must be false
+					/*[MSG "K0679", "Module '{0}' no access to: package '{1}' because module '{0}' can't read module '{2}'"]*/
+					throw new IllegalAccessException(Msg.getString("K0679", getModuleName(accessModule), targetClassPackageName, getModuleName(targetModule))); //$NON-NLS-1$
 				}
 			}
 		}
@@ -1276,7 +1293,7 @@ public class MethodHandles {
 					throw new IllegalAccessException(this.toString());
 				}
 				if (declaringClass != accessClass || !Modifier.isPrivate(accessMode)) {
-					/*[MSG "K0587", "'{0}' no access to: '{1}'"]*/
+					/*[MSG "K0678", "Class '{0}' no access to: '{1}'"]*/
 					String message = com.ibm.oti.util.Msg.getString("K0587", this.toString(), declaringClass + "." + method.getName() + ":" + MethodHandle.KIND_INTERFACE + "/invokeinterface");  //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 					throw new IllegalAccessException(message);
 				}
