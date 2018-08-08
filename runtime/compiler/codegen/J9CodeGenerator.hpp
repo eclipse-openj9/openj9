@@ -160,7 +160,7 @@ public:
 
    bool alwaysGeneratesAKnownCleanSign(TR::Node *node) { return false; } // no virt
    bool alwaysGeneratesAKnownPositiveCleanSign(TR::Node *node) { return false; } // no virt
-   TR_RawBCDSignCode alwaysGeneratedSign(TR::Node *node) { return raw_bcd_sign_unknown; } // no virt
+   virtual TR_RawBCDSignCode alwaysGeneratedSign(TR::Node *node) { return raw_bcd_sign_unknown; } // no virt
 
    void foldSignCleaningIntoStore();
    void swapChildrenIfNeeded(TR::Node *store, char *optDetails);
