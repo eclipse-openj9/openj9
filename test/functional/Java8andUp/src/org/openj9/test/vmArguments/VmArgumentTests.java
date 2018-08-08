@@ -48,7 +48,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
+import org.openj9.test.util.FileUtilities;
+import org.openj9.test.util.HelloWorld;
 import org.openj9.test.util.StringPrintStream;
 import org.openj9.test.util.VersionCheck;
 import org.testng.annotations.BeforeMethod;
@@ -61,6 +64,8 @@ import org.testng.log4testng.Logger;
  */
 @Test(groups = { "level.extended" })
 public class VmArgumentTests {
+	private static final String XMX10M = "-Xmx10m";
+	private static final String HEAPDUMP = "heapdump";
 	private static final String FORCE_COMMON_CLEANER_SHUTDOWN = "-Dibm.java9.forceCommonCleanerShutdown=true";
 	private static final String XCHECK_MEMORY = "-Xcheck:memory";
 	private static final String XCOMPRESSEDREFS = "-Xcompressedrefs";
@@ -85,6 +90,7 @@ public class VmArgumentTests {
 	private static final String CLASSPATH=System.getProperty("java.class.path");
 	private static final String JAVA_COMMAND=System.getProperty("java.home")+File.separatorChar+"bin"+File.separatorChar+"java";
 	private static final String APPLICATION_NAME = ArgumentDumper.class.getCanonicalName();
+	private static final String HELLO_WORLD = HelloWorld.class.getCanonicalName();
 
 	private static final String[] mandatoryArgumentsJava8;
 
@@ -1328,6 +1334,76 @@ public class VmArgumentTests {
 			logger.debug("Skipping "+testName+" on Windows and non 64-bit systems");
 		}
 
+	}
+
+	/**
+	 * Tests options to select the dump output directory.
+	 * @throws IOException
+	 * @throws InterruptedException
+	 */
+	@Test
+	public void testDumpDirectory() throws IOException, InterruptedException {
+		File pwd = new File(System.getProperty("user.dir"));
+		logger.debug("user.dir="+pwd.getPath());
+		/* remove any existing heapdumps */
+		File pwdContents[] = pwd.listFiles();
+		for (File f: pwdContents) {
+			if (f.isFile() && f.getName().contains(HEAPDUMP)) {
+				f.delete();
+			}
+		}
+		/* first, just try defaults. */
+		ProcessBuilder pb = makeProcessBuilder(HELLO_WORLD, new String[] {XMX10M, "-Xdump:heap:events=vmstop"}, CLASSPATH);
+		/* Run a trivial process to create a dump */
+		Process proc;
+		proc = pb.start();
+		proc.waitFor();
+		/* check that the dump was created, and remove it. */
+		searchAndDestroy(pwd, HEAPDUMP);
+		/* test specifying the output directory for different types of dumps */
+		File dumpDir = new File(pwd, "dumps");
+		if (dumpDir.exists()) {
+			FileUtilities.deleteRecursive(dumpDir);
+		}
+		dumpDir.mkdir();
+		final String dumpDirPath = dumpDir.getPath();
+		logger.debug("dumpDirPath="+dumpDirPath);
+		
+		for (String dumpOption: new String [] {"-Xdump:directory=", "-XX:HeapDumpPath="} ) {
+			logger.debug("dumpOption="+dumpOption);
+			for (String dumpConfig[]: new String[][] {{"java", "javacore"}, {"heap", "heapdump"}}) { 
+				logger.debug("dumpType="+dumpConfig[0]);
+				pb = makeProcessBuilder(HELLO_WORLD, new String[] {XMX10M, 
+						"-Xdump:"+dumpConfig[0]+":events=vmstop",dumpOption+dumpDirPath},
+						CLASSPATH);
+				logger.debug("starting process");
+				proc = pb.start();
+				logger.debug("waiting for process stop");
+				boolean result = proc.waitFor(10, TimeUnit.SECONDS);
+				logger.debug("Process waitFor="+result);
+				searchAndDestroy(dumpDir, dumpConfig[1]);
+			}
+		}
+		
+		FileUtilities.deleteRecursive(dumpDir);
+	}
+
+	/**
+	 * Search a directory for files whose names contain a given pattern and remove them.
+	 * Search the top level only.
+	 * Fail if none are found.
+	 * @param searchDir directory to search.
+	 * @param searchPattern case-sensitive substring for which to search
+	 */
+	private void searchAndDestroy(File searchDir, String searchPattern) {
+		boolean found = false;
+		for (File f: searchDir.listFiles()) {
+			if (f.isFile() && f.getName().contains(searchPattern)) {
+				found = true;
+				f.delete();
+			}
+		}
+		assertTrue("file containing "+searchPattern+" not found in "+searchDir.getAbsolutePath(), found);
 	}
 
 	/* ===================================== Utility methods ===================================================== */
