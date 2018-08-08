@@ -358,10 +358,7 @@
 	<test id="Test 183-b: Ensure BCI Enabled is true" timeout="600" runPath=".">
 		<command>cat javacore.txt</command>				
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">BCI Enabled[\s]*= true</output>
-		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
-		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
-		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
-		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes" showMatch="yes">BCI Enabled[\s]*= false</output>
 	</test>
 	
 	<test id="Test 183-c: Verify BCI Enabled is true in printStats output" timeout="600" runPath=".">
@@ -389,10 +386,7 @@
 	<test id="Test 183-e: Ensure BCI Enabled is true in generated javacore" timeout="600" runPath=".">
 		<command>cat javacore.txt</command>				
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">BCI Enabled[\s]*= true</output>
-		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
-		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
-		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
-		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes" showMatch="yes">BCI Enabled[\s]*= false</output>
 	</test>
 	
 	<test id="Test 183-f: Ensure BCI Enabled is true in printStats output" timeout="600" runPath=".">
