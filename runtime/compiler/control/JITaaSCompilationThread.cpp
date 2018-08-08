@@ -2682,10 +2682,10 @@ JITaaSHelpers::packRemoteROMClassInfo(J9Class *clazz, TR_J9VM *fe, TR_Memory *tr
    methodTracingInfo.reserve(numMethods);
    for(uint32_t i = 0; i < numMethods; ++i)
       {
-      methodTracingInfo.push_back({
+      methodTracingInfo.push_back(std::make_tuple(
          fe->isMethodEnterTracingEnabled((TR_OpaqueMethodBlock *) &methodsOfClass[i]),
          fe->isMethodExitTracingEnabled((TR_OpaqueMethodBlock *) &methodsOfClass[i])
-         });
+         ));
       }
 
    return std::make_tuple(packROMClass(clazz->romClass, trMemory), methodsOfClass, baseClass, numDims, parentClass, TR::Compiler->cls.getITable((TR_OpaqueClassBlock *) clazz), methodTracingInfo);
