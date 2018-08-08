@@ -3468,7 +3468,7 @@ J9::CodeGenerator::rematerializeCompressedRefs(
           }
       }
 
-   if (self()->materializesHeapBase() &&
+   if (materializesHeapBase() &&
        !isLowMemHeap &&
        parent && (!parent->getOpCode().isStore()) &&
        (node->getOpCodeValue() == TR::lconst) &&
