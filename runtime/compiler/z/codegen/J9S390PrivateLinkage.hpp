@@ -110,8 +110,7 @@ public:
                                              TR::RealRegister::RegNum fh,
                                              TR::RealRegister::RegNum lh,
                                              int32_t &rsd,
-                                             int32_t &numInts, int32_t &numFloats,
-                                             int32_t &numAccess, int32_t &numHigh);
+                                             int32_t &numInts, int32_t &numFloats, int32_t &numHigh);
 
 protected:
 
