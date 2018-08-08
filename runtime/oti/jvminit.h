@@ -324,6 +324,8 @@ enum INIT_STAGE {
 #define VMOPT_XXDEBUGINTERPRETER "-XX:+DebugInterpreter"
 #define VMOPT_XXNOHANDLESIGXFSZ "-XX:-HandleSIGXFSZ"
 #define VMOPT_XXHANDLESIGXFSZ "-XX:+HandleSIGXFSZ"
+#define VMOPT_XXHEAPDUMPONOOM "-XX:+HeapDumpOnOutOfMemoryError"
+#define VMOPT_XXNOHEAPDUMPONOOM "-XX:-HeapDumpOnOutOfMemoryError"
 
 #define VMOPT_XSOFTREFTHRESHOLD "-XSoftRefThreshold"
 #define VMOPT_XAGGRESSIVE "-Xaggressive"
