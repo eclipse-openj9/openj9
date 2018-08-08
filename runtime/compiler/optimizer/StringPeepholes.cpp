@@ -213,9 +213,13 @@ TR::SymbolReference* TR_StringPeepholes::MethodEnumToArgsForMethodSymRefFromName
       {
       if (!fe()->getMethodFromName(classNames[m], methodNames[m], signatures[m], comp()->getCurrentMethod()->getNonPersistentIdentifier()))
          {
-         return comp()->getSymRefTab()->methodSymRefFromName(comp()->getMethodSymbol(), classNames[m], methodNames[m], "([CIIZ)V", TR::MethodSymbol::Static);
+         return comp()->getSymRefTab()->methodSymRefFromName(comp()->getMethodSymbol(), classNames[m], methodNames[m], "([CIIZ)V", TR::MethodSymbol::Special);
          }
       }
+
+   if (strlen(methodNames[m]) == 6
+       && !strncmp(methodNames[m], "<init>", 6))
+      return comp()->getSymRefTab()->methodSymRefFromName(comp()->getMethodSymbol(), classNames[m], methodNames[m], signatures[m], TR::MethodSymbol::Special);
 
    return comp()->getSymRefTab()->methodSymRefFromName(comp()->getMethodSymbol(), classNames[m], methodNames[m], signatures[m], TR::MethodSymbol::Static);
    }
@@ -1975,14 +1979,14 @@ TR::TreeTop *TR_StringPeepholes::detectPattern(TR::Block *block, TR::TreeTop *tt
          {
             if (pattern[1] == 'C')
             {
-               TR::SymbolReference *initSymRef = findSymRefForOptMethod(SPH_String_init_SC) ? getSymRefTab()->findOrCreateMethodSymbol(stringNode->getSymbolReference()->getOwningMethodIndex(), -1, findSymRefForOptMethod(SPH_String_init_SC)->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod(), TR::MethodSymbol::Static) : 0;
+               TR::SymbolReference *initSymRef = findSymRefForOptMethod(SPH_String_init_SC) ? getSymRefTab()->findOrCreateMethodSymbol(stringNode->getSymbolReference()->getOwningMethodIndex(), -1, findSymRefForOptMethod(SPH_String_init_SC)->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod(), TR::MethodSymbol::Special) : 0;
                initCall = TR::Node::createWithSymRef(TR::call, 3, 3,
                                           stringNode, appendedString[0], appendedString[1],
                                           initSymRef);
             }
             else
             {
-               TR::SymbolReference *initSymRef3 = findSymRefForOptMethod(SPH_String_init_SI) ? getSymRefTab()->findOrCreateMethodSymbol(stringNode->getSymbolReference()->getOwningMethodIndex(), -1, findSymRefForOptMethod(SPH_String_init_SI)->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod(), TR::MethodSymbol::Static) : 0;
+               TR::SymbolReference *initSymRef3 = findSymRefForOptMethod(SPH_String_init_SI) ? getSymRefTab()->findOrCreateMethodSymbol(stringNode->getSymbolReference()->getOwningMethodIndex(), -1, findSymRefForOptMethod(SPH_String_init_SI)->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod(), TR::MethodSymbol::Special) : 0;
                initCall = TR::Node::createWithSymRef(TR::call, 3, 3,
                                           stringNode, appendedString[0], appendedString[1],
                                           initSymRef3);
@@ -1990,7 +1994,7 @@ TR::TreeTop *TR_StringPeepholes::detectPattern(TR::Block *block, TR::TreeTop *tt
          }
       else // use the string + string constructor
          {
-         TR::SymbolReference *initSymRef1 = findSymRefForOptMethod(SPH_String_init_SS) ? getSymRefTab()->findOrCreateMethodSymbol(stringNode->getSymbolReference()->getOwningMethodIndex(), -1, findSymRefForOptMethod(SPH_String_init_SS)->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod(), TR::MethodSymbol::Static) : 0;
+         TR::SymbolReference *initSymRef1 = findSymRefForOptMethod(SPH_String_init_SS) ? getSymRefTab()->findOrCreateMethodSymbol(stringNode->getSymbolReference()->getOwningMethodIndex(), -1, findSymRefForOptMethod(SPH_String_init_SS)->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod(), TR::MethodSymbol::Special) : 0;
          initCall = TR::Node::createWithSymRef(TR::call, 3, 3,
                                     stringNode, appendedString[0], appendedString[1],
                                     initSymRef1);
@@ -1998,14 +2002,14 @@ TR::TreeTop *TR_StringPeepholes::detectPattern(TR::Block *block, TR::TreeTop *tt
       }
    else if ((stringCount == 3))
       {
-      TR::SymbolReference *initSymRef2 = findSymRefForOptMethod(SPH_String_init_SSS) ? getSymRefTab()->findOrCreateMethodSymbol(stringNode->getSymbolReference()->getOwningMethodIndex(), -1, findSymRefForOptMethod(SPH_String_init_SSS)->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod(), TR::MethodSymbol::Static) : 0;
+      TR::SymbolReference *initSymRef2 = findSymRefForOptMethod(SPH_String_init_SSS) ? getSymRefTab()->findOrCreateMethodSymbol(stringNode->getSymbolReference()->getOwningMethodIndex(), -1, findSymRefForOptMethod(SPH_String_init_SSS)->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod(), TR::MethodSymbol::Special) : 0;
       initCall = TR::Node::createWithSymRef(TR::call, 4, 4,
                                  stringNode, appendedString[0], appendedString[1], appendedString[2],
                                  initSymRef2);
       }
    else if ((stringCount == 5))
       {
-      TR::SymbolReference *initSymRef7 = findSymRefForOptMethod(SPH_String_init_ISISS) ? getSymRefTab()->findOrCreateMethodSymbol(stringNode->getSymbolReference()->getOwningMethodIndex(), -1, findSymRefForOptMethod(SPH_String_init_ISISS)->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod(), TR::MethodSymbol::Static) : 0;
+      TR::SymbolReference *initSymRef7 = findSymRefForOptMethod(SPH_String_init_ISISS) ? getSymRefTab()->findOrCreateMethodSymbol(stringNode->getSymbolReference()->getOwningMethodIndex(), -1, findSymRefForOptMethod(SPH_String_init_ISISS)->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod(), TR::MethodSymbol::Special) : 0;
       initCall = TR::Node::createWithSymRef(TR::call, 6, 6,
                                  stringNode, appendedString[0], appendedString[1], appendedString[2], appendedString[3], appendedString[4],
                                  initSymRef7);

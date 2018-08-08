@@ -97,18 +97,6 @@ TR::S390PrivateLinkage::S390PrivateLinkage(TR::CodeGenerator * codeGen,TR_S390Li
    setRegisterFlag(TR::RealRegister::FPR15, Preserved);
 #endif
 
-   if (TR::Compiler->target.isLinux())
-   {
-   setRegisterFlag(TR::RealRegister::AR8, Preserved);
-   setRegisterFlag(TR::RealRegister::AR9, Preserved);
-   setRegisterFlag(TR::RealRegister::AR10, Preserved);
-   setRegisterFlag(TR::RealRegister::AR11, Preserved);
-   setRegisterFlag(TR::RealRegister::AR12, Preserved);
-   setRegisterFlag(TR::RealRegister::AR13, Preserved);
-   setRegisterFlag(TR::RealRegister::AR14, Preserved);
-   setRegisterFlag(TR::RealRegister::AR15, Preserved);
-   }
-
    setIntegerReturnRegister (TR::RealRegister::GPR2 );
    setLongLowReturnRegister (TR::RealRegister::GPR3 );
    setLongHighReturnRegister(TR::RealRegister::GPR2 );
@@ -1073,12 +1061,11 @@ TR::S390PrivateLinkage::mapPreservedRegistersToStackOffsets(int32_t *mapRegsToSt
       return false;
 
    int32_t argSize = cg()->getLargestOutgoingArgSize() + getOffsetToFirstParm();
-   int32_t numIntSaved = 0, numFloatSaved = 0, numAccessRegSaved = 0, numHighWordRegSaved = 0, registerSaveDescription = 0;
+   int32_t numIntSaved = 0, numFloatSaved = 0, numHighWordRegSaved = 0, registerSaveDescription = 0;
    int32_t regSaveSize = calculateRegisterSaveSize(firstUsedReg, lastUsedReg,
                                                    firstUsedHighWordReg, lastUsedHighWordReg,
                                                    registerSaveDescription,
-                                                   numIntSaved, numFloatSaved,
-                                                   numAccessRegSaved, numHighWordRegSaved);
+                                                   numIntSaved, numFloatSaved, numHighWordRegSaved);
    // total frame size
    int32_t size = regSaveSize + localSize + argSize;
 
@@ -1179,8 +1166,7 @@ TR::S390PrivateLinkage::calculateRegisterSaveSize(TR::RealRegister::RegNum first
                                                  TR::RealRegister::RegNum firstUsedHighWordReg,
                                                  TR::RealRegister::RegNum lastUsedHighWordReg,
                                                  int32_t &registerSaveDescription,
-                                                 int32_t &numIntSaved, int32_t &numFloatSaved,
-                                                 int32_t &numAccessRegSaved, int32_t &numHighWordRegSaved)
+                                                 int32_t &numIntSaved, int32_t &numFloatSaved, int32_t &numHighWordRegSaved)
    {
    int32_t regSaveSize = 0;
    // set up registerSaveDescription which looks the following
@@ -1210,21 +1196,6 @@ TR::S390PrivateLinkage::calculateRegisterSaveSize(TR::RealRegister::RegNum first
       }
 #endif
 
-   //  AR8-15 are preserved on ZOS only
-   TR::RealRegister::RegNum lastUsedAccessReg = TR::RealRegister::NoReg;
-   if ( comp()->getOption(TR_Enable390AccessRegs) && !TR::Compiler->target.isLinux() )
-      {
-      lastUsedAccessReg = getLastSavedRegister(TR::RealRegister::AR8,
-                                              TR::RealRegister::AR15);
-
-      for (i = TR::RealRegister::AR8 ; i <= TR::RealRegister::AR15 ; ++i)
-         {
-         if ((getS390RealRegister(REGNUM(i)))->getHasBeenAssignedInMethod())
-            {
-            numAccessRegSaved++;
-            }
-         }
-      }
    // HPR6-HPR12 are also preserved on 32-bit
    if (cg()->supportsHighWordFacility() && !comp()->getOption(TR_DisableHighWordRA) && TR::Compiler->target.is32Bit())
       {
@@ -1234,7 +1205,6 @@ TR::S390PrivateLinkage::calculateRegisterSaveSize(TR::RealRegister::RegNum first
    // calculate stackFramesize
    regSaveSize += numIntSaved * cg()->machine()->getGPRSize() +
                           numFloatSaved * cg()->machine()->getFPRSize() +
-                          numAccessRegSaved * cg()->machine()->getGPRSize() +
                           numHighWordRegSaved * 4;
 
 
@@ -1283,7 +1253,7 @@ TR::S390PrivateLinkage::createPrologue(TR::Instruction * cursor)
    TR::RealRegister * epReg = getEntryPointRealRegister();
    TR::Snippet * firstSnippet = NULL;
    TR::Node * firstNode = comp()->getStartTree()->getNode();
-   int32_t size = 0, argSize = 0, regSaveSize = 0, numIntSaved = 0, numFloatSaved = 0, numAccessRegSaved = 0, numHighWordRegSaved =0;
+   int32_t size = 0, argSize = 0, regSaveSize = 0, numIntSaved = 0, numFloatSaved = 0, numHighWordRegSaved =0;
    int32_t registerSaveDescription = 0;
    int32_t firstLocalOffset = getOffsetToFirstLocal();
    int32_t i;
@@ -1298,10 +1268,6 @@ TR::S390PrivateLinkage::createPrologue(TR::Instruction * cursor)
    TR::RealRegister::RegNum lastUsedReg  = getLastSavedRegister(TR::RealRegister::GPR6,
                                                               TR::RealRegister::GPR12);
 
-   //  AR8-15 are preserved on ZOS only
-   TR::RealRegister::RegNum lastUsedAccessReg = TR::RealRegister::NoReg;
-
-
    // HPR6-HPR12 are also preserved on 32-bit
    TR::RealRegister::RegNum lastUsedHighWordReg  =  TR::RealRegister::NoReg;
    TR::RealRegister::RegNum firstUsedHighWordReg =  TR::RealRegister::NoReg;
@@ -1314,8 +1280,7 @@ TR::S390PrivateLinkage::createPrologue(TR::Instruction * cursor)
    regSaveSize = calculateRegisterSaveSize(firstUsedReg, lastUsedReg,
                                            firstUsedHighWordReg, lastUsedHighWordReg,
                                            registerSaveDescription,
-                                           numIntSaved, numFloatSaved,
-                                           numAccessRegSaved, numHighWordRegSaved);
+                                           numIntSaved, numFloatSaved, numHighWordRegSaved);
 
    if (regSaveSize != 0)
       {
@@ -1554,15 +1519,6 @@ TR::S390PrivateLinkage::createPrologue(TR::Instruction * cursor)
             }
          }
 #endif
-
-      // save ARs
-      if (lastUsedAccessReg != TR::RealRegister::NoReg)
-         {
-         rsa = generateS390MemoryReference(spReg, disp, cg());
-         cursor = generateRSInstruction(cg(), TR::InstOpCode::STAM, firstNode, getS390RealRegister(TR::RealRegister::AR8),
-                  getS390RealRegister(lastUsedAccessReg), rsa, cursor);
-         }
-      disp += numAccessRegSaved * cg()->machine()->getGPRSize();
 
       // save HPRs
       if (0 && cg()->supportsHighWordFacility() && !comp()->getOption(TR_DisableHighWordRA) && TR::Compiler->target.is32Bit() &&
@@ -1822,16 +1778,6 @@ TR::S390PrivateLinkage::createEpilogue(TR::Instruction * cursor)
          }
       }
 #endif
-
-   TR::RealRegister::RegNum lastUsedAccessReg =
-      getLastRestoredRegister(TR::RealRegister::AR8, TR::RealRegister::AR15);
-   if (lastUsedAccessReg != TR::RealRegister::NoReg)
-      {
-      rsa = generateS390MemoryReference(spReg, offset, cg());
-      cursor = generateRSInstruction(cg(), TR::InstOpCode::LAM, nextNode, getS390RealRegister(TR::RealRegister::AR8),
-               getS390RealRegister(lastUsedAccessReg), rsa, cursor);
-      offset += cg()->machine()->getGPRSize() * (lastUsedAccessReg - TR::RealRegister::GPR8 + 1);
-      }
 
    // Restore HPRs
    TR::RealRegister::RegNum lastUsedHighWordReg =
