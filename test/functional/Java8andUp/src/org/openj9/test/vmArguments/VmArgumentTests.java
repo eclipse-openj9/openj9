@@ -44,6 +44,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -64,6 +65,12 @@ import org.testng.log4testng.Logger;
  */
 @Test(groups = { "level.extended" })
 public class VmArgumentTests {
+	private static final String NOT_ALL_OOM_TYPES_ENABLED_WITH = "Not all OOM types enabled with "; //$NON-NLS-1$
+	private static final String SOME_OOM_TYPES_ENABLED_WITH = "Some OOM types enabled with "; //$NON-NLS-1$
+	private static final String XX_HEAP_DUMP_ON_OOM = "-XX:+HeapDumpOnOutOfMemoryError"; //$NON-NLS-1$
+	private static final String XX_HEAP_NO_DUMP_ON_OOM = "-XX:-HeapDumpOnOutOfMemoryError"; //$NON-NLS-1$
+	private static final String XDUMP_WHAT = "-Xdump:what"; //$NON-NLS-1$
+	private static final String XDUMP_NONE = "-Xdump:none"; //$NON-NLS-1$
 	private static final String XMX10M = "-Xmx10m";
 	private static final String HEAPDUMP = "heapdump";
 	private static final String FORCE_COMMON_CLEANER_SHUTDOWN = "-Dibm.java9.forceCommonCleanerShutdown=true";
@@ -112,6 +119,7 @@ public class VmArgumentTests {
 
 	private static final String IBM_NOSIGHANDLER = "IBM_NOSIGHANDLER";
 	private static final String VMOPT_XRS = "-Xrs";
+	static final int PROCESS_JOIN_TIMEOUT = 10000;
 
 	private ProcessStreamReader stdoutReader;
 	private ProcessStreamReader stderrReader;
@@ -1355,9 +1363,7 @@ public class VmArgumentTests {
 		/* first, just try defaults. */
 		ProcessBuilder pb = makeProcessBuilder(HELLO_WORLD, new String[] {XMX10M, "-Xdump:heap:events=vmstop"}, CLASSPATH);
 		/* Run a trivial process to create a dump */
-		Process proc;
-		proc = pb.start();
-		proc.waitFor();
+		runProcess(pb);
 		/* check that the dump was created, and remove it. */
 		searchAndDestroy(pwd, HEAPDUMP);
 		/* test specifying the output directory for different types of dumps */
@@ -1377,15 +1383,77 @@ public class VmArgumentTests {
 						"-Xdump:"+dumpConfig[0]+":events=vmstop",dumpOption+dumpDirPath},
 						CLASSPATH);
 				logger.debug("starting process");
-				proc = pb.start();
-				logger.debug("waiting for process stop");
-				boolean result = proc.waitFor(10, TimeUnit.SECONDS);
-				logger.debug("Process waitFor="+result);
+				runProcess(pb);
 				searchAndDestroy(dumpDir, dumpConfig[1]);
 			}
 		}
 		
 		FileUtilities.deleteRecursive(dumpDir);
+	}
+
+	/**
+	 * Tests effect of -XX:[+-]HeapDumpOnOutOfMemoryError
+	 * @throws IOException
+	 * @throws InterruptedException
+	 */
+	@Test
+	public void testHeapDumpOnOOM() throws IOException, InterruptedException {
+		ProcessRunner pr = runHelloWorld();
+		assertTrue(NOT_ALL_OOM_TYPES_ENABLED_WITH+"default options", checkXdumpOOM(pr, true));
+		
+		pr = runHelloWorld(XDUMP_NONE);
+		assertFalse(SOME_OOM_TYPES_ENABLED_WITH+XDUMP_NONE, checkXdumpOOM(pr, false));
+		
+		pr = runHelloWorld(XX_HEAP_NO_DUMP_ON_OOM);
+		assertFalse(SOME_OOM_TYPES_ENABLED_WITH+XX_HEAP_NO_DUMP_ON_OOM, checkXdumpOOM(pr, false));
+		
+		pr = runHelloWorld(XDUMP_NONE, XX_HEAP_DUMP_ON_OOM);
+		assertTrue(NOT_ALL_OOM_TYPES_ENABLED_WITH+XDUMP_NONE+" "+XX_HEAP_DUMP_ON_OOM, 
+				checkXdumpOOM(pr, true));
+		
+		pr = runHelloWorld(XX_HEAP_DUMP_ON_OOM, XDUMP_NONE);
+		assertFalse(SOME_OOM_TYPES_ENABLED_WITH+" "+XX_HEAP_DUMP_ON_OOM+XDUMP_NONE, checkXdumpOOM(pr, false));
+	}
+
+	private static ProcessRunner runHelloWorld(String ... args) throws IOException, InterruptedException {
+		ProcessBuilder pb;
+		ProcessRunner pr;
+		ArrayList<String>  argList = new ArrayList<>();
+		argList.addAll(Arrays.asList(args));
+		argList.add(XDUMP_WHAT);
+		String argArray[] = new String[argList.size()];
+		argList.toArray(argArray);
+		pb = makeProcessBuilder(HELLO_WORLD, argArray, CLASSPATH);
+		pr = ProcessRunner.runAndGetOutputs(pb);
+		return pr;
+	}
+
+	private static boolean checkXdumpOOM(ProcessRunner pr, boolean allExpected) {
+		boolean allFound = true;
+		boolean someFound = false;
+		for (String kind: new String[] {"heap", "java", "snap", "system"}) {
+			boolean kindFound = false;
+			Iterator<String> iter = pr.getStderr().iterator();
+			while (!kindFound && iter.hasNext()) {
+				String l = iter.next();
+				if (l.contains("Xdump:"+kind)) {
+					while (!kindFound && iter.hasNext()) {
+						l = iter.next();
+						if (l.contains("OutOfMemoryError")) {
+							kindFound = true;
+						} else if (l.contains("-------")) {
+							break;
+						}
+					}
+				}
+			}
+			allFound &= kindFound;
+			someFound |= kindFound;
+			if (allExpected ? !allFound: someFound) {
+				break; /* stop if we encounter sufficient conditions for result */
+			}
+		}
+		return allExpected? allFound: someFound;		
 	}
 
 	/**
@@ -1427,7 +1495,7 @@ public class VmArgumentTests {
 		return makeProcessBuilder(appName, vmArgs, targetClasspath);
 	}
 
-	private ProcessBuilder makeProcessBuilder(String appName, String[] vmArgs, String targetClasspath) {
+	private static ProcessBuilder makeProcessBuilder(String appName, String[] vmArgs, String targetClasspath) {
 		ArrayList<String> vmArgsList = new ArrayList<String>(vmArgs.length+5);
 		vmArgsList.add(JAVA_COMMAND);
 		if (null != targetClasspath) {
@@ -1446,52 +1514,52 @@ public class VmArgumentTests {
 	}
 
 	private ArrayList<String> runAndGetArgumentList(ProcessBuilder pb) {
-		ArrayList<String> actualArguments = new ArrayList<String>();
+		ArrayList<String> actualArguments = null;
 
+		ProcessRunner pr = runProcess(pb);
+		ArrayList<String> actualArguments1 = new ArrayList<String>();
+		Iterator<String> olIterator = pr.getStdout().iterator();
+		String l = "";
+		while (olIterator.hasNext() && isNotTag(l)) {
+			l = olIterator.next();
+			if (isNotTag(l)) {
+				logger.debug(l);
+			}
+		}
+		while (olIterator.hasNext() && !l.isEmpty()) {
+			actualArguments1.add(l);
+			l = olIterator.next();
+		}
+		actualArguments = actualArguments1;
+		return actualArguments;
+	}
+
+	private ProcessRunner runProcess(ProcessBuilder pb) {
+		List<String> cmd = pb.command();
+
+		dumpStrings(cmd);
+		ProcessRunner pr;
 		try {
-			List<String> cmd = pb.command();
-
-			dumpStrings(cmd);
-			Process p = pb.start();
-			BufferedReader targetOutReader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-			stdoutReader = new ProcessStreamReader(targetOutReader);
-			BufferedReader targetErrReader = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-			stderrReader = new ProcessStreamReader(targetErrReader);
-			stdoutReader.start();
-			stderrReader.start();
-			int rc = p.waitFor();
-			/* Ensure the ProcessStreamReaders finish reading their respective streams. */
-			stdoutReader.join(10000);
-			stderrReader.join(10000);
-			ArrayList<String> outputLines = stdoutReader.getOutputLines();
-			if (0 != rc) {
-				logger.debug("---------------------------------\nstdout");
-				dumpStrings(outputLines);
-				ArrayList<String> errLines = stderrReader.getOutputLines();
-				logger.debug("---------------------------------\nstderr");
-				dumpStrings(errLines);
-				fail("Target process failed");
-
-			}
-			Iterator<String> olIterator = outputLines.iterator();
-			String l = "";
-			while (olIterator.hasNext() && isNotTag(l)) {
-				l = olIterator.next();
-				if (isNotTag(l)) {
-					logger.debug(l);
-				}
-			}
-			while (olIterator.hasNext() && !l.isEmpty()) {
-				actualArguments.add(l);
-				l = olIterator.next();
-			} 
+			pr = ProcessRunner.runAndGetOutputs(pb);
+			stderrReader = pr.getStderrRdr();
+			stdoutReader = pr.getStdoutRdr();
 		} catch (IOException | InterruptedException e) {
 			/* 
 			 * Catch the checked exceptions so callers of this method don't need to declare them as thrown.
 			 */
 			fail("unexpected Exception: "+e.getMessage(), e);
+			return null;
 		}
-		return actualArguments;
+		if (0 != pr.getExitStatus()) {
+			logger.debug("---------------------------------\nstdout");
+			dumpStrings(pr.getStdout());
+			ArrayList<String> errLines = stderrReader.getOutputLines();
+			logger.debug("---------------------------------\nstderr");
+			dumpStrings(pr.getStderr());
+			fail("Target process failed");
+
+		}
+		return pr;
 	}
 
 	private boolean isNotTag(String l) {
@@ -1673,7 +1741,7 @@ public class VmArgumentTests {
 	 * CMVC 194775 - child process blocked writing tracepoint output.
 	 *
 	 */
-	class ProcessStreamReader extends Thread {
+	static class ProcessStreamReader extends Thread {
 		BufferedReader processStream;
 		StringBuffer psBuffer = new StringBuffer();
 		ArrayList<String> outputLines = new ArrayList<>();
@@ -1711,8 +1779,55 @@ public class VmArgumentTests {
 		return ((null != osName) && osName.startsWith("Windows"));
 	}
 
-	/* 
-	 * Re-use this class as a dummy application.
-	 * Note that stdout and stderr go to a parent process, not the console.
-	 */
+	static class ProcessRunner {
+		private ProcessBuilder pb;
+		private int exitStatus;
+		private ArrayList<String> stdout;
+		private ArrayList<String> stderr;
+		private ProcessStreamReader stdoutRdr;
+		private ProcessStreamReader stderrRdr;
+		
+		static ProcessRunner runAndGetOutputs(ProcessBuilder pb) throws IOException, InterruptedException {
+			ProcessRunner result = new ProcessRunner(pb);
+			result.run(pb);
+			return result;
+		}
+		private void run(ProcessBuilder pb2) throws IOException, InterruptedException {
+			Process p = pb.start();
+			BufferedReader targetOutReader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+			stdoutRdr = new ProcessStreamReader(targetOutReader);
+			BufferedReader targetErrReader = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+			stderrRdr = new ProcessStreamReader(targetErrReader);
+			stdoutRdr.start();
+			stderrRdr.start();
+			exitStatus = p.waitFor();
+			/* Ensure the ProcessStreamReaders finish reading their respective streams. */
+			stdoutRdr.join(PROCESS_JOIN_TIMEOUT);
+			stderrRdr.join(10000);
+			stdout = stdoutRdr.getOutputLines();
+			stderr = stderrRdr.getOutputLines();
+		}
+		private ProcessRunner(ProcessBuilder pb) {
+			this.pb = pb;
+			stdout = new ArrayList<>();
+			stderr = new ArrayList<>();
+		}
+		
+		List<String> getStdout() {
+			return stdout;
+		}
+		
+		List<String> getStderr() {
+			return stderr;
+		}
+		public int getExitStatus() {
+			return exitStatus;
+		}
+		public ProcessStreamReader getStdoutRdr() {
+			return stdoutRdr;
+		}
+		public ProcessStreamReader getStderrRdr() {
+			return stderrRdr;
+		}
+	}
 }
