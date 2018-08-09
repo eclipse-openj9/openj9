@@ -2339,6 +2339,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
    static X HashMapHashIteratorMethods[] =
       {
       {x(TR::java_util_HashMapHashIterator_nextNode,   "nextNode",      "()Ljava/util/HashMap$Node;")},
+      {x(TR::java_util_HashMapHashIterator_init,       "<init>",            "(Ljava/util/HashMap;)V")},
       {  TR::unknownMethod}
       };
 
