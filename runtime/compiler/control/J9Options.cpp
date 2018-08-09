@@ -1047,7 +1047,8 @@ static bool getJITaaSNumericOptionFromCommandLineOptions(char **options, char de
 
    char *startChar = scan_to_delim(PORTLIB, options, delimiter);
    uint32_t value = 0;
-   UDATA scanResult = scan_u32(&startChar, &value);
+   char *scanChar = startChar;
+   UDATA scanResult = scan_u32(&scanChar, &value);
    j9mem_free_memory(startChar);
    if (scanResult != 0)
       {
