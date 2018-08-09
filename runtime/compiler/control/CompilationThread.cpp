@@ -6720,6 +6720,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       TR::IlGeneratorMethodDetails & details = entry->getMethodDetails();
 
       eligibleForRelocatableCompile =
+            _compInfo.getPersistentInfo()->getJITaaSMode() == NONJITaaS_MODE && // do not allow AOT compilations in JITaaS
             TR::Options::sharedClassCache() &&
             !details.isNewInstanceThunk() &&
             !entry->isJNINative() &&
@@ -6730,8 +6731,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             reloRuntime->isRomClassForMethodInSharedCache(method, javaVM) &&
             !isMethodIneligibleForAot(method) &&
             (!TR::Options::getAOTCmdLineOptions()->getOption(TR_AOTCompileOnlyFromBootstrap) ||
-               TR_J9VMBase::get(jitConfig, vmThread)->isClassLibraryMethod((TR_OpaqueMethodBlock *)method), true) &&
-            _compInfo.getPersistentInfo()->getJITaaSMode() == NONJITaaS_MODE; // do not allow AOT compilations in JITaaS
+               TR_J9VMBase::get(jitConfig, vmThread)->isClassLibraryMethod((TR_OpaqueMethodBlock *)method), true);
 
       bool sharedClassTest = eligibleForRelocatableCompile &&
          !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoStoreAOT);
