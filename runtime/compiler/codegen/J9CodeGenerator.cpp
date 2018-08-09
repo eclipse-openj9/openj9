@@ -4150,8 +4150,8 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
                   lowLRI  = lri;
                   highLRI = lri+1;
                   }
-               TR_GlobalRegisterNumber lowReg  = self()->getLinkageGlobalRegisterNumber(lowLRI,  node->getDataType());
-               TR_GlobalRegisterNumber highReg = self()->getLinkageGlobalRegisterNumber(highLRI, node->getDataType());
+               TR_GlobalRegisterNumber lowReg  = getLinkageGlobalRegisterNumber(lowLRI,  node->getDataType());
+               TR_GlobalRegisterNumber highReg = getLinkageGlobalRegisterNumber(highLRI, node->getDataType());
 
                if (lowReg != -1 && highReg != -1 && !globalRegsWithRegLoad->isSet(lowReg) && !globalRegsWithRegLoad->isSet(highReg)
                   && performTransformation(self()->comp(), "O^O LINKAGE REGISTER ALLOCATION: transforming %s into %s\n", self()->comp()->getDebug()->getName(node), self()->comp()->getDebug()->getName(regLoadOp)))
@@ -4198,8 +4198,8 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
             // if not 64 bit and data type is 64 bit, need to place it into two registers
             if ((TR::Compiler->target.is32Bit() && !self()->use64BitRegsOn32Bit()) && dt == TR::Int64)
                {
-               TR_GlobalRegisterNumber lowReg  = self()->getLinkageGlobalRegisterNumber(lri+1, dt);
-               TR_GlobalRegisterNumber highReg = self()->getLinkageGlobalRegisterNumber(lri, dt);
+               TR_GlobalRegisterNumber lowReg  = getLinkageGlobalRegisterNumber(lri+1, dt);
+               TR_GlobalRegisterNumber highReg = getLinkageGlobalRegisterNumber(lri, dt);
 
                if (lowReg != -1 && highReg != -1 && !globalRegsWithRegLoad->isSet(lowReg) && !globalRegsWithRegLoad->isSet(highReg) &&
                    performTransformation(self()->comp(), "O^O LINKAGE REGISTER ALLOCATION: transforming aggregate parm %s into xRegLoad\n", self()->comp()->getDebug()->getName(node)))
@@ -4218,7 +4218,7 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
                }
             else
                {
-               TR_GlobalRegisterNumber reg = self()->getLinkageGlobalRegisterNumber(lri, dt);
+               TR_GlobalRegisterNumber reg = getLinkageGlobalRegisterNumber(lri, dt);
 
                if (reg != -1 && !globalRegsWithRegLoad->isSet(reg) &&
                    performTransformation(self()->comp(), "O^O LINKAGE REGISTER ALLOCATION: transforming aggregate parm %s into xRegLoad\n", self()->comp()->getDebug()->getName(node)))
@@ -4235,7 +4235,7 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
             }
          else
             {
-            TR_GlobalRegisterNumber reg = self()->getLinkageGlobalRegisterNumber(parm->getLinkageRegisterIndex(), node->getDataType());
+            TR_GlobalRegisterNumber reg = getLinkageGlobalRegisterNumber(parm->getLinkageRegisterIndex(), node->getDataType());
             if (reg != -1 && !globalRegsWithRegLoad->isSet(reg)
                && performTransformation(self()->comp(), "O^O LINKAGE REGISTER ALLOCATION: transforming %s into %s\n", self()->comp()->getDebug()->getName(node), self()->comp()->getDebug()->getName(regLoadOp)))
                {
