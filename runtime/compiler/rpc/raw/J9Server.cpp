@@ -68,7 +68,7 @@ void initSSL()
 
 SSL_CTX *createSSLContext(TR::PersistentInfo *info)
    {
-   SSL_CTX *ctx = SSL_CTX_new(TLS_server_method());
+   SSL_CTX *ctx = SSL_CTX_new(SSLv23_server_method());
    if (!ctx)
       {
       perror("can't create SSL context");

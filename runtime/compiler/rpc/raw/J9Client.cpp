@@ -31,7 +31,7 @@ void J9ClientStream::static_init(TR::PersistentInfo *info)
    SSL_library_init();
    OpenSSL_add_ssl_algorithms();
 
-   SSL_CTX *ctx = SSL_CTX_new(TLS_client_method());
+   SSL_CTX *ctx = SSL_CTX_new(SSLv23_client_method());
    if (!ctx)
       {
       perror("can't create SSL context");
