@@ -2446,9 +2446,9 @@ jvmtiHookCheckForDataBreakpoint(J9HookInterface** hook, UDATA eventNum, void* ev
 		}
 		j9env = pool_nextDo(&envPoolState);
 	}
+done:
 	omrthread_monitor_exit(jvmtiData->mutex);
 
-done:
 	TRACE_JVMTI_EVENT_RETURN(jvmtiHookCheckForDataBreakpoint);
 }
 
