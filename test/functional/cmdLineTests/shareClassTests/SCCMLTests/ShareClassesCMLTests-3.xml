@@ -1592,10 +1592,6 @@
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Maximum space for AOT bytes[\s]*= 8388608</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Reserved space for JIT data bytes[\s]*= 2097152</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Maximum space for JIT data bytes[\s]*= 4194304</output>
-		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
-		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
-		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
-		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 	
 	<!-- Tests 176-179 are used to ensure cache created without 'enableBCI' is usable with 'enableBCI' option and vice-versa -->

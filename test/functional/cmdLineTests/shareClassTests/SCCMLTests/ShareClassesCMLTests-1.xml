@@ -723,10 +723,6 @@
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class debug area % used[\s]*= 0%</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class LocalVariableTable bytes[\s]*= 0</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class LineNumberTable bytes[\s]*= 0</output>
-		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
-		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
-		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
-		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 	
 	<exec command="rm -f javacore.txt" quiet="false"/>
