@@ -300,6 +300,7 @@
    java_util_HashMap_putImpl,
    java_util_HashMap_resize,
    java_util_HashMapHashIterator_nextNode,
+   java_util_HashMapHashIterator_init,
    java_util_zip_CRC32_update,
    java_util_zip_CRC32_updateBytes,
    java_util_zip_CRC32_updateByteBuffer,
