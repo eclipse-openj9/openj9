@@ -3801,6 +3801,7 @@ TR_J9VMBase::lowerMultiANewArray(TR::Compilation * comp, TR::Node * root, TR::Tr
    else
       TR_ASSERT(false, "Number of dims in multianewarray is not constant");
 
+   bool secondDimConstNonZero = (root->getChild(2)->getOpCode().isLoadConst() && (root->getChild(2)->getInt() != 0));
 
    // Allocate a temp to hold the array of dimensions
    //
@@ -3832,7 +3833,10 @@ TR_J9VMBase::lowerMultiANewArray(TR::Compilation * comp, TR::Node * root, TR::Tr
    TR::Node * tempRef = TR::Node::createWithSymRef(root, TR::loadaddr,0,new (comp->trHeapMemory()) TR::SymbolReference(comp->getSymRefTab(), temp));
    root->setAndIncChild(0,tempRef);
    root->setNumChildren(3);
-   TR::Node::recreate(root, TR::acall);
+   
+   static bool recreateRoot = feGetEnv("TR_LowerMultiANewArrayRecreateRoot") ? true : false;
+   if (!TR::Compiler->target.is64Bit() || recreateRoot || dims > 2 || secondDimConstNonZero)
+      TR::Node::recreate(root, TR::acall);
 
    return treeTop;
    }
