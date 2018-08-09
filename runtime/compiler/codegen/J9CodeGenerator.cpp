@@ -2233,7 +2233,7 @@ J9::CodeGenerator::doInstructionSelection()
    if (self()->getDebug())
       self()->getDebug()->roundAddressEnumerationCounters();
 
-   self()->endInstructionSelection();
+   endInstructionSelection();
 
    if (self()->comp()->getOption(TR_TraceCG))
       diagnostic("</selection>\n");

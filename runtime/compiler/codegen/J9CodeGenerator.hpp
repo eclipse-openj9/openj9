@@ -158,8 +158,8 @@ public:
    bool hasSignCleans() { return _flags4.testAny(HasSignCleans);}
    void setHasSignCleans() { _flags4.set(HasSignCleans);}
 
-   bool alwaysGeneratesAKnownCleanSign(TR::Node *node) { return false; } // no virt
-   bool alwaysGeneratesAKnownPositiveCleanSign(TR::Node *node) { return false; } // no virt
+   virtual bool alwaysGeneratesAKnownCleanSign(TR::Node *node) { return false; } // no virt
+   virtual bool alwaysGeneratesAKnownPositiveCleanSign(TR::Node *node) { return false; } // no virt
    virtual TR_RawBCDSignCode alwaysGeneratedSign(TR::Node *node) { return raw_bcd_sign_unknown; } // no virt
 
    void foldSignCleaningIntoStore();
@@ -271,7 +271,7 @@ private:
 
    uint16_t changeParmLoadsToRegLoads(TR::Node*node, TR::Node **regLoads, TR_BitVector *globalRegsWithRegLoad, TR_BitVector &killedParms, vcount_t visitCount); // returns number of RegLoad nodes created
 
-   static bool wantToPatchClassPointer(TR::Compilation *comp,
+   virtual static bool wantToPatchClassPointer(TR::Compilation *comp,
                                        const TR_OpaqueClassBlock *allegedClassPointer,
                                        const char *locationDescription,
                                        const void *location)
@@ -409,7 +409,7 @@ public:
     *    The number of nodes between a monext and the next monent before
     *    transforming a monitored region with transactional lock elision.
     */
-   int32_t getMinimumNumberOfNodesBetweenMonitorsForTLE() { return 15; }
+   virtual int32_t getMinimumNumberOfNodesBetweenMonitorsForTLE() { return 15; }
 
 private:
 

@@ -1619,7 +1619,7 @@ J9::Node::hasKnownCleanSign()
    {
    TR_ASSERT(self()->getType().isBCD(), "hasKnownCleanSign only supported for BCD type nodes\n");
    TR_ASSERT(self()->hasDecimalInfo(), "attempting to access _decimalInfo._hasCleanSign field for node %s %p that does not have it", self()->getOpCode().getName(), self());
-   if (self()->alwaysGeneratesAKnownCleanSign())
+   if (alwaysGeneratesAKnownCleanSign())
       return true;
    else
       return self()->signStateIsKnown() && _unionPropertyB._decimalInfo._hasCleanSign == 1;
