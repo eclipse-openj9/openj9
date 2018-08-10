@@ -48,7 +48,11 @@
 #define sigsetjmp(env, savesigs) setjmp(env)
 #define siglongjmp(env, val) longjmp(env, val)
 #else /* defined(WIN32) */
+#if defined(OSX)
+#define JVMLIB "libjvm.dylib"
+#else /* OSX */
 #define JVMLIB "libjvm.so"
+#endif /* OSX */
 #define PATHSEP "/"
 #endif /* defined(WIN32) */
 
