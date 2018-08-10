@@ -12,6 +12,9 @@ JITaaSCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<TR_
                                TR_PersistentCHTable *table, TR::Compilation *comp);
 
 void
+JITaaSCommitOSRVirtualGuards(TR::Compilation *comp, std::vector<VirtualGuardForCHTable> &vguards);
+
+void
 JITaaSAddAnAssumptionForEachSubClass(TR_PersistentCHTable   *table,
                                                 TR_PersistentClassInfo *clazz,
                                                 std::vector<TR_VirtualGuardSite> &list,
@@ -52,24 +55,27 @@ VirtualGuardInfoForCHTable getImportantVGuardInfo(TR::Compilation *comp, TR_Virt
       return info;
 
    TR::SymbolReference *symRef = vguard->getSymbolReference();
-   TR::MethodSymbol *methodSymbol = symRef->getSymbol()->castToMethodSymbol();
-   TR::ResolvedMethodSymbol *resolvedMethodSymbol = methodSymbol->getResolvedMethodSymbol();
-   info._hasResolvedMethodSymbol = resolvedMethodSymbol != nullptr;
-   info._cpIndex = symRef->getCPIndex();
-   info._owningMethod = static_cast<TR_ResolvedJ9JITaaSServerMethod*>(symRef->getOwningMethod(comp))->getRemoteMirror();
-   info._isInterface = methodSymbol->isInterface();
-   info._guardedMethod = resolvedMethodSymbol ? static_cast<TR_ResolvedJ9JITaaSServerMethod*>(resolvedMethodSymbol->getResolvedMethod())->getRemoteMirror() : nullptr;
-   info._offset = symRef->getOffset();
+   if (symRef)
+      {
+      TR::MethodSymbol *methodSymbol = symRef->getSymbol()->castToMethodSymbol();
+      TR::ResolvedMethodSymbol *resolvedMethodSymbol = methodSymbol->getResolvedMethodSymbol();
+      info._hasResolvedMethodSymbol = resolvedMethodSymbol != nullptr;
+      info._cpIndex = symRef->getCPIndex();
+      info._owningMethod = static_cast<TR_ResolvedJ9JITaaSServerMethod*>(symRef->getOwningMethod(comp))->getRemoteMirror();
+      info._isInterface = methodSymbol->isInterface();
+      info._guardedMethod = resolvedMethodSymbol ? static_cast<TR_ResolvedJ9JITaaSServerMethod*>(resolvedMethodSymbol->getResolvedMethod())->getRemoteMirror() : nullptr;
+      info._offset = symRef->getOffset();
 
-   info._isInlineGuard = vguard->isInlineGuard();
-   TR_DevirtualizedCallInfo *dc;
-   
-   if (resolvedMethodSymbol)
-      info._guardedMethodThisClass = vguard->isInlineGuard()
-         ? vguard->getThisClass()
-         : ((dc = comp->findDevirtualizedCall(vguard->getCallNode()))
-            ? dc->_thisType
-            : resolvedMethodSymbol->getResolvedMethod()->classOfMethod());
+      info._isInlineGuard = vguard->isInlineGuard();
+      TR_DevirtualizedCallInfo *dc;
+
+      if (resolvedMethodSymbol)
+         info._guardedMethodThisClass = vguard->isInlineGuard()
+            ? vguard->getThisClass()
+            : ((dc = comp->findDevirtualizedCall(vguard->getCallNode()))
+               ? dc->_thisType
+               : resolvedMethodSymbol->getResolvedMethod()->classOfMethod());
+      }
 
    info._thisClass = vguard->getThisClass();
    info._mergedWithHCRGuard = vguard->mergedWithHCRGuard();
@@ -149,6 +155,11 @@ TR_CHTable::computeDataForCHTableCommit(TR::Compilation *comp)
    for (TR_ClassExtendCheck * cec = comp->getClassesThatShouldNotBeNewlyExtended()->getFirst(); cec; cec = cec->getNext())
       compClassesThatShouldNotBeNewlyExtended.emplace_back(cec->_clazz);
 
+   auto *compClassesForOSRRedefinition = comp->getClassesForOSRRedefinition();
+   std::vector<TR_OpaqueClassBlock*> classesForOSRRedefinition(compClassesForOSRRedefinition->size());
+   for (int i = 0; i < compClassesForOSRRedefinition->size(); ++i)
+      classesForOSRRedefinition[i] = (*compClassesForOSRRedefinition)[i];
+
    uint8_t *startPC = comp->cg()->getCodeStart();
 
    return std::make_tuple(classes,
@@ -158,6 +169,7 @@ TR_CHTable::computeDataForCHTableCommit(TR::Compilation *comp)
                           serialVGuards,
                           compClassesThatShouldNotBeLoaded,
                           compClassesThatShouldNotBeNewlyExtended,
+                          classesForOSRRedefinition,
                           startPC);
    }
 
@@ -194,7 +206,8 @@ bool JITaaSCHTableCommit(
    std::vector<VirtualGuardForCHTable> &vguards = std::get<4>(data);
    FlatClassLoadCheck &compClassesThatShouldNotBeLoaded = std::get<5>(data);
    FlatClassExtendCheck &compClassesThatShouldNotBeNewlyExtended = std::get<6>(data);
-   uint8_t *serverStartPC = std::get<7>(data);
+   std::vector<TR_OpaqueClassBlock*> &classesForOSRRedefinition = std::get<7>(data);
+   uint8_t *serverStartPC = std::get<8>(data);
    uint8_t *startPC = (uint8_t*) metaData->startPC;
 
    if (comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE())
@@ -251,7 +264,7 @@ bool JITaaSCHTableCommit(
          }
       }
 
-    if (!classesThatShouldNotBeNewlyExtended.empty())
+   if (!classesThatShouldNotBeNewlyExtended.empty())
       {
       // keep a list of classes that were set visited so that we can
       // easily reset the visited flag later-on
@@ -295,11 +308,15 @@ bool JITaaSCHTableCommit(
       if (invalidAssumption) return false;
       } //  if (classesThatShouldNotBeNewlyExtended)
 
+   comp->getClassesForOSRRedefinition()->clear();
+   for (auto &clazz : classesForOSRRedefinition)
+      comp->addClassForOSRRedefinition(clazz);
+
    if (!vguards.empty())
       {
       static bool dontGroupOSRAssumptions = (feGetEnv("TR_DontGroupOSRAssumptions") != NULL);
-      //if (!dontGroupOSRAssumptions)
-         //JITaaSCommitOSRVirtualGuards(comp, vguards);
+      if (!dontGroupOSRAssumptions)
+         JITaaSCommitOSRVirtualGuards(comp, vguards);
 
       for (auto &guard : vguards)
          {
@@ -348,21 +365,22 @@ bool JITaaSCHTableCommit(
 
    return true;
    }
-/* TODO
+
 void
-TR_CHTable::commitOSRVirtualGuards(TR::Compilation *comp, TR::list<TR_VirtualGuard*> &vguards)
+JITaaSCommitOSRVirtualGuards(TR::Compilation *comp, std::vector<VirtualGuardForCHTable> &vguards)
    {
    // Count patch sites with OSR assumptions
    int osrSites = 0;
    TR_VirtualGuardSite *onlySite = NULL;
-   for (auto info = vguards.begin(); info != vguards.end(); ++info)
+   for (auto &guard : vguards)
       {
-      if ((*info)->getKind() == TR_OSRGuard || (*info)->mergedWithOSRGuard())
+      auto &info = std::get<0>(guard);
+      auto &sites = std::get<1>(guard);
+      if (info._kind == TR_OSRGuard || info._mergedWithOSRGuard)
          {
-         List<TR_VirtualGuardSite> &sites = (*info)->getNOPSites();
-         if (sites.getSize() > 0)
-            onlySite = sites.getListHead()->getData();
-         osrSites += sites.getSize();
+         if (sites.size() > 0)
+            onlySite = &sites[0];
+         osrSites += sites.size();
          }
       }
 
@@ -374,19 +392,19 @@ TR_CHTable::commitOSRVirtualGuards(TR::Compilation *comp, TR::list<TR_VirtualGua
       // Only one patch point, create an assumption for each class
       for (int i = 0; i < clazzes->size(); ++i)
          TR_PatchNOPedGuardSiteOnClassRedefinition
-            ::make(comp->fe(), comp->trPersistentMemory(), (*clazzes)[i], onlySite.getLocation(), onlySite.getDestination(), comp->getMetadataAssumptionList());
+            ::make(comp->fe(), comp->trPersistentMemory(), (*clazzes)[i], onlySite->getLocation(), onlySite->getDestination(), comp->getMetadataAssumptionList());
       }
    else if (osrSites > 1)
       {
       // Several points to patch, create collection
       TR::PatchSites *points = new (comp->trPersistentMemory()) TR::PatchSites(comp->trPersistentMemory(), osrSites);
-      for (auto info = vguards.begin(); info != vguards.end(); ++info)
+      for (auto &guard : vguards)
          {
-         if ((*info)->getKind() == TR_OSRGuard || (*info)->mergedWithOSRGuard())
+         auto &info = std::get<0>(guard);
+         auto &sites = std::get<1>(guard);
+         if (info._kind == TR_OSRGuard || info._mergedWithOSRGuard)
             { 
-            List<TR_VirtualGuardSite> &sites = (*info)->getNOPSites();
-            ListIterator<TR_VirtualGuardSite> it(&sites);
-            for (TR_VirtualGuardSite *site = it.getFirst(); site; site = it.getNext())
+            for (auto &site : sites)
                points->add(site.getLocation(), site.getDestination());
             }
          }
@@ -399,7 +417,7 @@ TR_CHTable::commitOSRVirtualGuards(TR::Compilation *comp, TR::list<TR_VirtualGua
    comp->setHasClassRedefinitionAssumptions();
    return;
    }
-*/
+
 void
 JITaaSCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<TR_VirtualGuardSite> &sites,
                                TR_PersistentCHTable *table, TR::Compilation *comp)
@@ -407,16 +425,13 @@ JITaaSCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<TR_
    // If this is an OSR guard or another kind that has been marked as necessary to patch
    // in OSR, add a runtime assumption for every class that generated fear
    //
-   // TODO
-   /*
    static bool dontGroupOSRAssumptions = (feGetEnv("TR_DontGroupOSRAssumptions") != NULL);
-   if (dontGroupOSRAssumptions && (info->getKind() == TR_OSRGuard || info->mergedWithOSRGuard()))
+   if (dontGroupOSRAssumptions && (info->_kind == TR_OSRGuard || info->_mergedWithOSRGuard))
       {
       TR_Array<TR_OpaqueClassBlock*> *clazzes = comp->getClassesForOSRRedefinition();
       if (clazzes)
          {
-         ListIterator<TR_VirtualGuardSite> it(&sites);
-         for (TR_VirtualGuardSite *site = it.getFirst(); site; site = it.getNext())
+         for (TR_VirtualGuardSite &site : sites)
             {
             for (uint32_t i = 0; i < clazzes->size(); ++i)
                TR_PatchNOPedGuardSiteOnClassRedefinition
@@ -428,14 +443,13 @@ JITaaSCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<TR_
          }
 
       // If this was an OSR guard, there is nothing left to do
-      if (info->getKind() == TR_OSRGuard)
+      if (info->_kind == TR_OSRGuard)
          return;
       }
 
    // OSR guards are specially handled
-   if (!dontGroupOSRAssumptions && info->getKind() == TR_OSRGuard)
+   if (!dontGroupOSRAssumptions && info->_kind == TR_OSRGuard)
       return;
-      */
 
    TR_ResolvedMethod     *guardedMethod        = 0;
    TR_OpaqueClassBlock     *guardedClass         = 0;

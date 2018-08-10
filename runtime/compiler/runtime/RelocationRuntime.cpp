@@ -879,6 +879,9 @@ TR_RelocationRuntime::relocateMethodMetaData(UDATA codeRelocationAmount, UDATA d
       _exceptionTable->riData = (void *) (((U_8 *)_exceptionTable->riData) + dataRelocationAmount);
       }
 
+   if (_exceptionTable->osrInfo)
+      _exceptionTable->osrInfo = (void *) (((U_8 *)_exceptionTable->osrInfo) + dataRelocationAmount);
+
    #if 0
       fprintf(stdout, "-> %p", _exceptionTable->ramMethod);
       if (classReloAmount())

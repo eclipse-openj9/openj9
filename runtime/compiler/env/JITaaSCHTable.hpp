@@ -52,6 +52,7 @@ using CHTableCommitData = std::tuple<
       std::vector<VirtualGuardForCHTable>, // vguards
       FlatClassLoadCheck, // comp->getClassesThatShouldNotBeLoaded
       FlatClassExtendCheck, // comp->getClassesThatShouldNotBeNewlyExtended
+      std::vector<TR_OpaqueClassBlock*>, // classesForOSRRedefinition
       uint8_t*>; // startPC
 
 

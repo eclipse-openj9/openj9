@@ -2255,7 +2255,6 @@ J9::Options::fePostProcessJIT(void * base)
       self()->setOption(TR_DisableSamplingJProfiling);
       self()->setOption(TR_DisableSharedCacheHints);
       self()->setIsVariableHeapBaseForBarrierRange0(true);
-      self()->setOption(TR_DisableOSR);
       self()->setOption(TR_DisableProfiling); // JITaaS limitation, JIT profiling data is not available to remote compiles yet
       self()->setOption(TR_DisableEDO); // JITaaS limitation, EDO counters are not relocatable yet
       self()->setOption(TR_DisableKnownObjectTable);
