@@ -469,6 +469,7 @@ public class StackWalker
 							break WALKING_LOOP;
 						}
 						walkState.previousFrameFlags = walkState.frameFlags;
+						walkState.resolveFrameFlags = new UDATA(0);
 	
 					} // End of (! startAtJITFrame)
 	
