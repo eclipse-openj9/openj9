@@ -919,6 +919,39 @@ done:
 }
 
 
+static void
+fixWatchedFields(J9JavaVM *vm, J9HashTable *classHashTable)
+{
+	if (NULL != classHashTable) {
+		J9JVMTIData *jvmtiData = vm->jvmtiData;
+		pool_state envPoolState;
+		J9JVMTIEnv *j9env = pool_startDo(jvmtiData->environments, &envPoolState);
+		while (j9env != NULL) {
+			/* CMVC 196966: only inspect live (not disposed) environments */
+			if (0 == (j9env->flags & J9JVMTIENV_FLAG_DISPOSED)) {
+				J9HashTableState walkState;
+				J9JVMTIWatchedClass *watchedClass = hashTableStartDo(j9env->watchedClasses, &walkState);
+				while (NULL != watchedClass) {
+					J9JVMTIClassPair exemplar;
+					J9JVMTIClassPair *result = NULL;
+
+					exemplar.originalRAMClass = watchedClass->clazz;
+					result = hashTableFind(classHashTable, &exemplar);
+					if (NULL != result) {
+						J9Class *replacementRAMClass = result->replacementClass.ramClass;
+						if (NULL != replacementRAMClass) {
+							watchedClass->clazz = replacementRAMClass;
+						}
+					}
+					watchedClass = hashTableNextDo(&walkState);
+				}
+			}
+			j9env = pool_nextDo(&envPoolState);
+		}
+	}
+}
+
+
 static jvmtiError
 redefineClassesCommon(jvmtiEnv* env,
 					  jint class_count,
@@ -1099,6 +1132,9 @@ redefineClassesCommon(jvmtiEnv* env,
 
 				/* Flush the reflect method cache */
 				flushClassLoaderReflectCache(currentThread, classPairs);
+
+				/* Fix watched fields */
+				fixWatchedFields(vm, classPairs);
 
 				/* Indicate that a redefine has occurred */
 				vm->hotSwapCount += 1;
