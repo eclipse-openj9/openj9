@@ -418,6 +418,7 @@ def set_job_variables(job_type) {
         case "pipeline":
             // set variables for a pipeline job
             set_repos_variables()
+            set_vendor_variables()
             set_test_targets()
             set_slack_channel()
             set_job_names()
@@ -486,6 +487,119 @@ def convert_url(value) {
     }
 
     return value
+}
+
+/*
+* Checks for vendor test sources and initializes variables required to clone the
+* vendor test source Git repositories. Uses variable files when build parameters
+* are not provided.
+*/
+def set_vendor_variables() {
+    VENDOR_TEST_REPOS_MAP = [:]
+    VENDOR_TEST_BRANCHES_MAP = [:]
+    VENDOR_TEST_DIRS_MAP = [:]
+    VENDOR_TEST_SHAS_MAP = [:]
+
+    // initialize variables from build parameters
+    // VENDOR_TEST* build parameters are comma separated string parameters
+    // convert each comma separated string parameter to array
+    def branches = []
+    if (params.VENDOR_TEST_BRANCHES) {
+        branches.addAll(params.VENDOR_TEST_BRANCHES.tokenize(','))
+    }
+
+    def shas = []
+    if (params.VENDOR_TEST_SHAS) {
+        shas.addAll(params.VENDOR_TEST_SHAS.tokenize(','))
+    }
+
+    def dirs = []
+    if (params.VENDOR_TEST_DIRS) {
+        dirs.addAll(params.VENDOR_TEST_DIRS.tokenize(','))
+    }
+
+    BUILD_LIST = params.BUILD_LIST
+    if (!BUILD_LIST) {
+        BUILD_LIST = ''
+    }
+
+    if (params.VENDOR_TEST_REPOS) {
+        // populate the VENDOR_TEST_* maps
+
+        params.VENDOR_TEST_REPOS.tokenize(',').eachWithIndex { repoURL, index ->
+            repoURL = repoURL.trim()
+            REPO_NAME = get_repo_name_from_url(repoURL)
+            VENDOR_TEST_REPOS_MAP[REPO_NAME] = repoURL
+
+            if (branches[index]) {
+                VENDOR_TEST_BRANCHES_MAP[REPO_NAME] = branches[index].trim()
+            } else {
+                error("Missing branch for ${repoURL} from VENDOR_TEST_BRANCHES parameter")
+            }
+
+            if (dirs[index]) {
+                VENDOR_TEST_DIRS_MAP[REPO_NAME] = dirs[index].trim()
+            }
+
+            if (shas[index]) {
+                VENDOR_TEST_SHAS_MAP[REPO_NAME] = shas[index].trim()
+            }
+        }
+    } else {
+        // fetch from variables file
+
+        if (VARIABLES.vendor_source && VARIABLES.vendor_source.test) {
+            // parse the vendor source multi-map 
+            // and populate the VENDOR_TEST_* maps
+
+             VARIABLES.vendor_source.test.each { entry ->
+                REPO_NAME = get_repo_name_from_url(entry.get('repo'))
+
+                VENDOR_TEST_REPOS_MAP[REPO_NAME] = entry.get('repo')
+                VENDOR_TEST_BRANCHES_MAP[REPO_NAME] = entry.get('branch')
+                VENDOR_TEST_DIRS_MAP[REPO_NAME] = entry.get('directory')
+
+                if (entry.get('build_list')) {
+                    // a comma separated list of vendor tests projects
+                    if (BUILD_LIST) {
+                        BUILD_LIST += ","
+                    }
+                    BUILD_LIST += entry.get('build_list').join(',')
+               }
+            }
+        }
+    }
+
+    // the downstream job expects VENDOR_TEST* parameters to be comma separated strings
+    // convert VENDOR_TEST* maps to strings
+    if (VENDOR_TEST_REPOS_MAP) {
+        VENDOR_TEST_REPOS = VENDOR_TEST_REPOS_MAP.values().join(',')
+    } else {
+        VENDOR_TEST_REPOS = ''
+    }
+
+    if (VENDOR_TEST_BRANCHES_MAP) {
+        VENDOR_TEST_BRANCHES = VENDOR_TEST_BRANCHES_MAP.values().join(',')
+    } else {
+        VENDOR_TEST_BRANCHES = ''
+    }
+
+    if (!VENDOR_TEST_SHAS_MAP) {
+        VENDOR_TEST_SHAS = ''
+    }
+
+    if (VENDOR_TEST_DIRS_MAP) {
+        VENDOR_TEST_DIRS = VENDOR_TEST_DIRS_MAP.values().join(',')
+    } else {
+        VENDOR_TEST_DIRS = ''
+    }
+}
+
+/*
+*  Extracts the Git repository name from URL and converts it to upper case.
+*/
+def get_repo_name_from_url(URL) {
+    return URL.substring(URL.lastIndexOf('/') + 1, URL.lastIndexOf('.git')).toUpperCase()
 }
 
 return this
