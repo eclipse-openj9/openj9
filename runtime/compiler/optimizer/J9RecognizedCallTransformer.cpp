@@ -102,11 +102,39 @@ void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::Tr
    treetop->insertAfter(TR::TreeTop::create(comp(), TR::Node::create(node, TR::treetop, 1, newCallNode)));
    }
 
+void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop, TR::Node* node, TR::SymbolReferenceTable::CommonNonhelperSymbol helper)
+   {
+   node->setSymbolReference(comp()->getSymRefTab()->findOrCreateCodeGenInlinedHelper(helper));
+   node->removeChild(0);
+   bool safeToSkipDiamond = !strncmp(comp()->getCurrentMethod()->classNameChars(), "java/util/concurrent/atomic/", strlen("java/util/concurrent/atomic/"));
+
+   TR_Array<TR::Node*> params(trMemory(), node->getNumChildren()-2);
+   for (int i = 2; i < node->getNumChildren(); i++)
+      {
+      params.add(TR::TransformUtil::saveNodeToTempSlot(comp(), node->getChild(i), treetop));
+      }
+
+   auto address = TR::TransformUtil::calculateUnsafeAddress(treetop, node->getChild(0), node->getChild(1), comp(), false, safeToSkipDiamond);
+   node->removeAllChildren();
+   node->setNumChildren(params.size()+1);
+   node->setAndIncChild(0, address);
+   for (int i = 0; i < params.size(); i++)
+      {
+      node->setAndIncChild(i+1, params[i]);
+      }
+   }
+
 bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
    {
    auto node = treetop->getNode()->getFirstChild();
    switch(node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod())
       {
+      case TR::sun_misc_Unsafe_getAndAddInt:
+      case TR::sun_misc_Unsafe_getAndSetInt:
+         return TR::Compiler->target.cpu.isX86() && !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets();
+      case TR::sun_misc_Unsafe_getAndAddLong:
+      case TR::sun_misc_Unsafe_getAndSetLong:
+         return TR::Compiler->target.cpu.isX86() && !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && TR::Compiler->target.is64Bit() && !TR::Compiler->om.canGenerateArraylets();
       case TR::java_lang_Class_isAssignableFrom:
          return cg()->supportsInliningOfIsAssignableFrom();
       case TR::java_lang_Integer_rotateLeft:
@@ -133,6 +161,18 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop* treetop)
    auto node = treetop->getNode()->getFirstChild();
    switch(node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod())
       {
+      case TR::sun_misc_Unsafe_getAndAddInt:
+         processUnsafeAtomicCall(treetop, node, TR::SymbolReferenceTable::atomicFetchAndAdd32BitSymbol);
+         break;
+      case TR::sun_misc_Unsafe_getAndSetInt:
+         processUnsafeAtomicCall(treetop, node, TR::SymbolReferenceTable::atomicSwap32BitSymbol);
+         break;
+      case TR::sun_misc_Unsafe_getAndAddLong:
+         processUnsafeAtomicCall(treetop, node, TR::SymbolReferenceTable::atomicFetchAndAdd64BitSymbol);
+         break;
+      case TR::sun_misc_Unsafe_getAndSetLong:
+         processUnsafeAtomicCall(treetop, node, TR::SymbolReferenceTable::atomicSwap64BitSymbol);
+         break;
       case TR::java_lang_Class_isAssignableFrom:
          process_java_lang_Class_IsAssignableFrom(treetop, node);
          break;

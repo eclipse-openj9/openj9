@@ -366,6 +366,9 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
 
    switch (calleeMethod->getRecognizedMethod())
       {
+      case TR::sun_misc_Unsafe_getAndAddLong:
+      case TR::sun_misc_Unsafe_getAndSetLong:
+         return TR::Compiler->target.is32Bit();
       case TR::java_lang_J9VMInternals_fastIdentityHashCode:
       case TR::java_lang_Class_getSuperclass:
       case TR::java_lang_String_regionMatchesInternal:
@@ -410,6 +413,11 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
          return !calleeMethod->isNative();
       default:
          break;
+      }
+
+   if (!strncmp(calleeMethod->classNameChars(), "java/util/concurrent/atomic/", strlen("java/util/concurrent/atomic/")))
+      {
+      return true;
       }
 
    return false;

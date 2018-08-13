@@ -24,6 +24,7 @@
 #define J9RECOGNIZEDCALLTRANSFORMER_INCL
 
 #include "optimizer/OMRRecognizedCallTransformer.hpp"
+#include "compile/SymbolReferenceTable.hpp"
 
 namespace J9
 {
@@ -76,6 +77,20 @@ class RecognizedCallTransformer : public OMR::RecognizedCallTransformer
     *     \endcode
     */
    void process_java_lang_StringUTF16_toBytes(TR::TreeTop* treetop, TR::Node* node);
+   /** \brief
+    *     Transforms certain Unsafe atomic helpers into a CodeGen inlined helper with equivalent semantics.
+    *
+    *  \param treetop
+    *     The treetop which anchors the call node.
+    
+    *  \param node
+    *     The call node representing the Unsafe call
+    *
+    *  \param helper
+    *     The CodeGen inlined helper being transformed into
+    *
+    */
+   void processUnsafeAtomicCall(TR::TreeTop* treetop, TR::Node* node, TR::SymbolReferenceTable::CommonNonhelperSymbol helper);
    };
 
 }
