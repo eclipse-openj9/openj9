@@ -180,17 +180,12 @@ public:
 
    static TR_S390MachineType TO_PORTLIB_get390zLinuxMachineType();
    static TR_S390MachineType TO_PORTLIB_get390zOSMachineType();
-   static bool TO_PORTLIB_get390zLinux_cpuinfoFeatureFlag(const char *feature);
-   static bool TO_PORTLIB_get390zLinux_supportsStoreExtendedFacilityList();
    static bool TO_PORTLIB_get390_supportsZNext();
    static bool TO_PORTLIB_get390_supportsZ14();
    static bool TO_PORTLIB_get390_supportsZ13();
    static bool TO_PORTLIB_get390_supportsZ6();
    static bool TO_PORTLIB_get390_supportsZGryphon();
    static bool TO_PORTLIB_get390_supportsZHelix();
-   static bool TO_PORTLIB_get390zLinux_supportsHPRDebug();
-   static bool TO_PORTLIB_get390zLinux_SupportTM();
-   static bool TO_PORTLIB_get390zLinux_supportsVectorFacility();
    static bool TO_PORTLIB_get390zOS_N3Support();
    static bool TO_PORTLIB_get390zOS_ZArchSupport();
    static bool TO_PORTLIB_get390zOS_TrexSupport();
