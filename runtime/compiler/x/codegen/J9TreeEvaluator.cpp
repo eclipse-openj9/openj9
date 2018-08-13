@@ -13069,7 +13069,7 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
                   }
                else
                   {
-                  generateRegImmInstruction(CMPRegImms(), node, owningObjectReg, (int32_t)che, cg);
+                  generateRegImmInstruction(CMPRegImm4(), node, owningObjectReg, (int32_t)che, cg);
                   }
                }
             else
@@ -13160,7 +13160,7 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
                }
             else
                {
-               generateRegImmInstruction(CMPRegImms(), node, checkDest ? owningObjectReg : srcReg, (int32_t)che, cg);
+               generateRegImmInstruction(CMPRegImm4(), node, checkDest ? owningObjectReg : srcReg, (int32_t)che, cg);
                }
             }
          else
