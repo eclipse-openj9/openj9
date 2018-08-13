@@ -3150,6 +3150,10 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {x(TR::sun_misc_Unsafe_staticFieldBase,               "staticFieldBase",   "(Ljava/lang/reflect/Field;)Ljava/lang/Object")},
       {x(TR::sun_misc_Unsafe_staticFieldOffset,             "staticFieldOffset", "(Ljava/lang/reflect/Field;)J")},
       {x(TR::sun_misc_Unsafe_objectFieldOffset,             "objectFieldOffset", "(Ljava/lang/reflect/Field;)J")},
+      {x(TR::sun_misc_Unsafe_getAndAddInt,                  "getAndAddInt",      "(Ljava/lang/Object;JI)I")},
+      {x(TR::sun_misc_Unsafe_getAndSetInt,                  "getAndSetInt",      "(Ljava/lang/Object;JI)I")},
+      {x(TR::sun_misc_Unsafe_getAndAddLong,                 "getAndAddLong",     "(Ljava/lang/Object;JJ)J")},
+      {x(TR::sun_misc_Unsafe_getAndSetLong,                 "getAndSetLong",     "(Ljava/lang/Object;JJ)J")},
 
       {x(TR::sun_misc_Unsafe_putBooleanOrdered_jlObjectJZ_V,       "putOrderedBoolean", "(Ljava/lang/Object;JZ)V")},
       {x(TR::sun_misc_Unsafe_putByteOrdered_jlObjectJB_V,          "putOrderedByte",    "(Ljava/lang/Object;JB)V")},
@@ -4734,8 +4738,11 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
             case TR::sun_misc_Unsafe_loadFence:
             case TR::sun_misc_Unsafe_storeFence:
             case TR::sun_misc_Unsafe_fullFence:
-
             case TR::sun_misc_Unsafe_ensureClassInitialized:
+            case TR::sun_misc_Unsafe_getAndAddInt:
+            case TR::sun_misc_Unsafe_getAndSetInt:
+            case TR::sun_misc_Unsafe_getAndAddLong:
+            case TR::sun_misc_Unsafe_getAndSetLong:
 
             case TR::java_lang_Math_sqrt:
             case TR::java_lang_StrictMath_sqrt:

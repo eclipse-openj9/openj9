@@ -57,26 +57,24 @@ public:
    static TR::Node *transformStringIndexOfCall( TR::Compilation *, TR::Node *callNode);
    
    static TR::Node *transformIndirectLoad(TR::Compilation *, TR::Node *node);
-
    static bool transformDirectLoad(TR::Compilation *, TR::Node *node);
 
    static bool transformIndirectLoadChain(TR::Compilation *, TR::Node *node, TR::Node *baseExpression, TR::KnownObjectTable::Index baseKnownObject, TR::Node **removedNode);
-
    static bool transformIndirectLoadChainAt(TR::Compilation *, TR::Node *node, TR::Node *baseExpression, uintptrj_t *baseReferenceLocation, TR::Node **removedNode);
-
    static bool transformIndirectLoadChainImpl( TR::Compilation *, TR::Node *node, TR::Node *baseExpression, void *baseAddress, TR::Node **removedNode);
 
    static bool fieldShouldBeCompressed(TR::Node *node, TR::Compilation *comp);
 
    static TR::Block *insertNewFirstBlockForCompilation(TR::Compilation *comp);
-
    static TR::Node *calculateOffsetFromIndexInContiguousArray(TR::Compilation *, TR::Node * index, TR::DataType type);
-
    static TR::Node *calculateElementAddress(TR::Compilation *, TR::Node *array, TR::Node * index, TR::DataType type);
-
    static TR::Node *calculateIndexFromOffsetInContiguousArray(TR::Compilation *, TR::Node * offset, TR::DataType type);
+
+   static TR::Node* saveNodeToTempSlot(TR::Compilation* comp, TR::Node* node, TR::TreeTop* insertTreeTop);
    static void createTempsForCall(TR::Optimization* opt, TR::TreeTop *callTree);
    static void createDiamondForCall(TR::Optimization* opt, TR::TreeTop *callTree, TR::TreeTop *compareTree, TR::TreeTop *ifTree, TR::TreeTop *elseTree, bool changeBlockExtensions = false, bool markCold = false);
+
+   static TR::Node* calculateUnsafeAddress(TR::TreeTop* treetop, TR::Node* objectNode, TR::Node* offsetNode, TR::Compilation* comp, bool needsNullCheck, bool isNotStaticField);
    };
 
 }
