@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -122,21 +122,6 @@ public:
       return buildDirectDispatch(callNode, NULL, returnReg);
       }
 
-   /**   \brief
-    *    It generates a sequence that prepares parameters for the JIT helper function and generate a
-    *    direct call to a C helper function.
-    *
-    *    \param callNode The node for which you are generating a heleper call
-    *    \param deps The pre register dependency conditions that will be filled by this function to attach within ICF
-    *    \param returnReg TR::Register* allocated by consumer of this API to hold the result of the helper call,
-    *           If passed, this function uses it to store return value from helper instead of allocating new register
-    *    \param forceFastPath A flag to indicate that the given TR_RuntimeHelper should be built with fast path. Fast path
-    *           helpers have no internal control flow.
-    *    \return TR::Register *helperReturnResult, gets the return value of helper function and return to the evaluator.
-    */
-   TR::Register *buildDirectDispatch(TR::Node *callNode,
-                                     TR::RegisterDependencyConditions** deps,
-                                     TR::Register *returnReg=NULL,
-                                     bool forceFastPath = false);
+   TR::Register *buildDirectDispatch(TR::Node *callNode, TR::RegisterDependencyConditions** deps, TR::Register *returnReg=NULL);
    };
 }

@@ -2099,7 +2099,7 @@ done:
 		 * in the old stack, so does not need to be updated here.
 		 */
 
-		ret = callCFunction(REGISTER_ARGS, jniMethodStartAddress, receiverAddress, javaArgs, &bp, isStatic, &returnType, _sendMethod);
+		ret = callCFunction(REGISTER_ARGS, jniMethodStartAddress, receiverAddress, javaArgs, &bp, isStatic, &returnType);
 
 		if (isSynchronized) {
 			j9object_t syncObject = NULL;
@@ -2193,13 +2193,13 @@ done:;
 	}
 
 	VMINLINE FFI_Return
-	callCFunction(REGISTER_ARGS_LIST, void * jniMethodStartAddress, void *receiverAddress, UDATA *javaArgs, UDATA **bp, bool isStatic, U_8 *returnType, J9Method* method)
+	callCFunction(REGISTER_ARGS_LIST, void * jniMethodStartAddress, void *receiverAddress, UDATA *javaArgs, UDATA **bp, bool isStatic, U_8 *returnType)
 	{
 		/* Release VM access (all object pointers are indirect referenced from here on) */
 		UDATA relativeBP = _arg0EA - *bp;
 		updateVMStruct(REGISTER_ARGS);
 		VM_VMAccess::inlineExitVMToJNI(_currentThread);
-		VM_VMHelpers::beforeJNICall(_currentThread, method);
+		VM_VMHelpers::beforeJNICall(_currentThread);
 #if defined(J9VM_PORT_ZOS_CEEHDLRSUPPORT)
 		if (J9_ARE_ANY_BITS_SET(_vm->sigFlags, J9_SIG_ZOS_CEEHDLR)) {
 			_currentThread->tempSlot = (UDATA)jniMethodStartAddress;
@@ -2217,7 +2217,7 @@ done:;
 			}
 		}
 #endif /* J9VM_PORT_ZOS_CEEHDLRSUPPORT */
-		VM_VMHelpers::afterJNICall(_currentThread, method);
+		VM_VMHelpers::afterJNICall(_currentThread);
 		/* Reacquire VM access (all object pointers can be direct referenced from this point on) */
 		VM_VMAccess::inlineEnterVMFromJNI(_currentThread);
 		VMStructHasBeenUpdated(REGISTER_ARGS);

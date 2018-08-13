@@ -86,6 +86,8 @@ JIT_HELPER(jitNewArray);  // asm calling-convention helper
 JIT_HELPER(jitNewInstanceImplAccessCheck);  // asm calling-convention helper
 JIT_HELPER(jitNewObject);  // asm calling-convention helper
 JIT_HELPER(jitObjectHashCode);  // asm calling-convention helper
+JIT_HELPER(jitPostJNICallOffloadCheck);  // asm calling-convention helper
+JIT_HELPER(jitPreJNICallOffloadCheck);  // asm calling-convention helper
 JIT_HELPER(jitReleaseVMAccess);  // asm calling-convention helper
 JIT_HELPER(jitReportMethodEnter);  // asm calling-convention helper
 JIT_HELPER(jitReportMethodExit);  // asm calling-convention helper

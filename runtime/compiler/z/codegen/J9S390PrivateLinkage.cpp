@@ -40,7 +40,6 @@
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "infra/InterferenceGraph.hpp"
-#include "z/codegen/J9S390CHelperLinkage.hpp"
 #include "z/codegen/OpMemToMem.hpp"
 #include "z/codegen/S390Evaluator.hpp"
 #include "z/codegen/S390GenerateInstructions.hpp"
@@ -2690,6 +2689,673 @@ TR::S390PrivateLinkage::buildDirectCall(TR::Node * callNode, TR::SymbolReference
    return gcPoint;
    }
 
+
+void
+TR::S390PrivateLinkage::callPreJNICallOffloadCheck(TR::Node * callNode)
+   {
+   TR::CodeGenerator * codeGen = cg();
+   TR::LabelSymbol * offloadOffRestartLabel = generateLabelSymbol(codeGen);
+   TR::LabelSymbol * offloadOffSnippetLabel = generateLabelSymbol(codeGen);
+   TR::SymbolReference * offloadOffSymRef = codeGen->symRefTab()->findOrCreateRuntimeHelper(TR_S390jitPreJNICallOffloadCheck, false, false, false);
+
+   TR::Instruction *gcPoint = generateS390BranchInstruction(
+      codeGen, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, callNode, offloadOffSnippetLabel);
+   gcPoint->setNeedsGCMap(0);
+
+   codeGen->addSnippet(new (trHeapMemory()) TR::S390HelperCallSnippet(codeGen, callNode,
+      offloadOffSnippetLabel, offloadOffSymRef, offloadOffRestartLabel));
+   generateS390LabelInstruction(codeGen, TR::InstOpCode::LABEL, callNode, offloadOffRestartLabel);
+   }
+
+void
+TR::S390PrivateLinkage::callPostJNICallOffloadCheck(TR::Node * callNode)
+   {
+   TR::CodeGenerator * codeGen = cg();
+   TR::LabelSymbol * offloadOnRestartLabel = generateLabelSymbol(codeGen);
+   TR::LabelSymbol * offloadOnSnippetLabel = generateLabelSymbol(codeGen);
+
+   TR::Instruction *gcPoint = generateS390BranchInstruction(
+      codeGen, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, callNode, offloadOnSnippetLabel);
+   gcPoint->setNeedsGCMap(0);
+   TR::SymbolReference * offloadOnSymRef = codeGen->symRefTab()->findOrCreateRuntimeHelper(TR_S390jitPostJNICallOffloadCheck, false, false, false);
+   codeGen->addSnippet(new (trHeapMemory()) TR::S390HelperCallSnippet(codeGen, callNode,
+      offloadOnSnippetLabel, offloadOnSymRef, offloadOnRestartLabel));
+   generateS390LabelInstruction(codeGen, TR::InstOpCode::LABEL, callNode, offloadOnRestartLabel);
+   }
+
+void TR::S390PrivateLinkage::collapseJNIReferenceFrame(TR::Node * callNode,
+   TR::RealRegister * javaStackPointerRealRegister,
+   TR::Register * javaLitPoolVirtualRegister,
+   TR::Register * tempReg)
+   {
+   // must check to see if the ref pool was used and clean them up if so--or we
+   // leave a bunch of pinned garbage behind that screws up the gc quality forever
+   TR::CodeGenerator * codeGen = cg();
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
+   intptr_t flagValue = fej9->constJNIReferenceFrameAllocatedFlags();
+   TR::LabelSymbol * refPoolRestartLabel = generateLabelSymbol(codeGen);
+   TR::LabelSymbol * refPoolSnippetLabel = generateLabelSymbol(codeGen);
+
+   genLoadAddressConstant(codeGen, callNode, flagValue, tempReg, NULL, NULL, javaLitPoolVirtualRegister);
+
+   generateRXInstruction(codeGen, TR::InstOpCode::getAndOpCode(), callNode, tempReg,
+      new (trHeapMemory()) TR::MemoryReference(javaStackPointerRealRegister, (int32_t)fej9->constJNICallOutFrameFlagsOffset(), codeGen));
+   TR::Instruction *gcPoint =
+      generateS390BranchInstruction(codeGen, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, callNode, refPoolSnippetLabel);
+   gcPoint->setNeedsGCMap(0);
+
+   TR::SymbolReference * collapseSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390collapseJNIReferenceFrame, false, false, false);
+   codeGen->addSnippet(new (trHeapMemory()) TR::S390HelperCallSnippet(codeGen, callNode,
+      refPoolSnippetLabel, collapseSymRef, refPoolRestartLabel));
+   generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, refPoolRestartLabel);
+   }
+
+//JNI Callout frame
+//
+//       |-----|
+//       |     |      <-- constJNICallOutFrameSpecialTag() (For jni thunk, constJNICallOutFrameInvisibleTag())
+// 16/32 |-----|
+//       |     |      <-- savedPC ( we don't save anything here
+// 12/24 |-----|
+//       |     |      <-- return address for JNI call
+//  8/16 |-----|
+//       |     |      <-- constJNICallOutFrameFlags()
+//  4/8   -----
+//       |     |      <-- ramMethod for the native method
+//        -----       <-- stack pointer
+//
+
+// release vm access - use hardware registers because of the control flow
+// At this point: arguments for the native routine are all in place already, i.e., if there are
+//                more than 24 byte worth of arguments, some of them are on the stack. However,
+//                we potentially go out to call a helper before jumping to the native.
+//                but the helper call saves and restores all regs
+void
+TR::S390PrivateLinkage::setupJNICallOutFrame(TR::Node * callNode,
+   TR::RealRegister * javaStackPointerRealRegister,
+   TR::Register * methodMetaDataVirtualRegister,
+   TR::LabelSymbol * returnFromJNICallLabel,
+   TR::S390JNICallDataSnippet *jniCallDataSnippet)
+   {
+   TR::CodeGenerator * codeGen = cg();
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
+   TR::ResolvedMethodSymbol * cs = callNode->getSymbol()->castToResolvedMethodSymbol();
+   TR_ResolvedMethod * resolvedMethod = cs->getResolvedMethod();
+   TR::Instruction * cursor = NULL;
+
+   int32_t stackAdjust = (-5 * (int32_t)sizeof(intptrj_t));
+
+   cursor = generateRXYInstruction(codeGen, TR::InstOpCode::LAY, callNode, javaStackPointerRealRegister, generateS390MemoryReference(javaStackPointerRealRegister, stackAdjust, codeGen), cursor);
+
+   setOffsetToLongDispSlot( getOffsetToLongDispSlot() - stackAdjust );
+
+
+   // set up Java Thread
+   intptrj_t constJNICallOutFrameType = fej9->constJNICallOutFrameType();
+   TR_ASSERT( constJNICallOutFrameType < MAX_IMMEDIATE_VAL, "OMR::Z::Linkage::setupJNICallOutFrame constJNICallOutFrameType is too big for MVHI");
+
+   TR_ASSERT((fej9->thisThreadGetJavaFrameFlagsOffset() == fej9->thisThreadGetJavaLiteralsOffset() + TR::Compiler->om.sizeofReferenceAddress()) &&
+           fej9->thisThreadGetJavaLiteralsOffset() == fej9->thisThreadGetJavaPCOffset() + TR::Compiler->om.sizeofReferenceAddress()
+           , "The vmthread field order should be pc,literals,jitStackFrameFlags\n");
+
+   jniCallDataSnippet->setPC(constJNICallOutFrameType);
+   jniCallDataSnippet->setLiterals(0);
+   jniCallDataSnippet->setJitStackFrameFlags(0);
+
+   generateSS1Instruction(cg(), TR::InstOpCode::MVC, callNode, 3*(TR::Compiler->om.sizeofReferenceAddress()) - 1,
+         new (trHeapMemory()) TR::MemoryReference(methodMetaDataVirtualRegister, fej9->thisThreadGetJavaPCOffset(), codeGen),
+         new (trHeapMemory()) TR::MemoryReference(jniCallDataSnippet->getBaseRegister(), jniCallDataSnippet->getPCOffset(), codeGen));
+
+   // store out jsp
+   generateRXInstruction(codeGen, TR::InstOpCode::getStoreOpCode(), callNode, javaStackPointerRealRegister,
+     new (trHeapMemory()) TR::MemoryReference(methodMetaDataVirtualRegister,
+       fej9->thisThreadGetJavaSPOffset(), codeGen));
+
+   // JNI Callout Frame setup
+   // 0(sp) : RAM method for the native
+   intptrj_t ramMethod = (uintptrj_t) resolvedMethod->resolvedMethodAddress();
+   jniCallDataSnippet->setRAMMethod(ramMethod);
+
+   // 4[8](sp) : flags
+   intptrj_t flags = fej9->constJNICallOutFrameFlags();
+   jniCallDataSnippet->setJNICallOutFrameFlags(flags);
+
+   // 8[16](sp) : return address (savedCP)
+   jniCallDataSnippet->setReturnFromJNICall(returnFromJNICallLabel);
+
+   // 12[24](sp) : savedPC
+   jniCallDataSnippet->setSavedPC(0);
+
+   // 16[32](sp) : tag bits (savedA0)
+   intptr_t tagBits = fej9->constJNICallOutFrameSpecialTag();
+   // if the current method is simply a wrapper for the JNI call, hide the call-out stack frame
+   if (resolvedMethod == comp()->getCurrentMethod())
+      {
+      tagBits |= fej9->constJNICallOutFrameInvisibleTag();
+      }
+
+   jniCallDataSnippet->setTagBits(tagBits);
+
+   generateSS1Instruction(cg(), TR::InstOpCode::MVC, callNode, -stackAdjust - 1,
+         new (trHeapMemory()) TR::MemoryReference(javaStackPointerRealRegister, 0, codeGen),
+         new (trHeapMemory()) TR::MemoryReference(jniCallDataSnippet->getBaseRegister(), jniCallDataSnippet->getJNICallOutFrameDataOffset(), codeGen));
+
+   }
+
+
+/**
+ * release vm access - use hardware registers because of the control flow
+ * At this point: arguments for the native routine are all in place already, i.e., if there are
+ *                more than 24 byte worth of arguments, some of them are on the stack. However,
+ *                we potentially go out to call a helper before jumping to the native.
+ *                but the helper call saves and restores all regs
+ */
+void TR::J9S390JNILinkage::releaseVMAccessMask(TR::Node * callNode,
+   TR::Register * methodMetaDataVirtualRegister, TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg,
+   TR::S390JNICallDataSnippet * jniCallDataSnippet, TR::RegisterDependencyConditions * deps)
+   {
+   TR::LabelSymbol * loopHead = generateLabelSymbol(self()->cg());
+   TR::LabelSymbol * longReleaseLabel = generateLabelSymbol(self()->cg());
+   TR::LabelSymbol * longReleaseSnippetLabel = generateLabelSymbol(self()->cg());
+   TR::LabelSymbol * doneLabel = generateLabelSymbol(self()->cg());
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(self()->fe());
+
+   intptrj_t aValue = fej9->constReleaseVMAccessMask(); //0xfffffffffffdffdf
+   jniCallDataSnippet->setConstReleaseVMAccessMask(aValue);
+
+   generateRXInstruction(self()->cg(), TR::InstOpCode::getLoadOpCode(), callNode, methodAddressReg,
+     generateS390MemoryReference(methodMetaDataVirtualRegister,
+       fej9->thisThreadGetPublicFlagsOffset(), self()->cg()));
+
+
+   TR::Instruction * label = generateS390LabelInstruction(self()->cg(), TR::InstOpCode::LABEL, callNode, loopHead);
+   label->setStartInternalControlFlow();
+
+
+   aValue = fej9->constReleaseVMAccessOutOfLineMask(); //0x340001
+   jniCallDataSnippet->setConstReleaseVMAccessOutOfLineMask(aValue);
+
+   generateRRInstruction(self()->cg(), TR::InstOpCode::getLoadRegOpCode(), callNode, javaLitOffsetReg, methodAddressReg);
+   generateRXInstruction(self()->cg(), TR::InstOpCode::getAndOpCode(), callNode, javaLitOffsetReg,
+        generateS390MemoryReference(jniCallDataSnippet->getBaseRegister(), jniCallDataSnippet->getConstReleaseVMAccessOutOfLineMaskOffset(), self()->cg()));
+
+   TR::Instruction * gcPoint = (TR::Instruction *) generateS390BranchInstruction(
+      self()->cg(), TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, callNode, longReleaseSnippetLabel);
+   gcPoint->setNeedsGCMap(0);
+
+   generateRRInstruction(self()->cg(), TR::InstOpCode::getLoadRegOpCode(), callNode, javaLitOffsetReg, methodAddressReg);
+   generateRXInstruction(self()->cg(), TR::InstOpCode::getAndOpCode(), callNode, javaLitOffsetReg,
+         generateS390MemoryReference(jniCallDataSnippet->getBaseRegister(), jniCallDataSnippet->getConstReleaseVMAccessMaskOffset(), self()->cg()));
+   generateRSInstruction(self()->cg(), TR::InstOpCode::getCmpAndSwapOpCode(), callNode, methodAddressReg, javaLitOffsetReg,
+     generateS390MemoryReference(methodMetaDataVirtualRegister,
+       fej9->thisThreadGetPublicFlagsOffset(), self()->cg()));
+
+
+   //get existing post conditions on the registers parameters and create a new post cond for the internal control flow
+   TR::RegisterDependencyConditions * postDeps = new (self()->trHeapMemory()) TR::RegisterDependencyConditions(0, 3, self()->cg());
+   TR::RealRegister::RegNum realReg;
+   int32_t regPos = deps->searchPostConditionRegisterPos(methodMetaDataVirtualRegister);
+   if (regPos >= 0)
+      {
+      realReg = deps->getPostConditions()->getRegisterDependency(regPos)->getRealRegister();
+      postDeps->addPostCondition(methodMetaDataVirtualRegister, realReg);
+      }
+   else
+      postDeps->addPostCondition(methodMetaDataVirtualRegister, TR::RealRegister::AssignAny);
+
+   regPos = deps->searchPostConditionRegisterPos(methodAddressReg);
+   if (regPos >= 0)
+      {
+      realReg = deps->getPostConditions()->getRegisterDependency(regPos)->getRealRegister();
+      postDeps->addPostCondition(methodAddressReg, realReg);
+      }
+   else
+      postDeps->addPostCondition(methodAddressReg, TR::RealRegister::AssignAny);
+
+   regPos = deps->searchPostConditionRegisterPos(javaLitOffsetReg);
+   if (regPos >= 0)
+      {
+      realReg = deps->getPostConditions()->getRegisterDependency(regPos)->getRealRegister();
+      postDeps->addPostCondition(javaLitOffsetReg, realReg);
+      }
+   else
+      postDeps->addPostCondition(javaLitOffsetReg, TR::RealRegister::AssignAny);
+
+
+   TR::Instruction * br = generateS390BranchInstruction(self()->cg(), TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, callNode, loopHead);
+   br->setEndInternalControlFlow();
+   br->setDependencyConditions(postDeps);
+
+   generateS390LabelInstruction(self()->cg(), TR::InstOpCode::LABEL, callNode, doneLabel);
+
+
+   self()->cg()->addSnippet(new (self()->trHeapMemory()) TR::S390HelperCallSnippet(self()->cg(), callNode, longReleaseSnippetLabel,
+                              self()->comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(self()->comp()->getJittedMethodSymbol()), doneLabel));
+   // end of release vm access (spin lock)
+   }
+
+
+void TR::J9S390JNILinkage::acquireVMAccessMask(TR::Node * callNode, TR::Register * javaLitPoolVirtualRegister,
+   TR::Register * methodMetaDataVirtualRegister, TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg)
+   {
+   // start of acquire vm access
+
+   //  WARNING:
+   //  As java stack is not yet restored , Make sure that no instruction in this function
+   // should use stack.
+   // If instruction uses literal pool, it must only be to do load, and such instruction's memory reference should be marked MemRefMustNotSpill
+   // so that in case of long disp, we will resue the target reg as a scratch reg
+
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(self()->fe());
+   intptrj_t aValue = fej9->constAcquireVMAccessOutOfLineMask();
+
+   TR::Instruction * loadInstr = (TR::Instruction *) genLoadAddressConstant(self()->cg(), callNode, aValue, methodAddressReg, NULL, NULL, javaLitPoolVirtualRegister);
+   switch (loadInstr->getKind())
+         {
+         case TR::Instruction::IsRX:
+         case TR::Instruction::IsRXE:
+         case TR::Instruction::IsRXY:
+         case TR::Instruction::IsRXYb:
+              ((TR::S390RXInstruction *)loadInstr)->getMemoryReference()->setMemRefMustNotSpill();
+              break;
+         default:
+              break;
+         }
+
+   generateRRInstruction(self()->cg(), TR::InstOpCode::getXORRegOpCode(), callNode, javaLitOffsetReg, javaLitOffsetReg);
+
+   TR::LabelSymbol * longAcquireLabel = generateLabelSymbol(self()->cg());
+   TR::LabelSymbol * longAcquireSnippetLabel = generateLabelSymbol(self()->cg());
+   TR::LabelSymbol * acquireDoneLabel = generateLabelSymbol(self()->cg());
+   generateRSInstruction(cg(), TR::InstOpCode::getCmpAndSwapOpCode(), callNode, javaLitOffsetReg, methodAddressReg,
+      generateS390MemoryReference(methodMetaDataVirtualRegister,
+         (int32_t)fej9->thisThreadGetPublicFlagsOffset(), self()->cg()));
+   TR::Instruction *gcPoint = (TR::Instruction *) generateS390BranchInstruction(self()->cg(), TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, callNode, longAcquireSnippetLabel);
+   gcPoint->setNeedsGCMap(0);
+
+   self()->cg()->addSnippet(new (self()->trHeapMemory()) TR::S390HelperCallSnippet(self()->cg(), callNode, longAcquireSnippetLabel,
+                              self()->comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(self()->comp()->getJittedMethodSymbol()), acquireDoneLabel));
+   generateS390LabelInstruction(self()->cg(), TR::InstOpCode::LABEL, callNode, acquireDoneLabel);
+   // end of acquire vm accessa
+   }
+
+#ifdef J9VM_INTERP_ATOMIC_FREE_JNI
+
+/**
+ * \brief
+ * Build the atomic-free release VM access sequence for JNI dispatch.
+ *
+ * \details
+ * This is the atomic-free JNI design and works in conjunction with VMAccess.cpp atomic-free JNI changes.
+ *
+ * In the JNI dispatch sequence, a release-vm-access action is performed before the branch to native code; and an acquire-vm-access
+ * is done after the thread execution returns from the native call. Both of the actions require synchronization between the
+ * application thread and the GC thread. This was previously implemented with the atomic compare-and-swap (CS) instruction, which is slow in nature.
+ *
+ * To speed up the JNI acquire and release access actions (the fast path), a store-load sequence is generated by this evaluator
+ * to replace the CS instruction. Normally, the fast path ST-LD are not serialized and can be done out-of-order for higher performance. Synchronization
+ * burden is offloaded to the slow path.
+ *
+ * The slow path is where a thread tries to acquire exclusive vm access. The slow path should be taken proportionally less often than the fast
+ * path. Should the slow path be taken, that thread will be penalized by calling a slow flushProcessWriteBuffer() routine so that all threads
+ * can momentarily synchronize memory writes. Having fast and slow paths makes the atomic-free JNI design asymmetric.
+ *
+ * Note that the z/OS currently does not support the asymmetric algorithm. Hence, a serialization instruction is required between the
+ * store and the load.
+ *
+*/
+void
+TR::J9S390JNILinkage::releaseVMAccessMaskAtomicFree(TR::Node * callNode,
+                                                    TR::Register * methodMetaDataVirtualRegister,
+                                                    TR::Register * tempReg1)
+   {
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)fe();
+   TR::CodeGenerator* cg = self()->cg();
+   TR::Compilation* comp = self()->comp();
+
+   // Store a 1 into vmthread->inNative
+   generateSILInstruction(cg, TR::InstOpCode::getMoveHalfWordImmOpCode(), callNode,
+                          generateS390MemoryReference(methodMetaDataVirtualRegister, offsetof(J9VMThread, inNative), cg),
+                          1);
+
+#if !defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
+   generateSerializationInstruction(cg, callNode, NULL);
+#endif
+
+   // Compare vmthread public flag with J9_PUBLIC_FLAGS_VM_ACCESS
+   generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), callNode, tempReg1,
+                         generateS390MemoryReference(methodMetaDataVirtualRegister, fej9->thisThreadGetPublicFlagsOffset(), cg));
+
+   TR::LabelSymbol * longReleaseSnippetLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol * longReleaseRestartLabel = generateLabelSymbol(cg);
+
+   TR_ASSERT_FATAL(J9_PUBLIC_FLAGS_VM_ACCESS >= MIN_IMMEDIATE_BYTE_VAL && J9_PUBLIC_FLAGS_VM_ACCESS <= MAX_IMMEDIATE_BYTE_VAL, "VM access bit must be immediate");
+   generateRIEInstruction(cg, TR::InstOpCode::getCmpImmBranchRelOpCode(), callNode, tempReg1, J9_PUBLIC_FLAGS_VM_ACCESS, longReleaseSnippetLabel, TR::InstOpCode::COND_BNE);
+   cg->addSnippet(new (self()->trHeapMemory()) TR::S390HelperCallSnippet(cg,
+                                                                         callNode, longReleaseSnippetLabel,
+                                                                         comp->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp->getJittedMethodSymbol()),
+                                                                         longReleaseRestartLabel));
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, callNode, longReleaseRestartLabel);
+   }
+
+/**
+ * \brief
+ * Build the atomic-free acquire VM access sequence for JNI dispatch.
+ *
+ * */
+void
+TR::J9S390JNILinkage::acquireVMAccessMaskAtomicFree(TR::Node * callNode,
+                                                    TR::Register * methodMetaDataVirtualRegister,
+                                                    TR::Register * tempReg1)
+   {
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)fe();
+   TR::CodeGenerator* cg = self()->cg();
+   TR::Compilation* comp = self()->comp();
+
+   // Zero vmthread->inNative, which is a UDATA field
+   generateSS1Instruction(cg, TR::InstOpCode::XC, callNode, TR::Compiler->om.sizeofReferenceAddress() - 1,
+                          generateS390MemoryReference(methodMetaDataVirtualRegister, offsetof(J9VMThread, inNative), cg),
+                          generateS390MemoryReference(methodMetaDataVirtualRegister, offsetof(J9VMThread, inNative), cg));
+
+#if !defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
+   generateSerializationInstruction(cg, callNode, NULL);
+#endif
+
+   // Compare vmthread public flag with J9_PUBLIC_FLAGS_VM_ACCESS
+   generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), callNode, tempReg1,
+                         generateS390MemoryReference(methodMetaDataVirtualRegister, fej9->thisThreadGetPublicFlagsOffset(), cg));
+
+   TR::LabelSymbol * longAcquireSnippetLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol * longAcquireRestartLabel = generateLabelSymbol(cg);
+
+   TR_ASSERT_FATAL(J9_PUBLIC_FLAGS_VM_ACCESS >= MIN_IMMEDIATE_BYTE_VAL && J9_PUBLIC_FLAGS_VM_ACCESS <= MAX_IMMEDIATE_BYTE_VAL, "VM access bit must be immediate");
+   generateRIEInstruction(cg, TR::InstOpCode::getCmpImmBranchRelOpCode(), callNode, tempReg1, J9_PUBLIC_FLAGS_VM_ACCESS, longAcquireSnippetLabel, TR::InstOpCode::COND_BNE);
+
+   cg->addSnippet(new (self()->trHeapMemory()) TR::S390HelperCallSnippet(cg,
+                                                                         callNode, longAcquireSnippetLabel,
+                                                                         comp->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp->getJittedMethodSymbol()),
+                                                                         longAcquireRestartLabel));
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, callNode, longAcquireRestartLabel);
+   }
+#endif
+
+void TR::J9S390JNILinkage::checkException(TR::Node * callNode,
+   TR::Register * methodMetaDataVirtualRegister,
+   TR::Register * tempReg)
+   {
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
+   // check exception
+   TR::LabelSymbol * exceptionRestartLabel = generateLabelSymbol(self()->cg());
+   TR::LabelSymbol * exceptionSnippetLabel = generateLabelSymbol(self()->cg());
+   generateRXInstruction(self()->cg(), TR::InstOpCode::getLoadOpCode(), callNode, tempReg,
+               new (self()->trHeapMemory()) TR::MemoryReference(methodMetaDataVirtualRegister, fej9->thisThreadGetCurrentExceptionOffset(), self()->cg()));
+
+   TR::Instruction *gcPoint = (TR::Instruction *) generateS390CompareAndBranchInstruction(self()->cg(),
+      TR::InstOpCode::getCmpOpCode(), callNode, tempReg, (signed char)0, TR::InstOpCode::COND_BNE, exceptionSnippetLabel, false, true);
+   gcPoint->setNeedsGCMap(0);
+
+   self()->cg()->addSnippet(new (self()->trHeapMemory()) TR::S390HelperCallSnippet(self()->cg(), callNode, exceptionSnippetLabel,
+      self()->comp()->getSymRefTab()->findOrCreateThrowCurrentExceptionSymbolRef(self()->comp()->getJittedMethodSymbol()), exceptionRestartLabel));
+   generateS390LabelInstruction(self()->cg(), TR::InstOpCode::LABEL, callNode, exceptionRestartLabel);
+   }
+
+
+TR::Register * TR::J9S390JNILinkage::buildDirectDispatch(TR::Node * callNode)
+   {
+    if (comp()->getOption(TR_TraceCG))
+       traceMsg(comp(), "\nbuildDirectDispatch\n");
+
+   TR::CodeGenerator * codeGen = cg();
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
+   TR::SystemLinkage * systemLinkage = (TR::SystemLinkage *) cg()->getLinkage(TR_System);
+   TR::LabelSymbol * returnFromJNICallLabel = generateLabelSymbol(cg());
+   TR::RegisterDependencyConditions * deps;
+   int32_t numDeps = systemLinkage->getNumberOfDependencyGPRegisters();
+   if (cg()->supportsHighWordFacility() && !comp()->getOption(TR_DisableHighWordRA))
+      numDeps += 16; //HPRs need to be spilled
+   if (cg()->getSupportsVectorRegisters())
+      numDeps += 32; //VRFs need to be spilled
+
+   // 70896 Remove DEPEND instruction and merge glRegDeps to call deps
+   // *Speculatively* increase numDeps for dependencies from glRegDeps
+   // which is added right before callNativeFunction.
+   // GlobalRegDeps should not add any more children after here.
+   TR::RegisterDependencyConditions *glRegDeps;
+   TR::Node *GlobalRegDeps;
+
+   bool hasGlRegDeps = (callNode->getNumChildren() >= 1) &&
+            (callNode->getChild(callNode->getNumChildren()-1)->getOpCodeValue() == TR::GlRegDeps);
+   if(hasGlRegDeps)
+      {
+      GlobalRegDeps = callNode->getChild(callNode->getNumChildren()-1);
+      numDeps += GlobalRegDeps->getNumChildren();
+      }
+
+   deps = generateRegisterDependencyConditions(numDeps, numDeps, cg());
+   int64_t killMask = -1;
+   TR::Register *vftReg = NULL;
+   TR::S390JNICallDataSnippet * jniCallDataSnippet = NULL;
+   TR::RealRegister * javaStackPointerRealRegister = getStackPointerRealRegister();
+   TR::RealRegister * methodMetaDataRealRegister = getMethodMetaDataRealRegister();
+   TR::RealRegister * javaLitPoolRealRegister = getLitPoolRealRegister();
+
+   TR::Register * javaLitPoolVirtualRegister = javaLitPoolRealRegister;
+   TR::Register * methodMetaDataVirtualRegister = methodMetaDataRealRegister;
+
+   TR::Register * methodAddressReg = NULL;
+   TR::Register * javaLitOffsetReg = NULL;
+   intptrj_t targetAddress = (intptrj_t) 0;
+   TR::DataType returnType = TR::NoType;
+   int8_t numTempRegs = -1;
+   comp()->setHasNativeCall();
+
+   if (codeGen->getSupportsRuntimeInstrumentation())
+      TR::TreeEvaluator::generateRuntimeInstrumentationOnOffSequence(codeGen, TR::InstOpCode::RIOFF, callNode);
+
+   TR::ResolvedMethodSymbol * cs = callNode->getSymbol()->castToResolvedMethodSymbol();
+   TR_ResolvedMethod * resolvedMethod = cs->getResolvedMethod();
+   bool isFastJNI = true;
+   bool isPassJNIThread = !fej9->jniDoNotPassThread(resolvedMethod);
+   bool isPassReceiver = !fej9->jniDoNotPassReceiver(resolvedMethod);
+   bool isJNIGCPoint = !fej9->jniNoGCPoint(resolvedMethod);
+   bool isJNICallOutFrame = !fej9->jniNoNativeMethodFrame(resolvedMethod);
+   bool isReleaseVMAccess = !fej9->jniRetainVMAccess(resolvedMethod);
+   bool isJavaOffLoadCheck = false;
+   bool isAcquireVMAccess = isReleaseVMAccess;
+   bool isCollapseJNIReferenceFrame = !fej9->jniNoSpecialTeardown(resolvedMethod);
+   bool isCheckException = !fej9->jniNoExceptionsThrown(resolvedMethod);
+   bool isUnwrapAddressReturnValue = !fej9->jniDoNotWrapObjects(resolvedMethod);
+   bool isKillAllUnlockedGPRs = isJNIGCPoint;
+
+   killMask = killAndAssignRegister(killMask, deps, &methodAddressReg, (TR::Compiler->target.isLinux()) ?  TR::RealRegister::GPR1 : TR::RealRegister::GPR9 , codeGen, true);
+   killMask = killAndAssignRegister(killMask, deps, &javaLitOffsetReg, TR::RealRegister::GPR11, codeGen, true);
+
+   targetAddress = (intptrj_t) resolvedMethod->startAddressForJNIMethod(comp());
+   returnType = resolvedMethod->returnType();
+
+   static char * disablePureFn = feGetEnv("TR_DISABLE_PURE_FUNC_RECOGNITION");
+   if (cs->canDirectNativeCall())
+      {
+      isReleaseVMAccess = false;
+      isAcquireVMAccess = false;
+      isKillAllUnlockedGPRs = false;
+      isJNIGCPoint = false;
+      isCheckException = false;
+      isJNICallOutFrame = false;
+      }
+   if (cs->isPureFunction() && (disablePureFn == NULL))
+      {
+      isReleaseVMAccess=false;
+      isAcquireVMAccess=false;
+      isCheckException = false;
+      }
+   if ((fej9->isJavaOffloadEnabled() && static_cast<TR_ResolvedJ9Method *>(resolvedMethod)->methodIsNotzAAPEligible()) || (fej9->CEEHDLREnabled() && isJNICallOutFrame))
+      isJavaOffLoadCheck = true;
+
+
+   if (comp()->getOption(TR_TraceCG))
+      traceMsg(comp(), "isPassReceiver: %d, isPassJNIThread: %d, isJNIGCPoint: %d, isJNICallOutFrame:%d, isReleaseVMAccess: %d, isCollapseJNIReferenceFrame: %d, isJNIGCPoint: %d\n", isPassReceiver, isPassJNIThread, isJNIGCPoint, isJNICallOutFrame, isReleaseVMAccess, isCollapseJNIReferenceFrame, isJNIGCPoint);
+
+   if (isPassJNIThread)
+      {
+      //First param for JNI call in JNIEnv pointer
+      TR::Register * jniEnvRegister = cg()->allocateRegister();
+      deps->addPreCondition(jniEnvRegister, systemLinkage->getIntegerArgumentRegister(0));
+      generateRRInstruction(codeGen, TR::InstOpCode::getLoadRegOpCode(), callNode,
+      jniEnvRegister, methodMetaDataVirtualRegister);
+      }
+
+   // JNI dispatch does not allow for any object references to survive in preserved registers
+   // they are saved onto the system stack, which the stack walker has no way of accessing.
+   // Hence, ensure we kill all preserved HPRs (6-12) as well
+   if (cg()->supportsHighWordFacility() && !comp()->getOption(TR_DisableHighWordRA))
+      {
+      TR::Register *dummyReg = NULL;
+      killAndAssignRegister(killMask, deps, &dummyReg, REGNUM(TR::RealRegister::HPR6), codeGen, true, true );
+      killAndAssignRegister(killMask, deps, &dummyReg, REGNUM(TR::RealRegister::HPR7), codeGen, true, true );
+      killAndAssignRegister(killMask, deps, &dummyReg, REGNUM(TR::RealRegister::HPR8), codeGen, true, true );
+      killAndAssignRegister(killMask, deps, &dummyReg, REGNUM(TR::RealRegister::HPR9), codeGen, true, true );
+      killAndAssignRegister(killMask, deps, &dummyReg, REGNUM(TR::RealRegister::HPR10), codeGen, true, true );
+      killAndAssignRegister(killMask, deps, &dummyReg, REGNUM(TR::RealRegister::HPR11), codeGen, true, true );
+      killAndAssignRegister(killMask, deps, &dummyReg, REGNUM(TR::RealRegister::HPR12), codeGen, true, true );
+      }
+
+   setupRegisterDepForLinkage(callNode, TR_JNIDispatch, deps, killMask, systemLinkage, GlobalRegDeps, hasGlRegDeps, &methodAddressReg, javaLitOffsetReg);
+
+   setupBuildArgForLinkage(callNode, TR_JNIDispatch, deps, isFastJNI, isPassReceiver, killMask, GlobalRegDeps, hasGlRegDeps, systemLinkage);
+
+   if (isJNICallOutFrame || isReleaseVMAccess)
+     {
+     TR::Register * JNISnippetBaseReg = NULL;
+     killMask = killAndAssignRegister(killMask, deps, &JNISnippetBaseReg, TR::RealRegister::GPR12, codeGen, true);
+     jniCallDataSnippet = new (trHeapMemory()) TR::S390JNICallDataSnippet(cg(), callNode);
+     cg()->addSnippet(jniCallDataSnippet);
+     jniCallDataSnippet->setBaseRegister(JNISnippetBaseReg);
+     new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode,
+                                     jniCallDataSnippet->getBaseRegister(), jniCallDataSnippet, codeGen);
+     jniCallDataSnippet->setTargetAddress(targetAddress);
+     }
+
+   if (isJNICallOutFrame)
+     {
+     // Sets up PC, Stack pointer and literals offset slots.
+     setupJNICallOutFrame(callNode, javaStackPointerRealRegister, methodMetaDataVirtualRegister,
+                     returnFromJNICallLabel, jniCallDataSnippet);
+     }
+   else
+     {
+     // store java stack pointer
+     generateRXInstruction(codeGen, TR::InstOpCode::getStoreOpCode(), callNode, javaStackPointerRealRegister,
+                     new (trHeapMemory()) TR::MemoryReference(methodMetaDataVirtualRegister, (int32_t)fej9->thisThreadGetJavaSPOffset(), codeGen));
+
+
+     auto* literalOffsetMemoryReference = new (trHeapMemory()) TR::MemoryReference(methodMetaDataVirtualRegister, (int32_t)fej9->thisThreadGetJavaLiteralsOffset(), codeGen);
+
+     // Set up literal offset slot to zero
+     if (codeGen->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z10))
+        {
+        generateSILInstruction(codeGen, TR::InstOpCode::getMoveHalfWordImmOpCode(), callNode, literalOffsetMemoryReference, 0);
+        }
+     else
+        {
+        generateRIInstruction(codeGen, TR::InstOpCode::getLoadHalfWordImmOpCode(), callNode, javaLitOffsetReg, 0);
+
+        generateRXInstruction(codeGen, TR::InstOpCode::getStoreOpCode(), callNode, javaLitOffsetReg, literalOffsetMemoryReference);
+        }
+     }
+
+    if (isReleaseVMAccess)
+    {
+#ifdef J9VM_INTERP_ATOMIC_FREE_JNI
+      releaseVMAccessMaskAtomicFree(callNode, methodMetaDataVirtualRegister, methodAddressReg);
+#else
+      releaseVMAccessMask(callNode, methodMetaDataVirtualRegister, methodAddressReg, javaLitOffsetReg, jniCallDataSnippet, deps);
+#endif
+     }
+
+   //Turn off Java Offload if calling user native
+   if (isJavaOffLoadCheck)
+     {
+     callPreJNICallOffloadCheck(callNode);
+     }
+
+   // Generate a call to the native function
+   TR::Register * javaReturnRegister = systemLinkage->callNativeFunction(
+      callNode, deps, targetAddress, methodAddressReg, javaLitOffsetReg, returnFromJNICallLabel,
+      jniCallDataSnippet, isJNIGCPoint);
+
+     // restore java stack pointer
+     generateRXInstruction(codeGen, TR::InstOpCode::getLoadOpCode(), callNode, javaStackPointerRealRegister,
+                     new (trHeapMemory()) TR::MemoryReference(methodMetaDataVirtualRegister, (int32_t)fej9->thisThreadGetJavaSPOffset(), codeGen));
+
+   //Turn on Java Offload
+   if (isJavaOffLoadCheck)
+     {
+     callPostJNICallOffloadCheck(callNode);
+     }
+
+   if (isAcquireVMAccess)
+     {
+#ifdef J9VM_INTERP_ATOMIC_FREE_JNI
+     acquireVMAccessMaskAtomicFree(callNode, methodMetaDataVirtualRegister, methodAddressReg);
+#else
+     acquireVMAccessMask(callNode, javaLitPoolVirtualRegister, methodMetaDataVirtualRegister, methodAddressReg, javaLitOffsetReg);
+#endif
+     }
+
+
+   generateRXInstruction(codeGen, TR::InstOpCode::getAddOpCode(), callNode, javaStackPointerRealRegister,
+            new (trHeapMemory()) TR::MemoryReference(methodMetaDataVirtualRegister, (int32_t)fej9->thisThreadGetJavaLiteralsOffset(), codeGen));
+
+   isUnwrapAddressReturnValue = (isUnwrapAddressReturnValue &&
+                         (returnType == TR::Address) &&
+                         (javaReturnRegister!= NULL) &&
+                         (javaReturnRegister->getKind() == TR_GPR));
+
+   if (isUnwrapAddressReturnValue)
+     {
+     TR::LabelSymbol * tempLabel = generateLabelSymbol(codeGen);
+     TR::Instruction* start = generateS390CompareAndBranchInstruction(codeGen, TR::InstOpCode::getCmpOpCode(), callNode, javaReturnRegister, (signed char)0, TR::InstOpCode::COND_BE, tempLabel);
+     start->setStartInternalControlFlow();
+     generateRXInstruction(codeGen, TR::InstOpCode::getLoadOpCode(), callNode, javaReturnRegister,
+                generateS390MemoryReference(javaReturnRegister, 0, codeGen));
+
+
+     int32_t regPos = deps->searchPostConditionRegisterPos(javaReturnRegister);
+     TR::RealRegister::RegNum realReg = deps->getPostConditions()->getRegisterDependency(regPos)->getRealRegister();
+     TR::RegisterDependencyConditions * postDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg());
+     postDeps->addPostCondition(javaReturnRegister, realReg);
+
+     TR::Instruction* end =generateS390LabelInstruction(codeGen, TR::InstOpCode::LABEL, callNode, tempLabel);
+     end->setEndInternalControlFlow();
+     end->setDependencyConditions(postDeps);
+     }
+
+   if (isCollapseJNIReferenceFrame)
+     {
+     collapseJNIReferenceFrame(callNode, javaStackPointerRealRegister, javaLitPoolVirtualRegister, methodAddressReg);
+     }
+
+   // Restore the JIT frame
+   if (isJNICallOutFrame)
+     {
+     generateRXInstruction(codeGen, TR::InstOpCode::LA, callNode, javaStackPointerRealRegister,
+        generateS390MemoryReference(javaStackPointerRealRegister, 5 * sizeof(intptrj_t), codeGen));
+
+     setOffsetToLongDispSlot(getOffsetToLongDispSlot() - (5 * (int32_t)sizeof(intptrj_t)) );
+     }
+
+   if (isCheckException)
+     {
+     checkException(callNode, methodMetaDataVirtualRegister, methodAddressReg);
+     }
+
+   OMR::Z::Linkage::generateDispatchReturnLable(callNode, codeGen, deps, javaReturnRegister, hasGlRegDeps, GlobalRegDeps);
+   return javaReturnRegister;
+   }
+
 ////////////////////////////////////////////////////////////////////////////////
 // TR::S390PrivateLinkage::doNotKillSpecialRegsForBuildArgs -  Do not kill
 // special regs (java stack ptr, system stack ptr, and method metadata reg)
@@ -3066,6 +3732,12 @@ TR::S390PrivateLinkage::setupBuildArgForLinkage(TR::Node * callNode, TR_Dispatch
    OMR::Z::Linkage::setupBuildArgForLinkage(callNode, dispatchType, deps, isFastJNI, isPassReceiver, killMask, GlobalRegDeps, hasGlRegDeps, systemLinkage);
 
 
+   // omr todo: this should be cleaned up once the logic of other linkage related method is cleaned up
+   // basically JNIDispatch will perform the stuff after this statement and hence returning here
+   // to avoid executing stuff twice...should be fixed in conjunction with JNIDispatch
+   if (dispatchType == TR_JNIDispatch)  return;
+
+
    TR::S390PrivateLinkage * privateLinkage = (TR::S390PrivateLinkage *) cg()->getLinkage(TR_Private);
    TR::RealRegister * javaStackPointerRealRegister = privateLinkage->getStackPointerRealRegister();
    TR::Register * methodMetaDataVirtualRegister = privateLinkage->getMethodMetaDataRealRegister();
@@ -3145,4 +3817,10 @@ TR::S390PrivateLinkage::setupRegisterDepForLinkage(TR::Node * callNode, TR_Dispa
       }
 
    }
+
+TR::J9S390JNILinkage::J9S390JNILinkage(TR::CodeGenerator * cg, TR_S390LinkageConventions elc, TR_LinkageConventions lc)
+   :TR::S390PrivateLinkage(cg, elc, lc)
+   {
+   }
+
 

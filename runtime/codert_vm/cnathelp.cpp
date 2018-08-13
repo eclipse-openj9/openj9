@@ -2184,7 +2184,7 @@ old_slow_jitCallCFunction(J9VMThread *currentThread)
 }
 
 void
-fast_jitPreJNICallOffloadCheck(J9VMThread *currentThread, J9Method *method)
+fast_jitPreJNICallOffloadCheck(J9VMThread *currentThread)
 {
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 	OLD_JIT_HELPER_PROLOGUE(0);
@@ -2196,12 +2196,12 @@ fast_jitPreJNICallOffloadCheck(J9VMThread *currentThread, J9Method *method)
 		els->calloutVMState = setVMState(currentThread, J9VMSTATE_JNI_FROM_JIT);
 	}
 #endif /* J9VM_PORT_ZOS_CEEHDLRSUPPORT */
-	VM_VMHelpers::beforeJNICall(currentThread, method);
+	VM_VMHelpers::beforeJNICall(currentThread);
 #endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
 }
 
 void
-fast_jitPostJNICallOffloadCheck(J9VMThread *currentThread, J9Method* method)
+fast_jitPostJNICallOffloadCheck(J9VMThread *currentThread)
 {
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 	OLD_JIT_HELPER_PROLOGUE(0);
@@ -2216,7 +2216,7 @@ fast_jitPostJNICallOffloadCheck(J9VMThread *currentThread, J9Method* method)
 		}
 	}
 #endif /* J9VM_PORT_ZOS_CEEHDLRSUPPORT */
-	VM_VMHelpers::afterJNICall(currentThread, method);
+	VM_VMHelpers::afterJNICall(currentThread);
 #endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
 }
 

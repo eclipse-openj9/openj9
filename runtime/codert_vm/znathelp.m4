@@ -422,6 +422,38 @@ BEGIN_FUNC(jitRunOnJavaStack)
     BRANCH_VIA_VMTHREAD(J9TR_VMThread_tempSlot)
 END_CURRENT
 
+dnl When the offload helpers are called,
+dnl the java SP is already stored in the J9VMThread.
+
+BEGIN_HELPER(jitPreJNICallOffloadCheck)
+ifdef({ASM_J9VM_PORT_ZOS_CEEHDLRSUPPORT},{
+    std fpr8,JIT_FPR_SAVE_OFFSET(8)(CSP)
+    std fpr9,JIT_FPR_SAVE_OFFSET(9)(CSP)
+    std fpr10,JIT_FPR_SAVE_OFFSET(10)(CSP)
+    std fpr11,JIT_FPR_SAVE_OFFSET(11)(CSP)
+    std fpr12,JIT_FPR_SAVE_OFFSET(12)(CSP)
+    std fpr13,JIT_FPR_SAVE_OFFSET(13)(CSP)
+    std fpr14,JIT_FPR_SAVE_OFFSET(14)(CSP)
+    std fpr15,JIT_FPR_SAVE_OFFSET(15)(CSP)
+    stfpc CEEHDLR_FPC_SAVE_OFFSET(CSP)
+})
+    SAVE_ALL_REGS(jitPreJNICallOffloadCheck)
+    LR_GPR CARG1,J9VMTHREAD
+    LOAD_LABEL_CONSTANT($1, fast_jitPreJNICallOffloadCheck, CARG2)
+    CALL_INDIRECT(CARG2)
+    RESTORE_ALL_REGS_AND_SWITCH_TO_JAVA_STACK(jitPreJNICallOffloadCheck)
+    br r14
+END_CURRENT
+
+BEGIN_HELPER(jitPostJNICallOffloadCheck)
+    SAVE_ALL_REGS(jitPostJNICallOffloadCheck)
+    LR_GPR CARG1,J9VMTHREAD
+    LOAD_LABEL_CONSTANT($1, fast_jitPostJNICallOffloadCheck, CARG2)
+    CALL_INDIRECT(CARG2)
+    RESTORE_ALL_REGS_AND_SWITCH_TO_JAVA_STACK(jitPostJNICallOffloadCheck)
+    br r14
+END_CURRENT
+
 dnl When the VM access helpers are called,
 dnl the java SP is already stored in the J9VMThread.
 
