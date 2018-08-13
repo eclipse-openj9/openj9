@@ -1134,10 +1134,9 @@ done:
 	 * currentThread must be up-to-date.
 	 *
 	 * @param[in] currentThread the current J9VMThread
-	 * @param[in] J9Method the J9Method pointer of the JNI native function
 	 */
 	static VMINLINE void
-	beforeJNICall(J9VMThread *currentThread, J9Method* method)
+	beforeJNICall(J9VMThread *currentThread)
 	{
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 		J9JavaVM *vm = currentThread->javaVM;
@@ -1147,6 +1146,8 @@ done:
 			/* save old state */
 			els->savedJavaOffloadState = currentThread->javaOffloadState;
 			/* check if we need to change state */
+			J9SFJNINativeMethodFrame *nativeMethodFrame = (J9SFJNINativeMethodFrame*)((UDATA)currentThread->sp + (UDATA)currentThread->literals);
+			J9Method *method = nativeMethodFrame->method;
 			if (J9_ARE_ANY_BITS_SET((UDATA)method->constantPool, J9_STARTPC_NATIVE_REQUIRES_SWITCHING)) {
 				/* zero the state and switch java offload mode OFF */
 				currentThread->javaOffloadState = 0;
@@ -1168,10 +1169,9 @@ done:
 	 * currentThread must be up-to-date.
 	 *
 	 * @param[in] currentThread the current J9VMThread
-	 * @param[in] J9Method the J9Method pointer of the JNI native function
 	 */
 	static VMINLINE void
-	afterJNICall(J9VMThread *currentThread, J9Method* method)
+	afterJNICall(J9VMThread *currentThread)
 	{
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 		J9JavaVM *vm = currentThread->javaVM;
@@ -1182,6 +1182,8 @@ done:
 			if (0 == currentThread->javaOffloadState) {
 				if (0 != els->savedJavaOffloadState) {
 					/* if yes, call the offload switch ON and restore our state from ELS */
+					J9SFJNINativeMethodFrame *nativeMethodFrame = (J9SFJNINativeMethodFrame*)((UDATA)currentThread->sp + (UDATA)currentThread->literals);
+					J9Method *method = nativeMethodFrame->method;
 					vm->javaOffloadSwitchOnWithMethodFunc(currentThread, method);
 					currentThread->javaOffloadState = els->savedJavaOffloadState;
 				}

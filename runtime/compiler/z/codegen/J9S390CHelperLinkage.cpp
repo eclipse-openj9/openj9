@@ -247,17 +247,21 @@ class RealRegisterManager
    TR::CodeGenerator*   _cg;
    };
 
-TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode,
-                                                           TR::RegisterDependencyConditions **deps,
-                                                           TR::Register *returnReg,
-                                                           bool forceFastPath)
+/**   \brief Build a JIT helper call.
+ *    \details
+ *    It generates sequence that prepares parameters for the JIT helper function and generate a helper call.
+ *    \param callNode The node for which you are generating a heleper call
+ *    \param deps The pre register dependency conditions that will be filled by this function to attach within ICF
+ *    \param returnReg TR::Register* allocated by consumer of this API to hold the result of the helper call,
+ *           If passed, this function uses it to store return value from helper instead of allocating new register
+ *    \return TR::Register *helperReturnResult, gets the return value of helper function and return to the evaluator. 
+ */
+TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode, TR::RegisterDependencyConditions **deps, TR::Register *returnReg)
    {
    RealRegisterManager RealRegisters(cg());
    bool isHelperCallWithinICF = deps != NULL;
-   // TODO: Currently only jitInstanceOf and IFA helper calls are fast path helpers. Need to modify following condition if we add support for other fast path only helpers
-   // Having a fast path helper call also implies that there is no environment pointer setup in GPR5
-   bool isFastPathOnly = callNode->getOpCodeValue() == TR::instanceof || forceFastPath;
-
+   // TODO: Currently only jitInstanceOf is fast path helper. Need to modify following condition if we add support for other fast path only helpers
+   bool isFastPathOnly = callNode->getOpCodeValue() == TR::instanceof;
    traceMsg(comp(),"%s: Internal Control Flow in OOL : %s\n",callNode->getOpCode().getName(),isHelperCallWithinICF  ? "true" : "false" );
    for (int i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastHPR; i++)
       {
@@ -328,7 +332,6 @@ TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode,
       // Storing Java Stack Pointer
       javaStackPointerRegister = cg()->getStackPointerRealRegister();
       cursor = generateRXInstruction(cg(), TR::InstOpCode::getStoreOpCode(), callNode, javaStackPointerRegister, generateS390MemoryReference(vmThreadRegister, offsetJ9SP, cg()));
-
 #if defined(J9ZOS390)
       padding += 2;
       // Loading DSAPointer Register
@@ -349,21 +352,6 @@ TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode,
       }
    TR::SymbolReference * callSymRef = callNode->getSymbolReference();
    void * destAddr = callNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethodAddress();
-
-#if defined(J9ZOS390)
-   // Fast path helper calls are real C function calls, whereas non-fast-path calls jump to picBuilder glue code
-   // glue code does its own environment handling and does not need a environment loading here.
-   if(isFastPathOnly)
-      {
-      TR_RuntimeHelper helperIndex = static_cast<TR_RuntimeHelper>(callNode->getSymbolReference()->getReferenceNumber());
-      TR_ASSERT_FATAL(helperIndex < TR_S390numRuntimeHelpers, "Invalid helper index in c helper node\n");
-
-      // XPLINK GPR5 is an environment register.
-      intptrj_t environment = reinterpret_cast<intptrj_t>(TOC_UNWRAP_ENV(runtimeHelpers.getFunctionPointer(helperIndex)));
-      genLoadAddressConstant(cg(), callNode, environment, javaStackPointerRegister);
-      }
-#endif
-
    cursor = new (cg()->trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::BRASL, callNode, regRA, destAddr, callSymRef, cg());
    cursor->setDependencyConditions(preDeps);
    if (isFastPathOnly)

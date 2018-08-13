@@ -195,9 +195,6 @@ extern "C" void mcc_reservationAdjustment_unwrapper(void **argsPtr, void **resPt
 extern "C" void mcc_lookupHelperTrampoline_unwrapper(void **argsPtr, void **resPtr);
 #endif
 
-extern "C" void fast_jitPreJNICallOffloadCheck(J9VMThread *currentThread, J9Method *method);
-extern "C" void fast_jitPostJNICallOffloadCheck(J9VMThread *currentThread, J9Method *method);
-
 JIT_HELPER(icallVMprJavaSendNativeStatic);
 JIT_HELPER(icallVMprJavaSendStatic0);
 JIT_HELPER(icallVMprJavaSendStatic1);
@@ -626,6 +623,8 @@ JIT_HELPER(_nativeStaticHelper);
 JIT_HELPER(jitLookupInterfaceMethod);
 JIT_HELPER(jitMethodIsNative);
 JIT_HELPER(jitMethodIsSync);
+JIT_HELPER(jitPreJNICallOffloadCheck);
+JIT_HELPER(jitPostJNICallOffloadCheck);
 JIT_HELPER(jitResolveClass);
 JIT_HELPER(jitResolveClassFromStaticField);
 JIT_HELPER(jitResolveField);
@@ -1593,8 +1592,8 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_S390arrayORHelper,                          (void *) 0,                                TR_Helper);
    SET(TR_S390arrayANDHelper,                         (void *) 0,                                TR_Helper);
    SET(TR_S390collapseJNIReferenceFrame,              (void *) jitCollapseJNIReferenceFrame,     TR_Helper);
-   SET(TR_S390jitPreJNICallOffloadCheck,              (void *) fast_jitPreJNICallOffloadCheck,   TR_CHelper);
-   SET(TR_S390jitPostJNICallOffloadCheck,             (void *) fast_jitPostJNICallOffloadCheck,  TR_CHelper);
+   SET(TR_S390jitPreJNICallOffloadCheck,              (void *) jitPreJNICallOffloadCheck,        TR_Helper);
+   SET(TR_S390jitPostJNICallOffloadCheck,             (void *) jitPostJNICallOffloadCheck,       TR_Helper);
    SET(TR_S390jitCallCFunction,                       (void *) jitCallCFunction,                 TR_Helper);
    SET(TR_S390OutlinedNew,                            (void *) outlinedNewObject,                TR_Helper);
    SET(TR_S390OutlinedNewArray,                       (void *) outlinedNewArray,                 TR_Helper);

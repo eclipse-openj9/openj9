@@ -65,7 +65,6 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/z/codegen/J9MemoryReference.cpp \
     compiler/z/codegen/J9S390CHelperLinkage.cpp \
     compiler/z/codegen/J9S390PrivateLinkage.cpp \
-    compiler/z/codegen/J9S390JNILinkage.cpp \
     compiler/z/codegen/J9S390Snippet.cpp \
     compiler/z/codegen/J9S390SystemLinkage.cpp \
     compiler/z/codegen/J9TreeEvaluator.cpp \
