@@ -2030,64 +2030,21 @@ typedef struct J9BCTranslationData {
 	UDATA structureUnusedButConstantsUsedInDDR;
 } J9BCTranslationData;
 
-#define BCT_PcFlagBranchFlipped  0x4000000
-#define BCT_MajorClassFileVersionMask  0xFF000000
-#define BCT_ActionBreakpoint  7
-#define BCT_InitCopyLongs  17
-#define BCT_BigEndianOutput  1
-#define BCT_ActionReturn  4
-#define BCT_PcFlagLookupSwitch  0x800000
-#define BCT_ErrLocalsMapTooSmall  10
-#define BCT_MajorClassFileVersionMaskShift  24
-#define BCT_ErrIllegalState  6
-#define BCT_InitCopyIntegersW  14
-#define BCT_ErrConstantPoolMapInvalid  4
-#define BCT_InitSpecialsW  10
-#define BCT_Java2MajorVersionShifted  0x2E000000
-#define BCT_InitCopySingles  3
-#define BCT_RemoteOptionalAttributes  0x4000
-#define BCT_InitStaticFields  21
-#define BCT_InitInstanceFieldsW  20
-#define BCT_DumpPreverifyData  0x400
-#define BCT_ErrOutputBufferInvalid  11
-#define BCT_InitCopySinglesW  4
-#define BCT_UnsafeMode  0x1000
-#define BCT_StripDebugVars  0x20000
-#define BCT_InitSpecials  9
-#define BCT_PcFlagForwardBranchW  0x2000000
-#define BCT_PcFlagForwardBranch  0x200000
-#define BCT_InitStaticsW  2
-#define BCT_ActionBranch  1
-#define BCT_InitCopyLongsW  18
-#define BCT_ErrMaxLocalsInvalid  9
-#define BCT_ActionGoto  2
-#define BCT_J9DescriptionImmediate  1
-#define BCT_StaticVerification  0x200
-#define BCT_InitCopyIntegers  13
-#define BCT_StripDebugSource  0x10000
-#define BCT_InitNOP  0
-#define BCT_InitCopyFloatsW  16
-#define BCT_InitStatics  1
-#define BCT_ErrFlagsInvalid  7
 #define BCT_LittleEndianOutput  0
-#define BCT_PcFlagUnnecessaryGeneric  0x8000000
-#define BCT_ErrNoPathToPC  2
-#define BCT_ErrReservedLiteralsInvalid  8
-#define BCT_ErrLocalAccessOutOfRange  15
-#define BCT_InitInterfacesW  12
-#define BCT_ObjectSlotAllocated  1
-#define BCT_PcFlagStackMapNeeded  0x100000
-#define BCT_InitCopyFloats  15
-#define BCT_ErrTempsShapeTooSmall  18
-#define BCT_DumpMaps  0x40000000
-#define BCT_ActionTable  5
-#define BCT_ErrPopOnEmptyStack  3
-#define BCT_InitCopyDoublesW  6
+#define BCT_BigEndianOutput  1
+#define BCT_StripDebugAttributes  0x100
+#define BCT_StaticVerification  0x200
+#define BCT_DumpPreverifyData  0x400
+#define BCT_Xfuture  0x800
+#define BCT_AlwaysSplitBytecodes 0x1000
 #define BCT_IntermediateDataIsClassfile  0x2000
-#define BCT_PcFlagReturnDepthNeeded  0x20000000
-#define BCT_InitInstanceFields  19
-#define BCT_ErrConstantPoolMapTooSmall  14
-#define BCT_InitCopyDoubles  5
+#define BCT_StripDebugLines  0x8000
+#define BCT_StripDebugSource  0x10000
+#define BCT_StripDebugVars  0x20000
+#define BCT_StripSourceDebugExtension  0x40000
+#define BCT_RetainRuntimeInvisibleAttributes  0x80000
+#define BCT_DumpMaps  0x40000000
+
 #define BCT_J9DescriptionCpTypeScalar  0
 #define BCT_J9DescriptionCpTypeObject  1
 #define BCT_J9DescriptionCpTypeClass  2
@@ -2097,52 +2054,23 @@ typedef struct J9BCTranslationData {
 #define BCT_J9DescriptionCpTypeShift  4
 #define BCT_J9DescriptionCpTypeMask  15
 
+#define BCT_J9DescriptionImmediate  1
+
 /* When adding a new major version update BCT_JavaMaxMajorVersionShifted to
  * the maximum allowed value.
  */
+#define BCT_MajorClassFileVersionMask  0xFF000000
+#define BCT_MajorClassFileVersionMaskShift  24
+#define BCT_Java2MajorVersionShifted  0x2E000000
+#define BCT_Java5MajorVersionShifted  0x31000000
+#define BCT_Java6MajorVersionShifted  0x32000000
+#define BCT_Java7MajorVersionShifted  0x33000000
 #define BCT_Java8MajorVersionShifted  0x34000000
 #define BCT_Java9MajorVersionShifted  0x35000000
 #define BCT_Java10MajorVersionShifted 0x36000000
 #define BCT_Java11MajorVersionShifted 0x37000000
 #define BCT_Java12MajorVersionShifted 0x38000000
 #define BCT_JavaMaxMajorVersionShifted BCT_Java12MajorVersionShifted
-
-#define BCT_ActionUnused  6
-#define BCT_ErrFallOffLastInstruction  8
-#define BCT_ActionNone  0
-#define BCT_StripSourceDebugExtension  0x40000
-#define BCT_ErrTempsShapeInvalid  17
-#define BCT_ErrArgSizeInSlotsInvalid  13
-#define BCT_DoubleSlotAllocated  2
-#define BCT_ErrPCMapInvalid  5
-#define BCT_ErrPCMapTooSmall  6
-#define BCT_Java6MajorVersionShifted  0x32000000
-#define BCT_PcFlagUsedPadByte  0x1000000
-#define BCT_ErrUnknownBytecode  16
-#define BCT_ErrOutputBufferTooSmall  12
-#define BCT_ErrPushOnFullStack  5
-#define BCT_PcFlagTableSwitch  0x400000
-#define BCT_RetainRuntimeInvisibleAttributes  0x80000
-#define BCT_ErrTooManyTempsUsed  19
-#define BCT_ErrBreakpointFailure  4
-#define BCT_ActionJSR  3
-#define BCT_ErrNoMemory  1
-#define BCT_InitVirtuals  7
-#define BCT_Xfuture  0x800
-#define BCT_Java7MajorVersionShifted  0x33000000
-#define BCT_SingleSlotAllocated  4
-#define BCT_ErrLocalsMapInvalid  3
-#define BCT_InitVirtualsW  8
-#define BCT_ErrInputBytecodesInvalid  1
-#define BCT_ErrInputBytecodesSizeInvalid  2
-#define BCT_InitEnd  -1
-#define BCT_Java5MajorVersionShifted  0x31000000
-#define BCT_StripDebugLines  0x8000
-#define BCT_PcFlagUnnecessaryWide  0x10000000
-#define BCT_ErrResultArrayTooSmall  7
-#define BCT_InitStaticFieldsW  22
-#define BCT_InitInterfaces  11
-#define BCT_StripDebugAttributes  0x100
 
 typedef struct J9RAMClassFreeListBlock {
 	UDATA size;
