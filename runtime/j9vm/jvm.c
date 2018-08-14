@@ -337,7 +337,6 @@ static BOOLEAN librariesLoaded(void);
 static void dummySignalHandler(jint sigNum);
 static BOOLEAN isSignalUsedForShutdown(jint sigNum);
 static BOOLEAN isSignalReservedByJVM(jint sigNum);
-static BOOLEAN isSignalIgnoredByOS(jint sigNum);
 
 typedef struct {
 	const char *signalName;
@@ -4518,38 +4517,6 @@ isSignalReservedByJVM(jint sigNum)
 }
 
 /**
- * Check if a signal is ignored by using sigaction.
- *
- * @param sigNum Integer value of the signal
- *
- * @returns TRUE if the signal is ignored
- *          FALSE if the signal is not ignored
- */
-static BOOLEAN
-isSignalIgnoredByOS(jint sigNum) {
-	BOOLEAN signalIgnored = FALSE;
-
-#if !defined(WIN32)
-	void *oldHandler = NULL;
-
-	struct sigaction oldSignalAction;
-	memset(&oldSignalAction, 0, sizeof(struct sigaction));
-
-	OMRSIG_SIGACTION(sigNum, NULL, &oldSignalAction);
-	oldHandler = (void *)oldSignalAction.sa_sigaction;
-	if (NULL == oldHandler) {
-		oldHandler = (void *)oldSignalAction.sa_handler;
-	}
-
-	if (oldHandler == (void *)SIG_IGN) {
-		signalIgnored = TRUE;
-	}
-#endif /* !defined(WIN32) */
-
-	return signalIgnored;
-}
-
-/**
  * Raise a signal to the calling process or thread.
  *
  * isSignalReservedByJVM function lists the signals reserved by the JVM.
@@ -4574,8 +4541,18 @@ JVM_RaiseSignal(jint sigNum)
 	jboolean rc = JNI_FALSE;
 	J9JavaVM *javaVM = (J9JavaVM *)BFUjavaVM;
 	BOOLEAN isShutdownSignal = isSignalUsedForShutdown(sigNum);
+	BOOLEAN isSignalIgnored = FALSE;
+	int32_t isSignalIgnoredError = 0;
+	uint32_t portlibSignalFlag = 0;
+
+	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
 	Trc_SC_RaiseSignal_Entry(sigNum);
+
+	portlibSignalFlag = j9sig_map_os_signal_to_portlib_signal(sigNum);
+	if (0 != portlibSignalFlag) {
+		isSignalIgnoredError = j9sig_is_signal_ignored(portlibSignalFlag, &isSignalIgnored);
+	}
 
 	if (isSignalReservedByJVM(sigNum)) {
 		/* Don't raise a signal if it is reserved by the JVM, and not
@@ -4585,8 +4562,8 @@ JVM_RaiseSignal(jint sigNum)
 		/* Ignore shutdown signals if -Xrs or -Xrs:async is specified.
 		 * If -Xrs:sync is specified, then raise shutdown signals.
 		 */
-	} else if (isShutdownSignal && isSignalIgnoredByOS(sigNum)) {
-		/* Ignore shutdown signal if it is ignored. */
+	} else if (isShutdownSignal && ((0 == isSignalIgnoredError) && isSignalIgnored)) {
+		/* Ignore shutdown signal if it is ignored by the OS. */
 	} else {
 		raise(sigNum);
 		rc = JNI_TRUE;
@@ -4642,10 +4619,18 @@ JVM_RegisterSignal(jint sigNum, void *handler)
 	J9InternalVMFunctions *vmFuncs = javaVM->internalVMFunctions;
 	J9VMThread *currentThread = vmFuncs->currentVMThread(javaVM);
 	BOOLEAN isShutdownSignal = isSignalUsedForShutdown(sigNum);
+	BOOLEAN isSignalIgnored = FALSE;
+	int32_t isSignalIgnoredError = 0;
+	uint32_t portlibSignalFlag = 0;
 
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
 	Trc_SC_RegisterSignal_Entry(currentThread, sigNum, handler);
+
+	portlibSignalFlag = j9sig_map_os_signal_to_portlib_signal(sigNum);
+	if (0 != portlibSignalFlag) {
+		isSignalIgnoredError = j9sig_is_signal_ignored(portlibSignalFlag, &isSignalIgnored);
+	}
 
 	if (isSignalReservedByJVM(sigNum)) {
 		/* Return error if signal is reserved by the JVM. oldHandler is initialized to
@@ -4658,8 +4643,8 @@ JVM_RegisterSignal(jint sigNum, void *handler)
 		 * is initialized to J9_SIG_ERR.
 		 */
 		goto exit;
-	} else if (isShutdownSignal && isSignalIgnoredByOS(sigNum)) {
-		/* Ignore shutdown signal if it is ignored. */
+	} else if (isShutdownSignal && ((0 == isSignalIgnoredError) && isSignalIgnored)) {
+		/* Ignore shutdown signal if it is ignored by the OS. */
 		oldHandler = (void *)J9_SIG_IGNORED;
 		goto exit;
 	} else {
