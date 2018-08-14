@@ -6514,6 +6514,7 @@ done:
 							setIllegalAccessErrorReceiverNotSameOrSubtypeOfCurrentClass(_currentThread, receiverClass, currentClass);
 							VMStructHasBeenUpdated(REGISTER_ARGS);
 							rc = GOTO_THROW_CURRENT_EXCEPTION;
+							goto done;
 						}
 					}
 				}
@@ -6538,53 +6539,50 @@ done:
 		if (NULL == receiver) {
 			rc = THROW_NPE;
 		} else {
+			profileCallingMethod(REGISTER_ARGS);
 			_sendMethod = clazz->specialSplitMethodTable[splitTableIndex];
-			if (NULL == _sendMethod) {
-				buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
-				updateVMStruct(REGISTER_ARGS);
-				J9Method *method = resolveSpecialSplitMethodRef(_currentThread, ramConstantPool, splitTableIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
-				VMStructHasBeenUpdated(REGISTER_ARGS);
-				restoreGenericSpecialStackFrame(REGISTER_ARGS);
-				if (immediateAsyncPending()) {
-					rc = GOTO_ASYNC_CHECK;
-					goto done;
-				} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
-					rc = GOTO_THROW_CURRENT_EXCEPTION;
-					goto done;
-				} else {
-					profileCallingMethod(REGISTER_ARGS);
-					_sendMethod = method;
-				}
-			}
-
 			J9Class *currentClass = J9_CLASS_FROM_CP(ramConstantPool);
 			/* hostClass is exclusively defined only in Unsafe.defineAnonymousClass.
 			 * For all other cases, clazz->hostClass points to itself (clazz).
 			 */
 			currentClass = currentClass->hostClass;
-
 			if (J9_ARE_ALL_BITS_SET(currentClass->romClass->modifiers, J9AccInterface)) {
 				J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *)&ramConstantPool->romConstantPool[cpIndex];
 				J9ROMNameAndSignature *nameAndSig = J9ROMFIELDREF_NAMEANDSIGNATURE(romMethodRef);
 				J9UTF8 *nameUTF = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
 				U_8 *name = J9UTF8_DATA(nameUTF);
 				UDATA nameLength = J9UTF8_LENGTH(nameUTF);
-
 				/* Ignore <init> or <clinit> methods */
 				if ((0 != nameLength) && (name[0] != '<')) {
+					/* Resolve special split method ref when _sendMethod == NULL */
+					if (NULL == _sendMethod) {
+						buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
+						updateVMStruct(REGISTER_ARGS);
+						_sendMethod = resolveSpecialSplitMethodRef(_currentThread, ramConstantPool, splitTableIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
+						VMStructHasBeenUpdated(REGISTER_ARGS);
+						restoreGenericSpecialStackFrame(REGISTER_ARGS);
+						if (immediateAsyncPending()) {
+							rc = GOTO_ASYNC_CHECK;
+							goto done;
+						}
+						if (VM_VMHelpers::exceptionPending(_currentThread)) {
+							rc = GOTO_THROW_CURRENT_EXCEPTION;
+							goto done;
+						}
+					}
 					/* Check the receiver class is the subtype of the current class [= interface] */
 					J9Class *resolvedClass = J9_CLASS_FROM_METHOD(_sendMethod);
 					J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_sendMethod);
 					/* Skip the check for final methods in java.lang.Object (resolvedClassDepth == 0) */
 					if ((0 != J9CLASS_DEPTH(resolvedClass)) || J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccFinal)) {
 						J9Class *receiverClass = J9OBJECT_CLAZZ(_currentThread, receiver);
-
 						if (!instanceOfOrCheckCast(receiverClass, currentClass)) {
 							buildMethodFrame(REGISTER_ARGS, _sendMethod, 0);
 							updateVMStruct(REGISTER_ARGS);
 							setIllegalAccessErrorReceiverNotSameOrSubtypeOfCurrentClass(_currentThread, receiverClass, currentClass);
 							VMStructHasBeenUpdated(REGISTER_ARGS);
 							rc = GOTO_THROW_CURRENT_EXCEPTION;
+							goto done;
 						}
 					}
 				}
