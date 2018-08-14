@@ -2013,8 +2013,8 @@ dfp2lu(TR::Node * node, TR::CodeGenerator * cg)
    int64_t value1 = 0x2208000000000000LL;
    int64_t value2 = 0x948DF20DA5CFD42ELL;
 
-   size_t offset1 = cg->fe()->findOrCreateLiteral(comp, &value1, 8);
-   size_t offset2 = cg->fe()->findOrCreateLiteral(comp, &value2, 8);
+   size_t offset1 = cg->findOrCreateLiteral(&value1, 8);
+   size_t offset2 = cg->findOrCreateLiteral(&value2, 8);
 
    TR::Register * litReg = cg->allocateRegister();
    generateLoadLiteralPoolAddress(cg, node, litReg);
@@ -2224,8 +2224,8 @@ lu2dfp(TR::Node * node, TR::CodeGenerator * cg)
    int64_t value1 = 0x2208000000000000LL;
    int64_t value2 = 0x948DF20DA5CFD42ELL;
 
-   size_t offset1 = cg->fe()->findOrCreateLiteral(comp, &value1, 8);
-   size_t offset2 = cg->fe()->findOrCreateLiteral(comp, &value2, 8);
+   size_t offset1 = cg->findOrCreateLiteral(&value1, 8);
+   size_t offset2 = cg->findOrCreateLiteral(&value2, 8);
 
    TR::Register * litReg = cg->allocateRegister();
    generateLoadLiteralPoolAddress(cg, node, litReg);
@@ -2302,8 +2302,8 @@ lu2dfp64(TR::Node * node, TR::CodeGenerator * cg)
    int64_t value1 = 0x2208000000000000LL;
    int64_t value2 = 0x948DF20DA5CFD42ELL;
 
-   size_t offset1 = cg->fe()->findOrCreateLiteral(comp, &value1, 8);
-   size_t offset2 = cg->fe()->findOrCreateLiteral(comp, &value2, 8);
+   size_t offset1 = cg->findOrCreateLiteral(&value1, 8);
+   size_t offset2 = cg->findOrCreateLiteral(&value2, 8);
 
    TR::Register * litReg = cg->allocateRegister();
    generateLoadLiteralPoolAddress(cg, node, litReg);
