@@ -320,6 +320,7 @@ public class TraceContext {
 	 * 
 	 * @deprecated this method is deprecated as it's use implies a problem elsewhere
 	 */
+	@Deprecated
 	public void setTraceType(int type) {
 		boolean validType = true;
 		if (debugStream != null) {
