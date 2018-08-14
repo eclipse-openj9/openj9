@@ -1410,7 +1410,6 @@ exit:
 				vmFuncs->acquireSafePointVMAccess(currentThread);
 				/* check class flag again after aquiring VM access */
 				if (J9_ARE_NO_BITS_SET(fieldClass->classFlags, J9ClassHasIllegalFinalFieldModifications)) {
-					fieldClass->classFlags |= J9ClassHasIllegalFinalFieldModifications;
 					J9JITConfig* jitConfig = vm->jitConfig;
 					if (NULL != jitConfig) {
 						jitConfig->jitIllegalFinalFieldModification(currentThread, fieldClass);
