@@ -49,6 +49,8 @@ timeout(time: 10, unit: 'HOURS') {
             variableFile = load 'buildenv/jenkins/common/variables-functions'
             variableFile.parse_variables_file()
             variableFile.set_slack_channel()
+            variableFile.set_user_credentials()
+            variableFile.set_vendor_variables()
 
             // fetch SHAs
             ALL_SHAS['OPENJ9'] = buildFile.get_sha(OPENJ9_REPO, OPENJ9_BRANCH)
@@ -77,7 +79,7 @@ timeout(time: 10, unit: 'HOURS') {
                 echo "OMR_SHA:${SHAS['OMR']}"
 
                 SPECS.each { SPEC ->
-                    JOBS["Build-Test-JDK${SDK_VERSION}-${SPEC}"] = { buildFile.workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, TESTS_TARGETS, params.VENDOR_TEST_REPOS_MAP, params.VENDOR_TEST_BRANCHES_MAP, params.VENDOR_TEST_DIRS_MAP, params.USER_CREDENTIALS_ID, params.BUILD_LIST) }
+                    JOBS["Build-Test-JDK${SDK_VERSION}-${SPEC}"] = { buildFile.workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, TESTS_TARGETS, VENDOR_TEST_REPOS_MAP, VENDOR_TEST_BRANCHES_MAP, VENDOR_TEST_DIRS_MAP, USER_CREDENTIALS_ID, BUILD_LIST) }
                  }
             }
 
@@ -89,7 +91,7 @@ timeout(time: 10, unit: 'HOURS') {
             SHAS['OPENJ9'] = ALL_SHAS['OPENJ9']
             SHAS['OMR'] = ALL_SHAS['OMR']
             SHAS['OPENJDK'] = buildFile.get_sha(OPENJDK_REPOS[CMAKE_SDK_VERSION].repo, OPENJDK_REPOS[CMAKE_SDK_VERSION].branch)
-            JOBS["Build-TestJDK${CMAKE_SDK_VERSION}-linux_x86-64_cmprssptrs_cmake"] = { buildFile.workflow(CMAKE_SDK_VERSION as int, 'linux_x86-64_cmprssptrs_cmake', SHAS, OPENJDK_REPOS[CMAKE_SDK_VERSION].repo, OPENJDK_REPOS[CMAKE_SDK_VERSION].branch, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, 'none', params.VENDOR_TEST_REPOS_MAP, params.VENDOR_TEST_BRANCHES_MAP, params.VENDOR_TEST_DIRS_MAP, params.USER_CREDENTIALS_ID, params.BUILD_LIST) }
+            JOBS["Build-TestJDK${CMAKE_SDK_VERSION}-linux_x86-64_cmprssptrs_cmake"] = { buildFile.workflow(CMAKE_SDK_VERSION as int, 'linux_x86-64_cmprssptrs_cmake', SHAS, OPENJDK_REPOS[CMAKE_SDK_VERSION].repo, OPENJDK_REPOS[CMAKE_SDK_VERSION].branch, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, 'none', VENDOR_TEST_REPOS_MAP, VENDOR_TEST_BRANCHES_MAP, VENDOR_TEST_DIRS_MAP, USER_CREDENTIALS_ID, BUILD_LIST) }
 
             cleanWs()
         }
