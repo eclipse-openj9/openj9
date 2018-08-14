@@ -165,9 +165,6 @@
 
 		<flags>
 			<flag name="J9PORT_LIBRARY_DEFINE"/>
-			<flag name="OMRPORT_OMRSIG_SUPPORT">
-				<include-if condition="spec.flags.J9VM_PORT_OMRSIG_SUPPORT"/>
-			</flag>
 			<group name="vendor_flags"/>
 		</flags>
 
