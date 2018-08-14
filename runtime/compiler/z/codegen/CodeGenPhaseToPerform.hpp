@@ -57,6 +57,7 @@
     InstructionSelectionPhase,
     CreateStackAtlasPhase,
 
+    PreRAPeepholePhase,
     RegisterAssigningPhase,
     MapStackPhase,
     ShrinkWrappingPhase,

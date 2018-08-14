@@ -48,6 +48,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/z/codegen/S390HelperCallSnippet.cpp \
     omr/compiler/z/codegen/S390Instruction.cpp \
     omr/compiler/z/codegen/S390OutOfLineCodeSection.cpp \
+    omr/compiler/z/codegen/S390Peephole.cpp \
     omr/compiler/z/codegen/S390Snippets.cpp \
     omr/compiler/z/codegen/SystemLinkage.cpp \
     omr/compiler/z/codegen/TranslateEvaluator.cpp \
