@@ -421,6 +421,13 @@ configureDumpAgents(J9JavaVM *vm)
 	IDATA kind = 0;
 	char *optionString = NULL;
 
+	/*
+	 * -XX:[+-]HeapDumpOnOutOfMemoryError.
+	 */
+	IDATA heapDumpIndex = -1; /* index of the rightmost HeapDumpOnOutOfMemoryError option */
+	BOOLEAN processXXHeapDump = FALSE;  /* either -XX:[+-]HeapDumpOnOutOfMemoryError is specified */
+	BOOLEAN enableXXHeapDump = FALSE; /* -XX:+HeapDumpOnOutOfMemoryError is selected */
+
 	/* -Xdump:help */
 	if ( FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XDUMP ":help", NULL) >= 0 )
 	{
@@ -532,10 +539,38 @@ configureDumpAgents(J9JavaVM *vm)
 	/* Process IBM_XE_COE_NAME */
 	mapDumpSettings(vm, agentOpts, &agentNum);
 	
-	/* Process -Xdump command-line options (L..R)*/
+
+	/*
+	 * Process -XX:[+-]HeapDumpOnOutOfMemoryError.
+	 * Set heapDumpIndex to the index of the rightmost option
+	 * and indicate whether enable or disable wins.
+	 */
+	heapDumpIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNOHEAPDUMPONOOM, NULL);
+	xdumpIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXHEAPDUMPONOOM, NULL);
+	processXXHeapDump = ((xdumpIndex >= 0) || (heapDumpIndex >= 0));
+	if (xdumpIndex > heapDumpIndex) {
+		enableXXHeapDump = TRUE;
+		heapDumpIndex = xdumpIndex;
+	}
+
+	/*
+	 * Process -Xdump command-line options (L..R).
+	 * Treat -XX:[+-]HeapDumpOnOutOfMemoryError as an alias of -Xdump.
+	 */
+
 	xdumpIndex = FIND_ARG_IN_VMARGS_FORWARD(OPTIONAL_LIST_MATCH, VMOPT_XDUMP, NULL);
-	while ( xdumpIndex >= 0 )
+	while (xdumpIndex >= 0)
 	{
+		/* HeapDumpOnOutOfMemoryError before current -Xdump. */
+		if (processXXHeapDump && (heapDumpIndex < xdumpIndex)) {
+			/* process the -XX:[+-]HeapDumpOnOutOfMemoryError option first */
+			if (enableXXHeapDump) {
+				enableDumpOnOutOfMemoryError(agentOpts, &agentNum);
+			} else {
+				disableDumpOnOutOfMemoryError(agentOpts, agentNum);
+			}
+			processXXHeapDump = FALSE;
+		}
 		if ( IS_CONSUMABLE(j9vm_args, xdumpIndex) && !IS_CONSUMED(j9vm_args, xdumpIndex) )
 		{
 			GET_OPTION_VALUE(xdumpIndex, ':', &optionString);
@@ -582,6 +617,14 @@ configureDumpAgents(J9JavaVM *vm)
 		}
 
 		xdumpIndex = FIND_NEXT_ARG_IN_VMARGS_FORWARD(OPTIONAL_LIST_MATCH, VMOPT_XDUMP, NULL, xdumpIndex);
+	}
+	/* handle the case of no -Xdump options */
+	if (processXXHeapDump) {
+		if (enableXXHeapDump) {
+			enableDumpOnOutOfMemoryError(agentOpts, &agentNum);
+		} else {
+			disableDumpOnOutOfMemoryError(agentOpts, agentNum);
+		}
 	}
 
 	/* Process active agent options (L..R) */
@@ -861,7 +904,7 @@ setDumpOption(struct J9JavaVM *vm, char *optionString)
 			 * invalid one and have partially set the configuration we were
 			 * passed.
 			 */
-			if(J9RAS_DUMP_INVALID_TYPE == kind) {
+			if (J9RAS_DUMP_INVALID_TYPE == kind) {
 				unlockConfig();
 				return OMR_ERROR_INTERNAL;  /* Return unrecognized dump type error code. */
 			}
