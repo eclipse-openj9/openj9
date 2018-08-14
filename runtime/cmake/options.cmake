@@ -63,9 +63,7 @@ option(J9VM_INTERP_VERBOSE "Determines if verbose reporting is available. (ie. -
 
 option(J9VM_MODULE_A2E "Enables compilation of the a2e module.")
 option(J9VM_MODULE_ALGORITHM_TEST "Enables compilation of the algorithm_test module.")
-option(J9VM_MODULE_AMS "Enables compilation of the ams module.")
 option(J9VM_MODULE_AOTRT_COMMON "Enables compilation of the aotrt_common module.")
-option(J9VM_MODULE_ASMUTIL "Enables compilation of the asmutil module.")
 
 option(J9VM_MODULE_BCUTIL "Enables compilation of the bcutil module.")
 option(J9VM_MODULE_BCVERIFY "Enables compilation of the bcverify module.")
@@ -76,10 +74,7 @@ option(J9VM_MODULE_CASSUME "Enables compilation of the cassume module.")
 option(J9VM_MODULE_CFDUMPER "Enables compilation of the cfdumper module.")
 
 
-
-option(J9VM_MODULE_DBG "Enables compilation of the dbg module.")
 option(J9VM_MODULE_DBGEXT "Enables compilation of the dbgext module.")
-
 
 
 
@@ -87,7 +82,6 @@ option(J9VM_MODULE_EXELIB "Enables compilation of the exelib module.")
 
 
 option(J9VM_MODULE_VM "Enables compilation of the vm module.")
-option(J9VM_MODULE_VMALL "Enables compilation of the vmall module.")
 option(J9VM_MODULE_WINDBG "Enables compilation of the windbg module.")
 option(J9VM_MODULE_ZIP "Enables compilation of the zip module.")
 option(J9VM_MODULE_ZLIB "Enables compilation of the zlib module.")
