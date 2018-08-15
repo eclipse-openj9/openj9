@@ -1899,6 +1899,12 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 					Trc_VM_CgroupSubsystemsNotEnabled(vm->mainThread, subsystemsAvailable, subsystemsEnabled);
 				}
 			}
+			parseError = setMemoryOptionToOptElse(vm, &(vm->directByteBufferMemoryMax),
+					VMOPT_XXMAXDIRECTMEMORYSIZEEQUALS, (UDATA) -1, TRUE);
+			if (OPTION_OK != parseError) {
+				parseErrorOption = VMOPT_XXMAXDIRECTMEMORYSIZEEQUALS;
+				goto _memParseError;
+			}
 
 			break;
 

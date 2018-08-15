@@ -227,7 +227,7 @@ jobject getPropertyList(JNIEnv *env)
 	PORT_ACCESS_FROM_ENV(env);
 	int propIndex = 0;
 	jobject propertyList;
-#define PROPERTY_COUNT 135
+#define PROPERTY_COUNT 137
 	char *propertyKey= NULL;
 	const char * language;
 	const char * region;
@@ -359,8 +359,26 @@ jobject getPropertyList(JNIEnv *env)
 
 #undef USERNAME_LENGTH
 
+#if defined(OPENJ9_BUILD)
+	/* Set the maximum direct byte buffer allocation property if it has not been set manually */
+	if ((UDATA) -1 == javaVM->directByteBufferMemoryMax) {
+		UDATA heapSize = javaVM->memoryManagerFunctions->j9gc_get_maximum_heap_size(javaVM);
+		/* allow up to 7/8 of the heap to be direct byte buffers */
+		javaVM->directByteBufferMemoryMax = heapSize - (heapSize / 8);
+	}
+#endif /* defined(OPENJ9_BUILD) */
+	if ((UDATA) -1 != javaVM->directByteBufferMemoryMax) {
+		/* buffer to hold the size of the maximum direct byte buffer allocations */
+		char maxDirectMemBuff[24];
+		strings[propIndex] = "sun.nio.MaxDirectMemorySize";
+		propIndex += 1;
+		j9str_printf(PORTLIB, maxDirectMemBuff, sizeof(maxDirectMemBuff), "%zu", javaVM->directByteBufferMemoryMax);
+		strings[propIndex] = maxDirectMemBuff;
+		propIndex += 1;
+	}
+
 	propertyList = getPlatformPropertyList(env, strings, propIndex);
-	if (usernameAlloc) {
+	if (NULL != usernameAlloc) {
 		jclmem_free_memory(env, usernameAlloc);
 	}
 	return propertyList;

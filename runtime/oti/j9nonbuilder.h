@@ -5103,6 +5103,7 @@ typedef struct J9JavaVM {
 	UDATA ramClassAllocationIncrement;
 	UDATA romClassAllocationIncrement;
 	UDATA memoryMax;
+	UDATA directByteBufferMemoryMax;
 	omrthread_monitor_t exclusiveAccessMutex;
 	struct J9Pool* jniGlobalReferences;
 	struct J9Pool* jniWeakGlobalReferences;
