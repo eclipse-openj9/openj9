@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,6 @@ package com.ibm.dtfj.runtime;
 
 import com.ibm.dtfj.image.CorruptDataException;
 
-
 /**
  * <p>Represents a generic managed runtime instance.</p>
  * 
@@ -34,22 +33,23 @@ import com.ibm.dtfj.image.CorruptDataException;
  *
  */
 public interface ManagedRuntime {
-    
-    /**
-     * Get the 'full' version information for this runtime.
-     * @return a string representation of the version information for this runtime instance
-     * @throws CorruptDataException 
-     * @see #getVersion()
-     * 
+
+	/**
+	 * Get the 'full' version information for this runtime.
+	 * @return a string representation of the version information for this runtime instance
+	 * @throws CorruptDataException If the runtime presents no understandable version data
+	 * @see #getVersion()
+	 * 
 	 * @deprecated Use "getVersion()" instead
-     */
+	 */
+	@Deprecated
 	public String getFullVersion() throws CorruptDataException;
-    
+
 	/**
 	 * Get the version data available for this runtime instance.
 	 * @return a string representing all the version data available for this runtime instance.
 	 * 
 	 * @throws CorruptDataException If the runtime presents no understandable version data
 	 */
-	public String getVersion() throws CorruptDataException;    
+	public String getVersion() throws CorruptDataException;
 }

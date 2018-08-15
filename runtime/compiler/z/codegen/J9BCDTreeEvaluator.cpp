@@ -4297,7 +4297,7 @@ J9::Z::TreeEvaluator::pdnegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          else
             TR_ASSERT(false,"unexpected normalized sign for raw sign 0x%x\n",i);
          }
-      size_t paddingLitPoolOffset = cg->fe()->findOrCreateLiteral(comp, signCodes, TR_NUM_DECIMAL_CODES);
+      size_t paddingLitPoolOffset = cg->findOrCreateLiteral(signCodes, TR_NUM_DECIMAL_CODES);
       TR::Register *litPoolBaseReg = NULL;
       if(cg->isLiteralPoolOnDemandOn())
          {

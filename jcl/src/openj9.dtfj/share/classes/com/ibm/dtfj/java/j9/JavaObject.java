@@ -97,6 +97,7 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 	/**
 	 * @deprecated Use {@link JavaRuntime#getObjectAtAddress(ImagePointer)} instead
 	 */
+	@Deprecated
 	public static JavaObject createJavaObject(JavaRuntime vm, ImagePointer address) throws CorruptDataException
 	{
 		try {
@@ -109,6 +110,7 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 	/**
 	 * @deprecated Use {@link JavaRuntime#getObjectInHeapRegion(ImagePointer,JavaHeap,JavaHeapRegion)} instead
 	 */
+	@Deprecated
 	public static JavaObject createJavaObject(JavaRuntime vm, ImagePointer address, JavaHeap containingHeap, JavaHeapRegion containingRegion) throws CorruptDataException
 	{
 		try {
