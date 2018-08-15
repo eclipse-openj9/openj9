@@ -3,6 +3,10 @@ communication between the server and the client. The streaming API is used on
 both ends because the client and server need a persistent connection for the
 duration of the compilation, to send and receive an arbitrary amount of data.
 
+**gRPC is no longer used by default. See [Sockets](Sockets.md) for details
+on the new communication backend.** If you still wish to compile with gRPC
+support, you can set the environment variable `JITAAS_USE_GRPC`.
+
 ## Asynchronous Streams
 
 Streams in gRPC can be synchronous or asynchronous. Because of the nature of the
