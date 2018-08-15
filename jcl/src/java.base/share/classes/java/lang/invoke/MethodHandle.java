@@ -1276,7 +1276,7 @@ public abstract class MethodHandle {
 	}
 	
 	MemberName internalMemberName() {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		return null;
 	}
 	
 	BoundMethodHandle rebind() {
