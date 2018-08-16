@@ -84,113 +84,6 @@ static const int S390UnsupportedMachineTypes[] =
    TR_G5, TR_MULTIPRISE7000
    };
 
-
-bool
-CPU::TO_PORTLIB_get390zLinux_cpuinfoFeatureFlag(const char *feature)
-   {
-   char line[256];
-   const int LINE_SIZE = sizeof(line) - 1;
-   const char procHeader[] = "features";
-   const int PROC_HEADER_SIZE = sizeof(procHeader) - 1;
-#ifdef J9ZTPF
-   /*
-    * z/TPF platform knows "stfle" is supported;
-    * for other zLinux features, simply return false.
-   */
-   return false;
-#endif
-
-   FILE * fp = fopen("/proc/cpuinfo", "r");
-   if (fp)
-      {
-      while (fgets(line, LINE_SIZE, fp) > 0)
-         {
-         if (!memcmp(line, procHeader, PROC_HEADER_SIZE))
-            {
-            if (strstr(line, feature))
-               {
-               fclose(fp);
-               return true;
-               }
-            }
-         }
-      fclose(fp);
-      }
-   return false;
-   }
-
-
-bool
-CPU::TO_PORTLIB_get390zLinux_supportsStoreExtendedFacilityList()
-   {
-   char line[80];
-   const int LINE_SIZE = sizeof(line) - 1;
-   const char typeHeader[] = "Type: ";
-   const int TYPE_LINE_SIZE = 27;
-   const int TYPE_HEADER_SIZE = sizeof(typeHeader) - 1;
-   const char zVMHeader[] = "VM00 Control Program: z/VM    ";
-   const int zVM_LINE_SIZE = 39;
-   const int zVM_HEADER_SIZE = sizeof(zVMHeader) - 1;
-   bool supportedType = false;
-   bool supportedzVM = true;
-
-#ifdef J9ZTPF
-   /*
-    * z/TPF knows "stfle" is supported, but z/TPF platform cannot confirm this on procfs.
-   */
-   return true;
-#else
-
-   if (TR::Compiler->target.cpu.TO_PORTLIB_get390zLinux_cpuinfoFeatureFlag("stfle"))
-      return true;
-
-   FILE *fp = fopen("/proc/sysinfo", "r");
-   if (fp)
-      {
-      while (fgets(line, LINE_SIZE, fp) > 0)
-         {
-         int len = strlen(line);
-         if (len > TYPE_HEADER_SIZE &&
-             !memcmp(line, typeHeader, TYPE_HEADER_SIZE) &&
-             !supportedType)
-            {
-            if (len == TYPE_LINE_SIZE)
-               {
-               int type;
-               sscanf(line, "%*s %d",&type);
-
-               if (type == TR_GOLDEN_EAGLE || type == TR_DANU_GA2 || type == TR_Z9BC ||
-                   type == TR_Z10 || type == TR_Z10BC || type == TR_ZG || type == TR_ZGMR ||
-                   type == TR_ZEC12 || type == TR_ZEC12MR || type == TR_Z13 || type == TR_Z13s ||
-                   type == TR_Z14 || type == TR_Z14s)
-                  {
-                  supportedType = true;
-                  }
-               }
-            }
-         else if (len > zVM_HEADER_SIZE &&
-                  !memcmp(line, zVMHeader, zVM_HEADER_SIZE))
-            {
-            if (len == zVM_LINE_SIZE)
-               {
-               int ver=0;
-               int major=0;
-               sscanf(line, "%*s %*s %*s %*s %d%*c%d%*c%*d%*c", &ver, &major);
-
-               if (ver < 5 || (ver == 5 && major < 2))
-                  {
-                  supportedzVM = false;
-                  }
-               }
-            }
-         }
-      fclose(fp);
-      }
-   return (supportedType && supportedzVM);
-#endif
-   }
-
-
 TR_S390MachineType
 CPU::TO_PORTLIB_get390zLinuxMachineType()
    {
@@ -371,41 +264,6 @@ CPU::TO_PORTLIB_get390_supportsZHelix()
    return false;
    }
 
-
-////////////////////////////////////////////////////////////////////////////////
-// zLinux specific checks
-////////////////////////////////////////////////////////////////////////////////
-
-
-/* check for RAS highword register support on zLinux */
-bool
-CPU::TO_PORTLIB_get390zLinux_supportsHPRDebug()
-   {
-#if defined(TR_TARGET_32BIT)
-   return TR::Compiler->target.cpu.TO_PORTLIB_get390zLinux_cpuinfoFeatureFlag("highgprs");
-#else
-   /* the 64-bit kernel always has RAS support for highword registers */
-   return true;
-#endif
-   }
-
-
-/* check for transactional memory support on zLinux */
-bool
-CPU::TO_PORTLIB_get390zLinux_SupportTM()
-   {
-   return TR::Compiler->target.cpu.TO_PORTLIB_get390zLinux_cpuinfoFeatureFlag(" te ");
-   }
-
-
-/* check for vector facility support on zLinux */
-bool
-CPU::TO_PORTLIB_get390zLinux_supportsVectorFacility()
-   {
-   return TR::Compiler->target.cpu.TO_PORTLIB_get390zLinux_cpuinfoFeatureFlag(" vx ");
-   }
-
-
 /**
  zOS hardware detection checks a word at byte 200 of PSA.
 
@@ -572,7 +430,7 @@ CPU::initializeS390zLinuxProcessorFeatures()
    // However, the facility bits don't lie.
    //
    if (TR::Compiler->target.cpu.getS390SupportsZ900() &&
-       TR::Compiler->target.cpu.TO_PORTLIB_get390zLinux_supportsStoreExtendedFacilityList())
+       j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_STFLE))
       {
       // Check facility bits for support of hardware
 
@@ -600,7 +458,7 @@ CPU::initializeS390zLinuxProcessorFeatures()
 
    // Either z6/z10 wasn't detected or STFLE is not supported.
    // Use machine model.
-   if (!TR::Compiler->target.cpu.getS390SupportsZ10() || !TR::Compiler->target.cpu.TO_PORTLIB_get390zLinux_supportsStoreExtendedFacilityList())
+   if (!TR::Compiler->target.cpu.getS390SupportsZ10() || !j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_STFLE))
       {
       TR_S390MachineType machineType = TR::Compiler->target.cpu.getS390MachineType();
 
@@ -614,7 +472,7 @@ CPU::initializeS390zLinuxProcessorFeatures()
          }
 
       // For z10+ only use machine model if STFLE is not supported. Otherwise, we should have detected it above.
-      if (!TR::Compiler->target.cpu.TO_PORTLIB_get390zLinux_supportsStoreExtendedFacilityList())
+      if (!j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_STFLE))
          {
          if (machineType == TR_ZNEXT || machineType == TR_ZNEXTs)
             {
@@ -645,18 +503,19 @@ CPU::initializeS390zLinuxProcessorFeatures()
 
    // Only SLES11 SP1 supports HPR debugging facilities, which is
    // required for RAS support for HPR (ZGryphon or higher).
-   if (TR::Compiler->target.cpu.getS390SupportsZ196() && TR::Compiler->target.cpu.TO_PORTLIB_get390zLinux_supportsHPRDebug())
+   if (TR::Compiler->target.cpu.getS390SupportsZ196() && j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_HIGH_GPRS))
       TR::Compiler->target.cpu.setS390SupportsHPRDebug();
 
    // Check for OS support of TM.
-   if (TR::Compiler->target.cpu.getS390SupportsZEC12() && TR::Compiler->target.cpu.TO_PORTLIB_get390zLinux_SupportTM())
+   if (TR::Compiler->target.cpu.getS390SupportsZEC12() && j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_TE))
       TR::Compiler->target.cpu.setS390SupportsTM();
 
 
    if (TR::Compiler->target.cpu.getS390SupportsZEC12() && (0 == j9ri_enableRISupport()))
       TR::Compiler->target.cpu.setS390SupportsRI();
 
-   if (TR::Compiler->target.cpu.getS390SupportsZ13() && TR::Compiler->target.cpu.TO_PORTLIB_get390zLinux_supportsVectorFacility())
+   if (TR::Compiler->target.cpu.getS390SupportsZ13() &&
+              j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_VECTOR_FACILITY))
       TR::Compiler->target.cpu.setS390SupportsVectorFacility();
 
    if (TR::Compiler->target.cpu.getS390SupportsZ14())
