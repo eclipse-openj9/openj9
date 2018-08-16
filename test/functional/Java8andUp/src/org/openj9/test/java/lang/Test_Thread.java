@@ -370,19 +370,6 @@ public class Test_Thread {
 	}
 
 	/**
-	 * @tests java.lang.Thread#destroy()
-	 */
-	@Test
-	public void test_destroy() {
-		try {
-			new Thread().destroy();
-			Assert.fail("NoSuchMethodError expected");
-		} catch (NoSuchMethodError e) {
-			// expected
-		}
-	}
-
-	/**
 	 * @tests java.lang.Thread#enumerate(java.lang.Thread[])
 	 */
 	@Test
@@ -1218,85 +1205,6 @@ public class Test_Thread {
 	 * @tests java.lang.Thread#stop(java.lang.Throwable)
 	 */
 	@Test
-	public void test_stop3() {
-		/* [PR CMVC 94728] AccessControlException on dead Thread */
-		Thread t = new Thread("t");
-		class MySecurityManager extends SecurityManager {
-			public boolean intest = false;
-			public boolean checkAccess = false;
-
-			public void checkAccess(Thread t) {
-				if (intest) {
-					checkAccess = true;
-				}
-			}
-		}
-		MySecurityManager sm = new MySecurityManager();
-		System.setSecurityManager(sm);
-		try {
-			sm.intest = true;
-			try {
-				t.stop(new ThreadDeath());
-			} catch (UnsupportedOperationException e) {
-				// Expected
-			} catch (Throwable e) {
-				Assert.fail("unexpected exception: " + e);
-			}
-			sm.intest = false;
-			AssertJUnit.assertFalse("checkAccess 1", sm.checkAccess);
-			t.start();
-			try {
-				t.join(2000);
-			} catch (InterruptedException e) {
-			}
-			sm.intest = true;
-			sm.checkAccess = false;
-			try {
-				t.stop(new ThreadDeath());
-			} catch (UnsupportedOperationException e) {
-				// Expected
-			} catch (Throwable e) {
-				Assert.fail("unexpected exception: " + e);
-			}
-			AssertJUnit.assertFalse("checkAccess 2", sm.checkAccess);
-			sm.intest = false;
-		} finally {
-			System.setSecurityManager(null);
-		}
-	}
-
-
-	/**
-	 * @tests java.lang.Thread#stop(java.lang.Throwable)
-	 */
-	@Test
-	public void test_stop4() {
-		ResSupThread t = new ResSupThread(Thread.currentThread());
-		synchronized (t) {
-			st = new Thread(t, "StopThread");
-			st.setPriority(Thread.MAX_PRIORITY);
-			st.start();
-			try {
-				t.wait();
-			} catch (InterruptedException e) {
-			}
-		}
-		try {
-			st.stop(new BogusException("Bogus"));
-		} catch (UnsupportedOperationException e) {
-			AssertJUnit.assertTrue("Stopped child with exception not alive", st.isAlive());
-			st.interrupt();
-			return;
-		}
-		st.interrupt();
-		AssertJUnit.assertTrue("Stopped child did not throw exception", false);
-	}
-
-
-	/**
-	 * @tests java.lang.Thread#stop(java.lang.Throwable)
-	 */
-	@Test
 	public void test_stop5() {
 		class StopBeforeStartThread extends Thread {
 			public boolean failed = false;
@@ -1319,23 +1227,6 @@ public class Test_Thread {
 			Assert.fail("Unexpected exception:" + e);
 		}
 	}
-
-
-	/**
-	 * @tests java.lang.Thread#stop(java.lang.Throwable)
-	 */
-	@Test
-	public void test_stop6() {
-		try {
-			new Thread().stop(new ThreadDeath());
-			Assert.fail("should throw UnsupportedOperationException");
-		} catch (UnsupportedOperationException e) {
-			// expected
-		} catch (Throwable e) {
-			Assert.fail("unexpected exception: " + e);
-		}
-	}
-
 
 	/**
 	 * @tests java.lang.Thread#suspend()
