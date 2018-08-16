@@ -23,6 +23,7 @@ package org.openj9.test.gpu;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Random;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -33,6 +34,7 @@ import org.testng.annotations.Test;
 import org.testng.log4testng.Logger;
 
 import com.ibm.cuda.CudaDevice;
+import com.ibm.cuda.CudaException;
 import com.ibm.gpu.GPUConfigurationException;
 import com.ibm.gpu.GPUSortException;
 import com.ibm.gpu.Maths;
@@ -40,29 +42,42 @@ import com.ibm.gpu.Maths;
 /**
  * Test sorting using com.ibm.gpu.Maths.
  */
-@SuppressWarnings({ "nls", "restriction" })
+@SuppressWarnings({ "nls", "static-method" })
 public final class SortTest {
 
+	private static enum ElementType {
+
+		DOUBLE("double", Double.BYTES),
+
+		FLOAT("float", Float.BYTES),
+
+		INT("int", Integer.BYTES),
+
+		LONG("long", Long.BYTES);
+
+		final String name;
+
+		final int size;
+
+		private ElementType(String name, int size) {
+			this.name = name;
+			this.size = size;
+		}
+
+	}
+
 	private static final boolean DisableGC = Boolean.getBoolean("disable.system.gc");
+
+	private static final boolean DisableJavaTiming = Boolean.getBoolean("disable.java.timing");
 
 	private static final Logger logger = Logger.getLogger(SortTest.class);
 
 	private static final Pattern SeedPattern = makePattern("-srand", 6, "=(\\d+)");
 
-	private static final boolean TimeJava = !Boolean.getBoolean("disable.java.timing");
+	private static final Pattern TypesPattern = makePattern("-types", 5, "=(\\S+)");
 
 	private static void addGeometric(Set<Integer> lengths, int min, int max, int count) {
-		if (min <= 0) {
-			throw new IllegalArgumentException("min <= 0");
-		}
-
-		if (min > max) {
-			throw new IllegalArgumentException("min > max");
-		}
-
-		if (count < 2) {
-			throw new IllegalArgumentException("count < 2");
-		}
+		checkArgs(min, max, count);
 
 		double ratio = Math.pow(max / (double) min, 1.0 / (count - 1));
 
@@ -74,13 +89,7 @@ public final class SortTest {
 	}
 
 	private static void addLinear(Set<Integer> lengths, int min, int max, int count) {
-		if (min > max) {
-			throw new IllegalArgumentException("min > max");
-		}
-
-		if (count < 2) {
-			throw new IllegalArgumentException("count < 2");
-		}
+		checkArgs(min, max, count);
 
 		double step = (max - (double) min) / (count - 1);
 
@@ -91,6 +100,44 @@ public final class SortTest {
 		lengths.add(Integer.valueOf(max));
 	}
 
+	private static void addTypes(Set<ElementType> types, String typeList) {
+		for (String type : typeList.split(",")) {
+			switch (type) {
+			case "all":
+				types.addAll(Arrays.asList(ElementType.values()));
+				break;
+			case "double":
+				types.add(ElementType.DOUBLE);
+				break;
+			case "float":
+				types.add(ElementType.FLOAT);
+				break;
+			case "int":
+				types.add(ElementType.INT);
+				break;
+			case "long":
+				types.add(ElementType.LONG);
+				break;
+			default:
+				throw new IllegalArgumentException("unsupported type: " + type);
+			}
+		}
+	}
+
+	private static void checkArgs(int min, int max, int count) {
+		if (min <= 0) {
+			throw new IllegalArgumentException("min <= 0");
+		}
+
+		if (min > max) {
+			throw new IllegalArgumentException("min > max");
+		}
+
+		if (count < 2) {
+			throw new IllegalArgumentException("count < 2");
+		}
+	}
+
 	private static Double elementsPerSecond(int elements, long timeNs) {
 		return Double.valueOf(timeNs == 0 ? 0 : (elements * 1e9 / timeNs));
 	}
@@ -98,13 +145,11 @@ public final class SortTest {
 	private static int getDeviceCount() {
 		try {
 			return com.ibm.cuda.Cuda.getDeviceCount();
-		} catch (Exception e) {
+		} catch (CudaException e) {
 			// getDeviceCount() declares but never throws CudaException
 			unexpected(e);
-		} catch (NoClassDefFoundError e) {
-			// CUDA4J is not supported on this platform.
+			return 0;
 		}
-		return 0;
 	}
 
 	private static int getLengthLimit(int deviceId, int elementSize) {
@@ -113,10 +158,8 @@ public final class SortTest {
 			long freeMemory = device.getFreeMemory();
 
 			return (int) Math.min(freeMemory / elementSize, Integer.MAX_VALUE);
-		} catch (Exception e) {
+		} catch (CudaException e) {
 			// If deviceId is not valid or accessible, we'll get a CudaException.
-			// We don't explicitly catch CudaException because then this class
-			// would fail to load.
 			unexpected(e);
 			return 0;
 		}
@@ -153,8 +196,8 @@ public final class SortTest {
 					continue;
 				}
 
-				if (SeedPattern.matcher(arg).matches()) {
-					// ignore random seed here
+				if (SeedPattern.matcher(arg).matches() || TypesPattern.matcher(arg).matches()) {
+					// ignore non-length options here
 					continue;
 				}
 
@@ -187,7 +230,37 @@ public final class SortTest {
 		return sorted;
 	}
 
+	private static boolean isSorted(double[] data, int fromIndex, int toIndex) {
+		for (int i = fromIndex; ++i < toIndex;) {
+			if (data[i - 1] > data[i]) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private static boolean isSorted(float[] data, int fromIndex, int toIndex) {
+		for (int i = fromIndex; ++i < toIndex;) {
+			if (data[i - 1] > data[i]) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 	private static boolean isSorted(int[] data, int fromIndex, int toIndex) {
+		for (int i = fromIndex; ++i < toIndex;) {
+			if (data[i - 1] > data[i]) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private static boolean isSorted(long[] data, int fromIndex, int toIndex) {
 		for (int i = fromIndex; ++i < toIndex;) {
 			if (data[i - 1] > data[i]) {
 				return false;
@@ -258,32 +331,42 @@ public final class SortTest {
 
 	private final Random random;
 
-	private final Long randomSeed;
+	private final Set<ElementType> types;
 
-	public SortTest() {
-		this(new String[0]);
-	}
-
-	public SortTest(String[] args) {
+	public SortTest(String... args) {
 		super();
+		this.lengths = getLengths(args);
+		this.types = new LinkedHashSet<>();
 
 		Long seed = null;
 
 		for (String arg : args) {
-			Matcher matcher = SeedPattern.matcher(arg);
+			Matcher matcher;
 
+			matcher = SeedPattern.matcher(arg);
 			if (matcher.matches()) {
 				seed = Long.valueOf(matcher.group(1));
+			}
+
+			matcher = TypesPattern.matcher(arg);
+			if (matcher.matches()) {
+				addTypes(types, matcher.group(1));
 			}
 		}
 
 		if (seed == null) {
 			seed = Long.valueOf(new Random().nextLong());
+
+			logger.info(String.format(
+					"Random seed value: %1$d. Add -srand=%1$d to the command line to reproduce this test manually.",
+					seed));
 		}
 
-		this.lengths = getLengths(args);
 		this.random = new Random(seed.longValue());
-		this.randomSeed = seed;
+
+		if (types.isEmpty()) {
+			types.addAll(Arrays.asList(ElementType.values()));
+		}
 	}
 
 	private void run() {
@@ -291,27 +374,25 @@ public final class SortTest {
 
 		if (deviceCount == 0) {
 			logger.info("No devices found or unsupported platform.");
-			return;
 		}
 
-		logger.info(String.format(
-				"Random seed value: %1$d. Add -srand=%1$d to the command line to reproduce this test manually.",
-				randomSeed));
-
 		for (int deviceId = 0; deviceId < deviceCount; ++deviceId) {
-			run(deviceId);
+			for (ElementType type : types) {
+				run(deviceId, type);
+			}
 		}
 	}
 
-	private void run(int deviceId) {
-		logger.info(String.format("Running sort(int[]) tests on device %d", Integer.valueOf(deviceId)));
+	private void run(int deviceId, ElementType type) {
+		logger.info(String.format("Running sort(%s[]) tests on device %d",
+				type.name, Integer.valueOf(deviceId)));
 
 		// warm up
-		test(deviceId, 0x1_0000, false);
+		test(deviceId, type, 0x1_0000, false);
 
 		logger.info(String.format("%13s %16s %16s", "Length", "Rate(GPU)", "Rate(Java)"));
 
-		int limit = getLengthLimit(deviceId, Integer.BYTES);
+		int limit = getLengthLimit(deviceId, type.size);
 
 		for (int length : lengths) {
 			if (length > limit) {
@@ -320,26 +401,69 @@ public final class SortTest {
 				break;
 			}
 
-			test(deviceId, length, true);
+			test(deviceId, type, length, true);
 		}
 	}
 
 	/**
-	 * Sorts an int array of given length, then checks to see if array is in order.
+	 * Sorts an array of the specified element type and length, then checks to see if array is in order.
+	 *
+	 * @param deviceId  the device to use
+	 * @param type  the element type
+	 * @param size  size of array to be tested
+	 * @param logResult  should performance measurements be logged?
+	 */
+	private void test(int deviceId, ElementType type, int size, boolean logResult) {
+		switch (type) {
+		case DOUBLE:
+			testDouble(deviceId, size, logResult);
+			break;
+		case FLOAT:
+			testFloat(deviceId, size, logResult);
+			break;
+		case INT:
+			testInt(deviceId, size, logResult);
+			break;
+		case LONG:
+			testLong(deviceId, size, logResult);
+			break;
+		default:
+			throw new IllegalArgumentException();
+		}
+	}
+
+	/**
+	 * Sorts an array of doubles with the given length, then checks to see if array is in order.
 	 *
 	 * @param deviceId  the device to use
 	 * @param size  size of array to be tested
 	 * @param logResult  should performance measurements be logged?
 	 */
-	private void test(int deviceId, int size, boolean logResult) {
-		int[] gpuData = new int[size];
+	private void testDouble(int deviceId, int size, boolean logResult) {
+		double[] gpuData = new double[size];
 
-		// populate the array with random integer values
+		// populate the array with random values
 		for (int i = 0; i < size; ++i) {
-			gpuData[i] = random.nextInt();
+			// Use this instead of random.nextDouble() to include NaNs, etc.
+			gpuData[i] = Double.longBitsToDouble(random.nextLong());
 		}
 
-		int[] javaData = TimeJava ? gpuData.clone() : null;
+		if (size > 10) {
+			// include special values, out of order
+			gpuData[0] = Double.POSITIVE_INFINITY;
+			gpuData[1] = Double.MAX_VALUE;
+			gpuData[2] = Double.MIN_NORMAL;
+			gpuData[3] = Double.MIN_VALUE;
+			gpuData[4] = +0.0f;
+			gpuData[5] = Double.NaN;
+			gpuData[6] = -0.0f;
+			gpuData[7] = -Double.MIN_VALUE;
+			gpuData[8] = -Double.MIN_NORMAL;
+			gpuData[9] = -Double.MAX_VALUE;
+			gpuData[10] = Double.NEGATIVE_INFINITY;
+		}
+
+		double[] javaData = DisableJavaTiming ? null : gpuData.clone();
 		long gpuDurationNs = 0;
 		long javaDurationNs = 0;
 
@@ -365,14 +489,160 @@ public final class SortTest {
 		}
 
 		// Java sort
-		if (TimeJava) {
+		if (javaData != null) {
 			if (!DisableGC) {
 				System.gc();
 			}
 
 			long javaStart = System.nanoTime();
 
-			java.util.Arrays.sort(javaData);
+			Arrays.sort(javaData);
+
+			javaDurationNs = System.nanoTime() - javaStart;
+
+			if (!Arrays.equals(gpuData, javaData)) {
+				Assert.fail(String.format("sort failure (size=%d)", Integer.valueOf(size)));
+			}
+		}
+
+		if (logResult) {
+			String result = String.format("%13d %,16.3f %,16.3f", Integer.valueOf(size),
+					elementsPerSecond(size, gpuDurationNs), elementsPerSecond(size, javaDurationNs));
+
+			logger.info(result);
+		}
+	}
+
+	/**
+	 * Sorts an array of floats with the given length, then checks to see if array is in order.
+	 *
+	 * @param deviceId  the device to use
+	 * @param size  size of array to be tested
+	 * @param logResult  should performance measurements be logged?
+	 */
+	private void testFloat(int deviceId, int size, boolean logResult) {
+		float[] gpuData = new float[size];
+
+		// populate the array with random values
+		for (int i = 0; i < size; ++i) {
+			// Use this instead of random.nextFloat() to include NaNs, etc.
+			gpuData[i] = Float.intBitsToFloat(random.nextInt());
+		}
+
+		if (size > 10) {
+			// include special values, out of order
+			gpuData[0] = Float.POSITIVE_INFINITY;
+			gpuData[1] = Float.MAX_VALUE;
+			gpuData[2] = Float.MIN_NORMAL;
+			gpuData[3] = Float.MIN_VALUE;
+			gpuData[4] = +0.0f;
+			gpuData[5] = Float.NaN;
+			gpuData[6] = -0.0f;
+			gpuData[7] = -Float.MIN_VALUE;
+			gpuData[8] = -Float.MIN_NORMAL;
+			gpuData[9] = -Float.MAX_VALUE;
+			gpuData[10] = Float.NEGATIVE_INFINITY;
+		}
+
+		float[] javaData = DisableJavaTiming ? null : gpuData.clone();
+		long gpuDurationNs = 0;
+		long javaDurationNs = 0;
+
+		// GPU sort
+		{
+			if (!DisableGC) {
+				System.gc();
+			}
+
+			long gpuStart = System.nanoTime();
+
+			try {
+				Maths.sortArray(deviceId, gpuData);
+			} catch (GPUConfigurationException | GPUSortException e) {
+				unexpected(e);
+			}
+
+			gpuDurationNs = System.nanoTime() - gpuStart;
+
+			if (!isSorted(gpuData, 0, size)) {
+				Assert.fail(String.format("sort failure (size=%d)", Integer.valueOf(size)));
+			}
+		}
+
+		// Java sort
+		if (javaData != null) {
+			if (!DisableGC) {
+				System.gc();
+			}
+
+			long javaStart = System.nanoTime();
+
+			Arrays.sort(javaData);
+
+			javaDurationNs = System.nanoTime() - javaStart;
+
+			if (!Arrays.equals(gpuData, javaData)) {
+				Assert.fail(String.format("sort failure (size=%d)", Integer.valueOf(size)));
+			}
+		}
+
+		if (logResult) {
+			String result = String.format("%13d %,16.3f %,16.3f", Integer.valueOf(size),
+					elementsPerSecond(size, gpuDurationNs), elementsPerSecond(size, javaDurationNs));
+
+			logger.info(result);
+		}
+	}
+
+	/**
+	 * Sorts an array of ints with the given length, then checks to see if array is in order.
+	 *
+	 * @param deviceId  the device to use
+	 * @param size  size of array to be tested
+	 * @param logResult  should performance measurements be logged?
+	 */
+	private void testInt(int deviceId, int size, boolean logResult) {
+		int[] gpuData = new int[size];
+
+		// populate the array with random values
+		for (int i = 0; i < size; ++i) {
+			gpuData[i] = random.nextInt();
+		}
+
+		int[] javaData = DisableJavaTiming ? null : gpuData.clone();
+		long gpuDurationNs = 0;
+		long javaDurationNs = 0;
+
+		// GPU sort
+		{
+			if (!DisableGC) {
+				System.gc();
+			}
+
+			long gpuStart = System.nanoTime();
+
+			try {
+				Maths.sortArray(deviceId, gpuData);
+			} catch (GPUConfigurationException | GPUSortException e) {
+				unexpected(e);
+			}
+
+			gpuDurationNs = System.nanoTime() - gpuStart;
+
+			if (!isSorted(gpuData, 0, size)) {
+				Assert.fail(String.format("sort failure (size=%d)", Integer.valueOf(size)));
+			}
+		}
+
+		// Java sort
+		if (javaData != null) {
+			if (!DisableGC) {
+				System.gc();
+			}
+
+			long javaStart = System.nanoTime();
+
+			Arrays.sort(javaData);
 
 			javaDurationNs = System.nanoTime() - javaStart;
 
@@ -391,6 +661,71 @@ public final class SortTest {
 		}
 	}
 
+	/**
+	 * Sorts an array of longs with the given length, then checks to see if array is in order.
+	 *
+	 * @param deviceId  the device to use
+	 * @param size  size of array to be tested
+	 * @param logResult  should performance measurements be logged?
+	 */
+	private void testLong(int deviceId, int size, boolean logResult) {
+		long[] gpuData = new long[size];
+
+		// populate the array with random values
+		for (int i = 0; i < size; ++i) {
+			gpuData[i] = random.nextLong();
+		}
+
+		long[] javaData = DisableJavaTiming ? null : gpuData.clone();
+		long gpuDurationNs = 0;
+		long javaDurationNs = 0;
+
+		// GPU sort
+		{
+			if (!DisableGC) {
+				System.gc();
+			}
+
+			long gpuStart = System.nanoTime();
+
+			try {
+				Maths.sortArray(deviceId, gpuData);
+			} catch (GPUConfigurationException | GPUSortException e) {
+				unexpected(e);
+			}
+
+			gpuDurationNs = System.nanoTime() - gpuStart;
+
+			if (!isSorted(gpuData, 0, size)) {
+				Assert.fail(String.format("sort failure (size=%d)", Integer.valueOf(size)));
+			}
+		}
+
+		// Java sort
+		if (javaData != null) {
+			if (!DisableGC) {
+				System.gc();
+			}
+
+			long javaStart = System.nanoTime();
+
+			Arrays.sort(javaData);
+
+			javaDurationNs = System.nanoTime() - javaStart;
+
+			if (!Arrays.equals(gpuData, javaData)) {
+				Assert.fail(String.format("sort failure (size=%d)", Integer.valueOf(size)));
+			}
+		}
+
+		if (logResult) {
+			String result = String.format("%13d %,16.3f %,16.3f", Integer.valueOf(size),
+					elementsPerSecond(size, gpuDurationNs), elementsPerSecond(size, javaDurationNs));
+
+			logger.info(result);
+		}
+	}
+
 	@Test(groups = { "level.sanity", "level.extended" })
 	public void testBasic() {
 		main(new String[] { "-geometric=10,10000000,31" });
@@ -402,4 +737,3 @@ public final class SortTest {
 	}
 
 }
-
