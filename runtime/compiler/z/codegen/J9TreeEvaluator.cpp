@@ -10762,8 +10762,11 @@ inlineConcurrentHashMapTmPut(
 
    // Label used by the retry loop to retry transaction.
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, tstartLabel);
-   /// immediate field described in TR::TreeEvaluator::tstartEvaluator(TR_Node * node, TR_CodeGenerator * cg)
-   cursor = generateSILInstruction(cg, TR::InstOpCode::TBEGIN, node, generateS390MemoryReference(cg->machine()->getS390RealRegister(TR::RealRegister::GPR0),0,cg), 0xFF02);
+
+   // the Transaction Diagnostic Block (TDB) is a memory location for the OS to write state info in the event of an abort
+   TR::MemoryReference* TDBmemRef = generateS390MemoryReference(cg->getMethodMetaDataRealRegister(), fej9->thisThreadGetTDBOffset(), cg);
+   // immediate field described in TR::TreeEvaluator::tstartEvaluator
+   cursor = generateSILInstruction(cg, TR::InstOpCode::TBEGIN, node, TDBmemRef, 0xFF02);
 
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK7, node, failureLabel);
 
@@ -11023,8 +11026,11 @@ inlineConcurrentHashMapTmRemove(
 
    // Label used by the retry loop to retry transaction.
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, tstartLabel);
-   /// immediate field described in TR::TreeEvaluator::tstartEvaluator(TR_Node * node, TR_CodeGenerator * cg)
-   cursor = generateSILInstruction(cg, TR::InstOpCode::TBEGIN, node, generateS390MemoryReference(cg->machine()->getS390RealRegister(TR::RealRegister::GPR0),0,cg), 0xFF02);
+
+   // the Transaction Diagnostic Block (TDB) is a memory location for the OS to write state info in the event of an abort
+   TR::MemoryReference* TDBmemRef = generateS390MemoryReference(cg->getMethodMetaDataRealRegister(), fej9->thisThreadGetTDBOffset(), cg);
+   /// immediate field described in TR::TreeEvaluator::tstartEvaluator
+   cursor = generateSILInstruction(cg, TR::InstOpCode::TBEGIN, node, TDBmemRef, 0xFF02);
 
    cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK7, node, failureLabel);
 
@@ -11287,18 +11293,22 @@ inlineConcurrentLinkedQueueTMOffer(
    static char * useNonConstrainedTM = feGetEnv("TR_UseNonConstrainedTM");
    static char * disableNIAI = feGetEnv("TR_DisableNIAI");
 
+   // the Transaction Diagnostic Block (TDB) is a memory location for the OS to write state info in the event of an abort
+   TR::MemoryReference* TDBmemRef = generateS390MemoryReference(cg->getMethodMetaDataRealRegister(), fej9->thisThreadGetTDBOffset(), cg);
+
    if (!disableTMOffer)
       {
       if (useNonConstrainedTM)
          {
-         /// immediate field described in TR::TreeEvaluator::tstartEvaluator(TR_Node * node, TR_CodeGenerator * cg)
-         cursor = generateSILInstruction(cg, TR::InstOpCode::TBEGIN, node, generateS390MemoryReference(cg->machine()->getS390RealRegister(TR::RealRegister::GPR0),0,cg), 0xFF02);
+         // immediate field described in TR::TreeEvaluator::tstartEvaluator
+         cursor = generateSILInstruction(cg, TR::InstOpCode::TBEGIN, node, TDBmemRef, 0xFF02);
 
          cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK7, node, failLabel);
          }
       else
          {
-         cursor = generateSILInstruction(cg, TR::InstOpCode::TBEGINC, node, generateS390MemoryReference(cg->machine()->getS390RealRegister(TR::RealRegister::GPR0),0,cg), 0xFF00);  //GPRMask
+         // No TDB for constrained transactions. Immediate field reflects TBEGINC can't filter interrupts
+         cursor = generateSILInstruction(cg, TR::InstOpCode::TBEGINC, node, generateS390MemoryReference(0, cg), 0xFF00);
          }
 
       if (!disableNIAI)
@@ -11507,18 +11517,22 @@ inlineConcurrentLinkedQueueTMPoll(
    static char * useNonConstrainedTM = feGetEnv("TR_UseNonConstrainedTM");
    static char * disableNIAI = feGetEnv("TR_DisableNIAI");
 
+   // the Transaction Diagnostic Block (TDB) is a memory location for the OS to write state info in the event of an abort
+   TR::MemoryReference* TDBmemRef = generateS390MemoryReference(cg->getMethodMetaDataRealRegister(), fej9->thisThreadGetTDBOffset(), cg);
+
    if (!disableTMPoll)
       {
       if (useNonConstrainedTM)
          {
-         /// immediate field described in TR::TreeEvaluator::tstartEvaluator(TR_Node * node, TR_CodeGenerator * cg)
-         cursor = generateSILInstruction(cg, TR::InstOpCode::TBEGIN, node, generateS390MemoryReference(cg->machine()->getS390RealRegister(TR::RealRegister::GPR0),0,cg), 0xFF02);
+         // immediate field described in TR::TreeEvaluator::tstartEvaluator
+         cursor = generateSILInstruction(cg, TR::InstOpCode::TBEGIN, node, TDBmemRef, 0xFF02);
 
          cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK7, node, failLabel);
          }
       else
          {
-         cursor = generateSILInstruction(cg, TR::InstOpCode::TBEGINC, node, generateS390MemoryReference(cg->machine()->getS390RealRegister(TR::RealRegister::GPR0),0,cg), 0xFF00);  //GPRMask
+         // No TDB for constrained transactions. Immediate field reflects TBEGINC can't filter interrupts
+         cursor = generateSILInstruction(cg, TR::InstOpCode::TBEGINC, node, generateS390MemoryReference(0, cg), 0xFF00);
          }
 
       if (!disableNIAI)
@@ -12136,6 +12150,7 @@ J9::Z::TreeEvaluator::tstartEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    //    POST Deps
 
    TR::Compilation *comp = cg->comp();
+   TR_J9VMBase *fej9 = static_cast<TR_J9VMBase*>(cg->fe());
    TR::Instruction * cursor = NULL;
 
    TR::Node * brPersistentNode = node->getFirstChild();
@@ -12143,20 +12158,6 @@ J9::Z::TreeEvaluator::tstartEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Node * fallThrough = node->getThirdChild();
    TR::Node * objNode = node->getChild(3);
    TR::Node * GRAChild = NULL;
-
-   static char *extractTDB = feGetEnv("TR_ExtractTDB");
-   TR::Register * tdbAddressReg;
-   TR::MemoryReference * TDBMemRef;
-   if (extractTDB)
-      {
-      tdbAddressReg = cg->allocateRegister();
-#if 1
-      printf("tstartEvaluator: please make sure J9VMThread includes a 'tdb' member.\n"); fflush(stdout);
-      TDBMemRef = generateS390MemoryReference(node->getChild(3), cg);
-#else
-      TDBMemRef = generateS390MemoryReference(cg->getMethodMetaDataRealRegister(), offsetof(J9VMThread, tdb), cg);
-#endif
-      }
 
    TR::LabelSymbol * labelPersistentFailure = brPersistentNode->getBranchDestination()->getNode()->getLabel();
    TR::LabelSymbol * labelTransientFailure = brTransientNode->getBranchDestination()->getNode()->getLabel();
@@ -12194,7 +12195,8 @@ J9::Z::TreeEvaluator::tstartEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       cg->decReferenceCount(GRAChild);
       }
 
-   TR::MemoryReference* tempMR = generateS390MemoryReference(cg->machine()->getS390RealRegister(TR::RealRegister::GPR0),0,cg);
+   // the Transaction Diagnostic Block (TDB) is a memory location for the OS to write state info in the event of an abort
+   TR::MemoryReference* TDBmemRef = generateS390MemoryReference(cg->getMethodMetaDataRealRegister(), fej9->thisThreadGetTDBOffset(), cg);
 
    static char * debugTM = feGetEnv("debugTM");
 
@@ -12220,14 +12222,8 @@ J9::Z::TreeEvaluator::tstartEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       ///        rolled back PSW pointing to TBEGIN. Without filtering these interrupts, the program will crash. Filtering
       ///        the interrupts allows us to resume execution following the abort and go to slow path so the exceptions
       ///        can be properly caught and handled.
-      if (extractTDB)
-         {
-         cursor = generateSILInstruction(cg, TR::InstOpCode::TBEGIN, node, TDBMemRef, 0xFF02);
-         }
-      else
-         {
-       cursor = generateSILInstruction(cg, TR::InstOpCode::TBEGIN, node, tempMR, 0xFF02);
-         }
+
+      cursor = generateSILInstruction(cg, TR::InstOpCode::TBEGIN, node, TDBmemRef, 0xFF02);
       }
 
    if (labelTransientFailure == labelPersistentFailure)
@@ -12268,13 +12264,6 @@ J9::Z::TreeEvaluator::tstartEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, labelTransientFailure, depsTransient, cursor);
 
-   if (extractTDB)
-      {
-    if (tdbAddressReg)
-       {
-         cg->stopUsingRegister(tdbAddressReg);
-       }
-      }
    cg->stopUsingRegister(monitorReg);
    cg->decReferenceCount(objNode);
    cg->decReferenceCount(brPersistentNode);
