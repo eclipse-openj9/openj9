@@ -197,6 +197,12 @@
 							<pathelement location="${TEST_ROOT}/TestConfig/lib/javassist.jar" />
 						</classpath>
 					</javac>
+					<javac srcdir="${src_80}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+						<include name="org/openj9/test/java/lang/Test_Thread_Extra.java" />
+						<classpath>
+							<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
+						</classpath>
+					</javac>
 				</then>
 			</elseif>
 			<else>
