@@ -2607,10 +2607,10 @@ TR_J9ByteCodeIlGenerator::stashArgumentsForOSR(TR_J9ByteCode byteCode)
          symRef = symRefTab()->findOrCreateHandleMethodSymbol(_methodSymbol, next2Bytes());
          break;
       case J9BCinvokestaticsplit:
-         symRef = symRefTab()->findOrCreateStaticMethodSymbol(_methodSymbol, next2Bytes() | J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG);
+         symRef = symRefTab()->findOrCreateStaticMethodSymbol(_methodSymbol, next2Bytes() | J9_STATIC_SPLIT_TABLE_INDEX_FLAG);
          break;
       case J9BCinvokespecialsplit:
-         symRef = symRefTab()->findOrCreateSpecialMethodSymbol(_methodSymbol, next2Bytes() | J9_STATIC_SPLIT_TABLE_INDEX_FLAG);
+         symRef = symRefTab()->findOrCreateSpecialMethodSymbol(_methodSymbol, next2Bytes() | J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG);
          break;
       default:
          return;

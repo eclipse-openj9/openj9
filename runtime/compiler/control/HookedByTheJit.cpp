@@ -3415,6 +3415,7 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
             bool finishedArgs = false;
             int32_t curLocalSize;
             int32_t i = 0;
+            uint16_t cpIndex = 0;
             for (int32_t nextLocalIndex = 0; !matches && !finishedArgs && nextLocalIndex<255; nextLocalIndex += curLocalSize)
                {
                curLocalSize = 1;
@@ -3448,7 +3449,11 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
                      finishedArgs = (nextLocalIndex != _code[i++]);
                      break;
                   case J9BCinvokespecial:
+                      cpIndex = BC_OP_U16(&_code[i]); //will need to compare signature with superMethod.
+                      matches=true;
+                      break;
                   case J9BCinvokespecialsplit:
+                     cpIndex = *(U_16*)(J9ROMCLASS_SPECIALSPLITMETHODREFINDEXES(ROMCl) + BC_OP_U16(&_code[i])); //will need to compare signature with superMethod.
                      matches=true;
                      break;
                   default:
@@ -3468,7 +3473,6 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
                   }
 
 
-               uint16_t cpIndex = BC_OP_U16(&_code[i]); //will need to compare signature with superMethod.
                J9ROMFieldRef * ref1 = &(((J9ROMFieldRef *)((char *)ROMCl+sizeof(J9ROMClass)))[cpIndex]);
                J9ROMNameAndSignature *nameAndSignature = J9ROMFIELDREF_NAMEANDSIGNATURE(ref1);      //this isn't a string its a struct.
                callSignature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature);
