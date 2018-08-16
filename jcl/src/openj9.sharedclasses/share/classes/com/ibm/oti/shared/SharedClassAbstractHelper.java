@@ -95,7 +95,7 @@ public abstract class SharedClassAbstractHelper extends SharedAbstractHelper imp
 			return null;
 
 		boolean startsWithJar = jarName.startsWith("jar:"); //$NON-NLS-1$
-		boolean endsWithBang = jarName.endsWith("!/") || jarName.endsWith("!\\");//$NON-NLS-1$ //$NON-NLS-2$
+		boolean endsWithBang = jarName.endsWith("!/");//$NON-NLS-1$
 		int subStringStart = startsWithJar ? 4 : 0;
 		int len = jarName.length();
 		/*
@@ -118,9 +118,6 @@ public abstract class SharedClassAbstractHelper extends SharedAbstractHelper imp
 	private static URL getURLToCheck(URL url) {
 		String pathString = url.toString();
 		int indexBang = pathString.indexOf("!/"); //$NON-NLS-1$
-		if (-1 == indexBang) {
-			indexBang = pathString.indexOf("!\\"); //$NON-NLS-1$
-		}
 
 		if (-1 != indexBang) {
 			/* For a nested jar (e.g. /path/A.jar!/lib/B.jar), validate the external jar file only (/path/A.jar), 
