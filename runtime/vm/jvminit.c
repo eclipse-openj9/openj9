@@ -2945,6 +2945,10 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 			vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_JIT_INLINE_WATCHES;
 		} else if (0 == strcmp(testString, VMOPT_XXDISABLEJITWATCH)) {
 			vm->extendedRuntimeFlags &= ~(UDATA)J9_EXTENDED_RUNTIME_JIT_INLINE_WATCHES;
+		} else if (0 == strcmp(testString, VMOPT_XXENABLEALWAYSSPLITBYTECODES)) {
+			vm->runtimeFlags |= J9_RUNTIME_ALWAYS_SPLIT_BYTECODES;
+		} else if (0 == strcmp(testString, VMOPT_XXDISABLEALWAYSSPLITBYTECODES)) {
+			vm->runtimeFlags &= ~(UDATA)J9_RUNTIME_ALWAYS_SPLIT_BYTECODES;
 		}
 		/* -Xbootclasspath and -Xbootclasspath/p are not supported from Java 9 onwards */
 		if (J2SE_VERSION(vm) >= J2SE_19) {

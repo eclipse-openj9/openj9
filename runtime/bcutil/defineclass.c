@@ -526,6 +526,10 @@ internalLoadROMClass(J9VMThread * vmThread, J9LoadROMClassData *loadData, J9Tran
 		}
 	}
 
+	if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_ALWAYS_SPLIT_BYTECODES)) {
+		translationFlags |= BCT_AlwaysSplitBytecodes;
+	}
+
 	/* Determine allowed class file version */
 #ifdef J9VM_OPT_SIDECAR
 	if (J2SE_VERSION(vm) >= J2SE_V12) {
