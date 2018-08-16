@@ -263,7 +263,7 @@ TR::Register * caseConversionHelper(TR::Node* node, TR::CodeGenerator* cg, bool 
    TR::Instruction* cursor;
 
    const int elementSizeMask = (isCompressedString) ? 0x0 : 0x1;    // byte or halfword mask
-   const int8_t sizeOfVector = 16;
+   const int8_t sizeOfVector = cg->machine()->getVRFSize();
    const bool is64 = TR::Compiler->target.is64Bit();
    uintptrj_t headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
 

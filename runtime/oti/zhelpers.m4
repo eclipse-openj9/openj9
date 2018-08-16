@@ -1,4 +1,4 @@
-dnl Copyright (c) 1991, 2017 IBM Corp. and others
+dnl Copyright (c) 1991, 2018 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,6 +74,7 @@ define({C_GPR},cg)
 define({CHI_GPR},cghi)
 define({CDS_GPR},cdsg)
 define({CL_GPR},clg)
+define({CLFI_GPR},clgfi)
 define({CLM_GPR},clmh)
 define({CLR_GPR},clgr)
 define({CR_GPR},cgr)
@@ -124,6 +125,7 @@ define({C_GPR},c)
 define({CHI_GPR},chi)
 define({CDS_GPR},cds)
 define({CL_GPR},cl)
+define({CLFI_GPR},clfi)
 define({CLM_GPR},clm)
 define({CLR_GPR},clr)
 define({CR_GPR},cr)

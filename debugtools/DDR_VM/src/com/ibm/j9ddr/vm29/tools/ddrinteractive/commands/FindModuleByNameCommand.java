@@ -29,13 +29,13 @@ import com.ibm.j9ddr.tools.ddrinteractive.Context;
 import com.ibm.j9ddr.tools.ddrinteractive.DDRInteractiveCommandException;
 import com.ibm.j9ddr.util.PatternString;
 import com.ibm.j9ddr.vm29.j9.DataType;
-import com.ibm.j9ddr.vm29.j9.ObjectModel;
-import com.ibm.j9ddr.vm29.j9.Pool;
+import com.ibm.j9ddr.vm29.j9.HashTable;
+import com.ibm.j9ddr.vm29.j9.ModuleHashTable;
 import com.ibm.j9ddr.vm29.j9.SlotIterator;
+import com.ibm.j9ddr.vm29.j9.gc.GCClassLoaderIterator;
+import com.ibm.j9ddr.vm29.pointer.generated.J9ClassLoaderPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ModulePointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9ObjectPointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9PoolPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.JavaVersionHelper;
@@ -66,28 +66,28 @@ public class FindModuleByNameCommand extends Command
 		try {
 			J9JavaVMPointer vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
 			if (JavaVersionHelper.ensureJava9AndUp(vm, out)) {
-				J9PoolPointer pool = vm.modularityPool();
-				Pool<J9ModulePointer> modulePool = Pool.fromJ9Pool(pool, J9ModulePointer.class);
-				SlotIterator<J9ModulePointer> poolIterator = modulePool.iterator();
-				J9ModulePointer modulePtr = null;
+				GCClassLoaderIterator iterator = GCClassLoaderIterator.from();
 
 				int hitCount = 0;
 				String searchModuleName = args[0];
-				J9ObjectPointer moduleNameObjPtr = null;
 				PatternString pattern = new PatternString(searchModuleName);
 
 				out.printf("Searching for modules named '%s' in VM=%s%n", searchModuleName,
 						Long.toHexString(vm.getAddress()));
-				while (poolIterator.hasNext()) {
-					modulePtr = poolIterator.next();
-					moduleNameObjPtr = modulePtr.moduleName();
-					if (ObjectModel.isPointerInHeap(vm, moduleNameObjPtr)
-							&& pattern.isMatch(J9ObjectHelper.stringValue(moduleNameObjPtr))) {
-						hitCount++;
 
-						String moduleName = J9ObjectHelper.stringValue(moduleNameObjPtr);
-						String hexAddress = modulePtr.getHexAddress();
-						out.printf("%-30s !j9module %s%n", moduleName, hexAddress);
+				while (iterator.hasNext()) {
+					J9ClassLoaderPointer classLoaderPointer = iterator.next();
+					HashTable<J9ModulePointer> moduleHashTable = ModuleHashTable
+							.fromJ9HashTable(classLoaderPointer.moduleHashTable());
+					SlotIterator<J9ModulePointer> slotIterator = moduleHashTable.iterator();
+					while (slotIterator.hasNext()) {
+						J9ModulePointer modulePtr = slotIterator.next();
+						String moduleName = J9ObjectHelper.stringValue(modulePtr.moduleName());
+						if (pattern.isMatch(moduleName)) {
+							hitCount++;
+							String hexAddress = modulePtr.getHexAddress();
+							out.printf("%-30s !j9module %s%n", moduleName, hexAddress);
+						}
 					}
 				}
 				out.printf("Found %d module(s) named '%s'%n", hitCount, searchModuleName);

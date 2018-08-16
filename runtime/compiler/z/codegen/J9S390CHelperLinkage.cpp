@@ -99,8 +99,7 @@ TR::S390CHelperLinkage::S390CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390Li
       setRegisterFlag(TR::RealRegister::FPR15, Preserved);
       }
 #endif
-   // Following Snippet for marking ARs preserved was taken from System Linkage.
-   // Current linkage do not preserve the ARs
+
    if (TR::Compiler->target.isLinux())
       {
       
@@ -108,15 +107,6 @@ TR::S390CHelperLinkage::S390CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390Li
       setRegisterFlag(TR::RealRegister::GPR6, Preserved);
       setRegisterFlag(TR::RealRegister::GPR7, Preserved);
       setRegisterFlag(TR::RealRegister::GPR12, Preserved);
-
-      setRegisterFlag(TR::RealRegister::AR8, Preserved);
-      setRegisterFlag(TR::RealRegister::AR9, Preserved);
-      setRegisterFlag(TR::RealRegister::AR10, Preserved);
-      setRegisterFlag(TR::RealRegister::AR11, Preserved);
-      setRegisterFlag(TR::RealRegister::AR12, Preserved);
-      setRegisterFlag(TR::RealRegister::AR13, Preserved);
-      setRegisterFlag(TR::RealRegister::AR14, Preserved);
-      setRegisterFlag(TR::RealRegister::AR15, Preserved);
 
       setReturnAddressRegister (TR::RealRegister::GPR14 );
       setIntegerReturnRegister (TR::RealRegister::GPR2 );
@@ -223,10 +213,8 @@ class RealRegisterManager
             _Registers[RealRegister] = _cg->allocateRegister(TR_FPR);
          else if (RealRegister >= TR::RealRegister::FirstVRF && RealRegister <= TR::RealRegister::LastVRF)
             _Registers[RealRegister] = _cg->allocateRegister(TR_VRF);
-         else if (!(RealRegister >= TR::RealRegister::FirstAR && RealRegister <= TR::RealRegister::LastAR))
-            _Registers[RealRegister] = _cg->allocateRegister();
          else
-            return NULL;
+            _Registers[RealRegister] = _cg->allocateRegister();
          _numberOfRegistersInUse++;
          }
       return _Registers[RealRegister];

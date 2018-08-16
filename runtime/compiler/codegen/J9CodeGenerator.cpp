@@ -2766,13 +2766,13 @@ J9::CodeGenerator::compressedReferenceRematerialization()
       }
 
    // no need to rematerialize for lowMemHeap
-   //
    if (self()->comp()->useCompressedPointers() &&
          ((TR::Compiler->vm.heapBaseAddress() != 0) ||
          (TR::Compiler->om.compressedReferenceShift() != 0)) &&
          !disableRematforCP)
       {
-      self()->comp()->dumpMethodTrees("Trees before this remat phase", self()->comp()->getMethodSymbol());
+      if (self()->comp()->getOption(TR_TraceCG))
+         self()->comp()->dumpMethodTrees("Trees before this remat phase", self()->comp()->getMethodSymbol());
 
       List<TR::Node> rematerializedNodes(self()->trMemory());
       vcount_t visitCount = self()->comp()->incVisitCount();
@@ -2866,8 +2866,8 @@ J9::CodeGenerator::compressedReferenceRematerialization()
             rematerializedNodes.deleteAll();
             }
          }
-
-      self()->comp()->dumpMethodTrees("Trees after this remat phase", self()->comp()->getMethodSymbol());
+      if (self()->comp()->getOption(TR_TraceCG))
+         self()->comp()->dumpMethodTrees("Trees after this remat phase", self()->comp()->getMethodSymbol());
 
       if (self()->shouldYankCompressedRefs())
          {
@@ -2881,7 +2881,8 @@ J9::CodeGenerator::compressedReferenceRematerialization()
             self()->yankCompressedRefs(tt, NULL, -1, node, visitCount, secondVisitCount);
             }
 
-         self()->comp()->dumpMethodTrees("Trees after this yank phase", self()->comp()->getMethodSymbol());
+         if (self()->comp()->getOption(TR_TraceCG))
+            self()->comp()->dumpMethodTrees("Trees after this yank phase", self()->comp()->getMethodSymbol());
          }
       }
 

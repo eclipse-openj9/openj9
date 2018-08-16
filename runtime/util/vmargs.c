@@ -479,7 +479,7 @@ optionValueOperations(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, IDATA
 						}
 						break;
 					case MAP_WITH_INCLUSIVE_OPTIONS :
-						/* Has to build the result from part of the j9Name and then the actual value on the comand-line */
+						/* Has to build the result from part of the j9Name and then the actual value on the command-line */
 						if (bufSize > 0) {
 							char* mapName = MAPPING_MAPNAME(j9vm_args, element);
 							/* To get the value of the *actual* arg specified on the command-line, the delimiter may not be the one specified */

@@ -507,6 +507,7 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_VMThread_entryLocalStorage", offsetof(J9VMThread, entryLocalStorage)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_VMThread_stackWalkState", offsetof(J9VMThread, stackWalkState)) |
 #if defined(OMR_GC_CONCURRENT_SCAVENGER) && defined(J9VM_ARCH_S390)
+			writeConstant(OMRPORTLIB, fd, "J9TR_VMThread_gsParameters_GSECI", offsetof(J9VMThread, gsParameters) + 2) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_VMThread_gsParameters_returnAddr", offsetof(J9VMThread, gsParameters.returnAddr)) |
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
@@ -752,7 +753,10 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_ELSSize", sizeof(J9VMEntryLocalStorage)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_J9_EXTENDED_RUNTIME_DEBUG_MODE", J9_EXTENDED_RUNTIME_DEBUG_MODE) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS", J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS) |
-			writeConstant(OMRPORTLIB, fd, "J9TR_J9_INLINE_JNI_MAX_ARG_COUNT", J9_INLINE_JNI_MAX_ARG_COUNT);
+			writeConstant(OMRPORTLIB, fd, "J9TR_J9_INLINE_JNI_MAX_ARG_COUNT", J9_INLINE_JNI_MAX_ARG_COUNT) |
+
+			/* Flag for Nestmates invokeVirtual on private methods */
+			writeConstant(OMRPORTLIB, fd, "J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG", J9_VTABLE_INDEX_DIRECT_METHOD_FLAG);
 
 	if (0 != err) {
 		rc = JNI_ERR;

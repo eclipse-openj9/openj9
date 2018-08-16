@@ -168,7 +168,7 @@ set(J9_CXXFLAGS
 )
 
 omr_stringify(J9_SHAREDLAGS_STR ${J9_SHAREDFLAGS})
-omr_stringify(J9_CXXFLAGS_STR ${J9_CXX_FLAGS})
+omr_stringify(J9_CXXFLAGS_STR ${J9_CXXFLAGS})
 
 # Note: This is explicitly overriding what's provided by
 #       the VM CMakeLists, as they pass -fno-exceptions

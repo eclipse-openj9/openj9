@@ -34,9 +34,9 @@
 
 #include "BuildResult.hpp"
 #include "ClassFileOracle.hpp"
+#include "ROMClassCreationContext.hpp"
 
 class BufferManager;
-class ROMClassCreationContext;
 
 /*
  * The ConstantPoolMap class handles mapping from class file constant pool indices
@@ -227,8 +227,13 @@ public:
 		 * See Jazz103 Design 40047.
 		 */
 		return (isMarked(cfrCPIndex, INVOKE_STATIC)
-				&& (isMarked(cfrCPIndex, INVOKE_INTERFACE)
-					|| isMarked(cfrCPIndex, INVOKE_SPECIAL)));
+				&& (_context->alwaysSplitBytecodes()
+					|| isMarked(cfrCPIndex, INVOKE_INTERFACE)
+					|| isMarked(cfrCPIndex, INVOKE_SPECIAL)
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+					|| isMarked(cfrCPIndex, INVOKE_VIRTUAL)
+#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+				));
 	}
 
 	bool isSpecialSplit(U_16 cfrCPIndex) const
@@ -239,7 +244,12 @@ public:
 		 * See Jazz103 Design 40047.
 		 */
 		return (isMarked(cfrCPIndex, INVOKE_SPECIAL)
-				&& isMarked(cfrCPIndex, INVOKE_INTERFACE));
+				&& (_context->alwaysSplitBytecodes()
+					|| isMarked(cfrCPIndex, INVOKE_INTERFACE)
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+					|| isMarked(cfrCPIndex, INVOKE_VIRTUAL)
+#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+				));
 	}
 
 	bool hasStaticSplitTable() const { return _staticSplitEntryCount != 0; }

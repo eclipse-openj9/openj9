@@ -28,13 +28,13 @@ import com.ibm.j9ddr.tools.ddrinteractive.Command;
 import com.ibm.j9ddr.tools.ddrinteractive.Context;
 import com.ibm.j9ddr.tools.ddrinteractive.DDRInteractiveCommandException;
 import com.ibm.j9ddr.vm29.j9.DataType;
-import com.ibm.j9ddr.vm29.j9.ObjectModel;
-import com.ibm.j9ddr.vm29.j9.Pool;
+import com.ibm.j9ddr.vm29.j9.HashTable;
+import com.ibm.j9ddr.vm29.j9.ModuleHashTable;
 import com.ibm.j9ddr.vm29.j9.SlotIterator;
+import com.ibm.j9ddr.vm29.j9.gc.GCClassLoaderIterator;
+import com.ibm.j9ddr.vm29.pointer.generated.J9ClassLoaderPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ModulePointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9ObjectPointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9PoolPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.JavaVersionHelper;
@@ -62,23 +62,15 @@ public class FindAllModulesCommand extends Command
 		try {
 			J9JavaVMPointer vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
 			if (JavaVersionHelper.ensureJava9AndUp(vm, out)) {
-				J9PoolPointer pool = vm.modularityPool();
-				Pool<J9ModulePointer> modulePool = Pool.fromJ9Pool(pool, J9ModulePointer.class);
-				SlotIterator<J9ModulePointer> poolIterator = modulePool.iterator();
-				J9ModulePointer modulePtr = null;
-				J9ObjectPointer moduleNameObjPtr = null;
-				while (poolIterator.hasNext()) {
-					modulePtr = poolIterator.next();
-					moduleNameObjPtr = modulePtr.moduleName();
-					/*
-					 * Since both packages and modules could be in the pool, the
-					 * iterator checks on the region and make sure that it is
-					 * pointing to a module. (For modules, the first field must
-					 * be in heap since it is an object while for j9package it
-					 * is a J9UTF8.)
-					 */
-					if (ObjectModel.isPointerInHeap(vm, moduleNameObjPtr)) {
-						String moduleName = J9ObjectHelper.stringValue(moduleNameObjPtr);
+				GCClassLoaderIterator iterator = GCClassLoaderIterator.from();
+				while (iterator.hasNext()) {
+					J9ClassLoaderPointer classLoaderPointer = iterator.next();
+					HashTable<J9ModulePointer> moduleHashTable = ModuleHashTable
+							.fromJ9HashTable(classLoaderPointer.moduleHashTable());
+					SlotIterator<J9ModulePointer> slotIterator = moduleHashTable.iterator();
+					while (slotIterator.hasNext()) {
+						J9ModulePointer modulePtr = slotIterator.next();
+						String moduleName = J9ObjectHelper.stringValue(modulePtr.moduleName());
 						String hexAddress = modulePtr.getHexAddress();
 						out.printf("%-30s !j9module %s%n", moduleName, hexAddress);
 					}

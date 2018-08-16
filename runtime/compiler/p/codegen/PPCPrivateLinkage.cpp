@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -945,8 +945,8 @@ static int32_t calculateFrameSize(TR::RealRegister::RegNum &intSavedFirst,
          comp->failCompilation<TR::CompilationInterrupted>("Overflowed or underflowed bounds of regSaveOffset in calculateFrameSize.");
          }
 
-      //pramod
-      traceMsg(comp, "PPCLinkage calculateFrameSize registerSaveDescription: 0x%x regSaveOffset: %x\n", registerSaveDescription, regSaveOffset);
+      if (cg->comp()->getOption(TR_TraceCG))
+         traceMsg(comp, "PPCLinkage calculateFrameSize registerSaveDescription: 0x%x regSaveOffset: %x\n", registerSaveDescription, regSaveOffset);
       registerSaveDescription |= (regSaveOffset << 17); // see above for details
       cg->setFrameSizeInBytes(size+firstLocalOffset);
       TR_ASSERT((size-argSize+firstLocalOffset)<2048*1024, "Descriptor overflowed.\n");
@@ -2074,11 +2074,9 @@ int32_t TR::PPCPrivateLinkage::buildPrivateLinkageArgs(TR::Node                 
             }
          }
       }
-   else
-      {
+   else if (cg()->comp()->getOption(TR_TraceCG))
       traceMsg(comp(), "Omitting CCR save/restore for helper calls\n");
-      }
-
+   
    if (memArgs > 0)
       {
       for (argIndex = 0; argIndex < memArgs; argIndex++)

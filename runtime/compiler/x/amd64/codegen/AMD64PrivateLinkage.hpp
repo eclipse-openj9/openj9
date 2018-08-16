@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -80,13 +80,6 @@ class AMD64PrivateLinkage : public TR::X86PrivateLinkage
          TR::RegisterDependencyConditions *dependencies,
          bool rightToLeftHelperLinkage,
          bool passArgsOnStack = false);
-
-   void buildPICParameters(
-         TR::Node *callNode,
-         TR::SymbolReference *methodSymRef,
-         TR::LabelSymbol *resolveLabel,
-         TR::CodeGenerator *codeGen,
-         uint8_t *thunk);
 
    virtual void buildVirtualOrComputedCall(TR::X86CallSite &site, TR::LabelSymbol *entryLabel, TR::LabelSymbol *doneLabel, uint8_t *thunk);
    virtual TR::Instruction *buildPICSlot(TR::X86PICSlot picSlot, TR::LabelSymbol *mismatchLabel, TR::LabelSymbol *doneLabel, TR::X86CallSite &site);

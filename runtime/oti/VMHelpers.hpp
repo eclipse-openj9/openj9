@@ -37,6 +37,9 @@ typedef enum {
 	J9_BCLOOP_SEND_TARGET_INITIAL_STATIC = 0,
 	J9_BCLOOP_SEND_TARGET_INITIAL_SPECIAL,
 	J9_BCLOOP_SEND_TARGET_INITIAL_VIRTUAL,
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+	J9_BCLOOP_SEND_TARGET_INVOKE_PRIVATE,
+#endif /* J9VM_OPT_VALHALLA_NESTMATES */
 	J9_BCLOOP_SEND_TARGET_UNSATISFIED_OR_ABSTRACT,
 	J9_BCLOOP_SEND_TARGET_DEFAULT_CONFLICT,
 	J9_BCLOOP_SEND_TARGET_COUNT_NON_SYNC,
@@ -1407,7 +1410,6 @@ exit:
 				vmFuncs->acquireSafePointVMAccess(currentThread);
 				/* check class flag again after aquiring VM access */
 				if (J9_ARE_NO_BITS_SET(fieldClass->classFlags, J9ClassHasIllegalFinalFieldModifications)) {
-					fieldClass->classFlags |= J9ClassHasIllegalFinalFieldModifications;
 					J9JITConfig* jitConfig = vm->jitConfig;
 					if (NULL != jitConfig) {
 						jitConfig->jitIllegalFinalFieldModification(currentThread, fieldClass);

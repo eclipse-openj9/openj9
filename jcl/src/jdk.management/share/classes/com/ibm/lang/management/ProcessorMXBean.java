@@ -87,4 +87,16 @@ public interface ProcessorMXBean extends PlatformManagedObject {
 	 * @return	the number of CPUs the process is entitled to.
 	 */
 	public int getNumberTargetCPUs();
+
+	/**
+	 * Sets the number of CPUs that the process is specified to use.
+	 * {@link #getNumberTargetCPUs()}.
+	 * 
+	 * @param number
+	 * 			The number of CPUs to specify the process to use. The process
+	 * 			will behave as if <code>number</code> CPUs are available. If
+	 *			this is set to 0, it will reset the number of CPUs specified
+	 *			and the JVM will use the the number of CPUs detected on the system.
+	 */
+	public void setNumberActiveCPUs(int number);
 }

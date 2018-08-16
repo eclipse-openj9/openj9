@@ -584,16 +584,6 @@ gcStartupHeapManagement(J9JavaVM *javaVM)
 		result = JNI_ENOMEM;
 	}
 
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
-	/* If not explicitly set, concurrent phase of CS runs with 1/2 the thread count (relative to STW phases thread count,
-	 * which just have been initialized by the dispatcher) */
-	if (!extensions->concurrentScavengerBackgroundThreadsForced) {
-		extensions->concurrentScavengerBackgroundThreads = OMR_MAX(1, extensions->dispatcher->threadCount() / 2);
-	} else if (extensions->concurrentScavengerBackgroundThreads > extensions->dispatcher->threadCount()) {
-		extensions->concurrentScavengerBackgroundThreads = extensions->dispatcher->threadCount();
-	}
-#endif
-
 	if (JNI_OK != result) {
 		PORT_ACCESS_FROM_JAVAVM(javaVM);
 		extensions->getGlobalCollector()->collectorShutdown(extensions);
@@ -2085,12 +2075,11 @@ combinationMemoryParameterVerification(J9JavaVM *javaVM, IDATA* memoryParameters
 		}
 
 		/* Reset Xmox if applicable */
-		if (extensions->oldSpaceSize > extensions->maxOldSpaceSize) {
-			if (!opt_XmoxSet) {
+		if (!opt_XmoxSet) {
+			/* We know initial Nursery size now so adjust maximum Tenure size */
+			extensions->maxOldSpaceSize = extensions->memoryMax - extensions->newSpaceSize;
+			if (extensions->oldSpaceSize > extensions->maxOldSpaceSize) {
 				extensions->maxOldSpaceSize = extensions->oldSpaceSize;
-			} else {
-				/* Should have already been verified */
-				assume0(0);
 			}
 		}
 

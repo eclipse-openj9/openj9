@@ -396,6 +396,13 @@ J9::X86::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod 
       }
    }
 
+bool
+J9::X86::CodeGenerator::supportsInliningOfIsAssignableFrom()
+   {
+   static const bool disableInliningOfIsAssignableFrom = (bool)feGetEnv("TR_DisableInliningOfIsAssignableFrom");
+   return !disableInliningOfIsAssignableFrom;
+   }
+
 void
 J9::X86::CodeGenerator::reserveNTrampolines(int32_t numTrampolines)
    {

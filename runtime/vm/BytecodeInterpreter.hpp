@@ -695,11 +695,21 @@ done:
 	VMINLINE J9Method*
 	j2iVirtualMethod(REGISTER_ARGS_LIST, j9object_t receiver, UDATA interfaceVTableIndex)
 	{
+		J9Method *method = NULL;
 		void* const jitReturnAddress = VM_JITInterface::peekJITReturnAddress(_currentThread, _sp);
 		UDATA jitVTableOffset = VM_JITInterface::jitVTableIndex(jitReturnAddress, interfaceVTableIndex);
-		UDATA vTableOffset = sizeof(J9Class) - jitVTableOffset;
-		J9Class *clazz = J9OBJECT_CLAZZ(_currentThread, receiver);
-		return *(J9Method**)((UDATA)clazz + vTableOffset);
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+		if (J9_ARE_ANY_BITS_SET(jitVTableOffset, J9_VTABLE_INDEX_DIRECT_METHOD_FLAG)) {
+			/* Nestmates: vtable index is really a J9Method to directly invoke */
+			method = (J9Method*)(jitVTableOffset & ~J9_VTABLE_INDEX_DIRECT_METHOD_FLAG);
+		} else
+#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+		{
+			UDATA vTableOffset = sizeof(J9Class) - jitVTableOffset;
+			J9Class *clazz = J9OBJECT_CLAZZ(_currentThread, receiver);
+			method = *(J9Method**)((UDATA)clazz + vTableOffset);
+		}
+		return method;
 	}
 
 	VMINLINE void
@@ -1925,6 +1935,19 @@ done:
 		}
 		return rc;
 	}
+
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+	VMINLINE VM_BytecodeAction
+	invokePrivateMethod(REGISTER_ARGS_LIST)
+	{
+		U_16 index = *(U_16*)(_pc + 1);
+		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
+
+		_sendMethod = ((J9RAMVirtualMethodRef*)&ramConstantPool[index])->method;
+
+		return GOTO_RUN_METHOD;
+	}
+#endif /* J9VM_OPT_VALHALLA_NESTMATES */
 
 	VMINLINE VM_BytecodeAction
 	bindNative(REGISTER_ARGS_LIST)
@@ -6426,6 +6449,7 @@ done:
 				profileInvokeReceiver(REGISTER_ARGS, receiverClass, _literals, _sendMethod);
 			}
 		}
+
 		return rc;
 	}
 
@@ -6471,11 +6495,11 @@ done:
 						restoreGenericSpecialStackFrame(REGISTER_ARGS);
 						if (immediateAsyncPending()) {
 							rc = GOTO_ASYNC_CHECK;
-							goto exit;
+							goto done;
 						}
 						if (VM_VMHelpers::exceptionPending(_currentThread)) {
 							rc = GOTO_THROW_CURRENT_EXCEPTION;
-							goto exit;
+							goto done;
 						}
 					}
 					/* Check the receiver class is the subtype of the current class [= interface] */
@@ -6495,7 +6519,7 @@ done:
 				}
 			}
 		}
-exit:
+done:
 		return rc;
 	}
 
@@ -6510,7 +6534,8 @@ exit:
 		U_16 cpIndex = *(U_16 *)(J9ROMCLASS_SPECIALSPLITMETHODREFINDEXES(clazz->romClass) + splitTableIndex);
 		J9RAMSpecialMethodRef *ramMethodRef = (J9RAMSpecialMethodRef*)ramConstantPool + cpIndex;
 		/* argCount was initialized when we initialized the class (i.e. it is non-volatile), so no memory barrier is required */
-		if (0 == _sp[ramMethodRef->methodIndexAndArgCount & 0xFF]) {
+		j9object_t receiver = ((j9object_t *)_sp)[ramMethodRef->methodIndexAndArgCount & 0xFF];
+		if (NULL == receiver) {
 			rc = THROW_NPE;
 		} else {
 			_sendMethod = clazz->specialSplitMethodTable[splitTableIndex];
@@ -6522,14 +6547,50 @@ exit:
 				restoreGenericSpecialStackFrame(REGISTER_ARGS);
 				if (immediateAsyncPending()) {
 					rc = GOTO_ASYNC_CHECK;
+					goto done;
 				} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
 					rc = GOTO_THROW_CURRENT_EXCEPTION;
+					goto done;
 				} else {
 					profileCallingMethod(REGISTER_ARGS);
 					_sendMethod = method;
 				}
 			}
+
+			J9Class *currentClass = J9_CLASS_FROM_CP(ramConstantPool);
+			/* hostClass is exclusively defined only in Unsafe.defineAnonymousClass.
+			 * For all other cases, clazz->hostClass points to itself (clazz).
+			 */
+			currentClass = currentClass->hostClass;
+
+			if (J9_ARE_ALL_BITS_SET(currentClass->romClass->modifiers, J9AccInterface)) {
+				J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *)&ramConstantPool->romConstantPool[cpIndex];
+				J9ROMNameAndSignature *nameAndSig = J9ROMFIELDREF_NAMEANDSIGNATURE(romMethodRef);
+				J9UTF8 *nameUTF = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
+				U_8 *name = J9UTF8_DATA(nameUTF);
+				UDATA nameLength = J9UTF8_LENGTH(nameUTF);
+
+				/* Ignore <init> or <clinit> methods */
+				if ((0 != nameLength) && (name[0] != '<')) {
+					/* Check the receiver class is the subtype of the current class [= interface] */
+					J9Class *resolvedClass = J9_CLASS_FROM_METHOD(_sendMethod);
+					J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_sendMethod);
+					/* Skip the check for final methods in java.lang.Object (resolvedClassDepth == 0) */
+					if ((0 != J9CLASS_DEPTH(resolvedClass)) || J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccFinal)) {
+						J9Class *receiverClass = J9OBJECT_CLAZZ(_currentThread, receiver);
+
+						if (!instanceOfOrCheckCast(receiverClass, currentClass)) {
+							buildMethodFrame(REGISTER_ARGS, _sendMethod, 0);
+							updateVMStruct(REGISTER_ARGS);
+							setIllegalAccessErrorReceiverNotSameOrSubtypeOfCurrentClass(_currentThread, receiverClass, currentClass);
+							VMStructHasBeenUpdated(REGISTER_ARGS);
+							rc = GOTO_THROW_CURRENT_EXCEPTION;
+						}
+					}
+				}
+			}
 		}
+done:
 		return rc;
 	}
 
@@ -8315,6 +8376,9 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INITIAL_STATIC),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INITIAL_SPECIAL),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INITIAL_VIRTUAL),
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INVOKE_PRIVATE),
+#endif /* J9VM_OPT_VALHALLA_NESTMATES */
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_UNSATISFIED_OR_ABSTRACT),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_DEFAULT_CONFLICT),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_COUNT_NON_SYNC),
@@ -8725,6 +8789,10 @@ runMethod: {
 		PERFORM_ACTION(initialSpecialMethod(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INITIAL_VIRTUAL):
 		PERFORM_ACTION(initialVirtualMethod(REGISTER_ARGS));
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INVOKE_PRIVATE):
+		PERFORM_ACTION(invokePrivateMethod(REGISTER_ARGS));
+#endif /* J9VM_OPT_VALHALLA_NESTMATES */
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_UNSATISFIED_OR_ABSTRACT):
 		PERFORM_ACTION(throwUnsatisfiedLinkOrAbstractMethodError(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_DEFAULT_CONFLICT):

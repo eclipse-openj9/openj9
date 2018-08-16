@@ -103,6 +103,8 @@ omr_error_t mapDumpOptions(J9JavaVM *vm, J9RASdumpOption agentOpts[], IDATA *age
 omr_error_t mapDumpActions(J9JavaVM *vm, J9RASdumpOption agentOpts[], IDATA *agentNum, char *buf, IDATA condition);
 omr_error_t mapDumpDefaults(J9JavaVM *vm, J9RASdumpOption agentOpts[], IDATA *agentNum);
 omr_error_t mapDumpSettings(J9JavaVM *vm, J9RASdumpOption agentOpts[], IDATA *agentNum);
+void disableDumpOnOutOfMemoryError(J9RASdumpOption agentOpts[], IDATA agentNum);
+void enableDumpOnOutOfMemoryError(J9RASdumpOption agentOpts[], IDATA *agentNum);
 UDATA parseAllocationRange(char *range, UDATA *min, UDATA *max);
 omr_error_t rasDumpEnableHooks(J9JavaVM *vm, UDATA eventFlags);
 void rasDumpFlushHooks(J9JavaVM *vm, IDATA stage);

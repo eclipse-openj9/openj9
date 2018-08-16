@@ -1157,32 +1157,6 @@ int32_t TR::AMD64PrivateLinkage::buildPrivateLinkageArgs(TR::Node               
    }
 
 
-
-
-void TR::AMD64PrivateLinkage::buildPICParameters(TR::Node             *callNode,
-                                                TR::SymbolReference  *methodSymRef,
-                                                TR::LabelSymbol       *resolveLabel,
-                                                TR::CodeGenerator *cg,
-                                                uint8_t *thunk)
-   {
-   void           *cpAddress = methodSymRef->getOwningMethod(comp())->constantPool();
-   const int32_t   cpIndex   = methodSymRef->getCPIndex();
-
-   generateImm64SymInstruction(DQImm64, callNode, (uintptrj_t)cpAddress, methodSymRef, cg, thunk);
-
-   if (VM_NEEDS_8_BYTE_CPINDEX)
-      {
-      generateImm64Instruction(DQImm64, callNode, (uint64_t)cpIndex, cg);
-      }
-   else
-      {
-      generateImmInstruction(DDImm4, callNode, (uint32_t)cpIndex, cg);
-      }
-
-   generateLabelInstruction(LABEL, callNode, resolveLabel, cg);
-   }
-
-
 static TR_AtomicRegion X86PicSlotAtomicRegion[] =
    {
    { 0x0, 8 }, // Maximum instruction size that can be patched atomically.

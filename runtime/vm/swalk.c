@@ -346,8 +346,9 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 		if (walkFrame(walkState) != J9_STACKWALK_KEEP_ITERATING) {
 			goto terminationPoint;
 		}
-		walkState->previousFrameFlags = walkState->frameFlags;
 resumeInterpreterWalk:
+		walkState->previousFrameFlags = walkState->frameFlags;
+		walkState->resolveFrameFlags = 0;
 
 		/* Call the JIT walker if the current frame is a transition from the JIT to the interpreter */
 

@@ -31,6 +31,7 @@ import java.util.Map;
 import com.ibm.j9ddr.AddressedCorruptDataException;
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.InvalidDataTypeException;
+import com.ibm.j9ddr.vm29.j9.AlgorithmVersion;
 import com.ibm.j9ddr.vm29.j9.DataType;
 import com.ibm.j9ddr.vm29.j9.J9ObjectFieldOffset;
 import com.ibm.j9ddr.vm29.j9.J9ObjectFieldOffsetIterator;
@@ -46,10 +47,12 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9MethodPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMMethodPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9VTableHeaderPointer;
 import com.ibm.j9ddr.vm29.structure.J9Class;
 import com.ibm.j9ddr.vm29.structure.J9Consts;
 import com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags;
 import com.ibm.j9ddr.vm29.structure.J9Method;
+import com.ibm.j9ddr.vm29.structure.J9VTableHeader;
 import com.ibm.j9ddr.vm29.types.Scalar;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.UDATA;
@@ -241,7 +244,19 @@ public class J9ClassHelper
 		return false;
 	}
 	
-	public static UDATAPointer vTable(J9ClassPointer clazz) 
+	public static J9VTableHeaderPointer vTableHeader(J9ClassPointer clazz)
+	{
+		J9VTableHeaderPointer pointer = J9VTableHeaderPointer.cast(clazz.add(1));
+		return pointer;
+	}
+
+	public static UDATAPointer vTable(J9VTableHeaderPointer vTableHeader)
+	{
+		UDATAPointer pointer = UDATAPointer.cast(vTableHeader.add(1));
+		return pointer;
+	}
+
+	public static UDATAPointer oldVTable(J9ClassPointer clazz)
 	{
 		UDATAPointer pointer = UDATAPointer.cast(clazz.add(1));
 		return pointer;
@@ -264,7 +279,13 @@ public class J9ClassHelper
 		
 		// Fragment 0. RAM class header = J9Class struct + vTable + JIT vTable
 		UDATA size = new UDATA(J9Class.SIZEOF);
-		UDATA vTableSlotCount = vTable(clazz).at(0);
+		UDATA vTableSlotCount;
+		/* Check vTable algorithm version */
+		if (AlgorithmVersion.getVersionOf(AlgorithmVersion.VTABLE_VERSION).getAlgorithmVersion() >= 1) {
+			vTableSlotCount = vTableHeader(clazz).size().add(J9VTableHeader.SIZEOF / UDATA.SIZEOF);
+		} else {
+			vTableSlotCount = oldVTable(clazz).at(0);
+		}
 		size = size.add(Scalar.convertSlotsToBytes(vTableSlotCount));
 		if (vm.jitConfig().notNull()) {
 			UDATA jitVTableSlotCount = vTableSlotCount.sub(1);

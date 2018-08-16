@@ -1599,6 +1599,13 @@ retry:
 		}
 		goto retry;
 	}
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+	if (J9VTABLE_INVOKE_PRIVATE_OFFSET == vTableOffset) {
+		UDATA method = ((UDATA)ramMethodRef->method) | J9_VTABLE_INDEX_DIRECT_METHOD_FLAG;
+		JIT_RETURN_UDATA(method);
+		goto done;
+	}
+#endif /* J9VM_OPT_VALHALLA_NESTMATES */
 	JIT_RETURN_UDATA(sizeof(J9Class) - vTableOffset);
 done:
 	SLOW_JIT_HELPER_EPILOGUE();
@@ -2515,6 +2522,18 @@ fast_jitInstanceOf(J9VMThread *currentThread, J9Class *castClass, j9object_t obj
 		}
 	}
 	return isInstance;
+}
+
+UDATA J9FASTCALL
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
+/* TODO Will be cleaned once all platforms adopt the correct parameter order */
+fast_jitCheckAssignable(J9VMThread *currentThread, J9Class *clazz, J9Class *castClass)
+#else /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
+fast_jitCheckAssignable(J9VMThread *currentThread, J9Class *castClass, J9Class *clazz)
+#endif /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
+{
+	JIT_HELPER_PROLOGUE();
+	return VM_VMHelpers::inlineCheckCast(clazz, castClass) ? 1 : 0;
 }
 
 UDATA J9FASTCALL

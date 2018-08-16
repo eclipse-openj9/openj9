@@ -265,6 +265,7 @@ enum INIT_STAGE {
 #define VMOPT_XMXCL "-Xmxcl"
 #define VMOPT_XDUMP  "-Xdump"
 #define VMOPT_XDUMP_NONE  "-Xdump:none"
+#define VMOPT_XDUMP_DIRECTORY_EQUALS  "-Xdump:directory="
 #define VMOPT_XARGENCODING "-Xargencoding"
 #define VMOPT_XARGENCODINGCOLON "-Xargencoding:"
 #define VMOPT_XARGENCODINGUTF8 "-Xargencoding:utf8"
@@ -323,6 +324,8 @@ enum INIT_STAGE {
 #define VMOPT_XXDEBUGINTERPRETER "-XX:+DebugInterpreter"
 #define VMOPT_XXNOHANDLESIGXFSZ "-XX:-HandleSIGXFSZ"
 #define VMOPT_XXHANDLESIGXFSZ "-XX:+HandleSIGXFSZ"
+#define VMOPT_XXHEAPDUMPONOOM "-XX:+HeapDumpOnOutOfMemoryError"
+#define VMOPT_XXNOHEAPDUMPONOOM "-XX:-HeapDumpOnOutOfMemoryError"
 
 #define VMOPT_XSOFTREFTHRESHOLD "-XSoftRefThreshold"
 #define VMOPT_XAGGRESSIVE "-Xaggressive"
@@ -361,6 +364,8 @@ enum INIT_STAGE {
 #define VMOPT_XXDISABLEOSRSAFEPOINTFV "-XX:-OSRSafePointFV"
 #define VMOPT_XXENABLEJITWATCH "-XX:+JITInlineWatches"
 #define VMOPT_XXDISABLEJITWATCH "-XX:-JITInlineWatches"
+#define VMOPT_XXENABLEALWAYSSPLITBYTECODES "-XX:+AlwaysSplitBytecodes"
+#define VMOPT_XXDISABLEALWAYSSPLITBYTECODES "-XX:-AlwaysSplitBytecodes"
 
 #define VMOPT_XX_NOSUBALLOC32BITMEM "-XXnosuballoc32bitmem"
 
@@ -464,6 +469,9 @@ enum INIT_STAGE {
 #define MAPOPT_XSHARECLASSES_NONFATAL "-Xshareclasses:nonfatal"
 #define MAPOPT_XXDISABLEEXPLICITGC "-XX:+DisableExplicitGC"
 #define MAPOPT_XXENABLEEXPLICITGC "-XX:-DisableExplicitGC"
+#define MAPOPT_XXHEAPDUMPPATH_EQUALS "-XX:HeapDumpPath="
+
+#define VMOPT_XXACTIVEPROCESSORCOUNT_EQUALS "-XX:ActiveProcessorCount="
 
 #define VMOPT_XXDUMPLOADEDCLASSLIST "-XX:DumpLoadedClassList"
 

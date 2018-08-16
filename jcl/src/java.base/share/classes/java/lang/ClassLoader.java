@@ -268,7 +268,7 @@ public abstract class ClassLoader {
 		jdk.internal.misc.VM.initLevel(2);
 		String javaSecurityManager = System.internalGetProperties().getProperty("java.security.manager"); //$NON-NLS-1$
 		if (null != javaSecurityManager) {
-			if (javaSecurityManager.isEmpty()) {
+			if (javaSecurityManager.isEmpty() || "default".equals(javaSecurityManager)) {
 				System.setSecurityManager(new SecurityManager());
 			} else {
 				try {

@@ -102,7 +102,7 @@
 				<mkdir dir="${module_bin_root}" />
 				<copy file="${TEST_ROOT}/TestConfig/lib/testng.jar" todir="${module_bin_root}" />
 				<copy file="${TEST_ROOT}/TestConfig/lib/jcommander.jar" todir="${module_bin_root}" />
-				<for list="common,moduleD,moduleC,moduleB,moduleA,testerModule" param="mod">
+				<for list="common,moduleD,moduleC,moduleB,moduleA,testerModule,dummy" param="mod">
 					<sequential>
 						<var name="module_src_dir" value="${module_src_root}/${MODULE_NAME_ROOT}.@{mod}" />
 						<var name="module_bin_dir" value="${module_bin_root}/${MODULE_NAME_ROOT}.@{mod}" />
@@ -110,6 +110,36 @@
 						<var name="modpath" value="--module-path ${module_bin_root} -d ${module_bin_dir}" />
 						<javac srcdir="${module_src_dir}" destdir="${module_bin_dir}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 							<src path="${module_src_dir}" />
+							<compilerarg line="${modpath}" />
+						</javac>
+					</sequential>
+				</for>
+				<!-- compile unnamed module depending on module org.openj9test.modularity.dummy -->
+				<for list="unnamed" param="mod">
+					<sequential>
+						<var name="module_src_dir" value="${module_src_root}/${MODULE_NAME_ROOT}.@{mod}" />
+						<var name="module_bin_dir" value="${module_bin_root}/${MODULE_NAME_ROOT}.@{mod}" />
+						<mkdir dir="${module_bin_dir}" />
+						<var name="modpath" value="-cp ${TEST_ROOT}/TestConfig/lib/testng.jar --module-path ${module_bin_root} -d ${module_bin_dir} --add-modules org.openj9test.modularity.dummy --add-exports org.openj9test.modularity.dummy/org.openj9.test.modularity.dummy=ALL-UNNAMED" />
+						<javac srcdir="${module_src_dir}" destdir="${module_bin_dir}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+							<src path="${module_src_dir}" />
+							<compilerarg line="${modpath}" />
+						</javac>
+					</sequential>
+				</for>
+				<!-- compile module org.openj9test.modularity.testUnreflect depending on unnamed module above -->
+				<for list="testUnreflect" param="mod">
+					<sequential>
+						<var name="module_src_dir" value="${module_src_root}/${MODULE_NAME_ROOT}.@{mod}" />
+						<var name="module_bin_dir" value="${module_bin_root}/${MODULE_NAME_ROOT}.@{mod}" />
+						<mkdir dir="${module_bin_dir}" />
+						<var name="modpath" value="--module-path ${module_bin_root} -d ${module_bin_dir} --add-reads org.openj9test.modularity.testUnreflect=ALL-UNNAMED" />
+						<javac srcdir="${module_src_dir}" destdir="${module_bin_dir}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+							<src path="${module_src_dir}" />
+							<classpath>
+								<pathelement location="${module_bin_root}/org.openj9test.modularity.unnamed" />
+								<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
+							</classpath>
 							<compilerarg line="${modpath}" />
 						</javac>
 					</sequential>

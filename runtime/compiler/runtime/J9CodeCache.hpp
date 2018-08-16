@@ -61,6 +61,19 @@ public:
                                          size_t codeCacheSizeAllocated,
                                          OMR::CodeCacheHashEntrySlab *hashEntrySlab);
 
+   /**
+    * @brief Initialize an allocated CodeCache object
+    *
+    * @param[in] manager : the TR::CodeCacheManager
+    * @param[in] codeCacheSegment : the code cache memory segment that has been allocated
+    * @param[in] allocatedCodeCacheSizeInBytes : the size (in bytes) of the allocated code cache
+    *
+    * @return true on a successful initialization; false otherwise.
+    */
+   bool                       initialize(TR::CodeCacheManager *manager,
+                                         TR::CodeCacheMemorySegment *codeCacheSegment,
+                                         size_t allocatedCodeCacheSizeInBytes);
+
    static TR::CodeCache *     allocate(TR::CodeCacheManager *cacheManager, size_t segmentSize, int32_t reservingCompThreadID);
 
    bool                       resizeCodeMemory(void *memoryBlock, size_t newSize);
@@ -94,7 +107,7 @@ public:
                                                           int32_t cpIndex);
 
    OMR::CodeCacheHashEntry *  findUnresolvedMethod(void *constPool, int32_t constPoolIndex);
- 
+
 
   /**
    * @brief Restore warmCodeAlloc/coldCodeAlloc and trampoline pointers to their initial positions

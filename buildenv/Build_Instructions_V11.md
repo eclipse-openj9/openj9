@@ -326,9 +326,7 @@ You must install a number of software dependencies to create a suitable build en
 Note:
 mingw-w64 must be installed if compiling with VS2017 in that the current version of cygwin has not yet integrated the latest changes of mingw-w64 for the moment. Meanwhile, add the binary path of mingw-w64 to the `PATH` environment variable. e.g.
 ```
-set PATH=%PATH%;C:\mingw-w64\x86_64-8.1.0-win32-seh-rt_v6-rev0\mingw64\bin
-or
-export PATH="$PATH;C:\mingw-w64\x86_64-8.1.0-win32-seh-rt_v6-rev0\mingw64\bin" (in Cygwin)
+export PATH="/cygdrive/c/mingw-w64/x86_64-8.1.0-win32-seh-rt_v6-rev0/mingw64/bin/:$PATH" (in Cygwin)
 ```
 
 Update your `LIB` and `INCLUDE` environment variables to provide a path to the Windows debugging tools with the following commands:
@@ -354,7 +352,7 @@ wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemark
 - Install Visual Studio by running the file `vs2013.exe` (There is no special step required for downloading/installing VS2017. Please follow the guide of the downloaded installer to install all required components, especially for VC compiler).
 
 Not all of the shared libraries that are included with Visual Studio are registered during installation.
-In particular, the `msdia120.dll` libraries must be registered manually.
+In particular, the `msdia120.dll`(VS2013) or `msdia140.dll`(VS2017) libraries must be registered manually.
 To do so, execute the following from a command prompt:
 
 **VS2013**
@@ -364,8 +362,8 @@ regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio 12.0\DIA SDK\bin\amd64\
 ```
 **VS2017**
 ```
-regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\DIA SDK\bin\msdia140.dll"
-regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\DIA SDK\bin\amd64\msdia140.dll"
+regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\DIA SDK\bin\msdia140.dll"
+regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\DIA SDK\bin\amd64\msdia140.dll"
 ```
 
 - To unpack the Freemarker and Freetype compressed files, run:

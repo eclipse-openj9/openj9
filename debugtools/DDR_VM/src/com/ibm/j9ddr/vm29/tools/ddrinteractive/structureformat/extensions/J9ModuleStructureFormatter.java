@@ -37,8 +37,11 @@ import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
  * 
  * Example output (suffix part):
  * Module name: java.instrument
- * To display all j9packages exported by the module, use !dumpmoduleexports 0x000001305F46DB38
+ * To display all j9packages exported by a module, use !dumpmoduleexports 0x000001305F46DB38
  * To display all modules that the target module reads, use !dumpmodulereads 0x000001305F46DB38
+ * To find all modules that read a module, use !findallreads 0x000001305F46DB38
+ * To find all loaded classes in a module, use !dumpallclassesinmodule 0x000001305F46DB38
+ * 
  */
 public class J9ModuleStructureFormatter extends BaseStructureFormatter 
 {
@@ -50,21 +53,19 @@ public class J9ModuleStructureFormatter extends BaseStructureFormatter
 	{
 		if (type.equalsIgnoreCase("j9module") && address != 0) {
 			J9ModulePointer modulePtr = J9ModulePointer.cast(address);
-
+			String moduleAddress = modulePtr.getHexAddress();
 			try {
 				out.println("Module name: " + J9ObjectHelper.stringValue(modulePtr.moduleName()));
 			} catch (CorruptDataException e) {
 				// Do nothing
-				return FormatWalkResult.KEEP_WALKING;
 			}
-			out.println("To display all j9packages exported by the module, use !dumpmoduleexports "
-					+ modulePtr.getHexAddress());
-			out.println("To display all modules that the target module reads, use !dumpmodulereads "
-					+ modulePtr.getHexAddress());
+			out.println("To display all j9packages exported by a module, use !dumpmoduleexports " + moduleAddress);
+			out.println("To display all modules that the target module reads, use !dumpmodulereads " + moduleAddress);
+			out.println("To find all modules that read a module, use !findallreads " + moduleAddress);
+			out.println("To find all loaded classes in a module, use !dumpallclassesinmodule " + moduleAddress);
 		}
 
 		return FormatWalkResult.KEEP_WALKING;
 	}
 
-	
 }

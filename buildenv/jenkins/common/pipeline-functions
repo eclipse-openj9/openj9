@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
- def get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH) {
+def get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, VENDOR_TEST_REPOS_MAP=null, VENDOR_TEST_BRANCHES_MAP=null, VENDOR_TEST_SHAS_MAP=null) {
     // Get a set of SHAs for a standard OpenJ9 build
     def SHAS = [:]
 
@@ -28,29 +28,63 @@
     // if not set, sniff the remote repositories references
 
     stage ('Sniff Repos') {
-        dir('openjdk') {
+        def description = ''
+
+        if (OPENJDK_SHA instanceof Map && OPENJDK_REPO instanceof Map && OPENJDK_BRANCH instanceof Map) {
+            // fetch SHAs for all OpenJDK repositories
+            def OPENJDK_SHAS_BY_RELEASES = [:]
+
+            OPENJDK_SHA.each { release, sha ->
+                if (!sha) {
+                    sha = get_repository_sha(OPENJDK_REPO[release], OPENJDK_BRANCH[release])
+                }
+                OPENJDK_SHAS_BY_RELEASES[release] = sha
+                description += "<br/>OpenJDK${release}: ${get_short_sha(sha)}"
+                echo "OPENJDK${release}_SHA:${sha}"
+            }
+            SHAS['OPENJDK'] = OPENJDK_SHAS_BY_RELEASES
+        } else {
+            // fetch SHA for an OpenJDK repository
             SHAS['OPENJDK'] = OPENJDK_SHA
-            if (SHAS['OPENJDK'] == '') {
+            if (!SHAS['OPENJDK']) {
                 SHAS['OPENJDK'] = get_repository_sha(OPENJDK_REPO, OPENJDK_BRANCH)
             }
+            description += "<br/>OpenJDK: ${get_short_sha(SHAS['OPENJDK'])}"
+            echo "OPENJDK_SHA:${SHAS['OPENJDK']}"
         }
-        dir('openj9') {
-            SHAS['OPENJ9'] = OPENJ9_SHA
-            if ((SHAS['OPENJ9'] == '') && ((OPENJ9_REPO != '') && (OPENJ9_BRANCH != ''))) {
-                SHAS['OPENJ9'] = get_repository_sha(OPENJ9_REPO, OPENJ9_BRANCH)
-            }
+
+        // fetch extensions SHAs
+        SHAS['OPENJ9'] = OPENJ9_SHA
+        if (!SHAS['OPENJ9'] && (OPENJ9_REPO && OPENJ9_BRANCH)) {
+            SHAS['OPENJ9'] = get_repository_sha(OPENJ9_REPO, OPENJ9_BRANCH)
         }
-        dir('omr') {
-            SHAS['OMR'] = OMR_SHA
-            if ((SHAS['OMR'] == '') && ((OMR_REPO != '') && (OMR_BRANCH != ''))){
-                SHAS['OMR'] = get_repository_sha(OMR_REPO, OMR_BRANCH)
-            }
+
+        SHAS['OMR'] = OMR_SHA
+        if (!SHAS['OMR'] && (OMR_REPO && OMR_BRANCH)){
+            SHAS['OMR'] = get_repository_sha(OMR_REPO, OMR_BRANCH)
         }
+
         // Write the SHAs to the Build Description
-        echo "OPENJDK_SHA:${SHAS['OPENJDK']}"
         echo "OPENJ9_SHA:${SHAS['OPENJ9']}"
         echo "OMR_SHA:${SHAS['OMR']}"
-        currentBuild.description = "OpenJ9: ${SHAS['OPENJ9']}<br/>OMR: ${SHAS['OMR']}<br/>OpenJDK: ${SHAS['OPENJDK']}"
+        currentBuild.description = "OpenJ9: ${get_short_sha(SHAS['OPENJ9'])}<br/>OMR: ${get_short_sha(SHAS['OMR'])}${description}"
+
+        if (VENDOR_TEST_REPOS_MAP && VENDOR_TEST_BRANCHES_MAP) {
+            // fetch SHAs for vendor test repositories
+            VENDOR_TEST_REPOS_MAP.each { repoName, vendorRepoURL ->
+                if (!VENDOR_TEST_SHAS_MAP[repoName]) {
+                    VENDOR_TEST_SHAS_MAP[repoName] = get_repository_sha(vendorRepoURL, VENDOR_TEST_BRANCHES_MAP[repoName])
+                }
+
+                // update build description
+                currentBuild.description += "<br/>${repoName}: ${get_short_sha(VENDOR_TEST_SHAS_MAP[repoName])}"
+                echo "${repoName}_SHA: ${VENDOR_TEST_SHAS_MAP[repoName]}"
+            }
+
+            // add vendor test repositories SHAs to the list
+            SHAS['VENDOR_TEST'] = VENDOR_TEST_SHAS_MAP
+        }
+
         return SHAS
     }
 }
@@ -76,6 +110,15 @@ def get_sha(REPO, BRANCH) {
             script: "git ls-remote $REPO refs/heads/$BRANCH | cut -c1-40",
             returnStdout: true
         ).trim()
+}
+
+def get_short_sha(SHA) {
+    if (SHA) {
+        // return the first 7 characters of a given SHA.
+        return SHA.take(7)
+    }
+
+    return SHA
 }
 
 def git_push_auth(REPO, OPTION, CRED_ID) {
@@ -112,7 +155,7 @@ def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO
     }
 }
 
-def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE, OPENJ9_SHA) {
+def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST) {
     stage ("${JOB_NAME}") {
         return build_with_slack(JOB_NAME,
             [string(name: 'UPSTREAM_JOB_NAME', value: UPSTREAM_JOB_NAME),
@@ -122,7 +165,15 @@ def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, VA
             string(name: 'VENDOR_BRANCH', value: VENDOR_BRANCH),
             string(name: 'VENDOR_CREDENTIALS_ID', value: VENDOR_CREDENTIALS_ID),
             string(name: 'NODE', value: NODE),
-            string(name: 'OPENJ9_SHA', value: OPENJ9_SHA)])
+            string(name: 'OPENJ9_REPO', value: OPENJ9_REPO),
+            string(name: 'OPENJ9_BRANCH', value: OPENJ9_BRANCH),
+            string(name: 'OPENJ9_SHA', value: OPENJ9_SHA),
+            string(name: 'VENDOR_TEST_REPOS', value: VENDOR_TEST_REPOS),
+            string(name: 'VENDOR_TEST_BRANCHES', value: VENDOR_TEST_BRANCHES),
+            string(name: 'VENDOR_TEST_SHAS', value: VENDOR_TEST_SHAS),
+            string(name: 'VENDOR_TEST_DIRS', value: VENDOR_TEST_DIRS),
+            string(name: 'USER_CREDENTIALS_ID', value: USER_CREDENTIALS_ID),
+            string(name: 'BUILD_LIST', value: BUILD_LIST)])
     }
 }
 
@@ -143,23 +194,23 @@ def build_with_slack(JOB_NAME, PARAMETERS) {
             echo "Couldn't retrieve downstream failed job url"
         }
         
-        if (JOB.result == "FAILURE"){
+        if (JOB.result == "UNSTABLE") {
+            echo "WARNING: Downstream job ${JOB_NAME} is unstable. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
+            currentBuild.result = "UNSTABLE"
+            if (SLACK_CHANNEL) {
+                slackSend channel: SLACK_CHANNEL, color: 'warning', message: "Unstable: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)\nDownstream Job: ${JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)"
+            }
+        } else {
         	if (SLACK_CHANNEL) {
         		slackSend channel: SLACK_CHANNEL, color: 'danger', message: "Failure in: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)\nDownstream Job: ${JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)"
         	}
         	error "Downstream job ${JOB_NAME} did not pass. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
-        } else if (JOB.result == "UNSTABLE") {
-        	echo "WARNING: Downstream job ${JOB_NAME} is unstable. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
-        	currentBuild.result = "UNSTABLE"
-        	if (SLACK_CHANNEL) {
-        		slackSend channel: SLACK_CHANNEL, color: 'warning', message: "Unstable: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)\nDownstream Job: ${JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)"
-        	}
         }
     } 
     return JOB
 }
 
-def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, TESTS_TARGETS) {
+def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, TESTS_TARGETS, VENDOR_TEST_REPOS_MAP, VENDOR_TEST_BRANCHES_MAP, VENDOR_TEST_DIRS_MAP, USER_CREDENTIALS_ID, BUILD_LIST) {
     def jobs = [:]
 
     // compile the source and build the SDK
@@ -169,7 +220,15 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
 
     if (TESTS_TARGETS.trim() != "none") {
         def testjobs = [:]
-        def TARGET_NAMES = [:]
+        def TARGET_NAMES = []
+
+        if (SHAS['VENDOR_TEST']) {
+            // the downstream job is expecting comma separated SHAs
+            // convert vendor shas map to a string
+            VENDOR_TEST_SHAS = SHAS['VENDOR_TEST'].values().join(',')
+        }
+
+        echo "Using VENDOR_TEST_REPOS = ${VENDOR_TEST_REPOS}, VENDOR_TEST_BRANCHES = ${VENDOR_TEST_BRANCHES}, VENDOR_TEST_SHAS = ${VENDOR_TEST_SHAS}, VENDOR_TEST_DIRS = ${VENDOR_TEST_DIRS}, BUILD_LIST = ${BUILD_LIST}" 
 
         def targets = TESTS_TARGETS.split(",")
         targets.each { target ->
@@ -180,33 +239,33 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
                 //  - OpenJ9 test pipelines will be completely removed once we switch to use AdoptOpenJDK test pipelines
                 case "_sanity":
                     if (SPEC.contains("win") || SDK_VERSION == "9") {
-                        TARGET_NAMES = ["Sanity"]
+                        TARGET_NAMES.add("Sanity")
                     } else {
-                        TARGET_NAMES = ["sanity.functional", "sanity.system"]
+                        TARGET_NAMES.addAll(["sanity.functional", "sanity.system"])
                     }
                     break
                 case "_extended":
                     if (SPEC.contains("win") || SDK_VERSION == "9") {
-                        TARGET_NAMES = ["Extended"]
+                        TARGET_NAMES.add("Extended")
                     } else {
-                        TARGET_NAMES = ["extended.functional"]
+                        TARGET_NAMES.addAll(["extended.functional", "extended.system"])
                     }
                     break
                 // temporary for OMR acceptance. This should be removed once we completely switch to AdoptOpenJDK test Jenkins file
                 case "_sanity.tmp":
-                    TARGET_NAMES = ["Sanity"]
+                    TARGET_NAMES.add("Sanity")
                     break
                 default:
-                    TARGET_NAMES = ["${target}"]
+                    TARGET_NAMES.add(target.trim())
             }
+        }
 
-            for ( name in TARGET_NAMES ) {
-                def TEST_JOB_NAME = "Test-${name}-JDK${SDK_VERSION}-${SPEC}"
-                testjobs["${TEST_JOB_NAME}"] = {
-                    // run tests against the SDK build in the upstream job: Build-JDK${SDK_VERSION}-${SPEC}
-                    jobs["${TEST_JOB_NAME}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.TEST_NODE, SHAS['OPENJ9'])
-                    echo "JOB: ${TEST_JOB_NAME} PASSED in: ${jobs[TEST_JOB_NAME].getDurationString()}"
-                }
+        for (name in TARGET_NAMES) {
+            def TEST_JOB_NAME = "Test-${name}-JDK${SDK_VERSION}-${SPEC}"
+            testjobs["${TEST_JOB_NAME}"] = {
+                // run tests against the SDK build in the upstream job: Build-JDK${SDK_VERSION}-${SPEC}
+                jobs["${TEST_JOB_NAME}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST)
+                echo "JOB: ${TEST_JOB_NAME} PASSED in: ${jobs[TEST_JOB_NAME].getDurationString()}"
             }
         }
         parallel testjobs
