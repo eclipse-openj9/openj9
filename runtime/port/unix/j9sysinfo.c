@@ -702,7 +702,6 @@ testSTFLE(struct J9PortLibrary *portLibrary, uint64_t stfleBit)
 }
 
 #ifdef J9ZOS390
-/* Determine whether z/OS supports SIMD (Vector Facility) */
 #ifdef _LP64
 typedef struct pcb_t
 {
@@ -729,23 +728,94 @@ typedef struct ceecaa_t
 } ceecaa_t;
 #endif /* ifdef _LP64 */
 
-/**
- * @internal
- * Check if z/OS supports the Vector Facility (SIMD)
- * Bit 0x8 of CEEPCB_FLAG6 field is set if LE supports Vector Facility
+/** @internal
+ *  Check if z/OS supports the Vector Extension Facility (SIMD) by checking whether both the OS and LE support vector
+ *  registers. We use the CVTVEF (0x80) bit in the CVT structure for the OS check and bit 0x08 of CEEPCB_FLAG6 field in
+ *  the PCB for the LE check.
  *
- * @return TRUE if supported, FALSE otherwise
+ *  @return TRUE if VEF is supported; FALSE otherwise.
  */
 static BOOLEAN
-getS390zOS_supportsVectorFacility(void)
+getS390zOS_supportsVectorExtensionFacility(void)
 {
-	ceecaa_t *caa = ((ceecaa_t *)_gtca());
+	/* FLCCVT is an ADDRESS off the PSA structure
+	 * https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.3.0/com.ibm.zos.v2r3.iead300/PSA-map.htm */
+	uint8_t* CVT = (uint8_t*)(*(uint32_t*)0x10);
 
-	if (NULL == caa) {
-		return FALSE;
+	/* CVTFLAG5 is a BITSTRING off the CVT structure containing the CVTVEF (0x80) bit
+	 * https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.3.0/com.ibm.zos.v2r3.iead100/CVT-map.htm */
+	uint8_t CVTFLAG5 = *(CVT + 0x0F4);
+
+	ceecaa_t* CAA = (ceecaa_t *)_gtca();
+
+	if (J9_ARE_ALL_BITS_SET(CVTFLAG5, 0x80)) {
+		if (NULL != CAA) {
+			return J9_ARE_ALL_BITS_SET(CAA->pcb_addr->ceepcb_flags6, 0x08);
+		}
 	}
 
-	return (J9_ARE_ALL_BITS_SET(caa->pcb_addr->ceepcb_flags6, 0x8));
+	return FALSE;
+}
+
+/** @internal
+ *  Check if z/OS supports the Transactional Execution Facility (TX). We use the CVTTX (0x08) and CVTTXC (0x04) bits in
+ *  the CVT structure for the OS check.
+ *
+ *  @return TRUE if TX is supported; FALSE otherwise.
+ */
+static BOOLEAN
+getS390zOS_supportsTransactionalExecutionFacility(void)
+{
+	/* FLCCVT is an ADDRESS off the PSA structure
+	 * https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.3.0/com.ibm.zos.v2r3.iead300/PSA-map.htm */
+	uint8_t* CVT = (uint8_t*)(*(uint32_t*)0x10);
+
+	/* CVTFLAG4 is a BITSTRING off the CVT structure containing the CVTTX (0x08), CVTTXC (0x04), and CVTRI (0x02) bits
+	 * https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.3.0/com.ibm.zos.v2r3.iead100/CVT-map.htm */
+	uint8_t CVTFLAG4 = *(CVT + 0x17B);
+
+	/* Note we check for both constrained and non-constrained transaction support */
+	return J9_ARE_ALL_BITS_SET(CVTFLAG4, 0x0C);
+}
+
+/** @internal
+ *  Check if z/OS supports the Runtime Instrumentation Facility (RI). We use the CVTRI (0x02) bit in the CVT structure
+ *  for the OS check.
+ *
+ *  @return TRUE if RI is supported; FALSE otherwise.
+ */
+static BOOLEAN
+getS390zOS_supportsRuntimeInstrumentationFacility(void)
+{
+	/* FLCCVT is an ADDRESS off the PSA structure
+	 * https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.3.0/com.ibm.zos.v2r3.iead300/PSA-map.htm */
+	uint8_t* CVT = (uint8_t*)(*(uint32_t*)0x10);
+
+	/* CVTFLAG4 is a BITSTRING off the CVT structure containing the CVTTX (0x08), CVTTXC (0x04), and CVTRI (0x02) bits
+	 * https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.3.0/com.ibm.zos.v2r3.iead100/CVT-map.htm */
+	uint8_t CVTFLAG4 = *(CVT + 0x17B);
+
+	return J9_ARE_ALL_BITS_SET(CVTFLAG4, 0x02);
+}
+
+/** @internal
+ *  Check if z/OS supports the Guarded Storage Facility (GS). We use the CVTGSF (0x01) bit in the CVT structure
+ *  for the OS check.
+ *
+ *  @return TRUE if GS is supported; FALSE otherwise.
+ */
+static BOOLEAN
+getS390zOS_supportsGuardedStorageFacility(void)
+{
+	/* FLCCVT is an ADDRESS off the PSA structure
+	 * https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.3.0/com.ibm.zos.v2r3.iead300/PSA-map.htm */
+	uint8_t* CVT = (uint8_t*)(*(uint32_t*)0x10);
+
+	/* CVTFLAG3 is a BITSTRING off the CVT structure containing the CVTGSF (0x01) bit
+	 * https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.3.0/com.ibm.zos.v2r3.iead100/CVT-map.htm */
+	uint8_t CVTFLAG3 = *(CVT + 0x17A);
+
+	return J9_ARE_ALL_BITS_SET(CVTFLAG3, 0x01);
 }
 #endif /* ifdef J9ZOS390 */
 
@@ -763,10 +833,6 @@ getS390Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 /* Check hardware and OS (z/OS only) support for GS (guarded storage), RI (runtime instrumentation) and TE (transactional memory) */
 #if defined(J9ZOS390)
 #define S390_STFLE_BIT (0x80000000 >> 7)
-	uint8_t *cvtptr = (uint8_t *)(*(uint32_t *)16); /* pointer to CVT is at offset +16 of PSA (at address 0) */
-	uint8_t cvttxj = *(cvtptr + 0x17B); /* CVTTX and CVTTXC are at offset +0x17B of CVT, bits 8 and 4, indicating full support */
-	uint8_t cvtgsf = *(cvtptr + 0x17A); /* CVTGSF is at offset +0x17A of CVT */
-
 	/* s390 feature detection requires the store-facility-list-extended (STFLE) instruction which was introduced in z9
 	 * Location 200 is architected such that bit 7 is ON if STFLE instruction is installed */
 	if (J9_ARE_NO_BITS_SET(*(int*) 200, S390_STFLE_BIT)) {
@@ -776,47 +842,6 @@ getS390Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 	/* Some s390 features require OS support on Linux, querying auxv for AT_HWCAP bit-mask of processor capabilities. */
 	unsigned long auxvFeatures = query_auxv(AT_HWCAP);
 #endif /* defined(J9ZOS390) */
-
-	/* GS hardware support */
-	if (testSTFLE(portLibrary, J9PORT_S390_FEATURE_GUARDED_STORAGE)) {
-#if defined(J9ZOS390)
-		/* GS OS support */
-		if (J9_ARE_ALL_BITS_SET(cvtgsf, 0x1)) /* CVTGSF bit is X'01' bit at byte X'17A' off CVT */
-#elif defined(LINUX) && !defined(J9ZTPF) /* LINUX S390*/
-		if (J9_ARE_ALL_BITS_SET(auxvFeatures, J9PORT_HWCAP_S390_GS))
-#endif /* defined(J9ZOS390) */
-		{
-			setFeature(desc, J9PORT_S390_FEATURE_GUARDED_STORAGE);
-
-			desc->processor = PROCESSOR_S390_GP12;
-		}
-	}
-
-	/* RI hardware support */
-	if (testSTFLE(portLibrary, 64)) {
-#if defined(J9ZOS390)
-		/* RI OS support */
-		if (J9_ARE_ALL_BITS_SET(cvttxj, 0x2)) /* CVTRI bit is X'02' bit at byte X'17B' off CVT */
-#endif /* defined(J9ZOS390) */
-		{
-#if !defined(J9ZTPF)
-			setFeature(desc, J9PORT_S390_FEATURE_RI);
-#endif /* !defined(J9ZTPF) */
-		}
-	}
-
-	/* TE hardware support */
-	if (testSTFLE(portLibrary, 50) && testSTFLE(portLibrary, 73)) {
-#if defined(J9ZOS390)
-		/* TE OS support */
-		if (J9_ARE_ALL_BITS_SET(cvttxj, 0xC))
-#elif defined(LINUX) && !defined(J9ZTPF) /* LINUX S390 */
-		if (J9_ARE_ALL_BITS_SET(auxvFeatures, J9PORT_HWCAP_S390_TE))
-#endif /* defined(J9ZOS390) */
-		{
-			setFeature(desc, J9PORT_S390_FEATURE_TE);
-		}
-	}
 
 #if (defined(S390) && defined(LINUX) && !defined(J9ZTPF))
 	/* OS Support of HPAGE on Linux on Z */
@@ -987,6 +1012,30 @@ getS390Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 
 	/* zEC12 facility and processor detection */
 
+	/* TE/TX hardware support */
+	if (testSTFLE(portLibrary, 50) && testSTFLE(portLibrary, 73)) {
+#if defined(J9ZOS390)
+		if (getS390zOS_supportsTransactionalExecutionFacility())
+#elif defined(LINUX) && !defined(J9ZTPF) /* LINUX S390 */
+		if (J9_ARE_ALL_BITS_SET(auxvFeatures, J9PORT_HWCAP_S390_TE))
+#endif /* defined(J9ZOS390) */
+		{
+			setFeature(desc, J9PORT_S390_FEATURE_TE);
+		}
+	}
+
+	/* RI hardware support */
+	if (testSTFLE(portLibrary, 64)) {
+#if defined(J9ZOS390)
+		if (getS390zOS_supportsRuntimeInstrumentationFacility())
+#endif /* defined(J9ZOS390) */
+		{
+#if !defined(J9ZTPF)
+			setFeature(desc, J9PORT_S390_FEATURE_RI);
+#endif /* !defined(J9ZTPF) */
+		}
+	}
+
 	if (testSTFLE(portLibrary, J9PORT_S390_FEATURE_MISCELLANEOUS_INSTRUCTION_EXTENSION)) {
 		setFeature(desc, J9PORT_S390_FEATURE_MISCELLANEOUS_INSTRUCTION_EXTENSION);
 
@@ -994,6 +1043,21 @@ getS390Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 	}
 
 	/* z13 facility and processor detection */
+
+	if (testSTFLE(portLibrary, 129)) {
+#if defined(J9ZOS390)
+		/* Vector facility requires hardware and OS support */
+		if (getS390zOS_supportsVectorExtensionFacility())
+#elif !defined(J9ZTPF)
+		/* Vector facility requires hardware and OS support */
+		if (J9_ARE_ALL_BITS_SET(auxvFeatures, J9PORT_HWCAP_S390_VXRS))
+#endif
+		{
+			setFeature(desc, J9PORT_S390_FEATURE_VECTOR_FACILITY);
+
+			desc->processor = PROCESSOR_S390_GP11;
+		}
+	}
 
 	if (testSTFLE(portLibrary, J9PORT_S390_FEATURE_LOAD_STORE_ON_CONDITION_2)) {
 		setFeature(desc, J9PORT_S390_FEATURE_LOAD_STORE_ON_CONDITION_2);
@@ -1007,22 +1071,21 @@ getS390Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 		desc->processor = PROCESSOR_S390_GP11;
 	}
 
-	if (testSTFLE(portLibrary, 129)) {
-#if defined(J9ZOS390)
-		/* Vector facility requires hardware and OS support */
-		if (getS390zOS_supportsVectorFacility())
-#elif !defined(J9ZTPF)
-		/* Vector facility requires hardware and OS support */
-		if (J9_ARE_ALL_BITS_SET(auxvFeatures, J9PORT_HWCAP_S390_VXRS))
-#endif
-		{
-			setFeature(desc, J9PORT_S390_FEATURE_VECTOR_FACILITY);
+	/* z14 facility and processor detection */
 
-			desc->processor = PROCESSOR_S390_GP11;
+	/* GS hardware support */
+	if (testSTFLE(portLibrary, J9PORT_S390_FEATURE_GUARDED_STORAGE)) {
+#if defined(J9ZOS390)
+		if (getS390zOS_supportsGuardedStorageFacility())
+#elif defined(LINUX) && !defined(J9ZTPF) /* LINUX S390*/
+		if (J9_ARE_ALL_BITS_SET(auxvFeatures, J9PORT_HWCAP_S390_GS))
+#endif /* defined(J9ZOS390) */
+		{
+			setFeature(desc, J9PORT_S390_FEATURE_GUARDED_STORAGE);
+
+			desc->processor = PROCESSOR_S390_GP12;
 		}
 	}
-
-	/* z14 facility and processor detection */
 
 	if (testSTFLE(portLibrary, J9PORT_S390_FEATURE_MISCELLANEOUS_INSTRUCTION_EXTENSION_2)) {
 		setFeature(desc, J9PORT_S390_FEATURE_MISCELLANEOUS_INSTRUCTION_EXTENSION_2);
