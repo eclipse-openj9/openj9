@@ -657,6 +657,9 @@ MM_StandardAccessBarrier::preObjectRead(J9VMThread *vmThread, J9Class *srcClass,
 	return true;
 }
 
+
+#define GLOBAL_READ_BARRIR_STATS_UPDATE_THRESHOLD 32
+
 bool
 MM_StandardAccessBarrier::preObjectRead(J9VMThread *vmThread, J9Object *srcObject, fj9object_t *srcAddress)
 {
@@ -673,6 +676,12 @@ MM_StandardAccessBarrier::preObjectRead(J9VMThread *vmThread, J9Object *srcObjec
 		/* since object is still in evacuate, srcObject has not been scanned yet => we cannot assert
 		 * if srcObject should (already) be remembered (even if it's old)
 		 */
+
+		env->_scavengerStats._readObjectBarrierUpdate += 1;
+		if (GLOBAL_READ_BARRIR_STATS_UPDATE_THRESHOLD == env->_scavengerStats._readObjectBarrierUpdate) {
+			MM_AtomicOperations::addU64(&_extensions->scavengerStats._readObjectBarrierUpdate, GLOBAL_READ_BARRIR_STATS_UPDATE_THRESHOLD);
+			env->_scavengerStats._readObjectBarrierUpdate = 0;
+		}
 
 		GC_SlotObject slotObject(env->getOmrVM(), srcAddress);
 		MM_ForwardedHeader forwardHeader(object);
@@ -699,6 +708,13 @@ MM_StandardAccessBarrier::preObjectRead(J9VMThread *vmThread, J9Object *srcObjec
 			} else {
 				/* Successfully copied (or copied by another thread). copyObject() ensures that the object is fully copied. */
 				slotObject.atomicWriteReferenceToSlot(object, destinationObjectPtr);
+
+				env->_scavengerStats._readObjectBarrierCopy += 1;
+				if (GLOBAL_READ_BARRIR_STATS_UPDATE_THRESHOLD == env->_scavengerStats._readObjectBarrierCopy) {
+					MM_AtomicOperations::addU64(&_extensions->scavengerStats._readObjectBarrierCopy, GLOBAL_READ_BARRIR_STATS_UPDATE_THRESHOLD);
+					env->_scavengerStats._readObjectBarrierCopy = 0;
+				}
+
 			}
 		}
 	}
