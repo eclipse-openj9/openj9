@@ -627,6 +627,9 @@ public:
    virtual uintptrj_t         thisThreadGetOSRFrameIndexOffset();
    virtual uintptrj_t         thisThreadGetOSRReturnAddressOffset();
 
+#if defined(TR_TARGET_S390)
+   virtual uint16_t           thisThreadGetTDBOffset();
+#endif
 
    virtual uintptrj_t         thisThreadGetGSIntermediateResultOffset();
    virtual uintptrj_t         thisThreadGetConcurrentScavengeActiveByteAddressOffset();
