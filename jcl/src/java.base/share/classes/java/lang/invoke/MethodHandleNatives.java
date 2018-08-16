@@ -25,14 +25,23 @@
 
 package java.lang.invoke;
 
-/*
- * Stub class for compilation
- */
-
 class MethodHandleNatives {
 
 	static LinkageError mapLookupExceptionToError(ReflectiveOperationException roe) {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		String exMsg = roe.getMessage();
+		LinkageError linkageErr;
+		if (roe instanceof IllegalAccessException) {
+			linkageErr = new IllegalAccessError(exMsg);
+		} else if (roe instanceof NoSuchFieldException) {
+			linkageErr = new NoSuchFieldError(exMsg);
+		} else if (roe instanceof NoSuchMethodException) {
+			linkageErr = new NoSuchMethodError(exMsg);
+		} else {
+			linkageErr = new IncompatibleClassChangeError(exMsg);
+		}
+		Throwable th = roe.getCause();
+		linkageErr.initCause(th == null ? roe : th);
+		return linkageErr;
 	}
 }
 
