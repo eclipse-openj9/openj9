@@ -251,10 +251,6 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
                         TARGET_NAMES.addAll(["extended.functional", "extended.system"])
                     }
                     break
-                // temporary for OMR acceptance. This should be removed once we completely switch to AdoptOpenJDK test Jenkins file
-                case "_sanity.tmp":
-                    TARGET_NAMES.add("Sanity")
-                    break
                 default:
                     TARGET_NAMES.add(target.trim())
             }
