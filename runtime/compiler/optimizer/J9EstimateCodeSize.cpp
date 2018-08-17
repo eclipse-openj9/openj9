@@ -810,15 +810,8 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
             if (thisOnStack)
                hasThisCalls = true;
             cpIndex = bci.next2Bytes();
-            resolvedMethod = calltarget->_calleeMethod->getResolvedVirtualMethod(comp(),cpIndex, true, &isUnresolvedInCP);
-            bool isIndirectCall = (!resolvedMethod
-                  || !resolvedMethod->isFinal());
-            bool isInterface = false;
-            TR_Method *interfaceMethod = 0;
-            TR::TreeTop *callNodeTreeTop = 0;
-            TR::Node *parent = 0;
-            TR::Node *callNode = 0;
-            TR::ResolvedMethodSymbol *resolvedSymbol = 0;
+            auto calleeMethod = (TR_ResolvedJ9Method*)calltarget->_calleeMethod;
+            resolvedMethod = calleeMethod->getResolvedPossiblyPrivateVirtualMethod(comp(), cpIndex, true, &isUnresolvedInCP);
 
             ///if (!resolvedMethod || isUnresolvedInCP || resolvedMethod->isCold(comp(), true))
             if ((isUnresolvedInCP && !resolvedMethod) || (resolvedMethod
@@ -1399,8 +1392,11 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                if (thisOnStack)
                   hasThisCalls = true;
                cpIndex = bci.next2Bytes();
-               resolvedMethod = calltarget->_calleeMethod->getResolvedVirtualMethod(comp(), cpIndex, true, &isUnresolvedInCP);
-               bool isIndirectCall = (!resolvedMethod || !resolvedMethod->isFinal());
+               auto calleeMethod = (TR_ResolvedJ9Method*)calltarget->_calleeMethod;
+               resolvedMethod = calleeMethod->getResolvedPossiblyPrivateVirtualMethod(comp(), cpIndex, true, &isUnresolvedInCP);
+               bool isIndirectCall =
+                  resolvedMethod == NULL
+                  || (!resolvedMethod->isFinal() && !resolvedMethod->isPrivate());
                bool isInterface = false;
                TR_Method *interfaceMethod = 0;
                TR::TreeTop *callNodeTreeTop = 0;

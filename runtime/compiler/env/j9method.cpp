@@ -1622,6 +1622,26 @@ TR_ResolvedRelocatableJ9Method::isUnresolvedMethodHandle(I_32 cpIndex)
    return true;
    }
 
+TR_ResolvedMethod *
+TR_ResolvedRelocatableJ9Method::getResolvedPossiblyPrivateVirtualMethod(
+   TR::Compilation *comp,
+   int32_t cpIndex,
+   bool ignoreRtResolve,
+   bool * unresolvedInCP)
+   {
+   TR_ResolvedMethod *method =
+      TR_ResolvedJ9Method::getResolvedPossiblyPrivateVirtualMethod(
+         comp,
+         cpIndex,
+         ignoreRtResolve,
+         unresolvedInCP);
+
+   // For now leave private invokevirtual unresolved in AOT. If we resolve it,
+   // we may forceUnresolvedDispatch in codegen, in which case the generated
+   // code would attempt to resolve the wrong kind of constant pool entry.
+   return (method == NULL || method->isPrivate()) ? NULL : method;
+   }
+
 bool
 TR_ResolvedRelocatableJ9Method::getUnresolvedFieldInCP(I_32 cpIndex)
    {
@@ -6249,8 +6269,18 @@ TR_ResolvedJ9Method::getResolvedSpecialMethod(TR::Compilation * comp, I_32 cpInd
    return resolvedMethod;
    }
 
+static bool
+isInvokePrivateVTableOffset(UDATA vTableOffset)
+   {
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+   return vTableOffset == J9VTABLE_INVOKE_PRIVATE_OFFSET;
+#else
+   return false;
+#endif
+   }
+
 TR_ResolvedMethod *
-TR_ResolvedJ9Method::getResolvedVirtualMethod(TR::Compilation * comp, I_32 cpIndex, bool ignoreRtResolve, bool * unresolvedInCP)
+TR_ResolvedJ9Method::getResolvedPossiblyPrivateVirtualMethod(TR::Compilation * comp, I_32 cpIndex, bool ignoreRtResolve, bool * unresolvedInCP)
    {
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
 #if TURN_OFF_INLINING
@@ -6278,7 +6308,7 @@ TR_ResolvedJ9Method::getResolvedVirtualMethod(TR::Compilation * comp, I_32 cpInd
          TR::VMAccessCriticalSection resolveVirtualMethodRef(fej9());
          vTableOffset = _fe->_vmFunctionTable->resolveVirtualMethodRefInto(_fe->vmThread(), cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME, &ramMethod, NULL);
          }
-      else
+      else if (!isInvokePrivateVTableOffset(vTableOffset))
          {
          // go fishing for the J9Method...
          uint32_t classIndex = ((J9ROMMethodRef *) cp()->romConstantPool)[cpIndex].classRefCPIndex;
@@ -6287,6 +6317,9 @@ TR_ResolvedJ9Method::getResolvedVirtualMethod(TR::Compilation * comp, I_32 cpInd
          if (unresolvedInCP)
             *unresolvedInCP = false;
          }
+
+      if (isInvokePrivateVTableOffset(vTableOffset))
+         ramMethod = (((J9RAMVirtualMethodRef*) literals())[cpIndex]).method;
 
       if (vTableOffset)
          {
@@ -6322,6 +6355,22 @@ TR_ResolvedJ9Method::getResolvedVirtualMethod(TR::Compilation * comp, I_32 cpInd
 
    return resolvedMethod;
 #endif
+   }
+
+TR_ResolvedMethod *
+TR_ResolvedJ9Method::getResolvedVirtualMethod(
+   TR::Compilation * comp,
+   I_32 cpIndex,
+   bool ignoreRtResolve,
+   bool * unresolvedInCP)
+   {
+   TR_ResolvedMethod *method = getResolvedPossiblyPrivateVirtualMethod(
+      comp,
+      cpIndex,
+      ignoreRtResolve,
+      unresolvedInCP);
+
+   return (method == NULL || method->isPrivate()) ? NULL : method;
    }
 
 TR_ResolvedMethod *
@@ -6450,7 +6499,7 @@ TR_ResolvedJ9Method::getResolvedHandleMethodWithSignature(TR::Compilation * comp
    }
 
 TR_ResolvedMethod *
-TR_ResolvedJ9Method::getResolvedVirtualMethod(TR::Compilation * comp, TR_OpaqueClassBlock * classObject, I_32 virtualCallOffset , bool ignoreRtResolve)
+TR_ResolvedJ9Method::getResolvedVirtualMethod(TR::Compilation * comp, TR_OpaqueClassBlock * classObject, I_32 virtualCallOffset, bool ignoreRtResolve)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)_fe;
    void * ramMethod = fej9->getResolvedVirtualMethod(classObject, virtualCallOffset, ignoreRtResolve);
