@@ -6094,6 +6094,13 @@ resolved:
 		_sp -= 1;
 		if (J9DescriptionCpTypeClass == romCPEntry->cpType) {
 			value = J9VM_J9CLASS_TO_HEAPCLASS((J9Class*)value);
+		} else if ((J9DescriptionCpTypeConstantDynamic == (romCPEntry->cpType & J9DescriptionCpTypeMask))
+			&& (J9_ARE_ALL_BITS_SET(romCPEntry->cpType, J9DescriptionCpPrimitiveType))
+		){
+			/* Constant Dynamic ROM CP entry uses J9DescriptionCpPrimitiveType flag to
+			 * indicate primitive return type which requires unboxing before returning the value
+			 */
+			value = (j9object_t)(UDATA)J9VMJAVALANGINTEGER_VALUE(_currentThread, value);
 		}
 		*_sp = (UDATA)value;
 done:

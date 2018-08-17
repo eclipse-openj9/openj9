@@ -503,7 +503,20 @@ ConstantPoolMap::constantPoolDo(ConstantPoolVisitor *visitor)
 				visitor->visitMethodHandle(slot1, slot2);
 				break;
 			case J9CPTYPE_CONSTANT_DYNAMIC:
-				visitor->visitConstantDynamic(slot1, slot2);
+				/* Check if the return type of constant dynamic entry is a primitive type
+				 * Set the J9DescriptionCpPrimitiveType flag so interpreter know to unbox
+				 * the resolved object before returning it.
+				 */
+				{
+					char fieldDescriptor = (char)*_classFileOracle->getUTF8Data(getCPSlot2(cfrCPIndex));
+					if (fieldDescriptor == 'B' || fieldDescriptor == 'C' || fieldDescriptor == 'F' ||
+						fieldDescriptor == 'I' || fieldDescriptor == 'S' || fieldDescriptor == 'Z')
+					{
+						visitor->visitConstantDynamic(slot1, slot2, J9DescriptionCpPrimitiveType);
+					} else {
+						visitor->visitConstantDynamic(slot1, slot2, 0);
+					}
+				}
 				break;
 			default:
 				Trc_BCU_Assert_ShouldNeverHappen();

@@ -252,6 +252,10 @@
 #define J9DescriptionCpTypeShift 0x4
 #define J9DescriptionImmediate 0x1
 
+/* Rom CP Flag for constant dynamic with primitive type */
+#define J9DescriptionCpPrimitiveType 1 << 20
+#define J9DescriptionCpBsmIndexMask 0xFFFF
+
 /* @ddr_namespace: map_to_type=J9NativeTypeCodes */
 
 /* Constants from J9NativeTypeCodes */

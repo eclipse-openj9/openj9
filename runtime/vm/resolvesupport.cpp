@@ -1979,7 +1979,7 @@ retry:
 		J9SRP *callSiteData = (J9SRP *) J9ROMCLASS_CALLSITEDATA(romClass);
 		U_16 *bsmIndices = (U_16 *) (callSiteData + romClass->callSiteCount);
 		U_16 *bsmData = bsmIndices + romClass->callSiteCount;
-		U_32 bsmIndex = romConstantRef->bsmIndexAndCpType >> J9DescriptionCpTypeShift;
+		U_32 bsmIndex = (romConstantRef->bsmIndexAndCpType >> J9DescriptionCpTypeShift) & J9DescriptionCpBsmIndexMask;
 		J9ROMNameAndSignature* nameAndSig = SRP_PTR_GET(&romConstantRef->nameAndSignature, J9ROMNameAndSignature*);
 
 		/* Walk bsmData */

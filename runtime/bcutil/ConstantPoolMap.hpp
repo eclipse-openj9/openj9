@@ -96,7 +96,7 @@ public:
 		virtual void visitString(U_16 cfrCPIndex) = 0;
 		virtual void visitMethodType(U_16 cfrCPIndex, U_16 forMethodHandleInvocation) = 0;
 		virtual void visitMethodHandle(U_16 kind, U_16 cfrCPIndex) = 0;
-		virtual void visitConstantDynamic(U_16 bsmIndex, U_16 cfrCPIndex) = 0;
+		virtual void visitConstantDynamic(U_16 bsmIndex, U_16 cfrCPIndex, U_32 primitiveFlag) = 0;
 		virtual void visitSingleSlotConstant(U_32 slot1) = 0;
 		virtual void visitDoubleSlotConstant(U_32 slot1, U_32 slot2) = 0;
 		virtual void visitFieldOrMethod(U_16 classRefCPIndex, U_16 nameAndSignatureCfrCPIndex) = 0;
