@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -384,6 +384,7 @@ public:
    virtual TR_ResolvedMethod *   getResolvedHandleMethodWithSignature( TR::Compilation *, int32_t cpIndex, char *signature);
 
    virtual uint32_t              getResolvedInterfaceMethodOffset(TR_OpaqueClassBlock * classObject, int32_t cpIndex);
+   virtual TR_ResolvedMethod *   getResolvedImproperInterfaceMethod(TR::Compilation * comp, I_32 cpIndex);
    virtual TR_ResolvedMethod *   getResolvedInterfaceMethod( TR::Compilation *, TR_OpaqueClassBlock * classObject, int32_t cpIndex);
    virtual TR_ResolvedMethod *   getResolvedVirtualMethod( TR::Compilation *, TR_OpaqueClassBlock * classObject, int32_t cpIndex,bool ignoreReResolve = true);
 
@@ -495,6 +496,8 @@ public:
    virtual bool                  getUnresolvedStaticMethodInCP(int32_t cpIndex);
    virtual bool                  getUnresolvedSpecialMethodInCP(int32_t cpIndex);
    virtual bool                  getUnresolvedVirtualMethodInCP(int32_t cpIndex);
+
+   virtual TR_ResolvedMethod *   getResolvedImproperInterfaceMethod(TR::Compilation * comp, I_32 cpIndex);
 
    virtual TR_OpaqueMethodBlock *getNonPersistentIdentifier();
    virtual uint8_t *             allocateException(uint32_t, TR::Compilation*);
