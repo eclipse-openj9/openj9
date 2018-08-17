@@ -1817,6 +1817,7 @@ unresolveAllClasses(J9VMThread * currentThread, J9HashTable * classPairs, J9Hash
 	clazz = vmFuncs->allClassesStartDo(&state, vm, NULL);
 
 	while (clazz != NULL) {
+		U_16 i = 0;
 
 		if (extensionsUsed) {
 
@@ -1835,12 +1836,16 @@ unresolveAllClasses(J9VMThread * currentThread, J9HashTable * classPairs, J9Hash
 			}
 		}
 
-		/* zero out split table entries */
+		/* unresolve split table entries */
 		if (NULL != clazz->staticSplitMethodTable) {
-			memset((void *)clazz->staticSplitMethodTable, 0, clazz->romClass->staticSplitMethodRefCount * sizeof(J9Method *));
+			for (i = 0; i < clazz->romClass->staticSplitMethodRefCount; ++i) {
+				clazz->staticSplitMethodTable[i] = (J9Method*)vm->initialMethods.initialStaticMethod;
+			}
 		}
 		if (NULL != clazz->specialSplitMethodTable) {
-			memset((void *)clazz->specialSplitMethodTable, 0, clazz->romClass->specialSplitMethodRefCount * sizeof(J9Method *));
+			for (i = 0; i < clazz->romClass->specialSplitMethodRefCount; ++i) {
+				clazz->specialSplitMethodTable[i] = (J9Method*)vm->initialMethods.initialSpecialMethod;
+			}
 		}
 
 		clazz = vmFuncs->allClassesNextDo(&state);

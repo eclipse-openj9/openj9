@@ -2280,7 +2280,13 @@ fail:
 				ramClass->methodTypes = (j9object_t *) allocationRequests[RAM_METHOD_TYPES_FRAGMENT].address;
 				ramClass->varHandleMethodTypes = (j9object_t *) allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].address;
 				ramClass->staticSplitMethodTable = (J9Method **) allocationRequests[RAM_STATIC_SPLIT_TABLE_FRAGMENT].address;
+				for (U_16 i = 0; i < romClass->staticSplitMethodRefCount; ++i) {
+					ramClass->staticSplitMethodTable[i] = (J9Method*)javaVM->initialMethods.initialStaticMethod;
+				}
 				ramClass->specialSplitMethodTable = (J9Method **) allocationRequests[RAM_SPECIAL_SPLIT_TABLE_FRAGMENT].address;
+				for (U_16 i = 0; i < romClass->specialSplitMethodRefCount; ++i) {
+					ramClass->specialSplitMethodTable[i] = (J9Method*)javaVM->initialMethods.initialSpecialMethod;
+				}
 			}
 		}
 		

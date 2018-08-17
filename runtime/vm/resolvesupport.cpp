@@ -580,7 +580,7 @@ resolveStaticSplitMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA s
 	U_16 cpIndex = *(J9ROMCLASS_STATICSPLITMETHODREFINDEXES(ramCP->ramClass->romClass) + splitTableIndex);
 	J9Method *method = ramCP->ramClass->staticSplitMethodTable[splitTableIndex];
 
-	if (NULL == method) {
+	if (method == (J9Method*)vmStruct->javaVM->initialMethods.initialStaticMethod) {
 		method = resolveStaticMethodRefInto(vmStruct, ramCP, cpIndex, resolveFlags, ramStaticMethodRef);
 
 		if (NULL != method) {
@@ -1221,7 +1221,7 @@ resolveSpecialSplitMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA 
 	U_16 cpIndex = *(U_16 *)(J9ROMCLASS_SPECIALSPLITMETHODREFINDEXES(ramCP->ramClass->romClass) + splitTableIndex);
 	J9Method *method = ramCP->ramClass->specialSplitMethodTable[splitTableIndex];
 	
-	if (NULL == method) {
+	if (method == (J9Method*)vmStruct->javaVM->initialMethods.initialSpecialMethod) {
 		method = resolveSpecialMethodRefInto(vmStruct, ramCP, cpIndex, resolveFlags, NULL);
 
 		if (NULL != method) {
