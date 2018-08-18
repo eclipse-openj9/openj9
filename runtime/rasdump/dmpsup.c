@@ -561,6 +561,10 @@ configureDumpAgents(J9JavaVM *vm)
 	xdumpIndex = FIND_ARG_IN_VMARGS_FORWARD(OPTIONAL_LIST_MATCH, VMOPT_XDUMP, NULL);
 	while (xdumpIndex >= 0)
 	{
+		if (agentNum >= MAX_DUMP_OPTS) {
+			j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_DMP_TOO_MANY_DUMP_OPTIONS, MAX_DUMP_OPTS);
+			return J9VMDLLMAIN_FAILED;
+		}
 		/* HeapDumpOnOutOfMemoryError before current -Xdump. */
 		if (processXXHeapDump && (heapDumpIndex < xdumpIndex)) {
 			/* process the -XX:[+-]HeapDumpOnOutOfMemoryError option first */
