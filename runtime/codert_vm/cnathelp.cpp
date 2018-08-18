@@ -999,7 +999,8 @@ old_slow_jitLookupInterfaceMethod(J9VMThread *currentThread)
 	J9ConstantPool *ramConstantPool = ((J9ConstantPool**)indexAndLiteralsEA)[-2];
 	UDATA cpIndex = indexAndLiteralsEA[-1];
 	J9Class *interfaceClass = ((J9Class**)indexAndLiteralsEA)[0];
-	UDATA methodIndex = indexAndLiteralsEA[1];
+	// convert offset back to index for now
+	UDATA methodIndex = (indexAndLiteralsEA[1] - sizeof(J9ITable)) / sizeof(UDATA);
 	UDATA vTableOffset = VM_VMHelpers::convertITableIndexToVTableOffset(currentThread, receiverClass, interfaceClass, methodIndex, ramConstantPool, cpIndex);
 	buildJITResolveFrameWithPC(currentThread, J9_SSF_JIT_RESOLVE_INTERFACE_LOOKUP, parmCount, true, 0, jitEIP);
 	if (0 == vTableOffset) {
@@ -1027,7 +1028,8 @@ old_fast_jitLookupInterfaceMethod(J9VMThread *currentThread)
 	J9ConstantPool *ramConstantPool = ((J9ConstantPool**)indexAndLiteralsEA)[-2];
 	UDATA cpIndex = indexAndLiteralsEA[-1];
 	J9Class *interfaceClass = ((J9Class**)indexAndLiteralsEA)[0];
-	UDATA methodIndex = indexAndLiteralsEA[1];
+	// convert offset back to index for now
+	UDATA methodIndex = (indexAndLiteralsEA[1] - sizeof(J9ITable)) / sizeof(UDATA);
 	UDATA vTableOffset = VM_VMHelpers::convertITableIndexToVTableOffset(currentThread, receiverClass, interfaceClass, methodIndex, ramConstantPool, cpIndex);
 	if (0 != vTableOffset) {
 		J9Method* method = *(J9Method**)((UDATA)receiverClass + vTableOffset);
@@ -1516,7 +1518,8 @@ retry:
 		goto retry;
 	}
 	indexAndLiteralsEA[2] = (UDATA)interfaceClass;
-	indexAndLiteralsEA[3] = methodIndexAndArgCount >> 8; /* remove argCount */
+	// store iTable offset instead of index
+	indexAndLiteralsEA[3] = ((methodIndexAndArgCount >> 8) * sizeof(UDATA)) + sizeof(J9ITable);
 	JIT_RETURN_UDATA(1);
 done:
 	SLOW_JIT_HELPER_EPILOGUE();
@@ -2707,7 +2710,8 @@ fast_jitLookupInterfaceMethod(J9VMThread *currentThread, J9Class *receiverClass,
 	J9ConstantPool *ramConstantPool = ((J9ConstantPool**)indexAndLiteralsEA)[-2];
 	UDATA cpIndex = indexAndLiteralsEA[-1];
 	J9Class *interfaceClass = ((J9Class**)indexAndLiteralsEA)[0];
-	UDATA methodIndex = indexAndLiteralsEA[1];
+	// convert offset back to index for now
+	UDATA methodIndex = (indexAndLiteralsEA[1] - sizeof(J9ITable)) / sizeof(UDATA);
 	UDATA vTableOffset = VM_VMHelpers::convertITableIndexToVTableOffset(currentThread, receiverClass, interfaceClass, methodIndex, ramConstantPool, cpIndex);
 	if (0 != vTableOffset) {
 		J9Method* method = *(J9Method**)((UDATA)receiverClass + vTableOffset);
