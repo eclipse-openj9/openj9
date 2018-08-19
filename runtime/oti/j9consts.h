@@ -835,9 +835,18 @@ extern "C" {
 * Non-vTable methods in Object will have J9_ITABLE_INDEX_OBJECT and J9_ITABLE_INDEX_METHOD_INDEX set,
 * indicating that the underlying index is a method index in Object.
 */
-#define J9_ITABLE_INDEX_METHOD_INDEX	((UDATA)1 << ((8 * sizeof(UDATA)) - 1))
-#define J9_ITABLE_INDEX_OBJECT			((UDATA)1 << ((8 * sizeof(UDATA)) - 2))
-#define J9_ITABLE_INDEX_TAG_BITS		(J9_ITABLE_INDEX_METHOD_INDEX | J9_ITABLE_INDEX_OBJECT)
+#define J9_ITABLE_INDEX_METHOD_INDEX ((UDATA)1 << ((8 * sizeof(UDATA)) - 1))
+#define J9_ITABLE_INDEX_OBJECT ((UDATA)1 << ((8 * sizeof(UDATA)) - 2))
+#define J9_ITABLE_INDEX_TAG_BITS (J9_ITABLE_INDEX_METHOD_INDEX | J9_ITABLE_INDEX_OBJECT)
+
+/* Tag bits for iTableOffset field in JIT interface snippet data and compile-time resolution:
+ *
+ *	J9_ITABLE_OFFSET_DIRECT  - offset field is actually a direct J9Method*
+ *	J9_ITABLE_OFFSET_VIRTUAL - offset field represent a vTable offset, not iTable
+ */
+#define J9_ITABLE_OFFSET_DIRECT 1
+#define J9_ITABLE_OFFSET_VIRTUAL 2
+#define J9_ITABLE_OFFSET_TAG_BITS (J9_ITABLE_OFFSET_DIRECT | J9_ITABLE_OFFSET_VIRTUAL)
 
 #ifdef __cplusplus
 }
