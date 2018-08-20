@@ -622,8 +622,14 @@ jitGetJ9MethodUsingIndex(J9VMThread *currentThread, J9ConstantPool *constantPool
 
 		if (J9_IS_STATIC_SPLIT_TABLE_INDEX(cpOrSplitIndex)) {
 			method = clazz->staticSplitMethodTable[splitTableIndex];
+			if (method == (J9Method*)currentThread->javaVM->initialMethods.initialStaticMethod) {
+				method = NULL;
+			}
 		} else {
 			method = clazz->specialSplitMethodTable[splitTableIndex];
+			if (method == (J9Method*)currentThread->javaVM->initialMethods.initialSpecialMethod) {
+				method = NULL;
+			}
 		}
 	} else {
 		method = ((J9RAMStaticMethodRef*)(constantPool + cpOrSplitIndex))->method;
