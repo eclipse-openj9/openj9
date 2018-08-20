@@ -418,9 +418,9 @@ public class MethodHandles {
 				return;
 			} else if (Modifier.isPrivate(memberModifiers)) {
 				if (Modifier.isPrivate(accessMode) && ((targetClass == accessClass)
-/*[IF Valhalla-NestMates]*/
+/*[IF Java11]*/
 						|| targetClass.isNestmateOf(accessClass)
-/*[ENDIF] Valhalla-NestMates*/	
+/*[ENDIF] Java11*/	
 				)) {
 					return;
 				}

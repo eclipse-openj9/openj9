@@ -4360,7 +4360,7 @@ static byte[] getExecutableTypeAnnotationBytes(Executable exec) {
 }
 /*[ENDIF] Sidecar19-SE*/
 
-/*[IF Valhalla-NestMates]*/
+/*[IF Java11]*/
 /**
  * Answers the host class of the receiver's nest.
  *
@@ -4408,5 +4408,5 @@ public boolean isNestmateOf(Class<?> that) {
 public Class<?>[] getNestMembers() {
 	return getNestMembersImpl();
 }
-/*[ENDIF] Valhalla-NestMates*/
+/*[ENDIF] Java11 */
 }

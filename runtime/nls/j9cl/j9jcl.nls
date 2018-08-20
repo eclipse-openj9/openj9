@@ -436,3 +436,36 @@ J9NLS_JCL_NEST_MEMBER_CLAIMS_DIFFERENT_NEST_HOST.system_action=The JVM will thro
 J9NLS_JCL_NEST_MEMBER_CLAIMS_DIFFERENT_NEST_HOST.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
+# First argument is class name length
+# Second argument is class name
+# Third argument is nest host name length
+# Fourth argument is nest host name
+J9NLS_JCL_NESTMATES_CLASS_FAILED_TO_LOAD=Nest member %2$.*1$s must be able to load nest host %4$.*3$s
+# START NON-TRANSLATABLE
+J9NLS_JCL_NESTMATES_CLASS_FAILED_TO_LOAD.explanation=Nest member class and nest host class were loaded with different class loaders.
+J9NLS_JCL_NESTMATES_CLASS_FAILED_TO_LOAD.system_action=The JVM will throw an IncompatibleClassChangeError
+J9NLS_JCL_NESTMATES_CLASS_FAILED_TO_LOAD.user_response=Load class and nest host class with same classloader.
+# END NON-TRANSLATABLE
+
+# First argument is class name length
+# Second argument is class name
+# Third argument is nest host name length
+# Fourth argument is nest host name
+J9NLS_JCL_NEST_HOST_HAS_DIFFERENT_PACKAGE=Nest member class %2$.*1$s must be in the same package as nest host class %4$.*3$s
+# START NON-TRANSLATABLE
+J9NLS_JCL_NEST_HOST_HAS_DIFFERENT_PACKAGE.explanation=Nest member class and nest host class were loaded in different packages
+J9NLS_JCL_NEST_HOST_HAS_DIFFERENT_PACKAGE.system_action=The JVM will throw an IncompatibleClassChangeError
+J9NLS_JCL_NEST_HOST_HAS_DIFFERENT_PACKAGE.user_response=Load class and nest host class in same package
+# END NON-TRANSLATABLE
+
+# First argument is class name length
+# Second argument is class name
+# Third argument is nest host name length
+# Fourth argument is nest host name
+J9NLS_JCL_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST=Class %2$.*1$s must be claimed by its nest host %4$.*3$s
+# START NON-TRANSLATABLE
+J9NLS_JCL_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST.explanation=Class was not claimed by its nest host class.
+J9NLS_JCL_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST.system_action=The JVM will throw an IncompatibleClassChangeError
+J9NLS_JCL_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+

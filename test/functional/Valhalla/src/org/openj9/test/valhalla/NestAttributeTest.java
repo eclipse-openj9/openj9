@@ -23,6 +23,7 @@
 package org.openj9.test.valhalla;
 
 import java.lang.reflect.*;
+import org.objectweb.asm.*;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -246,5 +247,155 @@ public class NestAttributeTest {
 		Object instance = clazz.getDeclaredConstructor().newInstance();
 		Method bar = clazz.getDeclaredMethod("bar");
 		Assert.assertEquals(3, bar.invoke(instance));
+	}
+	
+	@Test
+	static public void testGetNestHostAPINestHostNotSet() throws Throwable {
+		CustomClassLoader classloader = new CustomClassLoader();
+		byte[] aBytes = ClassGenerator.generateClass("test/A", null);
+		Class<?> aClazz = classloader.getClass("test.A", aBytes);
+		Assert.assertEquals(aClazz, aClazz.getNestHost());
+	}
+	
+	@Test
+	static public void testGetNestHostAPINestHostDoesntExist() throws Throwable {
+		CustomClassLoader classloader = new CustomClassLoader();
+		byte[] aBytes = ClassGenerator.generateClass("test/A", new Attribute[] {new NestHostAttribute("test/NonExistent")});
+		Class<?> aClazz = classloader.getClass("test.A", aBytes);
+		Assert.assertEquals(aClazz, aClazz.getNestHost());
+	}
+	
+	@Test
+	static public void testGetNestHostAPINestHostSet() throws Throwable {
+		CustomClassLoader classloader = new CustomClassLoader();
+		byte[] aBytes = ClassGenerator.generateClass("test/A", new Attribute[] {new NestHostAttribute("test/B")});
+		Class<?> aClazz = classloader.getClass("test.A", aBytes);
+		byte[] bBytes = ClassGenerator.generateClass("test/B", new Attribute[] {new NestMembersAttribute(new String[] {"test/A"})});
+		Class<?> bClazz = classloader.getClass("test.B", bBytes);
+		Assert.assertEquals(bClazz, aClazz.getNestHost());
+	}
+	
+	@Test
+	static public void testGetNestHostAPINestHostSet2() throws Throwable {
+		CustomClassLoader classloader = new CustomClassLoader();
+		byte[] aBytes = ClassGenerator.generateClass("test/A", new Attribute[] {new NestHostAttribute("test/A")});
+		Class<?> aClazz = classloader.getClass("test.A", aBytes);
+		Assert.assertEquals(aClazz, aClazz.getNestHost());
+	}
+	
+	@Test
+	static public void testGetNestMembersAPINoMembers() throws Throwable {
+		CustomClassLoader classloader = new CustomClassLoader();
+		byte[] aBytes = ClassGenerator.generateClass("test/A", null);
+		Class<?> aClazz = classloader.getClass("test.A", aBytes);
+		Class<?> nestMembers[] = aClazz.getNestMembers();
+		Assert.assertEquals(1, nestMembers.length);
+		Assert.assertEquals(aClazz, nestMembers[0]);
+	}
+	
+	@Test
+	static public void testGetNestMembersAPIValidMembers() throws Throwable {
+		CustomClassLoader classloader = new CustomClassLoader();
+		byte[] aBytes = ClassGenerator.generateClass("test/A", new Attribute[] {new NestMembersAttribute(new String[] {"test/B", "test/C", "test/D"})});
+		Class<?> aClazz = classloader.getClass("test.A", aBytes);
+		byte[] bBytes = ClassGenerator.generateClass("test/B", new Attribute[] {new NestHostAttribute("test/A")});
+		Class<?> bClazz = classloader.getClass("test.B", bBytes);
+		byte[] cBytes = ClassGenerator.generateClass("test/C", new Attribute[] {new NestHostAttribute("test/A")});
+		Class<?> cClazz = classloader.getClass("test.C", cBytes);
+		byte[] dBytes = ClassGenerator.generateClass("test/D", new Attribute[] {new NestHostAttribute("test/A")});
+		Class<?> dClazz = classloader.getClass("test.D", dBytes);
+		
+		Class<?> clazzList[] = {aClazz, bClazz, cClazz, dClazz};
+		for (Class<?> clazz : clazzList) {
+			Class<?> nestMembers[] = clazz.getNestMembers();
+			
+			Assert.assertEquals(4, nestMembers.length);
+			Assert.assertEquals(aClazz, nestMembers[0]);
+			
+			for (int i = 1; i < nestMembers.length; i++)
+			{
+				Assert.assertTrue((nestMembers[i] == bClazz) || (nestMembers[i] == cClazz) || (nestMembers[i] == dClazz));
+			}
+		}
+	}
+	
+	@Test
+	static public void testGetNestMembersAPIInValidMembers() throws Throwable {
+		CustomClassLoader classloader = new CustomClassLoader();
+		byte[] aBytes = ClassGenerator.generateClass("test/A", new Attribute[] {new NestMembersAttribute(new String[] {"test/B", "test/Invalid", "test/D"})});
+		Class<?> aClazz = classloader.getClass("test.A", aBytes);
+		byte[] bBytes = ClassGenerator.generateClass("test/B", new Attribute[] {new NestHostAttribute("test/A")});
+		Class<?> bClazz = classloader.getClass("test.B", bBytes);
+		byte[] dBytes = ClassGenerator.generateClass("test/D", new Attribute[] {new NestHostAttribute("test/A")});
+		Class<?> dClazz = classloader.getClass("test.D", dBytes);
+		
+		Class<?> clazzList[] = {aClazz, bClazz, dClazz};
+		for (Class<?> clazz : clazzList) {
+			try {
+				Class<?> nestMembers[] = clazz.getNestMembers();
+				Assert.fail("should throw exception on getNestMembers");
+			} catch (NoClassDefFoundError e) { }
+		}
+	}
+	
+	@Test
+	static public void testGetNestMembersAPIInValidHost() throws Throwable {
+		CustomClassLoader classloader = new CustomClassLoader();
+		byte[] bBytes = ClassGenerator.generateClass("test/B", new Attribute[] {new NestHostAttribute("test/Invalid")});
+		Class<?> bClazz = classloader.getClass("test.B", bBytes);
+		byte[] cBytes = ClassGenerator.generateClass("test/C", new Attribute[] {new NestHostAttribute("test/Invalid")});
+		Class<?> cClazz = classloader.getClass("test.C", cBytes);
+		byte[] dBytes = ClassGenerator.generateClass("test/D", new Attribute[] {new NestHostAttribute("test/InValid")});
+		Class<?> dClazz = classloader.getClass("test.D", dBytes);
+		
+		Class<?> clazzList[] = {bClazz, cClazz, dClazz};
+		for (Class<?> clazz : clazzList) {
+			try {
+				Class<?> nestMembers[] = clazz.getNestMembers();
+				Assert.fail("should throw exception on getNestMembers");
+			} catch (NoClassDefFoundError e) { }
+		}
+	}
+	
+	@Test
+	static public void testGetNestMembersAPIInValidHostWrongPackage() throws Throwable {
+		CustomClassLoader classloader = new CustomClassLoader();
+		byte[] aBytes = ClassGenerator.generateClass("test2/A", new Attribute[] {new NestMembersAttribute(new String[] {"test/B", "test/Invalid", "test/D"})});
+		Class<?> aClazz = classloader.getClass("test2.A", aBytes);
+		byte[] bBytes = ClassGenerator.generateClass("test/B", new Attribute[] {new NestHostAttribute("test2/A")});
+		Class<?> bClazz = classloader.getClass("test.B", bBytes);
+		byte[] cBytes = ClassGenerator.generateClass("test/C", new Attribute[] {new NestHostAttribute("test2/A")});
+		Class<?> cClazz = classloader.getClass("test.C", cBytes);
+		byte[] dBytes = ClassGenerator.generateClass("test/D", new Attribute[] {new NestHostAttribute("test2/A")});
+		Class<?> dClazz = classloader.getClass("test.D", dBytes);
+		
+		Class<?> clazzList[] = {bClazz, cClazz, dClazz};
+		for (Class<?> clazz : clazzList) {
+			try {
+				Class<?> nestMembers[] = clazz.getNestMembers();
+				Assert.fail("should throw exception on getNestMembers");
+			} catch (IncompatibleClassChangeError e) { }
+		}
+	}
+	
+	@Test
+	static public void testGetNestMembersAPINestMemberWrongPackage() throws Throwable {
+		CustomClassLoader classloader = new CustomClassLoader();
+		byte[] aBytes = ClassGenerator.generateClass("test/A", new Attribute[] {new NestMembersAttribute(new String[] {"test/B", "test/C", "test2/D"})});
+		Class<?> aClazz = classloader.getClass("test.A", aBytes);
+		byte[] bBytes = ClassGenerator.generateClass("test/B", new Attribute[] {new NestHostAttribute("test/A")});
+		Class<?> bClazz = classloader.getClass("test.B", bBytes);
+		byte[] cBytes = ClassGenerator.generateClass("test/C", new Attribute[] {new NestHostAttribute("test/A")});
+		Class<?> cClazz = classloader.getClass("test.C", cBytes);
+		byte[] dBytes = ClassGenerator.generateClass("test2/D", new Attribute[] {new NestHostAttribute("test/A")});
+		Class<?> dClazz = classloader.getClass("test2.D", dBytes);
+		
+		Class<?> clazzList[] = {aClazz, bClazz, cClazz, dClazz};
+		for (Class<?> clazz : clazzList) {
+			try {
+				Class<?> nestMembers[] = clazz.getNestMembers();
+				Assert.fail("should throw exception on getNestMembers");
+			} catch (IncompatibleClassChangeError e) { }
+		}
 	}
 }
