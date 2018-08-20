@@ -6443,7 +6443,7 @@ static void genInitObjectHeader(TR::Node             *node,
    TR::Register * clzReg = classReg;
 
    // TODO: should be able to use a TR_ClassPointer relocation without this stuff (along with class validation)
-   if (cg->needClassAndMethodPointerRelocations())
+   if (cg->needClassAndMethodPointerRelocations() && !comp->getOption(TR_UseSymbolValidationManager))
       {
       TR::Register *vmThreadReg = cg->getVMThreadRegister();
       if (node->getOpCodeValue() == TR::newarray)
@@ -6461,14 +6461,18 @@ static void genInitObjectHeader(TR::Node             *node,
          }
       else if (node->getOpCodeValue() == TR::anewarray)
          {
-         TR_ASSERT(classReg, "must have a classReg for TR::anewarray in AOT mode");
+         if (comp->getOption(TR_UseSymbolValidationManager) && !classReg)
+            classReg = cg->evaluate(node->getSecondChild());
+         TR_ASSERT_FATAL(classReg, "must have a classReg for TR::anewarray in AOT mode");
          generateRegMemInstruction(LRegMem(), node, tempReg,
              generateX86MemoryReference(classReg, offsetof(J9Class, arrayClass), cg), cg);
          clzReg = tempReg;
          }
       else
          {
-         TR_ASSERT((node->getOpCodeValue() == TR::New)
+         if (comp->getOption(TR_UseSymbolValidationManager) && !classReg)
+            classReg = cg->evaluate(node->getFirstChild());
+         TR_ASSERT_FATAL((node->getOpCodeValue() == TR::New)
                    && classReg, "must have a classReg for TR::New in AOT mode");
          clzReg = classReg;
          }
@@ -6482,9 +6486,12 @@ static void genInitObjectHeader(TR::Node             *node,
    if (!clzReg)
       {
       TR::Instruction *instr = NULL;
-      if (use64BitClasses)
+      if (use64BitClasses || (cg->needClassAndMethodPointerRelocations() && comp->getOption(TR_UseSymbolValidationManager)))
          {
-         instr = generateRegImm64Instruction(MOV8RegImm64, node, tempReg, ((intptrj_t)clazz|orFlagsClass), cg);
+         if (cg->needClassAndMethodPointerRelocations() && comp->getOption(TR_UseSymbolValidationManager))
+            instr = generateRegImm64Instruction(MOV8RegImm64, node, tempReg, ((intptrj_t)clazz|orFlagsClass), cg, TR_ClassPointer);
+         else
+            instr = generateRegImm64Instruction(MOV8RegImm64, node, tempReg, ((intptrj_t)clazz|orFlagsClass), cg);
          generateMemRegInstruction(S8MemReg, node, generateX86MemoryReference(objectReg, TR::Compiler->om.offsetOfObjectVftField(), cg), tempReg, cg);
          }
       else
