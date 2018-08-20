@@ -56,8 +56,9 @@ public class NestedJarFileTestRunner extends Runner {
 			customOptions += "-Xshareclasses:name=nestedjarfiletest,reset,verboseHelper ";
 			break;
 		case 1:
-			/* The classes from nested jar should be found in the shared cache */
-			customOptions += "-Xshareclasses:name=nestedjarfiletest,verboseIO ";
+			/* The classes from nested jar should be found in the shared cache, add noTimestampChecks as this test 
+			 * will fail if somebody else change the timestamp of VM_Test.jar */
+			customOptions += "-Xshareclasses:name=nestedjarfiletest,noTimestampChecks,verboseIO ";
 			break;
 		case 2:
 			/* touch the jar file and load another class */
