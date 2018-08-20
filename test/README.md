@@ -93,7 +93,7 @@ inside the `<test>` element that you want to disable.
 
 - Disable an individual test class
     - testNG test
-add a line to `TestConfig/resources/excludes/latest_exclude_$(JAVA_VERSION).txt`
+add a line to `TestConfig/resources/excludes/latest_exclude_$(JDK_VERSION).txt`
  file with issue number and specific specs to disable
 ```
     org.openj9.test.java.lang.management.TestOperatingSystemMXBean 123 linux_x86-64
@@ -131,7 +131,7 @@ or
 
 Please read [How-to Run customized JCK test targets](https://github.com/AdoptOpenJDK/openjdk-tests/blob/master/jck/README.md) for details.
 
-## 7) How to run the test with different `JAVA_VERSION` and `JAVA_IPML`?
+## 7) How to run the test with different `JDK_VERSION` and `JAVA_IPML`?
 
 User can run tests against different java version and/or java
 implementation. While the default values of these variables match a
@@ -139,13 +139,13 @@ typical use case for OpenJ9 developers, there are also many cases
 where developers need to verify features for a specific version or
 compare behaviour against a particular implementation.
 
-JAVA_VERSION=[SE80|SE90|SE100|SE110|Panama|Valhalla] (SE90 default value)
+JDK_VERSION=[8|9|10|11|Panama|Valhalla] (8 default value)
 
-JAVA_IMPL=[openj9|ibm|hotspot|sap] (openj9 default value)
+JDK_IMPL=[openj9|ibm|hotspot|sap] (openj9 default value)
 
 ```
-    export JAVA_VERSION=SE80
-    export JAVA_IMPL=hotspot
+    export JDK_VERSION=8
+    export JDK_IMPL=hotspot
 ```
 
 ## 8) How to interpret test results?

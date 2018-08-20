@@ -31,7 +31,7 @@
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DJVM_TEST_ROOT="$(JVM_TEST_ROOT)" \
 	-DEXE=$(JAVA_COMMAND) \
-	-DGENERAL_TEST_DIR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)Java8andUp$(D)SE80$(Q) \
+	-DGENERAL_TEST_DIR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)Java8andUp$(Q) \
 	-DJDMPVIEW_EXE=$(Q)$(JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
 	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
@@ -46,10 +46,10 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE80</subset>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 </playlist>

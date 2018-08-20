@@ -33,7 +33,7 @@
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
-	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_SE80.xml$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_8.xml$(Q) \
 	-testnames jsr292Test,jsr292Test_optional \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
@@ -45,7 +45,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE80</subset>
+			<subset>8</subset>
 		</subsets>
 	</test>
 
@@ -71,8 +71,8 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
+			<subset>9</subset>
+			<subset>10</subset>
 		</subsets>
 	</test>
 
@@ -98,7 +98,7 @@
                         <group>functional</group>
                 </groups>
                 <subsets>
-                        <subset>SE110</subset>
+                        <subset>11</subset>
                 </subsets>
         </test>
 
@@ -110,7 +110,7 @@
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
-	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_SE80.xml$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_8.xml$(Q) \
 	-testnames jsr292Test \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
@@ -123,7 +123,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE80</subset>
+			<subset>8</subset>
 		</subsets>
 	</test>
 
@@ -149,9 +149,9 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 
@@ -164,7 +164,7 @@
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-Xbootclasspath/a:$(Q)$(TEST_RESROOT)$(D)jsr292bootstrap.jar$(Q) \
 	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(Q) \
-	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_SE80.xml$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_8.xml$(Q) \
 	-testnames jsr292BootstrapTest \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
@@ -176,7 +176,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE80</subset>
+			<subset>8</subset>
 		</subsets>
 	</test>
 
@@ -202,9 +202,9 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 
@@ -226,9 +226,9 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 
@@ -251,9 +251,9 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 
@@ -277,10 +277,10 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE80</subset>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 

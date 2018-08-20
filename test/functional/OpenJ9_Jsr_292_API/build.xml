@@ -69,7 +69,7 @@
 		<echo>===destdir:				${DEST}</echo>
 		<if>
 			<not>
-				<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+				<equals arg1="${JDK_VERSION}" arg2="8"/>
 			</not>
 			<then>
 				<property name="modulec_path" value="--module-path ${mods_dir} -d ${modulec_bin}" />
@@ -92,7 +92,7 @@
 		<echo>===destdir:				${DEST}</echo>
 		<if>
 			<not>
-				<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+				<equals arg1="${JDK_VERSION}" arg2="8"/>
 			</not>
 			<then>
 				<property name="moduleb_path" value="--module-path ${mods_dir} -d ${moduleb_bin}" />
@@ -115,7 +115,7 @@
 		<echo>===destdir:				${DEST}</echo>
 		<if>
 			<not>
-				<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+				<equals arg1="${JDK_VERSION}" arg2="8"/>
 			</not>
 			<then>
 				<property name="modulea_path" value="--module-path ${mods_dir} -d ${modulea_bin}" />
@@ -137,7 +137,7 @@
 		<echo>===destdir:				${DEST}</echo>
 		<if>
 			<not>
-				<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+				<equals arg1="${JDK_VERSION}" arg2="8"/>
 			</not>
 			<then>
 				<property name="addModules" value="--add-modules ${modulea_name},${moduleb_name},${modulec_name}  --module-path ${mods_dir}" />
@@ -176,7 +176,7 @@
 		<if>
 			<not>
 				<and>
-					<matches string="${JAVA_VERSION}" pattern="^SE(9|10)0$$" />
+					<matches string="${JDK_VERSION}" pattern="^(9|10)$$" />
 					<equals arg1="${JCL_VERSION}" arg2="current"/>
 				</and>
 			</not>

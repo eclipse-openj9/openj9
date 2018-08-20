@@ -33,7 +33,7 @@
 	<property name="PROJECT_ROOT" location="." />
 	<property name="src.dir" location="${PROJECT_ROOT}/src"/>
 
-	<target name="compile" description="using ${JAVA_VERSION} java compile the source ">
+	<target name="compile" description="using java ${JDK_VERSION} to compile the source ">
 		<echo>Ant version is ${ant.version}</echo>
 		<echo>============COMPILER SETTINGS============</echo>
 		<echo>===fork:				yes</echo>
@@ -41,7 +41,7 @@
 		<echo>===debug:				on</echo>
 		<echo>===destdir:			${DEST}</echo>
 		<if>
-			<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+			<equals arg1="${JDK_VERSION}" arg2="8"/>
 			<then>
 				<javac srcdir="${src.dir}" debug="true" fork="true" executable="${compiler.javac}" encoding="ISO-8859-1">
 					<src path="${src.dir}" />

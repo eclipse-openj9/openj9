@@ -63,7 +63,7 @@
 		</copy>
 	
 		<if>
-			<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+			<equals arg1="${JDK_VERSION}" arg2="8"/>
 			<then>
 				<javac srcdir="${build}" includes="PartitioningURLClassPathHelperURLHelperStaleEntryCompatibilityTest.java" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
 					<src path="${SharedClassUtils_srddir}"/>

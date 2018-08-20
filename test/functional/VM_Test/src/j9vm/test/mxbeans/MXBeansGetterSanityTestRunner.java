@@ -32,7 +32,7 @@ public class MXBeansGetterSanityTestRunner extends Runner {
 	@Override
 	public String getCustomCommandLineOptions() {
 		String customOptions = super.getCustomCommandLineOptions();
-		if (Integer.parseInt(javaVersion) >= 90) {
+		if (Integer.parseInt(javaVersion) >= 9) {
 			customOptions += " --add-exports=java.management/com.ibm.java.lang.management.internal=ALL-UNNAMED --add-exports=jdk.management/com.ibm.lang.management.internal=ALL-UNNAMED ";
 		}
 		return customOptions;

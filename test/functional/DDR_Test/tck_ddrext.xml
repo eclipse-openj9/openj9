@@ -30,8 +30,9 @@
 	<property name="JDK_HOME" value="${JDK_HOME}" />
 	<property name="TEST_RESROOT" value="${TEST_RESROOT}" />
 	<property name="REPORTDIR" value="${REPORTDIR}" />
+	<property name="JDK_VERSION" value="${JDK_VERSION}" />
 	<if>
-		<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+		<equals arg1="${JDK_VERSION}" arg2="8"/>
 		<then>
 			<property name="j9ddr" location="${JDK_HOME}/jre/lib/ddr/j9ddr.jar" />
 		</then>

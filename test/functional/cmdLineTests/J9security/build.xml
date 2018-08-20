@@ -39,7 +39,7 @@
 		<mkdir dir="${build}" />
 	</target>
 
-	<target name="compile" depends="init" description="Using ${JAVA_VERSION} java compile the source ">
+	<target name="compile" depends="init" description="Using java ${JDK_VERSION} to compile the source ">
 		<echo>Ant version is ${ant.version}</echo>
 		<echo>============COMPILER SETTINGS============</echo>
 		<echo>===fork:				yes</echo>

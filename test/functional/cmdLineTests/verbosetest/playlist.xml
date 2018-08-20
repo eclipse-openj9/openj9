@@ -34,7 +34,7 @@
 			<variation>Mode351</variation>
 			<variation>Mode551</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DTESTNG=$(Q)$(TESTNG)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) -DJAVA_VERSION=$(Q)$(JAVA_VERSION)$(Q) -DREPORTDIR=$(REPORTDIR) -DTEST_GROUP=$(Q)$(TEST_GROUP)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump' -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)verbosetests.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DTESTNG=$(Q)$(TESTNG)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) -DJDK_VERSION=$(Q)$(JDK_VERSION)$(Q) -DREPORTDIR=$(REPORTDIR) -DTEST_GROUP=$(Q)$(TEST_GROUP)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump' -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)verbosetests.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
 		<!-- https://github.com/eclipse/openj9/issues/1608, exclude test on Win temporarily -->
 		<platformRequirements>^arch.arm,^os.win</platformRequirements>
@@ -45,10 +45,10 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE80</subset>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 </playlist>

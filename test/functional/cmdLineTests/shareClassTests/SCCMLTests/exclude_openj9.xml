@@ -41,52 +41,52 @@
 		<reason>Java 6 SDK is missing for the platform</reason>
 	</exclude>
 	
-	<exclude id="Test 7: ensure zip cache sharing works and zip cache number is not 0" platform="SE[^8]\d+">
+	<exclude id="Test 7: ensure zip cache sharing works and zip cache number is not 0" platform="[^8]\d*">
 		<reason>Java 9 removed option -Xzero</reason>
 	</exclude>
-	<exclude id="Test 8: ensure zip cache info is printed in printAllStats output" platform="SE[^8]\d+">
+	<exclude id="Test 8: ensure zip cache info is printed in printAllStats output" platform="[^8]\d*">
 		<reason>Java 9 removed option -Xzero</reason>
 	</exclude>
-	<exclude id="Test 10s: JAZZ 31726 setup for Test 10, 11" platform="SE[^8]\d+">
+	<exclude id="Test 10s: JAZZ 31726 setup for Test 10, 11" platform="[^8]\d*">
 		<reason>Java 9 removed option -Xzero</reason>
 	</exclude>
-	<exclude id="Test 10: JAZZ 31726 test 1 ensure -Xzero:sharebootzip creates zip caches" platform="SE[^8]\d+">
+	<exclude id="Test 10: JAZZ 31726 test 1 ensure -Xzero:sharebootzip creates zip caches" platform="[^8]\d*">
 		<reason>Java 9 removed option -Xzero</reason>
 	</exclude>
-	<exclude id="Test 11: JAZZ 31726 test 2 ensure -Xzero:describe shows -Xzero:sharebootzip" platform="SE[^8]\d+">
+	<exclude id="Test 11: JAZZ 31726 test 2 ensure -Xzero:describe shows -Xzero:sharebootzip" platform="[^8]\d*">
 		<reason>Java 9 removed option -Xzero</reason>
 	</exclude>
-	<exclude id="Test 12s: JAZZ 31726 setup for Test 12" platform="SE[^8]\d+">
+	<exclude id="Test 12s: JAZZ 31726 setup for Test 12" platform="[^8]\d*">
 		<reason>Java 9 removed option -Xzero</reason>
 	</exclude>
-	<exclude id="Test 12: JAZZ 31726 test 3 ensure -Xzero:nosharebootzip doesn't create zip caches" platform="SE[^8]\d+">
+	<exclude id="Test 12: JAZZ 31726 test 3 ensure -Xzero:nosharebootzip doesn't create zip caches" platform="[^8]\d*">
 		<reason>Java 9 removed option -Xzero</reason>
 	</exclude>
-	<exclude id="Test 13s: JAZZ 31726 setup for Tests 13, 14 and 15" platform="SE[^8]\d+">
+	<exclude id="Test 13s: JAZZ 31726 setup for Tests 13, 14 and 15" platform="[^8]\d*">
 		<reason>Java 9 removed option -Xzero</reason>
 	</exclude>
-	<exclude id="Test 13: JAZZ 31723 test 2 ensure opened non-cached zip files are calling the VM_ZIP_LOAD hook" platform="SE[^8]\d+">
+	<exclude id="Test 13: JAZZ 31723 test 2 ensure opened non-cached zip files are calling the VM_ZIP_LOAD hook" platform="[^8]\d*">
 		<reason>Java 9 removed option -Xzero</reason>
 	</exclude>
-	<exclude id="Test 14: JAZZ 31726 test 4 ensure -Xzero:none doesn't create zip caches" platform="SE[^8]\d+">
+	<exclude id="Test 14: JAZZ 31726 test 4 ensure -Xzero:none doesn't create zip caches" platform="[^8]\d*">
 		<reason>Java 9 removed option -Xzero</reason>
 	</exclude>
-	<exclude id="Test 15: JAZZ 31726 test 5 ensure -Xzero:nosharebootzip,describe shows -Xzero:none" platform="SE[^8]\d+">
+	<exclude id="Test 15: JAZZ 31726 test 5 ensure -Xzero:nosharebootzip,describe shows -Xzero:none" platform="[^8]\d*">
 		<reason>Java 9 removed option -Xzero</reason>
 	</exclude>
-	<exclude id="Test 16s: JAZZ 31726 setup for Test 16" platform="SE[^8]\d+">
+	<exclude id="Test 16s: JAZZ 31726 setup for Test 16" platform="[^8]\d*">
 		<reason>Java 9 removed option -Xzero</reason>
 	</exclude>
-	<exclude id="Test 16: JAZZ 31726 test 6 ensure -Xzero creates boot zip caches" platform="SE[^8]\d+">
+	<exclude id="Test 16: JAZZ 31726 test 6 ensure -Xzero creates boot zip caches" platform="[^8]\d*">
 		<reason>Java 9 removed option -Xzero</reason>
 	</exclude>
-	<exclude id="Test 17: JAZZ 31726 test 7 ensure -Xzero -Xzero:describe shows sharebootzip" platform="SE[^8]\d+">
+	<exclude id="Test 17: JAZZ 31726 test 7 ensure -Xzero -Xzero:describe shows sharebootzip" platform="[^8]\d*">
 		<reason>Java 9 removed option -Xzero</reason>
 	</exclude>
-	<exclude id="Test 133: Test -Xshareclasses:printallstats=zipcache" platform="SE[^8]\d+" shouldFix="yes">
+	<exclude id="Test 133: Test -Xshareclasses:printallstats=zipcache" platform="[^8]\d*" shouldFix="yes">
 		<reason>JCL team has not yet added JVM_ZipHook() in Java 9</reason>
 	</exclude>
-	<exclude id="Test 154: Test -Xshareclasses:printstats=zipcache" platform="SE[^8]\d+" shouldFix="yes">
+	<exclude id="Test 154: Test -Xshareclasses:printstats=zipcache" platform="[^8]\d*" shouldFix="yes">
 		<reason>JCL team has not yet added JVM_ZipHook() in Java 9</reason>
 	</exclude>
 	<exclude id="Test 206-a: Create a new cache with -Xshareclasses:mprotect=default option." platform="zos_390-64.*">
@@ -215,10 +215,10 @@
 	<exclude id="Test 55 Check default cache size on non-OpenJ9 Java 8" platform="all">
 		<reason>This test should not be run on OpenJ9</reason>
 	</exclude>
-	<exclude id="Test 55 Check default cache size on OpenJ9 Java 8" platform="SE[^8]\d+">
+	<exclude id="Test 55 Check default cache size on OpenJ9 Java 8" platform="[^8]\d*">
 		<reason>This test should not be run on Java 9 and up</reason>
 	</exclude>
-	<exclude id="Test 55 Check default cache size on Java 9 and up" platform="SE80">
+	<exclude id="Test 55 Check default cache size on Java 9 and up" platform="8">
 		<reason>This test should not be run on Java 8</reason>
 	</exclude>
 </suite>

@@ -27,6 +27,6 @@
 <suite id="URLHelper Excluded Test Case List">
 <!-- PR 117232 Java 9 modularity share class test failures-->
 	<platform id="all"/>
-	<exclude id="APITests.URLGetDifferentHelperTest" platform="SE[^8]\d+"><reason>A classloader can have more than 1 helpers in Java 9 and up</reason></exclude>
-	<exclude id="URLStaleClassPathEntryTest 4" platform="SE80"><reason>Shouldn't find class B and E from shared cache as Alphabet.jar is updated. Should be re-enabled when openj9-openjdk8 is enabled in the builds</reason></exclude>
+	<exclude id="APITests.URLGetDifferentHelperTest" platform="[^8]\d*"><reason>A classloader can have more than 1 helpers in Java 9 and up</reason></exclude>
+	<exclude id="URLStaleClassPathEntryTest 4" platform="8"><reason>Shouldn't find class B and E from shared cache as Alphabet.jar is updated. Should be re-enabled when openj9-openjdk8 is enabled in the builds</reason></exclude>
 </suite>
