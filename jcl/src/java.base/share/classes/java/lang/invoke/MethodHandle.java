@@ -802,10 +802,6 @@ public abstract class MethodHandle {
 
 		MethodType.parseIntoClass(signature, 0, classList, classLoader, fieldDescriptor);
 
-		if (classList.isEmpty()) {
-			throw new NoClassDefFoundError(fieldDescriptor);
-		}
-
 		return classList.get(0);
 	}
 
@@ -948,8 +944,10 @@ public abstract class MethodHandle {
 					cpEntry = getCPMethodHandleAt(internalRamClass, index);
 					break;
 				case 17:
-					// TODO - cpEntry = getCPConstantDynamicAt(internalRamClass, index);
-					break;
+					/* cpEntry = getCPConstantDynamicAt(internalRamClass, index);
+					 * break;
+					 */
+					throw new InternalError("Method getCPConstantDynamicAt() not implemented");
 				default:
 					// Do nothing. The null check below will throw the appropriate exception.
 				}
@@ -983,14 +981,9 @@ public abstract class MethodHandle {
 			// result validation
 			result = MethodHandles.identity(typeClass).invoke(result);
 		} catch(Throwable e) {
-
-			/*[IF Sidecar19-SE]*/
-			if (e instanceof Error) {
-				throw e;
-			}
-			/*[ENDIF]*/
-			
-			throw new BootstrapMethodError(e);
+			/*[MSG "K0A00", "Failed to resolve Constant Dynamic entry with j9class: {0}, name: {1}, descriptor: {2}, bsmData: {3}"]*/
+			String msg = Msg.getString("K0A00", new Object[] {String.valueOf(j9class), name, fieldDescriptor, String.valueOf(bsmData)}); //$NON-NLS-1$
+			throw new BootstrapMethodError(msg, e);
 
 		}
 		
@@ -1095,8 +1088,10 @@ public abstract class MethodHandle {
 					cpEntry = getCPMethodHandleAt(internalRamClass, index);
 					break;
 				case 17:
-					// TODO - cpEntry = getCPConstantDynamicAt(internalRamClass, index);
-					break;
+					/* cpEntry = getCPConstantDynamicAt(internalRamClass, index);
+					 * break;
+					 */
+					throw new InternalError("Method getCPConstantDynamicAt() not implemented");
 				default:
 					// Do nothing. The null check below will throw the appropriate exception.
 				}

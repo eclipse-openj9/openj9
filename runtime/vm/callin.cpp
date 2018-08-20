@@ -945,7 +945,7 @@ sendForGenericInvoke(J9VMThread *currentThread, j9object_t methodHandle, j9objec
 void JNICALL
 sendResolveConstantDynamic(J9VMThread *currentThread, J9ConstantPool *ramCP, UDATA cpIndex, J9ROMNameAndSignature *nameAndSig, U_16 *bsmData)
 {
-	Trc_VM_sendResolveConstantDynamic_Entry(currentThread);
+	Trc_VM_sendResolveConstantDynamic_Entry(currentThread, ramCP, cpIndex, nameAndSig, bsmData);
 	J9VMEntryLocalStorage newELS;
 	if (buildCallInStackFrame(currentThread, &newELS, true, false)) {
 		/* Convert name and signature to String objects */

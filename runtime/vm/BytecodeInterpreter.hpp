@@ -4575,10 +4575,12 @@ done:
 	VMINLINE VM_BytecodeAction
 	ldc2lw(REGISTER_ARGS_LIST)
 	{
+		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 		U_16 index = *(U_16*)(_pc + 1);
+		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
+		J9ROMConstantRef *romConstant = (J9ROMConstantRef*)J9_ROM_CP_FROM_CP(ramConstantPool) + index;
 
 		if (J9CPTYPE_CONSTANT_DYNAMIC == J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(J9_CLASS_FROM_METHOD(_literals)->romClass), index)) {
-			J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
 			J9RAMConstantDynamicRef *ramConstant = (J9RAMConstantDynamicRef*)ramConstantPool + index;
 			j9object_t resolvedValue = ramConstant->value;
 
@@ -4591,25 +4593,37 @@ done:
 				VMStructHasBeenUpdated(REGISTER_ARGS);
 				restoreGenericSpecialStackFrame(REGISTER_ARGS);
 
-				if (VM_VMHelpers::exceptionPending(_currentThread)) {
-					return GOTO_THROW_CURRENT_EXCEPTION;
+				if (immediateAsyncPending()) {
+					rc = GOTO_ASYNC_CHECK;
+					goto done;
+				} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
+					rc = GOTO_THROW_CURRENT_EXCEPTION;
+					goto done;
 				}
 			}
 
 			_pc += 3;
 			_sp -= 2;
-			U_64 value = J9VMJAVALANGLONG_VALUE(_currentThread, resolvedValue);
-			*(U_64*)_sp = value;
 
+			/* Constant Dynamic ROM CP entry uses J9DescriptionReturnType* flag to indicate
+			 * different primitive return type that require unboxing before returning the value
+			 */
+			switch (((J9ROMConstantDynamicRef *)romConstant)->bsmIndexAndCpType >> J9DescriptionReturnTypeShift) {
+			case J9DescriptionReturnTypeDouble:
+				*(U_64*)_sp = (U_64)J9VMJAVALANGDOUBLE_VALUE(_currentThread, resolvedValue);
+				break;
+			case J9DescriptionReturnTypeLong:
+				*(U_64*)_sp = (U_64)J9VMJAVALANGLONG_VALUE(_currentThread, resolvedValue);
+				break;
+			}
 		} else {
-			J9ROMConstantRef *romConstant = (J9ROMConstantRef*)romConstantPoolItem(_literals, index);
-
 			_pc += 3;
 			_sp -= 2;
 			((U_32*)_sp)[0] = romConstant->slot1;
 			((U_32*)_sp)[1] = romConstant->slot2;
 		}
-		return EXECUTE_BYTECODE;
+done:
+		return rc;
 	}
 
 	/* ... => ..., value */
@@ -6069,10 +6083,12 @@ retry:
 				resolveMethodHandleRef(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_NO_CLASS_INIT);
 				break;
 			case J9DescriptionCpTypeConstantDynamic:
-				resolveConstantDynamic(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
 				if (((J9RAMConstantDynamicRef*)ramCPEntry)->exception == _vm->voidReflectClass->classObject) {
+					/* Void.class placed in the exception slot represents a valid null reference returned from resolution */
 					goto resolved;
 				}
+				resolveConstantDynamic(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
+
 				break;
 			default:
 				Assert_VM_unreachable();
@@ -6094,13 +6110,30 @@ resolved:
 		_sp -= 1;
 		if (J9DescriptionCpTypeClass == romCPEntry->cpType) {
 			value = J9VM_J9CLASS_TO_HEAPCLASS((J9Class*)value);
-		} else if ((J9DescriptionCpTypeConstantDynamic == (romCPEntry->cpType & J9DescriptionCpTypeMask))
-			&& (J9_ARE_ALL_BITS_SET(romCPEntry->cpType, J9DescriptionCpPrimitiveType))
-		){
-			/* Constant Dynamic ROM CP entry uses J9DescriptionCpPrimitiveType flag to
-			 * indicate primitive return type which requires unboxing before returning the value
+		} else if (J9DescriptionCpTypeConstantDynamic == (romCPEntry->cpType & J9DescriptionCpTypeMask)) {
+			/* Constant Dynamic ROM CP entry uses J9DescriptionReturnType* flag to indicate
+			 * different primitive return type that require unboxing before returning the value
 			 */
-			value = (j9object_t)(UDATA)J9VMJAVALANGINTEGER_VALUE(_currentThread, value);
+			switch (romCPEntry->cpType >> J9DescriptionReturnTypeShift) {
+			case J9DescriptionReturnTypeBoolean:
+				value = (j9object_t)(UDATA)J9VMJAVALANGBOOLEAN_VALUE(_currentThread, value);
+				break;
+			case J9DescriptionReturnTypeByte:
+				value = (j9object_t)(UDATA)J9VMJAVALANGBYTE_VALUE(_currentThread, value);
+				break;
+			case J9DescriptionReturnTypeChar:
+				value = (j9object_t)(UDATA)J9VMJAVALANGCHARACTER_VALUE(_currentThread, value);
+				break;
+			case J9DescriptionReturnTypeShort:
+				value = (j9object_t)(UDATA)J9VMJAVALANGSHORT_VALUE(_currentThread, value);
+				break;
+			case J9DescriptionReturnTypeFloat:
+				value = (j9object_t)(UDATA)J9VMJAVALANGFLOAT_VALUE(_currentThread, value);
+				break;
+			case J9DescriptionReturnTypeInt:
+				value = (j9object_t)(UDATA)J9VMJAVALANGINTEGER_VALUE(_currentThread, value);
+				break;
+			}
 		}
 		*_sp = (UDATA)value;
 done:

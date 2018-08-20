@@ -1912,7 +1912,6 @@ resolveConstantDynamic(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpInde
 	J9RAMConstantDynamicRef *ramCPEntry = (J9RAMConstantDynamicRef*)ramCP + cpIndex;
 	J9JavaVM *vm = vmThread->javaVM;
 	j9object_t value = NULL;
-	j9object_t cpException = NULL;
 	bool resolved = false;
 
 retry:
@@ -1921,7 +1920,7 @@ retry:
 	if (NULL != value) {
 		resolved = true;
 	} else {
-		cpException = ramCPEntry->exception;
+		j9object_t cpException = ramCPEntry->exception;
 		/* check if already resolved to NULL or exception */
 		if (NULL != cpException) {
 			J9Class *throwable = J9VMJAVALANGTHROWABLE_OR_NULL(vm);
@@ -1945,7 +1944,7 @@ retry:
 			omrthread_monitor_exit(vm->constantDynamicMutex);
 			goto retry;
 		} else {
-			cpException = ramCPEntry->exception;
+			j9object_t cpException = ramCPEntry->exception;
 			/* check if already resolved to NULL or exception */
 			if (NULL != cpException) {
 				J9Class *throwable = J9VMJAVALANGTHROWABLE_OR_NULL(vm);
@@ -1969,6 +1968,7 @@ retry:
 			}
 		}
 
+		/* Write threadObject in exception slot to indicate current thread is performing the resolution */
 		ramCPEntry->exception = vmThread->threadObject;
 		omrthread_monitor_exit(vm->constantDynamicMutex);
 
@@ -1979,12 +1979,14 @@ retry:
 		J9SRP *callSiteData = (J9SRP *) J9ROMCLASS_CALLSITEDATA(romClass);
 		U_16 *bsmIndices = (U_16 *) (callSiteData + romClass->callSiteCount);
 		U_16 *bsmData = bsmIndices + romClass->callSiteCount;
+
+		/* clear the J9DescriptionCpPrimitiveType flag with mask to get bsmIndex */
 		U_32 bsmIndex = (romConstantRef->bsmIndexAndCpType >> J9DescriptionCpTypeShift) & J9DescriptionCpBsmIndexMask;
 		J9ROMNameAndSignature* nameAndSig = SRP_PTR_GET(&romConstantRef->nameAndSignature, J9ROMNameAndSignature*);
 
-		/* Walk bsmData */
+		/* Walk bsmData - skip all bootstrap methods before bsmIndex */
 		for (U_32 i = 0; i < bsmIndex; i++) {
-			bsmData += bsmData[1] + 2;
+			bsmData += (bsmData[1] + 2);
 		}
 
 		/* Invoke BootStrap method*/
@@ -1998,7 +2000,6 @@ retry:
 
 		j9object_t exceptionObject = NULL;
 		if (NULL != vmThread->currentException) {
-			/* Allocate the exception object in tenure */
 			exceptionObject = vmThread->currentException;
 		} else if (NULL == value) {
 			/* Java.lang.void is used as a special flag to indicate null reference */

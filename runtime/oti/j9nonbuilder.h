@@ -253,7 +253,18 @@
 #define J9DescriptionImmediate 0x1
 
 /* Rom CP Flag for constant dynamic with primitive type */
-#define J9DescriptionCpPrimitiveType 1 << 20
+#define J9DescriptionReturnTypeBoolean 0x1
+#define J9DescriptionReturnTypeByte 0x2
+#define J9DescriptionReturnTypeChar 0x3
+#define J9DescriptionReturnTypeShort 0x4
+#define J9DescriptionReturnTypeFloat 0x5
+#define J9DescriptionReturnTypeInt 0x6
+#define J9DescriptionReturnTypeDouble 0x7
+#define J9DescriptionReturnTypeLong 0x8
+/* ROM CP have 32 bit slots, currently the least significat 20 bits are in use
+ * so the Constant Dynamic return types will be shifted left to use the free bits
+ */
+#define J9DescriptionReturnTypeShift 20
 #define J9DescriptionCpBsmIndexMask 0xFFFF
 
 /* @ddr_namespace: map_to_type=J9NativeTypeCodes */
