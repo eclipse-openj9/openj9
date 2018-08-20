@@ -1874,13 +1874,18 @@ done:
 	initialStaticMethod(REGISTER_ARGS_LIST)
 	{
 		VM_BytecodeAction rc = GOTO_RUN_METHOD;
+		bool split = (JBinvokestaticsplit == _pc[0]);
 		U_16 index = *(U_16*)(_pc + 1);
 		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
 		buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 		updateVMStruct(REGISTER_ARGS);
-		J9Method *method = resolveStaticMethodRef(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_CHECK_CLINIT);
-		if ((J9Method*)-1 == method) {
-			method = ((J9RAMStaticMethodRef*)&_currentThread->floatTemp1)->method;
+		if (split) {
+			_sendMethod = resolveStaticSplitMethodRef(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_CHECK_CLINIT);
+		} else {
+			_sendMethod = resolveStaticMethodRef(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_CHECK_CLINIT);
+		}
+		if ((J9Method*)-1 == _sendMethod) {
+			_sendMethod = ((J9RAMStaticMethodRef*)&_currentThread->floatTemp1)->method;
 		}
 		VMStructHasBeenUpdated(REGISTER_ARGS);
 		restoreGenericSpecialStackFrame(REGISTER_ARGS);
@@ -1888,8 +1893,6 @@ done:
 			rc = GOTO_ASYNC_CHECK;
 		} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
 			rc = GOTO_THROW_CURRENT_EXCEPTION;
-		} else {
-			_sendMethod = method;
 		}
 		return rc;
 	}
@@ -1898,11 +1901,16 @@ done:
 	initialSpecialMethod(REGISTER_ARGS_LIST)
 	{
 		VM_BytecodeAction rc = GOTO_RUN_METHOD;
+		bool split = (JBinvokespecialsplit == _pc[0]);
 		U_16 index = *(U_16*)(_pc + 1);
 		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
 		buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 		updateVMStruct(REGISTER_ARGS);
-		J9Method *method = resolveSpecialMethodRef(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
+		if (split) {
+			_sendMethod = resolveSpecialSplitMethodRef(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
+		} else {
+			_sendMethod = resolveSpecialMethodRef(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
+		}
 		VMStructHasBeenUpdated(REGISTER_ARGS);
 		restoreGenericSpecialStackFrame(REGISTER_ARGS);
 		if (immediateAsyncPending()) {
@@ -1910,7 +1918,7 @@ done:
 		} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
 			rc = GOTO_THROW_CURRENT_EXCEPTION;
 		} else {
-			_sendMethod = method;
+			rc = invokespecialLogic(REGISTER_ARGS, false, split);
 		}
 		return rc;
 	}
@@ -6440,7 +6448,7 @@ done:
 			if (methodIndex != J9VTABLE_INITIAL_VIRTUAL_OFFSET) {
 				rc = THROW_NPE;
 			} else {
-				_sendMethod = (J9Method *)_vm->initialMethods.initialVirtualMethod;
+				_sendMethod = (J9Method*)_vm->initialMethods.initialVirtualMethod;
 			}
 		} else {
 			J9Class *receiverClass = J9OBJECT_CLAZZ(_currentThread, receiver);
@@ -6460,26 +6468,42 @@ done:
 	}
 
 	VMINLINE VM_BytecodeAction
-	invokespecial(REGISTER_ARGS_LIST)
+	invokespecialLogic(REGISTER_ARGS_LIST, bool fromBytecode, bool split)
 	{
 		VM_BytecodeAction rc = GOTO_RUN_METHOD;
 		U_16 index = *(U_16*)(_pc + 1);
 		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
-		J9RAMSpecialMethodRef *ramMethodRef = ((J9RAMSpecialMethodRef*)ramConstantPool) + index;
+		J9RAMSpecialMethodRef *ramMethodRef = NULL;
+		U_16 cpIndex = index;
+		if (split) {
+			J9Class *clazz = ramConstantPool->ramClass;
+			cpIndex = *(U_16 *)(J9ROMCLASS_SPECIALSPLITMETHODREFINDEXES(clazz->romClass) + index);
+			ramMethodRef = ((J9RAMSpecialMethodRef*)ramConstantPool) + cpIndex;
+			_sendMethod = clazz->specialSplitMethodTable[index];
+		} else {
+			ramMethodRef = ((J9RAMSpecialMethodRef*)ramConstantPool) + cpIndex;
+			_sendMethod = ramMethodRef->method;
+		}
 		/* argCount was initialized when we initialized the class (i.e. it is non-volatile), so no memory barrier is required */
 		j9object_t receiver = ((j9object_t*)_sp)[ramMethodRef->methodIndexAndArgCount & 0xFF];
 		if (NULL == receiver) {
-			rc = THROW_NPE;
+			/* Resolution exceptions must be thrown first, so check if methodRef 
+			 * is resolved before throwing NPE on receiver.
+			 */
+			if (!fromBytecode || ((J9Method *)_vm->initialMethods.initialSpecialMethod != _sendMethod)) {
+				rc = THROW_NPE;
+			}
 		} else {
-			profileCallingMethod(REGISTER_ARGS);
-			_sendMethod = ramMethodRef->method;
+			if (fromBytecode) {
+				profileCallingMethod(REGISTER_ARGS);
+			}
 			J9Class *currentClass = J9_CLASS_FROM_CP(ramConstantPool);
 			/* hostClass is exclusively defined only in Unsafe.defineAnonymousClass.
 			 * For all other cases, clazz->hostClass points to itself (clazz).
 			 */
 			currentClass = currentClass->hostClass;
 			if (J9_ARE_ALL_BITS_SET(currentClass->romClass->modifiers, J9AccInterface)) {
-				J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *)&ramConstantPool->romConstantPool[index];
+				J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *)&ramConstantPool->romConstantPool[cpIndex];
 				J9ROMNameAndSignature *nameAndSig = J9ROMFIELDREF_NAMEANDSIGNATURE(romMethodRef);
 				J9UTF8 *nameUTF = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
 				U_8 *name = J9UTF8_DATA(nameUTF);
@@ -6487,33 +6511,21 @@ done:
 				/* Ignore <init> or <clinit> methods */
 				if ((0 != nameLength) && (name[0] != '<')) {
 					/* Resolve special method ref when _sendMethod == initialSpecialMethod */
-					if (_sendMethod == _vm->initialMethods.initialSpecialMethod) {
-						buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
-						updateVMStruct(REGISTER_ARGS);
-						_sendMethod = resolveSpecialMethodRef(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
-						VMStructHasBeenUpdated(REGISTER_ARGS);
-						restoreGenericSpecialStackFrame(REGISTER_ARGS);
-						if (immediateAsyncPending()) {
-							rc = GOTO_ASYNC_CHECK;
-							goto done;
-						}
-						if (VM_VMHelpers::exceptionPending(_currentThread)) {
-							rc = GOTO_THROW_CURRENT_EXCEPTION;
-							goto done;
-						}
-					}
-					/* Check the receiver class is the subtype of the current class [= interface] */
-					J9Class *resolvedClass = J9_CLASS_FROM_METHOD(_sendMethod);
-					J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_sendMethod);
-					/* Skip the check for final methods in java.lang.Object (resolvedClassDepth == 0) */
-					if ((0 != J9CLASS_DEPTH(resolvedClass)) || J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccFinal)) {
-						J9Class *receiverClass = J9OBJECT_CLAZZ(_currentThread, receiver);
-						if (!instanceOfOrCheckCast(receiverClass, currentClass)) {
-							buildMethodFrame(REGISTER_ARGS, _sendMethod, 0);
-							updateVMStruct(REGISTER_ARGS);
-							setIllegalAccessErrorReceiverNotSameOrSubtypeOfCurrentClass(_currentThread, receiverClass, currentClass);
-							VMStructHasBeenUpdated(REGISTER_ARGS);
-							rc = GOTO_THROW_CURRENT_EXCEPTION;
+					if (!fromBytecode || ((J9Method *)_vm->initialMethods.initialSpecialMethod != _sendMethod)) {
+						/* Check the receiver class is the subtype of the current class [= interface] */
+						J9Class *resolvedClass = J9_CLASS_FROM_METHOD(_sendMethod);
+						J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_sendMethod);
+						/* Skip the check for final methods in java.lang.Object (resolvedClassDepth == 0) */
+						if ((0 != J9CLASS_DEPTH(resolvedClass)) || J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccFinal)) {
+							J9Class *receiverClass = J9OBJECT_CLAZZ(_currentThread, receiver);
+							if (!instanceOfOrCheckCast(receiverClass, currentClass)) {
+								buildMethodFrame(REGISTER_ARGS, _sendMethod, 0);
+								updateVMStruct(REGISTER_ARGS);
+								setIllegalAccessErrorReceiverNotSameOrSubtypeOfCurrentClass(_currentThread, receiverClass, currentClass);
+								VMStructHasBeenUpdated(REGISTER_ARGS);
+								rc = GOTO_THROW_CURRENT_EXCEPTION;
+								goto done;
+							}
 						}
 					}
 				}
@@ -6524,74 +6536,15 @@ done:
 	}
 
 	VMINLINE VM_BytecodeAction
+	invokespecial(REGISTER_ARGS_LIST)
+	{
+		return invokespecialLogic(REGISTER_ARGS, true, false);
+	}
+
+	VMINLINE VM_BytecodeAction
 	invokespecialsplit(REGISTER_ARGS_LIST)
 	{
-		VM_BytecodeAction rc = GOTO_RUN_METHOD;
-		U_16 splitTableIndex = *(U_16*)(_pc + 1);
-		J9ConstantPool *ramConstantPool = (J9ConstantPool *)J9_CP_FROM_METHOD(_literals);
-		J9Class *clazz = ramConstantPool->ramClass;
-		Assert_VM_true(splitTableIndex < clazz->romClass->specialSplitMethodRefCount);
-		U_16 cpIndex = *(U_16 *)(J9ROMCLASS_SPECIALSPLITMETHODREFINDEXES(clazz->romClass) + splitTableIndex);
-		J9RAMSpecialMethodRef *ramMethodRef = (J9RAMSpecialMethodRef*)ramConstantPool + cpIndex;
-		/* argCount was initialized when we initialized the class (i.e. it is non-volatile), so no memory barrier is required */
-		j9object_t receiver = ((j9object_t *)_sp)[ramMethodRef->methodIndexAndArgCount & 0xFF];
-		if (NULL == receiver) {
-			rc = THROW_NPE;
-		} else {
-			_sendMethod = clazz->specialSplitMethodTable[splitTableIndex];
-			if (NULL == _sendMethod) {
-				buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
-				updateVMStruct(REGISTER_ARGS);
-				J9Method *method = resolveSpecialSplitMethodRef(_currentThread, ramConstantPool, splitTableIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
-				VMStructHasBeenUpdated(REGISTER_ARGS);
-				restoreGenericSpecialStackFrame(REGISTER_ARGS);
-				if (immediateAsyncPending()) {
-					rc = GOTO_ASYNC_CHECK;
-					goto done;
-				} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
-					rc = GOTO_THROW_CURRENT_EXCEPTION;
-					goto done;
-				} else {
-					profileCallingMethod(REGISTER_ARGS);
-					_sendMethod = method;
-				}
-			}
-
-			J9Class *currentClass = J9_CLASS_FROM_CP(ramConstantPool);
-			/* hostClass is exclusively defined only in Unsafe.defineAnonymousClass.
-			 * For all other cases, clazz->hostClass points to itself (clazz).
-			 */
-			currentClass = currentClass->hostClass;
-
-			if (J9_ARE_ALL_BITS_SET(currentClass->romClass->modifiers, J9AccInterface)) {
-				J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *)&ramConstantPool->romConstantPool[cpIndex];
-				J9ROMNameAndSignature *nameAndSig = J9ROMFIELDREF_NAMEANDSIGNATURE(romMethodRef);
-				J9UTF8 *nameUTF = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
-				U_8 *name = J9UTF8_DATA(nameUTF);
-				UDATA nameLength = J9UTF8_LENGTH(nameUTF);
-
-				/* Ignore <init> or <clinit> methods */
-				if ((0 != nameLength) && (name[0] != '<')) {
-					/* Check the receiver class is the subtype of the current class [= interface] */
-					J9Class *resolvedClass = J9_CLASS_FROM_METHOD(_sendMethod);
-					J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_sendMethod);
-					/* Skip the check for final methods in java.lang.Object (resolvedClassDepth == 0) */
-					if ((0 != J9CLASS_DEPTH(resolvedClass)) || J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccFinal)) {
-						J9Class *receiverClass = J9OBJECT_CLAZZ(_currentThread, receiver);
-
-						if (!instanceOfOrCheckCast(receiverClass, currentClass)) {
-							buildMethodFrame(REGISTER_ARGS, _sendMethod, 0);
-							updateVMStruct(REGISTER_ARGS);
-							setIllegalAccessErrorReceiverNotSameOrSubtypeOfCurrentClass(_currentThread, receiverClass, currentClass);
-							VMStructHasBeenUpdated(REGISTER_ARGS);
-							rc = GOTO_THROW_CURRENT_EXCEPTION;
-						}
-					}
-				}
-			}
-		}
-done:
-		return rc;
+		return invokespecialLogic(REGISTER_ARGS, true, true);
 	}
 
 	VMINLINE VM_BytecodeAction
@@ -6607,32 +6560,12 @@ done:
 	VMINLINE VM_BytecodeAction
 	invokestaticsplit(REGISTER_ARGS_LIST)
 	{
-		VM_BytecodeAction rc = GOTO_RUN_METHOD;
 		U_16 splitTableIndex = *(U_16*)(_pc + 1);
+		profileCallingMethod(REGISTER_ARGS);
 		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
 		J9Class *clazz = ramConstantPool->ramClass;
-		Assert_VM_true(splitTableIndex < clazz->romClass->staticSplitMethodRefCount);
-
 		_sendMethod = clazz->staticSplitMethodTable[splitTableIndex];
-		if (NULL == _sendMethod) {
-			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
-			updateVMStruct(REGISTER_ARGS);
-			J9Method *method = resolveStaticSplitMethodRef(_currentThread, ramConstantPool, splitTableIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
-			if ((J9Method*)-1 == method) {
-				method = ((J9RAMStaticMethodRef*)&_currentThread->floatTemp1)->method;
-			}
-			VMStructHasBeenUpdated(REGISTER_ARGS);
-			restoreGenericSpecialStackFrame(REGISTER_ARGS);
-			if (immediateAsyncPending()) {
-				rc = GOTO_ASYNC_CHECK;
-			} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
-				rc = GOTO_THROW_CURRENT_EXCEPTION;
-			} else {
-				profileCallingMethod(REGISTER_ARGS);
-				_sendMethod = method;
-			}
-		}
-		return rc;
+		return GOTO_RUN_METHOD;
 	}
 
 	VMINLINE VM_BytecodeAction
