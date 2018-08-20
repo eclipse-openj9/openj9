@@ -6669,7 +6669,7 @@ resolve:
 			rc = THROW_NPE;
 		} else {
 			J9Class *receiverClass = J9OBJECT_CLAZZ(_currentThread, receiver);
-			UDATA methodIndex = methodIndexAndArgCount >> 8;
+			UDATA methodIndex = (methodIndexAndArgCount & ~J9_ITABLE_INDEX_TAG_BITS) >> 8;
 			J9ROMMethod *romMethod = NULL;
 
 			/* Run search in receiverClass->lastITable */
@@ -6684,9 +6684,26 @@ resolve:
 				if (interfaceClass == iTable->interfaceClass) {
 					receiverClass->lastITable = iTable;
 foundITableCache:
-					_sendMethod = *(J9Method**)((UDATA)receiverClass + ((UDATA*)(iTable + 1))[methodIndex]);
+					if (J9_UNEXPECTED(J9_ARE_ANY_BITS_SET(methodIndexAndArgCount, J9_ITABLE_INDEX_TAG_BITS))) {
+						/* Object or private interface method invoke */
+						if (J9_ARE_ANY_BITS_SET(methodIndexAndArgCount, J9_ITABLE_INDEX_METHOD_INDEX)) {
+							if (J9_ARE_ANY_BITS_SET(methodIndexAndArgCount, J9_ITABLE_INDEX_OBJECT)) {
+								/* Object method not in the vTable */
+								_sendMethod = J9VMJAVALANGOBJECT_OR_NULL(_vm)->ramMethods + methodIndex;
+							} else {
+								/* Private interface method */
+								_sendMethod = interfaceClass->ramMethods + methodIndex;
+							}
+						} else {
+							/* Object method in the vTable */
+							_sendMethod = *(J9Method**)((UDATA)receiverClass + methodIndex);
+						}
+					} else {
+						/* Standard interface method */
+						_sendMethod = *(J9Method**)((UDATA)receiverClass + ((UDATA*)(iTable + 1))[methodIndex]);
+					}
 					romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_sendMethod);
-					if (!J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccPublic)) {
+					if (J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccPublic | J9AccPrivate)) {
 						/* We need a frame to describe the method arguments (in particular, for the case where we got here directly from the JIT) */
 						buildMethodFrame(REGISTER_ARGS, _sendMethod, jitStackFrameFlags(REGISTER_ARGS, 0));
 						updateVMStruct(REGISTER_ARGS);
@@ -6695,28 +6712,16 @@ foundITableCache:
 						rc = GOTO_THROW_CURRENT_EXCEPTION;
 						goto done;
 					}
-foundMethod:
 					profileInvokeReceiver(REGISTER_ARGS, receiverClass, _literals, _sendMethod);
 					_pc += offset;
 					goto done;
 				}
 				iTable = iTable->next;
 			}
-			if (J9_UNEXPECTED(NULL == interfaceClass)) {
+			if (J9_EXPECTED(NULL == interfaceClass)) {
 				goto resolve;
 			}
-			if (J9_EXPECTED(0 == (interfaceClass->romClass->modifiers & J9AccInterface))) {
-				/* Must be able to call java/lang/Object methods on interface */
-				_sendMethod = ((J9Method*)javaLookupMethod(
-					_currentThread,
-					receiverClass,
-					J9ROMMETHODREF_NAMEANDSIGNATURE(((J9ROMMethodRef*)ramConstantPool->romConstantPool + index)),
-					NULL,
-					J9_LOOK_VIRTUAL));
-				goto foundMethod;
-			} else {
-				rc = THROW_INCOMPATIBLE_CLASS_CHANGE;
-			}
+			rc = THROW_INCOMPATIBLE_CLASS_CHANGE;
 		}
 done:
 		return rc;

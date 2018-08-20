@@ -839,10 +839,10 @@ extern "C" {
 #define J9_ITABLE_INDEX_OBJECT ((UDATA)1 << ((8 * sizeof(UDATA)) - 2))
 #define J9_ITABLE_INDEX_TAG_BITS (J9_ITABLE_INDEX_METHOD_INDEX | J9_ITABLE_INDEX_OBJECT)
 
-/* Tag bits for iTableOffset field in JIT interface snippet data and compile-time resolution:
+/* Tag bits for iTableOffset field in JIT interface snippet data:
  *
  *	J9_ITABLE_OFFSET_DIRECT  - offset field is actually a direct J9Method*
- *	J9_ITABLE_OFFSET_VIRTUAL - offset field represent a vTable offset, not iTable
+ *	J9_ITABLE_OFFSET_VIRTUAL - offset field represents a vTable offset, not iTable
  */
 #define J9_ITABLE_OFFSET_DIRECT 1
 #define J9_ITABLE_OFFSET_VIRTUAL 2

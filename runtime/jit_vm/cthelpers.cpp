@@ -56,6 +56,11 @@ jitGetCountingSendTarget(J9VMThread *vmThread, J9Method *ramMethod)
 	return J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_SEND_TARGET_COUNT_NON_SYNC);
 }
 
+/* jitGetInterfaceITableIndexFromCP, jitGetInterfaceVTableOffsetFromCP and jitGetInterfaceMethodFromCP
+ * apply only to normal interface invocations, any special-case invocation will cause the calls to fail
+ * (i.e. special cases will be treated as unresolved).
+ */
+
 J9Class*
 jitGetInterfaceITableIndexFromCP(J9VMThread *currentThread, J9ConstantPool *constantPool, UDATA cpIndex, UDATA* pITableIndex)
 {
@@ -72,6 +77,10 @@ jitGetInterfaceITableIndexFromCP(J9VMThread *currentThread, J9ConstantPool *cons
 		}
 		interfaceClass = (J9Class*)localEntry.interfaceClass;
 		methodIndexAndArgCount = localEntry.methodIndexAndArgCount;
+	}
+	/* If any tag bits are set, this is a special-case invokeinterface so fail this call */
+	if (J9_ARE_ANY_BITS_SET(methodIndexAndArgCount, J9_ITABLE_INDEX_TAG_BITS)) {
+		interfaceClass = NULL;
 	}
 	*pITableIndex = methodIndexAndArgCount >> 8;
 done:
