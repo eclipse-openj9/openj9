@@ -342,6 +342,40 @@ def set_build_variables() {
     SDK_SUFFIX = ".tar.gz"
     TEST_PREFIX = "test-"
     TEST_SUFFIX = ".tar.gz"
+
+    // set variables for the build environment configuration
+    // check job parameters, if not provided default to variables file
+    BUILD_ENV_VARS = params.BUILD_ENV_VARS
+    if (!BUILD_ENV_VARS && VARIABLES."${SPEC}".build_env) {
+        BUILD_ENV_VARS = get_value(VARIABLES."${SPEC}".build_env.vars, SDK_VERSION)
+    }
+
+    BUILD_ENV_VARS_LIST = []
+    if (BUILD_ENV_VARS) {
+        // expect BUILD_ENV_VARS to be a space separated list of environment variables
+        // e.g. <variable1>=<value1> <variable2>=<value2> ... <variableN>=<valueN>
+        // convert space separated list to array
+        BUILD_ENV_VARS_LIST.addAll(BUILD_ENV_VARS.tokenize(' '))
+    }
+
+    EXTRA_BUILD_ENV_VARS = params.EXTRA_BUILD_ENV_VARS
+    if (EXTRA_BUILD_ENV_VARS) {
+        BUILD_ENV_VARS_LIST.addAll(EXTRA_BUILD_ENV_VARS.tokenize(' '))
+    }
+
+    BUILD_ENV_CMD = params.BUILD_ENV_CMD
+    if (!BUILD_ENV_CMD && VARIABLES."${SPEC}".build_env) {
+        BUILD_ENV_CMD = get_value(VARIABLES."${SPEC}".build_env.cmd, SDK_VERSION)
+    }
+
+    if (BUILD_ENV_CMD) {
+        // BUILD_ENV_CMD is used as preamble command
+        BUILD_ENV_CMD += ' && '
+    } else {
+        BUILD_ENV_CMD = ''
+    }
+
+    echo "Using BUILD_ENV_CMD = ${BUILD_ENV_CMD}, BUILD_ENV_VARS_LIST = ${BUILD_ENV_VARS_LIST.toString()}"
 }
 
 /*
