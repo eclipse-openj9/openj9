@@ -3040,6 +3040,29 @@ void jitMethodBreakpointed(J9VMThread * vmThread, J9Method *j9method)
    reportHookFinished(vmThread, "jitMethodbreakpointed");
    }
 
+/*
+ * JIT hook called by the VM on the event of illegal modification. Runtime assumption table will be notified.
+ */
+void jitIllegalFinalFieldModification(J9VMThread *currentThread, J9Class *fieldClass)
+   {
+   // Set the bit so that VM doesn't report the modification next time
+   fieldClass->classFlags |= J9ClassHasIllegalFinalFieldModifications;
+
+   J9JITConfig * jitConfig = currentThread->javaVM->jitConfig;
+   TR_J9VMBase * fe = TR_J9VMBase::get(jitConfig, currentThread);
+   int32_t length;
+   char *className = fe->getClassNameChars((TR_OpaqueClassBlock*)fieldClass, length);
+   reportHook(currentThread, "jitIllegalFinalFieldModification", "class %p %.*s", fieldClass, length, className);
+
+   TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+   TR_RuntimeAssumptionTable * rat = compInfo->getPersistentInfo()->getRuntimeAssumptionTable();
+   if (rat)
+      {
+      rat->notifyIllegalStaticFinalFieldModificationEvent(fe, fieldClass);
+      }
+   reportHookFinished(currentThread, "jitIllegalFinalFieldModification");
+   }
+
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 static void jitHookInterruptCompilation(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
    {

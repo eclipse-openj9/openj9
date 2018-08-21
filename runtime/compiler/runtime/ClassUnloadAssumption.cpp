@@ -586,6 +586,69 @@ void TR_RuntimeAssumptionTable::reclaimAssumptions(void *md, bool reclaimPreProl
    }
 
 
+/*
+ * \brief
+ *    Find and compensate assumptions violated by illegal static final field modification.
+ *
+ * \parm vm
+ *    The frontend object.
+ *
+ * \parm key
+ *    The class whose static final field is modified.
+ */
+void
+TR_RuntimeAssumptionTable::notifyIllegalStaticFinalFieldModificationEvent(TR_FrontEnd *vm,
+                                                  void *key)
+   {
+   OMR::CriticalSection notifyIllegalStaticFinalFieldModificationEvent(assumptionTableMutex);
+   bool reportDetails = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRuntimeAssumptions);
+
+   OMR::RuntimeAssumption **headPtr = getBucketPtr(RuntimeAssumptionOnStaticFinalFieldModification, hashCode((uintptrj_t)key));
+   OMR::RuntimeAssumption* cursor = *headPtr;
+   OMR::RuntimeAssumption* prev = NULL;
+   bool found = false;
+
+   while (cursor)
+      {
+      OMR::RuntimeAssumption* next = cursor->getNext();
+      if (reportDetails)
+         TR_VerboseLog::writeLine(TR_Vlog_RA, "key=%p @ %p", cursor->getKey(), cursor->getFirstAssumingPC());
+
+      if (cursor->matches((uintptrj_t)key))
+         {
+         found = true;
+         if (reportDetails)
+            {
+            TR_VerboseLog::vlogAcquire();
+            TR_VerboseLog::write(" compensating key=%p", key);
+            TR_VerboseLog::vlogRelease();
+            }
+         cursor->compensate(vm, 0, 0);
+         cursor->dequeueFromListOfAssumptionsForJittedBody();
+         incReclaimedAssumptionCount(cursor->getAssumptionKind());
+         cursor->reclaim();
+         cursor->paint();
+
+         TR_PersistentMemory::jitPersistentFree(cursor);
+         if (prev)
+            prev->setNext(next);
+         else
+            *headPtr = next;
+         cursor = next;
+         continue;
+         }
+      prev = cursor;
+      cursor = next;
+      }
+
+   if (!found && reportDetails)
+      {
+      TR_VerboseLog::vlogAcquire();
+      TR_VerboseLog::writeLine(TR_Vlog_RA,"key %p not registered!", key);
+      TR_VerboseLog::vlogRelease();
+      }
+   }
+
 void
 TR_RuntimeAssumptionTable::notifyClassUnloadEvent(TR_FrontEnd *vm, bool isSMP,
                                                   TR_OpaqueClassBlock *assumingClass,

@@ -166,6 +166,7 @@ J9::Compilation::Compilation(
    _monitorAutos(m),
    _monitorAutoSymRefsInCompiledMethod(getTypedAllocator<TR::SymbolReference*>(self()->allocator())),
    _classForOSRRedefinition(m),
+   _classForStaticFinalFieldModification(m),
    _profileInfo(NULL),
    _skippedJProfilingBlock(false)
    {
@@ -1193,6 +1194,23 @@ J9::Compilation::addClassForOSRRedefinition(TR_OpaqueClassBlock *clazz)
          return;
 
    _classForOSRRedefinition.add(clazz);
+   }
+
+/*
+ * Adds the provided TR_OpaqueClassBlock to the set of those to trigger OSR Guard patching
+ * on a static final field modification.
+ */
+void
+J9::Compilation::addClassForStaticFinalFieldModification(TR_OpaqueClassBlock *clazz)
+   {
+   // Class redefinition can also modify static final fields
+   addClassForOSRRedefinition(clazz);
+
+   for (uint32_t i = 0; i < _classForStaticFinalFieldModification.size(); ++i)
+      if (_classForStaticFinalFieldModification[i] == clazz)
+         return;
+
+   _classForStaticFinalFieldModification.add(clazz);
    }
 
 /*

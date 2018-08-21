@@ -270,6 +270,9 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    void addClassForOSRRedefinition(TR_OpaqueClassBlock *clazz);
    TR_Array<TR_OpaqueClassBlock*> *getClassesForOSRRedefinition() { return &_classForOSRRedefinition; }
 
+   void addClassForStaticFinalFieldModification(TR_OpaqueClassBlock *clazz);
+   TR_Array<TR_OpaqueClassBlock*> *getClassesForStaticFinalFieldModification() { return &_classForStaticFinalFieldModification; }
+
    TR::list<TR::AOTClassInfo*>* _aotClassInfo;
 
    J9VMThread *j9VMThread() { return _j9VMThread; }
@@ -350,6 +353,8 @@ private:
    TR::list<TR::SymbolReference*>             _monitorAutoSymRefsInCompiledMethod;
 
    TR_Array<TR_OpaqueClassBlock*>       _classForOSRRedefinition;
+   // Classes that have their static final fields folded and need assumptions
+   TR_Array<TR_OpaqueClassBlock*>       _classForStaticFinalFieldModification;
 
    // cache profile information
    TR_AccessedProfileInfo *_profileInfo;
