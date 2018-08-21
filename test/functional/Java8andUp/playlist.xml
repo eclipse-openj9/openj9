@@ -1150,6 +1150,7 @@
 			<subset>SE100</subset>
 			<subset>SE110</subset>
 		</subsets>
+		<disabled>https://github.com/eclipse/openj9/issues/2643</disabled>
 	</test>
 
 	<test>
