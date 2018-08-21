@@ -124,6 +124,7 @@ JIT_HELPER(jitThrowInstantiationException);  // asm calling-convention helper
 JIT_HELPER(jitThrowNullPointerException);  // asm calling-convention helper
 JIT_HELPER(jitThrowWrongMethodTypeException);  // asm calling-convention helper
 JIT_HELPER(jitThrowIncompatibleReceiver);  // asm calling-convention helper
+JIT_HELPER(jitThrowIncompatibleClassChangeError);  // asm calling-convention helper
 JIT_HELPER(jitTranslateNewInstanceMethod);  // asm calling-convention helper
 JIT_HELPER(jitTypeCheckArrayStore);  // asm calling-convention helper
 JIT_HELPER(jitTypeCheckArrayStoreWithNullCheck);  // asm calling-convention helper

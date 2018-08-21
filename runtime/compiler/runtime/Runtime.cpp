@@ -1040,6 +1040,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_nullCheck,                  (void *)jitThrowNullPointerException,          TR_Helper);
    SET(TR_methodTypeCheck,            (void *)jitThrowWrongMethodTypeException,      TR_Helper);
    SET(TR_incompatibleReceiver,       (void *)jitThrowIncompatibleReceiver,          TR_Helper);
+   SET(TR_IncompatibleClassChangeError, (void *)jitThrowIncompatibleClassChangeError, TR_Helper);
    SET(TR_arrayBoundsCheck,           (void *)jitThrowArrayIndexOutOfBounds,         TR_Helper);
    SET(TR_divCheck,                   (void *)jitThrowArithmeticException,           TR_Helper);
    SET(TR_arrayStoreException,        (void *)jitThrowArrayStoreException,           TR_Helper);

@@ -840,6 +840,11 @@ J9::SymbolReferenceTable::findOrCreateIncompatibleReceiverSymbolRef(TR::Resolved
    return findOrCreateRuntimeHelper(TR_incompatibleReceiver, false, true, true);
    }
 
+TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreateIncompatibleClassChangeErrorSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_IncompatibleClassChangeError, false, true, true);
+   }
 
 TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateReportStaticMethodEnterSymbolRef(TR::ResolvedMethodSymbol *)

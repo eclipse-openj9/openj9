@@ -67,7 +67,7 @@ jitGetInterfaceITableIndexFromCP(J9VMThread *currentThread, J9ConstantPool *cons
 	/* If the ref is resolved, do not call the resolve helper, as it will currently fail if the interface class is not initialized */
 	if (NULL == interfaceClass) {
 		J9RAMInterfaceMethodRef localEntry;
-		if (0 == currentThread->javaVM->internalVMFunctions->resolveInterfaceMethodRefInto(currentThread, constantPool, cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME, &localEntry)) {
+		if (NULL == currentThread->javaVM->internalVMFunctions->resolveInterfaceMethodRefInto(currentThread, constantPool, cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME, &localEntry)) {
 			goto done;
 		}
 		interfaceClass = (J9Class*)localEntry.interfaceClass;
@@ -76,6 +76,53 @@ jitGetInterfaceITableIndexFromCP(J9VMThread *currentThread, J9ConstantPool *cons
 	*pITableIndex = methodIndexAndArgCount >> 8;
 done:
 	return interfaceClass;
+}
+
+/* Only returns non-null if the method is resolved and not to be dispatched by
+ * itable, i.e. if it is:
+ * - private, using direct dispatch;
+ * - a final method of Object, using direct dispatch; or
+ * - a non-final method of Object, using virtual dispatch.
+ */
+J9Method*
+jitGetImproperInterfaceMethodFromCP(J9VMThread *currentThread, J9ConstantPool *constantPool, UDATA cpIndex)
+{
+	J9RAMInterfaceMethodRef *ramMethodRef = (J9RAMInterfaceMethodRef*)constantPool + cpIndex;
+	/* interfaceClass is used to indicate 'resolved'. Make sure to read it first */
+	J9Class* volatile interfaceClass = (J9Class*)ramMethodRef->interfaceClass;
+	VM_AtomicSupport::readBarrier();
+	UDATA volatile methodIndexAndArgCount = ramMethodRef->methodIndexAndArgCount;
+	J9Method *improperMethod = NULL;
+	/* If the ref is resolved, do not call the resolve helper, as it will currently fail if the interface class is not initialized */
+	if (NULL == interfaceClass) {
+		J9RAMInterfaceMethodRef localEntry;
+		if (NULL == currentThread->javaVM->internalVMFunctions->resolveInterfaceMethodRefInto(currentThread, constantPool, cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME, &localEntry)) {
+			goto done;
+		}
+		interfaceClass = (J9Class*)localEntry.interfaceClass;
+		methodIndexAndArgCount = localEntry.methodIndexAndArgCount;
+	}
+	if (J9_ARE_ANY_BITS_SET(methodIndexAndArgCount, J9_ITABLE_INDEX_TAG_BITS)) {
+		UDATA methodIndex = (methodIndexAndArgCount & ~J9_ITABLE_INDEX_TAG_BITS) >> 8;
+		J9Class *jlObject = J9VMJAVALANGOBJECT_OR_NULL(currentThread->javaVM);
+		if (J9_ARE_ANY_BITS_SET(methodIndexAndArgCount, J9_ITABLE_INDEX_METHOD_INDEX)) {
+			if (J9_ARE_ANY_BITS_SET(methodIndexAndArgCount, J9_ITABLE_INDEX_OBJECT)) {
+				/* Object method not in the vTable */
+				improperMethod = jlObject->ramMethods + methodIndex;
+			} else {
+				/* Private interface method */
+				improperMethod = interfaceClass->ramMethods + methodIndex;
+			}
+		} else {
+			/* Object method in the vTable. Return the Object method since we
+			 * don't know the receiver. The JIT will find its vTable offset and
+			 * generate a virtual dispatch.
+			 */
+			improperMethod = *(J9Method**)((UDATA)jlObject + methodIndex);
+		}
+	}
+done:
+	return improperMethod;
 }
 
 UDATA

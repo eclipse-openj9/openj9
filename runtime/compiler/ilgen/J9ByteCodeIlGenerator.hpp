@@ -296,6 +296,7 @@ private:
    // [PR 124693] To check types on invokespecial within interface methods.
    bool skipInvokeSpecialInterfaceTypeChecks();
    void expandInvokeSpecialInterface(TR::TreeTop *tree);
+   void separateNullCheck(TR::TreeTop *tree);
 
    // inline functions
    //
