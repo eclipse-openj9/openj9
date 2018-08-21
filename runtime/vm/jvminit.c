@@ -6302,9 +6302,9 @@ predefinedHandlerWrapper(struct J9PortLibrary *portLibrary, U_32 gpType, void *g
 		return 1;
 	}
 
-	/* Don't invoke handler if JVM exit or shutdown has started. */
+	/* Don't invoke handler if JVM exit has started. */
 	omrthread_monitor_enter(vm->runtimeFlagsMutex);
-	if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_EXIT_STARTED | J9_RUNTIME_SHUTDOWN_STARTED)) {
+	if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_EXIT_STARTED)) {
 		shutdownStarted = TRUE;
 	}
 	omrthread_monitor_exit(vm->runtimeFlagsMutex);
