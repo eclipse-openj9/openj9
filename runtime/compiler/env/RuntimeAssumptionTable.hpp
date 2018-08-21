@@ -44,6 +44,7 @@ enum TR_RuntimeAssumptionKind
    RuntimeAssumptionOnClassRedefinitionPIC,
    RuntimeAssumptionOnClassRedefinitionUPIC,
    RuntimeAssumptionOnClassRedefinitionNOP,
+   RuntimeAssumptionOnStaticFinalFieldModification,
    RuntimeAssumptionOnMutableCallSiteChange,
    RuntimeAssumptionOnMethodBreakPoint,
    LastAssumptionKind,
@@ -61,6 +62,7 @@ char const * const runtimeAssumptionKindNames[LastAssumptionKind] =
    "ClassRedefinitionPIC",
    "ClassRedefinitionUPIC",
    "ClassRedefinitionNOP",
+   "StaticFinalFieldModification",
    "MutableCallSiteChange",
    "OnMethodBreakpoint",
    };
@@ -104,6 +106,7 @@ class TR_RuntimeAssumptionTable
    void notifyClassUnloadEvent(TR_FrontEnd *vm, bool isSMP,
                                TR_OpaqueClassBlock *classOwningAssumption,
                                TR_OpaqueClassBlock *picKey);
+   void notifyIllegalStaticFinalFieldModificationEvent(TR_FrontEnd *vm, void *key);
    void notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool isSMP, void *oldKey, void *newKey);
    void notifyMutableCallSiteChangeEvent(TR_FrontEnd *vm, uintptrj_t cookie);
 

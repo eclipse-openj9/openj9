@@ -596,13 +596,6 @@ jitExclusiveVMShutdownPending(J9VMThread * vmThread)
    #endif
    }
 
-// Placeholder for JIT callback of final field notification
-extern "C" void
-jitIllegalFinalFieldModification(struct J9VMThread *currentThread, struct J9Class *fieldClass)
-   {
-      // TODO - Initial Stub for final field callback
-   }
-
 // -----------------------------------------------------------------------------
 // JIT control
 // -----------------------------------------------------------------------------
@@ -1076,7 +1069,6 @@ onLoadInternal(
    jitConfig->doSha256InHardware = doSha256InHardware;
    jitConfig->doSha512InHardware = doSha512InHardware;
 #endif
-   jitConfig->jitIllegalFinalFieldModification = jitIllegalFinalFieldModification;
 
    //set up our vlog Manager
    TR_VerboseLog::initialize(jitConfig);
