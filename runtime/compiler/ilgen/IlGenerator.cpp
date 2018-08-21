@@ -2712,40 +2712,7 @@ void TR_J9ByteCodeIlGenerator::expandInvokeSpecialInterface(TR::TreeTop *tree)
    _bcIndex = callNode->getByteCodeIndex();
 
    // Separate the null check if there is one, so it will precede the type test.
-   if (parent->getOpCode().isNullCheck())
-      {
-      if (trace)
-         {
-         traceMsg(comp(),
-            "separating null check of receiver n%un from call n%un\n",
-            receiver->getGlobalIndex(),
-            callNode->getGlobalIndex());
-         }
-
-      TR::Node * const passthrough = TR::Node::create(TR::PassThrough, 1, receiver);
-
-      TR::SymbolReference * const nullCheckSR =
-         symRefTab()->findOrCreateNullCheckSymbolRef(_methodSymbol);
-      TR::Node * const earlyNullCheck =
-         TR::Node::createWithSymRef(TR::NULLCHK, 1, 1, passthrough, nullCheckSR);
-
-      tree->insertBefore(TR::TreeTop::create(comp(), earlyNullCheck));
-
-      // Stop null checking at point of call
-      switch (parent->getOpCodeValue())
-         {
-         case TR::NULLCHK:
-            parent->setSymbolReference(NULL);
-            TR::Node::recreate(parent, TR::treetop);
-            break;
-
-         case TR::ResolveAndNULLCHK:
-            parent->setSymbolReference(
-               symRefTab()->findOrCreateResolveCheckSymbolRef(_methodSymbol));
-            TR::Node::recreate(parent, TR::ResolveCHK);
-            break;
-         }
-      }
+   separateNullCheck(tree);
 
    // Insert the type test
    TR::SymbolReference * const ifaceSR =
@@ -2837,4 +2804,44 @@ void TR_J9ByteCodeIlGenerator::expandInvokeSpecialInterface(TR::TreeTop *tree)
       comp()->dumpMethodTrees("Trees after expanding invokespecial", _methodSymbol);
 
    _bcIndex = rememberedBcIndex;
+   }
+
+void TR_J9ByteCodeIlGenerator::separateNullCheck(TR::TreeTop *tree)
+   {
+   TR::Node *nullCheck = tree->getNode();
+   if (!nullCheck->getOpCode().isNullCheck())
+      return;
+
+   TR::Node *checkedRef = nullCheck->getNullCheckReference();
+   if (comp()->getOption(TR_TraceILGen))
+      {
+      traceMsg(comp(),
+         "separating null check on n%un from n%un\n",
+         checkedRef->getGlobalIndex(),
+         nullCheck->getGlobalIndex());
+      }
+
+   TR::Node * const passthrough = TR::Node::create(TR::PassThrough, 1, checkedRef);
+
+   TR::SymbolReference * const nullCheckSR =
+      symRefTab()->findOrCreateNullCheckSymbolRef(_methodSymbol);
+   TR::Node * const separateNullCheck =
+      TR::Node::createWithSymRef(TR::NULLCHK, 1, 1, passthrough, nullCheckSR);
+
+   tree->insertBefore(TR::TreeTop::create(comp(), separateNullCheck));
+
+   // Stop null checking at point of call
+   switch (nullCheck->getOpCodeValue())
+      {
+      case TR::NULLCHK:
+         nullCheck->setSymbolReference(NULL);
+         TR::Node::recreate(nullCheck, TR::treetop);
+         break;
+
+      case TR::ResolveAndNULLCHK:
+         nullCheck->setSymbolReference(
+            symRefTab()->findOrCreateResolveCheckSymbolRef(_methodSymbol));
+         TR::Node::recreate(nullCheck, TR::ResolveCHK);
+         break;
+      }
    }

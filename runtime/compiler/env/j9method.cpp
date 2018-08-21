@@ -2040,6 +2040,18 @@ TR_ResolvedRelocatableJ9Method::getUnresolvedVirtualMethodInCP(I_32 cpIndex)
    }
 
 TR_ResolvedMethod *
+TR_ResolvedRelocatableJ9Method::getResolvedImproperInterfaceMethod(
+   TR::Compilation * comp,
+   I_32 cpIndex)
+   {
+   // For now leave private and Object invokeinterface unresolved in AOT. If we
+   // resolve it, we may forceUnresolvedDispatch in codegen, in which case the
+   // generated code would attempt to resolve the wrong kind of constant pool
+   // entry.
+   return NULL;
+   }
+
+TR_ResolvedMethod *
 TR_ResolvedRelocatableJ9Method::createResolvedMethodFromJ9Method(TR::Compilation *comp, I_32 cpIndex, uint32_t vTableSlot, J9Method *j9method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats)
    {
    TR_ResolvedMethod *resolvedMethod = NULL;
@@ -6097,6 +6109,36 @@ TR_ResolvedJ9Method::getResolvedInterfaceMethodOffset(TR_OpaqueClassBlock * clas
       }
 
    return (J9JIT_INTERP_VTABLE_OFFSET - vTableOffset);
+#endif
+   }
+
+/* Only returns non-null if the method is not to be dispatched by itable, i.e.
+ * if it is:
+ * - private (isPrivate()), using direct dispatch;
+ * - a final method of Object (isFinalInObject()), using direct dispatch; or
+ * - a non-final method of Object, using virtual dispatch.
+ */
+TR_ResolvedMethod *
+TR_ResolvedJ9Method::getResolvedImproperInterfaceMethod(TR::Compilation * comp, I_32 cpIndex)
+   {
+   TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
+#if TURN_OFF_INLINING
+   return 0;
+#else
+   INCREMENT_COUNTER(_fe, unresolvedInterfaceMethodRefs);
+   INCREMENT_COUNTER(_fe, totalInterfaceMethodRefs);
+
+   J9Method *j9method = NULL;
+   if ((_fe->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) == 0)
+      {
+      TR::VMAccessCriticalSection getResolvedPrivateInterfaceMethodOffset(fej9());
+      j9method = jitGetImproperInterfaceMethodFromCP(_fe->vmThread(), cp(), cpIndex);
+      }
+
+   if (j9method == NULL)
+      return NULL;
+   else
+      return createResolvedMethodFromJ9Method(comp, cpIndex, 0, j9method, NULL, NULL);
 #endif
    }
 

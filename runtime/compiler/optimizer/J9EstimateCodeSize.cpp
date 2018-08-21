@@ -918,18 +918,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
             flags[i].set(isUnsanitizeable);
             break;
          case J9BCinvokeinterface:
-            {
             cpIndex = bci.next2Bytes();
-            TR_Method * interfaceMethod = comp()->fej9()->createMethod(comp()->trMemory(), calltarget->_calleeMethod->containingClass(), cpIndex);
-            TR_OpaqueClassBlock * thisClass = 0;
-            resolvedMethod = 0;
-            bool isIndirectCall = true;
-            bool isInterface = true;
-            TR::TreeTop *callNodeTreeTop = 0;
-            TR::Node *parent = 0;
-            TR::Node *callNode = 0;
-            TR::ResolvedMethodSymbol *resolvedSymbol = 0;
-            }
             flags[i].set(isUnsanitizeable);
             break;
          case J9BCgetfield:
@@ -1659,34 +1648,71 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
             case J9BCinvokeinterface:
                {
                cpIndex = bci.next2Bytes();
-               TR_Method * interfaceMethod = comp()->fej9()->createMethod( comp()->trMemory(), calltarget->_calleeMethod->containingClass(), cpIndex);
-               TR_OpaqueClassBlock * thisClass = 0;
-               resolvedMethod = 0;
+
+               auto calleeMethod = (TR_ResolvedJ9Method*)calltarget->_calleeMethod;
+               resolvedMethod = calleeMethod->getResolvedImproperInterfaceMethod(comp(), cpIndex);
                bool isIndirectCall = true;
                bool isInterface = true;
+               if (resolvedMethod != NULL)
+                  {
+                  isInterface = false;
+                  isIndirectCall =
+                     !resolvedMethod->isPrivate()
+                     && !resolvedMethod->convertToMethod()->isFinalInObject();
+                  }
+
+               TR_Method * interfaceMethod = NULL;
+               if (isInterface)
+                  interfaceMethod = comp()->fej9()->createMethod( comp()->trMemory(), calltarget->_calleeMethod->containingClass(), cpIndex);
+
                TR::TreeTop *callNodeTreeTop = 0;
                TR::Node *parent = 0;
                TR::Node *callNode = 0;
                TR::ResolvedMethodSymbol *resolvedSymbol = 0;
 
+               uint32_t explicitParams = 0;
+               if (isInterface)
+                  explicitParams = interfaceMethod->numberOfExplicitParameters();
+               else
+                  explicitParams = resolvedMethod->numberOfExplicitParameters();
 
                bool allconsts= false;
-
-               heuristicTrace(tracer(),"numberOfExplicitParameters = %d  pca.getNumPrevConstArgs = %d\n",interfaceMethod->numberOfExplicitParameters() ,pca.getNumPrevConstArgs(interfaceMethod->numberOfExplicitParameters()));
-               if ( interfaceMethod->numberOfExplicitParameters() > 0 && interfaceMethod->numberOfExplicitParameters() <= pca.getNumPrevConstArgs(interfaceMethod->numberOfExplicitParameters()))
+               heuristicTrace(tracer(), "numberOfExplicitParameters = %d  pca.getNumPrevConstArgs = %d\n", explicitParams, pca.getNumPrevConstArgs(explicitParams));
+               if (explicitParams > 0 && explicitParams <= pca.getNumPrevConstArgs(explicitParams))
                   allconsts = true;
 
-               TR_CallSite *callsite = new (comp()->trHeapMemory()) TR_J9InterfaceCallSite( callStack._method, callNodeTreeTop, parent, callNode,
-                                                                                 interfaceMethod, thisClass, -1, cpIndex, resolvedMethod,
-                                                                                 resolvedSymbol, isIndirectCall, isInterface, newBCInfo,
-                                                                                 comp(), _recursionDepth, allconsts);
-
+               TR_CallSite *callsite = NULL;
+               if (isInterface)
+                  {
+                  TR_OpaqueClassBlock * thisClass = NULL;
+                  callsite = new (comp()->trHeapMemory()) TR_J9InterfaceCallSite(
+                     callStack._method, callNodeTreeTop, parent, callNode,
+                     interfaceMethod, thisClass, -1, cpIndex, resolvedMethod,
+                     resolvedSymbol, isIndirectCall, isInterface, newBCInfo,
+                     comp(), _recursionDepth, allconsts);
+                  }
+               else if (isIndirectCall)
+                  {
+                  callsite = new (comp()->trHeapMemory()) TR_J9VirtualCallSite(
+                     callStack._method, callNodeTreeTop, parent, callNode,
+                     interfaceMethod, resolvedMethod->classOfMethod(), -1, cpIndex,
+                     resolvedMethod, resolvedSymbol, isIndirectCall, isInterface,
+                     newBCInfo, comp(), _recursionDepth, allconsts);
+                  }
+               else
+                  {
+                  callsite = new (comp()->trHeapMemory()) TR_DirectCallSite(
+                     callStack._method, callNodeTreeTop, parent, callNode,
+                     interfaceMethod, resolvedMethod->classOfMethod(), -1, cpIndex,
+                     resolvedMethod, resolvedSymbol, isIndirectCall, isInterface,
+                     newBCInfo, comp(), _recursionDepth, allconsts);
+                  }
 
               if(tracer()->debugLevel())
                  {
                  pca.printIndexes(comp());
                  }
-              if(pca.isArgAtIndexReceiverObject(interfaceMethod->numberOfExplicitParameters()))
+              if(isInterface && pca.isArgAtIndexReceiverObject(interfaceMethod->numberOfExplicitParameters()))
                   {
                   //heuristicTrace(tracer(),"Arg at index %d is receiver object.  Propagating prexarginfo",interfaceMethod->numberOfExplicitParameters());
                   //callsite->_ecsPrexArgInfo = calltarget->_ecsPrexArgInfo;

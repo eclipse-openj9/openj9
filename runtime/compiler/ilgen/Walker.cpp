@@ -3863,10 +3863,73 @@ TR_J9ByteCodeIlGenerator::genInvokeVirtual(int32_t cpIndex)
 void
 TR_J9ByteCodeIlGenerator::genInvokeInterface(int32_t cpIndex)
    {
-   TR::SymbolReference * symRef = symRefTab()->findOrCreateInterfaceMethodSymbol(_methodSymbol, cpIndex);
+   auto owningMethod = (TR_ResolvedJ9Method*)_methodSymbol->getResolvedMethod();
+   TR_ResolvedMethod *improperMethod =
+      owningMethod->getResolvedImproperInterfaceMethod(comp(), cpIndex);
+   if (improperMethod == NULL)
+      {
+      TR::SymbolReference *symRef = symRefTab()->findOrCreateInterfaceMethodSymbol(_methodSymbol, cpIndex);
+      genInvokeWithVFTChild(symRef);
+      _methodSymbol->setMayHaveIndirectCalls(true);
+      }
+   else
+      {
+      _methodSymbol->setMayHaveInlineableCall(true);
+      TR::TreeTop *prevLastTree = _block->getExit()->getPrevTreeTop();
+      TR::Node *callNode = NULL;
+      if (improperMethod->isPrivate() || improperMethod->convertToMethod()->isFinalInObject())
+         {
+         TR::SymbolReference *symRef = symRefTab()->findOrCreateMethodSymbol(
+            _methodSymbol->getResolvedMethodIndex(),
+            cpIndex,
+            improperMethod,
+            TR::MethodSymbol::Special,
+            /* isUnresolvedInCP = */ false);
 
-   genInvokeWithVFTChild(symRef);
-   _methodSymbol->setMayHaveIndirectCalls(true);
+         callNode = genInvokeDirect(symRef);
+         }
+      else
+         {
+         TR::SymbolReference *symRef = symRefTab()->findOrCreateMethodSymbol(
+            _methodSymbol->getResolvedMethodIndex(),
+            -1, // don't use cpIndex to find the vtable slot
+            improperMethod,
+            TR::MethodSymbol::Virtual,
+            /* isUnresolvedInCP = */ false);
+
+         symRef->setCPIndex(cpIndex);
+         TR_OpaqueMethodBlock *m = improperMethod->getPersistentIdentifier();
+         symRef->setOffset(
+            TR::Compiler->cls.vTableSlot(comp(), m, fej9()->getClassOfMethod(m)));
+
+         callNode = genInvokeWithVFTChild(symRef);
+         _methodSymbol->setMayHaveIndirectCalls(true);
+         }
+
+      // Generate the dynamic type test against the interface type, throwing
+      // IncompatibleClassChangeError in case it fails
+      TR::TreeTop *bbExit = _block->getExit();
+      TR::TreeTop *callTree = prevLastTree->getNextTreeTop();
+      while (callTree != bbExit && callTree->getNode()->getChild(0) != callNode)
+         callTree = callTree->getNextTreeTop();
+
+      TR_ASSERT_FATAL(callTree != bbExit, "invokeinterface call tree not found\n");
+
+      separateNullCheck(callTree);
+
+      uint32_t interfaceCPIndex = owningMethod->classCPIndexOfMethod(cpIndex);
+      push(callNode->getArgument(0));
+      genInstanceof(interfaceCPIndex);
+      TR::Node *instanceof = pop();
+
+      TR::SymbolReference *icce =
+         symRefTab()->findOrCreateIncompatibleClassChangeErrorSymbolRef(_methodSymbol);
+
+      TR::Node *check =
+         TR::Node::createWithSymRef(TR::ZEROCHK, 1, 1, instanceof, icce);
+
+      callTree->insertBefore(TR::TreeTop::create(comp(), check));
+      }
    }
 
 static char *suffixedName(char *baseName, char typeSuffix, char *buf, int32_t bufSize, TR::Compilation *comp)
