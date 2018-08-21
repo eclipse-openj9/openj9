@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -285,12 +285,21 @@ tgcHookLocalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, v
 	}
 
 	tgcExtensions->printf("\n");
-	tgcExtensions->printf("          gc micros   idle   busy active  lists   caches   copied  scanned updates scaling\n");
+	tgcExtensions->printf("          gc micros   idle   busy active  lists   caches   copied  scanned updates scaling");
+	if (extensions->isConcurrentScavengerEnabled()) {
+		tgcExtensions->printf("  rb-copy rb-update\n");
+	} else {
+		tgcExtensions->printf("\n");
+	}
 
 	uintptr_t recordCount = 0;
 	MM_ScavengerCopyScanRatio::UpdateHistory *historyRecord = extensions->copyScanRatio.getHistory(&recordCount);
 	MM_ScavengerCopyScanRatio::UpdateHistory *endRecord = historyRecord + recordCount;
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	uint64_t prevReadObjectBarrierCopy = 0;
+	uint64_t prevReadObjectBarrierUpdate = 0;
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
 	while (historyRecord < endRecord) {
 		uint64_t elapsedMicros = extensions->copyScanRatio.getSpannedMicros(env, historyRecord);
 		double majorUpdates = (double)historyRecord->updates / (double)SCAVENGER_THREAD_UPDATES_PER_MAJOR_UPDATE;
@@ -300,9 +309,19 @@ tgcHookLocalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, v
 		double waitingThreads = (double)historyRecord->waits / (double)historyRecord->updates;
 		double busyThreads = threads - waitingThreads;
 		double scalingFactor = extensions->copyScanRatio.getScalingFactor(env, historyRecord);
-		tgcExtensions->printf("SCV.H %6zu %6zu %6.1f %6.1f %6.1f %6.1f   %6.1f %8zu %8zu %7zu  %0.4f\n",
+		tgcExtensions->printf("SCV.H %6zu %6zu %6.1f %6.1f %6.1f %6.1f   %6.1f %8zu %8zu %7zu  %0.4f",
 				gcCount, elapsedMicros, waitingThreads, busyThreads, threads, lists, caches,
 				historyRecord->copied, historyRecord->scanned, historyRecord->updates, scalingFactor);
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+		if (extensions->isConcurrentScavengerEnabled()) {
+			tgcExtensions->printf("  %7zu %9zu\n", historyRecord->readObjectBarrierCopy - prevReadObjectBarrierCopy, historyRecord->readObjectBarrierUpdate - prevReadObjectBarrierUpdate);
+			prevReadObjectBarrierCopy = historyRecord->readObjectBarrierCopy;
+			prevReadObjectBarrierUpdate = historyRecord->readObjectBarrierUpdate;
+		} else
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+		{
+			tgcExtensions->printf("\n");
+		}
 		historyRecord += 1;
 	}
 
