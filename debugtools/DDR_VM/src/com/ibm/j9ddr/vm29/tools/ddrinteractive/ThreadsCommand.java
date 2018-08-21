@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2015 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -216,10 +216,11 @@ public class ThreadsCommand extends  Command
 				J9VMThreadPointer threadCursor = vm.mainThread();
 
 				do {
-					out.append(String.format("    !j9vmthread 0x%s publicFlags=%s privateFlags=%s // %s", 
+					out.append(String.format("    !j9vmthread 0x%s publicFlags=%s privateFlags=%s inNative=%s // %s", 
 							Long.toHexString(threadCursor.getAddress()),
 							Long.toHexString(threadCursor.publicFlags().longValue()),
 							Long.toHexString(threadCursor.privateFlags().longValue()),
+							Long.toHexString(threadCursor.inNative().longValue()),
 							getThreadName(threadCursor)));
 					out.append(nl);
 					threadCursor = threadCursor.linkNext();
