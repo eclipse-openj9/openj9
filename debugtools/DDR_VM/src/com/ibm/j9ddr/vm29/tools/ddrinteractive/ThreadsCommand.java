@@ -216,7 +216,7 @@ public class ThreadsCommand extends  Command
 				J9VMThreadPointer threadCursor = vm.mainThread();
 
 				do {
-					out.append(String.format("    !j9vmthread 0x%s publicFlags=%s privateFlags=%s inNative=%d // %s", 
+					out.append(String.format("    !j9vmthread 0x%s publicFlags=%s privateFlags=%s inNative=%s // %s", 
 							Long.toHexString(threadCursor.getAddress()),
 							Long.toHexString(threadCursor.publicFlags().longValue()),
 							Long.toHexString(threadCursor.privateFlags().longValue()),
