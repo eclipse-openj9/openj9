@@ -1444,5 +1444,10 @@ J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED.explanation=ValueTypes is an experime
 J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED.user_response=Contact the provider of the classfile for a corrected version or use the -XX:+EnableValhalla option.
 
+J9NLS_CFR_ERR_PREVIEW_VERSION=Class file is a preview version but has the wrong major version or preview is not enabled.
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_MINOR_VERSION.explanation=Classfiles with minor version 65535 must have the same major version as the VM rumtime version and preview must be enabled
+J9NLS_CFR_ERR_MINOR_VERSION.system_action=The JVM will throw a verification or classloading-related exception.
+J9NLS_CFR_ERR_MINOR_VERSION.user_response=Run with the correct Java runtime version and use --enable-preview.
 # END NON-TRANSLATABLE
 

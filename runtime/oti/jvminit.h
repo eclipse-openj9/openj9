@@ -445,6 +445,7 @@ enum INIT_STAGE {
 
 #define VMOPT_XXREADIPINFOFORRAS "-XX:+ReadIPInfoForRAS"
 #define VMOPT_XXNOREADIPINFOFORRAS "-XX:-ReadIPInfoForRAS"
+#define VMOPT_ENABLE_PREVIEW "--enable-preview"
 
 #define VMOPT_XXNLSMESSAGES "-XX:+NLSMessages"
 #define VMOPT_XXNONLSMESSAGES  "-XX:-NLSMessages"
