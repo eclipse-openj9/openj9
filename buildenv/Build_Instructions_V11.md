@@ -25,7 +25,7 @@ Building OpenJDK Version 11 with OpenJ9
 
 Our website describes a simple [build process](http://www.eclipse.org/openj9/oj9_build.html)
 that uses Docker and Dockerfiles to create a build environment that contains everything
-you need to easily build a Linux binary of **OpenJDK V10** with the Eclipse OpenJ9 virtual machine.
+you need to easily build a Linux binary of **OpenJDK V11** with the Eclipse OpenJ9 virtual machine.
 A more complete set of build instructions are included here for multiple platforms:
 
 - [Linux :penguin:](#linux)
@@ -56,25 +56,25 @@ If you want to build a binary by using a Docker container, follow these steps to
 
 1. The first thing you need to do is install Docker. You can download the free Community edition from [here](https://docs.docker.com/engine/installation/), which also contains instructions for installing Docker on your system.  You should also read the [Getting started](https://docs.docker.com/get-started/) guide to familiarise yourself with the basic Docker concepts and terminology.
 
-2. Obtain the [Linux on 64-bit x86 systems Dockerfile](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk10/x86_64/ubuntu16/Dockerfile) to build and run a container that has all the correct software pre-requisites.
+2. Obtain the [Linux on 64-bit x86 systems Dockerfile](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk11/x86_64/ubuntu16/Dockerfile) to build and run a container that has all the correct software pre-requisites.
 
-    :pencil: Dockerfiles are also available for the following Linux architectures: [Linux on 64-bit Power systems&trade;](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk10/ppc64le/ubuntu16/Dockerfile) and [Linux on 64-bit z Systems&trade;](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk10/s390x/ubuntu16/Dockerfile)
+    :pencil: Dockerfiles are also available for the following Linux architectures: [Linux on 64-bit Power systems&trade;](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk11/ppc64le/ubuntu16/Dockerfile) and [Linux on 64-bit z Systems&trade;](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk11/s390x/ubuntu16/Dockerfile)
 
     Either download one of these Dockerfiles to your local system or copy and paste one of the following commands:
 
   - For Linux on 64-bit x86 systems, run:
 ```
-wget https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/jdk10/x86_64/ubuntu16/Dockerfile
+wget https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/jdk11/x86_64/ubuntu16/Dockerfile
 ```
 
   - For Linux on 64-bit Power systems, run:
 ```
-wget https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/jdk10/ppc64le/ubuntu16/Dockerfile
+wget https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/jdk11/ppc64le/ubuntu16/Dockerfile
 ```
 
   - For Linux on 64-bit z Systems, run:
 ```
-wget https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/jdk10/s390x/ubuntu16/Dockerfile
+wget https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/jdk11/s390x/ubuntu16/Dockerfile
 ```
 
 3. Next, run the following command to build a Docker image, called **openj9**:
@@ -94,17 +94,19 @@ Now that you have the Docker image running, you are ready to move to the next st
 
 #### Setting up your build environment without Docker
 
-If you don't want to user Docker, you can still build an **OpenJDK V10** with OpenJ9 directly on your Ubuntu system or in a Ubuntu virtual machine. Use the
-[Linux on x86 Dockerfile](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk10/x86_64/ubuntu16/Dockerfile) like a recipe card to determine the software dependencies
+If you don't want to user Docker, you can still build an **OpenJDK V11** with OpenJ9 directly on your Ubuntu system or in a Ubuntu virtual machine. Use the
+[Linux on x86 Dockerfile](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk11/x86_64/ubuntu16/Dockerfile) like a recipe card to determine the software dependencies
 that must be installed on the system, plus a few configuration steps.
 
 :pencil:
-Not on x86? We also have Dockerfiles for the following Linux architectures: [Linux on Power systems](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk10/ppc64le/ubuntu16/Dockerfile) and [Linux on z Systems](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk10/s390x/ubuntu16/Dockerfile).
+Not on x86? We also have Dockerfiles for the following Linux architectures: [Linux on Power systems](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk11/ppc64le/ubuntu16/Dockerfile) and [Linux on z Systems](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk11/s390x/ubuntu16/Dockerfile).
 
 1. Install the list of dependencies that can be obtained with the `apt-get` command from the following section of the Dockerfile:
 ```
 apt-get update \
   && apt-get install -qq -y --no-install-recommends \
+    gcc-7 \
+    g++-7 \
     autoconf \
     ca-certificates \
     ...
@@ -115,9 +117,9 @@ backlevel compared with the versions you use on your system. Create links for
 the compilers with the following commands:
 ```
 ln -s g++ /usr/bin/c++
-ln -s g++-4.8 /usr/bin/g++
+ln -s g++-7 /usr/bin/g++
 ln -s gcc /usr/bin/cc
-ln -s gcc-4.8 /usr/bin/gcc
+ln -s gcc-7 /usr/bin/gcc
 ```
 
 3. Download and setup **freemarker.jar** into a directory.
@@ -131,12 +133,12 @@ rm -f freemarker.tgz
 4. Download and setup the boot JDK using the latest AdoptOpenJDK v9 build.
 ```
 cd /<my_home_dir>
-wget -O bootjdk9.tar.gz https://api.adoptopenjdk.net/openjdk9-openj9/releases/x64_linux/latest/binary
-tar -xzf bootjdk9.tar.gz
-rm -f bootjdk9.tar.gz
-ls | grep -i jdk | xargs -I % sh -c 'mv % bootjdk9'
+wget -O bootjdk10.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk10?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk"
+tar -xzf bootjdk10.tar.gz
+rm -f bootjdk10.tar.gz
+mv $(ls | grep -i jdk) bootjdk10
 
-export JAVA_HOME="/<my_home_dir>/bootjdk9"
+export JAVA_HOME="/<my_home_dir>/bootjdk10"
 export PATH="${JAVA_HOME}/bin:${PATH}"
 ```
 
@@ -196,12 +198,12 @@ Run:
 Here is some sample output:
 
 ```
-openjdk version "10-internal" 2018-03-20
-OpenJDK Runtime Environment (build 10-internal+0-adhoc..openj9-openjdk-jdk10)
-Eclipse OpenJ9 VM (build master-4ecf784, JRE 10 Linux amd64-64 Compressed References 20180411_000000 (JIT enabled, AOT enabled)
-OpenJ9   - 4ecf784
-OMR      - cb9e24d
-JCL      - eaa06eb based on jdk-10+46)
+openjdk version "11-internal" 2018-09-25
+OpenJDK Runtime Environment (build 11-internal+0-adhoc..openj9-openjdk-jdk11)
+Eclipse OpenJ9 VM (build master-06905e2, JRE 11 Linux amd64-64-Bit Compressed References 20180726_000000 (JIT enabled, AOT enabled)
+OpenJ9   - 06905e2
+OMR      - 28139f2
+JCL      - e5c64f5 based on jdk-11+21)
 ```
 :penguin: *Congratulations!* :tada:
 
@@ -218,10 +220,10 @@ The following instructions guide you through the process of building an **OpenJD
 ### 1. Prepare your system
 :blue_book:
 You must install the following AIX Licensed Program Products (LPPs):
-
-- [Java9_64](https://adoptopenjdk.net/releases.html?variant=openjdk9-openj9#ppc64_aix)
 - [xlc/C++ 13.1.3](https://www.ibm.com/developerworks/downloads/r/xlcplusaix/)
 - x11.adt.ext
+
+You must also install the boot JDK: [Java10_AIX_PPC64](https://adoptopenjdk.net/releases.html?variant=openjdk10&jvmVariant=openj9#ppc64_aix).
 
 A number of RPM packages are also required. The easiest method for installing these packages is to use `yum`, because `yum` takes care of any additional dependent packages for you.
 
@@ -297,12 +299,12 @@ Run:
 Here is some sample output:
 
 ```
-openjdk version "10-internal" 2018-03-20
-OpenJDK Runtime Environment (build 10-internal+0-adhoc..openj9-openjdk-jdk10)
-Eclipse OpenJ9 VM (build master-4ecf784, JRE 10 AIX ppc64-64 Compressed References 20180411_000000 (JIT enabled, AOT enabled)
-OpenJ9   - 4ecf784
-OMR      - cb9e24d
-JCL      - eaa06eb based on jdk-10+46)
+openjdk version "11-internal" 2018-09-25
+OpenJDK Runtime Environment (build 11-internal+0-adhoc..openj9-openjdk-jdk11)
+Eclipse OpenJ9 VM (build master-06905e2, JRE 11 AIX ppc64-64 Compressed References 20180726_000000 (JIT enabled, AOT enabled)
+OpenJ9   - 06905e2
+OMR      - 28139f2
+JCL      - e5c64f5 based on jdk-11+21)
 ```
 :blue_book: *Congratulations!* :tada:
 
