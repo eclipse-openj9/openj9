@@ -100,7 +100,6 @@ JIT_HELPER(jitResolveFieldSetter);  // asm calling-convention helper
 JIT_HELPER(jitResolveHandleMethod);  // asm calling-convention helper
 JIT_HELPER(jitResolveInterfaceMethod);  // asm calling-convention helper
 JIT_HELPER(jitResolveInvokeDynamic);  // asm calling-convention helper
-JIT_HELPER(jitResolveConstantDynamic);  // asm calling-convention helper
 JIT_HELPER(jitResolveMethodHandle);  // asm calling-convention helper
 JIT_HELPER(jitResolveMethodType);  // asm calling-convention helper
 JIT_HELPER(jitResolveSpecialMethod);  // asm calling-convention helper
@@ -108,6 +107,7 @@ JIT_HELPER(jitResolveStaticField);  // asm calling-convention helper
 JIT_HELPER(jitResolveStaticFieldSetter);  // asm calling-convention helper
 JIT_HELPER(jitResolveStaticMethod);  // asm calling-convention helper
 JIT_HELPER(jitResolveString);  // asm calling-convention helper
+JIT_HELPER(jitResolveConstantDynamic);  // asm calling-convention helper
 JIT_HELPER(jitResolveVirtualMethod);  // asm calling-convention helper
 JIT_HELPER(jitRetranslateCaller);  // asm calling-convention helper
 JIT_HELPER(jitRetranslateCallerWithPreparation);  // asm calling-convention helper

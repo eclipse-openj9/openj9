@@ -135,6 +135,28 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    TR::SymbolReference * findOrCreatePerCodeCacheHelperSymbolRef(TR_CCPreLoadedCode helper, uintptrj_t helperAddr);
    TR::SymbolReference * findOrCreateANewArraySymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateStringSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex);
+   /** \brief
+    *     Finds or creates a constant dynamic static symbol reference.
+    *
+    *  \param owningMethodSymbol
+    *     The owning resolved method symbol.
+    *
+    *  \param cpIndex
+    *     The constant pool index of the constant dynamic.
+    *
+    *  \param symbolTypeSig
+    *     The underlying class type signature string of the constant dynamic. For primitive this is the signature of the corresponding autobox class.
+    *
+    *  \param symbolTypeSigLength
+    *     Length of the underlying class type signature string.
+    *
+    *  \param isCondyPrimitive
+    *     Determines whether the constant dynamic is of primitive type.
+    *
+    *  \return
+    *     The static symbol reference of the constant dynamic.
+    */
+   TR::SymbolReference * findOrCreateConstantDynamicSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex, char* symbolTypeSig, int32_t symbolTypeSigLength, bool isCondyPrimitive);
    TR::SymbolReference * findContiguousArraySizeSymbolRef() { return element(contiguousArraySizeSymbol); }
    TR::SymbolReference * findOrCreateMethodMonitorEntrySymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateMethodMonitorExitSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);

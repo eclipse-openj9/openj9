@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -155,6 +155,14 @@ J9::Symbol::searchRecognizedField(TR::Compilation * comp, TR_ResolvedMethod * ow
        {r(TR::Symbol::Java_math_BigInteger_useLongRepresentation,     "java/math/BigInteger", "useLongRepresentation", "Z")},
        {r(TR::Symbol::Java_lang_ref_SoftReference_age,                "java/lang/ref/SoftReference", "age", "I")},
        {r(TR::Symbol::Java_lang_invoke_VarHandle_handleTable,         "java/lang/invoke/VarHandle", "handleTable", "[Ljava/lang/invoke/MethodHandle;")},
+       {r(TR::Symbol::Java_lang_Integer_value,                        "java/lang/Integer", "value", "I")},
+       {r(TR::Symbol::Java_lang_Long_value,                           "java/lang/Long", "value", "J")},
+       {r(TR::Symbol::Java_lang_Float_value,                          "java/lang/Float", "value", "F")},
+       {r(TR::Symbol::Java_lang_Double_value,                         "java/lang/Double", "value", "D")},
+       {r(TR::Symbol::Java_lang_Byte_value,                           "java/lang/Byte", "value", "B")},
+       {r(TR::Symbol::Java_lang_Character_value,                      "java/lang/Character", "value", "C")},
+       {r(TR::Symbol::Java_lang_Short_value,                          "java/lang/Short", "value", "S")},
+       {r(TR::Symbol::Java_lang_Boolean_value,                        "java/lang/Boolean", "value", "Z")},
        {TR::Symbol::UnknownField}
       };
 

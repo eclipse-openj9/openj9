@@ -320,6 +320,14 @@ SymbolReference::getTypeSignature(int32_t & len, TR_AllocationKind allocKind, bo
             len = 23;
             return "Ljava/lang/invoke/MethodHandle;";
             }
+         if (_symbol->isConstantDynamic())
+            {
+            TR::StaticSymbol * symbol = _symbol->castToStaticSymbol();
+            int32_t condySigLength;
+            char *returnType = symbol->getConstantDynamicClassSignature(condySigLength);
+            len = condySigLength;
+            return returnType;
+            }
          if (_symbol->isConst())
             {
             len = 1;
