@@ -1948,11 +1948,11 @@ JVM_SetArrayElement(JNIEnv *env, jobject array, jint index, jobject value)
 							} else if (intWrapperClass == valueClass) {
 								val = (jfloat) ((I_32) J9VMJAVALANGINTEGER_VALUE(currentThread, j9value));
 							} else if (shortWrapperClass == valueClass) {
-								val = (jfloat) ((I_32) J9VMJAVALANGINTEGER_VALUE(currentThread, j9value));
+								val = (jfloat) ((I_32) J9VMJAVALANGSHORT_VALUE(currentThread, j9value));
 							} else if (charWrapperClass == valueClass) {
 								val = (jfloat) J9VMJAVALANGCHARACTER_VALUE(currentThread, j9value);
 							} else if (byteWrapperClass == valueClass) {
-								val = (jfloat) ((I_32) J9VMJAVALANGCHARACTER_VALUE(currentThread, j9value));
+								val = (jfloat) ((I_32) J9VMJAVALANGBYTE_VALUE(currentThread, j9value));
 							} else {
 								invalidArgument = TRUE;
 							}
