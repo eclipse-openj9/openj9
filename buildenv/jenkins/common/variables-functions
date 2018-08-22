@@ -265,6 +265,15 @@ def get_git_user_credentials_id() {
 }
 
 /*
+* Returns Jenkins credentials ID required to connect to GitHub using
+* API (username & password)
+* Returns empty string if no values is provided in the variables file
+*/
+def get_github_user_credentials_id() {
+    return get_user_credentials_id("github")
+}
+
+/*
 * Returns Jenkins credentials ID from the variable file for given key.
 */
 def get_user_credentials_id(KEY) {
@@ -468,6 +477,10 @@ def set_user_credentials() {
     USER_CREDENTIALS_ID = get_git_user_credentials_id()
     if (!USER_CREDENTIALS_ID) {
          USER_CREDENTIALS_ID = ''
+    }
+     GITHUB_API_CREDENTIALS_ID = get_github_user_credentials_id()
+     if (!GITHUB_API_CREDENTIALS_ID) {
+         GITHUB_API_CREDENTIALS_ID = ''
     }
 }
 

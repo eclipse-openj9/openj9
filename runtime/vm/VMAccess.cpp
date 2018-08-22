@@ -503,6 +503,10 @@ void releaseExclusiveVMAccess(J9VMThread * vmThread)
 			vm->exclusiveAccessState = J9_XACCESS_HANDING_OFF;
 
 			Trc_VM_releaseExclusiveVMAccess_QueueNonEmpty(vmThread,vm->exclusiveVMAccessQueueHead);
+			/* The next thread will be waiting for a response from this one, so this thread
+			 * had better not have J9_PUBLIC_FLAGS_NOT_COUNTED_BY_EXCLUSIVE set.
+			 */
+			Assert_VM_false(J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_NOT_COUNTED_BY_EXCLUSIVE));
 			/* Set the halt flag on the current thread */
 			VM_VMAccess::setPublicFlags(vmThread,J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE, true);
 			/* The thread accepting the hand off will be expecting
@@ -822,7 +826,7 @@ releaseExclusiveVMAccessFromExternalThread(J9JavaVM * vm)
 			vm->exclusiveVMAccessQueueTail = NULL;
 		}
 		nextThread->exclusiveVMAccessQueueNext = NULL;
-		VM_VMAccess::clearPublicFlags(nextThread,J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE);
+		VM_VMAccess::clearPublicFlags(nextThread, J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE | J9_PUBLIC_FLAGS_NOT_COUNTED_BY_EXCLUSIVE);
 		omrthread_monitor_exit(vm->exclusiveAccessMutex);
 		omrthread_monitor_enter(nextThread->publicFlagsMutex);
 		omrthread_monitor_notify_all(nextThread->publicFlagsMutex);

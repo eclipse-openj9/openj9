@@ -19,6 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+import groovy.json.JsonSlurper;
 
 def git_clean() {
     if (fileExists('.git')) {
@@ -178,7 +179,11 @@ def checkout_pullrequest() {
     }
 
     if (openjdk_bool) {
-        checkout_pullrequest(OPENJDK_PR)
+        def REPO_SUFFIX = ""
+        if (SDK_VERSION != "next") {
+            REPO_SUFFIX = SDK_VERSION
+        }
+        checkout_pullrequest(OPENJDK_PR, "ibmruntimes/openj9-openjdk-jdk${REPO_SUFFIX}")
     }
 
     sh "bash ./get_source.sh"
@@ -186,7 +191,7 @@ def checkout_pullrequest() {
     // Checkout dependent PRs, if any were specified
     if (openj9_bool) {
         dir ('openj9') {
-            checkout_pullrequest(OPENJ9_PR)
+            checkout_pullrequest(OPENJ9_PR, 'eclipse/openj9')
         }
     }
 
@@ -195,25 +200,48 @@ def checkout_pullrequest() {
             if (omr_upstream) {
                 sh "git config remote.origin.url https://github.com/eclipse/omr.git"
             }
-            checkout_pullrequest(OMR_PR)
+            checkout_pullrequest(OMR_PR, 'eclipse/omr')
         }
     }
 }
 
-def checkout_pullrequest(ID) {
+def checkout_pullrequest(ID, REPO) {
     // Determine if we are checking out a PR or a branch
     try {
         if (ID.isNumber()) {
-            sh "git fetch --progress origin +refs/pull/${ID}/merge:refs/remotes/origin/pr/${ID}/merge"
-            sh "git checkout refs/remotes/origin/pr/${ID}/merge"
+            try {
+                fetchRef("pull/${ID}/merge", "pr/${ID}/merge" )
+                checkoutRef ("pr/${ID}/merge")
+            } catch (e) {
+                def JSONFILE = ""
+                def BASEREF = ""
+                def URL = "https://api.github.com/repos/${REPO}/pulls/${ID}"
+                withCredentials([usernamePassword(credentialsId: "${GITHUB_API_CREDENTIALS_ID}", passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+                    JSONFILE = sh returnStdout: true, script: "curl -u ${USER} --pass ${PASS} ${URL}"
+                }
+                def slurper = new groovy.json.JsonSlurper()
+                def jsonResultFile = slurper.parseText(JSONFILE)
+                BASEREF = jsonResultFile.base.ref
+                fetchRef ("heads/${BASEREF}", "${BASEREF}")
+                checkoutRef (BASEREF)
+            }
         } else {
-            sh "git fetch --progress origin +refs/heads/${ID}:refs/remotes/origin/${ID}"
-            sh "git checkout refs/remotes/origin/${ID}"
+            fetchRef ("heads/${ID}", ID)
+            checkoutRef (ID)
         }
     } catch(e) {
         error("Fatal: Unable to checkout '${ID}'. If checking out a branch, please ensure the branch exists and the spelling is correct. If checking out a PullRequest, please ensure the PR is open, unmerged and has no merge conflicts.")
     }
 }
+
+def fetchRef (REF1, REF2) {
+    sh "git fetch --progress origin +refs/${REF1}:refs/remotes/origin/${REF2}"
+}
+
+def checkoutRef (REF) {
+    sh "git checkout refs/remotes/origin/${REF}"
+}
+
 
 def build() {
     stage('Compile') {
