@@ -1369,7 +1369,7 @@ public class VmArgumentTests {
 		/* test specifying the output directory for different types of dumps */
 		File dumpDir = new File(pwd, "dumps");
 		if (dumpDir.exists()) {
-			FileUtilities.deleteRecursive(dumpDir);
+			FileUtilities.deleteRecursive(dumpDir, !isWindows());
 		}
 		dumpDir.mkdir();
 		final String dumpDirPath = dumpDir.getPath();
@@ -1388,7 +1388,7 @@ public class VmArgumentTests {
 			}
 		}
 		
-		FileUtilities.deleteRecursive(dumpDir);
+		FileUtilities.deleteRecursive(dumpDir, !isWindows());
 	}
 
 	/**
