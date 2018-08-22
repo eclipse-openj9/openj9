@@ -82,7 +82,7 @@ RUN cd /root \
 
 # Download and install boot JDK from AdoptOpenJDK
 RUN cd /root \
-  && wget -O bootjdk10.tar.gz https://api.adoptopenjdk.net/openjdk10-openj9/nightly/s390x_linux/latest/binary \
+  && wget -O bootjdk10.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk10?openjdk_impl=openj9&os=linux&arch=s390x&release=latest&type=jdk" \
   && tar -xzf bootjdk10.tar.gz \
   && rm -f bootjdk10.tar.gz \
   && mv $(ls | grep -i jdk) bootjdk10
