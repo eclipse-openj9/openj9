@@ -83,7 +83,7 @@ RUN cd /root \
 
 # Download and install boot JDK from AdoptOpenJDK
 RUN cd /root \
-  && wget -O bootjdk10.tar.gz https://api.adoptopenjdk.net/openjdk10-openj9/nightly/ppc64le_linux/latest/binary \
+  && wget -O bootjdk10.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk10?openjdk_impl=openj9&os=linux&arch=ppc64le&release=latest&type=jdk" \
   && tar -xzf bootjdk10.tar.gz \
   && rm -f bootjdk10.tar.gz \
   && mv $(ls | grep -i jdk) bootjdk10
