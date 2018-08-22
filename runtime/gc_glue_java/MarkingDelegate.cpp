@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -399,24 +399,20 @@ MM_MarkingDelegate::scanClass(MM_EnvironmentBase *env, J9Class *clazz)
 		switch (descriptionBits & J9_CP_DESCRIPTION_MASK) {
 		case J9CPTYPE_STRING:
 		case J9CPTYPE_ANNOTATION_UTF8:
-			slotPtr = (omrobjectptr_t *) &(((J9RAMStringRef *) scanPtr)->stringObject);
-			_markingScheme->markObject(env, *slotPtr);
+			_markingScheme->markObject(env, ((J9RAMStringRef *) scanPtr)->stringObject);
 			break;
 		case J9CPTYPE_METHOD_TYPE:
-			slotPtr = (omrobjectptr_t *) &(((J9RAMMethodTypeRef *) scanPtr)->type);
-			_markingScheme->markObject(env, *slotPtr);
+			_markingScheme->markObject(env, ((J9RAMMethodTypeRef *) scanPtr)->type);
 			break;
 		case J9CPTYPE_METHODHANDLE:
-			slotPtr = (omrobjectptr_t *) &(((J9RAMMethodHandleRef *) scanPtr)->methodHandle);
-			_markingScheme->markObject(env, *slotPtr);
+			_markingScheme->markObject(env, ((J9RAMMethodHandleRef *) scanPtr)->methodHandle);
 			break;
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 		case J9CPTYPE_CLASS:
 			if (isDynamicClassUnloadingEnabled()) {
 				J9Class *clazzPtr = ((J9RAMClassRef *) scanPtr)->value;
 				if (NULL != clazzPtr) {
-					slotPtr = (omrobjectptr_t*) &(clazzPtr->classObject);
-					_markingScheme->markObject(env, *slotPtr);
+					_markingScheme->markObject(env, clazzPtr->classObject);
 				}
 			}
 			break;
@@ -479,23 +475,20 @@ MM_MarkingDelegate::scanClass(MM_EnvironmentBase *env, J9Class *clazz)
 			J9Class** superclassEndScanPtr = superclassScanPtr + classDepth;
 			while (superclassScanPtr < superclassEndScanPtr) {
 				J9Class *clazzPtr = *superclassScanPtr++;
-				slotPtr = (omrobjectptr_t *) &(clazzPtr->classObject);
-				_markingScheme->markObject(env, *slotPtr);
+				_markingScheme->markObject(env, clazzPtr->classObject);
 			}
 		}
 
 		if (NULL != clazz->arrayClass) {
 			J9Class *clazzPtr = clazz->arrayClass;
-			slotPtr = (omrobjectptr_t *) &(clazzPtr->classObject);
-			_markingScheme->markObject(env, *slotPtr);
+			_markingScheme->markObject(env, clazzPtr->classObject);
 		}
 
 		/* Component type and Leaf Component type for indexable */
 		if (_extensions->objectModel.isIndexable(clazz)) {
 			J9ArrayClass *indexableClass = (J9ArrayClass *)clazz;
 			J9Class *clazzPtr = indexableClass->componentType;
-			slotPtr = (omrobjectptr_t *) &(clazzPtr->classObject);
-			_markingScheme->markObject(env, *slotPtr);
+			_markingScheme->markObject(env, clazzPtr->classObject);
 
 			/*
 			 * There is no mandatory need to scan leafComponentType here because this class
@@ -504,8 +497,7 @@ MM_MarkingDelegate::scanClass(MM_EnvironmentBase *env, J9Class *clazz)
 			 * might reduce number of loops to scan
 			 */
 			clazzPtr = indexableClass->leafComponentType;
-			slotPtr = (omrobjectptr_t *) &(clazzPtr->classObject);
-			_markingScheme->markObject(env, *slotPtr);
+			_markingScheme->markObject(env, clazzPtr->classObject);
 		}
 
 		/* ITable */
@@ -513,8 +505,7 @@ MM_MarkingDelegate::scanClass(MM_EnvironmentBase *env, J9Class *clazz)
 			J9ITable *clazzITable = (J9ITable *)clazz->iTable;
 			J9ITable *endITable = (0 != classDepth) ? (J9ITable *)(clazz->superclasses[classDepth - 1]->iTable) : NULL;
 			while (clazzITable != endITable) {
-				slotPtr = (omrobjectptr_t *) &(clazzITable->interfaceClass->classObject);
-				_markingScheme->markObject(env, *slotPtr);
+				_markingScheme->markObject(env, clazzITable->interfaceClass->classObject);
 				clazzITable = clazzITable->next;
 			}
 		}
