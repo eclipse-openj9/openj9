@@ -377,7 +377,7 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
    {
    static bool disableHotFieldPrefetch = (feGetEnv("TR_DisableHotFieldPrefetch") != NULL);
    static bool disableHotFieldNextElementPrefetch  = (feGetEnv("TR_DisableHotFieldNextElementPrefetch") != NULL);
-   static bool disableTreeMapPrefetch  = (feGetEnv("TR_DisableTreeMapPrefetch") != NULL);
+   static bool disableIteratorPrefetch  = (feGetEnv("TR_DisableIteratorPrefetch") != NULL);
    static bool disableStringObjPrefetch = (feGetEnv("TR_DisableStringObjPrefetch") != NULL);
    bool optDisabled = false;
 
@@ -613,8 +613,8 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
       (TR::Compiler->target.is64Bit() && comp()->useCompressedPointers() && node->getOpCodeValue() == TR::iloadi && comp()->getMethodHotness() >= hot))
       {
       TR::Node *firstChild = node->getFirstChild();
-      optDisabled = false;
-      if (!disableTreeMapPrefetch)
+      optDisabled = disableIteratorPrefetch;
+      if (!disableIteratorPrefetch)
          {
          // 32bit
          if (TR::Compiler->target.is32Bit())
@@ -644,7 +644,9 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
             }
          }
 
-      if (!optDisabled)
+      // The use of this prefetching can cause a SEGV when the object array is allocated at the every end of the heap.
+      // The GC will protected against the SEGV by adding a "tail-padding" page, but only when -XAggressive is enabled!
+      if (!optDisabled && comp()->getOption(TR_AggressiveOpts))
          {
          int32_t loopSize = 0;
          int32_t prefetchElementStride = 1;
