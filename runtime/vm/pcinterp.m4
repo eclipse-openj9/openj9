@@ -1,4 +1,4 @@
-dnl Copyright (c) 2017, 2017 IBM Corp. and others
+dnl Copyright (c) 2017, 2018 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -78,6 +78,17 @@ ifdef({SAVE_R13},{
 	staddr r0,J9TR_ELS_jitGlobalStorageBase(r4)
 	addi r0,r1,JIT_FPR_SAVE_OFFSET(0)
 	staddr r0,J9TR_ELS_jitFPRegisterStorageBase(r4)
+ifdef({ASM_J9VM_ENV_DATA64},{
+	laddr r3,J9TR_VMThread_javaVM(J9VMTHREAD)
+	laddr r3,J9TR_JavaVMJitConfig(r3)
+	cmpliaddr r3,0
+	beq .L_noJIT
+	laddr r3,J9TR_JitConfig_pseudoTOC(r3)
+	staddr r3,JIT_GPR_SAVE_SLOT(16)
+.L_noJIT:
+})
+	li r3,-1
+	staddr r3,JIT_GPR_SAVE_SLOT(17)
 .L_cInterpOnCStack:
 	INIT_GOT(vmTOC)
 	mr r3,J9VMTHREAD
@@ -89,11 +100,6 @@ ifdef({SAVE_R13},{
 	RESTORE_PRESERVED_REGS
 	RESTORE_LR
 	SWITCH_TO_JAVA_STACK
-ifdef({ASM_J9VM_ENV_DATA64},{
-	laddr r16,J9TR_VMThread_javaVM(J9VMTHREAD)
-	laddr r16,J9TR_JavaVMJitConfig(r16)
-	laddr r16,J9TR_JitConfig_pseudoTOC(r16)
-})
 	BRANCH_VIA_VMTHREAD(J9TR_VMThread_tempSlot)
 .L_cInterpExit:
 	laddr r0,LR_SAVE_OFFSET(r1)
