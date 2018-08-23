@@ -43,20 +43,20 @@ import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.JavaVersionHelper;
 
 /**
- * FindAllReads command displays all modules that read the target module
+ * FindAllReads command displays all modules that the target module requires
  * 
  * Example:
  *    !findallreads 0x00000130550DBB58
  * Example output: 
  *    java.xml    !j9module 0x000001305F46BCB8
  *    java.base    !j9module 0x00000130550C7E88
- *    Found 2 module(s) that read(s) from !j9module    0x00000130550DBB58
+ *    Found 2 module(s) that is/are required by !j9module    0x00000130550DBB58
  */
 public class FindAllReadsCommand extends Command{
 
 	public FindAllReadsCommand()
 	{
-		addCommand("findallreads", "<targetModuleAddress>", "find all modules that read target module");
+		addCommand("findallreads", "<targetModuleAddress>", "find all modules that the target module requires");
 	}
 
 	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException {
@@ -95,7 +95,7 @@ public class FindAllReadsCommand extends Command{
 						}
 					}
 				}
-				out.printf("Found %d module(s) that read(s) from !j9module %s%n", hitCount,
+				out.printf("Found %d module(s) that is/are required by !j9module %s%n", hitCount,
 						searchModuleAddress);
 			}
 		} catch (CorruptDataException e) {

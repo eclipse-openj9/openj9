@@ -40,7 +40,7 @@ import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.JavaVersionHelper;
 
 /**
- * DumpModuleReads command displays all modules that the target module reads
+ * DumpModuleReads command displays all modules that require the target module
  * 
  * Example:
  * !dumpmodulereads 0x00000130550C7E88
@@ -48,13 +48,13 @@ import com.ibm.j9ddr.vm29.tools.ddrinteractive.JavaVersionHelper;
  * !j9module 0x000001305F46DB38
  * !j9module 0x00000130550DBB58
  * !j9module 0x000001305F469EA8
- * .....(A list of every module read by the target module)
+ * .....(A list of every module that requires the target module)
  */
 public class DumpModuleReadsCommand extends Command{
 
 	public DumpModuleReadsCommand()
 	{
-		addCommand("dumpmodulereads", "<targetModuleAddress>", "display all modules read by the target module");
+		addCommand("dumpmodulereads", "<targetModuleAddress>", "displays all modules that require the target module");
 	}
 
 	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException {

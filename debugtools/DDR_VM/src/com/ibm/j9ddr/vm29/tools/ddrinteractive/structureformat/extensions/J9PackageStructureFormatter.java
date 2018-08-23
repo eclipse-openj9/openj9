@@ -56,7 +56,7 @@ public class J9PackageStructureFormatter extends BaseStructureFormatter
 			} catch (CorruptDataException e) {
 				// Do nothing
 			}
-			out.println("To dump all modules that a package is exported to, use !dumpmoduleexports "
+			out.println("To dump all modules that a package is exported to, use !dumpmoduledirectedexports "
 					+ packagePtr.getHexAddress());
 		}
 		

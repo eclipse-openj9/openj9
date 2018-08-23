@@ -60,8 +60,8 @@ public class J9ModuleStructureFormatter extends BaseStructureFormatter
 				// Do nothing
 			}
 			out.println("To display all j9packages exported by a module, use !dumpmoduleexports " + moduleAddress);
-			out.println("To display all modules that the target module reads, use !dumpmodulereads " + moduleAddress);
-			out.println("To find all modules that read a module, use !findallreads " + moduleAddress);
+			out.println("To display all modules that require the target module, use !dumpmodulereads " + moduleAddress);
+			out.println("To find all modules that the target module requires, use !findallreads " + moduleAddress);
 			out.println("To find all loaded classes in a module, use !dumpallclassesinmodule " + moduleAddress);
 		}
 

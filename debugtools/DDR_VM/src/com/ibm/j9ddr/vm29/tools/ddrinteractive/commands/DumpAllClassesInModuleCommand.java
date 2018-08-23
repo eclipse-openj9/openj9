@@ -37,12 +37,11 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ModulePointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
-import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.JavaVersionHelper;
 
 /**
- * DumpModuleExports command dumps all modules that the package is exported to
+ * DumpAllClassesInModule command dumps all loaded classes in the target module
  * 
  * Example:
  *    !dumpallclassesinmodule 0x000001305F471528
