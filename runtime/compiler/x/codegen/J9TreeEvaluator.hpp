@@ -50,9 +50,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *monexitfenceEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *asynccheckEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *instanceofEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *checkcastEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *checkcastAndNULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *newEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *multianewArrayEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *arraylengthEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -90,9 +87,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static void generateWrtbarForArrayCopy(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *VMarrayStoreCheckArrayCopyEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static bool VMinlineCallEvaluator(TR::Node *node, bool isIndirect, TR::CodeGenerator *cg);
-   static TR::Register *VMinstanceOfEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *VMcheckcastEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *VMifInstanceOfEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *VMmonentEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *VMmonexitEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg);

@@ -22,7 +22,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/x/codegen/BinaryCommutativeAnalyser.cpp \
     omr/compiler/x/codegen/BinaryEvaluator.cpp \
     omr/compiler/x/codegen/CompareAnalyser.cpp \
-    omr/compiler/x/codegen/ConstantDataSnippet.cpp \
     omr/compiler/x/codegen/ControlFlowEvaluator.cpp \
     omr/compiler/x/codegen/DataSnippet.cpp \
     omr/compiler/x/codegen/DivideCheckSnippet.cpp \
