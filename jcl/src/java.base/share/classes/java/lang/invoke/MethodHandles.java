@@ -840,14 +840,21 @@ public class MethodHandles {
 		static MethodHandle adaptInterfaceLookupsOfObjectMethodsIfRequired(MethodHandle handle, Class<?> clazz, String methodName, MethodType type) throws NoSuchMethodException, IllegalAccessException {
 			assert handle instanceof InterfaceHandle;
 			/* Object methods need to be treated specially if the interface hasn't declared them itself */
-			if (Object.class == handle.getDefc()) {
+			Class<?> handleClass = handle.getDefc();
+			if (Object.class == handleClass) {
 				if (!Modifier.isPublic(handle.getModifiers())) {
 					/* Interfaces only inherit *public* methods from Object */
 					throw new NoSuchMethodException(clazz + "." + methodName + type); //$NON-NLS-1$					
 				}
 				handle = new VirtualHandle(new DirectHandle(Object.class, methodName, type, MethodHandle.KIND_SPECIAL, Object.class));
 				handle = handle.cloneWithNewType(handle.type.changeParameterType(0, clazz));
+			/*[IF Java11]*/
+			} else if (!Modifier.isPublic(handle.getModifiers())) {
+				handle = new DirectHandle(handleClass, methodName, type, MethodHandle.KIND_SPECIAL, handleClass, true);
+				handle = handle.cloneWithNewType(handle.type.changeParameterType(0, clazz));
+			/*[ENDIF] Java11*/
 			}
+
 			return handle;
 		}
 

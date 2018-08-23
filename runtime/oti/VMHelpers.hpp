@@ -1040,52 +1040,6 @@ done:
 	}
 
 	/**
-	 * Determine the vTable index for an interface send to a particular
-	 * receiver.
-	 *
-	 * @param currentThread[in] the current J9VMThread
-	 * @param receiverClass[in] the J9Class of the receiver
-	 * @param interfaceClass[in] the J9Class of the interface
-	 * @param iTableIndex[in] the iTable index
-	 * @param ramConstantPool[in] the RAM constant pool of the method performing the invoke
-	 * @param cpIndex[in] the constant pool index of the invokeinterface
-	 *
-	 * @returns the vTable index (0 indicates the mapping failed)
-	 */
-	static VMINLINE UDATA
-	convertITableIndexToVTableOffset(J9VMThread *currentThread, J9Class *receiverClass, J9Class *interfaceClass, UDATA iTableIndex, J9ConstantPool *ramConstantPool, UDATA cpIndex)
-	{
-		UDATA vTableOffset = 0;
-		J9ITable * iTable = receiverClass->lastITable;
-		if (interfaceClass == iTable->interfaceClass) {
-			goto foundITable;
-		}
-		
-		iTable = (J9ITable*)receiverClass->iTable;
-		while (NULL != iTable) {
-			if (interfaceClass == iTable->interfaceClass) {
-				receiverClass->lastITable = iTable;
-foundITable:
-				vTableOffset = ((UDATA*)(iTable + 1))[iTableIndex];
-				goto done;
-			}
-			iTable = iTable->next;
-		}
-		if (J9_ARE_NO_BITS_SET(interfaceClass->romClass->modifiers, J9AccInterface)) {
-			/* Must be able to call java/lang/Object methods on interfaces (bugzilla 97275) */
-			J9Method *method = (J9Method*)J9_VM_FUNCTION(currentThread, javaLookupMethod)(
-				currentThread,
-				receiverClass,
-				J9ROMMETHODREF_NAMEANDSIGNATURE(((J9ROMMethodRef*)ramConstantPool->romConstantPool + cpIndex)),
-				NULL,
-				J9_LOOK_VIRTUAL);
-			vTableOffset = J9_VM_FUNCTION(currentThread, getVTableOffsetForMethod)(method, receiverClass, currentThread);
-		}
-done:
-		return vTableOffset;
-	}
-
-	/**
 	 * Determine if a method is being traced via method trace.
 	 *
 	 * @param vm[in] the J9JavaVM

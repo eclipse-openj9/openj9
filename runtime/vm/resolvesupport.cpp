@@ -31,6 +31,7 @@
 #include "ut_j9vm.h"
 #include "rommeth.h"
 #include "stackwalk.h"
+#include "j9modifiers_api.h"
 #include "VMHelpers.hpp"
 
 #define MAX_STACK_SLOTS 255
@@ -1045,16 +1046,52 @@ resolveInterfaceMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA
 			J9Class *methodClass = J9_CLASS_FROM_METHOD(method);
 			UDATA methodIndex = 0;
 			UDATA oldArgCount = ramInterfaceMethodRef->methodIndexAndArgCount & 255;
-			/* Object methods may be invoked via invokeinterface.  In that case, use Object
-			 * for the interfaceClass in the ref.  The methodIndex value doesn't matter as
-			 * Object will never be found in an iTable.
-			 */
+			UDATA tagBits = 0;
+			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 			if (J9_ARE_ANY_BITS_SET(methodClass->romClass->modifiers, J9_JAVA_INTERFACE)) {
-				methodIndex = getITableIndexForMethod(method, interfaceClass) << 8;
+				/* Resolved method is in an interface class */
+				if (J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccPrivate)) {
+					/* Resolved method is a private interface method which does not appear in the
+					 * vTable or iTable.  Use the index into ramMethods in interfaceClass. This is
+					 * only allowed in JDK11 and beyond.
+					 */
+					if (J2SE_VERSION(vm) < J2SE_V11) {
+						setIllegalAccessErrorNonPublicInvokeInterface(vmStruct, method);
+						goto done;
+					}
+					methodIndex = (method - methodClass->ramMethods);
+					tagBits |= J9_ITABLE_INDEX_METHOD_INDEX;
+				} else {
+					/* Resolved method is a public interface method which appears in the
+					 * vTable and iTable.  Use the iTable index in interfaceClass.
+					 */
+					methodIndex = getITableIndexForMethod(method, interfaceClass);
+				}
 			} else {
-				interfaceClass = methodClass;
+				/* Resolved method is in Object */
+				Assert_VM_true(methodClass == J9VMJAVALANGOBJECT_OR_NULL(vm));
+				/* Interfaces inherit only public methods from Object */
+				if (J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccPublic)) {
+					setIllegalAccessErrorNonPublicInvokeInterface(vmStruct, method);
+					goto done;
+				}
+				if (J9ROMMETHOD_HAS_VTABLE(romMethod)) {
+					/* Resolved method is in the vTable, so it must be invoked via the
+					 * receiver's vTable.
+					 */
+					methodIndex = getVTableOffsetForMethod(method, methodClass, vmStruct);
+				} else {
+					/* Resolved method is not in the vTable, so invoke it directly
+					 * via the index into ramMethods in Object.
+					 */
+					methodIndex = (method - methodClass->ramMethods);
+					tagBits |= J9_ITABLE_INDEX_METHOD_INDEX;
+				}
+				tagBits |= J9_ITABLE_INDEX_OBJECT;
 			}
-			methodIndex |= oldArgCount;
+			methodIndex <<= 8;
+			Assert_VM_true(J9_ARE_NO_BITS_SET(methodIndex, J9_ITABLE_INDEX_TAG_BITS));
+			methodIndex = methodIndex | tagBits | oldArgCount;
 			ramCPEntry->methodIndexAndArgCount = methodIndex;
 			/* interfaceClass is used to indicate resolved. Make sure to write it last */
 			issueWriteBarrier();
