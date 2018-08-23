@@ -84,6 +84,7 @@
 			<subset>SE100</subset>
 			<subset>SE110</subset>
 		</subsets>
+		<disabled>https://github.com/eclipse/openj9/issues/2644</disabled>
 	</test>
 
 	<test>
