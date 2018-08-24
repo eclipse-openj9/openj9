@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -155,6 +155,19 @@ getJ9CfrErrorDetailMessageForMethod(J9PortLibrary* portLib, J9CfrError* error, c
 
 void
 buildError(J9CfrError * errorStruct, UDATA code, UDATA action, UDATA offset);
+
+/**
+ * Set up bootstrap method errors if the verification error occurs.
+ * @param[in] errorStruct - pointer to J9CfrError
+ * @param[in] code - the error code
+ * @param[in] action - the errorAction
+ * @param[in] offset - the errorOffset
+ * @param[in] bsmIndex - the index of the bootstrap method array
+ * @param[in] bsmArgsIndex - the constant pool index stored in the bootstrap method arguments.
+ * @param[in] cpType - the constant pool type value
+ */
+void
+buildBootstrapMethodError(J9CfrError * errorStruct, UDATA code, UDATA action, UDATA offset, I_32 bsmIndex, U_32 bsmArgsIndex, U_32 cpType);
 
 /**
  * Set up method errors if the verification error occurs.
