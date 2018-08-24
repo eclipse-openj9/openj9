@@ -134,6 +134,7 @@
 	<test id="FindStore.BuildVerify" timeout="$TMOUT$" runPath=".">
 		<command>$RUN_SCRIPT$ .$PATHSEP$FindStore$PATHSEP$buildVerify$SCRIPT_SUFFIX$ $JAVAC_DIR$ ..$PATHSEP$.$NETUSEDIR$</command>
 		<output type="success" caseSensitive="yes" regex="no">A.jar</output>
+		<output type="failure" caseSensitive="no" regex="no">0 file(s) copied</output>
 		<output type="failure" caseSensitive="yes" regex="no">Usage:</output>
 		<output type="failure" caseSensitive="yes" regex="no">no such</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
