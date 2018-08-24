@@ -1774,15 +1774,14 @@ wrap_stringPrimitiveCallback(J9JavaVM * vm, J9JVMTIHeapData * iteratorData)
 	j9object_t bytes = J9VMJAVALANGSTRING_VALUE(iteratorData->currentThread, iteratorData->object);
 	UDATA offset = 0;
 
-	/* Get the Unicode string data */
-
-	stringLength = J9VMJAVALANGSTRING_LENGTH(iteratorData->currentThread, iteratorData->object);
-	
 	/* Ignore uninitialized string */
 	if (NULL == bytes) {
 		return JVMTI_ITERATION_CONTINUE;
 	}
 
+	/* Get the Unicode string data */
+
+	stringLength = J9VMJAVALANGSTRING_LENGTH(iteratorData->currentThread, iteratorData->object);
 	stringValue = j9mem_allocate_memory(stringLength * sizeof(jchar), J9MEM_CATEGORY_JVMTI);
 	if (NULL == stringValue) {
 		JVMTI_HEAP_ERROR(JVMTI_ERROR_OUT_OF_MEMORY);

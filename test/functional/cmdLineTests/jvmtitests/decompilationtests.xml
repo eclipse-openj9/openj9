@@ -50,4 +50,14 @@
 		<return type="success" value="0"/>
 	</test>
 
+	<test id="decomp004">
+		<command>$EXE$ $JVM_OPTS$ -Xjit:count=0,limit={*.jit*} $AGENTLIB$=test:decomp004 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+	<test id="decomp004-mimic">
+		<command>$EXE$ $JVM_OPTS$ -Xjit:count=0,limit={*.jit*},mimicinterpreterframeshape $AGENTLIB$=test:decomp004 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
 </suite>

@@ -103,6 +103,7 @@ static jvmtiTest jvmtiTestList[] =
 	{ "decomp001", decomp001, "com.ibm.jvmti.tests.decompResolveFrame.decomp001",             "Decompile method resolve frame with stacked args" },
 	{ "decomp002", decomp002, "com.ibm.jvmti.tests.decompResolveFrame.decomp002",             "Intermittent single stepping throught some code" },
 	{ "decomp003", decomp003, "com.ibm.jvmti.tests.decompResolveFrame.decomp003",             "Decompile at exception catch at various levels of inlining" },
+	{ "decomp004", decomp004, "com.ibm.jvmti.tests.decompResolveFrame.decomp004",             "Decompile a synchronized method" },
 	{ "vmd001",    vmd001,    "com.ibm.jvmti.tests.vmDump.vmd001",                            "VM Dump tests" },
 	{ "glc001",    glc001,    "com.ibm.jvmti.tests.getLoadedClasses.glc001",                  "Verify correct return of all relevant loaded classes" },
 	{ "rtc001",    rtc001,    "com.ibm.jvmti.tests.retransformClasses.rtc001",                "RetransformClasses on a class loaded by sun.misc.Unsafe" },
