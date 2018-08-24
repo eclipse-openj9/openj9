@@ -20,10 +20,6 @@ rem
 rem SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 rem
 
-# ensure the new jar files are not created in the same second as the originals,
-# otherwise the shared cache will not be able to determine the jar files have
-# been modified
-sleep 2
 cd FindStore
 del /Q *.jar
 del /Q %2\I.jar %2\J.jar %2\K.jar %2\L.jar
@@ -32,6 +28,10 @@ del /Q N_Classes\jnurlcldr\shared\findstore\*.class
 del /Q O_Classes\jnurlcldr\shared\findstore\*.class
 del /Q P_Classes\jnurlcldr\shared\findstore\*.class
 cd VerifyClasses
+# ensure the new jar files are not created in the same second as the originals,
+# otherwise the shared cache will not be able to determine the jar files have
+# been modified
+sleep 2
 %1\javac jnurlcldr\shared\findstore\*.java
 %1\jar -cvf ..\A.jar jnurlcldr\shared\findstore\A*.class
 %1\jar -cvf ..\B.jar jnurlcldr\shared\findstore\B*.class
