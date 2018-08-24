@@ -3685,8 +3685,9 @@ inline void generateInlinedCheckCastOrInstanceOfForClass(TR::Node* node, TR_Opaq
    if (!fej9->isAbstractClass(clazz) || node->getOpCodeValue() == TR::icall/*TR_checkAssignable*/)
       {
       // For instanceof and checkcast, LHS is obtained from an instance, which cannot be abstract or interface;
-      // however, LHS for TR_checkAssignable may be abstract or interface as it may be an arbitrary class;
-      // therefore, equality test can be safely skipped for instanceof and checkcast.
+      // therefore, equality test can be safely skipped for instanceof and checkcast when RHS is abstract.
+      // However, LHS for TR_checkAssignable may be abstract or interface as it may be an arbitrary class, and
+      // hence equality test is always needed.
       if (use64BitClasses)
          {
          generateRegMemInstruction(CMP8RegMem, node, j9class, generateX86MemoryReference(clazzData, cg), cg);
