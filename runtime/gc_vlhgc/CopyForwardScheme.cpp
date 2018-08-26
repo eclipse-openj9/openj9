@@ -1676,8 +1676,15 @@ MM_CopyForwardScheme::mergeGCStats(MM_EnvironmentVLHGC *env)
 		}
 
 		if (0 != totalCopiedBytes) {
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+			U_32 &atomicLockWord = persistentStats[compactGroupNumber]._atomicLockWord;
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
 			MM_AtomicOperations::add(&persistentStats[compactGroupNumber]._measuredBytesCopiedToGroupDuringCopyForward, totalCopiedBytes);
-			MM_AtomicOperations::addU64(&persistentStats[compactGroupNumber]._measuredAllocationAgeToGroupDuringCopyForward, compactGroup->_allocationAge);
+			MM_AtomicOperations::addU64(&persistentStats[compactGroupNumber]._measuredAllocationAgeToGroupDuringCopyForward, compactGroup->_allocationAge
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+			                            , atomicLockWord
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
+                                                   );
 		}
 
 		if (0 != (totalCopiedBytes + compactGroup->_discardedBytes)) {

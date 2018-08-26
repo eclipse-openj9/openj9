@@ -5445,6 +5445,9 @@ typedef struct J9JavaVM {
 #endif /* WIN32 */
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 	omrthread_monitor_t constantDynamicMutex;
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+	U_32 atomicLockWord;
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
 } J9JavaVM;
 
 #define J9VM_PHASE_NOT_STARTUP  2

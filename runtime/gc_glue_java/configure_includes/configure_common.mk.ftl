@@ -32,6 +32,9 @@ CONFIGURE_ARGS += \
   --enable-OMR_THREAD \
   --enable-OMR_OMRSIG \
   --enable-tracegen \
+<#if uma.spec.flags.env_64bit_capable.enabled>
+  --enable-OMR_ENV_64BIT_CAPABLE \
+</#if>
   --enable-OMR_GC_ARRAYLETS \
   --enable-OMR_GC_DYNAMIC_CLASS_UNLOADING \
   --enable-OMR_GC_MODRON_COMPACTION \

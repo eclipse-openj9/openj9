@@ -339,6 +339,9 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 #if defined(J9VM_JIT_NEW_DUAL_HELPERS)
 			writeConstant(OMRPORTLIB, fd, "ASM_J9VM_JIT_NEW_DUAL_HELPERS", 1) |
 #endif /* J9VM_JIT_NEW_DUAL_HELPERS */
+#if defined(J9VM_ENV_64BIT_CAPABLE)
+			writeConstant(OMRPORTLIB, fd, "ASM_J9VM_ENV_64BIT_CAPABLE", 1) |
+#endif /* J9VM_ENV_64BIT_CAPABLE */
 #if defined(J9VM_ENV_LITTLE_ENDIAN)
 			writeConstant(OMRPORTLIB, fd, "ASM_J9VM_ENV_LITTLE_ENDIAN", 1) |
 #endif /* J9VM_ENV_LITTLE_ENDIAN */

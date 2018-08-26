@@ -843,9 +843,16 @@ public:
 		return (1 == vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_mixedObjectCompareAndSwapLong(vmThread, destObject, destOffset, compareValue, swapValue));
 #elif defined(J9VM_GC_COMBINATION_SPEC) 
 		U_64 *actualAddress = J9OAB_MIXEDOBJECT_EA(destObject, destOffset, U_64);
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+		U_32 &atomicLockWord = vmThread->javaVM->atomicLockWord;
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
 
 		protectIfVolatileBefore(isVolatile, false);
-		bool result = compareAndSwapU64Impl(vmThread, actualAddress, compareValue, swapValue, isVolatile);
+		bool result = compareAndSwapU64Impl(vmThread, actualAddress, compareValue, swapValue, isVolatile
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+		                                    , atomicLockWord
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
+                                                   );
 		protectIfVolatileAfter(isVolatile, false);
 
 		return result;
@@ -875,9 +882,16 @@ public:
 		return vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_mixedObjectCompareAndExchangeLong(vmThread, destObject, destOffset, compareValue, swapValue);
 #elif defined(J9VM_GC_COMBINATION_SPEC)
 		U_64 *actualAddress = J9OAB_MIXEDOBJECT_EA(destObject, destOffset, U_64);
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+		U_32 &atomicLockWord = vmThread->javaVM->atomicLockWord;
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
 
 		protectIfVolatileBefore(isVolatile, false);
-		U_64 result = compareAndExchangeU64Impl(vmThread, actualAddress, compareValue, swapValue, isVolatile);
+		U_64 result = compareAndExchangeU64Impl( vmThread, actualAddress, compareValue, swapValue, isVolatile
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+		                                         , atomicLockWord
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
+                                                       );
 		protectIfVolatileAfter(isVolatile, false);
 
 		return result;
@@ -1216,8 +1230,16 @@ public:
 		return (1 == vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_staticCompareAndSwapLong(vmThread, clazz, destAddress, compareValue, swapValue));
 #elif defined(J9VM_GC_COMBINATION_SPEC) 
 
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+		U_32 &atomicLockWord = vmThread->javaVM->atomicLockWord;
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
+
 		protectIfVolatileBefore(isVolatile, false);
-		bool result = compareAndSwapU64Impl(vmThread, destAddress, compareValue, swapValue, isVolatile);
+		bool result = compareAndSwapU64Impl(vmThread, destAddress, compareValue, swapValue, isVolatile
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+		                                    , atomicLockWord
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
+                                                   );
 		protectIfVolatileAfter(isVolatile, false);
 
 		return result;
@@ -1247,8 +1269,16 @@ public:
 		return (1 == vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_staticCompareAndExchangeLong(vmThread, clazz, destAddress, compareValue, swapValue));
 #elif defined(J9VM_GC_COMBINATION_SPEC)
 
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+		U_32 &atomicLockWord = vmThread->javaVM->atomicLockWord;
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
+
 		protectIfVolatileBefore(isVolatile, false);
-		U_64 result = compareAndExchangeU64Impl(vmThread, destAddress, compareValue, swapValue, isVolatile);
+		U_64 result = compareAndExchangeU64Impl(vmThread, destAddress, compareValue, swapValue, isVolatile
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+		                                        , atomicLockWord
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
+                                                       );
 		protectIfVolatileAfter(isVolatile, false);
 
 		return result;
@@ -1760,9 +1790,16 @@ public:
 	{
 #if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER) || defined(J9VM_GC_COMBINATION_SPEC) 
 		U_64 *actualAddress = J9JAVAARRAY_EA(vmThread, destArray, destIndex, U_64);
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+		U_32 &atomicLockWord = vmThread->javaVM->atomicLockWord;
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
 
 		protectIfVolatileBefore(isVolatile, false);
-		bool result = compareAndSwapU64Impl(vmThread, actualAddress, compareValue, swapValue, isVolatile);
+		bool result = compareAndSwapU64Impl(vmThread, actualAddress, compareValue, swapValue, isVolatile
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+		                                    , atomicLockWord
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
+                                                   );
 		protectIfVolatileAfter(isVolatile, false);
 
 		return result;
@@ -1790,9 +1827,16 @@ public:
 	{
 #if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER) || defined(J9VM_GC_COMBINATION_SPEC)
 		U_64 *actualAddress = J9JAVAARRAY_EA(vmThread, destArray, destIndex, U_64);
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+		U_32 &atomicLockWord = vmThread->javaVM->atomicLockWord;
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
 
 		protectIfVolatileBefore(isVolatile, false);
-		U_64 result = compareAndExchangeU64Impl(vmThread, actualAddress, compareValue, swapValue, isVolatile);
+		U_64 result = compareAndExchangeU64Impl(vmThread, actualAddress, compareValue, swapValue, isVolatile
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+		                                        , atomicLockWord
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
+                                                       );
 		protectIfVolatileAfter(isVolatile, false);
 
 		return result;
@@ -2428,15 +2472,31 @@ protected:
 	}
 
 	VMINLINE bool
-	compareAndSwapU64Impl(J9VMThread *vmThread, U_64 *destAddress, U_64 compareValue, U_64 swapValue, bool isVolatile)
+	compareAndSwapU64Impl(J9VMThread *vmThread, U_64 *destAddress, U_64 compareValue, U_64 swapValue, bool isVolatile
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+	                      , uint32_t &lock
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
+                             )
 	{
-		return (compareValue == VM_AtomicSupport::lockCompareExchangeU64(destAddress, compareValue, swapValue));
+		return (compareValue == VM_AtomicSupport::lockCompareExchangeU64(destAddress, compareValue, swapValue
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+		                                                                 , lock
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
+                                                                                ));
 	}
 
 	VMINLINE U_64
-	compareAndExchangeU64Impl(J9VMThread *vmThread, U_64 *destAddress, U_64 compareValue, U_64 swapValue, bool isVolatile)
+	compareAndExchangeU64Impl(J9VMThread *vmThread, U_64 *destAddress, U_64 compareValue, U_64 swapValue, bool isVolatile
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+	                          , uint32_t &lock
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
+                                 )
 	{
-		return VM_AtomicSupport::lockCompareExchangeU64(destAddress, compareValue, swapValue);
+		return VM_AtomicSupport::lockCompareExchangeU64(destAddress, compareValue, swapValue
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+		                                                , lock
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
+                                                               );
 	}
 
 	/**

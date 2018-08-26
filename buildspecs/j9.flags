@@ -203,6 +203,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<description>Indicates that the memleaks test has been excluded, as a result the system may be leaking and repeated calls to CreateJavaVM()//DestroyJavaVM() may run out of memory.</description>
 		<ifRemoved></ifRemoved>
 	</flag>
+	<flag id="env_64bit_capable">
+		<description>Builds a 32-bit VM that will use 64-bit instructions and will only run on 64-bit capable hardware.</description>
+		<ifRemoved>Builds a 32-bit VM that will only use 32-bit instructions and will run on 32-bit hardware</ifRemoved>
+	</flag>
 	<flag id="env_advanceToolchain">
 		<description>Controls if this platform builds using the advance toolchain.</description>
 		<ifRemoved>No advance toolchain support</ifRemoved>

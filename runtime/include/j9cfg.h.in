@@ -85,6 +85,7 @@ extern "C" {
 #cmakedefine J9VM_BUILD_VM_CONTINUOUS
 #cmakedefine J9VM_COMPILER_PROMOTION
 #cmakedefine J9VM_DANGER_MEMLEAKS_BROKEN
+#cmakedefine J9VM_ENV_64BIT_CAPABLE
 #cmakedefine J9VM_ENV_ADVANCE_TOOLCHAIN
 #cmakedefine J9VM_ENV_CALL_VIA_TABLE
 #cmakedefine J9VM_ENV_DATA64

@@ -54,6 +54,9 @@ MM_HeapRegionDescriptorVLHGC::MM_HeapRegionDescriptorVLHGC(MM_EnvironmentVLHGC *
 	,_rememberedSetCardList()
 	,_rsclBufferPool(NULL)
 	,_dynamicSelectionNext(NULL)
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+	,_atomicLockWord(0)
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
 {
 	_typeId = __FUNCTION__;
 }

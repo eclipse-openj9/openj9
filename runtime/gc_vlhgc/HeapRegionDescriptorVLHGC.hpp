@@ -93,6 +93,9 @@ private:
 	U_64 _upperAgeBound; /**< highest possible age of any object in this region */
 	double _allocationAgeSizeProduct; /**< sum of (age * size) products for each object in the region. used for age merging math in surivovor regions */
 	UDATA _age; /**< logical allocation age (number of GC cycles since the last attempted allocation) */
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+	uint32_t _atomicLockWord;
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
 	MM_RememberedSetCardList _rememberedSetCardList; /**< remembered set card list */
 	MM_RememberedSetCard *_rsclBufferPool;			 /**< RSCL Buffer pool owned by this region (Buffers can still be shared among other regions) */
 	
@@ -142,7 +145,11 @@ public:
 	 */
 	MMINLINE double atomicIncrementAllocationAgeSizeProduct(double allocationAgeSizeProduct)
 	{
-		 return MM_AtomicOperations::addDouble(&_allocationAgeSizeProduct, allocationAgeSizeProduct);
+		return MM_AtomicOperations::addDouble(&_allocationAgeSizeProduct, allocationAgeSizeProduct
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+		                                      , _atomicLockWord
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
+                                                      );
 	}
 
 	/**

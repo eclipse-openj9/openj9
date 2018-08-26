@@ -573,7 +573,11 @@ public:
 		bool result = false;
 		
 		if (NULL == object) {
-			result = (compareValue == VM_AtomicSupport::lockCompareExchangeU64((U_64*)offset, compareValue, swapValue));
+			result = (compareValue == VM_AtomicSupport::lockCompareExchangeU64((U_64*)offset, compareValue, swapValue
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+		                                                                           , currentThread->javaVM->atomicLockWord
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
+                                                                                          ));
 		} else {
 			if (VM_VMHelpers::objectIsArray(currentThread, object)) {
 				/* Array access */
@@ -715,7 +719,11 @@ instanceField:
 		U_64 result = 0;
 
 		if (NULL == object) {
-			result = VM_AtomicSupport::lockCompareExchangeU64((U_64*)offset, compareValue, swapValue);
+			result = VM_AtomicSupport::lockCompareExchangeU64((U_64*)offset, compareValue, swapValue
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+		                                                           , currentThread->javaVM->atomicLockWord
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
+                                                                         );
 		} else {
 			if (VM_VMHelpers::objectIsArray(currentThread, object)) {
 				/* Array access */

@@ -1613,9 +1613,16 @@ bool
 MM_ObjectAccessBarrier::mixedObjectCompareAndSwapLong(J9VMThread *vmThread, J9Object *destObject, UDATA offset, U_64 compareValue, U_64 swapValue)
 {	
 	U_64 *actualDestAddress = J9OAB_MIXEDOBJECT_EA(destObject, offset, U_64);
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+	U_32 &atomicLockWord = vmThread->javaVM->atomicLockWord;
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
 
 	protectIfVolatileBefore(vmThread, true, false, true);
-	bool result = (compareValue == MM_AtomicOperations::lockCompareExchangeU64(actualDestAddress, compareValue, swapValue));
+	bool result = (compareValue == MM_AtomicOperations::lockCompareExchangeU64(actualDestAddress, compareValue, swapValue
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+		                                                                   , atomicLockWord
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
+                                                                                  ));
 	protectIfVolatileAfter(vmThread, true, false, true);
 	return result;
 }
@@ -1630,8 +1637,15 @@ MM_ObjectAccessBarrier::mixedObjectCompareAndSwapLong(J9VMThread *vmThread, J9Ob
 bool 
 MM_ObjectAccessBarrier::staticCompareAndSwapLong(J9VMThread *vmThread, J9Class *destClass, U_64 *destAddress, U_64 compareValue, U_64 swapValue)
 {	
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+	U_32 &atomicLockWord = vmThread->javaVM->atomicLockWord;
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
 	protectIfVolatileBefore(vmThread, true, false, true);
-	bool result = (compareValue == MM_AtomicOperations::lockCompareExchangeU64(destAddress, compareValue, swapValue));
+	bool result = (compareValue == MM_AtomicOperations::lockCompareExchangeU64(destAddress, compareValue, swapValue
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+		                                                                   , atomicLockWord
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
+                                                                                  ));
 	protectIfVolatileAfter(vmThread, true, false, true);
 	return result;
 }
@@ -1762,9 +1776,16 @@ U_64
 MM_ObjectAccessBarrier::mixedObjectCompareAndExchangeLong(J9VMThread *vmThread, J9Object *destObject, UDATA offset, U_64 compareValue, U_64 swapValue)
 {
 	U_64 *actualDestAddress = J9OAB_MIXEDOBJECT_EA(destObject, offset, U_64);
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+	U_32 &atomicLockWord = vmThread->javaVM->atomicLockWord;
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
 
 	protectIfVolatileBefore(vmThread, true, false, true);
-	U_64 result = MM_AtomicOperations::lockCompareExchangeU64(actualDestAddress, compareValue, swapValue);
+	U_64 result = MM_AtomicOperations::lockCompareExchangeU64(actualDestAddress, compareValue, swapValue
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+		                                                  , atomicLockWord
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
+                                                                 );
 	protectIfVolatileAfter(vmThread, true, false, true);
 	return result;
 }
@@ -1780,8 +1801,15 @@ MM_ObjectAccessBarrier::mixedObjectCompareAndExchangeLong(J9VMThread *vmThread, 
 U_64
 MM_ObjectAccessBarrier::staticCompareAndExchangeLong(J9VMThread *vmThread, J9Class *destClass, U_64 *destAddress, U_64 compareValue, U_64 swapValue)
 {
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+	U_32 &atomicLockWord = vmThread->javaVM->atomicLockWord;
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
 	protectIfVolatileBefore(vmThread, true, false, true);
-	U_64 result = MM_AtomicOperations::lockCompareExchangeU64(destAddress, compareValue, swapValue);
+	U_64 result = MM_AtomicOperations::lockCompareExchangeU64(destAddress, compareValue, swapValue
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+		                                                  , atomicLockWord
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
+                                                                 );
 	protectIfVolatileAfter(vmThread, true, false, true);
 	return result;
 }

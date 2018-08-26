@@ -916,12 +916,12 @@ initializeJavaVM(void * osMainThread, J9JavaVM ** vmPtr, J9CreateJavaVMParams *c
 	/* this is here only so that we can use the portlib macros later on */
 	privatePortLibrary = portLibrary;
 
-#if (defined(AIXPPC) || defined(LINUXPPC)) && !defined(J9OS_I5)
+#if defined(J9VM_ENV_64BIT_CAPABLE) && (defined(AIXPPC) || defined(LINUXPPC)) && !defined(J9OS_I5)
 	if (FALSE == isPPC64bit()) {
 		j9nls_printf(portLibrary, J9NLS_ERROR, J9NLS_VM_PPC32_HARDWARE_NOT_SUPPORTED);
 		return JNI_ERR;
 	}
-#endif /* (AIXPPC || LINUXPPC) && !J9OS_I5 */
+#endif /* J9VM_ENV_64BIT_CAPABLE && (AIXPPC || LINUXPPC) && !J9OS_I5 */
 
 #ifdef J9VM_ENV_SSE2_SUPPORT_DETECTION
 	if (FALSE == isSSE2SupportedOnX86()) {
@@ -965,6 +965,10 @@ initializeJavaVM(void * osMainThread, J9JavaVM ** vmPtr, J9CreateJavaVMParams *c
 
 	vm->internalVMLabels = (J9InternalVMLabels*)-1001;
 	vm->cInterpreter = J9_BUILDER_SYMBOL(cInterpreter);
+
+#if !defined(J9VM_ENV_64BIT_CAPABLE)
+	vm->atomicLockWord = 0;
+#endif /* !defined(J9VM_ENV_64BIT_CAPABLE) */
 
 	*vmPtr = vm;
 
