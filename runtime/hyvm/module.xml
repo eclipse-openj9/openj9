@@ -67,7 +67,7 @@
 		</objects>
 		<libraries>
 			<library name="omrsig">
-			<include-if condition="spec.flags.J9VM_PORT_OMRSIG_SUPPORT"/>
+				<include-if condition="spec.flags.J9VM_PORT_OMRSIG_SUPPORT"/>
 			</library>
 			<library name="socket" type="macro"/>
 			<library name="j9exelib"/>
@@ -81,7 +81,7 @@
 			<library name="hyprtshim"/>
 			<!--  for advance toolchain pthread must be last in the link order -->
 			<library name="pthread" type="system">
-			<include-if condition="spec.linux.* and not spec.linux_ztpf.*"/>
+				<include-if condition="spec.linux.* and not spec.linux_ztpf.*"/>
 			</library>
 		</libraries>
 	</artifact>
