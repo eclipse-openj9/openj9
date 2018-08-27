@@ -78,6 +78,7 @@ private:
 		case condy_slot_exception:
 			result = &(((J9RAMConstantDynamicRef *) slotPtr)->exception);
 			_condySlotState = condy_slot_value;
+			*nextSlot = true;
 			break;
 		default:
 			Assert_MM_unreachable();
