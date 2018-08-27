@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,13 @@
 #include "j9cfg.h"
 #include "j9cp.h"
 #include "modron.h"
+#include "j2sever.h"
+#include "ModronAssertions.h"
+
+typedef enum {
+	condy_slot_value,
+	condy_slot_exception
+} CondySlot;
 
 /**
  * Iterate over object references (but not class references) in the constant pool of a class.
@@ -48,18 +55,56 @@ class GC_ConstantPoolObjectSlotIterator
 	U_32 *_cpDescriptionSlots;
 	U_32 _cpDescription;
 	UDATA _cpDescriptionIndex;
+	bool _condyOnly;
+	bool _condyEnabled;
+	CondySlot _condySlotState;
 	
+
+private:
+	/**
+	 * Scan the current constant dynamic slot
+	 * @return slot value if it is not NULL
+	 * @return exception otherwise
+	 */
+	MMINLINE
+	j9object_t* scanCondySlot(j9object_t *slotPtr, bool *nextSlot) {
+		j9object_t *result;
+		switch (_condySlotState) {
+		case condy_slot_value:
+			result = &(((J9RAMConstantDynamicRef *) slotPtr)->value);
+			_condySlotState = condy_slot_exception;
+			*nextSlot = false;
+			break;
+		case condy_slot_exception:
+			result = &(((J9RAMConstantDynamicRef *) slotPtr)->exception);
+			_condySlotState = condy_slot_value;
+			break;
+		default:
+			Assert_MM_unreachable();
+			break;
+		}
+		return result;
+	}
+
 public:
-	GC_ConstantPoolObjectSlotIterator(J9Class *clazz) :
+
+	GC_ConstantPoolObjectSlotIterator(J9JavaVM *vm, J9Class *clazz, bool condyOnly = false) :
 		_cpEntry((j9object_t *)J9_CP_FROM_CLASS(clazz)),
-		_cpEntryCount(clazz->romClass->ramConstantPoolCount)
+		_cpEntryCount(clazz->romClass->ramConstantPoolCount),
+		_condySlotState(condy_slot_value)
 	{
+		_condyOnly = condyOnly;
 		_cpEntryTotal = _cpEntryCount;
 		if(_cpEntryCount) {
 			_cpDescriptionSlots = SRP_PTR_GET(&clazz->romClass->cpShapeDescription, U_32 *);
 			_cpDescriptionIndex = 0;
 		}
-
+		/* Check if the system is condy-enabled */
+		if (J2SE_VERSION(vm) < J2SE_V11) {
+			_condyEnabled = false;
+		} else {
+			_condyEnabled = true;
+		}
 	};
 
 	/**
@@ -90,6 +135,7 @@ public:
 	 * @param slot[in] The slot pointer which is to be returned by the next call to nextSlot
 	 */
 	void setNextSlot(j9object_t *slot);
+
 };
 
 #endif /* CONSTANTPOOLOBJECTSLOTITERATOR_HPP_ */

@@ -4670,7 +4670,7 @@ MM_CopyForwardScheme::verifyClassObjectSlots(MM_EnvironmentVLHGC *env, J9Object 
 			/* we can safely ignore any classes referenced by the constant pool, since
 			 * these are guaranteed to be referenced by our class loader
 			 */
-			GC_ConstantPoolObjectSlotIterator constantPoolIterator(classPtr);
+			GC_ConstantPoolObjectSlotIterator constantPoolIterator(_javaVM, classPtr);
 			while(NULL != (slotPtr = constantPoolIterator.nextSlot())) {
 				J9Object *dstObject = *slotPtr;
 				if(!_abortInProgress && verifyIsPointerInEvacute(env, dstObject)) {
