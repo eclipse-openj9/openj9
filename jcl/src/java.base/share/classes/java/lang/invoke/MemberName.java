@@ -34,6 +34,17 @@ final class MemberName {
 		public static Factory INSTANCE = null;
 	}
 	/*[ENDIF]*/
+	
+	/*[IF Java11]*/
+	private MethodHandle mh;
+
+	public MemberName() {
+	}
+
+	public MemberName(MethodHandle methodHandle) {
+		mh = methodHandle;
+	}
+	/*[ENDIF] Java11 */
 
 	public boolean isVarargs() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
@@ -72,7 +83,11 @@ final class MemberName {
 	}
 	/*[IF Java11]*/
 	public boolean isFinal() {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		if (mh instanceof FieldHandle) {
+			return ((FieldHandle)mh).isFinal();
+		}
+		/*[MSG "K0675", "Unexpected MethodHandle instance: {0} with {1}"]*/
+		throw new InternalError(com.ibm.oti.util.Msg.getString("K0675", mh, mh.getClass())); //$NON-NLS-1$
 	}
 	/*[ENDIF]*/
 	/*[ENDIF]*/
