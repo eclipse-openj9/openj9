@@ -74,13 +74,7 @@ getFunction(void **tableAddress, char *name)
 		void *handle = dlopen("libomrsig.so", RTLD_LAZY);
 		*tableAddress = dlsym(handle, name);
 #else /* defined(WIN32) */
-		void *handle = dlopen(
-#if defined(OSX)
-			"libomrsig.dylib"
-#else /* OSX */
-			"libomrsig.so"
-#endif /* OSX */
-			, RTLD_GLOBAL | RTLD_LAZY);
+		void *handle = dlopen("libomrsig.so", RTLD_GLOBAL | RTLD_LAZY);
 		*tableAddress = dlsym(handle, name);
 #endif /* defined(WIN32) */
 	}
