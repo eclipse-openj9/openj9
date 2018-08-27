@@ -1142,7 +1142,7 @@ openLibraries(const char *libraryDir)
 	}
 
 #else
-	buffer = jvmBufferCat(buffer, "/libjvm.so");
+	buffer = jvmBufferCat(buffer, "/libjvm" J9PORT_LIBRARY_SUFFIX);
 	/* open the DLL and look up the symbols */
 #if defined(AIXPPC)
 	/* CMVC 137341:
@@ -1449,7 +1449,7 @@ getjvmBin(BOOLEAN removeSubdir)
 #if defined(J9ZOS390)
 	buffer = findDirUplevelToDirContainingFile(buffer, "LIBPATH", ':', "libjvm.so", 0);
 #else
-	buffer = findDirUplevelToDirContainingFile(buffer, "LD_LIBRARY_PATH", ':', "libjvm.so", 0);
+	buffer = findDirUplevelToDirContainingFile(buffer, "LD_LIBRARY_PATH", ':', "libjvm" J9PORT_LIBRARY_SUFFIX, 0);
 #endif
 
 	if (NULL != buffer) {

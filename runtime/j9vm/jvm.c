@@ -879,7 +879,7 @@ getj9bin()
 	result = jvmBufferCat(NULL, libraryInfo.dli_fname);
 	/* remove libjvm.so */
 	truncatePath(jvmBufferData(result));
-#elif defined(J9ZOS390) || defined(J9ZTPF)
+#elif defined(J9ZOS390) || defined(J9ZTPF) || defined(OSX)
 #define VMDLL_NAME J9_VM_DLL_NAME
 
 	int foundPosition = 0;
@@ -890,14 +890,14 @@ getj9bin()
 		DBG_MSG(("found a libjvm.so at offset %d - looking at elem: %s\n", foundPosition, result));
 
 		/* first try this dir - this will be true for 'vm in subdir' cases, and is the likely Java 6 case as of SR1. */
-		if(isFileInDir(jvmBufferData(result), "lib" VMDLL_NAME ".so")) {
+		if (isFileInDir(jvmBufferData(result), "lib" VMDLL_NAME J9PORT_LIBRARY_SUFFIX)) {
 			return result;
 		}
 
 		truncatePath(jvmBufferData(result));
 
 		/* trying parent */
-		if(isFileInDir(jvmBufferData(result), "lib" VMDLL_NAME ".so")) {
+		if (isFileInDir(jvmBufferData(result), "lib" VMDLL_NAME J9PORT_LIBRARY_SUFFIX)) {
 			return result;
 		}
 	}
@@ -1238,23 +1238,13 @@ jio_snprintf(char * str, int n, const char * format, ...)
 
 	Trc_SC_snprintf_Entry();
 
-#ifdef WIN32
 	va_start(args, format);
-
-#ifdef WIN32_IBMC
-	result = vsprintf( str, format, args );
-#else
+#if defined(WIN32) && !defined(WIN32_IBMC)
 	result = _vsnprintf( str, n, format, args );
-#endif
-
-	va_end(args);
-
-#endif
-#if defined(J9UNIX) || defined(J9ZOS390)
-	va_start(args, format);
+#else
 	result = vsprintf( str, format, args );
-	va_end(args);
 #endif
+	va_end(args);
 
 	Trc_SC_snprintf_Exit(result);
 
@@ -1286,16 +1276,9 @@ jio_vsnprintf(char * str, int n, const char * format, va_list args)
 
 	Trc_SC_vsnprintf_Entry(str, n, format);
 
-#ifdef WIN32
-
-#ifdef WIN32_IBMC
-	result = vsprintf( str, format, args );
-#else
+#if defined(WIN32) && !defined(WIN32_IBMC)
 	result = _vsnprintf( str, n, format, args );
-#endif
-
-#endif
-#if defined(J9UNIX) || defined(J9ZOS390)
+#else 
 	result = vsprintf( str, format, args );
 #endif
 
@@ -1891,7 +1874,7 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 		libpathValue = envTemp;
 	}
 #endif
-#if defined(J9UNIX)
+#if defined(J9UNIX) || defined(OSX)
 	ldLibraryPathValue = getenv(ENV_LD_LIB_PATH);
 	if (NULL != ldLibraryPathValue) {
 		size_t pathLength = strlen(ldLibraryPathValue) +1;
@@ -2081,9 +2064,10 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 		ibmMallocTraceSet = TRUE;
 	altJavaHomeSpecified = (GetEnvironmentVariableW(ALT_JAVA_HOME_DIR_STR, NULL, 0) > 0);
 #endif
-#if defined(J9UNIX) || defined(J9ZOS390)
-	if (getenv(IBM_MALLOCTRACE_STR))
+#if defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
+	if (getenv(IBM_MALLOCTRACE_STR)) {
 		ibmMallocTraceSet = TRUE;
+	}
 #endif
 
 	args = (JavaVMInitArgs *)vm_args;
@@ -2661,10 +2645,10 @@ preloadLibrary(char* dllName, BOOLEAN inJVMDir)
 		fprintf(stderr,"jvm.dll preloadLibrary: LoadLibrary(%s) error: %x\n", buffer->data, GetLastError());
 	}
 #endif
-#ifdef J9UNIX
+#if defined(J9UNIX) || defined(OSX)
 	buffer = jvmBufferCat(buffer, "/lib");
 	buffer = jvmBufferCat(buffer, dllName);
-	buffer = jvmBufferCat(buffer, ".so");
+	buffer = jvmBufferCat(buffer, J9PORT_LIBRARY_SUFFIX);
 #ifdef AIXPPC
 	loadAndInit(jvmBufferData(buffer), L_RTLD_LOCAL, NULL);
 #endif
@@ -2688,7 +2672,7 @@ preloadLibrary(char* dllName, BOOLEAN inJVMDir)
 	if (handle == NULL) {
 		fprintf(stderr,"libjvm.so preloadLibrary(%s): %s\n", buffer->data, dlerror());
 	}
-#endif /* J9UNIX */
+#endif /* J9UNIX || OSX */
 #ifdef J9ZOS390
 	buffer = jvmBufferCat(buffer, "/lib");
 	buffer = jvmBufferCat(buffer, dllName);
@@ -3718,7 +3702,7 @@ JVM_LoadSystemLibrary(const char *libName)
 
 #endif
 
-#if defined(J9UNIX) || defined(J9ZOS390)
+#if defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
 	void *dllHandle;
 
 	Trc_SC_LoadSystemLibrary_Entry(libName);
@@ -3864,11 +3848,12 @@ JVM_FindLibraryEntry(void* handle, const char *functionName)
 
 	Trc_SC_FindLibraryEntry_Entry(handle, functionName);
 
-#ifdef WIN32
+#if defined(WIN32)
 	result = GetProcAddress ((HINSTANCE)handle, (LPCSTR)functionName);
-#endif
-#if defined(J9UNIX) || defined(J9ZOS390)
+#elif defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
 	result = (void*)dlsym( (void*)handle, (char *)functionName );
+#else
+#error "Please implemente jvm.c:JVM_FindLibraryEntry(void* handle, const char *functionName)"
 #endif
 
 	Trc_SC_FindLibraryEntry_Exit(result);
@@ -3892,19 +3877,17 @@ JVM_SetLength(jint fd, jlong length)
 		return -1;
 	}
 
-#ifdef WIN32
-#ifdef WIN32_IBMC
+#if defined(WIN32_IBMC)
 	printf("_JVM_SetLength@12 called but not yet implemented. Exiting.");
 	exit(43);
-#else
+#elif defined(WIN32)
 	result = _chsize(fd, (long)length);
-#endif
-#endif
-#if defined(J9UNIX) && !defined(J9ZTPF)
+#elif defined(J9UNIX) && !defined(J9ZTPF)
 	result = ftruncate64(fd, length);
-#endif
-#if defined(J9ZOS390) || defined(J9ZTPF)
+#elif defined(J9ZOS390) || defined(J9ZTPF) || defined(OSX)
 	result = ftruncate(fd, length);
+#else 
+#error "Please provide an implementation of jvm.c:JVM_SetLength(jint fd, jlong length)"
 #endif
 
 	Trc_SC_SetLength_Exit(result);
@@ -5325,7 +5308,7 @@ JVM_SocketAvailable(jint descriptor, jint* result)
 	/* Windows JCL native doesn't invoke this JVM method */
 	Assert_SC_unreachable();
 #endif
-#if defined(J9UNIX) || defined(J9ZOS390)
+#if defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
 	if (0 <= descriptor) {
 		do {
 			retVal = ioctl(descriptor, FIONREAD, result);
@@ -5362,12 +5345,11 @@ JVM_SocketClose(jint descriptor)
 		return 1;
 	}
 
-#ifdef WIN32
+#if defined(WIN32)
 	(void)shutdown(descriptor, SD_SEND);
 	(void)closesocket(descriptor);
 	retVal = 1; /* Always return TRUE */
-#endif
-#if defined(J9UNIX) || defined(J9ZOS390)
+#else
 	do {
 		retVal = close(descriptor);
 	} while ((-1 == retVal) && (EINTR == errno));

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -240,15 +240,11 @@ void mapLibraryToPlatformName(const char *inPath, char *outPath) {
 #else
 	strcpy(outPath, "lib");
 	strcat(outPath,inPath);
-#ifdef HP720
-	strcat(outPath, ".sl");
-#else
-#ifdef AIXPPC
+#if defined(AIXPPC)
 	strcat(outPath, ".a");
-#else
-	strcat(outPath, ".so");
-#endif
-#endif
+#else /* AIXPPC */
+	strcat(outPath, J9PORT_LIBRARY_SUFFIX);
+#endif /* AIXPPC */
 #endif
 }
 
