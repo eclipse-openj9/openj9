@@ -442,6 +442,54 @@ public final class MethodType implements Serializable {
 	}
 
 	/*
+	 * Parses the first parameter in a descriptor string into a Class object.
+	 * The Class object is append to given ArrayList and the current string index is returned.
+	 */
+	static final int parseIntoClass(char[] signature, int index, ArrayList<Class<?>> args, ClassLoader classLoader, String descriptor) {
+		char current = signature[index];
+		Class<?> c;			
+		
+		if ((current == 'L') || (current == '[')) {
+			int start = index;
+			while(signature[index] == '[') {
+				index++;
+			}
+			String name;
+			if (signature[index] != 'L') {
+				name = descriptor.substring(start, index + 1);
+			} else { 
+				int end = descriptor.indexOf(';', index);
+				if (end == -1) {
+					/*[MSG "K05d6", "malformed method descriptor: {0}"]*/
+					throw new IllegalArgumentException(Msg.getString("K05d6", descriptor)); //$NON-NLS-1$
+				}
+				name = descriptor.substring(start, end + 1);
+				index = end;
+			}
+			c = nonPrimitiveClassFromString(name, classLoader);
+		} else {
+			try {
+				c = primitivesArray[current - 'A'];
+			} catch(ArrayIndexOutOfBoundsException e) {
+				c = null;
+			}
+			if (c == null) {
+				if (current == 'V') {
+					// lazily add 'V' to work around load ordering issues
+					primitivesArray['V' - 'A'] = void.class;
+					c = void.class;
+				} else {
+					/*[MSG "K05d7", "not a primitive: {0}"]*/
+					throw new IllegalArgumentException(Msg.getString("K05d7", current)); //$NON-NLS-1$
+				}
+			}
+		}
+		args.add(c);
+
+		return index;
+	}
+
+	/*
 	 * Parse the MethodDescriptor string into a list of Class objects.  The last class in the list
 	 * is the return type.
 	 */
@@ -465,12 +513,9 @@ public final class MethodType implements Serializable {
 		
 		ArrayList<Class<?>> args = new ArrayList<Class<?>>();
 		
-		while((index < length) ) {
-			char current = signature[index];
-			Class<?> c;
-			
+		while(index < length) {
 			/* Ensure we only see one ')' closing bracket */
-			if ((current == ')')) {
+			if ((signature[index] == ')')) {
 				if (closeBracket) {
 					/*[MSG "K05d5", "too many ')': {0}"]*/
 					throw new IllegalArgumentException(Msg.getString("K05d5", methodDescriptor)); //$NON-NLS-1$
@@ -479,43 +524,8 @@ public final class MethodType implements Serializable {
 				index++;
 				continue;
 			}
-			
-			if ((current == 'L') || (current == '[')) {
-				int start = index;
-				while(signature[index] == '[') {
-					index++;
-				}
-				String name;
-				if (signature[index] != 'L') {
-					name = methodDescriptor.substring(start, index + 1);
-				} else { 
-					int end = methodDescriptor.indexOf(';', index);
-					if (end == -1) {
-						/*[MSG "K05d6", "malformed method descriptor: {0}"]*/
-						throw new IllegalArgumentException(Msg.getString("K05d6", methodDescriptor)); //$NON-NLS-1$
-					}
-					name = methodDescriptor.substring(start, end + 1);
-					index = end;
-				}
-				c = nonPrimitiveClassFromString(name, classLoader);
-			} else {
-				try {
-					c = primitivesArray[current - 'A'];
-				} catch(ArrayIndexOutOfBoundsException e) {
-					c = null;
-				}
-				if (c == null) {
-					if (current == 'V') {
-						// lazily add 'V' to work around load ordering issues
-						primitivesArray['V' - 'A'] = void.class;
-						c = void.class;
-					} else {
-						/*[MSG "K05d7", "not a primitive: {0}"]*/
-						throw new IllegalArgumentException(Msg.getString("K05d7", current)); //$NON-NLS-1$
-					}
-				}
-			}
-			args.add(c);
+
+			index = parseIntoClass(signature, index, args, classLoader, methodDescriptor);
 			index++;
 		}
 		return args;

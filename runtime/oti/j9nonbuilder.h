@@ -252,6 +252,21 @@
 #define J9DescriptionCpTypeShift 0x4
 #define J9DescriptionImmediate 0x1
 
+/* Rom CP Flag for constant dynamic with primitive type */
+#define J9DescriptionReturnTypeBoolean 0x1
+#define J9DescriptionReturnTypeByte 0x2
+#define J9DescriptionReturnTypeChar 0x3
+#define J9DescriptionReturnTypeShort 0x4
+#define J9DescriptionReturnTypeFloat 0x5
+#define J9DescriptionReturnTypeInt 0x6
+#define J9DescriptionReturnTypeDouble 0x7
+#define J9DescriptionReturnTypeLong 0x8
+/* ROM CP have 32 bit slots, currently the least significat 20 bits are in use
+ * so the Constant Dynamic return types will be shifted left to use the free bits
+ */
+#define J9DescriptionReturnTypeShift 20
+#define J9DescriptionCpBsmIndexMask 0xFFFF
+
 /* @ddr_namespace: map_to_type=J9NativeTypeCodes */
 
 /* Constants from J9NativeTypeCodes */
@@ -4706,7 +4721,9 @@ typedef struct J9InternalVMFunctions {
 	void  (JNICALL *sendForGenericInvoke)(struct J9VMThread *vmThread, j9object_t methodHandle, j9object_t methodType, UDATA dropFirstArg, UDATA reserved4) ;
 	void  (JNICALL *jitFillOSRBuffer)(struct J9VMThread *vmContext, void *osrBlock, UDATA reserved1, UDATA reserved2, UDATA reserved3) ;
 	void  (JNICALL *sendResolveMethodHandle)(struct J9VMThread *vmThread, UDATA cpIndex, J9ConstantPool *ramCP, J9Class *definingClass, J9ROMNameAndSignature* nameAndSig) ;
+	j9object_t ( *resolveConstantDynamic)(struct J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags) ;
 	j9object_t  ( *resolveInvokeDynamic)(struct J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags) ;
+	void  (JNICALL *sendResolveConstantDynamic)(struct J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, J9ROMNameAndSignature* nameAndSig, U_16* bsmData) ;
 	void  (JNICALL *sendResolveInvokeDynamic)(struct J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA callSiteIndex, J9ROMNameAndSignature* nameAndSig, U_16* bsmData) ;
 	j9object_t  ( *resolveMethodHandleRef)(struct J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags) ;
 	UDATA  ( *resolveNativeAddress)(struct J9VMThread *currentThread, J9Method *nativeMethod, UDATA runtimeBind) ;
@@ -5424,6 +5441,7 @@ typedef struct J9JavaVM {
 	void *flushFunction;
 #endif /* WIN32 */
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
+	omrthread_monitor_t constantDynamicMutex;
 } J9JavaVM;
 
 #define J9VM_PHASE_NOT_STARTUP  2
