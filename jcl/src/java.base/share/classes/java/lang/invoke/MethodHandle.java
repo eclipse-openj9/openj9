@@ -950,10 +950,8 @@ public abstract class MethodHandle {
 					cpEntry = getCPMethodHandleAt(internalRamClass, index);
 					break;
 				case 17:
-					/* cpEntry = getCPConstantDynamicAt(internalRamClass, index);
-					 * break;
-					 */
-					throw new InternalError("Method getCPConstantDynamicAt() not implemented");
+					cpEntry = getCPConstantDynamicAt(internalRamClass, index);
+					break;
 				default:
 					// Do nothing. The null check below will throw the appropriate exception.
 				}
@@ -1094,10 +1092,8 @@ public abstract class MethodHandle {
 					cpEntry = getCPMethodHandleAt(internalRamClass, index);
 					break;
 				case 17:
-					/* cpEntry = getCPConstantDynamicAt(internalRamClass, index);
-					 * break;
-					 */
-					throw new InternalError("Method getCPConstantDynamicAt() not implemented");
+					cpEntry = getCPConstantDynamicAt(internalRamClass, index);
+					break;
 				default:
 					// Do nothing. The null check below will throw the appropriate exception.
 				}
