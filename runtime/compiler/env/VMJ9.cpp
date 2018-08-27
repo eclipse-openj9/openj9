@@ -3144,13 +3144,10 @@ bool TR_J9VMBase::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, 
                   }
             // Intentional fallthrough here.
          case TR::java_lang_String_hashCodeImplCompressed:
-            if (!TR::Compiler->om.canGenerateArraylets()){
-               if ((TR::Compiler->target.cpu.isX86() && getX86SupportsSSE4_1()) ||
-                   (TR::Compiler->target.cpu.isZ() && comp->cg()->getSupportsVectorRegisters()))
-                  {
-                  dontInlineRecognizedMethod = true;
-                  }
-            }
+            if (comp->cg()->getSupportsInlineStringHashCode())
+               {
+               dontInlineRecognizedMethod = true;
+               }
             break;
          default:
             break;

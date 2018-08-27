@@ -115,6 +115,12 @@ J9::Z::CodeGenerator::CodeGenerator() :
       cg->setSupportsInlineStringIndexOf();
       }
 
+   if (cg->getSupportsVectorRegisters() && !comp->getOption(TR_DisableSIMDStringHashCode) &&
+       !TR::Compiler->om.canGenerateArraylets())
+      {
+      cg->setSupportsInlineStringHashCode();
+      }
+
    // Let's turn this on.  There is more work needed in the opt
    // to catch the case where the BNDSCHK is inserted after
    //
@@ -4146,19 +4152,17 @@ J9::Z::CodeGenerator::inlineDirectCall(
          break;
        // HashCode routine for Compressed and Decompressed String Shares lot of code so combining them.
       case TR::java_lang_String_hashCodeImplDecompressed:
-         if (!comp->getOption(TR_DisableSIMDStringHashCode))
+         if (cg->getSupportsInlineStringHashCode())
             {
-            if (cg->getSupportsVectorRegisters() && !TR::Compiler->om.canGenerateArraylets())
-               return resultReg = inlineStringHashCode(node, cg, false);
+            return resultReg = inlineStringHashCode(node, cg, false);
             }
          break;
 
       case TR::java_lang_String_hashCodeImplCompressed:
-         if (!comp->getOption(TR_DisableSIMDStringHashCode)){
-            if (cg->getSupportsVectorRegisters() && !TR::Compiler->om.canGenerateArraylets()){
-                return resultReg = inlineStringHashCode(node, cg, true);
+         if (cg->getSupportsInlineStringHashCode())
+            {
+            return resultReg = inlineStringHashCode(node, cg, true);
             }
-         }
         break;
 
       case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Big:
