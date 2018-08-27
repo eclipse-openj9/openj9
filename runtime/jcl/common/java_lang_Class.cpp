@@ -30,9 +30,8 @@
 #include "vmaccess.h"
 #include "java_lang_Class.h"
 #include "ArrayCopyHelpers.hpp"
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
 #include "j9jclnls.h"
-#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+
 
 #include "VMHelpers.hpp"
 
@@ -1786,11 +1785,11 @@ storePDobjectsHelper(J9VMThread* vmThread, J9Class* arrayClass, J9StackWalkState
 	return arrayObject;
 }
 
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
 
 jobject JNICALL
 Java_java_lang_Class_getNestHostImpl(JNIEnv *env, jobject recv)
 {
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	J9VMThread *currentThread = (J9VMThread*)env;
 	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
 	vmFuncs->internalEnterVMFromJNI(currentThread);
@@ -1817,11 +1816,16 @@ Java_java_lang_Class_getNestHostImpl(JNIEnv *env, jobject recv)
 
 	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
+#else /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+	Assert_JCL_unimplemented();
+	return NULL;
+#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
 }
 
 jobject JNICALL
 Java_java_lang_Class_getNestMembersImpl(JNIEnv *env, jobject recv)
 {
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	J9VMThread *currentThread = (J9VMThread*)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
@@ -1908,6 +1912,10 @@ Java_java_lang_Class_getNestMembersImpl(JNIEnv *env, jobject recv)
 _done:
 	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
-}
+#else /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+	Assert_JCL_unimplemented();
+	return NULL;
 #endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+}
+
 }
