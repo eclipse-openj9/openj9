@@ -1,3 +1,10 @@
+There are currently 2 supported test procedures. Select the one that best suits your neeeds.
+
+- [Testing locally](#local). Choose this if you have build & test dependencies set up.
+- [Testing in Docker](#docker). Choose this if you don't want to deal with build & test dependency setups.
+
+## LOCAL
+
 These are the steps to run the tests on your machine.
 
 1. Compile a debug build of openj9 from scratch. To do this pass the flag `--with-debug-level=slowdebug` to `configure`.
@@ -38,3 +45,7 @@ For example, I copy them into `/opt/IBM/JDK/xa6480sr6/jre/lib/amd64/compressedre
    ```
    make <name_of_the_test> EXTRA_OPTIONS=" -XX:JITaaSClient "
    ```
+
+## DOCKER
+
+Follow the README.md in `buildenv/docker/jitaas/jdk8/x86_64/ubuntu18/` for building then testing JITaaS in Docker.
