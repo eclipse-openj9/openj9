@@ -1,7 +1,8 @@
-There are currently two supported build procedures. Select the one that best suits your needs.
+There are currently 3 supported build procedures. Select the one that best suits your needs.
 
 - [Building only the JIT](#jit). Choose this if you have no need to modify the VM or JCL. This only builds OMR and everything in the `runtime/compiler` directory. Output artifact is `libj9jit29.so`.
 - [Building the whole VM](#vm). The complete build process. Takes much longer but produces a complete JVM as output (including the JIT).
+- [Building in Docker](#docker). Choose this if you don't want to deal with build dependencies. Takes the longest.
 
 Either way, you will need protobuf installed.
 
@@ -20,3 +21,8 @@ The only new addition to the build process for JITaaS is to protbuf schema files
 ## VM
 
 See https://www.eclipse.org/openj9/oj9_build.html. The only difference is you need to check out the JITaaS code instead of upstream OpenJ9.
+
+
+## DOCKER
+
+Follow the README.md file in `buildenv/docker/jitaas/jdk8/x86_64/ubuntu18/` Section `build/Dockerfile` for building in Docker.
