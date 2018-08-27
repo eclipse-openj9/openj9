@@ -25,4 +25,4 @@ See https://www.eclipse.org/openj9/oj9_build.html. The only difference is you ne
 
 ## DOCKER
 
-Follow the README.md file in `buildenv/docker/jitaas/jdk8/x86_64/ubuntu18/` Section `build/Dockerfile` for building in Docker.
+Follow the [README.md](https://github.ibm.com/runtimes/Jaas_tr.open/blob/milestone_8/buildenv/docker/jitaas/jdk8/x86_64/ubuntu18/README.md) section `build/Dockerfile` for building JITaaS in Docker.
