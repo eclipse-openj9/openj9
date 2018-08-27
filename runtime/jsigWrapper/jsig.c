@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 IBM Corp. and others
+ * Copyright (c) 2016, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,7 +74,13 @@ getFunction(void **tableAddress, char *name)
 		void *handle = dlopen("libomrsig.so", RTLD_LAZY);
 		*tableAddress = dlsym(handle, name);
 #else /* defined(WIN32) */
-		void *handle = dlopen("libomrsig.so", RTLD_GLOBAL | RTLD_LAZY);
+		void *handle = dlopen(
+#if defined(OSX)
+			"libomrsig.dylib"
+#else /* OSX */
+			"libomrsig.so"
+#endif /* OSX */
+			, RTLD_GLOBAL | RTLD_LAZY);
 		*tableAddress = dlsym(handle, name);
 #endif /* defined(WIN32) */
 	}
