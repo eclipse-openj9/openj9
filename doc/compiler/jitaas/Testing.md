@@ -48,4 +48,4 @@ For example, I copy them into `/opt/IBM/JDK/xa6480sr6/jre/lib/amd64/compressedre
 
 ## DOCKER
 
-Follow the README.md in `buildenv/docker/jitaas/jdk8/x86_64/ubuntu18/` for building then testing JITaaS in Docker.
+Follow the [README.md](https://github.ibm.com/runtimes/Jaas_tr.open/blob/milestone_8/buildenv/docker/jitaas/jdk8/x86_64/ubuntu18/README.md) here for building then testing JITaaS in Docker.
