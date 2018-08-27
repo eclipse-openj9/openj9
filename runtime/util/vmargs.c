@@ -75,7 +75,6 @@
 #define JAVA_LIB_PATH_EQUALS "-Djava.library.path="
 #define JAVA_EXT_DIRS_EQUALS "-Djava.ext.dirs="
 #define JAVA_USER_DIR_EQUALS "-Duser.dir="
-#define SUN_NIO_MAXDIRECTMEMORYSIZE_EQUALS "-Dsun.nio.MaxDirectMemorySize="
 #define OPTIONS_DEFAULT "options.default"
 
 #define LARGE_STRING_BUF_SIZE 256
@@ -652,60 +651,6 @@ getStartOfOptionValue(J9VMInitArgs* j9vm_args, IDATA element, const char *option
 	value = j9vm_args->actualVMArgs->options[element].optionString + strlen(option);
 
 	return value;
-}
-
-static UDATA
-convertMemorySizeToBytes(J9PortLibrary * portLib, char *sizeString, UDATA *result)
-{
-	UDATA value = 0;
-	UDATA oldValue = 0;
-	char *cursor = sizeString;
-
-	*result = 0;
-	if (scan_udata(&cursor, &value)) {
-		return OPTION_MALFORMED;
-	}
-
-	switch (*cursor) {
-	case '\0':
-		oldValue = value;
-		value = (value +  sizeof(UDATA) - 1) & ~(sizeof(UDATA) - 1);		/* round to nearest pointer value */
-		if (value < oldValue) {
-			return OPTION_OVERFLOW;
-		}
-		break;
-	case 'k':
-	case 'K':
-		if (value <= (((UDATA)-1) >> 10)) {
-			value <<= 10;
-		} else {
-			return OPTION_OVERFLOW;
-		}
-		cursor++;
-		break;
-	case 'm':
-	case 'M':
-		if (value <= (((UDATA)-1) >> 20)) {
-			value <<= 20;
-		} else {
-			return OPTION_OVERFLOW;
-		}
-		cursor++;
-		break;
-	case 'g':
-	case 'G':
-		if (value <= (((UDATA)-1) >> 30)) {
-			value <<= 30;
-		} else {
-			return OPTION_OVERFLOW;
-		}
-		cursor++;
-		break;
-	default:
-		return OPTION_MALFORMED;
-	}
-	*result = value;
-	return 0;
 }
 
 IDATA
@@ -1583,47 +1528,6 @@ addLauncherArgs(J9PortLibrary * portLib, JavaVMInitArgs *launcherArgs, UDATA lau
 			return -1;
 		}
 		optArg->vmOpt.extraInfo = currentOpt->extraInfo;
-
-		if (0 == strncmp(optString, VMOPT_XXMAXDIRECTMEMORYSIZEEQUALS, strlen(VMOPT_XXMAXDIRECTMEMORYSIZEEQUALS))) {
-			/*
-			 *  CMVC 149604 - check for errors in <size> portion of -XX:maxDirectMemorySize=<size>
-			 *                and add -Dsun.nio.MaxDirectMemorySize=<size in bytes>
-			 */
-
-			UDATA value = 0;
-			char *optname = VMOPT_XXMAXDIRECTMEMORYSIZEEQUALS;
-			IDATA returnCode = convertMemorySizeToBytes(portLib, optString + strlen(VMOPT_XXMAXDIRECTMEMORYSIZEEQUALS), &value);
-			if ( OPTION_OK == returnCode ) {
-				const size_t bufferSize = strlen(SUN_NIO_MAXDIRECTMEMORYSIZE_EQUALS) + 16; /* allocate 16 byt bytes for maximum length decimal string and null */
-				char * snmBuffer = j9mem_allocate_memory(bufferSize, OMRMEM_CATEGORY_VM);
-				if (NULL == snmBuffer) {
-					return -1;
-				}
-				/* add -Dsun.nio.MaxDirectMemorySize= to appendList.*/
-				j9str_printf(portLib, snmBuffer, bufferSize, SUN_NIO_MAXDIRECTMEMORYSIZE_EQUALS "%zd", value);
-				optArg = newJavaVMArgInfo(vmArgumentsList, snmBuffer, ARG_MEMORY_ALLOCATION|CONSUMABLE_ARG);
-				if (NULL == optArg) {
-					j9mem_free_memory(snmBuffer);
-					return -1;
-				}
-				optArg->vmOpt.extraInfo = currentOpt->extraInfo;
-			} else {
-				/* show something meaningful about why parsing failed */
-				switch(returnCode) {
-				case OPTION_MALFORMED:
-					j9nls_printf(portLib, J9NLS_WARNING, J9NLS_VMUTIL_OPTION_MALFORMED, optString);
-					break;
-				case OPTION_OVERFLOW:
-					j9nls_printf(portLib, J9NLS_WARNING, J9NLS_VMUTIL_OPTION_OVERFLOW, optString);
-					break;
-				default:
-					scan_failed(portLib, "VM", optString);
-					break;
-				}
-				return -1;
-			}
-		}
-
 	}
 	return 0;
 }
