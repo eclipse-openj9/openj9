@@ -503,7 +503,42 @@ ConstantPoolMap::constantPoolDo(ConstantPoolVisitor *visitor)
 				visitor->visitMethodHandle(slot1, slot2);
 				break;
 			case J9CPTYPE_CONSTANT_DYNAMIC:
-				visitor->visitConstantDynamic(slot1, slot2);
+				/* Check if the return type of constant dynamic entry is a primitive type
+				 * Set the J9DescriptionCpPrimitiveType flag so interpreter know to unbox
+				 * the resolved object before returning it.
+				 */
+				{
+					char fieldDescriptor = (char)*_classFileOracle->getUTF8Data(getCPSlot2(slot2));
+					switch (fieldDescriptor) {
+					case 'B':
+						visitor->visitConstantDynamic(slot1, slot2, (J9DescriptionReturnTypeByte << J9DescriptionReturnTypeShift));
+						break;
+					case 'C':
+						visitor->visitConstantDynamic(slot1, slot2, (J9DescriptionReturnTypeChar << J9DescriptionReturnTypeShift));
+						break;
+					case 'D':
+						visitor->visitConstantDynamic(slot1, slot2, (J9DescriptionReturnTypeDouble << J9DescriptionReturnTypeShift));
+						break;
+					case 'F':
+						visitor->visitConstantDynamic(slot1, slot2, (J9DescriptionReturnTypeFloat << J9DescriptionReturnTypeShift));
+						break;
+					case 'I':
+						visitor->visitConstantDynamic(slot1, slot2, (J9DescriptionReturnTypeInt << J9DescriptionReturnTypeShift));
+						break;
+					case 'J':
+						visitor->visitConstantDynamic(slot1, slot2, (J9DescriptionReturnTypeLong << J9DescriptionReturnTypeShift));
+						break;
+					case 'S':
+						visitor->visitConstantDynamic(slot1, slot2, (J9DescriptionReturnTypeShort << J9DescriptionReturnTypeShift));
+						break;
+					case 'Z':
+						visitor->visitConstantDynamic(slot1, slot2, (J9DescriptionReturnTypeBoolean << J9DescriptionReturnTypeShift));
+						break;
+					default:
+						visitor->visitConstantDynamic(slot1, slot2, 0);
+						break;
+					}
+				}
 				break;
 			default:
 				Trc_BCU_Assert_ShouldNeverHappen();

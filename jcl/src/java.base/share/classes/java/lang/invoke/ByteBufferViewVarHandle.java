@@ -111,7 +111,7 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 					arrayMH = internalPrivilegedLookup.findGetter(ByteBuffer.class, "hb", byte[].class);
 					offsetMH = internalPrivilegedLookup.findGetter(ByteBuffer.class, "offset", int.class);
 				} catch (Throwable t) {
-					throw new InternalError("Could not create MethodHandle for field ByteBuffer field.", t);
+					throw new InternalError("Could not create MethodHandles for ByteBuffer fields", t);
 				}
 				directBufferAddressMH = addressMH;
 				onHeapBufferArrayMH = arrayMH;
@@ -132,7 +132,7 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 				try {
 					return (byte[])onHeapBufferArrayMH.invokeExact(buffer);
 				} catch (Throwable e) {
-					throw new InternalError("Could not get ByteBuffer backing array.");
+					throw new InternalError("Could not get ByteBuffer backing array", e);
 				}
 			}
 			
@@ -141,7 +141,7 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 				try {
 					arrayOffset = (int)bufferOffsetMH.invokeExact(buffer);
 				} catch (Throwable e) {
-					throw new InternalError("Could not get ByteBuffer backing array.");
+					throw new InternalError("Could not get ByteBuffer offset", e);
 				}
 				return (long)INDEX_OFFSET + arrayOffset + index;
 			}
@@ -151,7 +151,7 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 				try {
 					base = (long)directBufferAddressMH.invokeExact(buffer);
 				} catch (Throwable e) {
-					throw new InternalError("Could not get ByteBuffer.address");
+					throw new InternalError("Could not get ByteBuffer address", e);
 				}
 				return (long)base + index;
 			}

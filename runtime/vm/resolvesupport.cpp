@@ -1906,6 +1906,116 @@ resolveMethodHandleRef(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpInde
 
 }
 
+j9object_t
+resolveConstantDynamic(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags)
+{
+	J9RAMConstantDynamicRef *ramCPEntry = (J9RAMConstantDynamicRef*)ramCP + cpIndex;
+	J9JavaVM *vm = vmThread->javaVM;
+	j9object_t value = NULL;
+	bool resolved = false;
+
+retry:
+	value = ramCPEntry->value;
+	/* Fast path resolution for previously resolved entries */
+	if (NULL != value) {
+		resolved = true;
+	} else {
+		j9object_t cpException = ramCPEntry->exception;
+		/* check if already resolved to NULL or exception */
+		if (NULL != cpException) {
+			J9Class *throwable = J9VMJAVALANGTHROWABLE_OR_NULL(vm);
+			J9Class *clazz = J9OBJECT_CLAZZ(vmThread, cpException);
+			if (cpException == vm->voidReflectClass->classObject) {
+				/* Resolved with null reference */
+				resolved = true;
+			} else if (isSameOrSuperClassOf(throwable, clazz)) {
+				/* Resolved with exception */
+				VM_VMHelpers::setExceptionPending(vmThread, cpException);
+				resolved = true;
+			}
+		}
+	}
+
+	if (!resolved) {
+		/* Slow path, attempt to acquire resolve mutex or retry, or wait */
+		omrthread_monitor_enter(vm->constantDynamicMutex);
+		value = ramCPEntry->value;
+		if (NULL != value) {
+			omrthread_monitor_exit(vm->constantDynamicMutex);
+			goto retry;
+		} else {
+			j9object_t cpException = ramCPEntry->exception;
+			/* check if already resolved to NULL or exception */
+			if (NULL != cpException) {
+				J9Class *throwable = J9VMJAVALANGTHROWABLE_OR_NULL(vm);
+				J9Class *clazz = J9OBJECT_CLAZZ(vmThread, cpException);
+				if (cpException == vm->voidReflectClass->classObject) {
+					/* Resolved with null reference */
+					omrthread_monitor_exit(vm->constantDynamicMutex);
+					goto retry;
+				} else if (isSameOrSuperClassOf(throwable, clazz)) {
+					/* Resolved with exception */
+					omrthread_monitor_exit(vm->constantDynamicMutex);
+					goto retry;
+				} else if (cpException != vmThread->threadObject) {
+					/* Another thread is currently resolving this entry */
+					internalReleaseVMAccess(vmThread);
+					omrthread_monitor_wait(vm->constantDynamicMutex);
+					omrthread_monitor_exit(vm->constantDynamicMutex);
+					internalAcquireVMAccess(vmThread);
+					goto retry;
+				}
+			}
+		}
+
+		/* Write threadObject in exception slot to indicate current thread is performing the resolution */
+		ramCPEntry->exception = vmThread->threadObject;
+		omrthread_monitor_exit(vm->constantDynamicMutex);
+
+		/* Enter if not previously resolved */
+		J9Class *ramClass = ramCP->ramClass;
+		J9ROMClass *romClass = ramClass->romClass;
+		J9ROMConstantDynamicRef *romConstantRef = (J9ROMConstantDynamicRef*)(J9_ROM_CP_FROM_CP(ramCP) + cpIndex);
+		J9SRP *callSiteData = (J9SRP *) J9ROMCLASS_CALLSITEDATA(romClass);
+		U_16 *bsmIndices = (U_16 *) (callSiteData + romClass->callSiteCount);
+		U_16 *bsmData = bsmIndices + romClass->callSiteCount;
+
+		/* clear the J9DescriptionCpPrimitiveType flag with mask to get bsmIndex */
+		U_32 bsmIndex = (romConstantRef->bsmIndexAndCpType >> J9DescriptionCpTypeShift) & J9DescriptionCpBsmIndexMask;
+		J9ROMNameAndSignature* nameAndSig = SRP_PTR_GET(&romConstantRef->nameAndSignature, J9ROMNameAndSignature*);
+
+		/* Walk bsmData - skip all bootstrap methods before bsmIndex */
+		for (U_32 i = 0; i < bsmIndex; i++) {
+			bsmData += (bsmData[1] + 2);
+		}
+
+		/* Invoke BootStrap method*/
+		sendResolveConstantDynamic(vmThread, ramCP, cpIndex, nameAndSig, bsmData);
+		value = (j9object_t)vmThread->returnValue;
+
+		/* Check if entry resolved by nested constantDynamic calls */
+		if (ramCPEntry->exception != vmThread->threadObject) {
+			goto retry;
+		}
+
+		j9object_t exceptionObject = NULL;
+		if (NULL != vmThread->currentException) {
+			exceptionObject = vmThread->currentException;
+		} else if (NULL == value) {
+			/* Java.lang.void is used as a special flag to indicate null reference */
+			exceptionObject = vm->voidReflectClass->classObject;
+		}
+
+		omrthread_monitor_enter(vm->constantDynamicMutex);
+		ramCPEntry->value = value;
+		ramCPEntry->exception = exceptionObject;
+		omrthread_monitor_notify_all(vm->constantDynamicMutex);
+		omrthread_monitor_exit(vm->constantDynamicMutex);
+	}
+
+	return value;
+}
+
 j9object_t   
 resolveInvokeDynamic(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA callSiteIndex, UDATA resolveFlags)
 {

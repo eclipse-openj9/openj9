@@ -29,6 +29,7 @@
 #include "util_api.h"
 #include "vm_internal.h"
 #include "j9protos.h"
+#include "j9vmnls.h"
 
 IDATA
 checkModuleAccess(J9VMThread *currentThread, J9JavaVM* vm, J9ROMClass* srcRomClass, J9Module* srcModule, J9ROMClass* destRomClass, J9Module* destModule, UDATA destPackageID, UDATA lookupOptions)
@@ -185,6 +186,90 @@ _exit:
 }
 
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
+
+/**
+ * Sets the nestmates error based on the errorCode
+ *
+ * @param vmThread vmthread token
+ * @param nestMember the j9lass requesting the nesthost
+ * @param nestHost the actual nest host, this may be NULL
+ * @param errorCode the error code represting the exception to throw
+ * 					J9_VISIBILITY_NEST_HOST_LOADING_FAILURE_ERROR
+ * 					J9_VISIBILITY_NEST_HOST_DIFFERENT_PACKAGE_ERROR
+ * 					J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR
+ */
+static void
+setNestmatesError(J9VMThread *vmThread, J9Class *nestMember, J9Class *nestHost, IDATA errorCode)
+{
+	PORT_ACCESS_FROM_VMC(vmThread);
+	J9UTF8 *nestMemberName = J9ROMCLASS_CLASSNAME(nestMember->romClass);
+	J9UTF8 *nestHostName = NULL;
+	UDATA exception = J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR;
+	const char *nlsTemplate = NULL;
+	char *msg = NULL;
+
+	if (NULL == nestHost) {
+		nestHostName = J9ROMCLASS_NESTHOSTNAME(nestMember->romClass);
+	} else {
+		nestHostName = J9ROMCLASS_CLASSNAME(nestHost->romClass);
+	}
+
+	switch (errorCode) {
+	case J9_VISIBILITY_NEST_HOST_LOADING_FAILURE_ERROR:
+		exception = J9VMCONSTANTPOOL_JAVALANGNOCLASSDEFFOUNDERROR;
+		nlsTemplate = j9nls_lookup_message(
+				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_VM_NESTMATES_CLASS_FAILED_TO_LOAD,
+				NULL);
+		break;
+	case J9_VISIBILITY_NEST_HOST_DIFFERENT_PACKAGE_ERROR:
+		nlsTemplate = j9nls_lookup_message(
+				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE,
+				NULL);
+		break;
+	case J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR:
+		nlsTemplate = j9nls_lookup_message(
+				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST,
+				NULL);
+		break;
+	default:
+		Assert_VM_unreachable();
+	}
+
+	if (NULL != nlsTemplate) {
+		UDATA msgLen = j9str_printf(PORTLIB, NULL, 0, nlsTemplate,
+				J9UTF8_LENGTH(nestMemberName), J9UTF8_DATA(nestMemberName),
+				J9UTF8_LENGTH(nestHostName), J9UTF8_DATA(nestHostName),
+				J9UTF8_LENGTH(nestMemberName), J9UTF8_DATA(nestMemberName));
+
+		msg = (char *)j9mem_allocate_memory(msgLen, OMRMEM_CATEGORY_VM);
+
+		/* If msg is NULL we can still throw the exception without it. */
+		if (NULL != msg) {
+			j9str_printf(PORTLIB, msg, msgLen, nlsTemplate,
+					J9UTF8_LENGTH(nestMemberName), J9UTF8_DATA(nestMemberName),
+					J9UTF8_LENGTH(nestHostName), J9UTF8_DATA(nestHostName),
+					J9UTF8_LENGTH(nestMemberName), J9UTF8_DATA(nestMemberName));
+		}
+	}
+
+	setCurrentExceptionUTF(vmThread, exception, msg);
+	j9mem_free_memory(msg);
+}
+
+/*
+ * Loads and verifies the nesthost
+ *
+ * @param vmThread vmthread token
+ * @param clazz the j9lass requesting the nesthost
+ * @param options loading options (e.g. J9_LOOK_NO_THROW)
+ * @return 	J9_VISIBILITY_ALLOWED if nest host is loaded, otherwise
+ * 			J9_VISIBILITY_NEST_HOST_LOADING_FAILURE_ERROR
+ * 			J9_VISIBILITY_NEST_HOST_DIFFERENT_PACKAGE_ERROR
+ * 			J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR
+ */
 UDATA
 loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options)
 {
@@ -193,13 +278,13 @@ loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options)
 		J9Class *nestHost = NULL;
 		J9ROMClass *romClass = clazz->romClass;
 		J9UTF8 *nestHostName = J9ROMCLASS_NESTHOSTNAME(romClass);
-
+		BOOLEAN throwException = J9_ARE_NO_BITS_SET(options, J9_LOOK_NO_THROW);
 		/* If no nest host is named, class is own nest host */
 		if (NULL == nestHostName) {
 			nestHost = clazz;
 		} else {
 			UDATA classLoadingFlags = 0;
-			if (J9_ARE_NO_BITS_SET(options, J9_LOOK_NO_THROW)) {
+			if (throwException) {
 				classLoadingFlags = J9_FINDCLASS_FLAG_THROW_ON_FAIL;
 			}
 
@@ -229,8 +314,10 @@ loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options)
 		}
 
 		/* If a problem occurred in nest host verification then the nest host value is invalid */
-		if  ((J9_VISIBILITY_ALLOWED == result) && (NULL != nestHost)) {
+		if (J9_VISIBILITY_ALLOWED == result) {
 			clazz->nestHost = nestHost;
+		} else if (throwException) {
+			setNestmatesError(vmThread, clazz, nestHost, result);
 		}
 	}
 
