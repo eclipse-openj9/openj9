@@ -376,7 +376,8 @@ public:
 
    virtual TR_ResolvedMethod *   getResolvedStaticMethod ( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP);
    virtual TR_ResolvedMethod *   getResolvedSpecialMethod( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP);
-   virtual TR_ResolvedMethod *   getResolvedVirtualMethod( TR::Compilation *, int32_t cpIndex, bool ignoreReResolve, bool * unresolvedInCP);
+   virtual TR_ResolvedMethod *   getResolvedVirtualMethod( TR::Compilation *, int32_t cpIndex, bool ignoreRtResolve, bool * unresolvedInCP);
+   virtual TR_ResolvedMethod *   getResolvedPossiblyPrivateVirtualMethod( TR::Compilation *, int32_t cpIndex, bool ignoreRtResolve, bool * unresolvedInCP);
    virtual TR_OpaqueClassBlock * getResolvedInterfaceMethod(int32_t cpIndex, uintptrj_t * pITableIndex);
 
    virtual TR_ResolvedMethod *   getResolvedDynamicMethod( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP);
@@ -386,7 +387,7 @@ public:
    virtual uint32_t              getResolvedInterfaceMethodOffset(TR_OpaqueClassBlock * classObject, int32_t cpIndex);
    virtual TR_ResolvedMethod *   getResolvedImproperInterfaceMethod(TR::Compilation * comp, I_32 cpIndex);
    virtual TR_ResolvedMethod *   getResolvedInterfaceMethod( TR::Compilation *, TR_OpaqueClassBlock * classObject, int32_t cpIndex);
-   virtual TR_ResolvedMethod *   getResolvedVirtualMethod( TR::Compilation *, TR_OpaqueClassBlock * classObject, int32_t cpIndex,bool ignoreReResolve = true);
+   virtual TR_ResolvedMethod *   getResolvedVirtualMethod( TR::Compilation *, TR_OpaqueClassBlock * classObject, int32_t virtualCallOffset, bool ignoreRtResolve = true);
 
    virtual bool                  virtualMethodIsOverridden();
    virtual void                  setVirtualMethodIsOverridden();
@@ -491,6 +492,8 @@ public:
    virtual char *                staticSignatureChars(int32_t cpIndex, int32_t & len);
 
    virtual TR_OpaqueClassBlock * classOfStatic(int32_t cpIndex, bool returnClassForAOT = false);
+
+   virtual TR_ResolvedMethod *   getResolvedPossiblyPrivateVirtualMethod( TR::Compilation *, int32_t cpIndex, bool ignoreRtResolve, bool * unresolvedInCP);
 
    virtual bool                  getUnresolvedFieldInCP(int32_t cpIndex);
    virtual bool                  getUnresolvedStaticMethodInCP(int32_t cpIndex);

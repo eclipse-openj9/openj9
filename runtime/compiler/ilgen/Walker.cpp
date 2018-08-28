@@ -3841,13 +3841,40 @@ TR_J9ByteCodeIlGenerator::genInvokeSpecial(int32_t cpIndex)
 void
 TR_J9ByteCodeIlGenerator::genInvokeVirtual(int32_t cpIndex)
    {
-   TR::SymbolReference * symRef = symRefTab()->findOrCreateVirtualMethodSymbol(_methodSymbol, cpIndex);
-   TR::Symbol * sym = symRef->getSymbol();
+   auto owningMethod = (TR_ResolvedJ9Method*)_methodSymbol->getResolvedMethod();
+   bool unresolvedInCP;
+   TR_ResolvedMethod *method =
+      owningMethod->getResolvedPossiblyPrivateVirtualMethod(
+         comp(),
+         cpIndex,
+         /* ignoreRtResolve = */ false,
+         &unresolvedInCP);
 
-   TR_ResolvedMethod * method = symRef->isUnresolved() ? 0 : sym->castToResolvedMethodSymbol()->getResolvedMethod();
-   bool isDirectCall = (method &&
-                        (sym->isFinal() ||
-                         (debug("omitVirtualGuard") && !method->virtualMethodIsOverridden())));
+   TR::SymbolReference * symRef = NULL;
+   if (method != NULL && method->isPrivate())
+      {
+      _methodSymbol->setMayHaveInlineableCall(true);
+      symRef = symRefTab()->findOrCreateMethodSymbol(
+         _methodSymbol->getResolvedMethodIndex(),
+         cpIndex,
+         method,
+         TR::MethodSymbol::Special,
+         /* isUnresolvedInCP = */ false);
+      }
+   else
+      {
+      symRef = symRefTab()->findOrCreateVirtualMethodSymbol(_methodSymbol, cpIndex);
+      }
+
+   TR::Symbol * sym = symRef->getSymbol();
+   bool isDirectCall = false;
+   if (method != NULL)
+      {
+      isDirectCall =
+         sym->isFinal() ||
+         method->isPrivate() ||
+         (debug("omitVirtualGuard") && !method->virtualMethodIsOverridden());
+      }
 
    if (isDirectCall)
       {
