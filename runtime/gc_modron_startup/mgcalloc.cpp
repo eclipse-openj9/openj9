@@ -89,7 +89,7 @@ J9AllocateObjectNoGC(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFla
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-	if (extensions->instrumentableAllocateHookEnabled ) {
+	if (extensions->instrumentableAllocateHookEnabled || !env->isInlineTLHAllocateEnabled()) {
 		/* This function is restricted to only being used for instrumentable allocates so we only need to check that one allocation hook.
 		 * Note that we can't handle hooked allocates since we might be called without a JIT resolve frame and that is required for us to
 		 * report the allocation event.
@@ -282,7 +282,7 @@ J9AllocateIndexableObjectNoGC(J9VMThread *vmThread, J9Class *clazz, uint32_t num
 	
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-	if (extensions->instrumentableAllocateHookEnabled ) {
+	if (extensions->instrumentableAllocateHookEnabled || !env->isInlineTLHAllocateEnabled()) {
 		/* This function is restricted to only being used for instrumentable allocates so we only need to check that one allocation hook.
 		 * Note that we can't handle hooked allocates since we might be called without a JIT resolve frame and that is required for us to
 		 * report the allocation event.

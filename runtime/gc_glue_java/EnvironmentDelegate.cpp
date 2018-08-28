@@ -307,7 +307,14 @@ MM_EnvironmentDelegate::isInlineTLHAllocateEnabled()
 {
 	J9VMThread *vmThread = (J9VMThread *)_env->getOmrVMThread()->_language_vmthread;
 	J9ModronThreadLocalHeap *tlh = (J9ModronThreadLocalHeap *)&vmThread->allocateThreadLocalHeap;
-	return NULL != tlh->realHeapAlloc ? false : true;
+	bool result = (NULL == tlh->realHeapAlloc);
+
+#if defined(J9VM_GC_NON_ZERO_TLH)
+	tlh = (J9ModronThreadLocalHeap *)&vmThread->nonZeroAllocateThreadLocalHeap;
+	result = result && (NULL == tlh->realHeapAlloc);
+#endif /* defined(J9VM_GC_NON_ZERO_TLH) */
+
+	return result;
 }
 #endif /* J9VM_GC_THREAD_LOCAL_HEAP */
 
