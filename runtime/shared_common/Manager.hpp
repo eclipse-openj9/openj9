@@ -122,9 +122,14 @@ public:
 	public :
 		UDATA _nonStaleItems;
 		UDATA _staleItems;
-		SH_SharedCache* _cache;
+		SH_SharedCache *_cache;
 
-		CountData() : _nonStaleItems(0), _staleItems(0), _cache(0) {}
+		explicit CountData(SH_SharedCache *cache)
+			: _nonStaleItems(0)
+			, _staleItems(0)
+			, _cache(cache)
+		{
+		}
 	};
 
 #if defined(J9SHR_CACHELET_SUPPORT)

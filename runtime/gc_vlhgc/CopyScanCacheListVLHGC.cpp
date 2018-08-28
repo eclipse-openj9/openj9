@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,7 +57,7 @@ MM_CopyScanCacheListVLHGC::initialize(MM_EnvironmentVLHGC *env)
 		return false;
 	}
 
-	memset(_sublists, 0, sublistBytes);
+	memset((void *)_sublists, 0, sublistBytes);
 	for (UDATA i = 0; i < _sublistCount; i++) {
 		if (!_sublists[i]._cacheLock.initialize(env, &extensions->lnrlOptions, "MM_CopyScanCacheListVLHGC:_sublists[]._cacheLock")) {
 			return false;
@@ -66,7 +65,6 @@ MM_CopyScanCacheListVLHGC::initialize(MM_EnvironmentVLHGC *env)
 	}
 	
 	return true;
-
 }
 
 void

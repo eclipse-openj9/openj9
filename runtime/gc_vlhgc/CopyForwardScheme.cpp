@@ -421,7 +421,7 @@ MM_CopyForwardScheme::initialize(MM_EnvironmentVLHGC *env)
 		return false;
 	}
 	
-	memset(_reservedRegionList, 0, sizeof(MM_ReservedRegionListHeader) * _compactGroupMaxCount);
+	memset((void *)_reservedRegionList, 0, sizeof(MM_ReservedRegionListHeader) * _compactGroupMaxCount);
 	for(UDATA index = 0; index < _compactGroupMaxCount; index++) {
 		_reservedRegionList[index]._maxSublistCount = 1;
 		_reservedRegionList[index]._sublistCount = 1;
