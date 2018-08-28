@@ -1094,8 +1094,6 @@ resolveInterfaceMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA
 			methodIndex <<= J9_ITABLE_INDEX_SHIFT;
 			methodIndex = methodIndex | tagBits | oldArgCount;
 			ramCPEntry->methodIndexAndArgCount = methodIndex;
-			/* interfaceClass is used to indicate resolved. Make sure to write it last */
-			issueWriteBarrier();
 			ramCPEntry->interfaceClass = (UDATA)interfaceClass;
 		}
 		/* indicate success */
