@@ -2136,7 +2136,7 @@ TR::Register *J9::X86::TreeEvaluator::ZEROCHKEvaluator(TR::Node *node, TR::CodeG
    else
       {
       TR::Register *value = cg->evaluate(node->getFirstChild());
-      generateRegRegInstruction(TESTRegReg(!value->areUpperBitsZero()), node, value, value, cg);
+      generateRegRegInstruction(TEST4RegReg, node, value, value, cg);
       cg->decReferenceCount(node->getFirstChild());
       generateLabelInstruction(JE4, node, slowPathLabel, cg);
       }
