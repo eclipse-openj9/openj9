@@ -1089,8 +1089,9 @@ resolveInterfaceMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA
 				}
 				tagBits |= J9_ITABLE_INDEX_OBJECT;
 			}
-			methodIndex <<= 8;
-			Assert_VM_true(J9_ARE_NO_BITS_SET(methodIndex, J9_ITABLE_INDEX_TAG_BITS));
+			/* Ensure methodIndex can be shifted without losing any bits */
+			Assert_VM_true(methodIndex < ((UDATA)1 << ((sizeof(UDATA) * 8) - J9_ITABLE_INDEX_SHIFT)));
+			methodIndex <<= J9_ITABLE_INDEX_SHIFT;
 			methodIndex = methodIndex | tagBits | oldArgCount;
 			ramCPEntry->methodIndexAndArgCount = methodIndex;
 			/* interfaceClass is used to indicate resolved. Make sure to write it last */

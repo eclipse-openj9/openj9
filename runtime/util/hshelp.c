@@ -1701,7 +1701,7 @@ fixRAMConstantPoolForFastHCR(J9ConstantPool *ramConstantPool, J9HashTable *class
 			}
 			case J9CPTYPE_INTERFACE_METHOD: {
 				J9RAMInterfaceMethodRef *methodRef = (J9RAMInterfaceMethodRef *) &ramConstantPool[cpIndex];
-				UDATA methodIndex = ((methodRef->methodIndexAndArgCount & ~255) >> 8);
+				UDATA methodIndex = methodRef->methodIndexAndArgCount >> J9_ITABLE_INDEX_SHIFT;
 				J9Class *resolvedClass = (J9Class *) methodRef->interfaceClass;
 				/* Don't fix unresolved entries */
 				if (NULL != resolvedClass) {
@@ -1728,7 +1728,7 @@ fixRAMConstantPoolForFastHCR(J9ConstantPool *ramConstantPool, J9HashTable *class
 										UDATA argCount = (methodRef->methodIndexAndArgCount & 255);
 										UDATA newMethodIndex = getITableIndexForMethod(methodResult->newMethod, resolvedClass);
 										/* Fix the index in the resolved CP entry, retaining the argCount */
-										methodRef->methodIndexAndArgCount = ((newMethodIndex << 8) | argCount);
+										methodRef->methodIndexAndArgCount = ((newMethodIndex << J9_ITABLE_INDEX_SHIFT) | argCount);
 									}
 								}
 							}
