@@ -1116,6 +1116,7 @@ extern J9_CFUNC struct J9Class*  jitGetClassInClassloaderFromUTF8 (J9VMThread *v
 extern J9_CFUNC UDATA  jitFieldsAreIdentical (J9VMThread *vmStruct, J9ConstantPool *cp1, UDATA index1, J9ConstantPool *cp2, UDATA index2, UDATA isStatic);
 extern J9_CFUNC IDATA  jitCTResolveInstanceFieldRefWithMethod (J9VMThread *vmStruct, J9Method *method, UDATA fieldIndex, UDATA resolveFlags, J9ROMFieldShape **resolvedField);
 extern J9_CFUNC struct J9Method*  jitGetInterfaceMethodFromCP (J9VMThread *vmThread, J9ConstantPool *constantPool, UDATA cpIndex, J9Class* lookupClass);
+extern J9_CFUNC struct J9UTF8* jitGetConstantDynamicTypeFromCP(J9VMThread *currentThread, J9ConstantPool *constantPool, UDATA cpIndex);
 extern J9_CFUNC void*  jitGetCountingSendTarget (J9VMThread *vmThread, J9Method *ramMethod);
 extern J9_CFUNC void  jitResetAllMethodsAtStartup (J9VMThread *vmContext);
 extern J9_CFUNC struct J9Class*  jitGetInterfaceITableIndexFromCP (J9VMThread *vmThread, J9ConstantPool *constantPool, UDATA cpIndex, UDATA* pITableIndex);

@@ -173,4 +173,13 @@ jitGetInterfaceMethodFromCP(J9VMThread *currentThread, J9ConstantPool *constantP
 	return method;
 }
 
+J9UTF8*
+jitGetConstantDynamicTypeFromCP(J9VMThread *currentThread, J9ConstantPool *constantPool, UDATA cpIndex)
+{
+	J9ROMConstantDynamicRef *romConstantRef = (J9ROMConstantDynamicRef*)J9_ROM_CP_FROM_CP(constantPool) + cpIndex;
+	J9UTF8 *sigUTF = J9ROMNAMEANDSIGNATURE_SIGNATURE(NNSRP_GET(romConstantRef->nameAndSignature, struct J9ROMNameAndSignature*));
+
+	return sigUTF;
+}
+
 }
