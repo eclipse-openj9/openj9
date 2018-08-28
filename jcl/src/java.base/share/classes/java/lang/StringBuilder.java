@@ -78,8 +78,8 @@ public final class StringBuilder extends AbstractStringBuilder implements Serial
 	private transient int count;
 	private transient char[] value;
 	private transient int capacity;
-	
-	private void decompress(int min) {
+
+	private int decompress(int min) {
 		int currentLength = lengthInternal();
 		int currentCapacity = capacityInternal();
 		
@@ -100,6 +100,7 @@ public final class StringBuilder extends AbstractStringBuilder implements Serial
 		capacity = newValue.length;
 		
 		String.initCompressionFlag();
+		return capacity;
 	}
 	
 /**
@@ -208,7 +209,7 @@ public StringBuilder append (char[] chars) {
 		} else {
 			// Check if the StringBuilder is compressed
 			if (count >= 0) {
-				decompress(newLength);
+				currentCapacity = decompress(newLength);
 			}
 			
 			if (newLength > currentCapacity) {
@@ -265,7 +266,7 @@ public StringBuilder append (char chars[], int start, int length) {
 			} else {
 				// Check if the StringBuilder is compressed
 				if (count >= 0) {
-					decompress(newLength);					
+					currentCapacity = decompress(newLength);
 				}
 				
 				if (newLength > currentCapacity) {
@@ -311,7 +312,7 @@ StringBuilder append (char[] chars, int start, int length, boolean compressed) {
 		} else {
 			// Check if the StringBuilder is compressed
 			if (count >= 0) {
-				decompress(newLength);				
+				currentCapacity = decompress(newLength);
 			}
 			
 			if (newLength > currentCapacity) {
@@ -369,7 +370,7 @@ public StringBuilder append(char ch) {
 		} else {
 			// Check if the StringBuilder is compressed
 			if (count >= 0) {
-				decompress(newLength);
+				currentCapacity = decompress(newLength);
 			}
 			
 			if (newLength > currentCapacity) {
@@ -547,7 +548,7 @@ public StringBuilder append (String string) {
 		} else {
 			// Check if the StringBuilder is compressed
 			if (count >= 0) {
-				decompress(newLength);
+				currentCapacity = decompress(newLength);
 			}
 			
 			if (newLength > currentCapacity) {
@@ -2217,7 +2218,7 @@ public StringBuilder append(CharSequence sequence) {
 			} else {
 				// Check if the StringBuilder is compressed
 				if (count >= 0) {
-					decompress(newLength);
+					currentCapacity = decompress(newLength);
 				}
 				
 				if (newLength > currentCapacity) {
@@ -2281,8 +2282,7 @@ public StringBuilder append(CharSequence sequence, int start, int end) {
 				} else {
 					// Check if the StringBuilder is compressed
 					if (count >= 0) {
-						decompress(newLength);
-						currentCapacity = capacityInternal();
+						currentCapacity = decompress(newLength);
 					}
 					
 					if (newLength > currentCapacity) {
@@ -2359,7 +2359,7 @@ public StringBuilder append(CharSequence sequence, int start, int end) {
 				} else {
 					// Check if the StringBuilder is compressed
 					if (count >= 0) {
-						decompress(newLength);
+						currentCapacity = decompress(newLength);
 					}
 					
 					if (newLength > currentCapacity) {
