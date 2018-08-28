@@ -6677,7 +6677,7 @@ resolve:
 			rc = THROW_NPE;
 		} else {
 			J9Class *receiverClass = J9OBJECT_CLAZZ(_currentThread, receiver);
-			UDATA methodIndex = (methodIndexAndArgCount & ~J9_ITABLE_INDEX_TAG_BITS) >> 8;
+			UDATA methodIndex = methodIndexAndArgCount >> J9_ITABLE_INDEX_SHIFT;
 			J9ROMMethod *romMethod = NULL;
 
 			/* Run search in receiverClass->lastITable */
