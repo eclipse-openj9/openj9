@@ -333,6 +333,10 @@ public final class SortTest {
 
 	private final Set<ElementType> types;
 
+	public SortTest() {
+		this(new String[0]);
+	}
+
 	public SortTest(String... args) {
 		super();
 		this.lengths = getLengths(args);
