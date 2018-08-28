@@ -91,6 +91,13 @@ J9::X86::CodeGenerator::CodeGenerator() :
       cg->setSupportsInlineStringIndexOf();
       }
 
+   if (cg->getX86ProcessorInfo().supportsSSE4_1() &&
+       !comp->getOption(TR_DisableSIMDStringHashCode) &&
+       !TR::Compiler->om.canGenerateArraylets())
+      {
+      cg->setSupportsInlineStringHashCode();
+      }
+
    if (comp->generateArraylets() && !comp->getOptions()->realTimeGC())
       {
       cg->setSupportsStackAllocationOfArraylets();

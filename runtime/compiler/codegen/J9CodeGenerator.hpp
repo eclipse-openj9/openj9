@@ -392,6 +392,16 @@ public:
     */
    void setSupportsInlineStringIndexOf() { return _j9Flags.set(SupportsInlineStringIndexOf);}
 
+   /** \brief
+   *    Determines whether the code generator supports inlining of java/lang/String.hashCode()
+   */
+   bool getSupportsInlineStringHashCode() { return _j9Flags.testAny(SupportsInlineStringHashCode); }
+
+   /** \brief
+   *    The code generator supports inlining of java/lang/String.hashCode()
+   */
+   void setSupportsInlineStringHashCode() { return _j9Flags.set(SupportsInlineStringHashCode); }
+
    /**
     * \brief
     *    The number of nodes between a monext and the next monent before
@@ -407,6 +417,7 @@ private:
       SupportsMaxPrecisionMilliTime       = 0x00000002,
       SupportsInlineStringCaseConversion  = 0x00000004, /*! codegen inlining of Java string case conversion */
       SupportsInlineStringIndexOf         = 0x00000008, /*! codegen inlining of Java string index of */
+      SupportsInlineStringHashCode        = 0x00000010, /*! codegen inlining of Java string hash code */
       };
 
    flags32_t _j9Flags;
