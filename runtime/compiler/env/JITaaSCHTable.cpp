@@ -314,10 +314,6 @@ bool JITaaSCHTableCommit(
 
    if (!vguards.empty())
       {
-      static bool dontGroupOSRAssumptions = (feGetEnv("TR_DontGroupOSRAssumptions") != NULL);
-      if (!dontGroupOSRAssumptions)
-         JITaaSCommitOSRVirtualGuards(comp, vguards);
-
       for (auto &guard : vguards)
          {
          auto &info = std::get<0>(guard);
@@ -340,6 +336,12 @@ bool JITaaSCHTableCommit(
          for (auto &inner : innerAssumptions)
             JITaaSCommitVirtualGuard(&inner, sites, table, comp);
          }
+      
+      // osr guards need to be processed after all the guards, because sites' location/destination
+      // need to be patched first
+      static bool dontGroupOSRAssumptions = (feGetEnv("TR_DontGroupOSRAssumptions") != NULL);
+      if (!dontGroupOSRAssumptions)
+         JITaaSCommitOSRVirtualGuards(comp, vguards);
       }
 
    TR::list<TR_VirtualGuardSite*> *sites = comp->getSideEffectGuardPatchSites();
