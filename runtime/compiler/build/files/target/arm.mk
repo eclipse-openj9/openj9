@@ -25,7 +25,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/arm/codegen/ARMOperand2.cpp \
     omr/compiler/arm/codegen/ARMOutOfLineCodeSection.cpp \
     omr/compiler/arm/codegen/ARMSystemLinkage.cpp \
-    omr/compiler/arm/codegen/BinaryCommutativeAnalyser.cpp \
     omr/compiler/arm/codegen/BinaryEvaluator.cpp \
     omr/compiler/arm/codegen/ConstantDataSnippet.cpp \
     omr/compiler/arm/codegen/ControlFlowEvaluator.cpp \
