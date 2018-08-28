@@ -633,11 +633,14 @@ initializeTraceOptions(J9JavaVM *vm, char* opts[])
 	IDATA optionsLength;
 	IDATA rc =  J9VMDLLMAIN_OK;
 
+#define trace_option_helper(option) \
+		splitCommandLineOption(vm, option, LITERAL_STRLEN(option), opts + i)
+
 	/* set up the default options */
-	rc = splitCommandLineOption(vm, UT_MAXIMAL_KEYWORD "=all{level1}", 20, opts);
+	rc = trace_option_helper(UT_MAXIMAL_KEYWORD "=all{level1}");
 	i += 2;
 	if (rc != J9VMDLLMAIN_FAILED) {
-		rc = splitCommandLineOption(vm, UT_EXCEPTION_KEYWORD "=j9mm{gclogger}", 26, opts + i);
+		rc = trace_option_helper(UT_EXCEPTION_KEYWORD "=j9mm{gclogger}");
 		i += 2;
 	}
 
@@ -653,7 +656,7 @@ initializeTraceOptions(J9JavaVM *vm, char* opts[])
 	 * trace they selected but their selection + level 2.)
 	 */
 	if( xtraceIndex >= 0 && !checkAndSetL2EnabledFlag() ) {
-		rc = splitCommandLineOption(vm, UT_MAXIMAL_KEYWORD "=all{level2}", 20, opts + i);
+		rc = trace_option_helper(UT_MAXIMAL_KEYWORD "=all{level2}");
 		i += 2;
 	}
 	while (xtraceIndex >= 0) {
@@ -675,6 +678,8 @@ initializeTraceOptions(J9JavaVM *vm, char* opts[])
 	}
 	opts[i++] = NULL;
 	return rc;
+
+#undef trace_option_helper
 }
 
 /*
