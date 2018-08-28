@@ -1554,7 +1554,7 @@ retry:
 		goto retry;
 	} else {
 		indexAndLiteralsEA[2] = (UDATA)interfaceClass;
-		UDATA methodIndex = (methodIndexAndArgCount & ~J9_ITABLE_INDEX_TAG_BITS) >> 8;
+		UDATA methodIndex = methodIndexAndArgCount >> J9_ITABLE_INDEX_SHIFT;
 		UDATA iTableOffset = 0;
 		if (J9_ARE_ANY_BITS_SET(methodIndexAndArgCount, J9_ITABLE_INDEX_METHOD_INDEX)) {
 			/* Direct method - methodIndex is an index into the method list of either Object or interfaceClass */
