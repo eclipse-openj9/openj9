@@ -28,7 +28,8 @@ bool useSSL(TR::PersistentInfo *info)
    }
 
 J9ServerStream::J9ServerStream(int connfd, BIO *ssl, uint32_t timeout)
-   : _msTimeout(timeout)
+   : J9Stream(),
+   _msTimeout(timeout)
    {
    initStream(connfd, ssl);
    }

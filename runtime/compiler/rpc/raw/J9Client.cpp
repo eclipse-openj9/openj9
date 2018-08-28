@@ -203,7 +203,7 @@ BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
       {
       ERR_print_errors_fp(stderr);
       SSL_free(ssl);
-      throw JITaaS::StreamFailure("fAiled to make new BIO");
+      throw JITaaS::StreamFailure("Failed to make new BIO");
       }
    if (BIO_set_ssl(bio, ssl, true) != 1)
       {
@@ -217,7 +217,8 @@ BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
    }
 
 J9ClientStream::J9ClientStream(TR::PersistentInfo *info)
-   : _timeout(info->getJITaaSTimeout())
+   : J9Stream(),
+   _timeout(info->getJITaaSTimeout())
    {
    int connfd = openConnection(info->getJITaaSServerAddress(), info->getJITaaSServerPort(), info->getJITaaSTimeout());
    BIO *ssl = openSSLConnection(_sslCtx, connfd);

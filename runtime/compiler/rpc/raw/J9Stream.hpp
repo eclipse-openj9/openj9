@@ -11,6 +11,18 @@ using namespace google::protobuf::io;
 class J9Stream
    {
 protected:
+   J9Stream()
+      : _inputStream(nullptr),
+      _outputStream(nullptr),
+      _ssl(nullptr),
+      _sslInputStream(nullptr),
+      _sslOutputStream(nullptr),
+      _connfd(-1)
+      {
+      // set everything to nullptr, in case the child stream fails to call initStream
+      // which initializes these variables
+      }
+
    void initStream(int connfd, BIO *ssl)
       {
       _connfd = connfd;
@@ -28,12 +40,19 @@ protected:
          _outputStream = new (PERSISTENT_NEW) FileOutputStream(_connfd);
          }
       }
+
    virtual ~J9Stream()
       {
-      _inputStream->~ZeroCopyInputStream();
-      TR_Memory::jitPersistentFree(_inputStream);
-      _outputStream->~ZeroCopyOutputStream();
-      TR_Memory::jitPersistentFree(_outputStream);
+      if (_inputStream)
+         {
+         _inputStream->~ZeroCopyInputStream();
+         TR_Memory::jitPersistentFree(_inputStream);
+         }
+      if (_outputStream)
+         {
+         _outputStream->~ZeroCopyOutputStream();
+         TR_Memory::jitPersistentFree(_outputStream);
+         }
       if (_ssl)
          {
          _sslInputStream->~SSLInputStream();
@@ -42,8 +61,11 @@ protected:
          TR_Memory::jitPersistentFree(_sslOutputStream);
          BIO_free_all(_ssl);
          }
-      close(_connfd);
-      _connfd = -1;
+      if (_connfd != -1)
+         {
+         close(_connfd);
+         _connfd = -1;
+         }
       }
 
    template <typename T>
