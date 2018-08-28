@@ -314,6 +314,7 @@ PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveVirtualMethod,2)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveMethodType,3)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveMethodHandle,3)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveInvokeDynamic,3)
+PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveConstantDynamic,3)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveHandleMethod,3)
 
 dnl Recompilation helpers

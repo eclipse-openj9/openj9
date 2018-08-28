@@ -3478,6 +3478,7 @@ typedef struct J9JITConfig {
 	void *old_slow_jitResolveMethodType;
 	void *old_slow_jitResolveMethodHandle;
 	void *old_slow_jitResolveInvokeDynamic;
+	void *old_slow_jitResolveConstantDynamic;
 	void *old_slow_jitResolveHandleMethod;
 	void *old_slow_jitRetranslateCaller;
 	void *old_slow_jitRetranslateCallerWithPreparation;
@@ -3838,6 +3839,7 @@ typedef struct J9AOTConfig {
 	void *old_slow_jitResolveMethodType;
 	void *old_slow_jitResolveMethodHandle;
 	void *old_slow_jitResolveInvokeDynamic;
+	void *old_slow_jitResolveConstantDynamic;
 	void *old_slow_jitResolveHandleMethod;
 	void *old_slow_jitRetranslateCaller;
 	void *old_slow_jitRetranslateCallerWithPreparation;
