@@ -190,7 +190,7 @@ removeTempDir(J9JavaVM *vm, char *dir)
 		char resultBuffer[J9SH_MAXPATH];
 		UDATA rc, handle;
 
-		j9str_printf(PORTLIB, baseFilePath, J9SH_MAXPATH, "%s", dir);
+		j9str_printf(PORTLIB, baseFilePath, sizeof(baseFilePath), "%s", dir);
 		rc = handle = j9file_findfirst(baseFilePath, resultBuffer);
 		while ((UDATA)-1 != rc) {
 			char nextEntry[J9SH_MAXPATH];
@@ -199,7 +199,7 @@ removeTempDir(J9JavaVM *vm, char *dir)
 				rc = j9file_findnext(handle, resultBuffer);
 				continue;
 			}
-			j9str_printf(PORTLIB, nextEntry, J9SH_MAXPATH, "%s/%s", baseFilePath, resultBuffer);
+			j9str_printf(PORTLIB, nextEntry, sizeof(nextEntry), "%s/%s", baseFilePath, resultBuffer);
 			removeTempDir(vm, nextEntry);
 			rc = j9file_findnext(handle, resultBuffer);
 		}
