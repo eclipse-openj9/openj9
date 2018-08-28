@@ -47,8 +47,6 @@ static jint initializeBootClassPathSystemProperty( J9JavaVM *vm);
 static IDATA initializeSystemThreadGroup(J9JavaVM * vm, JNIEnv * env);
 static char * addEndorsedPath(J9PortLibrary *portLib, char *endorsedPath, char *path);
 
-
-
 /* JCL_J2SE */
 #define JCL_J2SE
 
@@ -81,7 +79,6 @@ computeJCLRuntimeFlags( J9JavaVM* vm)
 	flags |= JCL_RTFLAG_OPT_PANAMA;
 #endif
 
-
 #ifdef J9VM_OPT_MODULE
 	if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) >= J2SE_19) {
 		flags |= JCL_RTFLAG_OPT_MODULE;
@@ -95,7 +92,8 @@ computeJCLRuntimeFlags( J9JavaVM* vm)
 	return flags;
 }
 
-jint standardInit( J9JavaVM *vm, char* dllName)
+jint
+standardInit( J9JavaVM *vm, char* dllName)
 {
 	jint result;
 	J9VMThread *vmThread = vm->mainThread;
@@ -141,7 +139,7 @@ jint standardInit( J9JavaVM *vm, char* dllName)
 	}
 
 	vmFuncs->internalAcquireVMAccess(vmThread);
-	result = (jint)initializeRequiredClasses(vmThread, dllName );
+	result = (jint)initializeRequiredClasses(vmThread, dllName);
 
 	if (0 == result) {
 		result = vmFuncs->initializeHeapOOMMessage(vmThread);
@@ -166,7 +164,7 @@ jint standardInit( J9JavaVM *vm, char* dllName)
 #endif /* J9VM_OPT_SIDECAR */
 
 	vmFuncs->internalAcquireVMAccess(vmThread);
-	
+
 	if (result == 0) {
 		U_32 runtimeFlags = computeJCLRuntimeFlags(vm);
 		result = initializeKnownClasses(vm, runtimeFlags);
@@ -177,12 +175,10 @@ jint standardInit( J9JavaVM *vm, char* dllName)
 		/* Must do this before initializeAttachedThread */
 		vmFuncs->internalReleaseVMAccess(vmThread);
 
-
 		TRIGGER_J9HOOK_VM_INITIALIZE_REQUIRED_CLASSES_DONE(vm->hookInterface, vmThread, continueInitialization);
 		if (!continueInitialization) {
 			goto _fail;
 		}
-
 
 		result = (jint)initializeSystemThreadGroup(vm, (JNIEnv*)vmThread);
 		if (result != JNI_OK) goto _fail;
@@ -231,7 +227,7 @@ jint standardInit( J9JavaVM *vm, char* dllName)
 		if (!invokeMethod) goto _fail;
 		vm->jlrMethodInvoke = ((J9JNIMethodID *) invokeMethod)->method;
 		(*(JNIEnv*)vmThread)->DeleteLocalRef((JNIEnv*)vmThread, clazz);
-		
+
 		if (J2SE_SHAPE(vm) != J2SE_SHAPE_RAW) {
 			/* JSR 292-related class */
 			clazz = (*(JNIEnv*)vmThread)->FindClass((JNIEnv*)vmThread, "com/ibm/oti/lang/ArgumentHelper");
@@ -288,12 +284,12 @@ _fail:
 	return JNI_ERR;
 }
 
-
 /**
   * Set up any information that might be consumed/modified by other libraries before classes are loaded.
-  *  
+  *
   */
-jint standardPreconfigure( JavaVM *jvm)
+jint
+standardPreconfigure( JavaVM *jvm)
 {
 	J9JavaVM* vm = (J9JavaVM*)jvm;
 
@@ -312,8 +308,8 @@ _fail:
 	return JNI_ERR;
 }
 
-
-static IDATA initializeSystemThreadGroup(J9JavaVM * vm, JNIEnv * env)
+static IDATA
+initializeSystemThreadGroup(J9JavaVM * vm, JNIEnv * env)
 {
 	IDATA result = JNI_ERR;
 	jclass threadClass = NULL;
@@ -361,7 +357,6 @@ done:
 	if (groupNameRef) (*env)->DeleteLocalRef(env, groupNameRef);
 	return result;
 }
-
 
 void
 internalInitializeJavaLangClassLoader(JNIEnv * env)
@@ -433,13 +428,15 @@ exitVM:
 done: ;
 }
 
-
-jint JNICALL JVM_OnUnload(JavaVM* jvm, void* reserved) {
+jint
+JNICALL JVM_OnUnload(JavaVM* jvm, void* reserved)
+{
 	return 0;
 }
 
-
-jint JCL_OnUnload(J9JavaVM* vm, void* reserved) {
+jint
+JCL_OnUnload(J9JavaVM* vm, void* reserved)
+{
 #ifdef J9VM_OPT_DYNAMIC_LOAD_SUPPORT
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	if (vm->bootstrapClassPath) {
@@ -451,8 +448,8 @@ jint JCL_OnUnload(J9JavaVM* vm, void* reserved) {
 	return 0;
 }
 
-
-IDATA checkJCL(J9VMThread * vmThread, U_8* dllValue, U_8* jclConfig, UDATA j9Version, UDATA jclVersion)
+IDATA
+checkJCL(J9VMThread * vmThread, U_8* dllValue, U_8* jclConfig, UDATA j9Version, UDATA jclVersion)
 {
 	J9JavaVM * vm = vmThread->javaVM;
 	PORT_ACCESS_FROM_JAVAVM(vm);
@@ -460,7 +457,7 @@ IDATA checkJCL(J9VMThread * vmThread, U_8* dllValue, U_8* jclConfig, UDATA j9Ver
 	UDATA j9V, jclV;
 
 	/* If jclConfig is NULL or jclVersion is -1, then we didn't find the fields in java.lang.Class. Make sure the dllValue and jclConfig match. */
-	if((jclConfig == NULL) || (jclVersion == (UDATA)-1) || (memcmp( jclConfig, dllValue, 8))) {
+	if ((jclConfig == NULL) || (jclVersion == (UDATA)-1) || (memcmp(jclConfig, dllValue, 8))) {
 		/* Incompatible class library */
 		j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_BEGIN_MULTI_LINE, J9NLS_JCL_INCOMPATIBLE_CL);
 		if (jclConfig != NULL) {
@@ -495,20 +492,17 @@ IDATA checkJCL(J9VMThread * vmThread, U_8* dllValue, U_8* jclConfig, UDATA j9Ver
 	}
 
 	/* Last, compare the versions */
-	if((jclV = jclVersion & 0xffff) != (j9V = j9Version & 0xffff))
-	{
+	if((jclV = jclVersion & 0xffff) != (j9V = j9Version & 0xffff)) {
 		/* Incompatible class library version: JCL %x, VM %x */
 		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JCL_INCOMPATIBLE_CL_VERSION, jclV, j9V);
 		return 3;
 	}
-	if((jclV = jclVersion & 0xff0000) < (j9V = j9Version & 0xff0000))
-	{
+	if((jclV = jclVersion & 0xff0000) < (j9V = j9Version & 0xff0000)) {
 		/* Incompatible class library version: expected JCL v%i, found v%i */
 		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JCL_INCOMPATIBLE_CL_VERSION_JCL, j9V >> 16, jclV >> 16);
 		return 4;
 	}
-	if((jclV = jclVersion & 0xff000000) > (j9V = j9Version & 0xff000000))
-	{
+	if((jclV = jclVersion & 0xff000000) > (j9V = j9Version & 0xff000000)) {
 		/* Incompatible class library version: requires VM v%i, found v%i */
 		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JCL_INCOMPATIBLE_CL_VERSION_VM, jclV >> 24, j9V >> 24);
 		return 5;
@@ -518,10 +512,10 @@ IDATA checkJCL(J9VMThread * vmThread, U_8* dllValue, U_8* jclConfig, UDATA j9Ver
 	return 0;
 }
 
-
 #ifdef J9VM_OPT_DYNAMIC_LOAD_SUPPORT
 
-static IDATA initializeBootstrapClassPath(J9JavaVM * vm)
+static IDATA
+initializeBootstrapClassPath(J9JavaVM * vm)
 {
 	VMI_ACCESS_FROM_JAVAVM((JavaVM*)vm);
 	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
@@ -539,10 +533,10 @@ static IDATA initializeBootstrapClassPath(J9JavaVM * vm)
 	(*VMI)->GetSystemProperty(VMI, BOOT_PATH_SEPARATOR_SYS_PROP, &classpathSeparator);
 
 	/* Fail if the classpath has already been set */
-	if(J9_ARE_ALL_BITS_SET(loader->flags, J9CLASSLOADER_CLASSPATH_SET)){
+	if(J9_ARE_ALL_BITS_SET(loader->flags, J9CLASSLOADER_CLASSPATH_SET)) {
 		return -2;
 	}
-	
+
 #if defined(J9VM_OPT_SHARED_CLASSES)
 	if (J9_ARE_ALL_BITS_SET(loader->flags, J9CLASSLOADER_SHARED_CLASSES_ENABLED)) {
 		/* Warm up the classpath entry so that the Classpath stored in the cache has the correct info.
@@ -559,19 +553,19 @@ static IDATA initializeBootstrapClassPath(J9JavaVM * vm)
 	} else {
 		/* Mark the class path as having been set */
 		loader->flags |= J9CLASSLOADER_CLASSPATH_SET;
-	
+
 		TRIGGER_J9HOOK_VM_CLASS_LOADER_CLASSPATH_ENTRIES_INITIALIZED(vm->hookInterface, vm, loader);
 	}
 
 	return 0;
 }
 
-
-static UDATA isEndorsedBundle(const char *filename)
+static UDATA
+isEndorsedBundle(const char *filename)
 {
 	size_t len = strlen(filename);
 
-	if ( len > 4 ) {
+	if (len > 4) {
 		char suffix[4];
 
 		suffix[0] = j9_ascii_tolower(filename[len-4]);
@@ -579,17 +573,18 @@ static UDATA isEndorsedBundle(const char *filename)
 		suffix[2] = j9_ascii_tolower(filename[len-2]);
 		suffix[3] = j9_ascii_tolower(filename[len-1]);
 
-		if ( strncmp(suffix, ".jar", 4) == 0 ) {
+		if (strncmp(suffix, ".jar", 4) == 0) {
 			return 1;
-		} else if ( strncmp(suffix, ".zip", 4) == 0 ) {
+		} else if (strncmp(suffix, ".zip", 4) == 0) {
 			return 1;
 		}
 	}
+
 	return 0;
 }
 
-
-static char * addEndorsedPath(J9PortLibrary *portLib, char *endorsedPath, char *path)
+static char *
+addEndorsedPath(J9PortLibrary *portLib, char *endorsedPath, char *path)
 {
 	PORT_ACCESS_FROM_PORT(portLib);
 
@@ -600,7 +595,7 @@ static char * addEndorsedPath(J9PortLibrary *portLib, char *endorsedPath, char *
 	char* endorsedDir = j9mem_allocate_memory(EsMaxPath * 2, J9MEM_CATEGORY_VM_JCL);
 	if (!endorsedDir) return path;
 
-	while ( dirStart  > (char *) 1 ) {
+	while (dirStart > (char *)1) {
 		/* break path into separate directories */
 		dirEnd = strchr(dirEnd, separator);
 
@@ -626,8 +621,8 @@ static char * addEndorsedPath(J9PortLibrary *portLib, char *endorsedPath, char *
 	return path;
 }
 
-
-static char * addEndorsedBundles(J9PortLibrary *portLib, char *endorsedDir, char *path, char *endorsedBundle)
+static char *
+addEndorsedBundles(J9PortLibrary *portLib, char *endorsedDir, char *path, char *endorsedBundle)
 {
 	PORT_ACCESS_FROM_PORT(portLib);
 
@@ -657,18 +652,18 @@ static char * addEndorsedBundles(J9PortLibrary *portLib, char *endorsedDir, char
 	return path;
 }
 
-
 /**
   * Initialize the BOOT_PATH_SYS_PROP (sun.boot.class.path) system property by scanning the vm args and extracting
   * the value of any -Xbootclasspath: argument.  If no bootpath is explicitly specified then use a default
   * value appropriate for this class library.
-  * 
+  *
   * @return  zero on sucess, non-zero on failure.
   *
   * @note Assumes that the VMI functions are available, and sysprops have been allocated.
-  * @note Requires that the 'java.home' system property be available. 
+  * @note Requires that the 'java.home' system property be available.
   */
-static jint initializeBootClassPathSystemProperty( J9JavaVM *vm)
+static jint
+initializeBootClassPathSystemProperty(J9JavaVM *vm)
 {
 	VMI_ACCESS_FROM_JAVAVM((JavaVM*)vm);
 	PORT_ACCESS_FROM_JAVAVM(vm);
@@ -683,7 +678,7 @@ static jint initializeBootClassPathSystemProperty( J9JavaVM *vm)
 
 	/* Scan for the explicit bootpath override */
 	for (i = 0; i < args->nOptions; i++) {
-		if (strncmp(args->options[i].optionString, bpOption, bpOptionLength) == 0) { 
+		if (strncmp(args->options[i].optionString, bpOption, bpOptionLength) == 0) {
 			bp = &(args->options[i].optionString[bpOptionLength]);
 
 			/* empty bootclasspath means use default */
@@ -700,7 +695,7 @@ static jint initializeBootClassPathSystemProperty( J9JavaVM *vm)
 		vmiError rcGetProp;
 
 		/* If the bootpath already exists (i.e. it was set using a -D in the startup options), use that one */
-		rcGetProp = (*VMI)->GetSystemProperty(VMI, BOOT_PATH_SYS_PROP,&currentBootpath);
+		rcGetProp = (*VMI)->GetSystemProperty(VMI, BOOT_PATH_SYS_PROP, &currentBootpath);
 		if (rcGetProp != VMI_ERROR_NONE) {
 			return -2;
 		}
@@ -709,30 +704,30 @@ static jint initializeBootClassPathSystemProperty( J9JavaVM *vm)
 		}
 
 		/* Entries are relative to java.home */
-		rcGetProp = (*VMI)->GetSystemProperty(VMI, "java.home",&javaHome);
+		rcGetProp = (*VMI)->GetSystemProperty(VMI, "java.home", &javaHome);
 		if (rcGetProp != VMI_ERROR_NONE) {
 			return -2;
 		}
 
 		/* Add the 'standard' collection of jars */
-		bp = getDefaultBootstrapClassPath( (J9JavaVM*)vm, javaHome);
+		bp = getDefaultBootstrapClassPath((J9JavaVM*)vm, javaHome);
 		if (!bp ) {
 			return -1;
 		}
 
 		/* Remember that the bp must be freed */
-		freeBP = 1; 
-	} 
+		freeBP = 1;
+	}
 
 	/* Set the system property */
 	vmiRC = (*VMI)->SetSystemProperty(VMI, BOOT_PATH_SYS_PROP, bp);
 	if (vmiRC != VMI_ERROR_NONE) {
-		rc = -3;		
+		rc = -3;
 	}
 
 	/* Free the memory if necessary */
 	if (freeBP) {
-		j9mem_free_memory(bp);	
+		j9mem_free_memory(bp);
 	}
 
 	return rc;
@@ -746,7 +741,7 @@ static jint initializeBootClassPathSystemProperty( J9JavaVM *vm)
  *
  * @return 0 On success, non-zero otherwise.
  */
-static IDATA 
+static IDATA
 computeBootstrapClassPathAppend(J9JavaVM *vm)
 {
 	I_32 i = 0;
@@ -829,7 +824,8 @@ _end:
   *
   * @note Requires that the 'java.home' system property has been set in the VMI.
   */
-static IDATA computeFinalBootstrapClassPath(J9JavaVM * vm)
+static IDATA
+computeFinalBootstrapClassPath(J9JavaVM * vm)
 {
 	VMI_ACCESS_FROM_JAVAVM((JavaVM*)vm);
 	PORT_ACCESS_FROM_JAVAVM(vm);
@@ -843,16 +839,16 @@ static IDATA computeFinalBootstrapClassPath(J9JavaVM * vm)
 #define PRIV_J9_BPA_OPTION_LEN 18  /* strlen() */
 #define PRIV_J9_BPP_OPTION "-Xbootclasspath/p:"
 #define PRIV_J9_BPP_OPTION_LEN 18  /* strlen() */
- 
+
 #define PRIV_J9_IJB_OPTION "-Dibm.jvm.bootclasspath="
 #define PRIV_J9_IJB_OPTION_LEN 24  /* strlen() */
- 
+
 	/* Fetch java.home and cache it in the JavaVM struct */
 	vmiRC = (*VMI)->GetSystemProperty(VMI, "java.home", &javaHome);
 	if (vmiRC != VMI_ERROR_NONE) {
 		return -1;
 	}
-	
+
 	/* Fetch the java.endorsed.dirs path */
 	vmiRC = (*VMI)->GetSystemProperty(VMI, JAVA_ENDORSED_DIRS_PROP, &endorsedPath);
 	if (vmiRC != VMI_ERROR_NONE) {
@@ -876,7 +872,7 @@ static IDATA computeFinalBootstrapClassPath(J9JavaVM * vm)
 	-Xbootclasspath/p: if specified. So scan for -Dibm.jvm.bootclasspath first. */
 #ifdef JCL_J2SE
 	for (i = 0; i < args->nOptions; i++) {
-		if (strncmp(args->options[i].optionString, PRIV_J9_IJB_OPTION, PRIV_J9_IJB_OPTION_LEN) == 0) { 
+		if (strncmp(args->options[i].optionString, PRIV_J9_IJB_OPTION, PRIV_J9_IJB_OPTION_LEN) == 0) {
 			char* oldPath = path;
 			path = catPaths(PORTLIB, &(args->options[i].optionString[PRIV_J9_IJB_OPTION_LEN]), path);
 			j9mem_free_memory(oldPath);
@@ -889,14 +885,14 @@ static IDATA computeFinalBootstrapClassPath(J9JavaVM * vm)
 
 	/* Look for and add the prepend and append bootclasspath options */
 	for (i = 0; i < args->nOptions; i++) {
-		if (strncmp(args->options[i].optionString, PRIV_J9_BPA_OPTION, PRIV_J9_BPA_OPTION_LEN) == 0) { 
+		if (strncmp(args->options[i].optionString, PRIV_J9_BPA_OPTION, PRIV_J9_BPA_OPTION_LEN) == 0) {
 			char* oldPath = path;
 			path = catPaths(PORTLIB, path, &(args->options[i].optionString[PRIV_J9_BPA_OPTION_LEN]));
 			j9mem_free_memory(oldPath);
 			if (path == NULL) {
 				return -5;
 			}
-		} else if (strncmp(args->options[i].optionString, PRIV_J9_BPP_OPTION, PRIV_J9_BPP_OPTION_LEN) == 0) { 
+		} else if (strncmp(args->options[i].optionString, PRIV_J9_BPP_OPTION, PRIV_J9_BPP_OPTION_LEN) == 0) {
 			char* oldPath = path;
 			path = catPaths(PORTLIB, &(args->options[i].optionString[PRIV_J9_BPP_OPTION_LEN]), path);
 			j9mem_free_memory(oldPath);
@@ -920,7 +916,7 @@ static IDATA computeFinalBootstrapClassPath(J9JavaVM * vm)
 	/* Update the VM sysprop */
 	vmiRC = (*VMI)->SetSystemProperty(VMI, BOOT_PATH_SYS_PROP, path);
 	if (vmiRC != VMI_ERROR_NONE) {
-		return -11;		
+		return -11;
 	}
 
 	return 0;
