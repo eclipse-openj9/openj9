@@ -61,17 +61,6 @@ public class AdaptorTests {
 		private static final long serialVersionUID = 1L;
 	}
 	
-	static class PrivateMethod {
-		@SuppressWarnings("unused")
-		private static String method() {
-			return "privateMethod";
-		}
-		
-		public static Lookup getLookup() {
-			return MethodHandles.lookup();
-		}
-	}
-	
 	static class PackageExamplesCrossPackageSubClass extends examples.PackageExamples {
 		public static Lookup getLookup() {
 			return MethodHandles.lookup();
