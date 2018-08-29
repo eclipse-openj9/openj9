@@ -238,18 +238,10 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
                 //  - there is no need to enable JDK9 as it is not supported anymore (https://github.com/eclipse/openj9/issues/2020)
                 //  - OpenJ9 test pipelines will be completely removed once we switch to use AdoptOpenJDK test pipelines
                 case "_sanity":
-                    if (SPEC.contains("win") || SDK_VERSION == "9") {
-                        TARGET_NAMES.add("Sanity")
-                    } else {
-                        TARGET_NAMES.addAll(["sanity.functional", "sanity.system"])
-                    }
+                    TARGET_NAMES.addAll(["sanity.functional", "sanity.system"])
                     break
                 case "_extended":
-                    if (SPEC.contains("win") || SDK_VERSION == "9") {
-                        TARGET_NAMES.add("Extended")
-                    } else {
-                        TARGET_NAMES.addAll(["extended.functional", "extended.system"])
-                    }
+                    TARGET_NAMES.addAll(["extended.functional", "extended.system"])
                     break
                 default:
                     TARGET_NAMES.add(target.trim())
