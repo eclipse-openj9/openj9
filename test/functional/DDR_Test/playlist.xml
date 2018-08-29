@@ -93,7 +93,6 @@
 		</groups>
 		<impls>
 			<impl>openj9</impl>
-			<impl>ibm</impl>
 		</impls>
 		<subsets>
 			<subset>SE80</subset>
