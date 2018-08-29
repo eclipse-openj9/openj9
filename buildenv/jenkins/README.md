@@ -42,7 +42,7 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
     - Build Types: compile,test
     - Levels: sanity,extended (only if Build Type is test)
     - Platforms: xlinux,zlinux,plinux,aix,win,win32
-    - Java Versions: jdk8,jdk9,jdk10
+    - Java Versions: jdk8,jdk9,jdk10,jdk11
 - Note: You can use keyword `all` for level, platform or version
 
 ###### Examples
@@ -64,6 +64,8 @@ You can also request a Pull Request build from the extensions repos or openj9-om
 - [openj9-omr](https://github.com/eclipse/openj9-omr)
 - [openj9-openjdk-jdk8](https://github.com/ibmruntimes/openj9-openjdk-jdk8)
 - [openj9-openjdk-jdk9](https://github.com/ibmruntimes/openj9-openjdk-jdk9)
+- [openj9-openjdk-jdk10](https://github.com/ibmruntimes/openj9-openjdk-jdk10)
+- [openj9-openjdk-jdk11](https://github.com/ibmruntimes/openj9-openjdk-jdk11)
 
 ###### Note: When specifying a dependent change in an OpenJDK extensions repo, you can only build the SDK version that matches the repo where the dependent change lives. Eg. You cannot build JDK8 with a PR in openj9-openjdk-jdk9.
 
