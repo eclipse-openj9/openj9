@@ -344,11 +344,15 @@ LIBCDEFS := $(word 1,$(wildcard $(foreach d,$(TPF_ROOT),$d/base/lib/libCDEFSFORA
 # We use sed in these scripts to retain only those lines that will be interesting
 # to omr/ddr/tools/getmacros; this reduces the total footprint of all *.i files by
 # over 1GB and reduces the workload of getmacros as it reads them.
+
+DDR_SED_COMMAND := \
+    sed -n -e '/^@/p' -e '/^DDRFILE_BEGIN /,/^DDRFILE_END /s/^/@/p'
+
 %.i : %.c
-	$(CC) $(CFLAGS) -E $< | sed -n -e '/^@/p' > $@
+	$(CC) $(CFLAGS) -E $< | $(DDR_SED_COMMAND) > $@
 
 %.i : %.cpp
-	$(CXX) $(CXXFLAGS) -E $< | sed -n -e '/^@/p' > $@
+	$(CXX) $(CXXFLAGS) -E $< | $(DDR_SED_COMMAND) > $@
 
 # just create empty output files
 %.i : %.asm ; touch $@
