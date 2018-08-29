@@ -25,25 +25,6 @@
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TestConfig/playlist.xsd">
 	<include>java8andUpSettings.mk</include>
 	<test>
-		<testCaseName>generalSanityTest_SE80</testCaseName>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
-	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames generalTest \
-	-groups $(TEST_GROUP) \
-	-excludegroups $(DEFAULT_EXCLUDE); \
-	$(TEST_STATUS)</command>
-		<subsets>
-			<subset>SE80</subset>
-		</subsets>
-		<levels>
-			<level>sanity</level>
-		</levels>
-		<groups>
-			<group>functional</group>
-		</groups>
-	</test>
-
-	<test>
 		<testCaseName>generalSanityTest</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -52,6 +33,7 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<subsets>
+			<subset>SE80</subset>
 			<subset>SE90</subset>
 			<subset>SE100</subset>
 			<subset>SE110</subset>
@@ -62,28 +44,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-	</test>
-
-	<test>
-		<testCaseName>generalExtendedTest</testCaseName>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
-	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames generalTest \
-	-groups $(TEST_GROUP) \
-	-excludegroups $(DEFAULT_EXCLUDE); \
-	$(TEST_STATUS)</command>
-		<levels>
-			<level>extended</level>
-		</levels>
-		<groups>
-			<group>functional</group>
-		</groups>
-		<subsets>
-			<subset>SE80</subset>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
-		</subsets>
 	</test>
 
 	<test>
