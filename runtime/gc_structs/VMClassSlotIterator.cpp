@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,16 +43,4 @@ GC_VMClassSlotIterator::nextSlot()
 		return _scanPtr++;
 	}
 	return NULL;
-}
-
-
-void
-GC_VMClassSlotIterator::setNextSlot(J9Class **slot)
-{
-	/* TODO (JAZZ 47325): Fix how we link GCCheck such that it can find these trace symbols (otherwise, uncommenting these will cause link failures on AIX and z/OS)
-	Assert_MM_true(slot >= _scanPtr);
-	Assert_MM_true(slot <= _endPtr);
-	*/
-
-	_scanPtr = slot;
 }
