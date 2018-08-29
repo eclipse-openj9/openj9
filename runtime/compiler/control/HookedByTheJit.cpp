@@ -4114,7 +4114,7 @@ static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, 
    classLoadEvent->failed = allocFailed;
 
    // Determine whether this class gets lock reservation
-   if (options->getOption(TR_ReservingLocks))
+   if (options->getOption(TR_ReservingLocks) && compInfo->getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
       {
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(TR_J9VMBase::get(jitConfig, 0));
       int lwOffset = fej9->getByteOffsetToLockword(clazz);

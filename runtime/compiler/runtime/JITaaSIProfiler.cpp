@@ -124,7 +124,7 @@ TR_JITaaSIProfiler::searchForMethodSample(TR_OpaqueMethodBlock *omb, int32_t buc
       return nullptr;
       }
    stream->write(JITaaS::J9ServerMessageType::IProfiler_searchForMethodSample, omb, bucket);
-   const std::string &entryStr = std::get<0>(stream->read<std::string>());
+   const std::string entryStr = std::get<0>(stream->read<std::string>());
    if (entryStr.empty())
       {
       return nullptr;
@@ -177,7 +177,7 @@ TR_JITaaSIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
          TR_ASSERT(!wholeMethod, "Client should not have sent whole method info");
          uintptrj_t methodStart = TR::Compiler->mtd.bytecodeStart(method);
          TR_IPBCDataStorageHeader *clientData = ipdata.empty() ? nullptr : (TR_IPBCDataStorageHeader *) &ipdata[0];
-         bool isMethodBeingCompiled = (method == comp->methodToBeCompiled()->getPersistentIdentifier());
+         bool isMethodBeingCompiled = (method == comp->getMethodBeingCompiled()->getPersistentIdentifier());
          validateCachedIPEntry(entry, clientData, methodStart, isMethodBeingCompiled, method);
 #endif
          return entry; // could be NULL

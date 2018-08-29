@@ -427,31 +427,33 @@ JITaaSCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<TR_
    // If this is an OSR guard or another kind that has been marked as necessary to patch
    // in OSR, add a runtime assumption for every class that generated fear
    //
-   static bool dontGroupOSRAssumptions = (feGetEnv("TR_DontGroupOSRAssumptions") != NULL);
-   if (dontGroupOSRAssumptions && (info->_kind == TR_OSRGuard || info->_mergedWithOSRGuard))
+   if (info->_kind == TR_OSRGuard || info->_mergedWithOSRGuard)
       {
-      TR_Array<TR_OpaqueClassBlock*> *clazzes = comp->getClassesForOSRRedefinition();
-      if (clazzes)
+      static bool dontGroupOSRAssumptions = (feGetEnv("TR_DontGroupOSRAssumptions") != NULL);
+      if (dontGroupOSRAssumptions)
          {
-         for (TR_VirtualGuardSite &site : sites)
+         TR_Array<TR_OpaqueClassBlock*> *clazzes = comp->getClassesForOSRRedefinition();
+         if (clazzes)
             {
-            for (uint32_t i = 0; i < clazzes->size(); ++i)
-               TR_PatchNOPedGuardSiteOnClassRedefinition
-                  ::make(comp->fe(), comp->trPersistentMemory(), (*clazzes)[i], site.getLocation(), site.getDestination(), comp->getMetadataAssumptionList());
+            for (TR_VirtualGuardSite &site : sites)
+               {
+               for (uint32_t i = 0; i < clazzes->size(); ++i)
+                  TR_PatchNOPedGuardSiteOnClassRedefinition
+                     ::make(comp->fe(), comp->trPersistentMemory(), (*clazzes)[i], site.getLocation(), site.getDestination(), comp->getMetadataAssumptionList());
 
-            if (clazzes->size() > 0)
-               comp->setHasClassRedefinitionAssumptions();
+               if (clazzes->size() > 0)
+                  comp->setHasClassRedefinitionAssumptions();
+               }
             }
          }
 
-      // If this was an OSR guard, there is nothing left to do
-      if (info->_kind == TR_OSRGuard)
+      // if it's not a real OSR guard, then we need to register
+      // both the OSR site and the guard
+      if (!info->_mergedWithOSRGuard)
+         return;
+      if (info->_kind == TR_ProfiledGuard) // !isNopable
          return;
       }
-
-   // OSR guards are specially handled
-   if (!dontGroupOSRAssumptions && info->_kind == TR_OSRGuard)
-      return;
 
    TR_ResolvedMethod     *guardedMethod        = 0;
    TR_OpaqueClassBlock     *guardedClass         = 0;
@@ -638,4 +640,3 @@ JITaaSCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<TR_
          }
       }
    }
-

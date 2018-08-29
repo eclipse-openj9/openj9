@@ -2709,7 +2709,7 @@ J9::Options::packOptions(TR::Options *origOptions)
    if (origOptions->_induceOSR)
       induceOSRLength = strlen(origOptions->_induceOSR) + 1;
 
-   size_t totalSize = sizeof(TR::Options) + logFileNameLength + suffixLogsFormatLength + blockShufflingSequenceLength + induceOSRLength;
+   size_t totalSize = sizeof(TR::Options) + logFileNameLength + suffixLogsFormatLength + blockShufflingSequenceLength + induceOSRLength + sizeof(bool);
 
    addRegexStringSize(origOptions->_disabledOptTransformations, totalSize);
    addRegexStringSize(origOptions->_disabledInlineSites, totalSize);
@@ -2782,6 +2782,14 @@ J9::Options::packOptions(TR::Options *origOptions)
    curPos = appendContent(options->_blockShufflingSequence, curPos, blockShufflingSequenceLength);
    curPos = appendContent(options->_induceOSR, curPos, induceOSRLength);
 
+   // send rtResolve option to the server
+   // TODO: this is an ugly solution, come up with something better
+   // e.g. make rtResolve part of TR::Options instead of runtime flags
+   auto *jitConfig = (J9JITConfig *) _feBase;
+   bool rtResolve = jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE;
+   char *rtResolveStr = (char *) &rtResolve;
+   curPos = appendContent(rtResolveStr, curPos, sizeof(bool));
+
    return optionsStr;
    }
 
@@ -2801,6 +2809,13 @@ J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR_Mem
       options->_blockShufflingSequence = (char *)((uint8_t *)&(options->_blockShufflingSequence) + (ptrdiff_t)options->_blockShufflingSequence);
    if (options->_induceOSR)
       options->_induceOSR = (char *)((uint8_t *)&(options->_induceOSR) + (ptrdiff_t)options->_induceOSR);
+   
+   // receive rtResolve
+   // NOTE: this relies on rtResolve being the last option in clientOptions
+   bool rtResolve = (bool)((uint8_t *) options + clientOptionsSize - sizeof(bool));
+   J9JITConfig *jitConfig = (J9JITConfig *) _feBase;
+   if (rtResolve)
+      jitConfig->runtimeFlags |= J9JIT_RUNTIME_RESOLVE;
 
    unpackRegex(options->_disabledOptTransformations);
    unpackRegex(options->_disabledInlineSites);

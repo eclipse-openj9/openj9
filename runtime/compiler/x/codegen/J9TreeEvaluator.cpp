@@ -6538,8 +6538,7 @@ static void genInitObjectHeader(TR::Node             *node,
    //
    // --------------------------------------------------------------------------------
    //
-   J9Class *j9class = TR::Compiler->cls.convertClassOffsetToClassPtr(clazz);
-   bool initReservable = J9CLASS_EXTENDED_FLAGS(j9class) & J9ClassReservableLockWordInit;
+   bool initReservable = TR::Compiler->cls.classFlagsValue(clazz) & J9ClassReservableLockWordInit;
    if (!isZeroInitialized || initReservable)
       {
       bool initLw = (node->getOpCodeValue() != TR::New) || initReservable;

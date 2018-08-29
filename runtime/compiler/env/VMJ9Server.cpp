@@ -929,25 +929,6 @@ TR_J9ServerVM::isUnloadAssumptionRequired(TR_OpaqueClassBlock *clazz, TR_Resolve
    return std::get<0>(stream->read<bool>());
    }
 
-void
-TR_J9ServerVM::scanClassForReservation (TR_OpaqueClassBlock *clazz, TR::Compilation *comp)
-   {
-   TR_PersistentCHTable *table = comp->getPersistentInfo()->getPersistentCHTable();
-   TR_PersistentClassInfo *info = table->findClassInfoAfterLocking(clazz, comp);
-
-   // Check if scanning has already been performed
-   if (!info || info->isScannedForReservation())
-      return;
-
-   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_scanClassForReservation, clazz);
-   bool isReservable = std::get<0>(stream->read<bool>());
-
-   // Apply changes to server CHTable
-   info->setReservable(isReservable);
-   info->setScannedForReservation(true);
-   }
-
 uint32_t
 TR_J9ServerVM::getInstanceFieldOffset(TR_OpaqueClassBlock *clazz, char *fieldName, uint32_t fieldLen, char *sig, uint32_t sigLen, UDATA options)
    {

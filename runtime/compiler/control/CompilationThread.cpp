@@ -8543,7 +8543,7 @@ TR::CompilationInfoPerThreadBase::compile(
                   );
                }
 
-            if (compiler->getOptions()->getOption(TR_AlwaysSafeFatal)) {
+            if (compiler->getOption(TR_AlwaysSafeFatal)) {
                TR_ASSERT_SAFE_FATAL(false, "alwaysSafeFatal set");
                 TR_VerboseLog::writeLineLocked(
                   TR_Vlog_INFO ,
@@ -8553,7 +8553,7 @@ TR::CompilationInfoPerThreadBase::compile(
                   );
             }
 
-            if (compiler->getOptions()->getOption(TR_AlwaysFatalAssert)) {
+            if (compiler->getOption(TR_AlwaysFatalAssert)) {
                TR_ASSERT_FATAL(false, "alwaysFatalAssert set");
             }
 

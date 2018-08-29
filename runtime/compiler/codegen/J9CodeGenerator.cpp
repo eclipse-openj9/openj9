@@ -2709,7 +2709,7 @@ J9::CodeGenerator::processRelocations()
       }
    }
 
-void J9::CodeGenerator::addExternalRelocation(TR::Relocation *r, char *generatingFileName, uintptr_t generatingLineNumber, TR::Node *node)
+void J9::CodeGenerator::addExternalRelocation(TR::Relocation *r, const char *generatingFileName, uintptr_t generatingLineNumber, TR::Node *node, TR::ExternalRelocationPositionRequest where)
    {
    TR_ASSERT(generatingFileName, "External relocation location has improper NULL filename specified");
    if (self()->comp()->compileRelocatableCode() || self()->comp()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
@@ -2718,18 +2718,33 @@ void J9::CodeGenerator::addExternalRelocation(TR::Relocation *r, char *generatin
       genData->file = generatingFileName;
       genData->line = generatingLineNumber;
       genData->node = node;
-      r->setDebugInfo(genData);
-      _externalRelocationList.push_back(r);
+      self()->addExternalRelocation(r, genData, where);
       }
    }
 
-void J9::CodeGenerator::addExternalRelocation(TR::Relocation *r, TR::RelocationDebugInfo* info)
+void J9::CodeGenerator::addExternalRelocation(TR::Relocation *r, TR::RelocationDebugInfo* info, TR::ExternalRelocationPositionRequest where)
    {
    if (self()->comp()->compileRelocatableCode() || self()->comp()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
       {
       TR_ASSERT(info, "External relocation location does not have associated debug information");
       r->setDebugInfo(info);
-      _externalRelocationList.push_back(r);
+      switch (where)
+         {
+         case TR::ExternalRelocationAtFront:
+            _externalRelocationList.push_front(r);
+            break;
+
+         case TR::ExternalRelocationAtBack:
+            _externalRelocationList.push_back(r);
+            break;
+
+         default:
+            TR_ASSERT_FATAL(
+               false,
+               "invalid TR::ExternalRelocationPositionRequest %d",
+               where);
+            break;
+         }
       }
    }
 

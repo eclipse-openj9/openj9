@@ -89,7 +89,7 @@ void handler_IProfiler_profilingSample(JITaaS::J9ClientStream *client, TR_J9VM *
    TR_JITaaSClientIProfiler *iProfiler = (TR_JITaaSClientIProfiler *)fe->getIProfiler();
 
    bool isCompiled = TR::CompilationInfo::isCompiled((J9Method*)method);
-   bool isInProgress = comp->methodToBeCompiled()->getPersistentIdentifier() == method;
+   bool isInProgress = comp->getMethodBeingCompiled()->getPersistentIdentifier() == method;
    bool wholeMethodInfo = (isCompiled || isInProgress) && (data == 0);
 
    if (!iProfiler)
@@ -686,15 +686,6 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->isUnloadAssumptionRequired(clazz, method));
          }
          break;
-      case J9ServerMessageType::VM_scanClassForReservation:
-         {
-         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         fe->scanClassForReservation(clazz, comp);
-         auto table = (TR_JITaaSClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
-         TR_PersistentClassInfo *info = table->findClassInfoAfterLocking(clazz, comp);
-         client->write(info->isReservable());
-         }
-         break;
       case J9ServerMessageType::VM_getInstanceFieldOffset:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, std::string, std::string, UDATA>();
@@ -1236,6 +1227,15 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          auto cpIndex = std::get<2>(recv);
          U_32 offset = mirror->getResolvedInterfaceMethodOffset(clazz, cpIndex);
          client->write(offset);
+         }
+         break;
+      case J9ServerMessageType::ResolvedMethod_getResolvedImproperInterfaceMethod:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, I_32>();
+         auto mirror = std::get<0>(recv);
+         auto cpIndex = std::get<1>(recv);
+         J9Method *j9method = jitGetImproperInterfaceMethodFromCP(fe->vmThread(), mirror->cp(), cpIndex);
+         client->write(j9method);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_startAddressForJNIMethod:

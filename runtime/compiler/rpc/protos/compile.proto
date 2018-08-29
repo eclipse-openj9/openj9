@@ -76,6 +76,7 @@ enum J9ServerMessageType
    ResolvedMethod_methodIsNotzAAPEligible = 144;
    ResolvedMethod_setClassForNewInstance = 145;
    ResolvedMethod_getJittedBodyInfo = 146;
+   ResolvedMethod_getResolvedImproperInterfaceMethod = 147;
 
    // For TR_J9ServerVM methods
    VM_isClassLibraryClass = 200;
@@ -151,7 +152,7 @@ enum J9ServerMessageType
    VM_getResolvedVirtualMethod = 266;
    VM_sameClassLoaders = 267;
    VM_isUnloadAssumptionRequired = 268;
-   VM_scanClassForReservation = 269;
+   /* VM_scanClassForReservation = 269; */
    VM_getInstanceFieldOffset = 270;
    VM_getJavaLangClassHashCode = 271;
    VM_hasFinalizer = 272;

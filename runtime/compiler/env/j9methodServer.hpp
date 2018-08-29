@@ -104,6 +104,7 @@ public:
    virtual TR_ResolvedMethod * getResolvedInterfaceMethod(TR::Compilation *, TR_OpaqueClassBlock * classObject, int32_t cpIndex) override;
    virtual TR_OpaqueClassBlock * getResolvedInterfaceMethod(int32_t cpIndex, uintptrj_t * pITableIndex) override;
    virtual uint32_t getResolvedInterfaceMethodOffset(TR_OpaqueClassBlock * classObject, int32_t cpIndex) override;
+   virtual TR_ResolvedMethod *   getResolvedImproperInterfaceMethod(TR::Compilation * comp, I_32 cpIndex) override;
    virtual void * startAddressForJNIMethod(TR::Compilation *) override;
    virtual bool getUnresolvedStaticMethodInCP(int32_t cpIndex) override;
    virtual void *startAddressForInterpreterOfJittedMethod() override;

@@ -508,6 +508,39 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedInterfaceMethodOffset(TR_OpaqueClass
    return std::get<0>(recv);
    }
 
+/* Only returns non-null if the method is not to be dispatched by itable, i.e.
+ * if it is:
+ * - private (isPrivate()), using direct dispatch;
+ * - a final method of Object (isFinalInObject()), using direct dispatch; or
+ * - a non-final method of Object, using virtual dispatch.
+ */
+TR_ResolvedMethod *
+TR_ResolvedJ9JITaaSServerMethod::getResolvedImproperInterfaceMethod(TR::Compilation * comp, I_32 cpIndex)
+   {
+   TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
+#if TURN_OFF_INLINING
+   return 0;
+#else
+   INCREMENT_COUNTER(_fe, unresolvedInterfaceMethodRefs);
+   INCREMENT_COUNTER(_fe, totalInterfaceMethodRefs);
+
+   J9Method *j9method = NULL;
+   if ((_fe->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) == 0)
+      {
+      // TODO: this method produces 2 messages, this one, and mirror message in createResolvedMethodFromJ9Method.
+      // Need to coalesce them into one, i.e. in one remote message create a mirror, and
+      // get resolved interface method from it
+      _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedImproperInterfaceMethod, _remoteMirror, cpIndex);
+      j9method = std::get<0>(_stream->read<J9Method *>());
+      }
+
+   if (j9method == NULL)
+      return NULL;
+   else
+      return createResolvedMethodFromJ9Method(comp, cpIndex, 0, j9method, NULL, NULL);
+#endif
+   }
+
 void *
 TR_ResolvedJ9JITaaSServerMethod::startAddressForJNIMethod(TR::Compilation *comp)
    {

@@ -4486,7 +4486,7 @@ TR::TreeTop* TR_J9VMBase::initializeClazzFlagsMonitorFields(TR::Compilation* com
       // Initialize the monitor field
       //
       int32_t lwInitialValue = 0;
-      if (J9CLASS_EXTENDED_FLAGS(ramClass) & J9ClassReservableLockWordInit)
+      if (TR::Compiler->cls.classFlagsValue(ramClass) & J9ClassReservableLockWordInit)
          lwInitialValue = OBJECT_HEADER_LOCK_RESERVED;
 
       if (!TR::Compiler->target.is64Bit() || generateCompressedLockWord())

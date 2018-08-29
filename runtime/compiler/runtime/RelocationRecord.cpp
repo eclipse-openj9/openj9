@@ -474,9 +474,6 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
       case TR_ClassUnloadAssumption:
          reloRecord = new (storage) TR_RelocationRecordClassUnloadAssumption(reloRuntime, record);
          break;
-      case TR_ClassUnload:
-         reloRecord = new (storage) TR_RelocationRecordClassUnload(reloRuntime, record);
-         break;
       default:
          // TODO: error condition
          printf("Unexpected relo record: %d\n", reloType);fflush(stdout);
@@ -3620,22 +3617,3 @@ TR_RelocationRecordClassUnloadAssumption::applyRelocation(TR_RelocationRuntime *
    return 0;
    }
 
-// AssumptionRelocation
-char *
-TR_RelocationRecordClassUnload::name()
-   {
-   return "TR_ClassUnload";
-   }
-
-int32_t
-TR_RelocationRecordClassUnload::bytesInHeaderAndPayload()
-   {
-   return sizeof(TR_RelocationRecordClassUnloadBinaryTemplate);
-   }
-
-int32_t
-TR_RelocationRecordClassUnload::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
-   {
-   reloTarget->addPICtoPatchPtrOnClassUnload((TR_OpaqueClassBlock *)-1, reloLocation);
-   return 0;
-   }
