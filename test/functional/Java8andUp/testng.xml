@@ -30,17 +30,6 @@
 	<test name="generalTest">
 		<classes>
 			<class name="org.openj9.test.gpu.SortTest" />
-			<class name="org.openj9.test.reflect.GetConstructorTests" />
-			<class name="org.openj9.test.reflect.GetConstructorsTests" />
-			<class name="org.openj9.test.reflect.GetDeclaredConstructorTests" />
-			<class name="org.openj9.test.reflect.GetDeclaredConstructorsTests" />
-			<class name="org.openj9.test.reflect.GetDeclaredFieldTests" />
-			<class name="org.openj9.test.reflect.GetDeclaredFieldsTests" />
-			<class name="org.openj9.test.reflect.GetDeclaredMethodTests" />
-			<class name="org.openj9.test.reflect.GetDeclaredMethodsTests" />
-			<class name="org.openj9.test.reflect.GetFieldTests" />
-			<class name="org.openj9.test.reflect.GetFieldsTests" />
-			<class name="org.openj9.test.reflect.GetMethodTests" />
 		</classes>
 	</test>
 	<test name="regression">
@@ -356,8 +345,19 @@
 			<class name="j9vm.test.softmx.ExpandHeapUntilOOM" />
 		</classes>
 	</test>
-	<test name="reflect_getMethods">
+	<test name="reflect">
 		<classes>
+			<class name="org.openj9.test.reflect.GetConstructorTests" />
+			<class name="org.openj9.test.reflect.GetConstructorsTests" />
+			<class name="org.openj9.test.reflect.GetDeclaredConstructorTests" />
+			<class name="org.openj9.test.reflect.GetDeclaredConstructorsTests" />
+			<class name="org.openj9.test.reflect.GetDeclaredFieldTests" />
+			<class name="org.openj9.test.reflect.GetDeclaredFieldsTests" />
+			<class name="org.openj9.test.reflect.GetDeclaredMethodTests" />
+			<class name="org.openj9.test.reflect.GetDeclaredMethodsTests" />
+			<class name="org.openj9.test.reflect.GetFieldTests" />
+			<class name="org.openj9.test.reflect.GetFieldsTests" />
+			<class name="org.openj9.test.reflect.GetMethodTests" />
 			<class name="org.openj9.test.reflect.GetMethodsTests" />
 		</classes>
 	</test>
