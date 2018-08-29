@@ -200,7 +200,7 @@ MM_WriteOnceCompactor::initialize(MM_EnvironmentVLHGC *env)
 		_compactGroupDestinations = (MM_CompactGroupDestinations *)j9mem_allocate_memory(sizeof(MM_CompactGroupDestinations) * compactGroups, OMRMEM_CATEGORY_MM);
 		didAllocateTable = (NULL != _compactGroupDestinations);
 		if (didAllocateTable) {
-			memset(_compactGroupDestinations, 0, sizeof(MM_CompactGroupDestinations) * compactGroups);
+			memset((void *)_compactGroupDestinations, 0, sizeof(MM_CompactGroupDestinations) * compactGroups);
 			for (UDATA i = 0; i < compactGroups; i++) {
 				_compactGroupDestinations[i].head = NULL;
 				_compactGroupDestinations[i].tail = NULL;
