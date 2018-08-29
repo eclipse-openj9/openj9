@@ -2421,6 +2421,7 @@ void TR::PPCPrivateLinkage::buildVirtualDispatch(TR::Node                       
          generateDepLabelInstruction(cg(), TR::InstOpCode::label, callNode, doneLabel, dependencies);
 
          gcPoint->PPCNeedsGCMap(regMapForGC);
+         snippet->gcMap().setGCRegisterMask(regMapForGC);
          return;
          }
 
