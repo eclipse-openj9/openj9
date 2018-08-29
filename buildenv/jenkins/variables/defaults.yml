@@ -146,11 +146,11 @@ aix_ppc-64_cmprssptrs:
       11: 'hw.arch.ppc && sw.os.aix'
       next: 'hw.arch.ppc && sw.os.aix'
   extra_configure_options:
-    8: '--with-cups-include=/opt/freeware/include --with-extra-ldflags=-lpthread --with-extra-cflags=-lpthread --with-extra-cxxflags=-lpthread DF=/usr/sysv/bin/df --disable-ccache --with-jobs=8'
-    9: '--with-cups-include=/opt/freeware/include --with-extra-ldflags=-lpthread --with-extra-cflags=-lpthread --with-extra-cxxflags=-lpthread DF=/usr/sysv/bin/df --disable-warnings-as-errors --with-jobs=8'
-    10: '--with-cups-include=/opt/freeware/include --with-extra-ldflags=-lpthread --with-extra-cflags=-lpthread --with-extra-cxxflags=-lpthread DF=/usr/sysv/bin/df --disable-warnings-as-errors --with-jobs=8'
-    11: '--with-cups-include=/opt/freeware/include --with-extra-ldflags=-lpthread --with-extra-cflags=-lpthread --with-extra-cxxflags=-lpthread DF=/usr/sysv/bin/df --disable-warnings-as-errors --with-jobs=8'
-    next: '--with-cups-include=/opt/freeware/include --with-extra-ldflags=-lpthread --with-extra-cflags=-lpthread --with-extra-cxxflags=-lpthread DF=/usr/sysv/bin/df --disable-warnings-as-errors --with-jobs=8'
+    8: '--with-cups-include=/opt/freeware/include --disable-ccache --with-jobs=8'
+    9: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
+    10: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
+    11: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
+    next: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
 #========================================#
 # Linux x86 64bits Compressed Pointers
 #========================================#
