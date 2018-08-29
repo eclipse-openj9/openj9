@@ -456,124 +456,117 @@ def set_job_properties(JOB_TYPE) {
     *       - PR: GH Trigger
     ****************************/
 
-    if (JOB_TYPE == "build" || JOB_TYPE == "pipeline") {
-        // Start with just supporting Build and Pipeline jobs
-        // PR jobs will need some playing to get the trigger figured out
-        // Also regaring PR builds, see OpenJ9 Issue #2728
-        // This IF can be removed once we support PR job types (all job types)
+    echo "Configure Jenkins job PROPERTIES"
+    /********************
+    * BUILD DISCARDER
+    ********************/
 
-        echo "Configure Jenkins job PROPERTIES"
-        /********************
-        * BUILD DISCARDER
-        ********************/
+    echo "Configure Build Discarder..."
+    NUM_BUILDS = get_value(VARIABLES.build_discarder.logs, JOB_TYPE)
+    NUM_ARTIFACTS = get_value(VARIABLES.build_discarder.artifacts, JOB_TYPE)
+    echo "NUM_BUILDS:'${NUM_BUILDS}"
+    echo "NUM_ARTIFACTS:'${NUM_ARTIFACTS}"
 
-        echo "Configure Build Discarder..."
-        NUM_BUILDS = get_value(VARIABLES.build_discarder.logs, JOB_TYPE)
-        NUM_ARTIFACTS = get_value(VARIABLES.build_discarder.artifacts, JOB_TYPE)
-        echo "NUM_BUILDS:'${NUM_BUILDS}"
-        echo "NUM_ARTIFACTS:'${NUM_ARTIFACTS}"
+    /********************
+    * PARAMETERS
+    ********************/
 
-        /********************
-        * PARAMETERS
-        ********************/
+    // All build types
 
-        // All build types
-
-        // If SDK_VERSION parameter is already set, assume it is correct (helps with Sandbox builds)
-        // Else parse the JOB_NAME to determine the verison
-        if (params.SDK_VERSION) {
-            SDK_VERSION = params.SDK_VERSION
-            echo "SDK_VERSION parameter already set"
-        } else {
-            echo "Parse build name to determine SDK_VERSION..."
-            // Eg - Build-JDK8-linux_390-64_cmprssptrs
-            //    - Pipeline-Build-Test-JDK8-linux_390-64_cmprssptrs
-            //    - PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9
-            // Index of JDK + 3 until index of next '-'
-            INDEX_START_SDK_VERSION = JOB_NAME.indexOf('JDK')+3
-            SDK_VERSION = JOB_NAME.substring(INDEX_START_SDK_VERSION,JOB_NAME.indexOf('-',INDEX_START_SDK_VERSION))
-        }
-        echo "SDK_VERSION:'${SDK_VERSION}'"
-
-        if (params.PLATFORM) {
-            PLATFORM = params.PLATFORM
-            echo "PLATFORM parameter already set"
-        } else {
-            echo "Parse build name to determine PLATFORM..."
-            // Assuming consistent naming convention
-            // Substring start from index of 1 after '-' starting at index of 'JDK', go until the end (no end index) excpet for PR builds
-            // Build-JDK8-linux_390-64_cmprssptrs
-            // PullRequest-Compile-JDK-linux_x86-64-OpenJ9
-            // Pipeline-Build-Test-JDK10-aix_ppc-64_cmprssptrs
-            PLATFORM = JOB_NAME.substring(JOB_NAME.indexOf('-',JOB_NAME.indexOf('JDK'))+1)
-            if (JOB_TYPE == "pullRequest") {
-                // PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9
-                // Pipeline PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJDK9
-                PLATFORM = PLATFORM.substring(0,PLATFORM.indexOf('Open')-1)
-            }
-        }
-        echo "PLATFORM:'${PLATFORM}'"
-
-        PARAMETERS = []
-
-        // All build types
-        PARAMETERS.add(choice(name: 'SDK_VERSION', choices: ["${SDK_VERSION}"], description: ''))
-        PARAMETERS.add(choice(name: 'PLATFORM', choices: ["${PLATFORM}"], description: ''))
-
-        // Pipeline or build
-        if (JOB_TYPE == 'pipeline' || JOB_TYPE == 'build') {
-            /* OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA,
-            *  OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA,
-            *  OMR_REPO, OMR_BRANCH, OMR_SHA,
-            *  VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID */
-            PARAMETERS.add(string(name: 'OPENJDK_REPO', defaultValue: '', description: '', trim: true))
-            PARAMETERS.add(string(name: 'OPENJDK_BRANCH', defaultValue: '', description: '',  trim: true))
-            PARAMETERS.add(string(name: 'OPENJDK_SHA', defaultValue: '', description: '', trim: true))
-            PARAMETERS.add(string(name: 'OPENJ9_REPO', defaultValue: '', description: '', trim: true))
-            PARAMETERS.add(string(name: 'OPENJ9_BRANCH', defaultValue: '', description: '', trim: true))
-            PARAMETERS.add(string(name: 'OPENJ9_SHA', defaultValue: '', description: '', trim: true))
-            PARAMETERS.add(string(name: 'OMR_REPO', defaultValue: '', description: '', trim: true))
-            PARAMETERS.add(string(name: 'OMR_BRANCH', defaultValue: '', description: '', trim: true))
-            PARAMETERS.add(string(name: 'OMR_SHA', defaultValue: '', description: '', trim: true))
-            PARAMETERS.add(string(name: 'VARIABLE_FILE', defaultValue: "${VARIABLE_FILE_DEFAULT}", description: '', trim: true))
-            PARAMETERS.add(string(name: 'VENDOR_REPO', defaultValue: "${VENDOR_REPO_DEFAULT}", description: '', trim: true))
-            PARAMETERS.add(string(name: 'VENDOR_BRANCH', defaultValue: "${VENDOR_BRANCH_DEFAULT}", description: '', trim: true))
-            PARAMETERS.add(string(name: 'VENDOR_CREDENTIALS_ID', defaultValue: "${VENDOR_CREDENTIALS_ID_DEFAULT}", description: '', trim: true))
-        }
-
-        // Pipeline or PR
-        if (JOB_TYPE == 'pipeline' || JOB_TYPE == 'pullRequest') {
-            // TESTS_TARGETS
-            PARAMETERS.add(string(name: 'TESTS_TARGETS', defaultValue: '', description: '', trim: true))
-        }
-
-        // Build
-        if (JOB_TYPE == 'build') {
-            // NODE, SDK_FILENAME
-            PARAMETERS.add(string(name: 'NODE', defaultValue: '', description: '', trim: true))
-            PARAMETERS.add(string(name: 'SDK_FILENAME', defaultValue: '', description: '', trim: true))
-        }
-
-        /********************
-        * TRIGGER
-        ********************/
-
-        // No trigger for Build and Pipeline jobs
-        // TODO PR builds will need Github trigger setup
-
-        /********************
-        * SETUP PROPERTIES
-        ********************/
-
-        properties([
-            buildDiscarder(logRotator(
-                artifactDaysToKeepStr: '',
-                artifactNumToKeepStr: NUM_ARTIFACTS,
-                daysToKeepStr: '',
-                numToKeepStr: NUM_BUILDS)),
-            parameters(PARAMETERS)
-        ])
+    // If SDK_VERSION parameter is already set, assume it is correct (helps with Sandbox builds)
+    // Else parse the JOB_NAME to determine the verison
+    if (params.SDK_VERSION) {
+        SDK_VERSION = params.SDK_VERSION
+        echo "SDK_VERSION parameter already set"
+    } else {
+        echo "Parse build name to determine SDK_VERSION..."
+        // Eg - Build-JDK8-linux_390-64_cmprssptrs
+        //    - Pipeline-Build-Test-JDK8-linux_390-64_cmprssptrs
+        //    - PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9
+        // Index of JDK + 3 until index of next '-'
+        INDEX_START_SDK_VERSION = JOB_NAME.indexOf('JDK')+3
+        SDK_VERSION = JOB_NAME.substring(INDEX_START_SDK_VERSION,JOB_NAME.indexOf('-',INDEX_START_SDK_VERSION))
     }
+    echo "SDK_VERSION:'${SDK_VERSION}'"
+
+    if (params.PLATFORM) {
+        PLATFORM = params.PLATFORM
+        echo "PLATFORM parameter already set"
+    } else {
+        echo "Parse build name to determine PLATFORM..."
+        // Assuming consistent naming convention
+        // Substring start from index of 1 after '-' starting at index of 'JDK', go until the end (no end index) excpet for PR builds
+        // Build-JDK8-linux_390-64_cmprssptrs
+        // PullRequest-Compile-JDK-linux_x86-64-OpenJ9
+        // Pipeline-Build-Test-JDK10-aix_ppc-64_cmprssptrs
+        PLATFORM = JOB_NAME.substring(JOB_NAME.indexOf('-',JOB_NAME.indexOf('JDK'))+1)
+        if (JOB_TYPE == "pullRequest") {
+            // PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9
+            // Pipeline PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJDK9
+            PLATFORM = PLATFORM.substring(0,PLATFORM.indexOf('Open')-1)
+        }
+    }
+    echo "PLATFORM:'${PLATFORM}'"
+
+    PARAMETERS = []
+
+    // All build types
+    PARAMETERS.add(choice(name: 'SDK_VERSION', choices: ["${SDK_VERSION}"], description: ''))
+    PARAMETERS.add(choice(name: 'PLATFORM', choices: ["${PLATFORM}"], description: ''))
+
+    // Pipeline or build
+    if (JOB_TYPE == 'pipeline' || JOB_TYPE == 'build') {
+        /* OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA,
+        *  OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA,
+        *  OMR_REPO, OMR_BRANCH, OMR_SHA,
+        *  VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID */
+        PARAMETERS.add(string(name: 'OPENJDK_REPO', defaultValue: '', description: '', trim: true))
+        PARAMETERS.add(string(name: 'OPENJDK_BRANCH', defaultValue: '', description: '',  trim: true))
+        PARAMETERS.add(string(name: 'OPENJDK_SHA', defaultValue: '', description: '', trim: true))
+        PARAMETERS.add(string(name: 'OPENJ9_REPO', defaultValue: '', description: '', trim: true))
+        PARAMETERS.add(string(name: 'OPENJ9_BRANCH', defaultValue: '', description: '', trim: true))
+        PARAMETERS.add(string(name: 'OPENJ9_SHA', defaultValue: '', description: '', trim: true))
+        PARAMETERS.add(string(name: 'OMR_REPO', defaultValue: '', description: '', trim: true))
+        PARAMETERS.add(string(name: 'OMR_BRANCH', defaultValue: '', description: '', trim: true))
+        PARAMETERS.add(string(name: 'OMR_SHA', defaultValue: '', description: '', trim: true))
+        PARAMETERS.add(string(name: 'VARIABLE_FILE', defaultValue: "${VARIABLE_FILE_DEFAULT}", description: '', trim: true))
+        PARAMETERS.add(string(name: 'VENDOR_REPO', defaultValue: "${VENDOR_REPO_DEFAULT}", description: '', trim: true))
+        PARAMETERS.add(string(name: 'VENDOR_BRANCH', defaultValue: "${VENDOR_BRANCH_DEFAULT}", description: '', trim: true))
+        PARAMETERS.add(string(name: 'VENDOR_CREDENTIALS_ID', defaultValue: "${VENDOR_CREDENTIALS_ID_DEFAULT}", description: '', trim: true))
+    }
+
+    // Pipeline or PR
+    if (JOB_TYPE == 'pipeline' || JOB_TYPE == 'pullRequest') {
+        // TESTS_TARGETS
+        PARAMETERS.add(string(name: 'TESTS_TARGETS', defaultValue: '', description: '', trim: true))
+    }
+
+    // Build
+    if (JOB_TYPE == 'build') {
+        // NODE, SDK_FILENAME
+        PARAMETERS.add(string(name: 'NODE', defaultValue: '', description: '', trim: true))
+        PARAMETERS.add(string(name: 'SDK_FILENAME', defaultValue: '', description: '', trim: true))
+    }
+
+    /********************
+    * TRIGGER
+    ********************/
+
+    // No trigger for Build and Pipeline jobs
+    // TODO PR builds will need Github trigger setup
+
+    /********************
+    * SETUP PROPERTIES
+    ********************/
+
+    properties([
+        buildDiscarder(logRotator(
+            artifactDaysToKeepStr: '',
+            artifactNumToKeepStr: NUM_ARTIFACTS,
+            daysToKeepStr: '',
+            numToKeepStr: NUM_BUILDS)),
+        parameters(PARAMETERS)
+    ])
 }
 
 /*
