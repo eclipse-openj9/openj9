@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,7 @@
 #include "infra/Assert.hpp"                // for TR_ASSERT
 #include "infra/BitVector.hpp"             // for TR_BitVector
 #include "infra/Checklist.hpp"             // for TR::NodeChecklist
+#include "optimizer/FearPointAnalysis.hpp"
 
 static bool containsPrepareForOSR(TR::Block *block)
    {
@@ -88,18 +89,25 @@ bool TR_HCRGuardAnalysis::shouldSkipBlock(TR::Block *block)
 
 void TR_HCRGuardAnalysis::initializeGenAndKillSetInfo()
    {
+   int32_t numBits = getNumberOfBits();
    for (int32_t i = 0; i < comp()->getFlowGraph()->getNextNodeNumber(); ++i)
       {
-      _regularGenSetInfo[i] = new (trStackMemory()) TR_SingleBitContainer(getNumberOfBits(),trMemory(), stackAlloc);
-      _exceptionGenSetInfo[i] = new (trStackMemory()) TR_SingleBitContainer(getNumberOfBits(),trMemory(), stackAlloc);
-      _regularKillSetInfo[i] = new (trStackMemory()) TR_SingleBitContainer(getNumberOfBits(),trMemory(), stackAlloc);
-      _exceptionKillSetInfo[i] = new (trStackMemory()) TR_SingleBitContainer(getNumberOfBits(),trMemory(), stackAlloc);
+      _regularGenSetInfo[i] = new (trStackMemory()) TR_SingleBitContainer(numBits,trMemory(), stackAlloc);
+      _exceptionGenSetInfo[i] = new (trStackMemory()) TR_SingleBitContainer(numBits,trMemory(), stackAlloc);
+      _regularKillSetInfo[i] = new (trStackMemory()) TR_SingleBitContainer(numBits,trMemory(), stackAlloc);
+      _exceptionKillSetInfo[i] = new (trStackMemory()) TR_SingleBitContainer(numBits,trMemory(), stackAlloc);
       }
 
    TR::Block *currentBlock = NULL;
-   bool exceptingTTSeen = false;
+   int32_t blockId = -1;
    TR::NodeChecklist checklist(comp());
-   TR::Node *osrNode;
+   TR::NodeChecklist exceptionNodelist(comp());
+   bool isGen;            /* If current state is gen */
+   bool isKill;           /* If current state is kill */
+   bool hasExceptionGen;  /* If there exists an exception that gens*/
+   bool hasExceptionKill;  /* If there exists an exception that kills*/
+   bool hasExceptionNotKill;  /* If there exists an exception that doesn't kill*/
+   bool isYieldPoint;
 
    TR_ByteCodeInfo nodeBCI;
    nodeBCI.setCallerIndex(-1);
@@ -107,61 +115,137 @@ void TR_HCRGuardAnalysis::initializeGenAndKillSetInfo()
    nodeBCI.setDoNotProfile(false);
    currentBlock = comp()->getStartTree()->getEnclosingBlock();
    if (!comp()->getMethodSymbol()->supportsInduceOSR(nodeBCI, currentBlock, comp()))
-      _regularGenSetInfo[currentBlock->getNumber()]->setAll(getNumberOfBits());
+      _regularGenSetInfo[currentBlock->getNumber()]->setAll(numBits);
 
    for (TR::TreeTop *treeTop = comp()->getStartTree(); treeTop; treeTop = treeTop->getNextTreeTop())
       {
-      if (treeTop->getNode()->getOpCodeValue() == TR::BBStart)
+      TR::Node* ttNode = treeTop->getNode();
+      TR::Node* osrNode = NULL;
+      isYieldPoint = false;
+      if (ttNode->getOpCodeValue() == TR::BBStart)
          {
-         exceptingTTSeen = false;
          currentBlock = treeTop->getEnclosingBlock();
+         blockId = currentBlock->getNumber();
+         // Reset the walk state at the beginning of each block
+         isGen = false;
+         isKill = false;
+         hasExceptionGen = false;
+         hasExceptionKill = false;
+         hasExceptionNotKill = false;
          if (shouldSkipBlock(currentBlock))
             {
-            _regularKillSetInfo[currentBlock->getNumber()]->setAll(getNumberOfBits());
-            _exceptionKillSetInfo[currentBlock->getNumber()]->setAll(getNumberOfBits());
+            _regularKillSetInfo[blockId]->setAll(numBits);
+            _regularGenSetInfo[blockId]->empty();
+            _exceptionKillSetInfo[blockId]->setAll(numBits);
+            _exceptionGenSetInfo[blockId]->empty();
+
             treeTop = currentBlock->getExit();
             }
          continue;
          }
-
-      if (treeTop->getNode()->getOpCode().canRaiseException())
+      else if (ttNode->getOpCodeValue() == TR::BBEnd)
          {
-         exceptingTTSeen = true;
+         // Gen and kill are exclusive, so isGen and isKill cannot be true at the same time
+         if (isGen)
+            {
+            TR_ASSERT(!isKill, "isGen and isKill cannot be true at the same time");
+            _regularGenSetInfo[blockId]->setAll(numBits);
+            _regularKillSetInfo[blockId]->empty();
+            }
+         else if (isKill)
+            {
+            TR_ASSERT(!isGen, "isGen and isKill cannot be true at the same time");
+            _regularKillSetInfo[blockId]->setAll(numBits);
+            _regularGenSetInfo[blockId]->empty();
+            }
+
+         // Gen should win if there exists one exception point that is or can be reached by gen
+         if (hasExceptionGen)
+            {
+            _exceptionGenSetInfo[blockId]->setAll(numBits);
+            _exceptionKillSetInfo[blockId]->empty();
+            }
+         else if (hasExceptionKill && !hasExceptionNotKill) /* All exception points have to be kill in order to kill along the exception path */
+            {
+            _exceptionKillSetInfo[blockId]->setAll(numBits);
+            _exceptionGenSetInfo[blockId]->empty();
+            }
+
+         continue;
          }
 
-      osrNode = NULL;
-      if (comp()->isPotentialOSRPoint(treeTop->getNode(), &osrNode) && !checklist.contains(osrNode))
+      if (comp()->isPotentialOSRPoint(ttNode, &osrNode) && !checklist.contains(osrNode))
          {
          checklist.add(osrNode);
+         isYieldPoint = true;
          bool supportsOSR = comp()->isPotentialOSRPointWithSupport(treeTop);
          if (supportsOSR)
             {
-            _regularKillSetInfo[currentBlock->getNumber()]->setAll(getNumberOfBits());
-            if (exceptingTTSeen)
-               _exceptionKillSetInfo[currentBlock->getNumber()]->setAll(getNumberOfBits());
+            isKill = true;
+            isGen = false;
             }
-         /*else
+         else
             {
-            TR::Node *node = treeTop->getNode();
-            traceMsg(comp(), "mismatch at n%dn %d:%d %s\n", node->getGlobalIndex(), node->getByteCodeInfo().getCallerIndex(), node->getByteCodeInfo().getByteCodeIndex(),  comp()->signature());
-            }*/
-         if (!supportsOSR && treeTop->getNode()->getByteCodeInfo().getCallerIndex() > -1)
-            {
-            _regularGenSetInfo[currentBlock->getNumber()]->setAll(getNumberOfBits());
-            if (exceptingTTSeen)
-               *(_exceptionGenSetInfo[currentBlock->getNumber()]) |= *(_regularGenSetInfo[currentBlock->getNumber()]);
+            isGen = true;
+            isKill = false;
             }
          }
-      else if (treeTop->getNode()->isTheVirtualGuardForAGuardedInlinedCall() && comp()->cg()->supportsMergingGuards())
+      else if (ttNode->isTheVirtualGuardForAGuardedInlinedCall()
+               && TR_FearPointAnalysis::virtualGuardsKillFear()
+               && comp()->cg()->supportsMergingGuards())
          {
-         TR_VirtualGuard *guardInfo = comp()->findVirtualGuardInfo(treeTop->getNode());
+         TR_VirtualGuard *guardInfo = comp()->findVirtualGuardInfo(ttNode);
          if (guardInfo->getKind() != TR_HCRGuard)
             {
-            _regularKillSetInfo[currentBlock->getNumber()]->setAll(getNumberOfBits());
-            if (exceptingTTSeen)
-               _exceptionKillSetInfo[currentBlock->getNumber()]->setAll(getNumberOfBits());
+            // Theoretically, the guard should only kill its inlined path. However, making it right require adding
+            // complications to the data flow and/or optimizations using the result of the analysis. Based on the
+            // fact that there is few optimization opportunities on the taken side and optimizing it has little benefit,
+            // we require optimizations that can generate fear stay away from taken side such that considering a guard
+            // to be a kill for the taken side is safe.
+            //
+            isKill = true;
+            isGen = false;
             }
          }
+
+      bool canNodeRaiseException = false;
+      if (ttNode->getOpCode().canRaiseException())
+         {
+         canNodeRaiseException = true;
+         }
+      else
+         {
+         // Non-treetop nodes that can raise exceptions
+         if (ttNode->getOpCodeValue() == TR::treetop && ttNode->getNumChildren() > 0)
+            {
+            TR::Node* node = ttNode->getFirstChild();
+            if (!exceptionNodelist.contains(node) && node->getOpCode().canRaiseException())
+               {
+               canNodeRaiseException = true;
+               exceptionNodelist.add(node);
+               }
+            }
+         }
+
+      if (canNodeRaiseException)
+         {
+         // If the exception point is also a yield point, it has to be a gen.
+         // It's possible for the tree to yield, allowing assumptions to be invalidated,
+         // and then throw afterward. An OSR guard (if one is necessary) would only run
+         // after non-exceptional completion of the tree, so it wouldn't stop control from
+         // reaching the exception handler.
+         if (isYieldPoint)
+            {
+            hasExceptionGen = true;
+            }
+         else
+            {
+            hasExceptionGen = hasExceptionGen || isGen;
+            hasExceptionKill = hasExceptionKill || isKill;
+            hasExceptionNotKill = hasExceptionNotKill || !isKill;
+            }
+         }
+
       }
    }
 
