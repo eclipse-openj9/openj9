@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,7 +69,7 @@ MM_CollectionSetDelegate::initialize(MM_EnvironmentVLHGC *env)
 		if(NULL == _setSelectionDataTable) {
 			goto error_no_memory;
 		}
-		memset(_setSelectionDataTable, 0, tableAllocationSizeInBytes);
+		memset((void *)_setSelectionDataTable, 0, tableAllocationSizeInBytes);
 		for(UDATA index = 0; index < setSelectionEntryCount; index++) {
 			_setSelectionDataTable[index]._compactGroup = index;
 		}
