@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,13 +50,6 @@ public:
 
 	J9Class **nextSlot();
 
-	/**
-	 * Sets the next slot to be returned to the given slot.  This is only useful for
-	 * resuming a suspended class slot iteration.
-	 *
-	 * @param slot[in] The slot pointer which is to be returned by the next call to nextSlot
-	 */
-	void setNextSlot(J9Class **slot);
 };
 
 #endif /* VMCLASSSLOTITERATOR_HPP_ */

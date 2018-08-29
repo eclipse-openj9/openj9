@@ -119,24 +119,6 @@ public:
 
 	j9object_t *nextSlot();
 
-	/**
-	 * Required in order to resume constant pool scanning state.  The caller doesn't know which class
-	 * of a replacedClass list the constant pool slot refers to so this will do a simple range check
-	 * to determine if it refers to this class's constant pool.
-	 *
-	 * @param slot[in] A pointer to a slot in a class's constant pool
-	 * @return True if the slot points into the constant pool known to this iterator
-	 */
-	bool isSlotInConstantPool(j9object_t *slot);
-
-	/**
-	 * Sets the next slot to be returned to the given slot.  This is only useful for
-	 * resuming a suspended constant pool iteration.
-	 *
-	 * @param slot[in] The slot pointer which is to be returned by the next call to nextSlot
-	 */
-	void setNextSlot(j9object_t *slot);
-
 };
 
 #endif /* CONSTANTPOOLOBJECTSLOTITERATOR_HPP_ */
