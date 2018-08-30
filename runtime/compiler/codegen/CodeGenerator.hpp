@@ -27,7 +27,7 @@
 
 namespace TR
 {
-class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGeneratorConnector
+class /*OMR_EXTENSIBLE*/ CodeGenerator : public J9::CodeGeneratorConnector
    {
    public:
 

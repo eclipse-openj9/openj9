@@ -48,7 +48,7 @@ namespace X86
 namespace i386
 {
 
-class OMR_EXTENSIBLE CodeGenerator : public J9::X86::CodeGenerator
+class /*OMR_EXTENSIBLE*/ CodeGenerator : public J9::X86::CodeGenerator
    {
    public:
 

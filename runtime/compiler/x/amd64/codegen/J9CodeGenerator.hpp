@@ -49,7 +49,7 @@ namespace X86
 namespace AMD64
 {
 
-class OMR_EXTENSIBLE CodeGenerator : public J9::X86::CodeGenerator
+class /*OMR_EXTENSIBLE*/ CodeGenerator : public J9::X86::CodeGenerator
    {
    public:
 

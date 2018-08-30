@@ -69,7 +69,7 @@ namespace J9
 namespace Power
 {
 
-class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
+class /*OMR_EXTENSIBLE*/ CodeGenerator : public J9::CodeGenerator
    {
    public:
 

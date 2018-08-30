@@ -57,7 +57,7 @@ namespace TR { class TreeTop; }
 namespace J9
 {
 
-class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGeneratorConnector
+class /*OMR_EXTENSIBLE*/ CodeGenerator : public OMR::CodeGeneratorConnector
    {
 public:
 

@@ -51,7 +51,7 @@ namespace J9
 namespace Z
 {
 
-class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
+class /*OMR_EXTENSIBLE*/ CodeGenerator : public J9::CodeGenerator
    {
    public:
 

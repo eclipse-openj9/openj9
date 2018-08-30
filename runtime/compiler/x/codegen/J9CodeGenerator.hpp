@@ -33,7 +33,7 @@ namespace J9
 namespace X86
 {
 
-class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
+class /*OMR_EXTENSIBLE*/ CodeGenerator : public J9::CodeGenerator
    {
    public:
 
