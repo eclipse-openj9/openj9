@@ -2767,8 +2767,7 @@ TR_J9ByteCodeIlGenerator::loadConstantValueIfPossible(TR::Node *topNode, uintptr
       bool canOptimizeFinalStatic = false;
       if (isResolved && symbol->isFinal() && !symRef->isUnresolved() &&
           classOfStatic != comp()->getSystemClassPointer() &&
-          isClassInitialized &&
-          !comp()->compileRelocatableCode())
+          isClassInitialized)
          {
        //if (symbol->getDataType() == TR::Address)
             {
@@ -6137,8 +6136,7 @@ TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
    bool canOptimizeFinalStatic = false;
    if (isResolved && symbol->isFinal() && !symRef->isUnresolved() &&
        classOfStatic != comp()->getSystemClassPointer() &&
-       isClassInitialized &&
-       !comp()->compileRelocatableCode())
+       isClassInitialized)
       {
       //if (type == TR::Address)
          {
@@ -7853,7 +7851,7 @@ void TR_J9ByteCodeIlGenerator::performClassLookahead(TR_PersistentClassInfo *cla
    if (comp()->getOption(TR_EnableHCR))
       return;
 
-   if (comp()->compileRelocatableCode())
+   if (comp()->compileRelocatableCode() && !comp()->getOption(TR_UseSymbolValidationManager))
       return;
 
    _classLookaheadSymRefTab = new (trStackMemory())TR::SymbolReferenceTable(method()->maxBytecodeIndex(), comp());
