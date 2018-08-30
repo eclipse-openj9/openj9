@@ -53,6 +53,7 @@ public class MainTester {
 		result.add(new TestUnsafeAccessUnaligned(scenario));
 		result.add(new TestUnsafeSetMemory(scenario));
 		result.add(new TestUnsafeCopyMemory(scenario));
+		result.add(new TestUnsafeCopySwapMemory(scenario));
 		result.add(new TestUnsafePutGetAddress(scenario));
 		result.add(new TestUnsafeCompareAndExchange(scenario));
 		result.add(new TestUnsafeCompareAndSet(scenario));
@@ -72,7 +73,7 @@ public class MainTester {
 			Class clazz = classes[i];
 			if (Compiler.compileClass(clazz) == false) {
 				logger.error("Compilation of " + clazz.getName()
-						+ " failed -- aborting");
+						+ " failed or compiler is not available -- aborting");
 				AssertJUnit.fail();
 			}else{
 				logger.debug("Compiler.compileClass( "+  clazz.getName() + " )");
