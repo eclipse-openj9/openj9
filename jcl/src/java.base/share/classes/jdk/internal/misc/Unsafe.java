@@ -829,21 +829,23 @@ public final class Unsafe {
 	 */
 	private native void copyMemory0(Object srcObj, long srcOffset, Object destObj, long destOffset, long size);
 
-	/* 
-	 * Swap bytes between source object and destination.
+	/*
+	 * Copy bytes from source object to destination in reverse order.
+	 * Memory is reversed in elementSize chunks.
 	 * 
 	 * @param srcObj object to copy from 
-	 * @param srcOffset location in srcObj to start swap
+	 * @param srcOffset location in srcObj to start copy
 	 * @param destObj object to copy into
-	 * @param destOffset location in destObj to start swap
-	 * @param srcSize the number of bytes to be swapped in source
-	 * @param destSize the number of bytes to be swapped in destination
+	 * @param destOffset location in destObj to start copy
+	 * @param copySize the number of bytes to be copied, a multiple of elementSize
+	 * @param elementSize the size in bytes of elements that will be reversed
 	 * 
 	 * @throws IllegalArgumentException if srcOffset is illegal in srcObj, 
-	 * if destOffset is illegal in destObj, or if sizes are invalid
+	 * if destOffset is illegal in destObj, if copySize is invalid or copySize is not
+	 * a multiple of elementSize
 	 */
-	private native void copySwapMemory0(Object srcObj, long srcOffset, Object destObj, long destOffset, long srcSize,
-			long destSize);
+	private native void copySwapMemory0(Object srcObj, long srcOffset, Object destObj, long destOffset, long copySize,
+			long elementSize);
 
 	/* 
 	 * Returns byte offset to field.
@@ -1307,40 +1309,43 @@ public final class Unsafe {
 	}
 
 	/**
-	 * Swap bytes between source object and destination.
+	 * Copy bytes from source object to destination in reverse order.
+	 * Memory is reversed in elementSize chunks.
 	 * 
 	 * @param srcObj object to copy from 
-	 * @param srcOffset location in srcObj to start swap
+	 * @param srcOffset location in srcObj to start copy
 	 * @param destObj object to copy into
-	 * @param destOffset location in destObj to start swap
-	 * @param srcSize the number of bytes to be swapped in source
-	 * @param destSize the number of bytes to be swapped in destination
+	 * @param destOffset location in destObj to start copy
+	 * @param copySize the number of bytes to be copied, a multiple of elementSize
+	 * @param elementSize the size in bytes of elements that will be reversed
 	 * 
 	 * @throws IllegalArgumentException if srcOffset is illegal in srcObj, 
-	 * if destOffset is illegal in destObj, or if sizes are invalid
+	 * if destOffset is illegal in destObj, if copySize is invalid or copySize is not
+	 * a multiple of elementSize
 	 */
-	public void copySwapMemory(Object srcObj, long srcOffset, Object destObj, long destOffset, long srcSize,
-			long destSize) {
-		copySwapMemoryChecks(srcObj, srcOffset, destObj, destOffset, srcSize, destSize);
+	public void copySwapMemory(Object srcObj, long srcOffset, Object destObj, long destOffset, long copySize,
+			long elementSize) {
+		copySwapMemoryChecks(srcObj, srcOffset, destObj, destOffset, copySize, elementSize);
 
-		if (0 != srcSize) {
-			copySwapMemory0(srcObj, srcOffset, destObj, destOffset, srcSize, destSize);
+		if (0 != copySize) {
+			copySwapMemory0(srcObj, srcOffset, destObj, destOffset, copySize, elementSize);
 		}
 	}
 
 	/**
-	 * Swap bytes between source address and destination.
+	 * Copy bytes from source address to destination in reverse order.
+	 * Memory is reversed in elementSize chunks.
 	 * 
-	 * @param srcAddress location to start swap
-	 * @param destAddress location to start swap
-	 * @param srcSize the number of bytes to be swapped at source
-	 * @param destSize the number of bytes to be swapped at destination
+	 * @param srcAddress location to start copy
+	 * @param destAddress location to start copy
+	 * @param copySize the number of bytes to be copied, a multiple of elementSize
+	 * @param elementSize the size in bytes of elements that will be reversed
 	 * 
 	 * @throws IllegalArgumentException if srcAddress or destAddress is illegal, 
-	 *  or if sizes are invalid
+	 * if copySize is invalid or copySize is not a multiple of elementSize
 	 */
-	public void copySwapMemory(long srcAddress, long destAddress, long srcSize, long destSize) {
-		copySwapMemory(null, srcAddress, null, destAddress, srcSize, destSize);
+	public void copySwapMemory(long srcAddress, long destAddress, long copySize, long elementSize) {
+		copySwapMemory(null, srcAddress, null, destAddress, copySize, elementSize);
 	}
 
 	/**
@@ -5874,15 +5879,14 @@ public final class Unsafe {
 	 * Verify that parameters are valid.
 	 * 
 	 * @throws IllegalArgumentException if srcOffset is illegal in srcObj, 
-	 * if destOffset is illegal in destObj, or if sizes are invalid
+	 * if destOffset is illegal in destObj, if copySize is invalid or copySize is not
+	 * a multiple of elementSize
 	 */
-	private void copySwapMemoryChecks(Object srcObj, long srcOffset, Object destObj, long destOffset, long srcSize,
-			long destSize) {
-		checkSize(srcSize);
-		if ((2 == destSize) || (4 == destSize) || (8 == destSize)) {
-			long remainder = srcSize - (srcSize / destSize) * destSize;
-
-			if (0 == remainder) {
+	private void copySwapMemoryChecks(Object srcObj, long srcOffset, Object destObj, long destOffset, long copySize,
+			long elementSize) {
+		checkSize(copySize);
+		if ((2 == elementSize) || (4 == elementSize) || (8 == elementSize)) {
+			if (0 == (copySize % elementSize)) {
 				checkPrimitivePointer(srcObj, srcOffset);
 				checkPrimitivePointer(destObj, destOffset);
 			} else {
