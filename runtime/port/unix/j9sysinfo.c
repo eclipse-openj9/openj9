@@ -1100,7 +1100,10 @@ getS390Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 	}
 
 	if (testSTFLE(portLibrary, J9PORT_S390_FEATURE_VECTOR_PACKED_DECIMAL)) {
-#if (defined(S390) && defined(LINUX) && !defined(J9ZTPF))
+#if defined(J9ZOS390)
+		/* Vector packed decimal requires hardware and OS support (for OS, checking for VEF is sufficient) */
+		if (getS390zOS_supportsVectorExtensionFacility())
+#elif (defined(S390) && defined(LINUX) && !defined(J9ZTPF))
 	/* OS Support for Linux on Z */
 		if (J9_ARE_ALL_BITS_SET(auxvFeatures, J9PORT_HWCAP_S390_VXRS_BCD))
 #endif /* defined(S390) && defined(LINUX) && !defined(J9ZTPF) */
@@ -1112,7 +1115,10 @@ getS390Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 	}
 
 	if (testSTFLE(portLibrary, J9PORT_S390_FEATURE_VECTOR_FACILITY_ENHANCEMENT_1)) {
-#if (defined(S390) && defined(LINUX) && !defined(J9ZTPF))
+#if defined(J9ZOS390)
+		/* Vector facility enhancement 1 requires hardware and OS support (for OS, checking for VEF is sufficient) */
+		if (getS390zOS_supportsVectorExtensionFacility())
+#elif (defined(S390) && defined(LINUX) && !defined(J9ZTPF))
 	/* OS Support for Linux on Z */
 		if (J9_ARE_ALL_BITS_SET(auxvFeatures, J9PORT_HWCAP_S390_VXRS_EXT))
 #endif /* defined(S390) && defined(LINUX) && !defined(J9ZTPF) */

@@ -521,6 +521,11 @@ typedef struct J9ProcessorDesc {
 
 /*  Linux on Z features
  *  Auxiliary Vector Hardware Capability (AT_HWCAP) features for Linux on Z.
+ *  Obtained from: https://github.com/torvalds/linux/blob/050cdc6c9501abcd64720b8cc3e7941efee9547d/arch/s390/include/asm/elf.h#L94-L109.
+ *  If new facility support is required, then it must be defined there (and here), before we can check for it consistently.
+ *
+ *  The linux kernel will use the defines in the above link to set HWCAP features. This is done inside "setup_hwcaps(void)" routine found
+ *  in arch/s390/kernel/setup.c in the linux kernel source tree.
  */
 #define J9PORT_HWCAP_S390_ESAN3     0x1
 #define J9PORT_HWCAP_S390_ZARCH     0x2
