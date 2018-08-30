@@ -51,7 +51,7 @@
 #include "x/codegen/CallSnippet.hpp"
 #include "x/codegen/FPTreeEvaluator.hpp"
 #include "x/codegen/CheckFailureSnippet.hpp"
-#include "x/codegen/ScratchArgHelperCallSnippet.hpp"
+#include "x/codegen/StackOverflowCheckSnippet.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9ValueProfiler.hpp"
 
@@ -133,13 +133,13 @@ TR::X86PrivateLinkage::createStackOverflowCheck(
 
    TR::X86HelperCallSnippet  *snippet =
       new (trHeapMemory()) TR::X86StackOverflowCheckSnippet(
+         cg(),
          cursor->getNode(),
          reStartLabel,
          snippetLabel,
          helper,
          stackSpaceAllocated,
-         stackPointerAdjustment,
-         cg());
+         stackPointerAdjustment);
 
    cg()->addSnippet(snippet);
    cursor = new (trHeapMemory()) TR::X86LabelInstruction(cursor, LABEL, reStartLabel, cg());

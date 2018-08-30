@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,8 +20,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef SCRATCHARGHELPERCALLSNIPPET_INCL
-#define SCRATCHARGHELPERCALLSNIPPET_INCL
+#ifndef STACKOVERFLOWCHECKSNIPPET_INCL
+#define STACKOVERFLOWCHECKSNIPPET_INCL
 
 #include "x/codegen/HelperCallSnippet.hpp"
 
@@ -35,49 +35,27 @@ namespace TR { class SymbolReference; }
 
 namespace TR {
 
-class X86ScratchArgHelperCallSnippet : public TR::X86HelperCallSnippet
+class X86StackOverflowCheckSnippet : public TR::X86HelperCallSnippet
    {
    uintptrj_t _scratchArg;
 
    public:
 
-   X86ScratchArgHelperCallSnippet(TR::CodeGenerator   *cg,
-                                     TR::Node            *node,
-                                     TR::LabelSymbol      *restartlab,
-                                     TR::LabelSymbol      *snippetlab,
-                                     TR::SymbolReference *helper,
-                                     uintptrj_t          scratchArg,
-                                     int32_t             stackPointerAdjustment=0)
+   X86StackOverflowCheckSnippet(TR::CodeGenerator   *cg,
+                                TR::Node            *node,
+                                TR::LabelSymbol      *restartlab,
+                                TR::LabelSymbol      *snippetlab,
+                                TR::SymbolReference *helper,
+                                uintptrj_t          scratchArg,
+                                int32_t             stackPointerAdjustment=0)
       :_scratchArg(scratchArg), TR::X86HelperCallSnippet(cg, node, restartlab, snippetlab, helper, stackPointerAdjustment){}
-
-   virtual Kind getKind() { return IsScratchArgHelperCall; }
 
    uintptrj_t getScratchArg(){ return _scratchArg; }
 
    virtual uint8_t *genHelperCall(uint8_t *buffer);
    virtual uint32_t getLength(int32_t estimatedSnippetStart);
-
+   virtual void print(TR::FILE* pOutFile, TR_Debug* debug);
    };
-
-class X86StackOverflowCheckSnippet : public TR::X86ScratchArgHelperCallSnippet
-   {
-   public:
-
-   X86StackOverflowCheckSnippet(
-      TR::Node            *node,
-      TR::LabelSymbol      *restartLabel,
-      TR::LabelSymbol      *snippetLabel,
-      TR::SymbolReference *helper,
-      uintptrj_t          scratchArg,
-      int32_t             stackPointerAdjustment,
-      TR::CodeGenerator   *cg) :
-         TR::X86ScratchArgHelperCallSnippet(cg, node, restartLabel, snippetLabel, helper, scratchArg, stackPointerAdjustment)
-      {
-      }
-
-   virtual uint8_t *genHelperCall(uint8_t *buffer);
-   };
-
 }
 
 #endif

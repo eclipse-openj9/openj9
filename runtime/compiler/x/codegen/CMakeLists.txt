@@ -38,7 +38,7 @@ j9jit_files(
 	x/codegen/JNIPauseSnippet.cpp
 	x/codegen/PassJNINullSnippet.cpp
 	x/codegen/RecompilationSnippet.cpp
-	x/codegen/ScratchArgHelperCallSnippet.cpp
+	x/codegen/StackOverflowCheckSnippet.cpp
 	x/codegen/WriteBarrierSnippet.cpp
 	x/codegen/X86HelperLinkage.cpp
 	x/codegen/X86PrivateLinkage.cpp
