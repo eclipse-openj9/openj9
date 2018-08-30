@@ -24,6 +24,7 @@ package org.openj9.test.jsr335.defineAnonClass;
 import org.testng.annotations.Test;
 import org.testng.Assert;
 import org.testng.AssertJUnit;
+import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -106,6 +107,21 @@ public class TestUnsafeDefineAnonClass {
 		}
 	}
 	
+	@Test(groups = { "level.sanity" })
+	public void testAnonClassGetOwnClassName() {
+		try {
+			byte[] classBytes = DefineAnonClass.getClassBytesFromResource(AnonClass.class);
+			Class<?> clazz = DefineAnonClass.callDefineAnonClass(TestUnsafeDefineAnonClass.class, classBytes, null);
+			Method getClassName = clazz.getDeclaredMethod("getClassName", null);
+			String className = (String) getClassName.invoke(clazz.newInstance(), null);
+			Assert.assertEquals("AnonClass", className);
+		} catch (NoSuchMethodException | IllegalAccessException | InstantiationException
+				| InvocationTargetException e) {
+			e.printStackTrace();
+			Assert.fail("Exception caught!");
+		}
+	}
+
 	/**
 	 * Finds the declared field, then sets it to a different value. After, it verifies that
 	 * it was appropriately set.
