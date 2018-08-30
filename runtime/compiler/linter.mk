@@ -47,8 +47,8 @@ endif
 # Personally, I feel it's best to default to out-of-tree build but who knows, there may be
 # differing opinions on that.
 #
-JIT_SRCBASE?=../..
-JIT_OBJBASE?=../objs/compiler_$(BUILD_CONFIG)
+JIT_SRCBASE?=..
+JIT_OBJBASE?=$(J9SRC)/objs/compiler_$(BUILD_CONFIG)
 JIT_DLL_DIR?=$(JIT_OBJBASE)
 
 #
@@ -65,7 +65,7 @@ BUILD_CONFIG?=prod
 # Dirs used internally by the makefiles
 #
 JIT_MAKE_DIR?=$(FIXED_SRCBASE)/compiler/build
-JIT_SCRIPT_DIR?=$(FIXED_SRCBASE)/compiler/build/scripts
+JIT_SCRIPT_DIR?=$(JIT_MAKE_DIR)/scripts
 
 #
 # First we set a bunch of tokens about the platform that the rest of the
@@ -88,6 +88,17 @@ include $(JIT_MAKE_DIR)/files/common.mk
 # That makes sense - You can't expect XLC and GCC to take the same arguments
 #
 include $(JIT_MAKE_DIR)/toolcfg/common.mk
+
+# Add include directories to find j9cfg.h and omrcfg.h if needed.
+#
+# If the linter is being run after a CMake build, it
+# results in j9cfg.h and omrcfg.h to be in a location that
+# is different from an automake build.
+#
+
+ifneq ("$(wildcard $(J9SRC)/build/j9cfg.h)", "")
+CXX_INCLUDES+=$(J9SRC)/build $(J9SRC)/build/omr
+endif
 
 
 #
