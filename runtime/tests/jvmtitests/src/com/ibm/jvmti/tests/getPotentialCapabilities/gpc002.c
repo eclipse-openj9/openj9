@@ -109,7 +109,7 @@ gpc002(agentEnv * agent_env, char * args)
 	err = (*jvmti_env)->SetEventNotificationMode(jvmti_env, JVMTI_ENABLE, JVMTI_EVENT_THREAD_START, (jthread) NULL);
 	if (err != JVMTI_ERROR_NONE)
 	{
-		error(env, err, "Failed to SetEventNotificationMode");
+		error(env, err, "Failed to SetEventNotificationMode for thread start");
 		return JNI_ERR;
 	}
 	 

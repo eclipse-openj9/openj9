@@ -77,11 +77,11 @@ Java_com_ibm_jvmti_tests_decompResolveFrame_ResolveFrameClassloader_checkFrame(J
 
 	printf("In Java_com_ibm_jvmti_tests_decompResolveFrame_DecompResolveMethodClassloader_checkFrame\n");
 
-    err = (*jvmti_env)->SetEventNotificationMode(jvmti_env, JVMTI_ENABLE, JVMTI_EVENT_SINGLE_STEP, NULL);
-    if ( err != JVMTI_ERROR_NONE ) {
-        error(env, err, "SetEventNotificationMode failed");
-        return JNI_FALSE;
-    }
+	err = (*jvmti_env)->SetEventNotificationMode(jvmti_env, JVMTI_ENABLE, JVMTI_EVENT_SINGLE_STEP, NULL);
+	if ( err != JVMTI_ERROR_NONE ) {
+		error(env, err, "Enable SetEventNotificationMode single step failed");
+		return JNI_FALSE;
+	}
 
 	return JNI_FALSE;
 }
