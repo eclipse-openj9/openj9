@@ -6199,7 +6199,7 @@ TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
    else
       {
       TR::Node * load;
-      if (cg()->getAccessStaticsIndirectly() && isResolved && type != TR::Address && !comp()->compileRelocatableCode())
+      if (cg()->getAccessStaticsIndirectly() && isResolved && type != TR::Address && (!comp()->compileRelocatableCode() || comp()->getOption(TR_UseSymbolValidationManager)))
          {
          TR::Node * statics = TR::Node::createWithSymRef(TR::loadaddr, 0, symRefTab()->findOrCreateClassStaticsSymbol(_methodSymbol, cpIndex));
          load = TR::Node::createWithSymRef(comp()->il.opCodeForIndirectLoad(type), 1, 1, statics, symRef);
@@ -7359,7 +7359,7 @@ TR_J9ByteCodeIlGenerator::storeStatic(int32_t cpIndex)
 
       node = TR::Node::createWithSymRef(TR::call, 2, 2, value, statics, volatileLongSymRef);
       }
-   else if (!symRef->isUnresolved() && cg()->getAccessStaticsIndirectly() && type != TR::Address && !comp()->compileRelocatableCode())
+   else if (!symRef->isUnresolved() && cg()->getAccessStaticsIndirectly() && type != TR::Address && (!comp()->compileRelocatableCode() || comp()->getOption(TR_UseSymbolValidationManager)))
       {
       TR::Node * statics = TR::Node::createWithSymRef(TR::loadaddr, 0, symRefTab()->findOrCreateClassStaticsSymbol(_methodSymbol, cpIndex));
       node = TR::Node::createWithSymRef(comp()->il.opCodeForIndirectStore(type), 2, 2, statics, value, symRef);
