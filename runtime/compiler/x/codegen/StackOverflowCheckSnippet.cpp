@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "x/codegen/ScratchArgHelperCallSnippet.hpp"
+#include "x/codegen/StackOverflowCheckSnippet.hpp"
 
 #include <stdint.h>
 #include "env/IO.hpp"
@@ -34,7 +34,7 @@ inline bool is32Bit(uintptrj_t value)
       return ((uint64_t)value >> 32) == 0;
    }
 
-uint8_t *TR::X86ScratchArgHelperCallSnippet::genHelperCall(uint8_t *buffer)
+uint8_t *TR::X86StackOverflowCheckSnippet::genHelperCall(uint8_t *buffer)
    {
    if (is32Bit(_scratchArg))
       {
@@ -54,30 +54,28 @@ uint8_t *TR::X86ScratchArgHelperCallSnippet::genHelperCall(uint8_t *buffer)
    return TR::X86HelperCallSnippet::genHelperCall(buffer);
    }
 
-
-void
-TR_Debug::print(TR::FILE *pOutFile, TR::X86ScratchArgHelperCallSnippet * snippet)
+void TR::X86StackOverflowCheckSnippet::print(TR::FILE* pOutFile, TR_Debug* debug)
    {
    if (pOutFile == NULL)
       return;
 
-   uint8_t   *bufferPos  = snippet->getSnippetLabel()->getCodeLocation();
-   uintptrj_t scratchArg = snippet->getScratchArg();
+   uint8_t   *bufferPos  = getSnippetLabel()->getCodeLocation();
+   uintptrj_t scratchArg = getScratchArg();
 
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(snippet->getDestination()));
+   debug->printSnippetLabel(pOutFile, getSnippetLabel(), bufferPos, debug->getName(this), debug->getName(getDestination()));
 
    // Print the argument load
    //
    if (sizeof(scratchArg) <= 4 || ((uint64_t)scratchArg) >> 32 == 0)
       {
-      printPrefix(pOutFile, NULL, bufferPos, 5);
+      debug->printPrefix(pOutFile, NULL, bufferPos, 5);
       trfprintf(pOutFile, "mov \tedi, " POINTER_PRINTF_FORMAT "\t\t%s Load argument into scratch reg", scratchArg,
                     commentString());
       bufferPos += 5;
       }
    else
       {
-      printPrefix(pOutFile, NULL, bufferPos, 10);
+      debug->printPrefix(pOutFile, NULL, bufferPos, 10);
       trfprintf(pOutFile, "mov \trdi, " POINTER_PRINTF_FORMAT "\t%s Load argument into scratch reg", scratchArg,
                     commentString());
       bufferPos += 10;
@@ -85,22 +83,11 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86ScratchArgHelperCallSnippet * snippet
 
    // Print the rest of the snippet
    //
-   printBody(pOutFile, (TR::X86HelperCallSnippet*)snippet, bufferPos);
+   debug->printBody(pOutFile, (TR::X86HelperCallSnippet*)this, bufferPos);
    }
 
-
-uint32_t TR::X86ScratchArgHelperCallSnippet::getLength(int32_t estimatedSnippetStart)
+uint32_t TR::X86StackOverflowCheckSnippet::getLength(int32_t estimatedSnippetStart)
    {
    uint32_t movSize = is32Bit(_scratchArg)? 5 : 10;
    return movSize + TR::X86HelperCallSnippet::getLength(movSize + estimatedSnippetStart);
-   }
-
-uint8_t *TR::X86StackOverflowCheckSnippet::genHelperCall(uint8_t *buffer)
-   {
-   // This code assumes that the superclass' call to genHelperCall() will have
-   // the buffer pointing to the instruction immediately following the helper
-   // call.
-   //
-   uint8_t *cursor = TR::X86ScratchArgHelperCallSnippet::genHelperCall(buffer);
-   return cursor;
    }
