@@ -651,26 +651,5 @@ addVMSpecificDirectories(J9JavaVM *vm, UDATA *cursor, char * subdirName)
 		jclBootstrapClassPath[(*cursor)++] = serviceJarPath;
 	}
 
-#if defined(J9VM_OPT_CUDA)
-#define CUDA4J_JAR "cuda4j.jar"
-	if (NULL != vm->j2seRootDirectory) {
-		/* Format: '!' + vm->javaHome + '/' + 'lib' + '/' + 'cuda4j.jar' + NUL-terminator */
-		int cuda4jPathLength = 1 + javaHomePathLength + 1 + LITERAL_STRLEN("lib") + 1 + LITERAL_STRLEN(CUDA4J_JAR) + 1;
-		char * cuda4jJarPath = j9mem_allocate_memory(cuda4jPathLength, J9MEM_CATEGORY_VM_JCL);
-		if (NULL == cuda4jJarPath) {
-			setFatalErrorStringInDLLTableEntry(vm, "failed to allocate memory for cuda4j jar path");
-			return JNI_ENOMEM;
-		}
-		strcpy(cuda4jJarPath, "!");
-		strcat(cuda4jJarPath, (char*)vm->javaHome);
-		strcat(cuda4jJarPath, DIR_SEPARATOR_STR);
-		strcat(cuda4jJarPath, "lib");
-		strcat(cuda4jJarPath, DIR_SEPARATOR_STR);
-		strcat(cuda4jJarPath, CUDA4J_JAR);
-		jclBootstrapClassPath[(*cursor)++] = cuda4jJarPath;
-	}
-#undef CUDA4J_JAR
-#endif /* J9VM_OPT_CUDA */
-
 	return 0;
 }
