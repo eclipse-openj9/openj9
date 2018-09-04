@@ -2297,7 +2297,7 @@ TR_J9VMBase::allocateCodeMemory(TR::Compilation * comp, uint32_t warmCodeSize, u
       fprintf(stderr, "comp %p ID=%d switched cache to %p\n", comp, comp->getCompThreadID(), codeCache);
 #endif
       TR_ASSERT(!codeCache || codeCache->isReserved(), "Substitute code cache isn't marked as reserved");  // Either we didn't get a code cache, or the one we should get is
-      comp->setAotMethodCodeStart(warmCode);
+      comp->setRelocatableMethodCodeStart(warmCode);
       switchCodeCache(comp, comp->getCurrentCodeCache(), codeCache);
       }
 
@@ -8958,7 +8958,7 @@ TR_J9SharedCacheVM::getDesignatedCodeCache(TR::Compilation *comp)
       codeCache->alignWarmCodeAlloc(_jitConfig->codeCacheAlignment - 1);
 
       // For AOT we must install the beginning of the code cache
-      comp->setAotMethodCodeStart((uint32_t *)codeCache->getWarmCodeAlloc());
+      comp->setRelocatableMethodCodeStart((uint32_t *)codeCache->getWarmCodeAlloc());
       }
    else
       {
