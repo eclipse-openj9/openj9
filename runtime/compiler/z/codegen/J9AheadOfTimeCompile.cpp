@@ -220,7 +220,7 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();
          uintptr_t inlinedSiteIndex = (uintptr_t)relocation->getTargetAddress2();
 
-         inlinedSiteIndex = findCorrectInlinedSiteIndex(tempSR->getOwningMethod(self()->comp())->constantPool(), inlinedSiteIndex);
+         inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(tempSR->getOwningMethod(self()->comp())->constantPool(), inlinedSiteIndex);
 
          *(uintptrj_t *)cursor = inlinedSiteIndex;  // inlinedSiteIndex
          cursor += SIZEPOINTER;
@@ -237,7 +237,7 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          {
          TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();
          uintptr_t inlinedSiteIndex = (uintptr_t)relocation->getTargetAddress2();
-         inlinedSiteIndex = findCorrectInlinedSiteIndex(tempSR->getOwningMethod(self()->comp())->constantPool(), inlinedSiteIndex);
+         inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(tempSR->getOwningMethod(self()->comp())->constantPool(), inlinedSiteIndex);
 
          *(uintptrj_t *)cursor = inlinedSiteIndex; // inlinedSiteIndex
          cursor += SIZEPOINTER;
@@ -255,7 +255,7 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();
          uintptr_t inlinedSiteIndex = (uintptr_t)relocation->getTargetAddress2();
 
-         inlinedSiteIndex = findCorrectInlinedSiteIndex(tempSR->getOwningMethod(self()->comp())->constantPool(), inlinedSiteIndex);
+         inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(tempSR->getOwningMethod(self()->comp())->constantPool(), inlinedSiteIndex);
 
 
          *(uintptrj_t *)cursor = inlinedSiteIndex;  // inlinedSiteIndex
@@ -444,7 +444,7 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          auto symRef = (TR::SymbolReference *)relocation->getTargetAddress();
          auto sym = symRef->getSymbol()->castToStaticSymbol();
          auto j9class = (TR_OpaqueClassBlock *)sym->getStaticAddress();
-         uintptr_t inlinedSiteIndex = findCorrectInlinedSiteIndex(symRef->getOwningMethod(self()->comp())->constantPool(), (uintptr_t)relocation->getTargetAddress2());
+         uintptr_t inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(symRef->getOwningMethod(self()->comp())->constantPool(), (uintptr_t)relocation->getTargetAddress2());
 
          // Data identifying the class is as though for TR_ClassPointer
          // (TR_RelocationRecordPointerBinaryTemplate)
