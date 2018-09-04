@@ -88,6 +88,7 @@ public:
 		if (extensions->alwaysCallWriteBarrier) {
 			writeBarrierType = gc_modron_wrtbar_always;
 		}
+
 		Assert_MM_true(gc_modron_wrtbar_illegal != writeBarrierType);
 		javaVM->gcWriteBarrierType = writeBarrierType;
 

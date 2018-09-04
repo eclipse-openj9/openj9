@@ -171,13 +171,15 @@ typedef struct J9IndexableObject* mm_j9array_t;
 	(void)0)
 #define J9OBJECT__PRE_OBJECT_STORE_ADDRESS(vmThread, object, address, value) \
 	((void)0, \
-	(OMR_GC_ALLOCATION_TYPE_SEGREGATED == (J9VMTHREAD_JAVAVM((vmThread)))->gcAllocationType) ? \
+	((OMR_GC_WRITE_BARRIER_TYPE_SATB == (J9VMTHREAD_JAVAVM((vmThread)))->gcWriteBarrierType) || \
+	(OMR_GC_WRITE_BARRIER_TYPE_SATB_AND_OLDCHECK == (J9VMTHREAD_JAVAVM((vmThread)))->gcWriteBarrierType)) ? \
 	J9VMTHREAD_JAVAVM((vmThread))->memoryManagerFunctions->J9MetronomeWriteBarrierStore((vmThread), (j9object_t)(object), (fj9object_t*)(address), (j9object_t)(value)) : \
 	(void)0 \
 	)
 #define J9OBJECT__PRE_OBJECT_STORE_ADDRESS_VM(javaVM, object, address, value) \
 	((void)0, \
-	(OMR_GC_ALLOCATION_TYPE_SEGREGATED == javaVM->gcAllocationType) ? \
+	((OMR_GC_WRITE_BARRIER_TYPE_SATB == javaVM->gcWriteBarrierType) || \
+	(OMR_GC_WRITE_BARRIER_TYPE_SATB_AND_OLDCHECK == javaVM->gcWriteBarrierType)) ? \
 	javaVM->memoryManagerFunctions->J9MetronomeWriteBarrierStore(J9JAVAVM_VMTHREAD(javaVM), (j9object_t)(object), (fj9object_t*)(address), (j9object_t)(value)) : \
 	(void)0 \
 	)
@@ -195,13 +197,15 @@ typedef struct J9IndexableObject* mm_j9array_t;
 	)
 #define J9STATIC__PRE_OBJECT_STORE(vmThread, clazz, address, value) \
 	((void)0, \
-	(OMR_GC_ALLOCATION_TYPE_SEGREGATED == (J9VMTHREAD_JAVAVM((vmThread)))->gcAllocationType) ? \
+	((OMR_GC_WRITE_BARRIER_TYPE_SATB == (J9VMTHREAD_JAVAVM((vmThread)))->gcWriteBarrierType) || \
+	(OMR_GC_WRITE_BARRIER_TYPE_SATB_AND_OLDCHECK == (J9VMTHREAD_JAVAVM((vmThread)))->gcWriteBarrierType)) ? \
 	J9VMTHREAD_JAVAVM((vmThread))->memoryManagerFunctions->J9MetronomeWriteBarrierJ9ClassStore((vmThread), J9VM_J9CLASS_TO_HEAPCLASS((clazz)), (j9object_t*)(address), (j9object_t)(value)) : \
 	(void)0 \
 	)
 #define J9STATIC__PRE_OBJECT_STORE_VM(javaVM, object, address, value) \
 	((void)0, \
-	(OMR_GC_ALLOCATION_TYPE_SEGREGATED == javaVM->gcAllocationType) ? \
+	((OMR_GC_WRITE_BARRIER_TYPE_SATB == javaVM->gcWriteBarrierType) || \
+	(OMR_GC_WRITE_BARRIER_TYPE_SATB_AND_OLDCHECK == javaVM->gcWriteBarrierType)) ? \
 	javaVM->memoryManagerFunctions->J9MetronomeWriteBarrierJ9ClassStore(J9JAVAVM_VMTHREAD(javaVM), J9VM_J9CLASS_TO_HEAPCLASS((clazz)), (j9object_t*)(address), (j9object_t)(value)) : \
 	(void)0 \
 	)

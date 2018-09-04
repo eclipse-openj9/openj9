@@ -2625,8 +2625,9 @@ private:
 	VMINLINE void
 	internalPreStoreObject(J9VMThread *vmThread, j9object_t object, fj9object_t *destAddress, j9object_t value)
 	{
-		if (j9gc_modron_wrtbar_realtime == _writeBarrierType) {
-			internalPreStoreObjectRealtime(vmThread, object, destAddress, value);
+		if ((j9gc_modron_wrtbar_satb == _writeBarrierType) ||
+				(j9gc_modron_wrtbar_satb_and_oldcheck == _writeBarrierType)) {
+			internalPreStoreObjectSATB(vmThread, object, destAddress, value);
 		}
 	}
 
@@ -2644,8 +2645,9 @@ private:
 	VMINLINE void
 	internalStaticPreStoreObject(J9VMThread *vmThread, j9object_t object, j9object_t *destAddress, j9object_t value)
 	{
-		if (j9gc_modron_wrtbar_realtime == _writeBarrierType) {
-			internalStaticPreStoreObjectRealtime(vmThread, object, destAddress, value);
+		if ((j9gc_modron_wrtbar_satb == _writeBarrierType) ||
+				(j9gc_modron_wrtbar_satb_and_oldcheck == _writeBarrierType)) {
+			internalStaticPreStoreObjectSATB(vmThread, object, destAddress, value);
 		}
 	}
 
@@ -2658,10 +2660,10 @@ private:
 	 *
 	 */
 	VMINLINE void
-	internalPreStoreObjectRealtime(J9VMThread *vmThread, j9object_t object, fj9object_t *destAddress, j9object_t value)
+	internalPreStoreObjectSATB(J9VMThread *vmThread, j9object_t object, fj9object_t *destAddress, j9object_t value)
 	{
 #if defined(J9VM_GC_REALTIME)
-		J9VMGCRememberedSetFragment *fragment =  &vmThread->staccatoRememberedSetFragment;
+		J9VMGCRememberedSetFragment *fragment =  &vmThread->sATBBarrierRememberedSetFragment;
 		J9VMGCRememberedSet *parent = fragment->fragmentParent;
 		/* Check if the barrier is enabled.  No work if barrier is not enabled */
 		if (0 != parent->globalFragmentIndex) {
@@ -2689,10 +2691,10 @@ private:
 	 *
 	 */
 	VMINLINE void
-	internalStaticPreStoreObjectRealtime(J9VMThread *vmThread, j9object_t object, j9object_t *destAddress, j9object_t value)
+	internalStaticPreStoreObjectSATB(J9VMThread *vmThread, j9object_t object, j9object_t *destAddress, j9object_t value)
 	{
 #if defined(J9VM_GC_REALTIME)
-		J9VMGCRememberedSetFragment *fragment =  &vmThread->staccatoRememberedSetFragment;
+		J9VMGCRememberedSetFragment *fragment =  &vmThread->sATBBarrierRememberedSetFragment;
 		J9VMGCRememberedSet *parent = fragment->fragmentParent;
 		/* Check if the barrier is enabled.  No work if barrier is not enabled */
 		if (0 != parent->globalFragmentIndex) {
@@ -2763,7 +2765,9 @@ private:
 			internalPostObjectStoreCardTable(vmThread, object, value);
 			break;
 		case j9gc_modron_wrtbar_none:
-		case j9gc_modron_wrtbar_realtime:
+		case j9gc_modron_wrtbar_satb:
+		case j9gc_modron_wrtbar_satb_and_oldcheck:
+			//TODO SATB change to handle gencon, decide where to do it in pre/post store
 			break;
 		default:
 			/* Should assert as all real types are handled.  Should never get here
@@ -2790,7 +2794,8 @@ private:
 			internalPostBatchStoreObjectCardTable(vmThread, object);
 			break;
 		case j9gc_modron_wrtbar_none:
-		case j9gc_modron_wrtbar_realtime:
+		case j9gc_modron_wrtbar_satb:
+		case j9gc_modron_wrtbar_satb_and_oldcheck:
 			break;
 		default:
 			/* Should assert as all real types are handled.  Should never get here

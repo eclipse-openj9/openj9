@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,7 @@
  */
 
 #include "RealtimeAccessBarrier.hpp"
-#include "RememberedSetWorkPackets.hpp"
+#include "RememberedSetSATB.hpp"
 
 class MM_EnvironmentBase;
 class MM_EnvironmentRealtime;
@@ -107,7 +107,7 @@ protected:
 	MMINLINE bool isBarrierActive(MM_EnvironmentBase* env)
 	{
 		MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(env);
-		return !extensions->staccatoRememberedSet->isGlobalFragmentIndexPreserved(env);
+		return !extensions->sATBBarrierRememberedSet->isGlobalFragmentIndexPreserved(env);
 	}
 	
 	MMINLINE bool isDoubleBarrierActiveOnThread(J9VMThread *vmThread)
@@ -116,7 +116,7 @@ protected:
 		 * to the special value, this ensures the JIT will go out-of line. We can determine if the double
 		 * barrier is active simply by checking if the fragment index corresponds to the special value.
 		 */
-		return (J9GC_REMEMBERED_SET_RESERVED_INDEX == vmThread->staccatoRememberedSetFragment.localFragmentIndex);
+		return (J9GC_REMEMBERED_SET_RESERVED_INDEX == vmThread->sATBBarrierRememberedSetFragment.localFragmentIndex);
 	}
 	
 	bool markAndScanContiguousArray(MM_EnvironmentRealtime *env, J9IndexableObject *objectPtr);

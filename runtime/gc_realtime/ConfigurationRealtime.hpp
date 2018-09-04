@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,7 +62,7 @@ public:
 	virtual void defaultMemorySpaceAllocated(MM_GCExtensionsBase *extensions, void* defaultMemorySpace);
 	
 	MM_ConfigurationRealtime(MM_EnvironmentBase *env)
-		: MM_Configuration(env, gc_policy_metronome, mm_regionAlignment, REALTIME_REGION_SIZE_BYTES, REALTIME_ARRAYLET_LEAF_SIZE_BYTES, gc_modron_wrtbar_realtime, gc_modron_allocation_type_segregated)
+		: MM_Configuration(env, gc_policy_metronome, mm_regionAlignment, REALTIME_REGION_SIZE_BYTES, REALTIME_ARRAYLET_LEAF_SIZE_BYTES, gc_modron_wrtbar_satb, gc_modron_allocation_type_segregated)
 	{
 		_typeId = __FUNCTION__;
 	};

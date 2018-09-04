@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -143,7 +143,7 @@ MM_AllocationContextRealtime::allocateLarge(MM_EnvironmentBase *env, UDATA sizeI
 
 	/* Call parent to try to get a large object region */
 	UDATA *result =  MM_AllocationContextSegregated::allocateLarge(env, sizeInBytesRequired);
-
+//TODO SATB extract into a method
 	if ((NULL != result) && (GC_MARK == ((MM_EnvironmentRealtime *) env)->getAllocationColor())) {
 		ext->realtimeGC->getMarkingScheme()->mark((omrobjectptr_t)result);
 	}

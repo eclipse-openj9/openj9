@@ -232,6 +232,11 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 
+	if (try_scan(scan_start, "snapshotAtTheBeginningBarrier")) {
+		extensions->configurationOptions._forceOptionWriteBarrierSATB = true;
+		goto _exit;
+	}
+
 #if defined(J9VM_GC_MODRON_SCAVENGER)
 	if(try_scan(scan_start, "scavenge")) {
 		extensions->configurationOptions._forceOptionScavenge = true;
