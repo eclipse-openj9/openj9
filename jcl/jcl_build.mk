@@ -89,8 +89,6 @@ JCL_TOOLS_DIR  := $(WORKSPACE)/sourcetools/J9_JCL_Build_Tools
 PCONFIG_DIR    := $(PCONFIG)/pConfig_$(JPP_CONFIG)
 DEST_DIR       := $(ROOT_DIR)/build/j9jcl/source/ive/lib/$(JPP_DIRNAME)
 
-CUDA4J_JAR     := $(WORKSPACE)/jcl/cuda4j_j8.jar
-
 SOURCETOOLS_LIB  := $(WORKSPACE)/sourcetools/lib
 IBMJZOS_JAR      := $(SOURCETOOLS_LIB)/ibmjzos.jar
 RAS_BINARIES_DIR := $(ROOT_DIR)/build/RAS_Binaries
@@ -106,7 +104,7 @@ PREPROCESS_ARGS := \
 	-macro:define "com.ibm.oti.vm.library.version=29"
 
 JCL_ARGS  := -verbose -g -Xlint:unchecked -source $(SPEC_VERSION) -target $(SPEC_VERSION)
-JCL_CP    := $(CUDA4J_JAR)$(PATH_SEP)$(IBMJZOS_JAR)
+JCL_CP    := $(IBMJZOS_JAR)
 
 # Add Boot class path
 ifneq ($(COMPILER_BCP),)
