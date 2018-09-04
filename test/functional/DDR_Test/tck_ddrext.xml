@@ -44,7 +44,7 @@
 	<if>
 		<equals arg1="${OS}" arg2="os.zos"/>
 		<then>
-			<property name="DUMP_OPTION" value="-Xdump:system:events=vmstop,label=%uid.${dump.name},request=exclusive+compact+prepwalk -Xshareclasses:name=ddrextjunitSCC,addtestjithints -Xjit -Xaot:forceaot,count=5,disableAsyncCompilation -Xmx512M -version" />
+			<property name="DUMP_OPTION" value="-Xdump:system:events=vmstop,label=%uid.${dump.name},request=exclusive+compact+prepwalk -Xscmx16m -Xshareclasses:name=ddrextjunitSCC,addtestjithints -Xjit -Xaot:forceaot,count=5,disableAsyncCompilation -Xmx512M -version" />
 				<if>
 				<equals arg1="${BITS}" arg2="bits.64"/>
 				<then>
@@ -56,7 +56,7 @@
 			</if>
 		</then>
 		<else>
-			<property name="DUMP_OPTION" value="-Xdump:system:events=vmstop,label=${system.dump},request=exclusive+compact+prepwalk -Xshareclasses:name=ddrextjunitSCC,addtestjithints -Xjit -Xaot:forceaot,count=5,disableAsyncCompilation -Xmx512M -version" />
+			<property name="DUMP_OPTION" value="-Xdump:system:events=vmstop,label=${system.dump},request=exclusive+compact+prepwalk -Xscmx16m -Xshareclasses:name=ddrextjunitSCC,addtestjithints -Xjit -Xaot:forceaot,count=5,disableAsyncCompilation -Xmx512M -version" />
 		</else>
 	</if>
 

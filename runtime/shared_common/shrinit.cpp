@@ -2708,9 +2708,13 @@ ensureCorrectCacheSizes(J9JavaVM *vm, J9PortLibrary* portlib, U_64 runtimeFlags,
 	bool is64BitPlatDefaultSize = false;
 
 #if defined(J9VM_ENV_DATA64)
+#if defined(OPENJ9_BUILD)
+	defaultCacheSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE_64BIT_PLATFORM;
+#else /* OPENJ9_BUILD */
 	if (J2SE_VERSION(vm) >= J2SE_19) {
 		defaultCacheSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE_64BIT_PLATFORM;
 	}
+#endif /* OPENJ9_BUILD */
 #endif /* J9VM_ENV_DATA64 */
 
 	if (*cacheSize == 0) {

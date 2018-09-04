@@ -590,7 +590,7 @@
 
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class debug area size[\s]*= 0</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class debug area used bytes[\s]*= 0</output>
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class debug area % used[\s]*= 0%</output>
+		<!-- do not check if Class debug area % used is 0%. When Class debug area used bytes is too small (< 1%) compared to Class debug area size, Class debug area % used will show up as 0% -->
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -982,12 +982,29 @@
 		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
 	</test>
 	
-	<test id="Test 55 Check default cache size on Java 8" timeout="600" runPath=".">
+	<test id="Test 55 Check default cache size on non-OpenJ9 Java 8" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -verbose:sizes $currentMode$ -Xtrace:print={j9shr.369,j9shr.734} -version</command>
 		<output type="success" caseSensitive="yes" regex="no" showMatch="yes">SH_OSCachemmap::startup: Successfully set cache length to 16777216</output>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">OSCache startup.*length=16777216 create=1</output>
 		<output type="required" caseSensitive="yes" regex="no" showMatch="yes">XX:SharedCacheHardLimit=16M</output>
 
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 55 Check default cache size on OpenJ9 Java 8" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ -verbose:sizes $currentMode$ -Xtrace:print={j9shr.369,j9shr.734} -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes" platforms="$NON_64BIT_PLATFORMS$">SH_OSCachemmap::startup: Successfully set cache length to 16777216</output>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes" platforms="$NON_64BIT_PLATFORMS$">OSCache startup.*length=16777216 create=1</output>
+		<output type="required" caseSensitive="yes" regex="no" showMatch="yes" platforms="NON_64BIT_PLATFORMS">XX:SharedCacheHardLimit=16M</output>
+
+		<output type="success" caseSensitive="yes" regex="no" showMatch="yes" platforms="$64BIT_PLATFORMS$">SH_OSCachemmap::startup: Successfully set cache length to 314572800</output>
+		<output type="success" caseSensitive="yes" regex="no" showMatch="yes" platforms="$64BIT_PLATFORMS$">SH_OSCachemmap::startup: Successfully set cache length to 67108864</output>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes" platforms="$64BIT_PLATFORMS$">OSCache startup.*length=314572800 create=1</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes" platforms="$64BIT_PLATFORMS$">(XX:SharedCacheHardLimit=300M(.)*[\n\r](.)*Xscmx64M|XX:SharedCacheHardLimit=64M)</output>
+		
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
