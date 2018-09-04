@@ -2812,7 +2812,7 @@ J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR_Mem
    
    // receive rtResolve
    // NOTE: this relies on rtResolve being the last option in clientOptions
-   bool rtResolve = (bool)((uint8_t *) options + clientOptionsSize - sizeof(bool));
+   bool rtResolve = (bool) *((uint8_t *) options + clientOptionsSize - sizeof(bool));
    J9JITConfig *jitConfig = (J9JITConfig *) _feBase;
    if (rtResolve)
       jitConfig->runtimeFlags |= J9JIT_RUNTIME_RESOLVE;
