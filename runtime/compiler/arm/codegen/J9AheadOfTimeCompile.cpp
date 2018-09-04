@@ -99,8 +99,6 @@ void J9::ARM::AheadOfTimeCompile::processRelocations()
       }
    }
 
-uintptr_t findCorrectInlinedSiteIndex(void *constantPool, TR::Compilation *comp, uintptr_t currentInlinedSiteIndex);
-
 uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedExternalRelocation *relocation)
    {
    TR::Compilation* comp = TR::comp();
@@ -158,7 +156,7 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          {
          TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation*) relocation->getTargetAddress();
          TR::SymbolReference *tempSR = (TR::SymbolReference *) recordInfo->data1;
-         uintptr_t inlinedSiteIndex = findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), comp, recordInfo->data2);
+         uintptr_t inlinedSiteIndex = findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), recordInfo->data2);
          uint8_t flags = (uint8_t) recordInfo->data3;//Sequence ID
          //TODO
          *(uintptrj_t *)cursor = inlinedSiteIndex;
@@ -180,7 +178,7 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();
          uintptr_t inlinedSiteIndex = (uintptr_t)relocation->getTargetAddress2();
 
-         inlinedSiteIndex = findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), comp, inlinedSiteIndex);
+         inlinedSiteIndex = findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), inlinedSiteIndex);
 
          *(uintptrj_t *)cursor = inlinedSiteIndex;  // inlinedSiteIndex
          cursor += SIZEPOINTER;
@@ -202,7 +200,7 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          // they'll be needed for TR_ArbitraryClassAddress as well
          uint8_t flags = (uint8_t) recordInfo->data3;
 
-         uintptr_t inlinedSiteIndex = findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), comp, recordInfo->data2);
+         uintptr_t inlinedSiteIndex = findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), recordInfo->data2);
 
          *(uintptrj_t *)cursor = inlinedSiteIndex; // inlinedSiteIndex
 
@@ -219,8 +217,7 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          {
          TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation *) relocation->getTargetAddress();
          TR::SymbolReference *tempSR = (TR::SymbolReference *) recordInfo->data1;
-         uintptr_t inlinedSiteIndex = findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(),
-                 comp, recordInfo->data2);
+         uintptr_t inlinedSiteIndex = findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), recordInfo->data2);
          uint8_t flags = (uint8_t) recordInfo->data3;
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
@@ -385,10 +382,7 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          auto sym = symRef->getSymbol()->castToStaticSymbol();
          auto j9class = (TR_OpaqueClassBlock *)sym->getStaticAddress();
          // flags stored in data3 are currently unused
-         uintptr_t inlinedSiteIndex = findCorrectInlinedSiteIndex(
-            symRef->getOwningMethod(comp)->constantPool(),
-            comp,
-            recordInfo->data2);
+         uintptr_t inlinedSiteIndex = findCorrectInlinedSiteIndex(symRef->getOwningMethod(comp)->constantPool(), recordInfo->data2);
 
          // Data identifying the class is as though for TR_ClassPointer
          // (TR_RelocationRecordPointerBinaryTemplate)
