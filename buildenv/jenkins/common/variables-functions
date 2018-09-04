@@ -287,18 +287,27 @@ def get_user_credentials_id(KEY) {
 /*
 * Sets the NODE variable to the labels identifying nodes by platform suitable
 * to run a Jenkins job.
-* Fetches the labels from the variables file when the NODE is not set as build
+* Fetches the labels from the variables file when the node is not set as build
 * parameter.
 * The node's labels could be a single label - e.g. label1 - or a boolean 
 * expression - e.g. label1 && label2 || label3. 
 */
 def set_node(job_type) {
     // fetch labels for given platform/spec
-    NODE = params.NODE
+    NODE = ''
+    for (key in ['NODE', 'LABEL']) {
+        // check the build parameters
+        if (params.containsKey(key)) {
+            NODE = params.get(key)
+            break
+        }
+    }
+
     if (!NODE) {
+        // fetch from variables file
         NODE = get_value(VARIABLES."${SPEC}".node_labels."${job_type}", SDK_VERSION)
         if (!NODE) {
-            error("Cannot find label value matching JOB_TYPE:'${job_type}' SPEC:'${SPEC}' and SDK_VERSION:'${SDK_VERSION}'")
+            error("Missing ${job_type} NODE!")
         }
     }
 }
