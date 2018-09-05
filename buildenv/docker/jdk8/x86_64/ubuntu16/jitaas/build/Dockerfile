@@ -53,7 +53,7 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update \
- && add-apt-repository ppa:ubuntu-toolchain-r/test -y
+ && add-apt-repository ppa:ubuntu-toolchain-r/test -y \
  && apt-get update \
  && apt-get install gcc-snapshot -y \
  && apt-get update \
