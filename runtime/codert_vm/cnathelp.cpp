@@ -1541,10 +1541,9 @@ retry:
 	J9ConstantPool *ramConstantPool = ((J9ConstantPool**)indexAndLiteralsEA)[0];
 	UDATA cpIndex = indexAndLiteralsEA[1];
 	J9RAMInterfaceMethodRef *ramMethodRef = (J9RAMInterfaceMethodRef*)ramConstantPool + cpIndex;
-	J9Class* volatile interfaceClass = (J9Class*)ramMethodRef->interfaceClass;
-	VM_AtomicSupport::readBarrier();
-	UDATA volatile methodIndexAndArgCount = ramMethodRef->methodIndexAndArgCount;
-	if (NULL == interfaceClass) {
+	J9Class* const interfaceClass = (J9Class*)ramMethodRef->interfaceClass;
+	UDATA const methodIndexAndArgCount = ramMethodRef->methodIndexAndArgCount;
+	if (!J9RAMINTERFACEMETHODREF_RESOLVED(interfaceClass, methodIndexAndArgCount)) {
 		buildJITResolveFrameWithPC(currentThread, J9_SSF_JIT_RESOLVE_INTERFACE_METHOD, parmCount, true, 0, jitEIP);
 		currentThread->javaVM->internalVMFunctions->resolveInterfaceMethodRef(currentThread, ramConstantPool, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
 		addr = restoreJITResolveFrame(currentThread, jitEIP);

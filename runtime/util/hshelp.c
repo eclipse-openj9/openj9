@@ -1632,7 +1632,7 @@ reresolveHotSwappedConstantPool(J9ConstantPool * ramConstantPool, J9VMThread * c
 						romMethodRef = ((J9ROMMethodRef *) romConstantPool) + i;
 						nas = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
 						((J9RAMInterfaceMethodRef *) ramConstantPool)[i].interfaceClass = 0;
-						((J9RAMInterfaceMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas)));
+						((J9RAMInterfaceMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = J9_ITABLE_INDEX_UNRESOLVED | getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas)));
 					} else {
 						vmFuncs->resolveInterfaceMethodRef(currentThread, ramConstantPool, i,
 																			resolveFlagsBase | J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
