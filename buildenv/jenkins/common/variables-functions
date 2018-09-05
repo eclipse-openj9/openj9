@@ -342,16 +342,6 @@ def set_build_variables() {
     set_release()
     set_jdk_folder()
 
-    try{
-        SDK_PREFIX = "OpenJ9-JDK${SDK_VERSION}-PR${ghprbPullId}-${SPEC}-"
-    } catch (e) {
-        SDK_PREFIX = "OpenJ9-JDK${SDK_VERSION}-${SPEC}-"
-    }
-
-    SDK_SUFFIX = ".tar.gz"
-    TEST_PREFIX = "test-"
-    TEST_SUFFIX = ".tar.gz"
-
     // set variables for the build environment configuration
     // check job parameters, if not provided default to variables file
     BUILD_ENV_VARS = params.BUILD_ENV_VARS
@@ -385,6 +375,18 @@ def set_build_variables() {
     }
 
     echo "Using BUILD_ENV_CMD = ${BUILD_ENV_CMD}, BUILD_ENV_VARS_LIST = ${BUILD_ENV_VARS_LIST.toString()}"
+}
+
+def set_sdk_variables() {
+    SDK_FILENAME = params.SDK_FILENAME
+    if (!SDK_FILENAME) {
+        DATESTAMP = sh (
+            script: 'date +%Y%d%m%H%M',
+            returnStdout: true
+            ).trim()
+        SDK_FILENAME = "OpenJ9-JDK${SDK_VERSION}-${SPEC}-${DATESTAMP}.tar.gz"
+        echo "Using SDK_FILENAME = ${SDK_FILENAME}"
+    }
 }
 
 /*
@@ -421,6 +423,18 @@ def set_slack_channel() {
     }
 }
 
+def set_artifactory_config() {
+    ARTIFACTORY_SERVER = VARIABLES.artifactory_server
+    ARTIFACTORY_REPO = VARIABLES.artifactory_repo
+    ARTIFACTORY_CREDS = VARIABLES.artifactory_creds
+    if (ARTIFACTORY_SERVER) {
+        ARTIFACTORY_BASE_URL = "https://" + "${ARTIFACTORY_SERVER}" + ".com/artifactory/" + "${ARTIFACTORY_REPO}"
+        echo "Using artifactory server/repo: ${ARTIFACTORY_SERVER} / ${ARTIFACTORY_REPO}"
+        echo "Using artifactory base url: ${ARTIFACTORY_BASE_URL}"
+        echo "Using artifactory credentials: ${ARTIFACTORY_CREDS}"
+    }
+}
+
 /*
 * Sets the names of the downstream build & test jobs
 */
@@ -446,6 +460,7 @@ def set_job_variables(job_type) {
 
     // fetch credentials required to connect to GitHub using ssh protocol
     set_user_credentials()
+    set_artifactory_config()
 
     switch (job_type) {
         case "build":
@@ -453,6 +468,7 @@ def set_job_variables(job_type) {
             set_node('build')
             // set variables for a build job
             set_build_variables()
+            set_sdk_variables()
             break
         case "test":
             // set the node the tests would run on
@@ -465,12 +481,14 @@ def set_job_variables(job_type) {
             set_node('build')
             // set variables for a pull request job that builds an SDK
             set_build_variables()
+            set_sdk_variables()
             set_test_variables()
             break
         case "pipeline":
             // set variables for a pipeline job
             set_repos_variables()
             set_vendor_variables()
+            set_sdk_variables()
             set_test_targets()
             set_slack_channel()
             set_job_names()

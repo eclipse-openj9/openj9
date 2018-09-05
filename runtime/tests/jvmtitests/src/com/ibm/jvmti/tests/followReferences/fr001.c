@@ -68,7 +68,7 @@ testFollowReferences(JavaVM * vm, jvmtiEnv * jvmti_env, char *args)
 	/* Enable the classLoad callback */
 	err = (*jvmti_env)->SetEventNotificationMode(jvmti_env, JVMTI_ENABLE, JVMTI_EVENT_METHOD_ENTRY, NULL);
 	if (err != JVMTI_ERROR_NONE) {
-		j9tty_printf(PORTLIB, "%s\n", errorName(jvmti_env, NULL, err, "Failed to enable class load"));
+		j9tty_printf(PORTLIB, "%s\n", errorName(jvmti_env, NULL, err, "Failed to enable method entry"));
 		goto done;
 	} 
 

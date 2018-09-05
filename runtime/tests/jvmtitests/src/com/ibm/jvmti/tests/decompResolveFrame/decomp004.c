@@ -77,7 +77,7 @@ Java_com_ibm_jvmti_tests_decompResolveFrame_decomp004_triggerDecompile(JNIEnv *j
 
     err = (*jvmti_env)->SetEventNotificationMode(jvmti_env, JVMTI_ENABLE, JVMTI_EVENT_SINGLE_STEP, NULL);
     if ( err != JVMTI_ERROR_NONE ) {
-        error(env, err, "SetEventNotificationMode failed");
+        error(env, err, "SetEventNotificationMode single step failed");
         return JNI_FALSE;
     }
 
