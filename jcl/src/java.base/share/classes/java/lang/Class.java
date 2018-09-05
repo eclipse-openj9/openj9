@@ -52,9 +52,9 @@ import sun.reflect.generics.scope.ClassScope;
 import sun.reflect.annotation.AnnotationType;
 import java.util.Arrays;
 import com.ibm.oti.vm.VM;
-/*[IF Valhalla-NestMates]*/
+/*[IF Java11]*/
 import static com.ibm.oti.util.Util.doesClassLoaderDescendFrom;
-/*[ENDIF] Valhalla-NestMates*/
+/*[ENDIF] Java11*/
 
 /*[IF Sidecar19-SE]
 import jdk.internal.misc.Unsafe;
@@ -245,11 +245,11 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 		return unsafe;
 	}
 	
-/*[IF Valhalla-NestMates]*/
+/*[IF Java11]*/
 	/* Store the results of getNestHostImpl() and getNestMembersImpl() respectively */
 	private Class<?> nestHost;
 	private Class<?>[] nestMembers;
-/*[ENDIF] Valhalla-NestMates*/
+/*[ENDIF] Java11*/
 	
 /**
  * Prevents this class from being instantiated. Instances
