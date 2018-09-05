@@ -78,15 +78,12 @@ endif
 ifeq ($(JAVA_VERSION), SE110)
 	JDK_VERSION = openjdk11
 endif
-ifneq (, $(findstring openj9, $(JAVA_IMPL)))
-	JVM_VERSION = $(JDK_VERSION)-openj9
+ifeq (hotspot, $(JAVA_IMPL))
+	JVM_VERSION = $(JDK_VERSION)
 else 
-	ifeq (, $(findstring sap, $(JAVA_IMPL)))
-		JVM_VERSION = $(JDK_VERSION)-sap
-	else 
-		JVM_VERSION = $(JDK_VERSION)
-	endif
+	JVM_VERSION = $(JDK_VERSION)-$(JAVA_IMPL)
 endif
+
 export JVM_VERSION:=$(JVM_VERSION)
 endif
 
