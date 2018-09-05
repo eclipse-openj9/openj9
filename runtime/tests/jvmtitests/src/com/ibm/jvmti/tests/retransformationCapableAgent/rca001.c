@@ -335,7 +335,7 @@ rca001(agentEnv * agent_env, char * args)
 	/* Enable the JVMTI_EVENT_CLASS_PREPARE callback */
 	err = (*jvmti_env)->SetEventNotificationMode(jvmti_env, JVMTI_ENABLE, JVMTI_EVENT_CLASS_PREPARE, NULL);
 	if (JVMTI_ERROR_NONE != err) {
-		error(env, err, "Failed to enable ClassFileLoadHook event");
+		error(env, err, "Failed to enable ClassPrepare event");
 		return JNI_ERR;
 	}
 
