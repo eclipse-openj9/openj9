@@ -864,7 +864,13 @@ public class MethodHandles {
 					/* Interfaces only inherit *public* methods from Object */
 					throw new NoSuchMethodException(clazz + "." + methodName + type); //$NON-NLS-1$					
 				}
-				handle = new VirtualHandle(new DirectHandle(Object.class, methodName, type, MethodHandle.KIND_SPECIAL, Object.class));
+				handle = new DirectHandle(Object.class, methodName, type, MethodHandle.KIND_SPECIAL, Object.class);
+				/* Final methods in Object do not appear in the vTable and must be invoked directly.
+				 * Non-final methods need to be invoked virtually.
+				 */
+				if (!Modifier.isFinal(handle.getModifiers())) {
+					handle = new VirtualHandle((DirectHandle)handle);
+				}
 				handle = handle.cloneWithNewType(handle.type.changeParameterType(0, clazz));
 			/*[IF Java11]*/
 			} else if (!Modifier.isPublic(handle.getModifiers())) {
@@ -1207,12 +1213,44 @@ public class MethodHandles {
 				if (Modifier.isStatic(methodModifiers)) {
 					handle = new DirectHandle(method, MethodHandle.KIND_STATIC, null);
 				} else if (declaringClass.isInterface()) {
-					/*[PR 67085] Temporary fix to match RI's behavior pending 335 EG discussion */
-					if ((Modifier.isPrivate(methodModifiers)) && !Modifier.isStatic(methodModifiers)) {
-						return throwAbstractMethodErrorForUnreflectPrivateInterfaceMethod(method, type);
-					} else {
-						handle = new InterfaceHandle(method);
+					if (Modifier.isPrivate(methodModifiers)) {
+						/* Inlined version of access checking - this need only cover the NO_ACCESS and private_access cases */
+						if (!method.isAccessible()) {
+							if (accessMode == NO_ACCESS) {
+								throw new IllegalAccessException(this.toString());
+							}
+							if (declaringClass != accessClass || !Modifier.isPrivate(accessMode)) {
+								/*[MSG "K0678", "Class '{0}' no access to: '{1}'"]*/
+								String message = com.ibm.oti.util.Msg.getString("K0678", this.toString(), declaringClass + "." + method.getName() + ":" + MethodHandle.KIND_INTERFACE + "/invokeinterface"); //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+								throw new IllegalAccessException(message);
+							}
+						}
+
+						/* JDK9 and beyond allow accessible private interface methods.
+						 * JDK8 throws AbstractMethodError for private interface methods.
+						 */
+						/*[IF !Sidecar19-SE]*/
+						/*insert the 'receiver' into the MethodType just as is done by InterfaceHandle */
+						type = type.insertParameterTypes(0, declaringClass);
+						
+						MethodHandle thrower = throwException(type.returnType(), AbstractMethodError.class);
+						MethodHandle constructor;
+						try {
+							constructor = IMPL_LOOKUP.findConstructor(AbstractMethodError.class, MethodType.methodType(void.class));
+						} catch (IllegalAccessException | NoSuchMethodException e) {
+							throw new InternalError("Unable to find AbstractMethodError.<init>()");  //$NON-NLS-1$
+						}
+						handle = foldArguments(thrower, constructor);
+						handle = dropArguments(handle, 0, type.parameterList());
+						
+						if (isVarargs(methodModifiers)) {
+							Class<?> lastClass = handle.type.lastParameterType();
+							handle = handle.asVarargsCollector(lastClass);
+						}
+						return handle;
+						/*[ENDIF]*/
 					}
+					handle = new InterfaceHandle(method);
 					/* Note, it is not required to call adaptInterfaceLookupsOfObjectMethodsIfRequired() here 
 					 * as Reflection will not return a j.l.r.Method for a public Object method with an interface
 					 * as the declaringClass *unless* that the method is defined in the interface or superinterface.
@@ -1244,58 +1282,6 @@ public class MethodHandles {
 			}
 			
 			handle = SecurityFrameInjector.wrapHandleWithInjectedSecurityFrameIfRequired(this, handle);
-			
-			return handle;
-		}
-		
-		/*[IF ]*/
-		/** Private interface methods created by unreflect must throw AbstractMethodError 
-		 * when invoked to match RI's behaviour.
-		 *
-		 * @param method The private interface method
-		 * @param type The incoming method type without the receiver 
-		 * @return A MethodHandle of the right signature that always throws AME
-		 * @throws IllegalAccessException under the same conditions as checkAccess()
-		 */
-		/*[ENDIF]*/
-		private MethodHandle throwAbstractMethodErrorForUnreflectPrivateInterfaceMethod(Method method, MethodType type) throws IllegalAccessException {
-			Class<?> declaringClass = method.getDeclaringClass();
-			int modifiers = method.getModifiers();
-			
-			if (!declaringClass.isInterface() || !Modifier.isPrivate(modifiers)) {
-				throw new InternalError("Only applicable to private interface methods"); //$NON-NLS-1$
-			}
-			/* Inlined version of access checking.  This needs to cover the NO_ACCESS and private_access case
-			 * as this method should only be called on a private interface method.
-			 */
-			if (!method.isAccessible()) {
-				if (accessMode == NO_ACCESS) {
-					throw new IllegalAccessException(this.toString());
-				}
-				if (declaringClass != accessClass || !Modifier.isPrivate(accessMode)) {
-					/*[MSG "K0678", "Class '{0}' no access to: '{1}'"]*/
-					String message = com.ibm.oti.util.Msg.getString("K0587", this.toString(), declaringClass + "." + method.getName() + ":" + MethodHandle.KIND_INTERFACE + "/invokeinterface");  //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-					throw new IllegalAccessException(message);
-				}
-			}
-			
-			/* insert the 'receiver' into the MethodType just as is done by InterfaceHandle */
-			type = type.insertParameterTypes(0, declaringClass);
-			
-			MethodHandle thrower = throwException(type.returnType(), AbstractMethodError.class);
-			MethodHandle constructor;
-			try {
-				constructor = IMPL_LOOKUP.findConstructor(AbstractMethodError.class, MethodType.methodType(void.class));
-			} catch (IllegalAccessException | NoSuchMethodException e) {
-				throw new InternalError("Unable to find AbstractMethodError.<init>()");  //$NON-NLS-1$
-			}
-			MethodHandle handle = foldArguments(thrower, constructor);
-			handle = dropArguments(handle, 0, type.parameterList());
-			
-			if (isVarargs(modifiers)) {
-				Class<?> lastClass = handle.type.lastParameterType();
-				handle = handle.asVarargsCollector(lastClass);
-			}
 			
 			return handle;
 		}
