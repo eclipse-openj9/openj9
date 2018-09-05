@@ -670,7 +670,7 @@ J9::TransformUtil::transformIndirectLoad(TR::Compilation *comp, TR::Node *node)
          int32_t len;
          char * name = fej9->getClassNameChars((TR_OpaqueClassBlock*)fieldClass, len);
          if (sym->getRecognizedField() != TR::Symbol::assertionsDisabled
-             && !foldFinalFieldsIn((TR_OpaqueClassBlock *)fieldClass, name, len, sym->isStaticField(), comp))
+          && !J9::TransformUtil::foldFinalFieldsIn((TR_OpaqueClassBlock *)fieldClass, name, len, sym->isStaticField(), comp))
             return NULL;
 
          // Note that the load type can differ from the type of the symbol, eg.
@@ -1042,7 +1042,7 @@ J9::TransformUtil::transformDirectLoad(TR::Compilation *comp, TR::Node *node)
       //
       if (comp->getOption(TR_RestrictStaticFieldFolding)
           && sym->getRecognizedField() != TR::Symbol::assertionsDisabled
-          && !foldFinalFieldsIn((TR_OpaqueClassBlock*)fieldClass, name, len, true, comp))
+         && !J9::TransformUtil::foldFinalFieldsIn((TR_OpaqueClassBlock*)fieldClass, name, len, true, comp))
          return false;
 
       // Static initializer can produce different values in different runs

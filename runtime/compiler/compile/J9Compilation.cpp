@@ -1204,7 +1204,7 @@ void
 J9::Compilation::addClassForStaticFinalFieldModification(TR_OpaqueClassBlock *clazz)
    {
    // Class redefinition can also modify static final fields
-   addClassForOSRRedefinition(clazz);
+   self()->addClassForOSRRedefinition(clazz);
 
    for (uint32_t i = 0; i < _classForStaticFinalFieldModification.size(); ++i)
       if (_classForStaticFinalFieldModification[i] == clazz)
