@@ -247,8 +247,8 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	
 /*[IF Valhalla-NestMates]*/
 	/* Store the results of getNestHostImpl() and getNestMembersImpl() respectively */
-	private  Class<?> nestHost;
-	private  Class<?>[] nestMembers;
+	private Class<?> nestHost;
+	private Class<?>[] nestMembers;
 /*[ENDIF] Valhalla-NestMates*/
 	
 /**
@@ -4389,11 +4389,10 @@ private native Class<?>[] getNestMembersImpl();
 /**
  * Answers the host class of the receiver's nest.
  * 
- * @throws 		SecurityException if a returned class is not the current class, a
- * 				security manager, s, is present, the caller's class loader is not
- * 				the same or an ancestor of that returned class, and s.checkPackageAccess()
- * 				denies access
- * @return		the host class of the receiver.
+ * @throws SecurityException if nestHost is not same as the current class, a security manager
+ *	is present, the classloader of the caller is not the same or an ancestor of nestHost
+ * 	class, and checkPackageAccess() denies access
+ * @return the host class of the receiver.
  */
 @CallerSensitive
 public Class<?> getNestHost() throws SecurityException {
@@ -4414,7 +4413,7 @@ public Class<?> getNestHost() throws SecurityException {
 			ClassLoader nestHostClassLoader = nestHost.getClassLoader();			
 			if (!doesClassLoaderDescendFrom(nestHostClassLoader, callerClassLoader)) {
 				String nestHostPackageName = nestHost.getPackageName();
-				if (nestHostPackageName != null) {
+				if ((nestHostPackageName != null) && (nestHostPackageName != "")) {
 					securityManager.checkPackageAccess(nestHostPackageName);
 				}
 			}
@@ -4426,8 +4425,8 @@ public Class<?> getNestHost() throws SecurityException {
 /**
  * Returns true if the class passed has the same nest top as this class.
  * 
- * @param		that		The class to compare
- * @return		true if class is a nestmate of this class; false otherwise.
+ * @param that The class to compare
+ * @return true if class is a nestmate of this class; false otherwise.
  *
  */
 public boolean isNestmateOf(Class<?> that) {
@@ -4445,13 +4444,12 @@ public boolean isNestmateOf(Class<?> that) {
 /**
  * Answers the nest member classes of the receiver's nest host.
  *
- * @throws		SecurityException if a SecurityManager is present and package access is not allowed
- * @throws		LinkageError if there is any problem loading or validating a nest member or the nest host
- * @throws 		SecurityException if a returned class is not the current class, a
- * 				security manager, s, is present, the caller's class loader is not
- * 				the same or an ancestor of that returned class, and s.checkPackageAccess()
- * 				denies access
- * @return		the host class of the receiver.
+ * @throws SecurityException if a SecurityManager is present and package access is not allowed
+ * @throws LinkageError if there is any problem loading or validating a nest member or the nest host
+ * @throws SecurityException if a returned class is not the current class, a security manager is enabled,
+ *	the caller's class loader is not the same or an ancestor of that returned class, and the
+ * 	checkPackageAccess() denies access
+ * @return the host class of the receiver.
  */
 @CallerSensitive
 public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
@@ -4465,7 +4463,7 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 		ClassLoader callerClassLoader = ClassLoader.getCallerClassLoader();
 		if (!doesClassLoaderDescendFrom(nestMemberClassLoader, callerClassLoader)) {
 			String nestMemberPackageName = this.getPackageName();
-			if (nestMemberPackageName != null) {
+			if ((nestMemberPackageName != null) && (nestMemberPackageName != "")) {
 				securityManager.checkPackageAccess(nestMemberPackageName);
 			}
 		}
