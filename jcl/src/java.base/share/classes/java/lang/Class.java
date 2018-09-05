@@ -4410,7 +4410,7 @@ public Class<?> getNestHost() throws SecurityException {
 		SecurityManager securityManager = System.getSecurityManager();
 		if (securityManager != null) {
 			ClassLoader callerClassLoader = ClassLoader.getCallerClassLoader();
-			ClassLoader nestHostClassLoader = nestHost.getClassLoader();			
+			ClassLoader nestHostClassLoader = nestHost.internalGetClassLoader();
 			if (!doesClassLoaderDescendFrom(nestHostClassLoader, callerClassLoader)) {
 				String nestHostPackageName = nestHost.getPackageName();
 				if ((nestHostPackageName != null) && (nestHostPackageName != "")) {
@@ -4459,7 +4459,7 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 	SecurityManager securityManager = System.getSecurityManager();
 	if (securityManager != null) {
 		/* All classes in a nest must be in the same runtime package and therefore same classloader */
-		ClassLoader nestMemberClassLoader = this.getClassLoader();
+		ClassLoader nestMemberClassLoader = this.internalGetClassLoader();
 		ClassLoader callerClassLoader = ClassLoader.getCallerClassLoader();
 		if (!doesClassLoaderDescendFrom(nestMemberClassLoader, callerClassLoader)) {
 			String nestMemberPackageName = this.getPackageName();
