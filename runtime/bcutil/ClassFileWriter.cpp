@@ -310,6 +310,9 @@ ClassFileWriter::analyzeConstantPool()
 		case J9CPTYPE_ANNOTATION_UTF8:
 			addEntry(J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) cpItem), i, CFR_CONSTANT_Utf8);
 			break;
+		case J9CPTYPE_CONSTANT_DYNAMIC:
+			addNASEntry(J9ROMCONSTANTDYNAMICREF_NAMEANDSIGNATURE((J9ROMConstantDynamicRef *) cpItem));
+			break;
 		default:
 			Trc_BCU_Assert_ShouldNeverHappen();
 			break;
@@ -593,6 +596,11 @@ ClassFileWriter::writeConstantPool()
 			writeU8(CFR_CONSTANT_Utf8);
 			writeU16(J9UTF8_LENGTH(J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) cpItem)));
 			writeData(J9UTF8_LENGTH(J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) cpItem)), J9UTF8_DATA(J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) cpItem)));
+			break;
+		case J9CPTYPE_CONSTANT_DYNAMIC:
+			writeU8(CFR_CONSTANT_Dynamic);
+			writeU16(U_16((((J9ROMConstantDynamicRef *) cpItem)->bsmIndexAndCpType >> J9DescriptionCpTypeShift) & J9DescriptionCpBsmIndexMask));
+			writeU16(indexForNAS(J9ROMCONSTANTDYNAMICREF_NAMEANDSIGNATURE((J9ROMConstantDynamicRef *) cpItem)));
 			break;
 		default:
 			Trc_BCU_Assert_ShouldNeverHappen();
