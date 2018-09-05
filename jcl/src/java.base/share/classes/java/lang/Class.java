@@ -52,6 +52,9 @@ import sun.reflect.generics.scope.ClassScope;
 import sun.reflect.annotation.AnnotationType;
 import java.util.Arrays;
 import com.ibm.oti.vm.VM;
+/*[IF Java11]*/
+import static com.ibm.oti.util.Util.doesClassLoaderDescendFrom;
+/*[ENDIF] Java11*/
 
 /*[IF Sidecar19-SE]
 import jdk.internal.misc.Unsafe;
@@ -241,6 +244,12 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	static Unsafe getUnsafe() {
 		return unsafe;
 	}
+	
+/*[IF Java11]*/
+	/* Store the results of getNestHostImpl() and getNestMembersImpl() respectively */
+	private Class<?> nestHost;
+	private Class<?>[] nestMembers;
+/*[ENDIF] Java11*/
 	
 /**
  * Prevents this class from being instantiated. Instances
@@ -4379,34 +4388,87 @@ private native Class<?>[] getNestMembersImpl();
 
 /**
  * Answers the host class of the receiver's nest.
- *
- * @return		the host class of the receiver.
+ * 
+ * @throws SecurityException if nestHost is not same as the current class, a security manager
+ *	is present, the classloader of the caller is not the same or an ancestor of nestHost
+ * 	class, and checkPackageAccess() denies access
+ * @return the host class of the receiver.
  */
-public Class<?> getNestHost() {
-	return getNestHostImpl();
+@CallerSensitive
+public Class<?> getNestHost() throws SecurityException {
+	if (nestHost == null) {
+		nestHost = getNestHostImpl();
+	}
+	/* The specification requires that if:
+	 *    - the returned class is not the current class
+	 *    - a security manager is present
+	 *    - the caller's class loader is not the same or an ancestor of the returned class
+	 *    - s.checkPackageAccess() disallows access to the package of the returned class
+	 * then throw a SecurityException.
+	 */
+	if (nestHost != this) {
+		SecurityManager securityManager = System.getSecurityManager();
+		if (securityManager != null) {
+			ClassLoader callerClassLoader = ClassLoader.getCallerClassLoader();
+			ClassLoader nestHostClassLoader = nestHost.internalGetClassLoader();
+			if (!doesClassLoaderDescendFrom(nestHostClassLoader, callerClassLoader)) {
+				String nestHostPackageName = nestHost.getPackageName();
+				if ((nestHostPackageName != null) && (nestHostPackageName != "")) {
+					securityManager.checkPackageAccess(nestHostPackageName);
+				}
+			}
+		}
+	}
+	return nestHost;
 }
 
 /**
  * Returns true if the class passed has the same nest top as this class.
- * The list of nest members in the classfile is permitted to contain
- * duplicates, or to explicitly include the nest host. It is not required
- * that an implementation of this method removes these duplicates.
  * 
- * @param		that		The class to compare
- * @return		true if class is a nestmate of this class; false otherwise.
+ * @param that The class to compare
+ * @return true if class is a nestmate of this class; false otherwise.
  *
  */
 public boolean isNestmateOf(Class<?> that) {
-	return this.getNestHost() == that.getNestHost();
+	Class<?> thisNestHost = this.nestHost;
+	if (thisNestHost == null) {
+		thisNestHost = this.getNestHostImpl();
+	}
+	Class<?> thatNestHost = that.nestHost;
+	if (thatNestHost == null) {
+		thatNestHost = that.getNestHostImpl();
+	}
+	return (thisNestHost == thatNestHost);
 }
 
 /**
  * Answers the nest member classes of the receiver's nest host.
  *
- * @return		the host class of the receiver.
+ * @throws SecurityException if a SecurityManager is present and package access is not allowed
+ * @throws LinkageError if there is any problem loading or validating a nest member or the nest host
+ * @throws SecurityException if a returned class is not the current class, a security manager is enabled,
+ *	the caller's class loader is not the same or an ancestor of that returned class, and the
+ * 	checkPackageAccess() denies access
+ * @return the host class of the receiver.
  */
-public Class<?>[] getNestMembers() {
-	return getNestMembersImpl();
+@CallerSensitive
+public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
+	if (nestMembers == null) {
+		nestMembers = getNestMembersImpl();
+	}
+	SecurityManager securityManager = System.getSecurityManager();
+	if (securityManager != null) {
+		/* All classes in a nest must be in the same runtime package and therefore same classloader */
+		ClassLoader nestMemberClassLoader = this.internalGetClassLoader();
+		ClassLoader callerClassLoader = ClassLoader.getCallerClassLoader();
+		if (!doesClassLoaderDescendFrom(nestMemberClassLoader, callerClassLoader)) {
+			String nestMemberPackageName = this.getPackageName();
+			if ((nestMemberPackageName != null) && (nestMemberPackageName != "")) {
+				securityManager.checkPackageAccess(nestMemberPackageName);
+			}
+		}
+	}
+	return nestMembers;
 }
 /*[ENDIF] Java11 */
 }
