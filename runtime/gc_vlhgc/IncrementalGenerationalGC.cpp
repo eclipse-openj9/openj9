@@ -2483,7 +2483,7 @@ MM_IncrementalGenerationalGC::unloadDeadClassLoaders(MM_EnvironmentVLHGC *env)
 	Assert_MM_true(env->_cycleState->_dynamicClassUnloadingEnabled);
 
 	/* set the vmState whilst we're unloading classes */
-	UDATA vmState = env->pushVMstate(J9VMSTATE_GC_UNLOADING_DEAD_CLASSLOADERS);
+	UDATA vmState = env->pushVMstate(J9VMSTATE_GC_CLEANING_METADATA);
 	/* we are going to report that we started unloading, even though we might decide that there is no work to do */
 	reportClassUnloadingStart(env);
 	classUnloadStats->_startTime = j9time_hires_clock();
