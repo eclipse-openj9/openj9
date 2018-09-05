@@ -66,13 +66,11 @@ J9Method*
 jitGetImproperInterfaceMethodFromCP(J9VMThread *currentThread, J9ConstantPool *constantPool, UDATA cpIndex)
 {
 	J9RAMInterfaceMethodRef *ramMethodRef = (J9RAMInterfaceMethodRef*)constantPool + cpIndex;
-	/* interfaceClass is used to indicate 'resolved'. Make sure to read it first */
-	J9Class* volatile interfaceClass = (J9Class*)ramMethodRef->interfaceClass;
-	VM_AtomicSupport::readBarrier();
-	UDATA volatile methodIndexAndArgCount = ramMethodRef->methodIndexAndArgCount;
+	J9Class* interfaceClass = (J9Class*)ramMethodRef->interfaceClass;
+	UDATA methodIndexAndArgCount = ramMethodRef->methodIndexAndArgCount;
 	J9Method *improperMethod = NULL;
 	/* If the ref is resolved, do not call the resolve helper, as it will currently fail if the interface class is not initialized */
-	if (NULL == interfaceClass) {
+	if (!J9RAMINTERFACEMETHODREF_RESOLVED(interfaceClass, methodIndexAndArgCount)) {
 		J9RAMInterfaceMethodRef localEntry;
 		if (NULL == currentThread->javaVM->internalVMFunctions->resolveInterfaceMethodRefInto(currentThread, constantPool, cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME, &localEntry)) {
 			goto done;
@@ -112,12 +110,10 @@ J9Class*
 jitGetInterfaceITableIndexFromCP(J9VMThread *currentThread, J9ConstantPool *constantPool, UDATA cpIndex, UDATA* pITableIndex)
 {
 	J9RAMInterfaceMethodRef *ramMethodRef = (J9RAMInterfaceMethodRef*)constantPool + cpIndex;
-	/* interfaceClass is used to indicate 'resolved'. Make sure to read it first */
-	J9Class* volatile interfaceClass = (J9Class*)ramMethodRef->interfaceClass;
-	VM_AtomicSupport::readBarrier();
-	UDATA volatile methodIndexAndArgCount = ramMethodRef->methodIndexAndArgCount;
+	J9Class* interfaceClass = (J9Class*)ramMethodRef->interfaceClass;
+	UDATA methodIndexAndArgCount = ramMethodRef->methodIndexAndArgCount;
 	/* If the ref is resolved, do not call the resolve helper, as it will currently fail if the interface class is not initialized */
-	if (NULL == interfaceClass) {
+	if (!J9RAMINTERFACEMETHODREF_RESOLVED(interfaceClass, methodIndexAndArgCount)) {
 		J9RAMInterfaceMethodRef localEntry;
 		if (NULL == currentThread->javaVM->internalVMFunctions->resolveInterfaceMethodRefInto(currentThread, constantPool, cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME, &localEntry)) {
 			goto done;

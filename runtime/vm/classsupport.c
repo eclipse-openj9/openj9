@@ -367,7 +367,7 @@ internalRunPreInitInstructions(J9Class * ramClass, J9VMThread * vmThread)
 				case J9CPTYPE_INTERFACE_METHOD:
 					romMethodRef = ((J9ROMMethodRef *) romConstantPool) + i;
 					nas = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
-					((J9RAMInterfaceMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas)));
+					((J9RAMInterfaceMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = J9_ITABLE_INDEX_UNRESOLVED | getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas)));
 					break;
 
 				case J9CPTYPE_METHOD_TYPE:

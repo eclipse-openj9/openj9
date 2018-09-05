@@ -316,4 +316,8 @@ static const struct { \
 /* Skip Interpreter VTable header */
 #define JIT_VTABLE_START_ADDRESS(clazz) ((UDATA *)(clazz) - (sizeof(J9VTableHeader) / sizeof(UDATA)))
 
+/* Check if J9RAMInterfaceMethodRef is resolved */
+#define J9RAMINTERFACEMETHODREF_RESOLVED(interfaceClass, methodIndexAndArgCount) \
+	((NULL != (interfaceClass)) && ((J9_ITABLE_INDEX_UNRESOLVED != ((methodIndexAndArgCount) & ~255))))
+
 #endif /* J9_H */

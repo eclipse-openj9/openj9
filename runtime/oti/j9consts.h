@@ -834,11 +834,17 @@ extern "C" {
  *
  * Non-vTable methods in Object will have J9_ITABLE_INDEX_OBJECT and J9_ITABLE_INDEX_METHOD_INDEX set,
  * indicating that the underlying index is a method index in Object.
+ *
+ * J9_ITABLE_INDEX_UNRESOLVED represents an impossible value to represent an unresolved
+ * CP entry (an unaligned vTable offset). J9_ITABLE_INDEX_UNRESOLVED_VALUE is the index value
+ * after the CP value has been downshifted.
  */
 #define J9_ITABLE_INDEX_SHIFT 10
 #define J9_ITABLE_INDEX_METHOD_INDEX ((UDATA)1 << 8)
 #define J9_ITABLE_INDEX_OBJECT ((UDATA)1 << 9)
 #define J9_ITABLE_INDEX_TAG_BITS (J9_ITABLE_INDEX_METHOD_INDEX | J9_ITABLE_INDEX_OBJECT)
+#define J9_ITABLE_INDEX_UNRESOLVED_VALUE ((UDATA)1)
+#define J9_ITABLE_INDEX_UNRESOLVED ((J9_ITABLE_INDEX_UNRESOLVED_VALUE << J9_ITABLE_INDEX_SHIFT) | J9_ITABLE_INDEX_OBJECT)
 
 /* Tag bits for iTableOffset field in JIT interface snippet data:
  *

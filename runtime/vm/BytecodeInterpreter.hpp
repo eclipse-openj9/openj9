@@ -6651,13 +6651,11 @@ retry:
 		U_16 index = *(U_16*)(_pc + 1 + offset);
 		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
 		J9RAMInterfaceMethodRef *ramMethodRef = ((J9RAMInterfaceMethodRef*)ramConstantPool) + index;
-		/* interfaceClass is used to indicate 'resolved'. Make sure to read it first */
 		J9Class* const interfaceClass = (J9Class*)ramMethodRef->interfaceClass;
-		VM_AtomicSupport::readBarrier();
 		UDATA const methodIndexAndArgCount = ramMethodRef->methodIndexAndArgCount;
 		j9object_t receiver = ((j9object_t*)_sp)[methodIndexAndArgCount & 0xFF];
 		if (J9_UNEXPECTED(NULL == receiver)) {
-			if (NULL == interfaceClass) {
+			if (!J9RAMINTERFACEMETHODREF_RESOLVED(interfaceClass, methodIndexAndArgCount)) {
 resolve:
 				/* Unresolved */
 				buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
@@ -6703,7 +6701,15 @@ foundITableCache:
 								_sendMethod = interfaceClass->ramMethods + methodIndex;
 							}
 						} else {
-							/* Object method in the vTable */
+							/* Object method in the vTable. If methodIndex is
+							 * J9_ITABLE_INDEX_UNRESOLVED_VALUE, the CP entry is unresolved.
+							 * This test is required here because there is no resolve check
+							 * in the main path, so it is possible to get the resolved value
+							 * for interfaceClass, but the unresolved for methodIndexAndArgcCount.
+							 */
+							if (J9_UNEXPECTED(J9_ITABLE_INDEX_UNRESOLVED_VALUE == methodIndex)) {
+								goto retry;
+							}
 							_sendMethod = *(J9Method**)((UDATA)receiverClass + methodIndex);
 						}
 					} else {
@@ -6726,7 +6732,7 @@ foundITableCache:
 				}
 				iTable = iTable->next;
 			}
-			if (J9_EXPECTED(NULL == interfaceClass)) {
+			if (!J9RAMINTERFACEMETHODREF_RESOLVED(interfaceClass, methodIndexAndArgCount)) {
 				goto resolve;
 			}
 			rc = THROW_INCOMPATIBLE_CLASS_CHANGE;
