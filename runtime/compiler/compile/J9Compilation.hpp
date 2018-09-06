@@ -198,10 +198,38 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
 
    void verifySymbolHasBeenValidated(void *symbol)
       {
-      if (getOption(TR_UseSymbolValidationManager) && compileRelocatableCode())
+      if (getOption(TR_UseSymbolValidationManager)
+          && compileRelocatableCode()
+          && !getSymbolValidationManager()->inHeuristicRegion())
          {
          uint16_t id = _symbolValidationManager->getIDFromSymbol(symbol);
          TR_ASSERT_FATAL(id, "0x%p was not validated!\n", symbol);
+         }
+      }
+   void incrementHeuristicRegion()
+      {
+      if (getOption(TR_UseSymbolValidationManager)
+          && compileRelocatableCode())
+         {
+         getSymbolValidationManager()->incrementHeuristicRegion();
+         }
+      }
+   void decrementHeuristicRegion()
+      {
+      if (getOption(TR_UseSymbolValidationManager)
+          && compileRelocatableCode())
+         {
+         getSymbolValidationManager()->decrementHeuristicRegion();
+         }
+      }
+   bool validateImplementer(TR_ResolvedMethod *implementer)
+      {
+      if (getOption(TR_UseSymbolValidationManager)
+          && compileRelocatableCode())
+         {
+         return getSymbolValidationManager()->validateMethodFromClassRecord(implementer->getPersistentIdentifier(),
+                                                                            implementer->classOfMethod(),
+                                                                            -1);
          }
       }
 
