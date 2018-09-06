@@ -379,6 +379,7 @@ def set_build_variables() {
 
 def set_sdk_variables() {
     SDK_FILENAME = params.SDK_FILENAME
+    TEST_FILENAME = params.TEST_FILENAME
     if (!SDK_FILENAME) {
         DATESTAMP = sh (
             script: 'date +%Y%d%m%H%M',
@@ -386,6 +387,9 @@ def set_sdk_variables() {
             ).trim()
         SDK_FILENAME = "OpenJ9-JDK${SDK_VERSION}-${SPEC}-${DATESTAMP}.tar.gz"
         echo "Using SDK_FILENAME = ${SDK_FILENAME}"
+    }
+    if (!TEST_FILENAME) {
+        TEST_FILENAME = "native-test-libs.tar.gz"
     }
 }
 
