@@ -29,6 +29,8 @@ cache:
 dist: trusty
 addons:
   apt:
+    sources:
+      - llvm-toolchain-trusty
     packages:
       - autoconf
       - ca-certificates
@@ -58,6 +60,10 @@ addons:
       - unzip
       - wget
       - zip
+      - clang-3.8
+      - llvm-3.8
+      - libclang-3.8-dev
+      - llvm-3.8-dev
 before_install:
   - jdk_switcher use oraclejdk8
 before_script:
@@ -88,5 +94,14 @@ script:
   - make images EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"
   # Minimal sniff test - ensure java -version works.
   - ./build/linux-x86_64-normal-server-release/images/jdk/bin/java -version
+
+  # run the OMRChecker linter
+  - export J9SRC=$PWD/build/linux-x86_64-normal-server-release/vm
+  - export OMRCHECKER_DIR=$J9SRC/omr/tools/compiler/OMRChecker
+  - export LLVM_CONFIG=llvm-config-3.8 CLANG=clang++-3.8 CXX_PATH=clang++-3.8 CXX=clang++-3.8
+  - cd $OMRCHECKER_DIR
+  - sh smartmake.sh
+  - cd $J9SRC/compiler
+  - make -f linter.mk
 after_script:
   - ccache -s
