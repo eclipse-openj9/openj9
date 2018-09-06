@@ -22,7 +22,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 # Quick Start
 
-Below is an example to run all sanity.functional tests against 
+Below is an example to run all sanity.functional tests against
 Linux x86-64 cmprssptrs SDK:
 
 ```
@@ -30,8 +30,8 @@ Linux x86-64 cmprssptrs SDK:
     export JAVA_BIN=/my/openj9/sdk/bin
     export SPEC=linux_x86-64_cmprssptrs
     make -f run_configure.mk   // generates makefiles
-    make compile               // downloads test related material/libs 
-                               // and compiles test material 
+    make compile               // downloads test related material/libs
+                               // and compiles test material
     make _sanity.functional    // runs tests
 ```
 
@@ -39,22 +39,22 @@ Please read [OpenJ9 Test User Guide](./docs/OpenJ9TestUserGuide.md) for
 details and other examples.
 
 ## Prerequisites:
-Please read [Prerequisites.md](./docs/Prerequisites.md) for details on 
+Please read [Prerequisites.md](./docs/Prerequisites.md) for details on
 what tools should be installed on your test machine to run tests.
 
 # FAQ
 
 While the [OpenJ9 Test User Guide](./docs/OpenJ9TestUserGuide.md) gives
-a more complete list of OpenJ9 test use cases, there are some 
-frequently asked questions or common use cases by OpenJ9 developers 
+a more complete list of OpenJ9 test use cases, there are some
+frequently asked questions or common use cases by OpenJ9 developers
 listed below.
 
 ## 1) How to compile tests in selected directories?
 
-By default, `make compile` compiles all tests. This is the safest way 
-to ensure all the test code needed has been compiled. However, there is a 
-way to shortcut the compilation process to reduce compilation time. If 
-`BUILD_LIST` is set, `make compile` will only compile the folder names 
+By default, `make compile` compiles all tests. This is the safest way
+to ensure all the test code needed has been compiled. However, there is a
+way to shortcut the compilation process to reduce compilation time. If
+`BUILD_LIST` is set, `make compile` will only compile the folder names
 names that match within `BUILD_LIST`.
 
 ```
@@ -67,28 +67,28 @@ names that match within `BUILD_LIST`.
 ### Add FV (functional) test
 Adding a testNG test as an example:
 - adding a single test class to an existing directory
-    - update testng.xml to add the test class to a existing <test> or 
+    - update testng.xml to add the test class to a existing <test> or
     create a new <test>
-    - If the new <test> is created in testng.xml, playlist.xml should 
+    - If the new <test> is created in testng.xml, playlist.xml should
     be updated to add the new <test> based on [playlist.xsd](./TestConfig/playlist.xsd)
     Supported test groups are `functional|system|openjdk|external|perf|jck`.
     It is required to provide one group per test in playlist.xml.
 - adding additional new test methods for new Java10 functionality
-    - test should be automatically picked up 
+    - test should be automatically picked up
 
 ### Add external test
 Please refer to the [video and tutorial](https://blog.adoptopenjdk.net/2018/02/adding-third-party-application-tests-adoptopenjdk)
-that describes how to add container-based 3rd party application tests 
-(run inside of Docker images). These tests are added and run in the 
+that describes how to add container-based 3rd party application tests
+(run inside of Docker images). These tests are added and run in the
 automated test builds at the AdoptOpenJDK project.
 
 ## 3) How to disable a test?
 In playlist.xml, to disable a test target, add
 
  ```
-    <disabled>Reason for disabling test, should include issue number<disabled>
+    <disabled>Reason for disabling test, should include issue number</disabled>
  ```
- 
+
 inside the `<test>` element that you want to disable.
 
 - Disable an individual test class
@@ -101,7 +101,7 @@ add a line to `TestConfig/resources/excludes/latest_exclude_$(JAVA_VERSION).txt`
 
 ## 4) How to execute a different group of tests?
 
-Test can be run with different levels, groups or combination of 
+Test can be run with different levels, groups or combination of
 level.group.
 
 Supported levels are `sanity|extended`
@@ -116,17 +116,16 @@ Supported groups  are `functional|system|openjdk|external|perf|jck`
 
 ## 5) How to execute a directory of tests?
 
-The example below executes all of the sanity tests found within the 
+The example below executes all of the sanity tests found within the
 JIT_Test directory
 
 ```
     make -C ../functional/JIT_Test -f autoGen.mk _sanity
 ```
-or 
+or
 ```
     cd ../functional/JIT_Test; make -f autoGen.mk _sanity
 ```
-
 
 ## 6) How to run an individual JCK?
 
@@ -134,10 +133,10 @@ Please read [How-to Run customized JCK test targets](https://github.com/AdoptOpe
 
 ## 7) How to run the test with different `JAVA_VERSION` and `JAVA_IPML`?
 
-User can run tests against different java version and/or java 
-implementation. While the default values of these variables match a 
-typical use case for OpenJ9 developers, there are also many cases 
-where developers need to verify features for a specific version or 
+User can run tests against different java version and/or java
+implementation. While the default values of these variables match a
+typical use case for OpenJ9 developers, there are also many cases
+where developers need to verify features for a specific version or
 compare behaviour against a particular implementation.
 
 JAVA_VERSION=[SE80|SE90|SE100|SE110|Panama|Valhalla] (SE90 default value)
@@ -173,16 +172,16 @@ You can find the failed test output in console output.
 
 - TAP result
 
-A simple standardized TAP output is produced at the end of a test run, 
-to provide developers with a convenient summary of the test results. 
-It is also necessary as the tests used to verify OpenJ9 use a variety 
+A simple standardized TAP output is produced at the end of a test run,
+to provide developers with a convenient summary of the test results.
+It is also necessary as the tests used to verify OpenJ9 use a variety
 of test output formats. This summary is a way to standardize the output
 which allows CI tools to present results in a common way.
 
 - `SKIPPED` tests
 
-If a test is skipped, it means that this test cannot be run on this 
-platform due to jvm options, platform requirements and/or test 
+If a test is skipped, it means that this test cannot be run on this
+platform due to jvm options, platform requirements and/or test
 capabilities.
 
 ## 9) How to rerun failed tests?
@@ -194,6 +193,5 @@ We can rerun failed tests as following:
     make _failed
 ```
 
-`failed.mk` will be over-written each test run. If you want to 
+`failed.mk` will be over-written each test run. If you want to
 'save it', you can make a copy of the generated `failed.mk` file.
-
