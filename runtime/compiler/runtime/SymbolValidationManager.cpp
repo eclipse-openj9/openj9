@@ -60,6 +60,7 @@ static char getPrimitiveChar(J9UTF8 * primitiveClassName)
 
 TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region)
    : _symbolID(FIRST_ID),
+     _heuristicRegion(0),
      _region(region),
      _symbolValidationRecords(_region),
      _symbolToIdMap((SymbolToIdComparator()), _region),
@@ -257,6 +258,8 @@ TR::SymbolValidationManager::addRootClassRecord(TR_OpaqueClassBlock *clazz)
    {
    if (!clazz)
       return false;
+   if (inHeuristicRegion())
+      return true;
 
    int32_t arrayDims = 0;
    clazz = getBaseComponentClass(clazz, arrayDims);
@@ -270,6 +273,8 @@ TR::SymbolValidationManager::addClassByNameRecord(TR_OpaqueClassBlock *clazz, TR
    {
    if (!clazz)
       return false;
+   if (inHeuristicRegion())
+      return true;
 
    TR_ASSERT_FATAL(getIDFromSymbol(beholder) != 0, "beholder 0x%p should have already been validated\n", beholder);
 
@@ -296,6 +301,8 @@ TR::SymbolValidationManager::addProfiledClassRecord(TR_OpaqueClassBlock *clazz)
    {
    if (!clazz)
       return false;
+   if (inHeuristicRegion())
+      return true;
 
    int32_t arrayDims = 0;
    clazz = getBaseComponentClass(clazz, arrayDims);
@@ -321,6 +328,8 @@ TR::SymbolValidationManager::addClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9
    {
    if (!clazz)
       return false;
+   if (inHeuristicRegion())
+      return true;
 
    int32_t arrayDims = 0;
    clazz = getBaseComponentClass(clazz, arrayDims);
@@ -338,6 +347,8 @@ TR::SymbolValidationManager::addDefiningClassFromCPRecord(TR_OpaqueClassBlock *c
    {
    if (!clazz)
       return false;
+   if (inHeuristicRegion())
+      return true;
 
    int32_t arrayDims = 0;
    clazz = getBaseComponentClass(clazz, arrayDims);
@@ -355,6 +366,8 @@ TR::SymbolValidationManager::addStaticClassFromCPRecord(TR_OpaqueClassBlock *cla
    {
    if (!clazz)
       return false;
+   if (inHeuristicRegion())
+      return true;
 
    int32_t arrayDims = 0;
    clazz = getBaseComponentClass(clazz, arrayDims);
@@ -372,6 +385,8 @@ TR::SymbolValidationManager::addClassFromMethodRecord(TR_OpaqueClassBlock *clazz
    {
    if (!clazz)
       return false;
+   if (inHeuristicRegion())
+      return true;
 
    int32_t arrayDims = 0;
    clazz = getBaseComponentClass(clazz, arrayDims);
@@ -387,6 +402,8 @@ TR::SymbolValidationManager::addComponentClassFromArrayClassRecord(TR_OpaqueClas
    {
    if (!componentClass)
       return false;
+   if (inHeuristicRegion())
+      return true;
 
    TR_ASSERT_FATAL(getIDFromSymbol(arrayClass) != 0, "arrayClass 0x%p should have already been validated\n", arrayClass);
 
@@ -399,6 +416,8 @@ TR::SymbolValidationManager::addArrayClassFromComponentClassRecord(TR_OpaqueClas
    {
    if (!arrayClass)
       return false;
+   if (inHeuristicRegion())
+      return true;
 
    TR_ASSERT_FATAL(getIDFromSymbol(componentClass) != 0, "componentClass 0x%p should have already been validated\n", componentClass);
 
@@ -411,6 +430,8 @@ TR::SymbolValidationManager::addSuperClassFromClassRecord(TR_OpaqueClassBlock *s
    {
    if (!superClass)
       return false;
+   if (inHeuristicRegion())
+      return true;
 
    int32_t arrayDims = 0;
    superClass = getBaseComponentClass(superClass, arrayDims);
@@ -424,6 +445,9 @@ TR::SymbolValidationManager::addSuperClassFromClassRecord(TR_OpaqueClassBlock *s
 bool
 TR::SymbolValidationManager::addClassInstanceOfClassRecord(TR_OpaqueClassBlock *classOne, TR_OpaqueClassBlock *classTwo, bool objectTypeIsFixed, bool castTypeIsFixed, bool isInstanceOf)
    {
+   if (inHeuristicRegion())
+      return true;
+
    TR_ASSERT_FATAL(getIDFromSymbol(classOne) != 0, "classOne 0x%p should have already been validated\n", classOne);
    TR_ASSERT_FATAL(getIDFromSymbol(classTwo) != 0, "classTwo 0x%p should have already been validated\n", classTwo);
 
@@ -436,6 +460,8 @@ TR::SymbolValidationManager::addSystemClassByNameRecord(TR_OpaqueClassBlock *sys
    {
    if (!systemClass)
       return false;
+   if (inHeuristicRegion())
+      return true;
 
    int32_t arrayDims = 0;
    systemClass = getBaseComponentClass(systemClass, arrayDims);
@@ -449,6 +475,8 @@ TR::SymbolValidationManager::addClassFromITableIndexCPRecord(TR_OpaqueClassBlock
    {
    if (!clazz)
       return false;
+   if (inHeuristicRegion())
+      return true;
 
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
 
@@ -466,6 +494,8 @@ TR::SymbolValidationManager::addDeclaringClassFromFieldOrStaticRecord(TR_OpaqueC
    {
    if (!clazz)
       return false;
+   if (inHeuristicRegion())
+      return true;
 
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
 
@@ -483,6 +513,8 @@ TR::SymbolValidationManager::addClassClassRecord(TR_OpaqueClassBlock *classClass
    {
    if (!classClass)
       return false;
+   if (inHeuristicRegion())
+      return true;
 
    TR_ASSERT_FATAL(getIDFromSymbol(objectClass) != 0, "objectClass 0x%p should have already been validated\n", objectClass);
 
@@ -495,6 +527,8 @@ TR::SymbolValidationManager::addConcreteSubClassFromClassRecord(TR_OpaqueClassBl
    {
    if (!superClass)
       return false;
+   if (inHeuristicRegion())
+      return true;
 
    int32_t arrayDims = 0;
    childClass = getBaseComponentClass(childClass, arrayDims);
@@ -525,6 +559,8 @@ TR::SymbolValidationManager::addClassChainRecord(TR_OpaqueClassBlock *clazz, voi
    {
    if (!clazz)
       return false;
+   if (inHeuristicRegion())
+      return true;
 
    SymbolValidationRecord *record = new (_region) ClassChainRecord(clazz, classChain);
    return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record);
@@ -535,6 +571,8 @@ TR::SymbolValidationManager::addRomClassRecord(TR_OpaqueClassBlock *clazz)
    {
    if (!clazz)
       return false;
+   if (inHeuristicRegion())
+      return true;
 
    SymbolValidationRecord *record = new (_region) RomClassRecord(clazz);
    return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record);
@@ -543,6 +581,11 @@ TR::SymbolValidationManager::addRomClassRecord(TR_OpaqueClassBlock *clazz)
 bool
 TR::SymbolValidationManager::addPrimitiveClassRecord(TR_OpaqueClassBlock *clazz)
    {
+   if (!clazz)
+      return false;
+   if (inHeuristicRegion())
+      return true;
+
    TR_ASSERT_FATAL(getIDFromSymbol(clazz) != 0, "clazz 0x%p should have already been validated\n", clazz);
 
    TR::Compilation* comp = TR::comp();
@@ -565,6 +608,8 @@ TR::SymbolValidationManager::addMethodFromInlinedSiteRecord(TR_OpaqueMethodBlock
    {
    if (!method)
       return false;
+   if (inHeuristicRegion())
+      return true;
 
    SymbolValidationRecord *record = new (_region) MethodFromInlinedSiteRecord(method, inlinedSiteIndex);
    return storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -575,6 +620,8 @@ TR::SymbolValidationManager::addMethodByNameRecord(TR_OpaqueMethodBlock *method,
    {
    if (!method)
       return false;
+   if (inHeuristicRegion())
+      return true;
 
    TR_ASSERT_FATAL(getIDFromSymbol(beholder) != 0, "beholder 0x%p should have already been validated\n", beholder);
 
@@ -595,6 +642,8 @@ TR::SymbolValidationManager::addMethodFromClassRecord(TR_OpaqueMethodBlock *meth
    {
    if (!method)
       return false;
+   if (inHeuristicRegion())
+      return true;
 
    if (index == static_cast<uint32_t>(-1))
       {
@@ -628,6 +677,8 @@ TR::SymbolValidationManager::addStaticMethodFromCPRecord(TR_OpaqueMethodBlock *m
    {
    if (!method)
       return false;
+   if (inHeuristicRegion())
+      return true;
 
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(cp));
 
@@ -650,6 +701,8 @@ TR::SymbolValidationManager::addSpecialMethodFromCPRecord(TR_OpaqueMethodBlock *
    {
    if (!method)
       return false;
+   if (inHeuristicRegion())
+      return true;
 
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(cp));
 
@@ -672,6 +725,8 @@ TR::SymbolValidationManager::addVirtualMethodFromCPRecord(TR_OpaqueMethodBlock *
    {
    if (!method)
       return false;
+   if (inHeuristicRegion())
+      return true;
 
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(cp));
 
@@ -694,6 +749,8 @@ TR::SymbolValidationManager::addVirtualMethodFromOffsetRecord(TR_OpaqueMethodBlo
    {
    if (!method)
       return false;
+   if (inHeuristicRegion())
+      return true;
 
    TR_ASSERT_FATAL(getIDFromSymbol(beholder) != 0, "beholder 0x%p should have already been validated\n", beholder);
 
@@ -714,6 +771,8 @@ TR::SymbolValidationManager::addInterfaceMethodFromCPRecord(TR_OpaqueMethodBlock
    {
    if (!method)
       return false;
+   if (inHeuristicRegion())
+      return true;
 
    TR_ASSERT_FATAL(getIDFromSymbol(beholder) != 0, "beholder 0x%p should have already been validated\n", beholder);
    TR_ASSERT_FATAL(getIDFromSymbol(lookup) != 0, "lookup 0x%p should have already been validated\n", lookup);
@@ -759,6 +818,8 @@ TR::SymbolValidationManager::addMethodFromClassAndSignatureRecord(TR_OpaqueMetho
    {
    if (!method)
       return false;
+   if (inHeuristicRegion())
+      return true;
 
    TR_ASSERT_FATAL(getIDFromSymbol(methodClass) != 0, "methodClass 0x%p should have already been validated\n", methodClass);
    TR_ASSERT_FATAL(getIDFromSymbol(beholder) != 0, "beholder 0x%p should have already been validated\n", beholder);
