@@ -1385,17 +1385,18 @@ old_slow_jitResolveClassFromStaticField(J9VMThread *currentThread)
 	DECLARE_JIT_INT_PARM(cpIndex, 2);
 	DECLARE_JIT_PARM(void*, jitEIP, 3);
 	void *addr = NULL;
-retry:
 	J9RAMStaticFieldRef *ramStaticFieldRef = (J9RAMStaticFieldRef*)ramConstantPool + cpIndex;
 	IDATA flagsAndClass = ramStaticFieldRef->flagsAndClass;
-	if (flagsAndClass <= 0) {
+	UDATA valueOffset = ramStaticFieldRef->valueOffset;
+	if (J9_UNEXPECTED(!VM_VMHelpers::staticFieldRefIsResolved(flagsAndClass, valueOffset, false))) {
 		buildJITResolveFrameWithPC(currentThread, J9_SSF_JIT_RESOLVE_DATA, parmCount, true, 0, jitEIP);
-		currentThread->javaVM->internalVMFunctions->resolveStaticFieldRef(currentThread, NULL, ramConstantPool, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE, NULL);
+		J9RAMStaticFieldRef localRef;
+		currentThread->javaVM->internalVMFunctions->resolveStaticFieldRefInto(currentThread, NULL, ramConstantPool, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE, NULL, &localRef);
 		addr = restoreJITResolveFrame(currentThread, jitEIP);
 		if (NULL != addr) {
 			goto done;
 		}
-		goto retry;
+		flagsAndClass = localRef.flagsAndClass;
 	}
 	JIT_RETURN_UDATA(((UDATA)flagsAndClass) << J9_REQUIRED_CLASS_SHIFT);
 done:
@@ -1435,7 +1436,7 @@ retry:
 	J9RAMFieldRef *ramFieldRef = (J9RAMFieldRef*)ramConstantPool + cpIndex;
 	UDATA valueOffset = ramFieldRef->valueOffset;
 	UDATA flags = ramFieldRef->flags;
-	if (J9_UNEXPECTED(flags <= valueOffset)) {
+	if (J9_UNEXPECTED(!VM_VMHelpers::instanceFieldRefIsResolved(flags, valueOffset, isSetter))) {
 		J9Method *method = NULL;
 		UDATA resolveFlags = J9_RESOLVE_FLAG_RUNTIME_RESOLVE;
 		J9JavaVM *vm = currentThread->javaVM;
@@ -1485,7 +1486,7 @@ old_slow_jitResolveStaticFieldImpl(J9VMThread *currentThread, bool isSetter)
 	DECLARE_JIT_PARM(void*, jitEIP, 3);
 	void *addr = NULL;
 	J9RAMStaticFieldRef *ramRef = (J9RAMStaticFieldRef*)ramConstantPool + cpIndex;
-	UDATA field = (UDATA)VM_VMHelpers::staticFieldAddressFromRef(ramRef);
+	UDATA field = (UDATA)VM_VMHelpers::staticFieldAddressFromRef(ramRef, isSetter);
 	if (0 == field) {
 		J9JavaVM *vm = currentThread->javaVM;
 		J9Method *method = NULL;
@@ -1505,7 +1506,11 @@ old_slow_jitResolveStaticFieldImpl(J9VMThread *currentThread, bool isSetter)
 		if ((UDATA)-1 == field) {
 			/* fetch result from floatTemp - stashed there in clinit case */
 			J9RAMStaticFieldRef *fakeRef = (J9RAMStaticFieldRef*)&currentThread->floatTemp1;
-			field = (UDATA)VM_VMHelpers::staticFieldAddressFromRef(fakeRef);
+			/* Resolve call indicated success - no need for extra putstatic checks, and the ref
+			 * must contain valid resolved information.
+			 */
+			field = (UDATA)VM_VMHelpers::staticFieldAddressFromRef(fakeRef, false);
+			Assert_CodertVM_false(0 == field);
 			/* tag result as being from a clinit */
 			field |= J9_RESOLVE_STATIC_FIELD_TAG_FROM_CLINIT;
 		}
