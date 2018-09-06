@@ -100,7 +100,7 @@ timeout(time: 10, unit: 'HOURS') {
             try {
                 checkout scm
                 def variableFile = load 'buildenv/jenkins/common/variables-functions'
-                def buildFile = load 'buildenv/jenkins/common/pipeline-functions'
+                buildFile = load 'buildenv/jenkins/common/pipeline-functions'
 
                 def BUILD_SPECS = get_specs(SPECS)
                 // find releases to build based on given specs
@@ -108,7 +108,7 @@ timeout(time: 10, unit: 'HOURS') {
 
                 // parse variables file and initialize variables
                 variableFile.set_job_variables('wrapper')
-                def SHAS = buildFile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH)
+                SHAS = buildFile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH)
 
                 if (params.PERSONAL_BUILD) {
                     // update build name
@@ -157,6 +157,16 @@ timeout(time: 10, unit: 'HOURS') {
 
         // launch all pipeline builds
         parallel builds
+
+        if (params.PROMOTE_OMR) {
+            stage('Promote') {
+                PROMOTE_JOB = buildFile.build_with_slack('Promote-OpenJ9-OMR-master-to-openj9',
+                                                        [string(name: 'OMR_COMMIT', value: "${SHAS['OMR']}"),
+                                                        string(name: 'OPENJ9_COMMIT', value: "${SHAS['OPENJ9']}"),
+                                                        string(name: 'OPENJDK8_COMMIT', value: "${SHAS['OPENJDK'].get(8)}"),
+                                                        string(name: 'OPENJDK10_COMMIT', value: "${SHAS['OPENJDK'].get(10)}")])
+            }
+        }
     }
 }
 
