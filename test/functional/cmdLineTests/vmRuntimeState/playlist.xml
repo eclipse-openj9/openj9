@@ -28,7 +28,8 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump' -DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)vmruntimestate.jar$(Q) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)vmruntimestate.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+		$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump' -DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)vmruntimestate.jar$(Q) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)vmruntimestate.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
 		<platformRequirements>^arch.arm</platformRequirements>
 		<levels>
