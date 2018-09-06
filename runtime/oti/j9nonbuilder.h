@@ -3471,8 +3471,12 @@ typedef struct J9JITConfig {
 	void *old_fast_jitResolvedFieldIsVolatile;
 	void *old_slow_jitResolveField;
 	void *old_slow_jitResolveFieldSetter;
+	void *old_slow_jitResolveFieldDirect;
+	void *old_slow_jitResolveFieldSetterDirect;
 	void *old_slow_jitResolveStaticField;
 	void *old_slow_jitResolveStaticFieldSetter;
+	void *old_slow_jitResolveStaticFieldDirect;
+	void *old_slow_jitResolveStaticFieldSetterDirect;
 	void *old_slow_jitResolveInterfaceMethod;
 	void *old_slow_jitResolveSpecialMethod;
 	void *old_slow_jitResolveStaticMethod;
@@ -3832,8 +3836,12 @@ typedef struct J9AOTConfig {
 	void *old_fast_jitResolvedFieldIsVolatile;
 	void *old_slow_jitResolveField;
 	void *old_slow_jitResolveFieldSetter;
+	void *old_slow_jitResolveFieldDirect;
+	void *old_slow_jitResolveFieldSetterDirect;
 	void *old_slow_jitResolveStaticField;
 	void *old_slow_jitResolveStaticFieldSetter;
+	void *old_slow_jitResolveStaticFieldDirect;
+	void *old_slow_jitResolveStaticFieldSetterDirect;
 	void *old_slow_jitResolveInterfaceMethod;
 	void *old_slow_jitResolveSpecialMethod;
 	void *old_slow_jitResolveStaticMethod;
