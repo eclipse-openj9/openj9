@@ -619,6 +619,7 @@ JIT_HELPER(_interpreterFloatStaticGlue);
 JIT_HELPER(_interpreterSyncFloatStaticGlue);
 JIT_HELPER(_interpreterDoubleStaticGlue);
 JIT_HELPER(_interpreterSyncDoubleStaticGlue);
+JIT_HELPER(_jitResolveConstantDynamic);
 JIT_HELPER(_nativeStaticHelper);
 JIT_HELPER(jitLookupInterfaceMethod);
 JIT_HELPER(jitMethodIsNative);
@@ -1547,6 +1548,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_S390interfaceCallHelper,                        (void *) _interfaceCallHelper,                           TR_Helper);
    SET(TR_S390interfaceCallHelperSingleDynamicSlot,       (void *) _interfaceCallHelperSingleDynamicSlot,          TR_Helper);
    SET(TR_S390interfaceCallHelperMultiSlots,              (void *) _interfaceCallHelperMultiSlots,                 TR_Helper);
+   SET(TR_S390jitResolveConstantDynamicGlue,              (void *) _jitResolveConstantDynamic,                     TR_Helper);
    SET(TR_S390icallVMprJavaSendVirtual0,                  (void *) icallVMprJavaSendVirtual0,                      TR_Helper);
    SET(TR_S390icallVMprJavaSendVirtual1,                  (void *) icallVMprJavaSendVirtual1,                      TR_Helper);
    SET(TR_S390icallVMprJavaSendVirtualJ,                  (void *) icallVMprJavaSendVirtualJ,                      TR_Helper);
@@ -1557,6 +1559,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_S390jitMethodIsSync,                            (void *) jitMethodIsSync,                                TR_Helper);
    SET(TR_S390jitResolveClass,                            (void *) jitResolveClass,                                TR_Helper);
    SET(TR_S390jitResolveClassFromStaticField,             (void *) jitResolveClassFromStaticField,                 TR_Helper);
+   SET(TR_S390jitResolveConstantDynamic,                  (void *) jitResolveConstantDynamic,                      TR_Helper);
    SET(TR_S390jitResolveField,                            (void *) jitResolveField,                                TR_Helper);
    SET(TR_S390jitResolveFieldSetter,                      (void *) jitResolveFieldSetter,                          TR_Helper);
    SET(TR_S390jitResolveInterfaceMethod,                  (void *) jitResolveInterfaceMethod,                      TR_Helper);
