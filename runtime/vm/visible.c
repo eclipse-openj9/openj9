@@ -198,7 +198,7 @@ _exit:
  * 					J9_VISIBILITY_NEST_HOST_DIFFERENT_PACKAGE_ERROR
  * 					J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR
  */
-static void
+void
 setNestmatesError(J9VMThread *vmThread, J9Class *nestMember, J9Class *nestHost, IDATA errorCode)
 {
 	PORT_ACCESS_FROM_VMC(vmThread);
