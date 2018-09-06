@@ -1081,6 +1081,26 @@ J9::Compilation::compilationShouldBeInterrupted(TR_CallingContext callingContext
    return self()->fej9()->compilationShouldBeInterrupted(self(), callingContext);
    }
 
+void
+J9::Compilation::enterHeuristicRegion()
+   {
+   if (self()->getOption(TR_UseSymbolValidationManager)
+       && self()->compileRelocatableCode())
+      {
+      self()->getSymbolValidationManager()->enterHeuristicRegion();
+      }
+   }
+
+void
+J9::Compilation::exitHeuristicRegion()
+   {
+   if (self()->getOption(TR_UseSymbolValidationManager)
+       && self()->compileRelocatableCode())
+      {
+      self()->getSymbolValidationManager()->exitHeuristicRegion();
+      }
+   }
+
 
 void
 J9::Compilation::reportILGeneratorPhase()

@@ -36,6 +36,9 @@
 #include "env/VMJ9.h"
 #include "runtime/Runtime.hpp"
 
+#define SVM_ASSERT(manager, condition, format, ...) \
+   do { (manager->inHeuristicRegion() && condition) ? (void)0 : TR::fatal_assertion(__FILE__, __LINE__, #condition, format, ##__VA_ARGS__); } while(0)
+
 namespace TR {
 
 struct SymbolValidationRecord
@@ -1277,6 +1280,10 @@ public:
 
    SymbolValidationRecordList& getValidationRecordList() { return _symbolValidationRecords; }
 
+   void enterHeuristicRegion() { _heuristicRegion++; }
+   void exitHeuristicRegion() { _heuristicRegion--; }
+   bool inHeuristicRegion() { return (_heuristicRegion > 0); }
+
 private:
 
    static const uint16_t NO_ID = 0;
@@ -1305,6 +1312,8 @@ private:
 
    /* Monotonically increasing IDs */
    uint16_t _symbolID;
+
+   uint32_t _heuristicRegion;
 
    TR::Region &_region;
 
