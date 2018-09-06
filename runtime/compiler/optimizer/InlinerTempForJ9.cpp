@@ -44,6 +44,7 @@
 #include "optimizer/PreExistence.hpp"
 #include "optimizer/Structure.hpp"
 #include "codegen/CodeGenerator.hpp"                      // for CodeGenerator
+#include "codegen/CodeGenerator_inlines.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"                                   // for ILOpCode, etc
 #include "ilgen/IlGenRequest.hpp"
