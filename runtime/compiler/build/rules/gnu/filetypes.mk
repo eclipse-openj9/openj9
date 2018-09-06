@@ -34,15 +34,22 @@ PROTO_DIR=$(FIXED_SRCBASE)/compiler/rpc/protos
 define DEF_RULE.proto
 
 $(1).pb.cpp $(1).pb.h $(1).grpc.pb.cpp $(1).grpc.pb.h: $(2) | jit_createdirs
+ifdef JITAAS_USE_GRPC
 	$$(PROTO_CMD) --cpp_out=$$(PROTO_GEN_DIR) --plugin=protoc-gen-grpc="$$(GRPC_CPP)" -I $$(PROTO_DIR) $$< && \
 	$$(PROTO_CMD) --grpc_out=$$(PROTO_GEN_DIR) --plugin=protoc-gen-grpc="$$(GRPC_CPP)" -I $$(PROTO_DIR) $$< && \
-	cp $(1).pb.cc $(1).pb.cpp && \
 	cp $(1).grpc.pb.cc $(1).grpc.pb.cpp
+else
+	$$(PROTO_CMD) --cpp_out=$$(PROTO_GEN_DIR) -I $$(PROTO_DIR) $$<
+endif
+	cp $(1).pb.cc $(1).pb.cpp
 
 JIT_DIR_LIST+=$(dir $(1))
 
 jit_cleanobjs::
-	rm -f $(1).pb.cpp $(1).pb.h $(1).grpc.pb.cpp $(1).grpc.pb.h
+ifdef JITAAS_USE_GRPC
+	rm -f $(1).grpc.pb.cpp $(1).grpc.pb.h
+endif
+	rm -f $(1).pb.cpp $(1).pb.h
 
 endef # DEF_RULE.proto
 
