@@ -73,14 +73,15 @@
 */
 
 RELEASES = ['8', '9', '10', '11', 'next']
+CURRENT_RELEASES = ['8', '10', '11', 'next']
 
-SPECS = ['aix_ppc-64_cmprssptrs'      : RELEASES,
-         'linux_390-64_cmprssptrs'    : RELEASES,
-         'linux_ppc-64_cmprssptrs_le' : RELEASES,
-         'linux_x86-64'               : RELEASES,
-         'linux_x86-64_cmprssptrs'    : RELEASES,
+SPECS = ['aix_ppc-64_cmprssptrs'      : CURRENT_RELEASES,
+         'linux_390-64_cmprssptrs'    : CURRENT_RELEASES,
+         'linux_ppc-64_cmprssptrs_le' : CURRENT_RELEASES,
+         'linux_x86-64'               : CURRENT_RELEASES,
+         'linux_x86-64_cmprssptrs'    : CURRENT_RELEASES,
          'win_x86'                    : ['8'],
-         'win_x86-64_cmprssptrs'      : RELEASES]
+         'win_x86-64_cmprssptrs'      : CURRENT_RELEASES]
 
 LABEL = params.LABEL
 if (!LABEL) {
