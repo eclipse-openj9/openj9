@@ -415,7 +415,7 @@ public class JavaPreprocessor {
 			// First check to see if the key and value exist already
 			if (externalMessages.containsKey(key)) {
 				if (!value.equals(externalMessages.get(key))) {
-					throw new SyntaxException("\"" + key + "\" already has the value \"" + externalMessagesToBeAdded.get(key) + "\"");
+					throw new SyntaxException("\"" + key + "\" already has the value \"" + externalMessages.get(key) + "\"");
 				}
 			} else if (externalMessages.containsValue(value)) {
 				warning("MSG command warning: \"" + value + "\" is given multiple keys");
