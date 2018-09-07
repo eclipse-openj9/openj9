@@ -848,9 +848,14 @@ public class MethodHandleTest{
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 	}
 	
+	/**
+	 * 252 characters: below character limit for variable arity invokeWithArguments.
+	 * @throws Throwable
+	 */
 	@Test(groups = { "level.extended" })
-	public void test_invokeWithArguments_VarArgs_ArityLimit() throws Throwable {
-		MethodHandle mh = MethodHandles.lookup().findVirtual(MethodHandleTest.class, "helperVarArgsMethod", MethodType.methodType(void.class, String.class, int[].class));
+	public void test_invokeWithArguments_VarArgs_SmallArityLimit() throws Throwable {
+		MethodHandle mh = MethodHandles.lookup().findVirtual(MethodHandleTest.class, "helperVarArgsMethod", 
+				MethodType.methodType(void.class, String.class, int[].class));
 		mh.invokeWithArguments(new MethodHandleTest(), "test",
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -864,9 +869,32 @@ public class MethodHandleTest{
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 	}
-	
+
+	/**
+	 * 254 characters: the maximum number of characters for a variable arity MethodHandle.  
+	 * @throws Throwable
+	 */
+	@Test(groups = { "level.extended" })
+	public void test_invokeWithArguments_VarArgs_EdgeArityLimit() throws Throwable {
+		MethodHandle mh = MethodHandles.lookup().findVirtual(MethodHandleTest.class, "helperVarArgsMethod",
+				MethodType.methodType(void.class, String.class, int[].class));
+		mh.invokeWithArguments(new MethodHandleTest(), "test",
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	}
 	
 	/******************************
 	 * Tests for asFixedArity

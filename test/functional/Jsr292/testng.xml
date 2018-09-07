@@ -60,6 +60,11 @@
 		</classes>
 	</test>
 
+	<test name="jsr292Test_Java11up">
+		<classes>
+			<class name="com.ibm.j9.jsr292.MethodHandleInvokeWithArgumentsJumboTest"/>
+		</classes>
+	</test>
 <!--
 	The following tests are used to check whether some specific methods are correctly compiled by JIT.
 	If the JIT is not ON or with count=0 parameter, then there is no point to enable these tests.

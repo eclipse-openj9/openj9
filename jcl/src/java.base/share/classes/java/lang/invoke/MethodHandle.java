@@ -539,7 +539,7 @@ public abstract class MethodHandle {
 	/**
 	 * Invoke the MethodHandle using an Object[] of arguments.  The array must contain at exactly type().parameterCount() arguments.
 	 * 
-	 * Each of the arguments in the array with be coerced to the appropriate type, if possible, based on the MethodType.
+	 * Each of the arguments in the array will be coerced to the appropriate type, if possible, based on the MethodType.
 	 * 
 	 * @param args An array of Arguments, with length at exactly type().parameterCount() to be used in the call.
 	 * @return An Object
