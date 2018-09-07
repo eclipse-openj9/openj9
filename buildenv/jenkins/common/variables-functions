@@ -51,29 +51,34 @@ def parse_variables_file(){
 * Fetch the user provided variable file.
 */
 def get_variables_file() {
-    if (params.VARIABLE_FILE && params.VENDOR_REPO && params.VENDOR_BRANCH) {
-        stage('Get Variables File') {
-            if (params.VENDOR_CREDENTIALS_ID) {
-                sshagent(credentials:["${params.VENDOR_CREDENTIALS_ID}"]) {
-                    checkout_file()
-                }
-            } else {
+    VARIABLE_FILE = params.VARIABLE_FILE
+    VENDOR_BRANCH = params.VENDOR_BRANCH
+    VENDOR_REPO = params.VENDOR_REPO
+    VENDOR_CREDENTIALS_ID = params.VENDOR_CREDENTIALS_ID
+    if (VARIABLE_FILE && VENDOR_REPO && VENDOR_BRANCH) {
+        echo "VARIABLE_FILE:${VARIABLE_FILE}"
+        echo "VENDOR_REPO:${VENDOR_REPO}"
+        echo "VENDOR_BRANCH:${VENDOR_BRANCH}"
+        echo "VENDOR_CREDENTIALS_ID:${VENDOR_CREDENTIALS_ID}"
+        if (VENDOR_CREDENTIALS_ID) {
+            sshagent(credentials:[VENDOR_CREDENTIALS_ID]) {
                 checkout_file()
             }
-         }
+        } else {
+            checkout_file()
+        }
     }
-
-    return params.VARIABLE_FILE
+    return VARIABLE_FILE
 }
 
 /*
 * Check out the user variable file.
 */
 def checkout_file() {
-    sh "git config remote.vendor.url ${params.VENDOR_REPO}"
-    sh "git config remote.vendor.fetch +refs/heads/${params.VENDOR_BRANCH}:refs/remotes/vendor/${params.VENDOR_BRANCH}"
+    sh "git config remote.vendor.url ${VENDOR_REPO}"
+    sh "git config remote.vendor.fetch +refs/heads/${VENDOR_BRANCH}:refs/remotes/vendor/${VENDOR_BRANCH}"
     sh "git fetch vendor"
-    sh "git checkout vendor/${params.VENDOR_BRANCH} -- ${params.VARIABLE_FILE}"
+    sh "git checkout vendor/${VENDOR_BRANCH} -- ${VARIABLE_FILE}"
 }
 
 /*
@@ -444,16 +449,174 @@ def set_job_names() {
     EXTENDED_JOB_NAME = VARIABLES.extended_job_prefix + "${SDK_VERSION}-${SPEC}"
 }
 
+def set_job_properties(JOB_TYPE) {
+    /*************************
+    * Setup Jenkins Properties
+    * - Parameters
+    * - Triggers
+    * - Build discarder
+    *
+    * Three main build types
+    * - Build*
+    * - PullRequest*
+    * - Pipeline*
+    *   - Parameters:
+    *       - Build:
+    *           strings: NODE, SDK_FILENAME
+    *       - Build or Pipeline:
+    *           strings: OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA,
+    *                    OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA,
+    *                    OMR_REPO, OMR_BRANCH, OMR_SHA,
+    *                    VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID
+    *       - Build or PR or Pipeline
+    *           Choices: SDK_VERSION, PLATFORM
+    *       - PR or Pipeline
+    *           Choices: TESTS_TARGETS
+    *   - Build Discarder
+    *       - Ideally get values from variable file
+    *   - Trigger
+    *       - Build/Pipeline - no trigger
+    *       - PR: GH Trigger
+    ****************************/
+
+    if (JOB_TYPE == "build" || JOB_TYPE == "pipeline") {
+        // Start with just supporting Build and Pipeline jobs
+        // PR jobs will need some playing to get the trigger figured out
+        // Also regarding PR builds, see OpenJ9 Issue #2728
+        // This IF can be removed once we support PR job types (all job types)
+
+        echo "Configure Jenkins job PROPERTIES"
+        /********************
+        * BUILD DISCARDER
+        ********************/
+
+        echo "Configure Build Discarder..."
+        NUM_BUILDS = get_value(VARIABLES.build_discarder.logs, JOB_TYPE)
+        NUM_ARTIFACTS = get_value(VARIABLES.build_discarder.artifacts, JOB_TYPE)
+        echo "NUM_BUILDS:'${NUM_BUILDS}"
+        echo "NUM_ARTIFACTS:'${NUM_ARTIFACTS}"
+
+        /********************
+        * PARAMETERS
+        ********************/
+
+        // All build types
+
+        // If SDK_VERSION parameter is already set, assume it is correct (helps with Sandbox builds)
+        // Else parse the JOB_NAME to determine the verison
+        SDK_VERSION = params.SDK_VERSION
+        if (!SDK_VERSION) {
+            echo "Parse build name to determine SDK_VERSION..."
+            // Eg - Build-JDK8-linux_390-64_cmprssptrs
+            //    - Pipeline-Build-Test-JDK8-linux_390-64_cmprssptrs
+            //    - PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9
+            // Index of JDK + 3 until index of next '-'
+            INDEX_START_SDK_VERSION = JOB_NAME.indexOf('JDK')+3
+            SDK_VERSION = JOB_NAME.substring(INDEX_START_SDK_VERSION,JOB_NAME.indexOf('-',INDEX_START_SDK_VERSION))
+        }
+        echo "SDK_VERSION:'${SDK_VERSION}'"
+
+        PLATFORM = params.PLATFORM
+        if (!PLATFORM) {
+            echo "Parse build name to determine PLATFORM..."
+            // Assuming consistent naming convention
+            // Substring start from index of 1 after '-' starting at index of 'JDK', go until the end (no end index) excpet for PR builds
+            // Build-JDK8-linux_390-64_cmprssptrs
+            // PullRequest-Compile-JDK-linux_x86-64-OpenJ9
+            // Pipeline-Build-Test-JDK10-aix_ppc-64_cmprssptrs
+            PLATFORM = JOB_NAME.substring(JOB_NAME.indexOf('-',JOB_NAME.indexOf('JDK'))+1)
+            if (JOB_TYPE == "pullRequest") {
+                // PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9
+                // Pipeline PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJDK9
+                PLATFORM = PLATFORM.substring(0,PLATFORM.indexOf('Open')-1)
+            }
+        }
+        echo "PLATFORM:'${PLATFORM}'"
+
+        PARAMETERS = []
+
+        // All build types
+        PARAMETERS.add(choice(name: 'SDK_VERSION', choices: ["${SDK_VERSION}"], description: ''))
+        PARAMETERS.add(choice(name: 'PLATFORM', choices: ["${PLATFORM}"], description: ''))
+
+        // Pipeline or build
+        if (JOB_TYPE == 'pipeline' || JOB_TYPE == 'build') {
+            // NOTE: The following 4 DEFAULT variables can be configured in the Jenkins Global Config.
+            // This allows us to know what the default values are without being told explicitly.
+            // These DEFAULT values are typically constant per Jenkins Server.
+            if (!env.VARIABLE_FILE_DEFAULT) {
+                VARIABLE_FILE_DEFAULT = ''
+            }
+            if (!env.VENDOR_REPO_DEFAULT) {
+                VENDOR_REPO_DEFAULT = ''
+            }
+            if (!env.VENDOR_BRANCH_DEFAULT) {
+                VENDOR_BRANCH_DEFAULT = ''
+            }
+            if (!env.VENDOR_CREDENTIALS_ID_DEFAULT) {
+                VENDOR_CREDENTIALS_ID_DEFAULT = ''
+            }
+            add_string_params([
+                'OPENJDK_REPO':'',
+                'OPENJDK_BRANCH':'',
+                'OPENJDK_SHA':'',
+                'OPENJ9_REPO':'',
+                'OPENJ9_BRANCH':'',
+                'OPENJ9_SHA':'',
+                'OMR_REPO':'',
+                'OMR_BRANCH':'',
+                'OMR_SHA':'',
+                'VARIABLE_FILE':"${VARIABLE_FILE_DEFAULT}",
+                'VENDOR_REPO':"${VENDOR_REPO_DEFAULT}",
+                'VENDOR_BRANCH':"${VENDOR_BRANCH_DEFAULT}",
+                'VENDOR_CREDENTIALS_ID':"${VENDOR_CREDENTIALS_ID_DEFAULT}"])
+        }
+
+        // Pipeline or PR
+        if (JOB_TYPE == 'pipeline' || JOB_TYPE == 'pullRequest') {
+            add_string_params(['TESTS_TARGETS':''])
+        }
+
+        // Build
+        if (JOB_TYPE == 'build') {
+            add_string_params(['NODE':'', 'SDK_FILENAME':''])
+        }
+
+        /********************
+        * TRIGGER
+        ********************/
+
+        // No trigger for Build and Pipeline jobs
+        // TODO PR builds will need Github trigger setup
+
+        /********************
+        * SETUP PROPERTIES
+        ********************/
+
+        properties([
+            buildDiscarder(logRotator(
+                artifactDaysToKeepStr: '',
+                artifactNumToKeepStr: NUM_ARTIFACTS,
+                daysToKeepStr: '',
+                numToKeepStr: NUM_BUILDS)),
+            parameters(PARAMETERS)
+        ])
+    }
+}
+
+/*
+* Adds a String type Parameter
+* Takes a Key-Value map which are used as the param name and default value
+*/
+def add_string_params(PARAMETERS_TO_ADD) {
+    PARAMETERS_TO_ADD.each { key, value ->
+        PARAMETERS.add(string(name: key, defaultValue: value, description: '', trim: true))
+    }
+}
 /*
 * Initializes all of the required variables for a Jenkins job by given job type.
 */
 def set_job_variables(job_type) {
-    // check mandatory parameters if any
-    try {
-        validate_arguments(ARGS)
-    } catch(MissingPropertyException e){
-        // ignore when ARGS is not set
-    }
 
     // initialize VARIABLES
     parse_variables_file()
@@ -461,6 +624,16 @@ def set_job_variables(job_type) {
     // fetch credentials required to connect to GitHub using ssh protocol
     set_user_credentials()
     set_artifactory_config()
+
+    // Setup Jenkins Job Parameters
+    set_job_properties(job_type)
+
+    // check mandatory parameters if any
+    try {
+        validate_arguments(ARGS)
+    } catch(MissingPropertyException e){
+        // ignore when ARGS is not set
+    }
 
     switch (job_type) {
         case "build":

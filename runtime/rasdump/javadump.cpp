@@ -2908,6 +2908,11 @@ JavaCoreDumpWriter::writeSharedClassSection(void)
 		_OutputStream.writeInteger(javacoreData.cacheSize, "%zu");
 
 		_OutputStream.writeCharacters(
+			"\n2SCLTEXTSMB        Softmx bytes                              = "
+		);
+		_OutputStream.writeInteger(javacoreData.softMaxBytes, "%zu");
+
+		_OutputStream.writeCharacters(
 			"\n2SCLTEXTFRB        Free bytes                                = "
 		);
 		_OutputStream.writeInteger(javacoreData.freeBytes, "%zu");
@@ -3112,7 +3117,12 @@ JavaCoreDumpWriter::writeSharedClassSection(void)
 			"2SCLTEXTCPF        Cache is "
 		);
 		_OutputStream.writeInteger(javacoreData.percFull, "%zu");
-		_OutputStream.writeCharacters("% full\n");
+		
+		if (javacoreData.softMaxBytes == javacoreData.cacheSize) {
+			_OutputStream.writeCharacters("% full\n");
+		} else {
+			_OutputStream.writeCharacters("% soft full\n");
+		}
 
 		_OutputStream.writeCharacters(
 				"NULL\n"
