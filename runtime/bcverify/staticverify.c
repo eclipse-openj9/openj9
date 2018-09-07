@@ -238,9 +238,7 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 				case CFR_CONSTANT_String:
 					break;
 				case CFR_CONSTANT_Class:
-					if (((flags & BCT_MajorClassFileVersionMask) < BCT_Java5MajorVersionShifted)
-					&& (J9_ARE_ANY_BITS_SET(flags, BCT_MajorClassFileVersionMask))
-					) {
+					if ((flags & BCT_MajorClassFileVersionMask) < BCT_Java5MajorVersionShifted) {
 						errorType = J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49__ID;
 						errorDataIndex = index;
 						goto _verifyError;
@@ -248,9 +246,7 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 					break;
 				case CFR_CONSTANT_MethodType:
 				case CFR_CONSTANT_MethodHandle:
-					if (((flags & BCT_MajorClassFileVersionMask) < BCT_Java7MajorVersionShifted)
-					&& (J9_ARE_ANY_BITS_SET(flags, BCT_MajorClassFileVersionMask))
-					) {
+					if ((flags & BCT_MajorClassFileVersionMask) < BCT_Java7MajorVersionShifted) {
 						errorType = J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51__ID;
 						errorDataIndex = index;
 						goto _verifyError;
