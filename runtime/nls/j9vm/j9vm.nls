@@ -1476,7 +1476,7 @@ J9NLS_VM_XXSHARED_CACHE_HARD_LIMIT_EQUALS_IGNORED.system_action=The JVM continue
 J9NLS_VM_XXSHARED_CACHE_HARD_LIMIT_EQUALS_IGNORED.user_response=The -XX:SharedCacheHardLimit= value is ignored
 # END NON-TRANSLATABLE
 
-J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ=Class %2$.*1$s(%3$s) can not access class %5$.*4$s(%6$s) because %3$s does not read %6$s 
+J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ=Class %2$.*1$s(%3$s) can not access class %5$.*4$s(%6$s) because module %3$s does not read module %6$s 
 # START NON-TRANSLATABLE
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_1=18
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_2=com.greetings.Main 
@@ -1489,7 +1489,7 @@ J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.system_action=The JVM will exit.
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.user_response=Refer IBM Java User Guide for modularity diagnostic options.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT=Class %2$.*1$s(%3$s) can not access class %5$.*4$s(%6$s) because %6$s does not export package %7$s to %3$s
+J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT=Class %2$.*1$s(%3$s) can not access class %5$.*4$s(%6$s) because module %6$s does not export package %7$s to module %3$s
 # START NON-TRANSLATABLE
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_1=18
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_2=com.greetings.Main 
