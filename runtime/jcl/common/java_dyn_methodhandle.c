@@ -43,6 +43,7 @@
  * 		Java_java_lang_invoke_MethodHandle_getCPTypeAt
  * 		Java_java_lang_invoke_MethodHandle_getCPMethodTypeAt
  * 		Java_java_lang_invoke_MethodHandle_getCPMethodHandleAt
+ * 		Java_java_lang_invoke_MethodHandle_getCPConstantDynamicAt
  */
 
 static VMINLINE UDATA lookupImpl(J9VMThread *currentThread, J9Class *lookupClass, J9UTF8 *name, J9UTF8 *signature, J9Class *senderClass, UDATA options, BOOLEAN *foundDefaultConflicts);
