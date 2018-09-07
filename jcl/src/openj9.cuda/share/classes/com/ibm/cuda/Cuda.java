@@ -1,4 +1,4 @@
-/*[INCLUDE-IF CUDA4J | Sidecar19-SE]*/
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
  * Copyright (c) 2013, 2018 IBM Corp. and others
  *

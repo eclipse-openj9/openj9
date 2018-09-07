@@ -66,7 +66,6 @@
 		  outputpath="SIDECAR18-SE/src"
 		  flags="Sidecar18-SE,Sidecar70_27,Sidecar17,Sidecar16,SharedClasses"
 		  jdkcompliance="1.8">
-		<classpathentry kind="src" path="/pConfig CUDA4J"/>
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun180.jar"/>
 		<source path="src/java.base/share/classes"/>
 		<source path="src/java.desktop/share/classes"/>
@@ -88,7 +87,7 @@
 	<configuration
 		  label="SIDECAR18-SE-OPENJ9"
 		  outputpath="SIDECAR18-SE-OPENJ9/src"
-		  flags="Sidecar18-SE-OpenJ9,CUDA4J,DAA"
+		  flags="Sidecar18-SE-OpenJ9,DAA"
 		  dependencies="SIDECAR18-SE"
 		  jdkcompliance="1.8">
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun180.jar"/>
@@ -355,7 +354,6 @@
 		  flags="DAA"
 		  dependencies="SIDECAR18-SE"
 		  jdkcompliance="1.8">
-		<classpathentry kind="src" path="/pConfig CUDA4J"/>
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun180.jar"/>
 		<source path="src/java.base/share/classes"/>
 		<source path="src/openj9.dataaccess/share/classes"/>
@@ -370,7 +368,6 @@
 		  outputpath="SIDECAR18-DTFJ/src"
 		  dependencies="SIDECAR18-SE"
 		  jdkcompliance="1.8">
-		<classpathentry kind="src" path="/pConfig CUDA4J"/>
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun180.jar"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
 		<source path="src/java.base/share/classes"/>
@@ -386,7 +383,6 @@
 		  outputpath="SIDECAR18-DTFJVIEW/src"
 		  dependencies="SIDECAR18-SE"
 		  jdkcompliance="1.8">
-		<classpathentry kind="src" path="/pConfig CUDA4J"/>
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun180.jar"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
 		<source path="src/java.base/share/classes"/>
@@ -398,20 +394,11 @@
 		<parameter name="jxerules:outputdir" value="java/lang"/>
 	</configuration>
 
-	<configuration label="CUDA4J" outputpath="CUDA4J/src" flags="CUDA4J" jdkcompliance="1.8">
-		<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
-		<source path="src/openj9.cuda/share/classes"/>
-		<parameter name="macro:define" value="com.ibm.oti.vm.library.version=29"/>
-		<parameter name="msg:outputdir" value="com/ibm/oti/util" />
-		<parameter name="jxerules:outputdir" value="java/lang" />
-	</configuration>
-
 	<configuration
 		  label="SIDECAR18-TRACEFORMAT"
 		  outputpath="SIDECAR18-TRACEFORMAT/src"
 		  dependencies="SIDECAR18-SE"
 		  jdkcompliance="1.8">
-		<classpathentry kind="src" path="/pConfig CUDA4J"/>
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun180.jar"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
 		<source path="src/java.base/share/classes"/>
