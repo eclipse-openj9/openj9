@@ -43,6 +43,8 @@
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "env/VMJ9.h"
+#include "control/CompilationThread.hpp"
+#include "control/JITaaSCompilationThread.hpp"
 
 #define DEFAULT_OBJECT_ALIGNMENT (8)
 
@@ -567,4 +569,37 @@ uintptrj_t
 J9::ObjectModel::decompressReference(TR::Compilation* comp, uintptrj_t compressedReference)
    {
    return (compressedReference << TR::Compiler->om.compressedReferenceShift()) + TR::Compiler->vm.heapBaseAddress();
+   }
+
+bool
+J9::ObjectModel::usesDiscontiguousArraylets()
+   {
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_usesDiscontiguousArraylets;
+      }
+   return _usesDiscontiguousArraylets;
+   }
+
+int32_t 
+J9::ObjectModel::arrayletLeafSize() 
+   {
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_arrayletLeafSize;
+      }
+   return _arrayLetLeafSize;
+   }
+
+int32_t
+J9::ObjectModel::arrayletLeafLogSize() 
+   {
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_arrayletLeafLogSize;
+      }
+   return _arrayLetLeafLogSize;
    }

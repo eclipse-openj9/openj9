@@ -229,16 +229,6 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->isMethodExitTracingEnabled(method));
          }
          break;
-      case J9ServerMessageType::VM_canMethodEnterEventBeHooked:
-         {
-         client->write(fe->canMethodEnterEventBeHooked());
-         }
-         break;
-      case J9ServerMessageType::VM_canMethodExitEventBeHooked:
-         {
-         client->write(fe->canMethodExitEventBeHooked());
-         }
-         break;
       case J9ServerMessageType::VM_getClassClassPointer:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>());
@@ -274,12 +264,6 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          bool isVettedForAOT = std::get<2>(recv);
          auto clazz = fe->getClassFromSignature(sig.c_str(), sig.length(), method, isVettedForAOT);
          client->write(clazz);
-         }
-         break;
-      case J9ServerMessageType::VM_getSystemClassLoader:
-         {
-         client->getRecvData<JITaaS::Void>();
-         client->write(fe->getSystemClassLoader());
          }
          break;
       case J9ServerMessageType::VM_jitFieldsAreSame:
@@ -325,12 +309,6 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(fe->classHasBeenExtended(clazz));
-         }
-         break;
-      case J9ServerMessageType::VM_getOverflowSafeAllocSize:
-         {
-         client->getRecvData<JITaaS::Void>();
-         client->write(static_cast<uint64_t>(fe->getOverflowSafeAllocSize()));
          }
          break;
       case J9ServerMessageType::VM_isThunkArchetype:
@@ -404,6 +382,21 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
             methodsInfo.push_back(methodInfo);
             }
          client->write(methods, methodsInfo);
+         }
+         break;
+      case J9ServerMessageType::VM_getVMInfo:
+         {
+         ClientSessionData::VMInfo vmInfo;
+         vmInfo._systemClassLoader = fe->getSystemClassLoader();
+         vmInfo._processID = fe->getProcessID();
+         vmInfo._canMethodEnterEventBeHooked = fe->canMethodEnterEventBeHooked();
+         vmInfo._canMethodExitEventBeHooked = fe->canMethodExitEventBeHooked();
+         vmInfo._usesDiscontiguousArraylets = TR::Compiler->om.usesDiscontiguousArraylets();
+         vmInfo._arrayletLeafLogSize = TR::Compiler->om.arrayletLeafLogSize();
+         vmInfo._arrayletLeafSize = TR::Compiler->om.arrayletLeafSize();
+         vmInfo._overflowSafeAllocSize = static_cast<uint64_t>(fe->getOverflowSafeAllocSize());
+
+         client->write(vmInfo);
          }
          break;
       case J9ServerMessageType::VM_isPrimitiveArray:
@@ -610,12 +603,6 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(fe->getConstantPoolFromClass(clazz));
-         }
-         break;
-      case J9ServerMessageType::VM_getProcessID:
-         {
-         client->getRecvData<JITaaS::Void>();
-         client->write(fe->getProcessID());
          }
          break;
       case J9ServerMessageType::VM_getIdentityHashSaltPolicy:
@@ -2344,12 +2331,10 @@ ClientSessionData::ClientSessionData(uint64_t clientUID) :
    {
    updateTimeOfLastAccess();
    _javaLangClassPtr = nullptr;
-   _systemClassLoader = nullptr;
    _inUse = 1;
    _romMapMonitor = TR::Monitor::create("JIT-JITaaSROMMapMonitor");
    _systemClassMapMonitor = TR::Monitor::create("JIT-JITaaSystemClassMapMonitor");
-   _canMethodEnterEventBeHooked = TR_maybe;
-   _canMethodExitEventBeHooked = TR_maybe;
+   _vmInfo = nullptr;
    }
 
 ClientSessionData::~ClientSessionData()
@@ -2379,6 +2364,7 @@ ClientSessionData::~ClientSessionData()
       it.second.freeClassInfo();
       _romClassMap.erase(it.first);
       }
+   jitPersistentFree(_vmInfo);
    }
 
 void
@@ -2532,6 +2518,17 @@ ClientSessionData::ClassInfo::freeClassInfo()
    // free cached interfaces
    interfaces->~PersistentVector<TR_OpaqueClassBlock *>();
    jitPersistentFree(interfaces);
+   }
+
+ClientSessionData::VMInfo *
+ClientSessionData::getOrCacheVMInfo(JITaaS::J9ServerStream *stream)
+   {
+   if (!_vmInfo)
+      {
+      stream->write(JITaaS::J9ServerMessageType::VM_getVMInfo, JITaaS::Void());
+      _vmInfo = new (PERSISTENT_NEW) VMInfo(std::get<0>(stream->read<VMInfo>()));
+      }
+   return _vmInfo;
    }
 
 ClientSessionHT*
@@ -2734,4 +2731,3 @@ JITaaSHelpers::getRemoteROMClass(J9Class *clazz, JITaaS::J9ServerStream *stream,
    *classInfoTuple = std::get<0>(recv);
    return romClassFromString(std::get<0>(*classInfoTuple), trMemory->trPersistentMemory());
    }
-

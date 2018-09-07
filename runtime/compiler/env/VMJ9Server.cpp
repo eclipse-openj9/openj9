@@ -184,41 +184,22 @@ TR_J9ServerVM::isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method)
 bool
 TR_J9ServerVM::canMethodEnterEventBeHooked()
    {
-   auto clientData = _compInfoPT->getClientData();
-   if (clientData->_canMethodEnterEventBeHooked == TR_yes)
-      return true;
-   if(clientData->_canMethodEnterEventBeHooked == TR_no)
-      return false;
-
-   // first time the method is called, ask the client and cache the result
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_canMethodEnterEventBeHooked, JITaaS::Void());
-   bool canBeHooked = std::get<0>(stream->read<bool>());
-   clientData->_canMethodEnterEventBeHooked = canBeHooked ? TR_yes : TR_no;
-   return canBeHooked;
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   return vmInfo->_canMethodEnterEventBeHooked;
    }
 
 bool
 TR_J9ServerVM::canMethodExitEventBeHooked()
    {
-   auto clientData = _compInfoPT->getClientData();
-   if (clientData->_canMethodExitEventBeHooked == TR_yes)
-      return true;
-   if(clientData->_canMethodExitEventBeHooked == TR_no)
-      return false;
-
-   // first time the method is called, ask the client and cache the result
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_canMethodExitEventBeHooked, JITaaS::Void());
-   bool canBeHooked = std::get<0>(stream->read<bool>());
-   clientData->_canMethodExitEventBeHooked = canBeHooked ? TR_yes : TR_no;
-   return canBeHooked;
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   return vmInfo->_canMethodExitEventBeHooked;
    }
 
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getClassClassPointer(TR_OpaqueClassBlock *objectClassPointer)
    {
-   // First, search the client session data for a cached answer
    TR_OpaqueClassBlock *javaLangClass = _compInfoPT->getClientData()->getJavaLangClassPtr();
    if (!javaLangClass)
       {
@@ -348,17 +329,9 @@ TR_J9ServerVM::getClassFromSignature(const char *sig, int32_t length, TR_OpaqueM
 void *
 TR_J9ServerVM::getSystemClassLoader()
    {
-   // First, search the client session data for a cached answer
-   void * systemClassLoader = _compInfoPT->getClientData()->getSystemClassLoader();
-   if (!systemClassLoader)
-      {
-      // If value is not cached, fetch it from client and cache it
-      JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-      stream->write(JITaaS::J9ServerMessageType::VM_getSystemClassLoader, JITaaS::Void());
-      systemClassLoader = std::get<0>(stream->read<void *>());
-      _compInfoPT->getClientData()->setSystemClassLoader(systemClassLoader); // cache value for later
-      }
-   return systemClassLoader;
+   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   return vmInfo->_systemClassLoader;
    }
 
 bool
@@ -472,8 +445,8 @@ uintptrj_t
 TR_J9ServerVM::getOverflowSafeAllocSize()
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getOverflowSafeAllocSize, JITaaS::Void());
-   return static_cast<uintptrj_t>(std::get<0>(stream->read<uint64_t>()));
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   return static_cast<uintptrj_t>(vmInfo->_overflowSafeAllocSize);
    }
 
 bool
@@ -844,8 +817,8 @@ uintptrj_t
 TR_J9ServerVM::getProcessID()
    {
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_getProcessID, JITaaS::Void());
-   return std::get<0>(stream->read<uintptrj_t>());
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   return vmInfo->_processID;
    }
 
 UDATA

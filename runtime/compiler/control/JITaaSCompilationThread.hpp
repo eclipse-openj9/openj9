@@ -40,14 +40,25 @@ class ClientSessionData
       bool _isMethodExitTracingEnabled;
       };
 
+   // This struct contains information about VM that does not change during its lifetime.
+   struct VMInfo
+      {
+      void *_systemClassLoader;
+      uintptrj_t _processID;
+      bool _canMethodEnterEventBeHooked;
+      bool _canMethodExitEventBeHooked;
+      bool _usesDiscontiguousArraylets;
+      int32_t _arrayletLeafLogSize;
+      int32_t _arrayletLeafSize;
+      uint64_t _overflowSafeAllocSize;
+      };
+
    TR_PERSISTENT_ALLOC(TR_Memory::ClientSessionData)
    ClientSessionData(uint64_t clientUID);
    ~ClientSessionData();
 
    void setJavaLangClassPtr(TR_OpaqueClassBlock* j9clazz) { _javaLangClassPtr = j9clazz; }
    TR_OpaqueClassBlock * getJavaLangClassPtr() const { return _javaLangClassPtr; }
-   void * getSystemClassLoader() const { return _systemClassLoader; }
-   void   setSystemClassLoader(void * cl) { _systemClassLoader = cl; }
    PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> & getCHTableClassMap() { return _chTableClassMap; }
    PersistentUnorderedMap<J9Class*, ClassInfo> & getROMClassMap() { return _romClassMap; }
    PersistentUnorderedMap<J9Method*, J9MethodInfo> & getJ9MethodMap() { return _J9MethodMap; }
@@ -57,6 +68,7 @@ class ClientSessionData
    TR::Monitor *getSystemClassMapMonitor() { return _systemClassMapMonitor; }
    TR_IPBytecodeHashTableEntry *getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *methodInfoPresent);
    bool cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry);
+   VMInfo *getOrCacheVMInfo(JITaaS::J9ServerStream *stream);
 
    void incInUse() { _inUse++; }
    void decInUse() { _inUse--; TR_ASSERT(_inUse >= 0, "_inUse=%d must be positive\n", _inUse); }
@@ -67,13 +79,10 @@ class ClientSessionData
 
    void printStats();
 
-   TR_YesNoMaybe _canMethodEnterEventBeHooked;
-   TR_YesNoMaybe _canMethodExitEventBeHooked;
    private:
    uint64_t _clientUID; // for RAS
    int64_t  _timeOfLastAccess; // in ms
    TR_OpaqueClassBlock *_javaLangClassPtr; // nullptr means not set
-   void *              _systemClassLoader; // declared as void* so that we don't try to dereference it
    PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> _chTableClassMap; // cache of persistent CHTable
    PersistentUnorderedMap<J9Class*, ClassInfo> _romClassMap;
    // Hashtable for information related to one J9Method
@@ -86,6 +95,7 @@ class ClientSessionData
    TR::Monitor *_systemClassMapMonitor;
    int8_t  _inUse;  // Number of concurrent compilations from the same client 
                     // Accessed with compilation monitor in hand
+   VMInfo *_vmInfo; // info specific to a client VM that does not change, nullptr means not set
    }; // ClientSessionData
 
 // Hashtable that maps clientUID to a pointer that points to ClientSessionData

@@ -157,7 +157,7 @@ void J9CompileDispatcher::compile(JITaaS::J9ServerStream *stream)
       auto &unloadedClasses = std::get<7>(req);
       auto &classInfoTuple = std::get<8>(req);
       std::string clientOptionsStr = std::get<9>(req);
-
+      
       size_t clientOptionsSize = clientOptionsStr.size();
       clientOptions = new (PERSISTENT_NEW) char[clientOptionsSize];
       memcpy(clientOptions, clientOptionsStr.data(), clientOptionsSize);

@@ -105,7 +105,7 @@ enum J9ServerMessageType
    VM_classHasBeenExtended = 222;
    VM_compiledAsDLTBefore = 223;
 //   VM_getClassNameChars = 224;
-   VM_getOverflowSafeAllocSize = 225;
+   /* VM_getOverflowSafeAllocSize = 225; */
    VM_isThunkArchetype = 226;
    VM_printTruncatedSignature = 227;
 //   VM_isPrimitiveClass = 228;
@@ -115,10 +115,8 @@ enum J9ServerMessageType
    VM_getByteOffsetToLockword = 231;
    VM_isString1 = 232;
    VM_getMethods = 233;
-   VM_canMethodEnterEventBeHooked = 234;
-   VM_canMethodExitEventBeHooked = 235;
-   //VM_getNumMethods = 234;
-   //VM_getNumInnerClasses = 235;
+   /* VM_canMethodEnterEventBeHooked = 234; */
+   /* VM_canMethodExitEventBeHooked = 235; */
    VM_isPrimitiveArray = 236;
    VM_getAllocationSize = 237;
    VM_getObjectClass = 238;
@@ -143,7 +141,7 @@ enum J9ServerMessageType
    VM_getClassFromJavaLangClass = 257;
    VM_getOffsetOfClassFromJavaLangClassField = 258;
    VM_getConstantPoolFromMethod = 259;
-   VM_getProcessID = 260;
+   /* VM_getProcessID = 260; */
    VM_getIdentityHashSaltPolicy = 261;
    VM_getOffsetOfJLThreadJ9Thread = 262;
    VM_getVFTEntry = 263;
@@ -179,11 +177,12 @@ enum J9ServerMessageType
    VM_getClassFromStatic = 293;
    VM_setInvokeExactJ2IThunk = 294;
    VM_createMethodHandleArchetypeSpecimen = 295;
-   VM_getSystemClassLoader = 296;
+   /* VM_getSystemClassLoader = 296; */
    VM_instanceOfOrCheckCast = 297;
    VM_getNewArrayTypeFromClass = 298;
    VM_getConstantPoolFromClass = 299;
    VM_getResolvedMethodsAndMirror = 300;
+   VM_getVMInfo = 301;
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 400;
