@@ -738,6 +738,40 @@ Java_java_lang_invoke_MethodHandle_getCPMethodHandleAt(JNIEnv *env, jclass unuse
 	return returnValue;
 }
 
+jobject JNICALL
+Java_java_lang_invoke_MethodHandle_getCPConstantDynamicAt(JNIEnv *env, jclass unusedClass, jobject constantPoolOop, jint cpIndex)
+{
+	jobject returnValue = NULL;
+	J9VMThread *vmThread = (J9VMThread *) env;
+	J9InternalVMFunctions *vmFunctions = vmThread->javaVM->internalVMFunctions;
+	SunReflectCPResult result = NULL_POINTER_EXCEPTION;
+
+	if (NULL != constantPoolOop) {
+		J9RAMConstantDynamicRef *ramConstantDynamicRef = NULL;
+		vmFunctions->internalEnterVMFromJNI(vmThread);
+		result = getRAMConstantRef(vmThread, constantPoolOop, cpIndex, J9CPTYPE_CONSTANT_DYNAMIC, (J9RAMConstantRef **) &ramConstantDynamicRef);
+		if (OK == result) {
+			J9Class *ramClass = J9CLASS_FROMCPINTERNALRAMCLASS(vmThread, constantPoolOop);
+			j9object_t value = J9STATIC_OBJECT_LOAD(vmThread, ramClass, &ramConstantDynamicRef->value);;
+
+			/* Check if the value is resolved, Void.Class exception represents a valid null reference */
+			if ((NULL == value) && (ramConstantDynamicRef->exception != vmThread->javaVM->voidReflectClass->classObject)) {
+				/* If entry resolved to an exception previously, same exception will be set by resolution code */
+				value = vmFunctions->resolveConstantDynamic(vmThread, J9_CP_FROM_CLASS(ramClass), (UDATA)cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
+			}
+
+			if (NULL != value) {
+				returnValue = vmFunctions->j9jni_createLocalRef(env, value);
+			}
+		}
+		vmFunctions->internalReleaseVMAccess(vmThread);
+	}
+
+	checkResult(env, result);
+
+	return returnValue;
+}
+
 jint JNICALL
 Java_jdk_internal_reflect_ConstantPool_getClassRefIndexAt0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex)
 {
