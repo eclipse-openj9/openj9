@@ -1,4 +1,4 @@
-// Copyright (c) 2006, 2017 IBM Corp. and others
+// Copyright (c) 2006, 2018 IBM Corp. and others
 //	
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -623,3 +623,5 @@ TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_maxJitDataBytesImpl_E
 
 TraceEvent=Trc_JCL_getMethodImpl_result Overhead=1 Level=10 Template="Java_java_lang_Class_getMethodImpl %.*s(%.*s) = %p"
 TraceExit=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_ExitJIMAGE Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getCpeTypeForProtocol: Exiting with JIMAGE"
+
+TraceException=Trc_JCL_stringConversionFailed Overhead=1 Level=1 Template="JCL: string conversion of %s failed with error %d"

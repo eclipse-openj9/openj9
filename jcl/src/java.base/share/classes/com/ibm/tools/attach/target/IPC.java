@@ -51,6 +51,7 @@ import static java.nio.file.attribute.PosixFilePermission.OTHERS_WRITE;
  */
 public class IPC {
 
+	private static final String JAVA_IO_TMPDIR = "java.io.tmpdir";
 	/**
 	 * Successful return code from natives.
 	 */
@@ -261,7 +262,8 @@ public class IPC {
 	static String getTmpDir() {
 		String tmpDir = getTempDirImpl();
 		if (null == tmpDir) {
-			tmpDir = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("java.io.tmpdir"); //$NON-NLS-1$
+			IPC.logMessage("Could not get system temporary directory. Trying "+JAVA_IO_TMPDIR); //$NON-NLS-1$
+			tmpDir = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty(JAVA_IO_TMPDIR); //$NON-NLS-1$
 		}
 		return tmpDir;
 	}

@@ -52,7 +52,7 @@ public abstract class CommonDirectory {
 	/**
 	 * default name of directories where VMs place their advertisements
 	 */
-	private static String systemTmpDir = IPC.getTmpDir();
+	private static final String systemTmpDir = IPC.getTmpDir();
 	/**
 	 * Indicates the control file is newer than the semaphore
 	 */
