@@ -537,9 +537,9 @@ public class MethodHandles {
 					}
 				}
 			}
-			
-			/*[MSG "K0675", "Class '{0}' no access to: class '{1}'"]*/
-			throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K0675", accessClass.getName(), targetClass.getName()));  //$NON-NLS-1$
+
+			/*[MSG "K0680", "Class '{0}' no access to: class '{1}'"]*/
+			throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K0680", accessClass.getName(), targetClass.getName()));  //$NON-NLS-1$
 		}
 		
 		private void checkSpecialAccess(Class<?> callerClass) throws IllegalAccessException {
