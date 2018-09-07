@@ -51,6 +51,7 @@ timeout(time: 10, unit: 'HOURS') {
             variableFile.set_slack_channel()
             variableFile.set_user_credentials()
             variableFile.set_vendor_variables()
+            variableFile.set_sdk_variables()
 
             // fetch SHAs
             ALL_SHAS['OPENJ9'] = buildFile.get_sha(OPENJ9_REPO, OPENJ9_BRANCH)
