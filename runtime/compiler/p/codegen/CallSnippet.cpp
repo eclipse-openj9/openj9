@@ -633,6 +633,7 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    TR::SymbolReference *glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCinterfaceCallHelper, false, false, false);
    intptrj_t  distance;
+   void* thunk = fej9->getJ2IThunk(callNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethod(), comp);
 
    // We want the data in the snippet to be naturally aligned
    if (TR::Compiler->target.is64Bit() && (((uint64_t)cursor % TR::Compiler->om.sizeofReferenceAddress()) == 0))
@@ -773,15 +774,40 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor+3*TR::Compiler->om.sizeofReferenceAddress(), NULL, TR_AbsoluteMethodAddress, cg()),
          __FILE__, __LINE__, callNode);
 
-   return(cursor + 4*TR::Compiler->om.sizeofReferenceAddress());
+   cursor += 4 * TR::Compiler->om.sizeofReferenceAddress();
+
+   /*
+    * J2I thunk address.
+    * This is used for private nestmate calls.
+    */
+   *(intptrj_t*)cursor = (intptrj_t)thunk;
+   //TODO: Handle relocation here for the thunk. Currently not supported by AOT.
+   cursor += sizeof(intptrj_t);
+
+
+   return cursor;
    }
 
 uint32_t TR::PPCInterfaceCallSnippet::getLength(int32_t estimatedSnippetStart)
    {
    // *this   swipeable for debugger
-   // with conservative estimate for code alignment
+   /*
+    * 4 = Code alignment may add 4 to the length. To be conservative it is always part of the estimate.
+    * 8 = Two instructions. One bl and one b instruction.
+    * 0 or 4 = Padding. Only needed under 64 bit.
+    * 9 address fields:
+    *   - CP Pointer
+    *   - CP Index
+    *   - Interface Class Pointer
+    *   - ITable Index (may also contain a tagged J9Method* when handling nestmates)
+    *   - First Class Pointer
+    *   - First Class Target
+    *   - Second Class Pointer
+    *   - Second Class Target
+    *   - J2I thunk address
+    */
    TR::Compilation* comp = cg()->comp();
-   return(9*TR::Compiler->om.sizeofReferenceAddress()+4+(TR::Compiler->target.is64Bit()?4:0));
+   return(4 + 8 + (TR::Compiler->target.is64Bit() ? 4 : 0) + (9 * TR::Compiler->om.sizeofReferenceAddress()));
    }
 
 uint8_t *TR::PPCCallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg)
@@ -1530,5 +1556,9 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCInterfaceCallSnippet * snippet)
 
    printPrefix(pOutFile, NULL, cursor, sizeof(intptrj_t));
    trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Second Class Target", *(int32_t *)cursor);
+   cursor += sizeof(intptrj_t);
+
+   printPrefix(pOutFile, NULL, cursor, sizeof(intptrj_t));
+   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; J2I thunk address for private", *(intptrj_t *)cursor);
    }
 

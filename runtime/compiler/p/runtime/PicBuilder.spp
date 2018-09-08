@@ -434,6 +434,7 @@
 	.extern   jitLookupInterfaceMethod
 	.extern   jitAddPicToPatchOnClassUnload
 	.extern   jitCallCFunction
+	.extern   jitInstanceOf
 	.extern   mcc_reservationAdjustment_unwrapper
 	.extern   mcc_callPointPatching_unwrapper
 	.extern   mcc_lookupHelperTrampoline_unwrapper
@@ -2666,6 +2667,13 @@ _interfaceCallHelper:
 	cmpi	cr0, CmpAddr, r5, -1
 	isync							! Make sure none -1 is seen
 	bc	BO_IF_NOT, CR0_EQ, .L.continueLookup
+	laddr	r5, 4*ALen(r11)					! Load ITable Index
+	andi.	r5, r5, J9TR_J9_ITABLE_OFFSET_DIRECT		! Check if J9TR_J9_ITABLE_OFFSET_DIRECT flag is set
+	bc	BO_IF, CR0_EQ, .L.callResolve			! If not set, need to call jitResolveInterfaceMethod
+	laddr	r5, 3*ALen(r11)					! Load Interface Class Pointer
+	or.	r5, r5, r5					! Check if Interface Class Pointer is null
+	bc	BO_IF_NOT, CR0_EQ, .L.typeCheckAndDirectDispatch	! If not null, this is a known private interface call
+.L.callResolve:
 	addi	r3, r11, ALen
 	mr	r4, r11						! Load code cache RA
 #ifdef AIXPPC
@@ -2682,6 +2690,67 @@ _interfaceCallHelper:
 	mtspr	CTR, r5						! Prepare for long jump
 	bcctrl	BO_ALWAYS, CR0_LT					! Call for resolution
 	sync
+	laddr	r5, 4*ALen(r11)					! Load ITable Index
+	andi.	r5, r5, J9TR_J9_ITABLE_OFFSET_DIRECT		! Check if J9TR_J9_ITABLE_OFFSET_DIRECT flag is set
+	bc	BO_IF, CR0_EQ, .L.callInterface			! If not set, this does not need a direct dispatch
+.L.typeCheckAndDirectDispatch:
+#ifdef AIXPPC
+	laddr	r5, TOCjitInstanceOf(RTOC)
+	laddr	r5, 0(r5)					! Load target address
+#elif defined(LINUXPPC64)
+	laddr	r5, TOCjitInstanceOf@toc(RTOC)
+#if !defined(__LITTLE_ENDIAN__)
+	laddr	r5, 0(r5)					! Load target address
+#endif
+#else
+	laddr	r5, jitInstanceOf@got(RTOC)			! Load the callee address
+#endif
+	laddr	r3, 3*ALen(r11)					! Load Interface Class Pointer
+	laddr	r4, 7*ALen(J9SP)				! Load this pointer
+	mtspr	CTR, r5
+	bcctrl	BO_ALWAYS, CR0_LT				! Branch to jitInstanceOf
+	or.	r3, r3, r3					! Check if jitInstanceOf returned null
+	bc	BO_IF_NOT, CR0_EQ, .L.directDispatchInterface	! If not null, continue on to direct dispatch
+#ifdef AIXPPC
+	laddr	r5, TOCjitLookupInterfaceMethod(RTOC)
+	laddr	r5, 0(r5)					! Load target address
+#elif defined(LINUXPPC64)
+	laddr	r5, TOCjitLookupInterfaceMethod@toc(RTOC)
+#if !defined(__LITTLE_ENDIAN__)
+	laddr	r5, 0(r5)					! Load target address
+#endif
+#else
+	laddr	r5, jitLookupInterfaceMethod@got(RTOC)		! Load the callee address
+#endif
+	mtspr	CTR, r5						! Prepare for long jump
+#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+	lwz	r3, J9TR_J9Object_class(r4)				! Load the class offset
+#else
+	laddr	r3, J9TR_J9Object_class(r4)				! Load the class
+#endif
+	maskVFT(r3)
+	addi	r4, r11, 3*ALen					! Address of interface table&slot number
+	mr	r5, r11						! Load original RA for use inside jitLookupInterfaceMethod
+	bcctr	BO_ALWAYS, CR0_LT				! Branch to jitLookupInterfaceMethod to trigger exception
+								! The code will not return here after the branch.
+.L.directDispatchInterface:
+	laddr	r5, 4*ALen(r11)					! Load ITable Index. This is actually a J9Method.
+	xori	r5, r5, J9TR_J9_ITABLE_OFFSET_DIRECT		! Clear J9TR_J9_ITABLE_OFFSET_DIRECT flag.
+	laddr	r6, J9TR_MethodPCStartOffset(r5)		! load startPC/extra field
+	andi.	r7, r6, J9TR_MethodNotCompiledBit		! Check to see if the method has already been compiled
+	bc	BO_IF_NOT, CR0_EQ, .L.interpretedDispatch	! If not compiled, handle interpreted case
+	lwz	r7, -4(r6)					! Load offset of jit --> jit
+	rlwinm	r7, r7, 16, 0x0000FFFF				! shift right to get the bits we want
+	add	r7, r7, r6					! Addr of jit --> jit in r7 to jump to
+	b	.L.setupCTRforCallout
+.L.interpretedDispatch:
+	ori	r12, r5, J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG	! put tagged J9Method into r12
+	laddr	r7, 9*ALen(r11)					! put thunk into r7 to jump to
+.L.setupCTRforCallout:
+	laddr	r3, 7*ALen(J9SP)				! Restore object ptr: this
+	mtspr	CTR, r7						! move r7 to ctr to jump to later
+	b	.L.calloutInterface
+.L.callInterface:
 	li	r3, 5*ALen
 	li	r5, 0
 .L.loopToSetZero:
@@ -2789,7 +2858,6 @@ _interfaceCallHelper:
 	neg	r4, r3
 	addi	r12, r4,J9TR_InterpVTableOffset			! Must set it up in r12
 	laddr	r3, 7*ALen(J9SP)					! Restore "this"
-	mr	r7, r11						! Load code cache RA
 #ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
 	lwz	r5, J9TR_J9Object_class(r3)				! class offset
         ! may need to convert class offset to J9Class pointer
@@ -2797,9 +2865,10 @@ _interfaceCallHelper:
 	laddr	r5, J9TR_J9Object_class(r3)				! class pointer
 #endif
 	maskVFT(r5)
-	mtspr	LR, r7						! Set up to return
 	laddrx	r4, r5, r12
 	mtspr	CTR, r4						! set up callee addr
+.L.calloutInterface:
+	mtspr	LR, r11						! Set up to return
 	laddr	r4, 6*ALen(J9SP)					! Restore r4 -- r10
 	laddr	r5, 5*ALen(J9SP)
 	laddr	r6, 4*ALen(J9SP)
@@ -3122,6 +3191,8 @@ TOC_jitAddPicToPatchOnClassUnload:
 	.tc       jitAddPicToPatchOnClassUnload[TC],jitAddPicToPatchOnClassUnload
 TOCjitCallCFunction:
 	.tc       jitCallCFunction[TC],jitCallCFunction
+TOCjitInstanceOf:
+	.tc       jitInstanceOf[TC],jitInstanceOf
 TOCmcc_callPointPatching_unwrapper:
 	.tc       mcc_callPointPatching_unwrapper[TC],mcc_callPointPatching_unwrapper
 TOCmcc_reservationAdjustment_unwrapper:
@@ -3469,6 +3540,8 @@ TOC_jitAddPicToPatchOnClassUnload:
 	.tc       jitAddPicToPatchOnClassUnload[TC],jitAddPicToPatchOnClassUnload
 TOCjitCallCFunction:
 	.tc       jitCallCFunction[TC],jitCallCFunction
+TOCjitInstanceOf:
+	.tc       jitInstanceOf[TC],jitInstanceOf
 TOCmcc_callPointPatching_unwrapper:
 	.tc       mcc_callPointPatching_unwrapper[TC],mcc_callPointPatching_unwrapper
 TOCmcc_reservationAdjustment_unwrapper:
