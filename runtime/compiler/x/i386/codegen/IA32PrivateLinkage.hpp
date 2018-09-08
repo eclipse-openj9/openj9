@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,11 +35,8 @@ class IA32PrivateLinkage : public TR::X86PrivateLinkage
 
    IA32PrivateLinkage(TR::CodeGenerator *cg);
 
-   virtual TR::Register *buildJNIDispatch(TR::Node *callNode);
-
    TR::Register *pushThis(TR::Node *child);
    TR::Register *pushIntegerWordArg(TR::Node *child);
-   TR::Register *pushJNIReferenceArg (TR::Node *child);
 
    TR::UnresolvedDataSnippet *generateX86UnresolvedDataSnippetWithCPIndex(TR::Node *child, TR::SymbolReference *symRef, int32_t cpIndex);
 
@@ -47,7 +44,6 @@ class IA32PrivateLinkage : public TR::X86PrivateLinkage
 
    virtual TR::Instruction *savePreservedRegisters(TR::Instruction *cursor);
    virtual TR::Instruction *restorePreservedRegisters(TR::Instruction *cursor);
-   virtual TR::Register *buildDirectJNIDispatch(TR::Node *callNode){ return buildJNIDispatch(callNode); }
    virtual int32_t buildCallArguments(TR::Node *callNode, TR::RegisterDependencyConditions *dependencies){ return buildArgs(callNode, dependencies); }
 
    virtual TR::Instruction *savePreservedRegister(TR::Instruction *cursor, int32_t regIndex, int32_t offset);

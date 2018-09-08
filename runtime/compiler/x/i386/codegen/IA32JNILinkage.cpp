@@ -44,7 +44,6 @@
 #include "il/symbol/StaticSymbol.hpp"
 #include "env/VMJ9.h"
 #include "x/codegen/CheckFailureSnippet.hpp"
-#include "x/codegen/HelperCallSnippet.hpp"
 #include "x/codegen/IA32LinkageUtils.hpp"
 #include "x/codegen/JNIPauseSnippet.hpp"
 #include "x/codegen/PassJNINullSnippet.hpp"
@@ -53,60 +52,19 @@
 
 TR::Register *TR::IA32JNILinkage::buildDirectDispatch(TR::Node *callNode, bool spillFPRegs)
    {
-   TR::SymbolReference  *methodSymRef             = callNode->getSymbolReference();
-   TR::MethodSymbol     *methodSymbol             = methodSymRef->getSymbol()->castToMethodSymbol();
-   if (methodSymbol->isJNI())
-      return buildJNIDispatch(callNode);
-   else if (methodSymbol->isSystemLinkageDispatch())
-      TR_ASSERT(false, "call through TR::IA32SystemLinkage::buildDirectDispatch instead.\n");
-   else
-      {
-      TR_ASSERT(false, "TR::IA32JNILinkage::buildDirectDispatch can't hanlde this case.\n");
-      return NULL;
-      }
-   }
-
-int32_t static computeMemoryArgSize(TR::Node *callNode, int lastChildMinus1, bool passThread)
-   {
-   int argSize = passThread ? 4: 0;
-   for (int i = callNode->getNumChildren(); i > lastChildMinus1; i--)
-      {
-      TR::Node *child = callNode->getChild(i-1);
-      switch (child->getDataType())
-         {
-         case TR::Int8:
-         case TR::Int16:
-         case TR::Int32:
-            argSize += 4;
-            break;
-         case TR::Address:
-            argSize += 4;
-            break;
-         case TR::Int64:
-            argSize += 8;
-            break;
-         case TR::Float:
-            argSize += 4;
-            break;
-         case TR::Double:
-            argSize += 8;
-            break;
-         }
-      }
-   return argSize;
+   TR::MethodSymbol* methodSymbol = callNode->getSymbolReference()->getSymbol()->castToMethodSymbol();
+   TR_ASSERT(methodSymbol->isJNI(), "TR::IA32JNILinkage::buildDirectDispatch can't hanlde this case.\n");
+   return buildJNIDispatch(callNode);
    }
 
 TR::Register *TR::IA32JNILinkage::buildJNIDispatch(TR::Node *callNode)
    {
-
 #ifdef DEBUG
    if (debug("reportJNI"))
       {
       printf("JNI Dispatch: %s calling %s\n", comp()->signature(), comp()->getDebug()->getName(callNode->getSymbolReference()));
       }
 #endif
-
-   static char *dontUseEBXasGPR = feGetEnv("dontUseEBXasGPR");
 
    TR::RegisterDependencyConditions  *deps = generateRegisterDependencyConditions((uint8_t)0, 20, cg());
 
@@ -141,23 +99,30 @@ TR::Register *TR::IA32JNILinkage::buildJNIDispatch(TR::Node *callNode)
       checkExceptions = false;
       }
 
-   TR::Register *ebpReal = cg()->getMethodMetaDataRegister();
-   TR::RealRegister *espReal = cg()->machine()->getX86RealRegister(TR::RealRegister::esp);
-   TR::LabelSymbol *returnAddrLabel = NULL;
-   TR::X86VFPDedicateInstruction  *vfpDedicateInstruction = NULL;
+   TR::Register*     ebpReal = cg()->getVMThreadRegister();
+   TR::RealRegister* espReal = cg()->machine()->getX86RealRegister(TR::RealRegister::esp);
+   TR::LabelSymbol*           returnAddrLabel = NULL;
 
-   // Use ebx as an anchored frame register because the arguments to the native call are
-   // evaluated after the stacks have been switched.
-   //
-   vfpDedicateInstruction = generateVFPDedicateInstruction(
-         cg()->machine()->getX86RealRegister(TR::RealRegister::ebx), callNode, cg());
+   // Build parameters
+   int32_t argSize = buildParametersOnCStack(callNode, passReceiver ? 0 : 1, passThread, true);
+
+   // JNI Call
+   TR::LabelSymbol* begLabel = generateLabelSymbol(cg());
+   TR::LabelSymbol* endLabel = generateLabelSymbol(cg());
+   begLabel->setStartInternalControlFlow();
+   endLabel->setEndInternalControlFlow();
+
+   generateLabelInstruction(LABEL, callNode, begLabel, cg());
+
+   // Save VFP
+   TR::X86VFPSaveInstruction* vfpSave = generateVFPSaveInstruction(callNode, cg());
 
    returnAddrLabel = generateLabelSymbol(cg());
    if (createJNIFrame)
       {
       // Anchored frame pointer register.
       //
-      TR::RealRegister *ebxReal = cg()->machine()->getX86RealRegister(getProperties().getFramePointerRegister());
+      TR::RealRegister *ebxReal = cg()->machine()->getX86RealRegister(TR::RealRegister::ebx);
 
 
       // Begin: mask out the magic bit that indicates JIT frames below
@@ -248,70 +213,11 @@ TR::Register *TR::IA32JNILinkage::buildJNIDispatch(TR::Node *callNode)
       cg()
       );
 
-   // Squirrel away the vmthread on the C stack.
-   //
-   generateRegInstruction(PUSHReg, callNode, ebpReal, cg());
-
-   // save esp to Register
+   // Save ESP to EDI, a callee preserved register
+   // It is necessary because the JNI method may be either caller-cleanup or callee-cleanup
    TR::Register *ediReal = cg()->allocateRegister();
-   if (cg()->getJNILinkageCalleeCleanup())
-      generateRegRegInstruction(MOV4RegReg, callNode, ediReal, espReal, cg());
-
-   // Marshall outgoing args
-   // stdcall goes in C order, which is reverse of java order
-   //
-   uint32_t argSize = 4; // hack: isn't really an arg, but we need argsize to
-                         //       know how to reach back.
-   int lastChildMinus1;
-   if (!passReceiver)
-      {
-      lastChildMinus1 = 1;
-      TR::Node *firstChild =  callNode->getChild(0);
-      cg()->evaluate(firstChild);
-      cg()->decReferenceCount(firstChild);
-      }
-   else lastChildMinus1 = 0;
-
-   int32_t totalSize = argSize + computeMemoryArgSize(callNode, lastChildMinus1, passThread);
-   if ( totalSize % 16 != 0 )
-      {
-      int32_t adjustedMemoryArgSize = 16 - (totalSize % 16);
-      TR_X86OpCodes op = SUBRegImm4();
-      generateRegImmInstruction(op, callNode, espReal, adjustedMemoryArgSize, cg());
-      argSize = argSize + adjustedMemoryArgSize;
-      if (comp()->getOption(TR_TraceCG))
-         traceMsg(comp(), "adjust arguments size by %d to make arguments 16 byte aligned \n", adjustedMemoryArgSize);
-      }
-
-   for (int i = callNode->getNumChildren(); i > lastChildMinus1; i--)
-      {
-      TR::Node *child = callNode->getChild(i-1);
-      switch (child->getDataType())
-         {
-         case TR::Int8:
-         case TR::Int16:
-         case TR::Int32:
-            pushIntegerWordArg(child);
-            argSize += 4;
-            break;
-         case TR::Address:
-            pushJNIReferenceArg(child);
-            argSize += 4;
-            break;
-         case TR::Int64:
-            TR::IA32LinkageUtils::pushLongArg(child, cg());
-            argSize += 8;
-            break;
-         case TR::Float:
-            TR::IA32LinkageUtils::pushFloatArg(child, cg());
-            argSize += 4;
-            break;
-         case TR::Double:
-            TR::IA32LinkageUtils::pushDoubleArg(child, cg());
-            argSize += 8;
-            break;
-         }
-      }
+   generateRegRegInstruction(MOV4RegReg, callNode, ediReal, espReal, cg());
+   generateRegImmInstruction(argSize >= -128 && argSize <= 127 ? SUB4RegImms : SUB4RegImm4, callNode, espReal, argSize, cg());
 
    // We have to be careful to allocate the return register after the
    // dependency conditions for the other killed registers have been set up,
@@ -332,16 +238,11 @@ TR::Register *TR::IA32JNILinkage::buildJNIDispatch(TR::Node *callNode)
    edxReal = cg()->allocateRegister();
    deps->addPostCondition(NULL, TR::RealRegister::edx, cg());
 
-   if (!dontUseEBXasGPR)
-      {
-      ebxReal = cg()->allocateRegister();
-      deps->addPostCondition(ebxReal, TR::RealRegister::ebx, cg());
-      cg()->stopUsingRegister(ebxReal);
-      }
+   ebxReal = cg()->allocateRegister();
+   deps->addPostCondition(ebxReal, TR::RealRegister::ebx, cg());
+   cg()->stopUsingRegister(ebxReal);
 
    deps->addPostCondition(ediReal, TR::RealRegister::edi, cg());
-   if (!cg()->getJNILinkageCalleeCleanup())
-      cg()->stopUsingRegister(ediReal);
 
    esiReal = cg()->allocateRegister();
    deps->addPostCondition(esiReal, TR::RealRegister::esi, cg());
@@ -369,19 +270,8 @@ TR::Register *TR::IA32JNILinkage::buildJNIDispatch(TR::Node *callNode)
       cg()->stopUsingRegister(xmm_i);
       }
 
-   // Pass in the env to the jni method as the lexically first arg.
-   //
-   if (passThread)
-      {
-      generateRegInstruction(PUSHReg, callNode, ebpReal, cg());
-      argSize += 4;
-      }
-
-   TR_X86OpCodes op;
-
    if (dropVMAccess)
       {
-#ifdef J9VM_INTERP_ATOMIC_FREE_JNI
       generateMemImmInstruction(S4MemImm4,
                                 callNode,
                                 generateX86MemoryReference(ebpReal, offsetof(struct J9VMThread, inNative), cg()),
@@ -404,80 +294,12 @@ TR::Register *TR::IA32JNILinkage::buildJNIDispatch(TR::Node *callNode)
                                 J9_PUBLIC_FLAGS_VM_ACCESS,
                                 cg());
       generateLabelInstruction(JNE4, callNode, longReleaseSnippetLabel, cg());
-
-      cg()->addSnippet(
-         new (trHeapMemory()) TR::X86HelperCallSnippet(
-            cg(),
-            callNode,
-            longReleaseRestartLabel,
-            longReleaseSnippetLabel,
-            comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getMethodSymbol())));
       generateLabelInstruction(LABEL, callNode, longReleaseRestartLabel, cg());
-#else
-      // Release vm access (spin lock).
-      //
-      generateRegMemInstruction(
-            L4RegMem,
-            callNode,
-            eaxReal,
-            generateX86MemoryReference(ebpReal, fej9->thisThreadGetPublicFlagsOffset(), cg()),
-            cg()
-            );
 
-      TR::LabelSymbol *loopHead = generateLabelSymbol(cg());
-      loopHead->setStartInternalControlFlow();
-
-      // Loop head
-      //
-      generateLabelInstruction(LABEL, callNode, loopHead, cg());
-      generateRegRegInstruction(MOV4RegReg, callNode, esiReal, eaxReal, cg());
-
-      TR::LabelSymbol *longReleaseSnippetLabel = generateLabelSymbol(cg());
-      TR::LabelSymbol *longReleaseRestartLabel = generateLabelSymbol(cg());
-
-      generateRegImmInstruction(TEST4RegImm4, callNode, eaxReal, fej9->constReleaseVMAccessOutOfLineMask(), cg());
-      generateLabelInstruction(JNE4, callNode, longReleaseSnippetLabel, cg());
-
-      cg()->addSnippet(
-            new (trHeapMemory()) TR::X86HelperCallSnippet(
-               cg(),
-               callNode,
-               longReleaseRestartLabel,
-               longReleaseSnippetLabel,
-               comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getJittedMethodSymbol())
-               )
-            );
-
-      generateRegImmInstruction(AND4RegImm4, callNode, esiReal, fej9->constReleaseVMAccessMask(), cg());
-
-      op = TR::Compiler->target.isSMP() ? LCMPXCHG4MemReg : CMPXCHG4MemReg;
-
-      generateMemRegInstruction(op, callNode, generateX86MemoryReference(ebpReal, fej9->thisThreadGetPublicFlagsOffset(), cg()), esiReal, cg());
-
-      TR::LabelSymbol *pauseSnippetLabel = generateLabelSymbol(cg());
-      cg()->addSnippet(new (trHeapMemory()) TR::X86JNIPauseSnippet(cg(), callNode, loopHead, pauseSnippetLabel));
-      generateLabelInstruction(JNE4, callNode, pauseSnippetLabel, cg());
-
-      generateLabelInstruction(LABEL, callNode, longReleaseRestartLabel, cg());
-#endif // J9VM_INTERP_ATOMIC_FREE_JNI
-      }
-   // Load machine bp esp + fej9->thisThreadGetMachineBPOffset() + argSize
-   //
-   generateRegMemInstruction(
-      L4RegMem,
-      callNode,
-      ebpReal,
-      generateX86MemoryReference(espReal, fej9->thisThreadGetMachineBPOffset(comp()) + argSize, cg()),
-      cg()
-      );
-
-   if (!cg()->useSSEForDoublePrecision())
-      {
-      // Force the FP register stack to be spilled.
-      //
-      TR::RegisterDependencyConditions  *fpSpillDependency = generateRegisterDependencyConditions(1, 0, cg());
-      fpSpillDependency->addPreCondition(NULL, TR::RealRegister::AllFPRegisters, cg());
-      generateInstruction(FPREGSPILL, callNode, fpSpillDependency, cg());
+      TR_OutlinedInstructionsGenerator og(longReleaseSnippetLabel, callNode, cg());
+      auto helper = comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getMethodSymbol());
+      generateImmSymInstruction(CALLImm4, callNode, (uintptrj_t)helper->getMethodAddress(), helper, cg());
+      generateLabelInstruction(JMP4, callNode, longReleaseRestartLabel, cg());
       }
 
    // Dispatch jni method directly.
@@ -491,7 +313,7 @@ TR::Register *TR::IA32JNILinkage::buildJNIDispatch(TR::Node *callNode)
       );
 
    if (isJNIGCPoint)
-      instr->setNeedsGCMap((argSize<<14) | getProperties().getPreservedRegisterMapForGC());
+      instr->setNeedsGCMap((argSize<<14) | 0xFF00FFFF);
 
    // memoize the call instruction, in order that we can register an assumption for this later on
    cg()->getJNICallSites().push_front(new (trHeapMemory()) TR_Pair<TR_ResolvedMethod,TR::Instruction>(resolvedMethodSymbol->getResolvedMethod(), instr));
@@ -502,28 +324,9 @@ TR::Register *TR::IA32JNILinkage::buildJNIDispatch(TR::Node *callNode)
    //
    generateLabelInstruction(LABEL, callNode, returnAddrLabel, cg());
 
-   // If not callee cleanup, then need to clean up the args with explicit
-   // add esp, argSize-4 (-4 because we added an extra push of ebp) after the call
-   //
-   if (!cg()->getJNILinkageCalleeCleanup())
-      {
-      int32_t cleanUpSize = argSize - 4;
-      if (cleanUpSize >= -128 && cleanUpSize <= 127)
-         {
-         generateRegImmInstruction(ADD4RegImms, callNode, espReal, cleanUpSize, cg());
-         }
-      else
-         {
-         generateRegImmInstruction(ADD4RegImm4, callNode, espReal, cleanUpSize, cg());
-         }
-      }
-   else
-      {
-      //Move esp back
-      generateRegRegInstruction(MOV4RegReg, callNode, espReal, ediReal, cg());
-      cg()->stopUsingRegister(ediReal);
-      }
-
+   // Restore stack pointer
+   generateRegRegInstruction(MOV4RegReg, callNode, espReal, ediReal, cg());
+   cg()->stopUsingRegister(ediReal);
 
    // Need to squirrel away the return value for some data types to avoid register
    // conflicts with subsequent code to acquire vm access, etc.
@@ -549,15 +352,10 @@ TR::Register *TR::IA32JNILinkage::buildJNIDispatch(TR::Node *callNode)
          break;
       }
 
-   // Restore the vmthread back from the C stack.
-   //
-   generateRegInstruction(POPReg, callNode, ebpReal, cg());
-
    if (dropVMAccess)
       {
       // Re-acquire vm access.
       //
-#ifdef J9VM_INTERP_ATOMIC_FREE_JNI
       generateMemImmInstruction(S4MemImm4,
                                 callNode,
                                 generateX86MemoryReference(ebpReal, offsetof(struct J9VMThread, inNative), cg()),
@@ -580,47 +378,12 @@ TR::Register *TR::IA32JNILinkage::buildJNIDispatch(TR::Node *callNode)
                                 J9_PUBLIC_FLAGS_VM_ACCESS,
                                 cg());
       generateLabelInstruction(JNE4, callNode, longAcquireSnippetLabel, cg());
-
-      cg()->addSnippet(
-         new (trHeapMemory()) TR::X86HelperCallSnippet(
-            cg(),
-            callNode,
-            longAcquireRestartLabel,
-            longAcquireSnippetLabel,
-            comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getMethodSymbol())));
-
       generateLabelInstruction(LABEL, callNode, longAcquireRestartLabel, cg());
-#else
-      generateRegRegInstruction(XOR4RegReg, callNode, eaxReal, eaxReal, cg());
-      generateRegImmInstruction(MOV4RegImm4, callNode, ediReal, fej9->constAcquireVMAccessOutOfLineMask(), cg());
 
-      TR::LabelSymbol *longReacquireSnippetLabel = generateLabelSymbol(cg());
-      TR::LabelSymbol *longReacquireRestartLabel = generateLabelSymbol(cg());
-
-      generateMemRegInstruction(
-            op,
-            callNode,
-            generateX86MemoryReference(ebpReal, fej9->thisThreadGetPublicFlagsOffset(), cg()),
-            ediReal,
-            cg()
-            );
-      generateLabelInstruction(JNE4, callNode, longReacquireSnippetLabel, cg());
-
-      // to do:: ecx may hold a reference across this snippet
-      // If the return type is address something needs to be represented in the
-      // register map for the snippet.
-      //
-      cg()->addSnippet(
-            new (trHeapMemory()) TR::X86HelperCallSnippet(
-               cg(),
-               callNode,
-               longReacquireRestartLabel,
-               longReacquireSnippetLabel,
-               comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getJittedMethodSymbol())
-               )
-            );
-      generateLabelInstruction(LABEL, callNode, longReacquireRestartLabel, cg());
-#endif // J9VM_INTERP_ATOMIC_FREE_JNI
+      TR_OutlinedInstructionsGenerator og(longAcquireSnippetLabel, callNode, cg());
+      auto helper = comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getMethodSymbol());
+      generateImmSymInstruction(CALLImm4, callNode, (uintptrj_t)helper->getMethodAddress(), helper, cg());
+      generateLabelInstruction(JMP4, callNode, longAcquireRestartLabel, cg());
       }
 
    if (TR::Address == resolvedMethod->returnType() && wrapRefs)
@@ -672,30 +435,16 @@ TR::Register *TR::IA32JNILinkage::buildJNIDispatch(TR::Node *callNode)
          // leave a bunch of pinned garbage behind that screws up the gc quality forever.
          //
          uint32_t flagValue = fej9->constJNIReferenceFrameAllocatedFlags();
-         if (flagValue <= 255)
-            {
-            op = TEST1MemImm1;
-            }
-         else
-            {
-            op = TEST4MemImm4;
-            }
+         TR_X86OpCodes op = flagValue <= 255 ? TEST1MemImm1 : TEST4MemImm4;
          TR::LabelSymbol *refPoolSnippetLabel = generateLabelSymbol(cg());
          TR::LabelSymbol *refPoolRestartLabel = generateLabelSymbol(cg());
          generateMemImmInstruction(op, callNode, generateX86MemoryReference(espReal, fej9->constJNICallOutFrameFlagsOffset(), cg()), flagValue, cg());
          generateLabelInstruction(JNE4, callNode, refPoolSnippetLabel, cg());
-
-         cg()->addSnippet(
-               new (trHeapMemory()) TR::X86HelperCallSnippet(
-                  cg(),
-                  callNode,
-                  refPoolRestartLabel,
-                  refPoolSnippetLabel,
-                  cg()->symRefTab()->findOrCreateRuntimeHelper(TR_IA32jitCollapseJNIReferenceFrame, false, false, false)
-                  )
-               );
-
          generateLabelInstruction(LABEL, callNode, refPoolRestartLabel, cg());
+
+         TR_OutlinedInstructionsGenerator og(refPoolSnippetLabel, callNode, cg());
+         generateHelperCallInstruction(callNode, TR_IA32jitCollapseJNIReferenceFrame, NULL, cg());
+         generateLabelInstruction(JMP4, callNode, refPoolRestartLabel, cg());
          }
 
       // Now set esp back to its previous value.
@@ -706,7 +455,6 @@ TR::Register *TR::IA32JNILinkage::buildJNIDispatch(TR::Node *callNode)
    // Get return registers set up before preserved regs are restored.
    //
    TR::Register *returnRegister = NULL;
-   bool requiresFPstackPop = false;
    switch (callNode->getDataType())
       {
       case TR::Int32:
@@ -721,15 +469,11 @@ TR::Register *TR::IA32JNILinkage::buildJNIDispatch(TR::Node *callNode)
       //
       case TR::Float:
          deps->addPostCondition(returnRegister = cg()->allocateSinglePrecisionRegister(TR_X87), TR::RealRegister::st0, cg());
-         requiresFPstackPop = true;
          break;
       case TR::Double:
          deps->addPostCondition(returnRegister = cg()->allocateRegister(TR_X87), TR::RealRegister::st0, cg());
-         requiresFPstackPop = true;
          break;
       }
-
-   deps->addPostCondition(cg()->getMethodMetaDataRegister(), getProperties().getMethodMetaDataRegister(), cg());
 
    deps->stopAddingConditions();
 
@@ -737,33 +481,29 @@ TR::Register *TR::IA32JNILinkage::buildJNIDispatch(TR::Node *callNode)
       {
       // Check exceptions.
       //
-      generateRegMemInstruction(
-            L4RegMem,
+      generateMemImmInstruction(
+            CMP4MemImms,
             callNode,
-            ediReal,
             generateX86MemoryReference(ebpReal, fej9->thisThreadGetCurrentExceptionOffset(), cg()),
+            0,
             cg()
             );
       TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg());
-      generateRegRegInstruction(TEST4RegReg, callNode, ediReal, ediReal, cg());
-
       instr = generateLabelInstruction(JNE4, callNode, snippetLabel, cg());
-      instr->setNeedsGCMap((argSize<<14) | getProperties().getPreservedRegisterMapForGC());
+      instr->setNeedsGCMap((argSize<<14) | 0xFF00FFFF);
 
       TR::Snippet *snippet = new (trHeapMemory()) TR::X86CheckFailureSnippet(
             cg(),
             cg()->symRefTab()->findOrCreateRuntimeHelper(TR_throwCurrentException, false, false, false),
             snippetLabel,
             instr,
-            requiresFPstackPop
-            );
+            callNode->getDataType() == TR::Float || callNode->getDataType() == TR::Double);
       cg()->addSnippet(snippet);
       }
 
-   generateVFPReleaseInstruction(vfpDedicateInstruction, callNode, cg());
-   TR::LabelSymbol *restartLabel = generateLabelSymbol(cg());
-   restartLabel->setEndInternalControlFlow();
-   generateLabelInstruction(LABEL, callNode, restartLabel, deps, cg());
+   // Restore VFP
+   generateVFPRestoreInstruction(vfpSave, callNode, cg());
+   generateLabelInstruction(LABEL, callNode, endLabel, deps, cg());
 
    // Stop using the killed registers that are not going to persist.
    //
@@ -772,35 +512,22 @@ TR::Register *TR::IA32JNILinkage::buildJNIDispatch(TR::Node *callNode)
 
    // If the processor supports SSE, return floating-point values in XMM registers.
    //
-   if (cg()->useSSEForSinglePrecision() && callNode->getOpCode().isFloat())
+   if (callNode->getOpCode().isFloat())
       {
-   TR::MemoryReference  *tempMR = cg()->machine()->getDummyLocalMR(TR::Float);
+      TR::MemoryReference  *tempMR = cg()->machine()->getDummyLocalMR(TR::Float);
       generateFPMemRegInstruction(FSTPMemReg, callNode, tempMR, returnRegister, cg());
       returnRegister = cg()->allocateSinglePrecisionRegister(TR_FPR);
       generateRegMemInstruction(MOVSSRegMem, callNode, returnRegister, generateX86MemoryReference(*tempMR, 0, cg()), cg());
       }
-   else if (cg()->useSSEForDoublePrecision() && callNode->getOpCode().isDouble())
+   else if (callNode->getOpCode().isDouble())
       {
-   TR::MemoryReference  *tempMR = cg()->machine()->getDummyLocalMR(TR::Double);
+      TR::MemoryReference  *tempMR = cg()->machine()->getDummyLocalMR(TR::Double);
       generateFPMemRegInstruction(DSTPMemReg, callNode, tempMR, returnRegister, cg());
       returnRegister = cg()->allocateRegister(TR_FPR);
       generateRegMemInstruction(cg()->getXMMDoubleLoadOpCode(), callNode, returnRegister, generateX86MemoryReference(*tempMR, 0, cg()), cg());
       }
-   else
-      {
-      // If the method returns a floating point value that is not used, insert a dummy store to
-      // eventually pop the value from the floating point stack.
-      //
-      if ((callNode->getDataType() == TR::Float ||
-           callNode->getDataType() == TR::Double) &&
-          callNode->getReferenceCount() == 1)
-         {
-         generateFPSTiST0RegRegInstruction(FSTRegReg, callNode, returnRegister, returnRegister, cg());
-         }
-      }
 
-   bool useRegisterAssociations = cg()->enableRegisterAssociations() ? true : false;
-   if (useRegisterAssociations)
+   if (cg()->enableRegisterAssociations())
       associatePreservedRegisters(deps, returnRegister);
 
    return returnRegister;
