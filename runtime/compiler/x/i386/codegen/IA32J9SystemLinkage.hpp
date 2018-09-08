@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,7 +39,7 @@ public:
 protected:
    virtual TR::Register *buildDirectDispatch(TR::Node *callNode, bool spillFPRegs);
    virtual TR::Register *buildVolatileAndReturnDependencies(TR::Node *callNode, TR::RegisterDependencyConditions *deps);
-   virtual int32_t buildArgs(TR::Node *callNode, TR::RegisterDependencyConditions *deps);
+   virtual int32_t buildParametersOnCStack(TR::Node *callNode, int firstParamIndex, bool passVMThread = false, bool wrapAddress = false);
    };
 
 }

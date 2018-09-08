@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,7 @@
 
 #if defined(TR_TARGET_32BIT)
 
-#include "codegen/IA32PrivateLinkage.hpp"
+#include "codegen/IA32J9SystemLinkage.hpp"
 
 namespace TR { class CodeGenerator; }
 namespace TR { class Node; }
@@ -33,14 +33,14 @@ namespace TR { class Register; }
 
 namespace TR {
 
-class IA32JNILinkage: public TR::IA32PrivateLinkage
+class IA32JNILinkage: public TR::IA32J9SystemLinkage
    {
    public:
-   IA32JNILinkage(TR::CodeGenerator *cg): TR::IA32PrivateLinkage(cg) {}
+   IA32JNILinkage(TR::CodeGenerator *cg): TR::IA32J9SystemLinkage(cg) {}
    virtual TR::Register *buildDirectDispatch(TR::Node *callNode, bool spillFPRegs);
 
    private:
-   virtual TR::Register *buildJNIDispatch(TR::Node *callNode);
+   TR::Register *buildJNIDispatch(TR::Node *callNode);
 
    };
 
