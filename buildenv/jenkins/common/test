@@ -32,6 +32,7 @@ if (params.ghprbPullId) {
     BUILD_RELEASE_IMAGES = "build/${RELEASE}/images/"
 }
 JAVA_BIN = "${WORKSPACE}/${BUILD_RELEASE_IMAGES}${JDK_FOLDER}${JRE_FOLDER}/bin"
+NATIVE_TEST_LIBS = "${WORKSPACE}/${BUILD_RELEASE_IMAGES}test/openj9/"
 
 def fetch_artifacts(){
     stage('Fetch Artifacts') {
@@ -50,7 +51,7 @@ def configure() {
     stage('Configure Test') {
         timestamps {
             dir ('openj9/test/TestConfig') {
-                withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "JAVA_VERSION=${JAVA_VERSION}"]) {
+                withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "JAVA_VERSION=${JAVA_VERSION}", "NATIVE_TEST_LIBS=${NATIVE_TEST_LIBS}"]) {
                     sh 'make -f run_configure.mk'
                 }
             }
@@ -70,7 +71,7 @@ def compile() {
     stage('Compile Test') {
         timestamps {
             dir ('openj9/test/TestConfig') {
-                withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "JAVA_VERSION=${JAVA_VERSION}"]) {
+                withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "JAVA_VERSION=${JAVA_VERSION}", "NATIVE_TEST_LIBS=${NATIVE_TEST_LIBS}"]) {
                     sh 'make compile'
                 }
             }
@@ -82,7 +83,7 @@ def test() {
     stage('Test') {
         timestamps {
             dir ('openj9/test/TestConfig') {
-                withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "JAVA_VERSION=${JAVA_VERSION}"]) {
+                withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "JAVA_VERSION=${JAVA_VERSION}", "NATIVE_TEST_LIBS=${NATIVE_TEST_LIBS}"]) {
                     sh "make ${TEST_TARGET}"
                 }
             }
