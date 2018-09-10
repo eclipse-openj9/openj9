@@ -478,7 +478,7 @@ __arrayTranslateTRTO255:
         li              r11, 8
         lvsl            vr0, r0, r3             ! vr0 = 0x000102030405060708090a0b0c0d0e0f, since r3 & 15 == 0
         vspltisb        vr1, 1                  ! vr1 = 16*{1}
-        vslb            vr1, vr0, vr1           ! vr1 = 0x00020406080a0c0e10121416181a1c1e = permute control vector
+        vslb            vr1, vr0, vr1           ! vr1 = 0x00020406080a0c0e10121416181a1c1e = permute control vector to combine elements
         vspltisw        vr0, 0                  ! vr0 = 0
 .L__vectorLoop_TRTO255:
         lvx             vr2, r0, r3             ! load elements 0-7
