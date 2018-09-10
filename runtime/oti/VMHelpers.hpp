@@ -1061,6 +1061,70 @@ done:
 	}
 
 	/**
+	 * Determine if a RAM instance field ref is resolved.
+	 *
+	 * @param flags[in] field from the ref
+	 * @param valueOffset[in] field from the ref
+	 * @param forPut[in] do extra checks specifically for putfield?
+	 *
+	 * @returns true if resolved, false if not
+	 */
+	static VMINLINE bool
+	instanceFieldRefIsResolved(UDATA flags, UDATA valueOffset, bool forPut)
+	{
+		/* In a resolved field, flags will have the J9FieldFlagResolved bit set, thus
+		 * having a higher value than any valid valueOffset.
+		 *
+		 * This check avoids the need for a barrier, as it will only succeed if flags
+		 * and valueOffset have both been updated. It is crucial that we do not treat
+		 * a field ref as resolved if only one of the two values has been set (by
+		 * another thread that is in the middle of a resolve).
+		 */
+		bool resolved = (flags > valueOffset);
+		if (forPut && resolved) {
+			if (0 == (flags & J9FieldFlagPutResolved)) {
+				resolved = false;
+			}
+		}
+		return resolved;
+	}
+
+	/**
+	 * Determine if a RAM static field ref is resolved.
+	 *
+	 * @param flagsAndClass[in] field from the ref
+	 * @param valueOffset[in] field from the ref
+	 * @param forPut[in] do extra checks specifically for putstatic?
+	 *
+	 * @returns true if resolved, false if not
+	 */
+	static VMINLINE bool
+	staticFieldRefIsResolved(IDATA flagsAndClass, UDATA valueOffset, bool forPut)
+	{
+		/* In an unresolved static fieldref, the valueOffset will be -1 or flagsAndClass will be <= 0.
+		 * If the fieldref was resolved as an instance fieldref, the high bit of flagsAndClass will be
+		 * set, so it will be < 0 and will be treated as an unresolved static fieldref.
+		 *
+		 * Since instruction re-ordering may result in us reading an updated valueOffset but
+		 * a stale flagsAndClass, we check that both fields have been updated. It is crucial
+		 * that we do not use a stale flagsAndClass with non-zero value, as doing so may cause the
+		 * the StaticFieldRefDouble bit check to succeed when it shouldn't.
+		 *
+		 * It is also necessary to check if the fieldref has been resolved for putstatic, since the
+		 * fieldref could be shared with a getstatic. The math below checks the put-resolved flag
+		 * in the flags byte of "flags and class", instead of the "class and flags" order expected by
+		 * the J9StaticFieldRef* flag definitions.
+		 */
+		bool resolved = ((UDATA)-1 != valueOffset) && (flagsAndClass > 0);
+		if (forPut && resolved) {
+			if (0 == (flagsAndClass & ((UDATA)J9StaticFieldRefPutResolved << (8 * sizeof(UDATA) - J9_REQUIRED_CLASS_SHIFT)))) {
+				resolved = false;
+			}
+		}
+		return resolved;
+	}
+
+	/**
 	 * Get the field address from a RAM static field ref.
 	 *
 	 * @param ramRef[in] the ref
@@ -1068,16 +1132,16 @@ done:
 	 * @returns the field address, or NULL if the ref is unresolved
 	 */
 	static VMINLINE void*
-	staticFieldAddressFromRef(J9RAMStaticFieldRef *ramRef)
+	staticFieldAddressFromRef(J9RAMStaticFieldRef *ramRef, bool forPut)
 	{
 		IDATA flagsAndClass = ramRef->flagsAndClass;
 		UDATA staticAddress = ramRef->valueOffset;
-		if (((UDATA)-1 == staticAddress) || (flagsAndClass <= 0)) {
-			staticAddress = 0;
-		} else {
+		if (staticFieldRefIsResolved(flagsAndClass, staticAddress, forPut)) {
 			J9Class *clazz = (J9Class*)((UDATA)flagsAndClass << J9_REQUIRED_CLASS_SHIFT);
 			staticAddress &= ~((UDATA)1 << ((8 * sizeof(UDATA)) - 1));
 			staticAddress += (UDATA)clazz->ramStatics;
+		} else  {
+			staticAddress = 0;
 		}
 		return (void*)staticAddress;
 	}
