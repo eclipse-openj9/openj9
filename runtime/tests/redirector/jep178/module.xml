@@ -47,8 +47,6 @@
 			<makefilestub data="UMA_EXE_POSTFIX_FLAGS+=-rdynamic">
 				<include-if condition="spec.linux_x86.*" />
 				<include-if condition="spec.linux_390.*" />
-			</makefilestub>
-			<makefilestub data="UMA_EXE_POSTFIX_FLAGS+=--export-dynamic">
 				<include-if condition="spec.linux_ppc.*" />
 			</makefilestub>
 		</makefilestubs>
