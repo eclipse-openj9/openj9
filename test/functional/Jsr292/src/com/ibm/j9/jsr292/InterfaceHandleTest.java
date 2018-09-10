@@ -34,6 +34,8 @@ import java.lang.reflect.Field;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 
+import org.openj9.test.util.VersionCheck;
+
 /**
  * A class to check if a specific method is correctly compiled by JIT
  */
@@ -82,7 +84,15 @@ public class InterfaceHandleTest {
 		try {
 			mh.invokeExact();
 			Assert.fail("Successfully invoked protected implementation of an interface method.");
-		} catch (IllegalAccessError e) { }
+		} catch (IllegalAccessError e) {
+			if (VersionCheck.major() >= 9) {
+				Assert.fail("IllegalAccessError thrown instead of AbstractMethodError");				
+			}
+		} catch (AbstractMethodError e) {
+			if (VersionCheck.major() < 9) {
+				Assert.fail("AbstractMethodError thrown instead of IllegalAccessError");				
+			}
+		}
 	}
 	
 	/**
@@ -98,7 +108,15 @@ public class InterfaceHandleTest {
 		try {
 			mh.invokeExact();
 			Assert.fail("Successfully invoked package private implementation of an interface method.");
-		} catch (IllegalAccessError e) { }
+		} catch (IllegalAccessError e) {
+			if (VersionCheck.major() >= 9) {
+				Assert.fail("IllegalAccessError thrown instead of AbstractMethodError");				
+			}
+		} catch (AbstractMethodError e) {
+			if (VersionCheck.major() < 9) {
+				Assert.fail("AbstractMethodError thrown instead of IllegalAccessError");				
+			}
+		}
 	}
 	
 	/**
@@ -114,7 +132,15 @@ public class InterfaceHandleTest {
 		try {
 			mh.invokeExact();
 			Assert.fail("Successfully invoked private implementation of an interface method.");
-		} catch (IllegalAccessError e) { }
+		} catch (IllegalAccessError e) {
+			if (VersionCheck.major() >= 9) {
+				Assert.fail("IllegalAccessError thrown instead of AbstractMethodError");				
+			}
+		} catch (AbstractMethodError e) {
+			if (VersionCheck.major() < 9) {
+				Assert.fail("AbstractMethodError thrown instead of IllegalAccessError");				
+			}
+		}
 	}
 	
 	static class Helper {
