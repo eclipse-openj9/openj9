@@ -1,4 +1,4 @@
-ZZ Copyright (c) 2000, 2017 IBM Corp. and others
+ZZ Copyright (c) 2000, 2018 IBM Corp. and others
 ZZ
 ZZ This program and the accompanying materials are made 
 ZZ available under the terms of the Eclipse Public License 2.0 
@@ -92,51 +92,57 @@ ifdef([TR_HOST_64BIT],[dnl
 EQUVAL(PTR_SIZE,8)
 
 ZZ Interface Snippet Layout (64-bit mode)
+ZZ Values defined here so they can be included in PicBuilder and
+ZZ ValueProf
+
 SETVAL(eq_codeRA_inInterfaceSnippet,0)
 SETVAL(eq_cp_inInterfaceSnippet,8)
 SETVAL(eq_cpindex_inInterfaceSnippet,16)
 SETVAL(eq_intfAddr_inInterfaceSnippet,24)
 SETVAL(eq_intfMethodIndex_inInterfaceSnippet,32)
+SETVAL(eq_thunk_inInterfaceSnippet,40)
 
 ZZ For Zero or Multi slot case
-SETVAL(eq_flag_inInterfaceSnippet,40)
+SETVAL(eq_flag_inInterfaceSnippet,48)
 
 ZZ For Multi slot case
-SETVAL(eq_lastCachedSlotField_inInterfaceSnippet,48)
-SETVAL(eq_firstSlotField_inInterfaceSnippet,56)
-SETVAL(eq_lastSlotField_inInterfaceSnippet,64)
-SETVAL(eq_firstSlot_inInterfaceSnippet,72)
+SETVAL(eq_lastCachedSlotField_inInterfaceSnippet,56)
+SETVAL(eq_firstSlotField_inInterfaceSnippet,64)
+SETVAL(eq_lastSlotField_inInterfaceSnippet,72)
+SETVAL(eq_firstSlot_inInterfaceSnippet,80)
 
 ZZ For single dynamic slot case
-SETVAL(eq_implementorClass_inInterfaceSnippet,40)
-SETVAL(eq_implementorMethod_inInterfaceSnippet,48)
-SETVAL(eq_flag_inInterfaceSnippetSingleDynamicSlot,56)
-SETVAL(eq_picreg_inInterfaceSnippetSingleDynamicSlot,57)
+SETVAL(eq_implementorClass_inInterfaceSnippet,48)
+SETVAL(eq_implementorMethod_inInterfaceSnippet,56)
+SETVAL(eq_flag_inInterfaceSnippetSingleDynamicSlot,64)
+SETVAL(eq_picreg_inInterfaceSnippetSingleDynamicSlot,65)
 
 ],[dnl
 EQUVAL(PTR_SIZE,4)
 
 ZZ Interface Snippet Layout (31 bit mode)
+
 SETVAL(eq_codeRA_inInterfaceSnippet,0)
 SETVAL(eq_cp_inInterfaceSnippet,4)
 SETVAL(eq_cpindex_inInterfaceSnippet,8)
 SETVAL(eq_intfAddr_inInterfaceSnippet,12)
 SETVAL(eq_intfMethodIndex_inInterfaceSnippet,16)
+SETVAL(eq_thunk_inInterfaceSnippet,20)
 
 ZZ For Zero or Multi slot case
-SETVAL(eq_flag_inInterfaceSnippet,20)
+SETVAL(eq_flag_inInterfaceSnippet,24)
 
 ZZ For Multi slot case
-SETVAL(eq_lastCachedSlotField_inInterfaceSnippet,24)
-SETVAL(eq_firstSlotField_inInterfaceSnippet,28)
-SETVAL(eq_lastSlotField_inInterfaceSnippet,32)
-SETVAL(eq_firstSlot_inInterfaceSnippet,36)
+SETVAL(eq_lastCachedSlotField_inInterfaceSnippet,28)
+SETVAL(eq_firstSlotField_inInterfaceSnippet,32)
+SETVAL(eq_lastSlotField_inInterfaceSnippet,36)
+SETVAL(eq_firstSlot_inInterfaceSnippet,40)
 
 ZZ For Single dynamic slot case
-SETVAL(eq_implementorClass_inInterfaceSnippet,20)
-SETVAL(eq_implementorMethod_inInterfaceSnippet,24)
-SETVAL(eq_flag_inInterfaceSnippetSingleDynamicSlot,28)
-SETVAL(eq_picreg_inInterfaceSnippetSingleDynamicSlot,29)
+SETVAL(eq_implementorClass_inInterfaceSnippet,24)
+SETVAL(eq_implementorMethod_inInterfaceSnippet,28)
+SETVAL(eq_flag_inInterfaceSnippetSingleDynamicSlot,32)
+SETVAL(eq_picreg_inInterfaceSnippetSingleDynamicSlot,33)
 
 ])dnl
 
