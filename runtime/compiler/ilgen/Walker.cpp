@@ -4643,13 +4643,6 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
 
     */
 
-
-   TR::Node * savedNode = NULL;
-   if (_stack->topIndex() > 0)
-      {
-      savedNode = _stack->element(_stack->topIndex());
-      }
-
 #define DAA_PRINT(a) \
 case a: \
    traceMsg(comp(), "DAA Method found: %s\n", #a); \
@@ -4955,7 +4948,12 @@ break
        return NULL;
        }
 
-    int32_t constToLoad = 0;
+   if (symbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_supportsIntrinsicCaseConversion)
+      {
+      pop(); //pop the receiver since it's not used
+      loadConstant(TR::iconst, cg()->getSupportsInlineStringCaseConversion() ? 1 : 0);
+      return NULL;
+      }
 
    if (!isStatic && _classInfo && !symRef->isUnresolved())
       {
@@ -5062,17 +5060,6 @@ break
          {
          callNode->getByteCodeInfo().setIsSameReceiver(1);
          }
-      }
-
-   if(symbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_supportsIntrinsicCaseConversion)
-      {
-      if (cg()->getSupportsInlineStringCaseConversion())
-         constToLoad = 1;
-      else
-         constToLoad  = 0; // should already be 0 but just incase..
-
-      loadConstant(TR::iconst, constToLoad);
-      return NULL;
       }
 
    if (cg()->getSupportsInlineStringCaseConversion() &&
