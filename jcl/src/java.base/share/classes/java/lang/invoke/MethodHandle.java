@@ -679,11 +679,8 @@ public abstract class MethodHandle {
 		if (isVarArityNeeded) {
 			/* Convert the handle if initially not with variable arity */
 			if (!this.isVarargsCollector()) {
-				Class<?> lastClass = null;
-				try {
-					/* An exception is thrown if the MethodType has no arguments */
-					lastClass = this.type.lastParameterType();
-				} catch(RuntimeException e) {
+				Class<?> lastClass = this.type.lastParameterType();
+				if (void.class == lastClass) { /* there were no arguments */
 					throw new IllegalArgumentException();
 				}
 				/* IllegalArgumentException will be thrown out from asVarargsCollector 
