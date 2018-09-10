@@ -2297,7 +2297,7 @@ TR_J9VMBase::allocateCodeMemory(TR::Compilation * comp, uint32_t warmCodeSize, u
       fprintf(stderr, "comp %p ID=%d switched cache to %p\n", comp, comp->getCompThreadID(), codeCache);
 #endif
       TR_ASSERT(!codeCache || codeCache->isReserved(), "Substitute code cache isn't marked as reserved");  // Either we didn't get a code cache, or the one we should get is
-      comp->setAotMethodCodeStart(warmCode);
+      comp->setRelocatableMethodCodeStart(warmCode);
       switchCodeCache(comp, comp->getCurrentCodeCache(), codeCache);
       }
 
@@ -8958,7 +8958,7 @@ TR_J9SharedCacheVM::getDesignatedCodeCache(TR::Compilation *comp)
       codeCache->alignWarmCodeAlloc(_jitConfig->codeCacheAlignment - 1);
 
       // For AOT we must install the beginning of the code cache
-      comp->setAotMethodCodeStart((uint32_t *)codeCache->getWarmCodeAlloc());
+      comp->setRelocatableMethodCodeStart((uint32_t *)codeCache->getWarmCodeAlloc());
       }
    else
       {
@@ -9116,6 +9116,10 @@ JNIEXPORT jlong JNICALL Java_java_lang_invoke_ThunkTuple_initialInvokeExactThunk
 #endif
    }
 
+/* Note this is the underlying implementation of InterfaceHandle.vTableOffset(). Any special cases
+ * (private interface method, methods in Object) have been adapted away by the java code, so this
+ * native only ever deals with iTable interface methods.
+ */
 JNIEXPORT jint JNICALL Java_java_lang_invoke_InterfaceHandle_convertITableIndexToVTableIndex
   (JNIEnv *env, jclass InterfaceMethodHandle, jlong interfaceArg, jint itableIndex, jlong receiverClassArg)
    {
