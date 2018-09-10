@@ -9116,6 +9116,10 @@ JNIEXPORT jlong JNICALL Java_java_lang_invoke_ThunkTuple_initialInvokeExactThunk
 #endif
    }
 
+/* Note this is the underlying implementation of InterfaceHandle.vTableOffset(). Any special cases
+ * (private interface method, methods in Object) have been adapted away by the java code, so this
+ * native only ever deals with iTable interface methods.
+ */
 JNIEXPORT jint JNICALL Java_java_lang_invoke_InterfaceHandle_convertITableIndexToVTableIndex
   (JNIEnv *env, jclass InterfaceMethodHandle, jlong interfaceArg, jint itableIndex, jlong receiverClassArg)
    {
