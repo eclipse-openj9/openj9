@@ -839,9 +839,13 @@ SH_OSCacheTestSysv::testSize(J9PortLibrary* portLibrary, J9JavaVM *vm)
 		if(osc->getError() < 0) {
 			UDATA defaultSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE;
 #if defined(J9VM_ENV_DATA64)
+#if defined(OPENJ9_BUILD)
+			defaultSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE_64BIT_PLATFORM;
+#else /* OPENJ9_BUILD */
 			if (J2SE_VERSION(vm) >= J2SE_19) {
 				defaultSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE_64BIT_PLATFORM;
 			}
+#endif /* OPENJ9_BUILD */
 #endif /* J9VM_ENV_DATA64 */
 			if ((i == 0) && (defaultSize > 1024) && (defaultSize < shmmax)) {
 				/*CMVC 153490: if we fail alloc ulimit the lets retry tests with the default size*/
