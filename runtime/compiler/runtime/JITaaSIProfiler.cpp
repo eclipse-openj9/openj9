@@ -76,6 +76,8 @@ TR_ContiguousIPMethodHashTableEntry::serialize(TR_IPMethodHashTableEntry *entry)
    size_t callerIdx = 0;
    for (TR_IPMethodData *caller = &entry->_caller; caller; caller = caller->next)
       {
+      if (callerIdx >= TR_IPMethodHashTableEntry::MAX_IPMETHOD_CALLERS)
+         break;
       auto &serialCaller = serialEntry._callers[callerIdx];
       serialCaller._method = caller->getMethod();
       serialCaller._pcIndex = caller->getPCIndex();
