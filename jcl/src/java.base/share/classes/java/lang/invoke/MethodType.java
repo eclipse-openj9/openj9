@@ -901,14 +901,21 @@ public final class MethodType implements Serializable {
 		return returnType;
 	}
 	
-	/* Return the last class in the parameterType array.
+	/**
+	 * Return the last class in the parameterType array.
 	 * This is equivalent to:
 	 * 		type.parameterType(type.parameterCount() - 1)
-	 * Will throw ArrayIndexOutOfBounds on bad indexes.  This is a subclass of IndexOutOfBoundsException
-	 * so this is valid when JCKs expect certain exceptions.
+	 * @return class of final parameter, or void.class if there are no parameters
 	 */
-	/* package */ Class<?> lastParameterType() {
-		 return arguments[arguments.length - 1];
+	/*[IF Java10]*/
+	public
+	/*[ENDIF]*/
+	Class<?> lastParameterType() {
+		Class<?> result = void.class;
+		if (arguments.length > 0) {
+			result = arguments[arguments.length - 1];
+		}
+		return result;
 	}
 	
 	/**
