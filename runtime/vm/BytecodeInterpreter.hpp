@@ -1449,21 +1449,24 @@ obj:;
 		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_sendMethod);
 		if (romMethod->modifiers & J9AccAbstract) {
 			exception = J9VMCONSTANTPOOL_JAVALANGABSTRACTMETHODERROR;
-			/* Starting with JDK11, private methods expressly do not override any methods from
-			 * superclass/superinterfaces, so AbstractMethodError is the correct error to throw.
-			 */
-			if (J2SE_VERSION(_vm) < J2SE_V11) {
-				/* If the method class is an interface, do the special checks to throw the correct error */
-				J9Class *methodClass = J9_CLASS_FROM_METHOD(_sendMethod);
-				if (J9ROMCLASS_IS_INTERFACE(methodClass->romClass)) {
-					J9Method *method = (J9Method*)javaLookupMethod(
-							_currentThread,
-							J9OBJECT_CLAZZ(_currentThread, *(j9object_t*)_arg0EA),
-							&romMethod->nameAndSignature,
-							NULL,
-							J9_LOOK_VIRTUAL | J9_LOOK_NO_THROW);
-					if (NULL != method) {
-						if (0 == (J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers & J9AccPublic)) {
+			/* If the method class is an interface, do the special checks to throw the correct error */
+			J9Class *methodClass = J9_CLASS_FROM_METHOD(_sendMethod);
+			if (J9ROMCLASS_IS_INTERFACE(methodClass->romClass)) {
+				J9Method *method = (J9Method*)javaLookupMethod(
+						_currentThread,
+						J9OBJECT_CLAZZ(_currentThread, *(j9object_t*)_arg0EA),
+						&romMethod->nameAndSignature,
+						NULL,
+						J9_LOOK_VIRTUAL | J9_LOOK_NO_THROW);
+				if (NULL != method) {
+					U_32 modifiers = J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers;
+					/* Finding a public method means it is necessarily abstract (this function only handles exceptional cases) */
+					if (J9_ARE_NO_BITS_SET(modifiers, J9AccPublic)) {
+						/* Starting with JDK11, private methods expressly do not override any methods from
+						 * superclass/superinterfaces, so AbstractMethodError is the correct error to throw.
+						 * For default or protected methods or JDK levels prior to 11, throw IllegalAccessError.
+						 */
+						if ((J2SE_VERSION(_vm) < J2SE_V11) || (J9_ARE_NO_BITS_SET(modifiers, J9AccPrivate))) {
 							exception = J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR;
 							_sendMethod = method;
 						}
