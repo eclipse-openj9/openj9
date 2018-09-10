@@ -2588,7 +2588,7 @@ TR_DebugExt::dxPrintCompilation()
 
    _dbgPrintf("\tTR_CHTable * _transientCHTable = !trprint chtable 0x%p\n",localCompiler->_transientCHTable);
    _dbgPrintf("\tvoid * _aotMethodDataStart = %p\n",localCompiler->_aotMethodDataStart);
-   _dbgPrintf("\tvoid * _aotMethodCodeStart = %p\n",localCompiler->_aotMethodCodeStart);
+   _dbgPrintf("\tvoid * _relocatableMethodCodeStart = %p\n",localCompiler->_relocatableMethodCodeStart);
    _dbgPrintf("\tint32_t _compThreadID = %d\n",localCompiler->_compThreadID);
    _dbgPrintf("\tbool _failCHtableCommitFlag = %s\n",localCompiler->_failCHtableCommitFlag?"TRUE":"FALSE");
    _dbgPrintf("\tsize_t _scratchSpaceLimit = %llu\n", static_cast<unsigned long long>(localCompiler->_scratchSpaceLimit));
