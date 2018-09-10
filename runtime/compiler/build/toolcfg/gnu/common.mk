@@ -134,15 +134,15 @@ endif
 
 ifeq ($(HOST_ARCH),p)
     CX_DEFAULTOPT=-O2
-    CX_FLAGS+=-fpic
     
     ifeq ($(HOST_BITS),32)
         CX_DEFINES+=LINUXPPC USING_ANSI
-        CX_FLAGS+=-m32
+        CX_FLAGS+=-m32 -fPIC
         CX_FLAGS_PROD+=-mcpu=powerpc
     endif
     
     ifeq ($(HOST_BITS),64)
+        CX_FLAGS+=-fpic
         CX_DEFINES+=LINUXPPC LINUXPPC64 USING_ANSI
         CX_FLAGS_PROD+=-mcpu=powerpc64
     endif
