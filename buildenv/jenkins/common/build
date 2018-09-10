@@ -290,8 +290,7 @@ def archive() {
                 server.publishBuildInfo buildInfo
               } else {
                 echo "ARTIFACTORY server is not set saving artifacts on jenkins."
-                archiveArtifacts artifacts: "**/${SDK_FILENAME}", fingerprint: true, onlyIfSuccessful: true
-                archiveArtifacts artifacts: "**/${TEST_FILENAME}", fingerprint: true, onlyIfSuccessful: true
+                archiveArtifacts artifacts: "**/${SDK_FILENAME},**/${TEST_FILENAME}", fingerprint: true, onlyIfSuccessful: true
               }
         }
     }
