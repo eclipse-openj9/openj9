@@ -48,21 +48,10 @@
 					</fileset>
 				</subant>
 			</then>
-			<elseif>
-				<equals arg1="${JAVA_VERSION}" arg2="Valhalla"/>
-				<then>
-					<subant target="">
-						<fileset dir="./">
-							<include name="Valhalla/build.xml" />
-						</fileset>
-					</subant>
-				</then>
-			</elseif>
 			<else>
 				<subant target="">
 					<fileset dir="." includes="*/build.xml" >
 						<exclude name="Panama/build.xml" />
-						<exclude name="Valhalla/build.xml" />
 					</fileset>
 				</subant>
 			</else>
