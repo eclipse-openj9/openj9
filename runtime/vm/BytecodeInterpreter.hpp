@@ -6159,17 +6159,7 @@ retry:
 		UDATA volatile classAndFlags = 0;
 		void* volatile valueAddress = NULL;
 
-		/* In an unresolved static fieldref, the valueOffset will be -1 or flagsAndClass will be <= 0.
-		 * If the fieldref was resolved as an instance fieldref, the high bit of flagsAndClass will be
-		 * set, so it will be < 0 and will be treated as an unresolved static fieldref.
-		 *
-		 * Since instruction re-ordering may result in us reading an updated valueOffset but
-		 * a stale flagsAndClass, we check that both fields have been updated. It is crucial
-		 * that we do not use a stale flagsAndClass with non-zero value, as doing so may cause the
-		 * the StaticFieldRefDouble bit check to succeed when it shouldn't.
-		 */
-		bool resolveNeeded = (flagsAndClass <= 0) || (valueOffset == (UDATA)-1);
-		if (J9_UNEXPECTED(resolveNeeded)) {
+		if (J9_UNEXPECTED(!VM_VMHelpers::staticFieldRefIsResolved(flagsAndClass, valueOffset, false))) {
 			/* Unresolved */
 			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 			updateVMStruct(REGISTER_ARGS);
@@ -6243,23 +6233,7 @@ retry:
 		void* volatile valueAddress = NULL;
 		void *resolveResult = NULL;
 
-		/* In an unresolved static fieldref, the valueOffset will be -1 or flagsAndClass will be <= 0.
-		 * If the fieldref was resolved as an instance fieldref, the high bit of flagsAndClass will be
-		 * set, so it will be < 0 and will be treated as an unresolved static fieldref.
-		 *
-		 * Since instruction re-ordering may result in us reading an updated valueOffset but
-		 * a stale flagsAndClass, we check that both fields have been updated. It is crucial
-		 * that we do not use a stale flagsAndClass with non-zero value, as doing so may cause the
-		 * the StaticFieldRefDouble bit check to succeed when it shouldn't.
-		 *
-		 * It is also necessary to check if the fieldref has been resolved for putstatic, since the
-		 * fieldref could be shared with a getstatic. The math below checks the put-resolved flag
-		 * in the flags byte of "flags and class", instead of the "class and flags" order expected by
-		 * the J9StaticFieldRef* flag definitions.
-		 */
-		bool resolveNeeded = (flagsAndClass <= 0) || (valueOffset == (UDATA) -1)
-				|| (0 == (flagsAndClass & (UDATA(J9StaticFieldRefPutResolved) << (8 * sizeof(UDATA) - J9_REQUIRED_CLASS_SHIFT))));
-		if (J9_UNEXPECTED(resolveNeeded)) {
+		if (J9_UNEXPECTED(!VM_VMHelpers::staticFieldRefIsResolved(flagsAndClass, valueOffset, true))) {
 			/* Unresolved */
 			J9Method *method = _literals;
 			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
@@ -6330,15 +6304,7 @@ retry:
 		UDATA const flags = ramFieldRef->flags;
 		UDATA const valueOffset = ramFieldRef->valueOffset;
 
-		/* In a resolved field, flags will have the J9FieldFlagResolved bit set, thus
-		 * having a higher value than any valid valueOffset.
-		 *
-		 * This check avoids the need for a barrier, as it will only succeed if flags
-		 * and valueOffset have both been updated. It is crucial that we do not treat
-		 * a field ref as resolved if only one of the two values has been set (by
-		 * another thread that is in the middle of a resolve).
-		 */
-		if (J9_UNEXPECTED(flags <= valueOffset)) {
+		if (J9_UNEXPECTED(!VM_VMHelpers::instanceFieldRefIsResolved(flags, valueOffset, false))) {
 			/* Unresolved */
 			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 			updateVMStruct(REGISTER_ARGS);
@@ -6421,15 +6387,7 @@ retry:
 		UDATA const flags = ramFieldRef->flags;
 		UDATA const valueOffset = ramFieldRef->valueOffset;
 
-		/* In a resolved field, flags will have the J9FieldFlagResolved bit set, thus
-		 * having a higher value than any valid valueOffset.
-		 *
-		 * This check avoids the need for a barrier, as it will only succeed if flags
-		 * and valueOffset have both been updated. It is crucial that we do not treat
-		 * a field ref as resolved if only one of the two values has been set (by
-		 * another thread that is in the middle of a resolve).
-		 */
-		if (J9_UNEXPECTED((flags <= valueOffset) || (0 == (flags & J9FieldFlagPutResolved)))) {
+		if (J9_UNEXPECTED(!VM_VMHelpers::instanceFieldRefIsResolved(flags, valueOffset, true))) {
 			/* Unresolved */
 			J9Method *method = _literals;
 			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);

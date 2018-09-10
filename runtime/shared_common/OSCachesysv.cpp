@@ -150,10 +150,15 @@ SH_OSCachesysv::startup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirPer
 	IDATA semLength = 0;
 	LastErrorInfo lastErrorInfo;
 	UDATA defaultCacheSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE;
+
 #if defined(J9VM_ENV_DATA64)
+#if defined(OPENJ9_BUILD)
+	defaultCacheSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE_64BIT_PLATFORM;
+#else /* OPENJ9_BUILD */
 	if (J2SE_VERSION(vm) >= J2SE_19) {
 		defaultCacheSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE_64BIT_PLATFORM;
 	}
+#endif /* OPENJ9_BUILD */
 #endif /* J9VM_ENV_DATA64 */
 	PORT_ACCESS_FROM_PORT(_portLibrary);
 	

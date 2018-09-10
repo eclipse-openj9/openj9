@@ -100,8 +100,6 @@ void J9::Power::AheadOfTimeCompile::processRelocations()
       }
    }
 
-uintptr_t findCorrectInlinedSiteIndex(void *constantPool, TR::Compilation *comp, uintptr_t currentInlinedSiteIndex);
-
 uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedExternalRelocation *relocation)
    {
    TR::Compilation* comp = TR::comp();
@@ -209,7 +207,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();
          uintptr_t inlinedSiteIndex = (uintptr_t)relocation->getTargetAddress2();
 
-         inlinedSiteIndex = findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), comp, inlinedSiteIndex);
+         inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), inlinedSiteIndex);
 
          *(uintptrj_t *)cursor = inlinedSiteIndex;  // inlinedSiteIndex
          cursor += SIZEPOINTER;
@@ -233,8 +231,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
          if (TR::Compiler->target.is64Bit())
             {
-            *(uint64_t *) cursor = (uint64_t) findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(),
-                                                                          comp, recordInfo->data2); //inlineSiteIndex
+            *(uint64_t *) cursor = (uint64_t) self()->findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), recordInfo->data2); //inlineSiteIndex
             cursor += 8;
 
             *(uint64_t *) cursor = (uint64_t) (uintptrj_t) tempSR->getOwningMethod(comp)->constantPool();
@@ -246,8 +243,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
             }
          else
             {
-            *(uint32_t *) cursor = (uint32_t) findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(),
-                                                                          comp, recordInfo->data2); //inlineSiteIndex
+            *(uint32_t *) cursor = (uint32_t) self()->findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), recordInfo->data2); //inlineSiteIndex
 
             cursor += 4;
 
@@ -270,8 +266,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
 
          // next word is the address of the constant pool to which the index refers
-         inlinedSiteIndex = findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(),
-                  comp, inlinedSiteIndex);
+         inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), inlinedSiteIndex);
 
          // relocation target
          *(uintptrj_t *) cursor = inlinedSiteIndex; // inlinedSiteIndex
@@ -522,10 +517,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          auto sym = symRef->getSymbol()->castToStaticSymbol();
          auto j9class = (TR_OpaqueClassBlock *)sym->getStaticAddress();
          uint8_t flags = (uint8_t)recordInfo->data3;
-         uintptr_t inlinedSiteIndex = findCorrectInlinedSiteIndex(
-            symRef->getOwningMethod(comp)->constantPool(),
-            comp,
-            recordInfo->data2);
+         uintptr_t inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(symRef->getOwningMethod(comp)->constantPool(), recordInfo->data2);
 
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);

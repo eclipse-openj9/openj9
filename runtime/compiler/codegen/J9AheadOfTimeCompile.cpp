@@ -43,6 +43,87 @@ J9::AheadOfTimeCompile::emitClassChainOffset(uint8_t* cursor, TR_OpaqueClassBloc
    return cursor + SIZEPOINTER;
    }
 
+uintptr_t
+J9::AheadOfTimeCompile::findCorrectInlinedSiteIndex(void *constantPool, uintptr_t currentInlinedSiteIndex)
+   {
+   TR::Compilation *comp = self()->comp();
+   uintptr_t constantPoolForSiteIndex = 0;
+   uintptr_t inlinedSiteIndex = currentInlinedSiteIndex;
+
+   if (inlinedSiteIndex == (uintptr_t)-1)
+      {
+      constantPoolForSiteIndex = (uintptr_t)comp->getCurrentMethod()->constantPool();
+      }
+   else
+      {
+      TR_InlinedCallSite &inlinedCallSite = comp->getInlinedCallSite(inlinedSiteIndex);
+      if (comp->compileRelocatableCode())
+         {
+         TR_AOTMethodInfo *callSiteMethodInfo = (TR_AOTMethodInfo *)inlinedCallSite._methodInfo;
+         constantPoolForSiteIndex = (uintptr_t)callSiteMethodInfo->resolvedMethod->constantPool();
+         }
+      else
+         {
+         TR_OpaqueMethodBlock *callSiteJ9Method = inlinedCallSite._methodInfo;
+         constantPoolForSiteIndex = comp->fej9()->getConstantPoolFromMethod(callSiteJ9Method);
+         }
+      }
+
+   bool matchFound = false;
+
+   if ((uintptr_t)constantPool == constantPoolForSiteIndex)
+      {
+      // The constant pool and site index match, no need to find anything.
+      matchFound = true;
+      }
+   else
+      {
+      if ((uintptr_t)constantPool == (uintptr_t)comp->getCurrentMethod()->constantPool())
+         {
+         // The constant pool belongs to the current method being compiled, the correct site index is -1.
+         matchFound = true;
+         inlinedSiteIndex = (uintptr_t)-1;
+         }
+      else
+         {
+         // Look for the first call site whose inlined method's constant pool matches ours and return that site index as the correct one.
+         if (comp->compileRelocatableCode())
+            {
+            for (uintptr_t i = 0; i < comp->getNumInlinedCallSites(); i++)
+               {
+               TR_InlinedCallSite &inlinedCallSite = comp->getInlinedCallSite(i);
+               TR_AOTMethodInfo *callSiteMethodInfo = (TR_AOTMethodInfo *)inlinedCallSite._methodInfo;
+
+               if ((uintptr_t)constantPool == (uintptr_t)callSiteMethodInfo->resolvedMethod->constantPool())
+                  {
+                  matchFound = true;
+                  inlinedSiteIndex = i;
+                  break;
+                  }
+               }
+            }
+         else
+            {
+            for (uintptr_t i = 0; i < comp->getNumInlinedCallSites(); i++)
+               {
+               TR_InlinedCallSite &inlinedCallSite = comp->getInlinedCallSite(i);
+               TR_OpaqueMethodBlock *callSiteJ9Method = inlinedCallSite._methodInfo;
+
+               if ((uintptr_t)constantPool == comp->fej9()->getConstantPoolFromMethod(callSiteJ9Method))
+                  {
+                  matchFound = true;
+                  inlinedSiteIndex = i;
+                  break;
+                  }
+               }
+            }
+         }
+      }
+
+   TR_ASSERT(matchFound, "Couldn't find this CP in inlined site list");
+   return inlinedSiteIndex;
+   }
+
 static const char* getNameForMethodRelocation (int type)
    {
    switch ( type )
