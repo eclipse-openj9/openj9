@@ -154,6 +154,18 @@ ifeq (linux_ppc, $(SPEC))
 		--enable-OMR_PORT_NUMA_SUPPORT
 endif
 
+ifeq (linux_ppc_gcc, $(SPEC))
+	CONFIGURE_ARGS += \
+		--enable-OMRTHREAD_LIB_UNIX \
+		--enable-OMR_ARCH_POWER \
+		--enable-OMR_ENV_GCC \
+		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
+		--enable-OMR_PORT_NUMA_SUPPORT \
+		--build=powerpc-unknown-linux-gnu \
+		--host=powerpc-unknown-linux-gnu \
+		'OMR_HOSTCONFIG_ENV=--host=powerpc-unknown-linux-gnu OMR_BUILD_DATASIZE=32'
+endif
+
 ifeq (linux_ppc_purec, $(SPEC))
 	CONFIGURE_ARGS += \
 		--enable-OMRTHREAD_LIB_UNIX \
