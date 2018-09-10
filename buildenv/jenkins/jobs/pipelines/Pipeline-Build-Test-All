@@ -73,14 +73,16 @@
 */
 
 RELEASES = ['8', '9', '10', '11', 'next']
+CURRENT_RELEASES = ['8', '10', '11', 'next']
 
-SPECS = ['aix_ppc-64_cmprssptrs'      : RELEASES,
-         'linux_390-64_cmprssptrs'    : RELEASES,
-         'linux_ppc-64_cmprssptrs_le' : RELEASES,
-         'linux_x86-64'               : RELEASES,
-         'linux_x86-64_cmprssptrs'    : RELEASES,
+SPECS = ['aix_ppc-64_cmprssptrs'      : CURRENT_RELEASES,
+         'linux_390-64_cmprssptrs'    : CURRENT_RELEASES,
+         'linux_ppc-64_cmprssptrs_le' : CURRENT_RELEASES,
+         'linux_x86-64'               : CURRENT_RELEASES,
+         'linux_x86-64_cmprssptrs'    : CURRENT_RELEASES,
+         'linux_x86-64_cmprssptrs_cmake' : ['9'],
          'win_x86'                    : ['8'],
-         'win_x86-64_cmprssptrs'      : RELEASES]
+         'win_x86-64_cmprssptrs'      : CURRENT_RELEASES]
 
 LABEL = params.LABEL
 if (!LABEL) {
@@ -100,7 +102,7 @@ timeout(time: 10, unit: 'HOURS') {
             try {
                 checkout scm
                 def variableFile = load 'buildenv/jenkins/common/variables-functions'
-                def buildFile = load 'buildenv/jenkins/common/pipeline-functions'
+                buildFile = load 'buildenv/jenkins/common/pipeline-functions'
 
                 def BUILD_SPECS = get_specs(SPECS)
                 // find releases to build based on given specs
@@ -108,7 +110,7 @@ timeout(time: 10, unit: 'HOURS') {
 
                 // parse variables file and initialize variables
                 variableFile.set_job_variables('wrapper')
-                def SHAS = buildFile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH)
+                SHAS = buildFile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH)
 
                 if (params.PERSONAL_BUILD) {
                     // update build name
@@ -157,6 +159,16 @@ timeout(time: 10, unit: 'HOURS') {
 
         // launch all pipeline builds
         parallel builds
+
+        if (params.PROMOTE_OMR) {
+            stage('Promote') {
+                PROMOTE_JOB = buildFile.build_with_slack('Promote-OpenJ9-OMR-master-to-openj9',
+                                                        [string(name: 'OMR_COMMIT', value: "${SHAS['OMR']}"),
+                                                        string(name: 'OPENJ9_COMMIT', value: "${SHAS['OPENJ9']}"),
+                                                        string(name: 'OPENJDK8_COMMIT', value: "${SHAS['OPENJDK'].get(8)}"),
+                                                        string(name: 'OPENJDK10_COMMIT', value: "${SHAS['OPENJDK'].get(10)}")])
+            }
+        }
     }
 }
 
