@@ -1077,7 +1077,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(method->startAddressForJittedMethod());
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getResolvedVirtualMethodAndMirror:
+      case J9ServerMessageType::ResolvedMethod_getResolvedPossiblyPrivateVirtualMethodAndMirror:
          {
          // 1. resolve method
          auto recv = client->getRecvData<TR_ResolvedMethod *, J9RAMConstantPoolItem *, I_32>();
@@ -1097,7 +1097,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
             vTableIndex = fe->_vmFunctionTable->resolveVirtualMethodRefInto(fe->vmThread(), cp, cpIndex,
                   J9_RESOLVE_FLAG_JIT_COMPILE_TIME, &ramMethod, NULL);
             }
-         else
+         else if (!TR_ResolvedJ9Method::isInvokePrivateVTableOffset(vTableIndex))
             {
             // go fishing for the J9Method...
             uint32_t classIndex = ((J9ROMMethodRef *) cp->romConstantPool)[cpIndex].classRefCPIndex;
@@ -1105,6 +1105,9 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
             ramMethod = *(J9Method **)((char *)classObject + vTableIndex);
             resolvedInCP = true;
             }
+
+         if(TR_ResolvedJ9Method::isInvokePrivateVTableOffset(vTableIndex))
+            ramMethod = (((J9RAMVirtualMethodRef*) literals)[cpIndex]).method;
 
          // 2. mirror the resolved method on the client
          if (vTableIndex)

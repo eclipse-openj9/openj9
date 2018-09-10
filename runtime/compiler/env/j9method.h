@@ -493,6 +493,8 @@ public:
 
    virtual TR_PersistentJittedBodyInfo *getExistingJittedBodyInfo();
 
+   static bool isInvokePrivateVTableOffset(UDATA vTableOffset);
+
 protected:
    virtual TR_J9MethodBase *asJ9Method(){ return this; }
    TR_ResolvedJ9Method(TR_FrontEnd *, TR_ResolvedMethod * owningMethod = 0);

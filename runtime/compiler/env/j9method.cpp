@@ -6411,8 +6411,8 @@ TR_ResolvedJ9Method::getResolvedSpecialMethod(TR::Compilation * comp, I_32 cpInd
    return resolvedMethod;
    }
 
-static bool
-isInvokePrivateVTableOffset(UDATA vTableOffset)
+bool
+TR_ResolvedJ9Method::isInvokePrivateVTableOffset(UDATA vTableOffset)
    {
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
    return vTableOffset == J9VTABLE_INVOKE_PRIVATE_OFFSET;

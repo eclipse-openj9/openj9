@@ -151,7 +151,7 @@ TR_ResolvedJ9JITaaSServerMethod::isUnresolvedString(I_32 cpIndex, bool optimizeF
    }
 
 TR_ResolvedMethod *
-TR_ResolvedJ9JITaaSServerMethod::getResolvedVirtualMethod(TR::Compilation * comp, I_32 cpIndex, bool ignoreRtResolve, bool * unresolvedInCP)
+TR_ResolvedJ9JITaaSServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Compilation * comp, I_32 cpIndex, bool ignoreRtResolve, bool * unresolvedInCP)
    {
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
 #if TURN_OFF_INLINING
@@ -169,7 +169,7 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedVirtualMethod(TR::Compilation * comp
          !comp->ilGenRequest().details().isMethodHandleThunk() && // cmvc 195373
          performTransformation(comp, "Setting as unresolved virtual call cpIndex=%d\n",cpIndex) ) || ignoreRtResolve)
       {
-      _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedVirtualMethodAndMirror, (TR_ResolvedMethod *) _remoteMirror, literals(), cpIndex);
+      _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedPossiblyPrivateVirtualMethodAndMirror, (TR_ResolvedMethod *) _remoteMirror, literals(), cpIndex);
       auto recv = _stream->read<J9Method *, UDATA, bool, TR_ResolvedJ9JITaaSServerMethodInfo>();
       J9Method *ramMethod = std::get<0>(recv);
       UDATA vTableIndex = std::get<1>(recv);
@@ -216,6 +216,22 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedVirtualMethod(TR::Compilation * comp
 
    return resolvedMethod;
 #endif
+   }
+
+TR_ResolvedMethod *
+TR_ResolvedJ9JITaaSServerMethod::getResolvedVirtualMethod(
+   TR::Compilation *comp,
+   I_32 cpIndex,
+   bool ignoreRtResolve,
+   bool *unresolvedInCP)
+   {
+   TR_ResolvedMethod *method = getResolvedPossiblyPrivateVirtualMethod(
+      comp,
+      cpIndex,
+      ignoreRtResolve,
+      unresolvedInCP);
+
+   return (method == NULL || method->isPrivate()) ? NULL : method;
    }
 
 bool
@@ -573,7 +589,7 @@ TR_ResolvedJ9JITaaSServerMethod::getUnresolvedSpecialMethodInCP(I_32 cpIndex)
    }
 
 TR_ResolvedMethod *
-TR_ResolvedJ9JITaaSServerMethod::getResolvedVirtualMethod(TR::Compilation * comp, TR_OpaqueClassBlock * classObject, I_32 virtualCallOffset , bool ignoreRtResolve)
+TR_ResolvedJ9JITaaSServerMethod::getResolvedVirtualMethod(TR::Compilation * comp, TR_OpaqueClassBlock * classObject, I_32 virtualCallOffset, bool ignoreRtResolve)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)_fe;
    // the frontend method performs a RPC
