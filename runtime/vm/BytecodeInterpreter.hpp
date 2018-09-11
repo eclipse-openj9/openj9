@@ -6089,7 +6089,10 @@ retry:
 				break;
 			case J9DescriptionCpTypeConstantDynamic:
 				if (((J9RAMConstantDynamicRef*)ramCPEntry)->exception == _vm->voidReflectClass->classObject) {
-					/* Void.class placed in the exception slot represents a valid null reference returned from resolution */
+					/* Void.class placed in the exception slot represents a valid null reference returned from resolution 
+					 * directly restore the special frame and return the null reference
+					 */
+					restoreGenericSpecialStackFrame(REGISTER_ARGS);
 					goto resolved;
 				}
 				resolveConstantDynamic(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
