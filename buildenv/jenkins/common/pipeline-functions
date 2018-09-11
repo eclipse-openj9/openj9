@@ -232,7 +232,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
     def jobs = [:]
 
     // compile the source and build the SDK
-    def BUILD_JOB_NAME = "Build-JDK${SDK_VERSION}-${SPEC}"
+    def BUILD_JOB_NAME = "Adam_Build-JDK${SDK_VERSION}-${SPEC}"
     jobs["build"] = build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS['OPENJDK'], OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], OMR_REPO, OMR_BRANCH, SHAS['OMR'], params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.BUILD_NODE)
     echo "JOB: ${BUILD_JOB_NAME} PASSED in: ${jobs['build'].getDurationString()}"
 

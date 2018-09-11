@@ -173,7 +173,7 @@ timeout(time: 10, unit: 'HOURS') {
 }
 
 def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE) {
-    def JOB_NAME = "Pipeline-Build-Test-JDK${SDK_VERSION}-${SPEC}"
+    def JOB_NAME = "Adam_Pipeline-Build-Test-JDK${SDK_VERSION}-${SPEC}"
 
     TESTS_TARGETS = params.TESTS_TARGETS    
     if (!TESTS_TARGETS) {
