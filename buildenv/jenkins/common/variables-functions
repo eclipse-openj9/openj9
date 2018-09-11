@@ -553,6 +553,14 @@ def add_string_params(PARAMETERS_TO_ADD) {
         PARAMETERS.add(string(name: key, defaultValue: value, description: '', trim: true))
     }
 }
+
+def add_pr_to_description() {
+    if (params.ghprbPullId) {
+        def TMP_DESC = (currentBuild.description) ? currentBuild.description + "<br>" : ""
+        currentBuild.description = TMP_DESC + "<a href=https://github.com/${params.ghprbGhRepository}/pull/${params.ghprbPullId}>PR #${params.ghprbPullId}</a>"
+    }
+}
+
 /*
 * Initializes all of the required variables for a Jenkins job by given job type.
 */
@@ -585,6 +593,7 @@ def set_job_variables(job_type) {
             set_build_variables()
             set_sdk_variables()
             set_artifactory_config()
+            add_pr_to_description()
             break
         case "pullRequest":
             // set the node the pull request job would run on
@@ -593,6 +602,7 @@ def set_job_variables(job_type) {
             set_build_variables()
             set_sdk_variables()
             set_test_variables()
+            set_artifactory_config()
             break
         case "pipeline":
             // set variables for a pipeline job
@@ -603,6 +613,7 @@ def set_job_variables(job_type) {
             set_test_targets()
             set_slack_channel()
             set_restart_timeout()
+            add_pr_to_description()
             break
         case "wrapper":
             //set variable for pipeline all/personal
@@ -612,7 +623,7 @@ def set_job_variables(job_type) {
             set_restart_timeout()
             break
         default:
-            error("Unknown Jenkins job type!")
+            error("Unknown Jenkins job type:'${job_type}'")
     }
 }
 
@@ -845,27 +856,31 @@ def get_build_specs_by_release(version, specs) {
  * and test. Returns a map of releases by specs.
  */
 def get_specs(SUPPORTED_SPECS) {
-    def RELEASES = []
-    def PLATFORMS = []
     def SPECS = [:]
 
-    // get releases 
-    params.each { key, value  ->
-        if ((key.indexOf('Java') != -1) && (value == true)) {
-            RELEASES.add(key.substring(4))
+    if (!RELEASES) {
+        // get releases
+        params.each { key, value  ->
+            if ((key.indexOf('Java') != -1) && (value == true)) {
+                RELEASES.add(key.substring(4))
+            }
         }
     }
+    echo "RELEASES:'${RELEASES}'"
 
-    // get specs
-    if (!params.PLATFORMS || (params.PLATFORMS.trim() == 'all')) {
-        // build and test all supported specs
-        PLATFORMS.addAll(SUPPORTED_SPECS.keySet())
-    } else {
-        PLATFORMS.addAll(params.PLATFORMS.split(","))
+    if (!PLATFORMS) {
+        // get specs
+        if (!params.PLATFORMS || (params.PLATFORMS.trim() == 'all')) {
+            // build and test all supported specs
+            PLATFORMS.addAll(SUPPORTED_SPECS.keySet())
+        } else {
+            PLATFORMS.addAll(params.PLATFORMS.split(","))
+        }
     }
-
+    echo "PLATFORMS:'${PLATFORMS}'"
     def RELEASES_STR = RELEASES.join(',')
 
+    // Setup SPEC map
     PLATFORMS.each { SPEC ->
         SPEC = SPEC.trim()
         if (!SUPPORTED_SPECS.keySet().contains(SPEC)) {
@@ -891,7 +906,7 @@ def get_specs(SUPPORTED_SPECS) {
     if (!SPECS) {
         error("Invalid PLATFORMS (${params.PLATFORMS}) and/or Java versions selections(${RELEASES_STR})!")
     }
-
+    echo "SPECS:'${SPECS}'"
     return SPECS
 }
 

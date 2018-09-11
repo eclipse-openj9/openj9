@@ -29,6 +29,8 @@ if (!binding.hasVariable('VENDOR_CREDENTIALS_ID_DEFAULT')) VENDOR_CREDENTIALS_ID
 if (!binding.hasVariable('DISCARDER_NUM_BUILDS')) DISCARDER_NUM_BUILDS = '1'
 if (!binding.hasVariable('GIT_URI')) GIT_URI = 'https://github.com/eclipse/openj9.git'
 if (!binding.hasVariable('GIT_BRANCH')) GIT_BRANCH = 'refs/heads/master'
+if (!binding.hasVariable('GIT_REFSPEC')) GIT_REFSPEC = ''
+if (!binding.hasVariable('LIGHTWEIGHT_CHECKOUT')) LIGHTWEIGHT_CHECKOUT = true
 
 if (jobType == 'build') {
     pipelineScript = 'buildenv/jenkins/jobs/builds/Build-Test-Any-Platform'
@@ -39,13 +41,14 @@ if (jobType == 'build') {
 }
 
 pipelineJob("$JOB_NAME") {
-    description('<h1>THIS IS AN AUTOMATICALLY GENERATED JOB DO NOT MODIFY, IT WILL BE OVERWRITTEN.</h1><p>This job is defined in Pipeline_Template.groovy in the openj9 repo, if you wish to change it modify that</p>')
+    description('<h3>THIS IS AN AUTOMATICALLY GENERATED JOB DO NOT MODIFY, IT WILL BE OVERWRITTEN.</h3><p>This job is defined in Pipeline_Template.groovy in the openj9 repo, if you wish to change it modify that</p>')
     definition {
         cpsScm {
             scm {
                 git {
                     remote {
                         url(GIT_URI)
+                        refspec(GIT_REFSPEC)
                     }
                     branch("${GIT_BRANCH}")
                     extensions {
@@ -54,7 +57,7 @@ pipelineJob("$JOB_NAME") {
                 }
             }
             scriptPath(pipelineScript)
-            lightweight(true)
+            lightweight(LIGHTWEIGHT_CHECKOUT)
         }
     }
     logRotator {
@@ -82,6 +85,9 @@ pipelineJob("$JOB_NAME") {
         stringParam('BUILD_IDENTIFIER')
         stringParam('ghprbGhRepository')
         stringParam('ghprbActualCommit')
+        stringParam('ghprbPullId')
+        stringParam('ghprbCommentBody')
+        stringParam('ghprbTargetBranch')
         stringParam('EXTRA_GETSOURCE_OPTIONS')
         stringParam('EXTRA_CONFIGURE_OPTIONS')
         stringParam('EXTRA_MAKE_OPTIONS')
