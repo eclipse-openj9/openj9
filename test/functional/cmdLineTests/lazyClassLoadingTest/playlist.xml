@@ -25,7 +25,8 @@
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TestConfig/playlist.xsd">
 	<test>
 		<testCaseName>cmdLineTester_LazyClassLoading</testCaseName>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -DJ9JAR=$(Q)$(TEST_RESROOT)$(D)lazyClassLoadingTest.jar$(Q) \
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+		$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -DJ9JAR=$(Q)$(TEST_RESROOT)$(D)lazyClassLoadingTest.jar$(Q) \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump' -Xint -jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)lazyClassLoading.xml$(Q) \
 	-nonZeroExitWhenError; \

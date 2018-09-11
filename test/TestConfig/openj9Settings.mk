@@ -66,12 +66,48 @@ else ifneq (,$(findstring linux_x86,$(SPEC)))
 	ARCH_DIR=i386
 endif
 
-ifneq (,$(findstring win,$(SPEC)))
-	JAVA_SHARED_LIBRARIES_DIR:=$(JAVA_BIN)$(D)$(VM_SUBDIR)
-else
-	JAVA_SHARED_LIBRARIES_DIR:=$(JAVA_LIB_DIR)$(D)$(ARCH_DIR)$(D)$(VM_SUBDIR)
+ifndef NATIVE_TEST_LIBS
+	NATIVE_TEST_LIBS=$(JDK_HOME)$(D)..$(D)native-test-libs$(D)
 endif
-ADD_JVM_LIB_DIR_TO_LIBPATH:=export LIBPATH=$(Q)$(JAVA_LIB_DIR)$(D)$(VM_SUBDIR)$(P)$(JAVA_SHARED_LIBRARIES_DIR)$(P)$(JAVA_BIN)$(D)j9vm$(P)$(LIBPATH)$(Q);
+
+# if JAVA_VERSION is below SE110, check for default locations for native test libs
+# otherwise, native test libs are under NATIVE_TEST_LIBS
+ifneq ($(filter SE80 SE90 SE100, $(JAVA_VERSION)),)
+	ifneq (,$(findstring win,$(SPEC)))
+		JAVA_SHARED_LIBRARIES_DIR:=$(JAVA_BIN)$(D)$(VM_SUBDIR)
+	else
+		JAVA_SHARED_LIBRARIES_DIR:=$(JAVA_LIB_DIR)$(D)$(ARCH_DIR)$(D)$(VM_SUBDIR)
+	endif
+	ADD_JVM_LIB_DIR_TO_LIBPATH:=export LIBPATH=$(Q)$(JAVA_LIB_DIR)$(D)$(VM_SUBDIR)$(P)$(JAVA_SHARED_LIBRARIES_DIR)$(P)$(JAVA_BIN)$(D)j9vm$(P)$(LIBPATH)$(Q);
+else
+	VM_SUBDIR_PATH=$(JAVA_LIB_DIR)$(D)$(VM_SUBDIR)
+	J9VM_PATH=$(JAVA_BIN)$(D)j9vm
+	PS=:
+	ifneq (,$(findstring win,$(SPEC)))
+		ifeq ($(CYGWIN),1)
+			NATIVE_TEST_LIBS := $(shell cygpath -u $(NATIVE_TEST_LIBS))
+			VM_SUBDIR_PATH := $(shell cygpath -u $(VM_SUBDIR_PATH))
+			J9VM_PATH := $(shell cygpath -u $(J9VM_PATH))
+		else
+			PS=;
+		endif
+	endif
+	
+	TEST_LIB_PATH_VALUE:=$(Q)$(NATIVE_TEST_LIBS)$(PS)$(VM_SUBDIR_PATH)$(PS)$(J9VM_PATH)$(Q)
+		
+	ifneq (,$(findstring win,$(SPEC)))
+		TEST_LIB_PATH:=PATH=$(Q)$(TEST_LIB_PATH_VALUE)$(PS)$(PATH)$(Q)
+	else ifneq (,$(findstring aix,$(SPEC)))
+		TEST_LIB_PATH:=LIBPATH=$(Q)$(TEST_LIB_PATH_VALUE)$(PS)$(LIBPATH)$(Q)
+	else ifneq (,$(findstring zos,$(SPEC)))
+		TEST_LIB_PATH:=LIBPATH=$(Q)$(TEST_LIB_PATH_VALUE)$(PS)$(LIBPATH)$(Q)
+	else
+		TEST_LIB_PATH:=LD_LIBRARY_PATH=$(Q)$(TEST_LIB_PATH_VALUE)$(PS)$(LD_LIBRARY_PATH)$(Q)
+	endif
+	
+	JAVA_SHARED_LIBRARIES_DIR:=$(NATIVE_TEST_LIBS)
+	ADD_JVM_LIB_DIR_TO_LIBPATH:=export $(TEST_LIB_PATH);
+endif
 
 ifneq ($(DEBUG),)
 $(info JAVA_SHARED_LIBRARIES_DIR is set to $(JAVA_SHARED_LIBRARIES_DIR))
