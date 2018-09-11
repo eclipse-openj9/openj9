@@ -46,7 +46,7 @@ jdk_image_dir:
 credentials:
   github: 'b6987280-6402-458f-bdd6-7affc2e360d4'
 test_dependencies_job_name: 'test.getDependency'
-slack_channel: '#jenkins'
+slack_channel: '#jenkins-sandbox'
 build_discarder:
   logs:
     build: 20
