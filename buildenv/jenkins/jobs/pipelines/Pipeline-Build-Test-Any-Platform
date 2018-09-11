@@ -29,7 +29,12 @@ timestamps {
                 checkout scm
             }
             variableFile = load 'buildenv/jenkins/common/variables-functions'
-            variableFile.set_job_variables('pipeline')
+            // Determine if build is a PullRequest
+            if (params.ghprbPullId) {
+                variableFile.set_job_variables('PullRequest')
+            } else {
+                variableFile.set_job_variables('pipeline')
+            }
 
             buildFile = load 'buildenv/jenkins/common/pipeline-functions'
             SHAS = buildFile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, VENDOR_TEST_REPOS_MAP, VENDOR_TEST_BRANCHES_MAP, VENDOR_TEST_SHAS_MAP)

@@ -251,10 +251,10 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
         def targets = TESTS_TARGETS.split(",")
         targets.each { target ->
             switch (target.trim().toLowerCase()) {
-                case "_sanity":
+                case ~/^(_)?sanity$/:
                     TARGET_NAMES.addAll(["sanity.functional", "sanity.system"])
                     break
-                case "_extended":
+                case ~/^(_)?extended$/:
                     TARGET_NAMES.addAll(["extended.functional", "extended.system"])
                     break
                 default:

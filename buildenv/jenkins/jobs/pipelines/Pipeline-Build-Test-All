@@ -104,6 +104,25 @@ timeout(time: 10, unit: 'HOURS') {
                 def variableFile = load 'buildenv/jenkins/common/variables-functions'
                 buildFile = load 'buildenv/jenkins/common/pipeline-functions'
 
+                // Determine if build is a PullRequest
+                if (params.ghprbPullId) {
+                    // Parse Github trigger comment
+                    // Jenkins test sanity <platform>*
+                    // Jenkins test extended <platform>*
+                    // Jenkins compile <platform>*
+                    // Jenkins test <comma_separated_test_target> <platform> *
+                    //params.TESTS_TARGETS = params.ghprbCommentBody.substring(?)
+                    Java8 = true
+                    Java9 = false
+                    Java10 = false
+                    Java11 = false
+                    Javanext = false
+                    def newJava8Parameter = new StringParameterValue('Java8', 'true')
+                    build.replaceAction(new ParametersAction(newJava8Parameter))
+                    PLATFORMS = 'linux_390-64_cmprssptrs'
+                    TESTS_TARGETS = 'sanity.functional'
+                }
+
                 def BUILD_SPECS = get_specs(SPECS)
                 // find releases to build based on given specs
                 BUILD_RELEASES.addAll(get_build_releases(BUILD_SPECS))
@@ -119,7 +138,8 @@ timeout(time: 10, unit: 'HOURS') {
                     }
 
                     // update build description
-                    currentBuild.description += "<br/>${params.PLATFORMS}"
+                    def TMP_DESC = (currentBuild.description) ? currentBuild.description + "<br>" : ""
+                    currentBuild.description = TMP_DESC + "<br/>${params.PLATFORMS}"
                 }
 
                 def BUILD_NODES = get_node_labels(params.BUILD_NODE_LABELS, BUILD_SPECS.keySet())
@@ -175,34 +195,31 @@ timeout(time: 10, unit: 'HOURS') {
 def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE) {
     def JOB_NAME = "Adam_Pipeline-Build-Test-JDK${SDK_VERSION}-${SPEC}"
 
-    TESTS_TARGETS = params.TESTS_TARGETS    
-    if (!TESTS_TARGETS) {
-        TESTS_TARGETS = ''
-    }
-    VARIABLE_FILE = params.VARIABLE_FILE    
-    if (!VARIABLE_FILE) {
-        VARIABLE_FILE = ''
-    }
-    VENDOR_REPO = params.VENDOR_REPO    
-    if (!VENDOR_REPO) {
-        VENDOR_REPO = ''
-    }
-    VENDOR_BRANCH = params.VENDOR_BRANCH    
-    if (!VENDOR_BRANCH) {
-        VENDOR_BRANCH = ''
-    }
-    VENDOR_CREDENTIALS_ID = params.VENDOR_CREDENTIALS_ID    
-    if (!VENDOR_CREDENTIALS_ID) {
-        VENDOR_CREDENTIALS_ID = ''
-    }
-    PERSONAL_BUILD = params.PERSONAL_BUILD    
-    if (!PERSONAL_BUILD) {
-        PERSONAL_BUILD = ''
-    }
-    SLACK_HANDLE = params.SLACK_HANDLE    
-    if (!SLACK_HANDLE) {
-        SLACK_HANDLE = ''
-    }
+    TESTS_TARGETS = (params.TESTS_TARGETS) ? params.TESTS_TARGETS : ""
+    echo "TESTS_TARGETS:'${TESTS_TARGETS}'"
+    VARIABLE_FILE = (params.VARIABLE_FILE) ? params.VARIABLE_FILE : ""
+    echo "VARIABLE_FILE:'${VARIABLE_FILE}'"
+    VENDOR_REPO = (params.VENDOR_REPO) ? params.VENDOR_REPO : ""
+    echo "VENDOR_REPO:'${VENDOR_REPO}'"
+    VENDOR_BRANCH = (params.VENDOR_BRANCH) ? params.VENDOR_BRANCH : ""
+    echo "VENDOR_BRANCH:'${VENDOR_BRANCH}'"
+    VENDOR_CREDENTIALS_ID = (params.VENDOR_CREDENTIALS_ID) ? params.VENDOR_CREDENTIALS_ID : ""
+    echo "VENDOR_CREDENTIALS_ID:'${VENDOR_CREDENTIALS_ID}'"
+    PERSONAL_BUILD = (params.PERSONAL_BUILD) ? params.PERSONAL_BUILD : ""
+    echo "PERSONAL_BUILD:'${PERSONAL_BUILD}'"
+    ghprbTargetBranch = (params.ghprbTargetBranch) ? params.ghprbTargetBranch : ""
+    echo "ghprbTargetBranch:'${ghprbTargetBranch}'"
+
+    // Pull Request Builds
+    ghprbPullId = (params.ghprbPullId) ? params.ghprbPullId : ""
+    echo "ghprbPullId:'${ghprbPullId}'"
+    ghprbGhRepository = (params.ghprbGhRepository) ? params.ghprbGhRepository : ""
+    echo "ghprbGhRepository:'${ghprbGhRepository}'"
+    ghprbCommentBody = (params.ghprbCommentBody) ? params.ghprbCommentBody : ""
+    echo "ghprbCommentBody:'${ghprbCommentBody}'"
+    ghprbTargetBranch = (params.ghprbTargetBranch) ? params.ghprbTargetBranch : ""
+    echo "ghprbTargetBranch:'${ghprbTargetBranch}'"
+
     stage ("${JOB_NAME}") {
         JOB = build job: JOB_NAME,
                 parameters: [
@@ -223,7 +240,11 @@ def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_RE
                     string(name: 'BUILD_NODE', value: BUILD_NODE),
                     string(name: 'TEST_NODE', value: TEST_NODE),
                     string(name: 'PERSONAL_BUILD', value: PERSONAL_BUILD),
-                    string(name: 'SLACK_CHANNEL', value: SLACK_HANDLE)]
+                    string(name: 'SLACK_CHANNEL', value: SLACK_HANDLE),
+                    string(name: 'ghprbPullId', value: ghprbPullId),
+                    string(name: 'ghprbGhRepository', value: ghprbGhRepository),
+                    string(name: 'ghprbCommentBody', value: ghprbCommentBody),
+                    string(name: 'ghprbTargetBranch', value: ghprbTargetBranch)]
         return JOB
     }
 }

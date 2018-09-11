@@ -655,13 +655,6 @@ def set_job_variables(job_type) {
             set_test_variables()
             break
         case "pullRequest":
-            // set the node the pull request job would run on
-            set_node('build')
-            // set variables for a pull request job that builds an SDK
-            set_build_variables()
-            set_sdk_variables()
-            set_test_variables()
-            break
         case "pipeline":
             // set variables for a pipeline job
             set_repos_variables()
