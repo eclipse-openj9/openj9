@@ -50,6 +50,7 @@ tools should be installed on your test machine to run tests.
     JAVA_VERSION=[SE80|SE90|SE100|SE110|Panama|Valhalla] (SE90 default value)
     JAVA_IMPL=[openj9|ibm|hotspot|sap] (openj9 default value)
     BUILD_LIST=<comma separated projects to be compiled and executed> (default to all projects)
+    NATIVE_TEST_LIBS=<path to native test libraries> (default to native-test-libs folder at same level as JDK_HOME)
     ```
 
 Please refer *.spec files in [buildspecs](https://github.com/eclipse/openj9/tree/master/buildspecs)
