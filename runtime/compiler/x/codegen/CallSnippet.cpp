@@ -39,10 +39,33 @@
 #include "il/symbol/StaticSymbol.hpp"
 #include "x/codegen/X86PrivateLinkage.hpp"
 
+bool TR::X86PicDataSnippet::shouldEmitJ2IThunkPointer()
+   {
+   if (!TR::Compiler->target.is64Bit())
+      return false; // no j2i thunks on 32-bit
+
+   if (!isInterface())
+      return unresolvedDispatch(); // invokevirtual could be private
+
+   // invokeinterface
+   if (forceUnresolvedDispatch())
+      return true; // forced to assume it could be private/Object
+
+   // Since interface method symrefs are always unresolved, check to see
+   // whether we know that it's a normal interface call. If we don't, then
+   // it could be private/Object.
+   uintptrj_t itableIndex = (uintptrj_t)-1;
+   int32_t cpIndex = _methodSymRef->getCPIndex();
+   TR_ResolvedMethod *owningMethod = _methodSymRef->getOwningMethod(comp());
+   TR_OpaqueClassBlock *interfaceClass =
+      owningMethod->getResolvedInterfaceMethod(cpIndex, &itableIndex);
+   return interfaceClass == NULL;
+   }
+
 uint8_t *TR::X86PicDataSnippet::encodeConstantPoolInfo(uint8_t *cursor)
    {
-   intptrj_t cpAddr = (intptrj_t)_methodSymRef->getOwningMethod(cg()->comp())->constantPool();
-   *(intptrj_t *)cursor = cpAddr;
+   uintptrj_t cpAddr = (uintptrj_t)_methodSymRef->getOwningMethod(cg()->comp())->constantPool();
+   *(uintptrj_t *)cursor = cpAddr;
 
    if (_thunkAddress)
       {
@@ -69,17 +92,34 @@ uint8_t *TR::X86PicDataSnippet::encodeConstantPoolInfo(uint8_t *cursor)
 
    // DD/DQ cpIndex
    //
-   cursor += sizeof(intptrj_t);
+   cursor += sizeof(uintptrj_t);
    *(uintptrj_t *)cursor = (uintptrj_t)_methodSymRef->getCPIndexForVM();
-   cursor += sizeof(intptrj_t);
+   cursor += sizeof(uintptrj_t);
 
    return cursor;
    }
 
+uint8_t *TR::X86PicDataSnippet::encodeJ2IThunkPointer(uint8_t *cursor)
+   {
+   TR_ASSERT_FATAL(_hasJ2IThunkInPicData, "did not expect j2i thunk pointer");
+
+   // Find the j2i thunk for this method's signature
+   TR_J9VMBase *fej9 = (TR_J9VMBase*)(cg()->fe());
+   TR::Symbol *symbol = _methodSymRef->getSymbol();
+   TR_Method *method = symbol->getMethodSymbol()->getMethod();
+   void *j2iThunk = fej9->getJ2IThunk(method, comp());
+   TR_ASSERT_FATAL(j2iThunk != NULL, "null virtual j2i thunk");
+
+   // DD/DQ j2iThunk
+   // TODO: AOT relocation
+   *(uintptrj_t *)cursor = (uintptrj_t)j2iThunk;
+   cursor += sizeof(uintptrj_t);
+
+   return cursor;
+   }
 
 uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
    {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg()->fe());
    uint8_t *startOfSnippet = cg()->getBinaryBufferCursor();
 
    uint8_t *cursor = startOfSnippet;
@@ -128,7 +168,7 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
       // DD/DQ constantPool address
       // DD/DQ cpIndex
       //
-      if (_methodSymRef->isUnresolved())
+      if (unresolvedDispatch())
          {
          cursor = encodeConstantPoolInfo(cursor);
          }
@@ -137,13 +177,17 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
          TR_ASSERT(0, "Can't handle resolved IPICs here yet!");
          }
 
-      // Reserve space for resolved interface class and itable index.
+      // Reserve space for resolved interface class and itable offset.
       // These slots will be populated during interface class resolution.
+      // The itable offset slot doubles as a direct J9Method pointer slot.
       //
       // DD/DQ  0x00000000
       // DD/DQ  0x00000000
       //
-      cursor += (2 * sizeof(intptrj_t));
+      *(uintptrj_t*)cursor = 0;
+      cursor += sizeof(uintptrj_t);
+      *(uintptrj_t*)cursor = 0;
+      cursor += sizeof(uintptrj_t);
 
       if (TR::Compiler->target.is64Bit())
          {
@@ -152,6 +196,9 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
          uint16_t *slotPatchInstructionBytes = (uint16_t *)_slotPatchInstruction->getBinaryEncoding();
          *(uint16_t *)cursor = *slotPatchInstructionBytes;
          cursor += 2;
+
+         if (unresolvedDispatch() && _hasJ2IThunkInPicData)
+            cursor = encodeJ2IThunkPointer(cursor);
          }
       else
          {
@@ -178,13 +225,14 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
       // DD/DQ constantPool address
       // DD/DQ cpIndex
       //
-      if (_methodSymRef->isUnresolved() || fej9->forceUnresolvedDispatch())
+      if (unresolvedDispatch())
          {
          // Align the real snippet entry point because it will be patched with
          // the vtable dispatch when the method is resolved.
          //
          intptrj_t entryPoint = ((intptrj_t)cursor +
-                                 ((2 * sizeof(intptrj_t)) +
+                                 ((3 * sizeof(uintptrj_t)) +
+                                  (hasJ2IThunkInPicData() ? sizeof(uintptrj_t) : 0) +
                                   (TR::Compiler->target.is64Bit() ? 4 : 1)));
 
          intptrj_t requiredEntryPoint =
@@ -198,8 +246,15 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
          //
          cursor = encodeConstantPoolInfo(cursor);
 
+         // DD/DQ directMethod (initially null)
+         *(uintptrj_t *)cursor = 0;
+         cursor += sizeof(uintptrj_t);
+
          if (TR::Compiler->target.is64Bit())
             {
+            // DD/DQ j2iThunk
+            cursor = encodeJ2IThunkPointer(cursor);
+
             // REX prefix of MOVRegImm64 instruction
             //
             uint8_t *slotPatchInstructionBytes = (uint8_t *)_slotPatchInstruction->getBinaryEncoding();
@@ -356,10 +411,14 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
       {
       // TODO: clean this up!
       //
-      if (TR::Compiler->target.is64Bit())
-         bufferPos -= (4 + 16);
-      else
-         bufferPos -= (1 + 8);
+      bufferPos -= TR::Compiler->target.is64Bit() ? 4 : 1;
+      bufferPos -= 2 * sizeof(uintptrj_t);
+      if (snippet->unresolvedDispatch())
+         {
+         bufferPos -= sizeof(uintptrj_t);
+         if (snippet->hasJ2IThunkInPicData())
+            bufferPos -= sizeof(uintptrj_t);
+         }
 
       uint32_t offset = bufferPos - _cg->getCodeStart();
       trfprintf(pOutFile, "\n\n" POINTER_PRINTF_FORMAT " %08x %*s", bufferPos, offset, 65, " <<< VPic Data >>>");
@@ -391,24 +450,44 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
 
       if (methodSymRef->isUnresolved())
          {
-         const char *op = (sizeof(intptrj_t) == 4) ? "DD" : "DQ";
+         const char *op = (sizeof(uintptrj_t) == 4) ? "DD" : "DQ";
 
-         printPrefix(pOutFile, NULL, bufferPos, sizeof(intptrj_t));
-         trfprintf(pOutFile, "%s\t" POINTER_PRINTF_FORMAT "\t\t%s owning method cpAddr",
-                       op, (intptrj_t)methodSymRef->getOwningMethod(_comp)->constantPool(), commentString());
-         bufferPos += sizeof(intptrj_t);
+         printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptrj_t));
+         trfprintf(
+            pOutFile,
+            "%s\t" POINTER_PRINTF_FORMAT "\t\t%s owning method cpAddr",
+            op,
+            (void*)*(uintptrj_t*)bufferPos,
+            commentString());
+         bufferPos += sizeof(uintptrj_t);
 
-         printPrefix(pOutFile, NULL, bufferPos, sizeof(intptrj_t));
-         trfprintf(pOutFile, "%s\t" POINTER_PRINTF_FORMAT "\t\t%s cpIndex", op, (intptrj_t)methodSymRef->getCPIndexForVM(), commentString());
-         bufferPos += sizeof(intptrj_t);
+         printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptrj_t));
+         trfprintf(
+            pOutFile,
+            "%s\t" POINTER_PRINTF_FORMAT "\t\t%s cpIndex",
+            op,
+            (void*)*(uintptrj_t*)bufferPos,
+            commentString());
+         bufferPos += sizeof(uintptrj_t);
 
-         printPrefix(pOutFile, NULL, bufferPos, sizeof(intptrj_t));
-         trfprintf(pOutFile, "%s\t" POINTER_PRINTF_FORMAT "\t\t%s interface class", op, 0, commentString());
-         bufferPos += sizeof(intptrj_t);
+         printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptrj_t));
+         trfprintf(
+            pOutFile,
+            "%s\t" POINTER_PRINTF_FORMAT "\t\t%s interface class (initially null)",
+            op,
+            (void*)*(uintptrj_t*)bufferPos,
+            commentString());
+         bufferPos += sizeof(uintptrj_t);
 
-         printPrefix(pOutFile, NULL, bufferPos, sizeof(intptrj_t));
-         trfprintf(pOutFile, "%s\t" POINTER_PRINTF_FORMAT "\t\t%s interface method index", op, 0, commentString());
-         bufferPos += sizeof(intptrj_t);
+         printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptrj_t));
+         trfprintf(
+            pOutFile,
+            "%s\t" POINTER_PRINTF_FORMAT "\t\t%s itable offset%s (initially zero)",
+            op,
+            (void*)*(uintptrj_t*)bufferPos,
+            commentString(),
+            snippet->hasJ2IThunkInPicData() ? " or direct J9Method" : "");
+         bufferPos += sizeof(uintptrj_t);
 
          if (TR::Compiler->target.is64Bit())
             {
@@ -429,12 +508,24 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
                           *bufferPos,
                           commentString());
             bufferPos += 1;
+
+            if (snippet->hasJ2IThunkInPicData())
+               {
+               printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptrj_t));
+               trfprintf(
+                  pOutFile,
+                  "%s\t" POINTER_PRINTF_FORMAT "\t\t%s j2i virtual thunk",
+                  op,
+                  (void*)*(uintptrj_t*)bufferPos,
+                  commentString());
+               bufferPos += sizeof(uintptrj_t);
+               }
             }
          else
             {
-            // REX+MOV of MOVRegImm64 instruction
+            // ModRM of CMPRegImm4
             //
-                    printPrefix(pOutFile, NULL, bufferPos, 1);
+            printPrefix(pOutFile, NULL, bufferPos, 1);
             trfprintf(pOutFile, "%s\t%s%02x%s\t\t\t\t\t\t\t\t%s ModRM of CMP",
                           dbString(),
                           hexPrefixString(),
@@ -449,23 +540,47 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
       {
       uint8_t callModRM = 0;
 
-      if (methodSymRef->isUnresolved())
+      if (snippet->unresolvedDispatch())
          {
-         const char *op = (sizeof(intptrj_t) == 4) ? "DD" : "DQ";
+         const char *op = (sizeof(uintptrj_t) == 4) ? "DD" : "DQ";
 
-         printPrefix(pOutFile, NULL, bufferPos, sizeof(intptrj_t));
-         trfprintf(pOutFile, "%s\t" POINTER_PRINTF_FORMAT "\t\t%s owning method cpAddr",
-                       op, (intptrj_t)methodSymRef->getOwningMethod(_comp)->constantPool(),
-                       commentString());
-         bufferPos += sizeof(intptrj_t);
+         printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptrj_t));
+         trfprintf(
+            pOutFile,
+            "%s\t" POINTER_PRINTF_FORMAT "\t\t%s owning method cpAddr",
+            op,
+            (void*)*(uintptrj_t*)bufferPos,
+            commentString());
+         bufferPos += sizeof(uintptrj_t);
 
-         printPrefix(pOutFile, NULL, bufferPos, sizeof(intptrj_t));
-         trfprintf(pOutFile, "%s\t" POINTER_PRINTF_FORMAT "\t\t%s cpIndex", op, (intptrj_t)methodSymRef->getCPIndexForVM(),
-                       commentString());
-         bufferPos += sizeof(intptrj_t);
+         printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptrj_t));
+         trfprintf(
+            pOutFile,
+            "%s\t" POINTER_PRINTF_FORMAT "\t\t%s cpIndex",
+            op,
+            (void*)*(uintptrj_t*)bufferPos,
+            commentString());
+         bufferPos += sizeof(uintptrj_t);
+
+         printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptrj_t));
+         trfprintf(pOutFile,
+            "%s\t" POINTER_PRINTF_FORMAT "\t\t%s direct J9Method (initially null)",
+            op,
+            (void*)*(uintptrj_t*)bufferPos,
+            commentString());
+         bufferPos += sizeof(uintptrj_t);
 
          if (TR::Compiler->target.is64Bit())
             {
+            printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptrj_t));
+            trfprintf(
+               pOutFile,
+               "%s\t" POINTER_PRINTF_FORMAT "\t\t%s j2i virtual thunk",
+               op,
+               (void*)*(uintptrj_t*)bufferPos,
+               commentString());
+            bufferPos += sizeof(uintptrj_t);
+
             printPrefix(pOutFile, NULL, bufferPos, 1);
             trfprintf(pOutFile, "%s\t%02x\t\t\t\t\t\t\t\t%s REX of MOVRegImm64",
                           dbString(),
@@ -491,7 +606,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
             printPrefix(pOutFile, NULL, bufferPos, 1);
             trfprintf(pOutFile, "%s\t%02x\t\t\t\t\t\t\t\t%s ModRM for CALLMem",
                           dbString(),
-                          callModRM,
+                          *bufferPos,
                           commentString());
             bufferPos += 1;
             }
@@ -548,15 +663,18 @@ uint32_t TR::X86PicDataSnippet::getLength(int32_t estimatedSnippetStart)
       {
       return   5                                 // Lookup dispatch
              + 5                                 // JMP done
-             + (4 * sizeof(intptrj_t))           // Resolve slots
-             + (TR::Compiler->target.is64Bit() ? 2 : 1);  // ModRM or REX+MOV
+             + (4 * sizeof(uintptrj_t))          // Resolve slots
+             + (TR::Compiler->target.is64Bit() ? 2 : 1)   // ModRM or REX+MOV
+             + (_hasJ2IThunkInPicData ? sizeof(uintptrj_t) : 0); // j2i thunk pointer
       }
    else
       {
       return   6                                 // CALL [Mem] (pessimistically assume a SIB is needed)
              + (TR::Compiler->target.is64Bit() ? 2 : 0)   // REX for CALL + SIB for CALL (64-bit)
              + 5                                 // JMP done
-             + (2 * sizeof(intptrj_t))           // cpAddr, cpIndex
+             + (2 * sizeof(uintptrj_t))          // cpAddr, cpIndex
+             + (unresolvedDispatch() ? sizeof(uintptrj_t) : 0)  // directMethod
+             + (_hasJ2IThunkInPicData ? sizeof(uintptrj_t) : 0) // j2i thunk
 
              // 64-bit Data
              // -----------

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,6 +44,7 @@ class X86PicDataSnippet : public TR::Snippet
    uint8_t            *_thunkAddress;
    int32_t             _numberOfSlots;
    bool                _isInterface;
+   bool                _hasJ2IThunkInPicData;
 
    public:
 
@@ -65,24 +66,40 @@ class X86PicDataSnippet : public TR::Snippet
          _slotPatchInstruction(slotPatchInstruction),
          _isInterface(isInterface),
          _dispatchSymRef(NULL),
-         _thunkAddress(thunkAddress)
+         _thunkAddress(thunkAddress),
+         _hasJ2IThunkInPicData(shouldEmitJ2IThunkPointer())
       {}
 
    bool isInterface()         {return _isInterface;}
    int32_t getNumberOfSlots() {return _numberOfSlots;}
+   bool hasJ2IThunkInPicData() {return _hasJ2IThunkInPicData;}
 
    TR::SymbolReference *getDispatchSymRef() {return _dispatchSymRef;}
    TR::SymbolReference *getMethodSymRef() {return _methodSymRef;}
 
    TR::LabelSymbol *getDoneLabel() {return _doneLabel;}
 
+   bool forceUnresolvedDispatch()
+      {
+      return ((TR_J9VMBase*)(cg()->fe()))->forceUnresolvedDispatch();
+      }
+
+   bool unresolvedDispatch()
+      {
+      return _methodSymRef->isUnresolved() || forceUnresolvedDispatch();
+      }
+
    uint8_t *encodeConstantPoolInfo(uint8_t *cursor);
+   uint8_t *encodeJ2IThunkPointer(uint8_t *cursor);
 
    virtual Kind getKind() { return (_isInterface ? IsIPicData : IsVPicData); }
 
    virtual uint8_t *emitSnippetBody();
 
    virtual uint32_t getLength(int32_t estimatedSnippetStart);
+
+   private:
+   bool shouldEmitJ2IThunkPointer();
    };
 
 
