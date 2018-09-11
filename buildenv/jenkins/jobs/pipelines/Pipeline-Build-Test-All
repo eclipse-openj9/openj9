@@ -175,6 +175,34 @@ timeout(time: 10, unit: 'HOURS') {
 def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE) {
     def JOB_NAME = "Pipeline-Build-Test-JDK${SDK_VERSION}-${SPEC}"
 
+    TESTS_TARGETS = params.TESTS_TARGETS    
+    if (!TESTS_TARGETS) {
+        TESTS_TARGETS = ''
+    }
+    VARIABLE_FILE = params.VARIABLE_FILE    
+    if (!VARIABLE_FILE) {
+        VARIABLE_FILE = ''
+    }
+    VENDOR_REPO = params.VENDOR_REPO    
+    if (!VENDOR_REPO) {
+        VENDOR_REPO = ''
+    }
+    VENDOR_BRANCH = params.VENDOR_BRANCH    
+    if (!VENDOR_BRANCH) {
+        VENDOR_BRANCH = ''
+    }
+    VENDOR_CREDENTIALS_ID = params.VENDOR_CREDENTIALS_ID    
+    if (!VENDOR_CREDENTIALS_ID) {
+        VENDOR_CREDENTIALS_ID = ''
+    }
+    PERSONAL_BUILD = params.PERSONAL_BUILD    
+    if (!PERSONAL_BUILD) {
+        PERSONAL_BUILD = ''
+    }
+    SLACK_HANDLE = params.SLACK_HANDLE    
+    if (!SLACK_HANDLE) {
+        SLACK_HANDLE = ''
+    }
     stage ("${JOB_NAME}") {
         JOB = build job: JOB_NAME,
                 parameters: [
@@ -187,15 +215,15 @@ def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_RE
                     string(name: 'OMR_REPO', value: OMR_REPO),
                     string(name: 'OMR_BRANCH', value: OMR_BRANCH),
                     string(name: 'OMR_SHA', value: SHAS['OMR']),
-                    string(name: 'TESTS_TARGETS', value: params.TESTS_TARGETS),
-                    string(name: 'VARIABLE_FILE', value: params.VARIABLE_FILE),
-                    string(name: 'VENDOR_REPO', value: params.VENDOR_REPO),
-                    string(name: 'VENDOR_BRANCH', value: params.VENDOR_BRANCH),
-                    string(name: 'VENDOR_CREDENTIALS_ID', value: params.VENDOR_CREDENTIALS_ID),
+                    string(name: 'TESTS_TARGETS', value: TESTS_TARGETS),
+                    string(name: 'VARIABLE_FILE', value: VARIABLE_FILE),
+                    string(name: 'VENDOR_REPO', value: VENDOR_REPO),
+                    string(name: 'VENDOR_BRANCH', value: VENDOR_BRANCH),
+                    string(name: 'VENDOR_CREDENTIALS_ID', value: VENDOR_CREDENTIALS_ID),
                     string(name: 'BUILD_NODE', value: BUILD_NODE),
                     string(name: 'TEST_NODE', value: TEST_NODE),
-                    string(name: 'PERSONAL_BUILD', value: params.PERSONAL_BUILD),
-                    string(name: 'SLACK_CHANNEL', value: params.SLACK_HANDLE)]
+                    string(name: 'PERSONAL_BUILD', value: PERSONAL_BUILD),
+                    string(name: 'SLACK_CHANNEL', value: SLACK_HANDLE)]
         return JOB
     }
 }
