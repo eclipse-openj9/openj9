@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -167,7 +167,7 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 	U_8 *bcStart, *bcInstructionStart, *bcIndex, *bcEnd;
 	UDATA bc, index, u1, u2, i, maxLocals, cpCount, tag, firstKey;
 	UDATA sigChar;
-	UDATA errorType;
+	UDATA errorType = 0;
 	UDATA errorDataIndex = 0;
 
 
@@ -228,26 +228,54 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 				errorDataIndex = index;
 				goto _verifyError;
 			}
+
 			info = &(classfile->constantPool[index]);
 			tag = (UDATA) info->tag;
-
-			if (!((tag == CFR_CONSTANT_Integer)
-				  || (tag == CFR_CONSTANT_Float)
-				  || (tag == CFR_CONSTANT_String)
-				  || ((tag == CFR_CONSTANT_Class)
-							&& (((flags & BCT_MajorClassFileVersionMask) >= BCT_Java5MajorVersionShifted)
-									|| ((flags & BCT_MajorClassFileVersionMask) == 0)))
-				  || (((tag == CFR_CONSTANT_MethodType) || (tag == CFR_CONSTANT_MethodHandle))
-						  && (((flags & BCT_MajorClassFileVersionMask) >= BCT_Java7MajorVersionShifted)
-									|| ((flags & BCT_MajorClassFileVersionMask) == 0)))	)) {
-				errorType = J9NLS_CFR_ERR_BC_LDC_NOT_CONSTANT__ID;
-				/* Jazz 82615: Set the constant pool index to show up in the error message framework */
-				errorDataIndex = index;
-				goto _verifyError;
+			{
+				switch (tag) {
+				case CFR_CONSTANT_Integer:
+				case CFR_CONSTANT_Float:
+				case CFR_CONSTANT_String:
+					break;
+				case CFR_CONSTANT_Class:
+					if ((flags & BCT_MajorClassFileVersionMask) < BCT_Java5MajorVersionShifted) {
+						errorType = J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49__ID;
+						errorDataIndex = index;
+						goto _verifyError;
+					}
+					break;
+				case CFR_CONSTANT_MethodType:
+				case CFR_CONSTANT_MethodHandle:
+					if ((flags & BCT_MajorClassFileVersionMask) < BCT_Java7MajorVersionShifted) {
+						errorType = J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51__ID;
+						errorDataIndex = index;
+						goto _verifyError;
+					}
+					break;
+				case CFR_CONSTANT_Dynamic:
+					{
+						J9CfrConstantPoolInfo *constantDynamicSignature = &classfile->constantPool[classfile->constantPool[info->slot2].slot2];
+						if ((flags & BCT_MajorClassFileVersionMask) < BCT_Java11MajorVersionShifted) {
+							errorType = J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55__ID;
+							errorDataIndex = index;
+							goto _verifyError;
+						} else if (('D' == constantDynamicSignature->bytes[0]) || ('J' == constantDynamicSignature->bytes[0])) {
+							errorType = J9NLS_CFR_ERR_BC_LDC_CONSTANT_DYNAMIC_RETURNS_LONG_OR_DOUBLE__ID;
+							errorDataIndex = index;
+							goto _verifyError;
+						}
+					}
+					break;
+				default:
+					errorType = J9NLS_CFR_ERR_BC_LDC_NOT_CONSTANT_OR_CONSTANT_DYNAMIC__ID;
+					errorDataIndex = index;
+					goto _verifyError;
+				}
 			}
 			break;
 
 		case CFR_BC_ldc2_w:
+
 			NEXT_U16(index, bcIndex);
 			if ((!index) || (index >= cpCount - 1)) {
 				errorType = J9NLS_CFR_ERR_BAD_INDEX__ID;
@@ -257,10 +285,20 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 			}
 			info = &(classfile->constantPool[index]);
 			tag = (UDATA) info->tag;
-			if (!((tag == CFR_CONSTANT_Double)
-				  || (tag == CFR_CONSTANT_Long))) {
-				errorType = J9NLS_CFR_ERR_BC_LDC_NOT_CONSTANT__ID;
-				/* Jazz 82615: Set the constant pool index to show up in the error message framework */
+
+			if (CFR_CONSTANT_Dynamic == tag) {
+				J9CfrConstantPoolInfo *constantDynamicSignature = &classfile->constantPool[classfile->constantPool[info->slot2].slot2];
+				if ((flags & BCT_MajorClassFileVersionMask) < BCT_Java11MajorVersionShifted) {
+					errorType = J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55__ID;
+					errorDataIndex = index;
+					goto _verifyError;
+				} else if (('D' != constantDynamicSignature->bytes[0]) && ('J' != constantDynamicSignature->bytes[0])) {
+					errorType = J9NLS_CFR_ERR_BC_LDC2W_CONSTANT_DYNAMIC_NOT_LONG_OR_DOUBLE__ID;
+					errorDataIndex = index;
+					goto _verifyError;
+				}
+			} else if ((CFR_CONSTANT_Double != tag) && (CFR_CONSTANT_Long != tag)) {
+				errorType = J9NLS_CFR_ERR_BC_LDC2W_NOT_CONSTANT_OR_CONSTANT_DYNAMIC__ID;
 				errorDataIndex = index;
 				goto _verifyError;
 			}

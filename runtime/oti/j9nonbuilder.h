@@ -2246,6 +2246,8 @@ typedef struct J9ROMConstantDynamicRef {
 	U_32 bsmIndexAndCpType;
 } J9ROMConstantDynamicRef;
 
+#define J9ROMCONSTANTDYNAMICREF_NAMEANDSIGNATURE(base) NNSRP_GET((base)->nameAndSignature, struct J9ROMNameAndSignature*)
+
 typedef struct J9ROMFieldRef {
 	U_32 classRefCPIndex;
 	J9SRP nameAndSignature;
