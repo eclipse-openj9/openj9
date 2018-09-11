@@ -110,7 +110,7 @@ generateS390CompareBranchLabel(TR::Node * node, TR::CodeGenerator * cg, TR::Inst
    return generateS390CompareOps(node, cg, fBranchOpCond, rBranchOpCond, label);
    }
 
-/* Moved from Codegen to FE since only wrtbarEvaluator calls this function */
+/* Moved from Codegen to FE since only awrtbarEvaluator calls this function */
 static TR::Register *
 allocateWriteBarrierInternalPointerRegister(TR::CodeGenerator * cg, TR::Node * sourceChild)
    {
@@ -973,8 +973,8 @@ extern void TEMPORARY_initJ9S390TreeEvaluatorTable(TR::CodeGenerator *cg)
    {
    TR_TreeEvaluatorFunctionPointer *tet = cg->getTreeEvaluatorTable();
 
-   tet[TR::wrtbar] =                TR::TreeEvaluator::wrtbarEvaluator;
-   tet[TR::wrtbari] =               TR::TreeEvaluator::iwrtbarEvaluator;
+   tet[TR::awrtbar] =                TR::TreeEvaluator::awrtbarEvaluator;
+   tet[TR::awrtbari] =               TR::TreeEvaluator::awrtbariEvaluator;
    tet[TR::monent] =                TR::TreeEvaluator::monentEvaluator;
    tet[TR::monexit] =               TR::TreeEvaluator::monexitEvaluator;
    tet[TR::monexitfence] =          TR::TreeEvaluator::monexitfenceEvaluator;
@@ -1575,7 +1575,7 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
 
    TR::Node * wrtbarNode = NULL;
    TR::LabelSymbol * helperSnippetLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   if (node->getOpCodeValue() == TR::wrtbari || node->getOpCodeValue() == TR::wrtbar)
+   if (node->getOpCodeValue() == TR::awrtbari || node->getOpCodeValue() == TR::awrtbar)
       wrtbarNode = node;
    else if (node->getOpCodeValue() == TR::ArrayStoreCHK)
       wrtbarNode = node->getFirstChild();
@@ -1745,7 +1745,7 @@ VMCardCheckEvaluator(
    if (!TR::Options::getCmdLineOptions()->realTimeGC())
       {
       TR::Node * wrtbarNode = NULL;
-      if (node->getOpCodeValue() == TR::wrtbari || node->getOpCodeValue() == TR::wrtbar)
+      if (node->getOpCodeValue() == TR::awrtbari || node->getOpCodeValue() == TR::awrtbar)
          wrtbarNode = node;
       else if (node->getOpCodeValue() == TR::ArrayStoreCHK)
          wrtbarNode = node->getFirstChild();
@@ -1907,7 +1907,7 @@ VMwrtbarEvaluator(
 //    holds addresses, flags and offsets as in TR::astore
 ///////////////////////////////////////////////////////////////////////////////////////
 TR::Register *
-J9::Z::TreeEvaluator::wrtbarEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+J9::Z::TreeEvaluator::awrtbarEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
    PRINT_ME("wrtbar", node, cg);
    TR::Node * owningObjectChild = node->getSecondChild();
@@ -1971,7 +1971,7 @@ J9::Z::TreeEvaluator::wrtbarEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    }
 
 ///////////////////////////////////////////////////////////////////////////////////////
-// iwrtbarEvaluator: indirect write barrier store checks for new space in old space
+// awrtbariEvaluator: indirect write barrier store checks for new space in old space
 //    reference store.  The first two children are as in TR::astorei.  The third child
 //    is address of the beginning of the destination object.  For putfield this will often
 //    be the same as the first child (when the offset is on the symbol reference.
@@ -1979,9 +1979,9 @@ J9::Z::TreeEvaluator::wrtbarEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 //    child 1's subtree will contain a reference to child 3's subtree
 ///////////////////////////////////////////////////////////////////////////////////////
 TR::Register *
-J9::Z::TreeEvaluator::iwrtbarEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+J9::Z::TreeEvaluator::awrtbariEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   PRINT_ME("iwrtbar", node, cg);
+   PRINT_ME("awrtbari", node, cg);
    TR::Node * owningObjectChild = node->getChild(2);
    TR::Node * sourceChild = node->getSecondChild();
    TR::Compilation *comp = cg->comp();
@@ -1992,7 +1992,7 @@ J9::Z::TreeEvaluator::iwrtbarEvaluator(TR::Node * node, TR::CodeGenerator * cg)
        (node->getSecondChild()->getDataType() != TR::Address))
       {
       // pattern match the sequence
-      //     iwrtbar f     iwrtbar f         <- node
+      //     awrtbari f     awrtbari f         <- node
       //       aload O       aload O
       //     value           l2i
       //                       lshr
@@ -2003,7 +2003,7 @@ J9::Z::TreeEvaluator::iwrtbarEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       //                         iconst shftKonst
       //
       // -or- if the field is known to be null
-      // iwrtbar f
+      // awrtbari f
       //    aload O
       //    l2i
       //      a2l

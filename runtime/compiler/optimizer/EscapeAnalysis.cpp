@@ -3641,7 +3641,7 @@ void TR_EscapeAnalysis::checkEscapeViaNonCall(TR::Node *node, TR::NodeChecklist&
                 (!baseObject->getOpCode().hasSymbolReference() ||
                  !node->getSecondChild()->getOpCode().hasSymbolReference() ||
                  ((baseObject->getReferenceCount() != 1) &&
-                  (!((baseObject->getReferenceCount() == 2) && (node->getOpCodeValue() == TR::wrtbari) && (node->getChild(2) == baseObject)))) ||
+                  (!((baseObject->getReferenceCount() == 2) && (node->getOpCodeValue() == TR::awrtbari) && (node->getChild(2) == baseObject)))) ||
                  (node->getSecondChild()->getReferenceCount() != 1) ||
                  (baseObject->getSymbolReference() != node->getSecondChild()->getSymbolReference())))
                {
@@ -6360,7 +6360,7 @@ void TR_EscapeAnalysis::heapifyBeforeColdBlocks(Candidate *candidate)
                   TR::TreeTop *translateTT = NULL;
                   if (stackFieldLoad->getDataType() == TR::Address)
                      {
-                     heapFieldStore = TR::Node::createWithSymRef(TR::wrtbari, 3, 3, heapAllocation->getFirstChild(), stackFieldLoad, heapAllocation->getFirstChild(), field.fieldSymRef());
+                     heapFieldStore = TR::Node::createWithSymRef(TR::awrtbari, 3, 3, heapAllocation->getFirstChild(), stackFieldLoad, heapAllocation->getFirstChild(), field.fieldSymRef());
                      if (comp()->useCompressedPointers())
                         {
                         translateTT = TR::TreeTop::create(comp(), TR::Node::createCompressedRefsAnchor(heapFieldStore), NULL, NULL);

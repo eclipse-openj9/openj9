@@ -570,8 +570,8 @@ static void fixupHelperCall(bool              moveFPRegSpill,
 extern void TEMPORARY_initJ9X86TreeEvaluatorTable(TR::CodeGenerator *cg)
    {
    TR_TreeEvaluatorFunctionPointer *tet = cg->getTreeEvaluatorTable();
-   tet[TR::wrtbar] =                TR::TreeEvaluator::writeBarrierEvaluator;
-   tet[TR::wrtbari] =               TR::TreeEvaluator::writeBarrierEvaluator;
+   tet[TR::awrtbar] =               TR::TreeEvaluator::writeBarrierEvaluator;
+   tet[TR::awrtbari] =              TR::TreeEvaluator::writeBarrierEvaluator;
    tet[TR::monent] =                TR::TreeEvaluator::monentEvaluator;
    tet[TR::monexit] =               TR::TreeEvaluator::monexitEvaluator;
    tet[TR::monexitfence] =          TR::TreeEvaluator::monexitfenceEvaluator;
@@ -1034,7 +1034,7 @@ TR::Register *J9::X86::TreeEvaluator::irdbarEvaluator(TR::Node *node, TR::CodeGe
 #endif
    }
 
-// Should only be called for pure TR::wrtbar and TR::wrtbari nodes.
+// Should only be called for pure TR::awrtbar and TR::awrtbari nodes.
 //
 TR::Register *J9::X86::TreeEvaluator::writeBarrierEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -1046,7 +1046,7 @@ TR::Register *J9::X86::TreeEvaluator::writeBarrierEvaluator(TR::Node *node, TR::
    bool                   usingLowMemHeap = false;
    bool                   useShiftedOffsets = (TR::Compiler->om.compressedReferenceShiftOffset() != 0);
 
-   if (node->getOpCodeValue() == TR::wrtbari)
+   if (node->getOpCodeValue() == TR::awrtbari)
       {
       destOwningObject = node->getChild(2);
       sourceObject = node->getSecondChild();
@@ -1103,7 +1103,7 @@ TR::Register *J9::X86::TreeEvaluator::writeBarrierEvaluator(TR::Node *node, TR::
       }
    else
       {
-      TR_ASSERT((node->getOpCodeValue() == TR::wrtbar), "expecting a TR::wrtbar");
+      TR_ASSERT((node->getOpCodeValue() == TR::awrtbar), "expecting a TR::wrtbar");
       destOwningObject = node->getSecondChild();
       sourceObject = node->getFirstChild();
       }
@@ -1117,11 +1117,11 @@ TR::Register *J9::X86::TreeEvaluator::writeBarrierEvaluator(TR::Node *node, TR::
       scratchRegisterManager,
       destOwningObject,
       sourceObject,
-      (node->getOpCodeValue() == TR::wrtbari) ? true : false,
+      (node->getOpCodeValue() == TR::awrtbari) ? true : false,
       cg,
       false);
 
-   if (comp->useAnchors() && (node->getOpCodeValue() == TR::wrtbari))
+   if (comp->useAnchors() && (node->getOpCodeValue() == TR::awrtbari))
       node->setStoreAlreadyEvaluated(true);
 
    if (usingCompressedPointers)
@@ -10300,8 +10300,8 @@ void J9::X86::TreeEvaluator::VMwrtbarRealTimeWithoutStoreEvaluator(
       case TR::arraycopy:
          wrtbarNode = NULL;
          break;
-      case TR::wrtbari:
-      case TR::wrtbar:
+      case TR::awrtbari:
+      case TR::awrtbar:
          wrtbarNode = node;
          break;
       default:
@@ -10357,7 +10357,7 @@ void J9::X86::TreeEvaluator::VMwrtbarRealTimeWithoutStoreEvaluator(
       }
 
    TR::SymbolReference *wrtBarSymRef = NULL;
-   if (wrtbarNode && (wrtbarNode->getOpCodeValue()==TR::wrtbar || wrtbarNode->isUnsafeStaticWrtBar()))
+   if (wrtbarNode && (wrtbarNode->getOpCodeValue()==TR::awrtbar || wrtbarNode->isUnsafeStaticWrtBar()))
       wrtBarSymRef = comp->getSymRefTab()->findOrCreateWriteBarrierClassStoreRealTimeGCSymbolRef();
    else
       wrtBarSymRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreRealTimeGCSymbolRef();
@@ -10546,8 +10546,8 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
       case TR::arraycopy:
          wrtbarNode = NULL;
          break;
-      case TR::wrtbari:
-      case TR::wrtbar:
+      case TR::awrtbari:
+      case TR::awrtbar:
          wrtbarNode = node;
          break;
       default:
@@ -10940,7 +10940,7 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
          // handling it out of line is justified.
          //
          if (!comp->getOption(TR_DisableWriteBarriersRangeCheck)
-             && (node->getOpCodeValue() == TR::wrtbari)
+             && (node->getOpCodeValue() == TR::awrtbari)
              && doInternalControlFlow)
             {
             bool is64Bit = TR::Compiler->target.is64Bit(); // On compressed refs, owningObjectReg is already uncompressed, and the vmthread fields are 64 bits
