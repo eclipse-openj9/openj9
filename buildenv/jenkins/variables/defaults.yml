@@ -47,9 +47,6 @@ credentials:
   github: 'b6987280-6402-458f-bdd6-7affc2e360d4'
 test_dependencies_job_name: 'test.getDependency'
 slack_channel: '#jenkins'
-build_job_prefix: 'Build-JDK-'
-sanity_job_prefix: 'Sanity-JDK-'
-extended_job_prefix: 'Extended-JDK-'
 build_discarder:
   logs:
     build: 20
