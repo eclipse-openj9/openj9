@@ -444,15 +444,6 @@ def set_artifactory_config() {
     }
 }
 
-/*
-* Sets the names of the downstream build & test jobs
-*/
-def set_job_names() {
-    BUILD_JOB_NAME = VARIABLES.build_job_prefix + "${SDK_VERSION}-${SPEC}"
-    SANITY_JOB_NAME = VARIABLES.sanity_job_prefix + "${SDK_VERSION}-${SPEC}"
-    EXTENDED_JOB_NAME = VARIABLES.extended_job_prefix + "${SDK_VERSION}-${SPEC}"
-}
-
 def set_job_properties(JOB_TYPE) {
     /*************************
     * Setup Jenkins Properties
@@ -668,7 +659,6 @@ def set_job_variables(job_type) {
             set_sdk_variables()
             set_test_targets()
             set_slack_channel()
-            set_job_names()
             break
         case "wrapper":
             //set variable for pipeline all/personal

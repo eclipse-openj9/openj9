@@ -175,20 +175,22 @@ make all
 ```
 :warning: If you just type `make`, rather than `make all` your build will fail, because the default `make` target is `exploded-image`. If you want to specify `make` instead of `make all`, you must add `--default-make-target=images` when you run the configure script. For more information, read this [issue](https://github.com/ibmruntimes/openj9-openjdk-jdk9/issues/34).
 
-Two Java builds are produced: a full developer kit (jdk) and a runtime environment (jre)
+A binary for the full developer kit (jdk) is built and stored in the following directory:
+
 - **build/linux-x86_64-normal-server-release/images/jdk**
-- **build/linux-x86_64-normal-server-release/images/jre**
 
     :whale: If you built your binaries in a Docker container, copy the binaries to the containers **/root/hostdir** directory so that you can access them on your local system. You'll find them in the directory you set for `<host_directory>` when you started your Docker container. See [Setting up your build environment with Docker](#setting-up-your-build-environment-with-docker).
 
-    :pencil: On other architectures the **/jdk** and **/jre** directories are in **build/linux-ppc64le-normal-server-release/images** (Linux on 64-bit Power systems) and **build/linux-s390x-normal-server-release/images** (Linux on 64-bit z Systems)
+    :pencil: On other architectures the **/jdk** directory is in **build/linux-ppc64le-normal-server-release/images** (Linux on 64-bit Power systems) and **build/linux-s390x-normal-server-release/images** (Linux on 64-bit z Systems).
+
+    :pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/linux-x86_64-normal-server-release/images/jre** directory.
 
 ### 5. Test
 :penguin:
 For a simple test, try running the `java -version` command.
-Change to the /jre directory:
+Change to the /jdk directory:
 ```
-cd build/linux-x86_64-normal-server-release/images/jre
+cd build/linux-x86_64-normal-server-release/images/jdk
 ```
 Run:
 ```
@@ -199,11 +201,11 @@ Here is some sample output:
 
 ```
 openjdk version "11-internal" 2018-09-25
-OpenJDK Runtime Environment (build 11-internal+0-adhoc..openj9-openjdk-jdk11)
-Eclipse OpenJ9 VM (build master-06905e2, JRE 11 Linux amd64-64-Bit Compressed References 20180726_000000 (JIT enabled, AOT enabled)
-OpenJ9   - 06905e2
-OMR      - 28139f2
-JCL      - e5c64f5 based on jdk-11+21)
+OpenJDK Runtime Environment (build 11-internal+0-adhoc..jdk11)
+Eclipse OpenJ9 VM (build master-ee517c1, JRE 11 Linux amd64-64-Bit Compressed References 20180910_000000 (JIT enabled, AOT enabled)
+OpenJ9   - ee517c1
+OMR      - f29d158
+JCL      - 98f2038 based on jdk-11+28)
 ```
 :penguin: *Congratulations!* :tada:
 
@@ -280,9 +282,11 @@ make all
 ```
 :warning: If you just type `make`, rather than `make all` your build will fail, because the default `make` target is `exploded-image`. If you want to specify `make` instead of `make all`, you must add `--default-make-target=images` when you run the configure script. For more information, read this [issue](https://github.com/ibmruntimes/openj9-openjdk-jdk9/issues/34).
 
-Two Java builds are produced: a full developer kit (jdk) and a runtime environment (jre)
+A binary for the full developer kit (jdk) is built and stored in the following directory:
+
 - **build/aix-ppc64-normal-server-release/images/jdk**
-- **build/aix-ppc64-normal-server-release/images/jre**
+
+    :pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/aix-ppc64-normal-server-release/images/jre** directory.
 
 ### 5. Test
 :blue_book:
@@ -411,9 +415,11 @@ Now you're ready to build OpenJDK with OpenJ9:
 make all
 ```
 
-Two Java builds are produced: a full developer kit (jdk) and a runtime environment (jre)
+A binary for the full developer kit (jdk) is built and stored in the following directory:
+
 - **build/windows-x86_64-normal-server-release/images/jdk**
-- **build/windows-x86_64-normal-server-release/images/jre**
+
+    :pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/windows-x86_64-normal-server-release/images/jre** directory.
 
 ### 5. Test
 :ledger:
