@@ -40,6 +40,7 @@
 	<property name="bootstrapSrc_90" location="./bootstrap_src_90"/>
 	<property name="bootstrapBuild" location="./bootstrap_bin"/>
 	<property name="transformerListener" location="${TEST_ROOT}/Utils/src"/>
+	<property name="TestUtilities" location="../TestUtilities/src"/> 
 
 	<target name="init">
 		<mkdir dir="${DEST}"/>
@@ -150,6 +151,7 @@
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src}"/>
 					<src path="${transformerListener}" />
+					<src path="${TestUtilities}" /> 
 					<!-- exclude files only for SE90 -->
 					<exclude name="**/MethodHandleAPI_asCollector.java" />
 					<exclude name="**/MethodHandleAPI_asSpreader.java" />
@@ -188,6 +190,7 @@
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src}" />
 					<src path="${transformerListener}" />
+					<src path="${TestUtilities}" /> 
 					<!-- exclude non test files for indyn test -->
 					<exclude name="**/indyn/BootstrapMethods.java" />
 					<exclude name="**/indyn/ComplexIndyGenerator.java" />
