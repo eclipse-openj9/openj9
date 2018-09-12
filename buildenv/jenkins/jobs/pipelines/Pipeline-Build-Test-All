@@ -170,10 +170,7 @@ timeout(time: 10, unit: 'HOURS') {
                     }
 
                     // update build description
-                    echo "desc:${currentBuild.description}"
-                    def TMP_DESC = (currentBuild.description) ? currentBuild.description + "<br>" : ""
-                    echo "tmp_desc:${TMP_DESC}"
-                    currentBuild.description = TMP_DESC + "<br/>${PLATFORMS}"
+                    currentBuild.description += "<br/>${PLATFORMS}"
                 }
 
                 def BUILD_NODES = get_node_labels(BUILD_NODE_LABELS, BUILD_SPECS.keySet())
