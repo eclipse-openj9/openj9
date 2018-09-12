@@ -216,6 +216,10 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
       {
       glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_interpreterUnresolvedMethodTypeTableEntryGlue, false, false, false);
       }
+   else if (getDataSymbol()->isConstantDynamic())
+      {
+      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390jitResolveConstantDynamicGlue, false, false, false);
+      }
    else // must be static data
       {
       if (resolveForStore())
@@ -503,7 +507,10 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
       {
       glueRef = _cg->getSymRef(TR_interpreterUnresolvedMethodTypeTableEntryGlue);
       }
-
+   else if (snippet->getDataSymbol()->isConstantDynamic())
+      {
+      glueRef = _cg->getSymRef(TR_S390jitResolveConstantDynamicGlue);
+      }
    else // the data symbol is static
       {
       if (snippet->resolveForStore())
@@ -515,6 +522,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
          glueRef = _cg->getSymRef(TR_S390interpreterUnresolvedStaticDataGlue);
          }
       }
+
 
    printPrefix(pOutFile, NULL, bufferPos, sizeof(intptrj_t));
    trfprintf(pOutFile, "DC    \t%s", getName(glueRef));
