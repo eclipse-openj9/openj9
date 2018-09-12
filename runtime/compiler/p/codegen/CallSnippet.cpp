@@ -525,8 +525,17 @@ uint8_t *TR::PPCVirtualUnresolvedSnippet::emitSnippetBody()
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    TR::Node       *callNode = getNode();
    TR::SymbolReference *glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCvirtualUnresolvedHelper, false, false, false);
-   intptrj_t  distance = (intptrj_t)glueRef->getMethodAddress() - (intptrj_t)cursor;
+   intptrj_t  distance;
+   void* thunk = fej9->getJ2IThunk(callNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethod(), comp);
 
+   // We want the data in the snippet to be naturally aligned
+   if (TR::Compiler->target.is64Bit() && (((uint64_t)cursor % TR::Compiler->om.sizeofReferenceAddress()) == 4))
+      {
+      *(int32_t *)cursor = 0xdeadc0de;
+      cursor += 4;
+      }
+
+   distance = (intptrj_t)glueRef->getMethodAddress() - (intptrj_t)cursor;
    getSnippetLabel()->setCodeLocation(cursor);
 
    if (!(distance>=BRANCH_BACKWARD_LIMIT && distance<=BRANCH_FORWARD_LIMIT))
@@ -540,6 +549,18 @@ uint8_t *TR::PPCVirtualUnresolvedSnippet::emitSnippetBody()
    *(int32_t *)cursor = 0x48000001 | (distance & 0x03fffffc);
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,(uint8_t *)glueRef,TR_HelperAddress, cg()),
       __FILE__, __LINE__, callNode);
+   cursor += 4;
+
+   /*
+    * Place a 'b' back to the main line code after the 'bl'.
+    * This is used to have 'blr's return to their corresponding 'bl's when handling private nestmate calls.
+    * Ideally, 'blr's return to their corresponding 'bl's in other cases as well but currently that does not happen.
+    */
+   distance = (intptrj_t)getReturnLabel()->getCodeLocation() - (intptrj_t)cursor;
+   *(int32_t *)cursor = 0x48000000 | (distance & 0x03fffffc);
+
+   TR_ASSERT(gcMap().isGCSafePoint() && gcMap().getStackMap(), "Virtual call snippets must have GC maps when preserving the link stack");
+   gcMap().registerStackMap(cursor - 4, cg());
    cursor += 4;
 
    // Store the code cache RA
@@ -564,14 +585,42 @@ uint8_t *TR::PPCVirtualUnresolvedSnippet::emitSnippetBody()
    *(uintptrj_t *)cursor = callNode->getSymbolReference()->getCPIndexForVM();
    cursor += TR::Compiler->om.sizeofReferenceAddress();
 
+   /*
+    * Reserved spot to hold J9Method pointer of the callee.
+    * This is used for private nestmate calls.
+    */
+   *(intptrj_t *)cursor = (intptrj_t)0;
+   cursor += sizeof(intptrj_t);
+
+   /*
+    * J2I thunk address.
+    * This is used for private nestmate calls.
+    */
+   *(intptrj_t*)cursor = (intptrj_t)thunk;
+   //TODO: Handle relocation here for the thunk. Currently not supported by AOT.
+   cursor += sizeof(intptrj_t);
+
    *(int32_t *)cursor = 0;        // Lock word
-   return(cursor + 4);
+   cursor += sizeof(int32_t);
+
+   return cursor;
    }
 
 uint32_t TR::PPCVirtualUnresolvedSnippet::getLength(int32_t estimatedSnippetStart)
    {
+   /*
+    * 4 = Code alignment may add 4 to the length. To be conservative it is always part of the estimate.
+    * 8 = Two instructions. One bl and one b instruction.
+    * 5 address fields:
+    *   - Call Site RA
+    *   - Constant Pool Pointer
+    *   - Constant Pool Index
+    *   - Private J9Method pointer
+    *   - J2I thunk address
+    * 4 = Lockword
+    */
    TR::Compilation* comp = cg()->comp();
-   return(8 + 3*TR::Compiler->om.sizeofReferenceAddress());
+   return(4 + 8 + (5 * TR::Compiler->om.sizeofReferenceAddress()) + 4);
    }
 
 uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
@@ -584,6 +633,7 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    TR::SymbolReference *glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCinterfaceCallHelper, false, false, false);
    intptrj_t  distance;
+   void* thunk = fej9->getJ2IThunk(callNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethod(), comp);
 
    // We want the data in the snippet to be naturally aligned
    if (TR::Compiler->target.is64Bit() && (((uint64_t)cursor % TR::Compiler->om.sizeofReferenceAddress()) == 0))
@@ -724,15 +774,40 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor+3*TR::Compiler->om.sizeofReferenceAddress(), NULL, TR_AbsoluteMethodAddress, cg()),
          __FILE__, __LINE__, callNode);
 
-   return(cursor + 4*TR::Compiler->om.sizeofReferenceAddress());
+   cursor += 4 * TR::Compiler->om.sizeofReferenceAddress();
+
+   /*
+    * J2I thunk address.
+    * This is used for private nestmate calls.
+    */
+   *(intptrj_t*)cursor = (intptrj_t)thunk;
+   //TODO: Handle relocation here for the thunk. Currently not supported by AOT.
+   cursor += sizeof(intptrj_t);
+
+
+   return cursor;
    }
 
 uint32_t TR::PPCInterfaceCallSnippet::getLength(int32_t estimatedSnippetStart)
    {
    // *this   swipeable for debugger
-   // with conservative estimate for code alignment
+   /*
+    * 4 = Code alignment may add 4 to the length. To be conservative it is always part of the estimate.
+    * 8 = Two instructions. One bl and one b instruction.
+    * 0 or 4 = Padding. Only needed under 64 bit.
+    * 9 address fields:
+    *   - CP Pointer
+    *   - CP Index
+    *   - Interface Class Pointer
+    *   - ITable Index (may also contain a tagged J9Method* when handling nestmates)
+    *   - First Class Pointer
+    *   - First Class Target
+    *   - Second Class Pointer
+    *   - Second Class Target
+    *   - J2I thunk address
+    */
    TR::Compilation* comp = cg()->comp();
-   return(9*TR::Compiler->om.sizeofReferenceAddress()+4+(TR::Compiler->target.is64Bit()?4:0));
+   return(4 + 8 + (TR::Compiler->target.is64Bit() ? 4 : 0) + (9 * TR::Compiler->om.sizeofReferenceAddress()));
    }
 
 uint8_t *TR::PPCCallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg)
@@ -1388,6 +1463,12 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCVirtualUnresolvedSnippet * snippet)
    trfprintf(pOutFile, "bl \t" POINTER_PRINTF_FORMAT "\t\t;%s", (intptrj_t)cursor + distance, info);
    cursor += 4;
 
+   printPrefix(pOutFile, NULL, cursor, 4);
+   distance = *((int32_t *) cursor) & 0x03fffffc;
+   distance = (distance << 6) >> 6;   // sign extend
+   trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t\t; Back to program code", (intptrj_t)cursor + distance);
+   cursor += 4;
+
    printPrefix(pOutFile, NULL, cursor, sizeof(intptrj_t));
    trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Call Site RA", (intptrj_t)snippet->getReturnLabel()->getCodeLocation());
    cursor += sizeof(intptrj_t);
@@ -1398,6 +1479,14 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCVirtualUnresolvedSnippet * snippet)
 
    printPrefix(pOutFile, NULL, cursor, sizeof(intptrj_t));
    trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Constant Pool Index", callNode->getSymbolReference()->getCPIndexForVM());
+   cursor += sizeof(intptrj_t);
+
+   printPrefix(pOutFile, NULL, cursor, sizeof(intptrj_t));
+   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Private J9Method pointer", *(intptrj_t *)cursor);
+   cursor += sizeof(intptrj_t);
+
+   printPrefix(pOutFile, NULL, cursor, sizeof(intptrj_t));
+   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; J2I thunk address for private", *(intptrj_t *)cursor);
    cursor += sizeof(intptrj_t);
 
    printPrefix(pOutFile, NULL, cursor, 4);
@@ -1467,5 +1556,9 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCInterfaceCallSnippet * snippet)
 
    printPrefix(pOutFile, NULL, cursor, sizeof(intptrj_t));
    trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Second Class Target", *(int32_t *)cursor);
+   cursor += sizeof(intptrj_t);
+
+   printPrefix(pOutFile, NULL, cursor, sizeof(intptrj_t));
+   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; J2I thunk address for private", *(intptrj_t *)cursor);
    }
 
