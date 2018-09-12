@@ -44,4 +44,10 @@
 			<class name="org.openj9.test.condy.PrimitiveCondyTest" />
 		</classes>
 	</test>
+
+	<test name="GarbageCollectionCondyTest">
+		<classes>
+			<class name="org.openj9.test.condy.GarbageCollectionCondyTest" />
+		</classes>
+	</test>
 </suite>
