@@ -108,6 +108,8 @@ TEST_NODE_LABELS = (params.TEST_NODE_LABELS) ? params.TEST_NODE_LABELS : ""
 echo "TEST_NODE_LABELS:'${TEST_NODE_LABELS}'"
 PROMOTE_OMR = (params.PROMOTE_OMR) ? params.PROMOTE_OMR : ""
 echo "PROMOTE_OMR:'${PROMOTE_OMR}'"
+SLACK_HANDLE = (params.SLACK_HANDLE) ? params.SLACK_HANDLE : ""
+echo "SLACK_HANDLE:'${SLACK_HANDLE}'"
 
 // Pull Request Builds
 ghprbPullId = (params.ghprbPullId) ? params.ghprbPullId : ""
