@@ -70,7 +70,6 @@ GC_ConstantPoolObjectSlotIterator::nextSlot() {
 			/* Determine if the slot is constant dynamic */
 			if (slotType == J9CPTYPE_CONSTANT_DYNAMIC) {
 				result = scanCondySlot(slotPtr, &nextSlot);
-				break;
 			}
 		} else {
 			/* Determine if the slot should be processed */
