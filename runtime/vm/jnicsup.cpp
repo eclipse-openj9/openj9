@@ -445,10 +445,6 @@ UDATA JNICALL   pushArguments(J9VMThread *vmThread, J9Method* method, void *args
 	jvalue* jvalues;
 	U_8 *sigChar;
 	jobject objArg;
-	jdouble dbl;
-	jlong lng;
-	UDATA* lngOrDblPtr;
-	jfloat *fltPtr;
 	UDATA* sp;
 
 	if ( (UDATA)args & 1 ) {
@@ -465,17 +461,24 @@ UDATA JNICALL   pushArguments(J9VMThread *vmThread, J9Method* method, void *args
 	sp = vmThread->sp;
 
 	for (;;) {
+		BOOLEAN skipSignature = TRUE;
 		switch (*sigChar++) {
 			case '[':
 				/* skip the rest of the signature */
-				while (*sigChar == '[') sigChar++;
-				if (*sigChar++ != 'L') goto dontSkipClassName;
-			case 'L':
+				while ('[' == *sigChar) {
+					sigChar += 1;
+				}
+				skipSignature = ('L' == *sigChar++);
+			case 'L': /* FALLTHROUGH */
 				/* skip the rest of the signature */
-				while (*sigChar++ != ';');
-dontSkipClassName:
+				if (skipSignature) {
+					while (';' != *sigChar) {
+						sigChar += 1;
+					}
+				}
+				sp -= 1;
 				objArg = ARG(jobject, l);
-				*--sp = objArg ? (UDATA)*(j9object_t*)objArg : 0;
+				*sp = (NULL == objArg) ? 0: (UDATA) *((j9object_t*) objArg);
 				break;
 			case 'B':
 				/* byte type */
@@ -500,29 +503,20 @@ dontSkipClassName:
 #ifdef J9VM_INTERP_FLOAT_SUPPORT
 			case 'F':
 				/* float type */
-				fltPtr = (jfloat*)--sp;
-				/* The Linux SH4 compiler needs the next two lines to be two steps.  If you combine them it fails to compile */
-				dbl = ARG(jdouble, f);
-				*fltPtr = (jfloat)dbl;
-				break;
+				sp -= 1;
+				/* jfloat is promoted to double when passed through '...' */
+				*((jfloat*) sp) = (jfloat) ARG(jdouble, f);
+			break;
 			case 'D':
 				/* double type */
-				dbl = ARG(jdouble, d);
-				lngOrDblPtr = (UDATA *) &dbl;
-				goto pushLongOrDouble;
+				sp -= 2;
+				*((jdouble*) sp) = ARG(jdouble, d);
+				break;
 #endif
 			case 'J':
 				/* long type */
-				lng = ARG(jlong, j);
-				lngOrDblPtr = (UDATA *) &lng;
-pushLongOrDouble:
-#ifdef J9VM_ENV_DATA64
-				--sp;
-				*--sp = *(lngOrDblPtr);
-#else
-				*--sp = *(lngOrDblPtr + 1);
-				*--sp = *(lngOrDblPtr);
-#endif
+				sp -= 2;
+				*((jlong*) sp) = ARG(jlong, j);
 				break;
 			case ')':
 				vmThread->sp = sp;
