@@ -667,7 +667,7 @@ def set_job_variables(job_type) {
             set_repos_variables(BUILD_RELEASES)
             break
         default:
-            error("Unknown Jenkins job type!")
+            error("Unknown Jenkins job type:'${job_type}'")
     }
 }
 
