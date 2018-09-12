@@ -152,7 +152,7 @@ timeout(time: 10, unit: 'HOURS') {
                     echo "PLATFORMS:'${PLATFORMS}'"
                     TESTS_TARGETS = 'sanity.functional'
                     echo "TESTS_TARGETS:'${TESTS_TARGETS}'"
-                    PERSONAL_BUILD = true
+                    PERSONAL_BUILD = 'true'
                     echo "PERSONAL_BUILD:'${PERSONAL_BUILD}'"
                 }
 
@@ -228,6 +228,18 @@ timeout(time: 10, unit: 'HOURS') {
 def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE) {
     def JOB_NAME = "Adam_Pipeline-Build-Test-JDK${SDK_VERSION}-${SPEC}"
 
+    echo "TESTS_TARGETS:'${TESTS_TARGETS}'"
+    echo "PLATFORMS:'${PLATFORMS}'"
+    echo "VARIABLE_FILE:'${VARIABLE_FILE}'"
+    echo "VENDOR_REPO:'${VENDOR_REPO}'"
+    echo "VENDOR_BRANCH:'${VENDOR_BRANCH}'"
+    echo "VENDOR_CREDENTIALS_ID:'${VENDOR_CREDENTIALS_ID}'"
+    echo "PERSONAL_BUILD:'${PERSONAL_BUILD}'"
+    echo "BUILD_NODE_LABELS:'${BUILD_NODE_LABELS}'"
+    echo "TEST_NODE_LABELS:'${TEST_NODE_LABELS}'"
+    echo "PROMOTE_OMR:'${PROMOTE_OMR}'"
+    echo "SLACK_HANDLE:'${SLACK_HANDLE}'"
+
     stage ("${JOB_NAME}") {
         JOB = build job: JOB_NAME,
                 parameters: [
@@ -247,7 +259,7 @@ def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_RE
                     string(name: 'VENDOR_CREDENTIALS_ID', value: VENDOR_CREDENTIALS_ID),
                     string(name: 'BUILD_NODE', value: BUILD_NODE),
                     string(name: 'TEST_NODE', value: TEST_NODE),
-                    string(name: 'PERSONAL_BUILD', value: "${PERSONAL_BUILD}"),
+                    string(name: 'PERSONAL_BUILD', value: PERSONAL_BUILD),
                     string(name: 'SLACK_CHANNEL', value: SLACK_HANDLE),
                     string(name: 'ghprbPullId', value: ghprbPullId),
                     string(name: 'ghprbGhRepository', value: ghprbGhRepository),

@@ -51,10 +51,10 @@ def parse_variables_file(){
 * Fetch the user provided variable file.
 */
 def get_variables_file() {
-    VARIABLE_FILE = params.VARIABLE_FILE
-    VENDOR_BRANCH = params.VENDOR_BRANCH
-    VENDOR_REPO = params.VENDOR_REPO
-    VENDOR_CREDENTIALS_ID = params.VENDOR_CREDENTIALS_ID
+    VARIABLE_FILE = (params.VARIABLE_FILE) ? params.VARIABLE_FILE : ""
+    VENDOR_BRANCH = (params.VENDOR_BRANCH) ? params.VENDOR_BRANCH : ""
+    VENDOR_REPO = (params.VENDOR_REPO) ? params.VENDOR_REPO : ""
+    VENDOR_CREDENTIALS_ID = (params.VENDOR_CREDENTIALS_ID) ? params.VENDOR_CREDENTIALS_ID : ""
     if (VARIABLE_FILE && VENDOR_REPO && VENDOR_BRANCH) {
         echo "VARIABLE_FILE:${VARIABLE_FILE}"
         echo "VENDOR_REPO:${VENDOR_REPO}"
