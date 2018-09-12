@@ -164,6 +164,7 @@ timeout(time: 10, unit: 'HOURS') {
 
                 if (PERSONAL_BUILD) {
                     // update build name
+                    BUILD_USER_EMAIL = params.ghprbPullAuthorLogin
                     wrap([$class: 'BuildUser']) {
                         currentBuild.displayName = "#${BUILD_NUMBER} - ${BUILD_USER_EMAIL}"
                     }
