@@ -1864,7 +1864,7 @@ TR::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDe
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
 
    // Generate and register a thunk for a resolved virtual function
-   uint8_t *virtualThunk;
+   void *virtualThunk;
    if (methodSymbol && methodSymbol->isComputed())
       {
       switch (methodSymbol->getMandatoryRecognizedMethod())
@@ -1873,10 +1873,10 @@ TR::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDe
             {
             char *j2iSignature = fej9->getJ2IThunkSignatureForDispatchVirtual(methodSymbol->getMethod()->signatureChars(), methodSymbol->getMethod()->signatureLength(), comp());
             int32_t signatureLen = strlen(j2iSignature);
-            virtualThunk = (uint8_t*)fej9->getJ2IThunk(j2iSignature, signatureLen, comp());
+            virtualThunk = fej9->getJ2IThunk(j2iSignature, signatureLen, comp());
             if (!virtualThunk)
                {
-               virtualThunk = (uint8_t*)fej9->setJ2IThunk(j2iSignature, signatureLen,
+               virtualThunk = fej9->setJ2IThunk(j2iSignature, signatureLen,
                   TR::S390J9CallSnippet::generateVIThunk(
                      fej9->getEquivalentVirtualCallNodeForDispatchVirtual(callNode, comp()), sizeOfArguments, cg()), comp()); // TODO:JSR292: Is this the right sizeOfArguments?
                }
@@ -1893,9 +1893,9 @@ TR::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDe
       }
    else
       {
-      virtualThunk = (uint8_t*)(fej9->getJ2IThunk(methodSymbol->getMethod(), comp()));
+      virtualThunk = fej9->getJ2IThunk(methodSymbol->getMethod(), comp());
       if (!virtualThunk)
-         virtualThunk = (uint8_t*)(fej9->setJ2IThunk(methodSymbol->getMethod(), TR::S390J9CallSnippet::generateVIThunk(callNode, sizeOfArguments, cg()), comp()));
+         virtualThunk = fej9->setJ2IThunk(methodSymbol->getMethod(), TR::S390J9CallSnippet::generateVIThunk(callNode, sizeOfArguments, cg()), comp());
       }
 
    if (methodSymbol->isVirtual() && (!methodSymRef->isUnresolved() && !comp()->compileRelocatableCode()))
@@ -2251,6 +2251,9 @@ TR::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDe
       gcPoint = new (trHeapMemory()) TR::S390RRInstruction(TR::InstOpCode::BASR, callNode, RegRA, RegRA, cg());
       gcPoint->setDependencyConditions(preDeps);
 
+      if (unresolvedSnippet != NULL)
+         (static_cast<TR::S390VirtualUnresolvedSnippet *>(unresolvedSnippet))->setIndirectCallInstruction(gcPoint);
+
       if (outlinedSlowPath)
          {
          TR::Instruction * temp = generateS390BranchInstruction(cg(),TR::InstOpCode::BRC,TR::InstOpCode::COND_BRC,callNode,doneVirtualLabel);
@@ -2347,7 +2350,7 @@ TR::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDe
 
       TR::LabelSymbol * snippetLabel = generateLabelSymbol(cg());
       TR::S390InterfaceCallSnippet * ifcSnippet = new (trHeapMemory()) TR::S390InterfaceCallSnippet(cg(), callNode,
-           snippetLabel, sizeOfArguments, numInterfaceCallCacheSlots, virtualThunk);
+           snippetLabel, sizeOfArguments, numInterfaceCallCacheSlots, virtualThunk, false);
       cg()->addSnippet(ifcSnippet);
 
       if (numStaticPICs != 0)

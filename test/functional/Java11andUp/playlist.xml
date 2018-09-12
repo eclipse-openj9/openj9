@@ -45,4 +45,59 @@
 			<subset>SE110</subset>
 		</subsets>
 	</test>
+	
+	<!-- 
+		The nestmate test specifically exercise the JIT's handling of unresolved virtual and interface private methods.
+		The JIT pibBuilder routines will have to handle virtual and interface private methods that are both JIT compiled and interpreted.
+		These private methods will have to be resolved at runtime and gets handled as a direct dispatch, instead of an indirect virtual/interface
+		dispatch. Hence, the need for -Xjit:rtResolve.
+         
+		 Variation 1:
+			This variation tests the handling of nestmate private instance methods with the callee being interpreted.
+			The -Xjit option limits the compilation to just one method (the caller), which invokes only once an inner class's private method (the callee).
+			The callee is interpreted because it's only invoked once.
+			
+		 Variation 2:
+			This variation tests the handling of nestmate private instance methods that is JIT compiled.
+			The -Xjit option limits the compilation to two methods: a caller (count=0) and a callee (count=100).
+		    The callee is an nestmate private instance method. It's first invoked by the caller 1000 times in a loopy method. The low count=100
+			on the callee ensures that the callee can get JIT compiled early enough so that the last invocation of it jumps to a JIT'ed body.
+			
+		 Variation 3:
+			Similar to variation 1 except that the callee is an interface private method.
+			
+		 Variation 4:
+			Similar to variation 2 except that the callee is an interface private method.
+		 -->
+	<test>
+		<testCaseName>Nestmate_virtual_private</testCaseName>
+		
+		<variations>
+		
+			<variation>'-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmate/NestmateTest.testVirtualUnresolvedInterpreted*},{org/openj9/test/nestmate/NestmateTest.testVirtualUnresolvedInterpreted*}(count=0)'</variation>
+			<variation>'-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmate/NestmateTest.testVirtualUnresolvedJitted*,org/openj9/test/nestmate/NestmateTest$InnerClass.innerPrivateMethod*},{org/openj9/test/nestmate/NestmateTest.testVirtualUnresolvedInterpreted*}(count=0),{org/openj9/test/nestmate/NestmateTest$InnerClass.innerPrivateMethod*}(count=100)'</variation>
+			
+			<variation>'-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmate/NestmateTest.testInterfaceUnresolvedInterpreted*},{org/openj9/test/nestmate/NestmateTest.testInterfaceUnresolvedInterpreted*}(count=0)'</variation>
+			<variation>'-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmate/NestmateTest.testInterfaceUnresolvedJitted*,org/openj9/test/nestmate/NestmateTest$InnerInterface.innerInterfacePrivateMethod*},{org/openj9/test/nestmate/NestmateTest.testInterfaceUnresolvedJitted*}(count=0),{org/openj9/test/nestmate/NestmateTest$InnerInterface.innerInterfacePrivateMethod*}(count=100)'</variation>
+	
+		</variations>
+			
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames NestmateTest \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>SE110</subset>
+		</subsets>
+	</test>
+	
 </playlist>

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -98,7 +98,7 @@ class S390VirtualSnippet : public TR::S390J9CallSnippet
 
 class S390VirtualUnresolvedSnippet : public TR::S390VirtualSnippet
    {
-   uint8_t *thunkAddress;
+   void *thunkAddress;
 
    public:
 
@@ -107,7 +107,7 @@ class S390VirtualUnresolvedSnippet : public TR::S390VirtualSnippet
       {
       }
 
-   S390VirtualUnresolvedSnippet(TR::CodeGenerator *cg, TR::Node *c, TR::LabelSymbol *lab, int32_t s, uint8_t *thunkPtr)
+   S390VirtualUnresolvedSnippet(TR::CodeGenerator *cg, TR::Node *c, TR::LabelSymbol *lab, int32_t s, void *thunkPtr)
       : TR::S390VirtualSnippet(cg, c, lab, s), thunkAddress(thunkPtr)
       {
       }
@@ -117,25 +117,70 @@ class S390VirtualUnresolvedSnippet : public TR::S390VirtualSnippet
    virtual uint8_t *emitSnippetBody();
 
    virtual uint32_t getLength(int32_t estimatedSnippetStart);
+   void* getJ2IThunkAddress() { return thunkAddress; }
 
    TR::Instruction *patchVftInstruction;
+   TR::Instruction *indirectCallInstruction;    // the BASR in the virtual dispatch sequence
+
    TR::Instruction *setPatchVftInstruction(TR::Instruction *i) {return patchVftInstruction=i;}
    TR::Instruction *getPatchVftInstruction() {return patchVftInstruction;}
 
+   TR::Instruction *setIndirectCallInstruction(TR::Instruction *i) {return indirectCallInstruction = i;}
+   TR::Instruction *getIndirectCallInstruction() {return indirectCallInstruction;}
+   };
+
+class J9S390InterfaceCallDataSnippet : public TR::S390ConstantDataSnippet
+   {
+   TR::Instruction * _firstCLFI;
+   uint8_t _numInterfaceCallCacheSlots;
+   uint8_t* _codeRA;
+   void *_thunkAddress;
+   bool _useCLFIandBRCL;
+
+   public:
+   J9S390InterfaceCallDataSnippet(TR::CodeGenerator *,
+                                  TR::Node *,
+                                  uint8_t,
+                                  void *,
+                                  bool useCLFIandBRCL = false);
+
+   virtual Kind getKind() { return IsInterfaceCallData; }
+   virtual uint8_t *emitSnippetBody();
+   virtual uint32_t getLength(int32_t estimatedSnippetStart);
+
+   int8_t getNumInterfaceCallCacheSlots() {return _numInterfaceCallCacheSlots;}
+
+   void setUseCLFIandBRCL(bool useCLFIandBRCL) {_useCLFIandBRCL = useCLFIandBRCL;}
+   bool isUseCLFIandBRCL() {return _useCLFIandBRCL;}
+
+   void setFirstCLFI(TR::Instruction* firstCLFI) { _firstCLFI = firstCLFI; }
+   TR::Instruction* getFirstCLFI() { return _firstCLFI;}
+
+   uint8_t* getCodeRA() { return _codeRA;}
+   uint8_t* setCodeRA(uint8_t *codeRA)
+      {
+      return _codeRA = codeRA;
+      }
+
+   virtual uint32_t getCallReturnAddressOffset();
+   virtual uint32_t getSingleDynamicSlotOffset();
+   virtual uint32_t getLastCachedSlotFieldOffset();
+   virtual uint32_t getFirstSlotFieldOffset();
+   virtual uint32_t getLastSlotFieldOffset();
+   virtual uint32_t getFirstSlotOffset();
+   virtual uint32_t getLastSlotOffset();
    };
 
 
 class S390InterfaceCallSnippet : public TR::S390VirtualSnippet
    {
-   TR::S390InterfaceCallDataSnippet * _dataSnippet;
+   TR::J9S390InterfaceCallDataSnippet * _dataSnippet;
    int8_t _numInterfaceCallCacheSlots;
    bool _useCLFIandBRCL;
 
    public:
 
-   S390InterfaceCallSnippet(TR::CodeGenerator *cg, TR::Node *c, TR::LabelSymbol *lab, int32_t s, int8_t n, bool useCLFIandBRCL = false);
-
-   S390InterfaceCallSnippet(TR::CodeGenerator *cg, TR::Node *c, TR::LabelSymbol *lab, int32_t s, int8_t n, uint8_t *thunkPtr, bool useCLFIandBRCL = false);
+   S390InterfaceCallSnippet(TR::CodeGenerator *cg, TR::Node *c, TR::LabelSymbol *lab, int32_t s, int8_t n, void *thunkPtr, bool useCLFIandBRCL = false);
 
    virtual Kind getKind() { return IsInterfaceCall; }
    int8_t getNumInterfaceCallCacheSlots() {return _numInterfaceCallCacheSlots;}
@@ -148,8 +193,8 @@ class S390InterfaceCallSnippet : public TR::S390VirtualSnippet
       }
    bool isUseCLFIandBRCL() {return _useCLFIandBRCL;}
 
-   TR::S390InterfaceCallDataSnippet *getDataConstantSnippet() { return _dataSnippet; }
-   TR::S390InterfaceCallDataSnippet *setDataConstantSnippet(TR::S390InterfaceCallDataSnippet *snippet)
+   TR::J9S390InterfaceCallDataSnippet *getDataConstantSnippet() { return _dataSnippet; }
+   TR::J9S390InterfaceCallDataSnippet *setDataConstantSnippet(TR::J9S390InterfaceCallDataSnippet *snippet)
       {
       return _dataSnippet = snippet;
       }
@@ -158,7 +203,6 @@ class S390InterfaceCallSnippet : public TR::S390VirtualSnippet
    virtual uint8_t *emitSnippetBody();
 
    };
-
 }
 
 #endif

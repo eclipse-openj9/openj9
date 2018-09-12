@@ -1,4 +1,4 @@
-ZZ Copyright (c) 2000, 2017 IBM Corp. and others
+ZZ Copyright (c) 2000, 2018 IBM Corp. and others
 ZZ
 ZZ This program and the accompanying materials are made 
 ZZ available under the terms of the Eclipse Public License 2.0 
@@ -62,6 +62,7 @@ define([LTR_GPR],ltgr)
 define([MSGR_GPR],msgr)
 define([N_GPR],ng)
 define([NIHH_GPR],nihh)
+define([NR_GPR],ngr)
 define([O_GPR],og)
 define([S_GPR],sg)
 define([SL32_GPR],slgf)
@@ -124,6 +125,7 @@ define([LMH_GPR],lmh)
 define([LNR_GPR],lnr)
 define([LTR_GPR],ltr)
 define([N_GPR],n)
+define([NR_GPR],nr)
 define([O_GPR],o)
 define([S_GPR],s)
 define([SL32_GPR],sl)
