@@ -120,6 +120,10 @@ linux_390-64_cmprssptrs:
       10: 'hw.arch.s390x && sw.os.ubuntu'
       11: 'hw.arch.s390x && sw.os.ubuntu'
       next: 'hw.arch.s390x && sw.os.ubuntu'
+  build_env:
+    vars:
+      11: 'CC=gcc-7 CXX=g++-7'
+      next: 'CC=gcc-7 CXX=g++-7'
 #========================================#
 # AIX PPC 64bits Compressed Pointers
 #========================================#
@@ -188,6 +192,10 @@ linux_x86-64_cmprssptrs:
       10: 'hw.arch.x86 && sw.os.ubuntu'
       11: 'hw.arch.x86 && sw.os.ubuntu'
       next: 'hw.arch.x86 && sw.os.ubuntu'
+  build_env:
+    vars:
+      11: 'CC=gcc-7 CXX=g++-7'
+      next: 'CC=gcc-7 CXX=g++-7'
 #========================================#
 # Linux x86 64bits Compressed Pointers /w CMake
 #========================================#
@@ -231,6 +239,10 @@ linux_x86-64_cmprssptrs_cmake:
     10: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
     11: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
     next: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
+  build_env:
+    vars:
+      11: 'CC=gcc-7 CXX=g++-7'
+      next: 'CC=gcc-7 CXX=g++-7'
 #========================================#
 # Linux x86 64bits Large Heap
 #========================================#
@@ -268,6 +280,10 @@ linux_x86-64:
     10: '--with-noncompressedrefs'
     11: '--with-noncompressedrefs'
     next: '--with-noncompressedrefs'
+  build_env:
+    vars:
+      11: 'CC=gcc-7 CXX=g++-7'
+      next: 'CC=gcc-7 CXX=g++-7'
 #========================================#
 # Windows x86 64bits Compressed Pointers
 #========================================#
