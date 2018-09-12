@@ -31,7 +31,7 @@ timestamps {
             variableFile = load 'buildenv/jenkins/common/variables-functions'
             // Determine if build is a PullRequest
             if (params.ghprbPullId) {
-                variableFile.set_job_variables('PullRequest')
+                variableFile.set_job_variables('pullRequest')
             } else {
                 variableFile.set_job_variables('pipeline')
             }
