@@ -104,6 +104,8 @@ timeout(time: 10, unit: 'HOURS') {
                 def variableFile = load 'buildenv/jenkins/common/variables-functions'
                 buildFile = load 'buildenv/jenkins/common/pipeline-functions'
 
+                VERSION_MAP = initialize_version_map()
+
                 // Determine if build is a PullRequest
                 if (params.ghprbPullId) {
                     // Parse Github trigger comment
@@ -112,6 +114,9 @@ timeout(time: 10, unit: 'HOURS') {
                     // Jenkins compile <platform>*
                     // Jenkins test <comma_separated_test_target> <platform> *
                     //params.TESTS_TARGETS = params.ghprbCommentBody.substring(?)
+                    VERSION_MAP['8'] = true
+                    echo "VERSION_MAP:'${VERSION_MAP}'"
+                    error('no')
                     Java8 = true
                     Java9 = false
                     Java10 = false
@@ -123,7 +128,7 @@ timeout(time: 10, unit: 'HOURS') {
                     TESTS_TARGETS = 'sanity.functional'
                 }
 
-                def BUILD_SPECS = get_specs(SPECS)
+                def BUILD_SPECS = get_specs(SPECS, VERSION_MAP)
                 // find releases to build based on given specs
                 BUILD_RELEASES.addAll(get_build_releases(BUILD_SPECS))
 
@@ -253,15 +258,15 @@ def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_RE
 * Parses the build parameters to identify the specs and the releases to build
 * and test. Returns a map of releases by specs.
 */
-def get_specs(SUPPORTED_SPECS) {
+def get_specs(SUPPORTED_SPECS, VERSION_MAP) {
     def RELEASES = []
     def PLATFORMS = []
     def SPECS = [:]
 
     // get releases 
-    params.each { key, value  ->
-        if ((key.indexOf('Java') != -1) && (value == true)) {
-            RELEASES.add(key.substring(4))
+    VERSION_MAP.each { key, value  ->
+        if (value) {
+            RELEASES.add(key)
         }
     }
 
@@ -356,4 +361,19 @@ def get_node_labels(NODE_LABELS, SPECS) {
     }
 
     return LABELS
+}
+
+/*
+* Returns a map of the Java Version bools.
+* Ie. MAP = [8:true, 9:false, 10:true] etc
+*/
+def initialize_version_map() {
+    def VERSION_MAP = [:]
+    params.each { key, value  ->
+        if ((key.indexOf('Java') != -1) && (value == true)) {
+            VERSION_MAP["${key.substring(4)}"] = value
+        }
+    }
+    echo "Initial VERSION_MAP:'${VERSION_MAP}"
+    return VERSION_MAP
 }
