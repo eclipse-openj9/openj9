@@ -89,7 +89,7 @@ def checkout_pullrequest() {
     echo 'Look for Dependent Changes'
 
     def KEYWORD = "depends"
-    def COMMENT = ghprbCommentBody.toLowerCase(Locale.US);
+    def COMMENT = params.ghprbCommentBody.toLowerCase(Locale.US);
     def OPENJDK_PR
     def OMR_PR
     def OPENJ9_PR
