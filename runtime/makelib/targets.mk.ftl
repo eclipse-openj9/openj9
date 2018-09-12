@@ -346,7 +346,7 @@ LIBCDEFS := $(word 1,$(wildcard $(foreach d,$(TPF_ROOT),$d/base/lib/libCDEFSFORA
 # over 1GB and reduces the workload of getmacros as it reads them.
 
 DDR_SED_COMMAND := \
-    sed -n -e '/^@/p' -e '/^DDRFILE_BEGIN /,/^DDRFILE_END /s/^/@/p'
+    sed -n -e '/^DDRFILE_BEGIN /,/^DDRFILE_END /s/^/@/p'
 
 %.i : %.c
 	$(CC) $(CFLAGS) -E $< | $(DDR_SED_COMMAND) > $@
