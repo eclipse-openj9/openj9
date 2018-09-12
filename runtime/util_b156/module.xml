@@ -44,7 +44,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<makefilestub data="UMA_OBJECTS:=$(filter-out sse2memclear$(UMA_DOT_O),$(UMA_OBJECTS))">
 				<exclude-if condition="spec.win_x86.* and not spec.flags.J9VM_ENV_DATA64"/>
 			</makefilestub>
-			<makefilestub data="UMA_OBJECTS:=$(filter-out mingw_comp$(UMA_DOT_O),$(UMA_OBJECTS))">
+			<makefilestub data="UMA_OBJECTS:=$(filter-out clang_comp$(UMA_DOT_O),$(UMA_OBJECTS))">
 				<exclude-if condition="spec.win_x86.* and not spec.flags.J9VM_ENV_DATA64"/>
 			</makefilestub>
 			<makefilestub data="UMA_OBJECTS:=$(filter-out fpusup$(UMA_DOT_O),$(UMA_OBJECTS))">

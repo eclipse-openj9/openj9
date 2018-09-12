@@ -145,7 +145,7 @@ UMA_C_INCLUDE_PREFIX=/I
 UMA_C_INCLUDE_PREFIX=-I
 </#if>
 <#if uma.spec.type.windows>
-ifdef USE_MINGW
+ifdef USE_CLANG
   UMA_C_INCLUDE_PREFIX=-I
 endif
 </#if>
@@ -196,12 +196,12 @@ UMA_LINK_PATH += $(foreach d,$(TPF_ROOT),-L$d/opensource/stdlib)
 </#if>
 
 <#if uma.spec.type.windows>
-ifdef USE_MINGW
-  MINGW_CXXFLAGS+=$(UMA_C_INCLUDES)
-  MINGW_CXXFLAGS+=-I../oti/mingw
+ifdef USE_CLANG
+  CLANG_CXXFLAGS+=$(UMA_C_INCLUDES)
+  CLANG_CXXFLAGS+=-I../oti/clang
   ifneq ($(OPENJ9_BUILD),true)
-    MINGW_INCLUDES:="$(subst ;," -I",$(INCLUDE))"
-    MINGW_CXXFLAGS+=$(UMA_C_INCLUDE_PREFIX)$(MINGW_INCLUDES)
+    CLANG_INCLUDES:="$(subst ;," -I",$(INCLUDE))"
+    CLANG_CXXFLAGS+=$(UMA_C_INCLUDE_PREFIX)$(CLANG_INCLUDES)
   endif # OPENJ9_BUILD
 endif
 </#if>
@@ -248,8 +248,8 @@ UMA_LINK_PATH:=$(sort $(UMA_LINK_PATH))
 CFLAGS+=$(A_CFLAGS)
 CXXFLAGS+=$(A_CXXFLAGS)
 <#if uma.spec.type.windows>
-ifdef USE_MINGW
-  MINGW_CXXFLAGS+=$(A_CXXFLAGS)
+ifdef USE_CLANG
+  CLANG_CXXFLAGS+=$(A_CXXFLAGS)
 endif
 </#if>
 CPPFLAGS+=$(A_CPPFLAGS)
@@ -270,8 +270,8 @@ UMA_EXE_PREFIX_FLAGS+=-fprofile-arcs -ftest-coverage
 CFLAGS+=$(VMDEBUG)
 CXXFLAGS+=$(VMDEBUG)
 <#if uma.spec.type.windows>
-ifdef USE_MINGW
-  MINGW_CXXFLAGS+=$(VMDEBUG)
+ifdef USE_CLANG
+  CLANG_CXXFLAGS+=$(VMDEBUG)
 endif
 </#if>
 <#if uma.spec.processor.ppc>
@@ -490,7 +490,7 @@ UMA_PASM_INCLUDES:=$(addprefix -I ,$(UMA_INCLUDES))
 </#if>
 
 <#if uma.spec.type.windows>
-ifdef USE_MINGW
+ifdef USE_CLANG
 UMA_M4_INCLUDES = $(UMA_C_INCLUDES)
 else
 UMA_M4_INCLUDES = $(patsubst /I%,-I%,$(UMA_C_INCLUDES))
@@ -502,25 +502,25 @@ endif
 	$(AS) $(ASFLAGS) $*.asm
 	-mv -f $*.asm $*.hold
 
-ifdef USE_MINGW
-MINGW_CXXFLAGS+=-mdll -mwin32 -mthreads -fno-rtti -fno-threadsafe-statics -fno-strict-aliasing -fno-exceptions -fno-use-linker-plugin -fno-asynchronous-unwind-tables
+ifdef USE_CLANG
+CLANG_CXXFLAGS+=-fno-rtti -fno-threadsafe-statics -fno-strict-aliasing -fno-exceptions -fno-asynchronous-unwind-tables
 ifdef VS12AndHigher
-MINGW_CXXFLAGS+=-std=c++0x -D_CRT_SUPPRESS_RESTRICT -DVS12AndHigher
+CLANG_CXXFLAGS+=-std=c++0x -D_CRT_SUPPRESS_RESTRICT -DVS12AndHigher
 <#if uma.spec.processor.x86>
-	MINGW_CXXFLAGS+=-D_M_IX86
+	CLANG_CXXFLAGS+=-D_M_IX86
 <#elseif uma.spec.processor.amd64>
-	MINGW_CXXFLAGS+=-D_M_X64
+	CLANG_CXXFLAGS+=-D_M_X64
 </#if>
 endif
 # special handling BytecodeInterpreter.cpp and DebugBytecodeInterpreter.cpp
 BytecodeInterpreter$(UMA_DOT_O):BytecodeInterpreter.cpp
-	$(MINGW_CXX) $(MINGW_CXXFLAGS) -c $< -o $@
+	$(CLANG_CXX) $(CLANG_CXXFLAGS) -c $< -o $@
 
 DebugBytecodeInterpreter$(UMA_DOT_O):DebugBytecodeInterpreter.cpp
-	$(MINGW_CXX) $(MINGW_CXXFLAGS) -c $< -o $@
+	$(CLANG_CXX) $(CLANG_CXXFLAGS) -c $< -o $@
 
 MHInterpreter$(UMA_DOT_O):MHInterpreter.cpp
-	$(MINGW_CXX) $(MINGW_CXXFLAGS) -c $< -o $@
+	$(CLANG_CXX) $(CLANG_CXXFLAGS) -c $< -o $@
 
 endif
 </#if>
@@ -634,5 +634,5 @@ EXTRA_FLAGS=-DUT_DIRECT_TRACE_REGISTRATION -D$(TR_HOST)
 CFLAGS+=$(EXTRA_FLAGS)
 CXXFLAGS+=$(EXTRA_FLAGS)
 CPPFLAGS+=$(EXTRA_FLAGS)
-MINGW_CXXFLAGS+=$(EXTRA_FLAGS)
+CLANG_CXXFLAGS+=$(EXTRA_FLAGS)
 PPC_GCC_CXXFLAGS+=$(EXTRA_FLAGS)
