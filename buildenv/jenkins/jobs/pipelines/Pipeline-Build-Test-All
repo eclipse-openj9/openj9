@@ -170,7 +170,9 @@ timeout(time: 10, unit: 'HOURS') {
                     }
 
                     // update build description
+                    echo "desc:${currentBuild.description}"
                     def TMP_DESC = (currentBuild.description) ? currentBuild.description + "<br>" : ""
+                    echo "tmp_desc:${TMP_DESC}"
                     currentBuild.description = TMP_DESC + "<br/>${PLATFORMS}"
                 }
 
