@@ -29,7 +29,6 @@ timestamps {
                 checkout scm
             }
             variableFile = load 'buildenv/jenkins/common/variables-functions'
-            // Determine if build is a PullRequest
             variableFile.set_job_variables('pipeline')
 
             buildFile = load 'buildenv/jenkins/common/pipeline-functions'
