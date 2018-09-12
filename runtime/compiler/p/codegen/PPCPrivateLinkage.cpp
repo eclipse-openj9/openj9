@@ -348,11 +348,6 @@ TR::PPCPrivateLinkage::PPCPrivateLinkage(TR::CodeGenerator *cg)
    _properties._computedCallTargetRegister  = TR::RealRegister::gr0; // gr11 = interface, gr12 = virtual, so we need something else for computed
    _properties._vtableIndexArgumentRegister = TR::RealRegister::gr12;
    _properties._j9methodArgumentRegister    = TR::RealRegister::gr3; // TODO:JSR292: Confirm
-
-   // shrink wrapping
-   setRegisterSaveSize(0);
-   _mapRegsToStack = (int32_t *) trMemory()->allocateHeapMemory(TR::RealRegister::NumRegisters*sizeof(int32_t));
-   memset(_mapRegsToStack, -1, (TR::RealRegister::NumRegisters*sizeof(int32_t)));
    }
 
 const TR::PPCLinkageProperties& TR::PPCPrivateLinkage::getProperties()
@@ -857,8 +852,6 @@ static TR::Instruction *unrollPrologueInitLoop(TR::CodeGenerator *cg, TR::Node *
    return cursor;
    }
 
-// routines for shrink wrapping
-//
 static int32_t calculateFrameSize(TR::RealRegister::RegNum &intSavedFirst,
                                     int32_t &argSize,
                                     int32_t &size,
@@ -896,7 +889,6 @@ static int32_t calculateFrameSize(TR::RealRegister::RegNum &intSavedFirst,
    while (intSavedFirst<=TR::RealRegister::LastGPR && !machine->getPPCRealRegister(intSavedFirst)->getHasBeenAssignedInMethod())
       intSavedFirst=(TR::RealRegister::RegNum)((uint32_t)intSavedFirst+1);
 
-   // shrinkwrapping
    // the registerSaveDescription is emitted as follows:
    // 0000 0000 0000 000 0 0000 0000 0000 0000
    //                    <----           ---->
@@ -906,13 +898,9 @@ static int32_t calculateFrameSize(TR::RealRegister::RegNum &intSavedFirst,
    //     15 bits to represent the save offset from bp
    //     allowing 2^15 bytes / 8 = 4096 locals in 64-bit
    //
-   if (1)
+   for (int32_t i = intSavedFirst; i <= TR::RealRegister::LastGPR; i++)
       {
-      cg->setLowestSavedRegister(intSavedFirst);
-      for (int32_t i = intSavedFirst; i <= TR::RealRegister::LastGPR; i++)
-         {
-         registerSaveDescription |= 1 << (i - TR::RealRegister::gr15);
-         }
+      registerSaveDescription |= 1 << (i - TR::RealRegister::gr15);
       }
 
    // Currently no non-volatile FPR's in private linkage
@@ -932,7 +920,6 @@ static int32_t calculateFrameSize(TR::RealRegister::RegNum &intSavedFirst,
       const uint32_t alignBytes = 16;
       size = (size + (alignBytes - 1) & (~(alignBytes - 1)));
 
-      // shrinkwrapping
       regSaveOffset = (size-argSize+firstLocalOffset);
 
       //In MethodMetaData jitAddSpilledRegisters, we lookup the regSaveOffset
@@ -953,112 +940,6 @@ static int32_t calculateFrameSize(TR::RealRegister::RegNum &intSavedFirst,
       }
 
    return registerSaveDescription;
-   }
-
-TR::Instruction *
-TR::PPCPrivateLinkage::composeSavesRestores(TR::Instruction *start,
-                                           int32_t firstReg,
-                                           int32_t lastReg,
-                                           int32_t offset,
-                                           int32_t numRegs, bool doSaves)
-   {
-   TR::Machine *machine = cg()->machine();
-   TR::RealRegister       *stackPtr = cg()->getStackPointerRegister();
-   TR::Node                 *firstNode = comp()->getStartTree()->getNode();
-
-   TR::RealRegister::RegNum first = (TR::RealRegister::RegNum)firstReg;
-   TR::RealRegister::RegNum last  = (TR::RealRegister::RegNum)lastReg;
-
-   if (offset == -1)
-      offset = getStackOffsetForReg(firstReg);
-   TR::MemoryReference *pmr = new (trHeapMemory()) TR::MemoryReference(stackPtr, offset, 4*(last - first + 1), cg());
-   if (!doSaves)
-      start = generateTrg1MemInstruction(cg(), TR::InstOpCode::lmw, firstNode, machine->getPPCRealRegister(first), pmr, start);
-   else
-      start = generateMemSrc1Instruction(cg(), TR::InstOpCode::stmw, firstNode, pmr, machine->getPPCRealRegister(first), start);
-   return start;
-   }
-
-bool TR::PPCPrivateLinkage::mapPreservedRegistersToStackOffsets(int32_t *mapRegsToStack, int32_t &numPreserved, TR_BitVector *&preservedRegsInLinkage)
-   {
-   // this routine provides a mapping between the preserved registers and
-   // their location on the stack ; so shrinkWrapping can use the right
-   // offsets when sinking the save/restores
-   //
-   TR::Machine *machine = cg()->machine();
-   const TR::PPCLinkageProperties& properties = getProperties();
-   bool traceIt    = comp()->getOption(TR_TraceShrinkWrapping);
-
-
-   if (1)
-      {
-      if (traceIt)
-         traceMsg(comp(), "Preserved registers for this linkage: { ");
-      for (int32_t pindex = TR::RealRegister::gr15;
-            pindex <= TR::RealRegister::gr31;
-            pindex++)
-         {
-         TR::RealRegister::RegNum idx = (TR::RealRegister::RegNum)pindex;
-         preservedRegsInLinkage->set(idx);
-         if (traceIt)
-            traceMsg(comp(), "%s ", comp()->getDebug()->getRealRegisterName(idx-1));
-         }
-
-      if (traceIt)
-         traceMsg(comp(), "}\n");
-      }
-
-   TR::RealRegister::RegNum intSavedFirst = TR::RealRegister::gr15;
-   int32_t frameSize = -(comp()->getJittedMethodSymbol()->getLocalMappingCursor());
-   int32_t argSize = 0, regSaveOffset = 0, saveSize = 0;
-   bool saveLR = false;
-
-   //compute the frame size and stash it away in the linkage
-   //
-   int32_t registerSaveDescription = calculateFrameSize(intSavedFirst, argSize, frameSize, regSaveOffset, saveSize, cg(), saveLR);
-   setRegisterSaveSize(regSaveOffset);
-
-   //pramod
-   traceMsg(comp(), "regSaveOffset %d\n", regSaveOffset);
-
-
-   for (int32_t i = intSavedFirst; i <= TR::RealRegister::LastGPR; i++)
-      {
-      mapRegsToStack[i] = argSize;
-      setStackOffsetForReg(i, argSize);
-      traceMsg(comp(), "idx %d is assigned gets offsetcursor %d\n", i, argSize);
-      argSize = argSize + TR::Compiler->om.sizeofReferenceAddress();
-      }
-
-   // return true or false depending on whether
-   // the linkage uses pushes for preserved regs
-   return false;
-   }
-
-TR::Instruction *
-TR::PPCPrivateLinkage::savePreservedRegister(TR::Instruction *cursor, int32_t regIndex, int32_t offset)
-   {
-   TR::Node *n = comp()->getStartTree()->getNode();
-   TR::RealRegister       *stackPtr = cg()->getStackPointerRegister();
-   TR::Machine *machine = cg()->machine();
-
-   if (offset == -1)
-      offset = getStackOffsetForReg(regIndex);
-   cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_st, n, new (trHeapMemory()) TR::MemoryReference(stackPtr, offset, TR::Compiler->om.sizeofReferenceAddress(), cg()), machine->getPPCRealRegister((TR::RealRegister::RegNum)regIndex), cursor);
-   return cursor;
-   }
-
-TR::Instruction *
-TR::PPCPrivateLinkage::restorePreservedRegister(TR::Instruction *cursor, int32_t regIndex, int32_t offset)
-   {
-   TR::Node *n = comp()->getStartTree()->getNode();
-   TR::RealRegister       *stackPtr = cg()->getStackPointerRegister();
-   TR::Machine *machine = cg()->machine();
-
-   if (offset == -1)
-      offset = getStackOffsetForReg(regIndex);
-   cursor = generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, n, machine->getPPCRealRegister((TR::RealRegister::RegNum)regIndex), new (trHeapMemory()) TR::MemoryReference(stackPtr, offset, TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor);
-   return cursor;
    }
 
 void TR::PPCPrivateLinkage::createPrologue(TR::Instruction *cursor)
@@ -1193,26 +1074,20 @@ void TR::PPCPrivateLinkage::createPrologue(TR::Instruction *cursor)
    if (intSavedFirst <= TR::RealRegister::LastGPR)
       {
       if (TR::Compiler->target.is64Bit() ||
-           !comp()->getOption(TR_DisableShrinkWrapping) ||
           (!comp()->getOption(TR_OptimizeForSpace) &&
            TR::RealRegister::LastGPR - intSavedFirst <= 3))
          {
-         // shrink wrapping
-         TR_BitVector *p = cg()->getPreservedRegsInPrologue();
          for (regIndex=intSavedFirst; regIndex<=TR::RealRegister::LastGPR; regIndex=(TR::RealRegister::RegNum)((uint32_t)regIndex+1))
             {
-            if (!p || p->get((uint32_t)regIndex))
-               cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_st, firstNode, new (trHeapMemory()) TR::MemoryReference(stackPtr, argSize, TR::Compiler->om.sizeofReferenceAddress(), cg()), machine->getPPCRealRegister(regIndex), cursor);
+            cursor = generateMemSrc1Instruction(cg(),TR::InstOpCode::Op_st, firstNode, new (trHeapMemory()) TR::MemoryReference(stackPtr, argSize, TR::Compiler->om.sizeofReferenceAddress(), cg()), machine->getPPCRealRegister(regIndex), cursor);
+
             argSize = argSize + TR::Compiler->om.sizeofReferenceAddress();
             }
          }
       else
          {
-         if (comp()->getOption(TR_DisableShrinkWrapping) ||
-               !cg()->getPreservedRegsInPrologue())
-            cursor = generateMemSrc1Instruction(cg(), (intSavedFirst==TR::RealRegister::LastGPR)?TR::InstOpCode::stw:TR::InstOpCode::stmw, firstNode, new (trHeapMemory()) TR::MemoryReference(stackPtr, argSize, 4*(TR::RealRegister::LastGPR-intSavedFirst+1), cg()), machine->getPPCRealRegister(intSavedFirst), cursor);
-         else
-            cursor = cg()->saveOrRestoreRegisters(cg()->getPreservedRegsInPrologue(), cursor, true);
+         cursor = generateMemSrc1Instruction(cg(), (intSavedFirst==TR::RealRegister::LastGPR)?TR::InstOpCode::stw:TR::InstOpCode::stmw, firstNode, new (trHeapMemory()) TR::MemoryReference(stackPtr, argSize, 4*(TR::RealRegister::LastGPR-intSavedFirst+1), cg()), machine->getPPCRealRegister(intSavedFirst), cursor);
+         
          argSize += (TR::RealRegister::LastGPR - intSavedFirst + 1) * 4;
          }
       }
@@ -1485,27 +1360,20 @@ void TR::PPCPrivateLinkage::createEpilogue(TR::Instruction *cursor)
    if (savedFirst <= TR::RealRegister::LastGPR)
       {
       if (TR::Compiler->target.is64Bit() ||
-           !comp()->getOption(TR_DisableShrinkWrapping) ||
           (!comp()->getOption(TR_OptimizeForSpace) &&
            TR::RealRegister::LastGPR - savedFirst <= 3))
          {
-         // shrink wrapping
-         TR_BitVector *p = cg()->getPreservedRegsInPrologue();
          for (regIndex=savedFirst; regIndex<=TR::RealRegister::LastGPR; regIndex=(TR::RealRegister::RegNum)((uint32_t)regIndex+1))
             {
-            if (!p || p->get((uint32_t)regIndex))
-                cursor = generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, currentNode, machine->getPPCRealRegister(regIndex), new (trHeapMemory()) TR::MemoryReference(stackPtr, saveSize, TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor);
+            cursor = generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, currentNode, machine->getPPCRealRegister(regIndex), new (trHeapMemory()) TR::MemoryReference(stackPtr, saveSize, TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor);
 
             saveSize = saveSize + TR::Compiler->om.sizeofReferenceAddress();
             }
          }
       else
          {
-         if (comp()->getOption(TR_DisableShrinkWrapping) ||
-               !cg()->getPreservedRegsInPrologue())
-            cursor = generateTrg1MemInstruction(cg(), (savedFirst==TR::RealRegister::LastGPR)?TR::InstOpCode::lwz:TR::InstOpCode::lmw, currentNode, machine->getPPCRealRegister(savedFirst), new (trHeapMemory()) TR::MemoryReference(stackPtr, saveSize, 4*(TR::RealRegister::LastGPR-savedFirst+1), cg()), cursor);
-         else
-            cursor = cg()->saveOrRestoreRegisters(cg()->getPreservedRegsInPrologue(), cursor, false);
+         cursor = generateTrg1MemInstruction(cg(), (savedFirst==TR::RealRegister::LastGPR)?TR::InstOpCode::lwz:TR::InstOpCode::lmw, currentNode, machine->getPPCRealRegister(savedFirst), new (trHeapMemory()) TR::MemoryReference(stackPtr, saveSize, 4*(TR::RealRegister::LastGPR-savedFirst+1), cg()), cursor);
+         
          saveSize += (TR::RealRegister::LastGPR - savedFirst + 1) * 4;
          }
       }

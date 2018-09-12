@@ -7285,12 +7285,6 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                options->setOption(TR_DisableGuardedCountingRecompilations);
                }
 
-            // Shrink wrapping does not help at cold
-            if (options->getOptLevel() < warm && !options->getOption(TR_DisableJava8StartupHeuristics))
-               {
-               options->setOption(TR_DisableShrinkWrapping);
-               }
-
             if (that->_methodBeingCompiled->_oldStartPC != 0)
                {
                TR_PersistentJittedBodyInfo *bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(that->_methodBeingCompiled->_oldStartPC);
@@ -7431,7 +7425,6 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             // Disable some expensive optimizations
             if (options->getOptLevel() <= warm && !options->getOption(TR_EnableExpensiveOptsAtWarm))
                {
-               options->setOption(TR_DisableShrinkWrapping);
                options->setOption(TR_DisableStoreSinking);
                }
             } // end of compilation strategy tweaks for Java

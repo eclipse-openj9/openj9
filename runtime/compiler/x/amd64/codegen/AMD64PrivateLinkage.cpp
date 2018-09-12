@@ -722,37 +722,6 @@ void TR::AMD64PrivateLinkage::mapIncomingParms(TR::ResolvedMethodSymbol *method)
 
    }
 
-// routines for shrink wrapping
-//
-TR::Instruction *TR::AMD64PrivateLinkage::savePreservedRegister(TR::Instruction *cursor, int32_t regIndex, int32_t offset)
-   {
-   TR::RealRegister *reg = machine()->getX86RealRegister((TR::RealRegister::RegNum)regIndex);
-   cursor = generateMemRegInstruction(
-               cursor,
-               TR::Linkage::movOpcodes(MemReg, fullRegisterMovType(reg)),
-               generateX86MemoryReference(machine()->getX86RealRegister(TR::RealRegister::vfp), offset, cg()),
-               reg,
-               cg()
-               );
-   return cursor;
-   }
-
-TR::Instruction *TR::AMD64PrivateLinkage::restorePreservedRegister(TR::Instruction *cursor, int32_t regIndex, int32_t offset)
-   {
-   TR::RealRegister *reg = machine()->getX86RealRegister((TR::RealRegister::RegNum)regIndex);
-
-   cursor = generateRegMemInstruction(
-               cursor,
-               TR::Linkage::movOpcodes(RegMem, fullRegisterMovType(reg)),
-               reg,
-               generateX86MemoryReference(machine()->getX86RealRegister(TR::RealRegister::vfp), offset, cg()),
-               cg()
-               );
-   return cursor;
-   }
-
-// please reflect any changes to these routines in mapPreservedRegistersToStackOffsets
-//
 TR::Instruction *TR::AMD64PrivateLinkage::savePreservedRegisters(TR::Instruction *cursor)
    {
    TR::ResolvedMethodSymbol *bodySymbol  = comp()->getJittedMethodSymbol();
@@ -761,15 +730,11 @@ TR::Instruction *TR::AMD64PrivateLinkage::savePreservedRegisters(TR::Instruction
 
 
    int32_t offsetCursor = -localSize - pointerSize;
-   // this bitvector is populated by shrinkWrapping
-   // and is consulted before regs are saved/restored
-   //
 
    int32_t preservedRegStoreBytesSaved = 0;
    if (_properties.getOffsetToFirstLocal() - bodySymbol->getLocalMappingCursor() > 0)
       preservedRegStoreBytesSaved -= 4; // There's an extra mov rsp
 
-   TR_BitVector *p = cg()->getPreservedRegsInPrologue();
    for (int32_t pindex = _properties.getMaxRegistersPreservedInPrologue()-1;
         pindex >= 0;
         pindex--)
@@ -781,16 +746,13 @@ TR::Instruction *TR::AMD64PrivateLinkage::savePreservedRegisters(TR::Instruction
       if (reg->getHasBeenAssignedInMethod() &&
             (reg->getState() != TR::RealRegister::Locked))
          {
-         if (!p || p->get(idx))
-            {
-            cursor = generateMemRegInstruction(
-               cursor,
-               TR::Linkage::movOpcodes(MemReg, fullRegisterMovType(reg)),
-               generateX86MemoryReference(machine()->getX86RealRegister(TR::RealRegister::vfp), offsetCursor, cg()),
-               reg,
-               cg()
-               );
-            }
+         cursor = generateMemRegInstruction(
+            cursor,
+            TR::Linkage::movOpcodes(MemReg, fullRegisterMovType(reg)),
+            generateX86MemoryReference(machine()->getX86RealRegister(TR::RealRegister::vfp), offsetCursor, cg()),
+            reg,
+            cg()
+            );
          offsetCursor -= pointerSize;
          }
       }
@@ -807,7 +769,6 @@ TR::Instruction *TR::AMD64PrivateLinkage::restorePreservedRegisters(TR::Instruct
    const int32_t          pointerSize = _properties.getPointerSize();
 
    int32_t pindex;
-   TR_BitVector *p = cg()->getPreservedRegsInPrologue();
    int32_t offsetCursor = -localSize - _properties.getPointerSize();
    for (pindex = _properties.getMaxRegistersPreservedInPrologue()-1;
         pindex >= 0;
@@ -817,16 +778,13 @@ TR::Instruction *TR::AMD64PrivateLinkage::restorePreservedRegisters(TR::Instruct
       TR::RealRegister *reg = machine()->getX86RealRegister(idx);
       if (reg->getHasBeenAssignedInMethod())
          {
-         if (!p || p->get(idx))
-            {
-            cursor = generateRegMemInstruction(
-               cursor,
-               TR::Linkage::movOpcodes(RegMem, fullRegisterMovType(reg)),
-               reg,
-               generateX86MemoryReference(machine()->getX86RealRegister(TR::RealRegister::vfp), offsetCursor, cg()),
-               cg()
-               );
-            }
+         cursor = generateRegMemInstruction(
+            cursor,
+            TR::Linkage::movOpcodes(RegMem, fullRegisterMovType(reg)),
+            reg,
+            generateX86MemoryReference(machine()->getX86RealRegister(TR::RealRegister::vfp), offsetCursor, cg()),
+            cg()
+            );
          offsetCursor -= _properties.getPointerSize();
          }
       }

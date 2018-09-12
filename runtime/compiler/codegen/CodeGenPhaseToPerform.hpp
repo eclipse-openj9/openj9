@@ -55,7 +55,6 @@
 
     RegisterAssigningPhase,
     MapStackPhase,
-    ShrinkWrappingPhase,
     PeepholePhase,
     BinaryEncodingPhase,
     EmitSnippetsPhase,
