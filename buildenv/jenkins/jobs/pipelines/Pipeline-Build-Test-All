@@ -138,7 +138,6 @@ timeout(time: 10, unit: 'HOURS') {
                 def variableFile = load 'buildenv/jenkins/common/variables-functions'
                 buildFile = load 'buildenv/jenkins/common/pipeline-functions'
 
-
                 // Determine if build is a PullRequest
                 if (ghprbPullId) {
                     // Parse Github trigger comment
@@ -161,7 +160,9 @@ timeout(time: 10, unit: 'HOURS') {
                 BUILD_RELEASES.addAll(get_build_releases(BUILD_SPECS))
 
                 // parse variables file and initialize variables
-                variableFile.set_job_variables('wrapper')
+                job_type = (ghprbPullId) ? 'pullRequest' : 'wrapper'
+                variableFile.set_job_variables(job_type)
+
                 SHAS = buildFile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH)
 
                 if (PERSONAL_BUILD) {

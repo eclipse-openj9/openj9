@@ -648,13 +648,6 @@ def set_job_variables(job_type) {
             set_sdk_variables()
             set_artifactory_config()
             break
-        case "test":
-            // set the node the tests would run on
-            set_node('test')
-            // set variables for a test job
-            set_test_variables()
-            break
-        case "pullRequest":
         case "pipeline":
             // set variables for a pipeline job
             set_repos_variables()
@@ -662,6 +655,7 @@ def set_job_variables(job_type) {
             set_test_targets()
             set_slack_channel()
             break
+        case "pullRequest":
         case "wrapper":
             //set variable for pipeline all/personal
             set_repos_variables(BUILD_RELEASES)
