@@ -91,6 +91,9 @@ Java_com_ibm_tools_attach_target_IPC_getTempDirImpl(JNIEnv *env, jclass clazz)
 			} else {
 				conversionBuffer = NULL; /* string is bogus */
 			}
+		} else if (conversionResult < 0) {
+			Trc_JCL_stringConversionFailed(env, charResult, conversionResult);
+			conversionBuffer = NULL; /* string conversion failed */
 		}
 		if (NULL != conversionBuffer) {
 			result =  (*env)->NewStringUTF(env, (char*)conversionBuffer);
