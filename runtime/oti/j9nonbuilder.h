@@ -453,6 +453,9 @@ typedef struct J9CfrError {
 	I_32 errorFrameIndex;
 	U_32 errorDataIndex;  /* Used to store the invalid index value when the verification error occurs */
 	I_32 verboseErrorType;
+	I_32 errorBsmIndex;
+	U_32 errorBsmArgsIndex;
+	U_32 errorCPType;
 	struct J9CfrMethod* errorMember;
 	struct J9CfrConstantPoolInfo* constantPool;
 } J9CfrError;
