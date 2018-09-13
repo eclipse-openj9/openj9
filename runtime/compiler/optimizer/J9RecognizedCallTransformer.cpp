@@ -139,10 +139,19 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
       {
       case TR::sun_misc_Unsafe_getAndAddInt:
       case TR::sun_misc_Unsafe_getAndSetInt:
-         return TR::Compiler->target.cpu.isX86() && !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets();
+         return (TR::Compiler->target.cpu.isX86()
+                       || TR::Compiler->target.cpu.isPower())
+                    && !comp()->getOption(TR_DisableUnsafe)
+                    && !comp()->compileRelocatableCode()
+                    && !TR::Compiler->om.canGenerateArraylets();
       case TR::sun_misc_Unsafe_getAndAddLong:
       case TR::sun_misc_Unsafe_getAndSetLong:
-         return TR::Compiler->target.cpu.isX86() && !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && TR::Compiler->target.is64Bit() && !TR::Compiler->om.canGenerateArraylets();
+         return (TR::Compiler->target.cpu.isX86()
+                       || TR::Compiler->target.cpu.isPower())
+                    && !comp()->getOption(TR_DisableUnsafe)
+                    && !comp()->compileRelocatableCode()
+                    && TR::Compiler->target.is64Bit()
+                    && !TR::Compiler->om.canGenerateArraylets();
       case TR::java_lang_Class_isAssignableFrom:
          return cg()->supportsInliningOfIsAssignableFrom();
       case TR::java_lang_Integer_rotateLeft:
