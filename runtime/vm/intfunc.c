@@ -370,5 +370,6 @@ J9InternalVMFunctions J9InternalFunctions = {
 	throwNewJavaIoIOException,
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	loadAndVerifyNestHost,
+	setNestmatesError,
 #endif
 };

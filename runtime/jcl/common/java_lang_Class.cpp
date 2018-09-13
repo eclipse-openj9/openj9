@@ -1839,16 +1839,13 @@ Java_java_lang_Class_getNestMembersImpl(JNIEnv *env, jobject recv)
 	J9Class *arrayClass = NULL;
 	J9Class *nestMember = NULL;
 
-	IDATA nestLoadStatus = J9_VISIBILITY_ALLOWED;
-
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 
 	J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(recv));
 	J9Class *nestHost = clazz->nestHost;
 
 	if (NULL == nestHost) {
-		nestLoadStatus = vmFuncs->loadAndVerifyNestHost(currentThread, clazz, 0);
-		if (J9_VISIBILITY_ALLOWED != nestLoadStatus) {
+		if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, clazz, 0)) {
 			nestMember = clazz;
 			goto _done;
 		}
@@ -1894,13 +1891,12 @@ Java_java_lang_Class_getNestMembersImpl(JNIEnv *env, jobject recv)
 				 */
 				goto _done;
 			} else if (NULL == nestMember->nestHost) {
-				nestLoadStatus = vmFuncs->loadAndVerifyNestHost(currentThread, nestMember, 0);
-				if (J9_VISIBILITY_ALLOWED != nestLoadStatus) {
+				if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, nestMember, 0)) {
 					goto _done;
 				}
 			}
 			if (nestMember->nestHost != nestHost) {
-				nestLoadStatus = J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR;
+				vmFuncs->setNestmatesError(currentThread, nestMember, nestHost, J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR);
 				goto _done;
 			}
 			J9JAVAARRAYOFOBJECT_STORE(currentThread, resultObject, i + 1, J9VM_J9CLASS_TO_HEAPCLASS(nestMember));

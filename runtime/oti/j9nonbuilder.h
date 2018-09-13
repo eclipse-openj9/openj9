@@ -4798,6 +4798,7 @@ typedef struct J9InternalVMFunctions {
 	void ( *throwNewJavaIoIOException)(JNIEnv *env, const char *message);
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	UDATA ( *loadAndVerifyNestHost)(struct J9VMThread *vmThread, struct J9Class *clazz, UDATA options);
+	void ( *setNestmatesError)(struct J9VMThread *vmThread, struct J9Class *nestMember, struct J9Class *nestHost, IDATA errorCode);
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 } J9InternalVMFunctions;
 

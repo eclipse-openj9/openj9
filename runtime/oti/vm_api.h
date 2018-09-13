@@ -3070,6 +3070,20 @@ trace(J9VMThread *vmStruct);
  */
 UDATA
 loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options);
+
+/**
+ * Sets the nestmates error based on the errorCode
+ *
+ * @param vmThread vmthread token
+ * @param nestMember the j9lass requesting the nesthost
+ * @param nestHost the actual nest host, this may be NULL
+ * @param errorCode the error code represting the exception to throw
+ * 	J9_VISIBILITY_NEST_HOST_LOADING_FAILURE_ERROR
+ * 	J9_VISIBILITY_NEST_HOST_DIFFERENT_PACKAGE_ERROR
+ * 	J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR
+ */
+void
+setNestmatesError(J9VMThread *vmThread, J9Class *nestMember, J9Class *nestHost, IDATA errorCode);
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 
 /* ---------------- VMAccess.cpp ---------------- */
