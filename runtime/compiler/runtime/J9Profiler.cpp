@@ -1808,7 +1808,7 @@ TR_BlockFrequencyInfo::getFrequencyInfo(
             {
             traceMsg(comp, "  found frame for %s with no outter profiling info\n", resolvedMethodSymbol->signature(comp->trMemory()));
             // has this method been compiled so we might have had a chance to profile it?
-            if (!resolvedMethod->isInterpreted()
+            if (!resolvedMethod->isInterpretedForHeuristics()
                 && !resolvedMethod->isNative()
                 && !resolvedMethod->isJNINative())
                {

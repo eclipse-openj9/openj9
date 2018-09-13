@@ -1130,7 +1130,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
          {
          if (!((methodSymbol && methodSymbol->getResolvedMethodSymbol() &&
                methodSymbol->getResolvedMethodSymbol()->getResolvedMethod() &&
-               methodSymbol->getResolvedMethodSymbol()->getResolvedMethod()->isInterpreted()) ||
+               methodSymbol->getResolvedMethodSymbol()->getResolvedMethod()->isInterpretedForHeuristics()) ||
                methodSymbol->isVMInternalNative()      ||
                methodSymbol->isHelper()                ||
                methodSymbol->isNative()                ||

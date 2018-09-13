@@ -291,6 +291,7 @@ public:
    virtual bool                  isFinal();
    virtual bool                  isStrictFP();
    virtual bool                  isInterpreted();
+   virtual bool                  isInterpretedForHeuristics();
    virtual bool                  hasBackwardBranches();
    virtual bool                  isObjectConstructor();
    virtual bool                  isNonEmptyObjectConstructor();
@@ -508,6 +509,7 @@ public:
    virtual bool                  isStrictFP();
 
    virtual bool                  isInterpreted();
+   virtual bool                  isInterpretedForHeuristics();
    virtual bool                  hasBackwardBranches();
    virtual bool                  isObjectConstructor();
    virtual bool                  isNonEmptyObjectConstructor();
