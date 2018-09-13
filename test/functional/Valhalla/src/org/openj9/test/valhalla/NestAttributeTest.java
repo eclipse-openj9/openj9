@@ -398,4 +398,48 @@ public class NestAttributeTest {
 			} catch (IncompatibleClassChangeError e) { }
 		}
 	}
+	
+	@Test
+	static public void testGetNestMembersAPINestMemberWrongNestHost() throws Throwable {
+		CustomClassLoader classloader = new CustomClassLoader();
+		byte[] aBytes = ClassGenerator.generateClass("test/A", new Attribute[] {new NestMembersAttribute(new String[] {"test/B", "test/C"})});
+		Class<?> aClazz = classloader.getClass("test.A", aBytes);
+		byte[] bBytes = ClassGenerator.generateClass("test/B", new Attribute[] {new NestHostAttribute("test/A")});
+		Class<?> bClazz = classloader.getClass("test.B", bBytes);
+		byte[] cBytes = ClassGenerator.generateClass("test/C", new Attribute[] {new NestHostAttribute("test/B")});
+		Class<?> cClazz = classloader.getClass("test.C", cBytes);
+		
+		Class<?> clazzList[] = {aClazz, bClazz, cClazz};
+		for (Class<?> clazz : clazzList) {
+			try {
+				Class<?> nestMembers[] = clazz.getNestMembers();
+				Assert.fail("should throw exception on getNestMembers");
+			} catch (IncompatibleClassChangeError e) { }
+		}	
+	}
+	
+	@Test
+	static public void testGetNestMembersAPINestMemberWrongNestHost2() throws Throwable {
+		CustomClassLoader classloader = new CustomClassLoader();
+		byte[] aBytes = ClassGenerator.generateClass("test/A", new Attribute[] {new NestMembersAttribute(new String[] {"test/C", "test/D"})});
+		Class<?> aClazz = classloader.getClass("test.A", aBytes);
+		byte[] bBytes = ClassGenerator.generateClass("test/B", new Attribute[] {new NestMembersAttribute(new String[] {"test/C"})});
+		Class<?> bClazz = classloader.getClass("test.B", bBytes);
+		byte[] cBytes = ClassGenerator.generateClass("test/C", new Attribute[] {new NestHostAttribute("test/B")});
+		Class<?> cClazz = classloader.getClass("test.C", cBytes);
+		byte[] dBytes = ClassGenerator.generateClass("test/D", new Attribute[] {new NestHostAttribute("test/A")});
+		Class<?> dClazz = classloader.getClass("test.D", dBytes);
+		
+		Class<?> clazzList[] = {aClazz, dClazz};
+		for (Class<?> clazz : clazzList) {
+			try {
+				Class<?> nestMembers[] = clazz.getNestMembers();
+				Assert.fail("should throw exception on getNestMembers");
+			} catch (IncompatibleClassChangeError e) { }
+		}
+		
+		bClazz.getNestMembers();
+		cClazz.getNestMembers();
+		
+	}
 }
