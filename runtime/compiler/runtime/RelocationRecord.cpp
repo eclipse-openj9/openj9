@@ -133,12 +133,10 @@ struct TR_RelocationRecordConstantPoolWithIndexBinaryTemplate : public TR_Reloca
 
 typedef TR_RelocationRecordConstantPoolWithIndexBinaryTemplate TR_RelocationRecordClassObjectBinaryTemplate;
 
-struct TR_RelocationRecordThunksBinaryTemplate : public TR_RelocationRecordConstantPoolBinaryTemplate
+struct TR_RelocationRecordJ2IVirtualThunkPointerBinaryTemplate : public TR_RelocationRecordConstantPoolBinaryTemplate
    {
-   UDATA _thunkAddress;
+   IDATA _offsetToJ2IVirtualThunkPointer;
    };
-
-typedef TR_RelocationRecordThunksBinaryTemplate TR_RelocationRecordThunksJXEBinaryTemplate;
 
 struct TR_RelocationRecordInlinedAllocationBinaryTemplate : public TR_RelocationRecordConstantPoolWithIndexBinaryTemplate
    {
@@ -427,6 +425,9 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
          break;
       case TR_Thunks:
          reloRecord = new (storage) TR_RelocationRecordThunks(reloRuntime, record);
+         break;
+      case TR_J2IVirtualThunkPointer:
+         reloRecord = new (storage) TR_RelocationRecordJ2IVirtualThunkPointer(reloRuntime, record);
          break;
       case TR_GlobalValue:
          reloRecord = new (storage) TR_RelocationRecordGlobalValue(reloRuntime, record);
@@ -1710,11 +1711,16 @@ TR_RelocationRecordThunks::applyRelocation(TR_RelocationRuntime *reloRuntime, TR
    reloTarget->storeAddress((uint8_t *)newConstantPool, reloLocation);
    uintptrj_t cpIndex = reloTarget->loadThunkCPIndex(reloLocation);
    RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tapplyRelocation: loadThunkCPIndex is %d\n", cpIndex);
-   return relocateAndRegisterThunk(reloRuntime, reloTarget, newConstantPool, cpIndex);
+   return relocateAndRegisterThunk(reloRuntime, reloTarget, newConstantPool, cpIndex, reloLocation);
    }
 
 int32_t
-TR_RelocationRecordThunks::relocateAndRegisterThunk(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uintptrj_t cp, uintptr_t cpIndex)
+TR_RelocationRecordThunks::relocateAndRegisterThunk(
+   TR_RelocationRuntime *reloRuntime,
+   TR_RelocationTarget *reloTarget,
+   uintptrj_t cp,
+   uintptr_t cpIndex,
+   uint8_t *reloLocation)
    {
    J9JITConfig *jitConfig = reloRuntime->jitConfig();
    J9JavaVM *javaVM = reloRuntime->jitConfig()->javaVM;
@@ -1734,10 +1740,12 @@ TR_RelocationRecordThunks::relocateAndRegisterThunk(TR_RelocationRuntime *reloRu
    // Everything below is run with VM Access in hand
    TR::VMAccessCriticalSection relocateAndRegisterThunkCriticalSection(reloRuntime->fej9());
 
-   if (j9ThunkLookupNameAndSig(jitConfig, nameAndSignature))
+   void *existingThunk = j9ThunkLookupNameAndSig(jitConfig, nameAndSignature);
+   if (existingThunk != NULL)
       {
       /* Matching thunk found */
-      RELO_LOG(reloRuntime->reloLogger(), 6, "\t\t\trelocateAndRegisterThunk:found matching thunk %p\n");
+      RELO_LOG(reloRuntime->reloLogger(), 6, "\t\t\trelocateAndRegisterThunk:found matching thunk %p\n", existingThunk);
+      relocateJ2IVirtualThunkPointer(reloTarget, reloLocation, existingThunk);
       return 0; // return successful
       }
 
@@ -1786,6 +1794,8 @@ TR_RelocationRecordThunks::relocateAndRegisterThunk(TR_RelocationRuntime *reloRu
 
          if (J9_EVENT_IS_HOOKED(javaVM->hookInterface, J9HOOK_VM_DYNAMIC_CODE_LOAD))
             ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(javaVM->hookInterface, javaVM->internalVMFunctions->currentVMThread(javaVM), NULL, (void *) thunkAddress, *((uint32_t *)thunkAddress - 2), "JIT virtual thunk", NULL);
+
+         relocateJ2IVirtualThunkPointer(reloTarget, reloLocation, thunkAddress);
          }
       else
          {
@@ -1802,6 +1812,43 @@ TR_RelocationRecordThunks::relocateAndRegisterThunk(TR_RelocationRuntime *reloRu
       }
 
    return 0;
+   }
+
+// TR_J2IVirtualThunkPointer Relocation
+char *
+TR_RelocationRecordJ2IVirtualThunkPointer::name()
+   {
+   return "TR_J2IVirtualThunkPointer";
+   }
+
+int32_t
+TR_RelocationRecordJ2IVirtualThunkPointer::bytesInHeaderAndPayload()
+   {
+   return sizeof(TR_RelocationRecordJ2IVirtualThunkPointerBinaryTemplate);
+   }
+
+void
+TR_RelocationRecordJ2IVirtualThunkPointer::relocateJ2IVirtualThunkPointer(
+   TR_RelocationTarget *reloTarget,
+   uint8_t *reloLocation,
+   void *thunk)
+   {
+   TR_ASSERT_FATAL(thunk != NULL, "expected a j2i virtual thunk for relocation\n");
+
+   // For uniformity with TR_Thunks, the reloLocation is not the location of the
+   // J2I thunk pointer, but rather the location of the constant pool address.
+   // Find the J2I thunk pointer relative to that.
+   reloLocation += offsetToJ2IVirtualThunkPointer(reloTarget);
+   reloTarget->storeAddress((uint8_t *)thunk, reloLocation);
+   }
+
+uintptrj_t
+TR_RelocationRecordJ2IVirtualThunkPointer::offsetToJ2IVirtualThunkPointer(
+   TR_RelocationTarget *reloTarget)
+   {
+   auto recordData = (TR_RelocationRecordJ2IVirtualThunkPointerBinaryTemplate *)_record;
+   auto offsetEA = (uintptrj_t *) &recordData->_offsetToJ2IVirtualThunkPointer;
+   return reloTarget->loadRelocationRecordValue(offsetEA);
    }
 
 // TR_PicTrampolines Relocation

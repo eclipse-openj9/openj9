@@ -539,6 +539,24 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   }
                }
             break;
+         case TR_J2IVirtualThunkPointer:
+            cursor++;        // unused field
+            cursor += is64BitTarget ? 4 : 0;
+            ep1 = cursor;
+            ep2 = cursor + sizeof(uintptrj_t);
+            ep3 = cursor + 2 * sizeof(uintptrj_t);
+            cursor += 3 * sizeof(uintptrj_t);
+            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+            if (isVerbose)
+               {
+               traceMsg(
+                  self()->comp(),
+                  "\nInlined site index %lld, constant pool 0x%llx, offset to j2i thunk pointer 0x%llx",
+                  (int64_t)*(uintptrj_t*)ep1,
+                  (uint64_t)*(uintptrj_t*)ep2,
+                  (uint64_t)*(uintptrj_t*)ep3);
+               }
+            break;
          case TR_Trampolines:
             // constant pool address is placed as the last word of the header
             //traceMsg(self()->comp(), "\nConstant pool %x\n", *(uint32_t *)++cursor);
