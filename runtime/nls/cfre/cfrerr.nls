@@ -1423,3 +1423,17 @@ J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55.system_action=The JVM will throw a ve
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55.user_response=Contact the provider of the classfile for a corrected version.
 
 # END NON-TRANSLATABLE
+
+#Example: JVMCFRE154 BootstrapMethod (0) arguments contain invalid constantpool entry at index (#20) of type (9); class=Foo, offset=492
+J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY=BootstrapMethod (%1$d) arguments contain invalid constantpool entry at index (#%2$u) of type (%3$u); class=%5$.*4$s, offset=%6$u
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY.sample_input_1=1
+J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY.sample_input_2=3
+J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY.sample_input_3=20
+J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY.sample_input_4=3
+J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY.sample_input_5=Foo
+J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY.sample_input_6=492
+J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE

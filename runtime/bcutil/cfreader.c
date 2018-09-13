@@ -2017,7 +2017,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 			}
 			enclosing = (J9CfrAttributeEnclosingMethod*)attrib;
 			value = enclosing->classIndex;
-			if((0 == value) || (value > cpCount)) {
+			if ((0 == value) || (value > cpCount)) {
 				errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 				goto _errorFound;
 			}
@@ -2047,14 +2047,50 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 				}
 				bootstrapMethodAttributeRead = TRUE;
 				for (j = 0; j < bootstrapMethods->numberOfBootstrapMethods; j++) {
-					value = bootstrapMethods->bootstrapMethods[j].bootstrapMethodIndex;
-					if((0 == value) || (value > cpCount)) {
+					U_16 numberOfBootstrapArguments = 0;
+					J9CfrBootstrapMethod *bsm = &bootstrapMethods->bootstrapMethods[j];
+					value = bsm->bootstrapMethodIndex;
+					if ((0 == value) || (value > cpCount)) {
 						errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 						goto _errorFound;
 					}
-					if(cpBase[value].tag != CFR_CONSTANT_MethodHandle) {
+					if (cpBase[value].tag != CFR_CONSTANT_MethodHandle) {
 						errorCode = J9NLS_CFR_ERR_BOOTSTRAP_METHODHANDLE__ID;
 						goto _errorFound;
+					}
+
+					numberOfBootstrapArguments = bsm->numberOfBootstrapArguments;
+					for (k = 0; k < numberOfBootstrapArguments; k++) {
+						U_8 cpValueTag = 0;
+						value = bsm->bootstrapArguments[k];
+
+						if ((0 == value) || (value > cpCount)) {
+							errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
+							goto _errorFound;
+						}
+						/* Validate the constant_pool indexes stored in the bootstrap_arguments array.
+						 * Note: The constant_pool entry at that index must be a CONSTANT_String_info,
+						 * CONSTANT_Class_info, CONSTANT_Integer_info, CONSTANT_Long_info, CONSTANT_Float_info,
+						 * CONSTANT_Double_info, CONSTANT_MethodHandle_info, CONSTANT_MethodType_info
+						 * or CFR_CONSTANT_Dynamic structure.
+						 */
+						cpValueTag = cpBase[value].tag;
+						switch(cpValueTag) {
+						case CFR_CONSTANT_String:
+						case CFR_CONSTANT_Class:
+						case CFR_CONSTANT_Integer:
+						case CFR_CONSTANT_Long:
+						case CFR_CONSTANT_Float:
+						case CFR_CONSTANT_Double:
+						case CFR_CONSTANT_MethodHandle:
+						case CFR_CONSTANT_MethodType:
+						case CFR_CONSTANT_Dynamic:
+							break;
+						default:
+							errorCode = J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY__ID;
+							buildBootstrapMethodError((J9CfrError *)segment, errorCode, errorType, attrib->romAddress, j, value, cpValueTag);
+							return -1;
+						}
 					}
 				}
 			}
@@ -2111,7 +2147,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 		case CFR_ATTRIBUTE_StrippedInnerClasses:
 		case CFR_ATTRIBUTE_StrippedUnknown:
 		case CFR_ATTRIBUTE_Unknown:
-			break;			
+			break;
 		}
 	}
 
@@ -2120,7 +2156,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 		buildError((J9CfrError *) segment, errorCode, errorType, 0);
 		return -1;
 	}
-			
+
 	return 0;
 
 _errorFound:
