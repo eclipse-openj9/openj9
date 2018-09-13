@@ -1425,12 +1425,8 @@ old_fast_jitResolvedFieldIsVolatile(J9VMThread *currentThread)
 }
 
 static VMINLINE void*
-old_slow_jitResolveFieldImpl(J9VMThread *currentThread, bool isSetter)
+old_slow_jitResolveFieldImpl(J9VMThread *currentThread, UDATA parmCount, J9ConstantPool *ramConstantPool, UDATA cpIndex, void *jitEIP, bool isSetter, bool direct)
 {
-	OLD_SLOW_ONLY_JIT_HELPER_PROLOGUE(3);
-	DECLARE_JIT_PARM(J9ConstantPool*, ramConstantPool, 1);
-	DECLARE_JIT_INT_PARM(cpIndex, 2);
-	DECLARE_JIT_PARM(void*, jitEIP, 3);
 	void *addr = NULL;
 retry:
 	J9RAMFieldRef *ramFieldRef = (J9RAMFieldRef*)ramConstantPool + cpIndex;
@@ -1440,7 +1436,7 @@ retry:
 		J9Method *method = NULL;
 		UDATA resolveFlags = J9_RESOLVE_FLAG_RUNTIME_RESOLVE;
 		J9JavaVM *vm = currentThread->javaVM;
-		buildJITResolveFrameWithPC(currentThread, J9_SSF_JIT_RESOLVE_DATA, parmCount, true, 0, jitEIP);
+		buildJITResolveFrameWithPC(currentThread, direct ? J9_SSF_JIT_RESOLVE : J9_SSF_JIT_RESOLVE_DATA, parmCount, true, 0, jitEIP);
 		if (isSetter) {
 			J9StackWalkState *walkState = currentThread->stackWalkState;
 			walkState->walkThread = currentThread;
@@ -1461,29 +1457,60 @@ retry:
 	valueOffset += J9_OBJECT_HEADER_SIZE;
 	JIT_RETURN_UDATA(valueOffset);
 done:
-	SLOW_JIT_HELPER_EPILOGUE();
 	return addr;
 }
 
 void* J9FASTCALL
 old_slow_jitResolveField(J9VMThread *currentThread)
 {
-	return old_slow_jitResolveFieldImpl(currentThread, false);
+	OLD_SLOW_ONLY_JIT_HELPER_PROLOGUE(3);
+	DECLARE_JIT_PARM(J9ConstantPool*, ramConstantPool, 1);
+	DECLARE_JIT_INT_PARM(cpIndex, 2);
+	DECLARE_JIT_PARM(void*, jitEIP, 3);
+	void *addr = old_slow_jitResolveFieldImpl(currentThread, parmCount, ramConstantPool, cpIndex, jitEIP, false, false);
+	SLOW_JIT_HELPER_EPILOGUE();
+	return addr;
 }
 
 void* J9FASTCALL
 old_slow_jitResolveFieldSetter(J9VMThread *currentThread)
 {
-	return old_slow_jitResolveFieldImpl(currentThread, true);
-}
-
-static VMINLINE void*
-old_slow_jitResolveStaticFieldImpl(J9VMThread *currentThread, bool isSetter)
-{
 	OLD_SLOW_ONLY_JIT_HELPER_PROLOGUE(3);
 	DECLARE_JIT_PARM(J9ConstantPool*, ramConstantPool, 1);
 	DECLARE_JIT_INT_PARM(cpIndex, 2);
 	DECLARE_JIT_PARM(void*, jitEIP, 3);
+	void *addr = old_slow_jitResolveFieldImpl(currentThread, parmCount, ramConstantPool, cpIndex, jitEIP, true, false);
+	SLOW_JIT_HELPER_EPILOGUE();
+	return addr;
+}
+
+void* J9FASTCALL
+old_slow_jitResolveFieldDirect(J9VMThread *currentThread)
+{
+	OLD_SLOW_ONLY_JIT_HELPER_PROLOGUE(2);
+	DECLARE_JIT_PARM(J9ConstantPool*, ramConstantPool, 1);
+	DECLARE_JIT_INT_PARM(cpIndex, 2);
+	void *jitEIP = currentThread->jitReturnAddress;
+	void *addr = old_slow_jitResolveFieldImpl(currentThread, parmCount, ramConstantPool, cpIndex, jitEIP, false, true);
+	SLOW_JIT_HELPER_EPILOGUE();
+	return addr;
+}
+
+void* J9FASTCALL
+old_slow_jitResolveFieldSetterDirect(J9VMThread *currentThread)
+{
+	OLD_SLOW_ONLY_JIT_HELPER_PROLOGUE(2);
+	DECLARE_JIT_PARM(J9ConstantPool*, ramConstantPool, 1);
+	DECLARE_JIT_INT_PARM(cpIndex, 2);
+	void *jitEIP = currentThread->jitReturnAddress;
+	void *addr = old_slow_jitResolveFieldImpl(currentThread, parmCount, ramConstantPool, cpIndex, jitEIP, true, true);
+	SLOW_JIT_HELPER_EPILOGUE();
+	return addr;
+}
+
+static VMINLINE void*
+old_slow_jitResolveStaticFieldImpl(J9VMThread *currentThread, UDATA parmCount, J9ConstantPool *ramConstantPool, UDATA cpIndex, void *jitEIP, bool isSetter, bool direct)
+{
 	void *addr = NULL;
 	J9RAMStaticFieldRef *ramRef = (J9RAMStaticFieldRef*)ramConstantPool + cpIndex;
 	UDATA field = (UDATA)VM_VMHelpers::staticFieldAddressFromRef(ramRef, isSetter);
@@ -1491,7 +1518,7 @@ old_slow_jitResolveStaticFieldImpl(J9VMThread *currentThread, bool isSetter)
 		J9JavaVM *vm = currentThread->javaVM;
 		J9Method *method = NULL;
 		UDATA resolveFlags = J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_CHECK_CLINIT;
-		buildJITResolveFrameWithPC(currentThread, J9_SSF_JIT_RESOLVE_DATA, parmCount, true, 0, jitEIP);
+		buildJITResolveFrameWithPC(currentThread, direct ? J9_SSF_JIT_RESOLVE : J9_SSF_JIT_RESOLVE_DATA, parmCount, true, 0, jitEIP);
 		if (isSetter) {
 			J9StackWalkState *walkState = currentThread->stackWalkState;
 			walkState->walkThread = currentThread;
@@ -1511,28 +1538,66 @@ old_slow_jitResolveStaticFieldImpl(J9VMThread *currentThread, bool isSetter)
 			 */
 			field = (UDATA)VM_VMHelpers::staticFieldAddressFromRef(fakeRef, false);
 			Assert_CodertVM_false(0 == field);
-			/* tag result as being from a clinit */
-			field |= J9_RESOLVE_STATIC_FIELD_TAG_FROM_CLINIT;
+			/* Direct resolves do not patch the code cache, so do not need the clinit tag */
+			if (!direct) {
+				/* tag result as being from a clinit */
+				field |= J9_RESOLVE_STATIC_FIELD_TAG_FROM_CLINIT;
+			}
 		}
 		addr = restoreJITResolveFrame(currentThread, jitEIP);
 	}
 	if (NULL == addr) {
 		JIT_RETURN_UDATA(field);
 	}
-	SLOW_JIT_HELPER_EPILOGUE();
 	return addr;
 }
 
 void* J9FASTCALL
 old_slow_jitResolveStaticField(J9VMThread *currentThread)
 {
-	return old_slow_jitResolveStaticFieldImpl(currentThread, false);
+	OLD_SLOW_ONLY_JIT_HELPER_PROLOGUE(3);
+	DECLARE_JIT_PARM(J9ConstantPool*, ramConstantPool, 1);
+	DECLARE_JIT_INT_PARM(cpIndex, 2);
+	DECLARE_JIT_PARM(void*, jitEIP, 3);
+	void *addr = old_slow_jitResolveStaticFieldImpl(currentThread, parmCount, ramConstantPool, cpIndex, jitEIP, false, false);
+	SLOW_JIT_HELPER_EPILOGUE();
+	return addr;
 }
 
 void* J9FASTCALL
 old_slow_jitResolveStaticFieldSetter(J9VMThread *currentThread)
 {
-	return old_slow_jitResolveStaticFieldImpl(currentThread, true);
+	OLD_SLOW_ONLY_JIT_HELPER_PROLOGUE(3);
+	DECLARE_JIT_PARM(J9ConstantPool*, ramConstantPool, 1);
+	DECLARE_JIT_INT_PARM(cpIndex, 2);
+	DECLARE_JIT_PARM(void*, jitEIP, 3);
+	void *addr = old_slow_jitResolveStaticFieldImpl(currentThread, parmCount, ramConstantPool, cpIndex, jitEIP, true, false);
+	SLOW_JIT_HELPER_EPILOGUE();
+	return addr;
+}
+
+void* J9FASTCALL
+old_slow_jitResolveStaticFieldDirect(J9VMThread *currentThread)
+{
+	OLD_SLOW_ONLY_JIT_HELPER_PROLOGUE(2);
+	DECLARE_JIT_PARM(J9ConstantPool*, ramConstantPool, 1);
+	DECLARE_JIT_INT_PARM(cpIndex, 2);
+	void *jitEIP = currentThread->jitReturnAddress;
+	void *addr = old_slow_jitResolveStaticFieldImpl(currentThread, parmCount, ramConstantPool, cpIndex, jitEIP, false, true);
+	SLOW_JIT_HELPER_EPILOGUE();
+	return addr;
+}
+
+void* J9FASTCALL
+old_slow_jitResolveStaticFieldSetterDirect(J9VMThread *currentThread)
+{
+	OLD_SLOW_ONLY_JIT_HELPER_PROLOGUE(2);
+	DECLARE_JIT_PARM(J9ConstantPool*, ramConstantPool, 1);
+	DECLARE_JIT_INT_PARM(cpIndex, 2);
+	void *jitEIP = currentThread->jitReturnAddress;
+	void *addr = old_slow_jitResolveStaticFieldImpl(currentThread, parmCount, ramConstantPool, cpIndex, jitEIP, true, true);
+	SLOW_JIT_HELPER_EPILOGUE();
+	return addr;
 }
 
 void* J9FASTCALL
@@ -2957,8 +3022,21 @@ old_slow_jitReportStaticFieldRead(J9VMThread *currentThread)
 		J9Class *fieldClass = dataBlock->fieldClass;
 		if (J9_ARE_ANY_BITS_SET(fieldClass->classFlags, J9ClassHasWatchedFields)) {
 			void* oldPC = buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
+			/* Ensure that this call blocks before reporting the event if another thread
+			 * is initializing the class.
+			 */
+			if (J9_UNEXPECTED(VM_VMHelpers::classRequiresInitialization(currentThread, fieldClass))) {
+				vm->internalVMFunctions->initializeClass(currentThread, fieldClass);
+				if (VM_VMHelpers::exceptionPending(currentThread)) {
+					goto restore;
+				}
+				if (VM_VMHelpers::immediateAsyncPending(currentThread)) {
+					goto restore;
+				}
+			}
 			ALWAYS_TRIGGER_J9HOOK_VM_GET_STATIC_FIELD(vm->hookInterface, currentThread, dataBlock->method, dataBlock->location, fieldClass, dataBlock->fieldAddress);
-			addr = restoreJITResolveFrame(currentThread, oldPC, true, false);
+restore:
+			addr = restoreJITResolveFrame(currentThread, oldPC, true, true);
 		}
 	}
 
@@ -2979,7 +3057,20 @@ old_slow_jitReportStaticFieldWrite(J9VMThread *currentThread)
 		J9Class *fieldClass = dataBlock->fieldClass;
 		if (J9_ARE_ANY_BITS_SET(fieldClass->classFlags, J9ClassHasWatchedFields)) {
 			void* oldPC = buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
+			/* Ensure that this call blocks before reporting the event if another thread
+			 * is initializing the class.
+			 */
+			if (J9_UNEXPECTED(VM_VMHelpers::classRequiresInitialization(currentThread, fieldClass))) {
+				vm->internalVMFunctions->initializeClass(currentThread, fieldClass);
+				if (VM_VMHelpers::exceptionPending(currentThread)) {
+					goto restore;
+				}
+				if (VM_VMHelpers::immediateAsyncPending(currentThread)) {
+					goto restore;
+				}
+			}
 			ALWAYS_TRIGGER_J9HOOK_VM_PUT_STATIC_FIELD(vm->hookInterface, currentThread, dataBlock->method, dataBlock->location, fieldClass, dataBlock->fieldAddress, *(U_64*)valuePointer);
+restore:
 			addr = restoreJITResolveFrame(currentThread, oldPC, true, false);
 		}
 	}
@@ -3043,8 +3134,12 @@ initPureCFunctionTable(J9JavaVM *vm)
 	jitConfig->old_fast_jitResolvedFieldIsVolatile = (void*)old_fast_jitResolvedFieldIsVolatile;
 	jitConfig->old_slow_jitResolveField = (void*)old_slow_jitResolveField;
 	jitConfig->old_slow_jitResolveFieldSetter = (void*)old_slow_jitResolveFieldSetter;
+	jitConfig->old_slow_jitResolveFieldDirect = (void*)old_slow_jitResolveFieldDirect;
+	jitConfig->old_slow_jitResolveFieldSetterDirect = (void*)old_slow_jitResolveFieldSetterDirect;
 	jitConfig->old_slow_jitResolveStaticField = (void*)old_slow_jitResolveStaticField;
 	jitConfig->old_slow_jitResolveStaticFieldSetter = (void*)old_slow_jitResolveStaticFieldSetter;
+	jitConfig->old_slow_jitResolveStaticFieldDirect = (void*)old_slow_jitResolveStaticFieldDirect;
+	jitConfig->old_slow_jitResolveStaticFieldSetterDirect = (void*)old_slow_jitResolveStaticFieldSetterDirect;
 	jitConfig->old_slow_jitResolveInterfaceMethod = (void*)old_slow_jitResolveInterfaceMethod;
 	jitConfig->old_slow_jitResolveSpecialMethod = (void*)old_slow_jitResolveSpecialMethod;
 	jitConfig->old_slow_jitResolveStaticMethod = (void*)old_slow_jitResolveStaticMethod;
