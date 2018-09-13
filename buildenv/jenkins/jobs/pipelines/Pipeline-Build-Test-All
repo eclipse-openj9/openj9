@@ -84,6 +84,16 @@ SPECS = ['aix_ppc-64_cmprssptrs'      : CURRENT_RELEASES,
          'win_x86'                    : ['8'],
          'win_x86-64_cmprssptrs'      : CURRENT_RELEASES]
 
+// SHORT_NAMES is used for PullRequest triggers
+SHORT_NAMES = ['aix' : 'aix_ppc-64_cmprssptrs',
+             'zlinux' : 'linux_390-64_cmprssptrs',
+             'plinux' : 'linux_ppc-64_cmprssptrs_le',
+             'xlinuxlargeheap' : 'linux_x86-64',
+             'xlinux' : 'linux_x86-64_cmprssptrs',
+             'xlinuxcmake' : 'linux_x86-64_cmprssptrs_cmake',
+             'win32' : 'win_x86',
+             'win' : 'win_x86-64_cmprssptrs']
+
 // Initialize all PARAMETERS (params) to Groovy Variables even if they are not passed
 echo "Initialize all PARAMETERS..."
 LABEL = (params.LABEL) ? params.LABEL : "worker"
@@ -146,11 +156,64 @@ timeout(time: 10, unit: 'HOURS') {
                     // Jenkins compile <platform>*
                     // Jenkins test <comma_separated_test_target> <platform> *
                     //params.TESTS_TARGETS = params.ghprbCommentBody.substring(?)
-                    VERSION_MAP['8'] = true
-                    PLATFORMS = 'linux_390-64_cmprssptrs'
-                    echo "PLATFORMS:'${PLATFORMS}'"
-                    TESTS_TARGETS = 'sanity.functional'
+                    /*
+                    * Comment indexes - '+' is an offset of 0/1 if running tests or not
+                    * 0 - Jenkins
+                    * 1 - test / compile
+                    * 1+ - test target
+                    * 2+ - platforms
+                    * 3+ - jdk versions
+                    */
+                    def PARSED_COMMENT = params.ghprbCommentBody.tokenize(' ')
+                    if (PARSED_COMMENT.size() <= 4) { error("Pull Request trigger comment does not contain enough elements.")}
+                    if (PARSED_COMMENT[0].toLowerCase() != 'jenkins') { error("Pull Request trigger comment needs to begin with 'Jenkins'")}
+
+                    // Setup TESTS_TARGETS
+                    if ("${PARSED_COMMENT[1]}".toLowerCase() == "compile") {
+                        TESTS_TARGETS = 'none'
+                        OFFSET = 0
+                    } else if ("${PARSED_COMMENT[1]}".toLowerCase() == "test") {
+                        TESTS_TARGETS = "${PARSED_COMMENT[2]}".toLowerCase()
+                        OFFSET = 1
+                    } else {
+                        error("Unable to parse trigger comment. Unknown option:'${PARSED_COMMENT[1]}'")
+                    }
                     echo "TESTS_TARGETS:'${TESTS_TARGETS}'"
+
+                    // Setup JDK VERSIONS
+                    TMP_VERSIONS = PARSED_COMMENT[3+OFFSET].toLowerCase().tokenize(',')
+                    echo "TMP_VERSIONS:'${TMP_VERSIONS}'"
+                    TMP_VERSIONS.each { VERSION ->
+                        echo "VERSION:'${VERSION}'"
+                        echo "VERSION.substring(3):'${VERSION.substring(3)}'"
+                        println VERSION.class.name
+                        println RELEASES.class.name
+                        RELEASES.each {
+                            println it.class.name
+                        }
+                        println VERSION.substring(3).class.name
+                        if (RELEASES.contains(VERSION.substring(3))) {
+                            VERSION_MAP["${VERSION.substring(3)}"] = true
+                        } else {
+                            error("Unsupported JDK version or incorrect syntax:'${VERSION}'\nExpected 'jdkX' where X is one of ${RELEASES}")
+                        }
+                    }
+                    echo "VERSION_MAP:'${VERSION_MAP}'"
+
+                    // Setup PLATFORMS
+                    TMP_PLATFORMS = []
+                    PARSED_PLATFORMS = PARSED_COMMENT[2+OFFSET].toLowerCase().tokenize(',')
+                    PARSED_PLATFORMS.each { SHORT ->
+                        LONG_PLATFORM = SHORT_NAMES["${SHORT}"]
+                        if (LONG_PLATFORM) {
+                            TMP_PLATFORMS.add(LONG_PLATFORM)
+                        } else {
+                            error("Unknown PLATFORM short:'${SHORT}'\nExpected one of:${SHORT_NAMES}")
+                        }
+                    }
+                    PLATFORMS = TMP_PLATFORMS.join(',')
+                    echo "PLATFORMS:'${PLATFORMS}'"
+
                     PERSONAL_BUILD = 'true'
                     echo "PERSONAL_BUILD:'${PERSONAL_BUILD}'"
                 }
