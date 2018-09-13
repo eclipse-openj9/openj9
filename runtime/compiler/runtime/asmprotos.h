@@ -97,6 +97,8 @@ JIT_HELPER(jitResolveClassFromStaticField);  // asm calling-convention helper
 JIT_HELPER(jitResolvedFieldIsVolatile);  // asm calling-convention helper
 JIT_HELPER(jitResolveField);  // asm calling-convention helper
 JIT_HELPER(jitResolveFieldSetter);  // asm calling-convention helper
+JIT_HELPER(jitResolveFieldDirect);  // asm calling-convention helper
+JIT_HELPER(jitResolveFieldSetterDirect);  // asm calling-convention helper
 JIT_HELPER(jitResolveHandleMethod);  // asm calling-convention helper
 JIT_HELPER(jitResolveInterfaceMethod);  // asm calling-convention helper
 JIT_HELPER(jitResolveInvokeDynamic);  // asm calling-convention helper
@@ -106,6 +108,8 @@ JIT_HELPER(jitResolveMethodType);  // asm calling-convention helper
 JIT_HELPER(jitResolveSpecialMethod);  // asm calling-convention helper
 JIT_HELPER(jitResolveStaticField);  // asm calling-convention helper
 JIT_HELPER(jitResolveStaticFieldSetter);  // asm calling-convention helper
+JIT_HELPER(jitResolveStaticFieldDirect);  // asm calling-convention helper
+JIT_HELPER(jitResolveStaticFieldSetterDirect);  // asm calling-convention helper
 JIT_HELPER(jitResolveStaticMethod);  // asm calling-convention helper
 JIT_HELPER(jitResolveString);  // asm calling-convention helper
 JIT_HELPER(jitResolveVirtualMethod);  // asm calling-convention helper

@@ -362,6 +362,13 @@ PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveInvokeDynamic,3)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveConstantDynamic,3)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveHandleMethod,3)
 
+dnl Direct call field resolve helpers
+
+SLOW_PATH_ONLY_HELPER(jitResolveFieldDirect,2)
+SLOW_PATH_ONLY_HELPER(jitResolveFieldSetterDirect,2)
+SLOW_PATH_ONLY_HELPER(jitResolveStaticFieldDirect,2)
+SLOW_PATH_ONLY_HELPER(jitResolveStaticFieldSetterDirect,2)
+
 dnl Recompilation helpers
 
 SLOW_PATH_ONLY_HELPER(jitRetranslateCaller,2)

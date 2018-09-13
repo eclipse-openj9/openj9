@@ -613,8 +613,12 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_fast_jitResolvedFieldIsVolatile", offsetof(J9JITConfig, old_fast_jitResolvedFieldIsVolatile)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitResolveField", offsetof(J9JITConfig, old_slow_jitResolveField)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitResolveFieldSetter", offsetof(J9JITConfig, old_slow_jitResolveFieldSetter)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitResolveFieldDirect", offsetof(J9JITConfig, old_slow_jitResolveFieldDirect)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitResolveFieldSetterDirect", offsetof(J9JITConfig, old_slow_jitResolveFieldSetterDirect)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitResolveStaticField", offsetof(J9JITConfig, old_slow_jitResolveStaticField)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitResolveStaticFieldSetter", offsetof(J9JITConfig, old_slow_jitResolveStaticFieldSetter)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitResolveStaticFieldDirect", offsetof(J9JITConfig, old_slow_jitResolveStaticFieldDirect)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitResolveStaticFieldSetterDirect", offsetof(J9JITConfig, old_slow_jitResolveStaticFieldSetterDirect)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitResolveInterfaceMethod", offsetof(J9JITConfig, old_slow_jitResolveInterfaceMethod)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitResolveSpecialMethod", offsetof(J9JITConfig, old_slow_jitResolveSpecialMethod)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitResolveStaticMethod", offsetof(J9JITConfig, old_slow_jitResolveStaticMethod)) |
