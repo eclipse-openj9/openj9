@@ -2506,7 +2506,7 @@ J9::Z::TreeEvaluator::BCDCHKEvaluatorImpl(TR::Node * node,
       {
       if(isResultLong)
          {
-         if(TR::Compiler->target.is32Bit())
+         if(TR::Compiler->target.is32Bit() && !cg->use64BitRegsOn32Bit())
             {
             TR::RegisterPair* bcdOpPair = bcdOpResultReg->getRegisterPair();
             generateRRInstruction(cg, TR::InstOpCode::LR, node, bcdOpPair->getLowOrder(), callResultReg->getLowOrder());
@@ -2612,7 +2612,7 @@ J9::Z::TreeEvaluator::BCDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
                 * If this is the case, the lcall/icall must have been evaluated.
                 * We can skip the BCDCHK evaluation and return the call result.
                 */
-               TR_ASSERT_FATAL(resultReg != NULL && resultReg->getKind() == TR_GPR,
+               TR_ASSERT_FATAL(resultReg != NULL,
                                "BCDCHKEvaluator: variable precision path encounters an unrecognized and unevaluated long/int call\n");
                }
             }
