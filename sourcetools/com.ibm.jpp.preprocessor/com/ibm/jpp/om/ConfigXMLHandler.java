@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1999, 2017 IBM Corp. and others
+ * Copyright (c) 1999, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -98,9 +98,8 @@ import com.ibm.jpp.xml.XMLParser;
  *         label="XTREME"
  *         outputpath="pConfig XTREME/src"
  *         dependencies="xtr"&gt;
- *       &lt;source
- *             path="src"&gt;
- *           &lt;parameter name="macro:define" value="com.ibm.oti.vm.library.version=23;com.ibm.oti.jcl.build=plugin2"/&gt;
+ *       &lt;source path="src"&gt;
+ *           &lt;parameter name="macro:define" value="com.ibm.oti.vm.library.version=29;com.ibm.oti.jcl.build=plugin2"/&gt;
  *       &lt;/source&gt;
  *       &lt;parameter name="jxerules:outputdir" value="com/ibm/oti/util"/&gt;
  *   &lt;/configuration&gt;
@@ -532,7 +531,7 @@ public class ConfigXMLHandler implements IXMLDocumentHandler {
 		} else if (elementName.equals("coption")) {
 			currentConfig.addCompilerOption(attributes.get("name").toString(), attributes.get("value").toString());
 		} else if (elementName.equals("classpathentry")) {
-			boolean exported = (attributes.get("exported") != null) ? new Boolean(attributes.get("exported").toString()).booleanValue() : false;
+			boolean exported = (attributes.get("exported") != null) && Boolean.parseBoolean(attributes.get("exported"));
 			/* [PR 120359] New classpath entry is needed for configurations */
 			if (attributes.get("kind") != null) {
 				if (attributes.get("sourcepath") != null) {
