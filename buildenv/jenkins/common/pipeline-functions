@@ -136,6 +136,29 @@ def get_date() {
     ).trim()
 }
 
+/*
+* Set Github Commit Status
+*
+* Args:
+* - REPO: Repository to update status
+* - CONTEXT: Usually Build Name
+* - SHA: Git commit to update
+* - URL: Link to build details
+* - STATE: Build Result, one of PENDING, SUCCESS, FAILURE, ERROR
+* - MESSAGE: Build result message
+*/
+def set_build_status(REPO, CONTEXT, SHA, URL, STATE, MESSAGE) {
+    step([
+        $class: "GitHubCommitStatusSetter",
+        reposSource: [$class: "ManuallyEnteredRepositorySource", url: REPO],
+        contextSource: [$class: "ManuallyEnteredCommitContextSource", context: CONTEXT],
+        errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
+        commitShaSource: [$class: "ManuallyEnteredShaSource", sha: SHA ],
+        statusBackrefSource: [$class: "ManuallyEnteredBackrefSource", backref: URL],
+        statusResultSource: [$class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: MESSAGE, state: STATE]] ]
+    ]);
+}
+
 def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE, ghprbPullId, ghprbGhRepository, ghprbCommentBody, ghprbTargetBranch) {
     stage ("${BUILD_JOB_NAME}") {
         return build_with_slack(BUILD_JOB_NAME,
