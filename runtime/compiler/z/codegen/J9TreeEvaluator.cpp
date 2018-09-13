@@ -10190,7 +10190,7 @@ extern TR::Register *inlineAtomicOps(
             // 2nd operant needs to be in a register
             deltaChild = node->getSecondChild();
 
-            if (isLong && TR::Compiler->target.is32Bit()) // deal with reg pairs on 31bit platform
+            if (isLong && TR::Compiler->target.is32Bit() && !cg->use64BitRegsOn32Bit()) // deal with reg pairs on 31bit platform
                {
                deltaReg = cg->allocateRegister();
                if (deltaChild->getOpCode().isLoadConst() && !deltaChild->getRegister())
@@ -10265,7 +10265,7 @@ extern TR::Register *inlineAtomicOps(
          cg->stopUsingRegister(valueReg);
 
          TR::Register *resultPairReg;
-         if (isLong && TR::Compiler->target.is32Bit()) // on 31-bit platoform, restore the result back into a register pair
+         if (isLong && TR::Compiler->target.is32Bit() && !cg->use64BitRegsOn32Bit()) // on 31-bit platoform, restore the result back into a register pair
             {
             TR::Register * resultRegLow = cg->allocateRegister();
             resultPairReg = cg->allocateConsecutiveRegisterPair(resultRegLow, resultReg);
