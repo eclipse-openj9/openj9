@@ -6116,34 +6116,46 @@ retry:
 resolved:
 		_pc += (1 + parmSize);
 		_sp -= 1;
-		if (J9DescriptionCpTypeClass == romCPEntry->cpType) {
-			value = J9VM_J9CLASS_TO_HEAPCLASS((J9Class*)value);
-		} else if (J9DescriptionCpTypeConstantDynamic == (romCPEntry->cpType & J9DescriptionCpTypeMask)) {
+		
+		if ((J9DescriptionCpTypeConstantDynamic == (romCPEntry->cpType & J9DescriptionCpTypeMask))
+		&& (0 != (romCPEntry->cpType >> J9DescriptionReturnTypeShift))
+		) {
 			/* Constant Dynamic ROM CP entry uses J9DescriptionReturnType* flag to indicate
 			 * different primitive return type that require unboxing before returning the value
 			 */
+			I_32 unboxedValue = 0;
 			switch (romCPEntry->cpType >> J9DescriptionReturnTypeShift) {
 			case J9DescriptionReturnTypeBoolean:
-				value = (j9object_t)(UDATA)J9VMJAVALANGBOOLEAN_VALUE(_currentThread, value);
+				unboxedValue = (I_32)J9VMJAVALANGBOOLEAN_VALUE(_currentThread, value);
 				break;
 			case J9DescriptionReturnTypeByte:
-				value = (j9object_t)(UDATA)J9VMJAVALANGBYTE_VALUE(_currentThread, value);
+				unboxedValue = (I_32)(I_8)J9VMJAVALANGBYTE_VALUE(_currentThread, value);
 				break;
 			case J9DescriptionReturnTypeChar:
-				value = (j9object_t)(UDATA)J9VMJAVALANGCHARACTER_VALUE(_currentThread, value);
+				unboxedValue = (I_32)(U_16)J9VMJAVALANGCHARACTER_VALUE(_currentThread, value);
 				break;
 			case J9DescriptionReturnTypeShort:
-				value = (j9object_t)(UDATA)J9VMJAVALANGSHORT_VALUE(_currentThread, value);
+				unboxedValue = (I_32)(I_16)J9VMJAVALANGSHORT_VALUE(_currentThread, value);
 				break;
 			case J9DescriptionReturnTypeFloat:
-				value = (j9object_t)(UDATA)J9VMJAVALANGFLOAT_VALUE(_currentThread, value);
+				unboxedValue = (I_32)J9VMJAVALANGFLOAT_VALUE(_currentThread, value);
 				break;
 			case J9DescriptionReturnTypeInt:
-				value = (j9object_t)(UDATA)J9VMJAVALANGINTEGER_VALUE(_currentThread, value);
+				unboxedValue = (I_32)J9VMJAVALANGINTEGER_VALUE(_currentThread, value);
+				break;
+			default:
+				/* double and long value cannot be loaded by ldc as they require 2 slots */
+				Assert_VM_unreachable();
 				break;
 			}
+			*(I_32 *)_sp = unboxedValue;
+		} else {
+			if (J9DescriptionCpTypeClass == romCPEntry->cpType) {
+				value = J9VM_J9CLASS_TO_HEAPCLASS((J9Class*)value);
+			}
+
+			*_sp = (UDATA)value;
 		}
-		*_sp = (UDATA)value;
 done:
 		return rc;
 	}
