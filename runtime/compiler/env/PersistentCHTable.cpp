@@ -230,7 +230,7 @@ FindSingleJittedImplementer::visitSubclass(TR_PersistentClassInfo *cl)
          }
 
       // check to see if there are any duplicates
-      if (!method->isInterpreted())
+      if (!method->isInterpretedForHeuristics())
          {
          if (_implementer)
             {

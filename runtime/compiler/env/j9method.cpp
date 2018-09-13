@@ -1200,7 +1200,7 @@ TR_ResolvedJ9MethodBase::isCold(TR::Compilation * comp, bool isIndirectCall, TR:
    // For overridden virtual calls we may decide at some point to traverse all the
    // existing targets to see if they are all interpreted with high counts
    //
-   if (!isInterpreted() || maxBytecodeIndex() <= TRIVIAL_INLINER_MAX_SIZE)
+   if (!isInterpretedForHeuristics() || maxBytecodeIndex() <= TRIVIAL_INLINER_MAX_SIZE)
       return false;
 
    if (isIndirectCall && virtualMethodIsOverridden())
@@ -1492,6 +1492,12 @@ TR_ResolvedRelocatableJ9Method::isInterpreted()
    if (alwaysTreatAsInterpreted)
       return true;
 
+   return TR_ResolvedJ9Method::isInterpreted();
+   }
+
+bool
+TR_ResolvedRelocatableJ9Method::isInterpretedForHeuristics()
+   {
    return TR_ResolvedJ9Method::isInterpreted();
    }
 
@@ -5253,6 +5259,12 @@ TR_ResolvedJ9Method::isInterpreted()
    if (_fe->tossingCode())
       return true;
    return !(TR::CompilationInfo::isCompiled(ramMethod()));
+   }
+
+bool
+TR_ResolvedJ9Method::isInterpretedForHeuristics()
+   {
+   return isInterpreted();
    }
 
 TR_OpaqueMethodBlock *
