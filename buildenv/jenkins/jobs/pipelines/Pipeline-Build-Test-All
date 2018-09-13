@@ -165,7 +165,7 @@ timeout(time: 10, unit: 'HOURS') {
                     * 3+ - jdk versions
                     */
                     def PARSED_COMMENT = params.ghprbCommentBody.tokenize(' ')
-                    if (PARSED_COMMENT.size() <= 4) { error("Pull Request trigger comment does not contain enough elements.")}
+                    if (PARSED_COMMENT.size() < 4) { error("Pull Request trigger comment does not contain enough elements.")}
                     if (PARSED_COMMENT[0].toLowerCase() != 'adam') { error("Pull Request trigger comment needs to begin with 'Jenkins'")}
 
                     // Setup TESTS_TARGETS
