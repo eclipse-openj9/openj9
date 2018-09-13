@@ -318,19 +318,15 @@ def build_all() {
             add_node_to_description()
             get_source()
             build()
-            // Do not archive in compile only pr jobs
-            // ghprbPullId is the PullRequest ID which only shows up in Pull Requests
-            if (!params.ghprbPullId) {
-                archive()
-            }
+            archive()
         } finally {
             try {
-		cleanWs()
-	    } catch(e) {
-		echo e.toString()
-		echo e.printStackTrace()
-		sh "ps -ef"
-	    }
+                cleanWs()
+            } catch(e) {
+                echo e.toString()
+                echo e.printStackTrace()
+                sh "ps -ef"
+            }
         }
     }
 }
