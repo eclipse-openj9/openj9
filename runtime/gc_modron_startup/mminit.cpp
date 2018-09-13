@@ -484,9 +484,12 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 
 #if defined(J9VM_GC_IDLE_HEAP_MANAGER)
 	if (extensions->gcOnIdle || extensions->compactOnIdle) {
-		extensions->idleGCManager = MM_IdleGCManager::newInstance(&env);
-		if (NULL == extensions->idleGCManager) {
-			goto error_no_memory;
+		/* Enable idle tuning only for gencon policy */
+		if (gc_policy_gencon == extensions->configurationOptions._gcPolicy) {
+			extensions->idleGCManager = MM_IdleGCManager::newInstance(&env);
+			if (NULL == extensions->idleGCManager) {
+				goto error_no_memory;
+			}
 		}
 	}
 #endif
