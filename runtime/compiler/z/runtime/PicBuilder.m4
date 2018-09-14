@@ -1820,8 +1820,7 @@ ZZ into the Literal Pool
     L_GPR r14,eq_codeRA_inDataSnippet(,r14) # Get mainline RA
 
 ZZ Branch instruction in mainline will be patched here with NOP
-    LHI r1,HEX(04)
-    STCY r1,-5(r14)
+    MVIY -5(r14),HEX(04)
     BR r14 # Return
     END_FUNC(_jitResolveConstantDynamic,jRCD,6)
 
