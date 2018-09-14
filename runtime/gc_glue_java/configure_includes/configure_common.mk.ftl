@@ -27,6 +27,9 @@ CONFIGURE_ARGS += \
 <#if uma.spec.flags.opt_cuda.enabled>
   --enable-OMR_OPT_CUDA \
 </#if>
+<#if uma.spec.flags.port_omrsigSupport.enabled>
+  --enable-OMRPORT_OMRSIG_SUPPORT \
+</#if>
   --enable-OMR_GC \
   --enable-OMR_PORT \
   --enable-OMR_THREAD \

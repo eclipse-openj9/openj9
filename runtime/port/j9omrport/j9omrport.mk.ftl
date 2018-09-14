@@ -1,6 +1,5 @@
-
-#
-# Copyright (c) 2012, 2017 IBM Corp. and others
+###############################################################################
+# Copyright (c) 2012, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,7 +18,7 @@
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
-#
+###############################################################################
 
 # This makefile is generated using an UMA template.
 
@@ -38,7 +37,6 @@ MODULE_NAME := j9omrport
 ARTIFACT_TYPE := archive
 
 <#if uma.spec.flags.port_omrsigSupport.enabled>
-MODULE_CPPFLAGS += -DOMRPORT_OMRSIG_SUPPORT
 MODULE_INCLUDES += $(UMA_PATH_TO_ROOT)include
 MODULE_SHARED_LIBS += omrsig
 </#if>
