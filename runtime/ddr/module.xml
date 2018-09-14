@@ -276,7 +276,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</includes>
 		<makefilestubs>
 			<makefilestub data="UMA_EXE_POSTFIX_FLAGS+=-static">
-				<include-if condition="spec.linux_arm.*"/>
+				<include-if condition="spec.linux_arm.* and not spec.flags.J9VM_PORT_OMRSIG_SUPPORT"/>
 			</makefilestub>
 			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
 			<makefilestub data="include ddr_cpp_headers.mk"/>
