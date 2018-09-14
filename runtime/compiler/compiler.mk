@@ -82,7 +82,7 @@ endif
 # "all" should be the first target to appear so it's the default
 #
 .PHONY: all clean cleanobjs cleandeps cleandll proto
-all: ; @echo SUCCESS - All files are up-to-date
+all: proto ; @echo SUCCESS - All files are up-to-date
 clean: ; @echo SUCCESS - All files are cleaned
 cleanobjs: ; @echo SUCCESS - All objects are cleaned
 cleandeps: ; @echo SUCCESS - All dependencies are cleaned
