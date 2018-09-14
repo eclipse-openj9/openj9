@@ -1694,6 +1694,8 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 				}
 			}
 			break;
+		case CFR_CONSTANT_Dynamic: /* fall through */
+			/* No static constraints defined (so far) on slot1 (bsmIndex) */
 		case CFR_CONSTANT_Fieldref:
 			nameAndSig = &classfile->constantPool[info->slot2];
 			utf8 = &classfile->constantPool[nameAndSig->slot1];
