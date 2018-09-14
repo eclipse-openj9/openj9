@@ -81,7 +81,6 @@
 		</groups>
 		<subsets>
 			<subset>9</subset>
-			<subset>10</subset>
 			<subset>11</subset>
 		</subsets>
 	</test>

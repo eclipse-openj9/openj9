@@ -1,7 +1,7 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2016, 2018 IBM Corp. and others
+  Copyright (c) 2011, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,29 +22,10 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-<project name="NativeTest" default="build" basedir=".">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
-	<description>
-		Build NativeTest
-	</description>
-	<import file="${TEST_ROOT}/functional/build.xml"/>
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+ 
+<suite id="jdmpview tests" timeout="600">
+	<exclude id="Dump ROM method and check for type annotations" platform="all"><reason>https://github.com/eclipse/openj9/issues/3043</reason></exclude>
+</suite>
 
-	<!-- set properties for this build -->
-	<property name="DEST" value="${BUILD_ROOT}/functional/NativeTest" />
 
-	<target name="init">
-		<mkdir dir="${DEST}" />
-	</target>
-
-	<target name="build" depends="dist">
-		<subant target="">
-			<fileset dir="." includes="*/build.xml" />
-		</subant>
-	</target>
-
-	<target name="dist" depends="init,dist_functional">
-		<copy todir="${DEST}">
-			<fileset dir="." />
-		</copy>
-	</target>
-</project>
