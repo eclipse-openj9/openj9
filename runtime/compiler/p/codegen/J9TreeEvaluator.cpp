@@ -27,7 +27,7 @@
 #include "j9.h"
 #include "j9cfg.h"
 #include "j9consts.h"
-#include "j9modron.h"
+#include "omrmodroncore.h"
 #include "thrdsup.h"
 #include "thrtypes.h"
 #include "codegen/AheadOfTimeCompile.hpp"           // for AheadOfTimeCompile
