@@ -194,8 +194,8 @@
 	.globl    _interpreterUnresolvedClassGlue2{DS}
 	.globl    ._interpreterUnresolvedStringGlue
 	.globl    _interpreterUnresolvedStringGlue{DS}
-	.globl    ._interpreterUnresolvedConstantDynamicGlue{DS}
-	.globl    _interpreterUnresolvedConstantDynamicGlue
+	.globl    ._interpreterUnresolvedConstantDynamicGlue
+	.globl    _interpreterUnresolvedConstantDynamicGlue{DS}
 	.globl    ._interpreterUnresolvedMethodTypeGlue
 	.globl    _interpreterUnresolvedMethodTypeGlue{DS}
 	.globl    ._interpreterUnresolvedMethodHandleGlue
