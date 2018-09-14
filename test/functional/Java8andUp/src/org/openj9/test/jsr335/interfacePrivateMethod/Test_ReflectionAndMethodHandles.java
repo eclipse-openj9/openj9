@@ -33,6 +33,8 @@ import java.util.Set;
 import java.util.HashSet;
 import java.lang.invoke.MethodHandles.Lookup;
 
+import org.openj9.test.util.VersionCheck;
+
 /**
  * Test Reflection and MethodHandle lookup for private methods in interfaces.
  */
@@ -448,8 +450,13 @@ public class Test_ReflectionAndMethodHandles {
 		MethodType type = MethodType.methodType(String.class);
 		try {
 			MethodHandle mh = lookup.findVirtual(d, "private_non_static_method", type);
-			Assert.fail("Should have thrown an IllegalAccessException");
+			if (VersionCheck.major() < 11) {
+				Assert.fail("Should have thrown an IllegalAccessException");
+			}
 		} catch (IllegalAccessException e) {
+			if (VersionCheck.major() >= 11) {
+				Assert.fail("private access should be allowed");				
+			}
 			/* Pass */
 		}
 	}
@@ -713,8 +720,13 @@ public class Test_ReflectionAndMethodHandles {
 		MethodHandle mh = lookup.unreflect(method);
 		try {
 			String returnStatement = (String) mh.invoke(instance);
-			Assert.fail("Should have thrown AbstractMethodError!!");
+			if (VersionCheck.major() < 9) {
+				Assert.fail("Should have thrown AbstractMethodError!!");
+			}
 		} catch (AbstractMethodError e) {
+			if (VersionCheck.major() >= 9) {
+				Assert.fail("private access should be allowed");				
+			}
 			/* Pass */
 		} 
 	}

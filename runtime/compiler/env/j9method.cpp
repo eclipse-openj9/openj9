@@ -1561,6 +1561,7 @@ cpType2trType(UDATA cpType)
       case J9CPTYPE_ANNOTATION_UTF8:
       case J9CPTYPE_METHOD_TYPE:
       case J9CPTYPE_METHODHANDLE:
+      case J9CPTYPE_CONSTANT_DYNAMIC:
          return TR::Address;
       case J9CPTYPE_INT:
          return TR::Int32;
@@ -5837,6 +5838,54 @@ uint64_t
 TR_ResolvedJ9Method::longConstant(I_32 cpIndex)
    {
    return *((uint64_t *) & romLiterals()[cpIndex]);
+   }
+
+void *
+TR_ResolvedJ9Method::getConstantDynamicTypeFromCP(I_32 cpIndex)
+   {
+   return jitGetConstantDynamicTypeFromCP(fej9()->vmThread(), cp(), cpIndex);
+   }
+
+bool
+TR_ResolvedJ9Method::isConstantDynamic(I_32 cpIndex)
+   {
+   TR_ASSERT_FATAL(cpIndex != -1, "ConstantDynamic cpIndex shouldn't be -1");
+   UDATA cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(cp()->ramClass->romClass), cpIndex);
+   return (J9CPTYPE_CONSTANT_DYNAMIC == cpType);
+   }
+
+// Both value and exception slots are of object pointer type.
+// If first slot is non null, the CP entry is resolved to a non-null value.
+// Else if second slot is the class object of j/l/Void, the CP entry is resolved to null (0) value.
+// We retrieve the Void class object via javaVM->voidReflectClass->classObject,
+// which is protected by VMAccessCrtitical section to ensure vm access.
+// Other casese, the CP entry is considered unresolved.
+bool
+TR_ResolvedJ9Method::isUnresolvedConstantDynamic(I_32 cpIndex)
+   {
+   TR_ASSERT(cpIndex != -1, "ConstantDynamic cpIndex shouldn't be -1");
+   if (((J9RAMConstantDynamicRef *) literals())[cpIndex].value != 0)
+      {
+      return false;
+      }
+   if (((J9RAMConstantDynamicRef *) literals())[cpIndex].exception == 0)
+      {
+      return true;
+      }
+
+   TR::VMAccessCriticalSection voidClassObjectCritSec(fej9()); 
+   J9JavaVM * javaVM = fej9()->_jitConfig->javaVM;
+   j9object_t voidClassObject = javaVM->voidReflectClass->classObject;
+   j9object_t slot2 = ((J9RAMConstantDynamicRef *) literals())[cpIndex].exception;
+
+   return (voidClassObject != slot2);
+   }
+
+void *
+TR_ResolvedJ9Method::dynamicConstant(I_32 cpIndex)
+   {
+   TR_ASSERT_FATAL(cpIndex != -1, "ConstantDynamic cpIndex shouldn't be -1");
+   return &((J9RAMConstantDynamicRef *) literals())[cpIndex].value;
    }
 
 bool

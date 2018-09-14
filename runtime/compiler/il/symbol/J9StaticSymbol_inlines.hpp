@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,6 +59,28 @@ J9::StaticSymbol::getCallSiteIndex()
    {
    TR_ASSERT(self()->isCallSiteTableEntry(), "Must have called makeCallSiteTableEntry to have a valid callSiteIndex!");
    return _callSiteIndex;
+   }
+
+inline void
+J9::StaticSymbol::makeConstantDynamic(char * classSignature, int32_t classSignatureLength, bool isPrimitive)
+   {
+   TR_ASSERT(self()->getDataType() == TR::Address, "ConstantDynamic should have TR::Address as data type");
+   _classSignature = classSignature;
+   _classSignatureLength = classSignatureLength;
+   _isPrimitive = isPrimitive;
+   }
+
+inline char *
+J9::StaticSymbol::getConstantDynamicClassSignature(int32_t & classSignatureLength)
+   {
+   classSignatureLength = _classSignatureLength;
+   return _classSignature;
+   }
+
+inline bool
+J9::StaticSymbol::isConstantDynamicPrimitive()
+   {
+   return _isPrimitive;
    }
 
 inline TR::Symbol::RecognizedField

@@ -336,6 +336,46 @@ public:
    virtual double *              doubleConstant(int32_t cpIndex, TR_Memory *);
    virtual void *                stringConstant(int32_t cpIndex);
    virtual bool                  isUnresolvedString(int32_t cpIndex, bool optimizeForAOT = false);
+   /** \brief
+    *     Retrieves the underlying type infomation for a given constant dynamic.
+    *
+    *  \param cpIndex
+    *     The constant pool index of the constant dynamic.
+    *
+    *  \return
+    *     Opaque pointer to the UTF8 type string.
+    */
+   virtual void *                getConstantDynamicTypeFromCP(int32_t cpIndex);
+   /** \brief
+    *     Determines whether the given constant pool entry is constant dynamic.
+    *
+    *  \param cpIndex
+    *     The constant pool index of the constant dynamic.
+    *
+    *  \return
+    *     <c>true</c> if the given constant pool entry type is constant dynamic; <c>false</c> otherwise.
+    */
+   virtual bool                  isConstantDynamic(int32_t cpIndex);
+   /** \brief
+    *     Determines whether the given constant dynamic is unresolved.
+    *
+    *  \param cpIndex
+    *     The constant pool index of the constant dynamic.
+    *
+    *  \return
+    *     <c>true</c> if the constant dynamic is unresolved; <c>false</c> otherwise.
+    */
+   virtual bool                  isUnresolvedConstantDynamic(int32_t cpIndex);
+   /** \brief
+    *     Retrieve the adress of the slot containing the constant dynamic.
+    *
+    *  \param cpIndex
+    *     The constant pool index of the constant dynamic.
+    *
+    *  \return
+    *     Opauqe pointer to the slot containing the resolved constant dynamic value.
+    */
+   virtual void *                dynamicConstant(int32_t cpIndex);
    virtual void *                methodTypeConstant(int32_t cpIndex);
    virtual bool                  isUnresolvedMethodType(int32_t cpIndex);
    virtual void *                methodHandleConstant(int32_t cpIndex);

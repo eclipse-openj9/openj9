@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -86,6 +86,9 @@ J9::X86::UnresolvedDataSnippet::getHelper()
 
    if (getDataSymbol()->isMethodTypeTableEntry())
       return TR_interpreterUnresolvedMethodTypeTableEntryGlue;
+
+   if (getDataSymbol()->isConstantDynamic())
+      return TR_X86interpreterUnresolvedConstantDynamicGlue;
 
    // Must be a static data reference
 
