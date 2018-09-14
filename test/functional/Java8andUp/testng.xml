@@ -406,6 +406,11 @@
 			<class name="org.openj9.test.string.StringInterning" />
 		</classes>
 	</test>
+	<test name="testStringIndexOfString">
+		<classes>
+			<class name="org.openj9.test.string.StringIndexOfString" />
+		</classes>
+	</test>
 	<test name="floatSanityTests">
 		<classes>
 			<class name="org.openj9.test.floatsanity.TestFactory" />
