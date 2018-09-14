@@ -1547,9 +1547,9 @@ createMethodMetaData(
          aotMethodHeaderEntry->offsetToRelocationDataItems = 0;
          }
 
-      aotMethodHeaderEntry->compileMethodCodeStartPC = (UDATA)comp->getAotMethodCodeStart();
+      aotMethodHeaderEntry->compileMethodCodeStartPC = (UDATA)comp->getRelocatableMethodCodeStart();
       aotMethodHeaderEntry->compileMethodDataStartPC = (UDATA)comp->getAotMethodDataStart();
-      aotMethodHeaderEntry->compileMethodCodeSize = (UDATA)codeCache->getWarmCodeAlloc() - (UDATA)comp->getAotMethodCodeStart();
+      aotMethodHeaderEntry->compileMethodCodeSize = (UDATA)codeCache->getWarmCodeAlloc() - (UDATA)comp->getRelocatableMethodCodeStart();
 
       // For AOT we should have a reserved dataCache
       //
