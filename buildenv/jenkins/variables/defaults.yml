@@ -306,8 +306,8 @@ win_x86-64_cmprssptrs:
     8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --disable-ccache'
     9: '--with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-toolchain-version=2013 --disable-ccache'
     10: '--with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-toolchain-version=2013 --disable-ccache'
-    11: '--with-toolchain-version=2013 --disable-ccache'
-    next: '--with-toolchain-version=2013 --disable-ccache'
+    11: '--with-toolchain-version=2017 --disable-ccache'
+    next: '--with-toolchain-version=2017 --disable-ccache'
   node_labels:
     build:
       8: 'hw.arch.x86 && sw.os.windows'
@@ -321,6 +321,10 @@ win_x86-64_cmprssptrs:
       10: 'hw.arch.x86 && sw.os.windows'
       11: 'hw.arch.x86 && sw.os.windows'
       next: 'hw.arch.x86 && sw.os.windows'
+  build_env:
+    vars:
+      11: 'PATH+MINGW=/cygdrive/c/mingw-w64/x86_64-8.1.0-win32-seh-rt_v6-rev0/mingw64/bin/'
+      next: 'PATH+MINGW=/cygdrive/c/mingw-w64/x86_64-8.1.0-win32-seh-rt_v6-rev0/mingw64/bin/'
 #========================================#
 # Windows x86 32bits 
 #========================================#
