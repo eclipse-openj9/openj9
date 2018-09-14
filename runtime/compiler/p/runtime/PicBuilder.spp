@@ -194,6 +194,8 @@
 	.globl    _interpreterUnresolvedClassGlue2{DS}
 	.globl    ._interpreterUnresolvedStringGlue
 	.globl    _interpreterUnresolvedStringGlue{DS}
+	.globl    ._interpreterUnresolvedConstantDynamicGlue{DS}
+	.globl    _interpreterUnresolvedConstantDynamicGlue
 	.globl    ._interpreterUnresolvedMethodTypeGlue
 	.globl    _interpreterUnresolvedMethodTypeGlue{DS}
 	.globl    ._interpreterUnresolvedMethodHandleGlue
@@ -332,6 +334,8 @@
 	.type  FUNC_LABEL(_interpreterUnresolvedStaticGlue),@function
 	.globl FUNC_LABEL(_interpreterUnresolvedStringGlue)
 	.type  FUNC_LABEL(_interpreterUnresolvedStringGlue),@function
+	.globl FUNC_LABEL(_interpreterUnresolvedConstantDynamicGlue)
+	.type  FUNC_LABEL(_interpreterUnresolvedConstantDynamicGlue),@function
 	.globl FUNC_LABEL(_interpreterUnresolvedMethodTypeGlue)
 	.type  FUNC_LABEL(_interpreterUnresolvedMethodTypeGlue),@function
 	.globl FUNC_LABEL(_interpreterUnresolvedMethodHandleGlue)
@@ -387,6 +391,7 @@
 	.globl _interpreterUnresolvedStaticDataStoreGlue
 	.globl _interpreterUnresolvedStaticGlue
 	.globl _interpreterUnresolvedStringGlue
+	.globl _interpreterUnresolvedConstantDynamicGlue
 	.globl _interpreterUnresolvedMethodTypeGlue
 	.globl _interpreterUnresolvedMethodHandleGlue
 	.globl _interpreterUnresolvedCallSiteTableEntryGlue
@@ -406,6 +411,7 @@
 	.extern   jitResolveClass
 	.extern   jitResolveClassFromStaticField
 	.extern   jitResolveString
+	.extern   jitResolveConstantDynamic
 	.extern   jitResolveMethodType
 	.extern   jitResolveMethodHandle
 	.extern   jitResolveInvokeDynamic
@@ -1017,6 +1023,70 @@ _interpreterUnresolvedStringGlue:
 	lwz	r8, 2*ALen+8(r7)				! Load the template instruction
 	b	.L_patch_dword_load
 	endproc._interpreterUnresolvedStringGlue:
+
+#ifdef AIXPPC
+._interpreterUnresolvedConstantDynamicGlue:
+   .function ._interpreterUnresolvedConstantDynamicGlue,startproc._interpreterUnresolvedConstantDynamicGlue,16,0,(endproc._interpreterUnresolvedConstantDynamicGlue-startproc._interpreterUnresolvedConstantDynamicGlue)
+#elif defined(LINUXPPC64)
+FUNC_LABEL(_interpreterUnresolvedConstantDynamicGlue):
+#else
+_interpreterUnresolvedConstantDynamicGlue:
+._interpreterUnresolvedConstantDynamicGlue:
+#endif
+        startproc._interpreterUnresolvedConstantDynamicGlue:
+#include "p/runtime/SaveGPRs.inc"
+        mfcr    r0
+        stw     r0,-4(J9SP)                                     ! Save CR also
+        addi    J9SP,J9SP,-(33*ALen)
+        mfspr   r7, LR                                          ! Get the RA in snippet
+        laddr   RTOC, J9TR_VMThreadRTOCOffset(J9VM_STRUCT)      ! Restore RTOC
+#ifdef AIXPPC
+        laddr   r8, TOCjitResolveConstantDynamic(RTOC)          ! Load descriptor pointer
+        laddr   r8, 0(r8)                                       ! Load the callee address
+#elif defined(LINUXPPC64)
+        laddr   r8, TOCjitResolveConstantDynamic@toc(RTOC)      ! Load descriptor pointer
+#if !defined(__LITTLE_ENDIAN__)
+        laddr   r8, 0(r8)                                       ! Load the callee address
+#endif
+#else
+        laddr   r8, jitResolveConstantDynamic@got(RTOC)         ! Load the callee address
+#endif
+        laddr   r3, 1*ALen+4(r7)                                ! Load constant pool literal
+        lwz     r4, 1*ALen(r7)                                  ! Load cp index for this field
+        laddr   r5, 0(r7)                                       ! Load code cache RA
+        rlwinm  r4, r4, 0, 5, 31                                ! Masking off the flag bits
+        addi    r5, r5, 1                                       ! Increament for EX search
+        mtspr   CTR, r8                                         ! Move callee address to CTR
+        bcctrl  BO_ALWAYS, CR0_LT                               ! Call to resolve: RTOC, r7
+        laddr   r6, 0(r7)                                       ! Load code cache RA
+        rlwinm  r17, r3, 0, 31, 31                              ! keep in r17 if r3 last bit is set: <clinit> is being executed
+#ifdef TR_HOST_64BIT
+        clrrdi r3, r3, 1                                        ! <clinit> clear up the last bit, which must be zero
+#else
+        rlwinm  r3, r3, 0, 0xfffffffe                           ! <clinit> clear up the last bit, which must be zero
+#endif
+        cmpi    cr0, 0, r17, in_clinit                          ! <clinit> is being executed
+        bc      BO_IF, CR0_EQ, .L_condy_update                  ! If in <clinit>
+        addi    r10, r7, 2*ALen+12                              ! Calculate lock address
+        addi    r9, 0, LOCKED_VALUE
+        bl      .__common_lock_check                            ! Try to lock
+        or.     r8, r8, r8                                      ! Result in r8
+        bc      BO_IF,CR0_EQ,.L_condy_update                    ! Grab the lock successfully?
+        bl      .__spin_for_update                              ! r10 containing lock address
+        b       .L_restore_and_return
+.L_condy_update:
+        lwz     r4, 1*ALen(r7)                                  ! Load cp index
+        andis.  r4, r4, 0x8000                                  ! Test the pTOC bit
+        lwz     r4, 2*ALen+4(r7)                                ! Load offset to be merged
+#ifdef TR_HOST_64BIT
+        extsw   r4, r4
+#endif
+        bc      BO_IF_NOT, CR0_EQ, .L_pTOC_update               ! Is pTOC case?
+        or      r3, r4, r4                                      ! Not pTOC case -- 32bit
+        lwz     r9, 4(r6)                                       ! Load the second instr
+        lwz     r8, 2*ALen+8(r7)                                ! Load the template instruction
+        b       .L_patch_dword_load
+        endproc._interpreterUnresolvedConstantDynamicGlue:
 
 #ifdef AIXPPC
 ._interpreterUnresolvedMethodTypeGlue:
@@ -3127,6 +3197,8 @@ TOCjitResolveClassFromStaticField:
 	.tc       jitResolveClass[TC],jitResolveClassFromStaticField
 TOCjitResolveString:
 	.tc       jitResolveString[TC],jitResolveString
+TOCjitResolveConstantDynamic:
+	.tc       jitResolveConstantDynamic[TC],jitResolveConstantDynamic
 TOCjitResolveMethodType:
 	.tc       jitResolveMethodType[TC],jitResolveMethodType
 TOCjitResolveMethodHandle:
@@ -3249,6 +3321,12 @@ __staticGlueTable:
 	ADDR      TOC{TC0}
 	ADDR      0x00000000
 ! End   csect     _interpreterUnresolvedStringGlue{DS}
+
+	.csect    _interpreterUnresolvedConstantDynamicGlue{DS}
+	ADDR      ._interpreterUnresolvedConstantDynamicGlue
+	ADDR      TOC{TC0}
+	ADDR      0x00000000
+! End   csect     _interpreterUnresolvedConstantDynamicGlue{DS}
 
 	.csect    _interpreterUnresolvedMethodTypeGlue{DS}
 	ADDR      ._interpreterUnresolvedMethodTypeGlue
@@ -3476,6 +3554,8 @@ TOCjitResolveClassFromStaticField:
 	.tc       jitResolveClass[TC],jitResolveClassFromStaticField
 TOCjitResolveString:
 	.tc       jitResolveString[TC],jitResolveString
+TOCjitResolveConstantDynamic:
+	.tc       jitResolveConstantDynamic[TC],jitResolveConstantDynamic
 TOCjitResolveMethodType:
 	.tc       jitResolveMethodType[TC],jitResolveMethodType
 TOCjitResolveMethodHandle:
@@ -3612,6 +3692,14 @@ _interpreterUnresolvedClassGlue2:
 	.size     _interpreterUnresolvedStringGlue,24
 _interpreterUnresolvedStringGlue:
 	.quad     ._interpreterUnresolvedStringGlue
+	.quad     .TOC.@tocbase
+	.long     0x00000000
+	.long     0x00000000
+
+	.globl    _interpreterUnresolvedConstantDynamicGlue
+	.size     _interpreterUnresolvedConstantDynamicGlue,24
+_interpreterUnresolvedConstantDynamicGlue:
+	.quad     ._interpreterUnresolvedConstantDynamicGlue
 	.quad     .TOC.@tocbase
 	.long     0x00000000
 	.long     0x00000000
