@@ -1250,8 +1250,8 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
 
          case J9BCldc:     loadFromCP(TR::NoType, nextByte());   _bcIndex += 2; break;
          case J9BCldcw:    loadFromCP(TR::NoType, next2Bytes()); _bcIndex += 3; break;
-         case J9BCldc2lw:  loadFromCP(TR::Int64,  next2Bytes()); _bcIndex += 3; break;
-         case J9BCldc2dw:  loadFromCP(TR::Double, next2Bytes()); _bcIndex += 3; break;
+         case J9BCldc2lw:  loadFromCP(TR::NoType,  next2Bytes()); _bcIndex += 3; break;
+         case J9BCldc2dw:  loadFromCP(TR::NoType, next2Bytes()); _bcIndex += 3; break;
 
          case J9BCiload0: loadAuto(TR::Int32, 0); _bcIndex += 1; break;
          case J9BCiload1: loadAuto(TR::Int32, 1); _bcIndex += 1; break;
