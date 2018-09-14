@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +24,7 @@
 #include <stdlib.h>
 #include "j9user.h"
 
-#if defined(LINUX)
+#if defined(LINUX) || defined(OSX)
 /* Hack - to satisfy the runtime linker we need a definition of this function, should never be called */
 void __pure_virtual();
 void __cxa_pure_virtual();
@@ -41,4 +40,4 @@ void __cxa_pure_virtual()
         __pure_virtual();
 }
 
-#endif /* defined(LINUX) */
+#endif /* defined(LINUX) || defined(OSX) */

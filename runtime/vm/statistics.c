@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,26 +25,24 @@
 
 
 void *
-addStatistic (J9JavaVM* javaVM, U_8 * name, U_8 dataType)
+addStatistic(J9JavaVM *javaVM, U_8 *name, U_8 dataType)
 {
+	J9Statistic *statistic = NULL;
+
+	/* J9Statistic->name[1] accounts +1 for the null character. */
+	IDATA size = sizeof(*statistic) + (sizeof(char) * strlen((char *)name));
+
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
-
-	IDATA stringSize = strlen((char*)name) + 1;
-	IDATA size = stringSize;
-	J9Statistic * statistic;
-
-	/* Adjust for the default size in the struct array of 4 */
-	size += offsetof(J9Statistic, name);
 
 	/* Allocate and fill the structure */
 	statistic = j9mem_allocate_memory(size, OMRMEM_CATEGORY_VM);
-	if (statistic != NULL) {
+	if (NULL != statistic) {
 		statistic->dataSlot = 0;
 		statistic->dataType = (U_32) dataType;
-		strcpy((char*)&(statistic->name), (char*)name);
+		strcpy((char *)statistic->name, (char *)name);
 
 		/* Grab the monitor - if initialized (some statistics set prior to vmthinit.c) */
-		if (javaVM->statisticsMutex) {
+		if (NULL != javaVM->statisticsMutex) {
 			omrthread_monitor_enter(javaVM->statisticsMutex);
 		}
 
@@ -53,65 +51,65 @@ addStatistic (J9JavaVM* javaVM, U_8 * name, U_8 dataType)
 		javaVM->nextStatistic = statistic;
 
 		/* Release the monitor */
-		if (javaVM->statisticsMutex) {
+		if (NULL != javaVM->statisticsMutex) {
 			omrthread_monitor_exit(javaVM->statisticsMutex);
 		}
 	}
 
-	return (void *) statistic;
+	return (void *)statistic;
 }
 
 
 void
-deleteStatistics (J9JavaVM* javaVM)
+deleteStatistics(J9JavaVM *javaVM)
 {
+	J9Statistic *statistic = NULL;
+
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
-	J9Statistic * statistic;
-
-	if (javaVM->statisticsMutex) {
+	if (NULL != javaVM->statisticsMutex) {
 		omrthread_monitor_enter(javaVM->statisticsMutex);
 	}
 
 	statistic = javaVM->nextStatistic;
 
 	/* Delete the linked list */
-	while (statistic != NULL) {
-		J9Statistic * nextStatistic = statistic->nextStatistic;
+	while (NULL != statistic) {
+		J9Statistic *nextStatistic = statistic->nextStatistic;
 		j9mem_free_memory(statistic);
 		statistic = nextStatistic;
 	}
 	javaVM->nextStatistic = NULL;
 
-	if (javaVM->statisticsMutex) {
+	if (NULL != javaVM->statisticsMutex) {
 		omrthread_monitor_exit(javaVM->statisticsMutex);
 	}
 }
 
 
 void *
-getStatistic (J9JavaVM* javaVM, U_8 * name)
+getStatistic(J9JavaVM *javaVM, U_8 *name)
 {
-	J9Statistic * statistic;
+	J9Statistic *statistic = NULL;
 	
-	if (javaVM->statisticsMutex) {
+	if (NULL != javaVM->statisticsMutex) {
 		omrthread_monitor_enter(javaVM->statisticsMutex);
 	}
 	
 	statistic = javaVM->nextStatistic;
 
 	/* Walk the linked list */
-	while (statistic != NULL) {
-		if (strcmp((char*)name, (char*)&(statistic->name)) == 0) {
+	while (NULL != statistic) {
+		if (strcmp((char *)name, (char *)statistic->name) == 0) {
 			break;
 		}
 		statistic = statistic->nextStatistic;
 	}
 
-	if (javaVM->statisticsMutex) {
+	if (NULL != javaVM->statisticsMutex) {
 		omrthread_monitor_exit(javaVM->statisticsMutex);
 	}
 
-	return (void *) statistic;
+	return (void *)statistic;
 }
 

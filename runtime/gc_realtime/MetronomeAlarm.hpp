@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -99,8 +98,10 @@ public:
 
 class MM_RTCAlarm : public MM_Alarm
 {
-private:	
+private:
+#if defined(LINUX) && !defined(J9ZTPF)
 	IDATA RTCfd;
+#endif /* defined(LINUX) && !defined(J9ZTPF) */
 
 public:
 	static MM_RTCAlarm * newInstance(MM_EnvironmentBase *env, MM_OSInterface* osInterface);

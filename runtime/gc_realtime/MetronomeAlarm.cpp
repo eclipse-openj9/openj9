@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -246,13 +245,13 @@ MM_ITAlarm::initialize(MM_EnvironmentBase *env, MM_MetronomeAlarmThread* alarmTh
 void
 MM_RTCAlarm::sleep()
 {
-#if defined(LINUX)
+#if defined(LINUX) && !defined(J9ZTPF)
 	UDATA data;
 	ssize_t readAmount = read(RTCfd, &data, sizeof(data));
 	if (readAmount == -1) {
 		perror("blocking read failed");
 	}
-#endif
+#endif /* defined(LINUX) && !defined(J9ZTPF) */
 }
 
 void

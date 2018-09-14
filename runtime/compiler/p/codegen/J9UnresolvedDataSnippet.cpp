@@ -108,6 +108,10 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
       {
       glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_interpreterUnresolvedMethodTypeTableEntryGlue, false, false, false);
       }
+   else if (getDataSymbol()->isConstantDynamic())
+      {
+      glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCinterpreterUnresolvedConstantDynamicGlue, false, false, false);
+      }
    else // must be static data
       {
       if (isUnresolvedStore())
@@ -187,7 +191,7 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
    else
       {
       *(int32_t *)cursor = getMemoryReference()->getOffset(*(comp)); // offset
-      if (getDataSymbol()->isConstObjectRef())
+      if (getDataSymbol()->isConstObjectRef() || getDataSymbol()->isConstantDynamic())
          {
          cg()->addProjectSpecializedRelocation(cursor, *(uint8_t **)(cursor-4),
                getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_ConstantPool,
@@ -294,6 +298,10 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
    else if (snippet->getDataSymbol()->isMethodTypeTableEntry())
       {
       glueRef = _cg->getSymRef(TR_interpreterUnresolvedMethodTypeTableEntryGlue);
+      }
+   else if (snippet->getDataSymbol()->isConstantDynamic())
+      {
+      glueRef = _cg->getSymRef(TR_PPCinterpreterUnresolvedConstantDynamicGlue);
       }
    else // must be static data
       {

@@ -412,6 +412,7 @@ JIT_HELPER(_interpreterUnresolvedDirectVirtualGlue);
 JIT_HELPER(_interpreterUnresolvedClassGlue);
 JIT_HELPER(_interpreterUnresolvedClassGlue2);
 JIT_HELPER(_interpreterUnresolvedStringGlue);
+JIT_HELPER(_interpreterUnresolvedConstantDynamicGlue);
 JIT_HELPER(_interpreterUnresolvedMethodTypeGlue);
 JIT_HELPER(_interpreterUnresolvedMethodHandleGlue);
 JIT_HELPER(_interpreterUnresolvedCallSiteTableEntryGlue);
@@ -1282,6 +1283,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_PPCinterpreterUnresolvedClassGlue,              (void *) _interpreterUnresolvedClassGlue,               TR_Helper);
    SET(TR_PPCinterpreterUnresolvedClassGlue2,             (void *) _interpreterUnresolvedClassGlue2,              TR_Helper);
    SET(TR_PPCinterpreterUnresolvedStringGlue,             (void *) _interpreterUnresolvedStringGlue,              TR_Helper);
+   SET(TR_PPCinterpreterUnresolvedConstantDynamicGlue,    (void *) _interpreterUnresolvedConstantDynamicGlue,     TR_Helper);
    SET(TR_interpreterUnresolvedMethodTypeGlue,            (void *)_interpreterUnresolvedMethodTypeGlue,           TR_Helper);
    SET(TR_interpreterUnresolvedMethodHandleGlue,          (void *)_interpreterUnresolvedMethodHandleGlue,         TR_Helper);
    SET(TR_interpreterUnresolvedCallSiteTableEntryGlue,    (void *)_interpreterUnresolvedCallSiteTableEntryGlue,   TR_Helper);
