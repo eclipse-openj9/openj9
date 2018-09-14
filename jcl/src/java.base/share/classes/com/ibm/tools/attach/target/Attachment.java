@@ -407,6 +407,14 @@ final class Attachment extends Thread implements Response {
 			throw new IbmAttachOperationFailedException("startLocalManagementAgent error starting agent:" + e.getClass() + " " + e.getMessage());		 //$NON-NLS-1$ //$NON-NLS-2$
 		}
 
+		String addr = saveLocalConnectorAddress();
+		if (Objects.isNull(addr)) {
+			throw new IbmAttachOperationFailedException("startLocalManagementAgent: " + LOCAL_CONNECTOR_ADDRESS + " not defined"); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+		return addr;
+	}
+
+	static String saveLocalConnectorAddress() {
 		Properties systemProperties = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties();
 		String addr;
 		synchronized (systemProperties) {
@@ -419,9 +427,9 @@ final class Attachment extends Thread implements Response {
 			}
 		}
 		if (Objects.isNull(addr)) {
-			/* startLocalAgent() should have set the property. */
+			/* property should be set at this point */
 			IPC.logMessage(LOCAL_CONNECTOR_ADDRESS + " not set"); //$NON-NLS-1$
-			throw new IbmAttachOperationFailedException("startLocalManagementAgent: " + LOCAL_CONNECTOR_ADDRESS + " not defined"); //$NON-NLS-1$ //$NON-NLS-2$
+			return null;
 		}
 		IPC.logMessage(LOCAL_CONNECTOR_ADDRESS + "=", addr); //$NON-NLS-1$
 		return addr;
