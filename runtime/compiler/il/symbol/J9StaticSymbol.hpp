@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,6 +69,51 @@ public:
 private:
 
    int32_t _callSiteIndex;
+
+   /* ------- TR_ConstantDynamicSymbol --------- */
+public:
+
+   /** \brief
+    *     Populate the class signature fields and primitive flag of this constant dynamic symbol.
+    *
+    *  \param classSignature
+    *     The class signature string of the constant dynamic. For primitive this is the signature of the corresponding autobox class.
+    *
+    *  \param classSignatureLength
+    *     The length of the class signature string of the constant dynamic.
+    *
+    *  \param isPrimitive
+    *     Determines whether the constant dynamic is primitive type.
+    *
+    *  \return
+    *     Fields of this static symbol are populated.
+    */
+   void makeConstantDynamic(char * classSignature, int32_t classSignatureLength, bool isPrimitive);
+
+   /** \brief
+    *     Retrieves the class signature string for this constant dynamic static symbol.
+    *
+    *  \param classSignatureLength
+    *     The length of the class signature string of the constant dynamic. Modified in place.
+    *
+    *  \return
+    *     The class signature string for this constant dynamic static symbol.
+    */
+   char * getConstantDynamicClassSignature(int32_t & classSignatureLength);
+
+   /** \brief
+    *     Retrieves whether the underlying constant dynamic is of primitive type.
+    *
+    *  \return
+    *     <c>true</c> if the underlying constant dynamic is primitive; <c>false</c> otherwise.
+    */
+   bool isConstantDynamicPrimitive();
+
+private:
+
+   char * _classSignature;
+   int32_t _classSignatureLength;
+   bool _isPrimitive;
 
    /* ------ TR_RecognizedStaticSymbol ---------- */
 public:
