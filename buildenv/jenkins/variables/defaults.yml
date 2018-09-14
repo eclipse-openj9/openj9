@@ -87,6 +87,10 @@ linux_ppc-64_cmprssptrs_le:
       10: 'hw.arch.ppc64le && sw.os.ubuntu'
       11: 'hw.arch.ppc64le && sw.os.ubuntu'
       next: 'hw.arch.ppc64le && sw.os.ubuntu'
+  build_env:
+    vars:
+      11: 'CC=gcc-7 CXX=g++-7'
+      next: 'CC=gcc-7 CXX=g++-7'
 #========================================#
 # Linux S390 64bits Compressed Pointers
 # Note: boot_jdk 8 must use an Adopt JDK8 build rather than an 
