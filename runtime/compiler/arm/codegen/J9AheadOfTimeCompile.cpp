@@ -110,7 +110,7 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
    TR_ResolvedMethod *resolvedMethod;
 
    uint8_t *cursor = relocation->getRelocationData();
-   uint8_t * aotMethodCodeStart = (uint8_t *) comp->getAotMethodCodeStart();
+   uint8_t * aotMethodCodeStart = (uint8_t *) comp->getRelocatableMethodCodeStart();
 
    // size of relocation goes first in all types
    *(uint16_t *)cursor = relocation->getSizeOfRelocationData();
