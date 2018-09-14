@@ -2803,14 +2803,10 @@ retry:
 					module = javaVM->unamedModuleForSystemLoader;
 				}
 			} else {
-				if (J9ROMCLASS_IS_PRIMITIVE_TYPE(romClass)
-					|| (LOAD_LOCATION_PATCH_PATH == locationType)
-					|| (LOAD_LOCATION_MODULE == locationType)
-				) {
-					module = javaVM->javaBaseModule;
-				} else {
-					module = javaVM->unamedModuleForSystemLoader;
-				}
+				/* Ignore locationType and assign all classes created before the java.base module is created to java.base.
+				 * This matches the RI implementation. Validated on JDK9 through JDK11.
+				 */
+				module = javaVM->javaBaseModule;
 			}
 		}
 	}
