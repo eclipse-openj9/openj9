@@ -1100,12 +1100,23 @@ static void jitWalkResolveMethodFrame(J9StackWalkState *walkState)
 	} else if (resolveFrameType == J9_STACK_FLAGS_JIT_LOOKUP_RESOLVE) {
 		UDATA * interfaceObjectAndISlot = (UDATA *) JIT_RESOLVE_PARM(2);
 		J9Class * interfaceClass = READ_CLASS((J9Class *) READ_UDATA(interfaceObjectAndISlot));
-		UDATA methodIndex = READ_UDATA(interfaceObjectAndISlot + 1);
-		J9ROMMethod * romMethod = J9ROMCLASS_ROMMETHODS(interfaceClass->romClass);
-
-		while (methodIndex) {
-			romMethod = nextROMMethod(romMethod);
-			--methodIndex;
+		UDATA itableOffset = READ_UDATA(interfaceObjectAndISlot + 1);
+		J9ROMMethod * romMethod = NULL;
+		if (J9_ARE_ANY_BITS_SET(itableOffset, J9_ITABLE_OFFSET_DIRECT)) {
+			J9Method *ramMethod = (J9Method*)(itableOffset & ~J9_ITABLE_OFFSET_TAG_BITS);
+			romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
+		} else if (J9_ARE_ANY_BITS_SET(itableOffset, J9_ITABLE_OFFSET_VIRTUAL)) {
+			UDATA vTableOffset = itableOffset & ~J9_ITABLE_OFFSET_TAG_BITS;
+			J9Class *jlObject = J9VMJAVALANGOBJECT_OR_NULL(walkState->walkThread->javaVM);
+			J9Method *ramMethod = *(J9Method**)((UDATA)jlObject + vTableOffset);
+			romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
+		} else {
+			romMethod = J9ROMCLASS_ROMMETHODS(interfaceClass->romClass);
+			UDATA methodIndex = (itableOffset - sizeof(J9ITable)) / sizeof(UDATA);
+			while (methodIndex) {
+				romMethod = nextROMMethod(romMethod);
+				--methodIndex;
+			}
 		}
 
 		signature = J9ROMMETHOD_GET_SIGNATURE(interfaceClass->romClass, romMethod);
