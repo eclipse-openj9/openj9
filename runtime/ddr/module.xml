@@ -308,7 +308,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<library name="j9ddrautoblob"/>
 			<library name="j9gcautoblob"/>
 			<library name="omrsig">
-				<include-if condition="spec.linux_ztpf.*"/>
+				<include-if condition="spec.flags.J9VM_PORT_OMRSIG_SUPPORT"/>
 			</library>
 
 			<!-- The following libs are needed to statically link the port library. -->
