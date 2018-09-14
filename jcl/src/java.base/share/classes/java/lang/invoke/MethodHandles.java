@@ -879,7 +879,7 @@ public class MethodHandles {
 		/*
 		 * Check access to the parameter and return classes within incoming MethodType
 		 */
-		private void accessCheckArgRetTypes(MethodType type) throws IllegalAccessException {
+		final void accessCheckArgRetTypes(MethodType type) throws IllegalAccessException {
 			if (INTERNAL_PRIVILEGED != accessMode) {
 				for (Class<?> para : type.arguments) {
 					if (!para.isPrimitive()) {

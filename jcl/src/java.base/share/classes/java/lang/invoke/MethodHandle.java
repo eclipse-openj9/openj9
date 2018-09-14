@@ -1009,6 +1009,14 @@ public abstract class MethodHandle {
 			Objects.requireNonNull(classObject);
 			
 			type = MethodType.vmResolveFromMethodDescriptorString(methodDescriptor, access.getClassloader(classObject), null);
+			final MethodHandles.Lookup lookup = new MethodHandles.Lookup(classObject, false);
+			try {
+				lookup.accessCheckArgRetTypes(type);
+			} catch (IllegalAccessException e) {
+				IllegalAccessError err = new IllegalAccessError();
+				err.initCause(e);
+				throw err;
+			}
 			int bsmIndex = UNSAFE.getShort(bsmData);
 			int bsmArgCount = UNSAFE.getShort(bsmData + BSM_ARGUMENT_COUNT_OFFSET);
 			long bsmArgs = bsmData + BSM_ARGUMENTS_OFFSET;
@@ -1019,7 +1027,7 @@ public abstract class MethodHandle {
 			}
 			Object[] staticArgs = new Object[BSM_OPTIONAL_ARGUMENTS_START_INDEX + bsmArgCount];
 			/* Mandatory arguments */
-			staticArgs[BSM_LOOKUP_ARGUMENT_INDEX] = new MethodHandles.Lookup(classObject, false);
+			staticArgs[BSM_LOOKUP_ARGUMENT_INDEX] = lookup;
 			staticArgs[BSM_NAME_ARGUMENT_INDEX] = name;
 			staticArgs[BSM_TYPE_ARGUMENT_INDEX] = type;
 		
@@ -1254,47 +1262,65 @@ public abstract class MethodHandle {
 		try {
 			MethodHandles.Lookup lookup = new MethodHandles.Lookup(currentClass, false);
 			MethodType type = null;
-			
+			MethodHandle result = null;
+
 			switch(cpRefKind){
 			case 1: /* getField */
-				return lookup.findGetter(referenceClazz, name, resolveFieldHandleHelper(typeDescriptor, loader));
+				result = lookup.findGetter(referenceClazz, name, resolveFieldHandleHelper(typeDescriptor, lookup, loader));
+				break;
 			case 2: /* getStatic */
-				return lookup.findStaticGetter(referenceClazz, name, resolveFieldHandleHelper(typeDescriptor, loader));
+				result = lookup.findStaticGetter(referenceClazz, name, resolveFieldHandleHelper(typeDescriptor, lookup, loader));
+				break;
 			case 3: /* putField */
-				return lookup.findSetter(referenceClazz, name, resolveFieldHandleHelper(typeDescriptor, loader));
+				result = lookup.findSetter(referenceClazz, name, resolveFieldHandleHelper(typeDescriptor, lookup, loader));
+				break;
 			case 4: /* putStatic */
-				return lookup.findStaticSetter(referenceClazz, name, resolveFieldHandleHelper(typeDescriptor, loader));
+				result = lookup.findStaticSetter(referenceClazz, name, resolveFieldHandleHelper(typeDescriptor, lookup, loader));
+				break;
 			case 5: /* invokeVirtual */
 				type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
-				return lookup.findVirtual(referenceClazz, name, type);
+				lookup.accessCheckArgRetTypes(type);
+				result = lookup.findVirtual(referenceClazz, name, type);
+				break;
 			case 6: /* invokeStatic */
 				type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
-				return lookup.findStatic(referenceClazz, name, type);
+				lookup.accessCheckArgRetTypes(type);
+				result = lookup.findStatic(referenceClazz, name, type);
+				break;
 			case 7: /* invokeSpecial */ 
 				type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
-				return lookup.findSpecial(referenceClazz, name, type, currentClass);
+				lookup.accessCheckArgRetTypes(type);
+				result = lookup.findSpecial(referenceClazz, name, type, currentClass);
+				break;
 			case 8: /* newInvokeSpecial */
 				type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
-				return lookup.findConstructor(referenceClazz, type);
+				lookup.accessCheckArgRetTypes(type);
+				result = lookup.findConstructor(referenceClazz, type);
+				break;
 			case 9: /* invokeInterface */
 				type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
-				return lookup.findVirtual(referenceClazz, name, type);
+				lookup.accessCheckArgRetTypes(type);
+				result = lookup.findVirtual(referenceClazz, name, type);
+				break;
+			default:
+				/* Can never happen */
+				throw new UnsupportedOperationException();
 			}
+			return result;
 		} catch (IllegalAccessException iae) {
 			// Java spec expects an IllegalAccessError instead of IllegalAccessException thrown when an application attempts 
 			// (not reflectively) to access or modify a field, or to invoke a method that it doesn't have access to.
 			throw new IllegalAccessError(iae.getMessage()).initCause(iae);
 		}
-		/* Can never happen */
-		throw new UnsupportedOperationException();
 	}
 	
 	/* Convert the field typedescriptor into a MethodType so we can reuse the parsing logic in 
-	 * #fromMethodDescritorString().  The verifier checks to ensure that the typeDescriptor is
+	 * #fromMethodDescriptorString().  The verifier checks to ensure that the typeDescriptor is
 	 * a valid field descriptor so adding the "()V" around it is valid.
 	 */
-	private static final Class<?> resolveFieldHandleHelper(String typeDescriptor, ClassLoader loader) throws Throwable {
+	private static final Class<?> resolveFieldHandleHelper(String typeDescriptor, Lookup lookup, ClassLoader loader) throws Throwable {
 		MethodType mt = MethodType.vmResolveFromMethodDescriptorString("(" + typeDescriptor + ")V", loader, null); //$NON-NLS-1$ //$NON-NLS-2$
+		lookup.accessCheckArgRetTypes(mt);
 		return mt.parameterType(0);
 	}
 	
