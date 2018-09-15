@@ -1,4 +1,4 @@
-; Copyright (c) 2000, 2017 IBM Corp. and others
+; Copyright (c) 2000, 2018 IBM Corp. and others
 ;
 ; This program and the accompanying materials are made available under
 ; the terms of the Eclipse Public License 2.0 which accompanies this
@@ -60,6 +60,19 @@ eq_ObjectClassMask                equ -J9TR_RequiredClassAlignment
 
 ifndef TR_HOST_64BIT
 
+eq_VPicData_cpAddr             equ 00h
+eq_VPicData_cpIndex            equ 04h
+eq_VPicData_directMethod       equ 08h
+eq_VPicData_cmpRegImm4ModRM    equ 0ch
+eq_VPicData_size               equ 0dh
+
+eq_IPicData_cpAddr             equ 00h
+eq_IPicData_cpIndex            equ 04h
+eq_IPicData_interfaceClass     equ 08h
+eq_IPicData_itableOffset       equ 0ch
+eq_IPicData_cmpRegImm4ModRM    equ 10h
+; IPIC data size is omitted here since it would be unused anyway.
+
 J9PreservedFPRStackSize    equ   80
 
 LoadClassPointerFromObjectHeader macro ObjectReg, ClassPtrReg64, ClassPtrReg32
@@ -73,8 +86,23 @@ else
 ;                                    64-BIT
 ; --------------------------------------------------------------------------------
 
+eq_VPicData_cpAddr             equ 00h
+eq_VPicData_cpIndex            equ 08h
+eq_VPicData_directMethod       equ 10h
+eq_VPicData_j2iThunk           equ 18h
+eq_VPicData_movabsRexAndOpcode equ 20h
+eq_VPicData_callMemRex         equ 22h
+eq_VPicData_callMemModRM       equ 23h
+eq_VPicData_size               equ 24h
 
-
+eq_IPicData_cpAddr             equ 00h
+eq_IPicData_cpIndex            equ 08h
+eq_IPicData_interfaceClass     equ 10h
+eq_IPicData_itableOffset       equ 18h
+eq_IPicData_movabsRexAndOpcode equ 20h
+eq_IPicData_j2iThunk           equ 22h    ; only present if direct invoke is possible
+; IPIC data size is either 22h or 2ah, due to the optional j2iThunk.
+; It's omitted here since it would be unused anyway.
 
 LoadHelperIndex macro targetReg,helperIndexSym
 ifdef WINDOWS
