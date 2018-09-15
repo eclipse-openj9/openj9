@@ -1,4 +1,4 @@
-; Copyright (c) 2000, 2017 IBM Corp. and others
+; Copyright (c) 2000, 2018 IBM Corp. and others
 ;
 ; This program and the accompanying materials are made available under
 ; the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,6 +45,8 @@ ifndef TR_HOST_64BIT
       ExternHelper   jitResolveInterfaceMethod
       ExternHelper   jitResolveVirtualMethod
       ExternHelper   jitCallJitAddPicToPatchOnClassUnload
+      ExternHelper   jitInstanceOf
+      ExternHelper   j2iVirtual
 
       public         resolveIPicClass
       public         populateIPicSlotClass
@@ -90,6 +92,41 @@ doneMemoryFence:
 
 memoryFence endp
 
+; Do direct dispatch given the J9Method (for both VPIC & IPIC)
+;
+; Registers on entry:
+;    eax: direct J9Method pointer
+;    edi: adjusted return address
+;
+; Stack shape on entry:
+;    +16 last parameter
+;    +12 RA in code cache (call to helper)
+;    +8  saved edx
+;    +4  saved edi
+;    +0  saved eax (receiver)
+;
+      align 16
+dispatchDirectMethod proc
+      mov         dword ptr [esp+12], edi                      ; Replace RA on stack
+
+      test        dword ptr [eax+J9TR_MethodPCStartOffset], J9TR_MethodNotCompiledBit ; method compiled?
+      jnz         dispatchDirectMethodInterpreted
+
+      ; Method is compiled
+      mov         edi, dword ptr [eax+J9TR_MethodPCStartOffset] ; interpreter/JIT entry point for compiled method
+      jmp         mergeDispatchDirectMethod
+
+dispatchDirectMethodInterpreted:
+      lea         edx, [eax+J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG] ; low-tagged J9Method
+      MoveHelper  edi, j2iVirtual
+
+mergeDispatchDirectMethod:
+      pop         eax                                          ; restore
+      add         esp, 8                                       ; skip edi, edx
+      jmp         edi
+
+dispatchDirectMethod endp
+
 
 ; Resolve the interface method and update the IPIC data area with the interface J9Class
 ; and the itable index.
@@ -125,11 +162,22 @@ mergeFindDataBlockForResolveIPicClass:
       ;    +4  saved edi
       ;    +0  saved eax (receiver)
       ;
+
+      test        dword ptr [edx+eq_IPicData_itableOffset], J9TR_J9_ITABLE_OFFSET_DIRECT
+      jz          callResolveInterfaceMethod
+
+      cmp         dword ptr [edx+eq_IPicData_interfaceClass], 0
+      jne         typeCheckAndDirectDispatchIPic
+
+callResolveInterfaceMethod:
       push        edi                                          ; p) jit valid EIP
       push        edx                                          ; p) push the address of the constant pool and cpIndex
       CallHelperUseReg jitResolveInterfaceMethod,eax           ; returns interpreter vtable index
 
       call        memoryFence                                  ; Ensure IPIC data area drains to memory before proceeding.
+
+      test        dword ptr [edx+eq_IPicData_itableOffset], J9TR_J9_ITABLE_OFFSET_DIRECT
+      jnz         typeCheckAndDirectDispatchIPic
 
       push        ebx                                          ; preserve
       push        ecx                                          ; preserve
@@ -189,6 +237,34 @@ resolveIPicClassLongBranch:
                                                                ;    17 = 7 (offset to instr after branch) + 5 (CALL) + 5 (JMP)
       jmp         mergeFindDataBlockForResolveIPicClass
 
+typeCheckAndDirectDispatchIPic:
+      push        dword ptr [esp]                              ; p) receiver (saved eax)
+      push        dword ptr [edx+eq_IPicData_interfaceClass]   ; p) interface class
+      CallHelperUseReg jitInstanceOf, eax
+      test        eax, eax
+      jz          throwOnFailedTypeCheckIPic
+
+      ; Type check passed
+      mov         eax, dword ptr [edx+eq_IPicData_itableOffset]
+      xor         eax, J9TR_J9_ITABLE_OFFSET_DIRECT            ; Direct J9Method pointer
+
+      lea         edi, [edx-5]                                 ; Adjusted return address
+                                                               ;    5 (JMP)
+      jmp         dispatchDirectMethod
+
+throwOnFailedTypeCheckIPic:
+      mov         eax, [esp]                                   ; receiver (saved eax)
+#ifdef J9VM_OPT_TEMP_NEW_INTERFACE_INVOCATION
+      push        edx                                          ; p) push the address of the constant pool and cpIndex
+#endif
+      lea         edx, [edx+eq_IPicData_interfaceClass]        ; EA of IClass in data block
+      push        edi                                          ; p) jit EIP
+      push        edx                                          ; p) EA of resolved interface class
+      LoadClassPointerFromObjectHeader eax, eax, eax
+      push        eax                                          ; p) receiver class
+      CallHelperUseReg jitLookupInterfaceMethod, eax           ; guaranteed to throw
+      int         3
+
 resolveIPicClass endp
 
 
@@ -231,13 +307,7 @@ mergePopulateIPicClass:
 #ifdef J9VM_OPT_TEMP_NEW_INTERFACE_INVOCATION
       push        edx                                          ; p) push the address of the constant pool and cpIndex
 #endif
-      lea         edx, [edx+8]                                 ; EA of IClass in data block
-                                                               ;    = 4 + 10 (CALL+JMP) + 8 (cpaddr,cpIndex)
-                                                               ;
-                                                               ; Or if jmp to mergePopulateIPicClass taken
-                                                               ;    = 7 (offset to instr after branch) + 5 (CALL) +
-                                                               ;      5 (JMP) + 8 (cpaddr,cpIndex)
-
+      lea         edx, [edx+eq_IPicData_interfaceClass]        ; EA of IClass in data block
       push        edi                                          ; p) jit EIP
       push        edx                                          ; p) EA of resolved interface class
       LoadClassPointerFromObjectHeader eax, eax, eax
@@ -265,7 +335,7 @@ mergePopulateIPicClass:
       ; Construct the call instruction in edx:eax that should have brought
       ; us to this helper + the following 3 bytes.
       ;
-      mov         esi, edx                                     ; esi = EA of IClass in data block
+      lea         esi, [edx-eq_IPicData_interfaceClass]        ; esi = start of IPIC data
 
       MoveHelper  eax, populateIPicSlotClass
       mov         edi, dword ptr [esp+24]                      ; edi = RA in mainline (call to helper)
@@ -285,7 +355,7 @@ mergePopulateIPicClass:
       rol         ebx, 16
       mov         cx, bx
       mov         bl, 081h                                      ; CMP opcode
-      mov         bh, byte ptr [esi+8]                          ; ModRM byte in data area (offset from IClass)
+      mov         bh, byte ptr [esi+eq_IPicData_cmpRegImm4ModRM]
 
       ; Attempt to patch in the CMP instruction.
       ;
@@ -307,7 +377,7 @@ ifdef ASM_J9VM_GC_DYNAMIC_CLASS_UNLOADING
       LoadClassPointerFromObjectHeader eax, edx, edx           ; receiver class
       mov         eax, dword ptr [edx+J9TR_J9Class_classLoader] ; receivers class loader
 
-      mov         ebx, dword ptr [esi]                         ; ebx == IClass from IPic data area
+      mov         ebx, dword ptr [esi+eq_IPicData_interfaceClass]
       cmp         eax, dword ptr [ebx+J9TR_J9Class_classLoader] ; compare class loaders
       jz          short IPicClassSlotUpdateFailed              ; class loaders are the same--do nothing
 
@@ -379,8 +449,7 @@ mergeIPicSlotCall:
 #ifdef J9VM_OPT_TEMP_NEW_INTERFACE_INVOCATION
       push        edx                                          ; p) push the address of the constant pool and cpIndex
 #endif
-      lea         edx, [edx+8]                                 ; EA of IClass in data block
-                                                               ;    18 = 5 (CALL) + 5 (JMP) + 8 (cpAddr,cpIndex)
+      lea         edx, [edx+eq_IPicData_interfaceClass]        ; EA of IClass in data block
 
       push        edi                                          ; p) jit EIP
       push        edx                                          ; p) EA of resolved interface class
@@ -462,8 +531,7 @@ mergeIPicInterpretedDispatch:
       push        edx                                          ; p) push the address of the constant pool and cpIndex
 #endif
 
-      lea         edx, [edx+8]                                ; EA of IClass in data block
-                                                               ;    18 = 5 (CALL) + 5 (JMP) + 8 (cpAddr,cpIndex)
+      lea         edx, [edx+eq_IPicData_interfaceClass]        ; EA of IClass in data block
 
       push        edi                                          ; p) jit EIP
       push        edx                                          ; p) EA of resolved interface class
@@ -535,8 +603,7 @@ IPicLookupDispatch proc near
       push        edi                                          ; p) push the address of the constant pool and cpIndex
 #endif
 
-      lea         edi, [edi+8]                                 ; EA of IClass in data block
-                                                               ;    13 = 5 (JMP) + 8 (cpAddr,cpIndex)
+      lea         edi, [edi+eq_IPicData_interfaceClass]        ; EA of IClass in data block
 
       push        edi                                          ; p) jit EIP
       push        edi                                          ; p) EA of resolved interface class in IPic
@@ -578,7 +645,7 @@ resolveVPicClass proc near
       lea         edx, [edi+edx-11]                            ; edx = EA of disp32 of JNE
                                                                ;    -11 = 1 (instr. after JMP) -12 (EA of disp32 of JNE)
       add         edx, dword ptr [edx]                         ; EA of vtable dispatch snippet
-      lea         edx, [edx-9]                                 ; EA of VPic data block
+      lea         edx, [edx-eq_VPicData_size]                  ; EA of VPic data block
 
 mergeFindDataBlockForResolveVPicClass:
       push        eax                                          ; push receiver
@@ -591,9 +658,17 @@ mergeFindDataBlockForResolveVPicClass:
       ;    +4  saved edi
       ;    +0  saved eax (receiver)
       ;
+
+      mov         eax, dword ptr [edx+eq_VPicData_directMethod]
+      test        eax, eax
+      jnz         callDirectMethodVPic
+
       push        edi                                          ; p) jit valid EIP
       push        edx                                          ; p) push the address of the constant pool and cpIndex
       CallHelperUseReg jitResolveVirtualMethod,eax             ; returns compiler vtable index
+
+      test        eax, J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG
+      jnz         resolvedToDirectMethodVPic
 
       push        ebx                                          ; preserve
       push        ecx                                          ; preserve
@@ -649,9 +724,25 @@ endif
 
 resolveVPicClassLongBranch:
       mov         edx, dword ptr [edi+3]                       ; disp32 for branch to snippet
-      lea         edx, [edi+edx-2]                             ; EA of VPic data block
-                                                               ;    -2 = 7 (offset to instr after branch) -9 (DB+cpIndex+cpAddr)
+      lea         edx, [edi+edx+7-eq_VPicData_size]            ; EA of VPic data block
+                                                               ;    7 (offset to instr after branch)
       jmp         mergeFindDataBlockForResolveVPicClass
+
+resolvedToDirectMethodVPic:
+      ; We'll return to the jump just after the position where the call through
+      ; the VFT would be. In the j2i case, the VM assumes control was transferred
+      ; via a call though the VFT *unless* RA-5 has 0e8h (direct call relative).
+      ; Make sure the VM sees an 0e8h so that it uses the VFT offset register.
+      ; Start with a debug trap because the call itself is dead.
+      mov         word ptr [edx+eq_VPicData_size], 0e8cch      ; int 3, call
+
+      xor         eax, J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG ; eax is the J9Method to be directly invoked
+      mov         dword ptr [edx+eq_VPicData_directMethod], eax
+
+callDirectMethodVPic:
+      lea         edi, [edx+eq_VPicData_size+6]                ; Adjusted return address
+                                                               ;    6 (offset to jump after call through VFT)
+      jmp         dispatchDirectMethod
 
 resolveVPicClass endp
 
@@ -678,8 +769,8 @@ populateVPicSlotClass proc near
       lea         edx, [edi+edx-11]                            ; edx = EA of disp32 of JNE
                                                                ;    -11 = 1 (instr. after JMP) -12 (EA of disp32 of JNE)
       add         edx, dword ptr [edx]                         ; EA of vtable dispatch snippet
-      lea         edx, [edx-5]                                 ; EA of VPic data block
-                                                               ;    -5 = 4 - 9 (DB + cpAddr,cpIndex)
+      lea         edx, [edx+4-eq_VPicData_size]                ; EA of VPic data block
+                                                               ;    4 (offset to instruction after JNE)
 mergePopulateVPicClass:
       push        eax                                          ; push receiver
       push        ebx                                          ; preserve
@@ -721,7 +812,7 @@ mergePopulateVPicClass:
       rol         ebx, 16
       mov         cx, bx
       mov         bl, 081h                                      ; CMP opcode
-      mov         bh, byte ptr [esi+8]                          ; ModRM byte in VPic data area
+      mov         bh, byte ptr [esi+eq_VPicData_cmpRegImm4ModRM]
 
       ; Attempt to patch in the CMP instruction.
       ;
@@ -758,8 +849,8 @@ endif
 
 populateVPicClassLongBranch:
       mov         edx, dword ptr [edi+3]                       ; disp32 for branch to snippet
-      lea         edx, [edi+edx-2]                             ; EA of VPic data block
-                                                               ;    -2 = 7 (offset to instr after branch) - 9 (DB,cpIndex,cpAddr)
+      lea         edx, [edi+edx+7-eq_VPicData_size]            ; EA of VPic data block
+                                                               ;    7 (offset to instr after branch)
       jmp         mergePopulateVPicClass
 populateVPicSlotClass endp
 
@@ -788,8 +879,7 @@ populateVPicSlotCall proc near
                                                                ;    -6 = +2 (skip JMP disp8) - 5 (call in last slot) - 3 (NOP)
 mergeVPicSlotCall:
       add         edx, dword ptr [edx-4]                       ; EA of vtable dispatch snippet
-      lea         edx, [edx-9]                                 ; EA of VPic data block
-                                                               ;    -9 = (DB,cpIndex,cpAddr)
+      lea         edx, [edx-eq_VPicData_size]                  ; EA of VPic data block
       push        eax                                          ; push receiver
 
       ; Stack shape:
@@ -915,12 +1005,11 @@ interpretedLastVPicSlot:
       jmp         mergeVPicInterpretedDispatch
 
 vtableCallNotPatched:
-      lea         edx, [edx-9]                                 ; edx = EA of VPic data
-                                                               ;    -9 = (DB + cpAddr,cpIndex)
+      lea         edx, [edx-eq_VPicData_size]                  ; edx = EA of VPic data
       push        dword ptr [esp+12]                           ; p) jit valid EIP
       push        edx                                          ; p) push the address of the constant pool and cpIndex
       CallHelperUseReg jitResolveVirtualMethod,eax             ; eax = compiler vtable index
-      lea         edx, [edx+9]                                 ; restore edx = EA of vtable dispatch
+      lea         edx, [edx+eq_VPicData_size]                  ; restore edx = EA of vtable dispatch
       jmp short   mergeCheckIfMethodCompiled
 
 dispatchInterpretedFromVPicSlot endp
@@ -939,8 +1028,8 @@ populateVPicVTableDispatch proc near
       push        edx                                          ; preserve
       push        edi                                          ; preserve
       mov         edi, dword ptr [esp+8]                       ; RA in code cache
-      lea         edx, [edi-14]                                ; EA of VPic data block
-                                                               ;    -14 = -5 (CALL) -9 (DB,cpIndex,cpAddr)
+      lea         edx, [edi-5-eq_VPicData_size]                ; EA of VPic data block
+                                                               ;    -5 (CALL)
       push        eax                                          ; push receiver
 
       ; Stack shape:
@@ -1173,6 +1262,7 @@ _TEXT   segment para 'CODE'
       ExternHelper   jitCallCFunction
       ExternHelper   jitCallJitAddPicToPatchOnClassUnload
       ExternHelper   jitMethodIsNative
+      ExternHelper   jitInstanceOf
 
       ExternHelper   resolveIPicClassHelperIndex
       ExternHelper   populateIPicSlotClassHelperIndex
@@ -1274,6 +1364,48 @@ checkLastSlot:
       7: last arg                         <==== unwindSP should point here
 endif
 
+; Do direct dispatch given the J9Method (for both VPIC & IPIC)
+;
+; Registers on entry:
+;    rax: direct J9Method pointer
+;    rdi: adjusted return address
+;    rdx: pointer to j2i virtual thunk pointer within PIC data
+;
+; Stack shape on entry:
+;    +40 RA in code cache (call to helper)
+;    +32 saved rdi
+;    +24 saved rax (receiver)
+;    +16 saved rsi
+;    +8  saved rdx
+;    +0  saved rcx
+;
+      align 16
+dispatchDirectMethod proc
+      mov         qword ptr [rsp+40], rdi                      ; Replace RA on stack
+
+      test        qword ptr [rax+J9TR_MethodPCStartOffset], J9TR_MethodNotCompiledBit ; method compiled?
+      jnz         dispatchDirectMethodInterpreted
+
+      ; Method is compiled
+      mov         rax, qword ptr [rax+J9TR_MethodPCStartOffset] ; interpreter entry point for compiled method
+      mov         edi, dword ptr [rax-4]                        ; preprologue info word
+      shr         edi, 16                                       ; offset to JIT entry point
+      add         rdi, rax                                      ; JIT entry point
+      jmp         mergeDispatchDirectMethod
+
+dispatchDirectMethodInterpreted:
+      lea         r8, [rax+J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG] ; low-tagged J9Method
+      mov         rdi, qword ptr [rdx]                              ; j2i virtual thunk
+
+mergeDispatchDirectMethod:
+      pop         rcx                                          ; restore
+      pop         rdx                                          ; restore
+      pop         rsi                                          ; restore
+      pop         rax                                          ; restore
+      add         rsp, 8                                       ; skip rdi
+      jmp         rdi
+
+dispatchDirectMethod endp
 
 ; Resolve the interface method and update the IPIC data area with the interface J9Class
 ; and the itable index.
@@ -1314,11 +1446,22 @@ mergeResolveIPicClass:
       ;    +8  saved rdx
       ;    +0  saved rcx
       ;
+
+      test        qword ptr [rdx+eq_IPicData_itableOffset], J9TR_J9_ITABLE_OFFSET_DIRECT
+      jz          callResolveInterfaceMethod
+
+      cmp         qword ptr [rdx+eq_IPicData_interfaceClass], 0
+      jne         typeCheckAndDirectDispatchIPic
+
+callResolveInterfaceMethod:
       mov         rsi, rdi                                     ; p2) jit valid EIP
       mov         rax, rdx                                     ; p1) address of the constant pool and cpIndex
       CallHelperUseReg jitResolveInterfaceMethod,rax           ; returns interpreter vtable index
 
       mfence                                                   ; Ensure IPIC data area drains to memory before proceeding.
+
+      test        qword ptr [rdx+eq_IPicData_itableOffset], J9TR_J9_ITABLE_OFFSET_DIRECT
+      jnz         typeCheckAndDirectDispatchIPic
 
       ; Construct the call instruction in rax that should have brought
       ; us to this helper + the following 3 bytes.
@@ -1355,6 +1498,31 @@ resolveIPicClassLongBranch:
       lea         rdx, [rdi+rdx+24]                            ; EA of IPic data block
                                                                ;    24 = 14 (offset to instr after branch) + 5 (CALL) + 5 (JMP)
       jmp         mergeResolveIPicClass
+
+typeCheckAndDirectDispatchIPic:
+      mov         rax, qword ptr [rdx+eq_IPicData_interfaceClass] ; p1) interface class
+      mov         rsi, qword ptr [rsp+24]                         ; p2) receiver (saved rax)
+      CallHelperUseReg jitInstanceOf, rax
+      test        rax, rax
+      jz          throwOnFailedTypeCheckIPic
+
+      ; Type check passed
+      mov         rax, qword ptr [rdx+eq_IPicData_itableOffset]
+      xor         rax, J9TR_J9_ITABLE_OFFSET_DIRECT            ; Direct J9Method pointer
+
+      lea         rdi, [rdx-5]                                 ; Adjusted return address
+                                                               ;    5 (JMP)
+      add         rdx, eq_IPicData_j2iThunk
+      jmp         dispatchDirectMethod
+
+throwOnFailedTypeCheckIPic:
+      LoadClassPointerFromObjectHeader rsi, rax, eax           ; p1) rax = receiver class
+      lea         rsi, [rdx+eq_IPicData_interfaceClass]        ; p2) rsi = resolved interface class EA
+      mov         rcx, rdx                                     ; p4) rcx = address of constant pool and cpIndex
+      mov         rdx, qword ptr [rsp+40]                      ; p3) rdx = jit RIP (saved RA in code cache)
+      CallHelperUseReg jitLookupInterfaceMethod, rax           ; guaranteed to throw
+      int         3
+
 resolveIPicClass endp
 
 ; Look up a resolved interface method and attempt to occupy the PIC slot
@@ -1386,8 +1554,8 @@ endif
       movsxd      rdi, dword ptr [rsi]
       lea         rcx, [rsi+rdi+14]                            ; EA of constant pool and cpIndex
                                                                ;    14 = 4 + 10 (CALL+JMP)
-      lea         rsi, [rsi+rdi+30]                            ; EA of IPic data block
-                                                               ;    30 = 4 + 10 (CALL+JMP) + 16 (cpAddr,cpIndex)
+      lea         rsi, [rsi+rdi+14+eq_IPicData_interfaceClass] ; EA of interface class in IPic data block
+                                                               ;    14 = 4 + 10 (CALL+JMP)
 mergePopulateIPicClass:
 
       ; Stack shape:
@@ -1405,7 +1573,7 @@ mergePopulateIPicClass:
                                                                ; p4) rcx = address of constant pool and cpIndex
       CallHelperUseReg jitLookupInterfaceMethod,rax            ; returns interpreter vtable offset
 
-      mov         rdi, rsi                                     ; resolved IClass EA
+      mov         rdi, rcx                                     ; start of IPIC data
 
       ; Lookup succeeded--attempt to grab the PIC slot for this receivers class.
       ;
@@ -1425,7 +1593,7 @@ mergePopulateIPicClass:
       LoadClassPointerFromObjectHeader rcx, rcx, ecx           ; receiver class
       mov         rsi, rcx                                     ; receiver class
       rol         rcx, 16
-      mov         cx, word ptr[rdi+16]                         ; REX+MOV
+      mov         cx, word ptr[rdi+eq_IPicData_movabsRexAndOpcode]
 
       lock cmpxchg qword ptr [rdx-5], rcx                      ; patch attempt
 
@@ -1439,7 +1607,7 @@ ifdef ASM_J9VM_GC_DYNAMIC_CLASS_UNLOADING
       mov         rax, rsi                                     ; receivers class
       mov         rsi, qword ptr [rsi+J9TR_J9Class_classLoader] ; receivers class loader
 
-      mov         rcx, qword ptr [rdi]                         ; rcx == IClass from IPic data area
+      mov         rcx, qword ptr [rdi+eq_IPicData_interfaceClass]
       cmp         rsi, qword ptr [rcx+J9TR_J9Class_classLoader] ; compare class loaders
       jz          short IPicClassSlotUpdateFailed              ; class loaders are the same--do nothing
 
@@ -1463,9 +1631,8 @@ populateIPicClassLongBranch:
                                                                ;    10 = 5 + 3 (CMP) + 2 (JNE)
       lea         rcx, [rdx+rsi+24]                            ; EA of constant pool and cpIndex
                                                                ;    24 = 14 (offset to instr after branch) + 5 (CALL) + 5 (JMP)
-      lea         rsi, [rdx+rsi+40]                            ; EA of IPic data block
-                                                               ;    40 = 14 (offset to instr after branch) + 5 (CALL) + 5 (JMP)
-                                                               ;         + 16 (cpAddr,cpIndex)
+      lea         rsi, [rdx+rsi+24+eq_IPicData_interfaceClass] ; EA of interface class in IPic data block
+                                                               ;    24 = 14 (offset to instr after branch) + 5 (CALL) + 5 (JMP)
       jmp         mergePopulateIPicClass
 populateIPicSlotClass endp
 
@@ -1505,8 +1672,8 @@ mergeIPicSlotCall:
       lea         rcx, [rsi+rdi+10]                            ; EA of constant pool and cpIndex
                                                                ;    10 = 10 (CALL+JMP)
 
-      lea         rsi, [rsi+rdi+26]                            ; EA of IPic data block
-                                                               ;    26 = 10 (CALL+JMP) + 16 (cpAddr,cpIndex)
+      lea         rsi, [rsi+rdi+10+eq_IPicData_interfaceClass] ; EA of interface class in IPic data block
+                                                               ;    10 = 10 (CALL+JMP)
       ; Stack shape:
       ;
       ;    +40 RA in code cache (call to helper)
@@ -1749,12 +1916,12 @@ endif
       cmp         byte ptr [rdi+8], 075h                       ; is it a short branch?
       jnz         resolveVPicClassLongBranch                   ; no
       movzx       rsi, byte ptr [rdi+16]                       ; disp8 to end of VPic
-                                                               ;    16 = 5 + 3 (CMP) + 2 (JNE) + 5 (CALL) + 1 (JMP)
+                                                               ;    16 = 5 (zeros after CALL) + 3 (CMP) + 2 (JNE) + 5 (CALL) + 1 (JMP)
       lea         rdx, [rdi+rsi+8]                             ; rdx = EA of disp32 of JNE
                                                                ;     8 = 1 (instr. after JMP) -9 (EA of disp32 of JNE) + 16 (offset to disp8 EA)
       movsxd      rsi, dword ptr [rdx]
-      lea         rdx, [rsi+rdx-16]                            ; EA of VPic data block
-                                                               ;    -16 = +4 (EA after JNE) -4 (instr data) -16 (cpA,cpI)
+      lea         rdx, [rsi+rdx+4-eq_VPicData_size]            ; EA of VPic data block (+4: EA after JNE)
+
 mergeResolveVPicClass:
 
       ; Stack shape:
@@ -1766,9 +1933,17 @@ mergeResolveVPicClass:
       ;    +8  saved rdx
       ;    +0  saved rcx
       ;
+
+      mov         rax, qword ptr [rdx+eq_VPicData_directMethod]
+      test        rax, rax
+      jnz         callDirectMethodVPic
+
       mov         rax, rdx                                     ; p1) address of the constant pool and cpIndex
       mov         rsi, rdi                                     ; p2) jit valid EIP
-      CallHelperUseReg jitResolveVirtualMethod,rax             ; returns compiler vtable index
+      CallHelperUseReg jitResolveVirtualMethod,rax             ; returns compiler vtable index, or (low-tagged) direct J9Method pointer
+
+      test        rax, J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG
+      jnz         resolvedToDirectMethodVPic
 
       ; Construct the call instruction in rax that should have brought
       ; us to this helper + the following 3 bytes.
@@ -1802,9 +1977,25 @@ mergeResolveVPicClass:
 resolveVPicClassLongBranch:
       movsxd      rdx, dword ptr [rdi+10]                      ; disp32 for branch to snippet
                                                                ;    10 = 5 + 3 (CMP) + 2 (JNE)
-      lea         rdx, [rdi+rdx-6]                             ; EA of VPic data block
-                                                               ;    -6 = 14 (offset to instr after branch) -4 (instr data) -16 (cpA,cpI)
+      lea         rdx, [rdi+rdx+14-eq_VPicData_size]           ; EA of VPic data block (+14: offset to instr after branch)
       jmp         mergeResolveVPicClass
+
+resolvedToDirectMethodVPic:
+      ; We'll return to the jump just after the position where the call through
+      ; the VFT would be. In the j2i case, the VM assumes control was transferred
+      ; via a call though the VFT *unless* RA-5 has 0e8h (direct call relative).
+      ; Make sure the VM sees an 0e8h so that it uses the VFT offset register.
+      ; Start with a debug trap because the call itself is dead.
+      mov         dword ptr [rdx+eq_VPicData_size], 0e8cccch   ; int 3, int 3, call
+
+      xor         rax, J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG ; rax is the J9Method to be directly invoked
+      mov         qword ptr [rdx+eq_VPicData_directMethod], rax
+
+callDirectMethodVPic:
+      lea         rdi, [rdx+eq_VPicData_size+7]                ; Adjusted return address
+                                                               ;    7 (offset to jump after call through VFT)
+      add         rdx, eq_VPicData_j2iThunk
+      jmp         dispatchDirectMethod
 
 resolveVPicClass endp
 
@@ -1835,8 +2026,8 @@ endif
       lea         rsi, [rdx+rcx+8]                             ; rsi = EA of disp32 of JNE
                                                                ;     8 = 1 (instr. after JMP) -9 (EA of disp32 of JNE) + 16 (offset to disp8 EA)
       movsxd      rdi, dword ptr [rsi]
-      lea         rsi, [rsi+rdi-16]                            ; EA of VPic data block
-                                                               ;    -16 = 4 (EA after JNE) - 4 (instr data) -16 (cpA+cpI)
+      lea         rsi, [rsi+rdi+4-eq_VPicData_size]            ; EA of VPic data block (+4 EA after JNE)
+
 mergePopulateVPicClass:
 
       ; Stack shape:
@@ -1866,7 +2057,7 @@ mergePopulateVPicClass:
       LoadClassPointerFromObjectHeader rcx, rcx, ecx           ; receiver class
       mov         rsi, rcx                                     ; receiver class
       rol         rcx, 16
-      mov         cx, word ptr[rdi+16]                         ; REX+MOV
+      mov         cx, word ptr[rdi+eq_VPicData_movabsRexAndOpcode]
 
       lock cmpxchg qword ptr [rdx-5], rcx                      ; patch attempt
 
@@ -1894,8 +2085,7 @@ endif
 populateVPicClassLongBranch:
       movsxd      rsi, dword ptr [rdx+10]                      ; disp32 for branch to snippet
                                                                ;    10 = 5 + 3 (CMP) + 2 (JNE)
-      lea         rsi, [rdx+rsi-6]                             ; EA of VPic data block
-                                                               ;    -6 = 14 (offset to instr after branch) - 4 (instr data) - 16 (cpA+cpI)
+      lea         rsi, [rdx+rsi+14-eq_VPicData_size]           ; EA of VPic data block (+14: offset to instr after branch)
       jmp         mergePopulateVPicClass
 
 populateVPicSlotClass endp
@@ -1932,8 +2122,8 @@ endif
 mergeVPicSlotCall:
       movsxd      rsi, dword ptr [rdi-4]
       LoadClassPointerFromObjectHeader rax, rcx, ecx
-      lea         rax, [rsi+rdi-20]                            ; EA of VPic data block
-                                                               ;   -20 = -4 (instr data) - 16 (cpAddr+cpIndex)
+      lea         rax, [rsi+rdi-eq_VPicData_size]              ; EA of VPic data block
+
       ; Stack shape:
       ;
       ;    +40 RA in code cache (call to helper)
@@ -2193,8 +2383,7 @@ interpretedLastVPicSlot:
 vtableCallNotPatched:
       ; Get vtable offset again by resolving.
       ;
-      lea         rax, [rax-20]                                ; p1) rax = address of constant pool and cpIndex
-                                                               ;    -20 = -4 (instr data) - 16 (cpAddr,cpIndex)
+      lea         rax, [rax-eq_VPicData_size]                  ; p1) rax = address of constant pool and cpIndex
       mov         rsi, rdx                                     ; p2) rsi = jit valid EIP
       CallHelperUseReg jitResolveVirtualMethod,rax             ; returns compiler vtable index
       jmp         mergeCheckIfMethodCompiled
@@ -2223,8 +2412,8 @@ endif
       mov         rdx, qword ptr[rsp+40]                       ; RA in code cache
 
       LoadClassPointerFromObjectHeader rax, rcx, ecx
-      lea         rax, [rdx-25]                                ; EA of VPic data block
-                                                               ;   -25 = -5 (CALL) -4 (instr data) - 16 (cpAddr,cpIndex)
+      lea         rax, [rdx-5-eq_VPicData_size]                ; EA of VPic data block (-5: CALL)
+
       ; Stack shape:
       ;
       ;    +40 RA in code cache (call to helper)
@@ -2248,13 +2437,13 @@ endif
       mov         ecx, eax                                     ; copy and whack the high 32-bits
       rol         rcx, 32
 
-      cmp         byte ptr[rdi+19], 094h                       ; SIB byte needed?
+      cmp         byte ptr[rdi+eq_VPicData_callMemModRM], 094h ; SIB byte needed?
       je short    callNeedsSIB                                 ; yes
 
       or          rcx, 0ff00e9h                                ; JMP4 + CALLMem opcodes
-      mov         ch, byte ptr[rdi+18]                         ; REX from snippet
+      mov         ch, byte ptr[rdi+eq_VPicData_callMemRex]
       ror         rcx, 24
-      mov         cl, byte ptr[rdi+19]                         ; ModRM from snippet
+      mov         cl, byte ptr[rdi+eq_VPicData_callMemModRM]
       rol         rcx, 16
       mov         rdi, 0e9000000000000e8h
 
