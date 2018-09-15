@@ -187,9 +187,6 @@ static const OptimizationStrategy fsdStrategyOptsForMethodsWithoutSlotSharing[] 
    { OMR::treeSimplification,          OMR::IfEnabled },
    { OMR::localCSE                     },
    { OMR::treeSimplification,          OMR::MarkLastRun                },
-#ifdef TR_HOST_S390
-   { OMR::longRegAllocation                                                     },
-#endif
    { OMR::andSimplification,           },  //clean up after versioner
    { OMR::compactNullChecks,           }, // cleanup at the end
    { OMR::deadTreesElimination,        OMR::IfEnabled }, // cleanup at the end
@@ -272,9 +269,6 @@ static const OptimizationStrategy coldStrategyOpts[] =
    { OMR::localCSE,                                  OMR::IfEnabled                  },
    { OMR::treeSimplification                                                    },
    { OMR::dynamicLiteralPool,                        OMR::IfNotProfiling             },
-#ifdef TR_HOST_S390
-   { OMR::longRegAllocation                                                     },
-#endif
    { OMR::localCSE,                                  OMR::IfEnabled                  },
    { OMR::treeSimplification,                        OMR::MarkLastRun                },
    { OMR::rematerialization                                                     },
@@ -341,9 +335,6 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::treeSimplification,                        OMR::IfEnabled                  },
    { OMR::localCSE                                                              },
    { OMR::treeSimplification,                        OMR::MarkLastRun                },
-#ifdef TR_HOST_S390
-   { OMR::longRegAllocation                                                     },
-#endif
    { OMR::andSimplification,                         OMR::IfEnabled                  },  //clean up after versioner
    { OMR::compactNullChecks                                                     }, // cleanup at the end
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // cleanup at the end
@@ -688,9 +679,6 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::asyncCheckInsertion,                       OMR::IfNotJitProfiling          },
    { OMR::localCSE                                                              },
    { OMR::treeSimplification,                        OMR::MarkLastRun                },
-#ifdef TR_HOST_S390
-   { OMR::longRegAllocation                                                     },
-#endif
    { OMR::andSimplification,                         OMR::IfEnabled                  },  //clean up after versioner
    { OMR::compactNullChecks                                                     }, // cleanup at the end
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // cleanup at the end
