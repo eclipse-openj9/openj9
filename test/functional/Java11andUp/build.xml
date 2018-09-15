@@ -41,8 +41,48 @@
 		<mkdir dir="${DEST}" />
 		<mkdir dir="${build}"/>
 	</target>
+
+	<target name="compile_generator" depends="init" description="Compile CondyGenerator">
+		<echo>Compiling CondyTest helpers</echo>
+		<echo>Ant version is ${ant.version}"</echo>
+		<property name="compiler.javac" value="${JAVA_BIN}/javac" />
+		<echo>============COMPILER SETTINGS============</echo>
+		<echo>===fork:				yes</echo>
+		<echo>===executable:		${compiler.javac}</echo>
+		<echo>===debug:				on</echo>
+		<echo>===destdir:			${DEST}</echo>
+		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+			<src path="${src}"/>
+			<include name="**/condy/BootstrapMethods.java" />
+			<include name="**/condy/CondyGenerator.java" />
+			<classpath>
+				<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-7.0.jar" />
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="generate_condy" depends="compile_generator" description="Run Condugenerator to generate bytecode" >
+		<property name="javaexecutable.java" value="${JAVA_BIN}/java" />
+		<echo>Running CondyGenerator</echo>
+		<java classname="org.openj9.test.condy.CondyGenerator" fork="true" failonerror="true" logError="true" jvm="${javaexecutable.java}">
+			<jvmarg value="-Xverify:none" />
+			<classpath>
+				<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-7.0.jar" />
+				<pathelement location="${build}" />
+			</classpath>
+		</java>
+		<copy file="PrimitiveCondyMethods.class" todir="${build}/org/openj9/test/condy" overwrite="true" />
+		<delete failonerror="true" verbose="true">
+			<fileset dir=".">
+				<include name="PrimitiveCondyMethods.class"/>
+			</fileset>
+		</delete>
+	</target>
+   
+      
+      
 	
-	<target name="compile" depends="init" description="Using ${JAVA_VERSION} java compile the source " >
+	<target name="compile" depends="generate_condy" description="Using ${JAVA_VERSION} java compile the source " >
 		<echo>Ant version is ${ant.version}</echo>
 		<echo>============COMPILER SETTINGS============</echo>
 		<echo>===fork:				yes</echo>
@@ -57,6 +97,8 @@
 			<classpath>
 				<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar"/>
 				<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar"/>
+				<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-7.0.jar" />
+				<pathelement location="${build}" />
 			</classpath>
 		</javac>
 	</target>

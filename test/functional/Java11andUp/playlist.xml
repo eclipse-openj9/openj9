@@ -98,6 +98,44 @@
 		<subsets>
 			<subset>SE110</subset>
 		</subsets>
+   </test>
+
+
+	<!--
+		Following test covers scenario for both type of constant dynamics (Object and Primitives)
+		Variation 1:
+			This variation runs tests in default mode.
+		Variation 2:
+			This variation runs test under -Xjit:count=1 option which makes sure that ConstantDynamic is resoleved before we compile a method
+			to test JIT's handling of resolved constant dynamic
+		Variation 3:
+			This variation runs test under -Xjit:count=0 option means JIT faces unresolved constant dynamic and it needs to resolve them before
+			using it.
+		-->
+	<test>
+		<testCaseName>CondyPrimitive</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+			<variation>'-Xjit:count=1,disableAsyncCompilation,rtResolve'</variation>
+			<variation>'-Xjit:count=0,disableAsyncCompilation'</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames PrimitiveCondyTest \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>SE110</subset>
+		</subsets>
 	</test>
-	
+
 </playlist>
