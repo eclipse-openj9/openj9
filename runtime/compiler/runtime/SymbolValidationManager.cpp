@@ -1625,7 +1625,7 @@ TR::SymbolValidationManager::validateMethodFromSingleImplementerRecord(uint16_t 
    TR_OpaqueMethodBlock *callerMethod = static_cast<TR_OpaqueMethodBlock *>(getSymbolFromID(callerMethodID));
 
    TR_ResolvedMethod *callerResolvedMethod = fej9->createResolvedMethod(trMemory, callerMethod, NULL);
-   TR_ResolvedMethod *calleeResolvedMethod = chTable->findSingleImplementer(thisClass, cpIndexOrVftSlot, callerResolvedMethod, comp, locked, useGetResolvedInterfaceMethod, true);
+   TR_ResolvedMethod *calleeResolvedMethod = chTable->findSingleImplementer(thisClass, cpIndexOrVftSlot, callerResolvedMethod, comp, locked, useGetResolvedInterfaceMethod, false);
 
    if (!calleeResolvedMethod)
       return false;
@@ -1655,7 +1655,7 @@ TR::SymbolValidationManager::validateMethodFromSingleInterfaceImplementerRecord(
    TR_OpaqueMethodBlock *callerMethod = static_cast<TR_OpaqueMethodBlock *>(getSymbolFromID(callerMethodID));
 
    TR_ResolvedMethod *callerResolvedMethod = fej9->createResolvedMethod(trMemory, callerMethod, NULL);
-   TR_ResolvedMethod *calleeResolvedMethod = chTable->findSingleInterfaceImplementer(thisClass, cpIndex, callerResolvedMethod, comp, locked, true);
+   TR_ResolvedMethod *calleeResolvedMethod = chTable->findSingleInterfaceImplementer(thisClass, cpIndex, callerResolvedMethod, comp, locked, false);
 
    if (!calleeResolvedMethod)
       return false;
@@ -1685,7 +1685,7 @@ TR::SymbolValidationManager::validateMethodFromSingleAbstractImplementerRecord(u
    TR_OpaqueMethodBlock *callerMethod = static_cast<TR_OpaqueMethodBlock *>(getSymbolFromID(callerMethodID));
 
    TR_ResolvedMethod *callerResolvedMethod = fej9->createResolvedMethod(trMemory, callerMethod, NULL);
-   TR_ResolvedMethod *calleeResolvedMethod = chTable->findSingleAbstractImplementer(thisClass, vftSlot, callerResolvedMethod, comp, locked, true);
+   TR_ResolvedMethod *calleeResolvedMethod = chTable->findSingleAbstractImplementer(thisClass, vftSlot, callerResolvedMethod, comp, locked, false);
 
    if (!calleeResolvedMethod)
       return false;
@@ -1724,7 +1724,7 @@ TR::SymbolValidationManager::validateClassInfoIsInitializedRecord(uint16_t class
    bool initialized = false;
 
    TR_PersistentClassInfo * classInfo =
-                          comp->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(clazz, comp);
+                          comp->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(clazz, comp, true);
 
    if (classInfo)
       initialized = classInfo->isInitialized();

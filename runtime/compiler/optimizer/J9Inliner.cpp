@@ -812,6 +812,7 @@ void TR_ProfileableCallSite::findSingleProfiledReceiver(ListIterator<TR_ExtraAdd
       {
       int32_t freq = profiledInfo->_frequency;
       TR_OpaqueClassBlock* tempreceiverClass = (TR_OpaqueClassBlock *) profiledInfo->_value;
+
       float val = (float)freq/(float)valueInfo->getTotalFrequency();        //x87 hardware rounds differently if you leave this division in compare
 
 
@@ -847,7 +848,15 @@ void TR_ProfileableCallSite::findSingleProfiledReceiver(ListIterator<TR_ExtraAdd
          {
          TR_OpaqueClassBlock* callSiteClass = _receiverClass ? _receiverClass : getClassFromMethod();
 
-         if (!callSiteClass || fe()->isInstanceOf (tempreceiverClass, callSiteClass, true, true, true) != TR_yes)
+         bool profiledClassIsNotInstanceOfCallSiteClass = true;
+         if (callSiteClass)
+            {
+            comp()->incrementHeuristicRegion();
+            profiledClassIsNotInstanceOfCallSiteClass = (fe()->isInstanceOf(tempreceiverClass, callSiteClass, true, true, true) != TR_yes);
+            comp()->decrementHeuristicRegion();
+            }
+
+         if (profiledClassIsNotInstanceOfCallSiteClass)
             {
             inliner->tracer()->insertCounter(Not_Sane,_callNodeTreeTop);
             firstInstanceOfCheckFailed = true;
@@ -858,7 +867,9 @@ void TR_ProfileableCallSite::findSingleProfiledReceiver(ListIterator<TR_ExtraAdd
             continue;
             }
 
+         comp()->incrementHeuristicRegion();
          TR_ResolvedMethod* targetMethod = getResolvedMethod (tempreceiverClass);
+         comp()->decrementHeuristicRegion();
 
          if (!targetMethod)
             {
@@ -871,6 +882,17 @@ void TR_ProfileableCallSite::findSingleProfiledReceiver(ListIterator<TR_ExtraAdd
          // need to be able to store class chains for these methods
          if (comp()->compileRelocatableCode())
             {
+            if (tempreceiverClass && comp()->getOption(TR_UseSymbolValidationManager))
+               {
+               if (!comp()->getSymbolValidationManager()->addProfiledClassRecord(tempreceiverClass))
+                  continue;
+               /* call getResolvedMethod again to generate the validation records */
+               TR_ResolvedMethod* target_method = getResolvedMethod (tempreceiverClass);
+               if (!comp()->getSymbolValidationManager()->addClassFromMethodRecord(target_method->classOfMethod(), target_method->getPersistentIdentifier()))
+                  continue;
+               }
+
+
             TR_SharedCache *sharedCache = fej9->sharedCache();
             if (!sharedCache->canRememberClass(tempreceiverClass) ||
                 !sharedCache->canRememberClass(callSiteClass))
@@ -947,6 +969,13 @@ void TR_ProfileableCallSite::findSingleProfiledMethod(ListIterator<TR_ExtraAddre
       // need to be able to store class chains for these methods
       if (comp()->compileRelocatableCode())
          {
+         if (clazz && comp()->getOption(TR_UseSymbolValidationManager))
+            if (!comp()->getSymbolValidationManager()->addProfiledClassRecord(clazz))
+               {
+               classValuesAreSane = false;
+               break;
+               }
+
          TR_SharedCache *sharedCache = fej9->sharedCache();
          if (!sharedCache->canRememberClass(clazz) ||
              !sharedCache->canRememberClass(callSiteClass))

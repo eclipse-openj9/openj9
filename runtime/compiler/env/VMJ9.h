@@ -1149,6 +1149,10 @@ public:
    virtual TR_ResolvedMethod *getResolvedMethodForNameAndSignature(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer, const char* methodName, const char *signature);
    virtual uint32_t           getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, char * fieldName,
                                                      uint32_t fieldLen, char * sig, uint32_t sigLen, UDATA options);
+
+   virtual TR_OpaqueMethodBlock *getResolvedVirtualMethod(TR_OpaqueClassBlock * classObject, int32_t cpIndex, bool ignoreReResolve = true);
+   virtual TR_OpaqueMethodBlock *getResolvedInterfaceMethod(TR_OpaqueMethodBlock *ownerMethod, TR_OpaqueClassBlock * classObject, int32_t cpIndex);
+
 #if defined(TR_TARGET_S390)
    virtual void               initializeS390zLinuxProcessorFeatures();
    virtual void               initializeS390zOSProcessorFeatures();

@@ -2616,15 +2616,6 @@ J9::CodeGenerator::processRelocations()
             }
          }
 
-      TR::SymbolValidationManager::SymbolValidationRecordList &validationRecords = self()->comp()->getSymbolValidationManager()->getValidationRecordList();
-      for (auto it = validationRecords.begin(); it != validationRecords.end(); it++)
-         {
-         self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(NULL,
-                                                                          (uint8_t *)(*it),
-                                                                          (*it)->_kind, self()),
-                                                                          __FILE__, __LINE__, NULL);
-         }
-
       TR::list<TR::AOTClassInfo*>* classInfo = self()->comp()->_aotClassInfo;
       if (!classInfo->empty())
          {
@@ -2702,6 +2693,16 @@ J9::CodeGenerator::processRelocations()
                }
             }
          }
+
+      TR::SymbolValidationManager::SymbolValidationRecordList &validationRecords = self()->comp()->getSymbolValidationManager()->getValidationRecordList();
+      for (auto it = validationRecords.begin(); it != validationRecords.end(); it++)
+         {
+         self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(NULL,
+                                                                          (uint8_t *)(*it),
+                                                                          (*it)->_kind, self()),
+                                                                          __FILE__, __LINE__, NULL);
+         }
+
 //#endif
       // Now call the platform specific processing of relocations
       self()->getAheadOfTimeCompile()->processRelocations();
