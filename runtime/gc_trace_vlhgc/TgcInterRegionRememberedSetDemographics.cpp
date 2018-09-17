@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -65,7 +65,7 @@ public:
 private:
 protected:
 public:
-	virtual UDATA getVMStateID(void) { return J9VMSTATE_GC_TGC; }
+	virtual UDATA getVMStateID(void) { return OMRVMSTATE_GC_TGC; }
 	virtual void run(MM_EnvironmentBase *env);
 
 	TgcParallelHeapWalkTask(MM_EnvironmentBase *env, MM_Dispatcher *dispatcher)

@@ -605,7 +605,7 @@ MM_RealtimeGC::unloadDeadClassLoaders(MM_EnvironmentBase *envModron)
 	J9MemorySegment *reclaimedSegments = NULL;
 
 	/* set the vmState whilst we're unloading classes */
-	UDATA vmState = env->pushVMstate(J9VMSTATE_GC_CLEANING_METADATA);
+	UDATA vmState = env->pushVMstate(OMRVMSTATE_GC_CLEANING_METADATA);
 	
 	lockClassUnloadMonitor(env);
 	
