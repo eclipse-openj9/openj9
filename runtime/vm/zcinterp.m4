@@ -171,13 +171,26 @@ define({HANDLE_GS_EVENT_HELPER},{
 define({HANDLE_GS_EVENT},{
 BEGIN_FUNC($1)
 dnl Test the TX bit of GSECI (bit 16) to see if the CPU was in transactional-
-dnl execution mode when the guarded storage event was recognized. If this was
-dnl the case do not execute the read barrier and simply return to the fallback
-dnl transaction abort JIT code to handle it by forcing condition code to be 2
-dnl with the below CL(G)FI instruction indicating a transitent transaction
-dnl abort. See eclipse/openj9#2545 for more details.
+dnl execution mode when the guarded storage event was recognized. At that point
+dnl we have two cases:
+dnl
+dnl 1. TX was a non-constrained transaction:
+dnl	   If this was the case do not execute the read barrier and simply return to
+dnl    the fallback transaction abort JIT code to handle it by forcing condition
+dnl    code to be 2 with the below CL(G)FI instruction indicating a transitent 
+dnl    transaction abort.
+dnl
+dnl 2. TX was a constrained transaction:
+dnl    If this was the case then we are safe to execute the read barrier because
+dnl    the JIT has ensured that there will be no side-effects of the transaction
+dnl    being aborted prior to reaching the guarded storage event handler. In this
+dnl    case it is functionally safe to execute the read barrier.
+dnl
+dnl See eclipse/openj9#2545 and eclipse/openj9#2790 for more details.
     TM J9TR_VMThread_gsParameters_GSECI(J9VMTHREAD),128
     JZ LABEL_NAME(L_GS_CALLHELPER)
+    TM J9TR_VMThread_gsParameters_GSECI(J9VMTHREAD),64
+    JNZ LABEL_NAME(L_GS_CALLHELPER)
     CLFI_GPR J9SP,0
     J LABEL_NAME(L_GS_DONE)
 PLACE_LABEL(L_GS_CALLHELPER)
