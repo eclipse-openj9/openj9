@@ -980,7 +980,7 @@ ClassFileWriter::writeAttributes()
 		}
 	} else if (NULL != nestHost) {
 		writeAttributeHeader((J9UTF8 *) &NEST_HOST, 2);
-		writeU16(indexForUTF8(nestHost));
+		writeU16(indexForClass(nestHost));
 	}
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 
