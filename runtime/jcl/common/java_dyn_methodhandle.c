@@ -91,8 +91,10 @@ lookupInterfaceMethod(J9VMThread *currentThread, J9Class *lookupClass, J9UTF8 *n
 		J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
 
 		Assert_JCL_true(!J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers, J9AccStatic));
-		/* [PR 67082] private interface methods require invokespecial, not invokeinterface.*/
-		if (J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers, J9AccPrivate)) {
+
+		/* Starting Java 11 Nestmates, invokeInterface is allowed to target private interface methods */
+		if ((J2SE_VERSION(currentThread->javaVM) < J2SE_V11) && J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers, J9AccPrivate)) {
+			/* [PR 67082] private interface methods require invokespecial, not invokeinterface.*/
 			vmFuncs->setCurrentExceptionNLS(currentThread, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9NLS_JCL_PRIVATE_INTERFACE_REQUIRES_INVOKESPECIAL);
 			method = NULL;
 		} else {
