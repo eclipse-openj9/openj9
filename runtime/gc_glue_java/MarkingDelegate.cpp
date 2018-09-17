@@ -366,104 +366,22 @@ void
 MM_MarkingDelegate::scanClass(MM_EnvironmentBase *env, J9Class *clazz)
 {
 	/* Note: Class loader objects are handled separately */
-	J9JavaVM * javaVM = (J9JavaVM*)env->getLanguageVM();
-	J9ROMClass *romClass = NULL;
-	omrobjectptr_t *scanPtr = NULL;
-	omrobjectptr_t *endScanPtr = NULL;
-
-	/* Mark the java.lang.Class object */
-	_markingScheme->markObject(env, (omrobjectptr_t )clazz->classObject);
-
-	romClass = clazz->romClass;
-
-	/* Constant pool */
-	scanPtr = (omrobjectptr_t *)J9_CP_FROM_CLASS(clazz);
-	endScanPtr = (omrobjectptr_t *)( ((U_8 *)scanPtr) + romClass->ramConstantPoolCount * sizeof(J9RAMConstantPoolItem) );
-
-	/* As this function can be invoked during concurrent mark the slot is
+	/*
+	 * Scan and mark using GC_ClassIterator:
+	 *  - class object
+	 *  - class constant pool
+	 *  - class statics
+	 *  - class method types
+	 *  - class call sites
+	 *  - class varhandle method types
+	 *
+	 * As this function can be invoked during concurrent mark the slot is
 	 * volatile so we must ensure that the compiler generates the correct
 	 * code if markObject() is inlined.
 	 */
-	volatile omrobjectptr_t *slotPtr = NULL;
-
-	UDATA descriptionIndex = 0;
-	U_32 *descriptionPtr = NNSRP_GET(romClass->cpShapeDescription, U_32 *);
-	U_32 descriptionBits = 0;
-	while (scanPtr < endScanPtr) {
-		if (descriptionIndex == 0) {
-			descriptionBits = *descriptionPtr++;
-			descriptionIndex = J9_CP_DESCRIPTIONS_PER_U32;
-		}
-
-		/* Determine if the slot should be processed. */
-		switch (descriptionBits & J9_CP_DESCRIPTION_MASK) {
-		case J9CPTYPE_STRING:
-		case J9CPTYPE_ANNOTATION_UTF8:
-			_markingScheme->markObject(env, ((J9RAMStringRef *) scanPtr)->stringObject);
-			break;
-		case J9CPTYPE_METHOD_TYPE:
-			_markingScheme->markObject(env, ((J9RAMMethodTypeRef *) scanPtr)->type);
-			break;
-		case J9CPTYPE_METHODHANDLE:
-			_markingScheme->markObject(env, ((J9RAMMethodHandleRef *) scanPtr)->methodHandle);
-			break;
-#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-		case J9CPTYPE_CLASS:
-			if (isDynamicClassUnloadingEnabled()) {
-				J9Class *clazzPtr = ((J9RAMClassRef *) scanPtr)->value;
-				if (NULL != clazzPtr) {
-					_markingScheme->markObject(env, clazzPtr->classObject);
-				}
-			}
-			break;
-#endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
-		default:
-			break;
-		}
-
-		scanPtr = (omrobjectptr_t *)( ((U_8 *)scanPtr) + sizeof(J9RAMConstantPoolItem) );
-		descriptionIndex -= 1;
-		descriptionBits >>= J9_CP_BITS_PER_DESCRIPTION;
-	}
-
-	/* Statics */
-	scanPtr = (omrobjectptr_t *)clazz->ramStatics;
-	endScanPtr = scanPtr + romClass->objectStaticCount;
-	if (scanPtr != NULL) {
-		while (scanPtr < endScanPtr) {
-			slotPtr = scanPtr++;
-			_markingScheme->markObject(env, *slotPtr);
-		}
-	}
-
-	/* Call sites */
-	scanPtr = (omrobjectptr_t *)clazz->callSites;
-	endScanPtr = scanPtr + romClass->callSiteCount;
-	if (NULL != scanPtr) {
-		while (scanPtr < endScanPtr) {
-			slotPtr = scanPtr++;
-			_markingScheme->markObject(env, *slotPtr);
-		}
-	}
-
-	/* Method types */
-	scanPtr = (omrobjectptr_t *)clazz->methodTypes;
-	if (NULL != scanPtr) {
-		endScanPtr = scanPtr + romClass->methodTypeCount;
-		while (scanPtr < endScanPtr) {
-			slotPtr = scanPtr++;
-			_markingScheme->markObject(env, *slotPtr);
-		}
-	}
-
-	/* VarHandle method types */
-	scanPtr = (omrobjectptr_t *)clazz->varHandleMethodTypes;
-	if (NULL != scanPtr) {
-		endScanPtr = scanPtr + romClass->varHandleMethodTypeCount;
-		while (scanPtr < endScanPtr) {
-			slotPtr = scanPtr++;
-			_markingScheme->markObject(env, *slotPtr);
-		}
+	GC_ClassIterator classIterator(env, clazz, true);
+	while (volatile omrobjectptr_t *slotPtr = classIterator.nextSlot()) {
+		_markingScheme->markObject(env, *slotPtr);
 	}
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
@@ -501,6 +419,7 @@ MM_MarkingDelegate::scanClass(MM_EnvironmentBase *env, J9Class *clazz)
 		}
 
 		/* ITable */
+		J9JavaVM *javaVM = (J9JavaVM *)env->getLanguageVM();
 		if (!GC_ClassModel::usesSharedITable(javaVM, clazz)) {
 			J9ITable *clazzITable = (J9ITable *)clazz->iTable;
 			J9ITable *endITable = (0 != classDepth) ? (J9ITable *)(clazz->superclasses[classDepth - 1]->iTable) : NULL;
