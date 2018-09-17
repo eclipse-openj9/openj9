@@ -423,6 +423,21 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          }
          break;
 
+      case TR_J2IVirtualThunkPointer:
+         {
+         auto info = (TR_RelocationRecordInformation*)relocation->getTargetAddress();
+
+         *(uintptrj_t *)cursor = (uintptrj_t)info->data2; // inlined site index
+         cursor += SIZEPOINTER;
+
+         *(uintptrj_t *)cursor = (uintptrj_t)info->data1; // constantPool
+         cursor += SIZEPOINTER;
+
+         *(uintptrj_t *)cursor = (uintptrj_t)info->data3; // offset to J2I virtual thunk pointer
+         cursor += SIZEPOINTER;
+         }
+         break;
+
       case TR_CheckMethodEnter:
       case TR_CheckMethodExit:
          {
@@ -891,6 +906,7 @@ uint32_t J9::Power::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_
    32,                                       // TR_ArbitraryClassAddress               = 58,
    56,                                       // TR_DebugCounter                        = 59
    8,                                        // TR_ClassUnloadAssumption               = 60
+   32,                                       // TR_J2IVirtualThunkPointer              = 61
    };
 #else
 uint32_t J9::Power::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_NumExternalRelocationKinds] =
@@ -956,6 +972,7 @@ uint32_t J9::Power::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_
    16,                                       // TR_ArbitraryClassAddress               = 58,
    28,                                        // TR_DebugCounter                        = 59
    4,                                        // TR_ClassUnloadAssumption               = 60
+   16,                                       // TR_J2IVirtualThunkPointer              = 61
    };
 
 #endif

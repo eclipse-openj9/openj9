@@ -582,9 +582,30 @@ class TR_RelocationRecordThunks : public TR_RelocationRecordConstantPool
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
 
    protected:
-      virtual int32_t relocateAndRegisterThunk(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uintptrj_t cp, uintptr_t cpIndex);
+      int32_t relocateAndRegisterThunk(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uintptrj_t cp, uintptr_t cpIndex, uint8_t *reloLocation);
+
+      /** Relocate the J2I virtual thunk pointer, if applicable */
+      virtual void relocateJ2IVirtualThunkPointer(TR_RelocationTarget *reloTarget, uint8_t *reloLocation, void *thunk)
+         {
+         // nothing to relocate
+         }
    };
 
+class TR_RelocationRecordJ2IVirtualThunkPointer : public TR_RelocationRecordThunks
+   {
+   public:
+      TR_RelocationRecordJ2IVirtualThunkPointer() {}
+
+      TR_RelocationRecordJ2IVirtualThunkPointer(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record)
+         : TR_RelocationRecordThunks(reloRuntime, record) {}
+
+      virtual char *name();
+      virtual int32_t bytesInHeaderAndPayload();
+
+   protected:
+      virtual void relocateJ2IVirtualThunkPointer(TR_RelocationTarget *reloTarget, uint8_t *reloLocation, void *thunk);
+      uintptrj_t offsetToJ2IVirtualThunkPointer(TR_RelocationTarget *reloTarget);
+   };
 
 class TR_RelocationRecordTrampolines : public TR_RelocationRecordConstantPool
    {
