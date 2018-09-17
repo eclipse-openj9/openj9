@@ -2460,7 +2460,6 @@ TR_DebugExt::dxPrintPersistentInfo(TR::PersistentInfo *remotePersistentInfo)
    _dbgPrintf("\tint32_t                _countForRecompile = %d\n", localPersistentInfo->_countForRecompile);
    _dbgPrintf("\tTR_PersistentMemory *  _persistentMemory = !trprint persistentmemory 0x%p\n", localPersistentInfo->_persistentMemory);
    _dbgPrintf("\tTR_PersistentCHTable * _persistentCHTable = !trprint persistentchtable 0x%p\n", localPersistentInfo->_persistentCHTable);
-   _dbgPrintf("\tTR::CodeCacheManager * _codeCacheManager = 0x%p\n", localPersistentInfo->_codeCacheManager);
    _dbgPrintf("\tTR_OpaqueClassBlock ** _visitedSuperClasses = 0x%p\n", localPersistentInfo->_visitedSuperClasses);
    _dbgPrintf("\tint32_t                _numVisitedSuperClasses = %d\n", localPersistentInfo->_numVisitedSuperClasses);
    _dbgPrintf("\tbool                   _tooManySuperClasses = %d\n", localPersistentInfo->_tooManySuperClasses);
@@ -2837,13 +2836,19 @@ TR_DebugExt::dxPrintListOfCodeCaches()
    if (!_remotePersistentMemory)
       return;
 
-   TR::PersistentInfo *persistentInfo = PersistentMemory2PersistentInfo();
-
    TR::CodeCacheManager * manager = NULL;
-   dxReadField(persistentInfo, offsetof(TR::PersistentInfo, _codeCacheManager), &manager, sizeof(TR::CodeCacheManager *));
 
+   /**
+    * The CodeCacheManager will need to be materialized from the cached codeCacheManager field of
+    * the TR_JitPrivateConfig struct.  However, a local TR_JitPrivateConfig struct must first be
+    * materialized when the local JitConfig struct and local VM is materialized when the remote
+    * VM is still available.  The remote VM is not presently available to this function otherwise
+    * it could be done here.
+    *
+    * Until this is done, this function will simply return and not report anything.
+    */
    if (!manager)
-      return; // unlikely
+      return;
 
    _dbgPrintf("TR::CodeCacheManager = 0x%p  List of code caches:\n", manager);
    TR::CodeCacheManager *localManager = (TR::CodeCacheManager*) dxMallocAndRead(sizeof(TR::CodeCacheManager), manager);
