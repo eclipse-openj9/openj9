@@ -429,9 +429,6 @@ UMA_PASM_INCLUDES:=$(addprefix -I ,$(UMA_INCLUDES))
 
 </#if>
 <#if uma.spec.type.aix>
-# compilation rule for .dbg files
-%$(UMA_DOT_O): %.dbg
-	aspp $(UMA_ASPP_DEBUG) $< $
 
 # compilation rule for .spp files - translate ! to newline
 %$(UMA_DOT_O): %.spp
