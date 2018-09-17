@@ -1008,6 +1008,7 @@ uint32_t J9::Z::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_NumE
    0,                                         // TR_NativeMethodRelative                = 57,
    32,                                        // TR_ArbitraryClassAddress               = 58,
    56,                                        // TR_DebugCounter                        = 59
+   8,                                         // TR_ClassUnloadAssumption               = 60
    };
 
 #else
@@ -1073,7 +1074,8 @@ uint32_t J9::Z::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_NumE
    0,                                         // TR_NativeMethodAbsolute                = 56,
    0,                                         // TR_NativeMethodRelative                = 57,
    16,                                        // TR_ArbitraryClassAddress               = 58,
-   28                                         // TR_DebugCounter                        = 59
+   28,                                         // TR_DebugCounter                        = 59
+   4,                                         // TR_ClassUnloadAssumption               = 60
    };
 
 #endif

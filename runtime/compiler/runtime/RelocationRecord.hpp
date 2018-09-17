@@ -1103,5 +1103,18 @@ class TR_RelocationRecordDebugCounter : public TR_RelocationRecordWithInlinedSit
       TR::DebugCounterBase *findOrCreateCounter(TR_RelocationRuntime *reloRuntime);
    };
 
+class TR_RelocationRecordClassUnloadAssumption : public TR_RelocationRecord
+   {
+   public:
+      TR_RelocationRecordClassUnloadAssumption() {}
+      TR_RelocationRecordClassUnloadAssumption(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
+
+      virtual char *name();
+
+      virtual int32_t bytesInHeaderAndPayload();
+
+      virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+   };
+
 #endif   // RELOCATION_RECORD_INCL
 

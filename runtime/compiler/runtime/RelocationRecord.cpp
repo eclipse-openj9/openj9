@@ -230,6 +230,8 @@ struct TR_RelocationRecordDebugCounterBinaryTemplate : public TR_RelocationRecor
    };
 
 
+typedef TR_RelocationRecordBinaryTemplate TR_RelocationRecordClassUnloadAssumptionBinaryTemplate;
+
 // TR_RelocationRecordGroup
 
 void
@@ -463,6 +465,9 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
          break;
       case TR_DebugCounter:
          reloRecord = new (storage) TR_RelocationRecordDebugCounter(reloRuntime, record);
+         break;
+      case TR_ClassUnloadAssumption:
+         reloRecord = new (storage) TR_RelocationRecordClassUnloadAssumption(reloRuntime, record);
          break;
       default:
          // TODO: error condition
@@ -3532,4 +3537,24 @@ TR_RelocationRecordDebugCounter::findOrCreateCounter(TR_RelocationRuntime *reloR
       }
 
    return counter;
+   }
+
+// ClassUnloadAssumption
+char *
+TR_RelocationRecordClassUnloadAssumption::name()
+   {
+   return "TR_ClassUnloadAssumption";
+   }
+
+int32_t
+TR_RelocationRecordClassUnloadAssumption::bytesInHeaderAndPayload()
+   {
+   return sizeof(TR_RelocationRecordClassUnloadAssumptionBinaryTemplate);
+   }
+
+int32_t
+TR_RelocationRecordClassUnloadAssumption::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+   {
+   reloTarget->addPICtoPatchPtrOnClassUnload((TR_OpaqueClassBlock *) -1, reloLocation);
+   return 0;
    }
