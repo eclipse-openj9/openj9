@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE configurationreg SYSTEM "http://home.ottawa.ibm.com/teams/bluebird/web/eclipse_site/jpp.dtd">
-
 <!--
 /*******************************************************************************
  * Copyright (c) 2002, 2018 IBM Corp. and others
@@ -24,7 +23,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
  -->
-
 <configurationreg version="3.0">
 	<!-- AUTOMATED TEST METADATA -->
 	<automatedtests project="J9 JCL Automated Tests v2">
@@ -263,7 +261,7 @@
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.zosconditionhandling/share/classes"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
-		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sunJava11.jar"/>
+		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sunJava12.jar"/>
 		<source path="src"/>
 		<parameter name="macro:define" value="com.ibm.oti.vm.library.version=29"/>
 		<parameter name="msg:outputdir" value="java.base/share/classes/com/ibm/oti/util"/>
