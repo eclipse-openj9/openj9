@@ -219,7 +219,8 @@
 
 	<test>
 		<testCaseName>TestAttachAPI</testCaseName>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+		$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Djava.sidecar="--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED" \
@@ -356,7 +357,8 @@
 
 	<test>
 		<testCaseName>TestSunAttachClasses</testCaseName>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+		$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
