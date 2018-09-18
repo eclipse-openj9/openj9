@@ -78,7 +78,9 @@ ifdef({SAVE_R13},{
 	staddr r0,J9TR_ELS_jitGlobalStorageBase(r4)
 	addi r0,r1,JIT_FPR_SAVE_OFFSET(0)
 	staddr r0,J9TR_ELS_jitFPRegisterStorageBase(r4)
+	li r3,-1
 ifdef({ASM_J9VM_ENV_DATA64},{
+	staddr r3,JIT_GPR_SAVE_SLOT(17)
 	laddr r3,J9TR_VMThread_javaVM(J9VMTHREAD)
 	laddr r3,J9TR_JavaVMJitConfig(r3)
 	cmpliaddr r3,0
@@ -86,9 +88,9 @@ ifdef({ASM_J9VM_ENV_DATA64},{
 	laddr r3,J9TR_JitConfig_pseudoTOC(r3)
 	staddr r3,JIT_GPR_SAVE_SLOT(16)
 .L_noJIT:
-})
-	li r3,-1
-	staddr r3,JIT_GPR_SAVE_SLOT(17)
+},{ dnl ASM_J9VM_ENV_DATA64
+	staddr r3,JIT_GPR_SAVE_SLOT(15)
+}) dnl ASM_J9VM_ENV_DATA64
 .L_cInterpOnCStack:
 	INIT_GOT(vmTOC)
 	mr r3,J9VMTHREAD
