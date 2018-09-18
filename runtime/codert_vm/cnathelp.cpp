@@ -904,11 +904,13 @@ done:
 void* J9FASTCALL
 impl_jitClassCastException(J9VMThread *currentThread)
 {
-    SLOW_JIT_HELPER_PROLOGUE();
-    J9Class* castClass = (J9Class*)currentThread->floatTemp1;
-    J9Class* instanceClass = (J9Class*)currentThread->floatTemp2;
-    buildJITResolveFrameForRuntimeHelper(currentThread, 0);
-    return setClassCastExceptionFromJIT(currentThread, instanceClass, castClass);
+	SLOW_JIT_HELPER_PROLOGUE();
+	J9Class* castClass = (J9Class*)currentThread->floatTemp1;
+	J9Class* instanceClass = (J9Class*)currentThread->floatTemp2;
+	buildJITResolveFrameForRuntimeHelper(currentThread, 0);
+	void* exception = setClassCastExceptionFromJIT(currentThread, instanceClass, castClass);
+	SLOW_JIT_HELPER_EPILOGUE();
+	return exception;
 }
 
 void* J9FASTCALL
