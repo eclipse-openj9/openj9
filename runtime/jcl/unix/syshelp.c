@@ -252,18 +252,22 @@ void mapLibraryToPlatformName(const char *inPath, char *outPath) {
 char *getPlatformFileEncoding(JNIEnv * env, char *codepageProp, int propSize, int encodingType)
 {
 #if defined(J9ZTPF)
-    return "ISO8859_1";
+	return "ISO8859_1";
 #endif /* defined(J9ZTPF) */
-	PORT_ACCESS_FROM_ENV(env);
-	char *codepage;
-	int i, nameIndex;
+	char *codepage = NULL;
+	int i = 0;
+	int nameIndex = 0;
 #if defined(LINUX)
-    IDATA result;
-    char langProp[24], *ctype;
-#endif
+	IDATA result = 0;
+	char langProp[24] = {0};
+	char *ctype = NULL;
+	PORT_ACCESS_FROM_ENV(env);
+#endif /* defined(LINUX) */
 
 	/* Called with codepageProp == NULL to initialize the locale */
-	if (!codepageProp) return NULL;
+	if (NULL == codepageProp) {
+		return NULL;
+	}
 
 #ifdef LINUX
 	/*[PR 104520] Return EUC_JP when LC_CTYPE is not set, and the LANG environment variable is "ja" */
