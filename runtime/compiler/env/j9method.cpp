@@ -5679,24 +5679,49 @@ TR_J9MethodBase::isUnsafePut(TR::RecognizedMethod rm)
    {
    switch (rm)
       {
-      case TR::sun_misc_Unsafe_putBoolean_jlObjectJZ_V:
-      case TR::sun_misc_Unsafe_putByte_jlObjectJB_V:
-      case TR::sun_misc_Unsafe_putChar_jlObjectJC_V:
-      case TR::sun_misc_Unsafe_putShort_jlObjectJS_V:
-      case TR::sun_misc_Unsafe_putInt_jlObjectJI_V:
-      case TR::sun_misc_Unsafe_putLong_jlObjectJJ_V:
-      case TR::sun_misc_Unsafe_putFloat_jlObjectJF_V:
-      case TR::sun_misc_Unsafe_putDouble_jlObjectJD_V:
-      case TR::sun_misc_Unsafe_putObject_jlObjectJjlObject_V:
+      case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
+      case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
+      case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
+      case TR::sun_misc_Unsafe_getAndAddInt:
+      case TR::sun_misc_Unsafe_getAndAddLong:
+      case TR::sun_misc_Unsafe_getAndSetInt:
+      case TR::sun_misc_Unsafe_getAndSetLong:
+      case TR::sun_misc_Unsafe_putAddress_JJ_V:
+      case TR::sun_misc_Unsafe_putBooleanOrdered_jlObjectJZ_V:
       case TR::sun_misc_Unsafe_putBooleanVolatile_jlObjectJZ_V:
+      case TR::sun_misc_Unsafe_putBoolean_jlObjectJZ_V:
+      case TR::sun_misc_Unsafe_putByteOrdered_jlObjectJB_V:
       case TR::sun_misc_Unsafe_putByteVolatile_jlObjectJB_V:
+      case TR::sun_misc_Unsafe_putByte_JB_V:
+      case TR::sun_misc_Unsafe_putByte_jlObjectJB_V:
+      case TR::sun_misc_Unsafe_putCharOrdered_jlObjectJC_V:
       case TR::sun_misc_Unsafe_putCharVolatile_jlObjectJC_V:
-      case TR::sun_misc_Unsafe_putShortVolatile_jlObjectJS_V:
-      case TR::sun_misc_Unsafe_putIntVolatile_jlObjectJI_V:
-      case TR::sun_misc_Unsafe_putLongVolatile_jlObjectJJ_V:
-      case TR::sun_misc_Unsafe_putFloatVolatile_jlObjectJF_V:
+      case TR::sun_misc_Unsafe_putChar_JC_V:
+      case TR::sun_misc_Unsafe_putChar_jlObjectJC_V:
+      case TR::sun_misc_Unsafe_putDoubleOrdered_jlObjectJD_V:
       case TR::sun_misc_Unsafe_putDoubleVolatile_jlObjectJD_V:
+      case TR::sun_misc_Unsafe_putDouble_JD_V:
+      case TR::sun_misc_Unsafe_putDouble_jlObjectJD_V:
+      case TR::sun_misc_Unsafe_putFloatOrdered_jlObjectJF_V:
+      case TR::sun_misc_Unsafe_putFloatVolatile_jlObjectJF_V:
+      case TR::sun_misc_Unsafe_putFloat_JF_V:
+      case TR::sun_misc_Unsafe_putFloat_jlObjectJF_V:
+      case TR::sun_misc_Unsafe_putIntOrdered_jlObjectJI_V:
+      case TR::sun_misc_Unsafe_putIntVolatile_jlObjectJI_V:
+      case TR::sun_misc_Unsafe_putInt_JI_V:
+      case TR::sun_misc_Unsafe_putInt_jlObjectII_V:
+      case TR::sun_misc_Unsafe_putInt_jlObjectJI_V:
+      case TR::sun_misc_Unsafe_putLongOrdered_jlObjectJJ_V:
+      case TR::sun_misc_Unsafe_putLongVolatile_jlObjectJJ_V:
+      case TR::sun_misc_Unsafe_putLong_JJ_V:
+      case TR::sun_misc_Unsafe_putLong_jlObjectJJ_V:
+      case TR::sun_misc_Unsafe_putObjectOrdered_jlObjectJjlObject_V:
       case TR::sun_misc_Unsafe_putObjectVolatile_jlObjectJjlObject_V:
+      case TR::sun_misc_Unsafe_putObject_jlObjectJjlObject_V:
+      case TR::sun_misc_Unsafe_putShortOrdered_jlObjectJS_V:
+      case TR::sun_misc_Unsafe_putShortVolatile_jlObjectJS_V:
+      case TR::sun_misc_Unsafe_putShort_JS_V:
+      case TR::sun_misc_Unsafe_putShort_jlObjectJS_V:
          return true;
       default:
          return false;
