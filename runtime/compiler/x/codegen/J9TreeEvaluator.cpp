@@ -1430,6 +1430,131 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
    return targetReg;
    }
 
+TR::Register *J9::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   static bool UseOldReferenceArrayCopy = (bool)feGetEnv("TR_UseOldReferenceArrayCopy");
+   static bool UseOldReferenceArrayCopyPath = (bool)feGetEnv("TR_UseOldReferenceArrayCopyPath");
+   if (UseOldReferenceArrayCopyPath || !node->isReferenceArrayCopy())
+      {
+      return OMR::TreeEvaluatorConnector::arraycopyEvaluator(node, cg);
+      }
+   if (UseOldReferenceArrayCopy && !node->isNoArrayStoreCheckArrayCopy())
+      {
+      return TR::TreeEvaluator::VMarrayStoreCheckArrayCopyEvaluator(node, cg);
+      }
+
+   auto srcObjReg = cg->evaluate(node->getChild(0));
+   auto dstObjReg = cg->evaluate(node->getChild(1));
+   auto srcReg    = cg->evaluate(node->getChild(2));
+   auto dstReg    = cg->evaluate(node->getChild(3));
+   auto sizeReg   = cg->evaluate(node->getChild(4));
+
+   if (TR::Compiler->target.is64Bit() && !TR::TreeEvaluator::getNodeIs64Bit(node->getChild(4), cg))
+      {
+      generateRegRegInstruction(MOVZXReg8Reg4, node, sizeReg, sizeReg, cg);
+      }
+
+   if (!node->isNoArrayStoreCheckArrayCopy())
+      {
+      // Nothing to optimize, simply call jitReferenceArrayCopy helper
+      auto deps = generateRegisterDependencyConditions((uint8_t)3, 3, cg);
+      deps->addPreCondition(srcReg, TR::RealRegister::esi, cg);
+      deps->addPreCondition(dstReg, TR::RealRegister::edi, cg);
+      deps->addPreCondition(sizeReg, TR::RealRegister::ecx, cg);
+      deps->addPostCondition(srcReg, TR::RealRegister::esi, cg);
+      deps->addPostCondition(dstReg, TR::RealRegister::edi, cg);
+      deps->addPostCondition(sizeReg, TR::RealRegister::ecx, cg);
+
+      generateMemRegInstruction(SMemReg(), node, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp1), cg), srcObjReg, cg);
+      generateMemRegInstruction(SMemReg(), node, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp2), cg), dstObjReg, cg);
+      generateHelperCallInstruction(node, TR_referenceArrayCopy, deps, cg)->setNeedsGCMap(0xFF00FFFF);
+
+      auto snippetLabel = generateLabelSymbol(cg);
+      auto instr = generateLabelInstruction(JNE4, node, snippetLabel, cg); // ReferenceArrayCopy set ZF when succeed.
+      auto snippet = new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg, cg->symRefTab()->findOrCreateRuntimeHelper(TR_arrayStoreException, false, false, false),
+                                                                         snippetLabel, instr, false);
+      cg->addSnippet(snippet);
+      }
+   else
+      {
+      bool use64BitClasses = TR::Compiler->target.is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
+
+      auto RSI = cg->allocateRegister();
+      auto RDI = cg->allocateRegister();
+      auto RCX = cg->allocateRegister();
+
+      generateRegRegInstruction(MOVRegReg(), node, RSI, srcReg, cg);
+      generateRegRegInstruction(MOVRegReg(), node, RDI, dstReg, cg);
+      generateRegRegInstruction(MOVRegReg(), node, RCX, sizeReg, cg);
+
+      auto deps = generateRegisterDependencyConditions((uint8_t)5, 5, cg);
+      deps->addPreCondition(RSI, TR::RealRegister::esi, cg);
+      deps->addPreCondition(RDI, TR::RealRegister::edi, cg);
+      deps->addPreCondition(RCX, TR::RealRegister::ecx, cg);
+      deps->addPreCondition(srcObjReg, TR::RealRegister::NoReg, cg);
+      deps->addPreCondition(dstObjReg, TR::RealRegister::NoReg, cg);
+      deps->addPostCondition(RSI, TR::RealRegister::esi, cg);
+      deps->addPostCondition(RDI, TR::RealRegister::edi, cg);
+      deps->addPostCondition(RCX, TR::RealRegister::ecx, cg);
+      deps->addPostCondition(srcObjReg, TR::RealRegister::NoReg, cg);
+      deps->addPostCondition(dstObjReg, TR::RealRegister::NoReg, cg);
+
+      auto begLabel = generateLabelSymbol(cg);
+      auto endLabel = generateLabelSymbol(cg);
+      begLabel->setStartInternalControlFlow();
+      endLabel->setEndInternalControlFlow();
+
+      generateLabelInstruction(LABEL, node, begLabel, cg);
+
+      if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+         {
+         static_assert(IS_32BIT_SIGNED(J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE), "Unexcepted value of J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE.");
+         TR::LabelSymbol* rdbarLabel = generateLabelSymbol(cg);
+         generateMemImmInstruction(TEST4MemImm4, node, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, privateFlags), cg), J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE, cg);
+         generateLabelInstruction(JNE4, node, rdbarLabel, cg);
+
+         TR_OutlinedInstructionsGenerator og(rdbarLabel, node, cg);
+         generateMemRegInstruction(SMemReg(), node, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp1), cg), srcObjReg, cg);
+         generateMemRegInstruction(SMemReg(), node, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp2), cg), dstObjReg, cg);
+         generateHelperCallInstruction(node, TR_referenceArrayCopy, NULL, cg)->setNeedsGCMap(0xFF00FFFF);
+         generateLabelInstruction(JMP4, node, endLabel, cg);
+         }
+      if (!node->isForwardArrayCopy())
+         {
+         TR::LabelSymbol* backwardLabel = generateLabelSymbol(cg);
+
+         generateRegRegInstruction(SUBRegReg(), node, RDI, RSI, cg); // dst = dst - src
+         generateRegRegInstruction(CMPRegReg(), node, RDI, RCX, cg); // cmp dst, size
+         generateRegMemInstruction(LEARegMem(), node, RDI, generateX86MemoryReference(RDI, RSI, 0, cg), cg); // dst = dst + src
+         generateLabelInstruction(JB4, node, backwardLabel, cg);     // jb, skip backward copy setup
+
+         TR_OutlinedInstructionsGenerator og(backwardLabel, node, cg);
+         generateRegMemInstruction(LEARegMem(), node, RSI, generateX86MemoryReference(RSI, RCX, 0, -TR::Compiler->om.sizeofReferenceField(), cg), cg);
+         generateRegMemInstruction(LEARegMem(), node, RDI, generateX86MemoryReference(RDI, RCX, 0, -TR::Compiler->om.sizeofReferenceField(), cg), cg);
+         generateRegImmInstruction(SHRRegImm1(), node, RCX, use64BitClasses ? 3 : 2, cg);
+         generateInstruction(STD, node, cg);
+         generateInstruction(use64BitClasses ? REPMOVSQ : REPMOVSD, node, cg);
+         generateInstruction(CLD, node, cg);
+         generateLabelInstruction(JMP4, node, endLabel, cg);
+         }
+      generateRegImmInstruction(SHRRegImm1(), node, RCX, use64BitClasses ? 3 : 2, cg);
+      generateInstruction(use64BitClasses ? REPMOVSQ : REPMOVSD, node, cg);
+      generateLabelInstruction(LABEL, node, endLabel, deps, cg);
+
+      cg->stopUsingRegister(RSI);
+      cg->stopUsingRegister(RDI);
+      cg->stopUsingRegister(RCX);
+
+      TR::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(node, node->getChild(1), NULL, NULL, cg->generateScratchRegisterManager(), cg);
+      }
+
+   for (int32_t i = 0; i < node->getNumChildren(); i++)
+      {
+      cg->decReferenceCount(node->getChild(i));
+      }
+   return NULL;
+   }
+
 TR::Register *J9::X86::TreeEvaluator::arraylengthEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
