@@ -51,7 +51,7 @@
 		<mkdir dir="${build}"/>
 	</target>
 
-	<target name="compile" depends="init" description="Using ${JAVA_VERSION} java compile the source " >
+	<target name="compile" depends="init" description="Using java ${JDK_VERSION} to compile the source " >
 		<echo>Ant version is ${ant.version}</echo>
 		<echo>============COMPILER SETTINGS============</echo>
 		<echo>===fork:				yes</echo>
@@ -177,7 +177,7 @@
 	<target name="build" >
 		<if>
 			<not>
-				<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+				<equals arg1="${JDK_VERSION}" arg2="8"/>
 			</not>
 			<then>
 				<antcall target="clean" inheritall="true" />

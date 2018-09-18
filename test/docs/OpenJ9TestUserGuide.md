@@ -47,8 +47,8 @@ tools should be installed on your test machine to run tests.
     ```
     JAVA_BIN=<path to JDK bin directory that you wish to test>
     SPEC=[linux_x86-64|linux_x86-64_cmprssptrs|...] (platform on which to test)
-    JAVA_VERSION=[SE80|SE90|SE100|SE110|Panama|Valhalla] (SE90 default value)
-    JAVA_IMPL=[openj9|ibm|hotspot|sap] (openj9 default value)
+    JDK_VERSION=[8|9|10|11|Panama|Valhalla] (8 default value)
+    JDK_IMPL=[openj9|ibm|hotspot|sap] (openj9 default value)
     BUILD_LIST=<comma separated projects to be compiled and executed> (default to all projects)
     NATIVE_TEST_LIBS=<path to native test libraries> (default to native-test-libs folder at same level as JDK_HOME)
     ```
@@ -91,11 +91,11 @@ Please read [DependentLibs.md](./DependentLibs.md) for details.
       - level:   [sanity|extended] (extended default value)
       - group:   [functional|system|openjdk|external|perf|jck] (required 
                  to provide one group per test)
-      - impl:    [openj9|hotspot] (filter test based on exported JAVA_IMPL 
+      - impl:    [openj9|hotspot] (filter test based on exported JDK_IMPL 
                  value; a test can be tagged with multiple impls at the 
                  same time; default to all impls)
-      - subset:  [SE80|SE90|SE100|SE110|Panama|Valhalla] (filter test based on 
-                 exported JAVA_VERSION value; a test can be tagged with 
+      - subset:  [8|9|10|11|Panama|Valhalla] (filter test based on 
+                 exported JDK_VERSION value; a test can be tagged with 
                  multiple subsets at the same time; default to all subsets)
 
     - Most OpenJ9 FV tests are written with TestNG. We leverage
@@ -163,11 +163,11 @@ target
         make runtest
         ```
 
-  * against specific (e.g., hotspot SE80) SDK
+  * against specific (e.g., hotspot 8) SDK
 
     impl and subset are used to annotate tests in playlist.xml, 
-    so that the tests will be run against the targeted JAVA_IMPL 
-    and JAVA_VERSION.
+    so that the tests will be run against the targeted JDK_IMPL 
+    and JDK_VERSION.
 
   * rerun the failed tests from the last run
     ```
@@ -208,8 +208,8 @@ target
 
   * temporarily on all platforms
 
-    Depends on the JAVA_VERSION, add a line in the
-    test/TestConfig/resources/excludes/latest_exclude_$(JAVA_VERSION).txt
+    Depends on the JDK_VERSION, add a line in the
+    test/TestConfig/resources/excludes/latest_exclude_$(JDK_VERSION).txt
     file. It is the same format that the OpenJDK tests use, name of test,
     defect number, platforms to exclude.
 
@@ -226,7 +226,7 @@ method from that class will be excluded (on all platforms/specs).
   * temporarily on specific platforms or architectures
 
     Same as excluding on all platforms, you add a line to
-    latest_exclude_$(JAVA_VERSION).txt file, but with specific specs to
+    latest_exclude_$(JDK_VERSION).txt file, but with specific specs to
     exclude, for example:
     ```
     org.openj9.test.java.lang.management.TestOperatingSystemMXBean 121187 linux_x86-64

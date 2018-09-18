@@ -55,8 +55,8 @@
 	
 	<variable name="NON_WINDOWS_PLATFORMS" value="aix.*,linux.*,zos.*" />
 	<variable name="WINDOWS_PLATFORMS" value="win.*" />
-	<variable name="NON_64BIT_PLATFORMS" value="SE.*bits\.3[12]" />
-	<variable name="64BIT_PLATFORMS" value="SE.*bits\.64" />
+	<variable name="NON_64BIT_PLATFORMS" value=".*bits\.3[12]" />
+	<variable name="64BIT_PLATFORMS" value=".*bits\.64" />
 
 	<!-- 
 		Following variable specifies cache directory to be used by tests for 'cacheDirPerm' sub-option.

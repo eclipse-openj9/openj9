@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,7 +69,7 @@ private:
 	MM_MarkMap *_nextMarkMap;	/**< The next mark map which will be passed to the compactor (it uses it as temporary storage for fixup data) */
 
 public:
-	virtual UDATA getVMStateID() { return J9VMSTATE_GC_COMPACT; };
+	virtual UDATA getVMStateID() { return OMRVMSTATE_GC_COMPACT; };
 	
 	virtual void run(MM_EnvironmentBase *env);
 	virtual void setup(MM_EnvironmentBase *env);

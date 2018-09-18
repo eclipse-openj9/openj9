@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,7 +73,7 @@ protected:
 	/**
 	 * @see MM_CardCleaner::getVMStateID()
 	 */
-	virtual UDATA getVMStateID() { return J9VMSTATE_GC_GLOBAL_COLLECTION_CARD_CLEANER; }
+	virtual UDATA getVMStateID() { return OMRVMSTATE_GC_GLOBAL_COLLECTION_CARD_CLEANER; }
 
 public:	
 	

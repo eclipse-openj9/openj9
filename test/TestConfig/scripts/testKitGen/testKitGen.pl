@@ -35,21 +35,21 @@ my $projectRootDir = '';
 my $modesxml       = "../../resources/modes.xml";
 my $ottawacsv      = "../../resources/ottawa.csv";
 my $graphSpecs     = '';
-my $javaVersion    = '';
+my $jdkVersion    = '';
 my $impl           = '';
 my $output         = '';
 my $buildList      = '';
 my @allLevels      = ( "sanity", "extended" );
 my @allGroups      = ( "functional", "openjdk", "external", "perf", "jck", "system" );
-my @allSubsets     = ( "SE80", "SE90", "SE100", "SE110", "Panama", "Valhalla" );
+my @allSubsets     = ( '8', '9', '10', '11', "Panama", "Valhalla" );
 my @allImpls       = ( "openj9", "ibm", "hotspot", "sap" );
 
 foreach my $argv (@ARGV) {
 	if ( $argv =~ /^\-\-graphSpecs=/ ) {
 		($graphSpecs) = $argv =~ /^\-\-graphSpecs=(.*)/;
 	}
-	elsif ( $argv =~ /^\-\-javaVersion=/ ) {
-		($javaVersion) = $argv =~ /^\-\-javaVersion=(.*)/;
+	elsif ( $argv =~ /^\-\-jdkVersion=/ ) {
+		($jdkVersion) = $argv =~ /^\-\-jdkVersion=(.*)/;
 	}
 	elsif ( $argv =~ /^\-\-impl=/ ) {
 		($impl) = $argv =~ /^\-\-impl=(.*)/;
@@ -75,10 +75,10 @@ foreach my $argv (@ARGV) {
 		  . "makefile (per project)\n"
 		  . "jvmTest.mk and specToPlat.mk - under TestConfig\n";
 		print "Usage:\n"
-		  . "  perl testKitGen.pl --graphSpecs=[linux_x86-64|linux_x86-64_cmprssptrs|...] --javaVersion=[SE80|SE90|...] --impl=[openj9|ibm|hotspot|sap] [options]"
+		  . "  perl testKitGen.pl --graphSpecs=[linux_x86-64|linux_x86-64_cmprssptrs|...] --jdkVersion=[8|9|...] --impl=[openj9|ibm|hotspot|sap] [options]"
 		  . "Options:\n"
 		  . "  --graphSpecs=<specs>      Comma separated specs that the build will run on.\n"
-		  . "  --javaVersion=<version>   Java version that the build will run on.\n"
+		  . "  --jdkVersion=<version>    Jdk version that the build will run on.\n"
 		  . "  --impl=<implementation>   Java Implementation, e.g., openj9, ibm, hotspot, sap.\n" 
 		  . "  --projectRootDir=<path>   Root path for searching playlist.xml.\n"
 		  . "                            The path defaults to openj9/test.\n"
@@ -110,8 +110,8 @@ if ( !$graphSpecs ) {
 	die "Please provide graphSpecs!"
 }
 
-if ( !$javaVersion ) {
-	die "Please provide javaVersion!"
+if ( !$jdkVersion ) {
+	die "Please provide jdkVersion!"
 }
 
 if ( !$impl ) {
@@ -119,6 +119,6 @@ if ( !$impl ) {
 }
 
 # run make file generator
-runmkgen( $projectRootDir, \@allLevels, \@allGroups, \@allSubsets, $output, $graphSpecs, $javaVersion, \@allImpls, $impl, $modesxml, $ottawacsv, $buildList );
+runmkgen( $projectRootDir, \@allLevels, \@allGroups, \@allSubsets, $output, $graphSpecs, $jdkVersion, \@allImpls, $impl, $modesxml, $ottawacsv, $buildList );
 
 print "\nTEST AUTO GEN SUCCESSFUL\n";

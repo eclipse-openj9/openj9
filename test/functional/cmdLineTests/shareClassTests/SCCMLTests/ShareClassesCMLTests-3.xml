@@ -171,7 +171,7 @@
 		<output type="required" caseSensitive="yes" regex="no">AOT:</output>
 		<output type="required" caseSensitive="yes" regex="no">JITPROFILE:</output>
 		<output type="required" caseSensitive="yes" regex="no">JITHINT:</output>
-		<output type="required" caseSensitive="yes" regex="no" platforms="SE80">ZIPCACHE:</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="8">ZIPCACHE:</output>
 		<output type="failure" caseSensitive="yes" regex="no">ORPHAN:</output>
 		<output type="failure" caseSensitive="yes" regex="no">AOTCH:</output>
 		<output type="failure" caseSensitive="yes" regex="no">AOTDATA:</output>
@@ -195,7 +195,7 @@
 		<output type="required" caseSensitive="yes" regex="no">AOT:</output>
 		<output type="required" caseSensitive="yes" regex="no">JITPROFILE:</output>
 		<output type="required" caseSensitive="yes" regex="no">JITHINT:</output>
-		<output type="required" caseSensitive="yes" regex="no" platforms="SE80">ZIPCACHE:</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="8">ZIPCACHE:</output>
 		<output type="failure" caseSensitive="yes" regex="no">ORPHAN:</output>
 		<output type="failure" caseSensitive="yes" regex="no">AOTCH:</output>
 		<output type="failure" caseSensitive="yes" regex="no">AOTDATA:</output>
@@ -219,7 +219,7 @@
 		<output type="required" caseSensitive="yes" regex="no">AOT:</output>
 		<output type="required" caseSensitive="yes" regex="no">JITPROFILE:</output>
 		<output type="required" caseSensitive="yes" regex="no">JITHINT:</output>
-		<output type="required" caseSensitive="yes" regex="no" platforms="SE80">ZIPCACHE:</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="8">ZIPCACHE:</output>
 		<output type="failure" caseSensitive="yes" regex="no">ORPHAN:</output>
 		<output type="failure" caseSensitive="yes" regex="no">AOTCH:</output>
 		<output type="failure" caseSensitive="yes" regex="no">AOTDATA:</output>
@@ -243,7 +243,7 @@
 		<output type="required" caseSensitive="yes" regex="no">AOT:</output>
 		<output type="required" caseSensitive="yes" regex="no">JITPROFILE:</output>
 		<output type="required" caseSensitive="yes" regex="no">JITHINT:</output>
-		<output type="required" caseSensitive="yes" regex="no" platforms="SE80">ZIPCACHE:</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="8">ZIPCACHE:</output>
 		<output type="failure" caseSensitive="yes" regex="no">ORPHAN:</output>
 		<output type="failure" caseSensitive="yes" regex="no">AOTCH:</output>
 		<output type="failure" caseSensitive="yes" regex="no">AOTDATA:</output>
@@ -267,7 +267,7 @@
 		<output type="required" caseSensitive="yes" regex="no">AOT:</output>
 		<output type="required" caseSensitive="yes" regex="no">JITPROFILE:</output>
 		<output type="required" caseSensitive="yes" regex="no">JITHINT:</output>
-		<output type="required" caseSensitive="yes" regex="no" platforms="SE80">ZIPCACHE:</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="8">ZIPCACHE:</output>
 		<output type="required" caseSensitive="yes" regex="no">ORPHAN:</output>
 		<output type="failure" caseSensitive="yes" regex="no">AOTCH:</output>
 		<output type="failure" caseSensitive="yes" regex="no">AOTDATA:</output>
@@ -291,7 +291,7 @@
 		<output type="required" caseSensitive="yes" regex="no">AOT:</output>
 		<output type="required" caseSensitive="yes" regex="no">JITPROFILE:</output>
 		<output type="required" caseSensitive="yes" regex="no">JITHINT:</output>
-		<output type="required" caseSensitive="yes" regex="no" platforms="SE80">ZIPCACHE:</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="8">ZIPCACHE:</output>
 		<output type="required" caseSensitive="yes" regex="no">ORPHAN:</output>
 		<output type="failure" caseSensitive="yes" regex="no">AOTCH:</output>
 		<output type="failure" caseSensitive="yes" regex="no">AOTDATA:</output>
@@ -590,7 +590,7 @@
 		<output type="required" caseSensitive="yes" regex="no">ROMMETHOD:</output>
 		<output type="required" caseSensitive="yes" regex="no">AOT:</output>
 		<output type="required" caseSensitive="yes" regex="no">JITPROFILE:</output>
-		<output type="required" caseSensitive="yes" regex="no" platforms="SE80">ZIPCACHE:</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="8">ZIPCACHE:</output>
 		<output type="required" caseSensitive="yes" regex="no">ORPHAN:</output>
 		<output type="success" caseSensitive="yes" regex="no">JITHINT:</output>
 		<output type="required" caseSensitive="yes" regex="no">AOTCH:</output>
@@ -784,7 +784,7 @@
 		<output type="required" caseSensitive="yes" regex="no">AOT:</output>
 		<output type="required" caseSensitive="yes" regex="no">JITPROFILE:</output>
 		<output type="required" caseSensitive="yes" regex="no">JITHINT:</output>
-		<output type="required" caseSensitive="yes" regex="no" platforms="SE80">ZIPCACHE:</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="8">ZIPCACHE:</output>
 		<output type="failure" caseSensitive="yes" regex="no">ORPHAN:</output>
 		<output type="failure" caseSensitive="yes" regex="no">AOTCH:</output>
 		<output type="failure" caseSensitive="yes" regex="no">AOTDATA:</output>
@@ -808,7 +808,7 @@
 		<output type="required" caseSensitive="yes" regex="no">AOT:</output>
 		<output type="required" caseSensitive="yes" regex="no">JITPROFILE:</output>
 		<output type="required" caseSensitive="yes" regex="no">JITHINT:</output>
-		<output type="required" caseSensitive="yes" regex="no" platforms="SE80">ZIPCACHE:</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="8">ZIPCACHE:</output>
 		<output type="failure" caseSensitive="yes" regex="no">ORPHAN:</output>
 		<output type="failure" caseSensitive="yes" regex="no">AOTCH:</output>
 		<output type="failure" caseSensitive="yes" regex="no">AOTDATA:</output>
@@ -1134,7 +1134,7 @@
 		<output type="required" caseSensitive="yes" regex="no">ROMMETHOD:</output>
 		<output type="required" caseSensitive="yes" regex="no">AOT:</output>
 		<output type="required" caseSensitive="yes" regex="no">JITPROFILE:</output>
-		<output type="required" caseSensitive="yes" regex="no" platforms="SE80">ZIPCACHE:</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="8">ZIPCACHE:</output>
 		<output type="required" caseSensitive="yes" regex="no">ORPHAN:</output>
 		<output type="success" caseSensitive="yes" regex="no">JITHINT:</output>
 		<output type="required" caseSensitive="yes" regex="no">AOTCH:</output>

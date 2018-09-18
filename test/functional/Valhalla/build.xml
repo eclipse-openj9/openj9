@@ -44,7 +44,7 @@
 		</copy>
 	</target>
 
-	<target name="compile" depends="init" description="Using ${JAVA_VERSION} java compile the source " >
+	<target name="compile" depends="init" description="Using java ${JDK_VERSION} to compile the source " >
 		<echo>Ant version is ${ant.version}</echo>
 		<echo>============COMPILER SETTINGS============</echo>
 		<echo>===fork:				yes</echo>
@@ -77,7 +77,7 @@
 	<target name="build" >
 		<if>
 			<not>
-			<matches string="${JAVA_VERSION}" pattern="^SE(8|9|10)0$$" />
+			<matches string="${JDK_VERSION}" pattern="^(8|9|10)$$" />
 			</not>
 			<then>
 				<antcall target="clean" inheritall="true" />

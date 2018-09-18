@@ -112,7 +112,7 @@
 		<echo>===debug:				on</echo>
 		<echo>===destdir:				${DEST}</echo>
 		<if>
-			<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+			<equals arg1="${JDK_VERSION}" arg2="8"/>
 			<then>
 				<javac srcdir="${bootstrapSrc}" destdir="${bootstrapBuild}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${bootstrapSrc}"/>
@@ -146,13 +146,13 @@
 		<echo>===debug:				on</echo>
 		<echo>===destdir:				${DEST}</echo>
 		<if>
-			<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+			<equals arg1="${JDK_VERSION}" arg2="8"/>
 			<then>
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src}"/>
 					<src path="${transformerListener}" />
 					<src path="${TestUtilities}" /> 
-					<!-- exclude files only for SE90 -->
+					<!-- exclude files only for jdk9 -->
 					<exclude name="**/MethodHandleAPI_asCollector.java" />
 					<exclude name="**/MethodHandleAPI_asSpreader.java" />
 					<exclude name="**/MethodHandleAPI_foldArguments.java" />

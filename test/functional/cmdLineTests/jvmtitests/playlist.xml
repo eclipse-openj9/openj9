@@ -45,7 +45,7 @@
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)jvmtitests.xml$(Q) \
 	-explainExcludes \
-	-xids all,$(PLATFORM),$(JCL_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JAVA_VERSION).xml$(Q) -nonZeroExitWhenError; \
+	-xids all,$(PLATFORM),$(JCL_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>^arch.390</platformRequirements>
 		<levels>
@@ -55,10 +55,10 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE80</subset>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 	<test>
@@ -84,7 +84,7 @@
 	-DEXTRA_Add_OPEN_OPTION=' ' \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)jvmtitests_hcr.xml$(Q) \
-	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JAVA_VERSION).xml$(Q) -nonZeroExitWhenError; \
+	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>^arch.390</platformRequirements>
 		<levels>
@@ -94,7 +94,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE80</subset>
+			<subset>8</subset>
 		</subsets>
 	</test>
 	<test>
@@ -120,7 +120,7 @@
 	-DEXTRA_Add_OPEN_OPTION='--add-opens=java.base/java.lang.reflect=ALL-UNNAMED' \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)jvmtitests_hcr.xml$(Q) \
-	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JAVA_VERSION).xml$(Q) -nonZeroExitWhenError; \
+	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>^arch.390</platformRequirements>
 		<levels>
@@ -130,9 +130,9 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 	<test>
@@ -158,7 +158,7 @@
 	-DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump ' \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)jvmtitests_extended.xml$(Q) \
-	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JAVA_VERSION).xml$(Q) -nonZeroExitWhenError; \
+	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>^arch.390</platformRequirements>
 		<levels>
@@ -168,10 +168,10 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE80</subset>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 	<test>
@@ -196,7 +196,7 @@
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)jvmtitests.xml$(Q) \
 	-explainExcludes \
-	-xids all,$(PLATFORM),$(JCL_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JAVA_VERSION).xml$(Q) -nonZeroExitWhenError; \
+	-xids all,$(PLATFORM),$(JCL_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>arch.390</platformRequirements>
 		<levels>
@@ -206,10 +206,10 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE80</subset>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 	<test>
@@ -235,7 +235,7 @@
 	-DEXTRA_Add_OPEN_OPTION=' ' \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)jvmtitests_hcr.xml$(Q) \
-	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JAVA_VERSION).xml$(Q) -nonZeroExitWhenError; \
+	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>arch.390</platformRequirements>
 		<levels>
@@ -245,7 +245,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE80</subset>
+			<subset>8</subset>
 		</subsets>
 	</test>
 	<test>
@@ -271,7 +271,7 @@
 	-DEXTRA_Add_OPEN_OPTION='--add-opens=java.base/java.lang.reflect=ALL-UNNAMED' \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)jvmtitests_hcr.xml$(Q) \
-	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JAVA_VERSION).xml$(Q) -nonZeroExitWhenError; \
+	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>arch.390</platformRequirements>
 		<levels>
@@ -281,9 +281,9 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 
@@ -305,7 +305,7 @@
 	-DEXTRA_Add_OPEN_OPTION=' ' \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)jvmtitests_hcr.xml$(Q) \
-	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JAVA_VERSION).xml$(Q) -nonZeroExitWhenError; \
+	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<levels>
 			<level>extended</level>
@@ -314,7 +314,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE80</subset>
+			<subset>8</subset>
 		</subsets>
 	</test>
 	<test>
@@ -334,7 +334,7 @@
 	-DEXTRA_Add_OPEN_OPTION='--add-opens=java.base/java.lang.reflect=ALL-UNNAMED' \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)jvmtitests_hcr.xml$(Q) \
-	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JAVA_VERSION).xml$(Q) -nonZeroExitWhenError; \
+	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<levels>
 			<level>extended</level>
@@ -343,9 +343,9 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 
@@ -372,7 +372,7 @@
 	-DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump ' \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)jvmtitests_extended.xml$(Q) \
-	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JAVA_VERSION).xml$(Q) -nonZeroExitWhenError; \
+	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>arch.390</platformRequirements>
 		<levels>
@@ -382,10 +382,10 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE80</subset>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 
@@ -402,7 +402,7 @@
 	-DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -Xgcthreads1 ' \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)decompilationtests.xml$(Q) \
-	-explainExcludes -xids all,linux_ppc -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JAVA_VERSION).xml$(Q) -verbose -nonZeroExitWhenError; \
+	-explainExcludes -xids all,linux_ppc -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -verbose -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>^arch.arm</platformRequirements>
 		<levels>
@@ -412,10 +412,10 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE80</subset>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 	<test>
@@ -433,7 +433,7 @@
 	-DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -Xgcthreads1 ' \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)decompilationtests.xml$(Q) \
-	-explainExcludes -xids all,linux_ppc -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JAVA_VERSION).xml$(Q) -verbose -nonZeroExitWhenError; \
+	-explainExcludes -xids all,linux_ppc -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -verbose -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>^arch.arm</platformRequirements>
 		<levels>
@@ -443,10 +443,10 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE80</subset>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 	<test>
@@ -466,10 +466,10 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE80</subset>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 </playlist>

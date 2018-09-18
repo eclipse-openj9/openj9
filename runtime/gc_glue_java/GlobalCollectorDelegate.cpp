@@ -420,7 +420,7 @@ MM_GlobalCollectorDelegate::unloadDeadClassLoaders(MM_EnvironmentBase *env)
 	/* The list of classLoaders to be unloaded by cleanUpClassLoadersEnd is rooted in unloadLink */
 
 	/* set the vmState whilst we're unloading classes */
-	UDATA vmState = env->pushVMstate(J9VMSTATE_GC_CLEANING_METADATA);
+	UDATA vmState = env->pushVMstate(OMRVMSTATE_GC_CLEANING_METADATA);
 
 	/* Count the classes we're unloading and perform class-specific clean up work for each unloading class.
 	 * If we're unloading any classes, perform common class-unloading clean up.

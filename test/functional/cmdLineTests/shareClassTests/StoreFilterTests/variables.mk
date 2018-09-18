@@ -22,6 +22,6 @@
 
 
 XMLSUFFIX=
-ifeq ($(JAVA_VERSION), SE80)
-	XMLSUFFIX=_SE80
+ifeq ($(JDK_VERSION), 8)
+	XMLSUFFIX=_8
 endif

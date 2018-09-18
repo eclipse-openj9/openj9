@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -294,7 +294,7 @@ excludeGlobalGc(J9VMThread* vmThread)
 
 	/* If Concurrent Scavenger aborted, do not check before global GC (regardless if J9MODRON_GCCHK_SCAVENGER_BACKOUT is requested or not).
 	 * Since checkEngine->_scavengerBackout is set only if J9MODRON_GCCHK_SCAVENGER_BACKOUT requested, gcExtensions->isScavengerBackOutFlagRaised() is checked instead.  */
-	if (gcExtensions->isConcurrentScavengerEnabled() && gcExtensions->isScavengerBackOutFlagRaised() && (J9VMSTATE_GC_CHECK_BEFORE_GC == vmThread->omrVMThread->vmState)) {
+	if (gcExtensions->isConcurrentScavengerEnabled() && gcExtensions->isScavengerBackOutFlagRaised() && (OMRVMSTATE_GC_CHECK_BEFORE_GC == vmThread->omrVMThread->vmState)) {
 		return true;
 	}
 
@@ -355,7 +355,7 @@ hookGcCycleStart(J9HookInterface** hook, UDATA eventNum, void* eventData, void* 
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
 	UDATA oldVMState = vmThread->omrVMThread->vmState;
-	vmThread->omrVMThread->vmState = J9VMSTATE_GC_CHECK_BEFORE_GC;
+	vmThread->omrVMThread->vmState = OMRVMSTATE_GC_CHECK_BEFORE_GC;
 
 	if (OMR_GC_CYCLE_TYPE_GLOBAL == event->cycleType) {
 		++extensions->globalGcCount;
@@ -419,7 +419,7 @@ hookGcCycleEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void* us
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
 	UDATA oldVMState = vmThread->omrVMThread->vmState;
-	vmThread->omrVMThread->vmState = J9VMSTATE_GC_CHECK_AFTER_GC;
+	vmThread->omrVMThread->vmState = OMRVMSTATE_GC_CHECK_AFTER_GC;
 
 	if (OMR_GC_CYCLE_TYPE_GLOBAL == event->cycleType) {
 		if (!excludeGlobalGc(vmThread)) {

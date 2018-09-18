@@ -44,7 +44,7 @@ my $allGroups = '';
 my $allSubsets = '';
 my $output = '';
 my $graphSpecs = '';
-my $javaVersion = '';
+my $jdkVersion = '';
 my $allImpls = '';
 my $impl = '';
 my $modes_hs = '';
@@ -53,7 +53,7 @@ my %targetGroup = ();
 my $buildList = '';
 
 sub runmkgen {
-	( $projectRootDir, $allLevels, $allGroups, $allSubsets, $output, $graphSpecs, $javaVersion, $allImpls, $impl, my $modesxml, my $ottawacsv, $buildList ) = @_;
+	( $projectRootDir, $allLevels, $allGroups, $allSubsets, $output, $graphSpecs, $jdkVersion, $allImpls, $impl, my $modesxml, my $ottawacsv, $buildList ) = @_;
 
 	$testRoot = $projectRootDir;
 	if ($output) {
@@ -123,7 +123,7 @@ sub generateOnDir {
 		next if $entry eq '.' or $entry eq '..';
 		my $tempExclude = 0;
 		# tmporary exclusion, remove this block when JCL_VERSION separation is removed
-		if (($javaVersion ne "Panama") && ($javaVersion ne "Valhalla")) {
+		if (($jdkVersion ne "Panama") && ($jdkVersion ne "Valhalla")) {
 			my $JCL_VERSION = '';
 			if ( exists $ENV{'JCL_VERSION'} ) {
 				$JCL_VERSION = $ENV{'JCL_VERSION'};
@@ -293,6 +293,11 @@ sub parseXML {
 			}
 
 			my $subsets = getElementsByTag( $testlines, 'subset' );
+			# temporarily support SE version, convert it to JDK_VERSION
+			foreach (my $i=0; $i < @{$subsets}; $i++) {
+				$subsets->[$i] =~ s/^SE(.*)0$/$1/;
+			}
+
 			# defaults to all subsets
 			if (!@{$subsets}) {
 				$subsets = $allSubsets;
@@ -302,8 +307,8 @@ sub parseXML {
 					die "The subset: " . $subset . " for test " . $test{'testCaseName'} . " is not valid, the valid subset strings are " . join(",", @{$allSubsets}) . ".";
 				}
 			}
-			# do not generate make taget if subset doesn't match javaVersion
-			if ( !grep(/^$javaVersion$/, @{$subsets}) ) {
+			# do not generate make taget if subset doesn't match jdkVersion
+			if ( !grep(/^$jdkVersion$/, @{$subsets}) ) {
 				next;
 			}
 			push( @tests, \%test );

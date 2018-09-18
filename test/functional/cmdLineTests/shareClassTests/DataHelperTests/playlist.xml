@@ -41,7 +41,7 @@
 	mv $(Q)$(TESTOUTPUT)$(D)$@$(D)datacaching$(D)datatwo.contents$(D)datatwo.jar$(Q) $(Q)$(TESTOUTPUT)$(D)$@$(D)datacaching$(Q); \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_EXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DCPDL=$(Q)$(P)$(Q) -DSCMODE=204 -DTEST_JVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
-	-config $(Q)$(TEST_RESROOT)$(D)DataHelperTests$(XMLSUFFIX).xml$(Q) -xids all,$(JAVA_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
+	-config $(Q)$(TEST_RESROOT)$(D)DataHelperTests$(XMLSUFFIX).xml$(Q) -xids all,$(JDK_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
 	-nonZeroExitWhenError \
 	-outputLimit 300; \
 	$(TEST_STATUS)</command>
@@ -52,10 +52,10 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE80</subset>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 </playlist>

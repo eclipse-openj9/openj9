@@ -37,7 +37,7 @@
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_EXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DJDK_HOME=$(Q)$(JDK_HOME)$(Q) -DCPDL=$(Q)$(P)$(Q) -DPROPS_DIR=$(Q)$(TEST_RESROOT)$(D)props_win$(Q) -DSCMODE=204 \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)HelperCompatibilityTests$(XMLSUFFIX).xml$(Q) \
-	-xids all,$(JAVA_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
+	-xids all,$(JDK_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
 	-nonZeroExitWhenError \
 	-outputLimit 300; \
 	$(TEST_STATUS)</command>
@@ -49,10 +49,10 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE80</subset>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 	<test>
@@ -69,7 +69,7 @@
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_EXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DJDK_HOME=$(Q)$(JDK_HOME)$(Q) -DCPDL=$(Q)$(P)$(Q) -DPROPS_DIR=$(Q)$(TEST_RESROOT)$(D)props_unix$(Q) -DSCMODE=204 \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)HelperCompatibilityTests$(XMLSUFFIX).xml$(Q) \
-	-xids all,$(JAVA_VERSION),$(JCL_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
+	-xids all,$(JDK_VERSION),$(JCL_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
 	-nonZeroExitWhenError \
 	-outputLimit 300; \
 	$(TEST_STATUS)</command>
@@ -81,10 +81,10 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE80</subset>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 </playlist>

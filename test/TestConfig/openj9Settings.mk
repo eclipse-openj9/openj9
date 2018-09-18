@@ -70,9 +70,9 @@ ifndef NATIVE_TEST_LIBS
 	NATIVE_TEST_LIBS=$(JDK_HOME)$(D)..$(D)native-test-libs$(D)
 endif
 
-# if JAVA_VERSION is below SE110, check for default locations for native test libs
+# if JDK_VERSION is below 11, check for default locations for native test libs
 # otherwise, native test libs are under NATIVE_TEST_LIBS
-ifneq ($(filter SE80 SE90 SE100, $(JAVA_VERSION)),)
+ifneq ($(filter 8 9 10, $(JDK_VERSION)),)
 	ifneq (,$(findstring win,$(SPEC)))
 		JAVA_SHARED_LIBRARIES_DIR:=$(JAVA_BIN)$(D)$(VM_SUBDIR)
 	else

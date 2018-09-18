@@ -30,11 +30,11 @@
 
 	<property name="ascii.workspace.dir" value="${TEST_ROOT}" />
 	<property name="ascii.test.dir" value="${BUILD_ROOT}" />
-	<property name="JAVA_VERSION" value=""/>
+	<property name="JDK_VERSION" value=""/>
 	<property name="JAVA_BIN" value="${JAVA_BIN}" />
 	<echo> JAVA_BIN is ${JAVA_BIN} </echo>
 	<if>
-		<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+		<equals arg1="${JDK_VERSION}" arg2="8"/>
 		<then>
 			<property name="JAVAC" value="${JAVA_BIN}/../../bin/javac" />
 		</then>
@@ -67,11 +67,11 @@
 	</if>
 	<echo> build.list is ${build.list} </echo>
 
-	<target name="build" depends="stage_test_material" description="using ${JAVA_VERSION} compile the source ">
+	<target name="build" depends="stage_test_material" description="using ${JDK_VERSION} to compile the source ">
 		<subant target="">
 			<property name="build.dir" value="subant1.build" />
 			<property name="not.overloaded" value="not.overloaded" />
-			<property name="JAVA_VERSION" value="${JAVA_VERSION}" />
+			<property name="JDK_VERSION" value="${JDK_VERSION}" />
 			<property name="compiler.javac" value="${JAVAC}" />
 			<fileset dir="../../" includes="${build.list}">
 				<exclude name="TEST_*/build.xml" />
@@ -108,9 +108,9 @@
 				<if>
 					<isfalse value="${sdk.present}" />
 					<then>
-						<echo>${JAVA_VERSION} ${JAVA_BIN} is missing</echo>
-						<mkdir dir="${TMP_DIR}/${JAVA_VERSION}"/>
-						<property name="tmp.java.dir" value="${TMP_DIR}/${JAVA_VERSION}" />
+						<echo>${JDK_VERSION} ${JAVA_BIN} is missing</echo>
+						<mkdir dir="${TMP_DIR}/${JDK_VERSION}"/>
+						<property name="tmp.java.dir" value="${TMP_DIR}/${JDK_VERSION}" />
 						<delete dir="${tmp.java.dir}"/>
 						<basename property="jar.filename" file="${SDK_JAR}"/>
 						<copy file="${SDK_JAR}" todir="${tmp.java.dir}"/>

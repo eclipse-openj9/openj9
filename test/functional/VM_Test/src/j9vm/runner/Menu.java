@@ -150,7 +150,7 @@ public static void main(String[] args) {
 				exeName = args[i].substring(5);
 			} else if (args[i].startsWith("-version="))  {
 				if (javaVersion != null)  usage();
-				javaVersion = args[i].substring(9 + 2);
+				javaVersion = args[i].substring(9);
 			} else if (args[i].startsWith("-jar="))  {
 				if (jarName != null)  usage();
 				jarName = args[i].substring(5);
@@ -192,15 +192,15 @@ public static void main(String[] args) {
 	}
 	
 	if (javaVersion == null)  {
-		/* set default java version to 90 */
-		javaVersion = "90";
+		/* set default java version to 9 */
+		javaVersion = "9";
 	}
 	
 	if (jarName == null)  {
 		/* Need to revisit this */
 		jarName = System.getProperty("java.class.path");
 	}
-	if ((bootClassPath == null) && (Integer.parseInt(javaVersion) < 90)) {
+	if ((bootClassPath == null) && (Integer.parseInt(javaVersion) < 9)) {
 		bootClassPath = System.getProperty("sun.boot.class.path");
 	}
 	if (userClassPath == null)  {

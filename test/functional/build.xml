@@ -40,7 +40,7 @@
 	
 	<target name="build_functional" depends="dist_functional">
 		<if>
-			<equals arg1="${JAVA_VERSION}" arg2="Panama"/>
+			<equals arg1="${JDK_VERSION}" arg2="Panama"/>
 			<then>
 				<subant target="">
 					<fileset dir="./">
