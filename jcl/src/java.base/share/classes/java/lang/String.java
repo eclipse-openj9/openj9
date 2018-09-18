@@ -1,6 +1,4 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
-package java.lang;
-
 /*******************************************************************************
  * Copyright (c) 1998, 2018 IBM Corp. and others
  *
@@ -22,6 +20,7 @@ package java.lang;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package java.lang;
 
 import java.io.Serializable;
 
@@ -54,7 +53,6 @@ import java.util.stream.Stream;
  *
  * @see StringBuffer
  */
-
 public final class String implements Serializable, Comparable<String>, CharSequence {
 	
 	/*
@@ -2606,9 +2604,17 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 */
 	public Stream<String> lines() {
 		if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
+			/*[IF Java12]*/
+			return StringLatin1.lines(value, 0, 0);
+			/*[ELSE]*/
 			return StringLatin1.lines(value);
+			/*[ENDIF] Java12*/
 		} else {
+			/*[IF Java12]*/
+			return StringUTF16.lines(value, 0, 0);
+			/*[ELSE]*/
 			return StringUTF16.lines(value);
+			/*[ENDIF] Java12*/
 		}
 	}
 /*[ENDIF] Java11*/
