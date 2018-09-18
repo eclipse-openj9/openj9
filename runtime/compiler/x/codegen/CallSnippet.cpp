@@ -67,12 +67,44 @@ uint8_t *TR::X86PicDataSnippet::encodeConstantPoolInfo(uint8_t *cursor)
    uintptrj_t cpAddr = (uintptrj_t)_methodSymRef->getOwningMethod(cg()->comp())->constantPool();
    *(uintptrj_t *)cursor = cpAddr;
 
-   if (_thunkAddress)
+   uintptr_t inlinedSiteIndex = (uintptr_t)-1;
+   if (_startOfPicInstruction->getNode() != NULL)
+      inlinedSiteIndex = _startOfPicInstruction->getNode()->getInlinedSiteIndex();
+
+   if (_hasJ2IThunkInPicData)
+      {
+      TR_ASSERT(
+         TR::Compiler->target.is64Bit(),
+         "expecting a 64-bit target for thunk relocations");
+
+      auto info =
+         (TR_RelocationRecordInformation *)comp()->trMemory()->allocateMemory(
+            sizeof (TR_RelocationRecordInformation),
+            heapAlloc);
+
+      int offsetToJ2IVirtualThunk = isInterface() ? 0x22 : 0x18;
+
+      info->data1 = cpAddr;
+      info->data2 = inlinedSiteIndex;
+      info->data3 = offsetToJ2IVirtualThunk;
+
+      cg()->addExternalRelocation(
+         new (cg()->trHeapMemory()) TR::ExternalRelocation(
+            cursor,
+            (uint8_t *)info,
+            NULL,
+            TR_J2IVirtualThunkPointer,
+            cg()),
+         __FILE__,
+         __LINE__,
+         _startOfPicInstruction->getNode());
+      }
+   else if (_thunkAddress)
       {
       TR_ASSERT(TR::Compiler->target.is64Bit(), "expecting a 64-bit target for thunk relocations");
       cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
                                                                              *(uint8_t **)cursor,
-                                                                             _startOfPicInstruction->getNode() ? (uint8_t *)_startOfPicInstruction->getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+                                                                             (uint8_t *)inlinedSiteIndex,
                                                                              TR_Thunks, cg()),
                              __FILE__,
                              __LINE__,
@@ -82,7 +114,7 @@ uint8_t *TR::X86PicDataSnippet::encodeConstantPoolInfo(uint8_t *cursor)
       {
       cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
                                                                                   (uint8_t *)cpAddr,
-                                                                                   _startOfPicInstruction->getNode() ? (uint8_t *)_startOfPicInstruction->getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+                                                                                   (uint8_t *)inlinedSiteIndex,
                                                                                    TR_ConstantPool,
                                                                                    cg()),
                              __FILE__,
