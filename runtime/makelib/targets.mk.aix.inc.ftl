@@ -33,6 +33,9 @@ $(UMA_DLLTARGET) : $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
 		$(VMLINK) $(UMA_LINK_PATH) -o $(UMA_DLLTARGET) \
 		$(UMA_OBJECTS) \
 		$(UMA_DLL_LINK_POSTFLAGS)
+ifdef j9vm_uma_gnuDebugSymbols
+	cp $(UMA_DLLTARGET) $(UMA_DLLTARGET).dbg
+endif
 </#assign>
 
 <#assign exe_target_rule>
@@ -73,6 +76,11 @@ ifdef j9vm_uma_supportsIpv6
   CFLAGS += -DIPv6_FUNCTION_SUPPORT
   CXXFLAGS += -DIPv6_FUNCTION_SUPPORT
   CPPFLAGS += -DIPv6_FUNCTION_SUPPORT
+endif
+
+ifdef j9vm_uma_gnuDebugSymbols
+CFLAGS += -g
+CXXFLAGS += -g
 endif
 
 ifdef I5_VERSION

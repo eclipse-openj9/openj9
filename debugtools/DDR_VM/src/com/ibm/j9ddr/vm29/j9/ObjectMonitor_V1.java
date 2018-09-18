@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2015 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -224,7 +224,7 @@ class ObjectMonitor_V1 extends ObjectMonitor
 		blockedThreads = new ArrayList<J9VMThreadPointer>();
 		if(isInflated) {
 			if(OmrBuildFlags.OMR_THR_THREE_TIER_LOCKING) {
-				J9ThreadPointer thread = monitor.blocking();
+				J9ThreadPointer thread = J9ThreadMonitorHelper.getBlockingField(monitor);
 				while(thread.notNull()) {
 					J9VMThreadPointer vmThread = J9ThreadHelper.getVMThread(thread);
 					if(vmThread.notNull()) {
