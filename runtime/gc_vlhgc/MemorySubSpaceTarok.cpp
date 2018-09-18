@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -906,7 +906,7 @@ MM_MemorySubSpaceTarok::collectorExpand(MM_EnvironmentBase *env)
 IDATA
 MM_MemorySubSpaceTarok::performResize(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription)
 {
-	UDATA oldVMState = env->pushVMstate(J9VMSTATE_GC_PERFORM_RESIZE);
+	UDATA oldVMState = env->pushVMstate(OMRVMSTATE_GC_PERFORM_RESIZE);
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 	/* If -Xgc:fvtest=forceTenureResize is specified, then repeat a sequence of 5 expands followed by 5 contracts */	
 	if (extensions->fvtest_forceOldResize) {
@@ -957,7 +957,7 @@ MM_MemorySubSpaceTarok::performResize(MM_EnvironmentBase *env, MM_AllocateDescri
 void
 MM_MemorySubSpaceTarok::checkResize(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, bool _systemGC)
 {
-	UDATA oldVMState = env->pushVMstate(J9VMSTATE_GC_CHECK_RESIZE);
+	UDATA oldVMState = env->pushVMstate(OMRVMSTATE_GC_CHECK_RESIZE);
 	if (!timeForHeapContract(env, allocDescription, _systemGC)) {
 		timeForHeapExpand(env, allocDescription);
 	}

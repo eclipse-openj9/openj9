@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,7 +51,7 @@ protected:
 	virtual void internalPreCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *subSpace, MM_AllocateDescription *allocDescription, U_32 gcCode);
 
 public:
-	virtual UDATA getVMStateID() { return J9VMSTATE_GC_COLLECTOR_CONCURRENTSWEEPGC; };
+	virtual UDATA getVMStateID() { return OMRVMSTATE_GC_COLLECTOR_CONCURRENTSWEEPGC; };
 	
 	static MM_ConcurrentSweepGC *newInstance(MM_EnvironmentBase *env);
 
