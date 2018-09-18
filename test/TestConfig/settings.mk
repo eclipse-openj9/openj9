@@ -55,6 +55,7 @@ else
 export SPEC:=$(SPEC)
 endif
 
+# temporarily support both JAVA_VERSION and JDK_VERSION
 ifeq ($(JAVA_VERSION), SE80)
 	JDK_VERSION:=8
 endif
@@ -69,13 +70,20 @@ ifeq ($(JAVA_VERSION), SE110)
 endif
 
 ifndef JDK_VERSION
-export JDK_VERSION:=8
+	export JDK_VERSION:=8
 else
-export JDK_VERSION:=$(JDK_VERSION)
+	export JDK_VERSION:=$(JDK_VERSION)
+endif
+
+# temporarily support both JAVA_IMPL and JDK_IMPL
+ifndef JDK_IMPL
+	JDK_IMPL=$(JAVA_IMPL)
 endif
 
 ifndef JDK_IMPL
-export JDK_IMPL:=openj9
+	export JDK_IMPL:=openj9
+else
+	export JDK_IMPL:=$(JDK_IMPL)
 endif
 
 ifndef JVM_VERSION
@@ -92,10 +100,10 @@ ifeq ($(JDK_VERSION), 11)
 	OPENJDK_VERSION = openjdk11
 endif
 
-ifeq (hotspot, $(JAVA_IMPL))
+ifeq (hotspot, $(JDK_IMPL))
 	JVM_VERSION = $(OPENJDK_VERSION)
 else 
-	JVM_VERSION = $(OPENJDK_VERSION)-$(JAVA_IMPL)
+	JVM_VERSION = $(OPENJDK_VERSION)-$(JDK_IMPL)
 endif
 
 export JVM_VERSION:=$(JVM_VERSION)
