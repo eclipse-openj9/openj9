@@ -386,6 +386,7 @@ class TR_RelocationRecordConstantPoolWithIndex : public TR_RelocationRecordConst
       TR_OpaqueMethodBlock *getStaticMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpIndex);
       TR_OpaqueMethodBlock *getSpecialMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpIndex);
       TR_OpaqueMethodBlock *getInterfaceMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpIndex, TR_OpaqueMethodBlock *callerMethod);
+      TR_OpaqueMethodBlock *getAbstractMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpIndex, TR_OpaqueMethodBlock *callerMethod);
 
       virtual int32_t bytesInHeaderAndPayload();
    };
@@ -812,6 +813,19 @@ class TR_RelocationRecordInlinedInterfaceMethod: public TR_RelocationRecordInlin
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
    private:
       virtual TR_OpaqueMethodBlock *getMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpindex, TR_OpaqueMethodBlock *callerMethod);
+   };
+
+class TR_RelocationRecordInlinedAbstractMethodWithNopGuard : public TR_RelocationRecordNopGuard
+   {
+   public:
+      TR_RelocationRecordInlinedAbstractMethodWithNopGuard() {}
+      TR_RelocationRecordInlinedAbstractMethodWithNopGuard(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordNopGuard(reloRuntime, record) {}
+      virtual char *name();
+   private:
+      virtual TR_OpaqueMethodBlock *getMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpindex, TR_OpaqueMethodBlock *callerMethod);
+      virtual void updateFailedStats(TR_AOTStats *aotStats);
+      virtual void updateSucceededStats(TR_AOTStats *aotStats);
+      virtual void createAssumptions(TR_RelocationRuntime *reloRuntime, uint8_t *reloLocation);
    };
 
 class TR_RelocationRecordProfiledInlinedMethod : public TR_RelocationRecordInlinedMethod

@@ -484,8 +484,8 @@ bool TR_J9VirtualCallSite::findCallSiteForAbstractClass(TR_InlinerBase* inliner)
    TR_PersistentCHTable *chTable = comp()->getPersistentInfo()->getPersistentCHTable();
    TR_ResolvedMethod *implementer;
 
-   if (!comp()->compileRelocatableCode() && TR::Compiler->cls.isAbstractClass(comp(), _receiverClass) &&!comp()->getOption(TR_DisableAbstractInlining) &&
-               (implementer = chTable->findSingleAbstractImplementer(_receiverClass, _vftSlot, _callerResolvedMethod, comp())))
+   if (TR::Compiler->cls.isAbstractClass(comp(), _receiverClass) &&!comp()->getOption(TR_DisableAbstractInlining) &&
+       (implementer = chTable->findSingleAbstractImplementer(_receiverClass, _vftSlot, _callerResolvedMethod, comp())))
       {
       heuristicTrace(inliner->tracer(),"Found a single Abstract Implementer %p, signature = %s",implementer,inliner->tracer()->traceSignature(implementer));
       TR_VirtualGuardSelection *guard = new (comp()->trHeapMemory()) TR_VirtualGuardSelection(TR_AbstractGuard, TR_MethodTest);

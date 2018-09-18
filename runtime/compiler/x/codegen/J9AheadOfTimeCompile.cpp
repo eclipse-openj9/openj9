@@ -214,6 +214,7 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
       case TR_InlinedVirtualMethod:
       case TR_InlinedInterfaceMethodWithNopGuard:
       case TR_InlinedInterfaceMethod:
+      case TR_InlinedAbstractMethodWithNopGuard:
       case TR_InlinedHCRMethod:
          {
          guard = (TR_VirtualGuard *)relocation->getTargetAddress2();
@@ -242,7 +243,8 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          cursor += SIZEPOINTER;
 
          if (relocation->getTargetKind() == TR_InlinedInterfaceMethodWithNopGuard ||
-             relocation->getTargetKind() == TR_InlinedInterfaceMethod)
+             relocation->getTargetKind() == TR_InlinedInterfaceMethod ||
+             relocation->getTargetKind() == TR_InlinedAbstractMethodWithNopGuard)
             {
             TR_InlinedCallSite *inlinedCallSite = &comp->getInlinedCallSite(inlinedSiteIndex);
             TR_AOTMethodInfo *aotMethodInfo = (TR_AOTMethodInfo *)inlinedCallSite->_methodInfo;
@@ -704,6 +706,7 @@ uint32_t J9::X86::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_Nu
    56,                                              // TR_DebugCounter                        = 59
    8,                                               // TR_ClassUnloadAssumption               = 60
    32,                                              // TR_J2IVirtualThunkPointer              = 61,
+   48,                                              // TR_InlinedAbstractMethodWithNopGuard   = 62,
 #else
 
    12,                                              // TR_ConstantPool                        = 0
@@ -768,6 +771,7 @@ uint32_t J9::X86::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_Nu
    28,                                               // TR_DebugCounter                        = 59
    4,                                               // TR_ClassUnloadAssumption               = 60
    16,                                              // TR_J2IVirtualThunkPointer              = 61,
+   24,                                              // TR_InlinedAbstractMethodWithNopGuard   = 62,
 #endif
    };
 

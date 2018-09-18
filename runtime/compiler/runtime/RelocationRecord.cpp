@@ -1221,6 +1221,61 @@ TR_RelocationRecordConstantPoolWithIndex::getInterfaceMethodFromCP(TR_Relocation
    return calleeMethod;
    }
 
+TR_OpaqueMethodBlock *
+TR_RelocationRecordConstantPoolWithIndex::getAbstractMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpIndex, TR_OpaqueMethodBlock *callerMethod)
+   {
+   TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
+   TR_RelocationRecordInlinedMethodPrivateData *reloPrivateData = &(privateData()->inlinedMethod);
+
+   J9JavaVM *javaVM = reloRuntime->javaVM();
+   TR_J9VMBase *fe = reloRuntime->fej9();
+   TR_Memory *trMemory = reloRuntime->trMemory();
+
+   J9ConstantPool *cp = (J9ConstantPool *) void_cp;
+   J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *)&cp->romConstantPool[cpIndex];
+
+   TR_OpaqueMethodBlock *calleeMethod = NULL;
+   TR_OpaqueClassBlock *abstractClass = NULL;
+   UDATA vTableOffset = (UDATA)-1;
+   int32_t vftSlot = -1;
+
+      {
+      TR::VMAccessCriticalSection getAbstractlMethodFromCP(reloRuntime->fej9());
+      abstractClass = (TR_OpaqueClassBlock *) javaVM->internalVMFunctions->resolveClassRef(reloRuntime->currentThread(),
+                                                                                            cp,
+                                                                                            romMethodRef->classRefCPIndex,
+                                                                                            J9_RESOLVE_FLAG_AOT_LOAD_TIME);
+
+      J9Method *method;
+      vTableOffset = javaVM->internalVMFunctions->resolveVirtualMethodRefInto(reloRuntime->currentThread(),
+                                                                              cp,
+                                                                              cpIndex,
+                                                                              J9_RESOLVE_FLAG_AOT_LOAD_TIME,
+                                                                              &method,
+                                                                              NULL);
+      }
+
+   if (abstractClass)
+      {
+      vftSlot = (int32_t)(-(vTableOffset - J9JIT_INTERP_VTABLE_OFFSET));
+      TR_PersistentCHTable * chTable = reloRuntime->getPersistentInfo()->getPersistentCHTable();
+      TR_ResolvedMethod *callerResolvedMethod = fe->createResolvedMethod(trMemory, callerMethod, NULL);
+
+      TR_ResolvedMethod *calleeResolvedMethod = chTable->findSingleAbstractImplementer(abstractClass, vftSlot, callerResolvedMethod, reloRuntime->comp());
+
+      if (calleeResolvedMethod)
+         {
+         if (!calleeResolvedMethod->virtualMethodIsOverridden())
+            calleeMethod = calleeResolvedMethod->getPersistentIdentifier();
+         else
+            RELO_LOG(reloLogger, 6, "\tgetMethodFromCP: callee method overridden\n");
+         }
+      }
+
+   reloPrivateData->_receiverClass = abstractClass;
+   return calleeMethod;
+   }
+
 // TR_HelperAddress
 char *
 TR_RelocationRecordHelperAddress::name()
@@ -2522,6 +2577,44 @@ TR_OpaqueMethodBlock *
 TR_RelocationRecordInlinedInterfaceMethod::getMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpIndex, TR_OpaqueMethodBlock *callerMethod)
    {
    return getInterfaceMethodFromCP(reloRuntime, void_cp, cpIndex, callerMethod);
+   }
+
+// TR_InlinedAbstractMethodWithNopGuard
+char *
+TR_RelocationRecordInlinedAbstractMethodWithNopGuard::name()
+   {
+   return "TR_InlinedAbstractMethodWithNopGuard";
+   }
+
+TR_OpaqueMethodBlock *
+TR_RelocationRecordInlinedAbstractMethodWithNopGuard::getMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpIndex, TR_OpaqueMethodBlock *callerMethod)
+   {
+   return getAbstractMethodFromCP(reloRuntime, void_cp, cpIndex, callerMethod);
+   }
+
+void
+TR_RelocationRecordInlinedAbstractMethodWithNopGuard::createAssumptions(TR_RelocationRuntime *reloRuntime, uint8_t *reloLocation)
+   {
+   TR_RelocationRecordInlinedMethodPrivateData *reloPrivateData = &(privateData()->inlinedMethod);
+   TR_PersistentCHTable *table = reloRuntime->getPersistentInfo()->getPersistentCHTable();
+   List<TR_VirtualGuardSite> sites(reloRuntime->comp()->trMemory());
+   TR_VirtualGuardSite site;
+   site.setLocation(reloLocation);
+   site.setDestination(reloPrivateData->_destination);
+   sites.add(&site);
+   TR_ClassQueries::addAnAssumptionForEachSubClass(table, table->findClassInfo(reloPrivateData->_receiverClass), sites, reloRuntime->comp());
+   }
+
+void
+TR_RelocationRecordInlinedAbstractMethodWithNopGuard::updateFailedStats(TR_AOTStats *aotStats)
+   {
+   aotStats->abstractMethods.numFailedValidations++;
+   }
+
+void
+TR_RelocationRecordInlinedAbstractMethodWithNopGuard::updateSucceededStats(TR_AOTStats *aotStats)
+   {
+   aotStats->abstractMethods.numSucceededValidations++;
    }
 
 // TR_ProfiledInlinedMethod

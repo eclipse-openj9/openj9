@@ -698,6 +698,7 @@ J9::AheadOfTimeCompile::dumpRelocationData()
          case TR_InlinedSpecialMethodWithNopGuard:
          case TR_InlinedVirtualMethodWithNopGuard:
          case TR_InlinedInterfaceMethodWithNopGuard:
+         case TR_InlinedAbstractMethodWithNopGuard:
          case TR_InlinedHCRMethod:
             cursor++;        // unused field
             if (is64BitTarget)

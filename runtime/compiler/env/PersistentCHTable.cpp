@@ -500,7 +500,7 @@ TR_PersistentCHTable::findSingleAbstractImplementer(
    {
    if (comp->getOption(TR_DisableCHOpts))
       return 0;
-   TR_PersistentClassInfo * classInfo = findClassInfoAfterLocking(thisClass, comp);
+   TR_PersistentClassInfo * classInfo = findClassInfoAfterLocking(thisClass, comp, true);
    if (!classInfo) return 0;
 
    if (TR::Compiler->cls.isInterfaceClass(comp, thisClass))
