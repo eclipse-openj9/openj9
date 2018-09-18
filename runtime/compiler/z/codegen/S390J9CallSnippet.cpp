@@ -501,6 +501,7 @@ TR::S390VirtualUnresolvedSnippet::emitSnippetBody()
 
    cursor = generatePICBinary(cg(), cursor, glueRef);
 
+
    // Method address
    *(uintptrj_t *) cursor = (uintptrj_t) glueRef->getMethodAddress();
    AOTcgDiag1(comp, "add TR_AbsoluteHelperAddress cursor=%x\n", cursor);
@@ -515,12 +516,14 @@ TR::S390VirtualUnresolvedSnippet::emitSnippetBody()
                              __FILE__, __LINE__, callNode);
    cursor += sizeof(uintptrj_t);
 
+   // CP addr
    *(uintptrj_t *) cursor = (uintptrj_t) callNode->getSymbolReference()->getOwningMethod(comp)->constantPool();
 
-   AOTcgDiag1(comp, "add TR_Thunks cursor=%x\n", cursor);
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, *(uint8_t **)cursor, getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_Thunks, cg()),
-                             __FILE__, __LINE__, callNode);
-
+   // J2I relocation information for private nestmate calls
+   auto j2iRelocInfo = reinterpret_cast<TR_RelocationRecordInformation*>(comp->trMemory()->allocateMemory(sizeof(TR_RelocationRecordInformation), heapAlloc));
+   j2iRelocInfo->data1 = *(uintptrj_t *) cursor;                                             // CP address
+   j2iRelocInfo->data2 = (uintptrj_t)(callNode ? callNode->getInlinedSiteIndex() : -1);      // inlined site index
+   uintptrj_t cpAddrPosition = (uintptrj_t)cursor;                                  // for data3 calculation
    cursor += sizeof(uintptrj_t);
 
    //  save CPIndex as sign extended 8 byte value on 64bit as it's assumed in J9 helpers -- def#63837
@@ -541,11 +544,13 @@ TR::S390VirtualUnresolvedSnippet::emitSnippetBody()
 
    // Field used by nestmate private calls
    // J2I thunk address
-   // TODO: leave out the AOT until AOT supports this.
+   // No explicit call to `addExternalReloation` because its relocation info is passed to CP_addr `addExternalReloation` call.
    *(uintptrj_t *) cursor = (uintptrj_t) thunkAddress;
-   // AOTcgDiag1(comp, "add ThunkAddress cursor=%x\n", cursor);
-   // cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_AbsoluteMethodAddress, cg()),
-   //                        __FILE__, __LINE__, callNode);
+   j2iRelocInfo->data3 = (uintptrj_t)cursor - cpAddrPosition;    // data3 is the offset of CP_addr to J2I thunk
+   AOTcgDiag1(comp, "add TR_J2IVirtualThunkPointer cursor=%x\n", cursor);
+   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation((uint8_t*)cpAddrPosition, (uint8_t*)j2iRelocInfo, NULL,
+                                                                                 TR_J2IVirtualThunkPointer, cg()),
+                               __FILE__, __LINE__, callNode);
    cursor += sizeof(uintptrj_t);
 
    // Field used by nestmate private calls
@@ -1026,22 +1031,27 @@ TR::J9S390InterfaceCallDataSnippet::emitSnippetBody()
    getSnippetLabel()->setCodeLocation(cursor);
    TR::Node * callNode = getNode();
 
+
    intptrj_t snippetStart = (intptrj_t)cursor;
 
    // code cache RA
    TR_ASSERT_FATAL(_codeRA != NULL, "Interface Call Data Constant's code return address not initialized.\n");
    *(uintptrj_t *) cursor = (uintptrj_t)_codeRA;
    AOTcgDiag1(comp, "add TR_AbsoluteMethodAddress cursor=%x\n", cursor);
-   cg()->addProjectSpecializedRelocation(cursor, NULL, NULL, TR_AbsoluteMethodAddress,
+   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_AbsoluteMethodAddress, cg()),
                              __FILE__, __LINE__, callNode);
+
    cursor += TR::Compiler->om.sizeofReferenceAddress();
 
    // constant pool
    *(uintptrj_t *) cursor = (uintptrj_t) callNode->getSymbolReference()->getOwningMethod(comp)->constantPool();
 
-   AOTcgDiag1(comp, "add TR_Thunks cursor=%x\n", cursor);
-   cg()->addProjectSpecializedRelocation(cursor, *(uint8_t **)cursor, callNode ? (uint8_t *)(intptr_t)callNode->getInlinedSiteIndex() : (uint8_t *)-1, TR_Thunks,
-                             __FILE__, __LINE__, callNode);
+   // J2I relocation information for private nestmate calls
+   auto j2iRelocInfo = reinterpret_cast<TR_RelocationRecordInformation*>(comp->trMemory()->allocateMemory(sizeof(TR_RelocationRecordInformation), heapAlloc));
+   j2iRelocInfo->data1 = *(uintptrj_t *) cursor;                                             // CP address
+   j2iRelocInfo->data2 = (uintptrj_t)(callNode ? callNode->getInlinedSiteIndex() : -1);      // inlined site index
+   uintptrj_t cpAddrPosition = (uintptrj_t)cursor;                                  // for data3 calculation
+
    cursor += TR::Compiler->om.sizeofReferenceAddress();
 
    //  save CPIndex as sign extended 8 byte value on 64bit as it's assumed in J9 helpers
@@ -1057,12 +1067,16 @@ TR::J9S390InterfaceCallDataSnippet::emitSnippetBody()
    *(intptrj_t *) cursor = 0;
    cursor += TR::Compiler->om.sizeofReferenceAddress();
 
-   // J2I thunk address
-   // TODO: enable AOT once thunk relocation is supported.
+   // J2I thunk address.
+   // Note that J2I thunk relocation is associated with CP addr and the call to `addExternalReloation` uses CP-Addr cursor.
    *(intptrj_t *) cursor = (intptrj_t)_thunkAddress;
-   // AOTcgDiag1(comp, "add TR_AbsoluteMethodAddress cursor=%x\n", cursor);
-   // cg()->addProjectSpecializedRelocation(cursor, NULL, NULL, TR_AbsoluteMethodAddress,
-   //                           __FILE__, __LINE__, callNode);
+   j2iRelocInfo->data3 = (uintptrj_t)cursor - cpAddrPosition;  // data3 is the offset of CP_addr to J2I thunk
+
+   AOTcgDiag1(comp, "add TR_J2IVirtualThunkPointer cursor=%x\n", cursor);
+   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation((uint8_t*)cpAddrPosition, (uint8_t*)j2iRelocInfo, NULL,
+                                                                                 TR_J2IVirtualThunkPointer, cg()),
+                               __FILE__, __LINE__, callNode);
+
    cursor += TR::Compiler->om.sizeofReferenceAddress();
 
    if (getNumInterfaceCallCacheSlots() == 0)
@@ -1085,21 +1099,22 @@ TR::J9S390InterfaceCallDataSnippet::emitSnippetBody()
       cursorlastCachedSlot = cursor;
       *(intptrj_t *) (cursor) =  snippetStart + getFirstSlotOffset() - (2 * TR::Compiler->om.sizeofReferenceAddress());
       AOTcgDiag1(comp, "add TR_AbsoluteMethodAddress cursor=%x\n", cursor);
-      cg()->addProjectSpecializedRelocation(cursor, NULL, NULL, TR_AbsoluteMethodAddress,
+      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_AbsoluteMethodAddress, cg()),
                                 __FILE__, __LINE__, callNode);
+
       cursor += TR::Compiler->om.sizeofReferenceAddress();
 
       // firstSlot
       *(intptrj_t *) (cursor) = snippetStart + getFirstSlotOffset();
       AOTcgDiag1(comp, "add TR_AbsoluteMethodAddress cursor=%x\n", cursor);
-      cg()->addProjectSpecializedRelocation(cursor, NULL, NULL, TR_AbsoluteMethodAddress,
+      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_AbsoluteMethodAddress, cg()),
                                 __FILE__, __LINE__, callNode);
       cursor += TR::Compiler->om.sizeofReferenceAddress();
 
       // lastSlot
       *(intptrj_t *) (cursor) =  snippetStart + getLastSlotOffset();
       AOTcgDiag1(comp, "add TR_AbsoluteMethodAddress cursor=%x\n", cursor);
-      cg()->addProjectSpecializedRelocation(cursor, NULL, NULL, TR_AbsoluteMethodAddress,
+      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_AbsoluteMethodAddress, cg()),
                                 __FILE__, __LINE__, callNode);
       cursor += TR::Compiler->om.sizeofReferenceAddress();
       }
