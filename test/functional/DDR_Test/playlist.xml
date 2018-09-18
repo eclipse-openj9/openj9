@@ -27,7 +27,7 @@
 		<testCaseName>testDDRExt_General_ibm</testCaseName>
 		<command>$(MKTREE) $(REPORTDIR); \
 	cd $(REPORTDIR); \
-	ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DJDK_HOME=${JDK_HOME} -DJAVA_VERSION=${JAVA_VERSION} \
+	ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DJDK_HOME=${JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) \
 	-Dtest.list=$(Q)TestDDRExtensionGeneral$(Q) -DADDITIONALEXPORTS=-showversion -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
@@ -42,10 +42,10 @@
 			<impl>ibm</impl>
 		</impls>
 		<subsets>
-			<subset>SE80</subset>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 
@@ -53,7 +53,7 @@
 		<testCaseName>testDDRExt_General_openj9</testCaseName>
 		<command>$(MKTREE) $(REPORTDIR); \
 	cd $(REPORTDIR); \
-	ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DJDK_HOME=${JDK_HOME} -DJAVA_VERSION=${JAVA_VERSION} \
+	ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DJDK_HOME=${JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) \
 	-Dtest.list=$(Q)TestDDRExtensionGeneral$(Q) -DADDITIONALEXPORTS=-showversion -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
@@ -69,10 +69,10 @@
 			<impl>openj9</impl>
 		</impls>
 		<subsets>
-			<subset>SE80</subset>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 
@@ -80,7 +80,7 @@
 		<testCaseName>testDDRExt_General_win</testCaseName>
 		<command>$(MKTREE) $(REPORTDIR); \
 	cd $(REPORTDIR); \
-	ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DJDK_HOME=${JDK_HOME} -DJAVA_VERSION=${JAVA_VERSION} \
+	ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DJDK_HOME=${JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) \
 	-Dtest.list=$(Q)TestDDRExtensionGeneral$(Q) -DADDITIONALEXPORTS=-showversion -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
@@ -96,10 +96,10 @@
 			<impl>ibm</impl>
 		</impls>
 		<subsets>
-			<subset>SE80</subset>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 </playlist>

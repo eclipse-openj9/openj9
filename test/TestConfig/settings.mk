@@ -55,33 +55,47 @@ else
 export SPEC:=$(SPEC)
 endif
 
-ifndef JAVA_VERSION
-export JAVA_VERSION:=SE90
-else
-export JAVA_VERSION:=$(JAVA_VERSION)
+ifeq ($(JAVA_VERSION), SE80)
+	JDK_VERSION:=8
+endif
+ifeq ($(JAVA_VERSION), SE90)
+	JDK_VERSION:=9
+endif
+ifeq ($(JAVA_VERSION), SE100)
+	JDK_VERSION:=10
+endif
+ifeq ($(JAVA_VERSION), SE110)
+	JDK_VERSION:=11
 endif
 
-ifndef JAVA_IMPL
-export JAVA_IMPL:=openj9
+ifndef JDK_VERSION
+export JDK_VERSION:=8
+else
+export JDK_VERSION:=$(JDK_VERSION)
+endif
+
+ifndef JDK_IMPL
+export JDK_IMPL:=openj9
 endif
 
 ifndef JVM_VERSION
-ifeq ($(JAVA_VERSION), SE80)
-	JDK_VERSION = openjdk8
+ifeq ($(JDK_VERSION), 8)
+	OPENJDK_VERSION = openjdk8
 endif
-ifeq ($(JAVA_VERSION), SE90)
-	JDK_VERSION = openjdk9
+ifeq ($(JDK_VERSION), 9)
+	OPENJDK_VERSION = openjdk9
 endif
-ifeq ($(JAVA_VERSION), SE100)
-	JDK_VERSION = openjdk10
+ifeq ($(JDK_VERSION), 10)
+	OPENJDK_VERSION = openjdk10
 endif
-ifeq ($(JAVA_VERSION), SE110)
-	JDK_VERSION = openjdk11
+ifeq ($(JDK_VERSION), 11)
+	OPENJDK_VERSION = openjdk11
 endif
+
 ifeq (hotspot, $(JAVA_IMPL))
-	JVM_VERSION = $(JDK_VERSION)
+	JVM_VERSION = $(OPENJDK_VERSION)
 else 
-	JVM_VERSION = $(JDK_VERSION)-$(JAVA_IMPL)
+	JVM_VERSION = $(OPENJDK_VERSION)-$(JAVA_IMPL)
 endif
 
 export JVM_VERSION:=$(JVM_VERSION)
@@ -123,7 +137,7 @@ TEST_GROUP=level.*
 # removing " 
 JAVA_BIN_TMP := $(subst ",,$(JAVA_BIN))
 JDK_HOME := $(JAVA_BIN_TMP)$(D)..
-ifeq ($(JAVA_VERSION),SE80)
+ifeq ($(JDK_VERSION),8)
 JDK_HOME := $(JAVA_BIN_TMP)$(D)..$(D)..
 endif
 
@@ -200,7 +214,7 @@ endif
 #######################################
 # include openj9 specific settings
 #######################################
-ifeq ($(JAVA_IMPL), $(filter $(JAVA_IMPL),openj9 ibm))
+ifeq ($(JDK_IMPL), $(filter $(JDK_IMPL),openj9 ibm))
 	include $(TEST_ROOT)$(D)TestConfig$(D)openj9Settings.mk
 endif
 
@@ -232,8 +246,8 @@ setup_%:
 	@$(ECHO)
 	@$(ECHO) Running make $(MAKE_VERSION)
 	@$(ECHO) set TEST_ROOT to $(TEST_ROOT)
-	@$(ECHO) set JAVA_VERSION to $(JAVA_VERSION)
-	@$(ECHO) set JAVA_IMPL to $(JAVA_IMPL)
+	@$(ECHO) set JDK_VERSION to $(JDK_VERSION)
+	@$(ECHO) set JDK_IMPL to $(JDK_IMPL)
 	@$(ECHO) set JVM_VERSION to $(JVM_VERSION)
 	@$(ECHO) set JCL_VERSION to $(JCL_VERSION)
 	@$(ECHO) set JAVA_BIN to $(JAVA_BIN)
@@ -253,7 +267,7 @@ endif
 # Define the EXCLUDE_FILE to be used for temporarily excluding failed tests.
 # This macro is used in /test/Utils/src/org/openj9/test/util/IncludeExcludeTestAnnotationTransformer
 ifndef EXCLUDE_FILE
-	export EXCLUDE_FILE:=$(JVM_TEST_ROOT)$(D)TestConfig$(D)resources$(D)excludes$(D)$(JCL_VERSION)_exclude_$(JAVA_VERSION).txt
+	export EXCLUDE_FILE:=$(JVM_TEST_ROOT)$(D)TestConfig$(D)resources$(D)excludes$(D)$(JCL_VERSION)_exclude_$(JDK_VERSION).txt
 endif
 
 #######################################

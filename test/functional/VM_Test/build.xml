@@ -59,7 +59,7 @@
 		<mkdir dir="${databin}/JarFileUpdateTestRunnerResource2" />
 	</target>
 
-	<target name="compile" depends="init" description="Using ${JAVA_VERSION} java compile the source  ">
+	<target name="compile" depends="init" description="Using java ${JDK_VERSION} to compile the source  ">
 		<echo>Ant version is ${ant.version}</echo>
 		<echo>============COMPILER SETTINGS============</echo>
 		<echo>===fork:				yes</echo>
@@ -80,7 +80,7 @@
 		<property name="addExports" value="--add-modules openj9.sharedclasses --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-exports java.base/com.ibm.oti.util=ALL-UNNAMED --add-exports=java.management/com.ibm.java.lang.management.internal=ALL-UNNAMED --add-exports=jdk.management/com.ibm.lang.management.internal=ALL-UNNAMED" />
 
 		<if>
-			<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+			<equals arg1="${JDK_VERSION}" arg2="8"/>
 			<then>
 				<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
 					<src path="${src}" />
@@ -89,13 +89,13 @@
 				</javac>
 			</then>
 			<elseif>
-					<matches string="${JAVA_VERSION}" pattern="^SE(9|10)0$$" />
+					<matches string="${JDK_VERSION}" pattern="^(9|10)$$" />
 				<then>
 					<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
 						<src path="${src}" />
 						<src path="${src_80}" />
 						<src path="${excludeFiles}"/>
-						<!-- 133609: ClassPathSettingClassLoaderTest failed in SE90 -->
+						<!-- 133609: ClassPathSettingClassLoaderTest failed in jdk9 -->
 						<exclude name="**/ClassPathSettingClassLoader.java" />
 						<exclude name="**/ClassPathSettingClassLoaderTest.java" />
 						<compilerarg line='${addExports}' />
@@ -106,7 +106,7 @@
 				<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
 					<src path="${src}" />
 					<src path="${excludeFiles}"/>
-					<!-- 133609: ClassPathSettingClassLoaderTest failed in SE90 -->
+					<!-- 133609: ClassPathSettingClassLoaderTest failed in jdk9 -->
 					<exclude name="**/ClassPathSettingClassLoader.java" />
 					<exclude name="**/ClassPathSettingClassLoaderTest.java" />
 					<compilerarg line='${addExports}' />

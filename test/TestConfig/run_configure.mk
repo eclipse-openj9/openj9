@@ -41,12 +41,25 @@ ifndef SPEC
 $(error Please provide SPEC that matches the current platform (e.g. SPEC=linux_x86-64))
 endif
 
-ifndef JAVA_VERSION
-export JAVA_VERSION:=SE90
+ifeq ($(JAVA_VERSION), SE80)
+	JDK_VERSION:=8
+endif
+ifeq ($(JAVA_VERSION), SE90)
+	JDK_VERSION:=9
+endif
+ifeq ($(JAVA_VERSION), SE100)
+	JDK_VERSION:=10
+endif
+ifeq ($(JAVA_VERSION), SE110)
+	JDK_VERSION:=11
 endif
 
-ifndef JAVA_IMPL
-export JAVA_IMPL:=openj9
+ifndef JDK_VERSION
+export JDK_VERSION:=8
+endif
+
+ifndef JDK_IMPL
+export JDK_IMPL:=openj9
 endif
 
 autoconfig:
@@ -54,7 +67,7 @@ autoconfig:
 
 autogen: autoconfig
 	cd $(CURRENT_DIR)$(D)scripts$(D)testKitGen; \
-	perl testKitGen.pl --graphSpecs=$(SPEC) --javaVersion=$(JAVA_VERSION) --impl=$(JAVA_IMPL) --buildList=${BUILD_LIST} $(OPTS); \
+	perl testKitGen.pl --graphSpecs=$(SPEC) --jdkVersion=$(JDK_VERSION) --impl=$(JDK_IMPL) --buildList=${BUILD_LIST} $(OPTS); \
 	cd $(CURRENT_DIR);
 
 AUTOGEN_FILES = $(wildcard $(CURRENT_DIR)$(D)jvmTest.mk)

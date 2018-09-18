@@ -32,7 +32,7 @@ public class SoftReferenceAgingTestRunner extends Runner {
 	@Override
 	public String getCustomCommandLineOptions() {
 		String customOptions = super.getCustomCommandLineOptions();
-		if (Integer.parseInt(javaVersion) >= 90) {
+		if (Integer.parseInt(javaVersion) >= 9) {
 			customOptions += " --add-opens=java.base/java.lang.ref=ALL-UNNAMED ";
 		}
 		return customOptions;

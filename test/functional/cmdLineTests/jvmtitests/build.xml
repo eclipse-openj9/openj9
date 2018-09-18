@@ -52,7 +52,7 @@
 		<echo>===destdir:                      ${build}</echo>
 
 		<if>
-			<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+			<equals arg1="${JDK_VERSION}" arg2="8"/>
 			<then>
 				<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src}" />

@@ -116,7 +116,7 @@
 
 		<!-- compile sources -->
 		<if>
-			<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+			<equals arg1="${JDK_VERSION}" arg2="8"/>
 			<then>
 				<javac srcdir="${sharedClassTestClasses_srddir}/Alphabet" classpath="${build}:" destdir="${build}/Alphabet" fork="true" executable="${compiler.javac}" debug="on" debuglevel="lines,vars,source">
 					<src path="${SharedClassUtils_srddir}"/>

@@ -36,7 +36,7 @@
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -Xint \
 	-cp $(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
-	j9vm.runner.Menu A -exe=$(Q)$(JAVA_BIN_TMP)$(D)java $(JVM_OPTIONS) -Xdump$(Q) -version=$(JAVA_VERSION) -jar=$(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(Q) -xlist=$(Q)$(TEST_RESROOT)$(D)j9vm.xml$(Q) \
+	j9vm.runner.Menu A -exe=$(Q)$(JAVA_BIN_TMP)$(D)java $(JVM_OPTIONS) -Xdump$(Q) -version=$(JDK_VERSION) -jar=$(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(Q) -xlist=$(Q)$(TEST_RESROOT)$(D)j9vm.xml$(Q) \
 	-xids=all,$(PLATFORM); \
 	$(TEST_STATUS)</command>
 		<levels>
@@ -46,10 +46,10 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE80</subset>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 
@@ -73,10 +73,10 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE80</subset>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 
@@ -94,10 +94,10 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE80</subset>
-			<subset>SE90</subset>
-			<subset>SE100</subset>
-			<subset>SE110</subset>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 	<test>
@@ -117,7 +117,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE80</subset>
+			<subset>8</subset>
 		</subsets>
 		<disabled>excluded OpenJ9 tests</disabled>
 	</test>
@@ -135,7 +135,7 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE80</subset>
+			<subset>8</subset>
 		</subsets>
 		
 	<disabled>excluded OpenJ9 tests</disabled>

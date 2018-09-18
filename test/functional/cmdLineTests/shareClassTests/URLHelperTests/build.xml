@@ -77,7 +77,7 @@
 			<fileset dir="${src}/APITests/"/>
 		</copy>
 		<if>
-			<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+			<equals arg1="${JDK_VERSION}" arg2="8"/>
 			<then>
 				<javac srcdir="${build}/APITests" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
 					<src path="${SharedClassUtils_srddir}"/>
@@ -100,7 +100,7 @@
 			<fileset dir="${src}/ClassPathMatchingTests/"/>
 		</copy>
 		<if>
-			<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+			<equals arg1="${JDK_VERSION}" arg2="8"/>
 			<then>
 				<javac srcdir="${build}/ClassPathMatchingTests" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
 					<src path="${SharedClassUtils_srddir}"/>
