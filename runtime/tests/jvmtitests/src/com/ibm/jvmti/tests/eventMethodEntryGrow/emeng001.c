@@ -96,7 +96,7 @@ cbMethodEntry(jvmtiEnv *jvmti_env, JNIEnv* jni_env, jthread thread, jmethodID me
 			return;
 		}
 	}
-	(*jvmti_env)->Deallocate(jvmti_env, name_ptr);
+	(*jvmti_env)->Deallocate(jvmti_env, (unsigned char *)name_ptr);
 
 	return;
 }

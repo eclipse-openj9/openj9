@@ -56,7 +56,7 @@ getChildInfo(JNIEnv *jni_env, jthreadGroup *group)
 	}
 
 	if (JNI_OK == (*jvmti_env)->GetThreadGroupInfo(jvmti_env, *group, &groupInfo)) {
-		(*jvmti_env)->Deallocate(jvmti_env, groupInfo.name);
+		(*jvmti_env)->Deallocate(jvmti_env, (unsigned char *)groupInfo.name);
 	}
 
 	if (JNI_OK == (*jvmti_env)->GetThreadGroupChildren(jvmti_env, *group, &thread_cnt, &threads_p, &group_cnt, &groups_p)) {
@@ -68,7 +68,7 @@ getChildInfo(JNIEnv *jni_env, jthreadGroup *group)
 
 		for (i = 1; i <= thread_cnt; i++) {
 			if (JNI_OK == (*jvmti_env)->GetThreadInfo(jvmti_env, *thread_ptr, &threadInfo)) {
-				(*jvmti_env)->Deallocate(jvmti_env, threadInfo.name);
+				(*jvmti_env)->Deallocate(jvmti_env, (unsigned char *)threadInfo.name);
 			}
 		}
 
@@ -76,8 +76,8 @@ getChildInfo(JNIEnv *jni_env, jthreadGroup *group)
 			getChildInfo(jni_env, group_ptr);
 			group_ptr++;
 		}
-		(*jvmti_env)->Deallocate(jvmti_env, (char *) groups_p);
-		(*jvmti_env)->Deallocate(jvmti_env, (char *) threads_p);
+		(*jvmti_env)->Deallocate(jvmti_env, (unsigned char *)groups_p);
+		(*jvmti_env)->Deallocate(jvmti_env, (unsigned char *)threads_p);
 
 	}
 }
