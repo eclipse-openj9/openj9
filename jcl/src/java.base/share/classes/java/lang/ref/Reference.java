@@ -88,6 +88,12 @@ public abstract class Reference<T> extends Object {
 			  }
 			});
 	}
+	
+	/* The method waitForReferenceProcessing() is not used directly, just adapt for openjdk regression tests for TLS 1.3 */
+    private static boolean waitForReferenceProcessing() throws InterruptedException {
+    		return waitForReferenceProcessingImpl();
+    }
+
 	/*[ELSE]
 	static {
 		SharedSecrets.setJavaLangRefAccess(new JavaLangRefAccess() {
