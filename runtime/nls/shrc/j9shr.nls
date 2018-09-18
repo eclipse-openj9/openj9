@@ -2955,7 +2955,7 @@ J9NLS_SHRC_CM_PRINTSTATS_CACHE_CREATED_WITH.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_CACHE_CREATED_WITH.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG=The cache name is too long when the user name is included. There are %d bytes left in this buffer, and your user name is %d bytes.
+J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG=The cache name is to long when the user name is included. There are %d bytes left in this buffer, and your user name is %d bytes.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG.sample_input_1=23
 J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG.sample_input_2=45
