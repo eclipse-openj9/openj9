@@ -459,7 +459,7 @@ sub copy_groupname_err_msg {
 
 # error msg to indicate that the cache name could not accomodate the expansion of %u
 sub copy_username_err_msg {
-	return "The cache name is to long when the user name is included";
+	return "The cache name is too long when the user name is included";
 }
 
 sub get_short_string_for_user{

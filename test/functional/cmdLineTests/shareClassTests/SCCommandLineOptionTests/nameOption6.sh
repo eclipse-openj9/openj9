@@ -34,7 +34,7 @@ if [ ! -e $TESTSCRIPT.out ]
 then
     echo $TESTSCRIPT: TEST FAILED: No file created
 else
-    if( grep "The cache name is to long when the user name is included." $TESTSCRIPT.out ) 
+    if( grep "The cache name is too long when the user name is included." $TESTSCRIPT.out ) 
     then
         echo TEST PASSED
 	else

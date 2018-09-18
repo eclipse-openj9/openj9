@@ -36,7 +36,7 @@ set NAME=%%u%%u%%u%%u%%u%%u%%u%%u%%u%%u%%u%%u%%u%%u%%u%%u
 %1\java -Xshareclasses:name=%NAME% HelloWorld  2> %TESTSCRIPT%.out
 
 if exist %TESTSCRIPT%.out (
-    %1\java SimpleGrep "The cache name is to long when the user name is included." %TESTSCRIPT%.out
+    %1\java SimpleGrep "The cache name is too long when the user name is included." %TESTSCRIPT%.out
 ) else (
     echo %TESTSCRIPT%: TEST FAILED: No file created
 )
