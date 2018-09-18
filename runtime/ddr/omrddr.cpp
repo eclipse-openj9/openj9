@@ -24,6 +24,7 @@
 #include "../compiler/env/jittypes.h"
 #include "hashtable_api.h"
 #include "omr.h"
+#include "omrthread_generated.h"
 #include "omrtrace.h"
 #include "ute_core.h"
 #include "ddrhelp.h"
@@ -32,6 +33,7 @@
 
 #define OMR_DdrDebugLink(type) DdrDebugLink(omr, type)
 
+OMR_DdrDebugLink(J9AbstractThread)
 OMR_DdrDebugLink(J9HashTable)
 OMR_DdrDebugLink(J9HashTableState)
 OMR_DdrDebugLink(OMR_TraceThread)

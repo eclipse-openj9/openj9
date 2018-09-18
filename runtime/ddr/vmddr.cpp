@@ -32,6 +32,7 @@
 
 #define VM_DdrDebugLink(type) DdrDebugLink(vm, type)
 
+VM_DdrDebugLink(CacheletHints)
 VM_DdrDebugLink(CacheletWrapper)
 VM_DdrDebugLink(CharArrayWrapper)
 VM_DdrDebugLink(J9DbgROMClassBuilder)

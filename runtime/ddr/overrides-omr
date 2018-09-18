@@ -35,6 +35,10 @@ fieldoverride.CLimits.DDR_UINT_MAX=UINT_MAX
 fieldoverride.CLimits.DDR_ULONG_MAX=ULONG_MAX
 fieldoverride.CLimits.DDR_USHRT_MAX=USHRT_MAX
 
+#AIX perf objects
+fieldoverride.perfstat_cpu_t.wait=wait_field
+fieldoverride.perfstat_cpu_total_t.wait=wait_field
+
 typeoverride.semun.__buf=UDATA
 typeoverride.semun.buf=UDATA
 

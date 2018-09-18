@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,7 +39,8 @@ public class SystemMonitorThreeTier_V1 extends SystemMonitor
 	@Override
 	public boolean isContended() throws CorruptDataException
 	{
-		return monitor.blocking().notNull();
+		J9ThreadPointer blocking = J9ThreadMonitorHelper.getBlockingField(monitor);
+		return blocking.notNull();
 	}
 
 	private static List<J9ThreadPointer> threadListHelper(J9ThreadPointer thread) throws CorruptDataException
@@ -61,7 +62,7 @@ public class SystemMonitorThreeTier_V1 extends SystemMonitor
 	@Override
 	public List<J9ThreadPointer> getBlockedThreads() throws CorruptDataException
 	{
-		return threadListHelper(monitor.blocking());
+		J9ThreadPointer blocking = J9ThreadMonitorHelper.getBlockingField(monitor);
+		return threadListHelper(blocking);
 	}
-	
 }

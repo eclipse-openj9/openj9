@@ -1857,8 +1857,8 @@ j9sock_getopt_sockaddr(struct J9PortLibrary *portLibrary, j9socket_t socketP, in
 
 	/* if IPv4 the OS returns in_addr, if IPv6, value of interface index is returned */
 	typedef union byte_or_int {
-		uint8_t byte;
-		uint32_t integer;
+		uint8_t byte_val;
+		uint32_t integer_val;
 	} value;
 	value val;
 	socklen_t optlen = sizeof(val);
@@ -1888,13 +1888,13 @@ j9sock_getopt_sockaddr(struct J9PortLibrary *portLibrary, j9socket_t socketP, in
 	if (J9ADDR_FAMILY_AFINET6 == portableFamily) {
 		if (optlen == sizeof(uint8_t)) {
 			/* lookup the address with the interface index */
-			int32_t result = lookupIPv6AddressFromIndex(portLibrary, val.byte, (j9sockaddr_t) sockaddr);
+			int32_t result = lookupIPv6AddressFromIndex(portLibrary, val.byte_val, (j9sockaddr_t) sockaddr);
 			if (0 != result){
 				return result;
 			}
 		} else if (optlen == sizeof(struct in_addr)){
 			/* if optlen is 4, address is IPv4 */
-			sockaddr->sin_addr.s_addr = val.integer;
+			sockaddr->sin_addr.s_addr = val.integer_val;
 		} else {
 			Trc_PRT_sock_j9sock_getopt_sockaddr_address_length_invalid_Exit(portableFamily);
 			return J9PORT_ERROR_SOCKET_OPTARGSINVALID;
@@ -1902,7 +1902,7 @@ j9sock_getopt_sockaddr(struct J9PortLibrary *portLibrary, j9socket_t socketP, in
 	} else if (J9ADDR_FAMILY_AFINET4 == portableFamily) {
 		/* portableFamily is AFINET4 when preferIPv4Stack=true */
 		if (optlen == sizeof(struct in_addr)) {
-			sockaddr->sin_addr.s_addr = val.integer;
+			sockaddr->sin_addr.s_addr = val.integer_val;
 		} else {
 			Trc_PRT_sock_j9sock_getopt_sockaddr_address_length_invalid_Exit(portableFamily);
 			return J9PORT_ERROR_SOCKET_OPTARGSINVALID;
