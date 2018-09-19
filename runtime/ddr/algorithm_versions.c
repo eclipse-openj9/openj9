@@ -39,6 +39,7 @@
 #define ALG_ROM_HELP_VERSION 1
 #define FOUR_BYTE_OFFSETS_VERSION 1
 #define ALG_VM_VTABLE_VERSION 1
+#define ALG_VM_ITABLE_VERSION 1
 
 J9DDRConstantTableBegin(DDRAlgorithmVersions)
 	J9DDRConstantTableEntryWithValue("VM_MAJOR_VERSION", VM_MAJOR_VERSION)
@@ -55,6 +56,7 @@ J9DDRConstantTableBegin(DDRAlgorithmVersions)
 	J9DDRConstantTableEntryWithValue("ALG_ROM_HELP_VERSION", ALG_ROM_HELP_VERSION)
 	J9DDRConstantTableEntryWithValue("FOUR_BYTE_OFFSETS_VERSION", FOUR_BYTE_OFFSETS_VERSION)
 	J9DDRConstantTableEntryWithValue("ALG_VM_VTABLE_VERSION", ALG_VM_VTABLE_VERSION)
+	J9DDRConstantTableEntryWithValue("ALG_VM_ITABLE_VERSION", ALG_VM_ITABLE_VERSION)
 J9DDRConstantTableEnd
 
 J9DDRStructTableBegin(AlgorithmVersions)
