@@ -1106,7 +1106,8 @@ J9::Options::fePreProcess(void * base)
          case j9gc_modron_wrtbar_cardmark:               wrtbarMode = TR_WrtbarCardMark; break;
          case j9gc_modron_wrtbar_cardmark_and_oldcheck:  wrtbarMode = TR_WrtbarCardMarkAndOldCheck; break;
          case j9gc_modron_wrtbar_cardmark_incremental:   wrtbarMode = TR_WrtbarCardMarkIncremental; break;
-         case j9gc_modron_wrtbar_realtime:               wrtbarMode = TR_WrtbarRealTime; break;
+         case j9gc_modron_wrtbar_satb:
+         case j9gc_modron_wrtbar_satb_and_oldcheck:      wrtbarMode = TR_WrtbarRealTime; break;
          }
 
 #if defined(J9VM_GC_HEAP_CARD_TABLE)

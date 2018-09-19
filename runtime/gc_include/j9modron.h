@@ -47,7 +47,8 @@ typedef enum {
 	j9gc_modron_wrtbar_cardmark = gc_modron_wrtbar_cardmark,
 	j9gc_modron_wrtbar_cardmark_incremental = gc_modron_wrtbar_cardmark_incremental,
 	j9gc_modron_wrtbar_cardmark_and_oldcheck = gc_modron_wrtbar_cardmark_and_oldcheck,
-	j9gc_modron_wrtbar_realtime = gc_modron_wrtbar_realtime,
+	j9gc_modron_wrtbar_satb = gc_modron_wrtbar_satb,
+	j9gc_modron_wrtbar_satb_and_oldcheck = gc_modron_wrtbar_satb_and_oldcheck,
 	j9gc_modron_wrtbar_count = gc_modron_wrtbar_count
 } J9WriteBarrierType;
 

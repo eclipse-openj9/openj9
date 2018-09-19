@@ -100,7 +100,7 @@
 #include "SizeClasses.hpp"
 #endif /* J9VM_GC_SEGRGATED_HEAP */
 #if defined(J9VM_GC_STACCATO)
-#include "RememberedSetWorkPackets.hpp"
+#include "RememberedSetSATB.hpp"
 #endif /* J9VM_GC_STACCATO */
 #include "Scavenger.hpp"
 #include "StringTable.hpp"

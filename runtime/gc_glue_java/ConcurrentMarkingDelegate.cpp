@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -91,6 +91,37 @@ MM_ConcurrentMarkingDelegate::signalThreadsToTraceStacks(MM_EnvironmentBase *env
 	GC_VMInterface::unlockVMThreadList(extensions);
 
 	_collector->getConcurrentGCStats()->setThreadsToScanCount(threadCount);
+}
+
+void
+MM_ConcurrentMarkingDelegate::signalThreadsToActivateWriteBarrier(MM_EnvironmentBase *env)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	GC_VMInterface::lockVMThreadList(extensions);
+
+	J9VMThread *walkThread;
+	GC_VMThreadListIterator vmThreadListIterator(_javaVM);
+	while ((walkThread = vmThreadListIterator.nextVMThread()) != NULL) {
+		walkThread->privateFlags |= J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE;
+	}
+	GC_VMInterface::unlockVMThreadList(extensions);
+}
+
+void
+MM_ConcurrentMarkingDelegate::signalThreadsToDeactivateWriteBarrier(MM_EnvironmentBase *env)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(_javaVM);
+	if (extensions->optimizeConcurrentWB) {
+		GC_VMInterface::lockVMThreadList(extensions);
+		GC_VMThreadListIterator vmThreadListIterator(_javaVM);
+		J9VMThread *walkThread;
+
+		/* Reset vmThread flag so mutators don't dirty cards or run write barriers until next concurrent KO */
+		while ((walkThread = vmThreadListIterator.nextVMThread()) != NULL) {
+			walkThread->privateFlags &= ~J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE;
+		}
+		GC_VMInterface::unlockVMThreadList(extensions);
+	}
 }
 
 void

@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,7 @@
 #include "IncrementalParallelTask.hpp"
 #include "LockingFreeHeapRegionList.hpp"
 #include "ModronTypes.hpp"
-#include "RememberedSetWorkPackets.hpp"
+#include "RememberedSetSATB.hpp"
 #include "StaccatoAccessBarrier.hpp"
 #include "StaccatoGC.hpp"
 #include "RealtimeMarkingScheme.hpp"
@@ -70,8 +70,8 @@ MM_StaccatoGC::initialize(MM_EnvironmentBase *env)
 		return false;
 	}
 	
- 	_extensions->staccatoRememberedSet = MM_RememberedSetWorkPackets::newInstance(env, _workPackets);
- 	if (NULL == _extensions->staccatoRememberedSet) {
+ 	_extensions->sATBBarrierRememberedSet = MM_RememberedSetSATB::newInstance(env, _workPackets);
+ 	if (NULL == _extensions->sATBBarrierRememberedSet) {
  		return false;
  	}
  	
@@ -81,9 +81,9 @@ MM_StaccatoGC::initialize(MM_EnvironmentBase *env)
 void
 MM_StaccatoGC::tearDown(MM_EnvironmentBase *env)
 {
-	if (NULL != _extensions->staccatoRememberedSet) {
-		_extensions->staccatoRememberedSet->kill(env);
-		_extensions->staccatoRememberedSet = NULL;
+	if (NULL != _extensions->sATBBarrierRememberedSet) {
+		_extensions->sATBBarrierRememberedSet->kill(env);
+		_extensions->sATBBarrierRememberedSet = NULL;
 	}
 	
 	MM_RealtimeGC::tearDown(env);
@@ -106,7 +106,7 @@ void
 MM_StaccatoGC::enableWriteBarrier(MM_EnvironmentBase* env)
 {
 	MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(env);
-	extensions->staccatoRememberedSet->restoreGlobalFragmentIndex(env);
+	extensions->sATBBarrierRememberedSet->restoreGlobalFragmentIndex(env);
 }
 
 /**
@@ -116,7 +116,7 @@ void
 MM_StaccatoGC::disableWriteBarrier(MM_EnvironmentBase* env)
 {
 	MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(env);
-	extensions->staccatoRememberedSet->preserveGlobalFragmentIndex(env);
+	extensions->sATBBarrierRememberedSet->preserveGlobalFragmentIndex(env);
 }
 
 /**
@@ -167,7 +167,7 @@ MM_StaccatoGC::flushRememberedSet(MM_EnvironmentRealtime *env)
 {
 	if (_workPackets->inUsePacketsAvailable(env)) {
 		_workPackets->moveInUseToNonEmpty(env);
-		_extensions->staccatoRememberedSet->flushFragments(env);
+		_extensions->sATBBarrierRememberedSet->flushFragments(env);
 	}
 }
 

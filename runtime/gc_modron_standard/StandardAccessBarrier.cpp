@@ -63,6 +63,29 @@ MM_StandardAccessBarrier::newInstance(MM_EnvironmentBase *env)
 	return barrier;
 }
 
+/**
+ * Enables the double barrier on the provided thread.
+ */
+void
+MM_StandardAccessBarrier::setDoubleBarrierActiveOnThread(MM_EnvironmentBase* env)
+{
+	MM_GCExtensions::getExtensions(env)->sATBBarrierRememberedSet->preserveLocalFragmentIndex(env, &(((J9VMThread *)env->getLanguageVMThread())->sATBBarrierRememberedSetFragment));
+}
+
+void
+MM_StandardAccessBarrier::initializeForNewThread(MM_EnvironmentBase* env)
+{
+#if defined(OMR_GC_REALTIME)
+	if (_extensions->configuration->isSnapshotAtTheBeginningBarrierEnabled()) {
+
+		_extensions->sATBBarrierRememberedSet->initializeFragment(env, &(((J9VMThread *)env->getLanguageVMThread())->sATBBarrierRememberedSetFragment));
+		if (isDoubleBarrierActive()) {
+			setDoubleBarrierActiveOnThread(env);
+		}
+	}
+#endif /* OMR_GC_REALTIME */
+}
+
 bool 
 MM_StandardAccessBarrier::initialize(MM_EnvironmentBase *env)
 {
@@ -93,12 +116,121 @@ MM_StandardAccessBarrier::tearDown(MM_EnvironmentBase *env)
 }
 
 /**
+ * Unmarked, heap reference, about to be deleted (or overwritten), while marking
+ * is in progress is to be remembered for later marking and scanning.
+ */
+void
+MM_StandardAccessBarrier::rememberObjectToRescan(MM_EnvironmentBase *env, J9Object *object)
+{
+	MM_ParallelGlobalGC *globalCollector = (MM_ParallelGlobalGC *)_extensions->getGlobalCollector();
+
+	if (globalCollector->getMarkingScheme()->markObject(env, object, true)) {
+		rememberObjectImpl(env, object);
+	}
+}
+
+/**
+ * Unmarked, heap reference, about to be deleted (or overwritten), while marking
+ * is in progress is to be remembered for later marking and scanning.
+ * This method is called by MM_StandardAccessBarrier::rememberObject()
+ */
+void
+MM_StandardAccessBarrier::rememberObjectImpl(MM_EnvironmentBase *env, J9Object* object)
+{
+	J9VMThread *vmThread = (J9VMThread *)env->getLanguageVMThread();
+	_extensions->sATBBarrierRememberedSet->storeInFragment(env, &vmThread->sATBBarrierRememberedSetFragment, (UDATA *)object);
+}
+
+
+bool
+MM_StandardAccessBarrier::preObjectStoreImpl(J9VMThread *vmThread, J9Object *destObject, fj9object_t *destAddress, J9Object *value, bool isVolatile)
+{
+	MM_EnvironmentBase* env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
+
+	if (isSATBBarrierActive(env)) {
+		if (NULL != destObject) {
+			if (isDoubleBarrierActiveOnThread(vmThread)) {
+				rememberObjectToRescan(env, value);
+			}
+
+			J9Object *oldObject = NULL;
+			protectIfVolatileBefore(vmThread, isVolatile, true, false);
+			oldObject = mmPointerFromToken(vmThread, *destAddress);
+			protectIfVolatileAfter(vmThread, isVolatile, true, false);
+			rememberObjectToRescan(env, oldObject);
+		}
+	}
+
+	return true;
+}
+
+bool
+MM_StandardAccessBarrier::preObjectStoreImpl(J9VMThread *vmThread, J9Object **destAddress, J9Object *value, bool isVolatile)
+{
+	MM_EnvironmentBase* env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
+
+	if (isSATBBarrierActive(env)) {
+		if (isDoubleBarrierActiveOnThread(vmThread)) {
+			rememberObjectToRescan(env, value);
+		}
+		J9Object* oldObject = NULL;
+		protectIfVolatileBefore(vmThread, isVolatile, true, false);
+		oldObject = *destAddress;
+		protectIfVolatileAfter(vmThread, isVolatile, true, false);
+		rememberObjectToRescan(env, oldObject);
+	}
+
+	return true;
+}
+/**
+ * @copydoc MM_ObjectAccessBarrier::preObjectStore()
+ *
+ * Metronome uses a snapshot-at-the-beginning algorithm, but with a fuzzy snapshot in the
+ * sense that threads are allowed to run during the root scan.  This requires a "double
+ * barrier."  The barrier is active from the start of root scanning through the end of
+ * tracing.  For an unscanned thread performing a store, the new value is remembered by
+ * the collector.  For any thread performing a store (whether scanned or not), the old
+ * value is remembered by the collector before being overwritten (thus this barrier must be
+ * positioned as a pre-store barrier).  For the latter ("Yuasa barrier") aspect of the
+ * double barrier, only the first overwritten value needs to be remembered (remembering
+ * others is harmless but not needed), and so we omit synchronization on the reading of the
+ * old value.
+ **/
+bool
+MM_StandardAccessBarrier::preObjectStore(J9VMThread *vmThread, J9Object *destObject, fj9object_t *destAddress, J9Object *value, bool isVolatile)
+{
+	return preObjectStoreImpl(vmThread, destObject, destAddress, value, isVolatile);
+}
+
+/**
+ * @copydoc MM_MetronomeAccessBarrier::preObjectStore()
+ *
+ * Used for stores into classes
+ */
+bool
+MM_StandardAccessBarrier::preObjectStore(J9VMThread *vmThread, J9Object *destClass, J9Object **destAddress, J9Object *value, bool isVolatile)
+{
+	return preObjectStoreImpl(vmThread, destAddress, value, isVolatile);
+}
+
+/**
+ * @copydoc MM_MetronomeAccessBarrier::preObjectStore()
+ *
+ * Used for stores into internal structures
+ */
+bool
+MM_StandardAccessBarrier::preObjectStore(J9VMThread *vmThread, J9Object **destAddress, J9Object *value, bool isVolatile)
+{
+	return preObjectStoreImpl(vmThread, destAddress, value, isVolatile);
+}
+/**
  * Called after an object is stored into another object.
  */
 void
 MM_StandardAccessBarrier::postObjectStore(J9VMThread *vmThread, J9Object *destObject, fj9object_t *destAddress, J9Object *value, bool isVolatile)
 {
 	postObjectStoreImpl(vmThread, destObject, value);
+
 }
 
 /**
@@ -159,9 +291,7 @@ MM_StandardAccessBarrier::postObjectStoreImpl(J9VMThread *vmThread, J9Object *ds
 
 #if defined(OMR_GC_MODRON_CONCURRENT_MARK)
 		/* Call the concurrent write barrier if required */
-		if(_extensions->concurrentMark &&
-				(vmThread->privateFlags & J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE) &&
-				_extensions->isOld(dstObject)) {
+		if(isIncrementalUpdateBarrierActive(vmThread) && _extensions->isOld(dstObject)) {
 			J9ConcurrentWriteBarrierStore(vmThread->omrVMThread, dstObject, srcObject);
 		}
 #endif /* OMR_GC_MODRON_CONCURRENT_MARK */
@@ -481,6 +611,10 @@ I_32
 MM_StandardAccessBarrier::backwardReferenceArrayCopyIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots)
 {
 	I_32 retValue = ARRAY_COPY_NOT_DONE;
+	//TODO SATB re-enable opt?
+	if (_extensions->configuration->isSnapshotAtTheBeginningBarrierEnabled()) {
+		return retValue;
+	}
 
 	if(0 == lengthInSlots) {
 		retValue = ARRAY_COPY_SUCCESSFUL;
@@ -507,7 +641,12 @@ MM_StandardAccessBarrier::backwardReferenceArrayCopyIndex(J9VMThread *vmThread, 
 I_32
 MM_StandardAccessBarrier::forwardReferenceArrayCopyIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots)
 {
+	//TODO SATB re-enable opt
 	I_32 retValue = ARRAY_COPY_NOT_DONE;
+
+	if (_extensions->configuration->isSnapshotAtTheBeginningBarrierEnabled()) {
+		return retValue;
+	}
 
 	if(0 == lengthInSlots) {
 		retValue = ARRAY_COPY_SUCCESSFUL;
