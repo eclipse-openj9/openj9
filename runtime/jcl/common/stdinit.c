@@ -948,13 +948,22 @@ jobject getPropertyList(JNIEnv *env);
 jint
 completeInitialization(J9JavaVM * vm)
 {
+	jint result = JNI_OK;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	vmFuncs->internalEnterVMFromJNI(vm->mainThread);
-	vmFuncs->sendCompleteInitialization(vm->mainThread, 0, 0, 0, 0);
-	vmFuncs->internalReleaseVMAccess(vm->mainThread);
-
-	if (vm->mainThread->currentException) {
-		return JNI_ERR;
+	J9VMThread *currentThread = vm->mainThread;
+	
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	vmFuncs->sendCompleteInitialization(currentThread, 0, 0, 0, 0);
+	vmFuncs->internalReleaseVMAccess(currentThread);
+	
+	if (NULL == currentThread->currentException) {
+		/* ensure ClassLoader.applicationClassLoader updated via system property java.system.class.loader is updated in VM as well */
+		internalInitializeJavaLangClassLoader((JNIEnv*)currentThread);
+		if (NULL != currentThread->currentException) {
+			result = JNI_ERR;
+		}
+	} else {
+		result = JNI_ERR;
 	}
-	return JNI_OK;
+	return result;
 }
