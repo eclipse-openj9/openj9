@@ -232,11 +232,12 @@ final class Access implements JavaLangAccess {
 		return classLoader.createOrGetServicesCatalog();
 	}
 	
-	/* removed in build 160 */
+/*[IF !Java10]*/
 	@Deprecated
 	public ServicesCatalog getServicesCatalog(ClassLoader classLoader) {
 		return classLoader.getServicesCatalog();
 	}
+/*[ENDIF]*/	
 
 	public String fastUUID(long param1, long param2) {
 		return Long.fastUUID(param1, param2); 
@@ -263,8 +264,6 @@ final class Access implements JavaLangAccess {
 		return classLoader.packages();
 	}
 	
-	/* removed in build 160 */
-	@Deprecated
 	public ConcurrentHashMap<?, ?> createOrGetClassLoaderValueMap(
 			java.lang.ClassLoader classLoader) {
 		return classLoader.createOrGetClassLoaderValueMap();
@@ -278,9 +277,12 @@ final class Access implements JavaLangAccess {
 		}
 	}
 
-	/* TODO add proper implementation: RTC 125523: Implement java.lang.Access.invalidatePackageAccessCache */
 	public void invalidatePackageAccessCache() {
+/*[IF Java10]*/
+		java.lang.SecurityManager.invalidatePackageAccessCache();
+/*[ELSE]*/
 		return;
+/*[ENDIF]*/
 	}
 
 	public Class<?> defineClass(ClassLoader classLoader, String className, byte[] classRep, ProtectionDomain protectionDomain, String str) {
