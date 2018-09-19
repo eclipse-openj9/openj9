@@ -42,7 +42,6 @@ add_library(j9realtime STATIC
 	RealtimeRootScanner.cpp
 	RealtimeSweepTask.cpp
 	ReferenceObjectBufferRealtime.cpp
-	RememberedSetWorkPackets.cpp
 	Scheduler.cpp
 	SweepSchemeRealtime.cpp
 	Timer.cpp

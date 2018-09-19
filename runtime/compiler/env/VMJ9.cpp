@@ -1677,7 +1677,7 @@ TR_J9VMBase::thisThreadRememberedSetFragmentOffset()
    {
 
 #if defined(J9VM_GC_REALTIME)
-      return offsetof(J9VMThread, staccatoRememberedSetFragment);
+      return offsetof(J9VMThread, sATBBarrierRememberedSetFragment);
 #endif
    return 0;
    }

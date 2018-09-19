@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -123,7 +123,7 @@ extern "C" fj9object_t j9gc_objaccess_tokenFromPointer(J9VMThread *vmThread, mm_
 
 #if defined(J9VM_GC_STACCATO)
 /* Note that the "reserved" index is used for 2 different purposes with the
- * staccatoRememberedSet:
+ * sATBBarrierRememberedSet:
  * 1) As a per-thread flag indicating the double barrier is on.
  * 2) As a global flag indicating the barrier is disabled.
  * 

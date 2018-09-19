@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -81,7 +81,7 @@ MM_StaccatoAccessBarrier::rememberObjectImpl(MM_EnvironmentBase *env, J9Object* 
 	J9VMThread *vmThread = (J9VMThread *)env->getLanguageVMThread();
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vmThread->javaVM);
 
-	extensions->staccatoRememberedSet->storeInFragment(env, &vmThread->staccatoRememberedSetFragment, (UDATA *)object);
+	extensions->sATBBarrierRememberedSet->storeInFragment(env, &vmThread->sATBBarrierRememberedSetFragment, (UDATA *)object);
 }
 
 void
@@ -221,7 +221,7 @@ MM_StaccatoAccessBarrier::preObjectStore(J9VMThread *vmThread, J9Object **destAd
 void
 MM_StaccatoAccessBarrier::setDoubleBarrierActiveOnThread(MM_EnvironmentBase* env)
 {
-	MM_GCExtensions::getExtensions(env)->staccatoRememberedSet->preserveLocalFragmentIndex(env, &(((J9VMThread *)env->getLanguageVMThread())->staccatoRememberedSetFragment));
+	MM_GCExtensions::getExtensions(env)->sATBBarrierRememberedSet->preserveLocalFragmentIndex(env, &(((J9VMThread *)env->getLanguageVMThread())->sATBBarrierRememberedSetFragment));
 }
 
 /**
@@ -230,14 +230,14 @@ MM_StaccatoAccessBarrier::setDoubleBarrierActiveOnThread(MM_EnvironmentBase* env
 void
 MM_StaccatoAccessBarrier::setDoubleBarrierInactiveOnThread(MM_EnvironmentBase* env)
 {
-	MM_GCExtensions::getExtensions(env)->staccatoRememberedSet->restoreLocalFragmentIndex(env, &(((J9VMThread *)env->getLanguageVMThread())->staccatoRememberedSetFragment));
+	MM_GCExtensions::getExtensions(env)->sATBBarrierRememberedSet->restoreLocalFragmentIndex(env, &(((J9VMThread *)env->getLanguageVMThread())->sATBBarrierRememberedSetFragment));
 }
 
 void
 MM_StaccatoAccessBarrier::initializeForNewThread(MM_EnvironmentBase* env)
 {
 	MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(env);
-	extensions->staccatoRememberedSet->initializeFragment(env, &(((J9VMThread *)env->getLanguageVMThread())->staccatoRememberedSetFragment));
+	extensions->sATBBarrierRememberedSet->initializeFragment(env, &(((J9VMThread *)env->getLanguageVMThread())->sATBBarrierRememberedSetFragment));
 	if (isDoubleBarrierActive()) {
 		setDoubleBarrierActiveOnThread(env);
 	}

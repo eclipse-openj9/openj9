@@ -4908,7 +4908,7 @@ typedef struct J9VMThread {
 	struct J9VMEntryLocalStorage* entryLocalStorage;
 	UDATA gpProtected;
 	struct J9VMGCSublistFragment gcRememberedSet;
-	struct J9VMGCRememberedSetFragment staccatoRememberedSetFragment;
+	struct J9VMGCRememberedSetFragment sATBBarrierRememberedSetFragment;
 	void* gcTaskListPtr;
 	UDATA* dropBP;
 	UDATA dropFlags;
