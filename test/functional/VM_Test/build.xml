@@ -41,6 +41,7 @@
 	<property name="src_80" location="./src_80" />
 	<property name="build" location="./bin" />
 	<property name="transformerListener" location="${TEST_ROOT}/Utils/src"/>
+	<property name="TestUtilities" location="../TestUtilities/src"/>
 
 	<path id="build.cp">
 		<fileset  dir="${TEST_ROOT}/TestConfig/lib/" includes="junit4.jar" />
@@ -86,6 +87,11 @@
 					<src path="${src}" />
 					<src path="${src_80}" />
 					<src path="${excludeFiles}"/>
+					<src path="${TestUtilities}" />
+					<exclude name="**/attachAPI/**" />
+					<classpath>
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar"/>
+					</classpath>
 				</javac>
 			</then>
 			<elseif>
@@ -95,10 +101,15 @@
 						<src path="${src}" />
 						<src path="${src_80}" />
 						<src path="${excludeFiles}"/>
+						<src path="${TestUtilities}" />
+						<exclude name="**/attachAPI/**" />
 						<!-- 133609: ClassPathSettingClassLoaderTest failed in jdk9 -->
 						<exclude name="**/ClassPathSettingClassLoader.java" />
 						<exclude name="**/ClassPathSettingClassLoaderTest.java" />
 						<compilerarg line='${addExports}' />
+						<classpath>
+							<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar"/>
+						</classpath>
 					</javac>
 				</then>
 			</elseif>
@@ -106,10 +117,15 @@
 				<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
 					<src path="${src}" />
 					<src path="${excludeFiles}"/>
+					<src path="${TestUtilities}" />
+					<exclude name="**/attachAPI/**" />
 					<!-- 133609: ClassPathSettingClassLoaderTest failed in jdk9 -->
 					<exclude name="**/ClassPathSettingClassLoader.java" />
 					<exclude name="**/ClassPathSettingClassLoaderTest.java" />
 					<compilerarg line='${addExports}' />
+					<classpath>
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar"/>
+					</classpath>
 				</javac>
 			</else>
 		</if>
