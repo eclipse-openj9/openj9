@@ -352,7 +352,8 @@ tryAgain:
 	{
 		IDATA checkResult = checkVisibility(vmStruct, J9_CLASS_FROM_CP(ramCP), accessClass, accessModifiers, resolveFlags);
 		if (checkResult < J9_VISIBILITY_ALLOWED) {
-			if (canRunJavaCode) {
+			/* Check for pending exception for (ie. Nesthost class loading/verify), do not overwrite these exceptions */
+			if (canRunJavaCode && (!VM_VMHelpers::exceptionPending(vmStruct))) {
 				char *errorMsg = NULL;
 				PORT_ACCESS_FROM_VMC(vmStruct);
 				if (J9_VISIBILITY_NON_MODULE_ACCESS_ERROR == checkResult) {
