@@ -119,12 +119,12 @@ uint8_t *TR::PPCMonitorEnterSnippet::emitSnippetBody()
    TR::RealRegister *metaReg  = cg()->getMethodMetaDataRegister();
    TR::RealRegister *objReg;
    if (_objectClassReg)
-      objReg = cg()->machine()->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(4)->getRealRegister());
+      objReg = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(4)->getRealRegister());
    else
-      objReg = cg()->machine()->getPPCRealRegister(TR::RealRegister::gr3);
-   TR::RealRegister *cndReg = cg()->machine()->getPPCRealRegister(TR::RealRegister::cr0);
-   TR::RealRegister *monitorReg = cg()->machine()->getPPCRealRegister(TR::RealRegister::gr11);
-   TR::RealRegister *threadReg  = cg()->machine()->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
+      objReg = cg()->machine()->getRealRegister(TR::RealRegister::gr3);
+   TR::RealRegister *cndReg = cg()->machine()->getRealRegister(TR::RealRegister::cr0);
+   TR::RealRegister *monitorReg = cg()->machine()->getRealRegister(TR::RealRegister::gr11);
+   TR::RealRegister *threadReg  = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
 
    TR::InstOpCode opcode;
    TR::InstOpCode::Mnemonic opCodeValue;
@@ -135,7 +135,7 @@ uint8_t *TR::PPCMonitorEnterSnippet::emitSnippetBody()
 
    if (isReservationPreserving())
       {
-      TR::RealRegister *tempReg = cg()->machine()->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(4)->getRealRegister());
+      TR::RealRegister *tempReg = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(4)->getRealRegister());
 
       opcode.setOpCodeValue(TR::InstOpCode::li);
       buffer = opcode.copyBinaryToBuffer(buffer);
@@ -249,15 +249,15 @@ TR::PPCMonitorEnterSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
    TR::Machine *machine = cg()->machine();
    TR::RealRegister *metaReg    = cg()->getMethodMetaDataRegister();
    TR::RealRegister *objReg = _objectClassReg ?
-      machine->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(4)->getRealRegister()) :
-      machine->getPPCRealRegister(TR::RealRegister::gr3);
-   TR::RealRegister *condReg    = machine->getPPCRealRegister(TR::RealRegister::cr0);
-   TR::RealRegister *monitorReg  = machine->getPPCRealRegister(TR::RealRegister::gr11);
-   TR::RealRegister *threadReg = machine->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
+      machine->getRealRegister(deps->getPostConditions()->getRegisterDependency(4)->getRealRegister()) :
+      machine->getRealRegister(TR::RealRegister::gr3);
+   TR::RealRegister *condReg    = machine->getRealRegister(TR::RealRegister::cr0);
+   TR::RealRegister *monitorReg  = machine->getRealRegister(TR::RealRegister::gr11);
+   TR::RealRegister *threadReg = machine->getRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
 
    if (isReservationPreserving())
       {
-      TR::RealRegister *tempReg = machine->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(4)->getRealRegister());
+      TR::RealRegister *tempReg = machine->getRealRegister(deps->getPostConditions()->getRegisterDependency(4)->getRealRegister());
 
       debug->printPrefix(pOutFile, NULL, cursor, 4);
       trfprintf(pOutFile, "li \t%s, 0x%x\t;", debug->getName(tempReg), LOCK_RES_PRESERVE_ENTER_COMPLEMENT);
@@ -372,12 +372,12 @@ uint8_t *TR::PPCMonitorExitSnippet::emitSnippetBody()
    TR::RealRegister *metaReg  = cg()->getMethodMetaDataRegister();
    TR::RealRegister *objReg;
    if (_objectClassReg)
-      objReg = cg()->machine()->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(4)->getRealRegister());
+      objReg = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(4)->getRealRegister());
    else
-      objReg = cg()->machine()->getPPCRealRegister(TR::RealRegister::gr3);
-   TR::RealRegister *cndReg = cg()->machine()->getPPCRealRegister(TR::RealRegister::cr0);
-   TR::RealRegister *monitorReg = cg()->machine()->getPPCRealRegister(TR::RealRegister::gr11);
-   TR::RealRegister *threadReg  = cg()->machine()->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
+      objReg = cg()->machine()->getRealRegister(TR::RealRegister::gr3);
+   TR::RealRegister *cndReg = cg()->machine()->getRealRegister(TR::RealRegister::cr0);
+   TR::RealRegister *monitorReg = cg()->machine()->getRealRegister(TR::RealRegister::gr11);
+   TR::RealRegister *threadReg  = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
 
    TR::InstOpCode opcode;
    TR::InstOpCode::Mnemonic opCodeValue;
@@ -398,7 +398,7 @@ uint8_t *TR::PPCMonitorExitSnippet::emitSnippetBody()
       //    bl   jitMonitorExit
       //    b    doneLabel;
 
-      TR::RealRegister *offsetReg = cg()->machine()->getPPCRealRegister(TR::RealRegister::gr4);
+      TR::RealRegister *offsetReg = cg()->machine()->getRealRegister(TR::RealRegister::gr4);
       _decLabel->setCodeLocation(buffer);
 
       opcode.setOpCodeValue(TR::InstOpCode::andi_r);
@@ -629,12 +629,12 @@ TR::PPCMonitorExitSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
 
    TR::RegisterDependencyConditions *conditions = getRestartLabel()->getInstruction()->getDependencyConditions();
    TR::RealRegister *objReg     = _objectClassReg ?
-      cg()->machine()->getPPCRealRegister(conditions->getPostConditions()->getRegisterDependency(4)->getRealRegister()) :
-      cg()->machine()->getPPCRealRegister(TR::RealRegister::gr3);
+      cg()->machine()->getRealRegister(conditions->getPostConditions()->getRegisterDependency(4)->getRealRegister()) :
+      cg()->machine()->getRealRegister(TR::RealRegister::gr3);
    TR::RealRegister *metaReg    = cg()->getMethodMetaDataRegister();
-   TR::RealRegister *condReg    = cg()->machine()->getPPCRealRegister(TR::RealRegister::cr0);
-   TR::RealRegister *monitorReg  = cg()->machine()->getPPCRealRegister(TR::RealRegister::gr11);
-   TR::RealRegister *threadReg = cg()->machine()->getPPCRealRegister(conditions->getPostConditions()->getRegisterDependency(2)->getRealRegister());
+   TR::RealRegister *condReg    = cg()->machine()->getRealRegister(TR::RealRegister::cr0);
+   TR::RealRegister *monitorReg  = cg()->machine()->getRealRegister(TR::RealRegister::gr11);
+   TR::RealRegister *threadReg = cg()->machine()->getRealRegister(conditions->getPostConditions()->getRegisterDependency(2)->getRealRegister());
 
    if (isReservationPreserving())
       {
@@ -844,14 +844,14 @@ TR::PPCLockReservationEnterSnippet::emitSnippetBody()
    if (_objectClassReg)
       objReg = ( TR::RealRegister *) _objectClassReg->getRealRegister();
    else
-      objReg = cg()->machine()->getPPCRealRegister(TR::RealRegister::gr3);
-   TR::RealRegister *cndReg = cg()->machine()->getPPCRealRegister(TR::RealRegister::cr0);
-   TR::RealRegister *monitorReg = cg()->machine()->getPPCRealRegister(TR::RealRegister::gr11);
+      objReg = cg()->machine()->getRealRegister(TR::RealRegister::gr3);
+   TR::RealRegister *cndReg = cg()->machine()->getRealRegister(TR::RealRegister::cr0);
+   TR::RealRegister *monitorReg = cg()->machine()->getRealRegister(TR::RealRegister::gr11);
 
    int32_t regNum = 3;
 
-   TR::RealRegister *valReg  = cg()->machine()->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(regNum)->getRealRegister());
-   TR::RealRegister *tempReg  = cg()->machine()->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(regNum + 1)->getRealRegister());
+   TR::RealRegister *valReg  = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(regNum)->getRealRegister());
+   TR::RealRegister *tempReg  = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(regNum + 1)->getRealRegister());
 
    TR::InstOpCode  opcode;
    TR::InstOpCode::Mnemonic opCodeValue;
@@ -1032,12 +1032,12 @@ TR::PPCLockReservationEnterSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
    debug->printSnippetLabel(pOutFile, getStartLabel(), cursor, isPrimitive?"Primitive Reservation Enter":"Reservation Enter");
 
    TR::RegisterDependencyConditions *conditions = getRestartLabel()->getInstruction()->getDependencyConditions();
-   TR::RealRegister *objReg     = cg()->machine()->getPPCRealRegister(TR::RealRegister::gr3);
+   TR::RealRegister *objReg     = cg()->machine()->getRealRegister(TR::RealRegister::gr3);
    TR::RealRegister *metaReg    = cg()->getMethodMetaDataRegister();
-   TR::RealRegister *condReg    = cg()->machine()->getPPCRealRegister(TR::RealRegister::cr0);
-   TR::RealRegister *monitorReg = cg()->machine()->getPPCRealRegister(TR::RealRegister::gr11);
-   TR::RealRegister *valReg     = cg()->machine()->getPPCRealRegister(conditions->getPostConditions()->getRegisterDependency(3)->getRealRegister());
-   TR::RealRegister *tempReg    = cg()->machine()->getPPCRealRegister(conditions->getPostConditions()->getRegisterDependency(4)->getRealRegister());
+   TR::RealRegister *condReg    = cg()->machine()->getRealRegister(TR::RealRegister::cr0);
+   TR::RealRegister *monitorReg = cg()->machine()->getRealRegister(TR::RealRegister::gr11);
+   TR::RealRegister *valReg     = cg()->machine()->getRealRegister(conditions->getPostConditions()->getRegisterDependency(3)->getRealRegister());
+   TR::RealRegister *tempReg    = cg()->machine()->getRealRegister(conditions->getPostConditions()->getRegisterDependency(4)->getRealRegister());
 
    debug->printPrefix(pOutFile, NULL, cursor, 4);
    if (TR::Compiler->target.is64Bit())
@@ -1220,15 +1220,15 @@ TR::PPCLockReservationExitSnippet::emitSnippetBody()
    if (_objectClassReg)
      objReg = (TR::RealRegister *) _objectClassReg->getRealRegister();
   else
-     objReg = cg()->machine()->getPPCRealRegister(TR::RealRegister::gr3);
+     objReg = cg()->machine()->getRealRegister(TR::RealRegister::gr3);
 
-   TR::RealRegister *cndReg = cg()->machine()->getPPCRealRegister(TR::RealRegister::cr0);
-   TR::RealRegister *monitorReg = cg()->machine()->getPPCRealRegister(TR::RealRegister::gr11);
+   TR::RealRegister *cndReg = cg()->machine()->getRealRegister(TR::RealRegister::cr0);
+   TR::RealRegister *monitorReg = cg()->machine()->getRealRegister(TR::RealRegister::gr11);
 
    int32_t regNum = 3;
 
-   TR::RealRegister *valReg  = cg()->machine()->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(regNum)->getRealRegister());
-   TR::RealRegister *tempReg  = cg()->machine()->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(regNum + 1)->getRealRegister());
+   TR::RealRegister *valReg  = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(regNum)->getRealRegister());
+   TR::RealRegister *tempReg  = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(regNum + 1)->getRealRegister());
 
    TR::InstOpCode  opcode;
    TR::InstOpCode::Mnemonic opCodeValue;
@@ -1341,12 +1341,12 @@ TR::PPCLockReservationExitSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
    debug->printSnippetLabel(pOutFile, getStartLabel(), cursor, isPrimitive?"Primitive Reservation Exit":"Reservation Exit");
 
    TR::RegisterDependencyConditions *conditions = getRestartLabel()->getInstruction()->getDependencyConditions();
-   TR::RealRegister *objReg     = cg()->machine()->getPPCRealRegister(TR::RealRegister::gr3);
+   TR::RealRegister *objReg     = cg()->machine()->getRealRegister(TR::RealRegister::gr3);
    TR::RealRegister *metaReg    = cg()->getMethodMetaDataRegister();
-   TR::RealRegister *condReg    = cg()->machine()->getPPCRealRegister(TR::RealRegister::cr0);
-   TR::RealRegister *monitorReg = cg()->machine()->getPPCRealRegister(TR::RealRegister::gr11);
-   TR::RealRegister *valReg     = cg()->machine()->getPPCRealRegister(conditions->getPostConditions()->getRegisterDependency(3)->getRealRegister());
-   TR::RealRegister *tempReg    = cg()->machine()->getPPCRealRegister(conditions->getPostConditions()->getRegisterDependency(4)->getRealRegister());
+   TR::RealRegister *condReg    = cg()->machine()->getRealRegister(TR::RealRegister::cr0);
+   TR::RealRegister *monitorReg = cg()->machine()->getRealRegister(TR::RealRegister::gr11);
+   TR::RealRegister *valReg     = cg()->machine()->getRealRegister(conditions->getPostConditions()->getRegisterDependency(3)->getRealRegister());
+   TR::RealRegister *tempReg    = cg()->machine()->getRealRegister(conditions->getPostConditions()->getRegisterDependency(4)->getRealRegister());
 
    debug->printPrefix(pOutFile, NULL, cursor, 4);
    trfprintf(pOutFile, "li \t%s, 0x%x\t;", debug->getName(tempReg), LOCK_RES_OWNING_COMPLEMENT);
@@ -1471,11 +1471,11 @@ uint8_t *TR::PPCReadMonitorSnippet::emitSnippetBody()
    TR::RegisterDependencyConditions *deps = getRestartLabel()->getInstruction()->getDependencyConditions();
 
    TR::RealRegister *metaReg  = cg()->getMethodMetaDataRegister();
-   TR::RealRegister *monitorReg  = cg()->machine()->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(0)->getRealRegister());
-   TR::RealRegister *cndReg  = cg()->machine()->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
-   TR::RealRegister *loadResultReg  = cg()->machine()->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(3)->getRealRegister());
+   TR::RealRegister *monitorReg  = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(0)->getRealRegister());
+   TR::RealRegister *cndReg  = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
+   TR::RealRegister *loadResultReg  = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(3)->getRealRegister());
    bool                isResultCollectable = deps->getPostConditions()->getRegisterDependency(3)->getRegister()->containsCollectedReference();
-   TR::RealRegister *loadBaseReg  = cg()->machine()->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(4)->getRealRegister());
+   TR::RealRegister *loadBaseReg  = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(4)->getRealRegister());
    TR::Compilation *comp = cg()->comp();
    TR::InstOpCode opcode;
 
@@ -1592,10 +1592,10 @@ TR::PPCReadMonitorSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
 
    TR::Machine *machine = cg()->machine();
    TR::RealRegister *metaReg    = cg()->getMethodMetaDataRegister();
-   TR::RealRegister *monitorReg  = machine->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(1)->getRealRegister());
-   TR::RealRegister *condReg  = machine->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
-   TR::RealRegister *loadResultReg  = machine->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(3)->getRealRegister());
-   TR::RealRegister *loadBaseReg  = machine->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(4)->getRealRegister());
+   TR::RealRegister *monitorReg  = machine->getRealRegister(deps->getPostConditions()->getRegisterDependency(1)->getRealRegister());
+   TR::RealRegister *condReg  = machine->getRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
+   TR::RealRegister *loadResultReg  = machine->getRealRegister(deps->getPostConditions()->getRegisterDependency(3)->getRealRegister());
+   TR::RealRegister *loadBaseReg  = machine->getRealRegister(deps->getPostConditions()->getRegisterDependency(4)->getRealRegister());
 
    debug->printPrefix(pOutFile, NULL, cursor, 4);
    if (TR::Compiler->target.is64Bit())
@@ -1694,13 +1694,13 @@ uint8_t *TR::PPCHeapAllocSnippet::emitSnippetBody()
 
    TR::InstOpCode opcode;
 
-   TR::RealRegister *callRetReg  = cg()->machine()->getPPCRealRegister(TR::RealRegister::gr3);
-   TR::RealRegister *resultReg  = cg()->machine()->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(6)->getRealRegister());   // Refer to VMnewEvaluator
+   TR::RealRegister *callRetReg  = cg()->machine()->getRealRegister(TR::RealRegister::gr3);
+   TR::RealRegister *resultReg  = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(6)->getRealRegister());   // Refer to VMnewEvaluator
 
    if (getInsertType())
       {
       TR::RealRegister *objectReg  = cg()->machine()->
-         getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(0)->
+         getRealRegister(deps->getPostConditions()->getRegisterDependency(0)->
          getRealRegister());   // Refer to VMnewEvaluator
 
       opcode.setOpCodeValue(TR::InstOpCode::li);
@@ -1764,8 +1764,8 @@ TR::PPCHeapAllocSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
 
    debug->printSnippetLabel(pOutFile, getSnippetLabel(), cursor, "Heap Allocation Snippet");
 
-   TR::RealRegister *resultReg  = machine->getPPCRealRegister(conditions->getPostConditions()->getRegisterDependency(6)->getRealRegister());
-   TR::RealRegister *callRetReg = machine->getPPCRealRegister(TR::RealRegister::gr3);
+   TR::RealRegister *resultReg  = machine->getRealRegister(conditions->getPostConditions()->getRegisterDependency(6)->getRealRegister());
+   TR::RealRegister *callRetReg = machine->getRealRegister(TR::RealRegister::gr3);
 
    char    *info = "";
    if (debug->isBranchToTrampoline(getDestination(), cursor, distance))
@@ -1773,7 +1773,7 @@ TR::PPCHeapAllocSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
 
    if (getInsertType())
       {
-      TR::RealRegister *arrayTypeReg  = machine->getPPCRealRegister(conditions->getPostConditions()->getRegisterDependency(0)->getRealRegister());
+      TR::RealRegister *arrayTypeReg  = machine->getRealRegister(conditions->getPostConditions()->getRegisterDependency(0)->getRealRegister());
       debug->printPrefix(pOutFile, NULL, cursor, 4);
       trfprintf(pOutFile, "li \t%s, 0x%x", debug->getName(arrayTypeReg), getNode()->getSecondChild()->getInt());
       cursor += 4;
@@ -1921,10 +1921,10 @@ static uint8_t* initializeCCPreLoadedPrefetch(uint8_t *buffer, void **CCPreLoade
    TR::Instruction *cursor = entry;
 
    TR::Register *metaReg = cg->getMethodMetaDataRegister();
-   TR::Register *r8 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr8);
-   TR::Register *r10 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr10);
-   TR::Register *r11 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr11);
-   TR::Register *cr0 = cg->machine()->getPPCRealRegister(TR::RealRegister::cr0);
+   TR::Register *r8 = cg->machine()->getRealRegister(TR::RealRegister::gr8);
+   TR::Register *r10 = cg->machine()->getRealRegister(TR::RealRegister::gr10);
+   TR::Register *r11 = cg->machine()->getRealRegister(TR::RealRegister::gr11);
+   TR::Register *cr0 = cg->machine()->getRealRegister(TR::RealRegister::cr0);
 
    static bool    doL1Pref = feGetEnv("TR_doL1Prefetch") != NULL;
    const uint32_t ppcCacheLineSize = getPPCCacheLineSize();
@@ -2051,10 +2051,10 @@ static uint8_t* initializeCCPreLoadedNonZeroPrefetch(uint8_t *buffer, void **CCP
    TR::Instruction *cursor = entry;
 
    TR::Register *metaReg = cg->getMethodMetaDataRegister();
-   TR::Register *r8 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr8);
-   TR::Register *r10 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr10);
-   TR::Register *r11 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr11);
-   TR::Register *cr0 = cg->machine()->getPPCRealRegister(TR::RealRegister::cr0);
+   TR::Register *r8 = cg->machine()->getRealRegister(TR::RealRegister::gr8);
+   TR::Register *r10 = cg->machine()->getRealRegister(TR::RealRegister::gr10);
+   TR::Register *r11 = cg->machine()->getRealRegister(TR::RealRegister::gr11);
+   TR::Register *cr0 = cg->machine()->getRealRegister(TR::RealRegister::cr0);
 
    static bool    doL1Pref = feGetEnv("TR_doL1Prefetch") != NULL;
    const uint32_t ppcCacheLineSize = getPPCCacheLineSize();
@@ -2267,14 +2267,14 @@ static uint8_t* initializeCCPreLoadedObjectAlloc(uint8_t *buffer, void **CCPreLo
 #endif
 
    TR::Register *metaReg = cg->getMethodMetaDataRegister();
-   TR::Register *r3 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr3);
-   TR::Register *r4 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr4);
-   TR::Register *r8 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr8);
-   TR::Register *r10 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr10);
-   TR::Register *r11 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr11);
-   TR::Register *cr0 = cg->machine()->getPPCRealRegister(TR::RealRegister::cr0);
-   TR::Register *cr1 = cg->machine()->getPPCRealRegister(TR::RealRegister::cr1);
-   TR::Register *cr2 = cg->machine()->getPPCRealRegister(TR::RealRegister::cr2);
+   TR::Register *r3 = cg->machine()->getRealRegister(TR::RealRegister::gr3);
+   TR::Register *r4 = cg->machine()->getRealRegister(TR::RealRegister::gr4);
+   TR::Register *r8 = cg->machine()->getRealRegister(TR::RealRegister::gr8);
+   TR::Register *r10 = cg->machine()->getRealRegister(TR::RealRegister::gr10);
+   TR::Register *r11 = cg->machine()->getRealRegister(TR::RealRegister::gr11);
+   TR::Register *cr0 = cg->machine()->getRealRegister(TR::RealRegister::cr0);
+   TR::Register *cr1 = cg->machine()->getRealRegister(TR::RealRegister::cr1);
+   TR::Register *cr2 = cg->machine()->getRealRegister(TR::RealRegister::cr2);
 
 #if defined(DEBUG)
    // Trap if size not word aligned
@@ -2484,15 +2484,15 @@ static uint8_t* initializeCCPreLoadedArrayAlloc(uint8_t *buffer, void **CCPreLoa
 #endif
 
    TR::Register *metaReg = cg->getMethodMetaDataRegister();
-   TR::Register *r3 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr3);
-   TR::Register *r4 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr4);
-   TR::Register *r5 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr5);
-   TR::Register *r8 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr8);
-   TR::Register *r10 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr10);
-   TR::Register *r11 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr11);
-   TR::Register *cr0 = cg->machine()->getPPCRealRegister(TR::RealRegister::cr0);
-   TR::Register *cr1 = cg->machine()->getPPCRealRegister(TR::RealRegister::cr1);
-   TR::Register *cr2 = cg->machine()->getPPCRealRegister(TR::RealRegister::cr2);
+   TR::Register *r3 = cg->machine()->getRealRegister(TR::RealRegister::gr3);
+   TR::Register *r4 = cg->machine()->getRealRegister(TR::RealRegister::gr4);
+   TR::Register *r5 = cg->machine()->getRealRegister(TR::RealRegister::gr5);
+   TR::Register *r8 = cg->machine()->getRealRegister(TR::RealRegister::gr8);
+   TR::Register *r10 = cg->machine()->getRealRegister(TR::RealRegister::gr10);
+   TR::Register *r11 = cg->machine()->getRealRegister(TR::RealRegister::gr11);
+   TR::Register *cr0 = cg->machine()->getRealRegister(TR::RealRegister::cr0);
+   TR::Register *cr1 = cg->machine()->getRealRegister(TR::RealRegister::cr1);
+   TR::Register *cr2 = cg->machine()->getRealRegister(TR::RealRegister::cr2);
 
    // This is the distance between the end of the heap and the end of the address space,
    // such that adding this value or less to any heap pointer is guaranteed not to overflow
@@ -2762,13 +2762,13 @@ static uint8_t* initializeCCPreLoadedWriteBarrier(uint8_t *buffer, void **CCPreL
                                              J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST >> 16 : J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST;
 
    TR::Register *metaReg = cg->getMethodMetaDataRegister();
-   TR::Register *r3 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr3);
-   TR::Register *r4 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr4);
-   TR::Register *r5 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr5);
-   TR::Register *r6 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr6);
-   TR::Register *r11 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr11);
-   TR::Register *cr0 = cg->machine()->getPPCRealRegister(TR::RealRegister::cr0);
-   TR::Register *cr1 = cg->machine()->getPPCRealRegister(TR::RealRegister::cr1);
+   TR::Register *r3 = cg->machine()->getRealRegister(TR::RealRegister::gr3);
+   TR::Register *r4 = cg->machine()->getRealRegister(TR::RealRegister::gr4);
+   TR::Register *r5 = cg->machine()->getRealRegister(TR::RealRegister::gr5);
+   TR::Register *r6 = cg->machine()->getRealRegister(TR::RealRegister::gr6);
+   TR::Register *r11 = cg->machine()->getRealRegister(TR::RealRegister::gr11);
+   TR::Register *cr0 = cg->machine()->getRealRegister(TR::RealRegister::cr0);
+   TR::Register *cr1 = cg->machine()->getRealRegister(TR::RealRegister::cr1);
 
    TR_ASSERT((J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST <= UPPER_IMMED && J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST >= LOWER_IMMED) ||
            (J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST & 0xffff) == 0, "Expecting J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST to fit in immediate field");
@@ -2871,13 +2871,13 @@ static uint8_t* initializeCCPreLoadedWriteBarrierAndCardMark(uint8_t *buffer, vo
                                         trailingZeroes((uint32_t)comp->getOptions()->getGcCardSize());
 
    TR::Register *metaReg = cg->getMethodMetaDataRegister();
-   TR::Register *r3 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr3);
-   TR::Register *r4 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr4);
-   TR::Register *r5 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr5);
-   TR::Register *r6 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr6);
-   TR::Register *r11 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr11);
-   TR::Register *cr0 = cg->machine()->getPPCRealRegister(TR::RealRegister::cr0);
-   TR::Register *cr1 = cg->machine()->getPPCRealRegister(TR::RealRegister::cr1);
+   TR::Register *r3 = cg->machine()->getRealRegister(TR::RealRegister::gr3);
+   TR::Register *r4 = cg->machine()->getRealRegister(TR::RealRegister::gr4);
+   TR::Register *r5 = cg->machine()->getRealRegister(TR::RealRegister::gr5);
+   TR::Register *r6 = cg->machine()->getRealRegister(TR::RealRegister::gr6);
+   TR::Register *r11 = cg->machine()->getRealRegister(TR::RealRegister::gr11);
+   TR::Register *cr0 = cg->machine()->getRealRegister(TR::RealRegister::cr0);
+   TR::Register *cr1 = cg->machine()->getRealRegister(TR::RealRegister::cr1);
 
    TR_ASSERT((J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE <= UPPER_IMMED && J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE >= LOWER_IMMED) ||
            (J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE & 0xffff) == 0, "Expecting J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE to fit in immediate field");
@@ -2985,11 +2985,11 @@ static uint8_t* initializeCCPreLoadedCardMark(uint8_t *buffer, void **CCPreLoade
                                         trailingZeroes((uint32_t)comp->getOptions()->getGcCardSize());
 
    TR::Register *metaReg = cg->getMethodMetaDataRegister();
-   TR::Register *r3 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr3);
-   TR::Register *r4 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr4);
-   TR::Register *r5 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr5);
-   TR::Register *r11 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr11);
-   TR::Register *cr0 = cg->machine()->getPPCRealRegister(TR::RealRegister::cr0);
+   TR::Register *r3 = cg->machine()->getRealRegister(TR::RealRegister::gr3);
+   TR::Register *r4 = cg->machine()->getRealRegister(TR::RealRegister::gr4);
+   TR::Register *r5 = cg->machine()->getRealRegister(TR::RealRegister::gr5);
+   TR::Register *r11 = cg->machine()->getRealRegister(TR::RealRegister::gr11);
+   TR::Register *cr0 = cg->machine()->getRealRegister(TR::RealRegister::cr0);
 
    TR_ASSERT((J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE <= UPPER_IMMED && J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE >= LOWER_IMMED) ||
                        (J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE & 0xffff) == 0, "Expecting J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE to fit in immediate field");
@@ -3074,13 +3074,13 @@ static uint8_t* initializeCCPreLoadedArrayStoreCHK(uint8_t *buffer, void **CCPre
    const TR::InstOpCode::Mnemonic Op_lclass =TR::InstOpCode::Op_load;
 #endif
 
-   TR::Register *r3 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr3);
-   TR::Register *r4 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr4);
-   TR::Register *r5 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr5);
-   TR::Register *r6 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr6);
-   TR::Register *r7 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr7);
-   TR::Register *r11 = cg->machine()->getPPCRealRegister(TR::RealRegister::gr11);
-   TR::Register *cr0 = cg->machine()->getPPCRealRegister(TR::RealRegister::cr0);
+   TR::Register *r3 = cg->machine()->getRealRegister(TR::RealRegister::gr3);
+   TR::Register *r4 = cg->machine()->getRealRegister(TR::RealRegister::gr4);
+   TR::Register *r5 = cg->machine()->getRealRegister(TR::RealRegister::gr5);
+   TR::Register *r6 = cg->machine()->getRealRegister(TR::RealRegister::gr6);
+   TR::Register *r7 = cg->machine()->getRealRegister(TR::RealRegister::gr7);
+   TR::Register *r11 = cg->machine()->getRealRegister(TR::RealRegister::gr11);
+   TR::Register *cr0 = cg->machine()->getRealRegister(TR::RealRegister::cr0);
 
    cursor = generateTrg1MemInstruction(cg,Op_lclass, n, r5,
                                        new (cg->trHeapMemory()) TR::MemoryReference(r3, TR::Compiler->om.offsetOfObjectVftField(), TR::Compiler->om.sizeofReferenceField(), cg),
