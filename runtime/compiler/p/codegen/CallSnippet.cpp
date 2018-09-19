@@ -526,7 +526,8 @@ uint8_t *TR::PPCVirtualUnresolvedSnippet::emitSnippetBody()
    TR::Node       *callNode = getNode();
    TR::SymbolReference *glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCvirtualUnresolvedHelper, false, false, false);
    intptrj_t  distance;
-   void* thunk = fej9->getJ2IThunk(callNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethod(), comp);
+   void *thunk = fej9->getJ2IThunk(callNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethod(), comp);
+   uint8_t *j2iThunkRelocationPoint;
 
    // We want the data in the snippet to be naturally aligned
    if (TR::Compiler->target.is64Bit() && (((uint64_t)cursor % TR::Compiler->om.sizeofReferenceAddress()) == 4))
@@ -571,14 +572,9 @@ uint8_t *TR::PPCVirtualUnresolvedSnippet::emitSnippetBody()
    cursor += TR::Compiler->om.sizeofReferenceAddress();
 
    // GJ - Swizzled the order of the following lines to conform to helper
-   *(intptrj_t *)cursor = (intptrj_t)callNode->getSymbolReference()->getOwningMethod(comp)->constantPool();
-
-   // Use methodSymRef info to generate thunk relo for AOT shared classes
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                                *(uint8_t **)cursor,
-                                                                                getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
-                                                                                TR_Thunks, cg()),
-                                __FILE__, __LINE__, callNode);
+   intptrj_t cpAddr = (intptrj_t)callNode->getSymbolReference()->getOwningMethod(comp)->constantPool();
+   *(intptrj_t *)cursor = cpAddr;
+   j2iThunkRelocationPoint = cursor;
 
    cursor += TR::Compiler->om.sizeofReferenceAddress();
 
@@ -597,7 +593,24 @@ uint8_t *TR::PPCVirtualUnresolvedSnippet::emitSnippetBody()
     * This is used for private nestmate calls.
     */
    *(intptrj_t*)cursor = (intptrj_t)thunk;
-   //TODO: Handle relocation here for the thunk. Currently not supported by AOT.
+
+   auto info =
+      (TR_RelocationRecordInformation *)comp->trMemory()->allocateMemory(
+         sizeof (TR_RelocationRecordInformation),
+         heapAlloc);
+
+   // data1 = constantPool
+   info->data1 = cpAddr;
+
+   // data2 = inlined site index
+   info->data2 = callNode ? callNode->getInlinedSiteIndex() : (uintptr_t)-1;
+
+   // data3 = distance in bytes from Constant Pool Pointer to J2I Thunk
+   info->data3 = (intptrj_t)cursor - (intptrj_t)j2iThunkRelocationPoint;
+
+   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(j2iThunkRelocationPoint, (uint8_t *)info, NULL, TR_J2IVirtualThunkPointer, cg()),
+                               __FILE__, __LINE__, callNode);
+
    cursor += sizeof(intptrj_t);
 
    *(int32_t *)cursor = 0;        // Lock word
@@ -633,7 +646,8 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    TR::SymbolReference *glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCinterfaceCallHelper, false, false, false);
    intptrj_t  distance;
-   void* thunk = fej9->getJ2IThunk(callNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethod(), comp);
+   void *thunk = fej9->getJ2IThunk(callNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethod(), comp);
+   uint8_t *j2iThunkRelocationPoint;
 
    // We want the data in the snippet to be naturally aligned
    if (TR::Compiler->target.is64Bit() && (((uint64_t)cursor % TR::Compiler->om.sizeofReferenceAddress()) == 0))
@@ -679,15 +693,9 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
       cursor += PPC_INSTRUCTION_LENGTH;
       }
 
-   *(intptrj_t *)cursor = (intptrj_t)callNode->getSymbolReference()->getOwningMethod(comp)->constantPool();
-
-   if (cg()->comp()->compileRelocatableCode())
-      {
-      // Use methodSymRef info to generate thunk relo for AOT shared classes
-      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,*(uint8_t **)cursor,
-                                                                                   getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,TR_Thunks, cg()),
-                                   __FILE__, __LINE__, callNode);
-      }
+   intptrj_t cpAddr = (intptrj_t)callNode->getSymbolReference()->getOwningMethod(comp)->constantPool();
+   *(intptrj_t *)cursor = cpAddr;
+   j2iThunkRelocationPoint = cursor;
 
    cursor += TR::Compiler->om.sizeofReferenceAddress();
 
@@ -781,7 +789,26 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
     * This is used for private nestmate calls.
     */
    *(intptrj_t*)cursor = (intptrj_t)thunk;
-   //TODO: Handle relocation here for the thunk. Currently not supported by AOT.
+
+   if (cg()->comp()->compileRelocatableCode())
+      {
+      auto info =
+         (TR_RelocationRecordInformation *)comp->trMemory()->allocateMemory(
+            sizeof (TR_RelocationRecordInformation),
+            heapAlloc);
+
+      // data1 = constantPool
+      info->data1 = cpAddr;
+
+      // data2 = inlined site index
+      info->data2 = callNode ? callNode->getInlinedSiteIndex() : (uintptr_t)-1;
+
+      // data3 = distance in bytes from Constant Pool Pointer to J2I Thunk
+      info->data3 = (intptrj_t)cursor - (intptrj_t)j2iThunkRelocationPoint;
+
+      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(j2iThunkRelocationPoint, (uint8_t *)info, NULL, TR_J2IVirtualThunkPointer, cg()),
+                               __FILE__, __LINE__, callNode);
+      }
    cursor += sizeof(intptrj_t);
 
 
