@@ -835,8 +835,29 @@ public:
    int32_t calculateCodeSize(TR_MethodMetaData *metaData);
    void increaseUnstoredBytes(U_32 aotBytes, U_32 jitBytes);
 
+   /**
+   * @brief Compute free physical memory taking into account container limits
+   *
+   * @param incompleteInfo   [OUTPUT] Boolean indicating that cached/buffered mmeory couldn't be read
+   * @return                 A value representing the free physicalMemory
+                             or OMRPORT_MEMINFO_NOT_AVAILABLE in case of error
+   */
    uint64_t computeFreePhysicalMemory(bool &incompleteInfo);
-   int64_t computeFreePhysicalLimitAndAbortCompilationIfLow(TR::Compilation *comp, bool &incompleteInfo, size_t sizeToAllocate);
+ 
+   /**
+   * @brief Compute free physical memory taking into account container limits and caches it for later use
+   *
+   * To limit overhead, this function caches the computed value and
+   * only refreshes it if more than "updatePeriodMs" have passed since the last update
+   * If updatePeriodMs==-1, then updatePeriodMs uses a default value of 500 ms
+   *
+   * @param incompleteInfo   [OUTPUT] Boolean indicating that cached/buffered mmeory couldn't be read
+   * @param updatePeriodMs   Indicates how often the cached values are refreshed
+   * @return                 A value representing the free physicalMemory 
+                             or OMRPORT_MEMINFO_NOT_AVAILABLE in case of error
+   */
+   uint64_t computeAndCacheFreePhysicalMemory(bool &incompleteInfo, int64_t updatePeriodMs=-1);
+   uint64_t computeFreePhysicalLimitAndAbortCompilationIfLow(TR::Compilation *comp, bool &incompleteInfo, size_t sizeToAllocate);
 
    TR_LowPriorityCompQueue &getLowPriorityCompQueue() { return _lowPriorityCompilationScheduler; }
    bool canProcessLowPriorityRequest();
@@ -856,7 +877,8 @@ public:
    int32_t getTotalCompThreadCpuUtilWhenStarvationComputed() const { return _totalCompThreadCpuUtilWhenStarvationComputed; }
    int32_t getNumActiveCompThreadsWhenStarvationComputed() const { return _numActiveCompThreadsWhenStarvationComputed; }
    bool canProcessJProfilingRequest();
-
+   bool getSuspendThreadDueToLowPhysicalMemory() const { return _suspendThreadDueToLowPhysicalMemory; }
+   void setSuspendThreadDueToLowPhysicalMemory(bool b) { _suspendThreadDueToLowPhysicalMemory = b; }
 
    static int32_t         VERY_SMALL_QUEUE;
    static int32_t         SMALL_QUEUE;
@@ -1029,6 +1051,13 @@ private:
    J9SharedClassJavacoreDataDescriptor _javacoreData;
 #endif
    uint64_t _cachedFreePhysicalMemoryB;
+   bool _cachedIncompleteFreePhysicalMemory;
+   bool _cgroupMemorySubsystemEnabled; // true when running in container and the memory subsystem is enabled
+   // The following flag is set when the JIT is not allowed to allocate
+   // a scratch segment due to low physical memory.
+   // It is reset when a compilation thread is suspended, thus possibly
+   // freeing scratch segments it holds to
+   bool _suspendThreadDueToLowPhysicalMemory;
    TR_InterpreterSamplingTracking *_interpSamplTrackingInfo;
    }; // CompilationInfo
 }
