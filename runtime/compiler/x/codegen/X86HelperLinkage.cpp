@@ -224,7 +224,7 @@ TR::Register* TR::X86HelperCallSite::BuildCall()
       traceMsg(cg()->comp(), "X86 HelperCall: [%04d] %s\n", _SymRef->getReferenceNumber(), cg()->getDebug()->getName(_SymRef));
       }
    RealRegisterManager RealRegisters(cg());
-   TR::RealRegister*   ESP = cg()->machine()->getX86RealRegister(TR::RealRegister::esp);
+   TR::RealRegister*   ESP = cg()->machine()->getRealRegister(TR::RealRegister::esp);
 
    // Preserve caller saved registers
    for (size_t i = 0;

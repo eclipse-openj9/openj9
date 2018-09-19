@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -255,7 +255,7 @@ uint8_t *TR::AMD64WriteBarrierSnippet::buildArgs(
    TR::RealRegister::RegNum r1 = r1Real->getRegisterNumber();
    TR::RealRegister::RegNum arg1Linkage = linkage->getProperties().getIntegerArgumentRegister(0);
    TR_ASSERT(arg1Linkage == TR::RealRegister::eax, "unsupported AMD64 linkage");
-   TR::RealRegister *raxReal = machine->getX86RealRegister(arg1Linkage);
+   TR::RealRegister *raxReal = machine->getRealRegister(arg1Linkage);
 
    TR::RealRegister *r2Real = NULL, *rsiReal = NULL;
    TR::RealRegister::RegNum r2 = TR::RealRegister::NoReg, arg2Linkage = TR::RealRegister::NoReg;
@@ -266,7 +266,7 @@ uint8_t *TR::AMD64WriteBarrierSnippet::buildArgs(
       r2 = r2Real->getRegisterNumber();
       arg2Linkage = linkage->getProperties().getIntegerArgumentRegister(1);
       TR_ASSERT(arg2Linkage == TR::RealRegister::esi, "unsupported AMD64 linkage");
-      rsiReal = machine->getX86RealRegister(arg2Linkage);
+      rsiReal = machine->getRealRegister(arg2Linkage);
       }
 
    // Fast path the single argument case.  Presently, only a batch arraycopy write barrier applies.

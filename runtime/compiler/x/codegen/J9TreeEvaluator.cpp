@@ -955,7 +955,7 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
                if (debug("traceConditionalHelperEvaluator"))
                   {
                   TR_Debug *debug = cg->getDebug();
-                  diagnostic("conditionalHelperEvaluator:    [%s : %s]\n", debug->getName(cursorPostCondition->getRegister()), debug->getName(machine->getX86RealRegister(cursorPostCondition->getRealRegister())));
+                  diagnostic("conditionalHelperEvaluator:    [%s : %s]\n", debug->getName(cursorPostCondition->getRegister()), debug->getName(machine->getRealRegister(cursorPostCondition->getRealRegister())));
                   }
                }
             }
@@ -3211,7 +3211,7 @@ TR::Register *J9::X86::TreeEvaluator::barrierFenceEvaluator(TR::Node *node, TR::
       }
    else
       {
-      TR::RealRegister *stackReg = cg->machine()->getX86RealRegister(TR::RealRegister::esp);
+      TR::RealRegister *stackReg = cg->machine()->getRealRegister(TR::RealRegister::esp);
       TR::MemoryReference *mr = generateX86MemoryReference(stackReg, intptrj_t(0), cg);
 
       mr->setRequiresLockPrefix();
@@ -8623,7 +8623,7 @@ inlineNanoTime(
    if (debug("traceInlInlining"))
       diagnostic("nanoTime called by %s\n", comp->signature());
 
-   TR::RealRegister  *espReal = cg->machine()->getX86RealRegister(TR::RealRegister::esp);
+   TR::RealRegister  *espReal = cg->machine()->getRealRegister(TR::RealRegister::esp);
    TR::Register *vmThreadReg = cg->getVMThreadRegister();
    TR::Register *temp2 = 0;
 
@@ -12385,7 +12385,7 @@ void generateReportFieldAccessOutlinedInstructions(TR::Node *node, TR::LabelSymb
       TR::MemoryReference *mr = generateX86MemoryReference(tempSymRef, cg);
       generateMemRegInstruction(SMemReg(), node, mr, valueReg, cg);
       */
-      TR::RealRegister  *espReg = cg->machine()->getX86RealRegister(TR::RealRegister::esp);
+      TR::RealRegister  *espReg = cg->machine()->getRealRegister(TR::RealRegister::esp);
       generateRegInstruction(PUSHReg, node, valueReg, cg);
       TR::MemoryReference *mr = generateX86MemoryReference(espReg, 0, cg);
       generateRegMemInstruction(LEARegMem(), node, valueReferenceReg, mr, cg);
