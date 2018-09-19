@@ -50,13 +50,20 @@ public class TestMonitors extends DDRExtTesterBase
 	public void testMonitorsAll()
 	{
 		String output = exec(Constants.MONITORS_CMD, new String[] { "all" });
-		
+
 		if (null == output) {
 			fail("\"!monitors all\" output is null. Can not proceed with test");
 			return;
 		}
-		
-		assertTrue(validate(output, "Object Monitors:,System Monitors:,j9threadmonitor", "unrecog,exception,error,null", false));
+
+		/*
+		 * On Windows, OMR defines a monitor named "portLibrary_omrsig_master_exception_monitor".
+		 * Fail if the string 'exception' is present, but only if it does not follow an underscore ('_').
+		 */
+		assertTrue(validate(output,
+				"Object Monitors:,System Monitors:,j9threadmonitor",
+				"unrecog,(^|[^_])exception,error,null",
+				false));
 	}
 	
 	/**
