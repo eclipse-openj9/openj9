@@ -1907,8 +1907,7 @@ J9::SymbolReferenceTable::checkImmutable(TR::SymbolReference *symRef)
                isClassInitialized = true;
 
             if ((classOfStatic != comp()->getSystemClassPointer()) &&
-                isClassInitialized && TR::Compiler->cls.isClassFinal(comp(), classOfStatic) &&
-                !comp()->getOption(TR_AOT))
+                isClassInitialized && TR::Compiler->cls.isClassFinal(comp(), classOfStatic))
                {
                if (!classInfo->getFieldInfo() &&
                     (comp()->getMethodHotness() >= hot))

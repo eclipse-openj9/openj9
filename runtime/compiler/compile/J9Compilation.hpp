@@ -227,9 +227,9 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
       if (getOption(TR_UseSymbolValidationManager)
           && compileRelocatableCode())
          {
-         return getSymbolValidationManager()->validateMethodFromClassRecord(implementer->getPersistentIdentifier(),
-                                                                            implementer->classOfMethod(),
-                                                                            -1);
+         return getSymbolValidationManager()->addMethodFromClassRecord(implementer->getPersistentIdentifier(),
+                                                                       implementer->classOfMethod(),
+                                                                       -1);
          }
       }
 

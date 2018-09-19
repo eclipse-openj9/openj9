@@ -62,8 +62,9 @@ TR_ClassLookahead::perform()
 
     bool isClassInitialized = false;
     bool seenFirstInitializerMethod = false;
+    bool allowForAOT = comp()->getOption(TR_UseSymbolValidationManager);
     TR_PersistentClassInfo * classInfo =
-                           comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(_classPointer, comp());
+                           comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(_classPointer, comp(), allowForAOT);
     if (classInfo && classInfo->isInitialized())
        isClassInitialized = true;
 

@@ -302,7 +302,8 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeCallGraph(TR::
             }
          }
 
-      TR_PersistentClassInfo *classInfo = comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(clazz, comp());
+      bool allowForAOT = comp()->getOption(TR_UseSymbolValidationManager);
+      TR_PersistentClassInfo *classInfo = comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(clazz, comp(), allowForAOT);
       if (classInfo)
          {
          TR_ScratchList<TR_PersistentClassInfo> subClasses(trMemory());
