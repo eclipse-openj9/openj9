@@ -75,7 +75,7 @@
 	-DJAVA_EXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DJAVA_HOME='$(JDK_HOME)' -DSCMODE=204 -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
 	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
-	-config $(Q)$(TEST_RESROOT)$(D)ShareClassesCMLTests-1.xml$(Q) -xids all,$(PLATFORM),$(VARIATION),$(JDK_VERSION),$(JAVA_IMPL) -plats all,$(PLATFORM),$(VARIATION),$(JDK_VERSION)_$(BITS) -xlist $(Q)$(TEST_RESROOT)$(D)exclude_openj9.xml$(Q) \
+	-config $(Q)$(TEST_RESROOT)$(D)ShareClassesCMLTests-1.xml$(Q) -xids all,$(PLATFORM),$(VARIATION),$(JDK_VERSION),$(JDK_IMPL) -plats all,$(PLATFORM),$(VARIATION),$(JDK_VERSION)_$(BITS) -xlist $(Q)$(TEST_RESROOT)$(D)exclude_openj9.xml$(Q) \
 	-nonZeroExitWhenError \
 	-outputLimit 300; \
 	$(TEST_STATUS)</command>
