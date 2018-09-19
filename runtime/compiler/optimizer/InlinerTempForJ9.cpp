@@ -933,6 +933,7 @@ TR_J9InlinerPolicy::genCodeForUnsafeGetPut(TR::Node* unsafeAddress,
       loadJavaLangClass->getByteCodeInfo().setZeroByteCodeIndex();
       loadJavaLangClass->setIsClassPointerConstant(true);
 
+      comp()->verifySymbolHasBeenValidated(static_cast<void *>(javaLangClass));
 
       TR::Node *isClassNode = TR::Node::createif(TR::ifacmpeq, vftLoad, loadJavaLangClass, NULL);
       isClassTreeTop = TR::TreeTop::create(comp(), isClassNode, NULL, NULL);
@@ -3493,6 +3494,7 @@ bool TR_MultipleCallTargetInliner::inlineCallTargets(TR::ResolvedMethodSymbol *c
          tracer()->dumpInline(&_callTargets, "inline script");
          }
       }
+
    if (prevCallStack == 0)
       {
       TR_InlinerDelimiter delimiter(tracer(),"inlineTransformation");
@@ -4218,12 +4220,12 @@ TR_MultipleCallTargetInliner::exceedsSizeThreshold(TR_CallSite *callSite, int by
        && (!trustedInterfaceRegex || !TR::SimpleRegex::match(trustedInterfaceRegex, callSite->_interfaceMethod->signature(trMemory()), false)))
       {
       TR_PersistentJittedBodyInfo *bodyInfo = NULL;
-      if (!calleeResolvedMethod->isInterpreted() && !calleeResolvedMethod->isJITInternalNative())
+      if (!calleeResolvedMethod->isInterpretedForHeuristics() && !calleeResolvedMethod->isJITInternalNative())
          {
          void *startPC = (void *)calleeResolvedMethod->startAddressForInterpreterOfJittedMethod();
          bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(startPC);
          }
-      if (((!bodyInfo && !calleeResolvedMethod->isInterpreted() && !calleeResolvedMethod->isJITInternalNative()) //jitted method without bodyInfo must be scorching 
+      if (((!bodyInfo && !calleeResolvedMethod->isInterpretedForHeuristics() && !calleeResolvedMethod->isJITInternalNative()) //jitted method without bodyInfo must be scorching
          || (bodyInfo && bodyInfo->getHotness() == scorching)
          || comp()->fej9()->isQueuedForVeryHotOrScorching(calleeResolvedMethod, comp()))
          && (comp()->getMethodHotness() == scorching))
@@ -4550,6 +4552,8 @@ TR_J9InlinerUtil::refineInlineGuard(TR::Node *callNode, TR::Block *&block1, TR::
 
                   TR::Node * aconstNode = TR::Node::aconst(callNode, (uintptrj_t)pc);
                   aconstNode->setIsClassPointerConstant(true);
+
+                  comp()->verifySymbolHasBeenValidated(static_cast<void *>(pc));
 
                   TR::Node *guard = NULL;
                   TR::DataType dataType = argument->getDataType();

@@ -41,6 +41,7 @@ namespace J9 { typedef J9::Compilation CompilationConnector; }
 #include "env/CompilerEnv.hpp"
 #include "env/OMRMemory.hpp"
 #include "compile/AOTClassInfo.hpp"
+#include "runtime/SymbolValidationManager.hpp"
 
 class TR_AOTGuardSite;
 class TR_FrontEnd;
@@ -195,6 +196,43 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
 
    bool compilationShouldBeInterrupted(TR_CallingContext);
 
+   void verifySymbolHasBeenValidated(void *symbol)
+      {
+      if (getOption(TR_UseSymbolValidationManager)
+          && compileRelocatableCode()
+          && !getSymbolValidationManager()->inHeuristicRegion())
+         {
+         uint16_t id = _symbolValidationManager->getIDFromSymbol(symbol);
+         TR_ASSERT_FATAL(id, "0x%p was not validated!\n", symbol);
+         }
+      }
+   void incrementHeuristicRegion()
+      {
+      if (getOption(TR_UseSymbolValidationManager)
+          && compileRelocatableCode())
+         {
+         getSymbolValidationManager()->incrementHeuristicRegion();
+         }
+      }
+   void decrementHeuristicRegion()
+      {
+      if (getOption(TR_UseSymbolValidationManager)
+          && compileRelocatableCode())
+         {
+         getSymbolValidationManager()->decrementHeuristicRegion();
+         }
+      }
+   bool validateImplementer(TR_ResolvedMethod *implementer)
+      {
+      if (getOption(TR_UseSymbolValidationManager)
+          && compileRelocatableCode())
+         {
+         return getSymbolValidationManager()->addMethodFromClassRecord(implementer->getPersistentIdentifier(),
+                                                                       implementer->classOfMethod(),
+                                                                       -1);
+         }
+      }
+
    void reportILGeneratorPhase();
    void reportAnalysisPhase(uint8_t id);
    void reportOptimizationPhase(OMR::Optimizations);
@@ -287,6 +325,8 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    //
    bool supportsQuadOptimization();
 
+   TR::SymbolValidationManager *getSymbolValidationManager() { return _symbolValidationManager; }
+
 private:
 
    J9VMThread *_j9VMThread;
@@ -360,6 +400,8 @@ private:
    TR_AccessedProfileInfo *_profileInfo;
 
    bool _skippedJProfilingBlock;
+
+   TR::SymbolValidationManager *_symbolValidationManager;
    };
 
 }

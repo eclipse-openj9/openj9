@@ -540,16 +540,20 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                TR::Node *arrayComponentClassPointer = TR::Node::aconst(node, (uintptrj_t)arrayComponentClass);
                // The classPointerConstant flag has to be set for AOT relocation
                arrayComponentClassPointer->setIsClassPointerConstant(true);
+               comp()->verifySymbolHasBeenValidated(static_cast<void *>(arrayComponentClass));
                node = TR::Node::recreateWithoutProperties(node, TR::aloadi, 1, arrayComponentClassPointer, comp()->getSymRefTab()->findOrCreateJavaLangClassFromClassSymbolRef());
 
                TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
-               TR::KnownObjectTable::Index knownObjectIndex = knot->getIndexAt((uintptrj_t*)(arrayComponentClass + comp()->fej9()->getOffsetOfJavaLangClassFromClassField()));
-               addBlockOrGlobalConstraint(node,
-                     TR::VPClass::create(this,
-                        TR::VPKnownObject::createForJavaLangClass(this, knownObjectIndex),
-                        TR::VPNonNullObject::create(this), NULL, NULL,
-                        TR::VPObjectLocation::create(this, TR::VPObjectLocation::JavaLangClassObject)),
-                     classChildGlobal);
+               if (knot)
+                  {
+                  TR::KnownObjectTable::Index knownObjectIndex = knot->getIndexAt((uintptrj_t*)(arrayComponentClass + comp()->fej9()->getOffsetOfJavaLangClassFromClassField()));
+                  addBlockOrGlobalConstraint(node,
+                        TR::VPClass::create(this,
+                           TR::VPKnownObject::createForJavaLangClass(this, knownObjectIndex),
+                           TR::VPNonNullObject::create(this), NULL, NULL,
+                           TR::VPObjectLocation::create(this, TR::VPObjectLocation::JavaLangClassObject)),
+                        classChildGlobal);
+                  }
 
                invalidateUseDefInfo();
                invalidateValueNumberInfo();
@@ -614,16 +618,20 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                TR::Node *superClassPointer = TR::Node::aconst(node, (uintptrj_t)superClass);
                // The classPointerConstant flag has to be set for AOT relocation
                superClassPointer->setIsClassPointerConstant(true);
+               comp()->verifySymbolHasBeenValidated(static_cast<void *>(superClass));
                node = TR::Node::recreateWithoutProperties(node, TR::aloadi, 1, superClassPointer, comp()->getSymRefTab()->findOrCreateJavaLangClassFromClassSymbolRef());
 
                TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
-               TR::KnownObjectTable::Index knownObjectIndex = knot->getIndexAt((uintptrj_t*)(superClass + comp()->fej9()->getOffsetOfJavaLangClassFromClassField()));
-               addBlockOrGlobalConstraint(node,
-                     TR::VPClass::create(this,
-                        TR::VPKnownObject::createForJavaLangClass(this, knownObjectIndex),
-                        TR::VPNonNullObject::create(this), NULL, NULL,
-                        TR::VPObjectLocation::create(this, TR::VPObjectLocation::JavaLangClassObject)),
-                     classChildGlobal);
+               if (knot)
+                  {
+                  TR::KnownObjectTable::Index knownObjectIndex = knot->getIndexAt((uintptrj_t*)(superClass + comp()->fej9()->getOffsetOfJavaLangClassFromClassField()));
+                  addBlockOrGlobalConstraint(node,
+                        TR::VPClass::create(this,
+                           TR::VPKnownObject::createForJavaLangClass(this, knownObjectIndex),
+                           TR::VPNonNullObject::create(this), NULL, NULL,
+                           TR::VPObjectLocation::create(this, TR::VPObjectLocation::JavaLangClassObject)),
+                        classChildGlobal);
+                  }
 
                invalidateUseDefInfo();
                invalidateValueNumberInfo();

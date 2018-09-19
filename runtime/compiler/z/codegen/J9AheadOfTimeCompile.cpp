@@ -482,6 +482,7 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
       case TR_InlinedVirtualMethod:
       case TR_InlinedInterfaceMethodWithNopGuard:
       case TR_InlinedInterfaceMethod:
+      case TR_InlinedAbstractMethodWithNopGuard:
       case TR_InlinedHCRMethod:
          {
          guard = (TR_VirtualGuard *)relocation->getTargetAddress2();
@@ -510,7 +511,8 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          cursor += SIZEPOINTER;
 
          if (relocation->getTargetKind() == TR_InlinedInterfaceMethodWithNopGuard ||
-             relocation->getTargetKind() == TR_InlinedInterfaceMethod)
+             relocation->getTargetKind() == TR_InlinedInterfaceMethod ||
+             relocation->getTargetKind() == TR_InlinedAbstractMethodWithNopGuard)
             {
             TR_InlinedCallSite *inlinedCallSite = &self()->comp()->getInlinedCallSite(inlinedSiteIndex);
             TR_AOTMethodInfo *aotMethodInfo = (TR_AOTMethodInfo *)inlinedCallSite->_methodInfo;
@@ -1025,6 +1027,7 @@ uint32_t J9::Z::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_NumE
    56,                                        // TR_DebugCounter                        = 59
    8,                                         // TR_ClassUnloadAssumption               = 60
    32,                                        // TR_J2IVirtualThunkPointer              = 61
+   48,                                        // TR_InlinedAbstractMethodWithNopGuard   = 62,
    };
 
 #else
@@ -1093,6 +1096,7 @@ uint32_t J9::Z::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_NumE
    28,                                         // TR_DebugCounter                        = 59
    4,                                         // TR_ClassUnloadAssumption               = 60
    16,                                        // TR_J2IVirtualThunkPointer              = 61
+   24,                                        // TR_InlinedAbstractMethodWithNopGuard   = 62,
    };
 
 #endif
