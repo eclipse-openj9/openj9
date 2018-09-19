@@ -32,9 +32,11 @@ com.ibm.jvmti.tests
 
 # Root level .project should be ignored as Eclipse automatically creates this file when new repositories are added as Projects for C/C++ indexing
 /.project
+/.cproject
 
 # Visual Studio
 /.vs
 
 # Default test directory (BUILD_ROOT)
 /jvmtest/
+/build/
