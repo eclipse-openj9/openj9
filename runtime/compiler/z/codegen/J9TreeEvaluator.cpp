@@ -9838,7 +9838,7 @@ J9::Z::TreeEvaluator::restoreGPR7(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::MemoryReference * tempMR = generateS390MemoryReference(cg->getMethodMetaDataRealRegister(), offsetof(J9VMThread, tempSlot), cg);
    TR::Register * tempReg = cg->allocateRegister();
-   generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node,   cg->machine()->getS390RealRegister(TR::RealRegister::GPR7), tempMR);
+   generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node,   cg->machine()->getRealRegister(TR::RealRegister::GPR7), tempMR);
    }
 
 void J9::Z::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Register *srcReg, TR::Register *dstReg, bool srcNonNull, TR::CodeGenerator *cg)
@@ -10906,7 +10906,7 @@ inlineAtomicFieldUpdater(
    TR::Register * thisReg = cg->evaluate(node->getFirstChild());
    TR::Register * objReg = cg->evaluate(node->getSecondChild());
    TR::Register * tempReg = cg->allocateRegister();
-   TR::Register * trueReg = cg->machine()->getS390RealRegister(TR::RealRegister::GPR5);
+   TR::Register * trueReg = cg->machine()->getRealRegister(TR::RealRegister::GPR5);
    TR::Register * deltaReg;
    TR::Register * offsetReg = cg->allocateRegister();
    TR::Register * tClassReg = cg->allocateRegister();
@@ -11266,7 +11266,7 @@ inlineConcurrentLinkedQueueTMOffer(
 
       cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, doneLabel, deps);
 
-      cursor = generateSInstruction(cg, TR::InstOpCode::TEND, node, generateS390MemoryReference(cg->machine()->getS390RealRegister(TR::RealRegister::GPR0),0,cg));
+      cursor = generateSInstruction(cg, TR::InstOpCode::TEND, node, generateS390MemoryReference(cg->machine()->getRealRegister(TR::RealRegister::GPR0),0,cg));
       }
 
    if (useNonConstrainedTM || disableTMOffer)
@@ -11451,7 +11451,7 @@ inlineConcurrentLinkedQueueTMPoll(
       else
          cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, doneLabel, deps);
 
-      cursor = generateSInstruction(cg, TR::InstOpCode::TEND, node, generateS390MemoryReference(cg->machine()->getS390RealRegister(TR::RealRegister::GPR0),0,cg));
+      cursor = generateSInstruction(cg, TR::InstOpCode::TEND, node, generateS390MemoryReference(cg->machine()->getRealRegister(TR::RealRegister::GPR0),0,cg));
       }
 
    if (useNonConstrainedTM || disableTMPoll)
@@ -12048,7 +12048,7 @@ J9::Z::TreeEvaluator::tstartEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, startLabel, deps, cursor);
 
-   TR::MemoryReference * tempMR1 = generateS390MemoryReference(cg->machine()->getS390RealRegister(TR::RealRegister::GPR0),0,cg);
+   TR::MemoryReference * tempMR1 = generateS390MemoryReference(cg->machine()->getRealRegister(TR::RealRegister::GPR0),0,cg);
 
    // use TEND + BRC instead of TABORT for better performance
    cursor = generateSInstruction(cg, TR::InstOpCode::TEND, node, tempMR1, cursor);
@@ -12073,7 +12073,7 @@ J9::Z::TreeEvaluator::tfinishEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
 #ifndef PUBLIC_BUILD
    PRINT_ME("tfinish", node, cg);
-   TR::MemoryReference * tempMR1 = generateS390MemoryReference(cg->machine()->getS390RealRegister(TR::RealRegister::GPR0),0,cg);
+   TR::MemoryReference * tempMR1 = generateS390MemoryReference(cg->machine()->getRealRegister(TR::RealRegister::GPR0),0,cg);
    TR::Instruction * cursor = generateSInstruction(cg, TR::InstOpCode::TEND, node, tempMR1);
 #endif
 

@@ -265,7 +265,7 @@ TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode, 
    traceMsg(comp(),"%s: Internal Control Flow in OOL : %s\n",callNode->getOpCode().getName(),isHelperCallWithinICF  ? "true" : "false" );
    for (int i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastHPR; i++)
       {
-      if (!self()->getPreserved(REGNUM(i)) && cg()->machine()->getS390RealRegister(i)->getState() != TR::RealRegister::Locked)
+      if (!self()->getPreserved(REGNUM(i)) && cg()->machine()->getRealRegister(i)->getState() != TR::RealRegister::Locked)
          {
          RealRegisters.use((TR::RealRegister::RegNum)i);
          }

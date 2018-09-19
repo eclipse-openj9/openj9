@@ -72,7 +72,7 @@ TR::S390HeapAllocSnippet::emitSnippetBody()
 
    TR::Machine *machine = codeGen->machine();
    TR::RegisterDependencyConditions *deps = getRestartLabel()->getInstruction()->getDependencyConditions();
-   TR::RealRegister * resReg = machine->getS390RealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
+   TR::RealRegister * resReg = machine->getRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
    uint32_t resRegEncoding = resReg->getRegisterNumber() - 1;
    bool is64BitTarget = TR::Compiler->target.is64Bit();
 
@@ -216,7 +216,7 @@ TR::S390HeapAllocSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
 
    TR::Machine *machine = cg()->machine();
    TR::RegisterDependencyConditions *deps = getRestartLabel()->getInstruction()->getDependencyConditions();
-   TR::RealRegister * resReg = machine->getS390RealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
+   TR::RealRegister * resReg = machine->getRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
 
    debug->printSnippetLabel(pOutFile, getSnippetLabel(), buffer, "HeapAlloc Snippet", debug->getName(getDestination()));
 
