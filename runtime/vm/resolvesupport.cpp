@@ -644,9 +644,14 @@ tryAgain:
 		/* ensure that the class is visible */
 		checkResult = checkVisibility(vmStruct, classFromCP, resolvedClass, resolvedClass->romClass->modifiers, resolveFlags);
 		if (checkResult < J9_VISIBILITY_ALLOWED) {
-			targetClass = resolvedClass;
-			badMemberModifier = resolvedClass->romClass->modifiers;
-			goto illegalAccess;
+			/* Check for existing exception and exit, do not overwrite the existing exception */
+			if (VM_VMHelpers::exceptionPending(vmStruct)) {
+				goto done;
+			} else {
+				targetClass = resolvedClass;
+				badMemberModifier = resolvedClass->romClass->modifiers;
+				goto illegalAccess;
+			}
 		}
 
 		/* Get the field address. */
@@ -698,20 +703,23 @@ tryAgain:
 			if ((resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER) != 0 && (modifiers & J9_JAVA_FINAL) != 0) {
 				checkResult = checkVisibility(vmStruct, classFromCP, definingClass, J9_JAVA_PRIVATE, resolveFlags);
 				if (checkResult < J9_VISIBILITY_ALLOWED) {
-					targetClass = definingClass;
-					badMemberModifier = J9_JAVA_PRIVATE;
+					/* Check for existing exception and exit, do not overwrite the existing exception */
+					if (!VM_VMHelpers::exceptionPending(vmStruct)) {
+						targetClass = definingClass;
+						badMemberModifier = J9_JAVA_PRIVATE;
 illegalAccess:
-					staticAddress = NULL;
-					if (!jitFlags) {
-						char *errorMsg = NULL;
-						PORT_ACCESS_FROM_VMC(vmStruct);
-						if (J9_VISIBILITY_NON_MODULE_ACCESS_ERROR == checkResult) {
-							errorMsg = illegalAccessMessage(vmStruct, badMemberModifier, classFromCP, targetClass, J9_VISIBILITY_NON_MODULE_ACCESS_ERROR);
-						} else {
-							errorMsg = illegalAccessMessage(vmStruct, -1, classFromCP, targetClass, checkResult);
+						staticAddress = NULL;
+						if (!jitFlags) {
+							char *errorMsg = NULL;
+							PORT_ACCESS_FROM_VMC(vmStruct);
+							if (J9_VISIBILITY_NON_MODULE_ACCESS_ERROR == checkResult) {
+								errorMsg = illegalAccessMessage(vmStruct, badMemberModifier, classFromCP, targetClass, J9_VISIBILITY_NON_MODULE_ACCESS_ERROR);
+							} else {
+								errorMsg = illegalAccessMessage(vmStruct, -1, classFromCP, targetClass, checkResult);
+							}
+							setCurrentExceptionUTF(vmStruct, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR, errorMsg);
+							j9mem_free_memory(errorMsg);
 						}
-						setCurrentExceptionUTF(vmStruct, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR, errorMsg);
-						j9mem_free_memory(errorMsg);
 					}
 					goto done;
 				}
@@ -863,9 +871,14 @@ resolveInstanceFieldRefInto(J9VMThread *vmStruct, J9Method *method, J9ConstantPo
 		/* ensure that the class is visible */
 		checkResult = checkVisibility(vmStruct, classFromCP, resolvedClass, resolvedClass->romClass->modifiers, resolveFlags);
 		if (checkResult < J9_VISIBILITY_ALLOWED) {
-			badMemberModifier = resolvedClass->romClass->modifiers;
-			targetClass = resolvedClass;
-			goto illegalAccess;
+			/* Check for existing exception and exit, do not overwrite the existing exception */
+			if (VM_VMHelpers::exceptionPending(vmStruct)) {
+				goto done;
+			} else {
+				badMemberModifier = resolvedClass->romClass->modifiers;
+				targetClass = resolvedClass;
+				goto illegalAccess;
+			}
 		}
 
 		/* Get the field address. */
@@ -904,19 +917,22 @@ resolveInstanceFieldRefInto(J9VMThread *vmStruct, J9Method *method, J9ConstantPo
 			if ((resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER) != 0 && (modifiers & J9_JAVA_FINAL) != 0) {
 				checkResult = checkVisibility(vmStruct, classFromCP, definingClass, J9_JAVA_PRIVATE, resolveFlags);
 				if (checkResult < J9_VISIBILITY_ALLOWED) {
-					badMemberModifier = J9_JAVA_PRIVATE;
-					targetClass = definingClass;
+					/* Check for existing exception and exit, do not overwrite the existing exception */
+					if (!VM_VMHelpers::exceptionPending(vmStruct)) {
+						badMemberModifier = J9_JAVA_PRIVATE;
+						targetClass = definingClass;
 illegalAccess:
-					fieldOffset = -1;
-					if (!jitFlags) {
-						PORT_ACCESS_FROM_VMC(vmStruct);
-						if (J9_VISIBILITY_NON_MODULE_ACCESS_ERROR == checkResult) {
-							nlsStr = illegalAccessMessage(vmStruct, badMemberModifier, classFromCP, targetClass, J9_VISIBILITY_NON_MODULE_ACCESS_ERROR);
-						} else {
-							nlsStr = illegalAccessMessage(vmStruct, -1, classFromCP, targetClass, checkResult);
+						fieldOffset = -1;
+						if (!jitFlags) {
+							PORT_ACCESS_FROM_VMC(vmStruct);
+							if (J9_VISIBILITY_NON_MODULE_ACCESS_ERROR == checkResult) {
+								nlsStr = illegalAccessMessage(vmStruct, badMemberModifier, classFromCP, targetClass, J9_VISIBILITY_NON_MODULE_ACCESS_ERROR);
+							} else {
+								nlsStr = illegalAccessMessage(vmStruct, -1, classFromCP, targetClass, checkResult);
+							}
+							setCurrentExceptionUTF(vmStruct, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR, nlsStr);
+							j9mem_free_memory(nlsStr);
 						}
-						setCurrentExceptionUTF(vmStruct, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR, nlsStr);
-						j9mem_free_memory(nlsStr);
 					}
 					goto done;
 				}
@@ -1706,13 +1722,16 @@ resolveMethodTypeRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIn
 			}
 		}
 		if (NULL != illegalClass) {
-			char *errorMsg = illegalAccessMessage(vmThread, illegalClass->romClass->modifiers, senderClass, illegalClass, visibilityReturnCode);
-			if (NULL == errorMsg) {
-				setNativeOutOfMemoryError(vmThread, 0, 0);
-			} else {
-				setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR, errorMsg);
+			/* Check for existing exception and exit, do not overwrite the existing exception */
+			if (!VM_VMHelpers::exceptionPending(vmThread)) {
+				char *errorMsg = illegalAccessMessage(vmThread, illegalClass->romClass->modifiers, senderClass, illegalClass, visibilityReturnCode);
+				if (NULL == errorMsg) {
+					setNativeOutOfMemoryError(vmThread, 0, 0);
+				} else {
+					setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR, errorMsg);
+				}
+				Trc_VM_sendResolveMethodTypeRefInto_Exception(vmThread, senderClass, illegalClass, visibilityReturnCode);
 			}
-			Trc_VM_sendResolveMethodTypeRefInto_Exception(vmThread, senderClass, illegalClass, visibilityReturnCode);
 			methodType = NULL;
 		}
 	}
