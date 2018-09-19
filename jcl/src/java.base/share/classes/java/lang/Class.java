@@ -1,6 +1,4 @@
 /*[INCLUDE-IF Sidecar16]*/
-package java.lang;
-
 /*******************************************************************************
  * Copyright (c) 1998, 2018 IBM Corp. and others
  *
@@ -22,6 +20,7 @@ package java.lang;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package java.lang;
 
 import java.io.InputStream;
 import java.security.AccessControlContext;
@@ -4021,9 +4020,7 @@ private ReflectCache peekReflectCache() {
 }
 
 static InternalError newInternalError(Exception cause) {
-	InternalError err = new InternalError(cause.toString());
-	err.setCause(cause);
-	return err;
+	return new InternalError(cause);
 }
 
 private Method lookupCachedMethod(String methodName, Class<?>[] parameters) {

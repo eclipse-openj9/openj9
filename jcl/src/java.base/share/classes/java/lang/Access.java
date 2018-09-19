@@ -1,6 +1,4 @@
 /*[INCLUDE-IF Sidecar17]*/
-package java.lang;
-
 /*******************************************************************************
  * Copyright (c) 2007, 2018 IBM Corp. and others
  *
@@ -22,6 +20,7 @@ package java.lang;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package java.lang;
 
 import java.security.AccessControlContext;
 import java.security.ProtectionDomain;
@@ -69,7 +68,6 @@ import sun.reflect.ConstantPool;
  * from outside the java.lang package.  The sun.misc.SharedSecrets class 
  * uses an instance of this class to access private java.lang members.
  */
-
 final class Access implements JavaLangAccess {
 
 	/** Set thread's blocker field. */
@@ -375,6 +373,12 @@ final class Access implements JavaLangAccess {
 		return StringCoding.newStringNoRepl(bytes, charset);
 	}
 /*[ENDIF]*/
-	
+
+/*[IF Java12]*/
+	public void setCause(Throwable throwable, Throwable cause) {
+		throwable.setCause(cause);
+	}
+/*[ENDIF]*/
+
 /*[ENDIF] Sidecar19-SE */
 }
