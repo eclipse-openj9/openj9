@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,8 +69,8 @@ TR::Instruction *TR_ARMRecompilation::generatePrePrologue()
    // see PicBuilder.s and Recompilation.s
    TR::Instruction *cursor=NULL;
    TR::Machine *machine = cg()->machine();
-   TR::Register   *gr4 = machine->getARMRealRegister(TR::RealRegister::gr4);
-   TR::Register   *lr = machine->getARMRealRegister(TR::RealRegister::gr14); // link register
+   TR::Register   *gr4 = machine->getRealRegister(TR::RealRegister::gr4);
+   TR::Register   *lr = machine->getRealRegister(TR::RealRegister::gr14); // link register
    TR::Node       *firstNode = _compilation->getStartTree()->getNode();
    TR::SymbolReference *recompileMethodSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_ARMsamplingRecompileMethod, false, false, false);
    TR_PersistentJittedBodyInfo *info = getJittedBodyInfo();
@@ -106,9 +106,9 @@ TR::Instruction *TR_ARMRecompilation::generatePrologue(TR::Instruction *cursor)
       // gr12 may contain the vtable offset, and must be preserved here
       // see PicBuilder.s and Recompilation.s
       TR::Machine *machine = cg()->machine();
-      TR::Register   *gr4 = machine->getARMRealRegister(TR::RealRegister::gr4);
-      TR::Register   *gr5 = machine->getARMRealRegister(TR::RealRegister::gr5);
-      TR::Register   *lr = machine->getARMRealRegister(TR::RealRegister::gr14); // link register
+      TR::Register   *gr4 = machine->getRealRegister(TR::RealRegister::gr4);
+      TR::Register   *gr5 = machine->getRealRegister(TR::RealRegister::gr5);
+      TR::Register   *lr = machine->getRealRegister(TR::RealRegister::gr14); // link register
       TR::Node       *firstNode = _compilation->getStartTree()->getNode();
       intptrj_t        addr = (intptrj_t)getCounterAddress();
       TR::LabelSymbol *snippetLabel = TR::LabelSymbol::create(cg()->trHeapMemory(), cg());
