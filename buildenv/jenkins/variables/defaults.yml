@@ -49,9 +49,9 @@ test_dependencies_job_name: 'test.getDependency'
 slack_channel: '#jenkins-sandbox'
 build_discarder:
   logs:
-    build: 20
-    pipeline: 20
-    pullRequest: 50
+    build: 30
+    pipeline: 30
+    pullRequest: 30
   artifacts:
     build: 10
     pipeline: 0
