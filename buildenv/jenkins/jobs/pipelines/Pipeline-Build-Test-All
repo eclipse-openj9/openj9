@@ -170,14 +170,17 @@ timeout(time: 10, unit: 'HOURS') {
                     if (PARSED_COMMENT[0].toLowerCase() != 'adam') { error("Pull Request trigger comment needs to begin with 'Jenkins'")}
 
                     // Setup TESTS_TARGETS
-                    if ("${PARSED_COMMENT[1]}".toLowerCase() == "compile") {
-                        TESTS_TARGETS = 'none'
-                        OFFSET = 0
-                    } else if ("${PARSED_COMMENT[1]}".toLowerCase() == "test") {
-                        TESTS_TARGETS = "${PARSED_COMMENT[2]}".toLowerCase()
-                        OFFSET = 1
-                    } else {
-                        error("Unable to parse trigger comment. Unknown option:'${PARSED_COMMENT[1]}'")
+                    switch ("${PARSED_COMMENT[1]}".toLowerCase()) {
+                        case "compile":
+                            TESTS_TARGETS = 'none'
+                            OFFSET = 0
+                            break
+                        case "test":
+                            TESTS_TARGETS = "${PARSED_COMMENT[2]}".toLowerCase()
+                            OFFSET = 1
+                            break
+                        default:
+                            error("Unable to parse trigger comment. Unknown build option:'${PARSED_COMMENT[1]}'")
                     }
                     echo "TESTS_TARGETS:'${TESTS_TARGETS}'"
 
