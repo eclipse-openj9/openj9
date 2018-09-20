@@ -825,7 +825,7 @@ freeJavaVM(J9JavaVM * vm)
 #if !defined(WIN32)
 	/* restore any handler we may have overwritten */
 	if (NULL != vm->originalSIGPIPESignalAction) {
-		OMRSIG_SIGACTION(SIGPIPE,(struct sigaction *)vm->originalSIGPIPESignalAction, NULL);
+		sigaction(SIGPIPE,(struct sigaction *)vm->originalSIGPIPESignalAction, NULL);
 		j9mem_free_memory(vm->originalSIGPIPESignalAction);
 		vm->originalSIGPIPESignalAction = NULL;
 	}
@@ -5362,7 +5362,7 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	newSignalAction.sa_flags = 0;
 #endif /* defined(J9ZTPF) */
 	newSignalAction.sa_handler = SIG_IGN;
-	OMRSIG_SIGACTION(SIGPIPE,&newSignalAction,(struct sigaction *)vm->originalSIGPIPESignalAction);
+	sigaction(SIGPIPE,&newSignalAction,(struct sigaction *)vm->originalSIGPIPESignalAction);
 #endif
 
 #ifdef J9VM_OPT_SIDECAR
@@ -6487,11 +6487,11 @@ isSSE2SupportedOnX86() {
 		 */
 		U_32 mxcsr = 0;
 		struct sigaction oldHandler;
-		OMRSIG_SIGACTION(SIGILL, NULL, &oldHandler);
-		OMRSIG_SIGNAL(SIGILL, (void (*)(int)) handleSIGILLForSSE);
+		sigaction(SIGILL, NULL, &oldHandler);
+		signal(SIGILL, (void (*)(int))handleSIGILLForSSE);
 		osSupportsSSE = TRUE;
 		asm("stmxcsr %0"::"m"(mxcsr) : );
-		OMRSIG_SIGACTION(SIGILL, &oldHandler, NULL);
+		sigaction(SIGILL, &oldHandler, NULL);
 		result = osSupportsSSE;
 #endif
 	}
