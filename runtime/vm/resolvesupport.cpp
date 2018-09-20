@@ -59,6 +59,16 @@ finalFieldSetAllowed(J9VMThread *currentThread, bool isStatic, J9Method *method,
 	bool legal = true;
 	/* NULL method means do not do the access check */
 	if (NULL != method) {
+		/* Handle the scenario where the callerClass is redefeined during <clinit> or <init>.
+		 * In that case, callerClass will be the obsolete version of the class and fieldClass
+		 * will be the current version (assuming that they represent the same class - if they
+		 * don't, this check fails anyway). It's safe to simply update both classes to their
+		 * current versions, as the classfile version check on fieldClass should take place on
+		 * the current version, and the Unsafe flag is preserved during redefinition, so it
+		 * doesn't matter which version is checked.
+		 */
+		fieldClass = J9_CURRENT_CLASS(fieldClass);
+		callerClass = J9_CURRENT_CLASS(callerClass);
 		J9ROMClass *romClass = fieldClass->romClass;
 		if (romClass->majorVersion >= 53) {
 			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
