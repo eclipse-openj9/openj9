@@ -138,8 +138,8 @@ digForStackDepth(jthread thread, char *methodName, char * methodSignature)
 			depth = i;
     		i = count;
     	}
-    	(*jvmti_env)->Deallocate(jvmti_env, name);
-    	(*jvmti_env)->Deallocate(jvmti_env, sig);
+    	(*jvmti_env)->Deallocate(jvmti_env, (unsigned char *)name);
+    	(*jvmti_env)->Deallocate(jvmti_env, (unsigned char *)sig);
     }
 
     return depth;
@@ -169,9 +169,9 @@ getVariableSlotNumber(JNIEnv *jni_env, jclass clazz, char * varName, char * meth
 			slotIndex = table[i].slot;
 			/*printf("got slot at i=%d, slot=%d\n", i, slotIndex);*/
 		}
-		(*jvmti_env)->Deallocate(jvmti_env, table[i].name);
-		(*jvmti_env)->Deallocate(jvmti_env, table[i].signature);
-		(*jvmti_env)->Deallocate(jvmti_env, table[i].generic_signature);
+		(*jvmti_env)->Deallocate(jvmti_env, (unsigned char *)table[i].name);
+		(*jvmti_env)->Deallocate(jvmti_env, (unsigned char *)table[i].signature);
+		(*jvmti_env)->Deallocate(jvmti_env, (unsigned char *)table[i].generic_signature);
 	}
 
 	(*jvmti_env)->Deallocate(jvmti_env, (unsigned char *) table);

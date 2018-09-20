@@ -53,14 +53,14 @@ gmc001(agentEnv * agent_env, char * args)
 			fprintf(stderr,"gmc001: setting getMemoryCategories extension to %p\n", getMemoryCategories);
 		}
 
-		err = (*jvmti_env)->Deallocate(jvmti_env, extensions[i].id);
+		err = (*jvmti_env)->Deallocate(jvmti_env, (unsigned char *)extensions[i].id);
 
 		if (err != JVMTI_ERROR_NONE) {
 			error(env, JVMTI_ERROR_NOT_FOUND, "gmc001:Couldn't Deallocate extensions[%d].id\n", i);
 			rc = JNI_ERR;
 		}
 
-		err = (*jvmti_env)->Deallocate(jvmti_env, extensions[i].short_description);
+		err = (*jvmti_env)->Deallocate(jvmti_env, (unsigned char *)extensions[i].short_description);
 
 		if (err != JVMTI_ERROR_NONE) {
 			error(env, JVMTI_ERROR_NOT_FOUND, "gmc001:Couldn't Deallocate extensions[%d].short_description\n", i);
@@ -68,7 +68,7 @@ gmc001(agentEnv * agent_env, char * args)
 		}
 
 		for (j = 0; j < extensions[i].param_count; j++) {
-			err = (*jvmti_env)->Deallocate(jvmti_env, extensions[i].params[j].name);
+			err = (*jvmti_env)->Deallocate(jvmti_env, (unsigned char *)extensions[i].params[j].name);
 
 			if (err != JVMTI_ERROR_NONE) {
 				error(env, JVMTI_ERROR_NOT_FOUND, "gmc001:Couldn't Deallocate extensions[%d].params[%d].name\n", i, j);

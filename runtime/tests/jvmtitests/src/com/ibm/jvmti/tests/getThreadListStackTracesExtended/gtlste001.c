@@ -179,7 +179,7 @@ static jint testGetThreadListStackTracesExtended(JavaVM * vm, jvmtiEnv * jvmti_e
 					++num_jitted;       
 			}
         }                     
-        (*jvmti_env)->Deallocate(jvmti_env, (char *)psiExt);
+        (*jvmti_env)->Deallocate(jvmti_env, (unsigned char *)psiExt);
 		
 		if ( high && (num_jitted == 0) ) {
 			rc = JNI_ERR; 
@@ -188,7 +188,7 @@ static jint testGetThreadListStackTracesExtended(JavaVM * vm, jvmtiEnv * jvmti_e
 			      "getThreadListTracesExtended: Error when high iteration count");
 		}		   
 	}
-	(*jvmti_env)->Deallocate(jvmti_env, (char *)thrds);
+	(*jvmti_env)->Deallocate(jvmti_env, (unsigned char *)thrds);
 	return(rc);
 }
 

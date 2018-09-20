@@ -214,7 +214,7 @@ testFollowReferences_heapRefCallback(jvmtiHeapReferenceKind refKind,
 static void *
 getArrayElements(JNIEnv * jni_env, jvmtiPrimitiveType primitiveType, jint primitiveArraySize, jobject array)
 {
-	void * arrayElements;
+	void *arrayElements = NULL;
 
 	switch (primitiveType) {
 		case JVMTI_PRIMITIVE_TYPE_BOOLEAN:
@@ -240,6 +240,9 @@ getArrayElements(JNIEnv * jni_env, jvmtiPrimitiveType primitiveType, jint primit
 	    	break;
 	    case JVMTI_PRIMITIVE_TYPE_DOUBLE:
 	    	arrayElements = (*jni_env)->GetDoubleArrayElements(jni_env, array, NULL);
+	    	break;
+	    default:
+	    	error(_agentEnv, JVMTI_ERROR_INTERNAL, "Unknown array primitive value type [%d]", primitiveType);
 	    	break;
 	}
 

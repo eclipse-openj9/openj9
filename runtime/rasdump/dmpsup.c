@@ -110,9 +110,9 @@ static void abortHandler (int sig);
 static void initRasDumpGlobalStorage(J9JavaVM *vm);
 static void freeRasDumpGlobalStorage(J9JavaVM *vm);
 static void hookVmInitialized PROTOTYPE((J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData));
-#ifdef LINUX
+#if defined(LINUX)
 static void appendSystemInfoFromFile(J9JavaVM *vm, U_32 key, const char *fileName );
-#endif
+#endif /* defined(LINUX) */
 #ifdef J9ZOS390
 static IDATA processZOSDumpOptions(J9JavaVM *vm, J9RASdumpOption* agentOpts, int optIndex);
 static void triggerAbend(void);
@@ -1268,7 +1268,7 @@ initSystemInfo(J9JavaVM *vm)
 		}
 	}
 
-#ifdef LINUX
+#if defined(LINUX)
 	/* On Linux, store the startup value of /proc/sys/kernel/sched_compat_yield if it's set */
 	{
 		char schedCompatYieldValue = j9util_sched_compat_yield_value(vm);
@@ -1287,7 +1287,7 @@ initSystemInfo(J9JavaVM *vm)
 	}
 	appendSystemInfoFromFile(vm, J9RAS_SYSTEMINFO_CORE_PATTERN, J9RAS_CORE_PATTERN_FILE);
 	appendSystemInfoFromFile(vm, J9RAS_SYSTEMINFO_CORE_USES_PID, J9RAS_CORE_USES_PID_FILE);
-#endif
+#endif /* defined(LINUX) */
 }
 
 /**
@@ -1325,7 +1325,7 @@ initDumpDirectory(J9JavaVM *vm)
 	return retVal;
 }
 
-
+#if defined(LINUX)
 /* Adds a J9RASSystemInfo to the end of the system info list using the key
  * specified as the key and the data from the specified file in /proc if
  * it exists.
@@ -1382,7 +1382,7 @@ appendSystemInfoFromFile(J9JavaVM *vm, U_32 key, const char *fileName )
 		j9file_close(fd);
 	}
 }
-
+#endif /* defined(LINUX) */
 
 IDATA
 J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
