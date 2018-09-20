@@ -243,18 +243,17 @@ def build_with_slack(JOB_NAME, ghprbGhRepository, ghprbActualCommit, PARAMETERS)
     }
     def JOB = build job: JOB_NAME, parameters: PARAMETERS, propagate: false
 
+    try {
+        DOWNSTREAM_JOB_NUMBER = JOB.getNumber()
+    } catch (er) {
+        echo "Couldn't retrieve downstream failed job number"
+    }
+    try {
+        DOWNSTREAM_JOB_URL = JOB.getAbsoluteUrl()
+    } catch (err) {
+        echo "Couldn't retrieve downstream failed job url"
+    }
     if (JOB.resultIsWorseOrEqualTo('UNSTABLE')) {
-        try {
-            DOWNSTREAM_JOB_NUMBER = JOB.getNumber()
-        } catch (er) {
-            echo "Couldn't retrieve downstream failed job number"
-        }
-        try {
-            DOWNSTREAM_JOB_URL = JOB.getAbsoluteUrl()
-        } catch (err) {
-            echo "Couldn't retrieve downstream failed job url"
-        }
-        
         if (JOB.result == "UNSTABLE") {
             echo "WARNING: Downstream job ${JOB_NAME} is unstable. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
             currentBuild.result = "UNSTABLE"
