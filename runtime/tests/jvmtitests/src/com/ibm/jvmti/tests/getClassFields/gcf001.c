@@ -93,12 +93,12 @@ Java_com_ibm_jvmti_tests_getClassFields_gcf001_checkClassFields(JNIEnv *jni_env,
 			return JNI_FALSE;
 		}
 
-		(*jvmti_env)->Deallocate(jvmti_env, fieldName);
-		(*jvmti_env)->Deallocate(jvmti_env, fieldSignature);
+		(*jvmti_env)->Deallocate(jvmti_env, (unsigned char *)fieldName);
+		(*jvmti_env)->Deallocate(jvmti_env, (unsigned char *)fieldSignature);
 		(*jni_env)->ReleaseStringUTFChars(jni_env, expectedNameString, expectedName);
 		(*jni_env)->ReleaseStringUTFChars(jni_env, expectedSignatureString, expectedSignature);
 	}
-	(*jvmti_env)->Deallocate(jvmti_env, (char *)fields);
+	(*jvmti_env)->Deallocate(jvmti_env, (unsigned char *)fields);
 
 	return JNI_TRUE;
 }

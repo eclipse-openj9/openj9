@@ -167,7 +167,7 @@ static jint testGetAllStackTracesExtended(JavaVM * vm, jvmtiEnv * jvmti_env, jin
 					++num_jitted;       
 			}
         }                     
-        (*jvmti_env)->Deallocate(jvmti_env, (char *)psiExt);                   
+        (*jvmti_env)->Deallocate(jvmti_env, (unsigned char *)psiExt);
 	  
 		if ( high && (num_jitted == 0) ) {
 			rc = JNI_ERR; 

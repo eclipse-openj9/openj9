@@ -85,10 +85,10 @@ testForceEarlyReturn_methodEntry(jvmtiEnv * jvmti_env, JNIEnv * jni_env, jthread
 {
 	jvmtiError err;
 	testForceEarlyReturn_testTrigger *trigger;
-	unsigned char * methName = NULL;
-	unsigned char * threadName = NULL;
-	unsigned char * suspThreadName = NULL;
-	agentEnv * env = _agentEnv;
+	char *methName = NULL;
+	char *threadName = NULL;
+	char *suspThreadName = NULL;
+	agentEnv *env = _agentEnv;
 
 	methName = testForceEarlyReturn_getMethodName(env, method);
 
@@ -288,7 +288,7 @@ testForceEarlyReturn_waitForTestThread(agentEnv * env, jthread thread, jmethodID
 			    !strcmp(thrName, "Thread-Runner")) {
 				unsigned char * suspendedThreadName;
 				*suspendedThread = threads[i];
-				suspendedThreadName = getThreadName(env, thread, *suspendedThread),
+				suspendedThreadName = (unsigned char *)getThreadName(env, thread, *suspendedThread),
 				tprintf(env, 300, 
 					  "\t%-10s state 0x%x thr 0x%x susThr 0x%p i%d is SUSPENDED. returning\n", 
 					  suspendedThreadName, state, thread, threads[i], i);
@@ -375,10 +375,10 @@ testForceEarlyReturn_getMethodName(agentEnv * env, jmethodID method)
 		goto done;                
 	}
 
-	strcpy(name, declaringClassName);
-	strcat(name, ".");
-	strcat(name, methodName);
-	strcat(name, methodSig);
+	strcpy((char *)name, declaringClassName);
+	strcat((char *)name, ".");
+	strcat((char *)name, methodName);
+	strcat((char *)name, methodSig);
 
 done:
 
@@ -392,5 +392,5 @@ done:
 		(*jvmti_env)->Deallocate(jvmti_env, (unsigned char *) declaringClassName); 
  
 
-	return name;
+	return (char *)name;
 }
