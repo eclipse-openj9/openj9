@@ -167,7 +167,6 @@ timeout(time: 10, unit: 'HOURS') {
                     * 3+ - jdk versions
                     */
                     def PARSED_COMMENT = params.ghprbCommentBody.tokenize(' ')
-                    if (PARSED_COMMENT.size() < 4) { error("Pull Request trigger comment does not contain enough elements.")}
                     if (PARSED_COMMENT[0].toLowerCase() != 'adam') { error("Pull Request trigger comment needs to begin with 'Jenkins'")}
 
                     // Setup TESTS_TARGETS
@@ -183,24 +182,41 @@ timeout(time: 10, unit: 'HOURS') {
                     echo "TESTS_TARGETS:'${TESTS_TARGETS}'"
 
                     // Setup JDK VERSIONS
-                    TMP_VERSIONS = PARSED_COMMENT[3+OFFSET].toLowerCase().tokenize(',')
-                    echo "TMP_VERSIONS:'${TMP_VERSIONS}'"
-                    TMP_VERSIONS.each { VERSION ->
-                        echo "VERSION:'${VERSION}'"
-                        echo "VERSION.substring(3):'${VERSION.substring(3)}'"
-                        println VERSION.class.name
-                        println RELEASES.class.name
-                        RELEASES.each {
-                            println it.class.name
-                        }
-                        println VERSION.substring(3).class.name
-                        if (RELEASES.contains(VERSION.substring(3))) {
-                            VERSION_MAP["${VERSION.substring(3)}"] = true
-                        } else {
-                            error("Unsupported JDK version or incorrect syntax:'${VERSION}'\nExpected 'jdkX' where X is one of ${RELEASES}")
-                        }
+                    switch (ghprbGhRepository) {
+                        case   ~/.*openj9-openjdk-jdk.*/:
+                            TMP_VERSION = ghprbGhRepository.substring(ghprbGhRepository.indexOf('-jdk')+4)
+                            if ("${TMP_VERSION}" == "") {
+                                TMP_VERSION = 'next'
+                            }
+                            VERSION_MAP["${TMP_VERSION}"] = true
+                            MIN_COMMENT_SIZE = 3
+                            break
+                        case "eclipse/openj9":
+                            TMP_VERSIONS = PARSED_COMMENT[3+OFFSET].toLowerCase().tokenize(',')
+                            TMP_VERSIONS.each { VERSION ->
+                                echo "VERSION:'${VERSION}'"
+                                echo "VERSION.substring(3):'${VERSION.substring(3)}'"
+                                println VERSION.class.name
+                                println RELEASES.class.name
+                                RELEASES.each {
+                                    println it.class.name
+                                }
+                                println VERSION.substring(3).class.name
+                                if (RELEASES.contains(VERSION.substring(3))) {
+                                    VERSION_MAP["${VERSION.substring(3)}"] = true
+                                } else {
+                                    error("Unsupported JDK version or incorrect syntax:'${VERSION}'\nExpected 'jdkX' where X is one of ${RELEASES}")
+                                }
+                            }
+                            MIN_COMMENT_SIZE = 4
+                            break
+                        default:
+                            error("Unknown source repo:'${ghprbGhRepository}'")
                     }
+
                     echo "VERSION_MAP:'${VERSION_MAP}'"
+
+                    if (PARSED_COMMENT.size() < MIN_COMMENT_SIZE) { error("Pull Request trigger comment does not contain enough elements.")}
 
                     // Setup PLATFORMS
                     TMP_PLATFORMS = []
