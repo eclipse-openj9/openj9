@@ -20,12 +20,13 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "j9cfg.h"
 #include <jni.h>
 
-#if J9VM_JCL_SE12
+#if JAVA_SPEC_VERSION >= 12
 JNIEXPORT void JNICALL
 JVM_InitializeFromArchive(JNIEnv *env, jclass clz)
 {
 	/* To be implemented via https://github.com/eclipse/openj9/issues/2452 */
 }
-#endif /* J9VM_JCL_SE12 */
+#endif /* JAVA_SPEC_VERSION >= 12 */

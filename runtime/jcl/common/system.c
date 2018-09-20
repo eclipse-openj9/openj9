@@ -398,7 +398,7 @@ jstring getEncoding(JNIEnv *env, jint encodingType)
 	char property[128];
 	jstring result = NULL;
 
-	switch(encodingType) {
+	switch (encodingType) {
 	case 0:		/* initialize the locale */
 		getPlatformFileEncoding(env, NULL, 0, encodingType);
 		break;
@@ -409,7 +409,7 @@ jstring getEncoding(JNIEnv *env, jint encodingType)
 #else
 		encoding = getPlatformFileEncoding(env, property, sizeof(property), encodingType);
 #endif /* defined(OSX) */
-#if defined(J9VM_JCL_SE11)
+#if JAVA_SPEC_VERSION >= 11
 		{
 			UDATA handle = 0;
 			PORT_ACCESS_FROM_ENV(env);
@@ -422,7 +422,7 @@ jstring getEncoding(JNIEnv *env, jint encodingType)
 				}
 			}
 		}
-#endif /* defined(J9VM_JCL_SE11) */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 		break;
 
 	case 2:		/* file.encoding */

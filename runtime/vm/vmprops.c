@@ -53,10 +53,11 @@ static J9JCLConfigurationInfo jclConfigs[] = {
 	{ "se7r" },
 	{ "se9" },
 	{ "se10" },
-	{ "se11" }
+	{ "se11" },
+	{ "se12" },
 };
 
-#define NUM_JCL_CONFIGS (sizeof(jclConfigs) / sizeof(J9JCLConfigurationInfo))
+#define NUM_JCL_CONFIGS (sizeof(jclConfigs) / sizeof(jclConfigs[0]))
 
 #define JAVA_ENDORSED_DIRS "java.endorsed.dirs"
 #define JAVA_EXT_DIRS "java.ext.dirs"
@@ -1119,19 +1120,19 @@ setSystemProperty(J9JavaVM * vm, J9VMSystemProperty * property, const char * val
 static J9JCLConfigurationInfo *
 determineJCLConfig(J9JavaVM * vm, char * jclName)
 {
-	UDATA i;
-
 	if (strncmp(jclName, "jcl", 3) == 0) {
 		char * configName = jclName + 3;
 		char * underscore = strchr(configName, '_');
 
 		if (underscore != NULL) {
 			UDATA len = underscore - configName;
+			UDATA i = 0;
 
 			for (i = 0; i < NUM_JCL_CONFIGS; ++i) {
 				J9JCLConfigurationInfo * currentConfig = &(jclConfigs[i]);
 
-				if ((strlen(currentConfig->jclName) == len) && (strncmp(configName, currentConfig->jclName, len) == 0)) {
+				if ((strncmp(configName, currentConfig->jclName, len) == 0)
+						&& ('\0' == currentConfig->jclName[len])) {
 					return currentConfig;
 				}
 			}

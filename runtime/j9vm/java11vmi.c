@@ -1756,7 +1756,7 @@ JVM_GetNanoTimeAdjustment(JNIEnv *env, jclass clazz, jlong offsetSeconds)
 	return result;
 }
 
-#if J9VM_JCL_SE11
+#if JAVA_SPEC_VERSION >= 11
 void JNICALL
 JVM_BeforeHalt()
 {
@@ -1831,4 +1831,4 @@ done:
 	return JNI_FALSE;
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 }
-#endif /* J9VM_JCL_SE11 */
+#endif /* JAVA_SPEC_VERSION >= 11 */
