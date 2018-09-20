@@ -869,7 +869,7 @@ TR_J9ServerVM::getDesignatedCodeCache(TR::Compilation *comp)
    if (codeCache)
       {
       // memorize the allocation pointers
-      comp->setAotMethodCodeStart((uint32_t *)codeCache->getWarmCodeAlloc());
+      comp->setRelocatableMethodCodeStart((uint32_t *)codeCache->getWarmCodeAlloc());
       }
    return codeCache;
    }
@@ -879,8 +879,8 @@ TR_J9ServerVM::allocateCodeMemory(TR::Compilation * comp, uint32_t warmCodeSize,
    {
    uint8_t *warmCode = TR_J9VM::allocateCodeMemory(comp, warmCodeSize, coldCodeSize, coldCode, isMethodHeaderNeeded);
    // JITaaS FIXME: why is this code needed? Shouldn't this be done when reserving?
-   if (!comp->getAotMethodCodeStart())
-      comp->setAotMethodCodeStart(warmCode - sizeof(OMR::CodeCacheMethodHeader));
+   if (!comp->getRelocatableMethodCodeStart())
+      comp->setRelocatableMethodCodeStart(warmCode - sizeof(OMR::CodeCacheMethodHeader));
    return warmCode;
    }
 
