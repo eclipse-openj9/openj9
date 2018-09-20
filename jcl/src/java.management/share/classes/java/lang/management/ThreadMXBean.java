@@ -632,8 +632,8 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 */
 	public ThreadInfo[] dumpAllThreads(boolean lockedMonitors,
 			boolean lockedSynchronizers);
-	/*[IF Java10]*/
 
+	/*[IF Java10]*/
 	/**
 	 * Returns an array of {@link ThreadInfo} objects holding information on all
 	 * threads that were alive when the call was invoked.
@@ -664,9 +664,11 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * @since 10
 	 */
 
-	public ThreadInfo[] dumpAllThreads(boolean lockedMonitors,
-            boolean lockedSynchronizers,
-            int maxDepth);
+	public default ThreadInfo[] dumpAllThreads(
+		boolean lockedMonitors, boolean lockedSynchronizers, int maxDepth
+	) {
+		throw new UnsupportedOperationException();
+	}
 
 
 	/**
@@ -728,9 +730,10 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 *  </ul>
 	 * @since 10
 	 */
-	public ThreadInfo[] getThreadInfo(long[] ids, boolean lockedMonitors,
-			boolean lockedSynchronizers, int maxDepth);
-
-
-	/*[ENDIF]*/ // Java 10
+	public default ThreadInfo[] getThreadInfo(
+		long[] ids, boolean lockedMonitors, boolean lockedSynchronizers, int maxDepth
+	) {
+		throw new UnsupportedOperationException();
+	}
+	/*[ENDIF] Java10*/
 }
