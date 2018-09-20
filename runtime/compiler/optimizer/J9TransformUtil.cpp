@@ -355,6 +355,7 @@ static void *dereferenceStructPointerChain(void *baseStruct, TR::Node *baseNode,
             }
          else // Native struct
             {
+            // Because addressChildAddress is going to be dereferenced, the field must be a final field pointing at native struct
             TR_ASSERT(isFinalFieldPointingAtNativeStruct(addressChildSymRef, comp), "dereferenceStructPointerChain should be dealing with reference fields");
             curStruct = *(uintptrj_t*)addressChildAddress;
             }
@@ -399,7 +400,7 @@ static void *dereferenceStructPointerChain(void *baseStruct, TR::Node *baseNode,
                }
             else
                {
-               TR_ASSERT(isFinalFieldPointingAtNativeStruct(symRef, comp), "dereferenceStructPointerChain should be dealing with reference fields");
+               // Native struct
                fieldAddress = curStruct + symRef->getOffset();
                }
 
