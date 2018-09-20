@@ -26,3 +26,4 @@ org.openj9.test.vm.Test_MsgHelp:test_loadMessages_EN																	AN-https://
 org.openj9.test.java.lang.management.TestRuntimeMXBean:testGetMBeanInfo													1626 generic-all
 org.openj9.test.java.lang.management.TestThreadMXBean:testGetMBeanInfo													1626 generic-all
 org.openj9.test.vmArguments.VmArgumentTests:testCrNocr																	244 generic-all
+org.openj9.test.attachAPI.TestAttachErrorHandling:test_startupShutdownRobustness										2871 generic-all
