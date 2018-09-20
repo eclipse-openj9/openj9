@@ -130,8 +130,10 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
    switch(node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod())
       {
       case TR::sun_misc_Unsafe_getAndAddInt:
+      case TR::sun_misc_Unsafe_getAndSetInt:
          return TR::Compiler->target.cpu.isX86() && !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets();
       case TR::sun_misc_Unsafe_getAndAddLong:
+      case TR::sun_misc_Unsafe_getAndSetLong:
          return TR::Compiler->target.cpu.isX86() && !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && TR::Compiler->target.is64Bit() && !TR::Compiler->om.canGenerateArraylets();
       case TR::java_lang_Class_isAssignableFrom:
          return cg()->supportsInliningOfIsAssignableFrom();
@@ -162,8 +164,14 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop* treetop)
       case TR::sun_misc_Unsafe_getAndAddInt:
          processUnsafeAtomicCall(treetop, node, TR::SymbolReferenceTable::atomicFetchAndAdd32BitSymbol);
          break;
+      case TR::sun_misc_Unsafe_getAndSetInt:
+         processUnsafeAtomicCall(treetop, node, TR::SymbolReferenceTable::atomicSwap32BitSymbol);
+         break;
       case TR::sun_misc_Unsafe_getAndAddLong:
          processUnsafeAtomicCall(treetop, node, TR::SymbolReferenceTable::atomicFetchAndAdd64BitSymbol);
+         break;
+      case TR::sun_misc_Unsafe_getAndSetLong:
+         processUnsafeAtomicCall(treetop, node, TR::SymbolReferenceTable::atomicSwap64BitSymbol);
          break;
       case TR::java_lang_Class_isAssignableFrom:
          process_java_lang_Class_IsAssignableFrom(treetop, node);
