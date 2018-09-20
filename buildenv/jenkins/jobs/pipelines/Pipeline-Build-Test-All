@@ -130,6 +130,8 @@ ghprbCommentBody = (params.ghprbCommentBody) ? params.ghprbCommentBody : ""
 echo "ghprbCommentBody:'${ghprbCommentBody}'"
 ghprbTargetBranch = (params.ghprbTargetBranch) ? params.ghprbTargetBranch : ""
 echo "ghprbTargetBranch:'${ghprbTargetBranch}'"
+ghprbActualCommit = (params.ghprbActualCommit) ? params.ghprbActualCommit : ""
+echo "ghprbActualCommit:'${ghprbActualCommit}'"
 
 VERSION_MAP = initialize_version_map()
 
@@ -316,7 +318,8 @@ def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_RE
                     string(name: 'ghprbPullId', value: ghprbPullId),
                     string(name: 'ghprbGhRepository', value: ghprbGhRepository),
                     string(name: 'ghprbCommentBody', value: ghprbCommentBody),
-                    string(name: 'ghprbTargetBranch', value: ghprbTargetBranch)]
+                    string(name: 'ghprbTargetBranch', value: ghprbTargetBranch),
+                    string(name: 'ghprbActualCommit', value: ghprbActualCommit)]
         return JOB
     }
 }
