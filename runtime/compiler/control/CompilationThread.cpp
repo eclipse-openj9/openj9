@@ -364,6 +364,12 @@ TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
       if ((getNumCompThreadsActive() + 1) * 100 >= (TR::Options::_compThreadCPUEntitlement + 50))
          return TR_no;
       }
+   // Do not activate if we are low on physical memory
+   bool incompleteInfo;
+   uint64_t freePhysicalMemorySizeB = computeAndCacheFreePhysicalMemory(incompleteInfo);
+   if (freePhysicalMemorySizeB != OMRPORT_MEMINFO_NOT_AVAILABLE &&
+       freePhysicalMemorySizeB <= (uint64_t)TR::Options::getSafeReservePhysicalMemoryValue() + TR::Options::getScratchSpaceLowerBound())
+      return TR_no;
    // Do not activate a new thread during graceperiod if AOT is used and first run because
    // we may have too many warm compilations at warm. However, there is no such risk for quickstart
    // Another exception: activate if second run in AOT mode
@@ -792,7 +798,12 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    // the options have been processed
 
    _vmStateOfCrashedThread = 0;
+
    _cachedFreePhysicalMemoryB = 0;
+   _cachedIncompleteFreePhysicalMemory = false;
+   OMRPORT_ACCESS_FROM_J9PORT(jitConfig->javaVM->portLibrary);
+   _cgroupMemorySubsystemEnabled = (OMR_CGROUP_SUBSYSTEM_MEMORY == omrsysinfo_cgroup_are_subsystems_enabled(OMR_CGROUP_SUBSYSTEM_MEMORY));
+   _suspendThreadDueToLowPhysicalMemory = false;
 
    // Initialize the compilation monitor
    //
@@ -3268,6 +3279,7 @@ TR::CompilationInfoPerThread::waitForWork()
 void
 TR::CompilationInfoPerThread::doSuspend()
    {
+   _compInfo.setSuspendThreadDueToLowPhysicalMemory(false);
    getCompThreadMonitor()->enter();
    setCompilationThreadState(COMPTHREAD_SUSPENDED);
    _compInfo.releaseCompMonitor(getCompilationThread());   // release the queue monitor before waiting
@@ -3486,11 +3498,16 @@ TR::CompilationInfoPerThread::processEntries()
           * Memory is hopelessly fragmented: stop all compilations
           */
          compInfo->getPersistentInfo()->setDisableFurtherCompilation(true);
-         if (TR::Options::getVerboseOption(TR_VerboseCompilationThreads) || TR::Options::getVerboseOption(TR_VerbosePerformance))
+         if (TR::Options::getVerboseOption(TR_VerboseCompilationThreads) || 
+             TR::Options::getVerboseOption(TR_VerbosePerformance) ||
+             TR::Options::getVerboseOption(TR_VerboseCompFailure))
             {
             TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,"t=%6u Disable further compilation due to OOM while processing compile entries", (uint32_t)compInfo->getPersistentInfo()->getElapsedTime());
             }
          compInfo->purgeMethodQueue(compilationVirtualAddressExhaustion);
+         // Must change the state to prevent an infinite loop
+         // Change it to COMPTHREAD_SIGNAL_WAIT because the compilation queue is empty
+         setCompilationThreadState(COMPTHREAD_SIGNAL_WAIT); 
          }
       }
    }
@@ -3742,6 +3759,7 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
       && compilationThreadIsActive() // We haven't already been signaled to suspend or terminate
       && (
          compInfo->getRampDownMCT() // force to have only one thread active
+         || compInfo->getSuspendThreadDueToLowPhysicalMemory()
          || (
             !tryCompilingAgain
             /*&& compInfoPT->getCompThreadId() != 0*/
@@ -3755,11 +3773,13 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
       compInfo->decNumCompThreadsActive();
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads))
          {
-         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u Suspend compThread %d Qweight=%d active=%d",
+         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u Suspend compThread %d Qweight=%d active=%d %s %s",
             (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(),
             getCompThreadId(),
             compInfo->getQueueWeight(),
-            compInfo->getNumCompThreadsActive());
+            compInfo->getNumCompThreadsActive(),
+            compInfo->getRampDownMCT() ? "RampDownMCT" : "",
+            compInfo->getSuspendThreadDueToLowPhysicalMemory() ? "LowPhysicalMem" : "");
          }
       // If the other remaining active thread(s) are sleeping (maybe because
       // we wanted to avoid two concurrent hot requests) we need to wake them
@@ -3786,6 +3806,14 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
             // TODO: write a message into the trace buffer because this is a corner case
             }
          }
+      }
+   else // We will not suspend this thread
+      {
+      // If the low memory flag was set but there was no additional comp thread
+      // to suspend, we must clear the flag now
+      if (compInfo->getSuspendThreadDueToLowPhysicalMemory() &&
+         compInfo->getNumCompThreadsActive() < 2)
+         compInfo->setSuspendThreadDueToLowPhysicalMemory(false);
       }
    }
 
@@ -7436,11 +7464,10 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 #ifdef MCT_DEBUG
          fprintf(stderr, "Created new compiler %p ID=%d\n", compiler, compiler->getCompThreadID());
 #endif
-
-         uint64_t proposedScratchMemoryLimitB_64bit = (uint64_t)TR::Options::getScratchSpaceLimit();
-
          if (compiler)
             {
+            uint64_t proposedScratchMemoryLimit = (uint64_t)TR::Options::getScratchSpaceLimit();
+
             // Check if the the method to be compiled is a JSR292 method
             if (TR::CompilationInfo::isJSR292(details.getMethod()))
                {
@@ -7448,8 +7475,8 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                compiler->getOptions()->setOption(TR_Server);
                compiler->getOptions()->setOption(TR_ProcessHugeMethods);
 
-               // Try to increase scratch space limit for this compilation
-               proposedScratchMemoryLimitB_64bit *= TR::Options::getScratchSpaceFactorWhenJSR292Workload();
+               // Try to increase scratch space limit for JSR292 compilations
+               proposedScratchMemoryLimit *= TR::Options::getScratchSpaceFactorWhenJSR292Workload();
                }
 
             // Check if the method to be compiled is a Thunk Archetype
@@ -7460,59 +7487,47 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                options->setOption(TR_EnableOSR, false);
                }
 
-            size_t proposedScratchMemoryLimitB = proposedScratchMemoryLimitB_64bit > UINT_MAX ? UINT_MAX : (size_t)proposedScratchMemoryLimitB_64bit;
-
             // Check to see if there is sufficient physical memory available for this compilation
-            // Temporarily only do this for JSR292 compilations
-            if (TR::CompilationInfo::isJSR292(details.getMethod())
-                || compiler->getOption(TR_EnableSelfTuningScratchMemoryUsageBeforeCompile))
+            if (compiler->getOption(TR_EnableSelfTuningScratchMemoryUsageBeforeCompile))
                {
                bool incompleteInfo = false;
-               int64_t physicalLimitB_64bit = compInfo->computeFreePhysicalLimitAndAbortCompilationIfLow(compiler,
-                                                                                                         incompleteInfo,
-                                                                                                         TR::Options::getScratchSpaceLowerBound());
-
+               // Abort the compile if we don't have at least getScratchSpaceLowerBound()
+               // available, plus some safe reserve
+               // TODO: we may want to use a lower value for third parameter below if the
+               // compilation is deemed cheap (JNI, thunks, cold small method)
+               uint64_t physicalLimit = compInfo->computeFreePhysicalLimitAndAbortCompilationIfLow(compiler,
+                                                                                                   incompleteInfo,
+                                                                                                   TR::Options::getScratchSpaceLowerBound());
                // If we were able to get the memory information
-               if (physicalLimitB_64bit >= 0)
+               if (physicalLimit != OMRPORT_MEMINFO_NOT_AVAILABLE)
                   {
-                  size_t physicalLimitB = physicalLimitB_64bit > UINT_MAX ? UINT_MAX : (size_t)physicalLimitB_64bit;
-
-                  // If the proposed scratch space limit is greater
-                  // than the available physical memory
-                  if (proposedScratchMemoryLimitB > physicalLimitB)
+                  // If the proposed scratch space limit is greater than the available 
+                  // physical memory, we need to lower the scratch space limit
+                  if (proposedScratchMemoryLimit > physicalLimit)
                      {
                      if (incompleteInfo)
                         {
                         // If we weren't able to get all the memory information
-                        // only lower the limit for JSR292 compilations
-                        if (TR::CompilationInfo::isJSR292(details.getMethod())
-                            && compiler->getOption(TR_EnableSelfTuningScratchMemoryUsageBeforeCompile))
+                        // only lower the limit for JSR292 compilations, 
+                        // but not beyond the default value for scratch memory
+                        if (TR::CompilationInfo::isJSR292(details.getMethod()))
                            {
-                           proposedScratchMemoryLimitB = (physicalLimitB >= scratchSegmentProvider.allocationLimit()
-                                                          ? physicalLimitB
-                                                          : scratchSegmentProvider.allocationLimit());
+                           proposedScratchMemoryLimit = (physicalLimit >= scratchSegmentProvider.allocationLimit()
+                                                         ? physicalLimit
+                                                         : scratchSegmentProvider.allocationLimit());
                            }
                         }
                      else // We have complete memory information
                         {
-                        if (physicalLimitB >= scratchSegmentProvider.allocationLimit())
-                           {
-                           proposedScratchMemoryLimitB = physicalLimitB;
-                           }
-                        else // Not enough physical memory to use even a regular scratch space limit
-                           {
-                           if (compiler->getOption(TR_EnableSelfTuningScratchMemoryUsageBeforeCompile))
-                              {
-                              proposedScratchMemoryLimitB = (physicalLimitB >= TR::Options::getScratchSpaceLowerBound()
-                                                             ? physicalLimitB
-                                                             : TR::Options::getScratchSpaceLowerBound());
-                              }
-                           }
+                        proposedScratchMemoryLimit = physicalLimit;
                         }
                      }
                   }
                }
-            scratchSegmentProvider.setAllocationLimit(proposedScratchMemoryLimitB);
+            
+            // Cap the limit for JIT to 4GB
+            size_t proposedCapped = proposedScratchMemoryLimit > UINT_MAX ? UINT_MAX : (size_t)proposedScratchMemoryLimit;
+            scratchSegmentProvider.setAllocationLimit(proposedCapped);
             }
 
          if (debug("traceInfo") && optionSetIndex > 0)
@@ -7524,6 +7539,8 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
       }
    catch (const std::exception &e)
       {
+      // TODO: we must handle OOM cases when we abort the compilation right from the start.
+      // Or eliminate the code that throws (or the code could also look at how the expensive the compilation is)
       that->_methodBeingCompiled->_compErrCode = compilationFailure;
 
 
@@ -7801,9 +7818,9 @@ TR::CompilationInfoPerThreadBase::compile(
                  compiler->isProfilingCompilation() ? "profiled " : ""
                 );
          bool incomplete;
-         uint64_t freePhysicalMemorySizeB = _compInfo.computeFreePhysicalMemory(incomplete);
+         uint64_t freePhysicalMemorySizeB = _compInfo.computeAndCacheFreePhysicalMemory(incomplete);
         
-         if (!incomplete)
+         if (freePhysicalMemorySizeB != OMRPORT_MEMINFO_NOT_AVAILABLE)
             { 
             TR_VerboseLog::writeLineLocked(
                TR_Vlog_COMPSTART,
@@ -10119,8 +10136,8 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
          else
             {
             bool incomplete;
-            uint64_t freePhysicalMemorySizeB = _compInfo.computeFreePhysicalMemory(incomplete);
-            if (!incomplete)
+            uint64_t freePhysicalMemorySizeB = _compInfo.computeAndCacheFreePhysicalMemory(incomplete);
+            if (freePhysicalMemorySizeB != OMRPORT_MEMINFO_NOT_AVAILABLE)
                {
                TR_VerboseLog::writeLine(TR_Vlog_COMPFAIL,"%s time=%dus %s memLimit=%zu KB freePhysicalMemory=%llu MB",
                                            compiler->signature(),
@@ -10466,71 +10483,116 @@ TR::CompilationInfo::increaseUnstoredBytes(U_32 aotBytes, U_32 jitBytes)
 #endif
    }
 
+
 uint64_t
 TR::CompilationInfo::computeFreePhysicalMemory(bool &incompleteInfo)
    {
    bool incomplete = false;
+   PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
 
-   if (_cachedFreePhysicalMemoryB >= 0)
+   uint64_t freePhysicalMemory = OMRPORT_MEMINFO_NOT_AVAILABLE;
+   J9MemoryInfo memInfo;
+   if (0 == j9sysinfo_get_memory_info(&memInfo)
+      && memInfo.availPhysical != OMRPORT_MEMINFO_NOT_AVAILABLE
+      && memInfo.hostAvailPhysical != OMRPORT_MEMINFO_NOT_AVAILABLE)
+      {
+      freePhysicalMemory = memInfo.availPhysical;
+      uint64_t freeHostPhysicalMemorySizeB = memInfo.hostAvailPhysical;
+
+      if (memInfo.cached != OMRPORT_MEMINFO_NOT_AVAILABLE)
+         freePhysicalMemory += memInfo.cached;
+      else
+         incomplete = !_cgroupMemorySubsystemEnabled;
+
+      if (memInfo.hostCached != OMRPORT_MEMINFO_NOT_AVAILABLE)
+         freeHostPhysicalMemorySizeB += memInfo.hostCached;
+      else
+         incomplete = true;
+#if defined(LINUX)
+      if (memInfo.buffered != OMRPORT_MEMINFO_NOT_AVAILABLE)
+         freePhysicalMemory += memInfo.buffered;
+      else
+         incomplete = incomplete || !_cgroupMemorySubsystemEnabled;
+
+      if (memInfo.hostBuffered != OMRPORT_MEMINFO_NOT_AVAILABLE)
+         freeHostPhysicalMemorySizeB += memInfo.hostBuffered;
+      else
+         incomplete = true;
+#endif
+      // If we run in a container, freePhysicalMemory is the difference between
+      // the container memory limit and how much physical memory the container used
+      // It's possible that on the entire machine there is less physical memory
+      // available because other processes have consumed it. Thus, we need to take
+      // into account the available physical memory on the host
+      if (freeHostPhysicalMemorySizeB < freePhysicalMemory)
+         freePhysicalMemory = freeHostPhysicalMemorySizeB;
+      }
+   else
+      {
+      incomplete= true;
+      freePhysicalMemory = OMRPORT_MEMINFO_NOT_AVAILABLE;
+      }
+
+   incompleteInfo = incomplete;
+   return freePhysicalMemory;
+   }
+
+
+uint64_t
+TR::CompilationInfo::computeAndCacheFreePhysicalMemory(bool &incompleteInfo, int64_t updatePeriodMs)
+   {
+   if (updatePeriodMs < 0)
+      updatePeriodMs = (int64_t)TR::Options::getUpdateFreeMemoryMinPeriod();
+   // If the OS ever gave us bad information, avoid future calls
+   if (_cachedFreePhysicalMemoryB != OMRPORT_MEMINFO_NOT_AVAILABLE)
       {
       static int64_t lastUpdateTime = 0;
       int64_t crtElapsedTime = getPersistentInfo()->getElapsedTime();
 
-      // time to recompute freePhysicalMemory
       if (lastUpdateTime == 0
-          || (crtElapsedTime - lastUpdateTime) > (int64_t)TR::Options::getUpdateFreeMemoryMinPeriod())
+         || (crtElapsedTime - lastUpdateTime) >= updatePeriodMs)
          {
-         PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
-
-         J9MemoryInfo memInfo;
-         if (0 == j9sysinfo_get_memory_info(&memInfo)
-             && memInfo.availPhysical != OMRPORT_MEMINFO_NOT_AVAILABLE)
-            {
-            uint64_t freePhysicalMemorySizeB = memInfo.availPhysical;
-           
-            if (memInfo.cached != OMRPORT_MEMINFO_NOT_AVAILABLE)
-               freePhysicalMemorySizeB += memInfo.cached;
-            else
-               incomplete = true;
-#if defined(LINUX)
-            if (memInfo.buffered != OMRPORT_MEMINFO_NOT_AVAILABLE)
-               freePhysicalMemorySizeB += memInfo.buffered;
-            else
-               incomplete = true;
-#endif
-            _cachedFreePhysicalMemoryB = freePhysicalMemorySizeB;
-            lastUpdateTime = crtElapsedTime;
-            }
-         else
-            {
-            incomplete = true;
-            _cachedFreePhysicalMemoryB = OMRPORT_MEMINFO_NOT_AVAILABLE;
-            }
+         // time to recompute freePhysicalMemory
+         bool incomplete;
+         uint64_t freeMem = computeFreePhysicalMemory(incomplete);
+         
+         // Cache the computed value for future reference
+         // Synchronization issues can be ignored here
+         _cachedIncompleteFreePhysicalMemory = incomplete;
+         _cachedFreePhysicalMemoryB = freeMem;
+         lastUpdateTime = crtElapsedTime;
          }
       }
-
-   incompleteInfo = incomplete;
-
+   incompleteInfo = _cachedIncompleteFreePhysicalMemory;
    return _cachedFreePhysicalMemoryB;
    }
 
 
-int64_t
+uint64_t
 TR::CompilationInfo::computeFreePhysicalLimitAndAbortCompilationIfLow(TR::Compilation *comp,
-                                                                     bool &incompleteInfo,
-                                                                     size_t sizeToAllocate)
+                                                                      bool &incompleteInfo,
+                                                                      size_t sizeToAllocate)
    {
-   int64_t freePhysicalMemorySizeB = computeFreePhysicalMemory(incompleteInfo);
-   int64_t freePhysicalMemoryLimitB = freePhysicalMemorySizeB;
-
-   if (freePhysicalMemoryLimitB >= 0)
+   uint64_t freePhysicalMemorySizeB = computeAndCacheFreePhysicalMemory(incompleteInfo);
+   if (OMRPORT_MEMINFO_NOT_AVAILABLE != freePhysicalMemorySizeB)
       {
-      // Take into account the size to be allocated and the safe reserve value
-      freePhysicalMemoryLimitB -= ((int64_t)sizeToAllocate + (int64_t)TR::Options::getSafeReservePhysicalMemoryValue());
-
-      // If we have incomplete data, don't abort the compile
-      if (!incompleteInfo
-          && freePhysicalMemoryLimitB < 0)
+      bool fail = false;
+      // Avoid consuming the last drop of physical memory for JIT (leave 50 MB for emergency)
+      // TODO: the emergency could be generated from SWAP
+      if (freePhysicalMemorySizeB >= (uint64_t)TR::Options::getSafeReservePhysicalMemoryValue())
+         {
+         freePhysicalMemorySizeB -= (uint64_t)TR::Options::getSafeReservePhysicalMemoryValue();
+         // Fail the compilation now if the remaining physical memory is not enough
+         // to perform a warm compilation that may use up to 'sizeToAllocate' memory
+         // However, do not fail if information about physical memory is incomplete
+         if (!incompleteInfo && freePhysicalMemorySizeB < sizeToAllocate)
+            fail = true;
+         }
+      else
+         {
+         fail = !incompleteInfo;
+         }
+      if (fail)
          {
          if (TR::Options::isAnyVerboseOptionSet(TR_VerbosePerformance, TR_VerboseCompileEnd, TR_VerboseCompFailure))
             {
@@ -10540,9 +10602,9 @@ TR::CompilationInfo::computeFreePhysicalLimitAndAbortCompilationIfLow(TR::Compil
          comp->failCompilation<J9::LowPhysicalMemory>("Low Physical Memory");
          }
       }
-
-   return freePhysicalMemoryLimitB;
+   return freePhysicalMemorySizeB;
    }
+    
 
 
 //===========================================================

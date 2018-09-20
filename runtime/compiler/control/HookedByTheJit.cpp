@@ -6219,7 +6219,11 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
       j9str_ftime(timestamp, sizeof(timestamp), "%b %d %H:%M:%S %Y", persistentInfo->getStartTime());
       TR_VerboseLog::vlogAcquire();
       TR_VerboseLog::writeLine(TR_Vlog_INFO, "StartTime: %s", timestamp);
-      TR_VerboseLog::writeLine(TR_Vlog_INFO, "Free Physical Memory: %lld KB", compInfo->computeFreePhysicalMemory(incomplete) >> 10);
+      uint64_t phMemAvail = compInfo->computeAndCacheFreePhysicalMemory(incomplete);
+      if (phMemAvail != OMRPORT_MEMINFO_NOT_AVAILABLE)
+         TR_VerboseLog::writeLine(TR_Vlog_INFO, "Free Physical Memory: %lld MB %s", phMemAvail >> 20, incomplete?"estimated":"");
+      else
+         TR_VerboseLog::writeLine(TR_Vlog_INFO, "Free Physical Memory: Unavailable");
 #if defined(J9VM_OPT_SHARED_CLASSES) && defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT)
       // When we read the SCC data we set isWarmSCC either to Yes or No. Otherwise it remains in maybe state.
       J9SharedClassJavacoreDataDescriptor* javacoreData = compInfo->getAddrOfJavacoreData();
@@ -6481,9 +6485,14 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
                bool incomplete;
                TR_PersistentMemory *persistentMemory = compInfo->persistentMemory();
                TR_VerboseLog::vlogAcquire();
-               TR_VerboseLog::writeLine(TR_Vlog_MEMORY,"Free Physical Memory: %lld KB", compInfo->computeFreePhysicalMemory(incomplete) >> 10);
-               TR_VerboseLog::writeLine(TR_Vlog_MEMORY,"t=%6u JIT memory usage", (uint32_t)crtTime);
-               TR_VerboseLog::writeLine(TR_Vlog_MEMORY, "FIXME: Report JIT memory usage\n");
+               uint64_t phMemAvail = compInfo->computeAndCacheFreePhysicalMemory(incomplete);
+               if (phMemAvail != OMRPORT_MEMINFO_NOT_AVAILABLE)
+                  TR_VerboseLog::writeLine(TR_Vlog_INFO, "Free Physical Memory: %lld MB %s", phMemAvail >> 20, incomplete ? "estimated" : "");
+               else
+                  TR_VerboseLog::writeLine(TR_Vlog_INFO, "Free Physical Memory: Unavailable");
+
+               //TR_VerboseLog::writeLine(TR_Vlog_MEMORY,"t=%6u JIT memory usage", (uint32_t)crtTime);
+               //TR_VerboseLog::writeLine(TR_Vlog_MEMORY, "FIXME: Report JIT memory usage\n");
                // Show stats on assumptions
                // assumptionTableMutex is not used, so the numbers may be a little off
                TR_VerboseLog::writeLine(TR_Vlog_MEMORY,"\tStats on assumptions:");

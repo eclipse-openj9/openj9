@@ -801,8 +801,6 @@ public:
    virtual bool methodMayHaveBeenInterpreted( TR::Compilation *comp);
    virtual bool canRecompileMethodWithMatchingPersistentMethodInfo( TR::Compilation *comp);
 
-   virtual void abortCompilationIfLowFreePhysicalMemory(TR::Compilation *comp, size_t sizeToAllocate = 0);
-
    virtual void               revertToInterpreted(TR_OpaqueMethodBlock *method);
 
    virtual bool               argumentCanEscapeMethodCall(TR::MethodSymbol *method, int32_t argIndex);
