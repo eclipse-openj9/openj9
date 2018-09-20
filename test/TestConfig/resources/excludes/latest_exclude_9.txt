@@ -27,3 +27,4 @@ org.openj9.test.java.lang.Test_ClassLoader																				134754 generic-all
 org.openj9.test.java.lang.Test_Thread:test_getContextClassLoader														125908 generic-all
 org.openj9.test.vmArguments.VmArgumentTests:testCrNocr																	244 generic-all
 j9vm.test.softmx.SoftmxRemoteTest																						480 generic-all
+org.openj9.test.attachAPI.TestAttachErrorHandling:test_startupShutdownRobustness										2871 generic-all
