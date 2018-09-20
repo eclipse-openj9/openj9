@@ -309,10 +309,36 @@ vmOptionsTableAddOptionWithCopy(void **vmOptionsTable, char *optionString, void 
 }
 
 #if defined(WIN32)
-#define	J9JAVA_DIR_SEPARATOR "\\"
-#else /* UNIX style */
-#define	J9JAVA_DIR_SEPARATOR "/"
-#endif
+  /* On Windows, the subdirectory containing the redirector hasn't changed with Java versions. */
+  #define J9JAVA_REDIRECTOR_SUBDIR "\\bin\\j9vm\\"
+#elif (JAVA_SPEC_VERSION >= 10) || ((JAVA_SPEC_VERSION == 9) && defined(OPENJ9_BUILD))
+  /* On other platforms, the subdirectory containing the redirector is common in recent Java versions. */
+  #define J9JAVA_REDIRECTOR_SUBDIR "/lib/j9vm/"
+#else /* WIN32 */
+  /* In Java 8 and early versions of Java 9, the path depends on the platform architecture. */
+  #if defined(J9HAMMER)
+	#define JVM_ARCH_DIR "amd64"
+  #elif defined(J9ARM)
+	#define JVM_ARCH_DIR "arm"
+  #elif defined(J9X86)
+	#define JVM_ARCH_DIR "i386"
+  #elif defined(S39064) || defined(J9ZOS39064)
+	#define JVM_ARCH_DIR "s390x"
+  #elif defined(S390) || defined(J9ZOS390)
+	#define JVM_ARCH_DIR "s390"
+  #elif defined(RS6000) || defined(LINUXPPC)
+	#if !defined(PPC64)
+	  #define JVM_ARCH_DIR "ppc"
+	#elif defined(J9VM_ENV_LITTLE_ENDIAN)
+	  #define JVM_ARCH_DIR "ppc64le"
+	#else /* J9VM_ENV_LITTLE_ENDIAN */
+	  #define JVM_ARCH_DIR "ppc64"
+	#endif /* PPC64 */
+  #else
+	#error "Must define an architecture"
+  #endif
+  #define J9JAVA_REDIRECTOR_SUBDIR "/lib/" JVM_ARCH_DIR "/j9vm/"
+#endif /* WIN32 */
 
 #define JAVAHOMEDIR "-Djava.home="
 #define JAVAHOMEDIR_LEN (sizeof(JAVAHOMEDIR) - 1)
@@ -347,7 +373,7 @@ cmdline_fetchRedirectorDllDir(struct j9cmdlineOptions *args, char *result)
 	}
 
 	strcpy(result, tmpresult);
-	strcat(result, J9JAVA_DIR_SEPARATOR "bin" J9JAVA_DIR_SEPARATOR "j9vm" J9JAVA_DIR_SEPARATOR);
+	strcat(result, J9JAVA_REDIRECTOR_SUBDIR);
 
 	return TRUE;
 }
