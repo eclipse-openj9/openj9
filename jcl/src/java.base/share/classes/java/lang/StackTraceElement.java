@@ -4,7 +4,7 @@ package java.lang;
 import java.security.ProtectionDomain;
 
 /*******************************************************************************
- * Copyright (c) 2002, 2017 IBM Corp. and others
+ * Copyright (c) 2002, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -257,6 +257,12 @@ public String toString() {
  * Helper method for toString and for Throwable.print output with PrintStream and PrintWriter
  */
 void appendTo(Appendable buf) {
+	/*[IF Sidecar19-SE]*/
+	if (null != moduleName) {
+		appendTo(buf, moduleName);
+		appendTo(buf, "/"); //$NON-NLS-1$
+	}
+	/*[ENDIF] Sidecar19-SE*/
 	/*[PR CMVC 90361] print "\tat " in Throwable.printStackTrace() for compatibility */
 	appendTo(buf, getClassName());
 	/*[PR CMVC 121726] Exception traces print '46' instead of '.' */
@@ -264,16 +270,6 @@ void appendTo(Appendable buf) {
 	appendTo(buf, getMethodName());
   
 	appendTo(buf, "("); //$NON-NLS-1$
-	/*[IF Sidecar19-SE]*/
-	if (null != moduleName) {
-		appendTo(buf, moduleName);
-		if (null != moduleVersion) {
-			appendTo(buf, "@"); //$NON-NLS-1$
-			appendTo(buf, moduleVersion);
-		}
-		appendTo(buf, "/"); //$NON-NLS-1$
-	}
-	/*[ENDIF]*/
 	if (isNativeMethod()) {
 		appendTo(buf, "Native Method"); //$NON-NLS-1$
 	} else {
