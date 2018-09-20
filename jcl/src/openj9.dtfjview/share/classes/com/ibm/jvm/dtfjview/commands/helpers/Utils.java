@@ -791,7 +791,7 @@ public class Utils {
 		return output;
 	}
 
-	public static Iterator getAddressSapceSectionInfo(Image loadedImage){
+	public static Iterator getAddressSpaceSectionInfo(Image loadedImage) {
 		Iterator itAddressSpace = loadedImage.getAddressSpaces();
 		Vector vSections = new Vector();
 		while(itAddressSpace.hasNext()){
