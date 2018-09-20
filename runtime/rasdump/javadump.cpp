@@ -3259,9 +3259,13 @@ JavaCoreDumpWriter::writeExceptionDetail(j9object_t* exceptionRef)
 			j9object_t             nestedException = NULL;
 			J9UTF8*                nestedExceptionClassName = NULL;
 
+#if JAVA_SPEC_VERSION >= 12
+			nestedException = J9VMJAVALANGTHROWABLE_CAUSE(vmThread, *exceptionRef);
+#else
 			nestedException = J9VMJAVALANGEXCEPTIONININITIALIZERERROR_EXCEPTION(vmThread, *exceptionRef);
+#endif /* JAVA_SPEC_VERSION */
 
-			if (nestedException){
+			if (nestedException) {
 				nestedExceptionClassName = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(vmThread, nestedException)->romClass);
 				if (nestedExceptionClassName) {
 					_OutputStream.writeCharacters(" Nested Exception: \"");

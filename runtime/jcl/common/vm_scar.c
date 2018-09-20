@@ -47,16 +47,18 @@
 #define JAVA_FONTS_STR "JAVA_FONTS"
 #define OFFLOAD_PREFIX "offload_"
 
-#if defined(J9VM_JCL_SE7_BASIC)
+#if JAVA_SPEC_VERSION == 8
 #define J9_DLL_NAME J9_JAVA_SE_7_BASIC_DLL_NAME
-#elif defined(J9VM_JCL_SE9)
+#elif JAVA_SPEC_VERSION == 9
 #define J9_DLL_NAME J9_JAVA_SE_9_DLL_NAME
-#elif defined(J9VM_JCL_SE10)
+#elif JAVA_SPEC_VERSION == 10
 #define J9_DLL_NAME J9_JAVA_SE_10_DLL_NAME
-#elif defined(J9VM_JCL_SE11)
+#elif JAVA_SPEC_VERSION == 11
 #define J9_DLL_NAME J9_JAVA_SE_11_DLL_NAME
+#elif JAVA_SPEC_VERSION == 12
+#define J9_DLL_NAME J9_JAVA_SE_12_DLL_NAME
 #else
-#error Unknown J9VM_JCL_SE
+#error Unsupported JAVA_SPEC_VERSION
 #endif
 
 /* this file is owned by the VM-team.  Please do not modify it without consulting the VM team */

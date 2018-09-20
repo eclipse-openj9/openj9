@@ -403,7 +403,7 @@ jstring getEncoding(JNIEnv *env, jint encodingType)
 
 		case 1: 		/* platform encoding */
 			encoding = getPlatformFileEncoding(env, property, sizeof(property), encodingType);
-#if defined(J9VM_JCL_SE11)
+#if JAVA_SPEC_VERSION >= 11
 			{
 				UDATA handle = 0;
 				PORT_ACCESS_FROM_ENV(env);
@@ -415,7 +415,7 @@ jstring getEncoding(JNIEnv *env, jint encodingType)
 					}
 				}
 			}
-#endif /* J9VM_JCL_SE11 */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 			break;
 
 		case 2:		/* file.encoding */

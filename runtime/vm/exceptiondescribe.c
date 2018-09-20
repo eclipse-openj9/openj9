@@ -481,7 +481,11 @@ internalExceptionDescribe(J9VMThread * vmThread)
 				vmThread->currentException = NULL;
 			}
 			if (J9OBJECT_CLAZZ(vmThread, exception) == eiieClass) {
+#if JAVA_SPEC_VERSION >= 12
+				exception = J9VMJAVALANGTHROWABLE_CAUSE(vmThread, exception);
+#else
 				exception = J9VMJAVALANGEXCEPTIONININITIALIZERERROR_EXCEPTION(vmThread, exception);
+#endif /* JAVA_SPEC_VERSION */
 			} else {
 				break;
 			}
