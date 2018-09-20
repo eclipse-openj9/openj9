@@ -19,7 +19,10 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 
 # To use this docker file:
-#   docker build -t=openj9 .
+# First copy your public ssh key into a file named authorized_keys next to the Dockerfile
+# Make sure you are in the directory contianing the Dockerfile and authorized_keys file
+# Then run:
+#   docker build -t openj9 -f Dockerfile .
 #   docker run -it openj9
 
 FROM centos:centos6.9
