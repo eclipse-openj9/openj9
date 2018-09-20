@@ -230,7 +230,7 @@ fixJNIFieldID(J9VMThread * currentThread, J9JNIFieldID * fieldID, J9Class * repl
 			J9UTF8_LENGTH(fieldSignature),
 			&declaringClass,
 			(UDATA *) &resolvedField,
-			J9_RESOLVE_FLAG_NO_THROW_ON_FAIL,
+			J9_LOOK_NO_JAVA,
 			NULL);
 		if ((newFieldAddress != NULL) && (J9_CURRENT_CLASS(declaringClass) == replacementRAMClass)) {
 			offset = (UDATA) newFieldAddress - (UDATA) replacementRAMClass->ramStatics;
@@ -250,7 +250,7 @@ fixJNIFieldID(J9VMThread * currentThread, J9JNIFieldID * fieldID, J9Class * repl
 			J9UTF8_LENGTH(fieldSignature),
 			&declaringClass,
 			(UDATA *) &resolvedField,
-			J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
+			J9_LOOK_NO_JAVA);
 		if ((newFieldOffset != -1) && (declaringClass == replacementRAMClass)) {
 			offset = newFieldOffset;
 			newField = resolvedField;
@@ -2029,7 +2029,7 @@ copyStaticFields(J9VMThread * currentThread, J9Class * originalRAMClass, J9Class
 			J9UTF8_LENGTH(fieldSignature),
 			NULL,
 			NULL,
-			J9_RESOLVE_FLAG_NO_THROW_ON_FAIL,
+			J9_LOOK_NO_JAVA,
 			NULL);
 
 		if (newFieldAddress != NULL) {
@@ -2044,7 +2044,7 @@ copyStaticFields(J9VMThread * currentThread, J9Class * originalRAMClass, J9Class
 				J9UTF8_LENGTH(fieldSignature),
 				NULL,
 				NULL,
-				J9_RESOLVE_FLAG_NO_THROW_ON_FAIL,
+				J9_LOOK_NO_JAVA,
 				NULL);
 
 			/* printf("copyStaticFields:  [%p:0x%08x] to [%p:0x%08x]\n", oldFieldAddress, oldFieldAddress[0], newFieldAddress, newFieldAddress[0]); */

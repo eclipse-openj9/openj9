@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -157,7 +157,7 @@ findField(J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fieldNameL
 	} while (currentClass != NULL);
 
 #if !defined (J9VM_OUT_OF_PROCESS)
-	if ( (options & J9_RESOLVE_FLAG_NO_THROW_ON_FAIL) == 0) {
+	if ( (options & (J9_LOOK_NO_THROW | J9_LOOK_NO_JAVA)) == 0) {
 		J9UTF8* className = J9ROMCLASS_CLASSNAME(clazz->romClass);
 		j9object_t message = catUtfToString4( vmStruct, 
 			J9UTF8_DATA(className), J9UTF8_LENGTH(className),
@@ -277,7 +277,7 @@ instanceFieldOffsetWithSourceClass(J9VMThread *vmStruct, J9Class *clazz, U_8 *fi
 	if (field) {
 		if (field->modifiers & J9AccStatic) {
 #if !defined (J9VM_OUT_OF_PROCESS)
-			if ((options & J9_RESOLVE_FLAG_NO_THROW_ON_FAIL) == 0) {
+			if ((options & (J9_LOOK_NO_THROW | J9_LOOK_NO_JAVA)) == 0) {
 				setCurrentException (vmStruct, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, NULL);
 			}
 #endif
@@ -323,7 +323,7 @@ findFieldAndCheckVisibility (J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldNam
 	if (sourceClass && field) {
 		IDATA checkResult = checkVisibility(vmStruct, sourceClass, defClass, field->modifiers, options);
 		if (checkResult < J9_VISIBILITY_ALLOWED) {
-			if ((options & J9_RESOLVE_FLAG_NO_THROW_ON_FAIL) == 0) {
+			if ((options & (J9_LOOK_NO_THROW | J9_LOOK_NO_JAVA)) == 0) {
 				char *errorMsg = NULL;
 				if (J9_VISIBILITY_NON_MODULE_ACCESS_ERROR == checkResult) {
 					errorMsg = illegalAccessMessage(vmStruct, field->modifiers, sourceClass, defClass, J9_VISIBILITY_NON_MODULE_ACCESS_ERROR);
@@ -367,7 +367,7 @@ staticFieldAddress(J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA f
 		staticAddress = (UDATA *) offsetOrAddress;
 		if (0 == (field->modifiers & J9AccStatic)) {
 #if !defined (J9VM_OUT_OF_PROCESS)
-			if ((options & J9_RESOLVE_FLAG_NO_THROW_ON_FAIL) == 0) {
+			if ((options & (J9_LOOK_NO_THROW | J9_LOOK_NO_JAVA)) == 0) {
 				setCurrentException (vmStruct, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, NULL);
 			}
 #endif

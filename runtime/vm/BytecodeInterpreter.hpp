@@ -2999,7 +2999,15 @@ done:
 			/* See if the class is visible to the sender */
 			if (NULL != senderClass) {
 				IDATA checkResult = checkVisibility(_currentThread, senderClass, j9clazz, j9clazz->romClass->modifiers, J9_LOOK_REFLECT_CALL);
+				VMStructHasBeenUpdated(REGISTER_ARGS);
 				if (checkResult < J9_VISIBILITY_ALLOWED) {
+					if (immediateAsyncPending()) {
+						rc = GOTO_ASYNC_CHECK;
+						goto done;
+					} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
+						rc = GOTO_THROW_CURRENT_EXCEPTION;
+						goto done;
+					}
 					char *nlsStr = illegalAccessMessage(_currentThread, -1, senderClass, j9clazz, checkResult);
 					/* VM struct is already up-to-date */
 					setCurrentExceptionUTF(_currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSEXCEPTION, nlsStr);
@@ -3014,7 +3022,6 @@ done:
 			if (J9_UNEXPECTED(EXECUTE_BYTECODE != rc)) {
 				goto done;
 			}
-		} else {
 		}
 		instance = allocateObject(REGISTER_ARGS, j9clazz);
 		if (J9_UNEXPECTED(NULL == instance)) {

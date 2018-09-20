@@ -5330,7 +5330,7 @@ TR_J9VMBase::getFieldOffset(TR::Compilation * comp, TR::SymbolReference* classRe
          offset = (uint32_t)(field->offset + getObjectHeaderSizeInBytes());
          // Do we Need this?
          // offset = getInstanceFieldOffset(j9ClassPtr, field->name, strlen(field->name), field->signature, strlen(field->signature),
-         //                               J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
+         //                               J9_LOOK_NO_JAVA);
 
          // fprintf(stderr,">>>>> Offset for %s determined to be : %d\n", field->name,offset);
          return (uintptrj_t)offset;
@@ -5347,7 +5347,7 @@ TR_J9VMBase::getFieldOffset(TR::Compilation * comp, TR::SymbolReference* classRe
          TR::VMAccessCriticalSection staticFieldAddress(this);
          staticAddr = jitConfig->javaVM->internalVMFunctions->staticFieldAddress(_vmThread,
                           (J9Class*)j9ClassPtr, u8FieldString, len,  (U_8*)field->signature, (UDATA)strlen(field->signature),
-                          NULL, NULL, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL, NULL);
+                          NULL, NULL, J9_LOOK_NO_JAVA, NULL);
          }
       }
 
@@ -6033,7 +6033,7 @@ TR_J9VMBase::getStaticFieldAddress(TR_OpaqueClassBlock * clazz, unsigned char * 
    {
    TR::VMAccessCriticalSection getStaticFieldAddress(this);
    void * result = vmThread()->javaVM->internalVMFunctions->staticFieldAddress(
-    vmThread(), TR::Compiler->cls.convertClassOffsetToClassPtr(clazz), fieldName, fieldLen, sig, sigLen, NULL, NULL, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL,  NULL);
+    vmThread(), TR::Compiler->cls.convertClassOffsetToClassPtr(clazz), fieldName, fieldLen, sig, sigLen, NULL, NULL, J9_LOOK_NO_JAVA,  NULL);
    return result;
    }
 
@@ -6386,7 +6386,7 @@ TR_J9VM::getObjectNewInstanceImplMethod(TR_Memory * trMemory)
 
    // make sure that internal functions return true class pointers
    J9Class * jlObject = intFunc->internalFindKnownClass(vmThread(), J9VMCONSTANTPOOL_JAVALANGOBJECT, J9_FINDKNOWNCLASS_FLAG_EXISTING_ONLY);
-   protoMethod = (J9Method *) intFunc->javaLookupMethod(vmThread(), jlObject, (J9ROMNameAndSignature *) &newInstancePrototypeNameAndSig, NULL, J9_LOOK_DIRECT_NAS | J9_LOOK_VIRTUAL | J9_LOOK_NO_THROW);
+   protoMethod = (J9Method *) intFunc->javaLookupMethod(vmThread(), jlObject, (J9ROMNameAndSignature *) &newInstancePrototypeNameAndSig, NULL, J9_LOOK_DIRECT_NAS | J9_LOOK_VIRTUAL | J9_LOOK_NO_JAVA);
    protoMethod->constantPool = (J9ConstantPool *) ((UDATA) protoMethod->constantPool | J9_STARTPC_METHOD_IS_OVERRIDDEN);
    TR_ResolvedMethod * result = createResolvedMethod(trMemory, (TR_OpaqueMethodBlock *) protoMethod, 0);
    return result;
@@ -6623,7 +6623,7 @@ uint32_t
 TR_J9VMBase::getInstanceFieldOffset(TR_OpaqueClassBlock * clazz, char * fieldName, uint32_t fieldLen,
                                     char * sig, uint32_t sigLen)
    {
-   return getInstanceFieldOffset(clazz, fieldName, fieldLen, sig, sigLen, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
+   return getInstanceFieldOffset(clazz, fieldName, fieldLen, sig, sigLen, J9_LOOK_NO_JAVA);
    }
 
 TR_OpaqueClassBlock *
@@ -6848,7 +6848,7 @@ TR_J9VMBase::getMethodFromClass(TR_OpaqueClassBlock * methodClass, char * method
       {
       TR::VMAccessCriticalSection getMethodFromClass(this);
       result = (TR_OpaqueMethodBlock *) vmThread()->javaVM->internalVMFunctions->javaLookupMethod(vmThread(),
-         (J9Class *)methodClass, (J9ROMNameAndSignature *) &nameAndSig, (J9Class *)callingClass, J9_LOOK_JNI | J9_LOOK_NO_THROW);
+         (J9Class *)methodClass, (J9ROMNameAndSignature *) &nameAndSig, (J9Class *)callingClass, J9_LOOK_JNI | J9_LOOK_NO_JAVA);
       }
 
    return result;
@@ -6902,7 +6902,7 @@ TR_J9VMBase::isClassVisible(TR_OpaqueClassBlock * sourceClass, TR_OpaqueClassBlo
    J9Class *sourceJ9Class = TR::Compiler->cls.convertClassOffsetToClassPtr(sourceClass);
    J9Class *destJ9Class = TR::Compiler->cls.convertClassOffsetToClassPtr(destClass);
 
-   IDATA result = intFunc->checkVisibility(vmThread(), sourceJ9Class, destJ9Class, destJ9Class->romClass->modifiers, J9_LOOK_REFLECT_CALL | J9_LOOK_NO_THROW);
+   IDATA result = intFunc->checkVisibility(vmThread(), sourceJ9Class, destJ9Class, destJ9Class->romClass->modifiers, J9_LOOK_REFLECT_CALL | J9_LOOK_NO_JAVA);
    if (result != J9_VISIBILITY_ALLOWED)
       return false;
    else

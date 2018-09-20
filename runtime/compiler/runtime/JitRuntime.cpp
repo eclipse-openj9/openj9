@@ -845,7 +845,7 @@ void dumpInstanceFieldsForClass(::FILE *fp, J9Class *instanceClass, J9VMThread *
 
             fprintf(fp, "%u, %.*s, %.*s, %08x, ", instanceClass, J9UTF8_LENGTH(sigUTF), J9UTF8_DATA(sigUTF), J9UTF8_LENGTH(nameUTF), J9UTF8_DATA(nameUTF), romFieldCursor->modifiers);
 
-            offset = javaVM->internalVMFunctions->instanceFieldOffset(vmThread, superclass, J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF), J9UTF8_DATA(sigUTF), J9UTF8_LENGTH(sigUTF), NULL, NULL, 0);
+            offset = javaVM->internalVMFunctions->instanceFieldOffset(vmThread, superclass, J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF), J9UTF8_DATA(sigUTF), J9UTF8_LENGTH(sigUTF), NULL, NULL, J9_LOOK_NO_JAVA);
 
             if (offset >= 0)
                {
@@ -880,7 +880,7 @@ void dumpClassStaticsForClass(::FILE *fp, J9Class *clazz, J9VMThread *vmThread)
 
          fprintf(fp, "%u, %.*s, %.*s, %08x, ", clazz, J9UTF8_LENGTH(sigUTF), J9UTF8_DATA(sigUTF), J9UTF8_LENGTH(nameUTF), J9UTF8_DATA(nameUTF), romFieldCursor->modifiers);
 
-         void *address = javaVM->internalVMFunctions->staticFieldAddress(vmThread, clazz, J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF), J9UTF8_DATA(sigUTF), J9UTF8_LENGTH(sigUTF), NULL, NULL, 0, NULL);
+         void *address = javaVM->internalVMFunctions->staticFieldAddress(vmThread, clazz, J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF), J9UTF8_DATA(sigUTF), J9UTF8_LENGTH(sigUTF), NULL, NULL, J9_LOOK_NO_JAVA, NULL);
 
          if (address)
             {
