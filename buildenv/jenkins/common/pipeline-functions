@@ -237,7 +237,9 @@ def build_with_slack(JOB_NAME, ghprbGhRepository, ghprbActualCommit, PARAMETERS)
 
     // Set Github Commit Status
     if (ghprbActualCommit) {
-        set_build_status("https://github.com/${ghprbGhRepository}", JOB_NAME, ghprbActualCommit, BUILD_URL, 'PENDING', "Build Started")
+        node('master') {
+            set_build_status("https://github.com/${ghprbGhRepository}", JOB_NAME, ghprbActualCommit, BUILD_URL, 'PENDING', "Build Started")
+        }
     }
     def JOB = build job: JOB_NAME, parameters: PARAMETERS, propagate: false
 
@@ -261,7 +263,9 @@ def build_with_slack(JOB_NAME, ghprbGhRepository, ghprbActualCommit, PARAMETERS)
             }
             // Set Github Commit Status
             if (ghprbActualCommit) {
-                set_build_status("https://github.com/${ghprbGhRepository}", JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'FAILURE', "Build UNSTABLE")
+                node('master') {
+                    set_build_status("https://github.com/${ghprbGhRepository}", JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'FAILURE', "Build UNSTABLE")
+                }
             }
         } else {
         	if (SLACK_CHANNEL) {
@@ -269,14 +273,18 @@ def build_with_slack(JOB_NAME, ghprbGhRepository, ghprbActualCommit, PARAMETERS)
         	}
             // Set Github Commit Status
             if (ghprbActualCommit) {
-                set_build_status("https://github.com/${ghprbGhRepository}", JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'FAILURE', "Build FAILED")
+                node('master') {
+                    set_build_status("https://github.com/${ghprbGhRepository}", JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'FAILURE', "Build FAILED")
+                }
             }
         	error "Downstream job ${JOB_NAME} did not pass. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
         }
     } else {
         // Set Github Commit Status
         if (ghprbActualCommit) {
-            set_build_status("https://github.com/${ghprbGhRepository}", JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'SUCCESS', "Build PASSED")
+            node('master') {
+                set_build_status("https://github.com/${ghprbGhRepository}", JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'SUCCESS', "Build PASSED")
+            }
         }
     }
     return JOB
