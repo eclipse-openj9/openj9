@@ -729,8 +729,6 @@ getStackTraceForThread (J9VMThread * vmThread, J9VMThread *targetThread, UDATA s
 /* J9SourceJclStandardInit*/
 jint JCL_OnUnload (J9JavaVM* vm, void* reserved);
 jint standardPreconfigure ( JavaVM *jvm);
-jint
-standardInitAndCompleteInitialization (J9JavaVM *vm, char* dllName);
 void
 internalInitializeJavaLangClassLoader (JNIEnv * env);
 IDATA checkJCL (J9VMThread * vmThread, U_8* dllValue, U_8* jclConfig, UDATA j9Version, UDATA jclVersion);
