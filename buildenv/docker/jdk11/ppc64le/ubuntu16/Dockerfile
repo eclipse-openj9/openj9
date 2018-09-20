@@ -32,7 +32,10 @@ RUN apt-get update \
   && add-apt-repository ppa:ubuntu-toolchain-r/test \
   && apt-get update \
   && apt-get install -qq -y --no-install-recommends \
+    ant \
+    ant-contrib \
     autoconf \
+    build-essential \
     ca-certificates \
     ccache \
     cpio \
@@ -55,6 +58,7 @@ RUN apt-get update \
     libxt-dev \
     libxtst-dev \
     make \
+    perl \
     pkg-config \
     realpath \
     ssh \
@@ -62,6 +66,9 @@ RUN apt-get update \
     wget \
     zip \
   && rm -rf /var/lib/apt/lists/*
+
+# Install Docker module to run test framework
+RUN echo yes | cpan install JSON Text::CSV
 
 # Install optional tools
 RUN apt-get update \

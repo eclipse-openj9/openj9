@@ -34,7 +34,10 @@ RUN apt-get update \
   && apt-get install -qq -y --no-install-recommends \
     gcc-7 \
     g++-7 \
+    ant \
+    ant-contrib \
     autoconf \
+    build-essential \
     ca-certificates \
     ccache \
     cmake \
@@ -55,6 +58,7 @@ RUN apt-get update \
     libxt-dev \
     libxtst-dev \
     make \
+    perl \
     pkg-config \
     realpath \
     ssh \
@@ -63,6 +67,9 @@ RUN apt-get update \
     zip \
     vim \
   && rm -rf /var/lib/apt/lists/*
+
+# Install Docker module to run test framework
+RUN echo yes | cpan install JSON Text::CSV
 
 # Create links for c++,g++,cc,gcc
 RUN ln -s g++ /usr/bin/c++ \
