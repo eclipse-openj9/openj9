@@ -313,10 +313,20 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
         targets.each { target ->
             switch (target.trim().toLowerCase()) {
                 case ~/^(_)?sanity$/:
-                    TARGET_NAMES.addAll(["sanity.functional", "sanity.system"])
+                    if (params.ghprbPullId) {
+                        // Map Sanity to sanity.functional in PR builds.
+                        TARGET_NAMES.addAll(["sanity.functional"])
+                    } else {
+                        TARGET_NAMES.addAll(["sanity.functional", "sanity.system"])
+                    }
                     break
                 case ~/^(_)?extended$/:
-                    TARGET_NAMES.addAll(["extended.functional", "extended.system"])
+                    if (params.ghprbPullId) {
+                        // Map Extended to extended.functional in PR builds.
+                        TARGET_NAMES.addAll(["extended.functional"])
+                    } else {
+                        TARGET_NAMES.addAll(["extended.functional", "extended.system"])
+                    }
                     break
                 default:
                     TARGET_NAMES.add(target.trim())
