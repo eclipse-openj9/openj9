@@ -198,13 +198,6 @@ timeout(time: 10, unit: 'HOURS') {
                             TMP_VERSIONS = PARSED_COMMENT[3+OFFSET].toLowerCase().tokenize(',')
                             TMP_VERSIONS.each { VERSION ->
                                 echo "VERSION:'${VERSION}'"
-                                echo "VERSION.substring(3):'${VERSION.substring(3)}'"
-                                println VERSION.class.name
-                                println RELEASES.class.name
-                                RELEASES.each {
-                                    println it.class.name
-                                }
-                                println VERSION.substring(3).class.name
                                 if (RELEASES.contains(VERSION.substring(3))) {
                                     VERSION_MAP["${VERSION.substring(3)}"] = true
                                 } else {
