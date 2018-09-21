@@ -223,6 +223,7 @@ typedef struct TR_AOTStats
    TR_AOTInliningStats specialMethods;
    TR_AOTInliningStats virtualMethods;
    TR_AOTInliningStats interfaceMethods;
+   TR_AOTInliningStats abstractMethods;
 
    TR_AOTInliningStats profiledInlinedMethods;
    TR_AOTInliningStats profiledClassGuards;

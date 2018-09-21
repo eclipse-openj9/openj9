@@ -2846,6 +2846,8 @@ void TR::CompilationInfo::stopCompilationThreads()
       fprintf(stderr, "numVirtualMethodsValidationSucceeded: %d\n", aotStats->virtualMethods.numSucceededValidations);
       fprintf(stderr, "numInterfaceMethodsValidationFailed: %d\n", aotStats->interfaceMethods.numFailedValidations);
       fprintf(stderr, "numInterfaceMethodsValidationSucceeded: %d\n", aotStats->interfaceMethods.numSucceededValidations);
+      fprintf(stderr, "numAbstractMethodsValidationFailed: %d\n", aotStats->abstractMethods.numFailedValidations);
+      fprintf(stderr, "numAbstractMethodsValidationSucceeded: %d\n", aotStats->abstractMethods.numSucceededValidations);
 
       fprintf(stderr, "-------------------------\n");
       fprintf(stderr, "numProfiledClassGuardsValidationFailed: %d\n", aotStats->profiledClassGuards.numFailedValidations);

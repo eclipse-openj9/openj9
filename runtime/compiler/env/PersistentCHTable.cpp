@@ -312,7 +312,8 @@ TR_PersistentClassInfo *
 TR_PersistentCHTable::findClassInfoAfterLocking(
       TR_OpaqueClassBlock *classId,
       TR::Compilation *comp,
-      bool returnClassInfoForAOT)
+      bool returnClassInfoForAOT,
+      bool validateClassInfo)
    {
    if (comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE() && !returnClassInfoForAOT) // for AOT do not use the class hierarchy
       return NULL;
@@ -387,14 +388,20 @@ TR_PersistentCHTable::isOverriddenInThisHierarchy(
    }
 
 TR_ResolvedMethod * TR_PersistentCHTable::findSingleImplementer(
-   TR_OpaqueClassBlock * thisClass, int32_t cpIndexOrVftSlot, TR_ResolvedMethod * callerMethod, TR::Compilation * comp, bool locked, TR_YesNoMaybe useGetResolvedInterfaceMethod)
+      TR_OpaqueClassBlock * thisClass,
+      int32_t cpIndexOrVftSlot,
+      TR_ResolvedMethod * callerMethod,
+      TR::Compilation * comp,
+      bool locked,
+      TR_YesNoMaybe useGetResolvedInterfaceMethod,
+      bool validate)
    {
    if (comp->getOption(TR_DisableCHOpts))
       return 0;
 
 
 
-   TR_PersistentClassInfo * classInfo = comp->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(thisClass, comp, true);
+   TR_PersistentClassInfo * classInfo = comp->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(thisClass, comp, true, validate);
    if (!classInfo)
       {
       return 0;
@@ -411,7 +418,8 @@ TR_PersistentCHTable::findSingleInterfaceImplementer(
       int32_t cpIndex,
       TR_ResolvedMethod *callerMethod,
       TR::Compilation *comp,
-      bool locked)
+      bool locked,
+      bool validate)
    {
    if (comp->getOption(TR_DisableCHOpts))
       return 0;
@@ -421,7 +429,7 @@ TR_PersistentCHTable::findSingleInterfaceImplementer(
       return 0;
       }
 
-   TR_PersistentClassInfo * classInfo = findClassInfoAfterLocking(thisClass, comp, true);
+   TR_PersistentClassInfo * classInfo = findClassInfoAfterLocking(thisClass, comp, true, validate);
    if (!classInfo)
       {
       return 0;
@@ -496,7 +504,12 @@ TR_PersistentCHTable::isKnownToHaveMoreThanTwoInterfaceImplementers(
 
 TR_ResolvedMethod *
 TR_PersistentCHTable::findSingleAbstractImplementer(
-   TR_OpaqueClassBlock * thisClass, int32_t vftSlot, TR_ResolvedMethod * callerMethod, TR::Compilation * comp, bool locked)
+   TR_OpaqueClassBlock * thisClass,
+      int32_t vftSlot,
+      TR_ResolvedMethod * callerMethod,
+      TR::Compilation * comp,
+      bool locked,
+      bool validate)
    {
    if (comp->getOption(TR_DisableCHOpts))
       return 0;
@@ -515,7 +528,8 @@ TR_PersistentCHTable::findSingleAbstractImplementer(
 TR_OpaqueClassBlock *
 TR_PersistentCHTable::findSingleConcreteSubClass(
       TR_OpaqueClassBlock *opaqueClass,
-      TR::Compilation *comp)
+      TR::Compilation *comp,
+      bool validate)
    {
    TR_OpaqueClassBlock *concreteSubClass = NULL;
    if (comp->getOption(TR_DisableCHOpts))

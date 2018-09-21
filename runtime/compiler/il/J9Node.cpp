@@ -414,6 +414,8 @@ J9::Node::processJNICall(TR::TreeTop * callNodeTreeTop, TR::ResolvedMethodSymbol
       addressOfJ9Class->setIsClassPointerConstant(true);
       TR::Node *addressOfJavaLangClassReference;
 
+      comp->verifySymbolHasBeenValidated(static_cast<void *>(resolvedMethod->containingClass()));
+
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
       if (TR::Compiler->target.is64Bit())
          {

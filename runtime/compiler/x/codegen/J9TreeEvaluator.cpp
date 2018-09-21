@@ -7582,12 +7582,15 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
                                                         node->getOpCodeValue() == TR::anewarray) )
       {
       startInstr = startInstr->getNext();
+      TR_OpaqueClassBlock *classToValidate = clazz;
+
       TR_RelocationRecordInformation *recordInfo =
          (TR_RelocationRecordInformation *) comp->trMemory()->allocateMemory(sizeof(TR_RelocationRecordInformation), heapAlloc);
       recordInfo->data1 = allocationSize;
       recordInfo->data2 = node->getInlinedSiteIndex();
       recordInfo->data3 = (uintptr_t) failLabel;
       recordInfo->data4 = (uintptr_t) startInstr;
+
       TR::SymbolReference * classSymRef;
       TR_ExternalRelocationTargetKind reloKind;
 
@@ -7600,6 +7603,15 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
          {
          classSymRef = node->getSecondChild()->getSymbolReference();
          reloKind = TR_VerifyRefArrayForAlloc;
+
+         if (comp->getOption(TR_UseSymbolValidationManager))
+            classToValidate = comp->fej9()->getComponentClassFromArrayClass(classToValidate);
+         }
+
+      if (comp->getOption(TR_UseSymbolValidationManager))
+         {
+         TR_ASSERT_FATAL(classToValidate, "classToValidate should not be NULL, clazz=%p\n", clazz);
+         recordInfo->data5 = (uintptr_t)classToValidate;
          }
 
       cg->addExternalRelocation(new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(startInstr,
