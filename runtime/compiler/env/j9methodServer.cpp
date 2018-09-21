@@ -145,6 +145,14 @@ TR_ResolvedJ9JITaaSServerMethod::classOfStatic(I_32 cpIndex, bool returnClassFor
    }
 
 bool
+TR_ResolvedJ9JITaaSServerMethod::isConstantDynamic(I_32 cpIndex)
+   {
+   TR_ASSERT_FATAL(cpIndex != -1, "ConstantDynamic cpIndex shouldn't be -1");
+   UDATA cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(_romClass), cpIndex);
+   return (J9CPTYPE_CONSTANT_DYNAMIC == cpType);
+   }
+
+bool
 TR_ResolvedJ9JITaaSServerMethod::isUnresolvedString(I_32 cpIndex, bool optimizeForAOT)
    {
    return true;

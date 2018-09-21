@@ -88,6 +88,7 @@ public:
    virtual TR_OpaqueClassBlock * getClassFromConstantPool( TR::Compilation *, uint32_t cpIndex, bool returnClassToAOT = false) override;
    virtual TR_OpaqueClassBlock * getDeclaringClassFromFieldOrStatic( TR::Compilation *comp, int32_t cpIndex) override;
    virtual TR_OpaqueClassBlock * classOfStatic(int32_t cpIndex, bool returnClassForAOT = false) override;
+   virtual bool isConstantDynamic(I_32 cpIndex) override;
    virtual bool isUnresolvedString(int32_t cpIndex, bool optimizeForAOT = false) override;
    virtual TR_ResolvedMethod * getResolvedVirtualMethod( TR::Compilation *, int32_t cpIndex, bool ignoreRtResolve, bool * unresolvedInCP) override;
    virtual TR_ResolvedMethod *   getResolvedPossiblyPrivateVirtualMethod( TR::Compilation *, int32_t cpIndex, bool ignoreRtResolve, bool * unresolvedInCP) override;
