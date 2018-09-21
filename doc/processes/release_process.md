@@ -109,7 +109,13 @@ them.  They are merely points in time.
 Update the Extensions branches to pull the tagged levels from the `openj9` 
 & `openj9-omr` release branches.
 1. Rebuild the tagged levels and ensure they pass the quality bar defined by 
-AdoptOpenJDK.
+AdoptOpenJDK. These builds need to have extra configure options which will
+ identify them as release builds.  These options are`--with-milestone=fcs`
+ (JDK8 - don't use the default option for an internal build) or
+ `--without-version-pre --without-version-opt` (JDK9+ - don't set
+ pre-release identifier or OPT field that contains a timestamp) added to the
+ `./configure` command line.  These ensure that the correct version string
+ is displayed in the `java -version` output.
 1. Provide a window of time (a week?) for any stakeholders to highlight any 
 stopship issues with the release candidate build.  If any are found, a 
 determination can be made to either:
