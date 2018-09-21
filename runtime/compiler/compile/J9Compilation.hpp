@@ -41,6 +41,7 @@ namespace J9 { typedef J9::Compilation CompilationConnector; }
 #include "env/CompilerEnv.hpp"
 #include "env/OMRMemory.hpp"
 #include "compile/AOTClassInfo.hpp"
+#include "runtime/SymbolValidationManager.hpp"
 
 class TR_AOTGuardSite;
 class TR_FrontEnd;
@@ -287,6 +288,8 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    //
    bool supportsQuadOptimization();
 
+   TR::SymbolValidationManager *getSymbolValidationManager() { return _symbolValidationManager; }
+
 private:
 
    J9VMThread *_j9VMThread;
@@ -360,6 +363,8 @@ private:
    TR_AccessedProfileInfo *_profileInfo;
 
    bool _skippedJProfilingBlock;
+
+   TR::SymbolValidationManager *_symbolValidationManager;
    };
 
 }

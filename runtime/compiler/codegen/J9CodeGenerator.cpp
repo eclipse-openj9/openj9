@@ -2513,6 +2513,10 @@ J9::CodeGenerator::processRelocations()
                type = TR_InlinedInterfaceMethod;
                break;
 
+            case TR_AbstractGuard:
+               type = TR_InlinedAbstractMethodWithNopGuard;
+               break;
+
             case TR_HCRGuard:
                // devinmp: TODO/FIXME this should arrange to create an AOT
                // relocation which, when loaded, creates a
@@ -2569,6 +2573,7 @@ J9::CodeGenerator::processRelocations()
             case TR_InlinedSpecialMethodWithNopGuard:
             case TR_InlinedVirtualMethodWithNopGuard:
             case TR_InlinedInterfaceMethodWithNopGuard:
+            case TR_InlinedAbstractMethodWithNopGuard:
             case TR_InlinedHCRMethod:
             case TR_ProfiledClassGuardRelocation:
             case TR_ProfiledMethodGuardRelocation:
@@ -2610,6 +2615,15 @@ J9::CodeGenerator::processRelocations()
                TR_ASSERT(false, "got a unknown/non-AOT guard at AOT site");
                break;
             }
+         }
+
+      TR::SymbolValidationManager::SymbolValidationRecordList &validationRecords = self()->comp()->getSymbolValidationManager()->getValidationRecordList();
+      for (auto it = validationRecords.begin(); it != validationRecords.end(); it++)
+         {
+         self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(NULL,
+                                                                          (uint8_t *)(*it),
+                                                                          (*it)->_kind, self()),
+                                                                          __FILE__, __LINE__, NULL);
          }
 
       TR::list<TR::AOTClassInfo*>* classInfo = self()->comp()->_aotClassInfo;

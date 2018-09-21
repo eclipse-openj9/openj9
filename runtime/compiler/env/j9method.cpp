@@ -5737,12 +5737,18 @@ TR_ResolvedJ9Method::staticSignatureChars(I_32 cpIndex, int32_t & len)
    }
 
 TR_OpaqueClassBlock *
+TR_ResolvedJ9Method::getClassOfStaticFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, int32_t cpIndex)
+   {
+   TR::VMAccessCriticalSection classOfStatic(fej9);
+   TR_OpaqueClassBlock *result;
+   result = fej9->convertClassPtrToClassOffset(cpIndex >= 0 ? jitGetClassOfFieldFromCP(fej9->vmThread(), cp, cpIndex) : 0);
+   return result;
+   }
+
+TR_OpaqueClassBlock *
 TR_ResolvedJ9Method::classOfStatic(I_32 cpIndex, bool returnClassForAOT)
    {
-   TR::VMAccessCriticalSection classOfStatic(fej9());
-   TR_OpaqueClassBlock *result;
-   result = _fe->convertClassPtrToClassOffset(cpIndex >= 0 ? jitGetClassOfFieldFromCP(_fe->vmThread(), cp(), cpIndex) : 0);
-   return result;
+   return getClassOfStaticFromCP(fej9(), cp(), cpIndex);
    }
 
 TR_OpaqueClassBlock *
@@ -6005,25 +6011,31 @@ TR_ResolvedJ9Method::isUnresolvedMethodTypeTableEntry(int32_t cpIndex)
 #endif
 
 TR_OpaqueClassBlock *
-TR_ResolvedJ9Method::getClassFromConstantPool(TR::Compilation * comp, uint32_t cpIndex, bool)
+TR_ResolvedJ9Method::getClassFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, TR::Compilation *comp, uint32_t cpIndex)
    {
-   TR::VMAccessCriticalSection getClassFromConstantPool(fej9());
+   TR::VMAccessCriticalSection getClassFromConstantPool(fej9);
    TR_OpaqueClassBlock *result = 0;
-   INCREMENT_COUNTER(_fe, totalClassRefs);
+   INCREMENT_COUNTER(fej9, totalClassRefs);
    J9Class * resolvedClass;
    if (cpIndex != -1 &&
-       !((_fe->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) &&
+       !((fej9->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) &&
          !comp->ilGenRequest().details().isMethodHandleThunk() && // cmvc 195373
          performTransformation(comp, "Setting as unresolved class from CP cpIndex=%d\n",cpIndex) )&&
-       (resolvedClass = _fe->_vmFunctionTable->resolveClassRef(_fe->vmThread(), cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME)))
+       (resolvedClass = fej9->_vmFunctionTable->resolveClassRef(fej9->vmThread(), cp, cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME)))
       {
-      result = _fe->convertClassPtrToClassOffset(resolvedClass);
+      result = fej9->convertClassPtrToClassOffset(resolvedClass);
       }
    else
       {
-      INCREMENT_COUNTER(_fe, unresolvedClassRefs);
+      INCREMENT_COUNTER(fej9, unresolvedClassRefs);
       }
    return result;
+   }
+
+TR_OpaqueClassBlock *
+TR_ResolvedJ9Method::getClassFromConstantPool(TR::Compilation * comp, uint32_t cpIndex, bool)
+   {
+   return getClassFromCP(fej9(), cp(), comp, cpIndex);
    }
 
 /*
@@ -6137,6 +6149,58 @@ TR_ResolvedJ9Method::isCompilable(TR_Memory * trMemory)
    return true;
    }
 
+static bool
+isInvokePrivateVTableOffset(UDATA vTableOffset)
+   {
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+   return vTableOffset == J9VTABLE_INVOKE_PRIVATE_OFFSET;
+#else
+   return false;
+#endif
+   }
+
+TR_OpaqueMethodBlock *
+TR_ResolvedJ9Method::getVirtualMethod(TR_J9VMBase *fej9, J9ConstantPool *cp, I_32 cpIndex, UDATA *vTableOffset, bool *unresolvedInCP)
+   {
+   J9RAMConstantPoolItem *literals = (J9RAMConstantPoolItem *)cp;
+   J9Method * ramMethod = NULL;
+
+   *vTableOffset = (((J9RAMVirtualMethodRef*) literals)[cpIndex]).methodIndexAndArgCount;
+   *vTableOffset >>= 8;
+   if (J9VTABLE_INITIAL_VIRTUAL_OFFSET == *vTableOffset)
+      {
+      TR::VMAccessCriticalSection resolveVirtualMethodRef(fej9);
+      *vTableOffset = fej9->_vmFunctionTable->resolveVirtualMethodRefInto(fej9->vmThread(), cp, cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME, &ramMethod, NULL);
+      }
+   else if (!isInvokePrivateVTableOffset(*vTableOffset))
+      {
+      // go fishing for the J9Method...
+      uint32_t classIndex = ((J9ROMMethodRef *) cp->romConstantPool)[cpIndex].classRefCPIndex;
+      J9Class * classObject = (((J9RAMClassRef*) literals)[classIndex]).value;
+      ramMethod = *(J9Method **)((char *)classObject + *vTableOffset);
+      if (unresolvedInCP)
+         *unresolvedInCP = false;
+      }
+
+   if (isInvokePrivateVTableOffset(*vTableOffset))
+      ramMethod = (((J9RAMVirtualMethodRef*) literals)[cpIndex]).method;
+
+   return (TR_OpaqueMethodBlock *)ramMethod;
+   }
+
+TR_OpaqueClassBlock *
+TR_ResolvedJ9Method::getInterfaceITableIndexFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, int32_t cpIndex, UDATA *pITableIndex)
+   {
+   INCREMENT_COUNTER(fej9, totalInterfaceMethodRefs);
+   INCREMENT_COUNTER(fej9, unresolvedInterfaceMethodRefs);
+
+   if (cpIndex == -1)
+      return NULL;
+
+   TR::VMAccessCriticalSection getResolvedInterfaceMethod(fej9);
+   return (TR_OpaqueClassBlock *)jitGetInterfaceITableIndexFromCP(fej9->vmThread(), cp, cpIndex, pITableIndex);
+   }
+
 TR_OpaqueClassBlock *
 TR_ResolvedJ9Method::getResolvedInterfaceMethod(I_32 cpIndex, UDATA *pITableIndex)
    {
@@ -6147,13 +6211,7 @@ TR_ResolvedJ9Method::getResolvedInterfaceMethod(I_32 cpIndex, UDATA *pITableInde
    return 0;
 #else
 
-   INCREMENT_COUNTER(_fe, totalInterfaceMethodRefs);
-   INCREMENT_COUNTER(_fe, unresolvedInterfaceMethodRefs);
-
-      {
-      TR::VMAccessCriticalSection getResolvedInterfaceMethod(fej9());
-      result = (TR_OpaqueClassBlock *)jitGetInterfaceITableIndexFromCP(_fe->vmThread(), cp(), cpIndex, pITableIndex);
-      }
+   result = getInterfaceITableIndexFromCP(fej9(), cp(), cpIndex, pITableIndex);
 
    return result;
 #endif
@@ -6360,16 +6418,6 @@ TR_ResolvedJ9Method::getResolvedSpecialMethod(TR::Compilation * comp, I_32 cpInd
    return resolvedMethod;
    }
 
-static bool
-isInvokePrivateVTableOffset(UDATA vTableOffset)
-   {
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
-   return vTableOffset == J9VTABLE_INVOKE_PRIVATE_OFFSET;
-#else
-   return false;
-#endif
-   }
-
 TR_ResolvedMethod *
 TR_ResolvedJ9Method::getResolvedPossiblyPrivateVirtualMethod(TR::Compilation * comp, I_32 cpIndex, bool ignoreRtResolve, bool * unresolvedInCP)
    {
@@ -6391,26 +6439,8 @@ TR_ResolvedJ9Method::getResolvedPossiblyPrivateVirtualMethod(TR::Compilation * c
          performTransformation(comp, "Setting as unresolved virtual call cpIndex=%d\n",cpIndex) ) || ignoreRtResolve)
       {
       // only call the resolve if unresolved
-      J9Method * ramMethod = 0;
-      UDATA vTableOffset = (((J9RAMVirtualMethodRef*) literals())[cpIndex]).methodIndexAndArgCount;
-      vTableOffset >>= 8;
-      if (J9VTABLE_INITIAL_VIRTUAL_OFFSET == vTableOffset)
-         {
-         TR::VMAccessCriticalSection resolveVirtualMethodRef(fej9());
-         vTableOffset = _fe->_vmFunctionTable->resolveVirtualMethodRefInto(_fe->vmThread(), cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME, &ramMethod, NULL);
-         }
-      else if (!isInvokePrivateVTableOffset(vTableOffset))
-         {
-         // go fishing for the J9Method...
-         uint32_t classIndex = ((J9ROMMethodRef *) cp()->romConstantPool)[cpIndex].classRefCPIndex;
-         J9Class * classObject = (((J9RAMClassRef*) literals())[classIndex]).value;
-         ramMethod = *(J9Method **)((char *)classObject + vTableOffset);
-         if (unresolvedInCP)
-            *unresolvedInCP = false;
-         }
-
-      if (isInvokePrivateVTableOffset(vTableOffset))
-         ramMethod = (((J9RAMVirtualMethodRef*) literals())[cpIndex]).method;
+      UDATA vTableOffset;
+      J9Method * ramMethod = (J9Method *)getVirtualMethod(_fe, cp(), cpIndex, &vTableOffset, unresolvedInCP);
 
       if (vTableOffset)
          {
@@ -6892,7 +6922,7 @@ TR_J9VMBase::getResolvedVirtualMethod(TR_OpaqueClassBlock * classObject, I_32 vi
    }
 
 TR_OpaqueMethodBlock *
-TR_J9VMBase::getResolvedInterfaceMethod(TR_OpaqueMethodBlock *interfaceMethod, TR_OpaqueClassBlock * classObject, I_32 cpIndex)
+TR_J9VMBase::getResolvedInterfaceMethod(J9ConstantPool *ownerCP, TR_OpaqueClassBlock * classObject, int32_t cpIndex)
    {
    TR::VMAccessCriticalSection getResolvedInterfaceMethod(this);
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
@@ -6904,12 +6934,43 @@ TR_J9VMBase::getResolvedInterfaceMethod(TR_OpaqueMethodBlock *interfaceMethod, T
    INCREMENT_COUNTER(this, totalInterfaceMethodRefs);
 
    J9Method * ramMethod = jitGetInterfaceMethodFromCP(vmThread(),
-                                                      (J9ConstantPool *)(J9_CP_FROM_METHOD((J9Method*)interfaceMethod)),
+                                                      ownerCP,
                                                       cpIndex,
                                                       TR::Compiler->cls.convertClassOffsetToClassPtr(classObject));
 
    return (TR_OpaqueMethodBlock *)ramMethod;
    }
+
+TR_OpaqueMethodBlock *
+TR_J9VMBase::getResolvedInterfaceMethod(TR_OpaqueMethodBlock *interfaceMethod, TR_OpaqueClassBlock * classObject, I_32 cpIndex)
+   {
+   return getResolvedInterfaceMethod((J9ConstantPool *)(J9_CP_FROM_METHOD((J9Method*)interfaceMethod)),
+                                                        classObject,
+                                                        cpIndex);
+
+   }
+
+TR_OpaqueMethodBlock *
+TR_J9SharedCacheVM::getResolvedVirtualMethod(TR_OpaqueClassBlock * classObject, I_32 virtualCallOffset, bool ignoreRtResolve)
+   {
+   TR_OpaqueMethodBlock *ramMethod = TR_J9VMBase::getResolvedVirtualMethod(classObject, virtualCallOffset, ignoreRtResolve);
+   return ramMethod;
+   }
+
+TR_OpaqueMethodBlock *
+TR_J9SharedCacheVM::getResolvedInterfaceMethod(TR_OpaqueMethodBlock *interfaceMethod, TR_OpaqueClassBlock * classObject, I_32 cpIndex)
+   {
+   TR_OpaqueMethodBlock *ramMethod = TR_J9VMBase::getResolvedInterfaceMethod(interfaceMethod, classObject, cpIndex);
+   return ramMethod;
+   }
+
+TR_OpaqueClassBlock *
+TR_ResolvedRelocatableJ9Method::getDeclaringClassFromFieldOrStatic(TR::Compilation *comp, int32_t cpIndex)
+   {
+   TR_OpaqueClassBlock *definingClass = TR_ResolvedJ9MethodBase::getDeclaringClassFromFieldOrStatic(comp, cpIndex);
+   return definingClass;
+   }
+
 
 J9UTF8 * getSignatureFromTR_VMMethod(TR_OpaqueMethodBlock *vmMethod)
    {
