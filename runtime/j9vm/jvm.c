@@ -879,7 +879,7 @@ getj9bin()
 	result = jvmBufferCat(NULL, libraryInfo.dli_fname);
 	/* remove libjvm.so */
 	truncatePath(jvmBufferData(result));
-#elif defined(J9ZOS390) || defined(J9ZTPF) || defined(OSX)
+#elif defined(J9ZOS390) || defined(J9ZTPF)
 #define VMDLL_NAME J9_VM_DLL_NAME
 
 	int foundPosition = 0;
