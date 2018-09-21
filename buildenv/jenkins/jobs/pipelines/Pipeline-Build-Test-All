@@ -85,14 +85,15 @@ SPECS = ['aix_ppc-64_cmprssptrs'      : CURRENT_RELEASES,
          'win_x86-64_cmprssptrs'      : CURRENT_RELEASES]
 
 // SHORT_NAMES is used for PullRequest triggers
-SHORT_NAMES = ['aix' : 'aix_ppc-64_cmprssptrs',
-             'zlinux' : 'linux_390-64_cmprssptrs',
-             'plinux' : 'linux_ppc-64_cmprssptrs_le',
-             'xlinuxlargeheap' : 'linux_x86-64',
-             'xlinux' : 'linux_x86-64_cmprssptrs',
-             'xlinuxcmake' : 'linux_x86-64_cmprssptrs_cmake',
-             'win32' : 'win_x86',
-             'win' : 'win_x86-64_cmprssptrs']
+SHORT_NAMES = ['all' : 'all',
+            'aix' : 'aix_ppc-64_cmprssptrs',
+            'zlinux' : 'linux_390-64_cmprssptrs',
+            'plinux' : 'linux_ppc-64_cmprssptrs_le',
+            'xlinuxlargeheap' : 'linux_x86-64',
+            'xlinux' : 'linux_x86-64_cmprssptrs',
+            'xlinuxcmake' : 'linux_x86-64_cmprssptrs_cmake',
+            'win32' : 'win_x86',
+            'win' : 'win_x86-64_cmprssptrs']
 
 // Initialize all PARAMETERS (params) to Groovy Variables even if they are not passed
 echo "Initialize all PARAMETERS..."
@@ -177,6 +178,9 @@ timeout(time: 10, unit: 'HOURS') {
                             break
                         case "test":
                             TESTS_TARGETS = "${PARSED_COMMENT[2]}".toLowerCase()
+                            if ("${TESTS_TARGETS}" == "all") {
+                                error("Test Target 'all' not allowed for Pull Request builds")
+                            }
                             OFFSET = 1
                             break
                         default:
@@ -198,6 +202,12 @@ timeout(time: 10, unit: 'HOURS') {
                             TMP_VERSIONS = PARSED_COMMENT[3+OFFSET].toLowerCase().tokenize(',')
                             TMP_VERSIONS.each { VERSION ->
                                 echo "VERSION:'${VERSION}'"
+                                if ("${VERSION}" == "all") {
+                                    error("JDK version 'all' not allowed for Pull Request builds\nExpected 'jdkX' where X is one of ${RELEASES}")
+                                }
+                                if (!("${VERSION}" ==~ /jdk.*/)) {
+                                    error("Incorrect syntax for requested JDK version:'${VERSION}'\nExpected 'jdkX' where X is one of ${RELEASES}")
+                                }
                                 if (RELEASES.contains(VERSION.substring(3))) {
                                     VERSION_MAP["${VERSION.substring(3)}"] = true
                                 } else {
