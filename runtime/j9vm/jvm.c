@@ -1074,7 +1074,7 @@ preloadLibraries(void)
 	/* detect if we're in a subdir or not */
 	jvmDLLNameBuffer = jvmBufferCat(jvmDLLNameBuffer, "/lib");
 	jvmDLLNameBuffer = jvmBufferCat(jvmDLLNameBuffer, vmDllName);
-	jvmDLLNameBuffer = jvmBufferCat(jvmDLLNameBuffer, ".so");
+	jvmDLLNameBuffer = jvmBufferCat(jvmDLLNameBuffer, J9PORT_LIBRARY_SUFFIX);
 
 	if(-1 != stat (jvmBufferData(jvmDLLNameBuffer), &statBuf)) {
 		jvmInSubdir = TRUE;
