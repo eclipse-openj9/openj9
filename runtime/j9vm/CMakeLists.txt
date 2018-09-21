@@ -74,10 +74,6 @@ target_link_libraries(jvm
 		j9util
 )
 add_dependencies(jvm omrgc_hookgen)
-target_compile_definitions(jvm
-	PRIVATE
-		-DJ9VM_JAVA9_BUILD=148
-)
 
 install(
 	TARGETS jvm

@@ -31,7 +31,6 @@
 *
 * This file contains public function prototypes and
 * type definitions for the UTIL module.
-*
 */
 
 #include "j9.h"
@@ -42,11 +41,6 @@
 #include "omrutil.h"
 #include "omrutilbase.h"
 #include "shchelp.h"
-
-/* Ensure J9VM_JAVA9_BUILD is always defined to simplify conditions. */
-#ifndef J9VM_JAVA9_BUILD
-#define J9VM_JAVA9_BUILD 0
-#endif /* J9VM_JAVA9_BUILD */
 
 #ifdef __cplusplus
 extern "C" {

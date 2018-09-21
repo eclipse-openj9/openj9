@@ -87,7 +87,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flags>
 			<!-- add a -D to access the Hursley build ID from java code - $MY_LEVEL will be set by the build environment -->
 			<flag name='J9_BUILD_LEVEL' value='&apos;"$(MY_LEVEL)"&apos;' asmflag='false'/>
-			<flag name="J9VM_JCL_SE9"/>
 		</flags>
 
 		<includes>

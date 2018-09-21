@@ -41,10 +41,6 @@ add_dependencies(jvm_b156
 	trc_j9scar
 )
 
-target_compile_definitions(jvm_b156
-	PRIVATE
-		-DJ9VM_JAVA9_BUILD=156
-)
 set_target_properties(jvm_b156 PROPERTIES LIBRARY_OUTPUT_NAME jvm)
 
 install(

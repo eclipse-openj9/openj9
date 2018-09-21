@@ -100,11 +100,6 @@ _syscall5(int, _llseek, uint, fd, ulong, hi, ulong, lo, loff_t *, res, uint, wh)
 #endif
 #endif
 
-/* Ensure J9VM_JAVA9_BUILD is always defined to simplify conditions. */
-#ifndef J9VM_JAVA9_BUILD
-#define J9VM_JAVA9_BUILD 0
-#endif /* J9VM_JAVA9_BUILD */
-
 #ifdef WIN32
 #define IBM_MALLOCTRACE_STR L"IBM_MALLOCTRACE"
 #define ALT_JAVA_HOME_DIR_STR L"_ALT_JAVA_HOME_DIR"

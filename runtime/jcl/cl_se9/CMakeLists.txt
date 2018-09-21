@@ -30,11 +30,6 @@ target_include_directories(jclse9_156
 		../
 )
 
-target_compile_definitions(jclse9_156
-	PRIVATE
-		J9VM_JCL_SE9
-)
-
 target_link_libraries(jclse9_156
 	PRIVATE
 		j9vm_interface

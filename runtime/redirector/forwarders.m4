@@ -58,9 +58,9 @@ _X(JVM_FreeMemory,JNICALL,true,jlong ,void)
 _X(JVM_GC,JNICALL,true,void ,void)
 _X(JVM_GCNoCompact,JNICALL,true,void ,void)
 _X(JVM_GetAllThreads,JNICALL,true,jobjectArray ,JNIEnv *env, jclass aClass)
-_IF([!defined(J9VM_JCL_SE11)],
+_IF([JAVA_SPEC_VERSION < 11],
 	[_X(JVM_GetCallerClass,JNICALL,true,jobject ,JNIEnv *env, jint depth)])
-_IF([defined(J9VM_JCL_SE11)],
+_IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_GetCallerClass,JNICALL,true,jobject ,JNIEnv *env)])
 _X(JVM_GetClassAccessFlags,JNICALL,true,jint ,JNIEnv * env, jclass clazzRef)
 _X(JVM_GetClassAnnotations,JNICALL,true,jbyteArray ,JNIEnv *env, jclass target)
@@ -310,13 +310,13 @@ _X(JVM_GetAndClearReferencePendingList,JNICALL,false,jobject ,JNIEnv *env)
 _X(JVM_HasReferencePendingList,JNICALL,false,jboolean ,JNIEnv *env)
 _X(JVM_WaitForReferencePendingList,JNICALL,false,void ,JNIEnv *env)
 _X(JVM_GetNanoTimeAdjustment,JNICALL,true,jlong ,JNIEnv *env, jclass clazz, jlong offsetSeconds)
-_IF([defined(J9VM_JCL_SE11)],
+_IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_BeforeHalt,JNICALL,false,void,void)])
-_IF([defined(J9VM_JCL_SE11)],
+_IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_GetNestHost,JNICALL,false,jclass,JNIEnv *env,jclass clz)])
-_IF([defined(J9VM_JCL_SE11)],
+_IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_GetNestMembers,JNICALL,false,jobjectArray,JNIEnv *env,jclass clz)])
-_IF([defined(J9VM_JCL_SE11)],
+_IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_AreNestMates,JNICALL,false,jboolean,JNIEnv *env,jclass clzOne, jclass clzTwo)])
-_IF([defined(J9VM_JCL_SE12)],
+_IF([JAVA_SPEC_VERSION >= 12],
 	[_X(JVM_InitializeFromArchive, JNICALL, false, void, JNIEnv *env, jclass clz)])

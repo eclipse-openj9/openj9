@@ -26,7 +26,6 @@ add_tracegen(vmutil.tdf j9vmutil)
 add_tracegen(module.tdf)
 add_tracegen(srphashtable.tdf)
 
-
 add_custom_command(
 	OUTPUT fpusup.s
 	DEPENDS fpusup.m4 run_constgen
@@ -160,5 +159,3 @@ target_link_libraries(j9util_b156
 		j9vm_interface
 		j9vm_gc_includes
 )
-
-target_compile_definitions(j9util_b156 PRIVATE -DJ9VM_JAVA9_BUILD=156)
