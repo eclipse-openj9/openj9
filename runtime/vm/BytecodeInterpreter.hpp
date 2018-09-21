@@ -3000,12 +3000,14 @@ done:
 			if (NULL != senderClass) {
 				IDATA checkResult = checkVisibility(_currentThread, senderClass, j9clazz, j9clazz->romClass->modifiers, J9_LOOK_REFLECT_CALL);
 				if (checkResult < J9_VISIBILITY_ALLOWED) {
-					char *nlsStr = illegalAccessMessage(_currentThread, -1, senderClass, j9clazz, checkResult);
-					/* VM struct is already up-to-date */
-					setCurrentExceptionUTF(_currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSEXCEPTION, nlsStr);
-					VMStructHasBeenUpdated(REGISTER_ARGS);
-					PORT_ACCESS_FROM_JAVAVM(_vm);
-					j9mem_free_memory(nlsStr);
+					if (!VM_VMHelpers::exceptionPending(_currentThread)) {
+						char *nlsStr = illegalAccessMessage(_currentThread, -1, senderClass, j9clazz, checkResult);
+						/* VM struct is already up-to-date */
+						setCurrentExceptionUTF(_currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSEXCEPTION, nlsStr);
+						VMStructHasBeenUpdated(REGISTER_ARGS);
+						PORT_ACCESS_FROM_JAVAVM(_vm);
+						j9mem_free_memory(nlsStr);
+					}
 					rc = GOTO_THROW_CURRENT_EXCEPTION;
 					goto done;
 				}

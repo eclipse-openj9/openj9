@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -323,7 +323,7 @@ findFieldAndCheckVisibility (J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldNam
 	if (sourceClass && field) {
 		IDATA checkResult = checkVisibility(vmStruct, sourceClass, defClass, field->modifiers, options);
 		if (checkResult < J9_VISIBILITY_ALLOWED) {
-			if ((options & J9_RESOLVE_FLAG_NO_THROW_ON_FAIL) == 0) {
+			if (J9_ARE_NO_BITS_SET(options, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL) && (NULL == vmStruct->currentException)) {
 				char *errorMsg = NULL;
 				if (J9_VISIBILITY_NON_MODULE_ACCESS_ERROR == checkResult) {
 					errorMsg = illegalAccessMessage(vmStruct, field->modifiers, sourceClass, defClass, J9_VISIBILITY_NON_MODULE_ACCESS_ERROR);
