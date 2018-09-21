@@ -239,7 +239,6 @@ timeout(time: 10, unit: 'HOURS') {
                     echo "PLATFORMS:'${PLATFORMS}'"
 
                     PERSONAL_BUILD = 'true'
-                    echo "PERSONAL_BUILD:'${PERSONAL_BUILD}'"
                 }
 
                 def BUILD_SPECS = get_specs(SPECS, VERSION_MAP)
