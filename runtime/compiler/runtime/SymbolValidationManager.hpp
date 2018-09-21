@@ -1164,7 +1164,7 @@ class SymbolValidationManager
 public:
    TR_ALLOC(TR_MemoryBase::SymbolValidationManager);
 
-   SymbolValidationManager(TR::Region &region);
+   SymbolValidationManager(TR::Region &region, TR_ResolvedMethod *compilee);
 
    void* getSymbolFromID(uint16_t id);
    uint16_t getIDFromSymbol(void *symbol);

@@ -170,23 +170,7 @@ J9::Compilation::Compilation(
    _profileInfo(NULL),
    _skippedJProfilingBlock(false)
    {
-   _symbolValidationManager = new (self()->region()) TR::SymbolValidationManager(self()->region());
-   if (compileRelocatableCode() && getOption(TR_UseSymbolValidationManager))
-      {
-      bool validated = false;
-      validated = _symbolValidationManager->addRootClassRecord(compilee->classOfMethod());
-      TR_ASSERT_FATAL(validated, "addRootClassRecord should not fail!\n");
-      validated = _symbolValidationManager->addMethodFromClassRecord(compilee->getNonPersistentIdentifier(), compilee->classOfMethod(), static_cast<uint32_t>(-1));
-      TR_ASSERT_FATAL(validated, "addMethodFromClassRecord should not fail!\n");
-
-      struct J9Class ** arrayClasses = &fej9()->getJ9JITConfig()->javaVM->booleanArrayClass;
-      for (int32_t i = 4; i <= 11; i++)
-         {
-         /* This will first add the primitive, and then an arrayof record */
-         validated = getSymbolValidationManager()->addArrayClassFromJavaVM((TR_OpaqueClassBlock *)arrayClasses[i - 4], i);
-         TR_ASSERT_FATAL(validated, "addArrayClassFromJavaVM should not fail!\n");
-         }
-      }
+   _symbolValidationManager = new (self()->region()) TR::SymbolValidationManager(self()->region(), compilee);
 
    _aotClassClassPointer = NULL;
    _aotClassClassPointerInitialized = false;
