@@ -261,37 +261,46 @@ def build() {
 def archive() {
     stage('Archive') {
         timestamps {
-              def buildDir = "build/${RELEASE}/images/"
-              def testDir = "test/openj9"
+            def buildDir = "build/${RELEASE}/images/"
+            def testDir = "test/openj9"
 
-              sh "tar -C ${buildDir} -zcvf ${SDK_FILENAME} ${JDK_FOLDER}"
-              // test if the test natives directory is present, only in JDK11+
-              sh "if test -d ${buildDir}${testDir}; then tar -C ${buildDir} -zcvf ${TEST_FILENAME} ${testDir} --transform 's,${testDir},native-test-libs,'; fi"
-              if (ARTIFACTORY_SERVER) {
+            sh "tar -C ${buildDir} -zcvf ${SDK_FILENAME} ${JDK_FOLDER}"
+            // test if the test natives directory is present, only in JDK11+
+            if (fileExists("${buildDir}${testDir}")) {
+               sh "tar -C ${buildDir} -zcvf ${TEST_FILENAME} ${testDir} --transform 's,${testDir},native-test-libs,'"
+            }
+            if (ARTIFACTORY_SERVER) {
                 def server = Artifactory.server ARTIFACTORY_SERVER
-                // if the archive location is modified the definition of CUSTOMIZED_SDK_URL will also need to be updated
+                def artifactory_upload_dir = "${ARTIFACTORY_REPO}/${JOB_NAME}/${BUILD_ID}/"
                 def uploadSpec = """{
-                  "files":[
-                    {
-                      "pattern": "${env.WORKSPACE}/${SDK_FILENAME}",
-                      "target": "${ARTIFACTORY_REPO}/${env.JOB_NAME}/${env.BUILD_ID}/"
-                    },
-                    {
-                      "pattern": "${env.WORKSPACE}/${TEST_FILENAME}",
-                      "target": "${ARTIFACTORY_REPO}/${env.JOB_NAME}/${env.BUILD_ID}/"
-                    }
-                  ]
+                    "files":[
+                        {
+                            "pattern": "${env.WORKSPACE}/${SDK_FILENAME}",
+                            "target": "${artifactory_upload_dir}"
+                        },
+                        {
+                            "pattern": "${env.WORKSPACE}/${TEST_FILENAME}",
+                            "target": "${artifactory_upload_dir}"
+                        }
+                    ]
                 }"""
 
                 def buildInfo = Artifactory.newBuildInfo()
-                // hardcoded to 30 for now, this need follow up for usage on per platform level or across all jobs
-                buildInfo.retention maxBuilds: 30, deleteBuildArtifacts: true
+                buildInfo.retention maxBuilds: ARTIFACTORY_NUM_ARTIFACTS, deleteBuildArtifacts: true
                 server.upload spec: uploadSpec, buildInfo: buildInfo
                 server.publishBuildInfo buildInfo
-              } else {
+                // Write URL to env so that we can pull it from the upstream pipeline job
+                ARTIFACTORY_URL = server.getUrl()
+                env.CUSTOMIZED_SDK_URL = "${ARTIFACTORY_URL}/${artifactory_upload_dir}/${SDK_FILENAME}"
+                if (fileExists("${TEST_FILENAME}")) {
+                    env.CUSTOMIZED_SDK_URL += " ${ARTIFACTORY_URL}/${artifactory_upload_dir}/${TEST_FILENAME}"
+                }
+                echo "CUSTOMIZED_SDK_URL:'${CUSTOMIZED_SDK_URL}'"
+                echo "ARTIFACTORY_CREDS:'${ARTIFACTORY_CREDS}'"
+            } else {
                 echo "ARTIFACTORY server is not set saving artifacts on jenkins."
                 archiveArtifacts artifacts: "**/${SDK_FILENAME},**/${TEST_FILENAME}", fingerprint: true, onlyIfSuccessful: true
-              }
+            }
         }
     }
 }
