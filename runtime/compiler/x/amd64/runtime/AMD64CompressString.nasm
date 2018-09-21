@@ -19,7 +19,7 @@
 ; SPDX-License-Identifier: EPL-2.0 or Apache-2.0 or GPL-2.0 WITH Classpath-exception-2.0 or LicenseRef-GPL-2.0 WITH Assembly-exception
 
 %ifdef TR_HOST_64BIT
-%include "jilconsts_nasm.inc"
+%include "jilconsts.inc"
 
 %include "x/amd64/runtime/AMD64CompressString_nasm.inc"
 

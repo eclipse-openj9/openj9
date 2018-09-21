@@ -35,7 +35,7 @@
 
       eq_offsetof_J9Object_clazz equ 8                            ; offset of class pointer in a J9Object
 
-      %include "jilconsts_nasm.inc"
+      %include "jilconsts.inc"
 
       segment .text
 
@@ -1123,7 +1123,7 @@ eq_offsetof_J9Object_clazz equ   8        ; offset of class pointer in a J9Objec
 eq_offsetof_J9Object_clazz equ   16       ; offset of class pointer in a J9Object
 #endif
 
-%include "jilconsts_nasm.inc"
+%include "jilconsts.inc"
 
 segment .text
 

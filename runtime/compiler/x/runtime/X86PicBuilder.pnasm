@@ -1225,7 +1225,7 @@ ret                                                   ; branch will mispredict s
 ;
 ; --------------------------------------------------------------------------------
 
-%include "jilconsts_nasm.inc"
+%include "jilconsts.inc"
 %include "x/runtime/X86PicBuilder_nasm.inc"
 
 segment .text

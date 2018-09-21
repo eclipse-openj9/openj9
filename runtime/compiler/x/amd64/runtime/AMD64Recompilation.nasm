@@ -20,7 +20,7 @@
         
 %ifdef TR_HOST_64BIT
 
-%include "jilconsts_nasm.inc"
+%include "jilconsts.inc"
 
 
                 extern _jitRetranslateMethod
