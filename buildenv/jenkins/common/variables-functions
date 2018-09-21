@@ -618,6 +618,14 @@ def add_string_params(PARAMETERS_TO_ADD) {
         PARAMETERS.add(string(name: key, defaultValue: value, description: '', trim: true))
     }
 }
+
+def add_pr_to_description() {
+    if (params.ghprbPullId) {
+        def TMP_DESC = (currentBuild.description) ? currentBuild.description + "<br>" : ""
+        currentBuild.description = TMP_DESC + "<a href=https://github.com/${params.ghprbGhRepository}/pull/${params.ghprbPullId}>PR #${params.ghprbPullId}</a>"
+    }
+}
+
 /*
 * Initializes all of the required variables for a Jenkins job by given job type.
 */
@@ -647,6 +655,7 @@ def set_job_variables(job_type) {
             set_build_variables()
             set_sdk_variables()
             set_artifactory_config()
+            add_pr_to_description()
             break
         case "pipeline":
             // set variables for a pipeline job
@@ -654,6 +663,7 @@ def set_job_variables(job_type) {
             set_vendor_variables()
             set_test_targets()
             set_slack_channel()
+            add_pr_to_description()
             break
         case "pullRequest":
         case "wrapper":
