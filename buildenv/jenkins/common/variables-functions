@@ -383,19 +383,14 @@ def set_build_variables() {
 }
 
 def set_sdk_variables() {
-    SDK_FILENAME = params.SDK_FILENAME
-    TEST_FILENAME = params.TEST_FILENAME
-    if (!SDK_FILENAME) {
-        DATESTAMP = sh (
-            script: 'date +%Y%d%m%H%M',
-            returnStdout: true
-            ).trim()
-        SDK_FILENAME = "OpenJ9-JDK${SDK_VERSION}-${SPEC}-${DATESTAMP}.tar.gz"
-        echo "Using SDK_FILENAME = ${SDK_FILENAME}"
-    }
-    if (!TEST_FILENAME) {
-        TEST_FILENAME = "native-test-libs.tar.gz"
-    }
+    DATESTAMP = sh (
+        script: 'date +%Y%d%m%H%M',
+        returnStdout: true
+        ).trim()
+    SDK_FILENAME = "OpenJ9-JDK${SDK_VERSION}-${SPEC}-${DATESTAMP}.tar.gz"
+    TEST_FILENAME = "native-test-libs.tar.gz"
+    echo "Using SDK_FILENAME = ${SDK_FILENAME}"
+    echo "Using TEST_FILENAME = ${TEST_FILENAME}"
 }
 
 /*
@@ -435,12 +430,13 @@ def set_slack_channel() {
 def set_artifactory_config() {
     ARTIFACTORY_SERVER = VARIABLES.artifactory_server
     ARTIFACTORY_REPO = VARIABLES.artifactory_repo
-    ARTIFACTORY_CREDS = VARIABLES.artifactory_creds
+    // Set Creds to env so that the parent pipeline can retireve them.
+    env.ARTIFACTORY_CREDS = VARIABLES.artifactory_creds
+    ARTIFACTORY_NUM_ARTIFACTS = VARIABLES.artifactory_num_artifacts
     if (ARTIFACTORY_SERVER) {
-        ARTIFACTORY_BASE_URL = "https://" + "${ARTIFACTORY_SERVER}" + ".com/artifactory/" + "${ARTIFACTORY_REPO}"
         echo "Using artifactory server/repo: ${ARTIFACTORY_SERVER} / ${ARTIFACTORY_REPO}"
-        echo "Using artifactory base url: ${ARTIFACTORY_BASE_URL}"
         echo "Using artifactory credentials: ${ARTIFACTORY_CREDS}"
+        echo "Keeping '${ARTIFACTORY_NUM_ARTIFACTS}' artifacts"
     }
 }
 
@@ -572,10 +568,10 @@ def set_job_properties(JOB_TYPE) {
             add_string_params(['TESTS_TARGETS':''])
         }
 
-        // Build
-        if (JOB_TYPE == 'build') {
-            add_string_params(['NODE':'', 'SDK_FILENAME':''])
-        }
+        // Build - Commented out as there are currently no params specific to only Build
+        //if (JOB_TYPE == 'build') {
+
+        //}
 
         /********************
         * TRIGGER
@@ -618,7 +614,6 @@ def set_job_variables(job_type) {
 
     // fetch credentials required to connect to GitHub using ssh protocol
     set_user_credentials()
-    set_artifactory_config()
 
     // Setup Jenkins Job Parameters
     set_job_properties(job_type)
@@ -637,6 +632,7 @@ def set_job_variables(job_type) {
             // set variables for a build job
             set_build_variables()
             set_sdk_variables()
+            set_artifactory_config()
             break
         case "test":
             // set the node the tests would run on
@@ -656,7 +652,6 @@ def set_job_variables(job_type) {
             // set variables for a pipeline job
             set_repos_variables()
             set_vendor_variables()
-            set_sdk_variables()
             set_test_targets()
             set_slack_channel()
             break
