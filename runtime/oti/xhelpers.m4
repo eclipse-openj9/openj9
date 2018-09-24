@@ -53,7 +53,7 @@ define({FILE_END},{
 define({START_PROC},{
 	align 16
 	DECLARE_PUBLIC($1)
-	$1 proc
+	GLOBAL_SYMBOL($1) proc
 })
 
 define({END_PROC},{$1 endp})
@@ -66,9 +66,13 @@ define({LABEL},$1)
 
 define({C_FUNCTION_SYMBOL},$1)
 
+define({GLOBAL_SYMBOL},$1)
+
 },{	dnl WIN32
 
 ifdef({OSX},{ 
+
+dnl OSX
 
 define({SHORT_JMP},{})
 
@@ -79,13 +83,11 @@ define({FILE_START},{
 
 define({C_FUNCTION_SYMBOL},_$1)
 
-define({START_PROC},{
-	.align 16
-	DECLARE_PUBLIC($1)
-	_$1:
-})
+define({GLOBAL_SYMBOL},_$1)
 
 },{	dnl OSX
+
+dnl LINUX
 
 define({SHORT_JMP},{short})
 
@@ -97,13 +99,17 @@ define({FILE_START},{
 
 define({C_FUNCTION_SYMBOL},$1)
 
+define({GLOBAL_SYMBOL},$1)
+
+})	dnl OSX
+
+dnl LINUX and OSX
+
 define({START_PROC},{
 	.align 16
 	DECLARE_PUBLIC($1)
-	$1:
+	GLOBAL_SYMBOL($1):
 })
-
-})	dnl OSX
 
 define({FILE_END})
 
@@ -116,9 +122,9 @@ ifdef({OSX},{
 })	dnl OSX
 })
 
-define({DECLARE_PUBLIC},{.global C_FUNCTION_SYMBOL($1)})
+define({DECLARE_PUBLIC},{.global GLOBAL_SYMBOL($1)})
 
-define({DECLARE_EXTERN},{.extern $1})
+define({DECLARE_EXTERN},{.extern C_FUNCTION_SYMBOL($1)})
 
 ifdef({OSX},{
 define({LABEL},$1)
@@ -265,7 +271,7 @@ define({SWITCH_TO_JAVA_STACK},{
 define({CALL_C_FUNC},{
 	mov uword ptr (J9TR_machineSP_vmStruct+$3+(J9TR_pointerSize*$2))[_rsp],_rbp
 	mov _rbp,uword ptr (J9TR_machineSP_machineBP+$3+(J9TR_pointerSize*$2))[_rsp]
-	call $1
+	call C_FUNCTION_SYMBOL($1)
 	mov _rbp,uword ptr (J9TR_machineSP_vmStruct+$3+(J9TR_pointerSize*$2))[_rsp]
 })
 
@@ -533,6 +539,13 @@ define({STORE_VIRTUAL_REGISTERS},{
 })
 
 })	dnl ASM_J9VM_ENV_DATA64
+
+ifdef({OSX},{
+	
+	define({FASTCALL_SYMBOL},{_$1})
+
+	define({FASTCALL_EXTERN},{DECLARE_EXTERN($1)})
+})
 
 ifdef({FASTCALL_SYMBOL},,{define({FASTCALL_SYMBOL},{$1})})
 
