@@ -7414,6 +7414,11 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                   options->setOption(TR_EnableGRACostBenefitModel, false);
                }
 
+            if (jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP || options->getOptLevel() < warm)
+               {
+               options->setOption(TR_UseSymbolValidationManager, false);
+               }
+
 
             // See if we need to inset GCR trees
             if (!details.supportsInvalidation())
