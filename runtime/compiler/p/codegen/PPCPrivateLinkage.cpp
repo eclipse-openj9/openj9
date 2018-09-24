@@ -1766,7 +1766,9 @@ int32_t TR::PPCPrivateLinkage::buildPrivateLinkageArgs(TR::Node                 
                      else
                         resultReg = cg()->allocateRegister();
                      dependencies->addPreCondition(argRegister, properties.getIntegerArgumentRegister(numIntegerArgs));
-                     dependencies->addPostCondition(resultReg, TR::RealRegister::gr3);
+                     dependencies->addPostCondition(resultReg, properties.getIntegerReturnRegister(0));
+                     if (TR::Compiler->target.is32Bit() && linkage == TR_Helper && resType.isInt64() && (i == to))
+                        dependencies->addPostCondition(cg()->allocateRegister(), properties.getIntegerReturnRegister(1));
                      if (firstExplicitArg == 1)
                         dependencies->addPostCondition(argRegister, properties.getIntegerArgumentRegister(numIntegerArgs));
                      }
