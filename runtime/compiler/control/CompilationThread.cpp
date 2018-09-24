@@ -7070,6 +7070,12 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                options->setOption(TR_EnableAnnotations,false);
             }
 
+         if (vm->canUseSymbolValidationManager() && options->getOption(TR_EnableSymbolValidationManager))
+            {
+            options->setOption(TR_UseSymbolValidationManager);
+            options->setOption(TR_DisableKnownObjectTable);
+            }
+
          // Set jitDump specific options
          TR::CompilationInfo *compInfo = TR::CompilationInfo::get(jitConfig);
          TR::CompilationInfoPerThread *threadCompInfo = compInfo ? compInfo->getCompInfoForThread(vmThread) : NULL;

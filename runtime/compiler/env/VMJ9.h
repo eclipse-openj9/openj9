@@ -225,6 +225,7 @@ public:
 
    virtual bool isAOT_DEPRECATED_DO_NOT_USE() { return false; }
    virtual bool supportsMethodEntryPadding() { return true; }
+   virtual bool canUseSymbolValidationManager() { return false; }
 
 #if defined(TR_TARGET_S390)
    virtual void initializeS390zLinuxProcessorFeatures();
@@ -1111,6 +1112,7 @@ public:
    virtual bool               isAOT_DEPRECATED_DO_NOT_USE()                                         { return true; }
 
    // replacing calls to isAOT
+   virtual bool               canUseSymbolValidationManager() { return true; }
    virtual bool               supportsCodeCacheSnippets()                     { return false; }
    virtual bool               canRelocateDirectNativeCalls()                  { return false; }
    virtual bool               needClassAndMethodPointerRelocations()          { return true; }
