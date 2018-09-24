@@ -1455,8 +1455,32 @@ JVM_ConstantPoolGetClassRefIndexAt(JNIEnv *env, jobject arg1, jlong arg2, jint a
 
 jobjectArray JNICALL
 JVM_GetVmArguments(JNIEnv *env) {
-	assert(!"JVM_GetVmArguments unimplemented"); /* Jazz 108925: Revive J9JCL raw pConfig build */
-    return NULL;
+	J9VMThread* currentThread = (J9VMThread*)env;
+	J9JavaVM* vm = currentThread->javaVM;
+	J9InternalVMFunctions* internalFunctions = vm->internalVMFunctions;
+	jclass vmJniClass = NULL;
+	jobjectArray result = NULL;
+	J9Class* vmClass = J9VMCOMIBMOTIVMVM_OR_NULL(vm);
+
+	if (NULL == vmClass) {
+		internalFunctions->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
+	} else {
+		jclass vmJniClass = NULL;
+		jmethodID mid = NULL;
+
+		vmJniClass = (jclass)internalFunctions->j9jni_createLocalRef(env, vmClass->classObject);
+
+		mid = (*env)->GetStaticMethodID(env, vmJniClass, "getVMArgs", "()[Ljava/lang/String;");
+		if (NULL == mid) {
+			internalFunctions->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
+		} else {
+			result = (jobjectArray)((*env)->CallObjectMethod(env, vmJniClass, mid));
+		}
+
+		internalFunctions->j9jni_deleteLocalRef(env, (jobject)vmJniClass);
+	}
+
+	return result;
 }
 
 void JNICALL
