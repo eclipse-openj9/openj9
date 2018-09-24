@@ -762,7 +762,6 @@ public Constructor<?>[] getConstructors() throws SecurityException {
 		return cachedConstructors;
 	}
 
-
 	/*[PR CMVC 192714,194493] prepare the class before attempting to access members */
 	J9VMInternals.prepare(this);
 
@@ -3491,21 +3490,21 @@ static void setReflectCacheAppOnly(boolean cacheAppOnly) {
 }
 @SuppressWarnings("nls")
 static void doInitCacheIds() {
-	constructorParameterTypesField = getAccessibleField(Constructor.class, "parameterTypes");
-	methodParameterTypesField = getAccessibleField(Method.class, "parameterTypes");
+	/* prepare classes before attempting to access members */
+	J9VMInternals.prepare(Constructor.class);
+	J9VMInternals.prepare(Method.class);
+	try {
+		constructorParameterTypesField = Constructor.class.getDeclaredFieldImpl("parameterTypes");
+		methodParameterTypesField = Method.class.getDeclaredFieldImpl("parameterTypes");
+	} catch (NoSuchFieldException e) {
+		throw newInternalError(e);
+	}
+	constructorParameterTypesField.setAccessible(true);
+	methodParameterTypesField.setAccessible(true);
 	if (reflectCacheEnabled) {
 		copyConstructor = getAccessibleMethod(Constructor.class, "copy");
 		copyMethod = getAccessibleMethod(Method.class, "copy");
 		copyField = getAccessibleMethod(Field.class, "copy");
-	}
-}
-private static Field getAccessibleField(Class<?> cls, String name) {
-	try {
-		Field field = cls.getDeclaredField(name);
-		field.setAccessible(true);
-		return field;
-	} catch (NoSuchFieldException e) {
-		throw newInternalError(e);
 	}
 }
 private static Method getAccessibleMethod(Class<?> cls, String name) {
