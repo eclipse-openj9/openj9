@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2016 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,7 @@
 
 static jobject processSegmentList(JNIEnv *env, jclass memoryUsage, jobject memUsageConstructor, J9MemorySegmentList *segList, U_64 initSize, U_64 *storedPeakSize, U_64 *storedPeakUsed, UDATA action);
 static UDATA getIndexFromPoolID(J9JavaLangManagementData *mgmt, UDATA id);
+static UDATA getIndexFromCollectorID(J9JavaLangManagementData *mgmt, UDATA id);
 static J9MemorySegmentList *getMemorySegmentList(J9JavaVM *javaVM, jint id);
 
 jobject JNICALL
@@ -129,7 +130,13 @@ Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getPeakUsageImpl
 			if (currentUsed > pool->peakUsed) {
 				pool->peakUsed = currentUsed;
 				pool->peakSize = currentCommitted;
-				pool->peakMax = pool->postCollectionMaxSize;
+				if (0 != mgmt->lastGCID) {
+					J9GarbageCollectorData *gcData = &mgmt->garbageCollectors[getIndexFromCollectorID(mgmt, mgmt->lastGCID)];
+					J9GarbageCollectionInfo* gcInfo = &gcData->lastGcInfo;
+					pool->peakMax = gcInfo->postMax[idx];
+				} else {
+					pool->peakMax = pool->postCollectionMaxSize;
+				}
 				used = currentUsed;
 				committed = currentCommitted;
 				max = pool->peakMax;
@@ -180,7 +187,14 @@ Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getUsageImpl(JNI
 		omrthread_rwmutex_enter_read(mgmt->managementDataLock);
 		peak = (jlong) pool->peakUsed;
 		init = (jlong) pool->initialSize;
-		max = (jlong) pool->postCollectionMaxSize;
+		if (0 != mgmt->lastGCID) {
+			J9GarbageCollectorData *gcData = &mgmt->garbageCollectors[getIndexFromCollectorID(mgmt, mgmt->lastGCID)];
+			J9GarbageCollectionInfo* gcInfo = &gcData->lastGcInfo;
+			max = (jlong) gcInfo->postMax[idx];
+		} else {
+			max = (jlong) pool->postCollectionMaxSize;
+		}
+
 		omrthread_rwmutex_exit_read(mgmt->managementDataLock);
 		
 		if (used > peak) {
@@ -189,7 +203,7 @@ Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getUsageImpl(JNI
 			if ((U_64)used > pool->peakUsed) {
 				pool->peakUsed = used;
 				pool->peakSize = committed;
-				pool->peakMax = pool->postCollectionMaxSize;
+				pool->peakMax = max;
 			}
 			omrthread_rwmutex_exit_write(mgmt->managementDataLock);
 		}
@@ -352,7 +366,13 @@ Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_resetPeakUsageIm
 		omrthread_rwmutex_enter_write(mgmt->managementDataLock);
 		pool->peakUsed = used;
 		pool->peakSize = committed;
-		pool->peakMax = pool->postCollectionMaxSize;
+		if (0 != mgmt->lastGCID) {
+			J9GarbageCollectorData *gcData = &mgmt->garbageCollectors[getIndexFromCollectorID(mgmt, mgmt->lastGCID)];
+			J9GarbageCollectionInfo* gcInfo = &gcData->lastGcInfo;
+			pool->peakMax = gcInfo->postMax[idx];
+		} else {
+			pool->peakMax = pool->postCollectionMaxSize;
+		}
 		omrthread_rwmutex_exit_write(mgmt->managementDataLock);
 	} else {
 		/* NonHeap MemoryPool */
@@ -496,8 +516,20 @@ static UDATA
 getIndexFromPoolID(J9JavaLangManagementData *mgmt, UDATA id)
 {
 	UDATA idx = 0;
-	for(; idx < mgmt->supportedMemoryPools; idx++) {
+	for (idx = 0; idx < mgmt->supportedMemoryPools; idx++) {
 		if ((mgmt->memoryPools[idx].id & J9VM_MANAGEMENT_POOL_HEAP_ID_MASK) == (id & J9VM_MANAGEMENT_POOL_HEAP_ID_MASK)) {
+			break;
+		}
+	}
+	return idx;
+}
+
+static UDATA
+getIndexFromCollectorID(J9JavaLangManagementData *mgmt, UDATA id)
+{
+	UDATA idx = 0;
+	for (idx = 0; idx < mgmt->supportedCollectors; ++idx) {
+		if ((J9VM_MANAGEMENT_GC_HEAP_ID_MASK & mgmt->garbageCollectors[idx].id) == (J9VM_MANAGEMENT_GC_HEAP_ID_MASK & id)) {
 			break;
 		}
 	}
