@@ -1,3 +1,25 @@
+<!--
+Copyright (c) 2018, 2018 IBM Corp. and others
+
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
+
+[1] https://www.gnu.org/software/classpath/license.html
+[2] http://openjdk.java.net/legal/assembly-exception.html
+
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
 JITaaS adds an additional two *personas* to the `java` executable: client mode and server mode. There are two new command line options that can be used to select a persona: `-XX:JITaaSServer` and `-XX:JITaaSClient`.
 
 In server mode, the JVM will halt after startup and begin listening for compilation requests from clients. No Java application is given to the server on the command line.
@@ -12,12 +34,12 @@ Clients can then be started. For this example, we assume the client and server a
 
 ```
 $ java -XX:JITaaSClient -version
-java version "1.8.0"
-Java(TM) SE Runtime Environment (build 1.8.0-foreman_2018_06_05_16_31-b00)
-IBM J9 VM (build 2.9, JRE 1.8.0 Linux amd64-64-Bit Compressed References 20180616_389602 (JIT enabled, AOT enabled)
-OpenJ9   - 83fa164
-OMR      - 6b22c53
-IBM      - d207010)
+openjdk version "1.8.0_192-internal"
+OpenJDK Runtime Environment (build 1.8.0_192-internal-ymanton_2018_09_19_11_13-b00)
+Eclipse OpenJ9 VM (build jitaas-f409446, JRE 1.8.0 Linux amd64-64-Bit Compressed References 20180920_000000 (JIT enabled, AOT enabled)
+OpenJ9   - f409446
+OMR      - feaf86d
+JCL      - 84cb836 based on jdk8u192-b03)
 ```
 Note that `java -version` is itself a small Java application! If you have some application you'd like to test, you can substitute it in for `-version`. Run it as usual, but with the flag `-XX:JITaaSClient` before the application name.
 
