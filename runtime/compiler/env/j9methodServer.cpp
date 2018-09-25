@@ -177,7 +177,8 @@ TR_ResolvedJ9JITaaSServerMethod::isConstantDynamic(I_32 cpIndex)
 bool
 TR_ResolvedJ9JITaaSServerMethod::isUnresolvedString(I_32 cpIndex, bool optimizeForAOT)
    {
-   return true;
+   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_isUnresolvedString, _remoteMirror, cpIndex, optimizeForAOT);
+   return std::get<0>(_stream->read<bool>());
    }
 
 TR_ResolvedMethod *
@@ -864,7 +865,8 @@ void *
 TR_ResolvedJ9JITaaSServerMethod::stringConstant(I_32 cpIndex)
    {
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
-   return (void *) ((U_8 *)&(((J9RAMStringRef *) romLiterals())[cpIndex].stringObject));
+   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_stringConstant, _remoteMirror, cpIndex);
+   return std::get<0>(_stream->read<void *>());
    }
 
 

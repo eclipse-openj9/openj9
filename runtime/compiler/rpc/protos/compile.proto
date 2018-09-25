@@ -99,6 +99,8 @@ enum J9ServerMessageType
    ResolvedMethod_setClassForNewInstance = 145;
    ResolvedMethod_getJittedBodyInfo = 146;
    ResolvedMethod_getResolvedImproperInterfaceMethod = 147;
+   ResolvedMethod_isUnresolvedString = 148;
+   ResolvedMethod_stringConstant = 149;
 
    // For TR_J9ServerVM methods
    VM_isClassLibraryClass = 200;
