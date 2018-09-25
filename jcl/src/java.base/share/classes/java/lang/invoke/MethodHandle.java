@@ -996,7 +996,9 @@ public abstract class MethodHandle {
 		MethodHandle result = null;
 		MethodType type = null;
 
+/*[IF !Java11]*/
 		try {
+/*[ENDIF]*/
 			VMLangAccess access = VM.getVMLangAccess();
 			Object internalRamClass = access.createInternalRamClass(j9class);
 			Class<?> classObject = null;
@@ -1107,6 +1109,14 @@ public abstract class MethodHandle {
 				staticArgs[staticArgIndex] = cpEntry;
 			}
 
+/*[IF Java11]*/
+		/* JVMS JDK11 5.4.3.6 Dynamically-Computed Constant and Call Site Resolution
+		 * requires that exceptions from BSM invocation be wrapped in a BootstrapMethodError
+		 * unless the exception thrown is a sub-class of Error.
+		 * Exceptions thrown before invocation should be passed through unwrapped.
+		 */
+		try {
+/*[ENDIF]*/
 			/* Take advantage of the per-MH asType cache */
 			CallSite cs = null;
 			switch(staticArgs.length) {
