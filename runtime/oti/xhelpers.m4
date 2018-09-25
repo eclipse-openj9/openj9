@@ -542,10 +542,23 @@ define({STORE_VIRTUAL_REGISTERS},{
 
 ifdef({OSX},{
 	
-	define({FASTCALL_SYMBOL},{_$1})
+define({FASTCALL_SYMBOL},{_$1})
 
-	define({FASTCALL_EXTERN},{DECLARE_EXTERN($1)})
+define({FASTCALL_EXTERN},{DECLARE_EXTERN($1)})
+
+define({CALL_C_ADDR_WITH_VMTHREAD},{
+	mov _rdi,_rbp
+	mov uword ptr (J9TR_machineSP_vmStruct+(J9TR_pointerSize*$2))[_rsp],_rbp
+	mov _rbp,uword ptr (J9TR_machineSP_machineBP+(J9TR_pointerSize*$2))[_rsp]
+	call $1
+	mov _rbp,uword ptr (J9TR_machineSP_vmStruct+(J9TR_pointerSize*$2))[_rsp]
 })
+
+},{ dnl OSX
+
+define({CALL_C_ADDR_WITH_VMTHREAD},{CALL_C_WITH_VMTHREAD($1,$2)})
+
+}) dnl OSX
 
 ifdef({FASTCALL_SYMBOL},,{define({FASTCALL_SYMBOL},{$1})})
 
