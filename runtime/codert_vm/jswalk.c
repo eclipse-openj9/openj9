@@ -1098,16 +1098,36 @@ static void jitWalkResolveMethodFrame(J9StackWalkState *walkState)
 #endif
 		walkState->unwindSP += getJitRecompilationResolvePushes();
 	} else if (resolveFrameType == J9_STACK_FLAGS_JIT_LOOKUP_RESOLVE) {
-		UDATA * interfaceObjectAndISlot = (UDATA *) JIT_RESOLVE_PARM(2);
-		J9Class * interfaceClass = READ_CLASS((J9Class *) READ_UDATA(interfaceObjectAndISlot));
-		UDATA methodIndex = READ_UDATA(interfaceObjectAndISlot + 1);
-		J9ROMMethod * romMethod = J9ROMCLASS_ROMMETHODS(interfaceClass->romClass);
-
-		while (methodIndex) {
-			romMethod = nextROMMethod(romMethod);
-			--methodIndex;
+		UDATA *interfaceObjectAndISlot = (UDATA *) JIT_RESOLVE_PARM(2);
+		J9Class *resolvedClass = READ_CLASS((J9Class *) READ_UDATA(interfaceObjectAndISlot));
+		UDATA iTableOffset = READ_UDATA(interfaceObjectAndISlot + 1);
+		J9Method *ramMethod = NULL;
+		J9ROMMethod *romMethod = NULL;
+		if (J9_ARE_ANY_BITS_SET(iTableOffset, J9_ITABLE_OFFSET_DIRECT)) {
+			ramMethod = (J9Method*)(iTableOffset & ~J9_ITABLE_OFFSET_TAG_BITS);
+		} else if (J9_ARE_ANY_BITS_SET(iTableOffset, J9_ITABLE_OFFSET_VIRTUAL)) {
+			UDATA vTableOffset = iTableOffset & ~J9_ITABLE_OFFSET_TAG_BITS;
+			J9Class *jlObject = J9VMJAVALANGOBJECT_OR_NULL(walkState->walkThread->javaVM);
+			ramMethod = *(J9Method**)((UDATA)jlObject + vTableOffset);
+		} else {
+			UDATA methodIndex = (iTableOffset - sizeof(J9ITable)) / sizeof(UDATA);
+			/* Find the appropriate segment for the referenced method within the
+			 * resolvedClass iTable.
+			 */
+			J9ITable *allInterfaces = (J9ITable*)resolvedClass->iTable;
+			for(;;) {
+				J9Class *interfaceClass = allInterfaces->interfaceClass;
+				UDATA methodCount = interfaceClass->romClass->romMethodCount;
+				if (methodIndex < methodCount) {
+					/* iTable segment located */
+					ramMethod = interfaceClass->ramMethods + methodIndex;
+					break;
+				}
+				methodIndex -= methodCount;
+				allInterfaces = allInterfaces->next;
+			}
 		}
-
+		romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
 		signature = J9ROMMETHOD_GET_SIGNATURE(interfaceClass->romClass, romMethod);
 		pendingSendSlots = J9_ARG_COUNT_FROM_ROM_METHOD(romMethod); /* receiver is already included in this arg count */
 		walkStackedReceiver = TRUE;
