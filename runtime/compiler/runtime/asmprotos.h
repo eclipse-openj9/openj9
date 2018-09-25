@@ -41,7 +41,7 @@ extern "C" {
 #else /* J9VM_ENV_LITTLE_ENDIAN */
 #define JIT_HELPER(x) extern "C" void * x
 #endif /* J9VM_ENV_LITTLE_ENDIAN */
-#elif defined(MVS) || defined(LINUX) || defined(J9ZOS390) || defined (J9HAMMER) || defined (WINDOWS)
+#elif defined(MVS) || defined(LINUX) || defined(J9ZOS390) || defined (J9HAMMER) || defined (WINDOWS) || defined (OSX)
 #define JIT_HELPER(x) extern "C" void x()
 #elif defined(NEUTRINO)
 #define JIT_HELPER(x) extern "C" char* x[]
