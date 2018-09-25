@@ -887,6 +887,15 @@ public abstract class MethodHandle {
 		Class<?> varargsComponentType = bsm.type.lastParameterType().getComponentType();
 		int bsmTypeArgCount = bsm.type.parameterCount();
 
+		/* JVMS JDK11 5.4.3.6 Dynamically-Computed Constant and Call Site Resolution
+		 * requires the first parameter of the bootstrap method to be java.lang.invoke.MethodHandles.Lookup
+		 * else fail resolution with BootstrapMethodError
+		 */
+		if (bsmTypeArgCount < 1 || MethodHandles.Lookup.class != bsm.type.parameterType(0)) {
+			/*[MSG "K0A01", "Constant_Dynamic references bootstrap method '{0}' does not have java.lang.invoke.MethodHandles.Lookup as first parameter."]*/
+			throw new BootstrapMethodError(Msg.getString("K0A01", bsm.getMethodName())); //$NON-NLS-1$
+		}
+
 		for (int i = 0; i < bsmArgCount; i++) {
 			int staticArgIndex = BSM_OPTIONAL_ARGUMENTS_START_INDEX + i;
 			short index = UNSAFE.getShort(bsmArgs + (i * BSM_ARGUMENT_SIZE));
