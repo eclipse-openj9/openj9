@@ -24,11 +24,10 @@ package org.openj9.test.attachAPI;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Method;
 import java.util.Properties;
 
-import com.ibm.tools.attach.target.AttachHandler;
 
-@SuppressWarnings("nls")
 public class TargetVM {
 
 	public static final String WAITING_FOR_INITIALIZATION = "STATUS_WAIT_INITIALIZATION";
@@ -43,10 +42,14 @@ public class TargetVM {
 		System.err.println("starting");
 		long pid = 0;
 		try {
-			pid = AttachHandler.getProcessId();
+			Class<?> attachHandlerClass = Class.forName(TargetManager.COM_IBM_TOOLS_ATTACH_TARGET_ATTACH_HANDLER);
+			final Method getVmId = attachHandlerClass.getMethod("getVmId");
+			final Method getProcessId = attachHandlerClass.getMethod("getProcessId");
+			final Method waitForAttachApiInitialization = attachHandlerClass.getMethod("waitForAttachApiInitialization");
+			pid = (long) getProcessId.invoke(attachHandlerClass);
 			System.out.println(TargetManager.PID_PREAMBLE + pid);
-			if (AttachHandler.waitForAttachApiInitialization()) {
-				System.out.println(TargetManager.VMID_PREAMBLE + AttachHandler.getVmId());
+			if ((boolean) waitForAttachApiInitialization.invoke(attachHandlerClass)) {
+				System.out.println(TargetManager.VMID_PREAMBLE + getVmId.invoke(attachHandlerClass));
 				System.out.println(TargetManager.STATUS_PREAMBLE
 						+ TargetManager.STATUS_INIT_SUCESS);
 				System.out.flush();
