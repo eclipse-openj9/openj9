@@ -1986,14 +1986,22 @@ resolvedToDirectMethodVPic:
       ; via a call though the VFT *unless* RA-5 has 0e8h (direct call relative).
       ; Make sure the VM sees an 0e8h so that it uses the VFT offset register.
       ; Start with a debug trap because the call itself is dead.
-      mov         dword ptr [rdx+eq_VPicData_size], 0e8cccch   ; int 3, int 3, call
+      ;
+      ; By writing 0e8h twice in a row, it doesn't matter here whether the vtable
+      ; call instruction would have been 7 or 8 bytes.
+      mov         dword ptr [rdx+eq_VPicData_size], 0e8e8cccch   ; int 3, int 3, call, call
 
       xor         rax, J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG ; rax is the J9Method to be directly invoked
       mov         qword ptr [rdx+eq_VPicData_directMethod], rax
 
 callDirectMethodVPic:
-      lea         rdi, [rdx+eq_VPicData_size+7]                ; Adjusted return address
-                                                               ;    7 (offset to jump after call through VFT)
+      ; The size of the vtable call instruction is 7 bytes + possibly a SIB byte,
+      ; which is needed when ModR/M for the call is 94h.
+      cmp         byte ptr [rdx+eq_VPicData_callMemModRM], 94h
+      sete        dil                                          ; 1 for SIB byte, or else 0
+      movzx       edi, dil
+      lea         rdi, [rdx+eq_VPicData_size+7+rdi]            ; Adjusted return address
+                                                               ;    7 (size of vtable call without SIB byte)
       add         rdx, eq_VPicData_j2iThunk
       jmp         dispatchDirectMethod
 
