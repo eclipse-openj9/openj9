@@ -35,10 +35,13 @@
 #include "VMHelpers.hpp"
 
 #define MAX_STACK_SLOTS 255
+#define BSM_ARGUMENT_SIZE 2
+#define BSM_ARGUMENT_COUNT_OFFSET 1
+#define BSM_ARGUMENTS_OFFSET 2
 
 static void checkForDecompile(J9VMThread *currentThread, J9ROMMethodRef *romMethodRef, UDATA jitFlags);
 static bool finalFieldSetAllowed(J9VMThread *currentThread, bool isStatic, J9Method *method, J9Class *fieldClass, J9Class *callerClass, J9ROMFieldShape *field, UDATA jitFlags);
-
+static bool isCycleDetected(J9ConstantPool *ramCP, U_16 *bsmDataOriginal, U_16 *visited, U_16 cpIndex, bool *resolved, int stackIndex);
 
 /**
 * @brief In class files with version 53 or later, setting of final fields is only allowed from initializer methods.
@@ -86,7 +89,6 @@ finalFieldSetAllowed(J9VMThread *currentThread, bool isStatic, J9Method *method,
 	}
 	return legal;
 }
-
 
 /**
 * @brief Check to see if a resolved method name matches the -XXdecomp: value from the command line
@@ -1996,6 +1998,27 @@ retry:
 		/* clear the J9DescriptionCpPrimitiveType flag with mask to get bsmIndex */
 		U_32 bsmIndex = (romConstantRef->bsmIndexAndCpType >> J9DescriptionCpTypeShift) & J9DescriptionCpBsmIndexMask;
 		J9ROMNameAndSignature* nameAndSig = SRP_PTR_GET(&romConstantRef->nameAndSignature, J9ROMNameAndSignature*);
+		U_16 cpIndex_16 = (U_16) cpIndex;
+
+		/* Enable Cycle Detection with "-XX:+CycleDetection" and disable with "-XX:-CycleDetection" at runtime */
+		if ((NULL != vm)
+				&& (J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags,
+						J9_EXTENDED_RUNTIME_CYCLE_DETECTION))) {
+			/* Cycle Detection implementation*/
+			U_32 CPSize = romClass->ramConstantPoolCount;
+			/* Implement a stack array here to track visited status */
+			U_16 *visited = new U_16[CPSize];
+			int stackIndex = 0;
+			/* Implement a boolean array to check if cycle detection is resolved */
+			bool *resolvedArr = new bool[CPSize];
+			for (U_32 i = 0; i < CPSize; i++) {
+				resolvedArr[i] = false;
+			}
+			if (isCycleDetected(ramCP, bsmData, visited, cpIndex_16, resolvedArr, stackIndex)) {
+				setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGSTACKOVERFLOWERROR,
+						"Cycle Detection error: Cycle detected.");
+			}
+		}
 
 		/* Walk bsmData - skip all bootstrap methods before bsmIndex */
 		for (U_32 i = 0; i < bsmIndex; i++) {
@@ -2013,6 +2036,7 @@ retry:
 
 		j9object_t exceptionObject = NULL;
 		if (NULL != vmThread->currentException) {
+			/* Allocate the exception object in tenure */
 			exceptionObject = vmThread->currentException;
 		} else if (NULL == value) {
 			/* Java.lang.void is used as a special flag to indicate null reference */
@@ -2084,4 +2108,45 @@ resolveInvokeDynamic(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA callSite
 	}
 
 	return methodHandle;
+}
+
+static bool
+isCycleDetected(J9ConstantPool *ramCP, U_16 *bsmDataOriginal, U_16 *visited, U_16 cpIndex, bool *resolved, int stackIndex)
+{
+    /* Check if the condy is resolved */
+    if (resolved[cpIndex] == true) {
+        return false;
+    }
+    /* Look through the stack to check if the condy is visited */
+    if (stackIndex > 0) {
+        for (int i = stackIndex - 1; i >= 0; i--) {
+            if (visited[i] == cpIndex) {
+                return true;
+            }
+        }
+    }
+    visited[stackIndex++] = cpIndex;
+    J9ROMConstantDynamicRef *romConstantRef = (J9ROMConstantDynamicRef*)(J9_ROM_CP_FROM_CP(ramCP) + cpIndex);
+    U_32 bsmIndex = (romConstantRef->bsmIndexAndCpType >> J9DescriptionCpTypeShift) & J9DescriptionCpBsmIndexMask;
+    U_16 *bsmData = bsmDataOriginal;
+    for (U_32 i = 0; i < bsmIndex; i++) {
+        bsmData += bsmData[1] + 2;
+    }
+    U_16 bsmArgCount = bsmData[1];
+    U_32 *bsmArgs = (U_32*) (bsmData + BSM_ARGUMENTS_OFFSET);
+
+    /* Check all bsm arguments for cycle detection */
+    for (U_16 i = 0; i < bsmArgCount; i++) {
+    	int bsmArgsIndex = i * BSM_ARGUMENT_SIZE;
+        U_16 index = bsmArgs[bsmArgsIndex];
+        U_16 cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(J9_CLASS_FROM_CP(ramCP)->romClass), index);
+        if (cpType == J9CPTYPE_CONSTANT_DYNAMIC) {
+            if (isCycleDetected(ramCP, bsmDataOriginal, visited, index, resolved, stackIndex)) {
+                return true;
+            }
+        }
+    }
+    stackIndex--;
+    resolved[cpIndex] = true;
+    return false;
 }
