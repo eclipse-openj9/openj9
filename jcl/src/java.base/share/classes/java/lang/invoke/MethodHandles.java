@@ -313,12 +313,20 @@ public class MethodHandles {
 				return true;
 			}
 			
+			while (a.isArray()) {
+				a = a.getComponentType();
+			}
+			
+			while (b.isArray()) {
+				b = b.getComponentType();
+			}
+			
 			VMLangAccess vma = getVMLangAccess();
 			
 			String packageName1 = vma.getPackageName(a);
 			String packageName2 = vma.getPackageName(b);
 			// If the string value is different, they're definitely not related
-			if((packageName1 == null) || (packageName2 == null) || !packageName1.equals(packageName2)) {
+			if ((packageName1 == null) || (packageName2 == null) || !packageName1.equals(packageName2)) {
 				return false;
 			}
 			
