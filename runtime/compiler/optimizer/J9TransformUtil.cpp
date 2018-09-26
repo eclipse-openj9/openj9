@@ -1727,7 +1727,7 @@ J9::TransformUtil::saveNodeToTempSlot(TR::Compilation* comp, TR::Node* node, TR:
    auto type = node->getDataType();
    auto symRef = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), type);
    insertTreeTop->insertBefore(TR::TreeTop::create(comp, TR::Node::createWithSymRef(comp->il.opCodeForDirectStore(type), 1, 1, node, symRef)));
-   return TR::Node::createWithSymRef(comp->il.opCodeForDirectLoad(type), 0, symRef);
+   return TR::Node::createWithSymRef(node, comp->il.opCodeForDirectLoad(type), 0, symRef);
    }
 
 
