@@ -456,7 +456,7 @@ getNewInstancePrototype(J9VMThread * context)
             jlClass,
             (J9ROMNameAndSignature *) &newInstancePrototypeNameAndSig,
             0,
-            J9_LOOK_DIRECT_NAS | J9_LOOK_VIRTUAL | J9_LOOK_NO_THROW);
+            J9_LOOK_DIRECT_NAS | J9_LOOK_VIRTUAL | J9_LOOK_NO_JAVA);
       }
 
    return newInstanceProto;

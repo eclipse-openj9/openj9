@@ -359,7 +359,7 @@ printClassShape(J9VMThread* vmThread, J9Class* clazz)
 							J9UTF8_LENGTH(signature),
 							NULL, /* defining class return value */
 							NULL, /* romFieldShape return value */
-							J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
+							J9_LOOK_NO_JAVA);
 							
 						offset /= sizeof(U_32);
 							
