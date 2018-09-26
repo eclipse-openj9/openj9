@@ -527,16 +527,7 @@ public class MethodHandles {
 				 * the protected flag of this class doesn't exist on the VM level (there is no 
 				 * access flag in the binary form representing 'protected')
 				 */
-				if (Modifier.isProtected(modifiers)) {
-					/* Interfaces are not classes but types, and should therefore not have access to 
-					 * protected methods in java.lang.Object as subclasses.
-					 */
-					if (!accessClass.isInterface()) {
-						return;
-					}
-				
-				/* The following access checking is for a normal class (non-member class) */
-				} else if (Modifier.isPublic(modifiers)) {
+				if (Modifier.isPublic(modifiers) || Modifier.isProtected(modifiers)) {
 					/* Already determined that we have more than "no access" (public access) */
 					return;
 				} else {
