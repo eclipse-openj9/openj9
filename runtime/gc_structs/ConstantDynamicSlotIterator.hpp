@@ -1,5 +1,6 @@
+
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,31 +20,39 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package org.openj9.test.condy;
 
-import java.lang.invoke.*;
-public class BootstrapMethods {
+/**
+ * @file
+ * @ingroup GC_Structs
+ */
 
-	public static Object bootstrap_constant_string(MethodHandles.Lookup l, String name, Class<?> c, String s) {
-		return s;
-	}
+#if !defined(CONSTANTDYNAMICSLOTITERATOR_HPP_)
+#define CONSTANTDYNAMICSLOTITERATOR_HPP_
 
-	public static int bootstrap_constant_int(MethodHandles.Lookup l, String name, Class<?> c, int v) {
-		return v;
-	}
+#include "j9.h"
+#include "ModronAssertions.h"
 
-	public static float bootstrap_constant_float(MethodHandles.Lookup l, String name, Class<?> c, float v) {
-		return v;
-	}
 
-	public static double bootstrap_constant_double(MethodHandles.Lookup l, String name, Class<?> c, double v) {
-		return v;
-	}
+/**
+ * Iterate over a constant dynamic object reference within the constant pool of a class.
+ * 
+ * @see GC_ConstantPoolClassSlotIterator
+ * @ingroup GC_Structs
+ */
+class GC_ConstantDynamicSlotIterator {
+private:
+	typedef enum {
+		condy_slot_value,
+		condy_slot_exception,
+		condy_slot_terminator
+	} CondySlotState;
+	CondySlotState _condySlotState;
+    
+public:
+	GC_ConstantDynamicSlotIterator() :
+		_condySlotState(condy_slot_value)
+	{ };
 
-	public static long bootstrap_constant_long(MethodHandles.Lookup l, String name, Class<?> c, long v) {
-		return v;
-	}
-	public static int bootstrap_constant_int_exception(MethodHandles.Lookup l, String name, Class<?> c, int v) throws Exception {
-		throw new Exception();
-	}
-}
+	j9object_t *nextSlot(j9object_t *slotPtr);
+};
+#endif /* CONSTANTDYNAMICSLOTITERATOR_HPP_ */

@@ -34,6 +34,7 @@ add_library(j9gcstructs STATIC
 	ClassStaticsDeclarationOrderIterator.cpp
 	ClassStaticsIterator.cpp
 	ClassSuperclassesIterator.cpp
+	ConstantDynamicSlotIterator.cpp
 	ConstantPoolClassSlotIterator.cpp
 	ConstantPoolObjectSlotIterator.cpp
 	JVMTIObjectTagTableIterator.cpp
