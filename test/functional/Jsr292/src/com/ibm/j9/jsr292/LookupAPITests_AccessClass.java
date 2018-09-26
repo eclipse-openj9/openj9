@@ -183,12 +183,7 @@ public class LookupAPITests_AccessClass {
 	 */
 	@Test(groups = { "level.extended" })
 	public void test_AccessNestedClass_ProtectedAccess_InterfaceLookup_DiffPackage() throws Throwable {
-		try {
-			Helper_Interface.interfaceLookupObject.accessClass(Helper_LookupAPI_OtherPackage.protectedNestedClass);
-			Assert.fail("The protected class shouldn't be accessible to the lookup interface from a different package");
-		} catch (IllegalAccessException e) {
-			/* Success */
-		}
+		Helper_Interface.interfaceLookupObject.accessClass(Helper_LookupAPI_OtherPackage.protectedNestedClass);
 	}
 
 	/**
@@ -216,7 +211,7 @@ public class LookupAPITests_AccessClass {
 	public void test_AccessClass_PackageAccess_DiffPackage() throws Throwable {
 		try {
 			lookupObjectThisPackage.accessClass(Helper_LookupAPI_OtherPackage.class_PackageAccess);
-			Assert.fail("The class shouldn't be accessiable to the lookup class from a different package");
+			Assert.fail("The class shouldn't be accessible to the lookup class from a different package");
 		} catch (IllegalAccessException e) {
 			/* Success */
 		}
