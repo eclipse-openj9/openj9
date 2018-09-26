@@ -572,6 +572,14 @@ def set_job_properties(JOB_TYPE) {
             add_string_params(['NODE':''])
         }
 
+        if (JOB_TYPE == 'pipeline') {
+            add_string_params([
+                'BUILD_NODE':'',
+                'TEST_NODE':'',
+                'PERSONAL_BUILD':'',
+                'SLACK_CHANNEL':''])
+        }
+
         /********************
         * TRIGGER
         ********************/
