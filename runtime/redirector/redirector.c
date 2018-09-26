@@ -48,11 +48,6 @@
 #include "omriarv64.h"
 #endif /* defined(J9ZOS39064) */
 
-/* Ensure J9VM_JAVA9_BUILD is always defined to simplify conditions. */
-#ifndef J9VM_JAVA9_BUILD
-#define J9VM_JAVA9_BUILD 0
-#endif /* J9VM_JAVA9_BUILD */
-
 extern void lookupJVMFunctions(void *vmdll);
 
 typedef jint (JNICALL *CreateVM)(JavaVM**, void**, void*);
