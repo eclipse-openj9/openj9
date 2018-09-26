@@ -571,20 +571,20 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedImproperInterfaceMethod(TR::Compilat
    INCREMENT_COUNTER(_fe, unresolvedInterfaceMethodRefs);
    INCREMENT_COUNTER(_fe, totalInterfaceMethodRefs);
 
-   J9Method *j9method = NULL;
    if ((_fe->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) == 0)
       {
-      // TODO: this method produces 2 messages, this one, and mirror message in createResolvedMethodFromJ9Method.
-      // Need to coalesce them into one, i.e. in one remote message create a mirror, and
-      // get resolved interface method from it
-      _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedImproperInterfaceMethod, _remoteMirror, cpIndex);
-      j9method = std::get<0>(_stream->read<J9Method *>());
+      // query for resolved method and create its mirror at the same time
+      _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedImproperInterfaceMethodAndMirror, _remoteMirror, cpIndex);
+      auto recv = _stream->read<J9Method *, TR_ResolvedJ9JITaaSServerMethodInfo>();
+      auto j9method = std::get<0>(recv);
+      auto methodInfo = std::get<1>(recv);
+      if (j9method == nullptr)
+         return nullptr;
+      else
+         createResolvedMethodFromJ9Method(comp, cpIndex, 0, j9method, nullptr, nullptr, methodInfo);
       }
 
-   if (j9method == NULL)
-      return NULL;
-   else
-      return createResolvedMethodFromJ9Method(comp, cpIndex, 0, j9method, NULL, NULL);
+   return nullptr;
 #endif
    }
 
