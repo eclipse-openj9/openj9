@@ -956,7 +956,7 @@ TR_ResolvedJ9MethodBase::getDeclaringClassFromFieldOrStatic(TR::Compilation *com
                                                                  sigLen,
                                                                  &containingClass,
                                                                  NULL,
-                                                                 J9_RESOLVE_FLAG_JIT_COMPILE_TIME | J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
+                                                                 J9_LOOK_NO_JAVA);
       }
 
    return (TR_OpaqueClassBlock*)containingClass;

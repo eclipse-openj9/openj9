@@ -431,7 +431,7 @@ findField(J9VMThread *vmStruct, J9ConstantPool *constantPool, UDATA index, BOOLE
 			IDATA offset = javaVM->internalVMFunctions->instanceFieldOffset(
 					vmStruct, clazz, J9UTF8_DATA(name),
 					J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), declaringClass,
-					&instanceField, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
+					&instanceField, J9_LOOK_NO_JAVA);
 			
 			if (-1 != offset) {
 				result = instanceField;
@@ -441,7 +441,7 @@ findField(J9VMThread *vmStruct, J9ConstantPool *constantPool, UDATA index, BOOLE
 			void * addr = javaVM->internalVMFunctions->staticFieldAddress(
 					vmStruct, clazz, J9UTF8_DATA(name),
 					J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), declaringClass,
-					&staticField, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL, NULL);
+					&staticField, J9_LOOK_NO_JAVA, NULL);
 
 			if (NULL != addr) {
 				result = staticField;

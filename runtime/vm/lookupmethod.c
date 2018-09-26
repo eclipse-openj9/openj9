@@ -563,6 +563,7 @@ doneItableSearch:
  * 		J9_LOOK_NO_CLIMB						Search only the given class, no superclasses or superinterfaces
  * 		J9_LOOK_NO_INTERFACE					Do not search superinterfaces
  * 		J9_LOOK_NO_THROW						Do not set the exception if lookup fails
+ * 		J9_LOOK_NO_JAVA							Do not run java code for any reason (implies NO_THROW)
  * 		J9_LOOK_NEW_INSTANCE					Use newInstance behaviour (translate IllegalAccessError -> IllegalAccessException, all other errors -> InstantiationException)
  * 		J9_LOOK_DIRECT_NAS						NAS contains direct pointers to UTF8, not SRPs (this option is mutually exclusive with lookupOptionsJNI)
  * 		J9_LOOK_CLCONSTRAINTS					Check that the found method doesn't violate any class loading constraints between the found class and the sender class.
@@ -756,7 +757,7 @@ nextClass:
 				if (NULL != foundDefaultConflicts) {
 					*foundDefaultConflicts = TRUE;
 				}
-				if ((lookupOptions & J9_LOOK_NO_THROW) == 0) {
+				if ((lookupOptions & (J9_LOOK_NO_THROW | J9_LOOK_NO_JAVA)) == 0) {
 					PORT_ACCESS_FROM_VMC(currentThread);
 					char *buf = NULL;
 					if (J9_VISIBILITY_NON_MODULE_ACCESS_ERROR == data.errorType) {
@@ -797,7 +798,7 @@ done:
 		}
 #endif
 
-		if ((lookupOptions & J9_LOOK_NO_THROW) == 0) {
+		if ((lookupOptions & (J9_LOOK_NO_THROW | J9_LOOK_NO_JAVA)) == 0) {
 			j9object_t errorString = NULL;
 
 			/* JNI throws NoSuchMethodError in all error cases */

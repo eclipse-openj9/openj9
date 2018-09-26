@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -898,7 +898,7 @@ readObjectField(j9object_t object, J9Class *clazz, U_8 *fieldName, U_8 *fieldSig
 	U_64 field = 0;
 	IDATA offset;
 
-	offset = instanceFieldOffset(NULL, clazz, fieldName, strlen(fieldName), fieldSig, strlen(fieldSig), NULL, NULL, 0);
+	offset = instanceFieldOffset(NULL, clazz, fieldName, strlen(fieldName), fieldSig, strlen(fieldSig), NULL, NULL, J9_LOOK_NO_JAVA);
 	if (offset >= 0) {
 		void *remoteAddr = (U_8 *)object + offset + sizeof(J9Object);
 
