@@ -1,5 +1,6 @@
+
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,31 +20,42 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package org.openj9.test.condy;
 
-import java.lang.invoke.*;
-public class BootstrapMethods {
+/**
+ * @file
+ * @ingroup GC_Structs
+ */
 
-	public static Object bootstrap_constant_string(MethodHandles.Lookup l, String name, Class<?> c, String s) {
-		return s;
-	}
+#include "j9.h"
+#include "ModronAssertions.h"
 
-	public static int bootstrap_constant_int(MethodHandles.Lookup l, String name, Class<?> c, int v) {
-		return v;
-	}
+#include "ConstantDynamicSlotIterator.hpp"
 
-	public static float bootstrap_constant_float(MethodHandles.Lookup l, String name, Class<?> c, float v) {
-		return v;
-	}
 
-	public static double bootstrap_constant_double(MethodHandles.Lookup l, String name, Class<?> c, double v) {
-		return v;
+/**
+ * Scan the current constant dynamic slot
+ * @return slot value if it is not NULL
+ * @return exception otherwise
+ */
+j9object_t*
+GC_ConstantDynamicSlotIterator::nextSlot(j9object_t *slotPtr) {
+	j9object_t *result;
+	switch (_condySlotState) {
+	case condy_slot_value:
+		result = &(((J9RAMConstantDynamicRef *) slotPtr)->value);
+		_condySlotState = condy_slot_exception;
+		break;
+	case condy_slot_exception:
+		result = &(((J9RAMConstantDynamicRef *) slotPtr)->exception);
+		_condySlotState = condy_slot_terminator;
+		break;
+	case condy_slot_terminator:
+		result = NULL;
+		_condySlotState = condy_slot_value;
+		break;
+	default:
+		Assert_MM_unreachable();
+		break;
 	}
-
-	public static long bootstrap_constant_long(MethodHandles.Lookup l, String name, Class<?> c, long v) {
-		return v;
-	}
-	public static int bootstrap_constant_int_exception(MethodHandles.Lookup l, String name, Class<?> c, int v) throws Exception {
-		throw new Exception();
-	}
+	return result;
 }

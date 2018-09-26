@@ -21,29 +21,9 @@
  *******************************************************************************/
 package org.openj9.test.condy;
 
-import java.lang.invoke.*;
-public class BootstrapMethods {
 
-	public static Object bootstrap_constant_string(MethodHandles.Lookup l, String name, Class<?> c, String s) {
-		return s;
-	}
-
-	public static int bootstrap_constant_int(MethodHandles.Lookup l, String name, Class<?> c, int v) {
-		return v;
-	}
-
-	public static float bootstrap_constant_float(MethodHandles.Lookup l, String name, Class<?> c, float v) {
-		return v;
-	}
-
-	public static double bootstrap_constant_double(MethodHandles.Lookup l, String name, Class<?> c, double v) {
-		return v;
-	}
-
-	public static long bootstrap_constant_long(MethodHandles.Lookup l, String name, Class<?> c, long v) {
-		return v;
-	}
-	public static int bootstrap_constant_int_exception(MethodHandles.Lookup l, String name, Class<?> c, int v) throws Exception {
-		throw new Exception();
+public class CondyClassLoader extends ClassLoader  {
+	public Class<?> load(String name, byte[] bytes) {
+		return (Class<?>) defineClass(name, bytes, 0, bytes.length);
 	}
 }

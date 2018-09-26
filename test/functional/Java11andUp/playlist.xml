@@ -134,8 +134,95 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE110</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 
+
+	<!--
+		Following test covers garbage collection of constant dynamics using several gc options.
+		Tests scenario for object, primitive and exception constant dynamics.
+	-->
+	<test>
+		<testCaseName>CondyGarbageCollection</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+			<variation>-Xgcpolicy:optthruput</variation>
+			<variation>-Xgcpolicy:gencon</variation>
+			<variation>-Xgcpolicy:balanced</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+			-cp $(Q)$(LIB_DIR)$(D)asm-7.0.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames GarbageCollectionCondyTest \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+	</test>
+
+	<!--
+		Following test covers metronome garbage collection tests on linux_x86.
+		Tests scenarios for object, primitive and exception constant dynamics.
+	-->
+	<test>
+		<testCaseName>CondyGarbageCollectionMetronomeLinux</testCaseName>
+		<variations>
+			<variation>-Xgcpolicy:metronome</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+			-cp $(Q)$(LIB_DIR)$(D)asm-7.0.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames GarbageCollectionCondyTest \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<platformRequirements>os.linux,arch.x86</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+	</test>
+
+	<!--
+		Following test covers metronome garbage collection tests on aix.
+		Tests scenarios for object, primitive and exception constant dynamics.
+	-->
+	<test>
+		<testCaseName>CondyGarbageCollectionMetronomeAIX</testCaseName>
+		<variations>
+			<variation>-Xgcpolicy:metronome</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+			-cp $(Q)$(LIB_DIR)$(D)asm-7.0.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames GarbageCollectionCondyTest \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<platformRequirements>os.aix</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+	</test>
 </playlist>

@@ -52,7 +52,6 @@ GC_ConstantPoolObjectSlotIterator::nextSlot() {
 	U_32 slotType;
 	j9object_t *slotPtr;
 	j9object_t *result = NULL;
-	bool nextSlot = true;
 
 	while (_cpEntryCount) {
 		if (0 == _cpDescriptionIndex) {
@@ -69,7 +68,11 @@ GC_ConstantPoolObjectSlotIterator::nextSlot() {
 		if (_condyOnly) {
 			/* Determine if the slot is constant dynamic */
 			if (slotType == J9CPTYPE_CONSTANT_DYNAMIC) {
-				result = scanCondySlot(slotPtr, &nextSlot);
+				if (NULL != (result = _constantDynamicSlotIterator.nextSlot(slotPtr))) {
+					/* Do not progress through the function.
+					 * Avoids advancing the slot while a constant dynamic is being iterated */
+					return result;
+				}
 			}
 		} else {
 			/* Determine if the slot should be processed */
@@ -85,7 +88,11 @@ GC_ConstantPoolObjectSlotIterator::nextSlot() {
 				result = &(((J9RAMMethodHandleRef *) slotPtr)->methodHandle);
 				break;
 			case J9CPTYPE_CONSTANT_DYNAMIC:
-				result = scanCondySlot(slotPtr, &nextSlot);
+				if (NULL != (result = _constantDynamicSlotIterator.nextSlot(slotPtr))) {
+					/* Do not progress through the function.
+					 * Avoids advancing the slot while a constant dynamic is being iterated */
+					return result;
+				}
 				break;
 			default:
 				break;
@@ -93,15 +100,13 @@ GC_ConstantPoolObjectSlotIterator::nextSlot() {
 
 		}
 
-		if (nextSlot) {
-			/* Adjust the CP slot and description information */
-			_cpEntry = (j9object_t *) (((U_8 *) _cpEntry)
-					+ sizeof(J9RAMConstantPoolItem));
-			_cpEntryCount -= 1;
+		/* Adjust the CP slot and description information */
+		_cpEntry = (j9object_t *) (((U_8 *) _cpEntry)
+				+ sizeof(J9RAMConstantPoolItem));
+		_cpEntryCount -= 1;
 
-			_cpDescription >>= J9_CP_BITS_PER_DESCRIPTION;
-			_cpDescriptionIndex -= 1;
-		}
+		_cpDescription >>= J9_CP_BITS_PER_DESCRIPTION;
+		_cpDescriptionIndex -= 1;
 
 		if (NULL != result) {
 			break;
