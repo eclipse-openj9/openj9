@@ -35,11 +35,10 @@
 
 FROM openj9:latest
 
-ARG openj9_repo=git@github.ibm.com:runtimes/Jaas_tr.open.git
-ARG openj9_branch=milestone_8
-ARG omr_repo=git@github.ibm.com:runtimes/Jaas_omr.git
-ARG omr_branch=milestone_8
-ARG use_grpc=0
+ARG openj9_repo=git@github.com:eclipse/openj9.git
+ARG openj9_branch=jitaas
+ARG omr_repo=git@github.com:eclipse/openj9-omr.git
+ARG omr_branch=jitaas
 
 RUN apt-get update \
  && apt-get install -qq -y --no-install-recommends \
@@ -55,50 +54,22 @@ RUN apt-get update \
 RUN apt-get update \
  && add-apt-repository ppa:ubuntu-toolchain-r/test -y \
  && apt-get update \
- && apt-get install gcc-snapshot -y \
- && apt-get update \
- && apt-get install gcc-6 g++-6 -y \
+ && apt-get install -qq -y --no-install-recommends gcc-7 g++-7 \
  && rm -rf /var/lib/apt/lists/*
 
 # JITaaS needs to be built with a newer GCC
 RUN ln -sf /usr/bin/g++ /usr/bin/c++ \
- && ln -sf /usr/bin/g++-6 /usr/bin/g++ \
+ && ln -sf /usr/bin/g++-7 /usr/bin/g++ \
  && ln -sf /usr/bin/gcc /usr/bin/cc \
- && ln -sf /usr/bin/gcc-6 /usr/bin/gcc
+ && ln -sf /usr/bin/gcc-7 /usr/bin/gcc
 
-# Install grpc 1.10.1 and protobuf 3.5.1
+# Install protobuf 3.5.1
 WORKDIR /
-RUN git clone -b $(curl -L https://grpc.io/release) https://github.com/grpc/grpc \
- && cd grpc \
- && git checkout v1.10.1 \
- && git submodule update --init \
- && cd /grpc/third_party/protobuf \
- && git checkout v3.5.1 \
- && cd /grpc \
- && make \
- && make install \
- && cd /grpc/third_party/protobuf \
- && make install \
- && rm -rf /grpc
-
-# Install openssl 1.1.0g
-RUN wget http://www.openssl.org/source/openssl-1.1.0g.tar.gz \
- && tar -xvzf openssl-1.1.0g.tar.gz \
- && cd openssl-1.1.0g \
-# && ./config -prefix=/usr/local/openssl -openssldir=/usr/local/openssl \
- && make \
- && make install \
- && openssl version 
-
-# This workaround will need to be removed once we open source
-RUN mkdir -p /root/.ssh
-COPY key /root/.ssh/
-
-# determine if grpc will be used
-RUN if [ $use_grpc = 1 ] ; \
-    then export JITAAS_USE_GRPC=1 ; \
-    else echo "Building with raw socket implementation" ; \
-    fi
+RUN wget https://github.com/protocolbuffers/protobuf/releases/download/v3.5.1/protobuf-cpp-3.5.1.tar.gz \
+ && tar -xvzf protobuf-cpp-3.5.1.tar.gz \
+ && cd protobuf-3.5.1 \
+ && ./configure && make && make install && ldconfig \
+ && rm -rf /protobuf-3.5.1 && rm -rf /protobuf-cpp-3.5.1.tar.gz
 
 # Grab sources from openj9-openjdk-jdk8 and JITaaS repos
 # Then builds JITaaS
@@ -107,10 +78,6 @@ RUN git clone https://github.com/ibmruntimes/openj9-openjdk-jdk8 \
  && cd openj9-openjdk-jdk8 \
  && bash ./get_source.sh -openj9-repo=$openj9_repo -openj9-branch=$openj9_branch -omr-repo=$omr_repo -omr-branch=$omr_branch \
  && bash ./configure --with-freemarker-jar=/root/freemarker.jar \
- && export UMA_SUPPRESS_WARNINGS_AS_ERRORS=1 \
- && cd openj9/runtime/compiler \
- && make -f compiler.mk -C . proto \
- && cd ../../.. \
  && make all
 
 # Clean up
