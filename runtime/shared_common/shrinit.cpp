@@ -57,7 +57,7 @@ extern "C" {
 #include "jvminit.h"
 #include "j9port.h"
 #include "shrinit.h"
-#include "verbose.h"
+#include "verbose_api.h"
 #include "ut_j9shr.h"
 #include "j9shrnls.h"
 #include "j9exelibnls.h"
