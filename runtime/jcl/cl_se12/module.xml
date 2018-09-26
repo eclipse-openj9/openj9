@@ -58,6 +58,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<artifact type="shared" name="jclse12_" bundle="jvm" loadgroup="jcl">
 		<include-if condition="spec.flags.build_java7"/>
+		<exclude-if condition="not spec.java12"/>
 		<options>
 			<option name="isRequired">
 				<include-if condition="spec.jcl.Sidecar"/>
@@ -170,4 +171,5 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<library name="sunvmi_jdk11"/>
 		</libraries>
 	</artifact>
+
 </module>

@@ -1,27 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <!--
-   Copyright (c) 2007, 2018 IBM Corp. and others
+Copyright (c) 2007, 2018 IBM Corp. and others
 
-   This program and the accompanying materials are made available under
-   the terms of the Eclipse Public License 2.0 which accompanies this
-   distribution and is available at https://www.eclipse.org/legal/epl-2.0/
-   or the Apache License, Version 2.0 which accompanies this distribution and
-   is available at https://www.apache.org/licenses/LICENSE-2.0.
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
 
-   This Source Code may also be made available under the following
-   Secondary Licenses when the conditions for such availability set
-   forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
-   General Public License, version 2 with the GNU Classpath
-   Exception [1] and GNU General Public License, version 2 with the
-   OpenJDK Assembly Exception [2].
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
 
-   [1] https://www.gnu.org/software/classpath/license.html
-   [2] http://openjdk.java.net/legal/assembly-exception.html
+[1] https://www.gnu.org/software/classpath/license.html
+[2] http://openjdk.java.net/legal/assembly-exception.html
 
-   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
-
 <module xmlns:xi="http://www.w3.org/2001/XInclude">
 	<xi:include href="../j9vm/j9vmnatives.xml"><xi:fallback/></xi:include>
 
@@ -55,6 +53,7 @@
 			<command type="clean" line="$(RM) generated.c"/>
 		</commands>
 	</artifact>
+
 	<artifact type="target" name="generate_redirector">
 		<commands>
 			<command type="all" line="$(MAKE) -C $(UMA_PATH_TO_ROOT)redirector generated.c"/>
@@ -64,6 +63,7 @@
 
 	<artifact type="shared" name="jvm_b150" scope="redirector" loadgroup="top" buildlocal="true" appendrelease="false">
 		<include-if condition="spec.flags.module_j9vm"/>
+		<exclude-if condition="spec.java10 or not spec.java9"/>
 		<options>
 			<!-- Need this for compatibility with older UMA versions in ifix streams -->
 			<option name="linuxVersionName" data ="JVM_2.3"/>
@@ -110,6 +110,7 @@
 		and last the makefile target of the artifact jvm -->
 	<artifact type="shared" name="jvm_b150_clean" scope="redirector" loadgroup="top" buildlocal="true" appendrelease="false">
 		<include-if condition="spec.flags.module_j9vm"/>
+		<exclude-if condition="spec.java10 or not spec.java9"/>
 		<phase>core quick j2se</phase>
 		<commands>
 			<command line="$(MAKE) -f redirector_jvm.mk clean" type="all"/>
@@ -118,6 +119,7 @@
 
 	<artifact type="shared" name="jvm_b156" scope="redirector" loadgroup="top" buildlocal="true" appendrelease="false">
 		<include-if condition="spec.flags.module_j9vm"/>
+		<exclude-if condition="spec.java11 or not spec.java9"/>
 		<options>
 			<!-- Need this for compatibility with older UMA versions in ifix streams -->
 			<option name="linuxVersionName" data ="JVM_2.3"/>
@@ -164,6 +166,7 @@
 		and last the makefile target of the artifact jvm -->
 	<artifact type="shared" name="jvm_b156_clean" scope="redirector" loadgroup="top" buildlocal="true" appendrelease="false">
 		<include-if condition="spec.flags.module_j9vm"/>
+		<exclude-if condition="spec.java11 or not spec.java9"/>
 		<phase>core quick j2se</phase>
 		<commands>
 			<command line="$(MAKE) -f redirector_jvm.mk clean" type="all"/>
@@ -172,6 +175,7 @@
 
 	<artifact type="shared" name="jvm_jdk11" scope="redirector" loadgroup="top" buildlocal="true" appendrelease="false">
 		<include-if condition="spec.flags.module_j9vm"/>
+		<exclude-if condition="spec.java12 or not spec.java11"/>
 		<options>
 			<!-- Need this for compatibility with older UMA versions in ifix streams -->
 			<option name="linuxVersionName" data ="JVM_2.3"/>
@@ -219,6 +223,7 @@
 		and last the makefile target of the artifact jvm -->
 	<artifact type="shared" name="jvm_jdk11_clean" scope="redirector" loadgroup="top" buildlocal="true" appendrelease="false">
 		<include-if condition="spec.flags.module_j9vm"/>
+		<exclude-if condition="spec.java12 or not spec.java11"/>
 		<phase>core quick j2se</phase>
 		<commands>
 			<command line="$(MAKE) -f redirector_jvm.mk clean" type="all"/>
@@ -227,6 +232,7 @@
 
 	<artifact type="shared" name="jvm_jdk12" scope="redirector" loadgroup="top" buildlocal="true" appendrelease="false">
 		<include-if condition="spec.flags.module_j9vm"/>
+		<exclude-if condition="not spec.java12"/>
 		<options>
 			<!-- Need this for compatibility with older UMA versions in ifix streams -->
 			<option name="linuxVersionName" data ="JVM_2.3"/>
@@ -276,6 +282,7 @@
 		and last the makefile target of the artifact jvm -->
 	<artifact type="shared" name="jvm_jdk12_clean" scope="redirector" loadgroup="top" buildlocal="true" appendrelease="false">
 		<include-if condition="spec.flags.module_j9vm"/>
+		<exclude-if condition="not spec.java12"/>
 		<phase>core quick j2se</phase>
 		<commands>
 			<command line="$(MAKE) -f redirector_jvm.mk clean" type="all"/>
@@ -322,4 +329,5 @@
 			<library name="omrutil" type="external"/>
 		</libraries>
 	</artifact>
+
 </module>
