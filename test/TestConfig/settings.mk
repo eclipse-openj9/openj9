@@ -77,14 +77,15 @@ endif
 
 # temporarily support both JAVA_IMPL and JDK_IMPL
 ifndef JDK_IMPL
-	JDK_IMPL=$(JAVA_IMPL)
-endif
-
-ifndef JDK_IMPL
-	export JDK_IMPL:=openj9
+	ifndef JAVA_IMPL
+		export JDK_IMPL:=openj9
+	else
+		export JDK_IMPL:=$(JAVA_IMPL)
+	endif
 else
 	export JDK_IMPL:=$(JDK_IMPL)
 endif
+
 
 ifndef JVM_VERSION
 ifeq ($(JDK_VERSION), 8)
