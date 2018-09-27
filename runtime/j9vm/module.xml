@@ -23,12 +23,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 <module xmlns:xi="http://www.w3.org/2001/XInclude">
 	<xi:include href="j9vmnatives.xml"><xi:fallback/></xi:include>
 
-	<exports group="all">
-		<export name="JNI_CreateJavaVM" />
-		<export name="JNI_GetCreatedJavaVMs" />
-		<export name="JNI_GetDefaultJavaVMInitArgs" />
-		<export name="_JVM_GetCallerClass@8" />
-	</exports>
 	<artifact type="target" name="generated.h" all="false">
 		<dependencies>
 			<dependency name="generated.h.m4"/>
@@ -40,6 +34,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<command type="clean" line="$(RM) generated.h"/>
 		</commands>
 	</artifact>
+
 	<artifact type="target" name="generate_j9vm">
 		<commands>
 			<command type="all" line="$(MAKE) -C $(UMA_PATH_TO_ROOT)j9vm generated.h"/>
@@ -97,7 +92,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		  WARNING: DO NOT LINK SHARED LIBRARIES AGAINST THIS SHARED LIBRARY
 		           WE NEED TO BE ABLE TO LOAD IT WITHOUT ANYTHING ELSE ON THE
 		           LIBPATH.
-
 		           This is required because of sidecar configurations.
 		-->
 		<libraries>

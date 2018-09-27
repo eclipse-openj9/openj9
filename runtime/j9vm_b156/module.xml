@@ -24,13 +24,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<xi:include href="../j9vm/j9vmnatives.xml"><xi:fallback/></xi:include>
 
-	<exports group="all">
-		<export name="JNI_CreateJavaVM"/>
-		<export name="JNI_GetCreatedJavaVMs"/>
-		<export name="JNI_GetDefaultJavaVMInitArgs"/>
-		<export name="_JVM_GetCallerClass@8" />
-	</exports>
-
 	<artifact type="shared" name="jvm" scope="b156" loadgroup="top" buildlocal="true" appendrelease="false">
 		<include-if condition="spec.flags.module_j9vm"/>
 		<exclude-if condition="spec.java11 or not spec.java9"/>

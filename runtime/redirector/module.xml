@@ -23,14 +23,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 <module xmlns:xi="http://www.w3.org/2001/XInclude">
 	<xi:include href="../j9vm/j9vmnatives.xml"><xi:fallback/></xi:include>
 
-	<exports group="all">
-		<export name="JNI_CreateJavaVM"/>
-		<export name="JNI_GetCreatedJavaVMs"/>
-		<export name="JNI_GetDefaultJavaVMInitArgs"/>
-	</exports>
-	<exports group="prejdk11">
-		<export name="_JVM_GetCallerClass@8"/>
-	</exports>
 	<exports group="jdk11">
 		<export name="_JVM_GetCallerClass@4"/>
 		<export name="JVM_BeforeHalt"/>
@@ -76,7 +68,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<exports>
 			<group name="all"/>
 			<group name="j9vmnatives"/>
-			<group name="prejdk11"/>
 		</exports>
 		<includes>
 			<include path="j9include"/>
@@ -114,7 +105,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<exports>
 			<group name="all"/>
 			<group name="j9vmnatives"/>
-			<group name="prejdk11"/>
 		</exports>
 		<includes>
 			<include path="j9include"/>
@@ -228,9 +218,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<exports>
 			<group name="all"/>
 			<group name="j9vmnatives"/>
-			<group name="prejdk11">
-				<exclude-if condition="spec.java11"/>
-			</group>
 			<group name="jdk11">
 				<include-if condition="spec.java11"/>
 			</group>
