@@ -165,45 +165,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</libraries>
 	</artifact>
 
-	<artifact type="shared" name="jvm_jdk12" scope="redirector" loadgroup="top" buildlocal="true" appendrelease="false">
-		<include-if condition="spec.flags.module_j9vm"/>
-		<exclude-if condition="not spec.java12"/>
-		<options>
-			<!-- Need this for compatibility with older UMA versions in ifix streams -->
-			<option name="linuxVersionName" data ="JVM_2.3"/>
-		</options>
-		<phase>core quick j2se</phase>
-		<dependencies>
-			<dependency name="generate_j9vm"/>
-			<dependency name="generate_redirector"/>
-		</dependencies>
-		<exports>
-			<group name="all"/>
-			<group name="j9vmnatives"/>
-			<group name="jdk11"/>
-			<group name="jdk12"/>
-		</exports>
-		<includes>
-			<include path="j9include"/>
-			<include path="j9oti"/>
-			<include path="jvm"/>
-			<include path="$(OMRPORT_SRCDIR)zos390" type="relativepath">
-				<include-if condition="spec.zos_390.*"/>
-			</include>
-		</includes>
-		<makefilestubs>
-			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
-			<makefilestub data="OMRPORT_SRCDIR=$(OMR_DIR)/port/"/>
-		</makefilestubs>
-		<objects>
-			<object name="generated"/>
-			<object name="redirector"/>
-		</objects>
-		<libraries>
-			<library name="omrutil" type="external"/>
-		</libraries>
-	</artifact>
-
 	<artifact type="shared" name="jvm" scope="redirector" loadgroup="top" buildlocal="true" appendrelease="false">
 		<include-if condition="spec.flags.module_j9vm"/>
 		<options>
