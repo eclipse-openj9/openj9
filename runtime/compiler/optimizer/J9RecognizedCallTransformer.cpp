@@ -105,7 +105,15 @@ void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::Tr
 void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop, TR::Node* node, TR::SymbolReferenceTable::CommonNonhelperSymbol helper)
    {
    node->setSymbolReference(comp()->getSymRefTab()->findOrCreateCodeGenInlinedHelper(helper));
+   if (treetop->getNode()->getOpCodeValue() == TR::NULLCHK)
+      {
+      auto nullchk = comp()->getSymRefTab()->findOrCreateNullCheckSymbolRef(comp()->getMethodSymbol());
+      treetop->insertBefore(TR::TreeTop::create(comp(), TR::Node::createWithSymRef(TR::NULLCHK, 1, 1, TR::Node::create(node, TR::PassThrough, 1, node->getChild(0)), nullchk)));
+      treetop->getNode()->setSymbolReference(NULL);
+      TR::Node::recreate(treetop->getNode(), TR::treetop);
+      }
    node->removeChild(0);
+
    bool safeToSkipDiamond = !strncmp(comp()->getCurrentMethod()->classNameChars(), "java/util/concurrent/atomic/", strlen("java/util/concurrent/atomic/"));
 
    TR_Array<TR::Node*> params(trMemory(), node->getNumChildren()-2);
