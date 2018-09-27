@@ -131,7 +131,7 @@ or
 
 Please read [How-to Run customized JCK test targets](https://github.com/AdoptOpenJDK/openjdk-tests/blob/master/jck/README.md) for details.
 
-## 7) How to run the test with different `JDK_VERSION` and `JAVA_IPML`?
+## 7) How to run the test with different `JDK_VERSION` and `JDK_IMPL`?
 
 User can run tests against different java version and/or java
 implementation. While the default values of these variables match a
