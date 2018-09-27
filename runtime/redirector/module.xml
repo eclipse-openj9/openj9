@@ -78,9 +78,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<group name="all"/>
 			<group name="j9vmnatives"/>
 		</exports>
-		<flags>
-			<flag name="J9VM_JAVA9_BUILD" value="150"/>
-		</flags>
 		<includes>
 			<include path="j9include"/>
 			<include path="j9oti"/>
@@ -134,9 +131,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<group name="all"/>
 			<group name="j9vmnatives"/>
 		</exports>
-		<flags>
-			<flag name="J9VM_JAVA9_BUILD" value="156"/>
-		</flags>
 		<includes>
 			<include path="j9include"/>
 			<include path="j9oti"/>
@@ -190,10 +184,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<group name="all"/>
 			<group name="j9vmnatives"/>
 		</exports>
-		<flags>
-			<flag name="J9VM_JAVA9_BUILD" value="156"/>
-			<flag name="J9VM_JCL_SE11"/>
-		</flags>
 		<includes>
 			<include path="j9include"/>
 			<include path="j9oti"/>
@@ -248,11 +238,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<group name="all"/>
 			<group name="j9vmnatives"/>
 		</exports>
-		<flags>
-			<flag name="J9VM_JAVA9_BUILD" value="156"/>
-			<flag name="J9VM_JCL_SE11"/>
-			<flag name="J9VM_JCL_SE12"/>
-		</flags>
 		<includes>
 			<include path="j9include"/>
 			<include path="j9oti"/>
@@ -306,9 +291,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<group name="all"/>
 			<group name="j9vmnatives"/>
 		</exports>
-		<flags>
-			<flag name="J9VM_JAVA9_BUILD" value="148"/>
-		</flags>
 		<includes>
 			<include path="j9include"/>
 			<include path="j9oti"/>

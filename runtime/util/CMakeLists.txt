@@ -106,7 +106,7 @@ add_library(j9util STATIC
 	${CMAKE_CURRENT_BINARY_DIR}/ut_module.c
 	${CMAKE_CURRENT_BINARY_DIR}/ut_srphashtable.c
 
-	#TODO this is platform specific
+	# TODO this is platform specific
 	linux/osinfo.c
 )
 
@@ -156,5 +156,3 @@ target_link_libraries(j9util_b156
 		j9vm_interface
 		j9vm_gc_includes
 )
-
-target_compile_definitions(j9util_b156 PRIVATE -DJ9VM_JAVA9_BUILD=156)
