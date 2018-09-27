@@ -3409,8 +3409,6 @@ TR_J9ByteCodeIlGenerator::genCompressedRefs(TR::Node * address, bool genTT, int3
 TR::Node *
 TR_J9ByteCodeIlGenerator::genNullCheck(TR::Node * first)
    {
-   // TODO : Can we get rid of the "value.getClass()" nullchecks in the Java code due to this function?
-
    // By default, NULLCHKs will be skipped on String.value fields.  A more general mechanism
    // is needed for skipping NULL/BNDCHKs on certain recognized fields...
    //
