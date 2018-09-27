@@ -568,10 +568,17 @@ def set_job_properties(JOB_TYPE) {
             add_string_params(['TESTS_TARGETS':''])
         }
 
-        // Build - Commented out as there are currently no params specific to only Build
-        //if (JOB_TYPE == 'build') {
+        if (JOB_TYPE == 'build') {
+            add_string_params(['NODE':''])
+        }
 
-        //}
+        if (JOB_TYPE == 'pipeline') {
+            add_string_params([
+                'BUILD_NODE':'',
+                'TEST_NODE':'',
+                'PERSONAL_BUILD':'',
+                'SLACK_CHANNEL':''])
+        }
 
         /********************
         * TRIGGER
