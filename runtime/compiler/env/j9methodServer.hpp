@@ -152,7 +152,6 @@ public:
    virtual TR_ResolvedMethod * getResolvedDynamicMethod( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP) override;
    virtual bool isSameMethod(TR_ResolvedMethod *) override;
    virtual bool isInlineable(TR::Compilation *) override;
-   virtual bool isWarmCallGraphTooBig(uint32_t, TR::Compilation *) override;
    virtual void setWarmCallGraphTooBig(uint32_t, TR::Compilation *) override;
    virtual void setVirtualMethodIsOverridden() override;
    virtual void * addressContainingIsOverriddenBit() override { return _addressContainingIsOverriddenBit; }
