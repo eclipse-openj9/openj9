@@ -1567,7 +1567,7 @@ public void test_toGenericString() {
 	AssertJUnit.assertEquals("public class org.openj9.test.java.lang.PublicStrictFPClass", PublicStrictFPClass.class.toGenericString());
 	AssertJUnit.assertEquals("public final class org.openj9.test.java.lang.PublicFinalClass", PublicFinalClass.class.toGenericString());
 	AssertJUnit.assertEquals("public final enum org.openj9.test.java.lang.PublicEnum", PublicEnum.class.toGenericString());
-	AssertJUnit.assertEquals("public abstract final class [Lorg.openj9.test.java.lang.PublicFinalClass;", PublicFinalClass[].class.toGenericString());
+	AssertJUnit.assertEquals("org.openj9.test.java.lang.PublicFinalClass[]", PublicFinalClass[].class.toGenericString());
 	AssertJUnit.assertEquals("class org.openj9.test.java.lang.GenericClass<E>", GenericClass.class.toGenericString());
 	AssertJUnit.assertEquals("class org.openj9.test.java.lang.GenericsClass<first,second>", GenericsClass.class.toGenericString());
 	AssertJUnit.assertEquals("public class org.openj9.test.java.lang.InnerClasses$InnerClass", InnerClasses.InnerClass.class.toGenericString());
@@ -1576,7 +1576,7 @@ public void test_toGenericString() {
 	AssertJUnit.assertEquals("private class org.openj9.test.java.lang.InnerClasses$PrivateClass", InnerClasses.getPrivateClass().toGenericString());
 	AssertJUnit.assertEquals("abstract interface org.openj9.test.java.lang.Interface", Interface.class.toGenericString());
 	AssertJUnit.assertEquals("public abstract @interface org.openj9.test.java.lang.AnnotationType", AnnotationType.class.toGenericString());
-	AssertJUnit.assertEquals("public abstract final class [C", char[].class.toGenericString());
+	AssertJUnit.assertEquals("char[]", char[].class.toGenericString());
 	Class[] classes = getTestClasses();
 	AssertJUnit.assertEquals("public class org.openj9.test.java.lang.Test_Class", classes[0].toGenericString());
 	AssertJUnit.assertEquals("static class org.openj9.test.java.lang.Test_Class$StaticMember$Class", classes[1].toGenericString());
