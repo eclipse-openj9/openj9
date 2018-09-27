@@ -469,6 +469,7 @@ private static AccessControlContext getContextHelper(boolean forDoPrivilegedWith
 	int frameNbr = domains.length / OBJS_ARRAY_SIZE;
 	AccessControlContext accContext = null;
 	AccessControlContext accLower = null;
+	DomainCombiner dc = null; // store a non-null domainCombiner from a closest frame or null
 	for (int j = 0; j < frameNbr; ++j) {
 		AccessControlContext acc = (AccessControlContext) domains[j * OBJS_ARRAY_SIZE];
 		/*[PR JAZZ 66930] j.s.AccessControlContext.checkPermission() invoke untrusted ProtectionDomain.implies */
@@ -486,6 +487,10 @@ private static AccessControlContext getContextHelper(boolean forDoPrivilegedWith
 		}
 		if (null != acc && null != acc.domainCombiner) {
 			accTmp.domainCombiner = acc.domainCombiner;
+			if (dc == null) {
+				// this dc will be set to accContext.domainCombiner
+				dc = acc.domainCombiner;
+			}
 		}
 		if (null != domains[j * OBJS_ARRAY_SIZE + OBJS_INDEX_PERMS_OR_CACHECHECKED]) {
 			// this is frame with limited permissions
@@ -500,7 +505,9 @@ private static AccessControlContext getContextHelper(boolean forDoPrivilegedWith
 		}
 		accLower = accTmp;
 	}
-
+	if ((accContext != null) && (accContext.domainCombiner == null) && (dc != null)) {
+		accContext.domainCombiner = dc;
+	}
 	return accContext;
 }
 
