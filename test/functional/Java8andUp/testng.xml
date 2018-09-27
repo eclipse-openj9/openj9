@@ -141,6 +141,7 @@
 			<class name="org.openj9.test.java.lang.Test_Compiler"/>
 			<class name="org.openj9.test.java.lang.Test_InstantiationError"/>
 			<class name="org.openj9.test.java.lang.Test_InstantiationException"/>
+			<class name="org.openj9.test.java.lang.Test_Math"/>
 			<class name="org.openj9.test.java.lang.Test_Object"/>
 			<class name="org.openj9.test.java.lang.Test_RuntimePermission"/>
 			<class name="org.openj9.test.java.lang.Test_String"/>
@@ -210,6 +211,11 @@
 	<test name="JCL_TEST_JITHelpers">
 		<classes>
 			<class name="org.openj9.test.com.ibm.jit.Test_JITHelpers"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_MathMethods">
+		<classes>
+			<class name="org.openj9.test.java.lang.Test_Math"/>
 		</classes>
 	</test>
 	<test name="JCL_TEST_Test-UnsafeFence">
