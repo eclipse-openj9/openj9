@@ -526,7 +526,6 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 #endif
 #if defined(J9VM_ENV_SHARED_LIBS_USE_GLOBAL_TABLE)
 			writeConstant(OMRPORTLIB, fd, "J9TR_JavaVM_jitTOC", offsetof(J9JavaVM, jitTOC)) |
-			writeConstant(OMRPORTLIB, fd, "J9TR_JavaVM_vmTOC", offsetof(J9JavaVM, vmTOC)) |
 #endif /* J9VM_ENV_SHARED_LIBS_USE_GLOBAL_TABLE */
 			/* J9VMEntryLocalStorage */
 			writeConstant(OMRPORTLIB, fd, "J9TR_ELS_jitGlobalStorageBase", offsetof(J9VMEntryLocalStorage, jitGlobalStorageBase)) |

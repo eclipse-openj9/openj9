@@ -1,4 +1,4 @@
-dnl Copyright (c) 1991, 2017 IBM Corp. and others
+dnl Copyright (c) 1991, 2018 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -100,8 +100,7 @@ define({staddrx},stdx)
 define({staddru},stdu)
 define({cmpliaddr},{cmpli 0,1,})
 define({ADDR},.llong)
-define({ALen},8)  
-
+define({ALen},{J9CONST(8,$1,$2)})
 define({J9VMTHREAD},{r15})
 
 },{ dnl ASM_J9VM_ENV_DATA64
@@ -116,7 +115,7 @@ define({staddrx},stwx)
 define({staddru},stwu)
 define({cmpliaddr},{cmpli 0,0,})
 define({ADDR},.long)
-define({ALen},4)       
+define({ALen},{J9CONST(4,$1,$2)})     
 
 define({J9VMTHREAD},{r13})
 
@@ -135,7 +134,11 @@ define({FUNC_PTR},{r11})
 
 define({CALL_INDIRECT},{
 	ifelse($1,,,{mr FUNC_PTR,$1})
-	bl ._ptrgl[pr]
+dnl inline version of _ptrgl follows
+	laddr r2,0(FUNC_PTR)
+	mtctr r2
+	laddr r2,ALen(FUNC_PTR)
+	bctrl
 })
 
 define({FUNC_LABEL},{.$1})
@@ -162,7 +165,6 @@ define({DECLARE_EXTERN},{
 })
 
 define({START_TEXT},{
-	.extern ._ptrgl[pr]
 	.csect .$1[pr]
 })
 
@@ -179,11 +181,6 @@ define({END_PROC},{endproc.$1:})
 define({CALL_DIRECT},{
 	bl BRANCH_SYMBOL($1)
 	cror 31,31,31
-})
-
-define({INIT_GOT},{
-	laddr r2,J9TR_VMThread_javaVM(J9VMTHREAD)
-    laddr r2,J9TR_JavaVM_$1(r2)
 })
 
 define({TOC_SAVE_OFFSET},{J9CONST(J9TR_cframe_currentTOC,$1,$2)})
@@ -207,10 +204,8 @@ define({FUNC_PTR},{r12})
 
 define({CALL_INDIRECT},{
 	ifelse($1,,,{mr FUNC_PTR,$1})
-	std r2,TOC_SAVE_OFFSET(r1)
-	mtctr r12
+	mtctr FUNC_PTR
 	bctrl
-	ld r2,TOC_SAVE_OFFSET(r1)
 })
 
 define({FUNC_LABEL},{$1})
@@ -230,7 +225,6 @@ define({START_TEXT},{
 })
 
 define({CALL_DIRECT},{
-	ori r0,r0,0
 	bl BRANCH_SYMBOL($1)
 	ori r0,r0,0
 })
@@ -243,11 +237,6 @@ define({START_PROC},{
 })
 
 define({END_PROC})
-
-define({INIT_GOT},{
-	laddr r2,J9TR_VMThread_javaVM(J9VMTHREAD)
-    laddr r2,J9TR_JavaVM_$1(r2)
-})
 
 define({TOC_SAVE_OFFSET},{J9CONST(J9TR_cframe_currentTOC,$1,$2)})
 define({GPR_SAVE_OFFSET},{eval(J9TR_cframe_preservedGPRs+((($1)-14)*ALen))})
@@ -265,12 +254,11 @@ define({FUNC_PTR},{r11})
 
 define({CALL_INDIRECT},{
 	ifelse($1,,,{mr FUNC_PTR,$1})
-	std r2,TOC_SAVE_OFFSET(r1)
-	ld r2,0(r11)
+dnl inline version of _ptrgl follows
+	ld r2,0(FUNC_PTR)
 	mtctr r2
-	ld r2,8(r11)
+	ld r2,8(FUNC_PTR)
 	bctrl
-	ld r2,TOC_SAVE_OFFSET(r1)
 })
 
 define({FUNC_LABEL},{.$1})
@@ -314,11 +302,6 @@ define({START_PROC},{
 
 define({END_PROC})
 
-define({INIT_GOT},{
-	laddr r2,J9TR_VMThread_javaVM(J9VMTHREAD)
-    laddr r2,J9TR_JavaVM_$1(r2)
-})
-
 define({TOC_SAVE_OFFSET},{J9CONST(J9TR_cframe_currentTOC,$1,$2)})
 define({GPR_SAVE_OFFSET},{eval(J9TR_cframe_preservedGPRs+((($1)-14)*ALen))})
 define({GPR_SAVE_SLOT},{GPR_SAVE_OFFSET($1)(r1)})
@@ -328,13 +311,8 @@ define({CR_SAVE_OFFSET},{J9CONST(eval(CINTERP_STACK_SIZE+J9TR_cframe_preservedCR
 define({LR_SAVE_OFFSET},{J9CONST(eval(CINTERP_STACK_SIZE+J9TR_cframe_preservedLR),$1,$2)})
 
 define({CALL_DIRECT},{
-	ld r11, .tocL_$1@toc(r2)
-	std r2,TOC_SAVE_OFFSET(r1)
-	ld r2, 0(r11)
-	mtctr r2
-	ld r2, 8(r11)
-	bctrl
-	ld r2,TOC_SAVE_OFFSET(r1)
+	ld FUNC_PTR, .tocL_$1@toc(r2)
+	CALL_INDIRECT
 })
 
 }) dnl ASM_J9VM_ENV_LITTLE_ENDIAN
@@ -370,7 +348,7 @@ define({START_PROC},{
 
 define({END_PROC})
 
-define({INIT_GOT},{
+define({INIT_JIT_TOC},{
 	bl _GLOBAL_OFFSET_TABLE_@local-4
 	mflr r29
 })
@@ -392,6 +370,12 @@ define({LR_SAVE_OFFSET},{J9CONST(eval(CINTERP_STACK_SIZE+J9TR_cframe_preservedLR
 
 }) dnl ASM_J9VM_ENV_DATA64
 }) dnl AIXPPC
+
+ifdef({INIT_JIT_TOC},,{
+define({INIT_JIT_TOC},{
+	laddr r2,J9TR_VMThread_jitTOC(J9VMTHREAD)
+})
+}) dnl !INIT_JIT_TOC
 
 define({SAVE_GPR},{staddr r$1,GPR_SAVE_SLOT($1)})
 define({RESTORE_GPR},{laddr r$1,GPR_SAVE_SLOT($1)})

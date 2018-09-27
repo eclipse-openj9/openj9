@@ -5582,8 +5582,6 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 
 	registerIgnoredOptions(PORTLIB, vm->vmArgsArray);				/* Tags -D java options and options in ignoredOptionTable as not consumable */
 
-	TOC_STORE_TOC(vm->vmTOC, &initializeJavaVM);
-
 #if !defined(J9VM_INTERP_MINIMAL_JNI)
 	vm->EsJNIFunctions = GLOBAL_TABLE(EsJNIFunctions);
 #endif
