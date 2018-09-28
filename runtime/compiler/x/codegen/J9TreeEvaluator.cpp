@@ -6443,7 +6443,7 @@ static void genInitObjectHeader(TR::Node             *node,
    TR::Register * clzReg = classReg;
 
    // TODO: should be able to use a TR_ClassPointer relocation without this stuff (along with class validation)
-   if (cg->needClassAndMethodPointerRelocations())
+   if (cg->needClassAndMethodPointerRelocations() && !comp->getOption(TR_UseSymbolValidationManager))
       {
       TR::Register *vmThreadReg = cg->getVMThreadRegister();
       if (node->getOpCodeValue() == TR::newarray)
@@ -6482,9 +6482,12 @@ static void genInitObjectHeader(TR::Node             *node,
    if (!clzReg)
       {
       TR::Instruction *instr = NULL;
-      if (use64BitClasses)
+      if (use64BitClasses || (cg->needClassAndMethodPointerRelocations() && comp->getOption(TR_UseSymbolValidationManager)))
          {
-         instr = generateRegImm64Instruction(MOV8RegImm64, node, tempReg, ((intptrj_t)clazz|orFlagsClass), cg);
+         if (cg->needClassAndMethodPointerRelocations() && comp->getOption(TR_UseSymbolValidationManager))
+            instr = generateRegImm64Instruction(MOV8RegImm64, node, tempReg, ((intptrj_t)clazz|orFlagsClass), cg, TR_ClassPointer);
+         else
+            instr = generateRegImm64Instruction(MOV8RegImm64, node, tempReg, ((intptrj_t)clazz|orFlagsClass), cg);
          generateMemRegInstruction(S8MemReg, node, generateX86MemoryReference(objectReg, TR::Compiler->om.offsetOfObjectVftField(), cg), tempReg, cg);
          }
       else
@@ -7582,12 +7585,15 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
                                                         node->getOpCodeValue() == TR::anewarray) )
       {
       startInstr = startInstr->getNext();
+      TR_OpaqueClassBlock *classToValidate = clazz;
+
       TR_RelocationRecordInformation *recordInfo =
          (TR_RelocationRecordInformation *) comp->trMemory()->allocateMemory(sizeof(TR_RelocationRecordInformation), heapAlloc);
       recordInfo->data1 = allocationSize;
       recordInfo->data2 = node->getInlinedSiteIndex();
       recordInfo->data3 = (uintptr_t) failLabel;
       recordInfo->data4 = (uintptr_t) startInstr;
+
       TR::SymbolReference * classSymRef;
       TR_ExternalRelocationTargetKind reloKind;
 
@@ -7600,6 +7606,15 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
          {
          classSymRef = node->getSecondChild()->getSymbolReference();
          reloKind = TR_VerifyRefArrayForAlloc;
+
+         if (comp->getOption(TR_UseSymbolValidationManager))
+            classToValidate = comp->fej9()->getComponentClassFromArrayClass(classToValidate);
+         }
+
+      if (comp->getOption(TR_UseSymbolValidationManager))
+         {
+         TR_ASSERT_FATAL(classToValidate, "classToValidate should not be NULL, clazz=%p\n", clazz);
+         recordInfo->data5 = (uintptr_t)classToValidate;
          }
 
       cg->addExternalRelocation(new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(startInstr,

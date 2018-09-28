@@ -318,6 +318,9 @@ public:
 
    virtual TR_OpaqueClassBlock * containingClass();
 
+   static TR_OpaqueClassBlock *  getClassFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, TR::Compilation *comp, uint32_t cpIndex);
+   static TR_OpaqueClassBlock *  getClassOfStaticFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, int32_t cpIndex);
+
    virtual void *                ramConstantPool();
    virtual void *                constantPool();
    virtual TR_OpaqueClassBlock * getClassFromConstantPool( TR::Compilation *, uint32_t cpIndex, bool returnClassForAot=false);
@@ -413,6 +416,9 @@ public:
    virtual uint32_t              vTableSlot(uint32_t);
 
    virtual bool                  isCompilable(TR_Memory *);
+
+   static TR_OpaqueMethodBlock * getVirtualMethod(TR_J9VMBase *fej9, J9ConstantPool *cp, I_32 cpIndex, UDATA *vTableOffset, bool *unresolvedInCP);
+   static TR_OpaqueClassBlock  * getInterfaceITableIndexFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, int32_t cpIndex, uintptrj_t *pITableIndex);
 
    virtual TR_ResolvedMethod *   getResolvedStaticMethod ( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP);
    virtual TR_ResolvedMethod *   getResolvedSpecialMethod( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP);
@@ -544,6 +550,8 @@ public:
 
    virtual TR_OpaqueMethodBlock *getNonPersistentIdentifier();
    virtual uint8_t *             allocateException(uint32_t, TR::Compilation*);
+
+   virtual TR_OpaqueClassBlock  *getDeclaringClassFromFieldOrStatic( TR::Compilation *comp, int32_t cpIndex);
 
 private:
    virtual TR_ResolvedMethod *   createResolvedMethodFromJ9Method(TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats);

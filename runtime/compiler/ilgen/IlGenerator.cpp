@@ -72,7 +72,8 @@ TR_J9ByteCodeIlGenerator::TR_J9ByteCodeIlGenerator(
          ((comp->getMethodHotness() >= scorching) ||
           (comp->couldBeRecompiled() && (comp->getMethodHotness() >= hot ))))))
       {
-      _classInfo = comp->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(method()->containingClass(), comp);
+      bool allowForAOT = comp->getOption(TR_UseSymbolValidationManager);
+      _classInfo = comp->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(method()->containingClass(), comp, allowForAOT);
       }
    else
       {

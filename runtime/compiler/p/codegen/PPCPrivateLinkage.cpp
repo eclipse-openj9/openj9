@@ -2451,7 +2451,7 @@ void TR::PPCPrivateLinkage::buildVirtualDispatch(TR::Node                       
                TR_OpaqueClassBlock      *thisClass = refinedThisClass ? refinedThisClass : resolvedMethod->containingClass();
 
                TR_PersistentCHTable     *chTable = comp()->getPersistentInfo()->getPersistentCHTable();
-               if (thisClass && TR::Compiler->cls.isAbstractClass(comp(), thisClass))
+               if (thisClass && TR::Compiler->cls.isAbstractClass(comp(), thisClass) && !comp()->compileRelocatableCode())
                   {
                   TR_ResolvedMethod *calleeMethod = chTable->findSingleAbstractImplementer(thisClass, methodSymRef->getOffset(), methodSymRef->getOwningMethod(comp()), comp());
                   if (calleeMethod &&

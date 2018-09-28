@@ -933,6 +933,7 @@ TR_J9InlinerPolicy::genCodeForUnsafeGetPut(TR::Node* unsafeAddress,
       loadJavaLangClass->getByteCodeInfo().setZeroByteCodeIndex();
       loadJavaLangClass->setIsClassPointerConstant(true);
 
+      comp()->verifySymbolHasBeenValidated(static_cast<void *>(javaLangClass));
 
       TR::Node *isClassNode = TR::Node::createif(TR::ifacmpeq, vftLoad, loadJavaLangClass, NULL);
       isClassTreeTop = TR::TreeTop::create(comp(), isClassNode, NULL, NULL);
@@ -3493,6 +3494,7 @@ bool TR_MultipleCallTargetInliner::inlineCallTargets(TR::ResolvedMethodSymbol *c
          tracer()->dumpInline(&_callTargets, "inline script");
          }
       }
+
    if (prevCallStack == 0)
       {
       TR_InlinerDelimiter delimiter(tracer(),"inlineTransformation");
@@ -4550,6 +4552,8 @@ TR_J9InlinerUtil::refineInlineGuard(TR::Node *callNode, TR::Block *&block1, TR::
 
                   TR::Node * aconstNode = TR::Node::aconst(callNode, (uintptrj_t)pc);
                   aconstNode->setIsClassPointerConstant(true);
+
+                  comp()->verifySymbolHasBeenValidated(static_cast<void *>(pc));
 
                   TR::Node *guard = NULL;
                   TR::DataType dataType = argument->getDataType();
