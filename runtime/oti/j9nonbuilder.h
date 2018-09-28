@@ -4998,8 +4998,12 @@ typedef struct J9VMThread {
 #endif /* J9VM_JIT_TRANSACTION_DIAGNOSTIC_THREAD_BLOCK */
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	struct J9GSParameters gsParameters;
-	void* evacuateBase;
-	void* evacuateTop;
+	UDATA evacuateBase;
+	UDATA evacuateTop;
+#if defined(J9VM_GC_COMPRESSED_POINTERS)
+	U_32 evacuateBaseCompressed;
+	U_32 evacuateTopCompressed;
+#endif /* J9VM_GC_COMPRESSED_POINTERS */
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 	UDATA safePointCount;
 } J9VMThread;

@@ -700,13 +700,35 @@ MM_CollectorLanguageInterfaceImpl::scavenger_switchConcurrentForThread(MM_Enviro
 			j9tty_printf(PORTLIB, "%p: Nursery [%p,%p] Evacuate [%p,%p] GS [%p,%p] Section size 0x%zx, sections %lu bit offset %lu bit mask 0x%zx\n",
 					vmThread, nurseryBase, nurseryTop, gsBase, gsTop, pageBase, pageTop, _extensions->getConcurrentScavengerPageSectionSize() , sectionCount, startOffsetInBits, bitMask);
 		}
-		vmThread->evacuateBase = gsBase;
-		vmThread->evacuateTop = gsTop;
+		/*
+		 * vmThread->evacuateTop is defined as the last address possible in the evacuate region;
+		 * however, gsTop is the first address above the evacuate region;
+		 * therefore, vmThread->evacuateTop = gsTop - 1.
+		 * In short, the evacuate region is [vmThread->evacuateBase, vmThread->evacuateTop].
+		 */
+		vmThread->evacuateBase = (UDATA)gsBase;
+		vmThread->evacuateTop = (UDATA)gsTop - 1;
+#if defined(J9VM_GC_COMPRESSED_POINTERS)
+		vmThread->evacuateBaseCompressed = _extensions->accessBarrier->convertTokenFromPointer((mm_j9object_t)vmThread->evacuateBase);
+		vmThread->evacuateTopCompressed = _extensions->accessBarrier->convertTokenFromPointer((mm_j9object_t)vmThread->evacuateTop);
+#endif /* J9VM_GC_COMPRESSED_POINTERS */
 		vmThread->privateFlags |= J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE;
 		j9gs_enable(&vmThread->gsParameters, _extensions->getConcurrentScavengerPageStartAddress(), _extensions->getConcurrentScavengerPageSectionSize(), bitMask);
     } else {
 		j9gs_disable(&vmThread->gsParameters);
+		/*
+		 * By setting evacuateTop to NULL and evacuateBase to ~evacuateTop
+		 * it gives an empty range that contains no address. Therefore,
+		 * when decide whether to read barrier, a simple range is sufficient and
+		 * checking J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE can be skipped.
+		 */
 		vmThread->privateFlags &= ~J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE;
+		vmThread->evacuateBase = UDATA_MAX;
+		vmThread->evacuateTop = 0;
+#ifdef J9VM_GC_COMPRESSED_POINTERS
+		vmThread->evacuateBaseCompressed = U_32_MAX;
+		vmThread->evacuateTopCompressed = 0;
+#endif
     }
 }
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */

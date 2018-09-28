@@ -967,6 +967,25 @@ END_PROC(jitDecompileOnReturnJ)
 
 })	dnl ASM_J9VM_ENV_DATA64
 
+START_PROC(jitReadBarrier)
+ifdef({OMR_GC_CONCURRENT_SCAVENGER},{
+	SWITCH_TO_C_STACK
+	SAVE_C_VOLATILE_REGS
+	dnl currentThread->javaVM->memoryManagerFunctions->J9ReadBarrier(currentThread,(fj9object_t*)currentThread->floatTemp1);
+	mov _rax,uword ptr J9TR_VMThread_javaVM[_rbp]
+	mov PARM_REG(2),uword ptr J9TR_VMThread_floatTemp1[_rbp]
+	mov _rax,uword ptr J9TR_JavaVM_memoryManagerFunctions[_rax]
+	mov PARM_REG(1),_rbp
+	call uword ptr J9TR_J9MemoryManagerFunctions_J9ReadBarrier[_rax]
+	RESTORE_C_VOLATILE_REGS
+	SWITCH_TO_JAVA_STACK
+	ret
+},{ dnl OMR_GC_CONCURRENT_SCAVENGER
+	dnl not supported
+	int 3
+})	dnl OMR_GC_CONCURRENT_SCAVENGER
+END_PROC(jitReadBarrier)
+
 START_PROC(jitReferenceArrayCopy)
 	FASTCALL_EXTERN(impl_jitReferenceArrayCopy,2)
 	SWITCH_TO_C_STACK
