@@ -31,4 +31,3 @@ Compilation lifecycle:
 1. A final message is sent which includes the compiled code
 1. Client relocates and installs the code
 
-![Architecture](Architecture.png "Architecture diagram")
