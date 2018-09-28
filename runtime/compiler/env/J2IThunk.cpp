@@ -178,8 +178,8 @@ TR_J2IThunkTable::findThunkFromTerseSignature(
       TR_FrontEnd *fe,
       bool isForCurrentRun)
    {
-   Node *match = NULL;
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe);
+   TR_J2IThunk *returnThunk = NULL;
 
    if (fej9->isAOT_DEPRECATED_DO_NOT_USE() && !isForCurrentRun)
       {
@@ -189,10 +189,12 @@ TR_J2IThunkTable::findThunkFromTerseSignature(
    else
       {
       OMR::CriticalSection critialSection(_monitor);
-      match = root()->get(terseSignature, _nodes, false);
+
+      Node *match = root()->get(terseSignature, _nodes, false);
+      returnThunk = match ? match->_thunk : NULL;
       }
 
-   return match? match->_thunk : NULL;
+   return returnThunk;
    }
 
 
