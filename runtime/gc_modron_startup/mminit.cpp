@@ -2853,6 +2853,9 @@ gcInitializeDefaults(J9JavaVM* vm)
 	if (gc_policy_gencon == extensions->configurationOptions._gcPolicy) {
 		/* after we parsed cmd line options, check if we can obey the request to run CS (valid for Gencon only) */
 		if (extensions->concurrentScavengerForced) {
+#if defined(J9VM_ARCH_X86)
+			extensions->softwareEvacuateReadBarrier = true;
+#endif /* J9VM_ARCH_X86 */
 			if (LOADED == (FIND_DLL_TABLE_ENTRY(J9_JIT_DLL_NAME)->loadFlags & LOADED)) {
 				/* If running jitted, it must be on supported h/w */
 				J9ProcessorDesc  processorDesc;

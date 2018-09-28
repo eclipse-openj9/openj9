@@ -787,10 +787,7 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 		if(try_scan(&scan_start, "softwareEvacuateReadBarrier")) {
-			/* Software read barriers are only implemented on s390 for now */
-#if defined(S390) || defined(J9ZOS390)
 			extensions->softwareEvacuateReadBarrier = true;
-#endif /* defined(S390) || defined(J9ZOS390) */
 			continue;
 		}
 #endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
