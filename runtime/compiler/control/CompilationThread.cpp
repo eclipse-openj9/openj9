@@ -1794,6 +1794,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
             case compilationAotValidateMethodEnterFailure:
             case compilationAotClassChainPersistenceFailure:
             case compilationAotValidateStringCompressionFailure:
+            case compilationSymbolValidationManagerFailure:
                // switch to JIT for these cases (we don't want to relocate again)
                entry->_doNotUseAotCodeFromSharedCache = true;
                tryCompilingAgain = true;
@@ -10081,6 +10082,10 @@ TR::CompilationInfoPerThreadBase::processException(
    catch (const TR::GCRPatchFailure &e)
       {
       _methodBeingCompiled->_compErrCode = compilationGCRPatchFailure;
+      }
+   catch (const J9::AOTSymbolValidationManagerFailure &e)
+      {
+      _methodBeingCompiled->_compErrCode = compilationSymbolValidationManagerFailure;
       }
    catch (const J9::ClassChainPersistenceFailure &e)
       {

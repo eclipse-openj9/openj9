@@ -1221,8 +1221,6 @@ public:
    bool addClassInfoIsInitializedRecord(TR_OpaqueClassBlock *clazz, bool isInitialized);
 
 
-   bool updateMethodFromInlinedSiteRecordWithMethodByNameRecord(TR_OpaqueMethodBlock *method, int32_t inlinedSiteIndex, TR_OpaqueClassBlock *beholder);
-
 
    bool validateRootClassRecord(uint16_t classID);
    bool validateClassByNameRecord(uint16_t classID, uint16_t beholderID, J9ROMClass *romClass, char primitiveType);
@@ -1297,14 +1295,7 @@ private:
    static const uint16_t NO_ID = 0;
    static const uint16_t FIRST_ID = 1;
 
-   uint16_t getNewSymbolID()
-      {
-      if (_symbolID == 0xFFFF)
-         {
-         TR_ASSERT_FATAL(false, "_symbolID overflow\n");
-         }
-         return _symbolID++;
-      }
+   uint16_t getNewSymbolID();
 
    void storeRecord(void *symbol, SymbolValidationRecord *record);
    bool storeClassRecord(TR_OpaqueClassBlock *clazz,

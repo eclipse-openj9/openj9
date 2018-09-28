@@ -455,7 +455,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
             {
             TR_OpaqueClassBlock *classOfMethod = (TR_OpaqueClassBlock *)recordInfo->data5;
             uintptrj_t classID = (uintptrj_t)symValManager->getIDFromSymbol(static_cast<void *>(classOfMethod));
-            TR_ASSERT_FATAL(classID, "classID should exist!\n");
             *(uintptrj_t *)cursor = classID;
             }
          else
@@ -490,7 +489,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
             {
             TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock *)recordInfo->data5;
             uintptrj_t classID = (uintptrj_t)symValManager->getIDFromSymbol(static_cast<void *>(clazz));
-            TR_ASSERT_FATAL(classID, "classID should exist!\n");
             *(uintptrj_t *)cursor = classID;
             }
          else
@@ -639,8 +637,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          else
             {
             void *classChainForClassToValidate = record->_classChain;
-
-            TR_ASSERT_FATAL(classChainForClassToValidate, "Class Chain shouldn't be NULL, classToValidate=%p\n", classToValidate);
 
             //store the classchain's offset for the classloader for the class
             void *loaderForClazzToValidate = fej9->getClassLoader(classToValidate);
@@ -1239,8 +1235,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          uint16_t symbolID = comp->getSymbolValidationManager()->getIDFromSymbol(static_cast<void *>(symbol));
 
          uint16_t symbolType = (uint16_t)(uintptrj_t)relocation->getTargetAddress2();
-
-         TR_ASSERT_FATAL(symbolID, "symbolID should exist!\n");
 
          cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
 

@@ -42,6 +42,7 @@
 #include "env/PersistentCHTable.hpp"
 #include "env/jittypes.h"
 #include "env/VMAccessCriticalSection.hpp"
+#include "exceptions/AOTFailure.hpp"
 #include "il/symbol/StaticSymbol.hpp"
 #include "infra/SimpleRegex.hpp"
 #include "runtime/CodeCache.hpp"
@@ -4070,12 +4071,22 @@ TR_RelocationRecordSymbolFromManager::activatePointer(TR_RelocationRuntime *relo
 
    if (needsUnloadAssumptions(symbolType))
       {
-      TR_ASSERT_FATAL(clazz, "clazz must exist!\n");
+      if (!clazz)
+         {
+         TR_ASSERT(false, "clazz must exist to add Unload Assumptions!\n");
+         reloRuntime->comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in activatePointer");
+         }
+
       reloTarget->addPICtoPatchPtrOnClassUnload(clazz, reloLocation);
       }
    if (needsRedefinitionAssumption(reloRuntime, reloLocation, clazz, symbolType))
       {
-      TR_ASSERT_FATAL(clazz, "clazz must exist!\n");
+      if (!clazz)
+         {
+         TR_ASSERT(false, "clazz must exist to add Redefinition Assumptions!\n");
+         reloRuntime->comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in activatePointer");
+         }
+
       createClassRedefinitionPicSite((void *)reloPrivateData->_symbol, (void *) reloLocation, sizeof(uintptrj_t), false, reloRuntime->comp()->getMetadataAssumptionList());
       reloRuntime->comp()->setHasClassRedefinitionAssumptions();
       }

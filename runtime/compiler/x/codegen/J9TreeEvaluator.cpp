@@ -7749,7 +7749,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
 
       if (comp->getOption(TR_UseSymbolValidationManager))
          {
-         TR_ASSERT_FATAL(classToValidate, "classToValidate should not be NULL, clazz=%p\n", clazz);
+         TR_ASSERT(classToValidate, "classToValidate should not be NULL, clazz=%p\n", clazz);
          recordInfo->data5 = (uintptr_t)classToValidate;
          }
 

@@ -25,6 +25,7 @@
 #include "env/ClassLoaderTable.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "env/VMAccessCriticalSection.hpp"
+#include "exceptions/AOTFailure.hpp"
 #include "compile/Compilation.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
@@ -96,6 +97,17 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
    TR_OpaqueMethodBlock *method = compilee->getPersistentIdentifier();
    _symbolToIdMap.insert(std::make_pair(static_cast<void *>(method), id));
    _idToSymbolsMap.insert(std::make_pair(id, static_cast<void *>(method)));
+   }
+
+uint16_t
+TR::SymbolValidationManager::getNewSymbolID()
+   {
+   if (_symbolID == 0xFFFF)
+      {
+      TR_ASSERT(false, "_symbolID overflow\n");
+      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed in getNewSymbolID");
+      }
+      return _symbolID++;
    }
 
 void *
@@ -224,7 +236,11 @@ TR::SymbolValidationManager::storeClassRecord(TR_OpaqueClassBlock *clazz,
             arrayDims++;
             }
 
-         TR_ASSERT_FATAL((validated && (arrayDims == arrayDimsToValidate)), "Failed to validated clazz 0x%p\n", clazz);
+         if (!(validated && (arrayDims == arrayDimsToValidate)))
+            {
+            TR_ASSERT(false, "Failed to validated clazz 0x%p\n", clazz);
+            comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in storeClassRecord");
+            }
          }
       }
 
@@ -306,13 +322,18 @@ TR::SymbolValidationManager::addClassByNameRecord(TR_OpaqueClassBlock *clazz, TR
    if (inHeuristicRegion())
       return true;
 
-   TR_ASSERT_FATAL(getIDFromSymbol(beholder) != 0, "beholder 0x%p should have already been validated\n", beholder);
+   TR::Compilation* comp = TR::comp();
+
+   if (getIDFromSymbol(beholder) == 0)
+      {
+      TR_ASSERT(false, "beholder 0x%p should have already been validated\n", beholder);
+      comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addClassByNameRecord");
+      }
 
    int32_t arrayDims = 0;
    clazz = getBaseComponentClass(clazz, arrayDims);
    char primitiveType = '\0';
 
-   TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
    if (fej9->isPrimitiveClass(clazz))
@@ -366,7 +387,11 @@ TR::SymbolValidationManager::addClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9
 
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
 
-   TR_ASSERT_FATAL(getIDFromSymbol(beholder) != 0, "beholder 0x%p should have already been validated\n", beholder);
+   if (getIDFromSymbol(beholder) == 0)
+      {
+      TR_ASSERT(false, "beholder 0x%p should have already been validated\n", beholder);
+      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addClassFromCPRecord");
+      }
 
    SymbolValidationRecord *record = new (_region) ClassFromCPRecord(clazz, beholder, cpIndex);
    return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record, arrayDims);
@@ -385,7 +410,11 @@ TR::SymbolValidationManager::addDefiningClassFromCPRecord(TR_OpaqueClassBlock *c
 
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
 
-   TR_ASSERT_FATAL(getIDFromSymbol(beholder) != 0, "beholder 0x%p should have already been validated\n", beholder);
+   if (getIDFromSymbol(beholder) == 0)
+      {
+      TR_ASSERT(false, "beholder 0x%p should have already been validated\n", beholder);
+      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addDefiningClassFromCPRecord");
+      }
 
    SymbolValidationRecord *record = new (_region) DefiningClassFromCPRecord(clazz, beholder, cpIndex, isStatic);
    return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record, arrayDims, isStatic);
@@ -404,7 +433,11 @@ TR::SymbolValidationManager::addStaticClassFromCPRecord(TR_OpaqueClassBlock *cla
 
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
 
-   TR_ASSERT_FATAL(getIDFromSymbol(beholder) != 0, "beholder 0x%p should have already been validated\n", beholder);
+   if (getIDFromSymbol(beholder) == 0)
+      {
+      TR_ASSERT(false, "beholder 0x%p should have already been validated\n", beholder);
+      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addStaticClassFromCPRecord");
+      }
 
    SymbolValidationRecord *record = new (_region) StaticClassFromCPRecord(clazz, beholder, cpIndex);
    return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record, arrayDims);
@@ -421,7 +454,11 @@ TR::SymbolValidationManager::addClassFromMethodRecord(TR_OpaqueClassBlock *clazz
    int32_t arrayDims = 0;
    clazz = getBaseComponentClass(clazz, arrayDims);
 
-   TR_ASSERT_FATAL(getIDFromSymbol(method) != 0, "method 0x%p should have already been validated\n", method);
+   if (getIDFromSymbol(method) == 0)
+      {
+      TR_ASSERT(false, "method 0x%p should have already been validated\n", method);
+      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addClassFromMethodRecord");
+      }
 
    SymbolValidationRecord *record = new (_region) ClassFromMethodRecord(clazz, method);
    return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record);
@@ -435,7 +472,11 @@ TR::SymbolValidationManager::addComponentClassFromArrayClassRecord(TR_OpaqueClas
    if (inHeuristicRegion())
       return true;
 
-   TR_ASSERT_FATAL(getIDFromSymbol(arrayClass) != 0, "arrayClass 0x%p should have already been validated\n", arrayClass);
+   if (getIDFromSymbol(arrayClass) == 0)
+      {
+      TR_ASSERT(false, "arrayClass 0x%p should have already been validated\n", arrayClass);
+      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addComponentClassFromArrayClassRecord");
+      }
 
    SymbolValidationRecord *record = new (_region) ComponentClassFromArrayClassRecord(componentClass, arrayClass);
    return storeValidationRecordIfNecessary(static_cast<void *>(componentClass), record);
@@ -449,7 +490,11 @@ TR::SymbolValidationManager::addArrayClassFromComponentClassRecord(TR_OpaqueClas
    if (inHeuristicRegion())
       return true;
 
-   TR_ASSERT_FATAL(getIDFromSymbol(componentClass) != 0, "componentClass 0x%p should have already been validated\n", componentClass);
+   if (getIDFromSymbol(componentClass) == 0)
+      {
+      TR_ASSERT(false, "componentClass 0x%p should have already been validated\n", componentClass);
+      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addArrayClassFromComponentClassRecord");
+      }
 
    SymbolValidationRecord *record = new (_region) ArrayClassFromComponentClassRecord(arrayClass, componentClass);
    return storeValidationRecordIfNecessary(static_cast<void *>(arrayClass), record);
@@ -466,7 +511,11 @@ TR::SymbolValidationManager::addSuperClassFromClassRecord(TR_OpaqueClassBlock *s
    int32_t arrayDims = 0;
    superClass = getBaseComponentClass(superClass, arrayDims);
 
-   TR_ASSERT_FATAL(getIDFromSymbol(childClass) != 0, "childClass 0x%p should have already been validated\n", childClass);
+   if (getIDFromSymbol(childClass) == 0)
+      {
+      TR_ASSERT(false, "childClass 0x%p should have already been validated\n", childClass);
+      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addSuperClassFromClassRecord");
+      }
 
    SymbolValidationRecord *record = new (_region) SuperClassFromClassRecord(superClass, childClass);
    return storeValidationRecordIfNecessary(static_cast<void *>(superClass), record, arrayDims);
@@ -478,8 +527,12 @@ TR::SymbolValidationManager::addClassInstanceOfClassRecord(TR_OpaqueClassBlock *
    if (inHeuristicRegion())
       return true;
 
-   TR_ASSERT_FATAL(getIDFromSymbol(classOne) != 0, "classOne 0x%p should have already been validated\n", classOne);
-   TR_ASSERT_FATAL(getIDFromSymbol(classTwo) != 0, "classTwo 0x%p should have already been validated\n", classTwo);
+   if (getIDFromSymbol(classOne) == 0 || getIDFromSymbol(classTwo) == 0)
+      {
+      TR_ASSERT(getIDFromSymbol(classOne) != 0, "classOne 0x%p should have already been validated\n", classOne);
+      TR_ASSERT(getIDFromSymbol(classTwo) != 0, "classTwo 0x%p should have already been validated\n", classTwo);
+      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addClassInstanceOfClassRecord");
+      }
 
    SymbolValidationRecord *record = new (_region) ClassInstanceOfClassRecord(classOne, classTwo, objectTypeIsFixed, castTypeIsFixed, isInstanceOf);
    return storeValidationRecordIfNecessary(static_cast<void *>(classOne), record);
@@ -510,7 +563,11 @@ TR::SymbolValidationManager::addClassFromITableIndexCPRecord(TR_OpaqueClassBlock
 
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
 
-   TR_ASSERT_FATAL(getIDFromSymbol(beholder) != 0, "beholder 0x%p should have already been validated\n", beholder);
+   if (getIDFromSymbol(beholder) == 0)
+      {
+      TR_ASSERT(false, "beholder 0x%p should have already been validated\n", beholder);
+      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addClassFromITableIndexCPRecord");
+      }
 
    int32_t arrayDims = 0;
    clazz = getBaseComponentClass(clazz, arrayDims);
@@ -529,7 +586,11 @@ TR::SymbolValidationManager::addDeclaringClassFromFieldOrStaticRecord(TR_OpaqueC
 
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
 
-   TR_ASSERT_FATAL(getIDFromSymbol(beholder) != 0, "beholder 0x%p should have already been validated\n", beholder);
+   if (getIDFromSymbol(beholder) == 0)
+      {
+      TR_ASSERT(false, "beholder 0x%p should have already been validated\n", beholder);
+      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addDeclaringClassFromFieldOrStaticRecord");
+      }
 
    int32_t arrayDims = 0;
    clazz = getBaseComponentClass(clazz, arrayDims);
@@ -546,7 +607,11 @@ TR::SymbolValidationManager::addClassClassRecord(TR_OpaqueClassBlock *classClass
    if (inHeuristicRegion())
       return true;
 
-   TR_ASSERT_FATAL(getIDFromSymbol(objectClass) != 0, "objectClass 0x%p should have already been validated\n", objectClass);
+   if (getIDFromSymbol(objectClass) == 0)
+      {
+      TR_ASSERT(false, "objectClass 0x%p should have already been validated\n", objectClass);
+      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addClassClassRecord");
+      }
 
    SymbolValidationRecord *record = new (_region) ClassClassRecord(classClass, objectClass);
    return storeValidationRecordIfNecessary(static_cast<void *>(classClass), record);
@@ -563,7 +628,11 @@ TR::SymbolValidationManager::addConcreteSubClassFromClassRecord(TR_OpaqueClassBl
    int32_t arrayDims = 0;
    childClass = getBaseComponentClass(childClass, arrayDims);
 
-   TR_ASSERT_FATAL(getIDFromSymbol(superClass) != 0, "superClass 0x%p should have already been validated\n", superClass);
+   if (getIDFromSymbol(superClass) == 0)
+      {
+      TR_ASSERT(false, "superClass 0x%p should have already been validated\n", superClass);
+      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addConcreteSubClassFromClassRecord");
+      }
 
    SymbolValidationRecord *record = new (_region) ConcreteSubClassFromClassRecord(childClass, superClass);
    return storeValidationRecordIfNecessary(static_cast<void *>(childClass), record, arrayDims);
@@ -616,9 +685,14 @@ TR::SymbolValidationManager::addPrimitiveClassRecord(TR_OpaqueClassBlock *clazz)
    if (inHeuristicRegion())
       return true;
 
-   TR_ASSERT_FATAL(getIDFromSymbol(clazz) != 0, "clazz 0x%p should have already been validated\n", clazz);
-
    TR::Compilation* comp = TR::comp();
+
+   if (getIDFromSymbol(clazz) == 0)
+      {
+      TR_ASSERT(false, "clazz 0x%p should have already been validated\n", clazz);
+      comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addPrimitiveClassRecord");
+      }
+
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
 
@@ -626,7 +700,11 @@ TR::SymbolValidationManager::addPrimitiveClassRecord(TR_OpaqueClassBlock *clazz)
    J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
    char primitiveType =getPrimitiveChar(className);
 
-   TR_ASSERT_FATAL((primitiveType != '\0'), "clazz 0x%p is not primitive\n", clazz);
+   if (primitiveType == '\0')
+      {
+      TR_ASSERT(false, "clazz 0x%p is not primitive\n", clazz);
+      comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addPrimitiveClassRecord");
+      }
 
    SymbolValidationRecord *record = new (_region) PrimitiveClassRecord(clazz, primitiveType);
    return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record);
@@ -653,7 +731,11 @@ TR::SymbolValidationManager::addMethodByNameRecord(TR_OpaqueMethodBlock *method,
    if (inHeuristicRegion())
       return true;
 
-   TR_ASSERT_FATAL(getIDFromSymbol(beholder) != 0, "beholder 0x%p should have already been validated\n", beholder);
+   if (getIDFromSymbol(beholder) == 0)
+      {
+      TR_ASSERT(false, "beholder 0x%p should have already been validated\n", beholder);
+      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addMethodByNameRecord");
+      }
 
    SymbolValidationRecord *record = new (_region) MethodByNameRecord(method, beholder);
    bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -675,9 +757,10 @@ TR::SymbolValidationManager::addMethodFromClassRecord(TR_OpaqueMethodBlock *meth
    if (inHeuristicRegion())
       return true;
 
+   TR::Compilation* comp = TR::comp();
+
    if (index == static_cast<uint32_t>(-1))
       {
-      TR::Compilation* comp = TR::comp();
       J9VMThread *vmThread = comp->j9VMThread();
       TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
 
@@ -691,12 +774,16 @@ TR::SymbolValidationManager::addMethodFromClassRecord(TR_OpaqueMethodBlock *meth
 
       if (index == numMethods)
          {
-         TR_ASSERT_FATAL(false, "Method 0x%p not found in class 0x%p\n", method, beholder);
+         TR_ASSERT(false, "Method 0x%p not found in class 0x%p\n", method, beholder);
          return false;
          }
       }
 
-   TR_ASSERT_FATAL(getIDFromSymbol(beholder) != 0, "beholder 0x%p should have already been validated\n", beholder);
+   if (getIDFromSymbol(beholder) == 0)
+      {
+      TR_ASSERT(false, "beholder 0x%p should have already been validated\n", beholder);
+      comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addMethodFromClassRecord");
+      }
 
    SymbolValidationRecord *record = new (_region) MethodFromClassRecord(method, beholder, index);
    return storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -712,7 +799,11 @@ TR::SymbolValidationManager::addStaticMethodFromCPRecord(TR_OpaqueMethodBlock *m
 
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(cp));
 
-   TR_ASSERT_FATAL(getIDFromSymbol(beholder) != 0, "beholder 0x%p should have already been validated\n", beholder);
+   if (getIDFromSymbol(beholder) == 0)
+      {
+      TR_ASSERT(false, "beholder 0x%p should have already been validated\n", beholder);
+      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addStaticMethodFromCPRecord");
+      }
 
    SymbolValidationRecord *record = new (_region) StaticMethodFromCPRecord(method, beholder, cpIndex);
    bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -736,7 +827,11 @@ TR::SymbolValidationManager::addSpecialMethodFromCPRecord(TR_OpaqueMethodBlock *
 
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(cp));
 
-   TR_ASSERT_FATAL(getIDFromSymbol(beholder) != 0, "beholder 0x%p should have already been validated\n", beholder);
+   if (getIDFromSymbol(beholder) == 0)
+      {
+      TR_ASSERT(false, "beholder 0x%p should have already been validated\n", beholder);
+      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addSpecialMethodFromCPRecord");
+      }
 
    SymbolValidationRecord *record = new (_region) SpecialMethodFromCPRecord(method, beholder, cpIndex);
    bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -760,7 +855,11 @@ TR::SymbolValidationManager::addVirtualMethodFromCPRecord(TR_OpaqueMethodBlock *
 
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(cp));
 
-   TR_ASSERT_FATAL(getIDFromSymbol(beholder) != 0, "beholder 0x%p should have already been validated\n", beholder);
+   if (getIDFromSymbol(beholder) == 0)
+      {
+      TR_ASSERT(false, "beholder 0x%p should have already been validated\n", beholder);
+      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addVirtualMethodFromCPRecord");
+      }
 
    SymbolValidationRecord *record = new (_region) VirtualMethodFromCPRecord(method, beholder, cpIndex);
    bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -782,7 +881,11 @@ TR::SymbolValidationManager::addVirtualMethodFromOffsetRecord(TR_OpaqueMethodBlo
    if (inHeuristicRegion())
       return true;
 
-   TR_ASSERT_FATAL(getIDFromSymbol(beholder) != 0, "beholder 0x%p should have already been validated\n", beholder);
+   if (getIDFromSymbol(beholder) == 0)
+      {
+      TR_ASSERT(false, "beholder 0x%p should have already been validated\n", beholder);
+      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addVirtualMethodFromOffsetRecord");
+      }
 
    SymbolValidationRecord *record = new (_region) VirtualMethodFromOffsetRecord(method, beholder, virtualCallOffset, ignoreRtResolve);
    bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -804,8 +907,12 @@ TR::SymbolValidationManager::addInterfaceMethodFromCPRecord(TR_OpaqueMethodBlock
    if (inHeuristicRegion())
       return true;
 
-   TR_ASSERT_FATAL(getIDFromSymbol(beholder) != 0, "beholder 0x%p should have already been validated\n", beholder);
-   TR_ASSERT_FATAL(getIDFromSymbol(lookup) != 0, "lookup 0x%p should have already been validated\n", lookup);
+   if (getIDFromSymbol(beholder) == 0 || getIDFromSymbol(lookup) == 0)
+      {
+      TR_ASSERT(getIDFromSymbol(beholder) != 0, "beholder 0x%p should have already been validated\n", beholder);
+      TR_ASSERT(getIDFromSymbol(lookup) != 0, "lookup 0x%p should have already been validated\n", lookup);
+      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addInterfaceMethodFromCPRecord");
+      }
 
    SymbolValidationRecord *record = new (_region) InterfaceMethodFromCPRecord(method, beholder, lookup, cpIndex);
    bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -829,7 +936,11 @@ TR::SymbolValidationManager::addImproperInterfaceMethodFromCPRecord(TR_OpaqueMet
 
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(cp));
 
-   TR_ASSERT_FATAL(getIDFromSymbol(beholder) != 0, "beholder 0x%p should have already been validated\n", beholder);
+   if (getIDFromSymbol(beholder) == 0)
+      {
+      TR_ASSERT(false, "beholder 0x%p should have already been validated\n", beholder);
+      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addImproperInterfaceMethodFromCPRecord");
+      }
 
    SymbolValidationRecord *record = new (_region) ImproperInterfaceMethodFromCPRecord(method, beholder, cpIndex);
    bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -851,8 +962,12 @@ TR::SymbolValidationManager::addMethodFromClassAndSignatureRecord(TR_OpaqueMetho
    if (inHeuristicRegion())
       return true;
 
-   TR_ASSERT_FATAL(getIDFromSymbol(methodClass) != 0, "methodClass 0x%p should have already been validated\n", methodClass);
-   TR_ASSERT_FATAL(getIDFromSymbol(beholder) != 0, "beholder 0x%p should have already been validated\n", beholder);
+   if (getIDFromSymbol(methodClass) == 0 || getIDFromSymbol(beholder) == 0)
+      {
+      TR_ASSERT(getIDFromSymbol(methodClass) != 0, "methodClass 0x%p should have already been validated\n", methodClass);
+      TR_ASSERT(getIDFromSymbol(beholder) != 0, "beholder 0x%p should have already been validated\n", beholder);
+      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addMethodFromClassAndSignatureRecord");
+      }
 
    SymbolValidationRecord *record = new (_region) MethodFromClassAndSigRecord(method, methodClass, beholder);
    return storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -870,8 +985,12 @@ TR::SymbolValidationManager::addMethodFromSingleImplementerRecord(TR_OpaqueMetho
    if (inHeuristicRegion())
       return true;
 
-   TR_ASSERT_FATAL(getIDFromSymbol(thisClass) != 0, "thisClass 0x%p should have already been validated\n", thisClass);
-   TR_ASSERT_FATAL(getIDFromSymbol(callerMethod) != 0, "callerMethod 0x%p should have already been validated\n", callerMethod);
+   if (getIDFromSymbol(thisClass) == 0 || getIDFromSymbol(callerMethod) == 0)
+      {
+      TR_ASSERT(getIDFromSymbol(thisClass) != 0, "thisClass 0x%p should have already been validated\n", thisClass);
+      TR_ASSERT(getIDFromSymbol(callerMethod) != 0, "callerMethod 0x%p should have already been validated\n", callerMethod);
+      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addMethodFromSingleImplementerRecord");
+      }
 
    SymbolValidationRecord *record = new (_region) MethodFromSingleImplementer(method, thisClass, cpIndexOrVftSlot, callerMethod, useGetResolvedInterfaceMethod);
    bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -896,8 +1015,12 @@ TR::SymbolValidationManager::addMethodFromSingleInterfaceImplementerRecord(TR_Op
    if (inHeuristicRegion())
       return true;
 
-   TR_ASSERT_FATAL(getIDFromSymbol(thisClass) != 0, "thisClass 0x%p should have already been validated\n", thisClass);
-   TR_ASSERT_FATAL(getIDFromSymbol(callerMethod) != 0, "callerMethod 0x%p should have already been validated\n", callerMethod);
+   if (getIDFromSymbol(thisClass) == 0 || getIDFromSymbol(callerMethod) == 0)
+      {
+      TR_ASSERT(getIDFromSymbol(thisClass) != 0, "thisClass 0x%p should have already been validated\n", thisClass);
+      TR_ASSERT(getIDFromSymbol(callerMethod) != 0, "callerMethod 0x%p should have already been validated\n", callerMethod);
+      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addMethodFromSingleInterfaceImplementerRecord");
+      }
 
    SymbolValidationRecord *record = new (_region) MethodFromSingleInterfaceImplementer(method, thisClass, cpIndex, callerMethod);
    bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -922,8 +1045,12 @@ TR::SymbolValidationManager::addMethodFromSingleAbstractImplementerRecord(TR_Opa
    if (inHeuristicRegion())
       return true;
 
-   TR_ASSERT_FATAL(getIDFromSymbol(thisClass) != 0, "thisClass 0x%p should have already been validated\n", thisClass);
-   TR_ASSERT_FATAL(getIDFromSymbol(callerMethod) != 0, "callerMethod 0x%p should have already been validated\n", callerMethod);
+   if (getIDFromSymbol(thisClass) == 0 || getIDFromSymbol(callerMethod) == 0)
+      {
+      TR_ASSERT(getIDFromSymbol(thisClass) != 0, "thisClass 0x%p should have already been validated\n", thisClass);
+      TR_ASSERT(getIDFromSymbol(callerMethod) != 0, "callerMethod 0x%p should have already been validated\n", callerMethod);
+      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addMethodFromSingleAbstractImplementerRecord");
+      }
 
    SymbolValidationRecord *record = new (_region) MethodFromSingleAbstractImplementer(method, thisClass, vftSlot, callerMethod);
    bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -945,8 +1072,12 @@ TR::SymbolValidationManager::addStackWalkerMaySkipFramesRecord(TR_OpaqueMethodBl
    if (inHeuristicRegion())
       return true;
 
-   TR_ASSERT_FATAL(getIDFromSymbol(method) != 0, "method 0x%p should have already been validated\n", method);
-   TR_ASSERT_FATAL(getIDFromSymbol(methodClass) != 0, "methodClass 0x%p should have already been validated\n", methodClass);
+   if (getIDFromSymbol(method) == 0 || getIDFromSymbol(methodClass) == 0)
+      {
+      TR_ASSERT(getIDFromSymbol(method) != 0, "method 0x%p should have already been validated\n", method);
+      TR_ASSERT(getIDFromSymbol(methodClass) != 0, "methodClass 0x%p should have already been validated\n", methodClass);
+      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addStackWalkerMaySkipFramesRecord");
+      }
 
    SymbolValidationRecord *record = new (_region) StackWalkerMaySkipFramesRecord(method, methodClass, skipFrames);
    return storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -960,44 +1091,14 @@ TR::SymbolValidationManager::addClassInfoIsInitializedRecord(TR_OpaqueClassBlock
    if (inHeuristicRegion())
       return true;
 
-   TR_ASSERT_FATAL(getIDFromSymbol(clazz) != 0, "clazz 0x%p should have already been validated\n", clazz);
+   if (getIDFromSymbol(clazz) == 0)
+      {
+      TR_ASSERT(false, "clazz 0x%p should have already been validated\n", clazz);
+      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addClassInfoIsInitializedRecord");
+      }
 
    SymbolValidationRecord *record = new (_region) ClassInfoIsInitialized(clazz, isInitialized);
    return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record);
-   }
-
-
-bool
-TR::SymbolValidationManager::updateMethodFromInlinedSiteRecordWithMethodByNameRecord(TR_OpaqueMethodBlock *method, int32_t inlinedSiteIndex, TR_OpaqueClassBlock *beholder)
-   {
-   TR_ASSERT_FATAL(getIDFromSymbol(method) != 0, "method 0x%p should have already been validated\n", method);
-   TR_ASSERT_FATAL(getIDFromSymbol(beholder) != 0, "beholder 0x%p should have already been validated\n", beholder);
-
-   MethodFromInlinedSiteRecord methodFromInlinedSiterecord(method, inlinedSiteIndex);
-   SymbolValidationRecord *record = reinterpret_cast<SymbolValidationRecord *>(&methodFromInlinedSiterecord);
-   SymbolValidationRecord *recordToBeRemoved = NULL;
-
-   auto it = _symbolValidationRecords.begin();
-   for (; it != _symbolValidationRecords.end(); it++)
-      {
-      if ((*it)->_kind == record->_kind && record->isEqual(*it))
-         {
-         recordToBeRemoved = (*it);
-         break;
-         }
-      }
-
-   TR_ASSERT_FATAL(recordToBeRemoved, "Trying to ignore record that does not exist <%p, %d>\n", method, inlinedSiteIndex);
-
-   if (it != _symbolValidationRecords.end())
-      {
-      SymbolValidationRecord *newRecord = new (_region) MethodByNameRecord(method, beholder);
-      (*it) = newRecord;
-      _region.deallocate(recordToBeRemoved);
-      return true;
-      }
-
-   return false;
    }
 
 
@@ -1044,7 +1145,11 @@ TR::SymbolValidationManager::validateRootClassRecord(uint16_t classID)
 bool
 TR::SymbolValidationManager::validateClassByNameRecord(uint16_t classID, uint16_t beholderID, J9ROMClass *romClass, char primitiveType)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(beholderID) != 0, "beholderID %u should exist\n", beholderID);
+   if (getSymbolFromID(beholderID) == NULL)
+      {
+      TR_ASSERT(false, "beholderID %u should exist\n", beholderID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
@@ -1055,7 +1160,11 @@ TR::SymbolValidationManager::validateClassByNameRecord(uint16_t classID, uint16_
 
    if (primitiveType != '\0')
       {
-      TR_ASSERT_FATAL(getSymbolFromID(classID) != 0, "primitive classID %u should exist\n", classID);
+      if (getSymbolFromID(classID) == NULL)
+         {
+         TR_ASSERT(false, "primitive classID %u should exist\n", classID);
+         return false;
+         }
       return true;
       }
 
@@ -1081,7 +1190,11 @@ TR::SymbolValidationManager::validateProfiledClassRecord(uint16_t classID, char 
 
    if (primitiveType != '\0')
       {
-      TR_ASSERT_FATAL(getSymbolFromID(classID) != 0, "primitive classID %u should exist\n", classID);
+      if (getSymbolFromID(classID) == NULL)
+         {
+         TR_ASSERT(false, "primitive classID %u should exist\n", classID);
+         return false;
+         }
       return true;
       }
 
@@ -1106,7 +1219,11 @@ TR::SymbolValidationManager::validateProfiledClassRecord(uint16_t classID, char 
 bool
 TR::SymbolValidationManager::validateClassFromCPRecord(uint16_t classID,  uint16_t beholderID, uint32_t cpIndex)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(beholderID) != 0, "beholderID %u should exist\n", beholderID);
+   if (getSymbolFromID(beholderID) == NULL)
+      {
+      TR_ASSERT(false, "beholderID %u should exist\n", beholderID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
@@ -1125,7 +1242,11 @@ TR::SymbolValidationManager::validateClassFromCPRecord(uint16_t classID,  uint16
 bool
 TR::SymbolValidationManager::validateDefiningClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex, bool isStatic)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(beholderID) != 0, "beholderID %u should exist\n", beholderID);
+   if (getSymbolFromID(beholderID) == NULL)
+      {
+      TR_ASSERT(false, "beholderID %u should exist\n", beholderID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
@@ -1152,7 +1273,11 @@ TR::SymbolValidationManager::validateDefiningClassFromCPRecord(uint16_t classID,
 bool
 TR::SymbolValidationManager::validateStaticClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(beholderID) != 0, "beholderID %u should exist\n", beholderID);
+   if (getSymbolFromID(beholderID) == NULL)
+      {
+      TR_ASSERT(false, "beholderID %u should exist\n", beholderID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
@@ -1171,7 +1296,11 @@ TR::SymbolValidationManager::validateStaticClassFromCPRecord(uint16_t classID, u
 bool
 TR::SymbolValidationManager::validateClassFromMethodRecord(uint16_t classID, uint16_t methodID)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(methodID) != 0, "methodID %u should exist\n", methodID);
+   if (getSymbolFromID(methodID) == NULL)
+      {
+      TR_ASSERT(false, "methodID %u should exist\n", methodID);
+      return false;
+      }
 
    J9Method *method = static_cast<J9Method *>(getSymbolFromID(methodID));
    TR_OpaqueClassBlock *classFromMethod = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_METHOD(method));
@@ -1185,7 +1314,11 @@ TR::SymbolValidationManager::validateClassFromMethodRecord(uint16_t classID, uin
 bool
 TR::SymbolValidationManager::validateComponentClassFromArrayClassRecord(uint16_t componentClassID, uint16_t arrayClassID)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(arrayClassID) != 0, "arrayClassID %u should exist\n", arrayClassID);
+   if (getSymbolFromID(arrayClassID) == NULL)
+      {
+      TR_ASSERT(false, "arrayClassID %u should exist\n", arrayClassID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
@@ -1200,7 +1333,11 @@ TR::SymbolValidationManager::validateComponentClassFromArrayClassRecord(uint16_t
 bool
 TR::SymbolValidationManager::validateArrayClassFromComponentClassRecord(uint16_t arrayClassID, uint16_t componentClassID)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(componentClassID) != 0, "componentClassID %u should exist\n", componentClassID);
+   if (getSymbolFromID(componentClassID) == NULL)
+      {
+      TR_ASSERT(false, "componentClassID %u should exist\n", componentClassID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
@@ -1215,7 +1352,11 @@ TR::SymbolValidationManager::validateArrayClassFromComponentClassRecord(uint16_t
 bool
 TR::SymbolValidationManager::validateSuperClassFromClassRecord(uint16_t superClassID, uint16_t childClassID)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(childClassID) != 0, "childClassID %u should exist\n", childClassID);
+   if (getSymbolFromID(childClassID) == NULL)
+      {
+      TR_ASSERT(false, "childClassID %u should exist\n", childClassID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
@@ -1233,8 +1374,12 @@ TR::SymbolValidationManager::validateSuperClassFromClassRecord(uint16_t superCla
 bool
 TR::SymbolValidationManager::validateClassInstanceOfClassRecord(uint16_t classOneID, uint16_t classTwoID, bool objectTypeIsFixed, bool castTypeIsFixed, bool wasInstanceOf)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(classOneID) != 0, "classOneID %u should exist\n", classOneID);
-   TR_ASSERT_FATAL(getSymbolFromID(classTwoID) != 0, "classTwoID %u should exist\n", classTwoID);
+   if (getSymbolFromID(classOneID) == NULL || getSymbolFromID(classTwoID) == NULL)
+      {
+      TR_ASSERT(getSymbolFromID(classOneID) != 0, "classOneID %u should exist\n", classOneID);
+      TR_ASSERT(getSymbolFromID(classTwoID) != 0, "classTwoID %u should exist\n", classTwoID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
@@ -1268,7 +1413,11 @@ TR::SymbolValidationManager::validateSystemClassByNameRecord(uint16_t systemClas
 bool
 TR::SymbolValidationManager::validateClassFromITableIndexCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(beholderID) != 0, "beholderID %u should exist\n", beholderID);
+   if (getSymbolFromID(beholderID) == NULL)
+      {
+      TR_ASSERT(false, "beholderID %u should exist\n", beholderID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
@@ -1288,7 +1437,11 @@ TR::SymbolValidationManager::validateClassFromITableIndexCPRecord(uint16_t class
 bool
 TR::SymbolValidationManager::validateDeclaringClassFromFieldOrStaticRecord(uint16_t definingClassID, uint16_t beholderID, int32_t cpIndex)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(beholderID) != 0, "beholderID %u should exist\n", beholderID);
+   if (getSymbolFromID(beholderID) == NULL)
+      {
+      TR_ASSERT(false, "beholderID %u should exist\n", beholderID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
@@ -1341,7 +1494,11 @@ TR::SymbolValidationManager::validateDeclaringClassFromFieldOrStaticRecord(uint1
 bool
 TR::SymbolValidationManager::validateClassClassRecord(uint16_t classClassID, uint16_t objectClassID)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(objectClassID) != 0, "objectClassID %u should exist\n", objectClassID);
+   if (getSymbolFromID(objectClassID) == NULL)
+      {
+      TR_ASSERT(false, "objectClassID %u should exist\n", objectClassID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
@@ -1356,7 +1513,11 @@ TR::SymbolValidationManager::validateClassClassRecord(uint16_t classClassID, uin
 bool
 TR::SymbolValidationManager::validateConcreteSubClassFromClassRecord(uint16_t childClassID, uint16_t superClassID)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(superClassID) != 0, "superClassID %u should exist\n", superClassID);
+   if (getSymbolFromID(superClassID) == NULL)
+      {
+      TR_ASSERT(false, "superClassID %u should exist\n", superClassID);
+      return false;
+      }
 
    TR_OpaqueClassBlock *superClass = static_cast<TR_OpaqueClassBlock *>(getSymbolFromID(superClassID));
 
@@ -1388,7 +1549,11 @@ TR::SymbolValidationManager::validateArrayClassFromJavaVM(uint16_t arrayClassID,
 bool
 TR::SymbolValidationManager::validateClassChainRecord(uint16_t classID, void *classChain)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(classID) != 0, "classID %u should exist\n", classID);
+   if (getSymbolFromID(classID) == NULL)
+      {
+      TR_ASSERT(false, "classID %u should exist\n", classID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    TR_OpaqueClassBlock *definingClass = static_cast<TR_OpaqueClassBlock *>(getSymbolFromID(classID));
@@ -1399,7 +1564,11 @@ TR::SymbolValidationManager::validateClassChainRecord(uint16_t classID, void *cl
 bool
 TR::SymbolValidationManager::validateRomClassRecord(uint16_t classID, J9ROMClass *romClass)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(classID) != 0, "classID %u should exist\n", classID);
+   if (getSymbolFromID(classID) == NULL)
+      {
+      TR_ASSERT(false, "classID %u should exist\n", classID);
+      return false;
+      }
 
    J9Class *definingClass = static_cast<J9Class *>(getSymbolFromID(classID));
 
@@ -1409,7 +1578,11 @@ TR::SymbolValidationManager::validateRomClassRecord(uint16_t classID, J9ROMClass
 bool
 TR::SymbolValidationManager::validatePrimitiveClassRecord(uint16_t classID, char primitiveType)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(classID) != 0, "classID %u should exist\n", classID);
+   if (getSymbolFromID(classID) == NULL)
+      {
+      TR_ASSERT(false, "classID %u should exist\n", classID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
@@ -1432,7 +1605,11 @@ TR::SymbolValidationManager::validateMethodFromInlinedSiteRecord(uint16_t method
 bool
 TR::SymbolValidationManager::validateMethodByNameRecord(uint16_t methodID, uint16_t beholderID, J9ROMClass *romClass, J9ROMMethod *romMethod)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(beholderID) != 0, "beholderID %u should exist\n", beholderID);
+   if (getSymbolFromID(beholderID) == NULL)
+      {
+      TR_ASSERT(false, "beholderID %u should exist\n", beholderID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
@@ -1464,7 +1641,11 @@ TR::SymbolValidationManager::validateMethodByNameRecord(uint16_t methodID, uint1
 bool
 TR::SymbolValidationManager::validateMethodFromClassRecord(uint16_t methodID, uint16_t beholderID, uint32_t index)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(beholderID) != 0, "beholderID %u should exist\n", beholderID);
+   if (getSymbolFromID(beholderID) == NULL)
+      {
+      TR_ASSERT(false, "beholderID %u should exist\n", beholderID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
@@ -1477,8 +1658,11 @@ TR::SymbolValidationManager::validateMethodFromClassRecord(uint16_t methodID, ui
       TR::VMAccessCriticalSection getResolvedMethods(fej9); // Prevent HCR
       J9Method *methods = static_cast<J9Method *>(fej9->getMethods(beholder));
       uint32_t numMethods = fej9->getNumMethods(beholder);
-      TR_ASSERT_FATAL(numMethods > index, "Index is not within the bounds of the ramMethods array\n");
-
+      if (index >= numMethods)
+         {
+         TR_ASSERT(false, "Index is not within the bounds of the ramMethods array\n");
+         return false;
+         }
       method = &(methods[index]);
       }
 
@@ -1488,7 +1672,11 @@ TR::SymbolValidationManager::validateMethodFromClassRecord(uint16_t methodID, ui
 bool
 TR::SymbolValidationManager::validateStaticMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(beholderID) != 0, "beholderID %u should exist\n", beholderID);
+   if (getSymbolFromID(beholderID) == NULL)
+      {
+      TR_ASSERT(false, "beholderID %u should exist\n", beholderID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
@@ -1509,7 +1697,11 @@ TR::SymbolValidationManager::validateStaticMethodFromCPRecord(uint16_t methodID,
 bool
 TR::SymbolValidationManager::validateSpecialMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(beholderID) != 0, "beholderID %u should exist\n", beholderID);
+   if (getSymbolFromID(beholderID) == NULL)
+      {
+      TR_ASSERT(false, "beholderID %u should exist\n", beholderID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
@@ -1530,7 +1722,11 @@ TR::SymbolValidationManager::validateSpecialMethodFromCPRecord(uint16_t methodID
 bool
 TR::SymbolValidationManager::validateVirtualMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(beholderID) != 0, "beholderID %u should exist\n", beholderID);
+   if (getSymbolFromID(beholderID) == NULL)
+      {
+      TR_ASSERT(false, "beholderID %u should exist\n", beholderID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
@@ -1549,7 +1745,11 @@ TR::SymbolValidationManager::validateVirtualMethodFromCPRecord(uint16_t methodID
 bool
 TR::SymbolValidationManager::validateVirtualMethodFromOffsetRecord(uint16_t methodID, uint16_t beholderID, int32_t virtualCallOffset, bool ignoreRtResolve)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(beholderID) != 0, "beholderID %u should exist\n", beholderID);
+   if (getSymbolFromID(beholderID) == NULL)
+      {
+      TR_ASSERT(false, "beholderID %u should exist\n", beholderID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
@@ -1565,8 +1765,12 @@ TR::SymbolValidationManager::validateVirtualMethodFromOffsetRecord(uint16_t meth
 bool
 TR::SymbolValidationManager::validateInterfaceMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, uint16_t lookupID, int32_t cpIndex)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(beholderID) != 0, "beholderID %u should exist\n", beholderID);
-   TR_ASSERT_FATAL(getSymbolFromID(lookupID) != 0, "lookupID %u should exist\n", lookupID);
+   if (getSymbolFromID(beholderID) == NULL || getSymbolFromID(lookupID) == NULL)
+      {
+      TR_ASSERT(getSymbolFromID(beholderID) != 0, "beholderID %u should exist\n", beholderID);
+      TR_ASSERT(getSymbolFromID(lookupID) != 0, "lookupID %u should exist\n", lookupID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
@@ -1585,7 +1789,11 @@ TR::SymbolValidationManager::validateInterfaceMethodFromCPRecord(uint16_t method
 bool
 TR::SymbolValidationManager::validateImproperInterfaceMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(beholderID) != 0, "beholderID %u should exist\n", beholderID);
+   if (getSymbolFromID(beholderID) == NULL)
+      {
+      TR_ASSERT(false, "beholderID %u should exist\n", beholderID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
@@ -1606,8 +1814,12 @@ TR::SymbolValidationManager::validateImproperInterfaceMethodFromCPRecord(uint16_
 bool
 TR::SymbolValidationManager::validateMethodFromClassAndSignatureRecord(uint16_t methodID, uint16_t methodClassID, uint16_t beholderID, J9ROMMethod *romMethod)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(methodClassID) != 0, "methodClassID %u should exist\n", methodClassID);
-   TR_ASSERT_FATAL(getSymbolFromID(beholderID) != 0, "beholderID %u should exist\n", beholderID);
+   if (getSymbolFromID(methodClassID) == NULL || getSymbolFromID(beholderID) == NULL)
+      {
+      TR_ASSERT(getSymbolFromID(methodClassID) != 0, "methodClassID %u should exist\n", methodClassID);
+      TR_ASSERT(getSymbolFromID(beholderID) != 0, "beholderID %u should exist\n", beholderID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
@@ -1638,8 +1850,12 @@ TR::SymbolValidationManager::validateMethodFromSingleImplementerRecord(uint16_t 
                                                                        uint16_t callerMethodID,
                                                                        TR_YesNoMaybe useGetResolvedInterfaceMethod)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(thisClassID) != 0, "thisClassID %u should exist\n", thisClassID);
-   TR_ASSERT_FATAL(getSymbolFromID(callerMethodID) != 0, "callerMethodID %u should exist\n", callerMethodID);
+   if (getSymbolFromID(thisClassID) == NULL || getSymbolFromID(callerMethodID) == NULL)
+      {
+      TR_ASSERT(getSymbolFromID(thisClassID) != 0, "thisClassID %u should exist\n", thisClassID);
+      TR_ASSERT(getSymbolFromID(callerMethodID) != 0, "callerMethodID %u should exist\n", callerMethodID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
@@ -1667,8 +1883,12 @@ TR::SymbolValidationManager::validateMethodFromSingleInterfaceImplementerRecord(
                                                                                 int32_t cpIndex,
                                                                                 uint16_t callerMethodID)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(thisClassID) != 0, "thisClassID %u should exist\n", thisClassID);
-   TR_ASSERT_FATAL(getSymbolFromID(callerMethodID) != 0, "callerMethodID %u should exist\n", callerMethodID);
+   if (getSymbolFromID(thisClassID) == NULL || getSymbolFromID(callerMethodID) == NULL)
+      {
+      TR_ASSERT(getSymbolFromID(thisClassID) != 0, "thisClassID %u should exist\n", thisClassID);
+      TR_ASSERT(getSymbolFromID(callerMethodID) != 0, "callerMethodID %u should exist\n", callerMethodID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
@@ -1696,8 +1916,12 @@ TR::SymbolValidationManager::validateMethodFromSingleAbstractImplementerRecord(u
                                                                                int32_t vftSlot,
                                                                                uint16_t callerMethodID)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(thisClassID) != 0, "thisClassID %u should exist\n", thisClassID);
-   TR_ASSERT_FATAL(getSymbolFromID(callerMethodID) != 0, "callerMethodID %u should exist\n", callerMethodID);
+   if (getSymbolFromID(thisClassID) == NULL || getSymbolFromID(callerMethodID) == NULL)
+      {
+      TR_ASSERT(getSymbolFromID(thisClassID) != 0, "thisClassID %u should exist\n", thisClassID);
+      TR_ASSERT(getSymbolFromID(callerMethodID) != 0, "callerMethodID %u should exist\n", callerMethodID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
@@ -1722,8 +1946,12 @@ TR::SymbolValidationManager::validateMethodFromSingleAbstractImplementerRecord(u
 bool
 TR::SymbolValidationManager::validateStackWalkerMaySkipFramesRecord(uint16_t methodID, uint16_t methodClassID, bool couldSkipFrames)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(methodID) != 0, "methodID %u should exist\n", methodID);
-   TR_ASSERT_FATAL(getSymbolFromID(methodClassID) != 0, "methodClassID %u should exist\n", methodClassID);
+   if (getSymbolFromID(methodID) == NULL || getSymbolFromID(methodClassID) == NULL)
+      {
+      TR_ASSERT(getSymbolFromID(methodID) != 0, "methodID %u should exist\n", methodID);
+      TR_ASSERT(getSymbolFromID(methodClassID) != 0, "methodClassID %u should exist\n", methodClassID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
@@ -1740,7 +1968,11 @@ TR::SymbolValidationManager::validateStackWalkerMaySkipFramesRecord(uint16_t met
 bool
 TR::SymbolValidationManager::validateClassInfoIsInitializedRecord(uint16_t classID, bool wasInitialized)
    {
-   TR_ASSERT_FATAL(getSymbolFromID(classID) != 0, "classID %u should exist\n", classID);
+   if (getSymbolFromID(classID) == NULL)
+      {
+      TR_ASSERT(getSymbolFromID(classID) != 0, "classID %u should exist\n", classID);
+      return false;
+      }
 
    TR::Compilation* comp = TR::comp();
    TR_OpaqueClassBlock *clazz = static_cast<TR_OpaqueClassBlock *>(getSymbolFromID(classID));

@@ -44,6 +44,7 @@
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
 #include "exceptions/DataCacheError.hpp"
+#include "exceptions/AOTFailure.hpp"
 #include "il/DataTypes.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
@@ -1371,7 +1372,10 @@ TR_ResolvedRelocatableJ9Method::TR_ResolvedRelocatableJ9Method(TR_OpaqueMethodBl
          if (comp->getOption(TR_UseSymbolValidationManager))
             {
             if (!comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(aMethod)))
-               TR_ASSERT_FATAL(false, "aMethod 0x%p should already be validated\n", aMethod);
+               {
+               TR_ASSERT(false, "aMethod 0x%p should already be validated\n", aMethod);
+               comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in TR_ResolvedRelocatableJ9Method");
+               }
             comp->getSymbolValidationManager()->addClassFromMethodRecord(containingClass(), aMethod);
             }
          else
