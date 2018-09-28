@@ -42,6 +42,7 @@ P=:
 PROPS_DIR=props_unix
 
 include $(TEST_ROOT)$(D)TestConfig$(D)utils.mk
+include $(TEST_ROOT)$(D)TestConfig$(D)testEnv.mk
 
 ifndef JAVA_BIN
 $(error Please provide JAVA_BIN value.)
@@ -241,7 +242,7 @@ $(SUBDIRS_TESTTARGET):
 
 $(TESTTARGET): $(SUBDIRS_TESTTARGET)
 
-_$(TESTTARGET): setup_$(TESTTARGET) rmResultFile $(TESTTARGET) resultsSummary
+_$(TESTTARGET): setup_$(TESTTARGET) rmResultFile $(TESTTARGET) resultsSummary teardown_$(TESTTARGET)
 	@$(ECHO) $@ done
 
 .PHONY: _$(TESTTARGET) $(TESTTARGET) $(SUBDIRS) $(SUBDIRS_TESTTARGET)
@@ -250,7 +251,7 @@ _$(TESTTARGET): setup_$(TESTTARGET) rmResultFile $(TESTTARGET) resultsSummary
 
 TOTALCOUNT := 0
 
-setup_%:
+setup_%: testEnvSetup
 	@$(ECHO)
 	@$(ECHO) Running make $(MAKE_VERSION)
 	@$(ECHO) set TEST_ROOT to $(TEST_ROOT)
@@ -265,6 +266,9 @@ setup_%:
 		$(ECHO) There are $(TOTALCOUNT) test targets in $(TESTTARGET).; \
 	fi
 	$(JAVA_COMMAND) -version
+
+teardown_%: testEnvTeardown
+	@$(ECHO)
 
 ifndef JCL_VERSION
 export JCL_VERSION:=latest
