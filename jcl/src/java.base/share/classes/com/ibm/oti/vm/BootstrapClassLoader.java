@@ -50,10 +50,6 @@ public final class BootstrapClassLoader extends AbstractClassLoader {
 	private static BootstrapClassLoader singleton;
 	private static Method appendToClassPathForInstrumentationMethod = null;
 	private static boolean initAppendMethod = true;
-	/*[IF Sidecar19-SE]*/
-	private Hashtable<String, Integer> packages = new Hashtable<String, Integer>();
-	ThreadLocal<String> definingPackage = new ThreadLocal<String>();
-	/*[ENDIF]*/
 
 /**
  * Prevents this class from being instantiated.
@@ -89,29 +85,8 @@ public Class<?> loadClass(String className) throws ClassNotFoundException {
 	/*[PR VMDESIGN 1433] Remove Java synchronization (Prevent redundant loads of the same class) */
 	Class<?> loadedClass = VM.getVMLangAccess().findClassOrNullHelper(className, this);
 	
-	/*[IF Sidecar19-SE]*/
-    if (loadedClass != null) {
-        String packageName = getPackageName(loadedClass);
-        /*[PR CMVC 98313] Avoid deadlock, do not call super.getPackage() in synchronized block */
-        if (packageName != null && super.getPackage(packageName) == null) {
-            int index = VM.getCPIndexImpl(loadedClass);
-            /*[PR CMVC 98059] Only define packages as required to avoid bootstrap problems */
-            addPackage(packageName, index);
-        }
-    }
-    /*[ENDIF]*/
 	return loadedClass;
 }
-
-/*[IF Sidecar19-SE]*/
-private void addPackage(final String packageName, final int index) {
-    synchronized(packages) {
-        if (!packages.containsKey(packageName)) {
-        	packages.put(packageName, new Integer(index));
-        }
-    }
-}
-/*[ENDIF]*/
 
 public static ClassLoader singleton() {
 	if (singleton == null)
@@ -123,50 +98,11 @@ public static ClassLoader singleton() {
 }
 
 protected Package getPackage(String name) {
-	/*[IF Sidecar19-SE]*/
-	/*[PR 126176] Do not create Packages for bootstrap classes unnecessarily */
-	Package result;
-	Integer index = packages.get(name);
-	if (index == null) {
-		return super.getPackage(name);
-	}
-	String inPackage = definingPackage.get();
-	if (name.equals(inPackage)) return null;
-	if (inPackage != null) throw new InternalError();
-	definingPackage.set(name);
-	try {
-		result = definePackage(name, index.intValue());
-		packages.remove(name);
-	} finally {
-		definingPackage.set(null);
-	}
-	return result;
-	/*[ELSE]*/
 	return VM.getVMLangAccess().getSystemPackage(name);
-	/*[ENDIF]*/
 }
 
 protected Package[] getPackages() {
-	/*[IF Sidecar19-SE]*/
-	/*[PR CMVC 94437] do not synchronized on this ClassLoader */
-	/*[PR CMVC 98059] do not recursively call definePackages(), was called from loadClass() */
-	/*[PR 126176] Do not create Packages for bootstrap classes unnecessarily */
-	// Capture packages loaded while calling definePackage().
-	// Also ensure all Hashtable elements are defined since the
-	// Hashtable is being modified by getPackage() while its
-	// being walked
-	while (packages.size() > 0) {
-		Hashtable<String, Integer> packagesClone = (Hashtable<String, Integer>)packages.clone();
-		Enumeration<String> keys = packagesClone.keys();
-		while (keys.hasMoreElements()) {
-			getPackage(keys.nextElement());
-		}
-	}
-	return super.getPackages();
-	/*[ELSE]*/
 	return VM.getVMLangAccess().getSystemPackages();
-	/*[ENDIF]*/
-	
 }
 
 /*[PR 123807] Design 450 SE.JVMTI: JVMTI 1.1: New ClassLoaderSearch API */
@@ -202,27 +138,6 @@ private void appendToClassPathForInstrumentation(String jarPath) throws Throwabl
 		}
 		// clear the getResources() cache when a jar is appended
 		resourceCacheRef = null;
-		/*[IF Sidecar19-SE]*/
-		ClassLoader sysLoader = getSystemClassLoader(); 
-		if (initAppendMethod) {
-			initAppendMethod = false;
-			try {
-				appendToClassPathForInstrumentationMethod = sysLoader.getClass().getDeclaredMethod("appendToClassPathForInstrumentation", String.class); //$NON-NLS-1$
-				PrivilegedAction<Void> action = new PriviAction(appendToClassPathForInstrumentationMethod);
-				AccessController.doPrivileged(action);
-			} catch (NoSuchMethodException e) {
-				/* 
-				 * User can override the default system loader.
-				 * It should contain appendToClassPathForInstrumentation(), but failure todo so is not fatal.
-				 */
-				appendToClassPathForInstrumentationMethod = null;
-			}
-		}
-
-		if (null != appendToClassPathForInstrumentationMethod) {
-			appendToClassPathForInstrumentationMethod.invoke(sysLoader, jarPath);
-		}
-		/*[ENDIF]*/
 	}
 }
 
