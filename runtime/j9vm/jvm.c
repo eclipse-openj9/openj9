@@ -879,7 +879,7 @@ getj9bin()
 	result = jvmBufferCat(NULL, libraryInfo.dli_fname);
 	/* remove libjvm.so */
 	truncatePath(jvmBufferData(result));
-#elif defined(J9ZOS390) || defined(J9ZTPF) || defined(OSX)
+#elif defined(J9ZOS390) || defined(J9ZTPF)
 #define VMDLL_NAME J9_VM_DLL_NAME
 
 	int foundPosition = 0;
@@ -1074,7 +1074,7 @@ preloadLibraries(void)
 	/* detect if we're in a subdir or not */
 	jvmDLLNameBuffer = jvmBufferCat(jvmDLLNameBuffer, "/lib");
 	jvmDLLNameBuffer = jvmBufferCat(jvmDLLNameBuffer, vmDllName);
-	jvmDLLNameBuffer = jvmBufferCat(jvmDLLNameBuffer, ".so");
+	jvmDLLNameBuffer = jvmBufferCat(jvmDLLNameBuffer, J9PORT_LIBRARY_SUFFIX);
 
 	if(-1 != stat (jvmBufferData(jvmDLLNameBuffer), &statBuf)) {
 		jvmInSubdir = TRUE;
