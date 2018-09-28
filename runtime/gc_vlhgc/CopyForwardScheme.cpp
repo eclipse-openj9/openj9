@@ -1419,7 +1419,9 @@ MM_CopyForwardScheme::copyAndForward(MM_EnvironmentVLHGC *env, MM_AllocationCont
 			/* Object has been copied - update the forwarding information and return */
 			*objectPtrIndirect = objectPtr;
 		} else {
-			Assert_MM_mustBeClass(forwardHeader.getPreservedClass());
+			Assert_GC_true_with_message(env, (UDATA)0x99669966 == forwardHeader.getPreservedClass()->eyecatcher, "Invalid class in objectPtr=%p\n", originalObjectPtr);
+
+
 			objectPtr = copy(env, reservingContext, &forwardHeader);
 			if (NULL == objectPtr) {
 				success = false;
