@@ -551,6 +551,8 @@ public:
    virtual TR_OpaqueMethodBlock *getNonPersistentIdentifier();
    virtual uint8_t *             allocateException(uint32_t, TR::Compilation*);
 
+   virtual TR_OpaqueClassBlock  *getDeclaringClassFromFieldOrStatic( TR::Compilation *comp, int32_t cpIndex);
+
 private:
    virtual TR_ResolvedMethod *   createResolvedMethodFromJ9Method(TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats);
 

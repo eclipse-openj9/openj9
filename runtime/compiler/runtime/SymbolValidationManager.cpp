@@ -1718,7 +1718,7 @@ TR::SymbolValidationManager::validateClassInfoIsInitializedRecord(uint16_t class
    bool initialized = false;
 
    TR_PersistentClassInfo * classInfo =
-                          comp->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(clazz, comp);
+                          comp->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(clazz, comp, true);
 
    if (classInfo)
       initialized = classInfo->isInitialized();

@@ -210,6 +210,11 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    void enterHeuristicRegion();
    void exitHeuristicRegion();
 
+   /* Used to ensure that a implementer chosen for inlining is valid under
+    * AOT.
+    */
+   bool validateTargetToBeInlined(TR_ResolvedMethod *implementer);
+
    void reportILGeneratorPhase();
    void reportAnalysisPhase(uint8_t id);
    void reportOptimizationPhase(OMR::Optimizations);

@@ -178,6 +178,14 @@ J9::Compilation::Compilation(
       TR_ASSERT_FATAL(validated, "addRootClassRecord should not fail!\n");
       validated = _symbolValidationManager->addMethodFromClassRecord(compilee->getNonPersistentIdentifier(), compilee->classOfMethod(), static_cast<uint32_t>(-1));
       TR_ASSERT_FATAL(validated, "addMethodFromClassRecord should not fail!\n");
+
+      struct J9Class ** arrayClasses = &fej9()->getJ9JITConfig()->javaVM->booleanArrayClass;
+      for (int32_t i = 4; i <= 11; i++)
+         {
+         /* This will first add the primitive, and then an arrayof record */
+         validated = getSymbolValidationManager()->addArrayClassFromJavaVM((TR_OpaqueClassBlock *)arrayClasses[i - 4], i);
+         TR_ASSERT_FATAL(validated, "addArrayClassFromJavaVM should not fail!\n");
+         }
       }
 
    _aotClassClassPointer = NULL;
@@ -663,7 +671,7 @@ J9::Compilation::canAllocateInline(TR::Node* node, TR_OpaqueClassBlock* &classIn
       if (clazz == NULL)
          return -1;
 
-      clazz = clazz->arrayClass;
+      clazz = (J9Class *)self()->fej9vm()->getArrayClassFromComponentClass((TR_OpaqueClassBlock *)clazz);
       if (!clazz)
          return -1;
 
@@ -1099,6 +1107,19 @@ J9::Compilation::exitHeuristicRegion()
       {
       self()->getSymbolValidationManager()->exitHeuristicRegion();
       }
+   }
+
+bool
+J9::Compilation::validateTargetToBeInlined(TR_ResolvedMethod *implementer)
+   {
+   if (self()->getOption(TR_UseSymbolValidationManager)
+       && self()->compileRelocatableCode())
+      {
+      return self()->getSymbolValidationManager()->addMethodFromClassRecord(implementer->getPersistentIdentifier(),
+                                                                            implementer->classOfMethod(),
+                                                                            -1);
+      }
+   return true;
    }
 
 

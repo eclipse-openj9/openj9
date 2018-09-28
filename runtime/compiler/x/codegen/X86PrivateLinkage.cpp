@@ -1329,7 +1329,8 @@ void TR::X86CallSite::setupVirtualGuardInfo()
 
             TR::SymbolReference *methodSymRef = getSymbolReference();
             TR_PersistentCHTable * chTable = comp()->getPersistentInfo()->getPersistentCHTable();
-            if (thisClass && TR::Compiler->cls.isAbstractClass(comp(), thisClass))
+            /* Devirtualization is not currently supported for AOT compilations */
+            if (thisClass && TR::Compiler->cls.isAbstractClass(comp(), thisClass) && !comp()->compileRelocatableCode())
                {
                TR_ResolvedMethod * method = chTable->findSingleAbstractImplementer(thisClass, methodSymRef->getOffset(), methodSymRef->getOwningMethod(comp()), comp());
                if (method &&

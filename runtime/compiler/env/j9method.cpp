@@ -229,6 +229,12 @@ TR_J9VMBase::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMe
       if (TR::Options::sharedClassCache())
          {
          result = new (trMemory->trHeapMemory()) TR_ResolvedRelocatableJ9Method(aMethod, this, trMemory, owningMethod);
+         TR::Compilation *comp = TR::comp();
+         if (comp && comp->getOption(TR_UseSymbolValidationManager))
+            {
+            if (!comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(result->containingClass())))
+               return NULL;
+            }
          }
       else
 #endif
@@ -1362,7 +1368,16 @@ TR_ResolvedRelocatableJ9Method::TR_ResolvedRelocatableJ9Method(TR_OpaqueMethodBl
       {
       if (fej9->sharedCache()->rememberClass(containingClass()))
          {
-         ((TR_ResolvedRelocatableJ9Method *) owner)->validateArbitraryClass(comp, (J9Class*)containingClass());
+         if (comp->getOption(TR_UseSymbolValidationManager))
+            {
+            if (!comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(aMethod)))
+               TR_ASSERT_FATAL(false, "aMethod 0x%p should already be validated\n", aMethod);
+            comp->getSymbolValidationManager()->addClassFromMethodRecord(containingClass(), aMethod);
+            }
+         else
+            {
+            ((TR_ResolvedRelocatableJ9Method *) owner)->validateArbitraryClass(comp, (J9Class*)containingClass());
+            }
          }
       else
          {
@@ -1515,29 +1530,36 @@ TR_ResolvedRelocatableJ9Method::constantPool()
 TR_OpaqueClassBlock *
 TR_ResolvedRelocatableJ9Method::getClassFromConstantPool(TR::Compilation *comp, uint32_t cpIndex, bool returnClassForAOT)
    {
-      TR_OpaqueClassBlock * resolvedClass = NULL;
+   TR_OpaqueClassBlock * resolvedClass = NULL;
 
-      if (returnClassForAOT)
+   if (returnClassForAOT || comp->getOption(TR_UseSymbolValidationManager))
+      {
+      resolvedClass = TR_ResolvedJ9Method::getClassFromConstantPool(comp, cpIndex);
+      if (resolvedClass)
          {
-         resolvedClass = TR_ResolvedJ9Method::getClassFromConstantPool(comp, cpIndex);
-         if (resolvedClass)
+         bool validated = validateClassFromConstantPool(comp, (J9Class *)resolvedClass, cpIndex);
+         if (validated)
             {
-            bool validated = validateClassFromConstantPool(comp, (J9Class *)resolvedClass, cpIndex);
-            if (validated)
-               {
-               return (TR_OpaqueClassBlock*)resolvedClass;
-               }
+            return (TR_OpaqueClassBlock*)resolvedClass;
             }
-         return 0;
          }
+      return 0;
+      }
 
-      return resolvedClass;
+   return resolvedClass;
    }
 
 bool
 TR_ResolvedRelocatableJ9Method::validateClassFromConstantPool(TR::Compilation *comp, J9Class *clazz, uint32_t cpIndex,  TR_ExternalRelocationTargetKind reloKind)
    {
-   return storeValidationRecordIfNecessary(comp, cp(), cpIndex, reloKind, ramMethod(), clazz);
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      return comp->getSymbolValidationManager()->addClassFromCPRecord(reinterpret_cast<TR_OpaqueClassBlock *>(clazz), cp(), cpIndex);
+      }
+   else
+      {
+      return storeValidationRecordIfNecessary(comp, cp(), cpIndex, reloKind, ramMethod(), clazz);
+      }
    }
 
 bool
@@ -1636,6 +1658,9 @@ TR_ResolvedRelocatableJ9Method::getResolvedPossiblyPrivateVirtualMethod(
          cpIndex,
          ignoreRtResolve,
          unresolvedInCP);
+
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      return method;
 
    // For now leave private invokevirtual unresolved in AOT. If we resolve it,
    // we may forceUnresolvedDispatch in codegen, in which case the generated
@@ -1793,7 +1818,34 @@ TR_ResolvedRelocatableJ9Method::fieldAttributes(TR::Compilation * comp, int32_t 
       if (comp->getOption(TR_DisableAOTInstanceFieldResolution))
          resolveField = false;
       else
-         fieldInfoCanBeUsed = !needAOTValidation || storeValidationRecordIfNecessary(comp, constantPool, cpIndex, TR_ValidateInstanceField, ramMethod());
+         {
+         if (needAOTValidation)
+            {
+            if (comp->getOption(TR_UseSymbolValidationManager))
+               {
+               TR_J9VMBase *fej9 = (TR_J9VMBase *) comp->fe();
+               TR::CompilationInfo *compInfo = TR::CompilationInfo::get(fej9->_jitConfig);
+               TR::CompilationInfoPerThreadBase *compInfoPerThreadBase = compInfo->getCompInfoForCompOnAppThread();
+               TR_RelocationRuntime *reloRuntime;
+               if (compInfoPerThreadBase)
+                  reloRuntime = compInfoPerThreadBase->reloRuntime();
+               else
+                  reloRuntime = compInfo->getCompInfoForThread(fej9->vmThread())->reloRuntime();
+
+               TR_OpaqueClassBlock *clazz = reloRuntime->getClassFromCP(fej9->vmThread(), fej9->_jitConfig->javaVM, constantPool, cpIndex, false);
+
+               fieldInfoCanBeUsed = comp->getSymbolValidationManager()->addDefiningClassFromCPRecord(clazz, constantPool, cpIndex);
+               }
+            else
+               {
+               fieldInfoCanBeUsed = storeValidationRecordIfNecessary(comp, constantPool, cpIndex, TR_ValidateInstanceField, ramMethod());
+               }
+            }
+         else
+            {
+            fieldInfoCanBeUsed = true;
+            }
+         }
       }
 
    if (offset == J9JIT_RESOLVE_FAIL_COMPILE)
@@ -1892,7 +1944,32 @@ TR_ResolvedRelocatableJ9Method::staticAttributes(TR::Compilation * comp,
    bool fieldInfoCanBeUsed = false;
    bool aotStats = comp->getOption(TR_EnableAOTStats);
 
-   fieldInfoCanBeUsed = !needAOTValidation || storeValidationRecordIfNecessary(comp, constantPool, cpIndex, TR_ValidateStaticField, ramMethod());
+   if (needAOTValidation)
+      {
+      if (comp->getOption(TR_UseSymbolValidationManager))
+         {
+         TR_J9VMBase *fej9 = (TR_J9VMBase *) comp->fe();
+         TR::CompilationInfo *compInfo = TR::CompilationInfo::get(fej9->_jitConfig);
+         TR::CompilationInfoPerThreadBase *compInfoPerThreadBase = compInfo->getCompInfoForCompOnAppThread();
+         TR_RelocationRuntime *reloRuntime;
+         if (compInfoPerThreadBase)
+            reloRuntime = compInfoPerThreadBase->reloRuntime();
+         else
+            reloRuntime = compInfo->getCompInfoForThread(fej9->vmThread())->reloRuntime();
+
+         TR_OpaqueClassBlock *clazz = reloRuntime->getClassFromCP(fej9->vmThread(), fej9->_jitConfig->javaVM, constantPool, cpIndex, true);
+
+         fieldInfoCanBeUsed = comp->getSymbolValidationManager()->addDefiningClassFromCPRecord(clazz, constantPool, cpIndex, true);
+         }
+      else
+         {
+         fieldInfoCanBeUsed = storeValidationRecordIfNecessary(comp, constantPool, cpIndex, TR_ValidateStaticField, ramMethod());
+         }
+      }
+   else
+      {
+      fieldInfoCanBeUsed = true;
+      }
 
    if (offset == (void *)J9JIT_RESOLVE_FAIL_COMPILE)
       {
@@ -1955,14 +2032,24 @@ TR_ResolvedRelocatableJ9Method::staticSignatureChars(int32_t cpIndex, int32_t & 
 TR_OpaqueClassBlock *
 TR_ResolvedRelocatableJ9Method::classOfStatic(int32_t cpIndex, bool returnClassForAOT)
    {
-   TR_OpaqueClassBlock * resolveClassOfStatic = NULL;
+   TR_OpaqueClassBlock * clazz = TR_ResolvedJ9Method::classOfStatic(cpIndex, returnClassForAOT);
 
-   if (returnClassForAOT)
+   TR::Compilation *comp = TR::comp();
+   bool validated = false;
+
+   if (comp && comp->getOption(TR_UseSymbolValidationManager))
       {
-      resolveClassOfStatic = TR_ResolvedJ9Method::classOfStatic(cpIndex, returnClassForAOT);
+      validated = comp->getSymbolValidationManager()->addStaticClassFromCPRecord(clazz, cp(), cpIndex);
+      }
+   else
+      {
+      validated = returnClassForAOT;
       }
 
-   return resolveClassOfStatic;
+   if (validated)
+      return clazz;
+   else
+      return NULL;
    }
 
 void
@@ -2065,6 +2152,9 @@ TR_ResolvedRelocatableJ9Method::getResolvedImproperInterfaceMethod(
    TR::Compilation * comp,
    I_32 cpIndex)
    {
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      return TR_ResolvedJ9Method::getResolvedImproperInterfaceMethod(comp, cpIndex);
+
    // For now leave private and Object invokeinterface unresolved in AOT. If we
    // resolve it, we may forceUnresolvedDispatch in codegen, in which case the
    // generated code would attempt to resolve the wrong kind of constant pool
@@ -2113,7 +2203,14 @@ TR_ResolvedRelocatableJ9Method::createResolvedMethodFromJ9Method(TR::Compilation
              isSystemClassLoader)
             {
             resolvedMethod = new (comp->trHeapMemory()) TR_ResolvedRelocatableJ9Method((TR_OpaqueMethodBlock *) j9method, _fe, comp->trMemory(), this, vTableSlot);
-            if (aotStats)
+            if (comp->getOption(TR_UseSymbolValidationManager))
+               {
+               if (!comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(resolvedMethod->containingClass())))
+                  {
+                  return NULL;
+                  }
+               }
+            else if (aotStats)
                {
                aotStats->numMethodResolvedAtCompile++;
                if (_fe->convertClassPtrToClassOffset(J9_CLASS_FROM_METHOD(ramMethod())) == _fe->convertClassPtrToClassOffset(J9_CLASS_FROM_METHOD(j9method)))
@@ -4627,7 +4724,7 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
       TR_PersistentClassInfo *clazzInfo = NULL;
       if (compInfo->getPersistentInfo()->getPersistentCHTable())
          {
-         clazzInfo = compInfo->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(clazz, fej9());
+         clazzInfo = compInfo->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(clazz, fej9(), true);
          }
 
       if (!clazzInfo)
@@ -6213,6 +6310,13 @@ TR_ResolvedJ9Method::getResolvedInterfaceMethod(I_32 cpIndex, UDATA *pITableInde
 
    result = getInterfaceITableIndexFromCP(fej9(), cp(), cpIndex, pITableIndex);
 
+   TR::Compilation *comp = TR::comp();
+   if (comp && comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager))
+      {
+      if (!comp->getSymbolValidationManager()->addClassFromITableIndexCPRecord(result, cp(), cpIndex))
+         result = NULL;
+      }
+
    return result;
 #endif
    }
@@ -6260,6 +6364,12 @@ TR_ResolvedJ9Method::getResolvedImproperInterfaceMethod(TR::Compilation * comp, 
       {
       TR::VMAccessCriticalSection getResolvedPrivateInterfaceMethodOffset(fej9());
       j9method = jitGetImproperInterfaceMethodFromCP(_fe->vmThread(), cp(), cpIndex);
+      }
+
+   if (comp->getOption(TR_UseSymbolValidationManager) && j9method)
+      {
+      if (!comp->getSymbolValidationManager()->addImproperInterfaceMethodFromCPRecord((TR_OpaqueMethodBlock *)j9method, cp(), cpIndex))
+         j9method = NULL;
       }
 
    if (j9method == NULL)
@@ -6325,6 +6435,12 @@ TR_ResolvedJ9Method::getResolvedStaticMethod(TR::Compilation * comp, I_32 cpInde
       {
       TR::VMAccessCriticalSection getResolvedStaticMethod(fej9());
       ramMethod = jitResolveStaticMethodRef(_fe->vmThread(), cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
+      }
+
+   if (comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager) && ramMethod)
+      {
+      if (!comp->getSymbolValidationManager()->addStaticMethodFromCPRecord((TR_OpaqueMethodBlock *)ramMethod, cp(), cpIndex))
+         ramMethod = NULL;
       }
 
    bool skipForDebugging = doResolveAtRuntime(ramMethod, cpIndex, comp);
@@ -6397,10 +6513,19 @@ TR_ResolvedJ9Method::getResolvedSpecialMethod(TR::Compilation * comp, I_32 cpInd
       ramMethod = jitResolveSpecialMethodRef(_fe->vmThread(), cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
       if (ramMethod)
          {
+         bool createResolvedMethod = true;
+
+         if (comp->getOption(TR_UseSymbolValidationManager))
+            {
+            if (!comp->getSymbolValidationManager()->addSpecialMethodFromCPRecord((TR_OpaqueMethodBlock *)ramMethod, cp(), cpIndex))
+               createResolvedMethod = false;
+            }
+
          TR_AOTInliningStats *aotStats = NULL;
          if (comp->getOption(TR_EnableAOTStats))
             aotStats = & (((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->specialMethods);
-         resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, 0, ramMethod, unresolvedInCP, aotStats);
+         if (createResolvedMethod)
+            resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, 0, ramMethod, unresolvedInCP, aotStats);
          if (unresolvedInCP)
             *unresolvedInCP = false;
          }
@@ -6441,14 +6566,23 @@ TR_ResolvedJ9Method::getResolvedPossiblyPrivateVirtualMethod(TR::Compilation * c
       // only call the resolve if unresolved
       UDATA vTableOffset;
       J9Method * ramMethod = (J9Method *)getVirtualMethod(_fe, cp(), cpIndex, &vTableOffset, unresolvedInCP);
+      bool createResolvedMethod = true;
+
+      if (comp->compileRelocatableCode() && ramMethod && comp->getOption(TR_UseSymbolValidationManager))
+         {
+         if (!comp->getSymbolValidationManager()->addVirtualMethodFromCPRecord((TR_OpaqueMethodBlock *)ramMethod, cp(), cpIndex))
+            createResolvedMethod = false;
+         }
 
       if (vTableOffset)
          {
          TR_AOTInliningStats *aotStats = NULL;
          if (comp->getOption(TR_EnableAOTStats))
             aotStats = & (((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->virtualMethods);
-         resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, vTableOffset, ramMethod, unresolvedInCP, aotStats);
+         if (createResolvedMethod)
+            resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, vTableOffset, ramMethod, unresolvedInCP, aotStats);
          }
+
       }
 
    if (resolvedMethod == NULL)
@@ -6954,6 +7088,13 @@ TR_OpaqueMethodBlock *
 TR_J9SharedCacheVM::getResolvedVirtualMethod(TR_OpaqueClassBlock * classObject, I_32 virtualCallOffset, bool ignoreRtResolve)
    {
    TR_OpaqueMethodBlock *ramMethod = TR_J9VMBase::getResolvedVirtualMethod(classObject, virtualCallOffset, ignoreRtResolve);
+   TR::Compilation *comp = TR::comp();
+   if (comp && comp->getOption(TR_UseSymbolValidationManager))
+      {
+      if (!comp->getSymbolValidationManager()->addVirtualMethodFromOffsetRecord(ramMethod, classObject, virtualCallOffset, ignoreRtResolve))
+         return NULL;
+      }
+
    return ramMethod;
    }
 
@@ -6961,6 +7102,17 @@ TR_OpaqueMethodBlock *
 TR_J9SharedCacheVM::getResolvedInterfaceMethod(TR_OpaqueMethodBlock *interfaceMethod, TR_OpaqueClassBlock * classObject, I_32 cpIndex)
    {
    TR_OpaqueMethodBlock *ramMethod = TR_J9VMBase::getResolvedInterfaceMethod(interfaceMethod, classObject, cpIndex);
+   TR::Compilation *comp = TR::comp();
+   if (comp && comp->getOption(TR_UseSymbolValidationManager))
+      {
+      if (!comp->getSymbolValidationManager()->addInterfaceMethodFromCPRecord(ramMethod,
+                                                                              (TR_OpaqueClassBlock *)J9_CLASS_FROM_METHOD((J9Method*)interfaceMethod),
+                                                                              classObject,
+                                                                              cpIndex))
+         {
+         return NULL;
+         }
+      }
    return ramMethod;
    }
 
@@ -6968,6 +7120,11 @@ TR_OpaqueClassBlock *
 TR_ResolvedRelocatableJ9Method::getDeclaringClassFromFieldOrStatic(TR::Compilation *comp, int32_t cpIndex)
    {
    TR_OpaqueClassBlock *definingClass = TR_ResolvedJ9MethodBase::getDeclaringClassFromFieldOrStatic(comp, cpIndex);
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      if (!comp->getSymbolValidationManager()->addDeclaringClassFromFieldOrStaticRecord(definingClass, cp(), cpIndex))
+         return NULL;
+      }
    return definingClass;
    }
 

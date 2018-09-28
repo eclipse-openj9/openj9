@@ -3492,6 +3492,7 @@ bool TR_MultipleCallTargetInliner::inlineCallTargets(TR::ResolvedMethodSymbol *c
          tracer()->dumpInline(&_callTargets, "inline script");
          }
       }
+
    if (prevCallStack == 0)
       {
       TR_InlinerDelimiter delimiter(tracer(),"inlineTransformation");
