@@ -29,6 +29,7 @@ const static char *versionNames[] =
 	"JVMTI 1.1",
 	"JVMTI 1.2",
 	"JVMTI 9.0",
+	"JVMTI 11",
 	"unknown"
 };
 
@@ -61,6 +62,8 @@ getVersionName(agentEnv * agent_env, jint version)
 			return versionNames[2];
 		case JVMTI_VERSION_9_0:
 			return versionNames[3];
+		case JVMTI_VERSION_11_0:
+			return versionNames[4];
 		default:
 			error(agent_env, JVMTI_ERROR_UNSUPPORTED_VERSION, "Query for an unknown version");
 	}

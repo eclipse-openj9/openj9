@@ -204,6 +204,10 @@
 		<export name="Java_com_ibm_jvmti_tests_nestMatesRedefinition_nmr001_redefineClass" />
 		<export name="Java_com_ibm_jvmti_tests_setNativeMethodPrefix_snmp001_setPrefix" />
 		<export name="Java_com_ibm_jvmti_tests_setNativeMethodPrefix_snmp001_nat" />
+		<export name="Java_com_ibm_jvmti_tests_eventSampledObjectAllocation_soae001_reset" />
+		<export name="Java_com_ibm_jvmti_tests_eventSampledObjectAllocation_soae001_enable" />
+		<export name="Java_com_ibm_jvmti_tests_eventSampledObjectAllocation_soae001_disable" />
+		<export name="Java_com_ibm_jvmti_tests_eventSampledObjectAllocation_soae001_check" />
 	</exports>
 
 	<artifact type="shared" name="jvmtitest" bundle="jvmti_test" appendrelease="false">

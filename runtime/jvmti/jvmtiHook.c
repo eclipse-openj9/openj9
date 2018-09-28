@@ -124,6 +124,7 @@ static void jvmtiHookMethodEnter (J9HookInterface** hook, UDATA eventNum, void* 
 #if defined(J9VM_INTERP_NATIVE_SUPPORT)
 static int J9THREAD_PROC compileEventThreadProc (void *entryArg);
 #endif /* INTERP_NATIVE_SUPPORT */
+static void jvmtiHookSampledObjectAlloc (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static void jvmtiHookObjectAllocate (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static void jvmtiHookThreadEnd (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static void jvmtiHookFindMethodFromPC (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
@@ -435,6 +436,9 @@ processEvent(J9JVMTIEnv* j9env, jint event, J9HookRedirectorFunction redirectorF
 
 		case JVMTI_EVENT_VM_OBJECT_ALLOC:
 			return redirectorFunction(vmHook, J9HOOK_VM_OBJECT_ALLOCATE, jvmtiHookObjectAllocate, OMR_GET_CALLSITE(), j9env);
+
+		case JVMTI_EVENT_SAMPLED_OBJECT_ALLOC:
+			return redirectorFunction(vmHook, J9HOOK_SAMPLED_OBJECT_ALLOCATE, jvmtiHookSampledObjectAlloc, OMR_GET_CALLSITE(), j9env);
 
 		case JVMTI_EVENT_NATIVE_METHOD_BIND:
 			return redirectorFunction(vmHook, J9HOOK_VM_JNI_NATIVE_BIND, jvmtiHookJNINativeBind, OMR_GET_CALLSITE(), j9env);
@@ -1555,7 +1559,12 @@ jvmtiHookGetEnv(J9HookInterface** hook, UDATA eventNum, void* eventData, void* u
 	if (data->rc == JNI_EVERSION) {
 		jint version = data->version & ~JVMTI_VERSION_MASK_MICRO;
 
-		if ((version == JVMTI_VERSION_1_0) || (version == JVMTI_VERSION_1_1) || (version == JVMTI_VERSION_1_2) || (version == JVMTI_VERSION_9_0)) {
+		if ((version == JVMTI_VERSION_1_0) 
+			|| (version == JVMTI_VERSION_1_1) 
+			|| (version == JVMTI_VERSION_1_2) 
+			|| (version == JVMTI_VERSION_9_0)
+			|| (version == JVMTI_VERSION_11_0)
+		) {
 			/* Jazz 99339: obtain the pointer to J9JavaVM from J9InvocationJavaVM so as to store J9NativeLibrary in J9JVMTIEnv */
 			J9InvocationJavaVM * invocationJavaVM = (J9InvocationJavaVM *)data->jvm;
 			J9JVMTIData * jvmtiData = userData;
@@ -2776,6 +2785,40 @@ jvmtiHookCompilingEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, v
 
 #endif /* INTERP_NATIVE_SUPPORT */
 
+static void 
+jvmtiHookSampledObjectAlloc(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
+{
+	J9JVMTIEnv * j9env = userData;
+	jvmtiEventSampledObjectAlloc callback = j9env->callbacks.SampledObjectAlloc;
+
+	ENSURE_EVENT_PHASE_LIVE(jvmtiHookSampledObjectAlloc, j9env);
+
+	if (NULL != callback) {
+		J9SampledObjectAllocateEvent *data = eventData;
+		J9VMThread * currentThread = data->currentThread;
+		jthread threadRef = NULL;
+		UDATA hadVMAccess = 0;
+		UDATA javaOffloadOldState = 0;
+
+		if (prepareForEvent(j9env, currentThread, currentThread, JVMTI_EVENT_SAMPLED_OBJECT_ALLOC, &threadRef, &hadVMAccess, TRUE, 2, &javaOffloadOldState)) {
+			j9object_t * objectRef = (j9object_t*) currentThread->arg0EA;
+			j9object_t * classRef = (j9object_t*) (objectRef - 1);
+			J9Class* clazz = NULL;
+			J9JavaVM * vm = currentThread->javaVM;
+
+			*objectRef = data->object;
+			clazz = J9OBJECT_CLAZZ(currentThread, data->object);
+			*classRef = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
+			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
+			callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, (jobject) objectRef, (jclass) classRef, (jlong) data->size);
+			currentThread->javaVM->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+			data->object = J9_JNI_UNWRAP_REDIRECTED_REFERENCE(objectRef);
+			finishedEvent(currentThread, JVMTI_EVENT_SAMPLED_OBJECT_ALLOC, hadVMAccess, javaOffloadOldState);
+		}
+	}
+
+	TRACE_JVMTI_EVENT_RETURN(jvmtiHookSampledObjectAlloc);
+}
 
 static void
 jvmtiHookObjectAllocate(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)

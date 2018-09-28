@@ -92,6 +92,8 @@ dumpCapabilities(J9JavaVM * vm, const jvmtiCapabilities *capabilities, const cha
 	PRINT_CAPABILITY(can_generate_early_vmstart);
 	PRINT_CAPABILITY(can_generate_early_class_hook_events);
 
+	/* JVMTI 11 */
+	PRINT_CAPABILITY(can_generate_sampled_object_alloc_events);
 #undef PRINT_CAPABILITY
 }
 
@@ -165,6 +167,10 @@ jvmtiGetPotentialCapabilities(jvmtiEnv* env, jvmtiCapabilities* capabilities_ptr
 
 	if (isEventHookable(j9env, JVMTI_EVENT_VM_OBJECT_ALLOC)) {
 		rv_capabilities.can_generate_vm_object_alloc_events = 1;
+	}
+	
+	if (isEventHookable(j9env, JVMTI_EVENT_SAMPLED_OBJECT_ALLOC)) {
+		rv_capabilities.can_generate_sampled_object_alloc_events = 1;
 	}
 
 	if (isEventHookable(j9env, JVMTI_EVENT_NATIVE_METHOD_BIND)) {
@@ -539,6 +545,10 @@ mapCapabilitiesToEvents(J9JVMTIEnv * j9env, jvmtiCapabilities * capabilities, J9
 
 	if (capabilities->can_generate_vm_object_alloc_events) {
 		rc |= eventHookFunction(j9env, JVMTI_EVENT_VM_OBJECT_ALLOC);
+	}
+
+	if (capabilities->can_generate_sampled_object_alloc_events) {
+		rc |= eventHookFunction(j9env, JVMTI_EVENT_SAMPLED_OBJECT_ALLOC);
 	}
 
 	if (capabilities->can_generate_object_free_events) {

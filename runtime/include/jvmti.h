@@ -45,9 +45,9 @@ JNIEXPORT jint JNICALL Agent_OnAttach(JavaVM* vm, char *options, void *reserved)
 #define JVMTI_VERSION_1_2 0x30010200
 #define JVMTI_VERSION_1 (JVMTI_VERSION_1_0)
 #define JVMTI_VERSION_9_0 0x30090000
+#define JVMTI_VERSION_11_0 0x300b0000
 
-/* Required as of Java 9 b14x */
-#define JVMTI_VERSION JVMTI_VERSION_9_0
+#define JVMTI_VERSION JVMTI_VERSION_11_0
 
 #define JVMTI_1_0_SPEC_VERSION           (JVMTI_VERSION_1_0 + 37)	/* Spec version is 1.0.37 */
 #define JVMTI_1_1_SPEC_VERSION           (JVMTI_VERSION_1_1 + 102)	/* Spec version is 1.1.102 */
@@ -483,7 +483,8 @@ typedef struct {
 	unsigned int can_generate_resource_exhaustion_threads_events : 1;
 	unsigned int can_generate_early_vmstart : 1;
 	unsigned int can_generate_early_class_hook_events : 1;
-	unsigned int : 5;
+	unsigned int can_generate_sampled_object_alloc_events : 1;
+	unsigned int : 4;
 	unsigned int : 16;
 	unsigned int : 16;
 	unsigned int : 16;
@@ -733,8 +734,9 @@ typedef enum jvmtiEvent {
 	JVMTI_EVENT_GARBAGE_COLLECTION_FINISH = 82,
 	JVMTI_EVENT_OBJECT_FREE = 83,
 	JVMTI_EVENT_VM_OBJECT_ALLOC = 84,
+	JVMTI_EVENT_SAMPLED_OBJECT_ALLOC = 86,
 
-	JVMTI_MAX_EVENT_TYPE_VAL = 84,
+	JVMTI_MAX_EVENT_TYPE_VAL = 86,
 	jvmtiEventEnsureWideEnum = 0x1000000						/* ensure 4-byte enum */
 } jvmtiEvent;
 
@@ -948,6 +950,14 @@ typedef void (JNICALL *jvmtiEventResourceExhausted) (
 	const void* reserved,
 	const char* description);
 
+typedef void (JNICALL *jvmtiEventSampledObjectAlloc) (
+	jvmtiEnv *jvmti_env,
+	JNIEnv *jni_env,
+	jthread thread,
+	jobject object,
+	jclass object_klass,
+	jlong size);
+
 typedef void * jvmtiEventReserved;
 
 typedef struct {
@@ -986,6 +996,8 @@ typedef struct {
 	jvmtiEventGarbageCollectionFinish GarbageCollectionFinish;
 	jvmtiEventObjectFree ObjectFree;
 	jvmtiEventVMObjectAlloc VMObjectAlloc;
+	jvmtiEventReserved reserved85;
+	jvmtiEventSampledObjectAlloc SampledObjectAlloc;
 } jvmtiEventCallbacks;
 
 /*
@@ -1150,6 +1162,7 @@ typedef struct JVMTINativeInterface_ {
 	jvmtiError (JNICALL * GetOwnedMonitorStackDepthInfo)(jvmtiEnv* env, jthread thread, jint* monitor_info_count_ptr, jvmtiMonitorStackDepthInfo** monitor_info_ptr);
 	jvmtiError (JNICALL * GetObjectSize)(jvmtiEnv* env,	jobject object,	jlong* size_ptr);
 	jvmtiError (JNICALL * GetLocalInstance)(jvmtiEnv* env, jthread thread, jint depth, jobject* value_ptr);
+	jvmtiError (JNICALL * SetHeapSamplingInterval)(jvmtiEnv* env, jint sampling_interval);
 } jvmtiNativeInterface;
 
 struct _jvmtiEnv {
@@ -1302,6 +1315,7 @@ struct _jvmtiEnv {
 	jvmtiError GetOwnedMonitorStackDepthInfo (jthread thread, jint* monitor_info_count_ptr, jvmtiMonitorStackDepthInfo** monitor_info_ptr) { return functions->GetOwnedMonitorStackDepthInfo(this, thread, monitor_info_count_ptr, monitor_info_ptr); }
 	jvmtiError GetObjectSize (jobject object, jlong* size_ptr) { return functions->GetObjectSize(this, object, size_ptr); }
 	jvmtiError GetLocalInstance (jthread thread, jint depth, jobject* value_ptr) { return functions->GetLocalInstance(this, thread, depth, value_ptr); }
+	jvmtiError SetHeapSamplingInterval (jint sampling_interval) { return functions->SetHeapSamplingInterval(this, sampling_interval); }
 #endif
 };
 

@@ -152,6 +152,53 @@ static jvmtiCapabilities capabilitiesMask90 = {
 	1, /* can_generate_early_class_hook_events */
 };
 
+static jvmtiCapabilities capabilitiesMaskV11 = {
+	1, /* can_tag_objects */
+	1, /* can_generate_field_modification_events */
+	1, /* can_generate_field_access_events */
+	1, /* can_get_bytecodes */
+	1, /* can_get_synthetic_attribute */
+	1, /* can_get_owned_monitor_info */
+	1, /* can_get_current_contended_monitor */
+	1, /* can_get_monitor_info */
+	1, /* can_pop_frame */
+	1, /* can_redefine_classes */
+	1, /* can_signal_thread */
+	1, /* can_get_source_file_name */
+	1, /* can_get_line_numbers */
+	1, /* can_get_source_debug_extension */
+	1, /* can_access_local_variables */
+	1, /* can_maintain_original_method_order */
+	1, /* can_generate_single_step_events */
+	1, /* can_generate_exception_events */
+	1, /* can_generate_frame_pop_events */
+	1, /* can_generate_breakpoint_events */
+	1, /*  can_suspend */
+	1, /* can_redefine_any_class */
+	1, /* can_get_current_thread_cpu_time */
+	1, /* can_get_thread_cpu_time */
+	1, /* can_generate_method_entry_events */
+	1, /* can_generate_method_exit_events */
+	1, /* can_generate_all_class_hook_events */
+	1, /* can_generate_compiled_method_load_events */
+	1, /* can_generate_monitor_events */
+	1, /* can_generate_vm_object_alloc_events */
+	1, /* can_generate_native_method_bind_events */
+	1, /* can_generate_garbage_collection_events */
+	1, /* can_generate_object_free_events */
+	1, /* can_force_early_return */
+	1, /* can_get_owned_monitor_stack_depth_info */
+	1, /* can_get_constant_pool */
+	1, /* can_set_native_method_prefix */
+	1, /* can_retransform_classes */
+	1, /* can_retransform_any_class */
+	1, /* can_generate_resource_exhaustion_heap_events */
+	1, /* can_generate_resource_exhaustion_threads_events */
+	1, /* can_generate_early_vmstart */
+	1, /* can_generate_early_class_hook_events */
+	1, /* can_generate_sampled_object_alloc_events */
+};
+
 /* Jazz 99339: Map JVMTI event number to the reason code for zAAP switching on zOS.
  * Note: refer to jvmtiEventCallbacks (/runtime/include/jvmti.h) for reserved JVMTI events.
  */
@@ -199,6 +246,7 @@ static const UDATA reasonCodeFromJVMTIEvent[] = {
 	J9_JNI_OFFLOAD_SWITCH_J9JVMTI_VM_DUMP_END,							/* J9JVMTI_EVENT_COM_IBM_VM_DUMP_END */
 	J9_JNI_OFFLOAD_SWITCH_J9JVMTI_GC_CYCLE_START,						/* J9JVMTI_EVENT_COM_IBM_GARBAGE_COLLECTION_CYCLE_START */
 	J9_JNI_OFFLOAD_SWITCH_J9JVMTI_GC_CYCLE_FINISH,						/* J9JVMTI_EVENT_COM_IBM_GARBAGE_COLLECTION_CYCLE_FINISH */
+	J9_JNI_OFFLOAD_SWITCH_JVMTI_SAMPLED_OBJECT_ALLOC,					/* JVMTI_EVENT_VM_OBJECT_ALLOC */
 };
 #endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
 
@@ -423,12 +471,14 @@ allocateEnvironment(J9InvocationJavaVM * invocationJavaVM, jint version, void **
 #if defined (J9VM_INTERP_NATIVE_SUPPORT)
 			j9env->jitHook.hookInterface = jitHook;
 #endif
-			j9env->capabilitiesMask = capabilitiesMask10;
-			if (version >= JVMTI_VERSION_1_1) {
-				j9env->capabilitiesMask = capabilitiesMask11;
-			}
-			if (version >= JVMTI_VERSION_9_0) {
+			if (version >= JVMTI_VERSION_11_0) {
+				j9env->capabilitiesMask = capabilitiesMaskV11;
+			} else	if (version >= JVMTI_VERSION_9_0) {
 				j9env->capabilitiesMask = capabilitiesMask90;
+			} else	if (version >= JVMTI_VERSION_1_1) {
+				j9env->capabilitiesMask = capabilitiesMask11;
+			} else {
+				j9env->capabilitiesMask = capabilitiesMask10;
 			}
 
 			if ((j9env->vmHook.agentID = (*vmHook)->J9HookAllocateAgentID(vmHook)) == 0) {

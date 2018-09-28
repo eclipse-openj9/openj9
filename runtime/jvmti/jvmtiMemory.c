@@ -80,4 +80,21 @@ jvmtiDeallocate(jvmtiEnv* env,
 	TRACE_JVMTI_RETURN(jvmtiDeallocate);
 }
 
-
+jvmtiError JNICALL 
+jvmtiSetHeapSamplingInterval(jvmtiEnv *env, 
+	jint samplingInterval)
+{
+	jvmtiError rc = JVMTI_ERROR_NONE;
+	J9VMThread *currentThread = NULL;
+	
+	Trc_JVMTI_jvmtiSetHeapSamplingInterval_Entry(env, samplingInterval);
+	
+	rc = getCurrentVMThread(((J9JVMTIEnv *)env)->vm, &currentThread);
+	if ((JVMTI_ERROR_NONE == rc) && (NULL != currentThread)) {
+		J9MemoryManagerFunctions *fns = currentThread->javaVM->memoryManagerFunctions;
+		if (NULL != fns) {
+			fns->j9gc_set_allocation_sampling_interval(currentThread, samplingInterval);
+		}
+	}
+	TRACE_JVMTI_RETURN(jvmtiSetHeapSamplingInterval);
+}

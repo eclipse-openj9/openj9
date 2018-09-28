@@ -1278,4 +1278,15 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<data type="struct J9VMThread*" name="vmThread" description="current thread" />
 		<data type="U_32" name="state" description="the VM runtime state" />
 	</event>
+	
+	<event>
+		<name>J9HOOK_SAMPLED_OBJECT_ALLOCATE</name>
+		<description>
+			Triggered when the size of objects specified via SetHeapSamplingInterval have been allocated. See JVMTI spec for details.
+		</description>
+		<struct>J9SampledObjectAllocateEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="j9object_t" name="object" return="true" description="the object which was just allocated" />
+		<data type="UDATA" name="size" description="the number of bytes allocated" />
+	</event>
 </interface>

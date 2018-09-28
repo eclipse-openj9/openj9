@@ -73,6 +73,7 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		if(!scan_udata_helper(javaVM, scan_start, &extensions->tlhMaximumSize, "tlhMaximumSize=")) {
 			goto _error;
 		}
+		extensions->tlhActiveMaximumSize = extensions->tlhMaximumSize;
 		goto _exit;
 	}
 	if(try_scan(scan_start, "tlhIncrementSize=")) {

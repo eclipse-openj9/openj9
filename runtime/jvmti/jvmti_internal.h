@@ -1505,6 +1505,15 @@ jvmtiGetLocalInstance(jvmtiEnv* env,
 	jint depth,
 	jobject* value_ptr);
 
+/**
+* @brief Set the allocation sampling interval
+* @param env The JVMTI environment pointer.
+* @param samplingInterval The sampling interval in bytes.
+* @return jvmtiError Error code returned by JVMTI function
+*/
+jvmtiError JNICALL 
+jvmtiSetHeapSamplingInterval(jvmtiEnv *env,
+	jint samplingInterval);
 
 /**
 * @brief

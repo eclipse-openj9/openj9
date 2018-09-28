@@ -181,11 +181,16 @@ getCapabilities(jvmtiCapabilities * caps, int * availableCount, int * unavailabl
 	PRINT_CAPABILITY(can_generate_resource_exhaustion_heap_events);
 	PRINT_CAPABILITY(can_generate_resource_exhaustion_threads_events);
 
-    /* JVMTI 9.0 */
-    if (JVMTI_VERSION_9_0 == env->jvmtiVersion) {
-        PRINT_CAPABILITY(can_generate_early_vmstart);
-        PRINT_CAPABILITY(can_generate_early_class_hook_events);
-    }
+	/* JVMTI 9.0 */
+	if (env->jvmtiVersion >= JVMTI_VERSION_9_0) {
+		PRINT_CAPABILITY(can_generate_early_vmstart);
+		PRINT_CAPABILITY(can_generate_early_class_hook_events);
+	}
+	
+	/* JVMTI 11 */
+	if (env->jvmtiVersion >= JVMTI_VERSION_11_0) {
+		PRINT_CAPABILITY(can_generate_sampled_object_alloc_events);
+	}
 }
 
 

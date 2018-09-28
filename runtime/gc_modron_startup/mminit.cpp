@@ -3053,14 +3053,25 @@ hookVMRegistrationEvent(J9HookInterface** hook, UDATA eventNum, void* voidEventD
 	J9HookRegistrationEvent* eventData = (J9HookRegistrationEvent*)voidEventData;
 
 	switch (eventData->eventNum) {
-		case J9HOOK_VM_OBJECT_ALLOCATE_WITHIN_THRESHOLD:
-		case J9HOOK_VM_OBJECT_ALLOCATE_INSTRUMENTABLE: {
-			J9JavaVM* vm = (J9JavaVM*)userData;
-			J9VMThread * currentThread = vm->internalVMFunctions->currentVMThread(vm);
-			if (currentThread != NULL) {
-				j9gc_allocation_threshold_changed(currentThread);
-			}
+	case J9HOOK_SAMPLED_OBJECT_ALLOCATE: {
+		J9JavaVM *vm = (J9JavaVM*)userData;
+		J9VMThread *currentThread = vm->internalVMFunctions->currentVMThread(vm);
+		if (NULL != currentThread) {
+			bool flag = (0 != J9_EVENT_IS_HOOKED(vm->hookInterface,J9HOOK_SAMPLED_OBJECT_ALLOCATE));
+			j9gc_set_allocation_sampling(currentThread, flag);
 		}
+		break;
+	}
+	case J9HOOK_VM_OBJECT_ALLOCATE_WITHIN_THRESHOLD:
+	case J9HOOK_VM_OBJECT_ALLOCATE_INSTRUMENTABLE: {
+		J9JavaVM* vm = (J9JavaVM*)userData;
+		J9VMThread * currentThread = vm->internalVMFunctions->currentVMThread(vm);
+		if (currentThread != NULL) {
+			j9gc_allocation_threshold_changed(currentThread);
+		}
+	}
+	default:
+		break;
 	}
 }
 

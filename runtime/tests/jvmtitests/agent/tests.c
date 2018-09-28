@@ -128,6 +128,7 @@ static jvmtiTest jvmtiTestList[] =
 	{ "mt001",   mt001,   "com.ibm.jvmti.tests.modularityTests.mt001", "Test Modularity functions"},
 	{ "nmr001",     nmr001,    "com.ibm.jvmti.tests.nestMatesRedefinition.nmr001", "Test nestmates redefinition"},
 	{ "snmp001",     snmp001,    "com.ibm.jvmti.tests.setNativeMethodPrefix.snmp001", "Tests setting a native method prefix and disposing a subsequent environment"},
+	{ "soae001", soae001, "com.ibm.jvmti.tests.eventSampleObjectAllocation.soae001", "EventSampledObjectAllocate - tests sampling object allocation events" },
 	{ NULL, NULL, NULL, NULL }
 };
 

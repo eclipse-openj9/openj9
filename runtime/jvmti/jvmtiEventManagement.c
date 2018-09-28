@@ -149,7 +149,11 @@ jvmtiSetEventNotificationMode(jvmtiEnv* env,
 				case  JVMTI_EVENT_VM_OBJECT_ALLOC:
 					ENSURE_CAPABILITY(env, can_generate_vm_object_alloc_events);
 					break;
- 
+
+				case  JVMTI_EVENT_SAMPLED_OBJECT_ALLOC:
+					ENSURE_CAPABILITY(env, can_generate_sampled_object_alloc_events);
+					break;
+
 				case JVMTI_EVENT_NATIVE_METHOD_BIND:
 					ENSURE_CAPABILITY(env, can_generate_native_method_bind_events);
 					break;

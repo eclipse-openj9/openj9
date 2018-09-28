@@ -412,4 +412,9 @@
  		<command>$EXE$ $JVM_OPTS$ -Xshareclasses:destroyAll</command>
 		<return type="success" value="1"/>
 	</test>
+
+	<test id="soae001">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:soae001 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="1"/>
+	</test>
 </suite>

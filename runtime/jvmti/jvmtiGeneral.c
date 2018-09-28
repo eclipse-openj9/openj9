@@ -185,7 +185,9 @@ jvmtiGetVersionNumber(jvmtiEnv* env,
 
 	ENSURE_NON_NULL(version_ptr);
 
-	if (J2SE_VERSION(vm) >= J2SE_19) {
+	if (J2SE_VERSION(vm) >= J2SE_V11) {
+		rv_version = JVMTI_VERSION_11_0;
+	} else if (J2SE_VERSION(vm) >= J2SE_19) {
 		rv_version = JVMTI_VERSION_9_0;
 	}
 

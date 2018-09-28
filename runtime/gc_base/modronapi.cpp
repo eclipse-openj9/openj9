@@ -787,6 +787,47 @@ j9gc_allocation_threshold_changed(J9VMThread *currentThread)
 }
 
 /**
+ * Set the allocation sampling interval to trigger a J9HOOK_SAMPLED_OBJECT_ALLOCATE event
+ * when the hook event J9HOOK_SAMPLED_OBJECT_ALLOCATE is registered.
+ * 
+ * Examples:
+ * 	To trigger an event whenever 4K objects have been allocated:
+ *		j9gc_set_allocation_sampling_interval(vmThread, (UDATA)4096);
+ *	To trigger an event for every object allocation:
+ *		j9gc_set_allocation_sampling_interval(vmThread, (UDATA)0);
+ * By default, the sampling interval is 512 KB.
+ * 
+ * @parm[in] vmThread The current VM Thread
+ * @parm[in] samplingInterval The allocation sampling interval.
+ */
+void 
+j9gc_set_allocation_sampling_interval(J9VMThread *vmThread, UDATA samplingInterval)
+{
+	MM_GCExtensions *ext = MM_GCExtensions::getExtensions(vmThread->javaVM);
+	Trc_MM_AllocationSampling_setInterval_Entry(vmThread, samplingInterval, ext->allocationSamplingInterval);
+	ext->allocationSamplingInterval = samplingInterval;
+	if ((samplingInterval >= ext->tlhMinimumSize) || (samplingInterval <= ext->tlhMaximumSize)) {
+		ext->tlhActiveMaximumSize = samplingInterval;
+	}
+	Trc_MM_AllocationSampling_setInterval_Exit(vmThread);
+}
+/**
+ * Set the flag to enable or disable allocation sampling
+ * 
+ * @parm[in] vmThread The current VM Thread
+ * @parm[in] flag true - enable allocation sampling, false otherwise
+ */
+void 
+j9gc_set_allocation_sampling(J9VMThread *vmThread, BOOLEAN flag)
+{
+	J9JavaVM *vm = vmThread->javaVM;
+	MM_GCExtensions *ext = MM_GCExtensions::getExtensions(vm);
+	Trc_MM_AllocationSampling_setFlag_Entry(vmThread, flag ? "true" : "false");
+	ext->enableAllocationSampling = flag;
+	Trc_MM_AllocationSampling_setFlag_Exit(vmThread);
+}
+
+/**
  * Sets the allocation threshold (VMDESIGN 2006) to trigger a J9HOOK_MM_ALLOCATION_THRESHOLD event
  * whenever an object is allocated on the heap whose is between the lower bound and the upper bound
  * of the allocation threshold range.

@@ -89,7 +89,7 @@ J9AllocateObjectNoGC(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFla
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-	if (extensions->instrumentableAllocateHookEnabled || !env->isInlineTLHAllocateEnabled()) {
+	if (extensions->instrumentableAllocateHookEnabled || !env->isInlineTLHAllocateEnabled() || extensions->enableAllocationSampling) {
 		/* This function is restricted to only being used for instrumentable allocates so we only need to check that one allocation hook.
 		 * Note that we can't handle hooked allocates since we might be called without a JIT resolve frame and that is required for us to
 		 * report the allocation event.
@@ -113,6 +113,12 @@ J9AllocateObjectNoGC(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFla
 			objectPtr = OMR_GC_AllocateObject(vmThread->omrVMThread, &mixedOAM);
 			if (NULL != objectPtr) {
 				uintptr_t allocatedBytes = env->getExtensions()->objectModel.getConsumedSizeInBytesWithHeader(objectPtr);
+/*
+				printf("J9AllocateObjectNoGC allocatedBytes = %lu \n", allocatedBytes);
+				if (allocatedBytes >= 200) {
+					printf("J9AllocateObjectNoGC allocatedBytes = %lu \n", allocatedBytes);
+				}
+*/
 				Assert_MM_true(allocatedBytes == mixedOAM.getAllocateDescription()->getContiguousBytes());
 				if (J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(clazz), J9ClassReservableLockWordInit)) {
 					*J9OBJECT_MONITOR_EA(vmThread, objectPtr) = OBJECT_HEADER_LOCK_RESERVED;
@@ -282,7 +288,7 @@ J9AllocateIndexableObjectNoGC(J9VMThread *vmThread, J9Class *clazz, uint32_t num
 	
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-	if (extensions->instrumentableAllocateHookEnabled || !env->isInlineTLHAllocateEnabled()) {
+	if (extensions->instrumentableAllocateHookEnabled || !env->isInlineTLHAllocateEnabled() || extensions->enableAllocationSampling) {
 		/* This function is restricted to only being used for instrumentable allocates so we only need to check that one allocation hook.
 		 * Note that we can't handle hooked allocates since we might be called without a JIT resolve frame and that is required for us to
 		 * report the allocation event.
@@ -307,6 +313,12 @@ J9AllocateIndexableObjectNoGC(J9VMThread *vmThread, J9Class *clazz, uint32_t num
 			objectPtr = OMR_GC_AllocateObject(vmThread->omrVMThread, &indexableOAM);
 			if (NULL != objectPtr) {
 				uintptr_t allocatedBytes = env->getExtensions()->objectModel.getConsumedSizeInBytesWithHeader(objectPtr);
+/*
+				printf("J9AllocateIndexableObjectNoGC allocatedBytes = %lu \n", allocatedBytes);
+				if (allocatedBytes >= 200) {
+					printf("J9AllocateIndexableObjectNoGC allocatedBytes = %lu \n", allocatedBytes);
+				}
+*/
 				Assert_MM_true(allocatedBytes == indexableOAM.getAllocateDescription()->getContiguousBytes());
 			}
 			env->_isInNoGCAllocationCall = false;
@@ -397,6 +409,22 @@ J9AllocateObject(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFlags)
 				sizeInBytesRequired);
 		}
 		
+		if (extensions->enableAllocationSampling) {
+			uintptr_t allocationSamplingInterval = extensions->allocationSamplingInterval;
+			uintptr_t currentAllocationRemainder = extensions->currentAllocationRemainder;
+			uintptr_t currentAllocationTemp = currentAllocationRemainder + sizeInBytesRequired;
+			if (currentAllocationTemp >= allocationSamplingInterval) {
+				MM_AtomicOperations::set(&extensions->currentAllocationRemainder, currentAllocationTemp % allocationSamplingInterval);
+				TRIGGER_J9HOOK_SAMPLED_OBJECT_ALLOCATE(
+					vmThread->javaVM->hookInterface, 
+					vmThread,
+					objectPtr, 
+					sizeInBytesRequired);
+			} else {
+				MM_AtomicOperations::set(&extensions->currentAllocationRemainder, currentAllocationTemp);
+			}
+		}
+		
 		if( !mixedOAM.getAllocateDescription()->isCompletedFromTlh()) {
 			TRIGGER_J9HOOK_MM_PRIVATE_NON_TLH_ALLOCATION(
 				extensions->privateHookInterface,
@@ -404,17 +432,19 @@ J9AllocateObject(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFlags)
 				objectPtr);
 		}
 		
-		uintptr_t lowThreshold = extensions->lowAllocationThreshold;
-		uintptr_t highThreshold = extensions->highAllocationThreshold;
-		if ( (sizeInBytesRequired >= lowThreshold) && (sizeInBytesRequired <= highThreshold) ) {
-			Trc_MM_AllocationThreshold_triggerAllocationThresholdEvent(vmThread,sizeInBytesRequired,lowThreshold,highThreshold);
-			TRIGGER_J9HOOK_VM_OBJECT_ALLOCATE_WITHIN_THRESHOLD(
-				vmThread->javaVM->hookInterface,
-				vmThread,
-				objectPtr,
-				sizeInBytesRequired,
-				lowThreshold,
-				highThreshold);
+		if (extensions->disableInlineCacheForAllocationThreshold) {
+			uintptr_t lowThreshold = extensions->lowAllocationThreshold;
+			uintptr_t highThreshold = extensions->highAllocationThreshold;
+			if ((sizeInBytesRequired >= lowThreshold) && (sizeInBytesRequired <= highThreshold)) {
+				Trc_MM_AllocationThreshold_triggerAllocationThresholdEvent(vmThread,sizeInBytesRequired,lowThreshold,highThreshold);
+				TRIGGER_J9HOOK_VM_OBJECT_ALLOCATE_WITHIN_THRESHOLD(
+					vmThread->javaVM->hookInterface,
+					vmThread,
+					objectPtr,
+					sizeInBytesRequired,
+					lowThreshold,
+					highThreshold);
+			}
 		}
 	}
 
@@ -443,7 +473,10 @@ J9AllocateObject(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFlags)
 	}
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
-	if (extensions->fvtest_disableInlineAllocation || extensions->instrumentableAllocateHookEnabled || extensions->disableInlineCacheForAllocationThreshold) {
+	if (extensions->fvtest_disableInlineAllocation 
+		|| extensions->instrumentableAllocateHookEnabled
+		|| (extensions->enableAllocationSampling && (extensions->allocationSamplingInterval < extensions->tlhMinimumSize))
+	) {
 		env->disableInlineTLHAllocate();
 	}	
 #endif /* J9VM_GC_THREAD_LOCAL_HEAP */	
@@ -469,7 +502,6 @@ J9AllocateIndexableObject(J9VMThread *vmThread, J9Class *clazz, uint32_t numberO
 	if (OMR_GC_ALLOCATE_OBJECT_NON_ZERO_TLH == (allocateFlags & OMR_GC_ALLOCATE_OBJECT_NON_ZERO_TLH)) {
 		Assert_MM_true(GC_ObjectModel::SCAN_PRIMITIVE_ARRAY_OBJECT == extensions->objectModel.getScanType(clazz));
 	}
-
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
 	if (!env->isInlineTLHAllocateEnabled()) {
 		/* For duration of call restore TLH allocate fields;
@@ -527,7 +559,23 @@ J9AllocateIndexableObject(J9VMThread *vmThread, J9Class *clazz, uint32_t numberO
 				objectPtr, 
 				sizeInBytesRequired);
 		}
-	
+
+		if (extensions->enableAllocationSampling) {
+			uintptr_t allocationSamplingInterval = extensions->allocationSamplingInterval;
+			uintptr_t currentAllocationRemainder = extensions->currentAllocationRemainder;
+			uintptr_t currentAllocationTemp = currentAllocationRemainder + sizeInBytesRequired;
+			if (currentAllocationTemp >= allocationSamplingInterval) {
+				MM_AtomicOperations::set(&extensions->currentAllocationRemainder, currentAllocationTemp % allocationSamplingInterval);
+				TRIGGER_J9HOOK_SAMPLED_OBJECT_ALLOCATE(
+					vmThread->javaVM->hookInterface, 
+					vmThread,
+					objectPtr, 
+					sizeInBytesRequired);
+			} else {
+				MM_AtomicOperations::set(&extensions->currentAllocationRemainder, currentAllocationTemp);
+			}
+		}
+		
 		/* If this was a non-TLH allocation, trigger the hook */
 		if( !indexableOAM.getAllocateDescription()->isCompletedFromTlh()) {
 			TRIGGER_J9HOOK_MM_PRIVATE_NON_TLH_ALLOCATION(
@@ -536,17 +584,20 @@ J9AllocateIndexableObject(J9VMThread *vmThread, J9Class *clazz, uint32_t numberO
 				objectPtr);
 		}
 		
-		uintptr_t lowThreshold = extensions->lowAllocationThreshold;
-		uintptr_t highThreshold = extensions->highAllocationThreshold;
-		if ( (sizeInBytesRequired >= lowThreshold) && (sizeInBytesRequired <= highThreshold) ) {
-			Trc_MM_AllocationThreshold_triggerAllocationThresholdEventIndexable(vmThread,sizeInBytesRequired,lowThreshold,highThreshold);
-			TRIGGER_J9HOOK_VM_OBJECT_ALLOCATE_WITHIN_THRESHOLD(
-				vmThread->javaVM->hookInterface,
-				vmThread,
-				objectPtr,
-				sizeInBytesRequired,
-				lowThreshold,
-				highThreshold);
+		
+		if (extensions->disableInlineCacheForAllocationThreshold) {
+			uintptr_t lowThreshold = extensions->lowAllocationThreshold;
+			uintptr_t highThreshold = extensions->highAllocationThreshold;
+			if ((sizeInBytesRequired >= lowThreshold) && (sizeInBytesRequired <= highThreshold)) {
+				Trc_MM_AllocationThreshold_triggerAllocationThresholdEventIndexable(vmThread,sizeInBytesRequired,lowThreshold,highThreshold);
+				TRIGGER_J9HOOK_VM_OBJECT_ALLOCATE_WITHIN_THRESHOLD(
+					vmThread->javaVM->hookInterface,
+					vmThread,
+					objectPtr,
+					sizeInBytesRequired,
+					lowThreshold,
+					highThreshold);
+			}
 		}
 		
 		traceAllocateObject(vmThread, clazz, sizeInBytesRequired, (uintptr_t)numberOfIndexedFields);
@@ -573,7 +624,10 @@ J9AllocateIndexableObject(J9VMThread *vmThread, J9Class *clazz, uint32_t numberO
 	}
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
-	if (extensions->fvtest_disableInlineAllocation || extensions->instrumentableAllocateHookEnabled || extensions->disableInlineCacheForAllocationThreshold ) {
+	if (extensions->fvtest_disableInlineAllocation 
+		|| extensions->instrumentableAllocateHookEnabled
+		|| (extensions->enableAllocationSampling && (extensions->allocationSamplingInterval < extensions->tlhMinimumSize))
+	) {
 		env->disableInlineTLHAllocate();
 	}	
 #endif /* J9VM_GC_THREAD_LOCAL_HEAP */	
@@ -600,25 +654,12 @@ memoryManagerTLHAsyncCallbackHandler(J9VMThread *vmThread, IDATA handlerKey, voi
 
 	extensions->instrumentableAllocateHookEnabled = (0 != J9_EVENT_IS_HOOKED(vm->hookInterface,J9HOOK_VM_OBJECT_ALLOCATE_INSTRUMENTABLE));
 	
-	if ( J9_EVENT_IS_HOOKED(vm->hookInterface,J9HOOK_VM_OBJECT_ALLOCATE_WITHIN_THRESHOLD) ) {
-		Trc_MM_memoryManagerTLHAsyncCallbackHandler_eventIsHooked(vmThread);
-		if (extensions->isStandardGC() || extensions->isVLHGC()) {
-#if defined(J9VM_GC_THREAD_LOCAL_HEAP)
-			extensions->disableInlineCacheForAllocationThreshold = (extensions->lowAllocationThreshold < (extensions->tlhMaximumSize + extensions->tlhMinimumSize));
-#endif /* defined(J9VM_GC_THREAD_LOCAL_HEAP) */
-		} else if (extensions->isSegregatedHeap()) {
-#if defined(J9VM_GC_SEGREGATED_HEAP)
-			extensions->disableInlineCacheForAllocationThreshold = (extensions->lowAllocationThreshold <= J9VMGC_SIZECLASSES_MAX_SMALL_SIZE_BYTES);
-#endif /* defined(J9VM_GC_SEGREGATED_HEAP) */
-		}
-	} else {
-		Trc_MM_memoryManagerTLHAsyncCallbackHandler_eventNotHooked(vmThread);
-		extensions->disableInlineCacheForAllocationThreshold = false;
-	}
-	
 	if (extensions->isStandardGC() || extensions->isVLHGC()) {
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
-		if (extensions->fvtest_disableInlineAllocation || extensions->instrumentableAllocateHookEnabled || extensions->disableInlineCacheForAllocationThreshold) {
+		if (extensions->fvtest_disableInlineAllocation 
+			|| extensions->instrumentableAllocateHookEnabled
+			|| (extensions->enableAllocationSampling && (extensions->allocationSamplingInterval < extensions->tlhMinimumSize))
+		) {
 			Trc_MM_memoryManagerTLHAsyncCallbackHandler_disableInlineTLHAllocates(vmThread,extensions->lowAllocationThreshold,extensions->highAllocationThreshold,extensions->tlhMinimumSize,extensions->tlhMaximumSize);
 			if (env->isInlineTLHAllocateEnabled()) {
 				/* BEN TODO: Collapse the env->enable/disableInlineTLHAllocate with these enable/disableCachedAllocations */
@@ -636,7 +677,10 @@ memoryManagerTLHAsyncCallbackHandler(J9VMThread *vmThread, IDATA handlerKey, voi
 #endif /* defined(J9VM_GC_THREAD_LOCAL_HEAP) */
 	} else if (extensions->isSegregatedHeap()) {
 #if defined(J9VM_GC_SEGREGATED_HEAP)
-		if (extensions->fvtest_disableInlineAllocation || extensions->instrumentableAllocateHookEnabled || extensions->disableInlineCacheForAllocationThreshold) {
+		if (extensions->fvtest_disableInlineAllocation 
+			|| extensions->instrumentableAllocateHookEnabled
+			|| (extensions->enableAllocationSampling && (extensions->allocationSamplingInterval < extensions->tlhMinimumSize))
+		) {
 			Trc_MM_memoryManagerTLHAsyncCallbackHandler_disableAllocationCache(vmThread,extensions->lowAllocationThreshold,extensions->highAllocationThreshold);
 			if (allocationInterface->cachedAllocationsEnabled(env)) {
 				allocationInterface->disableCachedAllocations(env);
