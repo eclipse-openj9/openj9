@@ -1701,21 +1701,17 @@ fixRAMConstantPoolForFastHCR(J9ConstantPool *ramConstantPool, J9HashTable *class
 			}
 			case J9CPTYPE_INTERFACE_METHOD: {
 				J9RAMInterfaceMethodRef *methodRef = (J9RAMInterfaceMethodRef *) &ramConstantPool[cpIndex];
-				UDATA methodIndex = methodRef->methodIndexAndArgCount >> J9_ITABLE_INDEX_SHIFT;
 				J9Class *resolvedClass = (J9Class *) methodRef->interfaceClass;
 				/* Don't fix unresolved entries */
 				if (NULL != resolvedClass) {
-					/* Find the appropriate segment for the referenced method within the
-					 * resolvedClass iTable.  This is fast HCR (no addition or removal of
-					 * methods), so the shape of the iTables cannot change, just the ordering
-					 * of methods within them.
-					 */
-					J9ITable *allInterfaces = (J9ITable*)resolvedClass->iTable;
-					for(;;) {
-						J9Class *interfaceClass = allInterfaces->interfaceClass;
-						UDATA methodCount = interfaceClass->romClass->romMethodCount;
-						if (methodIndex < methodCount) {
-							classPair.originalRAMClass = interfaceClass;
+					UDATA methodIndexAndArgCount = methodRef->methodIndexAndArgCount;
+					UDATA methodIndex = methodIndexAndArgCount >> J9_ITABLE_INDEX_SHIFT;
+					if (J9_ARE_ANY_BITS_SET(methodIndexAndArgCount, J9_ITABLE_INDEX_TAG_BITS)) {
+						if (J9_ARE_ANY_BITS_SET(methodIndexAndArgCount, J9_ITABLE_INDEX_OBJECT)) {
+							/* Object can currently not be redefined, so nothing need be done */
+						} else if (J9_ARE_ANY_BITS_SET(methodIndexAndArgCount, J9_ITABLE_INDEX_METHOD_INDEX)) {
+							/* Private interface method */
+							classPair.originalRAMClass = resolvedClass;
 							classResult = hashTableFind(classHashTable, &classPair);
 							/* If the class was not replaced, no need to update the constant pool */
 							if (NULL != classResult) {
@@ -1726,17 +1722,48 @@ fixRAMConstantPoolForFastHCR(J9ConstantPool *ramConstantPool, J9HashTable *class
 									methodResult = hashTableFind(methodHashTable, &methodPair);
 									if (NULL != methodResult) {
 										UDATA argCount = (methodRef->methodIndexAndArgCount & 255);
-										UDATA newMethodIndex = getITableIndexForMethod(methodResult->newMethod, resolvedClass);
-										/* Fix the index in the resolved CP entry, retaining the argCount */
-										methodRef->methodIndexAndArgCount = ((newMethodIndex << J9_ITABLE_INDEX_SHIFT) | argCount);
+										J9Method *newMethod = methodResult->newMethod;
+										UDATA newMethodIndex = newMethod - J9_CLASS_FROM_METHOD(newMethod)->ramMethods;
+										/* Fix the index in the resolved CP entry, retaining the argCount and tag */
+										methodRef->methodIndexAndArgCount = ((newMethodIndex << J9_ITABLE_INDEX_SHIFT) | argCount | J9_ITABLE_INDEX_METHOD_INDEX);
 									}
 								}
 							}
-							/* iTable segment was located, stop the scan */
-							break;
 						}
-						methodIndex -= methodCount;
-						allInterfaces = allInterfaces->next;
+					} else {
+						/* Find the appropriate segment for the referenced method within the
+						 * resolvedClass iTable.  This is fast HCR (no addition or removal of
+						 * methods), so the shape of the iTables cannot change, just the ordering
+						 * of methods within them.
+						 */
+						J9ITable *allInterfaces = (J9ITable*)resolvedClass->iTable;
+						for(;;) {
+							J9Class *interfaceClass = allInterfaces->interfaceClass;
+							UDATA methodCount = interfaceClass->romClass->romMethodCount;
+							if (methodIndex < methodCount) {
+								classPair.originalRAMClass = interfaceClass;
+								classResult = hashTableFind(classHashTable, &classPair);
+								/* If the class was not replaced, no need to update the constant pool */
+								if (NULL != classResult) {
+									J9Class *obsoleteClass = classResult->replacementClass.ramClass;
+									if (NULL != obsoleteClass) {
+										/* If the referenced method was not reordered, no need to update the constant pool */
+										methodPair.oldMethod = obsoleteClass->ramMethods + methodIndex;
+										methodResult = hashTableFind(methodHashTable, &methodPair);
+										if (NULL != methodResult) {
+											UDATA argCount = (methodRef->methodIndexAndArgCount & 255);
+											UDATA newMethodIndex = getITableIndexForMethod(methodResult->newMethod, resolvedClass);
+											/* Fix the index in the resolved CP entry, retaining the argCount */
+											methodRef->methodIndexAndArgCount = ((newMethodIndex << J9_ITABLE_INDEX_SHIFT) | argCount);
+										}
+									}
+								}
+								/* iTable segment was located, stop the scan */
+								break;
+							}
+							methodIndex -= methodCount;
+							allInterfaces = allInterfaces->next;
+						}
 					}
 				}
 				break;

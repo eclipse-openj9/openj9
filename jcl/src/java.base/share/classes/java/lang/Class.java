@@ -2203,6 +2203,11 @@ public String toString() {
  * kind is one of "class", "enum", "interface", "&#64;interface", or
  * empty string for primitive types. The type parameter list is
  * omitted if there are no type parameters.
+ *[IF Sidecar19-SE]
+ * For array classes, the string has the following format instead:
+ * name&#60;typeparam1, typeparam2, ...&#62; followed by a number of
+ * &#91;&#93; characters equal to the dimension of the array
+ *[ENDIF]
  * 
  * @return		a formatted string describing this class.
  * @since 1.8
@@ -2236,6 +2241,26 @@ public String toGenericString() {
 	}
 	
 	// Build generic string
+/*[IF Sidecar19-SE]*/
+	if (isArray) {
+		int depth = 0;
+		Class inner = this;
+		Class component = this;
+		do {
+			inner = inner.getComponentType();
+			if (inner != null) {
+				component = inner;
+				depth += 1;
+			}
+		} while (inner != null);
+		result.append(component.getName());
+		component.appendTypeParameters(result);
+		for (int i = 0; i < depth; i++) {
+			result.append('[').append(']');
+		}
+		return result.toString();
+	}
+/*[ENDIF]*/
 	result.append(Modifier.toString(modifiers));
 	if (result.length() > 0) {
 		result.append(' ');
@@ -2243,20 +2268,23 @@ public String toGenericString() {
 	result.append(kindOfType);
 	result.append(getName());
 	
-	// Add type parameters if present
+	appendTypeParameters(result);
+	return result.toString();
+}
+
+// Add type parameters to stringbuilder if present
+private void appendTypeParameters(StringBuilder nameBuilder) {
 	TypeVariable<?>[] typeVariables = getTypeParameters();
 	if (0 != typeVariables.length) {
-		result.append('<');		
+		nameBuilder.append('<');
 		boolean comma = false;
 		for (TypeVariable<?> t : typeVariables) {
-			if (comma) result.append(',');
-			result.append(t);
+			if (comma) nameBuilder.append(',');
+			nameBuilder.append(t);
 			comma = true;
 		}
-		result.append('>');
+		nameBuilder.append('>');
 	}
-	
-	return result.toString();
 }
 
 /**
