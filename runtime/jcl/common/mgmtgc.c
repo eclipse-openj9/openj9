@@ -107,7 +107,6 @@ Java_com_ibm_lang_management_internal_ExtendedGarbageCollectorMXBeanImpl_getLast
 	jclass gcBean = NULL;
 	jmethodID callBackID = NULL;
 
-	jclass stringClass = NULL;
 	U_32 idx = 0;
 	jlongArray initialArray = NULL;
 	jlongArray preUsedArray = NULL;
@@ -139,7 +138,6 @@ Java_com_ibm_lang_management_internal_ExtendedGarbageCollectorMXBeanImpl_getLast
 	if (!initializeJavaLangStringIDCache(env)) {
 		goto fail;
 	}
-	stringClass = JCL_CACHE_GET(env, CLS_java_lang_String);
 
 	callBackID = JCL_CACHE_GET(env, MID_com_ibm_lang_management_internal_ExtendedGarbageCollectorMXBeanImpl_buildGcInfo);
 	if (NULL == callBackID) {
