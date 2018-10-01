@@ -68,40 +68,11 @@ before_install:
   - jdk_switcher use oraclejdk8
 before_script:
   - ccache -s -z
-  # Exit immediately if any unexpected error occurs.
-  - set -e
-  - if [ ! `wget https://ci.eclipse.org/openj9/userContent/freemarker-2.3.8.jar -O freemarker.jar` ]; then
-      wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz;
-      tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2;
-    fi
-  - cd ..
-  # Shallow clone of the openj9-openjdk-jdk9 repo to speed up clone / reduce server load.
-  - git clone --depth 1 https://github.com/ibmruntimes/openj9-openjdk-jdk9.git
 script:
-  # Clear this option so it doesn't interfere with configure detecting the bootjdk.
-  - unset _JAVA_OPTIONS
-  # Exit immediately if any unexpected error occurs.
-  - set -e
-  # Point the get_sources script at the OpenJ9 repo that's already been cloned to disk.
-  # Results in a copy of the source (disk space =( ) but no new network activity so overall a win.
-  - OPENJ9_SHA=$(git -C $TRAVIS_BUILD_DIR rev-parse HEAD)
-  - if test x"$OPENJ9_SHA" != x"$TRAVIS_COMMIT" ; then echo "Warning using SHA $OPENJ9_SHA instead of $TRAVIS_COMMIT." ; fi
-  - cd openj9-openjdk-jdk9 && bash get_source.sh -openj9-repo=$TRAVIS_BUILD_DIR -openj9-branch=$TRAVIS_BRANCH -openj9-sha=$OPENJ9_SHA
-  # Based on https://blog.travis-ci.com/2014-12-17-faster-builds-with-container-based-infrastructure/ travis container
-  # builds have 2 cores and 4 gigs of memory.  Attempt to double provision the number of cores for the make...
-  # Limit number of jobs to work around g++ internal compiler error.
-  - bash configure --with-freemarker-jar=$TRAVIS_BUILD_DIR/freemarker.jar --with-jobs=4 --with-num-cores=4 --enable-ccache --with-cmake --disable-ddr
-  - make images EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"
-  # Minimal sniff test - ensure java -version works.
-  - ./build/linux-x86_64-normal-server-release/images/jdk/bin/java -version
-
-  # run the OMRChecker linter
-  - export J9SRC=$PWD/build/linux-x86_64-normal-server-release/vm
-  - export OMRCHECKER_DIR=$J9SRC/omr/tools/compiler/OMRChecker
-  - export LLVM_CONFIG=llvm-config-3.8 CLANG=clang++-3.8 CXX_PATH=clang++-3.8 CXX=clang++-3.8
-  - cd $OMRCHECKER_DIR
-  - sh smartmake.sh
-  - cd $J9SRC/compiler
-  - make -f linter.mk
+  - bash ./buildenv/travis/build-on-travis.sh
 after_script:
   - ccache -s
+env:
+  # Note Currently enabling RUN_LINT and RUN_BUILD simultaneously is not supported
+  - RUN_BUILD=yes RUN_LINT=no
+  - RUN_BUILD=no RUN_LINT=yes
