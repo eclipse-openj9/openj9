@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2016 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -249,20 +249,6 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_createMemoryPools(JN
 		return;
 	}
 
-	/* NonHeap Memory Pools */
-	for (idx = 0; idx < mgmt->supportedNonHeapMemoryPools; ++idx) {
-		id = (jint) mgmt->nonHeapMemoryPools[idx].id;
-		childName = (*env)->NewStringUTF(env, mgmt->nonHeapMemoryPools[idx].name);
-		if (NULL == childName) {
-			return;
-		}
-
-		(*env)->CallVoidMethod(env, beanInstance, helperID, childName, id, JNI_FALSE);
-		if ((*env)->ExceptionCheck(env)) {
-			return;
-		}
-	}
-
 	/* Heap Memory Pools */
 	for (idx = 0; idx < mgmt->supportedMemoryPools; ++idx) {
 		id = (jint) mgmt->memoryPools[idx].id;
@@ -272,6 +258,20 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_createMemoryPools(JN
 		}
 
 		(*env)->CallVoidMethod(env, beanInstance, helperID, childName, id, JNI_TRUE);
+		if ((*env)->ExceptionCheck(env)) {
+			return;
+		}
+	}
+
+	/* NonHeap Memory Pools */
+	for (idx = 0; idx < mgmt->supportedNonHeapMemoryPools; ++idx) {
+		id = (jint) mgmt->nonHeapMemoryPools[idx].id;
+		childName = (*env)->NewStringUTF(env, mgmt->nonHeapMemoryPools[idx].name);
+		if (NULL == childName) {
+			return;
+		}
+
+		(*env)->CallVoidMethod(env, beanInstance, helperID, childName, id, JNI_FALSE);
 		if ((*env)->ExceptionCheck(env)) {
 			return;
 		}
@@ -535,7 +535,7 @@ Java_com_ibm_lang_management_internal_MemoryNotificationThread_processNotificati
 	jstring poolName = NULL;
 	jstring gcName = NULL;
 	U_32 idx = 0;
-	jstring poolNames[J9VM_MAX_HEAP_MEMORYPOOL_COUNT + J9VM_MAX_NONHEAP_MEMORYPOOL_COUNT];
+	jstring poolNames[J9VM_MAX_HEAP_MEMORYPOOL_COUNT];
 	jstring gcNames[J9_GC_MANAGEMENT_MAX_COLLECTOR];
 	J9MemoryNotification *notification = NULL;
 
@@ -544,13 +544,6 @@ Java_com_ibm_lang_management_internal_MemoryNotificationThread_processNotificati
 	/* cache poolNames and gcNames */
 	for (idx = 0; idx < mgmt->supportedMemoryPools; ++idx) {
 		poolNames[idx] = (*env)->NewStringUTF(env, mgmt->memoryPools[idx].name);
-		if (NULL == poolNames[idx]) {
-			return;
-		}
-	}
-
-	for (; idx < (mgmt->supportedMemoryPools + mgmt->supportedNonHeapMemoryPools); ++idx) {
-		poolNames[idx] = (*env)->NewStringUTF(env, mgmt->nonHeapMemoryPools[idx - mgmt->supportedMemoryPools].name);
 		if (NULL == poolNames[idx]) {
 			return;
 		}
@@ -579,7 +572,7 @@ Java_com_ibm_lang_management_internal_MemoryNotificationThread_processNotificati
 		return;
 	}
 
-	helperGCID = (*env)->GetMethodID(env, threadClass, "dispatchGCNotificationHelper", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJJ[Ljava/lang/String;[J[J[J[J[J[J[JJ)V");
+	helperGCID = (*env)->GetMethodID(env, threadClass, "dispatchGCNotificationHelper", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJJ[J[J[J[J[J[J[JJ)V");
 	if (NULL == helperGCID) {
 		return;
 	}
@@ -621,7 +614,6 @@ Java_com_ibm_lang_management_internal_MemoryNotificationThread_processNotificati
 			jlongArray postUsedArray = NULL;
 			jlongArray postCommittedArray = NULL;
 			jlongArray postMaxArray = NULL;
-			jobjectArray poolNamesArray = NULL;
 
 			initialArray = (*env)->NewLongArray(env, gcInfo->arraySize);
 			if (NULL == initialArray) {
@@ -649,10 +641,6 @@ Java_com_ibm_lang_management_internal_MemoryNotificationThread_processNotificati
 			}
 			postMaxArray = (*env)->NewLongArray(env, gcInfo->arraySize);
 			if (NULL == postMaxArray) {
-				return;
-			}
-			poolNamesArray = (jobjectArray)(*env)->NewObjectArray(env, gcInfo->arraySize, stringClass, NULL);
-			if (NULL == poolNamesArray) {
 				return;
 			}
 
@@ -697,17 +685,10 @@ Java_com_ibm_lang_management_internal_MemoryNotificationThread_processNotificati
 			if ((*env)->ExceptionCheck(env)) {
 				return;
 			}
-			for (idx = 0; idx < gcInfo->arraySize; ++idx) {
-				(*env)->SetObjectArrayElement(env, poolNamesArray, idx, poolNames[idx]);
-				if ((*env)->ExceptionCheck(env)) {
-					return;
-				}
-			}
 
 			(*env)->CallVoidMethod(env, threadInstance, helperGCID,
 					gcName, gcAction, gcCause,
 					(jlong)gcInfo->index, (jlong)gcInfo->startTime, (jlong)gcInfo->endTime,
-					poolNamesArray,
 					initialArray,
 					preUsedArray,
 					preCommittedArray,
