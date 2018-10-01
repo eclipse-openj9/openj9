@@ -159,6 +159,24 @@ def set_build_status(REPO, CONTEXT, SHA, URL, STATE, MESSAGE) {
     ]);
 }
 
+def cancel_running_pr_builds(JOB_NAME, PULL_ID) {
+    def buildingJobs = Jenkins.instance.getAllItems(Job.class).findAll {
+                        it.isBuilding() }
+    def matching_jobs = []
+    buildingJobs.each { job->
+        if (job.getName() == JOB_NAME) {
+            allRuns = job._getRuns()
+            allRuns.each { item ->
+                if (!item.isBuilding()) { return }
+                if (item.getEnvironment()[ghprbPullId] != PULL_ID) { return }
+                echo "Found running job for PR:'${PULL_ID}'"
+                echo "Cancelling Job:'${JOB_NAME} #${item.getNumber()}"
+                item.doStop()
+            }
+        }
+    }
+}
+
 def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE, ghprbPullId, ghprbGhRepository, ghprbCommentBody, ghprbTargetBranch, ghprbActualCommit) {
     stage ("${BUILD_JOB_NAME}") {
         return build_with_slack(BUILD_JOB_NAME, ghprbGhRepository, ghprbActualCommit,

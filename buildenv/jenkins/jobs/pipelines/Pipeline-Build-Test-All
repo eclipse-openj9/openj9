@@ -183,6 +183,11 @@ timeout(time: 10, unit: 'HOURS') {
                             }
                             OFFSET = 1
                             break
+                        case "cancel":
+                            buildFile.cancel_running_pr_builds(JOB_NAME, ghprbPullId)
+                            cleanWs()
+                            return
+                            break
                         default:
                             error("Unable to parse trigger comment. Unknown build option:'${PARSED_COMMENT[1]}'")
                     }
