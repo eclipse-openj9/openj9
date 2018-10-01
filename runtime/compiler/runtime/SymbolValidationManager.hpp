@@ -1284,6 +1284,14 @@ public:
    void exitHeuristicRegion() { _heuristicRegion--; }
    bool inHeuristicRegion() { return (_heuristicRegion > 0); }
 
+   bool verifySymbolHasBeenValidated(void *symbol)
+      {
+      if (inHeuristicRegion())
+         return true;
+      else
+         return (getIDFromSymbol(symbol) != 0);
+      }
+
 private:
 
    static const uint16_t NO_ID = 0;
