@@ -311,11 +311,7 @@ timeout(time: 10, unit: 'HOURS') {
                     }
                     cleanWs()
                 } catch(e) {
-                    if (variableFile) {
-                        printStackTrace(e)
-                    } else {
-                        echo e.toString()
-                    }
+                    echo e.toString()
                 }
             }
         }
