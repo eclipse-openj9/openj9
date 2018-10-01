@@ -111,6 +111,9 @@
 		Variation 3:
 			This variation runs test under -Xjit:count=0 option means JIT faces unresolved constant dynamic and it needs to resolve them before
 			using it.
+		Variation 4:
+			In addition to Variation 3 this test runs gc on resolving constant dynamic. This will test JIT to make sure it correctly prepares
+			GC map in code.
 		-->
 	<test>
 		<testCaseName>CondyPrimitive</testCaseName>
@@ -118,6 +121,7 @@
 			<variation>NoOptions</variation>
 			<variation>'-Xjit:count=1,disableAsyncCompilation,rtResolve'</variation>
 			<variation>'-Xjit:count=0,disableAsyncCompilation'</variation>
+			<variation>'-Xjit:count=0,disableAsyncCompilation,gcOnResolve'</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
