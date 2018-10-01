@@ -307,7 +307,7 @@ timeout(time: 10, unit: 'HOURS') {
             } finally {
                 try{
                     if (ghprbPullId) {
-                        buildFile.set_build_status("${ghprbPullLink.substring(ghprbPullLink.indexOf('/pull'))}.git", JOB_NAME, ghprbActualCommit, BUILD_URL, currentBuild.Result, 'Jobs Finished')
+                        buildFile.set_build_status("${ghprbPullLink.substring(ghprbPullLink.indexOf('/pull'))}.git", JOB_NAME, ghprbActualCommit, BUILD_URL, currentBuild.result, 'Jobs Finished')
                     }
                     cleanWs()
                 } catch(e) {
