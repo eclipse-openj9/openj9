@@ -5215,9 +5215,6 @@ typedef struct J9JavaVM {
 	UDATA aotDllHandle;
 	struct J9ROMImageHeader* arrayROMClasses;
 	struct J9BytecodeVerificationData* bytecodeVerificationData;
-#if defined(J9VM_ENV_SHARED_LIBS_USE_GLOBAL_TABLE) || defined(J9VM_ENV_CALL_VIA_TABLE)
-	UDATA vmTOC;
-#endif /* J9VM_ENV_SHARED_LIBS_USE_GLOBAL_TABLE || J9VM_ENV_CALL_VIA_TABLE */
 	char* jclDLLName;
 	UDATA defaultOSStackSize;
 #if defined(J9VM_ENV_SHARED_LIBS_USE_GLOBAL_TABLE) || defined(J9VM_ENV_CALL_VIA_TABLE)
@@ -5586,7 +5583,7 @@ typedef struct J9CInterpreterStackFrame {
 	UDATA backChain; /* caller SP */
 	UDATA preservedCR; /* callee saves in caller frame */
 	UDATA preservedLR; /* callee saves in caller frame */
-	UDATA currentTOC; /* callee saves incoming TOC in own frame */
+	UDATA currentTOC; /* callee saves own TOC in own frame */
 	UDATA outgoingArguments[J9_INLINE_JNI_MAX_ARG_COUNT];
 	UDATA jitGPRs[32]; /* r0-r31 */
 	U_8 jitFPRs[32 * 8]; /* fp0-fp31 */
@@ -5605,7 +5602,7 @@ typedef struct J9CInterpreterStackFrame {
 	UDATA preservedLR; /* callee saves in caller frame */
 	UDATA tocSave;
 	UDATA reserved;
-	UDATA currentTOC; /* callee saves incoming TOC in own frame */
+	UDATA currentTOC; /* callee saves own TOC in own frame */
 	UDATA outgoingArguments[J9_INLINE_JNI_MAX_ARG_COUNT];
 	UDATA jitGPRs[32]; /* r0-r31 */
 	U_8 jitFPRs[32 * 8]; /* fp0-fp31 */
