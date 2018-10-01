@@ -688,9 +688,7 @@
 			<variation>NoOptions</variation>
 			<variation>-XX:RecreateClassfileOnload</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	cd $(REPORTDIR); \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
 	--add-modules openj9.sharedclasses $(ADD_MODULE_JAVA_SE_EE) \
 	--add-exports java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
@@ -743,9 +741,7 @@
 			<variation>NoOptions</variation>
 			<variation>-XX:RecreateClassfileOnload</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	cd $(REPORTDIR); \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump:none -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump:none -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
 	--add-modules openj9.sharedclasses $(ADD_MODULE_JAVA_SE_EE) \
 	--add-exports java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
@@ -784,9 +780,7 @@
 			<variation>NoOptions</variation>
 			<variation>-XX:RecreateClassfileOnload</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	cd $(REPORTDIR); \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(TEST_RESROOT)$(D)TestResources.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	-Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
@@ -827,9 +821,7 @@
 			<variation>NoOptions</variation>
 			<variation>-XX:RecreateClassfileOnload</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	cd $(REPORTDIR); \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump:none -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump:none -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(TEST_RESROOT)$(D)TestResources.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	-Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
@@ -917,9 +909,7 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	cd $(REPORTDIR); \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace \
 	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)testacc.policy$(Q) \
 	-Xbootclasspath/a:$(TEST_RESROOT)$(D)TestResources.jar \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(TEST_RESROOT)$(D)TestResources.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
@@ -948,9 +938,7 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	cd $(REPORTDIR); \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace \
 	--add-modules openj9.sharedclasses $(ADD_MODULE_JAVA_SE_EE) \
 	--add-exports java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
 	--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED \

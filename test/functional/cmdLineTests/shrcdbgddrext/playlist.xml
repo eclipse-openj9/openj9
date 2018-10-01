@@ -30,9 +30,7 @@
 			<variation>Mode610</variation>
 			<variation>Mode201</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	cd $(REPORTDIR); \
-	perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl zos ; \
+		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl zos ; \
 	cp $(CMDLINETESTER_RESJAR) .; \
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf cmdlinetestresources.jar; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \
@@ -64,9 +62,7 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	cd $(REPORTDIR); \
-	perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl zos ; \
+		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl zos ; \
 	cp $(CMDLINETESTER_RESJAR) .; \
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf cmdlinetestresources.jar; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \

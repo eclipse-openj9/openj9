@@ -29,8 +29,6 @@
 			<variation>NoOptions</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-	$(MKTREE) $(REPORTDIR); \
-	cd $(REPORTDIR); \
 	ulimit -f 4000 && \
 	ulimit && \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
