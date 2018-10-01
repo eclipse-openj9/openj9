@@ -184,7 +184,7 @@ timeout(time: 10, unit: 'HOURS') {
                             OFFSET = 1
                             break
                         case "cancel":
-                            buildFile.cancel_running_pr_builds(JOB_NAME, ghprbPullId)
+                            buildFile.cancel_running_pr_builds(JOB_NAME, BUILD_NUMBER, ghprbPullId)
                             cleanWs()
                             return
                             break
