@@ -2199,17 +2199,18 @@ public String toString() {
 /**
  * Returns a formatted string describing this Class. The string has
  * the following format:
- * modifier1 modifier2 ... kind name&#60;typeparam1, typeparam2, ...&#62;. 
- * kind is one of "class", "enum", "interface", "&#64;interface", or
- * empty string for primitive types. The type parameter list is
+ * <i>modifier1 modifier2 ... kind name&lt;typeparam1, typeparam2, ...&gt;</i>.
+ * kind is one of <code>class</code>, <code>enum</code>, <code>interface</code>,
+ * <code>&#64;interface</code>, or
+ * the empty string for primitive types. The type parameter list is
  * omitted if there are no type parameters.
- *[IF Sidecar19-SE]
+/*[IF Sidecar19-SE]
  * For array classes, the string has the following format instead:
- * name&#60;typeparam1, typeparam2, ...&#62; followed by a number of
- * &#91;&#93; characters equal to the dimension of the array
- *[ENDIF]
- * 
- * @return		a formatted string describing this class.
+ * <i>name&lt;typeparam1, typeparam2, ...&gt;</i> followed by a number of
+ * <code>[]</code> pairs, one pair for each dimension of the array.
+/*[ENDIF]
+ *
+ * @return a formatted string describing this class
  * @since 1.8
  */
 public String toGenericString() {
