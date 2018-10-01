@@ -78,14 +78,15 @@ endif
 
 # temporarily support both JAVA_IMPL and JDK_IMPL
 ifndef JDK_IMPL
-	JDK_IMPL=$(JAVA_IMPL)
-endif
-
-ifndef JDK_IMPL
-	export JDK_IMPL:=openj9
+	ifndef JAVA_IMPL
+		export JDK_IMPL:=openj9
+	else
+		export JDK_IMPL:=$(JAVA_IMPL)
+	endif
 else
 	export JDK_IMPL:=$(JDK_IMPL)
 endif
+
 
 ifndef JVM_VERSION
 ifeq ($(JDK_VERSION), 8)
@@ -205,7 +206,7 @@ REPORTDIR = $(Q)$(TESTOUTPUT)$(D)$@$(Q)
 #######################################
 # TEST_STATUS
 #######################################
-TEST_STATUS=if [ $$? -eq 0 ] ; then $(ECHO) $(Q)$(Q); $(ECHO) $(Q)$@$(Q)$(Q)_PASSED$(Q); $(ECHO) $(Q)$(Q); else $(ECHO) $(Q)$(Q); $(ECHO) $(Q)$@$(Q)$(Q)_FAILED$(Q); $(ECHO) $(Q)$(Q); fi
+TEST_STATUS=if [ $$? -eq 0 ] ; then $(ECHO) $(Q)$(Q); $(ECHO) $(Q)$@$(Q)$(Q)_PASSED$(Q); $(ECHO) $(Q)$(Q); $(CD) $(TEST_ROOT); $(RM) -r $(REPORTDIR); else $(ECHO) $(Q)$(Q); $(ECHO) $(Q)$@$(Q)$(Q)_FAILED$(Q); $(ECHO) $(Q)$(Q); fi
 ifneq ($(DEBUG),)
 $(info TEST_STATUS is $(TEST_STATUS))
 endif
@@ -261,6 +262,7 @@ setup_%: testEnvSetup
 	@$(ECHO) set JCL_VERSION to $(JCL_VERSION)
 	@$(ECHO) set JAVA_BIN to $(JAVA_BIN)
 	@$(ECHO) set SPEC to $(SPEC)
+	@$(MKTREE) $(Q)$(TESTOUTPUT)$(Q)
 	@$(ECHO) Running $(TESTTARGET) ...
 	@if [ $(TOTALCOUNT) -ne 0 ]; then \
 		$(ECHO) There are $(TOTALCOUNT) test targets in $(TESTTARGET).; \

@@ -29,9 +29,7 @@
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	$(CD) $(REPORTDIR); \
-	cp -r $(Q)$(TEST_RESROOT)$(D)URLClassLoaderTests.jar$(Q) .; \
+		<command>cp -r $(Q)$(TEST_RESROOT)$(D)URLClassLoaderTests.jar$(Q) .; \
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) -xf URLClassLoaderTests.jar; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_HOME='$(JDK_HOME)' -DPATHSEP=$(Q)$(D)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) -DJAVA_EXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DCPDL=$(Q)$(P)$(Q) -DSCMODE=210 -DTEST_JVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
@@ -56,9 +54,7 @@
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	$(CD) $(REPORTDIR); \
-	cp -r $(Q)$(TEST_RESROOT)$(D)URLClassLoaderTests.jar$(Q) .; \
+		<command>cp -r $(Q)$(TEST_RESROOT)$(D)URLClassLoaderTests.jar$(Q) .; \
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) -xf URLClassLoaderTests.jar; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_HOME='$(JDK_HOME)' -DPATHSEP=$(Q)$(D)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) -DJAVA_EXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DCPDL=$(Q)$(P)$(Q) -DSCMODE=210 -DTEST_JVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
@@ -85,9 +81,7 @@
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	$(CD) $(REPORTDIR); \
-	cp -r $(Q)$(TEST_RESROOT)$(D)URLClassLoaderTests.jar$(Q) .; \
+		<command>cp -r $(Q)$(TEST_RESROOT)$(D)URLClassLoaderTests.jar$(Q) .; \
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) -xf URLClassLoaderTests.jar; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_HOME='$(JDK_HOME)' -DPATHSEP=$(Q)$(D)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) -DJAVA_EXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DCPDL=$(Q)$(P)$(Q) -DSCMODE=210 -DTEST_JVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
@@ -112,9 +106,7 @@
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	$(CD) $(REPORTDIR); \
-	cp -r $(Q)$(TEST_RESROOT)$(D)URLClassLoaderTests.jar$(Q) .; \
+		<command>cp -r $(Q)$(TEST_RESROOT)$(D)URLClassLoaderTests.jar$(Q) .; \
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) -xf URLClassLoaderTests.jar; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_HOME='$(JDK_HOME)' -DPATHSEP=$(Q)$(D)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) -DJAVA_EXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DCPDL=$(Q)$(P)$(Q) -DSCMODE=211 -DTEST_JVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
 	-jar $(CMDLINETESTER_JAR) \

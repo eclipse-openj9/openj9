@@ -427,7 +427,6 @@ sub writeTargets {
 			print $fhOut "$name: TEST_GROUP=" . $levelStr . "\n";
 			my $indent .= "\t";
 			print $fhOut "$name:\n";
-			print $fhOut "$indent\@\$(MKTREE) \$(REPORTDIR);\n";
 			print $fhOut "$indent\@echo \"\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
 			print $fhOut "$indent\@echo \"===============================================\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
 			print $fhOut "$indent\@echo \"Running test \$\@ ...\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
@@ -452,7 +451,8 @@ sub writeTargets {
 			my $command = $test->{'command'};
 			$command =~ s/^\s+//;
 			$command =~ s/\s+$//;
-			print $fhOut "$indent\{ $command; \} 2>&1 | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
+
+			print $fhOut "$indent\{ \$(MKTREE) \$(REPORTDIR); \\\n$indent\$(CD) \$(REPORTDIR); \\\n$indent$command; \} 2>&1 | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
 
 			if (defined($capabilityReqs)) {
 				foreach my $key (keys %capabilityReqs_Hash) {

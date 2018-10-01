@@ -30,9 +30,7 @@
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>	
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	$(CD) $(REPORTDIR); \
-	cp $(Q)$(TEST_RESROOT)$(D)HelperCompatibilityTests.jar$(Q) .; \
+		<command>cp $(Q)$(TEST_RESROOT)$(D)HelperCompatibilityTests.jar$(Q) .; \
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar.exe$(Q) xf HelperCompatibilityTests.jar; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_EXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DJDK_HOME=$(Q)$(JDK_HOME)$(Q) -DCPDL=$(Q)$(P)$(Q) -DPROPS_DIR=$(Q)$(TEST_RESROOT)$(D)props_win$(Q) -DSCMODE=204 \
 	-jar $(CMDLINETESTER_JAR) \
@@ -61,9 +59,7 @@
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>	
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	$(CD) $(REPORTDIR); \
-	cp $(Q)$(TEST_RESROOT)$(D)HelperCompatibilityTests.jar$(Q) .; \
+		<command>cp $(Q)$(TEST_RESROOT)$(D)HelperCompatibilityTests.jar$(Q) .; \
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(Q) xf HelperCompatibilityTests.jar; \
 	$(CONVERT_TO_EBCDIC_CMD) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_EXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DJDK_HOME=$(Q)$(JDK_HOME)$(Q) -DCPDL=$(Q)$(P)$(Q) -DPROPS_DIR=$(Q)$(TEST_RESROOT)$(D)props_unix$(Q) -DSCMODE=204 \

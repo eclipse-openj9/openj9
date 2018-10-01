@@ -54,8 +54,7 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xjit:count=1,disableAsyncCompilation,verbose,vlog="$(REPORTDIR)$(D)jitv.log" \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xjit:count=1,disableAsyncCompilation,verbose,vlog="$(REPORTDIR)$(D)jitv.log" \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames stringConcatOptTest -groups $(TEST_GROUP) \
