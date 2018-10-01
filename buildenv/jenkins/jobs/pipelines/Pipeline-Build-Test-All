@@ -148,7 +148,7 @@ timeout(time: 10, unit: 'HOURS') {
         node(LABEL) {
             try {
                 checkout scm
-                def variableFile = load 'buildenv/jenkins/common/variables-functions'
+                variableFile = load 'buildenv/jenkins/common/variables-functions'
                 buildFile = load 'buildenv/jenkins/common/pipeline-functions'
 
                 // Determine if build is a PullRequest
