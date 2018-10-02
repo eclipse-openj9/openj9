@@ -1790,6 +1790,13 @@ ZZ ================================================
     START_FUNC(_jitResolveConstantDynamic,jRCD)
 
 LABEL(_jitResolveConstantDynamicBody)
+ZZ Store all the Regsiter on Java Stack and adjust J9SP.
+ZZ VM Helper old_slow_jitResolveConstantDynamic allocates
+ZZ Data resolve frame for unresolved field and these frame
+ZZ assumes all registers are stored off to the Java Stack
+ZZ upon entry and adjusts stack frames accordingly during
+ZZ stack walk.
+   SaveRegs
 ZZ Loading arguments for JIT helper
 ZZ R1 - Address of Constant Pool
 ZZ R2 - CPIndex
@@ -1816,7 +1823,7 @@ ZZ is address of resolved constant dynamic
 ZZ into the Literal Pool 
     L_GPR   r1,eq_literalPoolAddr_inDataSnippet(r14)
     ST_GPR  r2,0(,r1)
-
+    RestoreRegs
     L_GPR r14,eq_codeRA_inDataSnippet(,r14) # Get mainline RA
 
 ZZ Branch instruction in mainline will be patched here with NOP
