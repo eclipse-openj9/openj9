@@ -17,10 +17,11 @@
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
-
 # To use this docker file:
 # First copy your public ssh key into a file named authorized_keys next to the Dockerfile
-# Make sure you are in the directory contianing the Dockerfile and authorized_keys file
+# Then include a known_hosts file next to the Dockerfile, with github as a saved host
+# This can be done with "ssh-keyscan github.com >> path_to_dockerfile/known_hosts"
+# Make sure you are in the directory contianing the Dockerfile, authorized_keys file, and known_hosts file
 # Then run:
 #   docker build -t openj9 -f Dockerfile .
 #   docker run -it openj9
@@ -147,6 +148,7 @@ RUN cd /usr/src/ \
 RUN useradd -ms /bin/bash ${USER} \
   && mkdir /home/${USER}/.ssh/
 COPY authorized_keys /home/${USER}/.ssh/authorized_keys
+COPY known_hosts /home/${USER}/.ssh/known_hosts
 RUN chown -R ${USER}:${USER} /home/${USER} \
   && chmod 644 /home/${USER}/.ssh/authorized_keys
 
