@@ -236,61 +236,65 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
     jobs["build"] = build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS['OPENJDK'], OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], OMR_REPO, OMR_BRANCH, SHAS['OMR'], params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.BUILD_NODE)
     echo "JOB: ${BUILD_JOB_NAME} PASSED in: ${jobs['build'].getDurationString()}"
 
-    if (TESTS_TARGETS.trim() != "none") {
-        def testjobs = [:]
-        def TARGET_NAMES = []
+    try {
+        if (TESTS_TARGETS.trim() != "none") {
+            def testjobs = [:]
+            def TARGET_NAMES = []
 
-        if (SHAS['VENDOR_TEST']) {
-            // the downstream job is expecting comma separated SHAs
-            // convert vendor shas map to a string
-            VENDOR_TEST_SHAS = SHAS['VENDOR_TEST'].values().join(',')
-        }
-
-        echo "Using VENDOR_TEST_REPOS = ${VENDOR_TEST_REPOS}, VENDOR_TEST_BRANCHES = ${VENDOR_TEST_BRANCHES}, VENDOR_TEST_SHAS = ${VENDOR_TEST_SHAS}, VENDOR_TEST_DIRS = ${VENDOR_TEST_DIRS}, BUILD_LIST = ${BUILD_LIST}" 
-
-        def targets = TESTS_TARGETS.split(",")
-        targets.each { target ->
-            switch (target.trim().toLowerCase()) {
-                case "_sanity":
-                    TARGET_NAMES.addAll(["sanity.functional", "sanity.system"])
-                    break
-                case "_extended":
-                    TARGET_NAMES.addAll(["extended.functional", "extended.system"])
-                    break
-                default:
-                    TARGET_NAMES.add(target.trim())
+            if (SHAS['VENDOR_TEST']) {
+                // the downstream job is expecting comma separated SHAs
+                // convert vendor shas map to a string
+                VENDOR_TEST_SHAS = SHAS['VENDOR_TEST'].values().join(',')
             }
-        }
 
-        // Determine if Build job archived to Artifactory
-        def BUILD_JOB_ENV = jobs["build"].getBuildVariables()
-        ARTIFACTORY_CREDS = ''
-        echo "BUILD_JOB_ENV:'${BUILD_JOB_ENV}'"
-        if (BUILD_JOB_ENV['CUSTOMIZED_SDK_URL']) {
-            CUSTOMIZED_SDK_URL = BUILD_JOB_ENV['CUSTOMIZED_SDK_URL']
-            ARTIFACTORY_CREDS = BUILD_JOB_ENV['ARTIFACTORY_CREDS']
-            ARTIFACTORY_SERVER = BUILD_JOB_ENV['ARTIFACTORY_SERVER']
-            echo "Passing CUSTOMIZED_SDK_URL:'${CUSTOMIZED_SDK_URL}'"
-            echo "Using ARTIFACTORY_CREDS:'${ARTIFACTORY_CREDS}'"
-            echo "Using ARTIFACTORY_SERVER:'${ARTIFACTORY_SERVER}'"
-        }
-        for (name in TARGET_NAMES) {
-            def TEST_FLAG
-            if (name.contains('+jitaas')) {
-                name -= '+jitaas'
-                TEST_FLAG = 'JITAAS'
-            }
-            def TEST_JOB_NAME = "Test-${name}-JDK${SDK_VERSION}-${SPEC}"
-            testjobs["${TEST_JOB_NAME}"] = {
-                if (ARTIFACTORY_CREDS) {
-                    jobs["${TEST_JOB_NAME}"] = build_with_artifactory(TEST_JOB_NAME, params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, CUSTOMIZED_SDK_URL, ARTIFACTORY_SERVER, ARTIFACTORY_CREDS, TEST_FLAG)
-                } else {
-                    jobs["${TEST_JOB_NAME}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, TEST_FLAG)
+            echo "Using VENDOR_TEST_REPOS = ${VENDOR_TEST_REPOS}, VENDOR_TEST_BRANCHES = ${VENDOR_TEST_BRANCHES}, VENDOR_TEST_SHAS = ${VENDOR_TEST_SHAS}, VENDOR_TEST_DIRS = ${VENDOR_TEST_DIRS}, BUILD_LIST = ${BUILD_LIST}" 
+
+            def targets = TESTS_TARGETS.split(",")
+            targets.each { target ->
+                switch (target.trim().toLowerCase()) {
+                    case "_sanity":
+                        TARGET_NAMES.addAll(["sanity.functional", "sanity.system"])
+                        break
+                    case "_extended":
+                        TARGET_NAMES.addAll(["extended.functional", "extended.system"])
+                        break
+                    default:
+                        TARGET_NAMES.add(target.trim())
                 }
-                echo "JOB: ${TEST_JOB_NAME} PASSED in: ${jobs[TEST_JOB_NAME].getDurationString()}"
             }
+
+            // Determine if Build job archived to Artifactory
+            def BUILD_JOB_ENV = jobs["build"].getBuildVariables()
+            ARTIFACTORY_CREDS = ''
+            echo "BUILD_JOB_ENV:'${BUILD_JOB_ENV}'"
+            if (BUILD_JOB_ENV['CUSTOMIZED_SDK_URL']) {
+                CUSTOMIZED_SDK_URL = BUILD_JOB_ENV['CUSTOMIZED_SDK_URL']
+                ARTIFACTORY_CREDS = BUILD_JOB_ENV['ARTIFACTORY_CREDS']
+                ARTIFACTORY_SERVER = BUILD_JOB_ENV['ARTIFACTORY_SERVER']
+                echo "Passing CUSTOMIZED_SDK_URL:'${CUSTOMIZED_SDK_URL}'"
+                echo "Using ARTIFACTORY_CREDS:'${ARTIFACTORY_CREDS}'"
+                echo "Using ARTIFACTORY_SERVER:'${ARTIFACTORY_SERVER}'"
+            }
+            for (name in TARGET_NAMES) {
+                def TEST_FLAG
+                if (name.contains('+jitaas')) {
+                    name -= '+jitaas'
+                    TEST_FLAG = 'JITAAS'
+                }
+                def TEST_JOB_NAME = "Test-${name}-JDK${SDK_VERSION}-${SPEC}"
+                testjobs["${TEST_JOB_NAME}"] = {
+                    if (ARTIFACTORY_CREDS) {
+                        jobs["${TEST_JOB_NAME}"] = build_with_artifactory(TEST_JOB_NAME, params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, CUSTOMIZED_SDK_URL, ARTIFACTORY_SERVER, ARTIFACTORY_CREDS, TEST_FLAG)
+                    } else {
+                        jobs["${TEST_JOB_NAME}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, TEST_FLAG)
+                    }
+                    echo "JOB: ${TEST_JOB_NAME} PASSED in: ${jobs[TEST_JOB_NAME].getDurationString()}"
+                }
+            }
+            parallel testjobs
         }
-        parallel testjobs
+    } finally {
+        jobs["build"].getRawBuild().deleteArtifacts()
     }
 
     // return jobs for further reference
