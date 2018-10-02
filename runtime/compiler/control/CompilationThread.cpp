@@ -501,10 +501,7 @@ bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
                  !TR::Options::getCmdLineOptions()->getOption(TR_DisableDowngradeToColdOnVMPhaseStartup))
                )
                {
-#if !defined(J9ZOS390)  // disable for zOS because we don't want to increase CPU time
-               if (!importantMethodForStartup(method))
-#endif
-                  doDowngrade = true;
+               doDowngrade = true;
                }
             // Downgrade if RI based recompilation is enabled
             else if (persistentInfo->isRuntimeInstrumentationRecompilationEnabled() && // RI and RI Recompilation is functional
@@ -6411,7 +6408,8 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       {
       entry->_useAotCompilation = true;
       // In some circumstances AOT compilations are performed at warm
-      if (TR::Options::getCmdLineOptions()->getAggressivityLevel() == TR::Options::AGGRESSIVE_AOT &&
+      if ((TR::Options::getCmdLineOptions()->getAggressivityLevel() == TR::Options::AGGRESSIVE_AOT ||
+           getCompilationInfo()->importantMethodForStartup(method)) &&
           entry->_optimizationPlan->isOptLevelDowngraded() &&
           entry->_optimizationPlan->getOptLevel() == cold) // Is this test really needed?
          {
