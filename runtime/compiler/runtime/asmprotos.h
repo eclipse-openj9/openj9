@@ -88,6 +88,7 @@ JIT_HELPER(jitNewObject);  // asm calling-convention helper
 JIT_HELPER(jitObjectHashCode);  // asm calling-convention helper
 JIT_HELPER(jitPostJNICallOffloadCheck);  // asm calling-convention helper
 JIT_HELPER(jitPreJNICallOffloadCheck);  // asm calling-convention helper
+JIT_HELPER(jitReferenceArrayCopy);  // asm calling-convention helper
 JIT_HELPER(jitReleaseVMAccess);  // asm calling-convention helper
 JIT_HELPER(jitReportMethodEnter);  // asm calling-convention helper
 JIT_HELPER(jitReportMethodExit);  // asm calling-convention helper
@@ -121,9 +122,9 @@ JIT_HELPER(jitThrowArithmeticException);  // asm calling-convention helper
 JIT_HELPER(jitThrowArrayIndexOutOfBounds);  // asm calling-convention helper
 JIT_HELPER(jitThrowArrayStoreException);  // asm calling-convention helper
 JIT_HELPER(jitThrowArrayStoreExceptionWithIP);  // asm calling-convention helper
+JIT_HELPER(jitThrowClassCastException);  // asm calling-convention helper
 JIT_HELPER(jitThrowCurrentException);  // asm calling-convention helper
 JIT_HELPER(jitThrowException);  // asm calling-convention helper
-JIT_HELPER(jitThrowClassCastException);  // asm calling-convention helper
 JIT_HELPER(jitThrowExceptionInInitializerError);  // asm calling-convention helper
 JIT_HELPER(jitThrowInstantiationException);  // asm calling-convention helper
 JIT_HELPER(jitThrowNullPointerException);  // asm calling-convention helper
