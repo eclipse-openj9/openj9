@@ -7213,7 +7213,11 @@ TR_J9ByteCodeIlGenerator::storeInstance(int32_t cpIndex)
       node = TR::Node::createWithSymRef(TR::wrtbari, 3, 3, addressNode, value, parentObject, symRef);
       }
    else
+      {
+      if (type == TR::Int8 && symRefTab()->isFieldTypeBool(symRef))
+         value = TR::Node::create(TR::iand, 2, value, TR::Node::create(TR::iconst, 0, 1));
       node = TR::Node::createWithSymRef(comp()->il.opCodeForIndirectStore(type), 2, 2, addressNode, value, symRef);
+      }
 
    if (symbol->isPrivate() && _classInfo && comp()->getNeedsClassLookahead())
       {
@@ -7337,6 +7341,10 @@ TR_J9ByteCodeIlGenerator::storeStatic(int32_t cpIndex)
    TR::DataType type = symbol->getDataType();
 
    TR::Node * node;
+
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)fe();
+   if (type == TR::Int8 && symRefTab()->isStaticTypeBool(symRef))
+      value = TR::Node::create(TR::iand, 2, value, TR::Node::create(TR::iconst, 0, 1));
 
    if (type == TR::Address && _generateWriteBarriers)
       {

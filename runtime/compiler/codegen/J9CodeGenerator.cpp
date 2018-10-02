@@ -343,15 +343,16 @@ J9::CodeGenerator::lowerCompressedRefs(
 
    if (loadOrStoreNode->getOpCode().isLoadIndirect() && shouldBeCompressed)
       {
-      if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+      if (TR::Compiler->target.cpu.isZ() && TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
          {
-         dumpOptDetails(self()->comp(), "compression sequence %p is not required for loads under concurrent scavenge\n", node);
+         dumpOptDetails(self()->comp(), "compression sequence %p is not required for loads under concurrent scavenge on Z.\n", node);
          return;
          }
 
       // base object
       address = loadOrStoreNode->getFirstChild();
-      loadOrStoreOp = self()->comp()->il.opCodeForIndirectLoad(TR::Int32);
+      loadOrStoreOp = TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() ? self()->comp()->il.opCodeForIndirectReadBarrier(TR::Int32) :
+                                                                                   self()->comp()->il.opCodeForIndirectLoad(TR::Int32);
       }
    else if ((loadOrStoreNode->getOpCode().isStoreIndirect() ||
               loadOrStoreNode->getOpCodeValue() == TR::arrayset) &&

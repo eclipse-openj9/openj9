@@ -1255,7 +1255,6 @@ J9::SymbolReferenceTable::dynamicMethodSymrefsByCallSiteIndex(int32_t index)
    return _dynamicMethodSymrefsByCallSiteIndex[index];
    }
 
-
 bool
 J9::SymbolReferenceTable::isFieldClassObject(TR::SymbolReference *symRef)
    {
@@ -1265,6 +1264,28 @@ J9::SymbolReferenceTable::isFieldClassObject(TR::SymbolReference *symRef)
    return false;
    }
 
+static bool isSignatureTypeBool(const char *fieldSignature, int32_t len)
+   {
+   return len == 1 && fieldSignature[0] == 'Z';
+   }
+
+bool
+J9::SymbolReferenceTable::isFieldTypeBool(TR::SymbolReference *symRef)
+   {
+   int32_t len;
+   const char *fieldSignature = symRef->getOwningMethod(comp())->fieldSignatureChars(symRef->getCPIndex(), len);
+   dumpOptDetails(comp(), "got field signature as %s\n", fieldSignature);
+   return isSignatureTypeBool(fieldSignature, len);
+   }
+
+bool
+J9::SymbolReferenceTable::isStaticTypeBool(TR::SymbolReference *symRef)
+   {
+   int32_t len;
+   const char *fieldSignature = symRef->getOwningMethod(comp())->staticSignatureChars(symRef->getCPIndex(), len);
+   dumpOptDetails(comp(), "got static signature as %s\n", fieldSignature);
+   return isSignatureTypeBool(fieldSignature, len);
+   }
 
 static bool parmSlotCameFromExpandingAnArchetypeArgPlaceholder(int32_t slot, TR::ResolvedMethodSymbol *sym, TR_Memory *mem)
    {
