@@ -12153,7 +12153,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
             resultReg = VMinlineCompareAndSwap(node, cg, true);
             return true;
             }
-         else if ((node->isUnsafeGetPutCASCallOnNonArray() || !TR::Compiler->om.canGenerateArraylets()) && node->isSafeForCGToFastPathUnsafeCall())
+         else if (cg->is64BitProcessor() && (node->isUnsafeGetPutCASCallOnNonArray() || !TR::Compiler->om.canGenerateArraylets()) && node->isSafeForCGToFastPathUnsafeCall())
             {
             resultReg = inlineAtomicOperation(node, cg, methodSymbol);
             return true;
