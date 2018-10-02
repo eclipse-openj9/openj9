@@ -636,131 +636,131 @@ START_PROC(j2iVirtual)
 END_PROC(j2iVirtual)
 
 START_PROC(icallVMprJavaSendNativeStatic)
-	jmp j2iTransition
+	jmp GLOBAL_SYMBOL(j2iTransition)
 END_PROC(icallVMprJavaSendNativeStatic)
 
 START_PROC(icallVMprJavaSendStatic0)
-	jmp j2iTransition
+	jmp GLOBAL_SYMBOL(j2iTransition)
 END_PROC(icallVMprJavaSendStatic0)
 
 START_PROC(icallVMprJavaSendStatic1)
-	jmp j2iTransition
+	jmp GLOBAL_SYMBOL(j2iTransition)
 END_PROC(icallVMprJavaSendStatic1)
 
 START_PROC(icallVMprJavaSendStaticJ)
-	jmp j2iTransition
+	jmp GLOBAL_SYMBOL(j2iTransition)
 END_PROC(icallVMprJavaSendStaticJ)
 
 START_PROC(icallVMprJavaSendStaticF)
-	jmp j2iTransition
+	jmp GLOBAL_SYMBOL(j2iTransition)
 END_PROC(icallVMprJavaSendStaticF)
 
 START_PROC(icallVMprJavaSendStaticD)
-	jmp j2iTransition
+	jmp GLOBAL_SYMBOL(j2iTransition)
 END_PROC(icallVMprJavaSendStaticD)
 
 START_PROC(icallVMprJavaSendStaticSync0)
-	jmp j2iTransition
+	jmp GLOBAL_SYMBOL(j2iTransition)
 END_PROC(icallVMprJavaSendStaticSync0)
 
 START_PROC(icallVMprJavaSendStaticSync1)
-	jmp j2iTransition
+	jmp GLOBAL_SYMBOL(j2iTransition)
 END_PROC(icallVMprJavaSendStaticSync1)
 
 START_PROC(icallVMprJavaSendStaticSyncJ)
-	jmp j2iTransition
+	jmp GLOBAL_SYMBOL(j2iTransition)
 END_PROC(icallVMprJavaSendStaticSyncJ)
 
 START_PROC(icallVMprJavaSendStaticSyncF)
-	jmp j2iTransition
+	jmp GLOBAL_SYMBOL(j2iTransition)
 END_PROC(icallVMprJavaSendStaticSyncF)
 
 START_PROC(icallVMprJavaSendStaticSyncD)
-	jmp j2iTransition
+	jmp GLOBAL_SYMBOL(j2iTransition)
 END_PROC(icallVMprJavaSendStaticSyncD)
 
 START_PROC(icallVMprJavaSendNativeVirtual)
-	jmp j2iVirtual
+	jmp GLOBAL_SYMBOL(j2iVirtual)
 END_PROC(icallVMprJavaSendNativeVirtual)
 
 START_PROC(icallVMprJavaSendVirtual0)
-	jmp j2iVirtual
+	jmp GLOBAL_SYMBOL(j2iVirtual)
 END_PROC(icallVMprJavaSendVirtual0)
 
 START_PROC(icallVMprJavaSendVirtual1)
-	jmp j2iVirtual
+	jmp GLOBAL_SYMBOL(j2iVirtual)
 END_PROC(icallVMprJavaSendVirtual1)
 
 START_PROC(icallVMprJavaSendVirtualJ)
-	jmp j2iVirtual
+	jmp GLOBAL_SYMBOL(j2iVirtual)
 END_PROC(icallVMprJavaSendVirtualJ)
 
 START_PROC(icallVMprJavaSendVirtualF)
-	jmp j2iVirtual
+	jmp GLOBAL_SYMBOL(j2iVirtual)
 END_PROC(icallVMprJavaSendVirtualF)
 
 START_PROC(icallVMprJavaSendVirtualD)
-	jmp j2iVirtual
+	jmp GLOBAL_SYMBOL(j2iVirtual)
 END_PROC(icallVMprJavaSendVirtualD)
 
 START_PROC(icallVMprJavaSendVirtualSync0)
-	jmp j2iVirtual
+	jmp GLOBAL_SYMBOL(j2iVirtual)
 END_PROC(icallVMprJavaSendVirtualSync0)
 
 START_PROC(icallVMprJavaSendVirtualSync1)
-	jmp j2iVirtual
+	jmp GLOBAL_SYMBOL(j2iVirtual)
 END_PROC(icallVMprJavaSendVirtualSync1)
 
 START_PROC(icallVMprJavaSendVirtualSyncJ)
-	jmp j2iVirtual
+	jmp GLOBAL_SYMBOL(j2iVirtual)
 END_PROC(icallVMprJavaSendVirtualSyncJ)
 
 START_PROC(icallVMprJavaSendVirtualSyncF)
-	jmp j2iVirtual
+	jmp GLOBAL_SYMBOL(j2iVirtual)
 END_PROC(icallVMprJavaSendVirtualSyncF)
 
 START_PROC(icallVMprJavaSendVirtualSyncD)
-	jmp j2iVirtual
+	jmp GLOBAL_SYMBOL(j2iVirtual)
 END_PROC(icallVMprJavaSendVirtualSyncD)
 
 START_PROC(icallVMprJavaSendInvokeExact0)
-	jmp j2iInvokeExact
+	jmp GLOBAL_SYMBOL(j2iInvokeExact)
 END_PROC(icallVMprJavaSendInvokeExact0)
 
 START_PROC(icallVMprJavaSendInvokeExact1)
-	jmp j2iInvokeExact
+	jmp GLOBAL_SYMBOL(j2iInvokeExact)
 END_PROC(icallVMprJavaSendInvokeExact1)
 
 START_PROC(icallVMprJavaSendInvokeExactD)
-	jmp j2iInvokeExact
+	jmp GLOBAL_SYMBOL(j2iInvokeExact)
 END_PROC(icallVMprJavaSendInvokeExactD)
 
 START_PROC(icallVMprJavaSendInvokeExactF)
-	jmp j2iInvokeExact
+	jmp GLOBAL_SYMBOL(j2iInvokeExact)
 END_PROC(icallVMprJavaSendInvokeExactF)
 
 START_PROC(icallVMprJavaSendInvokeExactJ)
-	jmp j2iInvokeExact
+	jmp GLOBAL_SYMBOL(j2iInvokeExact)
 END_PROC(icallVMprJavaSendInvokeExactJ)
 
 START_PROC(icallVMprJavaSendInvokeExactL)
-	jmp j2iInvokeExact
+	jmp GLOBAL_SYMBOL(j2iInvokeExact)
 END_PROC(icallVMprJavaSendInvokeExactL)
 
 START_PROC(icallVMprJavaSendStaticL)
-	jmp j2iTransition
+	jmp GLOBAL_SYMBOL(j2iTransition)
 END_PROC(icallVMprJavaSendStaticL)
 
 START_PROC(icallVMprJavaSendStaticSyncL)
-	jmp j2iTransition
+	jmp GLOBAL_SYMBOL(j2iTransition)
 END_PROC(icallVMprJavaSendStaticSyncL)
 
 START_PROC(icallVMprJavaSendVirtualL)
-	jmp j2iVirtual
+	jmp GLOBAL_SYMBOL(j2iVirtual)
 END_PROC(icallVMprJavaSendVirtualL)
 
 START_PROC(icallVMprJavaSendVirtualSyncL)
-	jmp j2iVirtual
+	jmp GLOBAL_SYMBOL(j2iVirtual)
 END_PROC(icallVMprJavaSendVirtualSyncL)
 
 	DECLARE_EXTERN(c_jitDecompileOnReturn)

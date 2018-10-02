@@ -9083,7 +9083,22 @@ TR::Register *intOrLongClobberEvaluate(
       }
    }
 
-static TR::Register* intrinsicIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isCompressed)
+/**
+ * \brief
+ *   Generate inlined instructions equivalent to com/ibm/jit/JITHelpers.intrinsicIndexOfLatin1 or com/ibm/jit/JITHelpers.intrinsicIndexOfUTF16
+ *
+ * \param node
+ *   The tree node
+ *
+ * \param isLatin1
+ *   True when the string is Latin1, False when the string is UTF16
+ *
+ * \param cg
+ *   The Code Generator
+ *
+ * Note that this version does not support discontiguous arrays
+ */
+static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, bool isLatin1, TR::CodeGenerator* cg)
    {
    static uint8_t MASKOFSIZEONE[] =
       {
@@ -9104,7 +9119,7 @@ static TR::Register* intrinsicIndexOf(TR::Node* node, TR::CodeGenerator* cg, boo
    uint8_t shift = 0;
    uint8_t* shuffleMask = NULL;
    auto compareOp = BADIA32Op;
-   if(isCompressed)
+   if(isLatin1)
       {
       shuffleMask = MASKOFSIZEONE;
       compareOp = PCMPEQBRegReg;
@@ -11318,12 +11333,12 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
          if (!cg->getSupportsInlineStringIndexOf())
             break;
          else
-            return intrinsicIndexOf(node, cg, true);
+            return inlineIntrinsicIndexOf(node, true, cg);
       case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
          if (!cg->getSupportsInlineStringIndexOf())
             break;
          else
-            return intrinsicIndexOf(node, cg, false);
+            return inlineIntrinsicIndexOf(node, false, cg);
       case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Big:
       case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Little:
          return TR::TreeEvaluator::encodeUTF16Evaluator(node, cg);
