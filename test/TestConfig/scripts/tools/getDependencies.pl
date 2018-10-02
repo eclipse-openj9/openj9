@@ -71,9 +71,9 @@ my %asm_all = (
 	sha1 => '535f141f6c8fc65986a3469839a852a3266d1025'
 );
 my %asm_7_0 = (
-	url => 'https://repository.ow2.org/nexus/content/repositories/snapshots/org/ow2/asm/asm/7.0-beta-SNAPSHOT/asm-7.0-beta-20180929.073030-16.jar',
+	url => 'https://repository.ow2.org/nexus/content/repositories/releases/org/ow2/asm/asm/7.0-beta/asm-7.0-beta.jar',
 	fname => 'asm-7.0.jar',
-	sha1 => '1fc781c7bf0aa32338032bbcc0204c751022f32b'
+	sha1 => '7804855908e0a5e4f98e3364fa537426d9f5329c'
 );
 my %commons_cli = (
 	url => 'http://central.maven.org/maven2/commons-cli/commons-cli/1.2/commons-cli-1.2.jar',
