@@ -433,7 +433,8 @@ def set_slack_channel() {
 }
 
 def set_artifactory_config() {
-    if (VARIABLES.artifactory_server) {
+    ARTIFACTORY_SERVER = VARIABLES.artifactory_server
+    if (ARTIFACTORY_SERVER) {
         env.ARTIFACTORY_SERVER = ARTIFACTORY_SERVER
         env.ARTIFACTORY_REPO = VARIABLES.artifactory_repo
         // Set Creds to env so that the parent pipeline can retireve them.
