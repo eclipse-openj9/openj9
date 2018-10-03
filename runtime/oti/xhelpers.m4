@@ -205,6 +205,8 @@ dnl C linkage (windows and linux)
 dnl	argument GPRs: none (stdcall) / ECX EDX (fastcall)
 dnl	preserved: EBX EDI ESI, no XMM
 
+define({PARM_REG},{ifelse($1,1,_rcx,$1,2,_rdx,{ERROR})})
+
 define({_rax},{eax})
 define({_rbx},{ebx})
 define({_rcx},{ecx})

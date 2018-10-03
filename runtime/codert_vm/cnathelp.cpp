@@ -2064,23 +2064,22 @@ old_slow_jitThrowArrayIndexOutOfBounds(J9VMThread *currentThread)
 void* J9FASTCALL
 impl_jitReferenceArrayCopy(J9VMThread *currentThread, UDATA lengthInBytes)
 {
-	SLOW_JIT_HELPER_PROLOGUE();
+	JIT_HELPER_PROLOGUE();
 	void* exception = NULL;
-	if (-1 != currentThread->javaVM->memoryManagerFunctions->referenceArrayCopy(currentThread,
-																				(J9IndexableObject*)currentThread->floatTemp1,
-																				(J9IndexableObject*)currentThread->floatTemp2,
-																				(fj9object_t*)currentThread->floatTemp3,
-																				(fj9object_t*)currentThread->floatTemp4,
+	if (-1 != currentThread->javaVM->memoryManagerFunctions->referenceArrayCopy(
+		currentThread,
+		(J9IndexableObject*)currentThread->floatTemp1,
+		(J9IndexableObject*)currentThread->floatTemp2,
+		(fj9object_t*)currentThread->floatTemp3,
+		(fj9object_t*)currentThread->floatTemp4,
 #if defined(J9VM_GC_COMPRESSED_POINTERS) || !defined(J9VM_ENV_DATA64)
-																				(I_32)(lengthInBytes >> 2)
+		(I_32)(lengthInBytes >> 2)
 #else
-																				(I_32)(lengthInBytes >> 3)
+		(I_32)(lengthInBytes >> 3)
 #endif /* J9VM_INTERP_COMPRESSED_OBJECT_HEADER || !J9VM_ENV_DATA64 */
-    ))
-	{
-        exception = (void*)-1;
+	)) {
+		exception = (void*)-1;
 	}
-	SLOW_JIT_HELPER_EPILOGUE();
 	return exception;
 }
 
