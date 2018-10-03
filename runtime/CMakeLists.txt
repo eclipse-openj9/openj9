@@ -52,6 +52,7 @@ include(OmrTracegen)
 
 include(cmake/build_tags.cmake)
 include(cmake/compiler_config.cmake)
+include(cmake/J9vmGenAsm.cmake)
 
 ###
 ### Various configuration
@@ -128,7 +129,6 @@ add_custom_target(j9vm_m4gen
 		"${CMAKE_CURRENT_BINARY_DIR}/redirector/generated.c"
 		"${CMAKE_CURRENT_BINARY_DIR}/j9vm/generated.h"
 )
-
 
 ###
 ### Helper interface libraries
