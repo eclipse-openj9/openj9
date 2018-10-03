@@ -127,14 +127,6 @@ def git_push_auth(REPO, OPTION, CRED_ID) {
     }
 }
 
-def get_date() {
-    //Returns a string for the current date YYYYMMDD_HHMMSS
-    return sh (
-        script: 'date +%Y%m%d_%H%M%S',
-        returnStdout: true
-    ).trim()
-}
-
 def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE) {
     stage ("${BUILD_JOB_NAME}") {
         return build_with_slack(BUILD_JOB_NAME,

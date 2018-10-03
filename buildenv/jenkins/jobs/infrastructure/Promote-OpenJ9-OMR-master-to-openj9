@@ -41,7 +41,7 @@ timeout(time: 3, unit: 'HOURS') {
 
                 OLD_SHA = buildfile.get_sha("${HTTP}${REPO}", TARGET_BRANCH)
 
-                MERGE_DATE = buildfile.get_date()
+                MERGE_DATE = variableFile.get_date()
 
                 sh "git merge ${OMR_COMMIT} -m 'Merge ${OMR_COMMIT} into ${OLD_SHA}'"
 
