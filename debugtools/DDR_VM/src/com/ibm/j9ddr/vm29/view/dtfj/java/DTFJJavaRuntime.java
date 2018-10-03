@@ -191,7 +191,7 @@ public class DTFJJavaRuntime implements JavaRuntime {
 					properties.setProperty("AOT", "disabled");
 				}
 				
-				if (jitConfig.fsdEnabled().eq(new UDATA(0))) {
+				if (!jitConfig.fsdEnabled().eq(new UDATA(0))) {
 					properties.setProperty("FSD", "enabled");
 				} else {
 					properties.setProperty("FSD", "disabled");
