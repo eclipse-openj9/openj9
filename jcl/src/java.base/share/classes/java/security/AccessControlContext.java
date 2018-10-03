@@ -521,7 +521,11 @@ static int checkPermWithCachedPDsImplied(Permission perm, Object[] toCheck, Acce
 					}
 				}
 			}
+			/*[IF Sidecar19-SE-OpenJ9]*/
+			if (!((ProtectionDomain) domain).impliesWithAltFilePerm(perm)) {
+			/*[ELSE]*/
 			if (!((ProtectionDomain) domain).implies(perm)) {
+			/*[ENDIF] Sidecar19-SE-OpenJ9*/
 				return i; // NOT implied
 			}
 		}
