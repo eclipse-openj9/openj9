@@ -126,6 +126,53 @@ endef # DEF_RULE.pasm
 
 RULE.pasm=$(eval $(DEF_RULE.pasm))
 
+### NASM-specific rules
+
+ifeq ($(OS),linux)
+	ifeq ($(HOST_BITS),32)
+		OBJ_FORMAT=-felf32
+	else
+		OBJ_FORMAT=-felf64
+	endif
+endif #(OS = linux)
+
+ifeq ($(OS),osx)
+	OBJ_FORMAT=-fmacho64
+endif #(OS = osx)
+
+#
+# Compile .nasm file into .o file
+#
+define DEF_RULE.nasm
+$(1): $(2) | jit_createdirs
+	nasm $(OBJ_FORMAT) $$(patsubst %,-D%=1,$$(S_DEFINES)) $$(patsubst %,-I'%/',$$(S_INCLUDES)) -o $$@ $$<
+
+JIT_DIR_LIST+=$(dir $(1))
+
+jit_cleanobjs::
+	rm -f $(1)
+
+endef # DEF_RULE.nasm
+
+RULE.nasm=$(eval $(DEF_RULE.nasm))
+
+#
+# Preprocess pnasm into nasm and then assemble into .o
+# 
+define DEF_RULE.pnasm
+$(1).nasm: $(2) | jit_createdirs
+	$$(PASM_CMD) $$(PASM_FLAGS) $$(patsubst %,-I'%',$$(PASM_INCLUDES)) -o $$@ -x assembler-with-cpp -E -P $$<
+
+JIT_DIR_LIST+=$(dir $(1))
+
+jit_cleanobjs::
+	rm -f $(1).nasm
+
+$(call RULE.nasm,$(1),$(1).nasm)
+endef # DEF_RULE.pnasm
+
+RULE.pnasm=$(eval $(DEF_RULE.pnasm))
+
 endif # ($(HOST_ARCH),x)
 ##### END X SPECIFIC RULES #####
 
