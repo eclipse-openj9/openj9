@@ -22,6 +22,38 @@
 # These are the rules to compile files of type ".x" into object files
 # as well as to generate clean and cleandeps rules
 #
+#
+# Compile .proto files to .cpp files
+#
+PROTO_GEN_DIR=$(FIXED_SRCBASE)/compiler/rpc/gen
+PROTO_DIR=$(FIXED_SRCBASE)/compiler/rpc/protos
+
+#
+# Compile .proto file into .cpp and .h files
+#
+define DEF_RULE.proto
+
+$(1).pb.cpp $(1).pb.h $(1).grpc.pb.cpp $(1).grpc.pb.h: $(2) | jit_createdirs
+ifdef JITAAS_USE_GRPC
+	$$(PROTO_CMD) --cpp_out=$$(PROTO_GEN_DIR) --plugin=protoc-gen-grpc="$$(GRPC_CPP)" -I $$(PROTO_DIR) $$< && \
+	$$(PROTO_CMD) --grpc_out=$$(PROTO_GEN_DIR) --plugin=protoc-gen-grpc="$$(GRPC_CPP)" -I $$(PROTO_DIR) $$< && \
+	cp $(1).grpc.pb.cc $(1).grpc.pb.cpp
+else
+	$$(PROTO_CMD) --cpp_out=$$(PROTO_GEN_DIR) -I $$(PROTO_DIR) $$<
+endif
+	cp $(1).pb.cc $(1).pb.cpp
+
+JIT_DIR_LIST+=$(dir $(1))
+
+jit_cleanobjs::
+ifdef JITAAS_USE_GRPC
+	rm -f $(1).grpc.pb.cpp $(1).grpc.pb.h
+endif
+	rm -f $(1).pb.cpp $(1).pb.h
+
+endef # DEF_RULE.proto
+
+RULE.proto=$(eval $(DEF_RULE.proto))
 
 #
 # Compile .c file into .o file
@@ -130,7 +162,7 @@ endif # ($(HOST_ARCH),x)
 ##### END X SPECIFIC RULES #####
 
 ##### START PPC SPECIFIC RULES #####
-ifeq ($(HOST_ARCH),p) 
+ifeq ($(HOST_ARCH),p)
 
 #
 # Compile .ipp file into .o file
@@ -166,7 +198,7 @@ endef # DEF_RULE.spp
 
 RULE.spp=$(eval $(DEF_RULE.spp))
 
-endif # ($(HOST_ARCH),p) 
+endif # ($(HOST_ARCH),p)
 ##### END PPC SPECIFIC RULES #####
 
 ##### START Z SPECIFIC RULES #####

@@ -481,11 +481,16 @@ J9::CodeCache::addFreeBlock(void  *voidMetaData)
             // (IsAotedBody==false when addFreeBlock is called during compilation)
             if (!pmi || !pmi->isInDataCache())
                {
-               TR_Memory::jitPersistentFree(bi);
-               // If we free bodyInfo, we need to also free metaData->bodyInfo->mapTable by calling freeFastWalkCache()
-               J9VMThread *currentVMThread = _manager->javaVM()->internalVMFunctions->currentVMThread(_manager->javaVM());
-               freeFastWalkCache(currentVMThread, metaData);
-               metaData->bodyInfo = NULL;
+               // If compiled remotely, the body info is currently also in the DataCache so don't free it but still consider freeing
+               // the MethodInfo below since it is independent
+               if (!bi->getIsRemoteCompileBody())
+                  {
+                  TR_Memory::jitPersistentFree(bi);
+                  // If we free bodyInfo, we need to also free metaData->bodyInfo->mapTable by calling freeFastWalkCache()
+                  J9VMThread *currentVMThread = _manager->javaVM()->internalVMFunctions->currentVMThread(_manager->javaVM());
+                  freeFastWalkCache(currentVMThread, metaData);
+                  metaData->bodyInfo = NULL;
+                  }
                }
 
             // Attempt to free the persistentMethodInfo

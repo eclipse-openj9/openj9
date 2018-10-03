@@ -1318,13 +1318,21 @@ uint32_t isRecompMethBody(void *li)
 
 // This method MUST be used only for methods that were AOTed and then relocated
 // It marks the BodyInfo that this is an aoted method.
-void fixPersistentMethodInfo(void *table)
+void fixPersistentMethodInfo(void *table, bool isJITaaS)
    {
    J9JITExceptionTable *exceptionTable = (J9JITExceptionTable *)table;
    TR_PersistentJittedBodyInfo *bodyInfo = (TR_PersistentJittedBodyInfo *)exceptionTable->bodyInfo;
    void *vmMethodInfo = (void *)exceptionTable->ramMethod;
-   TR_PersistentMethodInfo *methodInfo = (TR_PersistentMethodInfo *)((char *)bodyInfo + sizeof(TR_PersistentJittedBodyInfo));
-   bodyInfo->setMethodInfo(methodInfo);
+   TR_PersistentMethodInfo *methodInfo;
+
+   if (!isJITaaS)
+      {
+      methodInfo = (TR_PersistentMethodInfo *)((char *)bodyInfo + sizeof(TR_PersistentJittedBodyInfo));
+      bodyInfo->setMethodInfo(methodInfo);
+      }
+   else
+      methodInfo = bodyInfo->getMethodInfo();
+
    methodInfo->setMethodInfo(vmMethodInfo);
 
    if (TR::Options::getCmdLineOptions()->getOption(TR_EnableHCR))
@@ -1337,7 +1345,11 @@ void fixPersistentMethodInfo(void *table)
    bodyInfo->setHotStartCountDelta(0);
    bodyInfo->setSampleIntervalCount(0);
    bodyInfo->setProfileInfo(NULL);
-   bodyInfo->setIsAotedBody(true);
+
+   if (!isJITaaS)
+      {
+      bodyInfo->setIsAotedBody(true);
+      }
    }
 #endif
 

@@ -65,6 +65,8 @@
  */
 bool firstCompileStarted = false;
 
+// TODO disabled to allow for JITaaS
+/*
 void *operator new(size_t size)
    {
 #if defined(DEBUG)
@@ -80,15 +82,20 @@ void *operator new(size_t size)
 #endif
    return malloc(size);
    }
+*/
 
 /**
  * Since we are using arena allocation, heap deletions must be a no-op, and
  * can't be used by JIT code, so we inject an assertion here.
  */
+
+// TODO disabled to allow for JITaaS
+/*
 void operator delete(void *)
    {
    TR_ASSERT(0, "Invalid use of global operator delete");
    }
+*/
 
 
 
@@ -168,7 +175,9 @@ J9::Compilation::Compilation(
    _classForOSRRedefinition(m),
    _classForStaticFinalFieldModification(m),
    _profileInfo(NULL),
-   _skippedJProfilingBlock(false)
+   _skippedJProfilingBlock(false),
+   _outOfProcessCompilation(false),
+   _remoteCompilation(false)
    {
    _ObjectClassPointer   = fe->getClassFromSignature("Ljava/lang/Object;", 18, compilee);
    _RunnableClassPointer = fe->getClassFromSignature("Ljava/lang/Runnable;", 20, compilee);
@@ -534,13 +543,22 @@ J9::Compilation::canAllocateInlineOnStack(TR::Node* node, TR_OpaqueClassBlock* &
       if (clazz == NULL)
          return -1;
 
-      // Can not inline the allocation on stack if the class is special
-      if (clazz->classDepthAndFlags & (J9_JAVA_CLASS_REFERENCE_WEAK      |
-                                       J9_JAVA_CLASS_REFERENCE_SOFT      |
-                                       J9_JAVA_CLASS_FINALIZE            |
-                                       J9_JAVA_CLASS_OWNABLE_SYNCHRONIZER))
+      if (auto stream = TR::CompilationInfo::getStream())
          {
-         return -1;
+         stream->write(JITaaS::J9ServerMessageType::CompInfo_isClassSpecial, clazz);
+         if (std::get<0>(stream->read<bool>()))
+             return -1;
+         }
+      else
+         {
+         // Can not inline the allocation on stack if the class is special
+         if (clazz->classDepthAndFlags & (J9_JAVA_CLASS_REFERENCE_WEAK      |
+                                          J9_JAVA_CLASS_REFERENCE_SOFT      |
+                                          J9_JAVA_CLASS_FINALIZE            |
+                                          J9_JAVA_CLASS_OWNABLE_SYNCHRONIZER))
+            {
+            return -1;
+            }
          }
       }
 
@@ -554,17 +572,7 @@ J9::Compilation::canAllocateInlineClass(TR_OpaqueClassBlock *block)
    if (block == NULL)
       return false;
 
-   J9Class* clazz = reinterpret_cast<J9Class*> (block);
-
-   // Can not inline the allocation if the class is not fully initialized
-   if (clazz->initializeStatus != 1)
-      return false;
-
-   // Can not inline the allocation if the class is an interface or abstract
-   if (clazz->romClass->modifiers & (J9_JAVA_ABSTRACT | J9_JAVA_INTERFACE))
-      return false;
-
-   return true;
+   return self()->fej9()->canAllocateInlineClass(block);
    }
 
 
@@ -622,8 +630,20 @@ J9::Compilation::canAllocateInline(TR::Node* node, TR_OpaqueClassBlock* &classIn
       TR_ASSERT(node->getSecondChild()->getOpCode().isLoadConst(), "Expecting const child \n");
 
       int32_t arrayClassIndex = node->getSecondChild()->getInt();
-      struct J9Class ** arrayClasses = &self()->fej9()->getJ9JITConfig()->javaVM->booleanArrayClass;
-      clazz = arrayClasses[arrayClassIndex - 4];
+
+      // TEMP HACK: getClassFromNewArrayType returns null under AOT because primitive array classes
+      // are not in the SCC. However, here we require that the array class is actually resolved.
+      // VP requires that getClassFromNewArrayType returns null under AOT for some reason so we cannot
+      // just always resolve it.
+      if (TR::CompilationInfo::getStream())
+         {
+         clazz = (J9Class *)self()->fej9()->getClassFromNewArrayType(arrayClassIndex);
+         }
+      else
+         {
+         struct J9Class ** arrayClasses = &self()->fej9()->getJ9JITConfig()->javaVM->booleanArrayClass;
+         clazz = arrayClasses[arrayClassIndex - 4];
+         }
 
       if (node->getFirstChild()->getOpCodeValue() != TR::iconst)
          {
@@ -653,7 +673,8 @@ J9::Compilation::canAllocateInline(TR::Node* node, TR_OpaqueClassBlock* &classIn
       if (clazz == NULL)
          return -1;
 
-      clazz = clazz->arrayClass;
+      auto classOffset = self()->fej9()->getArrayClassFromComponentClass(self()->fej9()->convertClassPtrToClassOffset(clazz));
+      clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(classOffset);
       if (!clazz)
          return -1;
 

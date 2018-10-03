@@ -81,18 +81,19 @@ endif
 #
 # "all" should be the first target to appear so it's the default
 #
-.PHONY: all clean cleanobjs cleandeps cleandll
-all: ; @echo SUCCESS - All files are up-to-date
+.PHONY: all clean cleanobjs cleandeps cleandll proto
+all: proto ; @echo SUCCESS - All files are up-to-date
 clean: ; @echo SUCCESS - All files are cleaned
 cleanobjs: ; @echo SUCCESS - All objects are cleaned
 cleandeps: ; @echo SUCCESS - All dependencies are cleaned
 cleandll: ; @echo SUCCESS - All shared libraries are cleaned
+proto: ; @echo SUCCESS - All proto files are recompiled
 
 # Handy macro to check to make sure variables are set
 REQUIRE_VARS=$(foreach VAR,$(1),$(if $($(VAR)),,$(error $(VAR) must be set)))
 
 # Verify SDK pointer for non-cleaning targets
-ifeq (,$(filter clean cleandeps cleandll,$(MAKECMDGOALS)))
+ifeq (,$(filter proto clean cleandeps cleandll,$(MAKECMDGOALS)))
     $(call REQUIRE_VARS,J9SRC)
 endif
 

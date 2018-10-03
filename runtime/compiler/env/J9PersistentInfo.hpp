@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,8 @@ namespace J9 { typedef J9::PersistentInfo PersistentInfoConnector; }
 #include "env/RuntimeAssumptionTable.hpp"
 
 #include <stdint.h>
+#include <string>
+#include <vector>
 #include "env/jittypes.h"
 
 
@@ -61,6 +63,11 @@ enum IprofilerStates {
    IPROFILING_STATE_OFF,
 };
 
+enum JITaaSModes {
+   NONJITaaS_MODE = 0,
+   CLIENT_MODE,
+   SERVER_MODE,
+};
 
 #define MAX_SUPERCLASSES (20000)
 namespace J9
@@ -118,6 +125,10 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _gpuInitMonitor(NULL),
          _runtimeInstrumentationEnabled(false),
          _runtimeInstrumentationRecompilationEnabled(false),
+         _JITaaSMode(NONJITaaS_MODE),
+         _JITaaSServerAddress("localhost"),
+         _JITaaSServerPort(38400),
+         _timeout(0),
       OMR::PersistentInfoConnector(pm)
       {}
 
@@ -277,6 +288,22 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    uint8_t _paddingBefore[128];
    int32_t _countForRecompile;
 
+   JITaaSModes getJITaaSMode() const { return _JITaaSMode;}
+   void setJITaaSMode(JITaaSModes m) { _JITaaSMode = m; }
+   const std::string &getJITaaSServerAddress() const { return _JITaaSServerAddress; }
+   void setJITaaSServerAddress(char *addr) { _JITaaSServerAddress = addr; }
+   uint32_t getJITaaSTimeout() { return _timeout; }
+   void setJITaaSTimeout(uint32_t t) { _timeout = t; }
+   uint32_t getJITaaSServerPort() const { return _JITaaSServerPort; }
+   void setJITaaSServerPort(uint32_t port) { _JITaaSServerPort = port; }
+   uint64_t getJITaaSId() { return _JITaaSId; }
+   void setJITaaSId(uint64_t val) { _JITaaSId = val; }
+   const std::vector<std::string> &getJITaaSSslKeys() { return _sslKeys; }
+   void addJITaaSSslKey(std::string key) { _sslKeys.push_back(key); }
+   const std::vector<std::string> &getJITaaSSslCerts() { return _sslCerts; }
+   void addJITaaSSslCert(std::string cert) { _sslCerts.push_back(cert); }
+   const std::string &getJITaaSSslRootCerts() { return _sslRootCerts; }
+   void setJITaaSSslRootCerts(std::string cert) { _sslRootCerts = cert; }
 
    private:
    TR_AddressSet *_unloadedClassAddresses;
@@ -360,6 +387,17 @@ class PersistentInfo : public OMR::PersistentInfoConnector
 
 
    int32_t _numLoadedClasses; ///< always increasing
+   JITaaSModes _JITaaSMode; // NONJITaaS_MODE, CLIENT_MODE, SERVER_MODE
+   std::string _JITaaSServerAddress;
+   uint32_t _JITaaSServerPort;
+   uint64_t _JITaaSId;
+   uint32_t _timeout;
+   std::string _sslRootCerts;
+   // SoA key pairs
+   // We use std::vector here to avoid an annoying include loop.
+   // Don't do this! Use PersistentVector instead.
+   std::vector<std::string> _sslKeys;
+   std::vector<std::string> _sslCerts;
    };
 
 }

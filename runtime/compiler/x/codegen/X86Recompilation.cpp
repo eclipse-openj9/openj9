@@ -70,9 +70,8 @@ TR_PersistentMethodInfo *TR_X86Recompilation::getExistingMethodInfo(TR_ResolvedM
    // start PC address. The mechanism is different depending on whether the
    // method was compiled for sampling or counting.
    //
-   void *startPC = method->startAddressForInterpreterOfJittedMethod();
-   TR_PersistentMethodInfo *info = getMethodInfoFromPC(startPC);
-   return info;
+   TR_PersistentJittedBodyInfo *bodyInfo = ((TR_ResolvedJ9Method*) method)->getExistingJittedBodyInfo();
+   return bodyInfo ? bodyInfo->getMethodInfo() : nullptr;
    }
 
 TR::Instruction *TR_X86Recompilation::generatePrePrologue()

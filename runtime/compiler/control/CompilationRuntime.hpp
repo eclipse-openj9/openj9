@@ -40,6 +40,7 @@
 #include "infra/Statistics.hpp"
 #include "control/rossa.h"
 #include "runtime/RelocationRuntime.hpp"
+#include "env/PersistentCollections.hpp"
 
 extern "C" {
 struct J9Method;
@@ -71,6 +72,7 @@ struct TR_JitPrivateConfig;
 struct TR_MethodToBeCompiled;
 template <typename T> class TR_PersistentArray;
 typedef J9JITExceptionTable TR_MethodMetaData;
+class ClientSessionHT; // JITaaS TODO: maybe move all JITaaS specific stuff in an extension for CompInfo
 
 struct TR_SignatureCountPair
 {
@@ -449,22 +451,44 @@ public:
    static bool createCompilationInfo(J9JITConfig * jitConfig);
    static void freeCompilationInfo(J9JITConfig *jitConfig);
    static TR::CompilationInfo *get(J9JITConfig * = 0) { return _compilationRuntime; }
+   static bool shouldAbortCompilation(TR_MethodToBeCompiled *entry, TR::PersistentInfo *persistentInfo);
    static bool shouldRetryCompilation(TR_MethodToBeCompiled *entry, TR::Compilation *comp);
    static bool useSeparateCompilationThread();
    static int computeCompilationThreadPriority(J9JavaVM *vm);
    static void *compilationEnd(J9VMThread *context, TR::IlGeneratorMethodDetails & details, J9JITConfig *jitConfig, void * startPC,
                                void *oldStartPC, TR_FrontEnd *vm=0, TR_MethodToBeCompiled *entry=NULL, TR::Compilation *comp=NULL);
+   static void endMethodHandleThunkCompilation(J9VMThread *vmThread, TR_J9VMBase *trvm, uintptrj_t *handleRef, uintptrj_t *argRef, void *startPC);
+
+   static JITaaS::J9ServerStream *getStream();
    static bool isInterpreted(J9Method *method) { return !isCompiled(method); }
-   static bool isCompiled(J9Method *method) {
+   static bool isCompiled(J9Method *method)
+      {
+      if (auto stream = getStream())
+         {
+         stream->write(JITaaS::J9ServerMessageType::CompInfo_isCompiled, method);
+         return std::get<0>(stream->read<bool>());
+         }
       return (((uintptrj_t)method->extra) & J9_STARTPC_NOT_TRANSLATED) == 0;
       }
-   static bool isJNINative(J9Method *method) {
+   static bool isJNINative(J9Method *method)
+      {
+      if (auto stream = getStream())
+         {
+         stream->write(JITaaS::J9ServerMessageType::CompInfo_isJNINative, method);
+         return std::get<0>(stream->read<bool>());
+         }
       // Note: This query is only concerned with the method to be compiled
       // and so we don't have to care if the VM has a FastJNI version
       return (((uintptrj_t)method->constantPool) & J9_STARTPC_JNI_NATIVE) != 0;
       }
 
-   static int32_t getInvocationCount(J9Method *method) {
+   static int32_t getInvocationCount(J9Method *method)
+      {
+      if (auto stream = getStream())
+         {
+         stream->write(JITaaS::J9ServerMessageType::CompInfo_getInvocationCount, method);
+         return std::get<0>(stream->read<int32_t>());
+         }
       if (((intptrj_t)method->extra & J9_STARTPC_NOT_TRANSLATED) == 0)
          return -1;
       int32_t count = getJ9MethodVMExtra(method);
@@ -472,42 +496,82 @@ public:
          return count;
       return count >> 1;
       }
-   static intptrj_t getJ9MethodExtra(J9Method *method) { return (intptrj_t)method->extra; }
+   static intptrj_t getJ9MethodExtra(J9Method *method)
+      {
+      if (auto stream = getStream())
+         {
+         stream->write(JITaaS::J9ServerMessageType::CompInfo_getJ9MethodExtra, method);
+         return (intptrj_t) std::get<0>(stream->read<uint64_t>());
+         }
+      return (intptrj_t)method->extra;
+      }
    static int32_t getJ9MethodVMExtra(J9Method *method) {
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITaaS server");
       return (int32_t)((intptrj_t)method->extra);
       }
    static uint32_t getJ9MethodJITExtra(J9Method *method) {
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITaaS server");
       TR_ASSERT((intptrj_t)method->extra & J9_STARTPC_NOT_TRANSLATED, "MethodExtra Already Jitted!");
       return (uint32_t)((uintptrj_t)method->extra >> 32);
       }
    static void * getJ9MethodStartPC(J9Method *method) {
-      TR_ASSERT(!((intptrj_t)method->extra & J9_STARTPC_NOT_TRANSLATED), "Method NOT Jitted!");
-      return (void *)method->extra;
+      if (auto stream = getStream())
+         {
+         stream->write(JITaaS::J9ServerMessageType::CompInfo_getJ9MethodStartPC, method);
+         return std::get<0>(stream->read<void*>());
+         }
+      else
+         {
+         TR_ASSERT(!((intptrj_t)method->extra & J9_STARTPC_NOT_TRANSLATED), "Method NOT Jitted!");
+         return (void *)method->extra;
+         }
       }
    static void setJ9MethodExtra(J9Method *method, intptrj_t newValue) {
-      method->extra = (void *)newValue;
+      if (auto stream = getStream())
+         {
+         stream->write(JITaaS::J9ServerMessageType::CompInfo_setJ9MethodExtra, method, (uint64_t) newValue);
+         std::get<0>(stream->read<JITaaS::Void>());
+         }
+      else
+         {
+         method->extra = (void *)newValue;
+         }
       }
    static bool setJ9MethodExtraAtomic(J9Method *method, intptrj_t oldValue, intptrj_t newValue) {
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITaaS server");
       return oldValue == VM_AtomicSupport::lockCompareExchange((UDATA*)&method->extra, oldValue, newValue);
       }
    static bool setJ9MethodExtraAtomic(J9Method *method, intptrj_t newValue) {
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITaaS server");
       intptrj_t oldValue = (intptrj_t)method->extra;
       return setJ9MethodExtraAtomic(method, oldValue, newValue);
       }
    static bool setJ9MethodVMExtra(J9Method *method, int32_t value) {
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITaaS server");
       intptrj_t oldValue = (intptrj_t)method->extra;
       //intptrj_t newValue = oldValue & (intptrj_t)~J9_INVOCATION_COUNT_MASK;
       //newValue |= (intptrj_t)value;
       intptrj_t newValue = (intptrj_t)value;
       return setJ9MethodExtraAtomic(method, oldValue, newValue);
       }
-   static bool setInvocationCount(J9Method *method, int32_t newCount) {
+   static bool setInvocationCount(J9Method *method, int32_t newCount)
+      {
+      if (auto stream = getStream())
+         {
+         stream->write(JITaaS::J9ServerMessageType::CompInfo_setInvocationCount, method, newCount);
+         return std::get<0>(stream->read<bool>());
+         }
       newCount = (newCount << 1) | 1;
       if (newCount < 1)
          return false;
       return setJ9MethodVMExtra(method, newCount);
       }
    static bool setInvocationCount(J9Method *method, int32_t oldCount, int32_t newCount){
+      if (auto stream = getStream())
+         {
+         stream->write(JITaaS::J9ServerMessageType::CompInfo_setInvocationCountAtomic, method, oldCount, newCount);
+         return std::get<0>(stream->read<bool>());
+         }
       newCount = (newCount << 1) | 1;
       oldCount = (oldCount << 1) | 1;
       if (newCount < 0)
@@ -525,15 +589,17 @@ public:
       return success;
       }
    static void setInitialInvocationCountUnsynchronized(J9Method *method, int32_t value) {
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITaaS server");
       value = (value << 1) | 1;
       if (value < 0)
           value = INT_MAX;
       method->extra = reinterpret_cast<void *>(value);
       }
 
-   static uint32_t getMethodBytecodeSize(J9ROMMethod * romMethod);
+   static uint32_t getMethodBytecodeSize(const J9ROMMethod * romMethod);
    static uint32_t getMethodBytecodeSize(J9Method* method);
 
+   static bool isJSR292(const J9ROMMethod *romMethod); // Check to see if the J9AccMethodHasMethodHandleInvokes flag is set
    static bool isJSR292(J9Method *j9method); // Check to see if the J9AccMethodHasMethodHandleInvokes flag is set
 
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
@@ -554,7 +620,7 @@ public:
    TR_MethodToBeCompiled *requestExistsInCompilationQueue(TR::IlGeneratorMethodDetails & details, TR_FrontEnd *fe);
 
    TR_MethodToBeCompiled *addMethodToBeCompiled(TR::IlGeneratorMethodDetails &details, void *pc, CompilationPriority priority,
-      bool async, TR_OptimizationPlan *optPlan, bool *queued, TR_YesNoMaybe methodIsInSharedCache);
+      bool async, TR_OptimizationPlan *optPlan, bool *queued, TR_YesNoMaybe methodIsInSharedCache, void *extra = nullptr, char *clientOptions = nullptr, size_t clientOptionsSize = 0);
 
    void                   queueEntry(TR_MethodToBeCompiled *entry);
    void                   recycleCompilationEntry(TR_MethodToBeCompiled *cur);
@@ -584,7 +650,10 @@ public:
    void purgeMethodQueue(TR_CompilationErrorCode errorCode);
    void *compileMethod(J9VMThread * context, TR::IlGeneratorMethodDetails &details, void *oldStartPC,
       TR_YesNoMaybe async, TR_CompilationErrorCode *, bool *queued, TR_OptimizationPlan *optPlan);
-
+   void *compileRemoteMethod(J9VMThread * vmThread, TR::IlGeneratorMethodDetails & details,
+                             const J9ROMMethod *romMethod, const J9ROMClass* romClass,
+                             void *oldStartPC, TR_CompilationErrorCode *compErrCode,
+                             bool *queued, TR_OptimizationPlan * optimizationPlan, void *extra, char *clientOptions, size_t clientOptionsSize);
    void *compileOnApplicationThread(J9VMThread * context, TR::IlGeneratorMethodDetails &details, void *oldStartPC,
                                     TR_CompilationErrorCode *,
                                     TR_OptimizationPlan *optPlan);
@@ -729,7 +798,8 @@ public:
    bool useMultipleCompilationThreads() { return (getNumUsableCompilationThreads() + _numDiagnosticThreads) > 1; }
    bool getRampDownMCT() const { return _rampDownMCT; }
    void setRampDownMCT() { _rampDownMCT = true; } // cannot be reset
-   void printMethodNameToVlog(J9Method *method);
+   static void printMethodNameToVlog(J9Method *method);
+   static void printMethodNameToVlog(const J9ROMClass* romClass, const J9ROMMethod* romMethod);
 
    void queueForcedAOTUpgrade(TR_MethodToBeCompiled *originalEntry);
 
@@ -787,7 +857,7 @@ public:
    bool compTracingEnabled() const { return _compilationTracingFacility.isInitialized(); }
    void addCompilationTraceEntry(J9VMThread * vmThread, TR_CompilationOperations op, uint32_t otherData=0);
 
-   TR_RelocationRuntime  *reloRuntime() { return &_reloRuntime; }
+   TR_SharedCacheRelocationRuntime  *reloRuntime() {  return &_sharedCacheReloRuntime; }
 
    int32_t incNumSeriousFailures() { return ++_numSeriousFailures; } // no atomicity guarantees for the increment
 
@@ -879,6 +949,26 @@ public:
    bool canProcessJProfilingRequest();
    bool getSuspendThreadDueToLowPhysicalMemory() const { return _suspendThreadDueToLowPhysicalMemory; }
    void setSuspendThreadDueToLowPhysicalMemory(bool b) { _suspendThreadDueToLowPhysicalMemory = b; }
+
+   // for JITaaS
+   ClientSessionHT *getClientSessionHT() { return _clientSessionHT; }
+   void setClientSessionHT(ClientSessionHT *ht) { _clientSessionHT = ht; }
+   PersistentVector<TR_OpaqueClassBlock*> *getUnloadedClassesTempList() { return _unloadedClassesTempList; }
+   void setUnloadedClassesTempList(PersistentVector<TR_OpaqueClassBlock*> *it) { _unloadedClassesTempList = it; }
+   PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t> *getNewlyExtendedClasses() { return _newlyExtendedClasses; }
+   void classGotNewlyExtended(TR_OpaqueClassBlock* clazz)
+      {
+      auto &newlyExtendedClasses = *getNewlyExtendedClasses();
+      uint8_t inProgress = getCHTableUpdateDone();
+      if (inProgress)
+         newlyExtendedClasses[clazz] |= inProgress;
+      }
+   void setNewlyExtendedClasses(PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t> *it) { _newlyExtendedClasses = it; }
+   void markCHTableUpdateDone(uint8_t threadId) { _chTableUpdateFlags |= 1 << threadId; }
+   void resetCHTableUpdateDone(uint8_t threadId) { _chTableUpdateFlags &= ~(1 << threadId); }
+   uint8_t getCHTableUpdateDone() { return _chTableUpdateFlags; }
+   uint32_t getLocalGCCounter() { return _localGCCounter; }
+   void incrementLocalGCCounter() { _localGCCounter++; }
 
    static int32_t         VERY_SMALL_QUEUE;
    static int32_t         SMALL_QUEUE;
@@ -1045,7 +1135,7 @@ private:
    TR::CompilationTracingFacility _compilationTracingFacility; // Must be intialized before using
    TR_CpuEntitlement _cpuEntitlement;
    TR_JitSampleInfo  _jitSampleInfo;
-   TR_SharedCacheRelocationRuntime _reloRuntime;
+   TR_SharedCacheRelocationRuntime _sharedCacheReloRuntime;
    uintptr_t _vmStateOfCrashedThread; // Set by Jit Dump; used by diagnostic thread
 #if defined(J9VM_OPT_SHARED_CLASSES)
    J9SharedClassJavacoreDataDescriptor _javacoreData;
@@ -1059,6 +1149,16 @@ private:
    // freeing scratch segments it holds to
    bool _suspendThreadDueToLowPhysicalMemory;
    TR_InterpreterSamplingTracking *_interpSamplTrackingInfo;
+
+   // JITaaS hashtable that holds session information about JITaaS clients
+   ClientSessionHT *_clientSessionHT;
+   // JITaaS list of classes unloaded 
+   PersistentVector<TR_OpaqueClassBlock*> *_unloadedClassesTempList;
+   // JITaaS table of newly extended classes
+   PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t> *_newlyExtendedClasses;
+   uint8_t _chTableUpdateFlags;
+   // number of local gc cycles done
+   uint32_t _localGCCounter = 0;
    }; // CompilationInfo
 }
 

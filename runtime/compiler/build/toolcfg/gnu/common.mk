@@ -104,7 +104,7 @@ CX_FLAGS+=\
     -fno-dollars-in-identifiers
 
 CXX_FLAGS+=\
-    -std=c++0x \
+    -std=c++11 \
     -fno-rtti \
     -fno-threadsafe-statics \
     -Wno-deprecated \
@@ -477,3 +477,21 @@ endif
 SOLINK_EXTRA_ARGS+=-Wl,--version-script=$(SOLINK_VERSION_SCRIPT)
 
 SOLINK_FLAGS+=$(SOLINK_FLAGS_EXTRA)
+
+#
+# Setup protobuf
+#
+PROTO_CMD?=protoc
+GRPC_CPP?=$(shell which grpc_cpp_plugin)
+
+# link grpc libraries
+ifdef JITAAS_USE_GRPC
+   SOLINK_SLINK+=grpc++ grpc gpr protobuf ssl
+   CXX_DEFINES+=JITAAS_USE_GRPC
+else
+   JITAAS_USE_RAW_SOCKETS=1
+   SOLINK_SLINK+=protobuf ssl
+   CXX_DEFINES+=JITAAS_USE_RAW_SOCKETS
+endif
+
+CXX_DEFINES+=GOOGLE_PROTOBUF_NO_RTTI

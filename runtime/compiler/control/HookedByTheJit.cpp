@@ -76,6 +76,8 @@
 #include "runtime/HWProfiler.hpp"
 #include "runtime/LMGuardedStorage.hpp"
 #include "env/SystemSegmentProvider.hpp"
+#include "control/JITaaSCompilationThread.hpp"
+#include "runtime/JITaaSIProfiler.hpp"
 
 extern "C" {
 struct J9JavaVM;
@@ -164,7 +166,6 @@ extern void rtHookClassLoaderUnload(J9HookInterface * *, UDATA , void *, void *)
 #else
 #define BC_OP_U16(bcPtr)  (*((uint16_t*)(bcPtr)))
 #endif
-
 
 TR::OptionSet *findOptionSet(J9Method *method, bool isAOT)
    {
@@ -469,11 +470,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
                {
                int32_t scount = optionsAOT->getInitialSCount();
                uint16_t newScount = 0;
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
-               if ((TR_J9SharedCache *)(((TR_J9VMBase *) fe)->sharedCache())->isHint(method, TR_HintFailedValidation, &newScount))
-#else
-               if (((TR_J9VMBase *) fe)->isSharedCacheHint(method, TR_HintFailedValidation, &newScount))
-#endif
+               if (fe->sharedCache() && (TR_J9SharedCache *)(((TR_J9VMBase *) fe)->sharedCache())->isHint(method, TR_HintFailedValidation, &newScount))
                   {
                   if ((scount == TR_QUICKSTART_INITIAL_SCOUNT) || (scount == TR_INITIAL_SCOUNT))
                      { // If scount is not user specified (coarse way due to info being lost from options parsing)
@@ -523,13 +520,9 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
                // We may lower or increase the counts based on TR_HintMethodCompiledDuringStartup
                if (count == -1 && // Not yet changed
                    jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP &&
-                   (TR_HintMethodCompiledDuringStartup & TR::Options::getAOTCmdLineOptions()->getEnableSCHintFlags()))
+                   (TR_HintMethodCompiledDuringStartup & TR::Options::getAOTCmdLineOptions()->getEnableSCHintFlags()) && fe->sharedCache())
                   {
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
                   bool wasCompiledDuringStartup = (TR_J9SharedCache *)(fe->sharedCache())->isHint(method, TR_HintMethodCompiledDuringStartup);
-#else
-                  bool wasCompiledDuringStartup = fe->isSharedCacheHint(method, TR_HintMethodCompiledDuringStartup);
-#endif
                   if (wasCompiledDuringStartup)
                      {
                      // Lower the counts for any method that doesn't have an AOT body,
@@ -608,6 +601,18 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
             TR::Options::sharedClassCache() ? compInfo->isRomClassForMethodInSharedCache(method, jitConfig->javaVM) : 0,containsInfo) ; fflush(stdout);
       }
    }
+
+static void jitHookVMInitialized(J9HookInterface * * hook, UDATA eventNum, void * eventData, void * userData)
+   {
+   J9VMThread* vmThread = ((J9VMInitEvent *)eventData)->vmThread;
+   TR::CompilationInfo *compInfo = getCompilationInfo(vmThread->javaVM->jitConfig);
+   if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+      {
+      fprintf(stderr, "\nJITaaS server ready to accept incoming requests\n");
+      j9thread_sleep(10000000000);
+      }
+   }
+
 
 #if defined(J9VM_INTERP_PROFILING_BYTECODES)
 
@@ -1534,6 +1539,9 @@ static void jitHookLocalGCEnd(J9HookInterface * * hookInterface, UDATA eventNum,
 
    if (jitConfig->runtimeFlags & J9JIT_GC_NOTIFY)
       printf("}");
+
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get(jitConfig);
+   compInfo->incrementLocalGCCounter();
    }
 
 static void initThreadAfterCreation(J9VMThread *vmThread)
@@ -1947,6 +1955,32 @@ static TR_CompilationErrorCode recompileMethodForLog(
 IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContext *context)
    {
    Trc_JIT_DumpStart(crashedThread);
+
+   if (context && context->javaVM && context->javaVM->jitConfig)
+      {
+      J9JITConfig *jitConfig = context->javaVM->jitConfig;
+      TR::CompilationInfo *compInfo = TR::CompilationInfo::get(context->javaVM->jitConfig);
+      if (compInfo)
+         {
+         static char * isPrintJITaaSMsgStats = feGetEnv("TR_PrintJITaaSMsgStats");
+         if (isPrintJITaaSMsgStats && compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+            printJITaaSMsgStats(jitConfig);
+
+         if (feGetEnv("TR_PrintJITaaSCHTableStats"))
+            printJITaaSCHTableStats(jitConfig, compInfo);
+
+         if (feGetEnv("TR_PrintJITaaSIPMsgStats"))
+            {
+            if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+               {
+               TR_J9VMBase * vmj9 = (TR_J9VMBase *)(TR_J9VMBase::get(context->javaVM->jitConfig, 0));
+               TR_JITaaSIProfiler *JITaaSIProfiler = (TR_JITaaSIProfiler *)vmj9->getIProfiler();
+               JITaaSIProfiler->printStats();
+               }
+            }
+         }
+      }
+
 
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseDump))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "JIT dump initiated. Crashed vmThread=%p", crashedThread);
@@ -2725,6 +2759,10 @@ static void jitHookClassUnload(J9HookInterface * * hookInterface, UDATA eventNum
    if (table)
       table->classGotUnloaded(fej9, clazz);
 
+   // Add to JITaaS unload list
+   if (compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+      compInfo->getUnloadedClassesTempList()->push_back(clazz);
+
    }
 #endif /* defined (J9VM_GC_DYNAMIC_CLASS_UNLOADING)*/
 
@@ -2958,13 +2996,17 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
    classPair = classList;
    for (i = 0; i < classCount; i++)
       {
+      // Add to JITaaS unload list
+      if (compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+         compInfo->getUnloadedClassesTempList()->push_back((TR_OpaqueClassBlock *) classPair->oldClass);
+
       freshClass = ((TR_J9VMBase *)fe)->convertClassPtrToClassOffset(classPair->newClass);
       if (VM_PASSES_SAME_CLASS_TWICE)
          staleClass = ((TR_J9VMBase *)fe)->convertClassPtrToClassOffset(((J9Class*)freshClass)->replacedClass);
       else
          staleClass = ((TR_J9VMBase *)fe)->convertClassPtrToClassOffset(classPair->oldClass);
       methodCount = classPair->methodCount;
-      methodList = classPair->methodList;
+      methodList = classPair->methodList; 
 
       // Step 3  patch modified classes
       if (rat)
@@ -3457,7 +3499,7 @@ static bool updateCHTable(J9VMThread * vmThread, J9Class  * cl)
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
 
    TR_PersistentCHTable * table = 0;
-   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
+   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts) && compInfo->getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
       table = compInfo->getPersistentInfo()->getPersistentCHTable();
 
    TR_J9VMBase *vm = TR_J9VMBase::get(jitConfig, vmThread);
@@ -4010,7 +4052,7 @@ static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, 
    cl->newInstanceCount = options->getInitialCount();
 #endif
 
-   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
+   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts) && compInfo->getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
       {
       TR_PersistentClassInfo *info = compInfo->getPersistentInfo()->getPersistentCHTable()->classGotLoaded(vm, clazz);
 
@@ -4072,7 +4114,7 @@ static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, 
    classLoadEvent->failed = allocFailed;
 
    // Determine whether this class gets lock reservation
-   if (options->getOption(TR_ReservingLocks))
+   if (options->getOption(TR_ReservingLocks) && compInfo->getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
       {
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(TR_J9VMBase::get(jitConfig, 0));
       int lwOffset = fej9->getByteOffsetToLockword(clazz);
@@ -4156,7 +4198,7 @@ static void jitHookClassPreinitialize(J9HookInterface * * hookInterface, UDATA e
 
    jitAcquireClassTableMutex(vmThread);
 
-   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
+   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts) && compInfo->getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
       {
       if (!initFailed && !compInfo->getPersistentInfo()->getPersistentCHTable()->classGotInitialized(vm, compInfo->persistentMemory(), clazz))
          initFailed = true;
@@ -4769,6 +4811,14 @@ void JitShutdown(J9JITConfig * jitConfig)
       j9tty_printf(PORTLIB, "\tNo prof. info cause cannot get classInfo:%10d\n", TR_IProfiler::_STATS_cannotGetClassInfo);
       j9tty_printf(PORTLIB, "\tNo prof. info because timestamp expired: %10d\n", TR_IProfiler::_STATS_timestampHasExpired);
       }
+
+   static char * isPrintJITaaSMsgStats = feGetEnv("TR_PrintJITaaSMsgStats");
+   if (isPrintJITaaSMsgStats && compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+      printJITaaSMsgStats(jitConfig);
+
+   static char * isPrintJITaaSCHTableStats = feGetEnv("TR_PrintJITaaSCHTableStats");
+   if (isPrintJITaaSCHTableStats)
+      printJITaaSCHTableStats(jitConfig, compInfo);
 
    TRC_JIT_ShutDownEnd(vmThread, "end of JitShutdown function");
    }
@@ -6912,7 +6962,7 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
    jitConfig->samplerMonitor = NULL; // initialize this field just in case
    TR::CompilationInfo *compInfo = getCompilationInfo(jitConfig);
    compInfo->setSamplingThreadLifetimeState(TR::CompilationInfo::SAMPLE_THR_NOT_CREATED); // just in case
-   if (jitConfig->samplingFrequency && !vmj9->isAOT_DEPRECATED_DO_NOT_USE())
+   if (jitConfig->samplingFrequency && !vmj9->isAOT_DEPRECATED_DO_NOT_USE() && compInfo->getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
       {
       if ((jitConfig->sampleInterruptHandlerKey = javaVM->internalVMFunctions->J9RegisterAsyncEvent(javaVM, jitMethodSampleInterrupt, NULL)) < 0)
          {
@@ -6987,10 +7037,15 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
       }
    else
       {
-      if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_INITIALIZE_SEND_TARGET, jitHookInitializeSendTarget, OMR_GET_CALLSITE(), NULL))
+      // Do not register the hook that sets method invocation counts in JITaaS server mode
+      // This ensures that interpreter will not send methods for compilation
+      if (compInfo->getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
          {
-         j9tty_printf(PORTLIB, "Error: Unable to install send target hook\n");
-         return -1;
+         if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_INITIALIZE_SEND_TARGET, jitHookInitializeSendTarget, OMR_GET_CALLSITE(), NULL))
+            {
+            j9tty_printf(PORTLIB, "Error: Unable to install send target hook\n");
+            return -1;
+            }
          }
 #if defined (J9VM_INTERP_PROFILING_BYTECODES)
       TR_IProfiler *iProfiler = vmj9->getIProfiler();
@@ -7037,7 +7092,23 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
          jProfiler->start(javaVM);
          }
       }
+   
+   if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+      {
+      TR_Listener *listener = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener; 
+      listener->startListenerThread(javaVM);
 
+      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Started JITaaSServer listener thread: %p ", listener->getListenerThread());
+
+      // Give the JIT a chance to do stuff after the VM is initialized
+      if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_INITIALIZED, jitHookVMInitialized, OMR_GET_CALLSITE(), NULL))
+         {
+         j9tty_printf(PORTLIB, "Error: Unable to install J9HOOK_VM_INITIALIZED\n");
+         return -1;
+         }
+      }
+ 
    if ((*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_LOCAL_GC_START, jitHookLocalGCStart, OMR_GET_CALLSITE(), NULL) ||
        (*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_LOCAL_GC_END, jitHookLocalGCEnd, OMR_GET_CALLSITE(), NULL) ||
        (*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_GLOBAL_GC_START, jitHookGlobalGCStart, OMR_GET_CALLSITE(), NULL) ||

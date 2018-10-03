@@ -248,12 +248,24 @@ void TR_CHTable::cleanupNewlyExtendedInfo(TR::Compilation *comp)
 //
 bool TR_CHTable::commit(TR::Compilation *comp)
    {
-   TR::list<TR_VirtualGuard*> &vguards = comp->getVirtualGuards();
-   TR::list<TR_VirtualGuardSite*> *sideEffectPatchSites = comp->getSideEffectGuardPatchSites();
+   if (TR::CompilationInfo::getStream())
+      {
+      return true; // Handled in remoteCompilationEnd instead
+      }
+   else
+      {
+      TR::list<TR_VirtualGuard*> &vguards = comp->getVirtualGuards();
+      TR::list<TR_VirtualGuardSite*> &sideEffectPatchSites = *comp->getSideEffectGuardPatchSites();
 
+      return commitLocal(comp, vguards, sideEffectPatchSites);
+      }
+   }
+
+bool TR_CHTable::commitLocal(TR::Compilation *comp, TR::list<TR_VirtualGuard*> &vguards, TR::list<TR_VirtualGuardSite*> &sideEffectPatchSites)
+   {
    if (comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE())
       return true;
-   if (vguards.empty() && sideEffectPatchSites->empty() && !_preXMethods && !_classes && !_classesThatShouldNotBeNewlyExtended)
+   if (vguards.empty() && sideEffectPatchSites.empty() && !_preXMethods && !_classes && !_classesThatShouldNotBeNewlyExtended)
       return true;
 
    cleanupNewlyExtendedInfo(comp);
@@ -396,7 +408,7 @@ bool TR_CHTable::commit(TR::Compilation *comp)
          }
       }
 
-   if (!sideEffectPatchSites->empty())
+   if (!sideEffectPatchSites.empty())
       table->commitSideEffectGuards(comp);
 
    return true;
@@ -819,8 +831,7 @@ bool CollectCompiledImplementors::visitSubclass(TR_PersistentClassInfo *cl)
             }
          else
             {
-            void *methodAddress = (_implArray[_count - 1])->startAddressForInterpreterOfJittedMethod();
-            TR_PersistentJittedBodyInfo * bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(methodAddress);
+            TR_PersistentJittedBodyInfo * bodyInfo = ((TR_ResolvedJ9Method*) _implArray[_count - 1])->getExistingJittedBodyInfo();
             if (!bodyInfo || bodyInfo->getHotness() < _hotness)
                {
                _count -= 1;

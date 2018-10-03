@@ -24,6 +24,7 @@
 #define COMPILATIONTHREAD_INCL
 
 #include <ctime>
+#include <unordered_map>
 #include "control/CompilationPriority.hpp"
 #include "env/RawAllocator.hpp"
 #include "j9.h"
@@ -44,6 +45,9 @@
 #include "env/IO.hpp"
 #include "runtime/RelocationRuntime.hpp"
 #include "env/J9SegmentCache.hpp"
+#include "env/VMJ9Server.hpp"
+#include "env/J2IThunk.hpp"
+#include "env/PersistentCollections.hpp"
 
 #define METHOD_POOL_SIZE_THRESHOLD 64
 #define MAX_SAMPLING_FREQUENCY     0x7FFFFFFF
@@ -63,6 +67,7 @@ namespace TR { class CompilationInfo; }              // forward declaration
 struct TR_MethodToBeCompiled;
 class TR_ResolvedMethod;
 class TR_RelocationRuntime;
+class ClientSessionData;
 
 enum CompilationThreadState
    {
@@ -145,6 +150,7 @@ class CompilationInfoPerThreadBase
    void *compile(J9VMThread *context, TR_MethodToBeCompiled *entry, J9::J9SegmentProvider &scratchSegmentProvider);
    TR_MethodMetaData *compile(J9VMThread *context, TR::Compilation *,
                  TR_ResolvedMethod *compilee, TR_J9VMBase &, TR_OptimizationPlan*, TR::SegmentAllocator const &scratchSegmentProvider);
+   TR_MethodMetaData *performAOTLoad(J9VMThread *context, TR::Compilation *, TR_ResolvedMethod *compilee, TR_J9VMBase *vm, J9Method *method);
 
    void preCompilationTasks(J9VMThread * vmThread,
                             J9JavaVM *javaVM,
@@ -229,15 +235,21 @@ class CompilationInfoPerThreadBase
    uintptr_t              getTimeWhenCompStarted() const { return _timeWhenCompStarted; }
    void                   setTimeWhenCompStarted(UDATA t) { _timeWhenCompStarted = t; }
 
-   TR_RelocationRuntime  *reloRuntime() { return &_reloRuntime; }
+   TR_RelocationRuntime  *reloRuntime();
+
    static TR::FILE *getPerfFile() { return _perfFile; } // used on Linux for perl tool support
    static void setPerfFile(TR::FILE *f) { _perfFile = f; }
 
+   // JITaaS
+   void                   setClientData(ClientSessionData *data) { _cachedClientDataPtr = data; }
+   ClientSessionData     *getClientData() { return _cachedClientDataPtr; }
+
    protected:
 
-   TR::CompilationInfo &         _compInfo;
+   TR::CompilationInfo &        _compInfo;
    J9JITConfig * const          _jitConfig;
-   TR_SharedCacheRelocationRuntime _reloRuntime;
+   TR_SharedCacheRelocationRuntime _sharedCacheReloRuntime;
+   TR_JITaaSRelocationRuntime      _remoteCompileReloRuntime;
    int32_t const                _compThreadId; // unique number starting from 0; Only used for compilation on separate thread
    bool const                   _onSeparateThread;
 
@@ -258,6 +270,8 @@ class CompilationInfoPerThreadBase
 
    static TR::FILE *_perfFile; // used on Linux for perl tool support
 
+   // JITaaS
+   ClientSessionData * _cachedClientDataPtr;
 
 private:
    void logCompilationSuccess(
@@ -306,6 +320,33 @@ private:
    }; // CompilationInfoPerThreadBase
 }
 
+struct ClassLoaderStringPair
+   {
+   J9ClassLoader *_classLoader;
+   std::string    _className;
+
+   bool operator==(const ClassLoaderStringPair &other) const
+      {
+      return _classLoader == other._classLoader &&  _className == other._className;
+      }
+   };
+
+
+// custom specialization of std::hash injected in std namespace
+namespace std
+   {
+   template<> struct hash<ClassLoaderStringPair>
+      {
+      typedef ClassLoaderStringPair argument_type;
+      typedef std::size_t result_type;
+      result_type operator()(argument_type const& clsPair) const noexcept
+         {
+         return std::hash<void*>()((void*)(clsPair._classLoader)) ^ std::hash<std::string>()(clsPair._className);
+         }
+      };
+   }
+
+
 //--------------------------------------------------------------------
 // The following class will be use by the separate compilation threads
 // TR::CompilationInfoPerThreadBase will be used by compilation on application thread
@@ -350,9 +391,24 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    bool                   isDiagnosticThread() const { return _isDiagnosticThread; }
    CpuSelfThreadUtilization& getCompThreadCPU() { return _compThreadCPU; }
 
+   // JITaaS
+   TR_J9ServerVM         *getServerVM() { return _serverVM; }
+   void                   setServerVM(TR_J9ServerVM *vm) { _serverVM = vm; }
+   JITaaS::J9ServerStream  *getStream();
+   J9ROMClass            *getAndCacheRemoteROMClass(J9Class *, TR_Memory *trMemory=nullptr);
+   J9ROMClass            *getRemoteROMClassIfCached(J9Class *);
+   void                   addThunkToBeRelocated(void *thunk, std::string signature);
+   void                   addInvokeExactThunkToBeRelocated(TR_J2IThunk *thunk);
+   void                   relocateThunks();
+   PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> & getCustomClassByNameMap() { return _customClassByNameMap; }
+   PersistentUnorderedSet<TR_OpaqueClassBlock*> *getClassesThatShouldNotBeNewlyExtended() { return _classesThatShouldNotBeNewlyExtended; }
+   uint32_t               getLastLocalGCCounter() { return _lastLocalGCCounter; }
+   void                   updateLastLocalGCCounter(); 
+
    private:
    J9::J9SegmentCache initializeSegmentCache(J9::J9SegmentProvider &segmentProvider);
 
+   TR_J9ServerVM         *_serverVM;
    j9thread_t             _osThread;
    J9VMThread            *_compilationThread;
    int32_t                _compThreadPriority; // to reduce number of checks
@@ -365,7 +421,19 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    bool                   _initializationSucceeded;
    bool                   _isDiagnosticThread;
    CpuSelfThreadUtilization _compThreadCPU;
+   typedef TR::typed_allocator<std::pair<void *, std::string>, TR::PersistentAllocator&> ThunkVectorAllocator;
+   std::vector<std::pair<void *, std::string>, ThunkVectorAllocator> _thunksToBeRelocated;
+   typedef TR::typed_allocator<TR_J2IThunk *, TR::PersistentAllocator&> InvokeExactThunkVectorAllocator;
+   std::vector<TR_J2IThunk *, InvokeExactThunkVectorAllocator> _invokeExactThunksToBeRelocated;
+   // The following hastable caches <classLoader,classname> --> <J9Class> mappings
+   // The cache only lives during a compilation due to class unloading concerns
+   PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> _customClassByNameMap;
+   PersistentUnorderedSet<TR_OpaqueClassBlock*> *_classesThatShouldNotBeNewlyExtended;
+   uint32_t               _lastLocalGCCounter;
+
    }; // CompilationInfoPerThread
+
+extern thread_local TR::CompilationInfoPerThread * compInfoPT;
 
 } // namespace TR
 

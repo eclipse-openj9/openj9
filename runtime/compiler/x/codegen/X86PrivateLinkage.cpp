@@ -54,6 +54,7 @@
 #include "x/codegen/StackOverflowCheckSnippet.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9ValueProfiler.hpp"
+#include "control/CompilationThread.hpp"
 
 #ifdef TR_TARGET_64BIT
 #include "x/amd64/codegen/AMD64GuardedDevirtualSnippet.hpp"
@@ -1829,7 +1830,8 @@ TR::Register *TR::X86PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
                char *j2iSignature = fej9->getJ2IThunkSignatureForDispatchVirtual(methodSymbol->getMethod()->signatureChars(), methodSymbol->getMethod()->signatureLength(), comp());
                int32_t signatureLen = strlen(j2iSignature);
                virtualThunk = fej9->getJ2IThunk(j2iSignature, signatureLen, comp());
-               if (!virtualThunk)
+               // in server mode, we always need to regenerate the thunk inside the code cache for this compilation
+               if (!virtualThunk || comp()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
                   {
                   virtualThunk = fej9->setJ2IThunk(j2iSignature, signatureLen,
                      generateVirtualIndirectThunk(
@@ -1838,10 +1840,11 @@ TR::Register *TR::X86PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
                }
                break;
             default:
-               if (fej9->needsInvokeExactJ2IThunk(callNode, comp()))
+               // in server mode, we always need to regenerate the thunk inside the code cache for this compilation
+               if (fej9->needsInvokeExactJ2IThunk(callNode, comp()) || comp()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
                   {
-                  comp()->getPersistentInfo()->getInvokeExactJ2IThunkTable()->addThunk(
-                     generateInvokeExactJ2IThunk(callNode, methodSymbol->getMethod()->signatureChars()), fej9);
+                  TR_J2IThunk *thunk = generateInvokeExactJ2IThunk(callNode, methodSymbol->getMethod()->signatureChars());
+                  fej9->setInvokeExactJ2IThunk(thunk, comp());
                   }
                break;
             }
@@ -1849,7 +1852,8 @@ TR::Register *TR::X86PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
       else
          {
          virtualThunk = fej9->getJ2IThunk(methodSymbol->getMethod(), comp());
-         if (!virtualThunk)
+         // in server mode, we always need to regenerate the thunk inside the code cache for this compilation
+         if (!virtualThunk || comp()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
             virtualThunk = fej9->setJ2IThunk(methodSymbol->getMethod(), generateVirtualIndirectThunk(callNode), comp());
          }
 
@@ -1870,7 +1874,7 @@ TR::Register *TR::X86PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
 
       TR::LabelSymbol *picMismatchLabel = NULL;
       TR_ScratchList<TR::X86PICSlot> *profiledTargets = site.getProfiledTargets();
-      if (profiledTargets)
+      if (comp()->getPersistentInfo()->getJITaaSMode() != SERVER_MODE && profiledTargets)
          {
          ListIterator<TR::X86PICSlot> i(profiledTargets);
          TR::X86PICSlot *picSlot = i.getFirst();
@@ -1984,6 +1988,12 @@ void TR::X86PrivateLinkage::buildDirectCall(TR::SymbolReference *methodSymRef, T
    if (TR::Compiler->target.is64Bit() && methodSymRef->getReferenceNumber()>=TR_AMD64numRuntimeHelpers)
       fej9->reserveTrampolineIfNecessary(comp(), methodSymRef, false);
 
+   // JITaaS Workaround: Further transmute dispatchJ9Method symbols to appear as a runtime helper, this will cause OMR to
+   // generate a TR_HelperAddress relocation instead of a TR_RelativeMethodAddress Relocation.
+   if (!comp()->getOption(TR_DisableInliningOfNatives) &&
+       methodSymbol->getMandatoryRecognizedMethod() == TR::java_lang_invoke_ComputedCalls_dispatchJ9Method)
+      methodSymbol->setHelper();
+
    if (cg()->supportVMInternalNatives() && methodSymbol->isVMInternalNative())
       {
       // Find the virtual register for edi
@@ -2020,7 +2030,7 @@ void TR::X86PrivateLinkage::buildDirectCall(TR::SymbolReference *methodSymRef, T
       cg()->stopUsingRegister(nativeMethodReg);
       }
    else if (methodSymRef->isUnresolved() || methodSymbol->isInterpreted()
-            || (cg()->comp()->compileRelocatableCode() && !methodSymbol->isHelper()) )
+            || ((cg()->comp()->compileRelocatableCode() || cg()->comp()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE) && !methodSymbol->isHelper()) )
       {
       TR::LabelSymbol *label   = generateLabelSymbol(cg());
 

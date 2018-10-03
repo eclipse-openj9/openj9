@@ -23,6 +23,7 @@
 #include "optimizer/TransformUtil.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
+#include "control/CompilationRuntime.hpp"
 #include "env/CompilerEnv.hpp"
 #include "il/Block.hpp"
 #include "il/Block_inlines.hpp"
@@ -1009,6 +1010,8 @@ J9::TransformUtil::transformIndirectLoad(TR::Compilation *comp, TR::Node *node)
 bool
 J9::TransformUtil::transformDirectLoad(TR::Compilation *comp, TR::Node *node)
    {
+   if (TR::CompilationInfo::getStream())
+      return false;
    TR_ASSERT(node->getOpCode().isLoadVarDirect(), "Expecting direct load; found %s %p", node->getOpCode().getName(), node);
    TR::SymbolReference *symRef = node->getSymbolReference();
    TR::Symbol           *sym    = node->getSymbol();
@@ -1024,17 +1027,17 @@ J9::TransformUtil::transformDirectLoad(TR::Compilation *comp, TR::Node *node)
       && sym->isStaticField()
       && sym->isFinal())
       {
-      J9Class *fieldClass = (J9Class*)symRef->getOwningMethod(comp)->getClassFromFieldOrStatic(comp, symRef->getCPIndex(), true);
+      TR_OpaqueClassBlock *fieldClass = symRef->getOwningMethod(comp)->getClassFromFieldOrStatic(comp, symRef->getCPIndex(), true);
       if (!fieldClass)
          return false;
       // Can't trust final statics unless class init is finished
       //
-      bool classInitIsFinished = (fieldClass->initializeStatus & J9ClassInitStatusMask) == J9ClassInitSucceeded;
+      bool classInitIsFinished = fej9->classInitIsFinished(fieldClass);
       if (!classInitIsFinished)
          return false;
 
       int32_t len;
-      char * name = fej9->getClassNameChars((TR_OpaqueClassBlock*)fieldClass, len);
+      char * name = fej9->getClassNameChars(fieldClass, len);
       if (!strncmp(name, "java/lang/System", len))
          return false; // Keep our hands off out/in/err, which are declared final but aren't really
 
@@ -1043,7 +1046,7 @@ J9::TransformUtil::transformDirectLoad(TR::Compilation *comp, TR::Node *node)
       //
       if (comp->getOption(TR_RestrictStaticFieldFolding)
           && sym->getRecognizedField() != TR::Symbol::assertionsDisabled
-         && !J9::TransformUtil::foldFinalFieldsIn((TR_OpaqueClassBlock*)fieldClass, name, len, true, comp))
+          && !J9::TransformUtil::foldFinalFieldsIn(fieldClass, name, len, true, comp))
          return false;
 
       // Static initializer can produce different values in different runs
@@ -1192,6 +1195,14 @@ J9::TransformUtil::transformDirectLoad(TR::Compilation *comp, TR::Node *node)
 bool
 J9::TransformUtil::transformIndirectLoadChainAt(TR::Compilation *comp, TR::Node *node, TR::Node *baseExpression, uintptrj_t *baseReferenceLocation, TR::Node **removedNode)
    {
+   // bypass this method, because baseReferenceLocation is often an address of a pointer
+   // on server's stack, which causes a segfault when getStaticReferenceFieldAtAddress is called
+   // on the client.
+   if (comp->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+      {
+      return false;
+      }
+
    TR::VMAccessCriticalSection transformIndirectLoadChainAt(comp->fej9());
    uintptrj_t baseAddress;
    if (baseExpression->getOpCode().hasSymbolReference() && baseExpression->getSymbol()->isStatic())
@@ -1289,16 +1300,17 @@ bool
 J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Node *node, TR::Node *baseExpression, void *baseAddress, TR::Node **removedNode)
    {
    TR_J9VMBase *fej9 = comp->fej9();
+   
+   if (comp->compileRelocatableCode() || comp->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+      {
+      return false;
+      }
 
    TR_ASSERT(TR::Compiler->vm.hasAccess(comp), "transformIndirectLoadChain requires VM access");
    TR_ASSERT(node->getOpCode().isLoadIndirect(), "Expecting indirect load; found %s %p", node->getOpCode().getName(), node);
    TR_ASSERT(node->getNumChildren() == 1, "Expecting indirect load %s %p to have one child; actually has %d", node->getOpCode().getName(), node, node->getNumChildren());
 
-   if (comp->compileRelocatableCode())
-      {
-      return false;
-      }
-
+   
    TR::SymbolReference *symRef = node->getSymbolReference();
 
    if (symRef->hasKnownObjectIndex())

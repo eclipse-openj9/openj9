@@ -58,17 +58,20 @@
 #include "runtime/CodeCacheReclamation.h"
 #include "runtime/codertinit.hpp"
 #include "runtime/IProfiler.hpp"
+#include "runtime/JITaaSIProfiler.hpp"
 #include "runtime/HWProfiler.hpp"
 #include "runtime/LMGuardedStorage.hpp"
 #include "env/PersistentInfo.hpp"
 #include "env/ClassLoaderTable.hpp"
 #include "env/J2IThunk.hpp"
 #include "env/PersistentCHTable.hpp"
+#include "env/JITaaSPersistentCHTable.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/jittypes.h"
 #include "env/ClassTableCriticalSection.hpp"
 
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
+#include "control/JITaaSCompilationThread.hpp"
 
 /* Hardware Profiling */
 #if defined(TR_HOST_S390) && defined(BUILD_Z_RUNTIME_INSTRUMENTATION)
@@ -195,6 +198,7 @@ char *compilationErrorNames[]={
    "compilationFSDHasInvokeHandle", //47
    "compilationVirtualAddressExhaustion", //48
    "compilationEnforceProfiling", //49
+   "compilationStreamFailure", //50
    "compilationMaxError"
 };
 
@@ -306,9 +310,9 @@ j9jit_testarossa_err(
       event._eventType = TR_MethodEvent::InterpreterCounterTripped;
       // Experimental code: user may want to artificially delay the compilation
       // of methods to gather more IProfiler info
+      TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
       if (TR::Options::_compilationDelayTime > 0)
          {
-         TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
          if (!TR::CompilationInfo::isJNINative(method))
             {
             if (compInfo->getPersistentInfo()->getElapsedTime() < 1000 * TR::Options::_compilationDelayTime)
@@ -323,6 +327,9 @@ j9jit_testarossa_err(
                }
             }
          }
+      // Do not allow local compilations in JITaaS server mode
+      if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+         return 0;
       }
 
    event._j9method = method;
@@ -484,7 +491,6 @@ j9jit_createNewInstanceThunk_err(
    event._j9method = method;
    event._oldStartPC = 0;
    event._vmThread = vmThread;
-   event._classNeedingThunk = classNeedingThunk;
    bool newPlanCreated;
    TR_OptimizationPlan *plan = TR::CompilationController::getCompilationStrategy()->processEvent(&event, &newPlanCreated);
    UDATA result = 0;
@@ -1079,10 +1085,9 @@ onLoadInternal(
    if (persistentMemory == NULL)
       return -1;
 
-   TR_PersistentCHTable *chtable = new (PERSISTENT_NEW) TR_PersistentCHTable(persistentMemory);
-   if (chtable == NULL)
-      return -1;
-   persistentMemory->getPersistentInfo()->setPersistentCHTable(chtable);
+   // JITaaS: persistentCHTable used to be inited here, but we have to move it after JITaaS commandline opts
+   // setting it to null here to catch anything that assumes it's set between here and the new init code.
+   persistentMemory->getPersistentInfo()->setPersistentCHTable(NULL);
 
    if (!TR::CompilationInfo::createCompilationInfo(jitConfig))
       return -1;
@@ -1482,7 +1487,18 @@ onLoadInternal(
 
    if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableInterpreterProfiling))
       {
-      ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler = TR_IProfiler::allocate(jitConfig);
+      if (persistentMemory->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+         {
+         ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler = TR_JITaaSIProfiler::allocate(jitConfig);
+         }
+      else if (persistentMemory->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+         {
+         ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler = TR_JITaaSClientIProfiler::allocate(jitConfig);
+         }
+      else
+         {
+         ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler = TR_IProfiler::allocate(jitConfig);
+         }
       if (!(((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler))
          {
          // Warn that IProfiler was not allocated
@@ -1550,6 +1566,48 @@ onLoadInternal(
           !(TR::Options::getCmdLineOptions()->getFixedOptLevel() == -1 &&
             TR::Options::getCmdLineOptions()->getOption(TR_InhibitRecompilation)))
          persistentMemory->getPersistentInfo()->setRuntimeInstrumentationRecompilationEnabled(true);
+      }
+
+   TR_PersistentCHTable *chtable;
+   if (persistentMemory->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+      {
+      chtable = new (PERSISTENT_NEW) TR_JITaaSServerPersistentCHTable(persistentMemory);
+      }
+   else if (persistentMemory->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+      {
+      chtable = new (PERSISTENT_NEW) TR_JITaaSClientPersistentCHTable(persistentMemory);
+      }
+   else
+      {
+      chtable = new (PERSISTENT_NEW) TR_PersistentCHTable(persistentMemory);
+      }
+   if (chtable == NULL)
+      return -1;
+   persistentMemory->getPersistentInfo()->setPersistentCHTable(chtable);
+   
+   if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+      {
+      // Allocate the hashtable that holds information about clients
+      compInfo->setClientSessionHT(ClientSessionHT::allocate());
+
+      ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener = TR_Listener::allocate();
+      if (!((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener)
+         {
+         // warn that Listener was not allocated
+         j9tty_printf(PORTLIB, "JITaaS Listener not allocated, abort.\n");
+         return -1; 
+         }
+      }
+   else if (compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+      {
+      compInfo->setUnloadedClassesTempList(new (PERSISTENT_NEW) PersistentVector<TR_OpaqueClassBlock*>(
+         PersistentVector<TR_OpaqueClassBlock*>::allocator_type(TR::Compiler->persistentAllocator())));
+
+      compInfo->setNewlyExtendedClasses(new (PERSISTENT_NEW) PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t>(
+         PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t>::allocator_type(TR::Compiler->persistentAllocator())));
+
+      // Try to initialize SSL
+      JITaaS::J9ClientStream::static_init(compInfo->getPersistentInfo());
       }
 
 #if defined(TR_HOST_S390)
@@ -1722,12 +1780,24 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
          {
          javaVM->sharedClassConfig->runtimeFlags &= ~J9SHR_RUNTIMEFLAG_ENABLE_AOT;
          TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
+         if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+            {
+            // TODO: Format the error message to use j9nls_printf
+            fprintf(stderr, "Aborting Compilation: SCC/AOT must be enabled and can be stored in JITaaS Server Mode.");
+            return -1;
+            }
          }
       else if ((javaVM->sharedClassConfig->runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_AOT) == 0)
          {
          TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
          TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
-         }
+         if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+            {
+            // TODO: Format the error message to use j9nls_printf
+            fprintf(stderr, "Aborting Compilation: SCC/AOT must be enabled and can be stored in JITaaS Server Mode.");
+            return -1;
+            }
+         }        
       }
 #endif
 

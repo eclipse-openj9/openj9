@@ -372,10 +372,23 @@ JIT_PRODUCT_SOURCE_FILES+=\
     omr/compiler/runtime/OMRCodeCacheConfig.cpp \
     omr/compiler/runtime/OMRCodeCacheManager.cpp \
     omr/compiler/runtime/OMRCodeCacheMemorySegment.cpp \
-    omr/compiler/runtime/OMRRuntimeAssumptions.cpp
+    omr/compiler/runtime/OMRRuntimeAssumptions.cpp \
+    compiler/runtime/Listener.cpp \
+    compiler/env/VMJ9Server.cpp \
+    compiler/env/j9methodServer.cpp \
+    compiler/rpc/grpc/J9Server.cpp \
+    compiler/rpc/raw/J9Server.cpp \
+    compiler/rpc/raw/J9Client.cpp \
+    compiler/rpc/ProtobufTypeConvert.cpp \
+    compiler/control/JITaaSCompilationThread.cpp \
+    compiler/env/JITaaSPersistentCHTable.cpp \
+    compiler/env/JITaaSCHTable.cpp \
+    compiler/runtime/JITaaSIProfiler.cpp \
+    compiler/runtime/CompileService.cpp
 
 -include $(JIT_MAKE_DIR)/files/extra.mk
 include $(JIT_MAKE_DIR)/files/host/$(HOST_ARCH).mk
 include $(JIT_MAKE_DIR)/files/target/$(TARGET_ARCH).mk
 -include $(JIT_MAKE_DIR)/files/host/$(HOST_ARCH)-extra.mk
 -include $(JIT_MAKE_DIR)/files/target/$(TARGET_ARCH)-extra.mk
+include $(JIT_MAKE_DIR)/files/rpc.mk

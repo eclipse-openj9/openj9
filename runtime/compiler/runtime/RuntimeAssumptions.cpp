@@ -32,6 +32,7 @@
 #include "infra/Monitor.hpp"
 #include "infra/CriticalSection.hpp"
 #include "control/CompilationRuntime.hpp"
+#include "control/CompilationThread.hpp"
 #include "env/VMJ9.h"
 
 namespace TR { class Monitor; }
@@ -224,6 +225,9 @@ TR_PersistentCHTable::classGotExtended(
    {
    TR_PersistentClassInfo * cl = findClassInfo(superClassId);
    TR_PersistentClassInfo * subClass = findClassInfo(subClassId); // This is actually the class that got loaded extending the superclass
+
+   TR::CompilationInfo::get()->classGotNewlyExtended(superClassId);
+
    // should have an assume0(cl && subClass) here - but assume does not work rt-code
 
    TR_SubClass *sc = cl->addSubClass(subClass); // Updating the hierarchy
@@ -302,6 +306,7 @@ TR_PersistentCHTable::removeClass(
       jitPersistentFree(subcl);
       subcl = nextScl;
       }
+   info->setFirstSubClass(nullptr);
 
    J9Class *clazzPtr;
    J9Class *superCl;
@@ -334,12 +339,9 @@ TR_PersistentCHTable::removeClass(
 
       }
 
-   if (!removeInfo)
-      info->setFirstSubClass(0);
-   else
+   if (removeInfo)
       {
       _classes[hashPos].remove(info);
-      info->removeSubClasses();
       jitPersistentFree(info);
       }
    }
@@ -501,4 +503,13 @@ TR_PersistentCHTable::removeAssumptionFromList(
       prev->setNext(next);
    else
       *list = next;
+   }
+
+void
+TR_PersistentClassInfo::setShouldNotBeNewlyExtended(int32_t ID)
+   {
+   auto classesThatShouldNotBeNewlyExtended = TR::compInfoPT->getClassesThatShouldNotBeNewlyExtended();
+   if (classesThatShouldNotBeNewlyExtended)
+      classesThatShouldNotBeNewlyExtended->insert(_classId);
+   _shouldNotBeNewlyExtended.set(1 << ID);
    }

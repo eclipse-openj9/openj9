@@ -3036,8 +3036,7 @@ TR_MultipleCallTargetInliner::walkCallSites(TR::ResolvedMethodSymbol * callerSym
                         {
                         if (TR::Compiler->mtd.isCompiledMethod(callsite->getTarget(i)->_calleeSymbol->getResolvedMethod()->getPersistentIdentifier()))
                            {
-                           void * methodAddress = callsite->getTarget(i)->_calleeSymbol->getResolvedMethodSymbol()->getResolvedMethod()->startAddressForInterpreterOfJittedMethod();
-                           TR_PersistentJittedBodyInfo * bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(methodAddress);
+                           TR_PersistentJittedBodyInfo * bodyInfo = ((TR_ResolvedJ9Method*) callsite->getTarget(i)->_calleeSymbol->getResolvedMethodSymbol()->getResolvedMethod())->getExistingJittedBodyInfo();
                            if (bodyInfo &&
                                bodyInfo->getHotness() < warm &&
                                !bodyInfo->getIsProfilingBody())
@@ -4133,11 +4132,14 @@ int32_t TR_MultipleCallTargetInliner::scaleSizeBasedOnBlockFrequency(int32_t byt
 
 bool TR_MultipleCallTargetInliner::isLargeCompiledMethod(TR_ResolvedMethod *calleeResolvedMethod, int32_t bytecodeSize, int32_t callerBlockFrequency)
    {
+   // JITaaS TODO: remove this early return when jitted body info is working
+   if (TR::CompilationInfo::getStream())
+      return false;
+
    TR_OpaqueMethodBlock* methodCallee = calleeResolvedMethod->getPersistentIdentifier();
    if (TR::Compiler->mtd.isCompiledMethod(methodCallee))
       {
-      void * methodAddress = calleeResolvedMethod->startAddressForInterpreterOfJittedMethod();
-      TR_PersistentJittedBodyInfo * bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(methodAddress);
+      TR_PersistentJittedBodyInfo * bodyInfo = ((TR_ResolvedJ9Method*) calleeResolvedMethod)->getExistingJittedBodyInfo();
       if ((comp()->getMethodHotness() <= warm))
          {
          if (bodyInfo &&
@@ -4220,8 +4222,7 @@ TR_MultipleCallTargetInliner::exceedsSizeThreshold(TR_CallSite *callSite, int by
       TR_PersistentJittedBodyInfo *bodyInfo = NULL;
       if (!calleeResolvedMethod->isInterpreted() && !calleeResolvedMethod->isJITInternalNative())
          {
-         void *startPC = (void *)calleeResolvedMethod->startAddressForInterpreterOfJittedMethod();
-         bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(startPC);
+         bodyInfo = ((TR_ResolvedJ9Method*) calleeResolvedMethod)->getExistingJittedBodyInfo();
          }
       if (((!bodyInfo && !calleeResolvedMethod->isInterpreted() && !calleeResolvedMethod->isJITInternalNative()) //jitted method without bodyInfo must be scorching 
          || (bodyInfo && bodyInfo->getHotness() == scorching)

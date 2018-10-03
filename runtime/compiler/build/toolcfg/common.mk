@@ -81,6 +81,13 @@ PRODUCT_SLINK=$(J9LIBS) $(J9LIBS)
 -include $(JIT_MAKE_DIR)/toolcfg/common-extra.mk
 
 #
+# RPC
+#
+PRODUCT_INCLUDES+=\
+    $(FIXED_SRCBASE)/compiler/rpc/gen \
+	$(FIXED_SRCBASE)/compiler/rpc
+
+#
 # Now we include the host and target tool config
 # These don't really do much generally... They set a few defines but there really
 # isn't a lot of stuff that's host/target dependent that isn't also dependent

@@ -44,8 +44,11 @@ public:
 
    bool isHint(TR_ResolvedMethod *, TR_SharedCacheHint, uint16_t *dataField = NULL);
    bool isHint(J9Method *, TR_SharedCacheHint, uint16_t *dataField = NULL);
+   bool isHint(J9ROMMethod *, TR_SharedCacheHint, uint16_t *dataField = NULL);
    uint16_t getAllEnabledHints(J9Method *method);
+   uint16_t getAllEnabledHints(J9ROMMethod *method);
    void addHint(J9Method *, TR_SharedCacheHint);
+   void addHint(J9ROMMethod *, TR_SharedCacheHint);
    void addHint(TR_ResolvedMethod *, TR_SharedCacheHint);
    bool isMostlyFull();
 
@@ -54,8 +57,6 @@ public:
 
    void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR::Compilation *comp);
    void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR_ResolvedMethod*, TR::Compilation *comp);
-
-   J9Class * matchRAMclassFromROMclass(J9ROMClass * clazz, TR::Compilation * comp);
 
    bool canRememberClass(TR_OpaqueClassBlock *classPtr)
       {
@@ -79,6 +80,8 @@ public:
       }
 
    TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptrj_t *chainData, void *classLoader);
+
+   uintptrj_t lookupClassChainOffsetInSharedCacheFromClass(TR_OpaqueClassBlock *clazz);
 
    bool isPointerInSharedCache(void *ptr, void * & cacheOffset);
 
@@ -104,6 +107,8 @@ public:
    static TR_YesNoMaybe isSharedCacheDisabledBecauseFull(TR::CompilationInfo *compInfo);
    static void setStoreSharedDataFailedLength(UDATA length) {_storeSharedDataFailedLength = length; }
    
+   UDATA getCacheStartAddress() { return _cacheStartAddress; }
+
 private:
    J9JITConfig *jitConfig() { return _jitConfig; }
    J9JavaVM *javaVM() { return _javaVM; }
@@ -115,6 +120,7 @@ private:
    void log(char *format, ...);
 
    uint32_t getHint(J9VMThread * vmThread, J9Method *method);
+   uint32_t getHint(J9VMThread * vmThread, J9ROMMethod *method);
 
    void convertUnsignedOffsetToASCII(UDATA offset, char *myBuffer);
    void createClassKey(UDATA classOffsetInCache, char *key, uint32_t & keyLength);
@@ -122,7 +128,7 @@ private:
    uint32_t numInterfacesImplemented(J9Class *clazz);
 
    bool writeClassToChain(J9ROMClass *romClass, UDATA * & chainPtr);
-   bool writeClassesToChain(J9Class **superclasses, int32_t numSuperclasses, UDATA * & chainPtr);
+   bool writeClassesToChain(J9Class *clazz, int32_t numSuperclasses, UDATA * & chainPtr);
    bool writeInterfacesToChain(J9Class *clazz, UDATA * & chainPtr);
    bool fillInClassChain(J9Class *clazz, UDATA *chainData, uint32_t chainLength,
                          uint32_t numSuperclasses, uint32_t numInterfaces);
