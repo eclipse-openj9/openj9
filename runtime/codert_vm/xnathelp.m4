@@ -969,29 +969,17 @@ END_PROC(jitDecompileOnReturnJ)
 
 START_PROC(jitReferenceArrayCopy)
 	FASTCALL_EXTERN(impl_jitReferenceArrayCopy,2)
-	pop uword ptr J9TR_VMThread_jitReturnAddress[_rbp]
 	SWITCH_TO_C_STACK
-	SAVE_ALL_REGS
-
-	mov    uword ptr [_rbp+J9TR_VMThread_floatTemp3], _rsi
-	mov    uword ptr [_rbp+J9TR_VMThread_floatTemp4], _rdi
-ifdef({ASM_J9VM_ENV_DATA64},{
-ifdef({WIN32},{
-	mov    _rdx, _rcx
-	mov    _rcx, _rbp
-},{
-	mov    _rsi, _rcx
-	mov    _rdi, _rbp
-})
-},{
-	mov    _rdx, _rcx
-	mov    _rcx, _rbp
-})
-	call   FASTCALL_SYMBOL(impl_jitReferenceArrayCopy,2)
-	test   _rax, _rax
-	RESTORE_ALL_REGS
+	SAVE_C_VOLATILE_REGS
+	mov uword ptr J9TR_VMThread_floatTemp3[_rbp],_rsi
+	mov uword ptr J9TR_VMThread_floatTemp4[_rbp],_rdi
+	mov PARM_REG(2),_rcx
+	mov PARM_REG(1),_rbp
+	call FASTCALL_SYMBOL(impl_jitReferenceArrayCopy,2)
+	dnl set ZF if succeed
+	test _rax,_rax
+	RESTORE_C_VOLATILE_REGS
 	SWITCH_TO_JAVA_STACK
-	push uword ptr J9TR_VMThread_jitReturnAddress[_rbp]
 	ret
 END_PROC(jitReferenceArrayCopy)
 

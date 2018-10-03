@@ -24,31 +24,33 @@ package j9vm.test.ddrext.junit;
 import j9vm.test.ddrext.Constants;
 import j9vm.test.ddrext.DDRExtTesterBase;
 
-public class TestMonitors extends DDRExtTesterBase
-{
+public class TestMonitors extends DDRExtTesterBase {
+
+	private static final String FailurePatterns = "error,(^|[^_])exception,null,unrecog";
+
 	/**
 	 * Test !monitors help
 	 */
-	public void testMonitorsHelp()
-	{
+	public void testMonitorsHelp() {
 		String output = exec(Constants.MONITORS_CMD, new String[] { "help" });
-		
+
 		if (null == output) {
 			fail("\"!monitors help\" output is null. Can not proceed with test");
 			return;
 		}
-		
+
 		assertTrue(validate(output,
-				"monitors tables,monitors system,monitors object,monitors objects," +
-				"monitors thread,monitors j9thread,monitors j9vmthread,monitors deadlock," +
-				"monitors [ owned | waiting | blocked | active | all ]", "unrecog,exception,error,null", false));
+				"monitors tables,monitors system,monitors object,monitors objects,"
+					+ "monitors thread,monitors j9thread,monitors j9vmthread,monitors deadlock,"
+					+ "monitors [ owned | waiting | blocked | active | all ]",
+				FailurePatterns,
+				false));
 	}
-	
+
 	/**
 	 * Test !monitors all
 	 */
-	public void testMonitorsAll()
-	{
+	public void testMonitorsAll() {
 		String output = exec(Constants.MONITORS_CMD, new String[] { "all" });
 
 		if (null == output) {
@@ -62,31 +64,33 @@ public class TestMonitors extends DDRExtTesterBase
 		 */
 		assertTrue(validate(output,
 				"Object Monitors:,System Monitors:,j9threadmonitor",
-				"unrecog,(^|[^_])exception,error,null",
+				FailurePatterns,
 				false));
 	}
-	
+
 	/**
 	 * Test !monitors tables and !monitors table
 	 */
-	public void testMonitorsTables()
-	{
+	public void testMonitorsTables() {
 		String output = exec(Constants.MONITORS_CMD, new String[] { "tables" });
-		
+
 		if (null == output) {
 			fail("\"!monitors tables\" output is null. Can not proceed with test");
 			return;
 		}
-		
+
 		// If we're running on a core with some active (object) monitors:
 		if (false == output.isEmpty()) {
-			assertTrue(validate(output,"j9monitortablelistentry", "exception,error,null", false));
-			
+			assertTrue(validate(output,
+					"j9monitortablelistentry",
+					FailurePatterns,
+					false));
+
 			String tableAddr = getAddressFor(output, null, "j9monitortablelistentry", "\t");
 			tableAddr = tableAddr.substring(0, tableAddr.indexOf('>')); // getAddressFor(...) has some issues.
-			
+
 			String tableOutput = exec(Constants.MONITORS_CMD, new String[] { "table", tableAddr });
-			
+
 			assertTrue((null != tableOutput) && (false == tableOutput.isEmpty()));
 		}
 	}
@@ -94,62 +98,77 @@ public class TestMonitors extends DDRExtTesterBase
 	/**
 	 * Test !monitors objects && !monitors object
 	 */
-	public void testMonitorsObject()
-	{
+	public void testMonitorsObject() {
 		String objectsOutput = exec(Constants.MONITORS_CMD, new String[] { "objects" });
-		
+
 		if (null == objectsOutput) {
 			fail("\"!monitors objects\"output is null. Can not proceed with test");
 			return;
 		}
-		
+
 		String eyecatcher = "Object monitor for ";
 		objectsOutput = objectsOutput.substring(objectsOutput.indexOf(eyecatcher) + eyecatcher.length());
 		String address = getAddressFor(objectsOutput, null, Constants.J9OBJECT_CMD, "\t");
-				
+
 		System.out.println("getAddressFor returned: " + address);
-		
+
 		if (null != address) { // If we're running on a core with some active (object) monitors:
 			String objOutput = exec(Constants.MONITORS_CMD, new String[] { "object", address });
-			assertTrue(validate(objOutput, "j9objectmonitor,j9threadmonitor,j9vmthread,j9thread", "unrecog,exception,error,null", false));
+			assertTrue(validate(objOutput,
+					"j9objectmonitor,j9threadmonitor,j9vmthread,j9thread",
+					FailurePatterns,
+					false));
 		}
 	}
-	
+
 	/**
 	 * Test !monitors system
 	 */
-	public void testMonitorsSystem()
-	{
+	public void testMonitorsSystem() {
 		String output = exec(Constants.MONITORS_CMD, new String[] { "system", "all" });
-		
+
 		if (null == output) {
 			fail("\"!monitors system\"output is null. Can not proceed with test");
 			return;
 		}
-		
-		assertTrue(validate(output, "!j9thread", "unrecog,exception,error,null", false));	
+
+		assertTrue(validate(output,
+				"!j9thread",
+				FailurePatterns,
+				false));
 	}
-	
+
 	/**
 	 * Test !monitors thread, !monitors j9thread, !monitors j9vmthread
 	 */
-	public void testMonitorsThread()
-	{
-		String threadOutput = exec(Constants.THREAD_CMD, new String[] {} );
+	public void testMonitorsThread() {
+		String threadOutput = exec(Constants.THREAD_CMD, new String[] {});
 		String j9threadAddr = getAddressFor(threadOutput, null, Constants.J9THREAD_CMD, "\t");
 		String j9vmthreadAddr = getAddressFor(threadOutput, null, Constants.J9VMTHREAD_CMD, "\t");
-		
+
 		String j9threadOutput = exec(Constants.MONITORS_CMD, new String[] { Constants.J9THREAD_CMD, j9threadAddr });
-		assertTrue(validate(j9threadOutput, Constants.J9THREAD_CMD, "unrecog,exception,error,null", false));
-		
+		assertTrue(validate(j9threadOutput,
+				Constants.J9THREAD_CMD,
+				FailurePatterns,
+				false));
+
 		String j9vmthreadOutput = exec(Constants.MONITORS_CMD, new String[] { Constants.J9VMTHREAD_CMD, j9vmthreadAddr });
-		assertTrue(validate(j9vmthreadOutput, Constants.J9VMTHREAD_CMD, "unrecog,exception,error,null", false));
-		
+		assertTrue(validate(j9vmthreadOutput,
+				Constants.J9VMTHREAD_CMD,
+				FailurePatterns,
+				false));
+
 		String findj9threadOutput = exec(Constants.MONITORS_CMD, new String[] { "thread", j9threadAddr });
-		assertTrue(validate(findj9threadOutput, Constants.J9THREAD_CMD, "unrecog,exception,error,null", false));
-		
+		assertTrue(validate(findj9threadOutput,
+				Constants.J9THREAD_CMD,
+				FailurePatterns,
+				false));
+
 		String findj9vmthreadOutput = exec(Constants.MONITORS_CMD, new String[] { "thread", j9vmthreadAddr });
-		assertTrue(validate(findj9vmthreadOutput, Constants.J9VMTHREAD_CMD, "unrecog,exception,error,null", false));
+		assertTrue(validate(findj9vmthreadOutput,
+				Constants.J9VMTHREAD_CMD,
+				FailurePatterns,
+				false));
 	}
-	
+
 }
