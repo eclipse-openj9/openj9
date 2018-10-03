@@ -383,14 +383,19 @@ def set_build_variables() {
 }
 
 def set_sdk_variables() {
-    DATESTAMP = sh (
-        script: 'date +%Y%d%m%H%M',
-        returnStdout: true
-        ).trim()
+    DATESTAMP = get_date()
     SDK_FILENAME = "OpenJ9-JDK${SDK_VERSION}-${SPEC}-${DATESTAMP}.tar.gz"
     TEST_FILENAME = "native-test-libs.tar.gz"
     echo "Using SDK_FILENAME = ${SDK_FILENAME}"
     echo "Using TEST_FILENAME = ${TEST_FILENAME}"
+}
+
+def get_date() {
+    //Returns a string for the current date YYYYMMDD-HHMMSS
+    return sh (
+        script: 'date +%Y%m%d-%H%M%S',
+        returnStdout: true
+    ).trim()
 }
 
 /*
