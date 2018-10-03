@@ -30,7 +30,7 @@ Welcome to the Eclipse OpenJ9 repository
 [![License](https://img.shields.io/badge/License-APL%202.0-green.svg)](https://opensource.org/licenses/Apache-2.0)
 
 
-We're not sure which route you might have taken on your way here, but we're really pleased to see you! If you came directly from our website, you've probably already learned a lot about Eclipse OpenJ9 and how it fits in to the OpenJDK ecosystem. If you came via some other route, here are a few key links to get you started:
+We're not sure which route you might have taken on your way here, but we're really pleased to see you! If you came directly from our website, you've probably already learned a lot about Eclipse OpenJ9 and how it fits into the OpenJDK ecosystem. If you came via some other route, here are a few key links to get you started:
 
 - [Eclipse OpenJ9 website](http://www.eclipse.org/openj9) - Learn about this high performance, enterprise-grade Java Virtual Machine (JVM) and why we think you want to get involved in its development.
 - [AdoptOpenJDK website](https://adoptopenjdk.net/releases.html?variant=openjdk9-openj9) - Grab pre-built OpenJDK binaries that embed OpenJ9 and try it out.
@@ -61,7 +61,7 @@ License 2.0 or Eclipse Public License 2.0 with a secondary compatibility license
 GPLv2 license) that is designed to allow OpenJDK to be built with the OpenJ9 JVM.  Please see our
 [LICENSE file](https://github.com/eclipse/openj9/blob/master/LICENSE) for more details.
 
-Eclipse OpenJ9 is a source code project that can be built alongside Java class libraries.  Cross platform
+Eclipse OpenJ9 is a source code project that can be built alongside Java class libraries.  Cross-platform
 nightly and release binaries and docker containers for OpenJDK with OpenJ9, targeting several JDK levels
 (like JDK8, JDK10, etc.) are built by the [AdoptOpenJDK organization](https://github.com/adoptopenjdk)
 and can be downloaded from the [AdoptOpenJDK download site](https://adoptopenjdk.net/?variant=openjdk8-openj9)
@@ -70,7 +70,7 @@ or on [DockerHub](https://hub.docker.com/search/?isAutomated=0&isOfficial=0&page
 What is the goal of the project?
 ================================
 
-The long term goal of the Eclipse OpenJ9 project is to foster an open ecosystem of JVM developers that can collaborate and innovate with designers and developers of hardware platforms, operating systems, tools, and frameworks.
+The long-term goal of the Eclipse OpenJ9 project is to foster an open ecosystem of JVM developers that can collaborate and innovate with designers and developers of hardware platforms, operating systems, tools, and frameworks.
 
 The project welcomes collaboration, embraces fresh innovation, and extends an opportunity to influence the development of OpenJ9 for the next generation of Java applications.
 
@@ -86,7 +86,7 @@ To get started, read our [Contribution Guide](CONTRIBUTING.md).
 
 [coc]: https://eclipse.org/org/documents/Community_Code_of_Conduct.php
 
-If you think you want to contribute but you're not ready to sign the Eclipse Contributor Agreement, why not come along to our weekly *Ask the OpenJ9 community* calls to find out more about how we work. We talk about new ideas, answer any questions that get raised, and discuss project plans and status. We also do lightning talks on features and functions of the VM. Visit the *#planning* channel in our [Slack workspace](https://openj9.slack.com/) for information about upcoming community calls and minutes from previous meetings (Join [here](https://www.eclipse.org/openj9/oj9_joinslack.html)). 
+If you think you want to contribute but you're not ready to sign the Eclipse Contributor Agreement, why not come along to our weekly *Ask the OpenJ9 community* calls to find out more about how we work. We talk about new ideas, answer any questions that get raised, and discuss project plans and status. We also do lightning talks on the features and functions of the VM. Visit the *#planning* channel in our [Slack workspace](https://openj9.slack.com/) for information about upcoming community calls and minutes from previous meetings (Join [here](https://www.eclipse.org/openj9/oj9_joinslack.html)). 
 
 What repos are part of the project?
 ===================================
@@ -109,6 +109,6 @@ Videos and Presentations
 - [JavaOne 2017: Eclipse OpenJ9 Under the hood of the next open source JVM](https://www.slideshare.net/DanHeidinga/javaone-2017-eclipse-openj9-under-the-hood-of-the-jvm)
 - [JavaOne 2017: Ask the OpenJ9 Architects](https://www.youtube.com/watch?v=qb5ennM_pgc)
 
-Also check out the [Resources](https://www.eclipse.org/openj9/oj9_resources.html) page on our website.
+Also, check out the [Resources](https://www.eclipse.org/openj9/oj9_resources.html) page on our website.
 
 Copyright (c) 2017, 2018 IBM Corp. and others
