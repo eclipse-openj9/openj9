@@ -1494,6 +1494,23 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
                           std::string((char*) bodyInfo->getMethodInfo(), sizeof(TR_PersistentMethodInfo)));
          }
          break;
+      case J9ServerMessageType::ResolvedMethod_isUnresolvedString:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool>();
+         auto mirror = std::get<0>(recv);
+         auto cpIndex = std::get<1>(recv);
+         auto optimizeForAOT = std::get<2>(recv);
+         client->write(mirror->isUnresolvedString(cpIndex, optimizeForAOT));
+         }
+         break;
+      case J9ServerMessageType::ResolvedMethod_stringConstant:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t>();
+         auto mirror = std::get<0>(recv);
+         auto cpIndex = std::get<1>(recv);
+         client->write(mirror->stringConstant(cpIndex));
+         }
+         break;
       case J9ServerMessageType::CompInfo_isCompiled:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
