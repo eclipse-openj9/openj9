@@ -1043,16 +1043,12 @@ TR_ResolvedJ9JITaaSServerMethod::isInlineable(TR::Compilation *comp)
       }
    }
 
-bool
-TR_ResolvedJ9JITaaSServerMethod::isWarmCallGraphTooBig(uint32_t bcIndex, TR::Compilation *comp)
-   {
-   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_isWarmCallGraphTooBig, _remoteMirror, bcIndex);
-   return std::get<0>(_stream->read<bool>()); 
-   }
-
 void
 TR_ResolvedJ9JITaaSServerMethod::setWarmCallGraphTooBig(uint32_t bcIndex, TR::Compilation *comp)
    {
+   // set the variable in the server IProfiler
+   TR_ResolvedJ9Method::setWarmCallGraphTooBig(bcIndex, comp);
+   // set it on the client IProfiler too, in case a server crashes, client will still have the correct value
    _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_setWarmCallGraphTooBig, _remoteMirror, bcIndex);
    _stream->read<JITaaS::Void>();
    }

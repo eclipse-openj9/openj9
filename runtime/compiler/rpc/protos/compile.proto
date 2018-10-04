@@ -91,7 +91,7 @@ enum J9ServerMessageType
    ResolvedMethod_isBigDecimalConvertersMethod = 137;
    ResolvedMethod_osrFrameSize = 138;
    ResolvedMethod_isInlineable = 139;
-   ResolvedMethod_isWarmCallGraphTooBig = 140;
+   // ResolvedMethod_isWarmCallGraphTooBig = 140; 
    ResolvedMethod_setWarmCallGraphTooBig = 141;
    ResolvedMethod_setVirtualMethodIsOverridden = 142;
    ResolvedMethod_addressContainingIsOverriddenBit = 143;
