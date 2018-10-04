@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2016 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -217,8 +217,12 @@ char* getPlatformFileEncoding(JNIEnv *env, char *codepage, int size, int encodin
 	/*[PR 94901] Get info about the current code page, not the system code page (CP_ACP) */
 	if (GetCPInfo(cp, &cpInfo) && cpInfo.MaxCharSize > 1) {
 		if (cp == 936) {
-			if (IsValidCodePage(54936))
-				return "GB18030";
+			J9JavaVM* vm = ((J9VMThread *)env)->javaVM;
+			if (J2SE_VERSION(vm) < J2SE_19) {
+				if (IsValidCodePage(54936)) {
+					return "GB18030";
+				}
+			}
 			return "GBK";
 		} else if (cp == 54936) return "GB18030";
 		codepage[0] = 'M';
