@@ -2208,7 +2208,7 @@ static bool matchFieldOrStaticName(TR::Compilation* comp, TR::Node* node, char* 
       int32_t index = symRef->getReferenceNumber();
       int32_t nonhelperIndex = comp->getSymRefTab()->getNonhelperIndex(comp->getSymRefTab()->getLastCommonNonhelperSymbol());
       int32_t numHelperSymbols = comp->getSymRefTab()->getNumHelperSymbols();
-      if ((index < numHelperSymbols) || (index < nonhelperIndex) || sym->isConstString()) return false;
+      if ((index < numHelperSymbols) || (index < nonhelperIndex) || !sym->isStaticField()) return false;
 
       const char * nodeName = method->staticName(symRef->getCPIndex(), comp->trMemory(), stackAlloc);
       return !strcmp(nodeName, staticOrFieldName);
