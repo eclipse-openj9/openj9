@@ -21,6 +21,20 @@
 JIT_PRODUCT_BACKEND_SOURCES+= \
     omr/compiler/x/runtime/VirtualGuardRuntime.cpp
 
+ifeq ($(OS),osx)
+    JIT_PRODUCT_SOURCE_FILES+=\
+    compiler/x/runtime/Recomp.cpp \
+    compiler/x/runtime/X86ArrayTranslate.nasm \
+    compiler/x/runtime/X86Codert.nasm \
+    compiler/x/runtime/X86EncodeUTF16.nasm \
+    compiler/x/runtime/X86LockReservation.nasm \
+    compiler/x/runtime/X86PicBuilder.pnasm \
+    compiler/x/runtime/X86PicBuilderC.cpp \
+    compiler/x/runtime/X86RelocationTarget.cpp \
+    compiler/x/runtime/X86Unresolveds.pnasm
+
+else
+
 JIT_PRODUCT_SOURCE_FILES+=\
     compiler/x/runtime/Recomp.cpp \
     compiler/x/runtime/X86ArrayTranslate.asm \
@@ -31,5 +45,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/x/runtime/X86PicBuilderC.cpp \
     compiler/x/runtime/X86RelocationTarget.cpp \
     compiler/x/runtime/X86Unresolveds.pasm
+
+endif # OS == osx
 
 include $(JIT_MAKE_DIR)/files/host/$(HOST_SUBARCH).mk
