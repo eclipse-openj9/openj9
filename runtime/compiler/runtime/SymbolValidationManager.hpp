@@ -103,34 +103,25 @@ struct SymbolValidationRecord
 struct ClassValidationRecord : public SymbolValidationRecord
    {
    ClassValidationRecord(TR_ExternalRelocationTargetKind kind)
-      : SymbolValidationRecord(kind),
-        _classChain(NULL)
+      : SymbolValidationRecord(kind)
       {}
 
-   virtual bool isEqual(SymbolValidationRecord *other) = 0;
-   virtual void printFields();
-
    virtual bool isClassValidationRecord() { return true; }
-
-   void * _classChain;
    };
 
 struct ClassByNameRecord : public ClassValidationRecord
    {
    ClassByNameRecord(TR_OpaqueClassBlock *clazz,
-                     TR_OpaqueClassBlock *beholder,
-                     char primitiveType)
+                     TR_OpaqueClassBlock *beholder)
       : ClassValidationRecord(TR_ValidateClassByName),
         _class(clazz),
-        _beholder(beholder),
-        _primitiveType(primitiveType)
+        _beholder(beholder)
       {}
 
    bool operator ==(const ClassByNameRecord &rhs)
       {
       if (_class == rhs._class &&
-          _beholder == rhs._beholder &&
-          _primitiveType == rhs._primitiveType)
+          _beholder == rhs._beholder)
          return true;
       else
          return false;
@@ -145,22 +136,18 @@ struct ClassByNameRecord : public ClassValidationRecord
 
    TR_OpaqueClassBlock * _class;
    TR_OpaqueClassBlock * _beholder;
-   char _primitiveType;
    };
 
 struct ProfiledClassRecord : public ClassValidationRecord
    {
-   ProfiledClassRecord(TR_OpaqueClassBlock *clazz,
-                       char primitiveType)
+   ProfiledClassRecord(TR_OpaqueClassBlock *clazz, void *classChain)
       : ClassValidationRecord(TR_ValidateProfiledClass),
-        _class(clazz),
-        _primitiveType(primitiveType)
+        _class(clazz), _classChain(classChain)
       {}
 
    bool operator ==(const ProfiledClassRecord &rhs)
       {
-      if (_class == rhs._class &&
-          _primitiveType == rhs._primitiveType)
+      if (_class == rhs._class)
          return true;
       else
          return false;
@@ -174,7 +161,7 @@ struct ProfiledClassRecord : public ClassValidationRecord
    virtual void printFields();
 
    TR_OpaqueClassBlock * _class;
-   char _primitiveType;
+   void * _classChain;
    };
 
 struct ClassFromCPRecord : public ClassValidationRecord
@@ -1083,8 +1070,6 @@ public:
    bool addClassClassRecord(TR_OpaqueClassBlock *classClass, TR_OpaqueClassBlock *objectClass);
    bool addConcreteSubClassFromClassRecord(TR_OpaqueClassBlock *childClass, TR_OpaqueClassBlock *superClass);
 
-   bool addClassChainRecord(TR_OpaqueClassBlock *clazz, void *classChain);
-
    bool addMethodFromClassRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *beholder, uint32_t index);
    bool addStaticMethodFromCPRecord(TR_OpaqueMethodBlock *method, J9ConstantPool *cp, int32_t cpIndex);
    bool addSpecialMethodFromCPRecord(TR_OpaqueMethodBlock *method, J9ConstantPool *cp, int32_t cpIndex);
@@ -1112,8 +1097,8 @@ public:
 
 
 
-   bool validateClassByNameRecord(uint16_t classID, uint16_t beholderID, J9ROMClass *romClass, char primitiveType);
-   bool validateProfiledClassRecord(uint16_t classID, char primitiveType, void *classChainIdentifyingLoader, void *classChainForClassBeingValidated);
+   bool validateClassByNameRecord(uint16_t classID, uint16_t beholderID, J9ROMClass *romClass);
+   bool validateProfiledClassRecord(uint16_t classID, void *classChainIdentifyingLoader, void *classChainForClassBeingValidated);
    bool validateClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex);
    bool validateDefiningClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex, bool isStatic);
    bool validateStaticClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex);
@@ -1175,13 +1160,17 @@ private:
 
    uint16_t getNewSymbolID();
 
-   void storeRecord(void *symbol, SymbolValidationRecord *record);
-   bool storeClassRecord(TR_OpaqueClassBlock *clazz,
-                         ClassValidationRecord *record,
-                         int32_t arrayDimsToValidate,
-                         bool storeCurrentRecord);
-   bool storeValidationRecordIfNecessary(void *symbol, SymbolValidationRecord *record, int32_t arrayDimsToValidate = 0);
-   void *storeClassChain(TR_OpaqueClassBlock *clazz);
+   bool shouldNotDefineSymbol(void *symbol) { return symbol == NULL || inHeuristicRegion(); }
+   bool abandonRecord(TR::SymbolValidationRecord *record);
+
+   bool recordExists(TR::SymbolValidationRecord *record);
+   void appendNewRecord(void *symbol, TR::SymbolValidationRecord *record);
+   void appendRecordIfNew(void *symbol, TR::SymbolValidationRecord *record);
+
+   bool addVanillaRecord(void *symbol, TR::SymbolValidationRecord *record);
+   bool addClassRecord(TR_OpaqueClassBlock *clazz, TR::ClassValidationRecord *record);
+   bool addClassRecordWithRomClass(TR_OpaqueClassBlock *clazz, TR::ClassValidationRecord *record, int arrayDims);
+   bool addMethodRecord(TR_OpaqueMethodBlock *method, TR::SymbolValidationRecord *record);
 
    bool validateSymbol(uint16_t idToBeValidated, void *validSymbol, TR::SymbolType type);
    bool validateSymbol(uint16_t idToBeValidated, TR_OpaqueClassBlock *clazz);
