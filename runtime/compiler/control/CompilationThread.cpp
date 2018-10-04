@@ -22,7 +22,7 @@
 
 #define J9_EXTERNAL_TO_VM
 
-#if SOLARIS || AIXPPC || LINUX
+#if SOLARIS || AIXPPC || LINUX || OSX
 #include <strings.h>
 #define J9OS_STRNCMP strncasecmp
 #else
@@ -4707,7 +4707,11 @@ bool TR::CompilationInfo::isQueuedForCompilation(J9Method * method, void *oldSta
    return linkageInfo->isBeingCompiled();
    }
 
+#if defined(OSX)
+JIT_HELPER(initialInvokeExactThunkGlue);
+#else
 JIT_HELPER(_initialInvokeExactThunkGlue);
+#endif
 
 void *TR::CompilationInfo::startPCIfAlreadyCompiled(J9VMThread * vmThread, TR::IlGeneratorMethodDetails & details, void *oldStartPC)
    {
@@ -4737,6 +4741,8 @@ void *TR::CompilationInfo::startPCIfAlreadyCompiled(J9VMThread * vmThread, TR::I
          initialInvokeExactThunkGlueAddress = (void*)TOC_UNWRAP_ADDRESS(_initialInvokeExactThunkGlue);
 #elif defined(TR_HOST_POWER) && (defined(TR_HOST_64BIT) || defined(AIXPPC)) && !defined(__LITTLE_ENDIAN__)
          initialInvokeExactThunkGlueAddress = (*(void **)_initialInvokeExactThunkGlue);
+#elif defined(OSX)
+         initialInvokeExactThunkGlueAddress = (void*)initialInvokeExactThunkGlue;
 #else
          initialInvokeExactThunkGlueAddress = (void*)_initialInvokeExactThunkGlue;
 #endif
