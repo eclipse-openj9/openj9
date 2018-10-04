@@ -240,13 +240,6 @@ public abstract class MethodHandle {
 	// Until the JIT can synthesize calls to virtual methods, we must synthesize calls to these static ones instead
 	/*[ENDIF]*/
 	private static MethodHandle asType(MethodHandle mh, MethodType newType) {
-		/*
-		 * JIT can easily propagate type information and fold the if when it can prove early return always happen.
-		 * The early return also saves the JIT from having to inline full asType call
-		 */
-		if (mh.type == newType) {
-			return mh;
-		}
 		return mh.asType(newType);
 	}
 	/*[IF Sidecar19-SE]*/
