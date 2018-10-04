@@ -2026,6 +2026,11 @@ copyPreservedValues(J9VMThread * currentThread, J9HashTable * classPairs, UDATA 
 			replacementRAMClass->arrayClass = arrayClass;
 			originalRAMClass->arrayClass = replacementRAMClass;
 			originalRAMClass->classDepthAndFlags |= J9AccClassHotSwappedOut;
+			/* Set the totalInstanceSize in the replaced class to a value so large that it
+			 * can never be allocated (but not so large as to overflow the arithmetic when
+			 * the header size addition and rounding are done).
+			 */
+			originalRAMClass->totalInstanceSize = (UDATA)-256;
 		}
 		classPair = hashTableNextDo(&hashTableState);
 	}

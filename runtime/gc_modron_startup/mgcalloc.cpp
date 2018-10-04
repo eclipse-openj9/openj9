@@ -344,6 +344,11 @@ J9AllocateObject(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFlags)
 	Assert_MM_false(allocateFlags & OMR_GC_ALLOCATE_OBJECT_NO_GC);
 
 	J9Object *objectPtr = NULL;
+	/* Replaced classes have poisoned the totalInstanceSize such that they are not allocatable,
+	 * so inline allocate and NoGC allocate have already failed. If this allocator is reached
+	 * with a replaced class, update to the current version and allocate that.
+	 */
+	clazz = J9_CURRENT_CLASS(clazz);
 	MM_MixedObjectAllocationModel mixedOAM(env, clazz, allocateFlags);
 	if (mixedOAM.initializeAllocateDescription(env)) {
 		objectPtr = OMR_GC_AllocateObject(vmThread->omrVMThread, &mixedOAM);
