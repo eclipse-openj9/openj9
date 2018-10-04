@@ -628,19 +628,6 @@ TR::SymbolValidationManager::addClassChainRecord(TR_OpaqueClassBlock *clazz, voi
    }
 
 bool
-TR::SymbolValidationManager::addMethodFromInlinedSiteRecord(TR_OpaqueMethodBlock *method,
-                                                            int32_t inlinedSiteIndex)
-   {
-   if (!method)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
-   SymbolValidationRecord *record = new (_region) MethodFromInlinedSiteRecord(method, inlinedSiteIndex);
-   return storeValidationRecordIfNecessary(static_cast<void *>(method), record);
-   }
-
-bool
 TR::SymbolValidationManager::addMethodByNameRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *beholder)
    {
    if (!method)
@@ -1450,12 +1437,6 @@ TR::SymbolValidationManager::validateClassChainRecord(uint16_t classID, void *cl
    }
 
 bool
-TR::SymbolValidationManager::validateMethodFromInlinedSiteRecord(uint16_t methodID, TR_OpaqueMethodBlock *method)
-   {
-   return validateSymbol(methodID, static_cast<void *>(method));
-   }
-
-bool
 TR::SymbolValidationManager::validateMethodByNameRecord(uint16_t methodID, uint16_t beholderID, J9ROMClass *romClass, J9ROMMethod *romMethod)
    {
    if (getSymbolFromID(beholderID) == NULL)
@@ -2013,13 +1994,6 @@ void TR::ClassChainRecord::printFields()
    traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
    printClass(_class);
    traceMsg(TR::comp(), "\t_classChain=0x%p\n", _classChain);
-   }
-
-void TR::MethodFromInlinedSiteRecord::printFields()
-   {
-   traceMsg(TR::comp(), "MethodFromInlinedSiteRecord\n");
-   traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
-   traceMsg(TR::comp(), "\t_inlinedSiteIndex=%d\n", _inlinedSiteIndex);
    }
 
 void TR::MethodByNameRecord::printFields()

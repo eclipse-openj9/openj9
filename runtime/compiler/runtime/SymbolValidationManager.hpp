@@ -549,35 +549,6 @@ struct ClassChainRecord : public SymbolValidationRecord
    void *_classChain;
    };
 
-struct MethodFromInlinedSiteRecord : public SymbolValidationRecord
-   {
-   MethodFromInlinedSiteRecord(TR_OpaqueMethodBlock *method,
-                               int32_t inlinedSiteIndex)
-      : SymbolValidationRecord(TR_ValidateMethodFromInlinedSite),
-        _method(method),
-        _inlinedSiteIndex(inlinedSiteIndex)
-      {}
-
-   bool operator ==( const MethodFromInlinedSiteRecord &rhs)
-      {
-      if (_method == rhs._method &&
-          _inlinedSiteIndex == rhs._inlinedSiteIndex)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<MethodFromInlinedSiteRecord *>(other));
-      }
-
-   virtual void printFields();
-
-   TR_OpaqueMethodBlock *_method;
-   int32_t _inlinedSiteIndex;
-   };
-
 struct MethodByNameRecord : public SymbolValidationRecord
    {
    MethodByNameRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *beholder)
@@ -1082,7 +1053,6 @@ public:
 
    bool addClassChainRecord(TR_OpaqueClassBlock *clazz, void *classChain);
 
-   bool addMethodFromInlinedSiteRecord(TR_OpaqueMethodBlock *method, int32_t inlinedSiteIndex);
    bool addMethodByNameRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *beholder);
    bool addMethodFromClassRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *beholder, uint32_t index);
    bool addStaticMethodFromCPRecord(TR_OpaqueMethodBlock *method, J9ConstantPool *cp, int32_t cpIndex);
@@ -1129,7 +1099,6 @@ public:
 
    bool validateClassChainRecord(uint16_t classID, void *classChain);
 
-   bool validateMethodFromInlinedSiteRecord(uint16_t methodID, TR_OpaqueMethodBlock *method);
    bool validateMethodByNameRecord(uint16_t methodID, uint16_t beholderID, J9ROMClass *romClass, J9ROMMethod *romMethod);
    bool validateMethodFromClassRecord(uint16_t methodID, uint16_t beholderID, uint32_t index);
    bool validateStaticMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex);

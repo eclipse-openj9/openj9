@@ -1478,25 +1478,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
             }
             break;
 
-         case TR_ValidateMethodFromInlinedSite:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Method From Inlined Site: methodID=%d, inlinedSiteIndex=%d ",
-                        (uint32_t)binaryTemplate->_methodID,
-                        (int32_t)binaryTemplate->_inlinedSiteIndex);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
          case TR_ValidateMethodByName:
             {
             cursor++;

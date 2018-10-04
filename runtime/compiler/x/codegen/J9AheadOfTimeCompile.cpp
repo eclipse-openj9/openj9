@@ -891,22 +891,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_ValidateMethodFromInlinedSite:
-         {
-         TR::MethodFromInlinedSiteRecord *record = reinterpret_cast<TR::MethodFromInlinedSiteRecord *>(relocation->getTargetAddress());
-
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-
-         TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate *>(cursor);
-
-         binaryTemplate->_methodID = symValManager->getIDFromSymbol(static_cast<void *>(record->_method));
-         binaryTemplate->_inlinedSiteIndex = static_cast<uintptrj_t>(record->_inlinedSiteIndex);
-
-         cursor += sizeof(TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate);
-         }
-         break;
-
       case TR_ValidateMethodByName:
          {
          TR::MethodByNameRecord *record = reinterpret_cast<TR::MethodByNameRecord *>(relocation->getTargetAddress());
@@ -1376,7 +1360,7 @@ uint32_t J9::X86::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_Nu
    sizeof(TR_RelocationRecordValidateClassChainBinaryTemplate),        // TR_ValidateClassChain                  = 79,
    0,                                                                  // TR_ValidateRomClass                    = 80,
    0,                                                                  // TR_ValidatePrimitiveClass              = 81,
-   sizeof(TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate), // TR_ValidateMethodFromInlinedSite       = 82,
+   0,                                                                  // TR_ValidateMethodFromInlinedSite       = 82,
    sizeof(TR_RelocationRecordValidateMethodByNameBinaryTemplate),      // TR_ValidatedMethodByName               = 83,
    sizeof(TR_RelocationRecordValidateMethodFromClassBinaryTemplate),   // TR_ValidatedMethodFromClass            = 84,
    sizeof(TR_RelocationRecordValidateStaticMethodFromCPBinaryTemplate),// TR_ValidateStaticMethodFromCP          = 85,

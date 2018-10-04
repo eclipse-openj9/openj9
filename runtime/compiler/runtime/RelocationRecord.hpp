@@ -300,12 +300,6 @@ struct TR_RelocationRecordValidateClassChainBinaryTemplate : public TR_Relocatio
    UDATA _classChainOffsetInSCC;
    };
 
-struct TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate : public TR_RelocationRecordBinaryTemplate
-   {
-   uint16_t _methodID;
-   uint32_t _inlinedSiteIndex;
-   };
-
 struct TR_RelocationRecordValidateMethodByNameBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
    uint16_t _methodID;
@@ -1585,18 +1579,6 @@ class TR_RelocationRecordValidateClassChain : public TR_RelocationRecord
       virtual bool isValidationRecord() { return true; }
       virtual char *name() { return "TR_RelocationRecordValidateClassChain"; }
       virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateClassChainBinaryTemplate); }
-      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
-      virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
-   };
-
-class TR_RelocationRecordValidateMethodFromInlinedSite : public TR_RelocationRecord
-   {
-   public:
-      TR_RelocationRecordValidateMethodFromInlinedSite() {}
-      TR_RelocationRecordValidateMethodFromInlinedSite(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
-      virtual bool isValidationRecord() { return true; }
-      virtual char *name() { return "TR_RelocationRecordValidateMethodFromInlinedSite"; }
-      virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate); }
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
    };

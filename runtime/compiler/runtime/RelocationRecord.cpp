@@ -364,9 +364,6 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
       case TR_ValidateClassChain:
          reloRecord = new (storage) TR_RelocationRecordValidateClassChain(reloRuntime, record);
          break;
-      case TR_ValidateMethodFromInlinedSite:
-         reloRecord = new (storage) TR_RelocationRecordValidateMethodFromInlinedSite(reloRuntime, record);
-         break;
       case TR_ValidateMethodByName:
          reloRecord = new (storage) TR_RelocationRecordValidateMethodByName(reloRuntime, record);
          break;
@@ -3541,28 +3538,6 @@ TR_RelocationRecordValidateClassChain::applyRelocation(TR_RelocationRuntime *rel
    }
 
 int32_t
-TR_RelocationRecordValidateMethodFromInlinedSite::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
-   {
-   uint16_t methodID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate *)_record)->_methodID);
-   uint32_t inlinedSiteIndex = reloTarget->loadUnsigned32b((uint8_t *) &((TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate *)_record)->_inlinedSiteIndex);
-
-   if (reloRuntime->reloLogger()->logEnabled())
-      {
-      reloRuntime->reloLogger()->printf("%s\n", name());
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: methodID %d\n", methodID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: inlinedSiteIndex %d\n", inlinedSiteIndex);
-      }
-
-   TR_InlinedCallSite *inlinedCallSite = (TR_InlinedCallSite *)getInlinedCallSiteArrayElement(reloRuntime->exceptionTable(), inlinedSiteIndex);
-   TR_OpaqueMethodBlock *method = inlinedCallSite->_methodInfo;
-
-   if (reloRuntime->comp()->getSymbolValidationManager()->validateMethodFromInlinedSiteRecord(methodID, method))
-      return 0;
-   else
-      return compilationAotClassReloFailure;
-   }
-
-int32_t
 TR_RelocationRecordValidateMethodByName::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
    uint16_t methodID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodByNameBinaryTemplate *)_record)->_methodID);
@@ -4560,7 +4535,7 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordValidateClassChainBinaryTemplate),                      // TR_ValidateClassChain                           = 79
    0,                                                                                // TR_ValidateRomClass                             = 80
    0,                                                                                // TR_ValidatePrimitiveClass                       = 81
-   sizeof(TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate),               // TR_ValidateMethodFromInlinedSite                = 82
+   0,                                                                                // TR_ValidateMethodFromInlinedSite                = 82
    sizeof(TR_RelocationRecordValidateMethodByNameBinaryTemplate),                    // TR_ValidatedMethodByName                        = 83
    sizeof(TR_RelocationRecordValidateMethodFromClassBinaryTemplate),                 // TR_ValidatedMethodFromClass                     = 84
    sizeof(TR_RelocationRecordValidateStaticMethodFromCPBinaryTemplate),              // TR_ValidateStaticMethodFromCP                   = 85
