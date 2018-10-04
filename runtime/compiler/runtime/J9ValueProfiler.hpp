@@ -817,8 +817,8 @@ TR_HashTableProfilerInfo<T>::initialHashConfig(HashFunction &hash, T value)
 
    // A bit index hash should try to nominate one bit that is zero for all
    // A bit shift hash should try to nominate one bit that is zero for all and to the left of all
-   if (getHashType() == BitIndexHash && ~value != 0 ||
-       getHashType() == BitShiftHash && (~value >> 8) != 0)
+   if (((getHashType() == BitIndexHash) && (~value != 0)) ||
+       ((getHashType() == BitShiftHash) && ((~value >> 8) != 0)))
       {
       size_t firstZero = 0;
       if (getHashType() == BitShiftHash)
