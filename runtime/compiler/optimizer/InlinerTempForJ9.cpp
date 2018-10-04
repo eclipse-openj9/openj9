@@ -2076,10 +2076,13 @@ TR_J9InlinerPolicy::isInlineableJNI(TR_ResolvedMethod *method,TR::Node *callNode
         !comp->fej9()->traceableMethodsCanBeInlined()))
       return false;
 
-   if (method->convertToMethod()->isUnsafeWithObjectArg(comp))
+   if (method->convertToMethod()->isUnsafeWithObjectArg(comp) || method->convertToMethod()->isUnsafeCAS(comp))
       {
+      // In Java9 sun/misc/Unsafe methods are simple Java wrappers to JNI
+      // methods in jdk.internal, and the enum values above match both. Only
+      // return true for the methods that are native.
       if (!TR::Compiler->om.canGenerateArraylets() || (callNode && callNode->isUnsafeGetPutCASCallOnNonArray()))
-         return true;
+         return method->isNative();
       else
          return false;
       }
@@ -2126,14 +2129,6 @@ TR_J9InlinerPolicy::isInlineableJNI(TR_ResolvedMethod *method,TR::Node *callNode
       case TR::sun_misc_Unsafe_storeFence:
       case TR::sun_misc_Unsafe_fullFence:
          return true;
-
-      case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
-      case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
-      case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
-         // In Java9 sun/misc/Unsafe methods are simple Java wrappers to JNI
-         // methods in jdk.internal, and the enum values above match both. Only
-         // return true for the methods that are native.
-         return method->isNative();
 
       case TR::sun_misc_Unsafe_staticFieldBase:
          return false; // todo

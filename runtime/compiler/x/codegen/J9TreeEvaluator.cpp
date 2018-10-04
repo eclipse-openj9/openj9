@@ -9352,6 +9352,115 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, bool isLatin1, TR::C
    return result;
    }
 
+/**
+ * \brief
+ *   Generate inlined instructions equivalent to sun/misc/Unsafe.compareAndSwapObject or jdk/internal/misc/Unsafe.compareAndSwapObject
+ *
+ * \param node
+ *   The tree node
+ *
+ * \param cg
+ *   The Code Generator
+ *
+ */
+static TR::Register* inlineCompareAndSwapObjectNative(TR::Node* node, TR::CodeGenerator* cg)
+   {
+   TR_ASSERT(!TR::Compiler->om.canGenerateArraylets(), "This evaluator does not support arraylets.");
+   cg->recursivelyDecReferenceCount(node->getChild(0)); // The Unsafe
+   TR::Node* objectNode   = node->getChild(1);
+   TR::Node* offsetNode   = node->getChild(2);
+   TR::Node* oldValueNode = node->getChild(3);
+   TR::Node* newValueNode = node->getChild(4);
+
+   TR::Register* object   = cg->evaluate(objectNode);
+   TR::Register* offset   = cg->evaluate(offsetNode);
+   TR::Register* oldValue = cg->evaluate(oldValueNode);
+   TR::Register* newValue = cg->evaluate(newValueNode);
+   TR::Register* result   = cg->allocateRegister();
+   TR::Register* EAX      = cg->allocateRegister();
+   TR::Register* tmp      = cg->allocateRegister();
+
+   bool use64BitClasses = TR::Compiler->target.is64Bit() && !cg->comp()->useCompressedPointers();
+
+   if (TR::Compiler->target.is32Bit())
+      {
+      // Assume that the offset is positive and not pathologically large (i.e., > 2^31).
+      offset = offset->getLowOrder();
+      }
+
+#ifdef OMR_GC_CONCURRENT_SCAVENGER
+   if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+      {
+      generateRegMemInstruction(LRegMem(use64BitClasses), node, tmp, generateX86MemoryReference(object, offset, 0, cg), cg);
+
+      auto begLabel = generateLabelSymbol(cg);
+      auto endLabel = generateLabelSymbol(cg);
+      auto rdbarLabel = generateLabelSymbol(cg);
+      begLabel->setStartInternalControlFlow();
+      endLabel->setEndInternalControlFlow();
+
+      auto deps = generateRegisterDependencyConditions((uint8_t)1, 1, cg);
+      deps->addPreCondition(tmp, TR::RealRegister::NoReg, cg);
+      deps->addPostCondition(tmp, TR::RealRegister::NoReg, cg);
+
+      generateLabelInstruction(LABEL, node, begLabel, cg);
+
+      generateRegMemInstruction(CMPRegMem(use64BitClasses), node, tmp, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, evacuateBase), cg), cg);
+      generateLabelInstruction(JAE4, node, rdbarLabel, cg);
+
+         {
+         TR_OutlinedInstructionsGenerator og(rdbarLabel, node, cg);
+
+         generateRegMemInstruction(CMPRegMem(use64BitClasses), node, tmp, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, evacuateTop), cg), cg);
+         generateLabelInstruction(JAE4, node, endLabel, cg);
+
+         generateRegMemInstruction(LEARegMem(), node, tmp, generateX86MemoryReference(object, offset, 0, cg), cg);
+         generateMemRegInstruction(SMemReg(), node, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp1), cg), tmp, cg);
+         generateHelperCallInstruction(node, TR_readBarrier, NULL, cg)->setNeedsGCMap(0xFF00FFFF);
+         generateLabelInstruction(JMP4, node, endLabel, cg);
+         }
+
+      generateLabelInstruction(LABEL, node, endLabel, deps, cg);
+      }
+#endif
+
+   generateRegRegInstruction(MOVRegReg(), node, EAX, oldValue, cg);
+   generateRegRegInstruction(MOVRegReg(), node, tmp, newValue, cg);
+   if (TR::Compiler->om.compressedReferenceShiftOffset() != 0)
+      {
+      if (!oldValueNode->isNull())
+         {
+         generateRegImmInstruction(SHRRegImm1(), node, EAX, TR::Compiler->om.compressedReferenceShiftOffset(), cg);
+         }
+      if (!newValueNode->isNull())
+         {
+         generateRegImmInstruction(SHRRegImm1(), node, tmp, TR::Compiler->om.compressedReferenceShiftOffset(), cg);
+         }
+      }
+
+   auto deps = generateRegisterDependencyConditions((uint8_t)1, 1, cg);
+   deps->addPreCondition(EAX, TR::RealRegister::eax, cg);
+   deps->addPostCondition(EAX, TR::RealRegister::eax, cg);
+   generateMemRegInstruction(use64BitClasses ? LCMPXCHG8MemReg : LCMPXCHG4MemReg, node, generateX86MemoryReference(object, offset, 0, cg), tmp, deps, cg);
+   generateRegInstruction(SETE1Reg, node, result, cg);
+   generateRegRegInstruction(MOVZXReg4Reg1, node, result, result, cg);
+
+   // We could insert a runtime test for whether the write actually succeeded or not.
+   // However, since in practice it will almost always succeed we do not want to
+   // penalize general runtime performance especially if it is still correct to do
+   // a write barrier even if the store never actually happened.
+   TR::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(node, objectNode, newValueNode, NULL, cg->generateScratchRegisterManager(), cg);
+
+   cg->stopUsingRegister(tmp);
+   cg->stopUsingRegister(EAX);
+   node->setRegister(result);
+   for (int32_t i = 1; i < node->getNumChildren(); i++)
+      {
+      cg->decReferenceCount(node->getChild(i));
+      }
+   return result;
+   }
+
 /** Replaces a call to an Unsafe CAS method with inline instructions.
    @return true if the call was replaced, false if it was not.
 
@@ -9789,8 +9898,17 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
             break;
          case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
             {
+            static bool UseOldCompareAndSwapObject = (bool)feGetEnv("TR_UseOldCompareAndSwapObject");
             if(node->isSafeForCGToFastPathUnsafeCall())
-               return inlineCompareAndSwapNative(node, (TR::Compiler->target.is64Bit() && !comp->useCompressedPointers()) ? 8 : 4, true, cg);
+               {
+               if (UseOldCompareAndSwapObject)
+                  return inlineCompareAndSwapNative(node, (TR::Compiler->target.is64Bit() && !comp->useCompressedPointers()) ? 8 : 4, true, cg);
+               else
+                  {
+                  inlineCompareAndSwapObjectNative(node, cg);
+                  return true;
+                  }
+               }
             }
             break;
 
