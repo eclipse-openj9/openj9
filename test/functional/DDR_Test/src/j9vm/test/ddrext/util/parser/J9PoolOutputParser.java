@@ -21,31 +21,26 @@
  *******************************************************************************/
 package j9vm.test.ddrext.util.parser;
 
+import java.util.regex.Pattern;
+
 import j9vm.test.ddrext.Constants;
 
 /**
- * This class is used to extract info from !j9pool <address> DDR extension output
- * @author fkaraman
+ * This class is used to extract info from !j9pool <address> DDR extension output.
  *
+ * @author fkaraman
  */
 public class J9PoolOutputParser {
-	private static final String FIELDSIGNATURE_PUDDLELIST = "J9WSRP(struct J9PoolPuddle) puddleList";
-	private static final String FIELDSIGNATURE_PUDDLELIST_v1 = "J9WSRP(struct J9PoolPuddleList) puddleList";
-	
-	
+
+	private static final Pattern PUDDLELIST_SIGNATURE = Pattern.compile("J9WSRP\\((struct )?J9PoolPuddleList\\) puddleList");
+
 	/**
 	 * This method finds the address of j9poolpuddlelist from !j9pool output
 	 * @param j9poolOutput
-	 * @return
+	 * @return puddleList address or null
 	 */
 	public static String getPuddleListAddress(String j9poolOutput) {
-		String addr = ParserUtil.getFieldAddressOrValue(FIELDSIGNATURE_PUDDLELIST_v1, Constants.J9POOLPUDDLELIST_CMD, j9poolOutput);
-		/* If it is old shipped vm, then use the old signature to extract the info */
-		if (null == addr) {
-			addr = ParserUtil.getFieldAddressOrValue(FIELDSIGNATURE_PUDDLELIST, Constants.J9POOLPUDDLE_CMD, j9poolOutput);
-		}
-		
-		return addr;
+		return ParserUtil.getFieldAddressOrValue(PUDDLELIST_SIGNATURE, Constants.J9POOLPUDDLELIST_CMD, j9poolOutput);
 	}
 
 }
