@@ -134,17 +134,10 @@ uint8_t *TR::X86PicDataSnippet::encodeConstantPoolInfo(uint8_t *cursor)
 uint8_t *TR::X86PicDataSnippet::encodeJ2IThunkPointer(uint8_t *cursor)
    {
    TR_ASSERT_FATAL(_hasJ2IThunkInPicData, "did not expect j2i thunk pointer");
-
-   // Find the j2i thunk for this method's signature
-   TR_J9VMBase *fej9 = (TR_J9VMBase*)(cg()->fe());
-   TR::Symbol *symbol = _methodSymRef->getSymbol();
-   TR_Method *method = symbol->getMethodSymbol()->getMethod();
-   void *j2iThunk = fej9->getJ2IThunk(method, comp());
-   TR_ASSERT_FATAL(j2iThunk != NULL, "null virtual j2i thunk");
+   TR_ASSERT_FATAL(_thunkAddress != NULL, "null virtual j2i thunk");
 
    // DD/DQ j2iThunk
-   // TODO: AOT relocation
-   *(uintptrj_t *)cursor = (uintptrj_t)j2iThunk;
+   *(uintptrj_t *)cursor = (uintptrj_t)_thunkAddress;
    cursor += sizeof(uintptrj_t);
 
    return cursor;
