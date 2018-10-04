@@ -1478,25 +1478,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
             }
             break;
 
-         case TR_ValidateRomClass:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateRomClassBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateRomClassBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate RomClass: classID=%d romClassOffsetInSCC=%p ",
-                        (uint32_t)binaryTemplate->_classID,
-                        binaryTemplate->_romClassOffsetInSCC);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateRomClassBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
          case TR_ValidateMethodFromInlinedSite:
             {
             cursor++;

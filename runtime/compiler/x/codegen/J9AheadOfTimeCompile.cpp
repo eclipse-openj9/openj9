@@ -891,27 +891,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_ValidateRomClass:
-         {
-         TR::RomClassRecord *record = reinterpret_cast<TR::RomClassRecord *>(relocation->getTargetAddress());
-
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-
-         TR_RelocationRecordValidateRomClassBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordValidateRomClassBinaryTemplate *>(cursor);
-
-         TR_OpaqueClassBlock *classToValidate = static_cast<TR_OpaqueClassBlock *>(record->_class);
-
-         void *romClass = reinterpret_cast<void *>(fej9->getPersistentClassPointerFromClassPointer(classToValidate));
-         void *romClassOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(romClass);
-
-         binaryTemplate->_classID = symValManager->getIDFromSymbol(static_cast<void *>(classToValidate));
-         binaryTemplate->_romClassOffsetInSCC = reinterpret_cast<uintptrj_t>(romClassOffsetInSharedCache);
-
-         cursor += sizeof(TR_RelocationRecordValidateRomClassBinaryTemplate);
-         }
-         break;
-
       case TR_ValidateMethodFromInlinedSite:
          {
          TR::MethodFromInlinedSiteRecord *record = reinterpret_cast<TR::MethodFromInlinedSiteRecord *>(relocation->getTargetAddress());
@@ -1395,7 +1374,7 @@ uint32_t J9::X86::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_Nu
    sizeof(TR_RelocationRecordValidateClassClassBinaryTemplate),        // TR_ValidateClassClass                  = 77,
    sizeof(TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate),//TR_ValidateConcreteSubClassFromClass  = 78,
    sizeof(TR_RelocationRecordValidateClassChainBinaryTemplate),        // TR_ValidateClassChain                  = 79,
-   sizeof(TR_RelocationRecordValidateRomClassBinaryTemplate),          // TR_ValidateRomClass                    = 80,
+   0,                                                                  // TR_ValidateRomClass                    = 80,
    0,                                                                  // TR_ValidatePrimitiveClass              = 81,
    sizeof(TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate), // TR_ValidateMethodFromInlinedSite       = 82,
    sizeof(TR_RelocationRecordValidateMethodByNameBinaryTemplate),      // TR_ValidatedMethodByName               = 83,

@@ -549,31 +549,6 @@ struct ClassChainRecord : public SymbolValidationRecord
    void *_classChain;
    };
 
-struct RomClassRecord : public SymbolValidationRecord
-   {
-   RomClassRecord(TR_OpaqueClassBlock *clazz)
-      : SymbolValidationRecord(TR_ValidateRomClass),
-        _class(clazz)
-      {}
-
-   bool operator ==(const RomClassRecord &rhs)
-      {
-      if (_class == rhs._class)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<RomClassRecord *>(other));
-      }
-
-   virtual void printFields();
-
-   TR_OpaqueClassBlock *_class;
-   };
-
 struct MethodFromInlinedSiteRecord : public SymbolValidationRecord
    {
    MethodFromInlinedSiteRecord(TR_OpaqueMethodBlock *method,
@@ -1106,7 +1081,6 @@ public:
    bool addConcreteSubClassFromClassRecord(TR_OpaqueClassBlock *childClass, TR_OpaqueClassBlock *superClass);
 
    bool addClassChainRecord(TR_OpaqueClassBlock *clazz, void *classChain);
-   bool addRomClassRecord(TR_OpaqueClassBlock *clazz);
 
    bool addMethodFromInlinedSiteRecord(TR_OpaqueMethodBlock *method, int32_t inlinedSiteIndex);
    bool addMethodByNameRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *beholder);
@@ -1154,7 +1128,6 @@ public:
    bool validateConcreteSubClassFromClassRecord(uint16_t childClassID, uint16_t superClassID);
 
    bool validateClassChainRecord(uint16_t classID, void *classChain);
-   bool validateRomClassRecord(uint16_t classID, J9ROMClass *romClass);
 
    bool validateMethodFromInlinedSiteRecord(uint16_t methodID, TR_OpaqueMethodBlock *method);
    bool validateMethodByNameRecord(uint16_t methodID, uint16_t beholderID, J9ROMClass *romClass, J9ROMMethod *romMethod);

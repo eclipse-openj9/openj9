@@ -242,7 +242,7 @@ TR::SymbolValidationManager::storeClassRecord(TR_OpaqueClassBlock *clazz,
     * then it is because we failed to rememberClass;
     * therefore, the last element in the list
     * will be the one we added in this method and not
-    * the RomClassRecord or ClassChainRecord
+    * the ClassChainRecord
     */
    if (!validated)
       _symbolValidationRecords.pop_front();
@@ -624,18 +624,6 @@ TR::SymbolValidationManager::addClassChainRecord(TR_OpaqueClassBlock *clazz, voi
       return true;
 
    SymbolValidationRecord *record = new (_region) ClassChainRecord(clazz, classChain);
-   return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record);
-   }
-
-bool
-TR::SymbolValidationManager::addRomClassRecord(TR_OpaqueClassBlock *clazz)
-   {
-   if (!clazz)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
-   SymbolValidationRecord *record = new (_region) RomClassRecord(clazz);
    return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record);
    }
 
@@ -1462,20 +1450,6 @@ TR::SymbolValidationManager::validateClassChainRecord(uint16_t classID, void *cl
    }
 
 bool
-TR::SymbolValidationManager::validateRomClassRecord(uint16_t classID, J9ROMClass *romClass)
-   {
-   if (getSymbolFromID(classID) == NULL)
-      {
-      TR_ASSERT(false, "classID %u should exist\n", classID);
-      return false;
-      }
-
-   J9Class *definingClass = static_cast<J9Class *>(getSymbolFromID(classID));
-
-   return (definingClass->romClass == romClass);
-   }
-
-bool
 TR::SymbolValidationManager::validateMethodFromInlinedSiteRecord(uint16_t methodID, TR_OpaqueMethodBlock *method)
    {
    return validateSymbol(methodID, static_cast<void *>(method));
@@ -2039,12 +2013,6 @@ void TR::ClassChainRecord::printFields()
    traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
    printClass(_class);
    traceMsg(TR::comp(), "\t_classChain=0x%p\n", _classChain);
-   }
-
-void TR::RomClassRecord::printFields()
-   {
-   traceMsg(TR::comp(), "RomClassRecord\n");
-   traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
    }
 
 void TR::MethodFromInlinedSiteRecord::printFields()

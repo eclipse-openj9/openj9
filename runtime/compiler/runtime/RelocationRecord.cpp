@@ -364,9 +364,6 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
       case TR_ValidateClassChain:
          reloRecord = new (storage) TR_RelocationRecordValidateClassChain(reloRuntime, record);
          break;
-      case TR_ValidateRomClass:
-         reloRecord = new (storage) TR_RelocationRecordValidateRomClass(reloRuntime, record);
-         break;
       case TR_ValidateMethodFromInlinedSite:
          reloRecord = new (storage) TR_RelocationRecordValidateMethodFromInlinedSite(reloRuntime, record);
          break;
@@ -3544,26 +3541,6 @@ TR_RelocationRecordValidateClassChain::applyRelocation(TR_RelocationRuntime *rel
    }
 
 int32_t
-TR_RelocationRecordValidateRomClass::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
-   {
-   uint16_t classID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateRomClassBinaryTemplate *)_record)->_classID);
-   void *romClassOffset = (void *)reloTarget->loadRelocationRecordValue((uintptrj_t *) &((TR_RelocationRecordValidateRomClassBinaryTemplate *)_record)->_romClassOffsetInSCC);
-   void *romClass = reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache(romClassOffset);
-
-   if (reloRuntime->reloLogger()->logEnabled())
-      {
-      reloRuntime->reloLogger()->printf("%s\n", name());
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: classID %d\n", classID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: romClass %p\n", romClass);
-      }
-
-   if (reloRuntime->comp()->getSymbolValidationManager()->validateRomClassRecord(classID, static_cast<J9ROMClass *>(romClass)))
-      return 0;
-   else
-      return compilationAotClassReloFailure;
-   }
-
-int32_t
 TR_RelocationRecordValidateMethodFromInlinedSite::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
    uint16_t methodID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate *)_record)->_methodID);
@@ -4581,7 +4558,7 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordValidateClassClassBinaryTemplate),                      // TR_ValidateClassClass                           = 77
    sizeof(TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate),            // TR_ValidateConcreteSubClassFromClass            = 78
    sizeof(TR_RelocationRecordValidateClassChainBinaryTemplate),                      // TR_ValidateClassChain                           = 79
-   sizeof(TR_RelocationRecordValidateRomClassBinaryTemplate),                        // TR_ValidateRomClass                             = 80
+   0,                                                                                // TR_ValidateRomClass                             = 80
    0,                                                                                // TR_ValidatePrimitiveClass                       = 81
    sizeof(TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate),               // TR_ValidateMethodFromInlinedSite                = 82
    sizeof(TR_RelocationRecordValidateMethodByNameBinaryTemplate),                    // TR_ValidatedMethodByName                        = 83
