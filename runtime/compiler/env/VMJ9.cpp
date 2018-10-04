@@ -8511,16 +8511,10 @@ TR_J9SharedCacheVM::isClassVisible(TR_OpaqueClassBlock * sourceClass, TR_OpaqueC
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(sourceClass)) &&
-          comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(destClass)))
-         {
-         validated = true;
-         }
-      else
-         {
-         TR_ASSERT(false, "Classes 0x%p and 0x%p should already be validated\n", sourceClass, destClass);
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in isClassVisible");
-         }
+      TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
+      SVM_ASSERT_ALREADY_VALIDATED(svm, sourceClass);
+      SVM_ASSERT_ALREADY_VALIDATED(svm, destClass);
+      validated = true;
       }
    else
       {
@@ -8538,11 +8532,8 @@ TR_J9SharedCacheVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_Op
    TR::Compilation *comp = TR::comp();
    if (comp && comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (!comp->getSymbolValidationManager()->addStackWalkerMaySkipFramesRecord(method, methodClass, skipFrames))
-         {
-         TR_ASSERT(false, "Failed to validate addStackWalkerMaySkipFramesRecord\n");
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in stackWalkerMaySkipFrames");
-         }
+      bool recordCreated = comp->getSymbolValidationManager()->addStackWalkerMaySkipFramesRecord(method, methodClass, skipFrames);
+      SVM_ASSERT(recordCreated, "Failed to validate addStackWalkerMaySkipFramesRecord");
       }
 
    return skipFrames;
@@ -8612,15 +8603,8 @@ TR_J9SharedCacheVM::getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, c
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(classPointer)))
-         {
-         validated = true;
-         }
-      else
-         {
-         TR_ASSERT(false, "Class 0x%p should already be validated\n", classPointer);
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in getInstanceFieldOffset");
-         }
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
       }
    else
       {
@@ -8692,15 +8676,8 @@ TR_J9SharedCacheVM::getResolvedMethods(TR_Memory *trMemory, TR_OpaqueClassBlock 
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(classPointer)))
-         {
-         validated = true;
-         }
-      else
-         {
-         TR_ASSERT(false, "Class 0x%p should already be validated\n", classPointer);
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in getResolvedMethods");
-         }
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
       }
    else
       {
@@ -8773,11 +8750,7 @@ TR_J9SharedCacheVM::getMethodFromName(char *className, char *methodName, char *s
       if (comp->getOption(TR_UseSymbolValidationManager))
          {
          TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
-         if (!svm->verifySymbolHasBeenValidated(static_cast<void *>(callingMethod)))
-            {
-            TR_ASSERT(false, "callingMethod %p should be valid\n", callingMethod);
-            comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in getMethodFromName");
-            }
+         SVM_ASSERT_ALREADY_VALIDATED(svm, callingMethod);
          bool validated = svm->addMethodByNameRecord(omb, getClassFromMethodBlock(callingMethod)) &&
                           svm->addClassFromMethodRecord(getClassFromMethodBlock(omb), omb);
 
@@ -8891,13 +8864,9 @@ TR_J9SharedCacheVM::getClassFromSignature(const char * sig, int32_t sigLength, T
       {
       if (comp->getOption(TR_UseSymbolValidationManager))
          {
-         if (!comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(method)))
-            {
-            TR_ASSERT(false, "method %p should be valid\n", method);
-            comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in getClassFromSignature");
-            }
-
-         validated = comp->getSymbolValidationManager()->addClassByNameRecord(j9class, getClassFromMethodBlock(method));
+         TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
+         SVM_ASSERT_ALREADY_VALIDATED(svm, method);
+         validated = svm->addClassByNameRecord(j9class, getClassFromMethodBlock(method));
          }
       else
          {
@@ -8980,15 +8949,8 @@ TR_J9SharedCacheVM::isPublicClass(TR_OpaqueClassBlock * classPointer)
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(classPointer)))
-         {
-         validated = true;
-         }
-      else
-         {
-         TR_ASSERT(false, "Class 0x%p should already be validated\n", classPointer);
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in isPublicClass");
-         }
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
       }
    else
       {
@@ -9013,15 +8975,8 @@ TR_J9SharedCacheVM::hasFinalizer(TR_OpaqueClassBlock * classPointer)
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(classPointer)))
-         {
-         validated = true;
-         }
-      else
-         {
-         TR_ASSERT(false, "Class 0x%p should already be validated\n", classPointer);
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in hasFinalizer");
-         }
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
       }
    else
       {
@@ -9046,15 +9001,8 @@ TR_J9SharedCacheVM::getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointe
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(classPointer)))
-         {
-         validated = true;
-         }
-      else
-         {
-         TR_ASSERT(false, "Class 0x%p should already be validated\n", classPointer);
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in getClassDepthAndFlagsValue");
-         }
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
       }
    else
       {
@@ -9079,15 +9027,8 @@ TR_J9SharedCacheVM::isPrimitiveClass(TR_OpaqueClassBlock * classPointer)
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(classPointer)))
-         {
-         validated = true;
-         }
-      else
-         {
-         TR_ASSERT(false, "Class 0x%p should already be validated\n", classPointer);
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in isPrimitiveClass");
-         }
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
       }
    else
       {
@@ -9112,15 +9053,8 @@ TR_J9SharedCacheVM::getComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayC
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(componentClass)))
-         {
-         validated = true;
-         }
-      else
-         {
-         TR_ASSERT(false, "Class 0x%p should already be validated\n", componentClass);
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in getComponentClassFromArrayClass");
-         }
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), componentClass);
+      validated = true;
       }
    else
       {
@@ -9170,15 +9104,8 @@ TR_J9SharedCacheVM::getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * ar
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(leafComponent)))
-         {
-         validated = true;
-         }
-      else
-         {
-         TR_ASSERT(false, "Class 0x%p should already be validated\n", leafComponent);
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in getLeafComponentClassFromArrayClass");
-         }
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), leafComponent);
+      validated = true;
       }
    else
       {
@@ -9203,15 +9130,8 @@ TR_J9SharedCacheVM::getBaseComponentClass(TR_OpaqueClassBlock * classPointer, in
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(baseComponent)))
-         {
-         validated = true;
-         }
-      else
-         {
-         TR_ASSERT(false, "Class 0x%p should already be validated\n", baseComponent);
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in getBaseComponentClass");
-         }
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), baseComponent);
+      validated = true;
       }
    else
       {
@@ -9246,15 +9166,8 @@ TR_J9SharedCacheVM::isPrimitiveArray(TR_OpaqueClassBlock *classPointer)
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(classPointer)))
-         {
-         validated = true;
-         }
-      else
-         {
-         TR_ASSERT(false, "Class 0x%p should already be validated\n", classPointer);
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in isPrimitiveArray");
-         }
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
       }
    else
       {
@@ -9279,15 +9192,8 @@ TR_J9SharedCacheVM::isReferenceArray(TR_OpaqueClassBlock *classPointer)
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      if (comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(classPointer)))
-         {
-         validated = true;
-         }
-      else
-         {
-         TR_ASSERT(false, "Class 0x%p should already be validated\n", classPointer);
-         comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in isReferenceArray");
-         }
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
       }
    else
       {
