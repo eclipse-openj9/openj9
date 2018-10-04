@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2018 IBM Corp. and others
+Copyright (c) 2018, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -127,18 +127,25 @@ already exists).
 ### Array Classes
 
 Array Classes create a problem for validation. Class Chains can only
-exist for non-array classes. However, if the compiler acquired an 
-array class by name or via profiling, in order to use it during an AOT
-compilation, it still needs to ensure that the shape of that class will
-be valid in the load run. Therefore, for every validation record 
-involving classes, what actually happens is the SVM will get the
-leaf component class, store the record as if the compiler acquired the
-leaf component class from the query, and then store as many 
-Array From Component Class Validation Records as there are array
-dimensions. Therefore, on the load run, when performing a validation, 
-the SVM also has ensure to get the leaf component class in order for
-the validation to be consistent with the compile run. The actual array
-class gets validated via the Array From Component Class records.
+exist for non-array classes. As such, when an array class is first
+encountered, it is impossible to generate a class chain validation for
+the array class itself. Instead, the SVM finds the leaf component class,
+generates records relating the array class to each of its (transitive)
+component classes until the leaf component class is reached, and then
+generates a class chain validation for the leaf component class.
+
+Some class records use a ROM class offset or a class chain offset in
+order to identify the class by name:
+- ClassByName and SystemClassByName use ROM class offsets.
+- ProfiledClass uses a class chain offset.
+
+Since array ROM classes are not in the shared class cache, these records
+are unable to name array classes directly. If an array class is found in
+any of these ways, the SVM finds the leaf component class, then creates
+a record for the leaf component instead of the array (and if necessary a
+class chain validation for it), followed by records relating each
+(transitive) component type to its corresponding array type, until the
+original array class is reached.
 
 ### Primitive Classes
 
@@ -146,14 +153,12 @@ Primitive Classes create a different problem for validation. As it turns
 out, the ROM Classes for primitive classes aren't stored in the SCC.
 This is an issue when storing Class By Name records, since the name
 portion of the validation is derived from the ROM Class. In order to
-deal with this problem, the Profiled Class and Class By Name 
-Validations also store a char value representing the primitive type;
-if the char value is '\0', then the class being validated isn't
-primitive and the rest of the validation process continues. If the
-char value is not '\0', then class is primitive, and the Profiled 
-Class or Class By Name record returns validaion succeeded, which is
+deal with this problem, the Profiled Class and Class By Name Validations
+are skipped entirely when the resulting class is primitive. This is
 correct because Primitive Classes are guaranteed to always be the
-same regardless of how they are acquired.
+same regardless of how they are acquired, and because the "name" (i.e.
+single-character code such as I, F, etc., occurring in a signature) is
+unambiguous.
 
 ### Guaranteed IDs
 
