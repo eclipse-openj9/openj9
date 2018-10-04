@@ -316,9 +316,6 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
          break;
       case TR_ClassUnloadAssumption:
          reloRecord = new (storage) TR_RelocationRecordClassUnloadAssumption(reloRuntime, record);
-      case TR_ValidateRootClass:
-         reloRecord = new (storage) TR_RelocationRecordValidateRootClass(reloRuntime, record);
-         break;
       case TR_ValidateClassByName:
          reloRecord = new (storage) TR_RelocationRecordValidateClassByName(reloRuntime, record);
          break;
@@ -3215,24 +3212,6 @@ TR_RelocationRecordValidateArbitraryClass::applyRelocation(TR_RelocationRuntime 
    return compilationAotClassReloFailure;
    }
 
-
-int32_t
-TR_RelocationRecordValidateRootClass::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
-   {
-   uint16_t classID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateRootClassBinaryTemplate *)_record)->_classID);
-
-   if (reloRuntime->reloLogger()->logEnabled())
-      {
-      reloRuntime->reloLogger()->printf("%s\n", name());
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: classID %d\n", classID);
-      }
-
-   if (reloRuntime->comp()->getSymbolValidationManager()->validateRootClassRecord(classID))
-      return 0;
-   else
-      return compilationAotClassReloFailure;
-   }
-
 int32_t
 TR_RelocationRecordValidateClassByName::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
@@ -4629,7 +4608,7 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordClassUnloadAssumptionBinaryTemplate),                   // TR_ClassUnloadAssumption                        = 60
    sizeof(TR_RelocationRecordJ2IVirtualThunkPointerBinaryTemplate),                  // TR_J2IVirtualThunkPointer                       = 61
    sizeof(TR_RelocationRecordNopGuardBinaryTemplate),                                // TR_InlinedAbstractMethodWithNopGuard            = 62
-   sizeof(TR_RelocationRecordValidateRootClassBinaryTemplate),                       // TR_ValidateRootClass                            = 63
+   0,                                                                                // TR_ValidateRootClass                            = 63
    sizeof(TR_RelocationRecordValidateClassByNameBinaryTemplate),                     // TR_ValidateClassByName                          = 64
    sizeof(TR_RelocationRecordValidateProfiledClassBinaryTemplate),                   // TR_ValidateProfiledClass                        = 65
    sizeof(TR_RelocationRecordValidateClassFromCPBinaryTemplate),                     // TR_ValidateClassFromCP                          = 66

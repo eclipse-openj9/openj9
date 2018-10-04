@@ -1161,23 +1161,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
             traceMsg(self()->comp(), "\n ClassUnloadAssumption \n");
             break;
 
-         case TR_ValidateRootClass:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateRootClassBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateRootClassBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Root Class: classID=%d ", (uint32_t)binaryTemplate->_classID);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateRootClassBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
          case TR_ValidateClassByName:
             {
             cursor++;

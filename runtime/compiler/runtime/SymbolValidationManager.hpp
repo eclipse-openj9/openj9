@@ -70,32 +70,6 @@ struct ClassValidationRecord : public SymbolValidationRecord
    void * _classChain;
    };
 
-struct RootClassRecord : public ClassValidationRecord
-   {
-   RootClassRecord(TR_OpaqueClassBlock *clazz)
-      : ClassValidationRecord(TR_ValidateRootClass),
-        _class(clazz)
-      {}
-
-   bool operator ==(const RootClassRecord &rhs)
-      {
-      if (_class == rhs._class)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<RootClassRecord *>(other));
-      }
-
-   virtual void printFields();
-
-   TR_OpaqueClassBlock * _class;
-   };
-
-
 struct ClassByNameRecord : public ClassValidationRecord
    {
    ClassByNameRecord(TR_OpaqueClassBlock *clazz,
@@ -1171,7 +1145,6 @@ public:
 
    bool isAlreadyValidated(void *symbol) { return (getIDFromSymbol(symbol) != 0); }
 
-   bool addRootClassRecord(TR_OpaqueClassBlock *clazz);
    bool addClassByNameRecord(TR_OpaqueClassBlock *clazz, TR_OpaqueClassBlock *beholder);
    bool addProfiledClassRecord(TR_OpaqueClassBlock *clazz);
    bool addClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, uint32_t cpIndex);
@@ -1222,7 +1195,6 @@ public:
 
 
 
-   bool validateRootClassRecord(uint16_t classID);
    bool validateClassByNameRecord(uint16_t classID, uint16_t beholderID, J9ROMClass *romClass, char primitiveType);
    bool validateProfiledClassRecord(uint16_t classID, char primitiveType, void *classChainIdentifyingLoader, void *classChainForClassBeingValidated);
    bool validateClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex);

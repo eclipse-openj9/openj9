@@ -587,21 +587,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
       case TR_RamMethod:
          break;
 
-      case TR_ValidateRootClass:
-         {
-         TR::RootClassRecord *record = reinterpret_cast<TR::RootClassRecord *>(relocation->getTargetAddress());
-
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-
-         TR_RelocationRecordValidateRootClassBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordValidateRootClassBinaryTemplate *>(cursor);
-
-         binaryTemplate->_classID = symValManager->getIDFromSymbol(static_cast<void *>(record->_class));
-
-         cursor += sizeof(TR_RelocationRecordValidateRootClassBinaryTemplate);
-         }
-         break;
-
       case TR_ValidateClassByName:
          {
          TR::ClassByNameRecord *record = reinterpret_cast<TR::ClassByNameRecord *>(relocation->getTargetAddress());
@@ -1425,7 +1410,7 @@ uint32_t J9::X86::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_Nu
    8,                                               // TR_ClassUnloadAssumption               = 60
    32,                                              // TR_J2IVirtualThunkPointer              = 61,
    48,                                              // TR_InlinedAbstractMethodWithNopGuard   = 62,
-   sizeof(TR_RelocationRecordValidateRootClassBinaryTemplate),         // TR_ValidateRootClass                   = 63,
+   0,                                                                  // TR_ValidateRootClass                   = 63,
    sizeof(TR_RelocationRecordValidateClassByNameBinaryTemplate),       // TR_ValidateClassByName                 = 64,
    sizeof(TR_RelocationRecordValidateProfiledClassBinaryTemplate),     // TR_ValidateProfiledClass               = 65,
    sizeof(TR_RelocationRecordValidateClassFromCPBinaryTemplate),       // TR_ValidateClassFromCP                 = 66,

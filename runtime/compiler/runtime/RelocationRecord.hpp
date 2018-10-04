@@ -201,11 +201,6 @@ struct TR_RelocationRecordDebugCounterBinaryTemplate : public TR_RelocationRecor
 
 typedef TR_RelocationRecordBinaryTemplate TR_RelocationRecordClassUnloadAssumptionBinaryTemplate;
 
-struct TR_RelocationRecordValidateRootClassBinaryTemplate : public TR_RelocationRecordBinaryTemplate
-   {
-   uint16_t _classID;
-   };
-
 struct TR_RelocationRecordValidateClassByNameBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
    uint16_t _classID;
@@ -1420,18 +1415,6 @@ class TR_RelocationRecordValidateArbitraryClass : public TR_RelocationRecord
 
 
 /* SYMBOL VALIDATION MANAGER */
-class TR_RelocationRecordValidateRootClass : public TR_RelocationRecord
-   {
-   public:
-      TR_RelocationRecordValidateRootClass() {}
-      TR_RelocationRecordValidateRootClass(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
-      virtual bool isValidationRecord() { return true; }
-      virtual char *name() { return "TR_RelocationRecordValidateRootClass"; }
-      virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateRootClassBinaryTemplate); }
-      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
-      virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
-   };
-
 class TR_RelocationRecordValidateClassByName : public TR_RelocationRecord
    {
    public:

@@ -292,21 +292,6 @@ TR::SymbolValidationManager::storeValidationRecordIfNecessary(void *symbol,
    }
 
 bool
-TR::SymbolValidationManager::addRootClassRecord(TR_OpaqueClassBlock *clazz)
-   {
-   if (!clazz)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
-   int32_t arrayDims = 0;
-   clazz = getBaseComponentClass(clazz, arrayDims);
-
-   SymbolValidationRecord *record = new (_region) RootClassRecord(clazz);
-   return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record, arrayDims);
-   }
-
-bool
 TR::SymbolValidationManager::addClassByNameRecord(TR_OpaqueClassBlock *clazz, TR_OpaqueClassBlock *beholder)
    {
    if (!clazz)
@@ -1119,19 +1104,6 @@ TR::SymbolValidationManager::validateSymbol(uint16_t idToBeValidated, void *vali
       }
 
    return valid;
-   }
-
-bool
-TR::SymbolValidationManager::validateRootClassRecord(uint16_t classID)
-   {
-   TR::Compilation *comp = TR::comp();
-   J9Class *rootClass = ((TR_ResolvedJ9Method *)comp->getMethodBeingCompiled())->constantPoolHdr();
-   TR_OpaqueClassBlock *opaqueRootClass = reinterpret_cast<TR_OpaqueClassBlock *>(rootClass);
-
-   int32_t arrayDims = 0;
-   opaqueRootClass = getBaseComponentClass(opaqueRootClass, arrayDims);
-
-   return validateSymbol(classID, static_cast<void *>(opaqueRootClass));
    }
 
 bool
@@ -1991,14 +1963,6 @@ static void printClass(TR_OpaqueClassBlock *clazz)
 void TR::ClassValidationRecord::printFields()
    {
    traceMsg(TR::comp(), "\t_classChain=0x%p\n", _classChain);
-   }
-
-void TR::RootClassRecord::printFields()
-   {
-   traceMsg(TR::comp(), "RootClassRecord\n");
-   TR::ClassValidationRecord::printFields();
-   traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
-   printClass(_class);
    }
 
 void TR::ClassByNameRecord::printFields()
