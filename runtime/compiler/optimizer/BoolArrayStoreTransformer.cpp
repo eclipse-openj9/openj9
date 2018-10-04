@@ -284,7 +284,7 @@ void TR_BoolArrayStoreTransformer::findBoolArrayStoreNodes()
             if (type != TR_maybe)
                {
                if (!typeInfo)
-                  typeInfo = new TypeInfo(_numLocals, TR_maybe, comp()->trMemory()->currentStackRegion());
+                  typeInfo = new (comp()->trMemory()->currentStackRegion()) TypeInfo(_numLocals, TR_maybe, comp()->trMemory()->currentStackRegion());
                (*typeInfo)[p->getLocalIndex()] = type;
                }
             }
@@ -565,7 +565,7 @@ TR_BoolArrayStoreTransformer::TypeInfo * TR_BoolArrayStoreTransformer::processBl
             if (newType != TR_maybe || currentTypeInfo)
                {
                if (!currentTypeInfo)
-                  currentTypeInfo = new TypeInfo(_numLocals, TR_maybe, comp()->trMemory()->currentStackRegion());
+                  currentTypeInfo = new (comp()->trMemory()->currentStackRegion()) TypeInfo(_numLocals, TR_maybe, comp()->trMemory()->currentStackRegion());
                if (comp()->getOption(TR_TraceILGen))
                   {
                   char newTypeBuffer[15];
