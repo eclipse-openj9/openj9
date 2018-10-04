@@ -306,12 +306,6 @@ struct TR_RelocationRecordValidateRomClassBinaryTemplate : public TR_RelocationR
    UDATA _romClassOffsetInSCC;
    };
 
-struct TR_RelocationRecordValidatePrimitiveClassBinaryTemplate : public TR_RelocationRecordBinaryTemplate
-   {
-   uint16_t _classID;
-   char _primitiveType;
-   };
-
 struct TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
    uint16_t _methodID;
@@ -1615,18 +1609,6 @@ class TR_RelocationRecordValidateRomClass : public TR_RelocationRecord
       virtual bool isValidationRecord() { return true; }
       virtual char *name() { return "TR_RelocationRecordValidateRomClass"; }
       virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateRomClassBinaryTemplate); }
-      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
-      virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
-   };
-
-class TR_RelocationRecordValidatePrimitiveClass : public TR_RelocationRecord
-   {
-   public:
-      TR_RelocationRecordValidatePrimitiveClass() {}
-      TR_RelocationRecordValidatePrimitiveClass(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
-      virtual bool isValidationRecord() { return true; }
-      virtual char *name() { return "TR_RelocationRecordValidatePrimitiveClass"; }
-      virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidatePrimitiveClassBinaryTemplate); }
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
    };

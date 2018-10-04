@@ -912,22 +912,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_ValidatePrimitiveClass:
-         {
-         TR::PrimitiveClassRecord *record = reinterpret_cast<TR::PrimitiveClassRecord *>(relocation->getTargetAddress());
-
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-
-         TR_RelocationRecordValidatePrimitiveClassBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordValidatePrimitiveClassBinaryTemplate *>(cursor);
-
-         binaryTemplate->_classID = symValManager->getIDFromSymbol(static_cast<void *>(record->_class));
-         binaryTemplate->_primitiveType = record->_primitiveType;
-
-         cursor += sizeof(TR_RelocationRecordValidatePrimitiveClassBinaryTemplate);
-         }
-         break;
-
       case TR_ValidateMethodFromInlinedSite:
          {
          TR::MethodFromInlinedSiteRecord *record = reinterpret_cast<TR::MethodFromInlinedSiteRecord *>(relocation->getTargetAddress());
@@ -1428,7 +1412,7 @@ uint32_t J9::X86::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_Nu
    sizeof(TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate),//TR_ValidateConcreteSubClassFromClass  = 78,
    sizeof(TR_RelocationRecordValidateClassChainBinaryTemplate),        // TR_ValidateClassChain                  = 79,
    sizeof(TR_RelocationRecordValidateRomClassBinaryTemplate),          // TR_ValidateRomClass                    = 80,
-   sizeof(TR_RelocationRecordValidatePrimitiveClassBinaryTemplate),    // TR_ValidatePrimitiveClass              = 81,
+   0,                                                                  // TR_ValidatePrimitiveClass              = 81,
    sizeof(TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate), // TR_ValidateMethodFromInlinedSite       = 82,
    sizeof(TR_RelocationRecordValidateMethodByNameBinaryTemplate),      // TR_ValidatedMethodByName               = 83,
    sizeof(TR_RelocationRecordValidateMethodFromClassBinaryTemplate),   // TR_ValidatedMethodFromClass            = 84,

@@ -1497,25 +1497,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
             }
             break;
 
-         case TR_ValidatePrimitiveClass:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidatePrimitiveClassBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidatePrimitiveClassBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Primitive Class: classID=%d, primitiveType=%c ",
-                        (uint32_t)binaryTemplate->_classID,
-                        binaryTemplate->_primitiveType);
-               }
-            cursor += sizeof(TR_RelocationRecordValidatePrimitiveClassBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
          case TR_ValidateMethodFromInlinedSite:
             {
             cursor++;

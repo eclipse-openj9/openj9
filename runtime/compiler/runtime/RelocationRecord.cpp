@@ -367,9 +367,6 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
       case TR_ValidateRomClass:
          reloRecord = new (storage) TR_RelocationRecordValidateRomClass(reloRuntime, record);
          break;
-      case TR_ValidatePrimitiveClass:
-         reloRecord = new (storage) TR_RelocationRecordValidatePrimitiveClass(reloRuntime, record);
-         break;
       case TR_ValidateMethodFromInlinedSite:
          reloRecord = new (storage) TR_RelocationRecordValidateMethodFromInlinedSite(reloRuntime, record);
          break;
@@ -3570,25 +3567,6 @@ TR_RelocationRecordValidateRomClass::applyRelocation(TR_RelocationRuntime *reloR
    }
 
 int32_t
-TR_RelocationRecordValidatePrimitiveClass::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
-   {
-   uint16_t classID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidatePrimitiveClassBinaryTemplate *)_record)->_classID);
-   char primitiveType = (char)reloTarget->loadUnsigned8b((uint8_t *) &((TR_RelocationRecordValidatePrimitiveClassBinaryTemplate *)_record)->_primitiveType);
-
-   if (reloRuntime->reloLogger()->logEnabled())
-      {
-      reloRuntime->reloLogger()->printf("%s\n", name());
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: classID %d\n", classID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: primitiveType %c\n", primitiveType);
-      }
-
-   if (reloRuntime->comp()->getSymbolValidationManager()->validatePrimitiveClassRecord(classID, primitiveType))
-      return 0;
-   else
-      return compilationAotClassReloFailure;
-   }
-
-int32_t
 TR_RelocationRecordValidateMethodFromInlinedSite::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
    uint16_t methodID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate *)_record)->_methodID);
@@ -4626,7 +4604,7 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate),            // TR_ValidateConcreteSubClassFromClass            = 78
    sizeof(TR_RelocationRecordValidateClassChainBinaryTemplate),                      // TR_ValidateClassChain                           = 79
    sizeof(TR_RelocationRecordValidateRomClassBinaryTemplate),                        // TR_ValidateRomClass                             = 80
-   sizeof(TR_RelocationRecordValidatePrimitiveClassBinaryTemplate),                  // TR_ValidatePrimitiveClass                       = 81
+   0,                                                                                // TR_ValidatePrimitiveClass                       = 81
    sizeof(TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate),               // TR_ValidateMethodFromInlinedSite                = 82
    sizeof(TR_RelocationRecordValidateMethodByNameBinaryTemplate),                    // TR_ValidatedMethodByName                        = 83
    sizeof(TR_RelocationRecordValidateMethodFromClassBinaryTemplate),                 // TR_ValidatedMethodFromClass                     = 84

@@ -208,7 +208,7 @@ TR::SymbolValidationManager::storeClassRecord(TR_OpaqueClassBlock *clazz,
       {
       if (fej9->isPrimitiveClass(clazz))
          {
-         validated = addPrimitiveClassRecord(clazz);
+         validated = true; // primitive types have guaranteed IDs
          }
       else
          {
@@ -651,39 +651,6 @@ TR::SymbolValidationManager::addRomClassRecord(TR_OpaqueClassBlock *clazz)
       return true;
 
    SymbolValidationRecord *record = new (_region) RomClassRecord(clazz);
-   return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record);
-   }
-
-bool
-TR::SymbolValidationManager::addPrimitiveClassRecord(TR_OpaqueClassBlock *clazz)
-   {
-   if (!clazz)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
-   TR::Compilation* comp = TR::comp();
-
-   if (getIDFromSymbol(clazz) == 0)
-      {
-      TR_ASSERT(false, "clazz 0x%p should have already been validated\n", clazz);
-      comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addPrimitiveClassRecord");
-      }
-
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
-   J9ROMClass *romClass = reinterpret_cast<J9ROMClass *>(fej9->getPersistentClassPointerFromClassPointer(clazz));
-   J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
-   char primitiveType =getPrimitiveChar(className);
-
-   if (primitiveType == '\0')
-      {
-      TR_ASSERT(false, "clazz 0x%p is not primitive\n", clazz);
-      comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addPrimitiveClassRecord");
-      }
-
-   SymbolValidationRecord *record = new (_region) PrimitiveClassRecord(clazz, primitiveType);
    return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record);
    }
 
@@ -1540,27 +1507,6 @@ TR::SymbolValidationManager::validateRomClassRecord(uint16_t classID, J9ROMClass
    }
 
 bool
-TR::SymbolValidationManager::validatePrimitiveClassRecord(uint16_t classID, char primitiveType)
-   {
-   if (getSymbolFromID(classID) == NULL)
-      {
-      TR_ASSERT(false, "classID %u should exist\n", classID);
-      return false;
-      }
-
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
-   TR_OpaqueClassBlock *primitiveClass = static_cast<TR_OpaqueClassBlock *>(getSymbolFromID(classID));
-
-   J9ROMClass *romClass = reinterpret_cast<J9ROMClass *>(fej9->getPersistentClassPointerFromClassPointer(primitiveClass));
-   J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
-
-   return (primitiveType == getPrimitiveChar(className));
-   }
-
-bool
 TR::SymbolValidationManager::validateMethodFromInlinedSiteRecord(uint16_t methodID, TR_OpaqueMethodBlock *method)
    {
    return validateSymbol(methodID, static_cast<void *>(method));
@@ -2130,13 +2076,6 @@ void TR::RomClassRecord::printFields()
    {
    traceMsg(TR::comp(), "RomClassRecord\n");
    traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
-   }
-
-void TR::PrimitiveClassRecord::printFields()
-   {
-   traceMsg(TR::comp(), "PrimitiveClassRecord\n");
-   traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
-   printClass(_class);
    }
 
 void TR::MethodFromInlinedSiteRecord::printFields()
