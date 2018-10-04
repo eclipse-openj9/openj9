@@ -1241,13 +1241,22 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(offset);
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getResolvedImproperInterfaceMethod:
+      case J9ServerMessageType::ResolvedMethod_getResolvedImproperInterfaceMethodAndMirror:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, I_32>();
          auto mirror = std::get<0>(recv);
          auto cpIndex = std::get<1>(recv);
-         J9Method *j9method = jitGetImproperInterfaceMethodFromCP(fe->vmThread(), mirror->cp(), cpIndex);
-         client->write(j9method);
+         J9Method *j9method = nullptr;
+            {
+            TR::VMAccessCriticalSection getResolvedHandleMethod(fe);
+            j9method = jitGetImproperInterfaceMethodFromCP(fe->vmThread(), mirror->cp(), cpIndex);
+            }
+         // create a mirror right away
+         TR_ResolvedJ9JITaaSServerMethodInfo methodInfo;
+         if (j9method)
+            TR_ResolvedJ9JITaaSServerMethod::createResolvedJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) j9method, 0, mirror, fe, trMemory);
+
+         client->write(j9method, methodInfo);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_startAddressForJNIMethod:

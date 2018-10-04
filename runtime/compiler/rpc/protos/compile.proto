@@ -98,7 +98,7 @@ enum J9ServerMessageType
    ResolvedMethod_methodIsNotzAAPEligible = 144;
    ResolvedMethod_setClassForNewInstance = 145;
    ResolvedMethod_getJittedBodyInfo = 146;
-   ResolvedMethod_getResolvedImproperInterfaceMethod = 147;
+   ResolvedMethod_getResolvedImproperInterfaceMethodAndMirror = 147;
    ResolvedMethod_isUnresolvedString = 148;
    ResolvedMethod_stringConstant = 149;
 
