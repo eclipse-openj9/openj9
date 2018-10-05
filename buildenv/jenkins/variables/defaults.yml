@@ -128,8 +128,6 @@ linux_390-64_cmprssptrs:
       10: 'hw.arch.s390x && sw.os.ubuntu'
       11: 'hw.arch.s390x && sw.os.ubuntu'
       next: 'hw.arch.s390x && sw.os.ubuntu'
-  extra_configure_options:
-    8: '--with-openssl=fetched --enable-openssl-bundling'
   build_env:
     vars:
       11: 'CC=gcc-7 CXX=g++-7'
@@ -166,7 +164,7 @@ aix_ppc-64_cmprssptrs:
       11: 'hw.arch.ppc && sw.os.aix'
       next: 'hw.arch.ppc && sw.os.aix'
   extra_configure_options:
-    8: '--with-cups-include=/opt/freeware/include --disable-ccache --with-jobs=8 --with-openssl=fetched --enable-openssl-bundling'
+    8: '--with-cups-include=/opt/freeware/include --disable-ccache --with-jobs=8'
     9: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
     10: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
     11: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
