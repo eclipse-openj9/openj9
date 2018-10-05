@@ -1197,6 +1197,13 @@ TR_J9ServerVM::getBytecodePC(TR_OpaqueMethodBlock *method, TR_ByteCodeInfo &bcIn
 bool
 TR_J9ServerVM::isClassLoadedBySystemClassLoader(TR_OpaqueClassBlock *clazz)
    {
+   OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+   auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) clazz);
+   if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+      {
+      return (it->second.classLoader == getSystemClassLoader());
+      }
+
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_isClassLoadedBySystemClassLoader, clazz);
    return std::get<0>(stream->read<bool>());
