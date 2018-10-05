@@ -42,6 +42,7 @@ namespace J9 { typedef J9::CodeGenerator CodeGeneratorConnector; }
 #include "codegen/RecognizedMethods.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
+#include "control/CompilationRuntime.hpp"
 #include "optimizer/Dominators.hpp"
 #include "cs2/arrayof.h"   // for ArrayOf
 
@@ -114,6 +115,8 @@ public:
    // --------------------------------------
    // AOT Relocations
    //
+   void addExternalRelocation(TR::Relocation *r, const char *generatingFileName, uintptr_t generatingLineNumber, TR::Node *node, TR::ExternalRelocationPositionRequest where = TR::ExternalRelocationAtBack);
+   void addExternalRelocation(TR::Relocation *r, TR::RelocationDebugInfo *info, TR::ExternalRelocationPositionRequest where = TR::ExternalRelocationAtBack);
 
    void processRelocations();
 
@@ -144,6 +147,8 @@ public:
 
    bool needClassAndMethodPointerRelocations();
    bool needRelocationsForStatics();
+   bool needRelocationsForBodyInfoData();
+   bool needRelocationsForPersistentInfoData();
 
    // ----------------------------------------
 
@@ -276,7 +281,7 @@ private:
       {
       // If we have a class pointer to consider, it should look like one.
       const uintptrj_t j9classEyecatcher = 0x99669966;
-      if (allegedClassPointer != NULL)
+      if (allegedClassPointer != NULL && !TR::CompilationInfo::getStream())
          {
          TR_ASSERT(*(const uintptrj_t*)allegedClassPointer == j9classEyecatcher,
                    "expected a J9Class* for omitted runtime assumption");

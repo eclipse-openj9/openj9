@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,8 +70,12 @@ int32_t TR_PersistentClassLoaderTable::_numClassLoaders = 0;
 void
 TR_PersistentClassLoaderTable::associateClassLoaderWithClass(void *classLoaderPointer, TR_OpaqueClassBlock *clazz)
    {
+   //fprintf(stderr, "PLCT: associateClassLoaderWithClass %p %p\n", classLoaderPointer, clazz);
    if (!sharedCache())
+      {
+      //fprintf(stderr, "PLCT: no shared cache\n");
       return;
+      }
 
    // need to acquire some kind of lock here
 
@@ -80,7 +84,7 @@ TR_PersistentClassLoaderTable::associateClassLoaderWithClass(void *classLoaderPo
    TR_ClassLoaderInfo *info = _loaderTable[index];
    while (info != NULL && info->_classLoaderPointer != classLoaderPointer)
       info = info->_next;
-
+   //fprintf(stderr, "PLCT: info %p\n", info);
    if (!info)
       {
       //fprintf(stderr, "PCLT:associating loader %p with first loaded class %p\n", classLoaderPointer, clazz);

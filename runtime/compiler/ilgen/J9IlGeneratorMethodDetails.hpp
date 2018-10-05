@@ -41,6 +41,8 @@ namespace J9 { typedef J9::IlGeneratorMethodDetails IlGeneratorMethodDetailsConn
 
 class J9Class;
 class J9Method;
+class J9ROMClass;
+class J9ROMMethod;
 class TR_FrontEnd;
 class TR_IlGenerator;
 class TR_InlineBlocks;
@@ -53,6 +55,19 @@ namespace TR { class SymbolReferenceTable;}
 
 namespace J9
 {
+enum IlGeneratorMethodDetailsType
+   {
+   EMPTY = 0,
+   ORDINARY_METHOD = 1<<0,
+   REMOTE_METHOD = 1<<1,
+   DUMP_METHOD = 1<<2,
+   NEW_INSTANCE_THUNK = 1<<3,
+   METHOD_IN_PROGRESS = 1<<4,
+   ARCHETYPE_SPECIMEN = 1<<5,
+   METHOD_HANDLE_THUNK = 1<<6,
+   SHAREABLE_THUNK = 1<<7,
+   CUSTOM_THUNK = 1<<8,
+   };
 
 class OMR_EXTENSIBLE IlGeneratorMethodDetails : public OMR::IlGeneratorMethodDetailsConnector
    {
@@ -65,10 +80,7 @@ public:
       _method = NULL;
       }
 
-   IlGeneratorMethodDetails(J9Method * const method) :
-      OMR::IlGeneratorMethodDetailsConnector(),
-      _method(method)
-   { }
+   IlGeneratorMethodDetails(J9Method * const method);
 
    IlGeneratorMethodDetails(TR_ResolvedMethod *method);
 
@@ -77,10 +89,18 @@ public:
    static TR::IlGeneratorMethodDetails & create(TR::IlGeneratorMethodDetails & target, TR_ResolvedMethod *method);
 
    static TR::IlGeneratorMethodDetails * clone(TR::IlGeneratorMethodDetails & storage, const TR::IlGeneratorMethodDetails & source);
+   TR::IlGeneratorMethodDetails & createRemoteMethodDetails(const TR::IlGeneratorMethodDetails &other,
+                                                            const IlGeneratorMethodDetailsType type,
+                                                            J9Method * const method,
+                                                            const J9ROMClass *romClass,
+                                                            const J9ROMMethod *romMethod,
+                                                            J9Class *clazz,
+                                                            J9Method * const methodsOfClass);
 
    virtual const char * name() const { return "OrdinaryMethod"; }
 
    virtual bool isOrdinaryMethod()     const { return true; }
+   virtual bool isRemoteMethod()       const { return false; }
    virtual bool isDumpMethod()         const { return false; }
    virtual bool isNewInstanceThunk()   const { return false; }
    virtual bool isMethodInProgress()   const { return false; }
@@ -88,8 +108,12 @@ public:
    virtual bool isMethodHandleThunk()  const { return false; }
    virtual bool supportsInvalidation() const { return true; }
 
+   IlGeneratorMethodDetailsType getType() const;
    J9Method *getMethod() const { return _method; }
-   virtual J9Class *getClass() const;
+   virtual J9Class *getClass() const { return _class; }
+   virtual const J9ROMClass *getRomClass() const { return _romClass; }
+   virtual const J9ROMMethod *getRomMethod() const { return _romMethod; }
+   J9Method *getMethodsOfClass() const { return _methodsOfClass; }
 
    virtual TR_IlGenerator *getIlGenerator(TR::ResolvedMethodSymbol *methodSymbol,
                                           TR_FrontEnd * fe,
@@ -114,9 +138,13 @@ protected:
    //    must be able to transmute itself into any kind of IlGeneratorMethodDetails in place (i.e. via placement new)
 
    J9Method *_method;
+   J9Class *_class;
+   const J9ROMMethod *_romMethod;
+   const J9ROMClass *_romClass;
+   J9Method *_methodsOfClass;
    union
       {
-      J9Class *_class;
+      J9Class *_classNeedingThunk;
       int32_t _byteCodeIndex;
       struct
          {

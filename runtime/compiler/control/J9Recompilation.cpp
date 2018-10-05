@@ -31,6 +31,7 @@
 #include "env/VMJ9.h"
 #include "runtime/J9Profiler.hpp"
 #include "exceptions/RuntimeFailure.hpp"    // for J9::EnforceProfiling
+#include "env/j9methodServer.hpp"
 
 bool J9::Recompilation::_countingSupported = false;
 
@@ -62,7 +63,20 @@ J9::Recompilation::setupMethodInfo()
    //
    TR_OptimizationPlan * optimizationPlan =  _compilation->getOptimizationPlan();
 
-   if (_firstCompile)
+   if (comp()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+      {
+      _methodInfo = new (PERSISTENT_NEW) TR_PersistentMethodInfo();
+      if (!_methodInfo)
+         {
+         _compilation->failCompilation<std::bad_alloc>("Unable to allocate method info");
+         }
+      auto curMethodRemoteMirror = static_cast<TR_ResolvedJ9JITaaSServerMethod *>(_compilation->getCurrentMethod())->getRemoteMirror();
+      auto stream = TR::CompilationInfo::getStream();
+      stream->write(JITaaS::J9ServerMessageType::Recompilation_getExistingMethodInfo, JITaaS::Void());
+      auto reply = stream->read<TR_PersistentMethodInfo>();
+      *_methodInfo = std::get<0>(reply);
+      }
+   else if (_firstCompile)
       {
       // Create the persistent method information
       // If the previous compiled version of the method is AOTed, then we need to create a new persistent method information
@@ -608,8 +622,7 @@ TR_PersistentMethodInfo::get(TR_ResolvedMethod * feMethod)
    if (feMethod->isInterpreted() || feMethod->isJITInternalNative())
       return 0;
 
-   void *startPC = (void *)feMethod->startAddressForInterpreterOfJittedMethod();
-   TR_PersistentJittedBodyInfo *bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(startPC);
+   TR_PersistentJittedBodyInfo *bodyInfo = ((TR_ResolvedJ9Method*) feMethod)->getExistingJittedBodyInfo();
    return bodyInfo ? bodyInfo->getMethodInfo() : 0;
    }
 
@@ -717,4 +730,23 @@ TR_PersistentMethodInfo::setForSharedInfo(TR_PersistentProfileInfo** ptr, TR_Per
    // Now that it can no longer be accessed, dec ref count on old info
    if (oldPtr)
       TR_PersistentProfileInfo::decRefCount((TR_PersistentProfileInfo*)oldPtr);
+   }
+
+// used for JITaaS
+TR_PersistentJittedBodyInfo *
+J9::Recompilation::persistentJittedBodyInfoFromString(const std::string &bodyInfoStr, const std::string &methodInfoStr, TR_Memory *trMemory)
+   {
+   auto bodyInfo = (TR_PersistentJittedBodyInfo*) trMemory->allocateHeapMemory(sizeof(TR_PersistentJittedBodyInfo), TR_MemoryBase::Recompilation);
+   auto methodInfo = (TR_PersistentMethodInfo*) trMemory->allocateHeapMemory(sizeof(TR_PersistentMethodInfo), TR_MemoryBase::Recompilation);
+   memcpy(bodyInfo, &bodyInfoStr[0], sizeof(TR_PersistentJittedBodyInfo));
+   memcpy(methodInfo, &methodInfoStr[0], sizeof(TR_PersistentMethodInfo));
+   bodyInfo->setMethodInfo(methodInfo);
+   bodyInfo->setProfileInfo(nullptr);
+   bodyInfo->setMapTable(nullptr);
+   methodInfo->setOptimizationPlan(nullptr);
+   // cannot use setter because it calls the destructor on the old profile data,
+   // which is a client pointer
+   methodInfo->_recentProfileInfo = nullptr;
+   methodInfo->_bestProfileInfo = nullptr;
+   return bodyInfo;
    }

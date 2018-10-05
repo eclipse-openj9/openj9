@@ -23,6 +23,7 @@
 #ifndef j9method_h
 #define j9method_h
 
+#include "rpc/J9Server.hpp"
 #include "codegen/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/ResolvedMethod.hpp"
@@ -33,7 +34,14 @@
 
 #define J9ROM_CP_BASE(romClassPtr, x) ((x*) (((U_8 *) (romClassPtr)) + sizeof(J9ROMClass)))
 
+#ifdef DEBUG
+   #define INCREMENT_COUNTER(vm, slotName) (vm)->_jitConfig->slotName++
+#else
+   #define INCREMENT_COUNTER(vm, slotName)
+#endif
+
 class TR_J9VMBase;
+class TR_PersistentJittedBodyInfo;
 
 extern "C" {
 struct J9UTF8;
@@ -55,6 +63,15 @@ extern "C" J9UTF8 * getNameFromTR_VMMethod(TR_OpaqueMethodBlock *vmMethod);
 extern "C" J9UTF8 * getClassNameFromTR_VMMethod(TR_OpaqueMethodBlock *vmMethod);
 extern "C" J9Class * getRAMClassFromTR_ResolvedVMMethod(TR_OpaqueMethodBlock *vmMethod);
 #endif
+
+static bool supportsFastJNI(TR_FrontEnd *fe)
+   {
+#if defined(TR_TARGET_S390) || defined(TR_TARGET_X86) || defined(TR_TARGET_POWER)
+   return true;
+#else
+   return false;
+#endif
+   }
 
 inline char *nextSignatureArgument(char *currentArgument)
    {
@@ -160,9 +177,11 @@ protected:
 
    uintptr_t    _paramElements;
    uintptr_t    _paramSlots;
+public:
    J9UTF8 *     _signature;
    J9UTF8 *     _name;
    J9UTF8 *     _className;
+protected:
    uint8_t *    _argTypes;
    char *       _fullSignature;
    flags32_t    _flags;
@@ -180,7 +199,13 @@ class TR_J9Method : public TR_J9MethodBase
    {
 public:
    TR_J9Method(TR_FrontEnd *trvm, TR_Memory *, J9Class * aClazz, uintptr_t cpIndex);
+   TR_J9Method(TR_FrontEnd *trvm, TR_Memory *, J9Class * aClazz, uintptr_t cpIndex, bool isJITaaSServerMode);
    TR_J9Method(TR_FrontEnd *trvm, TR_Memory *, TR_OpaqueMethodBlock * aMethod);
+
+protected:
+   // To be used by JITaaS.
+   // Warning: some initialization must be done manually after calling this constructor
+   TR_J9Method();
    };
 
 class TR_ResolvedJ9MethodBase : public TR_ResolvedMethod
@@ -200,7 +225,6 @@ public:
 
    virtual TR_ResolvedMethod    *owningMethod();
    virtual void                  setOwningMethod(TR_ResolvedMethod *parent);
-   virtual bool                  owningMethodDoesntMatter();
    virtual bool                  canAlwaysShareSymbolDespiteOwningMethod(TR_ResolvedMethod *other);
 
    virtual char *                classNameOfFieldOrStatic(int32_t cpIndex, int32_t & len);
@@ -230,7 +254,7 @@ public:
 
    protected:
 
-   char *  fieldOrStaticName(int32_t cpIndex, int32_t & len, TR_Memory *, TR_AllocationKind kind = heapAlloc);
+   virtual char *  fieldOrStaticName(int32_t cpIndex, int32_t & len, TR_Memory *, TR_AllocationKind kind = heapAlloc);
    int32_t exceptionData(J9ExceptionHandler *, int32_t, int32_t, int32_t *, int32_t *, int32_t *);
    virtual TR_J9MethodBase *asJ9Method() = 0;
 
@@ -241,26 +265,29 @@ public:
 
    };
 
-
 class TR_ResolvedJ9Method : public TR_J9Method, public TR_ResolvedJ9MethodBase
    {
 public:
    TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
 
-   J9Method *              ramMethod() { return _ramMethod; }
+   // JITaaS: make virtual
+   //
+   // JITaaS TODO: make protected, returning Opaque versions
    J9ROMMethod *           romMethod() { return _romMethod; }
-   J9Class *               constantPoolHdr();
-   J9ROMClass *            romClassPtr();
-   J9RAMConstantPoolItem * literals();   // address of 1st CP entry (with type being an entry for array indexing)
+   virtual J9ROMClass *            romClassPtr();
+   virtual J9ConstantPool *      cp();
+protected:
+   virtual J9RAMConstantPoolItem * literals();   // address of 1st CP entry (with type being an entry for array indexing)
+public:
+   J9Method *              ramMethod() { return _ramMethod; }
+   virtual J9Class *               constantPoolHdr();
+   virtual J9ClassLoader *         getClassLoader();
 
 
    uint32_t                methodModifiers();
-   uint32_t                classModifiers();
-   uint32_t                classExtraModifiers();
+   virtual uint32_t              classModifiers();
+   virtual uint32_t              classExtraModifiers();
 
-   J9ClassLoader *         getClassLoader();
-
-   virtual J9ConstantPool *      cp();
    virtual TR_Method *           convertToMethod();
 
    virtual uint32_t              numberOfParameters();
@@ -452,23 +479,35 @@ public:
    virtual const char *          newInstancePrototypeSignature(TR_Memory * m, TR_AllocationKind = heapAlloc);
 
    J9ExceptionHandler *          exceptionHandler();
-   void                          setClassForNewInstance(J9Class *c) { _j9classForNewInstance = c; }
+   virtual void                  setClassForNewInstance(J9Class *c);
    bool                          fieldIsFromLocalClass(int32_t cpIndex);
 
-   char *fieldOrStaticNameChars      (int32_t cpIndex, int32_t & len);
-   char *fieldOrStaticSignatureChars (int32_t cpIndex, int32_t & len);
+   virtual char *fieldOrStaticNameChars      (int32_t cpIndex, int32_t & len);
+   virtual char *fieldOrStaticSignatureChars (int32_t cpIndex, int32_t & len);
+
+   virtual bool shouldFailSetRecognizedMethodInfoBecauseOfHCR();
+   virtual void setRecognizedMethodInfo(TR::RecognizedMethod rm);
+
+   virtual bool                  owningMethodDoesntMatter();
+   virtual bool isMethodInValidLibrary();
+
+   virtual TR_PersistentJittedBodyInfo *getExistingJittedBodyInfo();
+
+   static bool isInvokePrivateVTableOffset(UDATA vTableOffset);
 
 protected:
    virtual TR_J9MethodBase *asJ9Method(){ return this; }
+   TR_ResolvedJ9Method(TR_FrontEnd *, TR_ResolvedMethod * owningMethod = 0);
+   virtual void construct();
 
-private:
+// JITaaS TODO
+//private:
    virtual TR_ResolvedMethod *createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats);
 
    virtual void                  handleUnresolvedStaticMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
    virtual void                  handleUnresolvedSpecialMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
    virtual void                  handleUnresolvedVirtualMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
 
-   void setRecognizedMethodInfo(TR::RecognizedMethod rm);
    void setQuadClassSeen();
 
    J9Method *              _ramMethod;
@@ -544,8 +583,9 @@ public:
 
    virtual TR_OpaqueMethodBlock *getNonPersistentIdentifier();
    virtual uint8_t *             allocateException(uint32_t, TR::Compilation*);
+   virtual bool                  storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *constantPool, int32_t cpIndex, TR_ExternalRelocationTargetKind reloKind, J9Method *ramMethod, J9Class *definingClass=0);
 
-private:
+protected:
    virtual TR_ResolvedMethod *   createResolvedMethodFromJ9Method(TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats);
 
    virtual void                  handleUnresolvedStaticMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
@@ -557,10 +597,10 @@ private:
    bool                          unresolvedFieldAttributes (int32_t cpIndex, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate);
    bool                          unresolvedStaticAttributes(int32_t cpIndex, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate);
    void                          setAttributeResult(bool, bool, uintptr_t, int32_t, int32_t, int32_t, TR::DataType *, bool *, bool *, bool *, void ** );
-   char *                        fieldOrStaticNameChars(int32_t cpIndex, int32_t & len);
+   virtual char *                fieldOrStaticNameChars(int32_t cpIndex, int32_t & len);
 
    J9ExceptionHandler * exceptionHandler();
    };
-#endif
 
+#endif
 #endif

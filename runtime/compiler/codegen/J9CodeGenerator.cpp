@@ -1030,6 +1030,13 @@ J9::CodeGenerator::lowerTreeIfNeeded(
          if (!allowedToReserve)
             {
             persistentClassInfo->setReservable(false);
+            // This is currently the only place where this flag gets cleared. For JITaaS, we should propagate it to the client,
+            // to avoid having to call scanForNativeMethodsUntilMonitorNode again.
+            if (auto stream = TR::CompilationInfo::getStream())
+               {
+               stream->write(JITaaS::J9ServerMessageType::CHTable_clearReservable, classPointer);
+               // No response necessary - we can continue concurrently
+               }
             }
          }
       }
@@ -1142,8 +1149,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
                methodSymbol->getResolvedMethodSymbol() &&
                methodSymbol->getResolvedMethodSymbol()->getResolvedMethod())
             {
-            void * methodAddress = methodSymbol->getResolvedMethodSymbol()->getResolvedMethod()->startAddressForInterpreterOfJittedMethod();
-            TR_PersistentJittedBodyInfo * bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(methodAddress);
+            TR_PersistentJittedBodyInfo * bodyInfo = ((TR_ResolvedJ9Method*) methodSymbol->getResolvedMethodSymbol()->getResolvedMethod())->getExistingJittedBodyInfo();
             //printf("Pushing node %p\n", node);
             //fflush(stdout);
             if (bodyInfo &&
@@ -2460,239 +2466,242 @@ J9::CodeGenerator::processRelocations()
    //Project neutral non-AOT processRelocation
    OMR::CodeGenerator::processRelocations();
 
+   bool isJITaaSMode = comp()->isOutOfProcessCompilation();
+
    int32_t missedSite = -1;
 
-   if (self()->comp()->getOption(TR_AOT) != false)
+   if (self()->comp()->compileRelocatableCode() || isJITaaSMode)
       {
-//#if (defined(TR_HOST_X86) || defined(TR_HOST_S390) || defined(TR_HOST_POWER))
-      uint32_t inlinedCallSize = self()->comp()->getNumInlinedCallSites();
-
-      // Create temporary hashtable for ordering AOT guard relocations
-      int32_t counter = inlinedCallSize;
-      TR_InlinedSiteHastTableEntry *orderedInlinedSiteListTable;
-      if (inlinedCallSize > 0)
+      if (!isJITaaSMode)
          {
-         orderedInlinedSiteListTable= (TR_InlinedSiteHastTableEntry*)self()->comp()->trMemory()->allocateMemory(sizeof(TR_InlinedSiteHastTableEntry) * inlinedCallSize, heapAlloc);
-         memset(orderedInlinedSiteListTable, 0, sizeof(TR_InlinedSiteHastTableEntry)*inlinedCallSize);
-         }
-      else
-         orderedInlinedSiteListTable = NULL;
+         uint32_t inlinedCallSize = self()->comp()->getNumInlinedCallSites();
 
-      TR_InlinedSiteLinkedListEntry *entry = NULL;
-
-      // Traverse list of AOT-specific guards and create relocation records
-      TR::list<TR_AOTGuardSite*> *aotGuardSites = self()->comp()->getAOTGuardPatchSites();
-      for(auto it = aotGuardSites->begin(); it != aotGuardSites->end(); ++it)
-         {
-         intptrj_t inlinedSiteIndex = -1;
-
-         // first, figure out the appropriate relocation record type from the guard type and symbol
-         TR_ExternalRelocationTargetKind type;
-         switch ((*it)->getType())
+         // Create temporary hashtable for ordering AOT guard relocations
+         int32_t counter = inlinedCallSize;
+         TR_InlinedSiteHastTableEntry *orderedInlinedSiteListTable;
+         if (inlinedCallSize > 0)
             {
-            case TR_DirectMethodGuard:
-               if ((*it)->getGuard()->getSymbolReference()->getSymbol()->getMethodSymbol()->isStatic())
-                  type = TR_InlinedStaticMethodWithNopGuard;
-               else if ((*it)->getGuard()->getSymbolReference()->getSymbol()->getMethodSymbol()->isSpecial())
-                  type = TR_InlinedSpecialMethodWithNopGuard;
-               else if ((*it)->getGuard()->getSymbolReference()->getSymbol()->getMethodSymbol()->isVirtual())
-                  type = TR_InlinedVirtualMethodWithNopGuard;
-               else
-                  TR_ASSERT(0, "unexpected AOTDirectMethodGuard method symbol");
-               break;
-
-            case TR_NonoverriddenGuard:
-               type = TR_InlinedVirtualMethodWithNopGuard;
-               break;
-            case TR_RemovedNonoverriddenGuard:
-               type = TR_InlinedVirtualMethod;
-               break;
-
-            case TR_InterfaceGuard:
-               type = TR_InlinedInterfaceMethodWithNopGuard;
-               break;
-            case TR_RemovedInterfaceGuard:
-               traceMsg(self()->comp(), "TR_RemovedInterfaceMethod\n");
-               type = TR_InlinedInterfaceMethod;
-               break;
-
-            case TR_HCRGuard:
-               // devinmp: TODO/FIXME this should arrange to create an AOT
-               // relocation which, when loaded, creates a
-               // TR_PatchNOPedGuardSiteOnClassRedefinition or similar.
-               // Here we would previously create a TR_HCR relocation,
-               // which is for replacing J9Class or J9Method pointers.
-               // These would be the 'unresolved' variant
-               // (TR_RedefinedClassUPicSite), which would (hopefully) never
-               // get patched. If it were patched, it seems like it would
-               // replace code with a J9Method pointer.
-               if (!self()->comp()->getOption(TR_UseOldHCRGuardAOTRelocations))
-                  continue;
-               type = TR_HCR;
-               break;
-
-            case TR_MethodEnterExitGuard:
-               if ((*it)->getGuard()->getCallNode()->getOpCodeValue() == TR::MethodEnterHook)
-                  type = TR_CheckMethodEnter;
-               else if ((*it)->getGuard()->getCallNode()->getOpCodeValue() == TR::MethodExitHook)
-                  type = TR_CheckMethodExit;
-               else
-                  TR_ASSERT(0,"Unexpected TR_MethodEnterExitGuard at site %p guard %p node %p\n",
-                                    *it, (*it)->getGuard(), (*it)->getGuard()->getCallNode());
-               break;
-
-            case TR_RemovedProfiledGuard:
-               traceMsg(self()->comp(), "TR_ProfiledInlinedMethodRelocation\n");
-               type = TR_ProfiledInlinedMethodRelocation;
-               break;
-
-            case TR_ProfiledGuard:
-               if ((*it)->getGuard()->getTestType() == TR_MethodTest)
-                  {
-                  type = TR_ProfiledMethodGuardRelocation;
-                  traceMsg(self()->comp(), "TR_ProfiledMethodGuardRelocation\n");
-                  }
-               else if ((*it)->getGuard()->getTestType() == TR_VftTest)
-                  {
-                  type = TR_ProfiledClassGuardRelocation;
-                  traceMsg(self()->comp(), "TR_ProfiledClassGuardRelocation\n");
-                  }
-               else
-                  TR_ASSERT(false, "unexpected profiled guard test type");
-               break;
-
-            default:
-               TR_ASSERT(false, "got a unknown/non-AOT guard at AOT site");
-               break;
+            orderedInlinedSiteListTable= (TR_InlinedSiteHastTableEntry*)self()->comp()->trMemory()->allocateMemory(sizeof(TR_InlinedSiteHastTableEntry) * inlinedCallSize, heapAlloc);
+            memset(orderedInlinedSiteListTable, 0, sizeof(TR_InlinedSiteHastTableEntry)*inlinedCallSize);
             }
+         else
+            orderedInlinedSiteListTable = NULL;
 
-         switch (type)  // relocation record type
+         TR_InlinedSiteLinkedListEntry *entry = NULL;
+
+         // Traverse list of AOT-specific guards and create relocation records
+         TR::list<TR_AOTGuardSite*> *aotGuardSites = self()->comp()->getAOTGuardPatchSites();
+         for(auto it = aotGuardSites->begin(); it != aotGuardSites->end(); ++it)
             {
-            case TR_InlinedStaticMethodWithNopGuard:
-            case TR_InlinedSpecialMethodWithNopGuard:
-            case TR_InlinedVirtualMethodWithNopGuard:
-            case TR_InlinedInterfaceMethodWithNopGuard:
-            case TR_InlinedHCRMethod:
-            case TR_ProfiledClassGuardRelocation:
-            case TR_ProfiledMethodGuardRelocation:
-            case TR_ProfiledInlinedMethodRelocation:
-            case TR_InlinedVirtualMethod:
-            case TR_InlinedInterfaceMethod:
-               TR_ASSERT(inlinedCallSize, "TR_AOT expect inlinedCallSize to be larger than 0\n");
-               inlinedSiteIndex = (intptrj_t)(*it)->getGuard()->getCurrentInlinedSiteIndex();
-               entry = (TR_InlinedSiteLinkedListEntry *)self()->comp()->trMemory()->allocateMemory(sizeof(TR_InlinedSiteLinkedListEntry), heapAlloc);
+            intptrj_t inlinedSiteIndex = -1;
 
-               entry->reloType = type;
-               entry->location = (uint8_t *)(*it)->getLocation();
-               entry->destination = (uint8_t *)(*it)->getDestination();
-               entry->guard = (uint8_t *)(*it)->getGuard();
-               entry->next = NULL;
-
-               if (orderedInlinedSiteListTable[inlinedSiteIndex].first)
-                  {
-                  orderedInlinedSiteListTable[inlinedSiteIndex].last->next = entry;
-                  orderedInlinedSiteListTable[inlinedSiteIndex].last = entry;
-                  }
-               else
-                  {
-                  orderedInlinedSiteListTable[inlinedSiteIndex].first = entry;
-                  orderedInlinedSiteListTable[inlinedSiteIndex].last = entry;
-                  }
-               break;
-
-            case TR_CheckMethodEnter:
-            case TR_CheckMethodExit:
-            case TR_HCR:
-               self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)(*it)->getLocation(),
-                                                                                (uint8_t *)(*it)->getDestination(),
-                                                                                type, self()),
-                                __FILE__, __LINE__, NULL);
-               break;
-
-            default:
-               TR_ASSERT(false, "got a unknown/non-AOT guard at AOT site");
-               break;
-            }
-         }
-
-      TR::list<TR::AOTClassInfo*>* classInfo = self()->comp()->_aotClassInfo;
-      if (!classInfo->empty())
-         {
-         for (auto info = classInfo->begin(); info != classInfo->end(); ++info)
-            {
-            traceMsg(self()->comp(), "processing AOT class info: %p in %s\n", *info, self()->comp()->signature());
-            traceMsg(self()->comp(), "ramMethod: %p cp: %p cpIndex: %x relo %d\n", (*info)->_method, (*info)->_constantPool, (*info)->_cpIndex, (*info)->_reloKind);
-            traceMsg(self()->comp(), "clazz: %p classChain: %p\n", (*info)->_clazz, (*info)->_classChain);
-
-            TR_OpaqueMethodBlock *ramMethod = (*info)->_method;
-
-            int32_t siteIndex = -1;
-
-            if (ramMethod != self()->comp()->getCurrentMethod()->getPersistentIdentifier()) // && info->_reloKind != TR_ValidateArbitraryClass)
+            // first, figure out the appropriate relocation record type from the guard type and symbol
+            TR_ExternalRelocationTargetKind type;
+            switch ((*it)->getType())
                {
-               int32_t i;
-               for (i = 0; i < self()->comp()->getNumInlinedCallSites(); i++)
-                  {
-                  TR_InlinedCallSite &ics = self()->comp()->getInlinedCallSite(i);
-                  TR_OpaqueMethodBlock *inlinedMethod = fej9->getInlinedCallSiteMethod(&ics);
+               case TR_DirectMethodGuard:
+                  if ((*it)->getGuard()->getSymbolReference()->getSymbol()->getMethodSymbol()->isStatic())
+                     type = TR_InlinedStaticMethodWithNopGuard;
+                  else if ((*it)->getGuard()->getSymbolReference()->getSymbol()->getMethodSymbol()->isSpecial())
+                     type = TR_InlinedSpecialMethodWithNopGuard;
+                  else if ((*it)->getGuard()->getSymbolReference()->getSymbol()->getMethodSymbol()->isVirtual())
+                     type = TR_InlinedVirtualMethodWithNopGuard;
+                  else
+                     TR_ASSERT(0, "unexpected AOTDirectMethodGuard method symbol");
+                  break;
 
-                  traceMsg(self()->comp(), "\tinline site %d inlined method %p\n", i, inlinedMethod);
-                  if (ramMethod == inlinedMethod)
-                  //if (((uintptrj_t)ramMethod == (uintptrj_t)aotMethodInfo->resolvedMethod->getPersistentIdentifier()) && orderedInlinedSiteListTable[counter].first)
+               case TR_NonoverriddenGuard:
+                  type = TR_InlinedVirtualMethodWithNopGuard;
+                  break;
+               case TR_RemovedNonoverriddenGuard:
+                  type = TR_InlinedVirtualMethod;
+                  break;
+
+               case TR_InterfaceGuard:
+                  type = TR_InlinedInterfaceMethodWithNopGuard;
+                  break;
+               case TR_RemovedInterfaceGuard:
+                  traceMsg(self()->comp(), "TR_RemovedInterfaceMethod\n");
+                  type = TR_InlinedInterfaceMethod;
+                  break;
+
+               case TR_HCRGuard:
+                  // devinmp: TODO/FIXME this should arrange to create an AOT
+                  // relocation which, when loaded, creates a
+                  // TR_PatchNOPedGuardSiteOnClassRedefinition or similar.
+                  // Here we would previously create a TR_HCR relocation,
+                  // which is for replacing J9Class or J9Method pointers.
+                  // These would be the 'unresolved' variant
+                  // (TR_RedefinedClassUPicSite), which would (hopefully) never
+                  // get patched. If it were patched, it seems like it would
+                  // replace code with a J9Method pointer.
+                  if (!self()->comp()->getOption(TR_UseOldHCRGuardAOTRelocations))
+                     continue;
+                  type = TR_HCR;
+                  break;
+
+               case TR_MethodEnterExitGuard:
+                  if ((*it)->getGuard()->getCallNode()->getOpCodeValue() == TR::MethodEnterHook)
+                     type = TR_CheckMethodEnter;
+                  else if ((*it)->getGuard()->getCallNode()->getOpCodeValue() == TR::MethodExitHook)
+                     type = TR_CheckMethodExit;
+                  else
+                     TR_ASSERT(0,"Unexpected TR_MethodEnterExitGuard at site %p guard %p node %p\n",
+                                       *it, (*it)->getGuard(), (*it)->getGuard()->getCallNode());
+                  break;
+
+               case TR_RemovedProfiledGuard:
+                  traceMsg(self()->comp(), "TR_ProfiledInlinedMethodRelocation\n");
+                  type = TR_ProfiledInlinedMethodRelocation;
+                  break;
+
+               case TR_ProfiledGuard:
+                  if ((*it)->getGuard()->getTestType() == TR_MethodTest)
                      {
-                     traceMsg(self()->comp(), "\t\tmatch!\n");
-                     siteIndex = i;
-                     break;
+                     type = TR_ProfiledMethodGuardRelocation;
+                     traceMsg(self()->comp(), "TR_ProfiledMethodGuardRelocation\n");
+                     }
+                  else if ((*it)->getGuard()->getTestType() == TR_VftTest)
+                     {
+                     type = TR_ProfiledClassGuardRelocation;
+                     traceMsg(self()->comp(), "TR_ProfiledClassGuardRelocation\n");
+                     }
+                  else
+                     TR_ASSERT(false, "unexpected profiled guard test type");
+                  break;
+
+               default:
+                  TR_ASSERT(false, "got a unknown/non-AOT guard at AOT site");
+                  break;
+               }
+
+            switch (type)  // relocation record type
+               {
+               case TR_InlinedStaticMethodWithNopGuard:
+               case TR_InlinedSpecialMethodWithNopGuard:
+               case TR_InlinedVirtualMethodWithNopGuard:
+               case TR_InlinedInterfaceMethodWithNopGuard:
+               case TR_InlinedHCRMethod:
+               case TR_ProfiledClassGuardRelocation:
+               case TR_ProfiledMethodGuardRelocation:
+               case TR_ProfiledInlinedMethodRelocation:
+               case TR_InlinedVirtualMethod:
+               case TR_InlinedInterfaceMethod:
+                  TR_ASSERT(inlinedCallSize, "TR_AOT expect inlinedCallSize to be larger than 0\n");
+                  inlinedSiteIndex = (intptrj_t)(*it)->getGuard()->getCurrentInlinedSiteIndex();
+                  entry = (TR_InlinedSiteLinkedListEntry *)self()->comp()->trMemory()->allocateMemory(sizeof(TR_InlinedSiteLinkedListEntry), heapAlloc);
+
+                  entry->reloType = type;
+                  entry->location = (uint8_t *)(*it)->getLocation();
+                  entry->destination = (uint8_t *)(*it)->getDestination();
+                  entry->guard = (uint8_t *)(*it)->getGuard();
+                  entry->next = NULL;
+
+                  if (orderedInlinedSiteListTable[inlinedSiteIndex].first)
+                     {
+                     orderedInlinedSiteListTable[inlinedSiteIndex].last->next = entry;
+                     orderedInlinedSiteListTable[inlinedSiteIndex].last = entry;
+                     }
+                  else
+                     {
+                     orderedInlinedSiteListTable[inlinedSiteIndex].first = entry;
+                     orderedInlinedSiteListTable[inlinedSiteIndex].last = entry;
+                     }
+                  break;
+
+               case TR_CheckMethodEnter:
+               case TR_CheckMethodExit:
+               case TR_HCR:
+                  self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)(*it)->getLocation(),
+                                                                                   (uint8_t *)(*it)->getDestination(),
+                                                                                   type, self()),
+                                   __FILE__, __LINE__, NULL);
+                  break;
+
+               default:
+                  TR_ASSERT(false, "got a unknown/non-AOT guard at AOT site");
+                  break;
+               }
+            }
+
+         TR::list<TR::AOTClassInfo*>* classInfo = self()->comp()->_aotClassInfo;
+         if (!classInfo->empty())
+            {
+            for (auto info = classInfo->begin(); info != classInfo->end(); ++info)
+               {
+               traceMsg(self()->comp(), "processing AOT class info: %p in %s\n", *info, self()->comp()->signature());
+               traceMsg(self()->comp(), "ramMethod: %p cp: %p cpIndex: %x relo %d\n", (*info)->_method, (*info)->_constantPool, (*info)->_cpIndex, (*info)->_reloKind);
+               traceMsg(self()->comp(), "clazz: %p classChain: %p\n", (*info)->_clazz, (*info)->_classChain);
+
+               TR_OpaqueMethodBlock *ramMethod = (*info)->_method;
+
+               int32_t siteIndex = -1;
+
+               if (ramMethod != self()->comp()->getCurrentMethod()->getPersistentIdentifier()) // && info->_reloKind != TR_ValidateArbitraryClass)
+                  {
+                  int32_t i;
+                  for (i = 0; i < self()->comp()->getNumInlinedCallSites(); i++)
+                     {
+                     TR_InlinedCallSite &ics = self()->comp()->getInlinedCallSite(i);
+                     TR_OpaqueMethodBlock *inlinedMethod = fej9->getInlinedCallSiteMethod(&ics);
+
+                     traceMsg(self()->comp(), "\tinline site %d inlined method %p\n", i, inlinedMethod);
+                     if (ramMethod == inlinedMethod)
+                        {
+                        traceMsg(self()->comp(), "\t\tmatch!\n");
+                        siteIndex = i;
+                        break;
+                        }
+                     }
+
+                  if (i >= (int32_t) self()->comp()->getNumInlinedCallSites())
+                     {
+                     // this assumption isn't associated with a method directly in the compilation
+                     // so we can't use a constant pool approach to validate: transform into TR_ValidateArbitraryClass
+                     // kind of overkill for TR_ValidateStaticField, but still correct
+                     (*info)->_reloKind = TR_ValidateArbitraryClass;
+                     siteIndex = -1;   // invalidate main compiled method
+                     traceMsg(self()->comp(), "\ttransformed into TR_ValidateArbitraryClass\n");
                      }
                   }
 
-               if (i >= (int32_t) self()->comp()->getNumInlinedCallSites())
+               traceMsg(self()->comp(), "Found inlined site %d\n", siteIndex);
+
+               TR_ASSERT(siteIndex < (int32_t) self()->comp()->getNumInlinedCallSites(), "did not find AOTClassInfo %p method in inlined site table", *info);
+
+               self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(NULL,
+                                                                                (uint8_t *)(intptr_t)siteIndex,
+                                                                                (uint8_t *)(*info),
+                                                                                (*info)->_reloKind, self()),
+                                                                                __FILE__, __LINE__, NULL);
+               }
+            }
+
+         // If have inlined calls, now add the relocation records in descending order of inlined site index (at relocation time, the order is reverse)
+         if (inlinedCallSize > 0)
+            {
+            counter= inlinedCallSize - 1;
+            int numSitesAdded = 0;
+            for (; counter >= 0 ; counter--)
+               {
+               TR_InlinedSiteLinkedListEntry *currentSite = orderedInlinedSiteListTable[counter].first;
+               if (!currentSite)
+                  missedSite = counter;
+
+               while (currentSite)
                   {
-                  // this assumption isn't associated with a method directly in the compilation
-                  // so we can't use a constant pool approach to validate: transform into TR_ValidateArbitraryClass
-                  // kind of overkill for TR_ValidateStaticField, but still correct
-                  (*info)->_reloKind = TR_ValidateArbitraryClass;
-                  siteIndex = -1;   // invalidate main compiled method
-                  traceMsg(self()->comp(), "\ttransformed into TR_ValidateArbitraryClass\n");
+                  self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(currentSite->location,
+                                                                                   currentSite->destination,
+                                                                                   currentSite->guard,
+                                                                                   currentSite->reloType, self()),
+                                  __FILE__,__LINE__, NULL);
+                  currentSite = currentSite->next;
+                  numSitesAdded++;
                   }
                }
-
-            traceMsg(self()->comp(), "Found inlined site %d\n", siteIndex);
-
-            TR_ASSERT(siteIndex < (int32_t) self()->comp()->getNumInlinedCallSites(), "did not find AOTClassInfo %p method in inlined site table", *info);
-
-            self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(NULL,
-                                                                             (uint8_t *)(intptr_t)siteIndex,
-                                                                             (uint8_t *)(*info),
-                                                                             (*info)->_reloKind, self()),
-                                                                             __FILE__, __LINE__, NULL);
             }
          }
 
-      // If have inlined calls, now add the relocation records in descending order of inlined site index (at relocation time, the order is reverse)
-      if (inlinedCallSize > 0)
-         {
-         counter= inlinedCallSize - 1;
-         int numSitesAdded = 0;
-         for (; counter >= 0 ; counter--)
-            {
-            TR_InlinedSiteLinkedListEntry *currentSite = orderedInlinedSiteListTable[counter].first;
-            if (!currentSite)
-               missedSite = counter;
-
-            while (currentSite)
-               {
-               self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(currentSite->location,
-                                                                                currentSite->destination,
-                                                                                currentSite->guard,
-                                                                                currentSite->reloType, self()),
-                               __FILE__,__LINE__, NULL);
-               currentSite = currentSite->next;
-               numSitesAdded++;
-               }
-            }
-         }
-//#endif
       // Now call the platform specific processing of relocations
       self()->getAheadOfTimeCompile()->processRelocations();
       }
@@ -2700,7 +2709,46 @@ J9::CodeGenerator::processRelocations()
    for (auto aotIterator = self()->getExternalRelocationList().begin(); aotIterator != self()->getExternalRelocationList().end(); ++aotIterator)
       {
       // Traverse the AOT/external labels
-	  (*aotIterator)->apply(self());
+      (*aotIterator)->apply(self());
+      }
+   }
+
+void J9::CodeGenerator::addExternalRelocation(TR::Relocation *r, const char *generatingFileName, uintptr_t generatingLineNumber, TR::Node *node, TR::ExternalRelocationPositionRequest where)
+   {
+   TR_ASSERT(generatingFileName, "External relocation location has improper NULL filename specified");
+   if (self()->comp()->compileRelocatableCode() || self()->comp()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+      {
+      TR::RelocationDebugInfo *genData = new(self()->trHeapMemory()) TR::RelocationDebugInfo;
+      genData->file = generatingFileName;
+      genData->line = generatingLineNumber;
+      genData->node = node;
+      self()->addExternalRelocation(r, genData, where);
+      }
+   }
+
+void J9::CodeGenerator::addExternalRelocation(TR::Relocation *r, TR::RelocationDebugInfo* info, TR::ExternalRelocationPositionRequest where)
+   {
+   if (self()->comp()->compileRelocatableCode() || self()->comp()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+      {
+      TR_ASSERT(info, "External relocation location does not have associated debug information");
+      r->setDebugInfo(info);
+      switch (where)
+         {
+         case TR::ExternalRelocationAtFront:
+            _externalRelocationList.push_front(r);
+            break;
+
+         case TR::ExternalRelocationAtBack:
+            _externalRelocationList.push_back(r);
+            break;
+
+         default:
+            TR_ASSERT_FATAL(
+               false,
+               "invalid TR::ExternalRelocationPositionRequest %d",
+               where);
+            break;
+         }
       }
    }
 
@@ -2735,7 +2783,7 @@ void
 J9::CodeGenerator::jitAddUnresolvedAddressMaterializationToPatchOnClassRedefinition(void *firstInstruction)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(self()->fe());
-   if (self()->comp()->compileRelocatableCode())
+   if (self()->comp()->compileRelocatableCode() || self()->comp()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
       {
       self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)firstInstruction, 0, TR_HCR, self()),
                                  __FILE__,__LINE__, NULL);
@@ -4453,6 +4501,18 @@ bool
 J9::CodeGenerator::needRelocationsForStatics()
    {
    return self()->fej9()->needRelocationsForStatics();
+   }
+
+bool
+J9::CodeGenerator::needRelocationsForBodyInfoData()
+   {
+   return self()->fej9()->needRelocationsForBodyInfoData();
+   }
+
+bool
+J9::CodeGenerator::needRelocationsForPersistentInfoData()
+   {
+   return self()->fej9()->needRelocationsForPersistentInfoData();
    }
 
 

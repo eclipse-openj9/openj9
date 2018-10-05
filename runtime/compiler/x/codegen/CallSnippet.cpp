@@ -986,7 +986,12 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       //the desired invoke bytecode.
       if (!isJitInduceOSRCall)
          {
-         intptrj_t ramMethod = (intptr_t)methodSymbol->getMethodAddress();
+         // XXX: Ugly, not sure how this was supposed to work but for AOT (and now JITaaS) we do direct calls
+	 // through snippets, except the method we're calling might already be compiled, in which case getMethodAddress()
+	 // returns the compiled code entrypoint instead of the RAM method... how did AOT not hit this?
+         intptrj_t ramMethod = comp->getPersistentInfo()->getJITaaSMode() == SERVER_MODE && !methodSymbol->isInterpreted() ?
+                               (intptr_t)methodSymRef->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod()->getPersistentIdentifier() :
+			       (intptr_t)methodSymbol->getMethodAddress();
 
          if (TR::Compiler->target.is64Bit())
             {

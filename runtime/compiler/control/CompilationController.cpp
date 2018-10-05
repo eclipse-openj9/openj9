@@ -141,7 +141,6 @@ TR_Hotness TR::DefaultCompilationStrategy::getInitialOptLevel(J9Method *j9method
    return TR::Options::getInitialHotnessLevel(J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod) ? true : false);
    }
 
-
 //------------------------------- processEvent ------------------------
 // If the function returns NULL, then the value of *newPlanCreated is
 // undefined and should not be tested
@@ -262,6 +261,14 @@ TR_OptimizationPlan *TR::DefaultCompilationStrategy::processEvent(TR_MethodEvent
          {
          plan = processHWPSample(event);
          }
+         break;
+      case TR_MethodEvent::RemoteCompilationRequest:
+         //compInfo->_stats._methodsCompiledOnCount++; // JITaaS TODO: add a new statistic
+
+         hotnessLevel = event->_JITaaSClientOptLevel;
+         // JITaaS TODO: allow the creation of a profiling body
+         plan = TR_OptimizationPlan::alloc(hotnessLevel);
+         *newPlanCreated = true;
          break;
       default:
          TR_ASSERT(0, "Bad event type %d", event->_eventType);
@@ -1043,11 +1050,7 @@ TR::DefaultCompilationStrategy::processJittedSample(TR_MethodEvent *event)
                         if (cmdLineOptions->getOption(TR_UpgradeBootstrapAtWarm) && fe->isClassLibraryMethod((TR_OpaqueMethodBlock *)j9method))
                            {
 #ifndef PUBLIC_BUILD
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
-                           bool expensiveComp = (TR_J9SharedCache *)(((TR_J9VMBase *) fe)->sharedCache())->isHint(j9method, TR_HintLargeMemoryMethodW);
-#else
-                           bool expensiveComp = ((TR_J9VMBase *) fe)->isSharedCacheHint(j9method, TR_HintLargeMemoryMethodW);
-#endif
+                           bool expensiveComp = fe->sharedCache() && (TR_J9SharedCache *)(((TR_J9VMBase *) fe)->sharedCache())->isHint(j9method, TR_HintLargeMemoryMethodW);
                            if (!expensiveComp)
 #endif //!PUBLIC_BUILD
                               nextOptLevel = warm;

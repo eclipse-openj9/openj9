@@ -90,8 +90,14 @@ TR_PersistentClassInfo::removeASubClass(TR_PersistentClassInfo *subClassToRemove
 void
 TR_PersistentClassInfo::removeSubClasses()
    {
-   _classId = 0;
+   TR_SubClass *scl = _subClasses.getFirst();
    _subClasses.setFirst(0);
+   while (scl)
+      {
+      TR_SubClass *nextScl = scl->getNext();
+      jitPersistentFree(scl);
+      scl = nextScl;
+      }
    }
 
 /*This method walks the subclass list and removes any class which is marked as unloaded*/

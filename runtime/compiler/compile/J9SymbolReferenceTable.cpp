@@ -1321,7 +1321,7 @@ J9::SymbolReferenceTable::findOrCreateStaticSymbol(TR::ResolvedMethodSymbol * ow
    TR::DataType type = TR::NoType;
    bool isVolatile, isFinal, isPrivate, isUnresolvedInCP;
    bool resolved = owningMethod->staticAttributes(comp(), cpIndex, &dataAddress, &type, &isVolatile, &isFinal, &isPrivate, isStore, &isUnresolvedInCP);
-
+   
    if (  isUnresolvedInCP && (type != TR::Address && _compilation->cg()->getAccessStaticsIndirectly()))
       resolved = false;
 
@@ -1366,12 +1366,17 @@ J9::SymbolReferenceTable::findOrCreateStaticSymbol(TR::ResolvedMethodSymbol * ow
       symRef->setReallySharesSymbol();
 
    TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN;
-   if (resolved
+   // check for KnownObjectTable first, in JITaaS mode, this will return NULL,
+   // so we never enter the critical section
+   TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
+   if (knot
+       && resolved
        && isFinal
        && type == TR::Address
        && !comp()->compileRelocatableCode())
       {
       TR::VMAccessCriticalSection getObjectReferenceLocation(comp());
+      
       if (*((uintptrj_t*)dataAddress) != NULL)
          {
          TR_J9VMBase *fej9 = comp()->fej9();

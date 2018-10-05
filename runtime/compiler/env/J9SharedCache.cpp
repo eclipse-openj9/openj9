@@ -34,6 +34,7 @@
 #include "env/VMJ9.h"
 #include "env/j9method.h"
 #include "runtime/IProfiler.hpp"
+#include "env/ClassLoaderTable.hpp"
 
 #define   LOG(n,c) \
    if (_logLevel >= (3*n)) \
@@ -140,10 +141,11 @@ TR_J9SharedCache::log(char *format, ...)
    JITRT_UNLOCK_LOG(jitConfig());
    }
 
-
 uint32_t
 TR_J9SharedCache::getHint(J9VMThread * vmThread, J9Method *method)
    {
+   if (TR::CompilationInfo::getStream())
+      return 0; // JITaaS TODO: bypass
    uint32_t result = 0;
 
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
@@ -169,6 +171,8 @@ TR_J9SharedCache::getHint(J9VMThread * vmThread, J9Method *method)
 uint16_t
 TR_J9SharedCache::getAllEnabledHints(J9Method *method)
    {
+   if (TR::CompilationInfo::getStream())
+      return 0; // JITaaS TODO: bypass
    uint16_t hintFlags = 0;
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
    if (_hintsEnabledMask)
@@ -186,6 +190,8 @@ TR_J9SharedCache::getAllEnabledHints(J9Method *method)
 bool
 TR_J9SharedCache::isHint(J9Method *method, TR_SharedCacheHint theHint, uint16_t *dataField)
    {
+   if (TR::CompilationInfo::getStream())
+      return false; // JITaaS TODO: bypass
    bool isHint = false;
 
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
@@ -217,12 +223,16 @@ TR_J9SharedCache::isHint(J9Method *method, TR_SharedCacheHint theHint, uint16_t 
 bool
 TR_J9SharedCache::isHint(TR_ResolvedMethod *method, TR_SharedCacheHint hint, uint16_t *dataField)
    {
+   if (TR::CompilationInfo::getStream())
+      return false; // JITaaS TODO: bypass
    return isHint(((TR_ResolvedJ9Method *) method)->ramMethod(), hint, dataField);
    }
 
 void
 TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
    {
+   if (TR::CompilationInfo::getStream())
+      return; // JITaaS TODO: bypass
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
    static bool SCfull = false;
    uint16_t newHint = ((uint16_t)theHint) & _hintsEnabledMask;
@@ -254,7 +264,7 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
       uint16_t *hintCount = ((uint16_t *)&scHintData) + 1; // Flags and new count field needs to be in contiguous location to be stored into sharecache
 
       bool hintDidNotExist = ((newHint & *hintFlags) == 0);
-      const uint32_t scHintDataLength = 4;
+      const uint32_t scHintDataLength = sizeof(scHintData);
 
       if (hintDidNotExist)
          {
@@ -266,7 +276,7 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
                *hintCount = 10 * _initialHintSCount;
 
             J9SharedDataDescriptor descriptor;
-            descriptor.address = (U_8*)scHintData;
+            descriptor.address = (U_8*)hintFlags;
             descriptor.length = scHintDataLength; // Size includes the 2nd data field, currently only used for TR_HintFailedValidation
             descriptor.type = J9SHR_ATTACHED_DATA_TYPE_JITHINT;
             descriptor.flags = J9SHR_ATTACHED_DATA_NO_FLAGS;
@@ -304,11 +314,12 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
          }
       else
          {
-         bool updateHint = true;
+         bool updateHint = false;
          if (isFailedValidationHint)
             {
             uint16_t oldCount = *hintCount;
             uint16_t newCount = std::min(oldCount * 10, TR_DEFAULT_INITIAL_COUNT);
+            updateHint = true;
             if (newCount == oldCount)
                {
                updateHint = false;
@@ -322,7 +333,7 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
          if (updateHint)
             {
             J9SharedDataDescriptor descriptor;
-            descriptor.address = (U_8*)scHintData;
+            descriptor.address = (U_8*)hintFlags;
             descriptor.length = scHintDataLength; // Size includes the 2nd data field, currently only used for TR_HintFailedValidation
             descriptor.type = J9SHR_ATTACHED_DATA_TYPE_JITHINT;
             descriptor.flags = J9SHR_ATTACHED_DATA_NO_FLAGS;
@@ -349,8 +360,11 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
 void
 TR_J9SharedCache::addHint(TR_ResolvedMethod * method, TR_SharedCacheHint hint)
    {
+   if (TR::CompilationInfo::getStream())
+      return; // JITaaS TODO: bypass
    addHint(((TR_ResolvedJ9Method *) method)->ramMethod(), hint);
    }
+
 
 void
 TR_J9SharedCache::persistIprofileInfo(TR::ResolvedMethodSymbol *methodSymbol, TR::Compilation *comp)
@@ -371,30 +385,6 @@ bool
 TR_J9SharedCache::isMostlyFull()
    {
    return (double) sharedCacheConfig()->getFreeSpaceBytes(_javaVM) / sharedCacheConfig()->getCacheSizeBytes(_javaVM) < 0.8;
-   }
-
-J9Class *
-TR_J9SharedCache::matchRAMclassFromROMclass(J9ROMClass * clazz, TR::Compilation * comp)
-   {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
-   J9VMThread *vmThread = fej9->getCurrentVMThread();
-   J9UTF8 *className = J9ROMCLASS_CLASSNAME(clazz);
-   J9Class *ramClass = NULL;
-
-      {
-      TR::VMAccessCriticalSection matchRAMclassFromROMclass(fej9);
-      ramClass = jitGetClassInClassloaderFromUTF8(vmThread,
-                                                  ((TR_ResolvedJ9Method *)comp->getCurrentMethod())->getClassLoader(),
-                                                  (char *) J9UTF8_DATA(className),
-                                                  J9UTF8_LENGTH(className));
-      if (!ramClass)
-         {
-         ramClass = jitGetClassInClassloaderFromUTF8(vmThread, (J9ClassLoader *) javaVM()->systemClassLoader,
-            (char *) J9UTF8_DATA(className), J9UTF8_LENGTH(className));
-         }
-      }
-
-   return ramClass;
    }
 
 void *
@@ -418,6 +408,7 @@ TR_J9SharedCache::isPointerInSharedCache(void *ptr, void * & cacheOffset)
       cacheOffset = (void*)offset;
       return true;
       }
+   LOG(5,{ log("isPointerInSharedCache FAIL offset %d size %d\n", offset, _cacheSizeInBytes);});
    return false;
    }
 
@@ -445,11 +436,13 @@ UDATA *
 TR_J9SharedCache::rememberClass(J9Class *clazz, bool create)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
-   J9UTF8 * className = J9ROMCLASS_CLASSNAME(clazz->romClass);
-   LOG(5,{ log("rememberClass class %p %.*s\n", clazz, J9UTF8_LENGTH(className), J9UTF8_DATA(className)); });
+   J9ROMClass *romClass = TR::Compiler->cls.romClassOf(fej9->convertClassPtrToClassOffset(clazz));
+
+   J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
+   LOG(5,{ log("rememberClass class %p romClass %p %.*s\n", clazz, romClass, J9UTF8_LENGTH(className), J9UTF8_DATA(className)); });
 
    void * classOffsetInCache;
-   if (! isPointerInSharedCache(clazz->romClass, classOffsetInCache))
+   if (! isPointerInSharedCache(romClass, classOffsetInCache))
       {
       LOG(5,{ log("\trom class not in shared cache, returning\n"); });
       return NULL;
@@ -468,7 +461,7 @@ TR_J9SharedCache::rememberClass(J9Class *clazz, bool create)
       return chainData;
       }
 
-   int32_t numSuperclasses =  J9CLASS_DEPTH(clazz);
+   int32_t numSuperclasses = TR::Compiler->cls.classDepthOf(fe()->convertClassPtrToClassOffset(clazz));
    int32_t numInterfaces = numInterfacesImplemented(clazz);
 
    LOG(9, { log("\tcreating chain now: 1 + 1 + %d superclasses + %d interfaces\n", numSuperclasses, numInterfaces); });
@@ -564,11 +557,11 @@ uint32_t
 TR_J9SharedCache::numInterfacesImplemented(J9Class *clazz)
    {
    uint32_t count=0;
-   J9ITable *element = (J9ITable *)clazz->iTable;
+   J9ITable *element = TR::Compiler->cls.iTableOf(fe()->convertClassPtrToClassOffset(clazz));
    while (element != NULL)
       {
       count++;
-      element = element->next;
+      element = TR::Compiler->cls.iTableNext(element);
       }
    return count;
    }
@@ -590,13 +583,13 @@ TR_J9SharedCache::writeClassToChain(J9ROMClass *romClass, UDATA * & chainPtr)
    }
 
 bool
-TR_J9SharedCache::writeClassesToChain(J9Class **superclasses, int32_t numSuperclasses, UDATA * & chainPtr)
+TR_J9SharedCache::writeClassesToChain(J9Class *clazz, int32_t numSuperclasses, UDATA * & chainPtr)
    {
    LOG(9, { log("\t\twriteClassesToChain:\n"); });
 
    for (int32_t index=0; index < numSuperclasses;index++)
       {
-      J9ROMClass *romClass = superclasses[index]->romClass;
+      J9ROMClass *romClass = TR::Compiler->cls.romClassOfSuperClass(fe()->convertClassPtrToClassOffset(clazz), index);
       if (! writeClassToChain(romClass, chainPtr))
          return false;
       }
@@ -608,14 +601,14 @@ TR_J9SharedCache::writeInterfacesToChain(J9Class *clazz, UDATA * & chainPtr)
    {
    LOG(9, { log("\t\twriteInterfacesToChain:\n"); });
 
-   J9ITable *element = (J9ITable *)clazz->iTable;
+   J9ITable *element = TR::Compiler->cls.iTableOf(fe()->convertClassPtrToClassOffset(clazz));
    while (element != NULL)
       {
-      J9ROMClass *romClass = element->interfaceClass->romClass;
+      J9ROMClass *romClass = TR::Compiler->cls.iTableRomClass(element);
       if (!writeClassToChain(romClass, chainPtr))
          return false;
 
-      element = element->next;
+      element = TR::Compiler->cls.iTableNext(element);
       }
 
    return true;
@@ -629,8 +622,9 @@ TR_J9SharedCache::fillInClassChain(J9Class *clazz, UDATA *chainData, uint32_t ch
 
    UDATA *chainPtr = chainData;
    *chainPtr++ = chainLength;
-   writeClassToChain(clazz->romClass, chainPtr);
-   if (! writeClassesToChain(clazz->superclasses, numSuperclasses, chainPtr))
+   J9ROMClass* romClass = TR::Compiler->cls.romClassOf(fe()->convertClassPtrToClassOffset(clazz));
+   writeClassToChain(romClass, chainPtr);
+   if (! writeClassesToChain(clazz, numSuperclasses, chainPtr))
       {
       return false;
       }
@@ -678,11 +672,12 @@ TR_J9SharedCache::findChainForClass(J9Class *clazz, const char *key, uint32_t ke
 bool
 TR_J9SharedCache::classMatchesCachedVersion(J9Class *clazz, UDATA *chainData)
    {
-   J9UTF8 * className = J9ROMCLASS_CLASSNAME(clazz->romClass);
+   J9ROMClass *romClass = TR::Compiler->cls.romClassOf(fe()->convertClassPtrToClassOffset(clazz));
+   J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
    LOG(5, { log("classMatchesCachedVersion class %p %.*s\n", clazz, J9UTF8_LENGTH(className), J9UTF8_DATA(className)); });
 
    void *classOffsetInCache;
-   if (! isPointerInSharedCache(clazz->romClass, classOffsetInCache))
+   if (! isPointerInSharedCache(romClass, classOffsetInCache))
       {
       LOG(5, { log("\tclass not in shared cache, returning false\n"); });
       return false;
@@ -707,32 +702,33 @@ TR_J9SharedCache::classMatchesCachedVersion(J9Class *clazz, UDATA *chainData)
    UDATA *chainEnd = (UDATA *) (((U_8*)chainData) + chainLength);
    LOG(9, { log("\tfound chain: %p with length %d\n", chainData, chainLength); });
 
-   if (! romclassMatchesCachedVersion(clazz->romClass, chainPtr, chainEnd))
+   if (! romclassMatchesCachedVersion(romClass, chainPtr, chainEnd))
       {
          LOG(5, { log("\tClass did not match, returning false\n"); });
          return false;
       }
 
-   int32_t numSuperclasses = J9CLASS_DEPTH(clazz);
-   J9Class **superclasses = clazz->superclasses;
+   int32_t numSuperclasses = TR::Compiler->cls.classDepthOf(fe()->convertClassPtrToClassOffset(clazz));
    for (int32_t index=0; index < numSuperclasses;index++)
       {
-      if (! romclassMatchesCachedVersion(superclasses[index]->romClass, chainPtr, chainEnd))
+      J9ROMClass *romClass = TR::Compiler->cls.romClassOfSuperClass(fe()->convertClassPtrToClassOffset(clazz), index);
+      if (! romclassMatchesCachedVersion(romClass, chainPtr, chainEnd))
          {
          LOG(5, { log("\tClass in hierarchy did not match, returning false\n"); });
          return false;
          }
       }
 
-   J9ITable *interfaceElement = (J9ITable *) clazz->iTable;
+   J9ITable *interfaceElement = TR::Compiler->cls.iTableOf(fe()->convertClassPtrToClassOffset(clazz));
    while (interfaceElement)
       {
-      if (! romclassMatchesCachedVersion(interfaceElement->interfaceClass->romClass, chainPtr, chainEnd))
+      J9ROMClass * romClass = TR::Compiler->cls.iTableRomClass(interfaceElement);
+      if (! romclassMatchesCachedVersion(romClass, chainPtr, chainEnd))
          {
          LOG(5, { log("\tInterface class did not match, returning false\n"); });
          return false;
          }
-      interfaceElement = interfaceElement->next;
+      interfaceElement = TR::Compiler->cls.iTableNext(interfaceElement);
       }
 
    if (chainPtr != chainEnd)
@@ -761,4 +757,23 @@ TR_J9SharedCache::lookupClassFromChainAndLoader(uintptrj_t *chainData, void *cla
       return (TR_OpaqueClassBlock *) clazz;
 
    return NULL;
+   }
+
+uintptrj_t TR_J9SharedCache::lookupClassChainOffsetInSharedCacheFromClass(TR_OpaqueClassBlock *clazz)
+   {
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      stream->write(JITaaS::J9ServerMessageType::SharedCache_getClassChainOffsetInSharedCache, clazz);
+      return std::get<0>(stream->read<uintptrj_t>());
+      }
+   else
+      {
+      void *loaderForClazz = _fe->getClassLoader(clazz);
+      //fprintf(stderr,"SharedCache: loaderForClazz %p\n", loaderForClazz);
+      void *classChainIdentifyingLoaderForClazz = persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazz);
+      //fprintf(stderr,"SharedCache: classChainIdentifyingLoaderForClazz %p\n", classChainIdentifyingLoaderForClazz);
+      uintptrj_t classChainOffsetInSharedCache = (uintptrj_t) offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazz);
+      //fprintf(stderr,"SharedCache: classChainOffsetInSharedCache %p\n", (void*)classChainOffsetInSharedCache);
+      return classChainOffsetInSharedCache;
+      }
    }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,15 +25,55 @@
 #include "env/CompilerEnv.hpp"
 #include "env/VMMethodEnv.hpp"
 #include "control/CompilationRuntime.hpp"
+#include "control/CompilationThread.hpp"
+#include "control/JITaaSCompilationThread.hpp"
 #include "j9.h"
 #include "j9cfg.h"
 #include "jilconsts.h"
 #include "j9protos.h"
 
+J9ROMMethod *romMethodOfRamMethod(J9Method* method)
+   {
+   if (!TR::CompilationInfo::getStream()) // If not JITaaS server
+      return J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)method);
+
+   // else, JITaaS
+   auto clientData = TR::compInfoPT->getClientData();
+   J9ROMMethod *romMethod = nullptr;
+
+   // check if the method is already cached
+      {
+      OMR::CriticalSection romCache(clientData->getROMMapMonitor());
+      auto &map = clientData->getJ9MethodMap();
+      auto it = map.find((J9Method*) method);
+      if (it != map.end())
+         romMethod = it->second._romMethod;
+      }
+
+   // if not, go cache the associated ROM class and get the ROM method from it
+   if (!romMethod)
+      {
+      auto stream = TR::CompilationInfo::getStream();
+      stream->write(JITaaS::J9ServerMessageType::VM_getClassOfMethod, (TR_OpaqueMethodBlock*) method);
+      J9Class *clazz = (J9Class*) std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+      TR::compInfoPT->getAndCacheRemoteROMClass(clazz);
+         {
+         OMR::CriticalSection romCache(clientData->getROMMapMonitor());
+         auto &map = clientData->getJ9MethodMap();
+         auto it = map.find((J9Method *) method);
+         if (it != map.end())
+            romMethod = it->second._romMethod;
+         }
+      }
+   TR_ASSERT(romMethod, "Should have acquired romMethod");
+   return romMethod;
+   }
+
+
 bool
 J9::VMMethodEnv::hasBackwardBranches(TR_OpaqueMethodBlock *method)
    {
-   J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)method);
+   J9ROMMethod * romMethod = romMethodOfRamMethod((J9Method *)method);
    return (romMethod->modifiers & J9AccMethodHasBackwardBranches) != 0;
    }
 
@@ -57,11 +97,10 @@ J9::VMMethodEnv::startPC(TR_OpaqueMethodBlock *method)
    return reinterpret_cast<uintptr_t>(TR::CompilationInfo::getJ9MethodStartPC(j9method));
    }
 
-
 uintptr_t
 J9::VMMethodEnv::bytecodeStart(TR_OpaqueMethodBlock *method)
    {
-   J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)method);
+   J9ROMMethod *romMethod = romMethodOfRamMethod((J9Method*) method);
    return (uintptr_t)(J9_BYTECODE_START_FROM_ROM_METHOD(romMethod));
    }
 
@@ -69,7 +108,7 @@ J9::VMMethodEnv::bytecodeStart(TR_OpaqueMethodBlock *method)
 uint32_t
 J9::VMMethodEnv::bytecodeSize(TR_OpaqueMethodBlock *method)
    {
-   J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)method);
+   J9ROMMethod *romMethod = romMethodOfRamMethod((J9Method*) method);
    return (uint32_t)(J9_BYTECODE_END_FROM_ROM_METHOD(romMethod) -
                      J9_BYTECODE_START_FROM_ROM_METHOD(romMethod));
    }

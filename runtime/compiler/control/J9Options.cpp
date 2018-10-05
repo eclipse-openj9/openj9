@@ -23,6 +23,7 @@
 #include "control/J9Options.hpp"
 
 #include <algorithm>
+#include <random>
 #include <ctype.h>
 #include <stdint.h>
 #include "jitprotos.h"
@@ -31,6 +32,7 @@
 #include "j9cfg.h"
 #include "j9modron.h"
 #include "jvminit.h"
+#include "j9vmnls.h"
 #include "codegen/CodeGenerator.hpp"
 #include "compile/Compilation.hpp"
 #include "control/Recompilation.hpp"
@@ -244,6 +246,10 @@ int32_t J9::Options::_expensiveCompWeight = TR::CompilationInfo::JSR292_WEIGHT;
 int32_t J9::Options::_jProfilingEnablementSampleThreshold = 10000;
 
 bool J9::Options::_aggressiveLockReservation = false;
+
+uintptr_t J9::Options::_mandatoryCodeCacheAddress = 0;
+
+uint32_t J9::Options::_compilationSequenceNumber = 0;
 
 //************************************************************************
 //
@@ -703,7 +709,7 @@ TR::OptionTable OMR::Options::_feOptions[] = {
                                "compilation requests is increased",
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_compPriorityQSZThreshold , 0, "F%d", NOT_IN_SUBSET},
    {"compilationThreadAffinityMask=", "M<nnn>\taffinity mask for compilation threads. Use hexa without 0x",
-        TR::Options::setStaticHexadecimal, (intptrj_t)&TR::Options::_compThreadAffinityMask, 0, "F%d", NOT_IN_SUBSET}, // MCT
+        TR::Options::setStaticHexadecimal, (intptrj_t)&TR::Options::_compThreadAffinityMask, 0, "F%d", NOT_IN_SUBSET},
    {"compilationYieldStatsHeartbeatPeriod=", "M<nnn>\tperiodically print stats about compilation yield points "
                                        "Period is in ms. Default is 0 which means don't do it. "
                                        "Values between 1 and 99 ms will be upgraded to 100 ms.",
@@ -877,6 +883,8 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_lowerBoundNumProcForScaling, 0, "F%d", NOT_IN_SUBSET},
    {"lowVirtualMemoryMBThreshold=","M<nnn>\tThreshold when we declare we are running low on virtual memory. Use 0 to disable the feature",
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_lowVirtualMemoryMBThreshold, 0, "F%d", NOT_IN_SUBSET},
+   {"mandatoryCodeCacheAddress=", "M<nnn>\tforce the allocation of code cache repository at specified address. Use hexa without 0x",
+        TR::Options::setStaticHexadecimal, (uintptr_t)&TR::Options::_mandatoryCodeCacheAddress, 0, "F%x", NOT_IN_SUBSET },
    {"maxCheckcastProfiledClassTests=", "R<nnn>\tnumber inlined profiled classes for profiledclass test in checkcast/instanceof",
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_maxCheckcastProfiledClassTests, 0, "%d", NOT_IN_SUBSET},
    {"maxOnsiteCacheSlotForInstanceOf=", "R<nnn>\tnumber of onsite cache slots for instanceOf",
@@ -1029,6 +1037,113 @@ bool J9::Options::showPID()
          }
       }
    return false;
+   }
+
+static bool getJITaaSNumericOptionFromCommandLineOptions(char **options, char delimiter, char *option, uint32_t *out)
+   {
+   if (!try_scan(options, option))
+      return false;
+   PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+
+   char *startChar = scan_to_delim(PORTLIB, options, delimiter);
+   uint32_t value = 0;
+   char *scanChar = startChar;
+   UDATA scanResult = scan_u32(&scanChar, &value);
+   j9mem_free_memory(startChar);
+   if (scanResult != 0)
+      {
+      if (scanResult == 1)
+         j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JIT_OPTIONS_MUST_BE_NUMBER, option);
+      else
+         j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED, option);
+      return false;
+      }
+   else
+      {
+      *out = value;
+      return true;
+      }
+   }
+
+static void handleUnrecognizedCommandLineOptions(char **options, char delimiter)
+   {
+   PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+
+   // try to find delimiter to isolate unrecognized option
+   char *delimLocation = strchr(*options, delimiter);
+   if (delimLocation) // delimiter found, print the unrecognized option
+      {
+      char unRecognized[delimLocation - *options + 1];
+      strncpy(unRecognized, *options, delimLocation - *options);
+      unRecognized[delimLocation - *options] = '\0';
+      j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT, unRecognized);
+      }
+   else // delimiter not found, unrecognized option remains until end of the string
+      j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT, *options);
+
+   // skip this unknown option to search for any known options left
+   j9mem_free_memory(scan_to_delim(PORTLIB, options, delimiter));
+   }
+
+static std::string readFileToString(char *fileName)
+   {
+   I_32 fileId = j9jit_fopen_existing(fileName);
+   if (fileId == -1)
+      return "";
+   char buf[4096];
+   std::string fileStr;
+   int readSize;
+   do {
+      readSize = j9jit_fread(fileId, buf, sizeof buf);
+      fileStr.append(buf, readSize);
+   } while (readSize == sizeof buf);
+   j9jit_fcloseId(fileId);
+   return fileStr;
+   }
+
+static bool JITaaSParseOptionsCommon(char **options, char delimiter, TR::CompilationInfo *compInfo, char **unRecognizedOptions)
+   {
+   PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+
+   uint32_t port, timeout;
+   if (try_scan(options, "sslKey="))
+      {
+      char * fileName = scan_to_delim(PORTLIB, options, delimiter);
+      std::string key = readFileToString(fileName);
+      j9mem_free_memory(fileName);
+      if (!key.empty())
+         compInfo->getPersistentInfo()->addJITaaSSslKey(key);
+      }
+   else if (try_scan(options, "sslCert="))
+      {
+      char * fileName = scan_to_delim(PORTLIB, options, delimiter);
+      std::string cert = readFileToString(fileName);
+      j9mem_free_memory(fileName);
+      if (!cert.empty())
+         compInfo->getPersistentInfo()->addJITaaSSslCert(cert);
+      }
+   else if (try_scan(options, "sslRootCerts="))
+      {
+      char * fileName = scan_to_delim(PORTLIB, options, delimiter);
+      std::string cert = readFileToString(fileName);
+      j9mem_free_memory(fileName);
+      compInfo->getPersistentInfo()->setJITaaSSslRootCerts(cert);
+      }
+   else if (getJITaaSNumericOptionFromCommandLineOptions(options, delimiter, "port=", &port))
+      compInfo->getPersistentInfo()->setJITaaSServerPort(port);
+   else if (getJITaaSNumericOptionFromCommandLineOptions(options, delimiter, "timeout=", &timeout))
+      compInfo->getPersistentInfo()->setJITaaSTimeout(timeout);
+   else // option not known
+      {
+      if (*unRecognizedOptions != *options)
+         {
+         *unRecognizedOptions = *options;
+         handleUnrecognizedCommandLineOptions(options, delimiter);
+         }
+      else // no more known options, break the loop
+         return false;
+      }
+   return true;
    }
 
 bool
@@ -1941,6 +2056,78 @@ J9::Options::fePreProcess(void * base)
          }
       }
 
+   // Check for option -XX:JITaaSClient and/or -XX:JITaaSServer
+   static bool JITaaSAlreadyParsed = false;
+   if (!JITaaSAlreadyParsed) // avoid processing twice for AOT and JIT and produce duplicate messages
+      {
+      JITaaSAlreadyParsed = true;
+      char *xxJITaaSClientOption = "-XX:JITaaSClient";
+      char *xxJITaaSServerOption = "-XX:JITaaSServer";
+      int32_t xxJITaaSClientArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITaaSClientOption, 0);
+      int32_t xxJITaaSServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITaaSServerOption, 0);
+      // Check if option is at all specified
+      if (xxJITaaSClientArgIndex >= 0 || xxJITaaSServerArgIndex >= 0)
+         {
+         if (xxJITaaSClientArgIndex > xxJITaaSServerArgIndex)   // client mode
+            {
+            compInfo->getPersistentInfo()->setJITaaSMode(CLIENT_MODE);
+
+            // parse -XX:JITaaSClient:server=<address/hostname>,port=<number> option if provided
+            char *xxJITaaSClientOptionWithArgs = "-XX:JITaaSClient:"; // tail colon indicates server and port are provided
+            xxJITaaSClientArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITaaSClientOptionWithArgs, 0);
+            if (xxJITaaSClientArgIndex >= 0)
+               {
+               // retrieve whole option part, i.e., server=<address/hostname>,port=<number>
+               char *options = NULL;
+               GET_OPTION_OPTION(xxJITaaSClientArgIndex, ':', ':', &options);
+
+               char *scanLimit = options + strlen(options);
+               char delimiter = ',';
+               char *unRecognizedOptions = NULL;
+               while (options < scanLimit)
+                  {
+                  if (try_scan(&options, "server=")) // parse server=<address/hostname> option
+                     {
+                     char *address = scan_to_delim(PORTLIB, &options, delimiter);
+                     compInfo->getPersistentInfo()->setJITaaSServerAddress(address);
+                     j9mem_free_memory(address);
+                     }
+                  else if (!JITaaSParseOptionsCommon(&options, delimiter, compInfo, &unRecognizedOptions))
+                     break;
+                  }
+               }
+            }
+         else                                               // server mode
+            {
+            compInfo->getPersistentInfo()->setJITaaSMode(SERVER_MODE);
+
+            // parse -XX:JITaaSServer:port=<number> option if provided
+            char *xxJITaaSServerOptionWithArgs = "-XX:JITaaSServer:"; // tail colon indicates options are provided
+            xxJITaaSServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITaaSServerOptionWithArgs, 0);
+            if (xxJITaaSServerArgIndex >= 0)
+               {
+               // retrieve whole option part, i.e., port=<number>
+               char *options = NULL;
+               GET_OPTION_OPTION(xxJITaaSServerArgIndex, ':', ':', &options);
+
+               char *scanLimit = options + strlen(options);
+               char delimiter = ',';
+               char *unRecognizedOptions = NULL;
+               while (options < scanLimit && JITaaSParseOptionsCommon(&options, delimiter, compInfo, &unRecognizedOptions));
+               }
+            }
+         }
+      if (compInfo->getPersistentInfo()->getJITaaSMode() != NONJITaaS_MODE)
+         {
+         // generate a random identifier for this JITaaS instance.
+         // TODO: prevent collisions with some kind of atomic registration algo!
+         std::random_device rd;
+         std::mt19937_64 rng(rd());
+         std::uniform_int_distribution<uint64_t> dist;
+         compInfo->getPersistentInfo()->setJITaaSId(dist(rng));
+         }
+      }
+
    return true;
    }
 
@@ -2061,6 +2248,38 @@ J9::Options::fePostProcessJIT(void * base)
          TR::Options::getDebug()->printFilters();
          }
       }
+
+   TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
+   if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE ||
+       compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+      {
+      self()->setOption(TR_DisableSamplingJProfiling);
+      self()->setOption(TR_DisableSharedCacheHints);
+      self()->setIsVariableHeapBaseForBarrierRange0(true);
+      self()->setOption(TR_DisableProfiling); // JITaaS limitation, JIT profiling data is not available to remote compiles yet
+      self()->setOption(TR_DisableEDO); // JITaaS limitation, EDO counters are not relocatable yet
+      self()->setOption(TR_DisableKnownObjectTable);
+      self()->setOption(TR_DisableMethodIsCold); // shady heuristic; better to disable to reduce client/server traffic
+
+      if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+         {
+         // The server can compile with VM access in hand because GC is not a factor here
+         // For the same reason we don't have to use TR_EnableYieldVMAccess
+         self()->setOption(TR_DisableNoVMAccess); 
+         }
+      }
+
+   if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+      {
+      if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS Server Mode. Port: %d",
+               compInfo->getPersistentInfo()->getJITaaSServerPort());
+      else if (compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS Client Mode. Server address: %s port: %d",
+               compInfo->getPersistentInfo()->getJITaaSServerAddress().c_str(),
+               compInfo->getPersistentInfo()->getJITaaSServerPort());
+      }
+
    return true;
    }
 
@@ -2081,6 +2300,7 @@ J9::Options::fePostProcessAOT(void * base)
          TR::Options::getDebug()->printFilters();
          }
       }
+
    return true;
    }
 
@@ -2397,7 +2617,6 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    if (!iProfiler || !iProfiler->getIProfilerThread())
       self()->setOption(TR_UseIdleTime, false);
 
-
    // If NoResumableTrapHandler is set, disable packed decimal intrinsics inlining because
    // PD instructions exceptions can't be handled without the handler.
    // Add a new option to disable traps explicitly so DAA and trap instructions can be disabled separately
@@ -2419,7 +2638,7 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
       {
       self()->setOption(TR_DisableIntrinsics);
       }
-
+ 
    return true;
    }
 
@@ -2430,6 +2649,306 @@ J9::Options::printPID()
    ((TR_J9VMBase *)_fe)->printPID();
    }
 
+void getTRPID(char *buf);
+
+void
+appendRegex(TR::SimpleRegex *&regexPtr, uint8_t *&curPos)
+   {
+   if (!regexPtr)
+      return;
+   size_t len = regexPtr->regexStrLen();
+   memcpy(curPos, regexPtr->regexStr(), len);
+   TR_ASSERT(curPos[len - 1], "not expecting null terminator");
+   regexPtr = (TR::SimpleRegex*) ((uint8_t*)curPos - (uint8_t *)&regexPtr);
+   curPos[len] = '\0';
+   curPos += len + 1;
+   }
+
+void
+unpackRegex(TR::SimpleRegex *&regexPtr)
+   {
+   if (!regexPtr)
+      return;
+   char *str = (char*)((uintptrj_t)&regexPtr + (uintptrj_t)regexPtr);
+   regexPtr = TR::SimpleRegex::create(str);
+   }
+
+void
+addRegexStringSize(TR::SimpleRegex *regexPtr, size_t &len)
+   {
+   if (regexPtr)
+      len += regexPtr->regexStrLen() + 1;
+   }
+
+// Packs a TR::Options object into a std::string to be transfered to the server
+std::string
+J9::Options::packOptions(TR::Options *origOptions)
+   {
+   size_t logFileNameLength = 0;
+   size_t suffixLogsFormatLength = 0;
+   size_t blockShufflingSequenceLength = 0;
+   size_t induceOSRLength = 0;
+
+   char buf[FILENAME_MAX_SIZE];
+   char * origLogFileName = NULL;
+   if (origOptions->_logFileName)
+      {
+      origLogFileName = origOptions->_logFileName;
+      char pidBuf[20];
+      memset(pidBuf, 0, 20);
+      getTRPID(pidBuf);
+      logFileNameLength = strlen(origOptions->_logFileName) + strlen(".") + strlen(pidBuf) + strlen(".server") + 1;
+      if (logFileNameLength > FILENAME_MAX_SIZE)
+         logFileNameLength = FILENAME_MAX_SIZE;
+      snprintf(buf, logFileNameLength, "%s.%s.server", origOptions->_logFileName, pidBuf);
+      origOptions->_logFileName = buf;
+      }
+   if (origOptions->_suffixLogsFormat)
+      suffixLogsFormatLength = strlen(origOptions->_suffixLogsFormat) + 1;
+   if (origOptions->_blockShufflingSequence)
+      blockShufflingSequenceLength = strlen(origOptions->_blockShufflingSequence) + 1;
+   if (origOptions->_induceOSR)
+      induceOSRLength = strlen(origOptions->_induceOSR) + 1;
+
+   size_t totalSize = sizeof(TR::Options) + logFileNameLength + suffixLogsFormatLength + blockShufflingSequenceLength + induceOSRLength + sizeof(bool);
+
+   addRegexStringSize(origOptions->_disabledOptTransformations, totalSize);
+   addRegexStringSize(origOptions->_disabledInlineSites, totalSize);
+   addRegexStringSize(origOptions->_disabledOpts, totalSize);
+   addRegexStringSize(origOptions->_optsToTrace, totalSize);
+   addRegexStringSize(origOptions->_dontInline, totalSize);
+   addRegexStringSize(origOptions->_onlyInline, totalSize);
+   addRegexStringSize(origOptions->_tryToInline, totalSize);
+   addRegexStringSize(origOptions->_slipTrap, totalSize);
+   addRegexStringSize(origOptions->_lockReserveClass, totalSize);
+   addRegexStringSize(origOptions->_breakOnOpts, totalSize);
+   addRegexStringSize(origOptions->_breakOnCreate, totalSize);
+   addRegexStringSize(origOptions->_debugOnCreate, totalSize);
+   addRegexStringSize(origOptions->_breakOnThrow, totalSize);
+   addRegexStringSize(origOptions->_breakOnPrint, totalSize);
+   addRegexStringSize(origOptions->_enabledStaticCounterNames, totalSize);
+   addRegexStringSize(origOptions->_enabledDynamicCounterNames, totalSize);
+   addRegexStringSize(origOptions->_counterHistogramNames, totalSize);
+   addRegexStringSize(origOptions->_verboseOptTransformationsRegex, totalSize);
+   addRegexStringSize(origOptions->_packedTest, totalSize);
+   addRegexStringSize(origOptions->_memUsage, totalSize);
+   addRegexStringSize(origOptions->_classesWithFolableFinalFields, totalSize);
+   addRegexStringSize(origOptions->_disabledIdiomPatterns, totalSize);
+
+   std::string optionsStr(totalSize, '\0');
+   TR::Options * options = (TR::Options *)optionsStr.data();
+   memcpy(options, origOptions, sizeof(TR::Options));
+   origOptions->_logFileName = origLogFileName;
+
+   uint8_t *curPos = ((uint8_t *)options) + sizeof(TR::Options);
+
+   options->_optionSets = NULL;
+   options->_startOptions = NULL;
+   options->_envOptions = NULL;
+   options->_logFile = NULL;
+   options->_optFileName = NULL;
+   options->_customStrategy = NULL;
+   options->_customStrategySize = 0;
+   options->_countString = NULL;
+   appendRegex(options->_traceForCodeMining, curPos);
+   appendRegex(options->_disabledOptTransformations, curPos);
+   appendRegex(options->_disabledInlineSites, curPos);
+   appendRegex(options->_disabledOpts, curPos);
+   appendRegex(options->_optsToTrace, curPos);
+   appendRegex(options->_dontInline, curPos);
+   appendRegex(options->_onlyInline, curPos);
+   appendRegex(options->_tryToInline, curPos);
+   appendRegex(options->_slipTrap, curPos);
+   appendRegex(options->_lockReserveClass, curPos);
+   appendRegex(options->_breakOnOpts, curPos);
+   appendRegex(options->_breakOnCreate, curPos);
+   appendRegex(options->_debugOnCreate, curPos);
+   appendRegex(options->_breakOnThrow, curPos);
+   appendRegex(options->_breakOnPrint, curPos);
+   appendRegex(options->_enabledStaticCounterNames, curPos);
+   appendRegex(options->_enabledDynamicCounterNames, curPos);
+   appendRegex(options->_counterHistogramNames, curPos);
+   appendRegex(options->_verboseOptTransformationsRegex, curPos);
+   appendRegex(options->_packedTest, curPos);
+   appendRegex(options->_memUsage, curPos);
+   appendRegex(options->_classesWithFolableFinalFields, curPos);
+   appendRegex(options->_disabledIdiomPatterns, curPos);
+   options->_osVersionString = NULL;
+   options->_logListForOtherCompThreads = NULL;
+   options->_objectFileName = NULL;
+
+
+   curPos = appendContent(options->_logFileName, curPos, logFileNameLength);
+   curPos = appendContent(options->_suffixLogsFormat, curPos, suffixLogsFormatLength);
+   curPos = appendContent(options->_blockShufflingSequence, curPos, blockShufflingSequenceLength);
+   curPos = appendContent(options->_induceOSR, curPos, induceOSRLength);
+
+   // send rtResolve option to the server
+   // TODO: this is an ugly solution, come up with something better
+   // e.g. make rtResolve part of TR::Options instead of runtime flags
+   auto *jitConfig = (J9JITConfig *) _feBase;
+   bool rtResolve = jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE;
+   char *rtResolveStr = (char *) &rtResolve;
+   curPos = appendContent(rtResolveStr, curPos, sizeof(bool));
+
+   return optionsStr;
+   }
+
+TR::Options *
+J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR_Memory *trMemory)
+   {
+   TR::Options *options = (TR::Options *)trMemory->allocateHeapMemory(clientOptionsSize);
+   memcpy(options, clientOptions, clientOptionsSize);
+
+   // convert relative pointers to absolute pointers
+   // pointer = address of field + offset
+   if (options->_logFileName)
+      options->_logFileName = (char *)((uint8_t *)&(options->_logFileName) + (ptrdiff_t)options->_logFileName);
+   if (options->_suffixLogsFormat)
+      options->_suffixLogsFormat = (char *)((uint8_t *)&(options->_suffixLogsFormat) + (ptrdiff_t)options->_suffixLogsFormat);
+   if (options->_blockShufflingSequence)
+      options->_blockShufflingSequence = (char *)((uint8_t *)&(options->_blockShufflingSequence) + (ptrdiff_t)options->_blockShufflingSequence);
+   if (options->_induceOSR)
+      options->_induceOSR = (char *)((uint8_t *)&(options->_induceOSR) + (ptrdiff_t)options->_induceOSR);
+   
+   // receive rtResolve
+   // NOTE: this relies on rtResolve being the last option in clientOptions
+   bool rtResolve = (bool) *((uint8_t *) options + clientOptionsSize - sizeof(bool));
+   J9JITConfig *jitConfig = (J9JITConfig *) _feBase;
+   if (rtResolve)
+      jitConfig->runtimeFlags |= J9JIT_RUNTIME_RESOLVE;
+
+   unpackRegex(options->_disabledOptTransformations);
+   unpackRegex(options->_disabledInlineSites);
+   unpackRegex(options->_disabledOpts);
+   unpackRegex(options->_optsToTrace);
+   unpackRegex(options->_dontInline);
+   unpackRegex(options->_onlyInline);
+   unpackRegex(options->_tryToInline);
+   unpackRegex(options->_slipTrap);
+   unpackRegex(options->_lockReserveClass);
+   unpackRegex(options->_breakOnOpts);
+   unpackRegex(options->_breakOnCreate);
+   unpackRegex(options->_debugOnCreate);
+   unpackRegex(options->_breakOnThrow);
+   unpackRegex(options->_breakOnPrint);
+   unpackRegex(options->_enabledStaticCounterNames);
+   unpackRegex(options->_enabledDynamicCounterNames);
+   unpackRegex(options->_counterHistogramNames);
+   unpackRegex(options->_verboseOptTransformationsRegex);
+   unpackRegex(options->_packedTest);
+   unpackRegex(options->_memUsage);
+   unpackRegex(options->_classesWithFolableFinalFields);
+   unpackRegex(options->_disabledIdiomPatterns);
+
+   return options;
+   }
+
+std::string
+J9::Options::packLogFile(TR::FILE *fp)
+   {
+   if (fp == NULL)
+      return "";
+   const size_t size = 4096; // 4kb
+   char buf[size + 1];
+   ::rewind(fp->_stream);
+   std::string logFileStr("");
+   int readSize;
+   do {
+      readSize = ::fread(buf, 1, size, fp->_stream);
+      buf[readSize] = '\0';
+      logFileStr.append(buf);
+   } while (readSize == size);
+
+   logFileStr.append("</jitlog>\n");
+   return logFileStr;
+   }
+
+uint8_t *
+J9::Options::appendContent(char * &charPtr, uint8_t * curPos, size_t length)
+   {
+   if (charPtr == NULL)
+      return curPos;
+   // copies charPtr's content to the location pointed by curPos
+   memcpy(curPos, charPtr, length);
+   // then compute the offset from address of charPtr to curPos and store it to charPtr
+   charPtr = (char *)(curPos - (uint8_t *)&(charPtr));
+   // update current position
+   return curPos += length;
+   }
+
+TR_Debug *createDebugObject(TR::Compilation *);
+// JITaaS: create a log file for each client compilation request
+// Used by JITaaSServer
+// Side effect: set _logFile
+void
+J9::Options::setLogFileForClientOptions()
+   {
+   if (_logFileName)
+      {
+      _fe->acquireLogMonitor();
+      _compilationSequenceNumber++;
+      self()->setOption(TR_EnablePIDExtension, false);
+
+      self()->openLogFile(_compilationSequenceNumber);
+      if (_logFile != NULL)
+         {
+         J9JITConfig *jitConfig = (J9JITConfig*)_feBase;
+         if (!jitConfig->tracingHook)
+            {
+            jitConfig->tracingHook = (void*) (TR_CreateDebug_t)createDebugObject;
+            suppressLogFileBecauseDebugObjectNotCreated(false);
+            _hasLogFile = true;
+            }
+         }
+      _fe->releaseLogMonitor();
+      }
+   }
+
+// JITaaS: close log file
+// Used by JITaaSServer
+void
+J9::Options::closeLogFileForClientOptions()
+   {
+   if (_logFile)
+      {
+      TR::Options::closeLogFile(_fe, _logFile);
+      _logFile = NULL;
+      }
+   }
+
+// JITaaS: create a log file on the client side
+// Used by JITaaSClient
+void
+J9::Options::writeLogFileFromServer(const std::string& logFileContent)
+   {
+   if (logFileContent.empty() || !_logFileName)
+      return;
+
+   char buf[FILENAME_MAX_SIZE];
+   _fe->acquireLogMonitor();
+   snprintf(buf, sizeof(buf), "%s.%d", _logFileName, ++_compilationSequenceNumber);
+   _fe->releaseLogMonitor();
+
+   int32_t len = strlen(buf);
+   // maximum length for suffix (dot + 8-digit date + dot + 6-digit time + dot + 5-digit pid + null terminator)
+   int32_t MAX_SUFFIX_LENGTH = 23;
+   if (len + MAX_SUFFIX_LENGTH > FILENAME_MAX_SIZE)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Trace log not genereted due to filename being too long");
+         }
+      return; // may overflow the buffer
+      }
+   char tmp[FILENAME_MAX_SIZE];
+   char * filename = _fe->getFormattedName(tmp, FILENAME_MAX_SIZE, buf, _suffixLogsFormat, true);
+
+   TR::FILE *logFile = trfopen(filename, "wb", false);
+   ::fputs(logFileContent.c_str(), logFile->_stream);
+   trfflush(logFile);
+   trfclose(logFile);
+   }
 
 #if 0
 char*

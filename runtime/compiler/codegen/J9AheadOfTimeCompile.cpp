@@ -1082,7 +1082,7 @@ J9::AheadOfTimeCompile::dumpRelocationData()
          default:
             traceMsg(self()->comp(), "Unknown Relocation type = %d\n", kind);
             TR_ASSERT(false, "should be unreachable");
-        break;
+            break;
          }
 
       traceMsg(self()->comp(), "\n");

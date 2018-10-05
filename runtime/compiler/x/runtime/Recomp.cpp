@@ -29,6 +29,7 @@
 #include "runtime/Runtime.hpp"
 #include "x/runtime/X86Runtime.hpp"
 #include "env/VMJ9.h"
+#include "control/CompilationRuntime.hpp"
 
 #if defined(TR_HOST_X86) && defined(TR_HOST_64BIT)
 #define IS_32BIT_RIP(x,rip)  ((intptrj_t)(x) == (intptrj_t)(rip) + (int32_t)((intptrj_t)(x) - (intptrj_t)(rip)))
@@ -104,6 +105,15 @@ extern "C" void mcc_AMD64callPointPatching_unwrapper(void **argsPtr, void **resP
 //
 TR_PersistentJittedBodyInfo *J9::Recompilation::getJittedBodyInfoFromPC(void *startPC)
    {
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      TR_ASSERT(TR::comp(), "Must be used during compilation when calling getJittedBodyInfoFromPC on the server");
+      stream->write(JITaaS::J9ServerMessageType::Recompilation_getJittedBodyInfoFromPC, startPC);
+      auto recv = stream->read<std::string, std::string>();
+      auto &bodyInfoStr = std::get<0>(recv);
+      auto &methodInfoStr = std::get<1>(recv);
+      return J9::Recompilation::persistentJittedBodyInfoFromString(bodyInfoStr, methodInfoStr, TR::comp()->trMemory());
+      }
    // The body info pointer is stored in the pre-prologue of the method. The
    // location of the field depends upon the type of the method header.  Use the
    // header-type bits in the linkage info fields to determine what kind of header
@@ -112,7 +122,7 @@ TR_PersistentJittedBodyInfo *J9::Recompilation::getJittedBodyInfoFromPC(void *st
    TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(startPC);
    return linkageInfo->isRecompMethodBody() ?
       *(TR_PersistentJittedBodyInfo **)((uint8_t*)startPC + START_PC_TO_METHOD_INFO_ADDRESS) :
-      0;
+      nullptr;
    }
 
 // This method should only be called for methods compiled for sampling

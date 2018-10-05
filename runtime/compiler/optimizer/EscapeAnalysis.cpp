@@ -1539,7 +1539,7 @@ Candidate *TR_EscapeAnalysis::createCandidateIfValid(TR::Node *node, TR_OpaqueCl
 
    if (classInfo &&
        !TR::Compiler->cls.sameClassLoaders(comp(), classInfo, comp()->getJittedMethodSymbol()->getResolvedMethod()->containingClass()) &&
-       (((void *) comp()->fej9()->getSystemClassLoader()) != ((void *) comp()->fej9()->getClassLoader(classInfo))))
+       !comp()->fej9()->isClassLoadedBySystemClassLoader(classInfo))
       return NULL;
 
    if (size <= 0)

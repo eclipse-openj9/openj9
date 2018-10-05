@@ -561,6 +561,7 @@ extern "C" void jitBytecodePrintFunction(void *userData, char *format, ...)
 void
 TR_Debug::printByteCodeStack(int32_t parentStackIndex, uint16_t byteCodeIndex, char * indent)
    {
+   return;
       if (!_comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE())
          {
          J9Method * ramMethod;

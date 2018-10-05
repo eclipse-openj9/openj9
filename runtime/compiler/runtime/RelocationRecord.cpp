@@ -53,6 +53,9 @@
 #include "runtime/RelocationTarget.hpp"
 #include "env/VMJ9.h"
 #include "control/rossa.h"
+#include "control/CompilationRuntime.hpp"
+#include "control/CompilationThread.hpp"
+#include "control/MethodToBeCompiled.hpp"
 
 // TODO: move this someplace common for RuntimeAssumptions.cpp and here
 #if defined(__IBMCPP__) && !defined(AIXPPC) && !defined(LINUXPPC)
@@ -229,6 +232,7 @@ struct TR_RelocationRecordDebugCounterBinaryTemplate : public TR_RelocationRecor
 
 
 typedef TR_RelocationRecordBinaryTemplate TR_RelocationRecordClassUnloadAssumptionBinaryTemplate;
+typedef TR_RelocationRecordBinaryTemplate TR_RelocationRecordClassUnloadBinaryTemplate;
 
 // TR_RelocationRecordGroup
 
@@ -1354,7 +1358,6 @@ TR_RelocationRecordMethodAddress::applyRelocation(TR_RelocationRuntime *reloRunt
       oldAddress = reloTarget->loadCallTarget(reloLocation);
    else
       oldAddress = reloTarget->loadAddress(reloLocation);
-
    RELO_LOG(reloRuntime->reloLogger(), 5, "\t\tapplyRelocation: old method address %p\n", oldAddress);
    uint8_t *newAddress = currentMethodAddress(reloRuntime, oldAddress);
    RELO_LOG(reloRuntime->reloLogger(), 5, "\t\tapplyRelocation: new method address %p\n", newAddress);
@@ -1526,7 +1529,6 @@ TR_RelocationRecordDataAddress::findDataAddress(TR_RelocationRuntime *reloRuntim
    if (address == NULL)
       {
       RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tfindDataAddress: unresolved\n");
-      return 0;
       }
 
    address = address + extraOffset;
@@ -1538,6 +1540,8 @@ int32_t
 TR_RelocationRecordDataAddress::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
    uint8_t *newAddress = findDataAddress(reloRuntime, reloTarget);
+
+   RELO_LOG(reloRuntime->reloLogger(), 6, "applyRelocation old ptr %p, new ptr %p\n", reloTarget->loadPointer(reloLocation), newAddress);
 
    if (!newAddress)
       return compilationAotStaticFieldReloFailure;
@@ -1689,7 +1693,7 @@ TR_RelocationRecordBodyInfo::applyRelocation(TR_RelocationRuntime *reloRuntime, 
    {
    J9JITExceptionTable *exceptionTable = reloRuntime->exceptionTable();
    reloTarget->storeAddress((uint8_t *) exceptionTable->bodyInfo, reloLocation);
-   fixPersistentMethodInfo((void *)exceptionTable);
+   fixPersistentMethodInfo((void *)exceptionTable, !reloRuntime->fej9()->_compInfoPT->getMethodBeingCompiled()->isAotLoad());
    return 0;
    }
 
@@ -1722,6 +1726,13 @@ TR_RelocationRecordThunks::relocateAndRegisterThunk(
    uintptr_t cpIndex,
    uint8_t *reloLocation)
    {
+   // XXX: Currently all thunks are batch-relocated elsewhere for JITaaS
+   if (reloRuntime->fej9()->_compInfoPT->getMethodBeingCompiled()->isRemoteCompReq() && 
+      !reloRuntime->fej9()->_compInfoPT->getMethodBeingCompiled()->isAotLoad())
+      {
+      return 0;
+      }
+
    J9JITConfig *jitConfig = reloRuntime->jitConfig();
    J9JavaVM *javaVM = reloRuntime->jitConfig()->javaVM;
    J9ConstantPool *constantPool = (J9ConstantPool *)cp;
@@ -3605,3 +3616,4 @@ TR_RelocationRecordClassUnloadAssumption::applyRelocation(TR_RelocationRuntime *
    reloTarget->addPICtoPatchPtrOnClassUnload((TR_OpaqueClassBlock *) -1, reloLocation);
    return 0;
    }
+

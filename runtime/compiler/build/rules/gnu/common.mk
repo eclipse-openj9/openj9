@@ -65,6 +65,10 @@ JIT_DIR_LIST+=$(dir $(JIT_PRODUCT_BUILDNAME_SRC))
 jit_cleanobjs::
 	rm -f $(JIT_PRODUCT_BUILDNAME_SRC)
 
+protoc: $(PROTO_GEN_DIR)/compile.pb.h
+
+$(call RULE.proto,$(PROTO_GEN_DIR)/compile,$(PROTO_DIR)/compile.proto)
+
 #
 # This part calls the "RULE.x" macros for each source file
 #
