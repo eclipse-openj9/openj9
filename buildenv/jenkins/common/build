@@ -81,7 +81,7 @@ def get_sources() {
         checkout_pullrequest()
     } else {
         sh "git checkout ${OPENJDK_SHA}"
-        sh "bash ./get_source.sh ${OPENJ9_REPO_OPTION} ${OPENJ9_BRANCH_OPTION} ${OPENJ9_SHA_OPTION} ${OMR_REPO_OPTION} ${OMR_BRANCH_OPTION} ${OMR_SHA_OPTION}"
+        sh "bash ./get_source.sh ${EXTRA_GETSOURCE_OPTIONS} ${OPENJ9_REPO_OPTION} ${OPENJ9_BRANCH_OPTION} ${OPENJ9_SHA_OPTION} ${OMR_REPO_OPTION} ${OMR_BRANCH_OPTION} ${OMR_SHA_OPTION}"
     }
 }
 
@@ -186,7 +186,7 @@ def checkout_pullrequest() {
         checkout_pullrequest(OPENJDK_PR, "ibmruntimes/openj9-openjdk-jdk${REPO_SUFFIX}")
     }
 
-    sh "bash ./get_source.sh"
+    sh "bash ./get_source.sh ${EXTRA_GETSOURCE_OPTIONS}"
 
     // Checkout dependent PRs, if any were specified
     if (openj9_bool) {
