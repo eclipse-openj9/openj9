@@ -1029,7 +1029,6 @@ public:
    virtual void               initializeHasFixedFrameC_CallingConvention();
 
    virtual bool               isPublicClass(TR_OpaqueClassBlock *clazz);
-   virtual TR_OpaqueMethodBlock *getMethodFromName(char * className, char *methodName, char *signature, TR_OpaqueMethodBlock *callingMethod);
    virtual TR_OpaqueMethodBlock *getMethodFromName(char * className, char *methodName, char *signature);
 
    virtual TR_OpaqueClassBlock * getComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass);

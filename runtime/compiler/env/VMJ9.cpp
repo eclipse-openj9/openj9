@@ -6685,12 +6685,6 @@ TR_J9VMBase::getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer)
 #define LOOKUP_OPTION_NO_THROW 8192
 
 TR_OpaqueMethodBlock *
-TR_J9VM::getMethodFromName(char *className, char *methodName, char *signature, TR_OpaqueMethodBlock *callingMethod)
-   {
-   return getMethodFromName(className, methodName, signature); // ignore callingMethod
-   }
-
-TR_OpaqueMethodBlock *
 TR_J9VM::getMethodFromName(char *className, char *methodName, char *signature)
    {
    TR::VMAccessCriticalSection getMethodFromName(this);
