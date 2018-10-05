@@ -409,6 +409,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<object name="gcddr"/>
 			<object name="jitflagsddr"/>
 			<object name="omrddr"/>
+			<object name="types"/>
 			<object name="vmddr"/>
 		</objects>
 	</artifact>

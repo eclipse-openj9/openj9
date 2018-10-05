@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,28 +19,23 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package j9vm.test.ddrext.util.parser;
 
-import java.util.regex.Pattern;
+#include "j9.h"
+#include "j9port_generated.h"
+#include "j9generated.h"
+#include "j9nongenerated.h"
+#include "ddrhelp.h"
 
-import j9vm.test.ddrext.Constants;
-
-/**
- * This class is used to extract info from !j9pool <address> DDR extension output.
- *
- * @author fkaraman
+/*
+ * This struct has fields corresponding to StructureTypeManager.TYPE_XXX categories
+ * that don't appear elsewhere so that all paths in BytecodeGenerator are exercised.
  */
-public class J9PoolOutputParser {
+struct GeneratorTypeSamples
+{
+	fj9object_t TYPE_FJ9OBJECT;
+	j9objectclass_t *TYPE_J9OBJECTCLASS_POINTER;
+	j9objectmonitor_t TYPE_J9OBJECTMONITOR;
+	j9objectmonitor_t *TYPE_J9OBJECTMONITOR_POINTER;
+};
 
-	private static final Pattern PUDDLELIST_SIGNATURE = Pattern.compile("J9WSRP\\((struct )?J9PoolPuddleList\\) puddleList");
-
-	/**
-	 * This method finds the address of j9poolpuddlelist from !j9pool output
-	 * @param j9poolOutput
-	 * @return puddleList address or null
-	 */
-	public static String getPuddleListAddress(String j9poolOutput) {
-		return ParserUtil.getFieldAddressOrValue(PUDDLELIST_SIGNATURE, Constants.J9POOLPUDDLELIST_CMD, j9poolOutput);
-	}
-
-}
+DdrDebugLink(types, GeneratorTypeSamples)

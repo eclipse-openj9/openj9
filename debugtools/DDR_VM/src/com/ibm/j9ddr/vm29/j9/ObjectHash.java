@@ -36,7 +36,7 @@ public class ObjectHash
 	private static U32 getSalt(J9JavaVMPointer vm, UDATA objectPointer) throws CorruptDataException
 	{
 		/* set up the default salt */
-		U32 salt = (new U32(1421595292)).bitXor(new U32(UDATA.cast(vm)));
+		UDATA salt = new U32(1421595292).bitXor(new U32(UDATA.cast(vm)));
 		J9IdentityHashDataPointer hashData = vm.identityHashData();
 		UDATA saltPolicy = hashData.hashSaltPolicy();
 		
@@ -85,7 +85,7 @@ public class ObjectHash
 			throw new CorruptDataException("Invalid salt policy");
 		}
 		
-		return salt;
+		return new U32(salt);
 	}
 	
 	static U32 rotateLeft(U32 value, int count)

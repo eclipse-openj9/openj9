@@ -878,11 +878,10 @@ public class MethodMetaData
 		
 		private VoidPointer getFirstInlinedCallSiteWithByteCodeInfo(J9JITExceptionTablePointer methodMetaData, VoidPointer stackMap, VoidPointer byteCodeInfo) throws CorruptDataException
 		{
-			I32 cix;
 			if (byteCodeInfo.isNull()) {
 				byteCodeInfo = ADDRESS_OF_BYTECODEINFO_IN_STACK_MAP(HAS_FOUR_BYTE_OFFSET(methodMetaData), stackMap);
 			}
-			cix = TR_ByteCodeInfoPointer.cast(byteCodeInfo)._callerIndex();
+			I32 cix = new I32(TR_ByteCodeInfoPointer.cast(byteCodeInfo)._callerIndex());
 			if (cix.lt(0)) {
 				return  VoidPointer.NULL;
 			}
@@ -940,7 +939,7 @@ public class MethodMetaData
 				VoidPointer inlinedCallSite) throws CorruptDataException
 		{
 			if (hasMoreInlinedMethods(inlinedCallSite)) {
-				return getNotUnloadedInlinedCallSiteArrayElement(methodMetaData, (getByteCodeInfo(inlinedCallSite))._callerIndex());
+				return getNotUnloadedInlinedCallSiteArrayElement(methodMetaData, new I32(getByteCodeInfo(inlinedCallSite)._callerIndex()));
 			}
 			return VoidPointer.NULL; 
 		}
@@ -951,7 +950,7 @@ public class MethodMetaData
 			return ! byteCodeInfo._callerIndex().lt(new I32(0));
 		}
 		
-		private TR_ByteCodeInfoPointer getByteCodeInfo(VoidPointer inlinedCallSite) throws CorruptDataException
+		private static TR_ByteCodeInfoPointer getByteCodeInfo(VoidPointer inlinedCallSite) throws CorruptDataException
 		{
 			return TR_ByteCodeInfoPointer.cast(TR_InlinedCallSitePointer.cast(inlinedCallSite)._byteCodeInfoEA());
 		}

@@ -1,0 +1,209 @@
+/*******************************************************************************
+ * Copyright (c) 1991, 2018 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ *******************************************************************************/
+
+/* All VM code assumes that sizeof(char) = 1 */
+char=U_8
+signed char=I_8
+unsigned char=U_8
+
+/* Object subtypes that we don't want to see */
+struct J9VMJavaLangThread=struct J9Object
+struct J9VMJavaLangString=struct J9Object
+struct J9VMJavaLangClass=struct J9Object
+struct J9VMJavaLangClassLoader=struct J9Object
+j9object_t=struct J9Object*
+
+/* Thread typedef */
+omrthread_t=struct J9Thread*
+omrthread_library_t=struct J9ThreadLibrary*
+omrthread_monitor_t=struct J9ThreadMonitor*
+omrthread_rwmutex_t=void*		// implementation specific struct
+omrthread_monitor_pool_t=struct J9ThreadMonitorPool*
+j9sem_t=struct J9Semaphore
+omrthread_tls_key_t=UDATA
+omrthread_os_errno_t=IDATA
+omrthread_entrypoint_t=void*		// function pointer
+omrthread_tls_finalizer_t=void*		// function pointer
+
+/* JNI type aliases */
+jobject=struct J9Object**
+jthread=struct J9Object**
+jthreadGroup=struct J9Object**
+jarray=struct J9IndexableObject**
+jclass=struct J9Class**
+jmethodID=struct J9JNIMethodID*
+jfieldID=struct J9JNIFieldID*
+jboolean=U_8
+jbyte=I_8
+jchar=U_16
+jdouble=double
+jfloat=float
+jint=I_32
+jlong=I_64
+jshort=I_16
+jlocation=I_64
+JVMExt=struct JVMExtensionInterface_*
+JavaVM=struct JNIInvokeInterface_*
+
+
+/* These structures are platform specific, so can't be modelled.
+   Alias to "void" so we won't try to reference them. */
+struct J9PortPlatformGlobals=void
+MUTEX=void
+COND=void
+OSTHREAD=void
+TLSKEY=void
+OSSEMAPHORE=void
+ucontext_t=void
+struct sigaction=void
+
+/* JIT types */
+uint8_t=U_8
+int8_t=I_8
+uint16_t=U_16
+int16_t=I_16
+uint32_t=U_32
+int32_t=I_32
+uint64_t=U_64
+int64_t=I_64
+uintptr_t=UDATA
+intptr_t=IDATA
+
+/* Regular C types used by RAS */
+unsigned int=U_32
+int=I_32
+UT_BOOL=I_32
+
+/* Structures defined in rasdump/dmpagent.c we currently can't parse */
+J9RASdumpEvent=void
+J9RASdumpRequest=void
+struct J9RASdumpSettings=void
+J9RASdumpSettings=void
+hythread_t=struct J9Thread*
+
+LRU=U_16
+
+/* Structures defined in j9heap.c that we currently can't parse */
+struct J9Heap=void
+
+classDataFreeFunction=void*
+J9SidecarExitHook=void*
+J9HookFunction=void*
+JDWPHandler=void*
+
+/* Trace Engine types */
+UT_I16=I_16
+UT_I32=I_32
+UT_U32=U_32
+UT_U64=U_64
+UT_UPTR=UDATA
+UT_FD=I_32
+
+UtListener=void* //Function pointer
+utsSubscriberCallback=void*
+utsSubscriberAlarmCallback=void*
+
+/* RAS trace queuing aliases */
+struct message=qMessage
+struct queue=qQueue
+struct subscription=qSubscription
+
+struct ArrayList=void
+
+struct utGroupDetails=UtGroupDetails
+struct utModuleInfo=UtModuleInfo
+
+ConfigureTraceFunction=void*
+
+J9TR_MethodMetaData=struct J9JITExceptionTable
+
+/* Harmony types */
+struct HyPortLibraryGlobalData=void
+
+/* Debug types */
+struct J9JNIEnv=void
+
+/* JVMTI */
+jvmtiError=U_32
+jvmtiTimerKind=U_32
+struct JVMTINativeInterface_=jvmtiNativeInterface
+jvmtiExtensionEvent=void* //typedef'd function pointer
+jvmtiEventBreakpoint=void*
+jvmtiEventClassFileLoadHook=void*
+jvmtiEventClassLoad=void*
+jvmtiEventClassPrepare=void*
+jvmtiEventCompiledMethodLoad=void*
+jvmtiEventCompiledMethodUnload=void*
+jvmtiEventDataDumpRequest=void*
+jvmtiEventDynamicCodeGenerated=void*
+jvmtiEventException=void*
+jvmtiEventExceptionCatch=void*
+jvmtiEventFieldAccess=void*
+jvmtiEventFieldModification=void*
+jvmtiEventFramePop=void*
+jvmtiEventGarbageCollectionFinish=void*
+jvmtiEventGarbageCollectionStart=void*
+jvmtiEventMethodEntry=void*
+jvmtiEventMethodExit=void*
+jvmtiEventMonitorContendedEnter=void*
+jvmtiEventMonitorContendedEntered=void*
+jvmtiEventMonitorWait=void*
+jvmtiEventMonitorWaited=void*
+jvmtiEventNativeMethodBind=void*
+jvmtiEventObjectFree=void*
+jvmtiEventResourceExhausted=void*
+jvmtiEventSingleStep=void*
+jvmtiEventThreadEnd=void*
+jvmtiEventThreadStart=void*
+jvmtiEventVMDeath=void*
+jvmtiEventVMInit=void*
+jvmtiEventVMObjectAlloc=void*
+jvmtiEventVMStart=void*
+jvmtiEventReserved=void*
+jvmtiReservedCallback=void*
+jvmtiExtensionFunction=void*
+jvmtiArrayPrimitiveValueCallback=void*
+jvmtiHeapIterationCallback=void*
+jvmtiHeapReferenceCallback=void*
+jvmtiPrimitiveFieldCallback=void*
+jvmtiStringPrimitiveValueCallback=void*
+
+/* GC typedefs */
+Card=U_8
+MM_SubpoolsPoolIndex=U_16
+
+J9VMAOTHeader=void
+
+/* Structures defined in .cpp files and not .h files */
+class CompactTableEntry=void
+class MM_ParallelSweepChunkArray=void
+struct MM_PrivateHookInterface=void
+class MM_VerboseHandlerOutput=void
+class WriteOnceCompactTableEntry=void
+
+/* OMR / Java glue */
+GC_ArrayletObjectModel=GC_ArrayObjectModel
+languageobjectptr_t=struct J9Object*
+omrobjectptr_t=struct J9Object*
+omrarrayptr_t=struct J9IndexableObject*
+fomrobject_t=fj9object_t
+fomrarray_t=fj9object_t
