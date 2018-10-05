@@ -648,7 +648,7 @@ public class J9BCUtil {
 	}
 
 	private static void dumpCPShapeDescription(PrintStream out, J9ROMClassPointer romClass, long flags) throws CorruptDataException {
-		U32Pointer cpDescription = romClass.cpShapeDescription();
+		U32Pointer cpDescription = J9ROMClassHelper.cpShapeDescription(romClass);
 		long descriptionLong;
 		long i, j, k, numberOfLongs;
 		char symbols[] = new char[] { '.', 'C', 'S', 'I', 'F', 'J', 'D', 'i', 's', 'v', 'x', 'y', 'z', 'T', 'H', 'A', '.', 'c', 'x', 'v' };
@@ -917,7 +917,7 @@ public class J9BCUtil {
 	
 		if (0 != bsmCount) {
 			J9ROMConstantPoolItemPointer constantPool = ConstantPoolHelpers.J9_ROM_CP_FROM_ROM_CLASS(romClass);
-			U32Pointer cpShapeDescription = romClass.cpShapeDescription();
+			U32Pointer cpShapeDescription = J9ROMClassHelper.cpShapeDescription(romClass);
 			U16Pointer bsmDataCursor = bsmIndices.add(callSiteCount);
 			
 			out.println(String.format("  Bootstrap Methods (%d):", bsmCount));
