@@ -11797,6 +11797,313 @@ static TR::Register *inlineEncodeUTF16(TR::Node *node, TR::CodeGenerator *cg)
    return outputLenReg;
    }
 
+static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, bool isLatin1, TR::CodeGenerator *cg)
+   {
+   auto vectorCompareOp = isLatin1 ? TR::InstOpCode::vcmpeubr : TR::InstOpCode::vcmpeuhr;
+
+   TR::Register *arrObjectAddress = cg->evaluate(node->getChild(1));
+   TR::Register *targetScalar = cg->evaluate(node->getChild(2));
+   TR::Register *startIndex = cg->evaluate(node->getChild(3));
+   TR::Register *endIndex = cg->evaluate(node->getChild(4));
+
+   TR::Register *cr0 = cg->allocateRegister(TR_CCR);
+   TR::Register *cr6 = cg->allocateRegister(TR_CCR);
+
+   TR::Register *zeroRegister = cg->allocateRegister();
+   TR::Register *result = cg->allocateRegister();
+   TR::Register *arrAddress = cg->allocateRegister();
+   TR::Register *currentAddress = cg->allocateRegister();
+   TR::Register *endAddress = cg->allocateRegister();
+
+   TR::Register *targetVector = cg->allocateRegister(TR_VRF);
+   TR::Register *targetVectorNot = cg->allocateRegister(TR_VRF);
+   TR::Register *searchVector = cg->allocateRegister(TR_VRF);
+   TR::Register *permuteVector = cg->allocateRegister(TR_VRF);
+
+   TR_PPCScratchRegisterManager *srm = cg->generateScratchRegisterManager();
+
+   TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *notSmallLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *vectorLoopLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *residueLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *notFoundLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *foundLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *endLabel = generateLabelSymbol(cg);
+
+   startLabel->setStartInternalControlFlow();
+   endLabel->setEndInternalControlFlow();
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, startLabel);
+
+   // Special case for empty strings, which always return -1
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr0, startIndex, endIndex);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, notFoundLabel, cr0);
+
+   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, zeroRegister, 0);
+
+   // Calculate the actual addresses of the start and end points
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, arrAddress, arrObjectAddress, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, endAddress, arrAddress, endIndex);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, currentAddress, arrAddress, startIndex);
+
+   if (!isLatin1)
+      {
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, endAddress, endAddress, endIndex);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, currentAddress, currentAddress, startIndex);
+      }
+
+   // Prefetch the string
+   generateMemInstruction(cg, TR::InstOpCode::dcbt, node, new (cg->trHeapMemory()) TR::MemoryReference(zeroRegister, currentAddress, 16, cg));
+
+   // Splat the value to be compared against and its bitwise complement into two vector registers
+   // for later use
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::mtvsrwz, node, targetVector, targetScalar);
+   if (isLatin1)
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::vspltb, node, targetVector, targetVector, 7);
+   else
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::vsplth, node, targetVector, targetVector, 3);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vnor, node, targetVectorNot, targetVector, targetVector);
+
+   TR::Register *endVectorAddress = srm->findOrCreateScratchRegister();
+   TR::Register *startVectorAddress = srm->findOrCreateScratchRegister();
+
+   // Calculate the end address for what can be compared using full vector compares. After reaching
+   // this address, the remaining comparisons (if required) will need special handling.
+   generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, endVectorAddress, endAddress, 0, CONSTANT64(0xfffffffffffffff0));
+
+   // Check if the entire string is contained within a single 16-byte aligned section. If this
+   // happens, we need to handle that case specially.
+   generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, startVectorAddress, currentAddress, 0, CONSTANT64(0xfffffffffffffff0));
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp8, node, cr0, startVectorAddress, endVectorAddress);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, notSmallLabel, cr0);
+
+   // If we got here, then the entire string to search is contained within a single 16-byte aligned
+   // vector and the end of the string is not aligned to the end of the vector. We don't know
+   // whether the start of the string is aligned, but we'll assume it isn't since that just results
+   // in a few unnecessary operations producing the correct answer regardless.
+
+   // First, we read in an entire 16-byte aligned vector containing the entire string. Since this
+   // load is done with 16-byte natural alignment, this load can't cross a page boundary and cause
+   // an unexpected page fault. However, this will read some garbage at the start and end of the
+   // vector. Assume that we read n bytes of garbage before the string and m bytes of garbage after
+   // the string.
+   generateTrg1MemInstruction(cg, TR::InstOpCode::lvx, node, searchVector, new (cg->trHeapMemory()) TR::MemoryReference(zeroRegister, currentAddress, 16, cg));
+
+      {
+      TR::Register *scratchRegister = srm->findOrCreateScratchRegister();
+
+      // We need to ensure that the garbage we read can't compare as equal to the target value for
+      // obvious reasons. In order to accomplish this, we first rotate forwards by m bytes. This
+      // places all garbage at the beginning of the vector.
+      generateTrg1Src1Instruction(cg, TR::InstOpCode::neg, node, scratchRegister, endAddress);
+      generateTrg1Src2Instruction(cg, TR::Compiler->target.cpu.isLittleEndian() ? TR::InstOpCode::lvsl : TR::InstOpCode::lvsr, node, permuteVector, zeroRegister, scratchRegister);
+      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, searchVector, searchVector, searchVector, permuteVector);
+
+      // Next, we shift the vector backwards by (n + m) bytes shifting in the bitwise complement of
+      // the target value. This causes the garbage to end up at the vector register, having been
+      // replaced with a bit pattern that can never compare as equal to the target value.
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, scratchRegister, scratchRegister, currentAddress);
+      if (TR::Compiler->target.cpu.isLittleEndian())
+         {
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::lvsr, node, permuteVector, zeroRegister, scratchRegister);
+         generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, searchVector, targetVectorNot, searchVector, permuteVector);
+         }
+      else
+         {
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::lvsl, node, permuteVector, zeroRegister, scratchRegister);
+         generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, searchVector, searchVector, targetVectorNot, permuteVector);
+         }
+
+      srm->reclaimScratchRegister(scratchRegister);
+
+      // Now the search vector is ready for comparison: none of the garbage can compare as equal to
+      // our target value and the start of the vector is now aligned to the start of the string. So
+      // we can now perform the comparison as normal.
+      generateTrg1Src2Instruction(cg, vectorCompareOp, node, searchVector, searchVector, targetVector);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, foundLabel, cr6);
+      generateLabelInstruction(cg, TR::InstOpCode::b, node, notFoundLabel);
+      }
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, notSmallLabel);
+
+   // Check if we already have 16-byte alignment. Vector loads require 16-byte alignment, so if we
+   // aren't properly aligned, we'll need to handle comparisons specially until we achieve 16-byte
+   // alignment.
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp8, node, cr0, currentAddress, startVectorAddress);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, vectorLoopLabel, cr0);
+
+   // We are not on a 16-byte boundary, so we cannot directly load the first 16 bytes of the string
+   // for comparison. Instead, we load the 16 byte vector starting from the 16-byte aligned section
+   // containing the start of the string. Since we have 16-byte natural alignment, this can't cause
+   // an unexpected page fault.
+   generateTrg1MemInstruction(cg, TR::InstOpCode::lvx, node, searchVector, new (cg->trHeapMemory()) TR::MemoryReference(zeroRegister, currentAddress, 16, cg));
+
+   // However, before we can run any comparisons on the loaded vector, we must ensure that the extra
+   // garbage read before the start of the string can't match the target character. To do this, we
+   // shift the loaded vector backwards by n bytes shifting in the bitwise complement of the target
+   // character.
+   if (TR::Compiler->target.cpu.isLittleEndian())
+      {
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::lvsr, node, permuteVector, zeroRegister, currentAddress);
+      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, searchVector, targetVectorNot, searchVector, permuteVector);
+      }
+   else
+      {
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::lvsl, node, permuteVector, zeroRegister, currentAddress);
+      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, searchVector, searchVector, targetVectorNot, permuteVector);
+      }
+
+   // Now our vector is ready for comparison: no garbage can match the target value and the start of
+   // the vector is now aligned to the start of the string.
+   generateTrg1Src2Instruction(cg, vectorCompareOp, node, searchVector, searchVector, targetVector);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, foundLabel, cr6);
+
+   // If the first vector didn't match, then we can slide right into the standard vectorized loop.
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, currentAddress, startVectorAddress, 0x10);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp8, node, cr0, currentAddress, endVectorAddress);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, residueLabel, cr0);
+
+   srm->reclaimScratchRegister(startVectorAddress);
+
+   // This is the heart of the vectorized loop, working just like any standard vectorized loop.
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, vectorLoopLabel);
+   generateTrg1MemInstruction(cg, TR::InstOpCode::lvx, node, searchVector, new (cg->trHeapMemory()) TR::MemoryReference(zeroRegister, currentAddress, 16, cg));
+   generateTrg1Src2Instruction(cg, vectorCompareOp, node, searchVector, searchVector, targetVector);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, foundLabel, cr6);
+
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, currentAddress, currentAddress, 0x10);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp8, node, cr0, currentAddress, endVectorAddress);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, vectorLoopLabel, cr0);
+
+   srm->reclaimScratchRegister(endVectorAddress);
+
+   // Now we're done with the part of the loop which can be handled as a normal vectorized loop. If
+   // there are no more elements to compare, we're done. Otherwise, we need to handle the residue.
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, residueLabel);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp8, node, cr0, currentAddress, endAddress);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, notFoundLabel, cr0);
+
+   // Usually, we would need a residue loop here, but it's safe to read beyond the end of the string
+   // here. Since our load will have 16-byte natural alignment, it can't cross a page boundary and
+   // cause an unexpected page fault.
+   generateTrg1MemInstruction(cg, TR::InstOpCode::lvx, node, searchVector, new (cg->trHeapMemory()) TR::MemoryReference(zeroRegister, currentAddress, 16, cg));
+
+   TR::Register *shiftAmount = srm->findOrCreateScratchRegister();
+
+   // Before we can run our comparison, we need to ensure that the garbage from beyond the end of
+   // the string cannot compare as equal to our target value. To do this, we first rotate the vector
+   // forwards by n bytes then shift back by n bytes, shifting in the bitwise complement of the
+   // target value.
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::neg, node, shiftAmount, endAddress);
+   if (TR::Compiler->target.cpu.isLittleEndian())
+      {
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::lvsl, node, permuteVector, zeroRegister, shiftAmount);
+      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, searchVector, searchVector, searchVector, permuteVector);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::lvsr, node, permuteVector, zeroRegister, shiftAmount);
+      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, searchVector, targetVectorNot, searchVector, permuteVector);
+      }
+   else
+      {
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::lvsr, node, permuteVector, zeroRegister, shiftAmount);
+      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, searchVector, searchVector, searchVector, permuteVector);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::lvsl, node, permuteVector, zeroRegister, shiftAmount);
+      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, searchVector, searchVector, targetVectorNot, permuteVector);
+      }
+
+   srm->reclaimScratchRegister(shiftAmount);
+
+   // Now we run our comparison as normal
+   generateTrg1Src2Instruction(cg, vectorCompareOp, node, searchVector, searchVector, targetVector);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, foundLabel, cr6);
+
+   srm->donateScratchRegister(targetVector);
+   srm->donateScratchRegister(targetVectorNot);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, notFoundLabel);
+
+   // We've looked through the entire string and didn't find our target character, so return the
+   // sentinel value -1
+   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, result, -1);
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, foundLabel);
+
+   // We've managed to find a match for the target value in the loaded vector, but we don't yet know
+   // which element of the loaded vector is the first match. The comparison will have set matching
+   // elements in the vector to -1 and non-matching elements to 0. We can find the first matching
+   // element by gathering the first bit of every byte in the vector register...
+
+   // Set permuteVector = 0x000102030405060708090a0b0c0d0e0f
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::lvsl, node, permuteVector, zeroRegister, zeroRegister);
+
+   // For little-endian, reverse permuteVector so that we can find the first set bit using a count
+   // leading zeroes test instead of a count trailing zeroes test. This is necessary since cnttzw
+   // wasn't introduced until Power 9.
+   if (TR::Compiler->target.cpu.isLittleEndian())
+      {
+      generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisb, node, targetVector, 0x0f);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::vsububm, node, permuteVector, targetVector, permuteVector);
+      }
+
+   // Set permuteVector = 0x00081018202830384048505860687078 (reversed for LE)
+   generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisb, node, targetVector, 3);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vslb, node, permuteVector, permuteVector, targetVector);
+
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vbpermq, node, searchVector, searchVector, permuteVector);
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::mfvsrwz, node, result, searchVector);
+
+   // Then count the number of leading zeroes from the obtained result. This tells us the index (in
+   // bytes) of the first matching element in the vector. Note that there is no way to count leading
+   // zeroes of a half-word, so we count leading zeroes of a word and subtract 16 since the value
+   // we're interested in is in the least significant half-word.
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::cntlzw, node, result, result);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, result, result, -16);
+
+   // Finally, combine this with the address of the last vector load to find the address of the
+   // first matching element in the string. Finally, use this to calculate the corresponding index.
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, result, result, currentAddress);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, result, arrAddress, result);
+   if (!isLatin1)
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::srawi, node, result, result, 1);
+
+      {
+      TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 14 + srm->numAvailableRegisters(), cg->trMemory());
+
+      deps->addPostCondition(arrAddress, TR::RealRegister::NoReg);
+      deps->addPostCondition(targetScalar, TR::RealRegister::NoReg);
+      deps->addPostCondition(startIndex, TR::RealRegister::NoReg);
+      deps->addPostCondition(endIndex, TR::RealRegister::NoReg);
+
+      deps->addPostCondition(cr0, TR::RealRegister::cr0);
+      deps->addPostCondition(cr6, TR::RealRegister::cr6);
+
+      deps->addPostCondition(zeroRegister, TR::RealRegister::NoReg);
+      deps->addPostCondition(result, TR::RealRegister::NoReg);
+      deps->addPostCondition(currentAddress, TR::RealRegister::NoReg);
+      deps->addPostCondition(endAddress, TR::RealRegister::NoReg);
+
+      deps->addPostCondition(targetVector, TR::RealRegister::NoReg);
+      deps->addPostCondition(targetVectorNot, TR::RealRegister::NoReg);
+      deps->addPostCondition(searchVector, TR::RealRegister::NoReg);
+      deps->addPostCondition(permuteVector, TR::RealRegister::NoReg);
+
+      srm->addScratchRegistersToDependencyList(deps);
+
+      generateDepLabelInstruction(cg, TR::InstOpCode::label, node, endLabel, deps);
+
+      deps->stopUsingDepRegs(cg, result);
+
+      cg->decReferenceCount(node->getChild(0));
+      cg->decReferenceCount(node->getChild(1));
+      cg->decReferenceCount(node->getChild(2));
+      cg->decReferenceCount(node->getChild(3));
+      cg->decReferenceCount(node->getChild(4));
+      }
+
+   node->setRegister(result);
+   return result;
+   }
+
 extern TR::Register *inlineLongRotateLeft(TR::Node *node, TR::CodeGenerator *cg);
 extern TR::Register *inlineIntegerRotateLeft(TR::Node *node, TR::CodeGenerator *cg);
 extern TR::Register *inlineBigDecimalConstructor(TR::Node *node, TR::CodeGenerator *cg, bool isLong, bool exp);
@@ -12124,6 +12431,22 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
          if (TR::Compiler->target.cpu.id() >= TR_PPCp7 && TR::Compiler->target.cpu.getPPCSupportsVSX())
             {
             resultReg = inlineEncodeUTF16(node, cg);
+            return true;
+            }
+         break;
+
+      case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1:
+         if (cg->getSupportsInlineStringIndexOf())
+            {
+            resultReg = inlineIntrinsicIndexOf(node, true, cg);
+            return true;
+            }
+         break;
+
+      case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
+         if (cg->getSupportsInlineStringIndexOf())
+            {
+            resultReg = inlineIntrinsicIndexOf(node, false, cg);
             return true;
             }
          break;
