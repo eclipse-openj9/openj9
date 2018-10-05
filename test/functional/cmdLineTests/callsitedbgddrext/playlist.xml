@@ -28,8 +28,8 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl zos ; \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \
+		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl all zos ; \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' \
 	-DJDMPVIEW_EXE=$(Q)$(JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
@@ -56,8 +56,8 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl zos ; \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \
+		<command>$perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl all ; \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' \
 	-DJDMPVIEW_EXE=$(Q)$(JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
@@ -85,15 +85,14 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl zos ; \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \
+		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl all ; \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' \
 	-DJDMPVIEW_EXE=$(Q)$(JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)callsiteddrtests.xml$(Q) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
-		<!-- temporarily disable this test on AIX, z/OS; github.com/eclipse/openj9/issues/1511 -->
 		<platformRequirements>^os.aix,^os.zos</platformRequirements>
 		<levels>
 			<level>sanity</level>
@@ -111,4 +110,37 @@
 			<subset>11</subset>
 		</subsets>
 	</test>
+
+	<test>
+		<testCaseName>cmdLineTester_callsitedbgddrext_openj9_aix_zos</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl all zos ; \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
+	-DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' \
+	-DJDMPVIEW_EXE=$(Q)$(JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)callsiteddrtests.xml$(Q) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
+	${TEST_STATUS}</command>
+		<!-- temporarily disable this test on z/OS; github.com/eclipse/openj9/issues/1511 -->
+		<platformRequirements>os.aix,^os.zos</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
+		</subsets>
+	</test>
+
 </playlist>

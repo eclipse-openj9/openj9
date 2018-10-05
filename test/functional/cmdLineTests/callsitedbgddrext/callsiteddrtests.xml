@@ -48,7 +48,7 @@
   <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
   <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
   <exec command="rm -f $DUMPFILE$" />
-  <command>$EXE$ -Xaot:forceaot,count=0 -Xshareclasses:name=$CACHENAME$ $CP$ $XDUMP$ $PROGRAM$</command>
+  <command>$EXE$ -Xaot:forceaot,count=0 -Xshareclasses:name=$CACHENAME$ $CP$ $XDUMP$ -Xmx256m $PROGRAM$</command>
   <output regex="no" type="success">Moved disk 0 to 1</output>
   <output regex="no" type="success">System dump written</output>
   <!-- check for unexpected core dumps -->
@@ -104,7 +104,4 @@
   <output regex="no" type="failure">dump event</output>
  </test>
 
-
 </suite>
-
-

@@ -98,17 +98,12 @@
 		<delete dir="${build}" />
 	</target>
 
-	<!-- Temporarily disable compilation on zos and aix until ddr is supported; github.com/eclipse/openj9/issues/1511 -->
+	<!-- Temporarily disable compilation on zos until ddr is supported; github.com/eclipse/openj9/issues/1511 -->
 	<target name="build" >
 		<if>
-			<and>
-				<not>
-					<equals arg1="${os.name}" arg2="z/OS" />
-				</not>
-				<not>
-					<matches string="${os.name}" pattern="AIX" />
-				</not>
-			</and>
+			<not>
+				<equals arg1="${os.name}" arg2="z/OS" />
+			</not>
 			<then>
 				<antcall target="clean" inheritall="true" />
 			</then>

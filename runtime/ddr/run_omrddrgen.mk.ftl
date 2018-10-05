@@ -42,6 +42,13 @@ DDR_INPUT_FILES := $(addprefix $(TOP_DIR),$(foreach module,$(DDR_INPUT_MODULES),
 DDR_INPUT_FILES := $(addsuffix .dbg,$(DDR_INPUT_DEPENDS))
 </#if>
 
+# workaround to find libomrsig
+<#if uma.spec.type.aix>
+DDR_LIB_PATH := LIBPATH=..
+<#else>
+DDR_LIB_PATH :=
+</#if>
+
 # The primary goals of this makefile.
 DDR_BLOB := $(TOP_DIR)j9ddr.dat
 DDR_SUPERSET_FILE := $(TOP_DIR)superset.dat
@@ -74,7 +81,7 @@ clean :
 	rm -f $(DDR_PRODUCTS)
 
 $(DDR_BLOB) : $(TOP_DIR)ddrgen$(UMA_DOT_EXE) $(DDR_MACRO_LIST) blacklist $(wildcard overrides*)
-	$(TOP_DIR)ddrgen $(DDR_OPTIONS) \
+	$(DDR_LIB_PATH) $(TOP_DIR)ddrgen $(DDR_OPTIONS) \
 		$(DDR_INPUT_FILES)
 
 $(DDR_MACRO_LIST) : $(DDR_INPUT_DEPENDS)

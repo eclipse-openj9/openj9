@@ -30,7 +30,7 @@
 			<variation>Mode610</variation>
 			<variation>Mode201</variation>
 		</variations>
-		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl zos ; \
+		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl all ; \
 	cp $(CMDLINETESTER_RESJAR) .; \
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf cmdlinetestresources.jar; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \
@@ -41,7 +41,6 @@
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)shrcdbgextddrtests.xml$(Q) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
-		<!-- temporarily disable this test on AIX, z/OS; github.com/eclipse/openj9/issues/1511 -->
 		<platformRequirements>^os.aix,^os.zos</platformRequirements>
 		<levels>
 			<level>extended</level>
@@ -58,11 +57,11 @@
 	</test>
 
 	<test>
-		<testCaseName>cmdLineTester_shrcdbgddrext_zos</testCaseName>
+		<testCaseName>cmdLineTester_shrcdbgddrext_aix_zos</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl zos ; \
+		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl all zos ; \
 	cp $(CMDLINETESTER_RESJAR) .; \
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf cmdlinetestresources.jar; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \
@@ -73,7 +72,8 @@
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)shrcdbgextddrtests.xml$(Q) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
-		<platformRequirements>os.zos</platformRequirements>
+		<!-- temporarily disable this test on z/OS; github.com/eclipse/openj9/issues/1511 -->
+		<platformRequirements>os.aix,^os.zos</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>

@@ -40,8 +40,40 @@
 	-config $(Q)$(TEST_RESROOT)$(D)modularityddrtests.xml$(Q) \
 	-outputLimit 1000 -explainExcludes -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
-		<!-- Tests excluded on zos and aix because neither platform supports DDR yet. Please see https://github.com/eclipse/openj9/issues/1511 for updates -->
 		<platformRequirements>^os.zos,^os.aix</platformRequirements>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
+		</subsets>
+	</test>
+
+	<test>
+		<testCaseName>cmdLineTester_modularityddrtests_aix_zos</testCaseName>
+		<variations>
+			<variation>Mode110</variation>
+			<variation>Mode610</variation>
+		</variations>
+		<command>$(MKTREE) $(REPORTDIR); \
+		cd $(REPORTDIR); \
+		perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl all zos ; \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xmx1G \
+	-DRESJAR=$(CMDLINETESTER_RESJAR) \
+	-DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' \
+	-DJDMPVIEW_EXE=$(Q)$(JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
+	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)modularityddrtests.xml$(Q) \
+	-outputLimit 1000 -explainExcludes -nonZeroExitWhenError; \
+	${TEST_STATUS}</command>
+		<!-- Tests excluded on zos since it does not support DDR yet. Please see https://github.com/eclipse/openj9/issues/1511 for updates -->
+		<platformRequirements>os.aix,^os.zos</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
