@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -211,7 +211,7 @@ TR::SymbolReference* TR_StringPeepholes::MethodEnumToArgsForMethodSymRefFromName
    // TODO: This is a workaround as we switched to using a byte[] backing array in String*. Remove this workaround once obsolete.
    if (m == SPH_String_init_AIIZ)
       {
-      if (!fe()->getMethodFromName(classNames[m], methodNames[m], signatures[m], comp()->getCurrentMethod()->getNonPersistentIdentifier()))
+      if (!fe()->getMethodFromName(classNames[m], methodNames[m], signatures[m]))
          {
          return comp()->getSymRefTab()->methodSymRefFromName(comp()->getMethodSymbol(), classNames[m], methodNames[m], "([CIIZ)V", TR::MethodSymbol::Special);
          }

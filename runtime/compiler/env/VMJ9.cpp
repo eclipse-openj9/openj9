@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -6770,40 +6770,21 @@ TR_J9VM::getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer)
 #define LOOKUP_OPTION_NO_THROW 8192
 
 TR_OpaqueMethodBlock *
-TR_J9VM::getMethodFromName(char *className, char *methodName, char *signature, J9ConstantPool *constantPool)
+TR_J9VM::getMethodFromName(char *className, char *methodName, char *signature, TR_OpaqueMethodBlock *callingMethod)
    {
-   TR::VMAccessCriticalSection getMethodFromName(this);
-   J9Class *methodClass = 0;
-   if (constantPool)
-      {
-      methodClass = jitGetClassFromUTF8(vmThread(), constantPool, className, strlen(className));
-      }
-   if (!methodClass) // try the system class loader
-      {
-      methodClass = jitGetClassInClassloaderFromUTF8(vmThread(),
-         (J9ClassLoader *) vmThread()->javaVM->systemClassLoader,
-         className, strlen(className));
-      }
-   TR_OpaqueMethodBlock * result = NULL;
-   /*
-    * Call the TR_J9VM version of getMethodFromClass since at this point,
-    * the methodClass may have never been seen before; if we call the
-    * TR_J9SharedCacheVM version, the validation manager could assert.
-    */
-   if (methodClass)
-      result = (TR_OpaqueMethodBlock *)TR_J9VM::getMethodFromClass((TR_OpaqueClassBlock *)methodClass, methodName, signature);
-   return result;
+   return getMethodFromName(className, methodName, signature); // ignore callingMethod
    }
 
 TR_OpaqueMethodBlock *
-TR_J9VM::getMethodFromName(char *className, char *methodName, char *signature, TR_OpaqueMethodBlock *callingMethod)
+TR_J9VM::getMethodFromName(char *className, char *methodName, char *signature)
    {
-   J9ConstantPool *cp = NULL;
+   TR::VMAccessCriticalSection getMethodFromName(this);
+   TR_OpaqueClassBlock *methodClass = getSystemClassFromClassName(className, strlen(className), true);
+   TR_OpaqueMethodBlock * result = NULL;
+   if (methodClass)
+      result = (TR_OpaqueMethodBlock *)getMethodFromClass(methodClass, methodName, signature);
 
-   if (callingMethod)
-      cp = (J9ConstantPool *) (J9_CP_FROM_METHOD((J9Method*)callingMethod));
-
-   return getMethodFromName(className, methodName, signature, cp);
+   return result;
    }
 
 /** \brief
@@ -8729,37 +8710,6 @@ TR_J9SharedCacheVM::getResolvedMethodForNameAndSignature(TR_Memory * trMemory, T
       return NULL;
    }
 
-
-TR_OpaqueMethodBlock *
-TR_J9SharedCacheVM::getMethodFromName(char *className, char *methodName, char *signature, TR_OpaqueMethodBlock *callingMethod)
-   {
-   TR_OpaqueMethodBlock *omb = this->TR_J9VM::getMethodFromName(className, methodName, signature, callingMethod);
-   if (omb)
-      {
-      TR::Compilation* comp = _compInfo->getCompInfoForCompOnAppThread() ? _compInfo->getCompInfoForCompOnAppThread()->getCompilation() : _compInfoPT->getCompilation();
-      TR_ASSERT(comp, "Should be called only within a compilation");
-
-      if (comp->getOption(TR_UseSymbolValidationManager))
-         {
-         TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
-         SVM_ASSERT_ALREADY_VALIDATED(svm, callingMethod);
-         bool validated = svm->addMethodByNameRecord(omb, getClassFromMethodBlock(callingMethod)) &&
-                          svm->addClassFromMethodRecord(getClassFromMethodBlock(omb), omb);
-
-         if (!validated)
-            omb = NULL;
-         }
-      else
-         {
-         J9Class* methodClass = (J9Class*)getClassFromMethodBlock(omb);
-         if (!((TR_ResolvedRelocatableJ9Method*) comp->getCurrentMethod())->validateArbitraryClass(comp, methodClass))
-            omb = NULL;
-         }
-      }
-
-   return omb;
-   }
-
 bool
 TR_J9SharedCacheVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT)
    {
@@ -8783,9 +8733,7 @@ TR_J9SharedCacheVM::getMethodFromClass(TR_OpaqueClassBlock * methodClass, char *
 
       if (comp->getOption(TR_UseSymbolValidationManager))
          {
-         bool validated = callingClass &&
-                          comp->getSymbolValidationManager()->addMethodFromClassAndSignatureRecord(omb, methodClass, callingClass);
-
+         bool validated = comp->getSymbolValidationManager()->addMethodFromClassAndSignatureRecord(omb, methodClass, callingClass);
          if (!validated)
             omb = NULL;
          }

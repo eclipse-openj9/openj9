@@ -1326,7 +1326,7 @@ TR::SymbolValidationManager::validateMethodByNameRecord(uint16_t methodID, uint1
    strncpy(className, reinterpret_cast<const char *>(J9UTF8_DATA(classNameData)), J9UTF8_LENGTH(classNameData));
    className[J9UTF8_LENGTH(classNameData)] = '\0';
 
-   TR_OpaqueMethodBlock *method = fej9->getMethodFromName(className, methodName, methodSig, beholderCP);
+   TR_OpaqueMethodBlock *method = fej9->getMethodFromName(className, methodName, methodSig);
 
    return validateSymbol(methodID, method);
    }
@@ -1465,7 +1465,7 @@ TR::SymbolValidationManager::validateMethodFromClassAndSignatureRecord(uint16_t 
    TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
 
    TR_OpaqueClassBlock *methodClass = getClassFromID(methodClassID);
-   TR_OpaqueClassBlock *beholder = getClassFromID(beholderID);
+   TR_OpaqueClassBlock *beholder = getClassFromID(beholderID, SymOptional);
 
    J9UTF8 *methodNameData = J9ROMMETHOD_NAME(romMethod);
    char *methodName = (char *)alloca(J9UTF8_LENGTH(methodNameData)+1);
@@ -1609,8 +1609,11 @@ TR::SymbolValidationManager::assertionsAreFatal()
 
 static void printClass(TR_OpaqueClassBlock *clazz)
    {
-   J9UTF8 *className = J9ROMCLASS_CLASSNAME(((J9Class *)clazz)->romClass);
-   traceMsg(TR::comp(), "\tclassName=%.*s\n", J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+   if (clazz != NULL)
+      {
+      J9UTF8 *className = J9ROMCLASS_CLASSNAME(((J9Class *)clazz)->romClass);
+      traceMsg(TR::comp(), "\tclassName=%.*s\n", J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+      }
    }
 
 void TR::ClassValidationRecord::printFields()
