@@ -693,6 +693,12 @@ TR_J9ServerVM::sampleSignature(TR_OpaqueMethodBlock * aMethod, char *buf, int32_
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getHostClass(TR_OpaqueClassBlock *clazzOffset)
    {
+   OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+   auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) clazzOffset);
+   if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+      {
+      return (it->second.hostClass);
+      }
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_getHostClass, clazzOffset);
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
