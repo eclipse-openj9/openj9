@@ -58,6 +58,62 @@ public:
    
    static TR::Node *transformIndirectLoad(TR::Compilation *, TR::Node *node);
    static bool transformDirectLoad(TR::Compilation *, TR::Node *node);
+   /**
+    * \brief
+    *    Fold direct load of a reliable static final field. A reliable static final field
+    *    is a field on which midification after initialization is not expected because it's
+    *    initial value critical to VM functionality and performance.
+    *
+    *    See J9::TransformUtil::canFoldStaticFinalField for the list of reliable static final
+    *    field.
+    *
+    * \parm comp
+    *    The compilation object
+    *
+    * \parm node
+    *    The node which is a direct load
+    *
+    * \return
+    *    True if the field has been folded
+    */
+   static bool foldReliableStaticFinalField(TR::Compilation *, TR::Node *node);
+   /**
+    * \brief
+    *    Fold direct load of a static final field assuming there is protection for the folding.
+    *    This will fold both the reliable ones as well as those we have no prior knowledge about.
+    *    Folding of the latter requires protection in order to get out of the jitted body when
+    *    the field gets modified. The onus is on the caller to ensure such protection is added.
+    *
+    * \parm comp
+    *    The compilation object
+    *
+    * \parm node
+    *    The node which is a direct load
+    *
+    * \return
+    *    True if the field has been folded
+    */
+   static bool foldStaticFinalFieldAssumingProtection(TR::Compilation *, TR::Node *node);
+
+   /**
+    * \brief
+    *    Answers if a static final field can be folded
+    *
+    * \parm comp
+    *    The compilation object
+    *
+    * \parm node
+    *    The node which is a load direct of static final field
+    *
+    * \return
+    *    TR_yes    If the final field is reliable, then we can trust it. Modifying such field
+    *              after initialization is not expected and is very likely to cause VM
+    *              functional or performance issue.
+    *    TR_no     If the final field is known to change, e.g. fields in java/lang/System
+    *    TR_maybe  If we don't have any prior knowledge about this field, it can be folded
+    *              with guard
+    */
+   static TR_YesNoMaybe canFoldStaticFinalField(TR::Compilation *comp, TR::Node *node);
 
    static bool transformIndirectLoadChain(TR::Compilation *, TR::Node *node, TR::Node *baseExpression, TR::KnownObjectTable::Index baseKnownObject, TR::Node **removedNode);
    static bool transformIndirectLoadChainAt(TR::Compilation *, TR::Node *node, TR::Node *baseExpression, uintptrj_t *baseReferenceLocation, TR::Node **removedNode);
@@ -73,6 +129,22 @@ public:
    static TR::Node* saveNodeToTempSlot(TR::Compilation* comp, TR::Node* node, TR::TreeTop* insertTreeTop);
    static void createTempsForCall(TR::Optimization* opt, TR::TreeTop *callTree);
    static void createDiamondForCall(TR::Optimization* opt, TR::TreeTop *callTree, TR::TreeTop *compareTree, TR::TreeTop *ifTree, TR::TreeTop *elseTree, bool changeBlockExtensions = false, bool markCold = false);
+
+protected:
+   /**
+    * \brief
+    *    Fold a load of static final field to a constant or improve its symbol reference
+    *
+    * \parm comp
+    *    The compilation object
+    *
+    * \parm node
+    *    The node which is a load direct of static final field
+    *
+    * \return
+    *    True if the field is folded
+    */
+   static bool foldStaticFinalFieldImpl(TR::Compilation *, TR::Node *node);
    };
 
 }
