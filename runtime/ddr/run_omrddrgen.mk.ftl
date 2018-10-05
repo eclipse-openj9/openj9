@@ -40,6 +40,11 @@ DDR_INPUT_DEPENDS := $(addprefix $(TOP_DIR),$(foreach module,$(DDR_INPUT_MODULES
 DDR_INPUT_FILES := $(addprefix $(TOP_DIR),$(foreach module,$(DDR_INPUT_MODULES),$($(module)_pdb)))
 <#elseif uma.spec.flags.uma_gnuDebugSymbols.enabled>
 DDR_INPUT_FILES := $(addsuffix .dbg,$(DDR_INPUT_DEPENDS))
+<#if uma.spec.type.osx>
+# workaround for OSX not keeping anonymous enum symbols in shared library
+# so get it directly from object file instead
+DDR_INPUT_FILES += $(TOP_DIR)/omr/gc/base/standard/CompactScheme$(UMA_DOT_O)
+</#if>
 </#if>
 
 # The primary goals of this makefile.
