@@ -532,7 +532,7 @@ public:
    int32_t getCallCount(TR_OpaqueMethodBlock *calleeMethod, TR_OpaqueMethodBlock *method, int32_t bcIndex, TR::Compilation *);
    int32_t getCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, TR::Compilation *);
    int32_t getCallCount(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp);
-   void    setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, int32_t count, TR::Compilation *);
+   virtual void setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, int32_t count, TR::Compilation *);
    void    setCallCount(TR_ByteCodeInfo &bcInfo, int32_t count, TR::Compilation *comp);
 
    int32_t getCGEdgeWeight (TR::Node *callerNode, TR_OpaqueMethodBlock *callee, TR::Compilation *comp);
@@ -676,8 +676,9 @@ private:
    TR_OpaqueMethodBlock           *_valueProfileMethod;
 
    // bytecode hashtable
+   protected:
    TR_IPBytecodeHashTableEntry   **_bcHashTable;
-
+   private:
 #if defined(EXPERIMENTAL_IPROFILER)
    // bytecode hashtable
    TR_IPBCDataAllocation         **_allocHashTable;

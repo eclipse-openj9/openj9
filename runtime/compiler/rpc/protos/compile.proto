@@ -267,6 +267,7 @@ enum J9ServerMessageType
    IProfiler_profilingSample = 900;
    IProfiler_searchForMethodSample = 901;
    IProfiler_getMaxCallCount = 902;
+   IProfiler_setCallCount = 903;
 
    Recompilation_getExistingMethodInfo = 1000;
    Recompilation_getJittedBodyInfoFromPC = 1001;
