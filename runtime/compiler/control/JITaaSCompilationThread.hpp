@@ -52,7 +52,7 @@ class ClientSessionData
       PersistentVector<TR_OpaqueClassBlock *> *interfaces; 
       bool classHasFinalFields;
       uintptrj_t classDepthAndFlags;
-      bool inlineClass;
+      bool classInitialized;
       };
 
    struct J9MethodInfo
