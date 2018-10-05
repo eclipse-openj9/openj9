@@ -2715,9 +2715,10 @@ JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class
    bool classHasFinalFields = std::get<7>(classInfo);
    uintptrj_t classDepthAndFlags = std::get<8>(classInfo);
    bool classInitialized = std::get<9>(classInfo);
+   uint32_t byteOffsetToLockword = std::get<10>(classInfo);
    clientSessionData->getROMClassMap().insert({ clazz, { romClass, methods,
       baseComponentClass, numDims,
-      nullptr, nullptr, parentClass, interfaces, classHasFinalFields, classDepthAndFlags, classInitialized } });
+      nullptr, nullptr, parentClass, interfaces, classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword } });
    uint32_t numMethods = romClass->romMethodCount;
    J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
    for (uint32_t i = 0; i < numMethods; i++)
@@ -2758,7 +2759,8 @@ JITaaSHelpers::packRemoteROMClassInfo(J9Class *clazz, TR_J9VM *fe, TR_Memory *tr
    uintptrj_t classDepthAndFlags = fe->getClassDepthAndFlagsValue((TR_OpaqueClassBlock *)clazz);
    bool inlineClass = fe->canAllocateInlineClass((TR_OpaqueClassBlock *)clazz);
    bool classInitialized =  fe->isClassInitialized((TR_OpaqueClassBlock *)clazz);
-   return std::make_tuple(packROMClass(clazz->romClass, trMemory), methodsOfClass, baseClass, numDims, parentClass, TR::Compiler->cls.getITable((TR_OpaqueClassBlock *) clazz), methodTracingInfo, classHasFinalFields, classDepthAndFlags, classInitialized);
+   uint32_t byteOffsetToLockword = fe->getByteOffsetToLockword((TR_OpaqueClassBlock *)clazz);
+   return std::make_tuple(packROMClass(clazz->romClass, trMemory), methodsOfClass, baseClass, numDims, parentClass, TR::Compiler->cls.getITable((TR_OpaqueClassBlock *) clazz), methodTracingInfo, classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword);
    }
 
 J9ROMClass *
