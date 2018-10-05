@@ -1075,11 +1075,17 @@ public:
 
    SymbolValidationManager(TR::Region &region, TR_ResolvedMethod *compilee);
 
-   void* getSymbolFromID(uint16_t id, TR::SymbolType type);
-   TR_OpaqueClassBlock *getClassFromID(uint16_t id);
-   J9Class *getJ9ClassFromID(uint16_t id);
-   TR_OpaqueMethodBlock *getMethodFromID(uint16_t id);
-   J9Method *getJ9MethodFromID(uint16_t id);
+   enum Presence
+      {
+      SymRequired,
+      SymOptional
+      };
+
+   void* getSymbolFromID(uint16_t id, TR::SymbolType type, Presence presence = SymRequired);
+   TR_OpaqueClassBlock *getClassFromID(uint16_t id, Presence presence = SymRequired);
+   J9Class *getJ9ClassFromID(uint16_t id, Presence presence = SymRequired);
+   TR_OpaqueMethodBlock *getMethodFromID(uint16_t id, Presence presence = SymRequired);
+   J9Method *getJ9MethodFromID(uint16_t id, Presence presence = SymRequired);
 
    uint16_t tryGetIDFromSymbol(void *symbol);
    uint16_t getIDFromSymbol(void *symbol);
