@@ -1990,14 +1990,16 @@ J9::Options::fePostProcessJIT(void * base)
    //
    if (_numUsableCompilationThreads <= 0)
       {
-#ifdef LINUX
-      // For linux we may want to create more threads to overcome thread
-      // starvation due to lack of priorities
-      //
-      if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableRampupImprovements) &&
-          !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableRampupImprovements))
-         _numUsableCompilationThreads = MAX_USABLE_COMP_THREADS;
-#endif // LINUX
+      _useCPUsToDetermineMaxNumberOfCompThreadsToActivate = true;
+      if (TR::Compiler->target.isLinux())
+         {
+         // For linux we may want to create more threads to overcome thread
+         // starvation due to lack of priorities
+         //
+         if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableRampupImprovements) &&
+            !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableRampupImprovements))
+            _numUsableCompilationThreads = MAX_USABLE_COMP_THREADS;
+         }
       if (_numUsableCompilationThreads <= 0)
          {
          // Determine the number of compilation threads based on number of online processors
@@ -2005,7 +2007,6 @@ J9::Options::fePostProcessJIT(void * base)
          //
          uint32_t numOnlineCPUs = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_ONLINE);
          _numUsableCompilationThreads = numOnlineCPUs > 1 ? std::min((numOnlineCPUs - 1), static_cast<uint32_t>(MAX_USABLE_COMP_THREADS)) : 1;
-         _useCPUsToDetermineMaxNumberOfCompThreadsToActivate = true;
          }
       }
 

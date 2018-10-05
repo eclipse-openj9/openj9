@@ -388,22 +388,23 @@ TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
    // determined based on the number of CPUs, then the upper bound of comp threads is _numTargetCPUs-1
    // However, if the compilation threads are starved (on Linux) we may want
    // to activate additional comp threads irrespective of the CPU entitlement
-   if (TR::Options::_useCPUsToDetermineMaxNumberOfCompThreadsToActivate ||
-       !_starvationDetected)
+   if (TR::Options::_useCPUsToDetermineMaxNumberOfCompThreadsToActivate)
       {
-      if (getNumCompThreadsActive() >= getNumTargetCPUs() - 1)
-         {
-         return TR_no;
-         }
-      else
+      if (getNumCompThreadsActive() < getNumTargetCPUs() - 1)
          {
          if (_queueWeight > compThreadActivationThresholds[getNumCompThreadsActive()])
             return TR_yes;
          }
+      else if (_starvationDetected)
+         {
+         // comp thread starvation; may activate threads beyond numCpu-1
+         if (_queueWeight > compThreadActivationThresholdsonStarvation[getNumCompThreadsActive()])
+            return TR_yes;
+         }
       }
-   else // comp thread starvation; may activate threads beyond numCpu-1
+   else // number of compilation threads indicated by the user
       {
-      if (_queueWeight > compThreadActivationThresholdsonStarvation[getNumCompThreadsActive()])
+      if (_queueWeight > compThreadActivationThresholds[getNumCompThreadsActive()])
          return TR_yes;
       }
 
