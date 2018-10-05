@@ -616,21 +616,6 @@ TR::SymbolValidationManager::addConcreteSubClassFromClassRecord(TR_OpaqueClassBl
    }
 
 bool
-TR::SymbolValidationManager::addArrayClassFromJavaVM(TR_OpaqueClassBlock *arrayClass, int32_t arrayClassIndex)
-   {
-   if (!arrayClass)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
-   int32_t arrayDims = 0;
-   arrayClass = getBaseComponentClass(arrayClass, arrayDims);
-
-   SymbolValidationRecord *record = new (_region) ArrayClassFromJavaVM(arrayClass, arrayClassIndex);
-   return storeValidationRecordIfNecessary(static_cast<void *>(arrayClass), record, arrayDims);
-   }
-
-bool
 TR::SymbolValidationManager::addClassChainRecord(TR_OpaqueClassBlock *clazz, void *classChain)
    {
    if (!clazz)
@@ -1462,22 +1447,6 @@ TR::SymbolValidationManager::validateConcreteSubClassFromClassRecord(uint16_t ch
    }
 
 bool
-TR::SymbolValidationManager::validateArrayClassFromJavaVM(uint16_t arrayClassID, int32_t arrayClassIndex)
-   {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
-   struct J9Class ** arrayClasses = &fej9->getJ9JITConfig()->javaVM->booleanArrayClass;
-   TR_OpaqueClassBlock *arrayClass = reinterpret_cast<TR_OpaqueClassBlock *>(arrayClasses[arrayClassIndex - 4]);
-
-   int32_t arrayDims = 0;
-   arrayClass = getBaseComponentClass(arrayClass, arrayDims);
-
-   return validateSymbol(arrayClassID, static_cast<void *>(arrayClass));
-   }
-
-bool
 TR::SymbolValidationManager::validateClassChainRecord(uint16_t classID, void *classChain)
    {
    if (getSymbolFromID(classID) == NULL)
@@ -2167,14 +2136,6 @@ void TR::StackWalkerMaySkipFramesRecord::printFields()
    traceMsg(TR::comp(), "\t_methodClass=0x%p\n", _methodClass);
    printClass(_methodClass);
    traceMsg(TR::comp(), "\t_skipFrames=%sp\n", _skipFrames ? "true" : "false");
-   }
-
-void TR::ArrayClassFromJavaVM::printFields()
-   {
-   traceMsg(TR::comp(), "ArrayClassFromJavaVM\n");
-   traceMsg(TR::comp(), "\t_arrayClass=0x%p\n", _arrayClass);
-   printClass(_arrayClass);
-   traceMsg(TR::comp(), "\t_arrayClassIndex=%d\n", _arrayClassIndex);
    }
 
 void TR::ClassInfoIsInitialized::printFields()

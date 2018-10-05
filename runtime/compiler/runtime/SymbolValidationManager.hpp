@@ -901,34 +901,6 @@ struct StackWalkerMaySkipFramesRecord : public SymbolValidationRecord
    bool _skipFrames;
    };
 
-struct ArrayClassFromJavaVM : public ClassValidationRecord
-   {
-   ArrayClassFromJavaVM(TR_OpaqueClassBlock *arrayClass, int32_t arrayClassIndex)
-      : ClassValidationRecord(TR_ValidateArrayClassFromJavaVM),
-        _arrayClass(arrayClass),
-        _arrayClassIndex(arrayClassIndex)
-      {}
-
-   bool operator ==(const ArrayClassFromJavaVM &rhs)
-      {
-      if (_arrayClass == rhs._arrayClass &&
-          _arrayClassIndex == rhs._arrayClassIndex)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<ArrayClassFromJavaVM *>(other));
-      }
-
-   virtual void printFields();
-
-   TR_OpaqueClassBlock *_arrayClass;
-   int32_t _arrayClassIndex;
-   };
-
 struct ClassInfoIsInitialized : public SymbolValidationRecord
    {
    ClassInfoIsInitialized(TR_OpaqueClassBlock *clazz, bool isInitialized)
@@ -1132,7 +1104,6 @@ public:
    bool addDeclaringClassFromFieldOrStaticRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, int32_t cpIndex);
    bool addClassClassRecord(TR_OpaqueClassBlock *classClass, TR_OpaqueClassBlock *objectClass);
    bool addConcreteSubClassFromClassRecord(TR_OpaqueClassBlock *childClass, TR_OpaqueClassBlock *superClass);
-   bool addArrayClassFromJavaVM(TR_OpaqueClassBlock *arrayClass, int32_t arrayClassIndex);
 
    bool addClassChainRecord(TR_OpaqueClassBlock *clazz, void *classChain);
    bool addRomClassRecord(TR_OpaqueClassBlock *clazz);
@@ -1181,7 +1152,6 @@ public:
    bool validateDeclaringClassFromFieldOrStaticRecord(uint16_t definingClassID, uint16_t beholderID, int32_t cpIndex);
    bool validateClassClassRecord(uint16_t classClassID, uint16_t objectClassID);
    bool validateConcreteSubClassFromClassRecord(uint16_t childClassID, uint16_t superClassID);
-   bool validateArrayClassFromJavaVM(uint16_t arrayClassID, int32_t arrayClassIndex);
 
    bool validateClassChainRecord(uint16_t classID, void *classChain);
    bool validateRomClassRecord(uint16_t classID, J9ROMClass *romClass);

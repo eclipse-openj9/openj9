@@ -1175,22 +1175,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_ValidateArrayClassFromJavaVM:
-         {
-         TR::ArrayClassFromJavaVM *record = reinterpret_cast<TR::ArrayClassFromJavaVM *>(relocation->getTargetAddress());
-
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-
-         TR_RelocationRecordValidateArrayClassFromJavaVMBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordValidateArrayClassFromJavaVMBinaryTemplate *>(cursor);
-
-         binaryTemplate->_arrayClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->_arrayClass));
-         binaryTemplate->_arrayClassIndex = record->_arrayClassIndex;
-
-         cursor += sizeof(TR_RelocationRecordValidateArrayClassFromJavaVMBinaryTemplate);
-         }
-         break;
-
       case TR_ValidateClassInfoIsInitialized:
          {
          TR::ClassInfoIsInitialized *record = reinterpret_cast<TR::ClassInfoIsInitialized *>(relocation->getTargetAddress());
@@ -1423,7 +1407,7 @@ uint32_t J9::X86::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_Nu
    sizeof(TR_RelocationRecordValidateInterfaceMethodFromCPBinaryTemplate),//TR_ValidateInterfaceMethodFromCP     = 89,
    sizeof(TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate),//TR_ValidateMethodFromClassAndSig     = 90,
    sizeof(TR_RelocationRecordValidateStackWalkerMaySkipFramesBinaryTemplate),//TR_ValidateStackWalkerMaySkipFramesRecord= 91,
-   sizeof(TR_RelocationRecordValidateArrayClassFromJavaVMBinaryTemplate), //TR_ValidateArrayClassFromJavaVM      = 92,
+   0,                                                                  // TR_ValidateArrayClassFromJavaVM        = 92,
    sizeof(TR_RelocationRecordValidateClassInfoIsInitializedBinaryTemplate),//TR_ValidateClassInfoIsInitialized   = 93,
    sizeof(TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate),//TR_ValidateMethodFromSingleImplementer= 94,
    sizeof(TR_RelocationRecordValidateMethodFromSingleInterfaceImplBinaryTemplate),//TR_ValidateMethodFromSingleInterfaceImplementer= 95,

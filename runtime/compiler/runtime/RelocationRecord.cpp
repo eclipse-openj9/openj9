@@ -400,9 +400,6 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
       case TR_ValidateStackWalkerMaySkipFramesRecord:
          reloRecord = new (storage) TR_RelocationRecordValidateStackWalkerMaySkipFrames(reloRuntime, record);
          break;
-      case TR_ValidateArrayClassFromJavaVM:
-         reloRecord = new (storage) TR_RelocationRecordValidateArrayClassFromJavaVM(reloRuntime, record);
-         break;
       case TR_ValidateClassInfoIsInitialized:
          reloRecord = new (storage) TR_RelocationRecordValidateClassInfoIsInitialized(reloRuntime, record);
          break;
@@ -3813,25 +3810,6 @@ TR_RelocationRecordValidateStackWalkerMaySkipFrames::applyRelocation(TR_Relocati
    }
 
 int32_t
-TR_RelocationRecordValidateArrayClassFromJavaVM::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
-   {
-   uint16_t arrayClassID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateArrayClassFromJavaVMBinaryTemplate *)_record)->_arrayClassID);
-   int32_t arrayClassIndex = reloTarget->loadSigned32b((uint8_t *) &((TR_RelocationRecordValidateArrayClassFromJavaVMBinaryTemplate *)_record)->_arrayClassIndex);
-
-   if (reloRuntime->reloLogger()->logEnabled())
-      {
-      reloRuntime->reloLogger()->printf("%s\n", name());
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: arrayClassID %d\n", arrayClassID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: arrayClassIndex %d\n", arrayClassIndex);
-      }
-
-   if (reloRuntime->comp()->getSymbolValidationManager()->validateArrayClassFromJavaVM(arrayClassID, arrayClassIndex))
-      return 0;
-   else
-      return compilationAotClassReloFailure;
-   }
-
-int32_t
 TR_RelocationRecordValidateClassInfoIsInitialized::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
    uint16_t classID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateClassInfoIsInitializedBinaryTemplate *)_record)->_classID);
@@ -4615,7 +4593,7 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordValidateInterfaceMethodFromCPBinaryTemplate),           // TR_ValidateInterfaceMethodFromCP                = 89
    sizeof(TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate),           // TR_ValidateMethodFromClassAndSig                = 90
    sizeof(TR_RelocationRecordValidateStackWalkerMaySkipFramesBinaryTemplate),        // TR_ValidateStackWalkerMaySkipFramesRecord       = 91
-   sizeof(TR_RelocationRecordValidateArrayClassFromJavaVMBinaryTemplate),            // TR_ValidateArrayClassFromJavaVM                 = 92
+   0,                                                                                // TR_ValidateArrayClassFromJavaVM                 = 92
    sizeof(TR_RelocationRecordValidateClassInfoIsInitializedBinaryTemplate),          // TR_ValidateClassInfoIsInitialized               = 93
    sizeof(TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate),            // TR_ValidateMethodFromSingleImplementer          = 94
    sizeof(TR_RelocationRecordValidateMethodFromSingleInterfaceImplBinaryTemplate),   // TR_ValidateMethodFromSingleInterfaceImplementer = 95

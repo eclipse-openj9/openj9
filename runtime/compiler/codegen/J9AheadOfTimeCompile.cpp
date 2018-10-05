@@ -1720,25 +1720,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
             }
             break;
 
-         case TR_ValidateArrayClassFromJavaVM:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateArrayClassFromJavaVMBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateArrayClassFromJavaVMBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Array Class From JavaVM: arrayClassID=%d, arrayClassIndex=%d ",
-                        (uint32_t)binaryTemplate->_arrayClassID,
-                        binaryTemplate->_arrayClassIndex);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateArrayClassFromJavaVMBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
          case TR_ValidateClassInfoIsInitialized:
             {
             cursor++;
