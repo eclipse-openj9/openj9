@@ -625,6 +625,16 @@ TR_J9ServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueC
 bool
 TR_J9ServerVM::hasFinalFieldsInClass(TR_OpaqueClassBlock *clazz)
    {
+   // Check the cache first
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*)clazz);
+      if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+         {
+         return it->second.classHasFinalFields;
+         }
+      }
+
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_hasFinalFieldsInClass, clazz);
    return std::get<0>(stream->read<bool>());
@@ -1281,3 +1291,4 @@ TR_J9ServerVM::transformJlrMethodInvoke(J9Method *callerMethod, J9Class *callerC
    stream->write(JITaaS::J9ServerMessageType::VM_transformJlrMethodInvoke, callerMethod, callerClass);
    return std::get<0>(stream->read<bool>());
    }
+
