@@ -60,6 +60,7 @@ import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.FindAllModulesCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.FindAllReadsCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.FindMethodFromPcCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.FindModuleByNameCommand;
+import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.FindModulesCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.FindOverlappingSegmentsCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.FindPatternCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.FindStackValueCommand;
@@ -189,6 +190,7 @@ public class GetCommandsTask extends BaseJVMCommands implements IBootstrapRunnab
 		toPassBack.add(new FindAllReadsCommand());
 		toPassBack.add(new DumpModuleDirectedExportsCommand());
 		toPassBack.add(new DumpAllClassesInModuleCommand());
+		toPassBack.add(new FindModulesCommand());
 
 		loadPlugins(toPassBack, loader);
 
