@@ -11800,6 +11800,7 @@ static TR::Register *inlineEncodeUTF16(TR::Node *node, TR::CodeGenerator *cg)
 static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, bool isLatin1, TR::CodeGenerator *cg)
    {
    auto vectorCompareOp = isLatin1 ? TR::InstOpCode::vcmpeubr : TR::InstOpCode::vcmpeuhr;
+   auto scalarLoadOp = isLatin1 ? TR::InstOpCode::lbzx : TR::InstOpCode::lhzx;
 
    TR::Register *arrObjectAddress = cg->evaluate(node->getChild(1));
    TR::Register *targetScalar = cg->evaluate(node->getChild(2));
@@ -11828,6 +11829,7 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, bool isLatin1, TR::C
    TR::LabelSymbol *residueLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *notFoundLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *foundLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *foundExactLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *endLabel = generateLabelSymbol(cg);
 
    startLabel->setStartInternalControlFlow();
@@ -11839,21 +11841,42 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, bool isLatin1, TR::C
    generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr0, startIndex, endIndex);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, notFoundLabel, cr0);
 
+   if (!isLatin1)
+      {
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, result, startIndex, startIndex);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, endAddress, endIndex, endIndex);
+      }
+   else
+      {
+      generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, result, startIndex);
+      generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, endAddress, endIndex);
+      }
+
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, arrAddress, arrObjectAddress, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+
+   // Handle the first character using a simple scalar compare. Otherwise, first character matches
+   // would be slower than the old scalar comparison loop. This is a problem since first character
+   // matches are common in certain contexts, e.g. StringTokenizer where the default first character
+   // to each String.indexOf call is ' ', which is the most common whitespace character.
+      {
+      TR::Register *value = srm->findOrCreateScratchRegister();
+
+      generateTrg1MemInstruction(cg, scalarLoadOp, node, value, new (cg->trHeapMemory()) TR::MemoryReference(arrAddress, result, isLatin1 ? 1 : 2, cg));
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr0, value, targetScalar);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, foundExactLabel, cr0);
+
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, result, result, isLatin1 ? 1 : 2);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp8, node, cr0, result, endAddress);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, notFoundLabel, cr0);
+
+      srm->reclaimScratchRegister(value);
+      }
+
    generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, zeroRegister, 0);
 
    // Calculate the actual addresses of the start and end points
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, arrAddress, arrObjectAddress, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, endAddress, arrAddress, endIndex);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, currentAddress, arrAddress, startIndex);
-
-   if (!isLatin1)
-      {
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, endAddress, endAddress, endIndex);
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, currentAddress, currentAddress, startIndex);
-      }
-
-   // Prefetch the string
-   generateMemInstruction(cg, TR::InstOpCode::dcbt, node, new (cg->trHeapMemory()) TR::MemoryReference(zeroRegister, currentAddress, 16, cg));
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, endAddress, arrAddress, endAddress);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, currentAddress, arrAddress, result);
 
    // Splat the value to be compared against and its bitwise complement into two vector registers
    // for later use
@@ -12063,6 +12086,8 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, bool isLatin1, TR::C
    // first matching element in the string. Finally, use this to calculate the corresponding index.
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, result, result, currentAddress);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, result, arrAddress, result);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, foundExactLabel);
    if (!isLatin1)
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::srawi, node, result, result, 1);
 
