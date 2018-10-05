@@ -273,6 +273,13 @@ TR_J9ServerVM::getBaseComponentClass(TR_OpaqueClassBlock * clazz, int32_t & numD
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass)
    {
+   OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+   auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) arrayClass);
+   if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+      {
+      return it->second.leafComponentClass;
+      }
+
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_getLeafComponentClassFromArrayClass, arrayClass);
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
