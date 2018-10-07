@@ -28,6 +28,9 @@ import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+/*[IF Sidecar19-SE-OpenJ9]*/
+import sun.security.util.FilePermCompat;
+/*[ENDIF] Sidecar19-SE-OpenJ9*/
 
 /**
  * An AccessControlContext encapsulates the information which is needed
@@ -582,6 +585,9 @@ static boolean checkPermWithCachedPermImplied(Permission perm, Permission[] perm
 					}
 				}
 			}
+			/*[IF Sidecar19-SE-OpenJ9]*/
+			permsLimited[j] = FilePermCompat.newPermPlusAltPath(permsLimited[j]);
+			/*[ENDIF] Sidecar19-SE-OpenJ9*/
 			if (!notImplied && permsLimited[j].implies(perm)) {
 				success = true; // just implied
 				if (null != cacheChecked) {
