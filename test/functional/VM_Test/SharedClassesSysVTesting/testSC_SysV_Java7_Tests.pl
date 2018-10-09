@@ -74,15 +74,17 @@ my $verbose = 0; #0 for false, 1 for true
 my $numprocs = 15;
 my $READONLY = 0400;
 my $testcachname = "SysVCacheTestFileName";
+my $cacheDirectory = "/tmp/";
+# No need to use "javasharedresources" cacheDirectory, as it will be automatically appended when using nonpersistent.
 my $java = "./java";
 
 #
 # Java commands for testing ...
 #
-my $cmd = $java. " -Xshareclasses:nonpersistent,name=".$testcachname." -version 2>&1";
-my $cmddumpdisabled = $java. " -Xshareclasses:disablecorruptcachedumps,nonpersistent,name=".$testcachname." -version 2>&1";
-my $destroycmd = $java. " -Xshareclasses:nonpersistent,name=".$testcachname.",destroy 2>&1";
-my $cmdNonfal = $java. " -Xshareclasses:nonpersistent,name=".$testcachname.",nonfatal -version 2>&1";
+my $cmd = $java. " -Xshareclasses:cacheDir=".$cacheDirectory.",nonpersistent,name=".$testcachname." -version 2>&1";
+my $cmddumpdisabled = $java. " -Xshareclasses:cacheDir=".$cacheDirectory.",disablecorruptcachedumps,nonpersistent,name=".$testcachname." -version 2>&1";
+my $destroycmd = $java. " -Xshareclasses:cacheDir=".$cacheDirectory.",nonpersistent,name=".$testcachname.",destroy 2>&1";
+my $cmdNonfal = $java. " -Xshareclasses:cacheDir=".$cacheDirectory.",nonpersistent,name=".$testcachname.",nonfatal -version 2>&1";
 
 #
 # Script argument handling ...
@@ -1538,6 +1540,7 @@ sub Test17
 	my @pidList;
 	my $count = 0;
 	my $waitedfor=0;
+	my $cacheDirectory = "/tmp/";
 	my $cachename = "testSCSysVTest17num";
 
 	print "Test 17: Run ".$numprocs." JVMs and create same number of caches. The try again and make sure no new ones show up\n";
@@ -1545,7 +1548,7 @@ sub Test17
 	&cleanupSysV($osname,$verbose);
 
 	for ($count = 0; $count < $numprocs; $count++) {
-		my $cmd = $javabin . " -Xshareclasses:nonpersistent,name=".$cachename.$count." -version ". " 2>&1";;
+		my $cmd = $javabin . " -Xshareclasses:cacheDir=".$cacheDirectory.",nonpersistent,name=".$cachename.$count." -version ". " 2>&1";;
 		my $pid = &forkAndRunInBackGround($cmd);
 		push(@pidList, $pid);
 	}
@@ -1568,7 +1571,7 @@ sub Test17
 	}
 
 	for ($count = 0; $count < $numprocs; $count++) {
-		my $cmd = $javabin . " -Xshareclasses:nonpersistent,name=".$cachename.$count." -version ". " 2>&1";
+		my $cmd = $javabin . " -Xshareclasses:cacheDir=".$cacheDirectory.",nonpersistent,name=".$cachename.$count." -version ". " 2>&1";
 		#print $cmd."\n";
 		my $pid = &forkAndRunInBackGround($cmd);
 		push(@pidList, $pid);
@@ -1607,6 +1610,7 @@ sub Test18
 	my @pidList;
 	my $count = 0;
 	my $waitedfor=0;
+	my $cacheDirectory = "/tmp/";
 	my $cachename = "testSCSysVTest18num";
 
 	print "Test 18: Run ".$numprocs." JVMs and create same number of caches. Delete the control files and try again. \n";
@@ -1614,7 +1618,7 @@ sub Test18
 	&cleanupSysV($osname,$verbose);
 
 	for ($count = 0; $count < $numprocs; $count++) {
-		my $cmd = $javabin . " -Xshareclasses:nonpersistent,name=".$cachename.$count." -version ". " 2>&1";;
+		my $cmd = $javabin . " -Xshareclasses:cacheDir=".$cacheDirectory.",nonpersistent,name=".$cachename.$count." -version ". " 2>&1";;
 		my $pid = &forkAndRunInBackGround($cmd);
 		push(@pidList, $pid);
 	}
@@ -1633,7 +1637,7 @@ sub Test18
 	`$cleanupCmd`;
 
 	for ($count = 0; $count < $numprocs; $count++) {
-		my $cmd = $javabin . " -Xshareclasses:nonpersistent,name=".$cachename.$count." -version ". " 2>&1";;
+		my $cmd = $javabin . " -Xshareclasses:cacheDir=".$cacheDirectory.",nonpersistent,name=".$cachename.$count." -version ". " 2>&1";;
 		my $pid = &forkAndRunInBackGround($cmd);
 		push(@pidList, $pid);
 		#print $cmd."\n";
@@ -1716,6 +1720,7 @@ sub Test20
 	my @pidList;
 	my $count = 0;
 	my $waitedfor=0;
+	my $cacheDirectory = "/tmp/";
 	my $cachename = "testSCSysVTest20num";
 
 	print "Test 20: Run ".$numprocs." JVMs and create same number of caches. Delete the ipcs objs and try again. \n";
@@ -1723,8 +1728,8 @@ sub Test20
 	&cleanupSysV($osname,$verbose);
 
 	for ($count = 0; $count < $numprocs; $count++) {
-		my $cmd = $javabin . " -Xshareclasses:nonpersistent,name=".$cachename.$count." -version &> ./out.txt";
-		my $cmd = $javabin . " -Xshareclasses:nonpersistent,name=".$cachename.$count." -version";
+		my $cmd = $javabin . " -Xshareclasses:cacheDir=".$cacheDirectory.",nonpersistent,name=".$cachename.$count." -version &> ./out.txt";
+		my $cmd = $javabin . " -Xshareclasses:cacheDir=".$cacheDirectory.",nonpersistent,name=".$cachename.$count." -version";
 		my $pid = &forkAndRunInBackGround($cmd);
 		push(@pidList, $pid);
 	}
@@ -1740,7 +1745,7 @@ sub Test20
 
 
 	for ($count = 0; $count < $numprocs; $count++) {
-		my $cmd = $javabin . " -Xshareclasses:nonpersistent,name=".$cachename.$count." -version &> ./out.txt";
+		my $cmd = $javabin . " -Xshareclasses:cacheDir=".$cacheDirectory.",nonpersistent,name=".$cachename.$count." -version &> ./out.txt";
 		my $pid = &forkAndRunInBackGround($cmd);
 		push(@pidList, $pid);
 	}

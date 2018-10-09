@@ -431,7 +431,7 @@ typedef struct J9PortLibrary {
 	/** see @ref j9shmem.c::j9shmem_handle_stat "j9shmem_handle_stat"*/
 	intptr_t  ( *shmem_handle_stat)(struct J9PortLibrary *portLibrary, struct j9shmem_handle *handle, struct J9PortShmemStatistic *statbuf);
 	/** see @ref j9shmem.c::j9shmem_getDir "j9shmem_getDir"*/
-	intptr_t  ( *shmem_getDir)(struct J9PortLibrary* portLibrary, const char* ctrlDirName, BOOLEAN appendBaseDir, char* buffer, uintptr_t length) ;
+	intptr_t  ( *shmem_getDir)(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint32_t flags, char* buffer, uintptr_t length) ;
 	/** see @ref j9shmem.c::j9shmem_createDir "j9shmem_createDir"*/
 	intptr_t  ( *shmem_createDir)(struct J9PortLibrary *portLibrary, char* cacheDirName, uintptr_t cacheDirPerm, BOOLEAN cleanMemorySegments) ;
 	/** see @ref j9shmem.c::j9shmem_getFilepath "j9shmem_getFilepath"*/

@@ -58,7 +58,7 @@ SH_OSCacheTestSysv::testBasic(J9PortLibrary* portLibrary, J9JavaVM *vm)
 	setCurrentCacheVersion(vm, J2SE_LATEST, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
 
-	rc = j9shmem_getDir(NULL, TRUE, cacheDir, J9SH_MAXPATH);
+	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
 	if (rc == -1) {
 		rc = FAIL;
 		goto cleanup;
@@ -187,7 +187,7 @@ SH_OSCacheTestSysv::testMultipleCreate(J9PortLibrary* portLibrary, J9JavaVM *vm,
 		return FAIL;
 	}
 
-	rc = j9shmem_getDir(NULL, TRUE, cacheDir, J9SH_MAXPATH);
+	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
 	if (rc == -1) {
 		return FAIL;
 	}
@@ -321,7 +321,7 @@ SH_OSCacheTestSysv::testConstructor(J9PortLibrary *portLibrary, J9JavaVM *vm)
 		goto cleanup;
 	}
 
-	rc = j9shmem_getDir(NULL, TRUE, cacheDir, J9SH_MAXPATH);
+	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
 	if (rc == -1) {
 		rc = FAIL;
 		goto cleanup;
@@ -400,7 +400,7 @@ SH_OSCacheTestSysv::testFailedConstructor(J9PortLibrary *portLibrary, J9JavaVM *
 		return FAIL;
 	}
 
-	rc = j9shmem_getDir(NULL, TRUE, cacheDir, J9SH_MAXPATH);
+	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
 	if (rc == -1) {
 		rc = FAIL;
 		goto cleanup;
@@ -481,7 +481,7 @@ SH_OSCacheTestSysv::testGetAllCacheStatistics(J9JavaVM* vm)
 	}
 
 	/* Pass in FALSE as the second parameter, cacheDirName is set to "/tmp" here. */
-	ret = j9shmem_getDir(ctrlDirName, FALSE, cacheDirName, J9SH_MAXPATH);
+	ret = j9shmem_getDir(ctrlDirName, 0, cacheDirName, J9SH_MAXPATH);
 	if (-1 == ret) {
 		j9tty_printf(PORTLIB, "testGetAllCacheStatistics: j9shmem_getDir() failed \n");
 		goto cleanup;
@@ -600,7 +600,7 @@ SH_OSCacheTestSysv::testMutex(J9PortLibrary *portLibrary, J9JavaVM *vm, struct j
 		return FAIL;
 	}
 
-	rc = j9shmem_getDir(NULL, TRUE, cacheDir, J9SH_MAXPATH);
+	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
 	if (rc == -1) {
 		return FAIL;
 	}
@@ -695,7 +695,7 @@ SH_OSCacheTestSysv::testMutexHang(J9PortLibrary *portLibrary, J9JavaVM *vm, stru
 		goto cleanup;
 	}
 	
-	rc = j9shmem_getDir(NULL, TRUE, cacheDir, J9SH_MAXPATH);
+	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
 	if (rc == -1) {
 		rc = FAIL;
 		goto cleanup;
@@ -777,7 +777,7 @@ SH_OSCacheTestSysv::testSize(J9PortLibrary* portLibrary, J9JavaVM *vm)
 		goto cleanup;
 	}
 
-	rc = j9shmem_getDir(NULL, TRUE, cacheDir, J9SH_MAXPATH);
+	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
 	if (rc == -1) {
 		rc = FAIL;
 		goto cleanup;
@@ -928,7 +928,7 @@ SH_OSCacheTestSysv::testDestroy (J9PortLibrary* portLibrary, J9JavaVM *vm, struc
 		goto cleanup;
 	}
 
-	ret = j9shmem_getDir(NULL, TRUE, cacheDir, J9SH_MAXPATH);
+	ret = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
 	if (-1 == ret) {
 	j9tty_printf(PORTLIB, "testDestroy: j9shmem_getDir() failed \n");
 		goto cleanup;

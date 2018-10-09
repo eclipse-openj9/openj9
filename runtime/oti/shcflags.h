@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,9 +62,10 @@
 
 #define J9SHR_RUNTIMEFLAG_ENABLE_TIMESTAMP_CHECKS  1
 #define J9SHR_RUNTIMEFLAG_ENABLE_LOCAL_CACHEING  2
+/*The bit 4 is free for use.*/
 #define J9SHR_RUNTIMEFLAG_ENABLE_REDUCE_STORE_CONTENTION  8
-/*The below bit (32) used to be for the safemod flag, it is now free for use.*/
-#define J9SHR_RUNTIMEFLAG_ENABLE_FREE_FOR_USE 32
+/*The bit 16 is free for use.*/
+#define J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES  32
 #define J9SHR_RUNTIMEFLAG_ENABLE_TRACECOUNT  64
 #define J9SHR_RUNTIMEFLAG_ENABLE_BYTECODEFIX  0x80
 #define J9SHR_RUNTIMEFLAG_BYTECODE_AGENT_RUNNING  0x100
