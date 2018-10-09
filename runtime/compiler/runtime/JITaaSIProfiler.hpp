@@ -65,7 +65,8 @@ public:
    virtual TR_IPBytecodeHashTableEntry *profilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex,
                                                          TR::Compilation *comp, uintptrj_t data = 0xDEADF00D, bool addIt = false) override;
 
-   virtual int32_t getMaxCallCount();
+   virtual int32_t getMaxCallCount() override;
+   virtual void setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, int32_t count, TR::Compilation *) override;
 
    TR_IPBytecodeHashTableEntry* ipBytecodeHashTableEntryFactory(TR_IPBCDataStorageHeader *storage, uintptrj_t pc, TR_Memory* mem, TR_AllocationKind allocKind);
    void printStats();

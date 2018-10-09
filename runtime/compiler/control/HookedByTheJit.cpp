@@ -5816,7 +5816,8 @@ static void iProfilerActivationLogic(J9JITConfig * jitConfig, TR::CompilationInf
          TR_J9VMBase *fej9 = (TR_J9VMBase *)(TR_J9VMBase::get(jitConfig, 0));
          TR_IProfiler *iProfiler = fej9->getIProfiler();
          TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
-         if (iProfiler && iProfiler->getProfilerMemoryFootprint() < TR::Options::_iProfilerMemoryConsumptionLimit)
+         if (iProfiler && iProfiler->getProfilerMemoryFootprint() < TR::Options::_iProfilerMemoryConsumptionLimit &&
+             compInfo->getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
             {
             // Turn on if classLoadPhase became active or
             // if many interpreted samples
@@ -7057,7 +7058,8 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
             {
             iProfiler->startIProfilerThread(javaVM);
             }
-         if (TR::Options::getCmdLineOptions()->getOption(TR_NoIProfilerDuringStartupPhase))
+         if (TR::Options::getCmdLineOptions()->getOption(TR_NoIProfilerDuringStartupPhase) ||
+             compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
             {
             interpreterProfilingState = IPROFILING_STATE_OFF;
             }

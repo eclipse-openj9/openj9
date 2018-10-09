@@ -2036,7 +2036,17 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(iProfiler->getMaxCallCount());
          }
          break;
-
+      case J9ServerMessageType::IProfiler_setCallCount:
+         {
+         auto recv = client->getRecvData<TR_OpaqueMethodBlock*, int32_t, int32_t>();
+         auto method = std::get<0>(recv);
+         auto bcIndex = std::get<1>(recv);
+         auto count = std::get<2>(recv);
+         TR_IProfiler * iProfiler = fe->getIProfiler();
+         iProfiler->setCallCount(method, bcIndex, count, comp);
+         client->write(JITaaS::Void());
+         }
+         break;
       case J9ServerMessageType::Recompilation_getExistingMethodInfo:
          {
          auto recomp = comp->getRecompilationInfo();

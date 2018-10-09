@@ -2941,9 +2941,6 @@ TR_IPBCDataCallGraph::isLocked()
 uint32_t
 TR_IPBCDataCallGraph::canBeSerialized(TR::PersistentInfo *info)
    {
-   if (!getCanPersistEntryFlag())
-      return IPBC_ENTRY_CANNOT_PERSIST;
-
    if (!lockEntry()) // Try to lock the entry; if entry is already locked, abort
       return IPBC_ENTRY_PERSIST_LOCK;
 
@@ -2999,17 +2996,8 @@ TR_IPBCDataCallGraph::deserialize(TR_IPBCDataStorageHeader *storage)
    TR_ASSERT(storage->ID == TR_IPBCD_CALL_GRAPH, "Incompatible types between storage and loading of iprofile persistent data");
    for (int32_t i = 0; i < NUM_CS_SLOTS; i++)
       {
-      J9Class * ramClass = (J9Class*) store->_csInfo.getClazz(i);
-      if (ramClass)
-         {
-         _csInfo.setClazz(i, (uintptrj_t)ramClass);
-         _csInfo._weight[i] = store->_csInfo._weight[i];
-         }
-      else
-         {
-         _csInfo.setClazz(i, 0);
-         _csInfo._weight[i] = 0;
-         }
+      _csInfo.setClazz(i, store->_csInfo.getClazz(i));
+      _csInfo._weight[i] = store->_csInfo._weight[i];
       }
    _csInfo._residueWeight = store->_csInfo._residueWeight;
    _csInfo._tooBigToBeInlined = store->_csInfo._tooBigToBeInlined;
@@ -3210,7 +3198,6 @@ TR_IProfiler::setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, int32_
 
       if (csInfo)
          {
-         csInfo->setClazz(0, 0);
          csInfo->_weight[0] = count;
 
          if (count>_maxCallFrequency)
