@@ -555,9 +555,22 @@ TR_J9ServerVM::getOSRFrameSizeInBytes(TR_OpaqueMethodBlock * method)
 int32_t
 TR_J9ServerVM::getByteOffsetToLockword(TR_OpaqueClassBlock * clazz)
    {
+#if defined (J9VM_THR_LOCK_NURSERY)
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) clazz);
+      if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+         {
+         return it->second.byteOffsetToLockword;
+         }
+      }
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_getByteOffsetToLockword, clazz);
    return std::get<0>(stream->read<int32_t>());
+
+#else
+   return TMP_OFFSETOF_J9OBJECT_MONITOR;
+#endif
    }
 
 bool
