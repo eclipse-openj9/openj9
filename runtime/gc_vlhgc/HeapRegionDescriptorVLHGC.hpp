@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2014 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,7 +51,6 @@ public:
 	};
 	struct {
 		bool _shouldMark;	/**< true if the collector is to mark this region during the collection cycle */
-		bool _noEvacuation; /**< true if the region is set that do not copyforward, it is valid if _shouldMark is true. */
 		UDATA _dynamicMarkCost;	/**< The cost of marking this region (that is, the number of other regions (not including this one) which will need to be scanned - this value is dynamic in that converting the regions which refer to it to scan or mark reduces this number.  It is only valid during GC setup */
 		U_8 _overflowFlags;	/**< Used to denote that work packet overflow occurred for an object in this region - bits 0x1 is GMP or global while 0x2 is PGC */
 	} _markData;

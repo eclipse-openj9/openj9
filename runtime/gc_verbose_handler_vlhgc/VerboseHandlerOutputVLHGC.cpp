@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -400,7 +400,7 @@ MM_VerboseHandlerOutputVLHGC::handleCopyForwardEnd(J9HookInterface** hook, UDATA
 				copyForwardStats->_copyObjectsNonEden, copyForwardStats->_copyBytesNonEden, copyForwardStats->_copyDiscardBytesNonEden);
 	writer->formatAndOutput(env, 1, "<memory-cardclean objects=\"%zu\" bytes=\"%zu\" />",
 				copyForwardStats->_objectsCardClean, copyForwardStats->_bytesCardClean);
-	if(copyForwardStats->_aborted || (0 != copyForwardStats->_nonEvacuateRegionCount)) {
+	if(copyForwardStats->_aborted) {
 		writer->formatAndOutput(env, 1, "<memory-traced type=\"eden\" objects=\"%zu\" bytes=\"%zu\" />",
 					copyForwardStats->_scanObjectsEden, copyForwardStats->_scanBytesEden);
 		writer->formatAndOutput(env, 1, "<memory-traced type=\"other\" objects=\"%zu\" bytes=\"%zu\" />",
@@ -425,9 +425,6 @@ MM_VerboseHandlerOutputVLHGC::handleCopyForwardEnd(J9HookInterface** hook, UDATA
 	
 	if(copyForwardStats->_scanCacheOverflow) {
 		writer->formatAndOutput(env, 1, "<warning details=\"scan cache overflow (storage acquired from heap)\" />");
-	}
-	if (0 != copyForwardStats->_nonEvacuateRegionCount) {
-		writer->formatAndOutput(env, 1, "<warning details=\"running under hybrid mode, JNI Critical region count=%zu\" />", copyForwardStats->_nonEvacuateRegionCount);
 	}
 	if(copyForwardStats->_aborted) {
 		writer->formatAndOutput(env, 1, "<warning details=\"operation aborted due to insufficient free space\" />");
