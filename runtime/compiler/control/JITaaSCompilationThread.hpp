@@ -56,6 +56,7 @@ class ClientSessionData
       uint32_t byteOffsetToLockword;
       TR_OpaqueClassBlock * leafComponentClass;
       void *classLoader;
+      TR_OpaqueClassBlock * hostClass;
       };
 
    struct J9MethodInfo
@@ -170,7 +171,7 @@ class JITaaSHelpers
    public:
    // NOTE: when adding new elements to this tuple, add them to the end,
    // to not mess with the established order.
-   using ClassInfoTuple = std::tuple<std::string, J9Method *, TR_OpaqueClassBlock *, int32_t, TR_OpaqueClassBlock *, std::vector<TR_OpaqueClassBlock *>, std::vector<std::tuple<bool, bool>>, bool, uintptrj_t , bool, uint32_t, TR_OpaqueClassBlock *, void *>;
+   using ClassInfoTuple = std::tuple<std::string, J9Method *, TR_OpaqueClassBlock *, int32_t, TR_OpaqueClassBlock *, std::vector<TR_OpaqueClassBlock *>, std::vector<std::tuple<bool, bool>>, bool, uintptrj_t , bool, uint32_t, TR_OpaqueClassBlock *, void *, TR_OpaqueClassBlock *>;
    static ClassInfoTuple packRemoteROMClassInfo(J9Class *clazz, TR_J9VM *fe, TR_Memory *trMemory);
    static void cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple);
    static J9ROMClass *getRemoteROMClassIfCached(ClientSessionData *clientSessionData, J9Class *clazz);
