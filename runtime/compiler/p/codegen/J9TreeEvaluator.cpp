@@ -11852,7 +11852,14 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, bool isLatin1, TR::C
       generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, endAddress, endIndex);
       }
 
+   if (node->getChild(3)->getReferenceCount() == 1)
+      srm->donateScratchRegister(startIndex);
+   if (node->getChild(4)->getReferenceCount() == 1)
+      srm->donateScratchRegister(endIndex);
+
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, arrAddress, arrObjectAddress, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+   if (node->getChild(1)->getReferenceCount() == 1)
+      srm->donateScratchRegister(arrObjectAddress);
 
    // Handle the first character using a simple scalar compare. Otherwise, first character matches
    // would be slower than the old scalar comparison loop. This is a problem since first character
@@ -11881,6 +11888,8 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, bool isLatin1, TR::C
    // Splat the value to be compared against and its bitwise complement into two vector registers
    // for later use
    generateTrg1Src1Instruction(cg, TR::InstOpCode::mtvsrwz, node, targetVector, targetScalar);
+   if (node->getChild(2)->getReferenceCount() == 1)
+      srm->donateScratchRegister(targetScalar);
    if (isLatin1)
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::vspltb, node, targetVector, targetVector, 7);
    else
