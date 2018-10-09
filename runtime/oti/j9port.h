@@ -213,6 +213,10 @@
 #define J9SHSEM_OPEN_FOR_DESTROY	0x2
 #define J9SHSEM_OPEN_DO_NOT_CREATE	0x4
 
+/* Flags passed to "flags" argument of j9shmem_getDir(). */
+#define J9SHMEM_GETDIR_APPEND_BASEDIR		0x1
+#define J9SHMEM_GETDIR_USE_USERHOME			0x2
+
 /* Maximum id we should try when we do ftok */
 #define J9SH_MAX_PROJ_ID 20 
 

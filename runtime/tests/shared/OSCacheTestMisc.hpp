@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2014 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,7 @@
 #define OSCACHETESTMISC_HPP_INCLUDED
 
 extern "C" {
-#include "j9port.h"
+#include "j9.h"
 #include "exelib_api.h"
 #include "main.h"
 }
@@ -33,11 +33,11 @@ extern "C" {
 class SH_OSCacheTestMisc {
 public:
 	/* Main function to run all the tests */
-	static IDATA runTests(J9PortLibrary *portLibrary, struct j9cmdlineOptions *arg, const char *cmdline);
+	static IDATA runTests(J9JavaVM *vm, struct j9cmdlineOptions *arg, const char *cmdline);
 	
 private:
 	/* Each test is a private function in the class */
-	static IDATA testGetCacheDir(J9PortLibrary *portLibrary);
+	static IDATA testGetCacheDir(J9JavaVM *vm);
 };
 
 #endif /* OSCACHETESTMISC_HPP_INCLUDED */

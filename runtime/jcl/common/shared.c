@@ -2305,12 +2305,16 @@ exit:
 jboolean JNICALL
 Java_com_ibm_oti_shared_Shared_isSharingEnabledImpl(JNIEnv* env, jclass clazz)
 {
+	jboolean ret = JNI_FALSE;
 #if defined(J9VM_OPT_SHARED_CLASSES)
 	J9JavaVM *vm = ((J9VMThread *)env)->javaVM;
-	return (NULL == vm->sharedClassConfig) ? JNI_FALSE : JNI_TRUE;
-#else
-	return JNI_FALSE;
+	if (NULL != vm->sharedClassConfig) {
+		if (J9_ARE_ALL_BITS_SET(vm->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES)) {
+			ret = JNI_TRUE;
+		}
+	}
 #endif /* defined(J9VM_OPT_SHARED_CLASSES) */
+	return ret;
 }
 
 

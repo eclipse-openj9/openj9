@@ -211,6 +211,7 @@ J9SharedClassesHelpText J9SHAREDCLASSESHELPTEXT[] = {
 	HELPTEXT_NEWLINE,
 	{OPTION_SILENT, J9NLS_SHRC_SHRINIT_HELPTEXT_SILENT, 0, 0},
 	{OPTION_NONFATAL, J9NLS_SHRC_SHRINIT_HELPTEXT_NONFATAL, 0, 0},
+	{OPTION_FATAL, J9NLS_SHRC_SHRINIT_HELPTEXT_FATAL, 0, 0},
 	{OPTION_NONE, J9NLS_SHRC_SHRINIT_HELPTEXT_NONE2, 0, 0},
 	{OPTION_UTILITIES, J9NLS_SHRC_SHRINIT_HELPTEXT_UTILITIES, 0, 0},
 	HELPTEXT_NEWLINE,
@@ -234,6 +235,7 @@ J9SharedClassesHelpText J9SHAREDCLASSESHELPTEXT[] = {
 #endif
 	{OPTION_CACHERETRANSFORMED, J9NLS_SHRC_SHRINIT_HELPTEXT_CACHERETRANSFORMED, 0, 0},
 	{OPTION_NOBOOTCLASSPATH, J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1, 0, 0},
+	{OPTION_BOOTCLASSESONLY, J9NLS_SHRC_SHRINIT_HELPTEXT_BOOTCLASSESONLY, 0, 0},
 	{OPTION_ENABLE_BCI, J9NLS_SHRC_SHRINIT_HELPTEXT_ENABLE_BCI, 0, 0},
 	{OPTION_DISABLE_BCI, J9NLS_SHRC_SHRINIT_HELPTEXT_DISABLE_BCI, 0, 0},
 	{OPTION_RESTRICT_CLASSPATHS, J9NLS_SHRC_SHRINIT_HELPTEXT_RESTRICT_CLASSPATHS, 0, 0},
@@ -301,6 +303,7 @@ J9SharedClassesOptions J9SHAREDCLASSESOPTIONS[] = {
 	{ OPTION_PRINTORPHANSTATS, PARSE_TYPE_EXACT, RESULT_DO_PRINTORPHANSTATS, 0},
 	{ OPTION_SILENT, PARSE_TYPE_EXACT, RESULT_DO_SET_VERBOSEFLAG, 0},
 	{ OPTION_NONFATAL, PARSE_TYPE_EXACT, RESULT_DO_ADD_RUNTIMEFLAG, J9SHR_RUNTIMEFLAG_ENABLE_NONFATAL},
+	{ OPTION_FATAL, PARSE_TYPE_EXACT, RESULT_DO_REMOVE_RUNTIMEFLAG, J9SHR_RUNTIMEFLAG_ENABLE_NONFATAL},
 	{ OPTION_CONTROLDIR_EQUALS, PARSE_TYPE_STARTSWITH, RESULT_DO_CTRLD_EQUALS, 0},
 	{ OPTION_NOAOT, PARSE_TYPE_EXACT, RESULT_DO_REMOVE_RUNTIMEFLAG, J9SHR_RUNTIMEFLAG_ENABLE_AOT},
 	{ OPTION_NO_JITDATA, PARSE_TYPE_EXACT, RESULT_DO_REMOVE_RUNTIMEFLAG, J9SHR_RUNTIMEFLAG_ENABLE_JITDATA},
@@ -310,6 +313,7 @@ J9SharedClassesOptions J9SHAREDCLASSESOPTIONS[] = {
 	{ OPTION_MPROTECT_EQUALS, PARSE_TYPE_STARTSWITH, RESULT_DO_MPROTECT_EQUALS, 0},
 	{ OPTION_CACHERETRANSFORMED, PARSE_TYPE_EXACT, RESULT_DO_ADD_RUNTIMEFLAG, J9SHR_RUNTIMEFLAG_ENABLE_CACHERETRANSFORMED},
 	{ OPTION_NOBOOTCLASSPATH, PARSE_TYPE_EXACT, RESULT_DO_REMOVE_RUNTIMEFLAG, J9SHR_RUNTIMEFLAG_ENABLE_CACHEBOOTCLASSES},
+	{ OPTION_BOOTCLASSESONLY, PARSE_TYPE_EXACT, RESULT_DO_BOOTCLASSESONLY, J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES},
 	{ OPTION_VERBOSE_DATA, PARSE_TYPE_EXACT, RESULT_DO_ADD_VERBOSEFLAG, J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DATA},
 	{ OPTION_SINGLEJVM, PARSE_TYPE_EXACT, RESULT_DO_NOTHING, 0},
 	{ OPTION_KEEP, PARSE_TYPE_EXACT, RESULT_DO_NOTHING, 0},
@@ -1024,12 +1028,17 @@ parseArgs(J9JavaVM* vm, char* options, U_64* runtimeFlags, UDATA* verboseFlags, 
 				return RESULT_PARSE_FAILED;
 			}
 			break;
+		case RESULT_DO_BOOTCLASSESONLY:
+			*runtimeFlags &= ~J9SHAREDCLASSESOPTIONS[i].flag;
+			*runtimeFlags |= J9SHR_RUNTIMEFLAG_ENABLE_NONFATAL;
+			break;
  		default:
 			return J9SHAREDCLASSESOPTIONS[i].action;
 		}
 	
 		options += (strlen(J9SHAREDCLASSESOPTIONS[i].option)+1);
 	}
+
 
 #if defined(J9ZOS390)
 	/* Persistent shared classes caches not currently available */
@@ -2284,7 +2293,7 @@ reportUtilityNotApplicable(J9JavaVM* vm, const char* ctrlDirName, const char* ca
 
 	IDATA reportedIncompatibleNum = j9shr_report_utility_incompatible(vm, ctrlDirName, groupPerm, verboseFlags, cacheName, optionName);
 
-	if (SH_OSCache::getCacheDir(PORTLIB, ctrlDirName, cacheDirName, J9SH_MAXPATH, versionData.cacheType) == -1) {
+	if (SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDirName, J9SH_MAXPATH, versionData.cacheType) == -1) {
 		return;
 	}
 	if ((reportedIncompatibleNum == 0) && (j9shr_stat_cache(vm, cacheDirName, 0, cacheName, &versionData, OSCACHE_CURRENT_CACHE_GEN))) {
@@ -2464,14 +2473,14 @@ performSharedClassesCommandLineAction(J9JavaVM* vm, J9SharedClassConfig* sharedC
 		break;
 
 	case RESULT_DO_PRINT_CACHENAME:
-		if (SH_OSCache::getCacheDir(PORTLIB, sharedClassConfig->ctrlDirName, cacheDirName, J9SH_MAXPATH, cacheType) == -1) {
+		if (SH_OSCache::getCacheDir(vm, sharedClassConfig->ctrlDirName, cacheDirName, J9SH_MAXPATH, cacheType) == -1) {
 			return J9VMDLLMAIN_SILENT_EXIT_VM;
 		}
 		j9shr_print_cache_filename(vm, cacheDirName, runtimeFlags, cacheName);
 		break;
 
 	case RESULT_DO_PRINT_SNAPSHOTNAME:
-		if (-1 == SH_OSCache::getCacheDir(PORTLIB, sharedClassConfig->ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_SNAPSHOT)) {
+		if (-1 == SH_OSCache::getCacheDir(vm, sharedClassConfig->ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_SNAPSHOT)) {
 			return J9VMDLLMAIN_SILENT_EXIT_VM;
 		}
 		j9shr_print_snapshot_filename(vm, cacheDirName, cacheName);
@@ -4143,6 +4152,7 @@ getDefaultRuntimeFlags(void)
 			J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_PARTIAL_PAGES |
 #endif
 			J9SHR_RUNTIMEFLAG_ENABLE_CACHEBOOTCLASSES |
+			J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES |
 			J9SHR_RUNTIMEFLAG_ENABLE_BYTECODEFIX |
 			J9SHR_RUNTIMEFLAG_ENABLE_AOT |
 			J9SHR_RUNTIMEFLAG_ENABLE_JITDATA |
@@ -4326,7 +4336,7 @@ j9shr_createCacheSnapshot(J9JavaVM* vm, const char* cacheName)
 
 	Trc_SHR_INIT_j9shr_createCacheSnapshot_Entry(cacheName);
 
-	if (-1 == SH_OSCache::getCacheDir(PORTLIB, vm->sharedClassConfig->ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_SNAPSHOT)) {
+	if (-1 == SH_OSCache::getCacheDir(vm, vm->sharedClassConfig->ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_SNAPSHOT)) {
 		Trc_SHR_INIT_j9shr_createCacheSnapshot_getCacheDirFailed();
 		SHRINIT_ERR_TRACE(verboseFlags, J9NLS_SHRC_GETSNAPSHOTDIR_FAILED);
 		rc = -1;
@@ -4775,7 +4785,7 @@ checkIfCacheExists(J9JavaVM* vm, const char* ctrlDirName, char* cacheDirName, co
 	IDATA ret = -1;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	if (-1 == SH_OSCache::getCacheDir(PORTLIB, ctrlDirName, cacheDirName, J9SH_MAXPATH, cacheType)) {
+	if (-1 == SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDirName, J9SH_MAXPATH, cacheType)) {
 		SHRINIT_ERR_TRACE(vm->sharedCacheAPI->verboseFlags, J9NLS_SHRC_SHRINIT_GETCACHEDIR_FAILED);
 	} else {
 		setCurrentCacheVersion(vm, J2SE_VERSION(vm), versionData);
@@ -4877,7 +4887,7 @@ isFreeDiskSpaceLow(J9JavaVM *vm, U_64* maxsize)
 	bool ret = true;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	if (-1 == SH_OSCache::getCacheDir(PORTLIB, vm->sharedCacheAPI->ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_PERSISTENT)) {
+	if (-1 == SH_OSCache::getCacheDir(vm, vm->sharedCacheAPI->ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_PERSISTENT)) {
 		Trc_SHR_INIT_isFreeDiskSpaceLow_getDirFailed();
 		goto done;
 	}
@@ -4901,5 +4911,4 @@ done:
 	}
 	return ret;
 }
-
 } /* extern "C" */

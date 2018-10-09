@@ -187,7 +187,7 @@ public:
 
 	static UDATA getRequiredConstrBytes(void);
 	
-	static IDATA getCacheDir(J9PortLibrary* portLibrary, const char* ctrlDirName, char* buffer, UDATA bufferSize, U_32 cacheType);
+	static IDATA getCacheDir(J9JavaVM* vm, const char* ctrlDirName, char* buffer, UDATA bufferSize, U_32 cacheType);
 	
 	static IDATA createCacheDir(J9PortLibrary* portLibrary, char* cacheDirName, UDATA cacheDirPerm, bool cleanMemorySegments);
 
