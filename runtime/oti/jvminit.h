@@ -366,6 +366,8 @@ enum INIT_STAGE {
 #define VMOPT_XXDISABLEJITWATCH "-XX:-JITInlineWatches"
 #define VMOPT_XXENABLEALWAYSSPLITBYTECODES "-XX:+AlwaysSplitBytecodes"
 #define VMOPT_XXDISABLEALWAYSSPLITBYTECODES "-XX:-AlwaysSplitBytecodes"
+#define VMOPT_XXENABLEPOSITIVEHASHCODE "-XX:+PositiveIdentityHash"
+#define VMOPT_XXDISABLEPOSITIVEHASHCODE "-XX:-PositiveIdentityHash"
 
 #define VMOPT_XX_NOSUBALLOC32BITMEM "-XXnosuballoc32bitmem"
 

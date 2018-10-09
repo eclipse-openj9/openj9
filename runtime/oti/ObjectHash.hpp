@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -173,6 +173,11 @@ public:
 		hashValue ^= hashValue >> 13;
 		hashValue *= MUL2;
 		hashValue ^= hashValue >> 16;
+
+		/* If forcing positive hash codes, AND out the sign bit */
+		if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_POSITIVE_HASHCODE)) {
+			hashValue &= (U_32)0x7FFFFFFF;
+		}
 
 		return (I_32) hashValue;
 	}
