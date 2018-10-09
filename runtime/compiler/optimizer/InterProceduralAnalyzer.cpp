@@ -847,7 +847,7 @@ TR::InterProceduralAnalyzer::addWrittenGlobal(TR::SymbolReference *symRef)
    {
    char *sig = NULL;
    int32_t length = 0;
-   if (symRef->getSymbol()->isStatic())
+   if (symRef->getSymbol()->isStaticField())
       sig = symRef->getOwningMethod(comp())->staticName(symRef->getCPIndex(), length, trMemory());
    else if (symRef->getSymbol()->isShadow())
       sig = symRef->getOwningMethod(comp())->fieldName(symRef->getCPIndex(), length, trMemory());
@@ -858,7 +858,7 @@ TR::InterProceduralAnalyzer::addWrittenGlobal(TR::SymbolReference *symRef)
       TR::SymbolReference *currSymReference = currSymRef->getData()->_symRef;
       char *currSig = NULL;
       int32_t currLength = 0;
-      if (currSymReference->getSymbol()->isStatic())
+      if (currSymReference->getSymbol()->isStaticField())
          currSig = currSymReference->getOwningMethod(comp())->staticName(currSymReference->getCPIndex(), currLength, trMemory());
       else if (currSymReference->getSymbol()->isShadow())
          currSig = currSymReference->getOwningMethod(comp())->fieldName(currSymReference->getCPIndex(), currLength, trMemory());
@@ -879,7 +879,7 @@ TR::InterProceduralAnalyzer::addWrittenGlobal(TR::SymbolReference *symRef)
       TR::SymbolReference *currSymReference = currSym->_symRef;
       char *currSig = NULL;
       int32_t currLength = 0;
-      if (currSymReference->getSymbol()->isStatic())
+      if (currSymReference->getSymbol()->isStaticField())
          currSig = currSymReference->getOwningMethod(comp())->staticName(currSymReference->getCPIndex(), currLength, trMemory());
       else if (currSymReference->getSymbol()->isShadow())
          currSig = currSymReference->getOwningMethod(comp())->fieldName(currSymReference->getCPIndex(), currLength, trMemory());
