@@ -2717,9 +2717,10 @@ JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class
    bool classInitialized = std::get<9>(classInfo);
    uint32_t byteOffsetToLockword = std::get<10>(classInfo);
    TR_OpaqueClassBlock * leafComponentClass = std::get<11>(classInfo);
+   void *classLoader = std::get<12>(classInfo);
    clientSessionData->getROMClassMap().insert({ clazz, { romClass, methods,
       baseComponentClass, numDims,
-      nullptr, nullptr, parentClass, interfaces, classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword, leafComponentClass } });
+      nullptr, nullptr, parentClass, interfaces, classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword, leafComponentClass, classLoader} });
    uint32_t numMethods = romClass->romMethodCount;
    J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
    for (uint32_t i = 0; i < numMethods; i++)
@@ -2761,7 +2762,8 @@ JITaaSHelpers::packRemoteROMClassInfo(J9Class *clazz, TR_J9VM *fe, TR_Memory *tr
    bool classInitialized =  fe->isClassInitialized((TR_OpaqueClassBlock *)clazz);
    uint32_t byteOffsetToLockword = fe->getByteOffsetToLockword((TR_OpaqueClassBlock *)clazz);
    TR_OpaqueClassBlock * leafComponentClass = fe->getLeafComponentClassFromArrayClass((TR_OpaqueClassBlock *)clazz);
-   return std::make_tuple(packROMClass(clazz->romClass, trMemory), methodsOfClass, baseClass, numDims, parentClass, TR::Compiler->cls.getITable((TR_OpaqueClassBlock *) clazz), methodTracingInfo, classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword, leafComponentClass);
+   void * classLoader = fe->getClassLoader((TR_OpaqueClassBlock *)clazz);
+   return std::make_tuple(packROMClass(clazz->romClass, trMemory), methodsOfClass, baseClass, numDims, parentClass, TR::Compiler->cls.getITable((TR_OpaqueClassBlock *) clazz), methodTracingInfo, classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword, leafComponentClass, classLoader);
    }
 
 J9ROMClass *
