@@ -12048,9 +12048,6 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, bool isLatin1, TR::C
    generateTrg1Src2Instruction(cg, vectorCompareOp, node, searchVector, searchVector, targetVector);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, foundLabel, cr6);
 
-   srm->donateScratchRegister(targetVector);
-   srm->donateScratchRegister(targetVectorNot);
-
    generateLabelInstruction(cg, TR::InstOpCode::label, node, notFoundLabel);
 
    // We've looked through the entire string and didn't find our target character, so return the
@@ -12103,27 +12100,27 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, bool isLatin1, TR::C
       {
       TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 15 + srm->numAvailableRegisters(), cg->trMemory());
 
-      deps->addPostCondition(arrObjectAddress, TR::RealRegister::NoReg);
-      deps->getPostConditions()->getRegisterDependency(0)->setExcludeGPR0();
-      deps->addPostCondition(targetScalar, TR::RealRegister::NoReg);
-      if (node->getChild(2)->getReferenceCount() == 1)
-         deps->getPostConditions()->getRegisterDependency(1)->setExcludeGPR0();
-      deps->addPostCondition(startIndex, TR::RealRegister::NoReg);
-      if (node->getChild(3)->getReferenceCount() == 1)
-         deps->getPostConditions()->getRegisterDependency(2)->setExcludeGPR0();
-      deps->addPostCondition(endIndex, TR::RealRegister::NoReg);
-      if (node->getChild(4)->getReferenceCount() == 1)
-         deps->getPostConditions()->getRegisterDependency(3)->setExcludeGPR0();
+      if (node->getChild(1)->getReferenceCount() != 1)
+         {
+         deps->addPostCondition(arrObjectAddress, TR::RealRegister::NoReg);
+         deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
+         }
+      if (node->getChild(2)->getReferenceCount() != 1)
+         deps->addPostCondition(targetScalar, TR::RealRegister::NoReg);
+      if (node->getChild(3)->getReferenceCount() != 1)
+         deps->addPostCondition(startIndex, TR::RealRegister::NoReg);
+      if (node->getChild(4)->getReferenceCount() != 1)
+         deps->addPostCondition(endIndex, TR::RealRegister::NoReg);
 
       deps->addPostCondition(cr0, TR::RealRegister::cr0);
       deps->addPostCondition(cr6, TR::RealRegister::cr6);
 
       deps->addPostCondition(zeroRegister, TR::RealRegister::NoReg);
       deps->addPostCondition(result, TR::RealRegister::NoReg);
-      deps->getPostConditions()->getRegisterDependency(7)->setExcludeGPR0();
+      deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
       deps->addPostCondition(arrAddress, TR::RealRegister::NoReg);
       deps->addPostCondition(currentAddress, TR::RealRegister::NoReg);
-      deps->getPostConditions()->getRegisterDependency(9)->setExcludeGPR0();
+      deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
       deps->addPostCondition(endAddress, TR::RealRegister::NoReg);
 
       deps->addPostCondition(targetVector, TR::RealRegister::NoReg);
@@ -12137,6 +12134,8 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, bool isLatin1, TR::C
 
       deps->stopUsingDepRegs(cg, result);
 
+      node->setRegister(result);
+
       cg->decReferenceCount(node->getChild(0));
       cg->decReferenceCount(node->getChild(1));
       cg->decReferenceCount(node->getChild(2));
@@ -12144,7 +12143,6 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, bool isLatin1, TR::C
       cg->decReferenceCount(node->getChild(4));
       }
 
-   node->setRegister(result);
    return result;
    }
 
