@@ -543,25 +543,9 @@ J9::Compilation::canAllocateInlineOnStack(TR::Node* node, TR_OpaqueClassBlock* &
       if (clazz == NULL)
          return -1;
 
-      if (auto stream = TR::CompilationInfo::getStream())
-         {
-         stream->write(JITaaS::J9ServerMessageType::CompInfo_isClassSpecial, clazz);
-         if (std::get<0>(stream->read<bool>()))
-             return -1;
-         }
-      else
-         {
-         // Can not inline the allocation on stack if the class is special
-         if (clazz->classDepthAndFlags & (J9_JAVA_CLASS_REFERENCE_WEAK      |
-                                          J9_JAVA_CLASS_REFERENCE_SOFT      |
-                                          J9_JAVA_CLASS_FINALIZE            |
-                                          J9_JAVA_CLASS_OWNABLE_SYNCHRONIZER))
-            {
-            return -1;
-            }
-         }
+      if (TR::Compiler->cls.isClassSpecialForStackAllocation((TR_OpaqueClassBlock *)clazz))
+         return -1;
       }
-
    return self()->canAllocateInline(node, classInfo);
    }
 

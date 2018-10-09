@@ -113,7 +113,8 @@ public:
    int32_t flagValueForPrimitiveTypeCheck(TR::Compilation *comp);
    int32_t flagValueForArrayCheck(TR::Compilation *comp);
    int32_t flagValueForFinalizerCheck(TR::Compilation *comp);
-   
+
+   bool isClassSpecialForStackAllocation(TR_OpaqueClassBlock * classPointer);
    /**
     * Get the virtual function table entry at a specific offset from the class
     *

@@ -2712,10 +2712,11 @@ JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class
       (tmpInterfaces.begin(), tmpInterfaces.end(),
        PersistentVector<TR_OpaqueClassBlock *>::allocator_type(TR::Compiler->persistentAllocator()));
    auto &methodTracingInfo = std::get<6>(classInfo);
-
+   bool classHasFinalFields = std::get<7>(classInfo);
+   uintptrj_t classDepthAndFlags = std::get<8>(classInfo);
    clientSessionData->getROMClassMap().insert({ clazz, { romClass, methods,
       baseComponentClass, numDims,
-      nullptr, nullptr, parentClass, interfaces } });
+      nullptr, nullptr, parentClass, interfaces, classHasFinalFields, classDepthAndFlags } });
    uint32_t numMethods = romClass->romMethodCount;
    J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
    for (uint32_t i = 0; i < numMethods; i++)
@@ -2752,8 +2753,9 @@ JITaaSHelpers::packRemoteROMClassInfo(J9Class *clazz, TR_J9VM *fe, TR_Memory *tr
          fe->isMethodExitTracingEnabled((TR_OpaqueMethodBlock *) &methodsOfClass[i])
          ));
       }
-
-   return std::make_tuple(packROMClass(clazz->romClass, trMemory), methodsOfClass, baseClass, numDims, parentClass, TR::Compiler->cls.getITable((TR_OpaqueClassBlock *) clazz), methodTracingInfo);
+   bool classHasFinalFields = fe->hasFinalFieldsInClass((TR_OpaqueClassBlock *)clazz);
+   uintptrj_t classDepthAndFlags = fe->getClassDepthAndFlagsValue((TR_OpaqueClassBlock *)clazz);
+   return std::make_tuple(packROMClass(clazz->romClass, trMemory), methodsOfClass, baseClass, numDims, parentClass, TR::Compiler->cls.getITable((TR_OpaqueClassBlock *) clazz), methodTracingInfo, classHasFinalFields, classDepthAndFlags);
    }
 
 J9ROMClass *
