@@ -82,7 +82,8 @@ SPECS = ['aix_ppc-64_cmprssptrs'      : CURRENT_RELEASES,
          'linux_x86-64_cmprssptrs'    : CURRENT_RELEASES,
          'linux_x86-64_cmprssptrs_cmake' : ['9'],
          'win_x86'                    : ['8'],
-         'win_x86-64_cmprssptrs'      : CURRENT_RELEASES]
+         'win_x86-64_cmprssptrs'      : CURRENT_RELEASES,
+         'zos_390-64_cmprssptrs'      : ['11']]
 
 LABEL = params.LABEL
 if (!LABEL) {
