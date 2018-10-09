@@ -67,7 +67,12 @@ include(cmake/J9vmGenAsm.cmake)
 # to explicitly tag individual targets which seem tedious
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-set(CMAKE_INSTALL_RPATH "\$ORIGIN")
+if(OMR_HOST_OS STREQUAL "osx")
+	set(CMAKE_INSTALL_RPATH "@loader_path")
+else()
+	set(CMAKE_INSTALL_RPATH "\$ORIGIN")
+endif()
+
 set(OMR_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}" CACHE STRING "")
 set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}" CACHE STRING "" FORCE)
 
