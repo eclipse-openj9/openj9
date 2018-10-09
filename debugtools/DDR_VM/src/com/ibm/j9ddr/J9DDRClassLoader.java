@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.Properties;
 
 import com.ibm.j9ddr.StructureReader.PackageNameType;
 import com.ibm.j9ddr.StructureReader.StructureDescriptor;
@@ -56,13 +57,29 @@ import com.ibm.j9ddr.corereaders.memory.IProcess;
  */
 public class J9DDRClassLoader extends SecureClassLoader {
 
-	private static boolean pointerClassesArePresent(StructureReader reader) {
+	private static boolean shouldGeneratePointerClasses(StructureReader reader) {
+		if (reader.getPackageVersion() < 29) {
+			// Prior to VM version 29, pointers classes are loaded from j9ddr.jar.
+			return false;
+		}
+
+		// Beginning with VM version 29, pointers classes are generated
+		// if "generate.pointers" is true in dynamic.properties.
+
 		String packageName = reader.getPackageName(PackageNameType.POINTER_PACKAGE_SLASH_NAME);
-		String resourceName = '/' + packageName + "J9JavaVMPointer.class";
+		String resourceName = '/' + packageName + "dynamic.properties";
 		InputStream stream = J9DDRClassLoader.class.getResourceAsStream(resourceName);
 
 		if (stream == null) {
 			return false;
+		}
+
+		Properties dynamic = new Properties();
+
+		try {
+			dynamic.load(stream);
+		} catch (IOException e) {
+			// ignore
 		}
 
 		try {
@@ -71,7 +88,7 @@ public class J9DDRClassLoader extends SecureClassLoader {
 			// ignore
 		}
 
-		return true;
+		return Boolean.parseBoolean(dynamic.getProperty("generate.pointers"));
 	}
 
 	private static String withTrailingDot(String name) {
@@ -103,10 +120,7 @@ public class J9DDRClassLoader extends SecureClassLoader {
 		super(parent);
 		this.cache = new HashMap<String, Class<?>>();
 		this.reader = Objects.requireNonNull(reader);
-		// Prior to VM version 29, pointers classes are loaded from j9ddr.jar.
-		// Beginning with VM version 29, pointers classes are generated
-		// if not present in j9ddr.jar.
-		this.generatePointers = (reader.getPackageVersion() >= 29) && !pointerClassesArePresent(reader);
+		this.generatePointers = shouldGeneratePointerClasses(reader);
 		this.pointerPackageDotName = withTrailingDot(reader.getPackageName(PackageNameType.POINTER_PACKAGE_DOT_NAME));
 		this.structurePackageDotName = withTrailingDot(reader.getPackageName(PackageNameType.STRUCTURE_PACKAGE_DOT_NAME));
 		this.streamPackageDotName = withTrailingDot(reader.getPackageName(PackageNameType.PACKAGE_DOT_BASE_NAME));
