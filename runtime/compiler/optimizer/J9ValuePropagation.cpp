@@ -543,13 +543,16 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                node = TR::Node::recreateWithoutProperties(node, TR::aloadi, 1, arrayComponentClassPointer, comp()->getSymRefTab()->findOrCreateJavaLangClassFromClassSymbolRef());
 
                TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
-               TR::KnownObjectTable::Index knownObjectIndex = knot->getIndexAt((uintptrj_t*)(arrayComponentClass + comp()->fej9()->getOffsetOfJavaLangClassFromClassField()));
-               addBlockOrGlobalConstraint(node,
-                     TR::VPClass::create(this,
-                        TR::VPKnownObject::createForJavaLangClass(this, knownObjectIndex),
-                        TR::VPNonNullObject::create(this), NULL, NULL,
-                        TR::VPObjectLocation::create(this, TR::VPObjectLocation::JavaLangClassObject)),
-                     classChildGlobal);
+               if (knot)
+                  {
+                  TR::KnownObjectTable::Index knownObjectIndex = knot->getIndexAt((uintptrj_t*)(arrayComponentClass + comp()->fej9()->getOffsetOfJavaLangClassFromClassField()));
+                  addBlockOrGlobalConstraint(node,
+                        TR::VPClass::create(this,
+                           TR::VPKnownObject::createForJavaLangClass(this, knownObjectIndex),
+                           TR::VPNonNullObject::create(this), NULL, NULL,
+                           TR::VPObjectLocation::create(this, TR::VPObjectLocation::JavaLangClassObject)),
+                        classChildGlobal);
+                  }
 
                invalidateUseDefInfo();
                invalidateValueNumberInfo();
@@ -617,13 +620,16 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                node = TR::Node::recreateWithoutProperties(node, TR::aloadi, 1, superClassPointer, comp()->getSymRefTab()->findOrCreateJavaLangClassFromClassSymbolRef());
 
                TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
-               TR::KnownObjectTable::Index knownObjectIndex = knot->getIndexAt((uintptrj_t*)(superClass + comp()->fej9()->getOffsetOfJavaLangClassFromClassField()));
-               addBlockOrGlobalConstraint(node,
-                     TR::VPClass::create(this,
-                        TR::VPKnownObject::createForJavaLangClass(this, knownObjectIndex),
-                        TR::VPNonNullObject::create(this), NULL, NULL,
-                        TR::VPObjectLocation::create(this, TR::VPObjectLocation::JavaLangClassObject)),
-                     classChildGlobal);
+               if (knot)
+                  {
+                  TR::KnownObjectTable::Index knownObjectIndex = knot->getIndexAt((uintptrj_t*)(superClass + comp()->fej9()->getOffsetOfJavaLangClassFromClassField()));
+                  addBlockOrGlobalConstraint(node,
+                        TR::VPClass::create(this,
+                           TR::VPKnownObject::createForJavaLangClass(this, knownObjectIndex),
+                           TR::VPNonNullObject::create(this), NULL, NULL,
+                           TR::VPObjectLocation::create(this, TR::VPObjectLocation::JavaLangClassObject)),
+                        classChildGlobal);
+                  }
 
                invalidateUseDefInfo();
                invalidateValueNumberInfo();

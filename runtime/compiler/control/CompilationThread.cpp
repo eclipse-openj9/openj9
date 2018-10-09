@@ -1792,6 +1792,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
             case compilationAotValidateMethodEnterFailure:
             case compilationAotClassChainPersistenceFailure:
             case compilationAotValidateStringCompressionFailure:
+            case compilationSymbolValidationManagerFailure:
                // switch to JIT for these cases (we don't want to relocate again)
                entry->_doNotUseAotCodeFromSharedCache = true;
                tryCompilingAgain = true;
@@ -2844,6 +2845,8 @@ void TR::CompilationInfo::stopCompilationThreads()
       fprintf(stderr, "numVirtualMethodsValidationSucceeded: %d\n", aotStats->virtualMethods.numSucceededValidations);
       fprintf(stderr, "numInterfaceMethodsValidationFailed: %d\n", aotStats->interfaceMethods.numFailedValidations);
       fprintf(stderr, "numInterfaceMethodsValidationSucceeded: %d\n", aotStats->interfaceMethods.numSucceededValidations);
+      fprintf(stderr, "numAbstractMethodsValidationFailed: %d\n", aotStats->abstractMethods.numFailedValidations);
+      fprintf(stderr, "numAbstractMethodsValidationSucceeded: %d\n", aotStats->abstractMethods.numSucceededValidations);
 
       fprintf(stderr, "-------------------------\n");
       fprintf(stderr, "numProfiledClassGuardsValidationFailed: %d\n", aotStats->profiledClassGuards.numFailedValidations);
@@ -7073,6 +7076,12 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                options->setOption(TR_EnableAnnotations,false);
             }
 
+         if (vm->canUseSymbolValidationManager() && options->getOption(TR_EnableSymbolValidationManager))
+            {
+            options->setOption(TR_UseSymbolValidationManager);
+            options->setOption(TR_DisableKnownObjectTable);
+            }
+
          // Set jitDump specific options
          TR::CompilationInfo *compInfo = TR::CompilationInfo::get(jitConfig);
          TR::CompilationInfoPerThread *threadCompInfo = compInfo ? compInfo->getCompInfoForThread(vmThread) : NULL;
@@ -7415,6 +7424,11 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                {
                if (options->getOptLevel() > warm || vm->isAOT_DEPRECATED_DO_NOT_USE())
                   options->setOption(TR_EnableGRACostBenefitModel, false);
+               }
+
+            if (jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP || options->getOptLevel() < warm)
+               {
+               options->setOption(TR_UseSymbolValidationManager, false);
                }
 
 
@@ -10073,6 +10087,10 @@ TR::CompilationInfoPerThreadBase::processException(
    catch (const TR::GCRPatchFailure &e)
       {
       _methodBeingCompiled->_compErrCode = compilationGCRPatchFailure;
+      }
+   catch (const J9::AOTSymbolValidationManagerFailure &e)
+      {
+      _methodBeingCompiled->_compErrCode = compilationSymbolValidationManagerFailure;
       }
    catch (const J9::ClassChainPersistenceFailure &e)
       {

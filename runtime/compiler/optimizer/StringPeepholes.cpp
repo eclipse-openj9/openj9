@@ -229,7 +229,7 @@ int32_t TR_StringPeepholes::perform()
    {
    static char *skipitAtWarm = feGetEnv("TR_noPeepholeAtWarm");
    if (comp()->getOption(TR_DisableStringPeepholes)
-       || !comp()->fej9()->doStringPeepholing()
+       || (!comp()->fej9()->doStringPeepholing() && !comp()->getOption(TR_UseSymbolValidationManager))
        || (skipitAtWarm && comp()->getMethodHotness()==warm))
       return 1;
 
