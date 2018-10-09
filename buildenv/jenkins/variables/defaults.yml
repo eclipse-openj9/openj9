@@ -313,7 +313,7 @@ win_x86-64_cmprssptrs:
   freemarker: '/cygdrive/c/openjdk/freemarker.jar'
   openjdk_reference_repo: 'C:\openjdk\openjdk_cache'
   extra_configure_options:
-    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --disable-ccache'
+    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --disable-ccache --with-openssl=/cygdrive/c/OpenSSL-1.1.1-x86_64 --enable-openssl-bundling'
     9: '--with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-toolchain-version=2013 --disable-ccache'
     10: '--with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-toolchain-version=2013 --disable-ccache'
     11: '--with-toolchain-version=2017 --disable-ccache'
@@ -344,7 +344,7 @@ win_x86:
   release:
     8: 'windows-x86-normal-server-release'
   extra_configure_options:
-    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib32 --with-target-bits=32 --disable-ccache'
+    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib32 --with-target-bits=32 --disable-ccache --with-openssl=/cygdrive/c/OpenSSL-1.1.1-x86_32 --enable-openssl-bundling'
   freemarker: '/cygdrive/c/openjdk/freemarker.jar'
   openjdk_reference_repo: 'C:\openjdk\openjdk_cache'
   node_labels:

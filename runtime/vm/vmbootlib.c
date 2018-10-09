@@ -587,8 +587,8 @@ classLoaderRegisterLibrary(void *voidVMThread, J9ClassLoader *classLoader, const
 		 */
 		if (0 == j9sysinfo_get_executable_name(NULL, &executableName)) {
 			slOpenResult = j9sl_open_shared_library(executableName,
-													&newNativeLibrary->handle,
-													(flags | J9PORT_SLOPEN_OPEN_EXECUTABLE));
+						&newNativeLibrary->handle,
+						(flags | J9PORT_SLOPEN_OPEN_EXECUTABLE));
 			if (J9PORT_SL_FOUND == slOpenResult) {
 				nameLength = J9STATIC_ONLOAD_LENGTH + strlen(logicalName) + 1;
 				onloadRtnName = j9mem_allocate_memory(nameLength, J9MEM_CATEGORY_CLASSES);
