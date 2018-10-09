@@ -12101,19 +12101,29 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, bool isLatin1, TR::C
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::srawi, node, result, result, 1);
 
       {
-      TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 14 + srm->numAvailableRegisters(), cg->trMemory());
+      TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 15 + srm->numAvailableRegisters(), cg->trMemory());
 
-      deps->addPostCondition(arrAddress, TR::RealRegister::NoReg);
+      deps->addPostCondition(arrObjectAddress, TR::RealRegister::NoReg);
+      deps->getPostConditions()->getRegisterDependency(0)->setExcludeGPR0();
       deps->addPostCondition(targetScalar, TR::RealRegister::NoReg);
+      if (node->getChild(2)->getReferenceCount() == 1)
+         deps->getPostConditions()->getRegisterDependency(1)->setExcludeGPR0();
       deps->addPostCondition(startIndex, TR::RealRegister::NoReg);
+      if (node->getChild(3)->getReferenceCount() == 1)
+         deps->getPostConditions()->getRegisterDependency(2)->setExcludeGPR0();
       deps->addPostCondition(endIndex, TR::RealRegister::NoReg);
+      if (node->getChild(4)->getReferenceCount() == 1)
+         deps->getPostConditions()->getRegisterDependency(3)->setExcludeGPR0();
 
       deps->addPostCondition(cr0, TR::RealRegister::cr0);
       deps->addPostCondition(cr6, TR::RealRegister::cr6);
 
       deps->addPostCondition(zeroRegister, TR::RealRegister::NoReg);
       deps->addPostCondition(result, TR::RealRegister::NoReg);
+      deps->getPostConditions()->getRegisterDependency(7)->setExcludeGPR0();
+      deps->addPostCondition(arrAddress, TR::RealRegister::NoReg);
       deps->addPostCondition(currentAddress, TR::RealRegister::NoReg);
+      deps->getPostConditions()->getRegisterDependency(9)->setExcludeGPR0();
       deps->addPostCondition(endAddress, TR::RealRegister::NoReg);
 
       deps->addPostCondition(targetVector, TR::RealRegister::NoReg);
@@ -12121,7 +12131,7 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, bool isLatin1, TR::C
       deps->addPostCondition(searchVector, TR::RealRegister::NoReg);
       deps->addPostCondition(permuteVector, TR::RealRegister::NoReg);
 
-      srm->addScratchRegistersToDependencyList(deps);
+      srm->addScratchRegistersToDependencyList(deps, true);
 
       generateDepLabelInstruction(cg, TR::InstOpCode::label, node, endLabel, deps);
 
