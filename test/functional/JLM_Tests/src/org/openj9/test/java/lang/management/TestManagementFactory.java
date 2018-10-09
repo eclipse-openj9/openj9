@@ -833,7 +833,7 @@ public class TestManagementFactory {
 			MemoryUsage directUsage = realBean.getCollectionUsage();
 			validateMemoryUsage(proxyUsage);
 			validateMemoryUsage(directUsage);
-			AssertJUnit.assertEquals(directUsage, proxyUsage);
+			/* directUsage and proxyUsage could be different, if gc happened between getCollectionUsage() calls*/
 
 			if (realBean.isCollectionUsageThresholdSupported()) {
 				AssertJUnit.assertEquals(realBean.getCollectionUsageThreshold(), proxy.getCollectionUsageThreshold());
