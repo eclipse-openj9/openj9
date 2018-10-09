@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -302,7 +302,8 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeCallGraph(TR::
             }
          }
 
-      TR_PersistentClassInfo *classInfo = comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(clazz, comp());
+      bool allowForAOT = comp()->getOption(TR_UseSymbolValidationManager);
+      TR_PersistentClassInfo *classInfo = comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(clazz, comp(), allowForAOT);
       if (classInfo)
          {
          TR_ScratchList<TR_PersistentClassInfo> subClasses(trMemory());

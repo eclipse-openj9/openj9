@@ -230,7 +230,7 @@ FindSingleJittedImplementer::visitSubclass(TR_PersistentClassInfo *cl)
          }
 
       // check to see if there are any duplicates
-      if (!method->isInterpreted())
+      if (!method->isInterpretedForHeuristics())
          {
          if (_implementer)
             {
@@ -309,17 +309,29 @@ TR_PersistentCHTable::findClassInfo(TR_OpaqueClassBlock * classId)
  * The class table lock is used to synchronize use of this method
  */
 TR_PersistentClassInfo *
-TR_PersistentCHTable::findClassInfoAfterLocking(
-      TR_OpaqueClassBlock *classId,
+TR_PersistentCHTable::findClassInfoAfterLocking(TR_OpaqueClassBlock *classId,
       TR::Compilation *comp,
-      bool returnClassInfoForAOT)
+      bool returnClassInfoForAOT,
+      bool validate)
    {
-   if (comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE() && !returnClassInfoForAOT) // for AOT do not use the class hierarchy
+   // for AOT do not use the class hierarchy
+   if (comp->compileRelocatableCode() && !returnClassInfoForAOT)
+      {
       return NULL;
+      }
 
    if (comp->getOption(TR_DisableCHOpts))
       return NULL;
-   return findClassInfoAfterLocking(classId, comp->fe(), returnClassInfoForAOT);
+
+   TR_PersistentClassInfo *classInfo = findClassInfoAfterLocking(classId, comp->fe(), returnClassInfoForAOT);
+   if (classInfo &&
+       comp->compileRelocatableCode() &&
+       comp->getOption(TR_UseSymbolValidationManager) &&
+       validate)
+      {
+      comp->getSymbolValidationManager()->addClassInfoIsInitializedRecord(classId, classInfo->isInitialized());
+      }
+   return classInfo;
    }
 
 /**
@@ -387,22 +399,51 @@ TR_PersistentCHTable::isOverriddenInThisHierarchy(
    }
 
 TR_ResolvedMethod * TR_PersistentCHTable::findSingleImplementer(
-   TR_OpaqueClassBlock * thisClass, int32_t cpIndexOrVftSlot, TR_ResolvedMethod * callerMethod, TR::Compilation * comp, bool locked, TR_YesNoMaybe useGetResolvedInterfaceMethod)
+      TR_OpaqueClassBlock * thisClass,
+      int32_t cpIndexOrVftSlot,
+      TR_ResolvedMethod * callerMethod,
+      TR::Compilation * comp,
+      bool locked,
+      TR_YesNoMaybe useGetResolvedInterfaceMethod,
+      bool validate)
    {
    if (comp->getOption(TR_DisableCHOpts))
       return 0;
 
 
 
-   TR_PersistentClassInfo * classInfo = comp->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(thisClass, comp, true);
+   TR_PersistentClassInfo * classInfo = comp->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(thisClass, comp, true, validate);
    if (!classInfo)
       {
       return 0;
       }
 
    TR_ResolvedMethod *implArray[2]; // collect maximum 2 implemeters if you can
+   comp->enterHeuristicRegion();
    int32_t implCount = TR_ClassQueries::collectImplementorsCapped(classInfo, implArray, 2, cpIndexOrVftSlot, callerMethod, comp, locked, useGetResolvedInterfaceMethod);
-   return (implCount == 1 ? implArray[0] : 0);
+   comp->exitHeuristicRegion();
+
+   TR_ResolvedMethod *implementer = NULL;
+   if (implCount == 1)
+      implementer =implArray[0];
+
+   if (implementer && comp->getOption(TR_UseSymbolValidationManager) && validate)
+      {
+      TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
+
+      bool validated = svm->addMethodFromSingleImplementerRecord(implementer->getPersistentIdentifier(),
+                                                                 thisClass,
+                                                                 cpIndexOrVftSlot,
+                                                                 callerMethod->getPersistentIdentifier(),
+                                                                 useGetResolvedInterfaceMethod);
+      if (validated)
+         validated = svm->addClassFromMethodRecord(implementer->classOfMethod(), implementer->getPersistentIdentifier());
+
+      if (!validated)
+         implementer = NULL;
+      }
+
+   return implementer;
    }
 
 TR_ResolvedMethod *
@@ -411,7 +452,8 @@ TR_PersistentCHTable::findSingleInterfaceImplementer(
       int32_t cpIndex,
       TR_ResolvedMethod *callerMethod,
       TR::Compilation *comp,
-      bool locked)
+      bool locked,
+      bool validate)
    {
    if (comp->getOption(TR_DisableCHOpts))
       return 0;
@@ -421,15 +463,37 @@ TR_PersistentCHTable::findSingleInterfaceImplementer(
       return 0;
       }
 
-   TR_PersistentClassInfo * classInfo = findClassInfoAfterLocking(thisClass, comp, true);
+   TR_PersistentClassInfo * classInfo = findClassInfoAfterLocking(thisClass, comp, true, validate);
    if (!classInfo)
       {
       return 0;
       }
 
    TR_ResolvedMethod *implArray[2]; // collect maximum 2 implemeters if you can
+   comp->enterHeuristicRegion();
    int32_t implCount = TR_ClassQueries::collectImplementorsCapped(classInfo, implArray, 2, cpIndex, callerMethod, comp, locked);
-   return (implCount == 1 ? implArray[0] : 0);
+   comp->exitHeuristicRegion();
+
+   TR_ResolvedMethod *implementer = NULL;
+   if (implCount == 1)
+      implementer = implArray[0];
+
+   if (implementer && comp->getOption(TR_UseSymbolValidationManager) && validate)
+      {
+      TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
+      bool validated = svm->addMethodFromSingleInterfaceImplementerRecord(implementer->getPersistentIdentifier(),
+                                                                          thisClass,
+                                                                          cpIndex,
+                                                                          callerMethod->getPersistentIdentifier());
+
+      if (validated)
+         validated = svm->addClassFromMethodRecord(implementer->classOfMethod(), implementer->getPersistentIdentifier());
+
+      if (!validated)
+         implementer = NULL;
+      }
+
+   return implementer;
    }
 
 bool
@@ -496,32 +560,63 @@ TR_PersistentCHTable::isKnownToHaveMoreThanTwoInterfaceImplementers(
 
 TR_ResolvedMethod *
 TR_PersistentCHTable::findSingleAbstractImplementer(
-   TR_OpaqueClassBlock * thisClass, int32_t vftSlot, TR_ResolvedMethod * callerMethod, TR::Compilation * comp, bool locked)
+   TR_OpaqueClassBlock * thisClass,
+      int32_t vftSlot,
+      TR_ResolvedMethod * callerMethod,
+      TR::Compilation * comp,
+      bool locked,
+      bool validate)
    {
    if (comp->getOption(TR_DisableCHOpts))
       return 0;
-   TR_PersistentClassInfo * classInfo = findClassInfoAfterLocking(thisClass, comp);
+   bool allowForAOT = comp->getOption(TR_UseSymbolValidationManager);
+   TR_PersistentClassInfo * classInfo = findClassInfoAfterLocking(thisClass, comp, allowForAOT, validate);
    if (!classInfo) return 0;
 
    if (TR::Compiler->cls.isInterfaceClass(comp, thisClass))
       return 0;
 
    TR_ResolvedMethod *implArray[2]; // collect maximum 2 implemeters if you can
+   comp->enterHeuristicRegion();
    int32_t implCount = TR_ClassQueries::collectImplementorsCapped(classInfo, implArray, 2, vftSlot, callerMethod, comp, locked);
-   return (implCount == 1 ? implArray[0] : 0);
+   comp->exitHeuristicRegion();
+
+   TR_ResolvedMethod *implementer = NULL;
+   if(implCount == 1)
+      implementer = implArray[0];
+
+   if (implementer && comp->getOption(TR_UseSymbolValidationManager) && validate)
+      {
+      TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
+      bool validated = svm->addMethodFromSingleAbstractImplementerRecord(implementer->getPersistentIdentifier(),
+                                                                         thisClass,
+                                                                         vftSlot,
+                                                                         callerMethod->getPersistentIdentifier());
+
+      if (validated)
+         validated = svm->addClassFromMethodRecord(implementer->classOfMethod(), implementer->getPersistentIdentifier());
+
+      if (!validated)
+         implementer = NULL;
+      }
+
+   return implementer;
    }
 
 
 TR_OpaqueClassBlock *
 TR_PersistentCHTable::findSingleConcreteSubClass(
       TR_OpaqueClassBlock *opaqueClass,
-      TR::Compilation *comp)
+      TR::Compilation *comp,
+      bool validate)
    {
    TR_OpaqueClassBlock *concreteSubClass = NULL;
    if (comp->getOption(TR_DisableCHOpts))
       return 0;
 
-   TR_PersistentClassInfo *classInfo = comp->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(opaqueClass, comp);
+   bool allowForAOT = comp->getOption(TR_UseSymbolValidationManager);
+
+   TR_PersistentClassInfo *classInfo = comp->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(opaqueClass, comp, allowForAOT, validate);
    if (classInfo)
       {
       TR_ScratchList<TR_PersistentClassInfo> subClasses(comp->trMemory());
@@ -537,6 +632,12 @@ TR_PersistentCHTable::findSingleConcreteSubClass(
             concreteSubClass = subClass;
             }
          }
+      }
+
+   if (validate && comp->getOption(TR_UseSymbolValidationManager))
+      {
+      if (!comp->getSymbolValidationManager()->addConcreteSubClassFromClassRecord(concreteSubClass, opaqueClass))
+         concreteSubClass = NULL;
       }
 
    return concreteSubClass;

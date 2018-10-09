@@ -3630,7 +3630,9 @@ inline void generateInlinedCheckCastOrInstanceOfForInterface(TR::Node* node, TR_
    {
    TR_ASSERT(clazz && TR::Compiler->cls.isInterfaceClass(cg->comp(), clazz), "Not a compile-time known Interface.");
 
-   auto use64BitClasses = TR::Compiler->target.is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
+   auto use64BitClasses = TR::Compiler->target.is64Bit() &&
+                             (!TR::Compiler->om.generateCompressedObjectHeaders() ||
+                              (cg->comp()->compileRelocatableCode() && cg->comp()->getOption(TR_UseSymbolValidationManager)));
 
    auto j9class = cg->allocateRegister();
    auto tmp     = use64BitClasses ? cg->allocateRegister() : NULL;
@@ -3679,6 +3681,11 @@ inline void generateInlinedCheckCastOrInstanceOfForInterface(TR::Node* node, TR_
          guessClass = (uintptrj_t)guessClassArray[i];
          }
       }
+
+   if (cg->comp()->compileRelocatableCode() && cg->comp()->getOption(TR_UseSymbolValidationManager))
+      if (!cg->comp()->getSymbolValidationManager()->addProfiledClassRecord((TR_OpaqueClassBlock *)guessClass))
+         guessClass = NULL;
+
    // Call site cache
    auto cache = sizeof(J9Class*) == 4 ? cg->create4ByteData(node, (uint32_t)guessClass) : cg->create8ByteData(node, (uint64_t)guessClass);
    cache->setClassAddress(true);
@@ -3767,7 +3774,9 @@ inline void generateInlinedCheckCastOrInstanceOfForInterface(TR::Node* node, TR_
 inline void generateInlinedCheckCastOrInstanceOfForClass(TR::Node* node, TR_OpaqueClassBlock* clazz, TR::CodeGenerator* cg, bool isCheckCast)
    {
    auto fej9 = (TR_J9VMBase*)(cg->fe());
-   auto use64BitClasses = TR::Compiler->target.is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
+   auto use64BitClasses = TR::Compiler->target.is64Bit() &&
+                             (!TR::Compiler->om.generateCompressedObjectHeaders() ||
+                              (cg->comp()->compileRelocatableCode() && cg->comp()->getOption(TR_UseSymbolValidationManager)));
 
    auto clazzData = use64BitClasses ? cg->create8ByteData(node, (uint64_t)(uintptr_t)clazz) : NULL;
    if (clazzData)
@@ -3928,7 +3937,7 @@ TR::Register *J9::X86::TreeEvaluator::checkcastinstanceofEvaluator(TR::Node *nod
    auto clazz = TR::TreeEvaluator::getCastClassAddress(node->getChild(1));
    if (clazz &&
        !TR::Compiler->cls.isClassArray(cg->comp(), clazz) && // not yet optimized
-       !cg->comp()->compileRelocatableCode() && // TODO subsequent PR will support AOT
+       (!cg->comp()->compileRelocatableCode() || cg->comp()->getOption(TR_UseSymbolValidationManager)) &&
        !cg->comp()->getOption(TR_DisableInlineCheckCast)  &&
        !cg->comp()->getOption(TR_DisableInlineInstanceOf))
       {
@@ -6548,7 +6557,9 @@ static void genInitObjectHeader(TR::Node             *node,
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
 
-   bool use64BitClasses = TR::Compiler->target.is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
+   bool use64BitClasses = TR::Compiler->target.is64Bit() &&
+                           (!TR::Compiler->om.generateCompressedObjectHeaders() ||
+                            (cg->comp()->compileRelocatableCode() && cg->comp()->getOption(TR_UseSymbolValidationManager)));
 
    // This code was moved to this point so that the romClass can be used by the AOT
    // portion without calling the method again.
@@ -6568,7 +6579,7 @@ static void genInitObjectHeader(TR::Node             *node,
    TR::Register * clzReg = classReg;
 
    // TODO: should be able to use a TR_ClassPointer relocation without this stuff (along with class validation)
-   if (cg->needClassAndMethodPointerRelocations())
+   if (cg->needClassAndMethodPointerRelocations() && !comp->getOption(TR_UseSymbolValidationManager))
       {
       TR::Register *vmThreadReg = cg->getVMThreadRegister();
       if (node->getOpCodeValue() == TR::newarray)
@@ -6609,7 +6620,10 @@ static void genInitObjectHeader(TR::Node             *node,
       TR::Instruction *instr = NULL;
       if (use64BitClasses)
          {
-         instr = generateRegImm64Instruction(MOV8RegImm64, node, tempReg, ((intptrj_t)clazz|orFlagsClass), cg);
+         if (cg->needClassAndMethodPointerRelocations() && comp->getOption(TR_UseSymbolValidationManager))
+            instr = generateRegImm64Instruction(MOV8RegImm64, node, tempReg, ((intptrj_t)clazz|orFlagsClass), cg, TR_ClassPointer);
+         else
+            instr = generateRegImm64Instruction(MOV8RegImm64, node, tempReg, ((intptrj_t)clazz|orFlagsClass), cg);
          generateMemRegInstruction(S8MemReg, node, generateX86MemoryReference(objectReg, TR::Compiler->om.offsetOfObjectVftField(), cg), tempReg, cg);
          }
       else
@@ -7707,12 +7721,15 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
                                                         node->getOpCodeValue() == TR::anewarray) )
       {
       startInstr = startInstr->getNext();
+      TR_OpaqueClassBlock *classToValidate = clazz;
+
       TR_RelocationRecordInformation *recordInfo =
          (TR_RelocationRecordInformation *) comp->trMemory()->allocateMemory(sizeof(TR_RelocationRecordInformation), heapAlloc);
       recordInfo->data1 = allocationSize;
       recordInfo->data2 = node->getInlinedSiteIndex();
       recordInfo->data3 = (uintptr_t) failLabel;
       recordInfo->data4 = (uintptr_t) startInstr;
+
       TR::SymbolReference * classSymRef;
       TR_ExternalRelocationTargetKind reloKind;
 
@@ -7725,6 +7742,15 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
          {
          classSymRef = node->getSecondChild()->getSymbolReference();
          reloKind = TR_VerifyRefArrayForAlloc;
+
+         if (comp->getOption(TR_UseSymbolValidationManager))
+            classToValidate = comp->fej9()->getComponentClassFromArrayClass(classToValidate);
+         }
+
+      if (comp->getOption(TR_UseSymbolValidationManager))
+         {
+         TR_ASSERT(classToValidate, "classToValidate should not be NULL, clazz=%p\n", clazz);
+         recordInfo->data5 = (uintptr_t)classToValidate;
          }
 
       cg->addExternalRelocation(new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(startInstr,

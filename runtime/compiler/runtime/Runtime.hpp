@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -169,6 +169,7 @@ typedef struct TR_AOTMethodHeader {
 #define TR_AOTMethodHeader_IsNotCapableOfMethodExitTracing           0x00000004
 #define TR_AOTMethodHeader_UsesEnableStringCompressionFolding        0x00000008
 #define TR_AOTMethodHeader_StringCompressionEnabled                  0x00000010
+#define TR_AOTMethodHeader_UsesSymbolValidationManager               0x00000020
 
 
 
@@ -223,6 +224,7 @@ typedef struct TR_AOTStats
    TR_AOTInliningStats specialMethods;
    TR_AOTInliningStats virtualMethods;
    TR_AOTInliningStats interfaceMethods;
+   TR_AOTInliningStats abstractMethods;
 
    TR_AOTInliningStats profiledInlinedMethods;
    TR_AOTInliningStats profiledClassGuards;

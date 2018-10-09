@@ -49,6 +49,7 @@ j9jit_files(
 	runtime/RuntimeAssumptions.cpp
 	runtime/Runtime.cpp
 	runtime/SignalHandler.c
+	runtime/SymbolValidationManager.cpp
 	runtime/Trampoline.cpp
 	runtime/ValueProfiler.cpp
 )
