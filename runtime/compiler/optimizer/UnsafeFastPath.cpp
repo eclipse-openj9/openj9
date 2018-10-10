@@ -538,12 +538,12 @@ int32_t TR_UnsafeFastPath::perform()
                      }
                   else
                      {
-                     if (isByIndex && value->getDataType() != type)
+                     if (value->getDataType() != type)
                         {
                         TR::ILOpCodes conversionOpCode = TR::ILOpCode::getProperConversion(value->getDataType(), type, true);
 
                         // Sanity check for future modifications
-                        TR_ASSERT(conversionOpCode != TR::BadILOp, "Could not get proper conversion for a JITHelpers byIndex operation.\n");
+                        TR_ASSERT(conversionOpCode != TR::BadILOp, "Could not get proper conversion on the value node %p n%dn for call %p n%dn.\n", value, value->getGlobalIndex(), node, node->getGlobalIndex());
 
                         value = TR::Node::create(conversionOpCode, 1, value);
                         }
@@ -560,12 +560,12 @@ int32_t TR_UnsafeFastPath::perform()
                else
                   {
                   //This is a load
-                  if (isByIndex && node->getDataType() != type)
+                  if (node->getDataType() != type)
                      {
                      TR::ILOpCodes conversionOpCode = TR::ILOpCode::getProperConversion(type, node->getDataType(), true);
 
                      // Sanity check for future modifications
-                     TR_ASSERT(conversionOpCode != TR::BadILOp, "Could not get proper conversion for a JITHelpers byIndex operation.\n");
+                     TR_ASSERT(conversionOpCode != TR::BadILOp, "Could not get proper conversion on the result of call %p n%dn.\n", node, node->getGlobalIndex());
 
                      TR::Node *load = TR::Node::createWithSymRef(node, comp()->il.opCodeForIndirectArrayLoad(type), 1, unsafeSymRef);
 
@@ -627,12 +627,12 @@ int32_t TR_UnsafeFastPath::perform()
                      node = TR::Node::recreateWithoutProperties(node, TR::wrtbari, 3, addrCalc, value, object, unsafeSymRef);
                   else
                      {
-                     if (isByIndex && value->getDataType() != type)
+                     if (value->getDataType() != type)
                         {
                         TR::ILOpCodes conversionOpCode = TR::ILOpCode::getProperConversion(value->getDataType(), type, true);
 
                         // Sanity check for future modifications
-                        TR_ASSERT(conversionOpCode != TR::BadILOp, "Could not get proper conversion for a JITHelpers byIndex operation.\n");
+                        TR_ASSERT(conversionOpCode != TR::BadILOp, "Could not get proper conversion on the value node %p n%dn for call %p n%dn.\n", value, value->getGlobalIndex(), node, node->getGlobalIndex());
 
                         value = TR::Node::create(conversionOpCode, 1, value);
                         }
@@ -653,12 +653,12 @@ int32_t TR_UnsafeFastPath::perform()
                   TR::ILOpCodes opCodeForIndirectLoad = isArrayOperation ? comp()->il.opCodeForIndirectArrayLoad(type) : comp()->il.opCodeForIndirectLoad(type);
 
                   // This is a load
-                  if (isByIndex && node->getDataType() != type)
+                  if (node->getDataType() != type)
                      {
                      TR::ILOpCodes conversionOpCode = TR::ILOpCode::getProperConversion(type, node->getDataType(), true);
 
                      // Sanity check for future modifications
-                     TR_ASSERT(conversionOpCode != TR::BadILOp, "Could not get proper conversion for a JITHelpers byIndex operation.\n");
+                     TR_ASSERT(conversionOpCode != TR::BadILOp, "Could not get proper conversion on the result of call %p n%dn.\n", node, node->getGlobalIndex());
 
                      TR::Node *load = TR::Node::createWithSymRef(node, opCodeForIndirectLoad, 1, unsafeSymRef);
 
