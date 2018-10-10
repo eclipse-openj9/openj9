@@ -67,6 +67,7 @@ addons:
 before_install:
   - jdk_switcher use oraclejdk8
 before_script:
+  - ccache -M 1G
   - ccache -s -z
 script:
   - bash ./buildenv/travis/build-on-travis.sh
