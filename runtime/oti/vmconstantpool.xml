@@ -339,7 +339,7 @@
 	<staticmethodref class="java/lang/invoke/MethodType" name="vmResolveFromMethodDescriptorString" signature="(Ljava/lang/String;Ljava/lang/ClassLoader;Ljava/lang/Class;)Ljava/lang/invoke/MethodType;" flags="opt_methodHandle"/>
 	<staticmethodref class="java/lang/invoke/MethodHandle" name="sendResolveMethodHandle" signature="(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/> 
 	<staticmethodref class="java/lang/invoke/MethodHandle" name="resolveInvokeDynamic" signature="(JLjava/lang/String;Ljava/lang/String;J)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/> 
-	<staticmethodref class="java/lang/invoke/MethodHandle" name="resolveConstantDynamic" signature="(JLjava/lang/String;Ljava/lang/String;J)Ljava/lang/Object;" flag="opt_methodHandle"/>
+	<staticmethodref class="java/lang/invoke/MethodHandle" name="resolveConstantDynamic" signature="(JLjava/lang/String;Ljava/lang/String;J)Ljava/lang/Object;" jcl="se11" flag="opt_methodHandle"/>
 	<staticmethodref class="java/lang/invoke/MethodHandle" name="invokeWithArgumentsHelper" signature="(Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Ljava/lang/Object;" flags="opt_methodHandle"/> 
 	<staticmethodref class="java/lang/invoke/MethodHandle" name="constructorPlaceHolder" signature="(Ljava/lang/Object;)Ljava/lang/Object;" flags="opt_methodHandle"/>
 	<specialmethodref class="java/lang/invoke/MethodHandle" name="forGenericInvoke" signature="(Ljava/lang/invoke/MethodType;Z)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
