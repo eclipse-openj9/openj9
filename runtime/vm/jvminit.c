@@ -1890,7 +1890,8 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			argIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXUSECONTAINERSUPPORT, NULL);
 			argIndex2 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNOUSECONTAINERSUPPORT, NULL);
 
-			if (argIndex > argIndex2) {
+			/* Enable -XX:+UseContainerSupport by default */
+			if (argIndex >= argIndex2) {
 				OMRPORT_ACCESS_FROM_J9PORT(vm->portLibrary);
 				uint64_t subsystemsEnabled = omrsysinfo_cgroup_enable_subsystems(OMR_CGROUP_SUBSYSTEM_ALL);
 
