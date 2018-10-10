@@ -6308,7 +6308,11 @@ retry:
 					_objectAccessBarrier.inlineStaticStoreU64(_currentThread, fieldClass, (U_64*)valueAddress, *(U_64*)_sp, isVolatile);
 					_sp += 2;
 				} else {
-					_objectAccessBarrier.inlineStaticStoreU32(_currentThread, fieldClass, (U_32*)valueAddress, *(U_32*)_sp, isVolatile);
+					U_32 value = *(U_32*)_sp;
+					if (J9_ARE_ALL_BITS_SET(classAndFlags, J9StaticFieldRefBoolean)) {
+						value &= 1;
+					}
+					_objectAccessBarrier.inlineStaticStoreU32(_currentThread, fieldClass, (U_32*)valueAddress, value, isVolatile);
 					_sp += 1;
 				}
 			} else {
@@ -6473,7 +6477,11 @@ retry:
 					rc = THROW_NPE;
 					goto done;
 				}
-				_objectAccessBarrier.inlineMixedObjectStoreU32(_currentThread, objectref, newValueOffset, *(U_32*)_sp, isVolatile);
+				U_32 value = *(U_32*)_sp;
+				if (J9FieldTypeBoolean == (flags & J9FieldTypeMask)) {
+					value &= 1;
+				}
+				_objectAccessBarrier.inlineMixedObjectStoreU32(_currentThread, objectref, newValueOffset, value, isVolatile);
 				_sp += 2;
 			}
 		}

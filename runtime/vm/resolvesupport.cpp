@@ -788,6 +788,8 @@ illegalAccess:
 					localClassAndFlagsData |= J9StaticFieldRefBaseType;
 					if ((modifiers & J9FieldSizeDouble) == J9FieldSizeDouble) {
 						localClassAndFlagsData |= J9StaticFieldRefDouble;
+					} else if (J9FieldTypeBoolean == (modifiers & J9FieldTypeMask)) {
+						localClassAndFlagsData |= J9StaticFieldRefBoolean;
 					}
 				}
 				/* Check if volatile and set the localClassAndFlags to have StaticFieldRefVolatile. */
