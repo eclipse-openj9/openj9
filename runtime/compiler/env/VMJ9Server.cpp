@@ -273,6 +273,14 @@ TR_J9ServerVM::getBaseComponentClass(TR_OpaqueClassBlock * clazz, int32_t & numD
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass)
    {
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) arrayClass);
+      if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+         {
+         return it->second.leafComponentClass;
+         }
+      }
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_getLeafComponentClassFromArrayClass, arrayClass);
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
@@ -514,9 +522,34 @@ TR_J9ServerVM::isPrimitiveClass(TR_OpaqueClassBlock * clazz)
 bool
 TR_J9ServerVM::isClassInitialized(TR_OpaqueClassBlock * clazz)
    {
+   bool classInitialized = false;
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) clazz);
+      if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+         {
+         if (it->second.classInitialized)
+            {
+            return true;
+            }
+         }
+      }
+
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_isClassInitialized, clazz);
-   return std::get<0>(stream->read<bool>());
+   classInitialized = std::get<0>(stream->read<bool>());
+
+   if (classInitialized)
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) clazz);
+      if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+         {
+         it->second.classInitialized = classInitialized;
+         }
+      }
+
+   return classInitialized;
    }
 
 UDATA
@@ -530,9 +563,22 @@ TR_J9ServerVM::getOSRFrameSizeInBytes(TR_OpaqueMethodBlock * method)
 int32_t
 TR_J9ServerVM::getByteOffsetToLockword(TR_OpaqueClassBlock * clazz)
    {
+#if defined (J9VM_THR_LOCK_NURSERY)
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) clazz);
+      if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+         {
+         return it->second.byteOffsetToLockword;
+         }
+      }
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_getByteOffsetToLockword, clazz);
    return std::get<0>(stream->read<int32_t>());
+
+#else
+   return TMP_OFFSETOF_J9OBJECT_MONITOR;
+#endif
    }
 
 bool
@@ -625,6 +671,16 @@ TR_J9ServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueC
 bool
 TR_J9ServerVM::hasFinalFieldsInClass(TR_OpaqueClassBlock *clazz)
    {
+   // Check the cache first
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*)clazz);
+      if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+         {
+         return it->second.classHasFinalFields;
+         }
+      }
+
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_hasFinalFieldsInClass, clazz);
    return std::get<0>(stream->read<bool>());
@@ -657,6 +713,14 @@ TR_J9ServerVM::sampleSignature(TR_OpaqueMethodBlock * aMethod, char *buf, int32_
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getHostClass(TR_OpaqueClassBlock *clazzOffset)
    {
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) clazzOffset);
+      if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+         {
+         return (it->second.hostClass);
+         }
+      }
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_getHostClass, clazzOffset);
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
@@ -712,9 +776,42 @@ TR_J9ServerVM::isCloneable(TR_OpaqueClassBlock *clazzPointer)
 bool
 TR_J9ServerVM::canAllocateInlineClass(TR_OpaqueClassBlock *clazz)
    {
+   bool classInitialized;
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) clazz);
+      if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+         {
+         if (it->second.classInitialized)
+            {
+            return ((it->second.romClass->modifiers & (J9_JAVA_ABSTRACT | J9_JAVA_INTERFACE ))?
+                     true:false);
+            }
+         }
+      }
+
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITaaS::J9ServerMessageType::VM_canAllocateInlineClass, clazz);
-   return std::get<0>(stream->read<bool>());
+   stream->write(JITaaS::J9ServerMessageType::VM_isClassInitialized, clazz);
+   classInitialized = std::get<0>(stream->read<bool>());
+
+   if (classInitialized)
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) clazz);
+      if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+         {
+         it->second.classInitialized = classInitialized;
+         return ((it->second.romClass->modifiers & (J9_JAVA_ABSTRACT | J9_JAVA_INTERFACE ))?
+                     true:false);
+         }
+      else
+         {
+         stream->write(JITaaS::J9ServerMessageType::VM_canAllocateInlineClass, clazz);
+         return std::get<0>(stream->read<bool>());
+         }
+      }
+
+      return false;
    }
 
 TR_OpaqueClassBlock *
@@ -1146,6 +1243,14 @@ TR_J9ServerVM::getBytecodePC(TR_OpaqueMethodBlock *method, TR_ByteCodeInfo &bcIn
 bool
 TR_J9ServerVM::isClassLoadedBySystemClassLoader(TR_OpaqueClassBlock *clazz)
    {
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) clazz);
+      if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+         {
+         return (it->second.classLoader == getSystemClassLoader());
+         }
+      }
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_isClassLoadedBySystemClassLoader, clazz);
    return std::get<0>(stream->read<bool>());

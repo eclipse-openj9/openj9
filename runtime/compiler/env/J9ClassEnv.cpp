@@ -23,6 +23,7 @@
 #include "compile/Compilation.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
+#include "control/JITaaSCompilationThread.hpp"
 #include "env/ClassEnv.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/jittypes.h"
@@ -53,6 +54,39 @@ J9::ClassEnv::convertClassOffsetToClassPtr(TR_OpaqueClassBlock *clazzOffset)
    // TR_FrontEnd is created with a NULL J9VMThread object.
    //
    return (J9Class*)((TR_OpaqueClassBlock *)clazzOffset);
+   }
+
+
+bool
+J9::ClassEnv::isClassSpecialForStackAllocation(TR_OpaqueClassBlock * clazz)
+   {
+   const int32_t mask = (J9_JAVA_CLASS_REFERENCE_WEAK |
+                         J9_JAVA_CLASS_REFERENCE_SOFT |
+                         J9_JAVA_CLASS_FINALIZE |
+                         J9_JAVA_CLASS_OWNABLE_SYNCHRONIZER);
+
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+         {
+         OMR::CriticalSection getRemoteROMClass(TR::compInfoPT->getClientData()->getROMMapMonitor());
+         auto it = TR::compInfoPT->getClientData()->getROMClassMap().find((J9Class*)clazz);
+         if (it != TR::compInfoPT->getClientData()->getROMClassMap().end())
+            {
+            return ((it->second.classDepthAndFlags & mask)?true:false);
+            }
+         }
+         stream->write(JITaaS::J9ServerMessageType::CompInfo_isClassSpecial, clazz);
+         return (std::get<0>(stream->read<bool>()));
+      }
+   else
+      {
+      if (((J9Class *)clazz)->classDepthAndFlags & mask)
+         {
+         return true;
+         }
+      }
+
+   return false;
    }
 
 
