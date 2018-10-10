@@ -128,11 +128,11 @@ static X VarHandleMethods[] =
       {  TR::java_lang_invoke_VarHandle_getAndBitwiseAndAcquire   ,   23, "getAndBitwiseAndAcquire",         (int16_t)-1, "*", 23},
       {  TR::java_lang_invoke_VarHandle_getAndBitwiseAndRelease   ,   23, "getAndBitwiseAndRelease",         (int16_t)-1, "*", 24},
       {  TR::java_lang_invoke_VarHandle_getAndBitwiseOr           ,   15, "getAndBitwiseOr",                 (int16_t)-1, "*", 25},
-      {  TR::java_lang_invoke_VarHandle_getAndBitwiseOrAcquire    ,   23, "getAndBitwiseAndAcquire",         (int16_t)-1, "*", 26},
-      {  TR::java_lang_invoke_VarHandle_getAndBitwiseOrRelease    ,   23, "getAndBitwiseAndRelease",         (int16_t)-1, "*", 27},
-      {  TR::java_lang_invoke_VarHandle_getAndBitwiseXor          ,   15, "getAndBitwiseOr",                 (int16_t)-1, "*", 28},
-      {  TR::java_lang_invoke_VarHandle_getAndBitwiseXorAcquire   ,   23, "getAndBitwiseAndAcquire",         (int16_t)-1, "*", 29},
-      {  TR::java_lang_invoke_VarHandle_getAndBitwiseXorRelease   ,   23, "getAndBitwiseAndRelease",         (int16_t)-1, "*", 30},
+      {  TR::java_lang_invoke_VarHandle_getAndBitwiseOrAcquire    ,   22, "getAndBitwiseOrAcquire",          (int16_t)-1, "*", 26},
+      {  TR::java_lang_invoke_VarHandle_getAndBitwiseOrRelease    ,   22, "getAndBitwiseOrRelease",          (int16_t)-1, "*", 27},
+      {  TR::java_lang_invoke_VarHandle_getAndBitwiseXor          ,   16, "getAndBitwiseXOr",                (int16_t)-1, "*", 28},
+      {  TR::java_lang_invoke_VarHandle_getAndBitwiseXorAcquire   ,   23, "getAndBitwiseXorAcquire",         (int16_t)-1, "*", 29},
+      {  TR::java_lang_invoke_VarHandle_getAndBitwiseXorRelease   ,   23, "getAndBitwiseXorRelease",         (int16_t)-1, "*", 30},
       {  TR::unknownMethod, 0, 0, 0, 0, -1}
       };
 
