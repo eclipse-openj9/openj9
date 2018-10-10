@@ -146,6 +146,8 @@ Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Ec
 bash get_source.sh
 ```
 
+:pencil: **OpenSSL support:** If you want to build an OpenJDK with OpenJ9 binary with OpenSSL support and you do not have a built version of OpenSSL v1.1.x available locally, you must specify `--openssl-version=<version>` where `<version>` is an OpenSSL level like 1.1.0 or 1.1.1. If the specified version of OpenSSL is already available in the standard location (SRC_DIR/openssl), `get_source.sh` uses it. Otherwise, the script deletes the content and downloads the specified version of OpenSSL source to the standard location and builds it. If you already have the version of OpenSSL in the standard location but you want a fresh copy, you must delete your current copy.
+
 ### 3. Configure
 :penguin:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
@@ -154,7 +156,17 @@ bash configure --with-freemarker-jar=/root/freemarker.jar
 ```
 :warning: You must give an absolute path to freemarker.jar
 
-:pencil: If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
+:pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
+
+:pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl={fetched|system|path_to_library}`
+
+  where:
+
+  - `fetched` uses the OpenSSL source downloaded by `get-source.sh` in step **2. Get the source**.
+  - `system` uses the package installed OpenSSL library in the system.
+  - `path_to_library` uses a custom OpenSSL library that's already built.
+
+  If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must include `--enable-openssl-bundling`.
 
 ### 4. Build
 :penguin:
@@ -194,6 +206,12 @@ OpenJ9   - 68d6fdb
 OMR      - 7c3d3d7
 OpenJDK  - 27f5b8f based on jdk8u152-b03)
 ```
+
+:pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.1.x support, the following acknowledgements apply in accordance with the license terms:
+
+  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
+  - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
+
 :penguin: *Congratulations!* :tada:
 
 ----------------------------------
@@ -249,6 +267,8 @@ Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Ec
 ```
 bash get_source.sh
 ```
+:pencil: **OpenSSL support:** If you want to build an OpenJDK with OpenJ9 binary with OpenSSL support and you do not have a built version of OpenSSL v1.1.x available locally, you must specify `--openssl-version=<version>` where `<version>` is an OpenSSL level like 1.1.0 or 1.1.1. If the specified version of OpenSSL is already available in the standard location (SRC_DIR/openssl), `get_source.sh` uses it. Otherwise, the script deletes the content and downloads the specified version of OpenSSL source to the standard location and builds it. If you already have the version of OpenSSL in the standard location but you want a fresh copy, you must delete your current copy.
+
 ### 3. Configure
 :blue_book:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
@@ -259,7 +279,18 @@ bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar \
 ```
 where `<my_home_dir>` is the location where you stored **freemarker.jar** and `<cups_include_path>` is the absolute path to CUPS. For example `/opt/freeware/include`.
 
-:pencil: If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
+:pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
+
+:pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl={fetched|system|path_to_library}`
+
+  where:
+
+  - `fetched` uses the OpenSSL source downloaded by `get-source.sh` in step **2. Get the source**.
+  - `system` uses the package installed OpenSSL library in the system.
+  - `path_to_library` uses a custom OpenSSL library that's already built.
+
+    If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must include `--enable-openssl-bundling`.
+
 
 ### 4. build
 :blue_book:
@@ -297,6 +328,12 @@ OpenJ9   - 68d6fdb
 OMR      - 7c3d3d7
 OpenJDK  - 27f5b8f based on jdk8u152-b03)
 ```
+
+:pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.1.x support, the following acknowledgements apply in accordance with the license terms:
+
+  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
+  - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
+
 :blue_book: *Congratulations!* :tada:
 
 ----------------------------------
@@ -388,6 +425,8 @@ Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Ec
 ```
 bash get_source.sh
 ```
+:pencil: **OpenSSL support:** If you want to build an OpenJDK with OpenJ9 binary with OpenSSL support and you do not have a built version of OpenSSL v1.1.x available locally, you must obtain a prebuilt OpenSSL v1.1.x binary.
+
 ### 3. Configure
 :ledger:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
@@ -411,7 +450,9 @@ bash configure --disable-ccache \
 ```
 :pencil: Modify the paths for freemarker and freetype if you manually downloaded and unpacked these dependencies into different directories.
 
-:pencil: If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
+:pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
+
+:pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl=path_to_library`, where `path_to_library` specifies the path to the prebuilt OpenSSL library that you obtained in **2. Get the source**. If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must also include `--enable-openssl-bundling`.
 
 ### 4. build
 :ledger:
@@ -469,6 +510,11 @@ OpenJ9   - 9f924a1a
 OMR      - e5db96ba
 JCL      - 7f27c537a8 based on jdk8u172-b11)
 ```
+
+:pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.1.x support, the following acknowledgements apply in accordance with the license terms:
+
+  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
+  - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
 
 :ledger: *Congratulations!* :tada:
 
