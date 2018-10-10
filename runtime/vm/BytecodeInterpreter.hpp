@@ -5623,6 +5623,9 @@ done:
 				I_8 value = (I_8)*(I_32*)_sp;
 				_pc += 1;
 				_sp += 3;
+				if (J9OBJECT_CLAZZ(_currentThread, arrayref) == _vm->booleanArrayClass) {
+					value &= 1;
+				}
 				_objectAccessBarrier.inlineIndexableObjectStoreI8(_currentThread, arrayref, index, value);
 			}
 		}

@@ -43,9 +43,6 @@ class S390PrivateLinkage : public TR::Linkage
 
    TR::RealRegister::RegNum _methodMetaDataRegister;
 
-   int32_t _registerSaveSize;
-   int32_t *_mapRegsToStack;
-
 public:
 
    S390PrivateLinkage(TR::CodeGenerator * cg, TR_S390LinkageConventions elc=TR_JavaPrivate, TR_LinkageConventions lc=TR_Private);
@@ -90,17 +87,8 @@ public:
    virtual TR::RealRegister::RegNum getSystemStackPointerRegister(){ return cg()->getLinkage(TR_System)->getStackPointerRegister(); }
    virtual TR::RealRegister *getSystemStackPointerRealRegister() {return getS390RealRegister(getSystemStackPointerRegister());}
 
-   virtual bool mapPreservedRegistersToStackOffsets(int32_t *mapRegsToStack, int32_t &numPreserved, TR_BitVector *&);
-   virtual int32_t getRegisterSaveSize() { return _registerSaveSize; }
-   void setRegisterSaveSize(int32_t v) { _registerSaveSize = v; }
-   int32_t getStackOffsetForReg(int32_t regIndex) { return _mapRegsToStack[regIndex]; }
-   void setStackOffsetForReg(int32_t regIndex, int32_t offset) { _mapRegsToStack[regIndex] = offset; }
    virtual int32_t setupLiteralPoolRegister(TR::Snippet *firstSnippet);
-
-   virtual TR::Instruction *savePreservedRegister(TR::Instruction *cursor, int32_t regIndex, int32_t offset);
-   virtual TR::Instruction *restorePreservedRegister(TR::Instruction *cursor, int32_t regIndex, int32_t offset);
-   virtual TR::Instruction *composeSavesRestores(TR::Instruction *start, int32_t firstReg, int32_t lastReg, int32_t offset, int32_t numRegs, bool doSaves);
-
+   
    //called by buildNativeDispatch
    virtual void setupRegisterDepForLinkage(TR::Node *, TR_DispatchType, TR::RegisterDependencyConditions * &, int64_t &, TR::SystemLinkage *, TR::Node * &, bool &, TR::Register **, TR::Register *&);
    virtual void setupBuildArgForLinkage(TR::Node *, TR_DispatchType, TR::RegisterDependencyConditions *, bool, bool, int64_t &, TR::Node *, bool, TR::SystemLinkage *);
