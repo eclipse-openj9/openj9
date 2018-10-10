@@ -220,7 +220,7 @@
 	<export name="Java_com_ibm_oti_shared_SharedClassUtilities_destroySharedCacheImpl" />
 	<export name="Java_com_ibm_oti_shared_SharedClassURLHelperImpl_init" />
 	<export name="Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_init" />
-	<export name="Java_com_ibm_oti_shared_Shared_isSharingEnabledImpl" />
+	<export name="Java_com_ibm_oti_shared_Shared_isNonBootSharingEnabledImpl" />
 	<export name="Java_com_ibm_oti_vm_VM_allInstances" />
 	<export name="Java_com_ibm_oti_vm_VM_getClassPathCount" />
 	<export name="Java_com_ibm_oti_vm_VM_getPathFromClassPath" />

@@ -2914,3 +2914,8 @@ TraceException=Trc_SHR_INIT_isFreeDiskSpaceLow_StatFileSystemFailed NoEnv Overhe
 TraceException=Trc_SHR_INIT_isFreeDiskSpaceLow_SetMaxSize NoEnv Overhead=1 Level=1 Template="INIT::isFreeDiskSpaceLow returning true, the maximum shared cache size allowed is %llu bytes"
 
 TraceEvent=Trc_SHR_CC_startup_Event_InitializingNewCache Overhead=1 Level=1 Template="CC startup: initializing a new cache"
+
+TraceEvent=Trc_SHR_INIT_j9shr_init_Entry Overhead=1 Level=6 Template="INIT entering j9shr_init"
+TraceEvent=Trc_SHR_INIT_j9shr_init_BootClassSharingEnabledByDefault Overhead=1 Level=1 Template="INIT j9shr_init: Bootstrap class sharing enabled by default"
+TraceException=Trc_SHR_INIT_j9shr_init_ExitOnNonFatal Overhead=1 Level=1 Template="INIT j9shr_init: exit on non-fatal error"
+TraceEvent=Trc_SHR_VMInitStages_Event_RunningInContainer Overhead=1 Level=1 Template="The JVM is running in container, class sharing is not enabled by default"

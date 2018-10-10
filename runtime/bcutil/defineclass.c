@@ -520,7 +520,7 @@ internalLoadROMClass(J9VMThread * vmThread, J9LoadROMClassData *loadData, J9Tran
 		/* Disable static verification for the bootstrap loader if Xfuture not present */
 		if ((vm->systemClassLoader == loadData->classLoader)
 		&& ((NULL == vm->bytecodeVerificationData) || (0 == (vm->bytecodeVerificationData->verificationFlags & J9_VERIFY_BOOTCLASSPATH_STATIC)))
-		&& ((NULL == vm->sharedCacheAPI) || (0 == (vm->sharedCacheAPI->xShareClassesPresent)))
+		&& (NULL == vm->sharedClassConfig)
 		) {
 			translationFlags &= ~BCT_StaticVerification;
 		}

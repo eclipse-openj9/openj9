@@ -38,7 +38,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-		if (vm->sharedCacheAPI == NULL) {
+	if (vm->sharedCacheAPI == NULL) {
 
 		IDATA index;
 
@@ -62,6 +62,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 			IDATA parseRc = OPTION_OK;
 
 			vm->sharedCacheAPI->xShareClassesPresent = TRUE;
+			vm->sharedCacheAPI->sharedCacheEnabled = TRUE;
 			parseRc = GET_OPTION_VALUES(index, ':', ',', &optionsBufferPtr, SHR_SUBOPT_BUFLEN);
 			if (OPTION_OK == parseRc) {
 				UDATA verboseFlags = J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT;
@@ -214,15 +215,36 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 				return J9VMDLLMAIN_FAILED;
 			}
 		} else {
+			OMRPORT_ACCESS_FROM_J9PORT(vm->portLibrary);
 			vm->sharedCacheAPI->xShareClassesPresent = FALSE;
+			if (J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm)) {
+				I_32 errorCode = 0;
+				BOOLEAN inContainer = omrsysinfo_is_running_in_container(&errorCode);;
+				/* Do not enable shared classes by default if running in Container */
+
+				if (FALSE == inContainer) {
+					/* If -Xshareclasses is not used in the CML, let VM startup on non-fatal error.
+					 * If shared cache failed to start, user can use -Xshareclasses:bootClassesOnly,fatal to debug. */
+					runtimeFlags |= J9SHR_RUNTIMEFLAG_ENABLE_NONFATAL;
+					runtimeFlags &= ~J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES;
+					vm->sharedCacheAPI->sharedCacheEnabled = TRUE;
+				} else {
+					vm->sharedCacheAPI->inContainer = TRUE;
+				}
+			}
 			/* Initialize the default settings of the flags.
 			 * The runtimeFlags are used by shared cache utilities even if there is no active cache
 			 * (i.e. even if there is no -Xshareclasses option specified).
 			 * In particular,  SH_CompositeCacheImpl::startupForStats() looks at the runtimeFlags to
 			 * determine if mprotection should be done.
 			 */
+			if (vm->sharedCacheAPI->sharedCacheEnabled) {
+				/* clear verboseflags if -Xshareclasses is not used in the CML */
+				vm->sharedCacheAPI->verboseFlags = 0;
+			} else {
+				vm->sharedCacheAPI->verboseFlags = J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT;
+			}
 			vm->sharedCacheAPI->runtimeFlags = runtimeFlags;
-			vm->sharedCacheAPI->verboseFlags = J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT;
 		}
 	}
 
@@ -268,7 +290,10 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 		Trc_SHR_VMInitStages_Event1(vm->mainThread);
 		vm->sharedCacheAPI->iterateSharedCaches = j9shr_iterateSharedCaches;
 		vm->sharedCacheAPI->destroySharedCache = j9shr_destroySharedCache;
-		if ((vm->sharedCacheAPI->xShareClassesPresent == TRUE) && (vm->sharedCacheAPI->parseResult != RESULT_DO_UTILITIES) ) {
+		if (vm->sharedCacheAPI->inContainer) {
+			Trc_SHR_VMInitStages_Event_RunningInContainer(vm->mainThread);
+		}
+		if ((vm->sharedCacheAPI->sharedCacheEnabled == TRUE) && (vm->sharedCacheAPI->parseResult != RESULT_DO_UTILITIES) ) {
 			/* Modules wishing to determine whether shared classes initialized correctly or not should query
 			 * vm->sharedClassConfig->runtimeFlags for J9SHR_RUNTIMEFLAG_CACHE_INITIALIZATION_COMPLETE */
 			if ((rc = j9shr_init(vm, loadFlags, &nonfatal)) != J9VMDLLMAIN_OK) {
@@ -288,7 +313,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 
 	case ALL_LIBRARIES_LOADED:
 	{
-		if ((vm->sharedCacheAPI->xShareClassesPresent == TRUE) && (vm->sharedCacheAPI->parseResult != RESULT_DO_UTILITIES)) {
+		if ((vm->sharedCacheAPI->sharedCacheEnabled == TRUE) && (vm->sharedCacheAPI->parseResult != RESULT_DO_UTILITIES)) {
 			if (0 != initZipLibrary(vm->portLibrary, vm->j2seRootDirectory)) {
 				returnVal = J9VMDLLMAIN_FAILED;
 			}
