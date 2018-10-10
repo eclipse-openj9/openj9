@@ -38,15 +38,9 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 endif()
 
 include(OmrPlatform)
-omr_detect_system_information()
+omr_platform_global_setup()
 
-if(OMR_ARCH_X86)
-    #TODO check for 64 bit
-    add_definitions(
-        -DJ9HAMMER
-    )
-elseif(OMR_ARCH_POWER)
-    add_definitions(-DLINUXPPC64 -DPPC64 -DLINUXPPC)
+if(OMR_ARCH_POWER)
     #TODO do based on toolchain stuff
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         add_definitions(-DOMR_ENV_GCC)
@@ -57,9 +51,6 @@ elseif(OMR_ARCH_POWER)
 endif()
 
 add_definitions(
-	-DLINUX
-	-D_REENTRANT
-	-DFILE_OFFSET_BITS=64
 	-DIPv6_FUNCTION_SUPPORT
 	-DUT_DIRECT_TRACE_REGISTRATION
 )
