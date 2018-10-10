@@ -933,16 +933,20 @@
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 	
-	<test id="Test 52: JAZZ 85641: Test setting -Dcom.ibm.oti.shared.enabled=true without using -Xshareclasses option" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ -XshowSettings:properties -Dcom.ibm.oti.shared.enabled=true $CP_HANOI$ $PROGRAM_HANOI$</command>
+	<test id="Test 52: JAZZ 85641: Test setting -Dcom.ibm.oti.shared.enabled=true incorrectly in the CML won't overwrite this property. And -Xshare:none turns off class sharing" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ -Xshareclasses:none -Xtrace:print={j9shr.1297,j9shr.1514,j9shr.2269} -XshowSettings:properties -Dcom.ibm.oti.shared.enabled=true $CP_HANOI$ $PROGRAM_HANOI$</command>
 		<output type="success" caseSensitive="yes" regex="no">com.ibm.oti.shared.enabled = false</output>
 		<output type="required" caseSensitive="yes" regex="no">Puzzle solved!</output>
 		
+		<output type="failure" caseSensitive="yes" regex="no">CM commitROMClass : Data was stored in the cache for J9ROMClass</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">CM findROMClass: class .* found at address</output>
 		<output type="failure" caseSensitive="yes" regex="no">com.ibm.oti.shared.enabled = true</output>
+		<output type="failure" caseSensitive="no" regex="no">INIT entering j9shr_init</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
-		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
-	</test>
+ 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+ 	</test>
+</test>
 	
 	<test id="Test 53: Make sure classes are being stored to the shared cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,verboseIO $CP_HANOI$ $PROGRAM_HANOI$</command>

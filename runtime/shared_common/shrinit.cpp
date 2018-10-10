@@ -3083,6 +3083,17 @@ j9shr_init(J9JavaVM *vm, UDATA loadFlags, UDATA* nonfatal)
 	UnitTest::unitTest = UnitTest::NO_TEST;
 	vm->sharedClassConfig = NULL;
 
+	Trc_SHR_INIT_j9shr_init_Entry(currentThread);
+
+	if (FALSE == vm->sharedCacheAPI->xShareClassesPresent) {
+		Trc_SHR_Assert_True(vm->sharedCacheAPI->sharedCacheEnabled);
+		Trc_SHR_Assert_True(J9_ARE_ALL_BITS_SET(runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_NONFATAL));
+		Trc_SHR_Assert_True(J9_ARE_ALL_BITS_SET(runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHEBOOTCLASSES));
+		Trc_SHR_Assert_True(J9_ARE_NO_BITS_SET(runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES));
+		Trc_SHR_Assert_True(0 == vm->sharedCacheAPI->verboseFlags);
+		Trc_SHR_INIT_j9shr_init_BootClassSharingEnabledByDefault(currentThread);
+	}
+
 	if (((0 != (runtimeFlags & J9SHR_RUNTIMEFLAG_CHECK_STRINGTABLE_RESET_READONLY)) ||
 		(0 != (runtimeFlags & J9SHR_RUNTIMEFLAG_CHECK_STRINGTABLE_RESET_READWRITE))) &&
 		(0 == (runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_ROUND_TO_PAGE_SIZE)))
@@ -3614,6 +3625,7 @@ _error:
 			 */
 			vm->sharedClassConfig->runtimeFlags |= J9SHR_RUNTIMEFLAG_DO_DESTROY_CONFIG;
 			j9shr_sharedClassesFinishInitialization(vm);
+			Trc_SHR_INIT_j9shr_init_ExitOnNonFatal(currentThread);
 		} else {
 			if (vm->sharedClassConfig->sharedAPIObject != NULL) {
 				j9mem_free_memory(vm->sharedClassConfig->sharedAPIObject);
