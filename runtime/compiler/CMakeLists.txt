@@ -214,8 +214,10 @@ target_link_libraries(j9jit
 		${CMAKE_DL_LIBS}
 )
 
-set_property(TARGET j9jit APPEND_STRING PROPERTY
-	LINK_FLAGS "  -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/build/scripts/j9jit.linux.exp")
+if(OMR_HOST_OS STREQUAL "linux")
+	set_property(TARGET j9jit APPEND_STRING PROPERTY
+		LINK_FLAGS "  -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/build/scripts/j9jit.linux.exp")
+endif()
 set_property(TARGET j9jit PROPERTY LINKER_LANGUAGE CXX)
 
 install(
