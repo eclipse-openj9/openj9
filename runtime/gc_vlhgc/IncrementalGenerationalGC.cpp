@@ -1238,19 +1238,22 @@ MM_IncrementalGenerationalGC::partialGarbageCollect(MM_EnvironmentVLHGC *env, MM
 		_schedulingDelegate.setAutomaticDefragmentEmptinessThreshold(optimalEmptinessRegionThreshold);
 	}
 
-	if (env->_cycleState->_shouldRunCopyForward) {
-		MM_HeapRegionDescriptorVLHGC *region = NULL;
-		GC_HeapRegionIteratorVLHGC iterator(_regionManager);
-		while (env->_cycleState->_shouldRunCopyForward && (NULL != (region = iterator.nextRegion()))) {
-			if ((region->_criticalRegionsInUse > 0) && region->isEden()) {
-				/* if we find any Eden regions which have critical regions in use, we need to switch to Mark-Compact since we have to collect Eden but can't move objects in this region */
-				env->_cycleState->_shouldRunCopyForward = false;
-				/* record this observation in the cycle state so that verbose can see it and produce an appropriate message */
-				env->_cycleState->_reasonForMarkCompactPGC = MM_CycleState::reason_JNI_critical_in_Eden;
+	/* For Non CopyForwardHybrid mode, we don't allow any eden rgions with jniCritical for copyforward, if there is any, would switch MarkCompact PGC mode
+	 * For CopyForwardHybrid mode, we do not care about jniCritical eden regions, the eden rgions with jniCritical would be marked instead copyforwarded during collection.*/
+	if (!_extensions->tarokEnableCopyForwardHybrid && (0 == _extensions->fvtest_forceCopyForwardHybridRatio)) {
+		if (env->_cycleState->_shouldRunCopyForward) {
+			MM_HeapRegionDescriptorVLHGC *region = NULL;
+			GC_HeapRegionIteratorVLHGC iterator(_regionManager);
+			while (env->_cycleState->_shouldRunCopyForward && (NULL != (region = iterator.nextRegion()))) {
+				if ((region->_criticalRegionsInUse > 0) && region->isEden()) {
+					/* if we find any Eden regions which have critical regions in use, we need to switch to Mark-Compact since we have to collect Eden but can't move objects in this region */
+					env->_cycleState->_shouldRunCopyForward = false;
+					/* record this observation in the cycle state so that verbose can see it and produce an appropriate message */
+					env->_cycleState->_reasonForMarkCompactPGC = MM_CycleState::reason_JNI_critical_in_Eden;
+				}
 			}
 		}
 	}
-	
 	/* Determine if there are enough regions available to attempt a copy-forward collection.
 	 * Note that this check is done after we sweep, since that might have recovered enough 
 	 * regions to make copy-forward feasible.
@@ -1366,8 +1369,8 @@ MM_IncrementalGenerationalGC::partialGarbageCollectUsingCopyForward(MM_Environme
 		_reclaimDelegate.runCompact(env, allocDescription, env->_cycleState->_activeSubSpace, desiredCompactWork, env->_cycleState->_gcCode, _markMapManager->getGlobalMarkPhaseMap(), &regionsSkippedByCompactorRequiringSweep);
 		/* we can't tell exactly how many bytes were added to meet the compact goal, so we'll assume it was an exact match. The precise amount could be lower or higher */ 
 		static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._externalCompactBytes = desiredCompactWork;
-	} else if(!successful) {
-		/* compact any unsuccessfully evacuated regions */
+	} else if(!successful || _copyForwardDelegate.isHybrid(env)) {
+		/* compact any unsuccessfully evacuated regions (include reclaiming jni critical eden regions)*/
 		_reclaimDelegate.runReclaimForAbortedCopyForward(env, allocDescription, env->_cycleState->_activeSubSpace, env->_cycleState->_gcCode, _markMapManager->getGlobalMarkPhaseMap(), &regionsSkippedByCompactorRequiringSweep);
 	}
 
