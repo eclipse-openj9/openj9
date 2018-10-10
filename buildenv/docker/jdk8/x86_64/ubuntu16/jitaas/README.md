@@ -28,46 +28,40 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
   - to obtain `openj9` image do the following:
   - ```
      docker build -f \ 
-     buildenv/docker/jdk<version>/<platform>/ubuntu/Dockerfile \
+     buildenv/docker/jdk<version>/<platform>/ubuntu<version>/Dockerfile \
      -t=openj9 .
       ```
 - What the image does:
    - sets up the build environment for JITaaS
-   - pulls source from openjdk & JITaaS github repos and runs make commands to build JITaaS
-(right now pulling from milestone_8 by default)
+   - pulls source from openjdk & OpenJ9/OMR jitaas branch by default and runs make commands to build JITaaS
+
 - to obtain `openj9-jitaas-build` image do the following:
   ```
   docker build -f \ 
-  buildenv/docker/jitaas/jdk<version>/<platform>/ubuntu<version>/build/Dockerfile \ 
+  buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitaas/build/Dockerfile \ 
   --build-arg openj9_repo=<your-openj9-repo> \ 
   --build-arg openj9_branch=<your-openj9-branch> \ 
   --build-arg omr_repo=<your-omr-repo> \ 
   --build-arg omr_branch=<your-omr-branch> \
   -t=openj9-jitaas-build .
   ```
-  or without specifying repos and default to milestone_8
+  or without specifying repos and default to OpenJ9/OMR jitaas branch (latest jitaas changes)
   ```
   docker build -f \ 
-  buildenv/docker/jitaas/jdk<version>/<platform>/ubuntu<version>/build/Dockerfile \ 
+  buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitaas/build/Dockerfile \ 
   -t=openj9-jitaas-build .
   ```
-- **Temporary Workaround**: IMPORTANT
-   - right now since our repos are not open-sourced
-   - the docker image will not have permissions to pull down source files from our repos
-   - workaround is to pass your .ssh directory into the docker image
-   - to do this, you need to first add your ssh key to your github repo, then copy the content of your /root/.ssh to a directory named `key` 
-        - `key` needs to be in the directory that you execute the `docker build` command
 
 ## run/Dockerfile
 - produces `openj9-jitaas-run` image
 - what the image does:
    - starts up a JITaaS Server
-   - it's used for ICP deployment & testing
+
 - **prerequisite**: `openj9-jitass-build` image
 - to build this Dockerfile, do:
    ```
    docker build -f \
-   buildenv/docker/jitaas/jdk<version>/<platform>/ubuntu<version>/run/Dockerfile \
+   buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitaas/run/Dockerfile \
    -t=openj9-jitaas-run .
    ```
 - to use the image to start up a JITaaS server:
@@ -87,12 +81,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 - produces `openj9-jitaas-test` image
 - what the image does:
    - sets up environment for openj9 tests for JITaaS
+
 - **prerequisite**: `openj9-jitaas-build` image
 - **prerequisite**: a running `openj9-jitaas-run` container and its IPAddress
 - to build the image:
    ```
    docker build -f \
-   buildenv/docker/jitaas/jdk<version>/<platform>/ubuntu<version>/test/Dockerfile \
+   buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitaas/test/Dockerfile \
    -t=openj9-jitaas-test .
    ```
 - to use the image for testing:
@@ -108,7 +103,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
    make _<test_name> EXTRA_OPTIONS=" -XX:JITaaSClient:server=<IPAddress> " 
    ```
 
-
 ## buildenv/Dockerfile
 - what the image does:
     - similar to `build/Dockerfile`
@@ -117,7 +111,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 - to obtain the image do the following
    ```
    docker build -f \
-   buildenv/docker/jitaas/jdk<version>/<platform>/ubuntu<version>/buildenv/Dockerfile \
+   buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitaas/buildenv/Dockerfile \
    -t=openj9-jitaas-buildenv .
    ```
 - to use the image
