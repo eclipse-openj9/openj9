@@ -423,6 +423,14 @@ TR_J9ServerVM::jitStaticsAreSame(TR_ResolvedMethod *method1, I_32 cpIndex1, TR_R
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getComponentClassFromArrayClass(TR_OpaqueClassBlock *arrayClass)
    {
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) arrayClass);
+      if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+         {
+         return (it->second.componentClass);
+         }
+      }
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_getComponentClassFromArrayClass, arrayClass);
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
