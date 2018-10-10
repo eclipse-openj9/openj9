@@ -135,6 +135,9 @@ class ClientSessionData
    void decNumActiveThreads() { --_numActiveThreads;  }
    void printStats();
 
+   TR::Monitor *getStaticMapMonitor() { return _staticMapMonitor; }
+   PersistentUnorderedMap<void *, TR_StaticFinalData> &getStaticFinalDataMap() { return _staticFinalDataMap; }
+
    private:
    const uint64_t _clientUID;
    int64_t  _timeOfLastAccess; // in ms
@@ -168,6 +171,8 @@ class ClientSessionData
 
    TR_AddressSet *_unloadedClassAddresses; // Per-client versions of the unloaded class and method addresses kept in J9PersistentInfo
    bool           _requestUnloadedClasses; // If true we need to request the current state of unloaded classes from the client
+   TR::Monitor *_staticMapMonitor;
+   PersistentUnorderedMap<void *, TR_StaticFinalData> _staticFinalDataMap; // stores values at static final addresses in JVM
    }; // ClientSessionData
 
 // Hashtable that maps clientUID to a pointer that points to ClientSessionData

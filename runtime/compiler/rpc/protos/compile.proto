@@ -209,6 +209,7 @@ enum J9ServerMessageType
    VM_getResolvedMethodsAndMirror = 300;
    VM_getVMInfo = 301;
    VM_isAnonymousClass = 302;
+   VM_dereferenceStaticAddress = 303;
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 400;

@@ -8395,6 +8395,44 @@ TR_J9VM::getPrimitiveArrayAllocationClass(J9Class *clazz)
    }
 
 
+TR_StaticFinalData
+TR_J9VM::dereferenceStaticFinalAddress(void *staticAddress, TR::DataType addressType)
+   {
+   TR_StaticFinalData data;
+   if (!staticAddress)
+      {
+      data.dataAddress = 0;
+      return data;
+      }
+   TR::VMAccessCriticalSection dereferenceStaticFinalAddress(this);
+   switch (addressType)
+      {
+      case TR::Int8:
+         data.dataInt8Bit = *(int8_t *) staticAddress;
+         break;
+      case TR::Int16:
+         data.dataInt16Bit = *(int16_t *) staticAddress;
+         break;
+      case TR::Int32:
+         data.dataInt32Bit = *(int32_t *) staticAddress;
+         break;
+      case TR::Int64:
+         data.dataInt64Bit = *(int64_t *) staticAddress;
+         break;
+      case TR::Float:
+         data.dataFloat = *(float *) staticAddress;
+         break;
+      case TR::Double:
+         data.dataDouble = *(double *) staticAddress;
+         break;
+      case TR::Address:
+         data.dataAddress = *(uintptrj_t *) staticAddress;
+         break;
+      default:
+         TR_ASSERT(0, "Unexpected type %s", addressType.toString());
+      }
+   return data;
+   }
 
 //////////////////////////////////////////////////////////
 // TR_J9SharedCacheVM

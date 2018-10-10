@@ -973,6 +973,14 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->isAnonymousClass(clazz));
          }
          break;
+      case J9ServerMessageType::VM_dereferenceStaticAddress:
+         {
+         auto recv = client->getRecvData<void *, TR::DataType>();
+         void *address = std::get<0>(recv);
+         auto addressType = std::get<1>(recv);
+         client->write(fe->dereferenceStaticFinalAddress(address, addressType));
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedRelocatableJ9Method on the heap, to be used as a mirror for performing actions which are only
@@ -2409,7 +2417,8 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) :
    _J9MethodMap(decltype(_J9MethodMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _systemClassByNameMap(decltype(_systemClassByNameMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _unloadedClassAddresses(NULL),
-   _requestUnloadedClasses(true)
+   _requestUnloadedClasses(true),
+   _staticFinalDataMap(decltype(_staticFinalDataMap)::allocator_type(TR::Compiler->persistentAllocator()))
    {
    updateTimeOfLastAccess();
    _javaLangClassPtr = nullptr;
@@ -2419,6 +2428,7 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) :
    _systemClassMapMonitor = TR::Monitor::create("JIT-JITaaSSystemClassMapMonitor");
    _sequencingMonitor = TR::Monitor::create("JIT-JITaaSSequencingMonitor");
    _vmInfo = nullptr;
+   _staticMapMonitor = TR::Monitor::create("JIT-JITaaSStaticMapMonitor");
    }
 
 ClientSessionData::~ClientSessionData()
@@ -2432,6 +2442,7 @@ ClientSessionData::~ClientSessionData()
       _unloadedClassAddresses->destroy();
       jitPersistentFree(_unloadedClassAddresses);
       }
+   _staticMapMonitor->destroy();
    jitPersistentFree(_vmInfo);
    }
 
