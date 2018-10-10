@@ -639,9 +639,28 @@ TR_J9ServerVM::getNumInnerClasses(TR_OpaqueClassBlock * clazz)
 bool
 TR_J9ServerVM::isPrimitiveArray(TR_OpaqueClassBlock *clazz)
    {
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) clazz);
+      if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+         {
+         if(!J9ROMCLASS_IS_ARRAY(it->second.romClass))
+            {
+            return false;
+            }
+         TR_OpaqueClassBlock * componentClass = it->second.componentClass;
+         auto it_comp = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) componentClass);
+         if (it_comp != _compInfoPT->getClientData()->getROMClassMap().end())
+            {
+            return J9ROMCLASS_IS_PRIMITIVE_TYPE(it_comp->second.romClass) ? true : false;
+            }
+         }
+      }
+
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_isPrimitiveArray, clazz);
    return std::get<0>(stream->read<bool>());
+
    }
 
 uint32_t
