@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -79,6 +79,9 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *tstartEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *tfinishEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *tabortEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *arraycopyEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *irdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *ardbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    
    static void restoreTOCRegister(TR::Node *node, TR::CodeGenerator *cg, TR::RegisterDependencyConditions *dependencies);
    static void buildArgsProcessFEDependencies(TR::Node *node, TR::CodeGenerator *cg, TR::RegisterDependencyConditions *dependencies);

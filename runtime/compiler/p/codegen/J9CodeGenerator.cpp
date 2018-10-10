@@ -619,7 +619,10 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
       }
 
    if (node->getOpCodeValue() == TR::aloadi ||
-      (TR::Compiler->target.is64Bit() && comp()->useCompressedPointers() && node->getOpCodeValue() == TR::iloadi && comp()->getMethodHotness() >= hot))
+         (TR::Compiler->target.is64Bit() &&
+          comp()->useCompressedPointers() &&
+          (node->getOpCodeValue() == TR::iloadi || node->getOpCodeValue() == TR::irdbari) &&
+          comp()->getMethodHotness() >= hot))
       {
       TR::Node *firstChild = node->getFirstChild();
       optDisabled = disableIteratorPrefetch;
