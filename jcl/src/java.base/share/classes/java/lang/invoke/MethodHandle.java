@@ -812,6 +812,11 @@ public abstract class MethodHandle {
 	 */
 	private static final native MethodHandle getCPMethodHandleAt(Object internalRamClass, int index);
 
+	/*
+	 * sun.reflect.ConstantPool doesn't have a getConstantDynamicAt method.  This is the 
+	 * equivalent for ConstantDynamic.
+	 */
+	private static final native Object getCPConstantDynamicAt(Object internalRamClass, int index);
 	
 	/**
 	 * Get the class name from a constant pool class element, which is located
@@ -835,13 +840,6 @@ public abstract class MethodHandle {
 	private static final int BSM_NAME_ARGUMENT_INDEX = 1;
 	private static final int BSM_TYPE_ARGUMENT_INDEX = 2;
 	private static final int BSM_OPTIONAL_ARGUMENTS_START_INDEX = 3;
-	
-/*[IF Java11]*/
-	/*
-	 * sun.reflect.ConstantPool doesn't have a getConstantDynamicAt method.  This is the 
-	 * equivalent for ConstantDynamic.
-	 */
-	private static final native Object getCPConstantDynamicAt(Object internalRamClass, int index);
 
 	@SuppressWarnings("unused")
 	private static final Object resolveConstantDynamic(long j9class, String name, String fieldDescriptor, long bsmData) throws Throwable {
@@ -1002,7 +1000,6 @@ public abstract class MethodHandle {
 		
 		return result;
 	}
-/*[ENDIF] Java11*/
 
 	@SuppressWarnings("unused")
 	private static final MethodHandle resolveInvokeDynamic(long j9class, String name, String methodDescriptor, long bsmData) throws Throwable {
@@ -1111,11 +1108,9 @@ public abstract class MethodHandle {
 				case 14:
 					cpEntry = getCPMethodHandleAt(internalRamClass, index);
 					break;
-/*[IF Java11]*/
 				case 17:
 					cpEntry = getCPConstantDynamicAt(internalRamClass, index);
 					break;
-/*[ENDIF] Java11*/
 				default:
 					// Do nothing. The null check below will throw the appropriate exception.
 				}
