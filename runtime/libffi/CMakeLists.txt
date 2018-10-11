@@ -56,9 +56,13 @@ if(OMR_ARCH_X86)
 		x86/ffi.c
 		x86/ffi64.c
 		x86/sysv.S
-		x86/unix64.S
 	)
-	if(OMR_HOST_OS STREQUAL "osx")
+	if(OMR_HOST_OS STREQUAL "linux")
+		target_sources(ffi
+			PRIVATE
+			x86/unix64.S
+		)
+	elseif(OMR_HOST_OS STREQUAL "osx")
 		target_sources(ffi
 			PRIVATE
 			x86/darwin64.s
