@@ -65,4 +65,11 @@
 		<output type="failure" caseSensitive="no" regex="no" platforms="zos_390-64_cmprssptrs.*">32bit allocation regions</output>		
 	</test>
 	
+	<test id="Verify -XX:MaxHeapSize -XX:InitialHeapSize -XX:ThreadStackSize">
+		<command>$EXE$ -XX:MaxHeapSize=234m -XX:InitialHeapSize=11m -verbose:sizes -version</command>				
+		<output type="success" caseSensitive="no" regex="no">OpenJ9</output>
+		<output type="required" caseSensitive="no" regex="no">-Xmx234M</output>
+		<output type="required" caseSensitive="no" regex="no">-Xms11M</output>
+	</test>
+	
 </suite>
