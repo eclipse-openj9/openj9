@@ -1043,6 +1043,19 @@ TR_J9ServerVM::allocateCodeMemory(TR::Compilation * comp, uint32_t warmCodeSize,
 bool
 TR_J9ServerVM::sameClassLoaders(TR_OpaqueClassBlock * class1, TR_OpaqueClassBlock * class2)
    {
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it_class1 = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) class1);
+      if (it_class1 != _compInfoPT->getClientData()->getROMClassMap().end())
+         {
+         auto it_class2 = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) class2);
+         if (it_class2 != _compInfoPT->getClientData()->getROMClassMap().end())
+            {
+            return (it_class1->second.classLoader == it_class2->second.classLoader);
+            }
+         }
+      }
+
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_sameClassLoaders, class1, class2);
    return std::get<0>(stream->read<bool>());
