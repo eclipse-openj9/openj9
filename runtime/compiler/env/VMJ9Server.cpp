@@ -1064,6 +1064,30 @@ TR_J9ServerVM::sameClassLoaders(TR_OpaqueClassBlock * class1, TR_OpaqueClassBloc
 bool
 TR_J9ServerVM::isUnloadAssumptionRequired(TR_OpaqueClassBlock *clazz, TR_ResolvedMethod *methodBeingCompiled)
    {
+   TR_OpaqueClassBlock * classOfMethod = static_cast<TR_ResolvedJ9JITaaSServerMethod *>(methodBeingCompiled)->classOfMethod();
+   if (clazz == classOfMethod)
+      return false;
+
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it_class = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) clazz);
+      if (it_class != _compInfoPT->getClientData()->getROMClassMap().end())
+         {
+         if (!isAnonymousClass(it_class->second.romClass))
+            {
+            if (it_class->second.classLoader == getSystemClassLoader())
+               return false;
+            auto it_classOfMethod = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) classOfMethod);
+            if (it_classOfMethod != _compInfoPT->getClientData()->getROMClassMap().end())
+               return (it_class->second.classLoader != it_classOfMethod->second.classLoader);
+            }
+         else
+            {
+            return true;
+            }
+         }
+      }
+
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    auto mirror = static_cast<TR_ResolvedJ9JITaaSServerMethod *>(methodBeingCompiled)->getRemoteMirror();
    stream->write(JITaaS::J9ServerMessageType::VM_isUnloadAssumptionRequired, clazz, static_cast<TR_ResolvedMethod *>(mirror));
