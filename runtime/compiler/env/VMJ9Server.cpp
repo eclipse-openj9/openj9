@@ -785,7 +785,7 @@ TR_J9ServerVM::canAllocateInlineClass(TR_OpaqueClassBlock *clazz)
          if (it->second.classInitialized)
             {
             return ((it->second.romClass->modifiers & (J9_JAVA_ABSTRACT | J9_JAVA_INTERFACE ))?
-                     true:false);
+                     false:true);
             }
          }
       }
@@ -802,7 +802,7 @@ TR_J9ServerVM::canAllocateInlineClass(TR_OpaqueClassBlock *clazz)
          {
          it->second.classInitialized = classInitialized;
          return ((it->second.romClass->modifiers & (J9_JAVA_ABSTRACT | J9_JAVA_INTERFACE ))?
-                     true:false);
+                  false:true);
          }
       else
          {
