@@ -2836,8 +2836,8 @@ J9::Z::TreeEvaluator::dfdivEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       oolHelper->swapInstructionListsWithCompilation();
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, oolReturnPoint);
 
-      cflowRegionEnd->setEndInternalControlFlow();
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cflowRegionEnd, deps);
+      cflowRegionEnd->setEndInternalControlFlow();
       }
 
    if (node->getDataType() == TR::DecimalLongDouble)

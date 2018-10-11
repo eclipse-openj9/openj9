@@ -267,7 +267,7 @@ J9::Z::TreeEvaluator::udsl2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
    if (!node->getOpCode().isSetSign())
       {
-      TR::LabelSymbol * startLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+      TR::LabelSymbol * cFlowRegionStart = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
       TR::LabelSymbol * doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
 
       bool isImplicitValue = node->getNumChildren() < 2;
@@ -292,8 +292,8 @@ J9::Z::TreeEvaluator::udsl2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
          if (sourceMR->getBaseRegister())
             deps->addPostConditionIfNotAlreadyInserted(sourceMR->getBaseRegister(), TR::RealRegister::AssignAny);
 
-         startLabel->setStartInternalControlFlow();
-         generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, startLabel, deps);
+         generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionStart, deps);
+         cFlowRegionStart->setStartInternalControlFlow();
 
          // The primary (and currently the only) consumer of BCD evaluators in Java is the DAA intrinsics
          // library. The DAA library assumes all BCD types are positive, unless an explicit negative sign
@@ -325,8 +325,8 @@ J9::Z::TreeEvaluator::udsl2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
                                 generateS390LeftAlignedMemoryReference(*sourceMR, node, 0, cg, sourceSignEndByte),
                                 minusSignMR);
 
-         startLabel->setStartInternalControlFlow();
-         generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, startLabel, deps);
+         generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionStart, deps);
+         cFlowRegionStart->setStartInternalControlFlow();
 
          generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK7, node, doneLabel);
          }
@@ -335,8 +335,8 @@ J9::Z::TreeEvaluator::udsl2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
                                      generateS390RightAlignedMemoryReference(*destMR, node, 0, cg),
                                      TR::DataType::getPreferredMinusCode(), targetReg, 0, false); // numericNibbleIsZero=false
 
-      doneLabel->setEndInternalControlFlow();
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, doneLabel, deps);
+      doneLabel->setEndInternalControlFlow();
 
       targetReg->resetSignState();
       targetReg->setHasKnownPreferredSign();
@@ -466,7 +466,7 @@ J9::Z::TreeEvaluator::pd2udslEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       TR_ASSERT(cg->getAppendInstruction()->getOpCodeValue() == TR::InstOpCode::UNPKU,
                 "the previous instruction should be an UNPKU\n");
 
-      TR::LabelSymbol * startLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+      TR::LabelSymbol * cFlowRegionStart = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
       TR::LabelSymbol * doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
 
       TR::RegisterDependencyConditions * targetMRDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 2, cg);
@@ -476,8 +476,8 @@ J9::Z::TreeEvaluator::pd2udslEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       if (destMR->getBaseRegister())
          targetMRDeps->addPostConditionIfNotAlreadyInserted(destMR->getBaseRegister(), TR::RealRegister::AssignAny);
 
-      startLabel->setStartInternalControlFlow();
-      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, startLabel, targetMRDeps);
+      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionStart, targetMRDeps);
+      cFlowRegionStart->setStartInternalControlFlow();
 
       // DAA library assumes all BCD types are positive, unless an explicit negative sign code is present
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK9, node, doneLabel);
@@ -485,8 +485,8 @@ J9::Z::TreeEvaluator::pd2udslEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       TR_ASSERT(TR::DataType::getNationalSeparateMinus() <= 0xFF, "expecting nationalSeparateMinusSign to be <= 0xFF and not 0x%x\n", TR::DataType::getNationalSeparateMinus());
       generateSIInstruction(cg, TR::InstOpCode::MVI, node, generateS390LeftAlignedMemoryReference(*destMR, node, 1, cg, destSignEndByte), TR::DataType::getNationalSeparateMinus());
 
-      doneLabel->setEndInternalControlFlow();
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, doneLabel, targetMRDeps);
+      doneLabel->setEndInternalControlFlow();
 
       targetReg->setHasKnownPreferredSign();
       }
@@ -793,10 +793,8 @@ J9::Z::TreeEvaluator::zonedToZonedSeparateSignHelper(TR::Node *node, TR_PseudoRe
       TR::LabelSymbol * processNegative = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
       TR::LabelSymbol * processEnd      = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
 
-      processSign->setStartInternalControlFlow();
-      processEnd   ->setEndInternalControlFlow();
-
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, processSign);
+      processSign->setStartInternalControlFlow();
 
       // A negative sign code is represented by 0xB and 0xD (1011 and 1101 in binary). Due to the
       // symmetry in the binary encoding of the negative sign codes we can get away with two bit
@@ -834,6 +832,7 @@ J9::Z::TreeEvaluator::zonedToZonedSeparateSignHelper(TR::Node *node, TR_PseudoRe
       // ----------------- Incoming branch -----------------
 
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, processEnd);
+      processEnd->setEndInternalControlFlow();
 
       // Clear the embedded sign code of the source
       TR::Instruction* cursor = generateSIInstruction(cg, TR::InstOpCode::OI, node, generateS390LeftAlignedMemoryReference(*srcSignCodeMR, node, 0, cg, srcSignCodeMR->getLeftMostByte()), TR::DataType::getZonedCode());
@@ -907,7 +906,7 @@ J9::Z::TreeEvaluator::zonedSeparateSignToPackedOrZonedHelper(TR::Node *node, TR_
          TR::LabelSymbol * returnLabel     = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
          TR::LabelSymbol * callLabel       = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
 
-         TR::LabelSymbol * cflowRegionStart   = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+         TR::LabelSymbol * cFlowRegionStart   = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
          TR::LabelSymbol * cflowRegionEnd     = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
 
          TR::RegisterDependencyConditions * deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 2, cg);
@@ -917,8 +916,8 @@ J9::Z::TreeEvaluator::zonedSeparateSignToPackedOrZonedHelper(TR::Node *node, TR_
          if (sourceMR->getBaseRegister())
             deps->addPostConditionIfNotAlreadyInserted(sourceMR->getBaseRegister(), TR::RealRegister::AssignAny);
 
-         cflowRegionStart->setStartInternalControlFlow();
-         generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cflowRegionStart, deps);
+         generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionStart, deps);
+         cFlowRegionStart->setStartInternalControlFlow();
 
          if (cg->traceBCDCodeGen())
             traceMsg(comp,"\t\ttargetReg->isInit=%s, targetRegSize=%d, targetRegPrec=%d, srcRegSize=%d, srcRegPrec=%d, sourceSignEndByte=%d\n",
@@ -928,8 +927,8 @@ J9::Z::TreeEvaluator::zonedSeparateSignToPackedOrZonedHelper(TR::Node *node, TR_
          generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, cflowRegionEnd);
 
 
-         cflowRegionEnd->setEndInternalControlFlow();
          generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cflowRegionEnd, deps);
+         cflowRegionEnd->setEndInternalControlFlow();
 
          targetReg->transferSignState(srcReg, isTruncation);
          }
@@ -946,7 +945,7 @@ J9::Z::TreeEvaluator::zonedSeparateSignToPackedOrZonedHelper(TR::Node *node, TR_
       TR::LabelSymbol * returnLabel       = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
       TR::LabelSymbol * callLabel       = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
 
-      TR::LabelSymbol * cflowRegionStart   = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+      TR::LabelSymbol * cFlowRegionStart   = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
       TR::LabelSymbol * cflowRegionEnd     = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
 
       TR::RegisterDependencyConditions * deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 4, cg);
@@ -962,8 +961,8 @@ J9::Z::TreeEvaluator::zonedSeparateSignToPackedOrZonedHelper(TR::Node *node, TR_
          deps->addPostConditionIfNotAlreadyInserted(destMR->getBaseRegister(), TR::RealRegister::AssignAny);
 
 
-      cflowRegionStart->setStartInternalControlFlow();
-      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cflowRegionStart, deps);
+      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionStart, deps);
+      cFlowRegionStart->setStartInternalControlFlow();
 
       if (cg->traceBCDCodeGen())
          traceMsg(comp,"\tzonedSeparateSignToPackedOrZonedHelper %p : op %s, targetReg->isInit=%s, targetRegSize=%d, targetRegPrec=%d, srcRegSize=%d, srcRegPrec=%d, sourceSignEndByte=%d\n",
@@ -983,8 +982,8 @@ J9::Z::TreeEvaluator::zonedSeparateSignToPackedOrZonedHelper(TR::Node *node, TR_
 
 
 
-      cflowRegionEnd->setEndInternalControlFlow();
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cflowRegionEnd, deps);
+      cflowRegionEnd->setEndInternalControlFlow();
 
       targetReg->setHasKnownPreferredSign();
       }
@@ -1502,10 +1501,8 @@ J9::Z::TreeEvaluator::zonedToPackedHelper(TR::Node *node, TR_PseudoRegister *tar
    TR::LabelSymbol * processNegative = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
    TR::LabelSymbol * processEnd      = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
 
-   processSign->setStartInternalControlFlow();
-   processEnd   ->setEndInternalControlFlow();
-
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, processSign);
+   processSign->setStartInternalControlFlow();
 
    // Load the sign byte of the Packed Decimal from memory
    generateRXYInstruction(cg, TR::InstOpCode::LLC, node, signCode, generateS390LeftAlignedMemoryReference(*destMR, node, 0, cg, 1));
@@ -1548,8 +1545,6 @@ J9::Z::TreeEvaluator::zonedToPackedHelper(TR::Node *node, TR_PseudoRegister *tar
 
    generateRXInstruction(cg, TR::InstOpCode::STC, node, signCode, generateS390LeftAlignedMemoryReference(*destMR, node, 0, cg, 1));
 
-   TR::Instruction* cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, processEnd);
-
    // Set up the proper register dependencies
    TR::RegisterDependencyConditions* dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 2, cg);
 
@@ -1562,7 +1557,8 @@ J9::Z::TreeEvaluator::zonedToPackedHelper(TR::Node *node, TR_PseudoRegister *tar
    if (destMR->getBaseRegister())
       dependencies->addPostCondition(destMR->getBaseRegister(), TR::RealRegister::AssignAny);
 
-   cursor->setDependencyConditions(dependencies);
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, processEnd, dependencies);
+   processEnd->setEndInternalControlFlow();
 
    // Cleanup registers before returning
    cg->stopUsingRegister(signCode);
@@ -1650,10 +1646,8 @@ J9::Z::TreeEvaluator::pd2zdSignFixup(TR::Node *node,
    TR::LabelSymbol * processNegative = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
    TR::LabelSymbol * processEnd      = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
 
-   processSign->setStartInternalControlFlow();
-   processEnd  ->setEndInternalControlFlow();
-
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, processSign);
+   processSign->setStartInternalControlFlow();
 
    // Load the sign byte of the Zoned Decimal from memory
    generateRXYInstruction(cg, TR::InstOpCode::LLC, node, signCode, generateS390LeftAlignedMemoryReference(*destMR, node, 0, cg, 1));
@@ -1696,8 +1690,6 @@ J9::Z::TreeEvaluator::pd2zdSignFixup(TR::Node *node,
 
    generateRXInstruction(cg, TR::InstOpCode::STC, node, signCode, generateS390LeftAlignedMemoryReference(*destMR, node, 0, cg, 1));
 
-   TR::Instruction* cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, processEnd);
-
    // Set up the proper register dependencies
    TR::RegisterDependencyConditions* dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 2, cg);
 
@@ -1710,7 +1702,8 @@ J9::Z::TreeEvaluator::pd2zdSignFixup(TR::Node *node,
    if (destMR->getBaseRegister())
       dependencies->addPostCondition(destMR->getBaseRegister(), TR::RealRegister::AssignAny);
 
-   cursor->setDependencyConditions(dependencies);
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, processEnd, dependencies);
+   processEnd->setEndInternalControlFlow();
 
    // Cleanup registers before returning
    cg->stopUsingRegister(signCode);
@@ -2698,7 +2691,7 @@ TR::Register*
 J9::Z::TreeEvaluator::pdcmpVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Register* resultReg = cg->allocateRegister(TR_GPR);
-   generateRRInstruction(cg, TR::Compiler->target.is64Bit() ? TR::InstOpCode::XGR : TR::InstOpCode::XR, node, resultReg, resultReg);
+   generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, resultReg, resultReg);
    generateLoad32BitConstant(cg, node, 1, resultReg, true);
 
    TR::RegisterDependencyConditions* deps = new(cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 2, cg);
@@ -2713,35 +2706,35 @@ J9::Z::TreeEvaluator::pdcmpVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerat
    // TODO: should we correct bad sign before comparing them
    TR::Instruction* cursor = generateVRRhInstruction(cg, TR::InstOpCode::VCP, node, pd1Value, pd2Value, 0);
 
-   TR::LabelSymbol* ifcStartLabel = generateLabelSymbol(cg);
-   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, ifcStartLabel);
-   cursor->setStartInternalControlFlow();
+   TR::LabelSymbol* cFlowRegionStart = generateLabelSymbol(cg);
+   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionStart);
+   cFlowRegionStart->setStartInternalControlFlow();
 
-   TR::LabelSymbol* icfEndLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol* cFlowRegionEnd = generateLabelSymbol(cg);
 
    // Generate Branch Instructions
    switch(node->getOpCodeValue())
       {
       case TR::pdcmpeq:
-         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC0, node, icfEndLabel);
+         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC0, node, cFlowRegionEnd);
          break;
       case TR::pdcmpne:
-         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, icfEndLabel);
-         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC2, node, icfEndLabel);
+         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, cFlowRegionEnd);
+         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC2, node, cFlowRegionEnd);
          break;
       case TR::pdcmplt:
-         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, icfEndLabel);
+         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, cFlowRegionEnd);
          break;
       case TR::pdcmple:
-         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC0, node, icfEndLabel);
-         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, icfEndLabel);
+         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC0, node, cFlowRegionEnd);
+         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, cFlowRegionEnd);
          break;
       case TR::pdcmpgt:
-         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC2, node, icfEndLabel);
+         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC2, node, cFlowRegionEnd);
          break;
       case TR::pdcmpge:
-         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC0, node, icfEndLabel);
-         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC2, node, icfEndLabel);
+         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC0, node, cFlowRegionEnd);
+         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC2, node, cFlowRegionEnd);
          break;
       default:
          TR_ASSERT(0, "Unrecognized op code in pd cmp vector evaluator helper.");
@@ -2751,8 +2744,8 @@ J9::Z::TreeEvaluator::pdcmpVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerat
    // don't really need this restriction however if we rearrange the parameters.
    cursor = generateLoad32BitConstant(cg, node, 0, resultReg, true, cursor, deps);
 
-   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, icfEndLabel, deps);
-   cursor->setEndInternalControlFlow();
+   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionEnd, deps);
+   cFlowRegionEnd->setEndInternalControlFlow();
 
    node->setRegister(resultReg);
 
@@ -6624,12 +6617,12 @@ J9::Z::TreeEvaluator::pdaddsubEvaluatorHelper(TR::Node * node, TR::InstOpCode::M
       traceMsg(comp,"\tcomputedResultPrecision %s nodePrec (%d %s %d) -- mayOverflow = %s\n",
          mayOverflow?">":"<=",computedResultPrecision,mayOverflow?">":"<=",node->getDecimalPrecision(),mayOverflow?"yes":"no");
 
-   TR::LabelSymbol * cflowRegionStart = NULL;
+   TR::LabelSymbol * cFlowRegionStart = NULL;
    TR::LabelSymbol * cflowRegionEnd = NULL;
    TR::RegisterDependencyConditions * deps = NULL;
    if (mayOverflow && produceOverflowMessage)
       {
-      cflowRegionStart   = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+      cFlowRegionStart   = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
       cflowRegionEnd     = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
       deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 4, cg);
 
@@ -6642,12 +6635,11 @@ J9::Z::TreeEvaluator::pdaddsubEvaluatorHelper(TR::Node * node, TR::InstOpCode::M
       if (secondMR->getBaseRegister())
          deps->addPostConditionIfNotAlreadyInserted(secondMR->getBaseRegister(), TR::RealRegister::AssignAny);
 
-      cflowRegionStart->setStartInternalControlFlow();
-      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cflowRegionStart, deps);
+      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionStart, deps);
+      cFlowRegionStart->setStartInternalControlFlow();
       }
 
-   TR::Instruction * cursor =
-      generateSS2Instruction(cg, op, node,
+   generateSS2Instruction(cg, op, node,
                              op1EncodingSize-1,
                              generateS390RightAlignedMemoryReference(*destMR, node, 0, cg),
                              secondReg->getSize()-1,
@@ -6676,8 +6668,8 @@ J9::Z::TreeEvaluator::pdaddsubEvaluatorHelper(TR::Node * node, TR::InstOpCode::M
 
          generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BO, node, oolEntryPoint);
 
-         cflowRegionEnd->setEndInternalControlFlow();
          generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cflowRegionEnd, deps);
+         cflowRegionEnd->setEndInternalControlFlow();
          }
       }
    else
