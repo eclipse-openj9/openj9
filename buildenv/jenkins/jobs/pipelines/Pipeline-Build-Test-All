@@ -285,11 +285,7 @@ timeout(time: 10, unit: 'HOURS') {
                     }
                 }
             } finally {
-                try{
-                    cleanWs()
-                } catch(e) {
-                    echo e.toString()
-                }
+                cleanWs notFailBuild: true
             }
         }
 
