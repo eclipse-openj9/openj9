@@ -27,7 +27,10 @@ eqS_swapStacksAndRunHandler = 33
 eqSR_swapStacksAndRunHandler = 6
 eqSRS_swapStacksAndRunHandler = 48
 eqSS_swapStacksAndRunHandler = 264
+ifdef({OSX_JAVA8},{
+},{	dnl OSX_JAVA8
         DECLARE_PUBLIC(vmSignalHandler)
+})	dnl OSX_JAVA8
         DECLARE_PUBLIC(swapStacksAndRunHandler)
 
 dnl Intel syntax: instruction dest source
