@@ -350,6 +350,36 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Instruction    *generateVFTMaskInstruction(TR::Node *node, TR::Register *reg, TR::CodeGenerator *cg, TR::Instruction *preced = NULL);
    static TR::Register *VMifInstanceOfEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static bool         VMinlineCallEvaluator(TR::Node *node, bool, TR::CodeGenerator *cg);
+
+/** \brief
+    *  Generates Sequence to check and use Guarded Load for ArrayCopy
+    *  
+    * \param node
+    *     The arraycopy node.
+    *
+    *  \param cg
+    *     The code generator used to generate the instructions.
+    * 
+    *  \param byteSrcReg
+    *     Register holding starting address of source
+    *
+    *  \param byteDstReg
+    *     Register holding starting address of destination
+    *
+    *  \param byteLenReg
+    *     Register holding number of bytes to copy
+    * 
+    *  \param mergeLabel
+    *     Label Symbol to merge from generated OOL sequence
+    * 
+    *  \param srm
+    *     Scratch Register Manager providing pool of scratch registers to use
+    * 
+    *  \param isForward
+    *     Boolean specifying if we need to copy elements in forward direction
+    * 
+    */
+   static void         genGuardedLoadOOL(TR::Node *node, TR::CodeGenerator *cg, TR::Register *byteSrcReg, TR::Register *byteDstReg, TR::Register *byteLenReg, TR::LabelSymbol *mergeLabel, TR_S390ScratchRegisterManager *srm, bool isForward);
    static void         genArrayCopyWithArrayStoreCHK(TR::Node *node, TR::Register *srcObjReg, TR::Register *dstObjReg, TR::Register *srcAddrReg, TR::Register *dstAddrReg, TR::Register *lengthReg, TR::CodeGenerator *cg);
    static void         genWrtbarForArrayCopy(TR::Node *node, TR::Register *srcObjReg, TR::Register *dstObjReg, bool srcNonNull, TR::CodeGenerator *cg);
    static TR::Register *VMgenCoreInstanceofEvaluator(TR::Node *node, TR::CodeGenerator *cg, TR::LabelSymbol * falseLabel, TR::LabelSymbol * trueLabel, bool needsResult, bool trueFallThrough, TR::RegisterDependencyConditions * conditions, bool isIfInstanceOf=false);
