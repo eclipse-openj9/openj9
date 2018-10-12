@@ -156,23 +156,6 @@ endef # DEF_RULE.nasm
 
 RULE.nasm=$(eval $(DEF_RULE.nasm))
 
-#
-# Preprocess pnasm into nasm and then assemble into .o
-# 
-define DEF_RULE.pnasm
-$(1).nasm: $(2) | jit_createdirs
-	$$(PASM_CMD) $$(PASM_FLAGS) $$(patsubst %,-I'%',$$(PASM_INCLUDES)) -o $$@ -x assembler-with-cpp -E -P $$<
-
-JIT_DIR_LIST+=$(dir $(1))
-
-jit_cleanobjs::
-	rm -f $(1).nasm
-
-$(call RULE.nasm,$(1),$(1).nasm)
-endef # DEF_RULE.pnasm
-
-RULE.pnasm=$(eval $(DEF_RULE.pnasm))
-
 endif # ($(HOST_ARCH),x)
 ##### END X SPECIFIC RULES #####
 
