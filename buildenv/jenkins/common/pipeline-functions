@@ -160,32 +160,26 @@ def set_build_status(REPO, CONTEXT, SHA, URL, STATE, MESSAGE) {
 }
 
 def cancel_running_pr_test_builds(JOB_NAME, PULL_ID) {
-    def buildingJobs = Jenkins.instance.getAllItems(Job.class).findAll {
-                        println it.class
-                        it.isBuilding() }
-    def matching_jobs = []
-    buildingJobs.each { job->
-        println job.class
-        if (job.getName() == JOB_NAME) {
-            job._getRuns().each { number, run ->
-                // Only look for running jobs
-                if (!run.isBuilding()) { return }
-                // Only look for jobs matching the PR ID
-                println number
-                println run
-                println job_name.class
-                println run.class
-                //println run.getKey()
-                //println run.getValue()
-                // getBuildByNumber
-                println run.getEnvironment()
-                println run.getEnvironment().class
-                if (run.getEnvironment()[OPENJ9_SHA] != "origin/pr/${params.ghprbPullId}/merge") { return }
-                echo "Found running job for PR:'${PULL_ID}'"
-                echo "Cancelling Job:'${JOB_NAME} #${run.getNumber()}"
-                run.doStop()
-            }
-        }
+    def build = Jenkins.instance.getAllItems(Job.class).findAll {
+        it.getName() == JOB_NAME
+    }
+    build.each._getRuns().each { number, run ->
+        // Only look for running jobs
+        if (!run.isBuilding()) { return }
+        // Only look for jobs matching the PR ID
+        println number
+        println run
+        println job_name.class
+        println run.class
+        //println run.getKey()
+        //println run.getValue()
+        // getBuildByNumber
+        println run.getEnvironment()
+        println run.getEnvironment().class
+        if (run.getEnvironment()[OPENJ9_SHA] != "origin/pr/${params.ghprbPullId}/merge") { return }
+        echo "Found running job for PR:'${PULL_ID}'"
+        echo "Cancelling Job:'${JOB_NAME} #${run.getNumber()}"
+        run.doStop()
     }
     error('no')
 }
