@@ -150,11 +150,20 @@ timeout(time: 10, unit: 'HOURS') {
         node(LABEL) {
             try {
                 checkout scm
+                i=1
+                echo "$i"
+                i+=1
                 variableFile = load 'buildenv/jenkins/common/variables-functions'
+                echo "$i"
+                i+=1
                 buildFile = load 'buildenv/jenkins/common/pipeline-functions'
 
+                echo "$i"
+                i+=1
                 // Determine if build is a PullRequest
                 if (ghprbPullId) {
+                    echo "$i"
+                    i+=1
                     // Parse Github trigger comment
                     // Jenkins test sanity <platform>*
                     // Jenkins test extended <platform>*
