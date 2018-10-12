@@ -18,8 +18,6 @@
 ;
 ; SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 
-
-#include "j9cfg.h"
 %ifndef TR_HOST_64BIT
 
 ; --------------------------------------------------------------------------------
@@ -30,8 +28,8 @@
 
       CPU PPRO
 
-      %include jilconsts.inc
-      %include x/runtime/X86PicBuilder_nasm.inc
+      %include "jilconsts.inc"
+      %include "x/runtime/X86PicBuilder_nasm.inc"
 
       segment .text
 
@@ -247,9 +245,6 @@ typeCheckAndDirectDispatchIPic:
 
 throwOnFailedTypeCheckIPic:
       mov         eax, [esp]                                   ; receiver (saved eax)
-#ifdef J9VM_OPT_TEMP_NEW_INTERFACE_INVOCATION
-      push        edx                                          ; p) push the address of the constant pool and cpIndex
-#endif
       lea         edx, [edx+eq_IPicData_interfaceClass]        ; EA of IClass in data block
       push        edi                                          ; p) jit EIP
       push        edx                                          ; p) EA of resolved interface class
@@ -298,9 +293,6 @@ mergePopulateIPicClass:
 
 
 
-#ifdef J9VM_OPT_TEMP_NEW_INTERFACE_INVOCATION
-      push        edx                                       ; p) push the address of the constant pool and cpIndex
-#endif
       lea         edx, [edx+eq_IPicData_interfaceClass]     ; EA of IClass in data block
       push        edi                                       ; p) jit EIP
       push        edx                                       ; p) EA of resolved interface class
@@ -371,7 +363,7 @@ mergePopulateIPicClass:
       LoadClassPointerFromObjectHeader eax, edx, edx              ; receiver class
       mov         eax, dword  [edx+J9TR_J9Class_classLoader]      ; receivers class loader
 
-      mov         ebx, dword  [esi+eq_IPicData_interfaceClass]    ; ebx == IClass from IPic data area
+      mov         ebx, dword  [esi+eq_IPicData_interfaceClass]    
       cmp         eax, dword  [ebx+J9TR_J9Class_classLoader]      ; compare class loaders
       jz short IPicClassSlotUpdateFailed                          ; class loaders are the same--do nothing
 
@@ -442,9 +434,6 @@ mergeIPicSlotCall:
 
 
 
-#ifdef J9VM_OPT_TEMP_NEW_INTERFACE_INVOCATION
-      push        edx                                             ; p) push the address of the constant pool and cpIndex
-#endif
       lea         edx, [edx+eq_IPicData_interfaceClass]           ; EA of IClass in data block
 
       push        edi                                             ; p) jit EIP
@@ -523,10 +512,6 @@ mergeIPicInterpretedDispatch:
       ; +0 saved eax (receiver)
       ;
 
-#ifdef J9VM_OPT_TEMP_NEW_INTERFACE_INVOCATION
-      push        edx                                             ; p) push the address of the constant pool and cpIndex
-#endif
-
       lea         edx, [edx+eq_IPicData_interfaceClass]           ; EA of IClass in data block
                                                                   ; 18 = 5 (CALL) + 5 (JMP) + 8 (cpAddr,cpIndex)
 
@@ -595,10 +580,6 @@ _IPicLookupDispatch:
       ; +4 saved edi
       ; +0 saved eax (receiver)
       ;
-
-#ifdef J9VM_OPT_TEMP_NEW_INTERFACE_INVOCATION
-      push        edi                                             ; p) push the address of the constant pool and cpIndex
-#endif
 
       lea         edi, [edi+eq_IPicData_interfaceClass]           ; EA of IClass in data block
                                                                   ; 13 = 5 (JMP) + 8 (cpAddr,cpIndex)
@@ -1001,7 +982,6 @@ interpretedLastVPicSlot:
 
 vtableCallNotPatched:
       lea         edx, [edx-eq_VPicData_size]                     ; edx = EA of VPic data
-                                                                  ; -9 = (DB + cpAddr,cpIndex)
       push        dword  [esp+12]                                 ; p) jit valid EIP
       push        edx                                             ; p) push the address of the constant pool and cpIndex
       CallHelperUseReg _jitResolveVirtualMethod,eax               ; eax = compiler vtable index
