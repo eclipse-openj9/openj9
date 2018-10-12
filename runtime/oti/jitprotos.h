@@ -112,7 +112,6 @@ void * j9ThunkInvokeExactHelperFromSignature(void * jitConfig, UDATA signatureLe
 
 /* prototypes from CodertVMHelpers.cpp */
 void initializeDirectJNI (J9JavaVM *vm);
-void flushICache(J9VMThread *currentThread, void *memoryPointer, UDATA byteAmount);
 
 /* prototypes from jsr292.c */
 void i2jFSDAssert();

@@ -38,7 +38,7 @@
   <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
   <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
   <exec command="rm -f $DUMPFILE$" />
-  <command>$EXE$ -Xmx256m $XDUMP$ $PROGRAM$</command>
+  <command>$EXE$ $XDUMP$ $PROGRAM$</command>
   <output regex="no" type="success">System dump written</output>
   <!-- check for unexpected core dumps -->
   <output regex="no" type="failure">0001.dmp</output>
@@ -372,5 +372,5 @@
   <output regex="no" type="failure">DDRInteractiveCommandException</output>
 
  </test>
-
+ 
  </suite>

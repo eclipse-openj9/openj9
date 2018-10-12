@@ -53,8 +53,8 @@
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) \
 	-Dtest.list=$(Q)TestDDRExtensionGeneral$(Q) -DADDITIONALEXPORTS=-showversion -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
-		<!-- temporarily disable this test on z/OS; github.com/eclipse/openj9/issues/1511 -->
-		<platformRequirements>^os.zos,^os.win</platformRequirements>
+		<!-- temporarily disable this test on AIX, z/OS; github.com/eclipse/openj9/issues/1511 -->
+		<platformRequirements>^os.aix,^os.zos,^os.win</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
