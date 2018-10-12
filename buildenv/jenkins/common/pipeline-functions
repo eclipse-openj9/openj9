@@ -169,7 +169,7 @@ def cancel_running_pr_test_builds(JOB_NAME, PULL_ID) {
         if (job.getName() == JOB_NAME) {
             job._getRuns().each { number, run ->
                 // Only look for running jobs
-                //if (!run.isBuilding()) { return }
+                if (!run.isBuilding()) { return }
                 // Only look for jobs matching the PR ID
                 println number
                 println run
@@ -178,6 +178,7 @@ def cancel_running_pr_test_builds(JOB_NAME, PULL_ID) {
                 //println run.getKey()
                 //println run.getValue()
                 // getBuildByNumber
+                println run.getEnvironment()
                 if (run.getEnvironment()[OPENJ9_SHA] != "origin/pr/${params.ghprbPullId}/merge") { return }
                 echo "Found running job for PR:'${PULL_ID}'"
                 echo "Cancelling Job:'${JOB_NAME} #${run.getNumber()}"
