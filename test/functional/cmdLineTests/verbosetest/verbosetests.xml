@@ -489,7 +489,9 @@
  <echo value="Test handling of other arguments" />
 	<variable name="VERBOSE" value="-verbose:dynload,sizes,stack,debug" />
   	<test id="$VERBOSE$">
- 		<command>$EXE$ $VERBOSE$ $PROGRAM$</command>
+  		<command>$EXE$ $VERBOSE$ $PROGRAM$</command>
+ 		<!-- check for -verbose:dynload message on a non-bootstrap class. When shared cache is enabled by default, -verbose:dynload won't show bootstrap classes loaded from the share cache-->
+  		<output regex="no" type="required">Loaded jit/test/vich/Allocation</output>
   		<output regex="no" type="required">Loaded java/lang/Object from</output>
  		<output regex="no" type="required">RAM class segment increment</output>
  		<output regex="no" type="required">JVMVERB000I Verbose stack</output>
@@ -501,7 +503,7 @@
 	<variable name="VERBOSE" value="-verbose:dynload -verbose:sizes -verbose:stack -verbose:debug" />
   	<test id="$VERBOSE$">
  		<command>$EXE$ $VERBOSE$ $PROGRAM$</command>
-  		<output regex="no" type="required">Loaded java/lang/Object from</output>
+  		<output regex="no" type="required">Loaded jit/test/vich/Allocation</output>
  		<output regex="no" type="required">RAM class segment increment</output>
  		<output regex="no" type="required">JVMVERB000I Verbose stack</output>
  		<output regex="no" type="success">$EXP_OP$</output>
@@ -510,7 +512,7 @@
 	<variable name="VERBOSE" value="-verbose:dynload -verbose:sizes -verbose:stack -verbose:debug -verbose:none" />
   	<test id="$VERBOSE$">
  		<command>$EXE$ $VERBOSE$ $PROGRAM$</command>
-  		<output regex="no" type="failure">Loaded java/lang/Object from</output>
+  		<output regex="no" type="failure">Loaded jit/test/vich/Allocation</output>
  		<output regex="no" type="failure">RAM class segment increment</output>
  		<output regex="no" type="failure">JVMVERB000I Verbose stack</output>
  		<output regex="no" type="success">$EXP_OP$</output>
@@ -519,7 +521,7 @@
 	<variable name="VERBOSE" value="-verbose:dynload -verbose:sizes -verbose:stack -verbose:debug,none" />
   	<test id="$VERBOSE$">
  		<command>$EXE$ $VERBOSE$ $PROGRAM$</command>
-  		<output regex="no" type="failure">Loaded java/lang/Object from</output>
+  		<output regex="no" type="failure">Loaded jit/test/vich/Allocation</output>
  		<output regex="no" type="failure">RAM class segment increment</output>
  		<output regex="no" type="failure">JVMVERB000I Verbose stack</output>
  		<output regex="no" type="success">$EXP_OP$</output>
