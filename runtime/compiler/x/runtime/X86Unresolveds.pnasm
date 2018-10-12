@@ -18,8 +18,6 @@
 ;
 ; SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 
-#include "j9cfg.h"
-
 %ifndef TR_HOST_64BIT
 
 ; --------------------------------------------------------------------------------
@@ -1114,16 +1112,16 @@ retn
 ; --------------------------------------------------------------------------------
 
 
-
-
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
-eq_offsetof_J9Object_clazz equ   8        ; offset of class pointer in a J9Object
-#else
-eq_offsetof_J9Object_clazz equ   16       ; offset of class pointer in a J9Object
-#endif
-
       %include "jilconsts.inc"
       %include "x/runtime/X86PicBuilder_nasm.inc"
+
+%ifdef ASM_J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+eq_offsetof_J9Object_clazz equ   8        ; offset of class pointer in a J9Object
+%else
+eq_offsetof_J9Object_clazz equ   16       ; offset of class pointer in a J9Object
+%endif
+
+
 
 segment .text
 
