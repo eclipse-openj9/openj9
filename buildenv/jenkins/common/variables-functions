@@ -498,47 +498,46 @@ def set_job_properties(JOB_TYPE) {
         * PARAMETERS
         ********************/
 
-        // All build types
+        if (JOB_TYPE == "build" || JOB_TYPE == "pipeline") {
+        // Only setup Parameters for Build and Pipeline jobs
 
-        // If SDK_VERSION parameter is already set, assume it is correct (helps with Sandbox builds)
-        // Else parse the JOB_NAME to determine the verison
-        SDK_VERSION = params.SDK_VERSION
-        if (!SDK_VERSION) {
-            echo "Parse build name to determine SDK_VERSION..."
-            // Eg - Build-JDK8-linux_390-64_cmprssptrs
-            //    - Pipeline-Build-Test-JDK8-linux_390-64_cmprssptrs
-            //    - PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9
-            // Index of JDK + 3 until index of next '-'
-            INDEX_START_SDK_VERSION = JOB_NAME.indexOf('JDK')+3
-            SDK_VERSION = JOB_NAME.substring(INDEX_START_SDK_VERSION,JOB_NAME.indexOf('-',INDEX_START_SDK_VERSION))
-        }
-        echo "SDK_VERSION:'${SDK_VERSION}'"
-
-        PLATFORM = params.PLATFORM
-        if (!PLATFORM) {
-            echo "Parse build name to determine PLATFORM..."
-            // Assuming consistent naming convention
-            // Substring start from index of 1 after '-' starting at index of 'JDK', go until the end (no end index) excpet for PR builds
-            // Build-JDK8-linux_390-64_cmprssptrs
-            // PullRequest-Compile-JDK-linux_x86-64-OpenJ9
-            // Pipeline-Build-Test-JDK10-aix_ppc-64_cmprssptrs
-            PLATFORM = JOB_NAME.substring(JOB_NAME.indexOf('-',JOB_NAME.indexOf('JDK'))+1)
-            if (JOB_TYPE == "pullRequest") {
-                // PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9
-                // Pipeline PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJDK9
-                PLATFORM = PLATFORM.substring(0,PLATFORM.indexOf('Open')-1)
+            // If SDK_VERSION parameter is already set, assume it is correct (helps with Sandbox builds)
+            // Else parse the JOB_NAME to determine the verison
+            SDK_VERSION = params.SDK_VERSION
+            if (!SDK_VERSION) {
+                echo "Parse build name to determine SDK_VERSION..."
+                // Eg - Build-JDK8-linux_390-64_cmprssptrs
+                //    - Pipeline-Build-Test-JDK8-linux_390-64_cmprssptrs
+                //    - PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9
+                // Index of JDK + 3 until index of next '-'
+                INDEX_START_SDK_VERSION = JOB_NAME.indexOf('JDK')+3
+                SDK_VERSION = JOB_NAME.substring(INDEX_START_SDK_VERSION,JOB_NAME.indexOf('-',INDEX_START_SDK_VERSION))
             }
-        }
-        echo "PLATFORM:'${PLATFORM}'"
+            echo "SDK_VERSION:'${SDK_VERSION}'"
 
-        PARAMETERS = []
+            PLATFORM = params.PLATFORM
+            if (!PLATFORM) {
+                echo "Parse build name to determine PLATFORM..."
+                // Assuming consistent naming convention
+                // Substring start from index of 1 after '-' starting at index of 'JDK', go until the end (no end index) excpet for PR builds
+                // Build-JDK8-linux_390-64_cmprssptrs
+                // PullRequest-Compile-JDK-linux_x86-64-OpenJ9
+                // Pipeline-Build-Test-JDK10-aix_ppc-64_cmprssptrs
+                PLATFORM = JOB_NAME.substring(JOB_NAME.indexOf('-',JOB_NAME.indexOf('JDK'))+1)
+                if (JOB_TYPE == "pullRequest") {
+                    // PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9
+                    // Pipeline PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJDK9
+                    PLATFORM = PLATFORM.substring(0,PLATFORM.indexOf('Open')-1)
+                }
+            }
+            echo "PLATFORM:'${PLATFORM}'"
 
-        // All build types
-        PARAMETERS.add(choice(name: 'SDK_VERSION', choices: ["${SDK_VERSION}"], description: ''))
-        PARAMETERS.add(choice(name: 'PLATFORM', choices: ["${PLATFORM}"], description: ''))
+            PARAMETERS = []
 
-        // Pipeline or build
-        if (JOB_TYPE == 'pipeline' || JOB_TYPE == 'build') {
+            // All build types
+            PARAMETERS.add(choice(name: 'SDK_VERSION', choices: ["${SDK_VERSION}"], description: ''))
+            PARAMETERS.add(choice(name: 'PLATFORM', choices: ["${PLATFORM}"], description: ''))
+
             // NOTE: The following 4 DEFAULT variables can be configured in the Jenkins Global Config.
             // This allows us to know what the default values are without being told explicitly.
             // These DEFAULT values are typically constant per Jenkins Server.
@@ -567,24 +566,26 @@ def set_job_properties(JOB_TYPE) {
                 'VARIABLE_FILE':"${VARIABLE_FILE_DEFAULT}",
                 'VENDOR_REPO':"${VENDOR_REPO_DEFAULT}",
                 'VENDOR_BRANCH':"${VENDOR_BRANCH_DEFAULT}",
-                'VENDOR_CREDENTIALS_ID':"${VENDOR_CREDENTIALS_ID_DEFAULT}"])
-        }
+                'VENDOR_CREDENTIALS_ID':"${VENDOR_CREDENTIALS_ID_DEFAULT}",
+                'ghprbPullId':'',
+                'ghprbGhRepository':'',
+                'ghprbCommentBody':'',
+                'ghprbTargetBranch':''])
+            }
 
-        // Pipeline or PR
-        if (JOB_TYPE == 'pipeline' || JOB_TYPE == 'pullRequest') {
-            add_string_params(['TESTS_TARGETS':''])
-        }
+            if (JOB_TYPE == 'build') {
+                add_string_params([
+                    'NODE':''])
+            }
 
-        if (JOB_TYPE == 'build') {
-            add_string_params(['NODE':''])
-        }
-
-        if (JOB_TYPE == 'pipeline') {
-            add_string_params([
-                'BUILD_NODE':'',
-                'TEST_NODE':'',
-                'PERSONAL_BUILD':'',
-                'SLACK_CHANNEL':''])
+            if (JOB_TYPE == 'pipeline') {
+                add_string_params([
+                    'BUILD_NODE':'',
+                    'TEST_NODE':'',
+                    'PERSONAL_BUILD':'',
+                    'SLACK_CHANNEL':'',
+                    'TESTS_TARGETS':''])
+            }
         }
 
         /********************
