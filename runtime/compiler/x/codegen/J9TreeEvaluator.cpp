@@ -960,6 +960,80 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
 #endif
 
 
+TR::Register *J9::X86::TreeEvaluator::irdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR_ASSERT(TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads(), "iReadBarrierEvaluator");
+
+#ifdef OMR_GC_CONCURRENT_SCAVENGER
+
+   auto sourceMR = generateX86MemoryReference(node, cg);
+   auto address = TR::TreeEvaluator::loadMemory(node, sourceMR, TR_RematerializableLoadEffectiveAddress, false, cg);
+   address->setMemRef(sourceMR);
+   sourceMR->decNodeReferenceCounts(cg);
+
+   auto object = cg->allocateRegister();
+   auto load = generateRegMemInstruction(L4RegMem, node, object, generateX86MemoryReference(address, 0, cg), cg);
+   cg->setImplicitExceptionPoint(load);
+
+   auto begLabel = generateLabelSymbol(cg);
+   auto endLabel = generateLabelSymbol(cg);
+   auto rdbarLabel = generateLabelSymbol(cg);
+   begLabel->setStartInternalControlFlow();
+   endLabel->setEndInternalControlFlow();
+
+   auto deps = generateRegisterDependencyConditions((uint8_t)2, 2, cg);
+   deps->addPreCondition(object, TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(address, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(object, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(address, TR::RealRegister::NoReg, cg);
+
+   generateLabelInstruction(LABEL, node, begLabel, cg);
+
+   generateRegMemInstruction(CMP4RegMem, node, object, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, evacuateBaseCompressed), cg), cg);
+   generateLabelInstruction(JAE4, node, rdbarLabel, cg);
+
+   {
+   TR_OutlinedInstructionsGenerator og(rdbarLabel, node, cg);
+
+   generateRegMemInstruction(CMP4RegMem, node, object, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, evacuateTopCompressed), cg), cg);
+   generateLabelInstruction(JA4, node, endLabel, cg);
+
+   generateMemRegInstruction(SMemReg(), node, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp1), cg), address, cg);
+   generateHelperCallInstruction(node, TR_readBarrier, NULL, cg);
+   generateRegMemInstruction(L4RegMem, node, object, generateX86MemoryReference(address, 0, cg), cg);
+   generateLabelInstruction(JMP4, node, endLabel, cg);
+   }
+
+   generateLabelInstruction(LABEL, node, endLabel, deps, cg);
+
+   if (cg->comp()->useCompressedPointers() &&
+       (node->getOpCode().hasSymbolReference() &&
+        node->getSymbolReference()->getSymbol()->getDataType() == TR::Address))
+      {
+      if (!node->getSymbolReference()->isUnresolved() &&
+          (node->getSymbolReference()->getSymbol()->getKind() == TR::Symbol::IsShadow) &&
+          (node->getSymbolReference()->getCPIndex() >= 0) &&
+          (cg->comp()->getMethodHotness()>=scorching))
+         {
+         int32_t len;
+         const char *fieldName = node->getSymbolReference()->getOwningMethod(cg->comp())->fieldSignatureChars(
+                node->getSymbolReference()->getCPIndex(), len);
+
+         if (fieldName && strstr(fieldName, "Ljava/lang/String;"))
+            {
+            generateMemInstruction(PREFETCHT0, node, generateX86MemoryReference(object, 0, cg), cg);
+            }
+         }
+      }
+
+   cg->stopUsingRegister(address);
+   node->setRegister(object);
+   return object;
+#else
+   return NULL;
+#endif
+   }
+
 // Should only be called for pure TR::wrtbar and TR::wrtbari nodes.
 //
 TR::Register *J9::X86::TreeEvaluator::writeBarrierEvaluator(TR::Node *node, TR::CodeGenerator *cg)
@@ -1612,20 +1686,20 @@ TR::Register *J9::X86::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(
       {
       // pattern match the sequence under the l2a
       // NULLCHK        NULLCHK                     <- node
-      //    iaload f      l2a
+      //    aloadi f      l2a
       //       aload O       ladd
       //                       lshl
       //                          i2l
-      //                            iiload f        <- firstChild
-      //                               aload O      <- reference
+      //                            iloadi/irdbari f <- firstChild
+      //                               aload O        <- reference
       //                          iconst shftKonst
       //                       lconst HB
       //
       usingCompressedPointers = true;
 
       TR::ILOpCodes loadOp = comp->il.opCodeForIndirectLoad(TR::Int32);
-
-      while (firstChild->getOpCodeValue() != loadOp)
+      TR::ILOpCodes rdbarOp = comp->il.opCodeForIndirectReadBarrier(TR::Int32);
+      while (firstChild->getOpCodeValue() != loadOp && firstChild->getOpCodeValue() != rdbarOp)
          firstChild = firstChild->getFirstChild();
       reference = firstChild->getFirstChild();
       }
@@ -1946,7 +2020,8 @@ TR::Register *J9::X86::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(
       reference->setIsNonNull(true);
       n = reference->getFirstChild();
       TR::ILOpCodes loadOp = comp->il.opCodeForIndirectLoad(TR::Int32);
-      while (n->getOpCodeValue() != loadOp)
+      TR::ILOpCodes rdbarOp = comp->il.opCodeForIndirectReadBarrier(TR::Int32);
+      while (n->getOpCodeValue() != loadOp && n->getOpCodeValue() != rdbarOp)
          {
          n->setIsNonZero(true);
          n = n->getFirstChild();
@@ -9415,9 +9490,10 @@ static TR::Register* inlineCompareAndSwapObjectNative(TR::Node* node, TR::CodeGe
       }
 
 #ifdef OMR_GC_CONCURRENT_SCAVENGER
+   TR_ASSERT(TR::Compiler->target.is64Bit() && cg->comp()->useCompressedPointers(), "Concurrent Scavenger is currently only supported on 64-bit compressedrefs.");
    if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
       {
-      generateRegMemInstruction(LRegMem(use64BitClasses), node, tmp, generateX86MemoryReference(object, offset, 0, cg), cg);
+      generateRegMemInstruction(L4RegMem, node, tmp, generateX86MemoryReference(object, offset, 0, cg), cg);
 
       auto begLabel = generateLabelSymbol(cg);
       auto endLabel = generateLabelSymbol(cg);
@@ -9431,20 +9507,20 @@ static TR::Register* inlineCompareAndSwapObjectNative(TR::Node* node, TR::CodeGe
 
       generateLabelInstruction(LABEL, node, begLabel, cg);
 
-      generateRegMemInstruction(CMPRegMem(use64BitClasses), node, tmp, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, evacuateBase), cg), cg);
+      generateRegMemInstruction(CMP4RegMem, node, tmp, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, evacuateBaseCompressed), cg), cg);
       generateLabelInstruction(JAE4, node, rdbarLabel, cg);
 
-         {
-         TR_OutlinedInstructionsGenerator og(rdbarLabel, node, cg);
+      {
+      TR_OutlinedInstructionsGenerator og(rdbarLabel, node, cg);
 
-         generateRegMemInstruction(CMPRegMem(use64BitClasses), node, tmp, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, evacuateTop), cg), cg);
-         generateLabelInstruction(JAE4, node, endLabel, cg);
+      generateRegMemInstruction(CMP4RegMem, node, tmp, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, evacuateTopCompressed), cg), cg);
+      generateLabelInstruction(JA4, node, endLabel, cg);
 
-         generateRegMemInstruction(LEARegMem(), node, tmp, generateX86MemoryReference(object, offset, 0, cg), cg);
-         generateMemRegInstruction(SMemReg(), node, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp1), cg), tmp, cg);
-         generateHelperCallInstruction(node, TR_readBarrier, NULL, cg)->setNeedsGCMap(0xFF00FFFF);
-         generateLabelInstruction(JMP4, node, endLabel, cg);
-         }
+      generateRegMemInstruction(LEARegMem(), node, tmp, generateX86MemoryReference(object, offset, 0, cg), cg);
+      generateMemRegInstruction(SMemReg(), node, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp1), cg), tmp, cg);
+      generateHelperCallInstruction(node, TR_readBarrier, NULL, cg);
+      generateLabelInstruction(JMP4, node, endLabel, cg);
+      }
 
       generateLabelInstruction(LABEL, node, endLabel, deps, cg);
       }
