@@ -187,6 +187,7 @@ def cancel_running_pr_test_builds(JOB_NAME, PULL_ID) {
             }
         }
     }
+    error('no')
 }
 
 def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE, ghprbPullId, ghprbGhRepository, ghprbCommentBody, ghprbTargetBranch, ghprbActualCommit) {
