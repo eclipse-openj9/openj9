@@ -153,21 +153,6 @@ timeout(time: 10, unit: 'HOURS') {
 
                 // Determine if build is a PullRequest
                 if (ghprbPullId) {
-                    // Set Github commit status
-                    /*
-                    * Set Github Commit Status
-                    *
-                    * Args:
-                    * - REPO: Repository to update status
-                    * - CONTEXT: Usually Build Name
-                    * - SHA: Git commit to update
-                    * - URL: Link to build details
-                    * - STATE: Build Result, one of PENDING, SUCCESS, FAILURE, ERROR
-                    * - MESSAGE: Build result message
-                    */
-                    echo "REPO:'${ghprbPullLink.substring(ghprbPullLink.indexOf('/pull'))}.git'"
-                    buildFile.set_build_status("${ghprbPullLink.substring(ghprbPullLink.indexOf('/pull'))}.git", JOB_NAME, ghprbActualCommit, BUILD_URL, 'PENDING', 'Jobs Running')
-
                     // Parse Github trigger comment
                     // Jenkins test sanity <platform>*
                     // Jenkins test extended <platform>*
@@ -197,11 +182,6 @@ timeout(time: 10, unit: 'HOURS') {
                                 error("Test Target 'all' not allowed for Pull Request builds")
                             }
                             OFFSET = 1
-                            break
-                        case "cancel":
-                            buildFile.cancel_running_pr_builds(JOB_NAME, BUILD_NUMBER, ghprbPullId)
-                            cleanWs()
-                            return
                             break
                         default:
                             error("Unable to parse trigger comment. Unknown build option:'${PARSED_COMMENT[1]}'")
@@ -306,9 +286,6 @@ timeout(time: 10, unit: 'HOURS') {
                 }
             } finally {
                 try{
-                    if (ghprbPullId) {
-                        buildFile.set_build_status("${ghprbPullLink.substring(ghprbPullLink.indexOf('/pull'))}.git", JOB_NAME, ghprbActualCommit, BUILD_URL, currentBuild.result, 'Jobs Finished')
-                    }
                     cleanWs()
                 } catch(e) {
                     echo e.toString()

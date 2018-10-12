@@ -159,7 +159,7 @@ def set_build_status(REPO, CONTEXT, SHA, URL, STATE, MESSAGE) {
     ]);
 }
 
-def cancel_running_pr_builds(JOB_NAME, JOB_NUMBER, PULL_ID) {
+def cancel_running_pr_test_builds(JOB_NAME, PULL_ID) {
     def buildingJobs = Jenkins.instance.getAllItems(Job.class).findAll {
                         it.isBuilding() }
     def matching_jobs = []
@@ -169,9 +169,7 @@ def cancel_running_pr_builds(JOB_NAME, JOB_NUMBER, PULL_ID) {
                 // Only look for running jobs
                 if (!run.isBuilding()) { return }
                 // Only look for jobs matching the PR ID
-                if (run.getEnvironment()[ghprbPullId] != PULL_ID) { return }
-                // Don't kill the current job
-                if (run.getNumber() == JOB_NUMBER) { return }
+                if (run.getEnvironment()[OPENJ9_SHA] != "origin/pr/${params.ghprbPullId}/merge") { return }
                 echo "Found running job for PR:'${PULL_ID}'"
                 echo "Cancelling Job:'${JOB_NAME} #${run.getNumber()}"
                 run.doStop()
@@ -379,6 +377,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             }
             def TEST_JOB_NAME = "Test-${name}-JDK${SDK_VERSION}-${SPEC}"
             testjobs["${TEST_JOB_NAME}"] = {
+                cancel_running_pr_test_builds(TEST_JOB_NAME, ghprbPullId)
                 if (ARTIFACTORY_CREDS) {
                     jobs["${TEST_JOB_NAME}"] = build_with_artifactory(TEST_JOB_NAME, params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, CUSTOMIZED_SDK_URL, ARTIFACTORY_SERVER, ARTIFACTORY_CREDS, TEST_FLAG, params.ghprbGhRepository, params.ghprbActualCommit)
                 } else {
