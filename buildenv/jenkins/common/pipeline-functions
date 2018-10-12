@@ -313,8 +313,9 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
 
     // compile the source and build the SDK
     def BUILD_JOB_NAME = "Adam_Build-JDK${SDK_VERSION}-${SPEC}"
-    jobs["build"] = build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS['OPENJDK'], OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], OMR_REPO, OMR_BRANCH, SHAS['OMR'], params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.BUILD_NODE, params.ghprbPullId, params.ghprbGhRepository, params.ghprbCommentBody, params.ghprbTargetBranch, params.ghprbActualCommit)
-    echo "JOB: ${BUILD_JOB_NAME} PASSED in: ${jobs['build'].getDurationString()}"
+    def BUILD_JOB_NUMBER = 113
+    //jobs["build"] = build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS['OPENJDK'], OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], OMR_REPO, OMR_BRANCH, SHAS['OMR'], params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.BUILD_NODE, params.ghprbPullId, params.ghprbGhRepository, params.ghprbCommentBody, params.ghprbTargetBranch, params.ghprbActualCommit)
+    //echo "JOB: ${BUILD_JOB_NAME} PASSED in: ${jobs['build'].getDurationString()}"
 
     if (TESTS_TARGETS.trim() != "none") {
         def testjobs = [:]
@@ -353,17 +354,17 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
         }
 
         // Determine if Build job archived to Artifactory
-        def BUILD_JOB_ENV = jobs["build"].getBuildVariables()
+        //def BUILD_JOB_ENV = jobs["build"].getBuildVariables()
         ARTIFACTORY_CREDS = ''
-        echo "BUILD_JOB_ENV:'${BUILD_JOB_ENV}'"
-        if (BUILD_JOB_ENV['CUSTOMIZED_SDK_URL']) {
+        //echo "BUILD_JOB_ENV:'${BUILD_JOB_ENV}'"
+        /*if (BUILD_JOB_ENV['CUSTOMIZED_SDK_URL']) {
             CUSTOMIZED_SDK_URL = BUILD_JOB_ENV['CUSTOMIZED_SDK_URL']
             ARTIFACTORY_CREDS = BUILD_JOB_ENV['ARTIFACTORY_CREDS']
             ARTIFACTORY_SERVER = BUILD_JOB_ENV['ARTIFACTORY_SERVER']
             echo "Passing CUSTOMIZED_SDK_URL:'${CUSTOMIZED_SDK_URL}'"
             echo "Using ARTIFACTORY_CREDS:'${ARTIFACTORY_CREDS}'"
             echo "Using ARTIFACTORY_SERVER:'${ARTIFACTORY_SERVER}'"
-        }
+        }*/
 
         // For PullRequest Builds, Hack the OpenJ9 sha for test jobs so they checkout the PR (OpenJ9 PRs only)
         if (params.ghprbPullId && params.ghprbGhRepository == 'eclipse/openj9') {
@@ -383,7 +384,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
                 if (ARTIFACTORY_CREDS) {
                     jobs["${TEST_JOB_NAME}"] = build_with_artifactory(TEST_JOB_NAME, params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, CUSTOMIZED_SDK_URL, ARTIFACTORY_SERVER, ARTIFACTORY_CREDS, TEST_FLAG, params.ghprbGhRepository, params.ghprbActualCommit)
                 } else {
-                    jobs["${TEST_JOB_NAME}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, TEST_FLAG, params.ghprbGhRepository, params.ghprbActualCommit)
+                    jobs["${TEST_JOB_NAME}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, BUILD_JOB_NUMBER, params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, TEST_FLAG, params.ghprbGhRepository, params.ghprbActualCommit)
                 }
                 echo "JOB: ${TEST_JOB_NAME} PASSED in: ${jobs[TEST_JOB_NAME].getDurationString()}"
             }
