@@ -379,4 +379,34 @@
 			<subset>11</subset>
 		</subsets>
 	</test>
+	<test>
+		<testCaseName>ShareClassesCMLOpenJ9</testCaseName>
+		<variations>
+			<variation>Mode110</variation>
+			<variation>Mode610</variation>
+		</variations>
+		<command>$(MKTREE) $(REPORTDIR); \
+	$(CD) $(REPORTDIR); \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-DPATHSEP=$(Q)$(D)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DPROPS_DIR=$(PROPS_DIR) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) \
+	-DJAVA_EXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DJAVA_HOME='$(JDK_HOME)' -DSCMODE=204 -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
+	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)ShareClassesCMLOpenJ9.xml$(Q) -xids all,$(PLATFORM),$(VARIATION),$(JAVA_VERSION) -plats all,$(PLATFORM),$(VARIATION) \
+	-nonZeroExitWhenError \
+	-outputLimit 300; \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>SE110</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
 </playlist>

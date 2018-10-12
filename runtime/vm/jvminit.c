@@ -1658,7 +1658,9 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				argIndex8 = FIND_AND_CONSUME_ARG(EXACT_MEMORY_MATCH, VMOPT_XSCMAXJITDATA, NULL);
 				argIndex9 = FIND_AND_CONSUME_ARG(EXACT_MEMORY_MATCH, VMOPT_XXSHARED_CACHE_HARD_LIMIT_EQUALS, NULL);
 
-				if (argIndex < 0) {
+				if ((!J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm))
+					&& (argIndex < 0)
+				) {
 					if (argIndex2>=0) {
 						/* If -Xscmx used without -Xshareclasses, don't bomb out with "unrecognised option" */
 						j9nls_printf(PORTLIB, J9NLS_INFO, J9NLS_VM_XSCMX_IGNORED);
