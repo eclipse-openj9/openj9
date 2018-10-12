@@ -28,10 +28,10 @@ ifeq ($(OS),osx)
     compiler/x/runtime/X86Codert.nasm \
     compiler/x/runtime/X86EncodeUTF16.nasm \
     compiler/x/runtime/X86LockReservation.nasm \
-    compiler/x/runtime/X86PicBuilder.pnasm \
+    compiler/x/runtime/X86PicBuilder.nasm \
     compiler/x/runtime/X86PicBuilderC.cpp \
     compiler/x/runtime/X86RelocationTarget.cpp \
-    compiler/x/runtime/X86Unresolveds.pnasm
+    compiler/x/runtime/X86Unresolveds.nasm
 
 else
 
