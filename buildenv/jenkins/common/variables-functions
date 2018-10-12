@@ -571,7 +571,6 @@ def set_job_properties(JOB_TYPE) {
                 'ghprbGhRepository':'',
                 'ghprbCommentBody':'',
                 'ghprbTargetBranch':''])
-            }
 
             if (JOB_TYPE == 'build') {
                 add_string_params([
