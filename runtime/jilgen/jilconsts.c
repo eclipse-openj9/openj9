@@ -571,12 +571,14 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_JavaVM_bytecodeLoop", offsetof(J9JavaVM, bytecodeLoop)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JavaVM_extendedRuntimeFlags", offsetof(J9JavaVM, extendedRuntimeFlags)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JavaVMInternalFunctionTable", offsetof(J9JavaVM, internalVMFunctions)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_JavaVM_memoryManagerFunctions", offsetof(J9JavaVM, memoryManagerFunctions)) |
 #if defined(OMR_GC_CONCURRENT_SCAVENGER) && defined(J9VM_ARCH_S390)
 			writeConstant(OMRPORTLIB, fd, "J9TR_JavaVM_invokeJ9ReadBarrier", offsetof(J9JavaVM, invokeJ9ReadBarrier)) |
 #endif
 #if defined(J9VM_ENV_SHARED_LIBS_USE_GLOBAL_TABLE)
 			writeConstant(OMRPORTLIB, fd, "J9TR_JavaVM_jitTOC", offsetof(J9JavaVM, jitTOC)) |
 #endif /* J9VM_ENV_SHARED_LIBS_USE_GLOBAL_TABLE */
+			writeConstant(OMRPORTLIB, fd, "J9TR_J9MemoryManagerFunctions_J9ReadBarrier", offsetof(J9MemoryManagerFunctions, J9ReadBarrier)) |
 			/* J9VMEntryLocalStorage */
 			writeConstant(OMRPORTLIB, fd, "J9TR_ELS_jitGlobalStorageBase", offsetof(J9VMEntryLocalStorage, jitGlobalStorageBase)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_ELS_jitFPRegisterStorageBase", offsetof(J9VMEntryLocalStorage, jitFPRegisterStorageBase)) |
