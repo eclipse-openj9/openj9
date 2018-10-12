@@ -2970,9 +2970,9 @@ hookAcquireVMAccess(J9HookInterface** hook, UDATA eventNum, void* voidEventData,
 jint
 triggerGCInitialized(J9VMThread* vmThread)
 {
-	J9JavaVM* javaVM = vmThread->javaVM;
-	PORT_ACCESS_FROM_JAVAVM(javaVM);
-	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
+	J9JavaVM* vm = vmThread->javaVM;
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vm);
 
 	UDATA beatMicro = 0;
 	UDATA timeWindowMicro = 0;
@@ -2994,17 +2994,17 @@ triggerGCInitialized(J9VMThread* vmThread)
 
 	UDATA arrayletLeafSize = 0;
 #if defined(J9VM_GC_ARRAYLETS)
-	arrayletLeafSize = javaVM->arrayletLeafSize;
+	arrayletLeafSize = vm->arrayletLeafSize;
 #endif
 
 	TRIGGER_J9HOOK_MM_OMR_INITIALIZED(
 		extensions->omrHookInterface,
 		vmThread->omrVMThread,
 		j9time_hires_clock(),
-		j9gc_get_gcmodestring(javaVM),
-		extensions->isConcurrentScavengerEnabled(),
-		j9gc_get_maximum_heap_size(javaVM),
-		j9gc_get_initial_heap_size(javaVM),
+		j9gc_get_gcmodestring(vm),
+		(LOADED == (FIND_DLL_TABLE_ENTRY(J9_JIT_DLL_NAME)->loadFlags & LOADED)),
+		j9gc_get_maximum_heap_size(vm),
+		j9gc_get_initial_heap_size(vm),
 		j9sysinfo_get_physical_memory(),
 		j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_ONLINE),
 		extensions->gcThreadCount,
