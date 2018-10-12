@@ -161,8 +161,12 @@ def set_build_status(REPO, CONTEXT, SHA, URL, STATE, MESSAGE) {
 
 def cancel_running_pr_test_builds(JOB_NAME, PULL_ID) {
     def build = Jenkins.instance.getAllItems(Job.class).findAll {
-        it.getName() == JOB_NAME
+        println it
+        println it.class
+        (it.getName() == JOB_NAME)
     }
+    println build
+    println build.class
     build.each._getRuns().each { number, run ->
         // Only look for running jobs
         if (!run.isBuilding()) { return }
