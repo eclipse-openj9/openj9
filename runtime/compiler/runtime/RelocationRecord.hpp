@@ -603,6 +603,11 @@ class TR_RelocationRecord
 
       virtual bool ignore(TR_RelocationRuntime *reloRuntime);
 
+      static uint32_t getSizeOfAOTRelocationHeader(TR_ExternalRelocationTargetKind k)
+         {
+         return _relocationRecordHeaderSizeTable[k];
+         }
+
    protected:
       OMR::RuntimeAssumption** getMetadataAssumptionList(J9JITExceptionTable *exceptionTable)
          {
@@ -624,6 +629,8 @@ class TR_RelocationRecord
       TR_RelocationRecordBinaryTemplate *_record;
 
       TR_RelocationRecordPrivateData _privateData;
+
+      static uint32_t _relocationRecordHeaderSizeTable[TR_NumExternalRelocationKinds];
    };
 
 // No class that derives from TR_RelocationRecord should define any state: all state variables should be declared
