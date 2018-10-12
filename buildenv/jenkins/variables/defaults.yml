@@ -132,6 +132,8 @@ linux_390-64_cmprssptrs:
     vars:
       11: 'CC=gcc-7 CXX=g++-7'
       next: 'CC=gcc-7 CXX=g++-7'
+  extra_configure_options:
+    8: '--with-openssl=/home/jenkins/openssl-1.1.1 --enable-openssl-bundling'
 #========================================#
 # AIX PPC 64bits Compressed Pointers
 #========================================#
