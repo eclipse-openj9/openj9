@@ -1911,10 +1911,10 @@ String getPackageName() {
 }
 
 /**
- * Answers a read-only stream on the contents of the
+ * Answers a URL referring to the
  * resource specified by resName. The mapping between
- * the resource name and the stream is managed by the
- * class' class loader.
+ * the resource name and the URL is managed by the
+ * class's class loader.
  *
  * @param		resName 	the name of the resource.
  * @return		a stream on the resource.
@@ -1927,31 +1927,33 @@ String getPackageName() {
 public URL getResource(String resName) {
 	ClassLoader loader = this.getClassLoaderImpl();
 	String absoluteResName = this.toResourceName(resName);
-/*[IF Sidecar19-SE]*/
+	URL result = null;
+	/*[IF Sidecar19-SE]*/
 	Module thisModule = getModule();
-	
-	if (thisModule.isNamed() && (thisModule == System.getCallerClass().getModule())) {
+	if (useModularSearch(absoluteResName, thisModule, System.getCallerClass())) {
 		try {
-			return loader.findResource(thisModule.getName(), absoluteResName);
+			result = loader.findResource(thisModule.getName(), absoluteResName);
 		} catch (IOException e) {
 			return null;
 		}
-	} else
-/*[ENDIF] Sidecar19-SE */
+	}
+	if (null == result)
+		/*[ENDIF] Sidecar19-SE */
 	{
 		if (loader == ClassLoader.bootstrapClassLoader) {
-			return ClassLoader.getSystemResource(absoluteResName);
+			result =ClassLoader.getSystemResource(absoluteResName);
 		} else {
-			return loader.getResource(absoluteResName);
+			result =loader.getResource(absoluteResName);
 		}
 	}
+	return result;
 }
 
 /**
  * Answers a read-only stream on the contents of the
  * resource specified by resName. The mapping between
  * the resource name and the stream is managed by the
- * class' class loader.
+ * class's class loader.
  *
  * @param		resName		the name of the resource.
  * @return		a stream on the resource.
@@ -1964,25 +1966,65 @@ public URL getResource(String resName) {
 public InputStream getResourceAsStream(String resName) {
 	ClassLoader loader = this.getClassLoaderImpl();
 	String absoluteResName = this.toResourceName(resName);
+	InputStream result = null;
 /*[IF Sidecar19-SE]*/
 	Module thisModule = getModule();
 	
-	if (thisModule.isNamed() && (thisModule == System.getCallerClass().getModule())) {
+	if (useModularSearch(absoluteResName, thisModule, System.getCallerClass())) {
 		try {
-			return thisModule.getResourceAsStream(absoluteResName);
+			result = thisModule.getResourceAsStream(absoluteResName);
 		} catch (IOException e) {
 			return null;
 		}
-	} else
+	}
+	if (null == result)
 /*[ENDIF] Sidecar19-SE */
 	{
 		if (loader == ClassLoader.bootstrapClassLoader) {
-			return ClassLoader.getSystemResourceAsStream(absoluteResName);
+			result = ClassLoader.getSystemResourceAsStream(absoluteResName);
 		} else {
-			return loader.getResourceAsStream(absoluteResName);
+			result = loader.getResourceAsStream(absoluteResName);
 		}
 	}
+	return result;
 }
+
+/*[IF Sidecar19-SE]*/
+/**
+ * Indicate if the package should be looked up in a module or via the class path.
+ * Look up the resource in the module if the module is named 
+ * and is the same module as the caller or the package is open to the caller.
+ * The default package (i.e. resources at the root of the module) is considered open.
+ * 
+ * @param absoluteResName name of resource, including package
+ * @param thisModule module of the current class
+ * @param callerClass class of method calling getResource() or getResourceAsStream()
+ * @return true if modular lookup should be used.
+ */
+private boolean useModularSearch(String absoluteResName, Module thisModule, Class<?> callerClass) {
+	boolean visible = false;
+
+	if (thisModule.isNamed()) {
+		final Module callerModule = callerClass.getModule();
+		visible = (thisModule == callerModule);
+		if (!visible) {
+			visible = absoluteResName.endsWith(".class"); //$NON-NLS-1$
+			if (!visible) {
+				// extract the package name
+				int lastSlash = absoluteResName.lastIndexOf('/');
+				if (-1 == lastSlash) { // no package name
+					visible = true;
+				} else {
+					String result = absoluteResName.substring(0, lastSlash).replace('/', '.');
+					visible = thisModule.isOpen(result, callerModule);
+				}
+			}
+		}
+	}
+	return visible;
+}
+/*[ENDIF] Sidecar19-SE */
+
 
 /**
  * Answers a String object which represents the class's
