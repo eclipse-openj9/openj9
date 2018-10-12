@@ -458,9 +458,13 @@ UMA_PASM_INCLUDES:=$(addprefix -I ,$(UMA_INCLUDES))
 </#if>
 
 <#if uma.spec.type.osx>
+UMA_OSX_M4_FLAGS=-DOSX
+ifeq "$(VERSION_MAJOR)" "8"
+	UMA_OSX_M4_FLAGS+=-DOSX_JAVA8
+endif
 #compilation rule for .m4 files
 %$(UMA_DOT_O): %.m4
-	m4 -DOSX $(UMA_M4_FLAGS) $(UMA_C_INCLUDES) $< > $*.s
+	m4 $(UMA_OSX_M4_FLAGS) $(UMA_M4_FLAGS) $(UMA_C_INCLUDES) $< > $*.s
 	$(AS) $(ASFLAGS) -o $*.o $*.s
 	-mv -f $*.s $*.hold
 </#if>
