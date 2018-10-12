@@ -93,7 +93,9 @@ SHORT_NAMES = ['all' : 'all',
             'xlinux' : 'linux_x86-64_cmprssptrs',
             'xlinuxcmake' : 'linux_x86-64_cmprssptrs_cmake',
             'win32' : 'win_x86',
-            'win' : 'win_x86-64_cmprssptrs']
+            'win' : 'win_x86-64_cmprssptrs',
+            'osx' : 'osx_x86-64_cmprssptrs',
+            'osxlargeheap' : 'osx_x86-64']
 
 // Initialize all PARAMETERS (params) to Groovy Variables even if they are not passed
 echo "Initialize all PARAMETERS..."
@@ -168,7 +170,9 @@ timeout(time: 10, unit: 'HOURS') {
                     * 3+ - jdk versions
                     */
                     def PARSED_COMMENT = params.ghprbCommentBody.toLowerCase().tokenize(' ')
-                    if (PARSED_COMMENT[0] != 'adam') { error("Pull Request trigger comment needs to begin with 'Jenkins'")}
+                    if (PARSED_COMMENT[0] != 'adam') {
+                        error("Pull Request trigger comment needs to begin with 'Jenkins'")
+                    }
 
                     // Setup TESTS_TARGETS
                     switch ("${PARSED_COMMENT[1]}") {
