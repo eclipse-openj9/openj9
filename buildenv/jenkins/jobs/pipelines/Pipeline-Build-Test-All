@@ -167,17 +167,17 @@ timeout(time: 10, unit: 'HOURS') {
                     * 2+ - platforms
                     * 3+ - jdk versions
                     */
-                    def PARSED_COMMENT = params.ghprbCommentBody.tokenize(' ')
-                    if (PARSED_COMMENT[0].toLowerCase() != 'adam') { error("Pull Request trigger comment needs to begin with 'Jenkins'")}
+                    def PARSED_COMMENT = params.ghprbCommentBody.toLowerCase().tokenize(' ')
+                    if (PARSED_COMMENT[0] != 'adam') { error("Pull Request trigger comment needs to begin with 'Jenkins'")}
 
                     // Setup TESTS_TARGETS
-                    switch ("${PARSED_COMMENT[1]}".toLowerCase()) {
+                    switch ("${PARSED_COMMENT[1]}") {
                         case "compile":
                             TESTS_TARGETS = 'none'
                             OFFSET = 0
                             break
                         case "test":
-                            TESTS_TARGETS = "${PARSED_COMMENT[2]}".toLowerCase()
+                            TESTS_TARGETS = "${PARSED_COMMENT[2]}"
                             if ("${TESTS_TARGETS}" == "all") {
                                 error("Test Target 'all' not allowed for Pull Request builds")
                             }
@@ -199,7 +199,7 @@ timeout(time: 10, unit: 'HOURS') {
                             MIN_COMMENT_SIZE = 3
                             break
                         case "eclipse/openj9":
-                            TMP_VERSIONS = PARSED_COMMENT[3+OFFSET].toLowerCase().tokenize(',')
+                            TMP_VERSIONS = PARSED_COMMENT[3+OFFSET].tokenize(',')
                             TMP_VERSIONS.each { VERSION ->
                                 echo "VERSION:'${VERSION}'"
                                 if ("${VERSION}" == "all") {
@@ -226,7 +226,7 @@ timeout(time: 10, unit: 'HOURS') {
 
                     // Setup PLATFORMS
                     TMP_PLATFORMS = []
-                    PARSED_PLATFORMS = PARSED_COMMENT[2+OFFSET].toLowerCase().tokenize(',')
+                    PARSED_PLATFORMS = PARSED_COMMENT[2+OFFSET].tokenize(',')
                     PARSED_PLATFORMS.each { SHORT ->
                         LONG_PLATFORM = SHORT_NAMES["${SHORT}"]
                         if (LONG_PLATFORM) {
