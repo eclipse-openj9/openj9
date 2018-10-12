@@ -161,15 +161,24 @@ def set_build_status(REPO, CONTEXT, SHA, URL, STATE, MESSAGE) {
 
 def cancel_running_pr_test_builds(JOB_NAME, PULL_ID) {
     def buildingJobs = Jenkins.instance.getAllItems(Job.class).findAll {
+                        println it.class
                         it.isBuilding() }
     def matching_jobs = []
     buildingJobs.each { job->
+        println job.class
         if (job.getName() == JOB_NAME) {
-            job._getRuns().each { run ->
+            job._getRuns().each { job_name, number ->
                 // Only look for running jobs
-                if (!run.isBuilding()) { return }
+                //if (!run.isBuilding()) { return }
                 // Only look for jobs matching the PR ID
-                if (run.getEnvironment()[OPENJ9_SHA] != "origin/pr/${params.ghprbPullId}/merge") { return }
+                println job_name
+                println number
+                println job_name.class
+                println number.class
+                //println run.getKey()
+                //println run.getValue()
+                // getBuildByNumber
+                //if (run.getEnvironment()[OPENJ9_SHA] != "origin/pr/${params.ghprbPullId}/merge") { return }
                 echo "Found running job for PR:'${PULL_ID}'"
                 echo "Cancelling Job:'${JOB_NAME} #${run.getNumber()}"
                 run.doStop()
