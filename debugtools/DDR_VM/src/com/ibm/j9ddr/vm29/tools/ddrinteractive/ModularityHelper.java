@@ -59,51 +59,57 @@ public class ModularityHelper {
 		void print(J9PackagePointer packagePtr, PrintStream out) throws CorruptDataException;
 	}
 
-	/**
-	 * Matches all modules. Fits the
-	 * ModuleIteratorFilter functional interface.
-	 * 
-	 * @param    modulePtr  unused
-	 * @param    arg        unused
-	 * @return   true
-	 */
-	public static boolean moduleFilterMatchAll(J9ModulePointer modulePtr, String arg) {
-		return true;
+	public static class ModuleFilterMatchAll implements ModuleIteratorFilter {
+		/**
+		 * Matches all modules. Fits the
+		 * ModuleIteratorFilter functional interface.
+		 * 
+		 * @param    modulePtr  unused
+		 * @param    arg        unused
+		 * @return   true
+		 */
+		public boolean filter(J9ModulePointer modulePtr, String arg) throws CorruptDataException {
+			return true;
+		}
 	}
 
-	/**
-	 * Prints the name and hex address of a J9Module.
-	 * Example:
-	 * java.base    !j9module 0x00007FAC2008EAC8
-	 * 
-	 * @param    modulePtr  The module which is to have its details
-	 *                      printed.
-	 * @param    out        The PrintStream that the details will
-	 *                      be outputted to.
-	 */
-	public static void printJ9Module(J9ModulePointer modulePtr, PrintStream out) throws CorruptDataException {
-		String moduleName = J9ObjectHelper.stringValue(modulePtr.moduleName());
-		String hexAddress = modulePtr.getHexAddress();
-		out.printf("%-30s !j9module %s%n", moduleName, hexAddress);
+	public static class PrintJ9Module implements ModuleOutput {
+		/**
+		 * Prints the name and hex address of a J9Module.
+		 * Example:
+		 * java.base    !j9module 0x00007FAC2008EAC8
+		 * 
+		 * @param    modulePtr  The module which is to have its details
+		 *                      printed.
+		 * @param    out        The PrintStream that the details will
+		 *                      be outputted to.
+		 */
+		public void print(J9ModulePointer modulePtr, PrintStream out) throws CorruptDataException {
+			String moduleName = J9ObjectHelper.stringValue(modulePtr.moduleName());
+			String hexAddress = modulePtr.getHexAddress();
+			out.printf("%-30s !j9module %s%n", moduleName, hexAddress);
+		}
 	}
 
-	/**
-	 * Prints the details of the J9Module that owns a
-	 * J9Package. Uses printJ9Module to output the
-	 * module details.
-	 * 
-	 * @param    packagePtr The package which is to have its
-	 *                      owner's details printed.
-	 * @param    out        The PrintStream that the details will
-	 *                      be outputted to.
-	 * 
-	 * @see      printJ9Module(J9ModulePointer, PrintStream)
-	 */
-	public static void printPackageJ9Module(J9PackagePointer packagePtr, PrintStream out) throws CorruptDataException {
-		J9ModulePointer modulePtr = packagePtr.module();
-		printJ9Module(modulePtr, out);
-	}
 
+	public static class PrintPackageJ9Module implements PackageOutput {
+		/**
+		 * Prints the details of the J9Module that owns a
+		 * J9Package. Uses printJ9Module to output the
+		 * module details.
+		 * 
+		 * @param    packagePtr The package which is to have its
+		 *                      owner's details printed.
+		 * @param    out        The PrintStream that the details will
+		 *                      be outputted to.
+		 * 
+		 * @see      printJ9Module(J9ModulePointer, PrintStream)
+		 */
+		public void print(J9PackagePointer packagePtr, PrintStream out) throws CorruptDataException {
+			J9ModulePointer modulePtr = packagePtr.module();
+			new PrintJ9Module().print(modulePtr, out);
+		}
+	}
 	/**
 	 * Traverses through all loaded modules. Uses
 	 * outtputter to print details about modules

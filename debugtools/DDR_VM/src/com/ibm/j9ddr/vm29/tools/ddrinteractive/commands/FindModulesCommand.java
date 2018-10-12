@@ -66,38 +66,32 @@ public class FindModulesCommand extends Command
 		Status status = HELP;
 		String filterArg = null;
 		ModuleIteratorFilter moduleFilter = null;
-		ModuleOutput moduleOutput = ModularityHelper::printJ9Module;
+		ModuleOutput moduleOutput = new ModularityHelper.PrintJ9Module();
 		PackageIteratorFilter packageFilter = null;
 		switch (args.length) {
 		case 0:
-			moduleFilter = ModularityHelper::moduleFilterMatchAll;
+			moduleFilter = new ModularityHelper.ModuleFilterMatchAll();
 			status = MODULE;
 			break;
 		case 1:
 			if (args[0].equalsIgnoreCase("all")) {
-				moduleFilter = ModularityHelper::moduleFilterMatchAll;
+				moduleFilter = new ModularityHelper.ModuleFilterMatchAll();
 				status = MODULE;
 			} /* else stay status.HELP */
 			break;
 		case 2:
 			filterArg = args[1]; /* use args[1] as a hex address */
-			switch (args[0]) {
-			case "name":
-				moduleFilter = FindModulesCommand::filterModuleName;
+			if (args[0].equalsIgnoreCase("name")) {
+				moduleFilter = new FilterModuleName();
 				status = MODULE;
-				break;
-			case "requires":
-				moduleFilter = FindModulesCommand::filterModuleName;
-				moduleOutput = FindModulesCommand::printModuleReads;
+			} else if (args[0].equalsIgnoreCase("requires")) {
+				moduleFilter = new FilterModuleName();
+				moduleOutput = new PrintModuleReads();
 				status = MODULE;
-				break;
-			case "package":
-				packageFilter = FindModulesCommand::filterPackageName;
+			} else if (args[0].equalsIgnoreCase("package")) {
+				packageFilter = new FilterPackageName();
 				status = PACKAGE;
-				break;
-			default:
-				break; /* default stay status.HELP */
-			}
+			} /* else stay status.HELP */
 			break;
 		default:
 			break; /* default stay status.HELP */
@@ -109,7 +103,7 @@ public class FindModulesCommand extends Command
 				ModularityHelper.iterateModules(out, moduleFilter, moduleOutput, filterArg);
 				break;
 			case PACKAGE:
-				ModularityHelper.PackageOutput packageOutput = ModularityHelper::printPackageJ9Module; 
+				ModularityHelper.PackageOutput packageOutput = new ModularityHelper.PrintPackageJ9Module();
 				ModularityHelper.iteratePackages(out, packageFilter, packageOutput, filterArg);
 				break;
 			case HELP:
@@ -126,47 +120,37 @@ public class FindModulesCommand extends Command
 		return;
 	}
 
-	private static void printModuleReads(J9ModulePointer modulePtr, PrintStream out) throws CorruptDataException {
-		J9HashTablePointer readTable = modulePtr.readAccessHashTable();
-		HashTable<J9ModulePointer> moduleHashTable = ModuleHashTable.fromJ9HashTable(readTable);
-		SlotIterator<J9ModulePointer> slotIterator = moduleHashTable.iterator();
-		while (slotIterator.hasNext()) {
-			J9ModulePointer readModulePtr = slotIterator.next();
-			ModularityHelper.printJ9Module(readModulePtr, out);
-		}
-	}
-	
-	/**
-	 * Matches all modules with the provided name.
-	 * Fits the ModuleIteratorFilter functional
-	 * interface. Case sensitive.
-	 * 
-	 * @param    modulePtr  The module to check the name of.
-	 * @param    targetName The name that should be matched.
-	 * @return   true if the names are equal, false otherwise.
-	 */
-	private static boolean filterModuleName(J9ModulePointer modulePtr, String targetName) throws CorruptDataException {
-		return J9ObjectHelper.stringValue(modulePtr.moduleName()).equals(targetName);
-	}
-
-
-	private static boolean filterRequiresTargetModule(J9ModulePointer modulePtr, String targetModule) throws CorruptDataException {
-		boolean result = false;
-		J9HashTablePointer readTable = modulePtr.readAccessHashTable();
-		HashTable<J9ModulePointer> moduleHashTable = ModuleHashTable.fromJ9HashTable(readTable);
-		SlotIterator<J9ModulePointer> slotIterator = moduleHashTable.iterator();
-		while (slotIterator.hasNext()) {
-			J9ModulePointer readModulePtr = slotIterator.next();
-			if (J9ObjectHelper.stringValue(readModulePtr.moduleName()).equals(targetModule)) {
-				result = true;
-				break;
+	private static class PrintModuleReads implements ModularityHelper.ModuleOutput {
+		public void print(J9ModulePointer modulePtr, PrintStream out) throws CorruptDataException {
+			J9HashTablePointer readTable = modulePtr.readAccessHashTable();
+			HashTable<J9ModulePointer> moduleHashTable = ModuleHashTable.fromJ9HashTable(readTable);
+			SlotIterator<J9ModulePointer> slotIterator = moduleHashTable.iterator();
+			while (slotIterator.hasNext()) {
+				J9ModulePointer readModulePtr = slotIterator.next();
+				new ModularityHelper.PrintJ9Module().print(readModulePtr, out);
 			}
 		}
-		return result;
 	}
 
-	private static boolean filterPackageName(J9PackagePointer packagePtr, String targetName) throws CorruptDataException  {
-		return J9UTF8Helper.stringValue(packagePtr.packageName()).equals(targetName);
+	private static class FilterModuleName implements ModularityHelper.ModuleIteratorFilter {
+		/**
+		 * Matches all modules with the provided name.
+		 * Fits the ModuleIteratorFilter functional
+		 * interface. Case sensitive.
+		 * 
+		 * @param    modulePtr  The module to check the name of.
+		 * @param    targetName The name that should be matched.
+		 * @return   true if the names are equal, false otherwise.
+		 */
+		public boolean filter(J9ModulePointer modulePtr, String targetName) throws CorruptDataException {
+			return J9ObjectHelper.stringValue(modulePtr.moduleName()).equals(targetName);
+		}
+	}
+
+	private class FilterPackageName implements ModularityHelper.PackageIteratorFilter {
+		public boolean filter(J9PackagePointer packagePtr, String targetName) throws CorruptDataException  {
+			return J9UTF8Helper.stringValue(packagePtr.packageName()).equals(targetName);
+		}
 	}
 
 	private static void printHelp(PrintStream out) {
