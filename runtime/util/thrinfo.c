@@ -420,14 +420,15 @@ getVMThreadStateHelper(J9VMThread *targetThread,
 								lockOwnerObject = J9OBJECT_FROM_FJ9OBJECT(targetThread->javaVM, fobj);
 							}
 #else
+							/* Simplify the macro usage by using the _VM version so we do not need to pass in the current thread */
 							lockOwnerObject =
-								J9VMJAVAUTILCONCURRENTLOCKSABSTRACTOWNABLESYNCHRONIZER_EXCLUSIVEOWNERTHREAD(targetThread, lockObject);
+								J9VMJAVAUTILCONCURRENTLOCKSABSTRACTOWNABLESYNCHRONIZER_EXCLUSIVEOWNERTHREAD_VM(targetThread->javaVM, lockObject);
 #endif
 							if (lockOwnerObject) {
 #if defined(J9VM_OUT_OF_PROCESS)
 								lockOwner = (J9VMThread *)(UDATA)readObjectField(lockOwnerObject, READCLAZZ(targetThread, lockOwnerObject), "threadRef", "J", sizeof(jlong));
 #else
-								lockOwner = (J9VMThread *)J9VMJAVALANGTHREAD_THREADREF(targetThread, lockOwnerObject);
+								lockOwner = (J9VMThread *)J9VMJAVALANGTHREAD_THREADREF_VM(targetThread->javaVM, lockOwnerObject);
 #endif
 							}
 						}
