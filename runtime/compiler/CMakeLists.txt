@@ -111,6 +111,7 @@ set(REMOVED_OMR_FILES
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRVirtualMachineOperandArray.cpp
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRVirtualMachineOperandStack.cpp
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRVirtualMachineRegister.cpp
+	${omr_SOURCE_DIR}/compiler/ilgen/OMRVirtualMachineRegisterInStruct.cpp
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRVirtualMachineState.cpp
 )
 
