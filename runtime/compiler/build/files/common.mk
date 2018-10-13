@@ -215,12 +215,9 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/optimizer/ReachingDefinitions.cpp \
     omr/compiler/optimizer/RedundantAsyncCheckRemoval.cpp \
     omr/compiler/optimizer/RegDepCopyRemoval.cpp \
-    omr/compiler/optimizer/RegisterAnticipatability.cpp \
-    omr/compiler/optimizer/RegisterAvailability.cpp \
     omr/compiler/optimizer/RegisterCandidate.cpp \
     omr/compiler/optimizer/RematTools.cpp \
     omr/compiler/optimizer/ReorderIndexExpr.cpp \
-    omr/compiler/optimizer/ShrinkWrapping.cpp \
     omr/compiler/optimizer/SinkStores.cpp \
     omr/compiler/optimizer/StripMiner.cpp \
     omr/compiler/optimizer/StructuralAnalysis.cpp \
