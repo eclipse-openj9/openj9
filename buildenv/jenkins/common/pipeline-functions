@@ -161,19 +161,21 @@ def set_build_status(REPO, CONTEXT, SHA, URL, STATE, MESSAGE) {
 
 def cancel_running_pr_test_builds(JOB_NAME, PULL_ID) {
     def build = Jenkins.instance.getAllItems(Job.class).findAll {
-        println it
-        println it.class
+        // it.class ->
+        // hudson.model.FreeStyleProject or org.jenkinsci.plugins.workflow.job.WorkflowJob
         (it.getName() == JOB_NAME)
     }
-    println build
-    println build.class
+    // Should only have 1 matching job in the array
     build[0]._getRuns().each { number, run ->
+        // Class org.jenkinsci.plugins.workflow.job.WorkflowRun
+        // number Class
+        // run
         // Only look for running jobs
         if (!run.isBuilding()) { return }
         // Only look for jobs matching the PR ID
         println number
         println run
-        println job_name.class
+        println number.class
         println run.class
         //println run.getKey()
         //println run.getValue()
