@@ -176,7 +176,7 @@ def cancel_running_pr_test_builds(JOB_NAME, PULL_ID) {
         // Only look for jobs matching the PR ID
         // Since we pass OPENJ9_SHA to Test jobs with PR_ID, we can sniff this parameter
         if (run.getEnvironment().get('OPENJ9_SHA') != "origin/pr/${params.ghprbPullId}/merge") { return }
-        echo "Cancelling Job:'${run}"
+        echo "Cancelling Job:'${run}'"
         run.doStop()
     }
     echo "Done stopping jobs"
