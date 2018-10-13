@@ -180,7 +180,7 @@ def cancel_running_pr_test_builds(JOB_NAME, PULL_ID) {
         // getBuildByNumber
         println run.getEnvironment()
         println run.getEnvironment().get('OPENJ9_SHA')
-        if (run.getEnvironment().get(OPENJ9_SHA) != "origin/pr/${params.ghprbPullId}/merge") { return }
+        if (run.getEnvironment().get('OPENJ9_SHA') != "origin/pr/${params.ghprbPullId}/merge") { return }
         echo "Found running job for PR:'${PULL_ID}'"
         echo "Cancelling Job:'${JOB_NAME} #${run.getNumber()}"
         run.doStop()
