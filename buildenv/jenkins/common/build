@@ -299,7 +299,7 @@ def archive() {
                 echo "ARTIFACTORY_CREDS:'${ARTIFACTORY_CREDS}'"
             } else {
                 echo "ARTIFACTORY server is not set saving artifacts on jenkins."
-                archiveArtifacts artifacts: "**/${SDK_FILENAME},**/${TEST_FILENAME}", fingerprint: true, onlyIfSuccessful: true
+                archiveArtifacts artifacts: "**/${SDK_FILENAME},**/${TEST_FILENAME}", fingerprint: false, onlyIfSuccessful: true
             }
         }
     }
