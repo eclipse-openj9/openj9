@@ -160,34 +160,26 @@ def set_build_status(REPO, CONTEXT, SHA, URL, STATE, MESSAGE) {
 }
 
 def cancel_running_pr_test_builds(JOB_NAME, PULL_ID) {
+    echo "Looking to stop running jobs:'${JOB_NAME}' from PR:'${PULL_ID}'"
     def build = Jenkins.instance.getAllItems(Job.class).findAll {
-        // it.class ->
-        // hudson.model.FreeStyleProject or org.jenkinsci.plugins.workflow.job.WorkflowJob
+        // Class hudson.model.FreeStyleProject
+        // or Class org.jenkinsci.plugins.workflow.job.WorkflowJob (pipelines)
+        // Only get Build matching JOB_NAME
         (it.getName() == JOB_NAME)
     }
     // Should only have 1 matching job in the array
     build[0]._getRuns().each { number, run ->
+        // get all runs/jobs
         // Class org.jenkinsci.plugins.workflow.job.WorkflowRun
-        // number Class
-        // run
         // Only look for running jobs
         if (!run.isBuilding()) { return }
         // Only look for jobs matching the PR ID
-        println number
-        println run
-        println number.class
-        println run.class
-        //println run.getKey()
-        //println run.getValue()
-        // getBuildByNumber
-        println run.getEnvironment()
-        println run.getEnvironment().get('OPENJ9_SHA')
+        // Since we pass OPENJ9_SHA to Test jobs with PR_ID in PRs, we can sniff this param
         if (run.getEnvironment().get('OPENJ9_SHA') != "origin/pr/${params.ghprbPullId}/merge") { return }
-        echo "Found running job for PR:'${PULL_ID}'"
+        echo "Found running job:'${run}'"
         echo "Cancelling Job:'${JOB_NAME} #${number}"
         run.doStop()
     }
-    error('no')
 }
 
 def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE, ghprbPullId, ghprbGhRepository, ghprbCommentBody, ghprbTargetBranch, ghprbActualCommit) {
