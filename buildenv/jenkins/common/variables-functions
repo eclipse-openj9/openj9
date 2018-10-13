@@ -51,10 +51,10 @@ def parse_variables_file(){
 * Fetch the user provided variable file.
 */
 def get_variables_file() {
-    VARIABLE_FILE = params.VARIABLE_FILE
-    VENDOR_BRANCH = params.VENDOR_BRANCH
-    VENDOR_REPO = params.VENDOR_REPO
-    VENDOR_CREDENTIALS_ID = params.VENDOR_CREDENTIALS_ID
+    VARIABLE_FILE = (params.VARIABLE_FILE) ? params.VARIABLE_FILE : ""
+    VENDOR_BRANCH = (params.VENDOR_BRANCH) ? params.VENDOR_BRANCH : ""
+    VENDOR_REPO = (params.VENDOR_REPO) ? params.VENDOR_REPO : ""
+    VENDOR_CREDENTIALS_ID = (params.VENDOR_CREDENTIALS_ID) ? params.VENDOR_CREDENTIALS_ID : ""
     if (VARIABLE_FILE && VENDOR_REPO && VENDOR_BRANCH) {
         echo "VARIABLE_FILE:${VARIABLE_FILE}"
         echo "VENDOR_REPO:${VENDOR_REPO}"
@@ -498,47 +498,46 @@ def set_job_properties(JOB_TYPE) {
         * PARAMETERS
         ********************/
 
-        // All build types
+        if (JOB_TYPE == "build" || JOB_TYPE == "pipeline") {
+        // Only setup Parameters for Build and Pipeline jobs
 
-        // If SDK_VERSION parameter is already set, assume it is correct (helps with Sandbox builds)
-        // Else parse the JOB_NAME to determine the verison
-        SDK_VERSION = params.SDK_VERSION
-        if (!SDK_VERSION) {
-            echo "Parse build name to determine SDK_VERSION..."
-            // Eg - Build-JDK8-linux_390-64_cmprssptrs
-            //    - Pipeline-Build-Test-JDK8-linux_390-64_cmprssptrs
-            //    - PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9
-            // Index of JDK + 3 until index of next '-'
-            INDEX_START_SDK_VERSION = JOB_NAME.indexOf('JDK')+3
-            SDK_VERSION = JOB_NAME.substring(INDEX_START_SDK_VERSION,JOB_NAME.indexOf('-',INDEX_START_SDK_VERSION))
-        }
-        echo "SDK_VERSION:'${SDK_VERSION}'"
-
-        PLATFORM = params.PLATFORM
-        if (!PLATFORM) {
-            echo "Parse build name to determine PLATFORM..."
-            // Assuming consistent naming convention
-            // Substring start from index of 1 after '-' starting at index of 'JDK', go until the end (no end index) excpet for PR builds
-            // Build-JDK8-linux_390-64_cmprssptrs
-            // PullRequest-Compile-JDK-linux_x86-64-OpenJ9
-            // Pipeline-Build-Test-JDK10-aix_ppc-64_cmprssptrs
-            PLATFORM = JOB_NAME.substring(JOB_NAME.indexOf('-',JOB_NAME.indexOf('JDK'))+1)
-            if (JOB_TYPE == "pullRequest") {
-                // PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9
-                // Pipeline PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJDK9
-                PLATFORM = PLATFORM.substring(0,PLATFORM.indexOf('Open')-1)
+            // If SDK_VERSION parameter is already set, assume it is correct (helps with Sandbox builds)
+            // Else parse the JOB_NAME to determine the verison
+            SDK_VERSION = params.SDK_VERSION
+            if (!SDK_VERSION) {
+                echo "Parse build name to determine SDK_VERSION..."
+                // Eg - Build-JDK8-linux_390-64_cmprssptrs
+                //    - Pipeline-Build-Test-JDK8-linux_390-64_cmprssptrs
+                //    - PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9
+                // Index of JDK + 3 until index of next '-'
+                INDEX_START_SDK_VERSION = JOB_NAME.indexOf('JDK')+3
+                SDK_VERSION = JOB_NAME.substring(INDEX_START_SDK_VERSION,JOB_NAME.indexOf('-',INDEX_START_SDK_VERSION))
             }
-        }
-        echo "PLATFORM:'${PLATFORM}'"
+            echo "SDK_VERSION:'${SDK_VERSION}'"
 
-        PARAMETERS = []
+            PLATFORM = params.PLATFORM
+            if (!PLATFORM) {
+                echo "Parse build name to determine PLATFORM..."
+                // Assuming consistent naming convention
+                // Substring start from index of 1 after '-' starting at index of 'JDK', go until the end (no end index) excpet for PR builds
+                // Build-JDK8-linux_390-64_cmprssptrs
+                // PullRequest-Compile-JDK-linux_x86-64-OpenJ9
+                // Pipeline-Build-Test-JDK10-aix_ppc-64_cmprssptrs
+                PLATFORM = JOB_NAME.substring(JOB_NAME.indexOf('-',JOB_NAME.indexOf('JDK'))+1)
+                if (JOB_TYPE == "pullRequest") {
+                    // PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9
+                    // Pipeline PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJDK9
+                    PLATFORM = PLATFORM.substring(0,PLATFORM.indexOf('Open')-1)
+                }
+            }
+            echo "PLATFORM:'${PLATFORM}'"
 
-        // All build types
-        PARAMETERS.add(choice(name: 'SDK_VERSION', choices: ["${SDK_VERSION}"], description: ''))
-        PARAMETERS.add(choice(name: 'PLATFORM', choices: ["${PLATFORM}"], description: ''))
+            PARAMETERS = []
 
-        // Pipeline or build
-        if (JOB_TYPE == 'pipeline' || JOB_TYPE == 'build') {
+            // All build types
+            PARAMETERS.add(choice(name: 'SDK_VERSION', choices: ["${SDK_VERSION}"], description: ''))
+            PARAMETERS.add(choice(name: 'PLATFORM', choices: ["${PLATFORM}"], description: ''))
+
             // NOTE: The following 4 DEFAULT variables can be configured in the Jenkins Global Config.
             // This allows us to know what the default values are without being told explicitly.
             // These DEFAULT values are typically constant per Jenkins Server.
@@ -567,24 +566,25 @@ def set_job_properties(JOB_TYPE) {
                 'VARIABLE_FILE':"${VARIABLE_FILE_DEFAULT}",
                 'VENDOR_REPO':"${VENDOR_REPO_DEFAULT}",
                 'VENDOR_BRANCH':"${VENDOR_BRANCH_DEFAULT}",
-                'VENDOR_CREDENTIALS_ID':"${VENDOR_CREDENTIALS_ID_DEFAULT}"])
-        }
+                'VENDOR_CREDENTIALS_ID':"${VENDOR_CREDENTIALS_ID_DEFAULT}",
+                'ghprbPullId':'',
+                'ghprbGhRepository':'',
+                'ghprbCommentBody':'',
+                'ghprbTargetBranch':''])
 
-        // Pipeline or PR
-        if (JOB_TYPE == 'pipeline' || JOB_TYPE == 'pullRequest') {
-            add_string_params(['TESTS_TARGETS':''])
-        }
+            if (JOB_TYPE == 'build') {
+                add_string_params([
+                    'NODE':''])
+            }
 
-        if (JOB_TYPE == 'build') {
-            add_string_params(['NODE':''])
-        }
-
-        if (JOB_TYPE == 'pipeline') {
-            add_string_params([
-                'BUILD_NODE':'',
-                'TEST_NODE':'',
-                'PERSONAL_BUILD':'',
-                'SLACK_CHANNEL':''])
+            if (JOB_TYPE == 'pipeline') {
+                add_string_params([
+                    'BUILD_NODE':'',
+                    'TEST_NODE':'',
+                    'PERSONAL_BUILD':'',
+                    'SLACK_CHANNEL':'',
+                    'TESTS_TARGETS':''])
+            }
         }
 
         /********************
@@ -618,6 +618,14 @@ def add_string_params(PARAMETERS_TO_ADD) {
         PARAMETERS.add(string(name: key, defaultValue: value, description: '', trim: true))
     }
 }
+
+def add_pr_to_description() {
+    if (params.ghprbPullId) {
+        def TMP_DESC = (currentBuild.description) ? currentBuild.description + "<br>" : ""
+        currentBuild.description = TMP_DESC + "<a href=https://github.com/${params.ghprbGhRepository}/pull/${params.ghprbPullId}>PR #${params.ghprbPullId}</a>"
+    }
+}
+
 /*
 * Initializes all of the required variables for a Jenkins job by given job type.
 */
@@ -647,20 +655,7 @@ def set_job_variables(job_type) {
             set_build_variables()
             set_sdk_variables()
             set_artifactory_config()
-            break
-        case "test":
-            // set the node the tests would run on
-            set_node('test')
-            // set variables for a test job
-            set_test_variables()
-            break
-        case "pullRequest":
-            // set the node the pull request job would run on
-            set_node('build')
-            // set variables for a pull request job that builds an SDK
-            set_build_variables()
-            set_sdk_variables()
-            set_test_variables()
+            add_pr_to_description()
             break
         case "pipeline":
             // set variables for a pipeline job
@@ -668,13 +663,15 @@ def set_job_variables(job_type) {
             set_vendor_variables()
             set_test_targets()
             set_slack_channel()
+            add_pr_to_description()
             break
+        case "pullRequest":
         case "wrapper":
             //set variable for pipeline all/personal
             set_repos_variables(BUILD_RELEASES)
             break
         default:
-            error("Unknown Jenkins job type!")
+            error("Unknown Jenkins job type:'${job_type}'")
     }
 }
 

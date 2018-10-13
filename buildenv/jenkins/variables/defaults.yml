@@ -46,16 +46,18 @@ jdk_image_dir:
 credentials:
   github: 'b6987280-6402-458f-bdd6-7affc2e360d4'
 test_dependencies_job_name: 'test.getDependency'
-slack_channel: '#jenkins'
+slack_channel: '#jenkins-sandbox'
 build_discarder:
   logs:
-    build: 20
-    pipeline: 20
-    pullRequest: 50
+    build: 30
+    pipeline: 30
+    pullRequest: 30
+    wrapper: 30
   artifacts:
     build: 10
     pipeline: 0
     pullRequest: 0
+    wrapper: 0
 extra_getsource_options:
   8: '--openssl-version=1.1.1'
 #========================================#

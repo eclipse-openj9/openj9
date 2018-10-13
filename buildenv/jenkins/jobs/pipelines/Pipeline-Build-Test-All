@@ -84,10 +84,59 @@ SPECS = ['aix_ppc-64_cmprssptrs'      : CURRENT_RELEASES,
          'win_x86'                    : ['8'],
          'win_x86-64_cmprssptrs'      : CURRENT_RELEASES]
 
-LABEL = params.LABEL
-if (!LABEL) {
-    LABEL = 'worker'
-}
+// SHORT_NAMES is used for PullRequest triggers
+SHORT_NAMES = ['all' : 'all',
+            'aix' : 'aix_ppc-64_cmprssptrs',
+            'zlinux' : 'linux_390-64_cmprssptrs',
+            'plinux' : 'linux_ppc-64_cmprssptrs_le',
+            'xlinuxlargeheap' : 'linux_x86-64',
+            'xlinux' : 'linux_x86-64_cmprssptrs',
+            'xlinuxcmake' : 'linux_x86-64_cmprssptrs_cmake',
+            'win32' : 'win_x86',
+            'win' : 'win_x86-64_cmprssptrs',
+            'osx' : 'osx_x86-64_cmprssptrs',
+            'osxlargeheap' : 'osx_x86-64']
+
+// Initialize all PARAMETERS (params) to Groovy Variables even if they are not passed
+echo "Initialize all PARAMETERS..."
+LABEL = (params.LABEL) ? params.LABEL : "worker"
+echo "Setup LABEL:'${LABEL}'"
+TESTS_TARGETS = (params.TESTS_TARGETS) ? params.TESTS_TARGETS : ""
+echo "TESTS_TARGETS:'${TESTS_TARGETS}'"
+PLATFORMS = (params.PLATFORMS) ? params.PLATFORMS : ""
+echo "PLATFORMS:'${PLATFORMS}'"
+VARIABLE_FILE = (params.VARIABLE_FILE) ? params.VARIABLE_FILE : ""
+echo "VARIABLE_FILE:'${VARIABLE_FILE}'"
+VENDOR_REPO = (params.VENDOR_REPO) ? params.VENDOR_REPO : ""
+echo "VENDOR_REPO:'${VENDOR_REPO}'"
+VENDOR_BRANCH = (params.VENDOR_BRANCH) ? params.VENDOR_BRANCH : ""
+echo "VENDOR_BRANCH:'${VENDOR_BRANCH}'"
+VENDOR_CREDENTIALS_ID = (params.VENDOR_CREDENTIALS_ID) ? params.VENDOR_CREDENTIALS_ID : ""
+echo "VENDOR_CREDENTIALS_ID:'${VENDOR_CREDENTIALS_ID}'"
+PERSONAL_BUILD = (params.PERSONAL_BUILD) ? params.PERSONAL_BUILD : ""
+echo "PERSONAL_BUILD:'${PERSONAL_BUILD}'"
+BUILD_NODE_LABELS = (params.BUILD_NODE_LABELS) ? params.BUILD_NODE_LABELS : ""
+echo "BUILD_NODE_LABELS:'${BUILD_NODE_LABELS}'"
+TEST_NODE_LABELS = (params.TEST_NODE_LABELS) ? params.TEST_NODE_LABELS : ""
+echo "TEST_NODE_LABELS:'${TEST_NODE_LABELS}'"
+PROMOTE_OMR = (params.PROMOTE_OMR) ? params.PROMOTE_OMR : ""
+echo "PROMOTE_OMR:'${PROMOTE_OMR}'"
+SLACK_HANDLE = (params.SLACK_HANDLE) ? params.SLACK_HANDLE : ""
+echo "SLACK_HANDLE:'${SLACK_HANDLE}'"
+
+// Pull Request Builds
+ghprbPullId = (params.ghprbPullId) ? params.ghprbPullId : ""
+echo "ghprbPullId:'${ghprbPullId}'"
+ghprbGhRepository = (params.ghprbGhRepository) ? params.ghprbGhRepository : ""
+echo "ghprbGhRepository:'${ghprbGhRepository}'"
+ghprbCommentBody = (params.ghprbCommentBody) ? params.ghprbCommentBody : ""
+echo "ghprbCommentBody:'${ghprbCommentBody}'"
+ghprbTargetBranch = (params.ghprbTargetBranch) ? params.ghprbTargetBranch : ""
+echo "ghprbTargetBranch:'${ghprbTargetBranch}'"
+ghprbActualCommit = (params.ghprbActualCommit) ? params.ghprbActualCommit : ""
+echo "ghprbActualCommit:'${ghprbActualCommit}'"
+
+VERSION_MAP = initialize_version_map()
 
 OPENJDK_REPO = [:]
 OPENJDK_BRANCH = [:]
@@ -101,29 +150,133 @@ timeout(time: 10, unit: 'HOURS') {
         node(LABEL) {
             try {
                 checkout scm
-                def variableFile = load 'buildenv/jenkins/common/variables-functions'
+                i=1
+                echo "$i"
+                i+=1
+                variableFile = load 'buildenv/jenkins/common/variables-functions'
+                echo "$i"
+                i+=1
                 buildFile = load 'buildenv/jenkins/common/pipeline-functions'
 
-                def BUILD_SPECS = get_specs(SPECS)
+                echo "$i"
+                i+=1
+                // Determine if build is a PullRequest
+                if (ghprbPullId) {
+                    echo "$i"
+                    i+=1
+                    // Parse Github trigger comment
+                    // Jenkins test sanity <platform>*
+                    // Jenkins test extended <platform>*
+                    // Jenkins compile <platform>*
+                    // Jenkins test <comma_separated_test_target> <platform> *
+                    //params.TESTS_TARGETS = params.ghprbCommentBody.substring(?)
+                    /*
+                    * Comment indexes - '+' is an offset of 0/1 if running tests or not
+                    * 0 - Jenkins
+                    * 1 - test / compile
+                    * 1+ - test target
+                    * 2+ - platforms
+                    * 3+ - jdk versions
+                    */
+                    def PARSED_COMMENT = params.ghprbCommentBody.toLowerCase().tokenize(' ')
+                    if (PARSED_COMMENT[0] != 'adam') {
+                        error("Pull Request trigger comment needs to begin with 'Jenkins'")
+                    }
+
+                    // Setup TESTS_TARGETS
+                    switch ("${PARSED_COMMENT[1]}") {
+                        case "compile":
+                            TESTS_TARGETS = 'none'
+                            OFFSET = 0
+                            break
+                        case "test":
+                            TESTS_TARGETS = "${PARSED_COMMENT[2]}"
+                            if ("${TESTS_TARGETS}" == "all") {
+                                error("Test Target 'all' not allowed for Pull Request builds")
+                            }
+                            OFFSET = 1
+                            break
+                        default:
+                            error("Unable to parse trigger comment. Unknown build option:'${PARSED_COMMENT[1]}'")
+                    }
+                    echo "TESTS_TARGETS:'${TESTS_TARGETS}'"
+
+                    // Setup JDK VERSIONS
+                    switch (ghprbGhRepository) {
+                        case   ~/.*openj9-openjdk-jdk.*/:
+                            TMP_VERSION = ghprbGhRepository.substring(ghprbGhRepository.indexOf('-jdk')+4)
+                            if ("${TMP_VERSION}" == "") {
+                                TMP_VERSION = 'next'
+                            }
+                            VERSION_MAP["${TMP_VERSION}"] = true
+                            MIN_COMMENT_SIZE = 3
+                            break
+                        case "eclipse/openj9":
+                            TMP_VERSIONS = PARSED_COMMENT[3+OFFSET].tokenize(',')
+                            TMP_VERSIONS.each { VERSION ->
+                                echo "VERSION:'${VERSION}'"
+                                if ("${VERSION}" == "all") {
+                                    error("JDK version 'all' not allowed for Pull Request builds\nExpected 'jdkX' where X is one of ${RELEASES}")
+                                }
+                                if (!("${VERSION}" ==~ /jdk.*/)) {
+                                    error("Incorrect syntax for requested JDK version:'${VERSION}'\nExpected 'jdkX' where X is one of ${RELEASES}")
+                                }
+                                if (RELEASES.contains(VERSION.substring(3))) {
+                                    VERSION_MAP["${VERSION.substring(3)}"] = true
+                                } else {
+                                    error("Unsupported JDK version or incorrect syntax:'${VERSION}'\nExpected 'jdkX' where X is one of ${RELEASES}")
+                                }
+                            }
+                            MIN_COMMENT_SIZE = 4
+                            break
+                        default:
+                            error("Unknown source repo:'${ghprbGhRepository}'")
+                    }
+
+                    echo "VERSION_MAP:'${VERSION_MAP}'"
+
+                    if (PARSED_COMMENT.size() < MIN_COMMENT_SIZE) { error("Pull Request trigger comment does not contain enough elements.")}
+
+                    // Setup PLATFORMS
+                    TMP_PLATFORMS = []
+                    PARSED_PLATFORMS = PARSED_COMMENT[2+OFFSET].tokenize(',')
+                    PARSED_PLATFORMS.each { SHORT ->
+                        LONG_PLATFORM = SHORT_NAMES["${SHORT}"]
+                        if (LONG_PLATFORM) {
+                            TMP_PLATFORMS.add(LONG_PLATFORM)
+                        } else {
+                            error("Unknown PLATFORM short:'${SHORT}'\nExpected one of:${SHORT_NAMES}")
+                        }
+                    }
+                    PLATFORMS = TMP_PLATFORMS.join(',')
+                    echo "PLATFORMS:'${PLATFORMS}'"
+
+                    PERSONAL_BUILD = 'true'
+                }
+
+                def BUILD_SPECS = get_specs(SPECS, VERSION_MAP)
                 // find releases to build based on given specs
                 BUILD_RELEASES.addAll(get_build_releases(BUILD_SPECS))
 
                 // parse variables file and initialize variables
-                variableFile.set_job_variables('wrapper')
+                job_type = (ghprbPullId) ? 'pullRequest' : 'wrapper'
+                variableFile.set_job_variables(job_type)
+
                 SHAS = buildFile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH)
 
-                if (params.PERSONAL_BUILD) {
+                if (PERSONAL_BUILD) {
                     // update build name
+                    BUILD_USER_EMAIL = params.ghprbPullAuthorLogin
                     wrap([$class: 'BuildUser']) {
                         currentBuild.displayName = "#${BUILD_NUMBER} - ${BUILD_USER_EMAIL}"
                     }
 
                     // update build description
-                    currentBuild.description += "<br/>${params.PLATFORMS}"
+                    currentBuild.description += "<br/>${PLATFORMS}"
                 }
 
-                def BUILD_NODES = get_node_labels(params.BUILD_NODE_LABELS, BUILD_SPECS.keySet())
-                def TEST_NODES = get_node_labels(params.TEST_NODE_LABELS, BUILD_SPECS.keySet())
+                def BUILD_NODES = get_node_labels(BUILD_NODE_LABELS, BUILD_SPECS.keySet())
+                def TEST_NODES = get_node_labels(TEST_NODE_LABELS, BUILD_SPECS.keySet())
 
                 BUILD_SPECS.each { SPEC, SDK_VERSIONS ->
                     SDK_VERSIONS.each { SDK_VERSION ->
@@ -145,22 +298,14 @@ timeout(time: 10, unit: 'HOURS') {
                     }
                 }
             } finally {
-                try{
-                    cleanWs()
-                } catch(e) {
-                    if (variableFile) {
-                        printStackTrace(e)
-                    } else {
-                        echo e.toString()
-                    }
-                }
+                cleanWs notFailBuild: true
             }
         }
 
         // launch all pipeline builds
         parallel builds
 
-        if (params.PROMOTE_OMR) {
+        if (PROMOTE_OMR) {
             stage('Promote') {
                 PROMOTE_JOB = buildFile.build_with_slack('Promote-OpenJ9-OMR-master-to-openj9',
                                                         [string(name: 'OMR_COMMIT', value: "${SHAS['OMR']}"),
@@ -173,36 +318,8 @@ timeout(time: 10, unit: 'HOURS') {
 }
 
 def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE) {
-    def JOB_NAME = "Pipeline-Build-Test-JDK${SDK_VERSION}-${SPEC}"
+    def JOB_NAME = "Adam_Pipeline-Build-Test-JDK${SDK_VERSION}-${SPEC}"
 
-    TESTS_TARGETS = params.TESTS_TARGETS    
-    if (!TESTS_TARGETS) {
-        TESTS_TARGETS = ''
-    }
-    VARIABLE_FILE = params.VARIABLE_FILE    
-    if (!VARIABLE_FILE) {
-        VARIABLE_FILE = ''
-    }
-    VENDOR_REPO = params.VENDOR_REPO    
-    if (!VENDOR_REPO) {
-        VENDOR_REPO = ''
-    }
-    VENDOR_BRANCH = params.VENDOR_BRANCH    
-    if (!VENDOR_BRANCH) {
-        VENDOR_BRANCH = ''
-    }
-    VENDOR_CREDENTIALS_ID = params.VENDOR_CREDENTIALS_ID    
-    if (!VENDOR_CREDENTIALS_ID) {
-        VENDOR_CREDENTIALS_ID = ''
-    }
-    PERSONAL_BUILD = params.PERSONAL_BUILD    
-    if (!PERSONAL_BUILD) {
-        PERSONAL_BUILD = ''
-    }
-    SLACK_HANDLE = params.SLACK_HANDLE    
-    if (!SLACK_HANDLE) {
-        SLACK_HANDLE = ''
-    }
     stage ("${JOB_NAME}") {
         JOB = build job: JOB_NAME,
                 parameters: [
@@ -223,7 +340,12 @@ def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_RE
                     string(name: 'BUILD_NODE', value: BUILD_NODE),
                     string(name: 'TEST_NODE', value: TEST_NODE),
                     string(name: 'PERSONAL_BUILD', value: PERSONAL_BUILD),
-                    string(name: 'SLACK_CHANNEL', value: SLACK_HANDLE)]
+                    string(name: 'SLACK_CHANNEL', value: SLACK_HANDLE),
+                    string(name: 'ghprbPullId', value: ghprbPullId),
+                    string(name: 'ghprbGhRepository', value: ghprbGhRepository),
+                    string(name: 'ghprbCommentBody', value: ghprbCommentBody),
+                    string(name: 'ghprbTargetBranch', value: ghprbTargetBranch),
+                    string(name: 'ghprbActualCommit', value: ghprbActualCommit)]
         return JOB
     }
 }
@@ -232,29 +354,29 @@ def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_RE
 * Parses the build parameters to identify the specs and the releases to build
 * and test. Returns a map of releases by specs.
 */
-def get_specs(SUPPORTED_SPECS) {
+def get_specs(SUPPORTED_SPECS, VERSION_MAP) {
     def RELEASES = []
-    def PLATFORMS = []
+    def PARSED_PLATFORMS = []
     def SPECS = [:]
 
     // get releases 
-    params.each { key, value  ->
-        if ((key.indexOf('Java') != -1) && (value == true)) {
-            RELEASES.add(key.substring(4))
+    VERSION_MAP.each { key, value  ->
+        if (value) {
+            RELEASES.add(key)
         }
     }
 
     // get specs
-    if (!params.PLATFORMS || (params.PLATFORMS.trim() == 'all')) {
+    if (!PLATFORMS || (PLATFORMS.trim() == 'all')) {
         // build and test all supported specs
-        PLATFORMS.addAll(SUPPORTED_SPECS.keySet())
+        PARSED_PLATFORMS.addAll(SUPPORTED_SPECS.keySet())
     } else {
-        PLATFORMS.addAll(params.PLATFORMS.split(","))
+        PARSED_PLATFORMS.addAll(PLATFORMS.split(","))
     }
 
     def RELEASES_STR = RELEASES.join(',')
 
-    PLATFORMS.each { SPEC ->
+    PARSED_PLATFORMS.each { SPEC ->
         SPEC = SPEC.trim()
         if (!SUPPORTED_SPECS.keySet().contains(SPEC)) {
             echo "Warning: Unknown or unsupported platform: ${SPEC}"
@@ -277,14 +399,14 @@ def get_specs(SUPPORTED_SPECS) {
     }
 
     if (!SPECS) {
-        error("Invalid PLATFORMS (${params.PLATFORMS}) and/or Java versions selections(${RELEASES_STR})!")
+        error("Invalid PLATFORMS (${PLATFORMS}) and/or Java versions selections(${RELEASES_STR})!")
     }
 
     return SPECS
 }
 
 /*
-* Returns a list of releases to build.
+* Returns a list of releases (jdk versions) to build.
 */
 def get_build_releases(BUILD_SPECS) {
     def BUILD_RELEASES = []
@@ -327,7 +449,7 @@ def get_node_labels(NODE_LABELS, SPECS) {
             }
 
             if (!SPECS.contains(ENTRY[0].trim())) {
-                error("Wrong node labels platform: ${ENTRY[0]} in ${ITEM}! It does not match any of your selected platforms: ${params.PLATFORMS}")
+                error("Wrong node labels platform: ${ENTRY[0]} in ${ITEM}! It does not match any of your selected platforms: ${PLATFORMS}")
             }
 
             LABELS.put(ENTRY[0].trim(), ENTRY[1].trim())
@@ -335,4 +457,19 @@ def get_node_labels(NODE_LABELS, SPECS) {
     }
 
     return LABELS
+}
+
+/*
+* Returns a map of the Java Version bools.
+* Ie. MAP = [8:true, 9:false, 10:true] etc
+*/
+def initialize_version_map() {
+    def VERSION_MAP = [:]
+    params.each { key, value  ->
+        if ((key.indexOf('Java') != -1) && (value == true)) {
+            VERSION_MAP["${key.substring(4)}"] = value
+        }
+    }
+    echo "Initial VERSION_MAP:'${VERSION_MAP}'"
+    return VERSION_MAP
 }
