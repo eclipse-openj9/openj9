@@ -167,7 +167,7 @@ def cancel_running_pr_test_builds(JOB_NAME, PULL_ID) {
     }
     println build
     println build.class
-    build.each._getRuns().each { number, run ->
+    build[0]._getRuns().each { number, run ->
         // Only look for running jobs
         if (!run.isBuilding()) { return }
         // Only look for jobs matching the PR ID
