@@ -28,7 +28,6 @@
 # For 64 bits, if SPEC contains _cmprssptrs, add -Xcompressedrefs.
 # If not, add -Xnocompressedrefs.
 #######################################
-RESERVED_OPTIONS=
 ifneq (,$(findstring bits.64,$(BITS)))
 	ifneq (,$(findstring _cmprssptrs,$(SPEC)))
 		RESERVED_OPTIONS+= -Xcompressedrefs
