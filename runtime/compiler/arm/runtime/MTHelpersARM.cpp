@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,16 +24,5 @@ extern "C"
    {
 
    /* Do nothing, just define dummy symbols */
-   void MTUnresolvedInt32Load() {}
-   void MTUnresolvedInt64Load() {}
-   void MTUnresolvedFloatLoad() {}
-   void MTUnresolvedDoubleLoad() {}
-   void MTUnresolvedAddressLoad() {}
-
-   void MTUnresolvedInt32Store() {}
-   void MTUnresolvedInt64Store() {}
-   void MTUnresolvedFloatStore() {}
-   void MTUnresolvedDoubleStore() {}
-   void MTUnresolvedAddressStore() {}
 
    }

@@ -71,18 +71,6 @@ ifndef TR_HOST_64BIT
       public         interpreterUnresolvedFieldSetterGlue
       public         interpreterUnresolvedConstantDynamicGlue
 
-      public         MTUnresolvedInt32Load
-      public         MTUnresolvedInt64Load
-      public         MTUnresolvedFloatLoad
-      public         MTUnresolvedDoubleLoad
-      public         MTUnresolvedAddressLoad
-
-      public         MTUnresolvedInt32Store
-      public         MTUnresolvedInt64Store
-      public         MTUnresolvedFloatStore
-      public         MTUnresolvedDoubleStore
-      public         MTUnresolvedAddressStore
-
       ExternHelper   jitResolveStaticMethod
       ExternHelper   jitResolveSpecialMethod
       ExternHelper   jitCallCFunction
@@ -1081,38 +1069,6 @@ executeSnippetCode:
 
 interpreterUnresolvedFieldSetterGlue endp
 
-
-
-MTUnresolvedInt32Load proc near
-MTUnresolvedInt32Load endp
-
-MTUnresolvedInt64Load proc near
-MTUnresolvedInt64Load endp
-
-MTUnresolvedFloatLoad proc near
-MTUnresolvedFloatLoad endp
-
-MTUnresolvedDoubleLoad proc near
-MTUnresolvedDoubleLoad endp
-
-MTUnresolvedAddressLoad proc near
-MTUnresolvedAddressLoad endp
-
-MTUnresolvedInt32Store proc near
-MTUnresolvedInt32Store endp
-
-MTUnresolvedInt64Store proc near
-MTUnresolvedInt64Store endp
-
-MTUnresolvedFloatStore proc near
-MTUnresolvedFloatStore endp
-
-MTUnresolvedDoubleStore proc near
-MTUnresolvedDoubleStore endp
-
-MTUnresolvedAddressStore proc near
-MTUnresolvedAddressStore endp
-
 _TEXT ends
 
 else
@@ -1161,18 +1117,6 @@ _TEXT   segment para 'CODE'
       public         interpreterUnresolvedFieldGlue
       public         interpreterUnresolvedFieldSetterGlue
       public         interpreterUnresolvedConstantDynamicGlue
-
-      public         MTUnresolvedInt32Load
-      public         MTUnresolvedInt64Load
-      public         MTUnresolvedFloatLoad
-      public         MTUnresolvedDoubleLoad
-      public         MTUnresolvedAddressLoad
-
-      public         MTUnresolvedInt32Store
-      public         MTUnresolvedInt64Store
-      public         MTUnresolvedFloatStore
-      public         MTUnresolvedDoubleStore
-      public         MTUnresolvedAddressStore
 
       ExternHelper   jitResolveStaticMethod
       ExternHelper   jitResolveSpecialMethod
@@ -2052,35 +1996,6 @@ noVolatileCheck4Byte:
 interpreterUnresolvedFieldSetterGlue endp
 
 
-MTUnresolvedInt32Load proc
-MTUnresolvedInt32Load endp
-
-MTUnresolvedInt64Load proc
-MTUnresolvedInt64Load endp
-
-MTUnresolvedFloatLoad proc
-MTUnresolvedFloatLoad endp
-
-MTUnresolvedDoubleLoad proc
-MTUnresolvedDoubleLoad endp
-
-MTUnresolvedAddressLoad proc
-MTUnresolvedAddressLoad endp
-
-MTUnresolvedInt32Store proc
-MTUnresolvedInt32Store endp
-
-MTUnresolvedInt64Store proc
-MTUnresolvedInt64Store endp
-
-MTUnresolvedFloatStore proc
-MTUnresolvedFloatStore endp
-
-MTUnresolvedDoubleStore proc
-MTUnresolvedDoubleStore endp
-
-MTUnresolvedAddressStore proc
-MTUnresolvedAddressStore endp
 _TEXT ends
 
 ;; !TR_HOST_64BIT

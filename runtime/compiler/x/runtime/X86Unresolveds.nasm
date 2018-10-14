@@ -63,18 +63,6 @@
       global _interpreterUnresolvedFieldSetterGlue
       global _interpreterUnresolvedConstantDynamicGlue
 
-      global _MTUnresolvedInt32Load
-      global _MTUnresolvedInt64Load
-      global _MTUnresolvedFloatLoad
-      global _MTUnresolvedDoubleLoad
-      global _MTUnresolvedAddressLoad
-
-      global _MTUnresolvedInt32Store
-      global _MTUnresolvedInt64Store
-      global _MTUnresolvedFloatStore
-      global _MTUnresolvedDoubleStore
-      global _MTUnresolvedAddressStore
-
       extern _jitResolveStaticMethod
       extern _jitResolveSpecialMethod
       extern _jitCallCFunction
@@ -1071,38 +1059,6 @@ executeSnippetCode:
 
 retn
 
-
-
-_MTUnresolvedInt32Load:
-retn
-
-_MTUnresolvedInt64Load:
-retn
-
-_MTUnresolvedFloatLoad:
-retn
-
-_MTUnresolvedDoubleLoad:
-retn
-
-_MTUnresolvedAddressLoad:
-retn
-
-_MTUnresolvedInt32Store:
-retn
-
-_MTUnresolvedInt64Store:
-retn
-
-_MTUnresolvedFloatStore:
-retn
-
-_MTUnresolvedDoubleStore:
-retn
-
-_MTUnresolvedAddressStore:
-retn
-
 %else
 
 ; --------------------------------------------------------------------------------
@@ -1151,18 +1107,6 @@ segment .text
       global _interpreterUnresolvedFieldGlue
       global _interpreterUnresolvedFieldSetterGlue
       global _interpreterUnresolvedConstantDynamicGlue
-
-      global _MTUnresolvedInt32Load
-      global _MTUnresolvedInt64Load
-      global _MTUnresolvedFloatLoad
-      global _MTUnresolvedDoubleLoad
-      global _MTUnresolvedAddressLoad
-
-      global _MTUnresolvedInt32Store
-      global _MTUnresolvedInt64Store
-      global _MTUnresolvedFloatStore
-      global _MTUnresolvedDoubleStore
-      global _MTUnresolvedAddressStore
 
       extern _jitResolveStaticMethod
       extern _jitResolveSpecialMethod
@@ -2037,37 +1981,6 @@ noVolatileCheck4Byte:
       lea rsp, [rsp+8]                                      ; skip over RA in snippet--mispredict
       ret
 
-ret
-
-
-_MTUnresolvedInt32Load:
-ret
-
-_MTUnresolvedInt64Load:
-ret
-
-_MTUnresolvedFloatLoad:
-ret
-
-_MTUnresolvedDoubleLoad:
-ret
-
-_MTUnresolvedAddressLoad:
-ret
-
-_MTUnresolvedInt32Store:
-ret
-
-_MTUnresolvedInt64Store:
-ret
-
-_MTUnresolvedFloatStore:
-ret
-
-_MTUnresolvedDoubleStore:
-ret
-
-_MTUnresolvedAddressStore:
 ret
 
 %endif
