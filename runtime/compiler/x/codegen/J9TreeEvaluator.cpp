@@ -10211,6 +10211,107 @@ static TR::X86WriteBarrierSnippet *generateWriteBarrierSnippet(
    return snippet;
    }
 
+/**
+ * \brief
+ *   Generate instructions to conditionally branch to a write barrier helper call
+ *
+ * \oaram branchOp
+ *   The branch instruction to jump to the write barrier helper call
+ *
+ * \param node
+ *   The write barrier node
+ *
+ * \param gcMode
+ *   The GC Mode
+ *
+ * \param owningObjectReg
+ *   The register holding the owning object
+ *
+ * \param sourceReg
+ *   The register holding the source object
+ *
+ * \param doneLabel
+ *   The label to jump to when returning from the write barrier helper
+ *
+ * \param cg
+ *   The Code Generator
+ *
+ * Note that RealTimeGC is handled separately in a different method.
+ */
+static void generateWriteBarrierCall(
+   TR_X86OpCodes        branchOp,
+   TR::Node*            node,
+   TR_WriteBarrierKind  gcMode,
+   TR::Register*        owningObjectReg,
+   TR::Register*        sourceReg,
+   TR::LabelSymbol*     doneLabel,
+   TR::CodeGenerator*   cg)
+   {
+   TR_ASSERT(gcMode != TR_WrtbarRealTime && !TR::Options::getCmdLineOptions()->realTimeGC(), "This helper is not for RealTimeGC.");
+
+   TR::Compilation *comp = cg->comp();
+   uint8_t helperArgCount = 0;  // Number of arguments passed on the runtime helper.
+   TR::SymbolReference *wrtBarSymRef = NULL;
+
+   if (node->getOpCodeValue() == TR::arraycopy)
+      {
+      wrtBarSymRef = comp->getSymRefTab()->findOrCreateWriteBarrierBatchStoreSymbolRef();
+      helperArgCount = 1;
+      }
+   else if (gcMode == TR_WrtbarCardMarkAndOldCheck)
+      {
+      wrtBarSymRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreGenerationalAndConcurrentMarkSymbolRef();
+      helperArgCount = 2;
+      }
+   else if (gcMode == TR_WrtbarAlways)
+      {
+      wrtBarSymRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef();
+      helperArgCount = 2;
+      }
+   else if (comp->generateArraylets())
+      {
+      wrtBarSymRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef();
+      helperArgCount = 2;
+      }
+   else
+      {
+      // Default case is a generational barrier (non-concurrent).
+      //
+      wrtBarSymRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreGenerationalSymbolRef();
+      helperArgCount = 2;
+      }
+
+   TR::LabelSymbol* wrtBarLabel = generateLabelSymbol(cg);
+
+   generateLabelInstruction(branchOp, node, wrtBarLabel, cg);
+
+   TR_OutlinedInstructionsGenerator og(wrtBarLabel, node, cg);
+
+   if (TR::Compiler->target.is64Bit())
+      {
+      auto deps = generateRegisterDependencyConditions(helperArgCount, helperArgCount, cg);
+      deps->addPreCondition(owningObjectReg, TR::RealRegister::eax, cg);
+      deps->addPostCondition(owningObjectReg, TR::RealRegister::eax, cg);
+      if (helperArgCount > 1)
+         {
+         deps->addPreCondition(sourceReg, TR::RealRegister::esi, cg);
+         deps->addPostCondition(sourceReg, TR::RealRegister::esi, cg);
+         }
+      generateImmSymInstruction(CALLImm4, node, (uintptrj_t)wrtBarSymRef->getMethodAddress(), wrtBarSymRef, deps, cg);
+      }
+   else
+      {
+      if (helperArgCount > 1)
+         {
+         generateRegInstruction(PUSHReg, node, sourceReg, cg);
+         }
+      generateRegInstruction(PUSHReg, node, owningObjectReg, cg);
+      generateImmSymInstruction(CALLImm4, node, (uintptrj_t)wrtBarSymRef->getMethodAddress(), wrtBarSymRef, cg)->setAdjustsFramePointerBy(-4*helperArgCount);
+      }
+
+   generateLabelInstruction(JMP4, node, doneLabel, cg);
+   }
+
 void J9::X86::TreeEvaluator::generateWrtbarForArrayCopy(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Node *destOwningObject = node->getChild(1);
@@ -11003,9 +11104,17 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
             generateMemImmInstruction(TEST4MemImm4, node, vmThreadPrivateFlagsMR, J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE, cg);
             }
 
-         TR::X86WriteBarrierSnippet *snippet =
-            generateWriteBarrierSnippet(node, TR_WrtbarCardMarkAndOldCheck, owningObjectReg, srcReg, NULL, doneLabel, cg);
-         generateLabelInstruction(JNE4, node, snippet->getSnippetLabel(), snippet->getDependencies(), cg);
+         static bool UseOldWriteBarrierSnippet = (bool)feGetEnv("TR_UseOldWriteBarrierSnippet");
+         if (UseOldWriteBarrierSnippet)
+            {
+            TR::X86WriteBarrierSnippet *snippet =
+               generateWriteBarrierSnippet(node, TR_WrtbarCardMarkAndOldCheck, owningObjectReg, srcReg, NULL, doneLabel, cg);
+            generateLabelInstruction(JNE4, node, snippet->getSnippetLabel(), snippet->getDependencies(), cg);
+            }
+         else
+            {
+            generateWriteBarrierCall(JNE4, node, TR_WrtbarCardMarkAndOldCheck, owningObjectReg, srcReg, doneLabel, cg);
+            }
 
          // If the destination object is old and not remembered then process the remembered
          // set update out-of-line with the generational helper.
@@ -11094,8 +11203,16 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
             }
          }
 
-      TR::X86WriteBarrierSnippet *snippet = generateWriteBarrierSnippet(node, gcModeForSnippet, owningObjectReg, srcReg, NULL, doneLabel, cg);
-      generateLabelInstruction(branchOp, node, snippet->getSnippetLabel(), snippet->getDependencies(), cg);
+      static bool UseOldWriteBarrierSnippet = (bool)feGetEnv("TR_UseOldWriteBarrierSnippet");
+      if (UseOldWriteBarrierSnippet)
+         {
+         TR::X86WriteBarrierSnippet *snippet = generateWriteBarrierSnippet(node, gcModeForSnippet, owningObjectReg, srcReg, NULL, doneLabel, cg);
+         generateLabelInstruction(branchOp, node, snippet->getSnippetLabel(), snippet->getDependencies(), cg);
+         }
+      else
+         {
+         generateWriteBarrierCall(branchOp, node, gcModeForSnippet, owningObjectReg, srcReg, doneLabel, cg);
+         }
       if (labelAfterBranchToSnippet)
          generateLabelInstruction(LABEL, node, labelAfterBranchToSnippet, cg);
       }
@@ -11280,12 +11397,19 @@ void J9::X86::TreeEvaluator::VMwrtbarWithStoreEvaluator(
 
       if (TR::Compiler->target.is64Bit())
          {
-         // TODO: do this inline, or via a shared snippet
-         //
-         TR::X86WriteBarrierSnippet *snippet =
-            generateWriteBarrierSnippet(node, gcMode, owningObjectRegister, sourceRegister, NULL, doneWrtBarLabel, cg);
-         generateLabelInstruction(JMP4, node, snippet->getSnippetLabel(), cg);
-         deps = snippet->getDependencies();
+         // TODO: do this inline
+         static bool UseOldWriteBarrierSnippet = (bool)feGetEnv("TR_UseOldWriteBarrierSnippet");
+         if (UseOldWriteBarrierSnippet)
+            {
+            TR::X86WriteBarrierSnippet *snippet =
+               generateWriteBarrierSnippet(node, gcMode, owningObjectRegister, sourceRegister, NULL, doneWrtBarLabel, cg);
+            generateLabelInstruction(JMP4, node, snippet->getSnippetLabel(), cg);
+            deps = snippet->getDependencies();
+            }
+         else
+            {
+            generateWriteBarrierCall(JMP4, node, gcMode, owningObjectRegister, sourceRegister, doneWrtBarLabel, cg);
+            }
          }
       else
          {
