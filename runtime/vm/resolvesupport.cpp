@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "j2sever.h"
 #include "j9.h"
 #include "j9protos.h"
 #include "j9consts.h"
@@ -30,38 +31,64 @@
 #include "ut_j9vm.h"
 #include "rommeth.h"
 #include "stackwalk.h"
+#include "j9modifiers_api.h"
 #include "VMHelpers.hpp"
 
 #define MAX_STACK_SLOTS 255
 
-static void checkForDecompile(J9VMThread *currentThread, J9ROMMethodRef *romMethodRef, UDATA jitFlags);
-static bool finalFieldSetAllowed(J9VMThread *currentThread, bool isStatic, J9Method *method, J9Class *fieldClass, J9ROMFieldShape *field, UDATA jitFlags);
+static void checkForDecompile(J9VMThread *currentThread, J9ROMMethodRef *romMethodRef, bool jitCompileTimeResolve);
+static bool finalFieldSetAllowed(J9VMThread *currentThread, bool isStatic, J9Method *method, J9Class *fieldClass, J9Class *callerClass, J9ROMFieldShape *field, bool canRunJavaCode);
 
 
 /**
+ * @brief See if the thread has an exception or immediate async pending
+ * @param currentThread the current J9VMThread
+ * @return true if something is pending, false if the thread may proceed
+ */
+static bool
+threadEventsPending(J9VMThread *currentThread)
+{
+	return VM_VMHelpers::immediateAsyncPending(currentThread) || VM_VMHelpers::exceptionPending(currentThread);
+}
+
+/**
 * @brief In class files with version 53 or later, setting of final fields is only allowed from initializer methods.
-* Note that this is called only after verifying that the calling class and declaring class are identical.
+* Note that this is called only after verifying that the calling class and declaring class share private access.
 *
 * @param currentThread the current J9VMThread
-* @param isStatic TRUE for static fields, FALSE for instance
+* @param isStatic true for static fields, false for instance
 * @param method the J9Method performing the resolve, NULL for no access check
 * @param fieldClass the J9Class which declares the field
+* @param callerClass the J9Class which tries to access the field
 * @param field J9ROMFieldShape of the final field
-* @param jitFlags 0 for a runtime resolve, non-zero for JIT compilation or AOT resolves
+* @param canRunJavaCode true if java code can be run, false if not
 * @return true if access is legal, false if not
 */
 static bool
-finalFieldSetAllowed(J9VMThread *currentThread, bool isStatic, J9Method *method, J9Class *fieldClass, J9ROMFieldShape *field, UDATA jitFlags)
+finalFieldSetAllowed(J9VMThread *currentThread, bool isStatic, J9Method *method, J9Class *fieldClass, J9Class *callerClass, J9ROMFieldShape *field, bool canRunJavaCode)
 {
 	bool legal = true;
 	/* NULL method means do not do the access check */
 	if (NULL != method) {
+		/* Handle the scenario where the callerClass is redefeined during <clinit> or <init>.
+		 * In that case, callerClass will be the obsolete version of the class and fieldClass
+		 * will be the current version (assuming that they represent the same class - if they
+		 * don't, this check fails anyway). It's safe to simply update both classes to their
+		 * current versions, as the classfile version check on fieldClass should take place on
+		 * the current version, and the Unsafe flag is preserved during redefinition, so it
+		 * doesn't matter which version is checked.
+		 */
+		fieldClass = J9_CURRENT_CLASS(fieldClass);
+		callerClass = J9_CURRENT_CLASS(callerClass);
 		J9ROMClass *romClass = fieldClass->romClass;
 		if (romClass->majorVersion >= 53) {
 			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 			J9UTF8 *name = J9ROMMETHOD_NAME(romMethod);
-			if (('<' != J9UTF8_DATA(name)[0]) || (J9UTF8_LENGTH(name) != strlen(isStatic ? "<clinit>" : "<init>"))) {
-				if (0 == jitFlags) {
+			if (('<' != J9UTF8_DATA(name)[0])
+			|| (J9UTF8_LENGTH(name) != strlen(isStatic ? "<clinit>" : "<init>"))
+			|| ((fieldClass != callerClass) && (!J9ROMCLASS_IS_UNSAFE(callerClass->romClass)))
+			) {
+				if (canRunJavaCode) {
 					setIllegalAccessErrorFinalFieldSet(currentThread, isStatic, romClass, field, romMethod);
 				}
 				legal = false;
@@ -77,18 +104,18 @@ finalFieldSetAllowed(J9VMThread *currentThread, bool isStatic, J9Method *method,
 * 		 and if so, force all running methods to be decompiled
 * @param currentThread the current J9VMThread
 * @param romMethodRef the J9ROMMethodRef being resolved
-* @param jitFlags 0 for a runtime resolve, non-zero for JIT compilation or AOT resolves
+* @param jitCompileTimeResolve true for JIT compilation or AOT resolves, false for a runtime resolve
 * @return void
 */
 static void
-checkForDecompile(J9VMThread *currentThread, J9ROMMethodRef *romMethodRef, UDATA jitFlags)
+checkForDecompile(J9VMThread *currentThread, J9ROMMethodRef *romMethodRef, bool jitCompileTimeResolve)
 {
 	J9JavaVM *vm = currentThread->javaVM;
 
 	if (NULL != vm->decompileName) {
 		J9JITConfig *jitConfig = vm->jitConfig;
 
-		if ((0 == jitFlags) && (NULL != vm->jitConfig)) {
+		if (!jitCompileTimeResolve && (NULL != vm->jitConfig)) {
 			J9UTF8 *name = J9ROMNAMEANDSIGNATURE_NAME(J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef));
 			char *decompileName = vm->decompileName;
 			if (J9UTF8_DATA_EQUALS(name->data, name->length, decompileName, strlen(decompileName))) {
@@ -110,12 +137,35 @@ packageAccessIsLegal(J9VMThread *currentThread, J9Class *targetClass, j9object_t
 	if (NULL == security) {
 		legal = TRUE;
 	} else if (canRunJavaCode) {
-		sendCheckPackageAccess(currentThread, targetClass, protectionDomain, 0, 0);
-		if (J9_ARE_NO_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_POP_FRAMES_INTERRUPT) && (NULL == currentThread->currentException)) {
+		if (J9_ARE_NO_BITS_SET(currentThread->privateFlags2, J9_PRIVATE_FLAGS2_CHECK_PACKAGE_ACCESS)) {
+			currentThread->privateFlags2 |= J9_PRIVATE_FLAGS2_CHECK_PACKAGE_ACCESS;
+			sendCheckPackageAccess(currentThread, targetClass, protectionDomain, 0, 0);
+			currentThread->privateFlags2 &= ~J9_PRIVATE_FLAGS2_CHECK_PACKAGE_ACCESS;
+		}
+		if (!threadEventsPending(currentThread)) {
 			legal = TRUE;
 		}
 	}
 	return legal;
+}
+
+BOOLEAN
+requirePackageAccessCheck(J9JavaVM *vm, J9ClassLoader *srcClassLoader, J9Module *srcModule, J9Class *targetClass)
+{
+	BOOLEAN checkFlag = TRUE;
+	if (J2SE_VERSION(vm) >= J2SE_19) {
+		if (srcModule == targetClass->module) {
+			if (NULL != srcModule) {
+				/* same named module */
+				checkFlag = FALSE;
+			} else if (srcClassLoader == targetClass->classLoader) {
+				/* same unnamed module */
+				checkFlag = FALSE;
+			}
+		}
+	}
+	
+	return checkFlag;
 }
 
 j9object_t   
@@ -180,51 +230,6 @@ findFieldSignatureClass(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA field
 	return resolvedClass;
 }
 
-#if defined(J9VM_OPT_VALHALLA_MVT)
-static bool
-ensureClassHasDVT(J9VMThread *vmStruct, J9Class *resolvedClass, U_16 classNameLength, U_8 *classNameData)
-{
-	PORT_ACCESS_FROM_VMC(vmStruct);
-	bool verified = false;
-	const char *nlsMsgFormat = NULL;
-
-	if (J9_ARE_NO_BITS_SET(resolvedClass->romClass->extraModifiers, J9AccClassIsValueCapable)) {
-		/* Error - Resolved class is not value capable */
-		nlsMsgFormat = j9nls_lookup_message(
-				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
-				J9NLS_VM_CLASS_NOT_VALUE_CAPABLE,
-				"The resolved class %2$.*1$s is not value capable");
-	} else if (NULL == resolvedClass->derivedValueType) {
-		/* Error - DVT is not set */
-		nlsMsgFormat = j9nls_lookup_message(
-				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
-				J9NLS_VM_DVT_NOT_SET,
-				"The value capable class %2$.*1$s does not have a derived value type");
-	} else {
-		/* Success - The DVT is available */
-		verified = true;
-	}
-
-	if (!verified) {
-		/* Construct error message */
-		char *msgChars = NULL;
-		UDATA msgCharLength = strlen(nlsMsgFormat);
-		msgCharLength += classNameLength;
-		msgChars = (char *)j9mem_allocate_memory(msgCharLength + 1, J9MEM_CATEGORY_VM);
-		if (NULL != msgChars) {
-			j9str_printf(PORTLIB, msgChars, msgCharLength, nlsMsgFormat, classNameLength, classNameData);
-		}
-
-		/* Throw InternalError */
-		setCurrentExceptionUTF(vmStruct, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, msgChars);
-
-		j9mem_free_memory(msgChars);
-	}
-
-	return verified;
-}
-#endif /* defined(J9VM_OPT_VALHALLA_MVT) */
-
 J9Class *   
 resolveClassRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags)
 {
@@ -239,15 +244,20 @@ resolveClassRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpIndex, UDAT
 	U_8 *classNameData = NULL;
 	J9ROMStringRef *romStringRef = NULL;
 	J9ClassLoader *classLoader = NULL;
-	UDATA jitCompileTimeResolve = J9_ARE_ANY_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_JIT_COMPILE_TIME | J9_RESOLVE_FLAG_AOT_LOAD_TIME);
-	UDATA canRunJavaCode = !jitCompileTimeResolve && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_REDEFINE_CLASS);
+	bool jitCompileTimeResolve = J9_ARE_ANY_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_JIT_COMPILE_TIME | J9_RESOLVE_FLAG_AOT_LOAD_TIME);
+	bool canRunJavaCode = !jitCompileTimeResolve && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_REDEFINE_CLASS);
+	bool throwException = canRunJavaCode && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
+	UDATA lookupOptions = 0;
+	if (canRunJavaCode) {
+		if (!throwException) {
+			lookupOptions = J9_LOOK_NO_THROW;			
+		}
+	} else {
+		lookupOptions = J9_LOOK_NO_JAVA;
+	}
 	UDATA findClassFlags = 0;
 	UDATA accessModifiers = 0;
 	j9object_t detailString = NULL;
-#if defined(J9VM_OPT_VALHALLA_MVT)
-	bool resolvingDVT = false;
-#endif /* defined(J9VM_OPT_VALHALLA_MVT) */
-
 	Trc_VM_resolveClassRef_Entry(vmStruct, ramCP, cpIndex, resolveFlags);
 
 tryAgain:
@@ -273,22 +283,8 @@ tryAgain:
 
 	Trc_VM_resolveClassRef_lookup(vmStruct, classNameLength, classNameData);
 
-#if defined(J9VM_OPT_VALHALLA_MVT)
-	/* If the class name starts with ;Q, resolve to the derived value type (DVT).
-	 * We get to the DVT by loading the value capable class (VCC) it was derived from,
-	 * and then read the DVT from the VCC's derivedValueType field.
-	 */
-	if ((';' == classNameData[0]) && ('Q' == classNameData[1])) {
-		/* To load the VCC, we extract the actual class name (remove ";Q" prefix and "$value" suffix). */
-		classNameLength -= (strlen(";Q") + strlen("$value"));
-		classNameData += strlen(";Q");
-		resolvingDVT = true;
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_MVT) */
-
-	findClassFlags = 0;
 	if (canRunJavaCode) {
-		if (J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL)) {
+		if (throwException) {
 			findClassFlags = J9_FINDCLASS_FLAG_THROW_ON_FAIL;
 		}
 	} else {
@@ -298,8 +294,12 @@ tryAgain:
 	if (ramClassRefWrapper->modifiers == (UDATA)-1) {
 		if ((findClassFlags & J9_FINDCLASS_FLAG_THROW_ON_FAIL) == J9_FINDCLASS_FLAG_THROW_ON_FAIL) {
 			detailString = vm->memoryManagerFunctions->j9gc_createJavaLangString(vmStruct, classNameData, classNameLength, 0);
-			if (NULL == vmStruct->currentException) {
-				setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGNOCLASSDEFFOUNDERROR, (UDATA *)detailString);
+			if (throwException) {
+				if (NULL == vmStruct->currentException) {
+					setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGNOCLASSDEFFOUNDERROR, (UDATA *)detailString);
+				}
+			} else {
+				VM_VMHelpers::clearException(vmStruct);
 			}
 		}
 		goto done;
@@ -340,23 +340,16 @@ tryAgain:
 		goto done;
 	}
 
-#if defined(J9VM_OPT_VALHALLA_MVT)
-	if (resolvingDVT) {
-		if (!ensureClassHasDVT(vmStruct, resolvedClass, classNameLength, classNameData)) {
-			/* The class doesn't have a DVT - exception has been set */
-			goto done;
-		}
-		/* Read the DVT from the VCC's derivedValueType field */
-		resolvedClass = resolvedClass->derivedValueType;
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_MVT) */
-
 	/* Perform a package access check from the current class to the resolved class.
 	 * No check is required if any of the following is true:
 	 * 		- the current class and resolved class are identical
 	 * 		- the current class was loaded by the bootstrap class loader
+	 * 		- the current class and resolved class are in same module
 	 */
-	if ((currentClass != resolvedClass) && (classLoader != bootstrapClassLoader)) {
+	if ((currentClass != resolvedClass) 
+		&& (classLoader != bootstrapClassLoader)
+		&& requirePackageAccessCheck(vm, classLoader, currentClass->module, resolvedClass)
+	) {
 		/* AOT resolves class refs inside J9Classes which have not yet
 		 * had the java/lang/Class associated with them.  canRunJavaCode must be false
 		 * in this case.  The protectionDomain object is only used if canRunJavaCode
@@ -390,9 +383,10 @@ tryAgain:
 		accessClass = resolvedClass;
 	}
 	{
-		IDATA checkResult = checkVisibility(vmStruct, J9_CLASS_FROM_CP(ramCP), accessClass, accessModifiers, resolveFlags);
+		IDATA checkResult = checkVisibility(vmStruct, J9_CLASS_FROM_CP(ramCP), accessClass, accessModifiers, lookupOptions);
 		if (checkResult < J9_VISIBILITY_ALLOWED) {
-			if (canRunJavaCode) {
+			/* Check for pending exception for (ie. Nesthost class loading/verify), do not overwrite these exceptions */
+			if (canRunJavaCode && (!VM_VMHelpers::exceptionPending(vmStruct))) {
 				char *errorMsg = NULL;
 				PORT_ACCESS_FROM_VMC(vmStruct);
 				if (J9_VISIBILITY_NON_MODULE_ACCESS_ERROR == checkResult) {
@@ -463,24 +457,27 @@ resolveStaticMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cp
 	J9ROMMethodRef *romMethodRef;
 	J9Class *resolvedClass;
 	J9Method *method = NULL;
-	UDATA lookupOptions;
-	UDATA jitFlags = 0;
 	J9Class *cpClass;
 	J9Class *methodClass = NULL;
 	BOOLEAN isResolvedClassAnInterface = FALSE;
+	bool jitCompileTimeResolve = J9_ARE_ANY_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_JIT_COMPILE_TIME | J9_RESOLVE_FLAG_AOT_LOAD_TIME);
+	bool canRunJavaCode = !jitCompileTimeResolve && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_REDEFINE_CLASS);
+	bool throwException = canRunJavaCode && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
+	UDATA lookupOptions = 0;
+	if (canRunJavaCode) {
+		if (!throwException) {
+			lookupOptions = J9_LOOK_NO_THROW;			
+		}
+	} else {
+		lookupOptions = J9_LOOK_NO_JAVA;
+	}
 
 	Trc_VM_resolveStaticMethodRef_Entry(vmStruct, ramCP, cpIndex, resolveFlags);
-
-#if defined(J9VM_INTERP_NATIVE_SUPPORT)
-	jitFlags |= J9_RESOLVE_FLAG_JIT_COMPILE_TIME;
-#endif
-	jitFlags |= J9_RESOLVE_FLAG_AOT_LOAD_TIME;
-	jitFlags = (jitFlags != 0) && ((resolveFlags & jitFlags) != 0);
 
 tryAgain:
 	romMethodRef = (J9ROMMethodRef *)&ramCP->romConstantPool[cpIndex];
 
-	checkForDecompile(vmStruct, romMethodRef, jitFlags);
+	checkForDecompile(vmStruct, romMethodRef, jitCompileTimeResolve);
 
 	/* Resolve the class. */
 	resolvedClass = resolveClassRef(vmStruct, ramCP, romMethodRef->classRefCPIndex, resolveFlags);
@@ -490,15 +487,36 @@ tryAgain:
 	isResolvedClassAnInterface = (J9_JAVA_INTERFACE == (resolvedClass->romClass->modifiers & J9_JAVA_INTERFACE));
 
 	/* Find the method. */
-	lookupOptions = J9_LOOK_STATIC;
+	lookupOptions |= J9_LOOK_STATIC;
 	if ((resolveFlags & J9_RESOLVE_FLAG_JCL_CONSTANT_POOL) == J9_RESOLVE_FLAG_JCL_CONSTANT_POOL) {
 		cpClass = NULL;
 	} else {
 		cpClass = J9_CLASS_FROM_CP(ramCP);
 		lookupOptions |= J9_LOOK_CLCONSTRAINTS;
-	}
-	if (jitFlags) {
-		lookupOptions |= J9_LOOK_NO_THROW;
+
+		if (J2SE_VERSION(vmStruct->javaVM) >= J2SE_19) {
+			/* This check is only required in Java9 and there have been applications that
+			 * fail when this check is enabled on Java8.
+			 */
+			if ((cpClass != NULL) && (cpClass->romClass != NULL)) {
+				UDATA cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(cpClass->romClass), cpIndex);
+				if (isResolvedClassAnInterface) {
+					if ((J9CPTYPE_INTERFACE_STATIC_METHOD != cpType)
+					&& (J9CPTYPE_INTERFACE_INSTANCE_METHOD != cpType)
+					&& (J9CPTYPE_INTERFACE_METHOD != cpType)
+					) {
+						goto incompat;
+					}
+				} else {
+					if ((J9CPTYPE_INTERFACE_STATIC_METHOD == cpType)
+					|| (J9CPTYPE_INTERFACE_INSTANCE_METHOD == cpType)
+					|| (J9CPTYPE_INTERFACE_METHOD == cpType)
+					) {
+						goto incompat;
+					}
+				}
+			}
+		}
 	}
 	if (isResolvedClassAnInterface) {
 		lookupOptions |= J9_LOOK_INTERFACE;
@@ -514,40 +532,41 @@ tryAgain:
 	methodClass = J9_CLASS_FROM_METHOD(method);
 	if (methodClass != resolvedClass) {
 		if (isResolvedClassAnInterface) {
-			method = NULL;
-			if (0 == jitFlags) {
+incompat:
+			if (throwException) {
 				setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, NULL);
 			}
+			method = NULL;
 			goto done;
 		}
 	}
 
 	/* Initialize the defining class of the method. */
 	
-	if (jitFlags) {
-		UDATA initStatus = resolvedClass->initializeStatus;
-		if (initStatus != J9ClassInitSucceeded) {
+	if (J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_NO_CLASS_INIT)) {
+		J9Class *methodClass = J9_CLASS_FROM_METHOD(method);
+		UDATA initStatus = methodClass->initializeStatus;
+		if (jitCompileTimeResolve && (J9ClassInitSucceeded != initStatus)) {
 			method = NULL;
 			goto done;
 		}
-	} else {
-		J9Class *methodClass = J9_CLASS_FROM_METHOD(method);
-		UDATA initStatus = methodClass->initializeStatus;
 		if (initStatus != J9ClassInitSucceeded && initStatus != (UDATA)vmStruct) {
-
-			{
+			/* Initialize the class if java code is allowed */
+			if (canRunJavaCode) {
 				UDATA preCount = vmStruct->javaVM->hotSwapCount;
 
-				if (J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_NO_CLASS_INIT)) {
-					initializeClass(vmStruct, methodClass);
-				}
-				if (vmStruct->currentException != NULL) {
+				initializeClass(vmStruct, methodClass);
+				if (threadEventsPending(vmStruct)) {
 					method = NULL;
 					goto done;
 				}
 				if (preCount != vmStruct->javaVM->hotSwapCount) {
 					goto tryAgain;
 				}
+			} else {
+				/* Can't initialize the class, so fail the resolve */
+				method = NULL;
+				goto done;
 			}
 		}
 	}
@@ -595,7 +614,7 @@ resolveStaticSplitMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA s
 	U_16 cpIndex = *(J9ROMCLASS_STATICSPLITMETHODREFINDEXES(ramCP->ramClass->romClass) + splitTableIndex);
 	J9Method *method = ramCP->ramClass->staticSplitMethodTable[splitTableIndex];
 
-	if (NULL == method) {
+	if (method == (J9Method*)vmStruct->javaVM->initialMethods.initialStaticMethod) {
 		method = resolveStaticMethodRefInto(vmStruct, ramCP, cpIndex, resolveFlags, ramStaticMethodRef);
 
 		if (NULL != method) {
@@ -620,6 +639,17 @@ resolveStaticFieldRefInto(J9VMThread *vmStruct, J9Method *method, J9ConstantPool
 	void *staticAddress;
 	J9ROMFieldRef *romFieldRef;
 	J9Class *resolvedClass;
+	bool jitCompileTimeResolve = J9_ARE_ANY_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_JIT_COMPILE_TIME | J9_RESOLVE_FLAG_AOT_LOAD_TIME);
+	bool canRunJavaCode = !jitCompileTimeResolve && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_REDEFINE_CLASS);
+	bool throwException = canRunJavaCode && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
+	UDATA lookupOptions = 0;
+	if (canRunJavaCode) {
+		if (!throwException) {
+			lookupOptions = J9_LOOK_NO_THROW;			
+		}
+	} else {
+		lookupOptions = J9_LOOK_NO_JAVA;
+	}
 
 	Trc_VM_resolveStaticFieldRef_Entry(vmStruct, method, ramCP, cpIndex, resolveFlags, resolvedField);
 
@@ -635,8 +665,6 @@ tryAgain:
 		J9Class *classFromCP = J9_CLASS_FROM_CP(ramCP);
 		J9ROMFieldShape *field;
 		J9Class *definingClass;
-		UDATA jitFlags;
-		UDATA fieldLookupFlags;
 		J9ROMNameAndSignature *nameAndSig;
 		J9UTF8 *name;
 		J9UTF8 *signature;
@@ -647,15 +675,8 @@ tryAgain:
 		J9Class *localClassAndFlags = NULL;
 		UDATA initStatus = 0;
 
-		jitFlags = 0;
-#if defined(J9VM_INTERP_NATIVE_SUPPORT)
-		jitFlags |= J9_RESOLVE_FLAG_JIT_COMPILE_TIME;
-#endif
-		jitFlags |= J9_RESOLVE_FLAG_AOT_LOAD_TIME;
-		jitFlags = (jitFlags != 0) && ((resolveFlags & jitFlags) != 0);
-
 		/* ensure that the class is visible */
-		checkResult = checkVisibility(vmStruct, classFromCP, resolvedClass, resolvedClass->romClass->modifiers, resolveFlags);
+		checkResult = checkVisibility(vmStruct, classFromCP, resolvedClass, resolvedClass->romClass->modifiers, lookupOptions);
 		if (checkResult < J9_VISIBILITY_ALLOWED) {
 			targetClass = resolvedClass;
 			badMemberModifier = resolvedClass->romClass->modifiers;
@@ -663,20 +684,10 @@ tryAgain:
 		}
 
 		/* Get the field address. */
-		fieldLookupFlags = 0;
-		if (jitFlags) {
-			UDATA initStatus = resolvedClass->initializeStatus;
-			if ( (J9ClassInitSucceeded != initStatus) && (J9ClassInitTenant != initStatus) ) {
-				goto done;
-			}
-			fieldLookupFlags |= J9_RESOLVE_FLAG_NO_THROW_ON_FAIL;
-		} else if (0 != (J9_RESOLVE_FLAG_NO_THROW_ON_FAIL & resolveFlags)) {
-			fieldLookupFlags |= J9_RESOLVE_FLAG_NO_THROW_ON_FAIL;
-		}
 		nameAndSig = J9ROMFIELDREF_NAMEANDSIGNATURE(romFieldRef);
 		name = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
 		signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
-		staticAddress = staticFieldAddress(vmStruct, resolvedClass, J9UTF8_DATA(name), J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), &definingClass, (UDATA *)&field, fieldLookupFlags, classFromCP);
+		staticAddress = staticFieldAddress(vmStruct, resolvedClass, J9UTF8_DATA(name), J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), &definingClass, (UDATA *)&field, lookupOptions, classFromCP);
 		/* Stop if an exception occurred. */
 		if (staticAddress != NULL) {
 			modifiers = field->modifiers;
@@ -688,34 +699,36 @@ tryAgain:
 				*resolvedField = field;
 			}
 
-			if (initStatus != J9ClassInitSucceeded && initStatus != (UDATA) vmStruct) {
-				/* Initialize the class if we're not being called from the JIT */
-				if (jitFlags == 0) {
-					{
+			if (J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_NO_CLASS_INIT)) {
+				if (initStatus != J9ClassInitSucceeded && initStatus != (UDATA) vmStruct) {
+					/* Initialize the class if java code is allowed */
+					if (canRunJavaCode) {
 						UDATA preCount = javaVM->hotSwapCount;
 
-						if (J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_NO_CLASS_INIT)) {
-							initializeClass(vmStruct, definingClass);
-						}
-						if (vmStruct->currentException != NULL) {
+						initializeClass(vmStruct, definingClass);
+						if (threadEventsPending(vmStruct)) {
 							staticAddress = NULL;
 							goto done;
 						}
 						if (preCount != javaVM->hotSwapCount) {
 							goto tryAgain;
 						}
+					} else {
+						/* Can't initialize the class, so fail the resolve */
+						staticAddress = NULL;
+						goto done;
 					}
 				}
 			}
 
 			if ((resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER) != 0 && (modifiers & J9_JAVA_FINAL) != 0) {
-				checkResult = checkVisibility(vmStruct, classFromCP, definingClass, J9_JAVA_PRIVATE, resolveFlags);
+				checkResult = checkVisibility(vmStruct, classFromCP, definingClass, J9_JAVA_PRIVATE, lookupOptions);
 				if (checkResult < J9_VISIBILITY_ALLOWED) {
 					targetClass = definingClass;
 					badMemberModifier = J9_JAVA_PRIVATE;
 illegalAccess:
 					staticAddress = NULL;
-					if (!jitFlags) {
+					if (canRunJavaCode && !threadEventsPending(vmStruct)) {
 						char *errorMsg = NULL;
 						PORT_ACCESS_FROM_VMC(vmStruct);
 						if (J9_VISIBILITY_NON_MODULE_ACCESS_ERROR == checkResult) {
@@ -728,9 +741,18 @@ illegalAccess:
 					}
 					goto done;
 				}
-				if (!finalFieldSetAllowed(vmStruct, true, method, definingClass, field, jitFlags)) {
+				if (!finalFieldSetAllowed(vmStruct, true, method, definingClass, classFromCP, field, canRunJavaCode)) {
 					staticAddress = NULL;
 					goto done;
+				} else { /* finalFieldSetAllowed */
+					if (jitCompileTimeResolve) {
+						/* Don't report the final field modification for JIT compile-time resolves.
+					 	 * Reporting may deadlock due to interaction between safepoint and ClassUnloadMutex.
+					 	 */
+						staticAddress = NULL;
+						goto done;
+					}
+					VM_VMHelpers::reportFinalFieldModified(vmStruct, definingClass);
 				}
 			}
 			
@@ -744,9 +766,8 @@ illegalAccess:
 				}
 				if (cl1 != cl2) {
 					J9UTF8 *fieldSignature = J9ROMFIELDSHAPE_SIGNATURE(field);
-					if (j9bcv_checkClassLoadingConstraintsForSignature(vmStruct, cl1, cl2, signature, fieldSignature) != 0)
-					{
-						if ((resolveFlags & (J9_RESOLVE_FLAG_NO_THROW_ON_FAIL | J9_RESOLVE_FLAG_JIT_COMPILE_TIME)) == 0) {
+					if (j9bcv_checkClassLoadingConstraintsForSignature(vmStruct, cl1, cl2, signature, fieldSignature) != 0) {
+						if (throwException) {
 							setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGVERIFYERROR, NULL);
 						}
 						staticAddress = NULL;
@@ -756,12 +777,8 @@ illegalAccess:
 			}
 			
 			/* If this is a JIT compile-time resolve, do not allow fields declared in uninitialized classes. */
-			if (jitFlags) {
-				UDATA initStatus = localClassAndFlags->initializeStatus;
-				if ( (J9ClassInitSucceeded != initStatus) && (J9ClassInitTenant != initStatus) ) {
-					staticAddress = NULL;
-					goto done;
-				}
+			if (jitCompileTimeResolve && (J9ClassInitSucceeded != initStatus)) {
+				goto done;
 			}
 
 			if (ramCPEntry != NULL) {
@@ -771,6 +788,8 @@ illegalAccess:
 					localClassAndFlagsData |= J9StaticFieldRefBaseType;
 					if ((modifiers & J9FieldSizeDouble) == J9FieldSizeDouble) {
 						localClassAndFlagsData |= J9StaticFieldRefDouble;
+					} else if (J9FieldTypeBoolean == (modifiers & J9FieldTypeMask)) {
+						localClassAndFlagsData |= J9StaticFieldRefBoolean;
 					}
 				}
 				/* Check if volatile and set the localClassAndFlags to have StaticFieldRefVolatile. */
@@ -829,6 +848,17 @@ resolveInstanceFieldRefInto(J9VMThread *vmStruct, J9Method *method, J9ConstantPo
 	IDATA fieldOffset = -1;
 	J9ROMFieldRef *romFieldRef;
 	J9Class *resolvedClass;
+	bool jitCompileTimeResolve = J9_ARE_ANY_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_JIT_COMPILE_TIME | J9_RESOLVE_FLAG_AOT_LOAD_TIME);
+	bool canRunJavaCode = !jitCompileTimeResolve && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_REDEFINE_CLASS);
+	bool throwException = canRunJavaCode && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
+	UDATA lookupOptions = 0;
+	if (canRunJavaCode) {
+		if (!throwException) {
+			lookupOptions = J9_LOOK_NO_THROW;			
+		}
+	} else {
+		lookupOptions = J9_LOOK_NO_JAVA;
+	}
 
 	Trc_VM_resolveInstanceFieldRef_Entry(vmStruct, method, ramCP, cpIndex, resolveFlags, resolvedField);
 	
@@ -843,8 +873,6 @@ resolveInstanceFieldRefInto(J9VMThread *vmStruct, J9Method *method, J9ConstantPo
 		J9Class *classFromCP = J9_CLASS_FROM_CP(ramCP);
 		J9ROMFieldShape *field;
 		J9Class *definingClass;
-		UDATA jitFlags;
-		UDATA findFieldFlags;
 		J9ROMNameAndSignature *nameAndSig;
 		J9UTF8 *name;
 		J9UTF8 *signature;
@@ -856,16 +884,8 @@ resolveInstanceFieldRefInto(J9VMThread *vmStruct, J9Method *method, J9ConstantPo
 		J9Class *currentTargetClass = NULL;
 		J9Class *currentSenderClass = NULL;
 
-		jitFlags = 0;
-		jitFlags |= J9_RESOLVE_FLAG_NO_THROW_ON_FAIL;
-#if defined(J9VM_INTERP_NATIVE_SUPPORT)
-		jitFlags |= J9_RESOLVE_FLAG_JIT_COMPILE_TIME;
-#endif
-		jitFlags |= J9_RESOLVE_FLAG_AOT_LOAD_TIME;
-		jitFlags = (jitFlags != 0) && ((resolveFlags & jitFlags) != 0);
-
 		/* ensure that the class is visible */
-		checkResult = checkVisibility(vmStruct, classFromCP, resolvedClass, resolvedClass->romClass->modifiers, resolveFlags);
+		checkResult = checkVisibility(vmStruct, classFromCP, resolvedClass, resolvedClass->romClass->modifiers, lookupOptions);
 		if (checkResult < J9_VISIBILITY_ALLOWED) {
 			badMemberModifier = resolvedClass->romClass->modifiers;
 			targetClass = resolvedClass;
@@ -873,15 +893,10 @@ resolveInstanceFieldRefInto(J9VMThread *vmStruct, J9Method *method, J9ConstantPo
 		}
 
 		/* Get the field address. */
-		findFieldFlags = 0;
-		if (jitFlags) {
-			findFieldFlags |= J9_RESOLVE_FLAG_NO_THROW_ON_FAIL;
-		}
-		
 		nameAndSig = J9ROMFIELDREF_NAMEANDSIGNATURE(romFieldRef);
 		name = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
 		signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
-		fieldOffset = instanceFieldOffsetWithSourceClass(vmStruct, resolvedClass, J9UTF8_DATA(name), J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), &definingClass, (UDATA *)&field, findFieldFlags, classFromCP);
+		fieldOffset = instanceFieldOffsetWithSourceClass(vmStruct, resolvedClass, J9UTF8_DATA(name), J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), &definingClass, (UDATA *)&field, lookupOptions, classFromCP);
 		
 		/* Stop if an exception occurred. */
 		if (fieldOffset != -1) {
@@ -906,13 +921,13 @@ resolveInstanceFieldRefInto(J9VMThread *vmStruct, J9Method *method, J9ConstantPo
 			}
 
 			if ((resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER) != 0 && (modifiers & J9_JAVA_FINAL) != 0) {
-				checkResult = checkVisibility(vmStruct, classFromCP, definingClass, J9_JAVA_PRIVATE, resolveFlags);
+				checkResult = checkVisibility(vmStruct, classFromCP, definingClass, J9_JAVA_PRIVATE, lookupOptions);
 				if (checkResult < J9_VISIBILITY_ALLOWED) {
 					badMemberModifier = J9_JAVA_PRIVATE;
 					targetClass = definingClass;
 illegalAccess:
 					fieldOffset = -1;
-					if (!jitFlags) {
+					if (throwException) {
 						PORT_ACCESS_FROM_VMC(vmStruct);
 						if (J9_VISIBILITY_NON_MODULE_ACCESS_ERROR == checkResult) {
 							nlsStr = illegalAccessMessage(vmStruct, badMemberModifier, classFromCP, targetClass, J9_VISIBILITY_NON_MODULE_ACCESS_ERROR);
@@ -924,7 +939,7 @@ illegalAccess:
 					}
 					goto done;
 				}
-				if (!finalFieldSetAllowed(vmStruct, false, method, definingClass, field, jitFlags)) {
+				if (!finalFieldSetAllowed(vmStruct, false, method, definingClass, classFromCP, field, canRunJavaCode)) {
 					fieldOffset = -1;
 					goto done;
 				}
@@ -940,9 +955,8 @@ illegalAccess:
 				}
 				if (cl1 != cl2) {
 					J9UTF8 *fieldSignature = J9ROMFIELDSHAPE_SIGNATURE(field);
-					if (j9bcv_checkClassLoadingConstraintsForSignature(vmStruct, cl1, cl2, signature, fieldSignature) != 0)
-					{
-						if ((resolveFlags & (J9_RESOLVE_FLAG_NO_THROW_ON_FAIL | J9_RESOLVE_FLAG_JIT_COMPILE_TIME)) == 0) {
+					if (j9bcv_checkClassLoadingConstraintsForSignature(vmStruct, cl1, cl2, signature, fieldSignature) != 0) {
+						if (throwException) {
 							setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGVERIFYERROR, NULL);
 						}
 						fieldOffset = -1;
@@ -989,24 +1003,27 @@ resolveInterfaceMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA
 	J9Method *returnValue = NULL;
 	J9ROMMethodRef *romMethodRef;
 	J9Class *interfaceClass;
-	UDATA jitFlags = 0;
 	J9ROMNameAndSignature *nameAndSig;
-	UDATA lookupOptions;
 	J9Method *method;
 	J9Class *cpClass;
 	J9JavaVM *vm = vmStruct->javaVM;
+	bool jitCompileTimeResolve = J9_ARE_ANY_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_JIT_COMPILE_TIME | J9_RESOLVE_FLAG_AOT_LOAD_TIME);
+	bool canRunJavaCode = !jitCompileTimeResolve && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_REDEFINE_CLASS);
+	bool throwException = canRunJavaCode && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
+	UDATA lookupOptions = 0;
+	if (canRunJavaCode) {
+		if (!throwException) {
+			lookupOptions = J9_LOOK_NO_THROW;			
+		}
+	} else {
+		lookupOptions = J9_LOOK_NO_JAVA;
+	}
 
 	Trc_VM_resolveInterfaceMethodRef_Entry(vmStruct, ramCP, cpIndex, resolveFlags);
 
 	romMethodRef = (J9ROMMethodRef *)&ramCP->romConstantPool[cpIndex];
 
-#if defined(J9VM_INTERP_NATIVE_SUPPORT)
-	jitFlags |= J9_RESOLVE_FLAG_JIT_COMPILE_TIME;
-#endif
-	jitFlags |= J9_RESOLVE_FLAG_AOT_LOAD_TIME;
-	jitFlags = (jitFlags != 0) && ((resolveFlags & jitFlags) != 0);
-
-	checkForDecompile(vmStruct, romMethodRef, jitFlags);
+	checkForDecompile(vmStruct, romMethodRef, jitCompileTimeResolve);
 
 	/* Resolve the class. */
 	interfaceClass = resolveClassRef(vmStruct, ramCP, romMethodRef->classRefCPIndex, resolveFlags);
@@ -1017,28 +1034,21 @@ resolveInterfaceMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA
 	}
 
 	if ((interfaceClass->romClass->modifiers & J9_JAVA_INTERFACE) != J9_JAVA_INTERFACE) {
-		J9UTF8 *className = J9ROMCLASS_CLASSNAME(interfaceClass->romClass);
-
-		if (jitFlags) {
-			goto done;
-		} else {
-			j9object_t detailMessage;
-			detailMessage = vm->memoryManagerFunctions->j9gc_createJavaLangString(vmStruct, J9UTF8_DATA(className), J9UTF8_LENGTH(className), J9_STR_XLAT);
+		if (throwException) {
+			J9UTF8 *className = J9ROMCLASS_CLASSNAME(interfaceClass->romClass);
+			j9object_t detailMessage = vm->memoryManagerFunctions->j9gc_createJavaLangString(vmStruct, J9UTF8_DATA(className), J9UTF8_LENGTH(className), J9_STR_XLAT);
 			setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, (UDATA *)detailMessage);
 			goto done;
 		}
 	}
 	
 	nameAndSig = J9ROMFIELDREF_NAMEANDSIGNATURE(romMethodRef);
-	lookupOptions = J9_LOOK_INTERFACE;
+	lookupOptions |= J9_LOOK_INTERFACE;
 	if ((resolveFlags & J9_RESOLVE_FLAG_JCL_CONSTANT_POOL) == J9_RESOLVE_FLAG_JCL_CONSTANT_POOL) {
 		cpClass = NULL;
 	} else {
 		cpClass = J9_CLASS_FROM_CP(ramCP);
 		lookupOptions |= J9_LOOK_CLCONSTRAINTS;
-	}
-	if (jitFlags) {
-		lookupOptions |= J9_LOOK_NO_THROW;
 	}
 	method = (J9Method *)javaLookupMethod(vmStruct, interfaceClass, nameAndSig, cpClass, lookupOptions);
 
@@ -1048,15 +1058,60 @@ resolveInterfaceMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA
 	if (method != NULL) {
 		if (ramCPEntry != NULL) {
 			J9RAMInterfaceMethodRef *ramInterfaceMethodRef = (J9RAMInterfaceMethodRef *)&ramCP[cpIndex];
-			UDATA methodIndex = getITableIndexForMethod(method) << 8;
+			J9Class *methodClass = J9_CLASS_FROM_METHOD(method);
+			UDATA methodIndex = 0;
 			UDATA oldArgCount = ramInterfaceMethodRef->methodIndexAndArgCount & 255;
-			J9Class *methodClass;
-			methodIndex |= oldArgCount;
-			methodClass = J9_CLASS_FROM_METHOD(method);
+			UDATA tagBits = 0;
+			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+			if (J9_ARE_ANY_BITS_SET(methodClass->romClass->modifiers, J9_JAVA_INTERFACE)) {
+				/* Resolved method is in an interface class */
+				if (J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccPrivate)) {
+					/* Resolved method is a private interface method which does not appear in the
+					 * vTable or iTable.  Use the index into ramMethods in interfaceClass. This is
+					 * only allowed in JDK11 and beyond.
+					 */
+					if (J2SE_VERSION(vm) < J2SE_V11) {
+nonpublic:
+						if (throwException) {
+							setIllegalAccessErrorNonPublicInvokeInterface(vmStruct, method);
+						}
+						goto done;
+					}
+					methodIndex = (method - methodClass->ramMethods);
+					tagBits |= J9_ITABLE_INDEX_METHOD_INDEX;
+				} else {
+					/* Resolved method is a public interface method which appears in the
+					 * vTable and iTable.  Use the iTable index in interfaceClass.
+					 */
+					methodIndex = getITableIndexForMethod(method, interfaceClass);
+				}
+			} else {
+				/* Resolved method is in Object */
+				Assert_VM_true(methodClass == J9VMJAVALANGOBJECT_OR_NULL(vm));
+				/* Interfaces inherit only public methods from Object */
+				if (J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccPublic)) {
+					goto nonpublic;
+				}
+				if (J9ROMMETHOD_HAS_VTABLE(romMethod)) {
+					/* Resolved method is in the vTable, so it must be invoked via the
+					 * receiver's vTable.
+					 */
+					methodIndex = getVTableOffsetForMethod(method, methodClass, vmStruct);
+				} else {
+					/* Resolved method is not in the vTable, so invoke it directly
+					 * via the index into ramMethods in Object.
+					 */
+					methodIndex = (method - methodClass->ramMethods);
+					tagBits |= J9_ITABLE_INDEX_METHOD_INDEX;
+				}
+				tagBits |= J9_ITABLE_INDEX_OBJECT;
+			}
+			/* Ensure methodIndex can be shifted without losing any bits */
+			Assert_VM_true(methodIndex < ((UDATA)1 << ((sizeof(UDATA) * 8) - J9_ITABLE_INDEX_SHIFT)));
+			methodIndex <<= J9_ITABLE_INDEX_SHIFT;
+			methodIndex = methodIndex | tagBits | oldArgCount;
 			ramCPEntry->methodIndexAndArgCount = methodIndex;
-			/* interfaceClass is used to indicate resolved. Make sure to write it last */
-			issueWriteBarrier();
-			ramCPEntry->interfaceClass = (UDATA)methodClass;
+			ramCPEntry->interfaceClass = (UDATA)interfaceClass;
 		}
 		/* indicate success */
 		returnValue = method;
@@ -1083,21 +1138,24 @@ resolveSpecialMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 	J9Class *resolvedClass;
 	J9Class *currentClass;
 	J9ROMNameAndSignature *nameAndSig;
-	UDATA jitFlags = 0;
-	UDATA lookupOptions;
 	J9Method *method = NULL;
-	
-	Trc_VM_resolveSpecialMethodRef_Entry(vmStruct, ramCP, cpIndex, resolveFlags);
+	bool jitCompileTimeResolve = J9_ARE_ANY_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_JIT_COMPILE_TIME | J9_RESOLVE_FLAG_AOT_LOAD_TIME);
+	bool canRunJavaCode = !jitCompileTimeResolve && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_REDEFINE_CLASS);
+	bool throwException = canRunJavaCode && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
+	UDATA lookupOptions = 0;
+	if (canRunJavaCode) {
+		if (!throwException) {
+			lookupOptions = J9_LOOK_NO_THROW;			
+		}
+	} else {
+		lookupOptions = J9_LOOK_NO_JAVA;
+	}
 
-#if defined(J9VM_INTERP_NATIVE_SUPPORT)
-	jitFlags |= J9_RESOLVE_FLAG_JIT_COMPILE_TIME;
-#endif
-	jitFlags |= J9_RESOLVE_FLAG_AOT_LOAD_TIME;
-	jitFlags = (jitFlags != 0) && ((resolveFlags & jitFlags) != 0);
+	Trc_VM_resolveSpecialMethodRef_Entry(vmStruct, ramCP, cpIndex, resolveFlags);
 
 	romMethodRef = (J9ROMMethodRef *)&ramCP->romConstantPool[cpIndex];
 
-	checkForDecompile(vmStruct, romMethodRef, jitFlags);
+	checkForDecompile(vmStruct, romMethodRef, jitCompileTimeResolve);
 
 	/* Resolve the class. */
 	resolvedClass = resolveClassRef(vmStruct, ramCP, romMethodRef->classRefCPIndex, resolveFlags);
@@ -1106,13 +1164,6 @@ resolveSpecialMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 	if (resolvedClass == NULL) {
 		goto done;
 	}
-
-	jitFlags = 0;
-#if defined(J9VM_INTERP_NATIVE_SUPPORT)
-	jitFlags |= J9_RESOLVE_FLAG_JIT_COMPILE_TIME;
-#endif
-	jitFlags |= J9_RESOLVE_FLAG_AOT_LOAD_TIME;
-	jitFlags = (jitFlags != 0) && ((resolveFlags & jitFlags) != 0);
 
 	/* Find the targetted method. */
 	currentClass = J9_CLASS_FROM_CP(ramCP);
@@ -1129,14 +1180,46 @@ resolveSpecialMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 	 * Special invocations (defender supersends) will not look at the receiver's vtable, but instead invoke the result of javaLookupMethod.
 	 * Default method conflicts must therefore be handled by the lookup code.
 	 */
-	lookupOptions = J9_LOOK_VIRTUAL | J9_LOOK_ALLOW_FWD | J9_LOOK_HANDLE_DEFAULT_METHOD_CONFLICTS;
+	lookupOptions |= (J9_LOOK_VIRTUAL | J9_LOOK_ALLOW_FWD | J9_LOOK_HANDLE_DEFAULT_METHOD_CONFLICTS);
 
 	if ((resolveFlags & J9_RESOLVE_FLAG_JCL_CONSTANT_POOL) != J9_RESOLVE_FLAG_JCL_CONSTANT_POOL) {
 		lookupOptions |= J9_LOOK_CLCONSTRAINTS;
 	}
-	if (jitFlags) {
-		lookupOptions |= J9_LOOK_NO_THROW;
+
+	if (J2SE_VERSION(vmStruct->javaVM) >= J2SE_19) {
+		/* This check is only required in Java9 and there have been applications that
+		 * fail when this check is enabled on Java8.
+		 */
+		if (currentClass != NULL) {
+			if ((resolvedClass->romClass != NULL) && (currentClass->romClass != NULL)) {
+				/* Ensure the cpType is taken from the original class.  The cpIndex
+				 * and J9Class must match, even if a redefinition occurs, or the
+				 * check may incorrectly fail.
+				 */
+				UDATA cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(J9_CLASS_FROM_CP(ramCP)->romClass), cpIndex);
+				if (J9_JAVA_INTERFACE == (resolvedClass->romClass->modifiers & J9_JAVA_INTERFACE)) {
+					if ((J9CPTYPE_INTERFACE_INSTANCE_METHOD != cpType)
+					&& (J9CPTYPE_INTERFACE_STATIC_METHOD != cpType)
+					&& (J9CPTYPE_INTERFACE_METHOD != cpType)
+					) {
+incompat:
+						if (throwException) {
+							setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, NULL);
+						}
+						goto done;
+					}
+				} else {
+					if ((J9CPTYPE_INTERFACE_INSTANCE_METHOD == cpType)
+					|| (J9CPTYPE_INTERFACE_STATIC_METHOD == cpType)
+					|| (J9CPTYPE_INTERFACE_METHOD == cpType)
+					) {
+						goto incompat;
+					}
+				}
+			}
+		}
 	}
+
 	method = (J9Method *)javaLookupMethod(vmStruct, resolvedClass, nameAndSig, currentClass, lookupOptions);
 	
 	Trc_VM_resolveSpecialMethodRef_lookupMethod(vmStruct, method);
@@ -1148,7 +1231,7 @@ resolveSpecialMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 		 * of currentClass (or resolvedClass == currentClass).
 		 */
 		if (!isDirectSuperInterface(vmStruct, resolvedClass, currentClass)) {
-			if (0 == jitFlags) {
+			if (throwException) {
 				setIncompatibleClassChangeErrorInvalidDefenderSupersend(vmStruct, resolvedClass, currentClass);
 			}
 			method = NULL;
@@ -1186,7 +1269,7 @@ resolveSpecialSplitMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA 
 	U_16 cpIndex = *(U_16 *)(J9ROMCLASS_SPECIALSPLITMETHODREFINDEXES(ramCP->ramClass->romClass) + splitTableIndex);
 	J9Method *method = ramCP->ramClass->specialSplitMethodTable[splitTableIndex];
 	
-	if (NULL == method) {
+	if (method == (J9Method*)vmStruct->javaVM->initialMethods.initialSpecialMethod) {
 		method = resolveSpecialMethodRefInto(vmStruct, ramCP, cpIndex, resolveFlags, NULL);
 
 		if (NULL != method) {
@@ -1200,30 +1283,33 @@ resolveSpecialSplitMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA 
 UDATA   
 resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags, J9Method **resolvedMethod, J9RAMVirtualMethodRef *ramCPEntry)
 {
-	UDATA vTableIndex = 0;
+	UDATA vTableOffset = 0;
 	J9ROMMethodRef *romMethodRef;
 	J9Class *resolvedClass;
 	J9JavaVM *vm = vmStruct->javaVM;
-	UDATA jitFlags = 0;
+	bool jitCompileTimeResolve = J9_ARE_ANY_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_JIT_COMPILE_TIME | J9_RESOLVE_FLAG_AOT_LOAD_TIME);
+	bool canRunJavaCode = !jitCompileTimeResolve && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_REDEFINE_CLASS);
+	bool throwException = canRunJavaCode && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
+	UDATA lookupOptions = 0;
+	if (canRunJavaCode) {
+		if (!throwException) {
+			lookupOptions = J9_LOOK_NO_THROW;			
+		}
+	} else {
+		lookupOptions = J9_LOOK_NO_JAVA;
+	}
 
 	Trc_VM_resolveVirtualMethodRef_Entry(vmStruct, ramCP, cpIndex, resolveFlags, resolvedMethod);
 
-#if defined(J9VM_INTERP_NATIVE_SUPPORT)
-	jitFlags |= J9_RESOLVE_FLAG_JIT_COMPILE_TIME;
-#endif
-	jitFlags |= J9_RESOLVE_FLAG_AOT_LOAD_TIME;
-	jitFlags = (jitFlags != 0) && ((resolveFlags & jitFlags) != 0);
-
 	romMethodRef = (J9ROMMethodRef *)&ramCP->romConstantPool[cpIndex];
 
-	checkForDecompile(vmStruct, romMethodRef, jitFlags);
+	checkForDecompile(vmStruct, romMethodRef, jitCompileTimeResolve);
 
 	/* Resolve the class. */
 	resolvedClass = resolveClassRef(vmStruct, ramCP, romMethodRef->classRefCPIndex, resolveFlags);
 
 	/* If resolvedClass is NULL, the exception has already been set. */
 	if (resolvedClass != NULL) {
-		UDATA lookupOptions;
 		J9ROMNameAndSignature *nameAndSig = J9ROMFIELDREF_NAMEANDSIGNATURE(romMethodRef);
 		U_32 *cpShapeDescription = NULL;
 		J9Method *method;
@@ -1233,22 +1319,19 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 		 *  - J9ROMNameAndSignature
 		 *  - Modified method name
 		 *      - U_16 for J9UTF8 length
-		 *      - 26 bytes for the original method name ("compareAndExchangeVolatile" is the longest)
+		 *      - 26 bytes for the original method name ("compareAndExchange" is the longest)
 		 *      - 5 bytes for "_impl".
 		 *  - J9UTF8 for empty signature
 		 */
 		U_8 nameAndNAS[sizeof(J9ROMNameAndSignature) + (sizeof(U_16) + 26 + 5) + sizeof(J9UTF8)];
 
-		lookupOptions = J9_LOOK_VIRTUAL;
+		lookupOptions |= J9_LOOK_VIRTUAL;
 		if ((resolveFlags & J9_RESOLVE_FLAG_JCL_CONSTANT_POOL) == J9_RESOLVE_FLAG_JCL_CONSTANT_POOL) {
 			cpClass = NULL;
 		} else {
 			cpClass = J9_CLASS_FROM_CP(ramCP);
 			cpShapeDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(cpClass->romClass);
 			lookupOptions |= J9_LOOK_CLCONSTRAINTS;
-		}
-		if (jitFlags) {
-			lookupOptions |= J9_LOOK_NO_THROW;
 		}
 		
 #if defined(J9VM_OPT_METHOD_HANDLE)
@@ -1261,7 +1344,6 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 		 */
 		if ((NULL != cpShapeDescription)
 		&& (resolvedClass == J9VMJAVALANGINVOKEMETHODHANDLE(vm))
-		&& (J9CPTYPE_INSTANCE_METHOD != J9_CP_TYPE(cpShapeDescription, cpIndex))
 		) {
 			J9UTF8 *nameUTF = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
 			J9UTF8 *sigUTF = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
@@ -1273,12 +1355,11 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 				UDATA methodTypeIndex = ramMethodRef->methodIndexAndArgCount >> 8;
 				j9object_t methodType = NULL;
 
-				/* Return NULL if called by the JIT compilation thread as that thread
-				 * is not allowed to make call-ins into Java.  The only way to resolve
+				/* Return NULL if not allowed to run java code. The only way to resolve
 				 * a MethodType object is to call-in using MethodType.fromMethodDescriptorString()
 				 * which runs Java code.
 				 */
-				if (jitFlags) {
+				if (!canRunJavaCode) {
 					goto done;
 				}
 
@@ -1286,7 +1367,9 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 				 * required by the MethodType and the MethodHandle.
 				 */
 				if (MAX_STACK_SLOTS == (ramMethodRef->methodIndexAndArgCount & MAX_STACK_SLOTS)) {
-					setCurrentExceptionNLS(vmStruct, J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR, J9NLS_VM_TOO_MANY_ARGUMENTS);
+					if (throwException) {
+						setCurrentExceptionNLS(vmStruct, J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR, J9NLS_VM_TOO_MANY_ARGUMENTS);
+					}
 					goto done;
 				}
 
@@ -1297,14 +1380,18 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 				methodType = (j9object_t) vmStruct->returnValue;
 
 				/* check if an exception is already pending */
-				if (NULL != vmStruct->currentException) {
+				if (threadEventsPending(vmStruct)) {
 					/* Already a pending exception */
 					methodType = NULL;
 				} else if (NULL == methodType) {
 					/* Resolved MethodType was null - throw NPE that includes the lookupSignature from the NaS */
 					j9object_t lookupSigString = vm->memoryManagerFunctions->j9gc_createJavaLangString(vmStruct, J9UTF8_DATA(sigUTF), J9UTF8_LENGTH(sigUTF), 0);
-					if (NULL == vmStruct->currentException) {
-						setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, (UDATA*)lookupSigString);
+					if (throwException) {
+						if (NULL == vmStruct->currentException) {
+							setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, (UDATA*)lookupSigString);
+						}
+					} else {
+						VM_VMHelpers::clearException(vmStruct);
 					}
 				}
 
@@ -1315,8 +1402,8 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 					/* Overwriting NULL with an immortal pointer, so no exception can occur */
 					J9STATIC_OBJECT_STORE(vmStruct, clazz, methodTypeObjectP, methodType);
 
-					/* Record vTableIndex for the exit tracepoint. */
-					vTableIndex = methodTypeIndex;
+					/* Record vTableOffset for the exit tracepoint. */
+					vTableOffset = methodTypeIndex;
 				}
 
 				goto done;
@@ -1437,7 +1524,7 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 				cpClass = resolvedClass;
 
 				/* Resolve the MethodType. */
-				if (!jitFlags) {
+				if (canRunJavaCode) {
 					j9object_t methodType = NULL;
 					J9Class *ramClass = ramCP->ramClass;
 					J9ROMClass *romClass = ramClass->romClass;
@@ -1447,7 +1534,9 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 					 * required by the MethodType and the MethodHandle.
 					 */
 					if (MAX_STACK_SLOTS == (ramMethodRef->methodIndexAndArgCount & MAX_STACK_SLOTS)) {
-						setCurrentExceptionNLS(vmStruct, J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR, J9NLS_VM_TOO_MANY_ARGUMENTS);
+						if (throwException) {
+							setCurrentExceptionNLS(vmStruct, J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR, J9NLS_VM_TOO_MANY_ARGUMENTS);
+						}
 						goto done;
 					}
 
@@ -1463,14 +1552,18 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 					methodType = (j9object_t)vmStruct->returnValue;
 
 					/* Check if an exception is already pending */
-					if (NULL != vmStruct->currentException) {
+					if (threadEventsPending(vmStruct)) {
 						/* Already a pending exception */
 						methodType = NULL;
 					} else if (NULL == methodType) {
 						/* Resolved MethodType was null - throw NPE that includes the lookupSignature from the NaS */
 						j9object_t lookupSigString = vm->memoryManagerFunctions->j9gc_createJavaLangString(vmStruct, J9UTF8_DATA(sigUTF), J9UTF8_LENGTH(sigUTF), 0);
-						if (NULL == vmStruct->currentException) {
-							setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, (UDATA*)lookupSigString);
+						if (throwException) {
+							if (NULL == vmStruct->currentException) {
+								setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, (UDATA*)lookupSigString);
+							}
+						} else {
+							VM_VMHelpers::clearException(vmStruct);
 						}
 					}
 
@@ -1491,24 +1584,45 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 
 		/* If method is NULL, the exception has already been set. */
 		if (method != NULL) {
-			/* Fill in the constant pool entry. Don't bother checking for failure on the vtable index, since we know the method is there. */
-			vTableIndex = getVTableIndexForMethod(method, resolvedClass, vmStruct);
-			if (vTableIndex == 0) {
-				if (!jitFlags && (0 == (J9_RESOLVE_FLAG_NO_THROW_ON_FAIL & resolveFlags))) {
-					j9object_t errorString = methodToString(vmStruct, method);
-					setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, (UDATA *)errorString);
-				}
-			} else {
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+			J9ROMMethod* romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+			/* Only allow non-interface method to call invokePrivate, private interface method should use "invokeInterface" bytecode
+			 * The else case will throw ICCE for private interface method 
+			 */
+			if (J9_ARE_ALL_BITS_SET(romMethod->modifiers, J9AccPrivate) && J9_ARE_NO_BITS_SET(resolvedClass->romClass->modifiers, J9_JAVA_INTERFACE)) {
+				/* Private method found, will not be in vTable, point vTable index to invokePrivate */
 				if (ramCPEntry != NULL) {
-					UDATA argSlotCount = vTableIndex << 8;
-					J9RAMVirtualMethodRef *ramVirtualMethodRef = (J9RAMVirtualMethodRef *)&ramCP[cpIndex];
-					UDATA oldArgCount = ramVirtualMethodRef->methodIndexAndArgCount & 255;
-					argSlotCount |= oldArgCount;
-					ramCPEntry->methodIndexAndArgCount = argSlotCount;
+					ramCPEntry->method = method;
+					UDATA methodIndexAndArgCount = J9VTABLE_INVOKE_PRIVATE_OFFSET << 8;
+					methodIndexAndArgCount |= (ramCPEntry->methodIndexAndArgCount & 255);
+					ramCPEntry->methodIndexAndArgCount = methodIndexAndArgCount;
 				}
 				if (resolvedMethod != NULL) {
 					/* save away method for callee */
 					*resolvedMethod = method;
+				}
+			} else
+#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+			{
+				/* Fill in the constant pool entry. Don't bother checking for failure on the vtable index, since we know the method is there. */
+				vTableOffset = getVTableOffsetForMethod(method, resolvedClass, vmStruct);
+				if (vTableOffset == 0) {
+					if (throwException) {
+						j9object_t errorString = methodToString(vmStruct, method);
+						setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, (UDATA *)errorString);
+					}
+				} else {
+					if (ramCPEntry != NULL) {
+						UDATA argSlotCount = vTableOffset << 8;
+						J9RAMVirtualMethodRef *ramVirtualMethodRef = (J9RAMVirtualMethodRef *)&ramCP[cpIndex];
+						UDATA oldArgCount = ramVirtualMethodRef->methodIndexAndArgCount & 255;
+						argSlotCount |= oldArgCount;
+						ramCPEntry->methodIndexAndArgCount = argSlotCount;
+					}
+					if (resolvedMethod != NULL) {
+						/* save away method for callee */
+						*resolvedMethod = method;
+					}
 				}
 			}
 		}
@@ -1517,8 +1631,8 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 #if defined(J9VM_OPT_METHOD_HANDLE)
 done:
 #endif /* J9VM_OPT_METHOD_HANDLE */
-	Trc_VM_resolveVirtualMethodRef_Exit(vmStruct, vTableIndex);
-	return vTableIndex;
+	Trc_VM_resolveVirtualMethodRef_Exit(vmStruct, vTableOffset);
+	return vTableOffset;
 }
 
 	
@@ -1533,9 +1647,19 @@ resolveVirtualMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpInd
 j9object_t   
 resolveMethodTypeRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags, J9RAMMethodTypeRef *ramCPEntry) {
 	j9object_t methodType;
-	UDATA jitFlags = 0;
 	J9ROMMethodTypeRef *romMethodTypeRef = NULL;
 	J9UTF8 *lookupSig = NULL;
+	bool jitCompileTimeResolve = J9_ARE_ANY_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_JIT_COMPILE_TIME | J9_RESOLVE_FLAG_AOT_LOAD_TIME);
+	bool canRunJavaCode = !jitCompileTimeResolve && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_REDEFINE_CLASS);
+	bool throwException = canRunJavaCode && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
+	UDATA lookupOptions = 0;
+	if (canRunJavaCode) {
+		if (!throwException) {
+			lookupOptions = J9_LOOK_NO_THROW;			
+		}
+	} else {
+		lookupOptions = J9_LOOK_NO_JAVA;
+	}
 
 	Trc_VM_sendResolveMethodTypeRefInto_Entry(vmThread, ramCP, cpIndex, resolveFlags);
 
@@ -1544,16 +1668,11 @@ resolveMethodTypeRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIn
 		return ramCPEntry->type;
 	}
 
-	/* Return NULL if called by the JIT compilation thread as that thread
-	 * is not allowed to make call-ins into Java.  The only way to resolve
+	/* Return NULL if not able to run java code. The only way to resolve
 	 * a MethodType object is to call-in using MethodType.fromMethodDescriptorString()
 	 * which runs Java code.
 	 */
-#if defined(J9VM_INTERP_NATIVE_SUPPORT)
-	jitFlags |= J9_RESOLVE_FLAG_JIT_COMPILE_TIME;
-#endif
-	jitFlags |= J9_RESOLVE_FLAG_AOT_LOAD_TIME;
-	if ((resolveFlags & jitFlags) != 0) {
+	if (!canRunJavaCode) {
 		return NULL;
 	}
 
@@ -1566,14 +1685,18 @@ resolveMethodTypeRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIn
 	methodType = (j9object_t) vmThread->returnValue;
 
 	/* check if an exception is already pending */
-	if (vmThread->currentException != NULL) {
+	if (threadEventsPending(vmThread)) {
 		/* Already a pending exception */
 		methodType = NULL;
 	} else if (methodType == NULL) {
 		/* Resolved MethodType was null - throw NPE that includes the lookupSignature from the NaS */
 		j9object_t lookupSigString = vmThread->javaVM->memoryManagerFunctions->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(lookupSig), J9UTF8_LENGTH(lookupSig), 0);
-		if (NULL == vmThread->currentException) {
-			setCurrentException(vmThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, (UDATA*)lookupSigString);
+		if (throwException) {
+			if (NULL == vmThread->currentException) {
+				setCurrentException(vmThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, (UDATA*)lookupSigString);
+			}
+		} else {
+			VM_VMHelpers::clearException(vmThread);
 		}
 	}
 
@@ -1592,7 +1715,7 @@ resolveMethodTypeRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIn
 			returnTypeClass = ((J9ArrayClass *)returnTypeClass)->leafComponentType;
 		}
 
-		visibilityReturnCode = checkVisibility(vmThread, senderClass, returnTypeClass, returnTypeClass->romClass->modifiers, resolveFlags);
+		visibilityReturnCode = checkVisibility(vmThread, senderClass, returnTypeClass, returnTypeClass->romClass->modifiers, lookupOptions);
 
 		if (J9_VISIBILITY_ALLOWED != visibilityReturnCode) {
 			illegalClass = returnTypeClass;
@@ -1608,7 +1731,7 @@ resolveMethodTypeRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIn
 					paramClass = ((J9ArrayClass *)paramClass)->leafComponentType;
 				}
 
-				visibilityReturnCode = checkVisibility(vmThread, senderClass, paramClass, paramClass->romClass->modifiers, resolveFlags);
+				visibilityReturnCode = checkVisibility(vmThread, senderClass, paramClass, paramClass->romClass->modifiers, lookupOptions);
 
 				if (J9_VISIBILITY_ALLOWED != visibilityReturnCode) {
 					illegalClass = paramClass;
@@ -1617,11 +1740,13 @@ resolveMethodTypeRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIn
 			}
 		}
 		if (NULL != illegalClass) {
-			char *errorMsg = illegalAccessMessage(vmThread, illegalClass->romClass->modifiers, senderClass, illegalClass, visibilityReturnCode);
-			if (NULL == errorMsg) {
-				setNativeOutOfMemoryError(vmThread, 0, 0);
-			} else {
-				setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR, errorMsg);
+			if (throwException) {
+				char *errorMsg = illegalAccessMessage(vmThread, illegalClass->romClass->modifiers, senderClass, illegalClass, visibilityReturnCode);
+				if (NULL == errorMsg) {
+					setNativeOutOfMemoryError(vmThread, 0, 0);
+				} else {
+					setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR, errorMsg);
+				}
 			}
 			Trc_VM_sendResolveMethodTypeRefInto_Exception(vmThread, senderClass, illegalClass, visibilityReturnCode);
 			methodType = NULL;
@@ -1651,27 +1776,23 @@ resolveMethodTypeRef(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex,
 
 j9object_t   
 resolveMethodHandleRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags, J9RAMMethodHandleRef *ramCPEntry) {
-	UDATA jitFlags = 0;
 	J9ROMMethodHandleRef *romMethodHandleRef;
 	U_32 fieldOrMethodIndex;
 	J9ROMMethodRef *cpItem;
 	J9Class *definingClass;
 	J9ROMNameAndSignature* nameAndSig;
 	j9object_t methodHandle = NULL;
+	bool jitCompileTimeResolve = J9_ARE_ANY_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_JIT_COMPILE_TIME | J9_RESOLVE_FLAG_AOT_LOAD_TIME);
+	bool canRunJavaCode = !jitCompileTimeResolve && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_REDEFINE_CLASS);
+	bool throwException = canRunJavaCode && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
 
 	/* Check if already resolved */
 	if (ramCPEntry->methodHandle != NULL) {
 		return ramCPEntry->methodHandle;
 	}
 
-	/* Return NULL if called by the JIT compilation thread as that thread
-	 * is not allowed to make call-ins into Java.
-	 */
-#if defined(J9VM_INTERP_NATIVE_SUPPORT)
-	jitFlags |= J9_RESOLVE_FLAG_JIT_COMPILE_TIME;
-#endif
-	jitFlags |= J9_RESOLVE_FLAG_AOT_LOAD_TIME;
-	if ((resolveFlags & jitFlags) != 0) {
+	/* Return NULL if not allowed to run java code */
+	if (!canRunJavaCode) {
 		return NULL;
 	}
 
@@ -1714,6 +1835,9 @@ resolveMethodHandleRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cp
 		J9Class *resolvedClass = NULL;
 
 		resolvedClass = resolveClassRef(vmThread, ramCP, romMethodRef->classRefCPIndex, resolveFlags);
+		if (NULL == resolvedClass) {
+			goto _done;
+		}
 
 		/* Assumes that if this is MethodHandle, the class was successfully resolved but the method was not */
 		if (resolvedClass == J9VMJAVALANGINVOKEMETHODHANDLE(vmThread->javaVM)) {
@@ -1723,7 +1847,7 @@ resolveMethodHandleRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cp
 			if (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF), "invokeExact")
 			|| J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF), "invoke")
 			) {
-				/* valid - must be resolvable - clear exception and continue */
+				/* valid - must be resolvable */
 				break;
 			}
 		}
@@ -1735,8 +1859,7 @@ resolveMethodHandleRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cp
 			J9RAMSpecialMethodRef ramSpecialMethodRef;
 
 			/* Clear the exception and let the resolveSpecialMethodRef set an exception if necessary */
-			vmThread->currentException = NULL;
-			vmThread->privateFlags &= ~J9_PRIVATE_FLAGS_REPORT_EXCEPTION_THROW;
+			VM_VMHelpers::clearException(vmThread);
 			
 			memset(&ramSpecialMethodRef, 0, sizeof(J9RAMSpecialMethodRef));
 			if (resolveSpecialMethodRefInto(vmThread, ramCP, fieldOrMethodIndex, resolveFlags, &ramSpecialMethodRef) == NULL) {
@@ -1774,6 +1897,9 @@ resolveMethodHandleRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cp
 	cpItem = (J9ROMMethodRef *) &(J9_ROM_CP_FROM_CP(ramCP)[fieldOrMethodIndex]);
 	definingClass = ((J9RAMClassRef *) &(ramCP[cpItem->classRefCPIndex]))->value;
 	if (definingClass == NULL) {
+		if (throwException) {
+			setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+		}
 		goto _done;
 	}
 	nameAndSig = J9ROMMETHODREF_NAMEANDSIGNATURE(cpItem);
@@ -1782,11 +1908,13 @@ resolveMethodHandleRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cp
 	methodHandle = (j9object_t) vmThread->returnValue;
 
 	/* check if an exception is already pending */
-	if (vmThread->currentException != NULL) {
+	if (threadEventsPending(vmThread)) {
 		/* Already a pending exception */
 		methodHandle = NULL;
 	} else if (methodHandle == NULL) {
-		setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+		if (throwException) {
+			setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+		}
 	}
 
 	/* Only write the value in if its not null */
@@ -1796,7 +1924,9 @@ resolveMethodHandleRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cp
 																		methodHandle, 
 																		J9_GC_ALLOCATE_OBJECT_TENURED | J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE | J9_GC_ALLOCATE_OBJECT_HASHED);
 		if (NULL == methodHandle) {
-			setHeapOutOfMemoryError(vmThread);
+			if (throwException) {
+				setHeapOutOfMemoryError(vmThread);
+			}
 		} else {
 			j9object_t *methodHandleObjectP = &ramCPEntry->methodHandle;
 			/* Overwriting NULL with an immortal pointer, so no exception can occur */
@@ -1817,9 +1947,121 @@ resolveMethodHandleRef(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpInde
 
 }
 
+j9object_t
+resolveConstantDynamic(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags)
+{
+	Assert_VM_true(J9_RESOLVE_FLAG_RUNTIME_RESOLVE == resolveFlags);
+	J9RAMConstantDynamicRef *ramCPEntry = (J9RAMConstantDynamicRef*)ramCP + cpIndex;
+	J9JavaVM *vm = vmThread->javaVM;
+	j9object_t value = NULL;
+	bool resolved = false;
+
+retry:
+	value = ramCPEntry->value;
+	/* Fast path resolution for previously resolved entries */
+	if (NULL != value) {
+		resolved = true;
+	} else {
+		j9object_t cpException = ramCPEntry->exception;
+		/* check if already resolved to NULL or exception */
+		if (NULL != cpException) {
+			J9Class *throwable = J9VMJAVALANGTHROWABLE_OR_NULL(vm);
+			J9Class *clazz = J9OBJECT_CLAZZ(vmThread, cpException);
+			if (cpException == vm->voidReflectClass->classObject) {
+				/* Resolved with null reference */
+				resolved = true;
+			} else if (isSameOrSuperClassOf(throwable, clazz)) {
+				/* Resolved with exception */
+				VM_VMHelpers::setExceptionPending(vmThread, cpException);
+				resolved = true;
+			}
+		}
+	}
+
+	if (!resolved) {
+		/* Slow path, attempt to acquire resolve mutex or retry, or wait */
+		omrthread_monitor_enter(vm->constantDynamicMutex);
+		value = ramCPEntry->value;
+		if (NULL != value) {
+			omrthread_monitor_exit(vm->constantDynamicMutex);
+			goto retry;
+		} else {
+			j9object_t cpException = ramCPEntry->exception;
+			/* check if already resolved to NULL or exception */
+			if (NULL != cpException) {
+				J9Class *throwable = J9VMJAVALANGTHROWABLE_OR_NULL(vm);
+				J9Class *clazz = J9OBJECT_CLAZZ(vmThread, cpException);
+				if (cpException == vm->voidReflectClass->classObject) {
+					/* Resolved with null reference */
+					omrthread_monitor_exit(vm->constantDynamicMutex);
+					goto retry;
+				} else if (isSameOrSuperClassOf(throwable, clazz)) {
+					/* Resolved with exception */
+					omrthread_monitor_exit(vm->constantDynamicMutex);
+					goto retry;
+				} else if (cpException != vmThread->threadObject) {
+					/* Another thread is currently resolving this entry */
+					internalReleaseVMAccess(vmThread);
+					omrthread_monitor_wait(vm->constantDynamicMutex);
+					omrthread_monitor_exit(vm->constantDynamicMutex);
+					internalAcquireVMAccess(vmThread);
+					goto retry;
+				}
+			}
+		}
+
+		/* Write threadObject in exception slot to indicate current thread is performing the resolution */
+		ramCPEntry->exception = vmThread->threadObject;
+		omrthread_monitor_exit(vm->constantDynamicMutex);
+
+		/* Enter if not previously resolved */
+		J9Class *ramClass = ramCP->ramClass;
+		J9ROMClass *romClass = ramClass->romClass;
+		J9ROMConstantDynamicRef *romConstantRef = (J9ROMConstantDynamicRef*)(J9_ROM_CP_FROM_CP(ramCP) + cpIndex);
+		J9SRP *callSiteData = (J9SRP *) J9ROMCLASS_CALLSITEDATA(romClass);
+		U_16 *bsmIndices = (U_16 *) (callSiteData + romClass->callSiteCount);
+		U_16 *bsmData = bsmIndices + romClass->callSiteCount;
+
+		/* clear the J9DescriptionCpPrimitiveType flag with mask to get bsmIndex */
+		U_32 bsmIndex = (romConstantRef->bsmIndexAndCpType >> J9DescriptionCpTypeShift) & J9DescriptionCpBsmIndexMask;
+		J9ROMNameAndSignature* nameAndSig = SRP_PTR_GET(&romConstantRef->nameAndSignature, J9ROMNameAndSignature*);
+
+		/* Walk bsmData - skip all bootstrap methods before bsmIndex */
+		for (U_32 i = 0; i < bsmIndex; i++) {
+			bsmData += (bsmData[1] + 2);
+		}
+
+		/* Invoke BootStrap method*/
+		sendResolveConstantDynamic(vmThread, ramCP, cpIndex, nameAndSig, bsmData);
+		value = (j9object_t)vmThread->returnValue;
+
+		/* Check if entry resolved by nested constantDynamic calls */
+		if (ramCPEntry->exception != vmThread->threadObject) {
+			goto retry;
+		}
+
+		j9object_t exceptionObject = NULL;
+		if (NULL != vmThread->currentException) {
+			exceptionObject = vmThread->currentException;
+		} else if (NULL == value) {
+			/* Java.lang.void is used as a special flag to indicate null reference */
+			exceptionObject = vm->voidReflectClass->classObject;
+		}
+
+		omrthread_monitor_enter(vm->constantDynamicMutex);
+		ramCPEntry->value = value;
+		ramCPEntry->exception = exceptionObject;
+		omrthread_monitor_notify_all(vm->constantDynamicMutex);
+		omrthread_monitor_exit(vm->constantDynamicMutex);
+	}
+
+	return value;
+}
+
 j9object_t   
 resolveInvokeDynamic(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA callSiteIndex, UDATA resolveFlags)
 {
+	Assert_VM_true(J9_RESOLVE_FLAG_RUNTIME_RESOLVE == resolveFlags);
 	j9object_t *callSite = ramCP->ramClass->callSites + callSiteIndex;
 	j9object_t methodHandle = *callSite;
 

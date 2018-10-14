@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,6 +32,7 @@
 #include "mmomrhook.h"
 #include "vmcheck.h"
 #include "ut_j9vmchk.h"
+#include "vendor_version.h"
 
 #include <stdarg.h>
 
@@ -174,7 +175,7 @@ vmchkPrintf(J9JavaVM *javaVM, const char *format, ...)
 static void
 printVMCheckHelp(J9JavaVM *vm)
 {
-	vmchkPrintf(vm, "vmchk VM Check utility for J9, Version " EsVersionString "\n");
+	vmchkPrintf(vm, "vmchk VM Check utility for J9, Version " J9JVM_VERSION_STRING "\n");
 	vmchkPrintf(vm, J9_COPYRIGHT_STRING "\n\n");
 	vmchkPrintf(vm, "  help              print this screen\n");
 	vmchkPrintf(vm, "  all               all checks\n");

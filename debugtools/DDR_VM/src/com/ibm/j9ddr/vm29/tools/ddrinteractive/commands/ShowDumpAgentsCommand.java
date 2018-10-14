@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,7 +64,6 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9RASdumpAgentPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9RASdumpFunctionsPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9RASdumpQueuePointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
-import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
 public class ShowDumpAgentsCommand extends Command

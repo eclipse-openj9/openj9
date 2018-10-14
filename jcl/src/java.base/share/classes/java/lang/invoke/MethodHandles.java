@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2017 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,23 +46,27 @@ import com.ibm.oti.util.Msg;
 import com.ibm.oti.lang.ArgumentHelper;
 import com.ibm.oti.vm.VM;
 import com.ibm.oti.vm.VMLangAccess;
+import static com.ibm.oti.util.Util.doesClassLoaderDescendFrom;
 
-/*[IF Sidecar19-SE]
+/*[IF Sidecar19-SE]*/
 import java.util.AbstractList;
 import java.util.Iterator;
 import java.util.ArrayList;
 import java.nio.ByteOrder;
 import jdk.internal.reflect.CallerSensitive;
-/*[IF Sidecar19-SE-B175]
+import java.lang.invoke.VarHandle.AccessMode;
+/*[IF Sidecar19-SE-OpenJ9]*/
 import java.lang.Module;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.misc.JavaLangAccess;
 import java.security.ProtectionDomain;
 import jdk.internal.org.objectweb.asm.ClassReader;
-/*[ENDIF] Sidecar19-SE-B175*/
-/*[ELSE]*/
+/*[ELSE] Sidecar19-SE-OpenJ9
+import java.lang.reflect.Module;
+/*[ENDIF] Sidecar19-SE-OpenJ9*/
+/*[ELSE] Sidecar19-SE*/
 import sun.reflect.CallerSensitive;
-/*[ENDIF]*/
+/*[ENDIF] Sidecar19-SE*/
 
 /**
  * Factory class for creating and adapting MethodHandles.
@@ -147,11 +151,11 @@ public class MethodHandles {
 		
 		static final int INTERNAL_PRIVILEGED = 0x40;
 
-		/*[IF Sidecar19-SE-B175]
+		/*[IF Sidecar19-SE-OpenJ9]
 		private static final int FULL_ACCESS_MASK = PUBLIC | PRIVATE | PROTECTED | PACKAGE | MODULE;
 		/*[ELSE]*/
 		private static final int FULL_ACCESS_MASK = PUBLIC | PRIVATE | PROTECTED | PACKAGE;
-		/*[ENDIF] Sidecar19-SE-B175*/
+		/*[ENDIF] Sidecar19-SE-OpenJ9*/
 		
 		private static final int NO_ACCESS = 0;
 		
@@ -160,11 +164,11 @@ public class MethodHandles {
 		static final int VARARGS = 0x80;
 		
 		/* single cached value of public Lookup object */
-		/*[IF Sidecar19-SE-B175]
+		/*[IF Sidecar19-SE-OpenJ9]
 		static Lookup PUBLIC_LOOKUP = new Lookup(Object.class, Lookup.PUBLIC | Lookup.UNCONDITIONAL);
 		/*[ELSE]*/
 		static Lookup PUBLIC_LOOKUP = new Lookup(Object.class, Lookup.PUBLIC);
-		/*[ENDIF] Sidecar19-SE-B175*/
+		/*[ENDIF] Sidecar19-SE-OpenJ9*/
 		
 		/* single cached internal privileged lookup */
 		static Lookup internalPrivilegedLookup = new Lookup(MethodHandle.class, Lookup.INTERNAL_PRIVILEGED);
@@ -254,7 +258,7 @@ public class MethodHandles {
 				handle = handle.asFixedArity(); // remove unnecessary varargsCollector from the middle of the MH chain.
 				handle = convertToVarargsIfRequired(handle.bindTo(receiver));
 			}
-			checkAccess(handle);
+			checkAccess(handle, false);
 			checkSecurity(handle.getDefc(), receiverClass, handle.getModifiers());
 			
 			handle = SecurityFrameInjector.wrapHandleWithInjectedSecurityFrameIfRequired(this, handle);
@@ -309,12 +313,20 @@ public class MethodHandles {
 				return true;
 			}
 			
+			while (a.isArray()) {
+				a = a.getComponentType();
+			}
+			
+			while (b.isArray()) {
+				b = b.getComponentType();
+			}
+			
 			VMLangAccess vma = getVMLangAccess();
 			
 			String packageName1 = vma.getPackageName(a);
 			String packageName2 = vma.getPackageName(b);
 			// If the string value is different, they're definitely not related
-			if((packageName1 == null) || (packageName2 == null) || !packageName1.equals(packageName2)) {
+			if ((packageName1 == null) || (packageName2 == null) || !packageName1.equals(packageName2)) {
 				return false;
 			}
 			
@@ -334,7 +346,7 @@ public class MethodHandles {
 			return false;
 		}
 		
-		void checkAccess(MethodHandle handle) throws IllegalAccessException {
+		void checkAccess(MethodHandle handle, boolean skipAccessCheckPara) throws IllegalAccessException {
 			if (INTERNAL_PRIVILEGED == accessMode) {
 				// Full access for use by MH implementation.
 				return;
@@ -344,11 +356,11 @@ public class MethodHandles {
 				throw new IllegalAccessException(this.toString());
 			}
 
-			checkAccess(handle.getDefc(), handle.getMethodName(), handle.getModifiers(), handle);
+			checkAccess(handle.getDefc(), handle.getMethodName(), handle.getModifiers(), handle, skipAccessCheckPara);
 		}
 		
 		/*[IF Sidecar19-SE]*/
-		void checkAccess(VarHandle handle) throws IllegalAccessException {
+		void checkAccess(VarHandle handle, boolean skipAccessCheckPara) throws IllegalAccessException {
 			if (INTERNAL_PRIVILEGED == accessMode) {
 				// Full access for use by MH implementation.
 				return;
@@ -358,7 +370,7 @@ public class MethodHandles {
 				throw new IllegalAccessException(this.toString());
 			}
 			
-			checkAccess(handle.getDefiningClass(), handle.getFieldName(), handle.getModifiers(), null);
+			checkAccess(handle.getDefiningClass(), handle.getFieldName(), handle.getModifiers(), null, skipAccessCheckPara);
 		}
 		
 		void checkAccess(Class<?> clazz) throws IllegalAccessException {
@@ -386,19 +398,38 @@ public class MethodHandles {
 		 * 				 The object is always {@link MethodHandle} in the current implementation, so in order 
 		 * 				 to avoid extra type checking, the parameter is {@link MethodHandle}. If we need to
 		 * 				 handle {@link VarHandle} in the future, the type can be {@link Object}.
+		 * @param skipAccessCheckPara skip access check for MethodType parameters
 		 * @throws IllegalAccessException If the member is not accessible.
+		 * @throws IllegalAccessError If a handle argument or return type is not accessible.
 		 */
-		private void checkAccess(Class<?> targetClass, String name, int memberModifiers, MethodHandle handle) throws IllegalAccessException {
+		private void checkAccess(Class<?> targetClass, String name, int memberModifiers, MethodHandle handle, boolean skipAccessCheckPara) throws IllegalAccessException {
 			checkClassAccess(targetClass);
 
+			/*[IF Sidecar19-SE]*/
+			if (null != handle && !skipAccessCheckPara) {
+				MethodType type = handle.type();
+				Module accessModule = accessClass.getModule();
+
+				try {
+					checkClassModuleVisibility(accessMode, accessModule, type.returnType);
+					for (Class<?> c: type.arguments) {
+						checkClassModuleVisibility(accessMode, accessModule, c);
+					}
+				} catch (IllegalAccessException exc) {
+					IllegalAccessError err = new IllegalAccessError(exc.getMessage());
+					err.initCause(exc);
+					throw err;
+				}
+			}
+			/*[ENDIF]*/
 			if (Modifier.isPublic(memberModifiers)) {
 				/* checkClassAccess already determined that we have more than "no access" (public access) */
 				return;
 			} else if (Modifier.isPrivate(memberModifiers)) {
 				if (Modifier.isPrivate(accessMode) && ((targetClass == accessClass)
-/*[IF Valhalla-NestMates]*/
-						|| targetClass.isInSameNest(accessClass)
-/*[ENDIF] Valhalla-NestMates*/	
+/*[IF Java11]*/
+						|| targetClass.isNestmateOf(accessClass)
+/*[ENDIF] Java11*/	
 				)) {
 					return;
 				}
@@ -481,6 +512,9 @@ public class MethodHandles {
 		 * @throws IllegalAccessException If the {@link Class} is not accessible from {@link #accessClass}. 
 		 */
 		private void checkClassAccess(Class<?> targetClass) throws IllegalAccessException {
+			/*[IF Sidecar19-SE]*/
+			checkClassModuleVisibility(accessMode, accessClass.getModule(), targetClass);
+			/*[ENDIF]*/
 			if (NO_ACCESS != accessMode) {
 				/* target class should always be accessible to the lookup class when they are the same class */
 				if (accessClass == targetClass) {
@@ -488,23 +522,23 @@ public class MethodHandles {
 				}
 				
 				int modifiers = targetClass.getModifiers();
-				if (Modifier.isPublic(modifiers)) {
+				
+				/* A protected class (must be a member class) is compiled to a public class as
+				 * the protected flag of this class doesn't exist on the VM level (there is no 
+				 * access flag in the binary form representing 'protected')
+				 */
+				if (Modifier.isPublic(modifiers) || Modifier.isProtected(modifiers)) {
 					/* Already determined that we have more than "no access" (public access) */
 					return;
-				} else if (Modifier.isProtected(modifiers)) {
-					/* Already determined that we have more than "no access" (public access) for a protected nested class */
-					if (!accessClass.isInterface()) {
-						return;
-					}
 				} else {
 					if (((PACKAGE == (accessMode & PACKAGE)) || Modifier.isPrivate(accessMode)) && isSamePackage(accessClass, targetClass)) {
 						return;
 					}
 				}
 			}
-			
-			/*[MSG "K0587", "'{0}' no access to: '{1}'"]*/
-			throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K0587", accessClass.getName(), targetClass.getName()));  //$NON-NLS-1$
+
+			/*[MSG "K0680", "Class '{0}' no access to: class '{1}'"]*/
+			throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K0680", accessClass.getName(), targetClass.getName()));  //$NON-NLS-1$
 		}
 		
 		private void checkSpecialAccess(Class<?> callerClass) throws IllegalAccessException {
@@ -547,7 +581,7 @@ public class MethodHandles {
 					/*[MSG "K0586", "Lookup class ({0}) must be the same as or subclass of the current class ({1})"]*/
 					throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K0586", accessClass, handleDefc)); //$NON-NLS-1$
 				}
-				checkAccess(handle);
+				checkAccess(handle, false);
 				checkSecurity(handleDefc, clazz, handle.getModifiers());
 				handle = SecurityFrameInjector.wrapHandleWithInjectedSecurityFrameIfRequired(this, handle);
 			} catch (DefaultMethodConflictException e) {
@@ -608,13 +642,30 @@ public class MethodHandles {
 				handle = new DirectHandle(clazz, methodName, type, MethodHandle.KIND_STATIC, null);
 				handle = HandleCache.putMethodInPerClassCache(cache, methodName, type, convertToVarargsIfRequired(handle));
 			}
-			checkAccess(handle);
+			checkAccess(handle, false);
 			checkSecurity(handle.getDefc(), clazz, handle.getModifiers());
 			/* Static check is performed by native code */
 			handle = SecurityFrameInjector.wrapHandleWithInjectedSecurityFrameIfRequired(this, handle);
 			return handle;
 		}
 		
+		/*[IF Sidecar19-SE]*/
+		/**
+		 * Return a MethodHandle to a virtual method.  The method will be looked up in the first argument 
+		 * (aka receiver) prior to dispatch.  The type of the MethodHandle will be that of the method
+		 * with the receiver type prepended.
+		 * 
+		 * @param clazz - the class defining the method
+		 * @param methodName - the name of the method
+		 * @param type - the type of the method
+		 * @return a MethodHandle that will do virtual dispatch on the first argument
+		 * @throws IllegalAccessException - if method is static or access is refused or clazz's package is not exported to the current module 
+		 * @throws IllegalAccessError - if the type's packages are not exported to the current module 
+		 * @throws NullPointerException - if clazz, methodName or type is null
+		 * @throws NoSuchMethodException - if clazz has no virtual method named methodName with signature matching type
+		 * @throws SecurityException - if any installed SecurityManager denies access to the method
+		 */
+		 /*[ELSE]
 		/**
 		 * Return a MethodHandle to a virtual method.  The method will be looked up in the first argument 
 		 * (aka receiver) prior to dispatch.  The type of the MethodHandle will be that of the method
@@ -629,6 +680,7 @@ public class MethodHandles {
 		 * @throws NoSuchMethodException - if clazz has no virtual method named methodName with signature matching type
 		 * @throws SecurityException - if any installed SecurityManager denies access to the method
 		 */
+		/*[ENDIF]*/
 		public MethodHandle findVirtual(Class<?> clazz, String methodName, MethodType type) throws IllegalAccessException, NoSuchMethodException {
 			nullCheck(clazz, methodName, type);
 			
@@ -641,11 +693,7 @@ public class MethodHandles {
 				initCheck(methodName);
 				
 				if (clazz.isInterface()) {
-					handle = new InterfaceHandle(clazz, methodName, type);
-					if (Modifier.isStatic(handle.getModifiers())) {
-						throw new IllegalAccessException();
-					}
-					handle = adaptInterfaceLookupsOfObjectMethodsIfRequired(handle, clazz, methodName, type);
+					handle = findInterface(clazz, methodName, type);
 				} else {
 					/*[IF ]*/
 					/* Need to perform a findSpecial and use that to determine what kind of handle to return:
@@ -666,11 +714,59 @@ public class MethodHandles {
 				HandleCache.putMethodInPerClassCache(cache, methodName, type, handle);
 			}
 			handle = restrictReceiver(handle);
-			checkAccess(handle);
+			checkAccess(handle, false);
 			checkSecurity(handle.getDefc(), clazz, handle.getModifiers());
 			handle = SecurityFrameInjector.wrapHandleWithInjectedSecurityFrameIfRequired(this, handle);
 			return handle;
 		}
+
+		/*[IF Sidecar19-SE]*/
+		/**
+		 * Get module name for exception messages.
+		 * Returns the string representation of this module in case it is a unnamed module.
+		 * @param module target module
+		 * @return A String of module name or the string representation of a unnamed module
+		 */
+		private static String getModuleName(Module module) {
+			String moduleName = module.getName();
+			if (moduleName == null) {
+				moduleName = module.toString();
+			}
+			return moduleName;
+		}
+		/**
+		 * Check if targetClass is in a package visible from the accessModule
+		 * @param accessMode access mode of the lookup object
+		 * @param accessModule module of the referring class
+		 * @param targetClass Class which the referring class is accessing
+		 * @throws IllegalAccessException if the targetClass is not visible
+		 */
+		static void checkClassModuleVisibility(int accessMode, Module accessModule, Class<?> targetClass) throws IllegalAccessException {
+
+			if (INTERNAL_PRIVILEGED != accessMode) {
+				Module targetModule = targetClass.getModule();
+				String targetClassPackageName = targetClass.getPackageName();
+				if ((UNCONDITIONAL & accessMode) == UNCONDITIONAL) {
+					/* publicLookup objects can see all unconditionally exported packages. */
+					if (!targetModule.isExported(targetClassPackageName)) {
+						/*[MSG "K0676", "Module '{0}' no access to: package '{1}' which is not exported by module '{2}'"]*/
+						throw new IllegalAccessException(Msg.getString("K0587", getModuleName(accessModule), targetClassPackageName, getModuleName(targetModule))); //$NON-NLS-1$
+					}
+				} else if (!(
+					Objects.equals(accessModule, targetModule)
+					|| (targetModule.isExported(targetClassPackageName, accessModule) && accessModule.canRead(targetModule)))
+				) {
+					if (!targetModule.isExported(targetClassPackageName, accessModule)) {
+						/*[MSG "K0677", "Module '{0}' no access to: package '{1}' which is not exported by module '{2}' to module '{0}'"]*/
+						throw new IllegalAccessException(Msg.getString("K0677", getModuleName(accessModule), targetClassPackageName, getModuleName(targetModule))); //$NON-NLS-1$
+					}
+					// here accessModule.canRead(targetModule) must be false
+					/*[MSG "K0679", "Module '{0}' no access to: package '{1}' because module '{0}' can't read module '{2}'"]*/
+					throw new IllegalAccessException(Msg.getString("K0679", getModuleName(accessModule), targetClassPackageName, getModuleName(targetModule))); //$NON-NLS-1$
+				}
+			}
+		}
+		/*[ENDIF]*/
 		
 		/*[IF Panama]*/
 		/**
@@ -743,44 +839,96 @@ public class MethodHandles {
 		}
 		
 		/**
-		 * Adapt InterfaceHandles on public Object methods if the method is not redeclared in the interface class.
+		 * Helper for findVirtual of an interface method.
 		 * Public methods of Object are implicitly members of interfaces and do not receive iTable indexes.
-		 * If the declaring class is Object, create a VirtualHandle and asType it to the interface class. 
-		 * @param handle An InterfaceHandle
+		 * Public interface methods will result in an InterfaceHandle.
+		 * Private interface methods and final Object methods will result in a DirectHandle.
+		 * Non-final Object methods will result in a VirtualHandle.
 		 * @param clazz The lookup class
 		 * @param methodName The lookup name
 		 * @param type The lookup type
-		 * @return Either the original handle or an adapted one for Object methods.
+		 * @return An InterfaceHandle, DirectHandle or VirtualHandle as appropriate
 		 * @throws NoSuchMethodException
 		 * @throws IllegalAccessException
 		 */
-		static MethodHandle adaptInterfaceLookupsOfObjectMethodsIfRequired(MethodHandle handle, Class<?> clazz, String methodName, MethodType type) throws NoSuchMethodException, IllegalAccessException {
-			assert handle instanceof InterfaceHandle;
+		private static MethodHandle findInterface(Class<?> clazz, String methodName, MethodType type) throws NoSuchMethodException, IllegalAccessException {
+			MethodHandle handle = new DirectHandle(clazz, methodName, type, MethodHandle.KIND_VIRTUAL, clazz, true);
 			/* Object methods need to be treated specially if the interface hasn't declared them itself */
-			if (Object.class == handle.getDefc()) {
+			Class<?> handleClass = handle.getDefc();
+			if (Object.class == handleClass) {
 				if (!Modifier.isPublic(handle.getModifiers())) {
 					/* Interfaces only inherit *public* methods from Object */
 					throw new NoSuchMethodException(clazz + "." + methodName + type); //$NON-NLS-1$					
 				}
-				handle = new VirtualHandle(new DirectHandle(Object.class, methodName, type, MethodHandle.KIND_SPECIAL, Object.class));
+				handle = new DirectHandle(Object.class, methodName, type, MethodHandle.KIND_SPECIAL, Object.class);
+				/* Final methods in Object do not appear in the vTable and must be invoked directly.
+				 * Non-final methods need to be invoked virtually.
+				 */
+				if (!Modifier.isFinal(handle.getModifiers())) {
+					handle = new VirtualHandle((DirectHandle)handle);
+				}
 				handle = handle.cloneWithNewType(handle.type.changeParameterType(0, clazz));
+			} else if (!Modifier.isPublic(handle.getModifiers())) {
+				/*[IF Java11]*/
+				handle = new DirectHandle(handleClass, methodName, type, MethodHandle.KIND_SPECIAL, handleClass, true);
+				handle = handle.cloneWithNewType(handle.type.changeParameterType(0, clazz));
+				/*[ELSE] Java11
+				throw new IllegalAccessException();	
+				/*[ENDIF] Java11*/
+			} else {
+				handle = new InterfaceHandle(clazz, methodName, type);
 			}
+
 			return handle;
 		}
 
 		/*
-		 * Check for methods MethodHandle.invokeExact or MethodHandle.invoke.  
-		 * Access checks are not required as these methods are public and therefore
-		 * accessible to everyone.
+		 * Check access to the parameter and return classes within incoming MethodType
 		 */
-		static MethodHandle handleForMHInvokeMethods(Class<?> clazz, String methodName, MethodType type) {
+		final void accessCheckArgRetTypes(MethodType type) throws IllegalAccessException {
+			if (INTERNAL_PRIVILEGED != accessMode) {
+				for (Class<?> para : type.arguments) {
+					if (!para.isPrimitive()) {
+						checkClassAccess(para);
+					}
+				}
+				Class<?> rType = type.returnType();
+				if (!rType.isPrimitive()) {
+					checkClassAccess(rType);
+				}
+			}
+		}
+		
+		/*
+		 * Check for methods MethodHandle.invokeExact, MethodHandle.invoke,
+		 * or MethodHandles.varHandleInvoker.  
+		 * Access checks to these methods are not required as these methods are public and therefore
+		 * accessible to everyone.
+		 * However the access checks to the parameter and return classes are required.
+		 */
+		MethodHandle handleForMHInvokeMethods(Class<?> clazz, String methodName, MethodType type) throws IllegalAccessException {
 			if (MethodHandle.class.isAssignableFrom(clazz)) {
 				if (INVOKE_EXACT.equals(methodName)) {
+					accessCheckArgRetTypes(type);
 					return type.getInvokeExactHandle();
 				} else if (INVOKE.equals(methodName))  {
+					accessCheckArgRetTypes(type);
 					return new InvokeGenericHandle(type);
 				}
 			}
+			/*[IF Sidecar19-SE]*/
+			/* If the requested method is a signature-polymorphic access mode method in VarHandle, 
+			 * the resulting method handle should be equivalent to one produced by varHandleInvoker().
+			 */
+			if (VarHandle.class.isAssignableFrom(clazz)) {
+				for (AccessMode m : AccessMode.values()) {
+					if (m.methodName().equals(methodName)) {
+						accessCheckArgRetTypes(type);
+						return new VarHandleInvokeGenericHandle(m, type);
+					}
+				}
+			}
+			/*[ENDIF]*/
 			return null;
 		}
 
@@ -808,7 +956,7 @@ public class MethodHandles {
 				handle = new FieldGetterHandle(clazz, fieldName, fieldType, accessClass);
 				HandleCache.putFieldInPerClassCache(cache, fieldName, fieldType, handle);
 			}
-			checkAccess(handle);
+			checkAccess(handle, false);
 			checkSecurity(handle.getDefc(), clazz, handle.getModifiers());
 			return handle;
 		}
@@ -835,7 +983,7 @@ public class MethodHandles {
 				handle = new StaticFieldGetterHandle(clazz, fieldName, fieldType, accessClass);
 				HandleCache.putFieldInPerClassCache(cache, fieldName, fieldType, handle);
 			}
-			checkAccess(handle);
+			checkAccess(handle, false);
 			checkSecurity(handle.getDefc(), clazz, handle.getModifiers());
 			return handle;
 		}
@@ -870,7 +1018,7 @@ public class MethodHandles {
 				/*[MSG "K05cf", "illegal setter on final field"]*/
 				throw new IllegalAccessException(Msg.getString("K05cf")); //$NON-NLS-1$
 			}
-			checkAccess(handle);
+			checkAccess(handle, false);
 			checkSecurity(handle.getDefc(), clazz, handle.getModifiers());
 			return handle;
 		}
@@ -905,7 +1053,7 @@ public class MethodHandles {
 				/*[MSG "K05cf", "illegal setter on final field"]*/
 				throw new IllegalAccessException(Msg.getString("K05cf")); //$NON-NLS-1$
 			}
-			checkAccess(handle);
+			checkAccess(handle, false);
 			checkSecurity(handle.getDefc(), clazz, handle.getModifiers());
 			return handle;
 		}
@@ -928,7 +1076,7 @@ public class MethodHandles {
 			/*[IF ]*/
 			/* If the new lookup class differs from the old one, protected members will not be accessible by virtue of inheritance. (Protected members may continue to be accessible because of package sharing.) */
 			/*[ENDIF]*/
-			/*[IF !Sidecar19-SE-B175]
+			/*[IF !Sidecar19-SE-OpenJ9]
 			int newAccessMode = accessMode & ~PROTECTED;
 			/*[ELSE]*/
 			/* The UNCONDITIONAL bit is discarded if the new lookup class differs from the old one in Java 9 */
@@ -960,7 +1108,7 @@ public class MethodHandles {
 					newAccessMode &= ~MODULE;
 				}
 			}
-			/*[ENDIF] Sidecar19-SE-B175*/
+			/*[ENDIF] Sidecar19-SE-OpenJ9*/
 			
 			/*[IF ]*/
 			/* If the new lookup class is in a different package than the old one, protected and default (package) members will not be accessible. */
@@ -973,13 +1121,13 @@ public class MethodHandles {
 				Class<?> a = getUltimateEnclosingClassOrSelf(accessClass);
 				Class<?> l = getUltimateEnclosingClassOrSelf(lookupClass);
 				if (a != l) {
-				/*[IF Sidecar19-SE-B175]
+				/*[IF Sidecar19-SE-OpenJ9]
 				/* If the new lookup class is not within the same package member as the old one, private and protected members will not be accessible. */
 					newAccessMode &= ~(PRIVATE | PROTECTED);
 				/*[ELSE]*/
 				/* If the new lookup class is not within the same package member as the old one, private members will not be accessible. */
 					newAccessMode &= ~PRIVATE;
-				/*[ENDIF] Sidecar19-SE-B175*/
+				/*[ENDIF] Sidecar19-SE-OpenJ9*/
 				}
 			}
 			
@@ -1024,27 +1172,6 @@ public class MethodHandles {
 			return previous;
 		}
 		
-		/*
-		 * Determine if 'currentClassLoader' is the same or a child of the requestedLoader.  Necessary
-		 * for access checking. 
-		 */
-		private static boolean doesClassLoaderDescendFrom(ClassLoader currentLoader, ClassLoader requestedLoader) {
-			if (requestedLoader == null) {
-				/* Bootstrap loader is parent of everyone */
-				return true;
-			}
-			if (currentLoader != requestedLoader) {
-				while (currentLoader != null) {
-					if (currentLoader == requestedLoader) {
-						return true;
-					}
-					currentLoader = currentLoader.getParent();
-				}
-				return false;
-			}
-			return true;
-		}
-		
 		/**
 		 * The class being used for visibility checks and access permissions.
 		 * 
@@ -1086,16 +1213,47 @@ public class MethodHandles {
 				if (Modifier.isStatic(methodModifiers)) {
 					handle = new DirectHandle(method, MethodHandle.KIND_STATIC, null);
 				} else if (declaringClass.isInterface()) {
-					/*[PR 67085] Temporary fix to match RI's behavior pending 335 EG discussion */
-					if ((Modifier.isPrivate(methodModifiers)) && !Modifier.isStatic(methodModifiers)) {
-						return throwAbstractMethodErrorForUnreflectPrivateInterfaceMethod(method, type);
+					if (Modifier.isPrivate(methodModifiers)) {
+						/* Inlined version of access checking - this need only cover the NO_ACCESS and private_access cases */
+						if (!method.isAccessible()) {
+							if (accessMode == NO_ACCESS) {
+								throw new IllegalAccessException(this.toString());
+							}
+							if (declaringClass != accessClass || !Modifier.isPrivate(accessMode)) {
+								/*[MSG "K0678", "Class '{0}' no access to: '{1}'"]*/
+								String message = com.ibm.oti.util.Msg.getString("K0678", this.toString(), declaringClass + "." + method.getName() + ":" + MethodHandle.KIND_INTERFACE + "/invokeinterface"); //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+								throw new IllegalAccessException(message);
+							}
+						}
+
+						/* JDK9 and beyond allow accessible private interface methods.
+						 * JDK8 throws AbstractMethodError for private interface methods.
+						 */
+						/*[IF !Sidecar19-SE]*/
+						/*insert the 'receiver' into the MethodType just as is done by InterfaceHandle */
+						type = type.insertParameterTypes(0, declaringClass);
+						
+						MethodHandle thrower = throwException(type.returnType(), AbstractMethodError.class);
+						MethodHandle constructor;
+						try {
+							constructor = IMPL_LOOKUP.findConstructor(AbstractMethodError.class, MethodType.methodType(void.class));
+						} catch (IllegalAccessException | NoSuchMethodException e) {
+							throw new InternalError("Unable to find AbstractMethodError.<init>()");  //$NON-NLS-1$
+						}
+						handle = foldArguments(thrower, constructor);
+						handle = dropArguments(handle, 0, type.parameterList());
+						
+						if (isVarargs(methodModifiers)) {
+							Class<?> lastClass = handle.type.lastParameterType();
+							handle = handle.asVarargsCollector(lastClass);
+						}
+						return handle;
+						/*[ELSE]
+						handle = new DirectHandle(method, MethodHandle.KIND_SPECIAL, declaringClass, true);
+						/*[ENDIF]*/
 					} else {
 						handle = new InterfaceHandle(method);
 					}
-					/* Note, it is not required to call adaptInterfaceLookupsOfObjectMethodsIfRequired() here 
-					 * as Reflection will not return a j.l.r.Method for a public Object method with an interface
-					 * as the declaringClass *unless* that the method is defined in the interface or superinterface.
-					 */
 				} else {
 					/*[IF ]*/
 					/* Need to perform a findSpecial and use that to determine what kind of handle to return:
@@ -1119,62 +1277,10 @@ public class MethodHandles {
 			
 			if (!method.isAccessible()) {
 				handle = restrictReceiver(handle);
-				checkAccess(handle);
+				checkAccess(handle, true);
 			}
 			
 			handle = SecurityFrameInjector.wrapHandleWithInjectedSecurityFrameIfRequired(this, handle);
-			
-			return handle;
-		}
-		
-		/*[IF ]*/
-		/** Private interface methods created by unreflect must throw AbstractMethodError 
-		 * when invoked to match RI's behaviour.
-		 *
-		 * @param method The private interface method
-		 * @param type The incoming method type without the receiver 
-		 * @return A MethodHandle of the right signature that always throws AME
-		 * @throws IllegalAccessException under the same conditions as checkAccess()
-		 */
-		/*[ENDIF]*/
-		private MethodHandle throwAbstractMethodErrorForUnreflectPrivateInterfaceMethod(Method method, MethodType type) throws IllegalAccessException {
-			Class<?> declaringClass = method.getDeclaringClass();
-			int modifiers = method.getModifiers();
-			
-			if (!declaringClass.isInterface() || !Modifier.isPrivate(modifiers)) {
-				throw new InternalError("Only applicable to private interface methods"); //$NON-NLS-1$
-			}
-			/* Inlined version of access checking.  This needs to cover the NO_ACCESS and private_access case
-			 * as this method should only be called on a private interface method.
-			 */
-			if (!method.isAccessible()) {
-				if (accessMode == NO_ACCESS) {
-					throw new IllegalAccessException(this.toString());
-				}
-				if (declaringClass != accessClass || !Modifier.isPrivate(accessMode)) {
-					/*[MSG "K0587", "'{0}' no access to: '{1}'"]*/
-					String message = com.ibm.oti.util.Msg.getString("K0587", this.toString(), declaringClass + "." + method.getName() + ":" + MethodHandle.KIND_INTERFACE + "/invokeinterface");  //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-					throw new IllegalAccessException(message);
-				}
-			}
-			
-			/* insert the 'receiver' into the MethodType just as is done by InterfaceHandle */
-			type = type.insertParameterTypes(0, declaringClass);
-			
-			MethodHandle thrower = throwException(type.returnType(), AbstractMethodError.class);
-			MethodHandle constructor;
-			try {
-				constructor = IMPL_LOOKUP.findConstructor(AbstractMethodError.class, MethodType.methodType(void.class));
-			} catch (IllegalAccessException | NoSuchMethodException e) {
-				throw new InternalError("Unable to find AbstractMethodError.<init>()");  //$NON-NLS-1$
-			}
-			MethodHandle handle = foldArguments(thrower, constructor);
-			handle = dropArguments(handle, 0, type.parameterList());
-			
-			if (isVarargs(modifiers)) {
-				Class<?> lastClass = handle.type.lastParameterType();
-				handle = handle.asVarargsCollector(lastClass);
-			}
 			
 			return handle;
 		}
@@ -1203,7 +1309,7 @@ public class MethodHandles {
 			} 
 			
 			if (!method.isAccessible()) {
-				checkAccess(handle);
+				checkAccess(handle, true);
 			}
 			
 			return handle;
@@ -1234,7 +1340,7 @@ public class MethodHandles {
 				}
 				handle = HandleCache.putMethodInPerClassCache(cache, "<init>", type, convertToVarargsIfRequired(handle)); //$NON-NLS-1$
 			}
-			checkAccess(handle);
+			checkAccess(handle, false);
 			checkSecurity(handle.getDefc(), declaringClass, handle.getModifiers());
 			return handle;
 		}
@@ -1266,7 +1372,7 @@ public class MethodHandles {
 			}
 			
 			if (!method.isAccessible()) {
-				checkAccess(handle);
+				checkAccess(handle, true);
 			}
 			
 			handle = SecurityFrameInjector.wrapHandleWithInjectedSecurityFrameIfRequired(this, handle);
@@ -1311,7 +1417,7 @@ public class MethodHandles {
 				HandleCache.putFieldInPerClassCache(cache, fieldName, fieldType, handle);
 			}			
 			if (!field.isAccessible()) {
-				checkAccess(handle);
+				checkAccess(handle, true);
 			}
 			return handle;
 		}
@@ -1362,7 +1468,7 @@ public class MethodHandles {
 			}
 			
 			if (!field.isAccessible()) {
-				checkAccess(handle);
+				checkAccess(handle, true);
 			}
 			return handle;
 		}
@@ -1387,7 +1493,7 @@ public class MethodHandles {
 				}
 			}
 			try {
-				checkAccess(target);
+				checkAccess(target, false);
 				checkSecurity(target.getDefc(), target.getReferenceClass(), target.getModifiers());
 			} catch (IllegalAccessException e) {
 				throw new IllegalArgumentException(e);
@@ -1408,7 +1514,7 @@ public class MethodHandles {
 			case PUBLIC:
 				toString += "/public"; //$NON-NLS-1$
 				break;
-			/*[IF Sidecar19-SE-B175]
+			/*[IF Sidecar19-SE-OpenJ9]
 			case PUBLIC | UNCONDITIONAL:
 				toString += "/publicLookup"; //$NON-NLS-1$
 				break;
@@ -1428,7 +1534,7 @@ public class MethodHandles {
 			case PUBLIC | PACKAGE | PRIVATE:
 				toString += "/private"; //$NON-NLS-1$
 				break;
-			/*[ENDIF] Sidecar19-SE-B175*/
+			/*[ENDIF] Sidecar19-SE-OpenJ9*/
 			}
 			return toString;
 		}
@@ -1558,7 +1664,7 @@ public class MethodHandles {
 				} else {
 					handle = new InstanceFieldVarHandle(definingClass, name, type, this.accessClass);
 				}
-				checkAccess(handle);
+				checkAccess(handle, false);
 				checkSecurity(definingClass, definingClass, handle.getModifiers());
 				return handle;
 			} catch (NoSuchFieldError e) {
@@ -1594,7 +1700,7 @@ public class MethodHandles {
 				handle = new InstanceFieldVarHandle(field, field.getDeclaringClass(), field.getType());
 			}
 			
-			checkAccess(handle);
+			checkAccess(handle, true);
 			checkSecurity(handle.getDefiningClass(), handle.getDefiningClass(), handle.modifiers);
 			
 			return handle;
@@ -1639,7 +1745,7 @@ public class MethodHandles {
 			return targetClass;
 		}
 		
-		/*[IF Sidecar19-SE-B175]*/
+		/*[IF Sidecar19-SE-OpenJ9]*/
 		/**
 		 * Return a class object with the same class loader, the same package and
 		 * the same protection domain as the lookup's lookup class.
@@ -1700,7 +1806,7 @@ public class MethodHandles {
 			
 			return targetClass;
 		}
-		/*[ENDIF] Sidecar19-SE-B175*/
+		/*[ENDIF] Sidecar19-SE-OpenJ9*/
 		
 		/**
 		 * Return a MethodHandles.Lookup object without the requested lookup mode.
@@ -1792,7 +1898,7 @@ public class MethodHandles {
 		return Lookup.PUBLIC_LOOKUP;
 	}
 	
-	/*[IF Sidecar19-SE-B175]*/
+	/*[IF Sidecar19-SE-OpenJ9]*/
 	/**
 	 * Return a MethodHandles.Lookup object with full capabilities including the access 
 	 * to the <code>private</code> members in the requested class
@@ -1849,7 +1955,7 @@ public class MethodHandles {
 		
 		return new Lookup(targetClass);
 	}
-	/*[ENDIF] Sidecar19-SE-B175*/
+	/*[ENDIF] Sidecar19-SE-OpenJ9*/
 	
 	/**
 	 * Gets the underlying Member of the provided <code>target</code> MethodHandle. This is done through an unchecked crack of the MethodHandle.
@@ -2075,7 +2181,7 @@ public class MethodHandles {
 							tryType.returnType.getSimpleName(),
 							finallyType.returnType.getSimpleName(),}));
 		}
-		if (Throwable.class != finallyType.parameterType(0)) {
+		if (!Throwable.class.isAssignableFrom(finallyType.parameterType(0))) {
 			/*[MSG "K063C", "The 1st parameter type of the finally handle: {0} is not {1}"]*/
 			throw new IllegalArgumentException(Msg.getString("K063C", new Object[] { //$NON-NLS-1$
 							finallyType.parameterType(0).getSimpleName(),
@@ -3358,10 +3464,6 @@ public class MethodHandles {
 				/* rely on widening conversion from byte to everything */
 				defaultValue = Byte.valueOf((byte) 0);
 			}
-		/*[IF Valhalla-MVT]*/
-		} else if (jdk.experimental.value.ValueType.classHasValueType(targetType)) {
-			return new DefaultValueHandle(targetType);
-		/*[ENDIF]*/
 		}
 		return constant(targetType, defaultValue);
 	}
@@ -3413,11 +3515,12 @@ public class MethodHandles {
 	 */
 	public static MethodHandle whileLoop(MethodHandle initHandle, MethodHandle predHandle, MethodHandle bodyHandle) throws NullPointerException, IllegalArgumentException {
 		
-		/* Check the validity of the predicate (must be non-null) and body handle.
-		 * Note: The constraints of initializer and predicate at other aspects will be checked
+		/* Check the validity of the predicate (must be non-null) and body handle. Also
+		 * verify that handles are effectively identical and constrained by body. Note:
+		 * The constraints of initializer and predicate at other aspects will be checked
 		 * later in the generic loop when adding clauses.
 		 */
-		MethodHandle finiHandle = validateArgumentsOfWhileLoop(predHandle, bodyHandle);
+		MethodHandle finiHandle = validateArgumentsOfWhileLoop(initHandle, predHandle, bodyHandle);
 		
 		/* Create the clause array with all these handles to be used by the generic loop */
 		MethodHandle[] exitConditionClause = {null, null, predHandle, finiHandle};
@@ -3439,11 +3542,12 @@ public class MethodHandles {
 	 */
 	public static MethodHandle doWhileLoop(MethodHandle initHandle, MethodHandle bodyHandle, MethodHandle predHandle) throws NullPointerException, IllegalArgumentException {
 		
-		/* Check the validity of the predicate (must be non-null) and body handle.
-		 * Note: The constraints of initializer and predicate at other aspects will be checked
+		/* Check the validity of the predicate (must be non-null) and body handle. Also
+		 * verify that handles are effectively identical and constrained by body. Note:
+		 * The constraints of initializer and predicate at other aspects will be checked
 		 * later in the generic loop when adding clauses.
 		 */
-		MethodHandle finiHandle = validateArgumentsOfWhileLoop(predHandle, bodyHandle);
+		MethodHandle finiHandle = validateArgumentsOfWhileLoop(initHandle, predHandle, bodyHandle);
 		
 		/* Create the clause array with all these handles to be used by the generic loop */
 		MethodHandle[] handleClause = {initHandle, bodyHandle, predHandle, finiHandle};
@@ -3451,7 +3555,7 @@ public class MethodHandles {
 	}
 	
 	/* Validate the body handle against the constraints of a while/do-while loop and generate the 'fini' handle from it */
-	private static MethodHandle validateArgumentsOfWhileLoop(MethodHandle predHandle, MethodHandle bodyHandle) throws NullPointerException, IllegalArgumentException {
+	private static MethodHandle validateArgumentsOfWhileLoop(MethodHandle initHandle, MethodHandle predHandle, MethodHandle bodyHandle) throws NullPointerException, IllegalArgumentException {
 		if ((null == predHandle) || (null == bodyHandle)) {
 			/*[MSG "K065C", "Both The predicate and the loop body must be non-null"]*/
 			throw new NullPointerException(com.ibm.oti.util.Msg.getString("K065C")); //$NON-NLS-1$
@@ -3459,11 +3563,42 @@ public class MethodHandles {
 		
 		MethodType bodyType = bodyHandle.type;
 		Class<?> bodyReturnType = bodyType.returnType;
+		int bodyParamLength = bodyType.parameterCount();
 		
 		/* The signature of the body handle must be either (V, A...)V or (A...)void */
-		if ((void.class != bodyReturnType) && (bodyReturnType != bodyType.arguments[0])) {
-			/*[MSG "K065D", "The return type of loop body: {0} does not match the type of the first argument: {1}"]*/
-			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D", bodyReturnType.getName(), bodyType.arguments[0].getName())); //$NON-NLS-1$
+		int bodyIterationVarLength = 0;
+		if (void.class != bodyReturnType) {
+			if (hasNoArgs(bodyType)) {
+				/*[MSG "K065D3", "loop body has a non-void return type and must contain at least one argument. First argument must be {0}"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D3", bodyReturnType)); //$NON-NLS-1$
+			}
+			
+			if (bodyReturnType != bodyType.arguments[0]) {
+				/*[MSG "K065D2", "The return type of loop body: {0} does not match the type of the first argument: {1}"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D2", bodyReturnType, bodyType.arguments[0])); //$NON-NLS-1$
+			}
+			
+			bodyIterationVarLength = 1;
+		}
+		
+		/* Verify that handles are effectively identical and constrained by body. All we
+		 * need to do here is verify that no parameters have longer argument lists than
+		 * body. The generic loop will compare arguments to ensure all clauses are
+		 * effectively identical.
+		 */
+		
+		/* The predicate parameter list may be either empty or of the form (V A...) and should be
+		 * compared to the full length of the loop body.
+		 */ 
+		if (predHandle.type.parameterCount() > bodyParamLength) {
+			/*[MSG "K06542", "The count of loop predicate's parameters must be less than the body parameters."]*/
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K06542")); //$NON-NLS-1$
+		}
+		
+		int bodyExternalParamLength = bodyParamLength - bodyIterationVarLength;
+		if ((initHandle != null) && (initHandle.type.parameterCount() > bodyExternalParamLength)) {
+			/*[MSG "K06541", "The count of {0}'s parameters must be less than the external parameters of body."]*/
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K06541", "loop initializer")); //$NON-NLS-2$
 		}
 		
 		/* The Java 9 doc says the loop result type is the result type V of the body handle,
@@ -3493,7 +3628,7 @@ public class MethodHandles {
 	 * @throws IllegalArgumentException - if passed-in arguments are invalid
 	 */
 	public static MethodHandle countedLoop(MethodHandle startHandle, MethodHandle endHandle, MethodHandle initHandle, MethodHandle bodyHandle) throws NullPointerException, IllegalArgumentException {
-		validateArgumentsOfCountedLoop(startHandle, endHandle, bodyHandle);
+		validateArgumentsOfCountedLoop(startHandle, endHandle, initHandle, bodyHandle);
 		
 		/* From the generic loop perspective, the passed-in 'end' handle needs one more
 		 * argument slot to be added to the internal parameter list [V, I, A...]
@@ -3572,7 +3707,7 @@ public class MethodHandles {
 	}
 	
 	/* Validate all argument handles against the constraints of countedLoop */
-	private static final void validateArgumentsOfCountedLoop(MethodHandle startHandle, MethodHandle endHandle, MethodHandle bodyHandle) throws NullPointerException, IllegalArgumentException {
+	private static final void validateArgumentsOfCountedLoop(MethodHandle startHandle, MethodHandle endHandle, MethodHandle initHandle, MethodHandle bodyHandle) throws NullPointerException, IllegalArgumentException {
 		if ((null == startHandle) || (null == endHandle) || (null == bodyHandle)) {
 			/*[MSG "K065E", "The start/end/body handles must be non-null"]*/
 			throw new NullPointerException(com.ibm.oti.util.Msg.getString("K065E")); //$NON-NLS-1$
@@ -3591,21 +3726,29 @@ public class MethodHandles {
 		MethodType bodyType = bodyHandle.type;
 		Class<?> bodyReturnType = bodyType.returnType;
 		Class<?>[] bodyParamTypes = bodyType.arguments;
-		Class<?> bodyParamType1 = bodyParamTypes[0];
+		int bodyParamLength = bodyParamTypes.length;
 		
 		/* The signature of the body handle must be either (V,I,A...)V or (I,A...)void */
+		if (hasNoArgs(bodyType)) {
+			/*[MSG "K065D1", "loop body must contain at least one argument."]*/
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D1")); //$NON-NLS-1$
+		}
+		
+		int bodyIterationVarLength;
 		if (void.class == bodyReturnType) {
-			if (int.class != bodyParamType1) {
-				/*[MSG "K065G", "The 1st parameter type of the body handle with a void return type must be int: {0}"]*/
-				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065G", bodyType.toMethodDescriptorString())); //$NON-NLS-1$
-			}
-		} else {
-			if (bodyReturnType != bodyParamType1) {
-				/*[MSG "K065D", "The return type of loop body: {0} does not match the type of the first argument: {1}"]*/
-				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D", bodyReturnType.getName(), bodyParamType1.getName())); //$NON-NLS-1$
+			if (int.class != bodyParamTypes[0]) {
+				/*[MSG "K065G", "The 1st parameter type of the body handle with a void return type must be int."]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065G")); //$NON-NLS-1$
 			}
 			
-			if (bodyParamTypes.length < 2) {
+			bodyIterationVarLength = 1;
+		} else {
+			if (bodyReturnType != bodyParamTypes[0]) {
+				/*[MSG "K065D2", "The return type of loop body: {0} does not match the type of the first argument: {1}"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D2", bodyReturnType, bodyParamTypes[0])); //$NON-NLS-1$
+			}
+			
+			if (bodyParamLength < 2) {
 				/*[MSG "K065H", "The parameters types of the body handle with the non-void return type include at least 2 loop variables: {0}"]*/
 				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065H", bodyType.toMethodDescriptorString())); //$NON-NLS-1$
 			}
@@ -3614,6 +3757,39 @@ public class MethodHandles {
 				/*[MSG "K065I", "The 2nd parameter type of the body handle with a non-void return type must be int rather than {0}"]*/
 				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065I", bodyType.toMethodDescriptorString())); //$NON-NLS-1$
 			}
+			
+			bodyIterationVarLength = 2;
+		}
+
+		/* As a special case, if the body contributes only V and I types, with no
+		 * additional A types, then the internal parameter list is extended by the
+		 * argument types A... of the end handle. Adjust A count to correctly verify
+		 * parameters are effectively identical. Body will be altered outside of
+		 * verification.
+		 */
+		int externalParamLength = bodyParamLength - bodyIterationVarLength;
+		if (bodyParamLength == bodyIterationVarLength) {
+			externalParamLength = endHandle.type.parameterCount();
+		}
+		
+		/* Verify that handles are effectively identical and constrained by body. All we
+		 * need to do here is verify that no parameters have longer argument lists than
+		 * body. The generic loop will compare arguments to ensure all clauses are
+		 * effectively identical.
+		 */
+		if (startHandle.type.parameterCount() > externalParamLength) {
+			/*[MSG "K06541", "The count of {0}'s parameters must be less than the external parameters of body."]*/
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K06541", "start handle"));  //$NON-NLS-2$
+		}
+		
+		if (endHandle.type.parameterCount() > externalParamLength) {
+			/*[MSG "K06541", "The count of {0}'s parameters must be less than the external parameters of body."]*/
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K06541", "end handle"));  //$NON-NLS-2$
+		}
+		
+		if ((null != initHandle) && (initHandle.type.parameterCount() > externalParamLength)) {
+			/*[MSG "K06541", "The count of {0}'s parameters must be less than the external parameters of body."]*/
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K06541", "loop initializer"));  //$NON-NLS-2$
 		}
 	}
 	
@@ -3626,7 +3802,7 @@ public class MethodHandles {
 	}
 	
 	/**
-	 * Produce a loop handle that iterates over a range of values produced by an Iterator<T>
+	 * Produce a loop handle that iterates over a range of values produced by an {@code Iterator<T>}
 	 * Loop variables are updated by the return values of the corresponding step handles 
 	 * (including the loop body) in each iteration.
 	 * 
@@ -3640,32 +3816,50 @@ public class MethodHandles {
 	public static MethodHandle iteratedLoop(MethodHandle iteratorHandle, MethodHandle initHandle, MethodHandle bodyHandle) throws NullPointerException, IllegalArgumentException {
 		validateArgumentsOfIteratedLoop(iteratorHandle, initHandle, bodyHandle);
 		
-		/* Method handles to Iterator.hasNext(), Iterator.next() and Iterable.iterator() are required
-		 * to construct a clause array in the the generic loop.
-		 */
-		MethodHandle iteratorNextElement = null;
-		MethodHandle iteratorHasNextElement = null;
-		try {
-			iteratorNextElement = Lookup.internalPrivilegedLookup.findVirtual(Iterator.class, "next", MethodType.methodType(Object.class)); //$NON-NLS-1$
-			iteratorHasNextElement = Lookup.internalPrivilegedLookup.findVirtual(Iterator.class, "hasNext", MethodType.methodType(boolean.class)); //$NON-NLS-1$
-		} catch (IllegalAccessException | NoSuchMethodException e) {
-			throw new InternalError("The next/hasNext method doesn't exist or it fails in the access checking", e); //$NON-NLS-1$
-		}
+		MethodType bodyType = bodyHandle.type;
+		Class<?> bodyReturnType = bodyType.returnType;
 		
 		/* The init handle for iterator is set to the method handle to Iterable.iterator()
-		 * by default if it is null.
+		 * by default if it is null. The default iterator handle parameters are adjusted 
+		 * to accept the leading A type.
 		 */
 		MethodHandle initIterator = iteratorHandle;
 		if (null == initIterator) {
+			int bodyParamTypesLength = bodyHandle.type.arguments.length;
+			int bodyIterationVarLength = 2;
+			if (void.class == bodyReturnType) {
+				bodyIterationVarLength = 1;
+			}
+			
+			/* If body has an A type, the default iterator handle is adjusted to accept the leading A type. 
+			 * Validation has already confirmed that the leading A type is an Iterable or subtype thereof.
+			 */
+			Class<?> iterableType = Iterable.class;
+			if (bodyParamTypesLength > bodyIterationVarLength) {
+				iterableType = bodyHandle.type.arguments[bodyIterationVarLength];
+			}
+			
 			try {
-				initIterator = Lookup.internalPrivilegedLookup.findVirtual(Iterable.class, "iterator", MethodType.methodType(Iterator.class)); //$NON-NLS-1$
+				initIterator = Lookup.internalPrivilegedLookup.findVirtual(iterableType, "iterator", MethodType.methodType(Iterator.class)); //$NON-NLS-1$
 			} catch (IllegalAccessException | NoSuchMethodException e) {
 				throw new InternalError("The iterator method doesn't exist or it fails in the access checking", e); //$NON-NLS-1$
 			}
 		}
 		
-		MethodType bodyType = bodyHandle.type;
-		Class<?> bodyReturnType = bodyType.returnType;
+		/* Method handles to Iterator.hasNext(), Iterator.next() and Iterable.iterator() are required
+		 * to construct a clause array in the the generic loop.
+		 */
+		MethodHandle iteratorNextElement = null;
+		MethodHandle iteratorHasNextElement = null;
+		Class<?> iteratorType = initIterator.type.returnType;
+
+		try {
+			iteratorNextElement = Lookup.internalPrivilegedLookup.findVirtual(iteratorType, "next", MethodType.methodType(Object.class)); //$NON-NLS-1$
+			iteratorHasNextElement = Lookup.internalPrivilegedLookup.findVirtual(iteratorType, "hasNext", MethodType.methodType(boolean.class)); //$NON-NLS-1$
+		} catch (IllegalAccessException | NoSuchMethodException e) {
+			throw new InternalError("The next/hasNext method doesn't exist or it fails in the access checking", e); //$NON-NLS-1$
+		}
+
 		MethodHandle returnValueFromBody = null;
 		
 		/* To accommodate the order of the following clauses in the generic loop:
@@ -3687,11 +3881,8 @@ public class MethodHandles {
 		 * Note: the missing parameters after V are handled in the generic loop.
 		 */
 		if (void.class != bodyReturnType) {
-			returnValueFromBody = dropArguments(identity(bodyReturnType), 0, Iterator.class);
+			returnValueFromBody = dropArguments(identity(bodyReturnType), 0, iteratorType);
 		}
-		
-		/* Create the first clause for Iterator */
-		MethodHandle[] iteratorClause = {initIterator, null, iteratorHasNextElement, returnValueFromBody};
 		
 		/* Change the parameter list of loop body from (V, T, A...) to (T, V, A...)
 		 * against the internal parameter list (I (Iterator returns T), V, A...).
@@ -3709,6 +3900,9 @@ public class MethodHandles {
 		/* Change the return type of Iterator.next() to the specific type T (the first parameter type of the loop body) */
 		MethodType newTypeOfNextElementFromIterator = iteratorNextElement.type.changeReturnType(typeTforIterator);
 		MethodHandle nextValueFromIterator = iteratorNextElement.asType(newTypeOfNextElementFromIterator);
+		
+		/* Create the first clause for Iterator */
+		MethodHandle[] iteratorClause = {initIterator, null, iteratorHasNextElement, returnValueFromBody};
 		
 		/* In creating the second clause for the loop body, filterArguments() is invoked
 		 * to implement the following 2 steps for the operations in "v = body(t = it.next(), v, a...)":
@@ -3732,6 +3926,13 @@ public class MethodHandles {
 		Class<?> bodyReturnType = bodyType.returnType;
 		Class<?>[] bodyParamTypes = bodyType.arguments;
 		int bodyParamTypesLength = bodyParamTypes.length;
+		int bodyIterationVarLength = 1;
+		
+		if (hasNoArgs(bodyType)) {
+			/*[MSG "K065D1", "loop body must contain at least one argument."]*/
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D1")); //$NON-NLS-1$
+		}
+		
 		if (void.class != bodyReturnType) {
 			if (bodyParamTypesLength < 2) {
 				/*[MSG "K065H", "The parameters types of the body handle with the non-void return type include at least 2 loop variables: {0}"]*/
@@ -3740,41 +3941,26 @@ public class MethodHandles {
 			
 			/* The signature of the passed-in loop body must be either (V, T, A...)V or (T, A...)void */
 			if (bodyReturnType != bodyParamTypes[0]) {
-				/*[MSG "K065D", "The return type of loop body: {0} does not match the type of the first argument: {1}"]*/
-				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D", bodyReturnType.getName(), bodyParamTypes[0].getName())); //$NON-NLS-1$
+				/*[MSG "K065D2", "The return type of loop body: {0} does not match the type of the first argument: {1}"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D2", bodyReturnType, bodyParamTypes[0])); //$NON-NLS-1$
 			}
+			
+			bodyIterationVarLength = 2;
 		}
 		
+		/* If the iterator handle is non-null, it must have the return type java.util.Iterator or a subtype thereof.
+		 * If null, the internal parameter list must have at least one A type that is java.util.Iterator or a subtype.
+		 * Otherwise default A will be set to java.util.Iterator.
+		 */
 		if (null != iteratorHandle) {
-			MethodType iteratorType = iteratorHandle.type;
-			Class<?> iteratorReturnType = iteratorType.returnType;
-			if (!Iterator.class.isAssignableFrom(iteratorReturnType)) {
+			if (!Iterator.class.isAssignableFrom(iteratorHandle.type.returnType)) {
 				/*[MSG "K065J", "The return type of the iterator handle must be Iterator or its subtype rather than {0}"]*/
-				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065J", iteratorReturnType.getName())); //$NON-NLS-1$
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065J", iteratorHandle.type.returnType.getName())); //$NON-NLS-1$
 			}
-			
-			/* The test case on RI indicates the first parameter of iterator must be an array 
-			 * or inherited from Iterable in that it will be used to generate the return type Iterator.
-			 */
-			Class<?>[] iteratorParamTypes = iteratorType.arguments;
-			if (iteratorParamTypes.length > 0) {
-				Class<?> iteratorParamType1 = iteratorParamTypes[0];
-				if ((!iteratorParamType1.isArray()) && (!Iterable.class.isAssignableFrom(iteratorParamType1))) {
-					/*[MSG "K065K", "The first parameter of the iterator handle: {0} is not an array type or inherited from Iterable"]*/
-					throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065K", iteratorParamType1)); //$NON-NLS-1$
-				}
-			}
-			
-			/* Given that the external parameter list is determined by iterator(non-null) against the Java9 doc,
-			 * we need to check the external parameter list of loop body as it won't be directly handled by
-			 * the generic loop.
-			 */
-			compareExternalParamTypesOfIteratedBodyHandles(bodyHandle, iteratorHandle);
-		} else if (bodyParamTypesLength > 2) {
-			Class<?> bodyParamType3 = bodyParamTypes[2];
-			if (!Iterable.class.isAssignableFrom(bodyParamType3)) {
-				/*[MSG "K065L", "If the iterator handle is null, the leading parameter type of loop body must be Iterable or its subtype rather than {0}"]*/
-				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065L", bodyParamType3.getName())); //$NON-NLS-1$
+		} else if (bodyParamTypesLength > bodyIterationVarLength) {
+			if (!Iterable.class.isAssignableFrom(bodyParamTypes[bodyIterationVarLength])) {
+				/*[MSG "K065L", "If the iterator handle is null, the leading external parameter type of loop body must be Iterable or its subtype rather than {0}"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065L", bodyParamTypes[bodyIterationVarLength].getName())); //$NON-NLS-1$
 			}
 		}
 		
@@ -3788,19 +3974,13 @@ public class MethodHandles {
 			
 			Class<?>[] initParamTypes = initType.arguments;
 			int initParamTypesLength = initParamTypes.length;
-			if (initParamTypesLength > 0) {
+			if ((initParamTypesLength > 0) && (bodyParamTypesLength == bodyIterationVarLength)) {
 				if (null == iteratorHandle) {
-					Class<?> initParamType1 = initParamTypes[0];
-					if (!Iterable.class.isAssignableFrom(initParamType1)) {
+					if (!Iterable.class.isAssignableFrom(initParamTypes[0])) {
 						/*[MSG "K065N", "If the iterator handle is null, the leading parameter type of init must be Iterable or its subtype rather than {0}"]*/
-						throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065N", initParamType1.getName())); //$NON-NLS-1$
+						throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065N", initParamTypes[0].getName())); //$NON-NLS-1$
 					}
-					
-					/* The comparison here is to cover the following situation:
-					 * 1) the external parameters of loop body exist.
-					 * 2) the parameters of init exist.
-					 */
-					compareExternalParamTypesOfIteratedBodyHandles(bodyHandle, initHandle);
+
 				} else {
 					/* Given that the external parameter list is determined by iterator(non-null) against the Java9 doc,
 					 * we need to check the init handle to see whether it has more parameter types than iterator.
@@ -3810,43 +3990,52 @@ public class MethodHandles {
 					if (initParamTypesLength > iteratorParamTypes.length) {
 						/*[MSG "K065O", "The parameter types of init doesn't match that of iterator: {0} != {1}"]*/
 						throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065O",  //$NON-NLS-1$
-															Arrays.toString(initParamTypes), Arrays.toString(iteratorParamTypes)));
+							Arrays.toString(initParamTypes), Arrays.toString(iteratorParamTypes)));
 					}
 				}
 			}
 		}
+		
+		/* All iteratedLoop parameters must be effectively identical to the body handle. We need to check
+		 * the external parameter list of loop body here as it won't be directly handled by the generic loop.
+		 */
+		compareExternalParamTypesOfIteratedBodyHandles(bodyHandle, iteratorHandle);
+		compareExternalParamTypesOfIteratedBodyHandles(bodyHandle, initHandle);
 	}
 	
 	/* Compare with the external parameter types (except (V,T)) of the loop body to see whether they are identical to each other */
 	private static final void compareExternalParamTypesOfIteratedBodyHandles(MethodHandle bodyHandle, MethodHandle targetHandle) {
-		MethodType bobyType = bodyHandle.type;
-		Class<?>[] bodyParamTypes = bobyType.arguments;
+		/* If the target handle is null validation is not necessary. */
+		if (null == targetHandle) {
+			return;
+		}
+		
+		MethodType bodyType = bodyHandle.type;
+		Class<?>[] bodyParamTypes = bodyType.arguments;
+		MethodType targetType = targetHandle.type;
+		Class<?>[] targetParamTypes = targetType.arguments;
 		
 		/* Remove V (if exist) and T from the parameter list of loop body so as to
 		 * obtain its external parameter types.
 		 */
 		int fixedParamType = 1;
-		if (void.class != bobyType.returnType) {
+		if (void.class != bodyType.returnType) {
 			fixedParamType += 1;
 		}
 		
-		/* No need to compare if there is no external parameters for the loop body */
+		/* No need to compare if there is no external parameters for the loop body
+		 * or the target handle.
+		  */
 		int bodyExternalParamTypesLength = bodyParamTypes.length - fixedParamType;
-		if (0 == bodyExternalParamTypesLength) {
+		int targetParamTypeLength = targetParamTypes.length;
+		if ((0 == bodyExternalParamTypesLength) || (0 == targetParamTypeLength)) {
 			return;
 		}
 		
 		Class<?>[] bodyExternalParamTypes = new Class<?>[bodyExternalParamTypesLength];
 		System.arraycopy(bodyParamTypes, fixedParamType, bodyExternalParamTypes, 0, bodyExternalParamTypesLength);
 		
-		MethodType targetType = targetHandle.type;
-		Class<?>[] targetParamTypes = targetType.arguments;
-		int targetParamTypeLength = targetParamTypes.length;
-		
-		/* Given that the parameter list of loop body can't be handled by the generic loop, the count
-		 * of parameters of init/iterator must be exactly identical to the external parameters of loop body.
-		 */
-		if (targetParamTypeLength != bodyExternalParamTypesLength) {
+		if (targetParamTypeLength > bodyExternalParamTypesLength) {
 			/*[MSG "K065P", "The external parameter types of body: {0} doesn't match the parameter types of iterator/init: {1}"]*/
 			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065P",  //$NON-NLS-1$
 												Arrays.toString(bodyExternalParamTypes), Arrays.toString(targetParamTypes)));
@@ -3866,30 +4055,46 @@ public class MethodHandles {
 		MethodHandle loopBody = bodyHandle;
 		MethodType bodyType = loopBody.type;
 		Class<?> bodyReturnType = bodyType.returnType;
+		Class<?>[] bodyParamTypes = bodyType.parameterArray();
+		int bodyParamLength = bodyParamTypes.length;
+		int bodyIterationVarLength = 1;
 		
 		if (void.class != bodyReturnType) {
-			Class<?>[] bodyParamTypes = bodyType.parameterArray();
 			Class<?> paramType1 = bodyParamTypes[0];
 			Class<?> paramType2 = bodyParamTypes[1];
 			bodyParamTypes[0] = paramType2;
 			bodyParamTypes[1] = paramType1;
 			MethodType newBodyType = MethodType.methodType(bodyReturnType, bodyParamTypes);
-			loopBody = MethodHandles.permuteArguments(loopBody, newBodyType, 1, 0);
 			
-			/* Insert the external parameter types if the loop body only has V and T */
-			if (2 == bodyParamTypes.length) {
-				/* Insert the class Iterable to the external parameter part of the loop body if iterator is null */
-				if (null == iteratorHandle) {
-					loopBody = MethodHandles.dropArguments(loopBody, 2, Iterable.class);
-				} else {
-					/* Append all parameter types of iterator to the end of the parameter types of loop body */
-					Class<?>[] bodyExternalParameterTypes = iteratorHandle.type.parameterArray();
-					loopBody = MethodHandles.dropArguments(loopBody, 2, bodyExternalParameterTypes);
-				}
+			int[] paramIndexReorder = new int[bodyParamLength];
+			paramIndexReorder[0] = 1;
+			paramIndexReorder[1] = 0;
+			for (int i = 2; i < bodyParamLength; i++) {
+				paramIndexReorder[i] = i;
+			}
+			
+			loopBody = MethodHandles.permuteArguments(loopBody, newBodyType, paramIndexReorder);
+			
+			bodyIterationVarLength = 2;
+		}
+		
+		/* Insert the external parameter types if the loop body only has V and T */
+		if (bodyIterationVarLength == bodyParamTypes.length) {
+			/* Insert the class Iterable to the external parameter part of the loop body if iterator is null */
+			if (null == iteratorHandle) {
+				loopBody = MethodHandles.dropArguments(loopBody, bodyIterationVarLength, Iterable.class);
+			} else {
+				/* Append all parameter types of iterator to the end of the parameter types of loop body */
+				Class<?>[] bodyExternalParameterTypes = iteratorHandle.type.parameterArray();
+				loopBody = MethodHandles.dropArguments(loopBody, bodyIterationVarLength, bodyExternalParameterTypes);
 			}
 		}
 		
 		return loopBody;
+	}
+	
+	private static boolean hasNoArgs(MethodType type) {
+		return (0 == type.arguments.length);
 	}
 	
 	/* Wrap the logic of clause validation, construction of parameter list for each handle,
@@ -3952,11 +4157,6 @@ public class MethodHandles {
 			}
 			
 			int handleCount = currentClause.length;
-			if (0 == handleCount) {
-				/*[MSG "K0654", "No method handle exists in the clause: {0}"]*/
-				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0654", Arrays.toString(currentClause))); //$NON-NLS-1$
-			}
-			
 			if (handleCount > COUNT_OF_HANDLES) {
 				/*[MSG "K0655", "At most 4 method handles are allowed in each clause: {0}"]*/
 				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0655", Arrays.toString(currentClause))); //$NON-NLS-1$	
@@ -3964,13 +4164,16 @@ public class MethodHandles {
 			
 			MethodHandle[] newClause = new MethodHandle[COUNT_OF_HANDLES];
 			
-			MethodHandle initHandle = currentClause[0];
+			MethodHandle initHandle = (handleCount >= 1) ? currentClause[0] : null;
 			MethodHandle stepHandle = (handleCount >= 2) ? currentClause[1] : null;
 			MethodHandle predHandle = (handleCount >= 3) ? currentClause[2] : null;
 			MethodHandle finiHandle = (COUNT_OF_HANDLES == handleCount) ? currentClause[3] : null;
 			
-			/* Java 9 doc says clauses with all nulls are disregarded.
+			/* The following check verifies two things:
+			 * 1) Java 9 doc says clauses with all nulls are disregarded.
 			 * So such clause must be skipped over.
+			 * 
+			 * 2) A clause with zero method handles should be skipped.
 			 */
 			if ((null == initHandle)
 				&& (null == stepHandle)
@@ -4127,11 +4330,12 @@ public class MethodHandles {
 			return MethodType.methodType(loopReturnType, longestLoopParamTypes);
 		}
 		
-		/* Get the suffixes (A*) of parameter types from a non-init handle by truncating the iteration variable types (V...) */
+		/* Get the suffixes (A*) of parameter types from a non-init handle by truncating
+		 * the iteration variable types (V...). Make sure iteration variables are
+		 * effectively identical.
+		 */
 		private Class<?>[] getSuffixOfParamTypesFromNonInitHandle(Class<?>[] handleParamTypes) throws IllegalArgumentException {
-			Class<?>[] suffixOfParamTypes = null;
-			int suffixLength = handleParamTypes.length - iterationVarTypesLength;
-			/* There are there cases in terms of a non-init handle as follows:
+			/* There are three cases in terms of a non-init handle as follows:
 			 * (1) If suffixLength > 0, it means the handle comes with all iteration variables (V...)
 			 *     and probably part of loop variables (A*) that should be extracted from here.
 			 * (2) If suffixLength == 0, it means the handle comes with all iteration variables (V...) 
@@ -4141,14 +4345,29 @@ public class MethodHandles {
 			 * In all these cases above, all missing variables will be filled up against (V..., A...) 
 			 * later in setMissingParamTypesOfHandle().
 			 */
-			if (suffixLength > 0) {
-				for (int loopVarIndex = 0; loopVarIndex < iterationVarTypesLength; loopVarIndex++) {
-					if (handleParamTypes[loopVarIndex] != iterationVarTypes.get(loopVarIndex)) {
-						/*[MSG "K065A", "The prefixes of parameter types of a non-init handle: {0} is not effectively identical to the iteration variable types: {1}"]*/
-						throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065A",  //$NON-NLS-1$
-								new Object[] {Arrays.toString(handleParamTypes), iterationVarTypes.toArray()}));
-					}
+			int suffixLength = handleParamTypes.length - iterationVarTypesLength;
+			
+			/* The handle may have either some or all iteration variables. Regardless of the case those iteration variables
+			 * that it does contain must be validated. The handle will be filled in later with a complete list.
+			 */
+			int minVarTypesLength = iterationVarTypesLength;
+			if (minVarTypesLength > handleParamTypes.length) {
+				minVarTypesLength = handleParamTypes.length;
+			}
+			
+			for (int loopVarIndex = 0; loopVarIndex < minVarTypesLength; loopVarIndex++) {
+				if (handleParamTypes[loopVarIndex] != iterationVarTypes.get(loopVarIndex)) {
+					/*[MSG "K065A", "The prefixes of parameter types of a non-init handle: {0} is not effectively identical to the iteration variable types: {1}"]*/
+					throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065A",  //$NON-NLS-1$
+							new Object[] {Arrays.toString(handleParamTypes), iterationVarTypes.toArray()}));
 				}
+			}
+			
+			/* If handle contains all iteration variables (V...) and some external variables (A..)
+			 * the external variables should be returned as the parameter suffix.
+			 */
+			Class<?>[] suffixOfParamTypes = null;
+			if (suffixLength > 0) {
 				suffixOfParamTypes = new Class<?>[suffixLength];
 				System.arraycopy(handleParamTypes, iterationVarTypesLength, suffixOfParamTypes, 0, suffixLength);
 			}

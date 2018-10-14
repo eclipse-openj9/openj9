@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2017 IBM Corp. and others
+ * Copyright (c) 2012, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,55 +34,56 @@ import java.util.logging.Level;
  * could be a directory or a jar file.
  * 
  * @author adam
- *
  */
 public class Container extends Entry {
-	private final List<Entry> entries = new ArrayList<Entry>(); 
-	
+
+	private final List<Entry> entries = new ArrayList<>();
+
 	public Container(File file) {
 		super(file);
 	}
-	
+
+	@Override
 	public URL toURL() {
 		try {
 			return file.toURI().toURL();
 		} catch (MalformedURLException e) {
-			logger.log(Level.FINE,"Exception thrown when constructing URL from class file name " + file.getName());
+			logger.log(Level.FINE,"Exception thrown when constructing URL from class file name " + file.getName()); //$NON-NLS-1$
 			return null;
-		} 
+		}
 	}
-	
+
 	public List<Entry> getEntries() {
 		return entries;
 	}
-	
+
 	public void addEntry(Entry entry) {
 		entries.add(entry);
 		entry.setParent(this);
 	}
-	
+
 	@SuppressWarnings("unchecked")
-	public <T extends Entry> T getEntry(File file) {
-		return (T) scanEntries(this, file);
+	public <T extends Entry> T getEntry(File fileToScan) {
+		return (T) scanEntries(this, fileToScan);
 	}
-	
-	private Entry scanEntries(Container root, File file) {
-		for(Entry entry : root.entries) {
-			if(entry.getFile() == null) {
-				//entry does not have a file set so could just be a container of other entries
-				if(entry instanceof Container) {
+
+	private static Entry scanEntries(Container root, File file) {
+		for (Entry entry : root.entries) {
+			if (entry.getFile() == null) {
+				// entry does not have a file set so could just be a container of other entries
+				if (entry instanceof Container) {
 					return scanEntries((Container) entry, file);
 				}
 			} else {
-				//file has been set, so compare files
-				if(entry.getFile().equals(file)) {
+				// file has been set, so compare files
+				if (entry.getFile().equals(file)) {
 					return entry;
 				}
 			}
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Recursively scan all nodes in the tree looking for the specified entry.
 	 * 
@@ -92,21 +93,22 @@ public class Container extends Entry {
 	public Entry getEntry(Entry entry) {
 		return scanEntries(this, entry);
 	}
-	
+
 	public Entry getEntry(String name) {
 		Entry searchFor = new Entry(name);
 		return scanEntries(this, searchFor);
 	}
-	
-	private Entry scanEntries(Container root, Entry searchFor) {
-		for(Entry entry : root.entries) {
-			if(entry instanceof Container) {
+
+	private static Entry scanEntries(Container root, Entry searchFor) {
+		for (Entry entry : root.entries) {
+			if (entry instanceof Container) {
 				return scanEntries((Container) entry, searchFor);
 			}
-			if(entry.equals(searchFor)) {
+			if (entry.equals(searchFor)) {
 				return entry;
 			}
 		}
 		return null;
 	}
+
 }

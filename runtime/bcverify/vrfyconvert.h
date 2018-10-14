@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,9 +27,9 @@
 
 extern const U_32 decodeTable[];
 extern const U_32 newArrayParamConversion[];
-extern const U_32 baseTypeCharConversion[]; 
-extern const U_32 argTypeCharConversion[]; 
-extern const U_32 oneArgTypeCharConversion[]; 
+extern const U_32 baseTypeCharConversion[];
+extern const U_32 argTypeCharConversion[];
+extern const U_32 oneArgTypeCharConversion[];
 extern const U_8  verificationBaseTokenEncode[];
 extern const U_8  verificationBaseArrayTokenEncode[];
 extern const U_32 verificationTokenDecode[];

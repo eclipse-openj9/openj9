@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2014 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,6 @@ package com.ibm.j9ddr.vm29.j9;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.security.InvalidParameterException;
 
 /**
  * Bytecode name->value mappings from oti/bcnames.h

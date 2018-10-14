@@ -44,10 +44,14 @@ import sun.nio.ch.Interruptible;
 import sun.reflect.annotation.AnnotationType;
 
 /*[IF Sidecar19-SE]
-/*[IF Sidecar19-SE-B165]
+/*[IF Sidecar19-SE-OpenJ9]
 import java.lang.Module;
 import java.util.Iterator;
 import java.util.List;
+/*[IF Java11]*/
+import java.nio.charset.Charset;
+import java.nio.charset.CharacterCodingException;
+/*[ENDIF]*/
 /*[ELSE]
 import java.lang.reflect.Module;
 /*[ENDIF]*/
@@ -215,7 +219,7 @@ final class Access implements JavaLangAccess {
 	 }
 	
 	public 
-/*[IF Sidecar19-SE-B165]	
+/*[IF Sidecar19-SE-OpenJ9]	
 	java.lang.ModuleLayer
 /*[ELSE]*/
 	java.lang.reflect.Layer
@@ -228,11 +232,12 @@ final class Access implements JavaLangAccess {
 		return classLoader.createOrGetServicesCatalog();
 	}
 	
-	/* removed in build 160 */
+/*[IF !Java10]*/
 	@Deprecated
 	public ServicesCatalog getServicesCatalog(ClassLoader classLoader) {
 		return classLoader.getServicesCatalog();
 	}
+/*[ENDIF]*/	
 
 	public String fastUUID(long param1, long param2) {
 		return Long.fastUUID(param1, param2); 
@@ -259,8 +264,6 @@ final class Access implements JavaLangAccess {
 		return classLoader.packages();
 	}
 	
-	/* removed in build 160 */
-	@Deprecated
 	public ConcurrentHashMap<?, ?> createOrGetClassLoaderValueMap(
 			java.lang.ClassLoader classLoader) {
 		return classLoader.createOrGetClassLoaderValueMap();
@@ -274,9 +277,12 @@ final class Access implements JavaLangAccess {
 		}
 	}
 
-	/* TODO add proper implementation: RTC 125523: Implement java.lang.Access.invalidatePackageAccessCache */
 	public void invalidatePackageAccessCache() {
+/*[IF Java10]*/
+		java.lang.SecurityManager.invalidatePackageAccessCache();
+/*[ELSE]*/
 		return;
+/*[ENDIF]*/
 	}
 
 	public Class<?> defineClass(ClassLoader classLoader, String className, byte[] classRep, ProtectionDomain protectionDomain, String str) {
@@ -284,7 +290,7 @@ final class Access implements JavaLangAccess {
 		return targetClassLoader.defineClass(className, classRep, 0, classRep.length, protectionDomain);
 	}
 
-/*[IF Sidecar19-SE-B165]*/	
+/*[IF Sidecar19-SE-OpenJ9]*/	
 	public Stream<ModuleLayer> layers(ModuleLayer ml) {
 		return ml.layers();
 	}
@@ -323,13 +329,13 @@ final class Access implements JavaLangAccess {
 		return ml.getServicesCatalog();
 	}
 
-/*[IF Sidecar19-SE-B169]*/
+/*[IF Sidecar19-SE-OpenJ9]*/
 	public void addNonExportedPackages(ModuleLayer ml) {
 		SecurityManager.addNonExportedPackages(ml);
 	}
 /*[ENDIF]*/
 	 
-/*[IF Sidecar19-SE-B175]*/
+/*[IF Sidecar19-SE-OpenJ9]*/
 	public List<Method> getDeclaredPublicMethods(Class<?> clz, String name, Class<?>... types) {
 		return clz.getDeclaredPublicMethods(name, types);
 	}
@@ -347,7 +353,7 @@ final class Access implements JavaLangAccess {
 	}
 /*[ENDIF]*/	
 	 
-/*[ENDIF] Sidecar19-SE-B165 */
+/*[ENDIF] Sidecar19-SE-OpenJ9 */
 
 /*[IF Java10]*/
 	public String newStringUTF8NoRepl(byte[] bytes, int offset, int length) {
@@ -358,6 +364,17 @@ final class Access implements JavaLangAccess {
 	}
 /*[ENDIF] Java10 */
 
+/*[IF Java11]*/
+	public void blockedOn(Interruptible interruptible) {
+		Thread.blockedOn(interruptible);
+	}
+	public byte[] getBytesNoRepl(String str, Charset charset) throws CharacterCodingException {
+		return StringCoding.getBytesNoRepl(str, charset);
+	}
+	public String newStringNoRepl(byte[] bytes, Charset charset) throws CharacterCodingException {
+		return StringCoding.newStringNoRepl(bytes, charset);
+	}
+/*[ENDIF]*/
 	
 /*[ENDIF] Sidecar19-SE */
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -869,7 +869,7 @@ initJVMRI( J9JavaVM * vm )
 {
 	if (omrthread_monitor_init_with_name(&jvmridumpmonitor, 0, "jvmriDumpThread")) {
 		PORT_ACCESS_FROM_JAVAVM(vm);
-		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_RI_INITIALISE_CANT_ALLOCATE_MONITOR);
+		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_RI_INITIALIZE_CANT_ALLOCATE_MONITOR);
 		return JNI_ERR;
 	}
 	

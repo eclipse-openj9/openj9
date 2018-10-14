@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<!DOCTYPE suite SYSTEM "excludes.dtd">
+<?xml:stylesheet type="text/xsl" href="excludes.xsl" ?>
+
+
+<!--
+  Copyright (c) 2016, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+
+<suite id="j9vm">
+
+	<exclude id="j9vm.test.multivm.MultiVMFibTest" platform="all">
+		<reason>Requires opt_multiVm which is not supported for realtime platforms</reason>
+	</exclude>
+
+	<exclude id="j9vm.test.libraryhandle.MultipleLibraryLoadTest" platform="static">
+		<reason>Requires loadLibrary() which is not available in static VM's.</reason>
+	</exclude>
+	<exclude id="j9vm.test.jni.JNIFloatTest" platform="static">
+		<reason>Requires loadLibrary() which is not available in static VM's.</reason>
+	</exclude>
+	<exclude id="j9vm.test.jni.LocalRefTest" platform="static">
+		<reason>Requires loadLibrary() which is not available in static VM's.</reason>
+	</exclude>
+	<exclude id="j9vm.test.jni.VolatileTest" platform="static">
+		<reason>Requires loadLibrary() which is not available in static VM's.</reason>
+	</exclude>
+	<exclude id="j9vm.test.jni.NullRefTest" platform="static">
+		<reason>Requires loadLibrary() which is not available in static VM's.</reason>
+	</exclude>
+	<exclude id="j9vm.test.monitor.CancelDeadThreadTest" platform="static">
+		<reason>Requires loadLibrary() which is not available in static VM's.</reason>
+	</exclude>
+	<exclude id="j9vm.test.monitor.CancelTest" platform="static">
+		<reason>Requires loadLibrary() which is not available in static VM's.</reason>
+	</exclude>
+	<exclude id="j9vm.test.monitor.EnterExitTest" platform="static">
+		<reason>Requires loadLibrary() which is not available in static VM's.</reason>
+	</exclude>
+	<exclude id="j9vm.test.monitor.IllegalMonitorStateTest" platform="static">
+		<reason>Requires loadLibrary() which is not available in static VM's.</reason>
+	</exclude>
+	<exclude id="j9vm.test.monitor.JNITest" platform="static">
+		<reason>Requires loadLibrary() which is not available in static VM's.</reason>
+	</exclude>
+
+	<exclude id="j9vm.test.classunloading.testcases" platform="all">
+		<reason>These tests run separately and are not as part of j9vm test suite</reason>
+	</exclude>
+
+	<exclude id="j9vm.test.thread.InterruptNotifyWaitTest" platform="all">
+		<reason>CMVC 158969: test runs too slow after switching to the SDK launcher</reason>
+	</exclude>
+
+	<include id="j9vm.test.thread.SchedulingTest" platform="linux_x86-64_srt.*">
+		<reason>Only applies to Linux SRT</reason>
+	</include>
+
+	<exclude id="j9vm.test.xlp" platform="all">
+		<reason>This test is run separately and not as part of j9vm test suite</reason>
+	</exclude>
+
+	<exclude id="j9vm.test.xlpcodecache" platform="all">
+		<reason>This test is run separately and not as part of j9vm test suite</reason>
+	</exclude>
+
+	<exclude id="j9vm.test.classloader.LazyClassLoaderInitTest" platform="all">
+		<reason>Test is run from playlist other than sanity.</reason>
+	</exclude>
+
+</suite>
+

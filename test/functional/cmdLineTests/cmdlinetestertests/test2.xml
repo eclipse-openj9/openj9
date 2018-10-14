@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2009, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="CmdLineTester Test 2" timeout="600">
+
+ <variable name="TEMP01" value="temp" />
+ <variable name="TEMP02" value="$TEMP01$" />
+ <variable name="TEMP03" value="$TEMP02$" />
+ <variable name="TEMP04" value="$TEMP03$" />
+ <variable name="TEMP05" value="$TEMP04$" />
+ <variable name="TEMP06" value="$TEMP05$" />
+ <variable name="TEMP07" value="$TEMP06$" />
+ <variable name="TEMP08" value="$TEMP07$" />
+ <variable name="TEMP09" value="$TEMP08$" />
+ <variable name="TEMP10" value="$TEMP09$" />
+ <variable name="TEMP11" value="$TEMP10$" />
+ <variable name="VAR11" value="$TEMP11$" />
+ <variable name="VAR12" value="$TEMP11$" />
+ <variable name="VAR21" value="temp21" />
+ <variable name="VAR22" value="temp22" />
+ <variable name="VAR31" value="temp31" />
+ <variable name="VAR32" value="temp32" />
+ <variable name="SCENARIO1" value="scenario1" />
+ <variable name="SCENARIO2" value="scenario2" />
+
+ <loop index="I" from="1" until="3" inc="1">
+
+  <test id="Test $SCENARIO{I}$ part 1">
+   <command>echo $VAR1{I}$</command>
+   <output regex="no" type="success">temp</output>
+  </test>
+
+  <test id="Test $SCENARIO{I}$ part 2">
+   <command>echo $VAR2{I}$</command>
+   <output regex="no" type="success">temp2$I$</output>
+  </test>
+
+  <test id="Test $SCENARIO{I}$ part 3">
+   <command>echo $VAR3{I}$</command>
+   <output regex="no" type="success">temp3$I$</output>
+  </test>
+
+ </loop>
+
+</suite>
+

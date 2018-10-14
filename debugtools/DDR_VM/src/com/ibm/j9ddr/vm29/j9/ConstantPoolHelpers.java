@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,12 +22,10 @@
 package com.ibm.j9ddr.vm29.j9;
 
 import static com.ibm.j9ddr.vm29.structure.J9Consts.J9_STARTPC_STATUS;
-import static com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags.J9AccClassHotSwappedOut;
 
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9_CP_BITS_PER_DESCRIPTION;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9_CP_DESCRIPTIONS_PER_U32;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9_CP_DESCRIPTION_MASK;
-
 
 import java.util.Iterator;
 

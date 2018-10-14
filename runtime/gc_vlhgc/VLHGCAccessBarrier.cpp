@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -289,11 +288,7 @@ MM_VLHGCAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jarray
 		vmThread->jniCriticalCopyCount += 1;
 	} else {
 		// acquire access and return a direct pointer
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
-	  	vmThread->jniCriticalDirectCount += 1;
-#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
-		MM_JNICriticalRegion::enterCriticalRegion(vmThread);
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+		MM_JNICriticalRegion::enterCriticalRegion(vmThread, true);
 		Assert_MM_true(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS);
 		arrayObject = (J9IndexableObject*)J9_JNI_UNWRAP_REFERENCE(array);
 		data = (void *)_extensions->indexableObjectModel.getDataPointerForContiguous(arrayObject);
@@ -363,11 +358,7 @@ MM_VLHGCAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread, ja
 		Assert_MM_true((*criticalCount) > 0);
 		MM_AtomicOperations::subtract(criticalCount, 1);
 #endif /* defined(J9VM_GC_MODRON_COMPACTION) || defined(J9VM_GC_MODRON_SCAVENGER)*/
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
-	  	vmThread->jniCriticalDirectCount -= 1;
-#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
-		MM_JNICriticalRegion::exitCriticalRegion(vmThread);
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+		MM_JNICriticalRegion::exitCriticalRegion(vmThread, true);
 	}
 	VM_VMAccess::inlineExitVMToJNI(vmThread);
 }
@@ -433,11 +424,7 @@ MM_VLHGCAccessBarrier::jniGetStringCritical(J9VMThread* vmThread, jstring str, j
 		vmThread->jniCriticalCopyCount += 1;
 	} else {
 		// acquire access and return a direct pointer
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
-	  	vmThread->jniCriticalDirectCount += 1;
-#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
-		MM_JNICriticalRegion::enterCriticalRegion(vmThread);
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+		MM_JNICriticalRegion::enterCriticalRegion(vmThread, true);
 		Assert_MM_true(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS);
 		data = (jchar*)_extensions->indexableObjectModel.getDataPointerForContiguous(valueObject);
 
@@ -497,11 +484,7 @@ MM_VLHGCAccessBarrier::jniReleaseStringCritical(J9VMThread* vmThread, jstring st
 		Assert_MM_true((*criticalCount) > 0);
 		MM_AtomicOperations::subtract(criticalCount, 1);
 #endif /* defined(J9VM_GC_MODRON_COMPACTION) || defined(J9VM_GC_MODRON_SCAVENGER)*/
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
-	  	vmThread->jniCriticalDirectCount -= 1;
-#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
-		MM_JNICriticalRegion::exitCriticalRegion(vmThread);
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+		MM_JNICriticalRegion::exitCriticalRegion(vmThread, true);
 	}
 	VM_VMAccess::inlineExitVMToJNI(vmThread);
 }

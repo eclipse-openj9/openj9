@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2017 IBM Corp. and others
+  Copyright (c) 2016, 2018 IBM Corp. and others
  
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,6 +29,7 @@
 		<export name="JNI_CreateJavaVM"/>
 		<export name="JNI_GetCreatedJavaVMs"/>
 		<export name="JNI_GetDefaultJavaVMInitArgs"/>
+		<export name="_JVM_GetCallerClass@8" />
 	</exports>
 
 	<artifact type="shared" name="jvm" scope="b150" loadgroup="top" buildlocal="true" appendrelease="false">
@@ -38,6 +39,9 @@
 			<option name="prototypeHeaderFileNames" data="jvm.h"/>
 		</options>
 		<phase>core quick j2se</phase>
+		<dependencies>
+			<dependency name="generate_j9vm"/>
+		</dependencies>
 		<exports>
 			<group name="all"/>
 			<group name="j9vmnatives"/>
@@ -52,8 +56,8 @@
 			<include path="jclcommon">
 				<include-if condition="spec.flags.build_realtime"/>
 			</include>
-                        <include path="$(OMR_DIR)/gc/include" type="relativepath"/>
-                        <include path="j9gcgluejava"/>
+			<include path="$(OMR_DIR)/gc/include" type="relativepath"/>
+			<include path="j9gcgluejava"/>
 		</includes>
 		<makefilestubs>
 			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
@@ -67,13 +71,13 @@
 			<vpath pattern="j7vmi.c" path="../j9vm" augmentObjects="true" augmentIncludes="true" type="relativepath"/>
 			<vpath pattern="j8vmi.c" path="../j9vm" augmentObjects="true" augmentIncludes="true" type="relativepath"/>
 			<vpath pattern="j9memcategories.c" path="../j9vm" augmentObjects="true" augmentIncludes="true" type="relativepath"/>
-			<vpath pattern="java9vmi.c" path="../j9vm" augmentObjects="true" augmentIncludes="true" type="relativepath"/>
+			<vpath pattern="java11vmi.c" path="../j9vm" augmentObjects="true" augmentIncludes="true" type="relativepath"/>
 			<vpath pattern="jvm.c" path="../j9vm" augmentObjects="true" augmentIncludes="true" type="relativepath"/>
 			<vpath pattern="ut_j9scar.c" path="../j9vm" augmentObjects="true" augmentIncludes="true" type="relativepath"/>
 			<vpath pattern="vmi.c" path="../j9vm" augmentObjects="true" augmentIncludes="true" type="relativepath"/>
 		</vpaths>
 		<objects>
-			<object name="java9vmi"/>
+			<object name="java11vmi"/>
 			<object name="j8vmi"/>
 			<object name="j7vmi"/>
 			<object name="j7verify"/>

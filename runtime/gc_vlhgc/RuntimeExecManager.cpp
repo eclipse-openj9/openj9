@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -104,10 +104,10 @@ MM_RuntimeExecManager::jniNativeBindHook(J9HookInterface** hook, UDATA eventNum,
 		BOOLEAN literalCheck = FALSE;
 		
 		if ((J2SE_VERSION(vmThread->javaVM) & J2SE_VERSION_MASK) <= J2SE_18) {
-			/* J2SE_15 to J2SE_18 */
+			/* Assuming J2SE_18, no other lower level supported */
 			literalCheck = J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(classNameUTF8), J9UTF8_LENGTH(classNameUTF8), CLASS_NAME1);
 		} else {
-			/* J2SE_19 */
+			/* J2SE_19 and beyond */
 			literalCheck = J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(classNameUTF8), J9UTF8_LENGTH(classNameUTF8), CLASS_NAME2);
 		}
 

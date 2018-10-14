@@ -40,7 +40,7 @@ J9NLS_J9JIT_390_UNSUPPORTED_HARDWARE.system_action=The compiler will not generat
 J9NLS_J9JIT_390_UNSUPPORTED_HARDWARE.user_response=Check the SDK and Runtime Environment Guide for a list of supported hardware.
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_STORE_FULL=Zabrak\u0142o miejsca na kod AOT w pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas. Nowy kod AOT nie zostanie wygenerowany.
+J9NLS_RELOCATABLE_CODE_STORE_FULL=Zabrak\u0142o miejsca na kod AOT we wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas. Nowy kod AOT nie zostanie wygenerowany.
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_STORE_FULL.explanation=The AOT section of the shared class cache is full.
 J9NLS_RELOCATABLE_CODE_STORE_FULL.system_action=The compiler will stop generating AOT code. The AOT code already stored in the shared class cache will continue to be used.
@@ -48,7 +48,7 @@ J9NLS_RELOCATABLE_CODE_STORE_FULL.user_response=Increase the size of the AOT sec
 J9NLS_RELOCATABLE_CODE_STORE_FULL.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xscmaxaot
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_STORE_ERROR=Niepowodzenie zapisania kodu AOT w pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas. Pami\u0119\u0107 podr\u0119czna wsp\u00f3\u0142u\u017cytkowanych klas mo\u017ce by\u0107 uszkodzona. Ignorowanie kodu AOT w pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas.
+J9NLS_RELOCATABLE_CODE_STORE_ERROR=Niepowodzenie zapisania kodu AOT we wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas. Wsp\u00f3\u0142u\u017cytkowana pami\u0119\u0107 podr\u0119czna klas mo\u017ce by\u0107 uszkodzona. Ignorowanie kodu AOT we wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas.
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_STORE_ERROR.explanation=An error occured storing AOT code in the shared class cache. The shared class cache might be corrupted.
 J9NLS_RELOCATABLE_CODE_STORE_ERROR.system_action=The compiler will stop generating AOT code. AOT code from the shared class cache will not be used.
@@ -56,7 +56,7 @@ J9NLS_RELOCATABLE_CODE_STORE_ERROR.user_response=Destroy and recreate the AOT co
 J9NLS_RELOCATABLE_CODE_STORE_ERROR.link=dita:///diag/tools/shcpd_debug_cache.dita
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_PROCESSING_COMPATIBILITY_FAILURE=Niepowodzenie podczas inicjowania \u015brodowiska wykonawczego AOT. Ignorowanie kodu AOT w pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas.
+J9NLS_RELOCATABLE_CODE_PROCESSING_COMPATIBILITY_FAILURE=Niepowodzenie podczas inicjowania \u015brodowiska wykonawczego AOT. Ignorowanie kodu AOT we wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas.
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_PROCESSING_COMPATIBILITY_FAILURE.explanation=An error occured initializing using AOT.
 J9NLS_RELOCATABLE_CODE_PROCESSING_COMPATIBILITY_FAILURE.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
@@ -64,7 +64,7 @@ J9NLS_RELOCATABLE_CODE_PROCESSING_COMPATIBILITY_FAILURE.user_response=If the err
 J9NLS_RELOCATABLE_CODE_PROCESSING_COMPATIBILITY_FAILURE.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_WRONG_HARDWARE=Nie mo\u017cna wykona\u0107 kodu AOT w pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas na bie\u017c\u0105cym procesorze. Ignorowanie kodu AOT w pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas.
+J9NLS_RELOCATABLE_CODE_WRONG_HARDWARE=Nie mo\u017cna wykona\u0107 kodu AOT we wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas na bie\u017c\u0105cym procesorze. Ignorowanie kodu AOT we wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas.
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_WRONG_HARDWARE.explanation=The AOT code in the shared class cache is not compiled for this platform.
 J9NLS_RELOCATABLE_CODE_WRONG_HARDWARE.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
@@ -72,7 +72,7 @@ J9NLS_RELOCATABLE_CODE_WRONG_HARDWARE.user_response=Destroy and recreate the AOT
 J9NLS_RELOCATABLE_CODE_WRONG_HARDWARE.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_WRONG_JVM_VERSION=Kod AOT w pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas nie mo\u017ce dzia\u0142a\u0107 w bie\u017c\u0105cej wersji maszyny JVM. Ignorowanie kodu AOT w pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas.
+J9NLS_RELOCATABLE_CODE_WRONG_JVM_VERSION=Kod AOT we wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas nie mo\u017ce dzia\u0142a\u0107 w bie\u017c\u0105cej wersji maszyny JVM. Ignorowanie kodu AOT we wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas.
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_WRONG_JVM_VERSION.explanation=The AOT code in the shared class cache was created using a different JVM release.
 J9NLS_RELOCATABLE_CODE_WRONG_JVM_VERSION.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
@@ -80,7 +80,7 @@ J9NLS_RELOCATABLE_CODE_WRONG_JVM_VERSION.user_response=Destroy and recreate the 
 J9NLS_RELOCATABLE_CODE_WRONG_JVM_VERSION.link=dita:///diag/tools/shcpd_deploying_compat.dita
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_WRONG_GC_POLICY=Kod AOT w pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas nie mo\u017ce dzia\u0142a\u0107 z bie\u017c\u0105c\u0105 strategi\u0105 czyszczenia pami\u0119ci. Ignorowanie kodu AOT w pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas.
+J9NLS_RELOCATABLE_CODE_WRONG_GC_POLICY=Kod AOT we wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas nie mo\u017ce dzia\u0142a\u0107 z bie\u017c\u0105c\u0105 strategi\u0105 czyszczenia pami\u0119ci. Ignorowanie kodu AOT we wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas.
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_WRONG_GC_POLICY.explanation=The AOT code in the shared class cache was created using a different garbage collection policy.
 J9NLS_RELOCATABLE_CODE_WRONG_GC_POLICY.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
@@ -88,7 +88,7 @@ J9NLS_RELOCATABLE_CODE_WRONG_GC_POLICY.user_response=Destroy and recreate AOT co
 J9NLS_RELOCATABLE_CODE_WRONG_GC_POLICY.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_NOT_AVAILABLE_WITH_FSD_JVMPI=Kod AOT w pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas nie mo\u017ce dzia\u0142a\u0107 z bie\u017c\u0105cymi ustawieniami JVMPI lub JVMTI. Ignorowanie kodu AOT w pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas.
+J9NLS_RELOCATABLE_CODE_NOT_AVAILABLE_WITH_FSD_JVMPI=Kod AOT we wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas nie mo\u017ce dzia\u0142a\u0107 z bie\u017c\u0105cymi ustawieniami JVMPI lub JVMTI. Ignorowanie kodu AOT we wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas.
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_NOT_AVAILABLE_WITH_FSD_JVMPI.explanation=AOT code cannot be used with JVMPI or JVMTI.
 J9NLS_RELOCATABLE_CODE_NOT_AVAILABLE_WITH_FSD_JVMPI.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.

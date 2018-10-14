@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2016, 2017 IBM Corp. and others
+# Copyright (c) 2016, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,23 +20,21 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ###############################################################################
 
-# Detect 64-bit vs. 32-bit
-ifneq (,$(findstring -64,$(SPEC)))
-  TEMP_TARGET_DATASIZE:=64
-else
-  TEMP_TARGET_DATASIZE:=32
-endif
+# Detect 64-bit vs. 32-bit.
+TEMP_TARGET_DATASIZE := $(if $(findstring -64,$(SPEC)),64,32)
 
 CONFIGURE_ARGS += \
 <#if uma.spec.flags.opt_cuda.enabled>
   --enable-OMR_OPT_CUDA \
+</#if>
+<#if uma.spec.flags.port_omrsigSupport.enabled>
+  --enable-OMRPORT_OMRSIG_SUPPORT \
 </#if>
   --enable-OMR_GC \
   --enable-OMR_PORT \
   --enable-OMR_THREAD \
   --enable-OMR_OMRSIG \
   --enable-tracegen \
-  --disable-debug \
   --enable-OMR_GC_ARRAYLETS \
   --enable-OMR_GC_DYNAMIC_CLASS_UNLOADING \
   --enable-OMR_GC_MODRON_COMPACTION \
@@ -53,6 +51,13 @@ CONFIGURE_ARGS += \
   --enable-OMR_THR_CUSTOM_SPIN_OPTIONS \
   --enable-OMR_NOTIFY_POLICY_CONTROL
 
+# Configure OpenJ9 builds with DDR enabled to use tooling from OMR.
+<#if uma.spec.flags.opt_useOmrDdr.enabled>
+CONFIGURE_ARGS += --enable-debug --enable-DDR
+<#else>
+CONFIGURE_ARGS += --disable-debug
+</#if>
+
 CONFIGURE_ARGS += 'lib_output_dir=$$(top_srcdir)/../lib'
 CONFIGURE_ARGS += 'exe_output_dir=$$(top_srcdir)/..'
 
@@ -61,4 +66,6 @@ CONFIGURE_ARGS += 'GLOBAL_INCLUDES=$$(top_srcdir)/../include'
 
 # This flag indicates that the J9 VMFarm build runs configure on a machine
 # that is not capable of compiling the source code.
+ifeq (yes,$(CALLED_BY_SOURCE_ZIP))
 CONFIGURE_ARGS += 'OMR_CROSS_CONFIGURE=yes'
+endif

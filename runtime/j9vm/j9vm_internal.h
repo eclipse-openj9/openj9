@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2017 IBM Corp. and others
+ * Copyright (c) 2002, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,7 +62,7 @@
 #include <sys/ioctl.h>
 #include <setjmp.h>
 #include <sys/time.h>
-#ifdef J9ZTPF
+#if defined(J9ZTPF) || defined(OSX)
 #define J9FSTAT fstat
 #else /* defined(J9ZTPF) */
 #define J9FSTAT fstat64

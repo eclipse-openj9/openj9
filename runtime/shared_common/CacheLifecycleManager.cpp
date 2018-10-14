@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -237,7 +237,6 @@ printSharedCache(void* element, void* param)
 	SH_OSCache_Info* currentItem = (SH_OSCache_Info*) element;
 	if (((state->printCompatibleCache == true) && (currentItem->isCompatible))
 			|| ((state->printIncompatibleCache == true) && (!currentItem->isCompatible))) {
-		char jclLevelStr[10];
 		char addrmodeStr[10];
 
 		PORT_ACCESS_FROM_JAVAVM(state->vm);
@@ -247,7 +246,7 @@ printSharedCache(void* element, void* param)
 		if (state->printIntro) {
 			char cacheDir[J9SH_MAXPATH];
 
-			SH_OSCache::getCacheDir(PORTLIB, state->ctrlDirName, cacheDir, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_PERSISTENT);
+			SH_OSCache::getCacheDir(state->vm, state->ctrlDirName, cacheDir, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_PERSISTENT);
 			j9tty_printf(PORTLIB, "\n");
 			CLM_TRACE1_NOTAG(J9NLS_SHRC_INFO_LISTING_FOR_CACHEDIR, cacheDir);
 			j9tty_printf(PORTLIB, "\n");
@@ -286,10 +285,11 @@ printSharedCache(void* element, void* param)
 			j9tty_printf(PORTLIB, "\nIncompatible shared caches\n");
 			state->printIncompatibleHeader = 2;
 		}
-
 		j9tty_printf(PORTLIB, "%-16s\t", currentItem->name);
-		getStringForShcModlevel(PORTLIB, currentItem->versionData.modlevel, (char*)&jclLevelStr);
-		getStringForShcAddrmode(PORTLIB, currentItem->versionData.addrmode, (char*)&addrmodeStr);
+		char jclLevelStr[10];
+		memset(jclLevelStr, 0, sizeof(jclLevelStr));
+		getStringForShcModlevel(PORTLIB, currentItem->versionData.modlevel, jclLevelStr, sizeof(jclLevelStr));
+		getStringForShcAddrmode(PORTLIB, currentItem->versionData.addrmode, addrmodeStr);
 		j9tty_printf(PORTLIB, "%s %s  ", jclLevelStr, addrmodeStr);
 		if (J9PORT_SHR_CACHE_TYPE_PERSISTENT == currentItem->versionData.cacheType) {
 			j9tty_printf(PORTLIB, "%-16s", "persistent");
@@ -605,7 +605,7 @@ j9shr_destroy_all_cache(struct J9JavaVM* vm, const char* ctrlDirName, UDATA grou
 		return -1;
 	}
 	
-	SH_OSCache::getCacheDir(PORTLIB, ctrlDirName, cacheDir, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_PERSISTENT);
+	SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDir, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_PERSISTENT);
 	j9tty_printf(PORTLIB, "\n");
 	CLM_TRACE1_NOTAG(J9NLS_SHRC_INFO_DESTROYING_FOR_CACHEDIR, cacheDir);
 	j9tty_printf(PORTLIB, "\n");
@@ -651,7 +651,7 @@ j9shr_destroy_all_snapshot(struct J9JavaVM* vm, const char* ctrlDirName, UDATA g
 		return -1;
 	}
 
-	if (-1 == SH_OSCache::getCacheDir(PORTLIB, ctrlDirName, cacheDir, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_SNAPSHOT)) {
+	if (-1 == SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDir, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_SNAPSHOT)) {
 		Trc_SHR_CLM_j9shr_destroy_all_snapshot_getCacheDirFailed();
 		CLM_TRACE(J9NLS_SHRC_GETSNAPSHOTDIR_FAILED);
 		return -1;
@@ -770,7 +770,7 @@ j9shr_destroy_cache(struct J9JavaVM* vm, const char* ctrlDirName, UDATA verboseF
 		return J9SH_DESTROYED_NONE;
 	}
 
-	if (SH_OSCache::getCacheDir(PORTLIB, ctrlDirName, cacheDirName, J9SH_MAXPATH, versionData->cacheType) == -1) {
+	if (SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDirName, J9SH_MAXPATH, versionData->cacheType) == -1) {
 		Trc_SHR_CLM_j9shr_destroy_cache_getCacheDirFailed();
 		CLM_TRACE1(J9NLS_SHRC_CLCM_FAILED_REMOVED, cacheName);
 		return J9SH_DESTROYED_NONE;
@@ -973,7 +973,7 @@ j9shr_destroy_snapshot(struct J9JavaVM* vm, const char* ctrlDirName, UDATA verbo
 	
 	Trc_SHR_CLM_j9shr_destroy_snapshot_Entry(verboseFlags, snapshotName, generationStart, generationEnd);
 
-	if (-1 == SH_OSCache::getCacheDir(PORTLIB, ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_SNAPSHOT)) {
+	if (-1 == SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_SNAPSHOT)) {
 		Trc_SHR_CLM_j9shr_destroy_snapshot_getCacheDirFailed();
 		CLM_TRACE(J9NLS_SHRC_GETSNAPSHOTDIR_FAILED);
 		returnVal = J9SH_DESTROYED_NONE;

@@ -310,7 +310,7 @@ J9NLS_VERB_SIZES_XSCMAXJITDATA.system_action=
 J9NLS_VERB_SIZES_XSCMAXJITDATA.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_XLP_CODECACHE=taille des pages volumineuses pour le cache de code JIT
+J9NLS_VERB_SIZES_XLP_CODECACHE=taille de grande page pour le cache de code JIT
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_XLP_CODECACHE.explanation=NOTAG
 J9NLS_VERB_SIZES_XLP_CODECACHE.system_action=
@@ -318,7 +318,7 @@ J9NLS_VERB_SIZES_XLP_CODECACHE.user_response=
 
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_AVAILABLE_XLP_CODECACHE=tailles des pages volumineuses disponibles pour le cache de code JIT :
+J9NLS_VERB_SIZES_AVAILABLE_XLP_CODECACHE=tailles de grande page disponibles pour le cache de code JIT :
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_AVAILABLE_XLP_CODECACHE.explanation=NOTAG
 J9NLS_VERB_SIZES_AVAILABLE_XLP_CODECACHE.system_action=

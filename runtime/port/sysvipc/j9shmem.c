@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,6 +41,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
+#include <pwd.h>
 
 #include "portnls.h"
 #include "portpriv.h"
@@ -1242,30 +1243,89 @@ getControlFilePath(struct J9PortLibrary* portLibrary, const char* cacheDirName, 
 }
 
 intptr_t
-j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, BOOLEAN appendBaseDir, char* buffer, uintptr_t bufLength)
+j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint32_t flags, char* buffer, uintptr_t bufLength)
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
-	const char* rootDir = J9SH_DEFAULT_CTRL_ROOT;
+	const char* rootDir = NULL;
+	char homeDirBuf[J9SH_MAXPATH];
+	const char* homeDir = NULL;
+	BOOLEAN appendBaseDir = J9_ARE_ALL_BITS_SET(flags, J9SHMEM_GETDIR_APPEND_BASEDIR);
 
 	Trc_PRT_j9shmem_getDir_Entry();
 
+	memset(homeDirBuf, 0, sizeof(homeDirBuf));
+
 	if (ctrlDirName != NULL) {
 		rootDir = ctrlDirName;
-	}
-
-	if (appendBaseDir) {
-		if (omrstr_printf(buffer, bufLength, "%s/%s", rootDir, J9SH_BASEDIR) == bufLength - 1) {
-			Trc_PRT_j9shmem_getDir_ExitFailedOverflow();
-			return -1;
-		}
 	} else {
-		/* Avoid appending two slashes; this leads to problems in matching full file names. */
-		if (omrstr_printf(buffer,
-							bufLength,
-							('/' == rootDir[strlen(rootDir)-1]) ? "%s" : "%s/",
-							rootDir) == bufLength - 1) {
-			Trc_PRT_j9shmem_getDir_ExitFailedOverflow();
-			return -1;
+		if (J9_ARE_ALL_BITS_SET(flags, J9SHMEM_GETDIR_USE_USERHOME)) {
+			Assert_PRT_true(TRUE == appendBaseDir);
+			uintptr_t baseDirLen = strlen(J9SH_BASEDIR);
+			/*
+			 *  User could define/change their notion of the home directory by setting environment variable "HOME".
+			 *  So check "HOME" first, if failed, then check getpwuid(getuid())->pw_dir.
+			 */
+			if (0 == omrsysinfo_get_env("HOME", homeDirBuf, J9SH_MAXPATH)) {
+				uintptr_t dirLen = strlen((const char*)homeDirBuf);
+				if (0 < dirLen
+					&& ((dirLen + baseDirLen) < bufLength))
+				{
+					homeDir = homeDirBuf;
+				} else {
+					Trc_PRT_j9shmem_getDir_tryHomeDirFailed_homeDirTooLong(dirLen, bufLength - baseDirLen);
+				}
+			} else {
+				Trc_PRT_j9shmem_getDir_tryHomeDirFailed_getEnvHomeFailed();
+			}
+			if (NULL == homeDir) {
+				struct passwd *pwent = getpwuid(getuid());
+				if (NULL != pwent) {
+					uintptr_t dirLen = strlen((const char*)pwent->pw_dir);
+					if (0 < dirLen
+						&& ((dirLen + baseDirLen) < bufLength))
+					{
+						homeDir = pwent->pw_dir;
+					} else {
+						Trc_PRT_j9shmem_getDir_tryHomeDirFailed_pw_dirDirTooLong(dirLen, bufLength - baseDirLen);
+					}
+				} else {
+					Trc_PRT_j9shmem_getDir_tryHomeDirFailed_getpwuidFailed();
+				}
+			}
+			if (NULL != homeDir) {
+				struct J9FileStat statBuf = {0};
+				if (0 == omrfile_stat(homeDir, 0, &statBuf)) {
+					if (!statBuf.isRemote) {
+						rootDir = homeDir;
+					} else {
+						Trc_PRT_j9shmem_getDir_tryHomeDirFailed_homeOnNFS(homeDir);
+					}
+				} else {
+					Trc_PRT_j9shmem_getDir_tryHomeDirFailed_cannotStat(homeDir);
+				}
+			}
+		} else {
+			rootDir = J9SH_DEFAULT_CTRL_ROOT;
+		}
+	}
+	if (NULL == rootDir) {
+		Assert_PRT_true(J9_ARE_ALL_BITS_SET(flags, J9SHMEM_GETDIR_USE_USERHOME));
+		return -1;
+	} else {
+		if (appendBaseDir) {
+			if (omrstr_printf(buffer, bufLength, "%s/%s", rootDir, J9SH_BASEDIR) == bufLength - 1) {
+				Trc_PRT_j9shmem_getDir_ExitFailedOverflow();
+				return -1;
+			}
+		} else {
+			/* Avoid appending two slashes; this leads to problems in matching full file names. */
+			if (omrstr_printf(buffer,
+								bufLength,
+								('/' == rootDir[strlen(rootDir)-1]) ? "%s" : "%s/",
+										rootDir) == bufLength - 1) {
+				Trc_PRT_j9shmem_getDir_ExitFailedOverflow();
+				return -1;
+			}
 		}
 	}
 

@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -83,32 +83,6 @@ public:
 	 */
 	MMINLINE IDATA getIndex() {
 		return _callSiteTotal - _callSiteCount - 1;
-	}
-
-	/**
-	 * Sets the next slot to be returned to the given slot.  This is only useful for
-	 * resuming a suspended callsite iteration.
-	 *
-	 * @param slot[in] The slot pointer which is to be returned by the next call to nextSlot
-	 */
-	void
-	setNextSlot(j9object_t *slot)
-	{
-		UDATA skipped = slot - _callSitePtr;
-		_callSitePtr = slot;
-		_callSiteCount -= (U_32) skipped;
-	}
-
-	bool
-	isSlotInCallSites(j9object_t *slot)
-	{
-		/* we can only call this if nextSlot has not yet been called */
-		bool isInCallSites = false;
-		if (slot >= _callSitePtr) {
-			UDATA skipped = (slot - _callSitePtr);
-			isInCallSites = (skipped <= _callSiteCount);
-		}
-		return isInCallSites;
 	}
 };
 

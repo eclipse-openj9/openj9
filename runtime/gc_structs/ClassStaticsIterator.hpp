@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -114,32 +114,5 @@ public:
 
 		return slotPtr;
 	}
-
-	bool
-	isSlotInClassStatics(j9object_t *slot)
-	{
-		/* we can only call this if nextSlot has not yet been called */
-		bool isInClassStatics = false;
-		if (slot >= _staticPtr) {
-			UDATA skipped = (slot - _staticPtr);
-			isInClassStatics = (skipped <= _objectStaticCount);
-		}
-		return isInClassStatics;
-	}
-
-	/**
-	 * Sets the next slot to be returned to the given slot.  This is only useful for
-	 * resuming a suspended static iteration.
-	 *
-	 * @param slot[in] The slot pointer which is to be returned by the next call to nextSlot
-	 */
-	void
-	setNextSlot(j9object_t *slot)
-	{
-		UDATA skipped = slot - _staticPtr;
-		_staticPtr = slot;
-		_objectStaticCount -= (U_32)skipped;
-	}
-	
 };
 #endif /* CLASSSTATICSITERATOR_HPP_ */

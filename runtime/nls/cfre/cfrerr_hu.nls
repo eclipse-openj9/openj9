@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -629,7 +629,7 @@ J9NLS_CFR_ERR_MULTIPLE_INNER_CLASS_ATTRIBUTES.user_response=Contact the provider
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_UNKNOWN_CONSTANT=ismeretlen konstanst\u00e1r bejegyz\u00e9sc\u00edmke
+J9NLS_CFR_ERR_UNKNOWN_CONSTANT=ismeretlen konstanst\u00e1r-bejegyz\u00e9sc\u00edmke
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_UNKNOWN_CONSTANT.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_UNKNOWN_CONSTANT.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1117,7 +1117,7 @@ J9NLS_CFR_ERR_BAD_ANNOTATION_TAG.user_response=Contact the provider of the class
 # END NON-TRANSLATABLE
 
 # InvokeDynamic and invokedynamic are not translatable
-J9NLS_CFR_ERR_BC_NOT_INVOKEDYNAMIC=Az invokedynamic byte-k\u00f3dnak egy InvokeDynamic konstanst\u00e1r bejegyz\u00e9sre kell hivatkoznia
+J9NLS_CFR_ERR_BC_NOT_INVOKEDYNAMIC=Az invokedynamic byte-k\u00f3dnak egy InvokeDynamic konstanst\u00e1r-bejegyz\u00e9sre kell hivatkoznia
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_NOT_INVOKEDYNAMIC.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_BC_NOT_INVOKEDYNAMIC.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1133,7 +1133,7 @@ J9NLS_CFR_ERR_BC_INVOKEDYNAMIC_RESERVED.user_response=Contact the provider of th
 # END NON-TRANSLATABLE
 
 # MethodHandle is not translatable
-J9NLS_CFR_ERR_BOOTSTRAP_METHODHANDLE=A bootstrap met\u00f3dusindexnek egy MethodHandle konstanst\u00e1r bejegyz\u00e9sre kell hivatkoznia
+J9NLS_CFR_ERR_BOOTSTRAP_METHODHANDLE=A bootstrap met\u00f3dusindexnek egy MethodHandle konstanst\u00e1r-bejegyz\u00e9sre kell hivatkoznia
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BOOTSTRAP_METHODHANDLE.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_BOOTSTRAP_METHODHANDLE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1148,7 +1148,7 @@ J9NLS_CFR_ERR_METHODTYPE_INVALID_SIG.system_action=The JVM will throw a verifica
 J9NLS_CFR_ERR_METHODTYPE_INVALID_SIG.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V51=A konstanst\u00e1r bejegyz\u00e9s \u00e9rv\u00e9nytelen az olyan oszt\u00e1lyf\u00e1jlokban, melyek verzi\u00f3sz\u00e1ma kisebb, mint 51.0
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V51=A konstanst\u00e1rbejegyz\u00e9s \u00e9rv\u00e9nytelen az olyan oszt\u00e1lyf\u00e1jlokban, melyek verzi\u00f3sz\u00e1ma kisebb, mint 51.0
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V51.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V51.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1226,7 +1226,7 @@ J9NLS_CFR_ERR_MULTIPLE_TYPE_ANNOTATIONS_ATTRIBUTES__ID.user_response=Contact the
 # END NON-TRANSLATABLE
 
 # invalid constant pool index
-J9NLS_CFR_ERR_INVALID_CONSTANT_POOL_INDEX=Az oszt\u00e1lyf\u00e1jl attrib\u00fatum egy nem l\u00e9tez\u0151 konstanst\u00e1r bejegyz\u00e9sre vonatkozik
+J9NLS_CFR_ERR_INVALID_CONSTANT_POOL_INDEX=Az oszt\u00e1lyf\u00e1jl attrib\u00fatum egy nem l\u00e9tez\u0151 konstanst\u00e1r-bejegyz\u00e9sre vonatkozik
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_INVALID_CONSTANT_POOL_INDEX.explanation=Constant pool indexes must refer to valid constant pool entries
 J9NLS_CFR_ERR_INVALID_CONSTANT_POOL_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1268,4 +1268,97 @@ J9NLS_CFR_ERR_MULTIPLE_ANNOTATION_ATTRIBUTES__ID.explanation=Class may have at m
 J9NLS_CFR_ERR_MULTIPLE_ANNOTATION_ATTRIBUTES__ID.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_MULTIPLE_ANNOTATION_ATTRIBUTES__ID.user_response=Contact the provider of the classfile for a corrected version.
 
+# END NON-TRANSLATABLE
+
+#Multiple nest mates attributes
+J9NLS_CFR_ERR_MULTIPLE_NEST_ATTRIBUTES=T\u00f6bb NestMate attrib\u00fatum
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_MULTIPLE_NEST_ATTRIBUTES.explanation=Class can have at most one NestMate or MemberOfNeset attribute
+J9NLS_CFR_ERR_MULTIPLE_NEST_ATTRIBUTES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_MULTIPLE_NEST_ATTRIBUTES.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+#Nest members attribute name is not a utf8
+J9NLS_CFR_ERR_NEST_MEMBERS_NAME_NOT_CONSTANT_CLASS=A nest attrib\u00fatum be\u00e1gyaz\u00e1si hosztj\u00e1nak tagja csak konstans oszt\u00e1ly lehet
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_NEST_MEMBERS_NAME_NOT_CONSTANT_CLASS.explanation=Member of nest attribute must be a constant class
+J9NLS_CFR_ERR_NEST_MEMBERS_NAME_NOT_CONSTANT_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_NEST_MEMBERS_NAME_NOT_CONSTANT_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+# Nest host attribute is not a constant class
+J9NLS_CFR_ERR_BAD_NEST_HOST_INDEX=A be\u00e1gyaz\u00e1si hoszt csak konstans oszt\u00e1ly lehet
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_BAD_NEST_HOST_INDEX.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_BAD_NEST_HOST_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_BAD_NEST_HOST_INDEX.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+# <clinit> method at version 51.0 or above does not have static flag set
+J9NLS_CFR_ERR_CLINIT_NOT_STATIC=A <clinit> met\u00f3dus nem statikus
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_CLINIT_NOT_STATIC.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_CLINIT_NOT_STATIC.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_CLINIT_NOT_STATIC.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+# <clinit> method at version 51.0 must be void and take no arguments
+J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE=A <clinit> met\u00f3dus al\u00e1\u00edr\u00e1sa hib\u00e1s
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+# <init> method cannot be in an Interface in Java 9
+J9NLS_CFR_ERR_INIT_ILLEGAL_IN_INTERFACE=A fel\u00fcletnek nem lehet <init> nev\u0171 met\u00f3dusa
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_INIT_ILLEGAL_IN_INTERFACE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_INIT_ILLEGAL_IN_INTERFACE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_INIT_ILLEGAL_IN_INTERFACE.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE=Ismeretlen konstansc\u00edmke (19) az oszt\u00e1lyf\u00e1jlban
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE=Ismeretlen konstansc\u00edmke (20) az oszt\u00e1lyf\u00e1jlban
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53=A konstanst\u00e1rbejegyz\u00e9s \u00e9rv\u00e9nytelen az olyan oszt\u00e1lyf\u00e1jlokban, melyek verzi\u00f3sz\u00e1ma kisebb, mint 53.0
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS=A module-info nem oszt\u00e1ly, mert access_flag ACC_MODULE van be\u00e1ll\u00edtva
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55=A konstanst\u00e1rbejegyz\u00e9s \u00e9rv\u00e9nytelen az olyan oszt\u00e1lyf\u00e1jlokban, melyek verzi\u00f3sz\u00e1ma kisebb, mint 55.0
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE

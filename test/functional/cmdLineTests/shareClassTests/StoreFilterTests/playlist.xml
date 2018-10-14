@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Copyright (c) 2016, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TestConfig/playlist.xsd">
+	<include>variables.mk</include>
+	<test>
+		<testCaseName>cmdLineTester_StoreFilterTests_win</testCaseName>
+		<variations>
+			<variation>Mode110</variation>
+		</variations>
+		<command>cp $(Q)$(TEST_RESROOT)$(D)StoreFilterTests.jar$(Q) .; \
+	$(Q)$(JDK_HOME)$(D)bin$(D)jar.exe$(Q) xf StoreFilterTests.jar; \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_EXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DPD=$(Q)\\$(Q) -DJDK_HOME=$(Q)$(JDK_HOME)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(Q)cmd /c$(Q) -DSCRIPT_SUFFIX=.bat -DSCMODE=204 \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)StoreFilterTests$(XMLSUFFIX).xml$(Q) \
+	-nonZeroExitWhenError \
+	-outputLimit 300; \
+	$(TEST_STATUS)</command>
+		<platformRequirements>os.win</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
+		</subsets>
+	</test>
+	<test>
+		<testCaseName>cmdLineTester_StoreFilterTests_unix</testCaseName>
+		<variations>
+			<variation>Mode110</variation>
+		</variations>
+		<command>cp $(Q)$(TEST_RESROOT)$(D)StoreFilterTests.jar$(Q) .; \
+	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(Q) xf StoreFilterTests.jar; \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_EXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DPD=$(Q)/$(Q) -DJDK_HOME=$(Q)$(JDK_HOME)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(Q)sh$(Q) -DSCRIPT_SUFFIX=.sh -DSCMODE=204 \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)StoreFilterTests$(XMLSUFFIX).xml$(Q) \
+	-nonZeroExitWhenError \
+	-outputLimit 300; \
+	$(TEST_STATUS)</command>
+		<platformRequirements>^os.win,^os.zos</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
+		</subsets>
+	</test>
+</playlist>

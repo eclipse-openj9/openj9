@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2017 IBM Corp. and others
+  Copyright (c) 2016, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,13 +28,13 @@
 
 	<taskdef resource="net/sf/antcontrib/antlib.xml" />
 
-	<property name="ascii.workspace.dir" value="${SRC_ROOT}" />
+	<property name="ascii.workspace.dir" value="${TEST_ROOT}" />
 	<property name="ascii.test.dir" value="${BUILD_ROOT}" />
-	<property name="JAVA_VERSION" value=""/>
+	<property name="JDK_VERSION" value=""/>
 	<property name="JAVA_BIN" value="${JAVA_BIN}" />
 	<echo> JAVA_BIN is ${JAVA_BIN} </echo>
 	<if>
-		<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+		<equals arg1="${JDK_VERSION}" arg2="8"/>
 		<then>
 			<property name="JAVAC" value="${JAVA_BIN}/../../bin/javac" />
 		</then>
@@ -67,110 +67,16 @@
 	</if>
 	<echo> build.list is ${build.list} </echo>
 
-	<target name="build" depends="stage_test_material" description="using ${JAVA_VERSION} compile the source ">
-		<if>
-			<equals arg1="${JAVA_VERSION}" arg2="Panama"/>
-			<then>
-				<subant target="">
-					<property name="build.dir" value="subant1.build" />
-					<property name="not.overloaded" value="not.overloaded" />
-					<property name="JAVA_VERSION" value="${JAVA_VERSION}" />
-					<property name="compiler.javac" value="${JAVAC}" />
-					<fileset dir="../../">
-						<include name="Panama/build.xml" />
-					</fileset>
-				</subant>
-			</then>
-			<elseif>
-				<equals arg1="${JAVA_VERSION}" arg2="Valhalla"/>
-				<then>
-					<subant target="">
-						<property name="build.dir" value="subant1.build" />
-						<property name="not.overloaded" value="not.overloaded" />
-						<property name="JAVA_VERSION" value="${JAVA_VERSION}" />
-						<property name="compiler.javac" value="${JAVAC}" />
-						<fileset dir="../../">
-							<include name="Valhalla/build.xml" />
-						</fileset>
-					</subant>
-				</then>
-			</elseif>
-			<elseif>
-				<equals arg1="${JAVA_VERSION}" arg2="SE90"/>
-				<then>
-					<if>
-						<equals arg1="${JCL_VERSION}" arg2="latest"/>
-						<then>
-							<subant target="">
-								<property name="build.dir" value="subant1.build" />
-								<property name="not.overloaded" value="not.overloaded" />
-								<property name="JAVA_VERSION" value="${JAVA_VERSION}" />
-								<property name="compiler.javac" value="${JAVAC}" />
-								<fileset dir="../../" includes="${build.list}" >
-									<exclude name="TEST_*/build.xml" />
-									<exclude name="NativeTest/build.xml" />
-									<exclude name="SharedCPEntryInvokerTests/build.xml" />
-								</fileset>
-							</subant>
-						</then>
-						<else>
-							<subant target="">
-								<property name="build.dir" value="subant1.build" />
-								<property name="not.overloaded" value="not.overloaded" />
-								<property name="JAVA_VERSION" value="${JAVA_VERSION}" />
-								<property name="compiler.javac" value="${JAVAC}" />
-								<fileset dir="../../" includes="${build.list}" >
-									<exclude name="TEST_*/build.xml" />
-									<exclude name="OpenJ9_Jsr_292_API/build.xml" />
-								</fileset>
-							</subant>
-						</else>
-					</if>
-				</then>
-			</elseif>
-			<elseif>
-				<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
-				<then>
-					<if>
-						<equals arg1="${JCL_VERSION}" arg2="latest"/>
-						<then>
-							<subant target="">
-								<property name="build.dir" value="subant1.build" />
-								<property name="not.overloaded" value="not.overloaded" />
-								<property name="JAVA_VERSION" value="${JAVA_VERSION}" />
-								<property name="compiler.javac" value="${JAVAC}" />
-								<fileset dir="../../" includes="${build.list}" >
-									<exclude name="TEST_*/build.xml" />
-									<exclude name="NativeTest/build.xml" />
-								</fileset>
-							</subant>
-						</then>
-						<else>
-							<subant target="">
-								<property name="build.dir" value="subant1.build" />
-								<property name="not.overloaded" value="not.overloaded" />
-								<property name="JAVA_VERSION" value="${JAVA_VERSION}" />
-								<property name="compiler.javac" value="${JAVAC}" />
-								<fileset dir="../../" includes="${build.list}" >
-									<exclude name="TEST_*/build.xml" />
-								</fileset>
-							</subant>
-						</else>
-					</if>
-				</then>
-			</elseif>
-			<else>
-				<subant target="">
-					<property name="build.dir" value="subant1.build" />
-					<property name="not.overloaded" value="not.overloaded" />
-					<property name="JAVA_VERSION" value="${JAVA_VERSION}" />
-					<property name="compiler.javac" value="${JAVAC}" />
-					<fileset dir="../../" includes="${build.list}">
-						<exclude name="TEST_*/build.xml" />
-					</fileset>
-				</subant>
-			</else>
-		</if>
+	<target name="build" depends="stage_test_material" description="using ${JDK_VERSION} to compile the source ">
+		<subant target="">
+			<property name="build.dir" value="subant1.build" />
+			<property name="not.overloaded" value="not.overloaded" />
+			<property name="JDK_VERSION" value="${JDK_VERSION}" />
+			<property name="compiler.javac" value="${JAVAC}" />
+			<fileset dir="../../" includes="${build.list}">
+				<exclude name="TEST_*/build.xml" />
+			</fileset>
+		</subant>
 	</target>
 
 	<target name="-create_test_directory">
@@ -202,9 +108,9 @@
 				<if>
 					<isfalse value="${sdk.present}" />
 					<then>
-						<echo>${JAVA_VERSION} ${JAVA_BIN} is missing</echo>
-						<mkdir dir="${TMP_DIR}/${JAVA_VERSION}"/>
-						<property name="tmp.java.dir" value="${TMP_DIR}/${JAVA_VERSION}" />
+						<echo>${JDK_VERSION} ${JAVA_BIN} is missing</echo>
+						<mkdir dir="${TMP_DIR}/${JDK_VERSION}"/>
+						<property name="tmp.java.dir" value="${TMP_DIR}/${JDK_VERSION}" />
 						<delete dir="${tmp.java.dir}"/>
 						<basename property="jar.filename" file="${SDK_JAR}"/>
 						<copy file="${SDK_JAR}" todir="${tmp.java.dir}"/>

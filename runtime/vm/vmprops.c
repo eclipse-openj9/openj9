@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,6 +31,7 @@
 #include "jvminit.h"
 #include "ut_j9vm.h"
 #include "vmargs_api.h"
+#include "vendor_version.h"
 
 #if defined(LINUX)
 /* Copy the system properties names and values into malloced memory */
@@ -51,7 +52,8 @@ static J9JCLConfigurationInfo jclConfigs[] = {
 	{ "se7b" },
 	{ "se7r" },
 	{ "se9" },
-	{ "se10" }
+	{ "se10" },
+	{ "se11" }
 };
 
 #define NUM_JCL_CONFIGS (sizeof(jclConfigs) / sizeof(J9JCLConfigurationInfo))
@@ -65,7 +67,6 @@ static char * getOptionArg(J9JavaVM *vm, IDATA argIndex, UDATA optionNameLen);
 static UDATA addPropertyForOptionWithPathArg(J9JavaVM *vm, const char *optionName, UDATA optionNameLen, const char *propName);
 static UDATA addPropertyForOptionWithModuleListArg(J9JavaVM *vm, const char *optionName, IDATA optionNameLen, const char *propName);
 static UDATA addPropertiesForOptionWithAssignArg(J9JavaVM *vm, const char *optionName, UDATA optionNameLen, const char *basePropName, UDATA basePropNameLen);
-static UDATA addPropertiesForOptionAddModsArg(J9JavaVM *vm, const char *optionName, UDATA optionNameLen, const char *basePropName, UDATA basePropNameLen);
 static UDATA addPropertyForOptionWithEqualsArg(J9JavaVM *vm, const char *optionName, UDATA optionNameLen, const char *propName);
 static UDATA addModularitySystemProperties(J9JavaVM * vm);
 
@@ -417,97 +418,6 @@ _end:
 	return rc;
 }
 
-/**
- * This function is a temporary fix to allow both b13[6-7] and b138+ working for command line options --add-modules
- * When b148+ becomes default level, this function can be removed and the call to this function should be replaced
- * with addPropertiesForOptionWithAssignArg().
- *
- * This function is the combination of addPropertyForOptionWithModuleListArg() and addPropertiesForOptionWithAssignArg().
- * i.e., it will set system properties "jdk.module.addmods" for b13[6-7], and "jdk.module.addmods.x" for b138+
- *
- * @param [in] vm the J9JavaVM
- * @param [in] optionName name of the modularity command line option
- * @param [in] optionNameLen length of the modularity command line option
- * @param [in] basePropName base name to be used for the property to be set
- * @param [in] basePropNameLen length of the base name
- *
- * @return returns J9SYSPROP_ERROR_NONE on success, any other J9SYSPROP_ERROR code on failure
- */
-static UDATA
-addPropertiesForOptionAddModsArg(J9JavaVM *vm, const char *optionName, UDATA optionNameLen, const char *basePropName, UDATA basePropNameLen)
-{
-	IDATA argIndex = -1;
-	UDATA rc = J9SYSPROP_ERROR_NONE;
-	J9VMInitArgs *j9vm_args	= vm->vmArgsArray;
-	PORT_ACCESS_FROM_JAVAVM(vm);
-
-	argIndex = FIND_ARG_IN_VMARGS_FORWARD(OPTIONAL_LIST_MATCH_USING_EQUALS, optionName, NULL);
-	if (argIndex >= 0) {
-		UDATA index = 0;
-		UDATA indexLen = 1;
-		char *modulesList = NULL;
-
-		do {
-			char *optionArg = getOptionArg(vm, argIndex, optionNameLen);
-
-			if (NULL != optionArg) {
-				char *propName = NULL;
-				IDATA propNameLen = basePropNameLen + indexLen + 1; /* +1 for '\0' */
-				IDATA listSize = strlen(optionArg);
-
-				if (NULL == modulesList) {
-					modulesList = j9mem_allocate_memory(listSize + 1, OMRMEM_CATEGORY_VM); /* +1 for '\0' */
-					if (NULL != modulesList) {
-						strncpy(modulesList, optionArg, listSize + 1);
-					} else {
-						rc = J9SYSPROP_ERROR_OUT_OF_MEMORY;
-						goto _end;
-					}
-				} else {
-					char *prevList = modulesList;
-
-					listSize += strlen(prevList);
-					modulesList = j9mem_allocate_memory(listSize + 2, OMRMEM_CATEGORY_VM); /* +1 for ',' and +1 for '\0' */
-					if (NULL != modulesList) {
-						j9str_printf(PORTLIB, modulesList, listSize + 2, "%s,%s", prevList, optionArg);
-						j9mem_free_memory(prevList);
-					} else {
-						j9mem_free_memory(prevList);
-						rc = J9SYSPROP_ERROR_OUT_OF_MEMORY;
-						goto _end;
-					}
-				}
-
-				propName = j9mem_allocate_memory(propNameLen, OMRMEM_CATEGORY_VM);
-				if (NULL == propName) {
-					rc = J9SYSPROP_ERROR_OUT_OF_MEMORY;
-					goto _end;
-				}
-				j9str_printf(PORTLIB, propName, propNameLen, "%s%zu", basePropName, index);
-				rc = addSystemProperty(vm, propName, optionArg, J9SYSPROP_FLAG_NAME_ALLOCATED);
-				if (J9SYSPROP_ERROR_NONE != rc) {
-					goto _end;
-				}
-				CONSUME_ARG(j9vm_args, argIndex);
-			} else {
-				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_PROPERTY_MODULARITY_OPTION_REQUIRES_MODULES, optionName);
-				rc = J9SYSPROP_ERROR_ARG_MISSING;
-				goto _end;
-			}
-
-			argIndex = FIND_NEXT_ARG_IN_VMARGS_FORWARD(OPTIONAL_LIST_MATCH_USING_EQUALS, optionName, NULL, argIndex);
-			index += 1;
-			indexLen = (IDATA)floor(log10((double)index) + 1); /* get number of digits in 'index' */
-		} while (argIndex >= 0);
-
-		if (NULL != modulesList) {
-			rc = addSystemProperty(vm, SYSPROP_JDK_MODULE_ADDMODS_B136, modulesList, J9SYSPROP_FLAG_VALUE_ALLOCATED);
-		}
-	}
-
-_end:
-	return rc;
-}
 
 /**
  * Process modularity related command line options and corresponding system properties.
@@ -533,9 +443,8 @@ addModularitySystemProperties(J9JavaVM * vm)
 		goto _end;
 	}
 
-	/* When b148+ becomes default level, this method call should be replaced with addPropertiesForOptionWithAssignArg() */
 	/* Find all --add-modules options */
-	rc = addPropertiesForOptionAddModsArg(vm, VMOPT_ADD_MODULES, LITERAL_STRLEN(VMOPT_ADD_MODULES), SYSPROP_JDK_MODULE_ADDMODS, LITERAL_STRLEN(SYSPROP_JDK_MODULE_ADDMODS));
+	rc = addPropertiesForOptionWithAssignArg(vm, VMOPT_ADD_MODULES, LITERAL_STRLEN(VMOPT_ADD_MODULES), SYSPROP_JDK_MODULE_ADDMODS, LITERAL_STRLEN(SYSPROP_JDK_MODULE_ADDMODS));
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto _end;
 	}
@@ -685,25 +594,33 @@ initializeSystemProperties(J9JavaVM * vm)
 	}
 
 	/* Properties that always exist */
+	specificationVendor = "Oracle Corporation";
 	switch (j2seVersion) {
 		case J2SE_18:
 			classVersion = "52.0";
 			specificationVersion = "1.8";
-			specificationVendor = "Oracle Corporation";
 			break;
 
 		case J2SE_19:
 			classVersion = "53.0";
 			specificationVersion = "9";
-			specificationVendor = "Oracle Corporation";
 			break;
 			
 		case J2SE_V10:
-			/* FALLTHROUGH */
-		default:
 			classVersion = "54.0";
 			specificationVersion = "10";
-			specificationVendor = "Oracle Corporation";
+			break;
+			
+		case J2SE_V11:
+			classVersion = "55.0";
+			specificationVersion = "11";
+			break;
+
+		case J2SE_V12:
+			/* FALLTHROUGH */
+		default:
+			classVersion = "56.0";
+			specificationVersion = "12";
 			break;
 	}
 	rc = addSystemProperty(vm, "java.class.version", classVersion, 0);
@@ -726,23 +643,22 @@ initializeSystemProperties(J9JavaVM * vm)
 		goto fail;
 	}
 
-#if !defined(JAVA_VENDOR)
-#define JAVA_VENDOR "Eclipse OpenJ9"
-#endif /*JAVA_VENDOR*/
- 	rc = addSystemProperty(vm, "java.vendor", JAVA_VENDOR, 0);
+	rc = addSystemProperty(vm, "java.vendor", JAVA_VENDOR, 0);
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto fail;
 	}
 
-#if !defined(JAVA_VENDOR_URL)
-#define JAVA_VENDOR_URL "http://www.eclipse.org/openj9"
-#endif /*JAVA_VENDOR_URL*/
 	rc = addSystemProperty(vm, "java.vendor.url", JAVA_VENDOR_URL, 0);
 
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto fail;
 	}
 
+	rc = addSystemProperty(vm, "java.specification.version", specificationVersion, 0);
+	if (J9SYSPROP_ERROR_NONE != rc) {
+		goto fail;
+	}
+	
 	rc = addSystemProperty(vm, "java.vm.specification.version", specificationVersion, 0);
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto fail;
@@ -758,7 +674,7 @@ initializeSystemProperties(J9JavaVM * vm)
 		goto fail;
 	}
 
-	rc = addSystemProperty(vm, "java.vm.version", EsVersionString, 0);
+	rc = addSystemProperty(vm, "java.vm.version", J9JVM_VERSION_STRING, 0);
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto fail;
 	}
@@ -768,13 +684,24 @@ initializeSystemProperties(J9JavaVM * vm)
 		goto fail;
 	}
 
-#if !defined(JAVA_VM_NAME)
-#define JAVA_VM_NAME "Eclipse OpenJ9 VM"
-#endif /*JAVA_VM_NAME*/
 	rc = addSystemProperty(vm, "java.vm.name", JAVA_VM_NAME, 0);
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto fail;
 	}
+
+#if defined(J9JDK_EXT_NAME)
+	rc = addSystemProperty(vm, "jdk.extensions.name", J9JDK_EXT_NAME, 0);
+	if (J9SYSPROP_ERROR_NONE != rc) {
+		goto fail;
+	}
+#endif
+
+#if defined(J9JDK_EXT_VERSION)
+	rc = addSystemProperty(vm, "jdk.extensions.version", J9JDK_EXT_VERSION, 0);
+	if (J9SYSPROP_ERROR_NONE != rc) {
+		goto fail;
+	}
+#endif
 
 	/* Don't know the JIT yet, put in a placeholder and make it writeable for now */
 	rc = addSystemProperty(vm, "java.compiler", "", J9SYSPROP_FLAG_WRITEABLE);

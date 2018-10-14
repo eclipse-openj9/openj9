@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,14 +19,15 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+
 #include <stdio.h>
 #include "dfix.h"
 #include "dfix_internal.h"
 
 static void
-zero_memory_impl1(void* address, size_t size)
+zero_memory_impl1(void *address, size_t size)
 {
-	printf("running in zero_memory_impl1(address=0x%p,size=%d).\n", address, size);
+	printf("running in zero_memory_impl1(address=0x%p,size=%llu).\n", address, (unsigned long long)size);
 }
 
 BOOLEAN

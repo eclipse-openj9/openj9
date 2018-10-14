@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -431,7 +431,7 @@ typedef struct J9PortLibrary {
 	/** see @ref j9shmem.c::j9shmem_handle_stat "j9shmem_handle_stat"*/
 	intptr_t  ( *shmem_handle_stat)(struct J9PortLibrary *portLibrary, struct j9shmem_handle *handle, struct J9PortShmemStatistic *statbuf);
 	/** see @ref j9shmem.c::j9shmem_getDir "j9shmem_getDir"*/
-	intptr_t  ( *shmem_getDir)(struct J9PortLibrary* portLibrary, const char* ctrlDirName, BOOLEAN appendBaseDir, char* buffer, uintptr_t length) ;
+	intptr_t  ( *shmem_getDir)(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint32_t flags, char* buffer, uintptr_t length) ;
 	/** see @ref j9shmem.c::j9shmem_createDir "j9shmem_createDir"*/
 	intptr_t  ( *shmem_createDir)(struct J9PortLibrary *portLibrary, char* cacheDirName, uintptr_t cacheDirPerm, BOOLEAN cleanMemorySegments) ;
 	/** see @ref j9shmem.c::j9shmem_getFilepath "j9shmem_getFilepath"*/
@@ -781,6 +781,12 @@ extern J9_CFUNC int32_t j9port_isCompatible(struct J9PortLibraryVersion *expecte
 #define j9sig_protect(param1,param2,param3,param4,param5,param6) OMRPORT_FROM_J9PORT(privatePortLibrary)->sig_protect((OMRPortLibrary*)privatePortLibrary,(omrsig_protected_fn)param1,param2,(omrsig_handler_fn)param3,param4,param5,param6)
 #define j9sig_can_protect(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->sig_can_protect(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
 #define j9sig_set_async_signal_handler(param1,param2,param3) OMRPORT_FROM_J9PORT(privatePortLibrary)->sig_set_async_signal_handler((OMRPortLibrary*)privatePortLibrary,(omrsig_handler_fn)param1,param2,param3)
+#define j9sig_set_single_async_signal_handler(param1,param2,param3,param4) OMRPORT_FROM_J9PORT(privatePortLibrary)->sig_set_single_async_signal_handler((OMRPortLibrary*)privatePortLibrary,(omrsig_handler_fn)param1,param2,param3,param4)
+#define j9sig_map_os_signal_to_portlib_signal(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->sig_map_os_signal_to_portlib_signal((OMRPortLibrary*)privatePortLibrary,param1)
+#define j9sig_map_portlib_signal_to_os_signal(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->sig_map_portlib_signal_to_os_signal((OMRPortLibrary*)privatePortLibrary,param1)
+#define j9sig_register_os_handler(param1,param2,param3) OMRPORT_FROM_J9PORT(privatePortLibrary)->sig_register_os_handler((OMRPortLibrary*)privatePortLibrary,param1,(void *)param2,param3)
+#define j9sig_is_master_signal_handler(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->sig_is_master_signal_handler((OMRPortLibrary*)privatePortLibrary,(void *)param1)
+#define j9sig_is_signal_ignored(param1,param2) OMRPORT_FROM_J9PORT(privatePortLibrary)->sig_is_signal_ignored((OMRPortLibrary*)privatePortLibrary,param1,param2)
 #define j9sig_info(param1,param2,param3,param4,param5) OMRPORT_FROM_J9PORT(privatePortLibrary)->sig_info(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2,param3,param4,param5)
 #define j9sig_info_count(param1,param2) OMRPORT_FROM_J9PORT(privatePortLibrary)->sig_info_count(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2)
 #define j9sig_set_options(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->sig_set_options(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
@@ -921,7 +927,7 @@ extern J9_CFUNC int32_t j9port_isCompatible(struct J9PortLibraryVersion *expecte
 #define j9sysinfo_set_limit(param1,param2) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_set_limit(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2)
 #define j9sysinfo_get_processing_capacity() privatePortLibrary->sysinfo_get_processing_capacity(privatePortLibrary)
 #define j9sysinfo_get_number_CPUs_by_type(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_get_number_CPUs_by_type(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
-#define j9sysinfo_set_number_entitled_CPUs(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_set_number_entitled_CPUs(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
+#define j9sysinfo_set_number_user_specified_CPUs(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_set_number_user_specified_CPUs(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
 #define j9sysinfo_get_cwd(param1,param2) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_get_cwd(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2)
 #define j9sysinfo_get_tmp(param1,param2,param3) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_get_tmp(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2,param3)
 #define j9sysinfo_get_open_file_count(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_get_open_file_count(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)

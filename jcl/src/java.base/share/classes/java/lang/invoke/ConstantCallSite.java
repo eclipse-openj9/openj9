@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2011, 2011 IBM Corp. and others
+ * Copyright (c) 2011, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,7 +44,7 @@ public class ConstantCallSite extends CallSite {
 	
 	/**
 	 * Create a ConstantCallSite and assign the hook MethodHandle's result to its permanent target.
-	 * The hook MethodHandle is invoked as though by {@link MethodHandle#invoke(this)} and must return a MethodHandle that will be installed 
+	 * The hook MethodHandle is invoked as though by (@link MethodHandle#invoke(this)) and must return a MethodHandle that will be installed 
 	 * as the ConstantCallSite's target.
 	 * <p>
 	 * The hook MethodHandle is required if the ConstantCallSite's target needs to have access to the ConstantCallSite instance.  This is an

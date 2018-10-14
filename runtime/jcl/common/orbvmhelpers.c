@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2014 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -82,7 +82,7 @@ Java_com_ibm_oti_vm_ORBVMHelpers_getJ9ClassFromClass64(JNIEnv *env, jclass rcv, 
 		clazz = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, *(j9object_t*)c);
 	}
 
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 
 	return (jlong)(UDATA)clazz;
 }
@@ -119,7 +119,7 @@ Java_com_ibm_oti_vm_ORBVMHelpers_getJ9ClassFromClass32(JNIEnv *env, jclass rcv, 
 
 	vmThread->javaVM->internalVMFunctions->internalEnterVMFromJNI(vmThread);
 	clazz = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, *(j9object_t*)c);
-	vmThread->javaVM->internalVMFunctions->internalReleaseVMAccess(vmThread);
+	vmThread->javaVM->internalVMFunctions->internalExitVMToJNI(vmThread);
 	return (jint)(UDATA)clazz;
 }
 
@@ -180,7 +180,7 @@ Java_com_ibm_rmi_io_IIOPInputStream_00024LUDCLStackWalkOptimizer_LUDCLMarkFrame(
 
 	vmfuncs->internalEnterVMFromJNI(vmThread);
 	vm->walkStackFrames(vmThread, &walkState);
-	vmfuncs->internalReleaseVMAccess(vmThread);
+	vmfuncs->internalExitVMToJNI(vmThread);
 
 	vmThread->ludclBPOffset = (U_32) (vmThread->stackObject->end - walkState.bp);
 	vmThread->ludclInlineDepth = (U_32) walkState.inlineDepth;
@@ -268,7 +268,7 @@ Java_com_ibm_oti_vm_ORBVMHelpers_LatestUserDefinedLoader(JNIEnv *env, jclass rcv
 	vm->walkStackFrames(vmThread, &walkState);
 
 	result = vm->internalVMFunctions->j9jni_createLocalRef(env, walkState.userData1);
-	vm->internalVMFunctions->internalReleaseVMAccess(vmThread);
+	vm->internalVMFunctions->internalExitVMToJNI(vmThread);
 
 	return result;
 }

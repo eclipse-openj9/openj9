@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -94,49 +94,51 @@ jvmtiRawMonitorEnter(jvmtiEnv* env,
 
 	rc = getCurrentVMThread(vm, &currentThread);
 	if (rc == JVMTI_ERROR_NONE) {
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
-		if (currentThread->inNative)
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
-		{
-			/* JDK blocks here if the current thread is suspended - don't do VM access stuff if the current thread has exclusive */
+		/* JDK blocks here if the current thread is suspended - don't do VM access stuff if the current thread has exclusive */
 
-			if (currentThread->publicFlags & J9_PUBLIC_FLAGS_HALT_THREAD_ANY) {
-				if (currentThread->omrVMThread->exclusiveCount == 0) {
-					/* Acquire VM access if the current thread does not already have it */
-					if (0 == (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS)) {
+		if (currentThread->publicFlags & J9_PUBLIC_FLAGS_HALT_THREAD_ANY) {
+			if (currentThread->omrVMThread->exclusiveCount == 0) {
+				/* Acquire VM access if the current thread does not already have it */
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+				if (currentThread->inNative)
+#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
+				if (0 == (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+				{
 block:
-						vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
-						vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
-					}
+					vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+					vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 				}
 			}
 		}
 
 		if (0 == omrthread_monitor_enter((omrthread_monitor_t) monitor)) {
+			/* CMVC 157789 : If the current thread is supposed to be blocked right now.
+			 * release the monitor and block to simulate blocking before acquiring the
+			 * monitor.
+			 */
+			if (currentThread->publicFlags & J9_PUBLIC_FLAGS_HALT_THREAD_ANY) {
+				if (currentThread->omrVMThread->exclusiveCount == 0) {
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
-			if (currentThread->inNative)
+					if (currentThread->inNative)
+#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
+					if (0 == (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
-			{
-				/* CMVC 157789 : If the current thread is supposed to be blocked right now.
-				 * release the monitor and block to simulate blocking before acquiring the
-				 * monitor.
-				 */
-				if (currentThread->publicFlags & J9_PUBLIC_FLAGS_HALT_THREAD_ANY) {
-					if (currentThread->omrVMThread->exclusiveCount == 0) {
-						if (0 == (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS)) {
-							omrthread_monitor_exit((omrthread_monitor_t) monitor);
-							goto block;
-						}
+					{
+						omrthread_monitor_exit((omrthread_monitor_t) monitor);
+						goto block;
 					}
 				}
 			}
 		} else {
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 			if (currentThread->inNative)
+#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
+			if (0 == (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 			{
 				vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
-				vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+				vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 			}
 			rc = JVMTI_ERROR_INTERNAL;
 		}
@@ -165,21 +167,21 @@ jvmtiRawMonitorExit(jvmtiEnv* env,
 			rc = JVMTI_ERROR_NOT_MONITOR_OWNER;
 		}
 
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
-		if (currentThread->inNative)
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
-		{
-			/* JDK blocks here if the current thread is suspended - don't do VM access stuff if the current thread has exclusive */
+		/* JDK blocks here if the current thread is suspended - don't do VM access stuff if the current thread has exclusive */
 
-			if (currentThread->publicFlags & J9_PUBLIC_FLAGS_HALT_THREAD_ANY) {
-				if (currentThread->omrVMThread->exclusiveCount == 0) {
-					/* Acquire VM access if the current thread does not already have it */
-					if (0 == (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS)) {
-						vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
-						vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
-					}
-					/* There is still a timing hole here, since the thread may be suspended at this point */
+		if (currentThread->publicFlags & J9_PUBLIC_FLAGS_HALT_THREAD_ANY) {
+			if (currentThread->omrVMThread->exclusiveCount == 0) {
+				/* Acquire VM access if the current thread does not already have it */
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+				if (currentThread->inNative)
+#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
+				if (0 == (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+				{
+					vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+					vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 				}
+				/* There is still a timing hole here, since the thread may be suspended at this point */
 			}
 		}
 	}
@@ -224,31 +226,31 @@ jvmtiRawMonitorWait(jvmtiEnv* env,
 				break;
 		}
 
+		/* JDK blocks here if the current thread is suspended - don't do VM access stuff if the current thread has exclusive */
+
+		if (currentThread->publicFlags & J9_PUBLIC_FLAGS_HALT_THREAD_ANY) {
+			if (currentThread->omrVMThread->exclusiveCount == 0) {
+				UDATA count = 0;
+
+				/* TODO: revisit and remove all together after we switch to harmony jdwp */
+				while (omrthread_monitor_exit((omrthread_monitor_t) monitor) == 0) {
+					++count;
+				}
+
+				/* Acquire VM access if the current thread does not already have it */
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
-		if (currentThread->inNative)
+				if (currentThread->inNative)
+#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
+				if (0 == (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
-		{
-			/* JDK blocks here if the current thread is suspended - don't do VM access stuff if the current thread has exclusive */
+				{
+					vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+					vm->internalVMFunctions->internalExitVMToJNI(currentThread);
+				}
 
-			if (currentThread->publicFlags & J9_PUBLIC_FLAGS_HALT_THREAD_ANY) {
-				if (currentThread->omrVMThread->exclusiveCount == 0) {
-					UDATA count = 0;
-
-					/* TODO: revisit and remove all together after we switch to harmony jdwp */
-					while (omrthread_monitor_exit((omrthread_monitor_t) monitor) == 0) {
-						++count;
-					}
-
-					/* Acquire VM access if the current thread does not already have it */
-					if (0 == (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS)) {
-						vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
-						vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
-					}
-
-					/* There is still a timing hole here, since the thread may be suspended at this point */
-					while (count-- != 0) {
-						omrthread_monitor_enter((omrthread_monitor_t) monitor);
-					}
+				/* There is still a timing hole here, since the thread may be suspended at this point */
+				while (count-- != 0) {
+					omrthread_monitor_enter((omrthread_monitor_t) monitor);
 				}
 			}
 		}

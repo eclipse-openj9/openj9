@@ -161,21 +161,21 @@ J9NLS_VERB_SIZES_XMX.system_action=
 J9NLS_VERB_SIZES_XMX.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_XSCMX=Velikost mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd
+J9NLS_VERB_SIZES_XSCMX=Velikost sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_XSCMX.explanation=NOTAG
 J9NLS_VERB_SIZES_XSCMX.system_action=
 J9NLS_VERB_SIZES_XSCMX.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_XSCMINAOT=Minim\u00e1ln\u00ed vyhrazen\u00e1 velikost mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd pro k\u00f3d AOT
+J9NLS_VERB_SIZES_XSCMINAOT=Minim\u00e1ln\u00ed prostor sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd vyhrazen\u00fd pro k\u00f3d AOT
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_XSCMINAOT.explanation=NOTAG
 J9NLS_VERB_SIZES_XSCMINAOT.system_action=
 J9NLS_VERB_SIZES_XSCMINAOT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_XSCMAXAOT=Maxim\u00e1ln\u00ed povolen\u00e1 velikost mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd pro k\u00f3d AOT
+J9NLS_VERB_SIZES_XSCMAXAOT=Maxim\u00e1ln\u00ed prostor sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd povolen\u00fd pro k\u00f3d AOT
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_XSCMAXAOT.explanation=NOTAG
 J9NLS_VERB_SIZES_XSCMAXAOT.system_action=
@@ -275,35 +275,35 @@ J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS_FAILURE_1.system_action=None
 J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS_FAILURE_1.user_response=None
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_XSCMINJIT=Minim\u00e1ln\u00ed vyhrazen\u00e1 velikost mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd pro k\u00f3d JIT
+J9NLS_VERB_SIZES_XSCMINJIT=Minim\u00e1ln\u00ed prostor sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd vyhrazen\u00fd pro k\u00f3d JIT
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_XSCMINJIT.explanation=NOTISSUED
 J9NLS_VERB_SIZES_XSCMINJIT.system_action=
 J9NLS_VERB_SIZES_XSCMINJIT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_XSCMAXJIT=Maxim\u00e1ln\u00ed povolen\u00e1 velikost mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd pro k\u00f3d JIT
+J9NLS_VERB_SIZES_XSCMAXJIT=Maxim\u00e1ln\u00ed prostor sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd povolen\u00fd pro k\u00f3d JIT
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_XSCMAXJIT.explanation=NOTISSUED
 J9NLS_VERB_SIZES_XSCMAXJIT.system_action=
 J9NLS_VERB_SIZES_XSCMAXJIT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_XSCDMX=Vyhrazen\u00e1 velikost mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd pro atributy lad\u011bn\u00ed t\u0159\u00eddy
+J9NLS_VERB_SIZES_XSCDMX=Prostor sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd vyhrazen\u00fd pro atributy lad\u011bn\u00ed t\u0159\u00eddy
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_XSCDMX.explanation=NOTAG
 J9NLS_VERB_SIZES_XSCDMX.system_action=
 J9NLS_VERB_SIZES_XSCDMX.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_XSCMINJITDATA=Minim\u00e1ln\u00ed vyhrazen\u00e1 velikost mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd pro data JIT
+J9NLS_VERB_SIZES_XSCMINJITDATA=Minim\u00e1ln\u00ed prostor sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd vyhrazen\u00fd pro data JIT
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_XSCMINJITDATA.explanation=NOTAG
 J9NLS_VERB_SIZES_XSCMINJITDATA.system_action=
 J9NLS_VERB_SIZES_XSCMINJITDATA.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_XSCMAXJITDATA=Maxim\u00e1ln\u00ed povolen\u00e1 velikost mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd pro data JIT
+J9NLS_VERB_SIZES_XSCMAXJITDATA=Maxim\u00e1ln\u00ed prostor sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd povolen\u00fd pro data JIT
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_XSCMAXJITDATA.explanation=NOTAG
 J9NLS_VERB_SIZES_XSCMAXJITDATA.system_action=
@@ -332,14 +332,14 @@ J9NLS_VERB_SIZES_XMCRS.system_action=
 J9NLS_VERB_SIZES_XMCRS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_XXSHARED_CACHE_HARD_LIMIT_EQUALS=Velikost mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd
+J9NLS_VERB_SIZES_XXSHARED_CACHE_HARD_LIMIT_EQUALS=Velikost sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_XXSHARED_CACHE_HARD_LIMIT_EQUALS.explanation=NOTAG
 J9NLS_VERB_SIZES_XXSHARED_CACHE_HARD_LIMIT_EQUALS.system_action=
 J9NLS_VERB_SIZES_XXSHARED_CACHE_HARD_LIMIT_EQUALS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_SIZES_XSCMX_V1=m\u011bkk\u00e9 maximum velikosti mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd
+J9NLS_VERB_SIZES_XSCMX_V1=m\u011bkk\u00e9 maximum velikosti sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd
 # START NON-TRANSLATABLE
 J9NLS_VERB_SIZES_XSCMX_V1.explanation=NOTAG
 J9NLS_VERB_SIZES_XSCMX_V1.system_action=

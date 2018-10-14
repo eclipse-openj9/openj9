@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,9 +33,8 @@ import com.ibm.j9ddr.tools.ddrinteractive.DDRInteractiveCommandException;
 import com.ibm.j9ddr.vm29.j9.walkers.MemoryCategoryIterator;
 import com.ibm.j9ddr.vm29.pointer.generated.OMRMemCategoryPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.OMRMemCategoryHelper;
-import com.ibm.j9ddr.vm29.types.U32;
+import com.ibm.j9ddr.vm29.types.UDATA;
 import com.ibm.j9ddr.vm29.view.dtfj.DTFJContext;
-
 
 public class NativeMemInfoCommand extends Command 
 {
@@ -77,7 +76,7 @@ public class NativeMemInfoCommand extends Command
 
 		final int numberOfChildren = next.numberOfChildren().intValue();
 		for (int i = 0; i < numberOfChildren; i++) {
-			U32 childCode = next.children().at(i);
+			UDATA childCode = next.children().at(i);
 			OMRMemCategoryPointer child = OMRMemCategoryHelper.getMemoryCategory(childCode);
 			printSections(child, level + 1);
 		}
@@ -105,7 +104,7 @@ public class NativeMemInfoCommand extends Command
 		
 		final int numberOfChildren = mcp.numberOfChildren().intValue();
 		for (int i = 0; i < numberOfChildren; i++) {
-			U32 childCode = mcp.children().at(i);
+			UDATA childCode = mcp.children().at(i);
 			OMRMemCategoryPointer child = OMRMemCategoryHelper.getMemoryCategory(childCode);
 			csa.add(computeSize(child));
 		}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,8 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 #if !defined(WIN32)
-extern "C"
-{
+extern "C" {
 #include "shrinit.h"
 }
 
@@ -37,8 +36,8 @@ extern "C"
 #define J9SH_DEFAULT_CTRL_ROOT "/tmp"
 
 #define USER_PERMISSION_STR "0700"
-#define USER_PERMISSION		0700
-#define NEW_DIR_PERM	0760
+#define USER_PERMISSION      0700
+#define NEW_DIR_PERM         0760
 
 extern "C" IDATA removeTempDir(J9JavaVM *vm, char *dir);
 
@@ -69,25 +68,21 @@ CacheDirPerm::getTempCacheDir(I_32 cacheType, bool useDefaultDir)
 
 	memset(cacheDir, 0, J9SH_MAXPATH);
 	memset(parentDir, 0, J9SH_MAXPATH);
-	if (true == useDefaultDir) {
-		rc = j9shmem_getDir(NULL, TRUE, baseDir, J9SH_MAXPATH);
-	} else {
-		rc = j9shmem_getDir(NULL, FALSE, baseDir, J9SH_MAXPATH);
-	}
+	rc = j9shmem_getDir(NULL, useDefaultDir ? J9SHMEM_GETDIR_APPEND_BASEDIR : 0, baseDir, J9SH_MAXPATH);
 	if (-1 == rc) {
 		ERRPRINTF("Failed to get a temporary directory\n");
 		rc = FAIL;
 		goto _end;
 	}
-	if (true == useDefaultDir) {
-		sprintf(cacheDir, "%s", baseDir);
+	if (useDefaultDir) {
+		j9str_printf(PORTLIB, cacheDir, sizeof(cacheDir), "%s", baseDir);
 	} else {
-		sprintf(cacheDir, "%s%s/%s/", baseDir, TEST_PARENTDIR, TEST_TEMPDIR);
+		j9str_printf(PORTLIB, cacheDir, sizeof(cacheDir), "%s%s/%s/", baseDir, TEST_PARENTDIR, TEST_TEMPDIR);
 		if (J9PORT_SHR_CACHE_TYPE_NONPERSISTENT == cacheType) {
 			/* for non-persistent cache, actual cache dir is cacheDir/J9SH_BASEDIR. So parent dir is same as cacheDir. */
-			sprintf(parentDir, "%s%s/%s/", baseDir, TEST_PARENTDIR, TEST_TEMPDIR);
+			j9str_printf(PORTLIB, parentDir, sizeof(parentDir), "%s%s/%s/", baseDir, TEST_PARENTDIR, TEST_TEMPDIR);
 		} else {
-			sprintf(parentDir, "%s%s/", baseDir, TEST_PARENTDIR);
+			j9str_printf(PORTLIB, parentDir, sizeof(parentDir), "%s%s/", baseDir, TEST_PARENTDIR);
 		}
 	}
 _end:
@@ -103,13 +98,13 @@ CacheDirPerm::createTempCacheDir(I_32 cacheType, bool useDefaultDir)
 	IDATA rc = PASS;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	if (true == useDefaultDir) {
-		sprintf(actualCacheDir, "%s", cacheDir);
+	if (useDefaultDir) {
+		j9str_printf(PORTLIB, actualCacheDir, sizeof(actualCacheDir), "%s", cacheDir);
 	} else {
 		if (J9PORT_SHR_CACHE_TYPE_NONPERSISTENT == cacheType) {
-			sprintf(actualCacheDir, "%s/%s", cacheDir, J9SH_BASEDIR);
+			j9str_printf(PORTLIB, actualCacheDir, sizeof(actualCacheDir), "%s/%s", cacheDir, J9SH_BASEDIR);
 		} else {
-			sprintf(actualCacheDir, "%s", cacheDir);
+			j9str_printf(PORTLIB, actualCacheDir, sizeof(actualCacheDir), "%s", cacheDir);
 		}
 	}
 
@@ -136,13 +131,13 @@ CacheDirPerm::getCacheDirPerm(I_32 cacheType, bool isDefaultDir)
 	const char *testName = "getCacheDirPerm";
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	if (true == isDefaultDir) {
-		sprintf(actualCacheDir, "%s", cacheDir);
+	if (isDefaultDir) {
+		j9str_printf(PORTLIB, actualCacheDir, sizeof(actualCacheDir), "%s", cacheDir);
 	} else {
 		if (J9PORT_SHR_CACHE_TYPE_NONPERSISTENT == cacheType) {
-			sprintf(actualCacheDir, "%s/%s", cacheDir, J9SH_BASEDIR);
+			j9str_printf(PORTLIB, actualCacheDir, sizeof(actualCacheDir), "%s/%s", cacheDir, J9SH_BASEDIR);
 		} else {
-			sprintf(actualCacheDir, "%s", cacheDir);
+			j9str_printf(PORTLIB, actualCacheDir, sizeof(actualCacheDir), "%s", cacheDir);
 		}
 	}
 
@@ -195,37 +190,36 @@ removeTempDir(J9JavaVM *vm, char *dir)
 		char resultBuffer[J9SH_MAXPATH];
 		UDATA rc, handle;
 
-        j9str_printf(PORTLIB, baseFilePath, J9SH_MAXPATH, "%s", dir);
-        rc = handle = j9file_findfirst(baseFilePath, resultBuffer);
-        while ((UDATA)-1 != rc) {
-        	char nextEntry[J9SH_MAXPATH];
-        	/* skip current and parent dir */
-        	if (resultBuffer[0] == '.') {
-        		rc = j9file_findnext(handle, resultBuffer);
-        		continue;
-        	}
-        	j9str_printf(PORTLIB, nextEntry, J9SH_MAXPATH, "%s/%s", baseFilePath, resultBuffer);
-        	removeTempDir(vm, nextEntry);
-        	rc = j9file_findnext(handle, resultBuffer);
-        }
-        if (handle != (UDATA)-1) {
-        	j9file_findclose(handle);
-        }
-        rc = j9file_unlinkdir(baseFilePath);
-        if ((UDATA)-1 == rc) {
+		j9str_printf(PORTLIB, baseFilePath, sizeof(baseFilePath), "%s", dir);
+		rc = handle = j9file_findfirst(baseFilePath, resultBuffer);
+		while ((UDATA)-1 != rc) {
+			char nextEntry[J9SH_MAXPATH];
+			/* skip current and parent dir */
+			if (resultBuffer[0] == '.') {
+				rc = j9file_findnext(handle, resultBuffer);
+				continue;
+			}
+			j9str_printf(PORTLIB, nextEntry, sizeof(nextEntry), "%s/%s", baseFilePath, resultBuffer);
+			removeTempDir(vm, nextEntry);
+			rc = j9file_findnext(handle, resultBuffer);
+		}
+		if (handle != (UDATA)-1) {
+			j9file_findclose(handle);
+		}
+		rc = j9file_unlinkdir(baseFilePath);
+		if ((UDATA)-1 == rc) {
 			ERRPRINTF1("Failed to unlink %s\n", baseFilePath);
 			rc = FAIL;
 			goto _end;
-        }
+		}
 	}
 	rc = PASS;
 _end:
 	return rc;
-
 }
 
 IDATA
-testCacheDirPerm(J9JavaVM* vm)
+testCacheDirPerm(J9JavaVM *vm)
 {
 	IDATA rc = PASS;
 	const char *testName = "testCacheDirPerm";
@@ -517,5 +511,6 @@ _end:
 	return rc;
 }
 
-}
-#endif
+} /* extern "C" */
+
+#endif /* !defined(WIN32) */

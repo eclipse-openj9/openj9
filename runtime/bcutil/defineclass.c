@@ -115,7 +115,7 @@ internalDefineClass(
 	}
 
 	if (!isAnonFlagSet) {
-		/* See if there's already an orphan romClass available */
+		/* See if there's already an orphan romClass available - still own classTableMutex at this point */
 		if (NULL != classLoader->romClassOrphansHashTable) {
 			orphanROMClass = romClassHashTableFind(classLoader->romClassOrphansHashTable, className, classNameLength);
 			if (NULL != orphanROMClass) {
@@ -168,8 +168,11 @@ internalDefineClass(
 		if (NULL == result) {
 			/* ramClass creation failed - remember the orphan romClass for next time */
 			if (orphanROMClass != romClass) {
-				J9HashTable *hashTable = classLoader->romClassOrphansHashTable;
+				J9HashTable *hashTable = NULL;
 
+				/* All access to the orphan table must be done while holding classTableMutex */
+				omrthread_monitor_enter(vm->classTableMutex);
+				hashTable = classLoader->romClassOrphansHashTable;
 				if (NULL == hashTable) {
 					hashTable = romClassHashTableNew(vm, 16);
 					classLoader->romClassOrphansHashTable = hashTable;
@@ -186,11 +189,23 @@ internalDefineClass(
 						romClassHashTableAdd(hashTable, romClass);
 					}
 				}
+				omrthread_monitor_exit(vm->classTableMutex);
 			}
 		} else if (NULL != orphanROMClass) {
+			J9ROMClass *tableEntry = NULL;
 			/* ramClass creation succeeded - the orphanROMClass is no longer an orphan */
 			Trc_BCU_romClassOrphansHashTableDelete(vmThread, classNameLength, className, orphanROMClass);
-			romClassHashTableDelete(classLoader->romClassOrphansHashTable, orphanROMClass);
+			/* All access to the orphan table must be done while holding classTableMutex.
+			 * Ensure the entry is still in the table before removing it.
+			 */
+			omrthread_monitor_enter(vm->classTableMutex);
+			tableEntry = romClassHashTableFind(classLoader->romClassOrphansHashTable, className, classNameLength);
+			if (tableEntry == orphanROMClass) {
+				romClassHashTableDelete(classLoader->romClassOrphansHashTable, orphanROMClass);
+			} else {
+				Trc_BCU_internalDefineClass_orphanNotFound(vmThread, orphanROMClass, tableEntry);
+			}
+			omrthread_monitor_exit(vm->classTableMutex);
 		}
 	}
 
@@ -505,24 +520,28 @@ internalLoadROMClass(J9VMThread * vmThread, J9LoadROMClassData *loadData, J9Tran
 		/* Disable static verification for the bootstrap loader if Xfuture not present */
 		if ((vm->systemClassLoader == loadData->classLoader)
 		&& ((NULL == vm->bytecodeVerificationData) || (0 == (vm->bytecodeVerificationData->verificationFlags & J9_VERIFY_BOOTCLASSPATH_STATIC)))
-		&& ((NULL == vm->sharedCacheAPI) || (0 == (vm->sharedCacheAPI->xShareClassesPresent)))
+		&& (NULL == vm->sharedClassConfig)
 		) {
 			translationFlags &= ~BCT_StaticVerification;
 		}
 	}
 
+	if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_ALWAYS_SPLIT_BYTECODES)) {
+		translationFlags |= BCT_AlwaysSplitBytecodes;
+	}
+
 	/* Determine allowed class file version */
 #ifdef J9VM_OPT_SIDECAR
-	if (J2SE_VERSION(vm) >= J2SE_V10) {
+	if (J2SE_VERSION(vm) >= J2SE_V12) {
+		translationFlags |= BCT_Java12MajorVersionShifted;
+	} else if (J2SE_VERSION(vm) >= J2SE_V11) {
+		translationFlags |= BCT_Java11MajorVersionShifted;
+	} else if (J2SE_VERSION(vm) >= J2SE_V10) {
 		translationFlags |= BCT_Java10MajorVersionShifted;
 	} else if (J2SE_VERSION(vm) >= J2SE_19) {
 		translationFlags |= BCT_Java9MajorVersionShifted;
 	} else if (J2SE_VERSION(vm) >= J2SE_18) {
 		translationFlags |= BCT_Java8MajorVersionShifted;
-	} else if (J2SE_VERSION(vm) >= J2SE_17) {
-		translationFlags |= BCT_Java7MajorVersionShifted;
-	} else if (J2SE_VERSION(vm) >= J2SE_16) {
-		translationFlags |= BCT_Java6MajorVersionShifted;
 	}
 #endif
 
@@ -729,6 +748,20 @@ callDynamicLoader(J9JavaVM * vm, J9LoadROMClassData *loadData, U_8 * intermediat
 			FALSE, /* isIntermediateROMClass */
 			localBuffer);
 
+	/* The module of a class transformed by a JVMTI agent needs access to unnamed modules */
+	if (
+			(J2SE_VERSION(vm) >= J2SE_19)
+			&& (classFileBytesReplacedByRIA || classFileBytesReplacedByRCA)
+			&& (NULL != loadData->romClass)
+	) {
+		J9VMThread *currentThread = vm->internalVMFunctions->currentVMThread(vm);
+		J9Module *module = vm->internalVMFunctions->findModuleForPackage(currentThread, loadData->classLoader,
+				loadData->className, (U_32) packageNameLength(loadData->romClass));
+		if (NULL != module) {
+			module->isLoose = TRUE;
+		}
+	}
+
 	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_RECREATE_CLASSFILE_ONLOAD)) {
 		if (BCT_ERR_NO_ERROR == result) {
 			U_8 * classFileBytes = NULL;
@@ -926,7 +959,7 @@ createErrorMessage(J9VMThread *vmStruct, J9ROMClass *anonROMClass, J9ROMClass *h
 		/* Anonymous class name has trailing digits. Example - "test/DummyClass/00000000442F098".
 		 * The code below removes the trailing digits, "/00000000442F098", from the anonymous class name.
 		 */
-		UDATA anonClassNameLength = J9UTF8_LENGTH(anonClassName) - 1;
+		IDATA anonClassNameLength = J9UTF8_LENGTH(anonClassName) - 1;
 		for (; anonClassNameLength >= 0; anonClassNameLength--) {
 			if (anonClassNameData[anonClassNameLength] == '/') {
 				break;

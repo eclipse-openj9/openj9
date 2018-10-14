@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -88,6 +88,7 @@ public:
 		if (extensions->alwaysCallWriteBarrier) {
 			writeBarrierType = gc_modron_wrtbar_always;
 		}
+
 		Assert_MM_true(gc_modron_wrtbar_illegal != writeBarrierType);
 		javaVM->gcWriteBarrierType = writeBarrierType;
 
@@ -231,6 +232,7 @@ public:
 
 		switch (_gcPolicy) {
 		case gc_policy_optthruput:
+		case gc_policy_nogc:
 		case gc_policy_optavgpause:
 		case gc_policy_gencon:
 			hashSaltCount = 1;

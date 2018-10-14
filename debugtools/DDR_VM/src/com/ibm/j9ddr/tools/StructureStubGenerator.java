@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,6 +61,7 @@ public class StructureStubGenerator {
 		opts.put("-o", null);
 		opts.put("-f", null);
 		opts.put("-s", null);
+		opts.put("-l", "false");
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -165,7 +166,7 @@ public class StructureStubGenerator {
 		}
 	}
 
-	private static void writeStaticInitializer(PrintWriter writer, StructureDescriptor structure) {
+	private void writeStaticInitializer(PrintWriter writer, StructureDescriptor structure) {
 		writer.println("\t// Static Initializer");
 		writer.println();
 		writer.println("\tprivate static final boolean RUNTIME = false;");
@@ -196,7 +197,15 @@ public class StructureStubGenerator {
 		writer.println(" */");
 	}
 
-	private static void writeOffsetStubs(PrintWriter writer, StructureDescriptor structure) {
+	private String getOffsetConstant(FieldDescriptor fieldDescriptor) {
+		String fieldName = fieldDescriptor.getName();
+		if (opts.get("-l").equals("true")) {
+			return PointerGenerator.getOffsetConstant(fieldName);
+		}
+		return fieldName;
+	}
+
+	private void writeOffsetStubs(PrintWriter writer, StructureDescriptor structure) {
 		List<FieldDescriptor> fields = structure.getFields();
 
 		if (fields.isEmpty()) {
@@ -207,7 +216,8 @@ public class StructureStubGenerator {
 		writer.println();
 		Collections.sort(fields);
 		for (FieldDescriptor fieldDescriptor : fields) {
-			if (PointerGenerator.getOffsetConstant(fieldDescriptor).equals(fieldDescriptor.getName())) {
+			if (getOffsetConstant(fieldDescriptor).equals(fieldDescriptor.getName())
+					&& !PointerGenerator.omitFieldImplementation(structure, fieldDescriptor)) {
 				writeOffsetStub(writer, fieldDescriptor, structure.getName(), "Offset");
 			}
 		}
@@ -225,11 +235,12 @@ public class StructureStubGenerator {
 		}
 	}
 
-	private static void writeOffsetInitializer(PrintWriter writer, StructureDescriptor structure) {
+	private void writeOffsetInitializer(PrintWriter writer, StructureDescriptor structure) {
 		Collections.sort(structure.getFields());
 		for (FieldDescriptor fieldDescriptor : structure.getFields()) {
-			if (PointerGenerator.getOffsetConstant(fieldDescriptor).equals(fieldDescriptor.getName())) {
-				String fieldName = fieldDescriptor.getName();
+			String fieldName = fieldDescriptor.getName();
+			if (getOffsetConstant(fieldDescriptor).equals(fieldName)
+					&& !PointerGenerator.omitFieldImplementation(structure, fieldDescriptor)) {
 				CTypeParser parser = new CTypeParser(fieldDescriptor.getType());
 
 				if (parser.getSuffix().contains(":")) {
@@ -273,11 +284,12 @@ public class StructureStubGenerator {
 	 * Print usage help to stdout
 	 */
 	private static void printHelp() {
-		System.out.println("Usage :\n\njava PointerGenerator -p <package name> -o <output path> -f <path to structure file> [-s <superset file name>]\n");
+		System.out.println("Usage :\n\njava PointerGenerator -p <package name> -o <output path> -f <path to structure file> [-s <superset file name> -l <legacy mode>]\n");
 		System.out.println("<package name>           : the package name for all the generated classes e.g. com.ibm.dtfj.j9.structures");
 		System.out.println("<relative output path>   : where to write out the class files.  Full path to base of package hierarchy e.g. c:\\src\\");
 		System.out.println("<path to structure file> : full path to the J9 structure file");
 		System.out.println("<superset file name>     : optional file name of the superset to be used for input / output");
+		System.out.println("<legacy mode>            : optional flag set to true or false indicating if legacy DDR is used");
 	}
 
 	/**

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2011, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+<suite id="XXArgumentTesting.xml" timeout="1000">
+
+	<test id="Ensure -XXnosuballoc32bitmem is recognized on all platforms">
+		<command>$EXE$ -Xcompressedrefs -XXnosuballoc32bitmem -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output regex="no" type="failure">Command-line option unrecognised</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<exec command="rm -f testjavacore.txt" quiet="false"/>
+
+	<test id="Generate a javacore without -XXnosuballoc32bitmem">
+		<command>$EXE$ -Xcompressedrefs -Xdump:java:events=vmstop,file=testjavacore.txt -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output regex="no" type="failure">Command-line option unrecognised</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="Verify that the sub allocator memory is listed in the javacore">
+		<command>cat testjavacore.txt</command>				
+		<output type="success" caseSensitive="no" regex="no">32bit allocation regions</output>
+	</test>
+	
+	<exec command="rm -f testjavacore.txt" quiet="false"/>
+	
+	<test id="Generate a javacore with -XXnosuballoc32bitmem">
+		<command>$EXE$ -Xcompressedrefs -XXnosuballoc32bitmem -Xdump:java:events=vmstop,file=testjavacore.txt -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output regex="no" type="failure">Command-line option unrecognised</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="Verify that the sub allocator memory is not listed in the javacore on z/OS. All other platforms should use the sub-allocator when -XXnosuballoc32bitmem is used.">
+		<command>cat testjavacore.txt</command>				
+		<output type="success" caseSensitive="no" regex="no">Javacore filename</output>
+		<output type="failure" caseSensitive="no" regex="no" platforms="zos_390-64_cmprssptrs.*">32bit allocation regions</output>		
+	</test>
+	
+	<test id="Verify -XX:MaxHeapSize -XX:InitialHeapSize -XX:ThreadStackSize">
+		<command>$EXE$ -XX:MaxHeapSize=234m -XX:InitialHeapSize=11m -verbose:sizes -version</command>				
+		<output type="success" caseSensitive="no" regex="no">OpenJ9</output>
+		<output type="required" caseSensitive="no" regex="no">-Xmx234M</output>
+		<output type="required" caseSensitive="no" regex="no">-Xms11M</output>
+	</test>
+	
+</suite>

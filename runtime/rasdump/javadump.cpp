@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003, 2017 IBM Corp. and others
+ * Copyright (c) 2003, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -969,6 +969,13 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 	_OutputStream.writeCharacters(EsBuildVersionString);
 	_OutputStream.writeCharacters("\n");
 
+#if defined(OPENJ9_TAG)
+	/* Write the OpenJ9 tag when it has a value */
+	if (strlen(OPENJ9_TAG) > 0) {
+		_OutputStream.writeCharacters("1CIJ9VMTAG     " OPENJ9_TAG "\n");
+	}
+#endif
+
 	/* Write the VM version data */
 	_OutputStream.writeCharacters("1CIJ9VMVERSION ");
 	_OutputStream.writeCharacters(_VirtualMachine->internalVMFunctions->getJ9VMVersionString(_VirtualMachine));
@@ -998,6 +1005,11 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 	/* Write the Vendor version data */
 	_OutputStream.writeCharacters("1CI" VENDOR_SHORT_NAME "VERSION  " VENDOR_SHA "\n");
 #endif /* VENDOR_SHORT_NAME && VENDOR_SHA */
+
+#if defined(OPENJDK_TAG) && defined(OPENJDK_SHA)
+	/* Write the JCL version data */
+	_OutputStream.writeCharacters("1CIJCLVERSION  " OPENJDK_SHA " based on " OPENJDK_TAG "\n");
+#endif
 
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 	_OutputStream.writeCharacters("1CIJITMODES    ");
@@ -1221,7 +1233,7 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 			}
 		}
 	} else {
-		/* the iterator didn't initialise so no user limits to print */
+		/* the iterator didn't initialize so no user limits to print */
 		_OutputStream.writeCharacters("2CIULIMITERR   Not supported on this platform\n");
 	}
 
@@ -2896,6 +2908,11 @@ JavaCoreDumpWriter::writeSharedClassSection(void)
 		_OutputStream.writeInteger(javacoreData.cacheSize, "%zu");
 
 		_OutputStream.writeCharacters(
+			"\n2SCLTEXTSMB        Softmx bytes                              = "
+		);
+		_OutputStream.writeInteger(javacoreData.softMaxBytes, "%zu");
+
+		_OutputStream.writeCharacters(
 			"\n2SCLTEXTFRB        Free bytes                                = "
 		);
 		_OutputStream.writeInteger(javacoreData.freeBytes, "%zu");
@@ -3100,7 +3117,12 @@ JavaCoreDumpWriter::writeSharedClassSection(void)
 			"2SCLTEXTCPF        Cache is "
 		);
 		_OutputStream.writeInteger(javacoreData.percFull, "%zu");
-		_OutputStream.writeCharacters("% full\n");
+		
+		if (javacoreData.softMaxBytes == javacoreData.cacheSize) {
+			_OutputStream.writeCharacters("% full\n");
+		} else {
+			_OutputStream.writeCharacters("% soft full\n");
+		}
 
 		_OutputStream.writeCharacters(
 				"NULL\n"
@@ -3213,22 +3235,11 @@ JavaCoreDumpWriter::writeExceptionDetail(j9object_t* exceptionRef)
 
 	if (exceptionRef && *exceptionRef) {
 		j9object_t message = J9VMJAVALANGTHROWABLE_DETAILMESSAGE(vmThread, *exceptionRef);
-		if (message) {
-			/* length is in jchars. 3x is enough for worst case UTF8 encoding */
-			len = J9VMJAVALANGSTRING_LENGTH(vmThread, message) * 3;
-			if (len > sizeof(stackBuffer)) {
-				buf = (char *)j9mem_allocate_memory(len, OMRMEM_CATEGORY_VM);
-			}
-
-			if (buf) {
-				len = _VirtualMachine->internalVMFunctions->copyStringToUTF8Helper(vmThread, message, FALSE, J9_STR_NONE, (U_8*)buf, len);
-			} else {
-				buf = stackBuffer;
-				len = 0;
-			}
+		if (NULL != message) {
+			buf = _VirtualMachine->internalVMFunctions->copyStringToUTF8WithMemAlloc(vmThread, message, J9_STR_NULL_TERMINATE_RESULT, "", 0, stackBuffer, _MaximumExceptionNameLength, &len);
 		}
 
-		if (len) {
+		if (0 != len) {
 			_OutputStream.writeCharacters(" \"");
 			_OutputStream.writeCharacters(buf, len);
 			_OutputStream.writeCharacters("\"");
@@ -3242,8 +3253,9 @@ JavaCoreDumpWriter::writeExceptionDetail(j9object_t* exceptionRef)
 		eiieClass = _VirtualMachine->internalVMFunctions->internalFindKnownClass(vmThread, J9VMCONSTANTPOOL_JAVALANGEXCEPTIONININITIALIZERERROR, J9_FINDKNOWNCLASS_FLAG_EXISTING_ONLY);
 
 		if (J9OBJECT_CLAZZ(vmThread, *exceptionRef) == eiieClass) {
+			char detailMessageStackBuffer[_MaximumExceptionNameLength];
 			char*                  nestedBuf = NULL;
-			IDATA                  nestedLen = 0;
+			UDATA                  nestedLen = 0;
 			j9object_t             nestedException = NULL;
 			J9UTF8*                nestedExceptionClassName = NULL;
 
@@ -3258,15 +3270,18 @@ JavaCoreDumpWriter::writeExceptionDetail(j9object_t* exceptionRef)
 				}
 
 				message = J9VMJAVALANGTHROWABLE_DETAILMESSAGE(vmThread, nestedException);
-				/* length is in jchars. 3x is enough for worst case UTF8 encoding */
-				nestedLen = J9VMJAVALANGSTRING_LENGTH(vmThread, message) * 3;
-				nestedBuf = (char *)j9mem_allocate_memory(nestedLen, OMRMEM_CATEGORY_VM);
-				if (nestedBuf) {
-					nestedLen = _VirtualMachine->internalVMFunctions->copyStringToUTF8Helper(vmThread, message, FALSE, J9_STR_NONE, (U_8*)nestedBuf, nestedLen);
+				if (NULL != message) {
+					nestedBuf = _VirtualMachine->internalVMFunctions->copyStringToUTF8WithMemAlloc(vmThread, message, J9_STR_NULL_TERMINATE_RESULT, "", 0, detailMessageStackBuffer, _MaximumExceptionNameLength, &nestedLen);
+				}
+				
+				if (0 != nestedLen) {
 					_OutputStream.writeCharacters(" Detail:  \"");
 					_OutputStream.writeCharacters(nestedBuf, nestedLen);
 					_OutputStream.writeCharacters("\"");
-					j9mem_free_memory( nestedBuf );
+				}
+
+				if (nestedBuf != detailMessageStackBuffer) {
+					j9mem_free_memory(nestedBuf);
 				}
 			}
 		}	
@@ -5103,6 +5118,9 @@ JavaCoreDumpWriter::writeCPUinfo(void)
 {
 	PORT_ACCESS_FROM_PORT(_PortLibrary);
 
+	UDATA bound = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_BOUND);
+	UDATA target = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
+
 	_OutputStream.writeCharacters(
 			"NULL           \n");
 	_OutputStream.writeCharacters(
@@ -5115,10 +5133,18 @@ JavaCoreDumpWriter::writeCPUinfo(void)
 	_OutputStream.writeInteger(j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_ONLINE), "%i\n");
 	_OutputStream.writeCharacters(
 			"2CIBOUNDCPU    Bound CPUs: ");
-	_OutputStream.writeInteger(j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_BOUND), "%i\n");
+	_OutputStream.writeInteger(bound, "%i\n");
+	_OutputStream.writeCharacters(
+			"2CIACTIVECPU   Active CPUs: ");
+	if (bound != target) {
+		_OutputStream.writeInteger(target, "%i\n");
+	} else {
+		/* target is not being overridden by active CPUs, so print 0 */
+		_OutputStream.writeCharacters("0\n");
+	}
 	_OutputStream.writeCharacters(
 			"2CITARGETCPU   Target CPUs: ");
-	_OutputStream.writeInteger(j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET), "%i\n");
+	_OutputStream.writeInteger(target, "%i\n");
 
 	return;
 }

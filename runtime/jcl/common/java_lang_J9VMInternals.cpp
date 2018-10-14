@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,7 +41,7 @@ Java_java_lang_J9VMInternals_getStackTrace(JNIEnv * env, jclass recv, jobject th
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	j9object_t traceObject = (j9object_t)getStackTrace(currentThread, (j9object_t*)throwable, (UDATA)pruneConstructors);
 	jobject result = vmFuncs->j9jni_createLocalRef(env, traceObject);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 

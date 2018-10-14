@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!--
+  Copyright (c) 2010, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "excludes.dtd">
+<?xml:stylesheet type="text/xsl" href="excludes.xsl" ?>
+<suite id="CommandLineOption Excluded Test Case List">
+
+	<platform id="none"/>
+	<platform id="all"/>
+	<exclude id="ListAllCaches 2: Make sure Java 6 is present" platform="all"><reason>java6 cannot open source</reason></exclude>
+	<exclude id="ListAllCaches 3: Create Java 6 nonpersistent shared cache" platform="all"><reason>java6 cannot open source</reason></exclude>
+	<exclude id="ListAllCaches 4: Create Java 6 persistent shared cache" platform="all"><reason>java6 cannot open source</reason></exclude>
+	<exclude id="ListAllCaches 5: Run listAllCaches and check for Java 6 nonpersistent caches" platform="all"><reason>java6 cannot open source</reason></exclude>
+	<exclude id="ListAllCaches 6: Run listAllCaches and check for Java 6 persistent caches" platform="all"><reason>java6 cannot open source</reason></exclude>
+	<exclude id="ListAllCaches 9: Check for compatible nonpersistent cache." platform="all"><reason>java6 cannot open source</reason></exclude>
+	<exclude id="ListAllCaches 10: Check for compatible persistent cache." platform="all"><reason>java6 cannot open source</reason></exclude>
+	<exclude id="ListAllCaches 13: Cleanup Java 6 nonpersistent cache " platform="all"><reason>java6 cannot open source</reason></exclude>
+	<exclude id="ListAllCaches 14: Cleanup Java 6 persistent cache " platform="all"><reason>java6 cannot open source</reason></exclude>
+	<exclude id="Expire & List 2: Create Java 6 nonpersistent shared cache" platform="all"><reason>java6 cannot open source</reason></exclude>
+	<exclude id="Expire & List 3: Create Java 6 persistent shared cache" platform="all"><reason>java6 cannot open source</reason></exclude>
+</suite>

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -97,6 +97,7 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 	/**
 	 * @deprecated Use {@link JavaRuntime#getObjectAtAddress(ImagePointer)} instead
 	 */
+	@Deprecated
 	public static JavaObject createJavaObject(JavaRuntime vm, ImagePointer address) throws CorruptDataException
 	{
 		try {
@@ -109,6 +110,7 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 	/**
 	 * @deprecated Use {@link JavaRuntime#getObjectInHeapRegion(ImagePointer,JavaHeap,JavaHeapRegion)} instead
 	 */
+	@Deprecated
 	public static JavaObject createJavaObject(JavaRuntime vm, ImagePointer address, JavaHeap containingHeap, JavaHeapRegion containingRegion) throws CorruptDataException
 	{
 		try {
@@ -397,7 +399,7 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 						//				when it is given an invalid address and when it is copying array slots that do not yet contain
 						//				an object.
 						if(pointer.getAddress() == 0) {
-							//CMVC 175864 : the getObjectAtAddress function enforces stricter address checking, so need to exclude uninitialised slots up front
+							//CMVC 175864 : the getObjectAtAddress function enforces stricter address checking, so need to exclude uninitialized slots up front
 							intermediateArray[x] = null;
 						} else {
 							try {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2016 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,6 @@ import static com.ibm.j9ddr.vm29.j9.ROMHelp.J9_ROM_METHOD_FROM_RAM_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9Consts.J9_STACKWALK_ITERATE_METHOD_CLASS_SLOTS;
 import static com.ibm.j9ddr.vm29.structure.J9Consts.J9_STACKWALK_ITERATE_O_SLOTS;
 import static com.ibm.j9ddr.vm29.structure.J9Consts.J9_STACKWALK_MAINTAIN_REGISTER_MAP;
-import static com.ibm.j9ddr.vm29.structure.J9StackWalkConstants.J9SW_JIT_STACK_SLOTS_USED_BY_CALL;
 import static com.ibm.j9ddr.vm29.structure.J9StackWalkState.J9_STACKWALK_SLOT_TYPE_INTERNAL;
 import static java.util.logging.Level.FINE;
 import static java.util.logging.Level.FINER;

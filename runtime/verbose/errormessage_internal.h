@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2016 IBM Corp. and others
+ * Copyright (c) 2015, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -60,9 +60,6 @@ extern "C" {
 #define INDEX_SIGNATURE				0x02
 #define INDEX_CLASSNAME				0x03
 #define	INDEX_CLASSNAMELIST			0x04
-
-/* Internal use in the error message framework to tag the BOOL array */
-#define STACKMAP_TYPE_BOOL_ARRAY	0x10
 
 #define INDENT(n) (n), " "
 

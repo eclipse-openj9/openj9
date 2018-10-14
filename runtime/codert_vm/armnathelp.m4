@@ -1,4 +1,4 @@
-dnl Copyright (c) 2017, 2017 IBM Corp. and others
+dnl Copyright (c) 2017, 2018 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -281,6 +281,11 @@ SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitReportMethodExit,2)
 DUAL_MODE_HELPER_NO_RETURN_VALUE(jitTypeCheckArrayStore,2)
 DUAL_MODE_HELPER_NO_RETURN_VALUE(jitTypeCheckArrayStoreWithNullCheck,2)
 FAST_PATH_ONLY_HELPER(jitObjectHashCode,1)
+SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitReportFinalFieldModified,1)
+SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitReportInstanceFieldRead,2)
+SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitReportInstanceFieldWrite,3)
+SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitReportStaticFieldRead,1)
+SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitReportStaticFieldWrite,2)
 
 dnl Trap handlers
 
@@ -309,12 +314,20 @@ PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveVirtualMethod,2)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveMethodType,3)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveMethodHandle,3)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveInvokeDynamic,3)
+PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveConstantDynamic,3)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveHandleMethod,3)
+
+dnl Direct call field resolve helpers
+
+SLOW_PATH_ONLY_HELPER(jitResolveFieldDirect,2)
+SLOW_PATH_ONLY_HELPER(jitResolveFieldSetterDirect,2)
+SLOW_PATH_ONLY_HELPER(jitResolveStaticFieldDirect,2)
+SLOW_PATH_ONLY_HELPER(jitResolveStaticFieldSetterDirect,2)
 
 dnl Recompilation helpers
 
 SLOW_PATH_ONLY_HELPER(jitRetranslateCaller,2)
-SLOW_PATH_ONLY_HELPER(jitRetranslateCallerWithPreparation,2)
+SLOW_PATH_ONLY_HELPER(jitRetranslateCallerWithPreparation,3)
 SLOW_PATH_ONLY_HELPER(jitRetranslateMethod,3)
 
 dnl Exception throw helpers

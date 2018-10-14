@@ -37,18 +37,18 @@
 #include "omr.h"
 #include "VerboseGCInterface.h"
 
-#include "Collector.hpp"
 #if defined(J9VM_GC_FINALIZATION)
 #include "FinalizeListManager.hpp"
 #endif /* J9VM_GC_FINALIZATION */
 #include "GCExtensions.hpp"
+#include "GlobalCollector.hpp"
 #include "Heap.hpp"
 #include "MemorySpace.hpp"
 #include "MemorySubSpace.hpp"
 
 extern "C" {
 extern J9MemoryManagerFunctions MemoryManagerFunctions;
-extern void initialiseVerboseFunctionTableWithDummies(J9MemoryManagerVerboseInterface *table);
+extern void initializeVerboseFunctionTableWithDummies(J9MemoryManagerVerboseInterface *table);
 
 /**
  * sets the mode where TLH pages are zeroed

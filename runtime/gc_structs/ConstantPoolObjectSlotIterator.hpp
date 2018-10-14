@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,11 @@
 #include "j9cfg.h"
 #include "j9cp.h"
 #include "modron.h"
+#include "j2sever.h"
+#include "ModronAssertions.h"
+
+
+#include "ConstantDynamicSlotIterator.hpp"
 
 /**
  * Iterate over object references (but not class references) in the constant pool of a class.
@@ -48,18 +53,29 @@ class GC_ConstantPoolObjectSlotIterator
 	U_32 *_cpDescriptionSlots;
 	U_32 _cpDescription;
 	UDATA _cpDescriptionIndex;
-	
+	bool _condyOnly;
+	bool _condyEnabled;
+	GC_ConstantDynamicSlotIterator _constantDynamicSlotIterator;
+
 public:
-	GC_ConstantPoolObjectSlotIterator(J9Class *clazz) :
+
+	GC_ConstantPoolObjectSlotIterator(J9JavaVM *vm, J9Class *clazz, bool condyOnly = false) :
 		_cpEntry((j9object_t *)J9_CP_FROM_CLASS(clazz)),
-		_cpEntryCount(clazz->romClass->ramConstantPoolCount)
+		_cpEntryCount(clazz->romClass->ramConstantPoolCount),
+		_constantDynamicSlotIterator()
 	{
+		_condyOnly = condyOnly;
 		_cpEntryTotal = _cpEntryCount;
 		if(_cpEntryCount) {
 			_cpDescriptionSlots = SRP_PTR_GET(&clazz->romClass->cpShapeDescription, U_32 *);
 			_cpDescriptionIndex = 0;
 		}
-
+		/* Check if the system is condy-enabled */
+		if (J2SE_VERSION(vm) < J2SE_V11) {
+			_condyEnabled = false;
+		} else {
+			_condyEnabled = true;
+		}
 	};
 
 	/**
@@ -73,23 +89,6 @@ public:
 
 	j9object_t *nextSlot();
 
-	/**
-	 * Required in order to resume constant pool scanning state.  The caller doesn't know which class
-	 * of a replacedClass list the constant pool slot refers to so this will do a simple range check
-	 * to determine if it refers to this class's constant pool.
-	 *
-	 * @param slot[in] A pointer to a slot in a class's constant pool
-	 * @return True if the slot points into the constant pool known to this iterator
-	 */
-	bool isSlotInConstantPool(j9object_t *slot);
-
-	/**
-	 * Sets the next slot to be returned to the given slot.  This is only useful for
-	 * resuming a suspended constant pool iteration.
-	 *
-	 * @param slot[in] The slot pointer which is to be returned by the next call to nextSlot
-	 */
-	void setNextSlot(j9object_t *slot);
 };
 
 #endif /* CONSTANTPOOLOBJECTSLOTITERATOR_HPP_ */

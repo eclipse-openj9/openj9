@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,14 +19,15 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+
 #include <stdio.h>
 #include "dfix.h"
 #include "dfix_internal.h"
 
 static void
-dfix_memcpy_impl1(void* dest, const void* src, size_t size)
+dfix_memcpy_impl1(void *dest, const void *src, size_t size)
 {
-	printf("running in dfix_memcpy_impl1(dest=0x%p,src=0x%p,size=%d).\n", dest, src, size);
+	printf("running in dfix_memcpy_impl1(dest=0x%p,src=0x%p,size=%llu).\n", dest, src, (unsigned long long)size);
 }
 
 BOOLEAN

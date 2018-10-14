@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -200,7 +200,7 @@ MM_WriteOnceCompactor::initialize(MM_EnvironmentVLHGC *env)
 		_compactGroupDestinations = (MM_CompactGroupDestinations *)j9mem_allocate_memory(sizeof(MM_CompactGroupDestinations) * compactGroups, OMRMEM_CATEGORY_MM);
 		didAllocateTable = (NULL != _compactGroupDestinations);
 		if (didAllocateTable) {
-			memset(_compactGroupDestinations, 0, sizeof(MM_CompactGroupDestinations) * compactGroups);
+			memset((void *)_compactGroupDestinations, 0, sizeof(MM_CompactGroupDestinations) * compactGroups);
 			for (UDATA i = 0; i < compactGroups; i++) {
 				_compactGroupDestinations[i].head = NULL;
 				_compactGroupDestinations[i].tail = NULL;
@@ -1227,10 +1227,15 @@ MM_WriteOnceCompactor::fixupClassObject(MM_EnvironmentVLHGC* env, J9Object *clas
 			Assert_MM_true(0 == (J9CLASS_FLAGS(classPtr) & J9_JAVA_CLASS_DYING));
 
 			/*
-			 * scan static fields
+			 * Scan J9Class internals using general iterator
+			 * - scan statics fields
+			 * - scan call sites
+			 * - scan MethodTypes
+			 * - scan VarHandle MethodTypes
+			 * - scan constants pool objects
 			 */
-			GC_ClassStaticsIterator classStaticsIterator(env, classPtr);
-			while(NULL != (slotPtr = classStaticsIterator.nextSlot())) {
+			GC_ClassIterator classIterator(env, classPtr, false);
+			while (NULL != (slotPtr = classIterator.nextSlot())) {
 				J9Object *originalObject = *slotPtr;
 				if (NULL != originalObject) {
 					J9Object *forwardedObject = getForwardWrapper(env, originalObject, cache);
@@ -1239,60 +1244,9 @@ MM_WriteOnceCompactor::fixupClassObject(MM_EnvironmentVLHGC* env, J9Object *clas
 				}
 			}
 
-			/*
-			 * scan call sites
-			 */
-			GC_CallSitesIterator callSitesIterator(classPtr);
-			while(NULL != (slotPtr = callSitesIterator.nextSlot())) {
-				J9Object *originalObject = *slotPtr;
-				if (NULL != originalObject) {
-					J9Object *forwardedObject = getForwardWrapper(env, originalObject, cache);
-					*slotPtr = forwardedObject;
-					_interRegionRememberedSet->rememberReferenceForCompact(env, classObject, forwardedObject);
-				}
-			}
-
-			/*
-			 * scan MethodTypes
-			 */
-			GC_MethodTypesIterator methodTypesIterator(classPtr->romClass->methodTypeCount, classPtr->methodTypes);
-			while(NULL != (slotPtr = methodTypesIterator.nextSlot())) {
-				J9Object *originalObject = *slotPtr;
-				if (NULL != originalObject) {
-					J9Object *forwardedObject = getForwardWrapper(env, originalObject, cache);
-					*slotPtr = forwardedObject;
-					_interRegionRememberedSet->rememberReferenceForCompact(env, classObject, forwardedObject);
-				}
-			}
-
-			/*
-			 * scan VarHandle MethodTypes
-			 */
-			GC_MethodTypesIterator varHandleMethodTypesIterator(classPtr->romClass->varHandleMethodTypeCount, classPtr->varHandleMethodTypes);
-			while(NULL != (slotPtr = varHandleMethodTypesIterator.nextSlot())) {
-				J9Object *originalObject = *slotPtr;
-				if (NULL != originalObject) {
-					J9Object *forwardedObject = getForwardWrapper(env, originalObject, cache);
-					*slotPtr = forwardedObject;
-					_interRegionRememberedSet->rememberReferenceForCompact(env, classObject, forwardedObject);
-				}
-			}
-
-			/*
-			 * scan constant pool objects
-			 */
 			Assert_MM_true(classObject == getForwardWrapper(env, J9VM_J9CLASS_TO_HEAPCLASS(classPtr), cache));
 			classPtr->classObject = (j9object_t)classObject;
 
-			GC_ConstantPoolObjectSlotIterator constantPoolIterator(classPtr);
-			while(NULL != (slotPtr = constantPoolIterator.nextSlot())) {
-				J9Object *originalObject = *slotPtr;
-				if (NULL != originalObject) {
-					J9Object *forwardedObject = getForwardWrapper(env, originalObject, cache);
-					*slotPtr = forwardedObject;
-					_interRegionRememberedSet->rememberReferenceForCompact(env, classObject, forwardedObject);
-				}
-			}
 			classPtr = classPtr->replacedClass;
 		} while (NULL != classPtr);
 	}

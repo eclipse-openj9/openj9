@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -5993,7 +5993,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_REVALIDATE_AOT_METHODS.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS=Imprima los m\u00e9todos AOT que coincidan con las especificaciones de m\u00e9todo.\n\
-\t<m\u00e9todo_especificaci\u00f3n> se define como: [!]{*|[*]<nombre_paquete/nombre_clase>[*]}[.{*|[*]<nombre_m\u00e9todo>[*]}][({*|[*]<par\u00e1metros>[*]})].
+\t<especificaci\u00f3n_m\u00e9todo> se define como: [!]{*|[*]<nombrepaquete/nombreclase>[*]}[.{*|[*]<nombrem\u00e9todo>[*]}[({*|[*]<par\u00e1metros>[*]})]].
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.system_action=
@@ -6007,7 +6007,7 @@ J9NLS_SHRC_CM_PRINTSTATS_INVALIDATED.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_INVALIDATED.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION=Uso: %s{<m\u00e9todo_especificaci\u00f3n>[,<m\u00e9todo_especificaci\u00f3n>]}
+J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION=Uso: %s{<especificaci\u00f3n_m\u00e9todo>[,<especificaci\u00f3n_m\u00e9todo>]}
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.sample_input_1=findAotMethods=
 J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.explanation=NOTAG
@@ -6015,9 +6015,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=El formato de <m\u00e9todo_especificaci\u00f3n> es [!]{*|[*]<nombre_paquete/nombre_clase>[*]}[.{*|[*]<nombre_m\u00e9todo>[*]}][({*|[*]<par\u00e1metros>[*]})], por ejemplo:\n\
-\n\
-\t-Xshareclasses:name=Cache1,%sjava/util/HashMap.hash(Ljava/lang/Object;)\n
+J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=El formato de <especificaci\u00f3n_m\u00e9todo> es [!]{*|[*]<nombrepaquete/nombreclase>[*]}[.{*|[*]<nombrem\u00e9todo>[*]}[({*|[*]<par\u00e1metros>[*]})]], p.ej.:\n \n \t-Xshareclasses:name=Cache1,%sjava/util/HashMap.hash(Ljava/lang/Object;)\n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC.sample_input_1=findAotMethods=
 J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC.explanation=NOTAG
@@ -6145,6 +6143,7 @@ J9NLS_SHRC_OSCACHE_MMAP_SET_GROUPACCESS_FAILED.user_response=Check the umask set
 
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED=No se ha podido definir el permiso de acceso a grupo seg\u00fan se solicita con la subopci\u00f3n 'groupAccess' en el sem\u00e1foro definido con semid=%d asociado con la memoria cach\u00e9 de clases compartida.
 # START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.explanation=Cannot set group access permission when creating the new semaphore with sub-option "groupAccess".
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.user_response=Ensure the user has sufficient permission for creating the new semaphore with group access.
@@ -6152,6 +6151,7 @@ J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.user_response=Ensure the use
 
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED=No se ha podido definir el permiso de acceso a grupo seg\u00fan se solicita con la subopci\u00f3n 'groupAccess' en la memoria compartida shmid=%d asociado con la memoria cach\u00e9 de clases compartida.
 # START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.explanation=Cannot set group access permission when creating the new shared memory with sub-option "groupAccess".
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.user_response=Ensure the user has sufficient permission for creating the new shared memory with group access.
@@ -6632,4 +6632,11 @@ J9NLS_SHRC_CC_INCORRECT_BUILDID=No se ha podido iniciar la memoria compartida. L
 J9NLS_SHRC_CC_INCORRECT_BUILDID.explanation=An error has occurred when starting up the cache. The build ID of the existing cache with the same name is different from that of the current JVM.
 J9NLS_SHRC_CC_INCORRECT_BUILDID.system_action=The JVM fails to complete the requested operation.
 J9NLS_SHRC_CC_INCORRECT_BUILDID.user_response=Use a JVM which matches the build ID of the existing cache.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1=Inhabilitar el almacenamiento en memoria cach\u00e9 de las clases cargadas por el cargador de clases de arranque.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.user_response=
 # END NON-TRANSLATABLE

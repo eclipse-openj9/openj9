@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -253,7 +253,7 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 	if (NULL == result) {
 		J9Module **findResult = NULL;
 		J9Module *j9module = NULL;
-		char localBuf[256];
+		char localBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 		char *utf8Name = NULL;
 		UDATA utf8Length = 0;
 		PORT_ACCESS_FROM_JAVAVM(vm);
@@ -269,13 +269,12 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 			}
 		}
 
-		utf8Name = copyStringToUTF8WithMemAlloc(currentThread, className, J9_STR_XLAT, "", localBuf, sizeof(localBuf));
+		utf8Name = copyStringToUTF8WithMemAlloc(currentThread, className, J9_STR_NULL_TERMINATE_RESULT | J9_STR_XLAT, "", 0, localBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &utf8Length);
 		if (NULL == utf8Name) {
 			/* Throw out-of-memory */
 			setNativeOutOfMemoryError(currentThread, 0, 0);
 			return NULL;
 		}
-		utf8Length = (UDATA)getStringUTF8Length(currentThread, className);
 		result = internalFindClassInModule(currentThread, j9module, (U_8 *)utf8Name, utf8Length, classLoader, options);
 		if (utf8Name != localBuf) {
 			j9mem_free_memory(utf8Name);
@@ -347,18 +346,20 @@ internalRunPreInitInstructions(J9Class * ramClass, J9VMThread * vmThread)
 					break;
 
 				case J9CPTYPE_INSTANCE_METHOD:
+				case J9CPTYPE_INTERFACE_INSTANCE_METHOD:
 					romMethodRef = ((J9ROMMethodRef *) romConstantPool) + i;
 					nas = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
-					((J9RAMMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = ((sizeof(J9Class) + sizeof(UDATA)) << 8) +
+					((J9RAMMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = (J9VTABLE_INITIAL_VIRTUAL_OFFSET << 8) +
 						getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas)));
 					((J9RAMMethodRef *) ramConstantPool)[i].method = vm->initialMethods.initialSpecialMethod;
 					break;
 
 				case J9CPTYPE_STATIC_METHOD:
+				case J9CPTYPE_INTERFACE_STATIC_METHOD:
 					romMethodRef = ((J9ROMMethodRef *) romConstantPool) + i;
 					nas = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
 					/* In case this CP entry is shared with invokevirtual */
-					((J9RAMMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = ((sizeof(J9Class) + sizeof(UDATA)) << 8) +
+					((J9RAMMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = (J9VTABLE_INITIAL_VIRTUAL_OFFSET << 8) +
 						getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas)));
 					((J9RAMStaticMethodRef *) ramConstantPool)[i].method = vm->initialMethods.initialStaticMethod;
 					break;
@@ -366,7 +367,7 @@ internalRunPreInitInstructions(J9Class * ramClass, J9VMThread * vmThread)
 				case J9CPTYPE_INTERFACE_METHOD:
 					romMethodRef = ((J9ROMMethodRef *) romConstantPool) + i;
 					nas = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
-					((J9RAMInterfaceMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas)));
+					((J9RAMInterfaceMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = J9_ITABLE_INDEX_UNRESOLVED | getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas)));
 					break;
 
 				case J9CPTYPE_METHOD_TYPE:

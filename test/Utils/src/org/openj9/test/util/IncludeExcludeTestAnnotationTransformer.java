@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,6 +42,7 @@ public class IncludeExcludeTestAnnotationTransformer implements IAnnotationTrans
 		String line = null;
 		String excludeFile = System.getenv("EXCLUDE_FILE");
 		logger.info("exclude file is " + excludeFile);
+		if (excludeFile != null) {
 		try {
 			FileReader fileReader = new FileReader(excludeFile);
 			BufferedReader bufferedReader = new BufferedReader(fileReader);
@@ -78,6 +79,7 @@ public class IncludeExcludeTestAnnotationTransformer implements IAnnotationTrans
 			logger.info("Unable to open file " + excludeFile, ex);
 		} catch(IOException ex) {
 			logger.info("Error reading file " + excludeFile, ex);
+		}
 		}
 	}
 

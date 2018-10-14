@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,6 +38,7 @@
 #include "MemorySpace.hpp"
 #include "VMThreadListIterator.hpp"
 #include "ModronAssertions.h"
+#include "VMHelpers.hpp"
 
 
 
@@ -1354,7 +1355,8 @@ MM_ObjectAccessBarrier::cloneObject(J9VMThread *vmThread, J9Object *srcObject, J
 		hashCode = _extensions->objectModel.getObjectHashCode(vmThread->javaVM, destObject);
 	}	
 	
-	UDATA *descriptionPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(srcObject)->instanceDescription;
+	J9Class *clazz = J9GC_J9OBJECT_CLAZZ(srcObject);
+	UDATA *descriptionPtr = (UDATA *)clazz->instanceDescription;
 	UDATA descriptionBits;
 	if(((UDATA)descriptionPtr) & 1) {
 		descriptionBits = ((UDATA)descriptionPtr) >> 1;
@@ -1394,10 +1396,14 @@ MM_ObjectAccessBarrier::cloneObject(J9VMThread *vmThread, J9Object *srcObject, J
 	}
 
 #if defined(J9VM_THR_LOCK_NURSERY)
-	/* zero lockword, if present */
+	/* initialize lockword, if present */
 	lockwordAddress = getLockwordAddress(vmThread, destObject);
 	if (NULL != lockwordAddress) {
-		*lockwordAddress = 0;
+		if (J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(clazz), J9ClassReservableLockWordInit)) {
+			*lockwordAddress = OBJECT_HEADER_LOCK_RESERVED;
+		} else {
+			*lockwordAddress = 0;
+		}
 	}
 #endif /* J9VM_THR_LOCK_NURSERY */
 
@@ -1501,6 +1507,7 @@ MM_ObjectAccessBarrier::compareAndSwapObject(J9VMThread *vmThread, J9Object *des
 	fj9object_t *actualDestAddress;
 	fj9object_t compareValue = convertTokenFromPointer(compareObject);
 	fj9object_t swapValue = convertTokenFromPointer(swapObject);
+	bool result = false;
 
 	/* TODO: To make this API more consistent, it should probably be split into separate
 	 * indexable and non-indexable versions. Currently, when called on an indexable object,
@@ -1513,25 +1520,22 @@ MM_ObjectAccessBarrier::compareAndSwapObject(J9VMThread *vmThread, J9Object *des
 		actualDestAddress = J9OAB_MIXEDOBJECT_EA(destObject, ((UDATA)destAddress - (UDATA)destObject), fj9object_t);
 	}
 
-	/* Note: This is a bit of a special case -- we call preObjectStore even though the store
-	 * may not actually occur. This is safe and correct for Metronome.
-	 */
-	preObjectStore(vmThread, destObject, actualDestAddress, swapObject, true);
-	protectIfVolatileBefore(vmThread, true, false, false);
-	
-	/* One of these conditions will evaluate to true at compile time based on whether fields are 32 or 64 bits */
-	bool result = false;
-	if (sizeof(fj9object_t) == sizeof(UDATA)) {
-		result = ((UDATA)compareValue == MM_AtomicOperations::lockCompareExchange((UDATA *)actualDestAddress, (UDATA)compareValue, (UDATA)swapValue));
-	} else if (sizeof(fj9object_t) == sizeof(U_32)) {
+	if (preObjectRead(vmThread, destObject, actualDestAddress)) {
+		/* Note: This is a bit of a special case -- we call preObjectStore even though the store
+		 * may not actually occur. This is safe and correct for Metronome.
+		 */
+		preObjectStore(vmThread, destObject, actualDestAddress, swapObject, true);
+		protectIfVolatileBefore(vmThread, true, false, false);
+
+#if defined(J9VM_GC_COMPRESSED_POINTERS)
 		result = ((U_32)(UDATA)compareValue == MM_AtomicOperations::lockCompareExchangeU32((U_32 *)actualDestAddress, (U_32)(UDATA)compareValue, (U_32)(UDATA)swapValue));
-	} else {
-		assume(false, "fj9object_t must be either U_32 (compressed pointers / 32-bit VM) or UDATA");
-	}
-	
-	protectIfVolatileAfter(vmThread, true, false, false);
-	if (result) {
-		postObjectStore(vmThread, destObject, actualDestAddress, swapObject, true);
+#else
+		result = ((UDATA)compareValue == MM_AtomicOperations::lockCompareExchange((UDATA *)actualDestAddress, (UDATA)compareValue, (UDATA)swapValue));
+#endif
+		protectIfVolatileAfter(vmThread, true, false, false);
+		if (result) {
+			postObjectStore(vmThread, destObject, actualDestAddress, swapObject, true);
+		}
 	}
 
 	return result;
@@ -1647,6 +1651,7 @@ MM_ObjectAccessBarrier::compareAndExchangeObject(J9VMThread *vmThread, J9Object 
 	fj9object_t *actualDestAddress;
 	fj9object_t compareValue = convertTokenFromPointer(compareObject);
 	fj9object_t swapValue = convertTokenFromPointer(swapObject);
+	J9Object *result = NULL;
 
 	/* TODO: To make this API more consistent, it should probably be split into separate
 	 * indexable and non-indexable versions. Currently, when called on an indexable object,
@@ -1659,21 +1664,23 @@ MM_ObjectAccessBarrier::compareAndExchangeObject(J9VMThread *vmThread, J9Object 
 		actualDestAddress = J9OAB_MIXEDOBJECT_EA(destObject, ((UDATA)destAddress - (UDATA)destObject), fj9object_t);
 	}
 
-	/* Note: This is a bit of a special case -- we call preObjectStore even though the store
-	 * may not actually occur. This is safe and correct for Metronome.
-	 */
-	preObjectStore(vmThread, destObject, actualDestAddress, swapObject, true);
-	protectIfVolatileBefore(vmThread, true, false, false);
+	if (preObjectRead(vmThread, destObject, actualDestAddress)) {
+		/* Note: This is a bit of a special case -- we call preObjectStore even though the store
+		 * may not actually occur. This is safe and correct for Metronome.
+		 */
+		preObjectStore(vmThread, destObject, actualDestAddress, swapObject, true);
+		protectIfVolatileBefore(vmThread, true, false, false);
 
 #if defined(J9VM_GC_COMPRESSED_POINTERS)
-	J9Object *result = (J9Object *)(UDATA)MM_AtomicOperations::lockCompareExchangeU32((U_32 *)actualDestAddress, (U_32)(UDATA)compareValue, (U_32)(UDATA)swapValue);
+		J9Object *result = (J9Object *)(UDATA)MM_AtomicOperations::lockCompareExchangeU32((U_32 *)actualDestAddress, (U_32)(UDATA)compareValue, (U_32)(UDATA)swapValue);
 #else
-	J9Object *result = (J9Object *)MM_AtomicOperations::lockCompareExchange((UDATA *)actualDestAddress, (UDATA)compareValue, (UDATA)swapValue);
+		J9Object *result = (J9Object *)MM_AtomicOperations::lockCompareExchange((UDATA *)actualDestAddress, (UDATA)compareValue, (UDATA)swapValue);
 #endif
 
-	protectIfVolatileAfter(vmThread, true, false, false);
-	if (result) {
-		postObjectStore(vmThread, destObject, actualDestAddress, swapObject, true);
+		protectIfVolatileAfter(vmThread, true, false, false);
+		if (result) {
+			postObjectStore(vmThread, destObject, actualDestAddress, swapObject, true);
+		}
 	}
 
 	return result;
@@ -2019,23 +2026,10 @@ MM_ObjectAccessBarrier::setOwnableSynchronizerLink(j9object_t object, j9object_t
 	*ownableSynchronizerLink = convertTokenFromPointer(value);
 }
 
-/**
- * This is copy of function from jnimisc.cpp
- *
- * Find the J9SFJNINativeMethodFrame representing the current native.
- * @param currentThread[in] the current J9VMThread
- * @returns the native method frame
- */
-static J9SFJNINativeMethodFrame*
-findNativeMethodFrame(J9VMThread *currentThread)
-{
-	return (J9SFJNINativeMethodFrame*)((UDATA)currentThread->sp + (UDATA)currentThread->literals);
-}
-
 void
 MM_ObjectAccessBarrier::printNativeMethod(J9VMThread* vmThread)
 {
-	J9SFJNINativeMethodFrame *nativeMethodFrame = findNativeMethodFrame(vmThread);
+	J9SFJNINativeMethodFrame *nativeMethodFrame = VM_VMHelpers::findNativeMethodFrame(vmThread);
 	J9Method *method = nativeMethodFrame->method;
 	J9JavaVM *javaVM = vmThread->javaVM;
 	PORT_ACCESS_FROM_JAVAVM(javaVM);

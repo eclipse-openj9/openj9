@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corp. and others
+ * Copyright (c) 2007, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,7 +61,7 @@ public class MonitorSovSectionParserPart extends SovereignSectionParserPart impl
 					long tid = results.getLongValue(MONITOR_THREAD_ID);
 					long ee = results.getLongValue(MONITOR_THREAD_EE);
 					// Remember the flat thread id for later
-					threads.put(new Integer(flatid), new Long(tid));
+					threads.put(Integer.valueOf(flatid), Long.valueOf(tid));
 					try {
 						fRuntimeBuilder.addJavaThread(null, name, IBuilderData.NOT_AVAILABLE, tid, IBuilderData.NOT_AVAILABLE, ee, "", IBuilderData.NOT_AVAILABLE, 0, null);
 					} catch (BuilderFailureException e) {
@@ -81,7 +81,7 @@ public class MonitorSovSectionParserPart extends SovereignSectionParserPart impl
 							long monitorID = results.getLongValue(MONITOR_OBJECT_ADDRESS);
 							results = processTagLineRequired(LK_FLAT_DETAILS);
 							int flatid = results.getIntValue(MONITOR_FLAT_ID);
-							Object p = threads.get(new Integer(flatid));
+							Object p = threads.get(Integer.valueOf(flatid));
 							long threadID = p instanceof Long ? ((Long)p).longValue() : IBuilderData.NOT_AVAILABLE; 
 							try {
 								if (monitorID != IBuilderData.NOT_AVAILABLE) {

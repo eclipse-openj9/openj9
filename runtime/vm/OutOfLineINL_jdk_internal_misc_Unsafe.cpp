@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2016 IBM Corp. and others
+ * Copyright (c) 2016, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,7 +46,9 @@ OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeObjectVolatile(J9VMThrea
 	j9object_t obj = *(j9object_t*)(currentThread->sp + 4);
 	MM_ObjectAccessBarrierAPI _objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
 
+	VM_OutOfLineINL_Helpers::buildInternalNativeStackFrame(currentThread, method);
 	j9object_t result = VM_UnsafeAPI::compareAndExchangeObject(currentThread, &_objectAccessBarrier, obj, offset, compareValue, swapValue);
+	VM_OutOfLineINL_Helpers::restoreInternalNativeStackFrame(currentThread);
 
 	VM_OutOfLineINL_Helpers::returnObject(currentThread, result, 6);
 	return EXECUTE_BYTECODE;
@@ -62,7 +64,9 @@ OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeIntVolatile(J9VMThread *
 	j9object_t obj = *(j9object_t*)(currentThread->sp + 4);
 	MM_ObjectAccessBarrierAPI _objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
 
+	VM_OutOfLineINL_Helpers::buildInternalNativeStackFrame(currentThread, method);
 	U_32 result = VM_UnsafeAPI::compareAndExchangeInt(currentThread, &_objectAccessBarrier, obj, offset, compareValue, swapValue);
+	VM_OutOfLineINL_Helpers::restoreInternalNativeStackFrame(currentThread);
 
 	VM_OutOfLineINL_Helpers::returnSingle(currentThread, result, 6);
 	return EXECUTE_BYTECODE;
@@ -78,7 +82,9 @@ OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeLongVolatile(J9VMThread 
 	j9object_t obj = *(j9object_t*)(currentThread->sp + 6);
 	MM_ObjectAccessBarrierAPI _objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
 
+	VM_OutOfLineINL_Helpers::buildInternalNativeStackFrame(currentThread, method);
 	U_64 result = VM_UnsafeAPI::compareAndExchangeLong(currentThread, &_objectAccessBarrier, obj, offset, compareValue, swapValue);
+	VM_OutOfLineINL_Helpers::restoreInternalNativeStackFrame(currentThread);
 
 	VM_OutOfLineINL_Helpers::returnDouble(currentThread, result, 8);
 	return EXECUTE_BYTECODE;

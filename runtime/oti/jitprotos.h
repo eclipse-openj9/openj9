@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -112,7 +112,6 @@ void * j9ThunkInvokeExactHelperFromSignature(void * jitConfig, UDATA signatureLe
 
 /* prototypes from CodertVMHelpers.cpp */
 void initializeDirectJNI (J9JavaVM *vm);
-void flushICache(J9VMThread *currentThread, void *memoryPointer, UDATA byteAmount);
 
 /* prototypes from jsr292.c */
 void i2jFSDAssert();
@@ -163,8 +162,10 @@ void J9FASTCALL fast_jitCollapseJNIReferenceFrame(J9VMThread *currentThread);
 #if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
 /* TODO Will be cleaned once all platforms adopt the correct parameter order */
 UDATA J9FASTCALL fast_jitInstanceOf(J9VMThread *currentThread, j9object_t object, J9Class *castClass);
+UDATA J9FASTCALL fast_jitCheckAssignable(J9VMThread *currentThread, J9Class *clazz, J9Class *castClass);
 #else /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 UDATA J9FASTCALL fast_jitInstanceOf(J9VMThread *currentThread, J9Class *castClass, j9object_t object);
+UDATA J9FASTCALL fast_jitCheckAssignable(J9VMThread *currentThread, J9Class *castClass, J9Class *clazz);
 #endif /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 UDATA J9FASTCALL fast_jitObjectHashCode(J9VMThread *currentThread, j9object_t object);
 

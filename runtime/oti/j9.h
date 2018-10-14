@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -60,6 +60,7 @@
 #include "omr.h"
 #include "temp.h"
 #include "j9thread.h"
+#include "j2sever.h"
 
 typedef struct J9JNIRedirectionBlock {
 	struct J9JNIRedirectionBlock* next;
@@ -79,6 +80,10 @@ typedef struct J9ClassLoaderWalkState {
 /* include ENVY-generated part of j9.h (which formerly was j9.h) */
 #include "j9generated.h"
 #include "j9cfg_builder.h"
+
+#if !defined(J9VM_OUT_OF_PROCESS)
+#include "j9accessbarrierhelpers.h"
+#endif
 
 /*------------------------------------------------------------------
  * AOT version defines
@@ -125,21 +130,35 @@ typedef struct J9ClassLoaderWalkState {
 
 #define IS_STRING_COMPRESSED(vmThread, object) \
 	(IS_STRING_COMPRESSION_ENABLED(vmThread) ? \
-		(((I_32) J9VMJAVALANGSTRING_COUNT(vmThread, object)) >= 0) : FALSE)
+		(J2SE_VERSION((vmThread)->javaVM) >= J2SE_19 ? \
+			(((I_32) J9VMJAVALANGSTRING_CODER(vmThread, object)) == 0) : \
+			(((I_32) J9VMJAVALANGSTRING_COUNT(vmThread, object)) >= 0)) : \
+		FALSE)
 
 #define IS_STRING_COMPRESSED_VM(javaVM, object) \
 	(IS_STRING_COMPRESSION_ENABLED_VM(javaVM) ? \
-		(((I_32) J9VMJAVALANGSTRING_COUNT_VM(javaVM, object)) >= 0) : FALSE)
+		(J2SE_VERSION(javaVM) >= J2SE_19 ? \
+			(((I_32) J9VMJAVALANGSTRING_CODER_VM(javaVM, object)) == 0) : \
+			(((I_32) J9VMJAVALANGSTRING_COUNT_VM(javaVM, object)) >= 0)) : \
+		FALSE)
 
 #define J9VMJAVALANGSTRING_LENGTH(vmThread, object) \
 	(IS_STRING_COMPRESSION_ENABLED(vmThread) ? \
-		(J9VMJAVALANGSTRING_COUNT(vmThread, object) & 0x7FFFFFFF) : \
-		(J9VMJAVALANGSTRING_COUNT(vmThread, object)))
+		(J2SE_VERSION((vmThread)->javaVM) >= J2SE_19 ? \
+			(J9INDEXABLEOBJECT_SIZE(vmThread, J9VMJAVALANGSTRING_VALUE(vmThread, object)) >> ((I_32) J9VMJAVALANGSTRING_CODER(vmThread, object))) : \
+			(J9VMJAVALANGSTRING_COUNT(vmThread, object) & 0x7FFFFFFF)) : \
+		(J2SE_VERSION((vmThread)->javaVM) >= J2SE_19 ? \
+			(J9INDEXABLEOBJECT_SIZE(vmThread, J9VMJAVALANGSTRING_VALUE(vmThread, object)) >> 1) : \
+			(J9VMJAVALANGSTRING_COUNT(vmThread, object))))
 
 #define J9VMJAVALANGSTRING_LENGTH_VM(javaVM, object) \
 	(IS_STRING_COMPRESSION_ENABLED_VM(javaVM) ? \
-		(J9VMJAVALANGSTRING_COUNT_VM(javaVM, object) & 0x7FFFFFFF) : \
-		(J9VMJAVALANGSTRING_COUNT_VM(javaVM, object)))
+		(J2SE_VERSION(javaVM) >= J2SE_19 ? \
+			(J9INDEXABLEOBJECT_SIZE_VM(javaVM, J9VMJAVALANGSTRING_VALUE_VM(javaVM, object)) >> ((I_32) J9VMJAVALANGSTRING_CODER(javaVM, object))) : \
+			(J9VMJAVALANGSTRING_COUNT_VM(javaVM, object) & 0x7FFFFFFF)) : \
+		(J2SE_VERSION(javaVM) >= J2SE_19 ? \
+			(J9INDEXABLEOBJECT_SIZE_VM(javaVM, J9VMJAVALANGSTRING_VALUE_VM(javaVM, object)) >> 1) : \
+			(J9VMJAVALANGSTRING_COUNT_VM(javaVM, object))))
 
 /* UTF8 access macros - all access to J9UTF8 fields should be done through these macros */
 
@@ -231,8 +250,6 @@ J9PortLibrary *privatePortLibrary = (*portPrivateVMI)->GetPortLibrary(portPrivat
 #define PORT_ACCESS_FROM_VMI(vmi) J9PortLibrary *privatePortLibrary = (*vmi)->GetPortLibrary(vmi)
 /** @} */
 
-#define JNI_NATIVE_CALLED_FAST(env) (J9_ARE_ANY_BITS_SET(J9VMTHREAD_FROM_JNIENV(env)->publicFlags, J9_PUBLIC_FLAGS_VM_ACCESS))
-
 #define J9_DECLARE_CONSTANT_UTF8(instanceName, name) \
 static const struct { \
 	U_16 length; \
@@ -275,7 +292,7 @@ static const struct { \
 
 #define J9_ARE_MODULES_ENABLED(vm) (J2SE_VERSION(vm) >= J2SE_19)
 
-/* Macrco for VM internalVMFunctions */
+/* Macro for VM internalVMFunctions */
 #if defined(J9_INTERNAL_TO_VM)
 #define J9_VM_FUNCTION(currentThread, function) function
 #define J9_VM_FUNCTION_VIA_JAVAVM(javaVM, function) function
@@ -283,5 +300,26 @@ static const struct { \
 #define J9_VM_FUNCTION(currentThread, function) ((currentThread)->javaVM->internalVMFunctions->function)
 #define J9_VM_FUNCTION_VIA_JAVAVM(javaVM, function) ((javaVM)->internalVMFunctions->function)
 #endif /* J9_INTERNAL_TO_VM */
+
+/* Macros for VTable */
+#define J9VTABLE_HEADER_FROM_RAM_CLASS(clazz) ((J9VTableHeader *)(((J9Class *)(clazz)) + 1))
+#define J9VTABLE_FROM_HEADER(vtableHeader) ((J9Method **)(((J9VTableHeader *)(vtableHeader)) + 1))
+#define J9VTABLE_FROM_RAM_CLASS(clazz) J9VTABLE_FROM_HEADER(J9VTABLE_HEADER_FROM_RAM_CLASS(clazz))
+#define J9VTABLE_OFFSET_FROM_INDEX(index) (sizeof(J9Class) + sizeof(J9VTableHeader) + ((index) * sizeof(UDATA)))
+
+/* VTable constants offset */
+#define J9VTABLE_INITIAL_VIRTUAL_OFFSET (sizeof(J9Class) + offsetof(J9VTableHeader, initialVirtualMethod))
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+#define J9VTABLE_INVOKE_PRIVATE_OFFSET (sizeof(J9Class) + offsetof(J9VTableHeader, invokePrivateMethod))
+#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+
+/* Skip Interpreter VTable header */
+#define JIT_VTABLE_START_ADDRESS(clazz) ((UDATA *)(clazz) - (sizeof(J9VTableHeader) / sizeof(UDATA)))
+
+/* Check if J9RAMInterfaceMethodRef is resolved */
+#define J9RAMINTERFACEMETHODREF_RESOLVED(interfaceClass, methodIndexAndArgCount) \
+	((NULL != (interfaceClass)) && ((J9_ITABLE_INDEX_UNRESOLVED != ((methodIndexAndArgCount) & ~255))))
+
+#define J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm) (J2SE_VERSION(vm) >= J2SE_V11)
 
 #endif /* J9_H */

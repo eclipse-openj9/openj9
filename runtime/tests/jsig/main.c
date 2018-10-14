@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2016 IBM Corp. and others
+ * Copyright (c) 2016, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,7 +48,11 @@
 #define sigsetjmp(env, savesigs) setjmp(env)
 #define siglongjmp(env, val) longjmp(env, val)
 #else /* defined(WIN32) */
+#if defined(OSX)
+#define JVMLIB "libjvm.dylib"
+#else /* OSX */
 #define JVMLIB "libjvm.so"
+#endif /* OSX */
 #define PATHSEP "/"
 #endif /* defined(WIN32) */
 

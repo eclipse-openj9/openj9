@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -89,7 +89,7 @@ J9AllocateObjectNoGC(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFla
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-	if (extensions->instrumentableAllocateHookEnabled ) {
+	if (extensions->instrumentableAllocateHookEnabled || !env->isInlineTLHAllocateEnabled()) {
 		/* This function is restricted to only being used for instrumentable allocates so we only need to check that one allocation hook.
 		 * Note that we can't handle hooked allocates since we might be called without a JIT resolve frame and that is required for us to
 		 * report the allocation event.
@@ -114,6 +114,9 @@ J9AllocateObjectNoGC(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFla
 			if (NULL != objectPtr) {
 				uintptr_t allocatedBytes = env->getExtensions()->objectModel.getConsumedSizeInBytesWithHeader(objectPtr);
 				Assert_MM_true(allocatedBytes == mixedOAM.getAllocateDescription()->getContiguousBytes());
+				if (J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(clazz), J9ClassReservableLockWordInit)) {
+					*J9OBJECT_MONITOR_EA(vmThread, objectPtr) = OBJECT_HEADER_LOCK_RESERVED;
+				}
 			}
 			env->_isInNoGCAllocationCall = false;
 		}
@@ -279,7 +282,7 @@ J9AllocateIndexableObjectNoGC(J9VMThread *vmThread, J9Class *clazz, uint32_t num
 	
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-	if (extensions->instrumentableAllocateHookEnabled ) {
+	if (extensions->instrumentableAllocateHookEnabled || !env->isInlineTLHAllocateEnabled()) {
 		/* This function is restricted to only being used for instrumentable allocates so we only need to check that one allocation hook.
 		 * Note that we can't handle hooked allocates since we might be called without a JIT resolve frame and that is required for us to
 		 * report the allocation event.
@@ -341,12 +344,20 @@ J9AllocateObject(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFlags)
 	Assert_MM_false(allocateFlags & OMR_GC_ALLOCATE_OBJECT_NO_GC);
 
 	J9Object *objectPtr = NULL;
+	/* Replaced classes have poisoned the totalInstanceSize such that they are not allocatable,
+	 * so inline allocate and NoGC allocate have already failed. If this allocator is reached
+	 * with a replaced class, update to the current version and allocate that.
+	 */
+	clazz = J9_CURRENT_CLASS(clazz);
 	MM_MixedObjectAllocationModel mixedOAM(env, clazz, allocateFlags);
 	if (mixedOAM.initializeAllocateDescription(env)) {
 		objectPtr = OMR_GC_AllocateObject(vmThread->omrVMThread, &mixedOAM);
 		if (NULL != objectPtr) {
 			uintptr_t allocatedBytes = env->getExtensions()->objectModel.getConsumedSizeInBytesWithHeader(objectPtr);
 			Assert_MM_true(allocatedBytes == mixedOAM.getAllocateDescription()->getContiguousBytes());
+			if (J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(clazz), J9ClassReservableLockWordInit)) {
+				*J9OBJECT_MONITOR_EA(vmThread, objectPtr) = OBJECT_HEADER_LOCK_RESERVED;
+			}
 		}
 	}
 

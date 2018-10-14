@@ -1,24 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- 
-	Copyright (c) 2006, 2017 IBM Corp. and others
-	
-	This program and the accompanying materials are made available under
-	the terms of the Eclipse Public License 2.0 which accompanies this
-	distribution and is available at https://www.eclipse.org/legal/epl-2.0/
-	or the Apache License, Version 2.0 which accompanies this distribution and
-	is available at https://www.apache.org/licenses/LICENSE-2.0.
-	
-	This Source Code may also be made available under the following
-	Secondary Licenses when the conditions for such availability set
-	forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
-	General Public License, version 2 with the GNU Classpath
-	Exception [1] and GNU General Public License, version 2 with the
-	OpenJDK Assembly Exception [2].
-	
-	[1] https://www.gnu.org/software/classpath/license.html
-	[2] http://openjdk.java.net/legal/assembly-exception.html
+<!--
+Copyright (c) 2006, 2018 IBM Corp. and others
 
-	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
+
+[1] https://www.gnu.org/software/classpath/license.html
+[2] http://openjdk.java.net/legal/assembly-exception.html
+
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <interface>
 	<publicHeader>../oti/jithook.h</publicHeader>
@@ -26,13 +26,20 @@
 	<struct>J9JITHookInterface</struct>
 	<description>All hookable JIT events</description>
 
+	<declarations>
+struct J9ConstantPool;
+struct J9Method;
+struct J9ROMFieldShape;
+struct J9VMThread;
+	</declarations>
+
 	<event>
 		<name>J9HOOK_JIT_COMPILED_METHOD_LOAD</name>
-		<description>Triggered when a method has been compiled. Multiple events will be generated if the method is 
+		<description>Triggered when a method has been compiled. Multiple events will be generated if the method is
 			recompiled, or if the compilation uses non-contiguous code memory regions</description>
 		<struct>J9CompiledMethodLoadEvent</struct>
-		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
-		<data type="struct J9Method*" name="method" description="method being compiled" />
+		<data type="struct J9VMThread *" name="currentThread" description="current thread" />
+		<data type="struct J9Method *" name="method" description="method being compiled" />
 		<data type="U_8 *" name="startPC" description="start of compiled code" />
 		<data type="UDATA" name="length" description="length of compiled code" />
 		<data type="void *" name="metaData" description="pointer to JIT metadata, or NULL if not available" />
@@ -42,8 +49,8 @@
 		<name>J9HOOK_JIT_COMPILED_METHOD_UNLOAD</name>
 		<description>Currently unused</description>
 		<struct>J9CompiledMethodUnloadEvent</struct>
-		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
-		<data type="struct J9Method*" name="method" description="method being compiled" />
+		<data type="struct J9VMThread *" name="currentThread" description="current thread" />
+		<data type="struct J9Method *" name="method" description="method being compiled" />
 		<data type="U_8 *" name="startPC" description="start of compiled code" />
 		<data type="UDATA" name="length" description="length of compiled code" />
 		<data type="void *" name="metaData" description="pointer to JIT metadata, or NULL if not available" />
@@ -53,16 +60,16 @@
 		<name>J9HOOK_JIT_COMPILING_START</name>
 		<description>The specified method is about to be compiled.</description>
 		<struct>J9CompilingStartEvent</struct>
-		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
-		<data type="struct J9Method*" name="method" description="method being compiled" />
+		<data type="struct J9VMThread *" name="currentThread" description="current thread" />
+		<data type="struct J9Method *" name="method" description="method being compiled" />
 	</event>
 
 	<event>
 		<name>J9HOOK_JIT_COMPILING_END</name>
 		<description>The specified method has finished being compiled.</description>
 		<struct>J9CompilingEndEvent</struct>
-		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
-		<data type="struct J9Method*" name="method" description="method being compiled" />
+		<data type="struct J9VMThread *" name="currentThread" description="current thread" />
+		<data type="struct J9Method *" name="method" description="method being compiled" />
 	</event>
 
 	<event>
@@ -70,14 +77,13 @@
 		<description>Check to see if a field reference must cause compile failure due to a data breakpoint.</description>
 		<condition>defined (J9VM_JIT_FULL_SPEED_DEBUG)</condition>
 		<struct>J9CheckForDataBreakpointEvent</struct>
-		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9VMThread *" name="currentThread" description="current thread" />
 		<data type="UDATA" name="result" return="true" description="return value" />
 		<data type="UDATA" name="fieldIndex" description="field index" />
-		<data type="struct J9ConstantPool*" name="constantPool" description="cp of field" />
-		<data type="struct J9ROMFieldShape*" name="resolvedField" description="resolved field (might be null)" />
+		<data type="struct J9ConstantPool *" name="constantPool" description="cp of field" />
+		<data type="struct J9ROMFieldShape *" name="resolvedField" description="resolved field (might be null)" />
 		<data type="UDATA" name="isStatic" description="is this a static field?" />
 		<data type="UDATA" name="isStore" description="is this lookup for a store, rather than a read?" />
 	</event>
 
 </interface>
-

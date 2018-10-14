@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -154,6 +154,7 @@ com/ibm/jvm/j9/dump/extract
 com/ibm/jvm/j9/dump/indexsupport
 com/ibm/lang
 com/ibm/lang/management
+openj9/lang/management
 com/ibm/le/conditionhandling
 com/ibm/math
 com/ibm/misc
@@ -1163,6 +1164,7 @@ com/ibm/virtualization/management/internal
 com/ibm/java/lang/management/internal
 com/ibm/Compiler/Internal
 com/ibm/lang/management/internal
+openj9/lang/management/internal
 com/ibm/cuda/internal
 com/ibm/jit/crypto
 com/ibm/oti/vm

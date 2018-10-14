@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2010, 2017 IBM Corp. and others
+  Copyright (c) 2010, 2018 IBM Corp. and others
  
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,10 +54,6 @@
 	<property name="mat_plugin_jar" value="${output.libs.dir}/com.ibm.dtfj.j9ddr_0.0.1.jar"/>
 
 	<property name="junit.jar" value="${j9_core_lib}/junit.jar"/>
-	<property name="emma.jar" value="${j9_core_lib}/emma.jar" />
-	<property name="emma_ant.jar" value="${j9_core_lib}/emma_ant.jar" />
-	<property name="emma_bin" value="${output.bin.dir}/emma" />
-	<property name="emma_jar" value="${output.libs.dir}/j9ddr-emma.jar"/>
 
 	<if>
 		<!-- VM_VERSION is inherited from DDR_VM/generate.xml -->
@@ -81,8 +77,8 @@
  	<if>
  		<equals arg1="${product}" arg2="java8" />
  		<then>
- 			<property name="src.level" value="1.5"/>
- 			<property name="target.level" value="1.5"/>
+ 			<property name="src.level" value="1.8"/>
+ 			<property name="target.level" value="1.8"/>
  			<property name="compilerarg.javac.addexports" value=""/>
  		</then>
  		<else>
@@ -99,11 +95,6 @@
 	</path>
 
 	<taskdef resource='net/sf/antcontrib/antlib.xml' classpathref="runtime.cp"/>
-
-	<path id="emma.lib">
-		<pathelement location="${emma.jar}" />
-		<pathelement location="${emma_ant.jar}" />
-	</path>
 
 	<target name="dist" depends="compile,package">
 	</target>
@@ -122,7 +113,6 @@
 				<!-- ant delete appears to be flaky most of the time and fails to delete an otherwise
 				     accessible and empty directory. Fix it by using proper tooling, avoid rm -rf to avoid non-fun deletions -->
 				<shellscript shell="bash" dir="/tmp">
-				      	rmdir ${output.dir}/bin/emma
 						rmdir ${output.dir}/bin
 						rmdir ${output.dir}/findbugs
 				</shellscript>
@@ -134,26 +124,6 @@
 		<antcall target="package.j9_core"/>
 		<!--<antcall target="package.mat_plugin"/>-->
 		<antcall target="package.j9ddr"/>
- 		<if>
- 			<equals arg1="${product}" arg2="java8" />
- 			<then>
- 				<antcall target="package.emma"/>
- 			</then>
- 		</if>
-	</target>
-
-	<target name="package.emma">
-		<!--Load the EMMA task-->
-		<taskdef resource="emma_ant.properties" classpathref="emma.lib"/>
-		<echo>Instrumenting classes (J9 core)</echo>
-		<emma>
-			<instr outdir="${emma_bin}" merge="yes" mode="fullcopy" outfile="${emma_bin}/coverage.em" instrpath="${j9_core_bin}" filter="-*generated*" />
-		</emma>
-		<echo>Creating jar file</echo>
-		<jar destfile="${emma_jar}">
-			<fileset dir="${emma_bin}/classes" />
-			<zipfileset src="${j9_core_jar}"/>
-		</jar>
 	</target>
 
 	<target name="package.j9_core">
@@ -334,7 +304,6 @@
 		<mkdir dir="${findbugs.dir}"/>
 		<mkdir dir="${findbugs.results.dir}"/>
 		<mkdir dir="${findbugs.unpack.dir}"/>
-		<mkdir dir="${emma_bin}"/>
 
 		<if>
 			<os family="unix"/>

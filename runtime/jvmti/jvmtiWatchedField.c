@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,8 +23,8 @@
 #include "jvmtiHelpers.h"
 #include "jvmti_internal.h"
 
-static jvmtiError setFieldWatch (jvmtiEnv* env, jclass klass, jfieldID field, UDATA flag);
-static jvmtiError clearFieldWatch (jvmtiEnv* env, jclass klass, jfieldID field, UDATA flag);
+static jvmtiError setFieldWatch (jvmtiEnv* env, jclass klass, jfieldID field, UDATA isModification);
+static jvmtiError clearFieldWatch (jvmtiEnv* env, jclass klass, jfieldID field, UDATA isModification);
 
 
 jvmtiError JNICALL
@@ -39,7 +39,7 @@ jvmtiSetFieldAccessWatch(jvmtiEnv* env,
 	ENSURE_PHASE_LIVE(env);
 	ENSURE_CAPABILITY(env, can_generate_field_access_events);
 
-	rc = setFieldWatch(env, klass, field, J9JVMTI_WATCH_FIELD_ACCESS);
+	rc = setFieldWatch(env, klass, field, FALSE);
 
 done:
 	TRACE_JVMTI_RETURN(jvmtiSetFieldAccessWatch);
@@ -58,7 +58,7 @@ jvmtiClearFieldAccessWatch(jvmtiEnv* env,
 	ENSURE_PHASE_LIVE(env);
 	ENSURE_CAPABILITY(env, can_generate_field_access_events);
 
-	rc = clearFieldWatch(env, klass, field, J9JVMTI_WATCH_FIELD_ACCESS);
+	rc = clearFieldWatch(env, klass, field, FALSE);
 
 done:
 	TRACE_JVMTI_RETURN(jvmtiClearFieldAccessWatch);
@@ -77,7 +77,7 @@ jvmtiSetFieldModificationWatch(jvmtiEnv* env,
 	ENSURE_PHASE_LIVE(env);
 	ENSURE_CAPABILITY(env, can_generate_field_modification_events);
 
-	rc = setFieldWatch(env, klass, field, J9JVMTI_WATCH_FIELD_MODIFICATION);
+	rc = setFieldWatch(env, klass, field, TRUE);
 
 done:
 	TRACE_JVMTI_RETURN(jvmtiSetFieldModificationWatch);
@@ -96,7 +96,7 @@ jvmtiClearFieldModificationWatch(jvmtiEnv* env,
 	ENSURE_PHASE_LIVE(env);
 	ENSURE_CAPABILITY(env, can_generate_field_modification_events);
 
-	rc = clearFieldWatch(env, klass, field, J9JVMTI_WATCH_FIELD_MODIFICATION);
+	rc = clearFieldWatch(env, klass, field, TRUE);
 
 done:
 	TRACE_JVMTI_RETURN(jvmtiClearFieldModificationWatch);
@@ -107,7 +107,7 @@ static jvmtiError
 setFieldWatch(jvmtiEnv* env,
 	jclass klass,
 	jfieldID field,
-	UDATA flag)
+	UDATA isModification)
 {
 	J9JVMTIEnv * j9env = (J9JVMTIEnv *) env;
 	J9JavaVM * vm = j9env->vm;
@@ -116,8 +116,13 @@ setFieldWatch(jvmtiEnv* env,
 
 	rc = getCurrentVMThread(vm, &currentThread);
 	if (rc == JVMTI_ERROR_NONE) {
-		pool_state poolState;
-		J9JVMTIWatchedField * watchedField;
+		J9Class *clazz = NULL;
+		J9JNIFieldID *fieldID = NULL;
+		UDATA localFieldIndex = 0;
+		UDATA fieldCount = 0;
+		UDATA *watchBits = NULL;
+		UDATA watchBit = 0;
+		J9JVMTIWatchedClass *watchedClass = NULL;
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
@@ -126,51 +131,77 @@ setFieldWatch(jvmtiEnv* env,
 
 		vm->internalVMFunctions->acquireExclusiveVMAccess(currentThread);
 
-		/* Scan currently watched fields to see if this agent is already watching */
-
-		watchedField = pool_startDo(j9env->watchedFieldPool, &poolState);
-		while (watchedField != NULL) {
-			if (watchedField->fieldID == field) {
-				break;
-			}
-			watchedField = pool_nextDo(&poolState);
-		}
-
-		/* If a watch already exists, tag it with the new request (access or modify), or error if it is already tagged */
-
-		if (watchedField != NULL) {
-			if (watchedField->flags & flag) {
-				rc = JVMTI_ERROR_DUPLICATE;
-			} else {
-				watchedField->flags |= flag;
-			}
-		} else {
-			watchedField = pool_newElement(j9env->watchedFieldPool);
-			if (watchedField == NULL) {
+		clazz = J9VM_J9CLASS_FROM_JCLASS(currentThread, klass);
+		fieldID = (J9JNIFieldID*)field;
+		localFieldIndex = fieldID->index - fieldID->declaringClass->romClass->romMethodCount;
+		fieldCount = clazz->romClass->romFieldCount;
+		watchedClass = hashTableFind(j9env->watchedClasses, &clazz);
+		if (NULL == watchedClass) {
+			J9JVMTIWatchedClass exemplar = { clazz, NULL };
+			watchedClass = hashTableAdd(j9env->watchedClasses, &exemplar);
+			if (NULL == watchedClass) {
 				rc = JVMTI_ERROR_OUT_OF_MEMORY;
 			} else {
-				watchedField->flags = flag;
-				watchedField->fieldID = field;
-#ifdef J9VM_JIT_FULL_SPEED_DEBUG
-				if (J9_FSD_ENABLED(vm)) {
-					vm->jitConfig->jitDataBreakpointAdded(currentThread);
+				UDATA fieldCount = clazz->romClass->romFieldCount;
+				if (fieldCount <= J9JVMTI_WATCHED_FIELDS_PER_UDATA) {
+					watchedClass->watchBits = (UDATA*)0;
+				} else {
+					UDATA allocSize = sizeof(UDATA) * J9JVMTI_WATCHED_FIELD_ARRAY_INDEX(fieldCount + (J9JVMTI_WATCHED_FIELDS_PER_UDATA - 1));
+					PORT_ACCESS_FROM_VMC(currentThread);
+					watchBits = j9mem_allocate_memory(allocSize, J9MEM_CATEGORY_JVMTI);
+					if (NULL == watchBits) {
+						hashTableRemove(j9env->watchedClasses, watchedClass);
+						rc = JVMTI_ERROR_OUT_OF_MEMORY;
+					} else {
+						memset(watchBits, 0, allocSize);
+						watchedClass->watchBits = watchBits;
+					}
 				}
-#endif
 			}
 		}
 
 		if (rc == JVMTI_ERROR_NONE) {
-			if (flag == J9JVMTI_WATCH_FIELD_MODIFICATION) {
-				hookEvent(j9env, JVMTI_EVENT_FIELD_MODIFICATION);
+			if (fieldCount <= J9JVMTI_WATCHED_FIELDS_PER_UDATA) {
+				watchBits = (UDATA*)&watchedClass->watchBits;
 			} else {
-				hookEvent(j9env, JVMTI_EVENT_FIELD_ACCESS);
+				watchBits = watchedClass->watchBits;	
+			}
+			watchBits += J9JVMTI_WATCHED_FIELD_ARRAY_INDEX(localFieldIndex);
+			if (isModification) {
+				watchBit = J9JVMTI_WATCHED_FIELD_MODIFICATION_BIT(localFieldIndex);	
+			} else {
+				watchBit = J9JVMTI_WATCHED_FIELD_ACCESS_BIT(localFieldIndex);	
+			}
+			if (*watchBits & watchBit) {
+				rc = JVMTI_ERROR_DUPLICATE;
+			} else {
+				*watchBits |= watchBit;
+				/* Tag this class and all its subclasses as having watched fields.
+				 * If this class is already tagged, so are the subclasses.
+				 */
+				if (J9_ARE_NO_BITS_SET(clazz->classFlags, J9ClassHasWatchedFields)) {
+					J9SubclassWalkState subclassState;
+					J9Class *subclass = allSubclassesStartDo(clazz, &subclassState, TRUE);
+					while (NULL != subclass) {
+						subclass->classFlags |= J9ClassHasWatchedFields;
+						subclass = allSubclassesNextDo(&subclassState);
+					}
+				}
+				if (J9_FSD_ENABLED(vm)) {
+					vm->jitConfig->jitDataBreakpointAdded(currentThread);
+				}
+				if (isModification) {
+					hookEvent(j9env, JVMTI_EVENT_FIELD_MODIFICATION);
+				} else {
+					hookEvent(j9env, JVMTI_EVENT_FIELD_ACCESS);
+				}
 			}
 		}
 
 		vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	return rc;
@@ -181,7 +212,7 @@ static jvmtiError
 clearFieldWatch(jvmtiEnv* env,
 	jclass klass,
 	jfieldID field,
-	UDATA flag)
+	UDATA isModification)
 {
 	J9JVMTIEnv * j9env = (J9JVMTIEnv *) env;
 	J9JavaVM * vm = j9env->vm;
@@ -190,8 +221,12 @@ clearFieldWatch(jvmtiEnv* env,
 
 	rc = getCurrentVMThread(vm, &currentThread);
 	if (rc == JVMTI_ERROR_NONE) {
-		pool_state poolState;
-		J9JVMTIWatchedField * watchedField;
+		J9Class *clazz = NULL;
+		J9JNIFieldID *fieldID = NULL;
+		UDATA localFieldIndex = 0;
+		UDATA *watchBits = NULL;
+		UDATA watchBit = 0;
+		J9JVMTIWatchedClass *watchedClass = NULL;
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
@@ -200,41 +235,43 @@ clearFieldWatch(jvmtiEnv* env,
 
 		vm->internalVMFunctions->acquireExclusiveVMAccess(currentThread);
 
-		/* Scan currently watched fields to see if this agent is watching the field */
-
-		watchedField = pool_startDo(j9env->watchedFieldPool, &poolState);
-		while (watchedField != NULL) {
-			if (watchedField->fieldID == field) {
-				break;
-			}
-			watchedField = pool_nextDo(&poolState);
-		}
-
-		/* If the field is not being watched at all, or not watched with the requested flag (access or modify), error */
-
-		if ((watchedField == NULL) || !(watchedField->flags & flag)) {
+		clazz = J9VM_J9CLASS_FROM_JCLASS(currentThread, klass);
+		fieldID = (J9JNIFieldID*)field;
+		localFieldIndex = fieldID->index - fieldID->declaringClass->romClass->romMethodCount;
+		watchedClass = hashTableFind(j9env->watchedClasses, &clazz);
+		if (NULL == watchedClass) {
 			rc = JVMTI_ERROR_NOT_FOUND;
 		} else {
-			if (flag == J9JVMTI_WATCH_FIELD_MODIFICATION) {
-				unhookEvent(j9env, JVMTI_EVENT_FIELD_MODIFICATION);
+			UDATA fieldCount = clazz->romClass->romFieldCount;
+			if (fieldCount <= J9JVMTI_WATCHED_FIELDS_PER_UDATA) {
+				watchBits = (UDATA*)&watchedClass->watchBits;
 			} else {
-				unhookEvent(j9env, JVMTI_EVENT_FIELD_ACCESS);
+				watchBits = watchedClass->watchBits;	
 			}
-			watchedField->flags &= ~flag;
-			if (watchedField->flags == 0) {
-				pool_removeElement(j9env->watchedFieldPool, watchedField);
-#ifdef J9VM_JIT_FULL_SPEED_DEBUG
+			watchBits += J9JVMTI_WATCHED_FIELD_ARRAY_INDEX(localFieldIndex);
+			if (isModification) {
+				watchBit = J9JVMTI_WATCHED_FIELD_MODIFICATION_BIT(localFieldIndex);	
+			} else {
+				watchBit = J9JVMTI_WATCHED_FIELD_ACCESS_BIT(localFieldIndex);	
+			}
+			if (0 == (*watchBits & watchBit)) {
+				rc = JVMTI_ERROR_NOT_FOUND;
+			} else {
+				*watchBits &= ~watchBit;
 				if (J9_FSD_ENABLED(vm)) {
 					vm->jitConfig->jitDataBreakpointRemoved(currentThread);
 				}
-#endif
+				/* Consider checking for no remaining watches on the class
+				 * and removing the watched fields bit from the class (and
+				 * subclasses) and removing the hash table entry.
+				 */
 			}
 		}
 
 		vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	return rc;

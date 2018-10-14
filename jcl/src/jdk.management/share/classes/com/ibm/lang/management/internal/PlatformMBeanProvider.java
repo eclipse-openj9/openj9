@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2017 IBM Corp. and others
+ * Copyright (c) 2016, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,11 @@
  *******************************************************************************/
 package com.ibm.lang.management.internal;
 
+/*[IF Sidecar19-SE-OpenJ9]*/
+import java.lang.ModuleLayer;
+/*[ELSE]
+import java.lang.reflect.Layer;
+/*[ENDIF]*/
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,9 +37,11 @@ import com.ibm.java.lang.management.internal.ManagementUtils;
 import com.ibm.lang.management.JvmCpuMonitorMXBean;
 import com.ibm.virtualization.management.internal.GuestOS;
 import com.ibm.virtualization.management.internal.HypervisorMXBeanImpl;
+import openj9.lang.management.OpenJ9DiagnosticsMXBean;
+import openj9.lang.management.internal.OpenJ9DiagnosticsMXBeanImpl;
 
 /**
- * This class implements the service-provider interface to make IBM-specific
+ * This class implements the service-provider interface to make OpenJ9-specific
  * MXBeans available. These beans are either in addition to the basic set or
  * implement non-standard interfaces.
  */
@@ -53,7 +60,7 @@ public final class PlatformMBeanProvider extends sun.management.spi.PlatformMBea
 		 *     PlatformLoggingMXBean
 		 */
 
-		// register IBM extensions of standard singleton beans
+		// register OpenJ9 extensions of standard singleton beans
 		ComponentBuilder.create(ExtendedMemoryMXBeanImpl.getInstance())
 			.addInterface(com.ibm.lang.management.MemoryMXBean.class)
 			.addInterface(java.lang.management.MemoryMXBean.class)
@@ -77,7 +84,7 @@ public final class PlatformMBeanProvider extends sun.management.spi.PlatformMBea
 			.addInterface(java.lang.management.ThreadMXBean.class)
 			.register(allComponents);
 
-		// register IBM-specific singleton beans
+		// register OpenJ9-specific singleton beans
 		ComponentBuilder.create(GuestOS.getInstance())
 			.addInterface(com.ibm.virtualization.management.GuestOSMXBean.class)
 			.register(allComponents);
@@ -89,6 +96,19 @@ public final class PlatformMBeanProvider extends sun.management.spi.PlatformMBea
 		ComponentBuilder.create(JvmCpuMonitor.getInstance())
 			.addInterface(JvmCpuMonitorMXBean.class)
 			.register(allComponents);
+
+		/* OpenJ9DiagnosticsMXBeanImpl depends on openj9.jvm. If openj9.jvm is not
+		 * available exclude this component.
+		 */
+/*[IF Sidecar19-SE-OpenJ9]*/
+		if (ModuleLayer.boot().findModule("openj9.jvm").isPresent()) { //$NON-NLS-1$
+/*[ELSE]
+		if (Layer.boot().findModule("openj9.jvm").isPresent()) { //$NON-NLS-1$
+/*[ENDIF]*/
+			ComponentBuilder.create(OpenJ9DiagnosticsMXBeanImpl.getInstance())
+				.addInterface(OpenJ9DiagnosticsMXBean.class)
+				.register(allComponents);
+		}
 
 		// register beans with zero or more instances
 		ComponentBuilder.create(ManagementFactory.GARBAGE_COLLECTOR_MXBEAN_DOMAIN_TYPE, ExtendedMemoryMXBeanImpl.getInstance().getGarbageCollectorMXBeans())

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2014 IBM Corp. and others
+ * Copyright (c) 2011, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -309,7 +309,9 @@ OSMemoryAgent::runAction(void)
 			if (_adjustSoftMx){
 				UDATA newSoftMx = _currentSoftMx;
 
-				if ((_currentSoftMx <= heapTotalMemory)&&((_lastHeapSize < heapTotalMemory)||((_lastHeapSize == heapTotalMemory))&&(0 == freeMemory)&&(_freeUnchanged>1))){
+				if ((_currentSoftMx <= heapTotalMemory) 
+				&& ((_lastHeapSize < heapTotalMemory) || ((_lastHeapSize == heapTotalMemory) && (0 == freeMemory) && (_freeUnchanged > 1)))
+				) {
 					/* if the size of the heap is growing, and is greater than the current softmx value
 					 * we better get out of the way to avoid causing an OOM
 					 */

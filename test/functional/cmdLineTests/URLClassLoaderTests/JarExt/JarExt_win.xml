@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2001, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="JarExtensionsTests" timeout="600">
+ <variable name="TMOUT" value="600" />
+ <variable name="SCCMD" value="-Xshareclasses:controlDir=.,name=" />
+ <variable name="TESTDIR" value=".\$TESTSUITE$" />
+	<test id="JarExtensionsTests.BuildInitial1" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$TESTDIR$\buildInitial.bat $TOOLSDIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">A.jar</output>
+		<output type="failure" caseSensitive="yes" regex="no">Usage:</output>
+		<output type="failure" caseSensitive="yes" regex="no">no such</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="JarExtensionsTests.SingleJarInManifest" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$JarExtensionTests,expire=0 -Xscmx5M -cp $TESTDIR$\A.jar;$TESTDIR$\B.jar;$TESTDIR$\D.jar jnurlcldr.shared.jarexttests.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">PASSED</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="JarExtensionsTests.MultipleJarsInManifests" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$JarExtensionTests -cp $TESTDIR$\E.jar;$TESTDIR$\F.jar;$TESTDIR$\H.jar jnurlcldr.shared.jarexttests.E_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">PASSED</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="JarExtensionsTests.BuildVerify1" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$TESTDIR$\buildVerify.bat $TOOLSDIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">A.jar</output>
+		<output type="failure" caseSensitive="yes" regex="no">Usage:</output>
+		<output type="failure" caseSensitive="yes" regex="no">no such</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="JarExtensionsTests.SingleJarInManifest.Verify1" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$JarExtensionTests,noTimestampChecks -cp $TESTDIR$\A.jar;$TESTDIR$\B.jar;$TESTDIR$\D.jar jnurlcldr.shared.jarexttests.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">CACHED</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="JarExtensionsTests.SingleJarInManifest.Verify2" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$JarExtensionTests -cp $TESTDIR$\A.jar;$TESTDIR$\B.jar;$TESTDIR$\D.jar jnurlcldr.shared.jarexttests.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">CACHED</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="JarExtensionsTests.MultipleJarsInManifests.Verify1" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$JarExtensionTests,noTimestampChecks -cp $TESTDIR$\E.jar;$TESTDIR$\F.jar;$TESTDIR$\H.jar jnurlcldr.shared.jarexttests.E_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">CACHED</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="JarExtensionsTests.MultipleJarsInManifests.Verify2" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$JarExtensionTests -cp $TESTDIR$\E.jar;$TESTDIR$\F.jar;$TESTDIR$\H.jar jnurlcldr.shared.jarexttests.E_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">CACHED</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="JarExtensionsTests.BuildInitial2" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$TESTDIR$\buildInitial.bat $TOOLSDIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">A.jar</output>
+		<output type="failure" caseSensitive="yes" regex="no">Usage:</output>
+		<output type="failure" caseSensitive="yes" regex="no">no such</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="JarExtensionsTests.CreateJarIndexes" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$TESTDIR$\buildJarIndexes.bat $TOOLSDIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">B.jar</output>
+		<output type="failure" caseSensitive="yes" regex="no">Usage:</output>
+		<output type="failure" caseSensitive="yes" regex="no">no such</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="JarExtensionsTests.SingleJarInManifestWithIndex" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$JarExtensionTests2,expire=0 -Xscmx5M -cp $TESTDIR$\A.jar;$TESTDIR$\B.jar;$TESTDIR$\D.jar jnurlcldr.shared.jarexttests.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">PASSED</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="JarExtensionsTests.MultipleJarsInManifestsWithIndex" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$JarExtensionTests2 -cp $TESTDIR$\E.jar;$TESTDIR$\F.jar;$TESTDIR$\H.jar jnurlcldr.shared.jarexttests.E_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">PASSED</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="JarExtensionsTests.BuildVerify2" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$TESTDIR$\buildVerify.bat $TOOLSDIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">A.jar</output>
+		<output type="failure" caseSensitive="yes" regex="no">Usage:</output>
+		<output type="failure" caseSensitive="yes" regex="no">no such</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="JarExtensionsTests.CreateJarIndexes" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$TESTDIR$\buildJarIndexes.bat $TOOLSDIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">B.jar</output>
+		<output type="failure" caseSensitive="yes" regex="no">Usage:</output>
+		<output type="failure" caseSensitive="yes" regex="no">no such</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="JarExtensionsTests.SingleJarInManifestWithIndex.Verify1" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$JarExtensionTests2,noTimestampChecks -cp $TESTDIR$\A.jar;$TESTDIR$\B.jar;$TESTDIR$\D.jar jnurlcldr.shared.jarexttests.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">CACHED</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="JarExtensionsTests.SingleJarInManifestWithIndex.Verify2" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$JarExtensionTests2 -cp $TESTDIR$\A.jar;$TESTDIR$\B.jar;$TESTDIR$\D.jar jnurlcldr.shared.jarexttests.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">CACHED</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="JarExtensionsTests.MultipleJarsInManifestsWithIndex.Verify1" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$JarExtensionTests2,noTimestampChecks -cp $TESTDIR$\E.jar;$TESTDIR$\F.jar;$TESTDIR$\H.jar jnurlcldr.shared.jarexttests.E_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">CACHED</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="JarExtensionsTests.MultipleJarsInManifestsWithIndex.Verify2" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$JarExtensionTests2 -cp $TESTDIR$\E.jar;$TESTDIR$\F.jar;$TESTDIR$\H.jar jnurlcldr.shared.jarexttests.E_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">CACHED</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+</suite>

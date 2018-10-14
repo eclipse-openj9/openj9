@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,8 +31,10 @@
 #include "j9consts.h"
 #include <string.h>
 
-SH_ScopeManagerImpl::SH_ScopeManagerImpl():
-	_allCacheletsStarted(false)
+SH_ScopeManagerImpl::SH_ScopeManagerImpl()
+#if defined(J9SHR_CACHELET_SUPPORT)
+	:_allCacheletsStarted(false)
+#endif /* J9SHR_CACHELET_SUPPORT */
 {
 	_htMutexName = "scTableMutex";
 }

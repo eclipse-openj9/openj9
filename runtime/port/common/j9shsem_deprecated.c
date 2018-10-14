@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,7 +58,7 @@ j9shsem_deprecated_openDeprecated (struct J9PortLibrary *portLibrary, const char
  * @param[in] portLibrary The port library.
  * @param[in] cacheDirName The name of the cache directory
  * @param[in] groupPerm Group permissions to open the cache directory
- * @param[out] handle A semaphore handle is allocated and initialised for use with further calls, NULL on failure.
+ * @param[out] handle A semaphore handle is allocated and initialized for use with further calls, NULL on failure.
  * @param[in] semname Unique identifier of the semaphore.
  * @param[in] setSize Size of the semaphore set.
  * @param[in] permission Permission to the semaphore set.

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2006, 2017 IBM Corp. and others
+ * Copyright (c) 2006, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,6 @@ import com.ibm.dtfj.corereaders.zos.mvs.RegisterSet;
  *
  * @has - - - com.ibm.dtfj.corereaders.zos.le.Function
  */
-
 public class DsaStackFrame {
 
     /** The address of this dsa */
@@ -938,7 +937,7 @@ public class DsaStackFrame {
      */
     public static String getEntryPointName(AddressSpace space, long ep) throws IOException {
         int eyecatcher;
-        Long mapKey = new Long(ep);
+        Long mapKey = Long.valueOf(ep);
         String function = (String)space.getUserMap().get(mapKey);
         if (function != null)
             return function;

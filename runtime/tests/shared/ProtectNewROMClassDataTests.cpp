@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -113,7 +113,7 @@ IDATA testProtectNewROMClassData_test1(J9JavaVM* vm) {
 	char * OSCacheMem;
 	FakeOSCache *myfakeoscache;
 
-	vm->internalVMFunctions->internalAcquireVMAccess(vm->mainThread);
+	vm->internalVMFunctions->internalEnterVMFromJNI(vm->mainThread);
 
 	if (NULL == (OSCacheMem = (char *)j9mem_allocate_memory(FakeOSCache::getRequiredConstrBytes(), J9MEM_CATEGORY_CLASSES))) {
 		ERRPRINTF("Failed to allocate memory for testProtectNewROMClassData_test1");
@@ -245,6 +245,6 @@ done:
 	if (NULL != OSCacheMem) {
 		j9mem_free_memory(OSCacheMem);
 	}
-	vm->internalVMFunctions->internalReleaseVMAccess(vm->mainThread);
+	vm->internalVMFunctions->internalExitVMToJNI(vm->mainThread);
 	return rc;
 }

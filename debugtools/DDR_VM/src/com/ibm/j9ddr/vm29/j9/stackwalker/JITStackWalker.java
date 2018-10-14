@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2017 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,7 +62,6 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9SFSpecialFramePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9UTF8Pointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMThreadPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.TRBuildFlags;
-import com.ibm.j9ddr.vm29.pointer.helper.J9MethodHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 import com.ibm.j9ddr.vm29.structure.J9JITFrame;
 import com.ibm.j9ddr.vm29.structure.J9SFJ2IFrame;
@@ -70,6 +69,9 @@ import com.ibm.j9ddr.vm29.structure.J9SFNativeMethodFrame;
 import com.ibm.j9ddr.vm29.structure.J9SFSpecialFrame;
 import com.ibm.j9ddr.vm29.types.U8;
 import com.ibm.j9ddr.vm29.types.UDATA;
+import com.ibm.j9ddr.vm29.structure.J9ITable;
+import com.ibm.j9ddr.vm29.pointer.generated.J9ITablePointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 
 import static com.ibm.j9ddr.vm29.j9.JITLook.*;
 import static com.ibm.j9ddr.vm29.j9.ROMHelp.*;
@@ -83,6 +85,7 @@ import static com.ibm.j9ddr.vm29.structure.J9Consts.*;
 import static com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags.*;
 import static com.ibm.j9ddr.vm29.structure.J9StackWalkConstants.*;
 import static com.ibm.j9ddr.vm29.structure.J9StackWalkState.*;
+import static com.ibm.j9ddr.vm29.structure.MethodMetaDataConstants.INTERNAL_PTR_REG_MASK;
 
 /**
  * Stack walker for processing JIT frames. Don't call directly - go through
@@ -402,27 +405,50 @@ public class JITStackWalker
 					stackSpillCursor = walkState.unwindSP.sub(1);
 				}
 
-				if (J9SW_JIT_RECOMPILATION_RESOLVE_OFFSET_TO_SAVED_RECEIVER_DEFINED) {
-					if (walkStackedReceiver && ((walkState.flags & J9_STACKWALK_ITERATE_O_SLOTS) != 0)) {
-						try {
-							swPrintf(walkState, 4, "\tObject push (recompilation saved receiver)");
-							WALK_O_SLOT(walkState,PointerPointer.cast(walkState.unwindSP.add(J9SW_JIT_RECOMPILATION_RESOLVE_OFFSET_TO_SAVED_RECEIVER)));
-						} catch (CorruptDataException ex) {
-							handleOSlotsCorruption(walkState, "JITStackWalker_29_V0", "jitWalkResolveMethodFrame", ex);
-						}
-					}
-				}
-
 				walkState.unwindSP = walkState.unwindSP.add(getJitRecompilationResolvePushes());
 			} else if (resolveFrameType.eq(J9_STACK_FLAGS_JIT_LOOKUP_RESOLVE)) {
 				UDATAPointer interfaceObjectAndISlot = UDATAPointer.cast(JIT_RESOLVE_PARM(walkState,2));
-				J9ClassPointer interfaceClass = J9ClassPointer.cast(interfaceObjectAndISlot.at(0));
-				UDATA methodIndex = interfaceObjectAndISlot.at(1);
-				J9ROMMethodPointer romMethod = interfaceClass.romClass().romMethods();
-
-				while (! methodIndex.eq(0)) {
-					romMethod = nextROMMethod(romMethod);
-					methodIndex = methodIndex.sub(1);
+				J9ClassPointer resolvedClass = J9ClassPointer.cast(interfaceObjectAndISlot.at(0));
+				J9ROMMethodPointer romMethod;
+				if (AlgorithmVersion.getVersionOf(AlgorithmVersion.ITABLE_VERSION).getAlgorithmVersion() < 1) {
+					UDATA methodIndex = interfaceObjectAndISlot.at(1);
+					romMethod = resolvedClass.romClass().romMethods();
+					while (! methodIndex.eq(0)) {
+						romMethod = nextROMMethod(romMethod);
+						methodIndex = methodIndex.sub(1);
+					}
+				} else {
+					long iTableOffset = interfaceObjectAndISlot.at(1).longValue();
+					J9MethodPointer ramMethod;
+					if (0 != (iTableOffset & J9_ITABLE_OFFSET_DIRECT)) {
+						ramMethod = J9MethodPointer.cast(iTableOffset).untag(J9_ITABLE_OFFSET_TAG_BITS);
+					} else if (0 != (iTableOffset & J9_ITABLE_OFFSET_VIRTUAL)) {
+						long vTableOffset = iTableOffset & ~J9_ITABLE_OFFSET_TAG_BITS;
+						J9JavaVMPointer vm = walkState.walkThread.javaVM();
+						// C code uses Object from the VM contant pool, but that's not easily
+						// accessible to DDR. Any class will do.
+						J9ClassPointer clazz = vm.booleanArrayClass();
+						ramMethod = J9MethodPointer.cast(PointerPointer.cast(clazz.longValue() + vTableOffset).at(0));
+					} else {
+						long methodIndex = (iTableOffset - J9ITable.SIZEOF) / UDATA.SIZEOF;
+						/* The iTable now contains every method from inherited interfaces.
+						 * Find the appropriate segment for the referenced method within the
+						 * resolvedClass iTable.
+						 */
+						J9ITablePointer allInterfaces = J9ITablePointer.cast(resolvedClass.iTable());
+						for(;;) {
+							J9ClassPointer interfaceClass = allInterfaces.interfaceClass();
+							long methodCount = interfaceClass.romClass().romMethodCount().longValue();
+							if (methodIndex < methodCount) {
+								/* iTable segment located */
+								ramMethod = interfaceClass.ramMethods().add(methodIndex);
+								break;
+							}
+							methodIndex -= methodCount;
+							allInterfaces = allInterfaces.next();
+						}
+					}
+					romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
 				}
 
 				signature = J9ROMMETHOD_SIGNATURE(romMethod);

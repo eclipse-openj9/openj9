@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2015 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -77,7 +77,11 @@ public class CheckReporterTTY extends CheckReporter
 		"class ramStatics field points to wrong object", /* J9MODRON_GCCHK_RC_CLASS_STATICS_FIELD_POINTS_WRONG_OBJECT (30) */
 		"class ramStatics must be NULL for hot swapped class", /* J9MODRON_GCCHK_RC_CLASS_HOT_SWAPPED_POINTS_TO_STATICS (31) */
 		"class ramStatics field points to object but out of GC scan range", /* J9MODRON_GCCHK_RC_CLASS_STATICS_REFERENCE_IS_NOT_IN_SCANNING_RANGE (32)*/
-		"class ramStatics number of references not equal specified in ROM class", /* J9MODRON_GCCHK_RC_CLASS_STATICS_WRONG_NUMBER_OF_REFERENCES (33) */		
+		"class ramStatics number of references not equal specified in ROM class", /* J9MODRON_GCCHK_RC_CLASS_STATICS_WRONG_NUMBER_OF_REFERENCES (33) */	
+		"obsolete code 34", /* obsolete code (34) */
+		"obsolete code 35", /* obsolete code (35) */
+		"obsolete code 36", /* obsolete code (36) */
+		"obsolete code 37", /* obsolete code (37) */
 		"class object not a subclass of java.util.concurrent.locks.AbstractOwnableSynchronizer", /* J9MODRON_GCCHK_RC_OWNABLE_SYNCHRONIZER_INVALID_CLASS (38) */
 		"array class can not be hot swapped", /* J9MODRON_GCCHK_RC_CLASS_HOT_SWAPPED_FOR_ARRAY (39) */
 		"replaced class has no hot swapped out flag set", /* J9MODRON_GCCHK_RC_REPLACED_CLASS_HAS_NO_HOTSWAP_FLAG (40) */

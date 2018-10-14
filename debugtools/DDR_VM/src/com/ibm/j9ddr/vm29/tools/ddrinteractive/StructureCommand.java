@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2014 IBM Corp. and others
+ * Copyright (c) 2010, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,8 +58,10 @@ import com.ibm.j9ddr.vm29.tools.ddrinteractive.structureformat.extensions.J9Clas
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.structureformat.extensions.J9ClassStructureFormatter;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.structureformat.extensions.J9MethodFieldFormatter;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.structureformat.extensions.J9MethodStructureFormatter;
+import com.ibm.j9ddr.vm29.tools.ddrinteractive.structureformat.extensions.J9ModuleStructureFormatter;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.structureformat.extensions.J9ObjectFieldFormatter;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.structureformat.extensions.J9ObjectStructureFormatter;
+import com.ibm.j9ddr.vm29.tools.ddrinteractive.structureformat.extensions.J9PackageStructureFormatter;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.structureformat.extensions.J9ROMMethodStructureFormatter;
 
 /**
@@ -89,6 +91,8 @@ public class StructureCommand extends BaseStructureCommand
 		registerStructureFormatter(new J9ClassStructureFormatter());
 		registerStructureFormatter(new J9MethodStructureFormatter());
 		registerStructureFormatter(new J9ROMMethodStructureFormatter());
+		registerStructureFormatter(new J9ModuleStructureFormatter());
+		registerStructureFormatter(new J9PackageStructureFormatter());
 	}
 
 	private void loadDefaultFormatters() 

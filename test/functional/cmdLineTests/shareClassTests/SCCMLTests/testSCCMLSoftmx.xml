@@ -1,0 +1,463 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!--
+  Copyright (c) 2012, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<!-- Test 1 to Test 13: 30 tests -->
+<suite id="Shared Classes CommandLineOptionTests Suite">
+
+	<!-- Our test modes for this suite -->
+	<variable name="mode204" value="-Xshareclasses:name=ShareClassesCMLTests"/>
+
+	<!-- Set variables up -->
+	<variable name="currentMode" value="$mode204$"/>
+	<variable name="PROGRAM" value="SystemProperties" />
+		
+	<if testVariable="SCMODE" testValue="204" resultVariable="currentMode" resultValue="$mode204$"/>
+	
+	<echo value=" "/>
+	<echo value="#######################################################"/>
+	<echo value="Running tests in mode $SCMODE$ with command line options: $currentMode$"/>
+	<echo value="#######################################################"/>
+	<echo value=" "/>
+		
+	<!--
+	Note:
+	Most tests check for strings 'corrupt', 'JVM requested Java dump', and 'JVM requested Snap dump' in the output.
+	These checks are present because a cache may be found to be corrupt, and the test could otherwise pass.
+	
+	The string 'corrupt' is checked because it can appear several messages like below.
+		JVMSHRC443E Cache CRC is incorrect indicating a corrupt cache. Incorrect cache CRC: 0x0.
+		JVMDUMP013I Processed dump event "corruptcache", detail "".
+		JVMSHRC442E Shared cache "jim" is corrupt. Corruption code is -1. Corrupt value is 0x0. No new JVMs will be allowed to connect to the cache.
+	-->
+		
+	<test id="Start : Cleanup" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 1-a: Create a cache with softmx=0" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,addtestjithints,verbose -XX:SharedCacheHardLimit=16m -Xscmx0m -Xaot:forceAot,count=1 -Xjit:disableAsyncCompilation -version</command>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">The softmx limit for shared cache usage is smaller than the minimum feasible value [^0][0-9]* bytes</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">The softmx bytes is set to [^0][0-9]*</output>
+		<output type="required" caseSensitive="yes" regex="no">Total bytes stored=0</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Total unstored bytes due to the setting of shared cache soft max is [^0][0-9]*</output>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		
+		<!-- in the output of addtestjithints, there might be class name or method name containing the word 'error', add space before and after 'error' in the following check-->
+		<output type="failure" caseSensitive="yes" regex="no"> error </output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 1-b: Verify in the cache stats that nothing has been added into the cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printDetails</command>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">AOT Methods\s+= 0</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">JIT Hints\s+= 0</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ROMClasses\s+= 0</output>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Cache is 100% soft full</output>
+
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">#(.)*= [^0][0-9]*</output>
+		<output type="failure" caseSensitive="yes" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 2: Increase softmx to 20m" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,adjustsoftmx=20m</command>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes"> The softmx limit set for shared cache usage is greater than the total cache size [^0][0-9]* bytes</output>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">The softmx bytes is set to [^0][0-9]*</output>
+		
+		<output type="failure" caseSensitive="yes" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 3-a: Add ROMClasses, AOT methods and JITHints into the cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,verboseAOT,verboseJITDATA,addtestjithints -Xaot:forceAot,count=1 -Xjit:disableAsyncCompilation -version</command>
+		
+		<output type="required" caseSensitive="yes" regex="no">Stored AOT code for ROMMethod</output>
+		<output type="required" caseSensitive="yes" regex="no">Stored JITHINT attached data</output>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		
+		<!-- in the output of addtestjithints, there might be class name or method name containing the word 'error', add space before and after 'error' in the following check-->
+		<output type="failure" caseSensitive="yes" regex="no"> error </output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 3-b: Verify in the cache stats that ROMClasses, AOT methods and JIT data have been added into the cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printDetails</command>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">AOT Methods\s+= [^0][0-9]*</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">JIT Hints\s+= [^0][0-9]*</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ROMClasses\s+= [^0][0-9]*</output>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Cache is [^0][0-9]*% soft full</output>
+		
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">AOT Methods\s+= 0</output>
+		<output type="failure" caseSensitive="yes"regex="yes" javaUtilPattern="yes">JIT Hints\s+= 0</output>
+		<output type="failure" caseSensitive="yes"regex="yes" javaUtilPattern="yes">ROMClasses\s+= 0</output>
+		<output type="failure" caseSensitive="yes">Cache is 0% soft full</output>
+		<output type="failure" caseSensitive="yes" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 4-a: Test setting maxAOT/maxJIT to a value that is smaller than AOT/JIT bytes already in the cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,adjustmaxaot=1,adjustmaxjitdata=1</command>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">The size of maximum AOT space should not be smaller than the AOT bytes \([^0][0-9]*\) that is already stored in the cache</output>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">The size of maximum JIT data space should not be smaller than the JIT bytes \([^0][0-9]*\) that is already stored in the cache</output>
+		
+		<output type="failure" caseSensitive="yes" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 4-b: Test setting minAOT to a value that is greater than maxAOT" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,adjustminaot=10m</command>
+		<output type="success" caseSensitive="yes" regex="no">The minimum reserved AOT space should not be greater than the maximum allowed AOT space</output>
+		
+		<output type="failure" caseSensitive="yes" regex="no">The minimum reserved AOT bytes is set to</output>
+		<output type="failure" caseSensitive="yes" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 4-c: Test setting minJIT to a value that is greater than maxJIT" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,adjustminjitdata=10m</command>
+		<output type="success" caseSensitive="yes" regex="no">The minimum reserved JIT data space should not be greater than the maximum allowed JIT data space</output>
+		
+		<output type="failure" caseSensitive="yes" regex="no">The minimum reserved JIT data bytes is set to</output>
+		<output type="failure" caseSensitive="yes" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 4-d: Test setting softmx to a value that is smaller than the number of bytes already used" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,adjustsoftmx=1m</command>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">The softmx limit for shared cache usage is smaller than the number of bytes [^0][0-9]* in shared cache already in use</output>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">The softmx bytes is set to [^0][0-9]*</output>
+		
+		<output type="failure" caseSensitive="yes" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 5: Cleanup" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 6-a: Create a new cache with -Xscminaot0 -Xscmaxaot0 and -Xscminjitdata0 -Xscmaxjitdata0" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ -Xscminaot0 -Xscmaxaot0 -Xscminjitdata0 -Xscmaxjitdata0 -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 6-b: Verify in the cache stats that the softmx value is not negative" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printStats</command>
+		<output type="success" caseSensitive="yes" regex="no">Current statistics for cache</output>
+		
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">softmx bytes\s+= -</output>
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 7-a: Adjust the size of softmx, AOT and JIT data space" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,readOnly,adjustminaot=20k,adjustmaxaot=1m,adjustminjitdata=40k,adjustmaxjitdata=2m,adjustsoftmx=10m</command>
+		<output type="required" caseSensitive="yes" regex="no">Sub-option "readonly" is ignored</output>
+		<output type="required" caseSensitive="yes" regex="no">The softmx bytes is set to 10485760</output>
+		<output type="required" caseSensitive="yes" regex="no">The minimum reserved AOT bytes is set to 20480</output>
+		<output type="required" caseSensitive="yes" regex="no">The maximum allowed AOT bytes is set to 1048576</output>
+		<output type="required" caseSensitive="yes" regex="no">The minimum reserved JIT data bytes is set to 40960</output>
+		<output type="success" caseSensitive="yes" regex="no">The maximum allowed JIT data bytes is set to 2097152</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 7-b: Verify in the cache stats that the sofmx, AOT and JIT data space have been adjusted to expected value" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printStats</command>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">softmx bytes\s+= 10485760</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Reserved space for AOT bytes\s+= 20480</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Maximum space for AOT bytes\s+= 1048576</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Reserved space for JIT data bytes\s+= 40960</output>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Maximum space for JIT data bytes\s+= 2097152</output>
+		
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Reserved space for AOT bytes\s+= 0</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Maximum space for AOT bytes\s+= 0</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Reserved space for JIT data bytes\s+= 0</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Maximum space for JIT data bytes\s+= 0</output>
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 7-c : Cleanup" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 8: Test create a cache with a positive softmx value" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,verbose -XX:SharedCacheHardLimit=16m -Xscmx1m -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Total unstored bytes due to the setting of shared cache soft max is [^0][0-9]*</output>
+
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+ 	<test id="Test 9-a: create a new cache" timeout="600" runPath=".">
+ 		<command>$JAVA_EXE$ $currentMode$,reset $PROGRAM$</command>
+  		<output type="success" caseSensitive="yes" regex="no">java.runtime.version</output>
+  		
+  		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+ 	</test>
+ 	
+ 	<exec command="touch $PROGRAM$.class"/>
+ 	
+ 	<test id="Test 9-b: Mark previous class entry as stale" timeout="600" runPath=".">
+ 		<command>$JAVA_EXE$ $currentMode$ $PROGRAM$</command>
+  		<output type="success" caseSensitive="yes" regex="no">java.runtime.version</output>
+  		
+  		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 9-b: Test stale entry is shown in printStats=stale" timeout="600" runPath=".">
+ 		<command>$JAVA_EXE$ $currentMode$,printStats=stale</command>
+ 		<output type="success" javaUtilPattern="yes" regex="yes">ROMCLASS: SystemProperties at 0x[\w]*[\.]!STALE![\n\r].*Index</output>
+  		<output type="required" caseSensitive="no" regex="no">stale bytes</output>
+
+  		<output type="failure" javaUtilPattern="yes" regex="yes">ROMCLASS:(.)*at 0x[\w]*[\.][\n\r].*Index</output>
+		<output type="failure" javaUtilPattern="yes" regex="yes">ROMMETHOD:(.)*Address: 0x[\w]*[\n\r]</output>
+		<output type="failure" javaUtilPattern="yes" regex="yes">AOT:(.)*Address: 0x[\w]*[\n\r]</output>
+		<output type="failure" javaUtilPattern="yes" regex="yes">JITPROFILE:(.)*Address: 0x[\w]*[\n\r]</output>
+		<output type="failure" javaUtilPattern="yes" regex="yes">JITHINT:(.)*Address: 0x[\w]*[\n\r]</output>
+		<output type="failure" javaUtilPattern="yes" regex="yes">ORPHAN:(.)*at 0x[\w]*[\.][\n\r]</output>
+		<output type="failure" javaUtilPattern="yes" regex="yes">Address: 0x[\w]*[\s]Size [\d]*[\n\r]</output>
+  		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 9-c: Cleanup" timeout="600" runPath=".">
+ 		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 10-a: Test create a cache with a small -Xscmaxaot and -Xscmaxjitdata value" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,verbose -Xscmaxaot10 -Xscmaxjitdata10 -Xaot:forceAot,count=1 -Xjit:disableAsyncCompilation -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Unstored AOT bytes due to the setting of -Xscmaxaot is [^0][0-9]*. Unstored JIT bytes due to the setting of -Xscmaxjitdata is [^0][0-9]*</output>
+
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 10-b: Cleanup" timeout="600" runPath=".">
+ 		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 11-a: Test create a cache with -Xscmx12m" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ -Xscmx12m -verbose:sizes -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">XX:SharedCacheHardLimit=12M\s+shared class cache size</output>
+
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 11-b: Cleanup" timeout="600" runPath=".">
+ 		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 12-a: Test create a cache with -XX:SharedCacheHardLimit=12m" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ -XX:SharedCacheHardLimit=12m -verbose:sizes -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">-XX:SharedCacheHardLimit=12M\s+shared class cache size</output>
+
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 12-b: Cleanup" timeout="600" runPath=".">
+ 		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 13-a: Test create a cache with -XX:SharedCacheHardLimit=12m and -Xscmx10m" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ -XX:SharedCacheHardLimit=12m -Xscmx10m -verbose:sizes -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">-XX:SharedCacheHardLimit=12M\s+shared class cache size</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">-Xscmx10M\s+shared class cache soft max size</output>
+
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 13-b: Cleanup" timeout="600" runPath=".">
+ 		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="End : Cleanup" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<!--
+	***** IMPORTANT NOTE *****
+	The last test in this file is normally a call to -Xshareclasses:destroy. When the test passes no files should ever be left behind. 
+	-->
+</suite>

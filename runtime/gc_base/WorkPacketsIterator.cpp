@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,7 +50,7 @@ MM_PacketListIterator::MM_PacketListIterator(MM_EnvironmentBase *env, MM_WorkPac
 	_typeId = __FUNCTION__;
 	I_32 numLists=0;
 	
-	/* Initialise storage for the packet lists array*/
+	/* Initialize storage for the packet lists array*/
 	for (I_32 i = 0; i < _numPacketLists +1; i++) {    
 		_packetLists[i] = NULL;
 	}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2017 IBM Corp. and others
+ * Copyright (c) 2012, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,7 +37,6 @@
 #include "VMHelpers.hpp"
 #include "VMAccess.hpp"
 #include "ArrayCopyHelpers.hpp"
-#include "ObjectAccessBarrierAPI.hpp"
 
 extern "C" {
 
@@ -123,19 +122,6 @@ fetchArrayClass(J9VMThread *currentThread, J9Class *elementTypeClass)
 }
 
 /**
- * Find the J9SFJNINativeMethodFrame representing the current native.
- *
- * @param currentThread[in] the current J9VMThread
- *
- * @returns the native method frame
- */
-static J9SFJNINativeMethodFrame*
-findNativeMethodFrame(J9VMThread *currentThread)
-{
-	return (J9SFJNINativeMethodFrame*)((UDATA)currentThread->sp + (UDATA)currentThread->literals);
-}
-
-/**
  * Find the J9ClassLoader to use for the currently-running native method.
  *
  * @param currentThread[in] the current J9VMThread
@@ -149,7 +135,7 @@ getCurrentClassLoader(J9VMThread *currentThread)
 {
 	J9JavaVM *vm = currentThread->javaVM;
 	J9ClassLoader *classLoader = NULL;
-	J9SFJNINativeMethodFrame *nativeMethodFrame = findNativeMethodFrame(currentThread);
+	J9SFJNINativeMethodFrame *nativeMethodFrame = VM_VMHelpers::findNativeMethodFrame(currentThread);
 	J9Method *nativeMethod = nativeMethodFrame->method;
 	/* JNI 1.2 says: if there is no current native method, use the appClassLoader */
 	if (NULL == nativeMethod) {
@@ -411,7 +397,9 @@ getVersion(JNIEnv *env)
 	J9VMThread *currentThread = (J9VMThread*)env;
 	J9JavaVM *vm = currentThread->javaVM;
 
-	if (J2SE_VERSION(vm) >= J2SE_19) {
+	if (J2SE_VERSION(vm) >= J2SE_V10) {
+		return JNI_VERSION_10;
+	} else if (J2SE_VERSION(vm) == J2SE_19) {
 		return JNI_VERSION_9;
 	} else {
 		return JNI_VERSION_1_8;
@@ -589,7 +577,10 @@ getOrSetArrayRegion(JNIEnv *env, jarray array, jsize start, jsize len, void *buf
 	UDATA ustart = (UDATA)(IDATA)start;
 	UDATA ulen = (UDATA)(IDATA)len;
 	UDATA end = ustart + ulen;
-	if ((ustart >= size) || (end > size)) {
+	if ((ustart >= size) 
+		|| (end > size)
+		|| (end < ustart) /* overflow */
+	) {
 		if ((ustart != size) || (0 != ulen)) {
 			gpCheckSetCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYINDEXOUTOFBOUNDSEXCEPTION, NULL);
 		}
@@ -792,10 +783,10 @@ getStringUTFChars(JNIEnv *env, jstring string, jboolean *isCopy)
 		gpCheckSetNativeOutOfMemoryError(currentThread, 0, 0);
 	} else {
 		JAVA_OFFLOAD_SWITCH_ON_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, J9_JNI_OFFLOAD_SWITCH_GET_STRING_UTF_CHARS, utfLength);
-		if (UDATA_MAX != copyStringToUTF8Helper(currentThread, stringObject, TRUE, J9_STR_NONE, utfChars, utfLength)) {
-			if (NULL != isCopy) {
-				*isCopy = JNI_TRUE;
-			}
+		copyStringToUTF8Helper(currentThread, stringObject, J9_STR_NULL_TERMINATE_RESULT, 0, J9VMJAVALANGSTRING_LENGTH(currentThread, stringObject), utfChars, utfLength);
+
+		if (NULL != isCopy) {
+			*isCopy = JNI_TRUE;
 		}
 		JAVA_OFFLOAD_SWITCH_OFF_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, J9_JNI_OFFLOAD_SWITCH_GET_STRING_UTF_CHARS, utfLength);
 	}
@@ -808,7 +799,10 @@ getStringUTFRegion(JNIEnv *env, jstring str, jsize start, jsize len, char *buf)
 {
 	J9VMThread *currentThread = (J9VMThread*)env;
 	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
-	if ((start < 0) || (len < 0)) {
+	if ((start < 0) 
+		|| (len < 0)
+		|| (((U_32) (start + len)) > I_32_MAX)
+	) {
 outOfBounds:
 		gpCheckSetCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGSTRINGINDEXOUTOFBOUNDSEXCEPTION, NULL);
 	} else {
@@ -818,8 +812,7 @@ outOfBounds:
 			goto outOfBounds;
 		}
 		JAVA_OFFLOAD_SWITCH_ON_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, J9_JNI_OFFLOAD_SWITCH_GET_STRING_UTF_REGION, (UDATA)length * sizeof(U_16));
-		copyCharsIntoUTF8Helper(currentThread, IS_STRING_COMPRESSED(currentThread, stringObject), TRUE, J9_STR_NONE,
-			J9VMJAVALANGSTRING_VALUE(currentThread, stringObject), 0, len, (U_8 *)buf, UDATA_MAX);
+		copyStringToUTF8Helper(currentThread, stringObject, J9_STR_NULL_TERMINATE_RESULT, start, len, (U_8*)buf, UDATA_MAX);
 		JAVA_OFFLOAD_SWITCH_OFF_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, J9_JNI_OFFLOAD_SWITCH_GET_STRING_UTF_REGION, (UDATA)length * sizeof(U_16));
 	}
 	VM_VMAccess::inlineExitVMToJNI(currentThread);
@@ -937,7 +930,10 @@ getStringRegion(JNIEnv *env, jstring str, jsize start, jsize len, jchar *buf)
 {
 	J9VMThread *currentThread = (J9VMThread*)env;
 	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
-	if ((start < 0) || (len < 0)) {
+	if ((start < 0) 
+		|| (len < 0)
+		|| (((U_32) (start + len)) > I_32_MAX)
+	) {
 outOfBounds:
 		gpCheckSetCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGSTRINGINDEXOUTOFBOUNDSEXCEPTION, NULL);
 	} else {
@@ -973,7 +969,7 @@ jniResetStackReferences(JNIEnv *env)
 {
 	J9VMThread *currentThread = (J9VMThread*)env;
 	Assert_VM_mustHaveVMAccess(currentThread);
-	J9SFJNINativeMethodFrame *nativeMethodFrame = findNativeMethodFrame(currentThread);
+	J9SFJNINativeMethodFrame *nativeMethodFrame = VM_VMHelpers::findNativeMethodFrame(currentThread);
 	UDATA flags = nativeMethodFrame->specialFrameFlags;
 	if (J9_ARE_ANY_BITS_SET(flags, J9_SSF_CALL_OUT_FRAME_ALLOC)) {
 		jniPopFrame(currentThread, JNIFRAME_TYPE_INTERNAL);
@@ -1004,185 +1000,6 @@ returnFromJNI(J9VMThread *currentThread, void *vbp)
 	if (flags & J9_SSF_CALL_OUT_FRAME_ALLOC) {
 		jniPopFrame(currentThread, JNIFRAME_TYPE_INTERNAL);
 	}
-}
-
-jint JNICALL
-getStaticIntField(JNIEnv *env, jclass clazz, jfieldID fieldID)
-{
-	J9VMThread *currentThread = (J9VMThread*)env;
-	J9JavaVM *vm = currentThread->javaVM;
-	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
-	J9JNIFieldID *id = (J9JNIFieldID*)fieldID;
-	J9Class *declaringClass = id->declaringClass;
-	UDATA offset = id->offset;
-	J9ROMFieldShape *field = id->field;
-	U_32 modifiers = field->modifiers;
-	void *valueAddress = (void*)((UDATA)declaringClass->ramStatics + offset);
-	if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_GET_STATIC_FIELD)) {
-		J9Method *method = findNativeMethodFrame(currentThread)->method;
-		if (NULL != method) {
-			ALWAYS_TRIGGER_J9HOOK_VM_GET_STATIC_FIELD(vm->hookInterface, currentThread, method, 0, valueAddress);
-		}
-	}
-	bool isVolatile = J9_ARE_ANY_BITS_SET(modifiers, J9AccVolatile);
-	MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
-	jint result = 0;
-	{
-		result = (jint)objectAccessBarrier.inlineStaticReadU32(currentThread, declaringClass, (U_32*)valueAddress, isVolatile);
-	}
-	VM_VMAccess::inlineExitVMToJNI(currentThread);
-	return result;
-}
-
-void JNICALL
-setStaticIntField(JNIEnv *env, jclass clazz, jfieldID fieldID, jint value)
-{
-	J9VMThread *currentThread = (J9VMThread*)env;
-	J9JavaVM *vm = currentThread->javaVM;
-	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
-	J9JNIFieldID *id = (J9JNIFieldID*)fieldID;
-	J9Class *declaringClass = id->declaringClass;
-	UDATA offset = id->offset;
-	J9ROMFieldShape *field = id->field;
-	U_32 modifiers = field->modifiers;
-	void *valueAddress = (void*)((UDATA)declaringClass->ramStatics + offset);
-	if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_PUT_STATIC_FIELD)) {
-		J9Method *method = findNativeMethodFrame(currentThread)->method;
-		if (NULL != method) {
-			ALWAYS_TRIGGER_J9HOOK_VM_PUT_STATIC_FIELD(vm->hookInterface, currentThread, method, 0, valueAddress, (void*)&value);
-		}
-	}
-	bool isVolatile = J9_ARE_ANY_BITS_SET(modifiers, J9AccVolatile);
-	MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
-	{
-		objectAccessBarrier.inlineStaticStoreU32(currentThread, declaringClass, (U_32*)valueAddress, (U_32)value, isVolatile);
-	}
-	VM_VMAccess::inlineExitVMToJNI(currentThread);
-}
-
-jlong JNICALL
-getStaticLongField(JNIEnv *env, jclass clazz, jfieldID fieldID)
-{
-	J9VMThread *currentThread = (J9VMThread*)env;
-	J9JavaVM *vm = currentThread->javaVM;
-	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
-	J9JNIFieldID *id = (J9JNIFieldID*)fieldID;
-	J9Class *declaringClass = id->declaringClass;
-	UDATA offset = id->offset;
-	J9ROMFieldShape *field = id->field;
-	U_32 modifiers = field->modifiers;
-	void *valueAddress = (void*)((UDATA)declaringClass->ramStatics + offset);
-	if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_GET_STATIC_FIELD)) {
-		J9Method *method = findNativeMethodFrame(currentThread)->method;
-		if (NULL != method) {
-			ALWAYS_TRIGGER_J9HOOK_VM_GET_STATIC_FIELD(vm->hookInterface, currentThread, method, 0, valueAddress);
-		}
-	}
-	bool isVolatile = J9_ARE_ANY_BITS_SET(modifiers, J9AccVolatile);
-	MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
-	jlong result = 0;
-	{
-		result = (jlong)objectAccessBarrier.inlineStaticReadU64(currentThread, declaringClass, (U_64*)valueAddress, isVolatile);
-	}
-	VM_VMAccess::inlineExitVMToJNI(currentThread);
-	return result;
-}
-
-void JNICALL
-setStaticDoubleFieldIndirect(JNIEnv *env, jobject clazz, jfieldID fieldID, void *value)
-{
-	J9VMThread *currentThread = (J9VMThread*)env;
-	J9JavaVM *vm = currentThread->javaVM;
-	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
-	J9JNIFieldID *id = (J9JNIFieldID*)fieldID;
-	J9Class *declaringClass = id->declaringClass;
-	UDATA offset = id->offset;
-	J9ROMFieldShape *field = id->field;
-	U_32 modifiers = field->modifiers;
-	void *valueAddress = (void*)((UDATA)declaringClass->ramStatics + offset);
-	if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_PUT_STATIC_FIELD)) {
-		J9Method *method = findNativeMethodFrame(currentThread)->method;
-		if (NULL != method) {
-			ALWAYS_TRIGGER_J9HOOK_VM_PUT_STATIC_FIELD(vm->hookInterface, currentThread, method, 0, valueAddress, value);
-		}
-	}
-	bool isVolatile = J9_ARE_ANY_BITS_SET(modifiers, J9AccVolatile);
-	MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
-	{
-		objectAccessBarrier.inlineStaticStoreU64(currentThread, declaringClass, (U_64*)valueAddress, *(U_64*)value, isVolatile);
-	}
-	VM_VMAccess::inlineExitVMToJNI(currentThread);
-}
-
-jobject JNICALL
-getStaticObjectField(JNIEnv *env, jclass clazz, jfieldID fieldID)
-{
-	J9VMThread *currentThread = (J9VMThread*)env;
-	J9JavaVM *vm = currentThread->javaVM;
-	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
-	J9JNIFieldID *id = (J9JNIFieldID*)fieldID;
-	J9Class *declaringClass = id->declaringClass;
-	UDATA offset = id->offset;
-	J9ROMFieldShape *field = id->field;
-	U_32 modifiers = field->modifiers;
-	void *valueAddress = (void*)((UDATA)declaringClass->ramStatics + offset);
-	if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_GET_STATIC_FIELD)) {
-		J9Method *method = findNativeMethodFrame(currentThread)->method;
-		if (NULL != method) {
-			ALWAYS_TRIGGER_J9HOOK_VM_GET_STATIC_FIELD(vm->hookInterface, currentThread, method, 0, valueAddress);
-		}
-	}
-	bool isVolatile = J9_ARE_ANY_BITS_SET(modifiers, J9AccVolatile);
-	MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
-	j9object_t resultObject = NULL;
-	{
-		resultObject = objectAccessBarrier.inlineStaticReadObject(currentThread, declaringClass, (j9object_t*)valueAddress, isVolatile);
-	}
-	jobject result = VM_VMHelpers::createLocalRef(env, resultObject);
-	VM_VMAccess::inlineExitVMToJNI(currentThread);
-	return result;
-}
-
-void JNICALL
-setStaticObjectField(JNIEnv *env, jclass clazz, jfieldID fieldID, jobject value)
-{
-	J9VMThread *currentThread = (J9VMThread*)env;
-	J9JavaVM *vm = currentThread->javaVM;
-	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
-	J9JNIFieldID *id = (J9JNIFieldID*)fieldID;
-	J9Class *declaringClass = id->declaringClass;
-	UDATA offset = id->offset;
-	J9ROMFieldShape *field = id->field;
-	U_32 modifiers = field->modifiers;
-	void *valueAddress = (void*)((UDATA)declaringClass->ramStatics + offset);
-	if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_PUT_STATIC_FIELD)) {
-		J9Method *method = findNativeMethodFrame(currentThread)->method;
-		if (NULL != method) {
-			j9object_t valueObject = (NULL == value) ? NULL : J9_JNI_UNWRAP_REFERENCE(value);
-			ALWAYS_TRIGGER_J9HOOK_VM_PUT_STATIC_FIELD(vm->hookInterface, currentThread, method, 0, valueAddress, (void*)&valueObject);
-		}
-	}
-	bool isVolatile = J9_ARE_ANY_BITS_SET(modifiers, J9AccVolatile);
-	MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
-	j9object_t valueObject = (NULL == value) ? NULL : J9_JNI_UNWRAP_REFERENCE(value);
-	{
-		objectAccessBarrier.inlineStaticStoreObject(currentThread, declaringClass, (j9object_t*)valueAddress, valueObject, isVolatile);
-	}
-	VM_VMAccess::inlineExitVMToJNI(currentThread);
-}
-
-jfloat JNICALL
-getStaticFloatField(JNIEnv *env, jclass clazz, jfieldID fieldID)
-{
-	jint value = getStaticIntField(env, clazz, fieldID);
-	return *(jfloat*)&value;
-}
-
-jdouble JNICALL
-getStaticDoubleField(JNIEnv *env, jclass clazz, jfieldID fieldID)
-{
-	jlong value = getStaticLongField(env, clazz, fieldID);
-	return *(jdouble*)&value;
 }
 
 }

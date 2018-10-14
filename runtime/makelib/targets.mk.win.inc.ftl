@@ -1,5 +1,5 @@
 <#-- 
-	Copyright (c) 1998, 2017 IBM Corp. and others
+	Copyright (c) 1998, 2018 IBM Corp. and others
 	
 	This program and the accompanying materials are made available under
 	the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,11 +70,6 @@ endif
 ifndef UMA_DO_NOT_OPTIMIZE_CCODE
 	UMA_OPTIMIZATION_FLAGS=/Ox
 endif
-<#if uma.spec.flags.build_newCompiler.enabled>	
-	#	/GS-: disable buffer security check (on by default)
-	#
-	UMA_OPTIMIZATION_FLAGS+=/GS-
-</#if>
 
 CFLAGS+=$(UMA_OPTIMIZATION_FLAGS)
 CXXFLAGS+=$(UMA_OPTIMIZATION_FLAGS)
@@ -130,7 +125,6 @@ UMA_EXEFLAGS+=/INCREMENTAL:NO /NOLOGO /LARGEADDRESSAWARE
 # Declare Flags
 
 # Assembler flags
-<#if uma.spec.processor.x86>
 #	/c Assemble without linking
 #	/Cp Preserve case of user identifiers
 #	/W3 Set warning level
@@ -140,22 +134,31 @@ UMA_EXEFLAGS+=/INCREMENTAL:NO /NOLOGO /LARGEADDRESSAWARE
 #	/Zd Add line number info
 #	/Zi Add symbolic debug info
 #	/Gd Use C calls (i.e. prepend underscored to symbols)
-#
-ASFLAGS+=/c /Cp /W3 /nologo /safeseh /coff /Zm /Zd /Zi /Gd -DWIN32
+ASFLAGS+=/c /Cp /W3 /nologo /Zd /Zi -DWIN32 -D_WIN32 -DOMR_OS_WINDOWS
+<#if uma.spec.processor.x86>
+ASFLAGS+=/safeseh /coff /Zm /Gd
 <#elseif uma.spec.processor.amd64>
-ASFLAGS+=/c /Cp /W3 /nologo /Zd /Zi  -DWIN32 -DWIN64 -DJ9HAMMER
+ASFLAGS+=-DWIN64 -D_WIN64 -DJ9HAMMER
 </#if>
+
+CFLAGS+=-DWIN32 -D_WIN32 -DOMR_OS_WINDOWS
+CXXFLAGS+=-DWIN32 -D_WIN32 -DOMR_OS_WINDOWS
+ifdef USE_MINGW
+  MINGW_CXXFLAGS+=-DWIN32 -D_WIN32 -DOMR_OS_WINDOWS
+endif
+
 <#if uma.spec.processor.amd64>
-  <#if uma.spec.flags.build_newCompiler.enabled>
-    CFLAGS+=-D_AMD64_=1 -DWIN64 -D_WIN64 -DWIN32 -D_WIN32 -DJ9HAMMER
-    CXXFLAGS+=-D_AMD64_=1 -DWIN64 -D_WIN64 -DWIN32 -D_WIN32 -DJ9HAMMER
-  <#else>
-    CFLAGS+=-D_AMD64_=1 -DWIN64 -D_WIN64 -DWIN32 -D_WIN32 -DJ9HAMMER /FIPRE64PRA.H -Wp64
-    CXXFLAGS+=-D_AMD64_=1 -DWIN64 -D_WIN64 -DWIN32 -D_WIN32 -DJ9HAMMER /FIPRE64PRA.H -Wp64
-  </#if>
-    ifdef USE_MINGW
-      MINGW_CXXFLAGS+=-D_AMD64_=1 -DWIN64 -D_WIN64 -DWIN32 -D_WIN32 -DJ9HAMMER
-    endif
+  CFLAGS+=-D_AMD64_=1 -DWIN64 -D_WIN64 -DJ9HAMMER
+  CXXFLAGS+=-D_AMD64_=1 -DWIN64 -D_WIN64 -DJ9HAMMER
+  ifdef USE_MINGW
+    MINGW_CXXFLAGS+=-D_AMD64_=1 -DWIN64 -D_WIN64 -DJ9HAMMER
+  endif
+<#elseif uma.spec.processor.x86>
+  CFLAGS+=-D_X86_=1
+  CXXFLAGS+=-D_X86_=1
+  ifdef USE_MINGW
+    MINGW_CXXFLAGS+=-D_X86_=1 -DJ9X86 -march=pentium4 -mtune=prescott -msse2
+  endif
 </#if>
 
 # To support parallel make we write a PDB file for each source file
@@ -176,13 +179,6 @@ ifdef USE_MINGW
   MINGW_CXXFLAGS+=-DCRTAPI1=_cdecl -DCRTAPI2=_cdecl
 endif
 
-<#if uma.spec.processor.x86>
-CFLAGS+=-D_X86_=1 -DWIN32 -D_WIN32
-CXXFLAGS+=-D_X86_=1 -DWIN32 -D_WIN32
-    ifdef USE_MINGW
-      MINGW_CXXFLAGS+=-D_X86_=1 -DWIN32 -D_WIN32 -DJ9X86 -march=pentium4 -mtune=prescott -msse2
-    endif
-</#if>
 
 CFLAGS+=-D_WIN95 -D_WIN32_WINDOWS=0x0500 /D_WIN32_DCOM
 CXXFLAGS+=-D_WIN95 -D_WIN32_WINDOWS=0x0500 /D_WIN32_DCOM

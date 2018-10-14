@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -235,6 +235,11 @@ public:
 	 * @return the number of buffers in the list being released 
 	 */
 	UDATA releaseCardBufferControlBlockList(MM_EnvironmentVLHGC* env, MM_CardBufferControlBlock *controlBlockHead, MM_CardBufferControlBlock *controlBlockTail = NULL);
+	
+	/**
+	 * release the complete list (from head to tail) of BufferControlBlocks for a given thread, and set the head and tail pointers to null.
+	 */
+	void releaseCardBufferControlBlockListForThread(MM_EnvironmentVLHGC* env, MM_EnvironmentVLHGC* threadEnv);
 
 	/**
 	 * release a BufferControlBlock list to the thread local pool.

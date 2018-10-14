@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2009 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,12 +68,13 @@ final class InterfaceHandle extends IndirectHandle {
 	/// {{{ JIT support
 	protected final long vtableOffset(Object receiver) {
 		/*[IF]*/
-		/* Must be 'defc' rather than 'type().parameterType(0)' so that the 
-		 * itable index matches the defining interface, otherwise handles
-		 * on interfaces methods defined in parent interfaces will crash
+		/* Must be 'referenceClass' rather than 'type().parameterType(0)' or
+		 * 'defc' so that the itable index matches the defining interface at
+		 * handle creation time, otherwise handles on interfaces methods defined
+		 * in parent interfaces will crash
 		 */
 		/*[ENDIF]*/
-		Class<?> interfaceClass = defc;
+		Class<?> interfaceClass = referenceClass;
 		if (interfaceClass.isInstance(receiver)) {
 			long interfaceJ9Class = getJ9ClassFromClass(interfaceClass);
 			long receiverJ9Class = getJ9ClassFromClass(receiver.getClass());

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2008, 2017 IBM Corp. and others
+ * Copyright (c) 2008, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -539,14 +539,14 @@ ITERATING_CLASSES:while(classesIt.hasNext()) {
 				if (cpObject instanceof JavaClass) {
 					// Found a class reference, add it to the list
 					JavaClass cpJavaClass = (JavaClass)cpObject;
-					references.add(new Long(cpJavaClass.getObject().getID().getAddress()));
+					references.add(Long.valueOf(cpJavaClass.getObject().getID().getAddress()));
 				}
 			}
 					
 			// Superclass references
 			JavaClass superClass = thisJavaClass.getSuperclass();
 			while (null != superClass){
-				references.add(new Long(superClass.getObject().getID().getAddress()));
+				references.add(Long.valueOf(superClass.getObject().getID().getAddress()));
 				superClass = superClass.getSuperclass();
 			}
 			
@@ -556,7 +556,7 @@ ITERATING_CLASSES:while(classesIt.hasNext()) {
 			if(loader != null) {
 				JavaObject loaderObject = loader.getObject();
 				if(loaderObject != null) {
-					references.add(new Long(loaderObject.getID().getAddress()));
+					references.add(Long.valueOf(loaderObject.getID().getAddress()));
 				} else {
 					reportError("Null loader object returned for class: " + thisJavaClass.getName() + "(" + thisJavaClass.getID() + ")",null);
 					_numberOfErrors++;
@@ -583,7 +583,7 @@ ITERATING_CLASSES:while(classesIt.hasNext()) {
 		try {
 			JavaObject protectionDomain = thisJavaClass.getProtectionDomain();
 			if(protectionDomain != null) {
-				references.add(new Long(protectionDomain.getID().getAddress()));
+				references.add(Long.valueOf(protectionDomain.getID().getAddress()));
 			}
 		} catch (DataUnavailable e) {
 			//record that access to the protection domain was not possible
@@ -634,9 +634,9 @@ ITERATING_CLASSES:while(classesIt.hasNext()) {
 			} else if (referent instanceof JavaObject) {
 				JavaObject referredObject = (JavaObject) referent;
 					
-				references.add(new Long(referredObject.getID().getAddress()));
+				references.add(Long.valueOf(referredObject.getID().getAddress()));
 			} else if (referent == null) {
-				references.add(new Long(0));
+				references.add(Long.valueOf(0));
 			} else if (referent instanceof Number || referent instanceof Boolean || referent instanceof Character) {
 				//Ignore
 			} else {
@@ -748,9 +748,9 @@ ITERATING_CLASSES:while(classesIt.hasNext()) {
 				}
 				// the following ugliness is necessary as JavaObject and JavaClass both support getID() but do not inherit from a common parent
 				if (target instanceof JavaObject) {
-					references.add(new Long(((JavaObject) target).getID().getAddress()));				
+					references.add(Long.valueOf(((JavaObject) target).getID().getAddress()));				
 				} else if (target instanceof JavaClass) {
-					references.add(new Long(((JavaClass) target).getID().getAddress()));
+					references.add(Long.valueOf(((JavaClass) target).getID().getAddress()));
 				} else {
 					_numberOfErrors++;
 					reportError("Object of unexpected type "

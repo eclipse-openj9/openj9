@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2014 IBM Corp. and others
+ * Copyright (c) 2010, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,7 +54,7 @@ public class TraceFileHeaderWriter {
 	/**
 	 * This class generates a trace file header. It is intended to be used when
 	 * a core dump has been taken before the JVM has written out any trace, the
-	 * trace header is not initialised until that happens.
+	 * trace header is not initialized until that happens.
 	 * 
 	 * There are a lot of arguments to pass but this data can be obtained from
 	 * the dump and prevents this code needing to exist in 23, 24 and 26

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -420,7 +420,7 @@ MM_GlobalCollectorDelegate::unloadDeadClassLoaders(MM_EnvironmentBase *env)
 	/* The list of classLoaders to be unloaded by cleanUpClassLoadersEnd is rooted in unloadLink */
 
 	/* set the vmState whilst we're unloading classes */
-	UDATA vmState = env->pushVMstate(J9VMSTATE_GC_UNLOADING_DEAD_CLASSLOADERS);
+	UDATA vmState = env->pushVMstate(OMRVMSTATE_GC_CLEANING_METADATA);
 
 	/* Count the classes we're unloading and perform class-specific clean up work for each unloading class.
 	 * If we're unloading any classes, perform common class-unloading clean up.

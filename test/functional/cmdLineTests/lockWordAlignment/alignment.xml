@@ -1,0 +1,431 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2015, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="J9 Field Alignment Command-Line Option Tests" timeout="300">
+ <variable name="TESTSBOOTCLASSPATH" value="-Xbootclasspath/a:$TESTSJARPATH$" />
+ <variable name="OBJECTTESTSBOOTCLASSPATH" value="-Xbootclasspath/p:$OBJECTJARPATH$" />
+ <variable name="JAVAPBOOTCLASSPATH" value="-bootclasspath $OBJECTJARPATH$" />
+
+ <variable name="PRIV_FIELD1" value=".*" />
+ <variable name="PRIV_FIELD2" value=".*" />
+ <variable name="PRIV_FIELD3" value=".*" />
+ 
+ <if testVariable="OLWMODE" testValue="standard" resultVariable="OBJECTTESTSBOOTCLASSPATH" resultValue=" "/>
+ <if testVariable="OLWMODE" testValue="standard" resultVariable="JAVAPBOOTCLASSPATH" resultValue=" "/>
+
+ <if testVariable="OLWMODE" testValue="d" resultVariable="PRIV_FIELD1" resultValue="\W*private double d;"/>
+
+ <if testVariable="OLWMODE" testValue="i" resultVariable="PRIV_FIELD1" resultValue="\W*private int i;"/>
+
+ <if testVariable="OLWMODE" testValue="ii" resultVariable="PRIV_FIELD1" resultValue="\W*private int i;"/>
+ <if testVariable="OLWMODE" testValue="ii" resultVariable="PRIV_FIELD2" resultValue="\W*private int ii;"/>
+
+ <if testVariable="OLWMODE" testValue="iii" resultVariable="PRIV_FIELD1" resultValue="\W*private int i;"/>
+ <if testVariable="OLWMODE" testValue="iii" resultVariable="PRIV_FIELD2" resultValue="\W*private int ii;"/>
+ <if testVariable="OLWMODE" testValue="iii" resultVariable="PRIV_FIELD3" resultValue="\W*private int iii;"/>
+
+ <echo value=" "/>
+ <echo value="#######################################################"/>
+ <echo value="Running the tests with the following settings:"/>
+ <echo value="OBJECTTESTSBOOTCLASSPATH = $OBJECTTESTSBOOTCLASSPATH$"/>
+ <echo value="PRIV_FIELD1 = $PRIV_FIELD1$"/>
+ <echo value="PRIV_FIELD2 = $PRIV_FIELD2$"/>
+ <echo value="PRIV_FIELD3 = $PRIV_FIELD3$"/>
+ <echo value="#######################################################"/>
+ <echo value=" "/>
+
+ <test id="Check whether Object contains necessary private fields if any">
+	<command>$EXEP$ -p $JAVAPBOOTCLASSPATH$ java/lang/Object</command>
+	<return value="0" />
+	<output type="required" caseSensitive="yes" regex="yes">$PRIV_FIELD1$</output>
+	<output type="required" caseSensitive="yes" regex="yes">$PRIV_FIELD2$</output>
+	<output type="required" caseSensitive="yes" regex="yes">$PRIV_FIELD3$</output>
+ </test>
+
+ <test id="Check Object is aligned">
+	<command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ main java.lang.Object</command>
+	<return value="0" />
+	<output type="failure" caseSensitive="no" regex="no">not aligned</output>
+	<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+ </test>
+ 
+ <test id="Check Object is still aligned with -Xlockword:noLockword">
+	<command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ -Xlockword:noLockword=java.lang.Object main java.lang.Object</command>
+	<return value="0" />
+	<output type="failure" caseSensitive="no" regex="no">not aligned</output>
+	<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+ </test>
+ 
+  <test id="Check I is aligned">
+	<command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ main level_2_I</command>
+	<return value="0" />
+	<output type="failure" caseSensitive="no" regex="no">not aligned</output>
+	<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+ </test>
+ 
+ <test id="Check I is still aligned with -Xlockword:noLockword">
+	<command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ -Xlockword:noLockword=level_2_I main level_2_I</command>
+	<return value="0" />
+	<output type="failure" caseSensitive="no" regex="no">not aligned</output>
+	<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+ </test>
+ 
+  <test id="Check J is aligned">
+	<command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ main level_2_J</command>
+	<return value="0" />
+	<output type="failure" caseSensitive="no" regex="no">not aligned</output>
+	<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+ </test>
+ 
+ <test id="Check J is still aligned with -Xlockword:noLockword">
+	<command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ -Xlockword:noLockword=level_2_J main level_2_J</command>
+	<return value="0" />
+	<output type="failure" caseSensitive="no" regex="no">not aligned</output>
+	<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+ </test>
+ 
+  <test id="Check O is aligned">
+	<command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ main level_2_O</command>
+	<return value="0" />
+	<output type="failure" caseSensitive="no" regex="no">not aligned</output>
+	<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+ </test>
+ 
+ <test id="Check O is still aligned with -Xlockword:noLockword">
+	<command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ -Xlockword:noLockword=level_2_O main level_2_O</command>
+	<return value="0" />
+	<output type="failure" caseSensitive="no" regex="no">not aligned</output>
+	<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+ </test>
+ 
+ <!-- GENERATED STARTS -->
+   
+ <test id="Check ijo_extends_level_2_I is aligned">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ main ijo_extends_level_2_I</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check ijo_extends_level_2_I is still aligned with -Xlockword:noLockword">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ -Xlockword:noLockword=ijo_extends_level_2_I main ijo_extends_level_2_I</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check ioj_extends_level_2_I is aligned">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ main ioj_extends_level_2_I</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check ioj_extends_level_2_I is still aligned with -Xlockword:noLockword">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ -Xlockword:noLockword=ioj_extends_level_2_I main ioj_extends_level_2_I</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check jio_extends_level_2_I is aligned">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ main jio_extends_level_2_I</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check jio_extends_level_2_I is still aligned with -Xlockword:noLockword">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ -Xlockword:noLockword=jio_extends_level_2_I main jio_extends_level_2_I</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check joi_extends_level_2_I is aligned">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ main joi_extends_level_2_I</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check joi_extends_level_2_I is still aligned with -Xlockword:noLockword">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ -Xlockword:noLockword=joi_extends_level_2_I main joi_extends_level_2_I</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check oij_extends_level_2_I is aligned">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ main oij_extends_level_2_I</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check oij_extends_level_2_I is still aligned with -Xlockword:noLockword">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ -Xlockword:noLockword=oij_extends_level_2_I main oij_extends_level_2_I</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check oji_extends_level_2_I is aligned">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ main oji_extends_level_2_I</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check oji_extends_level_2_I is still aligned with -Xlockword:noLockword">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ -Xlockword:noLockword=oji_extends_level_2_I main oji_extends_level_2_I</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check ijo_extends_level_2_J is aligned">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ main ijo_extends_level_2_J</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check ijo_extends_level_2_J is still aligned with -Xlockword:noLockword">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ -Xlockword:noLockword=ijo_extends_level_2_J main ijo_extends_level_2_J</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check ioj_extends_level_2_J is aligned">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ main ioj_extends_level_2_J</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check ioj_extends_level_2_J is still aligned with -Xlockword:noLockword">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ -Xlockword:noLockword=ioj_extends_level_2_J main ioj_extends_level_2_J</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check jio_extends_level_2_J is aligned">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ main jio_extends_level_2_J</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check jio_extends_level_2_J is still aligned with -Xlockword:noLockword">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ -Xlockword:noLockword=jio_extends_level_2_J main jio_extends_level_2_J</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check joi_extends_level_2_J is aligned">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ main joi_extends_level_2_J</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check joi_extends_level_2_J is still aligned with -Xlockword:noLockword">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ -Xlockword:noLockword=joi_extends_level_2_J main joi_extends_level_2_J</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check oij_extends_level_2_J is aligned">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ main oij_extends_level_2_J</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check oij_extends_level_2_J is still aligned with -Xlockword:noLockword">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ -Xlockword:noLockword=oij_extends_level_2_J main oij_extends_level_2_J</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check oji_extends_level_2_J is aligned">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ main oji_extends_level_2_J</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check oji_extends_level_2_J is still aligned with -Xlockword:noLockword">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ -Xlockword:noLockword=oji_extends_level_2_J main oji_extends_level_2_J</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check ijo_extends_level_2_O is aligned">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ main ijo_extends_level_2_O</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check ijo_extends_level_2_O is still aligned with -Xlockword:noLockword">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ -Xlockword:noLockword=ijo_extends_level_2_O main ijo_extends_level_2_O</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check ioj_extends_level_2_O is aligned">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ main ioj_extends_level_2_O</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check ioj_extends_level_2_O is still aligned with -Xlockword:noLockword">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ -Xlockword:noLockword=ioj_extends_level_2_O main ioj_extends_level_2_O</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check jio_extends_level_2_O is aligned">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ main jio_extends_level_2_O</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check jio_extends_level_2_O is still aligned with -Xlockword:noLockword">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ -Xlockword:noLockword=jio_extends_level_2_O main jio_extends_level_2_O</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check joi_extends_level_2_O is aligned">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ main joi_extends_level_2_O</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check joi_extends_level_2_O is still aligned with -Xlockword:noLockword">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ -Xlockword:noLockword=joi_extends_level_2_O main joi_extends_level_2_O</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check oij_extends_level_2_O is aligned">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ main oij_extends_level_2_O</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check oij_extends_level_2_O is still aligned with -Xlockword:noLockword">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ -Xlockword:noLockword=oij_extends_level_2_O main oij_extends_level_2_O</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check oji_extends_level_2_O is aligned">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ main oji_extends_level_2_O</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+<test id="Check oji_extends_level_2_O is still aligned with -Xlockword:noLockword">
+  <command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ -Xlockword:noLockword=oji_extends_level_2_O main oji_extends_level_2_O</command>
+  <return value="0" />
+  <output type="failure">not aligned</output>
+  <output type="failure">Unhandled Exception</output>
+  <output type="failure">Exception:</output>
+  <output type="failure">Processing dump event</output>
+</test>
+
+</suite>

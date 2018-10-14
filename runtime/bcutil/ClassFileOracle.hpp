@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,6 +32,7 @@
 #include "cfr.h"
 #include "cfreader.h"
 #include "ut_j9bcu.h"
+#include "bcnames.h"
 
 #include "BuildResult.hpp"
 
@@ -853,7 +854,7 @@ class NameAndTypeIterator
 	U_16 getInnerClassCount() const { return _innerClassCount; }
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	U_16 getNestMembersCount() const { return _nestMembersCount; }
-	U_16 getNestTopNameIndex() const { return _memberOfNest; }
+	U_16 getNestHostNameIndex() const { return _nestHost; }
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 	U_16 getMajorVersion() const { return _classFile->majorVersion; }
 	U_16 getMinorVersion() const { return _classFile->minorVersion; }
@@ -899,6 +900,7 @@ class NameAndTypeIterator
 	  */
 	bool isConstantLong(U_16 cpIndex) const { return CFR_CONSTANT_Long == _classFile->constantPool[cpIndex].tag; }
 	bool isConstantDouble(U_16 cpIndex) const { return CFR_CONSTANT_Double == _classFile->constantPool[cpIndex].tag; }
+	bool isConstantDynamic(U_16 cpIndex) const { return CFR_CONSTANT_Dynamic == _classFile->constantPool[cpIndex].tag;}
 	bool isConstantInteger0(U_16 cpIndex) const { return (CFR_CONSTANT_Integer == _classFile->constantPool[cpIndex].tag) && (0 == _classFile->constantPool[cpIndex].slot1); }
 	bool isConstantFloat0(U_16 cpIndex) const { return (CFR_CONSTANT_Float == _classFile->constantPool[cpIndex].tag) && (0 == _classFile->constantPool[cpIndex].slot1); }
 	bool isUTF8AtIndexEqualToString(U_16 cpIndex, const char *string, UDATA stringSize) { return (getUTF8Length(cpIndex) == (stringSize - 1)) && (0 == memcmp(getUTF8Data(cpIndex), string, stringSize - 1)); }
@@ -920,9 +922,23 @@ class NameAndTypeIterator
 	bool hasClinit() const { return _hasClinit; }
 	bool annotationRefersDoubleSlotEntry() const { return _annotationRefersDoubleSlotEntry; }
 	bool isInnerClass() const { return _isInnerClass; }
-#if defined(J9VM_OPT_VALHALLA_MVT)
-	bool isClassValueCapable() const { return _isClassValueCapable; }
-#endif /* J9VM_OPT_VALHALLA_MVT */
+
+	U_8 constantDynamicType(U_16 cpIndex) const
+	{
+		J9CfrConstantPoolInfo* nas = &_classFile->constantPool[_classFile->constantPool[cpIndex].slot2];
+		J9CfrConstantPoolInfo* signature = &_classFile->constantPool[nas->slot2];
+		U_8 result = 0;
+
+		if ('D' == signature->bytes[0]) {
+			result = JBldc2dw;
+		} else if ('J' == signature->bytes[0]) {
+			result = JBldc2lw;
+		} else {
+			Trc_BCU_Assert_ShouldNeverHappen();
+		}
+
+		return result;
+	}
 
 private:
 	class InterfaceVisitor;
@@ -931,9 +947,6 @@ private:
 		FRAMEITERATORSKIP_ANNOTATION,
 		SUN_REFLECT_CALLERSENSITIVE_ANNOTATION,
 		JDK_INTERNAL_REFLECT_CALLERSENSITIVE_ANNOTATION,
-#if defined(J9VM_OPT_VALHALLA_MVT)
-		DERIVE_VALUE_TYPE_ANNOTATION,
-#endif /* J9VM_OPT_VALHALLA_MVT */
 		JAVA8_CONTENDED_ANNOTATION,
 		CONTENDED_ANNOTATION,
 		KNOWN_ANNOTATION_COUNT
@@ -961,7 +974,7 @@ private:
 	U_16 _innerClassCount;
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	U_16 _nestMembersCount;
-	U_16 _memberOfNest;
+	U_16 _nestHost;
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 	U_32 _maxBranchCount;
 	U_16 _outerClassNameIndex;
@@ -980,9 +993,6 @@ private:
 	bool _hasClinit;
 	bool _annotationRefersDoubleSlotEntry;
 	bool _isInnerClass;
-#if defined(J9VM_OPT_VALHALLA_MVT)
-	bool _isClassValueCapable;
-#endif /* J9VM_OPT_VALHALLA_MVT */
 
 	FieldInfo *_fieldsInfo;
 	MethodInfo *_methodsInfo;
@@ -1049,6 +1059,7 @@ private:
 	VMINLINE void markMethodRefForMHInvocationAsReferenced(U_16 cpIndex);
 
 	VMINLINE void markConstantAsReferenced(U_16 cpIndex);
+	VMINLINE void markConstantDynamicAsReferenced(U_16 cpIndex);
 	VMINLINE void markConstantNameAndTypeAsReferenced(U_16 cpIndex);
 	VMINLINE void markConstantUTF8AsReferenced(U_16 cpIndex);
 

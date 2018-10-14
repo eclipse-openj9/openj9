@@ -1,0 +1,14 @@
+NumberOfUrls=2
+Url0=./Alphabet;
+NumberOfClassesToLoad0=2
+LoadClasses0=A,B
+NumberOfClassesToFind0=2
+FindClasses0=A,B
+Results0=true,true
+Url1=./Food;
+NumberOfClassesToLoad1=2
+LoadClasses1=Pizza,Noodles
+NumberOfClassesToFind1=2
+FindClasses1=Pizza,Noodles
+Results1=true,true
+BatchFileToRun=/bin/sh ./batchfiles/StaleClassPathTest3.sh

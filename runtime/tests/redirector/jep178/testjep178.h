@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2014 IBM Corp. and others
+ * Copyright (c) 2014, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,7 @@
 #include <string.h>
 #if defined(WIN32)
 #include <windows.h>
-#elif defined(LINUX) || defined(AIXPPC)
+#elif defined(LINUX) || defined(AIXPPC) || defined(OSX)
 #include <dlfcn.h>
 #else
 #include <dll.h>

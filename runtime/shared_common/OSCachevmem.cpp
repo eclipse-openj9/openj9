@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,10 +41,10 @@
 #include "UnitTest.hpp"
 
 SH_OSCachevmem::SH_OSCachevmem(J9PortLibrary* portLibrary, const char* cachedirname, const char* cacheName, J9SharedClassPreinitConfig* piconfig,
-		IDATA numLocks, UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, J9PortShcVersion* versionData, SH_OSCacheInitialiser* initialiser)
+		IDATA numLocks, UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, J9PortShcVersion* versionData, SH_OSCacheInitializer* initializer)
 {
 	initialize(portLibrary, NULL, OSCACHE_CURRENT_CACHE_GEN);
-	startup(cachedirname, J9SH_DIRPERM_ABSENT, cacheName, piconfig, numLocks, createFlag, verboseFlags, runtimeFlags, openMode, 0, versionData, initialiser, SHR_STARTUP_REASON_NORMAL);
+	startup(cachedirname, J9SH_DIRPERM_ABSENT, cacheName, piconfig, numLocks, createFlag, verboseFlags, runtimeFlags, openMode, 0, versionData, initializer, SHR_STARTUP_REASON_NORMAL);
 }
 
 void
@@ -65,7 +65,7 @@ SH_OSCachevmem::initialize(J9PortLibrary* portLibrary, char* memForConstructor, 
 
 bool
 SH_OSCachevmem::startup(const char* ctrlDirName, UDATA cacheDirPerm, const char* cacheName, J9SharedClassPreinitConfig* piconfig, IDATA numLocks,
-		UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, UDATA storageKeyTesting, J9PortShcVersion* versionData, SH_OSCacheInitialiser* initialiser, UDATA reason)
+		UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, UDATA storageKeyTesting, J9PortShcVersion* versionData, SH_OSCacheInitializer* initializer, UDATA reason)
 {
 	PORT_ACCESS_FROM_PORT(_portLibrary);
 	U_32 readWriteBytes = (U_32)((piconfig->sharedClassReadWriteBytes > 0) ? piconfig->sharedClassReadWriteBytes : 0);
@@ -254,14 +254,14 @@ SH_OSCachevmem::startup(const char* ctrlDirName, UDATA cacheDirPerm, const char*
 												piconfig->sharedClassMinJITSize,
 												piconfig->sharedClassMaxJITSize,
 												readWriteBytes);
-		initialiser->init((char*)_dataStart, 
+		initializer->init((char*)_dataStart, 
 									_dataLength, 
 									(I_32)piconfig->sharedClassMinAOTSize, 
 									(I_32)piconfig->sharedClassMaxAOTSize,
 									(I_32)piconfig->sharedClassMinJITSize,
 									(I_32)piconfig->sharedClassMaxJITSize,
 									readWriteBytes);
-		Trc_SHR_OSC_Vmem_startup_initialised();
+		Trc_SHR_OSC_Vmem_startup_initialized();
 	}
 
 	_startupCompleted = true;

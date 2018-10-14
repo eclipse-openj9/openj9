@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,8 @@
 #include "vmaccess.h"
 #include "java_lang_Class.h"
 #include "ArrayCopyHelpers.hpp"
+#include "j9jclnls.h"
+
 
 #include "VMHelpers.hpp"
 
@@ -73,7 +75,7 @@ Java_java_lang_Class_getDeclaredAnnotationsData(JNIEnv *env, jobject jlClass)
 			result = vmThread->javaVM->internalVMFunctions->j9jni_createLocalRef(env, annotationsData);
 		}
 	}
-	releaseVMAccess(vmThread);
+	exitVMToJNI(vmThread);
 	return result;
 }
 
@@ -86,6 +88,11 @@ isPrivilegedFrameIterator(J9VMThread * currentThread, J9StackWalkState * walkSta
 	J9JNIMethodID *doPrivilegedWithContextMethodID1 = (J9JNIMethodID *) vm->doPrivilegedWithContextMethodID1;
 	J9JNIMethodID *doPrivilegedWithContextMethodID2 = (J9JNIMethodID *) vm->doPrivilegedWithContextMethodID2;
 	J9Method *currentMethod = walkState->method;
+
+	if (J9_ARE_ALL_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(currentMethod)->modifiers, J9_JAVA_METHOD_FRAME_ITERATOR_SKIP)) {
+		/* Skip methods with java.lang.invoke.FrameIteratorSkip annotation */
+		return J9_STACKWALK_KEEP_ITERATING;
+	}
 
 	if (NULL == walkState->userData2) {
 		J9Class * currentClass = J9_CLASS_FROM_CP(walkState->constantPool);
@@ -128,7 +135,7 @@ Java_java_lang_Class_getStackClasses(JNIEnv *env, jclass jlHeapClass, jint maxDe
 	J9StackWalkState walkState = {0};
 	J9Class *jlClass = NULL;
 	J9Class *arrayClass = NULL;
-	UDATA walkFlags = J9_STACKWALK_CACHE_CPS | J9_STACKWALK_COUNT_SPECIFIED | J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_INCLUDE_NATIVES;
+	UDATA walkFlags = J9_STACKWALK_CACHE_METHODS | J9_STACKWALK_COUNT_SPECIFIED | J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_INCLUDE_NATIVES;
 	UDATA framesWalked = 0;
 	UDATA *cacheContents = NULL;
 	UDATA i = 0;
@@ -177,9 +184,11 @@ Java_java_lang_Class_getStackClasses(JNIEnv *env, jclass jlHeapClass, jint maxDe
 	cacheContents = walkState.cache;
 
 	for (i = framesWalked; i > 0; i--) {
-		J9Class *currentClass = ((J9ConstantPool *)*cacheContents)->ramClass;
+		J9Method *currentMethod = (J9Method *)*cacheContents;
+		J9Class *currentClass = J9_CLASS_FROM_METHOD(currentMethod);
 
-		if ( (vm->jliArgumentHelper && instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_JCLASS(vmThread, vm->jliArgumentHelper))) || 
+		if ( J9_ARE_ALL_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(currentMethod)->modifiers, J9_JAVA_METHOD_FRAME_ITERATOR_SKIP) ||
+			 (vm->jliArgumentHelper && instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_JCLASS(vmThread, vm->jliArgumentHelper))) ||
 			 (vm->srMethodAccessor && vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, *((j9object_t*) vm->srMethodAccessor)))) ||
 			 (vm->srConstructorAccessor && vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, *((j9object_t*) vm->srConstructorAccessor))))
 		) {
@@ -218,7 +227,7 @@ Java_java_lang_Class_getStackClasses(JNIEnv *env, jclass jlHeapClass, jint maxDe
 	result = vmFuncs->j9jni_createLocalRef(env, arrayObject);
 
 _throwException:
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 
 	return result;
 }
@@ -255,7 +264,7 @@ Java_java_lang_Class_isClassADeclaredClass(JNIEnv *env, jobject jlClass, jobject
 		srpCursor ++;
 	}
 
-	releaseVMAccess(vmThread);
+	exitVMToJNI(vmThread);
 	return result;
 }
 
@@ -346,7 +355,7 @@ Java_com_ibm_oti_vm_VM_getClassNameImpl(JNIEnv *env, jclass recv, jclass jlClass
 		}
 	}
 
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return classNameRef;
 }
 
@@ -378,7 +387,7 @@ Java_java_lang_Class_getGenericSignature(JNIEnv *env, jobject recv)
 		result = vmFuncs->j9jni_createLocalRef(env, stringObject);
 		releaseOptInfoBuffer(vm, romClass);
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -490,7 +499,7 @@ retry:
 		}
 	}
 	jobject result = vmFuncs->j9jni_createLocalRef(env, resultObject);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -547,7 +556,7 @@ retry:
 		}
 	}
 	jobject result = vmFuncs->j9jni_createLocalRef(env, resultObject);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -580,7 +589,7 @@ oom:
 		}
 	}
 	jobject result = vmFuncs->j9jni_createLocalRef(env, resultObject);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -640,7 +649,7 @@ retry:
 		}
 	}
 	jobject result = vmFuncs->j9jni_createLocalRef(env, resultObject);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -708,7 +717,7 @@ retry:
 		}
 	}
 	jobject result = vmFuncs->j9jni_createLocalRef(env, resultObject);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -772,7 +781,7 @@ retry:
 		}
 	}
 	jobject result = vmFuncs->j9jni_createLocalRef(env, resultObject);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -792,7 +801,7 @@ Java_java_lang_Class_getDeclaringClassImpl(JNIEnv *env, jobject recv)
 		resultObject = J9VM_J9CLASS_TO_HEAPCLASS(outerClass);
 	}
 	jobject result = vmFuncs->j9jni_createLocalRef(env, resultObject);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -831,7 +840,7 @@ Java_java_lang_Class_getEnclosingObject(JNIEnv *env, jobject recv)
 		}
 	}
 	jobject result = vmFuncs->j9jni_createLocalRef(env, resultObject);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -855,7 +864,7 @@ Java_java_lang_Class_getEnclosingObjectClass(JNIEnv *env, jobject recv)
 		}
 	}
 	jobject result = vmFuncs->j9jni_createLocalRef(env, resultObject);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -901,25 +910,27 @@ Java_java_lang_Class_getMethodImpl(JNIEnv *env, jobject recv, jobject name, jobj
 
 			J9JNINameAndSignature nameAndSig;
 			char nameBuffer[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
+			UDATA nameBufferLength = 0;
 			char signatureBuffer[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
+			UDATA signatureLength = 0;
 			nameAndSig.name = nameBuffer;
 			nameAndSig.nameLength = 0;
 			nameAndSig.signature = signatureBuffer;
 			nameAndSig.signatureLength = 0;
 
 			nameAndSig.name = vmFuncs->copyStringToUTF8WithMemAlloc(
-				currentThread, nameObject, J9_STR_NONE, "", nameBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+				currentThread, nameObject, J9_STR_NULL_TERMINATE_RESULT, "", 0, nameBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &nameBufferLength);
 			if (NULL == nameAndSig.name) {
 				goto _done;
 			}
-			nameAndSig.nameLength = (U_32) vmFuncs->getStringUTF8Length(currentThread, nameObject);
+			nameAndSig.nameLength = (U_32)nameBufferLength;
 
 			nameAndSig.signature = vmFuncs->copyStringToUTF8WithMemAlloc(
-				currentThread, signatureObject, J9_STR_XLAT, "", signatureBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+				currentThread, signatureObject, J9_STR_NULL_TERMINATE_RESULT | J9_STR_XLAT, "", 0, signatureBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &signatureLength);
 			if (NULL == nameAndSig.signature) {
 				goto _done;
 			}
-			nameAndSig.signatureLength = (U_32) vmFuncs->getStringUTF8Length(currentThread, signatureObject);
+			nameAndSig.signatureLength = (U_32)signatureLength;
 
 			currentMethod = (J9Method *) vmFuncs->javaLookupMethodImpl(currentThread, clazz, ((J9ROMNameAndSignature *) &nameAndSig), NULL, lookupFLags, NULL);
 			if (NULL == currentMethod) { /* by default we look for virtual methods.  Try static methods. */
@@ -950,7 +961,7 @@ _done:
 		}
 	}
 	jobject result = vmFuncs->j9jni_createLocalRef(env, resultObject);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -976,7 +987,7 @@ Java_java_lang_Class_getStaticMethodCountImpl(JNIEnv *env, jobject recv)
 		}
 		clazz = VM_VMHelpers::getSuperclass(clazz);
 	} while (NULL != clazz);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -1025,7 +1036,7 @@ Java_java_lang_Class_getStaticMethodsImpl(JNIEnv *env, jobject recv, jobject arr
 		result = JNI_FALSE;
 	}
 done:
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -1037,10 +1048,10 @@ Java_java_lang_Class_getVirtualMethodCountImpl(JNIEnv *env, jobject recv)
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(recv));
-	/* slot 0 contains size of vtable, slot 1 contains the unresolved method stub */
-	UDATA *vTable = (UDATA*)(clazz + 1);
-	UDATA count = vTable[0] - 1;
-	J9Method **vTableMethods = (J9Method**)(vTable + 2);
+
+	J9VTableHeader *vTableHeader = J9VTABLE_HEADER_FROM_RAM_CLASS(clazz);
+	UDATA count = vTableHeader->size;
+	J9Method **vTableMethods = J9VTABLE_FROM_HEADER(vTableHeader);
 	/* assuming constant number of public final methods in java.lang.Object */
 	jint result = 6;
 	for (UDATA index = 0; index < count; ++index) {
@@ -1065,7 +1076,7 @@ Java_java_lang_Class_getVirtualMethodCountImpl(JNIEnv *env, jobject recv)
 		}
 skip: ;
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -1084,10 +1095,9 @@ Java_java_lang_Class_getVirtualMethodsImpl(JNIEnv *env, jobject recv, jobject ar
 
 	/* First walk the vTable */
 	{
-		/* slot 0 contains size of vtable, slot 1 contains the unresolved method stub */
-		UDATA *vTable = (UDATA*)(clazz + 1);
-		UDATA vTableSize = vTable[0] - 1;
-		J9Method **vTableMethods = (J9Method**)(vTable + 2);
+		J9VTableHeader *vTableHeader = J9VTABLE_HEADER_FROM_RAM_CLASS(clazz);
+		UDATA vTableSize = vTableHeader->size;
+		J9Method **vTableMethods = J9VTABLE_FROM_HEADER(vTableHeader);
 		for (UDATA progress = 0; ((progress < vTableSize) && (numMethodFound < count)); ++progress) {
 			J9Method *currentMethod = vTableMethods[progress];
 			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(currentMethod);
@@ -1158,7 +1168,7 @@ skip: ;
 		}
 	}
 done:
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -1222,6 +1232,11 @@ isPrivilegedFrameIteratorGetAccSnapshot(J9VMThread * currentThread, J9StackWalkS
 	J9JNIMethodID *doPrivilegedWithContextPermissionMethodID1 = (J9JNIMethodID *) vm->doPrivilegedWithContextPermissionMethodID1;
 	J9JNIMethodID *doPrivilegedWithContextPermissionMethodID2 = (J9JNIMethodID *) vm->doPrivilegedWithContextPermissionMethodID2;
 	J9Method *currentMethod = walkState->method;
+
+	if (J9_ARE_ALL_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(currentMethod)->modifiers, J9_JAVA_METHOD_FRAME_ITERATOR_SKIP)) {
+		/* Skip methods with java.lang.invoke.FrameIteratorSkip annotation */
+		return J9_STACKWALK_KEEP_ITERATING;
+	}
 
 	if ((NULL == walkState->userData4)
 		|| (STACK_WALK_STATE_LIMITED_DOPRIVILEGED == walkState->userData3)
@@ -1627,7 +1642,7 @@ _clearAllocation:
 _throwException:
 	vmFuncs->freeStackWalkCaches(vmThread, &walkState);
 _walkStateUninitialized:
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 	/* Trc_JCL_java_security_AccessController_getAccSnapshot_Exit(vmThread, result); */
 	return result;
 }
@@ -1643,6 +1658,11 @@ _walkStateUninitialized:
 static UDATA
 isPrivilegedFrameIteratorGetCallerPD(J9VMThread * currentThread, J9StackWalkState * walkState)
 {
+	if (J9_ARE_ALL_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers, J9_JAVA_METHOD_FRAME_ITERATOR_SKIP)) {
+		/* Skip methods with java.lang.invoke.FrameIteratorSkip annotation */
+		return J9_STACKWALK_KEEP_ITERATING;
+	}
+
 	J9JavaVM *vm = currentThread->javaVM;
 	J9Class * currentClass = J9_CLASS_FROM_CP(walkState->constantPool);
 	if ((walkState->method == vm->jlrMethodInvoke)
@@ -1698,7 +1718,7 @@ Java_java_security_AccessController_getCallerPD(JNIEnv* env, jclass jsAccessCont
 
 _throwException:
 	vmFuncs->freeStackWalkCaches(vmThread, &walkState);
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 
 	return result;
 }
@@ -1765,25 +1785,133 @@ storePDobjectsHelper(J9VMThread* vmThread, J9Class* arrayClass, J9StackWalkState
 	return arrayObject;
 }
 
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+
 jobject JNICALL
 Java_java_lang_Class_getNestHostImpl(JNIEnv *env, jobject recv)
 {
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	J9VMThread *currentThread = (J9VMThread*)env;
 	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 
 	J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(recv));
-	J9Class *nestTop = clazz->memberOfNest;
-	j9object_t resultObject = J9VM_J9CLASS_TO_HEAPCLASS(nestTop);
+	J9Class *nestHost = clazz->nestHost;
+
+	if (NULL == nestHost) {
+		if (J9_VISIBILITY_ALLOWED == vmFuncs->loadAndVerifyNestHost(currentThread, clazz, J9_LOOK_NO_THROW)) {
+			nestHost = clazz->nestHost;
+		} else {
+			/* If there is a failure loading or accessing the nest host, or if this class or interface does
+			 * not specify a nest, then it is considered to belong to its own nest and this is returned as
+			 * the host */
+			nestHost = clazz;
+		}
+	}
+	j9object_t resultObject = J9VM_J9CLASS_TO_HEAPCLASS(nestHost);
 	jobject result = vmFuncs->j9jni_createLocalRef(env, resultObject);
 
 	if (NULL == result) {
 		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 	}
 
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
-}
+#else /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+	Assert_JCL_unimplemented();
+	return NULL;
 #endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+}
+
+jobject JNICALL
+Java_java_lang_Class_getNestMembersImpl(JNIEnv *env, jobject recv)
+{
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+	J9VMThread *currentThread = (J9VMThread*)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
+
+	j9object_t resultObject = NULL;
+	jobject result = NULL;
+	J9ROMClass *romHostClass = NULL;
+	U_16 nestMemberCount = 0;
+	J9Class *jlClass = NULL;
+	J9Class *arrayClass = NULL;
+	J9Class *nestMember = NULL;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+
+	J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(recv));
+	J9Class *nestHost = clazz->nestHost;
+
+	if (NULL == nestHost) {
+		if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, clazz, 0)) {
+			nestMember = clazz;
+			goto _done;
+		}
+		nestHost = clazz->nestHost;
+	}
+	romHostClass = nestHost->romClass;
+	nestMemberCount = romHostClass->nestMemberCount;
+
+	/*  Grab java.lang.Class class for result object size */
+	jlClass = J9VMJAVALANGCLASS_OR_NULL(vm);
+	Assert_JCL_notNull(jlClass);
+	arrayClass = fetchArrayClass(currentThread, jlClass);
+	if (NULL != currentThread->currentException) {
+		goto _done;
+	}
+
+	resultObject = mmFuncs->J9AllocateIndexableObject(currentThread, arrayClass, 1 + nestMemberCount, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+	if (NULL == resultObject) {
+		vmFuncs->setHeapOutOfMemoryError(currentThread);
+		goto _done;
+	}
+
+	/* Host class is always in zeroeth index */
+	J9JAVAARRAYOFOBJECT_STORE(currentThread, resultObject, 0, J9VM_J9CLASS_TO_HEAPCLASS(nestHost));
+
+	/* If host class claims nest members, they should be placed in second index onwards */
+	if (0 != nestMemberCount) {
+		J9SRP *nestMembers = J9ROMCLASS_NESTMEMBERS(romHostClass);
+		U_16 i = 0;
+		/* Classes in nest are in same runtime package & therefore have same classloader */
+		J9ClassLoader *classLoader = clazz->classLoader;
+
+		for (i = 0; i < nestMemberCount; i++) {
+			J9UTF8 *nestMemberName = NNSRP_GET(nestMembers[i], J9UTF8 *);
+
+			PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, resultObject);
+			nestMember = vmFuncs->internalFindClassUTF8(currentThread, J9UTF8_DATA(nestMemberName), J9UTF8_LENGTH(nestMemberName), classLoader, J9_FINDCLASS_FLAG_THROW_ON_FAIL);
+			resultObject = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
+
+			if (NULL == nestMember) {
+				/* If internalFindClassUTF8 fails to find the nest member, it sets
+				 * a NoClassDefFoundError
+				 */
+				goto _done;
+			} else if (NULL == nestMember->nestHost) {
+				if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, nestMember, 0)) {
+					goto _done;
+				}
+			}
+			if (nestMember->nestHost != nestHost) {
+				vmFuncs->setNestmatesError(currentThread, nestMember, nestHost, J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR);
+				goto _done;
+			}
+			J9JAVAARRAYOFOBJECT_STORE(currentThread, resultObject, i + 1, J9VM_J9CLASS_TO_HEAPCLASS(nestMember));
+		}
+	}
+
+	result = vmFuncs->j9jni_createLocalRef(env, resultObject);
+
+_done:
+	vmFuncs->internalExitVMToJNI(currentThread);
+	return result;
+#else /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+	Assert_JCL_unimplemented();
+	return NULL;
+#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+}
+
 }

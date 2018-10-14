@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -109,7 +109,7 @@ private:
 
 	
 
-	/* NOTE: Be sure to update J9DbgROMClassBuilder.st when changing the state variables below. */
+	/* NOTE: Be sure to update J9DbgROMClassBuilder in j9nonbuilder.h when changing the state variables below. */
 	J9JavaVM *_javaVM;
 	J9PortLibrary * _portLibrary;
 	U_8 * _verifyExcludeAttribute;
@@ -117,9 +117,12 @@ private:
 	UDATA _classFileParserBufferSize;
 	UDATA _bufferManagerSize;
 	U_8 *_classFileBuffer;
+	U_8 *_anonClassNameBuffer;
+	UDATA _anonClassNameBufferSize;
 	U_8 *_bufferManagerBuffer;
 	StringInternTable _stringInternTable;
 
+	BuildResult handleAnonClassName(J9CfrClassFile *classfile);
 	U_32 computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClassCreationContext *context);
 	U_32 computeOptionalFlags(ClassFileOracle *classFileOracle, ROMClassCreationContext *context);
 	BuildResult prepareAndLaydown( BufferManager *bufferManager, ClassFileParser *classFileParser, ROMClassCreationContext *context );

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,8 @@ class MM_VerboseHandlerOutputStandardJava : public MM_VerboseHandlerOutputStanda
 {
 private:
 protected:
-	J9HookInterface** _mmHooks;  /**< Pointers to the Hook interface */
+	J9HookInterface** _mmHooks;  /**< Pointers to the mm Hook interface */
+	J9HookInterface **_vmHooks;  /**< Pointers to the vm Hook interface */
 public:
 
 private:
@@ -78,6 +79,7 @@ protected:
 	MM_VerboseHandlerOutputStandardJava(MM_GCExtensions *extensions) :
 		MM_VerboseHandlerOutputStandard(extensions)
 		, _mmHooks(NULL)
+		, _vmHooks(NULL)
 	{};
 
 public:
@@ -107,6 +109,13 @@ public:
 	 */
 	void handleClassUnloadEnd(J9HookInterface** hook, UDATA eventNum, void* eventData);
 #endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
+
+	/**
+	 * @param hook Hook interface used by the JVM.
+	 * @param eventNum The hook event number.
+	 * @param eventData hook specific event data.
+	 */
+	void handleSlowExclusive(J9HookInterface **hook, UDATA eventNum, void *eventData);
 };
 
 #endif /* VERBOSEHANDLEROUTPUTSTANDARDJAVA_HPP_ */

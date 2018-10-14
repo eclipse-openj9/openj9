@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2009 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,6 +23,11 @@
 package java.lang.invoke;
 
 import java.lang.invoke.MethodHandles.Lookup;
+/*[IF Java11]*/
+import java.lang.reflect.Array;
+import java.util.Arrays;
+import java.util.Objects;
+/*[ENDIF]*/
 
 import com.ibm.oti.util.Msg;
 
@@ -99,13 +104,38 @@ final class VarargsCollectorHandle extends MethodHandle {
 	}
 	
 	public Object invokeWithArguments(Object... args) throws Throwable, WrongMethodTypeException, ClassCastException {
-		if (args.length < 253) {
-			MethodHandle mh = IWAContainer.getMH(args.length);
-			return mh.invokeExact((MethodHandle)this, args);
+		int argsLength = 0;
+		if (args != null) {
+			argsLength = args.length;
 		}
-		MethodHandle mh = this.asType(MethodType.genericMethodType(args.length));
-		mh = mh.asSpreader(Object[].class, args.length);
-		return mh.invokeExact(args);
+		/*[IF Java11]*/
+		/*
+		 * If argument count exceeds the parameter count of the MethodHandle, special handling is required to
+		 * store the additional arguments in the trailing array.
+		 */
+		int mhLength = this.type.parameterCount();
+		if (argsLength > mhLength) {
+			int numTrailingArgs = argsLength - mhLength + 1;
+			Class<?> trailingArrayType = this.arrayType.getComponentType();
+			Object trailingArgs = Array.newInstance(trailingArrayType, numTrailingArgs);
+			MethodHandle arraySetter = MethodHandles.arrayElementSetter(this.arrayType);
+			for (int i = 0; i < numTrailingArgs; i++) {
+				arraySetter.invoke(trailingArgs, i, args[mhLength - 1 + i]);
+			}
+			args = Arrays.copyOf(args, mhLength);
+			args[mhLength - 1] = trailingArgs;
+			return this.asFixedArity().invokeWithArguments(args);
+		} else
+		/*[ENDIF]*/
+		{
+			if (argsLength < 253) {
+				MethodHandle mh = IWAContainer.getMH(argsLength);
+				return mh.invokeExact((MethodHandle) this, args); 
+			}
+			MethodHandle mh = this.asType(MethodType.genericMethodType(argsLength));
+			mh = mh.asSpreader(Object[].class, argsLength);
+			return mh.invokeExact(args);
+		}
 	}
 	
 	private CollectHandle previousCollector = null;

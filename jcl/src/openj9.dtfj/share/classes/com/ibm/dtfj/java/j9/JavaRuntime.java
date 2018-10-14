@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -197,7 +197,7 @@ public class JavaRuntime implements com.ibm.dtfj.java.JavaRuntime
 			return;
 		}
 		long id = theClass.getID().getAddress();
-		_classes.put(new Long(id), theClass);
+		_classes.put(Long.valueOf(id), theClass);
 		try {
 			if (theClass.isArray()) {
 				// Useful for component type lookups
@@ -233,12 +233,12 @@ public class JavaRuntime implements com.ibm.dtfj.java.JavaRuntime
 	public void addClassLoader(com.ibm.dtfj.java.j9.JavaClassLoader loader)
 	{
 		long id = loader.getID();
-		_classLoaders.put(new Long(id), loader);
+		_classLoaders.put(Long.valueOf(id), loader);
 	}
 
 	public com.ibm.dtfj.java.JavaClass getClassForID(long classID)
 	{
-		return (com.ibm.dtfj.java.JavaClass)_classes.get(new Long(classID));
+		return (com.ibm.dtfj.java.JavaClass)_classes.get(Long.valueOf(classID));
 	}
 
 	JavaClass getComponentTypeForClass(JavaClass theClass) throws CorruptDataException
@@ -282,7 +282,7 @@ public class JavaRuntime implements com.ibm.dtfj.java.JavaRuntime
 
 	public JavaClassLoader getClassLoaderForID(long loaderID)
 	{
-		return (JavaClassLoader) _classLoaders.get(new Long(loaderID));
+		return (JavaClassLoader) _classLoaders.get(Long.valueOf(loaderID));
 	}
 
 	public void addMonitor(JavaMonitor monitor)
@@ -491,12 +491,12 @@ public class JavaRuntime implements com.ibm.dtfj.java.JavaRuntime
 
 	public JavaMethod methodForID(long method)
 	{
-		return (JavaMethod) _methodsByID.get(new Long(method));
+		return (JavaMethod) _methodsByID.get(Long.valueOf(method));
 	}
 	
 	public void addMethodForID(JavaMethod method, long id)
 	{
-		_methodsByID.put(new Long(id), method);
+		_methodsByID.put(Long.valueOf(id), method);
 	}
 
 	public JavaVMInitArgs createJavaVMInitArgs(int version, boolean ignoreUnrecognized)
@@ -605,7 +605,5 @@ public class JavaRuntime implements com.ibm.dtfj.java.JavaRuntime
 		// Not supported in legacy DTFJ (pre-DDR)
 		throw new DataUnavailable("Dump start time is not available");
 	}
-	
-	
 
 }

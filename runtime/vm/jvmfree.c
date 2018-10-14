@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -288,7 +288,7 @@ trcModulesFreeJ9ModuleEntry(J9JavaVM *javaVM, J9Module *j9module)
 	PORT_ACCESS_FROM_VMC(currentThread);
 	char moduleNameBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 	char *moduleNameUTF = copyStringToUTF8WithMemAlloc(
-		currentThread, j9module->moduleName, J9_STR_NONE, "", moduleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+		currentThread, j9module->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, moduleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 	if (NULL != moduleNameUTF) {
 		Trc_MODULE_freeJ9Module_entry(currentThread, moduleNameUTF);
 		if (moduleNameBuf != moduleNameUTF) {

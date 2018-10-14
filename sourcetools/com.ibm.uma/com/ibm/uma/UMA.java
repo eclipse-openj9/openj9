@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -657,6 +657,14 @@ public class UMA {
 				break;
 			}
 			buffer.append("UMA_TARGET_NAME=" + artifact.getTargetNameWithScope() + "\n");
+			
+			/* On OSX, <LIB_NAME_DYLIB>.dylib should match the -install_name <LIB_NAME_INSTALL>. 
+			 * Otherwise, the linker is unable to find the required library. Currently, LIB_NAME_DYLIB
+			 * doesn't match LIB_NAME_INSTALL. LIB_NAME_DYLIB has major and minor build versions
+			 * appended whereas LIB_NAME_INSTALL doesn't contain version info. UMA_LIB_NAME will contain
+			 * LIB_NAME_INSTALL with major and minor build versions.
+			 */
+			buffer.append("UMA_LIB_NAME=" + platform.getTargetNameWithRelease(artifact) + "\n");
 			
 			if ( artifact.getTargetPath() != null ) {
 				buffer.append("UMA_TARGET_PATH=" + UMA_PATH_TO_ROOT_VAR + artifact.getTargetPath()+"\n");

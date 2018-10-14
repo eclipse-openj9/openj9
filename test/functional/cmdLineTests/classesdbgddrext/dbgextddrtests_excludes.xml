@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2017, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "excludes.dtd">
+<?xml:stylesheet type="text/xsl" href="excludes.xsl" ?>
+
+<suite id="J9 shared cache dbgext Tests">
+
+<!-- Define all the platforms that are supported by the J9 VM-->
+<!--none --> <platform id="none"/>
+<!--all --> <platform id="all"/>
+<!--j2se --> <platform id="j2se"/>
+<!--AIX --> <platform id="aix_ppc-32"/>
+<!--AIX64 --> <platform id="aix_ppc-64"/>
+<!--Linux Hammer --> <platform id="linux_x86-64"/>
+<!--Linux IA32 --> <platform id="linux_x86-32"/>
+<!--Linux PPC --> <platform id="linux_ppc-32"/>
+<!--Linux PPC 64bit --> <platform id="linux_ppc-64"/>
+<!--Linux S390 --> <platform id="linux_390-31"/>
+<!--Linux S390 64bit --> <platform id="linux_390-64"/>
+<!--Linux IA32 Realtime --> <platform id="linux_x86_rtj"/>
+<!--Win64 Hammer --> <platform id="win_x86-64"/>
+<!--Windows IA32 --> <platform id="win_x86-32"/>
+<!--z/OS S390 64bit JIT Modron --> <platform id="zos_390-64"/>
+<!--z/OS S390 JIT Modron --> <platform id="zos_390-31"/>
+
+</suite>
+

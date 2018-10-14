@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -163,12 +163,12 @@ lookupKnownAttribute (register const char *str, register unsigned int len)
       {"Exceptions", CFR_ATTRIBUTE_Exceptions, CFR_ATTRIBUTE_Exceptions},
 #line 69 "attrlookup.gperf"
       {"RuntimeInvisibleParameterAnnotations", CFR_ATTRIBUTE_RuntimeInvisibleParameterAnnotations, CFR_ATTRIBUTE_RuntimeInvisibleParameterAnnotations},
+#line 72 "attrlookup.gperf"
+      {"NestHost", CFR_ATTRIBUTE_NestHost, CFR_ATTRIBUTE_NestHost},
 #line 51 "attrlookup.gperf"
       {"Deprecated", CFR_ATTRIBUTE_Deprecated, CFR_ATTRIBUTE_Deprecated},
 #line 71 "attrlookup.gperf"
       {"NestMembers", CFR_ATTRIBUTE_NestMembers, CFR_ATTRIBUTE_NestMembers},
-#line 72 "attrlookup.gperf"
-      {"MemberOfNest", CFR_ATTRIBUTE_MemberOfNest, CFR_ATTRIBUTE_MemberOfNest},
 #line 70 "attrlookup.gperf"
       {"MethodParameters", CFR_ATTRIBUTE_MethodParameters, CFR_ATTRIBUTE_MethodParameters}
     };
@@ -177,8 +177,8 @@ lookupKnownAttribute (register const char *str, register unsigned int len)
     {
       -1, -1, -1, -1,  0, -1, -1, -1, -1,  1,  2, -1,  3,  4,
       -1,  5,  6,  7,  8, -1,  9, -1, 10, 11, 12, 13, -1, 14,
-      15, 16, 17, 18, -1, -1, 19, 20, 21, -1, -1, -1, 22, 23,
-      24, -1, -1, -1, 25
+      15, 16, 17, 18, -1, -1, 19, 20, 21, -1, 22, -1, 23, 24,
+      -1, -1, -1, -1, 25
     };
 
   if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)

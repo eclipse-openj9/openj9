@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2014 IBM Corp. and others
+ * Copyright (c) 2010, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,7 @@ import com.ibm.j9ddr.util.IteratorHelpers.IteratorFilter;
 import com.ibm.j9ddr.view.dtfj.J9DDRDTFJUtils;
 import com.ibm.j9ddr.vm29.pointer.generated.OMRMemCategoryPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.OMRMemCategoryHelper;
-import com.ibm.j9ddr.vm29.types.U32;
+import com.ibm.j9ddr.vm29.types.UDATA;
 import com.ibm.j9ddr.vm29.view.dtfj.DTFJContext;
 
 import static com.ibm.j9ddr.vm29.pointer.helper.OMRMemCategoryHelper.IOMRMemCategoryVisitor;
@@ -77,7 +77,7 @@ public class DTFJJavaRuntimeMemoryCategory implements JavaRuntimeMemoryCategory
 			}
 			
 			try {
-				U32 childCode = category.children().at(index++);
+				UDATA childCode = category.children().at(index++);
 				OMRMemCategoryPointer childCategory = OMRMemCategoryHelper.getMemoryCategory(childCode);
 				
 				if (childCategory.categoryCode().eq(childCode)) {

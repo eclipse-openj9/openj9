@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,7 +50,7 @@ Java_com_ibm_oti_reflect_AnnotationParser_getAnnotationsData__Ljava_lang_reflect
 			result = vmThread->javaVM->internalVMFunctions->j9jni_createLocalRef(env, annotationsData);
 		}
 	}
-	releaseVMAccess(vmThread);
+	exitVMToJNI(vmThread);
 	return result;
 }
 
@@ -93,7 +93,7 @@ getExecutableAnnotationDataHelper(JNIEnv *env, jobject jlrMethod, METHOD_OBJECT_
 			result = vmThread->javaVM->internalVMFunctions->j9jni_createLocalRef(env, annotationsData);
 		}
 	}
-	releaseVMAccess(vmThread);
+	exitVMToJNI(vmThread);
 	return result;
 }
 

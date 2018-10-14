@@ -1,26 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- 
-	Copyright (c) 2017, 2017 IBM Corp. and others
-	
-	This program and the accompanying materials are made available under
-	the terms of the Eclipse Public License 2.0 which accompanies this
-	distribution and is available at https://www.eclipse.org/legal/epl-2.0/
-	or the Apache License, Version 2.0 which accompanies this distribution and
-	is available at https://www.apache.org/licenses/LICENSE-2.0.
-	
-	This Source Code may also be made available under the following
-	Secondary Licenses when the conditions for such availability set
-	forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
-	General Public License, version 2 with the GNU Classpath
-	Exception [1] and GNU General Public License, version 2 with the
-	OpenJDK Assembly Exception [2].
-	
-	[1] https://www.gnu.org/software/classpath/license.html
-	[2] http://openjdk.java.net/legal/assembly-exception.html
+<!--
+Copyright (c) 2017, 2018 IBM Corp. and others
 
-	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
+
+[1] https://www.gnu.org/software/classpath/license.html
+[2] http://openjdk.java.net/legal/assembly-exception.html
+
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
-
 <module xmlns:xi="http://www.w3.org/2001/XInclude">
 
 	<xi:include href="../uma/sun_misc_Unsafe_exports.xml"></xi:include>
@@ -31,7 +30,6 @@
 	<xi:include href="../uma/se7_exports.xml"></xi:include>
 	<xi:include href="../uma/se626_orb_ludcl_exports.xml"></xi:include>
 	<xi:include href="../uma/jithelpers_jni_exports.xml"></xi:include>
-	<xi:include href="../uma/rcm_exports.xml"></xi:include>
 	<xi:include href="../uma/se8_exports.xml"></xi:include>
 	<xi:include href="../uma/se829_exports.xml"></xi:include>
 	<xi:include href="../uma/se9_exports.xml"></xi:include>
@@ -40,14 +38,13 @@
 		<xi:fallback/>
 	</xi:include>
 
-	<xi:include href="../uma/sun_misc_Unsafe_objects.xml"></xi:include>	
+	<xi:include href="../uma/sun_misc_Unsafe_objects.xml"></xi:include>
 	<xi:include href="../uma/se6_vm-side_natives_objects.xml"></xi:include>
 	<xi:include href="../uma/se6_vm-side_lifecycle_objects.xml"></xi:include>
 	<xi:include href="../uma/attach_objects.xml"></xi:include>
 	<xi:include href="../uma/se7_objects.xml"></xi:include>
 	<xi:include href="../uma/se626_orb_ludcl_objects.xml"></xi:include>
 	<xi:include href="../uma/jithelpers_objects.xml"></xi:include>
-	<xi:include href="../uma/rcm_objects.xml"></xi:include>
 	<xi:include href="../uma/se8_objects.xml"></xi:include>
 	<xi:include href="../uma/se9_objects.xml"></xi:include>
 
@@ -70,7 +67,7 @@
 			<option name="dllDescription" data="Java SE 9"/>
 		</options>
 		<phase>core j2se</phase>
-		
+
 		<exports>
 			<group name="se6_vm-side_lifecycle"/>
 			<group name="se6_vm-side_natives"/>
@@ -86,13 +83,13 @@
 			<group name="se829"/>
 			<group name="se9" />
 		</exports>
-		
+
 		<flags>
-			<!-- add a -D to access the Hursley build ID from java code - $MY_LEVEL will be set by the build environment -->	
+			<!-- add a -D to access the Hursley build ID from java code - $MY_LEVEL will be set by the build environment -->
 			<flag name='J9_BUILD_LEVEL' value='&apos;"$(MY_LEVEL)"&apos;' asmflag='false'/>
 			<flag name="J9VM_JCL_SE9"/>
 		</flags>
-		
+
 		<includes>
 			<include path="j9include"/>
 			<include path="j9oti"/>
@@ -124,7 +121,7 @@
 			<vpath pattern="%" path="../inl" augmentIncludes="true" type="relativepath"/>
 			<vpath pattern="%" path="../." augmentIncludes="true" type="relativepath"/>
 		</vpaths>
-		
+
 		<objects>
 			<group name="se6_vm-side_lifecycle"/>
 			<group name="se6_vm-side_natives"/>
@@ -138,9 +135,9 @@
 
 			<group name="se8"/>
 			<group name="se9"/>
-			
+
 			<group name="vendor_jcl"/>
-			
+
 			<!-- Groups must be before Objects -->
 			<object name="j9vmconstantpool_se9_before_b165" />
 		</objects>
@@ -163,7 +160,7 @@
 			<library name="j9util"/>
 			<library name="j9utilcore"/>
 			<library name="j9avl" type="external"/>
-			<library name="j9hashtable" type="external"/>						
+			<library name="j9hashtable" type="external"/>
 			<library name="j9pool" type="external"/>
 			<library name="j9thr"/>
 			<library name="j9vmi"/>

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -5994,7 +5994,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_REVALIDATE_AOT_METHODS.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS=Geben Sie die den Methodenspezifikationen entsprechende(n) AOT-Methode(n) aus.\n\
-\t<Methodenspezifikation> ist wie folgt definiert: [!]{*|[*]<Paketname/Klassenname>[*]}[.{*|[*]<Methodenname>[*]}][({*|[*]<Parameter>[*]})].
+\t<Methodenspezifikation> ist wie folgt definiert: [!]{*|[*]<Paketname/Klassenname>[*]}[.{*|[*]<Methodenname>[*]}[({*|[*]<Parameter>[*]}]].
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.system_action=
@@ -6016,7 +6016,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=<Methodenspezifikation> hat folgendes Format: [!]{*|[*]<Paketname/Klassenname>[*]}[.{*|[*]<Methodenname>[*]}][({*|[*]<Parameter>[*]})]. Beispiel:\n\
+J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=<Methodenspezifikation> hat folgendes Format: [!]{*|[*]<Paketname/Klassenname>[*]}[.{*|[*]<Methodenname>[*]}[({*|[*]<Parameter>[*]})]]. Beispiel:\n\
 \n\
 \t-Xshareclasses:name=Cache1,%sjava/util/HashMap.hash(Ljava/lang/Object;)\n
 # START NON-TRANSLATABLE
@@ -6145,6 +6145,7 @@ J9NLS_SHRC_OSCACHE_MMAP_SET_GROUPACCESS_FAILED.user_response=Check the umask set
 
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED=Das Festlegen der Gruppenzugriffsberechtigung, die durch die Unteroption 'groupAccess' f\u00fcr das Semaphorset mit semid=%d angefordert wurde, das dem Cache f\u00fcr gemeinsam genutzte Klassen zugeordnet ist, ist fehlgeschlagen.
 # START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.explanation=Cannot set group access permission when creating the new semaphore with sub-option "groupAccess".
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.user_response=Ensure the user has sufficient permission for creating the new semaphore with group access.
@@ -6152,6 +6153,7 @@ J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.user_response=Ensure the use
 
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED=Das Festlegen der Gruppenzugriffsberechtigung, die durch die Unteroption 'groupAccess' f\u00fcr den gemeinsam genutzten Speicher mit shmid=%d angefordert wurde, der dem Cache f\u00fcr gemeinsam genutzte Klassen zugeordnet ist, ist fehlgeschlagen.
 # START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.explanation=Cannot set group access permission when creating the new shared memory with sub-option "groupAccess".
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.user_response=Ensure the user has sufficient permission for creating the new shared memory with group access.
@@ -6634,4 +6636,11 @@ J9NLS_SHRC_CC_INCORRECT_BUILDID=Der gemeinsam genutzte Cache konnte nicht gestar
 J9NLS_SHRC_CC_INCORRECT_BUILDID.explanation=An error has occurred when starting up the cache. The build ID of the existing cache with the same name is different from that of the current JVM.
 J9NLS_SHRC_CC_INCORRECT_BUILDID.system_action=The JVM fails to complete the requested operation.
 J9NLS_SHRC_CC_INCORRECT_BUILDID.user_response=Use a JVM which matches the build ID of the existing cache.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1=Inaktivieren Sie das Caching von Klassen, die durch das Klassenladeprogramm des Bootprogramms geladen wurden.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.user_response=
 # END NON-TRANSLATABLE

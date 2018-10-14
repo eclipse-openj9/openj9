@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2001, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="SignedSealedTests" timeout="600">
+ <variable name="TMOUT" value="600" />
+ <variable name="SCCMD" value="-Xshareclasses:controlDir=.,name=" />
+ <variable name="TESTDIR" value=".\$TESTSUITE$" />
+	<test id="SignedSealed.BuildInitial1" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$TESTDIR$\buildInitial1.bat $TOOLSDIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">AB.jar</output>
+		<output type="failure" caseSensitive="yes" regex="no">Usage:</output>
+		<output type="failure" caseSensitive="yes" regex="no">no such</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="Sealed.success" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$SignedSealed1,expire=0 -Xscmx5M -cp $TESTDIR$\AB.jar;$TESTDIR$\B1.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="Sealed.failure1" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$SignedSealed2 -Xscmx5M -cp $TESTDIR$\B1.jar;$TESTDIR$\AB.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">SecurityException</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	</test>
+	<test id="Sealed.failure2" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$SignedSealed3 -Xscmx5M -cp $TESTDIR$\B2.jar;$TESTDIR$\AB.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">SecurityException</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	</test>
+	<test id="Sealed.verify1" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$SignedSealed2 -cp $TESTDIR$\B1.jar;$TESTDIR$\AB.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">SecurityException</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	</test>
+	<test id="Sealed.verify2" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$SignedSealed3 -cp $TESTDIR$\B2.jar;$TESTDIR$\AB.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">SecurityException</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	</test>
+	<test id="SignedSealed.BuildInitial2" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$TESTDIR$\buildInitial2.bat $TOOLSDIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">sA.jar</output>
+		<output type="failure" caseSensitive="yes" regex="no">Usage:</output>
+		<output type="failure" caseSensitive="yes" regex="no">no such</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="Signed.success1Store" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$SignedSealed2,expire=0 -Xscmx5M -cp $TESTDIR$\sA.jar;$TESTDIR$\sB.jar;$TESTDIR$\sC.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="Signed.success1Find" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$SignedSealed2 -cp $TESTDIR$\sA.jar;$TESTDIR$\sB.jar;$TESTDIR$\sC.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="Signed.success2Store" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$SignedSealed2 -cp $TESTDIR$\sA.jar;$TESTDIR$\sB.jar;$TESTDIR$\C.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="Signed.success2Find" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$SignedSealed2 -cp $TESTDIR$\sA.jar;$TESTDIR$\sB.jar;$TESTDIR$\C.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="Signed.success3Store" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$SignedSealed2 -cp $TESTDIR$\A.jar;$TESTDIR$\B.jar;$TESTDIR$\sC.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="Signed.success3Find" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$SignedSealed2 -cp $TESTDIR$\A.jar;$TESTDIR$\B.jar;$TESTDIR$\sC.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="Signed.failure1Store" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$SignedSealed2 -cp $TESTDIR$\A.jar;$TESTDIR$\sB.jar;$TESTDIR$\C.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">SecurityException</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	</test>
+	<test id="Signed.failure1Find" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$SignedSealed2 -cp $TESTDIR$\A.jar;$TESTDIR$\sB.jar;$TESTDIR$\C.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">SecurityException</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	</test>
+	<test id="Signed.failure2Store" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$SignedSealed2 -cp $TESTDIR$\sA.jar;$TESTDIR$\B.jar;$TESTDIR$\C.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">SecurityException</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	</test>
+	<test id="Signed.failure2Find" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$SignedSealed2 -cp $TESTDIR$\sA.jar;$TESTDIR$\B.jar;$TESTDIR$\C.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">SecurityException</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	</test>
+</suite>

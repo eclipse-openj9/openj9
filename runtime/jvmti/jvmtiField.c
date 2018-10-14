@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -108,7 +108,7 @@ done:
 			j9mem_free_memory(signature);
 			j9mem_free_memory(generic);
 		}
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetFieldName);
@@ -143,7 +143,7 @@ jvmtiGetFieldDeclaringClass(jvmtiEnv* env,
 		*declaring_class_ptr = (jclass) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, J9VM_J9CLASS_TO_HEAPCLASS(fieldClass));
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetFieldDeclaringClass);
@@ -180,7 +180,7 @@ jvmtiGetFieldModifiers(jvmtiEnv* env,
 		rc = JVMTI_ERROR_NONE;
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetFieldModifiers);
@@ -216,7 +216,7 @@ jvmtiIsFieldSynthetic(jvmtiEnv* env,
 		*is_synthetic_ptr = (romFieldShape->modifiers & J9AccSynthetic) ? JNI_TRUE : JNI_FALSE;
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiIsFieldSynthetic);

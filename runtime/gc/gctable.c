@@ -36,6 +36,7 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	allocateMemoryForSublistFragment,
 	j9gc_heap_free_memory,
 	j9gc_heap_total_memory,
+	j9gc_is_garbagecollection_disabled,
 	j9gc_allsupported_memorypools,
 	j9gc_allsupported_garbagecollectors,
 	j9gc_pool_name,
@@ -54,7 +55,6 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	gcShutdownHeapManagement,
 	initializeMutatorModelJava,
 	cleanupMutatorModelJava,
-	internalFreeMemorySpace,
 #if defined(J9VM_GC_FINALIZATION)
 	j9gc_finalizer_startup,
 	j9gc_finalizer_shutdown,
@@ -101,9 +101,8 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	j9gc_jit_isInlineAllocationSupported,
 	J9MetronomeWriteBarrierStore,
 	J9MetronomeWriteBarrierJ9ClassStore,
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	J9ReadBarrier,
-#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+	J9ReadBarrierJ9Class,
 	j9gc_objaccess_monitorTableReadObject,
 	j9gc_objaccess_monitorTableReadObjectVM,
 	j9gc_ext_check_is_valid_heap_object,

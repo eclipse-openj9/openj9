@@ -974,7 +974,7 @@ J9NLS_JNICHK_HELP_15.system_action=
 J9NLS_JNICHK_HELP_15.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JNICHK_PACKED_MISMATCH=Errore JNI in %1$s: l'argomento #%2$d prevede %3$s %4$s, l'argomento attuale \u00e8 %5$s %6$s
+J9NLS_JNICHK_PACKED_MISMATCH=Errore JNI in %1$s: l'argomento #%2$d prevede %3$s %4$s, l'argomento effettivo \u00e8 %5$s %6$s
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_PACKED_MISMATCH.sample_input_1=SetObjectField
 J9NLS_JNICHK_PACKED_MISMATCH.sample_input_2=3
@@ -996,7 +996,7 @@ J9NLS_JNICHK_NON_ARRAY_REQUIRED.system_action=If -Xcheck:jni:nonfatal has been s
 J9NLS_JNICHK_NON_ARRAY_REQUIRED.user_response=Check and correct the JNI application code.
 # END NON-TRANSLATABLE
 
-J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS=Notifica JNI in %1$s: questa funzione non pu\u00f2 essere utilizzata con oggetti impacchettati. Al suo posto, utilizzare %2$s
+J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS=Avviso JNI in %1$s: questa funzione non pu\u00f2 essere utilizzata con oggetti compressi. Utilizzare %2$s
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.sample_input_1=GetPrimitiveArrayCritical
 J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.sample_input_2=GetPackedArrayElements

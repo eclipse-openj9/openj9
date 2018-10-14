@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -84,32 +84,6 @@ MM_GCExtensions::initialize(MM_EnvironmentBase *env)
 	if (!MM_GCExtensionsBase::initialize(env)) {
 		goto failed;
 	}
-
-#if defined(OMR_ENV_DATA64)
-	if (J2SE_VERSION((J9JavaVM *)getOmrVM()->_language_vm) >= J2SE_19) {
-		uint64_t physicalMemory = 0;
-		uint64_t memoryLimit = 0;
-		uint64_t usableMemory = 0;
-		/* Initial physicalMemory as per system call. */
-		physicalMemory = j9sysinfo_get_physical_memory();
-		if (OMRPORT_LIMIT_LIMITED == j9sysinfo_get_limit(OMRPORT_RESOURCE_ADDRESS_SPACE, &memoryLimit)) {
-			/* there is a limit on the memory we can use so take the minimum of this usable amount and the physical memory */
-			usableMemory = OMR_MIN(memoryLimit, physicalMemory);
-		} else {
-			/* if there is no memory limit being imposed on us, we will use physical memory as our max */
-			usableMemory = physicalMemory;
-		}
-
-		/* extend java default max memory to 25% of physical RAM */
-		memoryMax = OMR_MAX(memoryMax, usableMemory / 4);
-		/* limit maxheapsize up to MAXIMUM_HEAP_SIZE_RECOMMENDED_FOR_3BIT_SHIFT_COMPRESSEDREFS, then can set 3bit compressedrefs as the default */
-		memoryMax = OMR_MIN(memoryMax, MAXIMUM_HEAP_SIZE_RECOMMENDED_FOR_3BIT_SHIFT_COMPRESSEDREFS);
-
-		/* Initialize Xmx, Xmdx */
-		memoryMax = MM_Math::roundToFloor(heapAlignment, (uintptr_t)memoryMax);
-		maxSizeDefaultMemorySpace = memoryMax;
-	}
-#endif /* OMR_ENV_DATA64 */
 
 #if defined(J9VM_GC_REALTIME)
 #if defined(J9VM_GC_HYBRID_ARRAYLETS)
@@ -251,4 +225,38 @@ void
 MM_GCExtensions::updateIdentityHashDataForSaltIndex(UDATA index)
 {
 	getJavaVM()->identityHashData->hashSaltTable[index] = (U_32)convertValueToHash(getJavaVM(), getJavaVM()->identityHashData->hashSaltTable[index]);
+}
+
+void
+MM_GCExtensions::computeDefaultMaxHeap(MM_EnvironmentBase *env)
+{
+	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
+
+	MM_GCExtensionsBase::computeDefaultMaxHeap(env);
+
+	if (OMR_CGROUP_SUBSYSTEM_MEMORY == omrsysinfo_cgroup_are_subsystems_enabled(OMR_CGROUP_SUBSYSTEM_MEMORY)) {
+		if (omrsysinfo_cgroup_is_memlimit_set()) {
+			/* If running in a cgroup with memory limit > 1G, reserve at-least 512M for JVM's internal requirements
+			 * like JIT compilation etc, and extend default max heap memory to at-most 75% of cgroup limit.
+			 * The value reserved for JVM's internal requirements excludes heap. This value is a conservative
+			 * estimate of the JVM's internal requirements, given that one compilation thread can use up to 256M.
+			 */
+#define OPENJ9_IN_CGROUP_NATIVE_FOOTPRINT_EXCLUDING_HEAP ((U_64)512 * 1024 * 1024)
+			memoryMax = (uintptr_t)OMR_MAX((int64_t)(usablePhysicalMemory / 2), (int64_t)(usablePhysicalMemory - OPENJ9_IN_CGROUP_NATIVE_FOOTPRINT_EXCLUDING_HEAP));
+			memoryMax = (uintptr_t)OMR_MIN(memoryMax, (usablePhysicalMemory / 4) * 3);
+#undef OPENJ9_IN_CGROUP_NATIVE_FOOTPRINT_EXCLUDING_HEAP
+		}
+	}
+
+#if defined(OMR_ENV_DATA64)
+	if (J2SE_VERSION((J9JavaVM *)getOmrVM()->_language_vm) >= J2SE_19) {
+		/* extend java default max memory to 25% of usable RAM */
+		memoryMax = OMR_MAX(memoryMax, usablePhysicalMemory / 4);
+	}
+
+	/* limit maxheapsize up to MAXIMUM_HEAP_SIZE_RECOMMENDED_FOR_3BIT_SHIFT_COMPRESSEDREFS, then can set 3bit compressedrefs as the default */
+	memoryMax = OMR_MIN(memoryMax, MAXIMUM_HEAP_SIZE_RECOMMENDED_FOR_3BIT_SHIFT_COMPRESSEDREFS);
+#endif /* OMR_ENV_DATA64 */
+
+	memoryMax = MM_Math::roundToFloor(heapAlignment, memoryMax);
 }

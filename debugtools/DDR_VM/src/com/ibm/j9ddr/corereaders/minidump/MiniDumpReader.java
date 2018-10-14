@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2014 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -520,7 +520,7 @@ public class MiniDumpReader extends AbstractCoreReader implements ICoreFileReade
 				}
 			}
 			/* Add thread info (may or may not be in the dump) */
-			/* Relies on threads having been initialised as it adds properties so must be done second. */
+			/* Relies on threads having been initialized as it adds properties so must be done second. */
 			for (ThreadInfoStream stream : threadInfoStreams) {
 				try {
 					stream.readFrom(this, this.getAddressSpaces().get(0), is64Bit(), threads);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,6 @@ static jint walkLocalMonitorRefs (J9VMThread* currentThread, jobject* locks, J9V
 static jvmtiError resumeThread (J9VMThread * currentThread, jthread thread);
 static UDATA wrappedAgentThreadStart (J9PortLibrary* portLib, void * entryArg);
 static void ownedMonitorIterator (J9VMThread* aThread, J9StackWalkState* walkState, j9object_t* slot, const void * stackLocation);
-static jvmtiError suspendThread (J9VMThread * currentThread, jthread thread, UDATA allowNull, UDATA * currentThreadSuspended);
 
 
 jvmtiError JNICALL
@@ -113,7 +112,7 @@ jvmtiGetThreadState(jvmtiEnv* env,
 			releaseVMThread(currentThread, targetThread);
 		}
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetThreadState);
@@ -174,7 +173,7 @@ jvmtiGetAllThreads(jvmtiEnv* env,
 		vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetAllThreads);
@@ -205,12 +204,12 @@ jvmtiSuspendThread(jvmtiEnv* env,
 		/* If the current thread was suspended, block now until it is resumed */
 
 		if (currentThreadSuspended) {
-			vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 			setHaltFlag(currentThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
 			vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 		}
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiSuspendThread);
@@ -253,12 +252,12 @@ jvmtiSuspendThreadList(jvmtiEnv* env,
 		/* If the current thread appeared in the list (and was marked as suspended), block now until the thread is resumed */
 
 		if (currentThreadEverSuspended) {
-			vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 			setHaltFlag(currentThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
 			vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 		}
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 
 	}
 
@@ -286,7 +285,7 @@ jvmtiResumeThread(jvmtiEnv* env,
 		rc = resumeThread(currentThread, thread);
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiResumeThread);
@@ -323,7 +322,7 @@ jvmtiResumeThreadList(jvmtiEnv* env,
 		}
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiResumeThreadList);
@@ -365,7 +364,7 @@ jvmtiStopThread(jvmtiEnv* env,
 			releaseVMThread(currentThread, targetThread);
 		}
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiStopThread);
@@ -402,7 +401,7 @@ jvmtiInterruptThread(jvmtiEnv* env,
 			releaseVMThread(currentThread, targetThread);
 		}
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiInterruptThread);
@@ -433,31 +432,24 @@ jvmtiGetThreadInfo(jvmtiEnv* env,
 
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, FALSE);
 		if (rc == JVMTI_ERROR_NONE) {
-			char * name;
-			j9object_t threadObject = (thread == NULL) ? targetThread->threadObject : *((j9object_t*) thread);
+			char* name = NULL;
+			j9object_t threadObject = (NULL == thread) ? targetThread->threadObject : *((j9object_t*) thread);
 			jobject threadGroup = NULL;
 			jobject contextClassLoader;
 
-			if (targetThread == NULL) {
+			if (NULL == targetThread) {
 				/* java.lang.thread may not have a ref to vm thread. for example, after it gets terminated.
 				 * but we still want to return the name, so we retrieve it from the thread object itself. */
 				j9object_t threadName = J9VMJAVALANGTHREAD_NAME(currentThread, threadObject);
-				size_t threadNameLen = (threadName == NULL) ? 1 : (J9VMJAVALANGSTRING_LENGTH(currentThread, threadName) * 3) + 1;
 
-				/* Be sure to allocate at least one byte for the nul termination */
-
-				name = j9mem_allocate_memory(threadNameLen, J9MEM_CATEGORY_JVMTI_ALLOCATE);
-				if (name == NULL) {
-					/* failed to allocate memory, so release VMTthread and exit */
-					rc = JVMTI_ERROR_OUT_OF_MEMORY;
-					goto done;
-				}
-
-				if (threadName == NULL) {
+				if (NULL == threadName) {
+					name = j9mem_allocate_memory(1, J9MEM_CATEGORY_JVMTI_ALLOCATE);
 					name[0] = '\0';
 				} else {
-					if (UDATA_MAX == vm->internalVMFunctions->copyStringToUTF8Helper(currentThread, threadName, TRUE, J9_STR_NONE, (U_8*)name, threadNameLen)) {
-						rc = JVMTI_ERROR_INTERNAL;
+					name = vm->internalVMFunctions->copyStringToUTF8WithMemAlloc(currentThread, threadName, J9_STR_NULL_TERMINATE_RESULT, "", 0, NULL, 0, NULL);
+
+					if (NULL == name) {
+						rc = JVMTI_ERROR_OUT_OF_MEMORY;
 						goto done;
 					}
 				}
@@ -468,14 +460,14 @@ jvmtiGetThreadInfo(jvmtiEnv* env,
 				/* Be sure to allocate at least one byte for the nul termination */
 
 				name = j9mem_allocate_memory(threadNameLen, J9MEM_CATEGORY_JVMTI_ALLOCATE);
-				if (name == NULL) {
+				if (NULL == name) {
 					/* failed to allocate memory, so release VMTthread and exit */
 					releaseOMRVMThreadName(targetThread->omrVMThread);
 					rc = JVMTI_ERROR_OUT_OF_MEMORY;
 					goto done;
 				}
 
-				if (threadName == NULL) {
+				if (NULL == threadName) {
 					name[0] = '\0';
 				} else {
 					memcpy(name, threadName, threadNameLen);
@@ -501,7 +493,7 @@ jvmtiGetThreadInfo(jvmtiEnv* env,
 		}
 done:
 		releaseVMThread(currentThread, targetThread);
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetThreadInfo);
@@ -560,7 +552,7 @@ jvmtiGetOwnedMonitorInfo(jvmtiEnv* env,
 		vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetOwnedMonitorInfo);
@@ -671,7 +663,7 @@ doneRelease:
 			releaseVMThread(currentThread, targetThread);
 		}
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetOwnedMonitorStackDepthInfo);
@@ -718,7 +710,7 @@ jvmtiGetCurrentContendedMonitor(jvmtiEnv* env,
 			releaseVMThread(currentThread, targetThread);
 		}
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetCurrentContendedMonitor);
@@ -779,7 +771,7 @@ jvmtiRunAgentThread(jvmtiEnv* env,
 			}
 		}
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiRunAgentThread);
@@ -812,7 +804,7 @@ jvmtiSetThreadLocalStorage(jvmtiEnv* env,
 		}
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiSetThreadLocalStorage);
@@ -846,52 +838,10 @@ jvmtiGetThreadLocalStorage(jvmtiEnv* env,
 			releaseVMThread(currentThread, targetThread);
 		}
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetThreadLocalStorage);
-}
-
-
-static jvmtiError
-suspendThread(J9VMThread * currentThread, jthread thread, UDATA allowNull, UDATA * currentThreadSuspended)
-{
-	J9VMThread * targetThread;
-	jvmtiError rc;
-
-#define J9JVMTI_SUSPEND_MASK (J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND | J9_PUBLIC_FLAGS_VM_ACCESS)
-
-	*currentThreadSuspended = FALSE;
-	rc = getVMThread(currentThread, thread, &targetThread, allowNull, TRUE);
-	if (rc == JVMTI_ERROR_NONE) {
-		if (targetThread->publicFlags & J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND) {
-			rc = JVMTI_ERROR_THREAD_SUSPENDED;
-		} else {
-			if (targetThread->publicFlags & J9_PUBLIC_FLAGS_STOPPED) {
-				/* Do not suspend dead threads. Mirrors SUN behaviour. */
-				rc = JVMTI_ERROR_THREAD_NOT_ALIVE;
-			} else {
-				if (currentThread == targetThread) {
-					*currentThreadSuspended = TRUE;
-				} else {
-					currentThread->javaVM->internalVMFunctions->internalReleaseVMAccess(currentThread);
-					omrthread_monitor_enter(targetThread->publicFlagsMutex);
-					setHaltFlag(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
-					while ((targetThread->publicFlags & J9JVMTI_SUSPEND_MASK) == J9JVMTI_SUSPEND_MASK) {
-						omrthread_monitor_wait(targetThread->publicFlagsMutex);
-					}
-					omrthread_monitor_exit(targetThread->publicFlagsMutex);
-					currentThread->javaVM->internalVMFunctions->internalEnterVMFromJNI(currentThread);
-				}
-				Trc_JVMTI_threadSuspended(targetThread);
-			}
-		}
-		releaseVMThread(currentThread, targetThread);
-	}
-
-#undef J9JVMTI_SUSPEND_MASK
-
-	return rc;
 }
 
 
@@ -1073,7 +1023,7 @@ jvmtiGetCurrentThread(jvmtiEnv* env,
 
 		*thread_ptr = (jthread) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, (j9object_t) currentThread->threadObject);
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetCurrentThread);

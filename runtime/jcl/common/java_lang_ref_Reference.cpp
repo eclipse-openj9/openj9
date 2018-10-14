@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,12 +36,8 @@ Java_java_lang_ref_Reference_reprocess(JNIEnv *env, jobject recv)
 	J9JavaVM* vm = currentThread->javaVM;
 	J9InternalVMFunctions* vmFuncs = vm->internalVMFunctions;
 	J9MemoryManagerFunctions* mmFuncs = vm->memoryManagerFunctions;
-	j9object_t receiverObject = (j9object_t)recv;
-	jboolean fastJNI = JNI_NATIVE_CALLED_FAST(env);
-	if (!fastJNI) {
-		vmFuncs->internalEnterVMFromJNI(currentThread);
-		receiverObject = J9_JNI_UNWRAP_REFERENCE(recv);
-	}
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	j9object_t receiverObject = J9_JNI_UNWRAP_REFERENCE(recv);
 	if (J9_GC_POLICY_METRONOME == vm->gcPolicy) {
 		/* Under metronome call getReferent, which will mark the referent if a GC is in progress. */
 		mmFuncs->j9gc_objaccess_referenceGet(currentThread, receiverObject);
@@ -49,9 +45,7 @@ Java_java_lang_ref_Reference_reprocess(JNIEnv *env, jobject recv)
 		/* Reprocess this object if a concurrent GC is in progress */
 		mmFuncs->J9WriteBarrierBatchStore(currentThread, receiverObject);
 	}
-	if (!fastJNI) {
-		vmFuncs->internalReleaseVMAccess(currentThread);
-	}
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 /* java.lang.ref.Reference: static private native boolean waitForReferenceProcessingImpl(); */

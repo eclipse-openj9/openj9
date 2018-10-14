@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -210,7 +210,7 @@ jvmtiGetTag(jvmtiEnv* env,
 		}
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetTag);
@@ -275,7 +275,7 @@ jvmtiSetTag(jvmtiEnv* env,
 			rc = JVMTI_ERROR_INVALID_OBJECT;
 		}
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiSetTag);
@@ -302,7 +302,7 @@ jvmtiForceGarbageCollection(jvmtiEnv* env)
 		vm->memoryManagerFunctions->j9gc_modron_global_collect(currentThread);
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiForceGarbageCollection);
@@ -405,7 +405,7 @@ jvmtiGetObjectsWithTags(jvmtiEnv* env,
 		omrthread_monitor_exit(((J9JVMTIEnv *)env)->mutex);
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetObjectsWithTags);
@@ -548,7 +548,7 @@ jvmtiFollowReferences(jvmtiEnv* env, jint heap_filter, jclass klass, jobject ini
 		vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiFollowReferences);
@@ -1134,10 +1134,23 @@ mapEventType(J9JVMTIHeapData * data, IDATA type, jint index, j9object_t referrer
 			break;
 				
 		case J9GC_REFERENCE_TYPE_CLASS:
-            event->type = J9JVMTI_HEAP_EVENT_OBJECT;
+			event->type = J9JVMTI_HEAP_EVENT_OBJECT;
 			event->refKind = JVMTI_HEAP_REFERENCE_CLASS;
 
-			if (referrer) {
+			if (NULL != referrer) {
+				clazz = J9OBJECT_CLAZZ(data->currentThread, referrer);
+				if (J9VMJAVALANGCLASS_OR_NULL(vm) == clazz) {
+					/*
+					 * Do not report class references from Class objects,
+					 * per JVMTI specification:
+					 * "* 	Classes report a reference to the superclass and
+					 * 		directly implemented/extended interfaces.
+					 *  * 	Classes report a reference to the class loader,
+					 * 		protection domain, signers, and resolved entries in the constant pool."
+					 */
+					event->type = J9JVMTI_HEAP_EVENT_NONE_NOFOLLOW;
+					break;
+				}
 				if (!J9VM_IS_INITIALIZED_HEAPCLASS(data->currentThread, referrer)) {
 					/* referrer is an instance object, report its class reference but do not follow it.
 					 * Its odd but follows the SUN behaviour. */
@@ -1331,7 +1344,7 @@ jvmtiError JNICALL jvmtiIterateThroughHeap(jvmtiEnv* env,
 		vmFuncs->releaseExclusiveVMAccess(currentThread);
 
 done:
-		vmFuncs->internalReleaseVMAccess(currentThread);
+		vmFuncs->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiIterateThroughHeap);
@@ -1761,15 +1774,14 @@ wrap_stringPrimitiveCallback(J9JavaVM * vm, J9JVMTIHeapData * iteratorData)
 	j9object_t bytes = J9VMJAVALANGSTRING_VALUE(iteratorData->currentThread, iteratorData->object);
 	UDATA offset = 0;
 
-	/* Get the Unicode string data */
-
-	stringLength = J9VMJAVALANGSTRING_LENGTH(iteratorData->currentThread, iteratorData->object);
-	
 	/* Ignore uninitialized string */
 	if (NULL == bytes) {
 		return JVMTI_ITERATION_CONTINUE;
 	}
 
+	/* Get the Unicode string data */
+
+	stringLength = J9VMJAVALANGSTRING_LENGTH(iteratorData->currentThread, iteratorData->object);
 	stringValue = j9mem_allocate_memory(stringLength * sizeof(jchar), J9MEM_CATEGORY_JVMTI);
 	if (NULL == stringValue) {
 		JVMTI_HEAP_ERROR(JVMTI_ERROR_OUT_OF_MEMORY);

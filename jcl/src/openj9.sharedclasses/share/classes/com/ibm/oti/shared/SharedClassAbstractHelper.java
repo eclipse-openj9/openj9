@@ -12,7 +12,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -94,16 +94,43 @@ public abstract class SharedClassAbstractHelper extends SharedAbstractHelper imp
 		if (jarName==null)
 			return null;
 
-		int lastIndexBang = jarName.lastIndexOf("!/"); //$NON-NLS-1$
 		boolean startsWithJar = jarName.startsWith("jar:"); //$NON-NLS-1$
+		boolean endsWithBang = jarName.endsWith("!/");//$NON-NLS-1$
 		int subStringStart = startsWithJar ? 4 : 0;
-		int subStringEnd = lastIndexBang>=0 ? lastIndexBang : jarName.length();
+		int len = jarName.length();
+		/*
+		 * The possible separator "!/" at the end of the URL path is useless for us. Throw it away. 
+		 * We only care about the actual path string before "!/" .
+		 * 
+		 * We do not trim "!/" in the middle of the URL path. We need the string after "!/" to distinguish 
+		 * between different entries from the same nested jar.
+		 * e.g. /path/A.jar!/lib/B.jar, /path/A.jar!/lib/C.jar, /path/A.jar are treated as different paths even though they are from the same jar.
+		 */
+		int subStringEnd = endsWithBang ? len -2 : len;
 
-		if (!startsWithJar && lastIndexBang==-1) {
+		if (!startsWithJar && !endsWithBang) {
 			return jarName;
 		} else {
 			return recursiveJarTrim(jarName.substring(subStringStart, subStringEnd));
 		}
+	}
+	
+	private static URL getURLToCheck(URL url) {
+		String pathString = url.toString();
+		int indexBang = pathString.indexOf("!/"); //$NON-NLS-1$
+
+		if (-1 != indexBang) {
+			/* For a nested jar (e.g. /path/A.jar!/lib/B.jar), validate the external jar file only (/path/A.jar), 
+			 * so trim the entry within the jar after "!/" 
+			 */
+			pathString = pathString.substring(0, indexBang);
+			try {
+				return new URL(pathString);
+			} catch (MalformedURLException e) {
+				return url;
+			}
+		}
+		return url;
 	}
 
 	boolean validateClassLoader(ClassLoader loader, Class<?> clazz) {
@@ -131,7 +158,7 @@ public abstract class SharedClassAbstractHelper extends SharedAbstractHelper imp
 			return false;
 		}
 		if (checkExists) {
-			final URL urlToCheck = url;
+			final URL urlToCheck = getURLToCheck(url);
 			Integer fExists = AccessController.doPrivileged(new PrivilegedAction<Integer>() {
 				@Override
 				public Integer run() {

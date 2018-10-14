@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corp. and others
+ * Copyright (c) 2007, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,7 @@
  *******************************************************************************/
 package com.ibm.dtfj.javacore.parser.j9.section.platform;
 
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.LinkedHashMap;
@@ -173,23 +174,29 @@ public class PlatformSectionParser extends SectionParser implements IPlatformTyp
 	 * @throws ParserException
 	 */
 	private void registerInfo() throws ParserException {
-		IAttributeValueMap results;
-		
 		// T_1XHREGISTERS line if present indicates registers
 		if (processTagLineOptional(T_1XHREGISTERS) != null) {
-			Map m = new LinkedHashMap();
-			while((results = processTagLineOptional(T_2XHREGISTER)) != null) {
+			Map<String, Number> m = new LinkedHashMap<>();
+			IAttributeValueMap results;
+			while ((results = processTagLineOptional(T_2XHREGISTER)) != null) {
 				String name = results.getTokenValue(PL_REGISTER_NAME);
-				String val = results.getTokenValue(PL_REGISTER_VALUE);
-				Number n;
-				if (val == null) {
-					n = null;
-				} else if (val.startsWith("0x") && val.length() <= 2+4) {
-					n = new Short((short)results.getIntValue(PL_REGISTER_VALUE));
-				} else if (val.startsWith("0x") && val.length() <= 2+8) {
-					n = new Integer((int)results.getLongValue(PL_REGISTER_VALUE));
-				} else {
-					n = new Long(results.getLongValue(PL_REGISTER_VALUE));
+				String value = results.getTokenValue(PL_REGISTER_VALUE);
+				Number n = null;
+				if (value != null) {
+					// normally there's no '0x' prefix, but remove it if present
+					String digits = value.regionMatches(true, 0, "0x", 0, 2) ? value.substring(2) : value;
+					// register values are always in hex
+					BigInteger bigN = new BigInteger(digits, 16);
+					int bits = bigN.bitLength();
+					if (bits <= 16) {
+						n = Short.valueOf((short) bigN.intValue());
+					} else if (bits <= 32) {
+						n = Integer.valueOf(bigN.intValue());
+					} else if (bits <= 64) {
+						n = Long.valueOf(bigN.longValue());
+					} else {
+						n = bigN;
+					}
 				}
 				m.put(name, n);
 			}

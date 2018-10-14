@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,18 +57,18 @@ public class Aix32Dump extends NewAixDump {
 	protected Map readRegisters(long threadOffset) throws IOException {
 		Map registers = new TreeMap();
 		coreSeek(threadOffset + CONTEXT_OFFSET_IN_THREAD + IAR_OFFSET_IN_CONTEXT);
-		registers.put("iar", new Integer(coreReadInt()));
-		registers.put("msr", new Integer(coreReadInt()));
-		registers.put("cr", new Integer(coreReadInt()));
-		registers.put("lr", new Integer(coreReadInt()));
-		registers.put("ctr", new Integer(coreReadInt()));
-		registers.put("xer", new Integer(coreReadInt()));
-		registers.put("mq", new Integer(coreReadInt()));
-		registers.put("tid", new Integer(coreReadInt()));
-		registers.put("fpscr", new Integer(coreReadInt()));
+		registers.put("iar", Integer.valueOf(coreReadInt()));
+		registers.put("msr", Integer.valueOf(coreReadInt()));
+		registers.put("cr", Integer.valueOf(coreReadInt()));
+		registers.put("lr", Integer.valueOf(coreReadInt()));
+		registers.put("ctr", Integer.valueOf(coreReadInt()));
+		registers.put("xer", Integer.valueOf(coreReadInt()));
+		registers.put("mq", Integer.valueOf(coreReadInt()));
+		registers.put("tid", Integer.valueOf(coreReadInt()));
+		registers.put("fpscr", Integer.valueOf(coreReadInt()));
 		coreSeek(threadOffset + CONTEXT_OFFSET_IN_THREAD + GPR_OFFSET_IN_CONTEXT);
 		for (int i = 0; i < GPR_COUNT; i++)
-			registers.put("gpr" + i, new Integer(coreReadInt()));
+			registers.put("gpr" + i, Integer.valueOf(coreReadInt()));
 		return registers;
 	}
 

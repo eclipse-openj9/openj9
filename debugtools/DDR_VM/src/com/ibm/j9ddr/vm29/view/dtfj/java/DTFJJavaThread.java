@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2015 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,7 +44,6 @@ import com.ibm.dtfj.java.JavaReference;
 import com.ibm.dtfj.java.JavaThread;
 import com.ibm.j9ddr.events.IEventListener;
 import com.ibm.j9ddr.view.dtfj.J9DDRDTFJUtils;
-import com.ibm.j9ddr.view.dtfj.image.J9DDRBaseImageThread;
 import com.ibm.j9ddr.view.dtfj.image.J9DDRCorruptData;
 import com.ibm.j9ddr.view.dtfj.image.J9DDRImageProcess;
 import com.ibm.j9ddr.view.dtfj.image.J9DDRImageSection;

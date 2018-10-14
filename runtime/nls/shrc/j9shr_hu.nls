@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -5993,7 +5993,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_REVALIDATE_AOT_METHODS.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS=A met\u00f3dusspecifik\u00e1ci\u00f3(k)nak megfelel\u0151 AOT met\u00f3dus(ok) ki\u00edr\u00e1sa.\n\
-\tA <met\u00f3dusspecifik\u00e1ci\u00f3> a k\u00f6vetkez\u0151k\u00e9nt ker\u00fcl meghat\u00e1roz\u00e1sra: [!]{*|[*]<csomagn\u00e9v/oszt\u00e1lyn\u00e9v>[*]}[.{*|[*]<met\u00f3dusn\u00e9v>[*]}][({*|[*]<param\u00e9terek>[*]})].
+\tA <met\u00f3dusspecifik\u00e1ci\u00f3> a k\u00f6vetkez\u0151k\u00e9nt ker\u00fcl meghat\u00e1roz\u00e1sra: [!]{*|[*]<csomagn\u00e9v/oszt\u00e1lyn\u00e9v>[*]}[.{*|[*]<met\u00f3dusn\u00e9v>[*]}[({*|[*]<param\u00e9terek>[*]})]].
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.system_action=
@@ -6015,7 +6015,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=A <met\u00f3dusspecifik\u00e1ci\u00f3> form\u00e1tuma: [!]{*|[*]<csomagn\u00e9v/oszt\u00e1lyn\u00e9v>[*]}.{*|[*]<met\u00f3dusn\u00e9v>[*]}[({*|[*]<param\u00e9terek>[*]})], pl.:\n\
+J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=A <met\u00f3dusspecifik\u00e1ci\u00f3> form\u00e1tuma: [!]{*|[*]<csomagn\u00e9v/oszt\u00e1lyn\u00e9v>[*]}[.{*|[*]<met\u00f3dusn\u00e9v>[*]}[({*|[*]<param\u00e9terek>[*]})]], p\u00e9ld\u00e1ul:\n\
 \n\
 \t-Xshareclasses:name=Cache1,%sjava/util/HashMap.hash(Ljava/lang/Object;)\n
 # START NON-TRANSLATABLE
@@ -6145,6 +6145,7 @@ J9NLS_SHRC_OSCACHE_MMAP_SET_GROUPACCESS_FAILED.user_response=Check the umask set
 
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED=Nem siker\u00fclt be\u00e1ll\u00edtani a csoport-hozz\u00e1f\u00e9r\u00e9si enged\u00e9lyt a 'groupAccess' alparam\u00e9terben k\u00e9rt m\u00f3don a megosztott gyors\u00edt\u00f3t\u00e1rhoz tartoz\u00f3, semid=%d \u00e9rt\u00e9kkel be\u00e1ll\u00edtott szemafork\u00e9szleten.
 # START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.explanation=Cannot set group access permission when creating the new semaphore with sub-option "groupAccess".
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.user_response=Ensure the user has sufficient permission for creating the new semaphore with group access.
@@ -6152,6 +6153,7 @@ J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.user_response=Ensure the use
 
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED=Nem siker\u00fclt be\u00e1ll\u00edtani a csoport-hozz\u00e1f\u00e9r\u00e9si enged\u00e9lyt a 'groupAccess' alparam\u00e9terben k\u00e9rt m\u00f3don a megosztott gyors\u00edt\u00f3t\u00e1rhoz tartoz\u00f3, shmid=%d \u00e9rt\u00e9kkel be\u00e1ll\u00edtott megosztott mem\u00f3ri\u00e1n.
 # START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.explanation=Cannot set group access permission when creating the new shared memory with sub-option "groupAccess".
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.user_response=Ensure the user has sufficient permission for creating the new shared memory with group access.
@@ -6611,7 +6613,7 @@ J9NLS_SHRC_SHRINIT_MIN_SPACE_SIZE_VALUE_TOO_BIG.system_action=The JVM continues
 J9NLS_SHRC_SHRINIT_MIN_SPACE_SIZE_VALUE_TOO_BIG.user_response=The value has been changed automatically
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_MAX_SPACE_SIZE_VALUE_TOO_BIG=A(z) %s \u00e9rt\u00e9k nagyobb, mint a megosztott gyors\u00edt\u00f3t\u00e1r m\u00e9rete, ez\u00e9rt a korl\u00e1tlanra lett be\u00e1ll\u00edtva
+J9NLS_SHRC_SHRINIT_MAX_SPACE_SIZE_VALUE_TOO_BIG=A(z) %s \u00e9rt\u00e9k nagyobb, mint a megosztott gyors\u00edt\u00f3t\u00e1r m\u00e9rete, ez\u00e9rt korl\u00e1tlanra lett be\u00e1ll\u00edtva
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_MAX_SPACE_SIZE_VALUE_TOO_BIG.sample_input_1=-Xscmaxaot
 J9NLS_SHRC_SHRINIT_MAX_SPACE_SIZE_VALUE_TOO_BIG.explanation=It makes no sense for -Xscmaxaot/-Xscmaxjitdata to be greater than the shared cache size.
@@ -6634,4 +6636,11 @@ J9NLS_SHRC_CC_INCORRECT_BUILDID=Nem siker\u00fclt elind\u00edtani a megosztott g
 J9NLS_SHRC_CC_INCORRECT_BUILDID.explanation=An error has occurred when starting up the cache. The build ID of the existing cache with the same name is different from that of the current JVM.
 J9NLS_SHRC_CC_INCORRECT_BUILDID.system_action=The JVM fails to complete the requested operation.
 J9NLS_SHRC_CC_INCORRECT_BUILDID.user_response=Use a JVM which matches the build ID of the existing cache.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1=A bootstrap oszt\u00e1lybet\u00f6lt\u0151 \u00e1ltal bet\u00f6lt\u00f6tt oszt\u00e1lyok gyos\u00edt\u00f3t\u00e1raz\u00e1s\u00e1nak letilt\u00e1sa.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.user_response=
 # END NON-TRANSLATABLE

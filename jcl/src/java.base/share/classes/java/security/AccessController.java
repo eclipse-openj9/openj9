@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar16]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -240,10 +240,16 @@ private static boolean checkPermissionHelper(Permission perm, AccessControlConte
 			checked = new AccessCache(); /* checked was null initially when Pre-JEP140 format */
 			return AccessControlContext.checkPermissionWithCache(perm, pDomains, debug, acc, false, null, null, checked);
 		} else {
-			for (int i = 0; i < length ; ++i) {
-				// invoke PD within acc.context first
-				if (null != pDomains && !pDomains[length - i - 1].implies(perm)) {
-					throwACE((debug & AccessControlContext.DEBUG_ACCESS_DENIED) != 0, perm, pDomains[length - i - 1], false);
+			if (pDomains != null) {
+				for (int i = 0; i < length ; ++i) {
+					// invoke PD within acc.context first
+					/*[IF Sidecar19-SE-OpenJ9]*/
+					if ((pDomains[length - i - 1] != null) && !pDomains[length - i - 1].impliesWithAltFilePerm(perm)) {
+					/*[ELSE]*/
+					if ((pDomains[length - i - 1] != null) && !pDomains[length - i - 1].implies(perm)) {
+					/*[ENDIF] Sidecar19-SE-OpenJ9*/
+						throwACE((debug & AccessControlContext.DEBUG_ACCESS_DENIED) != 0, perm, pDomains[length - i - 1], false);
+					}
 				}
 			}
 		}
@@ -467,6 +473,7 @@ private static AccessControlContext getContextHelper(boolean forDoPrivilegedWith
 	int frameNbr = domains.length / OBJS_ARRAY_SIZE;
 	AccessControlContext accContext = null;
 	AccessControlContext accLower = null;
+	DomainCombiner dc = null; // store a non-null domainCombiner from a closest frame or null
 	for (int j = 0; j < frameNbr; ++j) {
 		AccessControlContext acc = (AccessControlContext) domains[j * OBJS_ARRAY_SIZE];
 		/*[PR JAZZ 66930] j.s.AccessControlContext.checkPermission() invoke untrusted ProtectionDomain.implies */
@@ -484,6 +491,10 @@ private static AccessControlContext getContextHelper(boolean forDoPrivilegedWith
 		}
 		if (null != acc && null != acc.domainCombiner) {
 			accTmp.domainCombiner = acc.domainCombiner;
+			if (dc == null) {
+				// this dc will be set to accContext.domainCombiner
+				dc = acc.domainCombiner;
+			}
 		}
 		if (null != domains[j * OBJS_ARRAY_SIZE + OBJS_INDEX_PERMS_OR_CACHECHECKED]) {
 			// this is frame with limited permissions
@@ -498,7 +509,9 @@ private static AccessControlContext getContextHelper(boolean forDoPrivilegedWith
 		}
 		accLower = accTmp;
 	}
-
+	if ((accContext != null) && (accContext.domainCombiner == null) && (dc != null)) {
+		accContext.domainCombiner = dc;
+	}
 	return accContext;
 }
 
@@ -880,7 +893,8 @@ public static <T> T doPrivilegedWithCombiner(PrivilegedAction<T> action,
 {
 	checkPermsNPE(perms);
 	ProtectionDomain domain = getCallerPD(1);
-	return doPrivileged(action, new AccessControlContext(context, new ProtectionDomain[] { domain }, getNewAuthorizedState(context, domain)), perms);
+	ProtectionDomain[] pdArray = (domain == null) ? null : new ProtectionDomain[] { domain };
+	return doPrivileged(action, new AccessControlContext(context, pdArray, getNewAuthorizedState(context, domain)), perms);
 }
 
 /**
@@ -956,7 +970,8 @@ public static <T> T doPrivilegedWithCombiner(PrivilegedExceptionAction<T> action
 {
 	checkPermsNPE(perms);
 	ProtectionDomain domain = getCallerPD(1);
-	return doPrivileged(action, new AccessControlContext(context, new ProtectionDomain[] {domain}, getNewAuthorizedState(context, domain)), perms);
+	ProtectionDomain[] pdArray = (domain == null) ? null : new ProtectionDomain[] { domain };
+	return doPrivileged(action, new AccessControlContext(context, pdArray, getNewAuthorizedState(context, domain)), perms);
 }
 
 }

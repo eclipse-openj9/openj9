@@ -1,4 +1,4 @@
-@ Copyright (c) 1991, 2017 IBM Corp. and others
+@ Copyright (c) 1991, 2018 IBM Corp. and others
 @
 @ This program and the accompanying materials are made available under
 @ the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,8 @@
 	.global	unsafePut64
 	.type	unsafePut64, %function
 unsafePut64:
-	strd	r2, [r0]
+	str	r2, [r0]
+	str	r3, [r0, #4]
 	bx	lr
 	.size	unsafePut64, .-unsafePut64
 @ Prototype: void unsafePut32(I_32 *address, I_32 value);

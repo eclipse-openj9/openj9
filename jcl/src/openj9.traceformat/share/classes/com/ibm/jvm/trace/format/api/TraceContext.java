@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -81,7 +81,7 @@ public class TraceContext {
 	protected MessageFile messageFile;
 	protected Vector auxiliaryMessageFiles;
 
-	/* The trace headers used to initialise this context */
+	/* The trace headers used to initialize this context */
 	TraceFileHeader metadata;
 
 	PrintStream errorStream = System.out;
@@ -320,6 +320,7 @@ public class TraceContext {
 	 * 
 	 * @deprecated this method is deprecated as it's use implies a problem elsewhere
 	 */
+	@Deprecated
 	public void setTraceType(int type) {
 		boolean validType = true;
 		if (debugStream != null) {

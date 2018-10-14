@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2017 IBM Corp. and others
+ * Copyright (c) 2015, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -411,14 +411,15 @@ exit:
 U_8*
 decodeStackmapFrameData(StackMapFrame* stackMapFrame, U_8* nextStackmapFrame, I_32 stackmapFrameIndex, MethodContextInfo* methodInfo, J9BytecodeVerificationData* verifyData)
 {
-	/* Decode the specified 'Stackmap Frame' data from compressed the stackmap table in the class file */
-	if (NULL != methodInfo->stackMapData) {
-		nextStackmapFrame = decodeStackFrameDataFromStackMapTable(stackMapFrame, nextStackmapFrame, methodInfo);
-	} else {
+	if (verifyData->createdStackMap) {
 		/* Decode the specified 'Stackmap frame' data from verifyData->stackMaps (the decompessed stackmap table)
-		 * as the stackmap table doesn't exist in the class file.
+		 * as the stackmap table doesn't exist in the class file or currently in fallback verification
+		 * so the frame is pointing to internal created stackMap
 		 */
 		nextStackmapFrame = decodeConstuctedStackMapFrameData(stackMapFrame, nextStackmapFrame, stackmapFrameIndex, methodInfo, verifyData);
+	} else {
+		/* Decode the specified 'Stackmap Frame' data from the compressed stackmap table in the class file */
+		nextStackmapFrame = decodeStackFrameDataFromStackMapTable(stackMapFrame, nextStackmapFrame, methodInfo);
 	}
 
 	return nextStackmapFrame;
@@ -665,9 +666,8 @@ bcvToBaseTypeNameIndex(UDATA bcvType)
 	case BCV_BASE_TYPE_CHAR_BIT:
 		index = isArray ? CFR_STACKMAP_TYPE_CHAR_ARRAY : CFR_STACKMAP_TYPE_INT;
 		break;
-	case (BCV_BASE_TYPE_BOOL_BIT | BCV_BASE_TYPE_BYTE_BIT):   /* Jazz 82615: baseTypeCharConversion returns BCV_BASE_TYPE_BYTE_BIT for type 'Z' */
-	case (BCV_BASE_TYPE_BOOL_BIT | BCV_BASE_TYPE_INT_BIT):    /*             argTypeCharConversion returns BCV_BASE_TYPE_INT for type 'Z' */
-		index = isArray ? STACKMAP_TYPE_BOOL_ARRAY : CFR_STACKMAP_TYPE_INT;
+	case BCV_BASE_TYPE_BOOL_BIT:
+		index = isArray ? CFR_STACKMAP_TYPE_BOOL_ARRAY : CFR_STACKMAP_TYPE_INT;
 		break;
 	default:
 		index = isArray ? CFR_STACKMAP_TYPE_NULL : CFR_STACKMAP_TYPE_TOP;
@@ -828,7 +828,7 @@ mapDataTypeToUTF8String(J9UTF8Ref* dataType, StackMapFrame* stackMapFrame, Metho
 	case CFR_STACKMAP_TYPE_SHORT_ARRAY:		/* FALLTHROUGH */
 	case CFR_STACKMAP_TYPE_BYTE_ARRAY:		/* FALLTHROUGH */
 	case CFR_STACKMAP_TYPE_CHAR_ARRAY:		/* FALLTHROUGH */
-	case STACKMAP_TYPE_BOOL_ARRAY:
+	case CFR_STACKMAP_TYPE_BOOL_ARRAY:
 		/* Set the name string for array type (only used for runtime verification) */
 		dataType->bytes = (U_8*)dataTypeNames[tag];
 		dataType->length = dataTypeLength[tag];
@@ -954,7 +954,7 @@ printTypeInfoToBuffer(MessageBuffer* buf, U_8 tag, J9UTF8Ref* dataType, BOOLEAN 
 	case CFR_STACKMAP_TYPE_SHORT_ARRAY:		/* FALLTHROUGH */
 	case CFR_STACKMAP_TYPE_BYTE_ARRAY:		/* FALLTHROUGH */
 	case CFR_STACKMAP_TYPE_CHAR_ARRAY:		/* FALLTHROUGH */
-	case STACKMAP_TYPE_BOOL_ARRAY:
+	case CFR_STACKMAP_TYPE_BOOL_ARRAY:
 		/* Base type array.
 		 * Note: arity 1 is implicitly set to 0 for base type array during verification, which means
 		 * 0 is used for arity 1, 1 for arity 2, 2 for arity 3 and so forth.

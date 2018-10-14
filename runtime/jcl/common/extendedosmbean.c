@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2016 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -129,7 +129,7 @@ handle_error(JNIEnv *env, IDATA error, jint type)
 
 	/* If out of memory setup a pending OutOfMemoryError */
 	if (J9PORT_ERROR_SYSINFO_MEMORY_ALLOC_FAILED == error) {
-		throwNativeOOMError(env, J9NLS_PORT_SYSINFO_OUT_OF_MEMORY_ERROR_MSG);
+		((J9VMThread *)env)->javaVM->internalVMFunctions->throwNativeOOMError(env, J9NLS_PORT_SYSINFO_OUT_OF_MEMORY_ERROR_MSG);
 		return 0;
 	}
 

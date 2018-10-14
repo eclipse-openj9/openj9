@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2016 IBM Corp. and others
+ * Copyright (c) 2007, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -281,6 +281,23 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	@Override
 	public ThreadInfo[] getThreadInfo(long[] ids, boolean lockedMonitors,
 			boolean lockedSynchronizers) {
+		return getThreadInfoCommon(ids, lockedMonitors, lockedSynchronizers, Integer.MAX_VALUE);
+	}
+
+	/*[IF Java10]*/
+	@Override
+	public ThreadInfo[] getThreadInfo(long[] ids, boolean lockedMonitors,
+			boolean lockedSynchronizers, int maxDepth) {
+		/*[MSG "K0662", "maxDepth must not be negative."]*/
+		if (maxDepth < 0) {
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0662")); //$NON-NLS-1$
+		}
+		return getThreadInfoCommon(ids, lockedMonitors, lockedSynchronizers, maxDepth);
+	}
+	/*[ENDIF]*/ // Java10
+
+	private ThreadInfo[] getThreadInfoCommon(long[] ids, boolean lockedMonitors,
+			boolean lockedSynchronizers, int maxDepth) {
 		// Verify inputs
 		if (lockedMonitors && !isObjectMonitorUsageSupported()) {
 			/*[MSG "K05FC", "Monitoring of object monitors is not supported on this virtual machine"]*/
@@ -305,7 +322,7 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 		}
 
 		// Create an array and populate with individual ThreadInfos
-		return this.getMultiThreadInfoImpl(ids, Integer.MAX_VALUE,
+		return this.getMultiThreadInfoImpl(ids, maxDepth,
 				lockedMonitors, lockedSynchronizers);
 	}
 
@@ -619,6 +636,11 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	 */
 	@Override
 	public ThreadInfo[] dumpAllThreads(boolean lockedMonitors, boolean lockedSynchronizers) {
+		return dumpAllThreadsCommon(lockedMonitors, lockedSynchronizers, Integer.MAX_VALUE);
+	}
+
+	private ThreadInfo[] dumpAllThreadsCommon(boolean lockedMonitors,
+			boolean lockedSynchronizers, int maxDepth) {
 		if (lockedMonitors && !isObjectMonitorUsageSupported()) {
 			/*[MSG "K05FC", "Monitoring of object monitors is not supported on this virtual machine"]*/
 			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K05FC")); //$NON-NLS-1$
@@ -631,9 +653,24 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPMONITOR);
 		}
-		return dumpAllThreadsImpl(lockedMonitors, lockedSynchronizers);
+		return dumpAllThreadsImpl(lockedMonitors, lockedSynchronizers, maxDepth);
 	}
 
+	/*[IF Java10]*/
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public ThreadInfo[] dumpAllThreads(boolean lockedMonitors,
+			boolean lockedSynchronizers, int maxDepth) {
+		/*[MSG "K0662", "maxDepth must not be negative."]*/
+		if (maxDepth < 0) {
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0662")); //$NON-NLS-1$
+		}
+		return dumpAllThreadsCommon(lockedMonitors, lockedSynchronizers, maxDepth);
+	}
+	/*[ENDIF]*/ // Java10
+	
 	/**
 	 * @param lockedMonitors
 	 *            if <code>true</code> then include details of locked object
@@ -641,11 +678,14 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	 * @param lockedSynchronizers
 	 *            if <code>true</code> then include details of locked ownable
 	 *            synchronizers in returned array
+	 * @param maxDepth
+	 *            Limit the number of frames returned.  Negative values indicate no limit.
 	 * @return an array of <code>ThreadInfo</code> objects&nbsp;-&nbsp;one for
 	 *         each thread running in the virtual machine
+	 * @since 10
 	 */
 	private native ThreadInfo[] dumpAllThreadsImpl(boolean lockedMonitors,
-			boolean lockedSynchronizers);
+			boolean lockedSynchronizers, int maxDepth);
 
 	/**
 	 * Answers an array of instances of the ThreadInfo class according to ids

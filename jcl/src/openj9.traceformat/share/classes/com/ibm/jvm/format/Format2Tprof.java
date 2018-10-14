@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,10 +23,8 @@
 package com.ibm.jvm.format;
 
 /**
- * Trace Tool routine for generating profile format output 
- * 
+ * Trace Tool routine for generating profile format output.
  */
-
 import java.io.*;
 import java.util.*;
 
@@ -113,7 +111,7 @@ public class Format2Tprof {
        {
           MethodEntry e = (MethodEntry) iter.next();
           float percent = (float) (e.count * 100) / totalCount;
-          String percentStr = (new Float(percent)).toString().substring(0,4) + "%";
+          String percentStr = Float.toString(percent).substring(0, 4) + "%";
           out.println(percentStr + " " + e.count + " " + e.name);
        }
     }
@@ -162,6 +160,3 @@ public class Format2Tprof {
       return rc;
    }
 }
-
-
-

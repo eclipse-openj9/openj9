@@ -75,7 +75,7 @@ J9NLS_VERB_MAX_STACK_USAGE.system_action=None
 J9NLS_VERB_MAX_STACK_USAGE.user_response=None
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_XVERBOSEGCLOG_NUM_FILES=Errore: -Xverbosegclog il numero di files deve essere maggiore di 0
+J9NLS_VERB_XVERBOSEGCLOG_NUM_FILES=Errore: -Xverbosegclog il numero di file deve essere maggiore di 0
 # START NON-TRANSLATABLE
 J9NLS_VERB_XVERBOSEGCLOG_NUM_FILES.explanation=The -Xverbosegclog option was specified with 0 files or the option could not be parsed
 J9NLS_VERB_XVERBOSEGCLOG_NUM_FILES.system_action=The JVM will terminate
@@ -191,7 +191,7 @@ J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_OPEN_ERROR.system_action=The JVM will warn
 J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_OPEN_ERROR.user_response=Check if the specified ZIP file exists and has appropriate permissions
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_READ_ERROR=Vice classpath non valida: %s (lettura file non riuscita)
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_READ_ERROR=Voce classpath non valida: %s (lettura file non riuscita)
 # START NON-TRANSLATABLE
 J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_READ_ERROR.sample_input_1=/path/java/user.jar
 J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_READ_ERROR.explanation=Part of the specified ZIP file could not be read. The file may be corrupt or truncated.
@@ -257,7 +257,7 @@ J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_OE_NOT_SUPPORTED.user_response=Replace the JXE 
 
 # Note: %.*s is the thread name
 # Note: %zd/%zd is two numbers, indicating how much stack was used on each stack
-J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS=Stack esteso: il thread in esecuzione \"%2$.*1$s\" utilizza %3$zd/%4$zd byte in stack Java/C
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS=Stack dettagliato: il thread in esecuzione \"%2$.*1$s\" utilizza %3$zd/%4$zd byte in stack Java/C
 # START NON-TRANSLATABLE
 J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.explanation=Indicates how much stack was used on each stack for a thread when -verbose:stack is specified
 J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.system_action=None
@@ -268,7 +268,7 @@ J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.sample_input_3=232
 J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.sample_input_4=2308
 # END NON-TRANSLATABLE
 
-J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS_FAILURE_1=Stack esteso: impossibile stampare informazioni sullo stack per i thread in esecuzione
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS_FAILURE_1=Stack dettagliato: impossibile stampare informazioni sullo stack per i thread in esecuzione
 # START NON-TRANSLATABLE
 J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS_FAILURE_1.explanation=Indicates that the JVM was unable to obtain a lock to iterate over the currently running threads
 J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS_FAILURE_1.system_action=None

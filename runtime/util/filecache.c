@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -296,13 +296,13 @@ j9cached_file_open(struct J9PortLibrary *portLibrary, const char *path, I_32 fla
 		I_8 index;
 		handle = (J9CachedFileHandle *) j9mem_allocate_memory(sizeof(J9CachedFileHandle), OMRMEM_CATEGORY_VM);
 		if(handle) {
-			/* got the handle, now initialise the cache(s) */
+			/* got the handle, now initialize the cache(s) */
 			memset(handle, 0x00, sizeof(J9CachedFileHandle));
 			handle->portLibrary = portLibrary;
 			handle->fd = rawResult;
 			LATEST_LRU() = -1;
 			for (index = 0; index < CACHE_BUFFER_NUM; index++) {
-				/* initialise the individual cache(s) */
+				/* initialize the individual cache(s) */
 				handle->cacheTable[index].cache = (char *) j9mem_allocate_memory(CACHE_BUFFER_SIZE, OMRMEM_CATEGORY_VM);
 				if (handle->cacheTable[index].cache != NULL) {
 					/* created one of the cache(s) */

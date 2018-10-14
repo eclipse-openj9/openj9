@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!--
+  Copyright (c) 2018, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<!-- #### RUN SharedClassesModularityTests SUITE #### -->
+<suite id="Shared Classes CommandLineOptionTests Suite">
+
+	<!-- Our test modes for this suite -->
+	<variable name="mode204" value="-Xshareclasses:name=ShareClassesCMLTests"/>
+
+	<!-- Set variables up -->
+	<variable name="currentMode" value="$mode204$"/>
+	<variable name="JAVALIB_DIR" value="$JAVA_HOME$$PATHSEP$lib"/>
+	<variable name="PROGRAM_HANOI" value="org.openj9.test.ivj.Hanoi 2" />
+	<variable name="HANOI_DIR" value="org$PATHSEP$openj9$PATHSEP$test$PATHSEP$ivj" />
+	<variable name="DISK_CLASS" value="$HANOI_DIR$$PATHSEP$Disk.class"/>
+
+	<echo value=" "/>
+	<echo value="#######################################################"/>
+	<echo value="Running tests in mode $SCMODE$ with command line options: $currentMode$"/>
+	<echo value="#######################################################"/>
+	<echo value=" "/>
+
+	<!--
+	Note:
+	Most tests check for strings 'corrupt', 'JVM requested Java dump', and 'JVM requested Snap dump' in the output.
+	These checks are present because a cache may be found to be corrupt, and the test could otherwise pass.
+	
+	The string 'corrupt' is checked because it can appear several messages like below.
+		JVMSHRC443E Cache CRC is incorrect indicating a corrupt cache. Incorrect cache CRC: 0x0.
+		JVMDUMP013I Processed dump event "corruptcache", detail "".
+		JVMSHRC442E Shared cache "jim" is corrupt. Corruption code is -1. Corrupt value is 0x0. No new JVMs will be allowed to connect to the cache.
+	-->
+
+	<test id="Start : Cleanup: persistent" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 1 set-up : remove one class from patch path" timeout="600" runPath=".">
+		<exec command="rm -f $DISK_CLASS$" />
+		<command>ls $HANOI_DIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">Post.class</output>
+		<output type="failure" caseSensitive="no" regex="no">Disk.class</output>
+	</test>
+
+	<test id="Test 1: Test --patch-module for Bootstrap ClassLoader and Builtin ClassLoader. Patched classes should not be stored to the cache. Other classes from the patched module should still be stored" timeout="600" runPath=".">
+			<!-- module java.base and module utils are patched -->
+		<command>$JAVA_EXE$ $currentMode$,verboseIO -verbose --patch-module java.base=$JAVALIB_DIR$$PATHSEP$jrt-fs.jar --patch-module utils=. --module-path $UTILSJAR$ -m utils/$PROGRAM_HANOI$</command>
+		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
+			<!-- Bootstrap ClassLoader: classes in java.base that are not patched (loaded from Jimage) should be stored to the cache -->
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Stored class java/.* in shared cache for class-loader id 0 with URL .*[\\/]lib[\\/]modules</output>
+			<!-- Builtin ClassLoader: classes in utils that are not patched (loaded from module path) should be stored to the cache (in this case class Disk) -->
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Stored class org/openj9/test/ivj/Disk in shared cache for class-loader id [2-9] with URL .*[\\/]utils.jar</output>
+			<!-- Make sure patched classes in module java.base are loaded by bootstrap ClassLoader -->
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">class load: jdk/internal/jimage.* from: .*[\\/]jrt-fs.jar</output>
+			<!-- make sure patched class (class Post) in module utils is loaded by Builtin ClassLoader -->
+		<output type="required" caseSensitive="yes" regex="no">class load: org.openj9.test.ivj.Post from:</output>
+
+			<!-- Bootstrap ClassLoader: patch classes in java.base should not be stored to the cache -->
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">Stored class jdk/internal/jimage.* in shared cache</output>
+			<!-- Builtin ClassLoader: patched classes in module utils should not be stored to the cache -->
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">Stored class .*/ivj/Post in shared cache</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 2: Test --patch-module for bootstrap ClassLoader and Builtin ClassLoader. Nothing from patched module should be found from the cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,verboseIO -Xtrace:print=j9shr.2261 --patch-module java.base=$JAVALIB_DIR$$PATHSEP$jrt-fs.jar --patch-module utils=. --module-path $UTILSJAR$ -m utils/$PROGRAM_HANOI$</command>
+		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">INIT isClassFromPatchedModule: Class .* is from a patched module .*java.base</output>
+		
+		<!-- Bootstrap ClassLoader: module java.base is patched, all the java/* classes from java.base should not be found from the shared cache -->
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">Found class java/.*</output>
+		<!-- Builtin ClassLoader: module utils is patched, all the classes from utils should not be found from the shared cache -->
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">Found class .*/ivj/.*</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 3: Jimage and module path should be stored into the cache. Patch paths should not be stored" timeout="600" runPath=".">
+		<exec command="pwd" capture="PATCH_PATH" quiet="false"/>
+		<command>$JAVA_EXE$ $currentMode$,printStats=classpath+url</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">0x[\w]*\sCLASSPATH[\n\r].*[\\/]lib[\\/]modules</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">0x[\w]*\sURL[\n\r].*[\\/]utils.jar</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Classpaths[\s]*= [1-9]</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">URLs[\s]*= [1-9]</output>
+
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">[\\/]jrt-fs.jar</output>
+		<output type="failure" caseSensitive="no" regex="no">$PATCH_PATH$</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">Classpaths[\s]*= 0</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">URLs[\s]*= 0</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 3 cleanup" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Java dump</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
+	</test>
+
+	<test id="Test 4 set-up: create a shared cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 4: Class from unresolved module should not be found" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ -Xtrace:print={j9shr.2262} -verbose --module-path $UTILSJAR$ -m utils/$PROGRAM_HANOI$</command>
+		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">INIT hookFindSharedClass: Class .* is from an unresolved module. Returning NULL.</output>
+
+		<!-- OpenJ9 issue 1081: assertion failure at j9vmutil(j9vrb).15 if class from unresolved module is found -->
+		<output type="failure" caseSensitive="no" regex="no">ASSERTION FAILED</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 4: Test classes are being found in the shared cache when running an application module" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,verboseIO --module-path $UTILSJAR$ -m utils/$PROGRAM_HANOI$</command>
+		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Found class java/.* in shared cache for class-loader id 0</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Found class org/openj9/test/ivj/.* in shared cache for class-loader id [2-9] with URL .*[\\/]utils.jar</output>
+
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="At end destroy cache for cleanup" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Java dump</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
+	</test>
+
+	<!--
+	***** IMPORTANT NOTE *****
+	The last test in this file is normally a call to -Xshareclasses:destroy. When the test passes no files should ever be left behind. 
+	-->
+</suite>

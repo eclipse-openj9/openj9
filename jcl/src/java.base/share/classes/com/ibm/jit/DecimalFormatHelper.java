@@ -11,7 +11,7 @@ import java.lang.StringBuilder;
 import java.lang.String;
 import java.lang.RuntimeException;
 /*******************************************************************************
- * Copyright (c) 2011, 2011 IBM Corp. and others
+ * Copyright (c) 2011, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -454,7 +454,7 @@ public class DecimalFormatHelper {
 						// Determine whether or not there are any printable fractional
 						// digits.  If we've used up the digits we know there aren't.
 						boolean fractionPresent = (minFraDigits > 0) ||
-								(!isInteger && digitIndex < digitList.count);
+								(!isInteger && digitIndex < digitList.count && !digitList.isZero());
 
 						// If there is no fraction present, and we haven't printed any
 						// integer digits, then print a zero.  Otherwise we won't print
@@ -916,7 +916,7 @@ public class DecimalFormatHelper {
 						// Determine whether or not there are any printable fractional
 						// digits.  If we've used up the digits we know there aren't.
 						boolean fractionPresent = (minFraDigits > 0) ||
-								(!isInteger && digitIndex < digitList.count);
+								(!isInteger && digitIndex < digitList.count && !digitList.isZero());
 
 						// If there is no fraction present, and we haven't printed any
 						// integer digits, then print a zero.  Otherwise we won't print

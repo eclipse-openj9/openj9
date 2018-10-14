@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2014 IBM Corp. and others
+ * Copyright (c) 2010, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,49 +29,46 @@ import java.util.NoSuchElementException;
 
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.util.IteratorHelpers;
-import com.ibm.j9ddr.vm29.pointer.VoidPointer;
-import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.events.EventManager;
+import com.ibm.j9ddr.vm29.pointer.VoidPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
+import com.ibm.j9ddr.vm29.pointer.generated.J9PortControlDataPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9PortLibraryPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.OMRMemCategoryPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.OMRMemCategorySetPointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9PortLibraryPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.OMRPortLibraryGlobalDataPointer;
+import com.ibm.j9ddr.vm29.pointer.helper.OMRMemCategoryHelper;
+import com.ibm.j9ddr.vm29.types.UDATA;
 
 /**
  * Walker for J9MemCategories
  */
-public abstract class MemoryCategoryIterator implements Iterator<OMRMemCategoryPointer>
-{
-	
+public abstract class MemoryCategoryIterator implements Iterator<OMRMemCategoryPointer> {
+
 	/**
 	 * Implementation that walks the memory category set registered with the port library, then over
 	 * the categories stored in the port library.
-	 *
 	 */
-	private static class MemoryCategorySetIterator extends MemoryCategoryIterator
-	{
+	private static class MemoryCategorySetIterator extends MemoryCategoryIterator {
 		private int index = 0;
 		private final OMRMemCategorySetPointer categorySet;
 		private OMRMemCategoryPointer next;
-		
-		MemoryCategorySetIterator(OMRMemCategorySetPointer categorySet) throws CorruptDataException
-		{
+
+		MemoryCategorySetIterator(OMRMemCategorySetPointer categorySet) throws CorruptDataException {
 			this.categorySet = categorySet;
 		}
-		
-		public boolean hasNext()
-		{
+
+		public boolean hasNext() {
 			if (next != null) {
 				return true;
 			}
-			
+
 			next = internalNext();
-			
+
 			return next != null;
 		}
 
-		private OMRMemCategoryPointer internalNext()
-		{
+		private OMRMemCategoryPointer internalNext() {
 			try {
 				if (index >= categorySet.numberOfCategories().intValue()) {
 					return null;
@@ -79,10 +76,10 @@ public abstract class MemoryCategoryIterator implements Iterator<OMRMemCategoryP
 			} catch (CorruptDataException e1) {
 				return null;
 			}
-			
+
 			try {
 				VoidPointer nextAtIndex = categorySet.categories().at(index++);
-				while( nextAtIndex.isNull() && index < categorySet.numberOfCategories().intValue() ) {
+				while (nextAtIndex.isNull() && index < categorySet.numberOfCategories().intValue()) {
 					nextAtIndex = categorySet.categories().at(index++);
 				}
 				return OMRMemCategoryPointer.cast(nextAtIndex);
@@ -92,8 +89,7 @@ public abstract class MemoryCategoryIterator implements Iterator<OMRMemCategoryP
 			}
 		}
 
-		public OMRMemCategoryPointer next()
-		{
+		public OMRMemCategoryPointer next() {
 			if (hasNext()) {
 				OMRMemCategoryPointer toReturn = next;
 				next = null;
@@ -102,69 +98,68 @@ public abstract class MemoryCategoryIterator implements Iterator<OMRMemCategoryP
 				throw new NoSuchElementException();
 			}
 		}
+
 	}
-	
+
 	/**
 	 * Implementation that iterates over the categories stored in the port library.
-	 *
-	 *
 	 */
-	private static class PortLibraryCategoryIterator extends MemoryCategoryIterator
-	{
+	private static class PortLibraryCategoryIterator extends MemoryCategoryIterator {
 		protected final J9PortLibraryPointer portLib;
 		private State state;
-		
+
 		private static enum State {
 			TERMINAL_STATE(null),
-			
+
 			UNUSED_SLAB_CATEGORY(TERMINAL_STATE),
-			
+
 			UNKNOWN_CATEGORY(J9BuildFlags.env_data64 ? UNUSED_SLAB_CATEGORY : TERMINAL_STATE),
-			
+
 			PORT_LIBRARY_CATEGORY(UNKNOWN_CATEGORY);
-			
+
 			private final State nextState;
-			State(State nextState)
-			{
-				this.nextState= nextState;
+
+			State(State nextState) {
+				this.nextState = nextState;
 			}
-			
-			public State getNextState()
-			{
+
+			public State getNextState() {
 				if (nextState == null) {
 					return this;
 				} else {
 					return nextState;
 				}
 			}
-		};
-		
-		public PortLibraryCategoryIterator(J9PortLibraryPointer portLib) throws CorruptDataException
-		{
+
+		}
+
+		public PortLibraryCategoryIterator(J9PortLibraryPointer portLib) throws CorruptDataException {
 			this.portLib = portLib;
 			this.state = State.PORT_LIBRARY_CATEGORY;
 		}
-		
-		public boolean hasNext()
-		{
+
+		public boolean hasNext() {
 			return state != State.TERMINAL_STATE;
 		}
 
-		public OMRMemCategoryPointer next() 
-		{
+		private OMRPortLibraryGlobalDataPointer getPortGlobals() throws CorruptDataException {
+			return portLib.omrPortLibrary().portGlobals();
+		}
+
+		public OMRMemCategoryPointer next() {
 			OMRMemCategoryPointer toReturn = null;
-			
+
 			while (toReturn == null) {
 				try {
-					switch(state) {
+					switch (state) {
 					case PORT_LIBRARY_CATEGORY:
-						toReturn = portLib.omrPortLibrary().portGlobals().portLibraryMemoryCategory();
+						toReturn = getPortGlobals().portLibraryMemoryCategory();
 						break;
 					case UNKNOWN_CATEGORY:
-						toReturn = portLib.omrPortLibrary().portGlobals().unknownMemoryCategory();
+						toReturn = getPortGlobals().unknownMemoryCategory();
 						break;
 					case UNUSED_SLAB_CATEGORY:
-						toReturn = portLib.omrPortLibrary().portGlobals().unusedAllocate32HeapRegionsMemoryCategory();
+						toReturn = OMRMemCategoryHelper.getUnusedAllocate32HeapRegionsMemoryCategory(getPortGlobals());
 						break;
 					case TERMINAL_STATE:
 						return null;
@@ -174,25 +169,25 @@ public abstract class MemoryCategoryIterator implements Iterator<OMRMemCategoryP
 				} catch (CorruptDataException ex) {
 					EventManager.raiseCorruptDataEvent("CorruptData encountered walking port library memory categories.", ex, false);
 				}
-				
+
 				state = state.getNextState();
 			}
-			
+
 			return toReturn;
 		}
-		
+
 	}
-	
-	public final void remove()
-	{
+
+	public final void remove() {
 		throw new UnsupportedOperationException("Remove not supported");
 	}
-	
+
 	@SuppressWarnings("unchecked")
-	public static Iterator<OMRMemCategoryPointer> iterateAllCategories(J9PortLibraryPointer portLibrary) throws CorruptDataException
-	{
-		OMRMemCategorySetPointer omr_categories = portLibrary.omrPortLibrary().portGlobals().control().omr_memory_categories();
-		OMRMemCategorySetPointer language_categories = portLibrary.omrPortLibrary().portGlobals().control().language_memory_categories();
+	public static Iterator<OMRMemCategoryPointer> iterateAllCategories(J9PortLibraryPointer portLibrary)
+			throws CorruptDataException {
+		J9PortControlDataPointer control = portLibrary.omrPortLibrary().portGlobals().control();
+		OMRMemCategorySetPointer omr_categories = control.omr_memory_categories();
+		OMRMemCategorySetPointer language_categories = control.language_memory_categories();
 		if (omr_categories.notNull() && language_categories.notNull()) {
 			return IteratorHelpers.combineIterators(
 					new MemoryCategorySetIterator(omr_categories),
@@ -205,35 +200,35 @@ public abstract class MemoryCategoryIterator implements Iterator<OMRMemCategoryP
 			return new PortLibraryCategoryIterator(portLibrary);
 		}
 	}
-	
-	public static Iterator<? extends OMRMemCategoryPointer> iterateCategoryRootSet(J9PortLibraryPointer portLibrary) throws CorruptDataException
-	{
-		Map<U32, OMRMemCategoryPointer> rootSetMap = new HashMap<U32, OMRMemCategoryPointer>();
-		
+
+	public static Iterator<? extends OMRMemCategoryPointer> iterateCategoryRootSet(J9PortLibraryPointer portLibrary)
+			throws CorruptDataException {
+		Map<UDATA, OMRMemCategoryPointer> rootSetMap = new HashMap<UDATA, OMRMemCategoryPointer>();
 		Iterator<? extends OMRMemCategoryPointer> categoryIt = iterateAllCategories(portLibrary);
-		
+
 		/* Store all categories in a map */
 		while (categoryIt.hasNext()) {
 			OMRMemCategoryPointer thisCategory = categoryIt.next();
-			
+
 			rootSetMap.put(thisCategory.categoryCode(), thisCategory);
 		}
-		
+
 		/* Remove any categories that are listed as children of any other category */
 		categoryIt = iterateAllCategories(portLibrary);
-		
+
 		while (categoryIt.hasNext()) {
 			OMRMemCategoryPointer thisCategory = categoryIt.next();
 
 			final int numberOfChildren = thisCategory.numberOfChildren().intValue();
-			
+
 			for (int i = 0; i < numberOfChildren; i++) {
-				U32 childCode = thisCategory.children().at(i);
-				
+				UDATA childCode = thisCategory.children().at(i);
+
 				rootSetMap.remove(childCode);
 			}
 		}
-		
+
 		return Collections.unmodifiableCollection(rootSetMap.values()).iterator();
 	}
+
 }

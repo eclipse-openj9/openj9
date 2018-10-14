@@ -2,7 +2,7 @@
 package com.ibm.tools.attach.attacher;
 
 /*******************************************************************************
- * Copyright (c) 2009, 2017 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,7 +56,7 @@ import static com.ibm.oti.util.Msg.getString;
  * Handles the initiator end of an attachment to a target VM
  * 
  */
-final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
+public final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 
 	/* 
 	 * The expected string is "ATTACH_CONNECTED <32 bit hexadecimal key>". 
@@ -92,7 +92,6 @@ final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 	 * @param id
 	 *            identifier for the VM
 	 */
-	@SuppressWarnings("unused")
 	OpenJ9VirtualMachine(AttachProvider provider, String id)
 			throws NullPointerException {
 		super(provider, id);
@@ -100,7 +99,6 @@ final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 			/*[MSG "K0554", "Virtual machine ID or display name is null"]*/
 			throw new NullPointerException(getString("K0554")); //$NON-NLS-1$
 		}
-		new IPC();
 		this.targetId = id;
 		this.myProvider = (OpenJ9AttachProvider) provider;
 		this.descriptor = (OpenJ9VirtualMachineDescriptor) myProvider.getDescriptor(id);
@@ -305,7 +303,6 @@ final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 		}
 	}
 
-	@SuppressWarnings("boxing")
 	private static boolean parseResponse(String response) throws IOException,
 			AgentInitializationException, AgentLoadException, IllegalArgumentException
 			, AttachOperationFailedException 
@@ -326,7 +323,7 @@ final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 				if (null == status) {
 					throw new AgentInitializationException(trimmedResponse);
 				} else {
-					throw new AgentInitializationException(trimmedResponse, status);
+					throw new AgentInitializationException(trimmedResponse, status.intValue());
 				}
 			} else if (response.contains(EXCEPTION_AGENT_LOAD_EXCEPTION)) {
 				throw new AgentLoadException(trimmedResponse);
@@ -353,15 +350,13 @@ final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 	 * @param response
 	 * @return Integer value of status, or null if the string does not end in a number
 	 */
-	@SuppressWarnings("boxing")
 	private static Integer getStatusValue(String response) {
 		Pattern rvPattern = Pattern.compile("(-?\\d+)\\s*$");  //$NON-NLS-1$
 		Matcher rvMatcher = rvPattern.matcher(response);
 		if (rvMatcher.find()) {
 			String status = rvMatcher.group(1);
 			try {
-				int statusValue = Integer.parseInt(status);
-				return statusValue;
+				return Integer.getInteger(status);
 			} catch (NumberFormatException e) {
 				IPC.logMessage("Error parsing response", response); //$NON-NLS-1$
 				return null;
@@ -390,7 +385,7 @@ final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 
 				targetServer = new ServerSocket(0); /* select a free port */
 				portNumber = Integer.valueOf(targetServer.getLocalPort());
-				String key = Integer.toHexString((IPC.getRandomNumber()));
+				String key = IPC.getRandomString();
 				replyFile = new Reply(portNumber, key, TargetDirectory.getTargetDirectoryPath(descriptor.id()), descriptor.getUid());
 				try {
 					replyFile.writeReply();

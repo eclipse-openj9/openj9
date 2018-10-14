@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -175,10 +175,9 @@ static inlMapping mappings[] = {
 	{ "Java_java_lang_Object_notify__", J9_BCLOOP_SEND_TARGET_INL_OBJECT_NOTIFY },
 	{ "Java_java_lang_Class_isInstance__Ljava_lang_Object_2", J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_INSTANCE },
 	{ "Java_java_lang_Class_getSimpleNameImpl__", J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_SIMPLE_NAME_IMPL },
-	{ "Java_com_ibm_oti_vm_VM_initializeClassLoader__Ljava_lang_ClassLoader_2ZZ", J9_BCLOOP_SEND_TARGET_INL_VM_INITIALIZE_CLASS_LOADER },
+	{ "Java_com_ibm_oti_vm_VM_initializeClassLoader__Ljava_lang_ClassLoader_2IZ", J9_BCLOOP_SEND_TARGET_INL_VM_INITIALIZE_CLASS_LOADER },
 	{ "Java_com_ibm_oti_vm_VM_getClassPathEntryType__Ljava_lang_Object_2I", J9_BCLOOP_SEND_TARGET_INL_VM_GET_CLASS_PATH_ENTRY_TYPE },
 	{ "Java_com_ibm_oti_vm_VM_isBootstrapClassLoader__Ljava_lang_ClassLoader_2", J9_BCLOOP_SEND_TARGET_INL_VM_IS_BOOTSTRAP_CLASS_LOADER },
-	{ "Java_java_lang_Class_getClassDepth__", J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_CLASS_DEPTH },
 	{ "Java_sun_misc_Unsafe_allocateInstance__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ALLOCATE_INSTANCE },
 	{ "Java_com_ibm_tools_attach_target_Attachment_loadAgentLibraryImpl__Ljava_lang_ClassLoader_2Ljava_lang_String_2Ljava_lang_String_2Z", J9_BCLOOP_SEND_TARGET_INL_ATTACHMENT_LOADAGENTLIBRARYIMPL },
 	{ "Java_com_ibm_oti_vm_VM_getStackClass__I", J9_BCLOOP_SEND_TARGET_INL_VM_GETSTACKCLASS },
@@ -277,9 +276,7 @@ static J9OutOfLineINLMapping outOfLineINLmappings[] = {
 	{ "Java_jdk_internal_misc_Unsafe_compareAndExchangeInt__Ljava_lang_Object_2JII", OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeIntVolatile },
 	{ "Java_jdk_internal_misc_Unsafe_compareAndExchangeLongVolatile__Ljava_lang_Object_2JJJ", OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeLongVolatile },
 	{ "Java_jdk_internal_misc_Unsafe_compareAndExchangeLong__Ljava_lang_Object_2JJJ", OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeLongVolatile },
-#if defined(J9VM_OPT_VALHALLA_MVT)
-	{ "Java_jdk_experimental_value_ValueType_valueClassImpl__Ljava_lang_Class_2", OutOfLineINL_jdk_experimental_value_ValueType_valueClassImpl },
-#endif /* defined(J9VM_OPT_VALHALLA_MVT) */
+	{ "Java_com_ibm_jit_JITHelpers_acmplt__Ljava_lang_Object_2Ljava_lang_Object_2", OutOfLineINL_com_ibm_jit_JITHelpers_acmplt },
 #if defined(J9VM_OPT_PANAMA)
 	{ "Java_java_lang_invoke_NativeMethodHandle_initJ9NativeCalloutDataRef___3Ljava_lang_String_2", OutOfLineINL_java_lang_invoke_NativeMethodHandle_initJ9NativeCalloutDataRef },
 	{ "Java_java_lang_invoke_NativeMethodHandle_freeJ9NativeCalloutDataRef__", OutOfLineINL_java_lang_invoke_NativeMethodHandle_freeJ9NativeCalloutDataRef },

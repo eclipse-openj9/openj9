@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,16 +56,13 @@ import com.ibm.j9ddr.view.dtfj.image.J9DDRCorruptData;
 import com.ibm.j9ddr.view.dtfj.image.J9DDRImageSection;
 import com.ibm.j9ddr.vm29.events.EventManager;
 import com.ibm.j9ddr.vm29.j9.DataType;
-import com.ibm.j9ddr.vm29.j9.Pool;
 import com.ibm.j9ddr.vm29.j9.RootScanner;
-import com.ibm.j9ddr.vm29.j9.SlotIterator;
 import com.ibm.j9ddr.vm29.j9.gc.GCClassLoaderIterator;
 import com.ibm.j9ddr.vm29.j9.gc.GCVMThreadListIterator;
 import com.ibm.j9ddr.vm29.j9.walkers.J9MemTagIterator;
 import com.ibm.j9ddr.vm29.j9.walkers.MemoryCategoryIterator;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
 import com.ibm.j9ddr.vm29.pointer.VoidPointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassLoaderPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JITConfigPointer;
@@ -76,7 +73,6 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ThreadAbstractMonitorPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMThreadPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.MM_MemorySpacePointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9JavaVMHelper;
-import com.ibm.j9ddr.vm29.structure.J9Consts;
 import com.ibm.j9ddr.vm29.structure.J9JITConfig;
 import com.ibm.j9ddr.vm29.structure.J9JavaVM;
 import com.ibm.j9ddr.vm29.types.U64;
@@ -195,7 +191,7 @@ public class DTFJJavaRuntime implements JavaRuntime {
 					properties.setProperty("AOT", "disabled");
 				}
 				
-				if (jitConfig.fsdEnabled().eq(new UDATA(0))) {
+				if (!jitConfig.fsdEnabled().eq(new UDATA(0))) {
 					properties.setProperty("FSD", "enabled");
 				} else {
 					properties.setProperty("FSD", "disabled");

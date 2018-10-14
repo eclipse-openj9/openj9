@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2011, 2017 IBM Corp. and others
+ * Copyright (c) 2011, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,7 +71,7 @@ public class MutableCallSite extends CallSite {
 	
 	/**
 	 * Create a MutableCallSite permanently set to the same type as the <i>mutableTarget</i> and using
-	 * the mutableTarget</i> as the initial target value.
+	 * the <i>mutableTarget</i> as the initial target value.
 	 * 
 	 * @param mutableTarget - the initial target of the CallSite
 	 * @throws NullPointerException - if the <i>mutableTarget</i> is null.
@@ -159,7 +159,7 @@ public class MutableCallSite extends CallSite {
 				if (StructuralComparator.get().handlesAreEquivalent(oldTarget, newTarget)) {
 					// Equivalence check saved us a thaw, so it's worth doing them every time.
 					equivalenceInterval = 1;
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 					MethodHandle.UNSAFE.compareAndSetObject(this, targetFieldOffset, oldTarget, newTarget);
 /*[ELSE]
 					MethodHandle.UNSAFE.compareAndSwapObject(this, targetFieldOffset, oldTarget, newTarget);

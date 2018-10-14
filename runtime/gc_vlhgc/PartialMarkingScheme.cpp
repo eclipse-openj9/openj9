@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,20 +30,17 @@
 #include "ModronAssertions.h"
 
 #include <string.h>
-
+#include "ClassIterator.hpp"
 #include "ArrayObjectModel.hpp"
 #include "AtomicOperations.hpp"
-#include "CallSitesIterator.hpp"
 #include "CardTable.hpp"
 #include "ClassHeapIterator.hpp"
 #include "ClassLoaderIterator.hpp"
 #include "ClassLoaderClassesIterator.hpp"
 #include "ClassLoaderRememberedSet.hpp"
 #include "ClassLoaderSegmentIterator.hpp"
-#include "ClassStaticsIterator.hpp"
 #include "ClassModel.hpp"
 #include "CompressedCardTable.hpp"
-#include "ConstantPoolObjectSlotIterator.hpp"
 #include "CycleState.hpp"
 #include "Debug.hpp"
 #include "Dispatcher.hpp"
@@ -64,7 +61,6 @@
 #include "MarkMap.hpp"
 #include "PartialMarkingScheme.hpp"
 #include "MemorySubSpaceRegionIterator.hpp"
-#include "MethodTypesIterator.hpp"
 #include "ModronTypes.hpp"
 #include "ObjectAccessBarrier.hpp"
 #include "ObjectModel.hpp"
@@ -747,40 +743,15 @@ MM_PartialMarkingScheme::scanClassObject(MM_EnvironmentVLHGC *env, J9Object *cla
 
 		do {
 			/*
-			 * scan static fields
+			 * Scan J9Class internals using general iterator
+			 * - scan statics fields
+			 * - scan call sites
+			 * - scan MethodTypes
+			 * - scan VarHandle MethodTypes
+			 * - scan constants pool objects
 			 */
-			GC_ClassStaticsIterator classStaticsIterator(env, classPtr);
-			while(NULL != (slotPtr = classStaticsIterator.nextSlot())) {
-				J9Object *value = *slotPtr;
-				markObject(env, value);
-				rememberReferenceIfRequired(env, classObject, value);
-			}
-
-			/*
-			 * scan call sites
-			 */
-			GC_CallSitesIterator callSitesIterator(classPtr);
-			while(NULL != (slotPtr = callSitesIterator.nextSlot())) {
-				J9Object *value = *slotPtr;
-				markObject(env, value);
-				rememberReferenceIfRequired(env, classObject, value);
-			}
-
-			/*
-			 * scan MethodTypes
-			 */
-			GC_MethodTypesIterator methodTypesIterator(classPtr->romClass->methodTypeCount, classPtr->methodTypes);
-			while(NULL != (slotPtr = methodTypesIterator.nextSlot())) {
-				J9Object *value = *slotPtr;
-				markObject(env, value);
-				rememberReferenceIfRequired(env, classObject, value);
-			}
-
-			/*
-			 * scan VarHandle MethodTypes
-			 */
-			GC_MethodTypesIterator varHandleMethodTypesIterator(classPtr->romClass->varHandleMethodTypeCount, classPtr->varHandleMethodTypes);
-			while(NULL != (slotPtr = varHandleMethodTypesIterator.nextSlot())) {
+			GC_ClassIterator classIterator(env, classPtr, false);
+			while (NULL != (slotPtr = classIterator.nextSlot())) {
 				J9Object *value = *slotPtr;
 				markObject(env, value);
 				rememberReferenceIfRequired(env, classObject, value);
@@ -803,18 +774,7 @@ MM_PartialMarkingScheme::scanClassObject(MM_EnvironmentVLHGC *env, J9Object *cla
 				}
 			}
 
-			/*
-			 * scan constant pool objects
-			 */
-			/* we can safely ignore any classes referenced by the constant pool, since
-			 * these are guaranteed to be referenced by our class loader
-			 */
-			GC_ConstantPoolObjectSlotIterator constantPoolIterator(classPtr);
-			while(NULL != (slotPtr = constantPoolIterator.nextSlot())) {
-				J9Object *value = *slotPtr;
-				markObject(env, value);
-				rememberReferenceIfRequired(env, classObject, value);
-			}
+
 			classPtr = classPtr->replacedClass;
 		} while (NULL != classPtr);
 	}

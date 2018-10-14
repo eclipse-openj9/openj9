@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -430,7 +430,7 @@ public class J9DDRImageProcess implements ImageProcess {
 			Object[] passbackArray = new Object[1];
 			
 			try {
-				//attempt to load a default bootstrap class which will allow different implementations to provide their own initialisers
+				//attempt to load a default bootstrap class which will allow different implementations to provide their own initializers
 				data.bootstrapRelative("view.dtfj.DTFJBootstrapShim", (Object)passbackArray, this);
 			} catch (ClassNotFoundException e) {
 				//no specific class was found, so use a generic native one instead

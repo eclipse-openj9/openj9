@@ -1,32 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- 
-	Copyright (c) 2017, 2017 IBM Corp. and others
-	
-	This program and the accompanying materials are made available under
-	the terms of the Eclipse Public License 2.0 which accompanies this
-	distribution and is available at https://www.eclipse.org/legal/epl-2.0/
-	or the Apache License, Version 2.0 which accompanies this distribution and
-	is available at https://www.apache.org/licenses/LICENSE-2.0.
-	
-	This Source Code may also be made available under the following
-	Secondary Licenses when the conditions for such availability set
-	forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
-	General Public License, version 2 with the GNU Classpath
-	Exception [1] and GNU General Public License, version 2 with the
-	OpenJDK Assembly Exception [2].
-	
-	[1] https://www.gnu.org/software/classpath/license.html
-	[2] http://openjdk.java.net/legal/assembly-exception.html
+<!--
+Copyright (c) 2017, 2018 IBM Corp. and others
 
-	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
+
+[1] https://www.gnu.org/software/classpath/license.html
+[2] http://openjdk.java.net/legal/assembly-exception.html
+
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <module>
-
 	<artifact type="executable" name="constgen">
 		<options>
-			<option name="isCPlusPlus">
-				<exclude-if condition="spec.linux_ppc.*"/>
-			</option>
+			<option name="isCPlusPlus"/>
 			<option name="doesNotRequireCMAIN"/>
 		</options>
 		<phase>core j2se</phase>
@@ -50,7 +47,7 @@
 			but works for other platforms as well.
 			-->
 			<library name="j9prtstatic" type="external" />
-			
+
 			<library name="j9thrstatic" type="external">
 				<include-if condition="spec.linux_arm.*" />
 			</library>
@@ -62,10 +59,13 @@
 			<library name="j9pool" type="external"/>
 			<library name="j9exelib"/>
 			<library name="j9utilcore"/>
-			
+			<library name="omrsig">
+				<include-if condition="spec.flags.J9VM_PORT_OMRSIG_SUPPORT"/>
+			</library>
+
 			<!-- The following libs are needed to statically link the port library -->
 			<library name="omrglue" type="external"/>
-			<library name="socket" type="macro"/>			
+			<library name="socket" type="macro"/>
 			<library name="iconv" type="system">
 				<include-if condition="spec.aix_.*"/>
 				<include-if condition="spec.osx_.*"/>
@@ -87,7 +87,7 @@
 			</library>
 		</libraries>
 	</artifact>
-	
+
 	<artifact type="target" name="run_constgen">
 		<phase>core j2se</phase>
 		<dependencies>
@@ -100,6 +100,9 @@
 			</command>
 			<command line="cd $(UMA_PATH_TO_ROOT) &amp;&amp; qemu-arm -r '9' ./constgen" type="all">
 				<include-if condition="spec.linux_arm.*"/>
+			</command>
+			<command line="cd $(UMA_PATH_TO_ROOT); if [ -x ../build_constgen.sh ] &amp;&amp; [ ! -e ../constgen.completed ] ; then ../build_constgen.sh ; fi" type="all">
+				<include-if condition="spec.linux_ztpf.*"/>
 			</command>
 		</commands>
 	</artifact>

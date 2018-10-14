@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2016 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -65,6 +65,6 @@ Java_java_lang_invoke_MethodType_makeTenured(JNIEnv *env, jclass clazz, jobject 
 	} else {
 		methodTypeRef = vmFuncs->j9jni_createLocalRef(env, methodType);
 	}
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 	return methodTypeRef;
 }

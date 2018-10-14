@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,7 +56,7 @@ Java_sun_misc_Unsafe_defineClass__Ljava_lang_String_2_3BIILjava_lang_ClassLoader
 
 		classLoaderObject = J9CLASSLOADER_CLASSLOADEROBJECT(currentThread, vm->systemClassLoader);
 		classLoader = vmFuncs->j9jni_createLocalRef(env, classLoaderObject);
-		vmFuncs->internalReleaseVMAccess(currentThread);
+		vmFuncs->internalExitVMToJNI(currentThread);
 	}
 
 	result = defineClassCommon(env, classLoader, className, classRep, offset, length, protectionDomain, J9_FINDCLASS_FLAG_UNSAFE, NULL);
@@ -64,7 +64,7 @@ Java_sun_misc_Unsafe_defineClass__Ljava_lang_String_2_3BIILjava_lang_ClassLoader
 	if (result != NULL) {
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 		vm->internalVMFunctions->fixUnsafeMethods(currentThread, result);
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	return result;
@@ -83,12 +83,12 @@ Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	if (NULL == bytecodes) {
 		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
-		vmFuncs->internalReleaseVMAccess(currentThread);
+		vmFuncs->internalExitVMToJNI(currentThread);
 		return NULL;
 	}
 	if (NULL == hostClass) {
 		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
-		vmFuncs->internalReleaseVMAccess(currentThread);
+		vmFuncs->internalExitVMToJNI(currentThread);
 		return NULL;
 	}
 
@@ -104,7 +104,7 @@ Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass 
 		hostClassLoader = vm->systemClassLoader->classLoaderObject;
 	}
 	jobject hostClassLoaderLocalRef = vmFuncs->j9jni_createLocalRef(env, hostClassLoader);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 
 	jsize length = env->GetArrayLength(bytecodes);
 
@@ -119,7 +119,7 @@ Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass 
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	vmFuncs->fixUnsafeMethods(currentThread, anonClass);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 
 	return anonClass;
 }
@@ -159,6 +159,8 @@ Java_sun_misc_Unsafe_pageSize(JNIEnv *env, jobject receiver)
 jint JNICALL
 Java_sun_misc_Unsafe_getLoadAverage(JNIEnv *env, jobject receiver, jdoubleArray loadavg, jint nelems)
 {
+	/* stub implementation */
+	assert(!"Java_sun_misc_Unsafe_getLoadAverage is unimplemented");
 	return -1;
 }
 
@@ -177,7 +179,7 @@ Java_sun_misc_Unsafe_allocateMemory(JNIEnv *env, jobject receiver, jlong size)
 	} else {
 		result = (jlong)(UDATA)unsafeAllocateMemory(currentThread, actualSize, TRUE);
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -196,7 +198,7 @@ Java_sun_misc_Unsafe_allocateDBBMemory(JNIEnv *env, jobject receiver, jlong size
 	} else {
 		result = (jlong)(UDATA)unsafeAllocateDBBMemory(currentThread, actualSize, TRUE);
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -220,7 +222,7 @@ Java_sun_misc_Unsafe_allocateMemoryNoException(JNIEnv *env, jobject receiver, jl
 	} else {
 		result = (jlong)(UDATA)unsafeAllocateMemory(currentThread, actualSize, FALSE);
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -260,7 +262,7 @@ Java_sun_misc_Unsafe_reallocateMemory(JNIEnv *env, jobject receiver, jlong addre
 	} else {
 		result = (jlong)(UDATA)unsafeReallocateMemory(currentThread, (void*)(UDATA)address, actualSize);
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -279,7 +281,7 @@ Java_sun_misc_Unsafe_reallocateDBBMemory(JNIEnv *env, jobject receiver, jlong ad
 	} else {
 		result = (jlong)(UDATA)unsafeReallocateDBBMemory(currentThread, (void*)(UDATA)address, actualSize);
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -305,7 +307,7 @@ Java_sun_misc_Unsafe_ensureClassInitialized(JNIEnv *env, jobject receiver, jclas
 			vmFuncs->initializeClass(currentThread, j9clazz);
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 
@@ -317,7 +319,7 @@ Java_sun_misc_Unsafe_park(JNIEnv *env, jobject receiver, jboolean isAbsolute, jl
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	vmFuncs->threadParkImpl(currentThread, (IDATA)isAbsolute, (I_64)time);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 
@@ -329,7 +331,7 @@ Java_sun_misc_Unsafe_unpark(JNIEnv *env, jobject receiver, jthread thread)
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	vmFuncs->threadUnparkImpl(currentThread, J9_JNI_UNWRAP_REFERENCE(thread));
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 
@@ -345,7 +347,7 @@ Java_sun_misc_Unsafe_throwException(JNIEnv *env, jobject receiver, jthrowable ex
 	} else {
 		currentThread->currentException = J9_JNI_UNWRAP_REFERENCE(exception);
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 
@@ -368,7 +370,7 @@ oom:
 			goto oom;
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 
@@ -390,7 +392,7 @@ Java_sun_misc_Unsafe_monitorExit(JNIEnv *env, jobject receiver, jobject obj)
 			VM_ObjectMonitor::recordJNIMonitorExit(currentThread, object);
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 
@@ -415,7 +417,7 @@ Java_sun_misc_Unsafe_tryMonitorEnter(JNIEnv *env, jobject receiver, jobject obj)
 			VM_ObjectMonitor::recordJNIMonitorEnter(currentThread, object);
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return entered;
 }
 
@@ -467,6 +469,88 @@ determineCommonAlignment(UDATA sourceOffset, UDATA destOffset, UDATA size)
 	return alignment;
 }
 
+/**
+ * Copy actualSize bytes from source object to destination.
+ * Helper method for copyMemory and copyMemoryByte.
+ *
+ * @param currentThread
+ * @param sourceObject object to copy from
+ * @param sourceOffset location in srcObject to start copy
+ * @param destObject object to copy into
+ * @param destOffset location in destObject to start copy
+ * @param actualSize the number of bytes to be copied
+ * @param logElementSize common alignment of offsets and actualSize
+ * @param sourceIndex index into source array
+ * @param destIndex index into destination array
+ * @param elementCount elements to copy in array
+ */
+static VMINLINE void
+copyMemorySub(J9VMThread* currentThread, j9object_t sourceObject, UDATA sourceOffset, j9object_t destObject,
+		UDATA destOffset, UDATA actualSize, UDATA logElementSize, UDATA sourceIndex, UDATA destIndex,
+		UDATA elementCount)
+{
+	if (NULL == sourceObject) {
+		if (NULL == destObject) {
+			UDATA sourceEnd = sourceOffset + actualSize;
+			if ((destOffset > sourceOffset) && (destOffset < sourceEnd)) {
+				alignedBackwardsMemcpy(currentThread, (void*)(destOffset + actualSize), (void*)sourceEnd, actualSize, logElementSize);
+			} else {
+				alignedMemcpy(currentThread, (void*)destOffset, (void*)sourceOffset, actualSize, logElementSize);
+			}
+		} else {
+			VM_ArrayCopyHelpers::memcpyToArray(currentThread, destObject, logElementSize, destIndex, elementCount, (void*)sourceOffset);
+		}
+	} else if (NULL == destObject) {
+		VM_ArrayCopyHelpers::memcpyFromArray(currentThread, sourceObject, logElementSize, sourceIndex, elementCount, (void*)destOffset);
+	} else {
+		VM_ArrayCopyHelpers::primitiveArrayCopy(currentThread, sourceObject, sourceIndex, destObject, destIndex, elementCount, logElementSize);
+	}
+}
+
+/**
+ * Copy actualSize bytes from source object to destination.
+ *
+ * @param currentThread
+ * @param sourceObject object to copy from
+ * @param sourceOffset location in srcObject to start copy
+ * @param destObject object to copy into
+ * @param destOffset location in destObject to start copy
+ * @param actualSize the number of bytes to be copied
+ */
+static VMINLINE void
+copyMemory(J9VMThread* currentThread, j9object_t sourceObject, UDATA sourceOffset, j9object_t destObject,
+		UDATA destOffset, UDATA actualSize)
+{
+	/* Because array data is always 8-aligned, only the alignment of the offsets (and byte size) need be considered */
+	UDATA logElementSize = determineCommonAlignment(sourceOffset, destOffset, actualSize);
+	UDATA sourceIndex = (sourceOffset - sizeof(J9IndexableObjectContiguous)) >> logElementSize;
+	UDATA destIndex = (destOffset - sizeof(J9IndexableObjectContiguous)) >> logElementSize;
+	UDATA elementCount = actualSize >> logElementSize;
+
+	copyMemorySub(currentThread, sourceObject, sourceOffset, destObject, destOffset, actualSize, logElementSize, sourceIndex,
+			destIndex, elementCount);
+}
+
+/**
+ * Copy byte from source object to destination.
+ *
+ * @param currentThread
+ * @param sourceObject object to copy from
+ * @param sourceOffset location in srcObject to start copy
+ * @param destObject object to copy into
+ * @param destOffset location in destObject to start copy
+ */
+static VMINLINE void
+copyMemoryByte(J9VMThread* currentThread, j9object_t sourceObject, UDATA sourceOffset, j9object_t destObject,
+		UDATA destOffset)
+{
+	UDATA sourceIndex = sourceOffset - sizeof(J9IndexableObjectContiguous);
+	UDATA destIndex = destOffset - sizeof(J9IndexableObjectContiguous);
+
+	copyMemorySub(currentThread, sourceObject, sourceOffset, destObject, destOffset,
+			(UDATA)1, (UDATA)0, sourceIndex, destIndex, (UDATA)1);
+}
+
 void JNICALL
 Java_sun_misc_Unsafe_copyMemory__Ljava_lang_Object_2JLjava_lang_Object_2JJ(JNIEnv *env, jobject receiver, jobject srcBase, jlong srcOffset, jobject dstBase, jlong dstOffset, jlong size)
 {
@@ -503,29 +587,10 @@ illegal:
 				goto illegal;
 			}
 		}
-		/* Because array data is always 8-aligned, only the alignment of the offsets (and byte size) need be considered */
-		UDATA logElementSize = determineCommonAlignment(sourceOffset, destOffset, actualSize);
-		UDATA sourceIndex = (sourceOffset - sizeof(J9IndexableObjectContiguous)) >> logElementSize;
-		UDATA destIndex = (destOffset - sizeof(J9IndexableObjectContiguous)) >> logElementSize;
-		UDATA elementCount = actualSize >> logElementSize;
-		if (NULL == sourceObject) {
-			if (NULL == destObject) {
-				UDATA sourceEnd = sourceOffset + actualSize;
-				if ((destOffset > sourceOffset) && (destOffset < sourceEnd)) {
-					alignedBackwardsMemcpy(currentThread, (void*)(destOffset + actualSize), (void*)sourceEnd, actualSize, logElementSize);
-				} else {
-					alignedMemcpy(currentThread, (void*)destOffset, (void*)sourceOffset, actualSize, logElementSize);
-				}
-			} else {
-				VM_ArrayCopyHelpers::memcpyToArray(currentThread, destObject, logElementSize, destIndex, elementCount, (void*)sourceOffset);
-			}
-		} else if (NULL == destObject) {
-			VM_ArrayCopyHelpers::memcpyFromArray(currentThread, sourceObject, logElementSize, sourceIndex, elementCount, (void*)destOffset);
-		} else {
-			VM_ArrayCopyHelpers::primitiveArrayCopy(currentThread, sourceObject, sourceIndex, destObject, destIndex, elementCount, logElementSize);
-		}
+
+		copyMemory(currentThread, sourceObject, sourceOffset, destObject, destOffset, actualSize);
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 
@@ -550,7 +615,7 @@ Java_sun_misc_Unsafe_objectFieldOffset(JNIEnv *env, jobject receiver, jobject fi
 			offset = (jlong)fieldID->offset + J9_OBJECT_HEADER_SIZE;
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return offset;
 }
 
@@ -581,7 +646,7 @@ illegal:
 		offset -= sizeof(J9IndexableObjectContiguous);
 		VM_ArrayCopyHelpers::primitiveArrayFill(currentThread, object, (UDATA)offset, actualSize, (U_8)value);
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 
@@ -606,7 +671,7 @@ Java_sun_misc_Unsafe_staticFieldBase__Ljava_lang_reflect_Field_2(JNIEnv *env, jo
 			base = vmFuncs->j9jni_createLocalRef(env, J9VM_J9CLASS_TO_HEAPCLASS(fieldID->declaringClass));
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return base;
 }
 
@@ -630,9 +695,13 @@ Java_sun_misc_Unsafe_staticFieldOffset(JNIEnv *env, jobject receiver, jobject fi
 			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
 		} else {
 			offset = fieldID->offset | J9_SUN_STATIC_FIELD_OFFSET_TAG;
+
+			if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccFinal)) {
+				offset |= J9_SUN_FINAL_FIELD_OFFSET_TAG;
+			}
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return offset;
 }
 
@@ -679,9 +748,24 @@ Java_sun_misc_Unsafe_getKlassPointer(JNIEnv *env, jobject receiver, jobject addr
 jboolean JNICALL
 Java_jdk_internal_misc_Unsafe_shouldBeInitialized(JNIEnv *env, jobject receiver, jclass clazz)
 {
-	/* stub implementation */
-	assert(!"Java_jdk_internal_misc_Unsafe_shouldBeInitialized is unimplemented");
-	return JNI_FALSE;
+	jboolean result = JNI_FALSE;
+
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	if (NULL == clazz) {
+		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+	} else {
+		j9object_t classObject = J9_JNI_UNWRAP_REFERENCE(clazz);
+		J9Class *j9clazz =  J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, classObject);
+		if (VM_VMHelpers::classRequiresInitialization(currentThread, j9clazz)) {
+			result = JNI_TRUE;
+		}
+	}
+	vmFuncs->internalExitVMToJNI(currentThread);
+
+	return result;
 }
 
 jlong JNICALL
@@ -709,7 +793,7 @@ Java_jdk_internal_misc_Unsafe_objectFieldOffset1(JNIEnv *env, jobject receiver, 
 			offset = (jlong)fieldID->offset + J9_OBJECT_HEADER_SIZE;
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	
 	return offset;
 }
@@ -738,6 +822,11 @@ registerJdkInternalMiscUnsafeNativesCommon(JNIEnv *env, jclass clazz) {
 			(char*)"getLoadAverage0",
 			(char*)"([DI)I",
 			(void*)&Java_sun_misc_Unsafe_getLoadAverage
+		},
+		{
+			(char*)"shouldBeInitialized0",
+			(char*)"(Ljava/lang/Class;)Z",
+			(void*)&Java_jdk_internal_misc_Unsafe_shouldBeInitialized
 		},
 		{
 			(char*)"allocateMemory0",
@@ -845,12 +934,119 @@ Java_jdk_internal_misc_Unsafe_registerNatives(JNIEnv *env, jclass clazz)
 	}
 }
 
+/*
+ * Determine if memory addresses overlap.
+ * Will always return false if either object is an array.
+ *
+ * @param sourceObject
+ * @param sourceOffset memory address
+ * @param destObject
+ * @param destOffset memory address
+ * @param actualCopySize size of memory after address
+ * @return true for no memory overlap, otherwise false
+ */
+jboolean
+ memOverlapIsNone(j9object_t sourceObject, UDATA sourceOffset, j9object_t destObject, UDATA destOffset, UDATA actualCopySize) {
+	jboolean result = JNI_FALSE;
+	if ((sourceObject == NULL) && (destObject == NULL)) {
+		if (sourceOffset > (destOffset + actualCopySize)) {
+			result = JNI_TRUE;
+		} else if (destOffset > (sourceOffset + actualCopySize)) {
+			result = JNI_TRUE;
+		}
+	}
+	return result;
+}
+
+/*
+ * Determine if memory addresses overlap, and is it is exactly aligned.
+ * Will always return false if either object is an array. Assumes we know
+ * that there is at least some memory overlap (memOverlapIsNone is false).
+ *
+ * @param sourceOffset memory address
+ * @param destOffset memory address
+ * @return true for no memory overlap, otherwise false
+ */
+jboolean
+ memOverlapIsUnaligned(UDATA sourceOffset, UDATA destOffset) {
+	return (sourceOffset != destOffset);
+}
+
 void JNICALL
-Java_jdk_internal_misc_Unsafe_copySwapMemory0(JNIEnv *env, jobject receiver, jobject obj1, jlong size1, jobject obj2, jlong size2, jlong size3, jlong size4)
+Java_jdk_internal_misc_Unsafe_copySwapMemory0(JNIEnv *env, jobject receiver, jobject srcBase, jlong srcOffset,
+		jobject dstBase, jlong dstOffset, jlong copySize, jlong elemSize)
 {
-	/* stub implementation */
-	/* private native void copySwapMemory0(java.lang.Object, long, java.lang.Object, long, long, long); */
-	assert(!"Java_jdk_internal_misc_Unsafe_copySwapMemory0 is unimplemented");
+	J9VMThread *currentThread = (J9VMThread*)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	UDATA sourceOffset = (UDATA)srcOffset;
+	UDATA destOffset = (UDATA)dstOffset;
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	UDATA actualCopySize = (UDATA)copySize;
+	UDATA actualElementSize = (UDATA)elemSize;
+
+	if ((copySize < 0) || (copySize != (jlong)actualCopySize) || (elemSize != (jlong)actualElementSize)) {
+illegal:
+		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
+	} else if ( ! (2 == elemSize || 4 == elemSize || 8 == elemSize)) {
+		/* verify that element size is supported for swapping */
+		goto illegal;
+	} else if (0 != (copySize % elemSize)) {
+		/* verify that size to be copied is a multiple of element size */
+		goto illegal;
+	} else {
+		j9object_t sourceObject = NULL;
+		j9object_t destObject = NULL;
+		if (NULL != srcBase) {
+			sourceObject = J9_JNI_UNWRAP_REFERENCE(srcBase);
+			J9Class *clazz = J9OBJECT_CLAZZ(currentThread, sourceObject);
+			if (!J9CLASS_IS_ARRAY(clazz)) {
+				goto illegal;
+			}
+			if (!J9ROMCLASS_IS_PRIMITIVE_TYPE(((J9ArrayClass*)clazz)->componentType->romClass)) {
+				goto illegal;
+			}
+		}
+		if (NULL != dstBase) {
+			destObject = J9_JNI_UNWRAP_REFERENCE(dstBase);
+			J9Class *clazz = J9OBJECT_CLAZZ(currentThread, destObject);
+			if (!J9CLASS_IS_ARRAY(clazz)) {
+				goto illegal;
+			}
+			if (!J9ROMCLASS_IS_PRIMITIVE_TYPE(((J9ArrayClass*)clazz)->componentType->romClass)) {
+				goto illegal;
+			}
+		}
+
+		jboolean overlapIsNone = memOverlapIsNone(sourceObject, sourceOffset, destObject, destOffset, actualCopySize);
+		if (!overlapIsNone) {
+			/* copy source data to destination first if source and destination memory is overlapping
+			 * and the overlap is unaligned. This will prevent any errors during swapping.
+			 */
+			if (memOverlapIsUnaligned(sourceOffset, destOffset)) {
+				copyMemory(currentThread, sourceObject, sourceOffset, destObject, destOffset, actualCopySize);
+			}
+		}
+
+		/* use temporary byte for swap if memory is overlapping */
+		UDATA tempOffset = 0;
+		for (UDATA elementOffset = 0; elementOffset < actualCopySize; elementOffset += actualElementSize) {
+			for (UDATA elementIndex = 0; elementIndex < (actualElementSize / 2); elementIndex++) {
+				UDATA lowerIndex = elementOffset + elementIndex;
+				UDATA upperIndex = elementOffset + actualElementSize - 1 - elementIndex;
+
+				if (overlapIsNone) {
+					copyMemoryByte(currentThread, sourceObject, sourceOffset + upperIndex, destObject, destOffset + lowerIndex);
+					copyMemoryByte(currentThread, sourceObject, sourceOffset + lowerIndex, destObject, destOffset + upperIndex);
+				} else { /* exact or unaligned overlap */
+					copyMemoryByte(currentThread, destObject, destOffset + lowerIndex, NULL, (UDATA)&tempOffset);
+					copyMemoryByte(currentThread, destObject, destOffset + upperIndex, destObject, destOffset + lowerIndex);
+					copyMemoryByte(currentThread, NULL, (UDATA)&tempOffset, destObject, destOffset + upperIndex);
+				}
+			}
+		}
+	}
+	vmFuncs->internalReleaseVMAccess(currentThread);
 }
 
 }

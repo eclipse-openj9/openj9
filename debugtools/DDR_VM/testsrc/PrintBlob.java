@@ -1,20 +1,5 @@
-import java.io.File;
-import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-
-import javax.imageio.stream.FileImageInputStream;
-import javax.imageio.stream.ImageInputStream;
-
-import com.ibm.j9ddr.StructureReader;
-import com.ibm.j9ddr.StructureReader.ConstantDescriptor;
-import com.ibm.j9ddr.StructureReader.FieldDescriptor;
-import com.ibm.j9ddr.StructureReader.StructureDescriptor;
-
 /*******************************************************************************
- * Copyright (c) 2010, 2014 IBM Corp. and others
+ * Copyright (c) 2010, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +19,19 @@ import com.ibm.j9ddr.StructureReader.StructureDescriptor;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+
+import java.io.File;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+import javax.imageio.stream.FileImageInputStream;
+import javax.imageio.stream.ImageInputStream;
+
+import com.ibm.j9ddr.StructureReader;
+import com.ibm.j9ddr.StructureReader.StructureDescriptor;
 
 /**
  * @author andhall

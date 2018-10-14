@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -164,9 +164,6 @@ addToSystemProperty(J9JavaVM * vm, const char * propertyName, const char * segme
 static UDATA
 addZipToLoader(J9JavaVM * vm, const char * filename, J9ClassLoader * classLoader, BOOLEAN enforceJarRestriction)
 {
-	I_32 zipResult;
-	J9ZipFile zipFile;
-	J9VMThread * currentThread;
 	UDATA rc = CLS_ERROR_NONE;
 
 	/* Handle JCLs which don't have class loaders */
@@ -177,7 +174,8 @@ addZipToLoader(J9JavaVM * vm, const char * filename, J9ClassLoader * classLoader
 
 	/* Validate the zip file */
 	if (enforceJarRestriction == TRUE) {
-		zipResult = zip_openZipFile(vm->portLibrary, (char *) filename, &zipFile, NULL, J9ZIP_OPEN_NO_FLAGS);
+		J9ZipFile zipFile;
+		I_32 zipResult = zip_openZipFile(vm->portLibrary, (char *) filename, &zipFile, NULL, J9ZIP_OPEN_NO_FLAGS);
 		if (zipResult) {
 			return CLS_ERROR_ILLEGAL_ARGUMENT;
 		}
@@ -190,17 +188,49 @@ addZipToLoader(J9JavaVM * vm, const char * filename, J9ClassLoader * classLoader
 		}
 	} else {
 		/* Call appendToClassPathForInstrumentation */
-		currentThread = currentVMThread(vm);
+		J9VMThread *currentThread = currentVMThread(vm);
 		if (currentThread != NULL) {
 			JNIEnv * env = (JNIEnv *) currentThread;
 			jobject classLoaderRef = NULL;
 			jstring filenameString = NULL;
 			jclass classLoaderClass = NULL;
-			jmethodID mid;
+			jmethodID mid = NULL;
 
-			internalAcquireVMAccess(currentThread);
+			if (J2SE_SHAPE(vm) >= J2SE_SHAPE_B165) {
+				jclass jimModules = getJimModules(currentThread);
+				jstring moduleNameString = NULL;
+				jobject vmModule = NULL;
+				jmethodID loadModule = NULL;
+
+				if (NULL == jimModules) {
+					rc = CLS_ERROR_NOT_FOUND;
+					goto cleanup;
+				}
+
+				loadModule = (*env)->GetStaticMethodID(env, jimModules, "loadModule", "(Ljava/lang/String;)Ljava/lang/Module;");
+				if (NULL == loadModule) {
+					rc = CLS_ERROR_NOT_FOUND;
+					goto cleanup;
+				}
+
+				moduleNameString = (*env)->NewStringUTF(env, "java.instrument");
+				if (NULL == moduleNameString) {
+					rc = CLS_ERROR_OUT_OF_MEMORY;
+					goto cleanup;
+				}
+
+				vmModule = (*env)->CallStaticObjectMethod(env, jimModules, loadModule, moduleNameString);
+				(*env)->DeleteLocalRef(env, vmModule);		
+				(*env)->DeleteLocalRef(env, moduleNameString);
+				if ((*env)->ExceptionOccurred(env)) {
+					rc = CLS_ERROR_INTERNAL;
+					goto cleanup;
+				}
+			}
+
+			internalEnterVMFromJNI(currentThread);
 			classLoaderRef = j9jni_createLocalRef(env, classLoader->classLoaderObject);
-			internalReleaseVMAccess(currentThread);
+			internalExitVMToJNI(currentThread);
 			if (classLoaderRef == NULL) {
 				rc = CLS_ERROR_OUT_OF_MEMORY;
 				goto cleanup;
@@ -227,13 +257,47 @@ addZipToLoader(J9JavaVM * vm, const char * filename, J9ClassLoader * classLoader
 			if ((*env)->ExceptionCheck(env)) {
 				rc = CLS_ERROR_OUT_OF_MEMORY;
 			}
-	cleanup:
+cleanup:
 			(*env)->ExceptionClear(env);
-			(*env)->DeleteLocalRef(env, classLoaderRef);
-			(*env)->DeleteLocalRef(env, filenameString);
 			(*env)->DeleteLocalRef(env, classLoaderClass);
+			(*env)->DeleteLocalRef(env, filenameString);
+			(*env)->DeleteLocalRef(env, classLoaderRef);
 		}
 	}
 
 	return rc;
+}
+
+jclass
+getJimModules(J9VMThread *currentThread)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	jclass jimModules = vm->jimModules;
+	if (NULL == jimModules) {
+		JNIEnv *env = (JNIEnv*)currentThread;
+		jclass modulesClass = (*env)->FindClass(env, "jdk/internal/module/Modules");
+		if (NULL == modulesClass) {
+			(*env)->ExceptionClear(env);
+		} else {
+			jclass newRef = (*env)->NewGlobalRef(env, modulesClass);
+			jboolean deleteNewRef = JNI_FALSE;
+			/* Ensure only one global ref is kept for the cache */
+			omrthread_monitor_enter(vm->jclCacheMutex);
+			if (NULL == vm->jimModules) {
+				/* Cache still empty, stash this ref */
+				jimModules = newRef;
+				vm->jimModules = jimModules;
+			} else {
+				/* Another thread filled the cache, discard this ref and use the cached one */
+				jimModules = vm->jimModules;
+				deleteNewRef = JNI_TRUE;
+			}
+			omrthread_monitor_exit(vm->jclCacheMutex);
+			if (deleteNewRef) {
+				(*env)->DeleteGlobalRef(env, newRef);
+			}
+			(*env)->DeleteLocalRef(env, modulesClass);
+		}
+	}
+	return jimModules;
 }

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,7 @@ package com.ibm.jvm.dtfjview.commands.infocommands;
 
 import java.io.PrintStream;
 import java.lang.reflect.Modifier;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -284,15 +285,13 @@ public class InfoThreadCommand extends BaseJdmpviewCommand {
 	public void printRegisters(ImageThread it)
 	{
 		out.print("   registers:");
-		out.print("\n");
-		
 		int count = 0;
 		Iterator itImageRegister = it.getRegisters();
 		while (itImageRegister.hasNext()) {
 			if (count % 4 == 0) {
-				if (0 != count) out.print("\n");
-				out.print("    ");
+				out.print("\n ");
 			}
+			out.print("   ");
 			ImageRegister ir = (ImageRegister)itImageRegister.next();
 			printRegisterInfo(ir);
 			count++;
@@ -304,13 +303,24 @@ public class InfoThreadCommand extends BaseJdmpviewCommand {
 	{
 		out.print(Utils.padWithSpaces(ir.getName(), 6) + " = ");
 		try {
-			long registerValue = ir.getValue().longValue();
+			Number value = ir.getValue();
+			if (value instanceof BigInteger) {
+				BigInteger bigValue = (BigInteger) value;
+				int width = bigValue.bitLength();
+				if (width > 64) {
+					// round up to a multiple of 64 bits
+					int paddedBits = ((width - 1) | 63) + 1;
+					out.print("0x" + Utils.padWithZeroes(bigValue.toString(16), paddedBits / 4));
+					return;
+				}
+			}
+			long registerValue = value.longValue();
 			if (_pointerSize > 32) {
 				out.print("0x" + Utils.toFixedWidthHex(registerValue));
 			} else {
 				if (_is_zOS) { // Show high and low word separated by '_' as in IPCS etc
-					out.print("0x" + Utils.toFixedWidthHex((int)(registerValue >> 32)) + "_" + 
-							Utils.toFixedWidthHex((int)registerValue));
+					out.print("0x" + Utils.toFixedWidthHex((int)(registerValue >> 32))
+							 + "_" + Utils.toFixedWidthHex((int)registerValue));
 				} else {
 					out.print("0x" + Utils.toFixedWidthHex((int)registerValue));
 				}
@@ -318,7 +328,6 @@ public class InfoThreadCommand extends BaseJdmpviewCommand {
 		} catch (CorruptDataException e) {
 			out.print(Exceptions.getCorruptDataExceptionString());
 		}
-		out.print("   ");
 	}
 	
 	public void printStackSection(ImageSection is)
@@ -570,7 +579,7 @@ public class InfoThreadCommand extends BaseJdmpviewCommand {
 
 		out.print("    Priority:      ");
 		try {
-			Integer pri = new Integer(jt.getPriority());
+			Integer pri = Integer.valueOf(jt.getPriority());
 			out.print(pri.toString());
 		} catch (CorruptDataException e) {
 			out.print(Exceptions.getCorruptDataExceptionString());

@@ -1,0 +1,85 @@
+###############################################################################
+# Copyright (c) 2017, 2018 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+###############################################################################
+
+file:<built-in>
+
+# Ignore types which conflict with primitive or standard types.
+type:Byte
+type:byte
+
+# Ignore types that are troublesome or not required.
+type:__gnu*
+type:*__va_list*
+type:*vc_attributes*
+type:*<*
+
+# These types contain arrays of anonymous types (not yet supported by ddrgen).
+type:SCOPE_TABLE
+type:PSCOPE_TABLE
+type:_SCOPE_TABLE
+type:SCOPE_TABLE_AMD64
+type:PSCOPE_TABLE_AMD64
+type:_SCOPE_TABLE_AMD64
+type:pthreadlocinfo
+type:threadlocaleinfostruct
+
+# These types contain a field named 'longValue' which clashes with the method
+# inherited by the generated pointer type.
+type:PDH_FMT_COUNTERVALUE
+type:PPDH_FMT_COUNTERVALUE
+type:_PDH_FMT_COUNTERVALUE
+
+# These types contain bitfields with a base other than U32 (not yet supported by DDR).
+type:PSAPI_WORKING_SET_BLOCK
+type:_PSAPI_WORKING_SET_BLOCK
+type:PSAPI_WORKING_SET_INFORMATION
+type:_PSAPI_WORKING_SET_INFORMATION
+type:UNWIND_CODE
+type:PUNWIND_CODE
+type:_UNWIND_CODE
+type:UNWIND_INFO
+type:PUNWIND_INFO
+type:_UNWIND_INFO
+type:PSLIST_HEADER
+type:_SLIST_HEADER
+
+# Ignore one (or all) of sets of types whose names differ only in case
+# (so we don't try to create Java source files whose names differ only
+# in case which isn't possible with case-insensitive file-systems).
+type:ADDRINFOW
+type:BYTE
+type:IN_ADDR
+type:IN6_ADDR
+type:SIZE_T
+type:SOCKADDR
+type:SOCKADDR_IN
+type:SOCKADDR_IN6
+type:SOCKADDR_IN6_W2KSP1
+type:SOCKADDR_STORAGE
+type:SOCKADDR_STORAGE_XP
+type:UINT
+type:ULONG
+type:WSADATA
+
+# problem names on AIX
+type:Enum
+type:signed char

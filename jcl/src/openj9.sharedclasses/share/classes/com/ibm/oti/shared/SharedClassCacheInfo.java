@@ -2,7 +2,7 @@
 package com.ibm.oti.shared;
 
 /*******************************************************************************
- * Copyright (c) 2010, 2016 IBM Corp. and others
+ * Copyright (c) 2010, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,11 +46,12 @@ public class SharedClassCacheInfo {
 	 * Specifies a Java 8 cache. 
 	 */
 	static final public int JVMLEVEL_JAVA8 = 4;
+	/*[IF Sidecar19-SE]*/
 	/**
-	 * Specifies a Java 9 cache. 
+	 * Specifies a Java 9 cache.
 	 */
 	static final public int JVMLEVEL_JAVA9 = 5;
-
+	/*[ENDIF] Sidecar19-SE */
 	/**
 	 * Specifies a 32-bit cache.
 	 */
@@ -160,7 +161,10 @@ public class SharedClassCacheInfo {
 	}
 	
 	/**
-	 * Gets the JVM level for the shared class cache. 
+	 * Gets the JVM level for the shared class cache.  
+	/*[IF Java10] 
+	 * Starting from Java 10, the JVM LEVEL equals to the java version number on which the share class cache is created.
+	/*[ENDIF]
 	 *
 	 * @return		A JVMLEVEL constant.
 	 */					

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -97,14 +97,14 @@ testSCStoreWithBCITests(J9JavaVM* vm)
 		return TEST_ERROR;
 	}
 
-	vm->internalVMFunctions->internalAcquireVMAccess(vm->mainThread);
+	vm->internalVMFunctions->internalEnterVMFromJNI(vm->mainThread);
 	
 	rc |= test1(vm);
 	for (i = 0; i < sizeof(tests)/sizeof(TestInfo); i += 1) {
 		rc |= testRunner(vm, tests[i]);
 	}
 	
-	vm->internalVMFunctions->internalReleaseVMAccess(vm->mainThread);
+	vm->internalVMFunctions->internalExitVMToJNI(vm->mainThread);
 
 	j9tty_printf(PORTLIB, "%s: %s\n", testName, TEST_PASS==rc?"PASS":"FAIL");
 	if (rc == TEST_ERROR) {

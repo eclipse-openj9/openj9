@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2015 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -740,10 +740,8 @@ void
 SH_Manager::getNumItems(J9VMThread* currentThread, UDATA* nonStaleItems, UDATA* staleItems)
 {
 	if (_hashTable && _hashTableGetNumItemsDoFn) {
-		CountData countData;
-		
-		memset(&countData, 0, sizeof(CountData));
-		countData._cache = _cache;
+		CountData countData(_cache);
+
 		/* WARNING - currentThread can be NULL */
 		if (lockHashTable(currentThread, "getNumItems")) {
 			hashTableForEachDo(_hashTable, _hashTableGetNumItemsDoFn, &countData);

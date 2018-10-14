@@ -1,0 +1,506 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!--
+  Copyright (c) 2001, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<!-- #### RUN URLClassLoaderTests SUITE #### -->
+<suite id="Shared Classes URLClassLoaderTests Suite - Windows Configuration">
+
+	<!-- Used to set which mode the test cases are run in -->
+	<variable name="currentMode" value=" "/>
+
+	<!-- Set variables up -->
+	<variable name="JAVAC_DIR" value="$JAVA_HOME$$PATHSEP$bin"/>
+	<variable name="TMOUT" value="600" />
+	<variable name="NETUSEDIR" value=".$PATHSEP$FindStore$PATHSEP$sharedClassesResults" />
+
+	<!-- Our test modes for this suite --> 	
+	<if testVariable="SCMODE" testValue="210" resultVariable="SCCMD" resultValue="-Xshareclasses:persistent,controlDir=.,name="/>
+	<if testVariable="SCMODE" testValue="211" resultVariable="SCCMD" resultValue="-Xshareclasses:nonpersistent,controlDir=.,name="/>
+	
+			
+	<echo value=" "/>
+	<echo value="#######################################################"/>
+	<echo value="Running tests in mode $SCMODE$ with command line options: $currentMode$"/>
+	<echo value="#######################################################"/>
+	<echo value=" "/>
+	
+	<exec command="$JAVA_EXE$ -Xshareclasses:destroyAll" quiet="false"/>
+	<exec command="$JAVA_EXE$ $SCCMD$invalidCacheName,destroyAll" quiet="false"/>
+	
+	<test id="Sanity.BuildInitial" timeout="$TMOUT$" runPath=".">
+		<command>$RUN_SCRIPT$ .$PATHSEP$Sanity$PATHSEP$buildInitial$SCRIPT_SUFFIX$ $JAVAC_DIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">A.jar</output>
+		<output type="failure" caseSensitive="yes" regex="no">Usage:</output>
+		<output type="failure" caseSensitive="yes" regex="no">no such</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="Sanity.success" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$Sanity,expire=0 -Xscmx5M -cp .$PATHSEP$Sanity$PATHSEP$A.jar$CPDL$.$PATHSEP$Sanity$PATHSEP$ExtDir$PATHSEP$A_Ext.jar jnurlcldr.shared.sanity.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="Sanity.BuildVerify" timeout="$TMOUT$" runPath=".">
+		<command>$RUN_SCRIPT$ .$PATHSEP$Sanity$PATHSEP$buildVerify$SCRIPT_SUFFIX$ $JAVAC_DIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">A.jar</output>
+		<output type="failure" caseSensitive="yes" regex="no">Usage:</output>
+		<output type="failure" caseSensitive="yes" regex="no">no such</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="Sanity.verifySuccess" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$Sanity,noTimestampChecks -cp .$PATHSEP$Sanity$PATHSEP$A.jar$CPDL$.$PATHSEP$Sanity$PATHSEP$ExtDir$PATHSEP$A_Ext.jar jnurlcldr.shared.sanity.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="Sanity.verifyStale" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$Sanity -cp .$PATHSEP$Sanity$PATHSEP$A.jar$CPDL$.$PATHSEP$Sanity$PATHSEP$ExtDir$PATHSEP$A_Ext.jar jnurlcldr.shared.sanity.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">CACHED</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="FindStore.BuildInitial" timeout="$TMOUT$" runPath=".">
+		<command>$RUN_SCRIPT$ .$PATHSEP$FindStore$PATHSEP$buildInitial$SCRIPT_SUFFIX$ $JAVAC_DIR$ .$NETUSEDIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">A.jar</output>
+		<output type="failure" caseSensitive="yes" regex="no">Usage:</output>
+		<output type="failure" caseSensitive="yes" regex="no">no such</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="FindStore.StoreExplicit" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$FindStore,expire=0 -Xscmx5M -cp .$PATHSEP$FindStore$PATHSEP$Nothing.jar$CPDL$.$PATHSEP$FindStore$PATHSEP$A.jar$CPDL$.$PATHSEP$FindStore$PATHSEP$B.jar$CPDL$.$PATHSEP$FindStore$PATHSEP$C.jar$CPDL$.$PATHSEP$FindStore$PATHSEP$D.jar jnurlcldr.shared.findstore.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="FindStore.StoreRelative" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$FindStore -cp .$PATHSEP$FindStore$PATHSEP$E.jar$CPDL$.$PATHSEP$FindStore$PATHSEP$Nothing.jar$CPDL$.$PATHSEP$FindStore$PATHSEP$F.jar$CPDL$.$PATHSEP$FindStore$PATHSEP$G.jar$CPDL$.$PATHSEP$FindStore$PATHSEP$H.jar jnurlcldr.shared.findstore.E_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="FindStore.StoreNetUse" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$FindStore -cp $NETUSEDIR$$PATHSEP$I.jar$CPDL$$NETUSEDIR$$PATHSEP$J.jar$CPDL$$NETUSEDIR$$PATHSEP$K.jar$CPDL$.$PATHSEP$FindStore$PATHSEP$Nothing.jar$CPDL$$NETUSEDIR$$PATHSEP$L.jar jnurlcldr.shared.findstore.I_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="FindStore.StoreClassfile" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$FindStore -cp .$PATHSEP$FindStore$PATHSEP$M_Classes$CPDL$.$PATHSEP$FindStore$PATHSEP$N_Classes$CPDL$.$PATHSEP$FindStore$PATHSEP$O_Classes$CPDL$.$PATHSEP$FindStore$PATHSEP$P_Classes$CPDL$.$PATHSEP$FindStore$PATHSEP$Nothing.jar jnurlcldr.shared.findstore.M_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="FindStore.BuildVerify" timeout="$TMOUT$" runPath=".">
+		<command>$RUN_SCRIPT$ .$PATHSEP$FindStore$PATHSEP$buildVerify$SCRIPT_SUFFIX$ $JAVAC_DIR$ ..$PATHSEP$.$NETUSEDIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">A.jar</output>
+		<output type="failure" caseSensitive="no" regex="no">0 file(s) copied</output>
+		<output type="failure" caseSensitive="yes" regex="no">Usage:</output>
+		<output type="failure" caseSensitive="yes" regex="no">no such</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="FindStore.FindExplicit" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$FindStore,noTimestampChecks -cp .$PATHSEP$FindStore$PATHSEP$Nothing.jar$CPDL$.$PATHSEP$FindStore$PATHSEP$A.jar$CPDL$.$PATHSEP$FindStore$PATHSEP$B.jar$CPDL$.$PATHSEP$FindStore$PATHSEP$C.jar$CPDL$.$PATHSEP$FindStore$PATHSEP$D.jar jnurlcldr.shared.findstore.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="FindStore.FindRelative" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$FindStore,noTimestampChecks -cp .$PATHSEP$FindStore$PATHSEP$E.jar$CPDL$.$PATHSEP$FindStore$PATHSEP$Nothing.jar$CPDL$.$PATHSEP$FindStore$PATHSEP$F.jar$CPDL$.$PATHSEP$FindStore$PATHSEP$G.jar$CPDL$.$PATHSEP$FindStore$PATHSEP$H.jar jnurlcldr.shared.findstore.E_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="FindStore.FindNetUse" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$FindStore,noTimestampChecks -cp $NETUSEDIR$$PATHSEP$I.jar$CPDL$$NETUSEDIR$$PATHSEP$J.jar$CPDL$$NETUSEDIR$$PATHSEP$K.jar$CPDL$.$PATHSEP$FindStore$PATHSEP$Nothing.jar$CPDL$$NETUSEDIR$$PATHSEP$L.jar jnurlcldr.shared.findstore.I_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="FindStore.FindClassfile" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$FindStore,noTimestampChecks -cp .$PATHSEP$FindStore$PATHSEP$M_Classes$CPDL$.$PATHSEP$FindStore$PATHSEP$N_Classes$CPDL$.$PATHSEP$FindStore$PATHSEP$O_Classes$CPDL$.$PATHSEP$FindStore$PATHSEP$P_Classes$CPDL$.$PATHSEP$FindStore$PATHSEP$Nothing.jar jnurlcldr.shared.findstore.M_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="FindStore.FindDiffcpExplicit" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$FindStore,noTimestampChecks -cp .$PATHSEP$FindStore$PATHSEP$A.jar$CPDL$.$PATHSEP$FindStore$PATHSEP$B.jar$CPDL$.$PATHSEP$FindStore$PATHSEP$C.jar$CPDL$.$PATHSEP$FindStore$PATHSEP$D.jar jnurlcldr.shared.findstore.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="FindStore.FindDiffcpRelative" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$FindStore,noTimestampChecks -cp .$PATHSEP$FindStore$PATHSEP$E.jar$CPDL$.$PATHSEP$FindStore$PATHSEP$F.jar$CPDL$.$PATHSEP$FindStore$PATHSEP$G.jar$CPDL$.$PATHSEP$FindStore$PATHSEP$H.jar jnurlcldr.shared.findstore.E_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="FindStore.FindDiffcpNetUse" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$FindStore,noTimestampChecks -cp $NETUSEDIR$$PATHSEP$I.jar$CPDL$$NETUSEDIR$$PATHSEP$J.jar$CPDL$$NETUSEDIR$$PATHSEP$K.jar$CPDL$$NETUSEDIR$$PATHSEP$L.jar jnurlcldr.shared.findstore.I_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="FindStore.FindDiffcpClassfile" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$FindStore,noTimestampChecks -cp .$PATHSEP$FindStore$PATHSEP$M_Classes$CPDL$.$PATHSEP$FindStore$PATHSEP$N_Classes$CPDL$.$PATHSEP$FindStore$PATHSEP$O_Classes$CPDL$.$PATHSEP$FindStore$PATHSEP$P_Classes jnurlcldr.shared.findstore.M_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="JarExtensionsTests.BuildInitial1" timeout="$TMOUT$" runPath=".">
+		<command>$RUN_SCRIPT$ .$PATHSEP$JarExt$PATHSEP$buildInitial$SCRIPT_SUFFIX$ $JAVAC_DIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">A.jar</output>
+		<output type="failure" caseSensitive="yes" regex="no">Usage:</output>
+		<output type="failure" caseSensitive="yes" regex="no">no such</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="JarExtensionsTests.SingleJarInManifest" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$JarExtensionTests,expire=0 -Xscmx5M -cp .$PATHSEP$JarExt$PATHSEP$A.jar$CPDL$.$PATHSEP$JarExt$PATHSEP$B.jar$CPDL$.$PATHSEP$JarExt$PATHSEP$D.jar jnurlcldr.shared.jarexttests.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">PASSED</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="JarExtensionsTests.MultipleJarsInManifests" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$JarExtensionTests -cp .$PATHSEP$JarExt$PATHSEP$E.jar$CPDL$.$PATHSEP$JarExt$PATHSEP$F.jar$CPDL$.$PATHSEP$JarExt$PATHSEP$H.jar jnurlcldr.shared.jarexttests.E_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">PASSED</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="JarExtensionsTests.BuildVerify1" timeout="$TMOUT$" runPath=".">
+		<command>$RUN_SCRIPT$ .$PATHSEP$JarExt$PATHSEP$buildVerify$SCRIPT_SUFFIX$ $JAVAC_DIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">A.jar</output>
+		<output type="failure" caseSensitive="yes" regex="no">Usage:</output>
+		<output type="failure" caseSensitive="yes" regex="no">no such</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="JarExtensionsTests.SingleJarInManifest.Verify1" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$JarExtensionTests,noTimestampChecks -cp .$PATHSEP$JarExt$PATHSEP$A.jar$CPDL$.$PATHSEP$JarExt$PATHSEP$B.jar$CPDL$.$PATHSEP$JarExt$PATHSEP$D.jar jnurlcldr.shared.jarexttests.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">CACHED</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="JarExtensionsTests.SingleJarInManifest.Verify2" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$JarExtensionTests -cp .$PATHSEP$JarExt$PATHSEP$A.jar$CPDL$.$PATHSEP$JarExt$PATHSEP$B.jar$CPDL$.$PATHSEP$JarExt$PATHSEP$D.jar jnurlcldr.shared.jarexttests.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">CACHED</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="JarExtensionsTests.MultipleJarsInManifests.Verify1" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$JarExtensionTests,noTimestampChecks -cp .$PATHSEP$JarExt$PATHSEP$E.jar$CPDL$.$PATHSEP$JarExt$PATHSEP$F.jar$CPDL$.$PATHSEP$JarExt$PATHSEP$H.jar jnurlcldr.shared.jarexttests.E_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">CACHED</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="JarExtensionsTests.MultipleJarsInManifests.Verify2" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$JarExtensionTests -cp .$PATHSEP$JarExt$PATHSEP$E.jar$CPDL$.$PATHSEP$JarExt$PATHSEP$F.jar$CPDL$.$PATHSEP$JarExt$PATHSEP$H.jar jnurlcldr.shared.jarexttests.E_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">CACHED</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="JarExtensionsTests.BuildInitial2" timeout="$TMOUT$" runPath=".">
+		<command>$RUN_SCRIPT$ .$PATHSEP$JarExt$PATHSEP$buildInitial$SCRIPT_SUFFIX$ $JAVAC_DIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">A.jar</output>
+		<output type="failure" caseSensitive="yes" regex="no">Usage:</output>
+		<output type="failure" caseSensitive="yes" regex="no">no such</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="JarExtensionsTests.CreateJarIndexes" timeout="$TMOUT$" runPath=".">
+		<command>$RUN_SCRIPT$ .$PATHSEP$JarExt$PATHSEP$buildJarIndexes$SCRIPT_SUFFIX$ $JAVAC_DIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">B.jar</output>
+		<output type="failure" caseSensitive="yes" regex="no">Usage:</output>
+		<output type="failure" caseSensitive="yes" regex="no">no such</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="JarExtensionsTests.SingleJarInManifestWithIndex" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$JarExtensionTests2,expire=0 -Xscmx5M -cp .$PATHSEP$JarExt$PATHSEP$A.jar$CPDL$.$PATHSEP$JarExt$PATHSEP$B.jar$CPDL$.$PATHSEP$JarExt$PATHSEP$D.jar jnurlcldr.shared.jarexttests.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">PASSED</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="JarExtensionsTests.MultipleJarsInManifestsWithIndex" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$JarExtensionTests2 -cp .$PATHSEP$JarExt$PATHSEP$E.jar$CPDL$.$PATHSEP$JarExt$PATHSEP$F.jar$CPDL$.$PATHSEP$JarExt$PATHSEP$H.jar jnurlcldr.shared.jarexttests.E_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">PASSED</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="JarExtensionsTests.BuildVerify2" timeout="$TMOUT$" runPath=".">
+		<command>$RUN_SCRIPT$ .$PATHSEP$JarExt$PATHSEP$buildVerify$SCRIPT_SUFFIX$ $JAVAC_DIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">A.jar</output>
+		<output type="failure" caseSensitive="yes" regex="no">Usage:</output>
+		<output type="failure" caseSensitive="yes" regex="no">no such</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="JarExtensionsTests.CreateJarIndexes" timeout="$TMOUT$" runPath=".">
+		<command>$RUN_SCRIPT$ .$PATHSEP$JarExt$PATHSEP$buildJarIndexes$SCRIPT_SUFFIX$ $JAVAC_DIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">B.jar</output>
+		<output type="failure" caseSensitive="yes" regex="no">Usage:</output>
+		<output type="failure" caseSensitive="yes" regex="no">no such</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="JarExtensionsTests.SingleJarInManifestWithIndex.Verify1" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$JarExtensionTests2,noTimestampChecks -cp .$PATHSEP$JarExt$PATHSEP$A.jar$CPDL$.$PATHSEP$JarExt$PATHSEP$B.jar$CPDL$.$PATHSEP$JarExt$PATHSEP$D.jar jnurlcldr.shared.jarexttests.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">CACHED</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="JarExtensionsTests.SingleJarInManifestWithIndex.Verify2" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$JarExtensionTests2 -cp .$PATHSEP$JarExt$PATHSEP$A.jar$CPDL$.$PATHSEP$JarExt$PATHSEP$B.jar$CPDL$.$PATHSEP$JarExt$PATHSEP$D.jar jnurlcldr.shared.jarexttests.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">CACHED</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="JarExtensionsTests.MultipleJarsInManifestsWithIndex.Verify1" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$JarExtensionTests2,noTimestampChecks -cp .$PATHSEP$JarExt$PATHSEP$E.jar$CPDL$.$PATHSEP$JarExt$PATHSEP$F.jar$CPDL$.$PATHSEP$JarExt$PATHSEP$H.jar jnurlcldr.shared.jarexttests.E_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">CACHED</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="JarExtensionsTests.MultipleJarsInManifestsWithIndex.Verify2" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$JarExtensionTests2 -cp .$PATHSEP$JarExt$PATHSEP$E.jar$CPDL$.$PATHSEP$JarExt$PATHSEP$F.jar$CPDL$.$PATHSEP$JarExt$PATHSEP$H.jar jnurlcldr.shared.jarexttests.E_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">CACHED</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="SignedSealed.BuildInitial1" timeout="$TMOUT$" runPath=".">
+		<command>$RUN_SCRIPT$ .$PATHSEP$SignedSealed$PATHSEP$buildInitial1$SCRIPT_SUFFIX$ $JAVAC_DIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">AB.jar</output>
+		<output type="failure" caseSensitive="yes" regex="no">Usage:</output>
+		<output type="failure" caseSensitive="yes" regex="no">no such</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="Sealed.success" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$SignedSealed1,expire=0 -Xscmx5M -cp .$PATHSEP$SignedSealed$PATHSEP$AB.jar$CPDL$.$PATHSEP$SignedSealed$PATHSEP$B1.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="Sealed.failure1" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$SignedSealed2 -Xscmx5M -cp .$PATHSEP$SignedSealed$PATHSEP$B1.jar$CPDL$.$PATHSEP$SignedSealed$PATHSEP$AB.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">SecurityException</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="Sealed.failure2" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$SignedSealed3 -Xscmx5M -cp .$PATHSEP$SignedSealed$PATHSEP$B2.jar$CPDL$.$PATHSEP$SignedSealed$PATHSEP$AB.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">SecurityException</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="Sealed.verify1" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$SignedSealed2 -cp .$PATHSEP$SignedSealed$PATHSEP$B1.jar$CPDL$.$PATHSEP$SignedSealed$PATHSEP$AB.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">SecurityException</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="Sealed.verify2" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$SignedSealed3 -cp .$PATHSEP$SignedSealed$PATHSEP$B2.jar$CPDL$.$PATHSEP$SignedSealed$PATHSEP$AB.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">SecurityException</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="SignedSealed.BuildInitial2" timeout="$TMOUT$" runPath=".">
+		<command>$RUN_SCRIPT$ .$PATHSEP$SignedSealed$PATHSEP$buildInitial2$SCRIPT_SUFFIX$ $JAVAC_DIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">sA.jar</output>
+		<output type="failure" caseSensitive="yes" regex="no">Usage:</output>
+		<output type="failure" caseSensitive="yes" regex="no">no such</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="Signed.success1Store" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$SignedSealed2,expire=0 -Xscmx5M -cp .$PATHSEP$SignedSealed$PATHSEP$sA.jar$CPDL$.$PATHSEP$SignedSealed$PATHSEP$sB.jar$CPDL$.$PATHSEP$SignedSealed$PATHSEP$sC.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="Signed.success1Find" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$SignedSealed2 -cp .$PATHSEP$SignedSealed$PATHSEP$sA.jar$CPDL$.$PATHSEP$SignedSealed$PATHSEP$sB.jar$CPDL$.$PATHSEP$SignedSealed$PATHSEP$sC.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="Signed.success2Store" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$SignedSealed2 -cp .$PATHSEP$SignedSealed$PATHSEP$sA.jar$CPDL$.$PATHSEP$SignedSealed$PATHSEP$sB.jar$CPDL$.$PATHSEP$SignedSealed$PATHSEP$C.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="Signed.success2Find" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$SignedSealed2 -cp .$PATHSEP$SignedSealed$PATHSEP$sA.jar$CPDL$.$PATHSEP$SignedSealed$PATHSEP$sB.jar$CPDL$.$PATHSEP$SignedSealed$PATHSEP$C.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="Signed.success3Store" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$SignedSealed2 -cp .$PATHSEP$SignedSealed$PATHSEP$A.jar$CPDL$.$PATHSEP$SignedSealed$PATHSEP$B.jar$CPDL$.$PATHSEP$SignedSealed$PATHSEP$sC.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="Signed.success3Find" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$SignedSealed2 -cp .$PATHSEP$SignedSealed$PATHSEP$A.jar$CPDL$.$PATHSEP$SignedSealed$PATHSEP$B.jar$CPDL$.$PATHSEP$SignedSealed$PATHSEP$sC.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="Signed.failure1Store" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$SignedSealed2 -cp .$PATHSEP$SignedSealed$PATHSEP$A.jar$CPDL$.$PATHSEP$SignedSealed$PATHSEP$sB.jar$CPDL$.$PATHSEP$SignedSealed$PATHSEP$C.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">SecurityException</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="Signed.failure1Find" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$SignedSealed2 -cp .$PATHSEP$SignedSealed$PATHSEP$A.jar$CPDL$.$PATHSEP$SignedSealed$PATHSEP$sB.jar$CPDL$.$PATHSEP$SignedSealed$PATHSEP$C.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">SecurityException</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="Signed.failure2Store" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$SignedSealed2 -cp .$PATHSEP$SignedSealed$PATHSEP$sA.jar$CPDL$.$PATHSEP$SignedSealed$PATHSEP$B.jar$CPDL$.$PATHSEP$SignedSealed$PATHSEP$C.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">SecurityException</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="Signed.failure2Find" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$SignedSealed2 -cp .$PATHSEP$SignedSealed$PATHSEP$sA.jar$CPDL$.$PATHSEP$SignedSealed$PATHSEP$B.jar$CPDL$.$PATHSEP$SignedSealed$PATHSEP$C.jar jnurlcldr.shared.signedsealed.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">SecurityException</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="NonExistJarTests.BuildInitial1" timeout="$TMOUT$" runPath=".">
+		<command>$RUN_SCRIPT$ .$PATHSEP$NonExistJar$PATHSEP$buildInitial1$SCRIPT_SUFFIX$ $JAVAC_DIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">A.jar</output>
+		<output type="failure" caseSensitive="yes" regex="no">Usage:</output>
+		<output type="failure" caseSensitive="yes" regex="no">no such</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="NonExistJarTests.StoreWithB" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$NonExist1,expire=0 -Xscmx5M -cp .$PATHSEP$NonExistJar$PATHSEP$A.jar$CPDL$.$PATHSEP$NonExistJar$PATHSEP$B.jar$CPDL$.$PATHSEP$NonExistJar$PATHSEP$C.jar jnurlcldr.shared.nonexistjar.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">ROGUE</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="NonExistJarTests.CheckForError1" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$NonExist1 -cp .$PATHSEP$NonExistJar$PATHSEP$A.jar$CPDL$.$PATHSEP$NonExistJar$PATHSEP$C.jar jnurlcldr.shared.nonexistjar.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">NoClassDefFoundError</output>
+		<output type="failure" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+	</test>
+	<test id="NonExistJarTests.BuildInitial2" timeout="$TMOUT$" runPath=".">
+		<command>$RUN_SCRIPT$ .$PATHSEP$NonExistJar$PATHSEP$buildInitial2$SCRIPT_SUFFIX$ $JAVAC_DIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">A.jar</output>
+		<output type="failure" caseSensitive="yes" regex="no">Usage:</output>
+		<output type="failure" caseSensitive="yes" regex="no">no such</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+	<test id="NonExistJarTests.StoreWithRogueB" timeout="$TMOUT$" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SCCMD$NonExist2,expire=0 -Xscmx5M -cp .$PATHSEP$NonExistJar$PATHSEP$A.jar$CPDL$.$PATHSEP$NonExistJar$PATHSEP$B.jar$CPDL$.$PATHSEP$NonExistJar$PATHSEP$BC.jar jnurlcldr.shared.nonexistjar.A_Main ROGUE</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">ROGUE</output>
+		<output type="failure" caseSensitive="yes" regex="no">SETUP ERROR</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+	</test>
+
+	<exec command="$JAVA_EXE$ $SCCMD$invalidCacheName,destroyAll" quiet="false"/>
+	<exec command="$JAVA_EXE$ -Xshareclasses:destroyAll" quiet="false"/>
+	
+</suite>

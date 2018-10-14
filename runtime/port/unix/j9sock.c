@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,9 +47,9 @@
 #include <arpa/inet.h>
 #endif
 
-#if defined(J9ZTPF)
+#if defined(J9ZTPF) || defined(OSX)
 #undef GLIBC_R
-#endif /* defined(J9ZTPF) */
+#endif /* defined(J9ZTPF) || defined(OSX) */
 
 #if defined(J9ZOS390)
 #include "atoe.h"
@@ -57,8 +57,10 @@
 
 #if defined(LINUX) || defined(OSX)
 #include <poll.h>
+#if defined(LINUX)
 #define IPV6_FLOWINFO_SEND      33
 #define HAS_RTNETLINK 1
+#endif /* defined(LINUX) */
 #endif /* defined(LINUX) || defined(OSX) */
 
 #if defined(HAS_RTNETLINK)
@@ -1225,14 +1227,14 @@ j9sock_getaddrinfo_name(struct J9PortLibrary *portLibrary, j9addrinfo_t handle, 
 int32_t
 j9sock_gethostbyaddr(struct J9PortLibrary *portLibrary, char *addr, int32_t length, int32_t type, j9hostent_t handle)
 {
-#if defined(J9ZTPF)
+#if defined(J9ZTPF) || defined(OSX) /* TODO: OSX: Revisit this after java -version works */ 
     int herr = NO_RECOVERY;
     OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 
     J9SOCKDEBUGH("<gethostbyaddr failed, err=%d>\n", herr);
     return omrerror_set_last_error(herr, findHostError(herr));
 
-#else /* defined(J9ZTPF) */
+#else /* defined(J9ZTPF) || defined(OX) */
 
 #if !HOSTENT_DATA_R
 	OSHOSTENT *result;
@@ -1347,6 +1349,10 @@ j9sock_gethostbyaddr(struct J9PortLibrary *portLibrary, char *addr, int32_t leng
 int32_t
 j9sock_gethostbyname(struct J9PortLibrary *portLibrary, const char *name, j9hostent_t handle)
 {
+#if defined(OSX) /* TODO: OSX: Revisit this after java -version works */
+	return -1;
+#else /* OSX */
+
 #if !HOSTENT_DATA_R
 	OSHOSTENT *result;
 #endif
@@ -1440,6 +1446,7 @@ j9sock_gethostbyname(struct J9PortLibrary *portLibrary, const char *name, j9host
 #undef hostentBuffer
 
 	return 0;
+#endif /* !OSX */
 }
 
 
@@ -1494,11 +1501,11 @@ j9sock_getnameinfo(struct J9PortLibrary *portLibrary, j9sockaddr_t in_addr, int3
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 	/* On z/TPF we don't support this option of returning the host name from the in_addr */
-#if defined(J9ZTPF)
+#if defined(J9ZTPF) || defined(OSX) /* TODO: OSX: Revisit this after java -version works */
 	int herr = NO_RECOVERY;
 	J9SOCKDEBUGH( "<gethostbyaddr failed, err=%d>\n", herr);
 	return omrerror_set_last_error(herr, findHostError(herr));
-#else /* defined(J9ZTPF) */
+#else /* defined(J9ZTPF) || defined(OSX) */
 /* If we have the IPv6 functions available we will call them, otherwise we'll call the IPv4 function */
 #ifdef IPv6_FUNCTION_SUPPORT
 	int rc = 0;
@@ -1850,8 +1857,8 @@ j9sock_getopt_sockaddr(struct J9PortLibrary *portLibrary, j9socket_t socketP, in
 
 	/* if IPv4 the OS returns in_addr, if IPv6, value of interface index is returned */
 	typedef union byte_or_int {
-		uint8_t byte;
-		uint32_t integer;
+		uint8_t byte_val;
+		uint32_t integer_val;
 	} value;
 	value val;
 	socklen_t optlen = sizeof(val);
@@ -1881,13 +1888,13 @@ j9sock_getopt_sockaddr(struct J9PortLibrary *portLibrary, j9socket_t socketP, in
 	if (J9ADDR_FAMILY_AFINET6 == portableFamily) {
 		if (optlen == sizeof(uint8_t)) {
 			/* lookup the address with the interface index */
-			int32_t result = lookupIPv6AddressFromIndex(portLibrary, val.byte, (j9sockaddr_t) sockaddr);
+			int32_t result = lookupIPv6AddressFromIndex(portLibrary, val.byte_val, (j9sockaddr_t) sockaddr);
 			if (0 != result){
 				return result;
 			}
 		} else if (optlen == sizeof(struct in_addr)){
 			/* if optlen is 4, address is IPv4 */
-			sockaddr->sin_addr.s_addr = val.integer;
+			sockaddr->sin_addr.s_addr = val.integer_val;
 		} else {
 			Trc_PRT_sock_j9sock_getopt_sockaddr_address_length_invalid_Exit(portableFamily);
 			return J9PORT_ERROR_SOCKET_OPTARGSINVALID;
@@ -1895,7 +1902,7 @@ j9sock_getopt_sockaddr(struct J9PortLibrary *portLibrary, j9socket_t socketP, in
 	} else if (J9ADDR_FAMILY_AFINET4 == portableFamily) {
 		/* portableFamily is AFINET4 when preferIPv4Stack=true */
 		if (optlen == sizeof(struct in_addr)) {
-			sockaddr->sin_addr.s_addr = val.integer;
+			sockaddr->sin_addr.s_addr = val.integer_val;
 		} else {
 			Trc_PRT_sock_j9sock_getopt_sockaddr_address_length_invalid_Exit(portableFamily);
 			return J9PORT_ERROR_SOCKET_OPTARGSINVALID;
@@ -2417,7 +2424,7 @@ j9sock_select(struct J9PortLibrary *portLibrary, int32_t nfds, j9fdset_t readfd,
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 	int32_t rc = 0;
-#if !defined(LINUX) && !defined(OSX)	
+#if !defined(LINUX) && !defined(OSX)
 	int32_t result = 0;
 #endif /* !defined(LINUX) && !defined(OSX) */
 

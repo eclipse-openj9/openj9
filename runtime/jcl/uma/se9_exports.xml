@@ -1,5 +1,5 @@
 <!-- 
-	Copyright (c) 2016, 2017 IBM Corp. and others
+	Copyright (c) 2016, 2018 IBM Corp. and others
 	
 	This program and the accompanying materials are made available under
 	the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,9 +20,6 @@
 	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <exports group="se9">
-	<export name="Java_java_lang_Class_getNestHostImpl">
-		<include-if condition="spec.flags.opt_valhallaNestmates" />
-	</export>
 	<export name="Java_java_lang_invoke_FieldVarHandle_lookupField" />
 	<export name="Java_java_lang_invoke_FieldVarHandle_unreflectField" />
 	<export name="Java_java_lang_invoke_VarHandle_get" />
@@ -34,23 +31,35 @@
 	<export name="Java_java_lang_invoke_VarHandle_getAcquire" />
 	<export name="Java_java_lang_invoke_VarHandle_setRelease" />
 	<export name="Java_java_lang_invoke_VarHandle_compareAndSet" />
-	<export name="Java_java_lang_invoke_VarHandle_compareAndExchangeVolatile" />
+	<export name="Java_java_lang_invoke_VarHandle_compareAndExchange" />
 	<export name="Java_java_lang_invoke_VarHandle_compareAndExchangeAcquire" />
 	<export name="Java_java_lang_invoke_VarHandle_compareAndExchangeRelease" />
 	<export name="Java_java_lang_invoke_VarHandle_weakCompareAndSet" />
 	<export name="Java_java_lang_invoke_VarHandle_weakCompareAndSetAcquire" />
 	<export name="Java_java_lang_invoke_VarHandle_weakCompareAndSetRelease" />
+	<export name="Java_java_lang_invoke_VarHandle_weakCompareAndSetPlain" />
 	<export name="Java_java_lang_invoke_VarHandle_getAndSet" />
+	<export name="Java_java_lang_invoke_VarHandle_getAndSetAcquire" />
+	<export name="Java_java_lang_invoke_VarHandle_getAndSetRelease" />
 	<export name="Java_java_lang_invoke_VarHandle_getAndAdd" />
+	<export name="Java_java_lang_invoke_VarHandle_getAndAddAcquire" />
+	<export name="Java_java_lang_invoke_VarHandle_getAndAddRelease" />
+	<export name="Java_java_lang_invoke_VarHandle_getAndBitwiseAnd" />
+	<export name="Java_java_lang_invoke_VarHandle_getAndBitwiseAndAcquire" />
+	<export name="Java_java_lang_invoke_VarHandle_getAndBitwiseAndRelease" />
+	<export name="Java_java_lang_invoke_VarHandle_getAndBitwiseOr" />
+	<export name="Java_java_lang_invoke_VarHandle_getAndBitwiseOrAcquire" />
+	<export name="Java_java_lang_invoke_VarHandle_getAndBitwiseOrRelease" />
+	<export name="Java_java_lang_invoke_VarHandle_getAndBitwiseXor" />
+	<export name="Java_java_lang_invoke_VarHandle_getAndBitwiseXorAcquire" />
+	<export name="Java_java_lang_invoke_VarHandle_getAndBitwiseXorRelease" />
 	<export name="Java_java_lang_invoke_VarHandle_addAndGet" />
 	<export name="Java_jdk_internal_reflect_ConstantPool_getClassRefIndexAt0" />
 	<export name="Java_jdk_internal_reflect_ConstantPool_getNameAndTypeRefIndexAt0" />
 	<export name="Java_jdk_internal_reflect_ConstantPool_getNameAndTypeRefInfoAt0" />
 	<export name="Java_jdk_internal_reflect_ConstantPool_getTagAt0" />
-	<export name="Java_java_lang_System_startSNMPAgent" />
 	<export name="Java_java_lang_StackWalker_walkWrapperImpl" />
 	<export name="Java_java_lang_StackWalker_getImpl" />
-	<export name="Java_java_lang_ref_Reference_waitForReferenceProcessingImpl" />
 	<export name="Java_java_lang_invoke_MethodHandles_findNativeAddress">
 		<include-if condition="spec.flags.opt_panama" />
 	</export>

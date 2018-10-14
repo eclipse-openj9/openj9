@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,8 +42,9 @@ defineClassCommon(JNIEnv *env, jobject classLoaderObject,
 	J9TranslationBufferSet *dynFuncs;
 	J9ClassLoader *classLoader;
 	UDATA retried = FALSE;
-	UDATA utf8Length;
-	U_8 *utf8Name;
+	UDATA utf8Length = 0;
+	char utf8NameStackBuffer[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
+	U_8 *utf8Name = NULL;
 	U_8 *classBytes = NULL;
 	J9Class *clazz = NULL;
 	jclass result;
@@ -68,7 +69,7 @@ defineClassCommon(JNIEnv *env, jobject classLoaderObject,
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	isContiguousClassBytes = J9ISCONTIGUOUSARRAY(vm, *(J9IndexableObject **)classRep);
 	if (!isContiguousClassBytes) {
-		vmFuncs->internalReleaseVMAccess(currentThread);
+		vmFuncs->internalExitVMToJNI(currentThread);
 		/* Make a "flat" copy of classRep */
 		if (length < 0) {
 			throwNewIndexOutOfBoundsException(env, NULL);
@@ -76,7 +77,7 @@ defineClassCommon(JNIEnv *env, jobject classLoaderObject,
 		}
 		classBytes = j9mem_allocate_memory(length, J9MEM_CATEGORY_CLASSES);
 		if (classBytes == NULL) {
-			throwNativeOOMError(env, 0, 0);
+			vmFuncs->throwNativeOOMError(env, 0, 0);
 			return NULL;
 		}
 		(*env)->GetByteArrayRegion(env, classRep, offset, length, (jbyte *)classBytes);
@@ -88,21 +89,11 @@ defineClassCommon(JNIEnv *env, jobject classLoaderObject,
 	}
 
 	/* Allocate and initialize a UTF8 copy of the Unicode class-name */
-	if (className == NULL) {
-		utf8Length = 0;
-		utf8Name = NULL;
-	} else {
-		utf8Length = vmFuncs->getStringUTF8Length(currentThread, J9_JNI_UNWRAP_REFERENCE(className));
-		/* For now, use malloc, but this should use stack allocation for short class-names */
-		utf8Name = j9mem_allocate_memory(utf8Length+1, J9MEM_CATEGORY_CLASSES);
-		if (utf8Name == NULL) {
+	if (NULL != className) {
+		utf8Name = (U_8*)vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, J9_JNI_UNWRAP_REFERENCE(className), J9_STR_NULL_TERMINATE_RESULT | J9_STR_XLAT, "", 0, utf8NameStackBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &utf8Length);
+
+		if (NULL == utf8Name) {
 			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
-			goto done;
-		}
-		if (UDATA_MAX == vmFuncs->copyStringToUTF8Helper(
-			currentThread, J9_JNI_UNWRAP_REFERENCE(className), TRUE, J9_STR_XLAT, utf8Name, utf8Length + 1)
-		) {
-			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
 			goto done;
 		}
 	}
@@ -218,9 +209,11 @@ done:
 			
 	result = vmFuncs->j9jni_createLocalRef(env, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
 
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 
-	j9mem_free_memory(utf8Name);
+	if ((U_8*)utf8NameStackBuffer != utf8Name) {
+		j9mem_free_memory(utf8Name);
+	}
 
 	if (!isContiguousClassBytes) {
 		j9mem_free_memory(classBytes);

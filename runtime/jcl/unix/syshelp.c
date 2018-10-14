@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -240,15 +240,11 @@ void mapLibraryToPlatformName(const char *inPath, char *outPath) {
 #else
 	strcpy(outPath, "lib");
 	strcat(outPath,inPath);
-#ifdef HP720
-	strcat(outPath, ".sl");
-#else
-#ifdef AIXPPC
+#if defined(AIXPPC)
 	strcat(outPath, ".a");
-#else
-	strcat(outPath, ".so");
-#endif
-#endif
+#else /* AIXPPC */
+	strcat(outPath, J9PORT_LIBRARY_SUFFIX);
+#endif /* AIXPPC */
 #endif
 }
 
@@ -256,18 +252,22 @@ void mapLibraryToPlatformName(const char *inPath, char *outPath) {
 char *getPlatformFileEncoding(JNIEnv * env, char *codepageProp, int propSize, int encodingType)
 {
 #if defined(J9ZTPF)
-    return "ISO8859_1";
+	return "ISO8859_1";
 #endif /* defined(J9ZTPF) */
-	PORT_ACCESS_FROM_ENV(env);
-	char *codepage;
-	int i, nameIndex;
+	char *codepage = NULL;
+	int i = 0;
+	int nameIndex = 0;
 #if defined(LINUX)
-    IDATA result;
-    char langProp[24], *ctype;
-#endif
+	IDATA result = 0;
+	char langProp[24] = {0};
+	char *ctype = NULL;
+	PORT_ACCESS_FROM_ENV(env);
+#endif /* defined(LINUX) */
 
 	/* Called with codepageProp == NULL to initialize the locale */
-	if (!codepageProp) return NULL;
+	if (NULL == codepageProp) {
+		return NULL;
+	}
 
 #ifdef LINUX
 	/*[PR 104520] Return EUC_JP when LC_CTYPE is not set, and the LANG environment variable is "ja" */

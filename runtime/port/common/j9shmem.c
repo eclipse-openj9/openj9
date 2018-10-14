@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -331,14 +331,14 @@ j9shmem_handle_stat(struct J9PortLibrary *portLibrary, struct j9shmem_handle *ha
  * 
  * @param[in] portLibrary The port library
  * @param[in] ctrlDirName The name of the control directory, ignored if cacheDirName is set
- * @param[in] appendBaseDir Indicates if the J9SH_BASEDIR should be appended
+ * @param[in] flags extra flags passed in
  * @param[out] buffer Pointer to a buffer to hold the returned path
  * @param[in] length the length of the buffer
  *
  * Returns -1 for error, >=0 for success
  */
 intptr_t
-j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, BOOLEAN appendBaseDir, char* buffer, uintptr_t length)
+j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint32_t flags, char* buffer, uintptr_t length)
 {
 	return -1;
 }

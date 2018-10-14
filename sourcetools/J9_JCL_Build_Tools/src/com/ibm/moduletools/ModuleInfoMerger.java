@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 IBM Corp. and others
+ * Copyright (c) 2016, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -197,55 +197,58 @@ public final class ModuleInfoMerger {
 		 * Parse a single module-info.java source file accessed via the given scanner.
 		 */
 		private void parse(ModuleInfoScanner scanner) throws IOException {
-			String word = scanner.requireWord();
+			boolean isExtra = false;
+			String moduleName = null;
+			String token = scanner.token();
 
-			if ("open".equals(word)) {
+			if ("open".equals(token)) {
 				isOpen = true;
-				word = scanner.requireWord();
+				scanner.require("module");
+				moduleName = scanner.requireWord();
+				scanner.require("{");
+				token = scanner.token();
+			} else if ("module".equals(token)) {
+				moduleName = scanner.requireWord();
+				scanner.require("{");
+				token = scanner.token();
+			} else {
+				isExtra = true;
 			}
 
-			if (!"module".equals(word)) {
-				throw scanner.expected("module", word);
-			}
-
-			String moduleName = scanner.requireWord();
-
-			if (name == null) {
-				name = moduleName;
-			} else if (!name.equals(moduleName)) {
-				throw new IOException(String.format("Cannot merge modules %s and %s", name, moduleName));
-			}
-
-			scanner.require("{");
-
-			for (;;) {
-				String token = scanner.token();
-
-				if (token != null) {
-					switch (token) {
-					case "}":
-						scanner.require(null);
-						return;
-					case "exports":
-						parseTargets(scanner, exports);
-						continue;
-					case "opens":
-						parseTargets(scanner, opens);
-						continue;
-					case "provides":
-						parseProvides(scanner);
-						continue;
-					case "requires":
-						parseRequires(scanner);
-						continue;
-					case "uses":
-						parseUses(scanner);
-						continue;
-					default:
-						break;
-					}
+			if (moduleName != null) {
+				if (name == null) {
+					name = moduleName;
+				} else if (!name.equals(moduleName)) {
+					throw new IOException(String.format("Cannot merge modules %s and %s", name, moduleName));
 				}
+			}
 
+			for (; token != null; token = scanner.token()) {
+				switch (token) {
+				case "}":
+					scanner.require(null);
+					return;
+				case "exports":
+					parseTargets(scanner, exports);
+					break;
+				case "opens":
+					parseTargets(scanner, opens);
+					break;
+				case "provides":
+					parseProvides(scanner);
+					break;
+				case "requires":
+					parseRequires(scanner);
+					break;
+				case "uses":
+					parseUses(scanner);
+					break;
+				default:
+					throw scanner.expected("}", token);
+				}
+			}
+
+			if (!isExtra) {
 				throw scanner.expected("}", token);
 			}
 		}

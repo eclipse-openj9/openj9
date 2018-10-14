@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,6 +37,9 @@ typedef enum {
 	J9_BCLOOP_SEND_TARGET_INITIAL_STATIC = 0,
 	J9_BCLOOP_SEND_TARGET_INITIAL_SPECIAL,
 	J9_BCLOOP_SEND_TARGET_INITIAL_VIRTUAL,
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+	J9_BCLOOP_SEND_TARGET_INVOKE_PRIVATE,
+#endif /* J9VM_OPT_VALHALLA_NESTMATES */
 	J9_BCLOOP_SEND_TARGET_UNSATISFIED_OR_ABSTRACT,
 	J9_BCLOOP_SEND_TARGET_DEFAULT_CONFLICT,
 	J9_BCLOOP_SEND_TARGET_COUNT_NON_SYNC,
@@ -150,7 +153,6 @@ typedef enum {
 	J9_BCLOOP_SEND_TARGET_INL_VM_INITIALIZE_CLASS_LOADER,
 	J9_BCLOOP_SEND_TARGET_INL_VM_GET_CLASS_PATH_ENTRY_TYPE,
 	J9_BCLOOP_SEND_TARGET_INL_VM_IS_BOOTSTRAP_CLASS_LOADER,
-	J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_CLASS_DEPTH,
 	J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ALLOCATE_INSTANCE,
 	J9_BCLOOP_SEND_TARGET_INL_INTERNALS_PREPARE_CLASS_IMPL,
 	J9_BCLOOP_SEND_TARGET_INL_ATTACHMENT_LOADAGENTLIBRARYIMPL,
@@ -827,6 +829,19 @@ done:
 	}
 
 	/**
+	 * Determine the number of UTF8 bytes required to encode a unicode character.
+	 *
+	 * @param unicode[in] the unicode character
+	 *
+	 * @returns the number of bytes required to encode the character as UTF8
+	 */
+	static VMINLINE UDATA
+	encodedUTF8LengthI8(I_8 unicode)
+	{
+		return (unicode >= 0x01) && (unicode <= 0x7F) ? 1 : 2;
+	}
+
+	/**
 	 * Encode the Unicode character.
 	 *
 	 * Encodes the input Unicode character and stores it into utfChars.
@@ -851,6 +866,30 @@ done:
 			utfChars[1] = (U_8)(((unicode >> 6 ) & 0x3F) | 0x80);
 			utfChars[2] = (U_8)((unicode & 0x3F) | 0x80);
 			length = 3;
+		}
+		return length;
+	}
+
+	/**
+	 * Encode the Unicode character.
+	 *
+	 * Encodes the input Unicode character and stores it into utfChars.
+	 *
+	 * @param[in] unicode The unicode character
+	 * @param[in,out] utfChars buffer for UTF8 character
+	 *
+	 * @return Size of encoding (1,2,3) on success, 0 on failure
+	 */
+	static VMINLINE UDATA
+	encodeUTF8CharI8(I_8 unicode, U_8 *utfChars)
+	{
+		UDATA length = 1;
+		if ((unicode >= 0x01) && (unicode <= 0x7F)) {
+			utfChars[0] = (U_8)unicode;
+		} else {
+			utfChars[0] = (U_8)(((unicode >>6 ) & 0x1F) | 0xC0);
+			utfChars[1] = (U_8)((unicode & 0x3F) | 0x80);
+			length = 2;
 		}
 		return length;
 	}
@@ -1001,52 +1040,6 @@ done:
 	}
 
 	/**
-	 * Determine the vTable index for an interface send to a particular
-	 * receiver.
-	 *
-	 * @param currentThread[in] the current J9VMThread
-	 * @param receiverClass[in] the J9Class of the receiver
-	 * @param interfaceClass[in] the J9Class of the interface
-	 * @param iTableIndex[in] the iTable index
-	 * @param ramConstantPool[in] the RAM constant pool of the method performing the invoke
-	 * @param cpIndex[in] the constant pool index of the invokeinterface
-	 *
-	 * @returns the vTable index (0 indicates the mapping failed)
-	 */
-	static VMINLINE UDATA
-	convertITableIndexToVTableIndex(J9VMThread *currentThread, J9Class *receiverClass, J9Class *interfaceClass, UDATA iTableIndex, J9ConstantPool *ramConstantPool, UDATA cpIndex)
-	{
-		UDATA vTableIndex = 0;
-		J9ITable * iTable = receiverClass->lastITable;
-		if (interfaceClass == iTable->interfaceClass) {
-			goto foundITable;
-		}
-		
-		iTable = (J9ITable*)receiverClass->iTable;
-		while (NULL != iTable) {
-			if (interfaceClass == iTable->interfaceClass) {
-				receiverClass->lastITable = iTable;
-foundITable:
-				vTableIndex = ((UDATA*)(iTable + 1))[iTableIndex];
-				goto done;
-			}
-			iTable = iTable->next;
-		}
-		if (J9_ARE_NO_BITS_SET(interfaceClass->romClass->modifiers, J9AccInterface)) {
-			/* Must be able to call java/lang/Object methods on interfaces (bugzilla 97275) */
-			J9Method *method = (J9Method*)J9_VM_FUNCTION(currentThread, javaLookupMethod)(
-				currentThread,
-				receiverClass,
-				J9ROMMETHODREF_NAMEANDSIGNATURE(((J9ROMMethodRef*)ramConstantPool->romConstantPool + cpIndex)),
-				NULL,
-				J9_LOOK_VIRTUAL);
-			vTableIndex = J9_VM_FUNCTION(currentThread, getVTableIndexForMethod)(method, receiverClass, currentThread);
-		}
-done:
-		return vTableIndex;
-	}
-
-	/**
 	 * Determine if a method is being traced via method trace.
 	 *
 	 * @param vm[in] the J9JavaVM
@@ -1068,6 +1061,70 @@ done:
 	}
 
 	/**
+	 * Determine if a RAM instance field ref is resolved.
+	 *
+	 * @param flags[in] field from the ref
+	 * @param valueOffset[in] field from the ref
+	 * @param forPut[in] do extra checks specifically for putfield?
+	 *
+	 * @returns true if resolved, false if not
+	 */
+	static VMINLINE bool
+	instanceFieldRefIsResolved(UDATA flags, UDATA valueOffset, bool forPut)
+	{
+		/* In a resolved field, flags will have the J9FieldFlagResolved bit set, thus
+		 * having a higher value than any valid valueOffset.
+		 *
+		 * This check avoids the need for a barrier, as it will only succeed if flags
+		 * and valueOffset have both been updated. It is crucial that we do not treat
+		 * a field ref as resolved if only one of the two values has been set (by
+		 * another thread that is in the middle of a resolve).
+		 */
+		bool resolved = (flags > valueOffset);
+		if (forPut && resolved) {
+			if (0 == (flags & J9FieldFlagPutResolved)) {
+				resolved = false;
+			}
+		}
+		return resolved;
+	}
+
+	/**
+	 * Determine if a RAM static field ref is resolved.
+	 *
+	 * @param flagsAndClass[in] field from the ref
+	 * @param valueOffset[in] field from the ref
+	 * @param forPut[in] do extra checks specifically for putstatic?
+	 *
+	 * @returns true if resolved, false if not
+	 */
+	static VMINLINE bool
+	staticFieldRefIsResolved(IDATA flagsAndClass, UDATA valueOffset, bool forPut)
+	{
+		/* In an unresolved static fieldref, the valueOffset will be -1 or flagsAndClass will be <= 0.
+		 * If the fieldref was resolved as an instance fieldref, the high bit of flagsAndClass will be
+		 * set, so it will be < 0 and will be treated as an unresolved static fieldref.
+		 *
+		 * Since instruction re-ordering may result in us reading an updated valueOffset but
+		 * a stale flagsAndClass, we check that both fields have been updated. It is crucial
+		 * that we do not use a stale flagsAndClass with non-zero value, as doing so may cause the
+		 * the StaticFieldRefDouble bit check to succeed when it shouldn't.
+		 *
+		 * It is also necessary to check if the fieldref has been resolved for putstatic, since the
+		 * fieldref could be shared with a getstatic. The math below checks the put-resolved flag
+		 * in the flags byte of "flags and class", instead of the "class and flags" order expected by
+		 * the J9StaticFieldRef* flag definitions.
+		 */
+		bool resolved = ((UDATA)-1 != valueOffset) && (flagsAndClass > 0);
+		if (forPut && resolved) {
+			if (0 == (flagsAndClass & ((UDATA)J9StaticFieldRefPutResolved << (8 * sizeof(UDATA) - J9_REQUIRED_CLASS_SHIFT)))) {
+				resolved = false;
+			}
+		}
+		return resolved;
+	}
+
+	/**
 	 * Get the field address from a RAM static field ref.
 	 *
 	 * @param ramRef[in] the ref
@@ -1075,16 +1132,16 @@ done:
 	 * @returns the field address, or NULL if the ref is unresolved
 	 */
 	static VMINLINE void*
-	staticFieldAddressFromRef(J9RAMStaticFieldRef *ramRef)
+	staticFieldAddressFromRef(J9RAMStaticFieldRef *ramRef, bool forPut)
 	{
 		IDATA flagsAndClass = ramRef->flagsAndClass;
 		UDATA staticAddress = ramRef->valueOffset;
-		if (((UDATA)-1 == staticAddress) || (flagsAndClass <= 0)) {
-			staticAddress = 0;
-		} else {
+		if (staticFieldRefIsResolved(flagsAndClass, staticAddress, forPut)) {
 			J9Class *clazz = (J9Class*)((UDATA)flagsAndClass << J9_REQUIRED_CLASS_SHIFT);
 			staticAddress &= ~((UDATA)1 << ((8 * sizeof(UDATA)) - 1));
 			staticAddress += (UDATA)clazz->ramStatics;
+		} else  {
+			staticAddress = 0;
 		}
 		return (void*)staticAddress;
 	}
@@ -1350,6 +1407,48 @@ exit:
 		case J9NtcClass:
 			break;
 		}
+	}
+
+	/**
+	 * @brief Notify JIT upon the first modification of a final field, a stack frame should be build before calling this method to make the stack walkable
+	 * @param currentThread
+	 * @param fieldClass The declaring class of the final field
+	 */
+	static VMINLINE void
+	reportFinalFieldModified(J9VMThread* currentThread, J9Class* fieldClass)
+	{
+		/** Only report modifications after class initalization
+		 *  Since final field write is allowed during class init process,
+		 *  JIT will not start to trust final field values until the class has completed initialization
+		 */
+		if (J9_ARE_NO_BITS_SET(fieldClass->classFlags, J9ClassHasIllegalFinalFieldModifications) && (J9ClassInitSucceeded == fieldClass->initializeStatus)) {
+			J9JavaVM* vm = currentThread->javaVM;
+			if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_OSR_SAFE_POINT)) {
+				J9InternalVMFunctions* vmFuncs = vm->internalVMFunctions;
+				vmFuncs->acquireSafePointVMAccess(currentThread);
+				/* check class flag again after aquiring VM access */
+				if (J9_ARE_NO_BITS_SET(fieldClass->classFlags, J9ClassHasIllegalFinalFieldModifications)) {
+					J9JITConfig* jitConfig = vm->jitConfig;
+					if (NULL != jitConfig) {
+						jitConfig->jitIllegalFinalFieldModification(currentThread, fieldClass);
+					}
+				}
+				vmFuncs->releaseSafePointVMAccess(currentThread);
+			}
+		}
+	}
+
+	/**
+	 * Find the J9SFJNINativeMethodFrame representing the current native.
+	 *
+	 * @param currentThread[in] the current J9VMThread
+	 *
+	 * @returns the native method frame
+	 */
+	static VMINLINE J9SFJNINativeMethodFrame*
+	findNativeMethodFrame(J9VMThread *currentThread)
+	{
+		return (J9SFJNINativeMethodFrame*)((UDATA)currentThread->sp + (UDATA)currentThread->literals);
 	}
 };
 

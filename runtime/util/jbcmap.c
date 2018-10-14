@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,6 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+#include "j9.h"
 
 const unsigned char sunJavaInstructionSizeTable[] = {
 0x01 /* JBnop = 0 = 0x00 */,
@@ -238,18 +239,6 @@ const unsigned char sunJavaInstructionSizeTable[] = {
 0x00 /* JBunimplemented = 214 = 0xD6 */,
 0x00 /* JBunimplemented = 215 = 0xD7 */,
 0x00 /* JBunimplemented = 216 = 0xD8 */,
-#if defined(J9_VALHALLA_MVT)
-0x02 /* JBvload = 217 = 0xD9 */ ,
-0x02 /* JBvstore = 218 = 0xDA */ ,
-0x01 /* JBvreturn = 219 = 0xDB */ ,
-0x01 /* JBvbox = 220 = 0xDC */ ,
-0x01 /* JBvunbox = 221 = 0xDD */ ,
-0x01 /* JBvaload = 222 = 0xDE */ ,
-0x01 /* JBvastore = 223 = 0xDF */ ,
-0x01 /* JBvdefault = 224 = 0xE0 */ ,
-0x03 /* JBvgetfield = 225 = 0xE1 */ ,
-0x03 /* JBvwithfield = 226 = 0xE2 */ ,
-#else /* defined(J9_VALHALLA_MVT) */
 0x00 /* JBunimplemented = 217 = 0xD9 */,
 0x00 /* JBunimplemented = 218 = 0xDA */,
 0x00 /* JBunimplemented = 219 = 0xDB */,
@@ -257,10 +246,15 @@ const unsigned char sunJavaInstructionSizeTable[] = {
 0x00 /* JBunimplemented = 221 = 0xDD */,
 0x00 /* JBunimplemented = 222 = 0xDE */,
 0x00 /* JBunimplemented = 223 = 0xDF */,
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+0x01 /* JBdefaultvalue = 224 = 0xE0 */ ,
+0x00 /* JBunimplemented = 225 = 0xE1 */,
+0x03 /* JBwithfield = 226 = 0xE2 */ ,
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 0x00 /* JBunimplemented = 224 = 0xE0 */,
 0x00 /* JBunimplemented = 225 = 0xE1 */,
 0x00 /* JBunimplemented = 226 = 0xE2 */,
-#endif /* defined(J9_VALHALLA_MVT) */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 0x00 /* JBunimplemented = 227 = 0xE3 */,
 0x00 /* JBunimplemented = 228 = 0xE4 */,
 0x00 /* JBunimplemented = 229 = 0xE5 */,

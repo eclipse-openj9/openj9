@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2015 IBM Corp. and others
+ * Copyright (c) 2015, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,7 +40,7 @@ const char* dataTypeNames[] = {
 	"S",											/* CFR_STACKMAP_TYPE_SHORT_ARRAY					0x0D */
 	"B",											/* CFR_STACKMAP_TYPE_BYTE_ARRAY						0x0E */
 	"C",											/* CFR_STACKMAP_TYPE_CHAR_ARRAY						0x0F */
-	"Z"												/* STACKMAP_TYPE_BOOL_ARRAY						    0x10 */
+	"Z"												/* CFR_STACKMAP_TYPE_BOOL_ARRAY						0x10 */
 };
 
 /* Length of data type string */

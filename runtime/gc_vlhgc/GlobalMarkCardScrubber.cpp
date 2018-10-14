@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,11 +28,9 @@
 
 #include "GlobalMarkCardScrubber.hpp"
 
-#include "CallSitesIterator.hpp"
 #include "CardTable.hpp"
 #include "ClassLoaderClassesIterator.hpp"
-#include "ClassStaticsIterator.hpp"
-#include "ConstantPoolObjectSlotIterator.hpp"
+#include "ClassIterator.hpp"
 #include "CycleState.hpp"
 #include "Dispatcher.hpp"
 #include "EnvironmentVLHGC.hpp"
@@ -41,7 +39,6 @@
 #include "HeapRegionIterator.hpp"
 #include "InterRegionRememberedSet.hpp"
 #include "MarkMap.hpp"
-#include "MethodTypesIterator.hpp"
 #include "MixedObjectIterator.hpp"
 #include "PointerArrayIterator.hpp"
 #include "Task.hpp"
@@ -199,50 +196,20 @@ MM_GlobalMarkCardScrubber::scrubClassObject(MM_EnvironmentVLHGC *env, J9Object *
 	J9Class *classPtr = J9VM_J9CLASS_FROM_HEAPCLASS((J9VMThread*)env->getLanguageVMThread(), classObject);
 	if (NULL != classPtr) {
 		J9Object * volatile * slotPtr = NULL;
-
+		/*
+		 * Scan J9Class internals using general iterator
+		 * - scan statics fields
+		 * - scan call sites
+		 * - scan MethodTypes
+		 * - scan VarHandle MethodTypes
+		 * - scan constants pool objects
+		 */
 		do {
-			/*
-			 * scan static fields
-			 */
-			GC_ClassStaticsIterator classStaticsIterator(env, classPtr);
-			while(doScrub && (NULL != (slotPtr = classStaticsIterator.nextSlot()))) {
+			GC_ClassIterator classIterator(env, classPtr, false);
+			while (doScrub && (NULL != (slotPtr = classIterator.nextSlot()))) {
 				doScrub = mayScrubReference(env, classObject, *slotPtr);
 			}
 
-			/*
-			 * scan call sites
-			 */
-			GC_CallSitesIterator callSitesIterator(classPtr);
-			while(doScrub && (NULL != (slotPtr = callSitesIterator.nextSlot()))) {
-				doScrub = mayScrubReference(env, classObject, *slotPtr);
-			}
-
-			/*
-			 * scan MethodTypes
-			 */
-			GC_MethodTypesIterator methodTypesIterator(classPtr->romClass->methodTypeCount, classPtr->methodTypes);
-			while(doScrub && (NULL != (slotPtr = methodTypesIterator.nextSlot()))) {
-				doScrub = mayScrubReference(env, classObject, *slotPtr);
-			}
-
-			/*
-			 * scan VarHandle MethodTypes
-			 */
-			GC_MethodTypesIterator varHandleMethodTypesIterator(classPtr->romClass->varHandleMethodTypeCount, classPtr->varHandleMethodTypes);
-			while(doScrub && (NULL != (slotPtr = varHandleMethodTypesIterator.nextSlot()))) {
-				doScrub = mayScrubReference(env, classObject, *slotPtr);
-			}
-
-			/*
-			 * scan constant pool objects
-			 */
-			/* we can safely ignore any classes referenced by the constant pool, since
-			 * these are guaranteed to be referenced by our class loader
-			 */
-			GC_ConstantPoolObjectSlotIterator constantPoolIterator(classPtr);
-			while(doScrub && (NULL != (slotPtr = constantPoolIterator.nextSlot()))) {
-				doScrub = mayScrubReference(env, classObject, *slotPtr);
-			}
 			classPtr = classPtr->replacedClass;
 		} while (doScrub && (NULL != classPtr));
 	}

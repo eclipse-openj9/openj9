@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2014 IBM Corp. and others
+ * Copyright (c) 2013, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,6 +20,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 #include "util_api.h"
+#include "j9version.h"
+#include "ut_j9vmutil.h"
+
+#define OPENJ9_SHA_MIN_BITS 28
 
 /**
  * Populate a J9PortShcVersion struct with the version data of the running JVM
@@ -60,4 +64,25 @@ getJVMFeature(J9JavaVM *vm)
 #endif /* defined(J9VM_GC_COMPRESSED_POINTERS) */
 #endif /* defined(J9VM_ENV_DATA64) */
 	return ret;
+}
+
+/**
+ * Get the OpenJ9 SHA
+ *
+ * @return uint64_t The OpenJ9 SHA
+ */
+uint64_t
+getOpenJ9Sha()
+{
+	uint64_t sha = 0;
+	char *str = J9VM_VERSION_STRING;
+	
+	if (scan_hex_u64(&str, &sha) < OPENJ9_SHA_MIN_BITS) {
+		Assert_VMUtil_ShouldNeverHappen();
+	}
+	if (0 == sha) {
+		Assert_VMUtil_ShouldNeverHappen();
+	}
+
+	return sha;
 }

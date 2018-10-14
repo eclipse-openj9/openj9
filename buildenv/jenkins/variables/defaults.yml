@@ -1,0 +1,356 @@
+###############################################################################
+# Copyright (c) 2018, 2018 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+###############################################################################
+#========================================#
+# Git repositories
+#========================================#
+openjdk_repo:
+  8: 'https://github.com/ibmruntimes/openj9-openjdk-jdk8.git'
+  9: 'https://github.com/ibmruntimes/openj9-openjdk-jdk9.git'
+  10: 'https://github.com/ibmruntimes/openj9-openjdk-jdk10.git'
+  11: 'https://github.com/ibmruntimes/openj9-openjdk-jdk11.git'
+  next: 'https://github.com/ibmruntimes/openj9-openjdk-jdk.git'
+openjdk_branch:
+  8: 'openj9'
+  9: 'openj9'
+  10: 'openj9'
+  11: 'openj9'
+  next: 'openj9-jdk'
+#========================================#
+# Miscellaneous settings
+#========================================#
+jdk_image_dir:
+  8: 'j2sdk-image'
+  9: 'jdk'
+  10: 'jdk'
+  11: 'jdk'
+  next: 'jdk'
+credentials:
+  github: 'b6987280-6402-458f-bdd6-7affc2e360d4'
+test_dependencies_job_name: 'test.getDependency'
+slack_channel: '#jenkins'
+build_discarder:
+  logs:
+    build: 20
+    pipeline: 20
+    pullRequest: 50
+  artifacts:
+    build: 10
+    pipeline: 0
+    pullRequest: 0
+extra_getsource_options:
+  8: '--openssl-version=1.1.1'
+#========================================#
+# Linux PPCLE 64bits Compressed Pointers
+#========================================#
+linux_ppc-64_cmprssptrs_le:
+  boot_jdk:
+    8: '/usr/lib/jvm/java-7-openjdk-ppc64el'
+    9: '/usr/lib/jvm/adoptojdk-java-ppc64le-80'
+    10: '/usr/lib/jvm/adoptojdk-java-ppc64le-90'
+    11: '/usr/lib/jvm/adoptojdk-java-10'
+    next: '/usr/lib/jvm/adoptojdk-java-10'
+  release:
+    8: 'linux-ppc64-normal-server-release'
+    9: 'linux-ppc64le-normal-server-release'
+    10: 'linux-ppc64le-normal-server-release'
+    11: 'linux-ppc64le-normal-server-release'
+    next: 'linux-ppc64le-normal-server-release'
+  freemarker: '/home/jenkins/freemarker.jar'
+  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
+  node_labels:
+    build:
+      8: 'hw.arch.ppc64le && sw.os.ubuntu'
+      9: 'hw.arch.ppc64le && sw.os.ubuntu'
+      10: 'hw.arch.ppc64le && sw.os.ubuntu'
+      11: 'hw.arch.ppc64le && sw.os.ubuntu'
+      next: 'hw.arch.ppc64le && sw.os.ubuntu'
+    test:
+      8: 'hw.arch.ppc64le && sw.os.ubuntu'
+      9: 'hw.arch.ppc64le && sw.os.ubuntu'
+      10: 'hw.arch.ppc64le && sw.os.ubuntu'
+      11: 'hw.arch.ppc64le && sw.os.ubuntu'
+      next: 'hw.arch.ppc64le && sw.os.ubuntu'
+  extra_configure_options:
+    8: '--with-openssl=fetched --enable-openssl-bundling'
+  build_env:
+    vars:
+      11: 'CC=gcc-7 CXX=g++-7'
+      next: 'CC=gcc-7 CXX=g++-7'
+#========================================#
+# Linux S390 64bits Compressed Pointers
+# Note: boot_jdk 8 must use an Adopt JDK8 build rather than an 
+# IBM 7 for the bootJDK or compiling corba will fail to find Object.
+#========================================#
+linux_390-64_cmprssptrs:
+  boot_jdk:
+    8: '/usr/lib/jvm/adoptojdk-java-s390x-80'
+    9: '/usr/lib/jvm/adoptojdk-java-s390x-80'
+    10: '/usr/lib/jvm/adoptojdk-java-s390x-90'
+    11: '/usr/lib/jvm/adoptojdk-java-10'
+    next: '/usr/lib/jvm/adoptojdk-java-10'
+  release:
+    8: 'linux-s390x-normal-server-release'
+    9: 'linux-s390x-normal-server-release'
+    10: 'linux-s390x-normal-server-release'
+    11: 'linux-s390x-normal-server-release'
+    next: 'linux-s390x-normal-server-release'
+  freemarker: '/home/jenkins/freemarker.jar'
+  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
+  node_labels:
+    build:
+      8: 'hw.arch.s390x && sw.os.ubuntu'
+      9: 'hw.arch.s390x && sw.os.ubuntu'
+      10: 'hw.arch.s390x && sw.os.ubuntu'
+      11: 'hw.arch.s390x && sw.os.ubuntu'
+      next: 'hw.arch.s390x && sw.os.ubuntu'
+    test:
+      8: 'hw.arch.s390x && sw.os.ubuntu'
+      9: 'hw.arch.s390x && sw.os.ubuntu'
+      10: 'hw.arch.s390x && sw.os.ubuntu'
+      11: 'hw.arch.s390x && sw.os.ubuntu'
+      next: 'hw.arch.s390x && sw.os.ubuntu'
+  build_env:
+    vars:
+      11: 'CC=gcc-7 CXX=g++-7'
+      next: 'CC=gcc-7 CXX=g++-7'
+  extra_configure_options:
+    8: '--with-openssl=/home/jenkins/openssl-1.1.1 --enable-openssl-bundling'
+#========================================#
+# AIX PPC 64bits Compressed Pointers
+#========================================#
+aix_ppc-64_cmprssptrs:
+  boot_jdk:
+    8: '/usr/java7'
+    9: '/usr/java8_64'
+    10: '/usr/java9_64'
+    11: '/usr/java10_64'
+    next: '/usr/java10_64'
+  release:
+    8: 'aix-ppc64-normal-server-release'
+    9: 'aix-ppc64-normal-server-release'
+    10: 'aix-ppc64-normal-server-release'
+    11: 'aix-ppc64-normal-server-release'
+    next: 'aix-ppc64-normal-server-release'
+  freemarker: '/home/jenkins/freemarker.jar'
+  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
+  node_labels:
+    build:
+      8: 'hw.arch.ppc && sw.os.aix'
+      9: 'hw.arch.ppc && sw.os.aix'
+      10: 'hw.arch.ppc && sw.os.aix'
+      11: 'hw.arch.ppc && sw.os.aix'
+      next: 'hw.arch.ppc && sw.os.aix'
+    test:
+      8: 'hw.arch.ppc && sw.os.aix'
+      9: 'hw.arch.ppc && sw.os.aix'
+      10: 'hw.arch.ppc && sw.os.aix'
+      11: 'hw.arch.ppc && sw.os.aix'
+      next: 'hw.arch.ppc && sw.os.aix'
+  extra_configure_options:
+    8: '--with-cups-include=/opt/freeware/include --disable-ccache --with-jobs=8 --with-openssl=fetched --enable-openssl-bundling'
+    9: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
+    10: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
+    11: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
+    next: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
+#========================================#
+# Linux x86 64bits Compressed Pointers
+#========================================#
+linux_x86-64_cmprssptrs:
+  boot_jdk:
+    8: '/usr/lib/jvm/java-7-openjdk-amd64'
+    9: '/usr/lib/jvm/adoptojdk-java-80'
+    10: '/usr/lib/jvm/adoptojdk-java-90'
+    11: '/usr/lib/jvm/adoptojdk-java-10'
+    next: '/usr/lib/jvm/adoptojdk-java-10'
+  release:
+    8: 'linux-x86_64-normal-server-release'
+    9: 'linux-x86_64-normal-server-release'
+    10: 'linux-x86_64-normal-server-release'
+    11: 'linux-x86_64-normal-server-release'
+    next: 'linux-x86_64-normal-server-release'
+  freemarker: '/home/jenkins/freemarker.jar'
+  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
+  node_labels:
+    build:
+      8: 'hw.arch.x86 && sw.os.ubuntu'
+      9: 'hw.arch.x86 && sw.os.ubuntu'
+      10: 'hw.arch.x86 && sw.os.ubuntu'
+      11: 'hw.arch.x86 && sw.os.ubuntu'
+      next: 'hw.arch.x86 && sw.os.ubuntu'
+    test:
+      8: 'hw.arch.x86 && sw.os.ubuntu'
+      9: 'hw.arch.x86 && sw.os.ubuntu'
+      10: 'hw.arch.x86 && sw.os.ubuntu'
+      11: 'hw.arch.x86 && sw.os.ubuntu'
+      next: 'hw.arch.x86 && sw.os.ubuntu'
+  extra_configure_options:
+    8: '--with-openssl=fetched --enable-openssl-bundling'
+  build_env:
+    vars:
+      11: 'CC=gcc-7 CXX=g++-7'
+      next: 'CC=gcc-7 CXX=g++-7'
+#========================================#
+# Linux x86 64bits Compressed Pointers /w CMake
+#========================================#
+linux_x86-64_cmprssptrs_cmake:
+  boot_jdk:
+    8: '/usr/lib/jvm/java-7-openjdk-amd64'
+    9: '/usr/lib/jvm/adoptojdk-java-80'
+    10: '/usr/lib/jvm/adoptojdk-java-90'
+    11: '/usr/lib/jvm/adoptojdk-java-10'
+    next: '/usr/lib/jvm/adoptojdk-java-10'
+  release:
+    8: 'linux-x86_64-normal-server-release'
+    9: 'linux-x86_64-normal-server-release'
+    10: 'linux-x86_64-normal-server-release'
+    11: 'linux-x86_64-normal-server-release'
+    next: 'linux-x86_64-normal-server-release'
+  freemarker: '/home/jenkins/freemarker.jar'
+  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
+  node_labels:
+    build:
+      8: 'hw.arch.x86 && sw.os.ubuntu'
+      9: 'hw.arch.x86 && sw.os.ubuntu'
+      10: 'hw.arch.x86 && sw.os.ubuntu'
+      11: 'hw.arch.x86 && sw.os.ubuntu'
+      next: 'hw.arch.x86 && sw.os.ubuntu'
+    test:
+      8: 'hw.arch.x86 && sw.os.ubuntu'
+      9: 'hw.arch.x86 && sw.os.ubuntu'
+      10: 'hw.arch.x86 && sw.os.ubuntu'
+      11: 'hw.arch.x86 && sw.os.ubuntu'
+      next: 'hw.arch.x86 && sw.os.ubuntu'
+  extra_configure_options:
+    8: '--with-cmake --disable-ddr --with-openssl=fetched --enable-openssl-bundling'
+    9: '--with-cmake --disable-ddr'
+    10: '--with-cmake --disable-ddr'
+    11: '--with-cmake --disable-ddr'
+    next: '--with-cmake --disable-ddr'
+  extra_make_options:
+    8: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
+    9: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
+    10: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
+    11: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
+    next: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
+  build_env:
+    vars:
+      11: 'CC=gcc-7 CXX=g++-7'
+      next: 'CC=gcc-7 CXX=g++-7'
+#========================================#
+# Linux x86 64bits Large Heap
+#========================================#
+linux_x86-64:
+  boot_jdk:
+    8: '/usr/lib/jvm/java-7-openjdk-amd64'
+    9: '/usr/lib/jvm/adoptojdk-java-80'
+    10: '/usr/lib/jvm/adoptojdk-java-90'
+    11: '/usr/lib/jvm/adoptojdk-java-10'
+    next: '/usr/lib/jvm/adoptojdk-java-10'
+  release:
+    8: 'linux-x86_64-normal-server-release'
+    9: 'linux-x86_64-normal-server-release'
+    10: 'linux-x86_64-normal-server-release'
+    11: 'linux-x86_64-normal-server-release'
+    next: 'linux-x86_64-normal-server-release'
+  freemarker: '/home/jenkins/freemarker.jar'
+  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
+  node_labels:
+    build:
+      8: 'hw.arch.x86 && sw.os.ubuntu'
+      9: 'hw.arch.x86 && sw.os.ubuntu'
+      10: 'hw.arch.x86 && sw.os.ubuntu'
+      11: 'hw.arch.x86 && sw.os.ubuntu'
+      next: 'hw.arch.x86 && sw.os.ubuntu'
+    test:
+      8: 'hw.arch.x86 && sw.os.ubuntu'
+      9: 'hw.arch.x86 && sw.os.ubuntu'
+      10: 'hw.arch.x86 && sw.os.ubuntu'
+      11: 'hw.arch.x86 && sw.os.ubuntu'
+      next: 'hw.arch.x86 && sw.os.ubuntu'
+  extra_configure_options:
+    8: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
+    9: '--with-noncompressedrefs'
+    10: '--with-noncompressedrefs'
+    11: '--with-noncompressedrefs'
+    next: '--with-noncompressedrefs'
+  build_env:
+    vars:
+      11: 'CC=gcc-7 CXX=g++-7'
+      next: 'CC=gcc-7 CXX=g++-7'
+#========================================#
+# Windows x86 64bits Compressed Pointers
+#========================================#
+win_x86-64_cmprssptrs:
+  boot_jdk:
+    8: '/cygdrive/c/openjdk/jdk7'
+    9: '/cygdrive/c/openjdk/jdk8'
+    10: '/cygdrive/c/openjdk/jdk9'
+    11: '/cygdrive/c/openjdk/jdk10'
+    next: '/cygdrive/c/openjdk/jdk10'
+  release:
+    8: 'windows-x86_64-normal-server-release'
+    9: 'windows-x86_64-normal-server-release'
+    10: 'windows-x86_64-normal-server-release'
+    11: 'windows-x86_64-normal-server-release'
+    next: 'windows-x86_64-normal-server-release'
+  freemarker: '/cygdrive/c/openjdk/freemarker.jar'
+  openjdk_reference_repo: 'C:\openjdk\openjdk_cache'
+  extra_configure_options:
+    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --disable-ccache --with-openssl=/cygdrive/c/OpenSSL-1.1.1-x86_64 --enable-openssl-bundling'
+    9: '--with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-toolchain-version=2013 --disable-ccache'
+    10: '--with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-toolchain-version=2013 --disable-ccache'
+    11: '--with-toolchain-version=2017 --disable-ccache'
+    next: '--with-toolchain-version=2017 --disable-ccache'
+  node_labels:
+    build:
+      8: 'hw.arch.x86 && sw.os.windows'
+      9: 'hw.arch.x86 && sw.os.windows'
+      10: 'hw.arch.x86 && sw.os.windows'
+      11: 'hw.arch.x86 && sw.os.windows'
+      next: 'hw.arch.x86 && sw.os.windows'
+    test:
+      8: 'hw.arch.x86 && sw.os.windows'
+      9: 'hw.arch.x86 && sw.os.windows'
+      10: 'hw.arch.x86 && sw.os.windows'
+      11: 'hw.arch.x86 && sw.os.windows'
+      next: 'hw.arch.x86 && sw.os.windows'
+  build_env:
+    vars:
+      11: 'PATH+MINGW=/cygdrive/c/mingw-w64/x86_64-8.1.0-win32-seh-rt_v6-rev0/mingw64/bin/'
+      next: 'PATH+MINGW=/cygdrive/c/mingw-w64/x86_64-8.1.0-win32-seh-rt_v6-rev0/mingw64/bin/'
+#========================================#
+# Windows x86 32bits 
+#========================================#
+win_x86:
+  boot_jdk:
+    8: '/cygdrive/c/openjdk/jdk7'
+  release:
+    8: 'windows-x86-normal-server-release'
+  extra_configure_options:
+    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib32 --with-target-bits=32 --disable-ccache --with-openssl=/cygdrive/c/OpenSSL-1.1.1-x86_32 --enable-openssl-bundling'
+  freemarker: '/cygdrive/c/openjdk/freemarker.jar'
+  openjdk_reference_repo: 'C:\openjdk\openjdk_cache'
+  node_labels:
+    build:
+      8: 'hw.arch.x86 && sw.os.windows'
+    test:
+      8: 'hw.arch.x86 && sw.os.windows'

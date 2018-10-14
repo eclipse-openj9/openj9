@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -4327,7 +4327,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITPROFILE.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITPROFILE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ZIPCACHE=\t zipcache	Izpi\u0161e samo tipe zipcache v predpomnilniku v skupni rabi.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ZIPCACHE=\t zipcache     Izpi\u0161e samo tipe zipcache v predpomnilniku v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ZIPCACHE.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ZIPCACHE.system_action=
@@ -5992,7 +5992,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_REVALIDATE_AOT_METHODS.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS=Natisnite metode AOT, ki se ujemajo s specifikacijami metod.\n\
-\t<method_specification> je definirano kot: [!]{*|[*]<packagename/classname>[*]}[.{*|[*]<methodname>[*]}][({*|[*]<parameters>[*]})].
+\t<method_specification> je definirano kot: [!]{*|[*]<packagename/classname>[*]}[.{*|[*]<methodname>[*]}[({*|[*]<parameters>[*]})]].
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.system_action=
@@ -6014,7 +6014,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=Oblika zapisa <method_specification> je [!]{*|[*]<packagename/classname>[*]}[.{*|[*]<methodname>[*]}][({*|[*]<parameters>[*]})], npr.:\n\
+J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=Oblika zapisa za <method_specification> je [!]{*|[*]<packagename/classname>[*]}[.{*|[*]<methodname>[*]}[({*|[*]<parameters>[*]})]], e.g.:\n\
 \n\
 \t-Xshareclasses:name=Cache1,%sjava/util/HashMap.hash(Ljava/lang/Object;)\n
 # START NON-TRANSLATABLE
@@ -6125,7 +6125,7 @@ J9NLS_SHRC_OSCACHE_CONTROL_FILE_RECREATE_PROHIBITED.user_response=None required.
 # END NON-TRANSLATABLE
 
 #shrinit.cpp
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_INVALIDATEDAOT=\t invalidatedaot	V skupni predpomnilnik natisne le razveljavljene tipe aot.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_INVALIDATEDAOT=\t invalidatedaot V skupni predpomnilnik natisne le razveljavljene tipe aot.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_INVALIDATEDAOT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_INVALIDATEDAOT.system_action=
@@ -6141,6 +6141,7 @@ J9NLS_SHRC_OSCACHE_MMAP_SET_GROUPACCESS_FAILED.user_response=Check the umask set
 
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED=Dovoljenja za skupinski dostop na zahtevo podmo\u017enosti 'groupAccess' v naboru semaforjev (semid=%d), ki je povezan s predpomnilnikom razredov v skupni rabi, ni bilo mogo\u010de nastaviti.
 # START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.explanation=Cannot set group access permission when creating the new semaphore with sub-option "groupAccess".
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.user_response=Ensure the user has sufficient permission for creating the new semaphore with group access.
@@ -6148,6 +6149,7 @@ J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.user_response=Ensure the use
 
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED=Dovoljenja za skupinski dostop na zahtevo podmo\u017enosti 'groupAccess' v pomnilniku v skupni rabi (shmid=%d), ki je povezan s predpomnilnikom razredov v skupni rabi, ni bilo mogo\u010de nastaviti.
 # START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.explanation=Cannot set group access permission when creating the new shared memory with sub-option "groupAccess".
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.user_response=Ensure the user has sufficient permission for creating the new shared memory with group access.
@@ -6582,7 +6584,7 @@ J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_UNSTORED.system_action=The JVM continues.
 J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_UNSTORED.user_response=No action required, this is an information only message.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STALE=\t zastarano		Izpi\u0161e vse zastarane vnose v predpomnilniku v skupni rabi.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STALE=\t zastarano               Izpi\u0161e vse zastarane vnose v predpomnilniku v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STALE.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STALE.system_action=
@@ -6630,4 +6632,11 @@ J9NLS_SHRC_CC_INCORRECT_BUILDID=Predpomnilnika v skupni rabi ni bilo mogo\u010de
 J9NLS_SHRC_CC_INCORRECT_BUILDID.explanation=An error has occurred when starting up the cache. The build ID of the existing cache with the same name is different from that of the current JVM.
 J9NLS_SHRC_CC_INCORRECT_BUILDID.system_action=The JVM fails to complete the requested operation.
 J9NLS_SHRC_CC_INCORRECT_BUILDID.user_response=Use a JVM which matches the build ID of the existing cache.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1=Onemogo\u010dite predpomnjenje razredov, nalo\u017eenih z nalagalnikom razredov samodejnega zagona.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.user_response=
 # END NON-TRANSLATABLE

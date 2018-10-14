@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2016 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,7 +50,7 @@ Java_com_ibm_jvm_Log_QueryOptionsImpl(JNIEnv *env, jclass clazz)
 	/* allocate enough memory for the options string */
 	nativeOptions = j9mem_allocate_memory(LOG_OPTION_DATA_SIZE, J9MEM_CATEGORY_VM_JCL);
 	if (NULL == nativeOptions) {
-		throwNativeOOMError(env, 0, 0);
+		vm->internalVMFunctions->throwNativeOOMError(env, 0, 0);
 		return NULL;
 	}
 

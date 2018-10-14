@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,7 @@
 
 #define TEST_METHOD_NAME "testMethod"
 #define TEST_METHOD_SIG "()"
-#define METHOD_SPEC "*."TEST_METHOD_NAME""TEST_METHOD_SIG
+#define METHOD_SPEC "*." TEST_METHOD_NAME "" TEST_METHOD_SIG
 #define METHOD_NAME_SIZE sizeof(TEST_METHOD_NAME) + sizeof(((J9UTF8 *)0)->length)
 #define METHOD_SIG_SIZE sizeof(TEST_METHOD_SIG) + sizeof(((J9UTF8 *)0)->length)
 #define NUM_ROMMETHOD 4

@@ -45,28 +45,28 @@ J9NLS.HEADER=j9exelibnls.h
 
 # J9SourceExeLibArgumentsParsing - describeInternalOptions
 
-J9NLS_EXELIB_INTERNAL_HELP_1_1=Les options suivantes ne sont pas standard et font l'objet de modification sans pr\u00e9avis.\n
+J9NLS_EXELIB_INTERNAL_HELP_1_1=Les options suivantes ne sont pas standard et pourront changer sans pr\u00e9avis.\n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_2=\  -Xbootclasspath:<chemin>    d\u00e9finir le chemin d'acc\u00e8s aux classes d'amor\u00e7age sur <chemin>
+J9NLS_EXELIB_INTERNAL_HELP_1_2=\  -Xbootclasspath:<chemin>    r\u00e9gler le chemin des classes d'amor\u00e7age sur <chemin>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_3=\  -Xbootclasspath/p:<chemin>  placer <chemin> au d\u00e9but du chemin d'acc\u00e8s aux classes d'amor\u00e7age
+J9NLS_EXELIB_INTERNAL_HELP_1_3=\  -Xbootclasspath/p:<chemin>  ajouter <chemin> au d\u00e9but du chemin des classes d'amor\u00e7age
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_3.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_3.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_4=\  -Xbootclasspath/a:<chemin>  adjoindre <chemin> au chemin d'acc\u00e8s aux classes d'amor\u00e7age
+J9NLS_EXELIB_INTERNAL_HELP_1_4=\  -Xbootclasspath/a:<chemin>  ajouter <chemin> \u00e0 la fin du chemin des classes d'amor\u00e7age
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_4.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_4.system_action=
@@ -103,7 +103,7 @@ J9NLS_EXELIB_INTERNAL_HELP_1_8.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_8.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_9=\  -Xfuture        activer les contr\u00f4les draconiens pour anticiper le comportement par d\u00e9faut
+J9NLS_EXELIB_INTERNAL_HELP_1_9=\  -Xfuture        activer les contr\u00f4les les plus stricts pour anticiper le comportement par d\u00e9faut
 # START NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_HELP_1_9.explanation=NOTAG
@@ -126,154 +126,154 @@ J9NLS_EXELIB_INTERNAL_HELP_2_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_3=\  -Xmca<x>        d\u00e9finir l'incr\u00e9ment de segment de classe RAM sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_3=\  -Xmca<x>        r\u00e9gler l'incr\u00e9ment de segment de classe RAM \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_3.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_3.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_4=\  -Xmco<x>        d\u00e9finir l'incr\u00e9ment de segment de classe ROM sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_4=\  -Xmco<x>        r\u00e9gler l'incr\u00e9ment de segment de classe ROM \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_4.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_4.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_4.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_5=\  -Xmn<x>         d\u00e9finir la nouvelle taille d'espace sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_5=\  -Xmn<x>         r\u00e9gler la taille de l'espace des nouveaux objets \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_5.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_5.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_5.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1=\  -Xmn<x>         d\u00e9finir la nouvelle taille d'espace initiale/maximale sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1=\  -Xmn<x>         r\u00e9gler la taille initiale/maximale de l'espace de nouveaux objets \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2=\  -Xmns<x>        d\u00e9finir la nouvelle taille d'espace initiale sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2=\  -Xmns<x>        r\u00e9gler la taille initiale de l'espace des nouveaux objets \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3=\  -Xmnx<x>         d\u00e9finir la nouvelle taille d'espace maximale sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3=\  -Xmnx<x>         r\u00e9gler la taille maximum de l'espace des nouveaux objets \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_6=\  -Xmo<x>         d\u00e9finir l'ancienne taille d'espace sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_6=\  -Xmo<x>         r\u00e9gler la taille de l'espace des anciens objets \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_6.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_6.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_6.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1=\  -Xmo<x>         d\u00e9finir l'ancienne taille d'espace initiale/maximale sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1=\  -Xmo<x>         r\u00e9gler la taille initiale/maximale de l'espace des anciens objets \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2=\  -Xmos<x>        d\u00e9finir l'ancienne taille d'espace initiale sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2=\  -Xmos<x>        r\u00e9gler la taille initiale de l'espace des anciens objets \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3=\  -Xmox<x>         d\u00e9finir l'ancienne taille d'espace maximale sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3=\  -Xmox<x>        r\u00e9gler la taille maximum de l'espace des anciens objets \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_7=\  -Xmoi<x>        d\u00e9finir l'ancien incr\u00e9ment d'espace sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_7=\  -Xmoi<x>        r\u00e9gler l'incr\u00e9ment de l'espace des anciens objets \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_7.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_7.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_7.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_8=\  -Xms<x>         d\u00e9finir l'ancienne taille d'espace sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_8=\  -Xms<x>         r\u00e9gler la taille de l'espace des anciens objets \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_8.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_8.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_8.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_8_MODRON=\  -Xms<x>         d\u00e9finir la taille m\u00e9moire initiale sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_8_MODRON=\  -Xms<x>         r\u00e9gler la taille initiale de m\u00e9moire \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_8_MODRON.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_8_MODRON.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_8_MODRON.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_9=\  -Xmx<x>         d\u00e9finir la taille maximale de m\u00e9moire sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_9=\  -Xmx<x>         r\u00e9gler la taille maximale de m\u00e9moire \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_9.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_9.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_9.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL=\  -Xmr<x>         d\u00e9finir la taille de l'ensemble m\u00e9moris\u00e9 sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL=\  -Xmr<x>         r\u00e9gler la taille de l'ensemble m\u00e9moris\u00e9 \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL_MODRON=\  -Xmrx<x>        d\u00e9finir la taille maximale de l'ensemble m\u00e9moris\u00e9 sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL_MODRON=\  -Xmrx<x>        r\u00e9gler la taille maximale de l'ensemble m\u00e9moris\u00e9 \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL_MODRON.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL_MODRON.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL_MODRON.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_11=\  -Xmso<x>        d\u00e9finir la taille de la pile d'unit\u00e9s d'ex\u00e9cution syst\u00e8me sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_11=\  -Xmso<x>        r\u00e9gler la taille de pile de l'unit\u00e9 d'ex\u00e9cution du syst\u00e8me d'exploitation \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_11.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_11.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_11.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_12_GROWABLE=\  -Xiss<x>        d\u00e9finir la taille initiale de la pile d'unit\u00e9s d'ex\u00e9cution Java sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_12_GROWABLE=\  -Xiss<x>        r\u00e9gler la taille initiale de pile de l'unit\u00e9 d'ex\u00e9cution Java \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_12_GROWABLE.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_12_GROWABLE.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_12_GROWABLE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_13_GROWABLE=\  -Xss<x>        d\u00e9finir la taille maximale de la pile d'unit\u00e9s d'ex\u00e9cution Java sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_13_GROWABLE=\  -Xss<x>        r\u00e9gler la taille maximale de pile de l'unit\u00e9 d'ex\u00e9cution Java \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_13_GROWABLE.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_13_GROWABLE.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_13_GROWABLE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_13=\  -Xss<x>         d\u00e9finir la taille de la pile d'unit\u00e9s d'ex\u00e9cution sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_13=\  -Xss<x>         r\u00e9gler la taille de pile de l'unit\u00e9 d'ex\u00e9cution \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_13.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_13.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_13.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_14_MODRON=\  -Xmine<x>       d\u00e9finir la taille minimale pour l'expansion du segment sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_14_MODRON=\  -Xmine<x>       r\u00e9gler la taille minimale pour l'expansion du tas \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_14_MODRON.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_14_MODRON.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_14_MODRON.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_15_MODRON=\  -Xmaxe<x>       d\u00e9finir la taille maximale pour l'expansion du segment sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_15_MODRON=\  -Xmaxe<x>       r\u00e9gler la taille maximale pour l'expansion du tas \u00e0 <x>
 # START NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_HELP_2_15_MODRON.explanation=NOTAG
@@ -296,14 +296,14 @@ J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_3=\  -Xminf<x>       pourcentage minimal de segment libre apr\u00e8s GC
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_3=\  -Xminf<x>       pourcentage minimal de tas libre apr\u00e8s r\u00e9cup\u00e9ration de place
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_3.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_3.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_4=\  -Xmaxf<x>       pourcentage maximal de segment libre apr\u00e8s GC
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_4=\  -Xmaxf<x>       pourcentage maximal de tas libre apr\u00e8s r\u00e9cup\u00e9ration de place
 # START NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_4.explanation=NOTAG
@@ -319,7 +319,7 @@ J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_2=\  -Xgcthreads<x>                d\u00e9finir le nombre d'unit\u00e9s d'ex\u00e9cution GC
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_2=\  -Xgcthreads<x>                r\u00e9gler le nombre d'unit\u00e9s d'ex\u00e9cution de r\u00e9cup\u00e9ration de place
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_2.system_action=
@@ -340,42 +340,42 @@ J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_4.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_4.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_5=\  -Xalwaysclassgc               activer le d\u00e9chargement de classe dynamique \u00e0 chaque GC
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_5=\  -Xalwaysclassgc               activer le d\u00e9chargement de classe dynamique \u00e0 chaque r\u00e9cup\u00e9ration de place
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_5.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_5.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_5.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_6=\  -Xnocompactexplicitgc         d\u00e9sactiver la compression lors d'un GC syst\u00e8me
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_6=\  -Xnocompactexplicitgc         d\u00e9sactiver le compactage lors d'une r\u00e9cup\u00e9ration de place syst\u00e8me
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_6.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_6.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_6.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_7=\  -Xcompactexplicitgc           activer la compression lors de chaque GC syst\u00e8me
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_7=\  -Xcompactexplicitgc           activer le compactage \u00e0 chaque r\u00e9cup\u00e9ration de place syst\u00e8me
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_7.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_7.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_7.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_8=\  -Xcompactgc                   activer la compression
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_8=\  -Xcompactgc                   activer le compactage
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_8.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_8.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_8.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_9=\  -Xnocompactgc                 d\u00e9sactiver la compression
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_9=\  -Xnocompactgc                 d\u00e9sactiver le compactage
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_9.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_9.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_9.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_LARGE_PAGE_SUPPORT=\  -Xlp                          activer la prise en charge de pages volumineuses
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_LARGE_PAGE_SUPPORT=\  -Xlp                          activer le support des grandes pages
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_LARGE_PAGE_SUPPORT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_LARGE_PAGE_SUPPORT.system_action=
@@ -397,7 +397,7 @@ J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_3=\  -Xdbginfo:<symbol file path> activer le serveur d'informations de d\u00e9bogage
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_3=\  -Xdbginfo:<chemin fichier symboles>  activer le serveur d'informations de d\u00e9bogage
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_3.system_action=
@@ -523,7 +523,7 @@ J9NLS_EXELIB_CLASS_DOES_NOT_IMPL_MAIN.system_action=the JVM will terminate.
 J9NLS_EXELIB_CLASS_DOES_NOT_IMPL_MAIN.user_response=Ensure target class implements main().
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_MUST_BE_PSV=La m\u00e9thode main doit \u00eatre d\u00e9clar\u00e9e en tant que m\u00e9thode de type public, static et void.
+J9NLS_EXELIB_MUST_BE_PSV=La m\u00e9thode main doit \u00eatre d\u00e9clar\u00e9e en tant que m\u00e9thode 'public', 'static' et 'void'.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_MUST_BE_PSV.explanation=main method should always be public, static and void
 J9NLS_EXELIB_MUST_BE_PSV.system_action=The JVM will terminate.
@@ -610,7 +610,7 @@ J9NLS_EXELIB_UNABLE_REDIRECT_IO.user_response=Ensure remote console is reachable
 # END NON-TRANSLATABLE
 
 # J9SourceExeLibArgumentsParsing - describeInternalOptions
-J9NLS_EXELIB_INTERNAL_HELP_1_10=\  -Xquickstart    am\u00e9liorer la dur\u00e9e du d\u00e9marrage en diff\u00e9rant les optimisations
+J9NLS_EXELIB_INTERNAL_HELP_1_10=\  -Xquickstart    am\u00e9liorer le temps de d\u00e9marrage en diff\u00e9rant les optimisations
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_10.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_10.system_action=
@@ -626,7 +626,7 @@ J9NLS_EXELIB_JIT_LEVEL.system_action=
 J9NLS_EXELIB_JIT_LEVEL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSSI_GROWABLE=\  -Xssi<x>        param\u00e9trer l'incr\u00e9ment de pile d'unit\u00e9s d'ex\u00e9cution Java sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSSI_GROWABLE=\  -Xssi<x>        r\u00e9gler l'incr\u00e9ment de pile de l'unit\u00e9 d'ex\u00e9cution Java \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSSI_GROWABLE.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSSI_GROWABLE.system_action=
@@ -640,7 +640,7 @@ J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMX=\  -Xscmx<x>       param\u00e9trer la taille du nouveau cache de classes partag\u00e9es sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCMX=\  -Xscmx<x>       r\u00e9gler la taille du nouveau cache de classes partag\u00e9es \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX.system_action=
@@ -666,7 +666,7 @@ J9NLS_EXELIB_VERSION_ME.system_action=
 J9NLS_EXELIB_VERSION_ME.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XLP_SIZE=\  -Xlp<x>         param\u00e9trer la taille des pages volumineuses sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_XLP_SIZE=\  -Xlp<x>         r\u00e9gler la taille de grande page \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XLP_SIZE.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XLP_SIZE.system_action=
@@ -700,14 +700,14 @@ J9NLS_EXELIB_CMDLINE_JXECOLON_WARN.user_response=Replace the command line argume
 # END NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_HELP_1_11=\n\
-\  -Xtrace[:option,...]  contr\u00f4le les traces utilisez -Xtrace:help pour plus de d\u00e9tails
+\  -Xtrace[:option,...]  contr\u00f4le les traces ; utilisez -Xtrace:help pour plus de d\u00e9tails
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_11.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_11.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_11.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XJNI_1=\  -Xjni:<options>               d\u00e9finir les options JNI
+J9NLS_EXELIB_INTERNAL_HELP_XJNI_1=\  -Xjni:<options>               fixer les options JNI
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XJNI_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XJNI_1.system_action=
@@ -721,14 +721,14 @@ J9NLS_EXELIB_INTERNAL_HELP_2_16.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_16.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT=\  -Xscminaot<x>   d\u00e9finir l'espace minimal du cache de classes partag\u00e9es r\u00e9serv\u00e9 aux donn\u00e9es AOT sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT=\  -Xscminaot<x>   r\u00e9gler l'espace minimal du cache de classes partag\u00e9es r\u00e9serv\u00e9 aux donn\u00e9es AOT \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT=\  -Xscmaxaot<x>   d\u00e9finir l'espace maximal du cache de classes partag\u00e9es autoris\u00e9 pour les donn\u00e9es AOT sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT=\  -Xscmaxaot<x>   r\u00e9gler l'espace maximal du cache de classes partag\u00e9es autoris\u00e9 pour les donn\u00e9es AOT \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT.system_action=
@@ -736,7 +736,7 @@ J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_HELP_1_12=\n\
-\  -Xcheck[:option[:...]]  contr\u00f4le les v\u00e9rifications utilisez -Xcheck:help pour plus de d\u00e9tails
+\  -Xcheck[:option[:...]]  contr\u00f4le les v\u00e9rifications ; utilisez -Xcheck:help pour plus de d\u00e9tails
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_12.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_12.system_action=
@@ -744,7 +744,7 @@ J9NLS_EXELIB_INTERNAL_HELP_1_12.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_HELP_1_13=\n\
-\  -Xdump[:option,...]  utiliser des vidages de contr\u00f4le -Xdump:help pour plus d'informations
+\  -Xdump[:option,...]  utiliser des vidages de contr\u00f4le ; -Xdump:help pour plus d'informations
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_13.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_13.system_action=
@@ -753,14 +753,14 @@ J9NLS_EXELIB_INTERNAL_HELP_1_13.user_response=
 
 # These messages are no longer used, but should be left intact just in case an older redirector is running
 
-J9NLS_EXELIB_INTERNAL_HELP_VMSELECT=Les options suivante contr\u00f4le la configuration VM globale :
+J9NLS_EXELIB_INTERNAL_HELP_VMSELECT=Les options suivantes contr\u00f4lent la configuration globale de la MV :
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_VMSELECT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_VMSELECT.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_VMSELECT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED=\  -Xcompressedrefs            utiliser des r\u00e9f\u00e9rences de segment de m\u00e9moire compress\u00e9es
+J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED=\  -Xcompressedrefs            utiliser des r\u00e9f\u00e9rences de tas compress\u00e9es
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED.system_action=
@@ -822,28 +822,28 @@ J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER.user_response=
 # diagnostic collector help
 
 J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR=\n\
-\  -Xdiagnosticscollector active le collecteur de diagnotic
+\  -Xdiagnosticscollector active le collecteur de diagnostic
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCDMX=\  -Xscdmx<x>      d\u00e9finir la taille de la zone d'attribut de d\u00e9bogage du cache de classes partag\u00e9es sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCDMX=\  -Xscdmx<x>      r\u00e9gler la taille de la zone d'attribut de d\u00e9bogage du cache de classes partag\u00e9es \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCDMX.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCDMX.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCDMX.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT=\  -Xscminjit<x>  d\u00e9finir l'espace minimal du cache de classes partag\u00e9es r\u00e9serv\u00e9 aux donn\u00e9es JIT sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT=\  -Xscminjit<x>  r\u00e9gler l'espace minimal du cache de classes partag\u00e9es r\u00e9serv\u00e9 aux donn\u00e9es JIT \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT=\  -Xscmaxjit<x>   d\u00e9finir l'espace maximal du cache de classes partag\u00e9es autoris\u00e9 pour les donn\u00e9es JIT sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT=\  -Xscmaxjit<x>   r\u00e9gler l'espace maximal du cache de classes partag\u00e9es autoris\u00e9 pour les donn\u00e9es JIT \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT.system_action=
@@ -851,28 +851,28 @@ J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT.user_response=
 
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA=\  -Xscminjitdata<x>   d\u00e9finir l'espace minimal du cache de classes partag\u00e9es r\u00e9serv\u00e9 aux donn\u00e9es JIT sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA=\  -Xscminjitdata<x>   r\u00e9gler l'espace minimal du cache de classes partag\u00e9es r\u00e9serv\u00e9 aux donn\u00e9es JIT \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA=\  -Xscmaxjitdata<x>   d\u00e9finir l'espace maximal du cache de classes partag\u00e9es autoris\u00e9 pour les donn\u00e9es JIT sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA=\  -Xscmaxjitdata<x>   r\u00e9gler l'espace maximal du cache de classes partag\u00e9es autoris\u00e9 pour les donn\u00e9es JIT \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP=\  -Xzero:nosharebootzip   ne pas partager les caches d'entr\u00e9e de fichier JAR d'amor\u00e7age dans le cache de classe partag\u00e9e
+J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP=\  -Xzero:nosharebootzip   ne pas partager les caches d'entr\u00e9es de fichier .jar d'amor\u00e7age dans le cache de classes partag\u00e9es
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI=\  -XX:ShareClassesEnableBCI   cr\u00e9er le cache de classes partag\u00e9es, \u00e0 l'aide du support d'instrumentation de bytecode
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI=\  -XX:ShareClassesEnableBCI   cr\u00e9er le cache de classes partag\u00e9es avec le support d'instrumentation de bytecode
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI.system_action=
@@ -893,21 +893,21 @@ J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX=\  -Xscsoftmx<x>       param\u00e9trer la taille maximale souple du nouveau cache de classes partag\u00e9es sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX=\  -Xscsoftmx<x>       r\u00e9gler la taille maximale souple du nouveau cache de classes partag\u00e9es \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1=\  -Xscmx<x>       param\u00e9trer la taille (ou la taille maximale souple si l'option -XX:SharedCacheHardLimit= est pr\u00e9sente) du nouveau cache de classes partag\u00e9es sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1=\  -Xscmx<x>       r\u00e9gler la taille (ou la taille maximale souple si l'option -XX:SharedCacheHardLimit= est pr\u00e9sente) du nouveau cache de classes partag\u00e9es \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS=\  -XX:SharedCacheHardLimit=<x>   param\u00e9trer la taille maximale souple du nouveau cache de classes partag\u00e9es sur <x>
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS=\  -XX:SharedCacheHardLimit=<x>   r\u00e9gler la taille maximale du nouveau cache de classes partag\u00e9es \u00e0 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS.system_action=

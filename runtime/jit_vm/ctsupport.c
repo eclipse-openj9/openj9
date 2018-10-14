@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2017 IBM Corp. and others
+ * Copyright (c) 2008, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -95,7 +95,7 @@ jitGetClassOfFieldFromCP(J9VMThread *vmStruct, J9ConstantPool *constantPool, UDA
 	if (J9RAMSTATICFIELDREF_IS_RESOLVED(ramRefWrapper)) {
 		J9Class *classWrapper = J9RAMSTATICFIELDREF_CLASS(ramRefWrapper);
 		UDATA initStatus = classWrapper->initializeStatus;
-		if ((J9ClassInitSucceeded == initStatus)  || (J9ClassInitTenant == initStatus)  || ((UDATA) vmStruct == initStatus)) {
+		if ((J9ClassInitSucceeded == initStatus) || ((UDATA) vmStruct == initStatus)) {
 			result = classWrapper;
 		}
 	}
@@ -267,6 +267,7 @@ jitCTInstanceOf (J9Class *instanceClass, J9Class *castClass)
 IDATA  
 jitCTResolveInstanceFieldRefWithMethod (J9VMThread *vmStruct, J9Method *method, UDATA fieldIndex, UDATA resolveFlags, J9ROMFieldShape **resolvedField)
 {
+	J9JavaVM *vm = vmStruct->javaVM;
 	J9ConstantPool *constantPool = J9_CP_FROM_METHOD(method);
 	IDATA result = 0;
 	UDATA resolveFlagsBuffer = 0;
@@ -276,22 +277,27 @@ jitCTResolveInstanceFieldRefWithMethod (J9VMThread *vmStruct, J9Method *method, 
 	if (0 != resolveFlags) {
 		resolveFlagsBuffer |= J9_RESOLVE_FLAG_FIELD_SETTER;
 	}
-	result = vmStruct->javaVM->internalVMFunctions->resolveInstanceFieldRefInto(
+	result = vm->internalVMFunctions->resolveInstanceFieldRefInto(
 			vmStruct, method, constantPool, fieldIndex, resolveFlagsBuffer, &resolvedFieldBuffer, NULL);
 
 	if (-1 != result) {
 		*resolvedField = resolvedFieldBuffer;
 	}
-#if defined (J9VM_JIT_FULL_SPEED_DEBUG)
-	ALWAYS_TRIGGER_J9HOOK_JIT_CHECK_FOR_DATA_BREAKPOINT(vmStruct->javaVM->jitConfig->hookInterface,
-			vmStruct,
-			result,	/* can be modified */
-			fieldIndex,
-			constantPool,
-			*resolvedField,
-			0,
-			resolveFlags);
-#endif
+
+	/* If the JIT is generating inline field watch notification code, there is no need to fail the
+	 * compilation when watches are in place.
+	 */
+	if (J9_ARE_NO_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_JIT_INLINE_WATCHES)) {
+		ALWAYS_TRIGGER_J9HOOK_JIT_CHECK_FOR_DATA_BREAKPOINT(vm->jitConfig->hookInterface,
+				vmStruct,
+				result,	/* can be modified */
+				fieldIndex,
+				constantPool,
+				*resolvedField,
+				0,
+				resolveFlags);
+	}
+
 	return result;
 }
 
@@ -307,6 +313,7 @@ jitCTResolveInstanceFieldRefWithMethod (J9VMThread *vmStruct, J9Method *method, 
 void* 
 jitCTResolveStaticFieldRefWithMethod (J9VMThread *vmStruct, J9Method *method, UDATA fieldIndex, UDATA resolveFlags, J9ROMFieldShape **resolvedField)
 {
+	J9JavaVM *vm = vmStruct->javaVM;
 	J9ConstantPool *constantPool = J9_CP_FROM_METHOD(method);
 	UDATA result = 0;
 	UDATA resolveFlagsBuffer = 0;
@@ -316,22 +323,27 @@ jitCTResolveStaticFieldRefWithMethod (J9VMThread *vmStruct, J9Method *method, UD
 	if (0 != resolveFlags) {
 		resolveFlagsBuffer |= J9_RESOLVE_FLAG_FIELD_SETTER;
 	}
-	result = (UDATA) vmStruct->javaVM->internalVMFunctions->resolveStaticFieldRefInto(
+	result = (UDATA) vm->internalVMFunctions->resolveStaticFieldRefInto(
 			vmStruct, method, constantPool, fieldIndex, resolveFlagsBuffer, &resolvedFieldBuffer, NULL);
 
 	if (0 != result) {
 		*resolvedField = resolvedFieldBuffer;
 	}
-#if defined (J9VM_JIT_FULL_SPEED_DEBUG)
-	ALWAYS_TRIGGER_J9HOOK_JIT_CHECK_FOR_DATA_BREAKPOINT(vmStruct->javaVM->jitConfig->hookInterface,
-			vmStruct,
-			result,	/* can be modified */
-			fieldIndex,
-			constantPool,
-			*resolvedField,
-			1,
-			resolveFlags);
-#endif
+
+	/* If the JIT is generating inline field watch notification code, there is no need to fail the
+	 * compilation when watches are in place.
+	 */
+	if (J9_ARE_NO_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_JIT_INLINE_WATCHES)) {
+		ALWAYS_TRIGGER_J9HOOK_JIT_CHECK_FOR_DATA_BREAKPOINT(vm->jitConfig->hookInterface,
+				vmStruct,
+				result,	/* can be modified */
+				fieldIndex,
+				constantPool,
+				*resolvedField,
+				1,
+				resolveFlags);
+	}
+
 	return (void* ) result;
 }
 
@@ -419,7 +431,7 @@ findField(J9VMThread *vmStruct, J9ConstantPool *constantPool, UDATA index, BOOLE
 			IDATA offset = javaVM->internalVMFunctions->instanceFieldOffset(
 					vmStruct, clazz, J9UTF8_DATA(name),
 					J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), declaringClass,
-					&instanceField, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
+					&instanceField, J9_LOOK_NO_JAVA);
 			
 			if (-1 != offset) {
 				result = instanceField;
@@ -429,7 +441,7 @@ findField(J9VMThread *vmStruct, J9ConstantPool *constantPool, UDATA index, BOOLE
 			void * addr = javaVM->internalVMFunctions->staticFieldAddress(
 					vmStruct, clazz, J9UTF8_DATA(name),
 					J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), declaringClass,
-					&staticField, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL, NULL);
+					&staticField, J9_LOOK_NO_JAVA, NULL);
 
 			if (NULL != addr) {
 				result = staticField;
@@ -610,8 +622,14 @@ jitGetJ9MethodUsingIndex(J9VMThread *currentThread, J9ConstantPool *constantPool
 
 		if (J9_IS_STATIC_SPLIT_TABLE_INDEX(cpOrSplitIndex)) {
 			method = clazz->staticSplitMethodTable[splitTableIndex];
+			if (method == (J9Method*)currentThread->javaVM->initialMethods.initialStaticMethod) {
+				method = NULL;
+			}
 		} else {
 			method = clazz->specialSplitMethodTable[splitTableIndex];
+			if (method == (J9Method*)currentThread->javaVM->initialMethods.initialSpecialMethod) {
+				method = NULL;
+			}
 		}
 	} else {
 		method = ((J9RAMStaticMethodRef*)(constantPool + cpOrSplitIndex))->method;

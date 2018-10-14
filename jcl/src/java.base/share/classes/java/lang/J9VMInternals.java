@@ -30,7 +30,7 @@ import com.ibm.oti.util.Msg;
 
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -333,7 +333,9 @@ final class J9VMInternals {
 	private static void checkPackageAccess(final Class clazz, ProtectionDomain pd) {
 		final SecurityManager sm = System.getSecurityManager();
 		if (sm != null) {
-			AccessController.doPrivileged(new PrivilegedAction() {
+			ProtectionDomain[] pdArray = (pd == null) ? new ProtectionDomain[]{} : new ProtectionDomain[]{pd};
+			AccessController.doPrivileged(new PrivilegedAction<Object>() {
+				@Override
 				public Object run() {
 					String packageName = clazz.getPackageName();
 					if (packageName != null) {
@@ -346,7 +348,7 @@ final class J9VMInternals {
 					}					
 					return null;
 				}
-			}, new AccessControlContext(new ProtectionDomain[]{pd}));
+			}, new AccessControlContext(pdArray));
 		}
 	}
 
@@ -439,7 +441,7 @@ final class J9VMInternals {
 				}
 			}
 		} else {
-			long ptr = (com.ibm.oti.vm.VM.FJ9OBJECT_SIZE == 4) ?  h.getIntFromObject(anObject, 0L) : h.getLongFromObject(anObject, 0L);
+			long ptr = (com.ibm.oti.vm.VM.FJ9OBJECT_SIZE == 4) ? Integer.toUnsignedLong(h.getIntFromObject(anObject, 0L)) : h.getLongFromObject(anObject, 0L);
 			if ((ptr & com.ibm.oti.vm.VM.OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS) != 0) {
 				if (!h.isArray(anObject)) {
 					long j9class = ptr & com.ibm.oti.vm.VM.J9_JAVA_CLASS_MASK;

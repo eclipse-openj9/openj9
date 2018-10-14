@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2016 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -91,6 +91,9 @@ Java_com_ibm_tools_attach_target_IPC_getTempDirImpl(JNIEnv *env, jclass clazz)
 			} else {
 				conversionBuffer = NULL; /* string is bogus */
 			}
+		} else if (conversionResult < 0) {
+			Trc_JCL_stringConversionFailed(env, charResult, conversionResult);
+			conversionBuffer = NULL; /* string conversion failed */
 		}
 		if (NULL != conversionBuffer) {
 			result =  (*env)->NewStringUTF(env, (char*)conversionBuffer);
@@ -117,7 +120,7 @@ Java_com_ibm_tools_attach_target_IPC_chmod(JNIEnv *env, jclass clazz, jstring pa
 {
 	PORT_ACCESS_FROM_VMC( ((J9VMThread *) env) );
 
-	jint result = JNI_OK;
+	jint result = JNI_ERR;
 	const char *pathUTF;
 
 	pathUTF = (*env)->GetStringUTFChars(env, path, NULL);
@@ -127,8 +130,6 @@ Java_com_ibm_tools_attach_target_IPC_chmod(JNIEnv *env, jclass clazz, jstring pa
 			Trc_JCL_attach_chmod(env, pathUTF, mode, result);
 		}
 		(*env)->ReleaseStringUTFChars(env, path, pathUTF);
-	} else {
-		result = JNI_ERR;
 	}
 	return result;
 }
@@ -286,7 +287,7 @@ Java_com_ibm_tools_attach_target_IPC_createFileWithPermissionsImpl(JNIEnv *env, 
 	const char *pathUTF = (*env)->GetStringUTFChars(env, path, NULL);
 
 	if (NULL != pathUTF) {
-		IDATA fd = j9file_open(pathUTF, EsOpenCreate | EsOpenWrite | EsOpenTruncate, mode);
+		IDATA fd = j9file_open(pathUTF, EsOpenCreateNew | EsOpenWrite | EsOpenTruncate , mode);
 		if (-1 == fd) {
 			status = JNI_ERR;
 		} else {

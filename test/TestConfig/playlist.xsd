@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <!--
-  Copyright (c) 2017, 2017 IBM Corp. and others
+  Copyright (c) 2017, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,16 +26,10 @@
   <xs:element name="playlist">
     <xs:complexType>
       <xs:sequence>
+        <xs:element type="xs:string" name="include" minOccurs="0"/>
         <xs:element name="test" maxOccurs="unbounded" minOccurs="0">
           <xs:complexType>
             <xs:all>
-              <xs:element name="featureIds" minOccurs="0">
-                <xs:complexType>
-                  <xs:sequence>
-                    <xs:element type="xs:string" name="featureId" maxOccurs="unbounded"/>
-                  </xs:sequence>
-                </xs:complexType>
-              </xs:element>
               <xs:element type="xs:string" name="testCaseName"/>
               <xs:element name="variations" minOccurs="0" >
                 <xs:complexType>
@@ -45,18 +39,34 @@
                 </xs:complexType>
               </xs:element>
               <xs:element type="xs:string" name="command"/>
-              <xs:element type="xs:string" name="prologueTag" minOccurs="0"/>
-              <xs:element type="xs:string" name="successCriteria" minOccurs="0"/>
-              <xs:element type="xs:string" name="platforms" minOccurs="0"/>
+              <xs:element type="xs:string" name="disabled" minOccurs="0"/>
               <xs:element type="xs:string" name="capabilities" minOccurs="0"/>
               <xs:element type="xs:string" name="platformRequirements" minOccurs="0"/>
-              <xs:element type="xs:string" name="id" minOccurs="0"/>
-              <xs:element type="xs:string" name="dependencies" minOccurs="0"/>
-              <xs:element type="xs:string" name="subsets" minOccurs="0"/>
               <xs:element name="tags" minOccurs="0">
                 <xs:complexType>
                   <xs:sequence>
                     <xs:element type="xs:string" name="tag" maxOccurs="unbounded"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="levels" minOccurs="0">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:string" name="level" maxOccurs="unbounded"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="groups" minOccurs="0">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:string" name="group" maxOccurs="unbounded"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="impls" minOccurs="0">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:string" name="impl" maxOccurs="unbounded"/>
                   </xs:sequence>
                 </xs:complexType>
               </xs:element>

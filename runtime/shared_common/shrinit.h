@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,7 +57,7 @@ BOOLEAN j9shr_isAddressInCache(J9JavaVM *vm, void *address, UDATA length);
 void j9shr_populatePreinitConfigDefaults(J9JavaVM *vm, J9SharedClassPreinitConfig *updatedWithDefaults);
 BOOLEAN j9shr_isPlatformDefaultPersistent(struct J9JavaVM* vm);
 UDATA j9shr_isBCIEnabled(J9JavaVM *vm);
-UDATA ensureCorrectCacheSizes(J9PortLibrary* portlib, U_64 runtimeFlags, UDATA verboseFlags, J9SharedClassPreinitConfig* piconfig);
+UDATA ensureCorrectCacheSizes(J9JavaVM *vm, J9PortLibrary* portlib, U_64 runtimeFlags, UDATA verboseFlags, J9SharedClassPreinitConfig* piconfig);
 UDATA parseArgs(J9JavaVM* vm, char* options, U_64* runtimeFlags, UDATA* verboseFlags, char** cacheName, char** modContext, char** expireTime, char** ctrlDirName, char** cacheDirPerm, char** methodSpecs, UDATA* printStatsOptions, UDATA* storageKeyTesting);
 UDATA convertPermToDecimal(J9JavaVM *vm, const char *permStr);
 SCAbstractAPI * initializeSharedAPI(J9JavaVM *vm);
@@ -109,6 +109,7 @@ typedef struct J9SharedClassesOptions {
 #define OPTION_TRACECOUNT "traceCount"
 #define OPTION_PRINTORPHANSTATS "printOrphanStats"
 #define OPTION_NONFATAL "nonfatal"
+#define OPTION_FATAL "fatal"
 #define OPTION_SILENT "silent"
 #define OPTION_NONE "none"
 #define OPTION_CONTROLDIR_EQUALS "controlDir="		/* purely for java5 compatability */
@@ -121,6 +122,7 @@ typedef struct J9SharedClassesOptions {
 #define OPTION_NO_ROUND_PAGES "noRoundPages"
 #define OPTION_CACHERETRANSFORMED "cacheRetransformed"
 #define OPTION_NOBOOTCLASSPATH "noBootclasspath"
+#define OPTION_BOOTCLASSESONLY "bootClassesOnly"
 #if !defined(WIN32)
 #define OPTION_SNAPSHOTCACHE "snapshotCache"
 #define OPTION_DESTROYSNAPSHOT "destroySnapshot"
@@ -250,6 +252,7 @@ typedef struct J9SharedClassesOptions {
 #define RESULT_DO_ADJUST_MAXAOT_EQUALS 46
 #define RESULT_DO_ADJUST_MINJITDATA_EQUALS 47
 #define RESULT_DO_ADJUST_MAXJITDATA_EQUALS 48
+#define RESULT_DO_BOOTCLASSESONLY 49
 
 
 #define PARSE_TYPE_EXACT 1
@@ -267,8 +270,8 @@ typedef struct J9SharedClassesOptions {
 #define HELPTEXT_MPROTECTEQUALS_PARTIAL_PAGES_PRIVATE_OPTION OPTION_MPROTECT_EQUALS""SUB_OPTION_MPROTECT_PARTIAL_PAGES
 #define HELPTEXT_MPROTECTEQUALS_PARTIAL_PAGES_ON_STARTUP_PRIVATE_OPTION OPTION_MPROTECT_EQUALS""SUB_OPTION_MPROTECT_PARTIAL_PAGES_ON_STARTUP
 #else
-#define HELPTEXT_MPROTECTEQUALS_PUBLIC_OPTION OPTION_MPROTECT_EQUALS"["SUB_OPTION_MPROTECT_ALL"|"SUB_OPTION_MPROTECT_ONFIND"|"SUB_OPTION_MPROTECT_PARTIAL_PAGES_ON_STARTUP"|"SUB_OPTION_MPROTECT_DEF"|"SUB_OPTION_MPROTECT_NO_PARTIAL_PAGES"|"SUB_OPTION_MPROTECT_NONE"]"
-#define HELPTEXT_MPROTECTEQUALS_NO_RW_PRIVATE_OPTION OPTION_MPROTECT_EQUALS""SUB_OPTION_MPROTECT_NO_RW
+#define HELPTEXT_MPROTECTEQUALS_PUBLIC_OPTION OPTION_MPROTECT_EQUALS "[" SUB_OPTION_MPROTECT_ALL "|" SUB_OPTION_MPROTECT_ONFIND "|" SUB_OPTION_MPROTECT_PARTIAL_PAGES_ON_STARTUP "|" SUB_OPTION_MPROTECT_DEF "|" SUB_OPTION_MPROTECT_NO_PARTIAL_PAGES "|" SUB_OPTION_MPROTECT_NONE "]"
+#define HELPTEXT_MPROTECTEQUALS_NO_RW_PRIVATE_OPTION OPTION_MPROTECT_EQUALS "" SUB_OPTION_MPROTECT_NO_RW
 #endif /* defined(J9ZOS390) || defined(AIXPPC) */
 #define HELPTEXT_PRINTALLSTATS_OPTION OPTION_PRINTALLSTATS"[=option[+s]]"
 #define HELPTEXT_PRINTSTATS_OPTION OPTION_PRINTSTATS"[=option[+s]]"

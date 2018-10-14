@@ -1,5 +1,5 @@
 ##############################################################################
-#  Copyright (c) 2016, 2017 IBM Corp. and others
+#  Copyright (c) 2016, 2018 IBM Corp. and others
 #
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,8 @@
 use strict;
 use warnings;
 use Data::Dumper;
-use feature 'say';
+use File::Basename;
+use File::Path qw/make_path/;
 
 my $resultFile;
 my $failuremkarg;
@@ -58,7 +59,7 @@ sub resultReporter {
 	my $numOfTotal = 0;
 	my @passed;
 	my @failed;
-	my @skipped;
+	my @capSkipped;
 	my $tapString = '';
 	my $fhIn;
 
@@ -67,57 +68,70 @@ sub resultReporter {
 	if (open($fhIn, '<', $resultFile)) {
 		while ( my $result = <$fhIn> ) {
 			if ($result =~ /===============================================\n/) {
-				my $output = "  ---\n    output:\n      |\n";
+				my $output = "    output:\n      |\n";
 				$output .= '        ' . $result;
 				my $testName = '';
+				my $startTime = 0;
+				my $endTime = 0;
 				while ( $result = <$fhIn> ) {
+					$output .= '        ' . $result;
 					if ($result =~ /Running test (.*) \.\.\.\n/) {
 						$testName = $1;
+					} elsif ($result =~ /^\Q$testName\E Start Time: .* Epoch Time \(ms\): (.*)\n/) {
+						$startTime = $1;
+					} elsif ($result =~ /^\Q$testName\E Finish Time: .* Epoch Time \(ms\): (.*)\n/) {
+						$endTime = $1;
+						$tapString .= "    duration_ms: " . ($endTime - $startTime) . "\n  ...\n";
+						last;
 					} elsif ($result eq ($testName . "_PASSED\n")) {
 						$result =~ s/_PASSED\n$//;
 						push (@passed, $result);
 						$numOfPassed++;
 						$numOfTotal++;
 						$tapString .= "ok " . $numOfTotal . " - " . $result . "\n";
+						$tapString .= "  ---\n";
 						if ($diagnostic eq 'all') {
-							$output .= "  ...\n";
 							$tapString .= $output;
 						}
-						last;
 					} elsif ($result eq ($testName . "_FAILED\n")) {
 						$result =~ s/_FAILED\n$//;
 						push (@failed, $result);
 						$numOfFailed++;
 						$numOfTotal++;
 						$tapString .= "not ok " . $numOfTotal . " - " . $result . "\n";
+						$tapString .= "  ---\n";
 						if (($diagnostic eq 'failure') || ($diagnostic eq 'all')) {
-							$output .= "  ...\n";
 							$tapString .= $output;
 						}
-						last;
 					} elsif ($result =~ /(capabilities \(.*?\))\s*=>\s*${testName}_SKIPPED\n/) {
 						my $capabilities = $1;
-						push (@skipped, "$testName - $capabilities");
+						push (@capSkipped, "$testName - $capabilities");
 						$numOfSkipped++;
 						$numOfTotal++;
 						$tapString .= "ok " . $numOfTotal . " - " . $testName . " # skip\n";
-						last;
+						$tapString .= "  ---\n";
+					} elsif ($result =~ /(jvm options|platform requirements).*=>\s*${testName}_SKIPPED\n/) {
+						$numOfSkipped++;
+						$numOfTotal++;
+						$tapString .= "ok " . $numOfTotal . " - " . $testName . " # skip\n";
+						$tapString .= "  ---\n";
 					}
-					$output .= '        ' . $result;
 				}
 			}
 		}
 
 		close $fhIn;
-
-		#generate tap output
-		if ($tapFile) {
-			open(my $fhOut, '>', $tapFile) or die "Cannot open file $tapFile!";
-			print $fhOut "1.." . $numOfTotal . "\n";
-			print $fhOut $tapString;
-			close $fhOut;
-		}
 	}
+
+	my $dir = dirname($tapFile);
+	if (!(-e $dir and -d $dir)) {
+		make_path($dir);
+	}
+	#generate tap output
+	open(my $fhOut, '>', $tapFile) or die "Cannot open file $tapFile!";
+	print $fhOut "1.." . $numOfTotal . "\n";
+	print $fhOut $tapString;
+	close $fhOut;
 
 	#generate console output
 	print "TEST TARGETS SUMMARY\n";
@@ -128,8 +142,9 @@ sub resultReporter {
 		print "\n";
 	}
 
-	if ($numOfSkipped != 0) {
-		printTests(\@skipped, "SKIPPED test targets due to capabilities");
+	# only print out skipped due to capabilities in console
+	if (@capSkipped) {
+		printTests(\@capSkipped, "SKIPPED test targets due to capabilities");
 		print "\n";
 	}
 
@@ -169,12 +184,17 @@ sub failureMkGen {
 		. "########################################################\n"
 		. "\n";
 		print $fhOut $headerComments;
-		print $fhOut "failed:";
-		print $fhOut " \\\nrmResultFile";
+		print $fhOut ".DEFAULT_GOAL := failed\n\n"
+					. "D = /\n\n"
+					. "ifndef TEST_ROOT\n"
+					. "\tTEST_ROOT := \$(shell pwd)\$(D)..\n"
+					. "endif\n\n"
+					. "failed:\n";
 		foreach my $target (@$failureTargets) {
-			print $fhOut " \\\n" . $target;
+			print $fhOut '	@$(MAKE) -C $(TEST_ROOT) -f autoGen.mk ' . $target . "\n";
 		}
-		print $fhOut " \\\nresultsSummary";
+		print $fhOut "\n.PHONY: failed\n"
+					. ".NOTPARALLEL: failed";
 		close $fhOut;
 	}
 }

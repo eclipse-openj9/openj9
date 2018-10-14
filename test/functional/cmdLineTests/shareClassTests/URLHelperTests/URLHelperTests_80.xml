@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!--
+  Copyright (c) 2016, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<!-- #### RUN URLHelperTests SUITE #### -->
+<suite id="Shared Classes URLHelperTests Suite - Windows Configuration">
+
+	<!-- Used to set which mode the test cases are run in -->
+	<variable name="currentMode" value=" "/>
+
+	<!-- Our test modes for this suite -->
+	<variable name="mode204" value="-Xshareclasses:name=URLHelperTests"/>
+	<variable name="mode205" value="-Xshareclasses:name=URLHelperTests,noClasspathCacheing"/>
+
+	<!-- Set variables up -->
+	<variable name="JAVAC_DIR" value="$JAVA_HOME$$PATHSEP$bin"/>
+	<variable name="BOOTCLASSPATH" value="-Xbootclasspath/p:.$PATHSEP$Utils$CPDL$."/>
+
+	<variable name="currentMode" value="$mode204$"/>
+	<if testVariable="SCMODE" testValue="204" resultVariable="currentMode" resultValue="$mode204$"/>
+	<if testVariable="SCMODE" testValue="205" resultVariable="currentMode" resultValue="$mode205$"/>
+	<if testVariable="SCMODE" testValue="206" resultVariable="currentMode" resultValue="$mode206$"/>
+	
+		
+	<echo value=" "/>
+	<echo value="#######################################################"/>
+	<echo value="Running tests in mode $SCMODE$ with command line options: $currentMode$"/>
+	<echo value="#######################################################"/>
+	<echo value=" "/>
+	
+	<exec command="$JAVA_EXE$ -Xshareclasses:destroyAll" quiet="false"/>
+	
+	<!-- Run APITests.URLStoreFindTest -->
+	<test id="APITests.URLStoreFindTest" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $BOOTCLASSPATH$ APITests.URLStoreFindTest</command>
+		<output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="destroy cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ -Xshareclasses:name=URLHelperTests,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<!-- Run APITests.NullURLStore/FindTest -->
+	<test id="APITests.NullURLStoreTest" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $BOOTCLASSPATH$ APITests.NullURLStoreTest</command>
+		<output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="destroy cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ -Xshareclasses:name=URLHelperTests,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+
+	<test id="APITests.NullURLFindTest" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $BOOTCLASSPATH$ APITests.NullURLFindTest</command>
+		<output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="destroy cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ -Xshareclasses:name=URLHelperTests,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+		<!-- Run APITests.URLGetDifferentHelperTest -->
+	<test id="APITests.URLGetDifferentHelperTest" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $BOOTCLASSPATH$ APITests.URLGetDifferentHelperTest</command>
+		<output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="destroy cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ -Xshareclasses:name=URLHelperTests,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<!-- Run APITests.URLMultipleGetHelperCallTest -->
+	<test id="APITests.URLMultipleGetHelperCallTest" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $BOOTCLASSPATH$ APITests.URLMultipleGetHelperCallTest</command>
+		<output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="destroy cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ -Xshareclasses:name=URLHelperTests,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<!-- Run ClassPathMatchingTests -->
+	<test id="URLClassPathMatchingTest 1" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $BOOTCLASSPATH$ ClassPathMatchingTests.URLClassPathMatchingTest -testfile .$PATHSEP$ClassPathMatchingTests$PATHSEP$Test1.props</command>
+		<output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="destroy cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ -Xshareclasses:name=URLHelperTests,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="URLClassPathMatchingTest 2" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $BOOTCLASSPATH$ ClassPathMatchingTests.MultiLoadURLClassPathMatchingTest -testfile .$PATHSEP$ClassPathMatchingTests$PATHSEP$Test2.props</command>
+		<output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="destroy cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ -Xshareclasses:name=URLHelperTests,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="URLClassPathMatchingTest 3" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $BOOTCLASSPATH$ ClassPathMatchingTests.URLClassPathMatchingTest -testfile .$PATHSEP$ClassPathMatchingTests$PATHSEP$Test3.props</command>
+		<output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="destroy cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ -Xshareclasses:name=URLHelperTests,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<!-- Run URLStaleClassPathEntryTests -->
+	<test id="URLStaleClassPathEntryTest 1" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $BOOTCLASSPATH$; StaleClassPathEntryTests.URLStaleClassPathEntryTest -testfile .$PATHSEP$StaleClassPathEntryTests$PATHSEP$$PROPS_DIR$$PATHSEP$Test1.props -javacdir $JAVAC_DIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="destroy cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ -Xshareclasses:name=URLHelperTests,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+		<test id="URLStaleClassPathEntryTest 2" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $BOOTCLASSPATH$; StaleClassPathEntryTests.URLStaleClassPathEntryTest -testfile .$PATHSEP$StaleClassPathEntryTests$PATHSEP$$PROPS_DIR$$PATHSEP$Test2.props -javacdir $JAVAC_DIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="destroy cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ -Xshareclasses:name=URLHelperTests,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+		<test id="URLStaleClassPathEntryTest 3" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $BOOTCLASSPATH$; StaleClassPathEntryTests.URLStaleClassPathEntryTest -testfile .$PATHSEP$StaleClassPathEntryTests$PATHSEP$$PROPS_DIR$$PATHSEP$Test3.props -javacdir $JAVAC_DIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="destroy cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ -Xshareclasses:name=URLHelperTests,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+		<test id="URLStaleClassPathEntryTest 4" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $BOOTCLASSPATH$; StaleClassPathEntryTests.URLStaleClassPathEntryTest -testfile .$PATHSEP$StaleClassPathEntryTests$PATHSEP$$PROPS_DIR$$PATHSEP$Test4.props -javacdir $JAVAC_DIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="destroy cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ -Xshareclasses:name=URLHelperTests,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<!-- Run PartitioningTests -->
+	<test id="PartitioningTest 1" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $BOOTCLASSPATH$; PartitioningTests.URLPartitioningStoreFindTest -testfile .$PATHSEP$PartitioningTests$PATHSEP$$PROPS_DIR$$PATHSEP$Test1.props</command>
+		<output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+		
+	<exec command="$JAVA_EXE$ -Xshareclasses:destroyAll" quiet="false"/>
+	
+</suite>

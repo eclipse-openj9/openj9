@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,8 +21,6 @@
  *******************************************************************************/
 package com.ibm.j9ddr.vm29.pointer.helper;
 
-import static com.ibm.j9ddr.vm29.structure.J9Consts.J9_JAVA_CLASS_RAM_SHAPE_SHIFT;
-import static com.ibm.j9ddr.vm29.structure.J9Object.OBJECT_HEADER_SHAPE_MASK;
 import static com.ibm.j9ddr.vm29.structure.J9ROMFieldOffsetWalkState.*;
 
 import java.lang.reflect.Modifier;
@@ -49,11 +47,12 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9MethodPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMMethodPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9VTableHeaderPointer;
 import com.ibm.j9ddr.vm29.structure.J9Class;
 import com.ibm.j9ddr.vm29.structure.J9Consts;
 import com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags;
-import com.ibm.j9ddr.vm29.structure.J9JavaClassFlags;
 import com.ibm.j9ddr.vm29.structure.J9Method;
+import com.ibm.j9ddr.vm29.structure.J9VTableHeader;
 import com.ibm.j9ddr.vm29.types.Scalar;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.UDATA;
@@ -245,7 +244,19 @@ public class J9ClassHelper
 		return false;
 	}
 	
-	public static UDATAPointer vTable(J9ClassPointer clazz) 
+	public static J9VTableHeaderPointer vTableHeader(J9ClassPointer clazz)
+	{
+		J9VTableHeaderPointer pointer = J9VTableHeaderPointer.cast(clazz.add(1));
+		return pointer;
+	}
+
+	public static UDATAPointer vTable(J9VTableHeaderPointer vTableHeader)
+	{
+		UDATAPointer pointer = UDATAPointer.cast(vTableHeader.add(1));
+		return pointer;
+	}
+
+	public static UDATAPointer oldVTable(J9ClassPointer clazz)
 	{
 		UDATAPointer pointer = UDATAPointer.cast(clazz.add(1));
 		return pointer;
@@ -268,7 +279,13 @@ public class J9ClassHelper
 		
 		// Fragment 0. RAM class header = J9Class struct + vTable + JIT vTable
 		UDATA size = new UDATA(J9Class.SIZEOF);
-		UDATA vTableSlotCount = vTable(clazz).at(0);
+		UDATA vTableSlotCount;
+		/* Check vTable algorithm version */
+		if (AlgorithmVersion.getVersionOf(AlgorithmVersion.VTABLE_VERSION).getAlgorithmVersion() >= 1) {
+			vTableSlotCount = vTableHeader(clazz).size().add(J9VTableHeader.SIZEOF / UDATA.SIZEOF);
+		} else {
+			vTableSlotCount = oldVTable(clazz).at(0);
+		}
 		size = size.add(Scalar.convertSlotsToBytes(vTableSlotCount));
 		if (vm.jitConfig().notNull()) {
 			UDATA jitVTableSlotCount = vTableSlotCount.sub(1);
@@ -277,7 +294,7 @@ public class J9ClassHelper
 
 		if (!J9ROMClassHelper.isArray(clazz.romClass())) {
 			// Fragment 1. RAM methods + extended method block
-			U32 ramMethodsSize = clazz.romClass().romMethodCount().mult((int)J9Method.SIZEOF);
+			UDATA ramMethodsSize = clazz.romClass().romMethodCount().mult((int)J9Method.SIZEOF);
 			size = size.add(ramMethodsSize);
 			if (vm.runtimeFlags().allBitsIn(J9Consts.J9_RUNTIME_EXTENDED_METHOD_BLOCK)) {
 				UDATA extendedMethodBlockSize = Scalar.roundToSizeofUDATA(new UDATA(clazz.romClass().romMethodCount()));
@@ -296,7 +313,7 @@ public class J9ClassHelper
 			}
 
 			// Fragment 5. Static slots
-			U32 staticSlotCount = clazz.romClass().objectStaticCount().add(clazz.romClass().singleScalarStaticCount());
+			UDATA staticSlotCount = clazz.romClass().objectStaticCount().add(clazz.romClass().singleScalarStaticCount());
 			if (J9BuildFlags.env_data64) {
 				staticSlotCount = staticSlotCount.add(clazz.romClass().doubleScalarStaticCount());
 			} else {
@@ -305,7 +322,7 @@ public class J9ClassHelper
 			size = size.add(Scalar.convertSlotsToBytes(new UDATA(staticSlotCount)));
 			
 			// Fragment 6. Constant pool
-			U32 constantPoolSlotCount = clazz.romClass().ramConstantPoolCount().mult(2);
+			UDATA constantPoolSlotCount = clazz.romClass().ramConstantPoolCount().mult(2);
 			size = size.add(Scalar.convertSlotsToBytes(new UDATA(constantPoolSlotCount)));
 		}
 		
@@ -388,7 +405,7 @@ public class J9ClassHelper
 		if (J9ClassHelper.isArrayClass(j9class)) {
 			J9ArrayClassPointer arrayClass = J9ArrayClassPointer.cast(j9class);
 			
-			U32 modifiers = arrayClass.leafComponentType().romClass().modifiers();
+			UDATA modifiers = arrayClass.leafComponentType().romClass().modifiers();
 
 			//OR in the bogus Sun bits
 			modifiers = modifiers.bitOr(J9JavaAccessFlags.J9AccAbstract);
@@ -396,7 +413,7 @@ public class J9ClassHelper
 			
 			return modifiers.intValue();
 		} else {
-			U32 modifiers = j9class.romClass().modifiers();
+			UDATA modifiers = j9class.romClass().modifiers();
 			
 			if (j9class.romClass().outerClassName().notNull()) {
 				modifiers = j9class.romClass().memberAccessFlags();
@@ -415,7 +432,7 @@ public class J9ClassHelper
 	}
 	
 	public static U32 extendedClassFlags(J9ClassPointer j9class) throws CorruptDataException {
-		return j9class.classFlags();
+		return new U32(j9class.classFlags());
 	}
 
 	public static UDATA classFlags(J9ClassPointer j9class) throws CorruptDataException {

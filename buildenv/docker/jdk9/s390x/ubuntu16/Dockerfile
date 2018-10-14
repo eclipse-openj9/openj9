@@ -1,4 +1,4 @@
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,7 @@
 #   docker build -t=openj9 .
 #   docker run -it openj9
 
-FROM s390x/ibmjava:8-sdk
+FROM ubuntu:16.04
 
 # Install required OS tools
 RUN apt-get update \
@@ -30,6 +30,7 @@ RUN apt-get update \
     autoconf \
     ca-certificates \
     ccache \
+    cmake \
     cpio \
     file \
     g++-4.8 \
@@ -72,5 +73,16 @@ RUN cd /root \
   && wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz \
   && tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2 \
   && rm -f freemarker.tgz
+
+# Download and install boot JDK from AdoptOpenJDK
+RUN cd /root \
+  && wget -O bootjdk8.tar.gz https://api.adoptopenjdk.net/openjdk8-openj9/releases/s390x_linux/latest/binary \
+  && tar -xzf bootjdk8.tar.gz \
+  && rm -f bootjdk8.tar.gz \
+  && ls | grep -i jdk | xargs -I % sh -c 'mv % bootjdk8'
+
+# Set environment variable JAVA_HOME, and prepend ${JAVA_HOME}/bin to PATH
+ENV JAVA_HOME="/root/bootjdk8"
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 WORKDIR /root

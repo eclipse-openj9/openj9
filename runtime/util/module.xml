@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-	Copyright (c) 2006, 2017 IBM Corp. and others
+	Copyright (c) 2006, 2018 IBM Corp. and others
 
 	This program and the accompanying materials are made available under
 	the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,10 +48,6 @@
 			<makefilestub data="UMA_OBJECTS:=$(filter-out fpusup$(UMA_DOT_O),$(UMA_OBJECTS))">
 				<exclude-if condition="spec.flags.J9VM_ARCH_X86"/>
 			</makefilestub>
-			<!--Special compilation for openj9_version.c with extra version flags. -->
-			<makefilestub data="ifeq ($(OPENJ9_BUILD),true)"/>
-			<makefilestub data="openj9_version$(UMA_DOT_O) : CFLAGS += -DOPENJ9_BUILD"/>
-			<makefilestub data="endif"/>
 		</makefilestubs>
 		<vpaths>
 			<vpath pattern="freessp.c" path="zos" augmentObjects="true" type="relativepath">

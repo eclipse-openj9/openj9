@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -86,8 +86,8 @@ tgcHookCardCleaningComplete(J9HookInterface** hook, UDATA eventNum, void* eventD
 }
 
 /**
- * Initialise cardcleaning tgc tracing.
- * Initialises the TgcConcurrentExtensions object associated with concurrent tgc tracing.
+ * Initialize cardcleaning tgc tracing.
+ * Initializes the TgcConcurrentExtensions object associated with concurrent tgc tracing.
  * Attaches hooks to the appropriate functions handling events used by card cleaning tgc tracing.
  */
 bool

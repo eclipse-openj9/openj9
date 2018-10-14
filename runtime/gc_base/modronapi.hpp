@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,19 +48,21 @@ extern "C" {
 #define J9_GC_MANAGEMENT_POOL_NAME_BALANCED_RESERVED	"balanced-reserved"
 #define J9_GC_MANAGEMENT_POOL_NAME_BALANCED_EDEN		"balanced-eden"
 #define J9_GC_MANAGEMENT_POOL_NAME_BALANCED_SURVIVOR	"balanced-survivor"
-#define J9_GC_MANAGEMENT_POOL_NAME_BALANCED_OLD			"balanced-old"
+#define J9_GC_MANAGEMENT_POOL_NAME_BALANCED_OLD		"balanced-old"
 
 #define J9_GC_MANAGEMENT_GC_NAME_GLOBAL_OLD 			"MarkSweepCompact"
-#define J9_GC_MANAGEMENT_GC_NAME_LOCAL_OLD				"Copy"
-#define J9_GC_MANAGEMENT_GC_NAME_GLOBAL 				"global"
-#define J9_GC_MANAGEMENT_GC_NAME_SCAVENGE 				"scavenge"
-#define J9_GC_MANAGEMENT_GC_NAME_PGC 					"partial gc"
-#define J9_GC_MANAGEMENT_GC_NAME_GGC 					"global garbage collect"
+#define J9_GC_MANAGEMENT_GC_NAME_LOCAL_OLD			"Copy"
+#define J9_GC_MANAGEMENT_GC_NAME_GLOBAL  			"global"
+#define J9_GC_MANAGEMENT_GC_NAME_SCAVENGE 			"scavenge"
+#define J9_GC_MANAGEMENT_GC_NAME_PGC 				"partial gc"
+#define J9_GC_MANAGEMENT_GC_NAME_GGC 				"global garbage collect"
+#define J9_GC_MANAGEMENT_GC_NAME_EPSILON 			"Epsilon"
 
 UDATA j9gc_modron_global_collect(J9VMThread *vmThread);
 UDATA j9gc_modron_local_collect(J9VMThread *vmThread);
 UDATA j9gc_heap_total_memory(J9JavaVM *javaVM);
 UDATA j9gc_heap_free_memory(J9JavaVM *javaVM);
+UDATA j9gc_is_garbagecollection_disabled(J9JavaVM *javaVM);
 
 UDATA j9gc_allsupported_memorypools(J9JavaVM *javaVM);
 UDATA j9gc_allsupported_garbagecollectors(J9JavaVM *javaVM);

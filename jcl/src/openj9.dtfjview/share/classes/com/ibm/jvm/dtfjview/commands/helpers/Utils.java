@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -271,13 +271,13 @@ public class Utils {
 				value = value.substring(2);
 			}
 			try {
-				translated = new Long(Long.parseLong(value, 16));
+				translated = Long.valueOf(value, 16);
 			} catch (NumberFormatException e) {
 				try {
 					// parseLong does not successfully read in numbers > 2^63 e.g. "ffffffffff600000"
 					// have another try going via a big integer
 					BigInteger big = new BigInteger(value,16);
-					translated = big.longValue();
+					translated = Long.valueOf(big.longValue());
 				} catch (NumberFormatException e2) {
 					// whatever the problem was it was not just to do with being > 2^63
 					translated = null;
@@ -558,39 +558,39 @@ public class Utils {
 		else
 		{
 			if (o instanceof Boolean) {
-				val += ((Boolean)o).toString();
+				val += ((Boolean) o).toString();
 			} else if (o instanceof Byte) {
-				byte b = ((Byte)o).byteValue();
+				byte b = ((Byte) o).byteValue();
 				val += String.valueOf(b);
-				value = new Long((new Byte(b)).longValue());
+				value = Long.valueOf(b);
 			} else if (o instanceof Character) {
-				char c = ((Character)o).charValue();
+				char c = ((Character) o).charValue();
 				val += Utils.getPrintableWithQuotes(c);
-				value = new Long((new Integer((int)c).longValue()));
+				value = Long.valueOf(c);
 			} else if (o instanceof Double) {
-				double d = ((Double)o).doubleValue();
+				double d = ((Double) o).doubleValue();
 				val += String.valueOf(d);
-				value = new Long(Double.doubleToRawLongBits(d));
+				value = Long.valueOf(Double.doubleToRawLongBits(d));
 			} else if (o instanceof Float) {
-				float f = ((Float)o).floatValue();
+				float f = ((Float) o).floatValue();
 				val += String.valueOf(f);
-				value = new Long(Float.floatToRawIntBits(f));
+				value = Long.valueOf(Float.floatToRawIntBits(f));
 			} else if (o instanceof Integer) {
-				int i = ((Integer)o).intValue();
+				int i = ((Integer) o).intValue();
 				val += String.valueOf(i);
-				value = new Long((new Integer(i)).longValue());
+				value = Long.valueOf(i);
 			} else if (o instanceof Long) {
-				long l = ((Long)o).longValue();
+				long l = ((Long) o).longValue();
 				val += String.valueOf(l);
-				value = new Long(l);
+				value = Long.valueOf(l);
 			} else if (o instanceof Short) {
-				short s = ((Short)o).shortValue();
+				short s = ((Short) o).shortValue();
 				val += String.valueOf(s);
-				value = new Long((new Short(s)).longValue());
+				value = Long.valueOf(s);
 			} else if (o instanceof String) {
-				val += (String)o;
+				val += (String) o;
 			} else if (o instanceof JavaObject) {
-				if (Utils.isNull((JavaObject)o)) {
+				if (Utils.isNull((JavaObject) o)) {
 					val += "null";
 				} else {
 					object = true;
@@ -791,7 +791,7 @@ public class Utils {
 		return output;
 	}
 
-	public static Iterator getAddressSapceSectionInfo(Image loadedImage){
+	public static Iterator getAddressSpaceSectionInfo(Image loadedImage) {
 		Iterator itAddressSpace = loadedImage.getAddressSpaces();
 		Vector vSections = new Vector();
 		while(itAddressSpace.hasNext()){

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2014 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,6 +61,17 @@
 #define J9_INVARIANT_INTERN_TABLE_NODE_COUNT 2345
 #define J9_SHARED_CLASS_CACHE_MIN_SIZE (4 * 1024)
 #define J9_SHARED_CLASS_CACHE_MAX_SIZE I_32_MAX
+/* Default shared class cache size on 64-bit platforms (if OS allows)
+ * Otherwise,
+ * 1. For non-persistent cache, if SHMMAX < J9_SHARED_CLASS_CACHE_DEFAULT_SIZE_64BIT_PLATFORM (300MB), default cache size is set to SHMMAX
+ * 2. For persistent cache, if free disk space is < SHRINIT_LOW_FREE_DISK_SIZE (6GB), default cache size is set to J9_SHARED_CLASS_CACHE_DEFAULT_SOFTMAX_SIZE_64BIT_PLATFORM (64MB)
+ */
+#define J9_SHARED_CLASS_CACHE_DEFAULT_SIZE_64BIT_PLATFORM (300 * 1024 * 1024)
+/* Default shared class soft max size on 64-bit platforms. This value is only set if the OS allows default cache size to be greater than J9_SHARED_CLASS_CACHE_MIN_DEFAULT_CACHE_SIZE_FOR_SOFTMAX */
+#define J9_SHARED_CLASS_CACHE_DEFAULT_SOFTMAX_SIZE_64BIT_PLATFORM (64 * 1024 * 1024)
+/* The minimum default shared class cache size to set a default soft max, on 64-bit platforms only. */
+#define J9_SHARED_CLASS_CACHE_MIN_DEFAULT_CACHE_SIZE_FOR_SOFTMAX (80 * 1024 *1024)
+/* Default shared class cache size on 32-bit platforms */
 #define J9_SHARED_CLASS_CACHE_DEFAULT_SIZE (16 * 1024 * 1024)
 
 #define J9_FIXED_SPACE_SIZE_NUMERATOR 0
@@ -119,9 +130,7 @@
 #define J9_IGC_OVERFLOW_LIST_MAX 16384
 #define J9_SCV_TENURE_RATIO_HIGH 30
 #define J9_IGC_OBJECT_SCAN_QUEUE_SIZE_MAX 16384
-#define J9_SCV_REMSET_MAX 65536
 #define J9_INITIAL_MEMORY_SIZE_SCALE_DENOMINATOR 1000
-#define J9_SCV_REMSET_FRAGMENT_SIZE 32
 #define J9_RESMAN_DEFAULT_MEMORY_SPACE_MAX_DIVISOR 8
 #define J9_GC_UNFINALIZED_LIST_INCREMENT 4096
 #define J9_OLD_SPACE_SIZE_SCALE_NUMERATOR 125
@@ -130,7 +139,6 @@
 #define J9_IGC_MINIMUM_FREE_RATIO 25
 #define J9_PHYSICAL_MEMORY_SCALE_DENOMINATOR 4
 #define J9_OLD_SPACE_SIZE_MAX 8388608
-#define J9_SCV_REMSET_SIZE 16384
 #define J9_FIXED_SPACE_SIZE_ROUND_TO 1024
 #define J9_ALLOCATION_INCREMENT_ROUND_TO 1024
 #define J9_NEW_SPACE_SIZE_MAX 4194304

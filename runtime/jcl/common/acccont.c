@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2014 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,15 +50,13 @@ jboolean JNICALL Java_java_security_AccessController_initializeInternal(JNIEnv *
 	if(mid == NULL) goto fail;
 	javaVM->doPrivilegedWithContextMethodID2 = (UDATA) mid;
 
-	if ((J2SE_VERSION_FROM_ENV(env) & J2SE_VERSION_MASK) >= J2SE_18) {
-		mid = (*env)->GetStaticMethodID(env, accessControllerClass, "doPrivileged", "(Ljava/security/PrivilegedAction;Ljava/security/AccessControlContext;[Ljava/security/Permission;)Ljava/lang/Object;");
-		if (NULL == mid) goto fail;
-		javaVM->doPrivilegedWithContextPermissionMethodID1 = (UDATA) mid;
+	mid = (*env)->GetStaticMethodID(env, accessControllerClass, "doPrivileged", "(Ljava/security/PrivilegedAction;Ljava/security/AccessControlContext;[Ljava/security/Permission;)Ljava/lang/Object;");
+	if (NULL == mid) goto fail;
+	javaVM->doPrivilegedWithContextPermissionMethodID1 = (UDATA) mid;
 
-		mid = (*env)->GetStaticMethodID(env, accessControllerClass, "doPrivileged", "(Ljava/security/PrivilegedExceptionAction;Ljava/security/AccessControlContext;[Ljava/security/Permission;)Ljava/lang/Object;");
-		if (NULL == mid) goto fail;
-		javaVM->doPrivilegedWithContextPermissionMethodID2 = (UDATA) mid;
-	}
+	mid = (*env)->GetStaticMethodID(env, accessControllerClass, "doPrivileged", "(Ljava/security/PrivilegedExceptionAction;Ljava/security/AccessControlContext;[Ljava/security/Permission;)Ljava/lang/Object;");
+	if (NULL == mid) goto fail;
+	javaVM->doPrivilegedWithContextPermissionMethodID2 = (UDATA) mid;
 
 	return JNI_TRUE;
 

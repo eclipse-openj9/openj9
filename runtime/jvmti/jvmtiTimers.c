@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -133,7 +133,7 @@ jvmtiGetThreadCpuTime(jvmtiEnv* env,
 			}
 		}
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetThreadCpuTime);
@@ -208,8 +208,9 @@ jvmtiGetAvailableProcessors(jvmtiEnv* env,
 
 	ENSURE_NON_NULL(processor_count_ptr);
 
-	cpuCount = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_ONLINE);
-	*processor_count_ptr = ((cpuCount == 0) ? 1 : (jint) cpuCount);
+	/* This implementation should be kept consistent with JVM_ActiveProcessorCount */
+	cpuCount = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
+	*processor_count_ptr = ((cpuCount < 1) ? 1 : (jint) cpuCount);
 	rc = JVMTI_ERROR_NONE;
 
 done:

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2096,7 +2096,7 @@ J9NLS_SHRC_SHRINIT_CACHERETRANSFORMED_INFO.system_action=
 J9NLS_SHRC_SHRINIT_CACHERETRANSFORMED_INFO.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH=Inhabilita mem\u00f2ria cau de classes bootclasspath
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH=Inhabilita l'emmagatzematge en mem\u00f2ria cau de classes bootclasspath
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH.system_action=
@@ -5994,7 +5994,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_REVALIDATE_AOT_METHODS.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS=Imprimiu els m\u00e8todes AOT que coincideixin amb les especificacions de m\u00e8todes.\n\
-\t<especificaci\u00f3_M\u00e8tode> es defineix com a: [!]{*|[*]<nom_paquet/nom_classe>[*]}[.{*|[*]<nom_m\u00e8tode>[*]}][({*|[*]<par\u00e0metres>[*]})].
+\t<especificaci\u00f3_m\u00e8tode> es defineix de la manera seg\u00fcent: [!]{*|[*]<nom_paquet/nom_classe>[*]}[.{*|[*]<nom_m\u00e8tode>[*]}[({*|[*]<par\u00e0metres>[*]})]].
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.system_action=
@@ -6016,7 +6016,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=El format d'<especificaci\u00f3_m\u00e8tode> \u00e9s [!]{*|[*]<nom_paquet/nom_classe>[*]}[.{*|[*]<nom_m\u00e8tode>[*]}][({*|[*]<par\u00e0metres>[*]})], per exemple:\n\
+J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=El format de <especificaci\u00f3_m\u00e8tode> \u00e9s [!]{*|[*]<nom_paquet/nom_classe>[*]}[.{*|[*]<nom_m\u00e8tode>[*]}[({*|[*]<par\u00e0metres>[*]})]], p.ex.:\n\
 \n\
 \t-Xshareclasses:name=Cache1,%sjava/util/HashMap.hash(Ljava/lang/Object;)\n
 # START NON-TRANSLATABLE
@@ -6146,6 +6146,7 @@ J9NLS_SHRC_OSCACHE_MMAP_SET_GROUPACCESS_FAILED.user_response=Check the umask set
 
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED=No s'ha pogut definir el perm\u00eds d'acc\u00e9s a grup segons s'ha sol\u00b7licitat amb l'opci\u00f3 secund\u00e0ria 'groupAccess' al sem\u00e0for definit amb semid=%d associat amb la mem\u00f2ria cau de classe compartida.
 # START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.explanation=Cannot set group access permission when creating the new semaphore with sub-option "groupAccess".
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.user_response=Ensure the user has sufficient permission for creating the new semaphore with group access.
@@ -6153,6 +6154,7 @@ J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.user_response=Ensure the use
 
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED=No s'ha pogut definir el perm\u00eds d'acc\u00e9s a grup segons s'ha sol\u00b7licitat amb l'opci\u00f3 secund\u00e0ria 'groupAccess' a la mem\u00f2ria compartida amb shmid=%d associada a la mem\u00f2ria cau de classe compartida.
 # START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.explanation=Cannot set group access permission when creating the new shared memory with sub-option "groupAccess".
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.user_response=Ensure the user has sufficient permission for creating the new shared memory with group access.
@@ -6631,4 +6633,11 @@ J9NLS_SHRC_CC_INCORRECT_BUILDID=No s'ha pogut iniciar la mem\u00f2ria cau compar
 J9NLS_SHRC_CC_INCORRECT_BUILDID.explanation=An error has occurred when starting up the cache. The build ID of the existing cache with the same name is different from that of the current JVM.
 J9NLS_SHRC_CC_INCORRECT_BUILDID.system_action=The JVM fails to complete the requested operation.
 J9NLS_SHRC_CC_INCORRECT_BUILDID.user_response=Use a JVM which matches the build ID of the existing cache.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1=Inhabilita l'emmagatzematge en mem\u00f2ria cau de les classes carregades pel carregador de classes de bootstrap.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.user_response=
 # END NON-TRANSLATABLE

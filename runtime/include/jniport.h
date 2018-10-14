@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,7 @@
 #ifndef jniport_h
 #define jniport_h
 
-#if defined(WIN32) || (defined(_WIN32)) || defined(RIM386) || (defined(BREW) && defined(AEE_SIMULATOR))
+#if defined(WIN32) || (defined(_WIN32)) || (defined(BREW) && defined(AEE_SIMULATOR))
 
 #define JNIEXPORT __declspec(dllexport)
 #define JNICALL __stdcall

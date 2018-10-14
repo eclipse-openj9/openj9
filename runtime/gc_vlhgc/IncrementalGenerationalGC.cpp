@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -391,6 +391,10 @@ MM_IncrementalGenerationalGC::masterThreadGarbageCollect(MM_EnvironmentBase *env
 	 * allow concurrent operations.
 	 */
 	_forceConcurrentTermination = false;
+
+	/* Release any resources that might be bound to this master thread,
+	 * since it may be implicit and change for other phases of the cycle */
+	_interRegionRememberedSet->releaseCardBufferControlBlockListForThread(env, env);
 }
 
 void
@@ -650,6 +654,9 @@ MM_IncrementalGenerationalGC::initializeTaxationThreshold(MM_EnvironmentVLHGC *e
 
 	/* we need to calculate the taxation threshold after the initial heap inflation, which happens before collectorStartup */
 	_taxationThreshold = _schedulingDelegate.getInitialTaxationThreshold(env);
+	/* initialize GMP Kickoff Headroom Region Count */
+	_schedulingDelegate.initializeKickoffHeadroom(env);
+
 
 	UDATA minimumKickOff = extensions->regionSize * 2;
 	if (_taxationThreshold < minimumKickOff) {
@@ -1216,6 +1223,7 @@ MM_IncrementalGenerationalGC::partialGarbageCollect(MM_EnvironmentVLHGC *env, MM
 	MM_CompactGroupPersistentStats::updateStatsBeforeCollect(env, persistentStats);
 	if (_schedulingDelegate.isGlobalSweepRequired()) {
 		Assert_MM_true(NULL == env->_cycleState->_externalCycleState);
+
 		_reclaimDelegate.runGlobalSweepBeforePGC(env, allocDescription, env->_cycleState->_activeSubSpace, env->_cycleState->_gcCode);
 
 		/* TODO: lpnguyen make another statisticsDelegate or something that both schedulingDelegate and reclaimDelegate can see
@@ -1228,26 +1236,24 @@ MM_IncrementalGenerationalGC::partialGarbageCollect(MM_EnvironmentVLHGC *env, MM
 
 		double optimalEmptinessRegionThreshold = _reclaimDelegate.calculateOptimalEmptinessRegionThreshold(env, regionConsumptionRate, avgSurvivorRegions, avgCopyForwardRate, scanTimeCostPerGMP);
 		_schedulingDelegate.setAutomaticDefragmentEmptinessThreshold(optimalEmptinessRegionThreshold);
-
-		/* recalculate ratios due to sweep */
-		_schedulingDelegate.calculatePGCCompactionRate(env, _schedulingDelegate.getCurrentEdenSizeInRegions(env) * _regionManager->getRegionSize());
-		_schedulingDelegate.calculateHeapOccupancyTrend(env);
-		_schedulingDelegate.calculateScannableBytesRatio(env);
 	}
 
-	if (env->_cycleState->_shouldRunCopyForward) {
-		MM_HeapRegionDescriptorVLHGC *region = NULL;
-		GC_HeapRegionIteratorVLHGC iterator(_regionManager);
-		while (env->_cycleState->_shouldRunCopyForward && (NULL != (region = iterator.nextRegion()))) {
-			if ((region->_criticalRegionsInUse > 0) && region->isEden()) {
-				/* if we find any Eden regions which have critical regions in use, we need to switch to Mark-Compact since we have to collect Eden but can't move objects in this region */
-				env->_cycleState->_shouldRunCopyForward = false;
-				/* record this observation in the cycle state so that verbose can see it and produce an appropriate message */
-				env->_cycleState->_reasonForMarkCompactPGC = MM_CycleState::reason_JNI_critical_in_Eden;
+	/* For Non CopyForwardHybrid mode, we don't allow any eden rgions with jniCritical for copyforward, if there is any, would switch MarkCompact PGC mode
+	 * For CopyForwardHybrid mode, we do not care about jniCritical eden regions, the eden rgions with jniCritical would be marked instead copyforwarded during collection.*/
+	if (!_extensions->tarokEnableCopyForwardHybrid && (0 == _extensions->fvtest_forceCopyForwardHybridRatio)) {
+		if (env->_cycleState->_shouldRunCopyForward) {
+			MM_HeapRegionDescriptorVLHGC *region = NULL;
+			GC_HeapRegionIteratorVLHGC iterator(_regionManager);
+			while (env->_cycleState->_shouldRunCopyForward && (NULL != (region = iterator.nextRegion()))) {
+				if ((region->_criticalRegionsInUse > 0) && region->isEden()) {
+					/* if we find any Eden regions which have critical regions in use, we need to switch to Mark-Compact since we have to collect Eden but can't move objects in this region */
+					env->_cycleState->_shouldRunCopyForward = false;
+					/* record this observation in the cycle state so that verbose can see it and produce an appropriate message */
+					env->_cycleState->_reasonForMarkCompactPGC = MM_CycleState::reason_JNI_critical_in_Eden;
+				}
 			}
 		}
 	}
-	
 	/* Determine if there are enough regions available to attempt a copy-forward collection.
 	 * Note that this check is done after we sweep, since that might have recovered enough 
 	 * regions to make copy-forward feasible.
@@ -1363,8 +1369,8 @@ MM_IncrementalGenerationalGC::partialGarbageCollectUsingCopyForward(MM_Environme
 		_reclaimDelegate.runCompact(env, allocDescription, env->_cycleState->_activeSubSpace, desiredCompactWork, env->_cycleState->_gcCode, _markMapManager->getGlobalMarkPhaseMap(), &regionsSkippedByCompactorRequiringSweep);
 		/* we can't tell exactly how many bytes were added to meet the compact goal, so we'll assume it was an exact match. The precise amount could be lower or higher */ 
 		static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._externalCompactBytes = desiredCompactWork;
-	} else if(!successful) {
-		/* compact any unsuccessfully evacuated regions */
+	} else if(!successful || _copyForwardDelegate.isHybrid(env)) {
+		/* compact any unsuccessfully evacuated regions (include reclaiming jni critical eden regions)*/
 		_reclaimDelegate.runReclaimForAbortedCopyForward(env, allocDescription, env->_cycleState->_activeSubSpace, env->_cycleState->_gcCode, _markMapManager->getGlobalMarkPhaseMap(), &regionsSkippedByCompactorRequiringSweep);
 	}
 
@@ -1372,6 +1378,10 @@ MM_IncrementalGenerationalGC::partialGarbageCollectUsingCopyForward(MM_Environme
 		/* there were regions which we needed to compact but we couldn't compact so at least sweep them to ensure that their stats are correct */
 		_reclaimDelegate.performAtomicSweep(env, allocDescription, env->_cycleState->_activeSubSpace, env->_cycleState->_gcCode);
 	}
+
+	/* calculatePGCCompactionRate() has to be after PGC due to half of Eden regions has not been marked after final GMP (the sweep could not collect those regions) */
+	/* calculatePGCCompactionRate() has to be before estimateReclaimableRegions(), which need to use the result of calculatePGCCompactionRate() - region->_defragmentationTarget */
+	_schedulingDelegate.recalculateRatesOnFirstPGCAfterGMP(env);
 
 	/* Need to understand how to do the estimates here found within the following two calls */
 	UDATA defragmentReclaimableRegions = 0;
@@ -1444,6 +1454,8 @@ MM_IncrementalGenerationalGC::partialGarbageCollectUsingMarkCompact(MM_Environme
 		_reclaimDelegate.runReclaimCompleteCompact(env, allocDescription, env->_cycleState->_activeSubSpace, env->_cycleState->_gcCode, _markMapManager->getGlobalMarkPhaseMap(), compactSelectionGoalInBytes);
 		Trc_MM_ReclaimDelegate_runReclaimComplete_Exit(env->getLanguageVMThread(), 0);
 	}
+
+	_schedulingDelegate.recalculateRatesOnFirstPGCAfterGMP(env);
 
 	UDATA defragmentReclaimableRegions = 0;
 	UDATA reclaimableRegions = 0;
@@ -1588,11 +1600,7 @@ MM_IncrementalGenerationalGC::incrementRegionAges(MM_EnvironmentVLHGC *env, UDAT
 	/* Overflowing stable regions releases buffers to thread local pool. Move them now to the locked global pool.
 	 * (if this is run in context of non-GC thread there will be not further opportinities to do it).
 	 */
-	env->_rsclBufferControlBlockCount -= _interRegionRememberedSet->releaseCardBufferControlBlockList(env, env->_rsclBufferControlBlockHead, env->_rsclBufferControlBlockTail);
-	Assert_MM_true(0 == env->_rsclBufferControlBlockCount);
-	env->_rsclBufferControlBlockHead = NULL;
-	env->_rsclBufferControlBlockTail = NULL;
-
+	_interRegionRememberedSet->releaseCardBufferControlBlockListForThread(env, env);
 }
 
 void 
@@ -1711,8 +1719,6 @@ MM_IncrementalGenerationalGC::declareAllRegionsAsMarked(MM_EnvironmentVLHGC *env
 bool
 MM_IncrementalGenerationalGC::isMarked(void *objectPtr)
 {
-	/* NOTE:  we shouldn't be using this entry-point for checking if an object is marked if we are currently within a cycle (the caller should use the mark map that they are working on) */
-	Assert_MM_false(_masterGCThread.isGarbageCollectInProgress());
 	/* the mark map used for PGC should be the most accurate */
 	return _markMapManager->getPartialGCMap()->isBitSet(static_cast<J9Object*>(objectPtr));
 }
@@ -2043,6 +2049,10 @@ MM_IncrementalGenerationalGC::masterThreadConcurrentCollect(MM_EnvironmentBase *
 	_persistentGlobalMarkPhaseState._vlhgcCycleStats.merge(&static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats);
 
 	env->_cycleState = NULL;
+
+	/* Release any resources that might be bound to this master thread,
+	 * since it may be implicit and more importantly change for other phases of the cycle */
+	_interRegionRememberedSet->releaseCardBufferControlBlockListForThread(env, env);
 	
 	/* return the number of bytes scanned since the caller needs to pass it into postConcurrentUpdateStatsAndReport for stats reporting */
 	return bytesConcurrentlyScanned;
@@ -2476,7 +2486,7 @@ MM_IncrementalGenerationalGC::unloadDeadClassLoaders(MM_EnvironmentVLHGC *env)
 	Assert_MM_true(env->_cycleState->_dynamicClassUnloadingEnabled);
 
 	/* set the vmState whilst we're unloading classes */
-	UDATA vmState = env->pushVMstate(J9VMSTATE_GC_UNLOADING_DEAD_CLASSLOADERS);
+	UDATA vmState = env->pushVMstate(OMRVMSTATE_GC_CLEANING_METADATA);
 	/* we are going to report that we started unloading, even though we might decide that there is no work to do */
 	reportClassUnloadingStart(env);
 	classUnloadStats->_startTime = j9time_hires_clock();

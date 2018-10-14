@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,52 +31,52 @@
 #define TYPE_PACKAGEID ((UDATA)-1)
 #define TYPE_UNICODE ((UDATA)2)
 
-#define ROUNDING_GRANULARITY	4
-#define ROUNDED_BYTE_AMOUNT(number)	 (((number) + (ROUNDING_GRANULARITY - 1)) & ~(UDATA)(ROUNDING_GRANULARITY - 1))
+#define ROUNDING_GRANULARITY    4
+#define ROUNDED_BYTE_AMOUNT(number)  (((number) + (ROUNDING_GRANULARITY - 1)) & ~(UDATA)(ROUNDING_GRANULARITY - 1))
 
 
-typedef union classTableEntry {
+typedef union KeyHashTableClassEntry {
 	UDATA tag;
-	J9Class* ramClass;
+	J9Class *ramClass;
 	J9PackageIDTableEntry packageID;
-	J9UTF8* className;
-} classTableEntry;
+	J9UTF8 *className;
+} KeyHashTableClassEntry;
 
-typedef struct classTableQueryEntry {
-	classTableEntry entry;
+typedef struct KeyHashTableClassQueryEntry {
+	KeyHashTableClassEntry entry;
 	U_8 *charData;
 	UDATA length;
-} classTableQueryEntry;
+} KeyHashTableClassQueryEntry;
 
-static UDATA classHashFn (void *key, void *userData);
-static UDATA classHashEqualFn (void *leftKey, void *rightKey, void *userData);
-static UDATA classHashGetName(classTableEntry* entry, const U_8** name, UDATA* nameLength);
+static UDATA classHashFn(void *key, void *userData);
+static UDATA classHashEqualFn(void *leftKey, void *rightKey, void *userData);
+static UDATA classHashGetName(KeyHashTableClassEntry *entry, const U_8 **name, UDATA *nameLength);
 
-static UDATA classLocationHashFn (void *key, void *userData);
-static UDATA classLocationHashEqualFn (void *leftKey, void *rightKey, void *userData);
+static UDATA classLocationHashFn(void *key, void *userData);
+static UDATA classLocationHashEqualFn(void *leftKey, void *rightKey, void *userData);
 
-static void addLocationGeneratedClass(J9VMThread *vmThread, J9ClassLoader *classLoader, classTableEntry *existingPackageEntry, IDATA entryIndex, I_32 locationType);
+static void addLocationGeneratedClass(J9VMThread *vmThread, J9ClassLoader *classLoader, KeyHashTableClassEntry *existingPackageEntry, IDATA entryIndex, I_32 locationType);
 
 static UDATA
-classHashGetName(classTableEntry* entry, const U_8** name, UDATA* nameLength)
+classHashGetName(KeyHashTableClassEntry *entry, const U_8 **name, UDATA *nameLength)
 {
 	UDATA type = TYPE_CLASS;
 	UDATA tag = entry->tag;
 
 	if (TAG_RAM_CLASS == (tag & MASK_RAM_CLASS)) {
-		J9UTF8* className = J9ROMCLASS_CLASSNAME(entry->ramClass->romClass);
+		J9UTF8 *className = J9ROMCLASS_CLASSNAME(entry->ramClass->romClass);
 
 		*name = J9UTF8_DATA(className);
 		*nameLength = J9UTF8_LENGTH(className);
 	} else if ((TAG_UTF_QUERY == (tag & MASK_QUERY))
 		|| (TAG_PACKAGE_UTF_QUERY == (tag & MASK_QUERY))
 	) {
-		classTableQueryEntry* queryEntry = (classTableQueryEntry*)entry;
+		KeyHashTableClassQueryEntry *queryEntry = (KeyHashTableClassQueryEntry *)entry;
 
 		*name = queryEntry->charData;
 		*nameLength = queryEntry->length;
 	} else if (TAG_UNICODE_QUERY == (tag & MASK_QUERY)) {
-		classTableQueryEntry* queryEntry = (classTableQueryEntry*)entry;
+		KeyHashTableClassQueryEntry *queryEntry = (KeyHashTableClassQueryEntry *)entry;
 
 		*name = (const U_8 *)queryEntry->charData;
 		type = TYPE_UNICODE;
@@ -90,23 +90,20 @@ classHashGetName(classTableEntry* entry, const U_8** name, UDATA* nameLength)
 	return type;
 }
 
-static UDATA  
+static UDATA
 classHashEqualFn(void *tableNode, void *queryNode, void *userData)
 {
-	UDATA tableNodeLength;
-	UDATA queryNodeLength;
-	const U_8* tableNodeName = NULL;
-	const U_8* queryNodeName = NULL;
-	UDATA tableNodeType;
-	UDATA queryNodeType;
-	J9JavaVM* javaVM = (J9JavaVM*) userData;
-
-	tableNodeType = classHashGetName(tableNode, &tableNodeName, &tableNodeLength);
-	queryNodeType = classHashGetName(queryNode, &queryNodeName, &queryNodeLength);
+	J9JavaVM *javaVM = (J9JavaVM *)userData;
+	UDATA tableNodeLength = 0;
+	UDATA queryNodeLength = 0;
+	const U_8 *tableNodeName = NULL;
+	const U_8 *queryNodeName = NULL;
+	UDATA tableNodeType = classHashGetName(tableNode, &tableNodeName, &tableNodeLength);
+	UDATA queryNodeType = classHashGetName(queryNode, &queryNodeName, &queryNodeLength);
 
 	if (queryNodeType == TYPE_UNICODE) {
 		if (tableNodeType == TYPE_CLASS) {
-			j9object_t stringObject = (j9object_t) queryNodeName;
+			j9object_t stringObject = (j9object_t)queryNodeName;
 			j9object_t charArray = J9VMJAVALANGSTRING_VALUE_VM(javaVM, stringObject);
 			U_32 i = 0;
 			U_32 end = J9VMJAVALANGSTRING_LENGTH_VM(javaVM, stringObject);
@@ -114,9 +111,9 @@ classHashEqualFn(void *tableNode, void *queryNode, void *userData)
 			BOOLEAN isCompressed = IS_STRING_COMPRESSED_VM(javaVM, stringObject);
 
 			while (i < end) {
-				U_16 unicode;
-				U_16 utf;
-				U_8 c;
+				U_16 unicode = 0;
+				U_16 utf = 0;
+				U_8 c = 0;
 
 				if (isCompressed) {
 					unicode = J9JAVAARRAYOFBYTE_LOAD_VM(javaVM, charArray, i);
@@ -168,37 +165,33 @@ classHashEqualFn(void *tableNode, void *queryNode, void *userData)
 	/*
 	 * queryNodeType must equal tableNodeType
 	 */
-
 	if (tableNodeType != queryNodeType) {
 		return FALSE;
 	}
 
-	Assert_VM_true(TAG_PACKAGE_UTF_QUERY != ((classTableEntry *) tableNode)->tag);
+	Assert_VM_true(TAG_PACKAGE_UTF_QUERY != ((KeyHashTableClassEntry *)tableNode)->tag);
 
-	if (TAG_PACKAGE_UTF_QUERY == ((classTableEntry *) queryNode)->tag) {
+	if (TAG_PACKAGE_UTF_QUERY == ((KeyHashTableClassEntry *)queryNode)->tag) {
 		if (queryNodeLength < tableNodeLength) {
-			char * className = strrchr((char*)tableNodeName, '/');
-			return J9UTF8_DATA_EQUALS(tableNodeName, (UDATA) className - (UDATA) tableNodeName, queryNodeName, queryNodeLength);
-		} 
+			char * className = strrchr((char *)tableNodeName, '/');
+			return J9UTF8_DATA_EQUALS(tableNodeName, (UDATA)className - (UDATA)tableNodeName, queryNodeName, queryNodeLength);
+		}
 		return FALSE;
-	} 
+	}
 	return J9UTF8_DATA_EQUALS(tableNodeName, tableNodeLength, queryNodeName, queryNodeLength);
 }
 
-
-static UDATA 
-classHashFn(void *key, void *userData) 
+static UDATA
+classHashFn(void *key, void *userData)
 {
-	J9JavaVM* javaVM = (J9JavaVM*) userData;
-
-	UDATA type;
+	J9JavaVM *javaVM = (J9JavaVM *)userData;
 	UDATA length = 0;
-	const U_8* name = NULL;
-	U_32 hash;
+	const U_8 *name = NULL;
+	U_32 hash = 0;
+	UDATA type = classHashGetName(key, &name, &length);
 
-	type = classHashGetName(key, &name, &length);
 	if (type == TYPE_UNICODE) {
-		j9object_t stringObject = (j9object_t) name;
+		j9object_t stringObject = (j9object_t)name;
 
 		hash = J9VMJAVALANGSTRING_HASHCODE_VM(javaVM, stringObject);
 		if (0 == hash) {
@@ -224,10 +217,9 @@ classHashFn(void *key, void *userData)
 	} else {
 		hash = 0;
 		while (length != 0) {
-			U_8 c;
-			U_16 unicodeChar;
+			U_16 unicodeChar = 0;
+			U_8 c = *(name++);
 
-			c = *(name++);
 			if ((c & 0x80) == 0x00) {
 				/* one byte encoding */
 
@@ -267,7 +259,6 @@ classHashFn(void *key, void *userData)
 	return hash;
 }
 
-
 J9HashTable *
 hashClassTableNew(J9JavaVM *javaVM, U_32 initialSize)
 {
@@ -278,22 +269,21 @@ hashClassTableNew(J9JavaVM *javaVM, U_32 initialSize)
 		flags |= J9HASH_TABLE_DO_NOT_GROW;
 	}
 
-	return hashTableNew(OMRPORT_FROM_J9PORT(javaVM->portLibrary), J9_GET_CALLSITE(), initialSize, sizeof(classTableEntry), sizeof(char *), flags, J9MEM_CATEGORY_CLASSES, classHashFn, classHashEqualFn, NULL, javaVM);
+	return hashTableNew(OMRPORT_FROM_J9PORT(javaVM->portLibrary), J9_GET_CALLSITE(), initialSize, sizeof(KeyHashTableClassEntry), sizeof(char *), flags, J9MEM_CATEGORY_CLASSES, classHashFn, classHashEqualFn, NULL, javaVM);
 }
 
-
 J9Class *
-hashClassTableAt(J9ClassLoader* classLoader, U_8 *className, UDATA classNameLength)
+hashClassTableAt(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength)
 {
 	J9HashTable *table = classLoader->classHashTable;
-	classTableQueryEntry key;
-	classTableEntry* result;
+	KeyHashTableClassQueryEntry key;
+	KeyHashTableClassEntry *result = NULL;
 
 	key.entry.tag = TAG_UTF_QUERY;
 	key.charData = className;
 	key.length = classNameLength;
 	result = hashTableFind(table, &key);
-	if (result) {
+	if (NULL != result) {
 		return result->ramClass;
 	} else {
 		return NULL;
@@ -301,11 +291,11 @@ hashClassTableAt(J9ClassLoader* classLoader, U_8 *className, UDATA classNameLeng
 }
 
 BOOLEAN
-isAnyClassLoadedFromPackage(J9ClassLoader* classLoader, U_8 *pkgName, UDATA pkgNameLength)
+isAnyClassLoadedFromPackage(J9ClassLoader *classLoader, U_8 *pkgName, UDATA pkgNameLength)
 {
 	J9HashTable *table = classLoader->classHashTable;
-	classTableQueryEntry key;
-	classTableEntry* result;
+	KeyHashTableClassQueryEntry key;
+	KeyHashTableClassEntry *result = NULL;
 
 	key.entry.tag = TAG_PACKAGE_UTF_QUERY;
 	key.charData = pkgName;
@@ -317,12 +307,10 @@ isAnyClassLoadedFromPackage(J9ClassLoader* classLoader, U_8 *pkgName, UDATA pkgN
 	return FALSE;
 }
 
-
 void
-hashClassTableFree(J9ClassLoader* classLoader)
+hashClassTableFree(J9ClassLoader *classLoader)
 {
 	J9HashTable *table = classLoader->classHashTable;
-
 
 	/* Free all the chained hash tables */
 	while (NULL != table) {
@@ -334,20 +322,18 @@ hashClassTableFree(J9ClassLoader* classLoader)
 	classLoader->classHashTable = NULL;
 }
 
-
-static classTableEntry *
-growClassHashTable(J9JavaVM *vm, J9ClassLoader *classLoader, classTableEntry *newEntry)
+static KeyHashTableClassEntry *
+growClassHashTable(J9JavaVM *vm, J9ClassLoader *classLoader, KeyHashTableClassEntry *newEntry)
 {
-	classTableEntry *node = NULL;
+	KeyHashTableClassEntry *node = NULL;
 	/* If -XX:+FastClassHashTable is enabled, attempt to allocate a new, larger hash table, otherwise return failure */
 	if (J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_FAST_CLASS_HASH_TABLE)) {
 		J9HashTable *oldTable = classLoader->classHashTable;
-		J9HashTable *newTable = hashTableNew(oldTable->portLibrary, J9_GET_CALLSITE(), oldTable->tableSize + 1, sizeof(classTableEntry), sizeof(char *), J9HASH_TABLE_DO_NOT_GROW | J9HASH_TABLE_ALLOW_SIZE_OPTIMIZATION, J9MEM_CATEGORY_CLASSES, classHashFn, classHashEqualFn, NULL, vm);
+		J9HashTable *newTable = hashTableNew(oldTable->portLibrary, J9_GET_CALLSITE(), oldTable->tableSize + 1, sizeof(KeyHashTableClassEntry), sizeof(char *), J9HASH_TABLE_DO_NOT_GROW | J9HASH_TABLE_ALLOW_SIZE_OPTIMIZATION, J9MEM_CATEGORY_CLASSES, classHashFn, classHashEqualFn, NULL, vm);
 		if (NULL != newTable) {
 			J9HashTableState walkState;
-			classTableEntry *oldNode = NULL;
 			/* Copy all of the data from the old hash table into the new one */
-			oldNode = hashTableStartDo(oldTable,  &walkState);
+			KeyHashTableClassEntry *oldNode = hashTableStartDo(oldTable,  &walkState);
 			while (NULL != oldNode) {
 				if (NULL == hashTableAdd(newTable, oldNode)) {
 					hashTableFree(newTable);
@@ -369,23 +355,20 @@ growClassHashTable(J9JavaVM *vm, J9ClassLoader *classLoader, classTableEntry *ne
 	return node;
 }
 
-
 UDATA
-hashClassTableAtPut(J9VMThread* vmThread, J9ClassLoader* classLoader, U_8 *className, UDATA classNameLength, J9Class *value)
+hashClassTableAtPut(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength, J9Class *value)
 {
 	J9JavaVM *vm = vmThread->javaVM;
 	J9HashTable *table = classLoader->classHashTable;
-	classTableEntry *node = NULL;
-	classTableEntry entry;
+	KeyHashTableClassEntry *node = NULL;
+	KeyHashTableClassEntry entry;
+
+	entry.ramClass = value;
+	node = hashTableAdd(table, &entry);
 
 	if (NULL == node) {
-		entry.ramClass = value;
-		node = hashTableAdd(table, &entry);
-
-		if (NULL == node) {
-			if (NULL == growClassHashTable(vm, classLoader, &entry)) {
-				return 1;
-			}
+		if (NULL == growClassHashTable(vm, classLoader, &entry)) {
+			return 1;
 		}
 	}
 
@@ -394,12 +377,11 @@ hashClassTableAtPut(J9VMThread* vmThread, J9ClassLoader* classLoader, U_8 *class
 	return 0;
 }
 
-
 UDATA
-hashClassTableDelete(J9ClassLoader* classLoader, U_8 *className, UDATA classNameLength)
+hashClassTableDelete(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength)
 {
 	J9HashTable *table = classLoader->classHashTable;
-	classTableQueryEntry key;
+	KeyHashTableClassQueryEntry key;
 
 	key.entry.tag = TAG_UTF_QUERY;
 	key.charData = className;
@@ -407,59 +389,57 @@ hashClassTableDelete(J9ClassLoader* classLoader, U_8 *className, UDATA className
 	return hashTableRemove(table, &key);
 }
 
-
 void
-hashClassTableReplace(J9VMThread* vmThread, J9ClassLoader *classLoader, J9Class *originalClass, J9Class *replacementClass)
+hashClassTableReplace(J9VMThread *vmThread, J9ClassLoader *classLoader, J9Class *originalClass, J9Class *replacementClass)
 {
-	J9HashTable* table = classLoader->classHashTable;
-	classTableEntry* result;
-	classTableQueryEntry original;
+	J9HashTable *table = classLoader->classHashTable;
+	KeyHashTableClassEntry *result = NULL;
+	KeyHashTableClassQueryEntry original;
 
 	original.entry.ramClass = originalClass;
 
 	result = hashTableFind(table, &original);
-	if ( (result != NULL) && (result->ramClass == originalClass)) {
+	if ((NULL != result) && (result->ramClass == originalClass)) {
 		result->ramClass = replacementClass;
 		/* Issue a GC write barrier when modifying the class hash table */
 		vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_postStoreClassToClassLoader(vmThread, classLoader, replacementClass);
 	}
 }
 
-J9Class*
-hashClassTableStartDo(J9ClassLoader* classLoader, J9HashTableState* walkState)
+J9Class *
+hashClassTableStartDo(J9ClassLoader *classLoader, J9HashTableState *walkState)
 {
-	classTableEntry* first = hashTableStartDo(classLoader->classHashTable, walkState);
+	KeyHashTableClassEntry *first = hashTableStartDo(classLoader->classHashTable, walkState);
 
 	/* only report RAM classes */
-	while ( (first != NULL) && (TAG_RAM_CLASS != (first->tag & MASK_RAM_CLASS)) ) {
+	while ((NULL != first) && (TAG_RAM_CLASS != (first->tag & MASK_RAM_CLASS))) {
 		first = hashTableNextDo(walkState);
 	}
 
-	return (first == NULL) ? NULL : first->ramClass;
+	return (NULL == first) ? NULL : first->ramClass;
 }
 
-J9Class*
-hashClassTableNextDo(J9HashTableState* walkState)
+J9Class *
+hashClassTableNextDo(J9HashTableState *walkState)
 {
-	classTableEntry* next = hashTableNextDo(walkState);
+	KeyHashTableClassEntry *next = hashTableNextDo(walkState);
 
 	/* only report RAM classes */
-	while ( (next != NULL) && (TAG_RAM_CLASS != (next->tag & MASK_RAM_CLASS)) ) {
+	while ((NULL != next) && (TAG_RAM_CLASS != (next->tag & MASK_RAM_CLASS))) {
 		next = hashTableNextDo(walkState);
 	}
 
-	return (next == NULL) ? NULL : next->ramClass;
+	return (NULL == next) ? NULL : next->ramClass;
 }
-
 
 /**
  * Find the package ID for the given name and length.
  * NOTE: You must own the class table mutex before calling this function.
  */
 UDATA
-hashPkgTableIDFor(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass* romClass, IDATA entryIndex, I_32 locationType)
+hashPkgTableIDFor(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, IDATA entryIndex, I_32 locationType)
 {
-	classTableEntry key;
+	KeyHashTableClassEntry key;
 	J9JavaVM *javaVM = vmThread->javaVM;
 	J9HashTable *table = classLoader->classHashTable;
 	UDATA packageNameLength = 0;
@@ -477,7 +457,7 @@ hashPkgTableIDFor(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass* 
 		return (UDATA)classLoader;
 	} else {
 		UDATA packageID = 0;
-		classTableEntry *result = hashTableAdd(table, &key);
+		KeyHashTableClassEntry *result = hashTableAdd(table, &key);
 		if (NULL == result) {
 			result = growClassHashTable(javaVM, classLoader, &key);
 		}
@@ -499,12 +479,12 @@ hashPkgTableIDFor(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass* 
 }
 
 J9PackageIDTableEntry *
-hashPkgTableAt(J9ClassLoader* classLoader, J9ROMClass* romClass)
+hashPkgTableAt(J9ClassLoader *classLoader, J9ROMClass *romClass)
 {
-	classTableEntry key;
+	KeyHashTableClassEntry key;
 	J9HashTable *table = classLoader->classHashTable;
 	UDATA packageNameLength = 0;
-	classTableEntry* result = NULL;
+	KeyHashTableClassEntry *result = NULL;
 
 	key.tag = (UDATA)romClass | TAG_ROM_CLASS;
 
@@ -512,58 +492,57 @@ hashPkgTableAt(J9ClassLoader* classLoader, J9ROMClass* romClass)
 	if (0 != packageNameLength) {
 		result = hashTableFind(table, &key);
 	}
-	return (NULL != result) ? &result->packageID: NULL;
+	return (NULL != result) ? &result->packageID : NULL;
 }
 
-J9PackageIDTableEntry*
-hashPkgTableStartDo(J9ClassLoader* classLoader, J9HashTableState* walkState)
+J9PackageIDTableEntry *
+hashPkgTableStartDo(J9ClassLoader *classLoader, J9HashTableState *walkState)
 {
-	classTableEntry* first = hashTableStartDo(classLoader->classHashTable, walkState);
+	KeyHashTableClassEntry *first = hashTableStartDo(classLoader->classHashTable, walkState);
 
 	/* examine only package IDs */
-	while ( (first != NULL) && (TAG_ROM_CLASS != (first->tag & MASK_ROM_CLASS)) ) {
+	while ((NULL != first) && (TAG_ROM_CLASS != (first->tag & MASK_ROM_CLASS))) {
 		first = hashTableNextDo(walkState);
 	}
 
-	return (first == NULL) ? NULL : &first->packageID;
+	return (NULL == first) ? NULL : &first->packageID;
 }
 
-J9PackageIDTableEntry*
-hashPkgTableNextDo(J9HashTableState* walkState)
+J9PackageIDTableEntry *
+hashPkgTableNextDo(J9HashTableState *walkState)
 {
-	classTableEntry* next = hashTableNextDo(walkState);
+	KeyHashTableClassEntry *next = hashTableNextDo(walkState);
 
 	/* examine only package IDs */
-	while ( (next != NULL) && (TAG_ROM_CLASS != (next->tag & MASK_ROM_CLASS)) ) {
+	while ((NULL != next) && (TAG_ROM_CLASS != (next->tag & MASK_ROM_CLASS))) {
 		next = hashTableNextDo(walkState);
 	}
 
 	return (next == NULL) ? NULL : &next->packageID;
 }
 
-
 J9Class *
-hashClassTableAtString(J9ClassLoader* classLoader, j9object_t stringObject)
+hashClassTableAtString(J9ClassLoader *classLoader, j9object_t stringObject)
 {
 	J9HashTable *table = classLoader->classHashTable;
-	classTableQueryEntry key;
-	classTableEntry* result;
+	KeyHashTableClassQueryEntry key;
+	KeyHashTableClassEntry *result = NULL;
 
 	key.entry.tag = TAG_UNICODE_QUERY;
-	key.charData = (U_8 *) stringObject;
+	key.charData = (U_8 *)stringObject;
 	result = hashTableFind(table, &key);
 	if (NULL != result) {
 #if 0
 		/* TODO stefanbu This path appears deprecated, userData was previously cast to J9VMToken. */
 		void * userData = table->functionUserData;
 		J9UTF8 * foundName = J9ROMCLASS_CLASSNAME(result->ramClass->romClass);
-		j9object_t charArray = J9VMJAVALANGSTRING_VALUE((J9VMThread*)userData, stringObject);
+		j9object_t charArray = J9VMJAVALANGSTRING_VALUE((J9VMThread *)userData, stringObject);
 		U_32 i = 0;
-		U_32 end = i + J9VMJAVALANGSTRING_LENGTH((J9VMThread*)userData, stringObject);
+		U_32 end = i + J9VMJAVALANGSTRING_LENGTH((J9VMThread *)userData, stringObject);
 
 		printf("looking for ");
 		while (i < end) {
-			U_16 c = J9JAVAARRAYOFCHAR_LOAD((J9VMThread*)userData, charArray, i);
+			U_16 c = J9JAVAARRAYOFCHAR_LOAD((J9VMThread *)userData, charArray, i);
 			printf("%c", c);
 			++i;
 		}
@@ -582,9 +561,8 @@ hashClassLocationTableNew(J9JavaVM *javaVM, U_32 initialSize)
 	return hashTableNew(OMRPORT_FROM_J9PORT(javaVM->portLibrary), J9_GET_CALLSITE(), initialSize, sizeof(J9ClassLocation), sizeof(char *), flags, J9MEM_CATEGORY_CLASSES, classLocationHashFn, classLocationHashEqualFn, NULL, javaVM);
 }
 
-
 static UDATA
-classLocationHashFn (void *key, void *userData)
+classLocationHashFn(void *key, void *userData)
 {
 	J9ClassLocation *entry = (J9ClassLocation *)key;
 
@@ -592,7 +570,7 @@ classLocationHashFn (void *key, void *userData)
 }
 
 static UDATA
-classLocationHashEqualFn (void *leftKey, void *rightKey, void *userData)
+classLocationHashEqualFn(void *leftKey, void *rightKey, void *userData)
 {
 	J9ClassLocation *leftNode = (J9ClassLocation *)leftKey;
 	J9ClassLocation *rightNode = (J9ClassLocation *)rightKey;
@@ -614,7 +592,7 @@ classLocationHashEqualFn (void *leftKey, void *rightKey, void *userData)
  * @return void
  */
 static void
-addLocationGeneratedClass(J9VMThread *vmThread, J9ClassLoader *classLoader, classTableEntry *existingPackageEntry, IDATA entryIndex, I_32 locationType)
+addLocationGeneratedClass(J9VMThread *vmThread, J9ClassLoader *classLoader, KeyHashTableClassEntry *existingPackageEntry, IDATA entryIndex, I_32 locationType)
 {
 	J9JavaVM *javaVM = vmThread->javaVM;
 	J9InternalVMFunctions *funcs = javaVM->internalVMFunctions;
@@ -678,4 +656,4 @@ findClassLocationForClass(J9VMThread *currentThread, J9Class *clazz)
 	targetPtr = hashTableFind(clazz->classLoader->classLocationHashTable, (void *)&classLocation);
 
 	return targetPtr;
-} 
+}

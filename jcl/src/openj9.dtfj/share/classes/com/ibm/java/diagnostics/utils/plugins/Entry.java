@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2017 IBM Corp. and others
+ * Copyright (c) 2012, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,48 +28,49 @@ import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
 /**
- * Describes an entry in the file system. It could be a class file or a container.
+ * Describes an entry in a file system. It could be a class file or a container.
  * 
  * @author adam
- *
  */
 public class Entry {
-	protected Logger logger = Logger.getLogger(PluginConstants.LOGGER_NAME);
-	public static final String FILE_EXT_JAR = ".jar";			//jar file extension
-	public static final String FILE_EXT_CLASS = ".class";		//class file extension
+
+	protected static final Logger logger = Logger.getLogger(PluginConstants.LOGGER_NAME);
+
+	/**
+	 * jar file extension
+	 */
+	public static final String FILE_EXT_JAR = ".jar"; //$NON-NLS-1$
+
+	/**
+	 * class file extension
+	 */
+	public static final String FILE_EXT_CLASS = ".class"; //$NON-NLS-1$
 
 	private final String name;
 	private long lastModified = -1;
 	private long size = -1;
 	private Container parent = null;
-	private URL url = null;			//URL for this entry in the file system
-	protected File file = null;		//file that this entry corresponds to on the file system
-	protected Object data = null;	//data associated with this entry
-	
+	private URL url = null; // URL for this entry
+	protected File file = null; // file that this entry corresponds to in the file system
+	protected Object data = null; // data associated with this entry
+
 	public Entry(String name) {
+		super();
 		this.name = name;
 	}
-	
+
 	public Entry(String name, File file) {
-		this.name = name;
+		this(name);
 		this.file = file;
-		if(file != null) {
+		if (file != null) {
 			size = file.length();
 			lastModified = file.lastModified();
 		}
 	}
-	
+
 	public Entry(File file) {
-		if(file == null) {
-			name = "root";
-		} else {
-			this.name = file.getName();
-			size = file.length();
-			lastModified = file.lastModified();
-		}
-		this.file = file;
+		this((file != null) ? file.getName() : "root", file); //$NON-NLS-1$
 	}
 
 	public long getLastModified() {
@@ -91,73 +92,75 @@ public class Entry {
 	public String getName() {
 		return name;
 	}
-	
+
 	public void setParent(Container parent) {
 		this.parent = parent;
 	}
-	
+
 	public Container getParent() {
 		return parent;
 	}
-	
+
 	public URL toURL() {
-		try {
-			if(url != null) {
-				return url;
-			}
-			if(parent != null) {
-				if(parent.getName().endsWith(FILE_EXT_JAR)) {
-					url = new URL("jar:file:" + parent.getFile().getAbsolutePath() + "!/" + name);
+		if (url == null) {
+			if (file != null) {
+				try {
+					url = file.toURI().toURL();
+				} catch (MalformedURLException e) {
+					logger.log(Level.FINE, "Exception thrown when constructing URL from file name " + file.getAbsolutePath()); //$NON-NLS-1$
+				}
+			} else if (parent != null && parent.getName().endsWith(FILE_EXT_JAR)) {
+				String jarPath = parent.getFile().getAbsolutePath();
+				try {
+					url = new URL("jar:file:" + jarPath + "!/" + name); //$NON-NLS-1$ //$NON-NLS-2$
+				} catch (MalformedURLException e) {
+					logger.log(Level.FINE, "Exception thrown when constructing URL from jar file name " //$NON-NLS-1$
+							+ jarPath + " and class file name " + name); //$NON-NLS-1$
 				}
 			}
-			if(file != null) {
-				url = file.toURI().toURL();
-			}
-		} catch (MalformedURLException e) {
-			logger.log(Level.FINE,"Exception thrown when constructing URL from jar file name " + parent.getFile().getAbsolutePath() + " and class file name " + name);
 		}
 		return url;
 	}
-	
+
 	public File getFile() {
 		return file;
 	}
-	
+
 	public boolean hasChanged(Entry previous) {
-		if(file != null) {
-			if(previous.file == null) {
+		if (file != null) {
+			if (previous.file == null) {
 				return false;
 			}
 		} else {
-			if(!name.equals(previous.name)) {
+			if (!name.equals(previous.name)) {
 				return false;
 			}
 		}
 		return (size != previous.size) || (lastModified != previous.lastModified);
 	}
-	
+
 	public boolean hasChanged(File previous) {
-		if(file == null) {
-			return true;		//always assumed to have changed if the file has not been set
+		if (file == null) {
+			return true; //always assumed to have changed if the file has not been set
 		}
-		if(file.equals(previous)) {
+		if (file.equals(previous)) {
 			return (size != previous.length()) || (lastModified != previous.lastModified());
 		}
 		return true;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public <T> T getData() {
 		return (T) data;
 	}
-	
+
 	public void setData(Object data) {
 		this.data = data;
 	}
 
 	@Override
 	public boolean equals(Object o) {
-		if((o == null) || !(o instanceof Entry)) {
+		if ((o == null) || !(o instanceof Entry)) {
 			return false;
 		}
 		Entry compareTo = (Entry) o;
@@ -171,13 +174,11 @@ public class Entry {
 
 	@Override
 	public String toString() {
-		if(file == null) {
+		if (file == null) {
 			return name;
 		} else {
-			return name + " loaded from " + file.getAbsolutePath();
+			return name + " loaded from " + file.getAbsolutePath(); //$NON-NLS-1$
 		}
 	}
-	
-	
-	
+
 }

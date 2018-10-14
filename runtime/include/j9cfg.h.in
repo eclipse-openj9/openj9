@@ -1,0 +1,292 @@
+/*******************************************************************************
+ * Copyright (c) 1998, 2018 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ *******************************************************************************/
+
+#ifndef J9CFG_H
+#define J9CFG_H
+
+/*
+ * @ddr_namespace: map_to_type=J9BuildFlags
+ * @ddr_options: valuesandbuildflags
+ */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "omrcfg.h"
+
+#define J9_COPYRIGHT_STRING "(c) Copyright 1991, ${J9VM_CURRENT_YEAR} IBM Corp. and others."
+
+#define EsVersionMajor ${J9VM_VERSION_MAJOR}
+#define EsVersionMinor ${J9VM_VERSION_MINOR}0
+
+#define EsVersionString "${J9VM_VERSION}"
+#define EsExtraVersionString ""
+
+#define JAVA_SPEC_VERSION ${JAVA_SPEC_VERSION}
+
+/*  Note: The following defines record flags used to build VM.  */
+/*  Changing them here does not remove the feature and may cause linking problems. */
+
+#cmakedefine J9VM_ARCH_ARM
+#cmakedefine J9VM_ARCH_POWER
+#cmakedefine J9VM_ARCH_S390
+#cmakedefine J9VM_ARCH_X86
+#cmakedefine J9VM_BUILD__SE6_PACKAGE
+#cmakedefine J9VM_BUILD__VS12_AND_HIGHER
+#cmakedefine J9VM_BUILD_AUTOBUILD
+#cmakedefine J9VM_BUILD_CMAKE
+#cmakedefine J9VM_BUILD_DROP_TO_HURSLEY
+#cmakedefine J9VM_BUILD_DROP_TO_PHOENIX
+#cmakedefine J9VM_BUILD_DROP_TO_TORONTO
+#cmakedefine J9VM_BUILD_FIPS
+#cmakedefine J9VM_BUILD_GC_CONTINUOUS
+#cmakedefine J9VM_BUILD_J2ME
+#cmakedefine J9VM_BUILD_J2SE
+#cmakedefine J9VM_BUILD_J9VM_DOC
+#cmakedefine J9VM_BUILD_JAVA5
+#cmakedefine J9VM_BUILD_JAVA6
+#cmakedefine J9VM_BUILD_JAVA60_26
+#cmakedefine J9VM_BUILD_JAVA6PROXY
+#cmakedefine J9VM_BUILD_JAVA7
+#cmakedefine J9VM_BUILD_JAVA70_27
+#cmakedefine J9VM_BUILD_JAVA7BASIC
+#cmakedefine J9VM_BUILD_JAVA7RAW
+#cmakedefine J9VM_BUILD_JAVA8
+#cmakedefine J9VM_BUILD_JAVA8RAW
+#cmakedefine J9VM_BUILD_JAVA9
+#cmakedefine J9VM_BUILD_NEW_COMPILER
+#cmakedefine J9VM_BUILD_OPENJ9
+#cmakedefine J9VM_BUILD_OUNCEMAKE
+#cmakedefine J9VM_BUILD_PRODUCT
+#cmakedefine J9VM_BUILD_REALTIME
+#cmakedefine J9VM_BUILD_STAGE_OTTAWA_VMLAB
+#cmakedefine J9VM_BUILD_STAGE_TORONTO_LAB
+#cmakedefine J9VM_BUILD_UMA
+#cmakedefine J9VM_BUILD_VM_CONTINUOUS
+#cmakedefine J9VM_COMPILER_PROMOTION
+#cmakedefine J9VM_DANGER_MEMLEAKS_BROKEN
+#cmakedefine J9VM_ENV_ADVANCE_TOOLCHAIN
+#cmakedefine J9VM_ENV_CALL_VIA_TABLE
+#cmakedefine J9VM_ENV_DATA64
+#cmakedefine J9VM_ENV_DLPAR
+#cmakedefine J9VM_ENV_GCC
+#cmakedefine J9VM_ENV_HAS_FPU
+#cmakedefine J9VM_ENV_LITTLE_ENDIAN
+#cmakedefine J9VM_ENV_SHARED_LIBS_CALLEE_GLOBAL_TABLE_SETUP
+#cmakedefine J9VM_ENV_SHARED_LIBS_USE_GLOBAL_TABLE
+#cmakedefine J9VM_ENV_SSE2_SUPPORT_DETECTION
+#cmakedefine J9VM_ENV_Z_TPF
+#cmakedefine J9VM_GC_ADAPTIVE_TENURING
+#cmakedefine J9VM_GC_ALIGN_OBJECTS
+#cmakedefine J9VM_GC_ALLOCATION_TAX
+#cmakedefine J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER
+#cmakedefine J9VM_GC_ALWAYS_CALL_WRITE_BARRIER
+#cmakedefine J9VM_GC_ARRAYLETS
+#cmakedefine J9VM_GC_BATCH_CLEAR_TLH
+#cmakedefine J9VM_GC_CLASSES_ON_HEAP
+#cmakedefine J9VM_GC_COMBINATION_SPEC
+#cmakedefine J9VM_GC_COMPRESSED_POINTER_BARRIER
+#cmakedefine J9VM_GC_COMPRESSED_POINTERS
+#cmakedefine J9VM_GC_CONCURRENT_SWEEP
+#cmakedefine J9VM_GC_DEBUG_ASSERTS
+#cmakedefine J9VM_GC_DYNAMIC_CLASS_UNLOADING
+#cmakedefine J9VM_GC_DYNAMIC_NEW_SPACE_SIZING
+#cmakedefine J9VM_GC_FINALIZATION
+#cmakedefine J9VM_GC_FRAGMENTED_HEAP
+#cmakedefine J9VM_GC_GENERATIONAL
+#cmakedefine J9VM_GC_HEAP_CARD_TABLE
+#cmakedefine J9VM_GC_HYBRID_ARRAYLETS
+#cmakedefine J9VM_GC_IDLE_HEAP_MANAGER
+#cmakedefine J9VM_GC_INLINED_ALLOC_FIELDS
+#cmakedefine J9VM_GC_JNI_ARRAY_CACHE
+#cmakedefine J9VM_GC_LARGE_OBJECT_AREA
+#cmakedefine J9VM_GC_LEAF_BITS
+#cmakedefine J9VM_GC_MINIMUM_OBJECT_SIZE
+#cmakedefine J9VM_GC_MODRON_COMPACTION
+#cmakedefine J9VM_GC_MODRON_CONCURRENT_MARK
+#cmakedefine J9VM_GC_MODRON_GC
+#cmakedefine J9VM_GC_MODRON_SCAVENGER
+#cmakedefine J9VM_GC_MODRON_STANDARD
+#cmakedefine J9VM_GC_MODRON_TRACE
+#cmakedefine J9VM_GC_MODRON_VERBOSE
+#cmakedefine J9VM_GC_NEW_SPINLOCK_SUPPORT
+#cmakedefine J9VM_GC_NON_ZERO_TLH
+#cmakedefine J9VM_GC_OBJECT_ACCESS_BARRIER
+#cmakedefine J9VM_GC_REALTIME
+#cmakedefine J9VM_GC_SEGREGATED_HEAP
+#cmakedefine J9VM_GC_STACCATO
+#cmakedefine J9VM_GC_STRICT_OMR
+#cmakedefine J9VM_GC_SUBPOOLS
+#cmakedefine J9VM_GC_SUBPOOLS_ALIAS
+#cmakedefine J9VM_GC_THREAD_LOCAL_HEAP
+#cmakedefine J9VM_GC_TILTED_NEW_SPACE
+#cmakedefine J9VM_GC_TLH_PREFETCH_FTA
+#cmakedefine J9VM_GC_USE_INLINE_ALLOCATE
+#cmakedefine J9VM_GC_VERIFY_ACCESS_BARRIER
+#cmakedefine J9VM_GC_VLHGC
+#cmakedefine J9VM_INTERP_AOT_COMPILE_SUPPORT
+#cmakedefine J9VM_INTERP_AOT_RUNTIME_SUPPORT
+#cmakedefine J9VM_INTERP_ATOMIC_FREE_JNI
+#cmakedefine J9VM_INTERP_BYTECODE_PREVERIFICATION
+#cmakedefine J9VM_INTERP_BYTECODE_VERIFICATION
+#cmakedefine J9VM_INTERP_COMPRESSED_OBJECT_HEADER
+#cmakedefine J9VM_INTERP_CUSTOM_SPIN_OPTIONS
+#cmakedefine J9VM_INTERP_DEBUG_SUPPORT
+#cmakedefine J9VM_INTERP_ENABLE_JIT_ON_DESKTOP
+#cmakedefine J9VM_INTERP_FLAGS_IN_CLASS_SLOT
+#cmakedefine J9VM_INTERP_FLOAT_SUPPORT
+#cmakedefine J9VM_INTERP_FLOATMATH_TRACING
+#cmakedefine J9VM_INTERP_FLOATMATHLIB_TRACING
+#cmakedefine J9VM_INTERP_GP_HANDLER
+#cmakedefine J9VM_INTERP_GROWABLE_STACKS
+#cmakedefine J9VM_INTERP_HOT_CODE_REPLACEMENT
+#cmakedefine J9VM_INTERP_JIT_ON_BY_DEFAULT
+#cmakedefine J9VM_INTERP_JNI_SUPPORT
+#cmakedefine J9VM_INTERP_MINIMAL_JCL
+#cmakedefine J9VM_INTERP_MINIMAL_JNI
+#cmakedefine J9VM_INTERP_NATIVE_SUPPORT
+#cmakedefine J9VM_INTERP_NEW_HEADER_SHAPE
+#cmakedefine J9VM_INTERP_PROFILING_BYTECODES
+#cmakedefine J9VM_INTERP_ROMABLE_AOT_SUPPORT
+#cmakedefine J9VM_INTERP_SIG_QUIT_THREAD
+#cmakedefine J9VM_INTERP_SIG_QUIT_THREAD_USES_SEMAPHORES
+#cmakedefine J9VM_INTERP_SMALL_MONITOR_SLOT
+#cmakedefine J9VM_INTERP_TRACING
+#cmakedefine J9VM_INTERP_UPDATE_VMCTRACING
+#cmakedefine J9VM_INTERP_USE_SPLIT_SIDE_TABLES
+#cmakedefine J9VM_INTERP_USE_UNSAFE_HELPER
+#cmakedefine J9VM_INTERP_VERBOSE
+#cmakedefine J9VM_IVE_JXE_FILE_RELOCATOR
+#cmakedefine J9VM_IVE_JXE_IN_PLACE_RELOCATOR
+#cmakedefine J9VM_IVE_JXE_NATIVES
+#cmakedefine J9VM_IVE_JXE_OERELOCATOR
+#cmakedefine J9VM_IVE_JXE_STREAMING_RELOCATOR
+#cmakedefine J9VM_IVE_MEMORY_SPACE_HELPERS
+#cmakedefine J9VM_IVE_ROM_IMAGE_HELPERS
+#cmakedefine J9VM_JIT_32BIT_USES64BIT_REGISTERS
+#cmakedefine J9VM_JIT_C_HELPERS
+#cmakedefine J9VM_JIT_CLASS_UNLOAD_RWMONITOR
+#cmakedefine J9VM_JIT_DYNAMIC_LOOP_TRANSFER
+#cmakedefine J9VM_JIT_FREE_SYSTEM_STACK_POINTER
+#cmakedefine J9VM_JIT_FULL_SPEED_DEBUG
+#cmakedefine J9VM_JIT_GC_ON_RESOLVE_SUPPORT
+#cmakedefine J9VM_JIT_HIGH_WORD_REGISTERS
+#cmakedefine J9VM_JIT_IA32_FIXED_FRAME
+#cmakedefine J9VM_JIT_MICRO_JIT
+#cmakedefine J9VM_JIT_NATHELP_USES_CLASS_OBJECTS
+#cmakedefine J9VM_JIT_NEEDS_TRAMPOLINES
+#cmakedefine J9VM_JIT_NEW_DUAL_HELPERS
+#cmakedefine J9VM_JIT_NEW_INSTANCE_PROTOTYPE
+#cmakedefine J9VM_JIT_ON_STACK_REPLACEMENT
+#cmakedefine J9VM_JIT_REQUIRES_TRAP_HANDLER
+#cmakedefine J9VM_JIT_RUNTIME_INSTRUMENTATION
+#cmakedefine J9VM_JIT_SMALL
+#cmakedefine J9VM_JIT_SUPPORTS_DIRECT_JNI
+#cmakedefine J9VM_JIT_TRANSACTION_DIAGNOSTIC_THREAD_BLOCK
+#cmakedefine J9VM_MATH_DIRECT_HELPERS
+#cmakedefine J9VM_MATH_USE_DIV_REM
+#cmakedefine J9VM_OPT_ANNOTATIONS
+#cmakedefine J9VM_OPT_BIG_INTEGER
+#cmakedefine J9VM_OPT_CUDA
+#cmakedefine J9VM_OPT_DEBUG_INFO_SERVER
+#cmakedefine J9VM_OPT_DEBUG_JSR45_SUPPORT
+#cmakedefine J9VM_OPT_DEPRECATED_METHODS
+#cmakedefine J9VM_OPT_DMA_NATIVES
+#cmakedefine J9VM_OPT_DYNAMIC_LOAD_SUPPORT
+#cmakedefine J9VM_OPT_FIPS
+#cmakedefine J9VM_OPT_FRAGMENT_RAM_CLASSES
+#cmakedefine J9VM_OPT_HARMONY
+#cmakedefine J9VM_OPT_ICBUILDER_SUPPORT
+#cmakedefine J9VM_OPT_INFO_SERVER
+#cmakedefine J9VM_OPT_INLINE_JSRS
+#cmakedefine J9VM_OPT_INVARIANT_INTERNING
+#cmakedefine J9VM_OPT_JAVA_OFFLOAD_SUPPORT
+#cmakedefine J9VM_OPT_JVMTI
+#cmakedefine J9VM_OPT_JXE_LOAD_SUPPORT
+#cmakedefine J9VM_OPT_MEMORY_CHECK_SUPPORT
+#cmakedefine J9VM_OPT_METHOD_HANDLE
+#cmakedefine J9VM_OPT_MODULE
+#cmakedefine J9VM_OPT_MULTI_VM
+#cmakedefine J9VM_OPT_NATIVE_CHARACTER_CONVERTER
+#cmakedefine J9VM_OPT_NATIVE_LOCALE_SUPPORT
+#cmakedefine J9VM_OPT_NEW_OBJECT_HASH
+#cmakedefine J9VM_OPT_NEW_ROM_CLASS_BUILDER
+#cmakedefine J9VM_OPT_NO_CLASSLOADERS
+#cmakedefine J9VM_OPT_NRR
+#cmakedefine J9VM_OPT_PAAS
+#cmakedefine J9VM_OPT_PACKED
+#cmakedefine J9VM_OPT_PANAMA
+#cmakedefine J9VM_OPT_PHP_SUPPORT
+#cmakedefine J9VM_OPT_REFLECT
+#cmakedefine J9VM_OPT_REMOTE_CONSOLE_SUPPORT
+#cmakedefine J9VM_OPT_RESOURCE_MANAGED
+#cmakedefine J9VM_OPT_ROM_IMAGE_SUPPORT
+#cmakedefine J9VM_OPT_SHARED_CLASSES
+#cmakedefine J9VM_OPT_SIDECAR
+#cmakedefine J9VM_OPT_SRP_AVL_TREE_SUPPORT
+#cmakedefine J9VM_OPT_STRING_COMPRESSION
+#cmakedefine J9VM_OPT_SWITCH_STACKS_FOR_SIGNAL_HANDLER
+#cmakedefine J9VM_OPT_TEMP_NEW_INTERFACE_INVOCATION
+#cmakedefine J9VM_OPT_USE_FFI
+#cmakedefine J9VM_OPT_USE_FFI_ONLY
+#cmakedefine J9VM_OPT_VALHALLA_MVT
+#cmakedefine J9VM_OPT_VEE_SUPPORT
+#cmakedefine J9VM_OPT_VM_LOCAL_STORAGE
+#cmakedefine J9VM_OPT_ZERO
+#cmakedefine J9VM_OPT_ZIP_SUPPORT
+#cmakedefine J9VM_OPT_ZLIB_COMPRESSION
+#cmakedefine J9VM_OPT_ZLIB_SUPPORT
+#cmakedefine J9VM_PORT_OMRSIG_SUPPORT
+#cmakedefine J9VM_PORT_RUNTIME_INSTRUMENTATION
+#cmakedefine J9VM_PORT_SIGNAL_SUPPORT
+#cmakedefine J9VM_PORT_ZOS_CEEHDLRSUPPORT
+#cmakedefine J9VM_PROF_COUNT_ARGS_TEMPS
+#cmakedefine J9VM_PROF_EVENT_REPORTING
+#cmakedefine J9VM_PROF_JVMTI
+#cmakedefine J9VM_RAS_DUMP_AGENTS
+#cmakedefine J9VM_RAS_EYECATCHERS
+#cmakedefine J9VM_RAS_FATAL_ASSERT
+#cmakedefine J9VM_SIZE_SMALL_CODE
+#cmakedefine J9VM_SIZE_SMALL_OS_STACK
+#cmakedefine J9VM_SIZE_SMALL_RAM
+#cmakedefine J9VM_SIZE_OPTIMIZE_SEND_TARGETS
+#cmakedefine J9VM_TEMP_ALIGN_CLASS_SLOT
+#cmakedefine J9VM_TEMP_KEEP_FLAGS_SLOT
+#cmakedefine J9VM_THR_ASYNC_NAME_UPDATE
+#cmakedefine J9VM_THR_EXTRA_CHECKS
+#cmakedefine J9VM_THR_JLM_HST
+#cmakedefine J9VM_THR_LOCK_NURSERY
+#cmakedefine J9VM_THR_LOCK_NURSERY_FAT_ARRAYS
+#cmakedefine J9VM_THR_LOCK_RESERVATION
+#cmakedefine J9VM_THR_PREEMPTIVE
+#cmakedefine J9VM_THR_SMART_DEFLATION
+
+#if JAVA_SPEC_VERSION >= 11
+#define J9VM_OPT_VALHALLA_NESTMATES
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* J9CFG_H */

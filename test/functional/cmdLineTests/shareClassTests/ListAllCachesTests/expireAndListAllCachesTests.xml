@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!--
+  Copyright (c) 2010, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<!-- #### RUN TokenHelperTests SUITE #### -->
+<suite id="Shared Classes CommandLineOptionTests Suite - Windows Configuration">
+
+	<!-- Our test modes for this suite -->
+	<variable name="mode204" value="-Xshareclasses:name=ShareClassesCMLTests"/>
+
+	<!-- Set variables up -->
+	<variable name="JAVAC_DIR" value="$JAVA_HOME$$PATHSEP$bin"/>
+	<variable name="JAVA6_EXE" value="$JAVA6_HOME$$PATHSEP$jre$PATHSEP$bin$PATHSEP$java$EXECUTABLE_SUFFIX$"/>
+	
+	<variable name="currentMode" value="$mode204$"/>
+	<!-- set currentMode variable depending on the value of loopIndex -->
+	<if testVariable="SCMODE" testValue="204" resultVariable="currentMode" resultValue="$mode204$"/>
+
+		
+	<echo value=" "/>
+	<echo value="#######################################################"/>
+	<echo value="Running tests in mode $SCMODE$ with command line options: $currentMode$"/>
+	<echo value="#######################################################"/>
+	<echo value=" "/>
+		
+		
+	<test id="Start : Cleanup" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="Expire & List 1: Create nonpersistent shared cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$NP,nonpersistent -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="Expire & List 2: Create Java 6 nonpersistent shared cache" timeout="600" runPath=".">
+		<command>$JAVA6_EXE$ $currentMode$NP,nonpersistent -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="Expire & List 3: Create Java 6 persistent shared cache" timeout="600" runPath=".">
+		<command>$JAVA6_EXE$ $currentMode$P,persistent -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="Expire & List 4: Create persistent shared cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$P,persistent -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+
+	<test id="Expire & List 5: expire persistent cache." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$P,persistent,expire=0 -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="Expire & List 6: After expire check for compatible persistent cache." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,listAllCaches</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">\[ERR\](.)*Cache(.)*name(.)*level(.)*(persistent|cache-type)(.)*last detach time(.|[\n\r])*ShareClassesCMLTestsP.*Java.*(yes|persistent)</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">\[ERR\](.)*Cache(.)*name(.)*level(.)*(persistent|cache-type)(.)*last detach time(.|[\n\r])*ShareClassesCMLTestsNP.*Java.*(no|non-persistent)</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">\[ERR\] Incompatible shared caches(.|[\n\r])*ShareClassesCMLTests.*Java.*</output>
+	</test>
+	
+	<test id="Expire & List 7: Cleanup persistent cache " timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$P,persistent,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="Expire & List 8: Make sure everything is cleaned up" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,listAllCaches</command>
+		<output type="success" caseSensitive="yes" regex="no">No shared class caches available</output>
+		<output type="success" caseSensitive="yes" regex="no">Listing all caches in cacheDir</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">\[ERR\](.)*Cache(.)*name(.)*level(.)*(persistent|cache-type)(.)*last detach time(.|[\n\r])*ShareClassesCMLTests(.|[\n\r])*\[ERR\]</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+				
+</suite>

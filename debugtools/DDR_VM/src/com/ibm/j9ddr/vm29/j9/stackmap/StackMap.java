@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2014 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,7 +73,6 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ROMConstantPoolItemPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMFieldRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMMethodPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMMethodRefPointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9ROMMethodTypeRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9UTF8Pointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 import com.ibm.j9ddr.vm29.types.I16;
@@ -257,7 +256,7 @@ public class StackMap
 			//Scratch storage is held on-heap in stack data structures and managed inside mapStack.
 			
 			//Build map array - one slot for every PC in method
-			length = (UDATA) J9_BYTECODE_SIZE_FROM_ROM_METHOD(romMethod);
+			length = J9_BYTECODE_SIZE_FROM_ROM_METHOD(romMethod);
 			
 			stackStructSize = romMethod.maxStack();
 			

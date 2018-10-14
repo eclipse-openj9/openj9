@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Copyright (c) 2018, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TestConfig/playlist.xsd">
+	<test>
+		<testCaseName>cmdLineTester_callsitedbgddrext_ibm_zos</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl zos ; \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \
+	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
+	-DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' \
+	-DJDMPVIEW_EXE=$(Q)$(JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)callsiteddrtests.xml$(Q) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
+	${TEST_STATUS}</command>
+		<platformRequirements>os.zos</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<impls>
+			<impl>ibm</impl>
+		</impls>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>8</subset>
+		</subsets>
+	</test>
+
+	<test>
+		<testCaseName>cmdLineTester_callsitedbgddrext_ibm</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl zos ; \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \
+	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
+	-DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' \
+	-DJDMPVIEW_EXE=$(Q)$(JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)callsiteddrtests.xml$(Q) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
+	${TEST_STATUS}</command>
+		<platformRequirements>^os.zos</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<impls>
+			<impl>ibm</impl>
+		</impls>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>8</subset>
+			<subset>9</subset>
+		</subsets>
+	</test>
+	
+	<test>
+		<testCaseName>cmdLineTester_callsitedbgddrext_openj9</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl zos ; \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \
+	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
+	-DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' \
+	-DJDMPVIEW_EXE=$(Q)$(JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)callsiteddrtests.xml$(Q) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
+	${TEST_STATUS}</command>
+		<!-- temporarily disable this test on AIX, z/OS; github.com/eclipse/openj9/issues/1511 -->
+		<platformRequirements>^os.aix,^os.zos</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
+		</subsets>
+	</test>
+</playlist>

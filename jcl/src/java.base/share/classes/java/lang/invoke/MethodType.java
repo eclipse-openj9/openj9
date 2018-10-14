@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2017 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -318,7 +318,7 @@ public final class MethodType implements Serializable {
 	 * <li>(II)V - method taking two ints and return void</li>
 	 * <li>(I)Ljava/lang/Integer; - method taking an int and returning an Integer</li>
 	 * <li>([I)I - method taking an array of ints and returning an int</li>
-	 * <ul>
+	 * </ul>
 	 * 
 	 * @param methodDescriptor - the method descriptor string 
 	 * @param loader - the ClassLoader to be used or null for System ClassLoader 
@@ -442,6 +442,54 @@ public final class MethodType implements Serializable {
 	}
 
 	/*
+	 * Parses the first parameter in a descriptor string into a Class object.
+	 * The Class object is append to given ArrayList and the current string index is returned.
+	 */
+	static final int parseIntoClass(char[] signature, int index, ArrayList<Class<?>> args, ClassLoader classLoader, String descriptor) {
+		char current = signature[index];
+		Class<?> c;			
+		
+		if ((current == 'L') || (current == '[')) {
+			int start = index;
+			while(signature[index] == '[') {
+				index++;
+			}
+			String name;
+			if (signature[index] != 'L') {
+				name = descriptor.substring(start, index + 1);
+			} else { 
+				int end = descriptor.indexOf(';', index);
+				if (end == -1) {
+					/*[MSG "K05d6", "malformed method descriptor: {0}"]*/
+					throw new IllegalArgumentException(Msg.getString("K05d6", descriptor)); //$NON-NLS-1$
+				}
+				name = descriptor.substring(start, end + 1);
+				index = end;
+			}
+			c = nonPrimitiveClassFromString(name, classLoader);
+		} else {
+			try {
+				c = primitivesArray[current - 'A'];
+			} catch(ArrayIndexOutOfBoundsException e) {
+				c = null;
+			}
+			if (c == null) {
+				if (current == 'V') {
+					// lazily add 'V' to work around load ordering issues
+					primitivesArray['V' - 'A'] = void.class;
+					c = void.class;
+				} else {
+					/*[MSG "K05d7", "not a primitive: {0}"]*/
+					throw new IllegalArgumentException(Msg.getString("K05d7", current)); //$NON-NLS-1$
+				}
+			}
+		}
+		args.add(c);
+
+		return index;
+	}
+
+	/*
 	 * Parse the MethodDescriptor string into a list of Class objects.  The last class in the list
 	 * is the return type.
 	 */
@@ -465,12 +513,9 @@ public final class MethodType implements Serializable {
 		
 		ArrayList<Class<?>> args = new ArrayList<Class<?>>();
 		
-		while((index < length) ) {
-			char current = signature[index];
-			Class<?> c;
-			
+		while(index < length) {
 			/* Ensure we only see one ')' closing bracket */
-			if ((current == ')')) {
+			if ((signature[index] == ')')) {
 				if (closeBracket) {
 					/*[MSG "K05d5", "too many ')': {0}"]*/
 					throw new IllegalArgumentException(Msg.getString("K05d5", methodDescriptor)); //$NON-NLS-1$
@@ -479,43 +524,8 @@ public final class MethodType implements Serializable {
 				index++;
 				continue;
 			}
-			
-			if ((current == 'L') || (current == '[')) {
-				int start = index;
-				while(signature[index] == '[') {
-					index++;
-				}
-				String name;
-				if (signature[index] != 'L') {
-					name = methodDescriptor.substring(start, index + 1);
-				} else { 
-					int end = methodDescriptor.indexOf(';', index);
-					if (end == -1) {
-						/*[MSG "K05d6", "malformed method descriptor: {0}"]*/
-						throw new IllegalArgumentException(Msg.getString("K05d6", methodDescriptor)); //$NON-NLS-1$
-					}
-					name = methodDescriptor.substring(start, end + 1);
-					index = end;
-				}
-				c = nonPrimitiveClassFromString(name, classLoader);
-			} else {
-				try {
-					c = primitivesArray[current - 'A'];
-				} catch(ArrayIndexOutOfBoundsException e) {
-					c = null;
-				}
-				if (c == null) {
-					if (current == 'V') {
-						// lazily add 'V' to work around load ordering issues
-						primitivesArray['V' - 'A'] = void.class;
-						c = void.class;
-					} else {
-						/*[MSG "K05d7", "not a primitive: {0}"]*/
-						throw new IllegalArgumentException(Msg.getString("K05d7", current)); //$NON-NLS-1$
-					}
-				}
-			}
-			args.add(c);
+
+			index = parseIntoClass(signature, index, args, classLoader, methodDescriptor);
 			index++;
 		}
 		return args;
@@ -891,14 +901,21 @@ public final class MethodType implements Serializable {
 		return returnType;
 	}
 	
-	/* Return the last class in the parameterType array.
+	/**
+	 * Return the last class in the parameterType array.
 	 * This is equivalent to:
 	 * 		type.parameterType(type.parameterCount() - 1)
-	 * Will throw ArrayIndexOutOfBounds on bad indexes.  This is a subclass of IndexOutOfBoundsException
-	 * so this is valid when JCKs expect certain exceptions.
+	 * @return class of final parameter, or void.class if there are no parameters
 	 */
-	/* package */ Class<?> lastParameterType() {
-		 return arguments[arguments.length - 1];
+	/*[IF Java10]*/
+	public
+	/*[ENDIF]*/
+	Class<?> lastParameterType() {
+		Class<?> result = void.class;
+		if (arguments.length > 0) {
+			result = arguments[arguments.length - 1];
+		}
+		return result;
 	}
 	
 	/**
@@ -1148,8 +1165,14 @@ public final class MethodType implements Serializable {
 					}
 				}
 			);
-			fReturnType.set(this, in.readObject());
-			fArguments.set(this, in.readObject());
+			try {
+				fReturnType.set(this, in.readObject());
+				fArguments.set(this, in.readObject());
+			} catch(Exception e) {
+				fReturnType.set(this, void.class);
+				fArguments.set(this, EMTPY_PARAMS);
+				throw e;
+			}
 		} catch (IllegalAccessException e) {
 		} catch (NoSuchFieldException e) {
 		}

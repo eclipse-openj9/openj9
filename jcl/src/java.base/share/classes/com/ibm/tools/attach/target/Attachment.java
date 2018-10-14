@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar16]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2017 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,17 +70,17 @@ final class Attachment extends Thread implements Response {
 				Class<?> agentClass;
 				Class<?> startRemoteArgumentType;
 				try {
-					/*[IF Sidecar19-SE-B165]*/
+					/*[IF Sidecar19-SE-OpenJ9]*/
 					agentClass = Class.forName("jdk.internal.agent.Agent"); //$NON-NLS-1$
-					/*[ELSE] Sidecar19-SE-B165 */
+					/*[ELSE] Sidecar19-SE-OpenJ9 */
 					agentClass = Class.forName("sun.management.Agent"); //$NON-NLS-1$
-					/*[ENDIF] Sidecar19-SE-B165 */
+					/*[ENDIF] Sidecar19-SE-OpenJ9 */
 					
-					/*[IF Sidecar19-SE-B165 | Sidecar18-SE-OpenJ9]*/
+					/*[IF Sidecar19-SE-OpenJ9 | Sidecar18-SE-OpenJ9]*/
 					startRemoteArgumentType = String.class;
-					/*[ELSE] Sidecar19-SE-B165 | Sidecar18-SE-OpenJ9 */
+					/*[ELSE] Sidecar19-SE-OpenJ9 | Sidecar18-SE-OpenJ9 */
 					startRemoteArgumentType = Properties.class;
-					/*[ENDIF] Sidecar19-SE-B165 | Sidecar18-SE-OpenJ9 */
+					/*[ENDIF] Sidecar19-SE-OpenJ9 | Sidecar18-SE-OpenJ9 */
 					startLocalManagementAgentMethod = agentClass.getDeclaredMethod(START_LOCAL_MANAGEMENT_AGENT);
 					startRemoteManagementAgentMethod = agentClass.getDeclaredMethod(START_REMOTE_MANAGEMENT_AGENT, startRemoteArgumentType);
 					startLocalManagementAgentMethod.setAccessible(true);
@@ -374,13 +374,13 @@ final class Attachment extends Thread implements Response {
 			IPC.logMessage("startAgent"); //$NON-NLS-1$
 			if (null != MethodRefsHolder.startRemoteManagementAgentMethod) {
 				Object startArgument;
-				/*[IF Sidecar19-SE-B165 | Sidecar18-SE-OpenJ9]*/
+				/*[IF Sidecar19-SE-OpenJ9 | Sidecar18-SE-OpenJ9]*/
 				startArgument = agentProperties.entrySet().stream()
 						.map(entry -> entry.getKey() + "=" + entry.getValue()) //$NON-NLS-1$
 						.collect(java.util.stream.Collectors.joining(",")); //$NON-NLS-1$
-				/*[ELSE] Sidecar19-SE-B165 | Sidecar18-SE-OpenJ9 */
+				/*[ELSE] Sidecar19-SE-OpenJ9 | Sidecar18-SE-OpenJ9 */
 				startArgument = agentProperties;
-				/*[ENDIF] Sidecar19-SE-B165 | Sidecar18-SE-OpenJ9 */
+				/*[ENDIF] Sidecar19-SE-OpenJ9 | Sidecar18-SE-OpenJ9 */
 				MethodRefsHolder.startRemoteManagementAgentMethod.invoke(null, startArgument);
 				return true;
 			}
@@ -407,6 +407,14 @@ final class Attachment extends Thread implements Response {
 			throw new IbmAttachOperationFailedException("startLocalManagementAgent error starting agent:" + e.getClass() + " " + e.getMessage());		 //$NON-NLS-1$ //$NON-NLS-2$
 		}
 
+		String addr = saveLocalConnectorAddress();
+		if (Objects.isNull(addr)) {
+			throw new IbmAttachOperationFailedException("startLocalManagementAgent: " + LOCAL_CONNECTOR_ADDRESS + " not defined"); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+		return addr;
+	}
+
+	static String saveLocalConnectorAddress() {
 		Properties systemProperties = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties();
 		String addr;
 		synchronized (systemProperties) {
@@ -419,9 +427,9 @@ final class Attachment extends Thread implements Response {
 			}
 		}
 		if (Objects.isNull(addr)) {
-			/* startLocalAgent() should have set the property. */
+			/* property should be set at this point */
 			IPC.logMessage(LOCAL_CONNECTOR_ADDRESS + " not set"); //$NON-NLS-1$
-			throw new IbmAttachOperationFailedException("startLocalManagementAgent: " + LOCAL_CONNECTOR_ADDRESS + " not defined"); //$NON-NLS-1$ //$NON-NLS-2$
+			return null;
 		}
 		IPC.logMessage(LOCAL_CONNECTOR_ADDRESS + "=", addr); //$NON-NLS-1$
 		return addr;

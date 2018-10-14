@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Copyright (c) 2016, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<project name="DDR Extension Test" default="clean">
+	<taskdef resource="net/sf/antcontrib/antcontrib.properties" />
+
+	<property name="JAVA_COMMAND" value="${JAVA_COMMAND}" />
+	<property name="TEST_ROOT" value="${TEST_ROOT}" />
+	<property name="JDK_HOME" value="${JDK_HOME}" />
+	<property name="TEST_RESROOT" value="${TEST_RESROOT}" />
+	<property name="REPORTDIR" value="${REPORTDIR}" />
+	<property name="JDK_VERSION" value="${JDK_VERSION}" />
+	<if>
+		<equals arg1="${JDK_VERSION}" arg2="8"/>
+		<then>
+			<property name="j9ddr" location="${JDK_HOME}/jre/lib/ddr/j9ddr.jar" />
+		</then>
+		<else>
+			<property name="j9ddr" location="${JDK_HOME}/lib/ddr/j9ddr.jar" />
+		</else>
+	</if>
+	<property name="dump.name" value="DDREXT.J9CORE.DMP" />
+	<property name="system.dump" value="${REPORTDIR}/${dump.name}" />
+	<if>
+		<equals arg1="${OS}" arg2="os.zos"/>
+		<then>
+			<property name="DUMP_OPTION" value="-Xdump:system:events=vmstop,label=%uid.${dump.name},request=exclusive+compact+prepwalk -Xscmx16m -Xshareclasses:name=ddrextjunitSCC,addtestjithints -Xjit -Xaot:forceaot,count=5,disableAsyncCompilation -Xmx512M -version" />
+				<if>
+				<equals arg1="${BITS}" arg2="bits.64"/>
+				<then>
+					<property name="zos.core.suffix" value=".X001" />
+				</then>
+				<else>
+					<property name="zos.core.suffix" value="" />
+				</else>
+			</if>
+		</then>
+		<else>
+			<property name="DUMP_OPTION" value="-Xdump:system:events=vmstop,label=${system.dump},request=exclusive+compact+prepwalk -Xscmx16m -Xshareclasses:name=ddrextjunitSCC,addtestjithints -Xjit -Xaot:forceaot,count=5,disableAsyncCompilation -Xmx512M -version" />
+		</else>
+	</if>
+
+	<path id="tck.class.path">
+		<pathelement location="${TEST_ROOT}/TestConfig/lib/junit4.jar" />
+		<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
+		<pathelement location="${TEST_ROOT}/TestConfig/lib/commons-exec.jar" />
+		<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
+		<pathelement location="${TEST_ROOT}/TestConfig/lib/commons-cli.jar" />
+		<pathelement location="${RESOURCES_DIR}" />
+		<pathelement location="${TEST_RESROOT}/DDR_Test.jar" />
+		<pathelement location="${j9ddr}" />
+	</path>
+
+	<target name="TCK.destroy.cache" depends="TCK.generate.dump" description="Destroy the cache">
+			<echo>Destroying cache</echo>
+			<echo>Running j9vm.test.corehelper.StackMapCoreGenerator to destroy the cache</echo>
+			<echo>Using JVM : ${JAVA_COMMAND}</echo>
+			<echo>classname = "j9vm.test.corehelper.StackMapCoreGenerator"</echo>
+			<echo>Java VM Args:</echo>
+			<echo>	jvmarg = -Xshareclasses:name=ddrextjunitSCC,destroy</echo>
+			<echo></echo>
+			<java fork="true" jvm="${JAVA_COMMAND}" classname="j9vm.test.corehelper.StackMapCoreGenerator"
+				timeout="1200000" failonerror="false">
+				<jvmarg value="-Xshareclasses:name=ddrextjunitSCC,destroy"/>
+				<classpath refid="tck.class.path" />
+			</java>
+	</target>
+
+	<target name="TCK.run.tests.ddrext" depends="TCK.destroy.cache">
+		<echo>Running the DDR Extension Test</echo>
+		<java fork="true" jvm="${JAVA_COMMAND}" classname="j9vm.test.ddrext.AutoRun"
+			timeout="1200000" failonerror="true">
+			<jvmarg value="${ADDITIONALEXPORTS}" />
+			<arg value="${system.dump}" />
+			<arg value="${test.list}"/>	
+			<arg value="${TEST_RESROOT}/ddrplugin.jar" />
+			<classpath refid="tck.class.path" />
+		</java>
+	</target>
+
+	<target name="TCK.generate.dump">
+		<echo>Generate dump file</echo>
+		<exec executable="${JAVA_COMMAND}" failonerror="true">
+			<arg line="${DUMP_OPTION}" />
+		</exec>
+		<if>
+			<equals arg1="${OS}" arg2="os.zos"/>
+			<then>
+				<antcall target ="TCK.move.dump.ddrext" />
+			</then>
+		</if>
+	</target>
+
+	<target name="TCK.move.dump.ddrext" description="Move core file from MVS to HFS">
+			<echo>Moving core file from MVS [${dump.name}${zos.core.suffix}] to HFS [${system.dump}]</echo>
+			<exec executable="/bin/mv" failonerror="true">
+				<arg line="&quot;//${dump.name}${zos.core.suffix}&quot; ${system.dump}"/>
+			</exec>
+	</target>
+
+	<target name="clean" depends="TCK.run.tests.ddrext" description="clean">
+		<delete file="${system.dump}" />
+	</target>
+</project>

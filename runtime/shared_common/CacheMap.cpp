@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -4175,7 +4175,7 @@ SH_CacheMap::markStale(J9VMThread* currentThread, ClasspathEntryItem* cpei, bool
 	ShcItem* it = NULL;
 	IDATA retryCount = 0;
 	U_16 cpeiPathLen = 0;
-	const char* cpeiPath = cpei->getPath(&cpeiPathLen);
+	const char* cpeiPath = cpei->getLocation(&cpeiPathLen);
 	UDATA oldState = currentThread->omrVMThread->vmState;
 	IDATA returnVal = 0;
 	const char* fnName = "markStale";
@@ -5034,7 +5034,7 @@ SH_CacheMap::createPathString(J9VMThread* currentThread, J9SharedClassConfig* co
 {
 	char* fullPath = *pathBuf;
 	U_16 cpeiPathLen = 0;
-	const char* cpeiPath = cpei->getPath(&cpeiPathLen);
+	const char* cpeiPath = cpei->getLocation(&cpeiPathLen);
 	char* classNamePos = (char*)className;
 	UDATA cNameLen = classNameLen;
 	char* lastSlashPos = NULL;

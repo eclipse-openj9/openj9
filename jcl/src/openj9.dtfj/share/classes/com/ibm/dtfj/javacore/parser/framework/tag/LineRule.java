@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corp. and others
+ * Copyright (c) 2007, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -92,7 +92,7 @@ public abstract class LineRule implements ILineRule {
 	}
 	
 	/**
-	 * Initialises buffer, token list, and other fields prior to parsing and tokenising a line.
+	 * Initializes buffer, token list, and other fields prior to parsing and tokenising a line.
 	 * The user-implemented method that parses the line is called here. This method is called
 	 * internally by the framework, so the user never needs to explicitly call this method.
 	 * 

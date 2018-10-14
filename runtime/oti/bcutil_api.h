@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -552,13 +552,6 @@ releaseInlineBuffers  (J9JSRIData * inlineBuffers);
 */
 const char * 
 buildVerifyErrorString ( J9JavaVM *javaVM, J9CfrError *error, U_8* className, UDATA classNameLength);
-
-
-typedef struct J9TenantIsolationFilter {
-	const U_8 *filter;		/**< The name or prefix to match */
-	BOOLEAN startsWith; 		/**< Specifies whether or not we want the filter to only match the beginning of the string */
-} J9TenantIsolationFilter;
-
 
 #ifdef __cplusplus
 }

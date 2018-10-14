@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!--
+  Copyright (c) 2001, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "excludes.dtd">
+<?xml:stylesheet type="text/xsl" href="excludes.xsl" ?>
+<suite id="URLClassLoader Excluded Test Case List">
+	<platform id="none"/>
+	<platform id="all"/>
+	<exclude id="FindStore.FindDiffcpExplicit" platform="all"><reason>noTimestampChecks does not work properly</reason></exclude>
+	<exclude id="FindStore.FindDiffcpRelative" platform="all"><reason>noTimestampChecks does not work properly</reason></exclude>
+	<exclude id="FindStore.FindDiffcpNetUse" platform="all"><reason>noTimestampChecks does not work properly</reason></exclude>
+	<exclude id="SignedSealed.BuildInitial2" platform="all"><reason>NoClassDefFoundError: sun.security.x509.AlgorithmId</reason></exclude>
+	<exclude id="Signed.success1Store" platform="all"><reason>NoClassDefFoundError: sun.security.x509.AlgorithmId</reason></exclude>
+	<exclude id="Signed.success1Find" platform="all"><reason>NoClassDefFoundError: sun.security.x509.AlgorithmId</reason></exclude>
+	<exclude id="Signed.success2Store" platform="all"><reason>NoClassDefFoundError: sun.security.x509.AlgorithmId</reason></exclude>
+	<exclude id="Signed.success2Find" platform="all"><reason>NoClassDefFoundError: sun.security.x509.AlgorithmId</reason></exclude>
+	<exclude id="Signed.success3Store" platform="all"><reason>NoClassDefFoundError: sun.security.x509.AlgorithmId</reason></exclude>
+	<exclude id="Signed.success3Find" platform="all"><reason>NoClassDefFoundError: sun.security.x509.AlgorithmId</reason></exclude>
+	<exclude id="Signed.failure1Store" platform="all"><reason>NoClassDefFoundError: sun.security.x509.AlgorithmId</reason></exclude>
+	<exclude id="Signed.failure1Find" platform="all"><reason>NoClassDefFoundError: sun.security.x509.AlgorithmId</reason></exclude>
+	<exclude id="Signed.failure2Store" platform="all"><reason>NoClassDefFoundError: sun.security.x509.AlgorithmId</reason></exclude>
+	<exclude id="Signed.failure2Find" platform="all"><reason>NoClassDefFoundError: sun.security.x509.AlgorithmId</reason></exclude>
+	<!-- PR 133321 -->
+	<exclude id="JarExtensionsTests.SingleJarInManifest.Verify1" platform="current"><reason>Failure condition was found: [Output match: LOCAL]</reason></exclude>
+	<exclude id="JarExtensionsTests.MultipleJarsInManifests.Verify1" platform="current"><reason>Failure condition was found: [Output match: LOCAL]</reason></exclude>
+</suite>

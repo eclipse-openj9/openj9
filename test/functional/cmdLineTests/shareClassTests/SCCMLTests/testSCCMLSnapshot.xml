@@ -1,0 +1,424 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!--
+  Copyright (c) 2012, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<!-- Test 1 to Test 18: 29 tests -->
+
+<suite id="Shared Classes CommandLineOptionTests Suite">
+
+	<!-- Our test modes for this suite -->
+	<variable name="mode204" value="-Xshareclasses:name=ShareClassesCMLTests"/>
+
+	<!-- Set variables up -->
+	<variable name="currentMode" value="$mode204$"/>
+	
+	<if testVariable="SCMODE" testValue="204" resultVariable="currentMode" resultValue="$mode204$"/>
+	
+	<echo value=" "/>
+	<echo value="#######################################################"/>
+	<echo value="Running tests in mode $SCMODE$ with command line options: $currentMode$"/>
+	<echo value="#######################################################"/>
+	<echo value=" "/>
+		
+	<!--
+	Note:
+	Most tests check for strings 'corrupt', 'JVM requested Java dump', and 'JVM requested Snap dump' in the output.
+	These checks are present because a cache may be found to be corrupt, and the test could otherwise pass.
+	
+	The string 'corrupt' is checked because it can appear several messages like below.
+		JVMSHRC443E Cache CRC is incorrect indicating a corrupt cache. Incorrect cache CRC: 0x0.
+		JVMDUMP013I Processed dump event "corruptcache", detail "".
+		JVMSHRC442E Shared cache "jim" is corrupt. Corruption code is -1. Corrupt value is 0x0. No new JVMs will be allowed to connect to the cache.
+	-->
+		
+	<test id="Start : Cleanup: persistent" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Start: Cleanup: nonpersistent" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,nonpersistent,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no"  regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 1: Create a snapshot of the non-persistent cache that does not exist" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,nonpersistent,snapshotCache</command>
+		<output type="required" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">Failed to create a snapshot of non-persistent shared cache "ShareClassesCMLTests"</output>
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="yes" regex="no">has been created</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 2s: Set up for test 2, test 3, test 4, test 5 and test 6, create a non-persistent cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,nonpersistent -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 2: Create a snapshot of the non-persistent cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,nonpersistent,snapshotCache</command>
+		<output type="success" caseSensitive="yes" regex="no">Snapshot of non-persistent shared cache "ShareClassesCMLTests" has been created</output>
+		<output type="failure" caseSensitive="yes" regex="no">Failed to create</output>
+		<output type="failure" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 3: Create a snapshot of the non-persistent cache when the snapshot file already exists" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,nonpersistent,snapshotCache</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">The JVM is creating a snapshot of the non-persistent shared cache "ShareClassesCMLTests", but a snapshot file(.)*ShareClassesCMLTests(.)*already exists and it will be overwritten</output>
+		<output type="required" caseSensitive="yes" regex="no">Snapshot of non-persistent shared cache "ShareClassesCMLTests" has been created</output>
+		<output type="failure" caseSensitive="yes" regex="no">Failed to create</output>
+		<output type="failure" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 4: Create a snapshot of the non-persistent cache without changing to non-persistent mode" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,snapshotCache</command>
+		<output type="success" caseSensitive="yes" regex="no" platforms="zos.*">Snapshot of non-persistent shared cache "ShareClassesCMLTests" has been created</output>
+		<output type="success" caseSensitive="yes" regex="no" platforms="aix.*,linux.*">To run the "snapshotCache" utility on a nonpersistent shared cache "ShareClassesCMLTests", you must also use the "nonpersistent" suboption</output>
+		<output type="failure" caseSensitive="yes" regex="no" platforms="zos.*">Failed to create</output>
+		<output type="failure" caseSensitive="yes" regex="no" platforms="zos.*">Cache does not exist</output>
+		<output type="failure" caseSensitive="yes" regex="no" platforms="aix.*,linux.*">has been created</output>
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 5: Create a snapshot of the non-persistent cache with reset option" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,nonpersistent,snapshotCache,reset -version</command>
+		<output type="required" caseSensitive="yes" regex="no">Sub-options "reset" and "snapshotCache" are incompatible. Sub-option "reset" is ignored</output>
+		<output type="success" caseSensitive="yes" regex="no">Snapshot of non-persistent shared cache "ShareClassesCMLTests" has been created</output>
+		<output type="failure" caseSensitive="yes" regex="no">Failed to create</output>
+		<output type="failure" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 6: Clean up, destroy the non-persistent cache if it exists" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,nonpersistent,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no"  regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 7: Restore a non-persistent cache that does not exist" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,nonpersistent,restoreFromSnapshot</command>
+		<output type="success" caseSensitive="yes" regex="no">Non-persistent shared cache "ShareClassesCMLTests" has been restored successfully from the snapshot</output>
+		<output type="failure" caseSensitive="yes" regex="no">Failed to restore</output>
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 8: Restore a non-persistent cache that already exists" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,nonpersistent,restoreFromSnapshot</command>
+		<output type="success" caseSensitive="yes" regex="no">Non-persistent shared cache "ShareClassesCMLTests" already exists. It cannot be restored from the snapshot</output>
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="yes" regex="no">has been restored successfully</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 9s: Set up for test 9. Destroy the non-persistent cache if it exists" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,nonpersistent,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no"  regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 9: Restore a cache without switching to non-persistent mode" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,restoreFromSnapshot</command>
+		<output type="success" caseSensitive="yes" regex="no" platforms="zos.*">Non-persistent shared cache "ShareClassesCMLTests" has been restored successfully from the snapshot</output>
+		<output type="success" caseSensitive="yes" regex="no" platforms="aix.*,linux.*">To run the "restoreFromSnapshot" utility on a nonpersistent shared cache "ShareClassesCMLTests", you must also use the "nonpersistent" suboption</output>
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="yes" regex="no" platforms="aix.*,linux.*">has been restored successfully</output>
+		<output type="failure" caseSensitive="yes" regex="no" platforms="zos.*">Failed to restore</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 10s: Setup for test 10. Destroy the non-persistent cache if it exists" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,nonpersistent,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Java dump</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
+	</test>
+	
+	<test id="Test 10: Restore a non-persistent cache that does not exist with readOnly option" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,nonpersistent,restoreFromSnapshot,readOnly</command>
+		<output type="required" caseSensitive="yes" regex="no">Sub-options "readonly" and "restoreFromSnapshot" are incompatible. Sub-option "readonly" is ignored</output>
+		<output type="success" caseSensitive="yes" regex="no">Non-persistent shared cache "ShareClassesCMLTests" has been restored successfully from the snapshot</output>
+		<output type="failure" caseSensitive="yes" regex="no">Failed to restore</output>
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 11 - a: Setup for test 11. Create a snapshot of the non-persistent cache that has a bad buildID" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,nonpersistent,testBadBuildID,snapshotCache</command>
+		<output type="success" caseSensitive="yes" regex="no">Snapshot of non-persistent shared cache "ShareClassesCMLTests" has been created</output>
+		<output type="failure" caseSensitive="yes" regex="no">Failed to create</output>
+		<output type="failure" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 11 - b: Setup for test 11. Destroy the non-persistent cache if it exists" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,nonpersistent,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Java dump</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
+	</test>
+	
+	<test id="Test 11: Restore a non-persistent cache that has a different buildID" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,nonpersistent,restoreFromSnapshot</command>
+		<output type="success" caseSensitive="yes" regex="no">The snapshot was created by a different JVM build and doesn't match the running JVM</output>
+		<output type="required" caseSensitive="yes" regex="no">Failed to restore the non-persistent shared cache "ShareClassesCMLTests" from the snapshot</output>
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="yes" regex="no">has been restored successfully</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 12: Restore a non-persistent cache that has a different buildID with noAutoPunt option" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,nonpersistent,noAutoPunt,restoreFromSnapshot</command>
+		<output type="success" caseSensitive="yes" regex="no">Non-persistent shared cache "ShareClassesCMLTests" has been restored successfully from the snapshot</output>
+		<output type="failure" caseSensitive="yes" regex="no">Failed to restore</output>
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 13: Clean up, destroy the snapshot" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,destroySnapshot</command>
+		<output type="success" caseSensitive="no" regex="no">Shared cache snapshot "ShareClassesCMLTests" is destroyed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Snapshot does not exist</output>
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 14: Clean up, destroy the non-persistent cache if it exists" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,nonpersistent,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Java dump</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
+	</test>
+	
+	<test id="Test 15: Restore a non-persistent cache from a corrupted snapshot" timeout="600" runPath=".">
+		<exec command="$JAVA_EXE$ $currentMode$C,printSnapshotFilename" captureStderr="FILENAME" platforms="aix.*,linux.*" />
+		<exec command="$JAVA_EXE$ $currentMode$C,printSnapshotFilename -Xifa:off" captureStderr="FILENAME" platforms="zos.*" />
+		<exec command="touch $FILENAME$" />
+		
+		<command>$JAVA_EXE$ $currentMode$C,nonpersistent,restoreFromSnapshot</command>
+		<output type="success" caseSensitive="yes" regex="no">The length of the non-persistent shared cache snapshot file "$FILENAME$" is invalid</output>
+		<output type="required" caseSensitive="yes" regex="no">Failed to restore the non-persistent shared cache "ShareClassesCMLTestsC" from the snapshot</output>
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="yes" regex="no">has been restored successfully</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 16 - clean up, destroy the corrupted snapshot if exist" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$C,destroySnapshot</command>
+		<output type="success" caseSensitive="no" regex="no">Shared cache snapshot "ShareClassesCMLTestsC" is destroyed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Snapshot does not exist</output>
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 17 - a: Set up for test 17 and test 18, create a non-persistent cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,nonpersistent -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 17 - b: Set up for test 17 and test 18, create a snapshot of the non-persistent cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,nonpersistent,snapshotCache</command>
+		<output type="success" caseSensitive="yes" regex="no">Snapshot of non-persistent shared cache "ShareClassesCMLTests" has been created</output>
+		<output type="failure" caseSensitive="yes" regex="no">Failed to create</output>
+		<output type="failure" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 17 - c: run listAllCaches to show the snapshot" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ -Xshareclasses:listAllCaches</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ShareClassesCMLTests[\s]*Java(.)*snapshot</output>
+		<output type="failure" caseSensitive="yes" regex="no" javaUtilPattern="yes">No shared class caches available</output>
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="Test 18: Destroy all snapshots" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ -Xshareclasses:destroyAllSnapshots</command>
+		<output type="success" caseSensitive="yes" regex="no">Attempting to destroy all shared cache snapshots in cacheDir</output>
+		<output type="required" caseSensitive="no" regex="no">Shared cache snapshot "ShareClassesCMLTests" is destroyed</output>
+		<output type="failure" caseSensitive="yes" regex="no">No snapshots available</output>
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="At end destroy persistent cache for cleanup" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$P,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Java dump</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
+	</test>
+	
+	<test id="At end destroy non-persistent cache for cleanup" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,nonpersistent,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Java dump</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
+	</test>
+	
+	<!--
+	***** IMPORTANT NOTE *****
+	The last test in this file is normally a call to -Xshareclasses:destroy. When the test passes no files should ever be left behind. 
+	-->
+</suite>

@@ -42,7 +42,7 @@ import sun.reflect.CallerSensitive;
 /*[ENDIF]*/
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -97,8 +97,6 @@ public abstract class ClassLoader {
 	private long vmRef;
 	ClassLoader parent;
 	
-	private boolean initDone;
-	
 	/*[IF Panama]*/
 	private static String[]	usr_paths = new String[1];
 	/*[ENDIF]*/
@@ -147,7 +145,7 @@ public abstract class ClassLoader {
 /*[ELSE]	
 	private static boolean lazyClassLoaderInit = false;
 /*[ENDIF]*/	
-	private static boolean bootloaderInited = false;
+	private static boolean specialLoaderInited = false;
 	private static InternalAnonymousClassLoader internalAnonClassLoader;
 	private static native void initAnonClassLoader(InternalAnonymousClassLoader anonClassLoader);	
 	
@@ -270,7 +268,7 @@ public abstract class ClassLoader {
 		jdk.internal.misc.VM.initLevel(2);
 		String javaSecurityManager = System.internalGetProperties().getProperty("java.security.manager"); //$NON-NLS-1$
 		if (null != javaSecurityManager) {
-			if (javaSecurityManager.isEmpty()) {
+			if (javaSecurityManager.isEmpty() || "default".equals(javaSecurityManager)) {
 				System.setSecurityManager(new SecurityManager());
 			} else {
 				try {
@@ -312,10 +310,23 @@ public abstract class ClassLoader {
  *					allow the creation of new ClassLoaders.
  */
 protected ClassLoader() {
-	this(applicationClassLoader);
+	this(checkSecurityPermission(), null, applicationClassLoader);
 }
 
-/*[IF Sidecar19-SE]*/
+/**
+ * This is a static helper method to perform security check earlier such that current ClassLoader object 
+ * can't be resurrected when there is a SecurityException thrown.
+ *
+ * @return Void a unused reference passed to the Constructor
+ */
+private static Void checkSecurityPermission() {
+	SecurityManager security = System.getSecurityManager();
+	if (security != null) {
+		security.checkCreateClassLoader();
+	}
+	return null;
+}
+
 /**
  * Constructs a new instance of this class with the given
  * class loader as its parent.
@@ -326,15 +337,12 @@ protected ClassLoader() {
  * @exception	SecurityException
  *					if a security manager exists and it does not
  *					allow the creation of new ClassLoaders.
- * @exception	NullPointerException
- *					if the parent is null.
  */
 protected ClassLoader(ClassLoader parentLoader) {
-	this(null, parentLoader);
-	// This assumes that DelegatingClassLoader is constructed via ClassLoader(parentLoader)
-	isDelegatingCL = DELEGATING_CL.equals(this.getClass().getName());
+	this(checkSecurityPermission(), null, parentLoader);
 }
 
+/*[IF Sidecar19-SE]*/
 /**
  * Constructs a class loader with the specified name and the given
  * class loader as its parent.
@@ -352,54 +360,36 @@ protected ClassLoader(ClassLoader parentLoader) {
  *@since 9
  */
 protected ClassLoader(String classLoaderName, ClassLoader parentLoader) {
+	this(checkSecurityPermission(), classLoaderName, parentLoader);
+}
+/*[ENDIF]*/
+
+private ClassLoader(Void staticMethodHolder, String classLoaderName, ClassLoader parentLoader) {
+	// This assumes that DelegatingClassLoader is constructed via ClassLoader(parentLoader)
+	isDelegatingCL = DELEGATING_CL.equals(this.getClass().getName());
+
+/*[IF Sidecar19-SE]*/
 	if ((classLoaderName != null) && classLoaderName.isEmpty()) {
 		/*[MSG "K0645", "The given class loader name can't be empty."]*/
 		throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0645")); //$NON-NLS-1$
 	}
-/*[ELSE]*/
-	/**
-	 * Constructs a new instance of this class with the given
-	 * class loader as its parent.
-	 *
-	 * @param		parentLoader ClassLoader
-	 *					the ClassLoader to use as the new class
-	 *					loaders parent.
-	 * @exception	SecurityException
-	 *					if a security manager exists and it does not
-	 *					allow the creation of new ClassLoaders.
-	 * @exception	NullPointerException
-	 *					if the parent is null.
-	 */
-protected ClassLoader(ClassLoader parentLoader) {
-	// This assumes that DelegatingClassLoader is constructed via ClassLoader(parentLoader)
-	isDelegatingCL = DELEGATING_CL.equals(this.getClass().getName());
 /*[ENDIF]*/
-
-	SecurityManager security = System.getSecurityManager();
-	if (security != null)
-		security.checkCreateClassLoader();
 
 	if (parallelCapableCollection.containsKey(this.getClass())) {
 		isParallelCapable = true;
 	}
 	
 	// VM Critical: must set parent before calling initializeInternal()
-	/*[MSG "K0546", "Uninitialized class loader"]*/
-	if (parentLoader != null ) {
-		if (parentLoader.initDone == false) {
-			throw new SecurityException(com.ibm.oti.util.Msg.getString("K0546")); //$NON-NLS-1$
-		} 
-	}
 	parent = parentLoader;
 /*[IF !Sidecar19-SE]*/
-	bootloaderInited = (bootstrapClassLoader != null);
+	specialLoaderInited = (bootstrapClassLoader != null);
 /*[ENDIF]*/
-	if (bootloaderInited) {
+	if (specialLoaderInited) {
 		if (!lazyClassLoaderInit) {
-			com.ibm.oti.vm.VM.initializeClassLoader(this, false, isParallelCapable);
+			VM.initializeClassLoader(this, VM.J9_CLASSLOADER_TYPE_OTHERS, isParallelCapable);
 		}
 /*[IF Sidecar19-SE]*/
-/*[IF Sidecar19-SE-B165]
+/*[IF Sidecar19-SE-OpenJ9]
 		unnamedModule = new Module(this);
 /*[ELSE]*/
 		unnamedModule = SharedSecrets.getJavaLangReflectModuleAccess().defineUnnamedModule(this);
@@ -408,20 +398,28 @@ protected ClassLoader(ClassLoader parentLoader) {
 	} 
 /*[IF Sidecar19-SE]*/	
 	else {
-		//bootstrapClassLoader.unnamedModule is set by JVM_SetBootLoaderUnnamedModule
-		unnamedModule = null;
-		bootloaderInited = true;
-		bootstrapClassLoader = this;
-		VM.initializeClassLoader(bootstrapClassLoader, true, false);
+		if (bootstrapClassLoader == null) {
+			// BootstrapClassLoader.unnamedModule is set by JVM_SetBootLoaderUnnamedModule
+			unnamedModule = null;
+			bootstrapClassLoader = this;
+			VM.initializeClassLoader(bootstrapClassLoader, VM.J9_CLASSLOADER_TYPE_BOOT, false);
+		} else {
+			// Assuming the second classloader initialized is platform classloader
+			VM.initializeClassLoader(this, VM.J9_CLASSLOADER_TYPE_PLATFORM, false);
+			specialLoaderInited = true;
+/*[IF Sidecar19-SE-OpenJ9]
+			unnamedModule = new Module(this);
+/*[ELSE]*/
+			unnamedModule = SharedSecrets.getJavaLangReflectModuleAccess().defineUnnamedModule(this);
+/*[ENDIF]*/
+		}
 	}
-	this.classLoaderName= classLoaderName;
+	this.classLoaderName = classLoaderName;
 /*[ENDIF]*/	
 	
 	if (isAssertOptionFound) {
 		initializeClassLoaderAssertStatus();
 	}
-	
-	initDone = true;
 }
 
 /**
@@ -565,9 +563,7 @@ protected final Class<?> defineClass (
 		}
 	}
 	/*[IF Sidecar19-SE]*/
-	synchronized(packages) {
-		packages.computeIfAbsent(answer.getPackageName(), pkgName->new NamedPackage(pkgName, answer.getModule()));
-	}
+	addPackageToList(answer);
 	/*[ENDIF] Sidecar19-SE */
 
 	/*[PR CMVC 89001] Verbose output when loading non-bootstrap classes */
@@ -578,6 +574,18 @@ protected final Class<?> defineClass (
 	}
 	return answer;
 }
+
+/*[IF Sidecar19-SE]*/
+ /**
+  * Add a class's package name to this classloader's list of packages, if not already present.
+ * @param newClass
+ */
+void addPackageToList(Class<?> newClass) {
+	synchronized(packages) {
+		packages.computeIfAbsent(newClass.getPackageName(), pkgName->new NamedPackage(pkgName, newClass.getModule()));
+	}
+}
+/*[ENDIF] Sidecar19-SE */
 
 /*[PR CMVC 89001] Verbose output when loading non-bootstrap classes */ 
 private native boolean isVerboseImpl();
@@ -927,24 +935,6 @@ public InputStream getResourceAsStream (String resName) {
 	return null;
 }
 
-/*[IF Sidecar19-SE]*/
-/**
- * Returns an input stream to a resource in a module defined to this class loader.
- * 
- * @param moduleName Name of the module
- * @param name Name of the resource
- * 
- * @return InputStream
- *			a stream on the resource or null.
- *
- * @throws IOException
- */
-InputStream getResourceAsStream(String moduleName, String name) throws IOException
-{
-	return null;
-}
-/*[ENDIF] Sidecar19-SE */
- 
 static void completeInitialization() {
 	/*[PR JAZZ 57622: Support -Dreflect.cache=boot option] -Dreflect.cache=boot causes deadlock (Details: CMVC 120695). Loading Void class explicitly will prevent possible deadlock during caching reflect classes/methods. */
 	@SuppressWarnings("unused")
@@ -1561,8 +1551,10 @@ public final Package[] getDefinedPackages() {
  *
  * @param		name		The name of the package to find
  * @return		The package requested, or null
- * 
+/*[IF Sidecar19-SE]
+ *
  * @deprecated Use getDefinedPackage(String)
+/*[ENDIF]
  */
 /*[IF Sidecar19-SE]*/
 @Deprecated(forRemoval=false, since="9")
@@ -2277,7 +2269,8 @@ ServicesCatalog getServicesCatalog() {
 /**
  * Answers an URL which can be used to access the resource
  * described by resName, using the class loader's resource lookup
- * algorithm. The default behavior is just to return null.
+ * algorithm. By default, return null, unless moduleName is null,
+ * in which case return findResource(resName).
  * This should be implemented by a ClassLoader.
  *
  * @return		URL
@@ -2287,8 +2280,13 @@ ServicesCatalog getServicesCatalog() {
  * @param		resName String
  *					the name of the resource to find.
  */
-protected URL findResource(String moduleName, String name) throws IOException {
-	return null;
+protected URL findResource(String moduleName, String resName) throws IOException {
+	URL result = null;
+	if (null == moduleName) {
+		/* Handle the default case for subclasses which do not implement this method */
+		result = findResource(resName);
+	}
+	return result;
 }
 
 Package definePackage(String name, Module module) {

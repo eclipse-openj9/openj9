@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -322,7 +322,7 @@ J9NLS_JVMTI_COM_IBM_ASYNC_EVENT.user_response=None
 
 # END NON-TRANSLATABLE
 
-J9NLS_JVMTI_COM_IBM_JVM_RESET_VM_DUMP_DESCRIPTION=R\u00e9initialise les options de vidage de la machine virtuelle.
+J9NLS_JVMTI_COM_IBM_JVM_RESET_VM_DUMP_DESCRIPTION=R\u00e9initialize les options de vidage de la machine virtuelle.
 # START NON-TRANSLATABLE
 J9NLS_JVMTI_COM_IBM_JVM_RESET_VM_DUMP_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
 J9NLS_JVMTI_COM_IBM_JVM_RESET_VM_DUMP_DESCRIPTION.system_action=None
@@ -449,7 +449,7 @@ J9NLS_JVMTI_COM_IBM_JVM_FLUSH_TRACE_DATA_DESCRIPTION.user_response=None
 
 # END NON-TRANSLATABLE
 
-J9NLS_JVMTI_COM_IBM_JVM_GET_TRACE_METADATA_DESCRIPTION=Obtient les m\u00e9tadonn\u00e9es de trace qui peuvent \u00eatre utilis\u00e9es avec le formateur pour traiter les m\u00e9moires tampon de trace de processus
+J9NLS_JVMTI_COM_IBM_JVM_GET_TRACE_METADATA_DESCRIPTION=Obtient les m\u00e9tadonn\u00e9es de trace qui peuvent \u00eatre utilis\u00e9es avec le formateur pour traiter les tampons de trace de processus
 # START NON-TRANSLATABLE
 J9NLS_JVMTI_COM_IBM_JVM_GET_TRACE_METADATA_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
 J9NLS_JVMTI_COM_IBM_JVM_GET_TRACE_METADATA_DESCRIPTION.system_action=None
@@ -511,7 +511,7 @@ J9NLS_JVMTI_COM_IBM_JLM_STATS_DUMP_DESCRIPTION.user_response=None
 
 # END NON-TRANSLATABLE
 
-J9NLS_JVMTI_COM_IBM_LOG_ALLOC_BUFFER_ERROR=Allocation de m\u00e9moire tampon impossible pour les options de journal de la machine virtuelle Java.
+J9NLS_JVMTI_COM_IBM_LOG_ALLOC_BUFFER_ERROR=Allocation de tampon impossible pour les options de journalisation de la machine virtuelle Java.
 # START NON-TRANSLATABLE
 J9NLS_JVMTI_COM_IBM_LOG_ALLOC_BUFFER_ERROR.explanation=Internationalized description of a JVMTI extension
 J9NLS_JVMTI_COM_IBM_LOG_ALLOC_BUFFER_ERROR.system_action=None
@@ -519,7 +519,7 @@ J9NLS_JVMTI_COM_IBM_LOG_ALLOC_BUFFER_ERROR.user_response=None
 
 # END NON-TRANSLATABLE
 
-J9NLS_JVMTI_COM_IBM_LOG_QUERY_OPT_ERROR=Analyse des options de journal de la machine virtuelle Java impossible.
+J9NLS_JVMTI_COM_IBM_LOG_QUERY_OPT_ERROR=Impossible d'interroger les options de journalisation de la machine virtuelle Java.
 # START NON-TRANSLATABLE
 J9NLS_JVMTI_COM_IBM_LOG_QUERY_OPT_ERROR.explanation=Internationalized description of a JVMTI extension
 J9NLS_JVMTI_COM_IBM_LOG_QUERY_OPT_ERROR.system_action=None
@@ -543,7 +543,7 @@ J9NLS_JVMTI_COM_IBM_LOG_SET_OPT_ERROR.user_response=None
 
 # END NON-TRANSLATABLE
 
-J9NLS_JVMTI_COM_IBM_GET_MEMORY_CATEGORIES_DESCRIPTION=Obtenez le volume de m\u00e9moire native utilis\u00e9 par la machine virtuelle Java, divis\u00e9 en cat\u00e9gories de m\u00e9moire.
+J9NLS_JVMTI_COM_IBM_GET_MEMORY_CATEGORIES_DESCRIPTION=Obtenir la quantit\u00e9 de m\u00e9moire native utilis\u00e9e par la machine virtuelle Java, d\u00e9compos\u00e9e en cat\u00e9gories de m\u00e9moire.
 # START NON-TRANSLATABLE
 J9NLS_JVMTI_COM_IBM_GET_MEMORY_CATEGORIES_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
 J9NLS_JVMTI_COM_IBM_GET_MEMORY_CATEGORIES_DESCRIPTION.system_action=None

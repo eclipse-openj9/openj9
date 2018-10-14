@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,7 +66,7 @@ public class Footer implements Serializable {
 		data.append(version);
 		data.append("\n");
 		for(int i = 0; i < entries.length; i++) {
-			if(entries[i] != null) {		//skip over entries that have not been initialised
+			if(entries[i] != null) {		//skip over entries that have not been initialized
 				data.append(entries[i].toString());
 			}
 		}
@@ -76,7 +76,7 @@ public class Footer implements Serializable {
 	public FooterLibraryEntry findEntry(String path) {
 		FooterLibraryEntry namematch = null;			//match against the name  
 		for(int i = 0; i < entries.length; i++) {
-			if(entries[i] != null) {		//skip over entries that have not been initialised
+			if(entries[i] != null) {		//skip over entries that have not been initialized
 				if(entries[i].getPath().equals(path)) {
 					return entries[i];
 				}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,11 +66,17 @@ OutOfLineINL_java_lang_invoke_NativeMethodHandle_initJ9NativeCalloutDataRef(J9VM
 	 */
 	U_32 typeCount = J9INDEXABLEOBJECT_SIZE(currentThread, argTypesObject) + 1;
 	args = (ffi_type **)j9mem_allocate_memory(sizeof(ffi_type *) * typeCount, OMRMEM_CATEGORY_VM);
+
 	if (NULL == args) {
 		rc = GOTO_THROW_CURRENT_EXCEPTION;
 		setNativeOutOfMemoryError(currentThread, 0, 0);
 		goto done;
 	}
+
+	/* Zero out the memory because if an error occurs before all the entries in this array are initialized then the error
+	* handling code at freeAllMemoryThenExit will attempt to free all the pointers, some of which will not be initialized.
+	*/
+	memset(args, 0, sizeof(ffi_type *) * typeCount);
 
 	cif = (ffi_cif *)j9mem_allocate_memory(sizeof(ffi_cif), OMRMEM_CATEGORY_VM);
 	if (NULL == cif) {

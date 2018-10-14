@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -107,7 +107,7 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 							Exceptions.getCorruptDataExceptionString());
 					return;
 				}
-				id = new Long(threadObject.getID().getAddress());
+				id = Long.valueOf(threadObject.getID().getAddress());
 			}
 			
 			// Note: defect 133638, we used to give up here with an error if there was already
@@ -154,7 +154,7 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 								Exceptions.getCorruptDataExceptionString());
 						return;
 					}
-					id = new Long(threadObject.getID().getAddress());
+					id = Long.valueOf(threadObject.getID().getAddress());
 					monitorNodes.put(id, node);
 				}
 			} catch(CorruptDataException cde) {
@@ -190,7 +190,7 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 					return;
 				} 
 				
-				id = new Long(threadObject.getID().getAddress());					
+				id = Long.valueOf(threadObject.getID().getAddress());					
 				
 				MonitorNode waiterNode = (MonitorNode)monitorNodes.get(id);
 				if (null != waiterNode) {

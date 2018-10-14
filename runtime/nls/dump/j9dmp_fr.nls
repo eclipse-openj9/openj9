@@ -263,7 +263,7 @@ J9NLS_DMP_WRITTEN_DUMP_STR_NOFILE.link=
 # END NON-TRANSLATABLE
 
 # "heapdump" and "exclusive" are not translatable. request=exclusive+prepwalk+compact and -Xdump:heap: are literal
-J9NLS_DMP_INVALID_HEAP_DUMP_REQUEST=Le clich\u00e9 de tas demand\u00e9 n'a pas \u00e9t\u00e9 g\u00e9n\u00e9r\u00e9, car aucun acc\u00e8s exclusif n'a \u00e9t\u00e9 demand\u00e9 ou n'a pu \u00eatre obtenu.
+J9NLS_DMP_INVALID_HEAP_DUMP_REQUEST=Le vidage de tas demand\u00e9 n'a pas \u00e9t\u00e9 g\u00e9n\u00e9r\u00e9, car aucun acc\u00e8s exclusif n'a \u00e9t\u00e9 demand\u00e9 ou n'a pu \u00eatre obtenu.
 # START NON-TRANSLATABLE
 J9NLS_DMP_INVALID_HEAP_DUMP_REQUEST.explanation=THIS MESSAGE IS RESERVED FOR FUTURE USE
 J9NLS_DMP_INVALID_HEAP_DUMP_REQUEST.system_action=THIS MESSAGE IS RESERVED FOR FUTURE USE
@@ -272,7 +272,7 @@ J9NLS_DMP_INVALID_HEAP_DUMP_REQUEST.link=
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_INVALID_HEAP_COMPACTION_REQUEST=La compression de segment de m\u00e9moire demand\u00e9e n'a pas \u00e9t\u00e9 ex\u00e9cut\u00e9e, car un acc\u00e8s exclusif n'a pas \u00e9t\u00e9 demand\u00e9 ou n'a pas pu obtenu.
+J9NLS_DMP_INVALID_HEAP_COMPACTION_REQUEST=Le compactage du tas demand\u00e9 n'a pas \u00e9t\u00e9 ex\u00e9cut\u00e9, car l'acc\u00e8s exclusif n'a pas \u00e9t\u00e9 demand\u00e9 ou n'a pas pu \u00eatre obtenu.
 # START NON-TRANSLATABLE
 J9NLS_DMP_INVALID_HEAP_COMPACTION_REQUEST.explanation=The garbage collector could not run because the gc thread did not have exclusive access to the heap.
 J9NLS_DMP_INVALID_HEAP_COMPACTION_REQUEST.system_action=The dump file is not produced.
@@ -281,7 +281,7 @@ J9NLS_DMP_INVALID_HEAP_COMPACTION_REQUEST.link=
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_INVALID_HEAP_PREPARATION_REQUEST=La pr\u00e9paration de segment de m\u00e9moire demand\u00e9 n'a pas \u00e9t\u00e9 ex\u00e9cut\u00e9e, car aucun acc\u00e8s exclusif n'a \u00e9t\u00e9 demand\u00e9 ou n'a pu \u00eatre obtenu.
+J9NLS_DMP_INVALID_HEAP_PREPARATION_REQUEST=La pr\u00e9paration du tas demand\u00e9 n'a pas \u00e9t\u00e9 ex\u00e9cut\u00e9e, car l'acc\u00e8s exclusif n'a pas \u00e9t\u00e9 demand\u00e9 ou n'a pas pu \u00eatre obtenu.
 # START NON-TRANSLATABLE
 J9NLS_DMP_INVALID_HEAP_PREPARATION_REQUEST.explanation=The dump thread must lock the heap to prevent changes while the dump is taken. Either no attempt was made to obtain the lock or the lock could not be obtained
 J9NLS_DMP_INVALID_HEAP_PREPARATION_REQUEST.system_action=The JVM does not produce the specified dump.
@@ -290,7 +290,7 @@ J9NLS_DMP_INVALID_HEAP_PREPARATION_REQUEST.link=
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_MULTIPLE_DUMP_OVERWRITE=Plusieurs clich\u00e9s de tas ont \u00e9t\u00e9 demand\u00e9s, mais %%id est absent dans l'\u00e9tiquette du fichier : les vidages vont \u00eatre remplac\u00e9s
+J9NLS_DMP_MULTIPLE_DUMP_OVERWRITE=Plusieurs vidages de tas ont \u00e9t\u00e9 demand\u00e9s, mais %%id est absent dans l'\u00e9tiquette du fichier : les vidages vont \u00eatre remplac\u00e9s
 # START NON-TRANSLATABLE
 J9NLS_DMP_MULTIPLE_DUMP_OVERWRITE.explanation=The JVM replaces the %%id insertion point with a unique number. Because %%id is missing the replacement cannot take place, causing a potential file name clash and file overwrite.
 J9NLS_DMP_MULTIPLE_DUMP_OVERWRITE.system_action=The JVM informs the user and produces dumps as requested.
@@ -323,7 +323,7 @@ J9NLS_DMP_IEATDUMP_MAXLENGTH_EXCEEDED.link=
 # END NON-TRANSLATABLE
 
 #Additional heapdump and system dump messages. "heapdump", "prepwalk", "exclusive", "compact" are not translatable
-J9NLS_DMP_HEAP_DUMP_EXCLUSIVE_FAILED=Le clich\u00e9 de tas demand\u00e9 n'a pas \u00e9t\u00e9 g\u00e9n\u00e9r\u00e9, car un autre composant d\u00e9tient le verrou exclusif VM.
+J9NLS_DMP_HEAP_DUMP_EXCLUSIVE_FAILED=Le vidage de tas demand\u00e9 n'a pas \u00e9t\u00e9 g\u00e9n\u00e9r\u00e9, car un autre composant d\u00e9tient le verrou exclusif VM.
 # START NON-TRANSLATABLE
 J9NLS_DMP_HEAP_DUMP_EXCLUSIVE_FAILED.explanation=The exclusive VM lock must be held to produce a usable heapdump. Although the VM exclusive lock was requested by the user, the VM could not obtain the lock in a reasonable time. This behavior avoids risking a deadlock.
 J9NLS_DMP_HEAP_DUMP_EXCLUSIVE_FAILED.system_action=The VM does not produce a heapdump.
@@ -362,7 +362,7 @@ J9NLS_DMP_MAKEPATH_CANNOT_USE_DMP_LABEL.link=
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_HEAP_DUMP_EXCLUSIVE_NOT_REQUESTED=Le clich\u00e9 de tas demand\u00e9 n'a pas \u00e9t\u00e9 g\u00e9n\u00e9r\u00e9, car le verrou exclusif VM n'a pas \u00e9t\u00e9 demand\u00e9. Ajoutez request=exclusive+prepwalk+compact \u00e0 l'option de ligne de commande -Xdump:heap:.
+J9NLS_DMP_HEAP_DUMP_EXCLUSIVE_NOT_REQUESTED=Le vidage de tas demand\u00e9 n'a pas \u00e9t\u00e9 g\u00e9n\u00e9r\u00e9, car le verrou exclusif VM n'a pas \u00e9t\u00e9 demand\u00e9. Ajoutez request=exclusive+prepwalk+compact \u00e0 l'option de ligne de commande -Xdump:heap:.
 # START NON-TRANSLATABLE
 J9NLS_DMP_HEAP_DUMP_EXCLUSIVE_NOT_REQUESTED.explanation=A heapdump dump agent was configured using the -Xdump option or JVMTI without requesting that the exclusive VM lock.
 J9NLS_DMP_HEAP_DUMP_EXCLUSIVE_NOT_REQUESTED.system_action=The JVM does not take the heapdump because the dump might be corrupt without the VM exclusive lock in place.

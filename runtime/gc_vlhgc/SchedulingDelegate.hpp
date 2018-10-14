@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -237,9 +237,26 @@ private:
 	 */
 	double calculateAverageCopyForwardRate(MM_EnvironmentVLHGC *env);
 
+	/**
+	 * Estimate total free memory
+	 * @param env[in] the master GC thread
+	 * @oaram freeRegionMemory[in]
+	 * @param defragmentedMemory[in]
+	 * @oaram reservedFreeMemory[in]
+	 * @return total free memory(bytes)
+	 */
+	UDATA estimateTotalFreeMemory(MM_EnvironmentVLHGC *env, UDATA freeRegionMemory, UDATA defragmentedMemory, UDATA reservedFreeMemory);
+
+	/**
+	 * Calculate GMP Kickoff Headroom In Bytes
+	 * the
+	 */
+	UDATA calculateKickoffHeadroom(MM_EnvironmentVLHGC *env, UDATA totalFreeMemory);
+
 protected:
 	
 public:
+	UDATA initializeKickoffHeadroom(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Calculate the allocation threshold for the first taxation period. This should be called
@@ -332,11 +349,28 @@ public:
 	void calculateHeapOccupancyTrend(MM_EnvironmentVLHGC *env);
 	
 	/**
+	 * recalculate PGCCompactionRate, HeapOccupancyTrend, ScannableBytesRatio at the end of First PGC After GMP
+	 * it should be called before estimating defragmentReclaimableRegions in order to calculate GMPIntermission more accurate.
+	 * TODO: might need to recalculate desiredCompactWork for sliding Compact of PGC (MacroDefragment part, right now it is calculated at the end of TaxationEntryPoint,
+	 * but we need to decide sliding compaction before Copyforward PGC).
+	 */
+	void recalculateRatesOnFirstPGCAfterGMP(MM_EnvironmentVLHGC *env);
+
+	/**
 	 * Calculate desired amount of work to be compacted this PGC cycle
 	 * @param env[in] the master GC thread
 	 * @return desired bytes to be compacted
 	 */
 	UDATA getDesiredCompactWork();
+
+	/**
+	 * @return true if it is first PGC after GMP completed (so we can calculate compact-bytes/free-bytes ratio, etc.)
+	 */
+	bool isFirstPGCAfterGMP();
+	/**
+	 * clear the flag that indicate this was the first PGC after GMP completed
+	 */
+	void firstPGCAfterGMPCompleted();
 
 	/**
 	 * return whether the following PGC is required to do global sweep (typically, first PGC after GMP completed)

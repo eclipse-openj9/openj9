@@ -1,0 +1,955 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!--
+  Copyright (c) 2012, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<!-- Test 200-a to Test 207 cleanup: 83 tests -->
+
+<suite id="Shared Classes CommandLineOptionTests Suite">
+
+	<!-- Our test modes for this suite -->
+	<variable name="mode204" value="-Xshareclasses:name=ShareClassesCMLTests"/>
+
+	<!-- Set variables up -->
+	<variable name="CACHE_DIR" value="cacheDir=."/>	
+	
+	<variable name="BOOTCLASSPATH" value="-Xbootclasspath/a:.$PATHSEP$Utils$CPDL$."/>	
+	<variable name="currentMode" value="$mode204$"/>
+	<variable name="XXShareClassesEnableBCI" value="-XX:ShareClassesEnableBCI"/>
+	<variable name="XXShareClassesDisableBCI" value="-XX:ShareClassesDisableBCI"/>
+	
+	<variable name="CP_HANOI" value="-cp $UTILSDIR$$PATHSEP$utils.jar" />
+ 	<variable name="PROGRAM_HANOI" value="org.openj9.test.ivj.Hanoi 2" />
+ 	
+ 	<variable name="CP_FIB" value="-cp $UTILSDIR$$PATHSEP$utilsBK.jar" />
+ 	<variable name="PROGRAM_FIB" value="VMBench/FibBench" />
+ 	
+	<variable name="NON_WINDOWS_PLATFORMS" value="aix.*,linux.*,zos.*" />
+	<variable name="WINDOWS_PLATFORMS" value="win.*" />
+		
+	<if testVariable="SCMODE" testValue="204" resultVariable="currentMode" resultValue="$mode204$"/>
+	
+	<echo value=" "/>
+	<echo value="#######################################################"/>
+	<echo value="Running tests in mode $SCMODE$ with command line options: $currentMode$"/>
+	<echo value="#######################################################"/>
+	<echo value=" "/>
+		
+	<!--
+	Note:
+	Most tests check for strings 'corrupt', 'JVM requested Java dump', and 'JVM requested Snap dump' in the output.
+	These checks are present because a cache may be found to be corrupt, and the test could otherwise pass.
+	
+	The string 'corrupt' is checked because it can appear several messages like below.
+		JVMSHRC443E Cache CRC is incorrect indicating a corrupt cache. Incorrect cache CRC: 0x0.
+		JVMDUMP013I Processed dump event "corruptcache", detail "".
+		JVMSHRC442E Shared cache "jim" is corrupt. Corruption code is -1. Corrupt value is 0x0. No new JVMs will be allowed to connect to the cache.
+	-->
+		
+	<test id="Start : Cleanup: persistent" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 200-a: CMVC 197811: Create a full shared cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ -Xscmx1M $CP_HANOI$ $PROGRAM_HANOI$</command>
+		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<!-- On windows, full cache has J9SHR_MIN_GAP_BEFORE_METADATA (=1024) free bytes, on other platforms free bytes should be 0 -->
+	<test id="Test 200-b: CMVC 197811: Make sure cache created in previous test is full" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printStats</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes" platforms="$NON_WINDOWS_PLATFORMS$">free bytes[\s]*= 0</output>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes" platforms="$WINDOWS_PLATFORMS$">free bytes[\s]*= 1024</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 200-c: CMVC 197811: Attach to full cache in readonly mode" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,readonly $CP_HANOI$ $PROGRAM_HANOI$</command>
+		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 200-d: CMVC 197811: Cleanup" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="failure" caseSensitive="no"  regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<!-- Tests 201 a-d verify shared cache is BCI disabled when only 'cacheRetransfomred is specified -->
+	
+	<test id="Test 201-a Verify shared cache is BCI disabled when 'cacheRetransformed' is specified" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,reset,cacheRetransformed -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>		
+	</test>
+	
+	<test id="Test 201-b Verify BCI enabled is false in printstats" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printStats</command>
+		<output type="success" caseSensitive="yes" regex="no">Current statistics for cache</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">BCI Enabled[\s]*= false</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>		
+	</test>
+	
+	<test id="Test 201-c Destroy previously created cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 201-d Verify a verbose message is displayed when 'cacheRetransformed' causes 'disableBCI'" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,reset,cacheRetransformed,verbose -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="no">Cache creation with the cacheRetransformed option forces disableBCI mode</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>		
+	</test>
+	
+	<!-- Tests 202a-d Verify behavior of -XX:ShareClassesDisableBCI and -XX:ShareClassesEnableBCI when used together -->
+	
+	<test id="Test 202-a: Test -XX:ShareClassesDisableBCI followed by -XX:ShareClassesEnableBCI" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,reset $XXShareClassesDisableBCI$ $XXShareClassesEnableBCI$ -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 202-b: Ensure BCI Enabled is true in printStats output" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">BCI Enabled[\s]*= true</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 202-c: Test -XX:ShareClassesEnableBCI followed by -XX:ShareClassesDisableBCI" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,reset $XXShareClassesEnableBCI$ $XXShareClassesDisableBCI$ -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 202-d: Ensure BCI Enabled is false in printStats output" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">BCI Enabled[\s]*= false</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<!-- Test 203a-k Verify behavior of -XX:ShareClassesDisableBCI with other -Xshareclasses sub-options -->
+	
+	<test id="Test 203-a: Test -Xshareclasses followed by -XX:ShareClassesDisableBCI" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,reset $XXShareClassesDisableBCI$ -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 203-b: Ensure BCI Enabled is false in printStats output" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">BCI Enabled[\s]*= false</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 203-c: Test -XX:ShareClassesDisableBCI followed by -Xshareclasses" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $XXShareClassesDisableBCI$ $currentMode$,reset -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 203-d: Ensure BCI Enabled is false in printStats output" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">BCI Enabled[\s]*= false</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+		
+	<test id="Test 203-e: Destroy any existing cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 203-f: Try to use -XX:ShareClassesDisableBCI after -Xshareclasses:none to create a cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,none $XXShareClassesDisableBCI$ -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 203-g: Verify that cache is not created by previous test" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="failure" caseSensitive="no" regex="no">Current statistics</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output> 
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>	
+	
+	<test id="Test 203-h: Try to use -XX:ShareClassesDisableBCI before -Xshareclasses:none to create a cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $XXShareClassesDisableBCI$ $currentMode$,none -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 203-i: Verify that cache is not created by previous test" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="failure" caseSensitive="no" regex="no">Current statistics</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output> 
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>	
+
+	<test id="Test 203-j: Try to use -XX:ShareClassesDisableBCI without -Xshareclasses to create a cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $XXShareClassesEnableBCI$ -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 203-k: Verify that cache is not created by previous test" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="failure" caseSensitive="no" regex="no">Current statistics</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output> 
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+		
+	<!-- Tests 204a-p test the behavior of '-XX:ShareClassesDisableBCI' on an existing cache that supports BCI -->
+	
+	<test id="Test 204-a: Create a cache with BCI support" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,enableBCI,reset -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 204-b: Ensure cache created with enableBCI option is not usable with -XX:ShareClassesDisableBCI option" timeout="600" runPath=".">
+	<command>$JAVA_EXE$ $currentMode$ $XXShareClassesDisableBCI$ -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Initialization error for library j9shr*</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 204-c: Verify that using '-XX:ShareClassesDisableBCI' with 'nonfatal' sub-option on an existing BCI enabled cache does not abort JVM" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $XXShareClassesDisableBCI$ $currentMode$,nonfatal,verboseIO -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="yes" regex="no">Found class</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 204-d: Run 'printStats' on an existing BCI enabled cache with '-XX:ShareClassesDisableBCI' option specified before it" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $XXShareClassesDisableBCI$ $currentMode$,printStats -version</command>
+		<output type="success" caseSensitive="yes" regex="no">Current statistics for cache</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">BCI Enabled[\s]*= true</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 204-e: Run 'printStats' on an existing BCI enabled cache with '-XX:ShareClassesDisableBCI' option specified after it" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printStats $XXShareClassesDisableBCI$ -version</command>
+		<output type="success" caseSensitive="yes" regex="no">Current statistics for cache</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">BCI Enabled[\s]*= true</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 204-f: Run 'listAllCaches' on an existing BCI enabled cache with '-XX:ShareClassesDisableBCI' option specified before it" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $XXShareClassesDisableBCI$ $currentMode$,listAllCaches -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Cache[\s]*name[\s]*level[\s]*(persistent|cache-type)(.)*last detach time</output>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">ShareClassesCMLTests[\s]*Java(.)*(yes|persistent)</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 204-g: Run 'listAllCaches' on an existing BCI enabled cache with '-XX:ShareClassesDisableBCI' sub-option specified after it" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,listAllCaches $XXShareClassesDisableBCI$ -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Cache[\s]*name[\s]*level[\s]*(persistent|cache-type)(.)*last detach time</output>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">ShareClassesCMLTests[\s]*Java(.)*(yes|persistent)</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 204-h: Run 'destroy' on an existing BCI enabled cache with '-XX:ShareClassesDisableBCI' option specified before it" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $XXShareClassesDisableBCI$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 204-i: Create a cache with BCI support" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,enableBCI,reset -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 204-j: Run 'destroy' on an existing BCI enabled cache with '-XX:ShareClassesDisableBCI' option specified after it" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,destroy $XXShareClassesDisableBCI$</command>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 204-k: Create a cache with BCI support" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,enableBCI,reset -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 204-l: Run 'reset' on an existing BCI enabled cache with '-XX:ShareClassesDisableBCI' option specified before it" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $XXShareClassesDisableBCI$ $currentMode$,reset -version</command>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 204-m: Verify BCI enabled is false in printStats output" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">BCI Enabled[\s]*= false</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 204-n: Create a cache with BCI support" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,enableBCI,reset -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 204-o: Run 'reset' on an existing BCI enabled cache with '-XX:ShareClassesDisableBCI' option specified after it" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,reset $XXShareClassesDisableBCI$ -version</command>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 204-p: Verify BCI Enabled is false in printStats output" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">BCI Enabled[\s]*= false</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<!-- Tests 205a-m test -Xshareclasses:restrictClasspaths and -Xshareclasses:allowClasspaths options
+		 added under WI Jazz103 "76572: Design : Add shared cache option to control if JVM can store classpaths into the cache"
+	-->
+	<test id="Test 205-a: Create a new cache with -Xshareclasses:restrictClasspaths option. Also generate a javacore to be used in later tests." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,restrictClasspaths,reset,verbose -Xdump:java:events=vmstop,file=javacore.txt -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSesitive="yes" regex="no">JVM has created shared cache with '-Xshareclasses:restrictClasspaths' option</output>
+		<output type="required" caseSensitive="yes" regex="no">Processed dump event</output>
+		<output type="required" caseSensitive="yes" regex="no">javacore.txt</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 205-b: Verify 'Restrict Classpaths = true' and # classpath = 1 (i.e. bootclasspath) in printStats output" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printStats</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Restrict Classpaths[\s]*= true</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Classpaths[\s]*= 1</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 205-c: Ensure 'Restrict Classpaths = true' and # classpaths is 1 in javacore" timeout="600" runPath=".">
+		<command>cat javacore.txt</command>
+		<output type="success" caseSensitive="no" regex="no">SHARED CLASSES subcomponent</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Restrict Classpaths[\s]*= true</output>
+	</test>
+	
+	<exec command="rm -f javacore.txt" quiet="false"/>
+	
+	<test id="Test 205-d: Using existing cache run an application which uses a classpath not present in the cache. Verify the trace point prohibiting addition of classpath is triggered." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,verbose -Xtrace:print={j9shr.2097} $CP_HANOI$ $PROGRAM_HANOI$</command>
+		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
+		<output type="required" caseSensitive="yes" regex="no">JVM cannot store classpaths into the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">JVM is not allowed to store classpaths to the cache</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 205-e: Verify the class loaded from the classpath in previous test is present in cache as ORPHAN only and the classpath is not stored in the cache." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printAllStats=orphan+romclass</command>
+		<output type="success" caseSensitive="yes" regex="no">ORPHAN: org/openj9/test/ivj/Hanoi</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Restrict Classpaths[\s]*= true</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Classpaths[\s]*= 1</output>
+		<output type="failure" caseSensitive="yes" regex="no">ROMCLASS: org/openj9/test/ivj/Hanoi</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" platforms="$NON_WINDOWS_PLATFORMS$">utils/utils.jar</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" platforms="$WINDOWS_PLATFORMS$">utils\\utils.jar</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 205-f: Using existing cache run same application as before but with -Xshareclasses:allowClasspaths option. Verify the trace point prohibiting addition of classpath is not triggered." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,allowClasspaths,verbose -Xtrace:print={j9shr.2097} $CP_HANOI$ $PROGRAM_HANOI$</command>
+		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
+		<output type="required" caseSensitive="yes" regex="no">JVM can store classpaths into the shared cache</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPatter="yes">j9shr.2097[\s]*.*JVM is not allowed to store classpaths to the cache</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 205-g: Verify the class loaded from the classpath in previous test is now present in cache as ROMCLASS and the classpath exists in the cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printAllStats=romclass+classpath</command>
+		<output type="success" caseSensitive="yes" regex="no">ROMCLASS: org/openj9/test/ivj/Hanoi</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes" platforms="$NON_WINDOWS_PLATFORMS$">utils/utils.jar</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes" platforms="$WINDOWS_PLATFORMS$">utils\\utils.jar</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Restrict Classpaths[\s]*= true</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Classpaths[\s]*= 2</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 205-h: Using existing cache run another application without -Xshareclasses:allowClasspaths option. Verify the trace point prohibiting addition of classpath is triggered." timeout="600" runPath=".">
+		<exec command="cp $UTILSDIR$$PATHSEP$utils.jar $UTILSDIR$$PATHSEP$utilsBK.jar"/>
+		<command>$JAVA_EXE$ $currentMode$,verbose -Xtrace:print={j9shr.2097} $CP_FIB$ $PROGRAM_FIB$</command>
+		<output type="success" caseSenditive="no" regex="no">Fibonacci: iterations</output>
+		<output type="required" caseSensitive="yes" regex="no">JVM cannot store classpaths into the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">JVM is not allowed to store classpaths to the cache</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 205-i: Verify the class loaded from the classpath in previous test is present in cache as ORPHAN and the classpath does not exist in the cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printAllStats=orphan+romclass+classpath</command>
+		<output type="success" caseSensitive="yes" regex="no">ORPHAN: VMBench/FibBench</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Restrict Classpaths[\s]*= true</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Classpaths[\s]*= 2</output>
+		<output type="failure" caseSensitive="yes" regex="no">ROMCLASS: VMBench/FibBench</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">utilsBK.jar</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 205-j: Create a new shared cache without -Xshareclasses:restrictClasspaths option" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,reset,verbose -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSesitive="yes" regex="no">created shared cache with '-Xshareclasses:restrictClasspaths' option</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 205-k: Re-use shared cache created in previous test with -Xshareclasses:restrictClasspaths option. Also generate a javacore to be used in subsequent test." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,restrictClasspaths,verbose -Xdump:java:events=vmstop,file=javacore.txt -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSesitive="yes" regex="no">JVM has ignored '-Xshareclasses:restrictClasspaths' option</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 205-l: Verify 'Restrict Classpaths = false' in printStats output" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printStats</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Restrict Classpaths[\s]*= false</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 205-m: Ensure 'Restrict Classpaths = false' in javacore" timeout="600" runPath=".">
+		<command>cat javacore.txt</command>
+		<output type="success" caseSensitive="no" regex="no">SHARED CLASSES subcomponent</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Restrict Classpaths[\s]*= false</output>
+	</test>
+	
+	<exec command="rm -f javacore.txt" quiet="false"/>
+	
+	<!-- Tests 206a-aa test -Xshareclasses:mprotect=[onfind|partialpagesonstartup|partialpages|def|nopartialpages] options.
+		 added under WI Jazz103 "95085: Ensure last partially filled pages in shared cache are kept write protected"
+		 Note that these tests are not run on 64-bit z/OS as memory protection is always disabled on this platform. See VM_Test/VM/shareClasses/exclude.xml.
+	-->
+	<test id="Test 206-a: Create a new cache with -Xshareclasses:mprotect=default option." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,mprotect=default,verbose,reset -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">Memory page protection on runtime data, string read-write data and partially filled pages is successfully enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">Memory page protection on runtime data is successfully enabled</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 206-b: Reuse the cache with -Xshareclasses:mprotect=onfind option." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,mprotect=onfind,verbose -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<!-- On linux and windows verify cache is being used with partial page protection enabled. -->
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">Memory page protection on runtime data, string read-write data and partially filled pages is successfully enabled</output>
+		<!-- On z/OS and AIX verify partial page protection is not enabled. -->
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">The JVM has disabled protecting partially filled pages. If '-Xshareclasses:mprotect=onfind' is specified, it is also ignored.</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">Memory page protection on runtime data is successfully enabled</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 206-c: Reuse the cache with -Xshareclasses:mprotect=partialpagesonstartup option." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,mprotect=partialpagesonstartup,verbose -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<!-- On linux and windows verify cache is used with partial page protection not enabled on startup -->
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">Memory page protection on runtime data, string read-write data and partially filled pages is successfully enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">The JVM has not enabled protecting shared cache partially filled pages on startup</output>
+		<!-- On z/OS and AIX verify partial page protection is not enabled. -->
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">The JVM has disabled protecting partially filled pages. If '-Xshareclasses:mprotect=onfind' is specified, it is also ignored</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">Memory page protection on runtime data is successfully enabled</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 206-d: Reuse the cache with -Xshareclasses:mprotect=partialpages option." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,mprotect=partialpages,verbose -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<!-- On linux and windows verify cache is being used with partial page protection enabled. -->
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">Memory page protection on runtime data, string read-write data and partially filled pages is successfully enabled</output>
+		<!-- On z/OS and AIX verify partial page protection is not enabled. -->
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">The JVM has disabled protecting partially filled pages. If '-Xshareclasses:mprotect=onfind' is specified, it is also ignored</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">Memory page protection on runtime data is successfully enabled</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 206-e: Reuse the cache without any -Xshareclasses:mprotect=<> option." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,verbose -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<!-- On linux and windows verify cache is being used with partial page protection enabled. -->
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">Memory page protection on runtime data, string read-write data and partially filled pages is successfully enabled</output>
+		<!-- On z/OS and AIX verify partial page protection is not enabled. -->
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">Memory page protection on runtime data is successfully enabled</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+
+	<test id="Test 206-f: Reuse the cache with -Xshareclasses:mprotect=nopartialpages option." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,mprotect=nopartialpages,verbose -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<!-- On linux and windows verify cache is being used with partial page protection enabled. -->
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">The JVM has enabled shared cache partial page protection as the existing shared cache was created with partial page protection enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">Memory page protection on runtime data, string read-write data and partially filled pages is successfully enabled</output>
+		<!-- On z/OS and AIX verify partial page protection is not enabled. -->
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">Memory page protection on runtime data is successfully enabled</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 206-g: Reuse the cache with -Xshareclasses:mprotect=none option." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,mprotect=none,verbose -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<!-- On linux and windows verify cache is being used with partial page protection enabled. -->
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">The JVM has enabled shared cache partial page protection as the existing shared cache was created with partial page protection enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">Memory page protection on runtime data, string read-write data and partially filled pages is successfully enabled</output>
+		<!-- On z/OS and AIX verify memory protection is disabled. -->
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">Memory page protection disabled for cache</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 206-h: Create a new cache with -Xshareclasses:mprotect=partialpagesonstartup option." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,mprotect=partialpagesonstartup,verbose,reset -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">Memory page protection on runtime data, string read-write data and partially filled pages is successfully enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">Memory page protection on runtime data and partially filled pages is successfully enabled</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 206-i: Reuse the cache with -Xshareclasses:mprotect=onfind option." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,mprotect=onfind,verbose -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="no">The JVM has enabled shared cache partial page protection on startup as the existing shared cache was created with partial page protection enabled on startup</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">Memory page protection on runtime data, string read-write data and partially filled pages is successfully enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">Memory page protection on runtime data and partially filled pages is successfully enabled</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 206-j: Reuse the cache with -Xshareclasses:mprotect=default option." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,mprotect=default,verbose -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="no">The JVM has enabled shared cache partial page protection on startup as the existing shared cache was created with partial page protection enabled on startup</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">Memory page protection on runtime data, string read-write data and partially filled pages is successfully enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">The JVM has enabled shared cache partial page protection as the existing shared cache was created with partial page protection enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">Memory page protection on runtime data and partially filled pages is successfully enabled</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 206-k: Reuse the cache without any -Xshareclasses:mprotect=<> option." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,verbose -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="no">The JVM has enabled shared cache partial page protection on startup as the existing shared cache was created with partial page protection enabled on startup</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">Memory page protection on runtime data, string read-write data and partially filled pages is successfully enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">The JVM has enabled shared cache partial page protection as the existing shared cache was created with partial page protection enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">Memory page protection on runtime data and partially filled pages is successfully enabled</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 206-l: Reuse the cache with -Xshareclasses:mprotect=nopartialpages option." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,mprotect=nopartialpages,verbose -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="no">The JVM has enabled shared cache partial page protection on startup as the existing shared cache was created with partial page protection enabled on startup</output>
+		<output type="required" caseSensitive="yes" regex="no">The JVM has enabled shared cache partial page protection as the existing shared cache was created with partial page protection enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">Memory page protection on runtime data, string read-write data and partially filled pages is successfully enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">Memory page protection on runtime data and partially filled pages is successfully enabled</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 206-m: Reuse the cache with -Xshareclasses:mprotect=none option." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,mprotect=none,verbose -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="no">The JVM has enabled shared cache partial page protection on startup as the existing shared cache was created with partial page protection enabled on startup</output>
+		<output type="required" caseSensitive="yes" regex="no">The JVM has enabled shared cache partial page protection as the existing shared cache was created with partial page protection enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">Memory page protection on runtime data, string read-write data and partially filled pages is successfully enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">Memory page protection on runtime data and partially filled pages is successfully enabled</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 206-n: Create a new cache with -Xshareclasses:mprotect=partialpages option." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,mprotect=partialpages,verbose,reset -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">Memory page protection on runtime data, string read-write data and partially filled pages is successfully enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">Memory page protection on runtime data and partially filled pages is successfully enabled</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 206-o: Reuse the cache with -Xshareclasses:mprotect=onfind option." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,mprotect=onfind,verbose -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">Memory page protection on runtime data, string read-write data and partially filled pages is successfully enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">Memory page protection on runtime data and partially filled pages is successfully enabled</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 206-p: Reuse the cache with -Xshareclasses:mprotect=partialpagesonstartup option." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,mprotect=partialpagesonstartup,verbose -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,linux.*,win.*">The JVM has not enabled protecting shared cache partially filled pages on startup</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">Memory page protection on runtime data, string read-write data and partially filled pages is successfully enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">Memory page protection on runtime data and partially filled pages is successfully enabled</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 206-q: Reuse the cache with -Xshareclasses:mprotect=default option." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,mprotect=default,verbose -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">Memory page protection on runtime data, string read-write data and partially filled pages is successfully enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">The JVM has enabled shared cache partial page protection as the existing shared cache was created with partial page protection enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">Memory page protection on runtime data and partially filled pages is successfully enabled</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 206-r: Reuse the cache without any -Xshareclasses:mprotect=<> option." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,verbose -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">Memory page protection on runtime data, string read-write data and partially filled pages is successfully enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">The JVM has enabled shared cache partial page protection as the existing shared cache was created with partial page protection enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">Memory page protection on runtime data and partially filled pages is successfully enabled</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 206-s: Reuse the cache with -Xshareclasses:mprotect=nopartialpages option." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,mprotect=nopartialpages,verbose -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="no">The JVM has enabled shared cache partial page protection as the existing shared cache was created with partial page protection enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">Memory page protection on runtime data, string read-write data and partially filled pages is successfully enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">Memory page protection on runtime data and partially filled pages is successfully enabled</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 206-t: Reuse the cache with -Xshareclasses:mprotect=none option." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,mprotect=none,verbose -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="no">The JVM has enabled shared cache partial page protection as the existing shared cache was created with partial page protection enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">Memory page protection on runtime data, string read-write data and partially filled pages is successfully enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">Memory page protection on runtime data and partially filled pages is successfully enabled</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 206-u: Create a cache with -Xshareclasses:mprotect=nopartialpages option." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,mprotect=nopartialpages,verbose,reset -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">Memory page protection on runtime data and string read-write data is successfully enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">Memory page protection on runtime data is successfully enabled</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 206-v: Reuse the cache with -Xshareclasses:mprotect=onfind option and verify partial page protection is not enabled." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,mprotect=onfind,verbose -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="no">The JVM has disabled protecting partially filled pages. If '-Xshareclasses:mprotect=onfind' is specified, it is also ignored</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">Memory page protection on runtime data and string read-write data is successfully enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">Memory page protection on runtime data is successfully enabled</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 206-w: Reuse the cache with -Xshareclasses:mprotect=partialpagesonstartup option and verify partial page protection is not enabled." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,mprotect=partialpagesonstartup,verbose -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">The JVM has disabled protecting partially filled pages</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">Memory page protection on runtime data and string read-write data is successfully enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">Memory page protection on runtime data is successfully enabled</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 206-x: Reuse the cache with -Xshareclasses:mprotect=partialpages option and verify partial page protection is not enabled." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,mprotect=partialpages,verbose -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">The JVM has disabled protecting partially filled pages</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">Memory page protection on runtime data and string read-write data is successfully enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">Memory page protection on runtime data is successfully enabled</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 206-y: Reuse the cache with -Xshareclasses:mprotect=default option and verify partial page protection is not enabled." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,mprotect=default,verbose -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">The JVM has disabled protecting partially filled pages</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">Memory page protection on runtime data and string read-write data is successfully enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">Memory page protection on runtime data is successfully enabled</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+
+	<test id="Test 206-z: Reuse the cache without any -Xshareclasses:mprotect=<> option and verify partial page protection is not enabled." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,verbose -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">The JVM has disabled protecting partially filled pages</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="linux.*,win.*">Memory page protection on runtime data and string read-write data is successfully enabled</output>
+		<output type="required" caseSensitive="yes" regex="no" platforms="aix.*,zos.*">Memory page protection on runtime data is successfully enabled</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 206-aa: Reuse the cache with -Xshareclasses:mprotect=none option and verify that memory protection is disabled." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,mprotect=none,verbose -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="yes" regex="no">Memory page protection disabled for cache</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+	
+	<test id="Test 207: Create a non-persistent cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ -Xtrace:print=j9prt.700 $currentMode$,nonpersistent -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+
+		<!-- Check for non-fatal message in ControlFileOpenWithWriteLock() -->
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9prt.700.*ControlFileFDWithWriteLock\(Info:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 207 cleanup: destroy non-persistent cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,nonpersistent,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="failure" caseSensitive="no"  regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="At end destroy cache for cleanup" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Java dump</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
+	</test>
+		
+	<!--
+	***** IMPORTANT NOTE *****
+	The last test in this file is normally a call to -Xshareclasses:destroy. When the test passes no files should ever be left behind. 
+	-->
+</suite>

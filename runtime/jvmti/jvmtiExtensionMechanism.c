@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -155,10 +155,6 @@ static const jvmtiParamInfo jvmtiGetOSThreadID_params[] = {
 	{ "threadid_ptr", JVMTI_KIND_OUT, JVMTI_TYPE_JLONG, JNI_FALSE },
 };
 
-static const jvmtiParamInfo jvmtiAsync_params[] = { 
-	{ "thread", JVMTI_KIND_IN, JVMTI_TYPE_JTHREAD, JNI_TRUE },
-};
-
 /* (jvmtiEnv *jvmti_env, jint option) */
 static const jvmtiParamInfo jvmtiTraceSet_params[] = { 
 	{ "option", JVMTI_KIND_IN, JVMTI_TYPE_JINT, JNI_FALSE } 
@@ -177,11 +173,6 @@ static const jvmtiParamInfo jvmtiJlmSet_params[] = {
 /* (jvmtiEnv *jvmti_env, ** JlmDump) */
 static const jvmtiParamInfo jvmtiJlmDump_params[] = { 
 	{ "jlm_dump_ptr", JVMTI_KIND_ALLOC_BUF, JVMTI_TYPE_CVOID, JNI_FALSE } 
-};
-
-/* (jvmtiEnv *jvmti_env,  jint option) */
-static const jvmtiParamInfo jvmtiControlSet_params[] = {
-		{ "option", JVMTI_KIND_IN_PTR, JVMTI_TYPE_JINT, JNI_FALSE }
 };
 
 /* (jvmtiEnv *jvmti_env, const char* option) */
@@ -291,13 +282,6 @@ static const jvmtiParamInfo jvmtiGetMethodAndClassNames_params[] = {
 };
  
 /* (jvmtiEnv *jvmti_env, jobject object, jint buffer_size, void* options_buffer, jint* data_size_ptr) */
-static const jvmtiParamInfo jvmtiQueryVmDump_params[] = {
-	{ "buffer_size", JVMTI_KIND_IN_BUF, JVMTI_TYPE_JINT, JNI_FALSE },
-	{ "options_buffer",  JVMTI_KIND_OUT_BUF, JVMTI_TYPE_CVOID, JNI_FALSE },
-	{ "data_size_ptr", JVMTI_KIND_OUT, JVMTI_TYPE_JINT, JNI_FALSE }
-};
-
-/* (jvmtiEnv *jvmti_env, jobject object, jint buffer_size, void* options_buffer, jint* data_size_ptr) */
 static const jvmtiParamInfo jvmtiQueryVmLogOptions_params[] = {
 	{ "buffer_size", JVMTI_KIND_IN, JVMTI_TYPE_JINT, JNI_FALSE },
 	{ "options_buffer",  JVMTI_KIND_OUT_BUF, JVMTI_TYPE_CVOID, JNI_FALSE },
@@ -374,11 +358,6 @@ static const jvmtiError notAvailable_errors[] = {
 	JVMTI_ERROR_NOT_AVAILABLE
 };
 
-static const jvmtiError nullPointer_notAvailable_errors[] = {
-	JVMTI_ERROR_NULL_POINTER,
-	JVMTI_ERROR_NOT_AVAILABLE
-};
-
 static const jvmtiError ras_errors[] = {
 	JVMTI_ERROR_NULL_POINTER,
 	JVMTI_ERROR_OUT_OF_MEMORY,
@@ -405,36 +384,11 @@ static const jvmtiError jlm_dump_errors[] = {
 	JVMTI_ERROR_ILLEGAL_ARGUMENT
 };
 
-static const jvmtiError control_set_errors[] = {
-		JVMTI_ERROR_WRONG_PHASE,
-		JVMTI_ERROR_ILLEGAL_ARGUMENT,
-		JVMTI_ERROR_NOT_AVAILABLE
-};
-
-static const jvmtiError set_method_selective_errors[] = {
-	JVMTI_ERROR_NULL_POINTER,
-	JVMTI_ERROR_WRONG_PHASE,
-	JVMTI_ERROR_NOT_AVAILABLE
-};
-
-static const jvmtiError set_event_notification_errors[] = {
-	JVMTI_ERROR_INVALID_THREAD,
-	JVMTI_ERROR_THREAD_NOT_ALIVE,
-	JVMTI_ERROR_ILLEGAL_ARGUMENT
-};
-
 static const jvmtiError get_os_thread_id_errors[] = {
 	JVMTI_ERROR_WRONG_PHASE,
 	JVMTI_ERROR_INVALID_THREAD,
 	JVMTI_ERROR_THREAD_NOT_ALIVE,
 	JVMTI_ERROR_NULL_POINTER
-};
-
-static const jvmtiError jvmtiAsync_errors[] = {
-	JVMTI_ERROR_WRONG_PHASE,
-	JVMTI_ERROR_INVALID_THREAD,
-	JVMTI_ERROR_THREAD_NOT_ALIVE,
-	JVMTI_ERROR_ACCESS_DENIED
 };
 
 static const jvmtiError jvmtiGetStack_errors[] = {
@@ -490,12 +444,6 @@ static const jvmtiError jvmtiFlushTraceData_errors[] = {
 
 static const jvmtiError jvmtiGetTraceMetadata_errors[] = {
 	JVMTI_ERROR_NULL_POINTER,		
-	JVMTI_ERROR_WRONG_PHASE,
-	JVMTI_ERROR_INVALID_ENVIRONMENT
-};
-
-static const jvmtiError jvmtiGetMethodAndClassNames_errors[] = {
-	JVMTI_ERROR_OUT_OF_MEMORY,
 	JVMTI_ERROR_WRONG_PHASE,
 	JVMTI_ERROR_INVALID_ENVIRONMENT
 };
@@ -948,7 +896,7 @@ jvmtiSetExtensionEventCallback(jvmtiEnv* env,
 		if (rc == JVMTI_ERROR_NONE) {
 			J9JVMTI_EXTENSION_CALLBACK(j9env, extension_event_index) = (jvmtiExtensionEvent) J9_COMPATIBLE_FUNCTION_POINTER( callback );
 		}
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiSetExtensionEventCallback);
@@ -1398,7 +1346,7 @@ jvmtiJlmSet(jvmtiEnv* env, jint option, ...)
 		}
 	
 		vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 #endif /* OMR_THR_JLM */
@@ -1490,7 +1438,7 @@ jvmtiGetOSThreadID(jvmtiEnv* jvmti_env, jthread thread, jlong * threadid_ptr, ..
 			releaseVMThread(currentThread, targetThread);
 		}
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetOSThreadID);
@@ -1533,7 +1481,7 @@ jvmtiGetStackTraceExtended(jvmtiEnv* env,
 			releaseVMThread(currentThread, targetThread);
 		}
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetStackTraceExtended);
@@ -1607,7 +1555,7 @@ fail:
 		vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetAllStackTracesExtended);
@@ -1688,7 +1636,7 @@ fail:
 		vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetThreadListStackTracesExtended);
@@ -2066,7 +2014,7 @@ jvmtiRemoveAllTags(jvmtiEnv* jvmti_env, ...)
 /*
  * Struct to insulate trace from jvmti types
  */
-typedef struct userDataWrapper {
+typedef struct UserDataWrapper {
 	J9PortLibrary			*portlib;
 	jvmtiTraceSubscriber	 subscriber;
 	jvmtiTraceAlarm			 alarm;
@@ -2620,7 +2568,7 @@ jvmtiGetMethodAndClassNames(jvmtiEnv *jvmti_env,  void * ramMethods, jint ramMet
 
 		*ramMethodStringsSize = (jint)totalStringsLength;
 
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 done:
@@ -2767,7 +2715,7 @@ jvmtiJlmDumpHelper(jvmtiEnv* env, void ** dump_info, jint dump_format)
 			omrthread_lib_unlock(self);
 		}
 		vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 #endif
 	return rc;
@@ -3247,7 +3195,7 @@ jvmtiGetJ9vmThread(jvmtiEnv *env, jthread thread, void **vmThreadPtr, ...)
 			releaseVMThread(currentThread, targetThread);
 		}
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetJ9vmThread);
@@ -3322,7 +3270,7 @@ jvmtiRegisterTracePointSubscriber(jvmtiEnv* env, char *description, jvmtiTraceSu
 
 		PORT_ACCESS_FROM_JAVAVM(vm);
 
-		/* Create and initialise wrapper structure. This is used in the function wrappers for the user callbacks */
+		/* Create and initialize wrapper structure. This is used in the function wrappers for the user callbacks */
 		UserDataWrapper *wrapper = j9mem_allocate_memory(sizeof(UserDataWrapper), J9MEM_CATEGORY_JVMTI);
 		if (wrapper == NULL) {
 			rc = JVMTI_ERROR_OUT_OF_MEMORY;

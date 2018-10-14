@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2015 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,8 +21,8 @@
  *******************************************************************************/
 package com.ibm.j9ddr.vm29.tools.ddrinteractive;
 
-import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.regex.Pattern;
 
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.StructureReader.FieldDescriptor;
@@ -37,7 +37,7 @@ import com.ibm.j9ddr.vm29.tools.ddrinteractive.IClassWalkCallbacks.SlotType;
 public abstract class ClassWalker {
 	/**
 	 * Walks every slots in an object and send the values to the classWalker
-	 * 
+	 *
 	 * @param classWalker
 	 *            a class that will receive the slot and sections of the object
 	 * @throws CorruptDataException
@@ -66,154 +66,146 @@ public abstract class ClassWalker {
 	}
 
 	/**
-	 * It walks through each field in this structure that is represented by methodClass and 
+	 * It walks through each field in this structure that is represented by methodClass and
 	 * registers each field as a slot into ClassWalkerCallBack
-	 * 
+	 *
 	 * It uses the StructureDescriptor of J9DDR to get the FieldDescriptor of a structure.
 	 * The name, type and address are found in the FieldDescriptor. The name, type and address
 	 * are guaranteed to match the current core file, since they are taken from it.
-	 * 
+	 *
 	 * @param methodClass pointer class that is generated for the VM structure
 	 * @param renameFields	list of names to rename the original field names in the structure
-	 * @throws CorruptDataException 
+	 * @throws CorruptDataException
 	 */
 	protected void addObjectsAsSlot(StructurePointer methodClass, HashMap<String, String> renameFields) throws CorruptDataException {
 		/* Get the structure name by removing "Pointer" suffix from the DDR generated class name*/
 		String structureName = methodClass.getClass().getSimpleName().substring(0, methodClass.getClass().getSimpleName().indexOf("Pointer"));
 		/* Get structure descriptor by using structure name */
 		StructureDescriptor sd = StructureCommandUtil.getStructureDescriptor(structureName, getContext());
-		/* Structure descriptor can not be null in normal circumstances, 
-		 * because StructurePointer "methodClass" is generated for an existing structure in the VM, 
-		 * so it should exist. If not, throw an exception. 
+		/* Structure descriptor can not be null in normal circumstances,
+		 * because StructurePointer "methodClass" is generated for an existing structure in the VM,
+		 * so it should exist. If not, throw an exception.
 		 */
 		if (sd == null) {
 			throw new CorruptDataException("Structure \"" + structureName + "\" can not be found.");
 		}
-		
+
 		for ( FieldDescriptor fd : sd.getFields() ) {
 			/* Get the name of the field from field descriptor */
 			String outName = fd.getName();
 			/* Get SlotType by using field type name */
 			SlotType type = getTypeByFieldTypeName(fd.getType());
-		
+
 			/* Get the address of the field by adding the offset to the methodClass'address */
-			AbstractPointer address = U8Pointer.cast(methodClass).addOffset(fd.getOffset()); 
-			
+			AbstractPointer address = U8Pointer.cast(methodClass).addOffset(fd.getOffset());
+
 			/* Rename fields if any defined. */
 			if (null != renameFields) {
 				if (renameFields.containsKey(outName)) {
 					outName = renameFields.get(outName);
 				}
 			}
-			
+
 			/*add the field into classWalkerCallback by its name, type, address and debug extension method name */
 			classWalkerCallback.addSlot(clazz, type, address, outName, getDebugExtForMethodName(outName));
 		}
 	}
-	
-	
+
 	protected void addObjectsasSlot(StructurePointer methodClass) throws CorruptDataException {
 		addObjectsAsSlot(methodClass, null);
 	}
-	
+
 	/**
 	 * Gets the SlotType value by using field's type name.
-	 * Field's type name is identical to how it looks in VM structures unless its type is overwritten by DDR properties file. 
+	 * Field's type name is identical to how it looks in VM structures unless its type is overwritten by DDR properties file.
 	 * Example :
 	 * 		struct  Test{
 	 * 			J9SRP field1;
-	 * 			J9SRP field2;	
+	 * 			J9SRP field2;
 	 * 		}
-	 * 		
+	 *
 	 * 		//overwrite field1's type in ddr .properties files
 	 * 		ddrblob.typeoverride.Test.field1=J9SRP(struct J9UTF8)
-	 * 
+	 *
 	 * fieldTypeName values for:
 	 * 		field1, it is "J9SRP(struct J9UTF8)"
 	 * 		field2, it is "J9SRP"
-	 * 	
-	 *  
+	 *
+	 *
 	 * @param fieldTypeName
 	 * @return SlotType
-	 * @throws CorruptDataException if the passed fieldTypeName is not recognized by any if statements below. 
+	 * @throws CorruptDataException if the passed fieldTypeName is not recognized by any if statements below.
 	 */
-	private SlotType getTypeByFieldTypeName(String fieldTypeName) throws CorruptDataException {
-		/*  
-		 * In the case where type is overwritten by DDR properties files
-		 * J9WSRP(struct J9ROMClass) field1 
-		 * J9WSRP(U32) field2
-		 */
-		if (fieldTypeName.startsWith("J9WSRP(")) {
-			return SlotType.J9_WSRP;
-		}
-		
+	private static SlotType getTypeByFieldTypeName(String fieldTypeName) throws CorruptDataException {
 		/*
-		 * If the field type is a struct J9UTF8 then print the name as well, also make sure
-		 * that this condition is checked before the following 'fieldTypeName.startsWith("J9SRP(")' condition
+		 * Remove any 'struct' or 'class' tags in the type name.
 		 */
-		if (fieldTypeName.startsWith("J9SRP(struct J9UTF8")) {
-			return SlotType.J9_SRP_TO_STRING;
-		}
-		
-		/* 
-		 * In the case where type is overwritten by DDR properties files
-		 * J9SRP(struct J9ROMClass) field1, 
-		 * J9SRP(U32) field2 
-		 */ 
-		if (fieldTypeName.startsWith("J9SRP(")) {
-			return SlotType.J9_SRP;
-		}
-				
-		/* J9WSRP field1 */
-		if (fieldTypeName.equals("J9WSRP")) {
+		String typeName = TypeTagPattern.matcher(fieldTypeName).replaceAll("");
+
+		/*
+		 * J9WSRP (possibly overridden by DDR properties files)
+		 * J9WSRP field1
+		 * J9WSRP(J9ROMClass) field2
+		 * J9WSRP(U32) field3
+		 */
+		if (typeName.equals("J9WSRP") || typeName.startsWith("J9WSRP(")) {
 			return SlotType.J9_WSRP;
 		}
-		/* J9SRP field1) */
-		if (fieldTypeName.equals("J9SRP")) {
-			return SlotType.J9_SRP;
+
+		/*
+		 * J9SRP (possibly overridden by DDR properties files)
+		 * J9SRP field1
+		 * J9SRP(J9ROMClass) field2
+		 * J9SRP(U32) field3
+		 */
+		if (typeName.equals("J9SRP") || typeName.startsWith("J9SRP(")) {
+			return typeName.startsWith("J9SRP(J9UTF8") ? SlotType.J9_SRP_TO_STRING : SlotType.J9_SRP;
 		}
-		
-		if (fieldTypeName.equals("struct J9UTF8*")) {
+
+		if (typeName.equals("J9UTF8*")) {
 			return SlotType.J9_ROM_UTF8;
 		}
-		if (fieldTypeName.equals("U8")) {
+		if (typeName.equals("U8")) {
 			return SlotType.J9_U8;
 		}
-		if (fieldTypeName.equals("I8")) {
+		if (typeName.equals("I8")) {
 			return SlotType.J9_I8;
 		}
-		if (fieldTypeName.equals("U16")) {
+		if (typeName.equals("U16")) {
 			return SlotType.J9_U16;
 		}
-		if (fieldTypeName.equals("I16")) {
+		if (typeName.equals("I16")) {
 			return SlotType.J9_I16;
 		}
-		if (fieldTypeName.equals("U32")) {
+		if (typeName.equals("U32")) {
 			return SlotType.J9_U32;
 		}
-		if (fieldTypeName.equals("I32")) {
+		if (typeName.equals("I32")) {
 			return SlotType.J9_I32;
 		}
-		if (fieldTypeName.equals("U64")) {
+		if (typeName.equals("U64")) {
 			return SlotType.J9_U64;
 		}
-		if (fieldTypeName.equals("I64")) {
+		if (typeName.equals("I64")) {
 			return SlotType.J9_I64;
 		}
-		if (fieldTypeName.equals("UDATA")) {
+		if (typeName.equals("UDATA")) {
 			return SlotType.J9_UDATA;
 		}
-		if (fieldTypeName.equals("IDATA")) {
+		if (typeName.equals("IDATA")) {
 			return SlotType.J9_IDATA;
 		}
-		if (fieldTypeName.equals("struct J9ROMNameAndSignature")) {
+		if (typeName.equals("J9ROMNameAndSignature")) {
 			return SlotType.J9_NAS;
 		}
-		/* if field type name ends with asteriks, assume that is is a pointer type */
-		if (fieldTypeName.endsWith("*")) {
+		/* if type name ends with an asterisk, it is a pointer type */
+		if (typeName.endsWith("*")) {
 			return SlotType.J9_UDATA;
 		}
 		/* throw exception if a new field type name is added to VM which is not recognized by any if block above */
-		throw new CorruptDataException("Field type name is not recognized.");
+		throw new CorruptDataException("Field type name '" + fieldTypeName + "' is not recognized.");
 	}
+
+	private static final Pattern TypeTagPattern = Pattern.compile("\\s*\\b(class|struct)\\s+");
+
 }

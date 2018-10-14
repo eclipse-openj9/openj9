@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,6 @@ import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_INSTANCE_METH
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_INT;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_INTERFACE_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_LONG;
-import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_SHARED_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_STATIC_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_STRING;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_UNUSED;
@@ -111,18 +110,14 @@ public class VMConstantPoolCommand extends Command {
 			
 			J9ConstantPoolPointer jclConstantPool = J9ConstantPoolPointer.cast(javaVM.jclConstantPoolEA());
 			J9ROMClassPointer romClass = jclConstantPool.ramClass().romClass();
-			
-			int index;
-			U32Pointer cpShapeDescription;
-			int constPoolCount;
 
-			cpShapeDescription = romClass.cpShapeDescription();
+			U32Pointer cpShapeDescription = J9ROMClassHelper.cpShapeDescription(romClass);
 			long cpDescription = cpShapeDescription.at(0).longValue();
-			constPoolCount = romClass.romConstantPoolCount().intValue();
+			int constPoolCount = romClass.romConstantPoolCount().intValue();
 			PointerPointer cpEntry = PointerPointer.cast(J9ROMClassHelper.constantPool(romClass));
 			long cpDescriptionIndex = 0;
 
-			for (index = 0; index < constPoolCount; index++) {
+			for (int index = 0; index < constPoolCount; index++) {
 				if (0 == cpDescriptionIndex) {
 					// Load a new description word
 					cpDescription = cpShapeDescription.at(0).longValue();

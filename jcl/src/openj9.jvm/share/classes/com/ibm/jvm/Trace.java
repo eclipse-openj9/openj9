@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar16]*/
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -283,8 +283,8 @@ public final class Trace {
 	 * @throws SecurityException
 	 */
     private static void checkLegacySecurityPermssion() throws SecurityException {
-    	if ("true".equalsIgnoreCase(com.ibm.oti.vm.VM.getVMLangAccess()	//$NON-NLS-1$
-    		.internalGetProperties().getProperty(LEGACY_TRACE_PERMISSION_PROPERTY)))	{	
+    	if (!("false".equalsIgnoreCase(com.ibm.oti.vm.VM.getVMLangAccess()	//$NON-NLS-1$
+    		.internalGetProperties().getProperty(LEGACY_TRACE_PERMISSION_PROPERTY)))) {
     		checkTraceSecurityPermssion();
     	}
     }

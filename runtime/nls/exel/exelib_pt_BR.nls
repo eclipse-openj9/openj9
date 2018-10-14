@@ -459,8 +459,6 @@ J9NLS_EXELIB_TARGET.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_EXELIB_COPYRIGHT_3=
-Java e todas as marcas baseadas em Java e logotipos s\u00e3o marcas ou marcas\n\
-registradas da Sun Microsystems, Inc.\n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_COPYRIGHT_3.explanation=NOTAG
 J9NLS_EXELIB_COPYRIGHT_3.system_action=

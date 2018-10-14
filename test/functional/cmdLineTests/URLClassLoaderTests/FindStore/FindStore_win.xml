@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2001, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="FindStoreTests" timeout="600">
+ <variable name="TMOUT" value="600" />
+ <variable name="SCCMD" value="-Xshareclasses:controlDir=.,name=" />
+ <variable name="TESTDIR" value=".\$TESTSUITE$" />
+	<test id="FindStore.BuildInitial" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$TESTDIR$\buildInitial.bat $TOOLSDIR$ $NETDIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">A.jar</output>
+		<output type="failure" caseSensitive="yes" regex="no">Usage:</output>
+		<output type="failure" caseSensitive="yes" regex="no">no such</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="FindStore.StoreExplicit" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$FindStore,expire=0 -Xscmx5M -cp $TESTDIR$\Nothing.jar;$TESTDIR$\A.jar;$TESTDIR$\B.jar;$TESTDIR$\C.jar;$TESTDIR$\D.jar jnurlcldr.shared.findstore.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="FindStore.StoreRelative" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$FindStore -cp .\E.jar;$TESTDIR$\Nothing.jar;.\F.jar;.\G.jar;.\H.jar jnurlcldr.shared.findstore.E_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="FindStore.StoreNetUse" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$FindStore -cp $NETDIR$\I.jar;$NETDIR$\J.jar;$NETDIR$\K.jar;$TESTDIR$\Nothing.jar;$NETDIR$\L.jar jnurlcldr.shared.findstore.I_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="FindStore.StoreClassfile" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$FindStore -cp $TESTDIR$\M_Classes;$TESTDIR$\N_Classes;$TESTDIR$\O_Classes;$TESTDIR$\P_Classes;$TESTDIR$\Nothing.jar jnurlcldr.shared.findstore.M_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="FindStore.BuildVerify" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$TESTDIR$\buildVerify.bat $TOOLSDIR$ $NETDIR$</command>
+		<output type="success" caseSensitive="yes" regex="no">A.jar</output>
+		<output type="failure" caseSensitive="no" regex="no">0 file(s) copied</output>
+		<output type="failure" caseSensitive="yes" regex="no">Usage:</output>
+		<output type="failure" caseSensitive="yes" regex="no">no such</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="FindStore.FindExplicit" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$FindStore,noTimestampChecks -cp $TESTDIR$\Nothing.jar;$TESTDIR$\A.jar;$TESTDIR$\B.jar;$TESTDIR$\C.jar;$TESTDIR$\D.jar jnurlcldr.shared.findstore.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="FindStore.FindRelative" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$FindStore,noTimestampChecks -cp .\E.jar;$TESTDIR$\Nothing.jar;.\F.jar;.\G.jar;.\H.jar jnurlcldr.shared.findstore.E_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="FindStore.FindNetUse" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$FindStore,noTimestampChecks -cp $NETDIR$\I.jar;$NETDIR$\J.jar;$NETDIR$\K.jar;$TESTDIR$\Nothing.jar;$NETDIR$\L.jar jnurlcldr.shared.findstore.I_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="FindStore.FindClassfile" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$FindStore,noTimestampChecks -cp $TESTDIR$\M_Classes;$TESTDIR$\N_Classes;$TESTDIR$\O_Classes;$TESTDIR$\P_Classes;$TESTDIR$\Nothing.jar jnurlcldr.shared.findstore.M_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="FindStore.FindDiffcpExplicit" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$FindStore,noTimestampChecks -cp $TESTDIR$\A.jar;$TESTDIR$\B.jar;$TESTDIR$\C.jar;$TESTDIR$\D.jar jnurlcldr.shared.findstore.A_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="FindStore.FindDiffcpRelative" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$FindStore,noTimestampChecks -cp .\E.jar;.\F.jar;.\G.jar;.\H.jar jnurlcldr.shared.findstore.E_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="FindStore.FindDiffcpNetUse" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$FindStore,noTimestampChecks -cp $NETDIR$\I.jar;$NETDIR$\J.jar;$NETDIR$\K.jar;$NETDIR$\L.jar jnurlcldr.shared.findstore.I_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	<test id="FindStore.FindDiffcpClassfile" timeout="$TMOUT$" runPath="$TESTDIR$">
+		<command>$EXE$ $VMOPTIONS$ $SCCMD$FindStore,noTimestampChecks -cp $TESTDIR$\M_Classes;$TESTDIR$\N_Classes;$TESTDIR$\O_Classes;$TESTDIR$\P_Classes jnurlcldr.shared.findstore.M_Main</command>
+		<output type="success" caseSensitive="yes" regex="no">Result=3</output>
+		<output type="failure" caseSensitive="yes" regex="no">LOCAL</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+</suite>

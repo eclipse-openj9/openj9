@@ -69,6 +69,7 @@ extern J9_CFUNC void J9WriteBarrierBatchStore(J9VMThread *vmThread, j9object_t d
 extern J9_CFUNC IDATA j9gc_objaccess_indexableReadI16(J9VMThread *vmThread, J9IndexableObject *srcObject, I_32 index, UDATA isVolatile);
 extern J9_CFUNC void J9WriteBarrierStore(J9VMThread *vmThread, j9object_t destinationObject, j9object_t storedObject);
 extern J9_CFUNC UDATA j9gc_heap_total_memory(J9JavaVM *javaVM);
+extern J9_CFUNC UDATA j9gc_is_garbagecollection_disabled(J9JavaVM *javaVM);
 extern J9_CFUNC UDATA j9gc_allsupported_memorypools(J9JavaVM* javaVM);
 extern J9_CFUNC UDATA j9gc_allsupported_garbagecollectors(J9JavaVM* javaVM);
 extern J9_CFUNC const char* j9gc_pool_name(J9JavaVM* javaVM, UDATA poolID);
@@ -189,6 +190,7 @@ extern J9_CFUNC UDATA j9gc_ext_is_marked(J9JavaVM *javaVM, j9object_t objectPtr)
 extern J9_CFUNC void J9MetronomeWriteBarrierStore(J9VMThread *vmThread, J9Object *dstObject, fj9object_t *dstAddress, J9Object *srcObject);
 extern J9_CFUNC void J9MetronomeWriteBarrierJ9ClassStore(J9VMThread *vmThread, J9Object *dstObject, J9Object **dstAddress, J9Object *srcObject);
 extern J9_CFUNC void J9ReadBarrier(J9VMThread *vmThread, fj9object_t *srcAddress);
+extern J9_CFUNC void J9ReadBarrierJ9Class(J9VMThread *vmThread, j9object_t *srcAddress);
 extern J9_CFUNC j9object_t j9gc_objaccess_monitorTableReadObject(J9VMThread *vmThread, j9object_t *srcAddress);
 extern J9_CFUNC j9object_t j9gc_objaccess_monitorTableReadObjectVM(J9JavaVM *vm, j9object_t *srcAddress);
 extern J9_CFUNC UDATA isStaticObjectAllocateFlags(J9JavaVM *javaVM);
@@ -208,7 +210,6 @@ extern J9_CFUNC struct J9HookInterface** j9gc_get_omr_hook_interface(OMR_VM *omr
 extern J9_CFUNC void j9gc_objaccess_staticStoreU32(J9VMThread *vmThread, J9Class *clazz, U_32 *destSlot, U_32 value, UDATA isVolatile);
 extern J9_CFUNC IDATA initializeMutatorModelJava(J9VMThread* vmThread);
 extern J9_CFUNC void j9gc_objaccess_mixedObjectStoreU64Split(J9VMThread *vmThread, j9object_t destObject, UDATA offset, U_32 valueSlot0, U_32 valueSlot1, UDATA isVolatile);
-extern J9_CFUNC void internalFreeMemorySpace(J9JavaVM * javaVM, void * memorySpace);
 extern J9_CFUNC IDATA j9gc_objaccess_staticReadI32(J9VMThread *vmThread, J9Class *clazz, I_32 *srcSlot, UDATA isVolatile);
 extern J9_CFUNC void j9gc_objaccess_indexableStoreObject(J9VMThread *vmThread, J9IndexableObject *destObject, I_32 index, j9object_t value, UDATA isVolatile);
 extern J9_CFUNC UDATA j9gc_objaccess_staticReadU32(J9VMThread *vmThread, J9Class *clazz, U_32 *srcSlot, UDATA isVolatile);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,11 +69,12 @@
 
 #define	CFR_STACKMAP_TYPE_INT_ARRAY				0x09
 #define	CFR_STACKMAP_TYPE_FLOAT_ARRAY			0x0A
-#define	CFR_STACKMAP_TYPE_DOUBLE_ARRAY		0x0B
+#define	CFR_STACKMAP_TYPE_DOUBLE_ARRAY			0x0B
 #define	CFR_STACKMAP_TYPE_LONG_ARRAY			0x0C
 #define	CFR_STACKMAP_TYPE_SHORT_ARRAY			0x0D
 #define	CFR_STACKMAP_TYPE_BYTE_ARRAY			0x0E
 #define	CFR_STACKMAP_TYPE_CHAR_ARRAY			0x0F
+#define	CFR_STACKMAP_TYPE_BOOL_ARRAY			0x10
 
 #define	CFR_METHOD_NAME_INIT	1
 #define	CFR_METHOD_NAME_CLINIT	2

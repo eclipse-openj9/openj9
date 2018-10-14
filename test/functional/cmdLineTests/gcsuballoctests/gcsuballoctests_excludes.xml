@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2011, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "excludes.dtd">
+<?xml:stylesheet type="text/xsl" href="excludes.xsl" ?>
+
+<suite id="J9 gcsuballoc Tests">
+
+<!-- Define all the platforms that are supported by the J9 VM-->
+<!--none --> <platform id="none"/>
+<!--all --> <platform id="all"/>
+<!--j2se --> <platform id="j2se"/>
+<!--AIX --> <platform id="aix_ppc"/>
+<!--AIX64 --> <platform id="aix_ppc-64"/>
+<!--Linux ARM JIT --> <platform id="linux_arm"/>
+<!--Linux Hammer --> <platform id="linux_x86-64"/>
+<!--Linux Hammer Tarok --> <platform id="linux_x86-64_tarok"/>
+<!--Linux Hammer Tarok Hybrid Arraylet --> <platform id="linux_x86-64_hybridarraylet_tarok"/>
+<!--Linux IA32 --> <platform id="linux_x86"/>
+<!--Linux IA32 Modron Tiny --> <platform id="linux_x86_tinygc"/>
+<!--Linux IA32 Embedded --> <platform id="linux_x86_embedded"/>
+<!--Linux PPC --> <platform id="linux_ppc"/>
+<!--Linux PPC 64bit --> <platform id="linux_ppc-64"/>
+<!--Linux PPC 64bit Compressed References Tarok --> <platform id="linux_ppc-64_cmprssptrs_tarok"/>
+<!--Linux PPC Static --> <platform id="linux_ppc_static"/>
+<!--Linux S390 --> <platform id="linux_390"/>
+<!--Linux S390 64bit --> <platform id="linux_390-64"/>
+<!--Linux IA32 Realtime --> <platform id="linux_x86_rtj"/>
+<!--Linux IA32 Realtime SoftRT Metronome --> <platform id="linux_x86_softrt-metronome"/>
+<!--Linux IA32 Realtime Barrier Check --> <platform id="linux_x86_rtj-barcheck"/>
+<!--Mac OSX --> <platform id="osx_ppc"/>
+<!--Neutrino ARM Small JIT --> <platform id="qnx_arm"/>
+<!--Neutrino IA32 JIT --> <platform id="qnx_x86-486_fjit"/>
+<!--Neutrino PPC JIT --> <platform id="qnx_ppc"/>
+<!--Neutrino SH-4 JIT Small --> <platform id="qnx_sh-4_sjit"/>
+<!--Win64 Hammer --> <platform id="win_x86-64"/>
+<!--Windows 386 Precise GC --> <platform id="win_x86pgc"/>
+<!--Windows 386 Static --> <platform id="win_x86_static"/>
+<!--Windows IA32 --> <platform id="win_x86"/>
+<!--Windows IA32 Tarok --> <platform id="win_x86_tarok"/>
+<!--Windows IA32 IGC --> <platform id="win_x86igc"/>
+<!--Windows IA32 Modron Tiny --> <platform id="win_x86_tinygc"/>
+<!--Windows IA32 Embedded --> <platform id="win_x86_embedded"/>
+<!--Windows IA32 Realtime --> <platform id="win_x86_rtj"/>
+<!--Windows IA32 Realtime Barrier Check --> <platform id="win_x86_rtj-barcheck"/>
+<!--z/OS S390 64bit JIT Modron --> <platform id="zos_390-64"/>
+<!--z/OS S390 JIT Modron --> <platform id="zos_390"/>
+
+</suite>
+

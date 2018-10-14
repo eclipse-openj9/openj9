@@ -1,0 +1,134 @@
+###############################################################################
+# Copyright (c) 2018, 2018 Pavel Samolysov
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+###############################################################################
+---
+- name: Create a build folder
+  file:
+    dest: "{{ build_dir }}" 
+    mode: 0755 
+    state: directory
+  tags:
+    - buildenv
+- name: Get Dockerfile for the building environment
+  get_url:
+    dest: "{{ build_dir }}/Dockerfile-base"
+    url: "https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/{{ version }}/{{ platform }}/ubuntu16/Dockerfile"
+    mode: 0644
+    validate_certs: no
+  tags:
+    - buildenv
+- name: Build the docker image for the building environment
+  docker_image:
+    path: "{{ build_dir }}"
+    dockerfile: Dockerfile-base
+    name: "openj9-{{ version }}-build"
+    tag: "latest"
+    rm: yes
+    push: no
+  tags:
+    - buildenv
+- name: Create a build result folder
+  file:
+    dest: "{{ host_dir }}" 
+    mode: 0755 
+    state: directory
+  tags:
+    - buildenv
+- name: Start the building environment as a docker container 
+  docker_container:
+    name: "openj9-{{ version }}-build"
+    image: "openj9-{{ version }}-build:latest"
+    state: started
+    restart: yes # without restart, the container wouldn't be able to touch any file in the host_dir folder
+    interactive: yes # without interactive, the container would be stopped just after it has been started
+    volumes: "{{ host_dir }}:/root/hostdir"
+  tags:
+    - buildenv
+- name: Get the ansible user
+  command: whoami
+  register: ansible_user
+  tags:
+    - buildenv
+    - build
+- name: Get the ansible uid
+  shell: "id {{ ansible_user.stdout }} | awk -F'uid=' '{printf \"%d\", $2}'"
+  register: ansible_uid
+  tags:
+    - buildenv
+- name: Get the ansible group
+  shell: "groups {{ ansible_user.stdout }} | awk -F' ' '{printf \"%s\", $3}'"
+  register: ansible_group
+  tags:
+    - buildenv
+    - build
+- name: Get the ansible gid
+  shell: "id {{ ansible_user.stdout }} | awk -F'gid=' '{printf \"%d\", $2}'"
+  register: ansible_gid
+  tags:
+    - buildenv
+- name: Add the container to inventory
+  add_host:      
+    name: "openj9-{{ version }}-build"
+    ansible_connection: docker
+    ansible_user: root
+  changed_when: false
+  tags:
+    - buildenv
+    - build
+- name: Install python to the container if there is no one
+  raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+  delegate_to: "openj9-{{ version }}-build"
+  tags:
+    - buildenv
+- name: Add group "{{ target.group }}"
+  group: 
+    name: "{{ target.group }}"
+    gid:  "{{ target.groupid }}"
+  delegate_to: "openj9-{{ version }}-build"
+  tags:
+    - buildenv
+- name: Add user "{{ target.user }}"
+  user: 
+    name: "{{ target.user }}"
+    uid:  "{{ target.userid }}"
+    group: "{{ target.group }}" 
+    createhome: no
+    shell: /sbin/nologin
+  delegate_to: "openj9-{{ version }}-build"
+  tags: 
+    - buildenv
+- name: Add group "{{ ansible_group.stdout }}"
+  group: 
+    name: "{{ ansible_group.stdout }}"
+    gid:  "{{ ansible_gid.stdout }}"
+  delegate_to: "openj9-{{ version }}-build"
+  tags:
+    - buildenv
+- name: Add user "{{ ansible_user.stdout }}"
+  user: 
+    name: "{{ ansible_user.stdout }}"
+    uid:  "{{ ansible_uid.stdout }}"
+    group: "{{ ansible_group.stdout }}" 
+    createhome: no
+    shell: /sbin/nologin
+  delegate_to: "openj9-{{ version }}-build"
+  tags: 
+    - buildenv

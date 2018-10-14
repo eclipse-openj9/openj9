@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1510,7 +1510,7 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 				} else {
 					index = PARAM_16(bcIndex, 1);
 				}
-				stackTop = pushLdcType(romClass, index, stackTop);
+				stackTop = pushLdcType(verifyData, romClass, index, stackTop);
 				break;
 
 			/* Change lookup table to generate constant of correct type */
@@ -2392,7 +2392,7 @@ j9bcv_verifyBytecodes (J9PortLibrary * portLib, J9Class * clazz, J9ROMClass * ro
 	/* save current and set vmState */
 	oldState = verifyData->vmStruct->omrVMThread->vmState;
 	verifyData->vmStruct->omrVMThread->vmState = J9VMSTATE_BCVERIFY;
-	
+
 	verifyData->romClass = romClass;
 	verifyData->errorPC = 0;
 	
@@ -2414,7 +2414,7 @@ j9bcv_verifyBytecodes (J9PortLibrary * portLib, J9Class * clazz, J9ROMClass * ro
 		UDATA createStackMaps;
 		
 		verifyData->ignoreStackMaps = (verifyData->verificationFlags & J9_VERIFY_IGNORE_STACK_MAPS) != 0;
-		
+		verifyData->createdStackMap = FALSE;
 		verifyData->romMethod = romMethod;
 
 		Trc_BCV_j9bcv_verifyBytecodes_VerifyMethod(verifyData->vmStruct,
@@ -2480,6 +2480,8 @@ _fallBack:
 		
 			if (createStackMaps && verifyData->stackMapsCount) {
 				UDATA mapIndex = 0;
+				/* Non-empty internal stackMap created */
+				verifyData->createdStackMap = TRUE;
 	
 				liveStack = BCV_FIRST_STACK ();
 				/* Initialize stackMaps */

@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2011, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="J9 GC  Tests" timeout="60">
+ 
+ <!-- Following tests are for compressedrefs platforms. 
+	Because -Xgc:suballocatorInitialSize= and -Xgc:suballocatorCommitSize= options are defined only for compressedrefs. -->
+
+ <test id="-Xgc:suballocatorInitialSize=100m">
+  <command>$EXE$ -Xgc:suballocatorInitialSize=100m -version</command>
+  <output regex="no" type="success">version</output>
+  <output regex="no" type="required">Runtime Environment</output>
+  <output regex="no" type="failure">Exception</output>
+  <output regex="no" type="failure">Error</output>
+  <output regex="no" type="failure">JVMDUMP006I</output>
+  <output regex="no" type="failure">Processing dump event</output>
+ </test>
+
+ <test id="-Xgc:suballocatorCommitSize=10m">
+  <command>$EXE$ -Xgc:suballocatorCommitSize=10m -version</command>
+  <output regex="no" type="success">version</output>
+  <output regex="no" type="required">Runtime Environment</output>
+  <output regex="no" type="failure">Exception</output>
+  <output regex="no" type="failure">Error</output>
+  <output regex="no" type="failure">JVMDUMP006I</output>
+  <output regex="no" type="failure">Processing dump event</output>
+ </test>
+ 
+ <test id="-Xgc:suballocatorCommitSize=300m">
+  <command>$EXE$ -Xgc:suballocatorCommitSize=300m -version</command>
+  <!--  JVMJ9GC057E -Xgc:suballocatorCommitSize= must be no greater than -Xgc:suballocatorInitialSize= -->
+  <output regex="no" type="success">JVMJ9GC057E</output>
+  <!-- JVMJ9VM015W Initialization error for library j9gc26(2): Failed to initialize -->
+  <output regex="no" type="required">JVMJ9VM015W</output>
+  <output regex="no" caseSensitive="no" type="required">Could not create the Java Virtual Machine.</output>
+  <output regex="no" type="failure">version</output>
+  <output regex="no" type="failure">Runtime Environment</output>
+  <output regex="no" type="failure">JVMDUMP006I</output>
+  <output regex="no" type="failure">Processing dump event</output>
+ </test>
+ 
+ <test id="-Xgc:suballocatorCommitSize=0">
+  <command>$EXE$ -Xgc:suballocatorCommitSize=0 -version</command>
+  <!-- JVMJ9GC036E -Xgc:suballocatorCommitSize= value must be above 0 -->
+  <output regex="no" type="success">JVMJ9GC036E</output>
+  <!-- JVMJ9VM015W Initialization error for library j9gc26(2): Failed to initialize -->
+  <output regex="no" type="required">JVMJ9VM015W</output>
+  <output regex="no" caseSensitive="no" type="required">Could not create the Java Virtual Machine.</output>
+  <output regex="no" type="failure">version</output>
+  <output regex="no" type="failure">Runtime Environment</output>
+  <output regex="no" type="failure">JVMDUMP006I</output>
+  <output regex="no" type="failure">Processing dump event</output>
+ </test>
+
+ <test id="-Xgc:suballocatorInitialSize=0">
+  <command>$EXE$ -Xgc:suballocatorInitialSize=0 -version</command>
+  <!-- JVMJ9GC036E -Xgc:suballocatorInitialSize= value must be above 0 -->
+  <output regex="no" type="success">JVMJ9GC036E</output>
+  <!-- JVMJ9VM015W Initialization error for library j9gc26(2): Failed to initialize -->
+  <output regex="no" type="required">JVMJ9VM015W</output>
+  <output regex="no" caseSensitive="no" type="required">Could not create the Java Virtual Machine.</output>
+  <output regex="no" type="failure">version</output>
+  <output regex="no" type="failure">Runtime Environment</output>
+  <output regex="no" type="failure">JVMDUMP006I</output>
+  <output regex="no" type="failure">Processing dump event</output>
+ </test>
+
+ <test id="-Xgc:suballocatorCommitSize=512m Xgc:suballocatorInitialSize=256m">
+  <command>$EXE$ -Xgc:suballocatorCommitSize=512m -Xgc:suballocatorInitialSize=256m -version</command>
+  <!-- JVMJ9GC057E -Xgc:suballocatorCommitSize= must be no greater than -Xgc:suballocatorInitialSize= -->
+  <output regex="no" type="success">JVMJ9GC057E</output>
+  <!-- JVMJ9VM015W Initialization error for library j9gc26(2): Failed to initialize -->
+  <output regex="no" type="required">JVMJ9VM015W</output>
+  <output regex="no" caseSensitive="no" type="required">Could not create the Java Virtual Machine.</output>
+  <output regex="no" type="failure">version</output>
+  <output regex="no" type="failure">Runtime Environment</output>
+  <output regex="no" type="failure">JVMDUMP006I</output>
+  <output regex="no" type="failure">Processing dump event</output>
+ </test>
+
+ <test id="-Xgc:suballocatorCommitSize=256m -Xgc:suballocatorInitialSize=512m">
+  <command>$EXE$ -Xgc:suballocatorCommitSize=256m -Xgc:suballocatorInitialSize=512m -version</command>
+  <output regex="no" type="success">version</output>
+  <output regex="no" type="required">Runtime Environment</output>
+  <output regex="no" type="failure">Exception</output>
+  <output regex="no" type="failure">Error</output>
+  <output regex="no" type="failure">JVMDUMP006I</output>
+  <output regex="no" type="failure">Processing dump event</output>
+ </test>
+
+ <test id="-Xgc:suballocatorCommitSize=1m -Xgc:suballocatorInitialSize=1m">
+  <command>$EXE$ -Xgc:suballocatorCommitSize=1m -Xgc:suballocatorInitialSize=1m -version</command>
+  <output regex="no" type="success">version</output>
+  <output regex="no" type="required">Runtime Environment</output>
+  <output regex="no" type="failure">Exception</output>
+  <output regex="no" type="failure">Error</output>
+  <output regex="no" type="failure">JVMDUMP006I</output>
+  <output regex="no" type="failure">Processing dump event</output>
+ </test>
+
+ <test id="-Xmcrs100m">
+  <command>$EXE$ -Xmcrs100m -version</command>
+  <output regex="no" type="success">version</output>
+  <output regex="no" type="required">Runtime Environment</output>
+  <output regex="no" type="failure">Exception</output>
+  <output regex="no" type="failure">Error</output>
+  <output regex="no" type="failure">JVMDUMP006I</output>
+  <output regex="no" type="failure">Processing dump event</output>
+ </test>
+
+ <test id="-Xmcrs0">
+  <command>$EXE$ -Xmcrs0 -version</command>
+  <!-- JVMJ9GC036E -Xgc:suballocatorInitialSize= value must be above 0 -->
+  <output regex="no" type="success">JVMJ9GC036E</output>
+  <output regex="no" type="required">JVMJ9VM015W</output>
+  <output regex="no" caseSensitive="no" type="required">Could not create the Java Virtual Machine.</output>
+  <output regex="no" type="failure">version</output>
+  <output regex="no" type="failure">Runtime Environment</output>
+  <output regex="no" type="failure">JVMDUMP006I</output>
+  <output regex="no" type="failure">Processing dump event</output>
+ </test>
+
+ <test id="-Xmcrs10m -Xgc:suballocatorCommitSize=80m">
+  <command>$EXE$ -Xmcrs10m -Xgc:suballocatorCommitSize=80m -version</command>
+  <output regex="no" type="success">version</output>
+  <output regex="no" type="required">Runtime Environment</output>
+  <output regex="no" type="failure">Exception</output>
+  <output regex="no" type="failure">Error</output>
+  <output regex="no" type="failure">JVMDUMP006I</output>
+  <output regex="no" type="failure">Processing dump event</output>
+ </test>
+
+ <test id="-Xmcrs5G">
+  <command>$EXE$ -Xmcrs5G -version</command>
+  <!-- JVMJ9GC038E -Xgc:suballocatorInitialSize= value must be below 4G -->
+  <output regex="no" type="success">JVMJ9GC038E</output>
+  <output regex="no" type="required">JVMJ9VM015W</output>
+  <output regex="no" caseSensitive="no" type="required">Could not create the Java Virtual Machine.</output>
+  <output regex="no" type="failure">version</output>
+  <output regex="no" type="failure">Runtime Environment</output>
+  <output regex="no" type="failure">JVMDUMP006I</output>
+  <output regex="no" type="failure">Processing dump event</output>
+ </test>
+
+ <test id="-Xmcrs4294967040">
+  <command>$EXE$ -Xmcrs4294967040 -version</command>
+  <output regex="no" type="success">JVMJ9VM015W</output>
+  <output regex="no" caseSensitive="no" type="required">Could not create the Java Virtual Machine.</output>
+  <output regex="no" type="failure">version</output>
+  <output regex="no" type="failure">Runtime Environment</output>
+  <output regex="no" type="failure">JVMDUMP006I</output>
+  <output regex="no" type="failure">Processing dump event</output>
+ </test>
+
+</suite>
+

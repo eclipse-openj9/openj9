@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2017 IBM Corp. and others
+ * Copyright (c) 2015, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,7 +46,7 @@
 
 #if defined(J9VM_GC_FINALIZATION)
 void
-MM_ScavengerRootScanner::startUnfinalizedProcessing(MM_EnvironmentStandard *env)
+MM_ScavengerRootScanner::startUnfinalizedProcessing(MM_EnvironmentBase *env)
 {
 	if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 		_clij->scavenger_setShouldScavengeUnfinalizedObjects(false);

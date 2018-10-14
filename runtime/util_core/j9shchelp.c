@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -130,6 +130,31 @@ getGenerationFromName(const char* cacheNameWithVGen)
 }
 
 /**
+ * Return the value of the modLevel from the cache filename
+ *
+ * @param [in] cacheNameWithVGen  the cache file name
+ *
+ * @return the modeLevel number,
+ * 		   -1 if it is an old cache name that does not have modlLevel, or an error occurred.
+ */
+intptr_t
+getModLevelFromName(const char* cacheNameWithVGen)
+{
+	char* cursor = (char*)cacheNameWithVGen;
+	intptr_t modLevel = -1;
+
+	if ((strlen(cacheNameWithVGen) > (J9SH_MODLEVEL_PREFIX_CHAR_OFFSET + 2))
+		 && (J9SH_MODLEVEL_PREFIX_CHAR == cursor[J9SH_MODLEVEL_PREFIX_CHAR_OFFSET])
+	) {
+		cursor += (J9SH_MODLEVEL_PREFIX_CHAR_OFFSET + 1);
+		if (0 != scan_idata(&cursor, &modLevel)) {
+			modLevel = -1;
+		}
+	}
+	return modLevel;
+}
+
+/**
  * Return the modification level for a given j2se version
  * 
  * @param [in] j2seVersion  The j2se version
@@ -141,31 +166,21 @@ getShcModlevelForJCL(uintptr_t j2seVersion)
 {
 	uint32_t modLevel = 0;
 	switch (j2seVersion) {
-	case J2SE_15 :
-		modLevel = J9SH_MODLEVEL_JAVA5;
-		break;
-	case J2SE_16 :
-		modLevel = J9SH_MODLEVEL_JAVA6;
-		break;
-	case J2SE_17 :
-		modLevel = J9SH_MODLEVEL_JAVA7;
-		break;
 	case J2SE_18 :
 		modLevel = J9SH_MODLEVEL_JAVA8;
 		break;
 	case J2SE_19 :
 		modLevel = J9SH_MODLEVEL_JAVA9;
 		break;
-	case J2SE_V10 :
-		modLevel = J9SH_MODLEVEL_JAVA10;
+	default: 
+		modLevel = JAVA_SPEC_VERSION_FROM_J2SE(j2seVersion);
 		break;
 	}
 	return modLevel;
 }
 
 /**
- * Return the j2se version for a given modification level
- * 
+ * Return the java spec version for a given modification level
  * @param [in] modlevel  The modification level
  * 
  * @return the j2se version or 0 if one cannot be found
@@ -173,42 +188,51 @@ getShcModlevelForJCL(uintptr_t j2seVersion)
 uint32_t
 getJCLForShcModlevel(uintptr_t modlevel)
 {
-	uint32_t j2seVersion = 0;
+	uint32_t javaVersion = 0;
 	switch (modlevel) {
 	case J9SH_MODLEVEL_JAVA5 :
-		j2seVersion = J2SE_15;
+		javaVersion = 5;
 		break;
 	case J9SH_MODLEVEL_JAVA6 :
-		j2seVersion = J2SE_16;
+		javaVersion = 6;
 		break;
 	case J9SH_MODLEVEL_JAVA7 :
-		j2seVersion = J2SE_17;
+		javaVersion = 7;
 		break;
 	case J9SH_MODLEVEL_JAVA8 :
-		j2seVersion = J2SE_18;
+		javaVersion = 8;
 		break;
 	case J9SH_MODLEVEL_JAVA9 :
-		j2seVersion = J2SE_19;
+		javaVersion = 9;
 		break;
-	case J9SH_MODLEVEL_JAVA10 :
-		j2seVersion = J2SE_V10;
+	case J9SH_MODLEVEL_JAVA10:
+		/* From Java 10, modLevel equals to java version number. But there might be Java 10 shared cache that has modLevel 6
+		 * created before this change.
+		 */
+		javaVersion = 10;
+		break;
+	default:
+		if (modlevel >= 10) {
+			/* J9SH_MODLEVEL_JAVA9 is 5. Does not have modlevel that is 7,8,9 */
+			javaVersion = modlevel;
+		}
 		break;
 	}
-	return j2seVersion;
+	return javaVersion;
 }
 
 /**
  * Given a cache filename and a j2se version, is the filename compatible with this running JVM
  * 
  * @param [in] portlib  A port library
- * @param [in] j2seVersion  The j2se version the JVM is running
+ * @param [in] javaVersion  The java version the JVM is running
  * @param [in] feature  this running JVM feature
  * @param [in] filename  The cache filename
  * 
  * @return 1 if the cache is compatible or 0 otherwise
  */
 uintptr_t 
-isCompatibleShcFilePrefix(J9PortLibrary* portlib, uint32_t j2seVersion, uint32_t feature, const char* filename)
+isCompatibleShcFilePrefix(J9PortLibrary* portlib, uint32_t javaVersion, uint32_t feature, const char* filename)
 {
 	J9PortShcVersion versionData;
 	uint32_t jclLevel;
@@ -218,7 +242,7 @@ isCompatibleShcFilePrefix(J9PortLibrary* portlib, uint32_t j2seVersion, uint32_t
 
 	if ((versionData.esVersionMajor == EsVersionMajor) &&
 			(versionData.esVersionMinor == EsVersionMinor) &&
-			(jclLevel == j2seVersion) &&
+			(jclLevel == javaVersion) &&
 			(versionData.addrmode == J9SH_ADDRMODE) &&
 			(versionData.feature == feature)) {
 		return 1;
@@ -234,29 +258,38 @@ isCompatibleShcFilePrefix(J9PortLibrary* portlib, uint32_t j2seVersion, uint32_t
  * @param [out] buffer  The buffer to copy the string into
  */
 void
-getStringForShcModlevel(J9PortLibrary* portlib, uint32_t modlevel, char* buffer)
+getStringForShcModlevel(J9PortLibrary* portlib, uint32_t modlevel, char* buffer, uint32_t buffSize)
 {
+	PORT_ACCESS_FROM_PORT(portlib);
 	switch (modlevel) {
 	case J9SH_MODLEVEL_JAVA5 :
-		strcpy(buffer, "Java5");
+		strncpy(buffer, "Java5", buffSize);
 		break;
 	case J9SH_MODLEVEL_JAVA6 :
-		strcpy(buffer, "Java6");
+		strncpy(buffer, "Java6", buffSize);
 		break;
 	case J9SH_MODLEVEL_JAVA7 :
-		strcpy(buffer, "Java7");
+		strncpy(buffer, "Java7", buffSize);
 		break;
 	case J9SH_MODLEVEL_JAVA8 :
-		strcpy(buffer, "Java8");
+		strncpy(buffer, "Java8", buffSize);
 		break;
 	case J9SH_MODLEVEL_JAVA9 :
-		strcpy(buffer, "Java9");
+		strncpy(buffer, "Java9", buffSize);
 		break;
 	case J9SH_MODLEVEL_JAVA10 :
-		strcpy(buffer, "Java10");
+		/* From Java 10, modLevel equals to java version number. But there might be Java 10 shared cache that has modLevel 6
+		 * created before this change.
+		 */
+		strncpy(buffer, "Java10", buffSize);
 		break;
 	default :
-		strcpy(buffer, "Unknown");
+		if (modlevel >= 10) {
+			j9str_printf(portlib, buffer, buffSize, "%s%u", "Java", modlevel);
+		} else {
+			/* J9SH_MODLEVEL_JAVA9 is 5. Does not have modlevel that is 7,8,9 */
+			strncpy(buffer, "Unknown", buffSize);
+		}
 		break;
 	}
 }
@@ -301,6 +334,7 @@ isCacheFileName(J9PortLibrary* portlib, const char* nameToTest, uintptr_t expect
 	intptr_t nameToTestLen = 0;
 	intptr_t expectedVersionLen = ((expectCacheType == J9PORT_SHR_CACHE_TYPE_PERSISTENT) || (J9PORT_SHR_CACHE_TYPE_SNAPSHOT == expectCacheType)) ? J9SH_VERSION_STRING_LEN + 1 : J9SH_VERSION_STRING_LEN;
 	uintptr_t generation = getGenerationFromName(nameToTest);
+	intptr_t modLevel = 0;
 
 	/*
 	 * cache names generated by earlier JVMs (generation <=29) don't have feature prefix char 'F' and the value
@@ -311,6 +345,12 @@ isCacheFileName(J9PortLibrary* portlib, const char* nameToTest, uintptr_t expect
 	}
 	if (nameToTest == NULL) {
 		return 0;
+	}
+	modLevel = getModLevelFromName(nameToTest);
+
+	/* modLevel becomes 2 digits from Java 10 */
+	if (modLevel < 10) {
+		expectedVersionLen -= J9SH_VERSTRLEN_INCREASED_SINCEJAVA10;
 	}
 	if (optionalExtraID != NULL) {
 		const char* temp1 = strstr(nameToTest, optionalExtraID);

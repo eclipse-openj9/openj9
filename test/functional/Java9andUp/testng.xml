@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Copyright (c) 2016, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Java9andUp suite" parallel="none" verbose="2">
+	<listeners>
+		<listener class-name="org.openj9.test.util.IncludeExcludeTestAnnotationTransformer"/>
+	</listeners>
+	<test name="StackWalkerTest">
+		<classes>
+			<class name="org.openj9.test.stackWalker.StackWalkerTest" />
+		</classes>
+	</test>
+	<test name="CallerSensitiveGetCallerClassTest">
+		<classes>
+			<class name="org.openj9.test.stackWalker.StackWalkerCallerSensitiveTest" />
+		</classes>
+	</test>
+	<test name="VarHandle">
+		<classes>
+			<class name="org.openj9.test.varhandle.InstanceFieldVarHandleTests"/>
+			<class name="org.openj9.test.varhandle.LookupTests"/>
+			<class name="org.openj9.test.varhandle.VarHandleFenceTests"/>
+			<class name="org.openj9.test.varhandle.ArrayVarHandleTests"/>
+			<class name="org.openj9.test.varhandle.StaticFieldVarHandleTests"/>
+			<class name="org.openj9.test.varhandle.VarHandleUtilTests"/>
+		 </classes>
+	</test>
+	<test name="View-LE-OnHeap">
+		<parameter name="byteOrder" value="littleEndian"/>
+		<parameter name="memoryLocation" value="onHeap"/>
+		<classes>
+			<class name="org.openj9.test.varhandle.ByteBufferViewVarHandleTests"/>
+			<class name="org.openj9.test.varhandle.ByteArrayViewVarHandleTests"/>
+		 </classes>
+	</test>
+	<test name="View-LE-OffHeap">
+		<parameter name="byteOrder" value="littleEndian"/>
+		<parameter name="memoryLocation" value="offHeap"/>
+		<classes>
+			<class name="org.openj9.test.varhandle.ByteBufferViewVarHandleTests"/>
+		 </classes>
+	</test>
+	<test name="View-BE-OnHeap">
+		<parameter name="byteOrder" value="bigEndian"/>
+		<parameter name="memoryLocation" value="onHeap"/>
+		<classes>
+			<class name="org.openj9.test.varhandle.ByteBufferViewVarHandleTests"/>
+			<class name="org.openj9.test.varhandle.ByteArrayViewVarHandleTests"/>
+		 </classes>
+	</test>
+	<test name="View-BE-OffHeap">
+		<parameter name="byteOrder" value="bigEndian"/>
+		<parameter name="memoryLocation" value="offHeap"/>
+		<classes>
+			<class name="org.openj9.test.varhandle.ByteBufferViewVarHandleTests"/>
+		</classes>
+	</test>
+	<test name="VarHandleInvokerTest">
+		<classes>
+			<class name="org.openj9.test.varhandle.VarHandleInvokerTest" />
+		</classes>
+	</test>
+	<test name="defineModuleAsClassTest">
+		<classes>
+			<class name="org.openj9.test.defineModuleAsClass.DefineModuleAsClassTest" />
+		</classes>
+	</test>
+	<test name="constantPoolTagTests">
+		<classes>
+			<class name="org.openj9.test.constantPoolTags.ConstantPoolTagTests" />
+		</classes>
+	</test>
+	<test name="Test_Class">
+		<classes>
+			<class name="org.openj9.test.java.lang.Test_Class" />
+ 		</classes>
+	</test>
+	<test name="TestJava9AttachAPI">
+		<classes>
+			<class name="org.openj9.test.attachAPI.TestJava9AttachAPI" />
+		</classes>
+	</test>
+	<test name="AccessUnRestrictedClass">
+		<classes>
+			<class name="org.openj9.test.access.staticAccessChecks.PermitAccess" />
+		</classes>
+	</test>
+	<test name="AccessRestrictedClass">
+		<classes>
+			<class name="org.openj9.test.access.staticAccessChecks.DenyAccess" />
+		</classes>
+    </test>
+	<test name="TestClassLoaderFindResource">
+		<classes>
+			<class name="org.openj9.test.modularity.TestClassLoaderFindResource" />
+		</classes>
+    </test>
+</suite> <!-- Suite -->

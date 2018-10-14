@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,6 +71,9 @@
 #define OPT_XMR "-Xmr"
 #define OPT_SOFTMX "-Xsoftmx"
 #define OPT_NUMA_NONE "-Xnuma:none"
+#define OPT_XXMAXRAMPERCENT "-XX:MaxRAMPercentage="
+#define OPT_XXINITIALRAMPERCENT "-XX:InitialRAMPercentage="
+
 /**
  * @}
  */
@@ -251,6 +254,35 @@ option_set_to_opt_integer(J9JavaVM* vm, const char* option, IDATA* optionIndex, 
 
 	if (element >= 0) {
 		returnCode = GET_INTEGER_VALUE(element, option, value);
+		if (OPTION_OK == returnCode) {
+			*address = value;
+		}
+	} 
+	return returnCode;
+}
+
+/**
+ * Find, consume and record an option from the argument list.
+ * Given an option string and the match type, find the argument in the to be consumed list.
+ * If not found, return success.
+ * If found, consume it, verify the memory value.
+ * 
+ * @return OPTION_OK if option is found and consumed or option not present, OPTION_MALFORMED if the option was malformed, OPTION_OVERFLOW if the option overflowed.
+ * @note value stored at address is invalid if failure returned
+ * @note optionIndex contains position of argument on command line if success returned, else -1
+ */
+static IDATA
+option_set_to_opt_double(J9JavaVM* vm, const char* option, IDATA* optionIndex, IDATA match, double* address)
+{
+	IDATA element = -1;
+	IDATA returnCode = OPTION_OK;
+	double value = 0.0;
+
+	element = FIND_AND_CONSUME_ARG2(match, option, NULL);
+	*optionIndex = element;
+
+	if (element >= 0) {
+		returnCode = GET_DOUBLE_VALUE(element, option, value);
 		if (OPTION_OK == returnCode) {
 			*address = value;
 		}
@@ -1500,7 +1532,6 @@ gcParseCommandLineAndInitializeWithValues(J9JavaVM *vm, IDATA *memoryParameters)
 	}
 	memoryParameters[opt_Xms] = index;
 
-
 #if defined(J9VM_GC_MODRON_SCAVENGER)
 	result = option_set_to_opt(vm, OPT_XMRX, &index, EXACT_MEMORY_MATCH, &optionValue);
 	if (OPTION_OK != result) {
@@ -1571,6 +1602,30 @@ gcParseCommandLineAndInitializeWithValues(J9JavaVM *vm, IDATA *memoryParameters)
 		/* Hack table to appear that -Xmos and -Xmox _were_ specified */		
 		memoryParameters[opt_Xmos] = memoryParameters[opt_Xmo];
 		memoryParameters[opt_Xmox] = memoryParameters[opt_Xmo];
+	}
+
+	result = option_set_to_opt_double(vm, OPT_XXMAXRAMPERCENT, &index, EXACT_MEMORY_MATCH, &extensions->maxRAMPercent);
+	if (OPTION_OK != result) {
+		goto _error;
+	}
+	memoryParameters[opt_maxRAMPercent] = index;
+	if (memoryParameters[opt_maxRAMPercent] != -1) {
+		if ((extensions->maxRAMPercent < 0.0) || (extensions->maxRAMPercent > 100.0)) {
+			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_PERCENT_OUT_OF_RANGE, "-XX:MaxRAMPercentage", 0.0, 100.0);
+			return JNI_EINVAL;
+		}
+	}
+
+	result = option_set_to_opt_double(vm, OPT_XXINITIALRAMPERCENT, &index, EXACT_MEMORY_MATCH, &extensions->initialRAMPercent);
+	if (OPTION_OK != result) {
+		goto _error;
+	}
+	memoryParameters[opt_initialRAMPercent] = index;
+	if (memoryParameters[opt_initialRAMPercent] != -1) {
+		if ((extensions->initialRAMPercent < 0.0) || (extensions->initialRAMPercent > 100.0)) {
+			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_PERCENT_OUT_OF_RANGE, "-XX:InitialRAMPercentage", 0.0, 100.0);
+			return JNI_EINVAL;
+		}
 	}
 
 	/* Parse the option to disable NUMA-awareness.  This is parsed on all platforms but only Balanced currently does anything

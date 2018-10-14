@@ -1280,7 +1280,7 @@ F|_reduceStoreContentionDisabled|_reduceStoreContentionDisabled|bool|bool
 F|_debugData|_debugData|class ClassDebugDataProvider*|class ClassDebugDataProvider*
 F|_commonCCInfo|_commonCCInfo|struct J9ShrCompositeCacheCommonInfo*|struct J9ShrCompositeCacheCommonInfo*
 F|_newHdrPtr|_newHdrPtr|class SH_CompositeCacheImpl$SH_SharedCacheHeaderInit*|class SH_CompositeCacheImpl::SH_SharedCacheHeaderInit*
-S|SH_CompositeCacheImpl$SH_SharedCacheHeaderInit|SH_CompositeCacheImpl$SH_SharedCacheHeaderInitPointer|SH_OSCache$SH_OSCacheInitialiser
+S|SH_CompositeCacheImpl$SH_SharedCacheHeaderInit|SH_CompositeCacheImpl$SH_SharedCacheHeaderInitPointer|SH_OSCache$SH_OSCacheInitializer
 S|SH_Manager|SH_ManagerPointer|
 F|_hashTable|_hashTable|struct J9HashTable*|struct J9HashTable*
 F|_cache|_cache|class SH_SharedCache*|class SH_SharedCache*
@@ -1337,7 +1337,7 @@ F|_doCheckBuildID|_doCheckBuildID|bool|bool
 F|_corruptionCode|_corruptionCode|IDATA|IDATA
 F|_corruptValue|_corruptValue|UDATA|UDATA
 F|_isUserSpecifiedCacheDir|_isUserSpecifiedCacheDir|bool|bool
-S|SH_OSCache$SH_OSCacheInitialiser|SH_OSCache$SH_OSCacheInitialiserPointer|
+S|SH_OSCache$SH_OSCacheInitializer|SH_OSCache$SH_OSCacheInitializerPointer|
 S|SH_OSCacheFile|SH_OSCacheFilePointer|SH_OSCache
 F|_fileHandle|_fileHandle|IDATA|IDATA
 S|SH_OSCache_Info|SH_OSCache_InfoPointer|
@@ -1371,7 +1371,7 @@ F|_semFileName|_semFileName|U8*|char*
 F|_openSharedMemory|_openSharedMemory|bool|bool
 F|_storageKeyTesting|_storageKeyTesting|UDATA|UDATA
 F|config|config|struct J9SharedClassPreinitConfig*|const struct J9SharedClassPreinitConfig*
-F|_initialiser|_initialiser|class SH_OSCache$SH_OSCacheInitialiser*|class SH_OSCache::SH_OSCacheInitialiser*
+F|_initializer|_initializer|class SH_OSCache$SH_OSCacheInitializer*|class SH_OSCache::SH_OSCacheInitializer*
 F|_groupPerm|_groupPerm|UDATA|UDATA
 F|_semid|_semid|I32|I32
 F|_semAccess|_semAccess|enum SH_SysvSemAccess|enum SH_SysvSemAccess

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,7 +53,7 @@ static void ensureDirectory(struct HyPortLibrary *portLibrary ) {
 	if (cacheDirName == NULL){
 		BOOLEAN appendBaseDir = (cacheDirFlags & J9SH_SHMEM_CONTROL_DIR_FLAG_DONT_CREATE_BASEDIR) == 0;
 		cacheDirName = j9mem_allocate_memory(EsMaxPath+1, J9MEM_CATEGORY_HARMONY);
-		j9shmem_getDir(ctrlDirName, appendBaseDir, cacheDirName, EsMaxPath);
+		j9shmem_getDir(ctrlDirName, appendBaseDir ? J9SHMEM_GETDIR_APPEND_BASEDIR : 0, cacheDirName, EsMaxPath);
 		if (cacheDirFlags & J9SH_SHMEM_CONTROL_DIR_FLAG_TRY_CREATE_DIR) {
 			j9shmem_createDir(cacheDirName, J9SH_DIRPERM_ABSENT, ctrlDirName == NULL);
 		}
@@ -990,7 +990,7 @@ hystub_sig_can_protect(struct HyPortLibrary *portLibrary, U_32 flags)
 	return j9sig_can_protect(flags);
 }
 
-U_32
+I_32
 hystub_sig_set_async_signal_handler(struct HyPortLibrary *portLibrary, hysig_handler_fn handler, void *handler_arg, U_32 flags)
 {
 	PORT_ACCESS_FROM_PORT((J9PortLibrary *)portLibrary->self_handle);

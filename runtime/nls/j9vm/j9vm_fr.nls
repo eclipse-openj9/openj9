@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -234,7 +234,7 @@ J9NLS_VM_OUT_OF_MEM_FOR_DLL_POOL.user_response=Check the system memory configura
 # END NON-TRANSLATABLE
 
 # Note: %.*s is a class name
-J9NLS_VM_UNABLE_TO_FIND_AND_INITIALIZE_REQUIRED_CLASS=Erreur irr\u00e9m\u00e9diable : Impossible de trouver et d'initialiser la classe requise %.*s
+J9NLS_VM_UNABLE_TO_FIND_AND_INITIALIZE_REQUIRED_CLASS=Erreur irr\u00e9m\u00e9diable : Impossible de trouver et d'initializer la classe requise %.*s
 # START NON-TRANSLATABLE
 J9NLS_VM_UNABLE_TO_FIND_AND_INITIALIZE_REQUIRED_CLASS.sample_input_1=9
 J9NLS_VM_UNABLE_TO_FIND_AND_INITIALIZE_REQUIRED_CLASS.sample_input_2=userClass
@@ -1193,7 +1193,7 @@ J9NLS_VM_EXCEPTION_DEFINECLASS_IN_PROTECTED_SYSTEM_PACKAGE.sample_input_3=5
 J9NLS_VM_EXCEPTION_DEFINECLASS_IN_PROTECTED_SYSTEM_PACKAGE.sample_input_4=java/
 # END NON-TRANSLATABLE
 
-J9NLS_VM_COMMITSIZE_IS_BIGGER_THAN_INITIALSIZE=La taille de validation du sous-allocateur 32 bits est sup\u00e9rieure \u00e0 la taille initiale. Taille de validation = %1$u, taille initiale = %2$u.
+J9NLS_VM_COMMITSIZE_IS_BIGGER_THAN_INITIALSIZE=La taille d'engagement du sous-allocateur 32 bits est sup\u00e9rieure \u00e0 la taille initiale. Taille d'engagement = %1$u, taille initiale = %2$u.
 # START NON-TRANSLATABLE
 J9NLS_VM_COMMITSIZE_IS_BIGGER_THAN_INITIALSIZE.explanation=This is an error message associated with the wrong usage of options '-XsuballocatorCommitSize' and/or ' -XsuballocatorInitialSize'
 J9NLS_VM_COMMITSIZE_IS_BIGGER_THAN_INITIALSIZE.system_action=The JVM prints the error message and exits.
@@ -1202,14 +1202,14 @@ J9NLS_VM_COMMITSIZE_IS_BIGGER_THAN_INITIALSIZE.sample_input_1=1000
 J9NLS_VM_COMMITSIZE_IS_BIGGER_THAN_INITIALSIZE.sample_input_2=800
 # END NON-TRANSLATABLE
 
-J9NLS_VM_COMMITSIZE_CAN_NOT_BE_SET_TO_ZERO=La taille de validation du sous-allocateur 32 bits ne peut pas \u00eatre param\u00e9tr\u00e9e sur z\u00e9ro.
+J9NLS_VM_COMMITSIZE_CAN_NOT_BE_SET_TO_ZERO=La taille d'engagement du sous-allocateur 32 bits ne peut pas \u00eatre r\u00e9gl\u00e9e \u00e0 z\u00e9ro.
 # START NON-TRANSLATABLE
 J9NLS_VM_COMMITSIZE_CAN_NOT_BE_SET_TO_ZERO.explanation=User tried to set the commit size to zero by using '-XsuballocatorCommitSize0'
 J9NLS_VM_COMMITSIZE_CAN_NOT_BE_SET_TO_ZERO.system_action=The JVM prints the error message and exits.
 J9NLS_VM_COMMITSIZE_CAN_NOT_BE_SET_TO_ZERO.user_response=Use positive value instead of 0 for '-XsuballocatorCommitSize'.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_INITIALSIZE_CAN_NOT_BE_SET_TO_ZERO=La taille initiale du sous-allocateur 32 bits ne peut pas \u00eatre param\u00e9tr\u00e9e sur z\u00e9ro.
+J9NLS_VM_INITIALSIZE_CAN_NOT_BE_SET_TO_ZERO=La taille initiale du sous-allocateur 32 bits ne peut pas \u00eatre r\u00e9gl\u00e9e \u00e0 z\u00e9ro.
 # START NON-TRANSLATABLE
 J9NLS_VM_INITIALSIZE_CAN_NOT_BE_SET_TO_ZERO.explanation=User tried to set the initial size to zero by using '-XsuballocatorInitialSize0'
 J9NLS_VM_INITIALSIZE_CAN_NOT_BE_SET_TO_ZERO.system_action=The JVM prints the error message and exits.
@@ -1217,28 +1217,28 @@ J9NLS_VM_INITIALSIZE_CAN_NOT_BE_SET_TO_ZERO.user_response=Use positive value ins
 # END NON-TRANSLATABLE
 
 # Message for OutOfMemoryError when the java heap space is exhausted.
-J9NLS_VM_HEAP_OUT_OF_MEMORY=Espace de segment de m\u00e9moire Java
+J9NLS_VM_HEAP_OUT_OF_MEMORY=Espace de tas Java
 # START NON-TRANSLATABLE
 J9NLS_VM_HEAP_OUT_OF_MEMORY.explanation=NOTAG
 J9NLS_VM_HEAP_OUT_OF_MEMORY.system_action=
 J9NLS_VM_HEAP_OUT_OF_MEMORY.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VM_ILLEGAL_RESUME_DETECTED=L'application a repris l'ex\u00e9cution apr\u00e8s le traitement d'une condition fatale et est renvoy\u00e9e ou rappel\u00e9e \u00e0 Java sans autorisation
+J9NLS_VM_ILLEGAL_RESUME_DETECTED=L'application a repris son ex\u00e9cution apr\u00e8s le traitement d'une condition irr\u00e9cup\u00e9rable et a ill\u00e9galement effectu\u00e9 un retour ou un rappel dans Java
 # START NON-TRANSLATABLE
 J9NLS_VM_ILLEGAL_RESUME_DETECTED.explanation=Application resumed execution after handling an unrecoverable condition and illegally returned to or called back into Java
 J9NLS_VM_ILLEGAL_RESUME_DETECTED.system_action=The JVM prints the error message and terminates the process using the z/OS specific system call CEE3AB2()
 J9NLS_VM_ILLEGAL_RESUME_DETECTED.user_response=Inspect their user condition handler and change it to not resume execution after receiving an unrecoverable condition on a Java thread
 # END NON-TRANSLATABLE
 
-J9NLS_VM_ILLEGAL_RESUME_DETECTED_JIT=L'application a repris l'ex\u00e9cution apr\u00e8s le traitement d'une condition irr\u00e9m\u00e9diable et est renvoy\u00e9e ou rappel\u00e9e \u00e0 Java sans autorisation (code JIT)
+J9NLS_VM_ILLEGAL_RESUME_DETECTED_JIT=L'application a repris son ex\u00e9cution apr\u00e8s le traitement d'une condition irr\u00e9cup\u00e9rable et a ill\u00e9galement effectu\u00e9 un retour ou un rappel dans Java (code JIT)
 # START NON-TRANSLATABLE
 J9NLS_VM_ILLEGAL_RESUME_DETECTED_JIT.explanation=Application resumed execution after handling an unrecoverable condition and illegally returned to or called back into Java
 J9NLS_VM_ILLEGAL_RESUME_DETECTED_JIT.system_action=The JVM prints the error message and terminates the process using the z/OS specific system call CEE3AB2()
 J9NLS_VM_ILLEGAL_RESUME_DETECTED_JIT.user_response=Inspect their user condition handler and change them to not resume execution after receiving an unrecoverable condition on a Java thread
 # END NON-TRANSLATABLE
 
-J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2=Arr\u00eat en cours du processus \u00e0 l'aide de CEE3AB2() avec fin anormale %1$u, motif %2$u, nettoyage %3$u.
+J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2=Arr\u00eat en cours du processus utilisant CEE3AB2() avec fin anormale %1$u, motif %2$u, nettoyage %3$u.
 # START NON-TRANSLATABLE
 J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2.explanation=The JVM detected an unrecoverable condition and is terminating the process using the z/OS specific system call CEE3AB2, which throws an abend.
 J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2.system_action=The JVM prints the error message and terminates the process
@@ -1256,7 +1256,7 @@ J9NLS_LOCKNURSERY_CONFIG_TENANT_BAD_OPTION.user_response=Remove the option ident
 J9NLS_LOCKNURSERY_CONFIG_TENANT_BAD_OPTION.sample_input_1=lockword=java/lang/Class
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CHECK_DUMP_ULIMIT=La taille ulimit maximale (hard) de la m\u00e9moire syst\u00e8me est param\u00e9tr\u00e9e sur %d ; il se peut que les vidages syst\u00e8me soient tronqu\u00e9s.
+J9NLS_VM_CHECK_DUMP_ULIMIT=La taille ulimit dure pour la m\u00e9moire syst\u00e8me est r\u00e9gl\u00e9e \u00e0 %d ; il se peut que les vidages syst\u00e8me soient tronqu\u00e9s.
 # START NON-TRANSLATABLE
 J9NLS_VM_CHECK_DUMP_ULIMIT.explanation=The JVM has been started with the -Xcheck:dump option, and has detected that core dump file size is limited by the system hard ulimit.
 J9NLS_VM_CHECK_DUMP_ULIMIT.system_action=The JVM continues to run
@@ -1264,14 +1264,14 @@ J9NLS_VM_CHECK_DUMP_ULIMIT.user_response=Refer to the IBM SDK documentation
 J9NLS_VM_CHECK_DUMP_ULIMIT.sample_input_1=1000000
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CHECK_DUMP_FULLCORE=L'option syst\u00e8me fullcore est param\u00e9tr\u00e9e sur FALSE ; il se peut que les vidages syst\u00e8me soient tronqu\u00e9s.
+J9NLS_VM_CHECK_DUMP_FULLCORE=L'option syst\u00e8me fullcore est mise \u00e0 FALSE ; il se peut que les vidages syst\u00e8me soient tronqu\u00e9s.
 # START NON-TRANSLATABLE
 J9NLS_VM_CHECK_DUMP_FULLCORE.explanation=The JVM has been started with the -Xcheck:dump option, and has detected that the system fullcore option is set to FALSE.
 J9NLS_VM_CHECK_DUMP_FULLCORE.system_action=The JVM continues to run
 J9NLS_VM_CHECK_DUMP_FULLCORE.user_response=Refer to the IBM SDK documentation
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CHECK_DUMP_COREPATTERN_PIPE=Le param\u00e8tre /proc/sys/kernel/core_pattern "%s" indique que les clich\u00e9s du processus core doivent \u00eatre dirig\u00e9s vers un programme externe. La JVM n'est peut-\u00eatre pas en mesure de localiser les clich\u00e9s du processus core et de les renommer.
+J9NLS_VM_CHECK_DUMP_COREPATTERN_PIPE=Le param\u00e8tre /proc/sys/kernel/core_pattern "%s" indique que les vidages core doivent \u00eatre dirig\u00e9s vers un programme externe. La JVM n'est peut-\u00eatre pas en mesure de localiser les vidages core et de les renommer.
 # START NON-TRANSLATABLE
 J9NLS_VM_CHECK_DUMP_COREPATTERN_PIPE.explanation=The JVM has been started on a system with /proc/sys/kernel/core_pattern set to pipe core dumps to the command specified after the | character. The JVM may be unable to locate core dumps and rename them.
 J9NLS_VM_CHECK_DUMP_COREPATTERN_PIPE.system_action=The JVM continues to run. Message JVMPORT030W will be issued when a system dump is taken.
@@ -1279,7 +1279,7 @@ J9NLS_VM_CHECK_DUMP_COREPATTERN_PIPE.user_response=Refer to the IBM SDK document
 J9NLS_VM_CHECK_DUMP_COREPATTERN_PIPE.sample_input_1=|/usr/libexec/abrt-hook-ccpp %s %c %p %u %g %t e
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CHECK_DUMP_COREPATTERN_FORMAT=Le param\u00e8tre /proc/sys/kernel/core_pattern "%s" une cha\u00eene de format pour le renommage des clich\u00e9s de processus core. La JVM n'est peut-\u00eatre pas en mesure de localiser les clich\u00e9s du processus core et de les renommer.
+J9NLS_VM_CHECK_DUMP_COREPATTERN_FORMAT=Le r\u00e9glage /proc/sys/kernel/core_pattern "%s" sp\u00e9cifie une cha\u00eene de format pour le renommage des vidages core. La JVM n'est peut-\u00eatre pas en mesure de localiser les vidages core et de les renommer.
 # START NON-TRANSLATABLE
 J9NLS_VM_CHECK_DUMP_COREPATTERN_FORMAT.explanation=The JVM has been started on a system with /proc/sys/kernel/core_pattern set to rename core dumps. The JVM may be unable to locate core dumps
 J9NLS_VM_CHECK_DUMP_COREPATTERN_FORMAT.system_action=The JVM continues to run
@@ -1291,7 +1291,7 @@ J9NLS_VM_CHECK_DUMP_COREPATTERN_FORMAT.sample_input_1=/tmp/core_dumps/core.%e.%p
 # arguments 1 and 2 are the method class name
 # arguments 3 and 4 are the method name
 # arguments 5 and 6 are the method signature
-J9NLS_VM_DEFAULT_METHOD_CONFLICT=la classe %2$.*1$s comporte des valeurs par d\u00e9faut conflictuelles pour la m\u00e9thode %4$.*3$s%6$.*5$s
+J9NLS_VM_DEFAULT_METHOD_CONFLICT=La classe %2$.*1$s comporte des valeurs par d\u00e9faut conflictuelles pour la m\u00e9thode %4$.*3$s%6$.*5$s
 # START NON-TRANSLATABLE
 J9NLS_VM_DEFAULT_METHOD_CONFLICT.sample_input_1=6
 J9NLS_VM_DEFAULT_METHOD_CONFLICT.sample_input_2=aClass
@@ -1439,6 +1439,7 @@ J9NLS_JIMAGE_INTF_LIBJIMAGE_OPEN_FAILED.user_response=None.
 
 J9NLS_JIMAGE_INTF_LIBJIMAGE_SYMBOL_LOOKUP_FAILED=Impossible de consulter le symbole %s dans la biblioth\u00e8que jimage
 # START NON-TRANSLATABLE
+J9NLS_JIMAGE_INTF_LIBJIMAGE_SYMBOL_LOOKUP_FAILED.sample_input_1=JIMAGE_Open
 J9NLS_JIMAGE_INTF_LIBJIMAGE_SYMBOL_LOOKUP_FAILED.explanation=An internal error occurred in looking up symbol in jimage library.
 J9NLS_JIMAGE_INTF_LIBJIMAGE_SYMBOL_LOOKUP_FAILED.system_action=The JVM fails to startup if -XX:-UseJ9JImageReader is specified, otherwise it attempts to use internal jimage reader instead.
 J9NLS_JIMAGE_INTF_LIBJIMAGE_SYMBOL_LOOKUP_FAILED.user_response=None.
@@ -1453,6 +1454,7 @@ J9NLS_JIMAGE_INTF_SWITCHING_TO_J9JIMAGE_READER.user_response=None.
 
 J9NLS_VM_XPATCH_OPTION_VALUE_MISSING=Valeur incorrecte pour -Xpatch ; la valeur de la propri\u00e9t\u00e9 %s n'est pas indiqu\u00e9e
 # START NON-TRANSLATABLE
+J9NLS_VM_XPATCH_OPTION_VALUE_MISSING.sample_input_1=jdk.launcher.patch.0
 J9NLS_VM_XPATCH_OPTION_VALUE_MISSING.explanation=The value of specified option is not correct
 J9NLS_VM_XPATCH_OPTION_VALUE_MISSING.system_action=The JVM will exit.
 J9NLS_VM_XPATCH_OPTION_VALUE_MISSING.user_response=Specify the module name and its patch path with -Xpatch option and restart the JVM.
@@ -1460,6 +1462,8 @@ J9NLS_VM_XPATCH_OPTION_VALUE_MISSING.user_response=Specify the module name and i
 
 J9NLS_VM_XPATCH_OPTION_PATCH_PATH_MISSING=Valeur incorrecte pour -Xpatch ; le chemin d'acc\u00e8s au correctif n'est pas indiqu\u00e9 dans la propri\u00e9t\u00e9 %s=%s
 # START NON-TRANSLATABLE
+J9NLS_VM_XPATCH_OPTION_PATCH_PATH_MISSING.sample_input_1=jdk.launcher.patch.0
+J9NLS_VM_XPATCH_OPTION_PATCH_PATH_MISSING.sample_input_2=/home/user/patch
 J9NLS_VM_XPATCH_OPTION_PATCH_PATH_MISSING.explanation=The value of specified option is not correct
 J9NLS_VM_XPATCH_OPTION_PATCH_PATH_MISSING.system_action=The JVM will exit.
 J9NLS_VM_XPATCH_OPTION_PATCH_PATH_MISSING.user_response=Specify the module name and its patch path with -Xpatch option and restart the JVM.
@@ -1474,10 +1478,10 @@ J9NLS_VM_XXSHARED_CACHE_HARD_LIMIT_EQUALS_IGNORED.user_response=The -XX:SharedCa
 
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ=La classe %2$.*1$s(%3$s) ne peut pas acc\u00e9der \u00e0 la classe %5$.*4$s(%6$s) car %3$s ne lit pas %6$s
 # START NON-TRANSLATABLE
-J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_1=3
+J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_1=18
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_2=com.greetings.Main
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_3=module com.greetings
-J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_4=3
+J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_4=9
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_5=com.hi.Hi
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_6=unnamed module @0x59fa1d9b
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.explanation=Module IllegalAccessError occurred.
@@ -1487,10 +1491,10 @@ J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.user_response=Refer IBM Java User Guide for 
 
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT=La classe %2$.*1$s(%3$s) ne peut pas acc\u00e9der \u00e0 la classe %5$.*4$s(%6$s) car %6$s n'exporte pas le package %7$s vers %3$s
 # START NON-TRANSLATABLE
-J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_1=3
+J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_1=18
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_2=com.greetings.Main
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_3=module com.greetings
-J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_4=3
+J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_4=9
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_5=com.hi.Hi
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_6=module com/hello
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_7=com/hello
@@ -1646,4 +1650,186 @@ J9NLS_VM_STACK_TRACE.sample_input_6=userSource.jar
 J9NLS_VM_STACK_TRACE.explanation=A single entry of a stack trace, with method, and source file.
 J9NLS_VM_STACK_TRACE.system_action=no action.
 J9NLS_VM_STACK_TRACE.user_response=no action.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_IDLE_TUNING_PLATFORM_OR_GC_POLICY_NOT_SUPPORTED=Les optimisations de la r\u00e9cup\u00e9ration de place pour l'\u00e9tat de repos de la JVM ne sont pas prises en charge
+# START NON-TRANSLATABLE
+J9NLS_VM_IDLE_TUNING_PLATFORM_OR_GC_POLICY_NOT_SUPPORTED.explanation=The GC optimizations on idle are not supported on some platforms and GC policies.
+J9NLS_VM_IDLE_TUNING_PLATFORM_OR_GC_POLICY_NOT_SUPPORTED.system_action=The JVM will exit.
+J9NLS_VM_IDLE_TUNING_PLATFORM_OR_GC_POLICY_NOT_SUPPORTED.user_response=Refer to the documentation for supported platforms and GC policies.
+# END NON-TRANSLATABLE
+
+# first argument is the length of class name
+# second argument is the class name
+J9NLS_VM_CLASS_NOT_VALUE_CAPABLE=La classe r\u00e9solue %2$.*1$s n'est pas capable de manipuler des valeurs
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_NOT_VALUE_CAPABLE.explanation=Attempting to derive a value type from a class that is not value capable
+J9NLS_VM_CLASS_NOT_VALUE_CAPABLE.system_action=
+J9NLS_VM_CLASS_NOT_VALUE_CAPABLE.user_response=
+# END NON-TRANSLATABLE
+
+# first argument is the length of class name
+# second argument is the class name
+J9NLS_VM_DVT_NOT_SET=La classe %2$.*1$s est capable de manipuler des valeurs, mais n'a pas de type de valeur d\u00e9riv\u00e9
+# START NON-TRANSLATABLE
+J9NLS_VM_DVT_NOT_SET.explanation=The class is value capable, but no value type had been derived
+J9NLS_VM_DVT_NOT_SET.system_action=
+J9NLS_VM_DVT_NOT_SET.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL=Tentative de fixer le champ statique final %2$.*1$s.%4$.*3$s \u00e0 partir de la m\u00e9thode "%6$.*5$s" qui n'est pas <clinit>
+# START NON-TRANSLATABLE
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.sample_input_1=3
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.sample_input_2=Bad
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.sample_input_3=1
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.sample_input_4=i
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.sample_input_5=3
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.sample_input_6=set
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.explanation=Attempt to set a static final field from a method other than <clinit>
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.system_action=IllegalAccessError is thrown
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.user_response=Modify source code to avoid the illegal access
+# END NON-TRANSLATABLE
+
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL=Tentative de fixer le champ d'instance final %2$.*1$s.%4$.*3$s \u00e0 partir de la m\u00e9thode "%6$.*5$s" qui n'est pas <init>
+# START NON-TRANSLATABLE
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.sample_input_1=3
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.sample_input_2=Bad
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.sample_input_3=1
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.sample_input_4=i
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.sample_input_5=3
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.sample_input_6=set
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.explanation=Attempt to set a non-static final field from a method other than <init>
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.system_action=IllegalAccessError is thrown
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.user_response=Modify source code to avoid the illegal access
+# END NON-TRANSLATABLE
+
+# First argument is class name length
+# Second argument is class name
+# Third argument is nest host name length
+# Fourth argument is nest host name
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER=La classe %2$.*1$s et son h\u00f4te de nich\u00e9e %4$.*3$s doivent avoir le m\u00eame chargeur de classes.
+# START NON-TRANSLATABLE
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER.explanation=Class and nest host class were loaded with different class loaders.
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER.system_action=The JVM will throw a java/lang/VerifyError
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER.user_response=Load class and nest host class with same classloader.
+# END NON-TRANSLATABLE
+
+# First argument is class name length
+# Second argument is class name
+# Third argument is nest host name length
+# Fourth argument is nest host name
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE=La classe %2$.*1$s et son h\u00f4te de nich\u00e9e %4$.*3$s doivent avoir le m\u00eame package.
+# START NON-TRANSLATABLE
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE.explanation=Class and nest host class were loaded with different class loaders.
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE.system_action=The JVM will throw a java/lang/VerifyError
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE.user_response=Load class and nest host class with same classloader.
+# END NON-TRANSLATABLE
+
+# First argument is class name length
+# Second argument is class name
+# Third argument is nest host name length
+# Fourth argument is nest host name
+J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST=La classe %2$.*1$s doit \u00eatre revendiqu\u00e9e par son h\u00f4te de nich\u00e9e %4$.*3$s
+# START NON-TRANSLATABLE
+J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST.explanation=Class was not claimed by its nest host class.
+J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST.system_action=The JVM will throw a java/lang/VerifyError
+J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# First argument is the library name
+# Second argument is the module name
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL=Impossible de charger la biblioth\u00e8que %1$s requise par le module : %2$s
+# START NON-TRANSLATABLE
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.sample_input_1=j9shr29
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.sample_input_2=openj9.sharedclasses
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.explanation=The JVM failed to load the library required by the specified module.
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.system_action=The JVM continues.
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.user_response=No action required if the specified library won't be referenced.
+# END NON-TRANSLATABLE
+
+# Message for LinkageError when a class loading constraint violation occurs when overriding a method
+# arguments 1 and 2 are the overridden method's class's name
+# arguments 3 and 4 are the overridden method name
+# arguments 5 and 6 are the overridden method's signature
+# arguments 7 and 8 are classloader name
+# argument 9 is the classloader's identity hashcode
+# arguments 10 and 11 are classloader's class
+# arguments 12 and 13 are the other classloader name
+# argument 14 is the other classloader's identity hashcode
+# arguments 15 and 16 are the other classloader's class
+# arguments 17 and 18 are the name of class being created
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION=violation de contrainte de chargement lors de la red\u00e9finition de la m\u00e9thode \"%2$.*1$s.%4$.*3$s%6$.*5$s\" pendant la cr\u00e9ation de la classe \"%18$.*17$s\" : le chargeur \"%8$.*7$s@%9$x\" de la classe \"%11$.*10$s\" et le chargeur \"%13$.*12$s@%14$x\" de la classe \"%16$.*15$s\" ont des types diff\u00e9rents pour la signature de m\u00e9thode
+# START NON-TRANSLATABLE
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_1=4
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_2=Main
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_3=4
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_4=method
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_5=15
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_6=()LLoadedTwice;
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_7=4
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_8=Main
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_9=2011a4e
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_10=8
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_11=Violator
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_12=6
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_13=Loader
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_14=200b50c
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_15=4
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_16=Main
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_17=4
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_18=Main
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.explanation=A class loading constraint has been violated.  The two class loader's have different classes for one of the class names in the signature.
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.system_action=A java/lang/LinkageError will be thrown
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.user_response=Examine the use of ClassLoaders to determine why a class of the same name is loaded in two different loaders
+# END NON-TRANSLATABLE
+
+# First argument is class name length
+# Second argument is class name
+# Third argument is nest host name length
+# Fourth argument is nest host name
+J9NLS_VM_NEST_HOST_FAILED_TO_LOAD=La classe %2$.*1$s doit \u00eatre capable de charger son h\u00f4te de nich\u00e9e %4$.*3$s.
+# START NON-TRANSLATABLE
+J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.explanation=Class and nest host class were loaded with different class loaders.
+J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.system_action=The JVM will throw a java/lang/IllegalAccessError
+J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.user_response=Load class and nest host class with same classloader.
+# END NON-TRANSLATABLE
+
+# No arguments
+J9NLS_VM_MODULE_IS_NULL=Module est null.
+# START NON-TRANSLATABLE
+J9NLS_VM_MODULE_IS_NULL.explanation=Incoming module can't be NULL.
+J9NLS_VM_MODULE_IS_NULL.system_action=The JVM will throw a java/lang/NullPointerExceptions.
+J9NLS_VM_MODULE_IS_NULL.user_response=Don't pass a NULL module.
+# END NON-TRANSLATABLE
+
+# No arguments
+J9NLS_VM_MODULE_IS_UNNAMED=Module est sans nom.
+# START NON-TRANSLATABLE
+J9NLS_VM_MODULE_IS_UNNAMED.explanation=Incoming module can't be unnamed.
+J9NLS_VM_MODULE_IS_UNNAMED.system_action=The JVM will throw a java/lang/IllegalArgumentExceptions.
+J9NLS_VM_MODULE_IS_UNNAMED.user_response=Don't pass a unnamed module.
+# END NON-TRANSLATABLE
+
+# No arguments
+J9NLS_VM_MODULE_NAME_IS_INVALID=Nom de module non valide.
+# START NON-TRANSLATABLE
+J9NLS_VM_MODULE_NAME_IS_INVALID.explanation=Incoming module name is invalid.
+J9NLS_VM_MODULE_NAME_IS_INVALID.system_action=The JVM will throw a java/lang/IllegalArgumentExceptions.
+J9NLS_VM_MODULE_NAME_IS_INVALID.user_response=Don't pass a module with invalid name.
+# END NON-TRANSLATABLE
+
+# No arguments
+J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE=Seul un chargeur de classes d'amor\u00e7age peut d\u00e9finir le module java.base.
+# START NON-TRANSLATABLE
+J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE.explanation=Non-bootstrap classloader can't define module java.base.
+J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE.system_action=The JVM will throw a java/lang/LayerInstantiationException.
+J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE.user_response=Don't define module java.base.
+# END NON-TRANSLATABLE
+
+# No arguments
+J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA=Seul un chargeur de classes d'amor\u00e7age ou de plateforme peut d\u00e9finir le package java ou java.*.
+# START NON-TRANSLATABLE
+J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA.explanation=A classloader other than boostrap or platform classloader can't define package java or java.*.
+J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA.system_action=The JVM will throw a java/lang/LayerInstantiationException.
+J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA.user_response=Don't define package java or java.*.
 # END NON-TRANSLATABLE

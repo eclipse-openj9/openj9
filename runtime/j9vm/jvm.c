@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2017 IBM Corp. and others
+ * Copyright (c) 2002, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -251,7 +251,6 @@ static jmethodID notifyAllMID = NULL;
 static UDATA jvmSEVersion = -1;
 
 static void *omrsigDLL = NULL;
-int (*g_sigaction)(int signum, const struct sigaction *act, struct sigaction *oldact);
 
 static void addToLibpath(const char *, BOOLEAN isPrepend);
 
@@ -325,9 +324,10 @@ static BOOLEAN librariesLoaded(void);
 #endif /* defined(J9ZTPF) */
 
 #define J9_SIG_ERR -1
+#define J9_SIG_IGNORED 1
 
 #define J9_PRE_DEFINED_HANDLER_CHECK 2
-#define J9_OLDHANDLER_SAME_AS_NEWHANDLER 2
+#define J9_USE_OLD_JAVA_SIGNAL_HANDLER 2
 
 #define J9_SIG_PREFIX "SIG"
 
@@ -335,8 +335,8 @@ static BOOLEAN librariesLoaded(void);
 #define J9_SIGNAME_BUFFER_LENGTH 16
 
 static void dummySignalHandler(jint sigNum);
-static BOOLEAN isSignalSpecial(jint sigNum);
-static BOOLEAN isSignalUsedByVM(jint sigNum);
+static BOOLEAN isSignalUsedForShutdown(jint sigNum);
+static BOOLEAN isSignalReservedByJVM(jint sigNum);
 
 typedef struct {
 	const char *signalName;
@@ -485,6 +485,9 @@ static const J9SignalMapping signalMap[] = {
 #if defined(SIGXFSZ)
 	J9_SIGNAL_MAP_ENTRY("XFSZ", SIGXFSZ),
 #endif /* defined(SIGXFSZ) */
+#if defined(SIGRECONFIG)
+	J9_SIGNAL_MAP_ENTRY("RECONFIG", SIGRECONFIG),
+#endif /* defined(SIGRECONFIG) */
 	{NULL, J9_SIG_ERR}
 };
 
@@ -887,14 +890,14 @@ getj9bin()
 		DBG_MSG(("found a libjvm.so at offset %d - looking at elem: %s\n", foundPosition, result));
 
 		/* first try this dir - this will be true for 'vm in subdir' cases, and is the likely Java 6 case as of SR1. */
-		if(isFileInDir(jvmBufferData(result), "lib" VMDLL_NAME ".so")) {
+		if (isFileInDir(jvmBufferData(result), "lib" VMDLL_NAME J9PORT_LIBRARY_SUFFIX)) {
 			return result;
 		}
 
 		truncatePath(jvmBufferData(result));
 
 		/* trying parent */
-		if(isFileInDir(jvmBufferData(result), "lib" VMDLL_NAME ".so")) {
+		if (isFileInDir(jvmBufferData(result), "lib" VMDLL_NAME J9PORT_LIBRARY_SUFFIX)) {
 			return result;
 		}
 	}
@@ -1000,7 +1003,7 @@ removeSuffix(char *string, const char *suffix)
 }
 #endif /* J9VM_JAVA9_BUILD < 150 */
 
-#if defined(J9UNIX) || defined(J9ZOS390)
+#if defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
 static BOOLEAN 
 preloadLibraries(void)
 {
@@ -1071,7 +1074,7 @@ preloadLibraries(void)
 	/* detect if we're in a subdir or not */
 	jvmDLLNameBuffer = jvmBufferCat(jvmDLLNameBuffer, "/lib");
 	jvmDLLNameBuffer = jvmBufferCat(jvmDLLNameBuffer, vmDllName);
-	jvmDLLNameBuffer = jvmBufferCat(jvmDLLNameBuffer, ".so");
+	jvmDLLNameBuffer = jvmBufferCat(jvmDLLNameBuffer, J9PORT_LIBRARY_SUFFIX);
 
 	if(-1 != stat (jvmBufferData(jvmDLLNameBuffer), &statBuf)) {
 		jvmInSubdir = TRUE;
@@ -1118,17 +1121,16 @@ preloadLibraries(void)
 		fprintf(stderr, "libomrsig failed to load: omrsig\n" );
 		exit( -1 ); /* failed */
 	}
-	g_sigaction = (SigAction) dlsym(omrsigDLL, "sigaction");
 
 	vmDLL = preloadLibrary(vmDllName, TRUE);
-
-	if (!vmDLL) {
+	if (NULL == vmDLL) {
 		fprintf(stderr,"libjvm.so failed to load: %s\n", vmDllName);
 		exit( -1 );	/* failed */
-	};
+	}
+
 	globalCreateVM = (CreateVM) dlsym (vmDLL, CREATE_JAVA_VM_ENTRYPOINT );
 	globalGetVMs = (GetVMs) dlsym (vmDLL,  GET_JAVA_VMS_ENTRYPOINT);
-	if (!globalCreateVM || !globalGetVMs) {
+	if ((NULL == globalCreateVM) || (NULL == globalGetVMs)) {
 		dlclose(vmDLL);
 		fprintf(stderr,"libjvm.so failed to load: global entrypoints not found\n");
 		exit( -1 );	/* failed */
@@ -1236,23 +1238,13 @@ jio_snprintf(char * str, int n, const char * format, ...)
 
 	Trc_SC_snprintf_Entry();
 
-#ifdef WIN32
 	va_start(args, format);
-
-#ifdef WIN32_IBMC
-	result = vsprintf( str, format, args );
-#else
+#if defined(WIN32) && !defined(WIN32_IBMC)
 	result = _vsnprintf( str, n, format, args );
-#endif
-
-	va_end(args);
-
-#endif
-#if defined(J9UNIX) || defined(J9ZOS390)
-	va_start(args, format);
+#else
 	result = vsprintf( str, format, args );
-	va_end(args);
 #endif
+	va_end(args);
 
 	Trc_SC_snprintf_Exit(result);
 
@@ -1284,16 +1276,9 @@ jio_vsnprintf(char * str, int n, const char * format, va_list args)
 
 	Trc_SC_vsnprintf_Entry(str, n, format);
 
-#ifdef WIN32
-
-#ifdef WIN32_IBMC
-	result = vsprintf( str, format, args );
-#else
+#if defined(WIN32) && !defined(WIN32_IBMC)
 	result = _vsnprintf( str, n, format, args );
-#endif
-
-#endif
-#if defined(J9UNIX) || defined(J9ZOS390)
+#else 
 	result = vsprintf( str, format, args );
 #endif
 
@@ -1321,15 +1306,12 @@ typedef struct VersionSetting {
  * and avoid naming change from J2SE_SHAPE_B136 to J2SE_SHAPE_B135.
  * This will be removed when a new stable JCL build level is determined and b135 is obsolete.
  *
- * Note about shape "sun_openjdk": 
- *    This shape is introduced to provide JVM_SocketAvailable() with different return values according to
- *    the "shape" value specified within classlib.properties such that both IBM and OpenJ9 Java 8 can work properly.
- *    This is required because IBM Java 8 is applied with a JCL patch which expects different return values from JVM_SocketAvailable().
- *    Newly added shape value and related code can be removed after IBM JCL patch is removed.
+ * Note: shapes "sun" and "sun_openjdk" here are for accommodation of such values within Java 8 classlib.properties.
+ *       Both shapes are mapped to J2SE_SHAPE_OPENJDK to indicate a Java 8 SDK.
  */
 VersionSetting SHAPE_SETTINGS[] = {
-		{"sun", J2SE_SHAPE_SUN},
-		{"sun_openjdk", J2SE_SHAPE_SUN_OPENJDK},
+		{"sun", J2SE_SHAPE_OPENJDK},
+		{"sun_openjdk", J2SE_SHAPE_OPENJDK},
 		{"raw", J2SE_SHAPE_RAW},
 		{"rawplusj9", J2SE_SHAPE_RAWPLUSJ9},
 		{"b135", J2SE_SHAPE_B136},
@@ -1343,8 +1325,6 @@ VersionSetting SHAPE_SETTINGS[] = {
  * Table to map textual props file entries to numeric constants.
  */
 VersionSetting VERSION_SETTINGS[] = {
-		{"1.6", J2SE_16},
-		{"1.7", J2SE_17},
 		{"1.8", J2SE_18},
 		{"1.9", J2SE_19}
 };
@@ -1473,15 +1453,17 @@ bail:
 /**
  * Attempt loading 'release' file, and get Java version info.
  * If the file is found, 'JAVA_VERSION' value is retrieved and decoded as following:
- * "1.8.0_xxx" --- Java 8, 'J2SE_18 | J2SE_SHAPE_SUN_OPENJDK' assuming this is an OpenJ9 Java 8 build;
- * "9"         --- Java 9, 'J2SE_19 | J2SE_SHAPE_B165';
- * "10"        --- Java 10, 'J2SE_V10 | J2SE_SHAPE_V10';
+ * "1.8.0_xxx" --- Java 8, 'J2SE_18 | J2SE_SHAPE_OPENJDK';
+ * "9[.x.x]"   --- Java 9, 'J2SE_19 | J2SE_SHAPE_B165';
+ * "10[.x.x]"  --- Java 10, 'J2SE_V10 | J2SE_SHAPE_V10';
+ * "11[.x.x]"  --- Java 11, 'J2SE_V11 | J2SE_SHAPE_V11';
+ * "12[.x.x]"  --- Java 12, 'J2SE_V12 | J2SE_SHAPE_V12';
  * Others      --- Latest Java, 'J2SE_LATEST | J2SE_SHAPE_LATEST'.
- * Note: 'release' file contains JAVA_VERSION="10" for Java 10 at this moment.
  * Otherwise, 0 is returned.
  *
- * @return 'J2SE_18 | J2SE_SHAPE_SUN_OPENJDK', 'J2SE_19 | J2SE_SHAPE_B165',
- *         'J2SE_V10 | J2SE_SHAPE_V10', 'J2SE_LATEST | J2SE_SHAPE_LATEST'
+ * @return 'J2SE_18 | J2SE_SHAPE_OPENJDK', 'J2SE_19 | J2SE_SHAPE_B165',
+ *         'J2SE_V10 | J2SE_SHAPE_V10', 'J2SE_V11 | J2SE_SHAPE_V11',
+ *         'J2SE_V12 | J2SE_SHAPE_V12', 'J2SE_LATEST | J2SE_SHAPE_LATEST'
  *         according to the 'JAVA_VERSION' value found in 'release';
  *         or 0 if otherwise.
  */
@@ -1504,11 +1486,23 @@ getVersionFromReleaseFile(void)
 #define	 JAVA_VERSION_8 "\"1.8.0" /* its usual format is "1.8.0_xxx" */
 			if (!strncmp(version, JAVA_VERSION_8, sizeof(JAVA_VERSION_8) - 1)) {
 #undef   JAVA_VERSION_8
-				finalVersion = J2SE_18 | J2SE_SHAPE_SUN_OPENJDK;
-			} else if (!strcmp(version, "\"9\"")) {
+				finalVersion = J2SE_18 | J2SE_SHAPE_OPENJDK;
+#define	 JAVA_VERSION_9 "\"9" /* its usual format is "9[.x.x]" */
+			} else if (!strncmp(version, JAVA_VERSION_9, sizeof(JAVA_VERSION_9) - 1)) {
+#undef   JAVA_VERSION_9
 				finalVersion = J2SE_19 | J2SE_SHAPE_B165;
-			} else if (!strcmp(version, "\"10\"")) {
+#define	 JAVA_VERSION_10 "\"10" /* its usual format is "10[.x.x]" */
+			} else if (!strncmp(version, JAVA_VERSION_10, sizeof(JAVA_VERSION_10) - 1)) {
+#undef   JAVA_VERSION_10			
 				finalVersion = J2SE_V10 | J2SE_SHAPE_V10;
+#define	 JAVA_VERSION_11 "\"11" /* its usual format is "11[.x.x]" */
+			} else if (!strncmp(version, JAVA_VERSION_11, sizeof(JAVA_VERSION_11) - 1)) {
+#undef   JAVA_VERSION_11
+				finalVersion = J2SE_V11 | J2SE_SHAPE_V11;
+#define	 JAVA_VERSION_12 "\"12" /* its usual format is "12[.x.x]" */
+			} else if (!strncmp(version, JAVA_VERSION_12, sizeof(JAVA_VERSION_12) - 1)) {
+#undef   JAVA_VERSION_12
+				finalVersion = J2SE_V12 | J2SE_SHAPE_V12;
 			} else {
 				/* Assume latest Java version and shape */
 				finalVersion = J2SE_LATEST | J2SE_SHAPE_LATEST;
@@ -1880,7 +1874,7 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 		libpathValue = envTemp;
 	}
 #endif
-#if defined(J9UNIX)
+#if defined(J9UNIX) || defined(OSX)
 	ldLibraryPathValue = getenv(ENV_LD_LIB_PATH);
 	if (NULL != ldLibraryPathValue) {
 		size_t pathLength = strlen(ldLibraryPathValue) +1;
@@ -2057,7 +2051,7 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 	j9portLibrary.omrPortLibrary.port_control(&j9portLibrary.omrPortLibrary, J9PORT_CTLDATA_MEM_CATEGORIES_SET, (UDATA)&j9MasterMemCategorySet);
 
 	j2seVersion = getVersionFromPropertiesFile();
-	if (J2SE_17 > j2seVersion) {
+	if (J2SE_18 > j2seVersion) {
 		fprintf(stderr, "Invalid version 0x%" J9PRIz "x detected in classlib.properties!\n", j2seVersion);
 		result = JNI_ERR;
 		goto exit;
@@ -2070,9 +2064,10 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 		ibmMallocTraceSet = TRUE;
 	altJavaHomeSpecified = (GetEnvironmentVariableW(ALT_JAVA_HOME_DIR_STR, NULL, 0) > 0);
 #endif
-#if defined(J9UNIX) || defined(J9ZOS390)
-	if (getenv(IBM_MALLOCTRACE_STR))
+#if defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
+	if (getenv(IBM_MALLOCTRACE_STR)) {
 		ibmMallocTraceSet = TRUE;
+	}
 #endif
 
 	args = (JavaVMInitArgs *)vm_args;
@@ -2366,6 +2361,7 @@ jint JNICALL JNI_GetDefaultJavaVMInitArgs(void *vm_args) {
 	case JNI_VERSION_1_6:
 	case JNI_VERSION_1_8:
 	case JNI_VERSION_9:
+	case JNI_VERSION_10:
 		return JNI_OK;
 	}
 	
@@ -2649,10 +2645,10 @@ preloadLibrary(char* dllName, BOOLEAN inJVMDir)
 		fprintf(stderr,"jvm.dll preloadLibrary: LoadLibrary(%s) error: %x\n", buffer->data, GetLastError());
 	}
 #endif
-#ifdef J9UNIX
+#if defined(J9UNIX) || defined(OSX)
 	buffer = jvmBufferCat(buffer, "/lib");
 	buffer = jvmBufferCat(buffer, dllName);
-	buffer = jvmBufferCat(buffer, ".so");
+	buffer = jvmBufferCat(buffer, J9PORT_LIBRARY_SUFFIX);
 #ifdef AIXPPC
 	loadAndInit(jvmBufferData(buffer), L_RTLD_LOCAL, NULL);
 #endif
@@ -2676,7 +2672,7 @@ preloadLibrary(char* dllName, BOOLEAN inJVMDir)
 	if (handle == NULL) {
 		fprintf(stderr,"libjvm.so preloadLibrary(%s): %s\n", buffer->data, dlerror());
 	}
-#endif /* J9UNIX */
+#endif /* J9UNIX || OSX */
 #ifdef J9ZOS390
 	buffer = jvmBufferCat(buffer, "/lib");
 	buffer = jvmBufferCat(buffer, dllName);
@@ -3706,7 +3702,7 @@ JVM_LoadSystemLibrary(const char *libName)
 
 #endif
 
-#if defined(J9UNIX) || defined(J9ZOS390)
+#if defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
 	void *dllHandle;
 
 	Trc_SC_LoadSystemLibrary_Entry(libName);
@@ -3852,11 +3848,12 @@ JVM_FindLibraryEntry(void* handle, const char *functionName)
 
 	Trc_SC_FindLibraryEntry_Entry(handle, functionName);
 
-#ifdef WIN32
+#if defined(WIN32)
 	result = GetProcAddress ((HINSTANCE)handle, (LPCSTR)functionName);
-#endif
-#if defined(J9UNIX) || defined(J9ZOS390)
+#elif defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
 	result = (void*)dlsym( (void*)handle, (char *)functionName );
+#else
+#error "Please implemente jvm.c:JVM_FindLibraryEntry(void* handle, const char *functionName)"
 #endif
 
 	Trc_SC_FindLibraryEntry_Exit(result);
@@ -3880,19 +3877,17 @@ JVM_SetLength(jint fd, jlong length)
 		return -1;
 	}
 
-#ifdef WIN32
-#ifdef WIN32_IBMC
+#if defined(WIN32_IBMC)
 	printf("_JVM_SetLength@12 called but not yet implemented. Exiting.");
 	exit(43);
-#else
+#elif defined(WIN32)
 	result = _chsize(fd, (long)length);
-#endif
-#endif
-#if defined(J9UNIX) && !defined(J9ZTPF)
+#elif defined(J9UNIX) && !defined(J9ZTPF)
 	result = ftruncate64(fd, length);
-#endif
-#if defined(J9ZOS390) || defined(J9ZTPF)
+#elif defined(J9ZOS390) || defined(J9ZTPF) || defined(OSX)
 	result = ftruncate(fd, length);
+#else 
+#error "Please provide an implementation of jvm.c:JVM_SetLength(jint fd, jlong length)"
 #endif
 
 	Trc_SC_SetLength_Exit(result);
@@ -3991,7 +3986,7 @@ JVM_Available(jint descriptor, jlong* bytes)
 #if defined(J9UNIX) && !defined(J9ZTPF)
 		struct stat64 tempStat;
 #endif
-#if defined(J9ZOS390) || defined(J9ZTPF)
+#if defined(J9ZOS390) || defined(J9ZTPF) || defined(OSX)
 		struct stat tempStat;
 #endif
 #if defined(LINUX)
@@ -4154,7 +4149,7 @@ JVM_Lseek(jint descriptor, jlong bytesToSeek, jint origin)
 #else
 	result = _lseeki64(descriptor, bytesToSeek, origin);
 #endif
-#elif defined(J9UNIX) || defined(J9ZOS390)
+#elif defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
 #if defined(LINUX) && !defined(J9VM_ENV_DATA64)
 
 #if __GLIBC_PREREQ(2,4)
@@ -4235,7 +4230,7 @@ JVM_Open(const char* filename, jint flags, jint mode)
 	struct stat64 tempStat;
 	int doUnlink;
 #endif
-#if defined(J9ZOS390) || defined(J9ZTPF)
+#if defined(J9ZOS390) || defined(J9ZTPF) || defined(OSX)
 	struct stat tempStat;
 	int doUnlink;
 #endif
@@ -4251,8 +4246,12 @@ JVM_Open(const char* filename, jint flags, jint mode)
 #endif
 #endif
 
-#if defined(J9UNIX) || defined(J9ZOS390)
+#if defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
+#if defined(OSX)
+#define EXTRA_OPEN_FLAGS 0
+#else
 #define EXTRA_OPEN_FLAGS O_LARGEFILE
+#endif /* defined(OSX) */
 
 #ifndef O_DSYNC
 #define O_DSYNC O_SYNC
@@ -4264,7 +4263,7 @@ JVM_Open(const char* filename, jint flags, jint mode)
 #else /* !defined(J9ZTPF) */
     flags &= (O_CREAT | O_APPEND | O_RDONLY | O_RDWR | O_TRUNC | O_WRONLY | O_EXCL | O_NOCTTY | O_NONBLOCK | O_SYNC | O_DSYNC);
 #endif /* defined(J9ZTPF) */
-#endif
+#endif /* defined(J9UNIX) || defined(J9ZOS390) || defined(OSX) */
 
 	/* For some reason, although JVM_NativePath is called on the filenames, some of them seem to
 		get mangled between JVM_NativePath being called and JVM_open being called */
@@ -4349,7 +4348,7 @@ JVM_Sync(jint descriptor)
 #else
 	result = _commit(descriptor);
 #endif
-#elif defined(J9UNIX) || defined(J9ZOS390)
+#elif defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
 	result = fsync(descriptor);
 #else
 #error No JVM_Sync implementation
@@ -4412,15 +4411,18 @@ JVM_NativePath(char* path)
 }
 
 /**
- * Checks if a signal is special.
+ * Check if a signal is used for shutdown. SIGHUP,
+ * SIGINT and SIGTERM are characterized as shutdown signals.
+ * Terminator.setup() registers handlers for these signals
+ * during startup.
  *
  * @param sigNum Integer value of the signal
  *
- * @returns TRUE if the signal is special
- *          FALSE if the signal is not special
+ * @returns TRUE if the signal is used for shutdown
+ *          FALSE if the signal is not used for shutdown
  */
 static BOOLEAN
-isSignalSpecial(jint sigNum)
+isSignalUsedForShutdown(jint sigNum)
 {
 	return
 #if defined(SIGHUP)
@@ -4429,9 +4431,6 @@ isSignalSpecial(jint sigNum)
 #if defined(SIGINT)
 		(SIGINT == sigNum) ||
 #endif /* defined(SIGINT) */
-#if defined(SIGQUIT)
-		(SIGQUIT == sigNum) ||
-#endif /* defined(SIGQUIT) */
 #if defined(SIGTERM)
 		(SIGTERM == sigNum) ||
 #endif /* defined(SIGTERM) */
@@ -4439,15 +4438,29 @@ isSignalSpecial(jint sigNum)
 }
 
 /**
- * Check if a signal is used by the VM.
+ * Check if a signal is reserved by the VM. This function is invoked from
+ * JVM_*Signal functions. This function only includes signals which
+ * are listed in jvm.c::signalMap. If the signal is not listed in
+ * jvm.c::signalMap, then a sun.misc.Signal instance can't be created
+ * for a signal value. The native JVM_*Signal functions can't be invoked
+ * in the absence of a sun.misc.Signal instance.
+ *
+ * Synchronous signals are handled by the VM via omrsig_protect: SIGFPE,
+ * SIGILL, SIGSEGV, SIGBUS and SIGTRAP. On Windows, SIGBREAK is reserved
+ * by the VM to trigger dumps. On Unix/Linux platforms, SIGQUIT is
+ * reserved by the VM to trigger dumps. SIGABRT is reserved by the JVM
+ * for abnormal termination. SIGCHLD is reserved for internal control.
+ * On zOS, SIGUSR1 is reserved by the JVM. SIGRECONFIG is reserved to
+ * detect any change in the number of CPUs, processing capacity, or
+ * physical memory.
  *
  * @param sigNum Integer value of the signal
  *
- * @returns TRUE if the signal is used by the VM
- *          FALSE if the signal is not used by the VM
+ * @returns TRUE if the signal is reserved by the VM
+ *          FALSE if the signal is not reserved by the VM
  */
 static BOOLEAN
-isSignalUsedByVM(jint sigNum)
+isSignalReservedByJVM(jint sigNum)
 {
 	return
 #if defined(SIGFPE)
@@ -4459,13 +4472,45 @@ isSignalUsedByVM(jint sigNum)
 #if defined(SIGSEGV)
 		(SIGSEGV == sigNum) ||
 #endif /* defined(SIGSEGV) */
+#if defined(SIGBUS)
+		(SIGBUS == sigNum) ||
+#endif /* defined(SIGBUS) */
+#if defined(SIGTRAP)
+		(SIGTRAP == sigNum) ||
+#endif /* defined(SIGTRAP) */
+#if defined(SIGQUIT)
+		(SIGQUIT == sigNum) ||
+#endif /* defined(SIGQUIT) */
+#if defined(SIGBREAK)
+		(SIGBREAK == sigNum) ||
+#endif /* defined(SIGBREAK) */
+#if defined(SIGABRT)
+		(SIGABRT == sigNum) ||
+#endif /* defined(SIGABRT) */
+#if defined(SIGCHLD)
+		(SIGCHLD == sigNum) ||
+#endif /* defined(SIGCHLD) */
+#if defined(SIGRECONFIG)
+		(SIGRECONFIG == sigNum) ||
+#endif /* defined(SIGRECONFIG) */
+#if defined(J9ZOS390) && defined(SIGUSR1)
+		(SIGUSR1 == sigNum) ||
+#endif /* defined(J9ZOS390) && defined(SIGUSR1) */
 		FALSE;
 }
 
 /**
- * Send a signal to the calling process or thread. If "-Xrs"
- * commandline option is specified, then signals such as SIGQUIT,
- * SIGHUP, SIGINT and SIGTERM are ignored.
+ * Raise a signal to the calling process or thread.
+ *
+ * isSignalReservedByJVM function lists the signals reserved by the JVM.
+ * Do not raise a signal if it is reserved by the JVM and not registered
+ * via JVM_RegisterSignal.
+ *
+ * isSignalUsedForShutdown lists all signals characterized as shutdown signals.
+ * Do not raise a shutdown signal if the -Xrs or the -Xrs:async cmdnline option
+ * is specified. If a shutdown signal is ignored by the OS, do not raise that
+ * shutdown signal. Only raise a shutdown signal if the previous two conditions
+ * are false.
  *
  * @param sigNum Integer value of the signal to be sent to the
  *               calling process or thread
@@ -4478,12 +4523,30 @@ JVM_RaiseSignal(jint sigNum)
 {
 	jboolean rc = JNI_FALSE;
 	J9JavaVM *javaVM = (J9JavaVM *)BFUjavaVM;
+	BOOLEAN isShutdownSignal = isSignalUsedForShutdown(sigNum);
+	BOOLEAN isSignalIgnored = FALSE;
+	int32_t isSignalIgnoredError = 0;
+	uint32_t portlibSignalFlag = 0;
+
+	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
 	Trc_SC_RaiseSignal_Entry(sigNum);
 
-	if (J9_ARE_ALL_BITS_SET(javaVM->sigFlags, J9_SIG_XRS)
-			&& isSignalSpecial(sigNum)) {
-		/* Ignore signal */
+	portlibSignalFlag = j9sig_map_os_signal_to_portlib_signal(sigNum);
+	if (0 != portlibSignalFlag) {
+		isSignalIgnoredError = j9sig_is_signal_ignored(portlibSignalFlag, &isSignalIgnored);
+	}
+
+	if (isSignalReservedByJVM(sigNum)) {
+		/* Don't raise a signal if it is reserved by the JVM, and not
+		 * registered via JVM_RegisterSignal.
+		 */
+	} else if (J9_ARE_ALL_BITS_SET(javaVM->sigFlags, J9_SIG_XRS_ASYNC) && isShutdownSignal) {
+		/* Ignore shutdown signals if -Xrs or -Xrs:async is specified.
+		 * If -Xrs:sync is specified, then raise shutdown signals.
+		 */
+	} else if (isShutdownSignal && ((0 == isSignalIgnoredError) && isSignalIgnored)) {
+		/* Ignore shutdown signal if it is ignored by the OS. */
 	} else {
 		raise(sigNum);
 		rc = JNI_TRUE;
@@ -4495,35 +4558,34 @@ JVM_RaiseSignal(jint sigNum)
 }
 
 /**
- * This is a stub for the pre-defined handler. The pre-defined
- * handler is supposed to be used in JVM_RegisterSignal when
- * the special value of J9_PRE_DEFINED_HANDLER_CHECK (2) is specified
- * in the handler. It hasn't been implemented since its functionality
- * is not known.
+ * Register a Java SignalHandler for a signal.
  *
- * TODO: Implement the pre-defined handler.
+ * isSignalReservedByJVM function lists the signals reserved by the JVM.
+ * This function shouldn't override handlers for signals that are reserved
+ * by the JVM. A user is allowed to register a native handler for the
+ * reserved signals if -Xrs cmdline option is specified. This function
+ * shouldn't register a Java SignalHandler for the reserved signals.
  *
- * @param sigNum Integer value of the signal to be sent to the
- *               calling process or thread
+ * isSignalUsedForShutdown lists all signals characterized as shutdown signals.
+ * This function shouldn't register a handler for shutdown signals if
+ * the -Xrs or the -Xrs:async cmdnline option is specified. If a shutdown
+ * signal is ignored by the OS, this function shouldn't register a handler
+ * for that shutdown signal. Only register a handler for shutdown signals if
+ * the previous two conditions are false.
  *
- * @returns void
- */
-static void
-dummySignalHandler(int sigNum) {
-
-}
-
-/**
- * Register a signal handler for a signal. Signals such as SIGFPE,
- * SIGILL and SIGSEGV are used by the VM; so, we don't register
- * a signal handler for these signals. If "-Xrs" commandline option
- * is specified, then signals such as SIGQUIT, SIGHUP, SIGINT
- * and SIGTERM are also ignored; thus, we don't register a signal
- * handler for these signals. If handler has the special value of
- * J9_PRE_DEFINED_HANDLER_CHECK (2), then handler is changed to
- * dummySignalHandler before it is registered. If the old handler
- * is same as the new handler, then a special value,
- * J9_OLDHANDLER_SAME_AS_NEWHANDLER (2) is returned.
+ * If handler has the special value of J9_PRE_DEFINED_HANDLER_CHECK (2),
+ * then the predefinedHandlerWrapper is registered with asynchSignalReporterThread
+ * in OMR. masterASynchSignalHandler notifies asynchSignalReporterThread whenever a
+ * signal is received. If the old OS handler is a master signal handler, then a
+ * Java signal handler was previously registered with the signal. In this case,
+ * J9_USE_OLD_JAVA_SIGNAL_HANDLER must be returned. sun.misc.Signal.handle(...) or
+ * jdk.internal.misc.Signal.handle(...) will return the old Java signal handler if
+ * JVM_RegisterSignal returns J9_USE_OLD_JAVA_SIGNAL_HANDLER. Otherwise, an instance
+ * of NativeHandler is returned with oldHandler's address stored in
+ * NativeHandler.handler.
+ *
+ * Java 8 - NativeHandler is sun.misc.NativeSignalHandler
+ * Java 9 - NativeHandler is jdk.internal.misc.Signal.NativeHandler
  *
  * @param sigNum Integer value of the signal to be sent to the
  *                  calling process or thread
@@ -4533,65 +4595,68 @@ dummySignalHandler(int sigNum) {
  *          J9_SIG_ERR (-1) in case of error
  */
 void* JNICALL
-JVM_RegisterSignal(jint sigNum, void* handler)
+JVM_RegisterSignal(jint sigNum, void *handler)
 {
-	J9JavaVM *javaVM = (J9JavaVM *)BFUjavaVM;
 	void *oldHandler = (void *)J9_SIG_ERR;
+	J9JavaVM *javaVM = (J9JavaVM *)BFUjavaVM;
+	J9InternalVMFunctions *vmFuncs = javaVM->internalVMFunctions;
+	J9VMThread *currentThread = vmFuncs->currentVMThread(javaVM);
+	BOOLEAN isShutdownSignal = isSignalUsedForShutdown(sigNum);
+	BOOLEAN isSignalIgnored = FALSE;
+	int32_t isSignalIgnoredError = 0;
+	uint32_t portlibSignalFlag = 0;
 
-#if !defined(WIN32)
-	struct sigaction newSignalAction = {{0}};
-	struct sigaction oldSignalAction = {{0}};
-#endif /* !defined(WIN32) */
+	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
-	Trc_SC_RegisterSignal();
+	Trc_SC_RegisterSignal_Entry(currentThread, sigNum, handler);
 
-	if (isSignalUsedByVM(sigNum)) {
-		/* Don't allow user to register a native handler since
-		 * the signal is already used by the VM.
+	portlibSignalFlag = j9sig_map_os_signal_to_portlib_signal(sigNum);
+	if (0 != portlibSignalFlag) {
+		isSignalIgnoredError = j9sig_is_signal_ignored(portlibSignalFlag, &isSignalIgnored);
+	}
+
+	if (isSignalReservedByJVM(sigNum)) {
+		/* Return error if signal is reserved by the JVM. oldHandler is initialized to
+		 * J9_SIG_ERR.
 		 */
-	} else if (J9_ARE_NO_BITS_SET(javaVM->sigFlags, J9_SIG_XRS)
-			&& isSignalSpecial(sigNum)) {
-		/* Don't allow user to register a native handler since
-		 * the signal is already used by the VM.
+		goto exit;
+	} else if (J9_ARE_ANY_BITS_SET(javaVM->sigFlags, J9_SIG_XRS_ASYNC) && isShutdownSignal) {
+		/* Don't register a handler for shutdown signals if -Xrs or -Xrs:async is specified.
+		 * If -Xrs:sync is specified, then register a handler for shutdown signals. oldHandler
+		 * is initialized to J9_SIG_ERR.
 		 */
+		goto exit;
+	} else if (isShutdownSignal && ((0 == isSignalIgnoredError) && isSignalIgnored)) {
+		/* Ignore shutdown signal if it is ignored by the OS. */
+		oldHandler = (void *)J9_SIG_IGNORED;
+		goto exit;
 	} else {
-		/* Register the signal */
-#if defined(WIN32)
+		/* Register the signal. */
+		IDATA isHandlerRegistered = 0;
 		if ((void *)J9_PRE_DEFINED_HANDLER_CHECK == handler) {
-			handler = (void *)dummySignalHandler;
-		}
-		oldHandler = OMRSIG_SIGNAL(sigNum, handler);
-#else /* defined(WIN32) */
-		sigemptyset(&newSignalAction.sa_mask);
-#if !defined(J9ZTPF)
-		newSignalAction.sa_flags = SA_RESTART;
-#else /* !defined(J9ZTPF) */
-		newSignalAction.sa_flags = 0;
-#endif /* !defined(J9ZTPF) */
-		if ((void *)J9_PRE_DEFINED_HANDLER_CHECK == handler) {
-			newSignalAction.sa_handler = dummySignalHandler;
+			isHandlerRegistered = vmFuncs->registerPredefinedHandler(javaVM, sigNum, &oldHandler);
 		} else {
-			newSignalAction.sa_handler = (void (*)(int))handler;
+			isHandlerRegistered = vmFuncs->registerOSHandler(javaVM, sigNum, handler, &oldHandler);
 		}
-		OMRSIG_SIGACTION(sigNum, &newSignalAction, &oldSignalAction);
-#endif /* defined(WIN32) */
+		if (0 != isHandlerRegistered) {
+			Trc_SC_RegisterSignal_FailedToRegisterHandler(currentThread, sigNum, handler, oldHandler);
+		}
 	}
 
-#if defined(WIN32)
-	if (((void *)J9_SIG_ERR != oldHandler) && (handler == oldHandler)) {
-		oldHandler = (void *)J9_OLDHANDLER_SAME_AS_NEWHANDLER;
-	} else {
-		oldHandler = (void *)oldHandler;
+	/* If oldHandler is a master handler, then a Java signal handler was previously registered with
+	 * the signal. sun.misc.Signal.handle(...) or jdk.internal.misc.Signal.handle(...) will return
+	 * the old Java signal handler if JVM_RegisterSignal returns J9_USE_OLD_JAVA_SIGNAL_HANDLER.
+	 * Otherwise, an instance of NativeHandler is returned with the oldHandler's address stored in
+	 * NativeHandler.handler. In Java 8, NativeHandler.handle() will invoke JVM_RegisterSignal using
+	 * NativeHandler.handler, which represents the address of the native signal handler function. In
+	 * Java 9, NativeHandler.handle() will throw UnsupportedOperationException.
+	 */
+	if (j9sig_is_master_signal_handler(oldHandler)) {
+		oldHandler = (void *)J9_USE_OLD_JAVA_SIGNAL_HANDLER;
 	}
-#else /* defined(WIN32) */
-	if ((NULL == oldSignalAction.sa_handler)
-			|| (newSignalAction.sa_handler != oldSignalAction.sa_handler)) {
-		oldHandler = (void *)oldSignalAction.sa_handler;
-	} else {
-		oldHandler = (void *)J9_OLDHANDLER_SAME_AS_NEWHANDLER;
-	}
-#endif /* defined(WIN32) */
 
+exit:
+	Trc_SC_RegisterSignal_Exit(currentThread, oldHandler);
 	return oldHandler;
 }
 
@@ -5231,11 +5296,6 @@ JVM_Socket(jint domain, jint type, jint protocol)
  * @param result the number of bytes that can be read without blocking
  * 
  * @return result of this JVM method, 0 for failure, 1 (or non-zero value) for success
- * 
- * Note: There is a JCL patch applied to IBM Java 8 build which expects 1 for failure, 0 for success.
- *       Current implementation supports both IBM and OpenJ9 Java 8 builds.
- *       When the JCL patch is removed, i.e., IBM Java 8 JCL is same as OpenJ9 JCL, following code can be 
- *       cleaned up to only return 0 for failure, 1 (or non-zero value) for success.
  */
 jint JNICALL
 JVM_SocketAvailable(jint descriptor, jint* result)
@@ -5248,13 +5308,12 @@ JVM_SocketAvailable(jint descriptor, jint* result)
 	/* Windows JCL native doesn't invoke this JVM method */
 	Assert_SC_unreachable();
 #endif
-#if defined(J9UNIX) || defined(J9ZOS390)
+#if defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
 	if (0 <= descriptor) {
 		do {
 			retVal = ioctl(descriptor, FIONREAD, result);
 		} while ((-1 == retVal) && (EINTR == errno));
 
-#if defined(OPENJ9_BUILD)
 		if (0 <= retVal) {
 			/* ioctl succeeded, return 1 to indicate that this JVM method succeeds */
 			retVal = 1;
@@ -5262,31 +5321,7 @@ JVM_SocketAvailable(jint descriptor, jint* result)
 			/* ioctl failed, return 0 to indicate that this JVM method fails */
 			retVal = 0;
 		}
-#else /* OPENJ9_BUILD */
-		if (J2SE_SHAPE_SUN_OPENJDK == J2SE_SHAPE(BFUjavaVM)) {
-			if (0 <= retVal) {
-				/* ioctl succeeded, return 1 to indicate that this JVM method succeeds */
-				retVal = 1;
-			} else {
-				/* ioctl failed, return 0 to indicate that this JVM method fails */
-				retVal = 0;
-			}
-		} else {
-			if (retVal < 0) {
-				/* ioctl failed, return 1 to indicate that this JVM method fails */
-				retVal = 1;
-			}
-		}
-#endif /* OPENJ9_BUILD */
 	}
-#if !defined(OPENJ9_BUILD)
-	else {
-		if (J2SE_SHAPE_SUN == J2SE_SHAPE(BFUjavaVM)) {
-			/* invalid descriptor, return 1 to indicate that this JVM method fails */
-			retVal = 1;
-		}
-	}
-#endif /* OPENJ9_BUILD */	
 #endif
 
 	Trc_SC_SocketAvailable_Exit(retVal, *result);
@@ -5310,12 +5345,11 @@ JVM_SocketClose(jint descriptor)
 		return 1;
 	}
 
-#ifdef WIN32
+#if defined(WIN32)
 	(void)shutdown(descriptor, SD_SEND);
 	(void)closesocket(descriptor);
 	retVal = 1; /* Always return TRUE */
-#endif
-#if defined(J9UNIX) || defined(J9ZOS390)
+#else
 	do {
 		retVal = close(descriptor);
 	} while ((-1 == retVal) && (EINTR == errno));
@@ -5339,8 +5373,9 @@ JVM_Timeout(jint descriptor, jint timeout)
 	struct fd_set fdset;
 #endif
 
-#if defined(J9UNIX) || defined(J9ZOS390)
-	jint returnVal, crazyCntr=10;
+#if defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
+	jint returnVal = 0; 
+	jint crazyCntr = 10;
 	fd_set fdset;
 #endif
 
@@ -5358,7 +5393,7 @@ JVM_Timeout(jint descriptor, jint timeout)
         } else  {
                 result = select(0, &fdset, 0, 0, &tval);
         }
-#elif defined(J9UNIX) || defined(J9ZOS390)
+#elif defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
 	do {
 		crazyCntr--;
 		returnVal = select(descriptor+1, &fdset, 0, 0, &tval);
@@ -5450,6 +5485,8 @@ JVM_ActiveProcessorCount(void)
 	 * Runtime.availableProcessors() by specification returns a number greater or equal to 1.
 	 * RTC 112959: [was 209402] Liberty JAX-RS Default Executor poor performance.  Match reference implementation behaviour
 	 * to return the bound CPUs rather than physical CPUs.
+	 *
+	 * This implementation should be kept consistent with jvmtiGetAvailableProcessors
 	 */
 	num = (jint)j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
 	if (num < 1) {
@@ -5860,7 +5897,7 @@ JVM_DefineClassWithSource(JNIEnv *env, const char * className, jobject classLoad
 
 	if (CLASSNAME_INVALID == vmFuncs->verifyQualifiedName(currentThread, J9_JNI_UNWRAP_REFERENCE(classNameString))) {
 		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNOCLASSDEFFOUNDERROR, (UDATA *)*(j9object_t*)classNameString);
-		vmFuncs->internalReleaseVMAccess(currentThread);
+		vmFuncs->internalExitVMToJNI(currentThread);
 		return NULL;
 	}
 
@@ -5869,11 +5906,11 @@ JVM_DefineClassWithSource(JNIEnv *env, const char * className, jobject classLoad
 	if (NULL == vmLoader) {
 		vmLoader = vmFuncs->internalAllocateClassLoader(vm, loaderObject);
 		if (NULL == vmLoader) {
-			vmFuncs->internalReleaseVMAccess(currentThread);
+			vmFuncs->internalExitVMToJNI(currentThread);
 			return NULL;
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return jvmDefineClassHelper(env, classLoader, classNameString, (jbyte*)classArray, 0, length, domain, 0);
 }
 

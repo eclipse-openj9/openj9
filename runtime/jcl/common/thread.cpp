@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,6 +31,7 @@
 
 #include "VMHelpers.hpp"
 #include "ObjectMonitor.hpp"
+#include "VMAccess.hpp"
 
 extern "C" {
 
@@ -93,7 +94,7 @@ Java_java_lang_Thread_getStateImpl(JNIEnv *env, jobject recv, jlong threadRef)
 	}
 	
 	currentThread->javaVM->internalVMFunctions->resumeThreadForInspection(currentThread, vmThread);
-	currentThread->javaVM->internalVMFunctions->internalReleaseVMAccess(currentThread);
+	currentThread->javaVM->internalVMFunctions->internalExitVMToJNI(currentThread);
 
 	Trc_JCL_Thread_getStateImpl_Exit(currentThread, status, state);
 	return state;
@@ -151,7 +152,7 @@ Java_java_lang_Thread_setNameImpl(JNIEnv *env, jobject thread, jlong threadRef, 
 			currentThread, vmThread, threadNameString)) {
 		internalVMFunctions->setNativeOutOfMemoryError(currentThread, 0, 0);        
 	} 
-	internalVMFunctions->internalReleaseVMAccess(currentThread);
+	internalVMFunctions->internalExitVMToJNI(currentThread);
 }
 
 void JNICALL
@@ -161,14 +162,22 @@ Java_java_lang_Thread_yield(JNIEnv *env, jclass threadClass)
 	/* Check whether Thread.Stop has been called */
 	if (J9_ARE_ANY_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_STOP)) {
 		J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
-		omrthread_monitor_enter(currentThread->publicFlagsMutex);
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 		vmFuncs->internalEnterVMFromJNI(currentThread);
+#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
+		omrthread_monitor_enter(currentThread->publicFlagsMutex);
+		vmFuncs->internalAcquireVMAccessNoMutex(currentThread);
+#endif /*  J9VM_INTERP_ATOMIC_FREE_JNI */
 		currentThread->currentException = currentThread->stopThrowable;
 		currentThread->stopThrowable = NULL;
 		clearEventFlag(currentThread, J9_PUBLIC_FLAGS_STOP);
 		omrthread_clear_priority_interrupted();
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+		vmFuncs->internalExitVMToJNI(currentThread);
+#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
 		vmFuncs->internalReleaseVMAccessNoMutex(currentThread);
 		omrthread_monitor_exit(currentThread->publicFlagsMutex);
+#endif /*  J9VM_INTERP_ATOMIC_FREE_JNI */
 	}
 	omrthread_yield();
 }
@@ -189,7 +198,7 @@ Java_java_lang_Thread_resumeImpl(JNIEnv *env, jobject rcv)
 			vmFuncs->clearHaltFlag(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 void JNICALL
@@ -205,23 +214,26 @@ Java_java_lang_Thread_suspendImpl(JNIEnv *env, jobject rcv)
 	Trc_JCL_threadSuspend(currentThread, targetThread);
 	if (J9VMJAVALANGTHREAD_STARTED(currentThread, receiverObject)) {
 		if (NULL != targetThread) {
-			vmFuncs->setHaltFlag(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
-			/* Suspending the current thread will take place upon the VM access reacquire after returning from
-			 * this native.  If suspending another thread, wait for it to become suspended before returning from
-			 * the native.
-			 */
-			if (currentThread != targetThread) {
-				vmFuncs->internalReleaseVMAccess(currentThread);
+			if (currentThread == targetThread) {
+				/* Suspending the current thread will take place upon re-entering the VM after returning from
+				 * this native.
+				 */
+				vmFuncs->setHaltFlag(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
+			} else {
+				vmFuncs->internalExitVMToJNI(currentThread);
 				omrthread_monitor_enter(targetThread->publicFlagsMutex);
-				while (J9_ARE_ALL_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND | J9_PUBLIC_FLAGS_VM_ACCESS)) {
-					omrthread_monitor_wait(targetThread->publicFlagsMutex);
+				VM_VMAccess::setHaltFlagForVMAccessRelease(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
+				if (VM_VMAccess::mustWaitForVMAccessRelease(targetThread)) {
+					while (J9_ARE_ALL_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND | J9_PUBLIC_FLAGS_VM_ACCESS)) {
+						omrthread_monitor_wait(targetThread->publicFlagsMutex);
+					}
 				}
 				omrthread_monitor_exit(targetThread->publicFlagsMutex);
 				goto vmAccessReleased;
 			}
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 vmAccessReleased: ;
 }
 
@@ -255,7 +267,7 @@ Java_java_lang_Thread_stopImpl(JNIEnv *env, jobject rcv, jobject stopThrowable)
 			}
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 void JNICALL
@@ -277,7 +289,7 @@ Java_java_lang_Thread_interruptImpl(JNIEnv *env, jobject rcv)
 			omrthread_interrupt(targetThread->osThread);
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 jboolean JNICALL
@@ -302,7 +314,7 @@ Java_java_lang_Thread_holdsLock(JNIEnv *env, jclass threadClass, jobject obj)
 			}
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 
 	return result;
 }
@@ -325,7 +337,7 @@ Java_java_lang_Thread_getStackTraceImpl(JNIEnv *env, jobject rcv)
 
 	j9object_t resultObject = getStackTraceForThread(currentThread, targetThread, skipCount);
 	jobject result = vmFuncs->j9jni_createLocalRef(env, resultObject);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -366,7 +378,7 @@ Java_java_lang_Thread_startImpl(JNIEnv *env, jobject rcv, jlong millis, jint nan
 			break;
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 }

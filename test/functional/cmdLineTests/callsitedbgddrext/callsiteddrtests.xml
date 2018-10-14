@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2018, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+ 
+<suite id="J9 shared cache dbgext Tests" timeout="600">
+
+ <variable name="CP" value="-cp $UTILSJAR$" />
+ <variable name="PROGRAM" value="org.openj9.test.ivj.Hanoi 2" />
+ <variable name="CACHENAME" value="shareddbgext" />
+ <variable name="DUMPFILE" value="j9core.dmp" />
+ <variable name="DUMPDIR" value="dumpdir" />
+ <variable name="XDUMP" value="-Xdump:system:file=$DUMPFILE$,events=vmstop" />
+ 
+ <!-- override the JDMPVIEW_EXE command on win32 since jdmpview.exe is failing on Windows XP - CMVC 200287 -->
+ <variable name="JDMPVIEW_EXE" value="$EXE$ com.ibm.jvm.dtfjview.DTFJView" platforms="win_x86-32" />
+ 
+ <!-- override the -Xdump command on z/OS -->
+ <variable name="XDUMP" value="-Xdump:system:opts=IEATDUMP,dsn=%uid.J9CORE.DMP,events=vmstop,request=exclusive+compact" platforms="zos.*" />
+
+ <test id="Create new shared cache with partition">
+  <command>$EXE$ -Xaot:forceaot,count=0,disableAsyncCompilation -Xshareclasses:name=$CACHENAME$,reset,modified=mod1</command>
+  <output regex="no" type="success">Usage:</output>
+ </test>
+
+ <test id="Create core file">
+  <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
+  <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
+  <exec command="rm -f $DUMPFILE$" />
+  <command>$EXE$ -Xaot:forceaot,count=0 -Xshareclasses:name=$CACHENAME$ $CP$ $XDUMP$ $PROGRAM$</command>
+  <output regex="no" type="success">Moved disk 0 to 1</output>
+  <output regex="no" type="success">System dump written</output>
+  <!-- check for unexpected core dumps -->
+  <output regex="no" type="failure">0001.dmp</output>
+ </test>
+
+ <test id="Remove shared cache">
+  <command>$EXE$ -Xshareclasses:name=$CACHENAME$,destroy</command>
+  <output regex="no" type="success">destroyed</output>
+ </test>
+
+ <test id="Run !printallcallsites">
+  <exec command="sh" capture="LOGNAME" platforms="zos.*" >
+    <arg>-c</arg>
+    <arg>echo $$LOGNAME</arg>
+  </exec>
+  <exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
+  <exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
+  <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
+  <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE$</arg>
+                <input>!printallcallsites</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success">jvminit.c</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+  <output regex="no" type="failure">no shared cache</output>
+  <output regex="no" type="failure">unable to read</output>
+  <output regex="no" type="failure">could not read</output>
+  <output regex="no" type="failure">dump event</output>
+ </test>
+
+ <test id="Run !findallcallsites">
+  <exec command="sh" capture="LOGNAME" platforms="zos.*" >
+    <arg>-c</arg>
+    <arg>echo $$LOGNAME</arg>
+  </exec>
+  <exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
+  <exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
+  <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
+  <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
+        <command command="$JDMPVIEW_EXE$">
+                <arg>-core $DUMPFILE$</arg>
+                <input>!findallcallsites</input>
+                <input>quit</input>
+        </command>
+  <output regex="no" type="success">jvminit.c</output>
+  <output regex="no" type="failure">DDRInteractiveCommandException</output>
+  <output regex="no" type="failure">no shared cache</output>
+  <output regex="no" type="failure">unable to read</output>
+  <output regex="no" type="failure">could not read</output>
+  <output regex="no" type="failure">dump event</output>
+ </test>
+
+
+</suite>
+
+

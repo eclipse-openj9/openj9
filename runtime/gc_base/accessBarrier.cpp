@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -678,15 +678,24 @@ J9WriteBarrierJ9ClassBatchStore(J9VMThread *vmThread, J9Class *dstJ9Class)
 	barrier->preBatchObjectStore(vmThread, dstJ9Class);	
 }
 
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
 /* The only read barrier is Scavenger concurrent copy, pre read */
 void
 J9ReadBarrier(J9VMThread *vmThread, fj9object_t *srcAddress)
 {
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread->javaVM)->accessBarrier;
 	barrier->preObjectRead(vmThread, NULL, srcAddress);
-}
 #endif
+}
+
+void
+J9ReadBarrierJ9Class(J9VMThread *vmThread, j9object_t *srcAddress)
+{
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread->javaVM)->accessBarrier;
+	barrier->preObjectRead(vmThread, NULL, srcAddress);
+#endif
+}
 
 j9object_t
 j9gc_objaccess_monitorTableReadObject(J9VMThread *vmThread, j9object_t *srcAddress)

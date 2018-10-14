@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -109,6 +109,16 @@ j9gc_heap_total_memory(J9JavaVM *javaVM)
 	return manager->getTotalHeapSize();
 }
 
+UDATA
+j9gc_is_garbagecollection_disabled(J9JavaVM *javaVM)
+{
+	UDATA ret = 0;
+	 if (gc_policy_nogc == MM_GCExtensions::getExtensions(javaVM)->configurationOptions._gcPolicy) {
+		 ret = 1;
+	 }
+	 return ret;
+}
+
 /**
  * VM API for determining the amount of free memory available on the heap.
  * The call returns the approximate free memory on the heap available for allocation.  An approximation is used
@@ -153,6 +163,9 @@ j9gc_allsupported_memorypools(J9JavaVM *javaVM)
 				memPools |= J9_GC_MANAGEMENT_POOL_TENURED;
 			}
 			break;
+		case J9_GC_POLICY_NOGC :
+			memPools |= J9_GC_MANAGEMENT_POOL_TENURED;
+			break;
 		case J9_GC_POLICY_BALANCED :
 				memPools |= J9_GC_MANAGEMENT_POOL_REGION_OLD;
 				memPools |= J9_GC_MANAGEMENT_POOL_REGION_EDEN;
@@ -190,6 +203,9 @@ j9gc_allsupported_garbagecollectors(J9JavaVM *javaVM)
 	case J9_GC_POLICY_BALANCED :
 		collectors |= J9_GC_MANAGEMENT_COLLECTOR_PGC;
 		collectors |= J9_GC_MANAGEMENT_COLLECTOR_GGC;
+		break;
+	case J9_GC_POLICY_NOGC :
+		collectors |= J9_GC_MANAGEMENT_COLLECTOR_EPSILON;
 		break;
 	default :
 		break;
@@ -256,6 +272,13 @@ j9gc_garbagecollector_name(J9JavaVM *javaVM, UDATA gcID)
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
 	const char *name = NULL;
 	switch (gcID) {
+	case J9_GC_MANAGEMENT_COLLECTOR_EPSILON :
+		if (extensions->_HeapManagementMXBeanBackCompatibilityEnabled) {
+			name = J9_GC_MANAGEMENT_GC_NAME_GLOBAL_OLD;
+		} else {
+			name = J9_GC_MANAGEMENT_GC_NAME_EPSILON;
+		}
+		break;
 	case J9_GC_MANAGEMENT_COLLECTOR_GLOBAL :
 		if (extensions->_HeapManagementMXBeanBackCompatibilityEnabled) {
 			name = J9_GC_MANAGEMENT_GC_NAME_GLOBAL_OLD;
@@ -310,6 +333,7 @@ j9gc_is_managedpool_by_collector(J9JavaVM *javaVM, UDATA gcID, UDATA poolID)
 	case J9_GC_MANAGEMENT_COLLECTOR_PGC :
 	case J9_GC_MANAGEMENT_COLLECTOR_GLOBAL :
 	case J9_GC_MANAGEMENT_COLLECTOR_GGC :
+	case J9_GC_MANAGEMENT_COLLECTOR_EPSILON :
 	default:
 		managedPools = j9gc_allsupported_memorypools(javaVM);
 		break;
@@ -416,6 +440,9 @@ j9gc_get_collector_id(OMR_VMThread *omrVMThread)
 		break;
 	case OMR_GC_CYCLE_TYPE_VLHGC_GLOBAL_GARBAGE_COLLECT :
 		id = J9_GC_MANAGEMENT_COLLECTOR_GGC;
+		break;
+	case OMR_GC_CYCLE_TYPE_EPSILON :
+		id = J9_GC_MANAGEMENT_COLLECTOR_EPSILON;
 		break;
 	default :
 		break;

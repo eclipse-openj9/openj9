@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2017 IBM Corp. and others
+ * Copyright (c) 2015, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -750,7 +750,7 @@ printReasonForFlagMismatch(MessageBuffer *msgBuf, J9BytecodeVerificationData *ve
 
 	/* Check the stackmap frame for flag only if the stackmap table exists in the class file */
 	if (stackMapCount > 0) {
-		I_32 stackmapFrameIndex = -1;
+		I_32 stackmapFrameIndex = 0;
 		U_8* nextStackmapFrame = NULL;
 
 		if (FALSE == prepareVerificationTypeBuffer(targetFrame, methodInfo)) {
@@ -759,8 +759,8 @@ printReasonForFlagMismatch(MessageBuffer *msgBuf, J9BytecodeVerificationData *ve
 
 		/* Walk through the stackmap table for the specified stackmap frame */
 		while (stackmapFrameIndex < (I_32)stackMapCount) {
-			stackmapFrameIndex += 1;
 			nextStackmapFrame = decodeStackmapFrameData(targetFrame, nextStackmapFrame, stackmapFrameIndex, methodInfo, verifyData);
+			stackmapFrameIndex += 1;
 			/* Return FALSE if out-of-memory during allocating verification buffer for data types in the specified stackmape frame */
 			if (NULL == nextStackmapFrame) {
 				goto exit;
@@ -956,7 +956,12 @@ generateJ9RtvExceptionDetails(J9BytecodeVerificationData* verifyData, U_8* initM
 
 	/* Stackmap Frame: */
 	if (printStackFrame) {
-		printMessage(&msgBuf, "\n%*sStackmap Frame:", INDENT(2));
+		/* Specify if the stack frame is from classfile or internal */
+		if (verifyData->createdStackMap) {
+			printMessage(&msgBuf, "\n%*sStackmap Frame (FallBack):", INDENT(2));
+		} else {
+			printMessage(&msgBuf, "\n%*sStackmap Frame:", INDENT(2));
+		}
 		printTheStackMapFrame(&msgBuf, &stackMapFrameTarget, &methodInfo);
 	}
 
@@ -969,8 +974,10 @@ generateJ9RtvExceptionDetails(J9BytecodeVerificationData* verifyData, U_8* initM
 		printExceptionTable(&msgBuf, &methodInfo);
 	}
 
-	/* Stack Map Table: */
-	if (methodInfo.stackMapCount > 0) {
+	/* Stack Map Table:
+	 * Only prints the stackmap table if it is non-empty and not internally generated
+	 */
+	if ((methodInfo.stackMapCount > 0) && (!verifyData->createdStackMap)) {
 		printMessage(&msgBuf, "\n%*sStackmap Table:", INDENT(2));
 		printSimpleStackMapTable(&msgBuf, &methodInfo);
 	}

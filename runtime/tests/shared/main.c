@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,7 +50,7 @@
 
 static IDATA setupArguments(struct j9cmdlineOptions* startupOptions,JavaVMInitArgs* vm_args,void **vmOptionsTable, BOOLEAN useXshareclasses, BOOLEAN enablebci);
 IDATA testOSCache(J9JavaVM* vm, struct j9cmdlineOptions *arg, const char *cmdline);
-IDATA testOSCacheMisc(J9PortLibrary *portLibrary, struct j9cmdlineOptions *arg, const char *cmdline);
+IDATA testOSCacheMisc(J9JavaVM *vm, struct j9cmdlineOptions *arg, const char *cmdline);
 IDATA testClasspathCache(J9JavaVM* vm);
 IDATA testCompositeCache(J9JavaVM* vm);
 IDATA testClasspathItem(J9JavaVM* vm);
@@ -148,7 +147,7 @@ createJavaVM(struct j9cmdlineOptions* startupOptions, J9JavaVM** vm_, BOOLEAN us
 	strcat(libjvmPath, jvmLibName);
 
 	if (j9sl_open_shared_library(libjvmPath, &handle, J9PORT_SLOPEN_DECORATE)) {
-		j9tty_printf(PORTLIB, "Failed to open JVM DLL: %s (%s)\n", J9_VM_DLL_NAME,
+		j9tty_printf(PORTLIB, "Failed to open JVM DLL: %s (%s)\n", libjvmPath,
 				j9error_last_error_message());
 		rc = 1;
 		goto cleanup;
@@ -355,7 +354,7 @@ signalProtectedMain(struct J9PortLibrary *portLibrary, void * vargs)
 #endif
 
 	HEADING(PORTLIB, "OSCacheMisc Test");
-	rc |= testOSCacheMisc(PORTLIB, args, argv[i]);
+	rc |= testOSCacheMisc(vm, args, argv[i]);
 
 	if ( (*((JavaVM*)vm))->DestroyJavaVM((JavaVM*)vm) != JNI_OK ) {
 		args->shutdownPortLib = FALSE;
@@ -407,6 +406,13 @@ setupArguments(struct j9cmdlineOptions* startupOptions,JavaVMInitArgs* vm_args,v
 			if (vmOptionsTableAddOption(vmOptionsTable, "-Xshareclasses:nonpersistent,name=testSCTransactions,enablebci,reset", NULL) != J9CMDLINE_OK) {
 				goto cleanup;
 			}
+		}
+		/* The test needs a debug area size of 2MB (using -Xscdmx2m). The default cache size is 300MB on 64-bit platforms on Java 9 and up, which might not be allowed
+		 * by the OS due to the shmmax setting. The cache size will be adjusted to shmmax and debug area size will also be adjusted proportionally, resulting in the debug area
+		 * size to be much smaller than 2MB. Set cache size to 16MB for this test so that it won't be unstable due to the shmmax setting on the test machines.
+		 */
+		if (vmOptionsTableAddOption(vmOptionsTable, "-Xscmx16m", NULL) != J9CMDLINE_OK) {
+			goto cleanup;
 		}
 		if (vmOptionsTableAddOption(vmOptionsTable, "-Xscdmx2m", NULL) != J9CMDLINE_OK) {
 			goto cleanup;

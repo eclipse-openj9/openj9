@@ -153,13 +153,10 @@ END_CURRENT
 })
 
 ifdef({OMR_GC_CONCURRENT_SCAVENGER},{
-dnl Helper to handle guarded storage events and
-dnl software read barriers. 
-dnl When event occurs, hardware populates return address in
-dnl vmThread->gsParameters.returnAddr
-dnl For software read barriers gsParameters.returnAddr is set by JIT
+dnl Helper to handle guarded storage events and software read barriers. When
+dnl the event occurs, hardware/software populates the return address in 
+dnl J9VMThread.gsParameters.returnAddr.
 define({HANDLE_GS_EVENT_HELPER},{
-BEGIN_HELPER($1)
     SAVE_ALL_REGS($1)
     ST_GPR J9SP,J9TR_VMThread_sp(J9VMTHREAD)
     LR_GPR CARG1,J9VMTHREAD
@@ -169,45 +166,48 @@ BEGIN_HELPER($1)
     L_GPR J9SP,J9TR_VMThread_sp(J9VMTHREAD)
     ST_GPR J9SP,JIT_GPR_SAVE_SLOT(J9SP)
     RESTORE_ALL_REGS_AND_SWITCH_TO_JAVA_STACK($1)
-dnl Force condition code 2 to be set before the return. This is done to
-dnl ensure that if we are returning to a non-constrained transactional
-dnl memory region that the transaction would abort with a condition code
-dnl indicating a transient transaction abort. The transaction would then
-dnl be re-executed. Note the below CLFI / CLGFI instruction will always 
-dnl produce condition code 2 because the Java stack pointer is always
-dnl non-zero at the return point.
-dnl 
-dnl TODO: When assembler -march changes to z9 update to:
-dnl CLFI_GPR J9SP,0
-ifdef({ASM_J9VM_ENV_DATA64},{
-    ifdef({J9ZOS390},{
-        DC X'C25E0000'
-        DC X'0000'
-    },{
-       .long 0xC25E0000
-       .short 0x0000
-    })
-},{
-    ifdef({J9ZOS390},{
-        DC X'C25F0000'
-        DC X'0000'
-    },{
-       .long 0xC25F0000
-       .short 0x0000
-    })
-})
 })
 
 define({HANDLE_GS_EVENT},{
+BEGIN_FUNC($1)
+dnl Test the TX bit of GSECI (bit 16) to see if the CPU was in transactional-
+dnl execution mode when the guarded storage event was recognized. At that point
+dnl we have two cases:
+dnl
+dnl 1. TX was a non-constrained transaction:
+dnl	   If this was the case do not execute the read barrier and simply return to
+dnl    the fallback transaction abort JIT code to handle it by forcing condition
+dnl    code to be 2 with the below CL(G)FI instruction indicating a transitent 
+dnl    transaction abort.
+dnl
+dnl 2. TX was a constrained transaction:
+dnl    If this was the case then we are safe to execute the read barrier because
+dnl    the JIT has ensured that there will be no side-effects of the transaction
+dnl    being aborted prior to reaching the guarded storage event handler. In this
+dnl    case it is functionally safe to execute the read barrier.
+dnl
+dnl See eclipse/openj9#2545 and eclipse/openj9#2790 for more details.
+    TM J9TR_VMThread_gsParameters_GSECI(J9VMTHREAD),128
+    JZ LABEL_NAME(L_GS_CALLHELPER)
+    TM J9TR_VMThread_gsParameters_GSECI(J9VMTHREAD),64
+    JNZ LABEL_NAME(L_GS_CALLHELPER)
+    CLFI_GPR J9SP,0
+    J LABEL_NAME(L_GS_DONE)
+PLACE_LABEL(L_GS_CALLHELPER)
+    RELOAD_SSP_SAVE_VALUE
+    STM_GPR r0,LAST_REG,JIT_GPR_SAVE_SLOT(0)
+    SWAP_SSP_VALUE
+    SAVE_HIWORD_REGS
+    LOAD_CAA
     HANDLE_GS_EVENT_HELPER($1)
-
+PLACE_LABEL(L_GS_DONE)
 dnl Branch back to the instruction that triggered guarded storage event.
-BRANCH_INDIRECT_ON_CONDITION(15,J9TR_VMThread_gsParameters_returnAddr,0,J9VMTHREAD)
-
+    BRANCH_INDIRECT_ON_CONDITION(15,J9TR_VMThread_gsParameters_returnAddr,0,J9VMTHREAD)
 END_CURRENT
 })
 
 define({HANDLE_SW_READ_BARRIER},{
+BEGIN_HELPER($1)
     HANDLE_GS_EVENT_HELPER($1)
 dnl Branch back to the instruction that called software read barrier hanlder.
     BR r14

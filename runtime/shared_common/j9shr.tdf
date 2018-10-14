@@ -1,5 +1,5 @@
 //*******************************************************************************
-// Copyright (c) 2006, 2017 IBM Corp. and others
+// Copyright (c) 2006, 2018 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -521,8 +521,8 @@ TraceEvent=Trc_SHR_OSC_GlobalLock_getMutex NoEnv Overhead=1 Level=6 Group=OSCach
 TraceEvent=Trc_SHR_OSC_GlobalLock_gotMutex NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache Global Lock: ACQUIRED for cache rootName=%s"
 TraceEvent=Trc_SHR_OSC_GlobalLock_released NoEnv Overhead=1 Level=4 Group=OSCache Template="OSCache releasing Global Lock semaphore"
 
-TraceEvent=Trc_SHR_OSC_createNewCache_Event4 Obsolete NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache createNewCache calling initialiser, intialiser=%p len=%d"
-TraceEvent=Trc_SHR_OSC_createNewCache_Event5 Obsolete NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache createNewCache return from initialiser"
+TraceEvent=Trc_SHR_OSC_createNewCache_Event4 Obsolete NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache createNewCache calling initializer, intialiser=%p len=%d"
+TraceEvent=Trc_SHR_OSC_createNewCache_Event5 Obsolete NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache createNewCache return from initializer"
 TraceDebug=Trc_SHR_OSC_createNewCache_Debug1 Obsolete NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache createNewCache: GENJVMAT: %d, GENLOCK: %d, GENSTATE: %d"
 TraceDebug=Trc_SHR_OSC_createNewCache_Debug2 Obsolete NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache createNewCache: currentgeneration in semaphore = %d"
 TraceExit=Trc_SHR_OSC_createNewCache_Exit_recreated Obsolete NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache createNewCache return opened (semaphore recreated)"
@@ -991,8 +991,8 @@ TraceEvent=Trc_SHR_OSC_Mmap_startup_goodCreateCacheHeader NoEnv Overhead=1 Level
 TraceEvent=Trc_SHR_OSC_Mmap_startup_goodSetCacheLength NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Successfully set cache length to %zu"
 TraceEvent=Trc_SHR_OSC_Mmap_startup_badAttach NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Failed to attach to cache"
 TraceExit=Trc_SHR_OSC_Mmap_startup_badSetCacheLength NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Failed to set cache length to %zu"
-TraceEvent=Trc_SHR_OSC_Mmap_startup_goodInitialiseDataHeader NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Successfully initialised cache data header"
-TraceExit=Trc_SHR_OSC_Mmap_startup_badInitialiseDataHeader NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Failed to initialise cache data header"
+TraceEvent=Trc_SHR_OSC_Mmap_startup_goodInitializeDataHeader NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Successfully initialized cache data header"
+TraceExit=Trc_SHR_OSC_Mmap_startup_badInitializeDataHeader NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Failed to initialize cache data header"
 TraceEvent=Trc_SHR_OSC_Mmap_startup_badCreateCacheHeader NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Failed to create cache header"
 TraceEvent=Trc_SHR_OSC_Mmap_startup_badReleaseHeaderWriteLock NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Failed to release header write lock"
 TraceEvent=Trc_SHR_OSC_Mmap_startup_goodReleaseHeaderWriteLock NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Successfully released header write lock"
@@ -1140,10 +1140,10 @@ TraceExit=Trc_SHR_OSC_Mmap_updateLastDetachedTime_badreleaselock NoEnv Overhead=
 TraceEvent=Trc_SHR_OSC_Mmap_updateLastDetachedTime_goodreleaselock NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::updateLastDetachedTime: releaseHeaderWriteLock successful"
 TraceExit=Trc_SHR_OSC_Mmap_updateLastDetachedTime_Exit NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::updateLastDetachedTime: Successful exit"
 
-TraceEntry=Trc_SHR_OSC_Mmap_initialiseDataHeader_Entry NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::initialiseDataHeader: Entered"
-TraceEvent=Trc_SHR_OSC_Mmap_initialiseDataHeader_callinginit NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::initialiseDataHeader: Calling init with _mapDataAddr=%p, _mapDataLength=%zu, sharedClassMinAOTSize=%zd, sharedClassMaxAOTSize=%zd, sharedClassReadWriteBytes=%zd"
-TraceEvent=Trc_SHR_OSC_Mmap_initialiseDataHeader_initialised NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::initialiseDataHeader: Returned from init method"
-TraceExit=Trc_SHR_OSC_Mmap_initialiseDataHeader_Exit NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::initialiseDataHeader: Exiting"
+TraceEntry=Trc_SHR_OSC_Mmap_initializeDataHeader_Entry NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::initializeDataHeader: Entered"
+TraceEvent=Trc_SHR_OSC_Mmap_initializeDataHeader_callinginit NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::initializeDataHeader: Calling init with _mapDataAddr=%p, _mapDataLength=%zu, sharedClassMinAOTSize=%zd, sharedClassMaxAOTSize=%zd, sharedClassReadWriteBytes=%zd"
+TraceEvent=Trc_SHR_OSC_Mmap_initializeDataHeader_initialized NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::initializeDataHeader: Returned from init method"
+TraceExit=Trc_SHR_OSC_Mmap_initializeDataHeader_Exit NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::initializeDataHeader: Exiting"
 
 TraceEntry=Trc_SHR_OSC_Mmap_internalDetach_Entry NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::internalDetach: Entering"
 TraceExit=Trc_SHR_OSC_Mmap_internalDetach_notattached NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::internalDetach: File not attached, returning"
@@ -1487,7 +1487,7 @@ TraceEntry=Trc_SHR_OSC_removeCacheVersionAndGen_Entry NoEnv Overhead=1 Level=1 T
 TraceExit=Trc_SHR_OSC_removeCacheVersionAndGen_overflow NoEnv Overhead=1 Level=1 Template="OSCache::removeCacheVersionAndGen: OVERFLOW"
 TraceExit=Trc_SHR_OSC_removeCacheVersionAndGen_Exit NoEnv Overhead=1 Level=1 Template="OSCache::removeCacheVersionAndGen: Exit"
 TraceEntry=Trc_SHR_OSC_getCacheDir_Entry NoEnv Overhead=1 Level=1 Template="OSCache::getCacheDir: Entry"
-TraceExit=Trc_SHR_OSC_getCacheDir_j9shmem_getDir_failed NoEnv Overhead=1 Level=1 Template="OSCache::getCacheDir: getDir failed"
+TraceExit=Trc_SHR_OSC_getCacheDir_j9shmem_getDir_failed Obsolete NoEnv Overhead=1 Level=1 Template="OSCache::getCacheDir: getDir failed"
 TraceEvent=Trc_SHR_OSC_getCacheDir_removedBaseDir NoEnv Obsolete Overhead=1 Level=1 Template="OSCache::getCacheDir: successfully removed baseDir"
 TraceExit=Trc_SHR_OSC_getCacheDir_noBaseDir NoEnv Overhead=1 Level=1 Template="OSCache::getCacheDir: no base dir"
 TraceExit=Trc_SHR_OSC_getCacheDir_Exit NoEnv Overhead=1 Level=1 Template="OSCache::getCacheDir: Exit"
@@ -1826,7 +1826,7 @@ TraceExit=Trc_SHR_OSC_Vmem_startup_closefilefailed NoEnv Overhead=1 Level=1 Temp
 TraceExit=Trc_SHR_OSC_Vmem_startup_cacheNotInitialized NoEnv Overhead=1 Level=1 Template="SH_OSCachevmem::startup: Attempting to open read-only but cache is not initialized"
 TraceExit=Trc_SHR_OSC_Vmem_startup_allocation_failed NoEnv Overhead=1 Level=1 Template="SH_OSCachevmem::startup: Memory allocation of %d bytes failed"
 TraceEvent=Trc_SHR_OSC_Vmem_startup_callinginit NoEnv  Obsolete Overhead=1 Level=1 Template="SH_OSCachevmem::startup: Calling init with _mapDataAddr=%p, _mapDataLength=%zu, sharedClassMinAOTSize=%zd, sharedClassMaxAOTSize=%zd, sharedClassReadWriteBytes=%zd"
-TraceEvent=Trc_SHR_OSC_Vmem_startup_initialised NoEnv Overhead=1 Level=1 Template="SH_OSCachevmem::startup: Returned from init method"
+TraceEvent=Trc_SHR_OSC_Vmem_startup_initialized NoEnv Overhead=1 Level=1 Template="SH_OSCachevmem::startup: Returned from init method"
 TraceExit=Trc_SHR_OSC_Vmem_startup_Exit NoEnv Overhead=1 Level=1 Template="SH_OSCachevmem::startup: Successful exit"
 
 TraceEntry=Trc_SHR_OSC_Vmem_attach_Entry Obsolete NoEnv Overhead=1 Level=1 Template="SH_OSCachevmem::attach: Entered"
@@ -2116,7 +2116,7 @@ TraceEvent=Trc_SHR_ClassDebugData_getDebugAreaEndAddress_Event NoEnv Overhead=1 
 
 TraceEntry=Trc_SHR_ClassDebugData_HeaderInitForDebug_Entry NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::HeaderInitForDebug : enter (ca=%p, size=%u)"
 TraceException=Trc_SHR_ClassDebugData_HeaderInitForDebug_NullCacheHdr_Event NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::HeaderInitForDebug : null cache header"
-TraceException=Trc_SHR_ClassDebugData_HeaderInitForDebug_AlreadyInit_Event NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::HeaderInitForDebug : cache already has an initialised debug area (flags=%x)"
+TraceException=Trc_SHR_ClassDebugData_HeaderInitForDebug_AlreadyInit_Event NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::HeaderInitForDebug : cache already has an initialized debug area (flags=%x)"
 TraceExit=Trc_SHR_ClassDebugData_HeaderInitForDebug_Exit NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::HeaderInitForDebug : exit (retval=%u)"
 
 TraceEvent=Trc_SHR_ClassDebugData_getRecommendedPercentage_Event NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::getRecommendedPercentage : retval=%u"
@@ -2201,7 +2201,7 @@ TraceEntry=Trc_SHR_OSC_Mmap_errorHandler_Entry_V2 NoEnv Overhead=1 Level=1 Templ
 TraceEntry=Trc_SHR_CC_commitUpdate_Entry2 Overhead=1 Level=2 Template="CC commitUpdate: Committing for _scan=%p, _storedMetaUsedBytes=%d, _storedSegmentUsedBytes=%d, _storedReadWriteUsedBytes=%d, _storedAOTUsedBytes=%d, _storedJITUsedBytes=%d"
 TraceEvent=Trc_SHR_CC_rollbackUpdate_Event2 Overhead=1 Level=1 Template="CC rollbackUpdate: Rolling back update for _scan=%p, _storedMetaUsedBytes=%d, _storedSegmentUsedBytes=%d, _storedReadWriteUsedBytes=%d, _storedAOTUsedBytes=%d, _storedJITUsedBytes=%d"
 TraceExit=Trc_SHR_CC_allocate_Exit2 Overhead=1 Level=3 Template="CC allocate: Exiting with result=%p, _scan=%p, _storedMetaUsedBytes=%d, _storedSegmentUsedBytes=%d, _storedReadWriteUsedBytes=%d, _storedAOTUsedBytes=%d, _storedJITUsedBytes=%d" 
-TraceEvent=Trc_SHR_OSC_Mmap_initialiseDataHeader_callinginit2 NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::initialiseDataHeader: Calling init with _mapDataAddr=%p, _mapDataLength=%zu, sharedClassMinAOTSize=%zd, sharedClassMaxAOTSize=%zd, sharedClassMinJITSize=%zd, sharedClassMaxJITSize=%zd, sharedClassReadWriteBytes=%zd"
+TraceEvent=Trc_SHR_OSC_Mmap_initializeDataHeader_callinginit2 NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::initializeDataHeader: Calling init with _mapDataAddr=%p, _mapDataLength=%zu, sharedClassMinAOTSize=%zd, sharedClassMaxAOTSize=%zd, sharedClassMinJITSize=%zd, sharedClassMaxJITSize=%zd, sharedClassReadWriteBytes=%zd"
 TraceEvent=Trc_SHR_OSC_Vmem_startup_callinginit2 NoEnv Overhead=1 Level=1 Template="SH_OSCachevmem::startup: Calling init with _mapDataAddr=%p, _mapDataLength=%zu, sharedClassMinAOTSize=%zd, sharedClassMaxAOTSize=%zd, sharedClassMinJITSize=%zd, sharedClassMaxJITSize=%zd, sharedClassReadWriteBytes=%zd"
 
 TraceEntry=Trc_SHR_CC_setCorruptCacheWithContext_Entry NoEnv Overhead=1 Level=1 Template="CC setCorruptCache: Entering, corruptionCode = %zd, corruptValue = 0x%zx, unitTest = %zd"
@@ -2333,7 +2333,7 @@ TraceException=Trc_SHR_API_j9shr_stringTransaction_stop_ExitWriteMutex_Event Ove
 TraceException=Trc_SHR_API_j9shr_stringTransaction_start_SegMutex_Event Overhead=1 Level=1 Template="API j9shr_stringTransaction_start : Error: omrthread_monitor_enter(segmentMutex) failed"
 TraceException=Trc_SHR_API_j9shr_stringTransaction_start_WriteLock_Event Overhead=1 Level=1 Template="API j9shr_stringTransaction_start : Error: enterWriteMutex() failed"
 
-TraceExit=Trc_SHR_OSC_checkOSCacheHeader_wrongBuildID_2 NoEnv Overhead=1 Level=1 Template="OSCache::checkOSCacheHeader: Exit - wrong build ID. VM build ID: %llu . Shared Cache build ID: %llu"
+TraceExit=Trc_SHR_OSC_checkOSCacheHeader_wrongBuildID_2 NoEnv Obsolete Overhead=1 Level=1 Template="OSCache::checkOSCacheHeader: Exit - wrong build ID. VM build ID: %llu . Shared Cache build ID: %llu"
 
 TraceException=Trc_SHR_CM_readCacheletHints_noManager Overhead=1 Level=1 Template="CM readCacheletHints no manager for type %zu"
 
@@ -2401,8 +2401,8 @@ TraceExit=Trc_SHR_OSC_Virt_startup_insufficientSpaceForSpecifiedCacheSize Obsole
 TraceEvent=Trc_SHR_OSC_Virt_startup_goodSetCacheLength Obsolete NoEnv Overhead=1 Level=5 Template="SH_OSCachevirt::startup: Successfully set cache length to %zu"
 TraceExit=Trc_SHR_OSC_Virt_startup_badCreateCacheHeader Obsolete NoEnv Overhead=1 Level=1 Template="SH_OSCachevirt::startup: Failed creating cache header"
 TraceEvent=Trc_SHR_OSC_Virt_startup_goodCreateCacheHeader Obsolete NoEnv Overhead=1 Level=5 Template="SH_OSCachevirt::startup: Successfully created cache header"
-TraceExit=Trc_SHR_OSC_Virt_startup_badInitialiseDataHeader Obsolete NoEnv Overhead=1 Level=1 Template="SH_OSCachevirt::startup: Failed initializing data header"
-TraceEvent=Trc_SHR_OSC_Virt_startup_goodInitialiseDataHeader Obsolete NoEnv Overhead=1 Level=5 Template="SH_OSCachevirt::startup: Successfully initializing data header"
+TraceExit=Trc_SHR_OSC_Virt_startup_badInitializeDataHeader Obsolete NoEnv Overhead=1 Level=1 Template="SH_OSCachevirt::startup: Failed initializing data header"
+TraceEvent=Trc_SHR_OSC_Virt_startup_goodInitializeDataHeader Obsolete NoEnv Overhead=1 Level=5 Template="SH_OSCachevirt::startup: Successfully initializing data header"
 TraceExit=Trc_SHR_OSC_Virt_startup_badReleaseHeaderWriteLock Obsolete NoEnv Overhead=1 Level=1 Template="SH_OSCachevirt::startup: Failed releasing header lock"
 TraceEvent=Trc_SHR_OSC_Virt_startup_goodReleaseHeaderWriteLock Obsolete NoEnv Overhead=1 Level=5 Template="SH_OSCachevirt::startup: Successfully released header lock"
 TraceExit=Trc_SHR_OSC_Virt_startup_Exit Obsolete NoEnv Overhead=1 Level=5 Template="SH_OSCachevirt::startup: Returning success"
@@ -2485,10 +2485,10 @@ TraceEntry=Trc_SHR_OSC_Virt_createCacheHeader_Entry Obsolete NoEnv Overhead=1 Le
 TraceEvent=Trc_SHR_OSC_Virt_createCacheHeader_header Obsolete NoEnv Overhead=1 Level=5 Template="SH_OSCachevirt::createCacheHeader: Created header eyecatcher=%s, size=%u, dataStart=%d, dataLength=%d, createTime=%llu, lastAttachedTime=%llu"
 TraceExit=Trc_SHR_OSC_Virt_createCacheHeader_Exit Obsolete NoEnv Overhead=1 Level=5 Template="SH_OSCachevirt::createCacheHeader: Returning"
 
-TraceEntry=Trc_SHR_OSC_Virt_initialiseDataHeader_Entry Obsolete NoEnv Overhead=1 Level=5 Template="SH_OSCachevirt::initialiseDataHeader: Function entered"
-TraceEvent=Trc_SHR_OSC_Virt_initialiseDataHeader_callinginit2 Obsolete NoEnv Overhead=1 Level=5 Template="SH_OSCachevirt::initialiseDataHeader: Calling init with _mapDataAddr=%p, _mapDataLength=%zu, sharedClassMinAOTSize=%zd, sharedClassMaxAOTSize=%zd, sharedClassMinJITSize=%zd, sharedClassMaxJITSize=%zd, sharedClassReadWriteBytes=%zd"
-TraceEvent=Trc_SHR_OSC_Virt_initialiseDataHeader_initialised Obsolete NoEnv Overhead=1 Level=5 Template="SH_OSCachevirt::initialiseDataHeader: Successfully initialized data header"
-TraceExit=Trc_SHR_OSC_Virt_initialiseDataHeader_Exit Obsolete NoEnv Overhead=1 Level=5 Template="SH_OSCachevirt::initialiseDataHeader: Returning"
+TraceEntry=Trc_SHR_OSC_Virt_initializeDataHeader_Entry Obsolete NoEnv Overhead=1 Level=5 Template="SH_OSCachevirt::initializeDataHeader: Function entered"
+TraceEvent=Trc_SHR_OSC_Virt_initializeDataHeader_callinginit2 Obsolete NoEnv Overhead=1 Level=5 Template="SH_OSCachevirt::initializeDataHeader: Calling init with _mapDataAddr=%p, _mapDataLength=%zu, sharedClassMinAOTSize=%zd, sharedClassMaxAOTSize=%zd, sharedClassMinJITSize=%zd, sharedClassMaxJITSize=%zd, sharedClassReadWriteBytes=%zd"
+TraceEvent=Trc_SHR_OSC_Virt_initializeDataHeader_initialized Obsolete NoEnv Overhead=1 Level=5 Template="SH_OSCachevirt::initializeDataHeader: Successfully initialized data header"
+TraceExit=Trc_SHR_OSC_Virt_initializeDataHeader_Exit Obsolete NoEnv Overhead=1 Level=5 Template="SH_OSCachevirt::initializeDataHeader: Returning"
 
 TraceEntry=Trc_SHR_OSC_Virt_internalDetach_Entry Obsolete NoEnv Overhead=1 Level=5 Template="SH_OSCachevirt::internalDetach: Function entered"
 TraceExit=Trc_SHR_OSC_Virt_internalDetach_notattached Obsolete NoEnv Overhead=1 Level=5 Template="SH_OSCachevirt::internalDetach: Not attached"
@@ -2869,8 +2869,8 @@ TraceExit=Trc_SHR_CC_updateRuntimeFullFlags_Exit Overhead=1 Level=4 Template="CC
 TraceEntry=Trc_SHR_CC_unsetCacheHeaderFullFlags_Entry Overhead=1 Level=1 Template="CC updateRuntimeFullFlags: entered with flags %zu"
 TraceExit=Trc_SHR_CC_unsetCacheHeaderFullFlags_Exit Overhead=1 Level=1 Template="CC updateRuntimeFullFlags: exit"
 
-TraceEvent=Trc_SHR_OSC_Mmap_initialiseDataHeader_callinginit3 NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::initialiseDataHeader: Calling init with _mapDataAddr=%p, _mapDataLength=%zu, sharedClassMinAOTSize=%zd, sharedClassMaxAOTSize=%zd, sharedClassMinJITSize=%zd, sharedClassMaxJITSize=%zd, sharedClassSoftMaxBytes=%zd, sharedClassReadWriteBytes=%zd"
-TraceException=Trc_SHR_OSC_Mmap_initialiseDataHeader_softMaxBytesTooBig NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::initialiseDataHeader: The softmx bytes passed in is too big, it is reset to the cache file size %u"
+TraceEvent=Trc_SHR_OSC_Mmap_initializeDataHeader_callinginit3 NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::initializeDataHeader: Calling init with _mapDataAddr=%p, _mapDataLength=%zu, sharedClassMinAOTSize=%zd, sharedClassMaxAOTSize=%zd, sharedClassMinJITSize=%zd, sharedClassMaxJITSize=%zd, sharedClassSoftMaxBytes=%zd, sharedClassReadWriteBytes=%zd"
+TraceException=Trc_SHR_OSC_Mmap_initializeDataHeader_softMaxBytesTooBig NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::initializeDataHeader: The softmx bytes passed in is too big, it is reset to the cache file size %u"
 TraceException=Trc_SHR_OSC_Sysv_initializeHeader_softMaxBytesTooBig NoEnv Overhead=1 Level=1 Template="SH_OSCachesysv::initializeHeader: The softmx bytes passed in is too big, it is reset to the cache file size %u"
 
 TraceEvent=Trc_SHR_API_j9shr_createSharedClass_softFull_Event Overhead=1 Level=2 Template="API j9shr_classStoreTransaction_createSharedClass : cache is soft full"
@@ -2905,3 +2905,14 @@ TraceEntry=Trc_SHR_API_j9shr_createSharedClass_Entry3 Overhead=1 Level=2 Templat
 TraceExit=Trc_SHR_CM_allocateROMClass_Exit3 Overhead=1 Level=3 Template="CM allocateROMClass : exit retval=%d (Class=%.*s  romClass=%p lineNumberTable=%p localVariableTable=%p flags=0x%x)"
 
 TraceEvent=Trc_SHR_INIT_isClassFromPatchedModule_ClassFromPatchedModule_Event Test Overhead=1 Level=3 Template="INIT isClassFromPatchedModule: Class (classname=%.*s) is from a patched module (URL=%.*s)."
+TraceEvent=Trc_SHR_INIT_hookFindSharedClass_classFromUnresolvedModule Overhead=1 Level=3 Template="INIT hookFindSharedClass: Class (classname=%.*s) is from an unresolved module. Returning NULL."
+TraceExit=Trc_SHR_OSC_checkOSCacheHeader_wrongBuildID_3 NoEnv Overhead=1 Level=1 Template="OSCache::checkOSCacheHeader: Exit - wrong build ID. VM OpenJ9 SHA: %llx . Shared Cache OpenJ9 SHA: %llx"
+TraceExit-Exception=Trc_SHR_OSC_getCacheDir_j9shmem_getDir_failed1 NoEnv Overhead=1 Level=1 Template="OSCache::getCacheDir: getDir failed, ctrlDirName is %s"
+TraceException=Trc_SHR_INIT_isFreeDiskSpaceLow_getDirFailed NoEnv Overhead=1 Level=1 Template="INIT::isFreeDiskSpaceLow Exception: Failed to get the shared cache directory"
+TraceException=Trc_SHR_INIT_isFreeDiskSpaceLow_DiskSpaceLow NoEnv Overhead=1 Level=1 Template="INIT::isFreeDiskSpaceLow Exception: The free disk space is low (%llu bytes)."
+TraceException=Trc_SHR_INIT_isFreeDiskSpaceLow_StatFileSystemFailed NoEnv Overhead=1 Level=1 Template="INIT::isFreeDiskSpaceLow Exception: Failed to check the free disk space for %s. Error number: %d. Error message: %s "
+TraceException=Trc_SHR_INIT_isFreeDiskSpaceLow_SetMaxSize NoEnv Overhead=1 Level=1 Template="INIT::isFreeDiskSpaceLow returning true, the maximum shared cache size allowed is %llu bytes"
+
+TraceEvent=Trc_SHR_INIT_j9shr_init_Entry Overhead=1 Level=6 Template="INIT entering j9shr_init"
+TraceEvent=Trc_SHR_INIT_j9shr_init_BootClassSharingEnabledByDefault Overhead=1 Level=1 Template="INIT j9shr_init: Bootstrap class sharing enabled by default"
+TraceException=Trc_SHR_INIT_j9shr_init_ExitOnNonFatal Overhead=1 Level=1 Template="INIT j9shr_init: exit on non-fatal error"

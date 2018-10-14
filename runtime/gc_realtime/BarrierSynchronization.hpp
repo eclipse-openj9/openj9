@@ -1,6 +1,5 @@
- 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,7 +44,6 @@ private:
 	J9JavaVM *_vm;                                 /**< Retained to access VM functions. */
 	UDATA _vmResponsesRequiredForExclusiveVMAccess;  /**< Used to support the (request/wait)ExclusiveVMAccess methods. */
 	UDATA _jniResponsesRequiredForExclusiveVMAccess;  /**< Used to support the (request/wait)ExclusiveVMAccess methods. */
-	U_32 _tokenCount;                              /**< A counter for which ragged barrier we are currently on. */
 
 /* Methods */
 public:
@@ -59,8 +57,7 @@ public:
 	MM_BarrierSynchronization(MM_EnvironmentBase *env) :
 		_vm((J9JavaVM *)env->getOmrVM()->_language_vm),
 		_vmResponsesRequiredForExclusiveVMAccess(0),
-		_jniResponsesRequiredForExclusiveVMAccess(0),
-		_tokenCount(0)
+		_jniResponsesRequiredForExclusiveVMAccess(0)
 	{
 		_typeId = __FUNCTION__;
 	}

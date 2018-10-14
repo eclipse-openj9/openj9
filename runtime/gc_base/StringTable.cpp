@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -644,8 +644,18 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 
 		if (IS_STRING_COMPRESSION_ENABLED_VM(vm)) {
 			if (isCompressable) {
-				J9VMJAVALANGSTRING_SET_COUNT(vmThread, result, (I_32) unicodeLength);
+				if (J2SE_VERSION(vm) >= J2SE_19) {
+					J9VMJAVALANGSTRING_SET_CODER(vmThread, result, 0);
+				} else {
+					J9VMJAVALANGSTRING_SET_COUNT(vmThread, result, (I_32)unicodeLength);
+				}
 			} else {
+				if (J2SE_VERSION(vm) >= J2SE_19) {
+					J9VMJAVALANGSTRING_SET_CODER(vmThread, result, 1);
+				} else {
+					J9VMJAVALANGSTRING_SET_COUNT(vmThread, result, (I_32)unicodeLength | (I_32)0x80000000);
+				}
+
 				if (J9VMJAVALANGSTRING_COMPRESSIONFLAG(vmThread, stringClass) == 0) {
 					/*
 					 * jitHookClassPreinitialize will process initialization events for String compression sideEffectGuards
@@ -653,29 +663,24 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 					 */
 			 		J9Class* flagClass = vm->internalVMFunctions->internalFindKnownClass(vmThread, J9VMCONSTANTPOOL_JAVALANGSTRINGSTRINGCOMPRESSIONFLAG, J9_FINDKNOWNCLASS_FLAG_INITIALIZE);
 
-					if (flagClass == NULL) {
+					if (NULL == flagClass) {
 						goto nomem;
 					} else {
 						j9object_t flag = J9AllocateObject(vmThread, flagClass, allocateFlags);
 
-						if (flag == NULL) {
+						if (NULL == flag) {
 							goto nomem;
 						}
 
 						J9VMJAVALANGSTRING_SET_COMPRESSIONFLAG(vmThread, stringClass, flag);
 					}
 				}
-
-				J9VMJAVALANGSTRING_SET_COUNT(vmThread, result, (I_32) unicodeLength | (I_32) 0x80000000);
 			}
 		} else {
-			J9VMJAVALANGSTRING_SET_COUNT(vmThread, result, (I_32) unicodeLength);
-			if (J2SE_VERSION(vm) >= J2SE_V10) {
-				/* Setting java/lang/String.coder to 1 (UTF16)
-				 * which can be removed if this field can be removed by
-				 * https://github.com/ibmruntimes/openj9-openjdk-jdk9/issues/91
-				 */
+			if (J2SE_VERSION(vm) >= J2SE_19) {
 				J9VMJAVALANGSTRING_SET_CODER(vmThread, result, 1);
+			} else {
+				J9VMJAVALANGSTRING_SET_COUNT(vmThread, result, (I_32)unicodeLength);
 			}
 		}
 
@@ -716,76 +721,56 @@ j9object_t
 setupCharArray(J9VMThread *vmThread, j9object_t sourceString, j9object_t newString)
 {
 	J9JavaVM *vm = vmThread->javaVM;
-	bool createTenuredChars = false;
 	bool isCompressed = IS_STRING_COMPRESSED(vmThread, sourceString);
-	j9object_t result = NULL;
-	j9object_t oldChars = J9VMJAVALANGSTRING_VALUE(vmThread, sourceString);
 	I_32 length = J9VMJAVALANGSTRING_LENGTH(vmThread, sourceString);
+	j9object_t result = NULL;
+	j9object_t newChars = NULL;
 
-	if (createTenuredChars) {
-		j9object_t newChars = NULL;
-		I_32 i;
+	PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, sourceString);
+	PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, newString);
 
-		PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, sourceString);
-		PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, newString);
-		PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, oldChars);
-		/* Construct the interned string out of the same thing as the original */
-		if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_STRING_BYTE_ARRAY)) {
-			if (isCompressed) {
-				newChars = J9AllocateIndexableObject(vmThread, vm->byteArrayClass, (U_32) length, J9_GC_ALLOCATE_OBJECT_TENURED | J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
-			} else {
-				newChars = J9AllocateIndexableObject(vmThread, vm->byteArrayClass, (U_32) length * 2, J9_GC_ALLOCATE_OBJECT_TENURED | J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
-			}
+	/* Construct the interned string data from the original */
+	if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_STRING_BYTE_ARRAY)) {
+		if (isCompressed) {
+			newChars = J9AllocateIndexableObject(vmThread, vm->byteArrayClass, (U_32) length, J9_GC_ALLOCATE_OBJECT_TENURED | J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 		} else {
-			if (isCompressed) {
-				newChars = J9AllocateIndexableObject(vmThread, vm->charArrayClass, (U_32) (length + 1) / 2, J9_GC_ALLOCATE_OBJECT_TENURED | J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
-			} else {
-				newChars = J9AllocateIndexableObject(vmThread, vm->charArrayClass, (U_32) length, J9_GC_ALLOCATE_OBJECT_TENURED | J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
-			}
-		}
-		
-		oldChars = POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
-		newString = POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
-		sourceString = POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
-		if (NULL != newChars) {
-			I_32 offset = 0;
-			if (isCompressed) {
-				for (i = 0; i < length; ++i, ++offset) {
-					J9JAVAARRAYOFBYTE_STORE(vmThread, newChars, i, J9JAVAARRAYOFBYTE_LOAD(vmThread, oldChars, offset));
-				}
-			} else {
-				for (i = 0; i < length; ++i, ++offset) {
-					J9JAVAARRAYOFCHAR_STORE(vmThread, newChars, i, J9JAVAARRAYOFCHAR_LOAD(vmThread, oldChars, offset));
-				}
-			}
-
-			J9VMJAVALANGSTRING_SET_VALUE(vmThread, newString, newChars);
-			
-			if (IS_STRING_COMPRESSION_ENABLED_VM(vm)) {
-				if (isCompressed) {
-					J9VMJAVALANGSTRING_SET_COUNT(vmThread, newString, (I_32) length);
-				} else {
-					J9VMJAVALANGSTRING_SET_COUNT(vmThread, newString, (I_32) length | (I_32) 0x80000000);
-				}
-			} else {
-				J9VMJAVALANGSTRING_SET_COUNT(vmThread, newString, length);
-			}
-
-			result = newString;
+			newChars = J9AllocateIndexableObject(vmThread, vm->byteArrayClass, (U_32) length * 2, J9_GC_ALLOCATE_OBJECT_TENURED | J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 		}
 	} else {
-		J9VMJAVALANGSTRING_SET_VALUE(vmThread, newString, J9VMJAVALANGSTRING_VALUE(vmThread, sourceString));
+		if (isCompressed) {
+			newChars = J9AllocateIndexableObject(vmThread, vm->charArrayClass, (U_32) (length + 1) / 2, J9_GC_ALLOCATE_OBJECT_TENURED | J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+		} else {
+			newChars = J9AllocateIndexableObject(vmThread, vm->charArrayClass, (U_32) length, J9_GC_ALLOCATE_OBJECT_TENURED | J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+		}
+	}
 
-		if (IS_STRING_COMPRESSION_ENABLED_VM(vm)) {
-			if (isCompressed) {
-				J9VMJAVALANGSTRING_SET_COUNT(vmThread, newString, (I_32) length);
-			} else {
-				J9VMJAVALANGSTRING_SET_COUNT(vmThread, newString, (I_32) length | (I_32) 0x80000000);
+	if (NULL != newChars) {
+		I_32 i = 0;
+		j9object_t oldChars = NULL;
+		
+		newString = POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
+		sourceString = POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
+
+		oldChars = J9VMJAVALANGSTRING_VALUE(vmThread, sourceString);
+
+		if (isCompressed) {
+			for (i = 0; i < length; ++i) {
+				J9JAVAARRAYOFBYTE_STORE(vmThread, newChars, i, J9JAVAARRAYOFBYTE_LOAD(vmThread, oldChars, i));
 			}
 		} else {
-			J9VMJAVALANGSTRING_SET_COUNT(vmThread, newString, (I_32) length);
+			for (i = 0; i < length; ++i) {
+				J9JAVAARRAYOFCHAR_STORE(vmThread, newChars, i, J9JAVAARRAYOFCHAR_LOAD(vmThread, oldChars, i));
+			}
 		}
-		
+
+		J9VMJAVALANGSTRING_SET_VALUE(vmThread, newString, newChars);
+
+		if (J2SE_VERSION(vm) >= J2SE_19) {
+			J9VMJAVALANGSTRING_SET_CODER(vmThread, newString, J9VMJAVALANGSTRING_CODER(vmThread, sourceString));
+		} else {
+			J9VMJAVALANGSTRING_SET_COUNT(vmThread, newString, J9VMJAVALANGSTRING_COUNT(vmThread, sourceString));
+		}
+
 		result = newString;
 	}
 
@@ -932,32 +917,44 @@ j9gc_allocStringWithSharedCharData(J9VMThread *vmThread, U_8 *data, UDATA length
 
 	if (IS_STRING_COMPRESSION_ENABLED_VM(vm)) {
 		if (isCompressable) {
-			J9VMJAVALANGSTRING_SET_COUNT(vmThread, string, (I_32) unicodeLength);
+			if (J2SE_VERSION(vm) >= J2SE_19) {
+				J9VMJAVALANGSTRING_SET_CODER(vmThread, string, 0);
+			} else {
+				J9VMJAVALANGSTRING_SET_COUNT(vmThread, string, (I_32)unicodeLength);
+			}
 		} else {
-		 	if (J9VMJAVALANGSTRING_COMPRESSIONFLAG(vmThread, stringClass) == 0) {
-				/*
+			if (J2SE_VERSION(vm) >= J2SE_19) {
+				J9VMJAVALANGSTRING_SET_CODER(vmThread, string, 1);
+			} else {
+				J9VMJAVALANGSTRING_SET_COUNT(vmThread, string, (I_32)unicodeLength | (I_32)0x80000000);
+			}
+
+			if (IS_STRING_COMPRESSION_ENABLED_VM(vm) && J9VMJAVALANGSTRING_COMPRESSIONFLAG(vmThread, stringClass) == 0) {
+				/**
 				 * jitHookClassPreinitialize will process initialization events for String compression sideEffectGuards
 				 * so we must initialize the class if this is the first time we are loading it
 				 */
 		 		J9Class* flagClass = vm->internalVMFunctions->internalFindKnownClass(vmThread, J9VMCONSTANTPOOL_JAVALANGSTRINGSTRINGCOMPRESSIONFLAG, J9_FINDKNOWNCLASS_FLAG_INITIALIZE);
 
-				if (flagClass == NULL) {
+				if (NULL == flagClass) {
 					goto nomem;
 				} else {
 					j9object_t flag = J9AllocateObject(vmThread, flagClass, allocateFlags);
 
-					if (flag == NULL) {
+					if (NULL == flag) {
 						goto nomem;
 					}
 
 					J9VMJAVALANGSTRING_SET_COMPRESSIONFLAG(vmThread, stringClass, flag);
 				}
 			}
-
-			J9VMJAVALANGSTRING_SET_COUNT(vmThread, string, (I_32) unicodeLength | (I_32) 0x80000000);
 		}
 	} else {
-		J9VMJAVALANGSTRING_SET_COUNT(vmThread, string, (I_32) unicodeLength);
+		if (J2SE_VERSION(vm) >= J2SE_19) {
+			J9VMJAVALANGSTRING_SET_CODER(vmThread, string, 1);
+		} else {
+			J9VMJAVALANGSTRING_SET_COUNT(vmThread, string, (I_32)unicodeLength);
+		}
 	}
 
 	MM_AtomicOperations::writeBarrier();

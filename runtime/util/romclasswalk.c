@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -137,7 +137,7 @@ void allSlotsInROMClassDo(J9ROMClass* romClass,
 	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, innerClassCount);
 	SLOT_CALLBACK(romClass, J9ROM_SRP,  romClass, innerClasses);
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
-	SLOT_CALLBACK(romClass, J9ROM_SRP,  romClass, memberOfNest);
+	SLOT_CALLBACK(romClass, J9ROM_SRP,  romClass, nestHost);
 	SLOT_CALLBACK(romClass, J9ROM_U16,  romClass, nestMemberCount);
 	SLOT_CALLBACK(romClass, J9ROM_U16,  romClass, unused);
 	SLOT_CALLBACK(romClass, J9ROM_SRP,  romClass, nestMembers);
@@ -673,6 +673,8 @@ static void allSlotsInConstantPoolDo(J9ROMClass* romClass, J9ROMClassWalkCallbac
 			case J9CPTYPE_INSTANCE_METHOD:
 			case J9CPTYPE_STATIC_METHOD:
 			case J9CPTYPE_INTERFACE_METHOD:
+			case J9CPTYPE_INTERFACE_INSTANCE_METHOD:
+			case J9CPTYPE_INTERFACE_STATIC_METHOD:
 				callbacks->slotCallback(romClass, J9ROM_NAS, &((J9ROMMethodRef *)&constantPool[index])->nameAndSignature, "cpFieldNAS", userData);
 				callbacks->slotCallback(romClass, J9ROM_U32, &((J9ROMMethodRef *)&constantPool[index])->classRefCPIndex, "cpFieldClassRef", userData);
 				break;

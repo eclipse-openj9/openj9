@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?><launchConfiguration type="org.eclipse.jdt.junit.launchconfig">
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
-<listEntry value="/DDR_VM/src/com/ibm/j9ddr/tools/xml/DTFJHeapSectionUnitTest.java"/>
+<listEntry value="/DDR_VM/testsrc/com/ibm/j9ddr/tools/xml/DTFJHeapSectionUnitTest.java"/>
 </listAttribute>
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
 <listEntry value="1"/>

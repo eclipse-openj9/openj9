@@ -140,70 +140,70 @@ J9NLS_EXELIB_INTERNAL_HELP_2_4.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_4.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_5=\  -Xmn<x>         Nastav\u00ed velikost nov\u00e9ho m\u00edsta na hodnotu <x>.
+J9NLS_EXELIB_INTERNAL_HELP_2_5=\  -Xmn<x>         Nastav\u00ed velikost nov\u00e9ho prostoru na hodnotu <x>.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_5.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_5.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_5.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1=\  -Xmn<x>         Nastav\u00ed po\u010d\u00e1te\u010dn\u00ed nebo maxim\u00e1ln\u00ed velikost nov\u00e9ho m\u00edsta na hodnotu <x>.
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1=\  -Xmn<x>         Nastav\u00ed po\u010d\u00e1te\u010dn\u00ed nebo maxim\u00e1ln\u00ed velikost nov\u00e9ho prostoru na hodnotu <x>.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2=\  -Xmns<x>        Nastav\u00ed po\u010d\u00e1te\u010dn\u00ed velikost nov\u00e9ho m\u00edsta na hodnotu <x>.
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2=\  -Xmns<x>        Nastav\u00ed po\u010d\u00e1te\u010dn\u00ed velikost nov\u00e9ho prostoru na hodnotu <x>.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3=\  -Xmnx<x>        Nastav\u00ed maxim\u00e1ln\u00ed velikost nov\u00e9ho m\u00edsta na hodnotu <x>.
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3=\  -Xmnx<x>        Nastav\u00ed maxim\u00e1ln\u00ed velikost nov\u00e9ho prostoru na hodnotu <x>.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_6=\  -Xmo<x>         Nastav\u00ed velikost star\u00e9ho m\u00edsta na hodnotu <x>.
+J9NLS_EXELIB_INTERNAL_HELP_2_6=\  -Xmo<x>         Nastav\u00ed velikost star\u00e9ho prostoru na hodnotu <x>.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_6.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_6.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_6.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1=\  -Xmo<x>         Nastav\u00ed po\u010d\u00e1te\u010dn\u00ed nebo maxim\u00e1ln\u00ed velikost star\u00e9ho m\u00edsta na hodnotu <x>.
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1=\  -Xmo<x>         Nastav\u00ed po\u010d\u00e1te\u010dn\u00ed nebo maxim\u00e1ln\u00ed velikost star\u00e9ho prostoru na hodnotu <x>.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2=\  -Xmos<x>        Nastav\u00ed po\u010d\u00e1te\u010dn\u00ed velikost star\u00e9ho m\u00edsta na hodnotu <x>.
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2=\  -Xmos<x>        Nastav\u00ed po\u010d\u00e1te\u010dn\u00ed velikost star\u00e9ho prostoru na hodnotu <x>.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3=\  -Xmox<x>        Nastav\u00ed maxim\u00e1ln\u00ed velikost star\u00e9ho m\u00edsta na hodnotu <x>.
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3=\  -Xmox<x>        Nastav\u00ed maxim\u00e1ln\u00ed velikost star\u00e9ho prostoru na hodnotu <x>.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_7=\  -Xmoi<x>        Nastav\u00ed p\u0159\u00edr\u016fstek star\u00e9ho m\u00edsta na hodnotu <x>.
+J9NLS_EXELIB_INTERNAL_HELP_2_7=\  -Xmoi<x>        Nastav\u00ed p\u0159\u00edr\u016fstek star\u00e9ho prostoru na hodnotu <x>.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_7.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_7.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_7.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_8=\  -Xms<x>         Nastav\u00ed velikost star\u00e9ho m\u00edsta na hodnotu <x>.
+J9NLS_EXELIB_INTERNAL_HELP_2_8=\  -Xms<x>         Nastav\u00ed velikost star\u00e9ho prostoru na hodnotu <x>.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_8.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_8.system_action=
@@ -641,7 +641,7 @@ J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMX=\  -Xscmx<x>       Nastav\u00ed velikost nov\u00e9 mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd na hodnotu <x>.
+J9NLS_EXELIB_INTERNAL_HELP_XSCMX=\  -Xscmx<x>       Nastav\u00ed velikost nov\u00e9 sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd na hodnotu <x>.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX.system_action=
@@ -722,14 +722,14 @@ J9NLS_EXELIB_INTERNAL_HELP_2_16.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_16.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT=\  -Xscminaot<x>   Nastav\u00ed minim\u00e1ln\u00ed m\u00edsto mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd pro data AOT na hodnotu <x>.
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT=\  -Xscminaot<x>   Nastav\u00ed minim\u00e1ln\u00ed prostor sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd vyhrazen\u00fd pro data AOT na hodnotu <x>.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT=\  -Xscmaxaot<x>   Nastav\u00ed maxim\u00e1ln\u00ed m\u00edsto mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd pro data AOT na hodnotu <x>.
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT=\  -Xscmaxaot<x>   Nastav\u00ed maxim\u00e1ln\u00ed prostor sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd povolen\u00fd pro data AOT na hodnotu <x>.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT.system_action=
@@ -830,21 +830,21 @@ J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCDMX=\  -Xscdmx<x>      Nastav\u00ed velikost oblasti atribut\u016f lad\u011bn\u00ed mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd na hodnotu <x>.
+J9NLS_EXELIB_INTERNAL_HELP_XSCDMX=\  -Xscdmx<x>      Nastav\u00ed velikost oblasti atribut\u016f lad\u011bn\u00ed sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd na hodnotu <x>.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCDMX.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCDMX.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCDMX.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT=\  -Xscminjit<x>   Nastav\u00ed minim\u00e1ln\u00ed m\u00edsto mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd pro data JIT na hodnotu <x>.
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT=\  -Xscminjit<x>   Nastav\u00ed minim\u00e1ln\u00ed prostor sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd vyhrazen\u00fd pro data JIT na hodnotu <x>.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT=\  -Xscmaxjit<x>   Nastav\u00ed maxim\u00e1ln\u00ed m\u00edsto mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd povolen\u00e9 pro data JIT na hodnotu <x>.
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT=\  -Xscmaxjit<x>   Nastav\u00ed maxim\u00e1ln\u00ed prostor sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd povolen\u00fd pro data JIT na hodnotu <x>.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT.system_action=
@@ -852,21 +852,21 @@ J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT.user_response=
 
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA=\  -Xscminjitdata<x>   Nastav\u00ed minim\u00e1ln\u00ed m\u00edsto mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd pro data JIT na hodnotu <x>.
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA=\  -Xscminjitdata<x>   Nastav\u00ed minim\u00e1ln\u00ed prostor sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd vyhrazen\u00fd pro data JIT na hodnotu <x>.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA=\  -Xscmaxjitdata<x>   Nastav\u00ed maxim\u00e1ln\u00ed m\u00edsto mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd povolen\u00e9 pro data JIT na hodnotu <x>.
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA=\  -Xscmaxjitdata<x>   Nastav\u00ed maxim\u00e1ln\u00ed prostor sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd povolen\u00fd pro data JIT na hodnotu <x>.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP=\  -Xzero:nosharebootzip   Nesd\u00edlet mezipam\u011bti polo\u017eek soubor\u016f JAR zav\u00e1d\u011bc\u00edho programu v mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd
+J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP=\  -Xzero:nosharebootzip   Nesd\u00edlet mezipam\u011bti polo\u017eek soubor\u016f JAR zav\u00e1d\u011bc\u00edho programu ve sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP.system_action=
@@ -894,21 +894,21 @@ J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX=\  -Xscsoftmx<x>   Nastav\u00ed m\u011bkk\u00e9 maximum velikost nov\u00e9 mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd na hodnotu <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX=\  -Xscsoftmx<x>   Nastav\u00ed m\u011bkk\u00e9 maximum velikosti nov\u00e9 sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd na hodnotu <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1=\  -Xscmx<x>       Nastav\u00ed velikost (nebo m\u011bkk\u00e9 maximum velikosti, pokud je uvedena volba -XX:SharedCacheHardLimit=) nov\u00e9 mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd na hodnotu <x>.
+J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1=\  -Xscmx<x>       Nastav\u00ed velikost (nebo m\u011bkk\u00e9 maximum velikosti, pokud je uvedena volba -XX:SharedCacheHardLimit=) nov\u00e9 sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd na hodnotu <x>.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS=\  -XX:SharedCacheHardLimit=<x>   Nastav\u00ed velikost nov\u00e9 mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd na hodnotu <x>.
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS=\  -XX:SharedCacheHardLimit=<x>   Nastav\u00ed velikost nov\u00e9 sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd na hodnotu <x>.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS.system_action=

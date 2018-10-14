@@ -1,0 +1,414 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Copyright (c) 2016, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="GeneralTest suite" parallel="none" verbose="2">
+	<listeners>
+		<listener class-name="org.openj9.test.util.IncludeExcludeTestAnnotationTransformer"/>
+	</listeners>
+	<test name="generalTest">
+		<classes>
+			<class name="org.openj9.test.gpu.SortTest" />
+		</classes>
+	</test>
+	<test name="regression">
+		<classes>
+			<class name="org.openj9.test.fastresolve.FastresolveTest" />
+			<class name="org.openj9.test.regression.Cmvc191564" />
+			<!-- PR117298 -->
+			<!-- <class name="org.openj9.test.regression.Cmvc194280" /> -->
+			<class name="org.openj9.test.regression.Cmvc194781" />
+			<class name="org.openj9.test.regression.Cmvc196849" />
+			<class name="org.openj9.test.regression.Cmvc199515" />
+		</classes>
+	</test>
+	<test name="jsr335InterfacePrivateMethod">
+		<classes>
+			<class name="org.openj9.test.jsr335.interfacePrivateMethod.Test_ITestRunner" />
+			<class name="org.openj9.test.jsr335.interfacePrivateMethod.Test_ReflectionAndMethodHandles" />
+			<class name="org.openj9.test.jsr335.interfacePrivateMethod.Test_ValidateReflectionWithExtensionMethods" />
+		</classes>
+	</test>
+	<test name="AttachAPISanity">
+		<classes>
+			<class name="org.openj9.test.attachAPI.AttachAPISanity"/>
+		</classes>
+	</test>
+	<test name="TestAttachAPI">
+		<classes>
+			<class name="org.openj9.test.attachAPI.TestAttachAPI"/>
+		</classes>
+	</test>
+	<test name="TestAttachAPIEnabling">
+		<classes>
+			<class name="org.openj9.test.attachAPI.TestAttachAPIEnabling"/>
+		</classes>
+	</test>
+	<test name="TestAttachErrorHandling">
+		<classes>
+			<class name="org.openj9.test.attachAPI.TestAttachErrorHandling"/>
+		</classes>
+	</test>
+	<test name="TestSunAttachClasses">
+		<classes>
+			<class name="org.openj9.test.attachAPI.TestSunAttachClasses"/>
+		</classes>
+	</test>
+	<test name="TestManagementAgent">
+		<classes>
+			<class name="org.openj9.test.attachAPI.TestManagementAgent"/>
+		</classes>
+	</test>
+	<test name="TestFileLocking">
+		<classes>
+			<class name="org.openj9.test.fileLock.TestFileLocking"/>
+		</classes>
+	</test>
+	<test name="gcNotificationTest">
+		<classes>
+			<class name="org.openj9.test.management.GarbageCollectionNotificationTest"/>
+		</classes>
+	</test>
+	<test name="ContendedFieldsTests">
+		<classes>
+			<class name="org.openj9.test.contendedfields.ContendedFieldsTests"/>
+		</classes>
+	</test>
+	<test name="ConstructorVerifierTests">
+		<classes>
+			<class name="org.openj9.test.constructorverify.TryInCtor"/>
+		</classes>
+	</test>
+
+	<!-- ............................... J9 JCL tests start here .................................................. -->
+	<test name="JCL_TEST_Test-TypeAnnotation">
+		<classes>
+			<class name="org.openj9.test.typeAnnotation.IbmTypeAnnotationsApiTest"/>
+			<class name="org.openj9.test.typeAnnotation.TypeAnnotatedTestClassTest"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Test-Annotation">
+		<classes>
+			<class name="org.openj9.test.annotation.Test_Annotation"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Lang_ClassLoader">
+		<classes>
+			<class name="org.openj9.test.java.lang.Test_ClassLoader"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Test-Annotation-ClassLoader">
+		<classes>
+			<class name="org.openj9.test.annotationClassLoader.Test_ClassLoader"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Test-Annotation-Identity">
+		<classes>
+			<class name="org.openj9.test.annotationIdentity.Test_Annotations"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Test-Annotation-Package">
+		<classes>
+			<class name="org.openj9.test.annotationPackage.Test_PackageAnnotation"/>
+			<class name="org.openj9.test.annotationPackage.Test_PackageAnnotation2"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Lang">
+		<classes>
+			<class name="org.openj9.test.java.lang.Test_Class"/>
+			<class name="org.openj9.test.java.lang.Test_ClassCastException"/>
+			<class name="org.openj9.test.java.lang.Test_Compiler"/>
+			<class name="org.openj9.test.java.lang.Test_InstantiationError"/>
+			<class name="org.openj9.test.java.lang.Test_InstantiationException"/>
+			<class name="org.openj9.test.java.lang.Test_Math"/>
+			<class name="org.openj9.test.java.lang.Test_Object"/>
+			<class name="org.openj9.test.java.lang.Test_RuntimePermission"/>
+			<class name="org.openj9.test.java.lang.Test_String"/>
+			<class name="org.openj9.test.java.lang.Test_StringBuffer"/>
+			<class name="org.openj9.test.java.lang.Test_StringBuilder"/>
+			<class name="org.openj9.test.java.lang.Test_System"/>
+			<class name="org.openj9.test.java.lang.Test_Thread"/>
+			<class name="org.openj9.test.java.lang.Test_Thread_Extra"/>			
+			<class name="org.openj9.test.java.lang.Test_ThreadGroup"/>
+			<class name="org.openj9.test.java.lang.Test_Throwable"/>
+			<class name="org.openj9.test.java.lang.Test_VMAccess"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Lang_OutOfMemoryError">
+		<classes>
+			<class name="org.openj9.test.java.lang.Test_OutOfMemoryError"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Internals">
+		<classes>
+			<class name="org.openj9.test.java.lang.Test_J9VMInternals"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Lang-Package">
+		<classes>
+			<class name="org.openj9.test.java.lang.Test_Package"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Lang-Invoke">
+		<classes>
+			<class name="org.openj9.test.java.lang.invoke.Test_AdaptorTests"/>
+			<class name="org.openj9.test.java.lang.invoke.Test_MethodHandleInfo"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Lang-Ref">
+		<classes>
+			<class name="org.openj9.test.java.lang.ref.Test_PhantomReference"/>
+			<class name="org.openj9.test.java.lang.ref.Test_Reference"/>
+			<class name="org.openj9.test.java.lang.ref.Test_ReferenceQueue"/>
+			<class name="org.openj9.test.java.lang.ref.Test_SoftReference"/>
+			<class name="org.openj9.test.java.lang.ref.Test_WeakReference"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Lang-Reflect">
+		<classes>
+			<class name="org.openj9.test.java.lang.reflect.Test_Array"/>
+			<class name="org.openj9.test.java.lang.reflect.Test_Executable"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Math">
+		<classes>
+			<class name="org.openj9.test.java.math.Test_BigDecimal"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Security">
+		<classes>
+			<class name="org.openj9.test.java.security.Test_AccessController"/>
+			<class name="org.openj9.test.java.security.Test_AccessControlContext"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_IBM-VM">
+		<classes>
+			<class name="org.openj9.test.vm.Test_MsgHelp"/>
+			<class name="org.openj9.test.vm.Test_VM"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_JITHelpers">
+		<classes>
+			<class name="org.openj9.test.com.ibm.jit.Test_JITHelpers"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_MathMethods">
+		<classes>
+			<class name="org.openj9.test.java.lang.Test_Math"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Test-UnsafeFence">
+		<classes>
+			<class name="org.openj9.test.unsafe.fence.Test_UnsafeFence"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Test-Defects">
+		<classes>
+			<class name="org.openj9.test.pmr.failures.Tests"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Test-RunLast"> <!-- pass on 829 but fail on 929 -->
+		<classes>
+			<class name="org.openj9.test.runlast.Test_JavaNetWithSideEffectsShouldRunLast"/>
+		</classes>
+	</test>
+
+	<test name="VmArgumentTests">
+		<classes>
+			<class name="org.openj9.test.vmArguments.VmArgumentTests">
+			</class>
+		</classes>
+	</test>
+	<test name="memoryMXBeanShutdownTest">
+		<classes>
+			<class name="org.openj9.test.java.lang.management.MemoryMXBeanShutdownNotification" />
+		</classes>
+	</test>
+	<test name="threadMXBeanTestSuite1">
+		<classes>
+			<class name="org.openj9.test.java.lang.management.ThreadMXBean.FindDeadlockTest" />
+			<class name="org.openj9.test.java.lang.management.ThreadMXBean.APITest" />
+			<class name="org.openj9.test.java.lang.management.ThreadMXBean.MonitorTraceTest" />
+			<class name="org.openj9.test.java.lang.management.ThreadMXBean.ParkedThreadTest" />
+		</classes>
+	</test>
+	<test name="threadMXBeanTestSuite2">
+		<classes>
+			<class name="org.openj9.test.java.lang.management.ThreadMXBean.APITest2" />
+			<class name="org.openj9.test.java.lang.management.ThreadMXBean.BenchCurrentThreadCpuTime" />
+			<class name="org.openj9.test.java.lang.management.ThreadMXBean.BlockedThread" />
+			<class name="org.openj9.test.java.lang.management.ThreadMXBean.Cmvc106800" />
+			<class name="org.openj9.test.java.lang.management.ThreadMXBean.Cycle" />
+			<class name="org.openj9.test.java.lang.management.ThreadMXBean.Deadlocks" />
+			<class name="org.openj9.test.java.lang.management.ThreadMXBean.DeadThread" />
+			<class name="org.openj9.test.java.lang.management.ThreadMXBean.ExitedThread" />
+			<class name="org.openj9.test.java.lang.management.ThreadMXBean.JoiningThread" />
+			<class name="org.openj9.test.java.lang.management.ThreadMXBean.ManyInspectOne" />
+			<class name="org.openj9.test.java.lang.management.ThreadMXBean.MaxMonitorsTest" />
+			<class name="org.openj9.test.java.lang.management.ThreadMXBean.NewThread" />
+			<class name="org.openj9.test.java.lang.management.ThreadMXBean.NoBlock" />
+			<class name="org.openj9.test.java.lang.management.ThreadMXBean.RunnableThread" />
+			<class name="org.openj9.test.java.lang.management.ThreadMXBean.SleepingThread" />
+			<class name="org.openj9.test.java.lang.management.ThreadMXBean.StackDepth" />
+			<class name="org.openj9.test.java.lang.management.ThreadMXBean.ThreadListMutex" />
+			<class name="org.openj9.test.java.lang.management.ThreadMXBean.TimedWaitingThread" />
+			<class name="org.openj9.test.java.lang.management.ThreadMXBean.WaitingThread" />
+		</classes>
+	</test>
+	<test name="threadMXBeanTimersTest">
+		<classes>
+			<class name="org.openj9.test.java.lang.management.ThreadMXBean.TimersTest" />
+		</classes>
+	</test>
+	<test name="threadMXBeanTimedParkTest">
+		<classes>
+			<class name="org.openj9.test.java.lang.management.ThreadMXBean.TimedParkTest" />
+		</classes>
+	</test>
+	<test name="TestArrayCopy">
+		<classes>
+			<class name="j9vm.test.arrayCopy.ArrayCopyTest" />
+		</classes>
+	</test>
+	<test name="HashPerformance">
+		<classes>
+			<class name="j9vm.test.hashCode.HashTest" />
+		</classes>
+	</test>
+	<test name="HashConsistency">
+		<classes>
+			<class name="j9vm.test.hashCode.TestHashConsistency" />
+		</classes>
+	</test>
+	<test name="pthreadDestructor">
+		<classes>
+			<class name="j9vm.test.jni.PthreadTest" />
+		</classes>
+	</test>
+	<test name="badUTF8inJNI">
+		<classes>
+			<class name="j9vm.test.jni.Utf8Test" />
+		</classes>
+	</test>
+	<test name="jniOnLoadExceptions">
+		<classes>
+			<class name="j9vm.test.jni.ExceptionTest" />
+		</classes>
+	</test>
+	<test name="memoryCategories">
+		<classes>
+			<class name="j9vm.test.memory.MemoryAllocator" />
+		</classes>
+	</test>
+	<test name="testReflectInvoke">
+		<classes>
+			<class name="j9vm.test.reflect.invoke.TestInvoke" />
+		</classes>
+	</test>
+	<test name="testInvokeSpecialInsideInterface">
+		<classes>
+			<class name="j9vm.test.invoker.InvokeSpecialInsideInterface" />
+		</classes>
+	</test>
+	<test name="testContendedClassLoading">
+		<classes>
+			<class name="org.openj9.test.contendedClassLoading.ParallelClassLoadingTests" />
+		</classes>
+	</test>
+	<test name="testClassLoadingDelegation">
+		<classes>
+			<class name="org.openj9.test.delegation.ClassLoadingDelegationTest" />
+		</classes>
+	</test>
+	<test name="testvmcheck">
+		<classes>
+			<class name="org.openj9.test.vmcheck.TestLoadingClassesFromJarfile" />
+		</classes>
+	</test>
+	<test name="testSoftMxCallback">
+		<classes>
+			<class name="j9vm.test.softmx.ExpandHeapUntilOOM" />
+		</classes>
+	</test>
+	<test name="reflect">
+		<classes>
+			<class name="org.openj9.test.reflect.GetConstructorTests" />
+			<class name="org.openj9.test.reflect.GetConstructorsTests" />
+			<class name="org.openj9.test.reflect.GetDeclaredConstructorTests" />
+			<class name="org.openj9.test.reflect.GetDeclaredConstructorsTests" />
+			<class name="org.openj9.test.reflect.GetDeclaredFieldTests" />
+			<class name="org.openj9.test.reflect.GetDeclaredFieldsTests" />
+			<class name="org.openj9.test.reflect.GetDeclaredMethodTests" />
+			<class name="org.openj9.test.reflect.GetDeclaredMethodsTests" />
+			<class name="org.openj9.test.reflect.GetFieldTests" />
+			<class name="org.openj9.test.reflect.GetFieldsTests" />
+			<class name="org.openj9.test.reflect.GetMethodTests" />
+			<class name="org.openj9.test.reflect.GetMethodsTests" />
+		</classes>
+	</test>
+	<test name="NoSuchMethodTests">
+		<classes>
+			<class name="org.openj9.test.NoSuchMethod.NoSuchMethodTests" />
+		</classes>
+	</test>
+	<test name="reattachAfterExit">
+		<classes>
+			<class name="org.openj9.test.osthread.ReattachAfterExit" />
+		</classes>
+	</test>
+	<test name="hanoiTest">
+		<parameter name="diskNumber" value="12" />
+		<classes>
+			<class name="org.openj9.test.ivj.TestHanoi" />
+		</classes>
+	</test>
+	<test name="memleaksTest">
+		<parameter name="diskNumber" value="9" />
+		<classes>
+			<class name="org.openj9.test.ivj.TestHanoi" />
+		</classes>
+	</test>
+	<test name="fibTest">
+		<parameter name="ficIterNum" value="20" />
+		<classes>
+			<class name="org.openj9.test.VMBench.FibBench" />
+		</classes>
+	</test>
+	<test name="testStringInterning">
+		<classes>
+			<class name="org.openj9.test.string.StringInterning" />
+		</classes>
+	</test>
+	<test name="floatSanityTests">
+		<classes>
+			<class name="org.openj9.test.floatsanity.TestFactory" />
+		</classes>
+	</test>
+	<test name="FileSystem-isAccessUserOnlyTests">
+		<classes>
+			<class name="org.openj9.test.jdk.internal.agent.Test_FileSystem"/>
+		</classes>
+	</test>
+</suite>
+<!-- Suite -->

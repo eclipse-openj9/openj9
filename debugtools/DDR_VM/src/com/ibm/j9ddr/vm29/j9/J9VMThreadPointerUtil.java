@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -277,10 +277,12 @@ public class J9VMThreadPointerUtil {
 			thrinfo.lockObject = null;
 			vmstate = getInflatedMonitorState(j9self, j9state, thrinfo);
 		}
-		
-		if(thrinfo.rawLock != null) {
-			if(thrinfo.rawLock.flags().allBitsIn(J9THREAD_MONITOR_OBJECT)) {
-				thrinfo.lockObject = J9ObjectPointer.cast(thrinfo.rawLock.userData());
+
+		if((thrinfo.lockObject == null) || thrinfo.lockObject.isNull()) {
+			if(!((thrinfo.rawLock == null) || thrinfo.rawLock.isNull())) {
+				if(thrinfo.rawLock.flags().allBitsIn(J9THREAD_MONITOR_OBJECT)) {
+					thrinfo.lockObject = J9ObjectPointer.cast(thrinfo.rawLock.userData());
+				}
 			}
 		}
 		

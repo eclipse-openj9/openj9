@@ -48,7 +48,7 @@ J9NLS_RELOCATABLE_CODE_STORE_FULL.user_response=Increase the size of the AOT sec
 J9NLS_RELOCATABLE_CODE_STORE_FULL.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xscmaxaot
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_STORE_ERROR=Shranjevanje kode AOT v predpomnilnik razreda v skupni rabi ni uspelo. Predpomnilnik razreda v skupni rabi je morda pokvarjen. Prezrtje kode AOT v predpomnilniku razreda v skupni rabi.
+J9NLS_RELOCATABLE_CODE_STORE_ERROR=Shranjevanje kode AOT v predpomnilnik razredov v skupni rabi ni uspelo. Predpomnilnik razredov v skupni rabi je morda pokvarjen. Prezrtje kode AOT v predpomnilniku razreda v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_STORE_ERROR.explanation=An error occured storing AOT code in the shared class cache. The shared class cache might be corrupted.
 J9NLS_RELOCATABLE_CODE_STORE_ERROR.system_action=The compiler will stop generating AOT code. AOT code from the shared class cache will not be used.

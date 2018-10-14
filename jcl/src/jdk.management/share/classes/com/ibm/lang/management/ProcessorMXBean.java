@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17 & !Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2017 IBM Corp. and others
+ * Copyright (c) 2005, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -80,28 +80,23 @@ public interface ProcessorMXBean extends PlatformManagedObject {
 	public int getNumberBoundCPUs();
 
 	/**
-	 * Returns the number of CPUs that the process is entitled to.
-	 * 
-	 * @return	the number of CPUs that the process is entitled to.
-	 */
-	public int getNumberEntitledCPUs();
-
-	/**
-	 * Returns the target number of CPUs for the process. This is the minimum 
-	 * of {@link #getNumberBoundCPUs()} and the number set for entitled CPUs, 
-	 * e.g. using {@link #setNumberEntitledCPUs(int)}.
+	 * Returns the target number of CPUs for the process. This is normally  
+	 * equal to {@link #getNumberBoundCPUs()}, but is overriden by active
+	 * CPUs when it is set, e.g. using {@link #setNumberActiveCPUs(int)}.
 	 * 
 	 * @return	the number of CPUs the process is entitled to.
 	 */
 	public int getNumberTargetCPUs();
 
 	/**
-	 * Sets the number of CPUs that the process should be restricted to.
-	 * {@link #getNumberBoundCPUs()}.
+	 * Sets the number of CPUs that the process is specified to use.
+	 * {@link #getNumberTargetCPUs()}.
 	 * 
 	 * @param number
-	 * 			The number of CPUs to restrict the process to. The process
-	 * 			will behave as if <code>number</code> CPUs are available.
+	 * 			The number of CPUs to specify the process to use. The process
+	 * 			will behave as if <code>number</code> CPUs are available. If
+	 *			this is set to 0, it will reset the number of CPUs specified
+	 *			and the JVM will use the the number of CPUs detected on the system.
 	 */
-	public void setNumberEntitledCPUs(int number);
+	public void setNumberActiveCPUs(int number);
 }

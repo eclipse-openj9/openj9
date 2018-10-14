@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -603,7 +603,7 @@ private:
 		_romClassProtectEnd = pointer;
 	}
 
-	class SH_SharedCacheHeaderInit : public SH_OSCache::SH_OSCacheInitialiser
+	class SH_SharedCacheHeaderInit : public SH_OSCache::SH_OSCacheInitializer
 	{
 	protected:
 		void *operator new(size_t size, void *memoryPtr) { return memoryPtr; };

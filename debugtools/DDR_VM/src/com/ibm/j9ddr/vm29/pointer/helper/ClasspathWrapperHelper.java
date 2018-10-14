@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,6 +35,6 @@ public class ClasspathWrapperHelper {
 	
 //	#define CPWLEN(cpw) (sizeof(ClasspathWrapper) + J9SHR_READMEM((cpw)->ClasspathItemSize))
 	public static U32 CPWLEN(ClasspathWrapperPointer ptr) throws CorruptDataException {
-		return ptr.classpathItemSize().add((int)ClasspathWrapper.SIZEOF);
+		return new U32(ptr.classpathItemSize()).add((int)ClasspathWrapper.SIZEOF);
 	}
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,7 @@ package com.ibm.j9ddr.vm29.types;
 
 import com.ibm.j9ddr.InvalidDataTypeException;
 
-public class I64 extends IScalar {
+public class I64 extends IDATA {
 	
 	// Constants
 	public static final int SIZEOF = 8;
@@ -34,6 +34,9 @@ public class I64 extends IScalar {
 	// Constructors
 	public I64(long value) {
 		super(value);
+		// When working with 32-bit core files, the constructor for IDATA
+		// will truncate the value to 32 bits: we need all 64-bits here.
+		this.data = value;
 	}
 	
 	public I64(Scalar parameter) {
@@ -46,7 +49,11 @@ public class I64 extends IScalar {
 	public I64 add(int number) {
 		return new I64(data + number);
 	}
-	
+
+	public I64 add(long number) {
+		return new I64(data + number);
+	}
+
 	public I64 add(U8 parameter) {
 		return add(new I64(parameter));
 	}
@@ -91,7 +98,11 @@ public class I64 extends IScalar {
 	public I64 sub(int number) {
 		return new I64(data - number);
 	}
-	
+
+	public I64 sub(long number) {
+		return new I64(data - number);
+	}
+
 	public I64 sub(U8 parameter) {
 		return sub(new I64(parameter));
 	}
@@ -127,19 +138,25 @@ public class I64 extends IScalar {
 	public I64 sub(IDATA parameter) {
 		return sub(new I64(parameter));
 	}
-	
-	
+
 	public int intValue() {
-		// TODO: Should we try to return negative numbers up to MAXINT most negative?
-		if (super.intValue() < 0) {
-			throw new InvalidDataTypeException("I_64 contains number larger than MAX_INT");
-		} else {
-			return super.intValue();
+		int value = (int) data;
+
+		if (data != value) {
+			throw new InvalidDataTypeException("I64: conversion to int would lose data");
 		}
+
+		return value;
 	}
-	
+
+	public long longValue() {
+		// When working with 32-bit core files, IDATA.longValue() will
+		// truncate the value to 32 bits: we must return all 64-bits here.
+		return data;
+	}
+
 	// bitOr
-	
+
 	public I64 bitOr(int number) {
 		return new I64(data | number);
 	}
@@ -270,7 +287,11 @@ public class I64 extends IScalar {
 	public I64 mult(int parameter) {
 		return new I64(data * parameter);
 	}
-	
+
+	public I64 mult(long parameter) {
+		return new I64(data * parameter);
+	}
+
 	public boolean lt(I64 parameter)
 	{
 		return this.data < parameter.data;

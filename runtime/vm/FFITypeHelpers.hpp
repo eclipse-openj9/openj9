@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -110,30 +110,23 @@ public:
 	getCustomFFIType(ffi_type** typeFFI, j9object_t layoutStringObject) {
 		PORT_ACCESS_FROM_JAVAVM(_vm);
 
-		UDATA result = 0;
 		*typeFFI = NULL;
 		UDATA structSize = UDATA_MAX;
-		UDATA length = getStringUTF8Length(_currentThread, layoutStringObject);
-		char bufOnStackLocal[J9VM_LAYOUT_STRING_ON_STACK_LIMIT];
-		char *buf = bufOnStackLocal;
-		char *layout = NULL;
-		if (length >= J9VM_LAYOUT_STRING_ON_STACK_LIMIT) {
-			buf = (char *) j9mem_allocate_memory(sizeof(char) * (length + 1), OMRMEM_CATEGORY_VM);
-			if (NULL == buf) {
-				goto doneGetCustomFFIType;
-			}
-		}
-		layout = buf;
-		result = copyFromStringIntoUTF8(_currentThread, layoutStringObject, layout);
-		if (UDATA_MAX == result) {
+		char layoutBuffer[J9VM_LAYOUT_STRING_ON_STACK_LIMIT];
+		char* layout = copyStringToUTF8WithMemAlloc(_currentThread, layoutStringObject, J9_STR_NULL_TERMINATE_RESULT, "", 0, layoutBuffer, sizeof(layoutBuffer), NULL);
+
+		/* Subsequent calls will modify the contents of this pointer, so preserve the original pointer for j9mem_free_memory */
+		char* layoutTemp = layout;
+
+		if (NULL == layout) {
 			goto doneGetCustomFFIType;
 		}
-		layout[length] = '\0';
-		structSize = getIntFromLayout(&layout);
-		*typeFFI = getStructFFIType(&layout, false);
+
+		structSize = getIntFromLayout(&layoutTemp);
+		*typeFFI = getStructFFIType(&layoutTemp, false);
 doneGetCustomFFIType:
-		if (buf != bufOnStackLocal) {
-			j9mem_free_memory(buf);
+		if (layout != layoutBuffer) {
+			j9mem_free_memory(layout);
 		}
 		return structSize;
 	}

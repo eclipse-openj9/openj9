@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2017 IBM Corp. and others
+ * Copyright (c) 2002, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -494,7 +494,7 @@ setThrowableSlots:
 		J9VMJAVALANGTHROWABLE_SET_STACKTRACE(currentThread, unwrappedThrowable, NULL);
 	}
 done:
-	vmfns->internalReleaseVMAccess(currentThread);
+	vmfns->internalExitVMToJNI(currentThread);
 }
 
 
@@ -561,7 +561,7 @@ JVM_FindLoadedClass(JNIEnv* env, jobject classLoader, jobject className)
 			vmClassLoader,
 			J9_FINDCLASS_FLAG_EXISTING_ONLY);
 done:
-	vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+	vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 
 	if (NULL == loadedClass) {
 		return NULL;
@@ -731,7 +731,7 @@ JVM_GetArrayElement(JNIEnv *env, jobject array, jint index)
 			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 
 	return elementJNIRef;
 }
@@ -775,7 +775,7 @@ JVM_GetArrayLength(JNIEnv *env, jobject array)
 		}
 	}
 
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 
 	return arrayLength;
 }
@@ -789,7 +789,7 @@ java_lang_Class_vmRef(JNIEnv* env, jobject clazz)
 
 	vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 	ramClass = J9VMJAVALANGCLASS_VMREF(currentThread, J9_JNI_UNWRAP_REFERENCE(clazz) );
-	vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+	vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 
 	return ramClass;
 }
@@ -1335,7 +1335,7 @@ JVM_GetPrimitiveArrayElement(JNIEnv *env, jobject array, jint index, jint wCode)
 			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 
 	return value;
 }
@@ -1366,7 +1366,7 @@ JVM_GetStackTraceDepth(JNIEnv* env, jobject throwable)
 
 	vmfns->internalEnterVMFromJNI(currentThread);
 	numberOfFrames = (jint)vmfns->iterateStackTrace(currentThread, (j9object_t*)throwable, NULL, NULL, pruneConstructors);
-	vmfns->internalReleaseVMAccess(currentThread);
+	vmfns->internalExitVMToJNI(currentThread);
 
 	return numberOfFrames;
 }
@@ -1460,7 +1460,7 @@ JVM_GetStackTraceElement(JNIEnv* env, jobject throwable, jint index)
 
 	vmfns->internalEnterVMFromJNI(currentThread);
 	vmfns->iterateStackTrace(currentThread, (j9object_t*)throwable, getStackTraceElementIterator, &userData, pruneConstructors);
-	vmfns->internalReleaseVMAccess(currentThread);
+	vmfns->internalExitVMToJNI(currentThread);
 
 	/* Bail if we couldn't find the frame */
 	if (TRUE != userData.found) {
@@ -1514,7 +1514,7 @@ JVM_IHashCode(JNIEnv *env, jobject obj)
 
 		vmFuncs->internalEnterVMFromJNI(currentThread);
 		result = vm->memoryManagerFunctions->j9gc_objaccess_getObjectHashCode(vm, J9_JNI_UNWRAP_REFERENCE(obj));
-		vmFuncs->internalReleaseVMAccess(currentThread);
+		vmFuncs->internalExitVMToJNI(currentThread);
 	}
 
 	return result;
@@ -1525,22 +1525,14 @@ JVM_IHashCode(JNIEnv *env, jobject obj)
 jobject JNICALL
 JVM_InitProperties(JNIEnv* env, jobject properties)
 {
-	J9JavaVM* vm = ((J9VMThread*)env)->javaVM;
-	jobject syspropsList = (jobject)vm->syspropsListRef;
-	jclass propertiesClass = (*env)->GetObjectClass(env, properties);
-	jmethodID setPropertyMID = (*env)->GetMethodID(env, propertiesClass, "setProperty", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;");
-	jsize pairCount;
-	jsize index;
-
-	assert(syspropsList != NULL);
-	assert(propertiesClass != NULL);
-	assert(setPropertyMID != NULL);
-	pairCount = (*env)->GetArrayLength(env, syspropsList);
-	for (index = 0; index < pairCount; ) {
-		jobject key = (*env)->GetObjectArrayElement(env, syspropsList, index++);
-		jobject value = (*env)->GetObjectArrayElement(env, syspropsList, index++);
-		(*env)->CallObjectMethod(env, properties, setPropertyMID, key, value);
-	}
+	/* This JVM method is invoked by JCL native Java_java_lang_System_initProperties
+	 * only for initialization of platform encoding.
+	 * This is only required by Java 11 raw builds.
+	 * This method is not invoked by other Java levels.
+	 */
+#if !defined(J9VM_JCL_SE11)
+	assert(!"JVM_InitProperties should not be called!");
+#endif /* J9VM_JCL_SE11 */
 	return properties;
 }
 
@@ -1567,7 +1559,7 @@ JVM_InternString(JNIEnv *env, jstring str)
 		stringObject = J9_JNI_UNWRAP_REFERENCE(str);
 		stringObject = javaVM->memoryManagerFunctions->j9gc_internString(currentThread, stringObject);
 		str = vmfns->j9jni_createLocalRef(env, stringObject);
-		vmfns->internalReleaseVMAccess(currentThread);
+		vmfns->internalExitVMToJNI(currentThread);
 	}
 
 	return str;
@@ -1621,7 +1613,7 @@ JVM_IsInterrupted(JNIEnv* env, jobject thread, jboolean unknown)
 
 	vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 	targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, J9_JNI_UNWRAP_REFERENCE(thread) );
-	vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+	vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 
 	assert(targetThread == currentThread);
 
@@ -1656,7 +1648,7 @@ JVM_IsPrimitiveClass(JNIEnv* env, jclass clazz)
  * This function may not lock, gc or throw exception.
  * @param version
  * @return true if version is JNI_VERSION_1_1, JNI_VERSION_1_2, JNI_VERSION_1_4, JNI_VERSION_1_6, or
- * 		   JNI_VERSION_1_8, JNI_VERSION_9; false if not.
+ * 		   JNI_VERSION_1_8, JNI_VERSION_9, JNI_VERSION_10; false if not.
  * @careful
  */
 jboolean JNICALL
@@ -1669,6 +1661,7 @@ JVM_IsSupportedJNIVersion(jint version)
 	case JNI_VERSION_1_6:
 	case JNI_VERSION_1_8:
 	case JNI_VERSION_9:
+	case JNI_VERSION_10:
 		return JNI_TRUE;
 
 	default:
@@ -1687,7 +1680,7 @@ JVM_IsThreadAlive(JNIEnv* jniEnv, jobject targetThread)
 
 	vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 	vmThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, J9_JNI_UNWRAP_REFERENCE(targetThread) );
-	vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+	vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 
 	/* Assume that a non-null threadRef indicates the thread is alive */
 	return (NULL == vmThread) ? JNI_FALSE : JNI_TRUE;
@@ -1721,7 +1714,7 @@ JVM_NewArray(JNIEnv* jniEnv, jclass componentType, jint dimension)
 	}
 
 	arrayRef = vm->internalVMFunctions->j9jni_createLocalRef(jniEnv, newArray);
-	vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+	vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	return arrayRef;
 }
 
@@ -1807,7 +1800,7 @@ JVM_NewMultiArray(JNIEnv *env, jclass eltClass, jintArray dim)
 		}
 	}
 
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -1955,11 +1948,11 @@ JVM_SetArrayElement(JNIEnv *env, jobject array, jint index, jobject value)
 							} else if (intWrapperClass == valueClass) {
 								val = (jfloat) ((I_32) J9VMJAVALANGINTEGER_VALUE(currentThread, j9value));
 							} else if (shortWrapperClass == valueClass) {
-								val = (jfloat) ((I_32) J9VMJAVALANGINTEGER_VALUE(currentThread, j9value));
+								val = (jfloat) ((I_32) J9VMJAVALANGSHORT_VALUE(currentThread, j9value));
 							} else if (charWrapperClass == valueClass) {
 								val = (jfloat) J9VMJAVALANGCHARACTER_VALUE(currentThread, j9value);
 							} else if (byteWrapperClass == valueClass) {
-								val = (jfloat) ((I_32) J9VMJAVALANGCHARACTER_VALUE(currentThread, j9value));
+								val = (jfloat) ((I_32) J9VMJAVALANGBYTE_VALUE(currentThread, j9value));
 							} else {
 								invalidArgument = TRUE;
 							}
@@ -2016,7 +2009,7 @@ JVM_SetArrayElement(JNIEnv *env, jobject array, jint index, jobject value)
 			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 
 	return;
 }
@@ -2203,7 +2196,7 @@ JVM_SetPrimitiveArrayElement(JNIEnv *env, jobject array, jint index, jvalue valu
 			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 
 	return;
 }
@@ -2238,7 +2231,7 @@ JVM_SetThreadPriority(JNIEnv* env, jobject thread, jint priority)
 	vm = currentThread->javaVM;
 	vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 	vmThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, J9_JNI_UNWRAP_REFERENCE(thread) );
-	vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+	vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 
 	if ( (NULL != vmThread) && (NULL != vmThread->osThread)) {
 		J9ThreadEnv* threadEnv = getJ9ThreadEnv(env);
@@ -2284,7 +2277,7 @@ JVM_StartThread(JNIEnv* jniEnv, jobject newThread)
 			javaVM,
 			NULL);
 
-	javaVM->internalVMFunctions->internalReleaseVMAccess(currentThread);
+	javaVM->internalVMFunctions->internalExitVMToJNI(currentThread);
 
 	if (result != J9_THREAD_START_NO_ERROR) {
 		assert(!"JVM_StartThread() failed!");
@@ -2471,7 +2464,7 @@ throwNativeOOMError(JNIEnv *env, U_32 moduleName, U_32 messageNumber)
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	vmFuncs->setNativeOutOfMemoryError(currentThread, moduleName, messageNumber);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 
@@ -2535,6 +2528,7 @@ jvmDefineClassHelper(JNIEnv *env, jobject classLoaderObject,
 	J9ClassLoader *classLoader = NULL;
 	UDATA retried = FALSE;
 	UDATA utf8Length = 0;
+	char utf8NameStackBuffer[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 	U_8 *utf8Name = NULL;
 	J9Class *clazz = NULL;
 	jclass result = NULL;
@@ -2558,22 +2552,10 @@ jvmDefineClassHelper(JNIEnv *env, jobject classLoaderObject,
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 
-	/* Allocate and initialize a UTF8 copy of the Unicode class-name */
-	if (className == NULL) {
-		utf8Length = 0;
-		utf8Name = NULL;
-	} else {
-		utf8Length = vmFuncs->getStringUTF8Length(currentThread, J9_JNI_UNWRAP_REFERENCE(className));
-		/* For now, use malloc, but this should use stack allocation for short class-names */
-		utf8Name = j9mem_allocate_memory(utf8Length+1, J9MEM_CATEGORY_CLASSES);
-		if (utf8Name == NULL) {
+	if (NULL != className) {
+		utf8Name = (U_8*)vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, J9_JNI_UNWRAP_REFERENCE(className), J9_STR_NULL_TERMINATE_RESULT | J9_STR_XLAT, "", 0, utf8NameStackBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &utf8Length);
+		if (NULL == utf8Name) {
 			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
-			goto done;
-		}
-		if (UDATA_MAX == vmFuncs->copyStringToUTF8Helper(
-			currentThread, J9_JNI_UNWRAP_REFERENCE(className), TRUE, J9_STR_XLAT, utf8Name, utf8Length + 1)
-		) {
-			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
 			goto done;
 		}
 	}
@@ -2659,9 +2641,12 @@ done:
 
 	result = vmFuncs->j9jni_createLocalRef(env, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
 
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 
-	j9mem_free_memory(utf8Name);
+	if ((U_8*)utf8NameStackBuffer != utf8Name) {
+		j9mem_free_memory(utf8Name);
+	}
+
 	return result;
 }
 

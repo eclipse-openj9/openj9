@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2016 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -458,6 +458,7 @@ extractAndProcessFormatStrings(JNIEnv *env, jarray templates, char ***const form
 {
 	UDATA i = 0;
 	UDATA rc = 0;
+	J9InternalVMFunctions *vmFuncs = ((J9VMThread *)env)->javaVM->internalVMFunctions;
 
 	PORT_ACCESS_FROM_ENV(env);
 
@@ -471,7 +472,7 @@ extractAndProcessFormatStrings(JNIEnv *env, jarray templates, char ***const form
 	*formatStringsArray = (char **)j9mem_allocate_memory(sizeof(char *) * (*tracePointCount + 1), J9MEM_CATEGORY_VM_JCL);
 
 	if (NULL == *formatStringsArray) {
-		throwNativeOOMError(env, 0, 0);
+		vmFuncs->throwNativeOOMError(env, 0, 0);
 		rc = 2;
 		goto fail;
 	}
@@ -481,7 +482,7 @@ extractAndProcessFormatStrings(JNIEnv *env, jarray templates, char ***const form
 	*callPatternsArray = (UDATA *) j9mem_allocate_memory(sizeof(UDATA) * *tracePointCount, J9MEM_CATEGORY_VM_JCL);
 
 	if (NULL == *callPatternsArray) {
-		throwNativeOOMError(env, 0, 0);
+		vmFuncs->throwNativeOOMError(env, 0, 0);
 		rc = 2;
 		goto fail;
 	}
@@ -522,7 +523,7 @@ extractAndProcessFormatStrings(JNIEnv *env, jarray templates, char ***const form
 		(*formatStringsArray)[i] = (char *)j9mem_allocate_memory(strlen(jniStringCharacters) + 1, J9MEM_CATEGORY_VM_JCL);
 
 		if (NULL == (*formatStringsArray)[i]) {
-			throwNativeOOMError(env, 0, 0);
+			vmFuncs->throwNativeOOMError(env, 0, 0);
 			(*env)->ReleaseStringUTFChars(env, thisString, jniStringCharacters);
 			rc = 6;
 			goto fail;
@@ -603,6 +604,7 @@ buildModInfo(JNIEnv *const env, const char *const applicationName, const UDATA t
 {
 	UtModuleInfo *toReturn = NULL;
 	UDATA arraySize = sizeof(unsigned char) * tracePointCount;
+	J9InternalVMFunctions *vmFuncs = ((J9VMThread *)env)->javaVM->internalVMFunctions;
 
 	PORT_ACCESS_FROM_ENV(env);
 
@@ -617,7 +619,7 @@ buildModInfo(JNIEnv *const env, const char *const applicationName, const UDATA t
 	toReturn->namelength = (I_32)strlen(applicationName);
 	toReturn->name = j9mem_allocate_memory( toReturn->namelength + 1, J9MEM_CATEGORY_VM_JCL);
 	if (NULL == toReturn->name) {
-		throwNativeOOMError(env, 0, 0);
+		vmFuncs->throwNativeOOMError(env, 0, 0);
 		goto error;
 	}
 	strcpy(toReturn->name, applicationName);
@@ -628,7 +630,7 @@ buildModInfo(JNIEnv *const env, const char *const applicationName, const UDATA t
 
 	toReturn->active = (unsigned char *)j9mem_allocate_memory( arraySize, J9MEM_CATEGORY_VM_JCL);
 	if (NULL == toReturn->active) {
-		throwNativeOOMError(env, 0, 0);
+		vmFuncs->throwNativeOOMError(env, 0, 0);
 		goto error;
 	}
 
@@ -636,7 +638,7 @@ buildModInfo(JNIEnv *const env, const char *const applicationName, const UDATA t
 
 	toReturn->traceVersionInfo = (UtTraceVersionInfo *)j9mem_allocate_memory( sizeof(UtTraceVersionInfo), J9MEM_CATEGORY_VM_JCL);
 	if (NULL == toReturn->traceVersionInfo) {
-		throwNativeOOMError(env, 0, 0);
+		vmFuncs->throwNativeOOMError(env, 0, 0);
 		goto error;
 	}
 
@@ -644,7 +646,7 @@ buildModInfo(JNIEnv *const env, const char *const applicationName, const UDATA t
 
 	toReturn->levels = (unsigned char *)j9mem_allocate_memory( arraySize, J9MEM_CATEGORY_VM_JCL);
 	if (NULL == toReturn->levels) {
-		throwNativeOOMError(env, 0, 0);
+		vmFuncs->throwNativeOOMError(env, 0, 0);
 		goto error;
 	}
 	memset(toReturn->levels, 3, arraySize);
@@ -1798,7 +1800,7 @@ allocArrayList(JNIEnv *const env, const UDATA slabSize)
 
 	if (NULL == toReturn) {
 		/*Malloc failure*/
-		throwNativeOOMError(env, 0, 0);
+		((J9VMThread *)env)->javaVM->internalVMFunctions->throwNativeOOMError(env, 0, 0);
 		return NULL;
 	}
 
@@ -1818,7 +1820,7 @@ arrayListAllocateSlab(JNIEnv *const env, const struct ArrayList *const list)
 	void **toReturn = j9mem_allocate_memory(allocSize, J9MEM_CATEGORY_VM_JCL);
 
 	if (NULL == toReturn) {
-		throwNativeOOMError(env, 0, 0);
+		((J9VMThread *)env)->javaVM->internalVMFunctions->throwNativeOOMError(env, 0, 0);
 		return NULL;
 	}
 

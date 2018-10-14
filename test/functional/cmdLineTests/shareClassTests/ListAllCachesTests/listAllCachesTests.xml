@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!--
+  Copyright (c) 2010, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="Shared Classes CommandLineOptionTests Suite - Windows Configuration">
+
+	<!-- Our test modes for this suite -->
+	<variable name="mode204" value="-Xshareclasses:name=listAllCacheName"/>
+
+	<!-- Set variables up -->
+	<variable name="JAVAC_DIR" value="$JAVA_HOME$$PATHSEP$bin"/>
+	
+	<variable name="currentMode" value="$mode204$"/>
+	<if testVariable="SCMODE" testValue="204" resultVariable="currentMode" resultValue="$mode204$"/>
+
+		
+	<echo value=" "/>
+	<echo value="#######################################################"/>
+	<echo value="Running tests in mode $SCMODE$ with command line options: $currentMode$"/>
+	<echo value="#######################################################"/>
+	<echo value=" "/>
+		
+	<test id="ListAllCaches 1: Cleanup current caches" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="ListAllCaches 2: Make sure Java 6 is present" timeout="600" runPath=".">
+		<command>$JAVA6_EXE$ -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="ListAllCaches 3: Create Java 6 nonpersistent shared cache" timeout="600" runPath=".">
+		<command>$JAVA6_EXE$ $currentMode$NP,nonpersistent -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="ListAllCaches 4: Create Java 6 persistent shared cache" timeout="600" runPath=".">
+		<command>$JAVA6_EXE$ $currentMode$P,persistent -version</command>
+		<output type="success" caseSensitive="yes" regex="no"  javaUtilregex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="ListAllCaches 5: Run listAllCaches and check for Java 6 nonpersistent caches" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,listAllCaches</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">\[ERR\] Incompatible shared caches(.|[\n\r])*listAllCacheNameNP.*Java6.*(no|non-persistent).*default</output>
+		<!-- regex below checks no valid caches -->
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">\[ERR\](.)*Cache(.)*name(.)*level(.)*(persistent|cache-type)(.)*last detach time(.|[\n\r])*listAllCacheName(.|[\n\r])*\[ERR\] Incompatible shared caches</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+
+	<test id="ListAllCaches 6: Run listAllCaches and check for Java 6 persistent caches" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,listAllCaches</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">\[ERR\] Incompatible shared caches(.|[\n\r])*listAllCacheNameP.*Java6.*(yes|persistent).*default</output>
+		<!-- regex below checks no valid caches -->
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">\[ERR\](.)*Cache(.)*name(.)*level(.)*(persistent|cache-type)(.)*last detach time(.|[\n\r])*listAllCacheName(.|[\n\r])*\[ERR\] Incompatible shared caches</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+
+	<test id="ListAllCaches 7: Create a nonpersistent shared cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$NP,nonpersistent -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+		
+	<test id="ListAllCaches 8: Create a persistent shared cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$P,persistent -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+		
+	<test id="ListAllCaches 9: Check for compatible nonpersistent cache." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,listAllCaches</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" platform=".*-64_cr.*">\[ERR\](.)*Cache(.)*name(.)*level(.)*(persistent|cache-type)(.)*last detach time(.|[\n\r])*listAllCacheNameNP.*Java.*(no|non-persistent).*cr(.|[\n\r])*\[ERR\] Incompatible shared caches</output>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" platform=".*-64(?!_cr)">\[ERR\](.)*Cache(.)*name(.)*level(.)*(persistent|cache-type)(.)*last detach time(.|[\n\r])*listAllCacheNameNP.*Java.*(no|non-persistent).*non-cr(.|[\n\r])*\[ERR\] Incompatible shared caches</output>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" platform=".*-3[12].*">\[ERR\](.)*Cache(.)*name(.)*level(.)*(persistent|cache-type)(.)*last detach time(.|[\n\r])*listAllCacheNameNP.*Java.*(no|non-persistent).*default(.|[\n\r])*\[ERR\] Incompatible shared caches</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="ListAllCaches 10: Check for compatible persistent cache." timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,listAllCaches</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" platform=".*-64_cr.*">\[ERR\](.)*Cache(.)*name(.)*level(.)*(persistent|cache-type)(.)*last detach time(.|[\n\r])*listAllCacheNameP.*Java.*(yes|persistent).*cr(.|[\n\r])*\[ERR\] Incompatible shared caches</output>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" platform=".*-64(?!_cr)">\[ERR\](.)*Cache(.)*name(.)*level(.)*(persistent|cache-type)(.)*last detach time(.|[\n\r])*listAllCacheNameP.*Java.*(yes|persistent).*non-cr(.|[\n\r])*\[ERR\] Incompatible shared caches</output>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" platform=".*-3[12].*">\[ERR\](.)*Cache(.)*name(.)*level(.)*(persistent|cache-type)(.)*last detach time(.|[\n\r])*listAllCacheNameP.*Java.*(yes|persistent).*default(.|[\n\r])*\[ERR\] Incompatible shared caches</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+		
+	<test id="ListAllCaches 11: Cleanup nonpersistent cache " timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$NP,nonpersistent,destroy</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" platform=".*-64_cr.*">Compressed references.*is destroyed</output>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" platform=".*-64(?!_cr)">Non-compressed references.* is destroyed</output>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" platform=".*-3[12].*">is destroyed</output>
+
+		<output type="failure" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="ListAllCaches 12: Cleanup persistent cache " timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$P,persistent,destroy</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" platform=".*-64_cr.*">Compressed references.*has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" platform=".*-64(?!_cr)">Non-compressed references.* has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" platform=".*-3[12].*">has been destroyed</output>
+
+		<output type="failure" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+		
+	<test id="ListAllCaches 13: Cleanup Java 6 nonpersistent cache " timeout="600" runPath=".">
+		<command>$JAVA6_EXE$ $currentMode$NP,nonpersistent,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="ListAllCaches 14: Cleanup Java 6 persistent cache " timeout="600" runPath=".">
+		<command>$JAVA6_EXE$ $currentMode$P,persistent,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
+	<test id="ListAllCaches 15: Make sure everything is cleaned up" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,listAllCaches</command>
+		<output type="success" caseSensitive="yes" regex="no">No shared class caches available</output>
+		<output type="success" caseSensitive="yes" regex="no">Listing all caches in cacheDir</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">\[ERR\](.)*Cache(.)*name(.)*level(.)*persistent(.)*last detach time(.|[\n\r])*listAllCacheName(.|[\n\r])*\[ERR\]</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+
+</suite>

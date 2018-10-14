@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar18-SE-OpenJ9]*/
 
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,17 @@ final class MemberName {
 		public static Factory INSTANCE = null;
 	}
 	/*[ENDIF]*/
+	
+	/*[IF Java11]*/
+	private MethodHandle mh;
+
+	public MemberName() {
+	}
+
+	public MemberName(MethodHandle methodHandle) {
+		mh = methodHandle;
+	}
+	/*[ENDIF] Java11 */
 
 	public boolean isVarargs() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
@@ -70,5 +81,14 @@ final class MemberName {
 	public Class<?> getDeclaringClass() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+	/*[IF Java11]*/
+	public boolean isFinal() {
+		if (mh instanceof FieldHandle) {
+			return ((FieldHandle)mh).isFinal();
+		}
+		/*[MSG "K0675", "Unexpected MethodHandle instance: {0} with {1}"]*/
+		throw new InternalError(com.ibm.oti.util.Msg.getString("K0675", mh, mh.getClass())); //$NON-NLS-1$
+	}
+	/*[ENDIF]*/
 	/*[ENDIF]*/
 }

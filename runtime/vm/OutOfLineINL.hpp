@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 IBM Corp. and others
+ * Copyright (c) 2016, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,7 @@
 #define VM_OUTOFLINEINL_HPP_
 
 #include "j9.h"
+#include "rommeth.h"
 #include "BytecodeAction.hpp"
 
 extern "C" {
@@ -34,9 +35,7 @@ J9OutOfLineINLMethod OutOfLineINL_jdk_internal_misc_Unsafe_fullFence;
 J9OutOfLineINLMethod OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeObjectVolatile;
 J9OutOfLineINLMethod OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeIntVolatile;
 J9OutOfLineINLMethod OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeLongVolatile;
-#if defined(J9VM_OPT_VALHALLA_MVT)
-J9OutOfLineINLMethod OutOfLineINL_jdk_experimental_value_ValueType_valueClassImpl;
-#endif /* defined(J9VM_OPT_VALHALLA_MVT) */
+J9OutOfLineINLMethod OutOfLineINL_com_ibm_jit_JITHelpers_acmplt;
 #if defined(J9VM_OPT_PANAMA)
 J9OutOfLineINLMethod OutOfLineINL_java_lang_invoke_NativeMethodHandle_initJ9NativeCalloutDataRef;
 J9OutOfLineINLMethod OutOfLineINL_java_lang_invoke_NativeMethodHandle_freeJ9NativeCalloutDataRef;
@@ -82,6 +81,53 @@ public:
 		currentThread->pc += 3;
 		currentThread->sp += (slotCount - 1);
 	}
+
+	static VMINLINE UDATA*
+	buildSpecialStackFrame(J9VMThread *currentThread, UDATA type, UDATA flags, bool visible)
+	{
+ 		*--currentThread->sp = (UDATA)currentThread->arg0EA | (visible ? 0 : J9SF_A0_INVISIBLE_TAG);
+ 		UDATA *bp = currentThread->sp;
+ 		*--currentThread->sp = (UDATA)currentThread->pc;
+ 		*--currentThread->sp = (UDATA)currentThread->literals;
+ 		*--currentThread->sp = (flags);
+ 		currentThread->pc = (U_8*)(type);
+ 		currentThread->literals = NULL;
+ 		return bp;
+ 	}
+ 	
+ 	static VMINLINE UDATA
+ 	jitStackFrameFlags(J9VMThread *currentThread, UDATA constantFlags)
+ 	{
+ 		UDATA flags = currentThread->jitStackFrameFlags;
+ 		currentThread->jitStackFrameFlags = 0;
+ 		return flags | constantFlags;
+ 	}
+ 	
+ 	static VMINLINE void
+ 	restoreSpecialStackFrameLeavingArgs(J9VMThread *currentThread, UDATA *bp)
+ 	{
+ 		currentThread->sp = bp + 1;
+ 		currentThread->literals = (J9Method*)(bp[-2]);
+ 		currentThread->pc = (U_8*)(bp[-1]);
+ 		currentThread->arg0EA = (UDATA*)(bp[0] & ~(UDATA)J9SF_A0_INVISIBLE_TAG);
+ 	}
+ 	
+ 	static VMINLINE UDATA*
+ 	buildInternalNativeStackFrame(J9VMThread *currentThread, J9Method *method)
+ 	{
+ 		UDATA *bp = buildSpecialStackFrame(currentThread, J9SF_FRAME_TYPE_NATIVE_METHOD, jitStackFrameFlags(currentThread, 0), true);
+ 		*--currentThread->sp = (UDATA)method;
+ 		currentThread->arg0EA = bp + J9_ROM_METHOD_FROM_RAM_METHOD(method)->argCount;
+ 		return bp;
+ 	}
+ 
+ 	static VMINLINE void
+ 	restoreInternalNativeStackFrame(J9VMThread *currentThread)
+ 	{
+ 		J9SFNativeMethodFrame *nativeMethodFrame = (J9SFNativeMethodFrame*)currentThread->sp;
+ 		currentThread->jitStackFrameFlags = nativeMethodFrame->specialFrameFlags & J9_SSF_JIT_NATIVE_TRANSITION_FRAME;
+ 		restoreSpecialStackFrameLeavingArgs(currentThread, ((UDATA*)(nativeMethodFrame + 1)) - 1);
+ 	}
 };
 
 #endif /* VM_OUTOFLINEINL_HPP_ */

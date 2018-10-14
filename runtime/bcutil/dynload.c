@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -201,7 +201,7 @@ searchClassInModule(J9VMThread * vmThread, J9Module * j9module, U_8 * className,
 {
 	J9JavaVM *javaVM = vmThread->javaVM;
 	char moduleNameBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
-	char *moduleName = moduleNameBuf;
+	char *moduleName = NULL;
 	BOOLEAN freeModuleName = FALSE;
 	IDATA rc = 1;
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
@@ -213,7 +213,7 @@ searchClassInModule(J9VMThread * vmThread, J9Module * j9module, U_8 * className,
 		moduleName = JAVA_BASE_MODULE;
 	} else {
 		moduleName = J9_VM_FUNCTION(vmThread, copyStringToUTF8WithMemAlloc)(
-			vmThread, j9module->moduleName, J9_STR_NONE, "", moduleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+			vmThread, j9module->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, moduleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 		if (NULL == moduleName) {
 			rc = -1;
 			goto _end;

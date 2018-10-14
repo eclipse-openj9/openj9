@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2702,7 +2702,7 @@ createAndRunOneOffDumpAgent(struct J9JavaVM *vm,J9RASdumpContext * context,IDATA
  * state [inout] - State bit flags. Used to maintain state between multiple calls of runDumpAgent. 
  *                 When you've performed all runDumpAgent calls you must call unwindAfterDump passing
  *                 the state variable to make sure all locks are cleaned up. The first time runDumpAgent 
- *                 is called, state should be initialised to 0.
+ *                 is called, state should be initialized to 0.
  * detail    -     Detail string for dump cause
  * timeNow [in] -  Time value as returned from j9time_current_time_millis. Used to timestamp the dumps.
  *

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1873,9 +1873,23 @@ getReturnTypeFromSignature(U_8 * inData, UDATA inLength, U_8 **outData);
 /* ---------------- mthutil.c ---------------- */
 
 /**
+ * @brief Retrieve the index of an interface method within the iTable for an interface
+ *        (not necessarily the same interface, as iTables contain methods from all
+ *        extended interfaces as well as the local one).
+ * @param method The interface method
+ * @param targetInterface The interface in whose table to search
+ *                        (NULL to use the declaring class of method)
+ * @return UDATA The iTable index (not including the fixed J9ITable header), or -1 if not found
+ */
+UDATA
+getITableIndexForMethod(J9Method * method, J9Class *targetInterface);
+
+/**
  * Returns the first ROM method following the argument.
  * If this is called on the last ROM method in a ROM class
  * it will return an undefined value.
+ * The defining class of method must be an interface; do not use this
+ * for methods inherited from java.lang.Object.
  *
  * @param[in] romMethod - the current ROM method
  * @return - the ROM method following the current one
@@ -2114,6 +2128,11 @@ jitClassRedefineEvent(J9VMThread * currentThread, J9JVMTIHCRJitEventData * jitEv
 void
 notifyGCOfClassReplacement(J9VMThread * currentThread, J9HashTable * classPairs, UDATA isFastHCR);
 
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+void
+fixNestMembers(J9VMThread * currentThread, J9HashTable * classPairs);
+#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+
 #endif /* J9VM_INTERP_HOT_CODE_REPLACEMENT */
 
 /* ---------------- filecache.c ---------------- */
@@ -2190,6 +2209,14 @@ setCurrentCacheVersion(J9JavaVM *vm, UDATA j2seVersion, J9PortShcVersion* result
  */
 U_32
 getJVMFeature(J9JavaVM *vm);
+
+/**
+ * Get the OpenJ9 SHA
+ *
+ * @return uint64_t The OpenJ9 SHA
+ */
+uint64_t
+getOpenJ9Sha();
 
 /* ---------------- cphelp.c ---------------- */
 
@@ -2588,24 +2615,6 @@ isAllowedReadAccessToModule(J9VMThread * currentThread, J9Module * fromModule, J
 BOOLEAN
 isModuleDefined(J9VMThread * currentThread, J9Module * fromModule);
 
-/**
- * Determine if a package within fromModule is exported to toModule
- *
- * @param[in] currentThread the current J9VMThread
- * @param[in] fromModule the module containing the package
- * @param[in] packageName the package to be checked if it is exported to toModule
- * @param[in] toModule the module to be checked if the package is exported to it
- * @param[in] toUnnamed the flag indicating if toModule is an unnamed module
- * @param[in] errCode the status code returned
- *
- * @return true if the package is exported to toModule, false if otherwise
- */
-BOOLEAN
-#if J9VM_JAVA9_BUILD >= 156
-isPackageExportedToModule(J9VMThread * currentThread, J9Module * fromModule, const char *packageName, J9Module * toModule, BOOLEAN toUnnamed, UDATA * errCode);
-#else /* J9VM_JAVA9_BUILD >= 156 */
-isPackageExportedToModule(J9VMThread * currentThread, J9Module * fromModule, j9object_t packageName, J9Module * toModule, BOOLEAN toUnnamed, UDATA * errCode);
-#endif /* J9VM_JAVA9_BUILD >= 156 */
 /**
  * Determine if a package within fromModule is exported to toModule
  *

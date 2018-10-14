@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,11 +51,11 @@ Java_java_lang_ClassLoader_defineClassImpl(JNIEnv *env, jobject receiver, jstrin
 
 		if (CLASSNAME_INVALID == vmFuncs->verifyQualifiedName(currentThread, J9_JNI_UNWRAP_REFERENCE(className))) {
 			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNOCLASSDEFFOUNDERROR, (UDATA *)*(j9object_t*)className);
-			vmFuncs->internalReleaseVMAccess(currentThread);
+			vmFuncs->internalExitVMToJNI(currentThread);
 			return NULL;
 		}
 
-		vmFuncs->internalReleaseVMAccess(currentThread);
+		vmFuncs->internalExitVMToJNI(currentThread);
 	}
 #endif
 
@@ -92,11 +92,11 @@ Java_com_ibm_oti_vm_BootstrapClassLoader_addJar(JNIEnv *env, jobject receiver, j
 		newCount = (jint)addJarToSystemClassLoaderClassPathEntries(vm, jarPathBuffer);
 		j9mem_free_memory(jarPathBuffer);
 		vmFuncs->releaseExclusiveVMAccess(currentThread);
-		vmFuncs->internalReleaseVMAccess(currentThread);
+		vmFuncs->internalExitVMToJNI(currentThread);
 	}
 	/* If any error occcurred, throw OutOfMemoryError */
 	if (0 == newCount) {
-		throwNativeOOMError(env, J9NLS_JCL_UNABLE_TO_CREATE_CLASS_PATH_ENTRY);
+		vmFuncs->throwNativeOOMError(env, J9NLS_JCL_UNABLE_TO_CREATE_CLASS_PATH_ENTRY);
 	}
 	return newCount;
 }

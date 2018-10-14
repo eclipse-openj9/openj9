@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3618,51 +3618,42 @@ J9NLS_SHRC_SHRINIT_SHARED_INTERN_TABLE_IS_BIGGER_THAN_SHARED_CACHE.system_action
 J9NLS_SHRC_SHRINIT_SHARED_INTERN_TABLE_IS_BIGGER_THAN_SHARED_CACHE.user_response=Check the shared cache size and intern string table node count specified by the -Xitsn option.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ACQUIREHEADERWRITELOCK_ERROR=Erro ao \
-adquirir bloqueio de grava\u00e7\u00e3o do cabe\u00e7alho de arquivo do cache de classe \
-compartilhado
+J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ACQUIREHEADERWRITELOCK_ERROR=Erro ao adquirir bloqueio de grava\u00e7\u00e3o do cabe\u00e7alho de arquivo do cache de classe compartilhado
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ACQUIREHEADERWRITELOCK_ERROR.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ACQUIREHEADERWRITELOCK_ERROR.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ACQUIREHEADERWRITELOCK_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_RELEASING_HEADER_WRITE_LOCK=Erro ao \
-liberar a trava de leitura do cabe\u00e7alho do arquivo do cache de classe \
-compartilhado
+J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_RELEASING_HEADER_WRITE_LOCK=Erro ao liberar o bloqueio de leitura do cabe\u00e7alho do arquivo do cache de classe compartilhado
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_RELEASING_HEADER_WRITE_LOCK.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_RELEASING_HEADER_WRITE_LOCK.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_RELEASING_HEADER_WRITE_LOCK.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_NOJIT=Desativar o armazenamento dos dados de \
-JIT no cache compartilhado
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOJIT=Desativar o armazenamento dos dados de JIT no cache compartilhado
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_NOJIT.explanation=NOTISSUED
 J9NLS_SHRC_SHRINIT_HELPTEXT_NOJIT.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NOJIT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_MINJIT_GRTHAN_MAXJIT=O valor do -XscminJIT n\u00e3o deve ser \
-maior que o valor do -XscmaxJIT
+J9NLS_SHRC_SHRINIT_MINJIT_GRTHAN_MAXJIT=O valor do -XscminJIT n\u00e3o deve ser maior que o valor do -XscmaxJIT
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_MINJIT_GRTHAN_MAXJIT.explanation=NOTISSUED
 J9NLS_SHRC_SHRINIT_MINJIT_GRTHAN_MAXJIT.system_action=The JVM exits
 J9NLS_SHRC_SHRINIT_MINJIT_GRTHAN_MAXJIT.user_response=Change -XscminJIT to be less than -XscmaxJIT
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_MINJIT_GRTHAN_SCMX=O valor do -XscminJIT \u00e9 maior que o \
-valor do -Xscmx, ent\u00e3o, ele foi configurado para um valor igual ao do \
--Xscmx
+J9NLS_SHRC_SHRINIT_MINJIT_GRTHAN_SCMX=O valor do -XscminJIT \u00e9 maior que o valor do -Xscmx, ent\u00e3o, ele foi configurado para um valor igual ao do -Xscmx
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_MINJIT_GRTHAN_SCMX.explanation=NOTISSUED
 J9NLS_SHRC_SHRINIT_MINJIT_GRTHAN_SCMX.system_action=The JVM continues
 J9NLS_SHRC_SHRINIT_MINJIT_GRTHAN_SCMX.user_response=The value has been changed automatically
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_MAXJIT_GRTHAN_SCMX=O valor do -XscmaxJIT \u00e9 maior que o \
-valor do -Xscmx, ent\u00e3o, ele foi configurado para ilimitado
+J9NLS_SHRC_SHRINIT_MAXJIT_GRTHAN_SCMX=O valor do -XscmaxJIT \u00e9 maior que o valor do -Xscmx, ent\u00e3o, ele foi configurado para ilimitado
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_MAXJIT_GRTHAN_SCMX.explanation=NOTISSUED
 J9NLS_SHRC_SHRINIT_MAXJIT_GRTHAN_SCMX.system_action=The JVM continues
@@ -3680,8 +3671,7 @@ J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2.system_action=The JVM will attempt to automa
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2.user_response=Destroy the shared class cache named in the message and rerun.  If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CC_STARTUP_CACHE_CRC_INVALID=O cache CRC est\u00e1 indicando \
-incorretamente um cache de corrompido. Cache de CRC incorreto: 0x%x.
+J9NLS_SHRC_CC_STARTUP_CACHE_CRC_INVALID=O cache CRC est\u00e1 indicando incorretamente um cache corrompido. Cache de CRC incorreto: 0x%x.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_STARTUP_CACHE_CRC_INVALID.sample_input_1=12345678
 J9NLS_SHRC_CC_STARTUP_CACHE_CRC_INVALID.explanation=An error has occurred in shared class processing.
@@ -3689,8 +3679,7 @@ J9NLS_SHRC_CC_STARTUP_CACHE_CRC_INVALID.system_action=The cache is marked as cor
 J9NLS_SHRC_CC_STARTUP_CACHE_CRC_INVALID.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_READ_CORRUPT_CACHE_ENTRY_HEADER=Leia os dados corrompidos \
-para o cabe\u00e7alho de entrada de cache 0x%p (comprimento do item inv\u00e1lido)
+J9NLS_SHRC_CM_READ_CORRUPT_CACHE_ENTRY_HEADER=Leia os dados corrompidos para o cabe\u00e7alho de entrada de cache 0x%p (comprimento do item inv\u00e1lido)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_READ_CORRUPT_CACHE_ENTRY_HEADER.sample_input_1=00FCAB00
 J9NLS_SHRC_CM_READ_CORRUPT_CACHE_ENTRY_HEADER.explanation=An error has occurred in shared class processing.
@@ -3698,8 +3687,7 @@ J9NLS_SHRC_CM_READ_CORRUPT_CACHE_ENTRY_HEADER.system_action=The cache is marked 
 J9NLS_SHRC_CM_READ_CORRUPT_CACHE_ENTRY_HEADER.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CC_STARTUP_CORRUPT_CACHE_SIZE_INVALID=O tamanho do cache \u00e9 \
-muito pequeno para ser \u00fatil. Tamanho do cache inv\u00e1lido: 0x%x.
+J9NLS_SHRC_CC_STARTUP_CORRUPT_CACHE_SIZE_INVALID=O tamanho do cache \u00e9 muito pequeno para ser \u00fatil. Tamanho do cache inv\u00e1lido: 0x%x.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_STARTUP_CORRUPT_CACHE_SIZE_INVALID.sample_input_1=00FCAB00
 J9NLS_SHRC_CC_STARTUP_CORRUPT_CACHE_SIZE_INVALID.explanation=An error has occurred in shared class processing.
@@ -3707,9 +3695,7 @@ J9NLS_SHRC_CC_STARTUP_CORRUPT_CACHE_SIZE_INVALID.system_action=The cache is mark
 J9NLS_SHRC_CC_STARTUP_CORRUPT_CACHE_SIZE_INVALID.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_CORRUPT_ACQUIRE_HEADER_WRITE_LOCK_FAILED=Falha ao \
-adquirir o bloqueio de grava\u00e7\u00e3o do cabe\u00e7alho durante a inicializa\u00e7\u00e3o do \
-cache com o c\u00f3digo de erro: %d.
+J9NLS_SHRC_OSCACHE_CORRUPT_ACQUIRE_HEADER_WRITE_LOCK_FAILED=Falha ao adquirir o bloqueio de grava\u00e7\u00e3o do cabe\u00e7alho durante a inicializa\u00e7\u00e3o do cache com o c\u00f3digo de erro: %d.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_CORRUPT_ACQUIRE_HEADER_WRITE_LOCK_FAILED.sample_input_1=-301
 J9NLS_SHRC_OSCACHE_CORRUPT_ACQUIRE_HEADER_WRITE_LOCK_FAILED.explanation=An error has occurred in shared class processing.
@@ -3717,9 +3703,7 @@ J9NLS_SHRC_OSCACHE_CORRUPT_ACQUIRE_HEADER_WRITE_LOCK_FAILED.system_action=The ca
 J9NLS_SHRC_OSCACHE_CORRUPT_ACQUIRE_HEADER_WRITE_LOCK_FAILED.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_BAD_EYECATCHER=Os dados de \
-identifica\u00e7\u00e3o do cabe\u00e7alho do cache n\u00e3o s\u00e3o v\u00e1lidos. O endere\u00e7o da \
-sequ\u00eancia dos dados de identifica\u00e7\u00e3o no cabe\u00e7alho do cache: 0x%p.
+J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_BAD_EYECATCHER=Os dados de identifica\u00e7\u00e3o do cabe\u00e7alho do cache n\u00e3o s\u00e3o v\u00e1lidos. O endere\u00e7o da sequ\u00eancia de carcteres em destaque no cabe\u00e7alho do cache: 0x%p.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_BAD_EYECATCHER.sample_input_1=00FCAB00
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_BAD_EYECATCHER.explanation=An error has occurred in shared class processing.
@@ -3727,9 +3711,7 @@ J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_BAD_EYECATCHER.system_action=The cache i
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_BAD_EYECATCHER.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_CACHE_SIZE=O campo do \
-tamanho do cache no cabe\u00e7alho do cache n\u00e3o \u00e9 v\u00e1lido. O tamanho do cache no \
-cabe\u00e7alho do cache \u00e9: 0x%x.
+J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_CACHE_SIZE=O campo do tamanho do cache no cabe\u00e7alho do cache n\u00e3o \u00e9 v\u00e1lido. O tamanho do cache no cabe\u00e7alho do cache \u00e9: 0x%x.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_CACHE_SIZE.sample_input_1=00FCAB00
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_CACHE_SIZE.explanation=An error has occurred in shared class processing.
@@ -3737,9 +3719,7 @@ J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_CACHE_SIZE.system_action=The c
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_CACHE_SIZE.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_PADDING=O preenchimento \
-\u00e9 diferente de zero. Os bytes de preenchimento no cabe\u00e7alho do cache s\u00e3o: \
-%u.
+J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_PADDING=O preenchimento \u00e9 diferente de zero. Os bytes de preenchimento no cabe\u00e7alho do cache s\u00e3o: %u.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_PADDING.sample_input_1=0
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_PADDING.explanation=An error has occurred in shared class processing.
@@ -3747,9 +3727,7 @@ J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_PADDING.system_action=The cach
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_PADDING.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_DATA_LENGTH=O campo de \
-comprimento dos dados no cabe\u00e7alho do cache n\u00e3o \u00e9 v\u00e1lido. O comprimento \
-dos dados no cabe\u00e7alho do cache \u00e9 : %u.
+J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_DATA_LENGTH=O campo de comprimento dos dados no cabe\u00e7alho do cache n\u00e3o \u00e9 v\u00e1lido. O comprimento dos dados no cabe\u00e7alho do cache \u00e9 : %u.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_DATA_LENGTH.sample_input_1=364720
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_DATA_LENGTH.explanation=An error has occurred in shared class processing.
@@ -3757,9 +3735,7 @@ J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_DATA_LENGTH.system_action=The 
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_DATA_LENGTH.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_DATA_START_ADDRESS=O \
-campo de in\u00edcio dos dados no cabe\u00e7alho do cache n\u00e3o \u00e9 v\u00e1lido. O endere\u00e7o \
-de in\u00edcio dos dados no cabe\u00e7alho do cache: 0x%p.
+J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_DATA_START_ADDRESS=O campo de in\u00edcio dos dados no cabe\u00e7alho do cache n\u00e3o \u00e9 v\u00e1lido. O endere\u00e7o de in\u00edcio dos dados no cabe\u00e7alho do cache: 0x%p.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_DATA_START_ADDRESS.sample_input_1=00FCAB00
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_DATA_START_ADDRESS.explanation=An error has occurred in shared class processing.
@@ -3825,8 +3801,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_NONE2.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NONE2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_NOJITDATA=Desativar o armazenamento dos dados de \
-JIT no cache compartilhado
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOJITDATA=Desativar o armazenamento dos dados de JIT no cache compartilhado
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_NOJITDATA.explanation=Use -Xnojit to disable storing JIT data in shared cache
 J9NLS_SHRC_SHRINIT_HELPTEXT_NOJITDATA.system_action=The JVM continues
@@ -6104,7 +6079,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_REVALIDATE_AOT_METHODS.user_response=
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS=Imprima \
 o(s) m\u00e9todo(s) AOT correspondente(s) \u00e0(s) especifica\u00e7\u00e3o(\u00f5es) de \
 m\u00e9todo.\n\
-\t<method_specification> est\u00e1 definido como: [!]{*|[*]<packagename/classname>[*]}[.{*|[*]<methodname>[*]}][({*|[*]<parameters>[*]})].
+\t<method_specification> \u00e9 definido como: [!]{*|[*]<packagename/classname>[*]}[.{*|[*]<methodname>[*]}[({*|[*]<parameters>[*]})]].
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.system_action=
@@ -6126,7 +6101,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=O formato de <method_specification> \u00e9 [!]{*|[*]<packagename/classname>[*]}[.{*|[*]<methodname>[*]}][({*|[*]<parameters>[*]})], por exemplo:\n\
+J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=O formato de <method_specification> \u00e9 [!]{*|[*]<packagename/classname>[*]}[.{*|[*]<methodname>[*]}[({*|[*]<parameters>[*]})]], por exemplo:\n\
 \n\
 \t-Xshareclasses:name=Cache1,%sjava/util/HashMap.hash(Ljava/lang/Object;)\n
 # START NON-TRANSLATABLE
@@ -6274,6 +6249,7 @@ J9NLS_SHRC_OSCACHE_MMAP_SET_GROUPACCESS_FAILED.user_response=Check the umask set
 
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED=Falha ao configurar a permiss\u00e3o de acesso do grupo conforme solicitado pela subp\u00e7\u00e3o 'groupAccess' na configura\u00e7\u00e3o de sem\u00e1foro com semid=%d associado ao cache de classe compartilhada.
 # START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.explanation=Cannot set group access permission when creating the new semaphore with sub-option "groupAccess".
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.user_response=Ensure the user has sufficient permission for creating the new semaphore with group access.
@@ -6281,6 +6257,7 @@ J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.user_response=Ensure the use
 
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED=Falha ao configurar a permiss\u00e3o de acesso do grupo conforme solicitado pela subop\u00e7\u00e3o 'groupAccess' na mem\u00f3ria compartilhada com shmid=%d associado ao cache de classe compartilhada.
 # START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.explanation=Cannot set group access permission when creating the new shared memory with sub-option "groupAccess".
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.user_response=Ensure the user has sufficient permission for creating the new shared memory with group access.
@@ -6771,7 +6748,7 @@ J9NLS_SHRC_SHRINIT_MAX_SPACE_SIZE_VALUE_TOO_BIG.system_action=The JVM continues
 J9NLS_SHRC_SHRINIT_MAX_SPACE_SIZE_VALUE_TOO_BIG.user_response=The value has been changed automatically
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_UNSTORED_V1=Total de bytes n\u00e3o armazenados devido \u00e0 configura\u00e7\u00e3o de m\u00e1ximo aproximado de cache compartilhado ser %u. Bytes AOT n\u00e3o armazenados devido \u00e0 configura\u00e7\u00e3o de -Xscmaxaot ser %u. Bytes JIT n\u00e3o armazenados devido \u00e0 configura\u00e7\u00e3o de -Xscmaxjitdata ser %u.
+J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_UNSTORED_V1=Total de bytes n\u00e3o armazenados devido \u00e0 configura\u00e7\u00e3o de m\u00e1ximo aproximado de cache compartilhado ser %u. Os bytes AOT n\u00e3o armazenados devido \u00e0 configura\u00e7\u00e3o de -Xscmaxaot ser %u. Os bytes JIT n\u00e3o armazenados devido \u00e0 configura\u00e7\u00e3o de -Xscmaxjitdata ser %u.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_UNSTORED_V1.sample_input_1=102400
 J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_UNSTORED_V1.sample_input_2=4096
@@ -6787,4 +6764,11 @@ corresponde \u00e0 JVM em execu\u00e7\u00e3o.
 J9NLS_SHRC_CC_INCORRECT_BUILDID.explanation=An error has occurred when starting up the cache. The build ID of the existing cache with the same name is different from that of the current JVM.
 J9NLS_SHRC_CC_INCORRECT_BUILDID.system_action=The JVM fails to complete the requested operation.
 J9NLS_SHRC_CC_INCORRECT_BUILDID.user_response=Use a JVM which matches the build ID of the existing cache.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1=Desative o armazenamento em cache das classes carregadas pelo carregador de classes de autoinicializa\u00e7\u00e3o.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.user_response=
 # END NON-TRANSLATABLE

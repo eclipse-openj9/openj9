@@ -394,6 +394,10 @@ MM_CollectorLanguageInterfaceImpl::scavenger_scavengeIndirectObjectSlots(MM_Envi
 		while((slotPtr = classStaticsIterator.nextSlot()) != NULL) {
 			shouldBeRemembered = _extensions->scavenger->copyObjectSlot(env, slotPtr) || shouldBeRemembered;
 		}
+		GC_ConstantPoolObjectSlotIterator constantPoolObjectSlotIterator((J9JavaVM*)_omrVM->_language_vm, classToScan, true);
+		while ((slotPtr = constantPoolObjectSlotIterator.nextSlot()) != NULL) {
+			shouldBeRemembered = _extensions->scavenger->copyObjectSlot(env, slotPtr) || shouldBeRemembered;
+		}
 		shouldBeRemembered = _extensions->scavenger->copyObjectSlot(env, (omrobjectptr_t *)&(classToScan->classObject)) || shouldBeRemembered;
 
 		classToScan = classToScan->replacedClass;
@@ -415,13 +419,23 @@ MM_CollectorLanguageInterfaceImpl::scavenger_hasIndirectReferentsInNewSpace(MM_E
 		 return true;
 	}
 
-	/* Iterate though Class Statics */
+	/* Iterate though Class Statics and Constant Dynamics*/
 	do {
 		omrobjectptr_t *slotPtr = NULL;
 		GC_ClassStaticsIterator classStaticsIterator(env, classToScan);
 		while(NULL != (slotPtr = (omrobjectptr_t*)classStaticsIterator.nextSlot())) {
 			omrobjectptr_t objectPtr = *slotPtr;
 			if (NULL != objectPtr){
+				if (_extensions->scavenger->isObjectInNewSpace(objectPtr)){
+					Assert_MM_false(_extensions->scavenger->isObjectInEvacuateMemory(objectPtr));
+					return true;
+				}
+			}
+		}
+		GC_ConstantPoolObjectSlotIterator constantPoolObjectSlotIterator((J9JavaVM*)_omrVM->_language_vm, classToScan, true);
+		while (NULL != (slotPtr = (omrobjectptr_t*)constantPoolObjectSlotIterator.nextSlot())) {
+			omrobjectptr_t objectPtr = *slotPtr;
+			if (NULL != objectPtr) {
 				if (_extensions->scavenger->isObjectInNewSpace(objectPtr)){
 					Assert_MM_false(_extensions->scavenger->isObjectInEvacuateMemory(objectPtr));
 					return true;
@@ -447,6 +461,10 @@ MM_CollectorLanguageInterfaceImpl::scavenger_fixupIndirectObjectSlots(MM_Environ
 		while((slotPtr = classStaticsIterator.nextSlot()) != NULL) {
 			_extensions->scavenger->fixupSlotWithoutCompression(slotPtr);
 		}
+		GC_ConstantPoolObjectSlotIterator constantPoolObjectSlotIterator((J9JavaVM*)_omrVM->_language_vm, classToScan, true);
+		while ((slotPtr = constantPoolObjectSlotIterator.nextSlot()) != NULL) {
+			_extensions->scavenger->fixupSlotWithoutCompression(slotPtr);
+		}
 		_extensions->scavenger->fixupSlotWithoutCompression((omrobjectptr_t *)&(classToScan->classObject));
 		classToScan = classToScan->replacedClass;
 	} while (NULL != classToScan);
@@ -463,6 +481,10 @@ MM_CollectorLanguageInterfaceImpl::scavenger_backOutIndirectObjectSlots(MM_Envir
 		volatile omrobjectptr_t *slotPtr = NULL;
 		GC_ClassStaticsIterator classStaticsIterator(env, classToScan);
 		while((slotPtr = classStaticsIterator.nextSlot()) != NULL) {
+			_extensions->scavenger->backOutFixSlotWithoutCompression(slotPtr);
+		}
+		GC_ConstantPoolObjectSlotIterator constantPoolObjectSlotIterator((J9JavaVM*)_omrVM->_language_vm, classToScan, true);
+		while ((slotPtr = constantPoolObjectSlotIterator.nextSlot()) != NULL) {
 			_extensions->scavenger->backOutFixSlotWithoutCompression(slotPtr);
 		}
 		_extensions->scavenger->backOutFixSlotWithoutCompression((omrobjectptr_t *)&(classToScan->classObject));
@@ -678,13 +700,35 @@ MM_CollectorLanguageInterfaceImpl::scavenger_switchConcurrentForThread(MM_Enviro
 			j9tty_printf(PORTLIB, "%p: Nursery [%p,%p] Evacuate [%p,%p] GS [%p,%p] Section size 0x%zx, sections %lu bit offset %lu bit mask 0x%zx\n",
 					vmThread, nurseryBase, nurseryTop, gsBase, gsTop, pageBase, pageTop, _extensions->getConcurrentScavengerPageSectionSize() , sectionCount, startOffsetInBits, bitMask);
 		}
-		vmThread->evacuateBase = gsBase;
-		vmThread->evacuateTop = gsTop;
+		/*
+		 * vmThread->evacuateTop is defined as the last address possible in the evacuate region;
+		 * however, gsTop is the first address above the evacuate region;
+		 * therefore, vmThread->evacuateTop = gsTop - 1.
+		 * In short, the evacuate region is [vmThread->evacuateBase, vmThread->evacuateTop].
+		 */
+		vmThread->evacuateBase = (UDATA)gsBase;
+		vmThread->evacuateTop = (UDATA)gsTop - 1;
+#if defined(J9VM_GC_COMPRESSED_POINTERS)
+		vmThread->evacuateBaseCompressed = _extensions->accessBarrier->convertTokenFromPointer((mm_j9object_t)vmThread->evacuateBase);
+		vmThread->evacuateTopCompressed = _extensions->accessBarrier->convertTokenFromPointer((mm_j9object_t)vmThread->evacuateTop);
+#endif /* J9VM_GC_COMPRESSED_POINTERS */
 		vmThread->privateFlags |= J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE;
 		j9gs_enable(&vmThread->gsParameters, _extensions->getConcurrentScavengerPageStartAddress(), _extensions->getConcurrentScavengerPageSectionSize(), bitMask);
     } else {
 		j9gs_disable(&vmThread->gsParameters);
+		/*
+		 * By setting evacuateTop to NULL and evacuateBase to ~evacuateTop
+		 * it gives an empty range that contains no address. Therefore,
+		 * when decide whether to read barrier, a simple range is sufficient and
+		 * checking J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE can be skipped.
+		 */
 		vmThread->privateFlags &= ~J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE;
+		vmThread->evacuateBase = UDATA_MAX;
+		vmThread->evacuateTop = 0;
+#ifdef J9VM_GC_COMPRESSED_POINTERS
+		vmThread->evacuateBaseCompressed = U_32_MAX;
+		vmThread->evacuateTopCompressed = 0;
+#endif
     }
 }
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */

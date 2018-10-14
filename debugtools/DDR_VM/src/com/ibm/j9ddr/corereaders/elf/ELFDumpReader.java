@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2015 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,8 +39,6 @@ import static com.ibm.j9ddr.corereaders.elf.ELFFileReader.NT_AUXV;
 import static com.ibm.j9ddr.corereaders.elf.ELFFileReader.NT_HGPRS;
 import static com.ibm.j9ddr.corereaders.elf.ELFFileReader.NT_PRPSINFO;
 import static com.ibm.j9ddr.corereaders.elf.ELFFileReader.NT_PRSTATUS;
-import static java.util.logging.Level.WARNING;
-import static java.util.logging.Level.FINE;
 import static java.util.logging.Level.FINER;
 
 import java.io.File;
@@ -48,16 +46,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.logging.Level;

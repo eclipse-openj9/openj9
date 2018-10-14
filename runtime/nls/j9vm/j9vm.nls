@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1476,7 +1476,7 @@ J9NLS_VM_XXSHARED_CACHE_HARD_LIMIT_EQUALS_IGNORED.system_action=The JVM continue
 J9NLS_VM_XXSHARED_CACHE_HARD_LIMIT_EQUALS_IGNORED.user_response=The -XX:SharedCacheHardLimit= value is ignored
 # END NON-TRANSLATABLE
 
-J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ=Class %2$.*1$s(%3$s) can not access class %5$.*4$s(%6$s) because %3$s does not read %6$s 
+J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ=Class %2$.*1$s(%3$s) can not access class %5$.*4$s(%6$s) because module %3$s does not read module %6$s 
 # START NON-TRANSLATABLE
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_1=18
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_2=com.greetings.Main 
@@ -1489,7 +1489,7 @@ J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.system_action=The JVM will exit.
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.user_response=Refer IBM Java User Guide for modularity diagnostic options.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT=Class %2$.*1$s(%3$s) can not access class %5$.*4$s(%6$s) because %6$s does not export package %7$s to %3$s
+J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT=Class %2$.*1$s(%3$s) can not access class %5$.*4$s(%6$s) because module %6$s does not export package %7$s to module %3$s
 # START NON-TRANSLATABLE
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_1=18
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_2=com.greetings.Main 
@@ -1661,18 +1661,18 @@ J9NLS_VM_IDLE_TUNING_PLATFORM_OR_GC_POLICY_NOT_SUPPORTED.user_response=Refer to 
 
 # first argument is the length of class name
 # second argument is the class name
-J9NLS_VM_CLASS_NOT_VALUE_CAPABLE=The resolved class %2$.*1$s is not value capable
+J9NLS_VM_CLASS_NOT_VALUE_CAPABLE=
 # START NON-TRANSLATABLE
-J9NLS_VM_CLASS_NOT_VALUE_CAPABLE.explanation=Attempting to derive a value type from a class that is not value capable
+J9NLS_VM_CLASS_NOT_VALUE_CAPABLE.explanation=NOTAG
 J9NLS_VM_CLASS_NOT_VALUE_CAPABLE.system_action=
 J9NLS_VM_CLASS_NOT_VALUE_CAPABLE.user_response=
 # END NON-TRANSLATABLE
 
 # first argument is the length of class name
 # second argument is the class name
-J9NLS_VM_DVT_NOT_SET=The value capable class %2$.*1$s does not have a derived value type
+J9NLS_VM_DVT_NOT_SET=
 # START NON-TRANSLATABLE
-J9NLS_VM_DVT_NOT_SET.explanation=The class is value capable, but no value type had been derived
+J9NLS_VM_DVT_NOT_SET.explanation=NOTAG
 J9NLS_VM_DVT_NOT_SET.system_action=
 J9NLS_VM_DVT_NOT_SET.user_response=
 # END NON-TRANSLATABLE
@@ -1705,35 +1705,35 @@ J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.user_response=Modify source code to avoi
 
 # First argument is class name length
 # Second argument is class name
-# Third argument is nest top name length
-# Fourth argument is nest top name
-J9NLS_VM_NEST_TOP_HAS_DIFFERENT_CLASSLOADER=Class %2$.*1$s and its nest top %4$.*3$s must have the same classloader.
+# Third argument is nest host name length
+# Fourth argument is nest host name
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER=Class %2$.*1$s and its nest host %4$.*3$s must have the same classloader.
 # START NON-TRANSLATABLE
-J9NLS_VM_NEST_TOP_HAS_DIFFERENT_CLASSLOADER.explanation=Class and nest top class were loaded with different class loaders.
-J9NLS_VM_NEST_TOP_HAS_DIFFERENT_CLASSLOADER.system_action=The JVM will throw a java/lang/VerifyError
-J9NLS_VM_NEST_TOP_HAS_DIFFERENT_CLASSLOADER.user_response=Load class and nest top class with same classloader.
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER.explanation=Class and nest host class were loaded with different class loaders.
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER.system_action=The JVM will throw a java/lang/VerifyError
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER.user_response=Load class and nest host class with same classloader.
 # END NON-TRANSLATABLE
 
 # First argument is class name length
 # Second argument is class name
-# Third argument is nest top name length
-# Fourth argument is nest top name
-J9NLS_VM_NEST_TOP_HAS_DIFFERENT_PACKAGE=Class %2$.*1$s and its nest top %4$.*3$s must have the same package.
+# Third argument is nest host name length
+# Fourth argument is nest host name
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE=Class %2$.*1$s and its nest host %4$.*3$s must have the same package.
 # START NON-TRANSLATABLE
-J9NLS_VM_NEST_TOP_HAS_DIFFERENT_PACKAGE.explanation=Class and nest top class were loaded with different class loaders.
-J9NLS_VM_NEST_TOP_HAS_DIFFERENT_PACKAGE.system_action=The JVM will throw a java/lang/VerifyError
-J9NLS_VM_NEST_TOP_HAS_DIFFERENT_PACKAGE.user_response=Load class and nest top class with same classloader.
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE.explanation=Class and nest host class were loaded with different class loaders.
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE.system_action=The JVM will throw a java/lang/VerifyError
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE.user_response=Load class and nest host class with same classloader.
 # END NON-TRANSLATABLE
 
 # First argument is class name length
 # Second argument is class name
-# Third argument is nest top name length
-# Fourth argument is nest top name
-J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_TOP=Class %2$.*1$s must be claimed by its nest top %4$.*1$s.
+# Third argument is nest host name length
+# Fourth argument is nest host name
+J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST=Class %2$.*1$s must be claimed by its nest host %4$.*3$s
 # START NON-TRANSLATABLE
-J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_TOP.explanation=Class was not claimed by its nest top class.
-J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_TOP.system_action=The JVM will throw a java/lang/VerifyError
-J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_TOP.user_response=Contact the provider of the classfile for a corrected version.
+J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST.explanation=Class was not claimed by its nest host class.
+J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST.system_action=The JVM will throw a java/lang/VerifyError
+J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
 # First argument is the library name
@@ -1782,3 +1782,66 @@ J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.explanation=A class loading const
 J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.system_action=A java/lang/LinkageError will be thrown
 J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.user_response=Examine the use of ClassLoaders to determine why a class of the same name is loaded in two different loaders
 # END NON-TRANSLATABLE
+
+# First argument is class name length
+# Second argument is class name
+# Third argument is nest host name length
+# Fourth argument is nest host name
+J9NLS_VM_NEST_HOST_FAILED_TO_LOAD=Class %2$.*1$s must be able to load its nest host %4$.*3$s.
+# START NON-TRANSLATABLE
+J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.explanation=Class and nest host class were loaded with different class loaders.
+J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.system_action=The JVM will throw a java/lang/IllegalAccessError
+J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.user_response=Load class and nest host class with same classloader.
+# END NON-TRANSLATABLE
+
+# No arguments
+J9NLS_VM_MODULE_IS_NULL=Module is null.
+# START NON-TRANSLATABLE
+J9NLS_VM_MODULE_IS_NULL.explanation=Incoming module can't be NULL.
+J9NLS_VM_MODULE_IS_NULL.system_action=The JVM will throw a java/lang/NullPointerExceptions.
+J9NLS_VM_MODULE_IS_NULL.user_response=Don't pass a NULL module.
+# END NON-TRANSLATABLE
+
+# No arguments
+J9NLS_VM_MODULE_IS_UNNAMED=Module is unnamed.
+# START NON-TRANSLATABLE
+J9NLS_VM_MODULE_IS_UNNAMED.explanation=Incoming module can't be unnamed.
+J9NLS_VM_MODULE_IS_UNNAMED.system_action=The JVM will throw a java/lang/IllegalArgumentExceptions.
+J9NLS_VM_MODULE_IS_UNNAMED.user_response=Don't pass a unnamed module.
+# END NON-TRANSLATABLE
+
+# No arguments
+J9NLS_VM_MODULE_NAME_IS_INVALID=Module name is invalid.
+# START NON-TRANSLATABLE
+J9NLS_VM_MODULE_NAME_IS_INVALID.explanation=Incoming module name is invalid.
+J9NLS_VM_MODULE_NAME_IS_INVALID.system_action=The JVM will throw a java/lang/IllegalArgumentExceptions.
+J9NLS_VM_MODULE_NAME_IS_INVALID.user_response=Don't pass a module with invalid name.
+# END NON-TRANSLATABLE
+
+# No arguments
+J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE=Only bootstrap classloader can define module java.base.
+# START NON-TRANSLATABLE
+J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE.explanation=Non-bootstrap classloader can't define module java.base.
+J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE.system_action=The JVM will throw a java/lang/LayerInstantiationException.
+J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE.user_response=Don't define module java.base.
+# END NON-TRANSLATABLE
+
+# No arguments
+J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA=Only bootstrap or platform classloader can define package java or java.*.
+# START NON-TRANSLATABLE
+J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA.explanation=A classloader other than boostrap or platform classloader can't define package java or java.*.
+J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA.system_action=The JVM will throw a java/lang/LayerInstantiationException.
+J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA.user_response=Don't define package java or java.*.
+# END NON-TRANSLATABLE
+
+# First argument is class name length
+# Second argument is class name
+# Third argument is nest host name length
+# Fourth argument is nest host name
+J9NLS_VM_NESTMATES_CLASS_FAILED_TO_LOAD=Nest member %2$.*1$s must be able to load nest host %4$.*3$s
+# START NON-TRANSLATABLE
+J9NLS_VM_NESTMATES_CLASS_FAILED_TO_LOAD.explanation=Nest member class and nest host class were loaded with different class loaders.
+J9NLS_VM_NESTMATES_CLASS_FAILED_TO_LOAD.system_action=The JVM will throw an IncompatibleClassChangeError
+J9NLS_VM_NESTMATES_CLASS_FAILED_TO_LOAD.user_response=Load class and nest host class with same classloader.
+# END NON-TRANSLATABLE
+

@@ -1,0 +1,193 @@
+<?xml version="1.0"?>
+
+<!--
+  Copyright (c) 2016, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<project name="Java9andUp" default="build" basedir=".">
+	<taskdef resource='net/sf/antcontrib/antlib.xml'/>
+	<description>
+		Tests for Java9andUp
+	</description>
+	<import file="${TEST_ROOT}/functional/build.xml"/>
+
+	<!-- set global properties for this build -->
+	<property name="DEST" value="${BUILD_ROOT}/functional/Java9andUp" />
+
+	<!--Properties for this particular build-->
+	<property name="src" location="./src"/>
+	<property name="src_current" location="./src_current"/>
+	<property name="src_latest" location="./src_latest"/>
+	<property name="TestUtilities" location="../TestUtilities/src"/>
+	<property name="module_src_root" location="./modules"/>
+	<property name="module_bin_root" location="./module_bin"/>
+	<property name="dest_module_bin" location="${DEST}/module_bin"/>
+	<property name="build" location="./bin"/>
+	<property name="transformerListener" location="${TEST_ROOT}/Utils/src"/>
+
+	<!--<property name="src.level" value="1.9"/>
+	<property name="target.level" value="1.9"/> -->
+
+	<target name="init">
+		<mkdir dir="${DEST}" />
+		<mkdir dir="${build}"/>
+	</target>
+
+	<target name="compile" depends="init" description="Using java ${JDK_VERSION} to compile the source " >
+		<echo>Ant version is ${ant.version}</echo>
+		<echo>============COMPILER SETTINGS============</echo>
+		<echo>===fork:				yes</echo>
+		<echo>===executable:			${compiler.javac}</echo>
+		<echo>===debug:				on</echo>
+		<echo>===destdir:				${DEST}</echo>
+
+		<if>
+			<equals arg1="${JCL_VERSION}" arg2="current"/>
+			<then>
+				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+					<src path="${src}"/>
+					<src path="${src_current}"/>
+					<src path="${TestUtilities}" />
+					<src path="${transformerListener}" />
+					<compilerarg line="--add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/sun.security.internal.spec=ALL-UNNAMED --add-exports java.base/jdk.internal.reflect=ALL-UNNAMED --add-exports java.base/com.ibm.tools.attach.target=ALL-UNNAMED" />
+					<classpath>
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar"/>
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar"/>
+					</classpath>
+				</javac>
+			</then>
+			<else>
+				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+					<src path="${src}"/>
+					<src path="${src_latest}"/>
+					<src path="${TestUtilities}" />
+					<src path="${transformerListener}" />
+					<compilerarg line="--add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/sun.security.internal.spec=ALL-UNNAMED --add-exports java.base/jdk.internal.reflect=ALL-UNNAMED --add-exports java.base/com.ibm.tools.attach.target=ALL-UNNAMED" />
+					<classpath>
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar"/>
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar"/>
+					</classpath>
+				</javac>
+			</else>
+		</if>
+	</target>
+
+	<property name="MODULE_NAME_ROOT" value="org.openj9test.modularity"/>
+	<property name="MODULE_PATH_ROOT" value="org/openj9/test/modularity"/>
+	<target name="build_modules" depends="init" description="Create the base modules for the modularity tests ">
+		<if>
+			<!-- These tests are not supported for build 148 -->
+			<equals arg1="${JCL_VERSION}" arg2="latest" />
+			<then>
+				<mkdir dir="${module_bin_root}" />
+				<copy file="${TEST_ROOT}/TestConfig/lib/testng.jar" todir="${module_bin_root}" />
+				<copy file="${TEST_ROOT}/TestConfig/lib/jcommander.jar" todir="${module_bin_root}" />
+				<for list="common,moduleD,moduleC,moduleB,moduleA,testerModule,dummy" param="mod">
+					<sequential>
+						<var name="module_src_dir" value="${module_src_root}/${MODULE_NAME_ROOT}.@{mod}" />
+						<var name="module_bin_dir" value="${module_bin_root}/${MODULE_NAME_ROOT}.@{mod}" />
+						<mkdir dir="${module_bin_dir}" />
+						<var name="modpath" value="--module-path ${module_bin_root} -d ${module_bin_dir}" />
+						<javac srcdir="${module_src_dir}" destdir="${module_bin_dir}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+							<src path="${module_src_dir}" />
+							<compilerarg line="${modpath}" />
+						</javac>
+					</sequential>
+				</for>
+				<!-- compile unnamed module depending on module org.openj9test.modularity.dummy -->
+				<for list="unnamed" param="mod">
+					<sequential>
+						<var name="module_src_dir" value="${module_src_root}/${MODULE_NAME_ROOT}.@{mod}" />
+						<var name="module_bin_dir" value="${module_bin_root}/${MODULE_NAME_ROOT}.@{mod}" />
+						<mkdir dir="${module_bin_dir}" />
+						<var name="modpath" value="-cp ${TEST_ROOT}/TestConfig/lib/testng.jar --module-path ${module_bin_root} -d ${module_bin_dir} --add-modules org.openj9test.modularity.dummy --add-exports org.openj9test.modularity.dummy/org.openj9.test.modularity.dummy=ALL-UNNAMED" />
+						<javac srcdir="${module_src_dir}" destdir="${module_bin_dir}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+							<src path="${module_src_dir}" />
+							<compilerarg line="${modpath}" />
+						</javac>
+					</sequential>
+				</for>
+				<!-- compile module org.openj9test.modularity.testUnreflect depending on unnamed module above -->
+				<for list="testUnreflect" param="mod">
+					<sequential>
+						<var name="module_src_dir" value="${module_src_root}/${MODULE_NAME_ROOT}.@{mod}" />
+						<var name="module_bin_dir" value="${module_bin_root}/${MODULE_NAME_ROOT}.@{mod}" />
+						<mkdir dir="${module_bin_dir}" />
+						<var name="modpath" value="--module-path ${module_bin_root} -d ${module_bin_dir} --add-reads org.openj9test.modularity.testUnreflect=ALL-UNNAMED" />
+						<javac srcdir="${module_src_dir}" destdir="${module_bin_dir}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+							<src path="${module_src_dir}" />
+							<classpath>
+								<pathelement location="${module_bin_root}/org.openj9test.modularity.unnamed" />
+								<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
+							</classpath>
+							<compilerarg line="${modpath}" />
+						</javac>
+					</sequential>
+				</for>
+				<exec executable="${JAVA_BIN}/java" failonerror="true">
+					<arg line="-jar ${TEST_ROOT}/TestConfig/lib/asmtools.jar jasm -d ${module_bin_root}/${MODULE_NAME_ROOT}.testerModule ${module_src_root}/${MODULE_NAME_ROOT}.testerModule/${MODULE_PATH_ROOT}/tests/MethodHandleTester.jasm" />
+				</exec>
+			</then>
+		</if>
+	</target>
+
+	<target name="dist" depends="compile,build_modules,dist_functional" description="generate the distribution" >
+		<mkdir dir="${DEST}"/>
+		<jar jarfile="${DEST}/GeneralTest.jar" filesonly="true">
+			<fileset dir="${build}"/>
+			<fileset dir="${src}/../" includes="*.properties,*.xml"/>
+		</jar>
+		<copy todir="${DEST}">
+			<fileset dir="${src}/../" includes="*.xml" />
+			<fileset dir="${src}/../" includes="*.mk" />
+		</copy>
+		<if>
+			<!-- These tests are not supported for build 148 -->
+			<equals arg1="${JCL_VERSION}" arg2="latest"/>
+			<then>
+				<echo>copy ${module_bin_root} to ${dest_module_bin}</echo>
+				<mkdir dir="${dest_module_bin}"/>
+				<copy todir="${dest_module_bin}">
+					<fileset dir="${module_bin_root}"/>
+				</copy>
+			</then>
+		</if>
+	</target>
+
+	<target name="build" >
+		<if>
+			<not>
+				<equals arg1="${JDK_VERSION}" arg2="8"/>
+			</not>
+			<then>
+				<antcall target="clean" inheritall="true" />
+			</then>
+		</if>
+	</target>
+
+	<target name="clean" depends="dist" description="clean up" >
+		<!-- Delete the ${build} directory trees -->
+		<delete dir="${module_bin_root}"/>
+		<delete dir="${build}"/>
+	</target>
+</project>

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -240,7 +240,6 @@ I_32 numCodeSets (void);
 #define _J9VMACCESSCONTROL_
 extern J9_CFUNC void  internalExitVMToJNI (J9VMThread *currentThread);
 extern J9_CFUNC void  internalEnterVMFromJNI (J9VMThread *currentThread);
-extern J9_CFUNC void  internalReleaseVMAccessInJNI (J9VMThread *vmThread);
 extern J9_CFUNC void  internalReleaseVMAccess (J9VMThread *vmThread);
 extern J9_CFUNC void  internalAcquireVMAccess (J9VMThread *vmThread);
 extern J9_CFUNC IDATA  internalTryAcquireVMAccess (J9VMThread *vmThread);
@@ -1117,13 +1116,15 @@ extern J9_CFUNC struct J9Class*  jitGetClassInClassloaderFromUTF8 (J9VMThread *v
 extern J9_CFUNC UDATA  jitFieldsAreIdentical (J9VMThread *vmStruct, J9ConstantPool *cp1, UDATA index1, J9ConstantPool *cp2, UDATA index2, UDATA isStatic);
 extern J9_CFUNC IDATA  jitCTResolveInstanceFieldRefWithMethod (J9VMThread *vmStruct, J9Method *method, UDATA fieldIndex, UDATA resolveFlags, J9ROMFieldShape **resolvedField);
 extern J9_CFUNC struct J9Method*  jitGetInterfaceMethodFromCP (J9VMThread *vmThread, J9ConstantPool *constantPool, UDATA cpIndex, J9Class* lookupClass);
+extern J9_CFUNC struct J9UTF8* jitGetConstantDynamicTypeFromCP(J9VMThread *currentThread, J9ConstantPool *constantPool, UDATA cpIndex);
 extern J9_CFUNC void*  jitGetCountingSendTarget (J9VMThread *vmThread, J9Method *ramMethod);
 extern J9_CFUNC void  jitResetAllMethodsAtStartup (J9VMThread *vmContext);
 extern J9_CFUNC struct J9Class*  jitGetInterfaceITableIndexFromCP (J9VMThread *vmThread, J9ConstantPool *constantPool, UDATA cpIndex, UDATA* pITableIndex);
+extern J9_CFUNC struct J9Method*  jitGetImproperInterfaceMethodFromCP (J9VMThread *vmThread, J9ConstantPool *constantPool, UDATA cpIndex);
 extern J9_CFUNC void  jitAcquireClassTableMutex (J9VMThread *vmThread);
 extern J9_CFUNC void*  jitCTResolveStaticFieldRefWithMethod (J9VMThread *vmStruct, J9Method *method, UDATA fieldIndex, UDATA resolveFlags, J9ROMFieldShape **resolvedField);
 extern J9_CFUNC void  jitReleaseClassTableMutex (J9VMThread *vmThread);
-extern J9_CFUNC UDATA  jitGetInterfaceVTableIndexFromCP (J9VMThread *vmThread, J9ConstantPool *constantPool, UDATA cpIndex, J9Class* lookupClass);
+extern J9_CFUNC UDATA  jitGetInterfaceVTableOffsetFromCP (J9VMThread *vmThread, J9ConstantPool *constantPool, UDATA cpIndex, J9Class* lookupClass);
 extern J9_CFUNC void  jitParseSignature (const J9UTF8 *signature, U_8 *paramBuffer, UDATA *paramElements, UDATA *parmSlots);
 extern J9_CFUNC UDATA jitMethodEnterTracingEnabled(J9VMThread *currentThread, J9Method *method);
 extern J9_CFUNC UDATA jitMethodExitTracingEnabled(J9VMThread *currentThread, J9Method *method);
@@ -1164,13 +1165,14 @@ extern J9_CFUNC UDATA  jitTranslateMethod (J9VMThread *vmThread, J9Method *metho
 extern J9_CFUNC U_8*  compressUTF8 (J9VMThread * vmThread, U_8 * data, UDATA length, UDATA * compressedLength);
 extern J9_CFUNC jlong  JNICALL getStaticLongField (JNIEnv *env, jclass clazz, jfieldID fieldID);
 extern J9_CFUNC void  JNICALL setStaticIntField (JNIEnv *env, jclass clazz, jfieldID fieldID, jint value);
+extern J9_CFUNC void  JNICALL setStaticFloatField (JNIEnv *env, jclass cls, jfieldID fieldID, jfloat value);
+extern J9_CFUNC void  JNICALL setStaticDoubleField (JNIEnv *env, jclass cls, jfieldID fieldID, jdouble value);
+extern J9_CFUNC void  JNICALL setStaticLongField (JNIEnv *env, jclass cls, jfieldID fieldID, jlong value);
 extern J9_CFUNC void  JNICALL getStringUTFRegion (JNIEnv *env, jstring str, jsize start, jsize len, char *buf);
 extern J9_CFUNC jint  JNICALL getStaticIntField (JNIEnv *env, jclass clazz, jfieldID fieldID);
 extern J9_CFUNC void  JNICALL releaseStringChars (JNIEnv *env, jstring string, const jchar * chars);
 extern J9_CFUNC void  JNICALL releaseStringCharsUTF (JNIEnv *env, jstring string, const char * chars);
-extern J9_CFUNC void  JNICALL setDoubleFieldIndirect (JNIEnv *env, jobject obj, jfieldID fieldID, void *value);
 extern J9_CFUNC jint  JNICALL unregisterNatives (JNIEnv *env, jclass clazz);
-extern J9_CFUNC void  JNICALL setStaticDoubleFieldIndirect (JNIEnv *env, jobject obj, jfieldID fieldID, void *value);
 extern J9_CFUNC struct J9Method*  findJNIMethod (J9VMThread* vmStruct, J9Class* clazz, char* name, char* signature);
 extern J9_CFUNC jfloat  JNICALL getStaticFloatField (JNIEnv *env, jclass clazz, jfieldID fieldID);
 extern J9_CFUNC void  JNICALL deleteLocalRef (JNIEnv *env, jobject localRef);
@@ -1215,6 +1217,7 @@ extern J9_CFUNC j9object_t resolveMethodTypeRefInto(J9VMThread *vmThread, J9Cons
 extern J9_CFUNC j9object_t resolveMethodHandleRef (J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags);
 extern J9_CFUNC j9object_t resolveMethodHandleRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags, J9RAMMethodHandleRef *ramCPEntry);
 extern J9_CFUNC j9object_t resolveInvokeDynamic (J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags);
+extern J9_CFUNC j9object_t resolveConstantDynamic (J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags);
 #endif /* _J9VMRESOLVESUPPORT_ */
 
 /* J9VMRomImageSupport*/
@@ -1305,6 +1308,7 @@ extern J9_CFUNC void  JNICALL sidecarInvokeReflectConstructorImpl (J9VMThread *v
 extern J9_CFUNC void  JNICALL sendFromMethodDescriptorString (J9VMThread *vmThread, J9UTF8 *descriptor, J9ClassLoader *classLoader, J9Class *appendArgType, UDATA reserved4);
 extern J9_CFUNC void  JNICALL sendResolveMethodHandle (J9VMThread *vmThread, UDATA cpIndex, J9ConstantPool *ramCP, J9Class *definingClass, J9ROMNameAndSignature* nameAndSig);
 extern J9_CFUNC void  JNICALL sendForGenericInvoke (J9VMThread *vmThread, j9object_t methodHandle, j9object_t methodType, UDATA dropFirstArg, UDATA reserved4);
+extern J9_CFUNC void  JNICALL sendResolveConstantDynamic (J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, J9ROMNameAndSignature* nameAndSig, U_16* bsmData);
 extern J9_CFUNC void  JNICALL sendResolveInvokeDynamic (J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA callSiteIndex, J9ROMNameAndSignature* nameAndSig, U_16* bsmData);
 extern J9_CFUNC void  JNICALL jitFillOSRBuffer (struct J9VMThread *vmContext, void *osrBlock, UDATA reserved1, UDATA reserved2, UDATA reserved3);
 extern J9_CFUNC void  JNICALL sendRunThread(J9VMThread *vmContext, j9object_t tenantContext, UDATA reserved1, UDATA reserved2, UDATA reserved3);

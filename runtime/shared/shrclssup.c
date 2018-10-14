@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,7 +38,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-		if (vm->sharedCacheAPI == NULL) {
+	if (vm->sharedCacheAPI == NULL) {
 
 		IDATA index;
 
@@ -62,6 +62,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 			IDATA parseRc = OPTION_OK;
 
 			vm->sharedCacheAPI->xShareClassesPresent = TRUE;
+			vm->sharedCacheAPI->sharedCacheEnabled = TRUE;
 			parseRc = GET_OPTION_VALUES(index, ':', ',', &optionsBufferPtr, SHR_SUBOPT_BUFLEN);
 			if (OPTION_OK == parseRc) {
 				UDATA verboseFlags = J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT;
@@ -179,7 +180,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 
 #if !defined(WIN32) && !defined(WIN64)
 				/* Get platform default cache directory */
-				rc = j9shmem_getDir(NULL, TRUE, defaultCacheDir, J9SH_MAXPATH);
+				rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, defaultCacheDir, J9SH_MAXPATH);
 				if (-1 == rc) {
 					SHRCLSSUP_ERR_TRACE(verboseFlags, J9NLS_SHRC_SHRCLSSUP_FAILURE_GET_DEFAULT_DIR_FAILED);
 					Trc_SHR_Assert_ShouldNeverHappen();
@@ -214,6 +215,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 				return J9VMDLLMAIN_FAILED;
 			}
 		} else {
+			OMRPORT_ACCESS_FROM_J9PORT(vm->portLibrary);
 			vm->sharedCacheAPI->xShareClassesPresent = FALSE;
 			/* Initialize the default settings of the flags.
 			 * The runtimeFlags are used by shared cache utilities even if there is no active cache
@@ -221,8 +223,19 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 			 * In particular,  SH_CompositeCacheImpl::startupForStats() looks at the runtimeFlags to
 			 * determine if mprotection should be done.
 			 */
+			if (J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm)
+				&& (J9_ARE_NO_BITS_SET(omrsysinfo_cgroup_are_subsystems_enabled(OMR_CGROUP_SUBSYSTEM_ALL), OMR_CGROUP_SUBSYSTEM_ALL))
+			) {
+				/* If -Xshareclasses is not used in the CML, let VM startup on non-fatal error and clear verbose messages.
+				 * If shared cache failed to start, user can use -Xshareclasses:bootClassesOnly,fatal to debug. */
+				runtimeFlags |= J9SHR_RUNTIMEFLAG_ENABLE_NONFATAL;
+				runtimeFlags &= ~J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES;
+				vm->sharedCacheAPI->verboseFlags = 0;
+				vm->sharedCacheAPI->sharedCacheEnabled = TRUE;
+			} else {
+				vm->sharedCacheAPI->verboseFlags = J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT;
+			}
 			vm->sharedCacheAPI->runtimeFlags = runtimeFlags;
-			vm->sharedCacheAPI->verboseFlags = J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT;
 		}
 	}
 
@@ -268,7 +281,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 		Trc_SHR_VMInitStages_Event1(vm->mainThread);
 		vm->sharedCacheAPI->iterateSharedCaches = j9shr_iterateSharedCaches;
 		vm->sharedCacheAPI->destroySharedCache = j9shr_destroySharedCache;
-		if ((vm->sharedCacheAPI->xShareClassesPresent == TRUE) && (vm->sharedCacheAPI->parseResult != RESULT_DO_UTILITIES) ) {
+		if ((vm->sharedCacheAPI->sharedCacheEnabled == TRUE) && (vm->sharedCacheAPI->parseResult != RESULT_DO_UTILITIES) ) {
 			/* Modules wishing to determine whether shared classes initialized correctly or not should query
 			 * vm->sharedClassConfig->runtimeFlags for J9SHR_RUNTIMEFLAG_CACHE_INITIALIZATION_COMPLETE */
 			if ((rc = j9shr_init(vm, loadFlags, &nonfatal)) != J9VMDLLMAIN_OK) {
@@ -288,7 +301,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 
 	case ALL_LIBRARIES_LOADED:
 	{
-		if ((vm->sharedCacheAPI->xShareClassesPresent == TRUE) && (vm->sharedCacheAPI->parseResult != RESULT_DO_UTILITIES)) {
+		if ((vm->sharedCacheAPI->sharedCacheEnabled == TRUE) && (vm->sharedCacheAPI->parseResult != RESULT_DO_UTILITIES)) {
 			if (0 != initZipLibrary(vm->portLibrary, vm->j2seRootDirectory)) {
 				returnVal = J9VMDLLMAIN_FAILED;
 			}

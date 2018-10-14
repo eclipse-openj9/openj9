@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2014 IBM Corp. and others
+ * Copyright (c) 2002, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,7 +48,11 @@ typedef jobject (JNICALL *JVM_AllocateNewObject_Type)(JNIEnv *env, jclass caller
 typedef jlong (JNICALL *JVM_FreeMemory_Type)(void);
 typedef void (JNICALL *JVM_GC_Type)(void);
 typedef void (JNICALL *JVM_GCNoCompact_Type)(void);
+#if J9VM_JCL_SE11
+typedef jobject (JNICALL *JVM_GetCallerClass_Type)(JNIEnv *env);
+#else /* J9VM_JCL_SE11 */
 typedef jobject (JNICALL *JVM_GetCallerClass_Type)(JNIEnv *env, jint depth);
+#endif /* J9VM_JCL_SE11 */
 typedef jint (JNICALL *JVM_GetClassAccessFlags_Type)(JNIEnv * env, jclass clazzRef);
 typedef jobject (JNICALL *JVM_GetClassContext_Type)(JNIEnv *env);
 typedef jobject (JNICALL *JVM_GetClassLoader_Type)(JNIEnv *env, jobject obj);
@@ -83,7 +87,11 @@ typedef jobjectArray (JNICALL *JVM_GetMethodParameters_Type)(JNIEnv *env, jobjec
 
 /* Function prototypes for implementations */
 JNIEXPORT jobject JNICALL JVM_LatestUserDefinedLoader_Impl(JNIEnv *env);
+#if J9VM_JCL_SE11
+JNIEXPORT jobject JNICALL JVM_GetCallerClass_Impl(JNIEnv *env);
+#else /* J9VM_JCL_SE11 */
 JNIEXPORT jobject JNICALL JVM_GetCallerClass_Impl(JNIEnv *env, jint depth);
+#endif /* J9VM_JCL_SE11 */
 JNIEXPORT jobject JNICALL JVM_NewInstanceFromConstructor_Impl(JNIEnv * env, jobject c, jobjectArray args);
 JNIEXPORT jobject JNICALL JVM_InvokeMethod_Impl(JNIEnv * env, jobject method, jobject obj, jobjectArray args);
 JNIEXPORT jint JNICALL JVM_GetClassAccessFlags_Impl(JNIEnv * env, jclass clazzRef);

@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!--
+  Copyright (c) 2012, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<!-- Test 1 to Test 11: 19 tests -->
+<suite id="Shared Classes CommandLineOptionTests Suite">
+
+	<!-- Our test modes for this suite -->
+	<variable name="mode204" value="-Xshareclasses:name=ShareClassesCMLTests"/>
+
+	<!-- Set variables up -->
+	<variable name="currentMode" value="$mode204$"/>
+		
+	<if testVariable="SCMODE" testValue="204" resultVariable="currentMode" resultValue="$mode204$"/>
+	
+	<echo value=" "/>
+	<echo value="#######################################################"/>
+	<echo value="Running tests in mode $SCMODE$ with command line options: $currentMode$"/>
+	<echo value="#######################################################"/>
+	<echo value=" "/>
+		
+	<!--
+	Note:
+	Most tests check for strings 'corrupt', 'JVM requested Java dump', and 'JVM requested Snap dump' in the output.
+	These checks are present because a cache may be found to be corrupt, and the test could otherwise pass.
+	
+	The string 'corrupt' is checked because it can appear several messages like below.
+		JVMSHRC443E Cache CRC is incorrect indicating a corrupt cache. Incorrect cache CRC: 0x0.
+		JVMDUMP013I Processed dump event "corruptcache", detail "".
+		JVMSHRC442E Shared cache "jim" is corrupt. Corruption code is -1. Corrupt value is 0x0. No new JVMs will be allowed to connect to the cache.
+	-->
+		
+	<test id="Start : Cleanup" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<!-- Pass -Xshareclasses option to <arg> to prevent shell intercepting and fragmenting comma-separated command -->
+	
+	<test id="Test 1 - a: Run option invalidateAotMethods on a non-existing cache" timeout="600" runPath=".">
+		<command command="$JAVA_EXE$">
+			<arg>$currentMode$,invalidateAotMethods={*.*(*)}</arg>
+		</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">Invalidated the</output>
+		<output type="failure" caseSensitive="yes" regex="no">has been created</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 1 - b: Run option revalidateAotMethods on a non-existing cache" timeout="600" runPath=".">
+		<command command="$JAVA_EXE$">
+			<arg>$currentMode$,revalidateAotMethods={*.*(*)}</arg>
+		</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">Revalidated the</output>
+		<output type="failure" caseSensitive="yes" regex="no">has been created</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 1 - c: Run option findAotMethods on a non-existing cache" timeout="600" runPath=".">
+		<command command="$JAVA_EXE$">
+			<arg>$currentMode$,findAotMethods={*.*(*)}</arg>
+		</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">Found the</output>
+		<output type="failure" caseSensitive="yes" regex="no">has been created</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 2 - Setup: create an cache with AOT methods" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ -Xaot:forceAot,count=1,disableAsyncCompilation -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		
+		<output type="failure" caseSensitive="yes" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 3: Invalidate all the methods in java/lang/ with readOnly option" timeout="600" runPath=".">
+		<command command="$JAVA_EXE$">
+			<arg>$currentMode$,readOnly,invalidateAotMethods={java/lang/*.*(*)}</arg>
+		</command>
+		<output type="required" caseSensitive="yes" regex="no">Sub-options "readonly" and "invalidateAotMethods=" are incompatible. Sub-option "readonly" is ignored</output>
+		<output type="success" caseSensitive="yes" regex="no">Invalidated the</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">Failed to invalidate</output>
+		<output type="failure" caseSensitive="yes" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 4: Test printStats=aot that only valid aot methods can be printed out" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printStats=aot</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Address: 0x[\w]*[\n\r](.)*for ROMClass</output>
+		
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Address: 0x[\w]*\sINVALIDATED[\n\r](.)*for ROMClass</output>
+		<output type="failure" caseSensitive="yes" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 5: Test printStats=invalidatedaot that only invalidated aot methods can be printed out" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printStats=invalidatedaot</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Address: 0x[\w]*\sINVALIDATED[\n\r](.)*for ROMClass java\/lang\/</output>
+		
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Address: 0x[\w]*[\n\r](.)*for ROMClass</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Address: 0x[\w]*\sINVALIDATED[\n\r](.(?!java\/lang\/))*at[\s]0x[\w]</output>
+		<output type="failure" caseSensitive="yes" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 6 - a: RevalidateAotMethods all the methods in java/lang/ with readOnly option" timeout="600" runPath=".">
+		<command command="$JAVA_EXE$">
+			<arg>$currentMode$,readOnly,revalidateAotMethods={java/lang/*.*(*)}</arg>
+		</command>
+		<output type="required" caseSensitive="yes" regex="no">Sub-options "readonly" and "revalidateAotMethods=" are incompatible. Sub-option "readonly" is ignored</output>
+		<output type="success" caseSensitive="yes" regex="no">Revalidated the</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">Failed to revalidate</output>
+		<output type="failure" caseSensitive="yes" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 6 - b: Print out the AOT methods to check the result" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printStats=aot+invalidatedaot</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Address: 0x[\w]*[\n\r](.)*for ROMClass java\/lang\/</output>
+		
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Address: (.)*INVALIDATED[\n\r](.)*for ROMClass</output>
+		<output type="failure" caseSensitive="yes" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 7 - a: Invalidate any methods but java/lang/Object.hashCode()" timeout="600" runPath=".">
+		<command command="$JAVA_EXE$">
+			<arg>$currentMode$,invalidateAotMethods={*.*,!java/lang/Object.hashCode()}</arg>
+		</command>
+		<output type="success" caseSensitive="yes" regex="no">Invalidated the</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">Failed to invalidate</output>
+		<output type="failure" caseSensitive="yes" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 7 - b: Find all the AOT methods and check the result" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,readOnly,findAotMethods={*.*}</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">AOT: hashCode Signature: \(\)I Address: 0x[\w]*[\n\r](.)*for ROMClass java\/lang\/Object at</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Address: 0x[\w]*\sINVALIDATED[\n\r](.)*for ROMClass</output>
+		<output type="required" caseSensitive="yes" regex="no">Found the</output>
+		
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">AOT: hashCode Signature: \(\)I Address: (.)*INVALIDATED[\n\r](.)*for ROMClass java\/lang\/Object at</output>
+		<output type="failure" caseSensitive="yes" regex="no">Sub-options "readonly" and "findAotMethods=" are incompatible. Sub-option "readonly" is ignored</output>
+		<output type="failure" caseSensitive="yes" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 8: Test the first method specification that should have no effect if it has an exclamation mark" timeout="600" runPath=".">
+		<command command="$JAVA_EXE$">
+			<arg>$currentMode$,invalidateAotMethods={!java/lang/*.*(*),java/lang/Object.hashCode()}</arg>
+		</command>
+		<output type="success" caseSensitive="yes" regex="no">Invalidated the 1 AOT method(s)</output>
+		
+		<output type="failure" caseSensitive="yes" regex="no">No AOT methods match the method specification(s)</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Invalidated the [02-9]|\d{2,} AOT method(s)</output>
+		<output type="failure" caseSensitive="yes" regex="no">Failed to invalidate the AOT method(s)</output>	
+		<output type="failure" caseSensitive="yes" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 9 - a: Revalidate all the AOT methods" timeout="600" runPath=".">
+		<command command="$JAVA_EXE$">
+			<arg>$currentMode$,revalidateAotMethods={*.*}</arg>
+		</command>
+		<output type="success" caseSensitive="yes" regex="no">Revalidated the</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">Failed to revalidate</output>
+		<output type="failure" caseSensitive="yes" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 9 - b: Invalidate all the AOT methods but the ones matching two method specifications" timeout="600" runPath=".">
+		<command command="$JAVA_EXE$">
+			<arg>$currentMode$,invalidateAotMethods={*.*,!java/lang/Object.hashCode,!java/util/HashMap.put}</arg>
+		</command>
+		<output type="success" caseSensitive="yes" regex="no">Invalidated the</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">Failed to invalidate</output>
+		<output type="failure" caseSensitive="yes" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 9 - c: Print out the AOT methods to check the result" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printStats=aot+invalidatedaot</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Address: 0x[\w]*\sINVALIDATED[\n\r](.)*for ROMClass</output>
+		
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">AOT: hashCode Signature: \((.)*\)I Address: 0x[\w]*\sINVALIDATED[\n\r](.)*for ROMClass java\/lang\/Object at</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">AOT: put Signature: \((.)*\)V Address: 0x[\w]*\sINVALIDATED[\n\r](.)*for ROMClass java\/util\/HashMap at</output>
+		<output type="failure" caseSensitive="yes" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 10: Try revalidating anything but two methods using two method specifications containing an exclamation mark" timeout="600" runPath=".">
+		<command command="$JAVA_EXE$">
+			<arg>$currentMode$,revalidateAotMethods={!java/lang/Object.hashCode,!java/util/HashMap.put}</arg>
+		</command>
+		<output type="success" caseSensitive="yes" regex="no">No AOT methods match the method specification(s)</output>
+		
+		<output type="failure" caseSensitive="yes" regex="no">Failed to revalidate the AOT method(s)</output>
+		<output type="failure" caseSensitive="yes" regex="no">Revalidated the</output>		
+		<output type="failure" caseSensitive="yes" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 11: Pass multiple exclamation marks" timeout="600" runPath=".">
+		<command command="$JAVA_EXE$">
+			<arg>$currentMode$,invalidateAotMethods={!!java/lang/*.*(*)}</arg>
+		</command>
+		<output type="success" caseSensitive="yes" regex="no">Failed to parse the method specification(s)</output>
+		<output type="required" caseSensitive="yes" regex="no">Failed to invalidate the AOT method(s)</output>
+		
+		<output type="failure" caseSensitive="yes" regex="no">Invalidated the</output>		
+		<output type="failure" caseSensitive="yes" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="At end destroy the cache for cleanup" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Java dump</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
+	</test>
+	
+	<!--
+	***** IMPORTANT NOTE *****
+	The last test in this file is normally a call to -Xshareclasses:destroy. When the test passes no files should ever be left behind. 
+	-->
+</suite>

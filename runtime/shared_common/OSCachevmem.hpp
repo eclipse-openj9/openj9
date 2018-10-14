@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,7 +47,7 @@ class SH_OSCachevmem : public SH_OSCacheFile
 {
 public:
 	SH_OSCachevmem(J9PortLibrary* portlib, const char* cachedirname, const char* cacheName, J9SharedClassPreinitConfig* piconfig, IDATA numLocks,
-			UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, J9PortShcVersion* versionData, SH_OSCacheInitialiser* initialiser);
+			UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, J9PortShcVersion* versionData, SH_OSCacheInitializer* initializer);
 	/*This constructor should only be used by this class or its parent*/
 	SH_OSCachevmem() {};
 
@@ -61,7 +61,10 @@ public:
 	void *operator new(size_t sizeArg, void *memoryPtrArg) { return memoryPtrArg; };
 
 	virtual bool startup(const char* ctrlDirName, UDATA cacheDirPerm, const char* cacheName, J9SharedClassPreinitConfig* piconfig, IDATA numLocks,
-			UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, UDATA storageKeyTesting, J9PortShcVersion* versionData, SH_OSCacheInitialiser* initialiser, UDATA reason);
+			UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, UDATA storageKeyTesting, J9PortShcVersion* versionData, SH_OSCacheInitializer* initializer, UDATA reason);
+
+	/* Work around compile error on mac osx due to hiding the other startup api */
+	using SH_OSCache::startup;
 
 	virtual IDATA destroy(bool suppressVerbose, bool isReset);
 

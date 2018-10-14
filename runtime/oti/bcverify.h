@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -136,6 +136,25 @@ typedef struct J9BCVAlloc {
 
 #define CHECK_TEMP_DOUBLE( tempIndex ) \
 	CHECK_TEMP_PAIR( tempIndex , (UDATA) BCV_BASE_TYPE_DOUBLE );
+
+/* The macro below is used for baload and bastore to deal with the case of byte/boolean array type.
+ * The reason for that is as follows:
+ * 1) The existing implementation prevents us from inserting a boolean array type in J9JavaBytecodeArrayTypeTable
+ *    (in which the expected type is determined by J9JavaBytecodeArrayTypeTable[bc - baload or bastore]).
+ * 2) For baload and bastore, there is no way to determine whether the target type (popped out from the stack)
+ *    is byte array (calculated via J9JavaBytecodeArrayTypeTable) or boolean array (not in J9JavaBytecodeArrayTypeTable).
+ *
+ * So we need to ensure the consistency check addresses the cases of boolean array and byte array for baload/bastore.
+ * In such case, the macro can be expended to:
+ * if (baload or bastore == bc),
+ * then inconsistentStack |= (BCV_BASE_ARRAY_TYPE_BYTE != arrayType) && (BCV_BASE_ARRAY_TYPE_BOOL != arrayType));
+ */
+#define CHECK_BOOL_ARRAY(opCode, bc, operandType) \
+	if (opCode == bc) { \
+		inconsistentStack |= ((operandType != arrayType) && (BCV_BASE_ARRAY_TYPE_BOOL != arrayType)); \
+	} else { \
+		inconsistentStack |= (operandType != arrayType); \
+	}
 
 #define	POP_TOS_TYPE( foundType, expectedType ) \
 	foundType = POP; \

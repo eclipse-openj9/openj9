@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2014 IBM Corp. and others
+ * Copyright (c) 2010, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,7 +49,8 @@ public class AlgorithmVersion {
 	public static final String STACK_MAP_VERSION = "ALG_STACK_MAP_VERSION";
 	public static final String STACK_WALKER_VERSION = "ALG_STACKWALKER_VERSION";
 	public static final String FOUR_BYTE_OFFSETS_VERSION = "FOUR_BYTE_OFFSETS_VERSION";
-	public static final String STRING_COMPRESSION_VERSION = "STRING_COMPRESSION_VERSION";
+	public static final String VTABLE_VERSION = "ALG_VM_VTABLE_VERSION";
+	public static final String ITABLE_VERSION = "ALG_VM_ITABLE_VERSION";
 	
 	public static final String GC_ARRAYLET_OBJECT_MODEL_VERSION = "ALG_GC_ARRAYLET_OBJECT_MODEL_VERSION";
 	public static final String GC_CLASS_MODEL_VERSION = "ALG_GC_CLASS_MODEL_VERSION";

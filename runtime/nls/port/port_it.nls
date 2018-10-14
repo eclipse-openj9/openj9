@@ -417,7 +417,7 @@ J9NLS_PORT_MALFORMED_HYPERVISOR_SETTINGS.user_response=Correct the IBM_JAVA_HYPE
 # END NON-TRANSLATABLE
 
 # This message is encapsulated within J9NLS_JCL_HYPERVISOR_USAGE_RETRIEVAL_ERROR in file nls/j9cl/j9jcl.nls
-J9NLS_PORT_HYPFS_UPDATE_FAILED=Aggiornamento HYPFS non riuscito
+J9NLS_PORT_HYPFS_UPDATE_FAILED=Aggiornamento di HYPFS non riuscito
 # START NON-TRANSLATABLE
 J9NLS_PORT_HYPFS_UPDATE_FAILED.explanation=Failed to write to the update file on hypfs
 J9NLS_PORT_HYPFS_UPDATE_FAILED.system_action=The JVM will continue, but no guest usage related information will be provided.
@@ -425,7 +425,7 @@ J9NLS_PORT_HYPFS_UPDATE_FAILED.user_response=Check the hypfs permissions for thi
 # END NON-TRANSLATABLE
 
 # This message is encapsulated within J9NLS_JCL_HYPERVISOR_USAGE_RETRIEVAL_ERROR in file nls/j9cl/j9jcl.nls
-J9NLS_PORT_HYPFS_READ_FAILED=Lettura HYPFS non riuscita
+J9NLS_PORT_HYPFS_READ_FAILED=Lettura di HYPFS non riuscita
 # START NON-TRANSLATABLE
 J9NLS_PORT_HYPFS_READ_FAILED.explanation=Failed to read from hypfs
 J9NLS_PORT_HYPFS_READ_FAILED.system_action=The JVM will continue, but no guest usage related information will be provided.
@@ -448,7 +448,7 @@ J9NLS_PORT_SYSINFO_FILE_READ_FAILED.system_action=The JVM will continue, but no 
 J9NLS_PORT_SYSINFO_FILE_READ_FAILED.user_response=Check /proc permissions for this userid
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_SYSINFO_USAGE_RETRIEVAL_ERROR_MSG=%1$d: Errore durante il richiamo delle informazioni %2$s.
+J9NLS_PORT_SYSINFO_USAGE_RETRIEVAL_ERROR_MSG=%1$d: Errore durante il richiamo delle informazioni su %2$s.
 # START NON-TRANSLATABLE
 J9NLS_PORT_SYSINFO_USAGE_RETRIEVAL_ERROR_MSG.sample_input_1=-711
 J9NLS_PORT_SYSINFO_USAGE_RETRIEVAL_ERROR_MSG.sample_input_2=Processor Usage

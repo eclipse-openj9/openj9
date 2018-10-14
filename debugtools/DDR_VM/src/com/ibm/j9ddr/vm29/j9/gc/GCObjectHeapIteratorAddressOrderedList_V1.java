@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -240,7 +240,7 @@ class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 	public void advance(UDATA size)
 	{
 		U8Pointer newAddress = scanPtr.addOffset(size);
-		if (newAddress.gte(scanPtr) && newAddress.lt(scanPtrTop)) {
+		if (newAddress.gte(scanPtr) && newAddress.lte(scanPtrTop)) {
 			scanPtr = newAddress;
 			currentObject = null;
 		} else {

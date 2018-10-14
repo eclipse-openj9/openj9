@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -109,9 +109,10 @@ typedef enum gc_policy{
 	GC_POLICY_GENCON,
 	GC_POLICY_BALANCED,
 	GC_POLICY_METRONOME,
+	GC_POLICY_NOGC
 } gc_policy;
 
-#ifdef LINUX
+#if defined(LINUX) || defined(OSX)
 /* defining _GNU_SOURCE allows the use of dladdr() in dlfcn.h */
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
@@ -538,6 +539,12 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 		int i = 0;
 
 		gcPolicyString = findStartOfMostRightOption(envOptions, gcPolicyOption);
+		if (NULL == gcPolicyString) {
+			if (hasEnvOption(envOptions, "-XX:+UseNoGC")) {
+				gcPolicyString = "nogc";
+			}
+		}
+
 		if (NULL != gcPolicyString) {
 			parseGCPolicy(gcPolicyString + gcPolicyOptionLength, &gcPolicy);
 		}
@@ -703,6 +710,24 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 			fprintf(stdout, "by option %s ", optionUsed);
 		}
 		fprintf(stdout, "does not exist.\n");
+
+		/* direct user to OpenJ9 build configurations to properly generate the requested build. */
+		if (DEFAULT_DIR == basePointer) {
+			fprintf(stdout,
+					"This JVM package only includes the '-Xcompressedrefs' configuration. Please run "
+					"the VM without specifying the '-Xnocompressedrefs' option or by specifying the "
+					"'-Xcompressedrefs' option.\nTo compile the other configuration, please run configure "
+					"with '--with-noncompressedrefs.\n"
+			);
+		}
+		if (COMPRESSEDREFS_DIR == basePointer) {
+			fprintf(stdout,
+					"This JVM package only includes the '-Xnocompressedrefs' configuration. Please run "
+					"the VM without specifying the '-Xcompressedrefs' option or by specifying the "
+					"'-Xnocompressedrefs' option.\nTo compile the other configuration, please run configure "
+					"without '--with-noncompressedrefs.\n"
+			);
+		}
 		exit(-1);
 	}
 }
@@ -899,6 +924,7 @@ JNI_GetDefaultJavaVMInitArgs(void *vm_args)
 			|| (jniVersion == JNI_VERSION_1_6)
 			|| (jniVersion == JNI_VERSION_1_8)
 			|| (jniVersion == JNI_VERSION_9)
+			|| (jniVersion == JNI_VERSION_10)
 		) {
 			return JNI_OK;
 		} else {
@@ -1116,7 +1142,7 @@ openLibraries(const char *libraryDir)
 	}
 
 #else
-	buffer = jvmBufferCat(buffer, "/libjvm.so");
+	buffer = jvmBufferCat(buffer, "/libjvm" J9PORT_LIBRARY_SUFFIX);
 	/* open the DLL and look up the symbols */
 #if defined(AIXPPC)
 	/* CMVC 137341:
@@ -1190,7 +1216,7 @@ getjvmBin(BOOLEAN removeSubdir)
 }
 #endif
 
-#if defined(LINUX) && !defined(J9ZTPF)
+#if (defined(LINUX) || defined(OSX)) && !defined(J9ZTPF)
 static J9StringBuffer*
 getjvmBin(BOOLEAN removeSubdir)
 {
@@ -1212,7 +1238,7 @@ getjvmBin(BOOLEAN removeSubdir)
 
 	return buffer;
 }
-#endif /* defined(LINUX) && !defined(J9ZTPF) */
+#endif /* (defined(LINUX) || defined(OSX)) && !defined(J9ZTPF) */
 
 #ifdef AIXPPC
 static J9StringBuffer*
@@ -1423,7 +1449,7 @@ getjvmBin(BOOLEAN removeSubdir)
 #if defined(J9ZOS390)
 	buffer = findDirUplevelToDirContainingFile(buffer, "LIBPATH", ':', "libjvm.so", 0);
 #else
-	buffer = findDirUplevelToDirContainingFile(buffer, "LD_LIBRARY_PATH", ':', "libjvm.so", 0);
+	buffer = findDirUplevelToDirContainingFile(buffer, "LD_LIBRARY_PATH", ':', "libjvm" J9PORT_LIBRARY_SUFFIX, 0);
 #endif
 
 	if (NULL != buffer) {
@@ -1496,6 +1522,7 @@ static BOOLEAN parseGCPolicy(char *buffer, int *value)
 			"gencon",
 			"balanced",
 			"metronome",
+			"nogc",
 			NULL,
 	};
 

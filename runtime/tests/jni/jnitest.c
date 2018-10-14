@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,8 +24,15 @@
 #include "j9port.h"
 #include "j9.h"
 #include "vmi.h"
+/*
+ * jvm.h is required by MemoryAllocator_allocateMemory:
+ * https://github.com/eclipse/openj9/issues/1377
+ */
 #include "../j9vm/jvm.h"
-#ifndef WIN32
+#ifdef WIN32
+#include <stdlib.h>
+#include <malloc.h>
+#else
 #include <pthread.h>
 #include <stdlib.h>
 #endif

@@ -2,7 +2,7 @@
 package com.ibm.oti.util;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2010 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -184,5 +184,30 @@ public static String canonicalizePath(String file) {
 		file = file.substring(0, file.lastIndexOf('/', file.length() - 4) + 1);
 	
 	return file;
+}
+
+/**
+ * This class contains a utility method which checks if one class loader is in
+ * the ancestry of another.
+ * 
+ * @param currentLoader classloader whose ancestry is being checked
+ * @param requestedLoader classloader who may be an ancestor of currentLoader
+ * @return true if currentClassLoader is the same or a child of the requestLoader
+ */
+public static boolean doesClassLoaderDescendFrom(ClassLoader currentLoader, ClassLoader requestedLoader) {
+	if (requestedLoader == null) {
+		/* Bootstrap loader is parent of everyone */
+		return true;
+	}
+	if (currentLoader != requestedLoader) {
+		while (currentLoader != null) {
+			if (currentLoader == requestedLoader) {
+				return true;
+			}
+			currentLoader = currentLoader.getParent();
+		}
+		return false;
+	}
+	return true;
 }
 }

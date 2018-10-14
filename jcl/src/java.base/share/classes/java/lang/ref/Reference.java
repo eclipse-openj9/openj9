@@ -1,15 +1,23 @@
 /*[INCLUDE-IF Sidecar16]*/
 package java.lang.ref;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+
 import com.ibm.oti.vm.VM;
 
+/*[IF Sidecar18-SE-OpenJ9 | Sidecar19-SE]*/
 /*[IF Sidecar19-SE]*/
 import jdk.internal.misc.JavaLangRefAccess;
 import jdk.internal.misc.SharedSecrets;
+/*[ELSE]
+import sun.misc.JavaLangRefAccess;
+import sun.misc.SharedSecrets;
+/*[ENDIF]*/
 /*[ENDIF]*/
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,15 +54,7 @@ public abstract class Reference<T> extends Object {
 	private ReferenceQueue queue;
 	private int state;
 
-	/*[IF Sidecar19-SE]*/
-	static {
-		SharedSecrets.setJavaLangRefAccess(new JavaLangRefAccess() {
-			public boolean waitForReferenceProcessing() throws InterruptedException {
-				return waitForReferenceProcessingImpl();
-			}
-		});
-	}
-	
+	/*[IF Sidecar18-SE-OpenJ9 | Sidecar19-SE]*/
 	/**
 	 *  Wait for progress in reference processing.
 	 * return false if there is no processing reference,
@@ -62,6 +62,48 @@ public abstract class Reference<T> extends Object {
 	 */
 	static private native boolean waitForReferenceProcessingImpl();
 	
+	/*[IF Sidecar19-SE]*/
+	static {
+		SharedSecrets.setJavaLangRefAccess(new JavaLangRefAccess() {
+			public boolean waitForReferenceProcessing() throws InterruptedException {
+				return waitForReferenceProcessingImpl();
+			}
+
+			/*[IF Java11]*/
+			public void runFinalization() {
+				Finalizer.runFinalization();
+			}
+			/*[ENDIF]*/
+		});
+	}
+	
+	/* jdk.lang.ref.disableClearBeforeEnqueue property allow reverting to the old behavior(non clear before enqueue) 
+	 *  defer initializing the immutable variable to avoid bootstrap error 
+	 */
+	static class ClearBeforeEnqueue {
+		@SuppressWarnings("boxing")
+		static final boolean ENABLED =  AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
+			@Override public Boolean run() {
+			    return !Boolean.getBoolean("jdk.lang.ref.disableClearBeforeEnqueue"); //$NON-NLS-1$
+			  }
+			});
+	}
+	
+	/* The method waitForReferenceProcessing() is not used directly, just adapt for openjdk regression tests for TLS 1.3 */
+    private static boolean waitForReferenceProcessing() throws InterruptedException {
+    		return waitForReferenceProcessingImpl();
+    }
+
+	/*[ELSE]
+	static {
+		SharedSecrets.setJavaLangRefAccess(new JavaLangRefAccess() {
+			public boolean tryHandlePendingReference() {
+				return waitForReferenceProcessingImpl();
+			}
+		});
+	}
+
+	/*[ENDIF]*/
 	/*[ENDIF]*/
 	
 /**
@@ -83,6 +125,11 @@ public void clear() {
  * @return	true if Reference is enqueued, false otherwise.
  */	
 public boolean enqueue() {
+	/*[IF Sidecar19-SE]*/
+	if (ClearBeforeEnqueue.ENABLED) {
+		clear();
+	}
+	/*[ENDIF]*/
 	return enqueueImpl();
 }
 
@@ -195,4 +242,19 @@ public static void reachabilityFence(java.lang.Object ref) {
 }
 /*[ENDIF]*/
 
+/*[IF Java11]*/
+/**
+ * This method will always throw CloneNotSupportedException. A clone of this instance will not be returned 
+ * since a Reference cannot be cloned. Workaround is to create a new Reference.
+ * 
+ * @throws CloneNotSupportedException always since a Reference cannot be cloned
+ *
+ * @since 11
+ */
+@Override
+protected Object clone() throws CloneNotSupportedException {
+	/*[MSG "K0900", "Create a new Reference, since a Reference cannot be cloned."]*/
+	throw new CloneNotSupportedException(com.ibm.oti.util.Msg.getString("K0900")); //$NON-NLS-1$
+}
+/*[ENDIF] Java11 */
 }

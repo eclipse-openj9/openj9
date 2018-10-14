@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -93,7 +93,7 @@ static void javaTraceTerm (void* env, UtModuleInfo *modInfo);
 
 typedef omr_error_t (*traceOptionFunction)(J9JavaVM *vm,const char * value,BOOLEAN atRuntime);
 
-/** 
+/**
  * Structure representing a trace option such as stackdepth
  * or trigger
  */
@@ -109,11 +109,12 @@ struct traceOption {
  * (Set the methods to be traced, set the depth and the compression options
  * for the stacks produced by the jstacktrace trigger action.)
  */
-const struct traceOption TRACE_OPTIONS[] = {
-		/* Name, Can be modified at runtime, option function */
-		{RAS_METHODS_KEYWORD, FALSE, setMethod},
-		{RAS_STACKDEPTH_KEYWORD, TRUE, setStackDepth},
-		{RAS_COMPRESSION_LEVEL_KEYWORD, TRUE, setStackCompressionLevel},
+const struct traceOption TRACE_OPTIONS[] =
+{
+	/* Name, Can be modified at runtime, option function */
+	{RAS_METHODS_KEYWORD, FALSE, setMethod},
+	{RAS_STACKDEPTH_KEYWORD, TRUE, setStackDepth},
+	{RAS_COMPRESSION_LEVEL_KEYWORD, TRUE, setStackCompressionLevel},
 };
 
 #define NUMBER_OF_TRACE_OPTIONS ( sizeof(TRACE_OPTIONS) / sizeof(struct traceOption))
@@ -124,7 +125,8 @@ const struct traceOption TRACE_OPTIONS[] = {
  * trace point hit) can fire Java dependent events (like creating
  * a javacore).
  */
-static struct RasTriggerAction j9vmTriggerActions[] = {
+static struct RasTriggerAction j9vmTriggerActions[] =
+{
 	{ "jstacktrace", AFTER_TRACEPOINT, doTriggerActionJstacktrace},
 	{ "javadump", AFTER_TRACEPOINT, doTriggerActionJavadump},
 	{ "coredump", AFTER_TRACEPOINT, doTriggerActionCoredump},
@@ -144,27 +146,28 @@ static struct RasTriggerAction j9vmTriggerActions[] = {
 
 #define NUM_J9VM_TRIGGER_ACTIONS (sizeof(j9vmTriggerActions) / sizeof(j9vmTriggerActions[0]))
 
-static const struct RasTriggerType methodTriggerType = 	{ "method", processTriggerMethodClause, FALSE };
+static const struct RasTriggerType methodTriggerType = { "method", processTriggerMethodClause, FALSE };
 
 /* Global lock for J9VM trace operations. */
 omrthread_monitor_t j9TraceLock = NULL;
 
 /* Structures for trace interfaces. */
-static J9UtServerInterface	javaUtServerIntfS;
-static UtModuleInterface	javaUtModuleIntfS;
+static J9UtServerInterface  javaUtServerIntfS;
+static UtModuleInterface    javaUtModuleIntfS;
 
-static UtModuleInterface	omrUtModuleIntfS;
+static UtModuleInterface    omrUtModuleIntfS;
 /* Required to look up the current thread if we are passed a null current thread on a trace point.
  * (NoEnv trace points always pass null.)
  */
 J9JavaVM* globalVM;
 
-IDATA J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
+IDATA
+J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 {
 	IDATA returnVal = J9VMDLLMAIN_OK;
 	omr_error_t rc = OMR_ERROR_NONE;
 
-	char *ignore[] = {"INITIALIZATION", "METHODS", "WHAT", "STACKDEPTH", "STACKCOMPRESSIONLEVEL", NULL};
+	char *ignore[] = { "INITIALIZATION", "METHODS", "WHAT", "STACKDEPTH", "STACKCOMPRESSIONLEVEL", NULL };
 	char *opts[UT_MAX_OPTS];
 	int i;
 	UtThreadData **tempThr = NULL;
@@ -189,13 +192,13 @@ IDATA J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 				memset (vm->j9rasGlobalStorage, '\0', sizeof(RasGlobalStorage));
 			}
 		}
-		
+
 		if (vm->j9rasGlobalStorage != NULL) {
 			vm->runtimeFlags |= J9_RUNTIME_EXTENDED_METHOD_BLOCK;
 			RAS_GLOBAL_FROM_JAVAVM(stackdepth,vm) = -1;
 			((RasGlobalStorage *)vm->j9rasGlobalStorage)->configureTraceEngine = (ConfigureTraceFunction)runtimeSetTraceOptions;
 		}
-		
+
 		break;
 	case TRACE_ENGINE_INITIALIZED:
 		if (vm->j9rasGlobalStorage == NULL) {
@@ -304,7 +307,7 @@ IDATA J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 		if ((returnVal = initializeTraceOptions(vm, opts)) != J9VMDLLMAIN_OK) {
 			return returnVal;
 		}
-		
+
 
 		for (i = 0; opts[i] != NULL; i += 2) {
 			if (j9_cmdla_stricmp(opts[i], "HELP") == 0) {
@@ -312,7 +315,7 @@ IDATA J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 				return J9VMDLLMAIN_SILENT_EXIT_VM;
 			}
 		}
-		
+
 
 		registerj9trc_auxWithTrace( ((RasGlobalStorage *)vm->j9rasGlobalStorage)->utIntf, NULL);
 		if( NULL == j9trc_aux_UtModuleInfo.intf ) {
@@ -353,7 +356,7 @@ IDATA J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 				j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_TRC_TRACE_INIT_FAILED);
 				return J9VMDLLMAIN_FAILED;
 			}
-	
+
 			if (JNI_OK != vm->internalVMFunctions->fillInDgRasInterface( ((RasGlobalStorage *)vm->j9rasGlobalStorage)->jvmriInterface )) {
 				dbg_err_printf(1, PORTLIB, "<UT> Error initializing jvmri interface not available, trace not enabled\n");
 				j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_TRC_TRACE_INIT_FAILED);
@@ -407,7 +410,7 @@ IDATA J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 				dbg_err_printf(1, PORTLIB, "<UT> Trace engine failed to hook VM Method events, trace not enabled\n");
 				j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_TRC_TRACE_INIT_FAILED);
 				return J9VMDLLMAIN_FAILED;
-			} 
+			}
 		}
 
 		 /*
@@ -419,10 +422,10 @@ IDATA J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 
 		/* initialize tracing in the port library as soon as possible */
 		j9port_control(J9PORT_CTLDATA_TRACE_START, (UDATA) ((RasGlobalStorage *)vm->j9rasGlobalStorage)->utIntf);
-		
+
 		/* initialize tracing in the thread library */
 		omrthread_lib_control(J9THREAD_LIB_CONTROL_TRACE_START, (UDATA) ((RasGlobalStorage *)vm->j9rasGlobalStorage)->utIntf);
-		
+
 		/* Load module for hookable library tracepoints */
 		omrhook_lib_control(J9HOOK_LIB_CONTROL_TRACE_START, (UDATA) ((RasGlobalStorage *)vm->j9rasGlobalStorage)->utIntf);
 
@@ -465,7 +468,7 @@ IDATA J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 		break;
 
 	case INTERPRETER_SHUTDOWN:
-	
+
 		thr = vm->internalVMFunctions->currentVMThread(vm);
 
 		/* if command line argument parsing failed we don't want to try to use an uninitialized trace engine */
@@ -481,10 +484,10 @@ IDATA J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 			reportVMTermination(vm, thr);
 			requestTraceCleanup(vm, thr);
 		}
-		
+
 		{
 			J9VMDllLoadInfo *loadInfo = FIND_DLL_TABLE_ENTRY( J9_RAS_TRACE_DLL_NAME );
-			if ( loadInfo && (IS_STAGE_COMPLETED(loadInfo->completedBits, VM_INITIALIZATION_COMPLETE)) ){
+			if ( loadInfo && (IS_STAGE_COMPLETED(loadInfo->completedBits, VM_INITIALIZATION_COMPLETE)) ) {
 				/* now force the main thread to end */
 				reportTraceEvent(vm, thr, J9RAS_TRACE_ON_THREAD_END);
 			}
@@ -497,7 +500,7 @@ IDATA J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 			tempRasGbl = (RasGlobalStorage *)vm->j9rasGlobalStorage;
 			vm->j9rasGlobalStorage = NULL;
 
-			if ( tempRasGbl->jvmriInterface != NULL ){
+			if ( tempRasGbl->jvmriInterface != NULL ) {
 				j9mem_free_memory( tempRasGbl->jvmriInterface );
 			}
 			j9mem_free_memory( tempRasGbl );
@@ -526,14 +529,10 @@ IDATA J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 	return returnVal;
 }
 
-
-
-
 jint JNICALL JVM_OnLoad(JavaVM *vm, char *options, void *reserved)
 {
 	return JNI_OK;
 }
-
 
 jint JNICALL JVM_OnUnload(JavaVM *vm, void *reserved)
 {
@@ -569,7 +568,7 @@ initializeUtInterface(void)
 		javaUtServerIntfS.StartupComplete = trcStartupComplete;
 
 		/*
-		 * Initialise the direct module interface, these
+		 * Initialize the direct module interface, these
 		 * are versions of the trace functions that expect
 		 * a J9VMThread as their env parameter rather than
 		 * an OMRVMThread.
@@ -589,7 +588,7 @@ processTraceOptionString(J9JavaVM *vm, char * opts[], IDATA * optIndex, const ch
 	IDATA rc = J9VMDLLMAIN_OK;
 	const char *optionString = option;
 	IDATA optionsLength = n;
-	
+
 	while (optionsLength > 0 && rc == J9VMDLLMAIN_OK) {
 		IDATA thisOptionLength = parseTraceOptions(vm, optionString, optionsLength);
 		if (thisOptionLength < 0) {
@@ -614,18 +613,18 @@ processTraceOptionString(J9JavaVM *vm, char * opts[], IDATA * optIndex, const ch
 			}
 		}
 	}
-	
+
 	return rc;
 }
 
 /*
- * Initialise the trace options from the defaults for the J9VM and any
+ * Initialize the trace options from the defaults for the J9VM and any
  * options that were passed in on the command line.
  *
  * Returns them as newly allocated string key/value pairs in the even/odd elements of opts.
  * The strings in opts will need to be freed.
  */
-static IDATA 
+static IDATA
 initializeTraceOptions(J9JavaVM *vm, char* opts[])
 {
 	IDATA xtraceIndex;
@@ -634,18 +633,21 @@ initializeTraceOptions(J9JavaVM *vm, char* opts[])
 	IDATA optionsLength;
 	IDATA rc =  J9VMDLLMAIN_OK;
 
+#define trace_option_helper(option) \
+		splitCommandLineOption(vm, option, LITERAL_STRLEN(option), opts + i)
+
 	/* set up the default options */
-	rc = splitCommandLineOption(vm, UT_MAXIMAL_KEYWORD "=all{level1}", 20, opts);
+	rc = trace_option_helper(UT_MAXIMAL_KEYWORD "=all{level1}");
 	i += 2;
-	if (rc != J9VMDLLMAIN_FAILED){
-		rc = splitCommandLineOption(vm, UT_EXCEPTION_KEYWORD "=j9mm{gclogger}", 26, opts + i);
+	if (rc != J9VMDLLMAIN_FAILED) {
+		rc = trace_option_helper(UT_EXCEPTION_KEYWORD "=j9mm{gclogger}");
 		i += 2;
 	}
 
 	/*
 	 *  Find all the trace options specified in the command line and pass
 	 *  them to the trace engine. Note that trace args are formatted forwards
-	 *  (left to right) so as to be consistent with dump. 
+	 *  (left to right) so as to be consistent with dump.
 	 */
 	xtraceIndex = FIND_ARG_IN_VMARGS_FORWARD(OPTIONAL_LIST_MATCH, VMOPT_XTRACE, NULL);
 	/* A trace option has been set. We need to check if the level 2 trace points have been
@@ -654,7 +656,7 @@ initializeTraceOptions(J9JavaVM *vm, char* opts[])
 	 * trace they selected but their selection + level 2.)
 	 */
 	if( xtraceIndex >= 0 && !checkAndSetL2EnabledFlag() ) {
-		rc = splitCommandLineOption(vm, UT_MAXIMAL_KEYWORD "=all{level2}", 20, opts + i);
+		rc = trace_option_helper(UT_MAXIMAL_KEYWORD "=all{level2}");
 		i += 2;
 	}
 	while (xtraceIndex >= 0) {
@@ -673,9 +675,11 @@ initializeTraceOptions(J9JavaVM *vm, char* opts[])
 			}
 		}
 		xtraceIndex = FIND_NEXT_ARG_IN_VMARGS_FORWARD(OPTIONAL_LIST_MATCH, VMOPT_XTRACE, NULL, xtraceIndex);
-	} 
+	}
 	opts[i++] = NULL;
 	return rc;
+
+#undef trace_option_helper
 }
 
 /*
@@ -683,7 +687,8 @@ initializeTraceOptions(J9JavaVM *vm, char* opts[])
  * the option name in opt[0] and the option value in opt[1]
  * If there is no value to go with the name opt[1] will be null.
  */
-IDATA splitCommandLineOption(J9JavaVM *vm, const char *optionString, IDATA optionLength, char *opt[])
+static IDATA
+splitCommandLineOption(J9JavaVM *vm, const char *optionString, IDATA optionLength, char *opt[])
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	IDATA length;
@@ -694,7 +699,7 @@ IDATA splitCommandLineOption(J9JavaVM *vm, const char *optionString, IDATA optio
 			break;
 		}
 	}
-	
+
 	opt[0] = j9mem_allocate_memory(length + 1, OMRMEM_CATEGORY_TRACE);
 	if (opt[0] == NULL) {
 		return J9VMDLLMAIN_FAILED;
@@ -705,7 +710,7 @@ IDATA splitCommandLineOption(J9JavaVM *vm, const char *optionString, IDATA optio
 			optionString[length + 1] != '\0' &&
 			optionString[length + 1] != ',') {
 		opt[1] = j9mem_allocate_memory(optionLength - length, OMRMEM_CATEGORY_TRACE);
-		if (opt[1] == NULL){
+		if (opt[1] == NULL) {
 			return J9VMDLLMAIN_FAILED;
 		}
 		memcpy(opt[1], optionString + length + 1, optionLength - length - 1);
@@ -713,16 +718,16 @@ IDATA splitCommandLineOption(J9JavaVM *vm, const char *optionString, IDATA optio
 	} else {
 		opt[1] = NULL;
 	}
-	
+
 	return J9VMDLLMAIN_OK;
 }
 
 /*
  * Call back for OMR to set J9VM specific trace options.
  */
-omr_error_t
-setJ9VMTraceOption(const OMR_VM *omr_vm, const char *optName, const char* optValue, BOOLEAN atRuntime) {
-
+static omr_error_t
+setJ9VMTraceOption(const OMR_VM *omr_vm, const char *optName, const char* optValue, BOOLEAN atRuntime)
+{
 	int i = 0;
 	J9JavaVM* vm = (J9JavaVM*) omr_vm->_language_vm;
 	omr_error_t rc = OMR_ERROR_NONE;
@@ -741,15 +746,15 @@ setJ9VMTraceOption(const OMR_VM *omr_vm, const char *optName, const char* optVal
 			} else {
 				rc = TRACE_OPTIONS[i].optionFunction(vm,optValue,atRuntime);
 			}
-			
+
 			break;
 		}
 	}
-	
+
 	return rc;
 }
 
-omr_error_t
+static omr_error_t
 reportTraceEvent(J9JavaVM *vm, J9VMThread *self, UDATA eventFlags)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
@@ -768,7 +773,7 @@ reportTraceEvent(J9JavaVM *vm, J9VMThread *self, UDATA eventFlags)
 	 */
 	tempThr = UT_THREAD_FROM_VM_THREAD(self);
 
-	switch (eventFlags){
+	switch (eventFlags) {
 
 	case J9RAS_TRACE_ON_THREAD_CREATE:
 		/*
@@ -846,7 +851,6 @@ parseTraceOptions(J9JavaVM *vm, const char *optionString, IDATA optionsLength)
 	return inBraces == 0 ? length : -1;
 }
 
-
 static char *
 threadName(OMR_VMThread* vmThread)
 {
@@ -865,11 +869,10 @@ threadName(OMR_VMThread* vmThread)
 	return allocatedName;
 }
 
-
-static void displayTraceHelp(J9JavaVM *vm) 
-{     
+static void displayTraceHelp(J9JavaVM *vm)
+{
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	 
+
 	j9tty_err_printf(PORTLIB, "\nUsage:\n\n");
 	j9tty_err_printf(PORTLIB, "  java -Xtrace[:option,...]\n\n");
 	j9tty_err_printf(PORTLIB, "  Valid options are:\n\n");
@@ -905,8 +908,6 @@ static void displayTraceHelp(J9JavaVM *vm)
 	j9tty_err_printf(PORTLIB, "         \"-Xtrace:methods={java/lang/*,java/util/*},print=mt\"\n\n");
 }
 
-
-
 static void
 hookThreadAboutToStart(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
 {
@@ -914,7 +915,6 @@ hookThreadAboutToStart(J9HookInterface** hook, UDATA eventNum, void* eventData, 
 
 	reportTraceEvent(vmThread->javaVM, vmThread, J9RAS_TRACE_ON_THREAD_CREATE);
 }
-
 
 static void
 hookThreadEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
@@ -929,15 +929,13 @@ hookThreadEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void* use
 	}
 }
 
-
-static void 
+static void
 hookVmInitialized(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
 {
 	J9VMThread* vmThread = ((J9VMInitEvent *)eventData)->vmThread;
 
 	vmThread->javaVM->internalVMFunctions->rasStartDeferredThreads(vmThread->javaVM);
 }
-
 
 static void
 reportVMTermination(J9JavaVM* vm, J9VMThread * vmThread)
@@ -947,12 +945,11 @@ reportVMTermination(J9JavaVM* vm, J9VMThread * vmThread)
 	if (traceThread && *traceThread) {
 
 		/* Threads that should be ignored when deciding if all tracing has finished. */
-		char *ignoreThreads[] = {"Finalizer", "Signal dispatcher", "JIT PProfiler thread", "Reference Handler", NULL};
+		char *ignoreThreads[] = { "Finalizer", "Signal dispatcher", "JIT PProfiler thread", "Reference Handler", NULL };
 
 		utTerminateTrace(traceThread, ignoreThreads);
 	}
 }
-
 
 static void
 requestTraceCleanup(J9JavaVM* vm, J9VMThread * vmThread)
@@ -964,10 +961,9 @@ requestTraceCleanup(J9JavaVM* vm, J9VMThread * vmThread)
 	}
 }
 
-
 /*
  * Reconfigure trace at runtime.
- * 
+ *
  * Returns an OMR return code.
  */
 static omr_error_t
@@ -976,7 +972,7 @@ runtimeSetTraceOptions(J9VMThread * thr,const char * traceOptions)
 	PORT_ACCESS_FROM_JAVAVM(thr->javaVM);
 	RasGlobalStorage * j9ras = (RasGlobalStorage *)thr->javaVM->j9rasGlobalStorage;
 	UtInterface * uteInterface = (UtInterface *)(j9ras ? j9ras->utIntf : NULL);
-	
+
 	/* Is trace running? */
 	if ( uteInterface && uteInterface->server ) {
 		char *opts[UT_MAX_OPTS];
@@ -985,7 +981,7 @@ runtimeSetTraceOptions(J9VMThread * thr,const char * traceOptions)
 		omr_error_t rc = OMR_ERROR_NONE;
 		int i = 0;
 		/* Pass option to the trace engine */
-		
+
 		memset(opts,0,sizeof(opts));
 
 		/* A trace option has been set. We need to check if the level 2 trace points have been
@@ -1002,7 +998,7 @@ runtimeSetTraceOptions(J9VMThread * thr,const char * traceOptions)
 		}
 
 		rastraceError = processTraceOptionString(thr->javaVM,opts,&optIndex,traceOptions,strlen(traceOptions));
-		
+
 		if (rastraceError) {
 			/* Clients expect UTE error codes */
 			rc = OMR_ERROR_ILLEGAL_ARGUMENT;
@@ -1030,15 +1026,16 @@ runtimeSetTraceOptions(J9VMThread * thr,const char * traceOptions)
 	}
 }
 
-static omr_error_t 
-populateTraceHeaderInfo(J9JavaVM *vm) {
+static omr_error_t
+populateTraceHeaderInfo(J9JavaVM *vm)
+{
 	JavaVMInitArgs  *vmInitArgs;
 	char *options;
 	char *fullversion;
 	omr_error_t ret = OMR_ERROR_NONE;
 
 	PORT_ACCESS_FROM_JAVAVM( vm );
-	
+
 	/* overwrite the header settings now that we have full vm->j2seVersion info */
 	vmInitArgs = (JavaVMInitArgs  *) vm->vmArgsArray->actualVMArgs;
 	if (vmInitArgs) {
@@ -1163,18 +1160,18 @@ printTraceWhat(J9PortLibrary* portLibrary)
 /**************************************************************************
  * name        - reportJ9VMCommandLineError
  * description - Report an error in a command line option and put the given
- * 			   - string in as detail in an NLS enabled message.
+ *             - string in as detail in an NLS enabled message.
  * parameters  - portLibrary, detailStr, args for formatting into detailStr.
  *************************************************************************/
 static void
-reportJ9VMCommandLineError(J9PortLibrary* portLibrary, const char* detailStr, va_list args) {
+reportJ9VMCommandLineError(J9PortLibrary* portLibrary, const char* detailStr, va_list args)
+{
 	char buffer[1024];
 	PORT_ACCESS_FROM_PORT(portLibrary);
 
 	j9str_vprintf(buffer, sizeof(buffer), detailStr, args);
 
 	j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_TRC_ERROR_DETAIL_STR, buffer);
-
 }
 
 /**************************************************************************
@@ -1184,13 +1181,12 @@ reportJ9VMCommandLineError(J9PortLibrary* portLibrary, const char* detailStr, va
  * parameters  - detailStr, args for formatting into detailStr.
  *************************************************************************/
 void
-vaReportJ9VMCommandLineError(J9PortLibrary* portLibrary, const char* detailStr, ...) {
-
+vaReportJ9VMCommandLineError(J9PortLibrary* portLibrary, const char* detailStr, ...)
+{
 	va_list arg_ptr;
 	va_start(arg_ptr, detailStr);
 	reportJ9VMCommandLineError(portLibrary, detailStr, arg_ptr);
 	va_end(arg_ptr);
-
 }
 
 /**
@@ -1308,7 +1304,7 @@ javaTrace(void *env, UtModuleInfo *modInfo, U_32 traceId, const char *spec, ...)
 
 	va_start(var, spec);
 	/* TODO - Decide whether currentVMThread is fast enough for hot NoEnv trace points. */
-	if( NULL == vmThr ) {	
+	if( NULL == vmThr ) {
 		vmThr = globalVM->internalVMFunctions->currentVMThread(globalVM);
 	}
 	utThr = UT_THREAD_FROM_VM_THREAD(vmThr);
@@ -1319,7 +1315,6 @@ javaTrace(void *env, UtModuleInfo *modInfo, U_32 traceId, const char *spec, ...)
 static void
 javaTraceMem(void *env, UtModuleInfo *modInfo, U_32 traceId, UDATA length, void *memptr)
 {
-
 	/* There's no need to improve this to be cleaner, the function is obsolete and will assert when called. */
 	omrUtModuleIntfS.TraceMem( (env?((J9VMThread*)env)->omrVMThread:NULL), modInfo, traceId, length, memptr);
 }
@@ -1331,7 +1326,6 @@ javaTraceState(void *env, UtModuleInfo *modInfo, U_32 traceId, const char *spec,
 	 * Also since the function just asserts the varargs are never used and we can avoid handling them.
 	 */
 	omrUtModuleIntfS.TraceState( (env?((J9VMThread*)env)->omrVMThread:NULL), modInfo, traceId, spec, NULL);
-
 }
 
 static void
@@ -1351,10 +1345,8 @@ javaTraceInit(void *env, UtModuleInfo *modInfo)
 static void
 javaTraceTerm(void* env, UtModuleInfo *modInfo)
 {
-
 	/* Registering is a one time event, rather than a high performance task,
 	 * call through to the base omr version.
 	 */
 	omrUtModuleIntfS.TraceTerm( (env?((J9VMThread*)env)->omrVMThread:NULL), modInfo);
-
 }

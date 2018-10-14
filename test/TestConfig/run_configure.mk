@@ -1,5 +1,5 @@
 ##############################################################################
-#  Copyright (c) 2016, 2017 IBM Corp. and others
+#  Copyright (c) 2016, 2018 IBM Corp. and others
 #
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,17 +41,33 @@ ifndef SPEC
 $(error Please provide SPEC that matches the current platform (e.g. SPEC=linux_x86-64))
 endif
 
-ifndef JAVA_VERSION
-export JAVA_VERSION:=SE90
+ifeq ($(JAVA_VERSION), SE80)
+	JDK_VERSION:=8
+endif
+ifeq ($(JAVA_VERSION), SE90)
+	JDK_VERSION:=9
+endif
+ifeq ($(JAVA_VERSION), SE100)
+	JDK_VERSION:=10
+endif
+ifeq ($(JAVA_VERSION), SE110)
+	JDK_VERSION:=11
 endif
 
+ifndef JDK_VERSION
+export JDK_VERSION:=8
+endif
+
+ifndef JDK_IMPL
+export JDK_IMPL:=openj9
+endif
 
 autoconfig:
 	perl configure.pl
 
 autogen: autoconfig
 	cd $(CURRENT_DIR)$(D)scripts$(D)testKitGen; \
-	perl testKitGen.pl --graphSpecs=$(SPEC) --javaVersion=$(JAVA_VERSION) $(OPTS); \
+	perl testKitGen.pl --graphSpecs=$(SPEC) --jdkVersion=$(JDK_VERSION) --impl=$(JDK_IMPL) --buildList=${BUILD_LIST} $(OPTS); \
 	cd $(CURRENT_DIR);
 
 AUTOGEN_FILES = $(wildcard $(CURRENT_DIR)$(D)jvmTest.mk)

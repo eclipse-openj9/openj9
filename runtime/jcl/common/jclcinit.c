@@ -74,22 +74,19 @@ jint computeFullVersionString(J9JavaVM* vm)
 #define BUFFER_SIZE 512
 
 	/* The actual allowed BUFFER_SIZE is 512, the extra 1 char is added to check for overflow */
-	char fullversion[BUFFER_SIZE + 1];
 	char vminfo[BUFFER_SIZE + 1];
 
 #if defined(J9VM_INTERP_NATIVE_SUPPORT)
 	J9JITConfig *jitConfig = vm->jitConfig;
+	jitEnabled = "dis";
+	aotEnabled = "dis";
 
 	if (NULL != jitConfig) {
 		if (J9_ARE_ALL_BITS_SET(jitConfig->runtimeFlags, J9JIT_JIT_ATTACHED)) {
 			jitEnabled = "en";
-		} else {
-			jitEnabled = "dis";
 		}
 		if (J9_ARE_ALL_BITS_SET(jitConfig->runtimeFlags, J9JIT_AOT_ATTACHED)) {
 			aotEnabled = "en";
-		} else {
-			aotEnabled = "dis";
 		}
 	}
 	#define JIT_INFO " (JIT %sabled, AOT %sabled)\nOpenJ9   - "
@@ -119,6 +116,20 @@ jint computeFullVersionString(J9JavaVM* vm)
 			j2se_version_info = "10.?";
 		}
 		break;
+	case J2SE_V11:
+		if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_V11) {
+			j2se_version_info = "11";
+		} else {
+			j2se_version_info = "11.?";
+		}
+		break;
+	case J2SE_V12:
+		if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_V12) {
+			j2se_version_info = "12";
+		} else {
+			j2se_version_info = "12.?";
+		}
+		break;
 	default:
 		j2se_version_info = "?.?.?";
 	}
@@ -128,15 +139,15 @@ jint computeFullVersionString(J9JavaVM* vm)
 
 #ifdef J9VM_ENV_DATA64
 	#ifdef J9VM_GC_COMPRESSED_POINTERS
-		#define MEM_INFO "-64 Compressed References "
+		#define MEM_INFO "-64-Bit Compressed References "
 	#else
-		#define MEM_INFO "-64 "
+		#define MEM_INFO "-64-Bit "
 	#endif
 #else
 	#if defined(J9ZOS390) || defined(S390)
-		#define MEM_INFO "-31 "
+		#define MEM_INFO "-31-Bit "
 	#else
-		#define MEM_INFO "-32 "
+		#define MEM_INFO "-32-Bit "
 	#endif
 #endif
 
@@ -146,27 +157,20 @@ jint computeFullVersionString(J9JavaVM* vm)
 	#define OMR_INFO ""
 #endif /* J9VM_GC_MODRON_GC */
 
+#if defined(OPENJDK_TAG) && defined(OPENJDK_SHA)
+	#define OPENJDK_INFO "\nJCL      - " OPENJDK_SHA " based on " OPENJDK_TAG
+#else
+	#define OPENJDK_INFO ""
+#endif /* OPENJDK_TAG && OPENJDK_SHA */
+
 #if defined(VENDOR_SHORT_NAME) && defined(VENDOR_SHA)
 	#define VENDOR_INFO "\n" VENDOR_SHORT_NAME "      - " VENDOR_SHA
 #else
 	#define VENDOR_INFO ""
 #endif /* VENDOR_SHORT_NAME && VENDOR_SHA */
 
-	if (BUFFER_SIZE <= j9str_printf(PORTLIB, fullversion, BUFFER_SIZE + 1,
-			"JRE %s IBM J9 %s %s %s" MEM_INFO "%s" JIT_INFO J9VM_VERSION_STRING OMR_INFO VENDOR_INFO,
-			j2se_version_info,
-			EsVersionString,
-			(NULL != osname ? osname : " "),
-			osarch,
-			EsBuildVersionString,
-			jitEnabled,
-			aotEnabled)) {
-		j9tty_err_printf(PORTLIB, "\n%s - %d: %s: Error: Java full version string exceeds buffer size\n", __FILE__, __LINE__, __FUNCTION__);
-		return JNI_ERR;
-	}
-
 	if (BUFFER_SIZE <= j9str_printf(PORTLIB, vminfo, BUFFER_SIZE + 1,
-			"JRE %s %s %s" MEM_INFO "%s" JIT_INFO J9VM_VERSION_STRING OMR_INFO VENDOR_INFO,
+			"JRE %s %s %s" MEM_INFO "%s" JIT_INFO J9VM_VERSION_STRING OMR_INFO VENDOR_INFO OPENJDK_INFO,
 			j2se_version_info,
 			(NULL != osname ? osname : " "),
 			osarch,
@@ -184,8 +188,7 @@ jint computeFullVersionString(J9JavaVM* vm)
 #undef VENDOR_INFO
 
 	(*VMI)->SetSystemProperty(VMI, "java.vm.info", vminfo);
-	/*[PR 114306] System property java.fullversion is not initialized properly */
-	(*VMI)->SetSystemProperty(VMI, "java.fullversion", fullversion);
+	(*VMI)->SetSystemProperty(VMI, "java.fullversion", vminfo);
 	return JNI_OK;
 }
 
@@ -196,9 +199,9 @@ static jint initializeStaticMethod(J9JavaVM* vm, UDATA offset)
 	J9RAMStaticMethodRef * staticMethodConstantPool = (J9RAMStaticMethodRef *) vm->jclConstantPool;
 	J9ROMMethodRef * romMethodConstantPool = (J9ROMMethodRef *) jclConstantPool->romConstantPool;
 	J9ROMClass * jclROMClass = jclConstantPool->ramClass->romClass;
-	U_32 * cpShapeDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(jclROMClass);
+	UDATA cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(jclROMClass), offset);
 
-	if (J9CPTYPE_STATIC_METHOD == J9_CP_TYPE(cpShapeDescription, offset)) {
+	if ((J9CPTYPE_STATIC_METHOD == cpType) || (J9CPTYPE_INTERFACE_STATIC_METHOD == cpType)) {
 		if (NULL == vm->internalVMFunctions->resolveStaticMethodRef(vm->mainThread, jclConstantPool, offset, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL | J9_RESOLVE_FLAG_JCL_CONSTANT_POOL)) {
 			if (NULL == J9VMCONSTANTPOOL_CLASSREF_AT(vm, romMethodConstantPool[offset].classRefCPIndex)->value) {
 				Trc_JCL_initializeKnownClasses_ClassRefNotResolvedForMethodRef(vm->mainThread, romMethodConstantPool[offset].classRefCPIndex, offset);
@@ -307,7 +310,9 @@ jint initializeKnownClasses(J9JavaVM* vm, U_32 runtimeFlags)
 					return JNI_ERR;
 				}
 			}
-		} else if (J9CPTYPE_INSTANCE_METHOD == J9_CP_TYPE(cpShapeDescription, i)) {
+		} else if ((J9CPTYPE_INSTANCE_METHOD == J9_CP_TYPE(cpShapeDescription, i))
+		|| (J9CPTYPE_INTERFACE_INSTANCE_METHOD == J9_CP_TYPE(cpShapeDescription, i))
+		) {
 			J9ROMClassRef* romClassRef = &romClassConstantPool[romMethodConstantPool[i].classRefCPIndex];
 
 			if (0 == (romClassRef->runtimeFlags & runtimeFlags)) {
@@ -333,7 +338,9 @@ jint initializeKnownClasses(J9JavaVM* vm, U_32 runtimeFlags)
 					}
 				}
 			}
-		} else if (J9CPTYPE_STATIC_METHOD == J9_CP_TYPE(cpShapeDescription, i)) {
+		} else if (J9CPTYPE_STATIC_METHOD == J9_CP_TYPE(cpShapeDescription, i)
+		|| (J9CPTYPE_INTERFACE_STATIC_METHOD == J9_CP_TYPE(cpShapeDescription, i))
+		) {
 			J9ROMClassRef* romClassRef = &romClassConstantPool[romMethodConstantPool[i].classRefCPIndex];
 			if (0 == (romClassRef->runtimeFlags & runtimeFlags)) {
 				Trc_JCL_initializeKnownClasses_SkippingResolve(vm->mainThread, i, romClassRef, romClassRef->runtimeFlags, runtimeFlags);
@@ -444,6 +451,7 @@ static const J9IntConstantMapping intVMConstants[] = {
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_GC_POLICY_GENCON, J9_GC_POLICY_GENCON },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_GC_POLICY_BALANCED, J9_GC_POLICY_BALANCED },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_GC_POLICY_METRONOME, J9_GC_POLICY_METRONOME },
+		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_GC_POLICY_NOGC, J9_GC_POLICY_NOGC },
 
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_JAVA_CLASS_RAM_SHAPE_SHIFT, J9_JAVA_CLASS_RAM_SHAPE_SHIFT },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_OBJECT_HEADER_SHAPE_MASK, OBJECT_HEADER_SHAPE_MASK },
@@ -466,7 +474,16 @@ static const J9IntConstantMapping intVMConstants[] = {
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_ACC_CLASS_INTERNAL_PRIMITIVE_TYPE, J9AccClassInternalPrimitiveType },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_ACC_CLASS_ARRAY, J9AccClassArray },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS, OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS },
-
+#if defined(J9VM_ENV_LITTLE_ENDIAN)
+		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_IS_BIG_ENDIAN, JNI_FALSE},
+#else
+		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_IS_BIG_ENDIAN, JNI_TRUE},
+#endif
+		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_CLASSLOADER_TYPE_OTHERS, J9_CLASSLOADER_TYPE_OTHERS },
+		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_CLASSLOADER_TYPE_BOOT, J9_CLASSLOADER_TYPE_BOOT },
+		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_CLASSLOADER_TYPE_PLATFORM, J9_CLASSLOADER_TYPE_PLATFORM },
+		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9CLASS_RESERVABLE_LOCK_WORD_INIT, J9ClassReservableLockWordInit },
+		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_OBJECT_HEADER_LOCK_RESERVED, OBJECT_HEADER_LOCK_RESERVED },
 };
 
 /**

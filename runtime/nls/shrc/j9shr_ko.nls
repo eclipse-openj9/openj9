@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1389,7 +1389,6 @@ J9NLS_SHRC_OSCACHE_ERROR_SHMEM_TOOBIG_ZOS.user_response=If you require a cache o
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_ERROR_SHMEM_TOOBIG_AIX=\uc6b4\uc601 \uccb4\uc81c \uc81c\ud55c \ub54c\ubb38\uc5d0 \uc694\uccad\ub41c \ud06c\uae30\uc758 \uce90\uc2dc\ub97c \uc791\uc131\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
-
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_SHMEM_TOOBIG_AIX.explanation=AIX/i5OS cannot create a Shared Classes cache of requested size.
 J9NLS_SHRC_OSCACHE_ERROR_SHMEM_TOOBIG_AIX.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -1804,7 +1803,6 @@ J9NLS_SHRC_OSCACHE_MMAP_STARTUP_GETCACHEPATHNAME_ERROR.user_response=Contact you
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_FILEOPEN_ERROR=\uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \ud30c\uc77c\uc744 \uc5ec\ub294 \uc911\uc5d0 \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4.
-
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_FILEOPEN_ERROR.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_FILEOPEN_ERROR.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -4266,7 +4264,6 @@ J9NLS_SHRC_SHRINIT_PRINTALLSTATS_UNRECOGNISED.user_response=Provide a valid subo
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_HELP=-Xshareclasses:printAllStats=<options>\uc5d0 \uc0ac\uc6a9 \uac00\ub2a5\ud55c \uc635\uc158\uc785\ub2c8\ub2e4. \ubcf5\uc218 \uc635\uc158\uc744 \uc9c0\uc815\ud558\ub824\uba74 '+'\ub97c \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624. \uc989, printallstats=aot+url \n
-
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_HELP.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_HELP.system_action=
@@ -4274,7 +4271,6 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_HELP.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ALL=\t all \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 \ub2e4\uc74c \uc720\ud615 \ubaa8\ub450\ub97c \uc778\uc1c4\ud569\ub2c8\ub2e4.
-
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ALL.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ALL.system_action=
@@ -4282,7 +4278,6 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ALL.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CLASSPATH=\t classpath \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 classpath \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
-
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CLASSPATH.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CLASSPATH.system_action=
@@ -4290,7 +4285,6 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CLASSPATH.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_URL=\t url \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 url \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
-
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_URL.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_URL.system_action=
@@ -4298,7 +4292,6 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_URL.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_TOKEN=\t token \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 \ud1a0\ud070 \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
-
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_TOKEN.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_TOKEN.system_action=
@@ -4306,7 +4299,6 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_TOKEN.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMCLASS=\t romclass \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 romclass \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
-
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMCLASS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMCLASS.system_action=
@@ -4314,7 +4306,6 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMCLASS.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMMETHOD=\t rommethod \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 rommethod \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
-
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMMETHOD.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMMETHOD.system_action=
@@ -4322,7 +4313,6 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMMETHOD.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOT=\t aot \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 aot \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
-
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOT.system_action=
@@ -4331,7 +4321,6 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOT.user_response=
 
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITPROFILE=\t jitprofile \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 jitprofile \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
-
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITPROFILE.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITPROFILE.system_action=
@@ -4346,7 +4335,6 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ZIPCACHE.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_EXTRA=\t extra \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 \ub2e4\uc74c private \uc720\ud615\uc744 \ubaa8\ub450 \uc778\uc1c4\ud569\ub2c8\ub2e4.
-
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_EXTRA.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_EXTRA.system_action=
@@ -4354,7 +4342,6 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_EXTRA.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ORPHAN=\t orphan \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 \uace0\uc544 \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
-
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ORPHAN.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ORPHAN.system_action=
@@ -4362,7 +4349,6 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ORPHAN.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT=\t jithint \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 jithint \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
-
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT.system_action=
@@ -4370,7 +4356,6 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTCH=\t aotch \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 aotch \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
-
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTCH.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTCH.system_action=
@@ -4378,7 +4363,6 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTCH.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTTHUNK=\t aotthunk \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 aotthunk \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
-
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTTHUNK.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTTHUNK.system_action=
@@ -4386,7 +4370,6 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTTHUNK.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTDATA=\t aotdata \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 aotdata \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
-
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTDATA.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTDATA.system_action=
@@ -4394,7 +4377,6 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTDATA.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JCL=\t jcl \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 jcl \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
-
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JCL.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JCL.system_action=
@@ -4402,7 +4384,6 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JCL.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_BYTEDATA=\t bytedata \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 \uae30\ud0c0 \ubaa8\ub4e0 \ubc14\uc774\ud2b8 \ub370\uc774\ud130 \uc720\ud615\uc744 \uc778\uc1c4\ud569\ub2c8\ub2e4.
-
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_BYTEDATA.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_BYTEDATA.system_action=
@@ -4630,7 +4611,6 @@ J9NLS_SHRC_SHRINIT_PRINTSTATS_UNRECOGNISED.user_response=Provide a valid subopti
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP=-Xshareclasses:printStats=<options>\uc5d0 \uc0ac\uc6a9 \uac00\ub2a5\ud55c \uc635\uc158\uc785\ub2c8\ub2e4. \ubcf5\uc218 \uc635\uc158\uc744 \uc9c0\uc815\ud558\ub824\uba74 '+'\ub97c \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624. \uc989, printstats=aot+url \n
-
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP.system_action=
@@ -6012,7 +5992,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_REVALIDATE_AOT_METHODS.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS=\uba54\uc18c\ub4dc \uc2a4\ud399\uacfc \uc77c\uce58\ud558\ub294 AOT \uba54\uc18c\ub4dc\ub97c \uc778\uc1c4\ud569\ub2c8\ub2e4.\n\
-\t<method_specification>\uc740 [!]{*|[*]<packagename/classname>[*]}[.{*|[*]<methodname>>[*]}][({*|[*]<parameters>[*]})]\uc73c\ub85c \uc815\uc758\ub429\ub2c8\ub2e4.
+\t<method_specification>\uc740 [!]{*|[*]<packagename/classname>[*]}[.{*|[*]<methodname>[*]}[({*|[*]<parameters>[*]})]]\uc73c\ub85c \uc815\uc758\ub429\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.system_action=
@@ -6034,7 +6014,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=<method_specification>\uc758 \ud615\uc2dd\uc740 [!]{*|[*]<packagename/classname>[*]}[.{*|[*]<methodname>[*]}][({*|[*]<parameters>[*]})]\uc785\ub2c8\ub2e4. \uc608\ub97c \ub4e4\uc5b4 \ub2e4\uc74c\uacfc \uac19\uc2b5\ub2c8\ub2e4.\n\
+J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=<method_specification>\uc758 \ud615\uc2dd\uc740 [!]{*|[*]<packagename/classname>[*]}[.{*|[*]<methodname>[*]}[({*|[*]<parameters>[*]})]]\uc785\ub2c8\ub2e4. \uc608\ub97c \ub4e4\uc5b4 \ub2e4\uc74c\uacfc \uac19\uc2b5\ub2c8\ub2e4. \n\
 \n\
 \t-Xshareclasses:name=Cache1,%sjava/util/HashMap.hash(Ljava/lang/Object;)\n
 # START NON-TRANSLATABLE
@@ -6164,6 +6144,7 @@ J9NLS_SHRC_OSCACHE_MMAP_SET_GROUPACCESS_FAILED.user_response=Check the umask set
 
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED=\uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc640 \uc5f0\uad00\ub41c semid=%d \uc758 \uc138\ub9c8\ud3ec\uc5b4 \uc138\ud2b8\uc5d0 'groupAccess' \ud558\uc704 \uc635\uc158\uc73c\ub85c \uc694\uccad\ub41c \uadf8\ub8f9 \uc561\uc138\uc2a4 \uad8c\ud55c \uc124\uc815\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.explanation=Cannot set group access permission when creating the new semaphore with sub-option "groupAccess".
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.user_response=Ensure the user has sufficient permission for creating the new semaphore with group access.
@@ -6171,6 +6152,7 @@ J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.user_response=Ensure the use
 
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED=\uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc640 \uc5f0\uad00\ub41c shmid=%d\uc758 \uacf5\uc720 \uba54\ubaa8\ub9ac\uc5d0 'groupAccess' \ud558\uc704 \uc635\uc158\uc73c\ub85c \uc694\uccad\ub41c \uadf8\ub8f9 \uc561\uc138\uc2a4 \uad8c\ud55c \uc124\uc815\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.explanation=Cannot set group access permission when creating the new shared memory with sub-option "groupAccess".
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.user_response=Ensure the user has sufficient permission for creating the new shared memory with group access.
@@ -6648,9 +6630,16 @@ J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_UNSTORED_V1.system_action=The JVM continues.
 J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_UNSTORED_V1.user_response=No action required, this is an information only message.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CC_INCORRECT_BUILDID=\uacf5\uc720 \uce90\uc2dc\ub97c \uc2dc\uc791\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4. \uae30\uc874 \uacf5\uc720 \uce90\uc2dc\uac00 \ub2e4\ub978 JVM \ube4c\ub4dc\uc5d0 \uc758\ud574 \uc791\uc131\ub418\uc5b4 \uc2e4\ud589 \uc911\uc778 JVM\uacfc \uc77c\uce58\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_CC_INCORRECT_BUILDID=\uacf5\uc720 \uce90\uc2dc\ub97c \uc2dc\uc791\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4. \ub2e4\ub978 JVM \ube4c\ub4dc\uc5d0 \uc758\ud574 \uc791\uc131\ub41c \uae30\uc874 \uacf5\uc720 \uce90\uc2dc\uac00 \uc2e4\ud589 \uc911\uc778 JVM\uacfc \uc77c\uce58\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_INCORRECT_BUILDID.explanation=An error has occurred when starting up the cache. The build ID of the existing cache with the same name is different from that of the current JVM.
 J9NLS_SHRC_CC_INCORRECT_BUILDID.system_action=The JVM fails to complete the requested operation.
 J9NLS_SHRC_CC_INCORRECT_BUILDID.user_response=Use a JVM which matches the build ID of the existing cache.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1=\ubd80\ud2b8\uc2a4\ud2b8\ub7a9 \ud074\ub798\uc2a4 \ub85c\ub354\uc5d0\uc11c \ub85c\ub4dc\ud55c \ud074\ub798\uc2a4\uc758 \uce90\uc2f1\uc744 \uc0ac\uc6a9\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.user_response=
 # END NON-TRANSLATABLE

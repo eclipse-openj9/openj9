@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2006, 2017 IBM Corp. and others
+  Copyright (c) 2006, 2018 IBM Corp. and others
  
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -87,42 +87,12 @@
 	</jcls>
 	<projects>
 		<project id="com.ibm.jvmti.tests"/>
-		<project id="comsched"/>
-		<project id="cs2"/>
-		<project id="cuda"/>
 		<project id="fips"/>
-		<project id="Modron_MT"/>
-		<project id="ModronNext"/>
 		<project id="omr"/>
-		<project id="omr.jit"/>
-		<project id="oti"/>
-		<project id="port"/>
 		<project id="compiler"/>
-		<project id="util_core"/>
-		<project id="VM_AIX32"/>
-		<project id="VM_Binaries"/>
 		<project id="buildspecs"/>
 		<project id="VM_Build-Tools"/>
 		<project id="runtime"/>
-		<project id="VM_LINUX39031"/>
-		<project id="VM_LINUX39064"/>
-		<project id="VM_LINUXPPC32"/>
-		<project id="VM_NLS"/>
-		<project id="VM_NRR"/>
-		<project id="VM_OSE"/>
-		<project id="VM_Port-Library"/>
-		<project id="VM_Resource-Managed"/>
-		<project id="VM_ROM-Images"/>
-		<project id="VM_ROM-Images-BE"/>
-		<project id="VM_ROM-Images-LE"/>
-		<project id="VM_Runtime-Tools"/>
-		<project id="VM_Thread-Library"/>
-		<project id="VM_Tuning-Fork"/>
-		<project id="VM_Virt"/>
-		<project id="VM_Win32_compiler"/>
-		<project id="VM_Windows64_compiler"/>
-		<project id="VM_Windows_compiler"/>
-		<project id="VM_ZOS64"/>
 	</projects>
 	<asmBuilders>
 		<builder id="AIX64"/>

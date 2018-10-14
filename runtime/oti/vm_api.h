@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -472,6 +472,14 @@ addToBootstrapClassLoaderSearch(J9JavaVM * vm, const char * pathSegment, UDATA c
 UDATA
 addToSystemClassLoaderSearch(J9JavaVM * vm, const char* pathSegment, UDATA classLoaderType, BOOLEAN enforceJarRestriction);
 
+/**
+ * @brief Get a reference to jdk.internal.module.Modules.
+ * @param *currentThread
+ * @return class reference or null if error.
+ */
+
+jclass
+getJimModules(J9VMThread *currentThread);
 /* ---------------- description.c ---------------- */
 
 /**
@@ -1580,6 +1588,31 @@ initializeClassPathEntry (J9JavaVM * javaVM, J9ClassPathEntry *cpEntry);
 BOOLEAN
 setBootLoaderModulePatchPaths(J9JavaVM * javaVM, J9Module * j9module, const char * moduleName);
 
+/**
+ * @brief Register jvminit.c::predefinedHandlerWrapper using j9sig_set_*async_signal_handler
+ * for the specified signal
+ *
+ * @param[in] vm pointer to a J9JavaVM
+ * @param[in] signal integer value of the signal
+ * @param[out] oldOSHandler points to the old signal handler function
+ *
+ * @return 0 on success and non-zero on failure
+ */
+IDATA
+registerPredefinedHandler(J9JavaVM *vm, U_32 signal, void **oldOSHandler);
+
+/**
+ * @brief Register a signal handler function with the OS for the specified signal.
+ *
+ * @param[in] vm pointer to a J9JavaVM
+ * @param[in] signal integer value of the signal
+ * @param[in] newOSHandler address to the new signal handler function which will be registered
+ * @param[out] oldOSHandler points to the old signal handler function
+ *
+ * @return 0 on success and non-zero on failure
+ */
+IDATA
+registerOSHandler(J9JavaVM *vm, U_32 signal, void *newOSHandler, void **oldOSHandler);
 
 /* ---------------- romutil.c ---------------- */
 
@@ -2145,7 +2178,7 @@ fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9R
 
 /**
 * @brief Iterate over fields of the specified class in JVMTI order.
-* @param state[in/out]  the walk state that was initialised via fieldOffsetsStartDo()
+* @param state[in/out]  the walk state that was initialized via fieldOffsetsStartDo()
 * @return J9ROMFieldOffsetWalkResult *
 */
 J9ROMFieldOffsetWalkResult *
@@ -2164,7 +2197,7 @@ fullTraversalFieldOffsetsStartDo(J9JavaVM *vm, J9Class *clazz, J9ROMFullTraversa
 
 /**
 * @brief Fully traverse the fields of the specified class and its superclasses.
-* @param state[in/out]  the walk state that was initialised via fullTraversalFieldOffsetsStartDo()
+* @param state[in/out]  the walk state that was initialized via fullTraversalFieldOffsetsStartDo()
 * @return J9ROMFieldShape *
 */
 J9ROMFieldShape *
@@ -2215,6 +2248,19 @@ fieldIndexTableRemove(J9JavaVM* vm, J9Class *ramClass);
  */
 UDATA   
 packageAccessIsLegal(J9VMThread *currentThread, J9Class *targetClass, j9object_t protectionDomain, UDATA canRunJavaCode);
+
+/**
+ * Determine if the targetClass is subject to the package access check.
+ * Assuming targetClass is NOT NULL.
+ *
+ * @param *vm[in] the J9JavaVM
+ * @param srcClassLoader[in] Current class loader creating RAM class
+ * @param srcModule[in] The module where current RAM class is loaded from
+ * @param targetClass[in] The RAM class being examined to be determined if a package access check should be performed
+ * @return TRUE if a package access check is required, otherwise FALSE.
+ */
+BOOLEAN
+requirePackageAccessCheck(J9JavaVM *vm, J9ClassLoader *srcClassLoader, J9Module *srcModule, J9Class *targetClass);
 
 /**
  * @brief
@@ -2748,89 +2794,67 @@ romImageNewSegment(J9JavaVM *vm, J9ROMImageHeader *header, UDATA isBaseType, J9C
 
 
 /**
- * Copy a string object to a UTF8 data buffer, optionally to prepend a string before it
+ * Copy a string object to a UTF8 data buffer, and optionally prepend a string before it.
  *
- * ***The caller must free the memory from this pointer if the return value is NOT the buffer argument ***
+ * @note The caller must free the memory from this pointer if the return value is NOT the buffer argument.
+ * @note If the buffer is not large enough to encode the string this function will allocate enough memory to encode
+ *       the worst-case UTF8 encoding of the supplied UTF16 string (length of string * 3 bytes).
  *
  * @param[in] currentThread the current J9VMThread
  * @param[in] string a string object to be copied
  * 				it can't be NULL
- * @param[in] stringFlags the flag to determine performing '.' --> '/'
+ * @param[in] stringFlags the flag to determine performing '.' --> '/' or NULL termination
  * @param[in] prependStr the string to be prepended before the string object to be copied
  * 				it can't be NULL but can be an empty string ""
+ * @param[in] prependStrLength The length of prependStr as computed by strlen.
  * @param[in] buffer the buffer for the string
  * @param[in] bufferLength the buffer length
+ * @param[out] utf8Length If not NULL returns the computed length (in bytes) of the copied UTF8 string in the buffer excluding the NULL terminator.
  *
  * @return a char pointer to the string
  */
 char*
-copyStringToUTF8WithMemAlloc(J9VMThread *currentThread, j9object_t string, UDATA stringFlags, const char *prependStr, char *buffer, UDATA bufferLength);
+copyStringToUTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, char *buffer, UDATA bufferLength, UDATA *utf8Length);
 
 
 /**
- * Copy certain number of Unicode characters from an offset into a Unicode character array to a UTF8 data buffer.
- *
- * @param[in] vmThread the current J9VMThread
- * @param[in] compressed if the Unicode character array is compressed
- * @param[in] nullTermination if the utf8 data is going to be NULL terminated
- * @param[in] stringFlags the flag to determine performing '.' --> '/'
- * @param[in] unicodeBytes a Unicode character array
- * @param[in] unicodeOffset an offset into the Unicode character array
- * @param[in] unicodeLength the number of Unicode characters to be copied
- * @param[in] utf8Data a utf8 data buffer
- * @param[in] utf8Length the size of the utf8 data buffer
- *
- * @return UDATA_MAX if a failure occurred, otherwise the number of utf8 data copied excluding null termination
- */
-UDATA
-copyCharsIntoUTF8Helper(
-	J9VMThread *vmThread, BOOLEAN compressed, BOOLEAN nullTermination, UDATA stringFlags, j9object_t unicodeBytes, UDATA unicodeOffset, UDATA unicodeLength, U_8 *utf8Data, UDATA utf8Length);
+* Copy a string object to a J9UTF8 data buffer, and optionally prepend a string before it.
+*
+* @note The caller must free the memory from this pointer if the return value is NOT the buffer argument.
+* @note If the buffer is not large enough to encode the string this function will allocate enough memory to encode
+*       the worst-case UTF8 encoding of the supplied UTF16 string (length of string * 3 bytes).
+*
+* @param[in] currentThread the current J9VMThread
+* @param[in] string a string object to be copied
+* 				it can't be NULL
+* @param[in] stringFlags the flag to determine performing '.' --> '/' or NULL termination
+* @param[in] prependStr the string to be prepended before the string object to be copied
+* 				it can't be NULL but can be an empty string ""
+* @param[in] prependStrLength The length of prependStr as computed by strlen.
+* @param[in] buffer the buffer for the string
+* @param[in] bufferLength the buffer length
+*
+* @return a J9UTF8 pointer to the string
+*/
+J9UTF8*
+copyStringToJ9UTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, char *buffer, UDATA bufferLength);
 
 
 /**
- * Copy a Unicode String to a UTF8 data buffer with NULL termination.
- *
- * @param[in] vmThread the current J9VMThread
- * @param[in] nullTermination if the utf8 data is going to be NULL terminated
- * @param[in] stringFlags the flag to determine performing '.' --> '/'
- * @param[in] utf8Data a utf8 data buffer
- * @param[in] utf8Length the size of the utf8 data buffer
- *
- * @return UDATA_MAX if a failure occurred, otherwise the number of utf8 data copied including null termination
- */
-UDATA
-copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, BOOLEAN nullTermination, UDATA stringFlags, U_8 *utf8Data, UDATA utf8Length);
-
-
-/**
- * !!! this method is for backwards compatibility with JIT usage !!!
- * Copy a Unicode String to a UTF8 data buffer with NULL termination.
+ * Copy a Unicode String to a UTF8 data buffer.
  *
  * @param[in] vmThread the current J9VMThread
  * @param[in] string a string object to be copied, it can't be NULL
- * @param[in] stringFlags the flag to determine performing '.' --> '/'
+ * @param[in] stringFlags the flag to determine performing '.' --> '/' or NULL termination
+ * @param[in] stringOffset the offset into \p string at which to start the copy
+ * @param[in] stringLength the number of \p string characters to copy
  * @param[in] utf8Data a utf8 data buffer
- * @param[in] utf8Length the size of the utf8 data buffer
+ * @param[in] utf8DataLength the length of utf8Data in number of bytes
  *
- * @return 1 if a failure occurred, otherwise 0 for success
+ * @return The computed length (in bytes) of the copied UTF8 string in the buffer excluding any NULL terminator.
  */
 UDATA
-copyStringToUTF8(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, U_8 *utf8Data, UDATA utf8Length);
-
-
-/**
- * !!! this method is for backwards compatibility with JIT usage !!!
- * Copy a Unicode String to a UTF8 data buffer without NULL termination.
- * dest is assumed to have enough length - the easiest way to ensure this is to pass a buffer with 1.5 * string length in it
- *
- * @param[in] vmThread the current J9VMThread
- * @param[in] string a string object to be copied, it can't be NULL
- * @param[in] dest a utf8 data buffer
- *
- * @return UDATA_MAX if a failure occurred, otherwise the number of utf8 data copied excluding null termination
- */
-UDATA
-copyFromStringIntoUTF8(J9VMThread *vmThread, j9object_t string, char * dest);
+copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, UDATA stringOffset, UDATA stringLength, U_8 *utf8Data, UDATA utf8DataLength);
 
 
 /**
@@ -3029,8 +3053,60 @@ trace(J9VMThread *vmStruct);
 
 #endif /* J9VM_INTERP_TRACING || INTERP_UPDATE_VMCTRACING */ /* End File Level Build Flags */
 
+/* ---------------- visible.c ---------------- */
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+/**
+ * Loads the nest host and ensures that the nest host belongs
+ * to the same runtime package as the class. This function requires
+ * VMAccess
+ *
+ * @param vmThread handle to vmThread
+ * @param clazz the class to search the nest host
+ * @param options lookup options
+ *
+ * @return 	J9_VISIBILITY_ALLOWED if success,
+ * 			J9_VISIBILITY_NEST_HOST_LOADING_FAILURE_ERROR if failed to load nesthost,
+ * 			J9_VISIBILITY_NEST_HOST_DIFFERENT_PACKAGE_ERROR if nesthost is not in the same runtime package
+ */
+UDATA
+loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options);
 
-/* ---------------- vmaccess.c ---------------- */
+/**
+ * Sets the nestmates error based on the errorCode
+ *
+ * @param vmThread vmthread token
+ * @param nestMember the j9lass requesting the nesthost
+ * @param nestHost the actual nest host, this may be NULL
+ * @param errorCode the error code represting the exception to throw
+ * 	J9_VISIBILITY_NEST_HOST_LOADING_FAILURE_ERROR
+ * 	J9_VISIBILITY_NEST_HOST_DIFFERENT_PACKAGE_ERROR
+ * 	J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR
+ */
+void
+setNestmatesError(J9VMThread *vmThread, J9Class *nestMember, J9Class *nestHost, IDATA errorCode);
+#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+
+/* ---------------- VMAccess.cpp ---------------- */
+
+/**
+* @brief
+* @param currentThread
+* @param vmThread
+* @return void
+*/
+void
+haltThreadForInspection(J9VMThread * currentThread, J9VMThread * vmThread);
+
+
+/**
+* @brief
+* @param currentThread
+* @param vmThread
+* @return void
+*/
+void
+resumeThreadForInspection(J9VMThread * currentThread, J9VMThread * vmThread);
+
 
 /**
 * @brief
@@ -3167,26 +3243,6 @@ releaseSafePointVMAccess(J9VMThread * vmThread);
 */
 void
 releaseExclusiveVMAccessFromExternalThread(J9JavaVM * vm);
-
-/**
- * Enter a JNI critical region (i.e. GetPrimitiveArrayCritical or GetStringCritical).
- * Once a thread has successfully entered a critical region, it has privileges similar
- * to holding VM access. No object can move while any thread is in a critical region.
- *
- * @param vmThread  the J9VMThread requesting to enter a critical region
- */
-void  
-enterCriticalRegion(J9VMThread* vmThread);
-
-/**
- * Enter a JNI critical region (i.e. GetPrimitiveArrayCritical or GetStringCritical).
- * Once a thread has successfully entered a critical region, it has privileges similar
- * to holding VM access. No object can move while any thread is in a critical region.
- *
- * @param vmThread  the J9VMThread requesting to exit a critical region
- */
-void  
-exitCriticalRegion(J9VMThread* vmThread);
 
 
 #if (defined(J9VM_GC_REALTIME))
@@ -3617,16 +3673,6 @@ findObjectDeadlockedThreads(J9VMThread *currentThread, j9object_t **pDeadlockedT
 
 /**
 * @brief
-* @param currentThread
-* @param vmThread
-* @return void
-*/
-void
-haltThreadForInspection(J9VMThread * currentThread, J9VMThread * vmThread);
-
-
-/**
-* @brief
 * @param *entryarg
 * @return IDATA J9THREAD_PROC
 */
@@ -3645,16 +3691,6 @@ javaThreadProc(void *entryarg);
 void
 printThreadInfo(J9JavaVM *vm, J9VMThread *self, char *toFile, BOOLEAN allThreads);
 #endif /* J9VM_('RAS_DUMP_AGENTS' 'INTERP_SIG_QUIT_THREAD') */
-
-
-/**
-* @brief
-* @param currentThread
-* @param vmThread
-* @return void
-*/
-void
-resumeThreadForInspection(J9VMThread * currentThread, J9VMThread * vmThread);
 
 
 /**
@@ -3875,20 +3911,12 @@ fillJITVTableSlot(J9VMThread *vmStruct, UDATA *currentSlot, J9Method *currentMet
 /**
  * @brief
  * @param method
- * @return UDATA
- */
-UDATA
-getITableIndexForMethod(J9Method * method);
-
-/**
- * @brief
- * @param method
  * @param clazz
  * @param vmThread
  * @return UDATA
  */
 UDATA
-getVTableIndexForMethod(J9Method * method, J9Class *clazz, J9VMThread *vmThread);
+getVTableOffsetForMethod(J9Method * method, J9Class *clazz, J9VMThread *vmThread);
 
 j9object_t
 resolveMethodTypeRef(J9VMThread *vmThread, J9ConstantPool *constantPool, UDATA cpIndex, UDATA resolveFlags);
@@ -4191,6 +4219,17 @@ typedef struct J9ThreadEnv {
 	intptr_t 		(* tls_free)(omrthread_tls_key_t handle);
 
 } J9ThreadEnv;
+
+
+/* FlushProcessWriteBuffers.cpp */
+
+void flushProcessWriteBuffers(J9JavaVM *vm);
+
+/* throwexception.c */
+void
+throwNativeOOMError(JNIEnv *env, U_32 moduleName, U_32 messageNumber);
+void
+throwNewJavaIoIOException(JNIEnv *env, const char *message);
 
 #ifdef __cplusplus
 }

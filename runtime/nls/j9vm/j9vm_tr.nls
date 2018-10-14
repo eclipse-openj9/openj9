@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1439,6 +1439,7 @@ J9NLS_JIMAGE_INTF_LIBJIMAGE_OPEN_FAILED.user_response=None.
 
 J9NLS_JIMAGE_INTF_LIBJIMAGE_SYMBOL_LOOKUP_FAILED=jimage kitapl\u0131\u011f\u0131nda %s simgesi aranamad\u0131
 # START NON-TRANSLATABLE
+J9NLS_JIMAGE_INTF_LIBJIMAGE_SYMBOL_LOOKUP_FAILED.sample_input_1=JIMAGE_Open
 J9NLS_JIMAGE_INTF_LIBJIMAGE_SYMBOL_LOOKUP_FAILED.explanation=An internal error occurred in looking up symbol in jimage library.
 J9NLS_JIMAGE_INTF_LIBJIMAGE_SYMBOL_LOOKUP_FAILED.system_action=The JVM fails to startup if -XX:-UseJ9JImageReader is specified, otherwise it attempts to use internal jimage reader instead.
 J9NLS_JIMAGE_INTF_LIBJIMAGE_SYMBOL_LOOKUP_FAILED.user_response=None.
@@ -1453,6 +1454,7 @@ J9NLS_JIMAGE_INTF_SWITCHING_TO_J9JIMAGE_READER.user_response=None.
 
 J9NLS_VM_XPATCH_OPTION_VALUE_MISSING=-Xpatch de\u011feri hatal\u0131; %s \u00f6zelli\u011finin de\u011feri belirtilmedi
 # START NON-TRANSLATABLE
+J9NLS_VM_XPATCH_OPTION_VALUE_MISSING.sample_input_1=jdk.launcher.patch.0
 J9NLS_VM_XPATCH_OPTION_VALUE_MISSING.explanation=The value of specified option is not correct
 J9NLS_VM_XPATCH_OPTION_VALUE_MISSING.system_action=The JVM will exit.
 J9NLS_VM_XPATCH_OPTION_VALUE_MISSING.user_response=Specify the module name and its patch path with -Xpatch option and restart the JVM.
@@ -1460,6 +1462,8 @@ J9NLS_VM_XPATCH_OPTION_VALUE_MISSING.user_response=Specify the module name and i
 
 J9NLS_VM_XPATCH_OPTION_PATCH_PATH_MISSING=-Xpatch de\u011feri hatal\u0131; %s=%s \u00f6zelli\u011finde yama yolu belirtilmedi
 # START NON-TRANSLATABLE
+J9NLS_VM_XPATCH_OPTION_PATCH_PATH_MISSING.sample_input_1=jdk.launcher.patch.0
+J9NLS_VM_XPATCH_OPTION_PATCH_PATH_MISSING.sample_input_2=/home/user/patch
 J9NLS_VM_XPATCH_OPTION_PATCH_PATH_MISSING.explanation=The value of specified option is not correct
 J9NLS_VM_XPATCH_OPTION_PATCH_PATH_MISSING.system_action=The JVM will exit.
 J9NLS_VM_XPATCH_OPTION_PATCH_PATH_MISSING.user_response=Specify the module name and its patch path with -Xpatch option and restart the JVM.
@@ -1474,10 +1478,10 @@ J9NLS_VM_XXSHARED_CACHE_HARD_LIMIT_EQUALS_IGNORED.user_response=The -XX:SharedCa
 
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ=%3$s mod\u00fcl\u00fc %6$s mod\u00fcl\u00fcn\u00fc okumad\u0131\u011f\u0131 i\u00e7in, %2$.*1$s(%3$s) s\u0131n\u0131f\u0131 %5$.*4$s(%6$s) s\u0131n\u0131f\u0131na eri\u015femiyor
 # START NON-TRANSLATABLE
-J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_1=3
+J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_1=18
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_2=com.greetings.Main
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_3=module com.greetings
-J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_4=3
+J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_4=9
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_5=com.hi.Hi
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_6=unnamed module @0x59fa1d9b
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.explanation=Module IllegalAccessError occurred.
@@ -1487,10 +1491,10 @@ J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.user_response=Refer IBM Java User Guide for 
 
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT=%6$s mod\u00fcl\u00fc %7$s paketini %3$s mod\u00fcl\u00fcne aktarmad\u0131\u011f\u0131 i\u00e7in, %2$.*1$s(%3$s) s\u0131n\u0131f\u0131 %5$.*4$s(%6$s) s\u0131n\u0131f\u0131na eri\u015femiyor
 # START NON-TRANSLATABLE
-J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_1=3
+J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_1=18
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_2=com.greetings.Main
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_3=module com.greetings
-J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_4=3
+J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_4=9
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_5=com.hi.Hi
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_6=module com/hello
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_7=com/hello
@@ -1646,4 +1650,186 @@ J9NLS_VM_STACK_TRACE.sample_input_6=userSource.jar
 J9NLS_VM_STACK_TRACE.explanation=A single entry of a stack trace, with method, and source file.
 J9NLS_VM_STACK_TRACE.system_action=no action.
 J9NLS_VM_STACK_TRACE.user_response=no action.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_IDLE_TUNING_PLATFORM_OR_GC_POLICY_NOT_SUPPORTED=Bo\u015fta duran GC eniyilemeleri desteklenmiyor
+# START NON-TRANSLATABLE
+J9NLS_VM_IDLE_TUNING_PLATFORM_OR_GC_POLICY_NOT_SUPPORTED.explanation=The GC optimizations on idle are not supported on some platforms and GC policies.
+J9NLS_VM_IDLE_TUNING_PLATFORM_OR_GC_POLICY_NOT_SUPPORTED.system_action=The JVM will exit.
+J9NLS_VM_IDLE_TUNING_PLATFORM_OR_GC_POLICY_NOT_SUPPORTED.user_response=Refer to the documentation for supported platforms and GC policies.
+# END NON-TRANSLATABLE
+
+# first argument is the length of class name
+# second argument is the class name
+J9NLS_VM_CLASS_NOT_VALUE_CAPABLE=\u00c7\u00f6z\u00fclen %2$.*1$s s\u0131n\u0131f\u0131 de\u011fer yetene\u011fine sahip de\u011fil
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_NOT_VALUE_CAPABLE.explanation=Attempting to derive a value type from a class that is not value capable
+J9NLS_VM_CLASS_NOT_VALUE_CAPABLE.system_action=
+J9NLS_VM_CLASS_NOT_VALUE_CAPABLE.user_response=
+# END NON-TRANSLATABLE
+
+# first argument is the length of class name
+# second argument is the class name
+J9NLS_VM_DVT_NOT_SET=De\u011fer yetene\u011fine sahip olan %2$.*1$s s\u0131n\u0131f\u0131n t\u00fcretilmi\u015f bir de\u011fer tipi yok
+# START NON-TRANSLATABLE
+J9NLS_VM_DVT_NOT_SET.explanation=The class is value capable, but no value type had been derived
+J9NLS_VM_DVT_NOT_SET.system_action=
+J9NLS_VM_DVT_NOT_SET.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL=<clinit> olmayan "%6$.*5$s" y\u00f6nteminden %2$.*1$s.%4$.*3$s statik son (static final) alan ayarlama giri\u015fiminde bulunuldu
+# START NON-TRANSLATABLE
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.sample_input_1=3
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.sample_input_2=Bad
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.sample_input_3=1
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.sample_input_4=i
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.sample_input_5=3
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.sample_input_6=set
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.explanation=Attempt to set a static final field from a method other than <clinit>
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.system_action=IllegalAccessError is thrown
+J9NLS_VM_ILLEGAL_ACCESS_STATIC_FINAL.user_response=Modify source code to avoid the illegal access
+# END NON-TRANSLATABLE
+
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL=<init> olmayan "%6$.*5$s" y\u00f6nteminden %2$.*1$s.%4$.*3$s somut \u00f6rnek son (instance final) alan ayarlama giri\u015fiminde bulunuldu
+# START NON-TRANSLATABLE
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.sample_input_1=3
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.sample_input_2=Bad
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.sample_input_3=1
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.sample_input_4=i
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.sample_input_5=3
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.sample_input_6=set
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.explanation=Attempt to set a non-static final field from a method other than <init>
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.system_action=IllegalAccessError is thrown
+J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.user_response=Modify source code to avoid the illegal access
+# END NON-TRANSLATABLE
+
+# First argument is class name length
+# Second argument is class name
+# Third argument is nest host name length
+# Fourth argument is nest host name
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER=%2$.*1$s s\u0131n\u0131f\u0131 ile %4$.*3$s yuva anasisteminin s\u0131n\u0131f y\u00fckleyicisi ayn\u0131 olmal\u0131d\u0131r.
+# START NON-TRANSLATABLE
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER.explanation=Class and nest host class were loaded with different class loaders.
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER.system_action=The JVM will throw a java/lang/VerifyError
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER.user_response=Load class and nest host class with same classloader.
+# END NON-TRANSLATABLE
+
+# First argument is class name length
+# Second argument is class name
+# Third argument is nest host name length
+# Fourth argument is nest host name
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE=%2$.*1$s s\u0131n\u0131f\u0131 ile %4$.*3$s yuva anasisteminin paketi ayn\u0131 olmal\u0131d\u0131r.
+# START NON-TRANSLATABLE
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE.explanation=Class and nest host class were loaded with different class loaders.
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE.system_action=The JVM will throw a java/lang/VerifyError
+J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE.user_response=Load class and nest host class with same classloader.
+# END NON-TRANSLATABLE
+
+# First argument is class name length
+# Second argument is class name
+# Third argument is nest host name length
+# Fourth argument is nest host name
+J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST=%2$.*1$s s\u0131n\u0131f\u0131, %4$.*3$s yuva anasistemi taraf\u0131ndan sahiplenilmelidir
+# START NON-TRANSLATABLE
+J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST.explanation=Class was not claimed by its nest host class.
+J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST.system_action=The JVM will throw a java/lang/VerifyError
+J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# First argument is the library name
+# Second argument is the module name
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL=\u015eu mod\u00fcl i\u00e7in gereken %1$s kitapl\u0131\u011f\u0131 y\u00fcklenemedi: %2$s
+# START NON-TRANSLATABLE
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.sample_input_1=j9shr29
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.sample_input_2=openj9.sharedclasses
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.explanation=The JVM failed to load the library required by the specified module.
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.system_action=The JVM continues.
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.user_response=No action required if the specified library won't be referenced.
+# END NON-TRANSLATABLE
+
+# Message for LinkageError when a class loading constraint violation occurs when overriding a method
+# arguments 1 and 2 are the overridden method's class's name
+# arguments 3 and 4 are the overridden method name
+# arguments 5 and 6 are the overridden method's signature
+# arguments 7 and 8 are classloader name
+# argument 9 is the classloader's identity hashcode
+# arguments 10 and 11 are classloader's class
+# arguments 12 and 13 are the other classloader name
+# argument 14 is the other classloader's identity hashcode
+# arguments 15 and 16 are the other classloader's class
+# arguments 17 and 18 are the name of class being created
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION=\"%2$.*1$s.%4$.*3$s%6$.*5$s\" y\u00f6ntemi ge\u00e7ersiz k\u0131l\u0131n\u0131rken \"%18$.*17$s\" s\u0131n\u0131f\u0131n\u0131n yarat\u0131lmas\u0131 s\u0131ras\u0131nda y\u00fckleme k\u0131s\u0131tko\u015fuluna ayk\u0131r\u0131l\u0131k olu\u015ftu: \"%11$.*10$s\" s\u0131n\u0131f\u0131n\u0131n y\u00fckleyicisi \"%8$.*7$s@%9$x\" ile \"%16$.*15$s\" s\u0131n\u0131f\u0131n\u0131n y\u00fckleyicisi \"%13$.*12$s@%14$x\", y\u00f6ntem imzas\u0131 i\u00e7in farkl\u0131 tiplere sahip.
+# START NON-TRANSLATABLE
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_1=4
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_2=Main
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_3=4
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_4=method
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_5=15
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_6=()LLoadedTwice;
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_7=4
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_8=Main
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_9=2011a4e
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_10=8
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_11=Violator
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_12=6
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_13=Loader
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_14=200b50c
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_15=4
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_16=Main
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_17=4
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_18=Main
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.explanation=A class loading constraint has been violated.  The two class loader's have different classes for one of the class names in the signature.
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.system_action=A java/lang/LinkageError will be thrown
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.user_response=Examine the use of ClassLoaders to determine why a class of the same name is loaded in two different loaders
+# END NON-TRANSLATABLE
+
+# First argument is class name length
+# Second argument is class name
+# Third argument is nest host name length
+# Fourth argument is nest host name
+J9NLS_VM_NEST_HOST_FAILED_TO_LOAD=%2$.*1$s s\u0131n\u0131f\u0131, %4$.*3$s yuva anasistemini y\u00fckleyebilmelidir.
+# START NON-TRANSLATABLE
+J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.explanation=Class and nest host class were loaded with different class loaders.
+J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.system_action=The JVM will throw a java/lang/IllegalAccessError
+J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.user_response=Load class and nest host class with same classloader.
+# END NON-TRANSLATABLE
+
+# No arguments
+J9NLS_VM_MODULE_IS_NULL=Mod\u00fcl bo\u015f de\u011ferli.
+# START NON-TRANSLATABLE
+J9NLS_VM_MODULE_IS_NULL.explanation=Incoming module can't be NULL.
+J9NLS_VM_MODULE_IS_NULL.system_action=The JVM will throw a java/lang/NullPointerExceptions.
+J9NLS_VM_MODULE_IS_NULL.user_response=Don't pass a NULL module.
+# END NON-TRANSLATABLE
+
+# No arguments
+J9NLS_VM_MODULE_IS_UNNAMED=Mod\u00fcl adland\u0131r\u0131lmad\u0131.
+# START NON-TRANSLATABLE
+J9NLS_VM_MODULE_IS_UNNAMED.explanation=Incoming module can't be unnamed.
+J9NLS_VM_MODULE_IS_UNNAMED.system_action=The JVM will throw a java/lang/IllegalArgumentExceptions.
+J9NLS_VM_MODULE_IS_UNNAMED.user_response=Don't pass a unnamed module.
+# END NON-TRANSLATABLE
+
+# No arguments
+J9NLS_VM_MODULE_NAME_IS_INVALID=Mod\u00fcl ad\u0131 ge\u00e7ersiz.
+# START NON-TRANSLATABLE
+J9NLS_VM_MODULE_NAME_IS_INVALID.explanation=Incoming module name is invalid.
+J9NLS_VM_MODULE_NAME_IS_INVALID.system_action=The JVM will throw a java/lang/IllegalArgumentExceptions.
+J9NLS_VM_MODULE_NAME_IS_INVALID.user_response=Don't pass a module with invalid name.
+# END NON-TRANSLATABLE
+
+# No arguments
+J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE=java.base mod\u00fcl\u00fcn\u00fc yaln\u0131zca \u00f6ny\u00fckleme s\u0131n\u0131f y\u00fckleyicisi tan\u0131mlayabilir.
+# START NON-TRANSLATABLE
+J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE.explanation=Non-bootstrap classloader can't define module java.base.
+J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE.system_action=The JVM will throw a java/lang/LayerInstantiationException.
+J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE.user_response=Don't define module java.base.
+# END NON-TRANSLATABLE
+
+# No arguments
+J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA=java ya da java.* paketini yaln\u0131zca \u00f6ny\u00fckleme ya da platform s\u0131n\u0131f y\u00fckleyicisi tan\u0131mlayabilir.
+# START NON-TRANSLATABLE
+J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA.explanation=A classloader other than boostrap or platform classloader can't define package java or java.*.
+J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA.system_action=The JVM will throw a java/lang/LayerInstantiationException.
+J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA.user_response=Don't define package java or java.*.
 # END NON-TRANSLATABLE

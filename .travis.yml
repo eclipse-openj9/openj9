@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2016, 2017 IBM Corp. and others
+# Copyright (c) 2016, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,10 +23,14 @@ os:
   - linux
 language: cpp
 sudo: false
-#cache: ccache # https://docs.travis-ci.com/user/caching/
+cache:
+  directories:
+    - $HOME/.ccache
 dist: trusty
 addons:
   apt:
+    sources:
+      - llvm-toolchain-trusty
     packages:
       - autoconf
       - ca-certificates
@@ -39,6 +43,7 @@ addons:
       - git-core
       - libasound2-dev
       - libcups2-dev
+      - libdwarf-dev
       - libelf-dev
       - libfreetype6-dev
       - libnuma-dev
@@ -55,36 +60,19 @@ addons:
       - unzip
       - wget
       - zip
+      - clang-3.8
+      - llvm-3.8
+      - libclang-3.8-dev
+      - llvm-3.8-dev
 before_install:
   - jdk_switcher use oraclejdk8
-env:
-  global:
 before_script:
-  # - ccache -s -z
-  # Exit immediately if any unexpected error occurs.
-  - set -e
-  - wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
-  - tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2
-  - cd ..
-  # Shallow clone of the openj9-openjdk-jdk9 repo to speed up clone / reduce server load.
-  - git clone --depth 1 https://github.com/ibmruntimes/openj9-openjdk-jdk9.git
+  - ccache -s -z
 script:
-  # Clear this option so it doesn't interfere with configure detecting the bootjdk.
-  - unset _JAVA_OPTIONS
-  # Exit immediately if any unexpected error occurs.
-  - set -e
-  # Point the get_sources script at the OpenJ9 repo that's already been cloned to disk.
-  # Results in a copy of the source (disk space =( ) but no new network activity so overall a win.
-  - OPENJ9_SHA=$(git -C $TRAVIS_BUILD_DIR rev-parse HEAD)
-  - if test x"$OPENJ9_SHA" != x"$TRAVIS_COMMIT" ; then echo "Warning using SHA $OPENJ9_SHA instead of $TRAVIS_COMMIT." ; fi
-  - cd openj9-openjdk-jdk9 && bash get_source.sh -openj9-repo=$TRAVIS_BUILD_DIR -openj9-branch=$TRAVIS_BRANCH -openj9-sha=$OPENJ9_SHA
-  # Based on https://blog.travis-ci.com/2014-12-17-faster-builds-with-container-based-infrastructure/ travis container
-  # builds have 2 cores and 4 gigs of memory.  Attempt to double provision the number of cores for the make...
-  # Limit number of jobs to work around g++ internal compiler error.
-  - export UMA_WINDOWS_PARRALLEL_HACK=-j4
-  - bash configure --with-freemarker-jar=$TRAVIS_BUILD_DIR/freemarker.jar --with-jobs=4 --with-num-cores=4
-  - make images
-  # Minimal sniff test - ensure java -version works.
-  - ./build/linux-x86_64-normal-server-release/images/jdk/bin/java -version
+  - bash ./buildenv/travis/build-on-travis.sh
 after_script:
-  # - ccache -s
+  - ccache -s
+env:
+  # Note Currently enabling RUN_LINT and RUN_BUILD simultaneously is not supported
+  - RUN_BUILD=yes RUN_LINT=no
+  - RUN_BUILD=no RUN_LINT=yes

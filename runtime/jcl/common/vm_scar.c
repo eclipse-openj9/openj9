@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,9 +34,6 @@
 #include "jni.h"
 #include "j9protos.h"
 #include "jvminit.h"
-/* Avoid renaming malloc/free */
-#define LAUNCHERS
-#include "../../j9vm/jvm.h"
 #include "jclprots.h"
 #include "omrlinkedlist.h"
 #include "ut_j9jcl.h"
@@ -47,7 +44,6 @@
 #include "jcl_internal.h"
 
 #define OPT_XJCL_COLON "-Xjcl:"
-#define JAVA_ASSISTIVE_STR "JAVA_ASSISTIVE"
 #define JAVA_FONTS_STR "JAVA_FONTS"
 #define OFFLOAD_PREFIX "offload_"
 
@@ -57,6 +53,8 @@
 #define J9_DLL_NAME J9_JAVA_SE_9_DLL_NAME
 #elif defined(J9VM_JCL_SE10)
 #define J9_DLL_NAME J9_JAVA_SE_10_DLL_NAME
+#elif defined(J9VM_JCL_SE11)
+#define J9_DLL_NAME J9_JAVA_SE_11_DLL_NAME
 #else
 #error Unknown J9VM_JCL_SE
 #endif
@@ -652,27 +650,6 @@ addVMSpecificDirectories(J9JavaVM *vm, UDATA *cursor, char * subdirName)
 		strcat(serviceJarPath, SE_SERVICE_JAR);
 		jclBootstrapClassPath[(*cursor)++] = serviceJarPath;
 	}
-
-#if defined(J9VM_OPT_CUDA)
-#define CUDA4J_JAR "cuda4j.jar"
-	if (NULL != vm->j2seRootDirectory) {
-		/* Format: '!' + vm->javaHome + '/' + 'lib' + '/' + 'cuda4j.jar' + NUL-terminator */
-		int cuda4jPathLength = 1 + javaHomePathLength + 1 + LITERAL_STRLEN("lib") + 1 + LITERAL_STRLEN(CUDA4J_JAR) + 1;
-		char * cuda4jJarPath = j9mem_allocate_memory(cuda4jPathLength, J9MEM_CATEGORY_VM_JCL);
-		if (NULL == cuda4jJarPath) {
-			setFatalErrorStringInDLLTableEntry(vm, "failed to allocate memory for cuda4j jar path");
-			return JNI_ENOMEM;
-		}
-		strcpy(cuda4jJarPath, "!");
-		strcat(cuda4jJarPath, (char*)vm->javaHome);
-		strcat(cuda4jJarPath, DIR_SEPARATOR_STR);
-		strcat(cuda4jJarPath, "lib");
-		strcat(cuda4jJarPath, DIR_SEPARATOR_STR);
-		strcat(cuda4jJarPath, CUDA4J_JAR);
-		jclBootstrapClassPath[(*cursor)++] = cuda4jJarPath;
-	}
-#undef CUDA4J_JAR
-#endif /* J9VM_OPT_CUDA */
 
 	return 0;
 }

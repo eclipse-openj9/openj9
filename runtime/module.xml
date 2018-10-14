@@ -1,58 +1,60 @@
 <?xml version="1.0"?>
-<!-- 
-	Copyright (c) 2006, 2017 IBM Corp. and others
-	
-	This program and the accompanying materials are made available under
-	the terms of the Eclipse Public License 2.0 which accompanies this
-	distribution and is available at https://www.eclipse.org/legal/epl-2.0/
-	or the Apache License, Version 2.0 which accompanies this distribution and
-	is available at https://www.apache.org/licenses/LICENSE-2.0.
-	
-	This Source Code may also be made available under the following
-	Secondary Licenses when the conditions for such availability set
-	forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
-	General Public License, version 2 with the GNU Classpath
-	Exception [1] and GNU General Public License, version 2 with the
-	OpenJDK Assembly Exception [2].
-	
-	[1] https://www.gnu.org/software/classpath/license.html
-	[2] http://openjdk.java.net/legal/assembly-exception.html
+<!--
+Copyright (c) 2006, 2018 IBM Corp. and others
 
-	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
+
+[1] https://www.gnu.org/software/classpath/license.html
+[2] http://openjdk.java.net/legal/assembly-exception.html
+
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <module>
+
 	<artifact type="reference" name="j9root"/>
-	
+
 	<artifact type="target" name="j2se" all="false">
 		<dependencies>
 			<dependency name="phase_j2se"/>
 		</dependencies>
 	</artifact>
-	
+
 	<artifact type="target" name="uma" all="false">
 		<commands>
-			<command line='${MAKE} -f buildtools.mk uma'/>
+			<command line='$(MAKE) -f buildtools.mk uma'/>
 		</commands>
 	</artifact>
-	
+
 	<artifact type="target" name="javatest.%" all="false">
 		<commands>
-			<command line='${MAKE} -f javatest.mk $@'/>
+			<command line='$(MAKE) -f javatest.mk $@'/>
 		</commands>
 	</artifact>
-	
+
 	<artifact type="target" name="clean_depends" all="false">
 		<commands>
-			<command line="find ./compiler -name '*.depend.mk' | xargs rm -f">
+			<command line="find compiler -name '*.depend.mk' | xargs rm -f">
 				<exclude-if condition="spec.win_x86.*"/>
 			</command>
 		</commands>
 	</artifact>
-	
+
 	<!-- Cascade ddrgen macro processing to the omr module -->
 	<artifact type="target" name="omr_ddrmacros" all="true">
 		<commands>
-			<command line="$(MAKE) -C omr ddrgen" type="ddrgen"/>
+			<command line="$(MAKE) -C $(OMR_DIR) ddrgen" type="ddrgen"/>
 		</commands>
 	</artifact>
+
 </module>

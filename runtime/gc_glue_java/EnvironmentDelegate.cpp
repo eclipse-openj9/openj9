@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -111,7 +110,6 @@ MM_EnvironmentDelegate::attachVMThread(OMR_VM *omrVM, const char  *threadName, u
 	if (JNI_OK != javaVM->internalVMFunctions->attachSystemDaemonThread(javaVM, &vmThread, threadName)) {
 		return NULL;
 	}
-	javaVM->internalVMFunctions->internalReleaseVMAccessInJNI(vmThread);
 
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 	if ((MM_EnvironmentBase::ATTACH_THREAD != reason) &&  (NULL != javaVM->javaOffloadSwitchOnWithReasonFunc)) {
@@ -207,7 +205,7 @@ MM_EnvironmentDelegate::releaseExclusiveVMAccess()
 
 
 uintptr_t
-MM_EnvironmentDelegate::relinquishExclusiveVMAccess(bool *deferredVMAccessRelease)
+MM_EnvironmentDelegate::relinquishExclusiveVMAccess()
 {
 	J9VMThread *vmThread = (J9VMThread *)_env->getOmrVMThread()->_language_vmthread;
 	uintptr_t savedExclusiveCount = vmThread->omrVMThread->exclusiveCount;
@@ -216,26 +214,7 @@ MM_EnvironmentDelegate::relinquishExclusiveVMAccess(bool *deferredVMAccessReleas
 	Assert_MM_true(0 < savedExclusiveCount);
 
 	vmThread->omrVMThread->exclusiveCount = 0;
-
-	/* start with assumption we will release VM access */
-	bool releaseVMAccess = true;
-
-	if (deferredVMAccessRelease && *deferredVMAccessRelease) {
-		/* The caller requested not to release VM access now - it will do it at a later point. For example, after some concurrent GC work which immediately follows this STW phase,
-		 * has been completed. Such concurrent phase does not require exclusive VM access, but it should keep VM access, since it's accessing or possibly even mutating the heap. */
-		if (J9_LINEAR_LINKED_LIST_IS_EMPTY(vmThread->javaVM->exclusiveVMAccessQueueHead)) {
-			releaseVMAccess = false;
-		} else {
-			/* However, there is a pending exclusive VM access from another party. In this case, we will disobey the caller's request
-			 * and just release it right away since there could not be any concurrent GC work done, due to immediate exclusive VM access handoff.
-			 * We will let the caller know that we disobeyed the request. */
-			*deferredVMAccessRelease = false;
-		}
-	}
-
-	if (releaseVMAccess) {
-		VM_VMAccess::clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_VM_ACCESS);
-	}
+	VM_VMAccess::clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_VM_ACCESS);
 
 	return savedExclusiveCount;
 }
@@ -328,7 +307,14 @@ MM_EnvironmentDelegate::isInlineTLHAllocateEnabled()
 {
 	J9VMThread *vmThread = (J9VMThread *)_env->getOmrVMThread()->_language_vmthread;
 	J9ModronThreadLocalHeap *tlh = (J9ModronThreadLocalHeap *)&vmThread->allocateThreadLocalHeap;
-	return NULL != tlh->realHeapAlloc ? false : true;
+	bool result = (NULL == tlh->realHeapAlloc);
+
+#if defined(J9VM_GC_NON_ZERO_TLH)
+	tlh = (J9ModronThreadLocalHeap *)&vmThread->nonZeroAllocateThreadLocalHeap;
+	result = result && (NULL == tlh->realHeapAlloc);
+#endif /* defined(J9VM_GC_NON_ZERO_TLH) */
+
+	return result;
 }
 #endif /* J9VM_GC_THREAD_LOCAL_HEAP */
 

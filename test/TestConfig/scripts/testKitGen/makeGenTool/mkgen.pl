@@ -1,5 +1,5 @@
 ##############################################################################
-#  Copyright (c) 2016, 2017 IBM Corp. and others
+#  Copyright (c) 2016, 2018 IBM Corp. and others
 #
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,28 +27,41 @@ use feature 'say';
 
 use constant DEBUG => 0;
 
-my @allGroups = ( "sanity", "extended", "openjdk", "external", "perf", "jck" );
-
 my $headerComments =
 	"########################################################\n"
 	. "# This is an auto generated file. Please do NOT modify!\n"
 	. "########################################################\n"
 	. "\n";
 
-my $mkName = "autoGenTest.mk";
+my $mkName = "autoGen.mk";
+my $utilsmk = "utils.mk";
+my $countmk = "count.mk";
+my $settings = "settings.mk";
 my $projectRootDir = '';
+my $testRoot = '';
+my $allLevels = '';
+my $allGroups = '';
 my $allSubsets = '';
 my $output = '';
 my $graphSpecs = '';
-my $javaVersion = '';
+my $jdkVersion = '';
+my $allImpls = '';
+my $impl = '';
 my $modes_hs = '';
 my $sp_hs = '';
-my %tests = ();
+my %targetGroup = ();
+my $buildList = '';
 
 sub runmkgen {
-	( $projectRootDir, $allSubsets, $output, $graphSpecs, $javaVersion, my $modesxml, my $ottawacsv ) = @_;
-	my $includeModesService = 1;
+	( $projectRootDir, $allLevels, $allGroups, $allSubsets, $output, $graphSpecs, $jdkVersion, $allImpls, $impl, my $modesxml, my $ottawacsv, $buildList ) = @_;
 
+	$testRoot = $projectRootDir;
+	if ($output) {
+		make_path($output . '/TestConfig');
+		$testRoot = $output;
+	}
+
+	my $includeModesService = 1;
 	eval qq{require "modesService.pl"; 1;} or $includeModesService = 0;
 	my $serviceResponse;
 	if ($includeModesService) {
@@ -66,38 +79,51 @@ sub runmkgen {
 		$sp_hs = $data->{'specPlatMapping'};
 	}
 
-	generateOnDir();
-
-	my $specToPlatmk = $projectRootDir . "/TestConfig/specToPlat.mk";
-	my $jvmTestmk = $projectRootDir . "/TestConfig/jvmTest.mk";
-	if ($output) {
-		my $outputdir = $output . '/TestConfig';
-		make_path($outputdir);
-		$specToPlatmk = $outputdir . "/specToPlat.mk";
-		$jvmTestmk = $outputdir . "/jvmTest.mk";
+	$targetGroup{"all"} = 0;
+	foreach my $eachLevel (sort @{$allLevels}) {
+		foreach my $eachGroup (sort @{$allGroups}) {
+			my $groupTargetKey = $eachLevel . '.' . $eachGroup;
+			$targetGroup{$groupTargetKey} = 0;
+		}
 	}
 
-	specToPlatGen( $specToPlatmk, $graphSpecs );
-	print "\nGenerated $specToPlatmk\n";
-
-	jvmTestGen( $jvmTestmk, \%tests );
-	print "Generated $jvmTestmk\n";
-	return \%tests;
+	generateOnDir();
+	utilsGen();
+	countGen();
 }
 
 sub generateOnDir {
 	my @currentdirs = @_;
 	my $absolutedir = $projectRootDir;
+	my $currentdir = join('/', @currentdirs);
 	if (@currentdirs) {
-		$absolutedir .= '/' . join('/', @currentdirs);
+		$absolutedir .= '/' . $currentdir;
 	}
+	
+	# only generate make files for projects that specificed in the build list, if build list is empty, generate on every project
+	if ( $buildList ne '' ){
+		my $inList = 0;
+		my @buildListArr = split(',', $buildList);
+		foreach my $build (@buildListArr) {
+			$build =~ s/\\+/\//g;
+			if (( index($currentdir, $build) == 0 ) || ( index($build, $currentdir) == 0 )) {
+				$inList = 1;
+				last;
+			}
+		}
+		if ($inList == 0) {
+			return 0;
+		}
+	}
+
 	my $playlistXML;
 	my @subdirsHavePlaylist = ();
 	opendir( my $dir, $absolutedir );
 	while ( my $entry = readdir $dir ) {
 		next if $entry eq '.' or $entry eq '..';
 		my $tempExclude = 0;
-		if (($javaVersion eq "SE90") || ($javaVersion eq "SE80")) {
+		# tmporary exclusion, remove this block when JCL_VERSION separation is removed
+		if (($jdkVersion ne "Panama") && ($jdkVersion ne "Valhalla")) {
 			my $JCL_VERSION = '';
 			if ( exists $ENV{'JCL_VERSION'} ) {
 				$JCL_VERSION = $ENV{'JCL_VERSION'};
@@ -105,7 +131,8 @@ sub generateOnDir {
 				$JCL_VERSION = "latest";
 			}
 			# temporarily exclude projects for CCM build (i.e., when JCL_VERSION is latest)
-			my $latestDisabledDir = "jvmtitests proxyFieldAccess classesdbgddrext dumpromtests jep178staticLinkingTest pltest Panama NativeTest SharedCPEntryInvokerTests gcCheck classvertest";
+			my $latestDisabledDir = "proxyFieldAccess dumpromtests jep178staticLinkingTest pltest Panama NativeTest";
+
 			# Temporarily exclude SVT_Modularity tests from integration build where we are still using b148 JCL level
 			my $currentDisableDir= "SVT_Modularity OpenJ9_Jsr_292_API";
 			$tempExclude = (($JCL_VERSION eq "latest") and ($latestDisabledDir =~ /\Q$entry\E/ )) or (($JCL_VERSION eq "current") and ($currentDisableDir =~ /\Q$entry\E/ ));
@@ -125,63 +152,94 @@ sub generateOnDir {
 	}
 	closedir $dir;
 
-	if ($playlistXML) {
-		print "\nGenerating make file based on $playlistXML...\n";
-		generate($playlistXML, $absolutedir, \@currentdirs, \@subdirsHavePlaylist);
-		return 1;
-	} elsif (@subdirsHavePlaylist) {
-		print "\nGenerating make file based on subdirs...\n";
-		subdir2make($absolutedir, \@currentdirs, \@subdirsHavePlaylist);
-		return 1;
-	}
-
-	return 0;
+	return generateMk($playlistXML, $absolutedir, \@currentdirs, \@subdirsHavePlaylist);
 }
 
-sub generate {
+sub generateMk {
 	my ($playlistXML, $absolutedir, $currentdirs, $subdirsHavePlaylist) = @_;
-
-	my $projectName      = $currentdirs->[-1];
-	my $makeFile         = $absolutedir . "/" . $mkName;
-
+	
+	# construct makeFile path
+	my $makeFile = $absolutedir . "/" . $mkName;
 	if ($output) {
 		my $outputdir = $output;
 		if (@{$currentdirs}) {
 			$outputdir .= '/' . join('/', @{$currentdirs});
-		}		make_path($outputdir);
+		}
+		make_path($outputdir);
 		$makeFile = $outputdir . "/" . $mkName;
 	}
 
-	#clean stale makefile before generating
-	unlink $makeFile or warn "Cannot not unlink $makeFile: $!";
-	my $project = xml2make(	$playlistXML, $makeFile, $currentdirs, $subdirsHavePlaylist );
-
-	$tests{$projectName} = $project;
+	my $rt = 0;
+	if ($playlistXML || @{$subdirsHavePlaylist}) {
+		writeVars($makeFile, $subdirsHavePlaylist, $currentdirs);
+		if (@{$subdirsHavePlaylist}) {
+			$rt = 1;
+		}
+		if ($playlistXML) {
+			$rt |= xml2mk($makeFile, $playlistXML, $currentdirs, $subdirsHavePlaylist);
+		}
+	}
+	return $rt;
 }
 
-sub xml2make {
-	my ( $playlistXML, $makeFile, $currentdirs, $subdirsHavePlaylist )
-	  = @_;
-	my $tests = parseXML($playlistXML);
-	my $testgroups =
-	  genMK( $makeFile, $tests, $currentdirs, $subdirsHavePlaylist );
-	return $testgroups;
+sub xml2mk {
+	my ($makeFile, $playlistXML, $currentdirs) = @_;
+	my $result = parseXML($playlistXML);
+	if (!%{$result}) {
+		return 0;
+	}
+	writeTargets($makeFile, $result, $currentdirs);
+	return 1;
+}
+
+sub writeVars {
+	my ($makeFile, $subdirsHavePlaylist, $currentdirs) = @_;
+	print "\nGenerating make file $makeFile\n";
+	open( my $fhOut, '>', $makeFile ) or die "Cannot create make file $makeFile";
+	
+	my $realtiveRoot = "";
+	my $subdirlevel = scalar @{$currentdirs};
+	if ($subdirlevel == 0) {
+		$realtiveRoot = ".";
+	} else {
+		for my $i (1..$subdirlevel) {
+			$realtiveRoot .= ($i == $subdirlevel) ? ".." : "..\$(D)";
+		}
+	}
+	
+	print $fhOut $headerComments ."\n";
+	print $fhOut "D=/\n\n";
+	print $fhOut "ifndef TEST_ROOT\n";
+	print $fhOut "\tTEST_ROOT := $testRoot\n";
+	print $fhOut "endif\n\n";
+	print $fhOut "SUBDIRS = " . join(" ", @{$subdirsHavePlaylist}) . "\n\n";
+	print $fhOut 'include $(TEST_ROOT)$(D)TestConfig$(D)' . $settings . "\n\n";
+	close $fhOut;
 }
 
 sub parseXML {
 	my ($playlistXML) = @_;
 	open( my $fhIn, '<', $playlistXML ) or die "Cannot open file $_[0]";
+	my %result = ();
 	my @tests = ();
 	while ( my $line = <$fhIn> ) {
 		my %test;
 		my $testlines;
-		if ( $line =~ /\<test\>/ ) {
+		if ( $line =~ /\<include\>/ ) {
+			my $include = getElementByTag( $line, 'include' );
+			$result{'include'} = $include;
+		} elsif ( $line =~ /\<test\>/ ) {
 			$testlines .= $line;
 			while ( my $testline = <$fhIn> ) {
 				$testlines .= $testline;
 				if ( $testline =~ /\<\/test\>/ ) {
 					last;
 				}
+			}
+
+			my $disabled = getElementByTag( $testlines, 'disabled' );
+			if (defined $disabled) {
+				next;
 			}
 
 			$test{'testCaseName'} =
@@ -197,33 +255,68 @@ sub parseXML {
 			}
 			$test{'variation'} = $variation;
 
-			my $tags = getElementByTag( $testlines, 'tags' );
-			my $tag = getElementsByTag( $testlines, 'tag' );
-			foreach my $eachtag ( @{$tag} ) {
-				if ( grep(/^$eachtag$/, @allGroups) ) {
-					$test{'group'} = $eachtag;
-					last;
+			$test{'levels'} = getElementsByTag( $testlines, 'level' );
+			# defaults to extended
+			if (!@{$test{'levels'}}) {
+				$test{'levels'} = ['extended'];
+			}
+			foreach my $level ( @{$test{'levels'}} ) {
+				if ( !grep(/^$level$/, @{$allLevels}) ) {
+					die "The level: " . $level . " for test " . $test{'testCaseName'} . " is not valid, the valid level strings are " . join(",", @{$allLevels}) . ".";
 				}
 			}
-			# defaults to 'sanity'
-			if (!defined $test{'group'}) {
-				$test{'group'} = 'sanity';
+
+			$test{'groups'} = getElementsByTag( $testlines, 'group' );
+			# defaults to functional
+			if (!@{$test{'groups'}}) {
+				$test{'groups'} = ['functional'];
+			}
+			foreach my $group ( @{$test{'groups'}} ) {
+				if ( !grep(/^$group$/, @{$allGroups}) ) {
+					die "The group: " . $group . " for test " . $test{'testCaseName'} . " is not valid, the valid group strings are " . join(",", @{$allGroups}) . ".";
+				}
+			}
+
+			my $impls = getElementsByTag( $testlines, 'impl' );
+			# defaults to all impls
+			if (!@{$impls}) {
+				$impls = $allImpls;
+			}
+			foreach my $impl ( @{$impls} ) {
+				if ( !grep(/^$impl$/, @{$allImpls}) ) {
+					die "The impl: " . $impl . " for test " . $test{'testCaseName'} . " is not valid, the valid impl strings are " . join(",", @{$allImpls}) . ".";
+				}
+			}
+			# do not generate make taget if impl doesn't match the exported impl
+			if ( !grep(/^$impl$/, @{$impls}) ) {
+				next;
 			}
 
 			my $subsets = getElementsByTag( $testlines, 'subset' );
+			# temporarily support SE version, convert it to JDK_VERSION
+			foreach (my $i=0; $i < @{$subsets}; $i++) {
+				$subsets->[$i] =~ s/^SE(.*)0$/$1/;
+			}
+
 			# defaults to all subsets
-			if (!$subsets) {
+			if (!@{$subsets}) {
 				$subsets = $allSubsets;
 			}
-			# do not generate make taget if subset doesn't match javaVersion
-			if ( !grep(/^$javaVersion$/, @{$subsets}) ) {
+			foreach my $subset ( @{$subsets} ) {
+				if ( !grep(/^$subset$/, @{$allSubsets}) ) {
+					die "The subset: " . $subset . " for test " . $test{'testCaseName'} . " is not valid, the valid subset strings are " . join(",", @{$allSubsets}) . ".";
+				}
+			}
+			# do not generate make taget if subset doesn't match jdkVersion
+			if ( !grep(/^$jdkVersion$/, @{$subsets}) ) {
 				next;
 			}
 			push( @tests, \%test );
 		}
 	}
 	close $fhIn;
-	return \@tests;
+	$result{'tests'} = \@tests;
+	return \%result;
 }
 
 sub getElementByTag {
@@ -236,16 +329,17 @@ sub getElementsByTag {
 	return \@elements;
 }
 
-sub genMK {
-	my ( $makeFile, $tests, $currentdirs, $subdirsHavePlaylist ) = @_;
-	open( my $fhOut, '>', $makeFile ) or die "Cannot create make file $makeFile";
+sub writeTargets {
+	my ( $makeFile, $result, $currentdirs ) = @_;
+	open( my $fhOut, '>>', $makeFile ) or die "Cannot create make file $makeFile";
 	my %project = ();
-	print $fhOut $headerComments;
-
-	my %testgroups = ();
-	foreach my $test ( @{ $tests } ) {
+	my %groupTargets = ();
+	if (defined $result->{'include'}) {
+		print $fhOut "-include " . $result->{'include'} . "\n\n";
+	}
+	foreach my $test ( @{ $result->{'tests'} } ) {
 		my $count     = 0;
-		my $group = $test->{'group'};
+		my @subtests = ();
 		foreach my $var ( @{ $test->{'variation'} } ) {
 			my $jvmoptions = ' ' . $var . ' ';
 			$jvmoptions =~ s/\ NoOptions\ //x;
@@ -291,12 +385,12 @@ sub genMK {
 					my ( $key, $value ) = split( /:/, $capabilityReq );
 					$capabilityReqs_Hash{$key} = $value;
 				}
-				print Dumper(\%capabilityReqs_Hash);
 			}
 
 			# generate make target
 			my $name = $test->{'testCaseName'};
 			$name .= "_$count";
+			push (@subtests, $name);
 
 			my $condition_platform = undef;
 			if (@allInvalidSpecs) {
@@ -322,13 +416,22 @@ sub genMK {
 				print $fhOut "$name: JVM_OPTIONS=\$(RESERVED_OPTIONS) \$(EXTRA_OPTIONS)\n";
 			}
 
-			print $fhOut "$name: TEST_GROUP=level.$group\n";
+			my $levelStr = '';
+			foreach my $level (@{$test->{'levels'}}) {
+				if ($levelStr ne '') {
+					$levelStr .= ',';
+				}
+				$levelStr .= "level." . $level;
+			}
+
+			print $fhOut "$name: TEST_GROUP=" . $levelStr . "\n";
 			my $indent .= "\t";
 			print $fhOut "$name:\n";
-			print $fhOut "$indent\@echo \"\" | tee -a TestTargetResult;\n";
-			print $fhOut "$indent\@echo \"===============================================\" | tee -a TestTargetResult;\n";
-			print $fhOut "$indent\@echo \"Running test \$\@ ...\" | tee -a TestTargetResult;\n";
-			print $fhOut "$indent\@echo \"===============================================\" | tee -a TestTargetResult;\n";
+			print $fhOut "$indent\@echo \"\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
+			print $fhOut "$indent\@echo \"===============================================\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
+			print $fhOut "$indent\@echo \"Running test \$\@ ...\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
+			print $fhOut "$indent\@echo \"===============================================\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
+			print $fhOut "$indent\@perl \'-MTime::HiRes=gettimeofday\' -e \'print \"$name Start Time: \" . localtime() . \" Epoch Time (ms): \" . int (gettimeofday * 1000) . \"\\n\"\' | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
 			if ($condition_platform) {
 				print $fhOut "ifeq (\$($condition_platform),)\n";
 			}
@@ -340,79 +443,91 @@ sub genMK {
 			}
 
 			if ($jvmoptions) {
-				print $fhOut "$indent\@echo \"test with $var\" | tee -a TestTargetResult;\n";
+				print $fhOut "$indent\@echo \"test with $var\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
 			}
 			else {
-				print $fhOut "$indent\@echo \"test with NoOptions\" | tee -a TestTargetResult;\n";
+				print $fhOut "$indent\@echo \"test with NoOptions\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
 			}
 			my $command = $test->{'command'};
 			$command =~ s/^\s+//;
 			$command =~ s/\s+$//;
-			print $fhOut "$indent\{ $command; \} 2>&1 | tee -a TestTargetResult\n";
+
+			print $fhOut "$indent\{ \$(MKTREE) \$(REPORTDIR); \\\n$indent\$(CD) \$(REPORTDIR); \\\n$indent$command; \} 2>&1 | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
 
 			if (defined($capabilityReqs)) {
 				foreach my $key (keys %capabilityReqs_Hash) {
 					print $fhOut "else\n";
-					print $fhOut "$indent\@echo \"Skipped due to capabilities ($capabilityReqs) => \$(TEST_SKIP_STATUS)\" | tee -a TestTargetResult\n";
+					print $fhOut "$indent\@echo \"Skipped due to capabilities ($capabilityReqs) => \$(TEST_SKIP_STATUS)\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
 					print $fhOut "endif\n";
 				}
 			}
 			if ($condition_platform) {
 				print $fhOut "else\n";
 				if (defined($platformRequirements)) {
-					print $fhOut "$indent\@echo \"Skipped due to jvm options (\$(JVM_OPTIONS)) and/or platform requirements ($platformRequirements) => \$(TEST_SKIP_STATUS)\"\n";
+					print $fhOut "$indent\@echo \"Skipped due to jvm options (\$(JVM_OPTIONS)) and/or platform requirements ($platformRequirements) => \$(TEST_SKIP_STATUS)\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
 				} else{
-					print $fhOut "$indent\@echo \"Skipped due to jvm options (\$(JVM_OPTIONS)) => \$(TEST_SKIP_STATUS)\"\n";
+					print $fhOut "$indent\@echo \"Skipped due to jvm options (\$(JVM_OPTIONS)) => \$(TEST_SKIP_STATUS)\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
 				}
 				print $fhOut "endif\n";
 			}
-			print $fhOut "\n";
-			my %testElement = ();
-			$testElement{"name"} = $name;
-			$testElement{"invalidSpecs"} = \@allInvalidSpecs;
+			print $fhOut "$indent\@perl \'-MTime::HiRes=gettimeofday\' -e \'print \"$name Finish Time: \" . localtime() . \" Epoch Time (ms): \" . int (gettimeofday * 1000) . \"\\n\"\' | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q)\n";
 
-			push(@{$testgroups{$group}}, \%testElement);
+			print $fhOut "\n.PHONY: $name\n\n"; 
+
+			foreach my $eachGroup (@{$test->{'groups'}}) {
+				foreach my $eachLevel (@{$test->{'levels'}}) {
+					my $groupTargetKey = $eachLevel . '.' . $eachGroup;
+					push(@{$groupTargets{$groupTargetKey}}, $name);
+				}
+			}
+
 			$count++;
 		}
-	}
-
-	my $dirtarget = join('.', @{$currentdirs});
-	foreach my $subdir (sort @{$subdirsHavePlaylist}) {
-		my $currdirstr = join("\$(D)", @{$currentdirs});
-		if ($currdirstr) {
-			$currdirstr .= "\$(D)";
+		print $fhOut $test->{'testCaseName'} . ":";
+		foreach my $subTest (@subtests) {
+			print $fhOut " \\\n$subTest";
 		}
-		print $fhOut "-include \$(JVM_TEST_ROOT)\$(D)" . $currdirstr . "$subdir\$(D)autoGenTest.mk\n";
+		print $fhOut "\n\n.PHONY: " . $test->{'testCaseName'} . "\n\n";
 	}
 
-	my $isempty = 1;
-	print $fhOut "\n.PHONY: $dirtarget\n\n";
-	print $fhOut "$dirtarget: ";
-	foreach my $subdir (sort @{$subdirsHavePlaylist}) {
-		print $fhOut "\\\n" . $dirtarget . "." . $subdir . " ";
-		$isempty = 0;
-	}
-	foreach my $eachgroup (sort keys %testgroups) {
-		if ($testgroups{$eachgroup}) {
-			foreach my $eachtestelement (sort {$a->{"name"} cmp $b->{"name"}} @{$testgroups{$eachgroup}}) {
-				print $fhOut "\\\n$eachtestelement->{\"name\"} ";
-				$isempty = 0;
+	foreach my $eachLevel (sort @{$allLevels}) {
+		foreach my $eachGroup (sort @{$allGroups}) {
+			my $groupTargetKey = $eachLevel . '.' . $eachGroup;
+			my $tests = $groupTargets{$groupTargetKey};
+			print $fhOut "$groupTargetKey:";
+			foreach my $test (@{$tests}) {
+				print $fhOut " \\\n$test";
 			}
+			$targetGroup{$groupTargetKey} += @{$tests};
+			print $fhOut "\n\n.PHONY: $groupTargetKey\n\n";
 		}
 	}
-	if ($isempty == 1) {
-		print $fhOut ";";
+
+	foreach my $eachLevel (sort @{$allLevels}) {
+		print $fhOut "$eachLevel:";
+		foreach my $eachGroup (sort @{$allGroups}) {
+			my $groupTargetKey = $eachLevel . '.' . $eachGroup;
+			print $fhOut " \\\n$groupTargetKey";
+		}
+		print $fhOut "\n\n.PHONY: $eachLevel\n\n";
 	}
 
-	print $fhOut "\n";
+	foreach my $eachGroup (sort @{$allGroups}) {
+		print $fhOut "$eachGroup:";
+		foreach my $eachLevel (sort @{$allLevels}) {
+			my $groupTargetKey = $eachLevel . '.' . $eachGroup;
+			print $fhOut " \\\n$groupTargetKey";
+		}
+		print $fhOut "\n\n.PHONY: $eachGroup\n\n";
+	}
 
-
-	$project{'testgroups'} = \%testgroups;
+	print $fhOut "all:";
+	foreach my $eachLevel (sort @{$allLevels}) {
+		print $fhOut " \\\n$eachLevel";
+	}
+	print $fhOut "\n\n.PHONY: all\n";
 
 	close $fhOut;
-	print "Generated $makeFile\n";
-
-	return \%project;
 }
 
 # return an array of invalid specs
@@ -485,11 +600,10 @@ sub getAllInvalidSpecs {
 	return @invalidSpecs;
 }
 
-sub specToPlatGen {
-	my ( $specToPlatmk ) = @_;
-	open( my $fhOut, '>', $specToPlatmk ) or die "Cannot create file $specToPlatmk";
+sub utilsGen {
+	my $utilsmkpath = $testRoot . "/TestConfig/" . $utilsmk;
+	open( my $fhOut, '>', $utilsmkpath ) or die "Cannot create file $utilsmkpath";
 	print $fhOut $headerComments;
-
 	print $fhOut "PLATFORM=\n";
 	my $spec2platform = '';
 	my @graphSpecs_arr = split( ',', $graphSpecs );
@@ -501,102 +615,41 @@ sub specToPlatGen {
 		}
 	}
 	print $fhOut $spec2platform;
+	close $fhOut;
+	print "\nGenerated $utilsmk\n";
 }
 
-sub jvmTestGen {
-	my ( $jvmTestmk, $tests ) = @_;
-	my %container = ();
+sub countGen {
+	my $countmkpath = $testRoot . "/TestConfig/" . $countmk;
+	open( my $fhOut, '>', $countmkpath ) or die "Cannot create file $countmkpath";
 
-	open( my $fhOut, '>', $jvmTestmk ) or die "Cannot create file $jvmTestmk";
-	print $fhOut $headerComments;
+	foreach my $eachLevel (sort @{$allLevels}) {
+		$targetGroup{$eachLevel} = 0;
+		foreach my $eachGroup (sort @{$allGroups}) {
+			my $groupTargetKey = $eachLevel . '.' . $eachGroup;
+			$targetGroup{$eachLevel} += $targetGroup{$groupTargetKey};
+		}
+		$targetGroup{"all"} += $targetGroup{$eachLevel};
+	}
 
-	foreach my $projectName (sort keys %{$tests}) {
-		my $testGroups = $tests->{$projectName}->{'testgroups'};
-		foreach my $group (@allGroups) {
-			if ( $testGroups->{$group} ) {
-				splice @{$container{$group}}, 0, 0, @{$testGroups->{$group}};
-			}
+	foreach my $eachGroup (sort @{$allGroups}) {
+		$targetGroup{$eachGroup} = 0;
+		foreach my $eachLevel (sort @{$allLevels}) {
+			my $groupTargetKey = $eachLevel . '.' . $eachGroup;
+			$targetGroup{$eachGroup} += $targetGroup{$groupTargetKey};
 		}
 	}
 
-	my %hashSet = ();
-	
-	foreach my $group ( sort keys %container ) {
-		$hashSet{$group} = 1;
-		print $fhOut "\n.PHONY: $group\n\n";
-		print $fhOut $group . ":";
-		my $testElement = $container{$group};
-		if (defined $testElement) {
-			print $fhOut " \\\nsetup_" . $group;
-			print $fhOut " \\\nrmResultFile";
-			foreach my $value ( sort {$a->{"name"} cmp $b->{"name"}} @{$testElement} ) {
-				print $fhOut " \\\n" . $value->{"name"};
-			}
-			print $fhOut " \\\nresultsSummary";
-		} else {
-			print $fhOut " ;";
-		}
-		print $fhOut "\n\n";
-		
+	print $fhOut "_GROUPTARGET = \$(firstword \$(MAKECMDGOALS))\n\n";
+	print $fhOut "GROUPTARGET = \$(patsubst _%,%,\$(_GROUPTARGET))\n\n";
+	foreach my $targetGroupKey (keys %targetGroup) {
+		print $fhOut "ifeq (\$(GROUPTARGET),$targetGroupKey)\n";
+		print $fhOut "\tTOTALCOUNT := $targetGroup{$targetGroupKey}\n";
+		print $fhOut "endif\n\n";
 	}
-
-	foreach my $group ( @allGroups ) {
-		if (!exists $hashSet{$group}) {
-			print $fhOut $group . ": ;\n\n";
-		}
-	}
-	
-	close $fhOut;
-}
-
-sub subdir2make {
-	my ($absolutedir, $currentdirs, $subdirsHavePlaylist) = @_;
-
-	my $makeFile = $absolutedir . "/" . $mkName;
-	if ($output) {
-		my $outputdir = $output;
-		if (@{$currentdirs}) {
-			$outputdir .= '/' . join('/', @{$currentdirs});
-		}
-		make_path($outputdir);
-		$makeFile = $outputdir . "/" . $mkName;
-	}
-
-	#clean stale makefile before generating
-	unlink $makeFile or warn "Cannot not unlink $makeFile: $!";
-	open( my $fhOut, '>', $makeFile ) or die "Cannot create make file $makeFile";
-	my $mkname = basename($makeFile);
-	my %project = ();
-	print $fhOut $headerComments;
-
-	foreach my $subdir (sort @{$subdirsHavePlaylist}) {
-		my $currdirstr = join("\$(D)", @{$currentdirs});
-		if ($currdirstr) {
-			$currdirstr .= "\$(D)";
-		}
-		print $fhOut "-include \$(JVM_TEST_ROOT)\$(D)" . $currdirstr . "$subdir\$(D)$mkname\n";
-	}
-
-	print $fhOut "\n";
-
-	my $dirtarget = 'alltargets';
-	if (@{$currentdirs}) {
-		$dirtarget = join('.', @{$currentdirs});
-	}
-
-	print $fhOut "\n.PHONY: $dirtarget\n\n";
-	print $fhOut "$dirtarget: ";
-	foreach my $subdir (sort @{$subdirsHavePlaylist}) {
-		if ($dirtarget eq 'alltargets') {
-			print $fhOut "\\\n" . $subdir . " ";
-		} else {
-			print $fhOut "\\\n" . $dirtarget . "." . $subdir . " ";
-		}
-	}
-	print $fhOut "\n";
 
 	close $fhOut;
-	print "Generated $makeFile\n";
+	print "\nGenerated $countmk\n";
 }
 
 1;

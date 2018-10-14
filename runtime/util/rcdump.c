@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -181,7 +181,7 @@ IDATA j9bcutil_dumpRomClass( J9ROMClass *romClass, J9PortLibrary *portLib, J9Tra
 	}
 
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
-	/* dump the nest members or nest top, if defined */
+	/* dump the nest members or nest host, if defined */
 	dumpNest(portLib, romClass, flags);
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 
@@ -230,7 +230,7 @@ static I_32 dumpCPShapeDescription( J9PortLibrary *portLib, J9ROMClass *romClass
 	U_32 *cpDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(romClass);
 	U_32 descriptionLong;
 	U_32 i, j, k, numberOfLongs;
-	char symbols[] = ".CSIFJDi.vxyzTHA";
+	char symbols[] = ".CSIFJDi.vxyzTHA.cxv";
 
 	PORT_ACCESS_FROM_PORT( portLib );
 
@@ -523,6 +523,8 @@ dumpCallSiteData(J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags)
 					case J9CPTYPE_INSTANCE_METHOD:
 					case J9CPTYPE_STATIC_METHOD:
 					case J9CPTYPE_INTERFACE_METHOD:
+					case J9CPTYPE_INTERFACE_INSTANCE_METHOD:
+					case J9CPTYPE_INTERFACE_STATIC_METHOD:
 						j9tty_printf(PORTLIB, "      Method: ");
 						classRef = (J9ROMClassRef *) &constantPool[((J9ROMMethodRef *)item)->classRefCPIndex];
 						nameAndSig = J9ROMMETHODREF_NAMEANDSIGNATURE((J9ROMMethodRef *)item);
@@ -827,7 +829,7 @@ dumpNest(J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags)
 {
 	PORT_ACCESS_FROM_PORT(portLib);
 	U_16 nestMemberCount = romClass->nestMemberCount;
-	J9UTF8 *nestTopName = J9ROMCLASS_NESTTOPNAME(romClass);
+	J9UTF8 *nestHostName = J9ROMCLASS_NESTHOSTNAME(romClass);
 
 	if (0 != nestMemberCount) {
 		/* The class has a "nest members" attribute (non-zero nestMemberCount) */
@@ -840,9 +842,9 @@ dumpNest(J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags)
 		}
 	}
 
-	if (NULL != nestTopName) {
-		/* The class has a "member of nest" attribute (non-NULL nest top name) */
-		j9tty_printf(PORTLIB, "Nest top class: %.*s\n", J9UTF8_LENGTH(nestTopName), J9UTF8_DATA(nestTopName));
+	if (NULL != nestHostName) {
+		/* The class has a "member of nest" attribute (non-NULL nest host name) */
+		j9tty_printf(PORTLIB, "Nest host class: %.*s\n", J9UTF8_LENGTH(nestHostName), J9UTF8_DATA(nestHostName));
 	}
 	return BCT_ERR_NO_ERROR;
 }

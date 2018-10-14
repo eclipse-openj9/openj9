@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 IBM Corp. and others
+ * Copyright (c) 2016, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,7 +74,13 @@ getFunction(void **tableAddress, char *name)
 		void *handle = dlopen("libomrsig.so", RTLD_LAZY);
 		*tableAddress = dlsym(handle, name);
 #else /* defined(WIN32) */
-		void *handle = dlopen("libomrsig.so", RTLD_GLOBAL | RTLD_LAZY);
+		/* Note: this needs to be ifdef'd this way for zOS to compile as it redefines dlopen */
+		void *handle = 
+#if defined(OSX)
+			dlopen("libomrsig.dylib", RTLD_GLOBAL | RTLD_LAZY);
+#else /* OSX */
+			dlopen("libomrsig.so", RTLD_GLOBAL | RTLD_LAZY);
+#endif /*OSX */
 		*tableAddress = dlsym(handle, name);
 #endif /* defined(WIN32) */
 	}

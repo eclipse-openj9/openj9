@@ -1,0 +1,212 @@
+###############################################################################
+# Copyright (c) 2017, 2018 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+###############################################################################
+
+# formats:
+# opaquetype=TypeName
+# fieldoverride.TypeName.FieldName=NewFieldName
+# typeoverride.TypeName.FieldName=NewFieldType
+
+# Opaque types.
+opaquetype=J9SRP
+opaquetype=J9WSRP
+opaquetype=fj9object_t
+opaquetype=iconv_t
+opaquetype=j9objectclass_t
+opaquetype=j9objectmonitor_t
+opaquetype=UDATA
+
+# Rename constants in J9BuildFlags as required for backwards compatibility.
+
+fieldoverride.J9BuildFlags.J9VM_ARCH_S390=arch_s390
+fieldoverride.J9BuildFlags.J9VM_ENV_DATA64=env_data64
+fieldoverride.J9BuildFlags.J9VM_ENV_LITTLE_ENDIAN=env_littleEndian
+fieldoverride.J9BuildFlags.J9VM_GC_ARRAYLETS=gc_arraylets
+fieldoverride.J9BuildFlags.J9VM_GC_COMBINATION_SPEC=gc_combinationSpec
+fieldoverride.J9BuildFlags.J9VM_GC_COMPRESSED_POINTERS=gc_compressedPointers
+fieldoverride.J9BuildFlags.J9VM_GC_DYNAMIC_CLASS_UNLOADING=gc_dynamicClassUnloading
+fieldoverride.J9BuildFlags.J9VM_GC_FINALIZATION=gc_finalization
+fieldoverride.J9BuildFlags.J9VM_GC_GENERATIONAL=gc_generational
+fieldoverride.J9BuildFlags.J9VM_GC_HYBRID_ARRAYLETS=gc_hybridArraylets
+fieldoverride.J9BuildFlags.J9VM_GC_INLINED_ALLOC_FIELDS=gc_inlinedAllocFields
+fieldoverride.J9BuildFlags.J9VM_GC_LEAF_BITS=gc_leafBits
+fieldoverride.J9BuildFlags.J9VM_GC_MINIMUM_OBJECT_SIZE=gc_minimumObjectSize
+fieldoverride.J9BuildFlags.J9VM_GC_MODRON_COMPACTION=gc_modronCompaction
+fieldoverride.J9BuildFlags.J9VM_GC_MODRON_SCAVENGER=gc_modronScavenger
+fieldoverride.J9BuildFlags.J9VM_GC_MODRON_STANDARD=gc_modronStandard
+fieldoverride.J9BuildFlags.J9VM_GC_NON_ZERO_TLH=gc_nonZeroTLH
+fieldoverride.J9BuildFlags.J9VM_GC_REALTIME=gc_realtime
+fieldoverride.J9BuildFlags.J9VM_GC_SEGREGATED_HEAP=gc_segregatedHeap
+fieldoverride.J9BuildFlags.J9VM_GC_VLHGC=gc_vlhgc
+fieldoverride.J9BuildFlags.J9VM_INTERP_COMPRESSED_OBJECT_HEADER=interp_compressedObjectHeader
+fieldoverride.J9BuildFlags.J9VM_INTERP_DEBUG_SUPPORT=interp_debugSupport
+fieldoverride.J9BuildFlags.J9VM_INTERP_FLAGS_IN_CLASS_SLOT=interp_flagsInClassSlot
+fieldoverride.J9BuildFlags.J9VM_INTERP_GROWABLE_STACKS=interp_growableStacks
+fieldoverride.J9BuildFlags.J9VM_INTERP_HOT_CODE_REPLACEMENT=interp_hotCodeReplacement
+fieldoverride.J9BuildFlags.J9VM_INTERP_NATIVE_SUPPORT=interp_nativeSupport
+fieldoverride.J9BuildFlags.J9VM_INTERP_SMALL_MONITOR_SLOT=interp_smallMonitorSlot
+fieldoverride.J9BuildFlags.J9VM_JIT_32BIT_USES64BIT_REGISTERS=jit_32bitUses64bitRegisters
+fieldoverride.J9BuildFlags.J9VM_JIT_FULL_SPEED_DEBUG=jit_fullSpeedDebug
+fieldoverride.J9BuildFlags.J9VM_JIT_HIGH_WORD_REGISTERS=jit_highWordRegisters
+fieldoverride.J9BuildFlags.J9VM_OPT_DEBUG_INFO_SERVER=opt_debugInfoServer
+fieldoverride.J9BuildFlags.J9VM_OPT_JVMTI=opt_jvmti
+fieldoverride.J9BuildFlags.J9VM_OPT_SHARED_CLASSES=opt_sharedClasses
+fieldoverride.J9BuildFlags.J9VM_THR_LOCK_NURSERY=thr_lockNursery
+fieldoverride.J9BuildFlags.J9VM_THR_LOCK_RESERVATION=thr_lockReservation
+
+# Type overrides - mostly adding data to SRPs.
+typeoverride.J9AnnotationInfo.defaultValues=J9SRP(J9AnnotationInfoEntry)
+typeoverride.J9AnnotationInfo.firstAnnotation=J9SRP(J9AnnotationInfoEntry)
+typeoverride.J9AnnotationInfo.firstClass=J9SRP(J9AnnotationInfoEntry)
+typeoverride.J9AnnotationInfo.firstField=J9SRP(J9AnnotationInfoEntry)
+typeoverride.J9AnnotationInfo.firstMethod=J9SRP(J9AnnotationInfoEntry)
+typeoverride.J9AnnotationInfo.firstParameter=J9SRP(J9AnnotationInfoEntry)
+
+typeoverride.J9AnnotationInfoEntry.annotationData=J9SRP(UDATA)
+typeoverride.J9AnnotationInfoEntry.annotationType=J9SRP(J9UTF8)
+typeoverride.J9AnnotationInfoEntry.memberName=J9SRP(J9UTF8)
+typeoverride.J9AnnotationInfoEntry.memberSignature=J9SRP(J9UTF8)
+
+typeoverride.J9EnclosingObject.nameAndSignature=J9SRP(J9ROMNameAndSignature)
+
+typeoverride.J9ROMClass.className=J9SRP(J9UTF8)
+typeoverride.J9ROMClass.cpShapeDescription=J9SRP(U32)
+typeoverride.J9ROMClass.innerClasses=J9SRP(J9SRP(J9UTF8))
+typeoverride.J9ROMClass.interfaces=J9SRP(J9SRP(J9UTF8))
+typeoverride.J9ROMClass.intermediateClassData=J9WSRP(U_8)
+typeoverride.J9ROMClass.optionalInfo=J9SRP(U32)
+typeoverride.J9ROMClass.outerClassName=J9SRP(J9UTF8)
+typeoverride.J9ROMClass.romFields=J9SRP(J9ROMFieldShape)
+typeoverride.J9ROMClass.romMethods=J9SRP(J9ROMMethod)
+typeoverride.J9ROMClass.specialSplitMethodRefIndexes=J9SRP(U16)
+typeoverride.J9ROMClass.staticSplitMethodRefIndexes=J9SRP(U16)
+typeoverride.J9ROMClass.superclassName=J9SRP(J9UTF8)
+
+typeoverride.J9ROMArrayClass.className=J9SRP(J9UTF8)
+typeoverride.J9ROMArrayClass.cpShapeDescription=J9SRP(U32)
+typeoverride.J9ROMArrayClass.innerClasses=J9SRP(J9SRP(J9UTF8))
+typeoverride.J9ROMArrayClass.interfaces=J9SRP(J9SRP(J9UTF8))
+typeoverride.J9ROMArrayClass.intermediateClassData=J9WSRP(U_8)
+typeoverride.J9ROMArrayClass.optionalInfo=J9SRP(U32)
+typeoverride.J9ROMArrayClass.outerClassName=J9SRP(J9UTF8)
+typeoverride.J9ROMArrayClass.romFields=J9SRP(J9ROMFieldShape)
+typeoverride.J9ROMArrayClass.romMethods=J9SRP(J9ROMMethod)
+typeoverride.J9ROMArrayClass.superclassName=J9SRP(J9UTF8)
+
+typeoverride.J9ROMClassCfrConstantPoolInfo.bytes=J9SRP(U_8)
+
+typeoverride.J9ROMStringRef.utf8Data=J9SRP(J9UTF8)
+
+typeoverride.J9ROMStaticDoubleFieldShape.initialValuePointer=J9SRP
+
+typeoverride.J9ROMClassCfrError.constantPool=J9SRP(J9ROMClassCfrConstantPoolInfo)
+typeoverride.J9ROMClassCfrError.errorMember=J9SRP(J9ROMClassCfrMember)
+
+typeoverride.J9SharedCacheHeader.corruptFlagPtr=J9WSRP(U_8)
+typeoverride.J9SharedCacheHeader.lockedPtr=J9WSRP(U_32)
+typeoverride.J9SharedCacheHeader.sharedStringHead=J9SRP(J9SharedInternSRPHashTableEntry)
+typeoverride.J9SharedCacheHeader.sharedStringRoot=J9SRP
+typeoverride.J9SharedCacheHeader.sharedStringTail=J9SRP(J9SharedInternSRPHashTableEntry)
+typeoverride.J9SharedCacheHeader.updateCountPtr=J9WSRP(UDATA)
+
+typeoverride.J9ROMClassRef.name=J9SRP(J9UTF8)
+
+typeoverride.J9ROMClassTOCEntry.className=J9SRP(J9UTF8)
+typeoverride.J9ROMClassTOCEntry.romClass=J9SRP(J9ROMClass)
+
+typeoverride.J9ROMFieldRef.nameAndSignature=J9SRP(J9ROMNameAndSignature)
+
+typeoverride.J9ROMImageHeader.aotPointer=J9SRP
+typeoverride.J9ROMImageHeader.firstClass=J9SRP(J9ROMClass)
+typeoverride.J9ROMImageHeader.jxePointer=J9SRP(UDATA)
+typeoverride.J9ROMImageHeader.tableOfContents=J9SRP(J9ROMClassTOCEntry)
+
+typeoverride.J9ROMMethodRef.nameAndSignature=J9SRP(J9ROMNameAndSignature)
+
+typeoverride.J9PoolPuddleList.nextAvailablePuddle=J9WSRP(J9PoolPuddle)
+typeoverride.J9PoolPuddleList.nextPuddle=J9WSRP(J9PoolPuddle)
+
+typeoverride.J9PoolPuddle.firstElementAddress=J9SRP
+typeoverride.J9PoolPuddle.firstFreeSlot=J9SRP(UDATA)
+typeoverride.J9PoolPuddle.nextAvailablePuddle=J9WSRP(J9PoolPuddle)
+typeoverride.J9PoolPuddle.nextPuddle=J9WSRP(J9PoolPuddle)
+typeoverride.J9PoolPuddle.prevAvailablePuddle=J9WSRP(J9PoolPuddle)
+typeoverride.J9PoolPuddle.prevPuddle=J9WSRP(J9PoolPuddle)
+
+typeoverride.J9Pool.puddleList=J9WSRP(J9PoolPuddleList)
+
+typeoverride.J9ROMNameAndSignature.name=J9SRP(J9UTF8)
+typeoverride.J9ROMNameAndSignature.signature=J9SRP(J9UTF8)
+
+typeoverride.J9ROMMethodTypeRef.signature=J9SRP(J9UTF8)
+
+# AVL leftChild and rightChild pointers aren't regular wide pointers.
+# They have AVL balance data encoded in them - so treat
+# them as IDATAs and handle them in the DDR AVL code.
+typeoverride.J9AVLTreeNode.leftChild=IDATA
+typeoverride.J9AVLTreeNode.rightChild=IDATA
+
+typeoverride.J9MEMAVLTreeNode.leftChild=IDATA
+typeoverride.J9MEMAVLTreeNode.rightChild=IDATA
+
+typeoverride.J9MemorySegment.leftChild=IDATA
+typeoverride.J9MemorySegment.rightChild=IDATA
+
+typeoverride.J9JITHashTable.leftChild=IDATA
+typeoverride.J9JITHashTable.rightChild=IDATA
+
+typeoverride.J9ObjectMemorySegment.leftChild=IDATA
+typeoverride.J9ObjectMemorySegment.rightChild=IDATA
+
+# The shared classes J9SRPs aren't regular J9SRPs.
+# They are relative to the start of the structure, not the field.
+typeoverride.ByteDataWrapper.externalBlockOffset=I_32
+typeoverride.ByteDataWrapper.tokenOffset=I_32
+typeoverride.CacheletWrapper.dataStart=I_32
+typeoverride.CompiledMethodWrapper.romMethodOffset=I_32
+typeoverride.OrphanWrapper.romClassOffset=I_32
+typeoverride.ROMClassWrapper.romClassOffset=I_32
+typeoverride.ROMClassWrapper.theCpOffset=I_32
+typeoverride.ScopedROMClassWrapper.modContextOffset=I_32
+typeoverride.ScopedROMClassWrapper.partitionOffset=I_32
+typeoverride.ScopedROMClassWrapper.romClassOffset=I_32
+typeoverride.ScopedROMClassWrapper.theCpOffset=I_32
+
+typeoverride.J9MethodDebugInfo.srpToVarInfo=J9SRP(U_8)
+
+# Type override for SRPs in shared string intern table.
+typeoverride.J9SharedInternSRPHashTableEntry.nextNode=J9SRP(J9SharedInternSRPHashTableEntry)
+typeoverride.J9SharedInternSRPHashTableEntry.prevNode=J9SRP(J9SharedInternSRPHashTableEntry)
+typeoverride.J9SharedInternSRPHashTableEntry.utf8SRP=J9SRP(J9UTF8)
+typeoverride.J9SRPHashTableInternal.nodePool=J9SRP(J9SimplePool)
+typeoverride.J9SRPHashTableInternal.nodes=J9SRP(J9SRP)
+
+# Type override for SRPs in J9SimplePoolFreeList.
+typeoverride.J9SimplePoolFreeList.next=J9SRP(J9SimplePoolFreeList)
+typeoverride.J9SimplePoolFreeList.simplePool=J9SRP(J9SimplePool)
+
+# Type override for SRPs in J9SimplePool.
+typeoverride.J9SimplePool.blockEnd=J9SRP(U_8)
+typeoverride.J9SimplePool.firstFreeSlot=J9SRP(U_8)
+typeoverride.J9SimplePool.freeList=J9SRP(J9SimplePoolFreeList)
+
+# Type override for SharedClassCache (SH_CacheMap).
+typeoverride.J9SharedClassConfig.sharedClassCache=SH_CacheMap*

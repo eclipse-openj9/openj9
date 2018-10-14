@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2016 IBM Corp. and others
+ * Copyright (c) 2005, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@ package java.lang.management;
  * clients.
  * </p>
  * <p>
- * Accessing this <code>MXBean</code> can be done in one of three ways. <br/>
+ * Accessing this <code>MXBean</code> can be done in one of three ways.
  * <ol>
  * <li>Invoking the static {@link ManagementFactory#getThreadMXBean} method.
  * </li>
@@ -40,8 +40,7 @@ package java.lang.management;
  * &quot;java.lang:type=Threading&quot; for the value of the second parameter.
  * </li>
  * </ol>
- * </p>
- * 
+ *  
  * @since 1.5
  */
 public interface ThreadMXBean extends PlatformManagedObject {
@@ -634,4 +633,107 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	public ThreadInfo[] dumpAllThreads(boolean lockedMonitors,
 			boolean lockedSynchronizers);
 
+	/*[IF Java10]*/
+	/**
+	 * Returns an array of {@link ThreadInfo} objects holding information on all
+	 * threads that were alive when the call was invoked.
+	 * 
+	 * @param lockedMonitors
+	 *            boolean indication of whether or not information on all
+	 *            currently locked object monitors is to be included in the
+	 *            returned array
+	 * @param lockedSynchronizers
+	 *            boolean indication of whether or not information on all
+	 *            currently locked ownable synchronizers is to be included in
+	 *            the returned array
+	 * @param maxDepth limits the number of stack frames returned
+	 * @return an array of <code>ThreadInfo</code> objects
+	 * @throws SecurityException
+	 *             if there is a security manager in effect and the caller does
+	 *             not have {@link ManagementPermission} of &quot;monitor&quot;.
+	 * @throws UnsupportedOperationException
+	 * 	if either of the following conditions apply:
+	 *  	<ul>
+	 *			<li><code>lockedMonitors</code> is <code>true</code> but
+	 *			a call to {@link #isObjectMonitorUsageSupported()} would
+	 *			result in a <code>false</code> value</li>
+	 *			<li><code>lockedSynchronizers</code> is <code>true</code>
+	 *			but a call to {@link #isSynchronizerUsageSupported()} would
+	 *			result in a <code>false</code> value</li>
+	 *	</ul>
+	 * @since 10
+	 */
+
+	public default ThreadInfo[] dumpAllThreads(
+		boolean lockedMonitors, boolean lockedSynchronizers, int maxDepth
+	) {
+		throw new UnsupportedOperationException();
+	}
+
+
+	/**
+	 * Returns an array of {@link ThreadInfo} objects; one for each of the
+	 * threads specified in the <code>ids</code> argument. Each
+	 * <code>ThreadInfo</code> will hold details of all of the stack trace
+	 * information for each specified thread. The returned
+	 * <code>ThreadInfo</code> objects will optionally contain details of all
+	 * monitor objects and synchronizers locked by the corresponding thread. In
+	 * order to retrieve locked monitor information the
+	 * <code>lockedMonitors</code> argument should be set to <code>true</code>;
+	 * in order to retrieve locked synchronizers information
+	 * <code>lockedSynchronizers</code> should be set to <code>true</code>.
+	 * For a given <code>ThreadInfo</code> element of the return array the
+	 * optional information may be inspected by calling
+	 * {@link ThreadInfo#getLockedMonitors()} and
+	 * {@link ThreadInfo#getLockedSynchronizers()} respectively.
+	 * <p>
+	 * Both <code>lockedMonitors</code> and <code>lockedSynchronizers</code>
+	 * arguments should only be set to <code>true</code> if the virtual
+	 * machine supports the requested monitoring.
+	 * </p>
+	 * 
+	 * @param ids
+	 *            an array of thread identifiers. Each one must be a positive
+	 *            number greater than zero.
+	 * @param lockedMonitors
+	 *            boolean indication of whether or not each returned
+	 *            <code>ThreadInfo</code> should hold information on locked
+	 *            object monitors
+	 * @param lockedSynchronizers
+	 *            boolean indication of whether or not each returned
+	 *            <code>ThreadInfo</code> should hold information on locked
+	 *            synchronizers
+	 * @param maxDepth limits the number of stack frames returned
+	 * @return an array of {@link ThreadInfo} objects with each entry
+	 *         corresponding to one of the threads specified in the input array
+	 *         of identifiers. The return array will therefore have an identical
+	 *         number of elements to the input <code>ids</code> array. If an
+	 *         entry in the <code>ids</code> array is invalid (there is no
+	 *         living thread with the supplied identifier in the virtual
+	 *         machine) then the corresponding entry in the return array will be
+	 *         a <code>null</code>.
+	 * @throws IllegalArgumentException
+	 *             if any of the entries in the <code>ids</code> array is
+	 *             &lt;=0.
+	 * @throws SecurityException
+	 *             if there is a security manager in effect and the caller does
+	 *             not have {@link ManagementPermission} of &quot;monitor&quot;.
+	 * @throws UnsupportedOperationException
+	 * if either of the following conditions apply:
+	 *  <ul>
+	 *  	<li><code>lockedMonitors</code> is <code>true</code> but
+	 *			a call to {@link #isObjectMonitorUsageSupported()} would
+	 * 			result in a <code>false</code> value</li>
+	 *      <li><code>lockedSynchronizers</code> is <code>true</code>
+	 *          but a call to {@link #isSynchronizerUsageSupported()} would
+	 *          result in a <code>false</code> value</li>
+	 *  </ul>
+	 * @since 10
+	 */
+	public default ThreadInfo[] getThreadInfo(
+		long[] ids, boolean lockedMonitors, boolean lockedSynchronizers, int maxDepth
+	) {
+		throw new UnsupportedOperationException();
+	}
+	/*[ENDIF] Java10*/
 }

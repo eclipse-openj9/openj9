@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -212,7 +212,7 @@ printDumpSpec(struct J9JavaVM *vm, IDATA kind, IDATA verboseLevel);
  * @param state [inout] State bit flags. Used to maintain state between multiple calls of runDumpAgent. 
  *                 When you've performed all runDumpAgent calls you must call unwindAfterDump to make 
  *                 sure all locks are cleaned up. The first time runDumpAgent is called, state should 
- *                 be initialised to 0.
+ *                 be initialized to 0.
  * @param detail [in] Detail string for dump cause
  * @param timeNow [in] Time value as returned from j9time_current_time_millis. Used to timestamp the dumps.
  *

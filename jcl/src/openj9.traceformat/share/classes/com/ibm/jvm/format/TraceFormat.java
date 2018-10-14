@@ -220,7 +220,7 @@ final public class TraceFormat
 				"  ThreadID         TP id  Type         TraceEntry ");
 		expectedRecords = 0;
 
-		// initialise statics in other classes
+		// initialize statics in other classes
 		Util.initStatics();
 		TraceArgs.initStatics();
 		TraceRecord.initStatics();
@@ -489,7 +489,7 @@ final public class TraceFormat
 
 	private void prime() throws IOException
 	{
-		/* reinitialise class variables to allow reuse */
+		/* reinitialize class variables to allow reuse */
 		globalNumberOfBuffers = 0;
 		tempThreadArray = null;
 		tracedThreads = null;
@@ -555,7 +555,7 @@ final public class TraceFormat
 				 */
 				traceRecord.processTraceBufferHeader(traceFile, (long)dataStart + (long)j * (long)bufferSize, bufferSize);
 
-				Long threadID = new Long(traceRecord.getThreadIDAsLong());
+				Long threadID = Long.valueOf(traceRecord.getThreadIDAsLong());
 				if (listOfThreadBuffers.containsKey(threadID)) {
 					TraceThread buffersForThread = (TraceThread) listOfThreadBuffers
 							.get(threadID);
@@ -676,7 +676,7 @@ final public class TraceFormat
 			tracePointsFormatted++;
 
 			threadID = tp.getThreadID();
-			if (Util.findThreadID(new Long(threadID))) {
+			if (Util.findThreadID(Long.valueOf(threadID))) {
 				String formattedTime = tp.getFormattedTime();
 				tempTPString.append(formattedTime);
 

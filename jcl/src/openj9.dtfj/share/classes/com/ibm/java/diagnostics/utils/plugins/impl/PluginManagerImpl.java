@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2017 IBM Corp. and others
+ * Copyright (c) 2012, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,103 +55,116 @@ import com.ibm.java.diagnostics.utils.plugins.PluginManager;
 
 /**
  * Singleton manager for working with plugins.
- * 
- * @author adam
  *
+ * @author adam
  */
 public class PluginManagerImpl implements PluginManager {
-	protected final Logger logger = Logger.getLogger(PluginConstants.LOGGER_NAME);
-	protected Container cache =  new Container(null);		//this is the cache of scanned files for plugins
-	protected final ArrayList<File> pluginSearchPath = new ArrayList<File>();	//specify classloader paths by URI as this can be used by the File class and converted into a URL
+
+	protected static final Logger logger = Logger.getLogger(PluginConstants.LOGGER_NAME);
+
+	/**
+	 * the cache of scanned files for plugins
+	 */
+	protected final Container cache = new Container(null);
+
+	/**
+	 * specify classloader paths by URI as this can be used by the File class and converted into a URL
+	 */
+	protected final ArrayList<File> pluginSearchPath = new ArrayList<>();
+
 	private static PluginManagerImpl instance = null;
-	private final Set<ClassListener> listeners = new HashSet<ClassListener>();	//listeners for moving over classes
+
+	/**
+	 * listeners for moving over classes
+	 */
+	private final Set<ClassListener> listeners = new HashSet<>();
+
 	private URL[] classpath = null;
-	
+
 	public static PluginManager getPluginManager() {
-		if(instance == null) {
+		if (instance == null) {
 			instance = new PluginManagerImpl();
 		}
 		return instance;
 	}
-	
+
 	private PluginManagerImpl() {
+		super();
 		refreshSearchPath();
 	}
-		
+
 	/**
-	 * Refresh the search path. This will take it's setting in order from 
-	 * 
+	 * Refresh the search path. This will take it's setting in order from
+	 *
 	 * 1. System property : com.ibm.java.diagnostics.plugins
 	 * 2. Environment variable : com.ibm.java.diagnostics.plugins
-	 * 
+	 *
 	 */
+	@Override
 	public void refreshSearchPath() {
 		synchronized (pluginSearchPath) {
 			pluginSearchPath.clear();
-			//the search path can be set by a system property or environment variable with the sys prop taking precedence
+			// the search path can be set by a system property or environment variable
+			// with the system property taking precedence
 			String property = System.getProperty(PluginConstants.PLUGIN_SYSTEM_PROPERTY);
-			if(null == property) {
+			if (null == property) {
 				property = System.getenv(PluginConstants.PLUGIN_SYSTEM_PROPERTY);
 			}
-			if((null == property) || (property.length() == 0)) {
-				//no plugin path was specified
-				logger.fine("No system property called " + PluginConstants.PLUGIN_SYSTEM_PROPERTY + " was found");
-				return;		
+			if ((null == property) || (property.length() == 0)) {
+				// no plugin path was specified
+				logger.fine("No system property called " + PluginConstants.PLUGIN_SYSTEM_PROPERTY + " was found"); //$NON-NLS-1$ //$NON-NLS-2$
+				return;
 			}
-			logger.fine("Plugins search path = " + property);
-			//break the path up and add to classloader search path
+			logger.fine("Plugins search path = " + property); //$NON-NLS-1$
+			// break the path up and add to classloader search path
 			String[] parts = property.split(File.pathSeparator);
-			for(int i = 0; i < parts.length; i++) {
-				try {
-					String path = stripQuotesFromPath(parts[i]);
-					File file = new File(path);
-					pluginSearchPath.add(file);
-				} catch (Exception e) {
-					logger.warning("Failed to create a URI or URL from " + parts[i]);
-				}
+			for (String part : parts) {
+				String path = stripQuotesFromPath(part);
+				pluginSearchPath.add(new File(path));
 			}
 		}
 	}
 
 	private static String stripQuotesFromPath(String path) {
-		if((path.length() > 0) && (path.charAt(0) == '"')) {
-			//strip out any initial quote
+		if ((path.length() > 0) && (path.charAt(0) == '"')) {
+			// strip out any initial quote
 			path = path.substring(1);
 		}
-		if((path.length() > 0) && (path.charAt(path.length() - 1) == '"')) {
-			//strip out trailing quote
+		if ((path.length() > 0) && (path.charAt(path.length() - 1) == '"')) {
+			// strip out trailing quote
 			path = path.substring(0, path.length() - 1);
 		}
 		return path;
 	}
-	
+
 	/**
 	 * Scan the supplied plugin path to find classes set by the plugin search path and then
 	 * examine the classes to see if any of the correct interfaces and annotations are supported.
-	 * 
+	 *
 	 * This method does not support MVS on z/OS, the path needs to point to HFS locations
 	 */
+	@Override
 	public void scanForClassFiles() throws CommandException {
 		synchronized (pluginSearchPath) {
-			classpath = null;			//reset the URL classpath
-			for(File file : pluginSearchPath) {	//a path entry can be null if the URI was malformed
-				logger.fine("Scanning path " + file + " in search of plugins");
-				if(!file.exists()) {
+			classpath = null; //reset the URL classpath
+			for (File file : pluginSearchPath) { //a path entry can be null if the URI was malformed
+				logger.fine("Scanning path " + file + " in search of plugins"); //$NON-NLS-1$ //$NON-NLS-2$
+				if (!file.exists()) {
 					//log that the entry does not exist and skip
-					logger.fine(String.format("Skipping search path: %s does not exist", file.getAbsolutePath()));
+					logger.fine(String.format("Skipping search path: %s does not exist", file.getAbsolutePath())); //$NON-NLS-1$
 					continue;
 				}
-				if(file.isDirectory()) {
+				if (file.isDirectory()) {
 					scanDirectory(file);
 				} else {
 					scanFile(file);
 				}
 			}
-			
+
 			/*[IF Sidecar19-SE]*/
-			logger.fine("Scanning path jrt:/modules/openj9.dtfjview in search of plugins");
-			FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
-			Path modules = fs.getPath("modules/openj9.dtfjview");
+			logger.fine("Scanning path jrt:/modules/openj9.dtfjview in search of plugins"); //$NON-NLS-1$
+			FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/")); //$NON-NLS-1$
+			Path modules = fs.getPath("modules/openj9.dtfjview"); //$NON-NLS-1$
 			listClassFiles(modules);
 			/*[ENDIF] Sidecar19-SE */
 		}
@@ -159,36 +172,35 @@ public class PluginManagerImpl implements PluginManager {
 
 	/*[IF Sidecar19-SE]*/
 	void listClassFiles(Path path) {
-		try(Stream<Path> paths = Files.list(path)) {
+		try (Stream<Path> paths = Files.list(path).filter(filePath -> !filePath.endsWith("module-info.class"))) { //$NON-NLS-1$
 			paths.forEach(filePath -> {
-				if (!filePath.endsWith("module-info.class")) {
-					if (Files.isRegularFile(filePath)) {
-						try {
+				if (Files.isRegularFile(filePath)) {
+					try {
+						URL fileUrl = filePath.toUri().toURL();
+						if (fileUrl.getFile().endsWith(".class")) { //$NON-NLS-1$
 							InputStream is = Files.newInputStream(filePath);
-							Entry entry = examineClassFile(is, filePath.toUri().toURL());
-							if(entry != null) {
-								for(ClassListener listener : listeners) {
+							Entry entry = examineClassFile(is, fileUrl);
+							if (entry != null) {
+								for (ClassListener listener : listeners) {
 									listener.scanComplete(entry);
 								}
 							}
-						} catch (Exception e) {
-							//log and ignore exception
-							logger.log(Level.FINE, "Error occurred scanning " + filePath, e);
 						}
-					} else {
-						if (Files.isDirectory(filePath)) {
-							listClassFiles(filePath);
-						}
+					} catch (Exception e) {
+						// log and ignore exception
+						logger.log(Level.FINE, "Error occurred scanning " + filePath, e); //$NON-NLS-1$
 					}
+				} else if (Files.isDirectory(filePath)) {
+					listClassFiles(filePath);
 				}
 			});
 		} catch (IOException e) {
-			//log and ignore exception
-			logger.log(Level.FINE, "Error occurred scanning " + path, e);
-		} 
+			// log and ignore exception
+			logger.log(Level.FINE, "Error occurred scanning " + path, e); //$NON-NLS-1$
+		}
 	}
 	/*[ENDIF] Sidecar19-SE */
-	
+
 	/**
 	 * Get an entry from the cache, using generics to describe the type expected.
 	 * @param <T>
@@ -200,19 +212,18 @@ public class PluginManagerImpl implements PluginManager {
 		return (T) cache.getEntry(file);
 	}
 
-	
 	private void scanDirectory(File dir) {
-		logger.fine("Scanning directory " + dir.getAbsolutePath());
+		logger.fine("Scanning directory " + dir.getAbsolutePath()); //$NON-NLS-1$
 		File[] files = dir.listFiles();
-		for(File file : files) {
-			if(file.isDirectory()) {
+		for (File file : files) {
+			if (file.isDirectory()) {
 				scanDirectory(file);
 			} else {
 				scanFile(file);
 			}
 		}
 	}
-	
+
 	/**
 	 * Returns the file extension
 	 * @param file file to test
@@ -221,51 +232,51 @@ public class PluginManagerImpl implements PluginManager {
 	private static String getExtension(File file) {
 		String name = file.getName();
 		int pos = name.lastIndexOf('.');
-		if((-1 == pos) || (name.length() == (pos + 1))) {
-			return "";	//no extension
+		if ((-1 == pos) || (name.length() == (pos + 1))) {
+			return ""; // no extension //$NON-NLS-1$
 		} else {
 			return name.substring(pos);
 		}
 	}
-	
+
 	/**
 	 * Scans a file and determines if it can be loaded
 	 * @param file
 	 */
 	private void scanFile(File file) {
 		Entry entry = null;
-		logger.fine("Scanning file " + file.getAbsolutePath());
+		logger.fine("Scanning file " + file.getAbsolutePath()); //$NON-NLS-1$
 		String ext = getExtension(file);
-		if(ext.equals(Entry.FILE_EXT_JAR)) {
-			if(!file.getName().equalsIgnoreCase("dtfj.jar")) {
-				//mask out dtfj.jar as this will cause potentially horrible circular class references
+		if (ext.equals(Entry.FILE_EXT_JAR)) {
+			if (!file.getName().equalsIgnoreCase("dtfj.jar")) { //$NON-NLS-1$
+				// mask out dtfj.jar as this will cause potentially horrible circular class references
 				entry = examineJarFile(file);
 			}
 		}
-		if(ext.equals(Entry.FILE_EXT_CLASS)) {
+		if (ext.equals(Entry.FILE_EXT_CLASS)) {
 			entry = examineClassFile(file);
-			if(entry != null) {
-				for(ClassListener listener : listeners) {
+			if (entry != null) {
+				for (ClassListener listener : listeners) {
 					listener.scanComplete(entry);
 				}
 			}
 		}
 	}
-	
+
 	private Entry examineClassFile(File file) {
-		if(file.length() > Integer.MAX_VALUE) {
-			logger.fine("Skipping file " + file.getAbsolutePath() + " as the file size is > Integer.MAX_VALUE");
-			return null;		//skip this file
+		if (file.length() > Integer.MAX_VALUE) {
+			logger.fine("Skipping file " + file.getAbsolutePath() + " as the file size is > Integer.MAX_VALUE"); //$NON-NLS-1$ //$NON-NLS-2$
+			return null; //skip this file
 		}
 		//check to see if the class has been scanned or it's changed
 		Entry entry = getEntry(file);
-		if((entry == null) || (entry.getData() == null) || entry.hasChanged(file)) {
+		if ((entry == null) || (entry.getData() == null) || entry.hasChanged(file)) {
 			//it hasn't so scan it
 			InputStream is = null;
 			try {
 				is = new FileInputStream(file);
-				ClassInfo info = scanClassFile(is, file.toURL());
-				if(entry == null) {
+				ClassInfo info = scanClassFile(is, file.toURI().toURL());
+				if (entry == null) {
 					entry = new Entry(info.getClassname(), file);
 					cache.addEntry(entry);
 				}
@@ -280,7 +291,7 @@ public class PluginManagerImpl implements PluginManager {
 						is.close();
 					}
 				} catch (IOException e) {
-					logger.log(Level.FINE, "Error closing file " + file.getAbsolutePath(), e);
+					logger.log(Level.FINE, "Error closing file " + file.getAbsolutePath(), e); //$NON-NLS-1$
 				}
 			}
 		}
@@ -303,98 +314,110 @@ public class PluginManagerImpl implements PluginManager {
 					is.close();
 				}
 			} catch (IOException e) {
-				logger.log(Level.FINE, "Error closing file " + is, e);
+				logger.log(Level.FINE, "Error closing file " + is, e); //$NON-NLS-1$
 			}
 		}
 		return entry;
 	}
 	/*[ENDIF] Sidecar19-SE */
-	
+
 	private ClassInfo scanClassFile(InputStream file, URL url) throws IOException {
 		ClassScanner scanner = new ClassScanner(url, listeners);
 		ClassReader cr = new ClassReader(file);
 		cr.accept(scanner, 0);
 		return scanner.getClassInfo();
 	}
-	
+
 	/**
 	 * Scans all classes in the specified jar file
 	 * @param file
 	 */
 	private Entry examineJarFile(File file) {
-		logger.fine("Found jar file " + file.getAbsolutePath());
+		logger.fine("Found jar file " + file.getAbsolutePath()); //$NON-NLS-1$
 
-		//check to see if the class has been scanned or it's changed
+		// check to see if the class has been scanned or it's changed
 		Container root = getEntry(file);
-		if(root == null) {
+		if (root == null) {
 			root = new Container(file);
 			cache.addEntry(root);
 		}
-		if((root.getData() == null) || root.hasChanged(file)) {
+		if ((root.getData() == null) || root.hasChanged(file)) {
 			JarInputStream jin = null;
 			try {
 				jin = new JarInputStream(new FileInputStream(file));
-				JarEntry jarentry = null;
-				while(null != (jarentry = jin.getNextJarEntry())) {
-					if(jarentry.isDirectory() || !jarentry.getName().endsWith(".class")) {
-						//skip directories, only interested in classes
+				for (;;) {
+					JarEntry jarentry = jin.getNextJarEntry();
+					if (jarentry == null) {
+						break;
+					}
+					String entryName = jarentry.getName();
+					if (jarentry.isDirectory() || !entryName.endsWith(".class")) { //$NON-NLS-1$
+						// skip directories, only interested in classes
 						continue;
 					}
-					if(jarentry.getSize() > Integer.MAX_VALUE) {
-						logger.fine("Skipping jar entry " + jarentry.getName() + " as the uncompressed size is > Integer.MAX_VALUE");
-						continue;		//skip this entry
-					}					
-					//getNextJarEntry correctly positions the stream for sniffing. Note that sniffing does not close the stream, which is the desired behaviour
-					Entry entry = new Entry(jarentry.getName());
+					long entrySize = jarentry.getSize();
+					if (entrySize > Integer.MAX_VALUE) {
+						logger.fine("Skipping jar entry " + entryName + " as the uncompressed size is > Integer.MAX_VALUE"); //$NON-NLS-1$ //$NON-NLS-2$
+						continue; //skip this entry
+					}
+					// getNextJarEntry correctly positions the stream for sniffing.
+					// Note that sniffing does not close the stream, which is the desired behaviour.
+					Entry entry = new Entry(entryName);
 					ClassInfo info = scanClassFile(jin, entry.toURL());
 					entry.setData(info);
-					entry.setSize(jarentry.getSize());
+					entry.setSize(entrySize);
 					entry.setLastModified(jarentry.getTime());
 					root.addEntry(entry);
 				}
 			} catch (IOException e) {
-				logger.log(Level.FINE, "Error reading from file " + file.getAbsolutePath(), e);
+				logger.log(Level.FINE, "Error reading from file " + file.getAbsolutePath(), e); //$NON-NLS-1$
 			} finally {
-				if(null != jin) {
+				if (null != jin) {
 					try {
-						jin.close();		
+						jin.close();
 					} catch (IOException e) {
-						logger.log(Level.FINE, "Error closing file " + file.getAbsolutePath(), e);
+						logger.log(Level.FINE, "Error closing file " + file.getAbsolutePath(), e); //$NON-NLS-1$
 					}
 				}
 			}
-			root.setData(new Object());		//doesn't matter what the root data is set to, it acts as a marker to indicate that the jar file has been scanned
+			// doesn't matter what the root data is set to, it acts as a marker
+			// to indicate that the jar file has been scanned
+			root.setData(new Object());
 		}
-		for(Entry entry : root.getEntries()) {
-			for(ClassListener listener : listeners) {
+		for (Entry entry : root.getEntries()) {
+			for (ClassListener listener : listeners) {
 				listener.scanComplete(entry);
 			}
 		}
 		return root;
 	}
 
+	@Override
 	public Container getCache() {
 		synchronized (pluginSearchPath) {
 			return cache;
 		}
 	}
 
+	@Override
 	public boolean addListener(ClassListener listener) {
 		synchronized (pluginSearchPath) {
 			//change set operations so that additions replace an existing instance
-			if(listeners.contains(listener)) {
+			if (listeners.contains(listener)) {
 				listeners.remove(listener);
 			}
 			return listeners.add(listener);
 		}
 	}
 
+	@Override
 	public boolean removeListener(ClassListener listener) {
 		synchronized (pluginSearchPath) {
 			return listeners.remove(listener);
 		}
 	}
 
+	@Override
 	public Set<ClassListener> getListeners() {
 		return listeners;
 	}
@@ -402,42 +425,45 @@ public class PluginManagerImpl implements PluginManager {
 	/*
 	 * (non-Javadoc)
 	 * @see com.ibm.java.diagnostics.utils.pluginsng.PluginManager#getClasspath()
-	 * 
+	 *
 	 * The classpath is calculated as a mixture of single class and jar entries.
-	 * All entries from the cache root are either files or jar files. The URLs 
-	 * need to be constructed either to point directly at the jar file or 
+	 * All entries from the cache root are either files or jar files. The URLs
+	 * need to be constructed either to point directly at the jar file or
 	 * relative to the path required to pick up the single jar entry.
 	 */
+	@Override
 	public URL[] getClasspath() {
 		synchronized (pluginSearchPath) {
-			if(classpath != null) {
-				return classpath;		//path already calculated
-			}
-			final Set<URL> urls = new HashSet<URL>();		//use an intermediate set so that duplicates are not created
-			for(Entry entry : cache.getEntries()) {
-				try {
-					if(entry instanceof Container) {
-						//this is a jar file so add it directly
-						urls.add(entry.getFile().toURL());
-					} else {
-						//this is a class file, so need to work out the relative root to add
-						ClassInfo info = entry.getData();
-						String name = info.getClassname();
-						int pos = name.indexOf('.', 0);
-						File file = entry.getFile().getParentFile();
-						while(pos != -1) {
-							file = file.getParentFile();
-							pos = name.indexOf('.', pos + 1);
+			// path not yet calculated?
+			if (classpath == null) {
+				// use an intermediate set so that duplicates are not created
+				final Set<URL> urls = new HashSet<>();
+				for (Entry entry : cache.getEntries()) {
+					try {
+						// some entries won't have an associated file
+						File file = entry.getFile();
+						if ((file != null) && !(entry instanceof Container)) {
+							// this may be a class file, so need to work out the relative root to add
+							ClassInfo info = entry.getData();
+							String name = info.getClassname();
+							int pos = -1;
+							do {
+								file = file.getParentFile();
+								pos = name.indexOf('.', pos + 1);
+							} while ((file != null) && (pos != -1));
 						}
-						urls.add(file.toURL());
+						if (file != null) {
+							urls.add(file.toURI().toURL());
+						}
+					} catch (Exception e) {
+						logger.log(Level.FINE, "Error setting classpath for plugin " + entry.getName(), e); //$NON-NLS-1$
 					}
-				} catch (Exception e) {
-					logger.log(Level.FINE, "Error setting classpath for plugin " + entry.getName(), e);
 				}
+				classpath = new URL[urls.size()];
+				urls.toArray(classpath);
 			}
-			classpath = new URL[urls.size()];
-			urls.toArray(classpath);
 			return classpath;
 		}
 	}
+
 }

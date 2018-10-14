@@ -1,0 +1,855 @@
+/*******************************************************************************
+ * Copyright (c) 2018, 2018 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ *******************************************************************************/
+
+def VARIABLES
+
+/*
+* Parses the Jenkins job variables file and populates the VARIABLES collection.
+* If a variables file is not set, parse the default variables file.
+* The variables file is in YAML format and contains configuration settings
+* required to compile and test the OpenJ9 extensions for OpenJDK on multiple
+* platforms.
+*/
+def parse_variables_file(){
+    DEFAULT_VARIABLE_FILE = "buildenv/jenkins/variables/defaults.yml"
+
+    // check if a variable file is passed as a Jenkins build parameter
+    // if not use default configuration settings
+    VARIABLE_FILE = get_variables_file()
+    if (!VARIABLE_FILE) {
+        VARIABLE_FILE = "${DEFAULT_VARIABLE_FILE}"
+    }
+
+    if (!fileExists("${VARIABLE_FILE}")) {
+        error("Missing variable file: ${VARIABLE_FILE}")
+    }
+
+    echo "Using variables file: ${VARIABLE_FILE}"
+    VARIABLES = readYaml file: "${VARIABLE_FILE}"
+}
+
+/*
+* Fetch the user provided variable file.
+*/
+def get_variables_file() {
+    VARIABLE_FILE = params.VARIABLE_FILE
+    VENDOR_BRANCH = params.VENDOR_BRANCH
+    VENDOR_REPO = params.VENDOR_REPO
+    VENDOR_CREDENTIALS_ID = params.VENDOR_CREDENTIALS_ID
+    if (VARIABLE_FILE && VENDOR_REPO && VENDOR_BRANCH) {
+        echo "VARIABLE_FILE:${VARIABLE_FILE}"
+        echo "VENDOR_REPO:${VENDOR_REPO}"
+        echo "VENDOR_BRANCH:${VENDOR_BRANCH}"
+        echo "VENDOR_CREDENTIALS_ID:${VENDOR_CREDENTIALS_ID}"
+        if (VENDOR_CREDENTIALS_ID) {
+            sshagent(credentials:[VENDOR_CREDENTIALS_ID]) {
+                checkout_file()
+            }
+        } else {
+            checkout_file()
+        }
+    }
+    return VARIABLE_FILE
+}
+
+/*
+* Check out the user variable file.
+*/
+def checkout_file() {
+    sh "git config remote.vendor.url ${VENDOR_REPO}"
+    sh "git config remote.vendor.fetch +refs/heads/${VENDOR_BRANCH}:refs/remotes/vendor/${VENDOR_BRANCH}"
+    sh "git fetch vendor"
+    sh "git checkout vendor/${VENDOR_BRANCH} -- ${VARIABLE_FILE}"
+}
+
+/*
+* Sets the Git repository URLs and branches for all sources required to build
+* the OpenJ9 extensions for OpenJDK.
+* Initializes variables to the value passed as build parameters.
+* When no values are available as build parameters set them to the values
+* available with the variable file otherwise set them to empty strings.
+*/
+def set_repos_variables(RELEASES=null) {
+    // check if passed as Jenkins build parameters
+    // if not set as params, check the variables file
+
+    if (!RELEASES) {
+        // set variables (as strings) for a single OpenJDK release
+
+        // fetch OpenJDK repo and branch from variables file as a map
+        def OPENJDK_INFO = get_openjdk_info(SDK_VERSION)
+
+        OPENJDK_REPO = OPENJDK_INFO['REPO']
+        OPENJDK_BRANCH = OPENJDK_INFO['BRANCH']
+        OPENJDK_SHA = OPENJDK_INFO['SHA']
+
+        echo "Using OPENJDK_REPO = ${OPENJDK_REPO} OPENJDK_BRANCH = ${OPENJDK_BRANCH} OPENJDK_SHA = ${OPENJDK_SHA}"
+
+        // set OpenJ9 and OMR repos, branches and SHAs
+        set_extensions_variables()
+
+     } else {
+        // set OpenJDK variables (as maps) for given releases
+        RELEASES.each { RELEASE ->
+            // fetch OpenJDK repo and branch from variables file as a map
+            def OPENJDK_INFO = get_openjdk_info(RELEASE, RELEASES)
+
+            OPENJDK_REPO[RELEASE] = OPENJDK_INFO['REPO']
+            OPENJDK_BRANCH[RELEASE] = OPENJDK_INFO['BRANCH']
+            OPENJDK_SHA[RELEASE] = OPENJDK_INFO['SHA']
+        }
+
+        echo "Using OPENJDK_REPO = ${OPENJDK_REPO.toString()} OPENJDK_BRANCH = ${OPENJDK_BRANCH.toString()} OPENJDK_SHA = ${OPENJDK_SHA.toString()}"
+
+        // default URL and branch for the OpenJ9 and OMR repositories (no entries in defaults.yml)
+        EXTENSIONS = ['OpenJ9': ['repo': 'https://github.com/eclipse/openj9.git',     'branch': 'master'],
+                      'OMR'   : ['repo': 'https://github.com/eclipse/openj9-omr.git', 'branch': 'openj9']]
+
+        // set OpenJ9 and OMR repos, branches and SHAs
+        set_extensions_variables(EXTENSIONS)
+    }
+}
+
+/*
+* Initializes OpenJDK repository URL, branch, SHA for given release and returns
+* them as a map.
+* Build parameters take precedence over custom variables (see variables file).
+* Throws an error if repository URL or branch are not provided. 
+*/
+def get_openjdk_info(SDK_VERSION, RELEASES=null) {
+    // initialize OPENJDK_INFO map with values from variables file
+    def OPENJDK_INFO = ['REPO'  : convert_url(get_value(VARIABLES.openjdk_repo, SDK_VERSION)), 
+                        'BRANCH': get_value(VARIABLES.openjdk_branch, SDK_VERSION),
+                        'SHA'   : '']
+
+    def PARAM_NAME = "OPENJDK"
+    if (RELEASES) {
+        PARAM_NAME += SDK_VERSION
+    }
+
+    // check if any OPENJDK* build parameters are provided
+    // and override OPENJDK_INFO map with those values
+    OPENJDK_INFO.keySet().each { KEY ->
+        def VALUE = params."${PARAM_NAME}_${KEY}"
+
+        if (VALUE) {
+            // build parameter provided, now override map value
+            if (KEY == 'REPO') { 
+                OPENJDK_INFO[KEY] = convert_url(VALUE)
+            } else {
+                OPENJDK_INFO[KEY] = VALUE
+            }
+        }
+
+        if ((KEY != 'SHA') && (!OPENJDK_INFO[KEY])) {
+            error("Missing ${PARAM_NAME}_${KEY}!")
+        }
+    }
+
+    return OPENJDK_INFO
+}
+
+/*
+* Initializes the OpenJ9 and OMR repositories variables with values from
+* the variables file if they are not set as build parameters. 
+* If no values available in the variable file then initialize these variables
+* with default values, otherwise set them to empty strings (to avoid 
+* downstream builds errors - Jenkins build parameters should not be null).
+*/
+def set_extensions_variables(defaults=null) {
+    OPENJ9_REPO = params.OPENJ9_REPO
+    if (!OPENJ9_REPO) {
+        // set it to the value set into the variable file
+        OPENJ9_REPO = VARIABLES.openj9_repo
+    }
+
+    if (!OPENJ9_REPO) {
+        OPENJ9_REPO = ''
+        if (defaults) {
+            OPENJ9_REPO = defaults.get('OpenJ9').get('repo')
+        }
+    }
+    OPENJ9_REPO = convert_url(OPENJ9_REPO)
+
+    OPENJ9_BRANCH = params.OPENJ9_BRANCH
+    if (!OPENJ9_BRANCH) {
+         OPENJ9_BRANCH = VARIABLES.openj9_branch
+    }
+
+    if (!OPENJ9_BRANCH) {
+        OPENJ9_BRANCH = ''
+        if (defaults) {
+            OPENJ9_BRANCH = defaults.get('OpenJ9').get('branch')
+        }
+    }
+
+    OPENJ9_SHA = params.OPENJ9_SHA
+    if (!OPENJ9_SHA) {
+        OPENJ9_SHA = ''
+    }
+
+    OMR_REPO = params.OMR_REPO
+    if (!OMR_REPO) {
+        // set it to the value set into the variable file
+        OMR_REPO = VARIABLES.omr_repo
+    }
+
+    if (!OMR_REPO) {
+        OMR_REPO = ''
+        if (defaults) {
+            OMR_REPO = defaults.get('OMR').get('repo')
+        }
+    }
+    OMR_REPO = convert_url(OMR_REPO)
+
+    OMR_BRANCH = params.OMR_BRANCH
+    if (!OMR_BRANCH) {
+        // set it to the value set into the variable file
+        OMR_BRANCH = VARIABLES.omr_branch
+    }
+
+    if (!OMR_BRANCH) {
+        OMR_BRANCH = ''
+        if (defaults) {
+            OMR_BRANCH = defaults.get('OMR').get('branch')
+        }
+    }
+
+    OMR_SHA = params.OMR_SHA
+    if (!OMR_SHA) {
+        OMR_SHA = ''
+    }
+
+    echo "Using OPENJ9_REPO = ${OPENJ9_REPO} OPENJ9_BRANCH = ${OPENJ9_BRANCH} OPENJ9_SHA = ${OPENJ9_SHA}"
+    echo "Using OMR_REPO = ${OMR_REPO} OMR_BRANCH = ${OMR_BRANCH} OMR_SHA = ${OMR_SHA}"
+}
+
+/*
+* Returns the value of the element identified by the given key or an empty string
+* if the map contains no mapping for the key.
+*/
+def get_value(MAP, KEY) {
+    if (MAP != null) {
+        for (item in MAP) {
+            if ("${item.key}" == "${KEY}") {
+                return "${item.value}"
+            }
+        }
+    }
+
+    return ''
+}
+
+/*
+* Returns Jenkins credentials ID required to connect to GitHub using
+* the ssh protocol.
+* Returns empty string if no values is provided in the variables file (not
+* required for public repositories).
+*/
+def get_git_user_credentials_id() {
+    return get_user_credentials_id("git")
+}
+
+/*
+* Returns Jenkins credentials ID required to connect to GitHub using
+* API (username & password)
+* Returns empty string if no values is provided in the variables file
+*/
+def get_github_user_credentials_id() {
+    return get_user_credentials_id("github")
+}
+
+/*
+* Returns Jenkins credentials ID from the variable file for given key.
+*/
+def get_user_credentials_id(KEY) {
+    if (VARIABLES.credentials && VARIABLES.credentials."${KEY}") {
+        return VARIABLES.credentials."${KEY}"
+    }
+
+    return ''
+}
+
+/*
+* Sets the NODE variable to the labels identifying nodes by platform suitable
+* to run a Jenkins job.
+* Fetches the labels from the variables file when the node is not set as build
+* parameter.
+* The node's labels could be a single label - e.g. label1 - or a boolean 
+* expression - e.g. label1 && label2 || label3. 
+*/
+def set_node(job_type) {
+    // fetch labels for given platform/spec
+    NODE = ''
+    for (key in ['NODE', 'LABEL']) {
+        // check the build parameters
+        if (params.containsKey(key)) {
+            NODE = params.get(key)
+            break
+        }
+    }
+
+    if (!NODE) {
+        // fetch from variables file
+        NODE = get_value(VARIABLES."${SPEC}".node_labels."${job_type}", SDK_VERSION)
+        if (!NODE) {
+            error("Missing ${job_type} NODE!")
+        }
+    }
+}
+
+/*
+* Set the RELEASE variable with the value provided in the variables file.
+*/
+def set_release() {
+    RELEASE = get_value(VARIABLES."${SPEC}".release, SDK_VERSION)
+}
+
+/*
+* Set the JDK_FOLDER variable with the value provided in the variables file.
+*/
+def set_jdk_folder() {
+    JDK_FOLDER = get_value(VARIABLES.jdk_image_dir, SDK_VERSION)
+}
+
+/*
+* Sets variables for a job that builds the OpenJ9 extensions for OpenJDK for a
+* given platform and version.
+*/
+def set_build_variables() {
+    set_repos_variables()
+
+    // fetch values per spec and Java version from the variables file
+    BOOT_JDK = get_value(VARIABLES."${SPEC}".boot_jdk, SDK_VERSION)
+    FREEMARKER = VARIABLES."${SPEC}".freemarker
+    EXTRA_GETSOURCE_OPTIONS = get_value(VARIABLES.extra_getsource_options, SDK_VERSION)
+    EXTRA_CONFIGURE_OPTIONS = get_value(VARIABLES."${SPEC}".extra_configure_options, SDK_VERSION)
+    EXTRA_MAKE_OPTIONS = get_value(VARIABLES."${SPEC}".extra_make_options, SDK_VERSION)
+    OPENJDK_REFERENCE_REPO = VARIABLES."${SPEC}".openjdk_reference_repo
+    set_release()
+    set_jdk_folder()
+
+    // set variables for the build environment configuration
+    // check job parameters, if not provided default to variables file
+    BUILD_ENV_VARS = params.BUILD_ENV_VARS
+    if (!BUILD_ENV_VARS && VARIABLES."${SPEC}".build_env) {
+        BUILD_ENV_VARS = get_value(VARIABLES."${SPEC}".build_env.vars, SDK_VERSION)
+    }
+
+    BUILD_ENV_VARS_LIST = []
+    if (BUILD_ENV_VARS) {
+        // expect BUILD_ENV_VARS to be a space separated list of environment variables
+        // e.g. <variable1>=<value1> <variable2>=<value2> ... <variableN>=<valueN>
+        // convert space separated list to array
+        BUILD_ENV_VARS_LIST.addAll(BUILD_ENV_VARS.tokenize(' '))
+    }
+
+    EXTRA_BUILD_ENV_VARS = params.EXTRA_BUILD_ENV_VARS
+    if (EXTRA_BUILD_ENV_VARS) {
+        BUILD_ENV_VARS_LIST.addAll(EXTRA_BUILD_ENV_VARS.tokenize(' '))
+    }
+
+    BUILD_ENV_CMD = params.BUILD_ENV_CMD
+    if (!BUILD_ENV_CMD && VARIABLES."${SPEC}".build_env) {
+        BUILD_ENV_CMD = get_value(VARIABLES."${SPEC}".build_env.cmd, SDK_VERSION)
+    }
+
+    if (BUILD_ENV_CMD) {
+        // BUILD_ENV_CMD is used as preamble command
+        BUILD_ENV_CMD += ' && '
+    } else {
+        BUILD_ENV_CMD = ''
+    }
+
+    echo "Using BUILD_ENV_CMD = ${BUILD_ENV_CMD}, BUILD_ENV_VARS_LIST = ${BUILD_ENV_VARS_LIST.toString()}"
+}
+
+def set_sdk_variables() {
+    DATESTAMP = get_date()
+    SDK_FILENAME = "OpenJ9-JDK${SDK_VERSION}-${SPEC}-${DATESTAMP}.tar.gz"
+    TEST_FILENAME = "native-test-libs.tar.gz"
+    echo "Using SDK_FILENAME = ${SDK_FILENAME}"
+    echo "Using TEST_FILENAME = ${TEST_FILENAME}"
+}
+
+def get_date() {
+    //Returns a string for the current date YYYYMMDD-HHMMSS
+    return sh (
+        script: 'date +%Y%m%d-%H%M%S',
+        returnStdout: true
+    ).trim()
+}
+
+/*
+* Sets variables for a test job on a given platform.
+* Note that JAVA_BIN is set separately within buildenv/jenkins/common/test
+*/
+def set_test_variables() {
+    set_release()
+    set_jdk_folder()
+    
+    if ( SPEC ==~ /.*valhalla.*/) {
+        JAVA_VERSION = "Valhalla"
+    } else {
+        JAVA_VERSION = "SE" + "${SDK_VERSION}" + "0"
+    }
+    TEST_DEPENDENCIES_JOB_NAME = VARIABLES.test_dependencies_job_name
+}
+
+/*
+* Set TESTS_TARGETS, indicating the level of testing. 
+*/
+def set_test_targets() {
+    TESTS_TARGETS = params.TESTS_TARGETS
+    if (!TESTS_TARGETS) {
+        // set default TESTS_TARGETS for pipeline job (run all tests)
+        TESTS_TARGETS = "_sanity,_extended"
+    }
+}
+
+def set_slack_channel() {
+    SLACK_CHANNEL = params.SLACK_CHANNEL
+    if (!SLACK_CHANNEL && (!params.PERSONAL_BUILD || params.PERSONAL_BUILD != 'true')) {
+        SLACK_CHANNEL = VARIABLES.slack_channel
+    }
+}
+
+def set_artifactory_config() {
+    ARTIFACTORY_SERVER = VARIABLES.artifactory_server
+    if (ARTIFACTORY_SERVER) {
+        env.ARTIFACTORY_SERVER = ARTIFACTORY_SERVER
+        env.ARTIFACTORY_REPO = VARIABLES.artifactory_repo
+        // Set Creds to env so that the parent pipeline can retireve them.
+        env.ARTIFACTORY_CREDS = VARIABLES.artifactory_creds
+        env.ARTIFACTORY_NUM_ARTIFACTS = VARIABLES.artifactory_num_artifacts
+        echo "Using artifactory server/repo: ${ARTIFACTORY_SERVER} / ${ARTIFACTORY_REPO}"
+        echo "Using artifactory credentials: ${ARTIFACTORY_CREDS}"
+        echo "Keeping '${ARTIFACTORY_NUM_ARTIFACTS}' artifacts"
+    }
+}
+
+def set_job_properties(JOB_TYPE) {
+    /*************************
+    * Setup Jenkins Properties
+    * - Parameters
+    * - Triggers
+    * - Build discarder
+    *
+    * Three main build types
+    * - Build*
+    * - PullRequest*
+    * - Pipeline*
+    *   - Parameters:
+    *       - Build:
+    *           strings: NODE, SDK_FILENAME
+    *       - Build or Pipeline:
+    *           strings: OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA,
+    *                    OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA,
+    *                    OMR_REPO, OMR_BRANCH, OMR_SHA,
+    *                    VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID
+    *       - Build or PR or Pipeline
+    *           Choices: SDK_VERSION, PLATFORM
+    *       - PR or Pipeline
+    *           Choices: TESTS_TARGETS
+    *   - Build Discarder
+    *       - Ideally get values from variable file
+    *   - Trigger
+    *       - Build/Pipeline - no trigger
+    *       - PR: GH Trigger
+    ****************************/
+
+    if (JOB_TYPE == "build" || JOB_TYPE == "pipeline") {
+        // Start with just supporting Build and Pipeline jobs
+        // PR jobs will need some playing to get the trigger figured out
+        // Also regarding PR builds, see OpenJ9 Issue #2728
+        // This IF can be removed once we support PR job types (all job types)
+
+        echo "Configure Jenkins job PROPERTIES"
+        /********************
+        * BUILD DISCARDER
+        ********************/
+
+        echo "Configure Build Discarder..."
+        NUM_BUILDS = get_value(VARIABLES.build_discarder.logs, JOB_TYPE)
+        NUM_ARTIFACTS = get_value(VARIABLES.build_discarder.artifacts, JOB_TYPE)
+        echo "NUM_BUILDS:'${NUM_BUILDS}"
+        echo "NUM_ARTIFACTS:'${NUM_ARTIFACTS}"
+
+        /********************
+        * PARAMETERS
+        ********************/
+
+        // All build types
+
+        // If SDK_VERSION parameter is already set, assume it is correct (helps with Sandbox builds)
+        // Else parse the JOB_NAME to determine the verison
+        SDK_VERSION = params.SDK_VERSION
+        if (!SDK_VERSION) {
+            echo "Parse build name to determine SDK_VERSION..."
+            // Eg - Build-JDK8-linux_390-64_cmprssptrs
+            //    - Pipeline-Build-Test-JDK8-linux_390-64_cmprssptrs
+            //    - PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9
+            // Index of JDK + 3 until index of next '-'
+            INDEX_START_SDK_VERSION = JOB_NAME.indexOf('JDK')+3
+            SDK_VERSION = JOB_NAME.substring(INDEX_START_SDK_VERSION,JOB_NAME.indexOf('-',INDEX_START_SDK_VERSION))
+        }
+        echo "SDK_VERSION:'${SDK_VERSION}'"
+
+        PLATFORM = params.PLATFORM
+        if (!PLATFORM) {
+            echo "Parse build name to determine PLATFORM..."
+            // Assuming consistent naming convention
+            // Substring start from index of 1 after '-' starting at index of 'JDK', go until the end (no end index) excpet for PR builds
+            // Build-JDK8-linux_390-64_cmprssptrs
+            // PullRequest-Compile-JDK-linux_x86-64-OpenJ9
+            // Pipeline-Build-Test-JDK10-aix_ppc-64_cmprssptrs
+            PLATFORM = JOB_NAME.substring(JOB_NAME.indexOf('-',JOB_NAME.indexOf('JDK'))+1)
+            if (JOB_TYPE == "pullRequest") {
+                // PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9
+                // Pipeline PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJDK9
+                PLATFORM = PLATFORM.substring(0,PLATFORM.indexOf('Open')-1)
+            }
+        }
+        echo "PLATFORM:'${PLATFORM}'"
+
+        PARAMETERS = []
+
+        // All build types
+        PARAMETERS.add(choice(name: 'SDK_VERSION', choices: ["${SDK_VERSION}"], description: ''))
+        PARAMETERS.add(choice(name: 'PLATFORM', choices: ["${PLATFORM}"], description: ''))
+
+        // Pipeline or build
+        if (JOB_TYPE == 'pipeline' || JOB_TYPE == 'build') {
+            // NOTE: The following 4 DEFAULT variables can be configured in the Jenkins Global Config.
+            // This allows us to know what the default values are without being told explicitly.
+            // These DEFAULT values are typically constant per Jenkins Server.
+            if (!env.VARIABLE_FILE_DEFAULT) {
+                VARIABLE_FILE_DEFAULT = ''
+            }
+            if (!env.VENDOR_REPO_DEFAULT) {
+                VENDOR_REPO_DEFAULT = ''
+            }
+            if (!env.VENDOR_BRANCH_DEFAULT) {
+                VENDOR_BRANCH_DEFAULT = ''
+            }
+            if (!env.VENDOR_CREDENTIALS_ID_DEFAULT) {
+                VENDOR_CREDENTIALS_ID_DEFAULT = ''
+            }
+            add_string_params([
+                'OPENJDK_REPO':'',
+                'OPENJDK_BRANCH':'',
+                'OPENJDK_SHA':'',
+                'OPENJ9_REPO':'',
+                'OPENJ9_BRANCH':'',
+                'OPENJ9_SHA':'',
+                'OMR_REPO':'',
+                'OMR_BRANCH':'',
+                'OMR_SHA':'',
+                'VARIABLE_FILE':"${VARIABLE_FILE_DEFAULT}",
+                'VENDOR_REPO':"${VENDOR_REPO_DEFAULT}",
+                'VENDOR_BRANCH':"${VENDOR_BRANCH_DEFAULT}",
+                'VENDOR_CREDENTIALS_ID':"${VENDOR_CREDENTIALS_ID_DEFAULT}"])
+        }
+
+        // Pipeline or PR
+        if (JOB_TYPE == 'pipeline' || JOB_TYPE == 'pullRequest') {
+            add_string_params(['TESTS_TARGETS':''])
+        }
+
+        if (JOB_TYPE == 'build') {
+            add_string_params(['NODE':''])
+        }
+
+        if (JOB_TYPE == 'pipeline') {
+            add_string_params([
+                'BUILD_NODE':'',
+                'TEST_NODE':'',
+                'PERSONAL_BUILD':'',
+                'SLACK_CHANNEL':''])
+        }
+
+        /********************
+        * TRIGGER
+        ********************/
+
+        // No trigger for Build and Pipeline jobs
+        // TODO PR builds will need Github trigger setup
+
+        /********************
+        * SETUP PROPERTIES
+        ********************/
+
+        properties([
+            buildDiscarder(logRotator(
+                artifactDaysToKeepStr: '',
+                artifactNumToKeepStr: NUM_ARTIFACTS,
+                daysToKeepStr: '',
+                numToKeepStr: NUM_BUILDS)),
+            parameters(PARAMETERS)
+        ])
+    }
+}
+
+/*
+* Adds a String type Parameter
+* Takes a Key-Value map which are used as the param name and default value
+*/
+def add_string_params(PARAMETERS_TO_ADD) {
+    PARAMETERS_TO_ADD.each { key, value ->
+        PARAMETERS.add(string(name: key, defaultValue: value, description: '', trim: true))
+    }
+}
+/*
+* Initializes all of the required variables for a Jenkins job by given job type.
+*/
+def set_job_variables(job_type) {
+
+    // initialize VARIABLES
+    parse_variables_file()
+
+    // fetch credentials required to connect to GitHub using ssh protocol
+    set_user_credentials()
+
+    // Setup Jenkins Job Parameters
+    set_job_properties(job_type)
+
+    // check mandatory parameters if any
+    try {
+        validate_arguments(ARGS)
+    } catch(MissingPropertyException e){
+        // ignore when ARGS is not set
+    }
+
+    switch (job_type) {
+        case "build":
+            // set the node the Jenkins build would run on
+            set_node('build')
+            // set variables for a build job
+            set_build_variables()
+            set_sdk_variables()
+            set_artifactory_config()
+            break
+        case "test":
+            // set the node the tests would run on
+            set_node('test')
+            // set variables for a test job
+            set_test_variables()
+            break
+        case "pullRequest":
+            // set the node the pull request job would run on
+            set_node('build')
+            // set variables for a pull request job that builds an SDK
+            set_build_variables()
+            set_sdk_variables()
+            set_test_variables()
+            break
+        case "pipeline":
+            // set variables for a pipeline job
+            set_repos_variables()
+            set_vendor_variables()
+            set_test_targets()
+            set_slack_channel()
+            break
+        case "wrapper":
+            //set variable for pipeline all/personal
+            set_repos_variables(BUILD_RELEASES)
+            break
+        default:
+            error("Unknown Jenkins job type!")
+    }
+}
+
+/*
+* Checks if mandatory arguments are set.
+*/
+def validate_arguments(ARGS) {
+    for (arg in ARGS) {
+        if (!params.get(arg)) {
+            error("Must specify ${arg}")
+        }
+
+        if (arg == 'PLATFORM') {
+            // set SPEC - a groovy variable - here
+            // SPEC cannot be a build parameter because build parameters are
+            // exported as environment variables and it will overwrite the
+            // make SPEC variable set in the configure phase in build.build() method
+            SPEC = params.get(arg)
+        }
+    }
+}
+
+/*
+* Prints the error stack trace.
+*/
+def printStackTrace(e) {
+    def writer = new StringWriter()
+    e.printStackTrace(new PrintWriter(writer))
+    echo e.toString()
+}
+
+/*
+* Sets USER_CREDENTIALS_ID to the value provided in the variables file or an
+* empty string.
+*/
+def set_user_credentials() {
+    USER_CREDENTIALS_ID = get_git_user_credentials_id()
+    if (!USER_CREDENTIALS_ID) {
+         USER_CREDENTIALS_ID = ''
+    }
+     GITHUB_API_CREDENTIALS_ID = get_github_user_credentials_id()
+     if (!GITHUB_API_CREDENTIALS_ID) {
+         GITHUB_API_CREDENTIALS_ID = ''
+    }
+}
+
+/*
+* Converts from SSH to HTTPS protocol the public Git repository URL and from
+* HTTPS to SSH the private repositories.
+*/
+def convert_url(value) {
+    if ((value && value.contains('git@')) && !USER_CREDENTIALS_ID) {
+        // external repos, no credentials, use HTTPS protocol
+        return value.replace(':', '/').replace('git@', 'https://')
+    }
+
+    if ((value && value.startsWith('https://')) && USER_CREDENTIALS_ID) {
+        // private repos, have credentials, use SSH protocol
+        return value.replace('https://', 'git@').replaceFirst('/', ':')
+    }
+
+    return value
+}
+
+/*
+* Checks for vendor test sources and initializes variables required to clone the
+* vendor test source Git repositories. Uses variable files when build parameters
+* are not provided.
+*/
+def set_vendor_variables() {
+    VENDOR_TEST_REPOS_MAP = [:]
+    VENDOR_TEST_BRANCHES_MAP = [:]
+    VENDOR_TEST_DIRS_MAP = [:]
+    VENDOR_TEST_SHAS_MAP = [:]
+
+    // initialize variables from build parameters
+    // VENDOR_TEST* build parameters are comma separated string parameters
+    // convert each comma separated string parameter to array
+    def branches = []
+    if (params.VENDOR_TEST_BRANCHES) {
+        branches.addAll(params.VENDOR_TEST_BRANCHES.tokenize(','))
+    }
+
+    def shas = []
+    if (params.VENDOR_TEST_SHAS) {
+        shas.addAll(params.VENDOR_TEST_SHAS.tokenize(','))
+    }
+
+    def dirs = []
+    if (params.VENDOR_TEST_DIRS) {
+        dirs.addAll(params.VENDOR_TEST_DIRS.tokenize(','))
+    }
+
+    BUILD_LIST = params.BUILD_LIST
+    if (!BUILD_LIST) {
+        BUILD_LIST = ''
+    }
+
+    if (params.VENDOR_TEST_REPOS) {
+        // populate the VENDOR_TEST_* maps
+
+        params.VENDOR_TEST_REPOS.tokenize(',').eachWithIndex { repoURL, index ->
+            repoURL = repoURL.trim()
+            REPO_NAME = get_repo_name_from_url(repoURL)
+            VENDOR_TEST_REPOS_MAP[REPO_NAME] = repoURL
+
+            if (branches[index]) {
+                VENDOR_TEST_BRANCHES_MAP[REPO_NAME] = branches[index].trim()
+            } else {
+                error("Missing branch for ${repoURL} from VENDOR_TEST_BRANCHES parameter")
+            }
+
+            if (dirs[index]) {
+                VENDOR_TEST_DIRS_MAP[REPO_NAME] = dirs[index].trim()
+            }
+
+            if (shas[index]) {
+                VENDOR_TEST_SHAS_MAP[REPO_NAME] = shas[index].trim()
+            }
+        }
+    } else {
+        // fetch from variables file
+
+        if (VARIABLES.vendor_source && VARIABLES.vendor_source.test) {
+            // parse the vendor source multi-map 
+            // and populate the VENDOR_TEST_* maps
+
+             VARIABLES.vendor_source.test.each { entry ->
+                REPO_NAME = get_repo_name_from_url(entry.get('repo'))
+
+                VENDOR_TEST_REPOS_MAP[REPO_NAME] = entry.get('repo')
+                VENDOR_TEST_BRANCHES_MAP[REPO_NAME] = entry.get('branch')
+                VENDOR_TEST_DIRS_MAP[REPO_NAME] = entry.get('directory')
+
+                if (entry.get('build_list')) {
+                    // a comma separated list of vendor tests projects
+                    if (BUILD_LIST) {
+                        BUILD_LIST += ","
+                    }
+                    BUILD_LIST += entry.get('build_list').join(',')
+               }
+            }
+        }
+    }
+
+    // the downstream job expects VENDOR_TEST* parameters to be comma separated strings
+    // convert VENDOR_TEST* maps to strings
+    if (VENDOR_TEST_REPOS_MAP) {
+        VENDOR_TEST_REPOS = VENDOR_TEST_REPOS_MAP.values().join(',')
+    } else {
+        VENDOR_TEST_REPOS = ''
+    }
+
+    if (VENDOR_TEST_BRANCHES_MAP) {
+        VENDOR_TEST_BRANCHES = VENDOR_TEST_BRANCHES_MAP.values().join(',')
+    } else {
+        VENDOR_TEST_BRANCHES = ''
+    }
+
+    if (!VENDOR_TEST_SHAS_MAP) {
+        VENDOR_TEST_SHAS = ''
+    }
+
+    if (VENDOR_TEST_DIRS_MAP) {
+        VENDOR_TEST_DIRS = VENDOR_TEST_DIRS_MAP.values().join(',')
+    } else {
+        VENDOR_TEST_DIRS = ''
+    }
+}
+
+/*
+*  Extracts the Git repository name from URL and converts it to upper case.
+*/
+def get_repo_name_from_url(URL) {
+    return URL.substring(URL.lastIndexOf('/') + 1, URL.lastIndexOf('.git')).toUpperCase()
+}
+
+return this

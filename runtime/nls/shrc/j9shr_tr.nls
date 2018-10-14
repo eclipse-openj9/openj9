@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -5993,7 +5993,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_REVALIDATE_AOT_METHODS.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS=Y\u00f6ntem belirtimleriyle e\u015fle\u015fen AOT y\u00f6ntemlerini yazd\u0131r\u0131r.\n\
-\t<y\u00f6ntem_belirtimi> \u015fu \u015fekilde tan\u0131mlan\u0131r: [!]{*|[*]<paketad\u0131/s\u0131n\u0131fad\u0131>[*]}[.{*|[*]<y\u00f6ntemad\u0131>[*]}][({*|[*]<de\u011fi\u015ftirgeler>[*]})].
+\t<y\u00f6ntem_belirtimi> \u015fu \u015fekilde tan\u0131mlan\u0131r: [!]{*|[*]<paketad\u0131/s\u0131n\u0131fad\u0131>[*]}[.{*|[*]<y\u00f6ntemad\u0131>[*]}][({*|[*]<de\u011fi\u015ftirgeler>[*]})]].
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.system_action=
@@ -6015,7 +6015,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=<y\u00f6ntem_belirtimi> bi\u00e7imi \u015f\u00f6yledir: [!]{*|[*]<paketad\u0131/s\u0131n\u0131fad\u0131>[*]}[.{*|[*]<y\u00f6ntemad\u0131>[*]}][({*|[*]<de\u011fi\u015ftirgeler>[*]})], \u00f6rn.:\n\
+J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=<y\u00f6ntem_belirtimi> bi\u00e7imi \u015f\u00f6yledir: [!]{*|[*]<paketad\u0131/s\u0131n\u0131fad\u0131>[*]}[.{*|[*]<y\u00f6ntemad\u0131>[*]}][({*|[*]<de\u011fi\u015ftirgeler>[*]})]], \u00f6rn.:\n\
 \n\
 \t-Xshareclasses:name=Cache1,%sjava/util/HashMap.hash(Ljava/lang/Object;)\n
 # START NON-TRANSLATABLE
@@ -6145,6 +6145,7 @@ J9NLS_SHRC_OSCACHE_MMAP_SET_GROUPACCESS_FAILED.user_response=Check the umask set
 
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED=Payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011fiyle ili\u015fkilendirilmi\u015f semid=%d tan\u0131t\u0131c\u0131l\u0131 semafor k\u00fcmesinde, 'groupAccess' alt se\u00e7ene\u011fiyle istenen grup eri\u015fimi izni ayarlanamad\u0131.
 # START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.explanation=Cannot set group access permission when creating the new semaphore with sub-option "groupAccess".
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.user_response=Ensure the user has sufficient permission for creating the new semaphore with group access.
@@ -6152,6 +6153,7 @@ J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.user_response=Ensure the use
 
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED=Payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011fiyle ili\u015fkilendirilmi\u015f shmid=%d tan\u0131t\u0131c\u0131l\u0131 payla\u015f\u0131lan \u00f6nbellekte, 'groupAccess' alt se\u00e7ene\u011fiyle istenen grup eri\u015fimi izni ayarlanamad\u0131.
 # START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.explanation=Cannot set group access permission when creating the new shared memory with sub-option "groupAccess".
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.user_response=Ensure the user has sufficient permission for creating the new shared memory with group access.
@@ -6634,4 +6636,11 @@ J9NLS_SHRC_CC_INCORRECT_BUILDID=Payla\u015f\u0131lan \u00f6nbellek ba\u015flat\u
 J9NLS_SHRC_CC_INCORRECT_BUILDID.explanation=An error has occurred when starting up the cache. The build ID of the existing cache with the same name is different from that of the current JVM.
 J9NLS_SHRC_CC_INCORRECT_BUILDID.system_action=The JVM fails to complete the requested operation.
 J9NLS_SHRC_CC_INCORRECT_BUILDID.user_response=Use a JVM which matches the build ID of the existing cache.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1=\u00d6ny\u00fckleme s\u0131n\u0131f y\u00fckleyicisi taraf\u0131ndan y\u00fcklenen s\u0131n\u0131flar\u0131n \u00f6nbelle\u011fe al\u0131nmas\u0131 ge\u00e7ersiz k\u0131l\u0131n\u0131r
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.user_response=
 # END NON-TRANSLATABLE

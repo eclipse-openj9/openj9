@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@
 #include "testProcessHelpers.h"
 #include "shmem.h"
 
-#if defined(LINUX) | defined (J9ZOS390) | defined (AIXPPC)
+#if defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX)
 #include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
@@ -106,7 +106,7 @@ j9shsem_deprecated_test1(J9PortLibrary *portLibrary)
 
 	reportTestEntry(portLibrary, testName);
 	
-	rc = j9shmem_getDir(NULL, TRUE, cacheDir, J9SH_MAXPATH);
+	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
 	if (rc == -1) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Cannot get a directory");
 		goto exit;
@@ -136,7 +136,7 @@ j9shsem_deprecated_test2(J9PortLibrary *portLibrary)
 	PORT_ACCESS_FROM_PORT(portLibrary);
 	const char* testName = "j9shsem_deprecated_test2";
 
-#if defined(LINUX) | defined(J9ZOS390) | defined(AIXPPC)
+#if defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX)
 	/* 
 	 * test check that after deleting with j9shsem_deprecated_destroy 
 	 * the next call to j9shsem_deprecated_open() results in J9PORT_INFO_SHSEM_CREATED
@@ -152,7 +152,7 @@ j9shsem_deprecated_test2(J9PortLibrary *portLibrary)
 	
 	reportTestEntry(PORTLIB, testName);
  
-	rc = j9shmem_getDir(NULL, TRUE, cacheDir, J9SH_MAXPATH);
+	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
 	if (rc == -1) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Cannot get a directory");
 		goto cleanup;
@@ -247,7 +247,7 @@ j9shsem_deprecated_test3(J9PortLibrary* portLibrary)
 	
 	reportTestEntry(portLibrary, testName);
 
-	rc = j9shmem_getDir(NULL, TRUE, cacheDir, J9SH_MAXPATH);
+	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
 	if (rc == -1) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Cannot get a directory");
 		goto cleanup;
@@ -293,7 +293,7 @@ j9shsem_deprecated_test4(J9PortLibrary *portLibrary, char* argv0)
 	PORT_ACCESS_FROM_PORT(portLibrary);
 	const char* testName = "j9shsem_deprecated_test4";
 	
-#if defined(LINUX) | defined(J9ZOS390) | defined(AIXPPC)
+#if defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX)
 	struct j9shsem_handle *childrensemaphore=NULL;
 	int i;
 	IDATA rc;
@@ -304,7 +304,7 @@ j9shsem_deprecated_test4(J9PortLibrary *portLibrary, char* argv0)
 	
 	reportTestEntry(portLibrary, testName);
 
-	rc = j9shmem_getDir(NULL, TRUE, cacheDir, J9SH_MAXPATH);
+	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
 	if (rc == -1) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Cannot get a directory");
 		goto cleanup;
@@ -386,7 +386,7 @@ j9shsem_deprecated_test4_child(J9PortLibrary *portLibrary)
 	
 	reportTestEntry(portLibrary, testName);
 
-	rc = j9shmem_getDir(NULL, TRUE, cacheDir, J9SH_MAXPATH);
+	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
 	if (rc == -1) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Cannot get a directory");
 		goto cleanup;
@@ -442,7 +442,7 @@ j9shsem_deprecated_test5(J9PortLibrary *portLibrary)
 	PORT_ACCESS_FROM_PORT(portLibrary);
 	const char* testName = "j9shsem_deprecated_test5";
 
-#if defined(LINUX) | defined(J9ZOS390) | defined(AIXPPC)	
+#if defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX)
 	/* UNIX only
 	 * test that our code can handle missing basefile
 	 * If someone has deleted the baseFile by mistake, we should be able to recreate/open the old area without problem.
@@ -458,7 +458,7 @@ j9shsem_deprecated_test5(J9PortLibrary *portLibrary)
 
 	reportTestEntry(PORTLIB, testName);
 
-	rc = j9shmem_getDir(NULL, TRUE, cacheDir, J9SH_MAXPATH);
+	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
 	if (rc == -1) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Cannot get a directory");
 		goto cleanup;
@@ -529,7 +529,7 @@ j9shsem_deprecated_test6(J9PortLibrary *portLibrary, const char* argv0)
 	
 	reportTestEntry(PORTLIB, testName);
 
-	rc = j9shmem_getDir(NULL, TRUE, cacheDir, J9SH_MAXPATH);
+	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
 	if (rc == -1) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Cannot get a directory");
 		goto cleanup;
@@ -581,7 +581,7 @@ j9shsem_deprecated_test6_child(J9PortLibrary *portLibrary)
 	
 	reportTestEntry(PORTLIB, testName);
 
-	rc = j9shmem_getDir(NULL, TRUE, cacheDir, J9SH_MAXPATH);
+	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
 	if (rc == -1) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Cannot get a directory");
 		goto cleanup;
@@ -623,7 +623,7 @@ cleanup:
 	return reportTestExit(portLibrary, testName);	
 }
 
-#if defined(LINUX) | defined (J9ZOS390) | defined (AIXPPC)
+#if defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX)
 /*Note:
  * This is more than one test. The first test that fails blocks the rest of the test. The test should not fail :-) 
  * This test is meant to excercise the race conditions that can occur when mutliple vm's create sysv obj
@@ -654,7 +654,7 @@ j9shsem_deprecated_test7(J9PortLibrary *portLibrary, char* argv0)
 
 	reportTestEntry(portLibrary, testName);	
 
-	if (j9shmem_getDir(NULL, TRUE, basedir, 1024) >= 0) {
+	if (j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, basedir, 1024) >= 0) {
 		j9str_printf(PORTLIB, mybaseFilePath, 1024, "%s%s", basedir, TEST7_SEMAPHORE_NAME);
 	} else {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Cannot get a directory");
@@ -1049,7 +1049,7 @@ j9shsem_deprecated_test7_testchild(J9PortLibrary *portLibrary) {
 	
 	rc = J9PORT_ERROR_SHSEM_OPFAILED;
 
-	rc = j9shmem_getDir(NULL, TRUE, cacheDir, J9SH_MAXPATH);
+	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
 	if (rc == -1) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Cannot get a directory");
 		goto cleanup;
@@ -1093,7 +1093,7 @@ j9shsem_deprecated_test8(struct J9PortLibrary *portLibrary)
 
 	reportTestEntry(portLibrary, testName);
 
-	rc = j9shmem_getDir(NULL, TRUE, cacheDir, J9SH_MAXPATH);
+	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
 	if (rc == -1) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Cannot get a directory");
 		goto cleanup;
@@ -1143,7 +1143,7 @@ j9shsem_deprecated_runTests(struct J9PortLibrary *portLibrary, char* argv0, char
 		} else if(strcmp(shsem_child, "j9shsem_deprecated_test6") == 0) {
 			return j9shsem_deprecated_test6_child(portLibrary);
 		}
-#if defined(LINUX) | defined (J9ZOS390) | defined (AIXPPC) 
+#if defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX)
 		else if(strcmp(shsem_child,"j9shsem_deprecated_test7") == 0) {
 			return j9shsem_deprecated_test7_testchild(portLibrary);
 		}
@@ -1153,7 +1153,7 @@ j9shsem_deprecated_runTests(struct J9PortLibrary *portLibrary, char* argv0, char
 	HEADING(PORTLIB,"Deprecated Shared Semaphore Test");
 
 	/* Ensure that any Testsem files from failing tests are deleted prior to starting */
-	rc2 = j9shmem_getDir(NULL, TRUE, basedir, J9SH_MAXPATH);
+	rc2 = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, basedir, J9SH_MAXPATH);
 	if (rc2 == -1) {
 		j9tty_printf(PORTLIB, "Cannot get a directory\n");
 		return -1;
@@ -1173,7 +1173,7 @@ j9shsem_deprecated_runTests(struct J9PortLibrary *portLibrary, char* argv0, char
 	rc |= j9shsem_deprecated_test4(portLibrary, argv0);	
 	rc |= j9shsem_deprecated_test5(portLibrary);
 	rc |= j9shsem_deprecated_test6(portLibrary, argv0);	
-#if defined(LINUX) | defined (J9ZOS390) | defined (AIXPPC)
+#if defined(LINUX) || defined(J9ZOS390) || defined(AIXPPC) || defined(OSX)
 	rc |= j9shsem_deprecated_test7(portLibrary, argv0);	
 #endif
 #if !(defined(WIN32) || defined(WIN64))

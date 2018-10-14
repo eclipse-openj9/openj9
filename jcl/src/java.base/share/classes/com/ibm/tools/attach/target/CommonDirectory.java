@@ -22,12 +22,19 @@ package com.ibm.tools.attach.target;
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+import static com.ibm.tools.attach.target.IPC.LOGGING_DISABLED;
+import static com.ibm.tools.attach.target.IPC.loggingStatus;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Objects;
 
+/**
+ * This class maintains the directory holding the attach API file artifacts.
+ *
+ */
 public abstract class CommonDirectory {
 	private static final String ATTACH_LOCK = "_attachlock"; //$NON-NLS-1$
 	private static final String COM_IBM_TOOLS_ATTACH_DIRECTORY = "com.ibm.tools.attach.directory"; //$NON-NLS-1$
@@ -38,7 +45,7 @@ public abstract class CommonDirectory {
 	static final int SEMAPHORE_OKAY = 0;
 	private static final String TRASH_PREFIX = ".trash_"; //$NON-NLS-1$
 
-	static final class syncObject {}
+	static final class syncObject { /* empty class for synchronization only. */}
 	private static final syncObject accessorMutex = new syncObject();
 	private static FileLock attachLock;
 	private static File commonDirFile; /* file where all IPC files are held */
@@ -48,7 +55,7 @@ public abstract class CommonDirectory {
 	/**
 	 * default name of directories where VMs place their advertisements
 	 */
-	private static String systemTmpDir = IPC.getTmpDir();
+	private static final String systemTmpDir = IPC.getTmpDir();
 	/**
 	 * Indicates the control file is newer than the semaphore
 	 */
@@ -89,7 +96,7 @@ public abstract class CommonDirectory {
 		String ipcDirProperty = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty(COM_IBM_TOOLS_ATTACH_DIRECTORY, 
 				(new File(systemTmpDir,".com_ibm_tools_attach")).getPath()); //$NON-NLS-1$
 		/*[PR CMVC 165300 restriction on embedded blanks was unnecessary. Also, trailing separators were redundant. ]*/
-		if (IPC.loggingEnabled ) {
+		if (LOGGING_DISABLED != loggingStatus) {
 			IPC.logMessage("IPC Directory=", ipcDirProperty); //$NON-NLS-1$
 		}
 		File cd = new File(ipcDirProperty);
@@ -103,7 +110,7 @@ public abstract class CommonDirectory {
 	 /*[PR Jazz 30075] createDirectoryAndSemaphore is a misnomer, since it does not create the semaphore. */
 	static void prepareCommonDirectory() throws IOException {
 		File cd = getCommonDirFileObject();
-		if (IPC.loggingEnabled ) {
+		if (LOGGING_DISABLED != loggingStatus) {
 			IPC.logMessage("createDirectoryAndSemaphore ", cd.getAbsolutePath()); //$NON-NLS-1$
 		}
 		if (cd.exists()) {
@@ -263,7 +270,7 @@ public abstract class CommonDirectory {
 	 * @return 0 on success
 	 */
 	public static int notifyVm(int numberOfTargets) {
-		if (IPC.loggingEnabled ) {
+		if (LOGGING_DISABLED != loggingStatus) {
 			IPC.logMessage("notifyVm ", numberOfTargets, " targets"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		return IPC.notifyVm(getCommonDirFileObject().getAbsolutePath(), MASTER_NOTIFIER, numberOfTargets);
@@ -293,6 +300,10 @@ public abstract class CommonDirectory {
 		IPC.destroySemaphore();
 	}
 
+	/**
+	 * Count the number of target directories in the common directory
+	 * @return Number of directories
+	 */
 	public static int countTargetDirectories () {
 		File dir= getCommonDirFileObject();
 
@@ -320,11 +331,10 @@ public abstract class CommonDirectory {
 				|| MASTER_NOTIFIER.equalsIgnoreCase(dirMemberName));
 	}
 
-	/*
-	 * look for leftover files and directories from previous VMs
+	/**
+	 * Look for and delete leftover files and directories from previous VMs
+	 * @param myId VMID of the current.  Set to non-null to prevent deleting own directory.
 	 */
-	/*[PR Jazz 37778 deleteStaleDirectories was always called with checkProcess=true */
-	@SuppressWarnings("synthetic-access")
 	static void deleteStaleDirectories(String myId) {
 		long myUid = IPC.getUid();
 		File[] vmDirs = getCommonDirFileObject().listFiles(new DirectorySampler());
@@ -341,7 +351,7 @@ public abstract class CommonDirectory {
 				continue;
 			}
 			String dirMemberName = dirMember.getName();
-			if (IPC.loggingEnabled ) {
+			if (LOGGING_DISABLED != loggingStatus) {
 				IPC.logMessage("deleteStaleDirectories checking ", dirMemberName); //$NON-NLS-1$
 			}
 			if (dirMember.isFile()) {
@@ -414,8 +424,7 @@ public abstract class CommonDirectory {
 			TargetDirectory.deleteTargetDirectory(dirMember.getName());
 		}
 		Advertisement advert;
-		try {
-			FileInputStream propStream = new FileInputStream(advertFile);
+		try (FileInputStream propStream = new FileInputStream(advertFile)) {
 			advert = Advertisement.readAdvertisementFile(propStream); /* throws IOException if file cannot be read */
 			propStream.close();
 		} catch (IOException e) {
@@ -423,14 +432,14 @@ public abstract class CommonDirectory {
 		}
 		pid = advert.getProcessId();
 		long uid = advert.getUid();
-		if (IPC.loggingEnabled) {
+		if (LOGGING_DISABLED != loggingStatus) {
 			IPC.logMessage("getPidFromFile pid = ", (int) pid, dirMember.getName()); //$NON-NLS-1$
 		}
 		/*advertisement is from an older version or is corrupt, or claims to be owned by root.  Get the owner via file stat ]*/
 		if (0 == uid) {
 			uid = CommonDirectory.getFileOwner(dirMember.getAbsolutePath());
 		}
-		if (IPC.loggingEnabled) {
+		if (LOGGING_DISABLED != loggingStatus) {
 			IPC.logMessage("getPidFromFile uid = ", (int) uid); //$NON-NLS-1$
 		}
 		if (((0 != myUid) && (uid != myUid))) {
@@ -466,13 +475,19 @@ public abstract class CommonDirectory {
 		return masterLock;
 	}
 	
+	/**
+	 * Get the UID of a file's owner
+	 * @param path file path
+	 * @return UID of file owner
+	 */
 	public static native long getFileOwner(String path);
 	
-	private static final class DirectorySampler implements FileFilter {
+	static final class DirectorySampler implements FileFilter {
 
 		private int acceptCount = 16;
 		private long skip;
 		private long range = 2;
+		@Override
 		public boolean accept(File candidate) {
 			if (acceptCount > 0) { /* accept the first N files unconditionally */
 				--acceptCount;

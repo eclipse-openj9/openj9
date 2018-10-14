@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,38 +69,34 @@
  */
 int is_lparcfg_version_supported()
 {
-	FILE* lparcfgFP = NULL;
-	char partitionString[MAXSTRINGLENGTH] = {0};
-	char* tmpPtr = NULL;
 	int rc = -1;
+	FILE *lparcfgFP = fopen(LINUX_PPC_CONFIG, "r");
 
-	lparcfgFP = fopen(LINUX_PPC_CONFIG, "r");
-	if (NULL == lparcfgFP) {
-		return rc;
-	}
-
-	while (0 == feof(lparcfgFP)) {
-		fgets((char*)partitionString, sizeof(partitionString), lparcfgFP);
-		tmpPtr = strstr(partitionString, LINUXPPC_VERSION_STRING);
-		if (NULL != tmpPtr) {
-			tmpPtr += sizeof (LINUXPPC_VERSION_STRING);
-			break;
+	if (NULL != lparcfgFP) {
+		while (0 == feof(lparcfgFP)) {
+			char partitionString[MAXSTRINGLENGTH];
+			char *tmpPtr = NULL;
+			if (NULL == fgets(partitionString, sizeof(partitionString), lparcfgFP)) {
+				break;
+			}
+			tmpPtr = strstr(partitionString, LINUXPPC_VERSION_STRING);
+			if (NULL != tmpPtr) {
+				tmpPtr += sizeof(LINUXPPC_VERSION_STRING);
+				/* Check if the version is greater/equal to 1.8, if yes return 1, else return 0. */
+				if (atof(tmpPtr) >= 1.8) {
+					rc = 1;
+				} else {
+					rc = 0;
+				}
+				break;
+			}
 		}
+		fclose(lparcfgFP);
 	}
 
-	fclose(lparcfgFP);
-
-	/* Check if the version is greater/equal to  1.8, if yes return 1, else return 0 */
-	if (NULL != tmpPtr) {
-		if (atof(tmpPtr) >= 1.8) {
-			rc = 1;
-		} else {
-			rc = 0;
-		}
-	}
 	return rc;
 }
-#endif
+#endif /* LINUXPPC */
 
 /*
  * Helper function to create a busy load for verifying the increase in the

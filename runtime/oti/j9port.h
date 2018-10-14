@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,6 +67,17 @@
 #define J9PORT_CAPABILITY_STANDARD 1
 #define J9PORT_CAPABILITY_CAN_RESERVE_SPECIFIC_ADDRESS 2
 #define J9PORT_CAPABILITY_ALLOCATE_TOP_DOWN 4
+
+#if defined(WIN32)
+#define J9PORT_LIBRARY_SUFFIX ".dll"
+#elif defined(OSX)
+#define J9PORT_LIBRARY_SUFFIX ".dylib"
+#elif defined(LINUX) || defined(AIXPPC) || defined(J9ZOS390)
+#define J9PORT_LIBRARY_SUFFIX ".so"
+#else
+#error "J9PORT_LIBRARY_SUFFIX must be defined"
+#endif
+
 
 /**
  * @name Shared Semaphore Success flags
@@ -201,6 +212,10 @@
 #define J9SHSEM_OPEN_FOR_STATS		0x1
 #define J9SHSEM_OPEN_FOR_DESTROY	0x2
 #define J9SHSEM_OPEN_DO_NOT_CREATE	0x4
+
+/* Flags passed to "flags" argument of j9shmem_getDir(). */
+#define J9SHMEM_GETDIR_APPEND_BASEDIR		0x1
+#define J9SHMEM_GETDIR_USE_USERHOME			0x2
 
 /* Maximum id we should try when we do ftok */
 #define J9SH_MAX_PROJ_ID 20 
@@ -508,6 +523,30 @@ typedef struct J9ProcessorDesc {
 /* STFLE bit 57 - Message-security-assist-extension-5 facility */
 #define J9PORT_S390_FEATURE_MSA_EXTENSION_5 57
 
+/*  Linux on Z features
+ *  Auxiliary Vector Hardware Capability (AT_HWCAP) features for Linux on Z.
+ *  Obtained from: https://github.com/torvalds/linux/blob/050cdc6c9501abcd64720b8cc3e7941efee9547d/arch/s390/include/asm/elf.h#L94-L109.
+ *  If new facility support is required, then it must be defined there (and here), before we can check for it consistently.
+ *
+ *  The linux kernel will use the defines in the above link to set HWCAP features. This is done inside "setup_hwcaps(void)" routine found
+ *  in arch/s390/kernel/setup.c in the linux kernel source tree.
+ */
+#define J9PORT_HWCAP_S390_ESAN3     0x1
+#define J9PORT_HWCAP_S390_ZARCH     0x2
+#define J9PORT_HWCAP_S390_STFLE     0x4
+#define J9PORT_HWCAP_S390_MSA       0x8
+#define J9PORT_HWCAP_S390_LDISP     0x10
+#define J9PORT_HWCAP_S390_EIMM      0x20
+#define J9PORT_HWCAP_S390_DFP       0x40
+#define J9PORT_HWCAP_S390_HPAGE     0x80
+#define J9PORT_HWCAP_S390_ETF3EH    0x100
+#define J9PORT_HWCAP_S390_HIGH_GPRS 0x200
+#define J9PORT_HWCAP_S390_TE        0x400
+#define J9PORT_HWCAP_S390_VXRS      0x800
+#define J9PORT_HWCAP_S390_VXRS_BCD  0x1000
+#define J9PORT_HWCAP_S390_VXRS_EXT  0x2000
+#define J9PORT_HWCAP_S390_GS        0x4000
+
 /* x86 features
  * INTEL INSTRUCTION SET REFERENCE, A-M
  * 3-170 Vol. 2A Table 3-21. More on Feature Information Returned in the EDX Register
@@ -648,6 +687,7 @@ typedef struct J9CacheInfoQuery {
 #define J9PORT_VMEM_ZOS_USE_EXTENDED_PRIVATE_AREA OMRPORT_VMEM_ZOS_USE2TO32G_AREA
 #define J9PORT_VMEM_ALLOCATE_TOP_DOWN OMRPORT_VMEM_ALLOCATE_TOP_DOWN
 #define J9PORT_VMEM_ADDRESS_HINT OMRPORT_VMEM_ADDRESS_HINT
+#define J9PORT_VMEM_NO_AFFINITY OMRPORT_VMEM_NO_AFFINITY
 
 #define J9PORT_SLOPEN_DECORATE OMRPORT_SLOPEN_DECORATE
 #define J9PORT_SLOPEN_LAZY OMRPORT_SLOPEN_LAZY
@@ -662,6 +702,7 @@ typedef struct J9CacheInfoQuery {
 #define J9PORT_CTLDATA_TRACE_STOP OMRPORT_CTLDATA_TRACE_STOP
 #define J9PORT_CTLDATA_VMEM_NUMA_IN_USE OMRPORT_CTLDATA_VMEM_NUMA_IN_USE
 #define J9PORT_CTLDATA_VMEM_NUMA_ENABLE OMRPORT_CTLDATA_VMEM_NUMA_ENABLE
+#define J9PORT_CTLDATA_VMEM_NUMA_INTERLEAVE_MEM OMRPORT_CTLDATA_VMEM_NUMA_INTERLEAVE_MEM
 #define J9PORT_CTLDATA_SYSLOG_OPEN OMRPORT_CTLDATA_SYSLOG_OPEN
 #define J9PORT_CTLDATA_SYSLOG_CLOSE OMRPORT_CTLDATA_SYSLOG_CLOSE
 #define J9PORT_CTLDATA_NOIPT OMRPORT_CTLDATA_NOIPT
@@ -675,7 +716,6 @@ typedef struct J9CacheInfoQuery {
 
 #define J9PORT_CPU_ONLINE OMRPORT_CPU_ONLINE
 #define J9PORT_CPU_TARGET OMRPORT_CPU_TARGET
-#define J9PORT_CPU_ENTITLED OMRPORT_CPU_ENTITLED
 #define J9PORT_CPU_PHYSICAL OMRPORT_CPU_PHYSICAL
 #define J9PORT_CPU_BOUND OMRPORT_CPU_BOUND
 

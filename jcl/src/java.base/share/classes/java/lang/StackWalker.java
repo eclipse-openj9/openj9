@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2017 IBM Corp. and others
+ * Copyright (c) 2016, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,9 +22,12 @@
  *******************************************************************************/
 package java.lang;
 import java.lang.StackWalker.StackFrameImpl;
+/*[IF Java10]*/
+import java.lang.invoke.MethodType;
+/*[ENDIF]*/
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Version;
-/*[IF Sidecar19-SE-B165]
+/*[IF Sidecar19-SE-OpenJ9]
 import java.lang.IllegalCallerException;
 import java.lang.Module;
 /*[ELSE]
@@ -182,7 +185,7 @@ public final class StackWalker {
 				s -> s.limit(2).collect(Collectors.toList()));
 		if (result.size() < 2) {
 			/*[MSG "K0640", "getCallerClass() called from method with no caller"]*/
-			/*[IF Sidecar19-SE-B165]
+			/*[IF Sidecar19-SE-OpenJ9]
 			throw new IllegalCallerException(com.ibm.oti.util.Msg.getString("K0640")); //$NON-NLS-1$
 			/*[ELSE]*/
 			throw new IllegalStateException(com.ibm.oti.util.Msg.getString("K0640")); //$NON-NLS-1$
@@ -306,6 +309,28 @@ public final class StackWalker {
 		 * @return StackTraceElement
 		 */
 		StackTraceElement toStackTraceElement();
+
+		/*[IF Java10]*/
+		/**
+		 * @throws UnsupportedOperationException if this method is not overridden
+		 * @return MethodType containing the parameter and return types for the associated method.
+		 * @since 10
+		 */
+		default MethodType getMethodType() {
+			throw new UnsupportedOperationException();
+		}
+
+		/**
+		 * @throws UnsupportedOperationException if this method is not overridden or the StackWalker
+		 * instance is not configured with RETAIN_CLASS_REFERENCE.
+		 * @return method descriptor string representing the type of this frame's method.
+		 * @since 10
+		 */
+		default String getDescriptor() {
+			throw new UnsupportedOperationException();
+		}
+
+		/*[ENDIF]*/
 	}
 
 	final static class StackFrameImpl implements StackFrame {
@@ -318,6 +343,7 @@ public final class StackWalker {
 		private int lineNumber;
 		private Module frameModule;
 		private String methodName;
+		private String methodSignature;
 		boolean callerSensitive;
 
 		@Override
@@ -376,6 +402,33 @@ public final class StackWalker {
 					lineNumber);
 		}
 
+		/*[IF Java10]*/
+		/**
+		 * Creates a MethodType object for the method associated with this frame.
+		 * @throws UnsupportedOperationException if the StackWalker object is not configured with RETAIN_CLASS_REFERENCE
+		 * @return MethodType object
+		 * @since 10
+		 */
+		@Override
+		public MethodType getMethodType() {
+			if (null == declaringClass) {
+				/*[MSG "K0639","Stack walker not configured with RETAIN_CLASS_REFERENCE"]*/
+				throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K0639")); //$NON-NLS-1$
+			}
+			return MethodType.fromMethodDescriptorString(methodSignature, declaringClass.internalGetClassLoader());
+		}
+
+		/**
+		 * Creates a string containing the signature of the method associated with this frame.
+		 * @return String signature
+		 * @since 10
+		 */
+		@Override
+		public java.lang.String getDescriptor() {
+			return methodSignature;
+		}
+		/*[ENDIF]*/
+		
 	}
 
 	static class PermissionSingleton {

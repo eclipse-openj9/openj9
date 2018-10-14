@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2014 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,11 +29,14 @@ void JNICALL Java_java_lang_Compiler_enable(JNIEnv *env, jclass clazz)
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 	J9VMThread *currentThread = (J9VMThread *) env;
 	J9JavaVM *vm = currentThread->javaVM;
-	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9JITConfig * jitConfig = vm->jitConfig;
 
 	if ((jitConfig != NULL) && (jitConfig->enableJit != NULL)) {
-		vmFuncs->internalReleaseVMAccessInJNI(currentThread);
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+		vmFuncs->internalReleaseVMAccess(currentThread);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 		jitConfig->enableJit(jitConfig);
 	}
 #endif
@@ -45,11 +48,14 @@ void JNICALL Java_java_lang_Compiler_disable(JNIEnv *env, jclass clazz)
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 	J9VMThread *currentThread = (J9VMThread *) env;
 	J9JavaVM *vm = currentThread->javaVM;
-	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9JITConfig * jitConfig = vm->jitConfig;
 
 	if ((jitConfig != NULL) && (jitConfig->disableJit != NULL)) {
-		vmFuncs->internalReleaseVMAccessInJNI(currentThread);
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+		vmFuncs->internalReleaseVMAccess(currentThread);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 		jitConfig->disableJit(jitConfig);
 	}
 #endif
@@ -61,7 +67,6 @@ jobject JNICALL Java_java_lang_Compiler_commandImpl(JNIEnv *env, jclass clazz, j
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 	J9VMThread *currentThread = (J9VMThread *) env;
 	J9JavaVM *vm = currentThread->javaVM;
-	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9JITConfig * jitConfig = vm->jitConfig;
 
 	if ((cmd != NULL) && (jitConfig != NULL) && (jitConfig->command != NULL)) {
@@ -79,7 +84,11 @@ jobject JNICALL Java_java_lang_Compiler_commandImpl(JNIEnv *env, jclass clazz, j
 
 						if (commandString != NULL) {
 							I_32 result = 0;
-							vmFuncs->internalReleaseVMAccessInJNI(currentThread);
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+							J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+							vmFuncs->internalEnterVMFromJNI(currentThread);
+							vmFuncs->internalReleaseVMAccess(currentThread);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 							result = jitConfig->command(currentThread, commandString);
 							(*env)->ReleaseStringUTFChars(env, cmd, commandString);
 							return (*env)->NewObject(env, intClass, mid, result);
@@ -100,11 +109,14 @@ jboolean JNICALL Java_java_lang_Compiler_compileClassImpl(JNIEnv *env, jclass cl
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 	J9VMThread *currentThread = (J9VMThread *) env;
 	J9JavaVM *vm = currentThread->javaVM;
-	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9JITConfig * jitConfig = vm->jitConfig;
 
 	if ((compileClass != NULL) && (jitConfig != NULL) && (jitConfig->compileClass != NULL)) {
-		vmFuncs->internalReleaseVMAccessInJNI(currentThread);
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+		vmFuncs->internalReleaseVMAccess(currentThread);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 		rc = (jboolean)jitConfig->compileClass(currentThread, compileClass);
 	}
 #endif
@@ -117,7 +129,6 @@ jboolean JNICALL Java_java_lang_Compiler_compileClassesImpl(JNIEnv *env, jclass 
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 	J9VMThread *currentThread = (J9VMThread *) env;
 	J9JavaVM *vm = currentThread->javaVM;
-	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9JITConfig * jitConfig = vm->jitConfig;
 
 	if ((nameRoot != NULL) && (jitConfig != NULL) && (jitConfig->compileClasses != NULL)) {
@@ -127,7 +138,11 @@ jboolean JNICALL Java_java_lang_Compiler_compileClassesImpl(JNIEnv *env, jclass 
 		if (pattern != NULL) {
 			jboolean rc;
 
-			vmFuncs->internalReleaseVMAccessInJNI(currentThread);
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+			J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+			vmFuncs->internalEnterVMFromJNI(currentThread);
+			vmFuncs->internalReleaseVMAccess(currentThread);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 			rc = (jboolean) jitConfig->compileClasses(currentThread, pattern);
 			(*env)->ReleaseStringUTFChars(env, nameRoot, pattern);
 			return rc;

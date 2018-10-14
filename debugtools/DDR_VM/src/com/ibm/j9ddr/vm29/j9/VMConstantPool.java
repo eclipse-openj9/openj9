@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,23 +23,6 @@ package com.ibm.j9ddr.vm29.j9;
 
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_CLASS;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_FIELD;
-import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_ANNOTATION_UTF8;
-import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_DOUBLE;
-import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_FLOAT;
-import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_HANDLE_METHOD;
-import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_INSTANCE_METHOD;
-import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_INT;
-import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_INTERFACE_METHOD;
-import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_LONG;
-import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_METHODHANDLE;
-import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_METHOD_TYPE;
-import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_SHARED_METHOD;
-import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_STATIC_METHOD;
-import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_STRING;
-import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_UNUSED;
-import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9_CP_BITS_PER_DESCRIPTION;
-import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9_CP_DESCRIPTIONS_PER_U32;
-import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9_CP_DESCRIPTION_MASK;
 
 import java.util.Iterator;
 
@@ -88,7 +71,7 @@ public final class VMConstantPool {
 			int constPoolCount = romClass.romConstantPoolCount().intValue();
 
 			_constantPool = new Object[constPoolCount];
-			_cpShapeDescription = romClass.cpShapeDescription();
+			_cpShapeDescription = J9ROMClassHelper.cpShapeDescription(romClass);
 			_romCPStart = J9ROMClassHelper.constantPool(romClass);
 			_ramCPStart = J9RAMConstantPoolItemPointer.cast(jclConstantPool);
 		} catch (CorruptDataException e) {

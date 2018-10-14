@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -229,6 +229,11 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		}
 
 		extensions->gcThreadCountForced = true;
+		goto _exit;
+	}
+
+	if (try_scan(scan_start, "snapshotAtTheBeginningBarrier")) {
+		extensions->configurationOptions._forceOptionWriteBarrierSATB = true;
 		goto _exit;
 	}
 
@@ -1062,11 +1067,6 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE, "scanCacheSize=", (UDATA)0);
 			goto _error;
 		}
-		goto _exit;
-	}
-
-	if(try_scan(scan_start, "traceHotFields")) {
-		extensions->scavengerTraceHotFields = true;
 		goto _exit;
 	}
 	

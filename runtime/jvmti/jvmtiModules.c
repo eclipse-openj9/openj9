@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 IBM Corp. and others
+ * Copyright (c) 2016, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -293,7 +293,7 @@ jvmtiGetAllModules(jvmtiEnv* jvmtiEnv, jint* module_count_ptr, jobject** modules
 		omrthread_monitor_exit(vm->classLoaderBlocksMutex);
 #endif
 done:
-		vmFuncs->internalReleaseVMAccess(currentThread);
+		vmFuncs->internalExitVMToJNI(currentThread);
 	}
 	return rc;
 }
@@ -372,7 +372,7 @@ jvmtiGetNamedModule(jvmtiEnv* jvmtiEnv, jobject class_loader, const char* packag
 			j9mem_free_memory(packageName);
 		}
 done:
-		vmFuncs->internalReleaseVMAccess(currentThread);
+		vmFuncs->internalExitVMToJNI(currentThread);
 	}
 	return rc;
 }
@@ -640,36 +640,18 @@ jvmtiAddModuleProvides(jvmtiEnv* jvmtiEnv,
 
 		if ((rc == JVMTI_ERROR_NONE) && (FALSE == isUnnamed)) {
 			JNIEnv *env = (JNIEnv *) currentThread;
-			if (NULL == vm->jimModules) {
-				omrthread_monitor_enter(vm->jlmModulesInitMutex);
-				if (NULL == vm->jimModules) {
-					jclass globalModules = NULL;
-					jclass jimModules = (*env)->FindClass(env, "jdk/internal/module/Modules");
-					if (NULL == jimModules) {
-						rc = JVMTI_ERROR_INTERNAL;
-						omrthread_monitor_exit(vm->jlmModulesInitMutex);
-						goto done;
-					}
-
-					globalModules = (*env)->NewGlobalRef(env, jimModules);
-					if (NULL == globalModules) {
-						rc = JVMTI_ERROR_OUT_OF_MEMORY;
-						omrthread_monitor_exit(vm->jlmModulesInitMutex);
-						goto done;
-					}
-
-					vm->jimModules = globalModules;
-				}
-				omrthread_monitor_exit(vm->jlmModulesInitMutex);
+			jclass jimModules = vmFuncs->getJimModules(currentThread);
+			if (NULL == jimModules) {
+				rc = JVMTI_ERROR_INTERNAL;
+				goto done;
 			}
-
 			if (NULL == vm->addProvides) {
 				jmethodID addProvides = NULL;
 
 				if(J2SE_SHAPE(vm) < J2SE_SHAPE_B165) {
-					addProvides = (*env)->GetStaticMethodID(env, vm->jimModules, "addProvides", "(Ljava/lang/reflect/Module;Ljava/lang/Class;Ljava/lang/Class;)V");
+					addProvides = (*env)->GetStaticMethodID(env, jimModules, "addProvides", "(Ljava/lang/reflect/Module;Ljava/lang/Class;Ljava/lang/Class;)V");
 				} else {
-					addProvides = (*env)->GetStaticMethodID(env, vm->jimModules, "addProvides", "(Ljava/lang/Module;Ljava/lang/Class;Ljava/lang/Class;)V");
+					addProvides = (*env)->GetStaticMethodID(env, jimModules, "addProvides", "(Ljava/lang/Module;Ljava/lang/Class;Ljava/lang/Class;)V");
 				}
 				if (NULL == addProvides) {
 					rc = JVMTI_ERROR_INTERNAL;
@@ -678,7 +660,7 @@ jvmtiAddModuleProvides(jvmtiEnv* jvmtiEnv,
 
 				vm->addProvides = addProvides;
 			}
-			(*env)->CallStaticVoidMethod(env, vm->jimModules, vm->addProvides, module, service, implClass);
+			(*env)->CallStaticVoidMethod(env, jimModules, vm->addProvides, module, service, implClass);
 		}
 	}
 

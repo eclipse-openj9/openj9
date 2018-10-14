@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,8 +22,6 @@
 package com.ibm.j9ddr.vm29.j9;
 
 import static com.ibm.j9ddr.vm29.events.EventManager.raiseCorruptDataEvent;
-
-import java.util.Set;
 
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.j9.gc.MMObjectAccessBarrier;

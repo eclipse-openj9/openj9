@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar16]*/
 package com.ibm.tools.attach.target;
 /*******************************************************************************
- * Copyright (c) 2009, 2010 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,6 @@ public final class Reply {
 	 * Manages the file created by an attaching process
 	 *
 	 */
-	private RandomAccessFile replyChannelRAF;
 	private  String key;
 	private  Integer portNumber;
 	private final File replyFile;
@@ -68,31 +67,30 @@ public final class Reply {
 
 	/**
 	 * Write data to the reply file.  Must be matched with an eraseReply()
-	 * @param keyText Security key to validate transaction
-	 * @param portNumberText to be written to file. Virtual machine ID, name, semaphore name etc.
-	 * @throws IOException if files are not accessible
+	 * keyText is a security key to validate transaction
+	 * portNumberText is text to be written to file. Virtual machine ID, name, semaphore name etc.
+	 * @throws IOException if file are not accessible or cannot be created with correct permissions
 	 */
 	public void writeReply() throws IOException {
-		/* replyFIle has been created by the constructor */
-		try {
-			IPC.logMessage("writing reply file port=", portNumber.intValue(), " file path=", replyFile.getAbsolutePath());  //$NON-NLS-1$//$NON-NLS-2$
-			
-			replyChannelRAF = new RandomAccessFile(replyFile, "rw"); //$NON-NLS-1$
-			replyChannelRAF.setLength(0); /* delete whatever crud was there before */
+		/* replyFile has been created by the constructor */
+		final String replyFileAbsolutePath = replyFile.getAbsolutePath();
+		IPC.logMessage("writing reply file port=", portNumber.intValue(), " file path=", replyFileAbsolutePath);  //$NON-NLS-1$//$NON-NLS-2$
+		IPC.createNewFileWithPermissions(replyFile, TargetDirectory.ADVERTISEMENT_FILE_PERMISSIONS);
+		/* we have a brand new, empty file with correct ownership and permissions */
+		try (RandomAccessFile replyChannelRAF = new RandomAccessFile(replyFile, "rw")) { //$NON-NLS-1$
 			replyChannelRAF.writeBytes(key);
 			replyChannelRAF.writeByte('\n');
 			replyChannelRAF.writeBytes(portNumber.toString());
 			replyChannelRAF.writeByte('\n');
 			replyChannelRAF.close();
 
-			IPC.chmod(replyFile.getAbsolutePath(), REPLY_PERMISSIONS);
 			long myUid = IPC.getUid();
 			if ((ROOT_UID == myUid) && (ROOT_UID != targetUid)) {
-				IPC.chownFileToTargetUid(replyFile.getAbsolutePath(), targetUid);
+				IPC.chownFileToTargetUid(replyFileAbsolutePath, targetUid);
 			}
 		} catch (FileNotFoundException e) {
 			/*[MSG "K0552", "File not found exception thrown in writeReply for file {0}"]*/
-			throw new IOException(com.ibm.oti.util.Msg.getString("K0552", replyFile.getAbsolutePath()), e); //$NON-NLS-1$
+			throw new IOException(com.ibm.oti.util.Msg.getString("K0552", replyFileAbsolutePath), e); //$NON-NLS-1$
 		}
 	}
 
@@ -102,24 +100,24 @@ public final class Reply {
 	 */
 	static Reply readReply(String path) throws IOException {
 		Reply rply = new Reply(path);
+		String replyFileAbsolutePath = rply.replyFile.getAbsolutePath();
 		if (rply.fileDoesNotExist()) {
 			return null;
 		}
-		BufferedReader replyStream;
-		try {
-			replyStream = new BufferedReader(new FileReader(rply.replyFile));
+		IPC.checkOwnerAccessOnly(replyFileAbsolutePath);
+		try (BufferedReader replyStream = new BufferedReader(new FileReader(rply.replyFile));) {
 			rply.key = replyStream.readLine();
 			String line = replyStream.readLine();
 			replyStream.close();
 			try {
-				rply.portNumber= new Integer(line);
+				rply.portNumber = Integer.valueOf(line);
 			} catch (NumberFormatException e) {
 				rply.portNumber = Integer.valueOf(-1);
 				throw new IOException(e.getMessage());
 			}
 		} catch (FileNotFoundException e) {
 			/*[MSG "K0548", "Cannot read reply file {0}"]*/
-			throw new IOException(com.ibm.oti.util.Msg.getString("K0548", rply.replyFile.getAbsolutePath()), e); //$NON-NLS-1$
+			throw new IOException(com.ibm.oti.util.Msg.getString("K0548", replyFileAbsolutePath), e); //$NON-NLS-1$
 		}
 		return rply;
 	}

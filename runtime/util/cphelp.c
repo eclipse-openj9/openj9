@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,8 @@ getClassPathEntry(J9VMThread * currentThread, J9ClassLoader * classLoader, IDATA
 	UDATA vmAccess = currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS;
 
 	if (vmAccess == 0) {
-		currentThread->javaVM->internalVMFunctions->internalAcquireVMAccess(currentThread);
+		/* The only callers without VM access are in the JNI context */
+		currentThread->javaVM->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 	}
 	if ((cpIndex < 0) || ((UDATA)cpIndex >= classLoader->classPathEntryCount)) {
 		rc = 1;
@@ -39,7 +40,7 @@ getClassPathEntry(J9VMThread * currentThread, J9ClassLoader * classLoader, IDATA
 		rc = 0;
 	}
 	if (vmAccess == 0) {
-		currentThread->javaVM->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		currentThread->javaVM->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 	return rc;
 }
@@ -145,22 +146,11 @@ getModuleJRTURL(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Module 
 	if (NULL == jrtURL) {
 		if (J9_ARE_ALL_BITS_SET(javaVM->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
 			/* set jrt URL for the module */
-#define JRT_URL_PROTOCOL "jrt:/"
-			char *nameLocation = NULL;
-			UDATA jrtURLLen = vmFuncs->getStringUTF8Length(currentThread, module->moduleName) + sizeof(JRT_URL_PROTOCOL) - 1;
+			jrtURL = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, module->moduleName, J9_STR_NONE, "jrt:/", 5, NULL, 0);
 
-			jrtURL = j9mem_allocate_memory(sizeof(jrtURL->length) + jrtURLLen, OMRMEM_CATEGORY_VM);
 			if (NULL == jrtURL) {
 				goto _exit;
 			}
-			strncpy((char *)J9UTF8_DATA(jrtURL), JRT_URL_PROTOCOL, sizeof(JRT_URL_PROTOCOL) - 1);
-			nameLocation = (char *)J9UTF8_DATA(jrtURL) + sizeof(JRT_URL_PROTOCOL) - 1;
-			if (UDATA_MAX == vmFuncs->copyStringToUTF8Helper(currentThread, module->moduleName, FALSE, J9_STR_NONE, (U_8*)nameLocation, jrtURLLen - sizeof(JRT_URL_PROTOCOL) + 1)) {
-				goto _exit;
-			}
-
-			J9UTF8_SET_LENGTH(jrtURL, (U_16) jrtURLLen);
-#undef JRT_URL_PROTOCOL
 		} else {
 			/* its java.base module */
 #define JRT_JAVA_BASE_URL "jrt:/java.base"

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,7 @@
  */
 
 #include <string.h>
+#include "j2sever.h"
 #include "j9cfg.h"
 #include "j9port.h"
 #include "pool_api.h"
@@ -48,7 +49,7 @@
 /**
  * Multi-argument constructor
  * 
- * Constructs and initialises a SH_OSCachemmap object and calls startup to open/create 
+ * Constructs and initializes a SH_OSCachemmap object and calls startup to open/create 
  * a shared classes cache.
  * This c'tor is currently used during unit testing only. Therefore we pass J9SH_DIRPERM_ABSENT as cacheDirPerm to startup().
  *
@@ -66,20 +67,20 @@
  * \args J9OSCACHE_OPEN_MODE_GROUPACCESS - creates a cache with group access. Only applies when a cache is created
  * \args J9OSCACHE_OPEN_MODE_CHECK_NETWORK_CACHE - checks whether we are attempting to connect to a networked cache
  * @param [in]  versionData Version data of the cache to connect to
- * @param [in]  initialiser Pointer to an initialiser to be used to initialise the data
+ * @param [in]  initializer Pointer to an initializer to be used to initialize the data
  * 				area of a new cache
  */ 
 SH_OSCachemmap::SH_OSCachemmap(J9PortLibrary* portLibrary, J9JavaVM* vm, const char* cacheDirName, const char* cacheName, J9SharedClassPreinitConfig* piconfig,
-		IDATA numLocks, UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, J9PortShcVersion* versionData, SH_OSCacheInitialiser* initialiser)
+		IDATA numLocks, UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, J9PortShcVersion* versionData, SH_OSCacheInitializer* initializer)
 {
 	Trc_SHR_OSC_Mmap_Constructor_Entry(cacheName, piconfig->sharedClassCacheSize, numLocks, createFlag, verboseFlags);
 	initialize(portLibrary, NULL, OSCACHE_CURRENT_CACHE_GEN);
-	startup(vm, cacheDirName, J9SH_DIRPERM_ABSENT, cacheName, piconfig, numLocks, createFlag, verboseFlags, runtimeFlags, openMode, 0, versionData, initialiser, SHR_STARTUP_REASON_NORMAL);
+	startup(vm, cacheDirName, J9SH_DIRPERM_ABSENT, cacheName, piconfig, numLocks, createFlag, verboseFlags, runtimeFlags, openMode, 0, versionData, initializer, SHR_STARTUP_REASON_NORMAL);
 	Trc_SHR_OSC_Mmap_Constructor_Exit();
 }
 
 /**
- * Method to initialise object variables.  This is outside the constructor for
+ * Method to initialize object variables.  This is outside the constructor for
  * consistency with SH_OSCachesysv
  * Note:  This method is public as it is called by the factory method newInstance in SH_OSCache
  * 
@@ -106,7 +107,7 @@ SH_OSCachemmap::initialize(J9PortLibrary* portLibrary, char* memForConstructor, 
 }
 
 /**
- * Method to free resources and re-initialise variables when
+ * Method to free resources and re-initialize variables when
  * cache is no longer required
  */
 void
@@ -146,7 +147,7 @@ SH_OSCachemmap::finalise()
  * \args J9OSCACHE_OPEN_MODE_GROUPACCESS - creates a cache with group access. Only applies when a cache is created
  * \args J9OSCACHE_OPEN_MODE_CHECK_NETWORK_CACHE - checks whether we are attempting to connect to a networked cache
  * @param [in]  versionData Version data of the cache to connect to
- * @param [in]  initialiser Pointer to an initialiser to be used to initialise the data
+ * @param [in]  initializer Pointer to an initializer to be used to initialize the data
  * 				area of a new cache
  * @param [in]  reason Reason for starting up the cache. Used only when startup is called during destroy
  * 
@@ -154,7 +155,7 @@ SH_OSCachemmap::finalise()
  */
 bool
 SH_OSCachemmap::startup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirPerm, const char* cacheName, J9SharedClassPreinitConfig* piconfig, IDATA numLocks,
-		UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, UDATA storageKeyTesting, J9PortShcVersion* versionData, SH_OSCacheInitialiser* initialiser, UDATA reason)
+		UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, UDATA storageKeyTesting, J9PortShcVersion* versionData, SH_OSCacheInitializer* initializer, UDATA reason)
 {
 	I_32 mmapCapabilities;
 	IDATA retryCntr;
@@ -162,11 +163,22 @@ SH_OSCachemmap::startup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirPer
 	struct J9FileStat statBuf;
 	IDATA errorCode = J9SH_OSCACHE_FAILURE;
 	LastErrorInfo lastErrorInfo;
+	UDATA defaultCacheSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE;
+
+#if defined(J9VM_ENV_DATA64)
+#if defined(OPENJ9_BUILD)
+	defaultCacheSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE_64BIT_PLATFORM;
+#else /* OPENJ9_BUILD */
+	if (J2SE_VERSION(vm) >= J2SE_19) {
+		defaultCacheSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE_64BIT_PLATFORM;
+	}
+#endif /* OPENJ9_BUILD */
+#endif /* J9VM_ENV_DATA64 */
 	
 	PORT_ACCESS_FROM_PORT(_portLibrary);
 
 	Trc_SHR_OSC_Mmap_startup_Entry(cacheName, ctrlDirName,
-		(piconfig!= NULL)? piconfig->sharedClassCacheSize : J9_SHARED_CLASS_CACHE_DEFAULT_SIZE,
+		(piconfig!= NULL)? piconfig->sharedClassCacheSize : defaultCacheSize,
 		numLocks, createFlag, verboseFlags, openMode);
 	
 	versionData->cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;
@@ -370,13 +382,13 @@ SH_OSCachemmap::startup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirPer
 		}
 		Trc_SHR_OSC_Mmap_startup_goodCreateCacheHeader();
 
-		if (initialiser) {
-			if (!initialiseDataHeader(initialiser)) {
-				Trc_SHR_OSC_Mmap_startup_badInitialiseDataHeader();
+		if (initializer) {
+			if (!initializeDataHeader(initializer)) {
+				Trc_SHR_OSC_Mmap_startup_badInitializeDataHeader();
 				errorHandler(J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_INITIALISING_DATA_HEADER, NULL);
 	 			goto _errorPostAttach;
 			}
-	 		Trc_SHR_OSC_Mmap_startup_goodInitialiseDataHeader();
+	 		Trc_SHR_OSC_Mmap_startup_goodInitializeDataHeader();
 		}
 		
 		if (_verboseFlags & J9SHR_VERBOSEFLAG_ENABLE_VERBOSE) {
@@ -1258,23 +1270,23 @@ SH_OSCachemmap::setCacheLength(U_32 cacheSize, LastErrorInfo *lastErrorInfo)
 }
 
 /**
- * Method to run the initialiser supplied to the multi argument constructor
+ * Method to run the initializer supplied to the multi argument constructor
  * or the startup method against the data area of a new cache
  * 
- * @param [in] initialiser  Struct containing fields to initialize
+ * @param [in] initializer  Struct containing fields to initialize
  * 
  * @return true on success, false on failure
  * THREADING: Pre-req caller holds the cache header write lock
  */
 I_32
-SH_OSCachemmap::initialiseDataHeader(SH_OSCacheInitialiser *initialiser)
+SH_OSCachemmap::initializeDataHeader(SH_OSCacheInitializer *initializer)
 {
 	U_32 readWriteBytes = (U_32)((_config->sharedClassReadWriteBytes > 0) ? _config->sharedClassReadWriteBytes : 0);
 	U_32 softMaxBytes = (U_32)_config->sharedClassSoftMaxBytes;
 
-	Trc_SHR_OSC_Mmap_initialiseDataHeader_Entry();
+	Trc_SHR_OSC_Mmap_initializeDataHeader_Entry();
 	
-	Trc_SHR_OSC_Mmap_initialiseDataHeader_callinginit3(_dataStart,
+	Trc_SHR_OSC_Mmap_initializeDataHeader_callinginit3(_dataStart,
 															_dataLength, 
 															_config->sharedClassMinAOTSize, 
 															_config->sharedClassMaxAOTSize,
@@ -1287,10 +1299,10 @@ SH_OSCachemmap::initialiseDataHeader(SH_OSCacheInitialiser *initialiser)
 		softMaxBytes = (U_32)-1;
 	} else if (softMaxBytes > _actualFileLength) {
 		softMaxBytes = (U_32)_actualFileLength;
-		Trc_SHR_OSC_Mmap_initialiseDataHeader_softMaxBytesTooBig(softMaxBytes);
+		Trc_SHR_OSC_Mmap_initializeDataHeader_softMaxBytesTooBig(softMaxBytes);
 	}
 
-	initialiser->init((char*)_dataStart, 
+	initializer->init((char*)_dataStart, 
 								_dataLength, 
 								(I_32)_config->sharedClassMinAOTSize, 
 								(I_32)_config->sharedClassMaxAOTSize,
@@ -1298,9 +1310,9 @@ SH_OSCachemmap::initialiseDataHeader(SH_OSCacheInitialiser *initialiser)
 								(I_32)_config->sharedClassMaxJITSize,
 								readWriteBytes,
 								softMaxBytes);
-	Trc_SHR_OSC_Mmap_initialiseDataHeader_initialised();
+	Trc_SHR_OSC_Mmap_initializeDataHeader_initialized();
 	
-	Trc_SHR_OSC_Mmap_initialiseDataHeader_Exit();
+	Trc_SHR_OSC_Mmap_initializeDataHeader_Exit();
 	return true;
 }
 

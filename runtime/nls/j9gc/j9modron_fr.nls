@@ -45,7 +45,7 @@ J9NLS_GC_INTERNAL_ERROR_OUT_OF_MEMORY.user_response=This may indicate a native m
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP=Echec de l'instanciation du segment
+J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP=Echec de l'instanciation du tas
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP.explanation=The JVM was unable to allocate memory for the object heap
 J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP.system_action=The JVM will terminate
@@ -55,7 +55,7 @@ J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP.user_response=Specify a smaller heap value u
 
 # Note %1$zu is number of bytes requested  (e.g. 256)
 # Note %2$s is qualifier for number of bytes (e.g. "M")
-J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP_SIZE_REQUESTED=Echec de l'instanciation du segment. %1$zu%2$s demand\u00e9
+J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP_SIZE_REQUESTED=Echec de l'instanciation du tas. %1$zu%2$s demand\u00e9
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP_SIZE_REQUESTED.explanation=The JVM was unable to allocate memory for the object heap
 J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP_SIZE_REQUESTED.system_action=The JVM will terminate
@@ -91,7 +91,7 @@ J9NLS_GC_FAILED_TO_INITIALIZE.user_response=Unknown
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY=Echec de l'initialisation, m\u00e9moire satur\u00e9e
+J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY=Echec de l'initialisation, m\u00e9moire insuffisante
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY.system_action=The JVM will terminate
@@ -99,7 +99,7 @@ J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY.user_response=Ensure the the system 
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_FAILED_TO_INITIALIZE_PARSING_COMMAND_LINE=Echec de l'initialisation, impossible d'analyser la ligne de commande
+J9NLS_GC_FAILED_TO_INITIALIZE_PARSING_COMMAND_LINE=Echec de l'initialisation, impossible d'analyser la syntaxe de la ligne de commande
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INITIALIZE_PARSING_COMMAND_LINE.explanation=The garbage collector failed to initialize because of an error on the command line
 J9NLS_GC_FAILED_TO_INITIALIZE_PARSING_COMMAND_LINE.system_action=The JVM will terminate
@@ -173,7 +173,7 @@ J9NLS_GC_FAILED_TO_ALLOCATE_DEFAULT_MEMORY_SPACE.user_response=Ensure the the sy
 # END NON-TRANSLATABLE
 
 # Note survivor is a technical term used in the context of a semispace garbage collector
-J9NLS_GC_FAILED_TO_ALLOCATE_SURVIVOR_SEGMENT=Echec de l'allocation du segment survivant dans l'espace m\u00e9moire par d\u00e9faut
+J9NLS_GC_FAILED_TO_ALLOCATE_SURVIVOR_SEGMENT=Echec de l'allocation du segment des objets survivants dans l'espace m\u00e9moire par d\u00e9faut
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_ALLOCATE_SURVIVOR_SEGMENT.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_ALLOCATE_SURVIVOR_SEGMENT.system_action=The JVM will terminate
@@ -184,7 +184,7 @@ J9NLS_GC_FAILED_TO_ALLOCATE_SURVIVOR_SEGMENT.user_response=Ensure the the system
 # Note %1$s is the memoryParameter that is too small (e.g. "-Xmx")
 # Note %2$zu the minimumSize value (e.g. 1024)
 # Note %3$s the qualifier for the minimumSize (e.g. "K", "M" or "G")
-J9NLS_GC_SUBSPACE_TOO_SMALL_FOR_VALUE=Taille de %1$s trop faible, taille minimale requise : %2$zu %3$so
+J9NLS_GC_SUBSPACE_TOO_SMALL_FOR_VALUE=Taille de %1$s trop petite, taille minimale requise : %2$zu %3$so
 # START NON-TRANSLATABLE
 J9NLS_GC_SUBSPACE_TOO_SMALL_FOR_VALUE.explanation=The specified option is smaller than the minimum permitted value
 J9NLS_GC_SUBSPACE_TOO_SMALL_FOR_VALUE.system_action=The JVM will terminate
@@ -197,7 +197,7 @@ J9NLS_GC_SUBSPACE_TOO_SMALL_FOR_VALUE.sample_input_3=M
 
 # Note %1$s memoryParameter (e.g. "-Xms")
 # Note %2$s memoryParameter (e.g. "-Xmx")
-J9NLS_GC_SUBSPACE_TOO_SMALL=Taille de %1$s trop faible pour %2$s
+J9NLS_GC_SUBSPACE_TOO_SMALL=Taille de %1$s trop petite pour %2$s
 # START NON-TRANSLATABLE
 J9NLS_GC_SUBSPACE_TOO_SMALL.explanation=The specified option is smaller than the minimum permitted value
 J9NLS_GC_SUBSPACE_TOO_SMALL.system_action=The JVM will terminate
@@ -209,7 +209,7 @@ J9NLS_GC_SUBSPACE_TOO_SMALL.sample_input_2=-Xmx
 
 # Note %1$s memoryParameter (e.g. "-Xms")
 # Note %2$s memoryParameter (e.g. "-Xmx")
-J9NLS_GC_SUBSPACE_TOO_LARGE=Taille de %1$s trop \u00e9lev\u00e9e pour %2$s
+J9NLS_GC_SUBSPACE_TOO_LARGE=Taille de %1$s trop grande pour %2$s
 # START NON-TRANSLATABLE
 J9NLS_GC_SUBSPACE_TOO_LARGE.explanation=The specified option is larger than the maximum permitted value
 J9NLS_GC_SUBSPACE_TOO_LARGE.system_action=The JVM will terminate
@@ -220,7 +220,7 @@ J9NLS_GC_SUBSPACE_TOO_LARGE.sample_input_2=-Xmx
 # END NON-TRANSLATABLE
 
 # Note %s memoryParameter (e.g. "-Xms")
-J9NLS_GC_SUBSPACE_TOO_LARGE_FOR_HEAP=Taille de %s trop \u00e9lev\u00e9e pour le segment
+J9NLS_GC_SUBSPACE_TOO_LARGE_FOR_HEAP=Taille de %s trop grande pour le tas
 # START NON-TRANSLATABLE
 J9NLS_GC_SUBSPACE_TOO_LARGE_FOR_HEAP.explanation=The specified option is larger than the maximum permitted value
 J9NLS_GC_SUBSPACE_TOO_LARGE_FOR_HEAP.system_action=The JVM will terminate
@@ -271,7 +271,7 @@ J9NLS_GC_SUBSPACE_SUM_OF_NOT_EQUAL.sample_input_3=-Xmo
 
 # Note %1$s memoryParameter (e.g. "-Xms")
 # Note %2$s memoryParameter (e.g. "-Xms")
-J9NLS_GC_SUBSPACE_SUM_OF_TOO_LARGE_FOR_HEAP=La somme de %1$s et de %2$s est trop \u00e9lev\u00e9e pour le segment
+J9NLS_GC_SUBSPACE_SUM_OF_TOO_LARGE_FOR_HEAP=La somme de %1$s et de %2$s est trop \u00e9lev\u00e9e pour le tas
 # START NON-TRANSLATABLE
 J9NLS_GC_SUBSPACE_SUM_OF_TOO_LARGE_FOR_HEAP.explanation=The sum of the specified options is larger than the maximum permitted value
 J9NLS_GC_SUBSPACE_SUM_OF_TOO_LARGE_FOR_HEAP.system_action=The JVM will terminate
@@ -492,7 +492,7 @@ J9NLS_GC_SUBSPACE_SUM_OF_TOO_SMALL.sample_input_3=-Xmx
 # END NON-TRANSLATABLE
 
 # These are the GC options output by -verbose:sizes
-J9NLS_GC_VERB_SIZES_XMNS=taille initiale de nouvel espace
+J9NLS_GC_VERB_SIZES_XMNS=taille initiale de l'espace des nouveaux objets
 # START NON-TRANSLATABLE
 J9NLS_GC_VERB_SIZES_XMNS.explanation=Explains the -Xmns option when -verbose:sizes is specified
 J9NLS_GC_VERB_SIZES_XMNS.system_action=None
@@ -500,7 +500,7 @@ J9NLS_GC_VERB_SIZES_XMNS.user_response=None
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_VERB_SIZES_XMNX=taille maximale de nouvel espace
+J9NLS_GC_VERB_SIZES_XMNX=taille maximale de l'espace des nouveaux objets
 # START NON-TRANSLATABLE
 J9NLS_GC_VERB_SIZES_XMNX.explanation=Explains the -Xmnx option when -verbose:sizes is specified
 J9NLS_GC_VERB_SIZES_XMNX.system_action=None
@@ -516,7 +516,7 @@ J9NLS_GC_VERB_SIZES_XMS.user_response=None
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_VERB_SIZES_XMOS=taille initiale d'ancien espace
+J9NLS_GC_VERB_SIZES_XMOS=taille initiale de l'espace des anciens objets
 # START NON-TRANSLATABLE
 J9NLS_GC_VERB_SIZES_XMOS.explanation=Explains the -Xmos option when -verbose:sizes is specified
 J9NLS_GC_VERB_SIZES_XMOS.system_action=None
@@ -524,7 +524,7 @@ J9NLS_GC_VERB_SIZES_XMOS.user_response=None
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_VERB_SIZES_XMOX=taille maximale d'ancien espace
+J9NLS_GC_VERB_SIZES_XMOX=taille maximale de l'espace des anciens objets
 # START NON-TRANSLATABLE
 J9NLS_GC_VERB_SIZES_XMOX.explanation=Explains the -Xmox option when -verbose:sizes is specified
 J9NLS_GC_VERB_SIZES_XMOX.system_action=None
@@ -532,7 +532,7 @@ J9NLS_GC_VERB_SIZES_XMOX.user_response=None
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_VERB_SIZES_XMOI=incr\u00e9ment d'ancien espace
+J9NLS_GC_VERB_SIZES_XMOI=incr\u00e9ment de l'espace des anciens objets
 # START NON-TRANSLATABLE
 J9NLS_GC_VERB_SIZES_XMOI.explanation=Explains the -Xmoi option when -verbose:sizes is specified
 J9NLS_GC_VERB_SIZES_XMOI.system_action=None
@@ -540,7 +540,7 @@ J9NLS_GC_VERB_SIZES_XMOI.user_response=None
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_VERB_SIZES_XMR=taille d\u00e9finie enregistr\u00e9e
+J9NLS_GC_VERB_SIZES_XMR=taille de l'ensemble m\u00e9moris\u00e9
 # START NON-TRANSLATABLE
 J9NLS_GC_VERB_SIZES_XMR.explanation=Explains the -Xmr option when -verbose:sizes is specified
 J9NLS_GC_VERB_SIZES_XMR.system_action=None
@@ -548,7 +548,7 @@ J9NLS_GC_VERB_SIZES_XMR.user_response=None
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_VERB_SIZES_XSOFTMX=m\u00e9moire maximale approximable
+J9NLS_GC_VERB_SIZES_XSOFTMX=m\u00e9moire maximale souple
 # START NON-TRANSLATABLE
 J9NLS_GC_VERB_SIZES_XSOFTMX.explanation=Explains the -Xsoftmx option when -verbose:sizes is specified
 J9NLS_GC_VERB_SIZES_XSOFTMX.system_action=None
@@ -584,7 +584,7 @@ J9NLS_GC_VERB_SIZES_XMX.user_response=None
 # Note %2$s size qualifier (e.g. "K")
 # Note %3$zu size of the page (e.g. 16)
 # Note %4$s size qualifier (e.g. "M")
-J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED=La taille de page volumineuse %1$zu%2$s n'est pas une taille prise en charge, %3$zu%4$s utilis\u00e9 \u00e0 la place.
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED=La taille de grande page %1$zu%2$s n'est pas une taille de page prise en charge, %3$zu%4$s utilis\u00e9 \u00e0 la place.
 # START NON-TRANSLATABLE
 J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.explanation=The specified large page size is not supported by the operating system. A default size will be used instead
 J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.system_action=The JVM will start using the default large page size instead of the specified size
@@ -597,7 +597,7 @@ J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.sample_input_4=M
 # END NON-TRANSLATABLE
 
 # This is a GC option output by -verbose:sizes
-J9NLS_GC_VERB_SIZES_XLP=taille des pages volumineuses
+J9NLS_GC_VERB_SIZES_XLP=taille de grande page
 # START NON-TRANSLATABLE
 J9NLS_GC_VERB_SIZES_XLP.explanation=Explains the -Xlp option when -verbose:sizes is specified
 J9NLS_GC_VERB_SIZES_XLP.system_action=None
@@ -605,7 +605,7 @@ J9NLS_GC_VERB_SIZES_XLP.user_response=None
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_VERB_SIZES_AVAILABLE_XLP=tailles des pages volumineuses disponibles :
+J9NLS_GC_VERB_SIZES_AVAILABLE_XLP=tailles de grande page disponibles :
 # START NON-TRANSLATABLE
 J9NLS_GC_VERB_SIZES_AVAILABLE_XLP.explanation=When J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED is displayed, it will be followed by this message and then a list of supported sizes
 J9NLS_GC_VERB_SIZES_AVAILABLE_XLP.system_action=None
@@ -693,7 +693,7 @@ J9NLS_GC_UNABLE_TO_OPEN_FILE.sample_input_1=filename.log
 # END NON-TRANSLATABLE
 
 # Split heap error messages
-J9NLS_GC_FAILED_TO_ALLOCATE_OLD_SPACE=Echec d'allocation de l'ancien espace
+J9NLS_GC_FAILED_TO_ALLOCATE_OLD_SPACE=Echec d'allocation de l'espace des anciens objets
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_ALLOCATE_OLD_SPACE.explanation=The size of the heap extent used for old space could not be reserved
 J9NLS_GC_FAILED_TO_ALLOCATE_OLD_SPACE.system_action=The JVM will terminate
@@ -701,7 +701,7 @@ J9NLS_GC_FAILED_TO_ALLOCATE_OLD_SPACE.user_response=Request a smaller old space 
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_FAILED_TO_ALLOCATE_NEW_SPACE=Echec de l'allocation du nouvel espace
+J9NLS_GC_FAILED_TO_ALLOCATE_NEW_SPACE=Echec de l'allocation de l'espace des nouveaux objets
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_ALLOCATE_NEW_SPACE.explanation=The size of the heap extent used for new space could not be reserved
 J9NLS_GC_FAILED_TO_ALLOCATE_NEW_SPACE.system_action=The JVM will terminate
@@ -709,7 +709,7 @@ J9NLS_GC_FAILED_TO_ALLOCATE_NEW_SPACE.user_response=Request a smaller new space 
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_SPLIT_HEAP_ENTEXTS_WRONG_ORDER=La g\u00e9om\u00e9trie n\u00e9cessaire de segment de m\u00e9moire partag\u00e9 n'a pas pu \u00eatre allou\u00e9e
+J9NLS_GC_SPLIT_HEAP_ENTEXTS_WRONG_ORDER=La g\u00e9om\u00e9trie m\u00e9moire n\u00e9cessaire au tas divis\u00e9 n'a pas pu \u00eatre allou\u00e9e
 # START NON-TRANSLATABLE
 J9NLS_GC_SPLIT_HEAP_ENTEXTS_WRONG_ORDER.explanation=The heap extents required for new space and old space could not be reserved in the address order required by the implementation
 J9NLS_GC_SPLIT_HEAP_ENTEXTS_WRONG_ORDER.system_action=The JVM will terminate
@@ -717,7 +717,7 @@ J9NLS_GC_SPLIT_HEAP_ENTEXTS_WRONG_ORDER.user_response=Request a smaller object h
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_FAILED_TO_INSTANTIATE_SPLIT_HEAP=Echec de l'instanciation du segment de m\u00e9moire partag\u00e9 : %1$s (nouvelle taille %2$zu%3$s, ancienne taille %4$zu%5$s)
+J9NLS_GC_FAILED_TO_INSTANTIATE_SPLIT_HEAP=Echec de l'instanciation du tas divis\u00e9 : %1$s (nouvelle taille %2$zu%3$s, ancienne taille %4$zu%5$s)
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INSTANTIATE_SPLIT_HEAP.explanation=Split heap failed to initialize
 J9NLS_GC_FAILED_TO_INSTANTIATE_SPLIT_HEAP.system_action=The JVM will terminate
@@ -731,7 +731,7 @@ J9NLS_GC_FAILED_TO_INSTANTIATE_SPLIT_HEAP.sample_input_5=M
 # END NON-TRANSLATABLE
 
 # Exception thrown on return from wait interruptible primitive wrapper rtsj_waitScopeReferenceCountLock for ScopedMemory.join and .joinAndEnter
-J9NLS_GC_AIE_THROW_DURING_SCOPED_MEMORY_JOIN=ScopedMemory.join/joinAndEnter interrupted
+J9NLS_GC_AIE_THROW_DURING_SCOPED_MEMORY_JOIN=ScopedMemory.join/joinAndEnter interrompu
 # START NON-TRANSLATABLE
 J9NLS_GC_AIE_THROW_DURING_SCOPED_MEMORY_JOIN.explanation=Interrupt has broken the wait in ScopedMemory.join/joinAndEnter
 J9NLS_GC_AIE_THROW_DURING_SCOPED_MEMORY_JOIN.system_action=A java/lang/InterruptedException will be thrown
@@ -764,7 +764,7 @@ J9NLS_GC_OPTIONS_INCORRECT_MEMORY_SIZE.sample_input_1=-Xlp:objectheap:pagesize=<
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE=La taille de page volumineuse %1$zu%2$s n'est pas une taille prise en charge ; %3$zu%4$s %5$s utilis\u00e9 \u00e0 la place.
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE=La taille de grande page %1$zu%2$s n'est pas une taille de page prise en charge ; %3$zu%4$s %5$s utilis\u00e9 \u00e0 la place.
 # START NON-TRANSLATABLE
 J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.explanation=The specified page size is not supported by the operating system. A suitable page size will be used.
 J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.system_action=The JVM will start using a different page size instead of the specified size
@@ -777,7 +777,7 @@ J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.sample_input_5=
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE=La taille de page volumineuse %1$zu%2$s %3$s  n'est pas une taille prise en charge, %4$zu%5$s utilis\u00e9 \u00e0 la place.
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE=La taille de grande page %1$zu%2$s %3$s n'est pas une taille de page prise en charge, %4$zu%5$s utilis\u00e9 \u00e0 la place.
 # START NON-TRANSLATABLE
 J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.explanation=The specified large page size is not supported by the operating system. A suitable page size will be used.
 J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.system_action=The JVM will start using a different page size instead of the specified size
@@ -790,7 +790,7 @@ J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.sample_in
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE=La taille de page volumineuse %1$zu%2$s %3$s n'est pas une taille prise en charge, %4$zu%5$s %6$s utilis\u00e9 \u00e0 la place.
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE=La taille de grande page %1$zu%2$s %3$s n'est pas une taille de page prise en charge, %4$zu%5$s %6$s utilis\u00e9 \u00e0 la place.
 # START NON-TRANSLATABLE
 J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.explanation=The specified large page size is not supported by the operating system. A suitable page size will be used.
 J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.system_action=The JVM will start using a different page size instead of the specified size
@@ -812,7 +812,7 @@ J9NLS_GC_OPTIONS_XLP_PARSING_ERROR.user_response=Correct the -Xlp option syntax 
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_OPTIONS_XLP_LARGE_PAGE_NOT_SUPPORTED=La configuration syst\u00e8me ne prend pas en charge la taille de page volumineuse %1$zu%2$s demand\u00e9e
+J9NLS_GC_OPTIONS_XLP_LARGE_PAGE_NOT_SUPPORTED=La configuration syst\u00e8me ne prend pas en charge la taille de grande page %1$zu%2$s demand\u00e9e
 # START NON-TRANSLATABLE
 J9NLS_GC_OPTIONS_XLP_LARGE_PAGE_NOT_SUPPORTED.explanation=The specified large page size is not supported by the operating system
 J9NLS_GC_OPTIONS_XLP_LARGE_PAGE_NOT_SUPPORTED.system_action=The JVM will terminate
@@ -822,7 +822,7 @@ J9NLS_GC_OPTIONS_XLP_LARGE_PAGE_NOT_SUPPORTED.sample_input_2=K
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_OPTIONS_XLP_LARGE_PAGE_NOT_SUPPORTED_WITH_PAGETYPE=La configuration syst\u00e8me ne prend pas en charge la taille de page volumineuse %1$zu%2$s %3$s demand\u00e9e
+J9NLS_GC_OPTIONS_XLP_LARGE_PAGE_NOT_SUPPORTED_WITH_PAGETYPE=La configuration syst\u00e8me ne prend pas en charge la taille de grande page %1$zu%2$s %3$s demand\u00e9e
 # START NON-TRANSLATABLE
 J9NLS_GC_OPTIONS_XLP_LARGE_PAGE_NOT_SUPPORTED_WITH_PAGETYPE.explanation=The specified large page size is not supported by the operating system
 J9NLS_GC_OPTIONS_XLP_LARGE_PAGE_NOT_SUPPORTED_WITH_PAGETYPE.system_action=The JVM will terminate
@@ -922,7 +922,7 @@ J9NLS_GC_FAILED_TO_INSTANTIATE_LOW_MEMORY_RESERVE_SIZE_REQUESTED.sample_input_2=
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_OPTIONS_XLP_PAGE_NOT_AVAILABLE_STRICT=Impossible de d\u00e9finir la taille de segment de m\u00e9moire  %1$zu%2$s \u00e0 l'aide de la taille de page %3$zu%4$s. La taille de segment de m\u00e9moire peut \u00eatre d\u00e9finie \u00e0 l'aide de -Xmx
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_AVAILABLE_STRICT=Impossible de satisfaire la taille de tas %1$zu%2$s avec la taille de page %3$zu%4$s. La taille du tas peut \u00eatre sp\u00e9cifi\u00e9e avec -Xmx
 # START NON-TRANSLATABLE
 J9NLS_GC_OPTIONS_XLP_PAGE_NOT_AVAILABLE_STRICT.explanation=The requested objectheap page size is supported by the OS but not currently available
 J9NLS_GC_OPTIONS_XLP_PAGE_NOT_AVAILABLE_STRICT.system_action=The JVM will terminate
@@ -951,5 +951,4 @@ J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN=L'option -Xgc:prefe
 J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN.explanation=The JVM was started with the -Xgc:preferredHeapBase option, which has no effect on z/OS.
 J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN.system_action=The JVM ignores the -Xgc:preferredHeapBase option.
 J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN.user_response=Refer to the IBM SDK documentation.
-
 # END NON-TRANSLATABLE

@@ -1,0 +1,348 @@
+/*******************************************************************************
+ * Copyright (c) 2017, 2018 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ *******************************************************************************/
+import groovy.json.JsonSlurper;
+
+def git_clean() {
+    if (fileExists('.git')) {
+            sh "git clean -ffxd"
+    }
+    if (fileExists('.git/index.lock')) {
+            sh "rm -f .git/index.lock"
+    }
+}
+
+def get_source() {
+    stage('Get Source') {
+        timestamps {
+            git_clean()
+
+            // Setup REPO variables
+            OPENJ9_REPO_OPTION = (OPENJ9_REPO != "") ? "-openj9-repo=${OPENJ9_REPO}" : ""
+            OPENJ9_BRANCH_OPTION = (OPENJ9_BRANCH != "") ? "-openj9-branch=${OPENJ9_BRANCH}" : ""
+            OPENJ9_SHA_OPTION = (OPENJ9_SHA != "") ? "-openj9-sha=${OPENJ9_SHA}" : ""
+            OMR_REPO_OPTION = (OMR_REPO != "") ? "-omr-repo=${OMR_REPO}" : ""
+            OMR_BRANCH_OPTION = (OMR_BRANCH != "")? "-omr-branch=${OMR_BRANCH}" : ""
+            OMR_SHA_OPTION = (OMR_SHA != "") ? "-omr-sha=${OMR_SHA}" : ""
+
+            if (USER_CREDENTIALS_ID != '') {
+                get_sources_with_authentication()
+            } else {
+                get_sources()
+            }
+        }
+    }
+}
+
+def get_sources_with_authentication() {
+    sshagent(credentials:["${USER_CREDENTIALS_ID}"]) {
+        get_sources()
+    }
+}
+
+def get_sources() {
+    checkout changelog: false,
+            poll: false,
+            scm: [$class: 'GitSCM',
+                branches: [[name: "${OPENJDK_BRANCH}"]],
+                doGenerateSubmoduleConfigurations: false,
+                extensions: [[$class: 'CheckoutOption', timeout: 30],
+                            [$class: 'CloneOption',
+                                depth: 0,
+                                noTags: false,
+                                reference: "${OPENJDK_REFERENCE_REPO}",
+                                shallow: false,
+                                timeout: 30]],
+                submoduleCfg: [],
+                userRemoteConfigs: [[credentialsId: "${USER_CREDENTIALS_ID}",
+                                    url: "${OPENJDK_REPO}"]]]
+
+    // Check if this build is a PR
+    if (params.ghprbGhRepository) {
+        // Look for dependent changes and checkout PR(s)
+        checkout_pullrequest()
+    } else {
+        sh "git checkout ${OPENJDK_SHA}"
+        sh "bash ./get_source.sh ${EXTRA_GETSOURCE_OPTIONS} ${OPENJ9_REPO_OPTION} ${OPENJ9_BRANCH_OPTION} ${OPENJ9_SHA_OPTION} ${OMR_REPO_OPTION} ${OMR_BRANCH_OPTION} ${OMR_SHA_OPTION}"
+    }
+}
+
+def checkout_pullrequest() {
+    echo 'Look for Dependent Changes'
+
+    def KEYWORD = "depends"
+    def COMMENT = ghprbCommentBody.toLowerCase(Locale.US);
+    def OPENJDK_PR
+    def OMR_PR
+    def OPENJ9_PR
+    def omr_bool = false
+    def omr_upstream = false
+    def openjdk_bool = false
+    def openj9_bool = false
+
+    // Determine source repo of PR
+    // Cannot depend on a change from the same repo as the source repo
+    def SOURCE_REPO_MESSAGE
+    switch (params.ghprbGhRepository) {
+        case "eclipse/openj9-omr":
+            omr_bool = true
+            OMR_PR = params.ghprbPullId
+            SOURCE_REPO_MESSAGE = "PullRequest source repo appears to be OpenJ9-OMR"
+            break
+        case "eclipse/openj9":
+            openj9_bool = true
+            OPENJ9_PR = params.ghprbPullId
+            SOURCE_REPO_MESSAGE = "PullRequest source repo appears to be OpenJ9"
+            break
+        case ~/ibmruntimes(.*)/:
+            openjdk_bool = true
+            OPENJDK_PR = params.ghprbPullId
+            SOURCE_REPO_MESSAGE = "PullRequest source repo appears to be OpenJDK"
+            break
+        default:
+            error "Unable to determine source repo for PullRequest"
+    }
+    echo SOURCE_REPO_MESSAGE
+
+    if (!COMMENT.contains(KEYWORD)) {
+        echo "No dependent changes found"
+    } else {
+        // Gather everything after KEYWORD. Assumes a whitespace after KEYWORD, hence +1
+        def DEPENDS_BLOB = COMMENT.substring(COMMENT.indexOf(KEYWORD) + KEYWORD.length() + 1 , COMMENT.length())
+        def DEPENDS_ARRAY = DEPENDS_BLOB.tokenize(' ')
+
+        // Setup PR_IDs for dependent changes
+        for (DEPEND in DEPENDS_ARRAY) {
+            String REPO = DEPEND.substring(DEPEND.indexOf("/") + 1, DEPEND.indexOf("#"));
+            String PR_ID = DEPEND.substring(DEPEND.indexOf("#") + 1, DEPEND.length());
+            switch(REPO) {
+                case "omr":
+                case "openj9-omr":
+                    if (omr_bool) {
+                        error "Cannot specify 2 OMR Repos"
+                    }
+                    omr_bool = true
+                    if (REPO == 'omr') {
+                        omr_upstream = true
+                    }
+                    OMR_PR = "${PR_ID}"
+                    echo "Dependent OMR change found: #${PR_ID}"
+                    break
+                case "openj9":
+                    if (openj9_bool) {
+                        error "Cannot specify 2 OpenJ9 Repos"
+                    }
+                    openj9_bool = true
+                    OPENJ9_PR = "${PR_ID}"
+                    echo "Dependent OpenJ9 change found: #${PR_ID}"
+                    break
+                case ~/openj9-openjdk(.*)/:
+                    if (openjdk_bool) {
+                        error "Cannot specify 2 OpenJDK Repos"
+                    }
+                    openjdk_bool = true
+                    OPENJDK_PR = "${PR_ID}"
+                    echo "Dependent OpenJDK change found: #${PR_ID}"
+
+                    // Verify OpenJDK Repo matches SDK Version of build.
+                    // eg. Cannot checkout a JDK8 PR for a JDK9 build
+                    echo "SDK: ${SDK_VERSION}"
+                    echo "REPO: ${REPO}"
+
+                    // For SDK 8/9/10, the Repo has the SDK version in the name
+                    if (REPO != "openj9-openjdk-jdk${SDK_VERSION}") {
+                        error "Trying to build SDK${SDK_VERSION} with a dependent change from repo '${REPO}' is not possible"
+                    }
+                    break
+                default:
+                    error "Bad Depends Repo: '${REPO}' in '${DEPEND}'"
+            }
+        }
+    }
+
+    if (openjdk_bool) {
+        def REPO_SUFFIX = ""
+        if (SDK_VERSION != "next") {
+            REPO_SUFFIX = SDK_VERSION
+        }
+        checkout_pullrequest(OPENJDK_PR, "ibmruntimes/openj9-openjdk-jdk${REPO_SUFFIX}")
+    }
+
+    sh "bash ./get_source.sh ${EXTRA_GETSOURCE_OPTIONS}"
+
+    // Checkout dependent PRs, if any were specified
+    if (openj9_bool) {
+        dir ('openj9') {
+            checkout_pullrequest(OPENJ9_PR, 'eclipse/openj9')
+        }
+    }
+
+    if (omr_bool) {
+        dir ('omr') {
+            if (omr_upstream) {
+                sh "git config remote.origin.url https://github.com/eclipse/omr.git"
+            }
+            checkout_pullrequest(OMR_PR, 'eclipse/omr')
+        }
+    }
+}
+
+def checkout_pullrequest(ID, REPO) {
+    // Determine if we are checking out a PR or a branch
+    try {
+        if (ID.isNumber()) {
+            try {
+                fetchRef("pull/${ID}/merge", "pr/${ID}/merge" )
+                checkoutRef ("pr/${ID}/merge")
+            } catch (e) {
+                def JSONFILE = ""
+                def BASEREF = ""
+                def URL = "https://api.github.com/repos/${REPO}/pulls/${ID}"
+                withCredentials([usernamePassword(credentialsId: "${GITHUB_API_CREDENTIALS_ID}", passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+                    JSONFILE = sh returnStdout: true, script: "curl -u ${USER} --pass ${PASS} ${URL}"
+                }
+                def slurper = new groovy.json.JsonSlurper()
+                def jsonResultFile = slurper.parseText(JSONFILE)
+                BASEREF = jsonResultFile.base.ref
+                fetchRef ("heads/${BASEREF}", "${BASEREF}")
+                checkoutRef (BASEREF)
+            }
+        } else {
+            fetchRef ("heads/${ID}", ID)
+            checkoutRef (ID)
+        }
+    } catch(e) {
+        error("Fatal: Unable to checkout '${ID}'. If checking out a branch, please ensure the branch exists and the spelling is correct. If checking out a PullRequest, please ensure the PR is open, unmerged and has no merge conflicts.")
+    }
+}
+
+def fetchRef (REF1, REF2) {
+    sh "git fetch --progress origin +refs/${REF1}:refs/remotes/origin/${REF2}"
+}
+
+def checkoutRef (REF) {
+    sh "git checkout refs/remotes/origin/${REF}"
+}
+
+
+def build() {
+    stage('Compile') {
+        timestamps {
+            withEnv(BUILD_ENV_VARS_LIST) {
+                sh "${BUILD_ENV_CMD} bash configure --with-freemarker-jar='$FREEMARKER' --with-boot-jdk='$BOOT_JDK' $EXTRA_CONFIGURE_OPTIONS && make $EXTRA_MAKE_OPTIONS all"
+            }
+        }
+    }
+    stage('Java Version') {
+        timestamps {
+            sh "build/$RELEASE/images/$JDK_FOLDER/bin/java -version"
+        }
+    }
+}
+
+def archive() {
+    stage('Archive') {
+        timestamps {
+            def buildDir = "build/${RELEASE}/images/"
+            def testDir = "test/openj9"
+
+            sh "tar -C ${buildDir} -zcvf ${SDK_FILENAME} ${JDK_FOLDER}"
+            // test if the test natives directory is present, only in JDK11+
+            if (fileExists("${buildDir}${testDir}")) {
+               sh "tar -C ${buildDir} -zcvf ${TEST_FILENAME} ${testDir} --transform 's,${testDir},native-test-libs,'"
+            }
+            if (ARTIFACTORY_SERVER) {
+                def server = Artifactory.server ARTIFACTORY_SERVER
+                def artifactory_upload_dir = "${ARTIFACTORY_REPO}/${JOB_NAME}/${BUILD_ID}/"
+                def uploadSpec = """{
+                    "files":[
+                        {
+                            "pattern": "${env.WORKSPACE}/${SDK_FILENAME}",
+                            "target": "${artifactory_upload_dir}"
+                        },
+                        {
+                            "pattern": "${env.WORKSPACE}/${TEST_FILENAME}",
+                            "target": "${artifactory_upload_dir}"
+                        }
+                    ]
+                }"""
+
+                def buildInfo = Artifactory.newBuildInfo()
+                buildInfo.retention maxBuilds: ARTIFACTORY_NUM_ARTIFACTS, deleteBuildArtifacts: true
+                server.upload spec: uploadSpec, buildInfo: buildInfo
+                server.publishBuildInfo buildInfo
+                // Write URL to env so that we can pull it from the upstream pipeline job
+                ARTIFACTORY_URL = server.getUrl()
+                env.CUSTOMIZED_SDK_URL = "${ARTIFACTORY_URL}/${artifactory_upload_dir}${SDK_FILENAME}"
+                if (fileExists("${TEST_FILENAME}")) {
+                    env.CUSTOMIZED_SDK_URL += " ${ARTIFACTORY_URL}/${artifactory_upload_dir}${TEST_FILENAME}"
+                }
+                echo "CUSTOMIZED_SDK_URL:'${CUSTOMIZED_SDK_URL}'"
+                echo "ARTIFACTORY_CREDS:'${ARTIFACTORY_CREDS}'"
+            } else {
+                echo "ARTIFACTORY server is not set saving artifacts on jenkins."
+                archiveArtifacts artifacts: "**/${SDK_FILENAME},**/${TEST_FILENAME}", fingerprint: false, onlyIfSuccessful: true
+            }
+        }
+    }
+}
+
+def add_node_to_description() {
+    def TMP_DESC = (currentBuild.description) ? currentBuild.description + "<br>" : ""
+    currentBuild.description = TMP_DESC + "<a href=${JENKINS_URL}computer/${NODE_NAME}>${NODE_NAME}</a>"
+}
+
+def build_all() {
+
+    // Typically called by Build jobs and Compile only PRs
+    timeout(time: 6, unit: 'HOURS') {
+        try {
+            add_node_to_description()
+            get_source()
+            build()
+            // Do not archive in compile only pr jobs
+            // ghprbPullId is the PullRequest ID which only shows up in Pull Requests
+            if (!params.ghprbPullId) {
+                archive()
+            }
+        } finally {
+            try {
+		cleanWs()
+	    } catch(e) {
+		echo e.toString()
+		echo e.printStackTrace()
+		sh "ps -ef"
+	    }
+        }
+    }
+}
+
+def build_pr() {
+
+    // Called by PR Compile & Test jobs
+    // Does not cleanup as it is expected testing will occur, followed by cleanup
+    timeout(time: 6, unit: 'HOURS') {
+        get_source()
+        build()
+    }
+}
+
+return this

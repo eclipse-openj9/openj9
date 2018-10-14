@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,52 +27,47 @@
 
 extern CuSuite *GetTestSuite();
 
-J9PortLibrary* g_PortLibrary;
+J9PortLibrary *g_PortLibrary;
 
 UDATA RunAllTests(J9PortLibrary *portLibrary)
 {
-	UDATA start, end;
 	CuString *output = CuStringNew();
 	CuSuite *suite = CuSuiteNew();
 	PORT_ACCESS_FROM_PORT(portLibrary);
 
 	CuSuiteAddSuite(suite, GetTestSuite());
- 
-	start = j9time_usec_clock();
+
+	UDATA start = j9time_usec_clock();
 	CuSuiteRun(suite);
-	end = j9time_usec_clock();
+	UDATA end = j9time_usec_clock();
 
 	CuSuiteSummary(suite, output);
 	CuSuiteDetails(suite, output);
 
 	printf("%s\n", output->buffer);
-	printf("Tests took %lu usec to run.\n", end - start);
+	printf("Tests took %llu usec to run.\n", (unsigned long long) (end - start));
 
-	if (suite->failCount == 0){
+	if (0 == suite->failCount) {
 		return 0;
 	} else {
 		return 1;
 	}
 }
 
-extern "C" {
-
-UDATA
+extern "C" UDATA
 signalProtectedMain(struct J9PortLibrary *portLibrary, void *arg)
 {
 	struct j9cmdlineOptions * startupOptions = (struct j9cmdlineOptions *) arg;
 	PORT_ACCESS_FROM_PORT(portLibrary);
-	
-	g_PortLibrary = portLibrary;	
+
+	g_PortLibrary = portLibrary;
 
 #if defined(J9VM_OPT_MEMORY_CHECK_SUPPORT)
 	/* This should happen before anybody allocates memory!  Otherwise, shutdown will not work properly. */
-	memoryCheck_parseCmdLine( PORTLIB, startupOptions->argc-1, startupOptions->argv );
+	memoryCheck_parseCmdLine( PORTLIB, startupOptions->argc - 1, startupOptions->argv );
 #endif /* J9VM_OPT_MEMORY_CHECK_SUPPORT */
 
-	cutest_parseCmdLine( PORTLIB, startupOptions->argc-1, startupOptions->argv);
+	cutest_parseCmdLine( PORTLIB, startupOptions->argc - 1, startupOptions->argv);
 
 	return RunAllTests(portLibrary);
-}
-
 }

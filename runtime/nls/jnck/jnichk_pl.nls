@@ -177,42 +177,42 @@ J9NLS_JNICHK_NULL_REF.system_action=
 J9NLS_JNICHK_NULL_REF.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JNICHK_LOCAL_REF=odniesienie lokalne
+J9NLS_JNICHK_LOCAL_REF=referencja lokalna
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_LOCAL_REF.explanation=NOTAG
 J9NLS_JNICHK_LOCAL_REF.system_action=
 J9NLS_JNICHK_LOCAL_REF.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JNICHK_GLOBAL_REF=odniesienie globalne
+J9NLS_JNICHK_GLOBAL_REF=referencja globalna
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_GLOBAL_REF.explanation=NOTAG
 J9NLS_JNICHK_GLOBAL_REF.system_action=
 J9NLS_JNICHK_GLOBAL_REF.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JNICHK_WEAK_GLOBAL_REF=s\u0142abe odniesienie globalne
+J9NLS_JNICHK_WEAK_GLOBAL_REF=s\u0142aba referencja globalna
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_WEAK_GLOBAL_REF.explanation=NOTAG
 J9NLS_JNICHK_WEAK_GLOBAL_REF.system_action=
 J9NLS_JNICHK_WEAK_GLOBAL_REF.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JNICHK_DEBUGGER_REF=odniesienie do debugera
+J9NLS_JNICHK_DEBUGGER_REF=referencja debugera
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_DEBUGGER_REF.explanation=NOTAG
 J9NLS_JNICHK_DEBUGGER_REF.system_action=
 J9NLS_JNICHK_DEBUGGER_REF.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JNICHK_BAD_LOCAL_REF=odniesienie lokalne w innym w\u0105tku
+J9NLS_JNICHK_BAD_LOCAL_REF=referencja lokalna w innym w\u0105tku
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_BAD_LOCAL_REF.explanation=NOTAG
 J9NLS_JNICHK_BAD_LOCAL_REF.system_action=
 J9NLS_JNICHK_BAD_LOCAL_REF.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JNICHK_FREED_LOCAL_REF=zwolnione odniesienie lokalne
+J9NLS_JNICHK_FREED_LOCAL_REF=zwolniona referencja lokalna
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_FREED_LOCAL_REF.explanation=NOTAG
 J9NLS_JNICHK_FREED_LOCAL_REF.system_action=
@@ -289,7 +289,7 @@ J9NLS_JNICHK_GC_IS_DISABLED.user_response=Correct the JNI application code to av
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_NULL_ARGUMENT=B\u0142\u0105d JNI w %1$s: Argument nr #%2$d ma warto\u015b\u0107 NULL
+J9NLS_JNICHK_NULL_ARGUMENT=B\u0142\u0105d JNI w %1$s: Argument nr %2$d ma warto\u015b\u0107 NULL
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_NULL_ARGUMENT.sample_input_1=methodName
 J9NLS_JNICHK_NULL_ARGUMENT.sample_input_2=3
@@ -299,7 +299,7 @@ J9NLS_JNICHK_NULL_ARGUMENT.user_response=Correct the JNI function call to pass a
 # END NON-TRANSLATABLE
 
 # JNI and jobjectArray are not translatable
-J9NLS_JNICHK_ARGUMENT_IS_NOT_JOBJECTARRAY=B\u0142\u0105d JNI w %1$s: Argument nr #%2$d nie jest tablic\u0105 jobjectArray
+J9NLS_JNICHK_ARGUMENT_IS_NOT_JOBJECTARRAY=B\u0142\u0105d JNI w %1$s: Argument nr %2$d nie jest tablic\u0105 jobjectArray
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_ARGUMENT_IS_NOT_JOBJECTARRAY.sample_input_1=methodName
 J9NLS_JNICHK_ARGUMENT_IS_NOT_JOBJECTARRAY.sample_input_2=3
@@ -309,7 +309,7 @@ J9NLS_JNICHK_ARGUMENT_IS_NOT_JOBJECTARRAY.user_response=Correct the JNI function
 # END NON-TRANSLATABLE
 
 # JNI and jarray are not translatable
-J9NLS_JNICHK_ARGUMENT_IS_NOT_JARRAY=B\u0142\u0105d JNI w %1$s: Argument nr #%2$d nie jest tablic\u0105 jarray
+J9NLS_JNICHK_ARGUMENT_IS_NOT_JARRAY=B\u0142\u0105d JNI w %1$s: Argument nr %2$d nie jest tablic\u0105 jarray
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_ARGUMENT_IS_NOT_JARRAY.sample_input_1=methodName
 J9NLS_JNICHK_ARGUMENT_IS_NOT_JARRAY.sample_input_2=3
@@ -319,7 +319,7 @@ J9NLS_JNICHK_ARGUMENT_IS_NOT_JARRAY.user_response=Correct the JNI function call 
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_ARGUMENT_IS_NOT_X=B\u0142\u0105d JNI w %1$s: Argument nr #%2$d nie jest obiektem %3$s
+J9NLS_JNICHK_ARGUMENT_IS_NOT_X=B\u0142\u0105d JNI w %1$s: Argument nr %2$d nie jest obiektem %3$s
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_ARGUMENT_IS_NOT_X.sample_input_1=methodName
 J9NLS_JNICHK_ARGUMENT_IS_NOT_X.sample_input_2=4
@@ -330,7 +330,7 @@ J9NLS_JNICHK_ARGUMENT_IS_NOT_X.user_response=Correct the JNI function call to pa
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_ARGUMENT_IS_NOT_GLOBAL_REF=B\u0142\u0105d JNI w %1$s: Argument nr #%2$d (0x%3$p) nie jest odniesieniem globalnym. Jego typem jest: %4$s
+J9NLS_JNICHK_ARGUMENT_IS_NOT_GLOBAL_REF=B\u0142\u0105d JNI w %1$s: Argument nr %2$d (0x%3$p) nie jest referencj\u0105 globaln\u0105. Jego typem jest: %4$s
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_ARGUMENT_IS_NOT_GLOBAL_REF.sample_input_1=methodName
 J9NLS_JNICHK_ARGUMENT_IS_NOT_GLOBAL_REF.sample_input_2=4
@@ -342,7 +342,7 @@ J9NLS_JNICHK_ARGUMENT_IS_NOT_GLOBAL_REF.user_response=Correct the JNI function c
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_ARGUMENT_IS_NOT_WEAK_GLOBAL_REF=B\u0142\u0105d JNI w %1$s: Argument nr #%2$d (0x%3$p) nie jest s\u0142abym odniesieniem globalnym. Jego typem jest: %4$s
+J9NLS_JNICHK_ARGUMENT_IS_NOT_WEAK_GLOBAL_REF=B\u0142\u0105d JNI w %1$s: Argument nr %2$d (0x%3$p) nie jest s\u0142ab\u0105 referencj\u0105 globaln\u0105. Jego typem jest: %4$s
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_ARGUMENT_IS_NOT_WEAK_GLOBAL_REF.sample_input_1=methodName
 J9NLS_JNICHK_ARGUMENT_IS_NOT_WEAK_GLOBAL_REF.sample_input_2=4
@@ -354,7 +354,7 @@ J9NLS_JNICHK_ARGUMENT_IS_NOT_WEAK_GLOBAL_REF.user_response=Correct the JNI funct
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_ARGUMENT_IS_NOT_LOCAL_REF=B\u0142\u0105d JNI w %1$s: Argument nr #%2$d (0x%3$p) nie jest odniesieniem lokalnym. Jego typem jest: %4$s
+J9NLS_JNICHK_ARGUMENT_IS_NOT_LOCAL_REF=B\u0142\u0105d JNI w %1$s: Argument nr %2$d (0x%3$p) nie jest referencj\u0105 lokaln\u0105. Jego typem jest: %4$s
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_ARGUMENT_IS_NOT_LOCAL_REF.sample_input_1=methodName
 J9NLS_JNICHK_ARGUMENT_IS_NOT_LOCAL_REF.sample_input_2=4
@@ -366,7 +366,7 @@ J9NLS_JNICHK_ARGUMENT_IS_NOT_LOCAL_REF.user_response=Correct the JNI function ca
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_ARGUMENT_IS_NOT_REF=B\u0142\u0105d JNI w %1$s: Argument nr #%2$d (0x%3$p) nie jest poprawnym odniesieniem do obiektu. Jego typem jest: %4$s\n
+J9NLS_JNICHK_ARGUMENT_IS_NOT_REF=B\u0142\u0105d JNI w %1$s: Argument nr %2$d (0x%3$p) nie jest poprawn\u0105 referencj\u0105 obiektu. Jego typem jest: %4$s\n
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_ARGUMENT_IS_NOT_REF.sample_input_1=methodName
 J9NLS_JNICHK_ARGUMENT_IS_NOT_REF.sample_input_2=3
@@ -378,7 +378,7 @@ J9NLS_JNICHK_ARGUMENT_IS_NOT_REF.user_response=Correct the JNI function call to 
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_ARGUMENT_IS_NULL=B\u0142\u0105d JNI w %1$s: Argument nr #%2$d ma warto\u015b\u0107 NULL
+J9NLS_JNICHK_ARGUMENT_IS_NULL=B\u0142\u0105d JNI w %1$s: Argument nr %2$d ma warto\u015b\u0107 NULL
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_ARGUMENT_IS_NULL.sample_input_1=methodName
 J9NLS_JNICHK_ARGUMENT_IS_NULL.sample_input_2=3
@@ -388,7 +388,7 @@ J9NLS_JNICHK_ARGUMENT_IS_NULL.user_response=Correct the JNI function call to pas
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_ARGUMENT_IS_TOO_LOW=B\u0142\u0105d JNI w %1$s: Argument nr #%2$d jest poza zakresem dla %3$s (0x%4$x < 0x%5$x)
+J9NLS_JNICHK_ARGUMENT_IS_TOO_LOW=B\u0142\u0105d JNI w %1$s: Argument nr %2$d jest poza zakresem dla %3$s (0x%4$x < 0x%5$x)
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_ARGUMENT_IS_TOO_LOW.sample_input_1=methodName
 J9NLS_JNICHK_ARGUMENT_IS_TOO_LOW.sample_input_2=3
@@ -401,7 +401,7 @@ J9NLS_JNICHK_ARGUMENT_IS_TOO_LOW.user_response=Correct the JNI function call.
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_ARGUMENT_IS_TOO_HIGH=B\u0142\u0105d JNI w %1$s: Argument nr #%2$d jest poza zakresem dla %3$s (0x%4$x > 0x%5$x)
+J9NLS_JNICHK_ARGUMENT_IS_TOO_HIGH=B\u0142\u0105d JNI w %1$s: Argument nr %2$d jest poza zakresem dla %3$s (0x%4$x > 0x%5$x)
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_ARGUMENT_IS_TOO_HIGH.sample_input_1=methodName
 J9NLS_JNICHK_ARGUMENT_IS_TOO_HIGH.sample_input_2=3
@@ -414,7 +414,7 @@ J9NLS_JNICHK_ARGUMENT_IS_TOO_HIGH.user_response=Correct the JNI function call.
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS=B\u0142\u0105d JNI w %1$s: Argument nr #%2$d nie jest podklas\u0105 %3$s
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS=B\u0142\u0105d JNI w %1$s: Argument nr %2$d nie jest podklas\u0105 %3$s
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS.sample_input_1=methodName
 J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS.sample_input_2=3
@@ -425,7 +425,7 @@ J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS.user_response=Correct the JNI function cal
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_ARGUMENT_CLASS_NOT_FOUND=B\u0142\u0105d JNI w %1$s: Argument nr #%2$d; nie mo\u017cna znale\u017a\u0107 %3$s
+J9NLS_JNICHK_ARGUMENT_CLASS_NOT_FOUND=B\u0142\u0105d JNI w %1$s: Argument nr %2$d; nie mo\u017cna znale\u017a\u0107 %3$s
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_ARGUMENT_CLASS_NOT_FOUND.sample_input_1=methodName
 J9NLS_JNICHK_ARGUMENT_CLASS_NOT_FOUND.sample_input_2=3
@@ -499,7 +499,7 @@ J9NLS_JNICHK_NO_LOCAL_FRAME_ON_STACK.user_response=Correct the JNI application c
 # END NON-TRANSLATABLE
 
 # VM and JNI are not translatable
-J9NLS_JNICHK_INCORRECT_PUSH_COUNT=B\u0142\u0105d wewn\u0119trzny maszyny VM w %1$s: Liczba bajt\u00f3w umieszczonych na stosie %2$p jest mniejsza od liczby bajt\u00f3w odniesienia JNI %3$p
+J9NLS_JNICHK_INCORRECT_PUSH_COUNT=B\u0142\u0105d wewn\u0119trzny maszyny VM w %1$s: Liczba bajt\u00f3w umieszczonych na stosie %2$p jest mniejsza od liczby bajt\u00f3w referencji JNI %3$p
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_INCORRECT_PUSH_COUNT.sample_input_1=methodName
 J9NLS_JNICHK_INCORRECT_PUSH_COUNT.sample_input_2=80
@@ -584,7 +584,7 @@ J9NLS_JNICHK_MISSING_EXCEPTION_CHECK.user_response=Correct the JNI application c
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_MALFORMED_IDENTIFIER=Ostrze\u017cenie JNI w %1$s: Argument nr #%2$d jest zniekszta\u0142conym identyfikatorem (\"%3$s\")
+J9NLS_JNICHK_MALFORMED_IDENTIFIER=Ostrze\u017cenie JNI w %1$s: Argument nr %2$d jest zniekszta\u0142conym identyfikatorem (\"%3$s\")
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_MALFORMED_IDENTIFIER.sample_input_1=methodName
 J9NLS_JNICHK_MALFORMED_IDENTIFIER.sample_input_2=3
@@ -595,7 +595,7 @@ J9NLS_JNICHK_MALFORMED_IDENTIFIER.user_response=Check and correct the JNI applic
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE=Ostrze\u017cenie JNI w %1$s: Argument nr #%2$d jest zniekszta\u0142conym podpisem metody (\"%3$s\")
+J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE=Ostrze\u017cenie JNI w %1$s: Argument nr %2$d jest zniekszta\u0142conym podpisem metody (\"%3$s\")
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE.sample_input_1=methodName
 J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE.sample_input_2=3
@@ -606,7 +606,7 @@ J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE.user_response=Check and correct the JNI 
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE=Ostrze\u017cenie JNI w %1$s: Argument nr #%2$d jest zniekszta\u0142conym podpisem pola (\"%3$s\")
+J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE=Ostrze\u017cenie JNI w %1$s: Argument nr %2$d jest zniekszta\u0142conym podpisem pola (\"%3$s\")
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE.sample_input_1=methodName
 J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE.sample_input_2=3
@@ -626,7 +626,7 @@ J9NLS_JNICHK_CRITICAL_UNSAFE_WARN.user_response=Check and correct the JNI applic
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_GREW_GLOBAL_REF_POOL=Ostrze\u017cenie JNI w %1$s: Pojemno\u015b\u0107 globalnej puli odniesie\u0144 wzros\u0142a automatycznie od warto\u015bci %2$d do warto\u015bci %3$d.\nMo\u017ce to by\u0107 przejawem przecieku pami\u0119ci.
+J9NLS_JNICHK_GREW_GLOBAL_REF_POOL=Ostrze\u017cenie JNI w %1$s: Pojemno\u015b\u0107 globalnej puli referencji wzros\u0142a automatycznie od warto\u015bci %2$d do warto\u015bci %3$d.\nMo\u017ce to by\u0107 przejawem przecieku pami\u0119ci.
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_GREW_GLOBAL_REF_POOL.sample_input_1=methodName
 J9NLS_JNICHK_GREW_GLOBAL_REF_POOL.sample_input_2=64
@@ -637,7 +637,7 @@ J9NLS_JNICHK_GREW_GLOBAL_REF_POOL.user_response=Check and correct the JNI applic
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL=Ostrze\u017cenie JNI w %1$s: Pojemno\u015b\u0107 globalnej puli s\u0142abych odniesie\u0144 wzros\u0142a automatycznie od warto\u015bci %2$d do warto\u015bci %3$d.\nMo\u017ce to by\u0107 przejawem przecieku pami\u0119ci.
+J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL=Ostrze\u017cenie JNI w %1$s: Pojemno\u015b\u0107 globalnej puli s\u0142abych referencji wzros\u0142a automatycznie od warto\u015bci %2$d do warto\u015bci %3$d.\nMo\u017ce to by\u0107 przejawem przecieku pami\u0119ci.
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL.sample_input_1=methodName
 J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL.sample_input_2=64
@@ -648,7 +648,7 @@ J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL.user_response=Check and correct the JNI a
 # END NON-TRANSLATABLE
 
 # JNI, EnsureLocalCapacity and PushLocalFrame are not translatable
-J9NLS_JNICHK_GREW_LOCAL_REF_FRAME=Ostrze\u017cenie JNI w %1$s: Pojemno\u015b\u0107 globalnej ramki odniesie\u0144 wzros\u0142a automatycznie od warto\u015bci %2$d do warto\u015bci %3$d.\n Liczba odniesie\u0144 w u\u017cyciu: %4$d.\nU\u017cyj EnsureLocalCapacity lub PushLocalFrame, aby jawnie zwi\u0119kszy\u0107 ramk\u0119.
+J9NLS_JNICHK_GREW_LOCAL_REF_FRAME=Ostrze\u017cenie JNI w %1$s: Pojemno\u015b\u0107 lokalnej ramki referencji wzros\u0142a automatycznie od warto\u015bci %2$d do warto\u015bci %3$d.\n Liczba referencji w u\u017cyciu: %4$d.\nU\u017cyj EnsureLocalCapacity lub PushLocalFrame, aby jawnie zwi\u0119kszy\u0107 ramk\u0119.
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_GREW_LOCAL_REF_FRAME.sample_input_1=methodName
 J9NLS_JNICHK_GREW_LOCAL_REF_FRAME.sample_input_2=64
@@ -867,7 +867,7 @@ J9NLS_JNICHK_ADVICE_IN_ONLOAD.user_response=Investigate the previous advice mess
 # END NON-TRANSLATABLE
 
 # JNI and java/nio/Buffer are not translatable
-J9NLS_JNICHK_ARGUMENT_IS_NOT_DIRECTBUFFER=Ostrze\u017cenie JNI w %1$s: Argumentem nr #%2$d nie jest java/nio/Buffer. %3$s zwr\u00f3ci kod b\u0142\u0119du
+J9NLS_JNICHK_ARGUMENT_IS_NOT_DIRECTBUFFER=Ostrze\u017cenie JNI w %1$s: Argumentem nr %2$d nie jest java/nio/Buffer. %3$s zwr\u00f3ci kod b\u0142\u0119du
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_ARGUMENT_IS_NOT_DIRECTBUFFER.sample_input_1=methodName
 J9NLS_JNICHK_ARGUMENT_IS_NOT_DIRECTBUFFER.sample_input_2=3
@@ -878,7 +878,7 @@ J9NLS_JNICHK_ARGUMENT_IS_NOT_DIRECTBUFFER.user_response=Check and correct the JN
 # END NON-TRANSLATABLE
 
 # JNI, java/lang/reflect/Method and java/lang/reflect/Constructor are not translatable
-J9NLS_JNICHK_ARGUMENT_IS_NOT_REFLECTMETHOD=B\u0142\u0105d JNI w %1$s: Argumentem nr #%2$d nie jest java/lang/reflect/Method ani java/lang/reflect/Constructor
+J9NLS_JNICHK_ARGUMENT_IS_NOT_REFLECTMETHOD=B\u0142\u0105d JNI w %1$s: Argumentem nr %2$d nie jest java/lang/reflect/Method ani java/lang/reflect/Constructor
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_ARGUMENT_IS_NOT_REFLECTMETHOD.sample_input_1=methodName
 J9NLS_JNICHK_ARGUMENT_IS_NOT_REFLECTMETHOD.sample_input_2=3
@@ -888,7 +888,7 @@ J9NLS_JNICHK_ARGUMENT_IS_NOT_REFLECTMETHOD.user_response=Check and correct the J
 # END NON-TRANSLATABLE
 
 # JNI, NewLocalRef and NewGlobalRef are not translatable
-J9NLS_JNICHK_WEAK_GLOBAL_REF_COULD_BE_NULL=Ostrze\u017cenie JNI w %1$s: Argument #%2$d jest s\u0142ab\u0105 referencj\u0105. S\u0142aba referencja mo\u017ce w dowolnym momencie uzyska\u0107 warto\u015b\u0107 NULL. Nale\u017cy dokona\u0107 promocji referencji przy u\u017cyciu NewLocalRef lub NewGlobalRef, a nast\u0119pnie por\u00f3wna\u0107 j\u0105 z warto\u015bci\u0105 NULL przed wywo\u0142aniem %3$s.
+J9NLS_JNICHK_WEAK_GLOBAL_REF_COULD_BE_NULL=Ostrze\u017cenie JNI w %1$s: Argument nr %2$d jest s\u0142ab\u0105 referencj\u0105. S\u0142aba referencja mo\u017ce w dowolnym momencie uzyska\u0107 warto\u015b\u0107 NULL. Nale\u017cy dokona\u0107 promocji referencji przy u\u017cyciu NewLocalRef lub NewGlobalRef, a nast\u0119pnie por\u00f3wna\u0107 j\u0105 z warto\u015bci\u0105 NULL przed wywo\u0142aniem %3$s.
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_WEAK_GLOBAL_REF_COULD_BE_NULL.sample_input_1=methodName
 J9NLS_JNICHK_WEAK_GLOBAL_REF_COULD_BE_NULL.sample_input_2=3
@@ -939,7 +939,7 @@ J9NLS_JNICHK_METHOD_IS_NOT_CONSTRUCTOR.system_action=If -Xcheck:jni:nonfatal has
 J9NLS_JNICHK_METHOD_IS_NOT_CONSTRUCTOR.user_response=Check and correct the JNI application code.
 # END NON-TRANSLATABLE
 
-J9NLS_JNICHK_BUFFER_MODIFIED=B\u0142\u0105d JNI w %1$s: Dane wskazywane przez argument nr #%2$d zosta\u0142y zmodyfikowane podczas wykonywania %3$s. Dane mog\u0142y zosta\u0107 zmodyfikowane przez inny w\u0105tek lub przez zagnie\u017cd\u017cone wywo\u0142anie. Wynik %4$s mo\u017ce by\u0107 niepoprawny, a maszyna wirtualna mo\u017ce utraci\u0107 stabilno\u015b\u0107.
+J9NLS_JNICHK_BUFFER_MODIFIED=B\u0142\u0105d JNI w %1$s: Dane wskazywane przez argument nr %2$d zosta\u0142y zmodyfikowane podczas wykonywania %3$s. Dane mog\u0142y zosta\u0107 zmodyfikowane przez inny w\u0105tek lub przez zagnie\u017cd\u017cone wywo\u0142anie. Wynik %4$s mo\u017ce by\u0107 niepoprawny, a maszyna wirtualna mo\u017ce utraci\u0107 stabilno\u015b\u0107.
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_BUFFER_MODIFIED.sample_input_1=methodName
 J9NLS_JNICHK_BUFFER_MODIFIED.sample_input_2=2
@@ -974,7 +974,7 @@ J9NLS_JNICHK_HELP_15.system_action=
 J9NLS_JNICHK_HELP_15.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JNICHK_PACKED_MISMATCH=B\u0142\u0105d JNI w %1$s: argument #%2$d oczekuje: %3$s %4$s, podano: %5$s %6$s
+J9NLS_JNICHK_PACKED_MISMATCH=B\u0142\u0105d JNI w %1$s: argument nr %2$d oczekuje: %3$s %4$s, podano: %5$s %6$s
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_PACKED_MISMATCH.sample_input_1=SetObjectField
 J9NLS_JNICHK_PACKED_MISMATCH.sample_input_2=3
@@ -987,7 +987,7 @@ J9NLS_JNICHK_PACKED_MISMATCH.system_action=If -Xcheck:jni:nonfatal has been spec
 J9NLS_JNICHK_PACKED_MISMATCH.user_response=Check and correct the JNI application code.
 # END NON-TRANSLATABLE
 
-J9NLS_JNICHK_NON_ARRAY_REQUIRED=B\u0142\u0105d JNI w %1$s: argument #%2$d wymaga typu, kt\u00f3ry nie jest tablic\u0105
+J9NLS_JNICHK_NON_ARRAY_REQUIRED=B\u0142\u0105d JNI w %1$s: argument nr %2$d wymaga typu, kt\u00f3ry nie jest tablic\u0105
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_NON_ARRAY_REQUIRED.sample_input_1=GetClassPackedDataSize
 J9NLS_JNICHK_NON_ARRAY_REQUIRED.sample_input_2=2

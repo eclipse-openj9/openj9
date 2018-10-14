@@ -24,29 +24,20 @@ package com.ibm.j9ddr.vm29.tools.ddrinteractive.commands;
 import java.io.PrintStream;
 
 import com.ibm.j9ddr.CorruptDataException;
-import com.ibm.j9ddr.tools.ddrinteractive.CommandUtils;
 import com.ibm.j9ddr.tools.ddrinteractive.Context;
 import com.ibm.j9ddr.tools.ddrinteractive.DDRInteractiveCommandException;
 import com.ibm.j9ddr.tools.ddrinteractive.Command;
 import com.ibm.j9ddr.vm29.j9.DataType;
 import com.ibm.j9ddr.vm29.j9.walkers.ClassSegmentIterator;
-import com.ibm.j9ddr.vm29.j9.walkers.ROMClassesIterator;
-import com.ibm.j9ddr.vm29.j9.walkers.ROMClassesRangeIterator;
 import com.ibm.j9ddr.vm29.pointer.PointerPointer;
-import com.ibm.j9ddr.vm29.pointer.U8Pointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9MemorySegmentPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ITablePointer;
-import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
-import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 import com.ibm.j9ddr.vm29.types.UDATA;
 import com.ibm.j9ddr.vm29.structure.J9ITable;
 import static com.ibm.j9ddr.vm29.structure.J9Consts.*;
-
 
 public class ITableSizeCommand extends Command 
 {

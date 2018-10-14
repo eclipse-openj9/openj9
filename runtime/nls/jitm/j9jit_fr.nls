@@ -80,7 +80,7 @@ J9NLS_RELOCATABLE_CODE_WRONG_JVM_VERSION.user_response=Destroy and recreate the 
 J9NLS_RELOCATABLE_CODE_WRONG_JVM_VERSION.link=dita:///diag/tools/shcpd_deploying_compat.dita
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_WRONG_GC_POLICY=Le code AOT du cache des classes partag\u00e9es ne peut pas \u00eatre ex\u00e9cut\u00e9 avec la r\u00e8gle de r\u00e9cup\u00e9ration de place en cours. Le code AOT du cache de classes partag\u00e9es est ignor\u00e9.
+J9NLS_RELOCATABLE_CODE_WRONG_GC_POLICY=Le code AOT dans le cache des classes partag\u00e9es ne peut pas \u00eatre ex\u00e9cut\u00e9 avec la politique de r\u00e9cup\u00e9ration de place actuelle. Le code AOT du cache de classes partag\u00e9es est ignor\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_WRONG_GC_POLICY.explanation=The AOT code in the shared class cache was created using a different garbage collection policy.
 J9NLS_RELOCATABLE_CODE_WRONG_GC_POLICY.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
@@ -152,7 +152,7 @@ J9NLS_JIT_OPTIONS_XLP_EXTRA_COMMA.system_action=The JVM will ignore extra comma 
 J9NLS_JIT_OPTIONS_XLP_EXTRA_COMMA.user_response=Remove extra commas from -Xlp option
 # END NON-TRANSLATABLE
 
-J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED=La taille de page volumineuse %1$zu%2$s n'est pas une taille prise en charge pour le cache de code JIT ; %3$zu%4$s utilis\u00e9 \u00e0 la place.
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED=La taille de grande page %1$zu%2$s n'est pas une taille de page prise en charge pour le cache de code JIT ; %3$zu%4$s utilis\u00e9 \u00e0 la place.
 # START NON-TRANSLATABLE
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.explanation=The specified large page size is not supported by the operating system. A default size will be used instead
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.system_action=The JVM will start using the default large page size instead of the specified size
@@ -163,7 +163,7 @@ J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.sample_input_3=16
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.sample_input_4=M
 # END NON-TRANSLATABLE
 
-J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE=La taille de page volumineuse %1$zu%2$s n'est pas une taille prise en charge pour le cache de code JIT ; %3$zu%4$s %5$s utilis\u00e9 \u00e0 la place.
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE=La taille de grande page %1$zu%2$s n'est pas une taille de page prise en charge pour le cache de code JIT ; %3$zu%4$s %5$s utilis\u00e9 \u00e0 la place.
 # START NON-TRANSLATABLE
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.explanation=The specified page size is not supported by the operating system. A suitable page size will be used.
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.system_action=The JVM will start using a different page size instead of the specified size
@@ -175,7 +175,7 @@ J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.sample_input_4
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.sample_input_5=pageable
 # END NON-TRANSLATABLE
 
-J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE=La taille de page volumineuse %1$zu%2$s %3$s  n'est pas une taille prise en charge pour le cache de code JIT ; %4$zu%5$s utilis\u00e9 \u00e0 la place.
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE=La taille de grande page %1$zu%2$s %3$s n'est pas une taille de page prise en charge pour le cache de code JIT ; %4$zu%5$s utilis\u00e9 \u00e0 la place.
 # START NON-TRANSLATABLE
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.explanation=The specified large page size is not supported by the operating system. A suitable page size will be used.
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.system_action=The JVM will start using a different page size instead of the specified size
@@ -187,7 +187,7 @@ J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.sample_i
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.sample_input_5=K
 # END NON-TRANSLATABLE
 
-J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE=La taille de page volumineuse %1$zu%2$s %3$s n'est pas une taille prise en charge pour le cache de code JIT ; %4$zu%5$s %6$s utilis\u00e9 \u00e0 la place.
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE=La taille de grande page %1$zu%2$s %3$s n'est pas une taille de page prise en charge pour le cache de code JIT ; %4$zu%5$s %6$s utilis\u00e9 \u00e0 la place.
 # START NON-TRANSLATABLE
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.explanation=The specified large page size is not supported by the operating system. A suitable page size will be used.
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.system_action=The JVM will start using a different page size instead of the specified size

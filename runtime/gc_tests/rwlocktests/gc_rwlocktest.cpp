@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,7 +70,7 @@ runRequest(SupportThreadInfo* info)
 		omrthread_monitor_enter(info->synchronization);
 		omrthread_monitor_notify(info->synchronization);
 		if (info->done == TRUE){
-			omrthread_monitor_exit(info->synchronization);
+			omrthread_exit(info->synchronization);
 			break;
 		}
 		omrthread_monitor_wait_interruptable(info->synchronization,STEP_MILLI_TIMEOUT,STEP_NANO_TIMEOUT);

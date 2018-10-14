@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -130,6 +130,7 @@ base types: (in the 19bit class index field)
 #define BCV_BASE_TYPE_SHORT					(BCV_TAG_BASE_TYPE_OR_TOP | BCV_BASE_TYPE_SHORT_BIT)
 #define BCV_BASE_TYPE_BYTE					(BCV_TAG_BASE_TYPE_OR_TOP | BCV_BASE_TYPE_BYTE_BIT)
 #define BCV_BASE_TYPE_CHAR					(BCV_TAG_BASE_TYPE_OR_TOP | BCV_BASE_TYPE_CHAR_BIT)
+#define BCV_BASE_TYPE_BOOL					(BCV_TAG_BASE_TYPE_OR_TOP | BCV_BASE_TYPE_BOOL_BIT)
 
 #define BCV_BASE_ARRAY_TYPE_INT				(BCV_TAG_BASE_ARRAY_OR_NULL | BCV_BASE_TYPE_INT_BIT)
 #define BCV_BASE_ARRAY_TYPE_FLOAT			(BCV_TAG_BASE_ARRAY_OR_NULL | BCV_BASE_TYPE_FLOAT_BIT)
@@ -138,6 +139,7 @@ base types: (in the 19bit class index field)
 #define BCV_BASE_ARRAY_TYPE_SHORT			(BCV_TAG_BASE_ARRAY_OR_NULL | BCV_BASE_TYPE_SHORT_BIT)
 #define BCV_BASE_ARRAY_TYPE_BYTE			(BCV_TAG_BASE_ARRAY_OR_NULL | BCV_BASE_TYPE_BYTE_BIT)
 #define BCV_BASE_ARRAY_TYPE_CHAR			(BCV_TAG_BASE_ARRAY_OR_NULL | BCV_BASE_TYPE_CHAR_BIT)
+#define BCV_BASE_ARRAY_TYPE_BOOL			(BCV_TAG_BASE_ARRAY_OR_NULL | BCV_BASE_TYPE_BOOL_BIT)
 
 #define BCV_INDEX_FROM_TYPE(type) (((type) & BCV_CLASS_INDEX_MASK) >> BCV_CLASS_INDEX_SHIFT)
 #define BCV_ARITY_FROM_TYPE(type) (((type) & BCV_ARITY_MASK) >> BCV_ARITY_SHIFT)

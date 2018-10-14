@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2006, 2017 IBM Corp. and others
+  Copyright (c) 2006, 2018 IBM Corp. and others
  
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,9 +26,7 @@
 	<name>GPU Support</name>
 	<description>Contains settings for GPU support.</description>
 	<properties/>
-	<source>
-		<project id="cuda"/>
-	</source>
+	<source/>
 	<flags>
 		<flag id="opt_cuda" value="true"/>
 	</flags>

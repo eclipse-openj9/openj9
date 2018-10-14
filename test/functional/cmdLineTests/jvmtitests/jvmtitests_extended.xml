@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2004, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<!-- Format For OnLoad JVMTI tests $EXE$ $JVM_OPTS$ $AGENTLIB$=test:fer003
+	-cp $JAR$ $TESTRUNNER$ For OnAttach JVMTI tests $EXE$ $JVM_OPTS$ -cp $JAR$
+	$TESTRUNNER$ testid=[TESTID] -->
+
+<suite id="JVMTI Tests" timeout="240">
+	<variable name="JVM_OPTS" value=" " />
+	<variable name="AGENTLIB" value="-agentlib:jvmtitest" />
+	<variable name="TESTID" value="testid" />
+	<variable name="ENABLE_ATTACH" value="-Dcom.ibm.tools.attach.enable=yes" />
+	<variable name="TESTRUNNER" value="com.ibm.jvmti.tests.util.TestRunner" />
+
+	<!-- Cleanup any stale cache -->
+	<test id="Initial cleanup to destroy any shared class cache"
+		modeHints="HINT_SHARECLASSES">
+		<command>$EXE$ $JVM_OPTS$ -Xshareclasses:destroyAll</command>
+		<return type="success" value="1" />
+	</test>
+
+	<test id="rc015">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc015 -cp $JAR$ $TESTRUNNER$</command>
+		<return type="success" value="0" />
+	</test>
+
+	<test id="rc016">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc016 -cp $JAR$ $TESTRUNNER$</command>
+		<return type="success" value="0" />
+	</test>
+
+	<!-- This should be last test to clean up any cache left behind -->
+	<test id="Cleanup any shared cache left behind" modeHints="HINT_SHARECLASSES">
+		<command>$EXE$ $JVM_OPTS$ -Xshareclasses:destroyAll</command>
+		<return type="success" value="1" />
+	</test>
+</suite>

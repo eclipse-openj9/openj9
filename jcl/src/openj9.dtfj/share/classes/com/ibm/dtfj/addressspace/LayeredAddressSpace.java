@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,7 +41,7 @@ public class LayeredAddressSpace extends CommonAddressSpace
 	private TreeMap _moduleRanges = new TreeMap();
 	private IAbstractAddressSpace _base;
 	private MemoryRange[] _moduleRangesArray = null; 
-	private Integer _lastModuleRange = new Integer(0);
+	private Integer _lastModuleRange = Integer.valueOf(0);
 	
 	public LayeredAddressSpace(IAbstractAddressSpace base, boolean isLittleEndian, boolean is64Bit)
 	{

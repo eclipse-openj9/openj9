@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2015 IBM Corp. and others
+ * Copyright (c) 2010, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import com.ibm.j9ddr.StructureReader.StructureDescriptor;
 
@@ -115,6 +116,14 @@ public class StructureTypeManager
 		
 		localSimpleTypeCodeMap.put("char", TYPE_U8);
 		
+		localSimpleTypeCodeMap.put("bool", TYPE_BOOL);
+		localSimpleTypeCodeMap.put("double", TYPE_DOUBLE);
+		localSimpleTypeCodeMap.put("float", TYPE_FLOAT);
+		localSimpleTypeCodeMap.put("fj9object_t", TYPE_FJ9OBJECT);
+		localSimpleTypeCodeMap.put("iconv_t", TYPE_IDATA);
+		localSimpleTypeCodeMap.put("j9objectclass_t", TYPE_J9OBJECTCLASS);
+		localSimpleTypeCodeMap.put("j9objectmonitor_t", TYPE_J9OBJECTMONITOR);
+
 		simpleTypeCodeMap = Collections.unmodifiableMap(localSimpleTypeCodeMap);
 		
 		Map<Integer, String> localSimpleTypeAccessorMap = new HashMap<Integer, String>();
@@ -146,129 +155,80 @@ public class StructureTypeManager
 			}
 		}
 	}
-	
-	public int getType(String type)
+
+	private static final Pattern CVQualifierPattern = Pattern.compile("\\s*\\b(const|volatile)\\s+");
+
+	public int getType(String rawType)
 	{
-		CTypeParser parser = new CTypeParser(type);
-		
-		// trim off the const modifier, if present
-		if(type.startsWith("const ")) {
-			return getType(type.substring("const ".length()).trim());
-		}
-		
-		// trim off the volatile modifier
-		if(type.startsWith("volatile ")) {
-			return getType(type.substring("volatile ".length()).trim());
-		}
-		
+		// strip out any const/volatile qualifiers
+		String type = CVQualifierPattern.matcher(rawType).replaceAll("");
+
 		// look for the simple types
-		if(simpleTypeCodeMap.containsKey(type)) {
+		if (simpleTypeCodeMap.containsKey(type)) {
 			return simpleTypeCodeMap.get(type);
 		}
-		
-		// bool?
-		if (type.equals("bool")) {
-			return TYPE_BOOL;
-		}
-		
-		// double??
-		if (type.equals("double")) {
-			return TYPE_DOUBLE;
-		}
-		
-		// float??
-		if (type.equals("float")) {
-			return TYPE_FLOAT;
-		}
-		
-		if (type.equals("fj9object_t")) {
-			return TYPE_FJ9OBJECT;
-		}
 
-		if (type.equals("j9objectclass_t")) {
-			return TYPE_J9OBJECTCLASS;
-		}
-		
-		if (type.equals("j9objectmonitor_t")) {
-			return TYPE_J9OBJECTMONITOR;
-		}
-		
-		if (type.equals("iconv_t")) {
-			return TYPE_IDATA;
-		}	
-		
+		CTypeParser parser = new CTypeParser(type);
+
 		// array?
-		if(parser.getSuffix().endsWith("]")) {
+		if (parser.getSuffix().endsWith("]")) {
 			return TYPE_ARRAY;
 		}
-		
-		//bit field?
-		if(parser.getSuffix().contains(":")) {
+
+		// bit field?
+		if (parser.getSuffix().contains(":")) {
 			return TYPE_BITFIELD;
 		}
-		
+
 		// pointer?
-		if(type.endsWith("*")) {
+		if (type.endsWith("*")) {
 			int pointerType = getType(type.substring(0, type.length() - 1).trim());
-			if(TYPE_UNKNOWN == pointerType) {
+			switch (pointerType) {
+			case TYPE_UNKNOWN:
 				return TYPE_UNKNOWN;
-			}
-			switch(pointerType)
-			{
 			case TYPE_STRUCTURE:
 				return TYPE_STRUCTURE_POINTER;
-				
 			case TYPE_FJ9OBJECT:
 				return TYPE_FJ9OBJECT_POINTER;
-				
 			case TYPE_J9OBJECTCLASS:
 				return TYPE_J9OBJECTCLASS_POINTER;
-
 			case TYPE_J9OBJECTMONITOR:
 				return TYPE_J9OBJECTMONITOR_POINTER;
-			
 			case TYPE_J9SRP:
 				return TYPE_J9SRP_POINTER;
-				
 			case TYPE_J9WSRP:
 				return TYPE_J9WSRP_POINTER;
-				
 			case TYPE_ENUM:
 				return TYPE_ENUM_POINTER;
-				
 			default:
 				return TYPE_POINTER;
 			}
 		}
-		
-		// SRP?
-		if(type.startsWith("J9SRP")) {
+
+		/* SRP?
+		 * Match types like J9SRP or J9SRP(UDATA) but not J9SRP* or J9SRPHashTable.
+		 */
+		if (type.equals("J9SRP") || type.startsWith("J9SRP(")) {
 			return TYPE_J9SRP;
 		}
-		
-		// WSRP?
-		if(type.startsWith("J9WSRP")) {
+
+		/* WSRP?
+		 * Match types like J9WSRP or J9WSRP(UDATA) but not J9WSRP*.
+		 */
+		if (type.equals("J9WSRP") || type.startsWith("J9WSRP(")) {
 			return TYPE_J9WSRP;
 		}
-		
-		// struct?
-		if(type.startsWith("struct ") || type.startsWith("class ")) {
-			return TYPE_STRUCTURE;
-		}
-		
-		if (structureNames.contains(type.trim())) {
-			return TYPE_STRUCTURE;
-		}
-		
 
-		if (type.startsWith("enum")) {
+		// struct?
+		if (type.startsWith("struct ") || type.startsWith("class ") || structureNames.contains(type.trim())) {
+			return TYPE_STRUCTURE;
+		}
+
+		if (type.startsWith("enum ") || enumNames.contains(type.trim())) {
 			return TYPE_ENUM;
 		}
-		
-		if (enumNames.contains(type.trim())) {
-			return TYPE_ENUM;
-		}
-				
+
 		return TYPE_UNKNOWN;
 	}
+
 }

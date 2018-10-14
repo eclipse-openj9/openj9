@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2015 IBM Corp. and others
+ * Copyright (c) 2006, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,6 @@ import com.ibm.j9ddr.corereaders.tdump.zebedee.dumpreader.*;
 import com.ibm.j9ddr.corereaders.tdump.zebedee.mvs.*;
 import com.ibm.j9ddr.corereaders.tdump.zebedee.util.*;
 
-import java.util.Properties;
 import java.util.Vector;
 import java.util.logging.*;
 import java.io.*;

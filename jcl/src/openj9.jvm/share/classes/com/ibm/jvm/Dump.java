@@ -2,7 +2,7 @@
 package com.ibm.jvm;
 
 /*******************************************************************************
- * Copyright (c) 2006, 2016 IBM Corp. and others
+ * Copyright (c) 2006, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,7 @@ package com.ibm.jvm;
 
 /**
  * This class is used to trigger and configure the options used to produce different
- * types of diagnostic dumps available from the IBM JVM.
+ * types of diagnostic dumps available from the OpenJ9 JVM.
  * <p>
  * -Xdump must be enabled on the command line or the functions that attempt to cause
  * dumps to be created or set options will fail with a java.lang.RuntimeException.
@@ -36,7 +36,7 @@ package com.ibm.jvm;
  * The {@link #JavaDump()}, {@link #SystemDump()}, {@link #HeapDump()} and {@link #SnapDump()}
  * methods trigger dumps of the given type with no options and no return value.
  * Although they are not configurable they do provide an easy API to use via reflection
- * if your code is likely to run on both IBM and non-IBM JVMs and you only need the most
+ * if your code is likely to run on both OpenJ9 and non-OpenJ9 JVMs and you only need the most
  * basic ability to create a dump.
  * <p>
  * The {@link #javaDumpToFile()}, {@link #systemDumpToFile()}, {@link #heapDumpToFile()} and
@@ -83,7 +83,7 @@ package com.ibm.jvm;
  * <li>setDumpOptions("system:none:events=systhrow,filter=java/lang/OutOfMemoryError") - disable
  * system dumps on systhrow events for OutOfMemory errors only.</li>
  * </ul>
- * For full details of dump options see the section on dump agents in the documentation for the IBM JVM.
+ * For full details of dump options see the section on dump agents in the documentation for the OpenJ9 JVM.
  * <p>
  * The {@link #queryDumpOptions()} method returns a String array containing a snapshot of the currently
  * configured dump options. Each String is in the format expected by the -Xdump command line
@@ -99,6 +99,7 @@ package com.ibm.jvm;
  * configuration.
  */
 public class Dump {
+	private static final String SystemRequestPrefix = "z/OS".equalsIgnoreCase(System.getProperty("os.name")) ? "system:dsn=" : "system:file=";
   
 	/**
 	 * Trigger a java dump. A java dump is in a human-readable format, and
@@ -142,7 +143,7 @@ public class Dump {
 	 * a check will be made for com.ibm.jvm.DumpPermission
 	 * 
 	 * @throws RuntimeException if the vm does not contain RAS dump support
-	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to take this dump
+	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
 	 */
 	public static void SystemDump() {
 		checkLegacySecurityPermssion();
@@ -162,14 +163,14 @@ public class Dump {
 	/**
      * Trigger a snap dump. The snap dump format is not human-readable
      * and must be processed using the trace formatting tool supplied
-     * with the IBM JVM.
+     * with the OpenJ9 JVM.
 	 * 
 	 * A security manager check will be made only if the system property
 	 * com.ibm.jvm.enableLegacyDumpSecurity is set to "true" in which case
 	 * a check will be made for com.ibm.jvm.DumpPermission
 	 * 
 	 * @throws RuntimeException if the vm does not contain RAS dump support
-	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to take this dump
+	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
 	 */
     public static void SnapDump() {
     	checkLegacySecurityPermssion();
@@ -191,7 +192,7 @@ public class Dump {
 	 * 
 	 * The JVM will attempt to write the file to the specified file name. This may
 	 * include replacement tokens as documented in the section on dump agents
-	 * in the documentation for the IBM JVM.
+	 * in the documentation for the OpenJ9 JVM.
 	 * 
 	 * A string containing the actual file name written to is returned. This may not
 	 * be the same as the requested filename for several reasons:
@@ -264,7 +265,7 @@ public class Dump {
 	 * 
 	 * The JVM will attempt to write the file to the specified file name. This may
 	 * include replacement tokens as documented in the section on dump agents
-	 * in the documentation for the IBM JVM.
+	 * in the documentation for the OpenJ9 JVM.
 	 * 
 	 * A string containing the actual file name written to is returned. This may not
 	 * be the same as the requested filename for several reasons:
@@ -339,7 +340,7 @@ public class Dump {
 	 * 
 	 * The JVM will attempt to write the file to the specified file name. This may
 	 * include replacement tokens as documented in the section on dump agents
-	 * in the documentation for the IBM JVM.
+	 * in the documentation for the OpenJ9 JVM.
 	 * 
 	 * A string containing the actual file name written to is returned. This may not
 	 * be the same as the requested filename for several reasons:
@@ -372,7 +373,7 @@ public class Dump {
     	if( fileNamePattern != null ) {
     		// Check no-one has tried to sneak options onto the end.
     		checkForExtraOptions(fileNamePattern);
-    		request = "system:file=" + fileNamePattern; //$NON-NLS-1$
+    		request = SystemRequestPrefix + fileNamePattern; //$NON-NLS-1$
     	} else {
     		// This is equivalent the to SystemDump() call.
     		request = "system"; //$NON-NLS-1$
@@ -410,11 +411,11 @@ public class Dump {
     /**
      * Trigger a snap dump. The snap dump format is not human-readable
      * and must be processed using the trace formatting tool supplied
-     * with the IBM JVM.
+     * with the OpenJ9 JVM.
 	 * 
 	 * The JVM will attempt to write the file to the specified file name. This may
 	 * include replacement tokens as documented in the section on dump agents
-	 * in the documentation for the IBM JVM.
+	 * in the documentation for the OpenJ9 JVM.
 	 * 
 	 * A string containing the actual file name written to is returned. This may not
 	 * be the same as the requested filename for several reasons:
@@ -460,7 +461,7 @@ public class Dump {
 	/**
      * Trigger a snap dump. The snap dump format is not human-readable
      * and must be processed using the trace formatting tool supplied
-     * with the IBM JVM.
+     * with the OpenJ9 JVM.
 	 * 
 	 * The JVM will attempt to write the file to the default location.
 	 * 
@@ -507,8 +508,8 @@ public class Dump {
     }
     
     private static void checkLegacySecurityPermssion() throws SecurityException {
-    	if ("true".equalsIgnoreCase(com.ibm.oti.vm.VM.getVMLangAccess()	//$NON-NLS-1$
-    		.internalGetProperties().getProperty(LEGACY_DUMP_PERMISSION_PROPERTY)))	{
+    	if (!("false".equalsIgnoreCase(com.ibm.oti.vm.VM.getVMLangAccess()	//$NON-NLS-1$
+    		.internalGetProperties().getProperty(LEGACY_DUMP_PERMISSION_PROPERTY)))) {
     		checkDumpSecurityPermssion();
     	}
     }
@@ -519,7 +520,7 @@ public class Dump {
 	 * with the specified options, immediately. The dump type and
 	 * options are specified using the same string parameters
 	 * as the -Xdump flag as described in the section on dump agents
-	 * in the documentation for the IBM JVM.
+	 * in the documentation for the OpenJ9 JVM.
 	 * 
 	 * Settings that do not apply to dumps that occur immediately
 	 * ("range=", "priority=", "filter=", "events=", "none" and "defaults")
@@ -571,7 +572,7 @@ public class Dump {
      * The dump option is passed in as an String.
      * Use the same syntax as the -Xdump command-line option, with the initial -Xdump: omitted.
      * See Using the -Xdump option as described in the section on dump agents
-	 * in the documentation for the IBM JVM.
+	 * in the documentation for the OpenJ9 JVM.
 	 * 
 	 * This method may throw a DumpConfigurationUnavailableException if the dump configuration
 	 * cannot be altered. If this occurs it will usually be because a dump event is currently 
@@ -616,7 +617,7 @@ public class Dump {
      * Returns the current dump configuration as an array of Strings.
      * The syntax of the option Strings is the same as the -Xdump command-line option,
      * with the initial -Xdump: omitted. See Using the -Xdump option
-     * in the section on dump agents in the documentation for the IBM JVM.
+     * in the section on dump agents in the documentation for the OpenJ9 JVM.
 	 * 
 	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
 	 * made, if this fails a SecurityException will be thrown.

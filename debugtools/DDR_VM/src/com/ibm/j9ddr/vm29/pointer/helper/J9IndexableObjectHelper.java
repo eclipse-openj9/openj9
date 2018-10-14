@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -65,7 +65,7 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 
 	public static U32 size(J9IndexableObjectPointer objPointer) throws CorruptDataException 
 	{
-		U32 size = J9IndexableObjectContiguousPointer.cast(objPointer).size();
+		UDATA size = J9IndexableObjectContiguousPointer.cast(objPointer).size();
 		if(J9BuildFlags.gc_hybridArraylets) {
 			if(size.eq(0)) {
 				size = J9IndexableObjectDiscontiguousPointer.cast(objPointer).size();	 
@@ -75,7 +75,7 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 			throw new CorruptDataException("java array size with sign bit set");
 		}
 
-		return size;
+		return new U32(size);
 	}
 	
 	public static U32 size(J9ObjectPointer objPointer) throws CorruptDataException 

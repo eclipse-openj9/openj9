@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2006, 2017 IBM Corp. and others
+  Copyright (c) 2006, 2018 IBM Corp. and others
  
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,25 @@
 		<export name="JNI_CreateJavaVM" />
 		<export name="JNI_GetCreatedJavaVMs" />
 		<export name="JNI_GetDefaultJavaVMInitArgs" />
+		<export name="_JVM_GetCallerClass@8" />
 	</exports>
+	<artifact type="target" name="generated.h" all="false">
+		<dependencies>
+			<dependency name="generated.h.m4"/>
+			<dependency name="$(UMA_PATH_TO_ROOT)redirector/forwarders.m4"/>
+			<dependency name="$(UMA_PATH_TO_ROOT)oti/helpers.m4"/>
+		</dependencies>
+		<commands>
+			<command type="all" line="m4 -I$(UMA_PATH_TO_ROOT)oti -I$(UMA_PATH_TO_ROOT)redirector generated.h.m4 > generated.h"/>
+			<command type="clean" line="$(RM) generated.h"/>
+		</commands>
+	</artifact>
+	<artifact type="target" name="generate_j9vm">
+		<commands>
+			<command type="all" line="$(MAKE) -C $(UMA_PATH_TO_ROOT)j9vm generated.h"/>
+			<command type="clean" line="$(MAKE) -C $(UMA_PATH_TO_ROOT)j9vm clean_generated.h"/>
+		</commands>
+	</artifact>
 
 	<artifact type="shared" name="jvm" bundle="jvm" loadgroup="" appendrelease="false">
 		<include-if condition="spec.flags.module_j9vm" />
@@ -37,7 +55,10 @@
 			<option name="requiresPrimitiveTable"/>
 			<option name="prototypeHeaderFileNames" data="jvm.h"/>
 		</options>
-		<phase>core quick j2se</phase>		
+		<phase>core quick j2se</phase>
+		<dependencies>
+			<dependency name="generate_j9vm"/>
+		</dependencies>
 		<exports>
 			<group name="all"/>
 			<group name="j9vmnatives"/>
@@ -57,9 +78,6 @@
 		</includes>
 		<makefilestubs>
 			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
-			<makefilestub data="ifeq ($(OPENJ9_BUILD),true)"/>
-			<makefilestub data="jvm$(UMA_DOT_O) : CFLAGS += -DOPENJ9_BUILD"/>
-			<makefilestub data="endif"/>
 		</makefilestubs>
 		<vpaths>
 			<vpath path="harmony_jvm" pattern="%.c" augmentIncludes="true">
@@ -67,7 +85,7 @@
 			</vpath>
 		</vpaths>
 		<objects>
-			<object name="java9vmi"/>
+			<object name="java11vmi"/>
 			<object name="j8vmi"/>
 			<object name="j7vmi"/>
 			<object name="j7verify"/>

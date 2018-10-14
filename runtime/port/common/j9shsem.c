@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,7 +47,7 @@ j9shsem_params_init(struct J9PortLibrary *portLibrary, struct J9PortShSemParamet
  * Open an existing semaphore set, or create a new one if it does not exist
  * 
  * @param[in] portLibrary The port library.
- * @param[out] handle A semaphore handle is allocated and initialised for use with further calls, NULL on failure.
+ * @param[out] handle A semaphore handle is allocated and initialized for use with further calls, NULL on failure.
  * @param[in] params struct containing semaphore name, permissions, etc.
  *
  * @return

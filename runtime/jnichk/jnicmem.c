@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -84,17 +84,12 @@ jniRecordMemoryAcquire(JNIEnv* env, const char* functionName, jobject object, co
 	if (recordCRC) {
 		U_32 length;
 		J9IndexableObject *arrayPtr;
-		BOOLEAN enteredWithoutVMAccess = !HAS_VM_ACCESS(vmThread);
 
-		if (enteredWithoutVMAccess) {
-			acquireVMAccess(vmThread);
-		}
+		enterVM(vmThread);
 		arrayPtr = *(J9IndexableObject**)object;
 		length = J9INDEXABLEOBJECT_SIZE(vmThread, arrayPtr);
 		length <<= ((J9ROMArrayClass*)(J9OBJECT_CLAZZ(vmThread, arrayPtr)->romClass))->arrayShape & 0x0000FFFF;
-		if (enteredWithoutVMAccess) {
-			releaseVMAccess(vmThread);
-		}
+		exitVM(vmThread);
 		crc = j9crc32(j9crc32(0, NULL, 0), (U_8*)memory, length);
 	}
 
@@ -238,7 +233,6 @@ checkArrayCrc(JNIEnv * env, const char *acquireFunction, const char *releaseFunc
 	const void *memory, jint mode, MemRecord * poolElement)
 {
 	J9VMThread *vmThread = (J9VMThread *)env;
-	BOOLEAN enteredWithoutVMAccess = !HAS_VM_ACCESS(vmThread);
 	PORT_ACCESS_FROM_VMC(vmThread);
 
 	U_32 length;
@@ -247,9 +241,7 @@ checkArrayCrc(JNIEnv * env, const char *acquireFunction, const char *releaseFunc
 	J9IndexableObject *arrayPtr;
 	UDATA isContiguousArray = 0;
 
-	if (enteredWithoutVMAccess) {
-		acquireVMAccess(vmThread);
-	}
+	enterVM(vmThread);
 	arrayPtr = *(J9IndexableObject**)object;
 	length = J9INDEXABLEOBJECT_SIZE(vmThread, arrayPtr);
 	length <<= ((J9ROMArrayClass*)(J9OBJECT_CLAZZ(vmThread, arrayPtr)->romClass))->arrayShape & 0x0000FFFF;
@@ -264,9 +256,7 @@ checkArrayCrc(JNIEnv * env, const char *acquireFunction, const char *releaseFunc
 		arrayCrc = calculateArrayCrc(vmThread, arrayPtr);	
 	}
 
-	if (enteredWithoutVMAccess) {
-		releaseVMAccess(vmThread);
-	}
+	exitVM(vmThread);
 	bufCrc = isCopy ? j9crc32(j9crc32(0, NULL, 0), (U_8 *) memory, length) : arrayCrc;
 
 	if (!isCopy) {
@@ -353,18 +343,13 @@ static jobject
 jniCheckNewGlobalRef(JNIEnv * env, jobject ref)
 {
 	J9VMThread *vmThread = (J9VMThread *)env;
-	BOOLEAN enteredWithoutVMAccess = !HAS_VM_ACCESS(vmThread);
 	jobject globalRef;
 
-	if (enteredWithoutVMAccess) {
-		acquireVMAccess(vmThread);
-	}
+	enterVM(vmThread);
 
 	globalRef = vmThread->javaVM->internalVMFunctions->j9jni_createGlobalRef(env, *(j9object_t*)ref, JNI_FALSE);
 
-	if (enteredWithoutVMAccess) {
-		releaseVMAccess(vmThread);
-	}
+	exitVM(vmThread);
 
 	return globalRef;
 }
@@ -375,17 +360,12 @@ static void
 jniCheckDeleteGlobalRef(JNIEnv * env, jobject ref)
 {
 	J9VMThread *vmThread = (J9VMThread *) env;
-	BOOLEAN enteredWithoutVMAccess = !HAS_VM_ACCESS(vmThread);
 
-	if (enteredWithoutVMAccess) {
-		acquireVMAccess(vmThread);
-	}
+	enterVM(vmThread);
 
 	vmThread->javaVM->internalVMFunctions->j9jni_deleteGlobalRef(env, ref, JNI_FALSE);
 
-	if (enteredWithoutVMAccess) {
-		releaseVMAccess(vmThread);
-	}
+	exitVM(vmThread);
 }
 
 
@@ -394,7 +374,6 @@ static jboolean
 jniCheckIsSameObject(JNIEnv * env, jobject ref1, jobject ref2)
 {
 	J9VMThread *vmThread = (J9VMThread *) env;
-	BOOLEAN enteredWithoutVMAccess;
 	jboolean same;
 
 	if ((ref1 == NULL) || (ref2 == NULL)) {
@@ -404,15 +383,10 @@ jniCheckIsSameObject(JNIEnv * env, jobject ref1, jobject ref2)
 		return JNI_TRUE;
 	}
 
-	enteredWithoutVMAccess = !HAS_VM_ACCESS(vmThread);
-	if (enteredWithoutVMAccess) {
-		acquireVMAccess(vmThread);
-	}
-
-	same = *(j9object_t*)ref1 == *(j9object_t*)ref2;
-
-	if (enteredWithoutVMAccess) {
-		releaseVMAccess(vmThread);
+	{
+		enterVM(vmThread);
+		same = *(j9object_t*)ref1 == *(j9object_t*)ref2;
+		exitVM(vmThread);
 	}
 
 	return same;

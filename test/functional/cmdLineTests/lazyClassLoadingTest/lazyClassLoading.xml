@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2004, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<!-- Verify correct operation of lazy classloading with empty (i.e. unused) classloaders. -->
+
+<!-- These are intentionally run as separate tests to ensure the JNI library is loaded    -->
+<!-- cleanly each time and no state information is mistakenly held over from prior test   -->
+<!-- cases. -->
+ 
+<!-- See Design 61796: Lazy initialization of J9ClassLoader. -->
+<!-- https://jtcjazz.ottawa.ibm.com:9443/jazz/resource/itemName/com.ibm.team.workitem.WorkItem/61796 -->
+
+<!-- See also: VM_Common/lazyclassloadtest     -->
+<!-- See also: j9vm_test/j9vm/test/classloader -->
+
+<suite id="Lazy classloading tests" timeout="60">
+	<test id="testJniDefineClass">
+		<!-- DefineClass on EmptyClassLoader within a JNI call. -->
+		<command>$EXE$ -classpath $Q$$J9JAR$$Q$ j9vm.test.classloader.LazyClassLoaderInitTest testJniDefineClass</command>
+		<output regex="yes" type="success">.*Test PASSED*</output>
+		<output regex="yes" type="failure">.*Test FAILED*</output>
+ 	</test>
+	<test id="testJvmtiCountLoadedClasses">
+		<!-- Verify EmptyClassLoader has loaded 0 classes using JVMTI. -->
+		<command>$EXE$ -classpath $Q$$J9JAR$$Q$ j9vm.test.classloader.LazyClassLoaderInitTest testJvmtiCountLoadedClasses</command>
+		<output regex="yes" type="success">.*Test PASSED*</output>
+		<output regex="yes" type="failure">.*Test FAILED*</output>
+ 	</test>
+	<test id="testJvmFindClass">
+		<!-- Find Object class using internal JVM_FindClassFromClassLoader. -->
+		<command>$EXE$ -classpath $Q$$J9JAR$$Q$ j9vm.test.classloader.LazyClassLoaderInitTest testJvmFindClass</command>
+		<output regex="yes" type="success">.*Test PASSED*</output>
+		<output regex="yes" type="failure">.*Test FAILED*</output>
+ 	</test>
+</suite>

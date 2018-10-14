@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2015 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,6 @@ package com.ibm.j9ddr.vm29.j9;
 import java.util.List;
 import com.ibm.j9ddr.CorruptDataException;
 
-import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ThreadMonitorPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ThreadPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.OmrBuildFlags;

@@ -310,11 +310,25 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 
-		if (try_scan(&scan_start, "tarokKickoffHeadroomRegionCount=")) {
-			if(!scan_udata_memory_size_helper(vm, &scan_start, &(extensions->tarokKickoffHeadroomRegionCount), "tarokKickoffHeadroomRegionCount=")) {
+		if (try_scan(&scan_start, "tarokKickoffHeadroomRegionRate=")) {
+			if(!scan_u32_helper(vm, &scan_start, &(extensions->tarokKickoffHeadroomRegionRate), "tarokKickoffHeadroomRegionRate=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}
+			if (50 < extensions->tarokKickoffHeadroomRegionRate) {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "tarokKickoffHeadroomRegionRate=", (UDATA)0, (UDATA)50);
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			continue;
+		}
+
+		if (try_scan(&scan_start, "tarokKickoffHeadroomInBytes=")) {
+			if(!scan_udata_memory_size_helper(vm, &scan_start, &(extensions->tarokKickoffHeadroomInBytes), "tarokKickoffHeadroomInBytes=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			extensions->tarokForceKickoffHeadroomInBytes = true;
 			continue;
 		}
 
@@ -618,6 +632,11 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 
 			continue;
 		}
+		if (try_scan(&scan_start, "tarokEnableCopyForwardMarkCompactHybrid")) {
+			extensions->tarokEnableCopyForwardHybrid = true;
+			continue;
+		}
+
 #endif /* defined (J9VM_GC_VLHGC) */
 
 		if(try_scan(&scan_start, "packetListLockSplit=")) {
@@ -773,10 +792,7 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 		if(try_scan(&scan_start, "softwareEvacuateReadBarrier")) {
-			/* Software read barriers are only implemented on s390 for now */
-#if defined(S390) || defined(J9ZOS390)
 			extensions->softwareEvacuateReadBarrier = true;
-#endif /* defined(S390) || defined(J9ZOS390) */
 			continue;
 		}
 #endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
@@ -904,15 +920,6 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 		}
 		if (try_scan(&scan_start, "verboseOldFormat")) {
 			extensions->verboseNewFormat = false;
-			continue;
-		}
-
-		/* Temporary option. See Jazz 31620: Reserve unused space at end of heap for JIT */
-		if (try_scan(&scan_start, "heapTailPadding=")) {
-			if(!scan_udata_memory_size_helper(vm, &scan_start, &extensions->heapTailPadding, "heapTailPadding=")) {
-				returnValue = JNI_EINVAL;
-				break;
-			}
 			continue;
 		}
 
@@ -1116,6 +1123,20 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 		if (try_scan(&scan_start, "fvtest_forceReferenceChainWalkerMarkMapCommitFailure")) {
 			extensions->fvtest_forceReferenceChainWalkerMarkMapCommitFailure = 1;
 			extensions->fvtest_forceReferenceChainWalkerMarkMapCommitFailureCounter = 0;
+			continue;
+		}
+
+		if (try_scan(&scan_start, "fvtest_forceCopyForwardHybridMarkCompactRatio=")) {
+			/* the percentage of the collectionSet regions would like to markCompact instead of copyForward */
+			if(!scan_udata_helper(vm, &scan_start, &(extensions->fvtest_forceCopyForwardHybridRatio), "fvtest_forceCopyForwardHybridMarkCompactRatio=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if ((extensions->fvtest_forceCopyForwardHybridRatio < 1) || (100 < extensions->fvtest_forceCopyForwardHybridRatio)) {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "fvtest_forceCopyForwardHybridMarkCompactRatio=", (UDATA)1, (UDATA)100);
+				returnValue = JNI_EINVAL;
+				break;
+			}
 			continue;
 		}
 

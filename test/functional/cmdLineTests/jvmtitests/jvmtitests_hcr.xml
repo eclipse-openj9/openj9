@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2004, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="JVMTI Tests" timeout="240">
+	<variable name="JVM_OPTS" value=" " />
+	<variable name="AGENTLIB" value="-agentlib:jvmtitest" />
+	<variable name="TESTRUNNER" value="com.ibm.jvmti.tests.util.TestRunner" />
+
+ 	<!--
+ 		Shared class cache is used when running in Mode 148.
+ 		Shared cache to be destroyed should have same name as in Mode 148.
+ 	-->
+ 	<test id="Initial cleanup to destroy any existing shared class cache">
+ 		<command>$EXE$ $JVM_OPTS$ -Xshareclasses:name=bcienabled,destroy</command>
+		<return type="success" value="1"/>
+	</test>
+
+	<test id="rc001">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc001 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+	<test id="rc002">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc002 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+	<test id="rc003">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc003 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+	<test id="rc004">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc004 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+	<test id="rc005">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc005 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+	<test id="rc006">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc006 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+	<test id="rc007">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc007 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+	<test id="rc008">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc008 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+	<test id="rc009">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc009 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+ 	<test id="rc010">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc010 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+ 	<test id="rc011">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc011 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+ 	<test id="rc012">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc012 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+ 	<test id="rc013">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc013 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+	 <test id="rc014">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc014 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+	<test id="rc015">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc014 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+	<test id="rc017">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc017 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+	<test id="rc018">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc018 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+	<test id="rc019a">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc019a -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+	<test id="rc019b">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc019b -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+ 	<test id="rtc001">
+		<command>$EXE$ $JVM_OPTS$ $EXTRA_Add_OPEN_OPTION$ $AGENTLIB$=test:rtc001 -Dsun.reflect.noInflation=true  -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+ 	<!--
+ 		Shared class cache is used when running in Mode 148.
+ 		Shared cache to be destroyed should have same name as in Mode 148.
+ 	-->
+	<test id="Cleanup any shared cache left behind">
+ 		<command>$EXE$ $JVM_OPTS$ -Xshareclasses:name=bcienabled,destroy</command>
+		<return type="success" value="1"/>
+	</test>
+
+	<!-- ASM based HCR tests -->
+	<test id="ta001">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:ta001 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+</suite>
+

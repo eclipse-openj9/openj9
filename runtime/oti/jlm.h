@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,17 +23,16 @@
 #ifndef jlm_h
 #define jlm_h
 
-/* @ddr_namespace: default */
-#define JLM_SUCCESS    ((jint)0)
-#define JLM_NOT_AVAILABLE       ((jint)1)
-#define JLM_OUT_OF_MEMORY    ((jint)2)
-#define JLM_FAIL    ((jint)-1)
+/* @ddr_namespace: map_to_type=JlmConstants */
+
+#define JLM_SUCCESS ((jint)0)
+#define JLM_NOT_AVAILABLE ((jint)1)
+#define JLM_OUT_OF_MEMORY ((jint)2)
+#define JLM_FAIL ((jint)-1)
 
 typedef struct J9VMJlmDump {
-        char *begin;
-        char *end;
+	char *begin;
+	char *end;
 } J9VMJlmDump;
 
-#endif     /* jlm_h */
-  
-
+#endif /* jlm_h */

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,13 +22,12 @@
 package com.ibm.j9ddr.vm29.tools.ddrinteractive.commands;
 
 import java.io.PrintStream;
-import java.util.Collection;
-import java.util.Collections;
 
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.tools.ddrinteractive.Context;
 import com.ibm.j9ddr.tools.ddrinteractive.DDRInteractiveCommandException;
 import com.ibm.j9ddr.tools.ddrinteractive.Command;
+import com.ibm.j9ddr.vm29.j9.AlgorithmVersion;
 import com.ibm.j9ddr.vm29.j9.ConstantPoolHelpers;
 import com.ibm.j9ddr.vm29.j9.DataType;
 import com.ibm.j9ddr.vm29.j9.ROMHelp;
@@ -54,8 +53,8 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ROMMethodPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9TranslationBufferSetPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9UTF8Pointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMThreadPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9VTableHeaderPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
-import com.ibm.j9ddr.vm29.pointer.helper.J9JavaVMHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9MethodHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMClassHelper;
@@ -454,7 +453,7 @@ public class VmCheckCommand extends Command
 				verifyAddressInSegment(out, vm, segment, address, "romClass->innerClasses");
 			}
 
-			U32Pointer cpShapeDescription = romClass.cpShapeDescription();
+			U32Pointer cpShapeDescription = J9ROMClassHelper.cpShapeDescription(romClass);
 
 			/* TODO: is !isNull() check required or not? */
 			if (!cpShapeDescription.isNull()) {
@@ -481,8 +480,8 @@ public class VmCheckCommand extends Command
 			}
 		}
 
-		U32 ramConstantPoolCount = romClass.ramConstantPoolCount();
-		U32 romConstantPoolCount = romClass.romConstantPoolCount();
+		UDATA ramConstantPoolCount = romClass.ramConstantPoolCount();
+		UDATA romConstantPoolCount = romClass.romConstantPoolCount();
 		if (ramConstantPoolCount.gt(romConstantPoolCount)) {
 			reportError(out, "ramConstantPoolCount=%d > romConstantPoolCount=%d for romClass=0x%s", ramConstantPoolCount.longValue(), romConstantPoolCount.longValue(), Long.toHexString(romClass.getAddress()));
 		}
@@ -704,11 +703,23 @@ public class VmCheckCommand extends Command
 	}
 	
 	private boolean findMethodInVTable(J9MethodPointer method, J9ClassPointer classPointer) throws CorruptDataException {
-		UDATAPointer vTable = J9ClassHelper.vTable(classPointer);
-		long vTableSize = vTable.at(0).longValue();
+		UDATAPointer vTable;
+		long vTableSize;
+		long vTableIndex;
 
-		/* skip magic first entry */
-		for (long vTableIndex = 2; vTableIndex <= vTableSize + 1; vTableIndex++) {
+		if (AlgorithmVersion.getVersionOf(AlgorithmVersion.VTABLE_VERSION).getAlgorithmVersion() >= 1) {
+			J9VTableHeaderPointer vTableHeader = J9ClassHelper.vTableHeader(classPointer);
+			vTableSize = vTableHeader.size().longValue();
+			vTable = J9ClassHelper.vTable(vTableHeader);
+			vTableIndex = 0;
+		} else {
+			vTable = J9ClassHelper.oldVTable(classPointer);
+			vTableSize = vTable.at(0).longValue() + 1;
+			vTableIndex = 2;
+		}
+		
+
+		for (; vTableIndex < vTableSize; vTableIndex++) {
 			//System.out.printf("%d COMP 0x%s vs. 0x%s\n", (int)vTableIndex, Long.toHexString(method.getAddress()), Long.toHexString(vTable.at(vTableIndex).longValue()));
 			if (method.eq(J9MethodPointer.cast(vTable.at(vTableIndex)))) {
 				return true;

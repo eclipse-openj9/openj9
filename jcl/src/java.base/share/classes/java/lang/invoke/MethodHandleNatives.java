@@ -1,7 +1,7 @@
-/*[INCLUDE-IF Sidecar18-SE-OpenJ9|Sidecar19-SE-B174]*/
+/*[INCLUDE-IF Sidecar18-SE-OpenJ9]*/
 
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,3 +21,28 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+/*[IF Java11]*/
+
+package java.lang.invoke;
+
+class MethodHandleNatives {
+
+	static LinkageError mapLookupExceptionToError(ReflectiveOperationException roe) {
+		String exMsg = roe.getMessage();
+		LinkageError linkageErr;
+		if (roe instanceof IllegalAccessException) {
+			linkageErr = new IllegalAccessError(exMsg);
+		} else if (roe instanceof NoSuchFieldException) {
+			linkageErr = new NoSuchFieldError(exMsg);
+		} else if (roe instanceof NoSuchMethodException) {
+			linkageErr = new NoSuchMethodError(exMsg);
+		} else {
+			linkageErr = new IncompatibleClassChangeError(exMsg);
+		}
+		Throwable th = roe.getCause();
+		linkageErr.initCause(th == null ? roe : th);
+		return linkageErr;
+	}
+}
+
+/*[ENDIF]*/

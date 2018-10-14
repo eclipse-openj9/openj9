@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -918,7 +918,7 @@ GC_CheckEngine::checkClassStatics(J9JavaVM* vm, J9Class* clazz)
 					numberOfReferences += 1;
 
 					/* get address of next field */
-					j9object_t* address = (j9object_t*)vm->internalVMFunctions->staticFieldAddress(currentThread, clazz, J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF), J9UTF8_DATA(sigUTF), J9UTF8_LENGTH(sigUTF), NULL, NULL, 0, NULL);
+					j9object_t* address = (j9object_t*)vm->internalVMFunctions->staticFieldAddress(currentThread, clazz, J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF), J9UTF8_DATA(sigUTF), J9UTF8_LENGTH(sigUTF), NULL, NULL, J9_LOOK_NO_JAVA, NULL);
 
 					/* an address must be in gc scan range */
 					if (!((address >= sectionStart) && (address < sectionEnd))) {

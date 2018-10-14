@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,6 +58,7 @@ public class Main {
 	static String option_excludeArtifacts_short = "-ea";
 	static String option_define = "-D";
 	static String option_undefine = "-U";
+	static String option_macro = "-M";
 	
 	static boolean splashed = false;
 	static boolean quiet = false;
@@ -71,6 +72,7 @@ public class Main {
 	static String jitVersionFile = "";
 	static String excludeArtifacts = "";
 	static HashMap<String, Boolean> overrideFlags = new HashMap<String,Boolean>();
+	static HashMap<String, String> extraMacros = new HashMap<String, String>();
 	static Logger logger;
 
 	static void dumpSplash() {
@@ -96,6 +98,7 @@ public class Main {
 		System.err.println("\t" + option_buildId + " <buildId>");
 		System.err.println("\t" + option_buildDate + " <buildDate>");
 		System.err.println("\t" + option_buildTag + " <buildTag>");
+		System.err.println("\t" + option_macro + " <name>=<value>");
 		System.err.println("");
 	}
 	
@@ -193,6 +196,20 @@ public class Main {
 				}
 				overrideFlags.put(args[++i], false);
 				continue;
+			} else if (arg.equalsIgnoreCase(option_macro)) {
+				i += 1;
+				if (i >= args.length) {
+					System.err.println("Must provide an argument for option " + arg + "\n");
+					return false;
+				}
+				String value = args[i].trim();
+				int eqIndex = value.indexOf('=');
+				if (eqIndex <= 0) {
+					System.err.println("Argument for option " + arg + " must be of the form 'name=value'\n");
+					return false;
+				}
+				extraMacros.put(value.substring(0, eqIndex), value.substring(eqIndex + 1));
+				continue;
 			} else {
 				System.err.println("Unknown command line option " + arg + "\n");
 				return false;
@@ -224,9 +241,9 @@ public class Main {
 		dumpSplash();
 		
 		if ( jitVersionFile.equals("") ) {
-			File tempJitVersionFile = new File(rootDir + "/compiler/trj9/build/version.h");
+			File tempJitVersionFile = new File(rootDir + "/compiler/build/version.h");
 			if(tempJitVersionFile.exists() && !tempJitVersionFile.isDirectory()) {
-				jitVersionFile = rootDir + "/compiler/trj9/build/version.h";
+				jitVersionFile = rootDir + "/compiler/build/version.h";
 				System.out.print("Using version.h as the jitVersionFile\n");
 			} else {
 				tempJitVersionFile = new File(rootDir + "/jit.version");
@@ -246,6 +263,14 @@ public class Main {
 				Flag flag = configuration.getBuildSpec().getFlag(flagString);
 				flag.setState(overrideFlags.get(flagString));
 			}
+
+			for (java.util.Map.Entry<String, String> entry : extraMacros.entrySet()) {
+				String name = entry.getKey();
+				String value = entry.getValue();
+
+				configuration.defineMacro(name, value);
+			}
+
 			// Since we may have changed some flags, we need to re-verify them
 			configuration.verify();
 

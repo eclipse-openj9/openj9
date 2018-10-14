@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -122,9 +122,14 @@ public:
 	public :
 		UDATA _nonStaleItems;
 		UDATA _staleItems;
-		SH_SharedCache* _cache;
+		SH_SharedCache *_cache;
 
-		CountData() : _nonStaleItems(0), _staleItems(0), _cache(0) {}
+		explicit CountData(SH_SharedCache *cache)
+			: _nonStaleItems(0)
+			, _staleItems(0)
+			, _cache(cache)
+		{
+		}
 	};
 
 #if defined(J9SHR_CACHELET_SUPPORT)
@@ -294,7 +299,9 @@ protected:
 
 private:
 	UDATA _state;
+#if defined(J9SHR_CACHELET_SUPPORT)
 	bool _allCacheletsStarted;
+#endif
 	
 	const char* _managerType;
 

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17 & !Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2017 IBM Corp. and others
+ * Copyright (c) 2005, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,8 +43,7 @@ public final class ProcessorMXBeanImpl implements ProcessorMXBean {
 	final static int PHYSICAL = 1;
 	final static int ONLINE = 2;
 	final static int BOUND = 3;
-	final static int ENTITLED = 4;
-	final static int TARGET = 5;
+	final static int TARGET = 4;
 
 	private static final ProcessorMXBean instance = new ProcessorMXBeanImpl();
 
@@ -81,7 +80,6 @@ public final class ProcessorMXBeanImpl implements ProcessorMXBean {
 	 * 			<br />{@link PHYSICAL} - see {@link #getNumberPhysicalCPUs()}
 	 * 			<br />{@link ONLINE} - see {@link #getNumberOnlineCPUs()}
 	 * 			<br />{@link BOUND} - see {@link #getNumberBoundCPUs()}
-	 * 			<br />{@link ENTITLED} - see {@link #getNumberEntitledCPUs()}
 	 * 			<br />{@link TARGET} - see {@link #getNumberTargetCPUs()}
 	 * 
 	 * @return the number corresponding to the argument <code>type</code>
@@ -116,32 +114,26 @@ public final class ProcessorMXBeanImpl implements ProcessorMXBean {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public int getNumberEntitledCPUs() {
-		return getNumberCPUsImpl(ENTITLED);
-	}
-	
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
 	public int getNumberTargetCPUs() {
 		return getNumberCPUsImpl(TARGET);
 	}
 	
 	/**
 	 * @param number
-	 * 			The number of CPU's to restrict the process to. The process
-	 * 			will behave as if <code>number</code> CPU's are available.
+	 * 			The number of CPUs to specify the process to use. The process
+	 * 			will behave as if <code>number</code> CPUs are available. If
+	 *			this is set to 0, it will reset the number of CPUs specified
+	 *			and the JVM will use the the number of CPUs detected on the system.
 	 * 
-	 * @see #setNumberEntitledCPUs(int)
+	 * @see #setNumberActiveCPUs(int)
 	 */
-	 native void setNumberEntitledCPUsImpl(int number);
+	private native void setNumberActiveCPUsImpl(int number);
 
 	/**
 	 * {@inheritDoc}
 	 */
 		@Override
-	public void setNumberEntitledCPUs(int number) throws IllegalArgumentException {
+	public void setNumberActiveCPUs(int number) throws IllegalArgumentException {
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
@@ -151,7 +143,6 @@ public final class ProcessorMXBeanImpl implements ProcessorMXBean {
 			/*[MSG "K0567", "Number of entitled CPUs cannot be negative."]*/
 			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0567")); //$NON-NLS-1$
 		}
-		setNumberEntitledCPUsImpl(number);
+		setNumberActiveCPUsImpl(number);
 	}
-	
 }

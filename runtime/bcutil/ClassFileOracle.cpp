@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,8 +30,6 @@
 #include "ROMClassVerbosePhase.hpp"
 
 
-#include "bcnames.h"
-#include "cfreader.h"
 #include "j9port.h"
 #include "jbcmap.h"
 #include "ut_j9bcu.h"
@@ -48,11 +46,6 @@ ClassFileOracle::KnownAnnotation ClassFileOracle::_knownAnnotations[] = {
 #define JDK_INTERNAL_REFLECT_CALLERSENSITIVE_SIGNATURE "Ljdk/internal/reflect/CallerSensitive;"
 		{JDK_INTERNAL_REFLECT_CALLERSENSITIVE_SIGNATURE, sizeof(JDK_INTERNAL_REFLECT_CALLERSENSITIVE_SIGNATURE)},
 #undef JDK_INTERNAL_REFLECT_CALLERSENSITIVE_SIGNATURE
-#if defined(J9VM_OPT_VALHALLA_MVT)
-#define DERIVE_VALUE_TYPE_SIGNATURE "Ljvm/internal/value/DeriveValueType;"
-		{DERIVE_VALUE_TYPE_SIGNATURE, sizeof(DERIVE_VALUE_TYPE_SIGNATURE)},
-#undef DERIVE_VALUE_TYPE_SIGNATURE
-#endif /* J9VM_OPT_VALHALLA_MVT */
 #define JAVA8_CONTENDED_SIGNATURE "Lsun/misc/Contended;" /* TODO remove this if VM does not support Java 8 */
 		{JAVA8_CONTENDED_SIGNATURE, sizeof(JAVA8_CONTENDED_SIGNATURE)},
 #undef JAVA8_CONTENDED_SIGNATURE
@@ -153,7 +146,7 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	_innerClassCount(0),
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	_nestMembersCount(0),
-	_memberOfNest(0),
+	_nestHost(0),
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 	_maxBranchCount(1), /* This is required to support buffer size calculations for stackmap support code */
 	_outerClassNameIndex(0),
@@ -183,9 +176,6 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	_nestMembers(NULL),
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 	_isClassContended(false),
-#if defined(J9VM_OPT_VALHALLA_MVT)
-	_isClassValueCapable(false),
-#endif /* J9VM_OPT_VALHALLA_MVT */
 	_isInnerClass(false)
 {
 	Trc_BCU_Assert_NotEquals( classFile, NULL );
@@ -448,9 +438,6 @@ ClassFileOracle::walkAttributes()
 			break;
 		case CFR_ATTRIBUTE_RuntimeVisibleAnnotations: {
 			UDATA knownAnnotations = 0;
-#if defined(J9VM_OPT_VALHALLA_MVT)
-			knownAnnotations = addAnnotationBit(knownAnnotations, DERIVE_VALUE_TYPE_ANNOTATION);
-#endif /* J9VM_OPT_VALHALLA_MVT */
 			if ((NULL != _context->javaVM()) && J9_ARE_ALL_BITS_SET(_context->javaVM()->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_ALLOW_CONTENDED_FIELDS) &&
 					(_context->isBootstrapLoader() || (J9_ARE_ALL_BITS_SET(_context->javaVM()->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_ALLOW_APPLICATION_CONTENDED_FIELDS)))) {
 				knownAnnotations = addAnnotationBit(knownAnnotations, CONTENDED_ANNOTATION);
@@ -459,11 +446,6 @@ ClassFileOracle::walkAttributes()
 			_annotationsAttribute = (J9CfrAttributeRuntimeVisibleAnnotations *)attrib;
 			if (0 == _annotationsAttribute->rawDataLength) {
 				UDATA foundAnnotations = walkAnnotations(_annotationsAttribute->numberOfAnnotations, _annotationsAttribute->annotations, knownAnnotations);
-#if defined(J9VM_OPT_VALHALLA_MVT)
-				if (containsKnownAnnotation(foundAnnotations, DERIVE_VALUE_TYPE_ANNOTATION)) {
-					_isClassValueCapable = true;
-				}
-#endif /* J9VM_OPT_VALHALLA_MVT */
 				if (containsKnownAnnotation(foundAnnotations, CONTENDED_ANNOTATION) || containsKnownAnnotation(foundAnnotations, JAVA8_CONTENDED_ANNOTATION)) {
 					_isClassContended = true;
 				}
@@ -498,15 +480,15 @@ ClassFileOracle::walkAttributes()
 			 * be kept in the constant pool.
 			 */
 			for (U_16 i = 0; i < _nestMembersCount; i++) {
-				U_16 classIndex = _nestMembers->classes[i];
-				markConstantUTF8AsReferenced(classIndex);
+				U_16 classNameIndex = UTF8_INDEX_FROM_CLASS_INDEX(_classFile->constantPool, _nestMembers->classes[i]);
+				markConstantUTF8AsReferenced(classNameIndex);
 			}
 			break;
 
-		case CFR_ATTRIBUTE_MemberOfNest: {
-			U_16 hostClassIndex = ((J9CfrAttributeMemberOfNest *)attrib)->hostClassIndex;
-			_memberOfNest = UTF8_INDEX_FROM_CLASS_INDEX(_classFile->constantPool, hostClassIndex);
-			markConstantUTF8AsReferenced(_memberOfNest);
+		case CFR_ATTRIBUTE_NestHost: {
+			U_16 hostClassIndex = ((J9CfrAttributeNestHost *)attrib)->hostClassIndex;
+			_nestHost = UTF8_INDEX_FROM_CLASS_INDEX(_classFile->constantPool, hostClassIndex);
+			markConstantUTF8AsReferenced(_nestHost);
 			break;
 		}
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
@@ -762,11 +744,28 @@ void
 ClassFileOracle::walkTypeAnnotations(U_16 annotationsCount, J9CfrTypeAnnotation *typeAnnotations) {
 	for (U_16 typeAnnotationIndex = 0; typeAnnotationIndex < annotationsCount; ++ typeAnnotationIndex) {
 		J9CfrAnnotation *annotation = &(typeAnnotations[typeAnnotationIndex].annotation);
-		markConstantAsUsedByAnnotation(annotation->typeIndex);
-		const U_16 elementValuePairsCount = annotation->numberOfElementValuePairs;
-		for (U_16 elementValuePairsIndex = 0; (elementValuePairsIndex < elementValuePairsCount) && (OK == _buildResult); ++elementValuePairsIndex) {
-			markConstantAsUsedByAnnotation(annotation->elementValuePairs[elementValuePairsIndex].elementNameIndex);
-			walkAnnotationElement(annotation->elementValuePairs[elementValuePairsIndex].value);
+		/* type_index in an annotation must refer to a CONSTANT_UTF8_info structure. */
+		if (getCPTag(annotation->typeIndex) == CFR_CONSTANT_Utf8) {
+			markConstantAsUsedByAnnotation(annotation->typeIndex);
+			const U_16 elementValuePairsCount = annotation->numberOfElementValuePairs;
+			for (U_16 elementValuePairsIndex = 0;
+					(elementValuePairsIndex < elementValuePairsCount) && (OK == _buildResult); ++elementValuePairsIndex) {
+				markConstantAsUsedByAnnotation(annotation->elementValuePairs[elementValuePairsIndex].elementNameIndex);
+				walkAnnotationElement(annotation->elementValuePairs[elementValuePairsIndex].value);
+			}
+		} else {
+			/*
+			 * UTF-8 entries and method entries use the same set of marking labels when
+			 * preparing to build the ROM class, but
+			 * the label value meanings differ depending on the type of the entry.
+			 * Thus we cannot mark a non-UTF-8 entry with a label used for UTF-8 as that label
+			 * value will be (mis)interpreted according to the type of the entry.
+			 *
+			 * In this case, force the typeIndex to a null value.
+			 * This will cause the parser to throw
+			 * an error if the the VM or application tries to retrieve the annotation.
+			 */
+			annotation->typeIndex = 0;
 		}
 	}
 }
@@ -1404,6 +1403,23 @@ ClassFileOracle::walkMethodCodeAttributeCode(U_16 methodIndex)
 
 	U_8 *code = codeAttribute->code;
 	for (U_32 codeIndex = 0; codeIndex < codeAttribute->codeLength; codeIndex += step) { /* NOTE codeIndex is modified below for CFR_BC_tableswitch and CFR_BC_lookupswitch */
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		/*
+		 * TODO: Remap Valhalla L-World value type opcodes. 
+		 *
+		 * The current proposal for L-World value types maps the new value type opcodes to opcodes
+		 * that are currently in use internally. This is a workaround that remaps the new opcodes to
+		 * opcodes that do not conflict. Once the new opcodes are given in an official
+		 * specification, the conflicting internal bytecodes should be remapped.
+		 */
+		if (204 == code[codeIndex]) {
+			code[codeIndex] = CFR_BC_defaultvalue;
+		} else if (203 == code[codeIndex]) {
+			code[codeIndex] = CFR_BC_withfield;
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 		U_8 sunInstruction = code[codeIndex];
 
 		step = sunJavaInstructionSizeTable[sunInstruction];
@@ -1507,12 +1523,17 @@ ClassFileOracle::walkMethodCodeAttributeCode(U_16 methodIndex)
 
 		case CFR_BC_ldc2_w:
 			cpIndex = PARAM_U16();
-			markConstantAsUsedByLDC2W(cpIndex);
 			addBytecodeFixupEntry(entry++, codeIndex + 1, cpIndex, ConstantPoolMap::LDC2W);
+
 			if (isConstantLong(cpIndex)) {
 				code[codeIndex + 0] = JBldc2lw;
+				markConstantAsUsedByLDC2W(cpIndex);
 			} else if (isConstantDouble(cpIndex)) {
 				code[codeIndex + 0] = JBldc2dw;
+				markConstantAsUsedByLDC2W(cpIndex);
+			} else if (isConstantDynamic(cpIndex)) {
+				code[codeIndex + 0] = constantDynamicType(cpIndex);
+				markConstantDynamicAsReferenced(cpIndex);
 			} else {
 				Trc_BCU_Assert_ShouldNeverHappen();
 			}
@@ -2306,6 +2327,15 @@ ClassFileOracle::markConstantNameAndTypeAsReferenced(U_16 cpIndex)
 }
 
 void
+ClassFileOracle::markConstantDynamicAsReferenced(U_16 cpIndex)
+{
+	markNameAndDescriptorAsReferenced(_classFile->constantPool[cpIndex].slot2);
+	if (0 != cpIndex) { /* Never, never, never mark constantPool[0] referenced */
+		_constantPoolMap->markConstantAsReferenced(cpIndex);
+	}
+}
+
+void
 ClassFileOracle::markConstantAsUsedByAnnotation(U_16 cpIndex)
 {
 	UDATA cpTag = getCPTag(cpIndex);
@@ -2480,6 +2510,9 @@ ClassFileOracle::markConstantBasedOnCpType(U_16 cpIndex, bool assertNotDoubleOrL
 			break;
 		}
 		_constantPoolMap->markConstantAsReferencedDoubleSlot(cpIndex);
+		break;
+	case CFR_CONSTANT_Dynamic:
+		markConstantDynamicAsReferenced(cpIndex);
 		break;
 	default:
 		Trc_BCU_Assert_ShouldNeverHappen();

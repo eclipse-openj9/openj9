@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,7 +53,6 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMFieldShapePointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMClassHelper;
-import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 import com.ibm.j9ddr.vm29.structure.J9Object;
 import com.ibm.j9ddr.vm29.types.IDATA;
 import com.ibm.j9ddr.vm29.types.U32;
@@ -100,8 +99,6 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 	private int hiddenInstanceFieldWalkIndex = -1;
 	private ArrayList<HiddenInstanceField> hiddenInstanceFieldList = new ArrayList<HiddenInstanceField>();
 
-	@SuppressWarnings("unused")
-
 	private static final UDATA NO_LOCKWORD_NEEDED = new UDATA(-1);
 	private static final UDATA LOCKWORD_NEEDED = new UDATA(-2);
 
@@ -118,7 +115,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 	
 	private void init() throws CorruptDataException {
 		calculateInstanceSize(romClass, superClazz); //initInstanceSize(romClass, superClazz);
-		romFieldsShapeIterator = new J9ROMFieldShapeIterator(romClass.romFields(), romClass.romFieldCount());		
+		romFieldsShapeIterator = new J9ROMFieldShapeIterator(romClass.romFields(), romClass.romFieldCount());
 	}
 	
 	private void nextField() throws CorruptDataException {
@@ -164,7 +161,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 
 		while (romFieldsShapeIterator.hasNext()) {
 			J9ROMFieldShapePointer localField = (J9ROMFieldShapePointer) romFieldsShapeIterator.next();
-			U32 modifiers = localField.modifiers();
+			UDATA modifiers = localField.modifiers();
 
 			/* count the index for jvmti */
 			index = index.add(1);
@@ -366,7 +363,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 			}
 
 			for (HiddenInstanceField hiddenField: hiddenInstanceFieldList) {
-				U32 modifiers = hiddenField.shape().modifiers();
+				UDATA modifiers = hiddenField.shape().modifiers();
 
 				if (modifiers.allBitsIn(J9FieldFlagObject)) {
 					if (useBackfillForObject) {

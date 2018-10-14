@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2014 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Properties;
 
 import com.ibm.j9ddr.CorruptDataException;
-import com.ibm.j9ddr.DataUnavailableException;
 import com.ibm.j9ddr.corereaders.memory.DumpMemorySource;
 import com.ibm.j9ddr.corereaders.memory.IAddressSpace;
 import com.ibm.j9ddr.corereaders.memory.IMemoryRange;

@@ -2,7 +2,7 @@
 package java.lang;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,7 @@ import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.misc.VM;
 import java.lang.StackWalker.Option;
-/*[IF Sidecar19-SE-B165]
+/*[IF Sidecar19-SE-OpenJ9]
 import java.lang.Module;
 /*[ELSE]
 import java.lang.reflect.Module;
@@ -102,7 +102,7 @@ public final class System {
 	private static String osEncoding;
 
 /*[IF Sidecar19-SE]*/
-/*[IF Sidecar19-SE-B165]
+/*[IF Sidecar19-SE-OpenJ9]
 	static java.lang.ModuleLayer	bootLayer;
 /*[ELSE]*/
 	static java.lang.reflect.Layer	bootLayer;
@@ -203,6 +203,7 @@ native static void startSNMPAgent();
 	
 static void completeInitialization() {
 	/*[IF !Sidecar19-SE_RAWPLUSJ9]*/	
+	/*[IF !Sidecar18-SE-OpenJ9]*/
 	Class<?> systemInitialization = null;
 	Method hook;
 	try {
@@ -218,7 +219,6 @@ static void completeInitialization() {
 		throw new InternalError(e.toString());
 	} 	
 	try {
-		/*[PR 111936] Give Hursley hooks into JCL startup */
 		if (null != systemInitialization) {
 			hook = systemInitialization.getMethod("firstChanceHook");	//$NON-NLS-1$
 			hook.invoke(null);
@@ -226,20 +226,21 @@ static void completeInitialization() {
 	} catch (Exception e) {
 		throw new InternalError(e.toString());
 	}
+	/*[ENDIF]*/ // Sidecar18-SE-OpenJ9
+	
 	/*[IF Sidecar18-SE-OpenJ9|Sidecar19-SE]*/
 	setIn(new BufferedInputStream(new FileInputStream(FileDescriptor.in)));
 	/*[ELSE]*/
 	/*[PR 100718] Initialize System.in after the main thread*/
 	setIn(com.ibm.jvm.io.ConsoleInputStream.localize(new BufferedInputStream(new FileInputStream(FileDescriptor.in))));
-	/*[ENDIF]*/
-	/*[ENDIF] */
+	/*[ENDIF]*/ //Sidecar18-SE-OpenJ9|Sidecar19-SE
+	/*[ENDIF] */ //!Sidecar19-SE_RAWPLUSJ9
 		
 	/*[PR 102344] call Terminator.setup() after Thread init */
 	Terminator.setup();
 	
-	/*[IF !Sidecar19-SE_RAWPLUSJ9]*/
+	/*[IF !Sidecar19-SE_RAWPLUSJ9&!Sidecar18-SE-OpenJ9]*/
 	try {
-		/*[PR 111936] Give Hursley hooks into JCL startup */
 		if (null != systemInitialization) {
 			hook = systemInitialization.getMethod("lastChanceHook");	//$NON-NLS-1$
 			hook.invoke(null);
@@ -247,7 +248,7 @@ static void completeInitialization() {
 	} catch (Exception e) {
 		throw new InternalError(e.toString());
 	}
-	/*[ENDIF]*/	
+	/*[ENDIF]*/	//!Sidecar19-SE_RAWPLUSJ9&!Sidecar18-SE-OpenJ9
 }
 
 
@@ -350,45 +351,48 @@ private static final int PlatformEncoding = 1;
 private static final int FileEncoding = 2;
 private static final int OSEncoding = 3;
 
+/*[IF OpenJ9-RawBuild]*/
+	/* This is a JCL native required only by OpenJ9 raw build.
+	 * OpenJ9 raw build is a combination of OpenJ9 and OpenJDK binaries without JCL patches within extension repo.
+	 * Currently OpenJ9 depends on a JCL patch to initialize platform encoding which is not available to raw build.
+	 * A workaround for raw build is to invoke this JCL native which initializes platform encoding.
+	 * This workaround can be removed if that JCL patch is not required.
+	 */
+private static native Properties initProperties(Properties props);
+/*[ENDIF] OpenJ9-RawBuild */
+
 /**
  * If systemProperties is unset, then create a new one based on the values 
  * provided by the virtual machine.
  */
 @SuppressWarnings("nls")
 private static void ensureProperties() {
+/*[IF OpenJ9-RawBuild]*/
+	// invoke JCL native to initialize platform encoding
+	initProperties(new Properties());
+/*[ENDIF] OpenJ9-RawBuild */
+	
 	systemProperties = new Properties();
 
-	if (osEncoding != null)
+	if (osEncoding != null) {
 		systemProperties.put("os.encoding", osEncoding); //$NON-NLS-1$
+	}
 	/*[PR The launcher apparently needs sun.jnu.encoding property or it does not work]*/
 	systemProperties.put("ibm.system.encoding", platformEncoding); //$NON-NLS-1$
 	systemProperties.put("sun.jnu.encoding", platformEncoding); //$NON-NLS-1$
-	
 	systemProperties.put("file.encoding", fileEncoding); //$NON-NLS-1$
-
 	systemProperties.put("file.encoding.pkg", "sun.io"); //$NON-NLS-1$ //$NON-NLS-2$
-
-	/*[IF Sidecar19-SE]*/
-	systemProperties.put("java.specification.version", "9"); //$NON-NLS-1$ //$NON-NLS-2$
-	/*[ELSE]*/ 
-	systemProperties.put("java.specification.version", "1.8"); //$NON-NLS-1$ //$NON-NLS-2$
-	/*[ENDIF] Sidecar19-SE */
-	
-
 	systemProperties.put("java.specification.vendor", "Oracle Corporation"); //$NON-NLS-1$ //$NON-NLS-2$
 	systemProperties.put("java.specification.name", "Java Platform API Specification"); //$NON-NLS-1$ //$NON-NLS-2$
-
 	systemProperties.put("com.ibm.oti.configuration", "scar"); //$NON-NLS-1$
-	/*[IF] Clear
-	systemProperties.put("com.ibm.oti.configuration", "clear"); //$NON-NLS-1$
-	systemProperties.put("com.ibm.oti.configuration.dir", "jclClear"); //$NON-NLS-1$ //$NON-NLS-2$
-	/*[ENDIF]*/
 
 	String[] list = getPropertyList();
-	for (int i=0; i<list.length; i+=2) {
+	for (int i = 0; i < list.length; i += 2) {
 		String key = list[i];
 		/*[PR 100209] getPropertyList should use fewer local refs */
-		if (key == null) break;
+		if (key == null) {
+			break;
+		}
 		systemProperties.put(key, list[i+1]);
 	}
 	
@@ -401,8 +405,10 @@ private static void ensureProperties() {
 	sun.misc.Version.init();
 	/*[ENDIF] Sidecar19-SE */
 
+	/*[IF !Sidecar19-SE]*/
 	StringBuffer.initFromSystemProperties(systemProperties);
 	StringBuilder.initFromSystemProperties(systemProperties);
+	/*[ENDIF]*/
 
 	String javaRuntimeVersion = systemProperties.getProperty("java.runtime.version"); //$NON-NLS-1$
 	if (null != javaRuntimeVersion) {
@@ -679,6 +685,7 @@ public static void runFinalization() {
 	RUNTIME.runFinalization();
 }
 
+/*[IF !Java11]*/
 /**
  * Ensure that, when the virtual machine is about to exit,
  * all objects are finalized. Note that all finalization
@@ -697,6 +704,7 @@ public static void runFinalization() {
 public static void runFinalizersOnExit(boolean flag) {
 	Runtime.runFinalizersOnExit(flag);
 }
+/*[ENDIF]*/
 
 /**
  * Answers the system properties. Note that the object
@@ -735,29 +743,42 @@ public static void setSecurityManager(final SecurityManager s) {
 	final SecurityManager currentSecurity = security;
 	
 	if (s != null) {
-		try {
-			/*[PR 95057] preload classes required for checkPackageAccess() */
-			// Preload classes used for checkPackageAccess(),
-			// otherwise we could go recursive 
-			s.checkPackageAccess("java.lang"); //$NON-NLS-1$
-		} catch (Exception e) {}
+		if (currentSecurity == null) {
+			// only preload classes when current security manager is null
+			// not adding an extra static field to preload only once
+			try {
+				/*[PR 95057] preload classes required for checkPackageAccess() */
+				// Preload classes used for checkPackageAccess(),
+				// otherwise we could go recursive 
+				s.checkPackageAccess("java.lang"); //$NON-NLS-1$
+			} catch (Exception e) {
+				// ignore any potential exceptions
+			}
+		}
+		
 		try {
 			/*[PR 97686] Preload the policy permission */
-			AccessController.doPrivileged(new PrivilegedAction() {
-				public Object run() {
+			AccessController.doPrivileged(new PrivilegedAction<Void>() {
+				@Override
+				public Void run() {
+					if (currentSecurity == null) {
+						// initialize external messages and 
+						// also load security sensitive classes 
+						com.ibm.oti.util.Msg.getString("K002c"); //$NON-NLS-1$
+					}
 					ProtectionDomain oldDomain = currentSecurity == null ?
 						System.class.getPDImpl() : currentSecurity.getClass().getPDImpl();
-						ProtectionDomain newDomain = s.getClass().getPDImpl();
+					ProtectionDomain newDomain = s.getClass().getPDImpl();
 					if (oldDomain != newDomain) {
-						// initialize external messages
-						com.ibm.oti.util.Msg.getString("K002c"); //$NON-NLS-1$
 						// initialize the protection domain, which may include preloading the
 						// dynamic permissions from the policy before installing
 						newDomain.implies(new AllPermission());
 					}
 					return null;
 				}});
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			// ignore any potential exceptions
+		}
 	}
 	if (currentSecurity != null) {
 		currentSecurity.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionSetSecurityManager);

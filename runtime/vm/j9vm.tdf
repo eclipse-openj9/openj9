@@ -1,4 +1,4 @@
-// Copyright (c) 2006, 2017 IBM Corp. and others
+// Copyright (c) 2006, 2018 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,10 +40,10 @@ TraceEntry=Trc_VM_runCallInMethod_Entry Overhead=1 Level=3 Template="runCallInMe
 TraceExit=Trc_VM_runCallInMethod_Exit Overhead=1 Level=3 Template="runCallInMethod"
 TraceEntry=Trc_VM_runJavaThread_Entry Overhead=1 Level=2 Template="runJavaThread"
 TraceExit=Trc_VM_runJavaThread_Exit Overhead=1 Level=2 Template="runJavaThread"
-TraceEntry=Trc_VM_runStaticMethod_Entry Overhead=1 Level=2 Template="runStaticMethod"
-TraceExit=Trc_VM_runStaticMethod_Exit Overhead=1 Level=2 Template="runStaticMethod"
-TraceEntry=Trc_VM_sendClinit_Entry Overhead=1 Level=2 Template="sendClinit"
-TraceExit=Trc_VM_sendClinit_Exit Overhead=1 Level=2 Template="sendClinit (no <clinit> found)"
+TraceEntry=Trc_VM_runStaticMethod_Entry Overhead=1 Level=3 Template="runStaticMethod"
+TraceExit=Trc_VM_runStaticMethod_Exit Overhead=1 Level=3 Template="runStaticMethod"
+TraceEntry=Trc_VM_sendClinit_Entry Overhead=1 Level=3 Template="sendClinit"
+TraceExit=Trc_VM_sendClinit_Exit Overhead=1 Level=3 Template="sendClinit (no <clinit> found)"
 TraceEntry=Trc_VM_sendInit_Entry Overhead=1 Level=3 Template="sendInit"
 TraceExit=Trc_VM_sendInit_Exit Overhead=1 Level=3 Template="sendInit"
 TraceEntry=Trc_VM_sendCheckPackageAccess_Entry Overhead=1 Level=3 Template="sendCheckPackageAccess"
@@ -52,10 +52,10 @@ TraceEntry=Trc_VM_sendInitialize_Entry Overhead=1 Level=3 Template="sendInitiali
 TraceExit=Trc_VM_sendInitialize_Exit Overhead=1 Level=3 Template="sendInitialize"
 TraceEntry=Trc_VM_sendLoadClass_Entry Overhead=1 Level=3 Template="sendLoadClass"
 TraceExit=Trc_VM_sendLoadClass_Exit Overhead=1 Level=3 Template="sendLoadClass"
-TraceEntry=Trc_VM_sidecarInvokeReflectConstructor_Entry Overhead=1 Level=2 Template="sidecarInvokeReflectConstructor"
-TraceExit=Trc_VM_sidecarInvokeReflectConstructor_Exit Overhead=1 Level=2 Template="sidecarInvokeReflectConstructor"
-TraceEntry=Trc_VM_sidecarInvokeReflectMethod_Entry Overhead=1 Level=2 Template="sidecarInvokeReflectMethod"
-TraceExit=Trc_VM_sidecarInvokeReflectMethod_Exit Overhead=1 Level=2 Template="sidecarInvokeReflectMethod"
+TraceEntry=Trc_VM_sidecarInvokeReflectConstructor_Entry Overhead=1 Level=3 Template="sidecarInvokeReflectConstructor"
+TraceExit=Trc_VM_sidecarInvokeReflectConstructor_Exit Overhead=1 Level=3 Template="sidecarInvokeReflectConstructor"
+TraceEntry=Trc_VM_sidecarInvokeReflectMethod_Entry Overhead=1 Level=3 Template="sidecarInvokeReflectMethod"
+TraceExit=Trc_VM_sidecarInvokeReflectMethod_Exit Overhead=1 Level=3 Template="sidecarInvokeReflectMethod"
 TraceExit=Trc_VM_sidecarExitInterpreter_Exit Overhead=1 Level=2 Template="sidecarExitInterpreter: %c"
 TraceEntry=Trc_VM_invokeReflectMethod_Entry Obsolete Overhead=1 Level=2 Template="invokeReflectMethod"
 TraceExit=Trc_VM_invokeReflectMethod_Exit Obsolete Overhead=1 Level=2 Template="invokeReflectMethod"
@@ -478,7 +478,7 @@ TraceEvent=Trc_VM_acquireExclusiveVMAccess_GrantingExclusiveAccessFirst Group=ex
 TraceEvent=Trc_VM_acquireExclusiveVMAccess_GrantingExclusiveAccess Group=exvmaccess Overhead=1 Level=1 Template="Thread is woken up from waiting, exclusive access being handed off to this thread. Changing state to J9_XACCESS_HANDED_OFF."
 TraceEvent=Trc_VM_acquireExclusiveVMAccess_PostedHaltRequest Group=exvmaccess Overhead=1 Level=1 Template="Posted Halt request to %d threads."
 TraceEvent=Trc_VM_acquireExclusiveVMAccess_WaitingForResponses Group=exvmaccess Overhead=1 Level=1 Template="Waiting for %d thread halt responses."
-TraceEvent=Trc_VM_acquireExclusiveVMAccess_ChangingStateExclusive Group=exvmaccess Overhead=1 Level=1 Template="Changing exclusiveAccessState to J9_XACCESS_EXCLUSIVE." 
+TraceEvent=Trc_VM_acquireExclusiveVMAccess_ChangingStateExclusive Group=exvmaccess Overhead=1 Level=1 Template="Changing exclusiveAccessState to J9_XACCESS_EXCLUSIVE."
 TraceExit=Trc_VM_acquireExclusiveVMAccess_Exit Group=exvmaccess Overhead=1 Level=1 Template="Exclusive VM Access acquired."
 
 TraceEntry=Trc_VM_releaseExclusiveVMAccess_Entry Group=exvmaccess Overhead=1 Level=1 Template="Releasing exclusive VM Access"
@@ -494,9 +494,9 @@ TraceExit=Trc_VM_internalReleaseVMAccessNoMutex_Exit Overhead=1 Level=9 Template
 TraceEvent=Trc_VM_acquireExclusiveVMAccess_SettingResponsesExpected Group=exvmaccess Overhead=1 Level=1 Template="State is J9_XACCESS_HANDING_OFF, Setting repsonsesExpected to 1"
 
 TraceEntry=Trc_JNIinv_DestroyJavaVM_Entry NoEnv Overhead=1 Level=3 Template="JNIinv DestroyJavaVM javaVM=%p"
-TraceExit=Trc_JNIinv_DestroyJavaVM_alreadyShutdown_Exit NoEnv Overhead=1 Level=3 Template="JNIinv DestroyJavaVM shutdown already started" Exception
-TraceExit=Trc_JNIinv_DestroyJavaVM_failedAttach_Exit NoEnv Overhead=1 Level=3 Template="JNIinv DestroyJavaVM couldn't attach thread to shutdown" Exception
-TraceExit=Trc_JNIinv_DestroyJavaVM_verifyCurrentThreadAttached_Exit Obsolete NoEnv Overhead=1 Level=3 Template="JNIinv DestroyJavaVM current thread not attached. result=%d" Exception
+TraceExit-Exception=Trc_JNIinv_DestroyJavaVM_alreadyShutdown_Exit NoEnv Overhead=1 Level=3 Template="JNIinv DestroyJavaVM shutdown already started"
+TraceExit-Exception=Trc_JNIinv_DestroyJavaVM_failedAttach_Exit NoEnv Overhead=1 Level=3 Template="JNIinv DestroyJavaVM couldn't attach thread to shutdown"
+TraceExit-Exception=Trc_JNIinv_DestroyJavaVM_verifyCurrentThreadAttached_Exit Obsolete NoEnv Overhead=1 Level=3 Template="JNIinv DestroyJavaVM current thread not attached. result=%d"
 TraceEntry=Trc_JNIinv_protectedDestroyJavaVM_Entry NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM"
 TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_StartingThreadWait NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM waiting for Java threads to stop"
 TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_FinishedThreadWait NoEnv Overhead=1 Level=3 Template="protectedDestoryJavaVM all Java threads have stopped"
@@ -504,8 +504,8 @@ TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_vmCleanupDone NoEnv Overhead=1 Leve
 TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_vmShutdownHookFired NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM VM Shutting Down Hook Fired"
 TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_HeapManagementShutdown NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM GC HeapManagement Shutdown"
 TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_vmShutdownDone NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM vmShutdown returned"
-TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_CallingExitHookSecondary NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM calling exitHook secondary path" 
-TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_terminateRemainingThreadsFailed NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM terminateRemainingThreads failed" Exception
+TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_CallingExitHookSecondary NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM calling exitHook secondary path"
+TraceException=Trc_JNIinv_protectedDestroyJavaVM_terminateRemainingThreadsFailed NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM terminateRemainingThreads failed"
 TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_CallingExitHook NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM calling exitHook"
 
 TraceEvent=Trc_VM_stringTableCacheHit Obsolete Overhead=1 Level=3 Template="String table cache hit %p"
@@ -583,7 +583,7 @@ TraceEvent=Trc_VM_resolveKnownClass_SkipResolveOfStringBytesCompressedFieldRef O
 TraceEvent=Trc_VM_yieldAlgorithmSelected Overhead=1 Level=3 Template="Thread yield algorithm information: sched_compat_yield=%c, yieldAlgorithm=%zu, yieldUsleepMultiplier=%zu."
 
 TraceEvent=Trc_VM_mhStackValidator_mismatchDetected Overhead=1 Level=1 Template="[MethodHandle StackValidator]"
-TraceEvent=Trc_VM_mhStackValidator_mh Overhead=1 Level=1 Template="MethodHandle = 0x%p"				
+TraceEvent=Trc_VM_mhStackValidator_mh Overhead=1 Level=1 Template="MethodHandle = 0x%p"
 TraceEvent=Trc_VM_mhStackValidator_mh_methodType Overhead=1 Level=1 Template="MethodType = 0x%p"
 TraceEvent=Trc_VM_mhStackValidator_mh_methodType_argSlots Overhead=1 Level=1 Template="MethodType.argSlots = %d"
 TraceEvent=Trc_VM_mhStackValidator_mh_methodType_arguments_length Overhead=1 Level=1 Template="MethodType.arguments[].length = %d"
@@ -625,7 +625,7 @@ TraceExit=Trc_VM_sendRunThread_Exit Overhead=1 Level=2 Template="sendRunThread"
 TraceExit-Exception=Trc_VM_objectMonitorExit_Exit_IllegalPackedObject Overhead=1 Level=4 Template="objectMonitorExit (IllegalMonitorState in objectMonitorExit. obj=%p is packed.)"
 TraceExit-Exception=Trc_VM_objectMonitorExit_Exit_IllegalNullMonitor Overhead=1 Level=4 Template="objectMonitorExit (IllegalMonitorState in objectMonitorExit. NULL monitor table entry for obj=%p.)"
 
-TraceExit=Trc_JNIinv_DestroyJavaVM_DetachCurrentThread_Exit NoEnv Overhead=1 Level=3 Template="JNIinv DestroyJavaVM failed to detach current thread. result=%d" Exception
+TraceExit-Exception=Trc_JNIinv_DestroyJavaVM_DetachCurrentThread_Exit NoEnv Overhead=1 Level=3 Template="JNIinv DestroyJavaVM failed to detach current thread. result=%d"
 
 TraceEvent=Trc_VM_VMPhases_JVMPhaseChange NoEnv Overhead=1 Level=4 Template="jvmPhaseChange occured (Phase = %u)"
 TraceEvent=Trc_VM_VMPhases_FastClassHashTable_Enabled NoEnv Overhead=1 Level=4 Template="Enabled FastClassHashTable"
@@ -755,11 +755,23 @@ TraceAssert=Assert_VM_Null noEnv Overhead=1 Level=1 Assert="(P1) == NULL"
 TraceEntry=Trc_VM_resolveStaticFieldRef_Entry Overhead=1 Level=3 Template="resolveStaticFieldRef(method=%p, ramCP=%p, cpIndex=%zu, flags=%zx, returnAddress=%p)"
 TraceEntry=Trc_VM_resolveInstanceFieldRef_Entry Overhead=1 Level=3 Template="resolveInstanceFieldRef(method=%p, ramCP=%p, cpIndex=%zu, flags=%zx, returnAddress=%p)"
 
-TraceEvent=Trc_VM_CreateRAMClassFromROMClass_nestTopLoaded Overhead=1 Level=3 Template="Loaded the nest top %.*s (RAM class=%p)"
-TraceException=Trc_VM_CreateRAMClassFromROMClass_nestTopNotSamePackage Overhead=1 Level=1 Template="The nest top class (RAM class=%p, class loader=%p, this class loader=%p) is not in the same package."
-TraceException=Trc_VM_CreateRAMClassFromROMClass_nestTopNotSameClassLoader Overhead=1 Level=1 Template="The nest top class (RAM class=%p, class loader=%p, this class loader=%p) has not been loaded by the same class loader."
-TraceException=Trc_VM_CreateRAMClassFromROMClass_nestTopNotVerified Overhead=1 Level=1 Template="The nest top (nest top class=%p, class loader=%p, this class loader=%p) does not claim the nest member (nest member=%p)."
+TraceEvent=Trc_VM_CreateRAMClassFromROMClass_nestHostLoaded Overhead=1 Level=3 Template="Loaded the nest host %.*s (RAM class=%p)"
+TraceException=Trc_VM_CreateRAMClassFromROMClass_nestHostNotSamePackage Overhead=1 Level=1 Template="The nest host class (RAM class=%p, class loader=%p, this class loader=%p) is not in the same package."
+TraceException=Trc_VM_CreateRAMClassFromROMClass_nestHostNotSameClassLoader Overhead=1 Level=1 Template="The nest host class (RAM class=%p, class loader=%p, this class loader=%p) has not been loaded by the same class loader."
+TraceException=Trc_VM_CreateRAMClassFromROMClass_nestHostNotVerified Overhead=1 Level=1 Template="The nest host (nest host class=%p, class loader=%p, this class loader=%p) does not claim the nest member (nest member=%p)."
 
 TraceEntry=Trc_VM_sendResolveMethodTypeRefInto_Entry Overhead=1 Level=5 Template="sendResolveMethodTypeRefInto ramCP=%p cpIndex=%zu resolveFlags=%zu"
 TraceException=Trc_VM_sendResolveMethodTypeRefInto_Exception Overhead=1 Level=1 Template="Sender class=%p cannot access receiver class=%p, errorCode=%zi."
 TraceExit=Trc_VM_sendResolveMethodTypeRefInto_Exit Overhead=1 Level=5 Template="sendResolveMethodTypeRefInto methodType=%p."
+
+TraceException=Trc_VM_CgroupSubsystemsNotEnabled Overhead=1 Level=1 Template="Cgroup subsystems available: 0x%llx, enabled: 0x%llx"
+
+TraceException=Trc_VM_failedtoAllocateGuardPage noEnv Overhead=1 Level=1 Template="Failed to allocate exclusive guard page of size %zu"
+
+TraceException=Trc_VM_registerPredefinedHandler_invalidPortlibSignalFlag NoEnv Overhead=1 Level=1 Template="registerPredefinedHandler - invalid portlib signal flag: %zu"
+TraceEvent=Trc_VM_signalDispatch_signalValue Overhead=1 Level=3 Template="signalDispatch - signal value: %d"
+
+TraceException=Trc_VM_registerOSHandler_invalidPortlibSignalFlag NoEnv Overhead=1 Level=1 Template="registerOSHandler - invalid portlib signal flag: %zu"
+
+TraceEntry=Trc_VM_sendResolveConstantDynamic_Entry Overhead=1 Level=2 Template="sendResolveConstantDynamic(ramCP=%p, cpIndex=%zu, nameAndSig=%p, bsmData=%p)"
+TraceExit=Trc_VM_sendResolveConstantDynamic_Exit Overhead=1 Level=2 Template="sendResolveConstantDynamic"

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2008, 2017 IBM Corp. and others
+ * Copyright (c) 2008, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -804,6 +804,7 @@ public final class ManagementUtils {
 		private static final String HYPERVISOR_MXBEAN_NAME = "com.ibm.virtualization.management:type=Hypervisor"; //$NON-NLS-1$
 
 		private static final String JVM_CPU_MONITOR_MXBEAN_NAME = "com.ibm.lang.management:type=JvmCpuMonitor"; //$NON-NLS-1$
+		private static final String OPENJ9_DIAGNOSTICS_MXBEAN_NAME = "openj9.lang.management:type=OpenJ9Diagnostics"; //$NON-NLS-1$
 
 		static void registerAll() {
 			// register standard singleton beans
@@ -839,7 +840,7 @@ public final class ManagementUtils {
 				.addInterface(java.lang.management.ThreadMXBean.class)
 				.validateAndRegister();
 
-			// register IBM-specific singleton beans
+			// register OpenJ9-specific singleton beans
 			create(GUEST_OPERATING_SYSTEM_MXBEAN_NAME, com.ibm.virtualization.management.internal.GuestOS.getInstance())
 				.addInterface(com.ibm.virtualization.management.GuestOSMXBean.class)
 				.validateAndRegister();
@@ -850,6 +851,10 @@ public final class ManagementUtils {
 
 			create(JVM_CPU_MONITOR_MXBEAN_NAME, com.ibm.lang.management.internal.JvmCpuMonitor.getInstance())
 				.addInterface(com.ibm.lang.management.JvmCpuMonitorMXBean.class)
+				.validateAndRegister();
+
+			create(OPENJ9_DIAGNOSTICS_MXBEAN_NAME, openj9.lang.management.internal.OpenJ9DiagnosticsMXBeanImpl.getInstance())
+				.addInterface(openj9.lang.management.OpenJ9DiagnosticsMXBean.class)
 				.validateAndRegister();
 
 			// register standard optional beans

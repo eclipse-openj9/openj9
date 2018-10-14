@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -383,7 +383,7 @@ ROMClassWriter::writeROMClass(Cursor *cursor,
 		cursor->writeU32(_classFileOracle->getInnerClassCount(), Cursor::GENERIC);
 		cursor->writeSRP(_innerClassesSRPKey, Cursor::SRP_TO_GENERIC);
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
-		cursor->writeSRP(_srpKeyProducer->mapCfrConstantPoolIndexToKey(_classFileOracle->getNestTopNameIndex()), Cursor::SRP_TO_UTF8);
+		cursor->writeSRP(_srpKeyProducer->mapCfrConstantPoolIndexToKey(_classFileOracle->getNestHostNameIndex()), Cursor::SRP_TO_UTF8);
 		cursor->writeU16(_classFileOracle->getNestMembersCount(), Cursor::GENERIC);
 		cursor->writeU16(0, Cursor::GENERIC); /* padding */
 		cursor->writeSRP(_nestMembersSRPKey, Cursor::SRP_TO_GENERIC);
@@ -506,6 +506,13 @@ public:
 		/* assumes format: { U32 cpIndex, (cfrKind << 4) || cpType } */
 		_cursor->writeU32(cpIndex, Cursor::GENERIC);
 		_cursor->writeU32((cfrKind << BCT_J9DescriptionCpTypeShift) | BCT_J9DescriptionCpTypeMethodHandle, Cursor::GENERIC);
+	}
+
+	void visitConstantDynamic(U_16 bsmIndex, U_16 cfrCPIndex, U_32 primitiveFlag)
+	{
+		/* assumes format: { SRP to NameAndSignature, primitiveFlag || (bsmIndex << 4) || cpType } */
+		_cursor->writeSRP(_srpKeyProducer->mapCfrConstantPoolIndexToKey(cfrCPIndex), Cursor::SRP_TO_NAME_AND_SIGNATURE);
+		_cursor->writeU32((bsmIndex << BCT_J9DescriptionCpTypeShift) | BCT_J9DescriptionCpTypeConstantDynamic | primitiveFlag, Cursor::GENERIC);
 	}
 
 	void visitSingleSlotConstant(U_32 slot1)
@@ -651,7 +658,7 @@ CFR_STACKMAP_TYPE_INT_ARRAY, CFR_STACKMAP_TYPE_LONG_ARRAY,  0,                  
 0,                           0,                             0,                             0,
 0,                           0,                             CFR_STACKMAP_TYPE_SHORT_ARRAY, 0,
 0,                           0,                             0,                             0,
-0,                           CFR_STACKMAP_TYPE_BYTE_ARRAY,  0};
+0,                           CFR_STACKMAP_TYPE_BOOL_ARRAY,  0};
 
 class ROMClassWriter::CallSiteWriter : public ConstantPoolMap::CallSiteVisitor
 {
@@ -880,6 +887,7 @@ private:
 			 *  Encode the primitive array type in the tag field.
 			 *  One of:
 			 *   CFR_STACKMAP_TYPE_BYTE_ARRAY
+			 *   CFR_STACKMAP_TYPE_BOOL_ARRAY
 			 *   CFR_STACKMAP_TYPE_CHAR_ARRAY
 			 *   CFR_STACKMAP_TYPE_DOUBLE_ARRAY
 			 *   CFR_STACKMAP_TYPE_FLOAT_ARRAY

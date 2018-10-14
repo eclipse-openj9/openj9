@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,7 +59,7 @@ jvmtiGetTopThreadGroups(jvmtiEnv* env,
 				*groups_ptr = groups;
 			}
 done:
-			vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 
 		}
 	} else {
@@ -84,14 +84,12 @@ jvmtiGetThreadGroupInfo(jvmtiEnv* env,
 	if (JAVAVM_FROM_ENV(env)->jclFlags & J9_JCL_FLAG_THREADGROUPS) {
 		J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 		J9VMThread * currentThread;
-		PORT_ACCESS_FROM_JAVAVM(vm);
 
 		rc = getCurrentVMThread(vm, &currentThread);
 		if (rc == JVMTI_ERROR_NONE) {
 			j9object_t threadGroupObject;
 			j9object_t groupName;
-			char * name;
-			UDATA nameLen = 0;
+			char* name = NULL;
 
 			vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
@@ -103,23 +101,18 @@ jvmtiGetThreadGroupInfo(jvmtiEnv* env,
 			threadGroupObject = *((j9object_t*) group);
 
 			groupName = J9VMJAVALANGTHREADGROUP_NAME(currentThread, threadGroupObject);
-			/* Allocate the maximum possible bytes per UTF8 character (3 bytes), + 1 for '\0' at the end of the string */
-			nameLen = J9VMJAVALANGSTRING_LENGTH(currentThread, groupName) * 3 + 1;
-			name = j9mem_allocate_memory(nameLen, J9MEM_CATEGORY_JVMTI_ALLOCATE);
-			if (name == NULL) {
+			name = vm->internalVMFunctions->copyStringToUTF8WithMemAlloc(currentThread, groupName, J9_STR_NULL_TERMINATE_RESULT, "", 0, NULL, 0, NULL);
+
+			if (NULL == name) {
 				rc = JVMTI_ERROR_OUT_OF_MEMORY;
 			} else {
-				if (UDATA_MAX == vm->internalVMFunctions->copyStringToUTF8Helper(currentThread, groupName, TRUE, J9_STR_NONE, (U_8*)name, nameLen)) {
-					rc = JVMTI_ERROR_INTERNAL;
-					goto done;
-				}
 				info_ptr->name = name;
 				info_ptr->parent = (jthreadGroup) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, (j9object_t)J9VMJAVALANGTHREADGROUP_PARENT(currentThread, threadGroupObject));
 				info_ptr->max_priority = J9VMJAVALANGTHREADGROUP_MAXPRIORITY(currentThread, threadGroupObject);
 				info_ptr->is_daemon = (jboolean)J9VMJAVALANGTHREADGROUP_ISDAEMON(currentThread, threadGroupObject);
 			}
 done:
-			vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 		}
 	}
 
@@ -240,7 +233,7 @@ jvmtiGetThreadGroupChildren(jvmtiEnv* env,
 			currentThread->javaVM->internalVMFunctions->objectMonitorExit(currentThread, childrenThreadsLock);
 
 done:
-			vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 		}
 	}
 

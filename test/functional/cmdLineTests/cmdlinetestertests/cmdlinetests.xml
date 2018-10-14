@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2009, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="CmdLineTester Tests" timeout="600">
+
+ <variable name="J9CMDLINE" value="$EXE$ -DRESJAR=$Q$$RESJAR$$Q$ -DTESTDIR=$Q$$TESTDIR$$Q$ -DCMDLINETESTERJAR=$Q$$CMDLINETESTERJAR$$Q$ -DRUN_SCRIPT_STRING=$Q$$RUN_SCRIPT_STRING$$Q$ -Dcmdlinetester.test=testval -Xint -jar $Q$$CMDLINETESTERJAR$$Q$ -explainExcludes -config $Q$$TESTDIR$$file.separator$" />
+
+ <test id="Test 1 (correct number of passes/fails reported)">
+  <command>$J9CMDLINE$test1.xml$Q$</command>
+
+  <!-- CmdLineTester needs at least one "success" output; you can think of
+         the second output as also being "required"
+  -->
+  <return value="0" type="required" />
+  <output regex="yes" type="required">Number of PASSED tests: 8 out of 8</output>
+  <output regex="yes" type="success">Number of FAILED tests: 0 out of 8</output>
+
+ </test>
+
+ <test id="Test 2 (variables in for loop)">
+  <command>$J9CMDLINE$test2.xml$Q$</command>
+  <return value="0" type="required" />
+  <output regex="yes" type="success">Number of FAILED tests: 0 out of \d</output>
+ </test>
+
+ <test id="Test 3 (simple variable evaluation loop)">
+  <command>$J9CMDLINE$test3.xml$Q$</command>
+  <return value="1" type="required" />
+  <output regex="yes" type="success">The variable "LOOP1" with value "$$LOOP1$$" cannot be resolved because it refers to itself somewhere along the variable substitution chain.</output>
+ </test>
+
+ <test id="Test 4 (not as simple variable evaluation loop)">
+  <command>$J9CMDLINE$test4.xml$Q$</command>
+  <return value="1" type="required" />
+  <output regex="yes" type="success">The variable "LOOP2" with value "$$LOOP2a$$" cannot be resolved because it refers to itself somewhere along the variable substitution chain.</output>
+ </test>
+
+ <test id="Test 5 (long variable evaluation loop)">
+  <command>$J9CMDLINE$test5.xml$Q$</command>
+  <return value="1" type="required" />
+  <output regex="yes" type="success">The variable "LOOP3" with value "$$TEMP11a$$" cannot be resolved because it refers to itself somewhere along the variable substitution chain.</output>
+ </test>
+
+ <test id="Test 6 (even longer variable evaluation loop)">
+  <command>$J9CMDLINE$test6.xml$Q$</command>
+  <return value="1" type="required" />
+  <output regex="yes" type="success">The variable "LOOP3" with value "$$TEMP11a$$" cannot be resolved because it refers to itself somewhere along the variable substitution chain.</output>
+ </test>
+
+ <test id="Test 7 (trying to fool loop detector)">
+  <command>$J9CMDLINE$test7.xml$Q$</command>
+  <return value="0" type="required" />
+  <output regex="yes" type="success">Number of FAILED tests: 0 out of \d</output>
+ </test>
+
+ <test id="Test 8 (trying to fool loop detector again)">
+  <command>$J9CMDLINE$test8.xml$Q$</command>
+  <return value="0" type="required" />
+  <output regex="yes" type="success">Number of FAILED tests: 0 out of \d</output>
+ </test>
+
+ <test id="Test 9 (variable does not exist)">
+  <command>$J9CMDLINE$test9.xml$Q$</command>
+  <return value="1" type="required" />
+  <output regex="yes" type="success">The variable "NO_EXIST" does not exist; original string used to construct the variable name was "NO_EXIST"</output>
+ </test>
+
+ <test id="Test 10 (long non-looping variable chain)">
+  <command>$J9CMDLINE$test10.xml$Q$</command>
+  <return value="0" type="required" />
+  <output regex="yes" type="success">Number of FAILED tests: 0 out of \d</output>
+ </test>
+
+ <test id="Test 11 (long looping variable chain)">
+  <command>$J9CMDLINE$test11.xml$Q$</command>
+  <return value="1" type="required" />
+  <output regex="yes" type="success">The variable "TEMP0" with value "$$TEMP1$$" cannot be resolved because it refers to itself somewhere along the variable substitution chain.</output>
+ </test>
+
+ <test id="Test 12 (curlies outside of dollar signs)">
+  <command>$J9CMDLINE$test12.xml$Q$</command>
+  <return value="0" type="required" />
+  <output regex="yes" type="success">Number of FAILED tests: 0 out of \d</output>
+ </test>
+
+ <test id="Test 13 (unclosed dollar sign before closing curly, discovered by expandVariable())">
+  <command>$J9CMDLINE$test13.xml$Q$</command>
+  <return value="1" type="required" />
+  <output regex="yes" type="success">The variable "TEMP0" with value "$$HI{$$HI}$$" cannot be resolved because it contains a '}' after an opening '$$'.</output>
+ </test>
+
+ <test id="Test 14 (unclosed dollar sign before closing curly, discovered by evaluateVariables())">
+  <command>$J9CMDLINE$test14.xml$Q$</command>
+  <return value="1" type="required" />
+  <output regex="yes" type="success">The variable "TEMP0" with value "$$HI}$$" cannot be resolved because it contains a '}' after an opening '$$'.</output>
+ </test>
+
+ <test id="Test 15 (unclosed '{' (no matching '}' before end of String), version 1)">
+  <command>$J9CMDLINE$test15.xml$Q$</command>
+  <return value="1" type="required" />
+  <output regex="yes" type="success">The variable "TEMP0" with value "$$HI{" cannot be resolved because it is missing at least one token signifying the end of a variable ('$$' or '}'); the first unbalanced start token is a '{'</output>
+ </test>
+
+ <test id="Test 16 (unclosed '{' (no matching '}' before end of String), version 2)">
+  <command>$J9CMDLINE$test16.xml$Q$</command>
+  <return value="1" type="required" />
+  <output regex="yes" type="success">The variable "TEMP0" with value "$$HI{HI{}$$" cannot be resolved because it is missing at least one token signifying the end of a variable ('$$' or '}'); the first unbalanced start token is a '$$'</output>
+ </test>
+
+ <test id="Test 17 (unclosed '$$' (no matching '$$' before end of String))">
+  <command>$J9CMDLINE$test17.xml$Q$</command>
+  <return value="1" type="required" />
+  <output regex="yes" type="success">The variable "TEMP0" with value "$$HI" cannot be resolved because it is missing at least one token signifying the end of a variable ('$$' or '}'); the first unbalanced start token is a '$$'</output>
+ </test>
+
+ <test id="Test 18 (_variables Map overrides System.properties())">
+  <command>$J9CMDLINE$test18.xml$Q$</command>
+  <return value="0" type="required" />
+  <output regex="yes" type="success">Number of FAILED tests: 0 out of \d</output>
+ </test>
+
+ <test id="Test 19 (_variables Map does not override System.properties())">
+  <command>$J9CMDLINE$test19.xml$Q$</command>
+  <return value="0" type="required" />
+  <output regex="yes" type="success">Number of FAILED tests: 0 out of \d</output>
+ </test>
+
+ <test id="Test 20 ($$$$$$$$$$ should give error (unclosed variable))">
+  <command>$J9CMDLINE$test20.xml$Q$</command>
+  <return value="1" type="required" />
+  <output regex="yes" type="success">The variable "TEMP" with value "$$$$$$$$$$" cannot be resolved because it is missing at least one token signifying the end of a variable ('$$' or '}'); the first unbalanced start token is a '$$'</output>
+ </test>
+
+ <test id="Test 21 ($$$$$$$$$$$$ should be fine)">
+  <command>$J9CMDLINE$test21.xml$Q$</command>
+  <return value="0" type="required" />
+  <output regex="yes" type="success">Number of FAILED tests: 0 out of \d</output>
+ </test>
+
+ <test id="Test 22 ($$HI$$$$ should give error (unclosed variable))">
+  <command>$J9CMDLINE$test22.xml$Q$</command>
+  <return value="1" type="required" />
+  <output regex="yes" type="success">The variable "TEMP" with value "$$HI$$$$" cannot be resolved because it is missing at least one token signifying the end of a variable ('$$' or '}'); the first unbalanced start token is a '$$'</output>
+ </test>
+
+ <test id="Test 23 ($$HI$$$$BYE$$$$HI$$ should be fine)">
+  <command>$J9CMDLINE$test23.xml$Q$</command>
+  <return value="0" type="required" />
+  <output regex="yes" type="success">Number of FAILED tests: 0 out of \d</output>
+ </test>
+
+ <test id="Test 24 (outputting number of failed tests)">
+  <command>echo FINAL failed tests: $cmdlinetester.failed_tests$</command>
+  <return value="0" type="required" />
+  <output regex="yes" type="success">FINAL failed tests: \d</output>
+ </test>
+
+</suite>
+
+

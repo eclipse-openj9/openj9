@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -411,21 +411,14 @@ public:
 #if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
 		return vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_mixedObjectReadObject(vmThread, srcObject, srcOffset, isVolatile);
 #elif defined(J9VM_GC_COMBINATION_SPEC)
-		j9object_t result = NULL; 
-		if (j9gc_modron_readbar_none != _readBarrierType) {
-			/* TODO implement HW barriers */
-			if (j9gc_modron_readbar_evacuate == _readBarrierType) {
-				result = vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_mixedObjectReadObject(vmThread, srcObject, srcOffset, isVolatile);
-			} else if (j9gc_modron_readbar_always == _readBarrierType) {
-				result = vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_mixedObjectReadObject(vmThread, srcObject, srcOffset, isVolatile);
-			}
-		} else {
-			fj9object_t *actualAddress = J9OAB_MIXEDOBJECT_EA(srcObject, srcOffset, fj9object_t);
-					
-			protectIfVolatileBefore(isVolatile, true);
-			result = readObjectImpl(vmThread, actualAddress, isVolatile);
-			protectIfVolatileAfter(isVolatile, true);
-		}
+		fj9object_t *actualAddress = J9OAB_MIXEDOBJECT_EA(srcObject, srcOffset, fj9object_t);
+		
+		preMixedObjectReadObject(vmThread, srcObject, actualAddress);
+				
+		protectIfVolatileBefore(isVolatile, true);
+		j9object_t result = readObjectImpl(vmThread, actualAddress, isVolatile);
+		protectIfVolatileAfter(isVolatile, true);
+
 		return result;
 #else /* J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER */
 #error unsupported barrier
@@ -492,6 +485,7 @@ public:
 		if (j9gc_modron_wrtbar_always == _writeBarrierType) {
 			return (1 == vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_compareAndSwapObject(vmThread, destObject, (J9Object **)destAddress, compareObject, swapObject));
 		} else {
+			preMixedObjectReadObject(vmThread, destObject, destAddress);
 			preMixedObjectStoreObject(vmThread, destObject, destAddress, swapObject);
 
 			protectIfVolatileBefore(isVolatile, false);
@@ -533,6 +527,7 @@ public:
 		if (j9gc_modron_wrtbar_always == _writeBarrierType) {
 			return vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_compareAndExchangeObject(vmThread, destObject, (J9Object **)destAddress, compareObject, swapObject);
 		} else {
+			preMixedObjectReadObject(vmThread, destObject, destAddress);
 			preMixedObjectStoreObject(vmThread, destObject, destAddress, swapObject);
 
 			protectIfVolatileBefore(isVolatile, false);
@@ -905,6 +900,9 @@ public:
 #if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
 		return vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_staticReadObject(vmThread, clazz, srcAddress, isVolatile);
 #elif defined(J9VM_GC_COMBINATION_SPEC) 
+
+		preStaticReadObject(vmThread, clazz, srcAddress);
+
 		protectIfVolatileBefore(isVolatile, true);
 		j9object_t result = staticReadObjectImpl(vmThread, srcAddress, isVolatile);
 		protectIfVolatileAfter(isVolatile, true);
@@ -1818,21 +1816,14 @@ public:
 #if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
 		return vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_indexableReadObject(vmThread, (J9IndexableObject *)srcArray, (I_32)srcIndex, isVolatile);
 #elif defined(J9VM_GC_COMBINATION_SPEC)  
-		j9object_t result = NULL;
-		if (j9gc_modron_readbar_none != _readBarrierType) {
-			/* TODO implement HW barriers */
-			if (j9gc_modron_readbar_evacuate == _readBarrierType) {
-				result = vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_indexableReadObject(vmThread, (J9IndexableObject *)srcArray, (I_32)srcIndex, isVolatile);
-			} else {
-				result = vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_indexableReadObject(vmThread, (J9IndexableObject *)srcArray, (I_32)srcIndex, isVolatile);
-			}
-		} else {
-			fj9object_t *actualAddress = J9JAVAARRAY_EA(vmThread, srcArray, srcIndex, fj9object_t);
+		fj9object_t *actualAddress = J9JAVAARRAY_EA(vmThread, srcArray, srcIndex, fj9object_t);
+		
+		preIndexableObjectReadObject(vmThread, srcArray, actualAddress);
 
-			protectIfVolatileBefore(isVolatile, true);
-			result = readObjectImpl(vmThread, actualAddress, isVolatile);
-			protectIfVolatileAfter(isVolatile, true);
-		}
+		protectIfVolatileBefore(isVolatile, true);
+		j9object_t result = readObjectImpl(vmThread, actualAddress, isVolatile);
+		protectIfVolatileAfter(isVolatile, true);
+
 		return result;
 #else /* J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER */
 #error unsupported barrier
@@ -1898,6 +1889,7 @@ public:
 		if (j9gc_modron_wrtbar_always == _writeBarrierType) {
 			return (1 == vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_compareAndSwapObject(vmThread, destArray, (J9Object **)actualAddress, compareObject, swapObject));
 		} else {
+			preIndexableObjectReadObject(vmThread, destArray, actualAddress);
 			preIndexableObjectStoreObject(vmThread, destArray, actualAddress, swapObject);
 
 			protectIfVolatileBefore(isVolatile, false);
@@ -1939,6 +1931,7 @@ public:
 		if (j9gc_modron_wrtbar_always == _writeBarrierType) {
 			return vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_compareAndExchangeObject(vmThread, destArray, (J9Object **)actualAddress, compareObject, swapObject);
 		} else {
+			preIndexableObjectReadObject(vmThread, destArray, actualAddress);
 			preIndexableObjectStoreObject(vmThread, destArray, actualAddress, swapObject);
 
 			protectIfVolatileBefore(isVolatile, false);
@@ -2100,6 +2093,31 @@ protected:
 	{
 		internalPostBatchStoreObject(vmThread, object);
 	}
+	
+	/**
+	 * Perform the preRead barrier for a reference slot within a mixed heap object
+	 *
+	 * @param object this is the heap object being read from
+	 * @param sreAddress the address of the slot being read
+	 */
+	VMINLINE void
+	preMixedObjectReadObject(J9VMThread *vmThread, j9object_t object, fj9object_t *srcAddress)
+	{
+		internalPreReadObject(vmThread, object, srcAddress);
+	}
+	
+	/**
+	 * Perform the preRead barrier for a reference slot within an indexable heap object
+	 *
+	 * @param object this is the heap object being read from
+	 * @param sreAddress the address of the slot being read
+	 */	
+	VMINLINE void
+	preIndexableObjectReadObject(J9VMThread *vmThread, j9object_t object, fj9object_t *srcAddress)
+	{
+		internalPreReadObject(vmThread, object, srcAddress);
+	}
+	
 
 	/**
 	 * Read a non-object address (pointer to internal VM data) from an object.
@@ -2250,6 +2268,21 @@ protected:
 	{
 		return internalConvertPointerFromToken(*srcAddress);
 	}
+	
+	/**
+	 * Called before reading a reference class static slot
+	 *
+	 * @param object - the class object being read from
+	 * @param srcAddress - the address the slot read from
+	 */	
+	VMINLINE void
+	preStaticReadObject(J9VMThread *vmThread, J9Class *clazz, j9object_t *srcAddress)
+	{
+		if (j9gc_modron_readbar_none != _readBarrierType) {
+			vmThread->javaVM->memoryManagerFunctions->J9ReadBarrierJ9Class(vmThread, srcAddress);
+		}
+	}
+	
 
 	/**
 	 * Read a static object field.
@@ -2592,8 +2625,9 @@ private:
 	VMINLINE void
 	internalPreStoreObject(J9VMThread *vmThread, j9object_t object, fj9object_t *destAddress, j9object_t value)
 	{
-		if (j9gc_modron_wrtbar_realtime == _writeBarrierType) {
-			internalPreStoreObjectRealtime(vmThread, object, destAddress, value);
+		if ((j9gc_modron_wrtbar_satb == _writeBarrierType) ||
+				(j9gc_modron_wrtbar_satb_and_oldcheck == _writeBarrierType)) {
+			internalPreStoreObjectSATB(vmThread, object, destAddress, value);
 		}
 	}
 
@@ -2611,8 +2645,9 @@ private:
 	VMINLINE void
 	internalStaticPreStoreObject(J9VMThread *vmThread, j9object_t object, j9object_t *destAddress, j9object_t value)
 	{
-		if (j9gc_modron_wrtbar_realtime == _writeBarrierType) {
-			internalStaticPreStoreObjectRealtime(vmThread, object, destAddress, value);
+		if ((j9gc_modron_wrtbar_satb == _writeBarrierType) ||
+				(j9gc_modron_wrtbar_satb_and_oldcheck == _writeBarrierType)) {
+			internalStaticPreStoreObjectSATB(vmThread, object, destAddress, value);
 		}
 	}
 
@@ -2625,10 +2660,10 @@ private:
 	 *
 	 */
 	VMINLINE void
-	internalPreStoreObjectRealtime(J9VMThread *vmThread, j9object_t object, fj9object_t *destAddress, j9object_t value)
+	internalPreStoreObjectSATB(J9VMThread *vmThread, j9object_t object, fj9object_t *destAddress, j9object_t value)
 	{
 #if defined(J9VM_GC_REALTIME)
-		J9VMGCRememberedSetFragment *fragment =  &vmThread->staccatoRememberedSetFragment;
+		J9VMGCRememberedSetFragment *fragment =  &vmThread->sATBBarrierRememberedSetFragment;
 		J9VMGCRememberedSet *parent = fragment->fragmentParent;
 		/* Check if the barrier is enabled.  No work if barrier is not enabled */
 		if (0 != parent->globalFragmentIndex) {
@@ -2656,10 +2691,10 @@ private:
 	 *
 	 */
 	VMINLINE void
-	internalStaticPreStoreObjectRealtime(J9VMThread *vmThread, j9object_t object, j9object_t *destAddress, j9object_t value)
+	internalStaticPreStoreObjectSATB(J9VMThread *vmThread, j9object_t object, j9object_t *destAddress, j9object_t value)
 	{
 #if defined(J9VM_GC_REALTIME)
-		J9VMGCRememberedSetFragment *fragment =  &vmThread->staccatoRememberedSetFragment;
+		J9VMGCRememberedSetFragment *fragment =  &vmThread->sATBBarrierRememberedSetFragment;
 		J9VMGCRememberedSet *parent = fragment->fragmentParent;
 		/* Check if the barrier is enabled.  No work if barrier is not enabled */
 		if (0 != parent->globalFragmentIndex) {
@@ -2730,7 +2765,9 @@ private:
 			internalPostObjectStoreCardTable(vmThread, object, value);
 			break;
 		case j9gc_modron_wrtbar_none:
-		case j9gc_modron_wrtbar_realtime:
+		case j9gc_modron_wrtbar_satb:
+		case j9gc_modron_wrtbar_satb_and_oldcheck:
+			//TODO SATB change to handle gencon, decide where to do it in pre/post store
 			break;
 		default:
 			/* Should assert as all real types are handled.  Should never get here
@@ -2757,13 +2794,29 @@ private:
 			internalPostBatchStoreObjectCardTable(vmThread, object);
 			break;
 		case j9gc_modron_wrtbar_none:
-		case j9gc_modron_wrtbar_realtime:
+		case j9gc_modron_wrtbar_satb:
+		case j9gc_modron_wrtbar_satb_and_oldcheck:
 			break;
 		default:
 			/* Should assert as all real types are handled.  Should never get here
 			 * with always or illegal
 			 */
 			break;
+		}
+	}
+	
+	/**
+	 * Perform the preRead barrier for heap object reference slot
+	 * It's common API for both mixed and indexable objects
+	 *
+	 * @param object this is the heap object being read from
+	 * @param sreAddress the address of the slot being read
+	 */
+	VMINLINE void
+	internalPreReadObject(J9VMThread *vmThread, j9object_t object, fj9object_t *srcAddress)
+	{
+		if (j9gc_modron_readbar_none != _readBarrierType) {
+			vmThread->javaVM->memoryManagerFunctions->J9ReadBarrier(vmThread, srcAddress);
 		}
 	}
 

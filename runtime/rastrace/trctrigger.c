@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2017 IBM Corp. and others
+ * Copyright (c) 2002, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -591,7 +591,7 @@ processTriggerTpnidClause(OMR_VMThread *thr, char *clause, BOOLEAN atRuntime)
 				}
 
 				/*
-				 * initialise the new tpid range
+				 * initialize the new tpid range
 				 */
 				if (OMR_ERROR_NONE == rc) {
 					/* header */
@@ -735,7 +735,7 @@ processTriggerGroupClause(OMR_VMThread *thr, char *clause, BOOLEAN atRuntime)
 			UT_DBGOUT(1, ("<UT> Out of memory processing trigger property."));
 		}
 
-		/* initialise the new tpid group */
+		/* initialize the new tpid group */
 		if (OMR_ERROR_NONE == rc) {
 			/* header */
 			memcpy(newTriggerGroupP->header.eyecatcher, "RSGR", 4);

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,6 @@ import com.ibm.java.diagnostics.utils.IContext;
 import com.ibm.java.diagnostics.utils.commands.CommandException;
 import com.ibm.java.diagnostics.utils.plugins.DTFJPlugin;
 import com.ibm.jvm.dtfjview.commands.helpers.Utils;
-
 
 @DTFJPlugin(version="1.*", runtime=false)
 public class HexdumpCommand extends BaseJdmpviewCommand {
@@ -101,13 +100,10 @@ public class HexdumpCommand extends BaseJdmpviewCommand {
 			//stringBuffer.append(Long.toHexString(addressInDecimal+i)+":\t");
 			//stringBuffer.append(Long.toHexString(imagePointer.getAddress())+":\t");
 			try {
-				Byte byteValue = new Byte(imagePointer.getByteAt(0));
-				asciiIndex = (int) byteValue.byteValue();
-				if (asciiIndex < 0) {
-					asciiIndex += 256;
-				}
-				
-				String rawHexString = Integer.toHexString(byteValue.intValue());
+				byte byteValue = imagePointer.getByteAt(0);
+				asciiIndex = byteValue & 0xFF;
+
+				String rawHexString = Integer.toHexString(asciiIndex);
 				String fixedHexString = fixHexStringLength(rawHexString);
 				
 				String hexText = fixedHexString;
@@ -134,7 +130,7 @@ public class HexdumpCommand extends BaseJdmpviewCommand {
 					if (15 == i%16 && i != 0){
 						ebcdicChars += "|";
 						stringBuffer.append(ebcdicChars);
-				}
+					}
 				}
 			}catch (MemoryAccessException e) {
 				out.println("Address not in memory - 0x" 
@@ -162,8 +158,8 @@ public class HexdumpCommand extends BaseJdmpviewCommand {
 		
 		/*properties.put(Utils.CURRENT_MEM_ADDRESS, 
 				Long.toHexString(addressInDecimal+numBytesToPrint));*/
-		ctx.getProperties().put(Utils.CURRENT_MEM_ADDRESS, new Long(addressInDecimal));
-		ctx.getProperties().put(Utils.CURRENT_NUM_BYTES_TO_PRINT, new Integer(numBytesToPrint));
+		ctx.getProperties().put(Utils.CURRENT_MEM_ADDRESS, Long.valueOf(addressInDecimal));
+		ctx.getProperties().put(Utils.CURRENT_NUM_BYTES_TO_PRINT, Integer.valueOf(numBytesToPrint));
 	}
 	
 	private String padSpace(long undisplayedBytes, String asciiChars){

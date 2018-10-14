@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2016 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1508,7 +1508,7 @@ startReader(void *entryArg) {
 	J9VMThread *currentThread = vm->internalVMFunctions->currentVMThread(vm);
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	vm->internalVMFunctions->internalAcquireVMAccess(currentThread);
+	vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
 	/* writer thread must have failed, no need to proceed */
 	if (true == adt->cancelThread) {
@@ -1547,7 +1547,7 @@ startReader(void *entryArg) {
 
 _exitCloseCache:
 	adt->closeTestCache(vm, false);
-	vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+	vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	UnitTest::unitTest = UnitTest::NO_TEST;
 	vm->internalVMFunctions->threadCleanup(currentThread, 0);
 	INFOPRINTF("Reader thread exited\n");
@@ -1564,7 +1564,7 @@ startWriter(void *entryArg) {
 	J9VMThread *currentThread = vm->internalVMFunctions->currentVMThread(vm);
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	vm->internalVMFunctions->internalAcquireVMAccess(currentThread);
+	vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
     rc = adt->openTestCache(vm, NULL, 0, J9PORT_SHR_CACHE_TYPE_PERSISTENT, 0, 0);
     if (FAIL == rc) {
@@ -1631,7 +1631,7 @@ startWriter(void *entryArg) {
 
 _exitCloseCache:
 	adt->closeTestCache(vm, true);
-	vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+	vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	vm->internalVMFunctions->threadCleanup(currentThread, 0);
 	INFOPRINTF("Writer thread exited\n");
 	adt->threadExited = true;
@@ -1809,7 +1809,7 @@ testAttachedData(J9JavaVM* vm)
 	REPORT_START("AttachedDataTest");
 
 	currentThread = vm->internalVMFunctions->currentVMThread(vm);
-	vm->internalVMFunctions->internalAcquireVMAccess(currentThread);
+	vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
 	for(i = 0; i < 4; i++) {
 		U_64 extraRuntimeFlag = 0;
@@ -1965,7 +1965,7 @@ _exitCloseCache:
 	UnitTest::cacheSize = 0;
 	UnitTest::cacheMemory = NULL;
 
-	vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+	vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	REPORT_SUMMARY("AttachedDataTest", rc);
 	return rc;
 

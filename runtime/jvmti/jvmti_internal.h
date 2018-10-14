@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -263,7 +263,7 @@ jvmtiGetConstantPool(jvmtiEnv* env,
 jvmtiError 
 jvmtiGetConstantPool_translateCP(J9PortLibrary *privatePortLibrary, 
 				 jvmtiGcp_translation *translation,
-				 J9Class *class,
+				 J9Class *clazz,
 				 jboolean translateUTF8andNAS);
 
 /** 
@@ -2550,6 +2550,18 @@ jvmtiError JNICALL
 jvmtiIsModifiableModule(jvmtiEnv* env,
 		jobject module,
 		jboolean* is_modifiable_module_ptr);
+
+/* ---------------- suspendhelper.cpp ---------------- */
+/**
+* @brief
+* @param currentThreasd
+* @param thread
+* @param allowNull
+* @param currentThreadSuspended
+* @return jvmtiError
+*/
+jvmtiError
+suspendThread(J9VMThread *currentThread, jthread thread, UDATA allowNull, UDATA *currentThreadSuspended);
 
 #ifdef __cplusplus
 }

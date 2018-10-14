@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,6 +75,9 @@ public:
 	{
 		j9object_t instance = NULL;
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP) || defined(J9VM_GC_SEGREGATED_HEAP)
+		bool initializeLockWord = initializeSlots
+			&& J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(clazz), J9ClassReservableLockWordInit);
+
 		/* Calculate the size of the object */
 		UDATA dataSize = clazz->totalInstanceSize;
 		UDATA allocateSize = (dataSize + J9_OBJECT_HEADER_SIZE + _objectAlignmentInBytes - 1) & ~(UDATA)(_objectAlignmentInBytes - 1);
@@ -143,6 +146,10 @@ public:
 
 		if (initializeSlots) {
 			memset(objectHeader + 1, 0, dataSize);
+		}
+
+		if (initializeLockWord) {
+			*J9OBJECT_MONITOR_EA(currentThread, instance) = OBJECT_HEADER_LOCK_RESERVED;
 		}
 
 		if (memoryBarrier) {

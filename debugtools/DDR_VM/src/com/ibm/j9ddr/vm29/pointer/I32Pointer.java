@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,7 @@ import com.ibm.j9ddr.vm29.types.I32;
 import com.ibm.j9ddr.vm29.types.Scalar;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
-public class I32Pointer extends Pointer {
+public class I32Pointer extends IDATAPointer {
 
 	public static final int SIZEOF = I32.SIZEOF;
 	public static final I32Pointer NULL = new I32Pointer(0);

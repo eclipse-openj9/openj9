@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- 
-	Copyright (c) 2009, 2017 IBM Corp. and others
+	Copyright (c) 2009, 2018 IBM Corp. and others
 	
 	This program and the accompanying materials are made available under
 	the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,6 @@
 	<xi:include href="../uma/se7_exports.xml"></xi:include>
 	<xi:include href="../uma/se626_orb_ludcl_exports.xml"></xi:include>
 	<xi:include href="../uma/jithelpers_jni_exports.xml"></xi:include>
-	<xi:include href="../uma/rcm_exports.xml"></xi:include>
 	<xi:include href="../uma/se8_exports.xml"></xi:include>
 	<xi:include href="../uma/se829_exports.xml"></xi:include>
 	<xi:include href="../uma/se8only_exports.xml"></xi:include>
@@ -47,7 +46,6 @@
 	<xi:include href="../uma/se7_objects.xml"></xi:include>
 	<xi:include href="../uma/se626_orb_ludcl_objects.xml"></xi:include>
 	<xi:include href="../uma/jithelpers_objects.xml"></xi:include>
-	<xi:include href="../uma/rcm_objects.xml"></xi:include>
 	<xi:include href="../uma/se8_objects.xml"></xi:include>
 	<xi:include href="../uma/se8only_objects.xml"></xi:include>
 
@@ -82,9 +80,6 @@
 			</group>
 			<group name="se7"/>
 			<group name="se626_orb_ludcl"/>
-			<group name="rcm">
-				<include-if condition="spec.flags.opt_resourceManaged" />
-			</group>
 			<group name="se8"/>
 			<group name="se829"/>
 			<group name="se8only"/>
@@ -109,9 +104,6 @@
 		<makefilestubs>
 			<makefilestub data="UMA_ENABLE_ALL_WARNINGS=1"/>
 			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
-			<makefilestub data="ifeq ($(OPENJ9_BUILD),true)"/>
-			<makefilestub data="vm_scar$(UMA_DOT_O) : CFLAGS += -DOPENJ9_BUILD"/>
-			<makefilestub data="endif"/>
 		</makefilestubs>
 
 		<vpaths>
@@ -139,11 +131,6 @@
 			</group>
 			<group name="se7"/>
 			<group name="se626_orb_ludcl"/>
-
-			<group name="rcm">
-				<include-if condition="spec.flags.opt_resourceManaged" />
-			</group>
-			
 			<group name="se8"/>
 			<group name="se8only"/>
 			

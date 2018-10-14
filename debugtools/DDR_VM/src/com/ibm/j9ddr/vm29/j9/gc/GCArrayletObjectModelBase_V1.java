@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,11 +48,11 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 	protected GC_ArrayletObjectModelPointer arrayletObjectModel;
 	protected VoidPointer arrayletRangeBase;
 	protected VoidPointer arrayletRangeTop;
-	protected UDATA largestDesirableArraySpineSize;	
+	protected UDATA largestDesirableArraySpineSize;
 	protected UDATA arrayletLeafSize;
 	protected UDATA arrayletLeafLogSize;
 	protected UDATA arrayletLeafSizeMask;
-	
+
 	public GCArrayletObjectModelBase_V1() throws CorruptDataException 
 	{
 		arrayletObjectModel = GC_ArrayletObjectModelPointer.cast(GCBase.getExtensions().indexableObjectModel());
@@ -106,22 +106,20 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 	 */	
 	protected UDATA getHeaderSize(long layout) 
 	{
-		UDATA headerSize;		
+		long headerSize;
 		if (J9BuildFlags.gc_hybridArraylets) {
 			if (GC_ArrayletObjectModelBase$ArrayLayout.InlineContiguous != layout) {
-				headerSize = new UDATA(J9IndexableObjectDiscontiguous.SIZEOF);
+				headerSize = J9IndexableObjectDiscontiguous.SIZEOF;
 			} else {
-				headerSize = new UDATA(J9IndexableObjectContiguous.SIZEOF);
+				headerSize = J9IndexableObjectContiguous.SIZEOF;
 			}
 		} else {
-			headerSize = new UDATA(J9IndexableObjectDiscontiguous.SIZEOF);
+			headerSize = J9IndexableObjectDiscontiguous.SIZEOF;
 		}
-		
-		return headerSize;
+
+		return new UDATA(headerSize);
 	}
 
-	
-	
 	/**
 	 * Returns the header size of a given indexable object. The arraylet layout is determined base on "small" size.
 	 * @param array Ptr to an array for which header size will be returned
@@ -130,19 +128,19 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 	@Override
 	public UDATA getHeaderSize(J9IndexableObjectPointer array) throws CorruptDataException
 	{
-		UDATA headerSize;		
+		long headerSize;
 		if (J9BuildFlags.gc_hybridArraylets) {
-			U32 size = J9IndexableObjectContiguousPointer.cast(array).size();
+			UDATA size = J9IndexableObjectContiguousPointer.cast(array).size();
 			if (size.eq(0)) {
-				headerSize = new UDATA(J9IndexableObjectDiscontiguous.SIZEOF); 
+				headerSize = J9IndexableObjectDiscontiguous.SIZEOF;
 			} else {
-				headerSize = new UDATA(J9IndexableObjectContiguous.SIZEOF);
+				headerSize = J9IndexableObjectContiguous.SIZEOF;
 			}
 		} else {
-			headerSize =  new UDATA(J9IndexableObjectDiscontiguous.SIZEOF);
+			headerSize = J9IndexableObjectDiscontiguous.SIZEOF;
 		}
-		
-		return headerSize;
+
+		return new UDATA(headerSize);
 	}	
 	
 	/**
@@ -155,9 +153,8 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 	 */
 	protected UDATA getSpineSizeWithoutHeader(long layout, UDATA numberArraylets, UDATA dataSize, boolean alignData) throws CorruptDataException
 	{
-		
-		UDATA spineArrayoidSize;
-		UDATA spinePaddingSize;
+		UDATA spineArrayoidSize = new UDATA(0);
+		UDATA spinePaddingSize = new UDATA(0);
 
 		/* The spine consists of three (possibly empty) sections, not including the header:
 		 * 1. the alignment word - padding between arrayoid and inline-data
@@ -166,18 +163,19 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 		 * In hybrid specs, the spine may also include padding for a secondary size field in empty arrays 
 		 */
 		if (J9BuildFlags.gc_hybridArraylets) {
-			spineArrayoidSize = new UDATA(0);
-			spinePaddingSize = new UDATA(0);
-			
 			if (GC_ArrayletObjectModelBase$ArrayLayout.InlineContiguous != layout) {
 				if (!dataSize.eq(0)) {
 					/* not in-line, so there in an arrayoid */
-					spinePaddingSize = alignData ? new UDATA(ObjectModel.getObjectAlignmentInBytes() - ObjectReferencePointer.SIZEOF) : new UDATA(0);
+					if (alignData) {
+						spinePaddingSize = new UDATA(ObjectModel.getObjectAlignmentInBytes() - ObjectReferencePointer.SIZEOF);
+					}
 					spineArrayoidSize = numberArraylets.mult(ObjectReferencePointer.SIZEOF);
 				}
 			}
 		} else {
-			spinePaddingSize = alignData ? new UDATA(ObjectReferencePointer.SIZEOF) : new UDATA(0);
+			if (alignData) {
+				spinePaddingSize = new UDATA(ObjectReferencePointer.SIZEOF);
+			}
 			spineArrayoidSize = numberArraylets.mult(ObjectReferencePointer.SIZEOF);
 		}
 		
@@ -283,12 +281,10 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 			} else {
 				layout = GC_ArrayletObjectModelBase$ArrayLayout.Discontiguous;
 			}
-			
 		}
-			
+
 		return layout;
-		
-	}	
+	}
 	
 	/**
 	 * Returns the size of data in an indexable object, in bytes, including leaves, excluding the header.
@@ -298,7 +294,7 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 	public UDATA getDataSizeInBytes(J9IndexableObjectPointer array) throws CorruptDataException
 	{
 		J9ArrayClassPointer clazz = J9IndexableObjectHelper.clazz(array);
-		U32 arrayShape = J9ROMArrayClassPointer.cast(clazz.romClass()).arrayShape();
+		UDATA arrayShape = J9ROMArrayClassPointer.cast(clazz.romClass()).arrayShape();
 		UDATA numberOfElements = getSizeInElements(array);
 		UDATA size = numberOfElements.leftShift(arrayShape.bitAnd(0x0000FFFF).intValue());
 		return UDATA.roundToSizeofUDATA(size);
@@ -308,8 +304,7 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 	public ObjectReferencePointer getArrayoidPointer(J9IndexableObjectPointer arrayPtr) throws CorruptDataException 
 	{
 		return ObjectReferencePointer.cast(arrayPtr.addOffset(J9IndexableObjectDiscontiguous.SIZEOF));
-	}	
-	
+	}
 
 	@Override
 	public VoidPointer getDataPointerForContiguous(J9IndexableObjectPointer arrayPtr) throws CorruptDataException
@@ -328,7 +323,7 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 		// Don't call getDataSizeInBytes() since that rounds up to UDATA.
 		long layout = getArrayLayout(array);
 		J9ArrayClassPointer clazz = J9IndexableObjectHelper.clazz(array);
-		U32 arrayShape = J9ROMArrayClassPointer.cast(clazz.romClass()).arrayShape();
+		UDATA arrayShape = J9ROMArrayClassPointer.cast(clazz.romClass()).arrayShape();
 		UDATA numberOfElements = getSizeInElements(array);
 		UDATA dataSize = numberOfElements.leftShift(arrayShape.bitAnd(0x0000FFFF).intValue());
 		UDATA numberArraylets = numArraylets(dataSize);
@@ -336,8 +331,7 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 		UDATA spineSize = getSpineSize(layout, numberArraylets, dataSize, alignData);		
 		return U32.roundToSizeofU32(spineSize);
 	}
-		
-	
+
 	/**
 	 * Check the given indexable object is inline contiguous
 	 * @param objPtr Pointer to an array object
@@ -474,6 +468,5 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 
 		return numberArraylets.mult(arrayletLeafSize);
 	}
-
 
 }

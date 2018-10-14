@@ -1,5 +1,5 @@
 #/*******************************************************************************
-# * Copyright (c) 2016, 2017 IBM Corp. and others
+# * Copyright (c) 2016, 2018 IBM Corp. and others
 # *
 # * This program and the accompanying materials are made available under
 # * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,7 @@
 #
 # Example call:
 #   make -f <path to file>/jcl_build.mk SPEC_LEVEL=8 JPP_CONFIG=SIDECAR18-SE JPP_DIRNAME=jclSC18 \
-#       JAVA_BIN=<JAVA SDK bin path> NVCC=<CUDA compiler path> BUILD_ID=<build-id>
+#       JAVA_BIN=<JAVA SDK bin path> BUILD_ID=<build-id>
 
 define \n
 
@@ -42,10 +42,6 @@ endif
 
 ifndef JPP_DIRNAME
 $(error JPP_DIRNAME is undefined)
-endif
-
-ifndef NVCC
-$(error NVCC is undefined)
 endif
 
 ifndef SPEC_LEVEL
@@ -93,9 +89,6 @@ JCL_TOOLS_DIR  := $(WORKSPACE)/sourcetools/J9_JCL_Build_Tools
 PCONFIG_DIR    := $(PCONFIG)/pConfig_$(JPP_CONFIG)
 DEST_DIR       := $(ROOT_DIR)/build/j9jcl/source/ive/lib/$(JPP_DIRNAME)
 
-GPU_TMP_DIR    := $(TEMP)/bld_$(BUILD_ID)/tmp_cuda
-CUDA4J_JAR     := $(WORKSPACE)/jcl/cuda4j_j8.jar
-
 SOURCETOOLS_LIB  := $(WORKSPACE)/sourcetools/lib
 IBMJZOS_JAR      := $(SOURCETOOLS_LIB)/ibmjzos.jar
 RAS_BINARIES_DIR := $(ROOT_DIR)/build/RAS_Binaries
@@ -111,7 +104,7 @@ PREPROCESS_ARGS := \
 	-macro:define "com.ibm.oti.vm.library.version=29"
 
 JCL_ARGS  := -verbose -g -Xlint:unchecked -source $(SPEC_VERSION) -target $(SPEC_VERSION)
-JCL_CP    := $(CUDA4J_JAR)$(PATH_SEP)$(IBMJZOS_JAR)
+JCL_CP    := $(IBMJZOS_JAR)
 
 # Add Boot class path
 ifneq ($(COMPILER_BCP),)
@@ -139,26 +132,7 @@ compile      = \
 			-d "$(PCONFIG_DIR)/bin" \
 			$(call java_sources,$(PCONFIG_DIR)/src)
 
-GPU_BIN_DIR := $(PCONFIG_DIR)/bin/com/ibm/gpu
-
-# CUDA compile configuration
-cu_file_lst := $(subst $(GPU_TMP_DIR),,$(sort $(wildcard $(GPU_TMP_DIR)/*.cu)))
-
-define compile_cuda
-	$(eval files=$(strip $(wildcard $(WORKSPACE)/sourcetools/JCL_Ant_Build/tools/*.java)))
-	mkdir -p $(GPU_TMP_DIR)
-	$(JAVAC) -verbose -sourcepath "$(WORKSPACE)/sourcetools/JCL_Ant_Build/tools/" -cp "$(GPU_TMP_DIR)/" -source $(SPEC_VERSION) -target $(SPEC_VERSION) -verbose -d $(GPU_TMP_DIR)/ "$(files)"
-	$(JAVA) -cp $(GPU_TMP_DIR)/ KernelGenerator > $(GPU_TMP_DIR)/SortKernels.cu
-	$(NVCC) \
-		--generate-code arch=compute_20,code=compute_20 \
-		--generate-code arch=compute_20,code=sm_20 \
-		--generate-code arch=compute_30,code=sm_30 \
-		--generate-code arch=compute_35,code=sm_35 \
-		-fatbin --machine 64 --ptxas-options -O4 \
-		-o "$(GPU_BIN_DIR)/SortKernels.fatbin" $(GPU_TMP_DIR)/SortKernels.cu
-endef
-
-.PHONY : all init preprocess-jcl compile-jcl generate-cuda copy-files dist clean
+.PHONY : all init preprocess-jcl compile-jcl copy-files dist clean
 
 all : dist clean
 
@@ -175,14 +149,11 @@ preprocess-jcl : init
 compile-jcl : preprocess-jcl
 	$(call compile)
 
-generate-cuda : compile-jcl
-	$(if $(findstring SortNetwork.class, $(wildcard $(GPU_BIN_DIR)/*)), $(call compile_cuda), echo "Skipped")
-
 FILES_TO_COPY := \
 	com/ibm/gpu/ibm_gpu_thresholds.properties \
 	com/ibm/oti/util/ExternalMessages.properties
 
-copy-files : generate-cuda
+copy-files : compile-jcl
 	@ $(foreach file,$(FILES_TO_COPY), cp $(PCONFIG_DIR)/src/$(file) $(PCONFIG_DIR)/bin/$(file) || echo $(PCONFIG_DIR)/src/$(file) not found $(\n))
 ifeq ($(JPP_CONFIG), SIDECAR18-SE)
 	$(JAVA) -cp "$(JCL_TOOLS_DIR)/lib/*" com.ibm.oti.build.utils.GenManifest "$(PCONFIG_DIR)/manifest" "Java Runtime Environment API" "2.9" "1.8"

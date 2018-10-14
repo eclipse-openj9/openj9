@@ -657,8 +657,8 @@ J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMX=\  -Xscmx<x>       Ustawienie wielko\u015bci nowej pami\u0119ci podr\u0119cznej \n\
-\                  wsp\u00f3\u0142u\u017cytkowanych klas na <x>.
+J9NLS_EXELIB_INTERNAL_HELP_XSCMX=\  -Xscmx<x>       Ustawienie wielko\u015bci nowej wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci \n\
+\                  podr\u0119cznej klas na <x>.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX.system_action=
@@ -739,14 +739,14 @@ J9NLS_EXELIB_INTERNAL_HELP_2_16.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_16.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT=\  -Xscminaot<x>   Ustawienie minimalnej wielko\u015bci pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas zarezerwowanej na dane AOT na warto\u015b\u0107 <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT=\  -Xscminaot<x>   Ustawienie minimalnej wielko\u015bci wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas zarezerwowanej na dane AOT na warto\u015b\u0107 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT=\  -Xscmaxaot<x>   Ustawienie maksymalnej dozwolonej wielko\u015bci pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas na dane AOT na warto\u015b\u0107 <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT=\  -Xscmaxaot<x>   Ustawienie maksymalnej dozwolonej wielko\u015bci wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas na dane AOT na warto\u015b\u0107 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT.system_action=
@@ -778,7 +778,7 @@ J9NLS_EXELIB_INTERNAL_HELP_VMSELECT.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_VMSELECT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED=\  -Xcompressedrefs              U\u017cycie odniesie\u0144 do skompresowanej sterty
+J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED=\  -Xcompressedrefs              U\u017cycie referencji do skompresowanej sterty
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED.system_action=
@@ -847,21 +847,21 @@ J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCDMX=\  -Xscdmx<x>      Ustawienie wielko\u015bci obszaru atrybutu debugowania pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas na warto\u015b\u0107 <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCDMX=\  -Xscdmx<x>      Ustawienie wielko\u015bci obszaru atrybutu debugowania wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas na warto\u015b\u0107 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCDMX.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCDMX.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCDMX.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT=\  -Xscminjit<x>   Ustawienie minimalnej wielko\u015bci pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas zarezerwowanej na dane JIT na warto\u015b\u0107 <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT=\  -Xscminjit<x>   Ustawienie minimalnej wielko\u015bci wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas zarezerwowanej na dane JIT na warto\u015b\u0107 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT=\  -Xscmaxjit<x>   Ustawienie maksymalnej dozwolonej wielko\u015bci pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas na dane JIT na warto\u015b\u0107 <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT=\  -Xscmaxjit<x>   Ustawienie maksymalnej dozwolonej wielko\u015bci wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas na dane JIT na warto\u015b\u0107 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT.system_action=
@@ -869,35 +869,35 @@ J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT.user_response=
 
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA=\  -Xscminjitdata<x>   Ustawienie minimalnej wielko\u015bci pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas zarezerwowanej na dane JIT na warto\u015b\u0107 <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA=\  -Xscminjitdata<x>   Ustawienie minimalnej wielko\u015bci wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas zarezerwowanej na dane JIT na warto\u015b\u0107 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA=\  -Xscmaxjitdata<x>   Ustawienie maksymalnej dozwolonej wielko\u015bci pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas na dane JIT na warto\u015b\u0107 <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA=\  -Xscmaxjitdata<x>   Ustawienie maksymalnej dozwolonej wielko\u015bci wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas na dane JIT na warto\u015b\u0107 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP=\  -Xzero:nosharebootzip   Nie wsp\u00f3\u0142u\u017cytkuj pami\u0119ci podr\u0119cznych pozycji jar programu startowego w pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas
+J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP=\  -Xzero:nosharebootzip   Nie wsp\u00f3\u0142u\u017cytkuj pami\u0119ci podr\u0119cznych pozycji jar programu startowego we wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI=\  -XX:ShareClassesEnableBCI   Tworzenie pami\u0119ci podr\u0119cznej z obs\u0142ug\u0105 instrumentacji kodu bajtowego
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI=\  -XX:ShareClassesEnableBCI   Tworzenie wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas z obs\u0142ug\u0105 instrumentacji kodu bajtowego
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESDISABLEBCI=\  -XX:ShareClassesDisableBCI   Tworzenie pami\u0119ci podr\u0119cznej bez obs\u0142ugi instrumentacji kodu bajtowego
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESDISABLEBCI=\  -XX:ShareClassesDisableBCI   Tworzenie wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas bez obs\u0142ugi instrumentacji kodu bajtowego
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESDISABLEBCI.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESDISABLEBCI.system_action=
@@ -911,21 +911,21 @@ J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX=\  -Xscsoftmx<x>   Ustawienie mi\u0119kkiej maksymalnej wielko\u015bci nowej pami\u0119ci podr\u0119cznej klas wsp\u00f3\u0142u\u017cytkowanych na <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX=\  -Xscsoftmx<x>   Ustawienie mi\u0119kkiej maksymalnej wielko\u015bci nowej wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1=\  -Xscmx<x>       Ustawienie wielko\u015bci (lub mi\u0119kkiej warto\u015bci maksymalnej, je\u015bli podano opcj\u0119-XX:SharedCacheHardLimit=) nowej pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanej klasy na <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1=\  -Xscmx<x>       Ustawienie wielko\u015bci (lub mi\u0119kkiej warto\u015bci maksymalnej, je\u015bli podano opcj\u0119 -XX:SharedCacheHardLimit=) nowej wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS=\  -XX:SharedCacheHardLimit=<x>   Ustawienie wielko\u015bci nowej pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas na rozmiar <x>
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS=\  -XX:SharedCacheHardLimit=<x>   Ustawienie wielko\u015bci nowej wsp\u00f3\u0142u\u017cytkowanej pami\u0119ci podr\u0119cznej klas na wielko\u015b\u0107 <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS.system_action=

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -309,7 +309,7 @@ SH_ROMClassManagerImpl::findNextExisting(J9VMThread* currentThread, void * &find
 
 	currentItem = walk->_item;
 
-	if (walk->_isOrphan) {
+	if (TYPE_ORPHAN == ITEMTYPE(currentItem)) {
 		Trc_SHR_RMI_findNextROMClass_FoundOrphan_Event(currentThread);
 		returnVal = (J9ROMClass*) OWROMCLASS(((OrphanWrapper*) ITEMDATA(currentItem)));
 	} else {
@@ -320,7 +320,7 @@ SH_ROMClassManagerImpl::findNextExisting(J9VMThread* currentThread, void * &find
 	if (prev != NULL) {
 		/*If returnVal is the same as the last one returned then move on.*/
 		prevItem = prev->_item;
-		if (prev->_isOrphan) {
+		if (TYPE_ORPHAN == ITEMTYPE(prevItem)) {
 			prevVal = (J9ROMClass*) OWROMCLASS(((OrphanWrapper*) ITEMDATA(prevItem)));
 		} else {
 			prevVal = (J9ROMClass*) RCWROMCLASS(((ROMClassWrapper*) ITEMDATA(prevItem)));
@@ -415,7 +415,7 @@ SH_ROMClassManagerImpl::locateROMClass(J9VMThread* currentThread, const char* pa
 
 		Trc_SHR_RMI_locateROMClass_TestItem(currentThread, currentItem);
 
-		if (walk->_isOrphan) {
+		if (TYPE_ORPHAN == ITEMTYPE(currentItem)) {
 
 			/*** IF AN UNMODIFIED ORPHAN IS FOUND, REMEMBER IT AND CARRY ON SEARCHING ***/
 

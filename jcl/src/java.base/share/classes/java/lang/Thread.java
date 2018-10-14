@@ -2,7 +2,7 @@
 package java.lang;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -182,10 +182,14 @@ void completeInitialization() {
 	// Get the java.system.class.loader
 	/*[PR CMVC 99755] Implement -Djava.system.class.loader option */
 	contextClassLoader = ClassLoader.getSystemClassLoader();
-	/*[IF Sidecar19-SE]*/
+	/*[IF Sidecar19-SE|Sidecar19-SE-OpenJ9]*/
 	jdk.internal.misc.VM.initLevel(4);
+	/*[ELSE]*/ // Sidecar19-SE|Sidecar19-SE-OpenJ9
+	sun.misc.VM.booted();
+	/*[ENDIF]*/ // Sidecar19-SE|Sidecar19-SE-OpenJ9
+	/*[IF Sidecar19-SE|Sidecar18-SE-OpenJ9]*/
 	System.startSNMPAgent();
-	/*[ENDIF]*/
+	/*[ENDIF]*/ // Sidecar19-SE|Sidecar18-SE-OpenJ9
 }
 
 /**
@@ -534,6 +538,7 @@ public int countStackFrames() {
  */
 public static native Thread currentThread();
 
+/*[IF !Java11]*/
 /**
  * 	Destroys the receiver without any monitor cleanup. Not implemented.
  * 
@@ -548,6 +553,7 @@ public void destroy() {
 	/*[PR 121318] Should throw NoSuchMethodError */
 	throw new NoSuchMethodError();
 }
+/*[ENDIF]*/
 
 
 /**
@@ -1122,6 +1128,7 @@ public final void stop() {
 	}
 }
 
+/*[IF !Java11]*/
 /**
  * Throws UnsupportedOperationException.
  *
@@ -1137,6 +1144,7 @@ public final void stop() {
 public final void stop(Throwable throwable) {
 	throw new UnsupportedOperationException();
  }
+/*[ENDIF]*/
 
 private final synchronized void stopWithThrowable(Throwable throwable) {
 	checkAccess();
@@ -1244,9 +1252,18 @@ public static native void yield();
  */
 public static native boolean holdsLock(Object object);
 
+/*[IF Java11]*/
+static
+/*[ENDIF]*/
 void blockedOn(sun.nio.ch.Interruptible interruptible) {
-	synchronized(lock) {
-		blockOn = interruptible;
+	Thread currentThread;
+	/*[IF Java11]*/
+	currentThread = currentThread();
+	/*[ELSE]
+	currentThread = this;
+	/*[ENDIF]*/
+	synchronized(currentThread.lock) {
+		currentThread.blockOn = interruptible;
 	}
 }
 

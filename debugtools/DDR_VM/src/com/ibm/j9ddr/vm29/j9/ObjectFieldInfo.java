@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2015 IBM Corp. and others
+ * Copyright (c) 2015, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,6 @@ import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMFieldShapePointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9UTF8Pointer;
 import com.ibm.j9ddr.vm29.structure.J9Object;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.U64;
@@ -281,7 +280,7 @@ public class ObjectFieldInfo {
 
 		Iterable <J9ROMFieldShapePointer>  fields = new J9ROMFieldShapeIterator(romClass.romFields(), romClass.romFieldCount());
 		for  (J9ROMFieldShapePointer f: fields) {
-			U32 modifiers = f.modifiers();
+			UDATA modifiers = f.modifiers();
 			if (!modifiers.anyBitsIn(J9AccStatic) ) {
 
 				if (modifiers.anyBitsIn(J9FieldFlagObject)) {
@@ -306,7 +305,7 @@ public class ObjectFieldInfo {
 		hiddenFieldCount = 0;
 		for (HiddenInstanceField hiddenField : hiddenFieldList) {
 			if (hiddenField.className() == null || className.equals(hiddenField.className())) {
-				U32 modifiers = hiddenField.shape().modifiers();
+				UDATA modifiers = hiddenField.shape().modifiers();
 				if (modifiers.anyBitsIn(J9FieldFlagObject)) {
 					totalObjectCount += 1;
 				} else if (modifiers.anyBitsIn(J9FieldSizeDouble)) {

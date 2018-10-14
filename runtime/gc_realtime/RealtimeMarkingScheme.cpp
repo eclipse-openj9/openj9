@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1148,7 +1148,7 @@ MM_RealtimeMarkingScheme::scanSoftReferenceObjects(MM_EnvironmentRealtime *env)
 		if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 			MM_ReferenceObjectList *referenceObjectList = &_gcExtensions->referenceObjectLists[listIndex];
 			referenceObjectList->startSoftReferenceProcessing();
-			processReferenceList(env, NULL, referenceObjectList->getPriorSoftList(), &gcEnv->_markJavaStats._weakReferenceStats);
+			processReferenceList(env, NULL, referenceObjectList->getPriorSoftList(), &gcEnv->_markJavaStats._softReferenceStats);
 			_scheduler->condYieldFromGC(env);
 		}
 	}
@@ -1159,14 +1159,15 @@ void
 MM_RealtimeMarkingScheme::scanPhantomReferenceObjects(MM_EnvironmentRealtime *env)
 {
 	GC_Environment *gcEnv = env->getGCEnvironment();
-	Assert_MM_true(gcEnv->_referenceObjectBuffer->isEmpty());
+	/* unfinalized processing may discover more phantom reference objects */
+	gcEnv->_referenceObjectBuffer->flush(env);
 	const UDATA maxIndex = MM_HeapRegionDescriptorRealtime::getReferenceObjectListCount(env);
 	UDATA listIndex;
 	for (listIndex = 0; listIndex < maxIndex; ++listIndex) {
 		if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 			MM_ReferenceObjectList *referenceObjectList = &_gcExtensions->referenceObjectLists[listIndex];
 			referenceObjectList->startPhantomReferenceProcessing();
-			processReferenceList(env, NULL, referenceObjectList->getPriorPhantomList(), &gcEnv->_markJavaStats._weakReferenceStats);
+			processReferenceList(env, NULL, referenceObjectList->getPriorPhantomList(), &gcEnv->_markJavaStats._phantomReferenceStats);
 			_scheduler->condYieldFromGC(env);
 		}
 	}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -135,7 +135,7 @@ jvmtiGetMethodDeclaringClass(jvmtiEnv* env,
 		*declaring_class_ptr = (jclass) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, J9VM_J9CLASS_TO_HEAPCLASS(methodClass));
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetMethodDeclaringClass);
@@ -631,6 +631,10 @@ readdWide:
 				case JBreturn0:
 				case JBreturn1:
 				case JBreturn2:
+				case JBreturnB:
+				case JBreturnC:
+				case JBreturnS:
+				case JBreturnZ:
 				case JBsyncReturn0:
 				case JBsyncReturn1:
 				case JBsyncReturn2: {

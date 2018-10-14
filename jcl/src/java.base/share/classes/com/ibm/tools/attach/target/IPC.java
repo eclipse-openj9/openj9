@@ -29,15 +29,29 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.security.SecureRandom;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Random;
+
+import static java.nio.file.attribute.PosixFilePermission.GROUP_READ;
+import static java.nio.file.attribute.PosixFilePermission.GROUP_WRITE;
+import static java.nio.file.attribute.PosixFilePermission.OTHERS_READ;
+import static java.nio.file.attribute.PosixFilePermission.OTHERS_WRITE;
 
 /**
  * Utility class for operating system calls
  */
 public class IPC {
 
+	private static final String JAVA_IO_TMPDIR = "java.io.tmpdir";
 	/**
 	 * Successful return code from natives.
 	 */
@@ -48,11 +62,29 @@ public class IPC {
 	static final int TRACEPOINT_STATUS_OOM_DURING_WAIT = -2;
 	static final int TRACEPOINT_STATUS_OOM_DURING_TERMINATE = -3;
 	static final String LOCAL_CONNECTOR_ADDRESS = "com.sun.management.jmxremote.localConnectorAddress"; //$NON-NLS-1$
-
+	private static final EnumSet<PosixFilePermission> NON_OWNER_READ_WRITE =
+				EnumSet.of(GROUP_READ, GROUP_WRITE, OTHERS_READ, OTHERS_WRITE);
+	static final int LOGGING_UNKNOWN = 0;
+	static final int LOGGING_DISABLED = 1;
+	static final int LOGGING_ENABLED = 2;
+	/**
+	 * True if operating system is Windows.
+	 */
+	public static boolean isWindows = false;
 
 	private static Random randomGen; /* Cleanup. this is used by multiple threads */
-	static  PrintStream logStream; /* cleanup.  Used by multiple threads */
-	static volatile boolean loggingEnabled; /* set at initialization time and not changed */
+	
+	/* loggingStatus may be seen to be LOGGING_ENABLED before logStream is initialized,
+	 * so use logStream inside a synchronized (IPC.accessorMutex) block.
+	 */
+	static  PrintStream logStream;
+	
+	/* loggingStatus is set at initialization time to LOGGING_DISABLED or LOGGING_ENABLED 
+	 * and not changed thereafter.
+	 * This can be safely tested by any thread against LOGGING_DISABLED.  If it is not equal, then 
+	 * isLoggingEnabled() will check the actual status in a thread-safe manner.
+	 */
+	static int loggingStatus = LOGGING_UNKNOWN; /* set at initialization time and not changed */
 	static String defaultVmId;
 
 	/**
@@ -88,6 +120,43 @@ public class IPC {
 	}
 
 	static native int mkdirWithPermissionsImpl(String absolutePath, int perms);
+
+	/**
+	 * Ensure that a file or directory is not readable or writable by others
+	 * and is owned by the current user.
+	 * @param filePath File or directory path
+	 * @throws IOException if the access or ownership is wrong
+	 */
+	public static void checkOwnerAccessOnly(String filePath) throws IOException {
+		final long myUid = getUid();
+		/* Ensure file is owned by current user, or current user is root */
+		final long fileOwner = CommonDirectory.getFileOwner(filePath);
+		if ((0 != myUid) && (fileOwner != myUid)) {
+			logMessage("Wrong permissions or ownership for ", filePath); //$NON-NLS-1$
+			/*[MSG "K0803", "File {0} is owned by {1}, should be owned by current user"]*/
+			throw new IOException(com.ibm.oti.util.Msg.getString("K0803", filePath, Long.valueOf(fileOwner)));//$NON-NLS-1$
+		}
+		if (!isWindows) {
+			try {
+				/* ensure that the directory is not readable or writable by others */
+				Set<PosixFilePermission> actualPermissions =
+						Files.getPosixFilePermissions(Paths.get(filePath), LinkOption.NOFOLLOW_LINKS);
+				actualPermissions.retainAll(NON_OWNER_READ_WRITE);
+				if (!actualPermissions.isEmpty()) {
+					final String permissionString = Files.getPosixFilePermissions(Paths.get(filePath), LinkOption.NOFOLLOW_LINKS).toString();
+					logMessage("Wrong permissions: " +permissionString + " for ", filePath); //$NON-NLS-1$ //$NON-NLS-2$
+					/*[MSG "K0805", "{0} has permissions {1}, should have owner access only"]*/
+					throw new IOException(com.ibm.oti.util.Msg.getString("K0805", filePath, permissionString));//$NON-NLS-1$
+				}
+			} catch (UnsupportedOperationException e) {
+				String osName = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("os.name"); //$NON-NLS-1$
+				if ((null != osName) && !osName.startsWith("Windows")) { //$NON-NLS-1$
+					/*[MSG "K0806", "Cannot verify permissions {0}"]*/
+					throw new IOException(com.ibm.oti.util.Msg.getString("K0806", filePath), e); //$NON-NLS-1$
+				}
+			}
+		}
+	}
 
 	/*[PR Jazz 30075] setupSemaphore was re-doing what createDirectoryAndSemaphore (now called prepareCommonDirectory) did already */
 
@@ -163,14 +232,53 @@ public class IPC {
 		int rc = processExistsImpl(pid);
 		return (rc > 0);
 	}
+	
+	/**
+	 * Check if attach API initialization has enabled logging.
+	 * Logging is enabled or disabled once, and remains enabled or disabled for the duration of the process.
+	 * @return true if logging is definitely enabled, false if is not initialized or is disabled.
+	 */
+	private static boolean isLoggingEnabled() {
+		boolean result = false;
+		if (LOGGING_DISABLED == loggingStatus) {
+			result = false;
+		} else if (LOGGING_ENABLED == loggingStatus) {
+			result = true;
+		} else synchronized (accessorMutex) {
+			/* 
+			 * We may be initializing.  If so, wait until initialization is complete.  
+			 * Otherwise, assume logging is disabled.
+			 */
+			result = (LOGGING_ENABLED == loggingStatus);			
+		}
+		return result;
+	}
 
 	private static native int processExistsImpl(long pid);
 
-	static void createFileWithPermissions(String path, int perms)
-			throws IOException {
-		int rc = createFileWithPermissionsImpl(path, perms);
+	/**
+	 * Create a new file with specified the permissions (to override umask) and close it.
+	 * If the file exists, delete it.
+	 * @param path file system path
+	 * @param mode file access permissions (posix format) for the new file
+	 * @throws IOException if the file exists and cannot be removed, or 
+	 * a new file cannot be created with the specified permission
+	 */
+	static void createNewFileWithPermissions(File theFile, int perms) throws IOException {
+		final String filePathString = theFile.getAbsolutePath();
+		if (theFile.exists()) {
+			IPC.logMessage("Found existing file ", filePathString); //$NON-NLS-1$
+			if (!theFile.delete()) {
+				IPC.logMessage("Cannot delete existing file ", filePathString); //$NON-NLS-1$
+				/*[MSG "K0807", "Cannot delete file {0}"]*/
+				throw (new IOException(com.ibm.oti.util.Msg.getString("K0807", filePathString))); //$NON-NLS-1$
+			}
+		}
+		int rc = createFileWithPermissionsImpl(theFile.getAbsolutePath(), perms);
 		if (JNI_OK != rc) {
-			throw new IOException(path);
+			IPC.logMessage("Cannot create new file ", filePathString); //$NON-NLS-1$
+			/*[MSG "K0808", "Cannot create new file {0}"]*/
+			throw (new IOException(com.ibm.oti.util.Msg.getString("K0808", filePathString))); //$NON-NLS-1$
 		}
 	}
 
@@ -187,7 +295,8 @@ public class IPC {
 	static String getTmpDir() {
 		String tmpDir = getTempDirImpl();
 		if (null == tmpDir) {
-			tmpDir = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("java.io.tmpdir"); //$NON-NLS-1$
+			IPC.logMessage("Could not get system temporary directory. Trying "+JAVA_IO_TMPDIR); //$NON-NLS-1$
+			tmpDir = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty(JAVA_IO_TMPDIR); //$NON-NLS-1$
 		}
 		return tmpDir;
 	}
@@ -211,6 +320,16 @@ public class IPC {
 			return randomGen.nextInt();
 		}
 	}
+	
+	/**
+	 * Create a truly random string of hexadecimal characters with 64 bits of entropy.
+	 * This may be slow.
+	 * @return hexadecimal string
+	 */
+	public static String getRandomString() {
+		SecureRandom randomGenerator = new SecureRandom();
+		return Long.toHexString(randomGenerator.nextLong());
+	}
 
 	/**
 	 * generate a level 1 tracepoint with a status code and message.
@@ -226,7 +345,7 @@ public class IPC {
 	 * @param msg message to print
 	 */
 	public static void logMessage(final String msg) {
-		if (loggingEnabled ) {
+		if (isLoggingEnabled()) {
 			printLogMessage(msg);
 		}
 	}
@@ -239,7 +358,7 @@ public class IPC {
 	 * @param string2 concatenated to second argument
 	 */
 	public static void logMessage(String string1, String string2) {
-		if (loggingEnabled ) {
+		if (isLoggingEnabled()) {
 			printLogMessage(string1+string2);
 		}
 	}
@@ -252,7 +371,7 @@ public class IPC {
 	 * @param int1 concatenated to second argument
 	 */
 	public static void logMessage(String string1, int int1) {
-		if (loggingEnabled ) {
+		if (isLoggingEnabled()) {
 			printLogMessage(string1+Integer.toString(int1));
 		}
 	}
@@ -266,7 +385,7 @@ public class IPC {
 	 * @param string2 second string
 	 */
 	public static void logMessage(String string1, int int1, String string2) {
-		if (loggingEnabled ) {
+		if (isLoggingEnabled()) {
 			printLogMessage(string1+Integer.toString(int1)+string2);
 		}
 	}
@@ -281,7 +400,7 @@ public class IPC {
 	 * @param string3 third string
 	 */
 	public static void logMessage(String string1, int int1, String string2, String string3) {
-		if (loggingEnabled ) {
+		if (isLoggingEnabled()) {
 			printLogMessage(string1+Integer.toString(int1)+string2+string3);
 		}
 	}
@@ -293,33 +412,42 @@ public class IPC {
 	 * @param thrown throwable
 	 * @note nothing is printed if logging is disabled
 	 */
-	public synchronized static void logMessage(String msg, Throwable thrown) {
-		@SuppressWarnings("resource")
-		PrintStream log = getLogStream();
-		if (!Objects.isNull(log)) {
-			tracepoint(TRACEPOINT_STATUS_LOGGING, msg);
-			printLogMessageHeader(log);
-			log.println(msg);
-			thrown.printStackTrace(log);
-			log.flush();
+	public static void logMessage(String msg, Throwable thrown) {
+		synchronized (accessorMutex) {
+			if (isLoggingEnabled()) {
+				printMessageWithHeader(msg, logStream);
+				thrown.printStackTrace(logStream);
+				logStream.flush();
+			}
 		}
 	}
 
 	/**
 	 * Print a message to the log file with time and thread information.
 	 * Also send the raw message to a tracepoint.
+	 * Call this only if isLoggingEnabled() has returned true.
 	 * @param msg message to print
 	 * @note no message is printed if logging is disabled
 	 */
-	private synchronized static void printLogMessage(final String msg) {
-		@SuppressWarnings("resource")
-		PrintStream log = getLogStream();
-		if (!Objects.isNull(log)) {
-			tracepoint(TRACEPOINT_STATUS_LOGGING, msg);
-			printLogMessageHeader(log);
-			log.println(msg);
-			log.flush();
+	private static void printLogMessage(final String msg) {
+		synchronized (accessorMutex) {
+			if (!Objects.isNull(logStream)) {
+				printMessageWithHeader(msg, logStream);
+				logStream.flush();
+			}
 		}
+	}
+
+	/**
+	 * Print a message to the logging stream with metadata.
+	 * This must be called in a synchronized block.
+	 * @param msg Message to print
+	 * @param log output stream.
+	 */
+	static void printMessageWithHeader(String msg, PrintStream log) {
+		tracepoint(TRACEPOINT_STATUS_LOGGING, msg);
+		printLogMessageHeader(log);
+		log.println(msg);
 	}
 
 	/**
@@ -344,20 +472,12 @@ public class IPC {
 	}
 	
 	static final class syncObject {
+		/* empty */
 	}
-	private static final syncObject accessorMutex = new syncObject();
-
-	private static PrintStream getLogStream() {
-		synchronized(accessorMutex) {
-			return logStream;
-		}
-	}
-
-	static void setLogStream(PrintStream log) {
-		synchronized(accessorMutex) {
-			IPC.logStream = log;
-		}
-	}
+	/**
+	 * For mutual exclusion to IPC objects.
+	 */
+	public static final syncObject accessorMutex = new syncObject();
 
 	static void setDefaultVmId(String id) { /* use this while until the real vmId is set, since they will usually be the same */
 		defaultVmId = id;

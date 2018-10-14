@@ -489,7 +489,7 @@ J9NLS_DMP_ABORT_ON_JAVA_STACK.user_response=No specific action is required. Look
 J9NLS_DMP_ABORT_ON_JAVA_STACK.link=dita:///diag/tools/dump_agents.dita
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_UNSUPPORTED_ON_PLATFORM=Mo\u017enost %s ni podprta na teh platformi.
+J9NLS_DMP_UNSUPPORTED_ON_PLATFORM=Mo\u017enost %s ni podprta na tej platformi.
 # START NON-TRANSLATABLE
 J9NLS_DMP_UNSUPPORTED_ON_PLATFORM.explanation=The option specified is not supported on the current platform.
 J9NLS_DMP_UNSUPPORTED_ON_PLATFORM.system_action=The JVM exits.

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -490,7 +490,7 @@ J9NLS_SHRC_SHRINIT_FAILURE_CREATE_CPI_FIND.system_action=The JVM fails to store 
 J9NLS_SHRC_SHRINIT_FAILURE_CREATE_CPI_FIND.user_response=System is running low on memory resource for the JVM to work properly. Check system memory configuration. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_FAILURE_CREATE_STRBUF_FIND=Impossible d'allouer de la m\u00e9moire pour la m\u00e9moire tampon de cha\u00eenes dans shrinit::hookFindSharedClass
+J9NLS_SHRC_SHRINIT_FAILURE_CREATE_STRBUF_FIND=Impossible d'allouer de la m\u00e9moire pour le tampon de cha\u00eenes dans shrinit::hookFindSharedClass
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_FAILURE_CREATE_STRBUF_FIND.explanation=The system is unable to obtain sufficient native memory to allocate internal data structures.
 J9NLS_SHRC_SHRINIT_FAILURE_CREATE_STRBUF_FIND.system_action=The JVM would not be able to locate class in the shared class cache.
@@ -1003,7 +1003,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_PERC_FULL.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_PERC_FULL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_FAILED_STRINGBUF_ALLOC=Impossible d'allouer de la m\u00e9moire pour la m\u00e9moire tampon de cha\u00eenes dans SH_CacheMap
+J9NLS_SHRC_CM_FAILED_STRINGBUF_ALLOC=Impossible d'allouer de la m\u00e9moire pour le tampon de cha\u00eenes dans SH_CacheMap
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_FAILED_STRINGBUF_ALLOC.explanation=The system is unable to obtain sufficient native memory to allocate internal data structures.
 J9NLS_SHRC_CM_FAILED_STRINGBUF_ALLOC.system_action=The JVM may fail to locate class in shared class cache.
@@ -2462,21 +2462,21 @@ J9NLS_SHRC_M_FAILED_CREATE_HINTTABLE.system_action=The JVM fails to complete the
 J9NLS_SHRC_M_FAILED_CREATE_HINTTABLE.user_response=System is running low on memory resource for the JVM to work properly. Check system memory configuration. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_FAILED_INIT_SEGMENTS=impossible d'initialiser les segments de m\u00e9moire de classe du cachelet.
+J9NLS_SHRC_CM_FAILED_INIT_SEGMENTS=impossible d'initializer les segments de m\u00e9moire de classe du cachelet.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_FAILED_INIT_SEGMENTS.explanation=An error has occurred in shared class initialization.
 J9NLS_SHRC_CM_FAILED_INIT_SEGMENTS.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_CM_FAILED_INIT_SEGMENTS.user_response=Verify that the system has enough native resources for the JVM to work properly. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_CANT_SERIALIZE_NO_CURRENT_THREAD=Impossible de s\u00e9rialiser le cache, car aucune unit\u00e9 d'ex\u00e9cution n'est en cours.
+J9NLS_SHRC_SHRINIT_CANT_SERIALIZE_NO_CURRENT_THREAD=Impossible de s\u00e9rialiser le cache, car aucune unit\u00e9 d'ex\u00e9cution de MV n'est en cours.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_CANT_SERIALIZE_NO_CURRENT_THREAD.explanation=An error has occurred in creating the shared cache.
 J9NLS_SHRC_SHRINIT_CANT_SERIALIZE_NO_CURRENT_THREAD.system_action=No shared cache is produced.
 J9NLS_SHRC_SHRINIT_CANT_SERIALIZE_NO_CURRENT_THREAD.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_CACHE_FILENAME=Imprimez le nom du fichier cache de classes partag\u00e9es qui sera utilis\u00e9.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_CACHE_FILENAME=Imprime le nom du fichier cache de classes partag\u00e9es qui sera utilis\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_CACHE_FILENAME.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_CACHE_FILENAME.system_action=
@@ -2961,7 +2961,7 @@ J9NLS_SHRC_CM_PRINTSTATS_CACHE_CREATED_WITH.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_CACHE_CREATED_WITH.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG=Le nom du cache est trop long lorsque le nom d'utilisateur est inclus. Il reste %d octets dans cette m\u00e9moire tampon et le nom d'utilisateur fait %d octets.
+J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG=Le nom du cache est trop long lorsque le nom d'utilisateur est inclus. Il reste %d octets dans ce tampon, et votre nom d'utilisateur fait %d octets.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG.sample_input_1=23
 J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG.sample_input_2=45
@@ -3652,7 +3652,7 @@ J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_BAD_EYECATCHER.system_action=The cache i
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_BAD_EYECATCHER.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_CACHE_SIZE=La zone de taille du cache n'est pas valide dans l'en-t\u00eate du cache. La taille du cache dans l'en-t\u00eate du cache est de : 0x%x.
+J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_CACHE_SIZE=Le champ de taille du cache n'est pas valide dans l'en-t\u00eate du cache. La taille du cache dans l'en-t\u00eate du cache est de : 0x%x.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_CACHE_SIZE.sample_input_1=00FCAB00
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_CACHE_SIZE.explanation=An error has occurred in shared class processing.
@@ -3668,7 +3668,7 @@ J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_PADDING.system_action=The cach
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_PADDING.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_DATA_LENGTH=La zone de longueur des donn\u00e9es dans l'en-t\u00eate du cache n'est pas valide. La longueur des donn\u00e9es dans l'en-t\u00eate du cache est de : %u.
+J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_DATA_LENGTH=Le champ de longueur des donn\u00e9es dans l'en-t\u00eate du cache n'est pas valide. La longueur des donn\u00e9es dans l'en-t\u00eate du cache est de : %u.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_DATA_LENGTH.sample_input_1=364720
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_DATA_LENGTH.explanation=An error has occurred in shared class processing.
@@ -3676,7 +3676,7 @@ J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_DATA_LENGTH.system_action=The 
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_DATA_LENGTH.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_DATA_START_ADDRESS=La zone de d\u00e9but des donn\u00e9es dans l'en-t\u00eate du cache n'est pas valide. L'adresse de d\u00e9but des donn\u00e9es dans l'en-t\u00eate du cache est : 0x%p.
+J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_DATA_START_ADDRESS=Le champ de d\u00e9but des donn\u00e9es dans l'en-t\u00eate du cache n'est pas valide. L'adresse de d\u00e9but des donn\u00e9es dans l'en-t\u00eate du cache est : 0x%p.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_DATA_START_ADDRESS.sample_input_1=00FCAB00
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_DATA_START_ADDRESS.explanation=An error has occurred in shared class processing.
@@ -4349,7 +4349,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ORPHAN.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ORPHAN.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT=\t jithint       Affche uniquement les types d'astuce jit dans le cache partag\u00e9.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT=\t jithint       Affiche uniquement les types d'astuce jit dans le cache partag\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT.system_action=
@@ -5993,7 +5993,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_REVALIDATE_AOT_METHODS.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS=Affichez les m\u00e9thodes AOT correspondant aux sp\u00e9cifications de la m\u00e9thode.\n\
-\t<sp\u00e9cification_m\u00e9thode> est d\u00e9finie comme suit : [!]{*|[*]<nom_module/nom_classe>[*]}[.{*|[*]<nom_m\u00e9thode>[*]}][({*|[*]<param\u00e8tres>[*]})].
+\t<sp\u00e9cification_m\u00e9thode> est d\u00e9finie comme suit : [!]{*|[*]<nompackage/nomclasse>[*]}[.{*|[*]<nomm\u00e9thode>[*]}[({*|[*]<param\u00e8tres>[*]})]].
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.system_action=
@@ -6007,7 +6007,7 @@ J9NLS_SHRC_CM_PRINTSTATS_INVALIDATED.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_INVALIDATED.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION=Syntaxe :%s{<sp\u00e9cification_m\u00e9thode>[,<sp\u00e9cification_m\u00e9thode>]}
+J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION=Syntaxe : %s{<sp\u00e9cification_m\u00e9thode>[,<sp\u00e9cification_m\u00e9thode>]}
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.sample_input_1=findAotMethods=
 J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.explanation=NOTAG
@@ -6015,7 +6015,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=Le format de <sp\u00e9cification_m\u00e9thode> est [!]{*|[*]<nom_module/nom_classe>[*]}[.{*|[*]<nom_m\u00e9thode>[*]}][({*|[*]<param\u00e8tres>[*]})], par exemple :\n\
+J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=Le format de <sp\u00e9cification_m\u00e9thode> est [!]{*|[*]<nompackage/nomclasse>[*]}[.{*|[*]<nomm\u00e9thode>[*]}[({*|[*]<param\u00e8tres>[*]})]], par exemple :\n\
 \n\
 \t-Xshareclasses:name=Cache1,%sjava/util/HashMap.hash(Ljava/lang/Object;)\n
 # START NON-TRANSLATABLE
@@ -6028,7 +6028,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC.user_response=
 J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC=IMPORTANT : Vous pouvez indiquer plusieurs sp\u00e9cifications de m\u00e9thode s\u00e9par\u00e9es par des virgules. Si une valeur d'option contient des virgules, elle doit \u00eatre entre accolades. \n\
 \tIl peut \u00eatre n\u00e9cessaire de mettre les options entre guillemets pour emp\u00eacher l'interpr\u00e9teur de commandes d'intercepter et de fragmenter les lignes de commande s\u00e9par\u00e9es par des virgules, par exemple : \n\
 \n\
-\t\"-Xshareclasses:name=Cache1,%s{java/util/*.*(),java/lang/Object.*(*)}\" or\n\
+\t\"-Xshareclasses:name=Cache1,%s{java/util/*.*(),java/lang/Object.*(*)}\" ou\n\
 \t-Xshareclasses:name=Cache1,%s\'{java/util/*.*(),!java/util/*.*()}\'\n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC.sample_input_1=findAotMethods=
@@ -6037,7 +6037,7 @@ J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC.system_action=
 J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_INVALID_METHODSPEC=Sp\u00e9cifications de m\u00e9thode non valides pour l'option \"%s\"
+J9NLS_SHRC_SHRINIT_INVALID_METHODSPEC=Sp\u00e9cification(s) de m\u00e9thode non valide(s) pour l'option \"%s\"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_INVALID_METHODSPEC.sample_input_1=findAotMethods=
 J9NLS_SHRC_SHRINIT_INVALID_METHODSPEC.explanation=The method specification provided was not recognised.
@@ -6098,7 +6098,7 @@ J9NLS_SHRC_SHRINIT_NO_AOT_METHOD_FOUND.user_response=No action is required.
 # END NON-TRANSLATABLE
 
 # From: CacheMap.cpp
-J9NLS_SHRC_CM_PARSE_METHOD_SPECS_TOO_MANY_ERROR=Echec de l'analyse des sp\u00e9cifications de m\u00e9thode. Pas plus de %d sp\u00e9cifications de m\u00e9thode autoris\u00e9es.
+J9NLS_SHRC_CM_PARSE_METHOD_SPECS_TOO_MANY_ERROR=Echec de l'analyse syntaxique des sp\u00e9cifications de m\u00e9thode. Pas plus de %d sp\u00e9cifications de m\u00e9thode autoris\u00e9es.
 # START NON-TRANSLATABLE.
 J9NLS_SHRC_CM_PARSE_METHOD_SPECS_TOO_MANY_ERROR.sample_input_1=64
 J9NLS_SHRC_CM_PARSE_METHOD_SPECS_TOO_MANY_ERROR.explanation=Too many method specifications are specified.
@@ -6106,7 +6106,7 @@ J9NLS_SHRC_CM_PARSE_METHOD_SPECS_TOO_MANY_ERROR.system_action=The JVM ends.
 J9NLS_SHRC_CM_PARSE_METHOD_SPECS_TOO_MANY_ERROR.user_response=Reduce the number of method specifications and try again. The maximum limit is 64.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PARSE_METHOD_SPECS_ERROR=Echec de l'analyse des sp\u00e9cifications de m\u00e9thode
+J9NLS_SHRC_CM_PARSE_METHOD_SPECS_ERROR=Echec de l'analyse syntaxique des sp\u00e9cifications de m\u00e9thode
 # START NON-TRANSLATABLE.
 J9NLS_SHRC_CM_PARSE_METHOD_SPECS_ERROR.explanation=An error has occurred while parsing the method specification.
 J9NLS_SHRC_CM_PARSE_METHOD_SPECS_ERROR.system_action=The JVM ends.
@@ -6145,6 +6145,7 @@ J9NLS_SHRC_OSCACHE_MMAP_SET_GROUPACCESS_FAILED.user_response=Check the umask set
 
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED=Impossible de d\u00e9finir les droits d'acc\u00e8s de groupe comme demand\u00e9 par la sous-option 'groupAccess' sur le jeu de s\u00e9maphores avec semid=%d associ\u00e9 \u00e0 un cache de classes partag\u00e9es.
 # START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.explanation=Cannot set group access permission when creating the new semaphore with sub-option "groupAccess".
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.user_response=Ensure the user has sufficient permission for creating the new semaphore with group access.
@@ -6152,6 +6153,7 @@ J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.user_response=Ensure the use
 
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED=Impossible de d\u00e9finir les droits d'acc\u00e8s de groupe comme demand\u00e9 par la sous-option 'groupAccess' sur la m\u00e9moire partag\u00e9e avec shmid=%d associ\u00e9e \u00e0 un cache de classes partag\u00e9es.
 # START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.explanation=Cannot set group access permission when creating the new shared memory with sub-option "groupAccess".
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.user_response=Ensure the user has sufficient permission for creating the new shared memory with group access.
@@ -6365,7 +6367,7 @@ J9NLS_SHRC_CC_TOTAL_USED_BYTES_GRTHAN_MAXLIMIT.system_action=The JVM continues. 
 J9NLS_SHRC_CC_TOTAL_USED_BYTES_GRTHAN_MAXLIMIT.user_response=Either increase the softmx limit for shared cache usage if possible, or decrease the value passed to options -Xshareclasses:adjustminaot= and/or -Xshareclasses:adjustminjitdata=.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CC_MINAOT_SET=Le nombre d'octets AOT r\u00e9serv\u00e9 minimal est param\u00e9tr\u00e9 sur %d.
+J9NLS_SHRC_CC_MINAOT_SET=Le nombre d'octets AOT r\u00e9serv\u00e9 minimal est r\u00e9gl\u00e9 \u00e0 %d.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_MINAOT_SET.sample_input_1=2048
 J9NLS_SHRC_CC_MINAOT_SET.explanation=The size of minimum AOT space has been adjusted.
@@ -6373,7 +6375,7 @@ J9NLS_SHRC_CC_MINAOT_SET.system_action=The JVM continues.
 J9NLS_SHRC_CC_MINAOT_SET.user_response=No action is required. This message is for information only.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CC_MAXAOT_SET=Le nombre d'octets AOT autoris\u00e9 maximal est param\u00e9tr\u00e9 sur %d.
+J9NLS_SHRC_CC_MAXAOT_SET=Le nombre d'octets AOT autoris\u00e9 maximal est r\u00e9gl\u00e9 \u00e0 %d.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_MAXAOT_SET.sample_input_1=2048
 J9NLS_SHRC_CC_MAXAOT_SET.explanation=The size of maximum AOT space has been adjusted.
@@ -6381,7 +6383,7 @@ J9NLS_SHRC_CC_MAXAOT_SET.system_action=The JVM continues.
 J9NLS_SHRC_CC_MAXAOT_SET.user_response=No action required. This message is for information only.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CC_MINJIT_SET=Le nombre d'octets de donn\u00e9es JIT r\u00e9serv\u00e9 minimal est param\u00e9tr\u00e9 sur %d.
+J9NLS_SHRC_CC_MINJIT_SET=Le nombre d'octets de donn\u00e9es JIT r\u00e9serv\u00e9 minimal est r\u00e9gl\u00e9 \u00e0 %d.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_MINJIT_SET.sample_input_1=2048
 J9NLS_SHRC_CC_MINJIT_SET.explanation=The size of minimum JIT data space has been adjusted.
@@ -6389,7 +6391,7 @@ J9NLS_SHRC_CC_MINJIT_SET.system_action=The JVM continues.
 J9NLS_SHRC_CC_MINJIT_SET.user_response=No action is required. This message is for information only.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CC_MAXJIT_SET=Le nombre d'octets de donn\u00e9es JIT autoris\u00e9 maximal est param\u00e9tr\u00e9 sur %d.
+J9NLS_SHRC_CC_MAXJIT_SET=Le nombre d'octets de donn\u00e9es JIT autoris\u00e9 maximal est r\u00e9gl\u00e9 \u00e0 %d.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_MAXJIT_SET.sample_input_1=2048
 J9NLS_SHRC_CC_MAXJIT_SET.explanation=The size of maximum JIT data space has been adjusted.
@@ -6397,7 +6399,7 @@ J9NLS_SHRC_CC_MAXJIT_SET.system_action=The JVM continues.
 J9NLS_SHRC_CC_MAXJIT_SET.user_response=No action is required. This message is for information only.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CC_SOFTMX_SET=Le nombre d'octets softmx est param\u00e9tr\u00e9 sur %u.
+J9NLS_SHRC_CC_SOFTMX_SET=La taille softmx (en nombre d'octets) est r\u00e9gl\u00e9e \u00e0 %u.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_SOFTMX_SET.sample_input_1=2048
 J9NLS_SHRC_CC_SOFTMX_SET.explanation=The softmx bytes has been adjusted.
@@ -6653,4 +6655,11 @@ J9NLS_SHRC_CC_INCORRECT_BUILDID=Impossible de d\u00e9marrer le cache partag\u00e
 J9NLS_SHRC_CC_INCORRECT_BUILDID.explanation=An error has occurred when starting up the cache. The build ID of the existing cache with the same name is different from that of the current JVM.
 J9NLS_SHRC_CC_INCORRECT_BUILDID.system_action=The JVM fails to complete the requested operation.
 J9NLS_SHRC_CC_INCORRECT_BUILDID.user_response=Use a JVM which matches the build ID of the existing cache.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1=D\u00e9sactiver la mise en cache des classes charg\u00e9es par le chargeur de classes d'amor\u00e7age.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.user_response=
 # END NON-TRANSLATABLE

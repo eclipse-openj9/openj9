@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -460,6 +460,7 @@ verifyBytecodes (J9BytecodeVerificationData * verifyData)
 	UDATA errorTargetType = (UDATA)-1;
 	UDATA errorStackIndex = (UDATA)-1;
 	UDATA errorTempData = (UDATA)-1;
+	BOOLEAN isNextStack = FALSE;
 
 	Trc_RTV_verifyBytecodes_Entry(verifyData->vmStruct, 
 			(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_GET_NAME(romClass, romMethod)),
@@ -622,12 +623,18 @@ _inconsistentStack2:
 			 * it needs to step back by 1 slot to the actual data type to be manipulated by the opcode.
 			 */
 			errorStackIndex = (stackTop - liveStack->stackElements) - 1;
-			/* Always set to the location of the 1st data type on 'stack' to show up if stackTop <= stackBase */
-			if (stackTop <= stackBase) {
+			/* Always set to the location of the 1st data type on 'stack' to show up if stackTop <= stackBase
+			 * Note: this setup is disabled to avoid decoding the garbage data in the error messages
+			 * if the current stack frame is loaded from the next stack (without data on the stack)
+			 * of the stackmaps.
+			 */
+			if ((stackTop <= stackBase) && !isNextStack) {
 				errorStackIndex = stackBase - liveStack->stackElements;
 			}
 			goto _miscError;
 		}
+		/* Reset as the flag is only used for the current bytecode */
+		isNextStack = FALSE;
 
 		/* Format: 8bits action, 4bits type Y, 4bits type X */
 		type1 = (UDATA) J9JavaBytecodeVerificationTable[bc];
@@ -705,7 +712,7 @@ _inconsistentStack2:
 				} else {
 					index = PARAM_16(bcIndex, 1);
 				}
-				stackTop = pushLdcType(romClass, index, stackTop);
+				stackTop = pushLdcType(verifyData, romClass, index, stackTop);
 				break;
 
 			/* Change lookup table to generate constant of correct type */
@@ -747,7 +754,8 @@ _inconsistentStack2:
 					break;
 				} else {
 					type = (UDATA) J9JavaBytecodeArrayTypeTable[bc - JBiaload];
-					inconsistentStack |= (type != arrayType);
+					/* The operand checking for baload needs to cover the case of boolean arrays */
+					CHECK_BOOL_ARRAY(JBbaload, bc, type);
 					if (inconsistentStack) {
 						/* Jazz 82615: Set the expected data type (already in type) and the location of wrong data type
 						 * on stack when the verification error occurs.
@@ -924,8 +932,10 @@ _inconsistentStack2:
 						errorStackIndex = (stackTop - liveStack->stackElements) + 2;
 						goto _inconsistentStack;
 					}
+
 					type2 = (UDATA) J9JavaBytecodeArrayTypeTable[bc - JBiastore];
-					inconsistentStack |= (arrayType != type2);
+					/* The operand checking for bastore needs to cover the case of boolean arrays */
+					CHECK_BOOL_ARRAY(JBbastore, bc, type2);
 					if (inconsistentStack) {
 						/* Jazz 82615: Set the expected data type and the location of wrong data type 
 						 * on stack when the verification error occurs.
@@ -1734,8 +1744,6 @@ _illegalPrimitiveReturn:
 				break;
 
 			case JBnewarray:
-				index = PARAM_8(bcIndex, 1);
-				type = (UDATA) newArrayParamConversion[index];
 				POP_TOS_INTEGER;	/* pop the size of the array */
 				if (inconsistentStack) {
 					/* Jazz 82615: Set the expected data type and the location of wrong data type
@@ -1745,6 +1753,9 @@ _illegalPrimitiveReturn:
 					errorStackIndex = stackTop - liveStack->stackElements;
 					goto _inconsistentStack;
 				}
+
+				index = PARAM_8(bcIndex, 1);
+				type = (UDATA) newArrayParamConversion[index];
 				PUSH(type);	/* arity of one implicit */
 				break;
 
@@ -2260,6 +2271,7 @@ _newStack:
 				/* Load the next stack into the live stack */
 				SAVE_STACKTOP(liveStack, stackTop);
 				memcpy((UDATA *) liveStack, (UDATA *) currentMapData, verifyData->stackSize);
+				isNextStack = TRUE;
 				RELOAD_LIVESTACK;
 
 				/* Start with uninitialized_this flag for the current map data */
@@ -2520,10 +2532,6 @@ j9rtv_verifyArguments (J9BytecodeVerificationData *verifyData, J9UTF8 * utf8stri
 				}
 
 				objectType = (UDATA) baseTypeCharConversion[*signature - 'A'];
-				/* Jazz 82615: Tagged as 'bool' when baseTypeCharConversion returns BCV_BASE_TYPE_BYTE_BIT for type 'Z' */
-				if ('Z' == *signature) {
-					boolType = TRUE;
-				}
 				signature++;
 
 				if (!objectType) {
@@ -2581,9 +2589,6 @@ j9rtv_verifyArguments (J9BytecodeVerificationData *verifyData, J9UTF8 * utf8stri
 					mrc = BCV_FAIL;
 					verifyData->errorDetailCode = BCV_ERR_INCOMPATIBLE_TYPE; /* failure - object type mismatch */
 					verifyData->errorTargetType = objectType;
-					if (boolType) {
-						verifyData->errorTargetType |= BCV_BASE_TYPE_BOOL_BIT;
-					}
 					break;
 				}
 			}
@@ -2606,7 +2611,12 @@ j9rtv_verifyArguments (J9BytecodeVerificationData *verifyData, J9UTF8 * utf8stri
 			}
 
 			baseType = (UDATA) argTypeCharConversion[*signature - 'A'];
-			/* Jazz 82615: Tagged as 'bool' when argTypeCharConversion returns BCV_BASE_TYPE_BYTE_BIT for type 'Z' */
+			/* Jazz 82615: Tagged as 'bool' when argTypeCharConversion returns BCV_BASE_TYPE_INT for type 'Z'
+			 * Note: for base type, type B (byte) and type Z (boolean) correspond to the verification type int.
+			 * In such case, there is no way to determine whether the original type is byte or boolean after the
+			 * conversion of argument type. To ensure type Z is correctly generated to the error messages, we need
+			 * to filter it out here by checking the type in signature.
+			 */
 			if ('Z' == *signature) {
 				boolType = TRUE;
 			}
@@ -2637,10 +2647,7 @@ j9rtv_verifyArguments (J9BytecodeVerificationData *verifyData, J9UTF8 * utf8stri
 						index, J9UTF8_LENGTH(utf8string), J9UTF8_DATA(utf8string), stackTop[index]);
 				mrc = BCV_FAIL;
 				verifyData->errorDetailCode = BCV_ERR_INCOMPATIBLE_TYPE; /* failure - primitive mismatch */
-				verifyData->errorTargetType = baseType;
-				if (boolType) {
-					verifyData->errorTargetType |= BCV_BASE_TYPE_BOOL_BIT;
-				}
+				verifyData->errorTargetType = (TRUE == boolType) ? BCV_BASE_TYPE_BOOL : baseType;
 				break;
 			}
 
@@ -2657,10 +2664,7 @@ j9rtv_verifyArguments (J9BytecodeVerificationData *verifyData, J9UTF8 * utf8stri
 							index, J9UTF8_LENGTH(utf8string), J9UTF8_DATA(utf8string));
 					mrc = BCV_FAIL;
 					verifyData->errorDetailCode = BCV_ERR_INCOMPATIBLE_TYPE; /* failure - wide primitive mismatch */
-					verifyData->errorTargetType = baseType;
-					if (boolType) {
-						verifyData->errorTargetType |= BCV_BASE_TYPE_BOOL_BIT;
-					}
+					verifyData->errorTargetType = (TRUE == boolType) ? BCV_BASE_TYPE_BOOL : baseType;
 					break;
 				}
 			}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2014 IBM Corp. and others
+ * Copyright (c) 2010, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,11 +22,12 @@
 package com.ibm.j9ddr.vm29.j9;
 
 /**
- * Class containing the boilerplate code for picking an appropriate algorithm
- * @author andhall
+ * Class containing the boilerplate code for picking an appropriate algorithm.
  *
+ * @author andhall
  */
-public abstract class AlgorithmPicker<T extends IAlgorithm>
+/* In Java 8 builds, the (interim) compiler gets confused if IAlgorithm is not fully qualified. */
+public abstract class AlgorithmPicker<T extends com.ibm.j9ddr.vm29.j9.IAlgorithm>
 {
 	private final String algorithmId;
 	

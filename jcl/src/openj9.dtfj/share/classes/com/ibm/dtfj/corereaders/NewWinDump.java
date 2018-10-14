@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,6 @@ package com.ibm.dtfj.corereaders;
 import java.io.IOException;
 
 import java.io.UnsupportedEncodingException;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -734,22 +733,22 @@ public abstract class NewWinDump extends CoreReaderSupport {
 				// We capture segment registers, flags, integer registers and instruction pointer
 				dump.coreSeek(contextRva + 140);
 				List registers = new ArrayList();
-				registers.add(builder.buildRegister("gs", new Integer(dump.coreReadInt())));
-				registers.add(builder.buildRegister("fs", new Integer(dump.coreReadInt())));
-				registers.add(builder.buildRegister("es", new Integer(dump.coreReadInt())));
-				registers.add(builder.buildRegister("ds", new Integer(dump.coreReadInt())));
-				registers.add(builder.buildRegister("edi", new Integer(dump.coreReadInt())));
-				registers.add(builder.buildRegister("esi", new Integer(dump.coreReadInt())));
-				registers.add(builder.buildRegister("ebx", new Integer(dump.coreReadInt())));
-				registers.add(builder.buildRegister("edx", new Integer(dump.coreReadInt())));
-				registers.add(builder.buildRegister("ecx", new Integer(dump.coreReadInt())));
-				registers.add(builder.buildRegister("eax", new Integer(dump.coreReadInt())));
-				registers.add(builder.buildRegister("ebp", new Integer(dump.coreReadInt())));
-				registers.add(builder.buildRegister("eip", new Integer(dump.coreReadInt())));
-				registers.add(builder.buildRegister("cs", new Integer(dump.coreReadInt())));
-				registers.add(builder.buildRegister("flags", new Integer(dump.coreReadInt())));
-				registers.add(builder.buildRegister("esp", new Integer(dump.coreReadInt())));
-				registers.add(builder.buildRegister("ss", new Integer(dump.coreReadInt())));
+				registers.add(builder.buildRegister("gs", Integer.valueOf(dump.coreReadInt())));
+				registers.add(builder.buildRegister("fs", Integer.valueOf(dump.coreReadInt())));
+				registers.add(builder.buildRegister("es", Integer.valueOf(dump.coreReadInt())));
+				registers.add(builder.buildRegister("ds", Integer.valueOf(dump.coreReadInt())));
+				registers.add(builder.buildRegister("edi", Integer.valueOf(dump.coreReadInt())));
+				registers.add(builder.buildRegister("esi", Integer.valueOf(dump.coreReadInt())));
+				registers.add(builder.buildRegister("ebx", Integer.valueOf(dump.coreReadInt())));
+				registers.add(builder.buildRegister("edx", Integer.valueOf(dump.coreReadInt())));
+				registers.add(builder.buildRegister("ecx", Integer.valueOf(dump.coreReadInt())));
+				registers.add(builder.buildRegister("eax", Integer.valueOf(dump.coreReadInt())));
+				registers.add(builder.buildRegister("ebp", Integer.valueOf(dump.coreReadInt())));
+				registers.add(builder.buildRegister("eip", Integer.valueOf(dump.coreReadInt())));
+				registers.add(builder.buildRegister("cs", Integer.valueOf(dump.coreReadInt())));
+				registers.add(builder.buildRegister("flags", Integer.valueOf(dump.coreReadInt())));
+				registers.add(builder.buildRegister("esp", Integer.valueOf(dump.coreReadInt())));
+				registers.add(builder.buildRegister("ss", Integer.valueOf(dump.coreReadInt())));
 				return registers;
 			}
 
@@ -757,31 +756,31 @@ public abstract class NewWinDump extends CoreReaderSupport {
 				// We capture segment registers, flags, integer registers and instruction pointer
 				dump.coreSeek(contextRva + 56);
 				List registers = new ArrayList();
-				registers.add(builder.buildRegister("cs", new Short(dump.coreReadShort())));
-				registers.add(builder.buildRegister("ds", new Short(dump.coreReadShort())));
-				registers.add(builder.buildRegister("es", new Short(dump.coreReadShort())));
-				registers.add(builder.buildRegister("fs", new Short(dump.coreReadShort())));
-				registers.add(builder.buildRegister("gs", new Short(dump.coreReadShort())));
-				registers.add(builder.buildRegister("ss", new Short(dump.coreReadShort())));
-				registers.add(builder.buildRegister("flags", new Integer(dump.coreReadInt())));
+				registers.add(builder.buildRegister("cs", Short.valueOf(dump.coreReadShort())));
+				registers.add(builder.buildRegister("ds", Short.valueOf(dump.coreReadShort())));
+				registers.add(builder.buildRegister("es", Short.valueOf(dump.coreReadShort())));
+				registers.add(builder.buildRegister("fs", Short.valueOf(dump.coreReadShort())));
+				registers.add(builder.buildRegister("gs", Short.valueOf(dump.coreReadShort())));
+				registers.add(builder.buildRegister("ss", Short.valueOf(dump.coreReadShort())));
+				registers.add(builder.buildRegister("flags", Integer.valueOf(dump.coreReadInt())));
 				dump.coreSeek(contextRva + 120);
-				registers.add(builder.buildRegister("eax", new Long(dump.coreReadLong())));
-				registers.add(builder.buildRegister("ecx", new Long(dump.coreReadLong())));
-				registers.add(builder.buildRegister("edx", new Long(dump.coreReadLong())));
-				registers.add(builder.buildRegister("ebx", new Long(dump.coreReadLong())));
-				registers.add(builder.buildRegister("esp", new Long(dump.coreReadLong())));
-				registers.add(builder.buildRegister("ebp", new Long(dump.coreReadLong())));
-				registers.add(builder.buildRegister("esi", new Long(dump.coreReadLong())));
-				registers.add(builder.buildRegister("edi", new Long(dump.coreReadLong())));
-				registers.add(builder.buildRegister("r8", new Long(dump.coreReadLong())));
-				registers.add(builder.buildRegister("r9", new Long(dump.coreReadLong())));
-				registers.add(builder.buildRegister("r10", new Long(dump.coreReadLong())));
-				registers.add(builder.buildRegister("r11", new Long(dump.coreReadLong())));
-				registers.add(builder.buildRegister("r12", new Long(dump.coreReadLong())));
-				registers.add(builder.buildRegister("r13", new Long(dump.coreReadLong())));
-				registers.add(builder.buildRegister("r14", new Long(dump.coreReadLong())));
-				registers.add(builder.buildRegister("r15", new Long(dump.coreReadLong())));
-				registers.add(builder.buildRegister("ip", new Long(dump.coreReadLong())));
+				registers.add(builder.buildRegister("eax", Long.valueOf(dump.coreReadLong())));
+				registers.add(builder.buildRegister("ecx", Long.valueOf(dump.coreReadLong())));
+				registers.add(builder.buildRegister("edx", Long.valueOf(dump.coreReadLong())));
+				registers.add(builder.buildRegister("ebx", Long.valueOf(dump.coreReadLong())));
+				registers.add(builder.buildRegister("esp", Long.valueOf(dump.coreReadLong())));
+				registers.add(builder.buildRegister("ebp", Long.valueOf(dump.coreReadLong())));
+				registers.add(builder.buildRegister("esi", Long.valueOf(dump.coreReadLong())));
+				registers.add(builder.buildRegister("edi", Long.valueOf(dump.coreReadLong())));
+				registers.add(builder.buildRegister("r8", Long.valueOf(dump.coreReadLong())));
+				registers.add(builder.buildRegister("r9", Long.valueOf(dump.coreReadLong())));
+				registers.add(builder.buildRegister("r10", Long.valueOf(dump.coreReadLong())));
+				registers.add(builder.buildRegister("r11", Long.valueOf(dump.coreReadLong())));
+				registers.add(builder.buildRegister("r12", Long.valueOf(dump.coreReadLong())));
+				registers.add(builder.buildRegister("r13", Long.valueOf(dump.coreReadLong())));
+				registers.add(builder.buildRegister("r14", Long.valueOf(dump.coreReadLong())));
+				registers.add(builder.buildRegister("r15", Long.valueOf(dump.coreReadLong())));
+				registers.add(builder.buildRegister("ip", Long.valueOf(dump.coreReadLong())));
 				return registers;
 			}
 		}

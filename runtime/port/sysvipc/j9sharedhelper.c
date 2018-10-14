@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -460,7 +460,7 @@ ControlFileOpenWithWriteLock(struct J9PortLibrary* portLibrary, intptr_t * fd, B
 
 			*fd = omrfile_open(filename, exclcreateflags, mode);
 			if (*fd != -1) {		
-				if (chown(filename, -1, getegid()) == -1) {
+				if (omrfile_chown(filename, OMRPORT_FILE_IGNORE_ID, getegid()) == -1) {
 					/*If this fails it is not fatal ... but we may have problems later ...*/
 					Trc_PRT_shared_ControlFileFDWithWriteLock_Message("Info: could not chown file.");
 				}

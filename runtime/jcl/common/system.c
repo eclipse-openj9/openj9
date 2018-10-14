@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -227,7 +227,7 @@ jobject getPropertyList(JNIEnv *env)
 	PORT_ACCESS_FROM_ENV(env);
 	int propIndex = 0;
 	jobject propertyList;
-#define PROPERTY_COUNT 135
+#define PROPERTY_COUNT 137
 	char *propertyKey= NULL;
 	const char * language;
 	const char * region;
@@ -241,12 +241,12 @@ jobject getPropertyList(JNIEnv *env)
 	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 	OMR_VM *omrVM = javaVM->omrVM;
 
-	/* Change the allocation value PROPERTY_COUNT above as you add/remove properties, * then follow the 
-		propIndex++ convention and consume 2 * slots for each property. 2 * number of property keys is the * correct allocation.
-
-		Also note the call to addSystemProperties below, which may add some configuration-specific properties.  Be sure to leave
-		enough room in the property list for all possibilities.
-	*/
+	/* Change the allocation value PROPERTY_COUNT above as you add/remove properties, 
+	 * then follow the propIndex++ convention and consume 2 * slots for each property. 2 * number of property keys is the 
+	 * correct allocation.
+	 * Also note the call to addSystemProperties below, which may add some configuration-specific properties.  Be sure to leave
+	 * enough room in the property list for all possibilities.
+	 */
 
 	if (J9_GC_POLICY_METRONOME == (omrVM->gcPolicy)) {
 		strings[propIndex++] = "com.ibm.jvm.realtime";
@@ -280,7 +280,7 @@ jobject getPropertyList(JNIEnv *env)
 	 * 	we consider to be asynchronous signals.
 	 * The JCLs do not install handlers for any synchronous signals */
 	strings[propIndex++] = "ibm.signalhandling.rs";
-	if (javaVM->sigFlags & J9_SIG_XRS_ASYNC) {
+	if (J9_ARE_ALL_BITS_SET(javaVM->sigFlags, J9_SIG_XRS_ASYNC)) {
 		strings[propIndex++] = "true";
 	} else {
 		strings[propIndex++] = "false";
@@ -359,8 +359,26 @@ jobject getPropertyList(JNIEnv *env)
 
 #undef USERNAME_LENGTH
 
+#if defined(OPENJ9_BUILD)
+	/* Set the maximum direct byte buffer allocation property if it has not been set manually */
+	if ((UDATA) -1 == javaVM->directByteBufferMemoryMax) {
+		UDATA heapSize = javaVM->memoryManagerFunctions->j9gc_get_maximum_heap_size(javaVM);
+		/* allow up to 7/8 of the heap to be direct byte buffers */
+		javaVM->directByteBufferMemoryMax = heapSize - (heapSize / 8);
+	}
+#endif /* defined(OPENJ9_BUILD) */
+	if ((UDATA) -1 != javaVM->directByteBufferMemoryMax) {
+		/* buffer to hold the size of the maximum direct byte buffer allocations */
+		char maxDirectMemBuff[24];
+		strings[propIndex] = "sun.nio.MaxDirectMemorySize";
+		propIndex += 1;
+		j9str_printf(PORTLIB, maxDirectMemBuff, sizeof(maxDirectMemBuff), "%zu", javaVM->directByteBufferMemoryMax);
+		strings[propIndex] = maxDirectMemBuff;
+		propIndex += 1;
+	}
+
 	propertyList = getPlatformPropertyList(env, strings, propIndex);
-	if (usernameAlloc) {
+	if (NULL != usernameAlloc) {
 		jclmem_free_memory(env, usernameAlloc);
 	}
 	return propertyList;
@@ -385,6 +403,20 @@ jstring getEncoding(JNIEnv *env, jint encodingType)
 
 		case 1: 		/* platform encoding */
 			encoding = getPlatformFileEncoding(env, property, sizeof(property), encodingType);
+#if defined(J9VM_JCL_SE11)
+			{
+				UDATA handle = 0;
+				PORT_ACCESS_FROM_ENV(env);
+				/* libjava.[so|dylib] is in the jdk/lib/ directory, one level up from the default/ & compressedrefs/ directories */
+				if (0 == j9sl_open_shared_library("../java", &handle, J9PORT_SLOPEN_DECORATE)) {
+					void (*nativeFuncAddrJNU)(JNIEnv *env, const char *str) = NULL;
+					if (0 == j9sl_lookup_name(handle, "InitializeEncoding", (UDATA*) &nativeFuncAddrJNU, "VLL")) {
+						/* invoke JCL native to initialize platform encoding explicitly */
+						nativeFuncAddrJNU(env, encoding);
+					}
+				}
+			}
+#endif /* J9VM_JCL_SE11 */
 			break;
 
 		case 2:		/* file.encoding */

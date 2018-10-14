@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,6 @@ import com.ibm.dtfj.image.ImageSection;
 import com.ibm.dtfj.image.ImageThread;
 import com.ibm.dtfj.image.MemoryAccessException;
 import com.ibm.dtfj.image.j9.CorruptData;
-import com.ibm.dtfj.image.j9.corrupt.CorruptImagePointer;
 import com.ibm.dtfj.java.JavaClass;
 import com.ibm.dtfj.java.JavaObject;
 
@@ -58,15 +57,15 @@ public class JavaThread implements com.ibm.dtfj.java.JavaThread
 
 	private static final HashMap _threadStateMap = new HashMap();
 	static {
-		_threadStateMap.put("Dead", 	new Integer(STATE_TERMINATED));
-		_threadStateMap.put("Suspended",new Integer(STATE_ALIVE | STATE_SUSPENDED));
-		_threadStateMap.put("Running", 	new Integer(STATE_ALIVE | STATE_RUNNABLE));
-		_threadStateMap.put("Blocked", 	new Integer(STATE_ALIVE | STATE_BLOCKED_ON_MONITOR_ENTER));
-		_threadStateMap.put("Waiting", 			new Integer(STATE_ALIVE | STATE_WAITING | STATE_WAITING_INDEFINITELY | STATE_IN_OBJECT_WAIT));
-		_threadStateMap.put("Waiting timed", 	new Integer(STATE_ALIVE | STATE_WAITING | STATE_WAITING_WITH_TIMEOUT | STATE_IN_OBJECT_WAIT));
-		_threadStateMap.put("Sleeping", 		new Integer(STATE_ALIVE | STATE_WAITING | STATE_SLEEPING));
-		_threadStateMap.put("Parked",   		new Integer(STATE_ALIVE | STATE_WAITING | STATE_WAITING_INDEFINITELY | STATE_PARKED));
-		_threadStateMap.put("Parked timed",   	new Integer(STATE_ALIVE | STATE_WAITING | STATE_WAITING_WITH_TIMEOUT | STATE_PARKED));
+		_threadStateMap.put("Dead", 	Integer.valueOf(STATE_TERMINATED));
+		_threadStateMap.put("Suspended",Integer.valueOf(STATE_ALIVE | STATE_SUSPENDED));
+		_threadStateMap.put("Running", 	Integer.valueOf(STATE_ALIVE | STATE_RUNNABLE));
+		_threadStateMap.put("Blocked", 	Integer.valueOf(STATE_ALIVE | STATE_BLOCKED_ON_MONITOR_ENTER));
+		_threadStateMap.put("Waiting", 			Integer.valueOf(STATE_ALIVE | STATE_WAITING | STATE_WAITING_INDEFINITELY | STATE_IN_OBJECT_WAIT));
+		_threadStateMap.put("Waiting timed", 	Integer.valueOf(STATE_ALIVE | STATE_WAITING | STATE_WAITING_WITH_TIMEOUT | STATE_IN_OBJECT_WAIT));
+		_threadStateMap.put("Sleeping", 		Integer.valueOf(STATE_ALIVE | STATE_WAITING | STATE_SLEEPING));
+		_threadStateMap.put("Parked",   		Integer.valueOf(STATE_ALIVE | STATE_WAITING | STATE_WAITING_INDEFINITELY | STATE_PARKED));
+		_threadStateMap.put("Parked timed",   	Integer.valueOf(STATE_ALIVE | STATE_WAITING | STATE_WAITING_WITH_TIMEOUT | STATE_PARKED));
 	};
 	
 	public JavaThread(JavaRuntime vm, ImagePointer nativeID, ImagePointer objectID, String state, ImageThread imageThread)

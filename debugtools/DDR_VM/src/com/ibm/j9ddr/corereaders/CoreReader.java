@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2014 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,7 +39,6 @@ import com.ibm.j9ddr.corereaders.aix.AIXDumpReaderFactory;
 import com.ibm.j9ddr.corereaders.debugger.JniReader;
 import com.ibm.j9ddr.corereaders.elf.ELFDumpReaderFactory;
 import com.ibm.j9ddr.corereaders.minidump.MiniDumpReader;
-import com.ibm.j9ddr.corereaders.tdump.TDumpReader;
 
 /**
  * Factory for ICoreReader implementations.
@@ -62,7 +61,22 @@ public class CoreReader
 		localReaders.add(JniReader.class);
 		localReaders.add(MiniDumpReader.class);
 		localReaders.add(ELFDumpReaderFactory.class);
-		localReaders.add(TDumpReader.class);
+
+		// Use reflection to find TDumpReader: it is not available on all platforms.
+		try {
+			Class<?> tdumpReaderClass = Class.forName("com.ibm.j9ddr.corereaders.tdump.TDumpReader");
+
+			if (ICoreFileReader.class.isAssignableFrom(tdumpReaderClass)) {
+				// the compiler doesn't recognize the significance of the test above
+				@SuppressWarnings("unchecked")
+				Class<? extends ICoreFileReader> cast = (Class<? extends ICoreFileReader>) tdumpReaderClass;
+
+				localReaders.add(cast);
+			}
+		} catch (ClassNotFoundException e) {
+			// proceed without TDumpReader
+		}
+
 		localReaders.add(AIXDumpReaderFactory.class);
 
 		coreReaders = Collections.unmodifiableList(localReaders);

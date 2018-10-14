@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar16]*/
 package com.ibm.tools.attach.target;
 /*******************************************************************************
- * Copyright (c) 2009, 2017 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,8 @@ package com.ibm.tools.attach.target;
 
 import java.io.File;
 import java.io.IOException;
+import static com.ibm.tools.attach.target.IPC.LOGGING_DISABLED;
+import static com.ibm.tools.attach.target.IPC.loggingStatus;
 
 /**
  * This class represents the advertisement directory representing a potentisal attach API target VM.
@@ -42,55 +44,82 @@ public final class TargetDirectory {
 	 */
 	public static final int SYNC_FILE_PERMISSIONS = 0666; 
 	static final int TARGET_DIRECTORY_PERMISSIONS = 01711;
-	
-	private volatile static  File targetDirectoryFileObject; 
+
+	private volatile static  File targetDirectoryFileObject;
 	private volatile static  File syncFileObject;
 	private volatile static  File advertisementFileObject;
 	
 	/**
-	 * Create the directory and files specific to this VM
+	 * Create the directory and files specific to this VM.
 	 * @param myVmId proposed ID of this VM
+	 * @param preserveId if false, change the VMID if there is a conflict
 	 * @return actual VM ID, or null in case of error
 	 * @throws IOException if files or directory cannot be created
 	 */
-	static String createMyDirectory(String myVmId, boolean recycle) throws IOException {
+	static String createMyDirectory(String myVmId, boolean preserveId) throws IOException {
 		String newId = myVmId;
 		File tgtDir = new File(getTargetDirectoryPath(newId));
+		if (tgtDir.exists()) {
+			/*
+			 * Don't know what's in the directory, so don't re-use it.
+			 * Clean it and potential other conflicts out.
+			 */
+			IPC.logMessage("target directory file conflict: ", tgtDir.getAbsolutePath()); //$NON-NLS-1$
+			if (preserveId) {
+				deleteMyDirectory(false);
+			}
+			CommonDirectory.deleteStaleDirectories(null);
+		}
 		int count = 0;
-		boolean reuseDirectory = false;
-		/*[PR 104653 - allow variation on process IDs as VM ids, re-use empty target directories */
-		if (!recycle) {
+
+		String advertFilename = Advertisement.getFilename();
+		if (!preserveId) {
 			while (tgtDir.exists() && (count < VARIANT_LIMIT)) {
-				File oldAdvert = new File(tgtDir, Advertisement.getFilename());
-				if (tgtDir.isDirectory() && tgtDir.canRead() && tgtDir.canWrite() && !oldAdvert.exists()) {
-					IPC.logMessage(tgtDir.getAbsolutePath()+" exists and is usable"); //$NON-NLS-1$
-					/* this is a stale directory with no advertisement. Make sure it is also executable */
-					tgtDir.setExecutable(true);
-					reuseDirectory = true;
-					break;
-				}
 				newId = myVmId+'_'+count;
+				IPC.logMessage("try VMID ", newId); //$NON-NLS-1$
 				tgtDir = new File(getTargetDirectoryPath(newId));
 				++count;
 			}
 		}
-		if (!tgtDir.exists() && (count < VARIANT_LIMIT)) {
-			IPC.mkdirWithPermissions(tgtDir.getAbsolutePath(), TARGET_DIRECTORY_PERMISSIONS);
-		} else if (!reuseDirectory){ /* directory exists but is unusable */
+		if (!tgtDir.exists() && (count <= VARIANT_LIMIT)) {
+			String targetDirectoryPath = tgtDir.getAbsolutePath();
+			/*
+			 * This fails if the file cannot be owned by the current user.
+			 * The actual permissions my not be the same as requested due to umask.
+			 */
+			IPC.mkdirWithPermissions(targetDirectoryPath, TARGET_DIRECTORY_PERMISSIONS);
+			IPC.checkOwnerAccessOnly(targetDirectoryPath);
+		} else {
+			/* The directory exists but is unusable. */
+			IPC.logMessage("Attach API target directory already exists for VMID ", myVmId); //$NON-NLS-1$
 			/*[MSG "K0547", "Attach API target directory already exists for VMID {0}"]*/			  
 			throw new IOException(com.ibm.oti.util.Msg.getString("K0547", myVmId));//$NON-NLS-1$
 		}
+		File replyFile = new File(tgtDir, Reply.REPLY_FILENAME);
+		if (replyFile.exists()) {
+			/* The directory should be empty at this point. */
+			final String absolutePath = replyFile.getAbsolutePath();
+			IPC.logMessage("Illegal file in target directory: ", absolutePath); //$NON-NLS-1$
+			/*[MSG "K0804", "Illegal file {0} found in target directory"]*/
+			throw new IOException(com.ibm.oti.util.Msg.getString("K0804", absolutePath));//$NON-NLS-1$
+		}
+
 		targetDirectoryFileObject = tgtDir;
 		syncFileObject = createSyncFileObject(newId);
-		/*[PR RTC 80844 we may be shutting down or having problems with the file system]*/
 		if (null == syncFileObject) {
 			newId = null;
 			IPC.logMessage("createSyncFileObject failed"); //$NON-NLS-1$
 		} else {
 			createMySyncFile();
-
 			/* Advertisement creates the actual file */
-			advertisementFileObject = new File(targetDirectoryFileObject, Advertisement.getFilename());
+			advertisementFileObject = new File(targetDirectoryFileObject, advertFilename);
+			if (advertisementFileObject.exists() && !advertisementFileObject.delete()) {
+				final String absolutePath = advertisementFileObject.getAbsolutePath();
+				IPC.logMessage("Illegal file found in target directory:", absolutePath); //$NON-NLS-1$
+				/*[MSG "K0804", "Illegal file {0} found in target directory"]*/
+				throw new IOException(com.ibm.oti.util.Msg.getString("K0804", //$NON-NLS-1$
+						absolutePath));
+			}
 		}
 		return newId;
 	}
@@ -100,10 +129,10 @@ public final class TargetDirectory {
 	 * @return true if the files were successfully deleted
 	 */
 	static boolean deleteMyFiles() {
-		if (IPC.loggingEnabled ) {
+		if (LOGGING_DISABLED != loggingStatus) {
 			IPC.logMessage("deleting my files"); //$NON-NLS-1$
 		}
-		
+
 		if ((null != advertisementFileObject) && advertisementFileObject.delete()) {
 			advertisementFileObject = null;		
 		} else {
@@ -122,10 +151,9 @@ public final class TargetDirectory {
 	 * @param directoryEmpty set to true if the directory is supposedly empty
 	 */
 	static void deleteMyDirectory(boolean directoryEmpty) {
-		if (IPC.loggingEnabled ) {
+		if (LOGGING_DISABLED != loggingStatus) {
 			IPC.logMessage("deleting my directory "); //$NON-NLS-1$
-		}
-		
+		}		
 		/* try the fast path for deleting files and directories. try the heavyweight path if something fails */
 		if ((!directoryEmpty && !deleteMyFiles()) || (null == targetDirectoryFileObject) || !targetDirectoryFileObject.delete()) {
 			deleteTargetDirectory(AttachHandler.getVmId());	
@@ -136,21 +164,21 @@ public final class TargetDirectory {
 		if ((null != vmId) && (0 != vmId.length())) { /* skip if the vmid was never set - we didn't create the directory */
 			File tgtDir = new File(getTargetDirectoryPath(vmId));
 			File[] vmFiles = tgtDir.listFiles();
-			if (IPC.loggingEnabled ) {
+			if (LOGGING_DISABLED != loggingStatus) {
 				IPC.logMessage("deleting target directory ", tgtDir.getAbsolutePath()); //$NON-NLS-1$
 			}
 			if (null != vmFiles) {
 				for (File f: vmFiles) {
 					if (!f.delete()) {
 						IPC.logMessage("error deleting directory ", f.getAbsolutePath()); //$NON-NLS-1$
-					} else if (IPC.loggingEnabled ) {
+					} else if (LOGGING_DISABLED != loggingStatus) {
 						IPC.logMessage("deleted file ", f.getAbsolutePath()); //$NON-NLS-1$
 					}
 				}
 			}
 			if (!tgtDir.delete()) {
 				IPC.logMessage("error deleting directory ", tgtDir.getAbsolutePath()); //$NON-NLS-1$
-			} else if (IPC.loggingEnabled ) {
+			} else if (LOGGING_DISABLED != loggingStatus) {
 				IPC.logMessage("deleted directory ", tgtDir.getAbsolutePath()); //$NON-NLS-1$
 			}
 		}

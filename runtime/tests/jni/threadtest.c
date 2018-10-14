@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,13 +45,13 @@ Java_j9vm_test_thread_NativeHelpers_findDeadlockedThreads(JNIEnv *env, jclass cl
 		return NULL;
 	}
 	
-	vmfns->internalAcquireVMAccess(currentThread);
+	vmfns->internalEnterVMFromJNI(currentThread);
 	vmfns->acquireExclusiveVMAccess(currentThread);
 	deadlockCount = vmfns->findObjectDeadlockedThreads(currentThread, &deadlockedThreads, NULL, J9VMTHREAD_FINDDEADLOCKFLAG_ALREADYHAVEEXCLUSIVE);
 	vmfns->releaseExclusiveVMAccess(currentThread);
 
 	if (deadlockCount <= 0) {
-		vmfns->internalReleaseVMAccess(currentThread);
+		vmfns->internalExitVMToJNI(currentThread);
 	} else {
 		threadRef = j9mem_allocate_memory(deadlockCount * sizeof(jobject), OMRMEM_CATEGORY_VM);
 		if (threadRef) {
@@ -60,7 +60,7 @@ Java_j9vm_test_thread_NativeHelpers_findDeadlockedThreads(JNIEnv *env, jclass cl
 			}
 		}
 		j9mem_free_memory(deadlockedThreads);
-		vmfns->internalReleaseVMAccess(currentThread);
+		vmfns->internalExitVMToJNI(currentThread);
 
 		if (threadRef) {
 			threads = (*env)->NewObjectArray(env, (jsize)deadlockCount, jlThread, NULL);
@@ -110,11 +110,11 @@ Java_j9vm_test_thread_NativeHelpers_findDeadlockedThreadsAndObjects(JNIEnv *env,
 		return;
 	}
 	
-	vmfns->internalAcquireVMAccess(currentThread);
+	vmfns->internalEnterVMFromJNI(currentThread);
 	deadlockCount = vmfns->findObjectDeadlockedThreads(currentThread, &deadlockedThreads, &blockingObjects, 0);
 
 	if (deadlockCount <= 0) {
-		vmfns->internalReleaseVMAccess(currentThread);
+		vmfns->internalExitVMToJNI(currentThread);
 	} else {
 		jobject *threadRef;
 		jobject *objectRef;
@@ -131,7 +131,7 @@ Java_j9vm_test_thread_NativeHelpers_findDeadlockedThreadsAndObjects(JNIEnv *env,
 		}
 		j9mem_free_memory(deadlockedThreads);
 		j9mem_free_memory(blockingObjects);
-		vmfns->internalReleaseVMAccess(currentThread);
+		vmfns->internalExitVMToJNI(currentThread);
 
 		if (threadRef && objectRef) {
 			threads = (*env)->NewObjectArray(env, (jsize)deadlockCount, jlThread, NULL);

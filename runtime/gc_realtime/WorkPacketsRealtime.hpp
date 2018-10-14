@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,20 +25,17 @@
 #define WORKPACKETSREALTIME_HPP_
 
 #include "EnvironmentBase.hpp"
-#include "WorkPackets.hpp"
+#include "WorkPacketsSATB.hpp"
 #include "YieldCollaborator.hpp"
 
 class MM_IncrementalOverflow;
 
-class MM_WorkPacketsRealtime : public MM_WorkPackets
+class MM_WorkPacketsRealtime : public MM_WorkPacketsSATB
 {
 public:
 protected:
 	MM_YieldCollaborator _yieldCollaborator;
 	
-private:
-	MM_PacketList _inUseBarrierPacketList;  /**< List for packets currently being used for the remembered set*/
-
 public:
 	static MM_WorkPacketsRealtime *newInstance(MM_EnvironmentBase *env);
 	
@@ -49,22 +46,13 @@ public:
 	MM_YieldCollaborator *getYieldCollaborator() { return &_yieldCollaborator; }
 
 	virtual MM_Packet *getInputPacket(MM_EnvironmentBase *env);
-	
-	MMINLINE bool inUsePacketsAvailable(MM_EnvironmentBase *env) { return !_inUseBarrierPacketList.isEmpty();}
-
-	MM_Packet *getBarrierPacket(MM_EnvironmentBase *env);
-	void putInUsePacket(MM_EnvironmentBase *env, MM_Packet *packet);
-	void removePacketFromInUseList(MM_EnvironmentBase *env, MM_Packet *packet);
-	void putFullPacket(MM_EnvironmentBase *env, MM_Packet *packet);
-	void moveInUseToNonEmpty(MM_EnvironmentBase *env);
 
 	/**
 	 * Create a MM_WorkPacketsRealtime object.
 	 */
 	MM_WorkPacketsRealtime(MM_EnvironmentBase *env) :
-		MM_WorkPackets(env)
+		MM_WorkPacketsSATB(env)
 		, _yieldCollaborator(&_inputListMonitor, &_inputListWaitCount, MM_YieldCollaborator::WorkPacketsRealtime)
-		, _inUseBarrierPacketList(NULL)
 	{
 		_typeId = __FUNCTION__;
 	};
@@ -72,9 +60,6 @@ public:
 protected:
 	virtual MM_WorkPacketOverflow *createOverflowHandler(MM_EnvironmentBase *env, MM_WorkPackets *workPackets);
 	virtual void notifyWaitingThreads(MM_EnvironmentBase *env);
-	virtual MM_Packet *getPacketByOverflowing(MM_EnvironmentBase *env);
-	virtual float getHeapCapacityFactor(MM_EnvironmentBase *env);
-	virtual MM_Packet *getInputPacketFromOverflow(MM_EnvironmentBase *env);
 
 private:
 };

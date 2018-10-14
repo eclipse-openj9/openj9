@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -335,6 +335,9 @@ JNIEXPORT jobject JNICALL Java_com_ibm_j9ddr_corereaders_debugger_JniNatives_get
 #endif
 #if defined(AIXPPC)
 	char* platform = "AIX";
+#endif
+#if defined(OSX)
+	char* platform = "OSX";
 #endif
 
 

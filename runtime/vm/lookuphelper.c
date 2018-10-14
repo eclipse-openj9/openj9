@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,7 +70,7 @@ getForwardedMethod(J9VMThread* currentThread, J9Method* method)
 		}
 
 		lookupClass = currentClass->superclasses[depth-1];
-		currentMethod = (J9Method *)javaLookupMethod(currentThread, lookupClass, nameAndSig, currentClass, J9_LOOK_VIRTUAL | J9_LOOK_NO_THROW);
+		currentMethod = (J9Method *)javaLookupMethod(currentThread, lookupClass, nameAndSig, currentClass, J9_LOOK_VIRTUAL | J9_LOOK_NO_JAVA);
 		if (NULL == currentMethod) {
 			/* No method found in superclasses */
 			break;

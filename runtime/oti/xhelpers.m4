@@ -1,4 +1,4 @@
-dnl Copyright (c) 1991, 2017 IBM Corp. and others
+dnl Copyright (c) 1991, 2018 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,7 +53,7 @@ define({FILE_END},{
 define({START_PROC},{
 	align 16
 	DECLARE_PUBLIC($1)
-	$1 proc
+	GLOBAL_SYMBOL($1) proc
 })
 
 define({END_PROC},{$1 endp})
@@ -64,9 +64,15 @@ define({DECLARE_EXTERN},{extrn $1:near})
 
 define({LABEL},$1)
 
+define({C_FUNCTION_SYMBOL},$1)
+
+define({GLOBAL_SYMBOL},$1)
+
 },{	dnl WIN32
 
 ifdef({OSX},{ 
+
+dnl OSX
 
 define({SHORT_JMP},{})
 
@@ -75,7 +81,13 @@ define({FILE_START},{
 	.text
 })
 
+define({C_FUNCTION_SYMBOL},_$1)
+
+define({GLOBAL_SYMBOL},_$1)
+
 },{	dnl OSX
+
+dnl LINUX
 
 define({SHORT_JMP},{short})
 
@@ -85,15 +97,21 @@ define({FILE_START},{
 	.text
 })
 
+define({C_FUNCTION_SYMBOL},$1)
+
+define({GLOBAL_SYMBOL},$1)
+
 })	dnl OSX
 
-define({FILE_END})
+dnl LINUX and OSX
 
 define({START_PROC},{
 	.align 16
 	DECLARE_PUBLIC($1)
-	$1:
+	GLOBAL_SYMBOL($1):
 })
+
+define({FILE_END})
 
 define({END_PROC},{
 END_$1:
@@ -104,9 +122,9 @@ ifdef({OSX},{
 })	dnl OSX
 })
 
-define({DECLARE_PUBLIC},{.global $1})
+define({DECLARE_PUBLIC},{.global GLOBAL_SYMBOL($1)})
 
-define({DECLARE_EXTERN},{.extern $1})
+define({DECLARE_EXTERN},{.extern C_FUNCTION_SYMBOL($1)})
 
 ifdef({OSX},{
 define({LABEL},$1)
@@ -187,6 +205,8 @@ dnl C linkage (windows and linux)
 dnl	argument GPRs: none (stdcall) / ECX EDX (fastcall)
 dnl	preserved: EBX EDI ESI, no XMM
 
+define({PARM_REG},{ifelse($1,1,_rcx,$1,2,_rdx,{ERROR})})
+
 define({_rax},{eax})
 define({_rbx},{ebx})
 define({_rcx},{ecx})
@@ -253,7 +273,7 @@ define({SWITCH_TO_JAVA_STACK},{
 define({CALL_C_FUNC},{
 	mov uword ptr (J9TR_machineSP_vmStruct+$3+(J9TR_pointerSize*$2))[_rsp],_rbp
 	mov _rbp,uword ptr (J9TR_machineSP_machineBP+$3+(J9TR_pointerSize*$2))[_rsp]
-	call $1
+	call C_FUNCTION_SYMBOL($1)
 	mov _rbp,uword ptr (J9TR_machineSP_vmStruct+$3+(J9TR_pointerSize*$2))[_rsp]
 })
 
@@ -521,6 +541,26 @@ define({STORE_VIRTUAL_REGISTERS},{
 })
 
 })	dnl ASM_J9VM_ENV_DATA64
+
+ifdef({OSX},{
+	
+define({FASTCALL_SYMBOL},{_$1})
+
+define({FASTCALL_EXTERN},{DECLARE_EXTERN($1)})
+
+define({CALL_C_ADDR_WITH_VMTHREAD},{
+	mov _rdi,_rbp
+	mov uword ptr (J9TR_machineSP_vmStruct+(J9TR_pointerSize*$2))[_rsp],_rbp
+	mov _rbp,uword ptr (J9TR_machineSP_machineBP+(J9TR_pointerSize*$2))[_rsp]
+	call $1
+	mov _rbp,uword ptr (J9TR_machineSP_vmStruct+(J9TR_pointerSize*$2))[_rsp]
+})
+
+},{ dnl OSX
+
+define({CALL_C_ADDR_WITH_VMTHREAD},{CALL_C_WITH_VMTHREAD($1,$2)})
+
+}) dnl OSX
 
 ifdef({FASTCALL_SYMBOL},,{define({FASTCALL_SYMBOL},{$1})})
 

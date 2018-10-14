@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,13 +32,9 @@ getVMThreadNameFromString(J9VMThread *vmThread, j9object_t nameObject)
 	J9JavaVM *javaVM = vmThread->javaVM;
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
-	J9InternalVMFunctions* fns = javaVM->internalVMFunctions;
-	UDATA length = fns->getStringUTF8Length(vmThread, nameObject);
-	char *buf = j9mem_allocate_memory(length + 1, OMRMEM_CATEGORY_THREADS);
-	if (buf != NULL) {
-		fns->copyStringToUTF8Helper(vmThread, nameObject, TRUE, J9_STR_NONE, (U_8 *)buf, length + 1);
-	}
-	return buf;
+	char* result = javaVM->internalVMFunctions->copyStringToUTF8WithMemAlloc(vmThread, nameObject, J9_STR_NULL_TERMINATE_RESULT, "", 0, NULL, 0, NULL);
+
+	return result;
 }
 
 /*

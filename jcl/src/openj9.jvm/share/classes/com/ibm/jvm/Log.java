@@ -2,7 +2,7 @@
 package com.ibm.jvm;
 
 /*******************************************************************************
- * Copyright (c) 2006, 2016 IBM Corp. and others
+ * Copyright (c) 2006, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,8 +69,8 @@ public class Log {
 	 * @throws SecurityException
 	 */
     private static void checkLegacySecurityPermssion() throws SecurityException {
-    	if ("true".equalsIgnoreCase(com.ibm.oti.vm.VM.getVMLangAccess()	//$NON-NLS-1$
-    		.internalGetProperties().getProperty(LEGACY_LOG_PERMISSION_PROPERTY)))	{	
+    	if (!("false".equalsIgnoreCase(com.ibm.oti.vm.VM.getVMLangAccess()	//$NON-NLS-1$
+    		.internalGetProperties().getProperty(LEGACY_LOG_PERMISSION_PROPERTY)))) {
     		checkLogSecurityPermssion();
     	}
     }

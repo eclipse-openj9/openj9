@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,7 +37,6 @@ import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.U8;
 import com.ibm.j9ddr.vm29.events.EventManager;
 import com.ibm.j9ddr.vm29.j9.AlgorithmVersion;
-import com.ibm.j9ddr.vm29.j9.OptInfo;
 
 public abstract class LineNumberIterator implements Iterator<LineNumber> {
 
@@ -146,7 +145,7 @@ public abstract class LineNumberIterator implements Iterator<LineNumber> {
 					lineNumber = lineNumber.add(signExtend(new I16(encoded.bitAnd(0x3FFF)), 14));
 					
 					lineNumberTablePtr = lineNumberTablePtr.add(2);
-				} else if (firstByte.bitAnd(0xE0).eq(0xF0)) {
+				} else if (firstByte.bitAnd(0xF0).eq(0xE0)) {
 					// 5 bytes encoded : 1110000Y xxxxxxxx xxxxxxxx YYYYYYYY YYYYYYYY
 					lineNumberTablePtr = lineNumberTablePtr.add(1);
 					location = location.add(U16Pointer.cast(lineNumberTablePtr).at(0));

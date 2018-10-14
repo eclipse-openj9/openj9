@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,9 +33,10 @@
 
 #include "j9.h"
 #include "j9cfg.h"	
-
 #include "ObjectAccessBarrier.hpp"
+#include "Configuration.hpp"
 #include "GenerationalAccessBarrierComponent.hpp"
+#include "RememberedSetSATB.hpp"
 
 /**
  * Access barrier for Modron collector.
@@ -47,7 +48,9 @@ private:
 #if defined(J9VM_GC_GENERATIONAL)
 	MM_GenerationalAccessBarrierComponent _generationalAccessBarrierComponent;	/**< Generational Component of Access Barrier */
 #endif /* J9VM_GC_GENERATIONAL */
-	
+#if defined(OMR_GC_REALTIME)
+	bool _doubleBarrierActive; /**< Global indicator that the double barrier is active. New threads will be set to double barrier mode if this falg is true. */
+#endif /* OMR_GC_REALTIME */
 	void postObjectStoreImpl(J9VMThread *vmThread, J9Object *dstObject, J9Object *srcObject);
 	void preBatchObjectStoreImpl(J9VMThread *vmThread, J9Object *dstObject);
     
@@ -67,6 +70,11 @@ public:
 
 	virtual J9Object* asConstantPoolObject(J9VMThread *vmThread, J9Object* toConvert, UDATA allocationFlags);
 
+	virtual void rememberObjectImpl(MM_EnvironmentBase *env, J9Object* object);
+	virtual bool preObjectStore(J9VMThread *vmThread, J9Object *destObject, fj9object_t *destAddress, J9Object *value, bool isVolatile=false);
+	virtual bool preObjectStore(J9VMThread *vmThread, J9Object *destClass, J9Object **destAddress, J9Object *value, bool isVolatile=false);
+	virtual bool preObjectStore(J9VMThread *vmThread, J9Object **destAddress, J9Object *value, bool isVolatile=false);
+
 	virtual void postObjectStore(J9VMThread *vmThread, J9Object *destObject, fj9object_t *destAddress, J9Object *value, bool isVolatile=false);
 	virtual void postObjectStore(J9VMThread *vmThread, J9Class *destClass, J9Object **destAddress, J9Object *value, bool isVolatile=false);
 	virtual bool preBatchObjectStore(J9VMThread *vmThread, J9Object *destObject, bool isVolatile=false);
@@ -77,6 +85,7 @@ public:
 	virtual void jniReleasePrimitiveArrayCritical(J9VMThread* vmThread, jarray array, void * elems, jint mode);
 	virtual const jchar* jniGetStringCritical(J9VMThread* vmThread, jstring str, jboolean *isCopy);
 	virtual void jniReleaseStringCritical(J9VMThread* vmThread, jstring str, const jchar* elems);
+	virtual void initializeForNewThread(MM_EnvironmentBase* env);
 
 #if defined(J9VM_GC_ARRAYLETS)
 	virtual I_32 backwardReferenceArrayCopyIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots);
@@ -87,9 +96,43 @@ public:
 	/* heap slot (possibly compressed refs) */
 	virtual bool preObjectRead(J9VMThread *vmThread, J9Object *srcObject, fj9object_t *srcAddress);
 	/* off-heap slot (always non-compressed) */
+	virtual bool preObjectRead(J9VMThread *vmThread, J9Class *srcClass, j9object_t *srcAddress);
 	virtual bool preMonitorTableSlotRead(J9VMThread *vmThread, j9object_t *srcAddress);
 	virtual bool preMonitorTableSlotRead(J9JavaVM *vm, j9object_t *srcAddress);	
 #endif	
+
+	bool preObjectStoreImpl(J9VMThread *vmThread, J9Object *destObject, fj9object_t *destAddress, J9Object *value, bool isVolatile);
+	bool preObjectStoreImpl(J9VMThread *vmThread, J9Object **destAddress, J9Object *value, bool isVolatile);
+
+	void rememberObjectToRescan(MM_EnvironmentBase *env, J9Object *object);
+
+	MMINLINE bool isSATBBarrierActive(MM_EnvironmentBase* env)
+	{
+		return ((_extensions->configuration->isSnapshotAtTheBeginningBarrierEnabled()) &&
+				(!_extensions->sATBBarrierRememberedSet->isGlobalFragmentIndexPreserved(env)));
+	}
+
+	MMINLINE bool isIncrementalUpdateBarrierActive(J9VMThread *vmThread)
+	{
+		return ((vmThread->privateFlags & J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE) &&
+				_extensions->configuration->isIncrementalUpdateBarrierEnabled());
+	}
+
+#if defined(OMR_GC_REALTIME)
+	MMINLINE void setDoubleBarrierActive() { _doubleBarrierActive = true; }
+	MMINLINE void setDoubleBarrierInactive() { _doubleBarrierActive = false; }
+	MMINLINE bool isDoubleBarrierActive() { return _doubleBarrierActive; }
+#endif /* OMR_GC_REALTIME */
+
+	MMINLINE bool isDoubleBarrierActiveOnThread(J9VMThread *vmThread)
+	{
+		/* The double barrier is enabled in by setting the threads remembered set fragment index
+		 * to the special value, this ensures the JIT will go out-of line. We can determine if the double
+		 * barrier is active simply by checking if the fragment index corresponds to the special value.
+		 */
+		return (J9GC_REMEMBERED_SET_RESERVED_INDEX == vmThread->sATBBarrierRememberedSetFragment.localFragmentIndex);
+	}
+	void setDoubleBarrierActiveOnThread(MM_EnvironmentBase* env);
 
 	/**
 	 * Return the number of currently active JNI critical regions.

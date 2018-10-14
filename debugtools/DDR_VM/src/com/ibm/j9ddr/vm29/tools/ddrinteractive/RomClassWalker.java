@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,6 @@ import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_INTERFACE_MET
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_LONG;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_METHODHANDLE;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_METHOD_TYPE;
-import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_SHARED_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_STATIC_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_STRING;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_UNUSED;
@@ -54,7 +53,6 @@ import com.ibm.j9ddr.tools.ddrinteractive.Context;
 import com.ibm.j9ddr.vm29.j9.AlgorithmVersion;
 import com.ibm.j9ddr.vm29.j9.BCNames;
 import com.ibm.j9ddr.vm29.j9.ConstantPoolHelpers;
-import com.ibm.j9ddr.vm29.j9.DataType;
 import com.ibm.j9ddr.vm29.j9.J9ROMFieldShapeIterator;
 import com.ibm.j9ddr.vm29.j9.OptInfo;
 import com.ibm.j9ddr.vm29.j9.ROMHelp;
@@ -68,11 +66,9 @@ import com.ibm.j9ddr.vm29.pointer.StructurePointer;
 import com.ibm.j9ddr.vm29.pointer.U16Pointer;
 import com.ibm.j9ddr.vm29.pointer.U32Pointer;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9EnclosingObjectPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ExceptionHandlerPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ExceptionInfoPointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9LineNumberPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9MethodDebugInfoPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9MethodParameterPointer;
@@ -88,25 +84,22 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ROMMethodRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMMethodTypeRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMNameAndSignaturePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMStringRefPointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9VariableInfoPointer;
-import com.ibm.j9ddr.vm29.pointer.helper.J9JavaVMHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9MethodDebugInfoHelper;
-import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMMethodHelper;
-import com.ibm.j9ddr.vm29.structure.J9Consts;
 import com.ibm.j9ddr.vm29.structure.J9EnclosingObject;
 import com.ibm.j9ddr.vm29.structure.J9ExceptionHandler;
 import com.ibm.j9ddr.vm29.structure.J9ExceptionInfo;
 import com.ibm.j9ddr.vm29.structure.J9MethodDebugInfo;
 import com.ibm.j9ddr.vm29.structure.J9ROMClass;
 import com.ibm.j9ddr.vm29.structure.J9ROMConstantPoolItem;
-import com.ibm.j9ddr.vm29.structure.J9VariableInfo;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.IClassWalkCallbacks.SlotType;
 import com.ibm.j9ddr.vm29.types.I32;
 import com.ibm.j9ddr.vm29.types.U16;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.U64;
+import com.ibm.j9ddr.vm29.types.UDATA;
+
 /**
  * Walk every slot and sections of a ROMClass
  * @author jeanpb
@@ -328,7 +321,7 @@ public class RomClassWalker extends ClassWalker {
 		int fieldLength = 0;
 		
 		U32Pointer initialValue;
-		U32 modifiers;
+		UDATA modifiers;
 		
 		J9ROMNameAndSignaturePointer fieldNAS = field.nameAndSignature();
 		classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, fieldNAS.nameEA(), "name");
@@ -588,33 +581,26 @@ public class RomClassWalker extends ClassWalker {
 	}
 	void allSlotsInCPShapeDescriptionDo() throws CorruptDataException
 	{
-		int i, count;
-		U32Pointer cpShapeDescription = romClass.cpShapeDescription();
+		U32Pointer cpShapeDescription = J9ROMClassHelper.cpShapeDescription(romClass);
 		final int romConstantPoolCount = romClass.romConstantPoolCount().intValue();
-		
-		count = (romConstantPoolCount + (U32.SIZEOF * 2) - 1) / (U32.SIZEOF * 2);
+		int count = (romConstantPoolCount + (U32.SIZEOF * 2) - 1) / (U32.SIZEOF * 2);
 
 		classWalkerCallback.addSection(clazz, cpShapeDescription, count * U32.SIZEOF, "cpShapeDescription", true);
-		for (i = 0; i < count; i++) {
+		for (int i = 0; i < count; i++) {
 			classWalkerCallback.addSlot(clazz, SlotType.J9_U32, cpShapeDescription.add(i), "cpShapeDescriptionU32");
 			//callbacks.slotCallback(romClass, J9ROM_U32, &cpShapeDescription[i], "cpShapeDescriptionU32", userData);
 		}
 	}
 	private void allSlotsInConstantPoolDo() throws CorruptDataException
 	{
-		J9ROMConstantPoolItemPointer constantPool;
-		int index;
-		U32Pointer cpShapeDescription;
-		int constPoolCount;
+		J9ROMConstantPoolItemPointer constantPool = J9ROMClassHelper.constantPool(romClass);
+		U32Pointer cpShapeDescription = J9ROMClassHelper.cpShapeDescription(romClass);
 
-		constantPool = J9ROMClassHelper.constantPool(romClass);
-		cpShapeDescription = romClass.cpShapeDescription();
-		
 		if (cpShapeDescription.isNull()) {
 			return;
 		}
 		
-		constPoolCount = romClass.romConstantPoolCount().intValue();
+		int constPoolCount = romClass.romConstantPoolCount().intValue();
 		PointerPointer cpEntry = PointerPointer.cast(J9ROMClassHelper.constantPool(romClass));
 		
 		// The spaces at the end of "Constant Pool" are important since the
@@ -622,7 +608,7 @@ public class RomClassWalker extends ClassWalker {
 		// by address and size, but when they are equal they are sorted by
 		// longest name and "Constant Pool" has to come first
 		classWalkerCallback.addSection(clazz, constantPool, constPoolCount * U64.SIZEOF, "constantPool              ", true);
-		for (index = 0; index < constPoolCount; index++) {
+		for (int index = 0; index < constPoolCount; index++) {
 			long shapeDesc = ConstantPoolHelpers.J9_CP_TYPE(cpShapeDescription, index);
 			if (shapeDesc == J9CPTYPE_CLASS) {
 				J9ROMStringRefPointer ref = J9ROMStringRefPointer.cast(cpEntry);
@@ -681,7 +667,7 @@ public class RomClassWalker extends ClassWalker {
 	}
 	void allSlotsInOptionalInfoDo() throws CorruptDataException
 	{
-		U32Pointer optionalInfo = romClass.optionalInfo();
+		U32Pointer optionalInfo = J9ROMClassHelper.optionalInfo(romClass);
 		SelfRelativePointer cursor = SelfRelativePointer.cast(optionalInfo);
 
 		if (romClass.optionalFlags().anyBitsIn(J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_SOURCE_FILE_NAME)) {
@@ -720,7 +706,7 @@ public class RomClassWalker extends ClassWalker {
 	}
 	void allSlotsInIntermediateClassDataDo () throws CorruptDataException
 	{
-		U32 count = romClass.intermediateClassDataLength();
+		UDATA count = romClass.intermediateClassDataLength();
 		if (count.gt(0)) {
 			U8Pointer cursor = romClass.intermediateClassData();
 			String j9xHelp = "!j9x "+cursor.getHexAddress()+","+count.getHexValue();
@@ -972,49 +958,30 @@ public class RomClassWalker extends ClassWalker {
 				}
 			}
 		}
-		
-		if (AlgorithmVersion.getVersionOf("VM_LOCAL_VARIABLE_TABLE_VERSION").getAlgorithmVersion() < 1) {
-			J9VariableInfoPointer variableTable = OptInfo.getV0VariableTableForROMClass(methodDebugInfo);
-			if (variableTable.notNull()) {
-				for (int j = 0; j < methodDebugInfo.varInfoCount().longValue(); j++) {
-					long entryLength = J9VariableInfo.SIZEOF;
-	
-					addObjectsasSlot(variableTable);
-	
-					if (variableTable.visibilityLength().anyBitsIn(J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_VARIABLE_TABLE_HAS_GENERIC)) {
-						U32Pointer typePtr = U32Pointer.cast(variableTable.add(1));
-						classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, typePtr, "methodVariableGeneric");
-						entryLength += SelfRelativePointer.SIZEOF;
-					}
-					classWalkerCallback.addSection(clazz, variableTable, entryLength, "variableInfo" + (inlineDebugExtension?" Inline":""), inlineDebugExtension);
-					variableTable = J9VariableInfoPointer.cast(variableTable.addOffset(entryLength));
-				}
-			}
-		} else {
-			U8Pointer variableTable = OptInfo.getV1VariableTableForMethodDebugInfo(methodDebugInfo);
-			if (variableTable.notNull()) {
-				LocalVariableTableIterator variableInfoValuesIterator = LocalVariableTableIterator.localVariableTableIteratorFor(methodDebugInfo);
-				U8Pointer start = variableInfoValuesIterator.getLocalVariableTablePtr();
-				while (variableInfoValuesIterator.hasNext()) {
-					LocalVariableTable values = variableInfoValuesIterator.next();
 
-					// Need to walk the name and signature to add them to the UTF8 section
-					classWalkerCallback.addSlot(clazz, SlotType.J9_UTF8, values.getName(), "name");
-					classWalkerCallback.addSlot(clazz, SlotType.J9_UTF8, values.getSignature(), "getSignature");
-					if (values.getGenericSignature().notNull()) {
-						classWalkerCallback.addSlot(clazz, SlotType.J9_UTF8, values.getGenericSignature(), "getGenericSignature");
-					}
+		U8Pointer variableTable = OptInfo.getV1VariableTableForMethodDebugInfo(methodDebugInfo);
+		if (variableTable.notNull()) {
+			LocalVariableTableIterator variableInfoValuesIterator = LocalVariableTableIterator.localVariableTableIteratorFor(methodDebugInfo);
+			U8Pointer start = variableInfoValuesIterator.getLocalVariableTablePtr();
+			while (variableInfoValuesIterator.hasNext()) {
+				LocalVariableTable values = variableInfoValuesIterator.next();
+
+				// Need to walk the name and signature to add them to the UTF8 section
+				classWalkerCallback.addSlot(clazz, SlotType.J9_UTF8, values.getName(), "name");
+				classWalkerCallback.addSlot(clazz, SlotType.J9_UTF8, values.getSignature(), "getSignature");
+				if (values.getGenericSignature().notNull()) {
+					classWalkerCallback.addSlot(clazz, SlotType.J9_UTF8, values.getGenericSignature(), "getGenericSignature");
 				}
-				U8Pointer end = variableInfoValuesIterator.getLocalVariableTablePtr();
-				int localVariableSectionSize = end.sub(start).intValue();
-				
-				for (int j = 0; j < localVariableSectionSize; j++) {
-					classWalkerCallback.addSlot(clazz, SlotType.J9_U8, start, "variableInfo compressed");
-					start = start.add(1);
-				}
-				
-				classWalkerCallback.addSection(clazz, variableTable, localVariableSectionSize, "variableInfo" + (inlineDebugExtension?" Inline":""), inlineDebugExtension);
 			}
+			U8Pointer end = variableInfoValuesIterator.getLocalVariableTablePtr();
+			int localVariableSectionSize = end.sub(start).intValue();
+
+			for (int j = 0; j < localVariableSectionSize; j++) {
+				classWalkerCallback.addSlot(clazz, SlotType.J9_U8, start, "variableInfo compressed");
+				start = start.add(1);
+			}
+
+			classWalkerCallback.addSection(clazz, variableTable, localVariableSectionSize, "variableInfo" + (inlineDebugExtension?" Inline":""), inlineDebugExtension);
 		}
 		classWalkerCallback.addSection(clazz, methodDebugInfo, sectionSizeBytes, "methodDebugInfo" + (inlineDebugExtension?" Inline":""), inlineDebugExtension);
 		return inlineSize;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,7 +64,7 @@ DECLARE_UTF8_ATTRIBUTE_NAME(ANNOTATION_DEFAULT, "AnnotationDefault");
 DECLARE_UTF8_ATTRIBUTE_NAME(BOOTSTRAP_METHODS, "BootstrapMethods");
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 DECLARE_UTF8_ATTRIBUTE_NAME(NEST_MEMBERS, "NestMembers");
-DECLARE_UTF8_ATTRIBUTE_NAME(MEMBER_OF_NEST, "MemberOfNest");
+DECLARE_UTF8_ATTRIBUTE_NAME(NEST_HOST, "NestHost");
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 
 void
@@ -97,7 +97,7 @@ ClassFileWriter::analyzeROMClass()
 	J9UTF8 * outerClassName = J9ROMCLASS_OUTERCLASSNAME(_romClass);
 	J9UTF8 * simpleName = getSimpleNameForROMClass(_javaVM, NULL, _romClass);
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
-	J9UTF8 *nestTop = J9ROMCLASS_NESTTOPNAME(_romClass);
+	J9UTF8 *nestHost = J9ROMCLASS_NESTHOSTNAME(_romClass);
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 
 	/* For a local class only InnerClasses.class[i].inner_name_index is preserved as simpleName in its J9ROMClass */
@@ -120,7 +120,7 @@ ClassFileWriter::analyzeROMClass()
 	}
 
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
-	/* Class can not have both a nest members and member of nest attribute */
+	/* Class can not have both a nest members and nest host attribute */
 	if (0 != _romClass->nestMemberCount) {
 		U_16 nestMemberCount = _romClass->nestMemberCount;
 		J9SRP *nestMembers = (J9SRP *) J9ROMCLASS_NESTMEMBERS(_romClass);
@@ -130,9 +130,9 @@ ClassFileWriter::analyzeROMClass()
 			J9UTF8 * className = NNSRP_GET(nestMembers[i], J9UTF8 *);
 			addClassEntry(className, 0);
 		}
-	} else if (NULL != nestTop) {
-		addEntry((void *) &MEMBER_OF_NEST, 0, CFR_CONSTANT_Utf8);
-		addClassEntry(nestTop, 0);
+	} else if (NULL != nestHost) {
+		addEntry((void *) &NEST_HOST, 0, CFR_CONSTANT_Utf8);
+		addClassEntry(nestHost, 0);
 	}
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 
@@ -284,6 +284,8 @@ ClassFileWriter::analyzeConstantPool()
 		case J9CPTYPE_INSTANCE_METHOD:
 		case J9CPTYPE_STATIC_METHOD:
 		case J9CPTYPE_INTERFACE_METHOD:
+		case J9CPTYPE_INTERFACE_STATIC_METHOD:
+		case J9CPTYPE_INTERFACE_INSTANCE_METHOD:
 		case J9CPTYPE_HANDLE_METHOD:
 			addNASEntry(J9ROMMETHODREF_NAMEANDSIGNATURE((J9ROMMethodRef *) cpItem));
 			break;
@@ -307,6 +309,9 @@ ClassFileWriter::analyzeConstantPool()
 			break;
 		case J9CPTYPE_ANNOTATION_UTF8:
 			addEntry(J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) cpItem), i, CFR_CONSTANT_Utf8);
+			break;
+		case J9CPTYPE_CONSTANT_DYNAMIC:
+			addNASEntry(J9ROMCONSTANTDYNAMICREF_NAMEANDSIGNATURE((J9ROMConstantDynamicRef *) cpItem));
 			break;
 		default:
 			Trc_BCU_Assert_ShouldNeverHappen();
@@ -544,6 +549,8 @@ ClassFileWriter::writeConstantPool()
 			writeU16(indexForNAS(J9ROMMETHODREF_NAMEANDSIGNATURE((J9ROMMethodRef *) cpItem)));
 			break;
 		case J9CPTYPE_INTERFACE_METHOD:
+		case J9CPTYPE_INTERFACE_STATIC_METHOD:
+		case J9CPTYPE_INTERFACE_INSTANCE_METHOD:
 			writeU8(CFR_CONSTANT_InterfaceMethodref);
 			writeU16(U_16(((J9ROMMethodRef *) cpItem)->classRefCPIndex));
 			writeU16(indexForNAS(J9ROMMETHODREF_NAMEANDSIGNATURE((J9ROMMethodRef *) cpItem)));
@@ -589,6 +596,11 @@ ClassFileWriter::writeConstantPool()
 			writeU8(CFR_CONSTANT_Utf8);
 			writeU16(J9UTF8_LENGTH(J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) cpItem)));
 			writeData(J9UTF8_LENGTH(J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) cpItem)), J9UTF8_DATA(J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) cpItem)));
+			break;
+		case J9CPTYPE_CONSTANT_DYNAMIC:
+			writeU8(CFR_CONSTANT_Dynamic);
+			writeU16(U_16((((J9ROMConstantDynamicRef *) cpItem)->bsmIndexAndCpType >> J9DescriptionCpTypeShift) & J9DescriptionCpBsmIndexMask));
+			writeU16(indexForNAS(J9ROMCONSTANTDYNAMICREF_NAMEANDSIGNATURE((J9ROMConstantDynamicRef *) cpItem)));
 			break;
 		default:
 			Trc_BCU_Assert_ShouldNeverHappen();
@@ -878,7 +890,7 @@ ClassFileWriter::writeAttributes()
 	U_32 * annotationsData = getClassAnnotationsDataForROMClass(_romClass);
 	U_32 * typeAnnotationsData = getClassTypeAnnotationsDataForROMClass(_romClass);
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
-	J9UTF8 *nestTop = J9ROMCLASS_NESTTOPNAME(_romClass);
+	J9UTF8 *nestHost = J9ROMCLASS_NESTHOSTNAME(_romClass);
 	U_16 nestMemberCount = _romClass->nestMemberCount;
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 
@@ -908,7 +920,7 @@ ClassFileWriter::writeAttributes()
 	}
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	/* Class can not have both a nest members and member of nest attribute */
-	if ((0 != _romClass->nestMemberCount) || (NULL != nestTop)) {
+	if ((0 != _romClass->nestMemberCount) || (NULL != nestHost)) {
 		attributesCount += 1;
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
@@ -966,9 +978,9 @@ ClassFileWriter::writeAttributes()
 			writeU16(indexForClass(nestMemberName));
 			nestMembers += 1;
 		}
-	} else if (NULL != nestTop) {
-		writeAttributeHeader((J9UTF8 *) &MEMBER_OF_NEST, 2);
-		writeU16(indexForUTF8(nestTop));
+	} else if (NULL != nestHost) {
+		writeAttributeHeader((J9UTF8 *) &NEST_HOST, 2);
+		writeU16(indexForClass(nestHost));
 	}
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 
@@ -1447,6 +1459,7 @@ ClassFileWriter::writeVerificationTypeInfo(U_16 count, U_8 ** typeInfo)
 
 		switch(tag) {
 		case CFR_STACKMAP_TYPE_BYTE_ARRAY:
+		case CFR_STACKMAP_TYPE_BOOL_ARRAY:
 		case CFR_STACKMAP_TYPE_CHAR_ARRAY:
 		case CFR_STACKMAP_TYPE_DOUBLE_ARRAY:
 		case CFR_STACKMAP_TYPE_FLOAT_ARRAY:
@@ -1454,7 +1467,7 @@ ClassFileWriter::writeVerificationTypeInfo(U_16 count, U_8 ** typeInfo)
 		case CFR_STACKMAP_TYPE_LONG_ARRAY:
 		case CFR_STACKMAP_TYPE_SHORT_ARRAY: {
 			/* convert primitive array tag to corresponding class index in constant pool */
-			U_8 typeInfoTagToPrimitiveArrayCharMap[] = { 'I', 'F', 'D', 'J', 'S', 'B', 'C' };
+			U_8 typeInfoTagToPrimitiveArrayCharMap[] = { 'I', 'F', 'D', 'J', 'S', 'B', 'C', 'Z' };
 			U_8 primitiveChar = typeInfoTagToPrimitiveArrayCharMap[tag - CFR_STACKMAP_TYPE_INT_ARRAY];
 			/* An array cannot have more than 255 dimensions as per VM spec */
 			U_8 classUTF8[2 + 255 + 1];		/* represents J9UTF8 for primitive class (size = length + arity + primitiveChar) */
@@ -1466,17 +1479,10 @@ ClassFileWriter::writeVerificationTypeInfo(U_16 count, U_8 ** typeInfo)
 			memset((void *)(classUTF8 + 2), '[', arity);
 			*(classUTF8 + 2 + arity) = primitiveChar;
 
-			/* CFR_STACKMAP_TYPE_BYTE_ARRAY is also used for boolean arrays,
-			 * so it is possible that byte array class is not present in constant pool.
-			 * If so, first call to indexForClass() will fail,
-			 * in which case convert byte array to boolean array, and search again in the hashtable.
+			/* There is no need to double-check the primitive type the in the constant pool in the case
+			 * of boolean arrays because CFR_STACKMAP_TYPE_BYTE_ARRAY is only used for byte arrays and
+			 * CFR_STACKMAP_TYPE_BOOL_ARRAY is used to represent boolean arrays.
 			 */
-			U_16 cpIndex = indexForClass((J9UTF8 *)classUTF8, true);
-			if (0 == cpIndex) {
-				Trc_BCU_Assert_True(CFR_STACKMAP_TYPE_BYTE_ARRAY == tag);
-				*(classUTF8 + 2 + arity) = 'Z';
-				cpIndex = indexForClass((J9UTF8 *)classUTF8);
-			}
 
 			writeU8(CFR_STACKMAP_TYPE_OBJECT);
 			writeU16(indexForClass((J9UTF8 *)classUTF8));

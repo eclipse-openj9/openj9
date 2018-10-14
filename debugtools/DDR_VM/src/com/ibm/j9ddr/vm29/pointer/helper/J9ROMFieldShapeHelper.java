@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,6 @@ import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.*;
 
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.pointer.U32Pointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMFieldShapePointer;
 import com.ibm.j9ddr.vm29.structure.J9CfrClassFile;
 import com.ibm.j9ddr.vm29.structure.J9ROMFieldShape;
@@ -58,7 +57,7 @@ public class J9ROMFieldShapeHelper {
 	public static UDATA romFieldSizeOf(J9ROMFieldShapePointer fieldShapePointer) throws CorruptDataException 
 	{
 		long size = J9ROMFieldShape.SIZEOF;
-		U32 modifiers = fieldShapePointer.modifiers();
+		UDATA modifiers = fieldShapePointer.modifiers();
 		
 		if ((modifiers.anyBitsIn(J9FieldFlagConstant))) {	
 			size += ((modifiers.allBitsIn(J9FieldSizeDouble)) ? U64.SIZEOF : U32.SIZEOF);

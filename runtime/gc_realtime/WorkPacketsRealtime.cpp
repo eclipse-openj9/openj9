@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,7 @@
 #include "GCExtensions.hpp"
 #include "IncrementalOverflow.hpp"
 #include "IncrementalParallelTask.hpp"
-#include "RememberedSetWorkPackets.hpp"
+#include "RememberedSetSATB.hpp"
 #include "RealtimeGC.hpp"
 #include "WorkPacketsRealtime.hpp"
 
@@ -65,7 +65,7 @@ MM_WorkPacketsRealtime::newInstance(MM_EnvironmentBase *env)
 bool
 MM_WorkPacketsRealtime::initialize(MM_EnvironmentBase *env)
 {
-	if (!MM_WorkPackets::initialize(env)) {
+	if (!MM_WorkPacketsSATB::initialize(env)) {
 		return false;
 	}
 
@@ -74,10 +74,6 @@ MM_WorkPacketsRealtime::initialize(MM_EnvironmentBase *env)
 		 * set it to be 5% of the packet slot count.
 		 */
 		MM_GCExtensions::getExtensions(_extensions)->overflowCacheCount = (UDATA)(_slotsInPacket * 0.05);
-	}
-
-	if (!_inUseBarrierPacketList.initialize(env)) {
-		return false;
 	}
 		
 	return true;
@@ -89,9 +85,7 @@ MM_WorkPacketsRealtime::initialize(MM_EnvironmentBase *env)
 void
 MM_WorkPacketsRealtime::tearDown(MM_EnvironmentBase *env)
 {
-	MM_WorkPackets::tearDown(env);
-
-	_inUseBarrierPacketList.tearDown(env);
+	MM_WorkPacketsSATB::tearDown(env);
 }
 
 /**
@@ -199,144 +193,3 @@ MM_WorkPacketsRealtime::notifyWaitingThreads(MM_EnvironmentBase *env)
 	omrthread_monitor_exit(_inputListMonitor);
 }
 
-/**
- * Return an empty packet for barrier processing.
- * If the emptyPacketList is empty then overflow a full packet.
- */
-MM_Packet *
-MM_WorkPacketsRealtime::getBarrierPacket(MM_EnvironmentBase *env)
-{
-	MM_Packet *barrierPacket = NULL;
-
-	/* Check the free list */
-	barrierPacket = getPacket(env, &_emptyPacketList);
-	if(NULL != barrierPacket) {
-		return barrierPacket;
-	}
-
-	barrierPacket = getPacketByAdddingWorkPacketBlock(env);
-	if (NULL != barrierPacket) {
-		return barrierPacket;
-	}
-
-	/* Adding a block of packets failed so move on to overflow processing */
-	return getPacketByOverflowing(env);
-}
-
-/**
- * Get a packet by overflowing a full packet or a barrierPacket
- *
- * @return pointer to a packet, or NULL if no packets could be overflowed
- */
-MM_Packet *
-MM_WorkPacketsRealtime::getPacketByOverflowing(MM_EnvironmentBase *env)
-{
-	MM_Packet *packet = NULL;
-
-	if (NULL != (packet = getPacket(env, &_fullPacketList))) {
-		/* Attempt to overflow a full mark packet.
-		 * Move the contents of the packet to overflow.
-		 */
-		emptyToOverflow(env, packet, OVERFLOW_TYPE_WORKSTACK);
-
-		omrthread_monitor_enter(_inputListMonitor);
-
-		/* Overflow was created - alert other threads that are waiting */
-		if(_inputListWaitCount > 0) {
-			omrthread_monitor_notify(_inputListMonitor);
-		}
-		omrthread_monitor_exit(_inputListMonitor);
-	} else {
-		/* Try again to get a packet off of the emptyPacketList as another thread
-		 * may have emptied a packet.
-		 */
-		packet = getPacket(env, &_emptyPacketList);
-	}
-
-	return packet;
-}
-
-/**
- * Put the packet on the inUseBarrierPacket list.
- * @param packet the packet to put on the list
- */
-void
-MM_WorkPacketsRealtime::putInUsePacket(MM_EnvironmentBase *env, MM_Packet *packet)
-{
-	_inUseBarrierPacketList.push(env, packet);
-}
-
-void
-MM_WorkPacketsRealtime::removePacketFromInUseList(MM_EnvironmentBase *env, MM_Packet *packet)
-{
-	_inUseBarrierPacketList.remove(packet);
-}
-
-void
-MM_WorkPacketsRealtime::putFullPacket(MM_EnvironmentBase *env, MM_Packet *packet)
-{
-	_fullPacketList.push(env, packet);
-}
-
-/**
- * Move all of the packets from the inUse list to the processing list
- * so they are available for processing.
- */
-void
-MM_WorkPacketsRealtime::moveInUseToNonEmpty(MM_EnvironmentBase *env)
-{
-	MM_Packet *head, *tail;
-	UDATA count;
-	bool didPop;
-
-	/* pop the inUseList */
-	didPop = _inUseBarrierPacketList.popList(&head, &tail, &count);
-	/* push the values from the inUseList onto the processingList */
-	if (didPop) {
-		_nonEmptyPacketList.pushList(head, tail, count);
-	}
-}
-
-/**
- * Return the heap capactify factor used to determine how many packets to create
- *
- * @return the heap capactify factor
- */
-float
-MM_WorkPacketsRealtime::getHeapCapacityFactor(MM_EnvironmentBase *env)
-{
-	/* Increase the factor for staccato since more packets are required */
-	return (float)0.008;
-}
-
-/**
- * Get an input packet from the current overflow handler
- *
- * @return a packet if one is found, NULL otherwise
- */
-MM_Packet *
-MM_WorkPacketsRealtime::getInputPacketFromOverflow(MM_EnvironmentBase *env)
-{
-	MM_Packet *overflowPacket;
-
-	/* Staccato spec cannot loop here as all packets may currently be on
-	 * the InUseBarrierList.  If all packets are on the InUseBarrierList then this
-	 * would turn into an infinite busy loop.
-	 * while(!_overflowHandler->isEmpty()) {
-	 */
-	if(!_overflowHandler->isEmpty()) {
-		if(NULL != (overflowPacket = getPacket(env, &_emptyPacketList))) {
-
-			_overflowHandler->fillFromOverflow(env, overflowPacket);
-
-			if(overflowPacket->isEmpty()) {
-				/* If we didn't end up filling the packet with anything, don't return it and try again */
-				putPacket(env, overflowPacket);
-			} else {
-				return overflowPacket;
-			}
-		}
-	}
-
-	return NULL;
-}

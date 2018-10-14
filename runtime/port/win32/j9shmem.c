@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -105,7 +105,7 @@ j9shmem_open(struct J9PortLibrary *portLibrary, const char* cacheDirName, uintpt
 		secattr.lpSecurityDescriptor=&secdes;
 		secattr.bInheritHandle = FALSE; 
 
-		/* Initialise the creationMutex */
+		/* Initialize the creationMutex */
 		Trc_PRT_shmem_j9shmem_open_globalMutexCreate();
 		PPG_shmem_creationMutex = CreateMutex(&secattr, FALSE, J9PORT_SHMEM_CREATIONMUTEX);
 		lastError = GetLastError();
@@ -775,10 +775,11 @@ getModifiedSharedMemoryPathandFileName(struct J9PortLibrary* portLibrary, const 
 }
 
 intptr_t
-j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, BOOLEAN appendBaseDir, char* shmemdir, uintptr_t bufLength)
+j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint32_t flags, char* shmemdir, uintptr_t bufLength)
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 	int32_t rc;
+	BOOLEAN appendBaseDir = J9_ARE_ALL_BITS_SET(flags, J9SHMEM_GETDIR_APPEND_BASEDIR);
 
 	Trc_PRT_j9shmem_getDir_Entry();
 

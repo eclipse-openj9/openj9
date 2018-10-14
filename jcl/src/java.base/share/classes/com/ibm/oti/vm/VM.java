@@ -2,7 +2,7 @@
 
 package com.ibm.oti.vm;
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,6 +68,7 @@ public final class VM {
 	public static final int J9_GC_POLICY_GENCON;
 	public static final int J9_GC_POLICY_BALANCED;
 	public static final int J9_GC_POLICY_METRONOME;
+	public static final int J9_GC_POLICY_NOGC;
 	
 	public static final int J9CLASS_INSTANCESIZE_OFFSET;
 	public static final int J9CLASS_INSTANCE_DESCRIPTION_OFFSET;
@@ -108,6 +109,16 @@ public final class VM {
 	
 	public static final int OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS;
 	
+	public static final boolean IS_BIG_ENDIAN;
+	
+	public static final int J9_CLASSLOADER_TYPE_OTHERS;
+	public static final int J9_CLASSLOADER_TYPE_BOOT;
+	public static final int J9_CLASSLOADER_TYPE_PLATFORM;
+	
+	/* Lock reservation */
+	public static final int J9CLASS_RESERVABLE_LOCK_WORD_INIT;
+	public static final int OBJECT_HEADER_LOCK_RESERVED;
+
 	private static String[] cachedVMArgs;
 	/*[PR CMVC 189091] Perf: EnumSet.allOf() is slow */
 	/*[PR CMVC 191554] Provide access to ClassLoader methods to improve performance */
@@ -144,6 +155,7 @@ public final class VM {
 		J9_GC_POLICY_GENCON = 0;
 		J9_GC_POLICY_BALANCED = 0;
 		J9_GC_POLICY_METRONOME = 0;
+		J9_GC_POLICY_NOGC = 0;
 		
 		J9CLASS_INSTANCESIZE_OFFSET = 0;
 		J9CLASS_INSTANCE_DESCRIPTION_OFFSET = 0;
@@ -170,6 +182,15 @@ public final class VM {
 		J9_STRING_COMPRESSION_ENABLED = false;
 		
 		OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS = 0;
+		
+		IS_BIG_ENDIAN = false;
+
+		J9_CLASSLOADER_TYPE_OTHERS = 0;
+		J9_CLASSLOADER_TYPE_BOOT = 0;
+		J9_CLASSLOADER_TYPE_PLATFORM = 0;
+
+		J9CLASS_RESERVABLE_LOCK_WORD_INIT = 0;
+		OBJECT_HEADER_LOCK_RESERVED = 0;
 }
 /**
  * Prevents this class from being instantiated.
@@ -216,13 +237,16 @@ static final native ClassLoader getStackClassLoader(int depth);
 /**
  * Initialize the classloader.
  *
- * @param 		loader ClassLoader
- *					the ClassLoader instance
- * @param 		bootLoader boolean 
- *					true for the bootstrap class loader
- * @param parallelCapable true if the loader has registered as parallel capable
+ * @param loader
+ *            ClassLoader the ClassLoader instance
+ * @param loaderType
+ *            J9_CLASSLOADER_TYPE_BOOT     - bootstrap classloader 
+ *            J9_CLASSLOADER_TYPE_PLATFORM - platform classloader 
+ *            J9_CLASSLOADER_TYPE_OTHERS   - other classlader
+ * @param parallelCapable
+ *            true if the loader has registered as parallel capable
  */
-public final static native void initializeClassLoader(ClassLoader loader, boolean bootLoader, boolean parallelCapable);
+public final static native void initializeClassLoader(ClassLoader loader, int loaderType, boolean parallelCapable);
 
 public final static native long getProcessId(); 
 public final static native long getUid(); 

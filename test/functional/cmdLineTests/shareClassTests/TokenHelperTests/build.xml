@@ -1,0 +1,136 @@
+<?xml version="1.0"?>
+<!--
+  Copyright (c) 2005, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+<project name="TokenHelperTests" default="build" basedir=".">
+	<taskdef resource='net/sf/antcontrib/antlib.xml'/>
+	<description>
+		Build TokenHelperTests
+	</description>
+		
+	<!-- set global properties for this build -->
+	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/shareClassTests/TokenHelperTests" />
+	<property name="src" location="."/>
+	<property name="build" location="./bin"/>
+
+	<!--Properties for this particular build-->
+	<property name="SharedClassUtils_srddir" value="../utils/src/" />
+	<property name="BatchFiles_srddir" value="../batchfiles/" />
+
+	<target name="init">
+		<mkdir dir="${DEST}" />
+		<mkdir dir="${build}" />
+	</target>
+
+	<import file="../testClasses/build.xml" />
+	<import file="../../../cmdline_options_tester/build.xml" />
+	
+	<!--
+		NOTE: The below targets are overridden from cmdline_options_tester/build.xml 
+	-->
+	<target name="-pre-package" depends="" description="copy multiple projects source">
+	</target>
+	
+	<target name="AddBatchAndScriptFilesToPackage" >
+		<mkdir  dir="${build}/batchfiles" />
+		<copy todir="${build}/batchfiles">
+			<fileset dir="${BatchFiles_srddir}"/>
+		</copy>
+	</target>
+	
+	<target name="compile" depends="init,AddTestClassesToPackage,AddBatchAndScriptFilesToPackage" description="compile the source" >
+		<echo>Ant version is ${ant.version}</echo>
+		<!--
+		1.) Copy config files ...
+		-->
+		<copy todir="${build}">
+			<fileset dir="${src}" includes="*.xml" excludes="playlist.xml" />
+		</copy>
+		
+		<!--
+		2.) APITests directory ...
+		-->
+		<mkdir dir="${build}/APITests"/>
+		<copy todir="${build}/APITests">
+			<fileset dir="${src}/APITests/"/>
+		</copy>
+		<if>
+			<equals arg1="${JDK_VERSION}" arg2="8"/>
+			<then>
+				<javac srcdir="${build}/APITests" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+					<src path="${SharedClassUtils_srddir}"/>
+				</javac>
+			</then>
+			<else>
+				<property name="addExports" value="--add-modules openj9.sharedclasses --add-exports java.base/com.ibm.oti.util=ALL-UNNAMED" />
+				<javac srcdir="${build}/APITests" destdir="${build}" classpath="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+					<src path="${SharedClassUtils_srddir}"/>
+					<compilerarg line='${addExports}' />
+				</javac>
+			</else>
+		</if>
+		
+		<!--
+		3.) StaleMarkingTests directory ...
+		-->
+		<mkdir dir="${build}/StaleMarkingTests"/>
+		<copy todir="${build}/StaleMarkingTests">
+			<fileset dir="${src}/StaleMarkingTests/"/>
+		</copy>
+		<javac srcdir="${build}/StaleMarkingTests" destdir="${build}" debug="on" fork="true" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1" />
+	
+		<!--
+		4.) TimeStampingTests directory ...
+		-->
+		<mkdir dir="${build}/TimeStampingTests"/>
+		<mkdir dir="${build}/TimeStampingTests/props_unix"/>
+		<mkdir dir="${build}/TimeStampingTests/props_win"/>
+		<copy todir="${build}/TimeStampingTests/">
+			<fileset dir="${src}/TimeStampingTests/"/>
+		</copy>
+		<copy todir="${build}/TimeStampingTests/props_unix">
+			<fileset dir="${src}/TimeStampingTests/props_unix"/>
+		</copy>
+		<copy todir="${build}/TimeStampingTests/props_win">
+			<fileset dir="${src}/TimeStampingTests/props_win"/>
+		</copy>
+		<javac srcdir="${build}/TimeStampingTests" destdir="${build}" debug="on" fork="true" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1" />
+	</target>
+	
+	<target name="dist" depends="compile" description="generate the distribution">
+ 		<jar jarfile="${DEST}/TokenHelperTests.jar" filesonly="true">
+			<fileset dir="${build}"/>
+		</jar>
+		<copy todir="${DEST}">
+			<fileset dir="${src}" />
+			<fileset dir="${src}" includes="*.mk" />
+		</copy>
+  	</target>
+	
+	<target name="clean" depends="dist" description="clean up">
+		<!-- Delete the ${build} directory trees -->
+		<delete dir="${build}" />
+	</target>
+
+	<target name="build" >
+		<antcall target="clean" inheritall="true" />
+	</target>
+</project>

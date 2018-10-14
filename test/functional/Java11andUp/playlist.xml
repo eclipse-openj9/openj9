@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Copyright (c) 2018, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TestConfig/playlist.xsd">
+	<test>
+		<testCaseName>String_CompactStrings</testCaseName>
+		<variations>
+			<variation>-XX:+CompactStrings</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames Test_String \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+	</test>
+	
+	<!-- 
+		The nestmate test specifically exercise the JIT's handling of unresolved virtual and interface private methods.
+		The JIT pibBuilder routines will have to handle virtual and interface private methods that are both JIT compiled and interpreted.
+		These private methods will have to be resolved at runtime and gets handled as a direct dispatch, instead of an indirect virtual/interface
+		dispatch. Hence, the need for -Xjit:rtResolve.
+         
+		 Variation 1:
+			This variation tests the handling of nestmate private instance methods with the callee being interpreted.
+			The -Xjit option limits the compilation to just one method (the caller), which invokes only once an inner class's private method (the callee).
+			The callee is interpreted because it's only invoked once.
+			
+		 Variation 2:
+			This variation tests the handling of nestmate private instance methods that is JIT compiled.
+			The -Xjit option limits the compilation to two methods: a caller (count=0) and a callee (count=100).
+		    The callee is an nestmate private instance method. It's first invoked by the caller 1000 times in a loopy method. The low count=100
+			on the callee ensures that the callee can get JIT compiled early enough so that the last invocation of it jumps to a JIT'ed body.
+			
+		 Variation 3:
+			Similar to variation 1 except that the callee is an interface private method.
+			
+		 Variation 4:
+			Similar to variation 2 except that the callee is an interface private method.
+		 -->
+	<test>
+		<testCaseName>Nestmate_virtual_private</testCaseName>
+		
+		<variations>
+		
+			<variation>'-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmate/NestmateTest.testVirtualUnresolvedInterpreted*},{org/openj9/test/nestmate/NestmateTest.testVirtualUnresolvedInterpreted*}(count=0)'</variation>
+			<variation>'-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmate/NestmateTest.testVirtualUnresolvedJitted*,org/openj9/test/nestmate/NestmateTest$InnerClass.innerPrivateMethod*},{org/openj9/test/nestmate/NestmateTest.testVirtualUnresolvedInterpreted*}(count=0),{org/openj9/test/nestmate/NestmateTest$InnerClass.innerPrivateMethod*}(count=100)'</variation>
+			
+			<variation>'-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmate/NestmateTest.testInterfaceUnresolvedInterpreted*},{org/openj9/test/nestmate/NestmateTest.testInterfaceUnresolvedInterpreted*}(count=0)'</variation>
+			<variation>'-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmate/NestmateTest.testInterfaceUnresolvedJitted*,org/openj9/test/nestmate/NestmateTest$InnerInterface.innerInterfacePrivateMethod*},{org/openj9/test/nestmate/NestmateTest.testInterfaceUnresolvedJitted*}(count=0),{org/openj9/test/nestmate/NestmateTest$InnerInterface.innerInterfacePrivateMethod*}(count=100)'</variation>
+	
+		</variations>
+			
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames NestmateTest \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+   </test>
+
+
+	<!--
+		Following test covers scenario for both type of constant dynamics (Object and Primitives)
+		Variation 1:
+			This variation runs tests in default mode.
+		Variation 2:
+			This variation runs test under -Xjit:count=1 option which makes sure that ConstantDynamic is resoleved before we compile a method
+			to test JIT's handling of resolved constant dynamic
+		Variation 3:
+			This variation runs test under -Xjit:count=0 option means JIT faces unresolved constant dynamic and it needs to resolve them before
+			using it.
+		Variation 4:
+			In addition to Variation 3 this test runs gc on resolving constant dynamic. This will test JIT to make sure it correctly prepares
+			GC map in code.
+		-->
+	<test>
+		<testCaseName>CondyPrimitive</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+			<variation>'-Xjit:count=1,disableAsyncCompilation,rtResolve'</variation>
+			<variation>'-Xjit:count=0,disableAsyncCompilation'</variation>
+			<variation>'-Xjit:count=0,disableAsyncCompilation,gcOnResolve'</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames PrimitiveCondyTest \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+	</test>
+
+
+	<!--
+		Following test covers garbage collection of constant dynamics using several gc options.
+		Tests scenario for object, primitive and exception constant dynamics.
+	-->
+	<test>
+		<testCaseName>CondyGarbageCollection</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+			<variation>-Xgcpolicy:optthruput</variation>
+			<variation>-Xgcpolicy:gencon</variation>
+			<variation>-Xgcpolicy:balanced</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+			-cp $(Q)$(LIB_DIR)$(D)asm-7.0.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames GarbageCollectionCondyTest \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+	</test>
+
+	<!--
+		Following test covers metronome garbage collection tests on linux_x86.
+		Tests scenarios for object, primitive and exception constant dynamics.
+	-->
+	<test>
+		<testCaseName>CondyGarbageCollectionMetronomeLinux</testCaseName>
+		<variations>
+			<variation>-Xgcpolicy:metronome</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+			-cp $(Q)$(LIB_DIR)$(D)asm-7.0.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames GarbageCollectionCondyTest \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<platformRequirements>os.linux,arch.x86</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+	</test>
+
+	<!--
+		Following test covers metronome garbage collection tests on aix.
+		Tests scenarios for object, primitive and exception constant dynamics.
+	-->
+	<test>
+		<testCaseName>CondyGarbageCollectionMetronomeAIX</testCaseName>
+		<variations>
+			<variation>-Xgcpolicy:metronome</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+			-cp $(Q)$(LIB_DIR)$(D)asm-7.0.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames GarbageCollectionCondyTest \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<platformRequirements>os.aix</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+	</test>
+</playlist>

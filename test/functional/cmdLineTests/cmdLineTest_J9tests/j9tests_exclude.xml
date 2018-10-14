@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2009, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "excludes.dtd">
+<?xml:stylesheet type="text/xsl" href="excludes.xsl" ?>
+
+<suite id="70 J9Tests CmdLine Tests">
+
+
+<exclude id="Xnoclassgc" platform=".*_hrt.*" shouldFix="true"><reason>unsupported command line option</reason></exclude>
+<exclude id="-Xlockword bad mode" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
+<exclude id="-Xlockword default mode" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
+<exclude id="-Xlockword minimizeFootprint mode" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
+<exclude id="-Xlockword all mode" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
+<exclude id="-Xlockword bad option" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
+<exclude id="-Xlockword bad option trailing separator" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
+<exclude id="-Xlockword empty option" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
+<exclude id="-Xlockword setting lockword" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
+<exclude id="-Xlockword setting noLockword" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
+<exclude id="-Xlockword setting what" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
+<exclude id="-Xlockword with two instance on command line" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
+<exclude id="-Xlockword with duplicates" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
+
+<exclude id="-Xthr:secondarySpinForObjectMonitors on command line" platform=".*_hrt.*" shouldFix="false"><reason>Adaptive Spin not supported on hard realtime</reason></exclude>
+<exclude id="-Xthr:noSecondarySpinForObjectMonitors on command line" platform=".*_hrt.*" shouldFix="false"><reason>Adaptive Spin not supported on hard realtime</reason></exclude>
+<exclude id="-Xthr:adaptSpin on command line" platform=".*_hrt.*" shouldFix="false"><reason>Adaptive Spin not supported on hard realtime</reason></exclude>
+<exclude id="-Xthr:noAdaptSpin on command line" platform=".*_hrt.*" shouldFix="false"><reason>Adaptive Spin not supported on hard realtime</reason></exclude>
+<exclude id="-Xthr:noSecondarySpinForObjectMonitors on command line" platform="aix.*" shouldFix="false"><reason>Only for platforms that three tier spin is enabled</reason></exclude>
+<exclude id="-Xthr:secondarySpinForObjectMonitors on command line" platform="aix.*" shouldFix="false"><reason>Only for platforms that three tier spin is enabled</reason></exclude>
+
+<include id="-Xpreloaduser32" platform="win_x86.*" shouldFix="false"><reason>Only available on Windows platforms</reason></include>
+<include id="-Xpreloaduser32 -Xprotectcontiguous" platform="win_x86.*" shouldFix="false"><reason>Only available on Windows platforms</reason></include>
+<include id="-Xpreloaduser32 -Xnoprotectcontiguous" platform="win_x86.*" shouldFix="false"><reason>Only available on Windows platforms</reason></include>
+<include id="-Xnopreloaduser32" platform="win_x86.*" shouldFix="false"><reason>Only available on Windows platforms</reason></include>
+<include id="-Xnopreloaduser32 -Xprotectcontiguous" platform="win_x86.*" shouldFix="false"><reason>Only available on Windows platforms</reason></include>
+<include id="-Xnopreloaduser32 -Xnoprotectcontiguous" platform="win_x86.*" shouldFix="false"><reason>Only available on Windows platforms</reason></include>
+<include id="-Xprotectcontiguous" platform="win_x86.*" shouldFix="false"><reason>Only available on Windows platforms</reason></include>
+<include id="-Xnoprotectcontiguous" platform="win_x86.*" shouldFix="false"><reason>Only available on Windows platforms</reason></include>
+
+
+<include id="-Xthr:cfsYield" platform="linux.*" shouldFix="false"><reason>Only available on Linux platforms</reason></include>
+<include id="-Xthr:noCfsYield" platform="linux.*" shouldFix="false"><reason>Only available on Linux platforms</reason></include>
+<include id="-Xthr:yieldAlgorithm=3" platform="linux.*" shouldFix="false"><reason>Only available on Linux platforms</reason></include>
+<include id="-Xthr:yieldUsleepMultiplier=60" platform="linux.*" shouldFix="false"><reason>Only available on Linux platforms</reason></include>
+<include id="-Xthr:cfsYield,noCfsYield" platform="linux.*" shouldFix="false"><reason>Only available on Linux platforms</reason></include>
+<include id="-Xthr:yieldAlgorithm=2,yieldUsleepMultiplier=10" platform="linux.*" shouldFix="false"><reason>Only available on Linux platforms</reason></include>
+<include id="-Xaggressive" platform="linux.*" shouldFix="false"><reason>Only available on Linux platforms</reason></include>
+<include id="defaultBehaviourOfCFS" platform="linux.*" shouldFix="false"><reason>Only available on Linux platforms</reason></include>
+
+</suite>

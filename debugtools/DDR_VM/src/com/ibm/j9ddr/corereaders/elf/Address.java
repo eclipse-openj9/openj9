@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2014 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,75 +21,26 @@
  *******************************************************************************/
 package com.ibm.j9ddr.corereaders.elf;
 
-abstract class Address
-{
+abstract class Address {
+
 	private long _value;
 
-	Address(long value)
-	{
+	Address(long value) {
 		_value = value;
 	}
 
-	long getValue()
-	{
+	long getValue() {
 		return _value;
 	}
 
 	abstract Address add(long offset);
 
-	boolean isNil()
-	{
+	boolean isNil() {
 		return 0L == getValue();
 	}
 
 	abstract Number asNumber();
 
 	abstract Address nil();
-}
 
-class Address32 extends Address
-{
-	Address32(int value)
-	{
-		super(value & 0xffffffffL);
-	}
-
-	Address add(long offset)
-	{
-		long result = getValue() + offset;
-		return new Address32((int) result);
-	}
-
-	Number asNumber()
-	{
-		return Integer.valueOf((int)getValue());
-	}
-
-	Address nil()
-	{
-		return new Address32(0);
-	}
-}
-
-class Address64 extends Address
-{
-	Address64(long value)
-	{
-		super(value);
-	}
-
-	Address add(long offset)
-	{
-		return new Address64(getValue() + offset);
-	}
-
-	Number asNumber()
-	{
-		return Long.valueOf(getValue());
-	}
-
-	Address nil()
-	{
-		return new Address64(0);
-	}
 }

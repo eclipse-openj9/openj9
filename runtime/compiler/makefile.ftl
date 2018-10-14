@@ -1,4 +1,4 @@
-#        Copyright (c) 2000, 2017 IBM Corp. and others
+#        Copyright (c) 2000, 2018 IBM Corp. and others
 #
 #        This program and the accompanying materials are made available under
 #        the terms of the Eclipse Public License 2.0 which accompanies this
@@ -116,7 +116,7 @@ default:
 	@ echo "ENABLE_GPU:           $(ENABLE_GPU)"
 	@ echo "CUDA_HOME:            $(CUDA_HOME)"
 	@ echo "GDK_HOME:             $(GDK_HOME)"
-	$(MAKE) $(UMA_WINDOWS_PARRALLEL_HACK) -C $(JIT_SRCBASE)/compiler/trj9
+	$(MAKE) $(UMA_WINDOWS_PARRALLEL_HACK) -C $(JIT_SRCBASE)/compiler -f compiler.mk
 
 clean:
-	$(MAKE) $(UMA_WINDOWS_PARRALLEL_HACK) -C $(JIT_SRCBASE)/compiler/trj9 clean
+	$(MAKE) $(UMA_WINDOWS_PARRALLEL_HACK) -C $(JIT_SRCBASE)/compiler -f compiler.mk clean

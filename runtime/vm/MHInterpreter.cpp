@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,9 +66,6 @@ static const char * names[] = {
 /* #ifdef J9VM_OPT_PANAMA */
 	"J9_METHOD_HANDLE_KIND_NATIVE",
 /* #endif J9VM_OPT_PANAMA */
-/* #if defined(J9VM_OPT_VALHALLA_MVT) */
-	"J9_METHOD_HANDLE_KIND_DEFAULT_VALUE",
-/* #endif defined(J9VM_OPT_VALHALLA_MVT) */
 };
 #endif /* MH_TRACE */
 
@@ -186,13 +183,13 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 			if (NULL != receiver) {
 				_currentThread->sp += 1;
 				J9Class *receiverClazz = J9OBJECT_CLAZZ(_currentThread, receiver);
-				J9Class *interfaceClazz = getPrimitiveHandleDefc(methodHandle);
+				J9Class *interfaceClazz = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, J9VMJAVALANGINVOKEPRIMITIVEHANDLE_REFERENCECLASS(_currentThread, methodHandle));
 				method = convertITableIndexToVirtualMethod(receiverClazz, interfaceClazz, getVMSlot(methodHandle));
 				if (NULL != method) {
 					goto runMethod;
 				}
 				prepareForExceptionThrow(_currentThread);
-				setClassCastException(_currentThread, receiverClazz, interfaceClazz);
+				setCurrentExceptionUTF(_currentThread, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, NULL);
 				goto throwCurrentException;
 			}
 			nextAction = THROW_NPE;
@@ -593,36 +590,6 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 			((j9object_t*)_currentThread->sp)[slotCount] = methodHandle;
 			break;
 		}
-#if defined(J9VM_OPT_VALHALLA_MVT)
-		case J9_METHOD_HANDLE_KIND_DEFAULT_VALUE: {
-			/* Constructs a default value object for the handle's return type and pushes it on the stack.
-			 * The return type is expected to be a Derived Value Type (DVT), which is enforced by the public API.
-			 */
-
-			/* Find the value type for which to create a default value object */
-			j9object_t type = getMethodHandleMethodType(methodHandle);
-			j9object_t valueClassObject = J9VMJAVALANGINVOKEMETHODTYPE_RETURNTYPE(_currentThread, type);
-			J9Class *valueClass = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, valueClassObject);
-
-			/* Initialize the class if required. MVT adds "creating a default value" to the specified initialization triggers. */
-			if (VM_VMHelpers::classRequiresInitialization(_currentThread, valueClass)) {
-				initializeClass(_currentThread, valueClass);
-				if (VM_VMHelpers::exceptionPending(_currentThread)) {
-					goto throwCurrentException;
-				}
-			}
-
-			/* Construct the new value object. The fields will be memset to 0, which are the expected field values for a default value. */
-			j9object_t defaultValue = _vm->memoryManagerFunctions->J9AllocateObject(_currentThread, valueClass, J9_GC_ALLOCATE_OBJECT_INSTRUMENTABLE);
-			if (J9_UNEXPECTED(NULL == defaultValue)) {
-				goto throwHeapOOM;
-			}
-
-			/* Push the new default value object on the stack (replaces the MethodHandle) */
-			*((j9object_t*) _currentThread->sp) = defaultValue;
-			goto returnFromSend;
-		}
-#endif /* defined(J9VM_OPT_VALHALLA_MVT) */
 		default:
 			Assert_VM_unreachable();
 			break;

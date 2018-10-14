@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -172,7 +172,7 @@ public class JavaClass extends JavaAbstractClass
 	{
 		//TODO:  What does a null class in the constant pool represent?  (It happens frequently)
 		if (0L != id) {
-			_constantPoolClassRefs.add(new Long(id));
+			_constantPoolClassRefs.add(Long.valueOf(id));
 		}
 	}
 
@@ -209,7 +209,7 @@ public class JavaClass extends JavaAbstractClass
 	public void createConstantPoolObjectRef(long id)
 	{
 		// Add the id to the list
-		_constantPoolObjects.add(new Long(id));	
+		_constantPoolObjects.add(Long.valueOf(id));	
 	}
 
 	public void createNewStaticField(String name, String sig, int modifiers, String value)

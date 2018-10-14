@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -232,7 +232,7 @@ typedef struct J9CfrAttribute {
 #define CFR_ATTRIBUTE_RuntimeInvisibleTypeAnnotations  23
 #define CFR_ATTRIBUTE_MethodParameters 24
 #define CFR_ATTRIBUTE_NestMembers 25
-#define CFR_ATTRIBUTE_MemberOfNest 26
+#define CFR_ATTRIBUTE_NestHost 26
 #define CFR_ATTRIBUTE_StrippedLocalVariableTypeTable  122
 #define CFR_ATTRIBUTE_StrippedSourceDebugExtension  123
 #define CFR_ATTRIBUTE_StrippedInnerClasses  124
@@ -479,13 +479,13 @@ typedef struct J9CfrAttributeSynthetic {
 } J9CfrAttributeSynthetic;
 
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
-typedef struct J9CfrAttributeMemberOfNest {
+typedef struct J9CfrAttributeNestHost {
 	U_8 tag;
 	U_16 nameIndex;
 	U_32 length;
 	UDATA romAddress;
 	U_16 hostClassIndex;
-} J9CfrAttributeMemberOfNest;
+} J9CfrAttributeNestHost;
 
 typedef struct J9CfrAttributeNestMembers {
 	U_8 tag;
@@ -531,6 +531,7 @@ typedef struct J9CfrConstantPoolInfo {
 #define CFR_CONSTANT_NameAndType  12
 #define CFR_CONSTANT_MethodHandle  15
 #define CFR_CONSTANT_MethodType  16
+#define CFR_CONSTANT_Dynamic  17
 #define CFR_CONSTANT_InvokeDynamic  18
 #define CFR_CONSTANT_Module 19
 #define CFR_CONSTANT_Package 20
@@ -779,18 +780,10 @@ typedef struct J9CfrMethod {
 #define CFR_BC_ifnonnull 199
 #define CFR_BC_goto_w 200
 #define CFR_BC_jsr_w 201
-#if defined(J9VM_OPT_VALHALLA_MVT)
-#define CFR_BC_vload 217
-#define CFR_BC_vstore 218
-#define CFR_BC_vreturn 219
-#define CFR_BC_vbox 220
-#define CFR_BC_vunbox 221
-#define CFR_BC_vaload 222
-#define CFR_BC_vastore 223
-#define CFR_BC_vdefault 224
-#define CFR_BC_vgetfield 225
-#define CFR_BC_vwithfield 226
-#endif /* defined(J9VM_OPT_VALHALLA_MVT) */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#define CFR_BC_defaultvalue 224
+#define CFR_BC_withfield 226
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #define CFR_BC_breakpoint 202  			/* Reserved opcodes */
 #define CFR_BC_impdep1 254
 #define CFR_BC_impdep2 255
@@ -815,6 +808,7 @@ typedef struct J9CfrClassFile {
     U_16 methodsCount;
     U_16 attributesCount;
     U_16 firstUTF8CPIndex;
+    U_16 lastUTF8CPIndex;
     U_16 firstNATCPIndex;
     struct J9CfrConstantPoolInfo* constantPool;
     U_16* interfaces;
@@ -834,6 +828,9 @@ typedef struct J9CfrClassFile {
 #define CFR_ACC_BRIDGE  					0x00000040
 #define CFR_ACC_VOLATILE  					0x00000040
 #define CFR_ACC_TRANSIENT  					0x00000080
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#define CFR_ACC_VALUE_TYPE					0x00000100
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #define CFR_ACC_VARARGS  					0x00000080
 #define CFR_ACC_NATIVE  					0x00000100
 #define CFR_ACC_INTERFACE  					0x00000200
@@ -865,7 +862,11 @@ typedef struct J9CfrClassFile {
 #define CFR_MAJOR_VERSION  45
 #define CFR_MINOR_VERSION  3
 #define CFR_PUBLIC_PRIVATE_PROTECTED_MASK	(CFR_ACC_PUBLIC | CFR_ACC_PRIVATE | CFR_ACC_PROTECTED)
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#define CFR_CLASS_ACCESS_MASK					(CFR_ACC_PUBLIC | CFR_ACC_FINAL | CFR_ACC_SUPER | CFR_ACC_INTERFACE | CFR_ACC_ABSTRACT | CFR_ACC_SYNTHETIC | CFR_ACC_ANNOTATION | CFR_ACC_ENUM | CFR_ACC_VALUE_TYPE)
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #define CFR_CLASS_ACCESS_MASK					(CFR_ACC_PUBLIC | CFR_ACC_FINAL | CFR_ACC_SUPER | CFR_ACC_INTERFACE | CFR_ACC_ABSTRACT | CFR_ACC_SYNTHETIC | CFR_ACC_ANNOTATION | CFR_ACC_ENUM)
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #define CFR_INTERFACE_CLASS_ACCESS_MASK			(CFR_ACC_PUBLIC | CFR_ACC_INTERFACE | CFR_ACC_ABSTRACT | CFR_ACC_SYNTHETIC | CFR_ACC_ANNOTATION)
 #define CFR_FIELD_ACCESS_MASK  					(CFR_ACC_PUBLIC | CFR_ACC_PRIVATE | CFR_ACC_PROTECTED | CFR_ACC_STATIC | CFR_ACC_FINAL | CFR_ACC_VOLATILE | CFR_ACC_TRANSIENT | CFR_ACC_SYNTHETIC | CFR_ACC_ENUM)
 #define CFR_INTERFACE_FIELD_ACCESS_MASK  		(CFR_ACC_PUBLIC | CFR_ACC_STATIC | CFR_ACC_FINAL | CFR_ACC_SYNTHETIC)

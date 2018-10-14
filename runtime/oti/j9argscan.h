@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2015 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -91,6 +91,23 @@ uintptr_t scan_hex_caseflag(char **scan_start, BOOLEAN uppercaseAllowed, uintptr
 * @param *result
 * @return uintptr_t
 */
+uintptr_t scan_hex_u64(char **scan_start, uint64_t* result);
+
+
+/**
+* @brief
+* @param **scan_start
+* @param *result
+* @return uintptr_t
+*/
+uintptr_t scan_hex_caseflag_u64(char **scan_start, BOOLEAN uppercaseAllowed, uint64_t* result);
+
+/**
+* @brief
+* @param **scan_start
+* @param *result
+* @return uintptr_t
+*/
 uintptr_t scan_idata(char **scan_start, intptr_t *result);
 
 
@@ -103,6 +120,17 @@ uintptr_t scan_idata(char **scan_start, intptr_t *result);
 */
 char *scan_to_delim(J9PortLibrary *portLibrary, char **scan_start, char delimiter);
 
+/** 
+ * Scan the next double number off of the argument string.
+ * Store the scanned double value in *result
+ *
+ * @param[in/out] scan_start pointer to char * representing the string to be scanned,
+                  on success, *scan_start is updated to point to the character after the last character converted to double
+ * @param[out] result pointer to double, on success contains the scanned double value
+ * @return on success returns OPTION_OK, on overflow returns OPTION_OVERFLOW,
+ *         if no conversion is performed return OPTION_MALFORMED
+ */
+uintptr_t scan_double(char **scan_start, double *result);
 
 /**
 * @brief

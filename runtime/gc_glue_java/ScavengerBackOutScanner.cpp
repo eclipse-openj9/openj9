@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2017 IBM Corp. and others
+ * Copyright (c) 2015, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -252,28 +252,60 @@ MM_ScavengerBackOutScanner::backoutUnfinalizedObjects(MM_EnvironmentStandard *en
 		}
 	}
 
-	GC_HeapRegionIteratorStandard regionIterator2(regionManager);
-	while(NULL != (region = regionIterator2.nextRegion())) {
-		MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
-		for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
-			MM_UnfinalizedObjectList *list = &regionExtension->_unfinalizedObjectLists[i];
-			if (!list->wasEmpty()) {
-				omrobjectptr_t object = list->getPriorList();
-				while (NULL != object) {
-					omrobjectptr_t next = NULL;
-					MM_ForwardedHeader forwardHeader(object);
-					Assert_MM_false(forwardHeader.isForwardedPointer());
-					if (forwardHeader.isReverseForwardedPointer()) {
-						omrobjectptr_t originalObject = forwardHeader.getReverseForwardedPointer();
-						Assert_MM_true(NULL != originalObject);
-						next = _extensions->accessBarrier->getFinalizeLink(originalObject);
-						env->getGCEnvironment()->_unfinalizedObjectBuffer->add(env, originalObject);
-					} else {
-						next = _extensions->accessBarrier->getFinalizeLink(object);
-						env->getGCEnvironment()->_unfinalizedObjectBuffer->add(env, object);
-					}
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	if (_extensions->isConcurrentScavengerEnabled()) {
+		GC_HeapRegionIteratorStandard regionIterator2(regionManager);
+		while(NULL != (region = regionIterator2.nextRegion())) {
+			MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
+			for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
+				MM_UnfinalizedObjectList *list = &regionExtension->_unfinalizedObjectLists[i];
+				if (!list->wasEmpty()) {
+					omrobjectptr_t object = list->getPriorList();
+					while (NULL != object) {
+						MM_ForwardedHeader forwardHeader(object);
+						omrobjectptr_t forwardPtr = forwardHeader.getNonStrictForwardedObject();
+						if (NULL != forwardPtr) {
+							if (forwardHeader.isSelfForwardedPointer()) {
+								forwardHeader.restoreSelfForwardedPointer();
+							} else {
+								object = forwardPtr;
+							}
+						}
 
-					object = next;
+						omrobjectptr_t next = _extensions->accessBarrier->getFinalizeLink(object);
+						env->getGCEnvironment()->_unfinalizedObjectBuffer->add(env, object);
+
+						object = next;
+					}
+				}
+			}
+		}
+	} else
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+	{
+		GC_HeapRegionIteratorStandard regionIterator2(regionManager);
+		while(NULL != (region = regionIterator2.nextRegion())) {
+			MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
+			for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
+				MM_UnfinalizedObjectList *list = &regionExtension->_unfinalizedObjectLists[i];
+				if (!list->wasEmpty()) {
+					omrobjectptr_t object = list->getPriorList();
+					while (NULL != object) {
+						omrobjectptr_t next = NULL;
+						MM_ForwardedHeader forwardHeader(object);
+						Assert_MM_false(forwardHeader.isForwardedPointer());
+						if (forwardHeader.isReverseForwardedPointer()) {
+							omrobjectptr_t originalObject = forwardHeader.getReverseForwardedPointer();
+							Assert_MM_true(NULL != originalObject);
+							next = _extensions->accessBarrier->getFinalizeLink(originalObject);
+							env->getGCEnvironment()->_unfinalizedObjectBuffer->add(env, originalObject);
+						} else {
+							next = _extensions->accessBarrier->getFinalizeLink(object);
+							env->getGCEnvironment()->_unfinalizedObjectBuffer->add(env, object);
+						}
+
+						object = next;
+					}
 				}
 			}
 		}

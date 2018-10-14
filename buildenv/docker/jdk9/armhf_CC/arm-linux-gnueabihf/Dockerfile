@@ -1,4 +1,4 @@
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,6 +35,7 @@ RUN apt-get update \
     git-core \
     libasound2-dev \
     libcups2-dev \
+    libdwarf-dev \
     libelf-dev \
     libfreetype6-dev \
     libnuma-dev \
@@ -44,7 +45,6 @@ RUN apt-get update \
     libxt-dev \
     libxtst-dev \
     make \
-    openjdk-8-jdk \
     pkg-config \
     qemu \
     realpath \
@@ -67,6 +67,13 @@ RUN cd /root \
   && tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2 \
   && rm -f freemarker.tgz
 
+# Download and install boot JDK from AdoptOpenJDK
+RUN cd /root \
+  && wget -O bootjdk8.tar.gz https://api.adoptopenjdk.net/openjdk8-openj9/releases/x64_linux/latest/binary \
+  && tar -xzf bootjdk8.tar.gz \
+  && rm -f bootjdk8.tar.gz \
+  && ls | grep -i jdk | xargs -I % sh -c 'mv % bootjdk8'
+
 # get the toolchain
 RUN cd /root \
   && wget https://releases.linaro.org/components/toolchain/binaries/4.9-2017.01/arm-linux-gnueabihf/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf.tar.xz \
@@ -82,8 +89,8 @@ RUN cd /root \
 ADD \
     http://ftp.us.debian.org/debian/pool/main/a/alsa-lib/libasound2_1.1.3-5_armhf.deb                \
     http://ftp.us.debian.org/debian/pool/main/a/alsa-lib/libasound2-dev_1.1.3-5_armhf.deb            \
-    http://ftp.us.debian.org/debian/pool/main/c/cups/libcups2-dev_2.2.1-8_armhf.deb                  \
-    http://ftp.us.debian.org/debian/pool/main/c/cups/libcupsimage2-dev_2.2.1-8_armhf.deb             \
+    http://ftp.us.debian.org/debian/pool/main/c/cups/libcups2-dev_2.2.1-8%2bdeb9u1_armhf.deb         \
+    http://ftp.us.debian.org/debian/pool/main/c/cups/libcupsimage2-dev_2.2.1-8%2bdeb9u1_armhf.deb    \
     http://ftp.us.debian.org/debian/pool/main/d/dwarfutils/libdwarf-dev_20161124-1+deb9u1_armhf.deb  \
     http://ftp.us.debian.org/debian/pool/main/f/freetype/libfreetype6_2.6.3-3.2_armhf.deb            \
     http://ftp.us.debian.org/debian/pool/main/f/freetype/libfreetype6-dev_2.6.3-3.2_armhf.deb        \
@@ -121,11 +128,15 @@ RUN cd /root/debs \
 # Env vars set here will be visibile in the running container, so can be
 # used to convey configuration information to the build scripts.
 
+# Set environment variable JAVA_HOME, and prepend ${JAVA_HOME}/bin to PATH
+ENV JAVA_HOME="/root/bootjdk8"
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
+
 # Directory containing the cross compilation tool chain
-ENV OPENJ9_CC_DIR /root/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf
+ENV OPENJ9_CC_DIR="/root/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf"
 
 # Prefix for the cross compilation tools (without the trailing '-')
-ENV OPENJ9_CC_PREFIX arm-linux-gnueabihf
+ENV OPENJ9_CC_PREFIX="arm-linux-gnueabihf"
 
 # Add the toolchain bin dir to the PATH for convenience
 ENV PATH="${PATH}:${OPENJ9_CC_DIR}/bin"

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,10 +75,11 @@
 #define JAVA_LIB_PATH_EQUALS "-Djava.library.path="
 #define JAVA_EXT_DIRS_EQUALS "-Djava.ext.dirs="
 #define JAVA_USER_DIR_EQUALS "-Duser.dir="
-#define SUN_NIO_MAXDIRECTMEMORYSIZE_EQUALS "-Dsun.nio.MaxDirectMemorySize="
 #define OPTIONS_DEFAULT "options.default"
 
 #define LARGE_STRING_BUF_SIZE 256
+
+static char * getStartOfOptionValue(J9VMInitArgs* j9vm_args, IDATA element, const char *optionName);
 
 IDATA
 findArgInVMArgs(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDATA match, const char* optionName, const char* optionValue, UDATA doConsumeArgs) {
@@ -346,6 +347,8 @@ optionValueOperations(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, IDATA
 	UDATA value, oldValue, done;
 	IDATA errorFound = 0;
 	UDATA mapType;
+	double dvalue = 0.0;
+	uintptr_t rc = 0;
 	PORT_ACCESS_FROM_PORT(portLibrary);
 
 	if (element < 0) {			/* If invalid element... don't even try */
@@ -355,7 +358,7 @@ optionValueOperations(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, IDATA
 	}
 
 	if (valuesBuffer) {
-		if ((action == GET_MEM_VALUE) || (action == GET_INT_VALUE) || (action == GET_PRC_VALUE)) {
+		if ((action == GET_MEM_VALUE) || (action == GET_INT_VALUE) || (action == GET_PRC_VALUE) || (action == GET_DBL_VALUE)) {
 			if (!(*valuesBuffer)) {
 				return OPTION_ERROR;					/* *valuesBuffer is an input value. Make sure it is not NULL. */
 			}
@@ -475,7 +478,7 @@ optionValueOperations(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, IDATA
 						}
 						break;
 					case MAP_WITH_INCLUSIVE_OPTIONS :
-						/* Has to build the result from part of the j9Name and then the actual value on the comand-line */
+						/* Has to build the result from part of the j9Name and then the actual value on the command-line */
 						if (bufSize > 0) {
 							char* mapName = MAPPING_MAPNAME(j9vm_args, element);
 							/* To get the value of the *actual* arg specified on the command-line, the delimiter may not be the one specified */
@@ -506,22 +509,26 @@ optionValueOperations(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, IDATA
 				done = TRUE;
 				break;
 
+			case GET_DBL_VALUE:
+				*(double *)reserved = 0.0;
+				cursor = getStartOfOptionValue(j9vm_args, element, *valuesBuffer);
+				rc = scan_double(&cursor, &dvalue);
+				if (*cursor != '\0') {
+					return OPTION_MALFORMED;
+				}
+				if (OPTION_OK != rc) {
+					return rc;
+				}
+				*(double *)reserved = dvalue;
+				done = TRUE;
+				break;
+
 			case GET_MEM_VALUE :
 			case GET_INT_VALUE :
 			case GET_PRC_VALUE :
-				*((UDATA*)(reserved)) = 0;				/* Initialize the return value */
-				if ( HAS_MAPPING(j9vm_args, element) ) {
-					/* If we have a mapping, then we ignore the option name passed in. Instead we want the one that corresponds to the actual cmd line */
-					scanStart = &(j9vm_args->actualVMArgs->options[element].optionString[ strlen(MAPPING_MAPNAME(j9vm_args, element)) ]);
-				} else {
-					if (*valuesBuffer) {
-						scanStart = &(j9vm_args->actualVMArgs->options[element].optionString[ strlen(*valuesBuffer) ]);
-					} else {
-						return OPTION_ERROR;
-					}
-				}
+				*((UDATA*)(reserved)) = 0;
+				scanStart = getStartOfOptionValue(j9vm_args, element, *valuesBuffer);
 				cursor = scanStart;
-
 				if (scan_udata(&cursor, &value)) {
 					return OPTION_MALFORMED;
 				}
@@ -629,58 +636,21 @@ optionValueOperations(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, IDATA
 	return OPTION_OK;
 }
 
-static UDATA
-convertMemorySizeToBytes(J9PortLibrary * portLib, char *sizeString, UDATA *result)
+static char * 
+getStartOfOptionValue(J9VMInitArgs* j9vm_args, IDATA element, const char *optionName)
 {
-	UDATA value = 0;
-	UDATA oldValue = 0;
-	char *cursor = sizeString;
+	const char *option = optionName;
+	char *value = NULL;
 
-	*result = 0;
-	if (scan_udata(&cursor, &value)) {
-		return OPTION_MALFORMED;
+	if (HAS_MAPPING(j9vm_args, element)) {
+		option = MAPPING_MAPNAME(j9vm_args, element);
 	}
 
-	switch (*cursor) {
-	case '\0':
-		oldValue = value;
-		value = (value +  sizeof(UDATA) - 1) & ~(sizeof(UDATA) - 1);		/* round to nearest pointer value */
-		if (value < oldValue) {
-			return OPTION_OVERFLOW;
-		}
-		break;
-	case 'k':
-	case 'K':
-		if (value <= (((UDATA)-1) >> 10)) {
-			value <<= 10;
-		} else {
-			return OPTION_OVERFLOW;
-		}
-		cursor++;
-		break;
-	case 'm':
-	case 'M':
-		if (value <= (((UDATA)-1) >> 20)) {
-			value <<= 20;
-		} else {
-			return OPTION_OVERFLOW;
-		}
-		cursor++;
-		break;
-	case 'g':
-	case 'G':
-		if (value <= (((UDATA)-1) >> 30)) {
-			value <<= 30;
-		} else {
-			return OPTION_OVERFLOW;
-		}
-		cursor++;
-		break;
-	default:
-		return OPTION_MALFORMED;
-	}
-	*result = value;
-	return 0;
+	Assert_Util_true(NULL != option);
+	
+	value = j9vm_args->actualVMArgs->options[element].optionString + strlen(option);
+
+	return value;
 }
 
 IDATA
@@ -713,16 +683,20 @@ addXjcl(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA j2s
 	if (J2SE_SHAPE_RAW == (j2seVersion & J2SE_SHAPE_MASK)) {
 		Assert_Util_unreachable();
 	} 
-	if (J2SE_V10 <= j2seReleaseValue) {
+	if (J2SE_V11 <= j2seReleaseValue) {
+		dllName = J9_JAVA_SE_11_DLL_NAME;
+		dllNameLength = sizeof(J9_JAVA_SE_11_DLL_NAME);
+	} else if (J2SE_V10 <= j2seReleaseValue) {
 		dllName = J9_JAVA_SE_10_DLL_NAME;
 		dllNameLength = sizeof(J9_JAVA_SE_10_DLL_NAME);
 	} else if (J2SE_19 <= j2seReleaseValue) {
 		dllName = J9_JAVA_SE_9_DLL_NAME;
 		dllNameLength = sizeof(J9_JAVA_SE_9_DLL_NAME);
-	} else if (J2SE_17 <= j2seReleaseValue) {
+	} else if (J2SE_18 <= j2seReleaseValue) {
+		/* Java 8 uses DLL name for Java 7 */
 		dllName = J9_JAVA_SE_7_BASIC_DLL_NAME;
 		dllNameLength = sizeof(J9_JAVA_SE_7_BASIC_DLL_NAME);
-	} else { /* Java 6 */
+	} else { /* Java 6, 7 */
 		Assert_Util_unreachable();
 	}
 
@@ -1554,47 +1528,6 @@ addLauncherArgs(J9PortLibrary * portLib, JavaVMInitArgs *launcherArgs, UDATA lau
 			return -1;
 		}
 		optArg->vmOpt.extraInfo = currentOpt->extraInfo;
-
-		if (0 == strncmp(optString, VMOPT_XXMAXDIRECTMEMORYSIZEEQUALS, strlen(VMOPT_XXMAXDIRECTMEMORYSIZEEQUALS))) {
-			/*
-			 *  CMVC 149604 - check for errors in <size> portion of -XX:maxDirectMemorySize=<size>
-			 *                and add -Dsun.nio.MaxDirectMemorySize=<size in bytes>
-			 */
-
-			UDATA value = 0;
-			char *optname = VMOPT_XXMAXDIRECTMEMORYSIZEEQUALS;
-			IDATA returnCode = convertMemorySizeToBytes(portLib, optString + strlen(VMOPT_XXMAXDIRECTMEMORYSIZEEQUALS), &value);
-			if ( OPTION_OK == returnCode ) {
-				const size_t bufferSize = strlen(SUN_NIO_MAXDIRECTMEMORYSIZE_EQUALS) + 16; /* allocate 16 byt bytes for maximum length decimal string and null */
-				char * snmBuffer = j9mem_allocate_memory(bufferSize, OMRMEM_CATEGORY_VM);
-				if (NULL == snmBuffer) {
-					return -1;
-				}
-				/* add -Dsun.nio.MaxDirectMemorySize= to appendList.*/
-				j9str_printf(portLib, snmBuffer, bufferSize, SUN_NIO_MAXDIRECTMEMORYSIZE_EQUALS "%zd", value);
-				optArg = newJavaVMArgInfo(vmArgumentsList, snmBuffer, ARG_MEMORY_ALLOCATION|CONSUMABLE_ARG);
-				if (NULL == optArg) {
-					j9mem_free_memory(snmBuffer);
-					return -1;
-				}
-				optArg->vmOpt.extraInfo = currentOpt->extraInfo;
-			} else {
-				/* show something meaningful about why parsing failed */
-				switch(returnCode) {
-				case OPTION_MALFORMED:
-					j9nls_printf(portLib, J9NLS_WARNING, J9NLS_VMUTIL_OPTION_MALFORMED, optString);
-					break;
-				case OPTION_OVERFLOW:
-					j9nls_printf(portLib, J9NLS_WARNING, J9NLS_VMUTIL_OPTION_OVERFLOW, optString);
-					break;
-				default:
-					scan_failed(portLib, "VM", optString);
-					break;
-				}
-				return -1;
-			}
-		}
-
 	}
 	return 0;
 }

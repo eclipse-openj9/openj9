@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2017 IBM Corp. and others
+ * Copyright (c) 2014, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -90,7 +90,7 @@ typedef struct OMRTraceLanguageInterface {
 /*
  * =============================================================================
  *  Functions called by users of the trace library at initialisation/shutdown time.
- *  (Runtime functions are called vi UtInterface->UtServerInterface once initialised)
+ *  (Runtime functions are called vi UtInterface->UtServerInterface once initialized)
  * =============================================================================
  */
 
@@ -296,7 +296,7 @@ omr_error_t setTraceHeaderInfo(const char * serviceInfo, const char * startupInf
  * }
  * where ReportCommandLineErrorFunc is the same function (or the same underlying functionality)
  * as passed to the trace engine in field OMRTraceLanguageInterface.ReportCommandLineError when trace
- * was initialised. This allows trace implementors to integrate their own debugging messages
+ * was initialized. This allows trace implementors to integrate their own debugging messages
  * with those from the trace engine without having to create a separate debugging mechanism.
  *
  * @return The integer debug level the trace engine is using.

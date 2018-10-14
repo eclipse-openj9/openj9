@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,11 +23,14 @@ package com.ibm.j9ddr.vm29.j9.gc;
 
 import com.ibm.j9ddr.AddressedCorruptDataException;
 import com.ibm.j9ddr.CorruptDataException;
+import com.ibm.j9ddr.vm29.pointer.Pointer;
+import com.ibm.j9ddr.vm29.pointer.U32Pointer;
+import com.ibm.j9ddr.vm29.pointer.UDATAPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.MM_HeapLinkedFreeHeaderPointer;
+import com.ibm.j9ddr.vm29.structure.J9Consts;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.UDATA;
-import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
-import com.ibm.j9ddr.vm29.structure.J9Consts;
 
 class GCHeapLinkedFreeHeader_V1 extends GCHeapLinkedFreeHeader {
 	protected GCHeapLinkedFreeHeader_V1(MM_HeapLinkedFreeHeaderPointer heapLinkedFreeHeaderPointer)
@@ -42,13 +45,16 @@ class GCHeapLinkedFreeHeader_V1 extends GCHeapLinkedFreeHeader {
 	
 	private UDATA getNextImpl() throws CorruptDataException
 	{
-		if(J9BuildFlags.interp_compressedObjectHeader) {
-			//_next_v1() is the compr version
-			U32 lowBits = heapLinkedFreeHeaderPointer._next_v1();
-			U32 highBits = heapLinkedFreeHeaderPointer._nextHighBits();
+		Pointer nextEA = heapLinkedFreeHeaderPointer._nextEA();
+
+		if (J9BuildFlags.interp_compressedObjectHeader) {
+			U32Pointer nextPointer = U32Pointer.cast(nextEA);
+			U32 lowBits = nextPointer.at(0);
+			U32 highBits = nextPointer.at(1);
+
 			return new UDATA(highBits).leftShift(32).bitOr(lowBits);
 		} else {
-			return heapLinkedFreeHeaderPointer._next();
+			return UDATAPointer.cast(nextEA).at(0);
 		}
 	}
 

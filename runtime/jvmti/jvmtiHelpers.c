@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -214,6 +214,8 @@ static J9JVMTIGlobalBreakpoint * findGlobalBreakpoint (J9JVMTIData * jvmtiData, 
 static J9JVMTIBreakpointedMethod * createBreakpointedMethod (J9VMThread * currentThread, J9Method * ramMethod);
 static UDATA hashEqualObjectTag (void *lhsEntry, void *rhsEntry, void *userData);
 static UDATA findDecompileInfoFrameIterator(J9VMThread *currentThread, J9StackWalkState *walkState);
+static UDATA watchedClassHash (void *entry, void *userData);
+static UDATA watchedClassEqual (void *lhsEntry, void *rhsEntry, void *userData);
 
 
 jvmtiError
@@ -351,9 +353,17 @@ disposeEnvironment(J9JVMTIEnv * j9env, UDATA freeData)
 			j9env->objectTagTable = NULL;
 		}
 
-		if (NULL != j9env->watchedFieldPool) {
-			pool_kill(j9env->watchedFieldPool);
-			j9env->watchedFieldPool = NULL;
+		if (NULL != j9env->watchedClasses) {
+			J9HashTableState walkState;
+			J9JVMTIWatchedClass *watchedClass = hashTableStartDo(j9env->watchedClasses, &walkState);
+			while (NULL != watchedClass) {
+				if (J9JVMTI_CLASS_REQUIRES_ALLOCATED_J9JVMTI_WATCHED_FIELD_ACCESS_BITS(watchedClass->clazz)) {
+					j9mem_free_memory(watchedClass->watchBits);
+				}
+				watchedClass = hashTableNextDo(&walkState);
+			}
+			hashTableFree(j9env->watchedClasses);
+			j9env->watchedClasses = NULL;
 		}
 
 		if (NULL != j9env->breakpoints) {
@@ -451,8 +461,8 @@ allocateEnvironment(J9InvocationJavaVM * invocationJavaVM, jint version, void **
 			if (j9env->objectTagTable == NULL) {
 				goto fail;
 			}
-			j9env->watchedFieldPool = pool_new(sizeof(J9JVMTIWatchedField), 0, 0, POOL_ALWAYS_KEEP_SORTED, J9_GET_CALLSITE(), J9MEM_CATEGORY_JVMTI, POOL_FOR_PORT(vm->portLibrary));
-			if (j9env->watchedFieldPool == NULL) {
+			j9env->watchedClasses = hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 0, sizeof(J9JVMTIWatchedClass), sizeof(UDATA), 0,  J9MEM_CATEGORY_JVMTI, watchedClassHash, watchedClassEqual, NULL, NULL);
+			if (j9env->watchedClasses == NULL) {
 				goto fail;
 			}
 			j9env->breakpoints = pool_new(sizeof(J9JVMTIAgentBreakpoint), 0, 0, POOL_ALWAYS_KEEP_SORTED, J9_GET_CALLSITE(), J9MEM_CATEGORY_JVMTI, POOL_FOR_PORT(vm->portLibrary));
@@ -505,7 +515,7 @@ fail:
 
 		omrthread_monitor_exit(jvmtiData->mutex);
 		vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	return rc;
@@ -705,7 +715,9 @@ finishedEvent(J9VMThread * currentThread, UDATA eventNumber, UDATA hadVMAccess, 
 	/* Acquire VM access if the current thread does not already have it */
 
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
-	currentThread->javaVM->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+	if (currentThread->inNative) {
+		currentThread->javaVM->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+	}
 #else /* J9VM_INTERP_ATOMIC_FREE_JNI */
 	if (!(currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS)) {
 		currentThread->javaVM->internalVMFunctions->internalAcquireVMAccess(currentThread);
@@ -777,11 +789,17 @@ getThreadState(J9VMThread *currentThread, j9object_t threadObject)
 		if (vmstate & J9VMTHREAD_STATE_INTERRUPTED) {
 			state |= JVMTI_THREAD_STATE_INTERRUPTED;
 		}
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+		if (vmThread->inNative) {
+			state |= JVMTI_THREAD_STATE_IN_NATIVE;
+		}
+#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
 		if ( (vmThread->omrVMThread->vmState & J9VMSTATE_MAJOR) == J9VMSTATE_JNI ) {
 			if (!(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS)) {
 				state |= JVMTI_THREAD_STATE_IN_NATIVE;
 			}
 		}
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 		if (vmstate & J9VMTHREAD_STATE_BLOCKED) {
 			state |= JVMTI_THREAD_STATE_BLOCKED_ON_MONITOR_ENTER;
 		/* Object.wait() */
@@ -898,6 +916,20 @@ static UDATA
 hashEqualObjectTag(void *lhsEntry, void *rhsEntry, void *userData) 
 {
 	return (((J9JVMTIObjectTag *) lhsEntry)->ref == ((J9JVMTIObjectTag *) rhsEntry)->ref);
+}
+
+
+static UDATA
+watchedClassHash(void *entry, void *userData) 
+{
+	return ((UDATA) ((J9JVMTIWatchedClass *) entry)->clazz) / J9_REQUIRED_CLASS_ALIGNMENT;
+}
+
+
+static UDATA
+watchedClassEqual(void *lhsEntry, void *rhsEntry, void *userData) 
+{
+	return (((J9JVMTIWatchedClass *) lhsEntry)->clazz == ((J9JVMTIWatchedClass *) rhsEntry)->clazz);
 }
 
 

@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!--
+  Copyright (c) 2010, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "excludes.dtd">
+<?xml:stylesheet type="text/xsl" href="excludes.xsl" ?>
+<suite id="CommandLineOption Excluded Test Case List">
+
+	<!-- Use this file to exclude tests when testing OpenJ9 -->
+
+	<platform id="none"/>
+	<platform id="all"/>
+	
+	<exclude id="Test 4s: Setup for test 4 and test 5, create a Java 6 cache" platform="zos_390-31.*" shouldFix="yes">
+		<reason>Java 6 SDK is missing for the platform</reason>
+	</exclude>
+	<exclude id="Test 4: run listAllCaches to show the Java 6 cache" platform="zos_390-31.*" shouldFix="yes">
+		<reason>Java 6 SDK is missing for the platform</reason>
+	</exclude>
+	<exclude id="Test 5: run printStats on the Java 6 cache" platform="zos_390-31.*" shouldFix="yes">
+		<reason>Java 6 SDK is missing for the platform</reason>
+	</exclude>
+	
+	<exclude id="Test 7: ensure zip cache sharing works and zip cache number is not 0" platform="[^8]\d*">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 8: ensure zip cache info is printed in printAllStats output" platform="[^8]\d*">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 10s: JAZZ 31726 setup for Test 10, 11" platform="[^8]\d*">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 10: JAZZ 31726 test 1 ensure -Xzero:sharebootzip creates zip caches" platform="[^8]\d*">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 11: JAZZ 31726 test 2 ensure -Xzero:describe shows -Xzero:sharebootzip" platform="[^8]\d*">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 12s: JAZZ 31726 setup for Test 12" platform="[^8]\d*">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 12: JAZZ 31726 test 3 ensure -Xzero:nosharebootzip doesn't create zip caches" platform="[^8]\d*">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 13s: JAZZ 31726 setup for Tests 13, 14 and 15" platform="[^8]\d*">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 13: JAZZ 31723 test 2 ensure opened non-cached zip files are calling the VM_ZIP_LOAD hook" platform="[^8]\d*">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 14: JAZZ 31726 test 4 ensure -Xzero:none doesn't create zip caches" platform="[^8]\d*">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 15: JAZZ 31726 test 5 ensure -Xzero:nosharebootzip,describe shows -Xzero:none" platform="[^8]\d*">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 16s: JAZZ 31726 setup for Test 16" platform="[^8]\d*">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 16: JAZZ 31726 test 6 ensure -Xzero creates boot zip caches" platform="[^8]\d*">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 17: JAZZ 31726 test 7 ensure -Xzero -Xzero:describe shows sharebootzip" platform="[^8]\d*">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 133: Test -Xshareclasses:printallstats=zipcache" platform="[^8]\d*" shouldFix="yes">
+		<reason>JCL team has not yet added JVM_ZipHook() in Java 9</reason>
+	</exclude>
+	<exclude id="Test 154: Test -Xshareclasses:printstats=zipcache" platform="[^8]\d*" shouldFix="yes">
+		<reason>JCL team has not yet added JVM_ZipHook() in Java 9</reason>
+	</exclude>
+	<exclude id="Test 206-a: Create a new cache with -Xshareclasses:mprotect=default option." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 206-b: Reuse the cache with -Xshareclasses:mprotect=onfind option." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 206-c: Reuse the cache with -Xshareclasses:mprotect=partialpagesonstartup option." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 206-d: Reuse the cache with -Xshareclasses:mprotect=partialpages option." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 206-e: Reuse the cache without any -Xshareclasses:mprotect=<> option." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 206-f: Reuse the cache with -Xshareclasses:mprotect=nopartialpages option." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 206-g: Reuse the cache with -Xshareclasses:mprotect=none option." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 206-h: Create a new cache with -Xshareclasses:mprotect=partialpagesonstartup option." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 206-i: Reuse the cache with -Xshareclasses:mprotect=onfind option." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 206-j: Reuse the cache with -Xshareclasses:mprotect=default option." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 206-k: Reuse the cache without any -Xshareclasses:mprotect=<> option." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 206-l: Reuse the cache with -Xshareclasses:mprotect=nopartialpages option." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 206-m: Reuse the cache with -Xshareclasses:mprotect=none option." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 206-n: Create a new cache with -Xshareclasses:mprotect=partialpages option." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 206-o: Reuse the cache with -Xshareclasses:mprotect=onfind option." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 206-p: Reuse the cache with -Xshareclasses:mprotect=partialpagesonstartup option." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 206-q: Reuse the cache with -Xshareclasses:mprotect=default option." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 206-r: Reuse the cache without any -Xshareclasses:mprotect=<> option." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 206-s: Reuse the cache with -Xshareclasses:mprotect=nopartialpages option." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 206-t: Reuse the cache with -Xshareclasses:mprotect=none option." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 206-u: Create a cache with -Xshareclasses:mprotect=nopartialpages option." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 206-v: Reuse the cache with -Xshareclasses:mprotect=onfind option and verify partial page protection is not enabled." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 206-w: Reuse the cache with -Xshareclasses:mprotect=partialpagesonstartup option and verify partial page protection is not enabled." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 206-x: Reuse the cache with -Xshareclasses:mprotect=partialpages option and verify partial page protection is not enabled." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 206-y: Reuse the cache with -Xshareclasses:mprotect=default option and verify partial page protection is not enabled." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 206-z: Reuse the cache without any -Xshareclasses:mprotect=<> option and verify partial page protection is not enabled." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 206-aa: Reuse the cache with -Xshareclasses:mprotect=none option and verify that memory protection is disabled." platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
+	</exclude>
+	<exclude id="Test 180-a: Create a system dump by using a shared cache with enableBCI option and with a JVMTI agent" platform="latest">
+		<reason>This test doesn't work for openj9</reason>
+	</exclude>
+	<exclude id="Test 180-b: Make sure system dump exists." platform="latest">
+		<reason>This test doesn't work for openj9</reason>
+	</exclude>
+	<exclude id="Test 180-c: Verify that Intermediate Class Data is present for non-bootstrap class" platform="latest">
+		<reason>This test doesn't work for openj9</reason>
+	</exclude>
+	<exclude id="Test 180-d: Verify that Intermediate Class Data is present for bootstrap class" platform="latest">
+		<reason>This test doesn't work for openj9</reason>
+	</exclude>
+	<exclude id="Test 180-g: Verify that Intermediate Class Data is present for non-bootstrap class" platform="latest">
+		<reason>This test doesn't work for openj9</reason>
+	</exclude>
+	<exclude id="Test 180-h: Verify that Intermediate Class Data is present for bootstrap class" platform="latest">
+		<reason>This test doesn't work for openj9</reason>
+	</exclude>
+	<exclude id="Test 181-b: Create a system dump by using previously created cache in read only mode with a JVMTI agent that has retransformation enabled" platform="latest">
+		<reason>This test doesn't work for openj9</reason>
+	</exclude>
+	<exclude id="Test 181-c: Make sure system dump exists." platform="latest">
+		<reason>This test doesn't work for openj9</reason>
+	</exclude>
+	<exclude id="Test 181-d: Verify that Intermediate Class Data is present" platform="latest">
+		<reason>This test doesn't work for openj9</reason>
+	</exclude>
+	<exclude id="Test 182-b: Create a system dump using previously created cache in read only mode with a JVMTI agent that has retransformation disabled" platform="latest">
+		<reason>This test doesn't work for openj9</reason>
+	</exclude>
+	<exclude id="Test 182-c: Make sure system dump exists." platform="latest">
+		<reason>This test doesn't work for openj9</reason>
+	</exclude>
+	<exclude id="Test 182-d: Verify that Intermediate Class Data is present" platform="latest">
+		<reason>This test doesn't work for openj9</reason>
+	</exclude>
+	<exclude id="Test 27: CMVC 168131 : Ensure Java 8 cache size is default (16 MB)" platform="all">
+		<reason>Exclude this test on OpenJ9, as the default nonpersistent cache is usually greater than SHMMAX, we do not know the value of SHMMAX on the testing machines</reason>
+	</exclude>
+	<exclude id="Test 29: CMVC 168131 : Ensure Java 8 cache size is default (16 MB)" platform="all">
+		<reason>Exclude this test on OpenJ9, as the default nonpersistent cache is usually greater than SHMMAX, we do not know the value of SHMMAX on the testing machines</reason>
+	</exclude>
+	<exclude id="Test 55 Check default cache size on non-OpenJ9 Java 8" platform="all">
+		<reason>This test should not be run on OpenJ9</reason>
+	</exclude>
+	<exclude id="Test 55 Check default cache size on OpenJ9 Java 8" platform="[^8]\d*">
+		<reason>This test should not be run on Java 9 and up</reason>
+	</exclude>
+	<exclude id="Test 55 Check default cache size on Java 9 and up" platform="8">
+		<reason>This test should not be run on Java 8</reason>
+	</exclude>
+</suite>

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,6 @@ import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_INTERFACE_MET
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_LONG;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_METHODHANDLE;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_METHOD_TYPE;
-import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_SHARED_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_STATIC_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_STRING;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_UNUSED8;
@@ -44,7 +43,6 @@ import static com.ibm.j9ddr.vm29.structure.J9ROMMethodHandleRef.MH_REF_PUTFIELD;
 import static com.ibm.j9ddr.vm29.structure.J9ROMMethodHandleRef.MH_REF_PUTSTATIC;
 
 import java.io.PrintStream;
-
 
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.j9.ConstantPoolHelpers;
@@ -94,7 +92,7 @@ import com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags;
 import com.ibm.j9ddr.vm29.types.U16;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.U8;
-
+import com.ibm.j9ddr.vm29.types.UDATA;
 
 public class J9BCUtil {
 	private static final String nl = System.getProperty("line.separator");
@@ -609,7 +607,7 @@ public class J9BCUtil {
 			}
 		}
 
-		U32 romFieldCount = romClass.romFieldCount();
+		UDATA romFieldCount = romClass.romFieldCount();
 		out.append(String.format("Fields (%d):" + nl, romFieldCount.longValue()));
 
 		J9ROMFieldShapeIterator iterator = new J9ROMFieldShapeIterator(romClass.romFields(), romFieldCount);
@@ -650,10 +648,10 @@ public class J9BCUtil {
 	}
 
 	private static void dumpCPShapeDescription(PrintStream out, J9ROMClassPointer romClass, long flags) throws CorruptDataException {
-		U32Pointer cpDescription = romClass.cpShapeDescription();
+		U32Pointer cpDescription = J9ROMClassHelper.cpShapeDescription(romClass);
 		long descriptionLong;
 		long i, j, k, numberOfLongs;
-		char symbols[] = new char[] { '.', 'C', 'S', 'I', 'F', 'J', 'D', 'i', 's', 'v', 'x', 'y', 'z', 'T', 'H', 'A' };
+		char symbols[] = new char[] { '.', 'C', 'S', 'I', 'F', 'J', 'D', 'i', 's', 'v', 'x', 'y', 'z', 'T', 'H', 'A', '.', 'c', 'x', 'v' };
 		
 		symbols[(int)J9CPTYPE_UNUSED8] = '.';
 
@@ -760,7 +758,7 @@ public class J9BCUtil {
 	private static void dumpSourceDebugExtension(PrintStream out, J9ROMClassPointer romClass, long flags) throws CorruptDataException {
 		if (J9BuildFlags.opt_debugInfoServer) {
 			U8Pointer current;
-			U32 temp;
+			UDATA temp;
 
 			if ((flags & J9BCTranslationData.BCT_StripDebugAttributes) == 0) {
 				J9SourceDebugExtensionPointer sde = OptInfo.getSourceDebugExtensionForROMClass(romClass);
@@ -919,7 +917,7 @@ public class J9BCUtil {
 	
 		if (0 != bsmCount) {
 			J9ROMConstantPoolItemPointer constantPool = ConstantPoolHelpers.J9_ROM_CP_FROM_ROM_CLASS(romClass);
-			U32Pointer cpShapeDescription = romClass.cpShapeDescription();
+			U32Pointer cpShapeDescription = J9ROMClassHelper.cpShapeDescription(romClass);
 			U16Pointer bsmDataCursor = bsmIndices.add(callSiteCount);
 			
 			out.println(String.format("  Bootstrap Methods (%d):", bsmCount));
@@ -1189,7 +1187,8 @@ public class J9BCUtil {
 				"J",
 				"S",
 				"B",
-				"C" };
+				"C",
+				"Z" };
 
 		out.print("(");
 

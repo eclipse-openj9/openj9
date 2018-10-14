@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,7 +57,7 @@ destroyOMRVMThread(J9JavaVM *vm, J9VMThread *vmThread)
 jint
 attachVMThreadToOMR(J9JavaVM *vm, J9VMThread *vmThread, omrthread_t osThread)
 {
-	jint rc = JNI_OK;
+	jint rc = JNI_ERR;
 	OMR_VM *omrVM = vm->omrVM;
 	OMR_VMThread *omrVMThread = (OMR_VMThread*)(((UDATA)vmThread) + J9_VMTHREAD_SEGREGATED_ALLOCATION_CACHE_OFFSET + vm->segregatedAllocationCacheSize);
 	omrVMThread->_vm = omrVM;
@@ -65,8 +65,7 @@ attachVMThreadToOMR(J9JavaVM *vm, J9VMThread *vmThread, omrthread_t osThread)
 	omrVMThread->_os_thread = osThread;
 	if (OMR_ERROR_NONE == omr_attach_vmthread_to_vm(omrVMThread)) {
 		vmThread->omrVMThread = omrVMThread;
-	} else {
-		rc = JNI_ERR;
+		rc = JNI_OK;
 	}
 	return rc;
 }
@@ -94,7 +93,7 @@ allocateJavaVMWithOMR(J9PortLibrary *portLibrary)
 	UDATA vmAllocationSize = omrVMOffset + sizeof(OMR_VM);
 	J9JavaVM *vm = (J9JavaVM *)j9mem_allocate_memory(vmAllocationSize, OMRMEM_CATEGORY_VM);
 	if (vm != NULL) {
-			memset(vm, 0, vmAllocationSize);
+		memset(vm, 0, vmAllocationSize);
 	}
 	return vm;
 }
@@ -102,7 +101,7 @@ allocateJavaVMWithOMR(J9PortLibrary *portLibrary)
 jint
 attachVMToOMR(J9JavaVM *vm)
 {
-	jint rc = JNI_OK;
+	jint rc = JNI_ERR;
 	UDATA omrRuntimeOffset = ROUND_TO(8, sizeof(J9JavaVM));
 	UDATA omrVMOffset = ROUND_TO(8, omrRuntimeOffset + sizeof(OMR_Runtime));
 	OMR_Runtime *omrRuntime = (OMR_Runtime*)(((UDATA)vm) + omrRuntimeOffset);

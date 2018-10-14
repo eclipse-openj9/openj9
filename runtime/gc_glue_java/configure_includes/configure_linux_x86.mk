@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2016, 2017 IBM Corp. and others
+# Copyright (c) 2016, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -155,14 +155,22 @@ endif
 
 CONFIGURE_ARGS += libprefix=lib exeext= solibext=.so arlibext=.a objext=.o
 
-CONFIGURE_ARGS += 'AS=as'
-CONFIGURE_ARGS += 'CC=cc'
-CONFIGURE_ARGS += 'CXX=c++'
-CONFIGURE_ARGS += 'CCLINKEXE=$$(CC)'
-CONFIGURE_ARGS += 'CCLINKSHARED=$$(CC)'
-CONFIGURE_ARGS += 'CXXLINKEXE=$$(CXX)'
-CONFIGURE_ARGS += 'CXXLINKSHARED=$$(CXX)'
-CONFIGURE_ARGS += 'AR=ar'
+ifeq (default,$(origin CC))
+	CC=gcc
+endif
+ifeq (default,$(origin CXX))
+	CXX=g++
+endif
+
+CONFIGURE_ARGS += 'AR=$(AR)'
+CONFIGURE_ARGS += 'AS=$(AS)'
+CONFIGURE_ARGS += 'CC=$(CC)'
+CONFIGURE_ARGS += 'CCLINKEXE=$(CC)'
+CONFIGURE_ARGS += 'CCLINKSHARED=$(CC)'
+CONFIGURE_ARGS += 'CXX=$(CXX)'
+CONFIGURE_ARGS += 'CXXLINKEXE=$(CXX)'
+CONFIGURE_ARGS += 'CXXLINKSHARED=$(CXX)'
+CONFIGURE_ARGS += 'RM=$(RM)'
 
 CONFIGURE_ARGS += 'OMR_HOST_OS=linux'
 CONFIGURE_ARGS += 'OMR_HOST_ARCH=x86'
