@@ -87,6 +87,9 @@ typeoverride.J9AnnotationInfoEntry.memberSignature=J9SRP(J9UTF8)
 
 typeoverride.J9EnclosingObject.nameAndSignature=J9SRP(J9ROMNameAndSignature)
 
+typeoverride.J9Package.exportToAll=UDATA
+typeoverride.J9Package.exportToAllUnnamed=UDATA
+
 typeoverride.J9ROMClass.className=J9SRP(J9UTF8)
 typeoverride.J9ROMClass.cpShapeDescription=J9SRP(U32)
 typeoverride.J9ROMClass.innerClasses=J9SRP(J9SRP(J9UTF8))
