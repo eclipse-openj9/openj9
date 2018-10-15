@@ -45,6 +45,7 @@
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
 #include "runtime/IProfiler.hpp"
+#include "env/j9methodServer.hpp"
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 #include "j9jitnls.h"
@@ -2816,6 +2817,9 @@ J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR_Mem
    J9JITConfig *jitConfig = (J9JITConfig *) _feBase;
    if (rtResolve)
       jitConfig->runtimeFlags |= J9JIT_RUNTIME_RESOLVE;
+
+   // disable caching of resolved methods if env variable TR_DisableResolvedMethodsCaching is set
+   TR_ResolvedJ9JITaaSServerMethod::_useCaching = !feGetEnv("TR_DisableResolvedMethodsCaching");
 
    unpackRegex(options->_disabledOptTransformations);
    unpackRegex(options->_disabledInlineSites);

@@ -47,10 +47,13 @@ romMethodAtClassIndex(J9ROMClass *romClass, uint64_t methodIndex)
    return romMethod;
    }
 
+bool TR_ResolvedJ9JITaaSServerMethod::_useCaching = true;
+
 TR_ResolvedJ9JITaaSServerMethod::TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
    : TR_ResolvedJ9Method(fe, owningMethod),
    _fieldAttributesCache(decltype(_fieldAttributesCache)::allocator_type(trMemory->heapMemoryRegion())),
-   _staticAttributesCache(decltype(_staticAttributesCache)::allocator_type(trMemory->heapMemoryRegion()))
+   _staticAttributesCache(decltype(_staticAttributesCache)::allocator_type(trMemory->heapMemoryRegion())),
+   _resolvedMethodsCache(decltype(_resolvedMethodsCache)::allocator_type(trMemory->heapMemoryRegion()))
    {
    TR_J9VMBase *j9fe = (TR_J9VMBase *)fe;
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get(j9fe->getJ9JITConfig());
@@ -68,7 +71,8 @@ TR_ResolvedJ9JITaaSServerMethod::TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethod
 TR_ResolvedJ9JITaaSServerMethod::TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, const TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
    : TR_ResolvedJ9Method(fe, owningMethod),
    _fieldAttributesCache(decltype(_fieldAttributesCache)::allocator_type(trMemory->heapMemoryRegion())),
-   _staticAttributesCache(decltype(_staticAttributesCache)::allocator_type(trMemory->heapMemoryRegion()))
+   _staticAttributesCache(decltype(_staticAttributesCache)::allocator_type(trMemory->heapMemoryRegion())),
+   _resolvedMethodsCache(decltype(_resolvedMethodsCache)::allocator_type(trMemory->heapMemoryRegion()))
    {
    // Mirror has already been created, its parameters are passed in methodInfo
    TR_J9VMBase *j9fe = (TR_J9VMBase *)fe;
@@ -190,7 +194,9 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Com
 #else
    INCREMENT_COUNTER(_fe, totalVirtualMethodRefs);
 
-   TR_ResolvedMethod *resolvedMethod = NULL;
+   TR_ResolvedMethod *resolvedMethod = nullptr;
+   if (getCachedResolvedMethod({TR_ResolvedMethodType::Virtual, cpIndex, nullptr}, &resolvedMethod, unresolvedInCP)) 
+      return resolvedMethod;
 
    // See if the constant pool entry is already resolved or not
    if (unresolvedInCP)
@@ -243,7 +249,9 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Com
 
       TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual");
       TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual:#bytes", sizeof(TR_ResolvedJ9Method));
+      
       }
+   cacheResolvedMethod({TR_ResolvedMethodType::Virtual, cpIndex, nullptr}, resolvedMethod, unresolvedInCP);
 
    return resolvedMethod;
 #endif
@@ -370,9 +378,12 @@ TR_ResolvedMethod *
 TR_ResolvedJ9JITaaSServerMethod::getResolvedStaticMethod(TR::Compilation * comp, I_32 cpIndex, bool * unresolvedInCP)
    {
    // JITaaS TODO: Decide whether the counters should be updated on the server or the client
-   TR_ResolvedMethod *resolvedMethod = NULL;
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
    INCREMENT_COUNTER(_fe, totalStaticMethodRefs);
+
+   TR_ResolvedMethod *resolvedMethod = nullptr;
+   if (getCachedResolvedMethod({TR_ResolvedMethodType::Static, cpIndex, nullptr}, &resolvedMethod, unresolvedInCP)) 
+      return resolvedMethod;
 
    _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedStaticMethodAndMirror, _remoteMirror, cpIndex);
    auto recv = _stream->read<J9Method *, TR_ResolvedJ9JITaaSServerMethodInfo>();
@@ -411,6 +422,7 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedStaticMethod(TR::Compilation * comp,
       if (unresolvedInCP)
          handleUnresolvedStaticMethodInCP(cpIndex, unresolvedInCP);
       }
+   cacheResolvedMethod({TR_ResolvedMethodType::Static, cpIndex, nullptr}, resolvedMethod, unresolvedInCP);
 
    return resolvedMethod;
    }
@@ -419,10 +431,13 @@ TR_ResolvedMethod *
 TR_ResolvedJ9JITaaSServerMethod::getResolvedSpecialMethod(TR::Compilation * comp, I_32 cpIndex, bool * unresolvedInCP)
    {
    // JITaaS TODO: Decide whether the counters should be updated on the server or the client
-   TR_ResolvedMethod *resolvedMethod = nullptr;
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
 
    INCREMENT_COUNTER(_fe, totalSpecialMethodRefs);
+   
+   TR_ResolvedMethod *resolvedMethod = nullptr;
+   if (getCachedResolvedMethod({TR_ResolvedMethodType::Special, cpIndex, nullptr}, &resolvedMethod, unresolvedInCP)) 
+      return resolvedMethod;
 
    if (unresolvedInCP)
       *unresolvedInCP = true;
@@ -454,6 +469,7 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedSpecialMethod(TR::Compilation * comp
          handleUnresolvedVirtualMethodInCP(cpIndex, unresolvedInCP);
       }
 
+   cacheResolvedMethod({TR_ResolvedMethodType::Special, cpIndex, nullptr}, resolvedMethod, unresolvedInCP);
    return resolvedMethod;
    }
 
@@ -514,6 +530,10 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedInterfaceMethod(I_32 cpIndex, UDATA 
 TR_ResolvedMethod *
 TR_ResolvedJ9JITaaSServerMethod::getResolvedInterfaceMethod(TR::Compilation * comp, TR_OpaqueClassBlock * classObject, I_32 cpIndex)
    {
+   TR_ResolvedMethod *resolvedMethod = nullptr;
+   if (getCachedResolvedMethod({TR_ResolvedMethodType::Interface, cpIndex, classObject}, &resolvedMethod, nullptr))
+      return resolvedMethod;
+
    _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedInterfaceMethodAndMirror_3, getPersistentIdentifier(), classObject, cpIndex, _remoteMirror);
    auto recv = _stream->read<bool, J9Method*, TR_ResolvedJ9JITaaSServerMethodInfo>();
    bool resolved = std::get<0>(recv);
@@ -538,10 +558,15 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedInterfaceMethod(TR::Compilation * co
             {
             TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/interface");
             TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/interface:#bytes", sizeof(TR_ResolvedJ9Method));
-            return m;
+            resolvedMethod = m;
             }
          }
       }
+   // for resolved interface method, need to know cpIndex, as well as classObject
+   // to uniquely identify it.
+   cacheResolvedMethod({TR_ResolvedMethodType::Interface, cpIndex, classObject}, resolvedMethod, nullptr);
+   if (resolvedMethod)
+      return resolvedMethod;
 
    TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/interface/null");
    return 0;
@@ -1185,7 +1210,36 @@ TR_ResolvedJ9JITaaSServerMethod::setAttributes(TR_OpaqueMethodBlock * aMethod, T
   
    setMandatoryRecognizedMethod(mandatoryRm);
    setRecognizedMethod(rm);
-
    }
 
+void
+TR_ResolvedJ9JITaaSServerMethod::cacheResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedMethod* resolvedMethod, bool *unresolvedInCP)
+   {
+   if(!_useCaching)
+      return;
+   TR_ASSERT(_resolvedMethodsCache.find(key) == _resolvedMethodsCache.end(), "Should not cache the same method twice");
 
+   _resolvedMethodsCache.insert({key, {resolvedMethod, unresolvedInCP ? *unresolvedInCP : false}});
+   }
+
+// retrieve a resolved method from the cache
+// returns true if the method is cached, sets resolvedMethod and unresolvedInCP to the cached values.
+// returns false otherwise.
+bool 
+TR_ResolvedJ9JITaaSServerMethod::getCachedResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedMethod **resolvedMethod, bool *unresolvedInCP)
+   {
+   if(!_useCaching)
+      return false;
+
+   auto it = _resolvedMethodsCache.find(key);
+   if (it != _resolvedMethodsCache.end())
+      {
+      auto entry = it->second;
+      if (resolvedMethod)
+         *resolvedMethod = entry.resolvedMethod;
+      if (unresolvedInCP)
+         *unresolvedInCP = entry.unresolvedInCP;
+      return true;
+      }
+   return false;
+   }
