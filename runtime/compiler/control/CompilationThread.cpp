@@ -8463,7 +8463,7 @@ TR::CompilationInfoPerThreadBase::compile(
       // to reset when throwing the data away
       //
       if ((_jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
-            || compiler->getPersistentInfo()->getJITaaSMode() != NONJITaaS_MODE // JITaaS FIXME: we need to reserve only for server mode
+            || compiler->getPersistentInfo()->getJITaaSMode() == SERVER_MODE
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
             || vm.isAOT_DEPRECATED_DO_NOT_USE()
 #endif //endif J9VM_INTERP_AOT_COMPILE_SUPPORT
