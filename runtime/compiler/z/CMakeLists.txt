@@ -29,3 +29,5 @@ endif()
 if(TR_TARGET_ARCH STREQUAL "z")
 	add_subdirectory(codegen)
 endif() 
+
+add_subdirectory(env)
