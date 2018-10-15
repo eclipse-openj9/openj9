@@ -104,7 +104,6 @@
 #define getJitTempOffset getJitTempOffsetVerbose
 #define getJitNumberOfExceptionRanges getJitNumberOfExceptionRangesVerbose
 #define getJitExceptionTableSize getJitExceptionTableSizeVerbose
-#define getJitRegisterSaveDescription getJitRegisterSaveDescriptionVerbose
 #define getJitGCStackAtlas getJitGCStackAtlasVerbose
 #define getJitInlinedCallInfo getJitInlinedCallInfoVerbose
 #define getJitInternalPointerMap getJitInternalPointerMapVerbose
@@ -214,7 +213,6 @@ typedef struct TR_MapIterator
 #define INTERNAL_PTR_REG_MASK 0x80000000
 #endif
 
-#define J9TR_SHRINK_WRAP 0xDEAD0000
 #define GET_BYTECODEINFO_VALUE(fourByteOffset, stackMap) (*((U_32 *)((U_8 *)stackMap + SIZEOF_MAP_OFFSET(fourByteOffset))))
 
 #ifdef TR_HOST_S390
@@ -309,7 +307,6 @@ JITINLINE U_16   getJitProloguePushes(J9TR_MethodMetaData * md);
 JITINLINE I_16   getJitTempOffset(J9TR_MethodMetaData * md);
 JITINLINE U_16   getJitNumberOfExceptionRanges(J9TR_MethodMetaData * md);
 JITINLINE I_32   getJitExceptionTableSize(J9TR_MethodMetaData * md);
-JITINLINE UDATA  getJitRegisterSaveDescription(J9StackWalkState * walkState, void * stackMap);
 void * getJitGCStackAtlas(J9TR_MethodMetaData * md);
 void * getJitInlinedCallInfo(J9TR_MethodMetaData * md);
 

@@ -27,7 +27,6 @@ import static com.ibm.j9ddr.vm29.pointer.generated.J9StackWalkFlags.J9SW_REGISTE
 import static com.ibm.j9ddr.vm29.structure.J9StackWalkConstants.J9SW_POTENTIAL_SAVED_REGISTERS;
 import static com.ibm.j9ddr.vm29.structure.J9StackWalkConstants.J9SW_REGISTER_MAP_MASK;
 import static com.ibm.j9ddr.vm29.structure.MethodMetaDataConstants.INTERNAL_PTR_REG_MASK;
-import static com.ibm.j9ddr.vm29.structure.MethodMetaDataConstants.J9TR_SHRINK_WRAP;
 import static com.ibm.j9ddr.vm29.structure.J9JITExceptionTable.*;
 
 import java.util.LinkedList;
@@ -432,13 +431,11 @@ public class MethodMetaData
 			//UDATA ** mapCursor = (UDATA **) &(walkState->registerEAs);
 			int mapCursor = 0;
 			J9JITExceptionTablePointer md = walkState.jitInfo;
-			UDATA registerSaveDescription = getJitRegisterSaveDescription(walkState, stackMap);
+			UDATA registerSaveDescription = walkState.jitInfo.registerSaveDescription();
 
 			if (TRBuildFlags.host_X86) {
 				UDATA prologuePushes = new UDATA(getJitProloguePushes(walkState.jitInfo));
 				U8 i = new U8(1); 
-				UDATA registersShrinkWrapped = md.registerSaveDescription(); 
-				registersShrinkWrapped = registersShrinkWrapped.bitAnd(new I16(0xFFFF));
 
 				if (! prologuePushes.eq(0)) {
 					saveCursor = walkState.bp.sub(  new UDATA(getJitScalarTempSlots(walkState.jitInfo)).add(new UDATA(getJitObjectTempSlots(walkState.jitInfo)).add(prologuePushes)) );
@@ -451,43 +448,23 @@ public class MethodMetaData
 							walkState.registerEAs[mapCursor] = saveCursor;
 							saveCursor = saveCursor.add(1);
 						}
-						else if (md.registerSaveDescription().bitAnd(0xFFFF0000L).eq(new UDATA(J9TR_SHRINK_WRAP).bitAnd(new UDATA(0xFFFFFFFFL)))) /* mask for 32-bit compare */
-						{
-							/* preserved registers: 
-							 * rbx [2], r9-r15 [10-16] on 64-bit
-							 * ebx [2], ecx [3], esi [6] on 32-bit
-							 */
-
-							/* make sure the stack slots are checked in lockstep
-							 * and bump the saveCursor only if the register is marked 
-							 */
-							if (registersShrinkWrapped.anyBitsIn(1)) 
-								saveCursor = saveCursor.add(1);
-						}
 						i = i.add(1);
 						++mapCursor;
 						registerSaveDescription = registerSaveDescription.rightShift(1);
-						registersShrinkWrapped = registersShrinkWrapped.rightShift(1);
 					}
 					while (! registerSaveDescription.eq(0));
 				}
 			} else if (TRBuildFlags.host_POWER || TRBuildFlags.host_MIPS) {
 				if (TRBuildFlags.host_POWER) {
-					if (true) { /*defined(TR_SHRINK_WRAP)*/
-						/*
-						 * see PPCLinkage for a description of the RSD 
-						 * the save offset is located from bits 18-32 
-						 * so first mask it off to get the bit vector 
-						 * corresponding to the saved GPRS
-						 */
-						savedGPRs = registerSaveDescription.bitAnd(new UDATA(0x1FFFFL));
-						saveOffset = registerSaveDescription.rightShift(17).bitAnd(new UDATA(0xFFFFL));
-						lowestRegister = new UDATA(15); /* gpr15 is the first saved GPR, so move 15 spaces */
-					} else {
-						savedGPRs = registerSaveDescription.bitAnd(new UDATA(31));
-						saveOffset = registerSaveDescription.rightShift(11);
-						lowestRegister = new UDATA(32).sub(savedGPRs);
-					}
+					/*
+					 * see PPCLinkage for a description of the RSD 
+					 * the save offset is located from bits 18-32 
+					 * so first mask it off to get the bit vector 
+					 * corresponding to the saved GPRS
+					 */
+					savedGPRs = registerSaveDescription.bitAnd(new UDATA(0x1FFFFL));
+					saveOffset = registerSaveDescription.rightShift(17).bitAnd(new UDATA(0xFFFFL));
+					lowestRegister = new UDATA(15); /* gpr15 is the first saved GPR, so move 15 spaces */
 				} else if (TRBuildFlags.host_MIPS) {
 					savedGPRs = registerSaveDescription.bitAnd(31);
 					saveOffset = registerSaveDescription.rightShift(13);
@@ -496,7 +473,7 @@ public class MethodMetaData
 				}
 				saveCursor = walkState.bp.subOffset(saveOffset);
 
-				if (TRBuildFlags.host_POWER) { /*defined(TR_SHRINK_WRAP)*/
+				if (TRBuildFlags.host_POWER) {
 					mapCursor += lowestRegister.intValue(); /* access gpr15 in the vm register state */
 					U8 i = new U8(lowestRegister.add(1));
 					do 
@@ -506,16 +483,6 @@ public class MethodMetaData
 							saveCursor = saveCursor.add(1);
 						}
 
-						/* get the first preserved register thats saved in the prologue 
-						 * this information is encoded as the last byte of the rsd 
-						 * hung off the method's metadata (1 byte = 256 registers)
-						 * */
-						else if ((md.registerSaveDescription().bitAnd(0xFFFF0000L)).eq(new UDATA(J9TR_SHRINK_WRAP).bitAnd(0xFFFFFFFFL)))
-						{
-							/* check the stack slots in lockstep */
-							if (i.gte(md.registerSaveDescription().bitAnd(0xFF)) && i.lte(new UDATA(32))) 
-								saveCursor = saveCursor.add(1);
-						}
 						i = i.add(1);
 						++mapCursor;
 						savedGPRs = savedGPRs.rightShift(1);
@@ -546,12 +513,6 @@ public class MethodMetaData
 							walkState.registerEAs[mapCursor] = saveCursor;
 							saveCursor = saveCursor.add(1);
 						}
-						else if ((md.registerSaveDescription().bitAnd(0xFFFF0000L)).eq(new UDATA(J9TR_SHRINK_WRAP).bitAnd(0xFFFFFFFFL)))
-						{
-							if (i.gte(md.registerSaveDescription().bitAnd(0xFF)) && i.lte(new UDATA(13))) {
-								saveCursor = saveCursor.add(1);
-							}
-						}
 						i = i.add(1);
 						++mapCursor;
 						savedGPRs = savedGPRs.rightShift(1);
@@ -561,22 +522,6 @@ public class MethodMetaData
 			}
 
 			jitPrintRegisterMapArray(walkState, "Frame");
-		}
-
-		private UDATA getJitRegisterSaveDescription(WalkState walkState, VoidPointer stackMap) throws CorruptDataException
-		{ 
-			J9JITExceptionTablePointer md = walkState.jitInfo;
-			UDATA registerSaveDescription = md.registerSaveDescription();
-			if ((registerSaveDescription.bitAnd(new UDATA(0xFFFF0000))).eq(new UDATA(J9TR_SHRINK_WRAP).bitAnd(new UDATA(0xFFFFFFFFL))))
-			{
-				if (stackMap.isNull())
-				{
-					U8Pointer searchPC = walkState.pc;
-					stackMap = getStackMapFromJitPC(walkState.walkThread.javaVM(), md, UDATA.cast(searchPC));
-				}
-				registerSaveDescription = new UDATA(U32Pointer.cast(GET_REGISTER_SAVE_DESCRIPTION_CURSOR(HAS_FOUR_BYTE_OFFSET(md), stackMap)).at(0));
-			}
-			return registerSaveDescription;
 		}
 		
 		private U8Pointer GET_REGISTER_SAVE_DESCRIPTION_CURSOR(boolean fourByteOffset, VoidPointer stackMap)
