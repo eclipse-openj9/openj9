@@ -675,47 +675,51 @@ MM_CollectorLanguageInterfaceImpl::scavenger_switchConcurrentForThread(MM_Enviro
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 	J9VMThread *vmThread = (J9VMThread *)env->getOmrVMThread()->_language_vmthread;
 
-	if (_extensions->scavenger->isConcurrentInProgress()) {
-		Assert_MM_true(NULL != _extensions->scavenger);
-		void* gsBase = _extensions->scavenger->getEvacuateBase();
-		void* gsTop = _extensions->scavenger->getEvacuateTop();
+	if (_extensions->isConcurrentScavengerInProgress()) {
+		void* base = _extensions->scavenger->getEvacuateBase();
+		void* top = _extensions->scavenger->getEvacuateTop();
 
-		/* Concurrent Scavenger Page start address must be initialized */
-		Assert_MM_true(_extensions->getConcurrentScavengerPageStartAddress() != (void *)UDATA_MAX);
-
-		/* Nursery should fit selected Concurrent Scavenger Page */
-		Assert_MM_true(gsBase >= _extensions->getConcurrentScavengerPageStartAddress());
-		Assert_MM_true(gsTop <= (void *)((uintptr_t)_extensions->getConcurrentScavengerPageStartAddress() + _extensions->getConcurrentScavengerPageSectionSize() * CONCURRENT_SCAVENGER_PAGE_SECTIONS));
-
-		uintptr_t sectionCount = ((uintptr_t)gsTop - (uintptr_t)gsBase) / _extensions->getConcurrentScavengerPageSectionSize();
-		uintptr_t startOffsetInBits = ((uintptr_t)gsBase - (uintptr_t)_extensions->getConcurrentScavengerPageStartAddress()) / _extensions->getConcurrentScavengerPageSectionSize();
-		uint64_t bitMask = (((uint64_t)1 << sectionCount) - 1) << (CONCURRENT_SCAVENGER_PAGE_SECTIONS - (sectionCount + startOffsetInBits));
-
-		if (_extensions->isDebugConcurrentScavengerPageAlignment()) {
-			void* nurseryBase = OMR_MIN(gsBase, _extensions->scavenger->getSurvivorBase());
-			void* nurseryTop = OMR_MAX(gsTop, _extensions->scavenger->getSurvivorTop());
-			void* pageBase = _extensions->getConcurrentScavengerPageStartAddress();
-			void* pageTop = (void *)((uintptr_t)pageBase + _extensions->getConcurrentScavengerPageSectionSize() * CONCURRENT_SCAVENGER_PAGE_SECTIONS);
-
-			j9tty_printf(PORTLIB, "%p: Nursery [%p,%p] Evacuate [%p,%p] GS [%p,%p] Section size 0x%zx, sections %lu bit offset %lu bit mask 0x%zx\n",
-					vmThread, nurseryBase, nurseryTop, gsBase, gsTop, pageBase, pageTop, _extensions->getConcurrentScavengerPageSectionSize() , sectionCount, startOffsetInBits, bitMask);
-		}
 		/*
 		 * vmThread->evacuateTop is defined as the last address possible in the evacuate region;
-		 * however, gsTop is the first address above the evacuate region;
-		 * therefore, vmThread->evacuateTop = gsTop - 1.
+		 * however, top is the first address above the evacuate region;
+		 * therefore, vmThread->evacuateTop = top - 1.
 		 * In short, the evacuate region is [vmThread->evacuateBase, vmThread->evacuateTop].
 		 */
-		vmThread->evacuateBase = (UDATA)gsBase;
-		vmThread->evacuateTop = (UDATA)gsTop - 1;
+		vmThread->evacuateBase = (UDATA)base;
+		vmThread->evacuateTop = (UDATA)top - 1;
 #if defined(J9VM_GC_COMPRESSED_POINTERS)
 		vmThread->evacuateBaseCompressed = _extensions->accessBarrier->convertTokenFromPointer((mm_j9object_t)vmThread->evacuateBase);
 		vmThread->evacuateTopCompressed = _extensions->accessBarrier->convertTokenFromPointer((mm_j9object_t)vmThread->evacuateTop);
 #endif /* J9VM_GC_COMPRESSED_POINTERS */
 		vmThread->privateFlags |= J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE;
-		j9gs_enable(&vmThread->gsParameters, _extensions->getConcurrentScavengerPageStartAddress(), _extensions->getConcurrentScavengerPageSectionSize(), bitMask);
+
+		if (_extensions->isConcurrentScavengerHWSupported()) {
+			/* Concurrent Scavenger Page start address must be initialized */
+			Assert_MM_true(_extensions->getConcurrentScavengerPageStartAddress() != (void *)UDATA_MAX);
+
+			/* Nursery should fit selected Concurrent Scavenger Page */
+			Assert_MM_true(base >= _extensions->getConcurrentScavengerPageStartAddress());
+			Assert_MM_true(top <= (void *)((uintptr_t)_extensions->getConcurrentScavengerPageStartAddress() + _extensions->getConcurrentScavengerPageSectionSize() * CONCURRENT_SCAVENGER_PAGE_SECTIONS));
+
+			uintptr_t sectionCount = ((uintptr_t)top - (uintptr_t)base) / _extensions->getConcurrentScavengerPageSectionSize();
+			uintptr_t startOffsetInBits = ((uintptr_t)base - (uintptr_t)_extensions->getConcurrentScavengerPageStartAddress()) / _extensions->getConcurrentScavengerPageSectionSize();
+			uint64_t bitMask = (((uint64_t)1 << sectionCount) - 1) << (CONCURRENT_SCAVENGER_PAGE_SECTIONS - (sectionCount + startOffsetInBits));
+
+			if (_extensions->isDebugConcurrentScavengerPageAlignment()) {
+				void* nurseryBase = OMR_MIN(base, _extensions->scavenger->getSurvivorBase());
+				void* nurseryTop = OMR_MAX(top, _extensions->scavenger->getSurvivorTop());
+				void* pageBase = _extensions->getConcurrentScavengerPageStartAddress();
+				void* pageTop = (void *)((uintptr_t)pageBase + _extensions->getConcurrentScavengerPageSectionSize() * CONCURRENT_SCAVENGER_PAGE_SECTIONS);
+
+				j9tty_printf(PORTLIB, "%p: Nursery [%p,%p] Evacuate [%p,%p] GS [%p,%p] Section size 0x%zx, sections %lu bit offset %lu bit mask 0x%zx\n",
+						vmThread, nurseryBase, nurseryTop, base, top, pageBase, pageTop, _extensions->getConcurrentScavengerPageSectionSize() , sectionCount, startOffsetInBits, bitMask);
+			}
+			j9gs_enable(&vmThread->gsParameters, _extensions->getConcurrentScavengerPageStartAddress(), _extensions->getConcurrentScavengerPageSectionSize(), bitMask);
+		}
     } else {
-		j9gs_disable(&vmThread->gsParameters);
+		if (_extensions->isConcurrentScavengerHWSupported()) {
+			j9gs_disable(&vmThread->gsParameters);
+		}
 		/*
 		 * By setting evacuateTop to NULL and evacuateBase to ~evacuateTop
 		 * it gives an empty range that contains no address. Therefore,

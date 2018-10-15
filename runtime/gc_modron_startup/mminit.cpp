@@ -2648,7 +2648,7 @@ configurateGCWithPolicyAndOptionsStandard(MM_EnvironmentBase *env)
 			 * - select Concurrent Scavenger Page size based at estimated Nursery size: if should be rounded up to next power of 2 but not smaller then 32M
 			 * - select region size as a Concurrent Scavenger Page Section size
 			 */
-			if (extensions->isConcurrentScavengerEnabled()) {
+			if (extensions->isConcurrentScavengerHWSupported()) {
 				OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 				/* Default maximum Nursery size estimation in case of none of -Xmn* options is specified */
 				uintptr_t nurserySize = extensions->memoryMax / 4;
@@ -2860,11 +2860,12 @@ gcInitializeDefaults(J9JavaVM* vm)
 				/* If running jitted, it must be on supported h/w */
 				J9ProcessorDesc  processorDesc;
 				j9sysinfo_get_processor_description(&processorDesc);
-				if ((j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_GUARDED_STORAGE) &&
-						j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_SIDE_EFFECT_ACCESS))
-						|| (extensions->softwareEvacuateReadBarrier)) {
-					extensions->concurrentScavenger = true;
-				}
+				bool hwSupported = j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_GUARDED_STORAGE) &&
+						j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_SIDE_EFFECT_ACCESS);
+
+				/* Software Barrier request overwrites HW usage */
+				extensions->concurrentScavengerHWSupport = hwSupported && !extensions->softwareEvacuateReadBarrier;
+				extensions->concurrentScavenger = hwSupported || extensions->softwareEvacuateReadBarrier;
 			} else {
 				/* running interpreted is ok on any h/w */
 				extensions->concurrentScavenger = true;
