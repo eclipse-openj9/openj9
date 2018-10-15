@@ -30,6 +30,7 @@ namespace J9 { typedef J9::AheadOfTimeCompile AheadOfTimeCompileConnector; }
 #endif // J9_AHEADOFTIMECOMPILE_CONNECTOR
 
 #include "codegen/OMRAheadOfTimeCompile.hpp"
+#include "runtime/RelocationRecord.hpp"
 
 #include <stdint.h>
 #include "env/jittypes.h"
@@ -51,7 +52,11 @@ class OMR_EXTENSIBLE AheadOfTimeCompile : public OMR::AheadOfTimeCompileConnecto
 
    uint8_t* emitClassChainOffset(uint8_t* cursor, TR_OpaqueClassBlock* classToRemember);
    uintptr_t findCorrectInlinedSiteIndex(void *constantPool, uintptr_t currentInlinedSiteIndex);
+
    void dumpRelocationData();
+   uint8_t* dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose);
+
+   uint8_t *initializeCommonAOTRelocationHeader(TR::IteratedExternalRelocation *relocation, TR_RelocationRecord *reloRecord);
 
    static void interceptAOTRelocation(TR::ExternalRelocation *relocation);
 
