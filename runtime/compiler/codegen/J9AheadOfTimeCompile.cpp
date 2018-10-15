@@ -164,11 +164,21 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
    TR_ExternalRelocationTargetKind kind = relocation->getTargetKind();
 
-   // initializeCommonAOTRelocationHeader currently doesn't do anything; however, as more
-   // relocation records are consolidated, it will become the canonical place
-   // to initialize the platform agnostic relocation headers
+   // initializeCommonAOTRelocationHeader is currently in the process
+   // of becoming the canonical place to initialize the platform agnostic
+   // relocation headers; new relocation records' header should be
+   // initialized here.
    switch (kind)
       {
+      case TR_ConstantPool:
+         {
+         TR_RelocationRecordConstantPool * cpRecord = reinterpret_cast<TR_RelocationRecordConstantPool *>(reloRecord);
+
+         cpRecord->setConstantPool(reloTarget, reinterpret_cast<uintptrj_t>(relocation->getTargetAddress()));
+         cpRecord->setInlinedSiteIndex(reloTarget, reinterpret_cast<uintptrj_t>(relocation->getTargetAddress2()));
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -203,11 +213,25 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
 
    bool orderedPair = isOrderedPair(kind);
 
-   // dumpRelocationHeaderData currently doesn't do anything; however, as more
-   // relocation records are consolidated, it will become the canonical place
-   // to dump the relocation header data
+   // dumpRelocationHeaderData is currently in the process of becoming the
+   // the canonical place to dump the relocation header data; new relocation
+   // records' header data should be printed here.
    switch (kind)
       {
+      case TR_ConstantPool:
+         {
+         TR_RelocationRecordConstantPool * cpRecord = reinterpret_cast<TR_RelocationRecordConstantPool *>(reloRecord);
+
+         self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\nInlined site index = %d, Constant pool = %x",
+                                     cpRecord->inlinedSiteIndex(reloTarget),
+                                     cpRecord->constantPool(reloTarget));
+            }
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -321,9 +345,9 @@ J9::AheadOfTimeCompile::dumpRelocationData()
 
       cursor++;
 
-      // dumpRelocationHeaderData currently doesn't do anything; however, as more
-      // relocation records are consolidated, it will become the canonical place
-      // to dump the relocation header data
+      // dumpRelocationHeaderData is currently in the process of becoming the
+      // the canonical place to dump the relocation header data; new relocation
+      // records' header data should be printed here.
       uint8_t *newCursor = self()->dumpRelocationHeaderData(origCursor, isVerbose);
       if (origCursor != newCursor)
          {
@@ -333,7 +357,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
 
       switch (kind)
          {
-         case TR_ConstantPool:
          case TR_ConstantPoolOrderedPair:
             // constant pool address is placed as the last word of the header
             //traceMsg(self()->comp(), "\nConstant pool %x\n", *(uint32_t *)++cursor);

@@ -271,7 +271,6 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
          break;
          }
-      case TR_ConstantPool:
       case TR_ConstantPoolOrderedPair:
       case TR_Trampolines:
       case TR_Thunks:
@@ -701,9 +700,10 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          break;
 
       default:
-         // initializeCommonAOTRelocationHeader currently doesn't do anything; however, as more
-         // relocation records are consolidated, it will become the canonical place
-         // to initialize the platform agnostic relocation headers
+         // initializeCommonAOTRelocationHeader is currently in the process
+         // of becoming the canonical place to initialize the platform agnostic
+         // relocation headers; new relocation records' header should be
+         // initialized here.
          cursor = self()->initializeCommonAOTRelocationHeader(relocation, reloRecord);
 
       }
