@@ -147,7 +147,6 @@ TR_JITaaSServerPersistentCHTable::commitModifications(std::string &rawData)
       {
       auto flat = it.second.first;
       auto persist = it.second.second;
-      persist->removeSubClasses();
       for (size_t i = 0; i < flat->_numSubClasses; i++)
          {
          auto classInfo = findClassInfo(flat->_subClasses[i]);
@@ -219,7 +218,7 @@ TR_JITaaSClientPersistentCHTable::serializeModifications()
       {
       auto clazz = findClassInfo(classId);
       if (!clazz) continue;
-      size_t size = FlatPersistentClassInfo::classSize(clazz);
+      size_t size = FlatPersistentClassInfo::classSize(clazz, getNumAddedSubClasses(classId));
       numBytes += size;
       }
 
@@ -231,13 +230,15 @@ TR_JITaaSClientPersistentCHTable::serializeModifications()
       {
       auto clazz = findClassInfo(classId);
       if (!clazz) continue;
+
       FlatPersistentClassInfo* info = (FlatPersistentClassInfo*)&data[bytesWritten];
-      bytesWritten += FlatPersistentClassInfo::serializeClass(clazz, info);
+      bytesWritten += FlatPersistentClassInfo::serializeClass(clazz, info, getNumAddedSubClasses(classId));
       count++;
       }
    CHTABLE_UPDATE_COUNTER(_numClassesUpdated, count);
 
    _dirty.clear();
+   _extended.clear();
    return data;
    }
 
@@ -269,7 +270,9 @@ collectHierarchy(std::unordered_set<TR_PersistentClassInfo*> &out, TR_Persistent
 size_t 
 FlatPersistentClassInfo::classSize(TR_PersistentClassInfo *clazz)
    {
-   auto numSubClasses = clazz->_subClasses.getSize();
+   // default case, serialize all subclasses
+   if (numSubClasses == -1)
+      numSubClasses = clazz->getSubClassesCount();
    return sizeof(FlatPersistentClassInfo) + numSubClasses * sizeof(TR_OpaqueClassBlock*);
    }
 
@@ -286,8 +289,13 @@ FlatPersistentClassInfo::serializeClass(TR_PersistentClassInfo *clazz, FlatPersi
    TR_ASSERT(!clazz->getFieldInfo(), "field info not supported");
    info->_shouldNotBeNewlyExtended = clazz->_shouldNotBeNewlyExtended;
    int idx = 0;
-   for (TR_SubClass *c = clazz->getFirstSubclass(); c; c = c->getNext())
+
+   // Since new subclasses are added at the beginning of the linked list, the first n entries
+   // correspond to n newest entries in a list. Thus, we only need to know the number of subclasses
+   // added to find them in a subclass list.
+   for (TR_SubClass *c = clazz->getFirstSubclass(); (idx < numSubClasses) || (numSubClasses == -1 && c); c = c->getNext())
       {
+      TR_ASSERT(c, "Incorrect number of subclasses provided");
       TR_ASSERT(c->getClassInfo(), "Subclass info cannot be null (on client)");
       TR_ASSERT(c->getClassInfo()->getClassId(), "Subclass cannot be null (on client)");
       info->_subClasses[idx++] = c->getClassInfo()->getClassId();
@@ -381,6 +389,7 @@ TR_JITaaSClientPersistentCHTable::TR_JITaaSClientPersistentCHTable(TR_Persistent
    : TR_PersistentCHTable(trMemory)
    , _dirty(decltype(_dirty)::allocator_type(TR::Compiler->persistentAllocator()))
    , _remove(decltype(_remove)::allocator_type(TR::Compiler->persistentAllocator()))
+   , _extended(decltype(_extended)::allocator_type(TR::Compiler->persistentAllocator()))
    {
    }
 
@@ -504,6 +513,7 @@ TR_JITaaSClientPersistentCHTable::classGotExtended(
       TR_OpaqueClassBlock *subClassId)
    {
    markDirty(superClassId);
+   markExtended(superClassId);
    return TR_PersistentCHTable::classGotExtended(fe, persistentMemory, superClassId, subClassId);
    }
 
@@ -521,4 +531,22 @@ TR_JITaaSClientPersistentCHTable::markDirty(TR_OpaqueClassBlock *clazz)
    {
    _dirty.insert(clazz);
    _remove.erase(clazz);
+   }
+
+void 
+TR_JITaaSClientPersistentCHTable::markExtended(TR_OpaqueClassBlock *clazz)
+   {
+   // increment the number of added subclasses
+   auto it = _extended.find(clazz);
+   if (it == _extended.end())
+      _extended.insert({clazz, 1});
+   else
+      it->second++;
+   }
+
+uint32_t
+TR_JITaaSClientPersistentCHTable::getNumAddedSubClasses(TR_OpaqueClassBlock *clazz)
+   {
+   auto it = _extended.find(clazz);
+   return it != _extended.end() ? it->second : 0;
    }

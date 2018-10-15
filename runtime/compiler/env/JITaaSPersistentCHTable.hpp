@@ -102,12 +102,15 @@ private:
    void markSuperClassesAsDirty(TR_FrontEnd *fe, TR_OpaqueClassBlock *classId);
    void markForRemoval(TR_OpaqueClassBlock *clazz);
    void markDirty(TR_OpaqueClassBlock *clazz);
+   void markExtended(TR_OpaqueClassBlock *clazz);
+   uint32_t getNumAddedSubClasses(TR_OpaqueClassBlock *clazz);
 
    std::string serializeRemoves();
    std::string serializeModifications();
 
    PersistentUnorderedSet<TR_OpaqueClassBlock*> _dirty;
    PersistentUnorderedSet<TR_OpaqueClassBlock*> _remove;
+   PersistentUnorderedMap<TR_OpaqueClassBlock*, uint32_t> _extended;
    };
 
 class FlatPersistentClassInfo
@@ -115,8 +118,8 @@ class FlatPersistentClassInfo
 public:
    static std::string serializeHierarchy(TR_PersistentClassInfo *orig);
    static std::vector<TR_PersistentClassInfo*> deserializeHierarchy(std::string& data);
-   static size_t classSize(TR_PersistentClassInfo *clazz);
-   static size_t serializeClass(TR_PersistentClassInfo *clazz, FlatPersistentClassInfo* info);
+   static size_t classSize(TR_PersistentClassInfo *clazz, int32_t numSubClasses=-1);
+   static size_t serializeClass(TR_PersistentClassInfo *clazz, FlatPersistentClassInfo* info, int32_t numSubClasses=-1);
    static size_t deserializeClassSimple(TR_PersistentClassInfo *clazz, FlatPersistentClassInfo *info);
 
    TR_OpaqueClassBlock                *_classId;
