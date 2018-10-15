@@ -179,6 +179,16 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_HelperAddress:
+         {
+         TR_RelocationRecordHelperAddress *haRecord = reinterpret_cast<TR_RelocationRecordHelperAddress *>(reloRecord);
+         TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(relocation->getTargetAddress());
+
+         haRecord->setEipRelative(reloTarget);
+         haRecord->setHelperID(reloTarget, static_cast<uint32_t>(symRef->getReferenceNumber()));
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -228,6 +238,22 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
             traceMsg(self()->comp(), "\nInlined site index = %d, Constant pool = %x",
                                      cpRecord->inlinedSiteIndex(reloTarget),
                                      cpRecord->constantPool(reloTarget));
+            }
+         }
+         break;
+
+      case TR_HelperAddress:
+         {
+         TR_RelocationRecordHelperAddress *haRecord = reinterpret_cast<TR_RelocationRecordHelperAddress *>(reloRecord);
+
+         uint32_t helperID = haRecord->helperID(reloTarget);
+
+         traceMsg(self()->comp(), "%-6d", helperID);
+         self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            TR::SymbolReference *symRef = self()->comp()->getSymRefTab()->getSymRef(helperID);
+            traceMsg(self()->comp(), "\nHelper method address of %s(%d)", self()->getDebug()->getName(symRef), helperID);
             }
          }
          break;
@@ -387,7 +413,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                }
             break;
          case TR_AbsoluteHelperAddress:
-         case TR_HelperAddress:
             // final byte of header is the index which indicates the particular helper being relocated to
             cursor++;
             ep1 = cursor;

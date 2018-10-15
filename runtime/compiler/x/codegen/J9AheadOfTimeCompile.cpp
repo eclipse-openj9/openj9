@@ -127,11 +127,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
 
    switch (relocation->getTargetKind())
       {
-      case TR_HelperAddress:
-         {
-         *flagsCursor |= RELOCATION_TYPE_EIP_OFFSET; // set the eip relative relocation bit for references to code addresses
-         }
-         // deliberate fall-through
       case TR_AbsoluteHelperAddress:
          {
          TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();

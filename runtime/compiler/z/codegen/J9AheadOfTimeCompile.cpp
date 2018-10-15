@@ -156,11 +156,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
 
    switch (relocation->getTargetKind())
       {
-      case TR_HelperAddress:
-         {
-         *flagsCursor |= EIP_RELATIVE;
-         }
-         // deliberate fall-through
       case TR_AbsoluteHelperAddress:
          {
          //let the eip relative relocation bit for references to code addresses

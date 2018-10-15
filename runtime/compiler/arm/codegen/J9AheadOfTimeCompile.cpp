@@ -138,12 +138,6 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
 
    switch (relocation->getTargetKind())
       {
-      case TR_HelperAddress:
-         {
-         //set the eip relative relocation bit for references to code addresses
-         *flagsCursor |= RELOCATION_TYPE_EIP_OFFSET;
-         }
-      // deliberate fall-through
       case TR_AbsoluteHelperAddress:
          {
          // final byte of header is the index which indicates the
