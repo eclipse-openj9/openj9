@@ -324,17 +324,7 @@ public:
 		bool copyLockword = true;
 		
 		if (OBJECT_HEADER_SHAPE_POINTERS == J9CLASS_SHAPE(objectClass)) {
-			if (j9gc_modron_readbar_none != _readBarrierType) {
-				copyLockword = false;
-				if (j9gc_modron_readbar_evacuate == _readBarrierType) {
-					/* TODO implement HW barriers */
-					currentThread->javaVM->memoryManagerFunctions->j9gc_objaccess_cloneIndexableObject(currentThread, (J9IndexableObject*)original, (J9IndexableObject*)copy);
-				} else {
-					currentThread->javaVM->memoryManagerFunctions->j9gc_objaccess_cloneIndexableObject(currentThread, (J9IndexableObject*)original, (J9IndexableObject*)copy);
-				}
-			} else {
-				VM_ArrayCopyHelpers::referenceArrayCopy(currentThread, original, 0, copy, 0, size);
-			}
+			VM_ArrayCopyHelpers::referenceArrayCopy(currentThread, original, 0, copy, 0, size);
 		} else {
 			VM_ArrayCopyHelpers::primitiveArrayCopy(currentThread, original, 0, copy, 0, size, (((J9ROMArrayClass*)objectClass->romClass)->arrayShape & 0x0000FFFF));
 		}
