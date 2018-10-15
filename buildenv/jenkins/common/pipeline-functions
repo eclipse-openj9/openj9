@@ -195,6 +195,24 @@ def build_with_artifactory(JOB_NAME, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, 
     }
 }
 
+def get_causes(job) {
+    def cause_string = ''
+    for (cause in job.rawBuild.getCauses()) {
+        cause_string += get_causes_recursively(cause)
+    }
+    return cause_string
+}
+
+def get_causes_recursively(cause) {
+    def cause_string = cause.getShortDescription()
+    if (cause instanceof hudson.model.Cause.UpstreamCause) {
+        for (upCause in cause.getUpstreamCauses()) {
+            cause_string += '\n' + get_causes_recursively(upCause)
+        }
+    }
+    return cause_string
+}
+
 def build_with_slack(JOB_NAME, PARAMETERS) {
     def DOWNSTREAM_JOB_NUMBER = ''
     def DOWNSTREAM_JOB_URL = ''
@@ -211,20 +229,23 @@ def build_with_slack(JOB_NAME, PARAMETERS) {
         } catch (err) {
             echo "Couldn't retrieve downstream failed job url"
         }
-        
+
+        // Get build causes
+        build_causes_string = get_causes(currentBuild)
+
         if (JOB.result == "UNSTABLE") {
             echo "WARNING: Downstream job ${JOB_NAME} is unstable. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
             currentBuild.result = "UNSTABLE"
             if (SLACK_CHANNEL) {
-                slackSend channel: SLACK_CHANNEL, color: 'warning', message: "Unstable: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)\nDownstream Job: ${JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)"
+                slackSend channel: SLACK_CHANNEL, color: 'warning', message: "Unstable: ${JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)\nStarted by ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)\n${build_causes_string}"
             }
         } else {
-        	if (SLACK_CHANNEL) {
-        		slackSend channel: SLACK_CHANNEL, color: 'danger', message: "Failure in: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)\nDownstream Job: ${JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)"
-        	}
-        	error "Downstream job ${JOB_NAME} did not pass. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
+            if (SLACK_CHANNEL) {
+                slackSend channel: SLACK_CHANNEL, color: 'danger', message: "Failure in: ${JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)\nStarted by ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)\n${build_causes_string}"
+            }
+            error "Downstream job ${JOB_NAME} did not pass. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
         }
-    } 
+    }
     return JOB
 }
 
