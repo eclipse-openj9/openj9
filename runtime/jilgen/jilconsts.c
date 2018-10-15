@@ -75,7 +75,11 @@ createConstant(OMRPortLibrary *OMRPORTLIB, char const *name, UDATA value)
 #if defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_ARM)
 	return omrstr_printf(line, sizeof(line), "#define %s %zu\n", name, value);
 #elif defined(LINUX) /* J9VM_ARCH_POWER || J9VM_ARCH_ARM */
-	return omrstr_printf(line, sizeof(line), "%s = %zu\n", name, value);
+	#if defined(J9VM_ENV_DATA64)
+		return omrstr_printf(line, sizeof(line), "%%define %s %zu\n", name, value);
+	#else /* J9VM_ENV_DATA64 */
+		return omrstr_printf(line, sizeof(line), "%s = %zu\n", name, value);
+	#endif
 #elif defined(WIN32) /* LINUX */
 	return omrstr_printf(line, sizeof(line), "%s equ %zu\n", name, value);
 #elif defined(J9ZOS390) /* WIN32 */
@@ -92,47 +96,52 @@ createConstant(OMRPortLibrary *OMRPORTLIB, char const *name, UDATA value)
 #if defined(LINUX)
 #if defined(J9VM_ENV_DATA64)
 static char const *macroString = "\n\
-MoveHelper MACRO register,helperName\n\
-		lea &register,[rip + &helperName]\n\
-ENDM\n\
+%macro MoveHelper 2 ; register, helperName\n\
+		lea %1, [rel %2]\n\
+%endmacro\n\
 \n\
-CompareHelperUseReg MACRO source,helperName,register\n\
-	   	lea &register,[rip + &helperName]\n\
-	   	cmp &source,&register\n\
-ENDM\n\
+%macro CompareHelper 2 ; source,helperName\n\
+	   	cmp %1, %2\n\
+%endmacro\n\
 \n\
-CallHelper MACRO helperName\n\
-	   	call &helperName\n\
-ENDM\n\
+%macro CompareHelperUseReg 3 ; source, helperName, register\n\
+		lea %3, [%2]\n\
+	   	cmp %1, %3\n\
+%endmacro\n\
 \n\
-CallHelperUseReg MACRO helperName,register\n\
-	   	call &helperName\n\
-ENDM\n\
+%macro CallHelper 1 ; helperName\n\
+	   	call %1\n\
+%endmacro\n\
 \n\
-JumpTableHelper MACRO temp,index,table\n\
-		lea &temp,[rip + &table]\n\
-		jmp qword ptr[&temp& + &index&*8]\n\
-ENDM\n\
+%macro CallHelperUseReg 2 ; helperName, register\n\
+	   	call %1\n\
+%endmacro\n\
 \n\
-JumpTableStart MACRO table\n\
-		_CONST32 SEGMENT PARA USE32 PUBLIC 'CONST'\n\
-	   	align   16\n\
-table&:\n\
-ENDM\n\
+%macro JumpTableHelper 3 ; temp, index, table\n\
+		lea %1,[%3]\n\
+		jmp qword [%1 + %2 * 8]\n\
+%endmacro\n\
 \n\
-JumpTableEnd MACRO table\n\
-	   	_CONST32 ends\n\
-ENDM\n\
+%macro JumpTableStart 1 ;table\n\
+section _CONST32\n\
+align 16\n\
+%1:\n\
+%endmacro\n\
 \n\
-ExternHelper MACRO helperName\n\
-	   	extrn &helperName&:near\n\
-ENDM\n\
+%macro JumpTableEnd 1 ; table\n\
+; NASM does not use ENDS or equivalent\n\
+%endmacro\n\
 \n\
-GlueHelper MACRO helperName\n\
-		test    byte ptr[rdi+J9TR_MethodPCStartOffset], J9TR_MethodNotCompiledBit\n\
-	   	jnz      &helperName\n\
+%macro ExternHelper 1 ; helperName\n\
+extern %1:near\n\
+%endmacro\n\
+\n\
+%macro GlueHelper 1 ;helperName\n\
+		test    byte [rdi+J9TR_MethodPCStartOffset], J9TR_MethodNotCompiledBit\n\
+	   	jnz     %1\n\
 	   	jmp     mergedStaticGlueCallFixer\n\
-ENDM\n";
+%endmacro\n\
+\n";
 #else /* J9VM_ENV_DATA64 */
 static char const *macroString = "\n\
 ASM_J9VM_USE_GOT = 1\n\
