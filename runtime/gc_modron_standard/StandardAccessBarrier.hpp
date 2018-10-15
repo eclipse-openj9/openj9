@@ -53,7 +53,12 @@ private:
 #endif /* OMR_GC_REALTIME */
 	void postObjectStoreImpl(J9VMThread *vmThread, J9Object *dstObject, J9Object *srcObject);
 	void preBatchObjectStoreImpl(J9VMThread *vmThread, J9Object *dstObject);
-    
+
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	I_32 doCopyContiguousBackwardWithReadBarrier(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots);
+	I_32 doCopyContiguousForwardWithReadBarrier(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots);
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+
 protected:
 	virtual bool initialize(MM_EnvironmentBase *env);
 	virtual void tearDown(MM_EnvironmentBase *env);
