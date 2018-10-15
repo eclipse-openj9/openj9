@@ -26,3 +26,5 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
   * make 3.81 or above (recommend make 4.1 or above on windows)
   * perl 5.10.1 or above with JSON and Text::CSV module installed
   * curl 7.20.0 or above (needs -J/--remote-header-name support)
+  
+  * docker (needed if you wish to run docker-based application tests)
