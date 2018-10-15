@@ -5981,6 +5981,15 @@ setSignalOptions(J9JavaVM* vm)
 			sigOptions |= (J9PORT_SIG_OPTIONS_REDUCED_SIGNALS_SYNCHRONOUS | J9PORT_SIG_OPTIONS_REDUCED_SIGNALS_ASYNCHRONOUS);
 		}
 	}
+#if defined(OSX)
+	else {
+		/* On OSX, temporarily default to "-Xrs" while the signal handler issues are
+		 * being investigated.  Issue link: https://github.com/eclipse/openj9/issues/3252
+		 */
+		vm->sigFlags |= (J9_SIG_XRS_SYNC | J9_SIG_XRS_ASYNC | J9_SIG_NO_SIG_QUIT);
+		sigOptions |= (J9PORT_SIG_OPTIONS_REDUCED_SIGNALS_SYNCHRONOUS | J9PORT_SIG_OPTIONS_REDUCED_SIGNALS_ASYNCHRONOUS);
+	}
+#endif
 
 #if defined(J9VM_PORT_ZOS_CEEHDLRSUPPORT)
 	if (FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XUSE_CEEHDLR, NULL) >= 0) {
