@@ -60,6 +60,11 @@ J9::X86::CodeGenerator::CodeGenerator() :
 
    cg->setAheadOfTimeCompile(new (cg->trHeapMemory()) TR::AheadOfTimeCompile(cg));
 
+   if (!TR::Compiler->om.canGenerateArraylets())
+      {
+      cg->setSupportsReferenceArrayCopy();
+      }
+
    if (comp->requiresSpineChecks())
       {
       // Spine check code doesn't officially support codegen register rematerialization
