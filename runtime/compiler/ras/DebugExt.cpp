@@ -3583,13 +3583,6 @@ TR_DebugExt::dxPrintAOTinfo(void *addr)
             ptr = (U_8*) (record+1);
             }
             break;
-         case TR_ClassObject:
-            {
-            TR_RelocationClassAddress *record = (TR_RelocationClassAddress *) reloRecord;
-            _dbgPrintf("0x%-16x  0x%-16x  0x%-16x", record->inlinedSiteIndex, record->constantPool, record->cpIndex);
-            ptr = (U_8*) (record+1);
-            }
-            break;
          case TR_MethodObject:
          case TR_Thunks:
          case TR_Trampolines:

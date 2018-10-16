@@ -158,7 +158,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          }
          break;
 
-      case TR_ClassObject:
       case TR_MethodObject:
       case TR_InterfaceObject:
          {

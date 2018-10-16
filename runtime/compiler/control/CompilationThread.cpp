@@ -2772,7 +2772,7 @@ void TR::CompilationInfo::stopCompilationThreads()
       fprintf(stderr, "numRuntimeClassAddressButFailValidation: %d\n", aotStats->numRuntimeClassAddressButFailValidation);
       fprintf(stderr, "numRuntimeClassAddressReloOK: %d\n", aotStats->numRuntimeClassAddressReloOK);
 
-      fprintf(stderr, "numRuntimeClassAddressRelocationCount (TR_ClassAddress and TR_ClassObject relocations): %d\n", aotStats->numRuntimeClassAddressRelocationCount);
+      fprintf(stderr, "numRuntimeClassAddressRelocationCount: %d\n", aotStats->numRuntimeClassAddressRelocationCount);
       fprintf(stderr, "numRuntimeClassAddressReloUnresolvedCP: %d\n", aotStats->numRuntimeClassAddressReloUnresolvedCP);
       fprintf(stderr, "numRuntimeClassAddressReloUnresolvedClass: %d\n", aotStats->numRuntimeClassAddressReloUnresolvedClass);
 

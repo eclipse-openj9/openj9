@@ -353,7 +353,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_ClassObject:
       case TR_MethodObject:
       //case TR_InterfaceObject: Shouldn't have branch that create inteface object for X86.
          {

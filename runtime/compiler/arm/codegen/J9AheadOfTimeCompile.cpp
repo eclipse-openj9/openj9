@@ -149,7 +149,6 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_ClassObject:
       case TR_MethodObject:
       case TR_InterfaceObject:
          {
