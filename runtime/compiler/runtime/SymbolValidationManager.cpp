@@ -119,13 +119,21 @@ TR::SymbolValidationManager::getSymbolFromID(uint16_t id)
    }
 
 uint16_t
-TR::SymbolValidationManager::getIDFromSymbol(void *symbol)
+TR::SymbolValidationManager::tryGetIDFromSymbol(void *symbol)
    {
    SymbolToIdMap::iterator it = _symbolToIdMap.find(symbol);
    if (it == _symbolToIdMap.end())
       return NO_ID;
    else
       return it->second;
+   }
+
+uint16_t
+TR::SymbolValidationManager::getIDFromSymbol(void *symbol)
+   {
+   uint16_t id = tryGetIDFromSymbol(symbol);
+   SVM_ASSERT(id != NO_ID, "Unknown symbol %p\n", symbol);
+   return id;
    }
 
 TR_OpaqueClassBlock *
