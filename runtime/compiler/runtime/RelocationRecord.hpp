@@ -1076,6 +1076,7 @@ class TR_RelocationRecordInlinedMethod : public TR_RelocationRecordConstantPoolW
 
    protected:
       virtual void fixInlinedSiteInfo(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, TR_OpaqueMethodBlock *inlinedMethod);
+      virtual bool needsReceiverClassFromID() { return false; }
 
    private:
       virtual bool inlinedSiteValid(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, TR_OpaqueMethodBlock **theMethod);
@@ -1169,6 +1170,8 @@ class TR_RelocationRecordInlinedInterfaceMethodWithNopGuard : public TR_Relocati
       TR_RelocationRecordInlinedInterfaceMethodWithNopGuard() {}
       TR_RelocationRecordInlinedInterfaceMethodWithNopGuard(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordNopGuard(reloRuntime, record) {}
       virtual char *name();
+   protected:
+      virtual bool needsReceiverClassFromID() { return true; }
    private:
       virtual TR_OpaqueMethodBlock *getMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpindex, TR_OpaqueMethodBlock *callerMethod);
       virtual void updateFailedStats(TR_AOTStats *aotStats);
@@ -1194,6 +1197,8 @@ class TR_RelocationRecordInlinedAbstractMethodWithNopGuard : public TR_Relocatio
       TR_RelocationRecordInlinedAbstractMethodWithNopGuard() {}
       TR_RelocationRecordInlinedAbstractMethodWithNopGuard(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordNopGuard(reloRuntime, record) {}
       virtual char *name();
+   protected:
+      virtual bool needsReceiverClassFromID() { return true; }
    private:
       virtual TR_OpaqueMethodBlock *getMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpindex, TR_OpaqueMethodBlock *callerMethod);
       virtual void updateFailedStats(TR_AOTStats *aotStats);
