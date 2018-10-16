@@ -631,6 +631,13 @@ TR_JITaaSIProfiler::setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, 
    {
    uintptr_t methodStart = TR::Compiler->mtd.bytecodeStart(method);
    uint8_t bytecode = *((uint8_t*)(methodStart+bcIndex));
+   // The following bytecode types are tracked by IProfiler, so we
+   // don't need to artificially set a call count for them
+   if (bytecode == JBinvokevirtual ||
+       bytecode == JBinvokeinterface ||
+       bytecode == JBinvokeinterface2)
+      return;
+
    bool sendRemoteMessage = false; 
    ClientSessionData *clientData = TR::compInfoPT->getClientData(); // Find clientSessionData
    if (_useCaching)
