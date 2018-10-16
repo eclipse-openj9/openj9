@@ -336,7 +336,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          break;
 
       case TR_ConstantPoolOrderedPair:
-      case TR_Trampolines:
          {
          // constant pool address is placed as the last word of the header
          if (TR::Compiler->target.is64Bit())

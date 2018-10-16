@@ -389,26 +389,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          break;
          }
 
-      case TR_Trampolines:
-         {
-         // constant pool address is placed as the last word of the header
-         if (TR::Compiler->target.is64Bit())
-            {
-            *(uint64_t *) cursor = (uint64_t) (uintptrj_t) relocation->getTargetAddress2();
-            cursor += 8;
-            *(uint64_t *) cursor = (uint64_t) (uintptrj_t) relocation->getTargetAddress();
-            cursor += 8;
-            }
-         else
-            {
-            *(uint32_t *) cursor = (uint32_t) (uintptrj_t) relocation->getTargetAddress2();
-            cursor += 4;
-            *(uint32_t *) cursor = (uint32_t) (uintptrj_t) relocation->getTargetAddress();
-            cursor += 4;
-            }
-         }
-         break;
-
       case TR_ResolvedTrampolines:
          {
          uint8_t *symbol = relocation->getTargetAddress();
