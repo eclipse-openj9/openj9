@@ -225,17 +225,18 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
       case TR_JNIVirtualTargetAddress:
       case TR_JNIStaticTargetAddress:
+      case TR_StaticRamMethodConst:
          {
-         TR_RelocationRecordDirectJNICall *jnicRecord = reinterpret_cast<TR_RelocationRecordDirectJNICall *>(reloRecord);
+         TR_RelocationRecordConstantPoolWithIndex *cpiRecord = reinterpret_cast<TR_RelocationRecordConstantPoolWithIndex *>(reloRecord);
          TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(relocation->getTargetAddress());
          uintptrj_t inlinedSiteIndex = reinterpret_cast<uintptrj_t>(relocation->getTargetAddress2());
 
          void *constantPool = symRef->getOwningMethod(comp)->constantPool();
          inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(constantPool, inlinedSiteIndex);
 
-         jnicRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
-         jnicRecord->setConstantPool(reloTarget, reinterpret_cast<uintptrj_t>(constantPool));
-         jnicRecord->setCpIndex(reloTarget, symRef->getCPIndex());
+         cpiRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
+         cpiRecord->setConstantPool(reloTarget, reinterpret_cast<uintptrj_t>(constantPool));
+         cpiRecord->setCpIndex(reloTarget, symRef->getCPIndex());
          }
          break;
 
@@ -343,17 +344,18 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
 
       case TR_JNIVirtualTargetAddress:
       case TR_JNIStaticTargetAddress:
+      case TR_StaticRamMethodConst:
          {
-         TR_RelocationRecordDirectJNICall *jnicRecord = reinterpret_cast<TR_RelocationRecordDirectJNICall *>(reloRecord);
+         TR_RelocationRecordConstantPoolWithIndex *cpiRecord = reinterpret_cast<TR_RelocationRecordConstantPoolWithIndex *>(reloRecord);
 
          self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
             traceMsg(self()->comp(), "\n Address Relocation (%s): inlinedIndex = %d, constantPool = %p, CPI = %d",
                                      getNameForMethodRelocation(kind),
-                                     jnicRecord->inlinedSiteIndex(reloTarget),
-                                     jnicRecord->constantPool(reloTarget),
-                                     jnicRecord->cpIndex(reloTarget));
+                                     cpiRecord->inlinedSiteIndex(reloTarget),
+                                     cpiRecord->constantPool(reloTarget),
+                                     cpiRecord->cpIndex(reloTarget));
             }
          }
          break;
@@ -1108,7 +1110,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
          case TR_JNISpecialTargetAddress:
          case TR_VirtualRamMethodConst:
          case TR_SpecialRamMethodConst:
-         case TR_StaticRamMethodConst:
             cursor++;
             if (is64BitTarget)
                cursor += 4;     // padding
