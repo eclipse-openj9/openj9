@@ -46,10 +46,12 @@
 	<!--Do not check the result of -Xshareclasses:destroy. It is possible another java process is holding the default shared cache open. In this case -Xshareclasses:destroy will fail on Windows -->
 	
 	<test id="Test 1: Test that only bootstrap class sharing is enabled by default" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ -XX:-UseContainerSupport -Xtrace:print={j9shr.1297,j9shr.1514,j9shr.2271,j9shr.2264,j9jcl.104,j9jcl.97} $CP_HANOI$ $PROGRAM_HANOI$</command>
+		<command>$JAVA_EXE$ -Xtrace:print={j9shr.1297,j9shr.1514,j9shr.2271,j9shr.2272,j9shr.2264,j9jcl.104,j9jcl.97} $CP_HANOI$ $PROGRAM_HANOI$</command>
 		<!-- Enable j9shr.2271 Trc_SHR_INIT_j9shr_init_ExitOnNonFatal and j9shr.2264 Trc_SHR_OSC_getCacheDir_j9shmem_getDir_failed1 for debugging purpose when failed -->
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">j9shr.1514\s+ - CM commitROMClass : Data was stored in the cache for J9ROMClass</output>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">j9shr.1297\s+ - CM findROMClass: class .* found at address</output>
+		<!--Let this test pass if someone is running in container-->
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">j9shr.2272\s+ - The JVM is running in container, class sharing is not enabled by default</output>
 		<output type="required" caseSensitive="yes" regex="no">Puzzle solved!</output>
 		<!-- j9jcl.104, j9jcl.97 SharedClassURLClasspathHelperImpl.storeSharedClassImpl()/findSharedClassImpl() is not triggered, non-bootstrap class sharing is not enabled.  -->
 		<output type="failure" caseSensitive="no" regex="no">SharedClassURLClasspathHelperImpl</output>	
