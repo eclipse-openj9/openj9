@@ -191,7 +191,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
          }
          break;
-      case TR_JNIStaticTargetAddress:
       case TR_JNISpecialTargetAddress:
       case TR_StaticRamMethodConst:
       case TR_VirtualRamMethodConst:
