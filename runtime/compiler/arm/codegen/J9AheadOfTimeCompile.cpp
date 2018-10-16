@@ -292,8 +292,6 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          break;
          }
 
-      case TR_RamMethod:
-         break;
       case TR_RamMethodSequence:
       case TR_RamMethodSequenceReg:
          {

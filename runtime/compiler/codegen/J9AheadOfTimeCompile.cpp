@@ -201,6 +201,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
       case TR_AbsoluteMethodAddress:
       case TR_BodyInfoAddress:
+      case TR_RamMethod:
          {
          // Nothing to do
          }
@@ -323,6 +324,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
       case TR_RelativeMethodAddress:
       case TR_AbsoluteMethodAddress:
       case TR_BodyInfoAddress:
+      case TR_RamMethod:
          {
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          }
@@ -757,10 +759,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   traceMsg(self()->comp(), "num trampolines\n %x", *(uint32_t *)ep1);
                   }
                }
-            break;
-         case TR_RamMethod:
-            cursor++;
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
             break;
          case TR_RamMethodSequence:
          case TR_RamMethodSequenceReg:

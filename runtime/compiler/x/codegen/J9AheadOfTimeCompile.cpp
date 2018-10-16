@@ -571,8 +571,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
 
          break;
          }
-      case TR_RamMethod:
-         break;
 
       case TR_ValidateClassByName:
          {

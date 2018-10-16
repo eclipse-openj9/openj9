@@ -436,9 +436,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          }
          break;
 
-      case TR_RamMethod:
-         break;
-
       case TR_RamMethodSequence:
       case TR_RamMethodSequenceReg:
          {
