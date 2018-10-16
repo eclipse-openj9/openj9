@@ -511,7 +511,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
 
       case TR_ConstantPoolOrderedPair:
       case TR_Trampolines:
-      case TR_Thunks:
          {
          // Note: thunk relos should only be created for 64 bit
          *(uintptrj_t *)cursor = (uintptrj_t)relocation->getTargetAddress2(); // inlined site index

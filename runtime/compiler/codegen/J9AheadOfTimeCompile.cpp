@@ -171,6 +171,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
    switch (kind)
       {
       case TR_ConstantPool:
+      case TR_Thunks:
          {
          TR_RelocationRecordConstantPool * cpRecord = reinterpret_cast<TR_RelocationRecordConstantPool *>(reloRecord);
 
@@ -278,6 +279,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
    switch (kind)
       {
       case TR_ConstantPool:
+      case TR_Thunks:
          {
          TR_RelocationRecordConstantPool * cpRecord = reinterpret_cast<TR_RelocationRecordConstantPool *>(reloRecord);
 
@@ -646,32 +648,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                cursor +=4;      // padding
                }
             self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            break;
-         case TR_Thunks:
-            cursor++;        // unused field
-            if (is64BitTarget)
-               {
-               cursor +=4;      // padding
-               ep1 = cursor;
-               ep2 = cursor+8;
-               cursor += 16;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(), "\nInlined site index %d, constant pool %x", *(int64_t*)ep1, *(uint64_t *)ep2);
-                  }
-               }
-            else
-               {
-               ep1 = cursor;
-               ep2 = cursor+4;
-               cursor += 8;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(), "\nInlined site index %d, constant pool %x", *(int32_t*)ep1, *(uint32_t *)ep2);
-                  }
-               }
             break;
          case TR_J2IVirtualThunkPointer:
             cursor++;        // unused field

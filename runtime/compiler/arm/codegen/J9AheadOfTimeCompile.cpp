@@ -244,7 +244,6 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
       case TR_ConstantPoolOrderedPair:
       case TR_Trampolines:
-      case TR_Thunks:
          {
          *(uintptrj_t *)cursor = (uintptrj_t)relocation->getTargetAddress2(); // inlined site index
          cursor += SIZEPOINTER;

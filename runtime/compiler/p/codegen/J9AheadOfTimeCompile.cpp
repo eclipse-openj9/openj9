@@ -391,7 +391,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          }
 
       case TR_Trampolines:
-      case TR_Thunks:
          {
          // constant pool address is placed as the last word of the header
          if (TR::Compiler->target.is64Bit())
