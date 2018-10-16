@@ -156,18 +156,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
    switch (targetKind)
       {
-      case TR_AbsoluteHelperAddress:
-         {
-         TR::SymbolReference *tempSR = (TR::SymbolReference *) relocation->getTargetAddress();
-
-         // final byte of header is the index which indicates the
-         // particular helper being relocated to
-         *wordAfterHeader = (uint32_t) tempSR->getReferenceNumber();
-         cursor = (uint8_t*)wordAfterHeader;
-         cursor +=4;
-         }
-         break;
-
       case TR_MethodObject:
          {
          TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation*) relocation->getTargetAddress();

@@ -212,6 +212,15 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_AbsoluteHelperAddress:
+         {
+         TR_RelocationRecordAbsoluteHelperAddress *ahaRecord = reinterpret_cast<TR_RelocationRecordAbsoluteHelperAddress *>(reloRecord);
+         TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(relocation->getTargetAddress());
+
+         ahaRecord->setHelperID(reloTarget, static_cast<uint32_t>(symRef->getReferenceNumber()));
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -293,6 +302,22 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          TR_RelocationRecordMethodCallAddress *mcaRecord = reinterpret_cast<TR_RelocationRecordMethodCallAddress *>(reloRecord);
          traceMsg(self()->comp(), "\n Method Call Address: address=" POINTER_PRINTF_FORMAT, mcaRecord->address(reloTarget));
          self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         }
+         break;
+
+      case TR_AbsoluteHelperAddress:
+         {
+         TR_RelocationRecordAbsoluteHelperAddress *ahaRecord = reinterpret_cast<TR_RelocationRecordAbsoluteHelperAddress *>(reloRecord);
+
+         uint32_t helperID = ahaRecord->helperID(reloTarget);
+
+         traceMsg(self()->comp(), "%-6d", helperID);
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            TR::SymbolReference *symRef = self()->comp()->getSymRefTab()->getSymRef(helperID);
+            traceMsg(self()->comp(), "\nHelper method address of %s(%d)", self()->getDebug()->getName(symRef), helperID);
+            }
          }
          break;
 
@@ -457,19 +482,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   // ep1 is same as self()->comp()->getCurrentMethod()->constantPool())
                   traceMsg(self()->comp(), "\nInlined site index = %d, Constant pool = %x", *(uint32_t *)ep1, *(uint32_t *)(ep2));
                   }
-               }
-            break;
-         case TR_AbsoluteHelperAddress:
-            // final byte of header is the index which indicates the particular helper being relocated to
-            cursor++;
-            ep1 = cursor;
-            cursor += 4;
-            traceMsg(self()->comp(), "%-6d", *(uint32_t *)ep1);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            if (isVerbose)
-               {
-               tempSR = self()->comp()->getSymRefTab()->getSymRef(*(int32_t*)ep1);
-               traceMsg(self()->comp(), "\nHelper method address of %s(%d)", self()->getDebug()->getName(tempSR), *(int32_t*)ep1);
                }
             break;
          case TR_AbsoluteMethodAddressOrderedPair:

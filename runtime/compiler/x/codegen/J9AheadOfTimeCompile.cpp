@@ -151,17 +151,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
 
    switch (relocation->getTargetKind())
       {
-      case TR_AbsoluteHelperAddress:
-         {
-         TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();
-         *wordAfterHeader = (uint32_t) tempSR->getReferenceNumber();
-         cursor = (uint8_t*)wordAfterHeader;
-         cursor += 4;
-         //printf("TR_Helper relo helperIndex: %d\n", tempSR->getReferenceNumber());
-         //printf("value at location: %d\n", *(uint32_t*)cursor);
-         }
-         break;
-
       case TR_GlobalValue:
          *(uintptrj_t*)cursor = (uintptr_t) relocation->getTargetAddress();
          cursor += SIZEPOINTER;

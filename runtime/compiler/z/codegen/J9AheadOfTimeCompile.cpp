@@ -166,22 +166,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
 
    switch (relocation->getTargetKind())
       {
-      case TR_AbsoluteHelperAddress:
-         {
-         //let the eip relative relocation bit for references to code addresses
-         TR::SymbolReference *tempSR =
-            (TR::SymbolReference *)relocation->getTargetAddress();
-
-         // final byte of header is the index which indicates the
-         // particular helper being relocated to
-         AOTcgDiag3(comp(), "TR_AbsoluteHelperAddress cursor=%x targetAddr=%x index=%x\n",
-                         wordAfterHeader, tempSR, tempSR->getReferenceNumber());
-         *wordAfterHeader = (uint32_t) tempSR->getReferenceNumber();
-         cursor = (uint8_t*)wordAfterHeader;
-         cursor += 4;
-         }
-         break;
-
       case TR_MethodObject:
          {
          TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();

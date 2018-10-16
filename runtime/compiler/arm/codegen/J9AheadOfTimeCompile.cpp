@@ -138,17 +138,6 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
 
    switch (relocation->getTargetKind())
       {
-      case TR_AbsoluteHelperAddress:
-         {
-         // final byte of header is the index which indicates the
-         // particular helper being relocated to
-         TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();
-         *wordAfterHeader = (uint32_t) tempSR->getReferenceNumber();
-         cursor = (uint8_t*)wordAfterHeader;
-         cursor += 4;
-         }
-         break;
-
       case TR_MethodObject:
          {
          TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation*) relocation->getTargetAddress();
