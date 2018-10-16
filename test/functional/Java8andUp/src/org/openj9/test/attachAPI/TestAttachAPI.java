@@ -23,6 +23,8 @@ package org.openj9.test.attachAPI;
 
 import static org.testng.AssertJUnit.assertTrue;
 import static org.openj9.test.util.FileUtilities.deleteRecursive;
+import static org.openj9.test.util.PlatformInfo.isWindows;
+import static org.openj9.test.util.PlatformInfo.isMacOS;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -202,14 +204,6 @@ public class TestAttachAPI extends AttachApiTest {
 
 	}
 
-	private boolean isWindows() {
-		String osName = System.getProperty("os.name");
-		if ((null != osName) && osName.startsWith("Windows")) {
-			return true;
-		}
-		return false;
-	}
-
 	@Test
 	public void test_agntld03() {
 		
@@ -222,12 +216,13 @@ public class TestAttachAPI extends AttachApiTest {
 		String[] libDirs = lipPath.split(File.pathSeparator);
 		char fs = File.separatorChar;
 		String decoration = "lib";
-		String suffix = ".so";
-		String errOutput = "";
+		String suffix = ".so"; // default for Linux, AIX, and z/OS
 		if (isWindows()) {
 			/* kludgy test if we are on MS Windows */
 			decoration = "";
 			suffix = ".dll";
+		} else if (isMacOS()) {
+			suffix = ".dylib";
 		}
 		int pIndex = 0;
 		String outOutput = null;
@@ -274,7 +269,7 @@ public class TestAttachAPI extends AttachApiTest {
 			logExceptionInfoAndFail(e);
 		}
 		target.terminateTarget();
-		errOutput = target.getErrOutput();
+		String errOutput = target.getErrOutput();
 		outOutput = target.getOutOutput();
 		logger.debug(outOutput);
 		assertTrue("missing Agent_OnAttach string",
