@@ -241,6 +241,14 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_CheckMethodEnter:
+         {
+         TR_RelocationRecordMethodEnterCheck *mcRecord = reinterpret_cast<TR_RelocationRecordMethodEnterCheck *>(reloRecord);
+
+         mcRecord->setDestinationAddress(reloTarget, reinterpret_cast<uintptrj_t>(relocation->getTargetAddress()));
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -358,6 +366,18 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
                                      cpiRecord->inlinedSiteIndex(reloTarget),
                                      cpiRecord->constantPool(reloTarget),
                                      cpiRecord->cpIndex(reloTarget));
+            }
+         }
+         break;
+
+      case TR_CheckMethodEnter:
+         {
+         TR_RelocationRecordMethodEnterCheck *mcRecord = reinterpret_cast<TR_RelocationRecordMethodEnterCheck *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\nDestination address %x", mcRecord->destinationAddress(reloTarget));
             }
          }
          break;
@@ -688,7 +708,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
             self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
             }
             break;
-         case TR_CheckMethodEnter:
          case TR_CheckMethodExit:
             cursor++;        // unused field
             if (is64BitTarget)

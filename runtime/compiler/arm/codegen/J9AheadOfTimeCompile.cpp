@@ -266,7 +266,6 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_CheckMethodEnter:
       case TR_CheckMethodExit:
          {
          *(uintptrj_t*)cursor = (uintptrj_t)relocation->getTargetAddress();

@@ -372,7 +372,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          }
          break;
 
-      case TR_CheckMethodEnter:
       case TR_CheckMethodExit:
          {
          if (TR::Compiler->target.is64Bit())
