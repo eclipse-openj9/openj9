@@ -335,13 +335,7 @@ def build_all() {
                 archive()
             }
         } finally {
-            try {
-                cleanWs()
-            } catch(e) {
-                echo e.toString()
-                echo e.printStackTrace()
-                sh "ps -ef"
-            }
+            cleanWs notFailBuild: true, disableDeferredWipeout: true
         }
     }
 }

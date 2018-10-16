@@ -32,13 +32,7 @@ timestamps {
             buildFile = load 'buildenv/jenkins/common/pipeline-functions'
             SHAS = buildFile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, VENDOR_TEST_REPOS_MAP, VENDOR_TEST_BRANCHES_MAP, VENDOR_TEST_SHAS_MAP)
         } finally {
-            try{
-                cleanWs()
-            } catch(e) {
-                if (variableFile) {
-                    variableFile.printStackTrace(e)
-                }
-            }
+            cleanWs notFailBuild: true, disableDeferredWipeout: true
         }
     }
 }

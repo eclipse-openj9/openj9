@@ -55,11 +55,7 @@ timeout(time: 10, unit: 'HOURS') {
                     buildFile = load 'buildenv/jenkins/common/build'
                 }
             } finally {
-                try{
-                    cleanWs()
-                } catch(e) {
-                    variableFile.printStackTrace(e)
-                }
+                cleanWs notFailBuild: true, disableDeferredWipeout: true
             }
         }
     }
