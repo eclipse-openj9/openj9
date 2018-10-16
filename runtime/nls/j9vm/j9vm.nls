@@ -1845,3 +1845,11 @@ J9NLS_VM_NESTMATES_CLASS_FAILED_TO_LOAD.system_action=The JVM will throw an Inco
 J9NLS_VM_NESTMATES_CLASS_FAILED_TO_LOAD.user_response=Load class and nest host class with same classloader.
 # END NON-TRANSLATABLE
 
+J9NLS_VM_ERROR_QTYPE_NOT_VALUE_TYPE=bad class %2$.*1$s: Qtype instance field is not a value type
+# START NON-TRANSLATABLE
+J9NLS_VM_ERROR_QTYPE_NOT_VALUE_TYPE.sample_input_1=3
+J9NLS_VM_ERROR_QTYPE_NOT_VALUE_TYPE.sample_input_2=Foo
+J9NLS_VM_ERROR_QTYPE_NOT_VALUE_TYPE.explanation=The class has a field with a q signature which is not a value type.
+J9NLS_VM_ERROR_QTYPE_NOT_VALUE_TYPE.system_action=The JVM will throw a IncompatibleClassChangeError.
+J9NLS_VM_ERROR_QTYPE_NOT_VALUE_TYPE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
