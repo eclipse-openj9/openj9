@@ -322,10 +322,6 @@ j9gc_is_managedpool_by_collector(J9JavaVM *javaVM, UDATA gcID, UDATA poolID)
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
 	if (extensions->_HeapManagementMXBeanBackCompatibilityEnabled) {
-		if (J9_GC_MANAGEMENT_COLLECTOR_SCAVENGE == gcID) {
-			/* for BackCompatible mode scavenge does not try to reclaim memory from the whole heap, so we do not mark JavaHeap managed by scavenge */
-			return 0;
-		}
 		return 1;
 	}
 	UDATA managedPools = 0;
