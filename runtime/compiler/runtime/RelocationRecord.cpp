@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1982,7 +1982,7 @@ TR_RelocationRecordInlinedAllocation::preparePrivateData(TR_RelocationRuntime *r
    if (reloRuntime->comp()->getOption(TR_UseSymbolValidationManager))
       {
       uint16_t classID = (uint16_t)cpIndex(reloTarget);
-      clazz = (J9Class *)reloRuntime->comp()->getSymbolValidationManager()->getSymbolFromID(classID);
+      clazz = reloRuntime->comp()->getSymbolValidationManager()->getJ9ClassFromID(classID);
       }
    else
       {
@@ -2226,9 +2226,9 @@ TR_RelocationRecordInlinedMethod::inlinedSiteValid(TR_RelocationRuntime *reloRun
          uint16_t receiverClassID = (uint16_t)((data >> 16) & 0xFFFF);
 
          // currentMethod is guaranteed to not be NULL because of the SVM
-         currentMethod = (J9Method *)reloRuntime->comp()->getSymbolValidationManager()->getSymbolFromID(methodID);
+         currentMethod = reloRuntime->comp()->getSymbolValidationManager()->getJ9MethodFromID(methodID);
          if (needsReceiverClassFromID())
-            reloPrivateData->_receiverClass = (TR_OpaqueClassBlock *)reloRuntime->comp()->getSymbolValidationManager()->getSymbolFromID(receiverClassID);
+            reloPrivateData->_receiverClass = reloRuntime->comp()->getSymbolValidationManager()->getClassFromID(receiverClassID);
          else
             reloPrivateData->_receiverClass = NULL;
 
@@ -3897,7 +3897,7 @@ TR_RelocationRecordSymbolFromManager::preparePrivateData(TR_RelocationRuntime *r
       reloRuntime->reloLogger()->printf("\tpreparePrivateData: symbolType %d\n", symbolType);
       }
 
-   reloPrivateData->_symbol = reloRuntime->comp()->getSymbolValidationManager()->getSymbolFromID(symbolID);
+   reloPrivateData->_symbol = reloRuntime->comp()->getSymbolValidationManager()->getSymbolFromID(symbolID, (TR::SymbolType)symbolType);
    reloPrivateData->_symbolType = symbolType;
    }
 
