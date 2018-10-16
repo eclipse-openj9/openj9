@@ -198,6 +198,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          break;
 
       case TR_AbsoluteMethodAddress:
+      case TR_BodyInfoAddress:
          {
          // Nothing to do
          }
@@ -308,6 +309,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
 
       case TR_RelativeMethodAddress:
       case TR_AbsoluteMethodAddress:
+      case TR_BodyInfoAddress:
          {
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          }
@@ -635,7 +637,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   }
                }
             break;
-         case TR_BodyInfoAddress:
          case TR_BodyInfoAddressLoad:
          case TR_ArrayCopyHelper:
          case TR_ArrayCopyToc:

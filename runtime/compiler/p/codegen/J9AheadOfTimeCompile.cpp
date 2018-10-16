@@ -349,8 +349,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          break;
 
 
-      case TR_BodyInfoAddress:
-         break;
       case TR_BodyInfoAddressLoad:
          {
          if (TR::Compiler->target.is64Bit())

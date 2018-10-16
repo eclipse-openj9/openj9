@@ -327,7 +327,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          break;
 
       case TR_AbsoluteMethodAddressOrderedPair:
-      case TR_BodyInfoAddress:
          break;
       case TR_ArrayCopyHelper:
          {

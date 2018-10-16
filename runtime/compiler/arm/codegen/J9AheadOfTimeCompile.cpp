@@ -235,8 +235,6 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          break;
       case TR_AbsoluteMethodAddressOrderedPair:
          break;
-      case TR_BodyInfoAddress:
-         break;
       case TR_BodyInfoAddressLoad:
          {
          uint8_t flags = (uint8_t) ((uintptr_t) relocation->getTargetAddress2());// sequence ID
