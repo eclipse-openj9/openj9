@@ -921,6 +921,7 @@ typedef struct J9JavaLangManagementData {
 	U_32 supportedMemoryPools;
 	U_32 supportedNonHeapMemoryPools;
 	U_32 supportedCollectors;
+	U_32 lastGCID;
 	struct J9MemoryPoolData *memoryPools;
 	struct J9NonHeapMemoryData *nonHeapMemoryPools;
 	struct J9GarbageCollectorData *garbageCollectors;

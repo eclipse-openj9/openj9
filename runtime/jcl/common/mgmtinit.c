@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -479,6 +479,7 @@ gcStartEvent(J9JavaVM *vm, UDATA heapSize, UDATA heapUsed, UDATA *totals, UDATA 
 	J9MemoryPoolData *memoryPools = mgmt->memoryPools;
 	J9MemoryNotification *notification = NULL;
 	J9MemoryNotification *last = NULL;
+	J9GarbageCollectionInfo* gcInfo = NULL;
 
 	UDATA total = 0;
 	UDATA used = 0;
@@ -500,21 +501,26 @@ gcStartEvent(J9JavaVM *vm, UDATA heapSize, UDATA heapUsed, UDATA *totals, UDATA 
 
 	mgmt->preCollectionHeapSize = heapSize;
 	mgmt->preCollectionHeapUsed = heapUsed;
+	gcInfo = &gcData->lastGcInfo;
 
 	for (idx = 0; idx < mgmt->supportedMemoryPools; ++idx) {
 		J9MemoryPoolData *memoryPool = &memoryPools[idx];
 		total = totals[idx];
 		used = totals[idx] - frees[idx];
 
-		memoryPool->preCollectionSize = total;
-		memoryPool->preCollectionUsed = used;
-		memoryPool->preCollectionMaxSize = memoryPool->postCollectionMaxSize;
+		/* update pre Memory Usage of last GcInfo for the collector */
+		gcInfo->preUsed[idx] = used;
+		gcInfo->preCommitted[idx] = total;
+		if (0 == gcInfo->postMax[idx]) {
+			gcInfo->postMax[idx] = memoryPool->postCollectionMaxSize;
+		}
+		gcInfo->preMax[idx] = gcInfo->postMax[idx];
 
 		/* check the peak usage and update */
 		if (memoryPool->peakUsed < used) {
 			memoryPool->peakUsed = used;
 			memoryPool->peakSize = total;
-			memoryPool->peakMax = memoryPool->preCollectionMaxSize;
+			memoryPool->peakMax = gcInfo->preMax[idx];
 		}
 
 		/* if a heap usage threshold is set, check whether we are above or below */
@@ -546,7 +552,7 @@ gcStartEvent(J9JavaVM *vm, UDATA heapSize, UDATA heapUsed, UDATA *totals, UDATA 
 							notification->usageThreshold->poolID = memoryPool->id;
 							notification->usageThreshold->usedSize = used;
 							notification->usageThreshold->totalSize = total;
-							notification->usageThreshold->maxSize = memoryPool->preCollectionMaxSize;
+							notification->usageThreshold->maxSize = gcInfo->preMax[idx];
 							notification->usageThreshold->thresholdCrossingCount = memoryPool->usageThresholdCrossedCount;
 							notification->sequenceNumber = mgmt->notificationCount++;
 
@@ -601,6 +607,7 @@ gcEndEvent(J9JavaVM *vm, UDATA heapSize, UDATA heapUsed, UDATA *totals, UDATA *f
 
 	UDATA total = 0;
 	UDATA used = 0;
+	UDATA max = 0;
 	UDATA idx = 0;
 	U_32 notificationEnabled = 0;
 
@@ -613,27 +620,31 @@ gcEndEvent(J9JavaVM *vm, UDATA heapSize, UDATA heapUsed, UDATA *totals, UDATA *f
 	/* lock the management struct */
 	omrthread_rwmutex_enter_write(mgmt->managementDataLock);
 
+	mgmt->lastGCID = (U_32)collectorID;
 	mgmt->postCollectionHeapSize = heapSize;
 	mgmt->postCollectionHeapUsed = heapUsed;
+	gcInfo = &gcData->lastGcInfo;
 
 	for (idx = 0; idx < mgmt->supportedMemoryPools; ++idx) {
 		J9MemoryPoolData *memoryPool = &memoryPools[idx];
 		total = totals[idx];
 		used = totals[idx] - frees[idx];
+		max = maxs[idx];
 
-		memoryPool->postCollectionSize = total;
-		memoryPool->postCollectionUsed = used;
-		memoryPool->postCollectionMaxSize = maxs[idx];
+		/* update post Memory Usage of last GcInfo for the collector */
+		gcInfo->postUsed[idx] = used;
+		gcInfo->postCommitted[idx] = total;
+		gcInfo->postMax[idx] = max;
 
 		/* check the peak usage and update */
 		if (memoryPool->peakUsed < used) {
 			memoryPool->peakUsed = used;
 			memoryPool->peakSize = total;
-			memoryPool->peakMax = memoryPool->postCollectionMaxSize;
+			memoryPool->peakMax = max;
 		}
 
-		/* if a heap collection threshold is set, check whether we are above or below */
-		if (0 < memoryPool->collectionUsageThreshold) {
+		/* if a memory pool collection threshold is set and the memory pool is managed by the collector, check whether we are above or below */
+		if ((0 < memoryPool->collectionUsageThreshold) && mmFuncs->j9gc_is_managedpool_by_collector(vm, (UDATA)(gcData->id & J9VM_MANAGEMENT_GC_HEAP_ID_MASK), (UDATA)(memoryPool->id & J9VM_MANAGEMENT_POOL_HEAP_ID_MASK))) {
 			if (memoryPool->collectionUsageThreshold < used) {
 				/* usage above threshold now, was it below threshold last time? */
 				if (0 == (memoryPool->notificationState & COLLECTION_THRESHOLD_EXCEEDED)) {
@@ -661,7 +672,7 @@ gcEndEvent(J9JavaVM *vm, UDATA heapSize, UDATA heapUsed, UDATA *totals, UDATA *f
 							notification->usageThreshold->poolID = memoryPool->id;
 							notification->usageThreshold->usedSize = used;
 							notification->usageThreshold->totalSize = total;
-							notification->usageThreshold->maxSize = memoryPool->postCollectionMaxSize;
+							notification->usageThreshold->maxSize = max;
 							notification->usageThreshold->thresholdCrossingCount = memoryPool->collectionUsageThresholdCrossedCount;
 							notification->sequenceNumber = mgmt->notificationCount++;
 
@@ -731,7 +742,6 @@ gcEndEvent(J9JavaVM *vm, UDATA heapSize, UDATA heapUsed, UDATA *totals, UDATA *f
 	/* update nonHeap memory pools for postCollection */
 	updateNonHeapMemoryPoolSizes(vm, mgmt, TRUE);
 	/* update J9GarbageCollectionInfo for the collector */
-	gcInfo = &gcData->lastGcInfo;
 
 	gcInfo->gcID = gcData->id;
 	gcInfo->gcAction = mmFuncs->j9gc_get_gc_action(vm, (gcInfo->gcID & J9VM_MANAGEMENT_GC_HEAP_ID_MASK));
@@ -741,12 +751,19 @@ gcEndEvent(J9JavaVM *vm, UDATA heapSize, UDATA heapUsed, UDATA *totals, UDATA *f
 	for (idx = 0; supportedMemoryPools > idx; ++idx) {
 		J9MemoryPoolData *memoryPool = &memoryPools[idx];
 		gcInfo->initialSize[idx] = memoryPool->initialSize;
-		gcInfo->preUsed[idx] = memoryPool->preCollectionUsed;
-		gcInfo->preCommitted[idx] = memoryPool->preCollectionSize;
-		gcInfo->preMax[idx] = (I_64) memoryPool->preCollectionMaxSize;
-		gcInfo->postUsed[idx] = memoryPool->postCollectionUsed;
-		gcInfo->postCommitted[idx] = memoryPool->postCollectionSize;
-		gcInfo->postMax[idx] = (I_64) memoryPool->postCollectionMaxSize;
+		if (mmFuncs->j9gc_is_managedpool_by_collector(vm, (UDATA)(gcData->id & J9VM_MANAGEMENT_GC_HEAP_ID_MASK), (UDATA)(memoryPool->id & J9VM_MANAGEMENT_POOL_HEAP_ID_MASK))) {
+			/**
+			 * the memoryPool is managed by this collection, update preCollection postCollection Memory Usage of this memory Pool
+			 * gcInfo keep memory Usage before and after this gc
+			 *  preCollection postCollection Memory Usage in memoryPool only keep information for the GC, which recycle the memory pool
+			 */
+			memoryPool->preCollectionUsed = gcInfo->preUsed[idx];
+			memoryPool->preCollectionSize = gcInfo->preCommitted[idx];
+			memoryPool->preCollectionMaxSize = (U_64)gcInfo->preMax[idx];
+			memoryPool->postCollectionUsed = gcInfo->postUsed[idx];
+			memoryPool->postCollectionSize = gcInfo->postCommitted[idx];
+			memoryPool->postCollectionMaxSize = (U_64)gcInfo->postMax[idx];
+		}
 	}
 	/* non heap memory pools */
 	for (; supportedMemoryPools + supportedNonHeapMemoryPools > idx; ++idx) {
