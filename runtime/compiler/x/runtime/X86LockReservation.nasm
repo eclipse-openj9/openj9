@@ -20,18 +20,18 @@
 
 %include "jilconsts.inc"
 
-    global _jitMonitorEnterReserved
-    global _jitMonitorEnterReservedPrimitive
-    global _jitMonitorEnterPreservingReservation
-    global _jitMethodMonitorEnterReserved
-    global _jitMethodMonitorEnterReservedPrimitive
-    global _jitMethodMonitorEnterPreservingReservation
-    global _jitMonitorExitReserved
-    global _jitMonitorExitReservedPrimitive
-    global _jitMonitorExitPreservingReservation
-    global _jitMethodMonitorExitPreservingReservation
-    global _jitMethodMonitorExitReserved
-    global _jitMethodMonitorExitReservedPrimitive
+    DECLARE_GLOBAL jitMonitorEnterReserved
+    DECLARE_GLOBAL jitMonitorEnterReservedPrimitive
+    DECLARE_GLOBAL jitMonitorEnterPreservingReservation
+    DECLARE_GLOBAL jitMethodMonitorEnterReserved
+    DECLARE_GLOBAL jitMethodMonitorEnterReservedPrimitive
+    DECLARE_GLOBAL jitMethodMonitorEnterPreservingReservation
+    DECLARE_GLOBAL jitMonitorExitReserved
+    DECLARE_GLOBAL jitMonitorExitReservedPrimitive
+    DECLARE_GLOBAL jitMonitorExitPreservingReservation
+    DECLARE_GLOBAL jitMethodMonitorExitPreservingReservation
+    DECLARE_GLOBAL jitMethodMonitorExitReserved
+    DECLARE_GLOBAL jitMethodMonitorExitReservedPrimitive
 
 %ifdef WINDOWS
     UseFastCall equ 1
@@ -286,40 +286,40 @@ eq_J9Monitor_CNTFLCClearMask  equ 0FFFFFFFFFFFFFF05h
 
 segment .text
 
-extern _jitMonitorEntry
-extern _jitMethodMonitorEntry
-extern _jitMonitorExit
-extern _jitMethodMonitorExit
+DECLARE_EXTERN jitMonitorEntry
+DECLARE_EXTERN jitMethodMonitorEntry
+DECLARE_EXTERN jitMonitorExit
+DECLARE_EXTERN jitMethodMonitorExit
 
 %ifdef TR_HOST_64BIT
-    entryFallback equ _jitMonitorEntry
-    methodEntryFallback equ _jitMethodMonitorEntry
+    entryFallback equ jitMonitorEntry
+    methodEntryFallback equ jitMethodMonitorEntry
 %else
     entryFallback:
-        ; _jitMonitorEntry won't clean up the extra argument
+        ; jitMonitorEntry won't clean up the extra argument
         pop eax
         mov dword [esp], eax
-        jmp _jitMonitorEntry
+        jmp jitMonitorEntry
         retn
 
     methodEntryFallback:
-        ; _jitMethodMonitorEntry won't clean up the extra argument
+        ; jitMethodMonitorEntry won't clean up the extra argument
         pop eax
         mov dword [esp], eax
-        jmp _jitMethodMonitorEntry
+        jmp jitMethodMonitorEntry
         retn
 %endif
 
-MonitorReservationFunction _jitMonitorEnterReserved,                    entryFallback,         MonitorEnterReserved
-MonitorReservationFunction _jitMethodMonitorEnterReserved,              methodEntryFallback,   MonitorEnterReserved
-MonitorReservationFunction _jitMonitorEnterReservedPrimitive,           entryFallback,         MonitorEnterReservedPrimitive
-MonitorReservationFunction _jitMethodMonitorEnterReservedPrimitive,     methodEntryFallback,   MonitorEnterReservedPrimitive
-MonitorReservationFunction _jitMonitorEnterPreservingReservation,       _jitMonitorEntry,       MonitorEnterPreservingReservation
-MonitorReservationFunction _jitMethodMonitorEnterPreservingReservation, _jitMethodMonitorEntry, MonitorEnterPreservingReservation
+MonitorReservationFunction jitMonitorEnterReserved,                    entryFallback,         MonitorEnterReserved
+MonitorReservationFunction jitMethodMonitorEnterReserved,              methodEntryFallback,   MonitorEnterReserved
+MonitorReservationFunction jitMonitorEnterReservedPrimitive,           entryFallback,         MonitorEnterReservedPrimitive
+MonitorReservationFunction jitMethodMonitorEnterReservedPrimitive,     methodEntryFallback,   MonitorEnterReservedPrimitive
+MonitorReservationFunction jitMonitorEnterPreservingReservation,       jitMonitorEntry,       MonitorEnterPreservingReservation
+MonitorReservationFunction jitMethodMonitorEnterPreservingReservation, jitMethodMonitorEntry, MonitorEnterPreservingReservation
 
-MonitorReservationFunction _jitMonitorExitReserved,                    _jitMonitorExit,       MonitorExitReserved
-MonitorReservationFunction _jitMethodMonitorExitReserved,              _jitMethodMonitorExit, MonitorExitReserved
-MonitorReservationFunction _jitMonitorExitReservedPrimitive,           _jitMonitorExit,       MonitorExitReservedPrimitive
-MonitorReservationFunction _jitMethodMonitorExitReservedPrimitive,     _jitMethodMonitorExit, MonitorExitReservedPrimitive
-MonitorReservationFunction _jitMonitorExitPreservingReservation,       _jitMonitorExit,       MonitorExitPreservingReservation
-MonitorReservationFunction _jitMethodMonitorExitPreservingReservation, _jitMethodMonitorExit, MonitorExitPreservingReservation
+MonitorReservationFunction jitMonitorExitReserved,                    jitMonitorExit,       MonitorExitReserved
+MonitorReservationFunction jitMethodMonitorExitReserved,              jitMethodMonitorExit, MonitorExitReserved
+MonitorReservationFunction jitMonitorExitReservedPrimitive,           jitMonitorExit,       MonitorExitReservedPrimitive
+MonitorReservationFunction jitMethodMonitorExitReservedPrimitive,     jitMethodMonitorExit, MonitorExitReservedPrimitive
+MonitorReservationFunction jitMonitorExitPreservingReservation,       jitMonitorExit,       MonitorExitPreservingReservation
+MonitorReservationFunction jitMethodMonitorExitPreservingReservation, jitMethodMonitorExit, MonitorExitPreservingReservation
