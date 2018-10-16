@@ -97,9 +97,9 @@ else
 	ifneq (,$(findstring win,$(SPEC)))
 		TEST_LIB_PATH:=PATH=$(Q)$(TEST_LIB_PATH_VALUE)$(PS)$(PATH)$(Q)
 	else ifneq (,$(findstring aix,$(SPEC)))
-		TEST_LIB_PATH:=LIBPATH=$(Q)$(TEST_LIB_PATH_VALUE)$(PS)$(LIBPATH)$(Q)
+		TEST_LIB_PATH:=LIBPATH=$(Q)$(LIBPATH)$(PS)$(TEST_LIB_PATH_VALUE)$(Q)
 	else ifneq (,$(findstring zos,$(SPEC)))
-		TEST_LIB_PATH:=LIBPATH=$(Q)$(TEST_LIB_PATH_VALUE)$(PS)$(LIBPATH)$(Q)
+		TEST_LIB_PATH:=LIBPATH=$(Q)$(LIBPATH)$(PS)$(TEST_LIB_PATH_VALUE)$(Q)
 	else
 		TEST_LIB_PATH:=LD_LIBRARY_PATH=$(Q)$(TEST_LIB_PATH_VALUE)$(PS)$(LD_LIBRARY_PATH)$(Q)
 	endif

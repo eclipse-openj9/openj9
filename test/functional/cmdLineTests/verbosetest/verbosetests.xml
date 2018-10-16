@@ -492,7 +492,6 @@
   		<command>$EXE$ $VERBOSE$ $PROGRAM$</command>
  		<!-- check for -verbose:dynload message on a non-bootstrap class. When shared cache is enabled by default, -verbose:dynload won't show bootstrap classes loaded from the share cache-->
   		<output regex="no" type="required">Loaded jit/test/vich/Allocation</output>
-  		<output regex="no" type="required">Loaded java/lang/Object from</output>
  		<output regex="no" type="required">RAM class segment increment</output>
  		<output regex="no" type="required">JVMVERB000I Verbose stack</output>
  		<output regex="no" type="required"></output>
