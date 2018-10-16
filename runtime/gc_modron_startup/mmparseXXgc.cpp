@@ -791,8 +791,8 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			extensions->setDebugConcurrentScavengerPageAlignment(true);
 			continue;
 		}
-		if(try_scan(&scan_start, "softwareEvacuateReadBarrier")) {
-			extensions->softwareEvacuateReadBarrier = true;
+		if(try_scan(&scan_start, "softwareRangeCheckReadBarrier")) {
+			extensions->softwareRangeCheckReadBarrier = true;
 			continue;
 		}
 #endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
