@@ -159,7 +159,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          break;
 
       case TR_MethodObject:
-      case TR_InterfaceObject:
          {
          TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation*) relocation->getTargetAddress();
          TR::SymbolReference *tempSR = (TR::SymbolReference *) recordInfo->data1;

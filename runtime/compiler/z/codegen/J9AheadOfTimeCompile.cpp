@@ -173,7 +173,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          break;
 
       case TR_MethodObject:
-      case TR_InterfaceObject:
          {
          TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();
 
@@ -205,6 +204,7 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
             }
          }
          break;
+
       case TR_JNIStaticTargetAddress:
       case TR_JNISpecialTargetAddress:
       case TR_JNIVirtualTargetAddress:

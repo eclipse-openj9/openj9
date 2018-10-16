@@ -3664,7 +3664,6 @@ TR_DebugExt::dxPrintAOTinfo(void *addr)
             }
          break;
          case TR_RelativeMethodAddress:
-         case TR_InterfaceObject:
             // unsupported
          default:
             _dbgPrintf("Unrecognized relocation record\n");
