@@ -189,6 +189,14 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_RelativeMethodAddress:
+         {
+         TR_RelocationRecordMethodAddress *rmaRecord = reinterpret_cast<TR_RelocationRecordMethodAddress *>(reloRecord);
+
+         rmaRecord->setEipRelative(reloTarget);
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -254,6 +262,16 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
             {
             TR::SymbolReference *symRef = self()->comp()->getSymRefTab()->getSymRef(helperID);
             traceMsg(self()->comp(), "\nHelper method address of %s(%d)", self()->getDebug()->getName(symRef), helperID);
+            }
+         }
+         break;
+
+      case TR_RelativeMethodAddress:
+         {
+         self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\nRelative Method Address");
             }
          }
          break;
@@ -423,35 +441,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                {
                tempSR = self()->comp()->getSymRefTab()->getSymRef(*(int32_t*)ep1);
                traceMsg(self()->comp(), "\nHelper method address of %s(%d)", self()->getDebug()->getName(tempSR), *(int32_t*)ep1);
-               }
-            break;
-         case TR_RelativeMethodAddress:
-            // next word is the address of the constant pool to which the index refers
-            // second word is the index in the above stored constant pool that indicates the particular
-            // relocation target
-            cursor++;        // unused field
-            if (is64BitTarget)
-               {
-               cursor +=4;      // padding
-               ep1 = cursor;
-               ep2 = cursor+8;
-               cursor += 16;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(), "\nRelative Method Address: Constant pool = %x, index = %d", *(uint64_t *)ep1, *(uint64_t *)ep2);
-                  }
-               }
-            else
-               {
-               ep1 = cursor;
-               ep2 = cursor+4;
-               cursor += 8;
-               self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-               if (isVerbose)
-                  {
-                  traceMsg(self()->comp(), "\nRelative Method Address: Constant pool = %x, index = %d", *(uint32_t *)ep1, *(uint32_t *)ep2);
-                  }
                }
             break;
          case TR_AbsoluteMethodAddress:

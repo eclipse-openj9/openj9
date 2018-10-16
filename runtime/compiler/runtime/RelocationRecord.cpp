@@ -4470,7 +4470,7 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    {
    sizeof(TR_RelocationRecordConstantPoolBinaryTemplate),                            // TR_ConstantPool                                 = 0
    sizeof(TR_RelocationRecordHelperAddressBinaryTemplate),                           // TR_HelperAddress                                = 1
-   24,                                                                               // TR_RelativeMethodAddress                        = 2
+   sizeof(TR_RelocationRecordBinaryTemplate),                                        // TR_RelativeMethodAddress                        = 2
    sizeof(TR_RelocationRecordBinaryTemplate),                                        // TR_AbsoluteMethodAddress                        = 3
    sizeof(TR_RelocationRecordDataAddressBinaryTemplate),                             // TR_DataAddress                                  = 4
    24,                                                                               // TR_ClassObject                                  = 5

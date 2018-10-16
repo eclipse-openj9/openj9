@@ -149,11 +149,6 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_RelativeMethodAddress:
-         // set the relative relocation bit for references to code addresses
-         *flagsCursor |= RELOCATION_TYPE_EIP_OFFSET;
-         // deliberate fall-through
-         //case TR_DataAddress:
       case TR_ClassObject:
       case TR_MethodObject:
       case TR_InterfaceObject:

@@ -353,11 +353,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_RelativeMethodAddress:
-         {
-         *flagsCursor |= RELOCATION_TYPE_EIP_OFFSET;  // set the relative relocation bit for references to code addresses
-         }
-         // deliberate fall-through
       case TR_ClassObject:
       case TR_MethodObject:
       //case TR_InterfaceObject: Shouldn't have branch that create inteface object for X86.
