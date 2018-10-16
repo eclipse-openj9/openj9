@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/Instruction.hpp"
 #include "env/SharedCache.hpp"
 #include "env/jittypes.h"
 #include "exceptions/PersistenceFailure.hpp"
@@ -250,6 +251,36 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_VerifyClassObjectForAlloc:
+         {
+         TR_RelocationRecordVerifyClassObjectForAlloc *allocRecord = reinterpret_cast<TR_RelocationRecordVerifyClassObjectForAlloc *>(reloRecord);
+
+         TR::SymbolReference * classSymRef = reinterpret_cast<TR::SymbolReference *>(relocation->getTargetAddress());
+         TR_RelocationRecordInformation *recordInfo = reinterpret_cast<TR_RelocationRecordInformation*>(relocation->getTargetAddress2());
+         TR::LabelSymbol *label = reinterpret_cast<TR::LabelSymbol *>(recordInfo->data3);
+         TR::Instruction *instr = reinterpret_cast<TR::Instruction *>(recordInfo->data4);
+
+         uint32_t branchOffset = static_cast<uint32_t>(label->getCodeLocation() - instr->getBinaryEncoding());
+
+         allocRecord->setInlinedSiteIndex(reloTarget, static_cast<uintptrj_t>(recordInfo->data2));
+         allocRecord->setConstantPool(reloTarget, reinterpret_cast<uintptrj_t>(classSymRef->getOwningMethod(comp)->constantPool()));
+         allocRecord->setBranchOffset(reloTarget, static_cast<uintptrj_t>(branchOffset));
+         allocRecord->setAllocationSize(reloTarget, static_cast<uintptrj_t>(recordInfo->data1));
+
+         /* Temporary, will be cleaned up in a future PR */
+         if (comp->getOption(TR_UseSymbolValidationManager))
+            {
+            TR_OpaqueClassBlock *classOfMethod = reinterpret_cast<TR_OpaqueClassBlock *>(recordInfo->data5);
+            uint16_t classID = symValManager->getIDFromSymbol(static_cast<void *>(classOfMethod));
+            allocRecord->setCpIndex(reloTarget, static_cast<uintptrj_t>(classID));
+            }
+         else
+            {
+            allocRecord->setCpIndex(reloTarget, static_cast<uintptrj_t>(classSymRef->getCPIndex()));
+            }
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -380,6 +411,23 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          if (isVerbose)
             {
             traceMsg(self()->comp(), "\nDestination address %x", mcRecord->destinationAddress(reloTarget));
+            }
+         }
+         break;
+
+      case TR_VerifyClassObjectForAlloc:
+         {
+         TR_RelocationRecordVerifyClassObjectForAlloc *allocRecord = reinterpret_cast<TR_RelocationRecordVerifyClassObjectForAlloc *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\nVerify Class Object for Allocation: InlineCallSite index = %d, Constant pool = %x, index = %d, binaryEncode = %x, size = %d",
+                                     allocRecord->inlinedSiteIndex(reloTarget),
+                                     allocRecord->constantPool(reloTarget),
+                                     allocRecord->cpIndex(reloTarget),
+                                     allocRecord->branchOffset(reloTarget),
+                                     allocRecord->allocationSize(reloTarget));
             }
          }
          break;
@@ -779,37 +827,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                cursor += 4;
                self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
                }
-            break;
-         case TR_VerifyClassObjectForAlloc:
-            {
-            cursor++;        //unused field
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            ep1 = (uintptr_t *) cursor;
-            cursor += sizeof(uintptr_t);
-            ep2 = (uintptr_t *) cursor;
-            cursor += sizeof(uintptr_t);
-            ep3 = (uintptr_t *) cursor;
-            cursor += sizeof(uintptr_t);
-            ep4 = (uintptr_t *) cursor;
-            cursor += sizeof(uintptr_t);
-            ep5 = (uintptr_t *) cursor;
-            cursor += sizeof(uintptr_t);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            if (isVerbose)
-               {
-               if (is64BitTarget)
-                  {
-                  traceMsg(self()->comp(), "\nVerify Class Object for Allocation: InlineCallSite index = %d, Constant pool = %x, index = %d, binaryEncode = %x, size = %d",
-                                  *(uint64_t *)ep1, *(uint64_t *)ep2, *(uint64_t *)ep3, *(uint64_t *)ep4, *(uint64_t *)ep5);
-                  }
-               else
-                  {
-                  traceMsg(self()->comp(), "\nVerify Class Object for Allocation: InlineCallSite index = %d, Constant pool = %x, index = %d, binaryEncode = %x, size = %d",
-                                  *(uint32_t *)ep1, *(uint32_t *)ep2, *(uint32_t *)ep3, *(uint32_t *)ep4, *(uint32_t *)ep5);
-                  }
-               }
-            }
             break;
          case TR_InlinedStaticMethodWithNopGuard:
          case TR_InlinedSpecialMethodWithNopGuard:
