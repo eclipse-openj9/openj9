@@ -355,7 +355,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          break;
 
 
-      case TR_AbsoluteMethodAddress:
       case TR_BodyInfoAddress:
          break;
       case TR_BodyInfoAddressLoad:

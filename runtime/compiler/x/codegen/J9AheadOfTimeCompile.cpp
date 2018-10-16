@@ -501,7 +501,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_AbsoluteMethodAddress:
       case TR_AbsoluteMethodAddressOrderedPair:
          break;
       case TR_BodyInfoAddress:

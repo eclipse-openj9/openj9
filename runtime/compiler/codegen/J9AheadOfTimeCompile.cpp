@@ -197,6 +197,12 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_AbsoluteMethodAddress:
+         {
+         // Nothing to do
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -267,12 +273,9 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          break;
 
       case TR_RelativeMethodAddress:
+      case TR_AbsoluteMethodAddress:
          {
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
-         if (isVerbose)
-            {
-            traceMsg(self()->comp(), "\nRelative Method Address");
-            }
          }
          break;
 
@@ -443,7 +446,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                traceMsg(self()->comp(), "\nHelper method address of %s(%d)", self()->getDebug()->getName(tempSR), *(int32_t*)ep1);
                }
             break;
-         case TR_AbsoluteMethodAddress:
          case TR_AbsoluteMethodAddressOrderedPair:
             // Reference to the current method, no other information
             cursor++;

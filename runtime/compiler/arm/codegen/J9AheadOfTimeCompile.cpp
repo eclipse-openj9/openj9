@@ -248,7 +248,6 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          cursor += 4;
          }
          break;
-      case TR_AbsoluteMethodAddress:
       case TR_AbsoluteMethodAddressOrderedPair:
          break;
       case TR_BodyInfoAddress:
