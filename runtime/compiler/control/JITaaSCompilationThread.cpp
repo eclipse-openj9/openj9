@@ -2578,6 +2578,13 @@ ClientSessionData::ClassInfo::freeClassInfo()
    // free cached interfaces
    interfaces->~PersistentVector<TR_OpaqueClassBlock *>();
    jitPersistentFree(interfaces);
+
+   // if class of static cache exists, free it
+   if (_classOfStaticCache)
+      {
+      _classOfStaticCache->~PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *>();
+      jitPersistentFree(_classOfStaticCache);
+      }
    }
 
 ClientSessionData::VMInfo *
@@ -2741,7 +2748,7 @@ JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class
    uintptrj_t totalInstanceSize = std::get<16>(classInfo);
    clientSessionData->getROMClassMap().insert({ clazz, { romClass, methods,
       baseComponentClass, numDims,
-      nullptr, nullptr, parentClass, interfaces, classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword, leafComponentClass, classLoader, hostClass, componentClass, arrayClass, totalInstanceSize} });
+      nullptr, nullptr, parentClass, interfaces, classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword, leafComponentClass, classLoader, hostClass, componentClass, arrayClass, totalInstanceSize, nullptr} });
    uint32_t numMethods = romClass->romMethodCount;
    J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
    for (uint32_t i = 0; i < numMethods; i++)

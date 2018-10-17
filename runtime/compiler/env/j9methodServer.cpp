@@ -166,8 +166,34 @@ TR_ResolvedJ9JITaaSServerMethod::classOfStatic(I_32 cpIndex, bool returnClassFor
    // if method is unresolved, return right away
    if (cpIndex < 0)
       return nullptr;
+
+   TR::CompilationInfoPerThread *compInfoPT = _fe->_compInfoPT;
+      {
+      OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor()); 
+      auto &classOfStaticCache = getJ9ClassInfo(compInfoPT, _ramClass)._classOfStaticCache;
+      if (!classOfStaticCache)
+         {
+         // initialize cache, called once per ram class
+         classOfStaticCache = new (PERSISTENT_NEW) PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *>(PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *>::allocator_type(TR::Compiler->persistentAllocator()));
+         }
+      
+      auto it = classOfStaticCache->find(cpIndex);
+      if (it != classOfStaticCache->end())
+         return it->second;
+      }
+
    _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_classOfStatic, _remoteMirror, cpIndex, returnClassForAOT);
-   return std::get<0>(_stream->read<TR_OpaqueClassBlock *>());
+   TR_OpaqueClassBlock *classOfStatic = std::get<0>(_stream->read<TR_OpaqueClassBlock *>());
+   if (classOfStatic)
+      {
+      // reacquire monitor and cache, if client returned a valid class
+      // if client returned NULL, don't cache, because class might not be fully initialized,
+      // so the result may change in the future
+      OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor()); 
+      auto classOfStaticCache = getJ9ClassInfo(compInfoPT, _ramClass)._classOfStaticCache;
+      classOfStaticCache->insert({cpIndex, classOfStatic});
+      }
+   return classOfStatic;
    }
 
 bool

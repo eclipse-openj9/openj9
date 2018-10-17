@@ -60,6 +60,7 @@ class ClientSessionData
       TR_OpaqueClassBlock * componentClass; // caching the componentType of the J9ArrayClass
       TR_OpaqueClassBlock * arrayClass;
       uintptrj_t totalInstanceSize;
+      PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> *_classOfStaticCache;
       };
 
    struct J9MethodInfo
