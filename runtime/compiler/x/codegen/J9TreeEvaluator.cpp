@@ -3759,7 +3759,7 @@ inline void generateInlinedCheckCastOrInstanceOfForInterface(TR::Node* node, TR_
 
    if (cg->comp()->compileRelocatableCode() && cg->comp()->getOption(TR_UseSymbolValidationManager))
       if (!cg->comp()->getSymbolValidationManager()->addProfiledClassRecord((TR_OpaqueClassBlock *)guessClass))
-         guessClass = NULL;
+         guessClass = 0;
 
    // Call site cache
    auto cache = sizeof(J9Class*) == 4 ? cg->create4ByteData(node, (uint32_t)guessClass) : cg->create8ByteData(node, (uint64_t)guessClass);
