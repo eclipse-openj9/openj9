@@ -1096,10 +1096,15 @@ preloadLibraries(void)
 		jrebinBuffer = jvmBufferCat(NULL, jvmBufferData(j9binBuffer));
 	}
 	j9libBuffer = jvmBufferCat(NULL, jvmBufferData(jrebinBuffer));
-#if J9VM_JAVA9_BUILD < 150
+#if !defined(OSX)
+	/* <arch> directory doesn't exist on OSX so j9libBuffer shouldn't
+	 * be truncated on OSX for removing <arch>.
+	 */
+#if (J9VM_JAVA9_BUILD < 150)
 	/* Remove <arch> */
 	truncatePath(jvmBufferData(j9libBuffer));
-#endif /* J9VM_JAVA9_BUILD < 150 */
+#endif /* (J9VM_JAVA9_BUILD < 150) */
+#endif /* !defined(OSX) */
 	j9libvmBuffer = jvmBufferCat(NULL, jvmBufferData(j9binBuffer));
 	j9Buffer = jvmBufferCat(NULL, jvmBufferData(jrebinBuffer));
 	truncatePath(jvmBufferData(j9Buffer));
