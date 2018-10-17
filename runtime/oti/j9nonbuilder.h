@@ -1366,7 +1366,6 @@ typedef struct J9SharedCacheAPI {
 	I_32 maxAOT;
 	I_32 minJIT;
 	I_32 maxJIT;
-	U_8 sharedCacheEnabled;
 } J9SharedCacheAPI;
 
 typedef struct J9SharedClassConfig {
