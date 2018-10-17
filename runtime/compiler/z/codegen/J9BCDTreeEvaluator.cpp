@@ -2701,8 +2701,8 @@ J9::Z::TreeEvaluator::pdcmpVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerat
    generateRRInstruction(cg, TR::Compiler->target.is64Bit() ? TR::InstOpCode::XGR : TR::InstOpCode::XR, node, resultReg, resultReg);
    generateLoad32BitConstant(cg, node, 1, resultReg, true);
 
-   TR::RegisterDependencyConditions* deps = new(cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);
-   TR::LabelSymbol* doneCompareLabel = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
+   TR::RegisterDependencyConditions* deps = new(cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 2, cg);
+   deps->addPostConditionIfNotAlreadyInserted(resultReg, TR::RealRegister::AssignAny);
 
    TR::Node* pd1Node = node->getFirstChild();
    TR::Node* pd2Node = node->getSecondChild();
@@ -2713,40 +2713,45 @@ J9::Z::TreeEvaluator::pdcmpVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerat
    // TODO: should we correct bad sign before comparing them
    TR::Instruction* cursor = generateVRRhInstruction(cg, TR::InstOpCode::VCP, node, pd1Value, pd2Value, 0);
 
+   TR::LabelSymbol* ifcStartLabel = generateLabelSymbol(cg);
+   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, ifcStartLabel);
    cursor->setStartInternalControlFlow();
-   deps->addPostConditionIfNotAlreadyInserted(resultReg, TR::RealRegister::AssignAny);
+
+   TR::LabelSymbol* icfEndLabel = generateLabelSymbol(cg);
 
    // Generate Branch Instructions
    switch(node->getOpCodeValue())
       {
       case TR::pdcmpeq:
-         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC0, node, doneCompareLabel);
+         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC0, node, icfEndLabel);
          break;
       case TR::pdcmpne:
-         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, doneCompareLabel);
-         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC2, node, doneCompareLabel);
+         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, icfEndLabel);
+         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC2, node, icfEndLabel);
          break;
       case TR::pdcmplt:
-         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, doneCompareLabel);
+         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, icfEndLabel);
          break;
       case TR::pdcmple:
-         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC0, node, doneCompareLabel);
-         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, doneCompareLabel);
+         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC0, node, icfEndLabel);
+         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, icfEndLabel);
          break;
       case TR::pdcmpgt:
-         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC2, node, doneCompareLabel);
+         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC2, node, icfEndLabel);
          break;
       case TR::pdcmpge:
-         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC0, node, doneCompareLabel);
-         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC2, node, doneCompareLabel);
+         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC0, node, icfEndLabel);
+         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC2, node, icfEndLabel);
          break;
       default:
          TR_ASSERT(0, "Unrecognized op code in pd cmp vector evaluator helper.");
       }
 
-   cursor = generateLoad32BitConstant(cg, node, 0, resultReg, true);
-   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, doneCompareLabel);
-   cursor->setDependencyConditions(deps);
+   // TODO: The only reason we keep track of the cursor here is because `deps` has to be passed in after `cursor`. We
+   // don't really need this restriction however if we rearrange the parameters.
+   cursor = generateLoad32BitConstant(cg, node, 0, resultReg, true, cursor, deps);
+
+   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, icfEndLabel, deps);
    cursor->setEndInternalControlFlow();
 
    node->setRegister(resultReg);
