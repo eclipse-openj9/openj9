@@ -828,8 +828,8 @@ struct InterfaceMethodFromCPRecord : public SymbolValidationRecord
 struct MethodFromClassAndSigRecord : public SymbolValidationRecord
    {
    MethodFromClassAndSigRecord(TR_OpaqueMethodBlock *method,
-                               TR_OpaqueClassBlock *beholder,
-                               TR_OpaqueClassBlock *methodClass)
+                               TR_OpaqueClassBlock *methodClass,
+                               TR_OpaqueClassBlock *beholder)
       : SymbolValidationRecord(TR_ValidateMethodFromClassAndSig),
         _method(method),
         _methodClass(methodClass),
