@@ -878,34 +878,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_ValidateMethodByName:
-         {
-         TR::MethodByNameRecord *record = reinterpret_cast<TR::MethodByNameRecord *>(relocation->getTargetAddress());
-
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-
-         TR_RelocationRecordValidateMethodByNameBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordValidateMethodByNameBinaryTemplate *>(cursor);
-
-         // Store rom method to get name of method
-         J9Method *methodToValidate = reinterpret_cast<J9Method *>(record->_method);
-         J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(methodToValidate);
-         void *romMethodOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(romMethod);
-
-         // Store rom class to get name of class
-         TR_OpaqueClassBlock *classOfMethod = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_METHOD(methodToValidate));
-         void *romClass = reinterpret_cast<void *>(fej9->getPersistentClassPointerFromClassPointer(classOfMethod));
-         void *romClassOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(romClass);
-
-         binaryTemplate->_methodID = symValManager->getIDFromSymbol(static_cast<void *>(methodToValidate));
-         binaryTemplate->_beholderID = symValManager->getIDFromSymbol(static_cast<void *>(record->_beholder));
-         binaryTemplate->_romClassOffsetInSCC = reinterpret_cast<uintptrj_t>(romClassOffsetInSharedCache);
-         binaryTemplate->_romMethodOffsetInSCC = reinterpret_cast<uintptrj_t>(romMethodOffsetInSharedCache);
-
-         cursor += sizeof(TR_RelocationRecordValidateMethodByNameBinaryTemplate);
-         }
-         break;
-
       case TR_ValidateMethodFromClass:
          {
          TR::MethodFromClassRecord *record = reinterpret_cast<TR::MethodFromClassRecord *>(relocation->getTargetAddress());
@@ -1349,7 +1321,7 @@ uint32_t J9::X86::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_Nu
    0,                                                                  // TR_ValidateRomClass                    = 80,
    0,                                                                  // TR_ValidatePrimitiveClass              = 81,
    0,                                                                  // TR_ValidateMethodFromInlinedSite       = 82,
-   sizeof(TR_RelocationRecordValidateMethodByNameBinaryTemplate),      // TR_ValidatedMethodByName               = 83,
+   0,                                                                  // TR_ValidatedMethodByName               = 83,
    sizeof(TR_RelocationRecordValidateMethodFromClassBinaryTemplate),   // TR_ValidatedMethodFromClass            = 84,
    sizeof(TR_RelocationRecordValidateStaticMethodFromCPBinaryTemplate),// TR_ValidateStaticMethodFromCP          = 85,
    sizeof(TR_RelocationRecordValidateSpecialMethodFromCPBinaryTemplate),//TR_ValidateSpecialMethodFromCP         = 86,

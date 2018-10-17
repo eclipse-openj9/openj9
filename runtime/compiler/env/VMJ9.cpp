@@ -8693,9 +8693,7 @@ TR_J9SharedCacheVM::getResolvedMethodForNameAndSignature(TR_Memory * trMemory, T
       TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *)((TR_ResolvedJ9Method *)resolvedMethod)->ramMethod();
       /*
        * TR_J9VM::getResolvedMethodForNameAndSignature will call getMatchingMethodFromNameAndSignature
-       * which adds a MethodFromClassRecord. Not sure if adding a MethodByNameRecord here will do the
-       * right validation, since the way TR_J9VM::getResolvedMethodForNameAndSignature gets the class
-       * by name and signature is different than TR_J9VM::getMethodFromName...
+       * which adds a MethodFromClassRecord.
        */
       validated = comp->getSymbolValidationManager()->addClassFromMethodRecord(getClassFromMethodBlock(method), method);
       }
