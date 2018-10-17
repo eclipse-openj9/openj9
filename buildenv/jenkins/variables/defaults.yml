@@ -67,6 +67,9 @@ build_discarder:
     pullRequest: 0
 extra_getsource_options:
   8: '--openssl-version=1.1.1'
+restart_timeout:
+  time: 5
+  units: 'HOURS'
 #========================================#
 # Linux PPCLE 64bits Compressed Pointers
 #========================================#
