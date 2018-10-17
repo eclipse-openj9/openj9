@@ -205,6 +205,7 @@
 		<classes>
 			<class name="org.openj9.test.java.security.Test_AccessController"/>
 			<class name="org.openj9.test.java.security.Test_AccessControlContext"/>
+			<class name="org.openj9.test.java.security.Test_MHLoaderConstraints"/>
 		</classes>
 	</test>
 	<test name="JCL_TEST_IBM-VM">
