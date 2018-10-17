@@ -11868,7 +11868,7 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, bool isLatin1, TR::C
       {
       TR::Register *value = srm->findOrCreateScratchRegister();
 
-      generateTrg1MemInstruction(cg, scalarLoadOp, node, value, new (cg->trHeapMemory()) TR::MemoryReference(arrAddress, result, isLatin1 ? 1 : 2, cg));
+      generateTrg1MemInstruction(cg, scalarLoadOp, node, value, new (cg->trHeapMemory()) TR::MemoryReference(result, arrAddress, isLatin1 ? 1 : 2, cg));
       generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr0, value, targetScalar);
       generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, foundExactLabel, cr0);
 
