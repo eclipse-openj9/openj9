@@ -1349,6 +1349,10 @@ readdWide:
 		case JBreturn0: /* Fall-through */
 		case JBreturn1: /* Fall-through */
 		case JBreturn2: /* Fall-through */
+		case JBreturnB: /* Fall-through */
+		case JBreturnC: /* Fall-through */
+		case JBreturnS: /* Fall-through */
+		case JBreturnZ: /* Fall-through */
 		case JBsyncReturn0: /* Fall-through */
 		case JBsyncReturn1: /* Fall-through */
 		case JBsyncReturn2: {
