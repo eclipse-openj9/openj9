@@ -12116,6 +12116,7 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, bool isLatin1, TR::C
       deps->addPostCondition(cr6, TR::RealRegister::cr6);
 
       deps->addPostCondition(zeroRegister, TR::RealRegister::NoReg);
+      deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
       deps->addPostCondition(result, TR::RealRegister::NoReg);
       deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
       deps->addPostCondition(arrAddress, TR::RealRegister::NoReg);
