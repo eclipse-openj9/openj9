@@ -1096,7 +1096,7 @@
 			<variation>Mode351 -Xjit:noJitUntilMain,count=0,optlevel=warm</variation>
 			<variation>Mode610 -Xjit:noJitUntilMain,count=0,optlevel=warm</variation>
 		</variations>
-		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS)\
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames \
@@ -1127,7 +1127,7 @@
 			<variation>Mode351</variation>
 			<variation>Mode610</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS)\
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames \
@@ -1158,7 +1158,7 @@
 			<variation>Mode351 -Xthr:minimizeUserCPU</variation>
 			<variation>Mode610 -Xthr:minimizeUserCPU</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS)\
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames \
@@ -1189,7 +1189,7 @@
 			<variation>Mode351</variation>
 			<variation>Mode610</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS)\
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames \
