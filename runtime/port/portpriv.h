@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -242,6 +242,8 @@ extern J9_CFUNC int32_t
 j9sysinfo_get_hw_info(struct J9PortLibrary *portLibrary, uint32_t infoType, char * buf, uint32_t bufLen);
 extern J9_CFUNC int32_t
 j9sysinfo_get_cache_info(struct J9PortLibrary *portLibrary, const J9CacheInfoQuery * query);
+extern J9_CFUNC int32_t
+j9sysinfo_get_cpu_governor_info(struct J9PortLibrary *portLibrary, struct J9CpuGovernorDetails *governorDetails);
 extern J9_CFUNC uintptr_t
 j9sysinfo_get_processing_capacity (struct J9PortLibrary *portLibrary);
 extern J9_CFUNC uintptr_t

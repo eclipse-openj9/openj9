@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,6 +50,7 @@ static J9PortLibrary MasterPortLibraryTable = {
 	j9sysinfo_processor_has_feature, /* sysinfo_processor_has_feature */
 	j9sysinfo_get_hw_info, /* sysinfo_get_hw_info */
 	j9sysinfo_get_cache_info, /* sysinfo_get_cache_info */
+	j9sysinfo_get_cpu_governor_info, /* sysinfo_get_cpu_governor_info */
 	j9sock_startup, /* sock_startup */
 	j9sock_shutdown, /* sock_shutdown */
 	j9sock_htons, /* sock_htons */

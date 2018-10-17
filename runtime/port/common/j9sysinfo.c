@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -192,5 +192,11 @@ j9sysinfo_get_hw_info(struct J9PortLibrary *portLibrary, uint32_t infoType,
  */
 IDATA
 j9sysinfo_get_cache_info(struct J9PortLibrary *portLibrary, struct const J9CacheInfoQuery * query) {
+	return J9PORT_ERROR_SYSINFO_NOT_SUPPORTED;
+}
+
+int32_t
+j9sysinfo_get_cpu_governor_info(struct J9PortLibrary *portLibrary, struct J9CpuGovernorDetails *governorDetails)
+{
 	return J9PORT_ERROR_SYSINFO_NOT_SUPPORTED;
 }
