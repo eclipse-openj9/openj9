@@ -310,6 +310,20 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_ValidateInstanceField:
+         {
+         TR_RelocationRecordValidateInstanceField *fieldRecord = reinterpret_cast<TR_RelocationRecordValidateInstanceField *>(reloRecord);
+         uintptrj_t inlinedSiteIndex = reinterpret_cast<uintptrj_t>(relocation->getTargetAddress());
+         TR::AOTClassInfo *aotCI = reinterpret_cast<TR::AOTClassInfo*>(relocation->getTargetAddress2());
+         void *classChainOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(aotCI->_classChain);
+
+         fieldRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
+         fieldRecord->setConstantPool(reloTarget, reinterpret_cast<uintptrj_t>(aotCI->_constantPool));
+         fieldRecord->setCpIndex(reloTarget, static_cast<uintptrj_t>(aotCI->_cpIndex));
+         fieldRecord->setClassChainOffsetInSharedCache(reloTarget, reinterpret_cast<uintptrj_t>(classChainOffsetInSharedCache));
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -473,6 +487,22 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
                                      allocRecord->constantPool(reloTarget),
                                      allocRecord->cpIndex(reloTarget),
                                      allocRecord->branchOffset(reloTarget));
+            }
+         }
+         break;
+
+      case TR_ValidateInstanceField:
+         {
+         TR_RelocationRecordValidateInstanceField *fieldRecord = reinterpret_cast<TR_RelocationRecordValidateInstanceField *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\nValidation Relocation: InlineCallSite index = %d, Constant pool = %x, cpIndex = %d, Class Chain offset = %x",
+                                     fieldRecord->inlinedSiteIndex(reloTarget),
+                                     fieldRecord->constantPool(reloTarget),
+                                     fieldRecord->cpIndex(reloTarget),
+                                     fieldRecord->classChainOffsetInSharedCache(reloTarget));
             }
          }
          break;
@@ -1019,7 +1049,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                }
             break;
          case TR_ValidateClass:
-         case TR_ValidateInstanceField:
          case TR_ValidateStaticField:
             {
             cursor++;        //unused field

@@ -1029,7 +1029,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          break;
 
       case TR_ValidateClass:
-      case TR_ValidateInstanceField:
          {
          *(uintptrj_t*)cursor = (uintptrj_t) relocation->getTargetAddress(); // Inlined site index
          cursor += SIZEPOINTER;
