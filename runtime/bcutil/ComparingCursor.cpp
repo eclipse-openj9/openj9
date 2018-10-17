@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,8 @@
 #include "bcnames.h"
 #include "pcstack.h"
 #include "rommeth.h"
+#include "vrfytbl.h"
+#include "bytecodewalk.h"
 
 
 ComparingCursor::ComparingCursor(J9JavaVM *javaVM, SRPOffsetTable *srpOffsetTable,
@@ -324,7 +326,7 @@ ComparingCursor::writeData(U_8* bytes, UDATA length, DataType dataType)
 					/* Check if the bytecode matches with a special case for JBgenericReturn. */
 					if (instruction != romInstruction) {
 						if ((JBgenericReturn != instruction) ||
-							(((romInstruction < JBreturn0) || (JBsyncReturn2 < romInstruction)) && (JBreturnFromConstructor != romInstruction))
+							(RTV_RETURN != (J9JavaBytecodeVerificationTable[romInstruction] >> 8))
 						) {
 							markUnEqual();
 							break;

@@ -47,6 +47,28 @@
 	</test>
 
 	<test>
+		<testCaseName>truncatedReturnTest</testCaseName>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames truncatedReturn \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<subsets>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
+		</subsets>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+	</test>
+
+	<test>
 		<testCaseName>regressionFastresolve_mode110</testCaseName>
 		<variations>
 			<variation> Mode110 -Xfastresolve0</variation>

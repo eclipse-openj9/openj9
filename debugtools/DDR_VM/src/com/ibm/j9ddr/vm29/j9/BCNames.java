@@ -250,6 +250,10 @@ public class BCNames {
 	public static final int JBinvokehandlegeneric = 233;
 	public static final int JBinvokestaticsplit = 234;
 	public static final int JBinvokespecialsplit = 235;
+	public static final int JBreturnC = 236;
+	public static final int JBreturnS = 237;
+	public static final int JBreturnB = 238;
+	public static final int JBreturnZ = 239;
 	public static final int JBretFromNative0 = 244;
 	public static final int JBretFromNative1 = 245;
 	public static final int JBretFromNativeF = 246;

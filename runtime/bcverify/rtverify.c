@@ -1172,8 +1172,14 @@ _illegalPrimitiveReturn:
 				break;
 
 			case JBreturn1:
+			case JBreturnB:
+			case JBreturnC:
+			case JBreturnS:
+			case JBreturnZ:
 			case JBsyncReturn1:
+				/* Note: for synchronized return{B,C,S,Z}, JBgenericReturn is used */
 				if (returnChar) {
+					U_32 returnType = 0;
 					/* single character return description */
 					if ((returnChar < 'A') || (returnChar > 'Z')) {
 						inconsistentStack = TRUE;
@@ -1181,6 +1187,43 @@ _illegalPrimitiveReturn:
 					}
 					type = (UDATA) oneArgTypeCharConversion[returnChar - 'A'];
 					POP_TOS(type);
+
+					/* check methods that return char, byte, short, or bool use the right opcode */
+					if (BCV_BASE_TYPE_INT == type){
+						switch(bc) {
+						case JBreturnB:
+							returnType = BCV_BASE_TYPE_BYTE_BIT;
+							break;
+
+						case JBreturnC:
+							returnType = BCV_BASE_TYPE_CHAR_BIT;
+							break;
+
+						case JBreturnS:
+							returnType = BCV_BASE_TYPE_SHORT_BIT;
+							break;
+
+						case JBreturnZ:
+							returnType = BCV_BASE_TYPE_BOOL_BIT;
+							break;
+						/* Note: synchronized return of b,c,s,z are handled as a JBgenericReturn */
+						case JBreturn1:
+						case JBsyncReturn1:
+							returnType = BCV_BASE_TYPE_INT_BIT;
+							break;
+						default:
+							Trc_RTV_j9rtv_verifyBytecodes_Unreachable(verifyData->vmStruct,
+								(UDATA) J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(verifyData->romClass)),
+								J9UTF8_DATA(J9ROMCLASS_CLASSNAME(verifyData->romClass)),
+								(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_GET_NAME(verifyData->romClass, verifyData->romMethod)),
+								J9UTF8_DATA(J9ROMMETHOD_GET_NAME(verifyData->romClass, verifyData->romMethod)),
+								(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_GET_SIGNATURE(verifyData->romClass, verifyData->romMethod)),
+								J9UTF8_DATA(J9ROMMETHOD_GET_SIGNATURE(verifyData->romClass, verifyData->romMethod)),
+								__LINE__);
+							break;
+						}
+						inconsistentStack |= returnType != baseTypeCharConversion[returnChar - 'A'];
+					}
 					if (inconsistentStack) {
 						/* Jazz 82615: Set the expected data type (already in type) and
 						 * the location of wrong data type on stack when the verification error occurs.
@@ -1189,6 +1232,7 @@ _illegalPrimitiveReturn:
 						errorStackIndex = stackTop - liveStack->stackElements;
 						goto _inconsistentStack;
 					}
+
 				} else {
 					IDATA reasonCode = 0;
 
