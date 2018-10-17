@@ -88,7 +88,7 @@ Java_com_ibm_oti_shared_SharedClassURLHelperImpl_init(JNIEnv *env, jclass clazz)
 void JNICALL
 Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_init(JNIEnv *env, jclass clazz);
 jboolean JNICALL
-Java_com_ibm_oti_shared_Shared_isNonBootSharingEnabledImpl(JNIEnv* env, jclass clazz);
+Java_com_ibm_oti_shared_Shared_isSharingEnabledImpl(JNIEnv* env, jclass clazz);
 jlong JNICALL
 Java_com_ibm_oti_shared_SharedClassStatistics_softMaxBytesImpl (JNIEnv* env, jobject thisObj);
 /* J9SourceJclExtremeInit*/

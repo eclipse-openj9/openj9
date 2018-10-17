@@ -2303,7 +2303,7 @@ exit:
 }
 
 jboolean JNICALL
-Java_com_ibm_oti_shared_Shared_isNonBootSharingEnabledImpl(JNIEnv* env, jclass clazz)
+Java_com_ibm_oti_shared_Shared_isSharingEnabledImpl(JNIEnv* env, jclass clazz)
 {
 	jboolean ret = JNI_FALSE;
 #if defined(J9VM_OPT_SHARED_CLASSES)

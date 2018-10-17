@@ -320,6 +320,4 @@ static const struct { \
 #define J9RAMINTERFACEMETHODREF_RESOLVED(interfaceClass, methodIndexAndArgCount) \
 	((NULL != (interfaceClass)) && ((J9_ITABLE_INDEX_UNRESOLVED != ((methodIndexAndArgCount) & ~255))))
 
-#define J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm) (J2SE_VERSION(vm) >= J2SE_V11)
-
 #endif /* J9_H */
