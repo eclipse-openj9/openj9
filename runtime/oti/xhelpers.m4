@@ -122,7 +122,11 @@ ifdef({OSX},{
 })	dnl OSX
 })
 
+ifdef({OSX_JAVA8},{
+define({DECLARE_PUBLIC},{.globl GLOBAL_SYMBOL($1)})
+},{	dnl OSX_JAVA8
 define({DECLARE_PUBLIC},{.global GLOBAL_SYMBOL($1)})
+})	dnl OSX_JAVA8
 
 define({DECLARE_EXTERN},{.extern C_FUNCTION_SYMBOL($1)})
 
