@@ -724,6 +724,34 @@ J9::CodeGenerator::lowerTreesPreChildrenVisit(TR::Node *parent, TR::TreeTop *tre
       if (parentOpCodeValue == TR::compressedRefs)
          self()->lowerCompressedRefs(treeTop, parent, visitCount, NULL);
       }
+   else if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() && !TR::Compiler->target.cpu.isZ())
+      {
+      if (parentOpCodeValue == TR::aloadi)
+         {
+         TR::Symbol* symbol = parent->getSymbolReference()->getSymbol();
+         // isCollectedReference() responds false to generic int shadows because their type
+         // is int. However, address type generic int shadows refer to collected slots.
+         if (symbol == TR::comp()->getSymRefTab()->findGenericIntShadowSymbol() || symbol->isCollectedReference())
+            {
+            TR::Node::recreate(parent, TR::ardbari);
+            if (treeTop->getNode()->getOpCodeValue() == TR::NULLCHK                  &&
+                treeTop->getNode()->getChild(0)->getOpCodeValue() != TR::PassThrough &&
+                treeTop->getNode()->getChild(0)->getChild(0) == parent)
+               {
+               treeTop->insertBefore(TR::TreeTop::create(self()->comp(),
+                                                         TR::Node::createWithSymRef(TR::NULLCHK, 1, 1,
+                                                                                    TR::Node::create(TR::PassThrough, 1, parent),
+                                                                                    treeTop->getNode()->getSymbolReference())));
+               treeTop->getNode()->setSymbolReference(NULL);
+               TR::Node::recreate(treeTop->getNode(), TR::treetop);
+               }
+            else
+               {
+               treeTop->insertBefore(TR::TreeTop::create(self()->comp(), TR::Node::create(parent, TR::treetop, 1, parent)));
+               }
+            }
+         }
+      }
 
    // J9
    //
