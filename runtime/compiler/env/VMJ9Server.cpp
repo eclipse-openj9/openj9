@@ -666,6 +666,16 @@ TR_J9ServerVM::isPrimitiveArray(TR_OpaqueClassBlock *clazz)
 uint32_t
 TR_J9ServerVM::getAllocationSize(TR::StaticSymbol *classSym, TR_OpaqueClassBlock *clazz)
    {
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*)clazz);
+      if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+         {
+         uint32_t objectSize = it->second.totalInstanceSize + sizeof(J9Object);
+         return ((objectSize >= J9_GC_MINIMUM_OBJECT_SIZE) ? objectSize : J9_GC_MINIMUM_OBJECT_SIZE);
+         }
+      }
+
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_getAllocationSize, classSym, clazz);
    return std::get<0>(stream->read<uint32_t>());
