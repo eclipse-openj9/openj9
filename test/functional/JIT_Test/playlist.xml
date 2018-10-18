@@ -82,7 +82,7 @@
 			<variation>-Xrs:sync -Xjit:noJitUntilMain,count=0,assumeStrictFP,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
 			<variation>-Xrs:async -Xjit:noJitUntilMain,count=0,assumeStrictFP,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS)\
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames \
@@ -132,7 +132,7 @@
 			<variation>-Xrs:sync -XCEEHDLR -Xjit:noJitUntilMain,count=0,assumeStrictFP,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
 			<variation>-Xrs:async -XCEEHDLR -Xjit:noJitUntilMain,count=0,assumeStrictFP,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS)\
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames \
@@ -181,7 +181,7 @@
 		<variations>
 			<variation>-Xjit:optlevel=warm,count=0 -DjarTesterArgs=$(Q)$(TEST_RESROOT)$(D)jitt.jar$(Q)</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS)\
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames \
@@ -209,7 +209,7 @@
 		<variations>
 			<variation>-Xjit:noJitUntilMain -Xdump:java</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS)\
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames \
@@ -253,7 +253,7 @@
 		<variations>
 			<variation>-XX:-EnableHCR -Xjit:count=0,optLevel=hot</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS)\
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames \
@@ -284,7 +284,7 @@
 			<variation>-Xdump:java -Xgcpolicy:optavgpause -Xjit:count=0</variation>
 			<variation>-Xdump:java -Xjit:enableHCR,enableOSR,count=0</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS)\
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames \
@@ -312,7 +312,7 @@
 		<variations>
 			<variation>-Xdump:java -Xjit:optlevel=warm,count=0</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS)\
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames \
@@ -341,7 +341,7 @@
 		<variations>
 			<variation>-Xdump</variation>
 		</variations>
-		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS)\
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames \
