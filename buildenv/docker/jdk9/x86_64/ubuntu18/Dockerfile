@@ -48,6 +48,7 @@ RUN apt-get update \
 	  libxt-dev \
 	  libxtst-dev \
 	  make \
+	  nasm \
 	  pkg-config \
       software-properties-common \
 	  ssh \

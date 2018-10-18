@@ -58,6 +58,7 @@ RUN apt-get update \
     libxt-dev \
     libxtst-dev \
     make \
+    nasm \
     openjdk-7-jdk \
     pkg-config \
     realpath \
