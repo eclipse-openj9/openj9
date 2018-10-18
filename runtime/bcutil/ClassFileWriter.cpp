@@ -1244,8 +1244,14 @@ ClassFileWriter::rewriteBytecode(J9ROMMethod * method, U_32 length, U_8 * code)
 		case JBldc2lw: {
 				code[index] = CFR_BC_ldc2_w;
 				U_16 cpIndex = *(U_16 *)(code + index + 1);
-				/* Adjust index of double/long CP entry */
-				cpIndex = cpIndex + (cpIndex - _romClass->ramConstantPoolCount);
+				U_32 * cpShapeDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(_romClass);
+
+				if (J9CPTYPE_CONSTANT_DYNAMIC != J9_CP_TYPE(cpShapeDescription, cpIndex)) {
+					/* Adjust index of double/long CP entry. Not necessary for Constant_Dynamic as
+					 * its already in the RAM CP while double/long are sorted to the end.
+					 */
+					cpIndex = cpIndex + (cpIndex - _romClass->ramConstantPoolCount);
+				}
 				writeU16At(cpIndex, code + index + 1);
 			}
 			break;
