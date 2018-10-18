@@ -96,7 +96,7 @@ public class DumpPackageCommand extends Command
 				try {
 					packagePtr = J9PackagePointer.cast(Long.decode(filterArg));
 				} catch (NumberFormatException e) {
-					throw new DDRInteractiveCommandException("The argument \"" + filterArg + "\" is not a valid number. It should be the address of a J9Module.");
+					throw new DDRInteractiveCommandException("The argument \"" + filterArg + "\" is not a valid number. It should be the address of a J9Package.");
 				}
 			}
 			int result = 0;
