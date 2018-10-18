@@ -127,8 +127,15 @@ J9::ClassEnv::classInstanceSize(TR_OpaqueClassBlock * clazzPointer)
    {
    if (auto stream = TR::CompilationInfo::getStream())
       {
-      stream->write(JITaaS::J9ServerMessageType::ClassEnv_classInstanceSize, clazzPointer);
-      return std::get<0>(stream->read<uintptrj_t>());
+         {
+         OMR::CriticalSection getRemoteROMClass(TR::compInfoPT->getClientData()->getROMMapMonitor());
+         auto it = TR::compInfoPT->getClientData()->getROMClassMap().find((J9Class*)clazzPointer);
+         if (it != TR::compInfoPT->getClientData()->getROMClassMap().end())
+            return (it->second.totalInstanceSize);
+         }
+
+         stream->write(JITaaS::J9ServerMessageType::ClassEnv_classInstanceSize, clazzPointer);
+         return std::get<0>(stream->read<uintptrj_t>());
       }
    return TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer)->totalInstanceSize;
    }
