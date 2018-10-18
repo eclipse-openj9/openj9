@@ -107,6 +107,14 @@ J9::ClassEnv::classDepthOf(TR_OpaqueClassBlock * clazzPointer)
    {
    if (auto stream = TR::CompilationInfo::getStream())
       {
+         {
+         OMR::CriticalSection getRemoteROMClass(TR::compInfoPT->getClientData()->getROMMapMonitor());
+         auto it = TR::compInfoPT->getClientData()->getROMClassMap().find((J9Class*)clazzPointer);
+         if (it != TR::compInfoPT->getClientData()->getROMClassMap().end())
+            {
+            return (it->second.classDepthAndFlags & J9_JAVA_CLASS_DEPTH_MASK);
+            }
+         }
       stream->write(JITaaS::J9ServerMessageType::ClassEnv_classDepthOf, clazzPointer);
       return std::get<0>(stream->read<uintptrj_t>());
       }

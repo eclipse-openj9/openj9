@@ -795,6 +795,15 @@ TR_J9ServerVM::getClassFromNewArrayType(int32_t arrayType)
 bool
 TR_J9ServerVM::isCloneable(TR_OpaqueClassBlock *clazzPointer)
    {
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) clazzPointer);
+      if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+         {
+         return ((it->second.classDepthAndFlags & J9AccClassCloneable) != 0);
+         }
+      }
+
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_isCloneable, clazzPointer);
    return std::get<0>(stream->read<bool>());
@@ -1115,6 +1124,14 @@ TR_J9ServerVM::getJavaLangClassHashCode(TR::Compilation *comp, TR_OpaqueClassBlo
 bool
 TR_J9ServerVM::hasFinalizer(TR_OpaqueClassBlock *clazz)
    {
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) clazz);
+      if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+         {
+         return ((it->second.classDepthAndFlags & (J9_JAVA_CLASS_FINALIZE | J9_JAVA_CLASS_OWNABLE_SYNCHRONIZER)) != 0);
+         }
+      }
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_hasFinalizer, clazz);
    return std::get<0>(stream->read<bool>());
@@ -1239,6 +1256,15 @@ TR_J9ServerVM::getLocationOfClassLoaderObjectPointer(TR_OpaqueClassBlock *clazz)
 bool
 TR_J9ServerVM::isOwnableSyncClass(TR_OpaqueClassBlock *clazz)
    {
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) clazz);
+      if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+         {
+         return ((it->second.classDepthAndFlags & J9_JAVA_CLASS_OWNABLE_SYNCHRONIZER) != 0);
+         }
+      }
+
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_isOwnableSyncClass, clazz);
    return std::get<0>(stream->read<bool>());
