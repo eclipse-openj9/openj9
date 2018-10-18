@@ -54,6 +54,7 @@
 		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" encoding="ISO-8859-1">
 			<src path="${src}"/>
 			<src path="${transformerListener}" />
+			<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED' />
 			<classpath>
 				<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar"/>
 				<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar"/>
@@ -76,9 +77,7 @@
 
 	<target name="build" >
 		<if>
-			<not>
-			<matches string="${JDK_VERSION}" pattern="^(8|9|10)$$" />
-			</not>
+			<equals arg1="${JDK_VERSION}" arg2="Valhalla"/>
 			<then>
 				<antcall target="clean" inheritall="true" />
 			</then>

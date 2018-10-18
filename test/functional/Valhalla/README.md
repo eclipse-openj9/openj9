@@ -21,4 +21,4 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 -->
 
 # Valhalla Test
-- Contains [tests](src/org/openj9/test/valhalla/) for nest host & nest members attributes
+- Contains [tests](src/org/openj9/test/lworld/) for Value Types
