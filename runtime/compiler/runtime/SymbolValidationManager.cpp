@@ -63,6 +63,11 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
    : _symbolID(FIRST_ID),
      _heuristicRegion(0),
      _region(region),
+     _comp(TR::comp()),
+     _vmThread(_comp->j9VMThread()),
+     _fej9((TR_J9VM *)TR_J9VMBase::get(_vmThread->javaVM->jitConfig, _vmThread)),
+     _trMemory(_comp->trMemory()),
+     _chTable(_comp->getPersistentInfo()->getPersistentCHTable()),
      _symbolValidationRecords(_region),
      _symbolToIdMap((SymbolToIdComparator()), _region),
      _idToSymbolTable(_region),
@@ -70,19 +75,15 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
    {
    assertionsAreFatal(); // Acknowledge the env var whether or not assertions fail
 
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
    defineGuaranteedID(NULL, TR::SymbolType::typeOpaque);
    defineGuaranteedID(compilee->classOfMethod(), TR::SymbolType::typeClass);
    defineGuaranteedID(compilee->getPersistentIdentifier(), TR::SymbolType::typeMethod);
 
-   struct J9Class ** arrayClasses = &fej9->getJ9JITConfig()->javaVM->booleanArrayClass;
+   struct J9Class ** arrayClasses = &_fej9->getJ9JITConfig()->javaVM->booleanArrayClass;
    for (int32_t i = 4; i <= 11; i++)
       {
       TR_OpaqueClassBlock *arrayClass = reinterpret_cast<TR_OpaqueClassBlock *>(arrayClasses[i - 4]);
-      TR_OpaqueClassBlock *component = fej9->getComponentClassFromArrayClass(arrayClass);
+      TR_OpaqueClassBlock *component = _fej9->getComponentClassFromArrayClass(arrayClass);
       defineGuaranteedID(arrayClass, TR::SymbolType::typeClass);
       defineGuaranteedID(component, TR::SymbolType::typeClass);
       }
@@ -188,13 +189,9 @@ TR::SymbolValidationManager::getBaseComponentClass(TR_OpaqueClassBlock *clazz, i
    if (!clazz)
       return NULL;
 
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
-   while (fej9->isClassArray(clazz))
+   while (_fej9->isClassArray(clazz))
       {
-      TR_OpaqueClassBlock * componentClass = fej9->getComponentClassFromArrayClass(clazz);
+      TR_OpaqueClassBlock * componentClass = _fej9->getComponentClassFromArrayClass(clazz);
       numDims++;
       clazz = componentClass;
       }
@@ -204,12 +201,12 @@ TR::SymbolValidationManager::getBaseComponentClass(TR_OpaqueClassBlock *clazz, i
 
 
 void *
-TR::SymbolValidationManager::storeClassChain(TR_J9VMBase *fej9, TR_OpaqueClassBlock *clazz)
+TR::SymbolValidationManager::storeClassChain(TR_OpaqueClassBlock *clazz)
    {
    void *classChain = NULL;
    bool validated = false;
 
-   classChain = fej9->sharedCache()->rememberClass(clazz);
+   classChain = _fej9->sharedCache()->rememberClass(clazz);
    if (classChain)
       validated = addClassChainRecord(clazz, classChain);
 
@@ -230,9 +227,9 @@ TR::SymbolValidationManager::storeRecord(void *symbol, TR::SymbolValidationRecor
    _symbolValidationRecords.push_front(record);
 
    record->printFields();
-   traceMsg(TR::comp(), "\tkind=%d\n", record->_kind);
-   traceMsg(TR::comp(), "\tid=%d\n", (uint32_t)getIDFromSymbol(symbol));
-   traceMsg(TR::comp(), "\n");
+   traceMsg(_comp, "\tkind=%d\n", record->_kind);
+   traceMsg(_comp, "\tid=%d\n", (uint32_t)getIDFromSymbol(symbol));
+   traceMsg(_comp, "\n");
    }
 
 bool
@@ -243,28 +240,24 @@ TR::SymbolValidationManager::storeClassRecord(TR_OpaqueClassBlock *clazz,
    {
    bool validated = false;
 
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
-   TR_AOTStats *aotStats = ((TR_JitPrivateConfig *)fej9->_jitConfig->privateConfig)->aotStats;
+   TR_AOTStats *aotStats = ((TR_JitPrivateConfig *)_fej9->_jitConfig->privateConfig)->aotStats;
 
    if (storeCurrentRecord)
       storeRecord(static_cast<void *>(clazz), record);
 
-   if (fej9->isClassArray(clazz))
+   if (_fej9->isClassArray(clazz))
       {
       validated = true;
       }
    else
       {
-      if (fej9->isPrimitiveClass(clazz))
+      if (_fej9->isPrimitiveClass(clazz))
          {
          validated = true; // primitive types have guaranteed IDs
          }
       else
          {
-         record->_classChain = storeClassChain(fej9, clazz);
+         record->_classChain = storeClassChain(clazz);
          validated = (record->_classChain != NULL);
          }
 
@@ -274,7 +267,7 @@ TR::SymbolValidationManager::storeClassRecord(TR_OpaqueClassBlock *clazz,
          TR_OpaqueClassBlock *componentClass = clazz;
          while (validated && componentClass && arrayDims < arrayDimsToValidate)
             {
-            TR_OpaqueClassBlock *arrayClass = fej9->getArrayClassFromComponentClass(componentClass);
+            TR_OpaqueClassBlock *arrayClass = _fej9->getArrayClassFromComponentClass(componentClass);
 
             validated = addArrayClassFromComponentClassRecord(arrayClass, componentClass);
 
@@ -350,19 +343,15 @@ TR::SymbolValidationManager::addClassByNameRecord(TR_OpaqueClassBlock *clazz, TR
    if (inHeuristicRegion())
       return true;
 
-   TR::Compilation* comp = TR::comp();
-
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
 
    int32_t arrayDims = 0;
    clazz = getBaseComponentClass(clazz, arrayDims);
    char primitiveType = '\0';
 
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-   if (fej9->isPrimitiveClass(clazz))
+   if (_fej9->isPrimitiveClass(clazz))
       {
-      J9ROMClass *romClass = reinterpret_cast<J9ROMClass *>(fej9->getPersistentClassPointerFromClassPointer(clazz));
+      J9ROMClass *romClass = reinterpret_cast<J9ROMClass *>(_fej9->getPersistentClassPointerFromClassPointer(clazz));
       J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
       primitiveType = getPrimitiveChar(className);
       }
@@ -383,12 +372,9 @@ TR::SymbolValidationManager::addProfiledClassRecord(TR_OpaqueClassBlock *clazz)
    clazz = getBaseComponentClass(clazz, arrayDims);
    char primitiveType = '\0';
 
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-   if (fej9->isPrimitiveClass(clazz))
+   if (_fej9->isPrimitiveClass(clazz))
       {
-      J9ROMClass *romClass = reinterpret_cast<J9ROMClass *>(fej9->getPersistentClassPointerFromClassPointer(clazz));
+      J9ROMClass *romClass = reinterpret_cast<J9ROMClass *>(_fej9->getPersistentClassPointerFromClassPointer(clazz));
       J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
       primitiveType = getPrimitiveChar(className);
       }
@@ -629,15 +615,10 @@ TR::SymbolValidationManager::addMethodFromClassRecord(TR_OpaqueMethodBlock *meth
    if (inHeuristicRegion())
       return true;
 
-   TR::Compilation* comp = TR::comp();
-
    if (index == static_cast<uint32_t>(-1))
       {
-      J9VMThread *vmThread = comp->j9VMThread();
-      TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
-      J9Method * resolvedMethods = static_cast<J9Method *>(fej9->getMethods(beholder));
-      uint32_t numMethods = fej9->getNumMethods(beholder);
+      J9Method * resolvedMethods = static_cast<J9Method *>(_fej9->getMethods(beholder));
+      uint32_t numMethods = _fej9->getNumMethods(beholder);
       for (index = 0; index < numMethods ; index++)
          {
          if ((TR_OpaqueMethodBlock *) &(resolvedMethods[index]) == method)
@@ -972,10 +953,6 @@ TR::SymbolValidationManager::validateSymbol(uint16_t idToBeValidated, J9Method *
 bool
 TR::SymbolValidationManager::validateClassByNameRecord(uint16_t classID, uint16_t beholderID, J9ROMClass *romClass, char primitiveType)
    {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
    J9Class *beholder = getJ9ClassFromID(beholderID);
    J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
 
@@ -989,7 +966,7 @@ TR::SymbolValidationManager::validateClassByNameRecord(uint16_t classID, uint16_
    char *className = reinterpret_cast<char *>(J9UTF8_DATA(classNameData));
    uint32_t classNameLength = J9UTF8_LENGTH(classNameData);
 
-   TR_OpaqueClassBlock *classByName = fej9->getClassFromSignature(className, classNameLength, beholderCP);
+   TR_OpaqueClassBlock *classByName = _fej9->getClassFromSignature(className, classNameLength, beholderCP);
 
    if (!classByName)
       return false;
@@ -1003,19 +980,17 @@ TR::SymbolValidationManager::validateClassByNameRecord(uint16_t classID, uint16_
 bool
 TR::SymbolValidationManager::validateProfiledClassRecord(uint16_t classID, char primitiveType, void *classChainIdentifyingLoader, void *classChainForClassBeingValidated)
    {
-   TR::Compilation* comp = TR::comp();
-
    if (primitiveType != '\0')
       {
       getClassFromID(classID); // just to assert that it exists
       return true;
       }
 
-   J9ClassLoader *classLoader = (J9ClassLoader *) comp->fej9()->sharedCache()->persistentClassLoaderTable()->lookupClassLoaderAssociatedWithClassChain(classChainIdentifyingLoader);
+   J9ClassLoader *classLoader = (J9ClassLoader *) _fej9->sharedCache()->persistentClassLoaderTable()->lookupClassLoaderAssociatedWithClassChain(classChainIdentifyingLoader);
 
    if (classLoader)
       {
-      TR_OpaqueClassBlock *clazz = comp->fej9()->sharedCache()->lookupClassFromChainAndLoader(static_cast<uintptrj_t *>(classChainForClassBeingValidated), classLoader);
+      TR_OpaqueClassBlock *clazz = _fej9->sharedCache()->lookupClassFromChainAndLoader(static_cast<uintptrj_t *>(classChainForClassBeingValidated), classLoader);
 
       if (clazz)
          {
@@ -1032,13 +1007,9 @@ TR::SymbolValidationManager::validateProfiledClassRecord(uint16_t classID, char 
 bool
 TR::SymbolValidationManager::validateClassFromCPRecord(uint16_t classID,  uint16_t beholderID, uint32_t cpIndex)
    {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
    J9Class *beholder = getJ9ClassFromID(beholderID);
    J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
-   TR_OpaqueClassBlock *classFromCP = TR_ResolvedJ9Method::getClassFromCP(fej9, beholderCP, comp, cpIndex);
+   TR_OpaqueClassBlock *classFromCP = TR_ResolvedJ9Method::getClassFromCP(_fej9, beholderCP, _comp, cpIndex);
 
    int32_t arrayDims = 0;
    classFromCP = getBaseComponentClass(classFromCP, arrayDims);
@@ -1049,21 +1020,17 @@ TR::SymbolValidationManager::validateClassFromCPRecord(uint16_t classID,  uint16
 bool
 TR::SymbolValidationManager::validateDefiningClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex, bool isStatic)
    {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
-   TR::CompilationInfo *compInfo = TR::CompilationInfo::get(fej9->_jitConfig);
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get(_fej9->_jitConfig);
    TR::CompilationInfoPerThreadBase *compInfoPerThreadBase = compInfo->getCompInfoForCompOnAppThread();
    TR_RelocationRuntime *reloRuntime;
    if (compInfoPerThreadBase)
       reloRuntime = compInfoPerThreadBase->reloRuntime();
    else
-      reloRuntime = compInfo->getCompInfoForThread(fej9->vmThread())->reloRuntime();
+      reloRuntime = compInfo->getCompInfoForThread(_vmThread)->reloRuntime();
 
    J9Class *beholder = getJ9ClassFromID(beholderID);
    J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
-   TR_OpaqueClassBlock *classFromCP = reloRuntime->getClassFromCP(fej9->vmThread(), fej9->_jitConfig->javaVM, beholderCP, cpIndex, isStatic);
+   TR_OpaqueClassBlock *classFromCP = reloRuntime->getClassFromCP(_vmThread, _fej9->_jitConfig->javaVM, beholderCP, cpIndex, isStatic);
 
    int32_t arrayDims = 0;
    classFromCP = getBaseComponentClass(classFromCP, arrayDims);
@@ -1074,13 +1041,9 @@ TR::SymbolValidationManager::validateDefiningClassFromCPRecord(uint16_t classID,
 bool
 TR::SymbolValidationManager::validateStaticClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex)
    {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
    J9Class *beholder = getJ9ClassFromID(beholderID);
    J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
-   TR_OpaqueClassBlock *classFromCP = TR_ResolvedJ9Method::getClassOfStaticFromCP(fej9, beholderCP, cpIndex);
+   TR_OpaqueClassBlock *classFromCP = TR_ResolvedJ9Method::getClassOfStaticFromCP(_fej9, beholderCP, cpIndex);
 
    int32_t arrayDims = 0;
    classFromCP = getBaseComponentClass(classFromCP, arrayDims);
@@ -1103,12 +1066,8 @@ TR::SymbolValidationManager::validateClassFromMethodRecord(uint16_t classID, uin
 bool
 TR::SymbolValidationManager::validateComponentClassFromArrayClassRecord(uint16_t componentClassID, uint16_t arrayClassID)
    {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
    TR_OpaqueClassBlock *arrayClass = getClassFromID(arrayClassID);
-   TR_OpaqueClassBlock *componentClass = fej9->getComponentClassFromArrayClass(arrayClass);
+   TR_OpaqueClassBlock *componentClass = _fej9->getComponentClassFromArrayClass(arrayClass);
 
    return validateSymbol(componentClassID, componentClass);
    }
@@ -1116,12 +1075,8 @@ TR::SymbolValidationManager::validateComponentClassFromArrayClassRecord(uint16_t
 bool
 TR::SymbolValidationManager::validateArrayClassFromComponentClassRecord(uint16_t arrayClassID, uint16_t componentClassID)
    {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
    TR_OpaqueClassBlock *componentClass = getClassFromID(componentClassID);
-   TR_OpaqueClassBlock *arrayClass = fej9->getArrayClassFromComponentClass(componentClass);
+   TR_OpaqueClassBlock *arrayClass = _fej9->getArrayClassFromComponentClass(componentClass);
 
    return validateSymbol(arrayClassID, arrayClass);
    }
@@ -1129,12 +1084,8 @@ TR::SymbolValidationManager::validateArrayClassFromComponentClassRecord(uint16_t
 bool
 TR::SymbolValidationManager::validateSuperClassFromClassRecord(uint16_t superClassID, uint16_t childClassID)
    {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
    TR_OpaqueClassBlock *childClass = getClassFromID(childClassID);
-   TR_OpaqueClassBlock *superClass = fej9->getSuperClass(childClass);
+   TR_OpaqueClassBlock *superClass = _fej9->getSuperClass(childClass);
 
    int32_t arrayDims = 0;
    superClass = getBaseComponentClass(superClass, arrayDims);
@@ -1145,14 +1096,10 @@ TR::SymbolValidationManager::validateSuperClassFromClassRecord(uint16_t superCla
 bool
 TR::SymbolValidationManager::validateClassInstanceOfClassRecord(uint16_t classOneID, uint16_t classTwoID, bool objectTypeIsFixed, bool castTypeIsFixed, bool wasInstanceOf)
    {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
    TR_OpaqueClassBlock *classOne = getClassFromID(classOneID);
    TR_OpaqueClassBlock *classTwo = getClassFromID(classTwoID);
 
-   TR_YesNoMaybe isInstanceOf = fej9->isInstanceOf(classOne, classTwo, objectTypeIsFixed, castTypeIsFixed);
+   TR_YesNoMaybe isInstanceOf = _fej9->isInstanceOf(classOne, classTwo, objectTypeIsFixed, castTypeIsFixed);
 
    return (wasInstanceOf == isInstanceOf);
    }
@@ -1160,12 +1107,8 @@ TR::SymbolValidationManager::validateClassInstanceOfClassRecord(uint16_t classOn
 bool
 TR::SymbolValidationManager::validateSystemClassByNameRecord(uint16_t systemClassID, J9ROMClass *romClass)
    {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
    J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
-   TR_OpaqueClassBlock *systemClassByName = fej9->getSystemClassFromClassName(reinterpret_cast<const char *>(J9UTF8_DATA(className)),
+   TR_OpaqueClassBlock *systemClassByName = _fej9->getSystemClassFromClassName(reinterpret_cast<const char *>(J9UTF8_DATA(className)),
                                                                               J9UTF8_LENGTH(className));
 
    int32_t arrayDims = 0;
@@ -1177,14 +1120,10 @@ TR::SymbolValidationManager::validateSystemClassByNameRecord(uint16_t systemClas
 bool
 TR::SymbolValidationManager::validateClassFromITableIndexCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex)
    {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
    J9Class *beholder = getJ9ClassFromID(beholderID);
    J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
    uintptr_t pITableIndex;
-   TR_OpaqueClassBlock *clazz = TR_ResolvedJ9Method::getInterfaceITableIndexFromCP(fej9, beholderCP, cpIndex, &pITableIndex);
+   TR_OpaqueClassBlock *clazz = TR_ResolvedJ9Method::getInterfaceITableIndexFromCP(_fej9, beholderCP, cpIndex, &pITableIndex);
 
    int32_t arrayDims = 0;
    clazz = getBaseComponentClass(clazz, arrayDims);
@@ -1195,10 +1134,6 @@ TR::SymbolValidationManager::validateClassFromITableIndexCPRecord(uint16_t class
 bool
 TR::SymbolValidationManager::validateDeclaringClassFromFieldOrStaticRecord(uint16_t definingClassID, uint16_t beholderID, int32_t cpIndex)
    {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
    J9Class *beholder = getJ9ClassFromID(beholderID);
    J9ROMClass *beholderRomClass = beholder->romClass;
    J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
@@ -1209,11 +1144,11 @@ TR::SymbolValidationManager::validateDeclaringClassFromFieldOrStaticRecord(uint1
       classCPIndexOfFieldOrStatic = ((J9ROMFieldRef *)(&romCPBase[cpIndex]))->classRefCPIndex;
 
    J9Class *definingClass = NULL;
-   J9Class *cpClass = (J9Class*)TR_ResolvedJ9Method::getClassFromCP(fej9, beholderCP, comp, classCPIndexOfFieldOrStatic);
+   J9Class *cpClass = (J9Class*)TR_ResolvedJ9Method::getClassFromCP(_fej9, beholderCP, _comp, classCPIndexOfFieldOrStatic);
 
    if (cpClass)
       {
-      TR::VMAccessCriticalSection getDeclaringClassFromFieldOrStatic(fej9);
+      TR::VMAccessCriticalSection getDeclaringClassFromFieldOrStatic(_fej9);
 
       int32_t fieldLen;
       char *field = cpIndex >= 0 ? utf8Data(J9ROMNAMEANDSIGNATURE_NAME(J9ROMFIELDREF_NAMEANDSIGNATURE(&romCPBase[cpIndex])), fieldLen) : 0;
@@ -1221,15 +1156,16 @@ TR::SymbolValidationManager::validateDeclaringClassFromFieldOrStaticRecord(uint1
       int32_t sigLen;
       char *sig = cpIndex >= 0 ? utf8Data(J9ROMNAMEANDSIGNATURE_SIGNATURE(J9ROMFIELDREF_NAMEANDSIGNATURE(&romCPBase[cpIndex])), sigLen) : 0;
 
-      vmThread->javaVM->internalVMFunctions->instanceFieldOffset(vmThread,
-                                                                 cpClass,
-                                                                 (U_8*)field,
-                                                                 fieldLen,
-                                                                 (U_8*)sig,
-                                                                 sigLen,
-                                                                 &definingClass,
-                                                                 NULL,
-                                                                 J9_LOOK_NO_JAVA);
+      _vmThread->javaVM->internalVMFunctions->instanceFieldOffset(
+         _vmThread,
+         cpClass,
+         (U_8*)field,
+         fieldLen,
+         (U_8*)sig,
+         sigLen,
+         &definingClass,
+         NULL,
+         J9_LOOK_NO_JAVA);
       }
    else
       {
@@ -1246,12 +1182,8 @@ TR::SymbolValidationManager::validateDeclaringClassFromFieldOrStaticRecord(uint1
 bool
 TR::SymbolValidationManager::validateClassClassRecord(uint16_t classClassID, uint16_t objectClassID)
    {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
    TR_OpaqueClassBlock *objectClass = getClassFromID(objectClassID);
-   TR_OpaqueClassBlock *classClass = fej9->getClassClassPointer(objectClass);
+   TR_OpaqueClassBlock *classClass = _fej9->getClassClassPointer(objectClass);
 
    return validateSymbol(classClassID, classClass);
    }
@@ -1260,9 +1192,7 @@ bool
 TR::SymbolValidationManager::validateConcreteSubClassFromClassRecord(uint16_t childClassID, uint16_t superClassID)
    {
    TR_OpaqueClassBlock *superClass = getClassFromID(superClassID);
-
-   TR_PersistentCHTable * chTable = comp()->getPersistentInfo()->getPersistentCHTable();
-   TR_OpaqueClassBlock *childClass = chTable->findSingleConcreteSubClass(superClass, TR::comp(), false);
+   TR_OpaqueClassBlock *childClass = _chTable->findSingleConcreteSubClass(superClass, _comp, false);
 
    int32_t arrayDims = 0;
    childClass = getBaseComponentClass(childClass, arrayDims);
@@ -1273,26 +1203,20 @@ TR::SymbolValidationManager::validateConcreteSubClassFromClassRecord(uint16_t ch
 bool
 TR::SymbolValidationManager::validateClassChainRecord(uint16_t classID, void *classChain)
    {
-   TR::Compilation* comp = TR::comp();
    TR_OpaqueClassBlock *definingClass = getClassFromID(classID);
-
-   return comp->fej9()->sharedCache()->classMatchesCachedVersion(definingClass, (uintptrj_t *) classChain);
+   return _fej9->sharedCache()->classMatchesCachedVersion(definingClass, (uintptrj_t *) classChain);
    }
 
 bool
 TR::SymbolValidationManager::validateMethodFromClassRecord(uint16_t methodID, uint16_t beholderID, uint32_t index)
    {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
    TR_OpaqueClassBlock *beholder = getClassFromID(beholderID);
    J9Method *method;
 
       {
-      TR::VMAccessCriticalSection getResolvedMethods(fej9); // Prevent HCR
-      J9Method *methods = static_cast<J9Method *>(fej9->getMethods(beholder));
-      uint32_t numMethods = fej9->getNumMethods(beholder);
+      TR::VMAccessCriticalSection getResolvedMethods(_fej9); // Prevent HCR
+      J9Method *methods = static_cast<J9Method *>(_fej9->getMethods(beholder));
+      uint32_t numMethods = _fej9->getNumMethods(beholder);
       SVM_ASSERT(index < numMethods, "Index is not within the bounds of the ramMethods array");
       method = &(methods[index]);
       }
@@ -1303,17 +1227,13 @@ TR::SymbolValidationManager::validateMethodFromClassRecord(uint16_t methodID, ui
 bool
 TR::SymbolValidationManager::validateStaticMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex)
    {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
    J9Class *beholder = getJ9ClassFromID(beholderID);
    J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
    J9Method *ramMethod;
 
       {
-      TR::VMAccessCriticalSection getResolvedStaticMethod(fej9);
-      ramMethod = jitResolveStaticMethodRef(vmThread, beholderCP, cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
+      TR::VMAccessCriticalSection getResolvedStaticMethod(_fej9);
+      ramMethod = jitResolveStaticMethodRef(_vmThread, beholderCP, cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
       }
 
    return validateSymbol(methodID, ramMethod);
@@ -1322,17 +1242,13 @@ TR::SymbolValidationManager::validateStaticMethodFromCPRecord(uint16_t methodID,
 bool
 TR::SymbolValidationManager::validateSpecialMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex)
    {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
    J9Class *beholder = getJ9ClassFromID(beholderID);
    J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
    J9Method *ramMethod;
 
       {
-      TR::VMAccessCriticalSection resolveSpecialMethodRef(fej9);
-      ramMethod = jitResolveSpecialMethodRef(vmThread, beholderCP, cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
+      TR::VMAccessCriticalSection resolveSpecialMethodRef(_fej9);
+      ramMethod = jitResolveSpecialMethodRef(_vmThread, beholderCP, cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
       }
 
    return validateSymbol(methodID, ramMethod);
@@ -1341,16 +1257,12 @@ TR::SymbolValidationManager::validateSpecialMethodFromCPRecord(uint16_t methodID
 bool
 TR::SymbolValidationManager::validateVirtualMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex)
    {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
    J9Class *beholder = getJ9ClassFromID(beholderID);
    J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
 
    UDATA vTableOffset;
    bool unresolvedInCP;
-   TR_OpaqueMethodBlock * ramMethod = TR_ResolvedJ9Method::getVirtualMethod(fej9, beholderCP, cpIndex, &vTableOffset, &unresolvedInCP);
+   TR_OpaqueMethodBlock * ramMethod = TR_ResolvedJ9Method::getVirtualMethod(_fej9, beholderCP, cpIndex, &vTableOffset, &unresolvedInCP);
 
    return validateSymbol(methodID, ramMethod);
    }
@@ -1358,13 +1270,9 @@ TR::SymbolValidationManager::validateVirtualMethodFromCPRecord(uint16_t methodID
 bool
 TR::SymbolValidationManager::validateVirtualMethodFromOffsetRecord(uint16_t methodID, uint16_t beholderID, int32_t virtualCallOffset, bool ignoreRtResolve)
    {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
    TR_OpaqueClassBlock *beholder = getClassFromID(beholderID);
 
-   TR_OpaqueMethodBlock *ramMethod = fej9->getResolvedVirtualMethod(beholder, virtualCallOffset, ignoreRtResolve);
+   TR_OpaqueMethodBlock *ramMethod = _fej9->getResolvedVirtualMethod(beholder, virtualCallOffset, ignoreRtResolve);
 
    return validateSymbol(methodID, ramMethod);
    }
@@ -1372,16 +1280,12 @@ TR::SymbolValidationManager::validateVirtualMethodFromOffsetRecord(uint16_t meth
 bool
 TR::SymbolValidationManager::validateInterfaceMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, uint16_t lookupID, int32_t cpIndex)
    {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
    TR_OpaqueClassBlock *lookup = getClassFromID(lookupID);
 
    J9Class *beholder = getJ9ClassFromID(beholderID);
    J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
 
-   TR_OpaqueMethodBlock *ramMethod = fej9->getResolvedInterfaceMethod(beholderCP, lookup, cpIndex);
+   TR_OpaqueMethodBlock *ramMethod = _fej9->getResolvedInterfaceMethod(beholderCP, lookup, cpIndex);
 
    return validateSymbol(methodID, ramMethod);
    }
@@ -1389,17 +1293,13 @@ TR::SymbolValidationManager::validateInterfaceMethodFromCPRecord(uint16_t method
 bool
 TR::SymbolValidationManager::validateImproperInterfaceMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex)
    {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
    J9Class *beholder = getJ9ClassFromID(beholderID);
    J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
    J9Method *ramMethod;
 
       {
-      TR::VMAccessCriticalSection resolveImproperMethodRef(fej9);
-      ramMethod = jitGetImproperInterfaceMethodFromCP(vmThread, beholderCP, cpIndex);
+      TR::VMAccessCriticalSection resolveImproperMethodRef(_fej9);
+      ramMethod = jitGetImproperInterfaceMethodFromCP(_vmThread, beholderCP, cpIndex);
       }
 
    return validateSymbol(methodID, ramMethod);
@@ -1408,10 +1308,6 @@ TR::SymbolValidationManager::validateImproperInterfaceMethodFromCPRecord(uint16_
 bool
 TR::SymbolValidationManager::validateMethodFromClassAndSignatureRecord(uint16_t methodID, uint16_t methodClassID, uint16_t beholderID, J9ROMMethod *romMethod)
    {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
    TR_OpaqueClassBlock *methodClass = getClassFromID(methodClassID);
    TR_OpaqueClassBlock *beholder = getClassFromID(beholderID, SymOptional);
 
@@ -1425,7 +1321,7 @@ TR::SymbolValidationManager::validateMethodFromClassAndSignatureRecord(uint16_t 
    strncpy(methodSig, reinterpret_cast<const char *>(J9UTF8_DATA(methodSigData)), J9UTF8_LENGTH(methodSigData));
    methodSig[J9UTF8_LENGTH(methodSigData)] = '\0';
 
-   TR_OpaqueMethodBlock *method = fej9->getMethodFromClass(methodClass, methodName, methodSig, beholder);
+   TR_OpaqueMethodBlock *method = _fej9->getMethodFromClass(methodClass, methodName, methodSig, beholder);
 
    return validateSymbol(methodID, method);
    }
@@ -1437,17 +1333,11 @@ TR::SymbolValidationManager::validateMethodFromSingleImplementerRecord(uint16_t 
                                                                        uint16_t callerMethodID,
                                                                        TR_YesNoMaybe useGetResolvedInterfaceMethod)
    {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-   TR_Memory *trMemory = comp->trMemory();
-   TR_PersistentCHTable * chTable = comp->getPersistentInfo()->getPersistentCHTable();
-
    TR_OpaqueClassBlock *thisClass = getClassFromID(thisClassID);
    TR_OpaqueMethodBlock *callerMethod = getMethodFromID(callerMethodID);
 
-   TR_ResolvedMethod *callerResolvedMethod = fej9->createResolvedMethod(trMemory, callerMethod, NULL);
-   TR_ResolvedMethod *calleeResolvedMethod = chTable->findSingleImplementer(thisClass, cpIndexOrVftSlot, callerResolvedMethod, comp, false, useGetResolvedInterfaceMethod, false);
+   TR_ResolvedMethod *callerResolvedMethod = _fej9->createResolvedMethod(_trMemory, callerMethod, NULL);
+   TR_ResolvedMethod *calleeResolvedMethod = _chTable->findSingleImplementer(thisClass, cpIndexOrVftSlot, callerResolvedMethod, _comp, false, useGetResolvedInterfaceMethod, false);
 
    if (!calleeResolvedMethod)
       return false;
@@ -1463,17 +1353,11 @@ TR::SymbolValidationManager::validateMethodFromSingleInterfaceImplementerRecord(
                                                                                 int32_t cpIndex,
                                                                                 uint16_t callerMethodID)
    {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-   TR_Memory *trMemory = comp->trMemory();
-   TR_PersistentCHTable * chTable = comp->getPersistentInfo()->getPersistentCHTable();
-
    TR_OpaqueClassBlock *thisClass = getClassFromID(thisClassID);
    TR_OpaqueMethodBlock *callerMethod = getMethodFromID(callerMethodID);
 
-   TR_ResolvedMethod *callerResolvedMethod = fej9->createResolvedMethod(trMemory, callerMethod, NULL);
-   TR_ResolvedMethod *calleeResolvedMethod = chTable->findSingleInterfaceImplementer(thisClass, cpIndex, callerResolvedMethod, comp, false, false);
+   TR_ResolvedMethod *callerResolvedMethod = _fej9->createResolvedMethod(_trMemory, callerMethod, NULL);
+   TR_ResolvedMethod *calleeResolvedMethod = _chTable->findSingleInterfaceImplementer(thisClass, cpIndex, callerResolvedMethod, _comp, false, false);
 
    if (!calleeResolvedMethod)
       return false;
@@ -1489,17 +1373,11 @@ TR::SymbolValidationManager::validateMethodFromSingleAbstractImplementerRecord(u
                                                                                int32_t vftSlot,
                                                                                uint16_t callerMethodID)
    {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-   TR_Memory *trMemory = comp->trMemory();
-   TR_PersistentCHTable * chTable = comp->getPersistentInfo()->getPersistentCHTable();
-
    TR_OpaqueClassBlock *thisClass = getClassFromID(thisClassID);
    TR_OpaqueMethodBlock *callerMethod = getMethodFromID(callerMethodID);
 
-   TR_ResolvedMethod *callerResolvedMethod = fej9->createResolvedMethod(trMemory, callerMethod, NULL);
-   TR_ResolvedMethod *calleeResolvedMethod = chTable->findSingleAbstractImplementer(thisClass, vftSlot, callerResolvedMethod, comp, false, false);
+   TR_ResolvedMethod *callerResolvedMethod = _fej9->createResolvedMethod(_trMemory, callerMethod, NULL);
+   TR_ResolvedMethod *calleeResolvedMethod = _chTable->findSingleAbstractImplementer(thisClass, vftSlot, callerResolvedMethod, _comp, false, false);
 
    if (!calleeResolvedMethod)
       return false;
@@ -1512,14 +1390,10 @@ TR::SymbolValidationManager::validateMethodFromSingleAbstractImplementerRecord(u
 bool
 TR::SymbolValidationManager::validateStackWalkerMaySkipFramesRecord(uint16_t methodID, uint16_t methodClassID, bool couldSkipFrames)
    {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
    TR_OpaqueMethodBlock *method = getMethodFromID(methodID);
    TR_OpaqueClassBlock *methodClass = getClassFromID(methodClassID);
 
-   bool canSkipFrames = fej9->stackWalkerMaySkipFrames(method, methodClass);
+   bool canSkipFrames = _fej9->stackWalkerMaySkipFrames(method, methodClass);
 
    return (canSkipFrames == couldSkipFrames);
    }
@@ -1527,13 +1401,12 @@ TR::SymbolValidationManager::validateStackWalkerMaySkipFramesRecord(uint16_t met
 bool
 TR::SymbolValidationManager::validateClassInfoIsInitializedRecord(uint16_t classID, bool wasInitialized)
    {
-   TR::Compilation* comp = TR::comp();
    TR_OpaqueClassBlock *clazz = getClassFromID(classID);
 
    bool initialized = false;
 
    TR_PersistentClassInfo * classInfo =
-                          comp->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(clazz, comp, true);
+      _chTable->findClassInfoAfterLocking(clazz, _comp, true);
 
    if (classInfo)
       initialized = classInfo->isInitialized();
