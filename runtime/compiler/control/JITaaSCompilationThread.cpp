@@ -2729,9 +2729,11 @@ JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class
    TR_OpaqueClassBlock * leafComponentClass = std::get<11>(classInfo);
    void *classLoader = std::get<12>(classInfo);
    TR_OpaqueClassBlock * hostClass = std::get<13>(classInfo);
+   TR_OpaqueClassBlock * componentClass = std::get<14>(classInfo);
+   TR_OpaqueClassBlock * arrayClass = std::get<15>(classInfo);
    clientSessionData->getROMClassMap().insert({ clazz, { romClass, methods,
       baseComponentClass, numDims,
-      nullptr, nullptr, parentClass, interfaces, classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword, leafComponentClass, classLoader, hostClass} });
+      nullptr, nullptr, parentClass, interfaces, classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword, leafComponentClass, classLoader, hostClass, componentClass, arrayClass} });
    uint32_t numMethods = romClass->romMethodCount;
    J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
    for (uint32_t i = 0; i < numMethods; i++)
@@ -2775,7 +2777,9 @@ JITaaSHelpers::packRemoteROMClassInfo(J9Class *clazz, TR_J9VM *fe, TR_Memory *tr
    TR_OpaqueClassBlock * leafComponentClass = fe->getLeafComponentClassFromArrayClass((TR_OpaqueClassBlock *)clazz);
    void * classLoader = fe->getClassLoader((TR_OpaqueClassBlock *)clazz);
    TR_OpaqueClassBlock * hostClass = fe->convertClassPtrToClassOffset(clazz->hostClass);
-   return std::make_tuple(packROMClass(clazz->romClass, trMemory), methodsOfClass, baseClass, numDims, parentClass, TR::Compiler->cls.getITable((TR_OpaqueClassBlock *) clazz), methodTracingInfo, classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword, leafComponentClass, classLoader, hostClass);
+   TR_OpaqueClassBlock * componentClass = fe->getComponentClassFromArrayClass((TR_OpaqueClassBlock *)clazz);
+   TR_OpaqueClassBlock * arrayClass = fe->getArrayClassFromComponentClass((TR_OpaqueClassBlock *)clazz);
+   return std::make_tuple(packROMClass(clazz->romClass, trMemory), methodsOfClass, baseClass, numDims, parentClass, TR::Compiler->cls.getITable((TR_OpaqueClassBlock *) clazz), methodTracingInfo, classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword, leafComponentClass, classLoader, hostClass, componentClass, arrayClass);
    }
 
 J9ROMClass *
