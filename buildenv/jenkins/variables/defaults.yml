@@ -354,3 +354,22 @@ win_x86:
       8: 'hw.arch.x86 && sw.os.windows'
     test:
       8: 'hw.arch.x86 && sw.os.windows'
+#========================================#
+# OSX x86 64bits Compressed Pointers
+#========================================#
+osx_x86-64_cmprssptrs:
+  boot_jdk:
+    8: '/Users/jenkins/bootjdks/openjdk-java-7'
+    11: '/Users/jenkins/bootjdks/adoptojdk-java-10'
+  release:
+    8: 'osx-x86_64-normal-server-release'
+    11: 'macosx-x86_64-normal-server-release'
+  freemarker: '/Users/jenkins/freemarker.jar'
+  openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
+  node_labels:
+    build:
+      8: 'hw.arch.x86 && sw.os.osx'
+      11: 'hw.arch.x86 && sw.os.osx'
+    test:
+      8: 'hw.arch.x86 && sw.os.osx'
+      11: 'hw.arch.x86 && sw.os.osx'
