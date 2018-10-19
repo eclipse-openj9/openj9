@@ -27,6 +27,7 @@
 #include "VMHelpers.hpp"
 #include "AtomicSupport.hpp"
 #include "MethodMetaData.h"
+#include "ut_j9codertvm.h"
 
 extern "C" {
 
@@ -80,7 +81,7 @@ static void *i2jReturnTable[16] = {0};
 
 void *jit2InterpreterSendTargetTable[13] = {0};
 
-static UDATA jitGetExceptionCatcher(J9VMThread *currentThread, void *handlerPC, J9JITExceptionTable *metaData, J9Method **method, IDATA *location);
+static J9Method* jitGetExceptionCatcher(J9VMThread *currentThread, void *handlerPC, J9JITExceptionTable *metaData, IDATA *location);
 
 void
 initializeCodertFunctionTable(J9JavaVM *javaVM)
@@ -319,28 +320,29 @@ jitUpdateInlineAttribute(J9VMThread *currentThread, J9Class * classPtr, void *ji
 	}
 }
 
-static UDATA
-jitGetExceptionCatcher(J9VMThread *currentThread, void *handlerPC, J9JITExceptionTable *metaData, J9Method **method, IDATA *location)
+static J9Method*
+jitGetExceptionCatcher(J9VMThread *currentThread, void *handlerPC, J9JITExceptionTable *metaData, IDATA *location)
 {
-	UDATA inlinedCatcherFound = FALSE;
+	J9Method *method = metaData->ramMethod;
+	void *stackMap = NULL;
+	void *inlineMap = NULL;
+	void *inlinedCallSite = NULL;
+	/* Note we need to add 1 to the JIT PC here in order to get the correct map at the exception handler
+	 * because jitGetMapsFromPC is expecting a return address, so it subtracts 1.  The value passed in is
+	 * the start address of the compiled exception handler.
+	 */
+	jitGetMapsFromPC(currentThread->javaVM, metaData, (UDATA)handlerPC + 1, &stackMap, &inlineMap);
+	Assert_CodertVM_false(NULL == stackMap);
 	if (NULL != getJitInlinedCallInfo(metaData)) {
-		void *stackMap = NULL;
-		void *inlineMap = NULL;
-		/* Note we need to add 1 to the JIT PC here in order to get the correct map at the exception handler
-		 * because jitGetMapsFromPC is expecting a return address, so it subtracts 1.  The value passed in is
-		 * the start address of the compiled exception handler.
-		 */
-		jitGetMapsFromPC(currentThread->javaVM, metaData, (UDATA)handlerPC + 1, &stackMap, &inlineMap);
 		if (NULL != inlineMap) {
-			void *inlinedCallSite = getFirstInlinedCallSite(metaData, inlineMap);
+			inlinedCallSite = getFirstInlinedCallSite(metaData, inlineMap);
 			if (NULL != inlinedCallSite) {
-				*method = (J9Method*)getInlinedMethod(inlinedCallSite);
-				*location = (IDATA)getJitPCOffsetFromExceptionHandler(metaData, handlerPC);
-				inlinedCatcherFound = TRUE;
+				method = (J9Method*)getInlinedMethod(inlinedCallSite);
 			}
 		}
 	}
-	return inlinedCatcherFound;
+	*location = (IDATA)getCurrentByteCodeIndexAndIsSameReceiver(metaData, stackMap, inlinedCallSite, NULL);
+	return method;
 }
 
 } /* extern "C" */

@@ -1320,11 +1320,8 @@ jvmtiHookExceptionThrow(J9HookInterface** hook, UDATA eventNum, void* eventData,
 		exception = (j9object_t) vm->internalVMFunctions->walkStackForExceptionThrow(currentThread, exception, TRUE);
 		switch((UDATA) currentThread->stackWalkState->userData3) {
 			case J9_EXCEPT_SEARCH_JIT_HANDLER:
-				if (vm->jitConfig->jitGetExceptionCatcher(currentThread, currentThread->stackWalkState->userData2, currentThread->stackWalkState->jitInfo, &catchMethod, &catchLocation)) {
-					/* Inlined catcher found */
-					break;
-				}
-				/* Intentional fall-through */
+				catchMethod = vm->jitConfig->jitGetExceptionCatcher(currentThread, currentThread->stackWalkState->userData2, currentThread->stackWalkState->jitInfo, &catchLocation);
+				break;
 
 			case J9_EXCEPT_SEARCH_JAVA_HANDLER:
 				catchMethod =  currentThread->stackWalkState->method;
