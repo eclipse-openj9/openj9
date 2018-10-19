@@ -1495,3 +1495,19 @@ TR_J9ServerVM::transformJlrMethodInvoke(J9Method *callerMethod, J9Class *callerC
    stream->write(JITaaS::J9ServerMessageType::VM_transformJlrMethodInvoke, callerMethod, callerClass);
    return std::get<0>(stream->read<bool>());
    }
+
+bool
+TR_J9ServerVM::isAnonymousClass(TR_OpaqueClassBlock *j9clazz)
+   {
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) j9clazz);
+      if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+         {
+         return (J9_ARE_ALL_BITS_SET(it->second.romClass->extraModifiers, J9AccClassAnonClass));
+         }
+      }
+   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITaaS::J9ServerMessageType::VM_isAnonymousClass, j9clazz);
+   return std::get<0>(stream->read<bool>());
+   }

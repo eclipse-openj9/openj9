@@ -160,6 +160,8 @@ public:
    virtual uintptrj_t getFieldOffset(TR::Compilation * comp, TR::SymbolReference* classRef, TR::SymbolReference* fieldRef) override { return 0; } // safe answer
    virtual bool instanceOfOrCheckCast(J9Class *instanceClass, J9Class* castClass) override;
    virtual bool transformJlrMethodInvoke(J9Method *callerMethod, J9Class *callerClass) override;
+   using TR_J9VM :: isAnonymousClass;
+   virtual bool isAnonymousClass(TR_OpaqueClassBlock *j9clazz) override;
    };
 
 #endif // VMJ9SERVER_H

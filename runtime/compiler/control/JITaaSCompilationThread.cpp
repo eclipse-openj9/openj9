@@ -947,6 +947,13 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->transformJlrMethodInvoke(method, clazz));
          }
          break;
+      case J9ServerMessageType::VM_isAnonymousClass:
+         {
+         auto recv = client->getRecvData<TR_OpaqueClassBlock *>();
+         TR_OpaqueClassBlock *clazz = std::get<0>(recv);
+         client->write(fe->isAnonymousClass(clazz));
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedRelocatableJ9Method on the heap, to be used as a mirror for performing actions which are only
