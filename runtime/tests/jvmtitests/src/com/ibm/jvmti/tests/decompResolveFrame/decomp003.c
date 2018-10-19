@@ -27,7 +27,10 @@
 static agentEnv * env;
 static jmethodID catchMethod = NULL;
 static jlocation catchLocation = 0;
- 
+
+static int singleStep = 1;
+static int stepInCatch = 0;
+
 static void JNICALL
 cbSingleStep(jvmtiEnv *jvmti_env, JNIEnv* jni_env, jthread thread, jmethodID method, jlocation location)
 {
@@ -94,6 +97,12 @@ cbExceptionCatch(jvmtiEnv *jvmti_env,
 	if (JVMTI_ERROR_NONE != err) {
 		error(env, err, "Failed to disable exception catch event");
 	}
+	if (stepInCatch) {
+		err = (*jvmti_env)->SetEventNotificationMode(jvmti_env, JVMTI_ENABLE, JVMTI_EVENT_SINGLE_STEP, NULL);
+		if ( err != JVMTI_ERROR_NONE ) {
+			error(env, err, "Failed to enable step event");
+		}
+	}
 }
 
 
@@ -101,7 +110,7 @@ jint JNICALL
 decomp003(agentEnv * _env, char * args)
 {
 	JVMTI_ACCESS_FROM_AGENT(_env);
-	jvmtiError err;
+	jvmtiError err = JVMTI_ERROR_NONE;
 	jvmtiEventCallbacks callbacks;
 	jvmtiCapabilities capabilities;
 
@@ -111,8 +120,21 @@ decomp003(agentEnv * _env, char * args)
 		return JNI_ERR;
 	}
 
+	if (NULL != args) {
+		if (0 == strcasecmp(args, "nostep")) {
+			singleStep = 0;
+		} else if (0 == strcasecmp(args, "stepincatch")) {
+			stepInCatch = 1;
+		} else {
+			error(env, err, "Unknown option");
+			return JNI_ERR;		
+		}
+	}
+
 	memset(&capabilities, 0, sizeof(jvmtiCapabilities));
-	capabilities.can_generate_single_step_events = 1;
+	if (singleStep) {
+		capabilities.can_generate_single_step_events = 1;
+	}
 	capabilities.can_generate_exception_events = 1;
 	err = (*jvmti_env)->AddCapabilities(jvmti_env, &capabilities);
 	if (err != JVMTI_ERROR_NONE) {
@@ -121,7 +143,9 @@ decomp003(agentEnv * _env, char * args)
 	}	
 	
 	memset(&callbacks, 0, sizeof(jvmtiEventCallbacks));
-	callbacks.SingleStep = cbSingleStep;
+	if (singleStep) {
+		callbacks.SingleStep = cbSingleStep;
+	}
 	callbacks.Exception = cbException;
 	callbacks.ExceptionCatch = cbExceptionCatch;
 	err = (*jvmti_env)->SetEventCallbacks(jvmti_env, &callbacks, sizeof(jvmtiEventCallbacks));
@@ -141,10 +165,12 @@ Java_com_ibm_jvmti_tests_decompResolveFrame_decomp003_startStepping(JNIEnv *jni_
 	JVMTI_ACCESS_FROM_AGENT(env);
 	jvmtiError err = JVMTI_ERROR_NONE;
 
-	err = (*jvmti_env)->SetEventNotificationMode(jvmti_env, JVMTI_ENABLE, JVMTI_EVENT_SINGLE_STEP, NULL);
-	if ( err != JVMTI_ERROR_NONE ) {
-		error(env, err, "Failed to enable step event");
-		return JNI_FALSE;
+	if (singleStep && !stepInCatch) {
+		err = (*jvmti_env)->SetEventNotificationMode(jvmti_env, JVMTI_ENABLE, JVMTI_EVENT_SINGLE_STEP, NULL);
+		if ( err != JVMTI_ERROR_NONE ) {
+			error(env, err, "Failed to enable step event");
+			return JNI_FALSE;
+		}
 	}
 	err = (*jvmti_env)->SetEventNotificationMode(jvmti_env, JVMTI_ENABLE, JVMTI_EVENT_EXCEPTION, thread);
 	if (JVMTI_ERROR_NONE != err) {
@@ -161,10 +187,12 @@ Java_com_ibm_jvmti_tests_decompResolveFrame_decomp003_stopStepping(JNIEnv *jni_e
 	JVMTI_ACCESS_FROM_AGENT(env);
 	jvmtiError err = JVMTI_ERROR_NONE;
 
-	err = (*jvmti_env)->SetEventNotificationMode(jvmti_env, JVMTI_DISABLE, JVMTI_EVENT_SINGLE_STEP, NULL);
-	if ( err != JVMTI_ERROR_NONE ) {
-		error(env, err, "Failed to disable step event failed");
-		return JNI_FALSE;
+	if (singleStep) {
+		err = (*jvmti_env)->SetEventNotificationMode(jvmti_env, JVMTI_DISABLE, JVMTI_EVENT_SINGLE_STEP, NULL);
+		if ( err != JVMTI_ERROR_NONE ) {
+			error(env, err, "Failed to disable step event failed");
+			return JNI_FALSE;
+		}
 	}
 	err = (*jvmti_env)->SetEventNotificationMode(jvmti_env, JVMTI_DISABLE, JVMTI_EVENT_EXCEPTION, thread);
 	if (JVMTI_ERROR_NONE != err) {
