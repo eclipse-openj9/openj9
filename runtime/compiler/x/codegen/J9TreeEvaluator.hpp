@@ -67,7 +67,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *BNDCHKwithSpineCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *ArrayStoreCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *ArrayCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *reverseLoadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *barrierFenceEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *atccheckEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *ScopeCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
