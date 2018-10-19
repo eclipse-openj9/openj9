@@ -1206,8 +1206,8 @@ JVM_OnUnload(JavaVM *vm, void *reserved)
 }
 
 /**
- * On Linux the first call to get a backtrace can cause some initialisation work.
- * If this is called in a signal handler with other threads paused then one of
+ * On Linux and OSX the first call to get a backtrace can cause some initialisation
+ * work. If this is called in a signal handler with other threads paused then one of
  * those can hold a lock required for the initialisation to complete. This causes
  * a hang. Therefore we do one redundant call to backtrace at startup to prevent
  * java dumps hanging the VM.
@@ -1217,7 +1217,7 @@ JVM_OnUnload(JavaVM *vm, void *reserved)
 static void
 initBackTrace(J9JavaVM *vm)
 {
-#ifdef LINUX
+#if defined(LINUX) || defined(OSX)
 	J9PlatformThread threadInfo;
 	J9Heap *heap;
 	char backingStore[8096];
@@ -1229,7 +1229,7 @@ initBackTrace(J9JavaVM *vm)
 	if( j9introspect_backtrace_thread(&threadInfo, heap, NULL) != 0 ) {
 		j9introspect_backtrace_symbols(&threadInfo, heap);
 	}
-#endif
+#endif /* defined(LINUX) || defined(OSX) */
 }
 
 /**
