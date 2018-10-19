@@ -45,7 +45,6 @@ RUN apt-get update \
     autoconf \
     build-essential \
     ca-certificates \
-    ccache \
     cmake \
     cpio \
     curl \
