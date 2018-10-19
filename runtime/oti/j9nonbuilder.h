@@ -3742,7 +3742,7 @@ typedef struct J9JITConfig {
 	void* b_i2jTransition;
 	void  ( *promoteGPUCompile)(struct J9VMThread * currentThread) ;
 	void ( *jitDiscardPendingCompilationsOfNatives)(struct J9VMThread *currentThread, J9Class *clazz) ;
-	UDATA ( *jitGetExceptionCatcher)(struct J9VMThread *currentThread, void *handlerPC, struct J9JITExceptionTable *metaData, struct J9Method **method, IDATA *location) ;
+	J9Method* ( *jitGetExceptionCatcher)(struct J9VMThread *currentThread, void *handlerPC, struct J9JITExceptionTable *metaData, IDATA *location) ;
 	void ( *jitMethodBreakpointed)(struct J9VMThread *currentThread, struct J9Method *method) ;
 	void ( *jitMethodUnbreakpointed)(struct J9VMThread *currentThread, struct J9Method *method) ;
 	void ( *jitIllegalFinalFieldModification)(struct J9VMThread *currentThread, struct J9Class *fieldClass);
@@ -4107,7 +4107,7 @@ typedef struct J9AOTConfig {
 	void* b_i2jTransition;
 	void  ( *promoteGPUCompile)(struct J9VMThread * currentThread) ;
 	void ( *jitDiscardPendingCompilationsOfNatives)(struct J9VMThread *currentThread, J9Class *clazz) ;
-	UDATA ( *jitGetExceptionCatcher)(struct J9VMThread *currentThread, void *handlerPC, struct J9JITExceptionTable *metaData, struct J9Method **method, IDATA *location) ;
+	J9Method* ( *jitGetExceptionCatcher)(struct J9VMThread *currentThread, void *handlerPC, struct J9JITExceptionTable *metaData, IDATA *location) ;
 	void ( *jitMethodBreakpointed)(struct J9VMThread *currentThread, struct J9Method *method) ;
 	void ( *jitMethodUnbreakpointed)(struct J9VMThread *currentThread, struct J9Method *method) ;
 	struct J9AOTCallbackFunctionTable* callbackFunctionTable;

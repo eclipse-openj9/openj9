@@ -2427,8 +2427,9 @@ ffi_exit:
 			/* Drop the decompilation records for frames removed from the stack if FSD is enabled */
 			J9JITConfig *jitConfig = _vm->jitConfig;
 			if (NULL != jitConfig) {
-				if (jitConfig->fsdEnabled) {
-					jitConfig->jitExceptionCaught(_currentThread);
+				void (*jitExceptionCaught)(J9VMThread *currentThread) = jitConfig->jitExceptionCaught;
+				if (NULL != jitExceptionCaught) {
+					jitExceptionCaught(_currentThread);
 				}
 			}
 		}
