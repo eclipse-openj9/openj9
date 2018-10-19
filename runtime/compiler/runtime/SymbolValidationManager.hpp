@@ -828,6 +828,10 @@ private:
    /* List of validation records to be written to the AOT buffer */
    SymbolValidationRecordList _symbolValidationRecords;
 
+   typedef TR::typed_allocator<SymbolValidationRecord*, TR::Region&> RecordPtrAlloc;
+   typedef std::set<SymbolValidationRecord*, LessSymbolValidationRecord, RecordPtrAlloc> RecordSet;
+   RecordSet _alreadyGeneratedRecords;
+
    typedef TR::typed_allocator<std::pair<void* const, uint16_t>, TR::Region&> SymbolToIdAllocator;
    typedef std::less<void*> SymbolToIdComparator;
    typedef std::map<void*, uint16_t, SymbolToIdComparator, SymbolToIdAllocator> SymbolToIdMap;

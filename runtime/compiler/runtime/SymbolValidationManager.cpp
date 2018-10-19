@@ -44,6 +44,7 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
      _trMemory(_comp->trMemory()),
      _chTable(_comp->getPersistentInfo()->getPersistentCHTable()),
      _symbolValidationRecords(_region),
+     _alreadyGeneratedRecords(LessSymbolValidationRecord(), _region),
      _symbolToIdMap((SymbolToIdComparator()), _region),
      _idToSymbolTable(_region),
      _seenSymbolsSet((SeenSymbolsComparator()), _region)
@@ -184,13 +185,7 @@ TR::SymbolValidationManager::abandonRecord(TR::SymbolValidationRecord *record)
 bool
 TR::SymbolValidationManager::recordExists(TR::SymbolValidationRecord *record)
    {
-   for (auto it = _symbolValidationRecords.begin(); it != _symbolValidationRecords.end(); it++)
-      {
-      if ((*it)->_kind == record->_kind && record->isEqual(*it))
-         return true;
-      }
-
-   return false;
+   return _alreadyGeneratedRecords.find(record) != _alreadyGeneratedRecords.end();
    }
 
 void
@@ -204,6 +199,7 @@ TR::SymbolValidationManager::appendNewRecord(void *symbol, TR::SymbolValidationR
       _symbolToIdMap.insert(std::make_pair(symbol, getNewSymbolID()));
       }
    _symbolValidationRecords.push_front(record);
+   _alreadyGeneratedRecords.insert(record);
 
    record->printFields();
    traceMsg(_comp, "\tkind=%d\n", record->_kind);
@@ -348,6 +344,7 @@ TR::SymbolValidationManager::addMethodRecord(TR_OpaqueMethodBlock *method, Symbo
 
    traceMsg(TR::comp(), "Forget the most recent record\n");
    _symbolValidationRecords.pop_front();
+   _alreadyGeneratedRecords.erase(record);
    _region.deallocate(record);
 
    if (_symbolID != oldNextID)
