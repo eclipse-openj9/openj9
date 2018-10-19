@@ -142,7 +142,7 @@ j9gc_concurrent_scavenger_enabled(J9JavaVM *javaVM)
 UDATA
 j9gc_software_read_barrier_enabled(J9JavaVM *javaVM)
 {
-	return MM_GCExtensions::getExtensions(javaVM)->isSoftwareEvacuateReadBarrierEnabled() ? 1 : 0;
+	return MM_GCExtensions::getExtensions(javaVM)->isSoftwareRangeCheckReadBarrierEnabled() ? 1 : 0;
 }
 
 /**

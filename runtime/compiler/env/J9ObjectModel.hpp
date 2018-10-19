@@ -122,7 +122,7 @@ public:
     * \brief Determine whether to replace guarded loads with software read barrier sequence
     *
     * \return
-    *     true if debug gc option -XXgc:softwareEvacuateReadBarrier is used
+    *     true if debug gc option -XXgc:softwareRangeCheckReadBarrier is used
     */
    bool shouldReplaceGuardedLoadWithSoftwareReadBarrier();
 
