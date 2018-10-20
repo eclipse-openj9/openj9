@@ -1018,6 +1018,11 @@ fixStackForNewDecompilation(J9VMThread * currentThread, J9StackWalkState * walkS
 			Trc_Decomp_addDecompilation_atAllocate(currentThread);
 			*pcStoreAddress = (U_8 *) J9_BUILDER_SYMBOL(jitDecompileAfterAllocation);
 			break;
+		case J9_STACK_FLAGS_JIT_EXCEPTION_CATCH_RESOLVE:
+			/* Decompile during jitReportExceptionCatch */
+			Trc_Decomp_addDecompilation_atExceptionCatch(currentThread);
+			*pcStoreAddress = (U_8 *) J9_BUILDER_SYMBOL(jitDecompileAtExceptionCatch);
+			break;
 		default:
 			Trc_Decomp_addDecompilation_atCurrentPC(currentThread);
 			*pcStoreAddress = (U_8 *) J9_BUILDER_SYMBOL(jitDecompileAtCurrentPC);

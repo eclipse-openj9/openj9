@@ -45,8 +45,28 @@
 		<return type="success" value="0"/>
 	</test>
 
-	<test id="decomp003">
+	<test id="decomp003-XINT">
+		<command>$EXE$ $JVM_OPTS$ -Xint $AGENTLIB$=test:decomp003 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+	<test id="decomp003-NON-FSD">
+		<command>$EXE$ $JVM_OPTS$ -Xjit:count=0,limit={*.jit*},tryToInline={*.jit*} $AGENTLIB$=test:decomp003,args:nostep -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+	<test id="decomp003-FSD-NO-DECOMP">
+		<command>$EXE$ $JVM_OPTS$ -Xjit:count=0,limit={*.jit*},tryToInline={*.jit*},forcefullspeeddebug $AGENTLIB$=test:decomp003,args:nostep -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+	<test id="decomp003-FSD-EXISTING-DECOMP">
 		<command>$EXE$ $JVM_OPTS$ -Xjit:count=0,limit={*.jit*},tryToInline={*.jit*} $AGENTLIB$=test:decomp003 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+	<test id="decomp003-FSD-DECOMP-DURING-EVENT">
+		<command>$EXE$ $JVM_OPTS$ -Xjit:count=0,limit={*.jit*},tryToInline={*.jit*} $AGENTLIB$=test:decomp003,args:stepincatch -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
 		<return type="success" value="0"/>
 	</test>
 
