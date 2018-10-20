@@ -151,7 +151,7 @@ static agentError *
 __error(agentEnv * env, jvmtiError err, agentErrorType errType, char *file, const char *fnname, int line, char * errorMsg)
 {
 	agentError *e;
-	char *errorName;
+	char *errorName = "Unknown JVMTI error";
 	JVMTI_ACCESS_FROM_AGENT(env);
 
 
