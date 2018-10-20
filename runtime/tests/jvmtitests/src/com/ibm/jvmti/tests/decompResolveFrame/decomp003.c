@@ -22,6 +22,10 @@
 
 #include "jvmti_test.h"
 #include <string.h>
+#if defined(_MSC_VER)
+#define strncasecmp _strnicmp
+#define strcasecmp _stricmp
+#endif /* _MSC_VER */
 
 
 static agentEnv * env;
