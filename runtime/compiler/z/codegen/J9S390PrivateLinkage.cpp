@@ -2311,8 +2311,8 @@ TR::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDe
                         generateS390MemoryReference(snippetReg, slotOffset, cg()), cursor);
 
                   //load cached methodEP from current cache slot
-                  cursor = new (trHeapMemory()) TR::S390RXInstruction(TR::InstOpCode::getLoadOpCode(), callNode, methodRegister,
-                        generateS390MemoryReference(snippetReg, slotOffset+TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor, cg());
+                  cursor = generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), callNode, methodRegister,
+                        generateS390MemoryReference(snippetReg, slotOffset+TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor);
 
                   cursor = generateS390RegInstruction(cg(), TR::InstOpCode::BCR, callNode, methodRegister, cursor);
                   ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCode::COND_BER);
