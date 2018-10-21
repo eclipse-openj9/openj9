@@ -114,7 +114,11 @@
 		Variation 4:
 			In addition to Variation 3 this test runs gc on resolving constant dynamic. This will test JIT to make sure it correctly prepares
 			GC map in code.
-		-->
+		Variation 5:
+			This variation runs test under -XX:RecreateClassfileOnload option which means VM should first recreate an idential classfile with
+			classFileWriter and test with the recreated classfile. This should test if the classFileWriter is generating the correct classfile
+			output.
+	-->
 	<test>
 		<testCaseName>CondyPrimitive</testCaseName>
 		<variations>
@@ -122,6 +126,7 @@
 			<variation>'-Xjit:count=1,disableAsyncCompilation,rtResolve'</variation>
 			<variation>'-Xjit:count=0,disableAsyncCompilation'</variation>
 			<variation>'-Xjit:count=0,disableAsyncCompilation,gcOnResolve'</variation>
+			<variation>-XX:RecreateClassfileOnload</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
