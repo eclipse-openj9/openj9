@@ -311,7 +311,7 @@ vmOptionsTableAddOptionWithCopy(void **vmOptionsTable, char *optionString, void 
 #if defined(WIN32)
   /* On Windows, the subdirectory containing the redirector hasn't changed with Java versions. */
   #define J9JAVA_REDIRECTOR_SUBDIR "\\bin\\j9vm\\"
-#elif (JAVA_SPEC_VERSION >= 10) || ((JAVA_SPEC_VERSION == 9) && defined(OPENJ9_BUILD))
+#elif (JAVA_SPEC_VERSION >= 10) || ((JAVA_SPEC_VERSION == 9) && defined(OPENJ9_BUILD)) || defined(OSX)
   /* On other platforms, the subdirectory containing the redirector is common in recent Java versions. */
   #define J9JAVA_REDIRECTOR_SUBDIR "/lib/j9vm/"
 #else /* WIN32 */
