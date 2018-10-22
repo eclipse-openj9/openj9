@@ -129,7 +129,6 @@ TR::S390PrivateLinkage::S390PrivateLinkage(TR::CodeGenerator * codeGen,TR_S390Li
    setJ9MethodArgumentRegister    (TR::RealRegister::GPR1);
 
    setLitPoolRegister       (TR::RealRegister::GPR6  );
-   setExtCodeBaseRegister   (TR::RealRegister::GPR7  );
    setMethodMetaDataRegister(TR::RealRegister::GPR13 );
 
    setIntegerArgumentRegister(0, TR::RealRegister::GPR1);
