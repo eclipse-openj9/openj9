@@ -304,6 +304,13 @@ TR::SymbolValidationManager::addClassRecordWithRomClass(TR_OpaqueClassBlock *com
          return false;
       }
 
+   addMultipleArrayRecords(component, arrayDims);
+   return true;
+   }
+
+void
+TR::SymbolValidationManager::addMultipleArrayRecords(TR_OpaqueClassBlock *component, int arrayDims)
+   {
    for (int i = 0; i < arrayDims; i++)
       {
       TR_OpaqueClassBlock *array = _fej9->getArrayClassFromComponentClass(component);
@@ -312,8 +319,6 @@ TR::SymbolValidationManager::addClassRecordWithRomClass(TR_OpaqueClassBlock *com
          new (_region) ArrayClassFromComponentClassRecord(array, component));
       component = array;
       }
-
-   return true;
    }
 
 bool
@@ -392,8 +397,11 @@ TR::SymbolValidationManager::addProfiledClassRecord(TR_OpaqueClassBlock *clazz)
    if (classChain == NULL)
       return false;
 
-   TR::ClassValidationRecord *record = new (_region) ProfiledClassRecord(clazz, classChain);
-   return addClassRecordWithRomClass(clazz, record, arrayDims);
+   if (!isAlreadyValidated(clazz))
+      appendNewRecord(clazz, new (_region) ProfiledClassRecord(clazz, classChain));
+
+   addMultipleArrayRecords(clazz, arrayDims);
+   return true;
    }
 
 bool

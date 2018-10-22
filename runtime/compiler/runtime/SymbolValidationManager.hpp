@@ -1170,6 +1170,7 @@ private:
    bool addVanillaRecord(void *symbol, TR::SymbolValidationRecord *record);
    bool addClassRecord(TR_OpaqueClassBlock *clazz, TR::ClassValidationRecord *record);
    bool addClassRecordWithRomClass(TR_OpaqueClassBlock *clazz, TR::ClassValidationRecord *record, int arrayDims);
+   void addMultipleArrayRecords(TR_OpaqueClassBlock *clazz, int arrayDims);
    bool addMethodRecord(TR_OpaqueMethodBlock *method, TR::SymbolValidationRecord *record);
 
    bool validateSymbol(uint16_t idToBeValidated, void *validSymbol, TR::SymbolType type);
