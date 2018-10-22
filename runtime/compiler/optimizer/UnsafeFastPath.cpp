@@ -80,11 +80,13 @@ static TR::SymbolReferenceTable::CommonNonhelperSymbol equivalentAtomicIntrinsic
    switch (rm)
       {
       case TR::sun_misc_Unsafe_getAndSetInt:
-      case TR::sun_misc_Unsafe_getAndSetLong:
            return TR::SymbolReferenceTable::atomicSwapSymbol;
+      case TR::sun_misc_Unsafe_getAndSetLong:
+           return TR::Compiler->target.is64Bit() ? TR::SymbolReferenceTable::atomicSwapSymbol : TR::SymbolReferenceTable::lastCommonNonhelperSymbol;
       case TR::sun_misc_Unsafe_getAndAddInt:
-      case TR::sun_misc_Unsafe_getAndAddLong:
            return TR::SymbolReferenceTable::atomicFetchAndAddSymbol;
+      case TR::sun_misc_Unsafe_getAndAddLong:
+           return TR::Compiler->target.is64Bit() ? TR::SymbolReferenceTable::atomicFetchAndAddSymbol : TR::SymbolReferenceTable::lastCommonNonhelperSymbol;
       default:
          break;
       }
