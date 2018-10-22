@@ -810,6 +810,7 @@ private:
    bool validateSymbol(uint16_t idToBeValidated, TR_OpaqueMethodBlock *method);
    bool validateSymbol(uint16_t idToBeValidated, J9Method *method);
 
+   bool isDefinedID(uint16_t id);
    void setSymbolOfID(uint16_t id, void *symbol, TR::SymbolType type);
    void defineGuaranteedID(void *symbol, TR::SymbolType type);
 

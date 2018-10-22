@@ -67,8 +67,6 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
       // redundant.
       _alreadyGeneratedRecords.insert(
          new (_region) ArrayClassFromComponentClassRecord(arrayClass, component));
-      _alreadyGeneratedRecords.insert(
-         new (_region) ComponentClassFromArrayClassRecord(component, arrayClass));
       }
    }
 
@@ -79,6 +77,12 @@ TR::SymbolValidationManager::defineGuaranteedID(void *symbol, TR::SymbolType typ
    _symbolToIdMap.insert(std::make_pair(symbol, id));
    setSymbolOfID(id, symbol, type);
    _seenSymbolsSet.insert(symbol);
+   }
+
+bool
+TR::SymbolValidationManager::isDefinedID(uint16_t id)
+   {
+   return id < _idToSymbolTable.size() && _idToSymbolTable[id]._hasValue;
    }
 
 void
@@ -278,7 +282,7 @@ TR::SymbolValidationManager::addClassRecord(TR_OpaqueClassBlock *clazz, TR::Clas
       TR_OpaqueClassBlock *component = _fej9->getComponentClassFromArrayClass(clazz);
       appendRecordIfNew(
          component,
-         new (_region) ComponentClassFromArrayClassRecord(component, clazz));
+         new (_region) ArrayClassFromComponentClassRecord(clazz, component));
       clazz = component;
       }
 
@@ -805,8 +809,19 @@ TR::SymbolValidationManager::validateComponentClassFromArrayClassRecord(uint16_t
 bool
 TR::SymbolValidationManager::validateArrayClassFromComponentClassRecord(uint16_t arrayClassID, uint16_t componentClassID)
    {
-   TR_OpaqueClassBlock *componentClass = getClassFromID(componentClassID);
-   return validateSymbol(arrayClassID, _fej9->getArrayClassFromComponentClass(componentClass));
+   if (isDefinedID(componentClassID))
+      {
+      TR_OpaqueClassBlock *componentClass = getClassFromID(componentClassID);
+      return validateSymbol(arrayClassID, _fej9->getArrayClassFromComponentClass(componentClass));
+      }
+   else
+      {
+      TR_OpaqueClassBlock *arrayClass = getClassFromID(arrayClassID);
+      if (_fej9->isClassArray(arrayClass))
+         return validateSymbol(componentClassID, _fej9->getComponentClassFromArrayClass(arrayClass));
+      else
+         return false;
+      }
    }
 
 bool
