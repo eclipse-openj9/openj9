@@ -8354,36 +8354,35 @@ public:
 #else /* DEBUG_VERSION */
 		JUMP_TABLE_ENTRY(JBunimplemented),
 #endif /* DEBUG_VERSION */
-		JUMP_TABLE_ENTRY(JBiloadw),
-		JUMP_TABLE_ENTRY(JBlloadw),
-		JUMP_TABLE_ENTRY(JBfloadw),
-		JUMP_TABLE_ENTRY(JBdloadw),
-		JUMP_TABLE_ENTRY(JBaloadw),
-		JUMP_TABLE_ENTRY(JBistorew),
-		JUMP_TABLE_ENTRY(JBlstorew),
-		JUMP_TABLE_ENTRY(JBfstorew),
-		JUMP_TABLE_ENTRY(JBdstorew),
-		JUMP_TABLE_ENTRY(JBastorew),
-		JUMP_TABLE_ENTRY(JBiincw),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBaload0getfield),
-		JUMP_TABLE_ENTRY(JBnewdup),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		JUMP_TABLE_ENTRY(JBdefaultvalue),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBwithfield),
+		JUMP_TABLE_ENTRY(JBdefaultvalue), /* 203 */
+		JUMP_TABLE_ENTRY(JBwithfield), /* 204 */
 #else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 203 */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 204 */
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 205 */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 206 */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 207 */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 208 */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 209 */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 210 */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 211 */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 212 */
+		JUMP_TABLE_ENTRY(JBiincw), /* 213 */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 214 */
+		JUMP_TABLE_ENTRY(JBaload0getfield), /* 215 */
+		JUMP_TABLE_ENTRY(JBnewdup), /* 216 */
+		JUMP_TABLE_ENTRY(JBiloadw), /* 217 */
+		JUMP_TABLE_ENTRY(JBlloadw), /* 218 */
+		JUMP_TABLE_ENTRY(JBfloadw), /* 219 */
+		JUMP_TABLE_ENTRY(JBdloadw), /* 220 */
+		JUMP_TABLE_ENTRY(JBaloadw), /* 221 */
+		JUMP_TABLE_ENTRY(JBistorew), /* 222 */
+		JUMP_TABLE_ENTRY(JBlstorew), /* 223 */
+		JUMP_TABLE_ENTRY(JBfstorew), /* 224 */
+		JUMP_TABLE_ENTRY(JBdstorew), /* 225 */
+		JUMP_TABLE_ENTRY(JBastorew), /* 226 */
 		JUMP_TABLE_ENTRY(JBunimplemented),
 		JUMP_TABLE_ENTRY(JBreturnFromConstructor),
 		JUMP_TABLE_ENTRY(JBgenericReturn),
