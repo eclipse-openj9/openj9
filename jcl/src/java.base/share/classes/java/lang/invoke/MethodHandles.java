@@ -253,10 +253,13 @@ public class MethodHandles {
 			Class<?> receiverClass = receiver.getClass();
 			MethodHandle handle = handleForMHInvokeMethods(receiverClass, methodName, type);
 			if (handle == null) {
-				// Use the priviledgedLookup to allow probe the findSpecial cache without restricting the receiver
-				handle = internalPrivilegedLookup.findSpecialImpl(receiverClass, methodName, type, receiverClass);
-				handle = handle.asFixedArity(); // remove unnecessary varargsCollector from the middle of the MH chain.
-				handle = convertToVarargsIfRequired(handle.bindTo(receiver));
+				try {
+					handle = findSpecialImpl(receiverClass, methodName, type, receiverClass);
+					handle = handle.asFixedArity(); // remove unnecessary varargsCollector from the middle of the MH chain.
+					handle = convertToVarargsIfRequired(handle.bindTo(receiver));
+				} catch (ClassCastException e) {
+					throw new IllegalAccessException(e.getMessage());
+				}
 			}
 			checkAccess(handle, false);
 			checkSecurity(handle.getDefc(), receiverClass, handle.getModifiers());
