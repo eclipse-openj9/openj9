@@ -444,14 +444,6 @@ TR::SymbolValidationManager::addClassFromMethodRecord(TR_OpaqueClassBlock *clazz
    }
 
 bool
-TR::SymbolValidationManager::addComponentClassFromArrayClassRecord(TR_OpaqueClassBlock *componentClass, TR_OpaqueClassBlock *arrayClass)
-   {
-   // Class chain validation for the base component type is already taken care of
-   SVM_ASSERT_ALREADY_VALIDATED(this, arrayClass);
-   return addVanillaRecord(componentClass, new (_region) ComponentClassFromArrayClassRecord(componentClass, arrayClass));
-   }
-
-bool
 TR::SymbolValidationManager::addArrayClassFromComponentClassRecord(TR_OpaqueClassBlock *arrayClass, TR_OpaqueClassBlock *componentClass)
    {
    // Class chain validation for the base component type is already taken care of
@@ -797,13 +789,6 @@ TR::SymbolValidationManager::validateClassFromMethodRecord(uint16_t classID, uin
    {
    J9Method *method = getJ9MethodFromID(methodID);
    return validateSymbol(classID, J9_CLASS_FROM_METHOD(method));
-   }
-
-bool
-TR::SymbolValidationManager::validateComponentClassFromArrayClassRecord(uint16_t componentClassID, uint16_t arrayClassID)
-   {
-   TR_OpaqueClassBlock *arrayClass = getClassFromID(arrayClassID);
-   return validateSymbol(componentClassID, _fej9->getComponentClassFromArrayClass(arrayClass));
    }
 
 bool
@@ -1300,23 +1285,6 @@ void TR::ClassFromMethodRecord::printFields()
    traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
    printClass(_class);
    traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
-   }
-
-bool TR::ComponentClassFromArrayClassRecord::isLessThanWithinKind(
-   SymbolValidationRecord *other)
-   {
-   TR::ComponentClassFromArrayClassRecord *rhs = downcast(this, other);
-   return LexicalOrder::by(_componentClass, rhs->_componentClass)
-      .thenBy(_arrayClass, rhs->_arrayClass).less();
-   }
-
-void TR::ComponentClassFromArrayClassRecord::printFields()
-   {
-   traceMsg(TR::comp(), "ComponentClassFromArrayClassRecord\n");
-   traceMsg(TR::comp(), "\t_componentClass=0x%p\n", _componentClass);
-   printClass(_componentClass);
-   traceMsg(TR::comp(), "\t_arrayClass=0x%p\n", _arrayClass);
-   printClass(_arrayClass);
    }
 
 bool TR::ArrayClassFromComponentClassRecord::isLessThanWithinKind(

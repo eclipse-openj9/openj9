@@ -691,22 +691,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_ValidateComponentClassFromArrayClass:
-         {
-         TR::ComponentClassFromArrayClassRecord *record = reinterpret_cast<TR::ComponentClassFromArrayClassRecord *>(relocation->getTargetAddress());
-
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-
-         TR_RelocationRecordValidateCompFromArrayBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordValidateCompFromArrayBinaryTemplate *>(cursor);
-
-         binaryTemplate->_componentClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->_componentClass));
-         binaryTemplate->_arrayClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->_arrayClass));
-
-         cursor += sizeof(TR_RelocationRecordValidateCompFromArrayBinaryTemplate);
-         }
-         break;
-
       case TR_ValidateArrayClassFromComponentClass:
          {
          TR::ArrayClassFromComponentClassRecord *record = reinterpret_cast<TR::ArrayClassFromComponentClassRecord *>(relocation->getTargetAddress());
@@ -1294,7 +1278,7 @@ uint32_t J9::X86::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_Nu
    sizeof(TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate),//TR_ValidateDefiningClassFromCP         = 67,
    sizeof(TR_RelocationRecordValidateStaticClassFromCPBinaryTemplate), // TR_ValidateStaticClassFromCP           = 68,
    sizeof(TR_RelocationRecordValidateClassFromMethodBinaryTemplate),   // TR_ValidateClassFromMethod             = 69,
-   sizeof(TR_RelocationRecordValidateCompFromArrayBinaryTemplate),     // TR_ValidateComponentClassFromArrayClass= 70,
+   0,                                                                  // TR_ValidateComponentClassFromArrayClass= 70,
    sizeof(TR_RelocationRecordValidateArrayFromCompBinaryTemplate),     // TR_ValidateArrayClassFromComponentClass= 71,
    sizeof(TR_RelocationRecordValidateSuperClassFromClassBinaryTemplate),//TR_ValidateSuperClassFromClass         = 72,
    sizeof(TR_RelocationRecordValidateClassInstanceOfClassBinaryTemplate),//TR_ValidateClassInstanceOfClass       = 73,
