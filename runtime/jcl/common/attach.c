@@ -571,19 +571,17 @@ Java_com_ibm_tools_attach_target_IPC_getProcessId(JNIEnv *env, jclass clazz)
 }
 
 /**
+ * Indicate if a specific process exists. Non-positive process IDs and processes owned by
+ * other users return an error.
  * @param pid process ID
  * @return positive value if the process exists, 0 if the process does not exist, otherwise negative error code
  */
 jint JNICALL
 Java_com_ibm_tools_attach_target_IPC_processExistsImpl(JNIEnv *env, jclass clazz, jlong pid)
 {
-
 	PORT_ACCESS_FROM_VMC( ((J9VMThread *) env) );
-
-	jint rc;
-
 	/* PID value was upcast from a UDATA to jlong. */
-	rc =  (jint) j9sysinfo_process_exists((UDATA) pid);
+	jint rc = (pid > 0) ? (jint) j9sysinfo_process_exists((UDATA) pid) : -1;
 	Trc_JCL_attach_processExists(env, pid, rc);
 	return rc;
 }
