@@ -22,18 +22,27 @@
 #========================================#
 # Git repositories
 #========================================#
-openjdk_repo:
-  8: 'https://github.com/ibmruntimes/openj9-openjdk-jdk8.git'
-  9: 'https://github.com/ibmruntimes/openj9-openjdk-jdk9.git'
-  10: 'https://github.com/ibmruntimes/openj9-openjdk-jdk10.git'
-  11: 'https://github.com/ibmruntimes/openj9-openjdk-jdk11.git'
-  next: 'https://github.com/ibmruntimes/openj9-openjdk-jdk.git'
-openjdk_branch:
-  8: 'openj9'
-  9: 'openj9'
-  10: 'openj9'
-  11: 'openj9'
-  next: 'openj9-jdk'
+openjdk:
+  8:
+    default:
+      repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk8.git'
+      branch: 'openj9'
+  9:
+    default:
+      repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk9.git'
+      branch: 'openj9'
+  10:
+    default:
+      repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk10.git'
+      branch: 'openj9'
+  11:
+    default:
+      repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk11.git'
+      branch: 'openj9'
+  next:
+    default:
+      repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk.git'
+      branch: 'openj9-jdk'
 #========================================#
 # Miscellaneous settings
 #========================================#
