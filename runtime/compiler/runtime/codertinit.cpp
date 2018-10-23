@@ -210,7 +210,6 @@ J9JITConfig * codert_onload(J9JavaVM * javaVM)
    memset(javaVM->jitConfig, 0, sizeof(J9JITConfig));
 #endif
    jitConfig = javaVM->jitConfig;
-   jitConfig->sampleInterruptHandlerKey = -1;
 
    /* setup the hook interface */
    if (J9HookInitializeInterface(J9_HOOK_INTERFACE(jitConfig->hookInterface), OMRPORTLIB, sizeof(jitConfig->hookInterface)))
@@ -225,17 +224,6 @@ J9JITConfig * codert_onload(J9JavaVM * javaVM)
       if (!(assumptionTableMutex = TR::Monitor::create("JIT-AssumptionTableMutex")))
          goto _abort;
       }
-
-   /* Should use portlib */
-#if defined(TR_HOST_X86)
-   jitConfig->codeCacheAlignment = 32;
-#elif defined(TR_HOST_64BIT) || defined(TR_HOST_S390)
-   // 390 31-bit may generate 64-bit instruction (i.e. CGRL) which requires
-   // doubleword alignment for its operands
-   jitConfig->codeCacheAlignment = 8;
-#else
-   jitConfig->codeCacheAlignment = 4;
-#endif
 
    jitConfig->translationArtifacts = jit_allocate_artifacts(javaVM->portLibrary);
    if (!jitConfig->translationArtifacts)
@@ -291,15 +279,15 @@ void codert_freeJITConfig(J9JavaVM * javaVM)
          javaVM->internalVMFunctions->freeMemorySegmentList(javaVM, jitConfig->codeCacheList);
 
 #if defined(TR_TARGET_S390)
-      if (jitConfig->pseudoTOC)
-         j9mem_free_memory(jitConfig->pseudoTOC);
+      if (TR_J9VMBase::getPrivateConfig(jitConfig)->pseudoTOC)
+         j9mem_free_memory(TR_J9VMBase::getPrivateConfig(jitConfig)->pseudoTOC);
 #endif
 
-      if (jitConfig->compilationInfo)
+      if (TR_J9VMBase::getPrivateConfig(jitConfig)->compilationInfo)
          {
-         TR_J9VMBase *fej9 = (TR_J9VMBase *)jitConfig->compilationInfo;
+         TR_J9VMBase *fej9 = (TR_J9VMBase *)TR_J9VMBase::getPrivateConfig(jitConfig)->compilationInfo;
          fej9->freeSharedCache();
-         jitConfig->compilationInfo = 0;
+         TR_J9VMBase::getPrivateConfig(jitConfig)->compilationInfo = 0;
          }
 
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
@@ -356,7 +344,7 @@ void codert_freeJITConfig(J9JavaVM * javaVM)
 
 
       // Destroy faint blocks
-      OMR::FaintCacheBlock *currentFaintBlock = (OMR::FaintCacheBlock *)jitConfig->methodsToDelete;
+      OMR::FaintCacheBlock *currentFaintBlock = (OMR::FaintCacheBlock *)TR_J9VMBase::getPrivateConfig(jitConfig)->methodsToDelete;
       while (currentFaintBlock)
          {
          PORT_ACCESS_FROM_JITCONFIG(jitConfig);
@@ -364,7 +352,7 @@ void codert_freeJITConfig(J9JavaVM * javaVM)
          j9mem_free_memory(currentFaintBlock);
          currentFaintBlock = nextFaintBlock;
          }
-      jitConfig->methodsToDelete = NULL;
+      TR_J9VMBase::getPrivateConfig(jitConfig)->methodsToDelete = NULL;
 
 
       J9HookInterface** hookInterface = J9_HOOK_INTERFACE(jitConfig->hookInterface);
@@ -584,10 +572,10 @@ static TR_X86CPUIDBuffer *initializeX86CPUIDBuffer(void * javaVM)
 
 #if defined(TR_HOST_X86)
    // jitConfig can be NULL during AOT
-   if (jitConfig && jitConfig->processorInfo == NULL)
+   if (jitConfig && TR_J9VMBase::getPrivateConfig(jitConfig)->processorInfo == NULL)
       {
       jitGetCPUID(&buf);
-      jitConfig->processorInfo = &buf;
+      TR_J9VMBase::getPrivateConfig(jitConfig)->processorInfo = &buf;
       }
 #endif
 

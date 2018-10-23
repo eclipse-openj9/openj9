@@ -74,7 +74,7 @@ void _prepareForOSR(uintptrj_t vmThreadArg, int32_t currentInlinedSiteIndex, int
 
       if (details)
          {
-         TR_J9VMBase * fe = (TR_J9VMBase *)jitConfig->compilationInfo;
+         TR_J9VMBase * fe = (TR_J9VMBase *)TR_J9VMBase::getPrivateConfig(jitConfig)->compilationInfo;
          char inlinedMethodSignature[1000];
          TR_OpaqueMethodBlock *inlinedMethod = NULL;
          if (currentInlinedSiteIndex != -1)

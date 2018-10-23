@@ -244,7 +244,7 @@ TR_DataCache* TR_DataCacheManager::allocateNewDataCache(uint32_t minimumSize)
          if (dataCache)
             {
             // Compute the size for the segment
-            int32_t segSize = std::max(_jitConfig->dataCacheKB * 1024, static_cast<UDATA>(minimumSize));
+            int32_t segSize = std::max(TR_J9VMBase::getPrivateConfig(_jitConfig)->dataCacheKB * 1024, static_cast<UDATA>(minimumSize));
 
             //--- allocate the segment for the dataCache
             J9MemorySegment *dataCacheSeg = NULL;
@@ -273,7 +273,7 @@ TR_DataCache* TR_DataCacheManager::allocateNewDataCache(uint32_t minimumSize)
                }
             else
                {
-               TR_VerboseLog::write("<JIT: non-fatal error: failed to allocate %d Kb data cache>\n", _jitConfig->dataCacheKB);
+               TR_VerboseLog::write("<JIT: non-fatal error: failed to allocate %d Kb data cache>\n", TR_J9VMBase::getPrivateConfig(_jitConfig)->dataCacheKB);
                j9mem_free_memory(dataCache);
                dataCache = NULL;
                _jitConfig->runtimeFlags |= J9JIT_DATA_CACHE_FULL;  // prevent future allocations
@@ -511,9 +511,9 @@ void TR_DataCacheManager::fillDataCacheHeader(J9JITDataCacheHeader *hdr, uint32_
    hdr->size = size;
    hdr->type = allocationType;
    if (allocationType == J9_JIT_DCE_EXCEPTION_INFO)
-      _jitConfig->lastExceptionTableAllocSize = size;
+      TR_J9VMBase::getPrivateConfig(_jitConfig)->lastExceptionTableAllocSize = size;
    else if (allocationType == J9_JIT_DCE_STACK_ATLAS)
-      _jitConfig->lastGCDataAllocSize = size;
+      TR_J9VMBase::getPrivateConfig(_jitConfig)->lastGCDataAllocSize = size;
 }
 
 

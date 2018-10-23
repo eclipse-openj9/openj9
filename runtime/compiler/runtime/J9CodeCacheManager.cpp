@@ -136,7 +136,7 @@ J9::CodeCacheManager::addFaintCacheBlock(OMR::MethodExceptionData  *metaData, ui
       return;
    block->_metaData = metaData;
 
-   OMR::FaintCacheBlock * & faintBlockList = reinterpret_cast<OMR::FaintCacheBlock * &>(_jitConfig->methodsToDelete);
+   OMR::FaintCacheBlock * & faintBlockList = reinterpret_cast<OMR::FaintCacheBlock * &>(TR_J9VMBase::getPrivateConfig(_jitConfig)->methodsToDelete);
    block->_next = faintBlockList;
    block->_bytesToSaveAtStart = bytesToSaveAtStart;
    block->_isStillLive = false;
@@ -159,14 +159,14 @@ J9::CodeCacheManager::setCodeCacheFull()
    {
    self()->OMR::CodeCacheManager::setCodeCacheFull();
    _jitConfig->runtimeFlags |= J9JIT_CODE_CACHE_FULL;
-   _jitConfig->lastCodeAllocSize = 0;
+   TR_J9VMBase::getPrivateConfig(_jitConfig)->lastCodeAllocSize = 0;
    }
 
 
 void
 J9::CodeCacheManager::purgeClassLoaderFromFaintBlocks(J9ClassLoader *classLoader)
    {
-   OMR::FaintCacheBlock *currentFaintBlock = static_cast<OMR::FaintCacheBlock *>(_jitConfig->methodsToDelete);
+   OMR::FaintCacheBlock *currentFaintBlock = static_cast<OMR::FaintCacheBlock *>(TR_J9VMBase::getPrivateConfig(_jitConfig)->methodsToDelete);
    OMR::FaintCacheBlock *previousFaintBlock = 0;
    while (currentFaintBlock)
       {
@@ -182,9 +182,9 @@ J9::CodeCacheManager::purgeClassLoaderFromFaintBlocks(J9ClassLoader *classLoader
             }
          else
             {
-            _jitConfig->methodsToDelete = currentFaintBlock->_next;
+            TR_J9VMBase::getPrivateConfig(_jitConfig)->methodsToDelete = currentFaintBlock->_next;
             j9mem_free_memory(currentFaintBlock);
-            currentFaintBlock = static_cast<OMR::FaintCacheBlock *>(_jitConfig->methodsToDelete);
+            currentFaintBlock = static_cast<OMR::FaintCacheBlock *>(TR_J9VMBase::getPrivateConfig(_jitConfig)->methodsToDelete);
             continue;
             }
          }

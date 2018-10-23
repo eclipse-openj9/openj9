@@ -526,7 +526,7 @@ stopSamplingThread(J9JITConfig * jitConfig)
       // TODO: add a trace point in this routine
       //Trc_JIT_stopSamplingThread_Entry();
       TR::CompilationInfo *compInfo = getCompilationInfo(jitConfig);
-      j9thread_monitor_enter(jitConfig->samplerMonitor);
+      j9thread_monitor_enter(TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor);
       // In most cases the state of the sampling thread should be SAMPLE_THR_INITIALIZED
       // However, if an early error happens, stage 15 might not be run (this is where we initialize
       // the thread) and so the thread could be in ATTACHED_STATE
@@ -540,14 +540,14 @@ stopSamplingThread(J9JITConfig * jitConfig)
       j9thread_interrupt(jitConfig->samplerThread);
       // Wait for samplerThread to exit
       while (compInfo->getSamplingThreadLifetimeState() != TR::CompilationInfo::SAMPLE_THR_DESTROYED)
-         j9thread_monitor_wait(jitConfig->samplerMonitor);
+         j9thread_monitor_wait(TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor);
       // At this point samplingThread has gone away
       compInfo->setSamplerThread(NULL);
       jitConfig->samplerThread = 0; // just in case we enter this routine again
-      j9thread_monitor_exit(jitConfig->samplerMonitor);
+      j9thread_monitor_exit(TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor);
       // sampleMonitor is no longer needed
-      j9thread_monitor_destroy(jitConfig->samplerMonitor);
-      jitConfig->samplerMonitor = 0;
+      j9thread_monitor_destroy(TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor);
+      TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor = 0;
       //Trc_JIT_stopSamplingThread_Exit();
       }
    }
@@ -574,7 +574,7 @@ freeJITConfig(J9JITConfig * jitConfig)
       //
       JitShutdown(jitConfig);
 
-      // free the compilation info before freeing the frontend without thread info (jitConfig->compilationInfo)
+      // free the compilation info before freeing the frontend without thread info (TR_J9VMBase::getPrivateConfig(jitConfig)->compilationInfo)
       // which is done on codert_OnUnload
       TR::CompilationInfo::freeCompilationInfo(jitConfig);
 
@@ -633,12 +633,12 @@ disableJit(J9JITConfig * jitConfig)
          {
          TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
          compInfo->setSamplerState(TR::CompilationInfo::SAMPLER_SUSPENDED);
-         jitConfig->samplingFrequency = MAX_SAMPLING_FREQUENCY;
+         TR_J9VMBase::getPrivateConfig(jitConfig)->samplingFrequency = MAX_SAMPLING_FREQUENCY;
          persistentInfo->setLastTimeSamplerThreadWasSuspended(persistentInfo->getElapsedTime());
          if (TR::Options::getVerboseOption(TR_VerbosePerformance))
             {
             TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,"t=%u\tSampling thread suspended and changed frequency to %d ms",
-                         persistentInfo->getElapsedTime(), jitConfig->samplingFrequency);
+                         persistentInfo->getElapsedTime(), TR_J9VMBase::getPrivateConfig(jitConfig)->samplingFrequency);
             }
          }
       // TODO: what are the implications of remaining in an appropriate JIT state?
@@ -686,7 +686,7 @@ enableJit(J9JITConfig * jitConfig)
          {
          TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
          compInfo->setSamplerState(TR::CompilationInfo::SAMPLER_DEFAULT);
-         jitConfig->samplingFrequency = TR::Options::getCmdLineOptions()->getSamplingFrequency();
+         TR_J9VMBase::getPrivateConfig(jitConfig)->samplingFrequency = TR::Options::getCmdLineOptions()->getSamplingFrequency();
          // this wake up call counts as a tick, so mark that we have seen ticks active
          // so that we need to wait another 5 seconds to enter idle
          persistentInfo->setLastTimeThreadsWereActive(persistentInfo->getElapsedTime());
@@ -694,7 +694,7 @@ enableJit(J9JITConfig * jitConfig)
          if (TR::Options::getVerboseOption(TR_VerbosePerformance))
             {
             TR_VerboseLog::writeLineLocked(TR_Vlog_SAMPLING,"t=%u\tSampling thread interrupted and changed frequency to %d ms",
-                         persistentInfo->getElapsedTime(), jitConfig->samplingFrequency);
+                         persistentInfo->getElapsedTime(), TR_J9VMBase::getPrivateConfig(jitConfig)->samplingFrequency);
             }
          }
 
@@ -1033,6 +1033,19 @@ onLoadInternal(
    ((TR_JitPrivateConfig*)jitConfig->privateConfig)->j9jitrt_printf = j9jitrt_printf;
    ((TR_JitPrivateConfig*)jitConfig->privateConfig)->j9jitrt_lock_log = j9jitrt_lock_log;
    ((TR_JitPrivateConfig*)jitConfig->privateConfig)->j9jitrt_unlock_log = j9jitrt_unlock_log;
+   ((TR_JitPrivateConfig*)jitConfig->privateConfig)->sampleInterruptHandlerKey = -1;
+
+   /* Should use portlib */
+#if defined(TR_HOST_X86)
+   ((TR_JitPrivateConfig*)jitConfig->privateConfig)->codeCacheAlignment = 32;
+#elif defined(TR_HOST_64BIT) || defined(TR_HOST_S390)
+   // 390 31-bit may generate 64-bit instruction (i.e. CGRL) which requires
+   // doubleword alignment for its operands
+   ((TR_JitPrivateConfig*)jitConfig->privateConfig)->codeCacheAlignment = 8;
+#else
+   ((TR_JitPrivateConfig*)jitConfig->privateConfig)->codeCacheAlignment = 4;
+#endif
+
 
    #ifndef J9VM_ENV_DIRECT_FUNCTION_POINTERS
       jitConfig->jitTranslateMethod = jitTranslateMethod;
@@ -1057,7 +1070,7 @@ onLoadInternal(
 #endif
    jitConfig->promoteGPUCompile = promoteGPUCompile;
    jitConfig->command = command;
-   jitConfig->bcSizeLimit = 0xFFFF;
+   TR_J9VMBase::getPrivateConfig(jitConfig)->bcSizeLimit = 0xFFFF;
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
    //Add support for AES methods.
@@ -1111,18 +1124,18 @@ onLoadInternal(
     J9JavaVM * vm = javaVM; //macro FIND_AND_CONSUME_ARG refers to javaVM as vm
     if (isQuickstart)
        {
-       jitConfig->codeCacheKB = 1024;
-       jitConfig->dataCacheKB = 1024;
+       TR_J9VMBase::getPrivateConfig(jitConfig)->codeCacheKB = 1024;
+       TR_J9VMBase::getPrivateConfig(jitConfig)->dataCacheKB = 1024;
        }
    else
        {
-       jitConfig->codeCacheKB = 2048;
-       jitConfig->dataCacheKB = 2048;
+       TR_J9VMBase::getPrivateConfig(jitConfig)->codeCacheKB = 2048;
+       TR_J9VMBase::getPrivateConfig(jitConfig)->dataCacheKB = 2048;
        }
 #else
 #if (defined(TR_HOST_POWER) || defined(TR_HOST_S390) || (defined(TR_HOST_X86) && defined(TR_HOST_64BIT)))
-      jitConfig->codeCacheKB = 2048;
-      jitConfig->dataCacheKB = 2048;
+      TR_J9VMBase::getPrivateConfig(jitConfig)->codeCacheKB = 2048;
+      TR_J9VMBase::getPrivateConfig(jitConfig)->dataCacheKB = 2048;
 
       //zOS will set the code cache to create at startup after options are enabled below
 #if !defined(J9ZOS390)	
@@ -1130,9 +1143,9 @@ onLoadInternal(
          numCodeCachesToCreateAtStartup = 4;
 #endif
 #else
-      jitConfig->codeCacheKB = 2048; // WAS-throughput guided change
-      //jitConfig->codeCacheKB = J9_JIT_CODE_CACHE_SIZE / 1024;  // bytes -> k
-      jitConfig->dataCacheKB = 512;  // bytes -> k
+      TR_J9VMBase::getPrivateConfig(jitConfig)->codeCacheKB = 2048; // WAS-throughput guided change
+      //TR_J9VMBase::getPrivateConfig(jitConfig)->codeCacheKB = J9_JIT_CODE_CACHE_SIZE / 1024;  // bytes -> k
+      TR_J9VMBase::getPrivateConfig(jitConfig)->dataCacheKB = 512;  // bytes -> k
 #endif
 #endif
 
@@ -1169,21 +1182,21 @@ onLoadInternal(
          /* Provide a 1MB floor and 256MB ceiling for the code cache size */
          if (physMemory <= 1)
             {
-            jitConfig->codeCacheKB = 1024;
+            TR_J9VMBase::getPrivateConfig(jitConfig)->codeCacheKB = 1024;
             jitConfig->codeCacheTotalKB = 1024;
             }
          else if (physMemory < 256)
             {
-            jitConfig->codeCacheKB = 2048;
+            TR_J9VMBase::getPrivateConfig(jitConfig)->codeCacheKB = 2048;
             jitConfig->codeCacheTotalKB = physMemory * 1024;
             }
          else
             {
-            jitConfig->codeCacheKB = 2048;
+            TR_J9VMBase::getPrivateConfig(jitConfig)->codeCacheKB = 2048;
             jitConfig->codeCacheTotalKB = 256 * 1024;
             }
 
-         jitConfig->dataCacheKB = 2048;
+         TR_J9VMBase::getPrivateConfig(jitConfig)->dataCacheKB = 2048;
          jitConfig->dataCacheTotalKB = 384 * 1024;
 #endif
       }
@@ -1191,7 +1204,7 @@ onLoadInternal(
    TR::Options::setScratchSpaceLimit(DEFAULT_SCRATCH_SPACE_LIMIT_KB * 1024);
    TR::Options::setScratchSpaceLowerBound(DEFAULT_SCRATCH_SPACE_LOWER_BOUND_KB * 1024);
 
-   jitConfig->samplingFrequency = TR::Options::getSamplingFrequency();
+   TR_J9VMBase::getPrivateConfig(jitConfig)->samplingFrequency = TR::Options::getSamplingFrequency();
 
 #if defined(DEBUG)
       static char * breakOnLoad = feGetEnv("TR_BreakOnLoad");
@@ -1256,12 +1269,12 @@ onLoadInternal(
 
    javaVM->minimumSuperclassArraySize = TR::Options::_minimumSuperclassArraySize;
 
-   if (!jitConfig->tracingHook && TR::Options::requiresDebugObject())
+   if (!TR_J9VMBase::getPrivateConfig(jitConfig)->tracingHook && TR::Options::requiresDebugObject())
       {
-      jitConfig->tracingHook = (void*) (TR_CreateDebug_t)createDebugObject;
+      TR_J9VMBase::getPrivateConfig(jitConfig)->tracingHook = (void*) (TR_CreateDebug_t)createDebugObject;
       }
 
-   if (!jitConfig->tracingHook)
+   if (!TR_J9VMBase::getPrivateConfig(jitConfig)->tracingHook)
       TR::Options::suppressLogFileBecauseDebugObjectNotCreated();
 
    TR_AOTStats *aotStats = (TR_AOTStats *)j9mem_allocate_memory(sizeof(TR_AOTStats), J9MEM_CATEGORY_JIT);
@@ -1279,27 +1292,27 @@ onLoadInternal(
    TR::CodeCacheConfig &codeCacheConfig = codeCacheManager->codeCacheConfig();
 
    // Do not allow code caches smaller than 128KB
-   if (jitConfig->codeCacheKB < 128)
-      jitConfig->codeCacheKB = 128;
+   if (TR_J9VMBase::getPrivateConfig(jitConfig)->codeCacheKB < 128)
+      TR_J9VMBase::getPrivateConfig(jitConfig)->codeCacheKB = 128;
    if (!fe->isAOT_DEPRECATED_DO_NOT_USE())
       {
-      if (jitConfig->codeCacheKB > 32768)
-         jitConfig->codeCacheKB = 32768;
+      if (TR_J9VMBase::getPrivateConfig(jitConfig)->codeCacheKB > 32768)
+         TR_J9VMBase::getPrivateConfig(jitConfig)->codeCacheKB = 32768;
       }
 
-   if (jitConfig->codeCacheKB > jitConfig->codeCacheTotalKB)
+   if (TR_J9VMBase::getPrivateConfig(jitConfig)->codeCacheKB > jitConfig->codeCacheTotalKB)
       {
       /* Handle case where user has set codeCacheTotalKB smaller than codeCacheKB (e.g. -Xjit:codeTotal=256) by setting codeCacheKB = codeCacheTotalKB */
-      jitConfig->codeCacheKB = jitConfig->codeCacheTotalKB;
+      TR_J9VMBase::getPrivateConfig(jitConfig)->codeCacheKB = jitConfig->codeCacheTotalKB;
       }
 
-   if (jitConfig->dataCacheKB > jitConfig->dataCacheTotalKB)
+   if (TR_J9VMBase::getPrivateConfig(jitConfig)->dataCacheKB > jitConfig->dataCacheTotalKB)
       {
       /* Handle case where user has set dataCacheTotalKB smaller than dataCacheKB (e.g. -Xjit:dataTotal=256) by setting dataCacheKB = dataCacheTotalKB */
-      jitConfig->dataCacheKB = jitConfig->dataCacheTotalKB;
+      TR_J9VMBase::getPrivateConfig(jitConfig)->dataCacheKB = jitConfig->dataCacheTotalKB;
       }
 
-   I_32 maxNumberOfCodeCaches = jitConfig->codeCacheTotalKB / jitConfig->codeCacheKB;
+   I_32 maxNumberOfCodeCaches = jitConfig->codeCacheTotalKB / TR_J9VMBase::getPrivateConfig(jitConfig)->codeCacheKB;
    if (fe->isAOT_DEPRECATED_DO_NOT_USE())
       maxNumberOfCodeCaches = 1;
 
@@ -1316,9 +1329,9 @@ onLoadInternal(
    codeCacheConfig._verboseReclamation = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCodeCacheReclamation);
    codeCacheConfig._doSanityChecks = TR::Options::getCmdLineOptions()->getOption(TR_CodeCacheSanityCheck);
    codeCacheConfig._codeCacheTotalKB = jitConfig->codeCacheTotalKB;
-   codeCacheConfig._codeCacheKB = jitConfig->codeCacheKB;
-   codeCacheConfig._codeCachePadKB = jitConfig->codeCachePadKB;
-   codeCacheConfig._codeCacheAlignment = jitConfig->codeCacheAlignment;
+   codeCacheConfig._codeCacheKB = TR_J9VMBase::getPrivateConfig(jitConfig)->codeCacheKB;
+   codeCacheConfig._codeCachePadKB = TR_J9VMBase::getPrivateConfig(jitConfig)->codeCachePadKB;
+   codeCacheConfig._codeCacheAlignment = TR_J9VMBase::getPrivateConfig(jitConfig)->codeCacheAlignment;
    codeCacheConfig._codeCacheFreeBlockRecylingEnabled = !TR::Options::getCmdLineOptions()->getOption(TR_DisableFreeCodeCacheBlockRecycling);
    codeCacheConfig._largeCodePageSize = jitConfig->largeCodePageSize;
    codeCacheConfig._largeCodePageFlags = jitConfig->largeCodePageFlags;
@@ -1365,25 +1378,25 @@ onLoadInternal(
 
       #if defined(TR_TARGET_S390)
          // allocate 4K
-         jitConfig->pseudoTOC = j9mem_allocate_memory(4096, J9MEM_CATEGORY_JIT);
-         if (!jitConfig->pseudoTOC)
+         TR_J9VMBase::getPrivateConfig(jitConfig)->pseudoTOC = j9mem_allocate_memory(4096, J9MEM_CATEGORY_JIT);
+         if (!TR_J9VMBase::getPrivateConfig(jitConfig)->pseudoTOC)
             return -1;
 
          if (currentVMThread)
-            currentVMThread->codertTOC = (void *)jitConfig->pseudoTOC;
+            currentVMThread->codertTOC = (void *)TR_J9VMBase::getPrivateConfig(jitConfig)->pseudoTOC;
       #endif
 
       }
 
    /* allocate the data cache */
-   if (jitConfig->dataCacheKB < 1)
+   if (TR_J9VMBase::getPrivateConfig(jitConfig)->dataCacheKB < 1)
       {
       printf("<JIT: fatal error, data cache size must be at least 1 Kb>\n");
       return -1;
       }
    if (!TR_DataCacheManager::initialize(jitConfig))
       {
-      printf("{JIT: fatal error, failed to allocate %d Kb data cache}\n", jitConfig->dataCacheKB);
+      printf("{JIT: fatal error, failed to allocate %d Kb data cache}\n", TR_J9VMBase::getPrivateConfig(jitConfig)->dataCacheKB);
       return -1;
       }
 
@@ -1701,7 +1714,7 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
          }
 
    #if defined(TR_TARGET_64BIT) && defined(TR_HOST_POWER)
-      jitConfig->pseudoTOC = tocBase;
+      TR_J9VMBase::getPrivateConfig(jitConfig)->pseudoTOC = tocBase;
    #endif
       }
 #endif
@@ -1733,7 +1746,7 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
 #endif
 
    #if defined(TR_TARGET_S390)
-      uintptrj_t * tocBase = (uintptrj_t *)jitConfig->pseudoTOC;
+      uintptrj_t * tocBase = (uintptrj_t *)TR_J9VMBase::getPrivateConfig(jitConfig)->pseudoTOC;
 
       // Initialize the helper function table (0 to TR_S390numRuntimeHelpers-2)
       for (int32_t idx=1; idx<TR_S390numRuntimeHelpers; idx++)

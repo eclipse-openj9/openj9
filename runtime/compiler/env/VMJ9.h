@@ -151,6 +151,49 @@ typedef struct TR_JitPrivateConfig
    int32_t        maxRuntimeTraceBufferSizeInBytes;
    int32_t        maxTraceBufferEntrySizeInBytes;
    TR_AOTStats *aotStats;
+
+   // fields moved from jitConfig
+   UDATA  lastCodeAllocSize;
+   UDATA  lastGCDataAllocSize;
+   UDATA  lastExceptionTableAllocSize;
+   UDATA  gcTraceThreshold;
+   UDATA  bcSizeLimit;
+   UDATA  totalCodeBytesUsed;
+   UDATA  totalGCDataBytesUsed;
+   UDATA  totalAtlasDataBytesUsed;
+   UDATA  totalMethodsTranslated;
+   UDATA  totalMethodsNotTranslated;
+   UDATA  totalDebugDataBytesUsed;
+   UDATA  unresolvedClassRefs;
+   UDATA  unresolvedStaticVariableRefs;
+   UDATA  unresolvedStaticMethodRefs;
+   UDATA  unresolvedSpecialMethodRefs;
+   UDATA  unresolvedInstanceFieldRefs;
+   UDATA  unresolvedVirtualMethodRefs;
+   UDATA  unresolvedInterfaceMethodRefs;
+   UDATA  totalClassRefs;
+   UDATA  totalStaticVariableRefs;
+   UDATA  totalStaticMethodRefs;
+   UDATA  totalSpecialMethodRefs;
+   UDATA  totalInstanceFieldRefs;
+   UDATA  totalVirtualMethodRefs;
+   UDATA  totalInterfaceMethodRefs;
+   UDATA  codeCacheKB;
+   UDATA  dataCacheKB;
+   UDATA  codeCachePadKB;
+   void*  tracingHook;
+   UDATA  codeCacheAlignment;
+   UDATA  samplingFrequency;
+   UDATA  samplingTickCount;
+   omrthread_monitor_t  samplerMonitor;
+   I_32  tLogFile; // is this field even used? it's just set to -1 in j9options
+   I_32  tLogFileTemp;  // same here
+   void*  compilationInfo;
+   void*  pseudoTOC;
+   void*  methodsToDelete;
+   void*  processorInfo;
+   void*  privateConfig;
+   IDATA  sampleInterruptHandlerKey;
    } TR_JitPrivateConfig;
 
 

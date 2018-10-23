@@ -1300,7 +1300,7 @@ TR_ResolvedJ9MethodBase::_genMethodILForPeeking(TR::ResolvedMethodSymbol *method
    {
    // Check if the size of method being peeked exceeds the limit
    TR_ResolvedJ9Method * j9method = static_cast<TR_ResolvedJ9Method *>(methodSymbol->getResolvedMethod());
-   if (_fe->_jitConfig->bcSizeLimit && (j9method->maxBytecodeIndex() > _fe->_jitConfig->bcSizeLimit))
+   if (TR_J9VMBase::getPrivateConfig(_fe->_jitConfig)->bcSizeLimit && (j9method->maxBytecodeIndex() > TR_J9VMBase::getPrivateConfig(_fe->_jitConfig)->bcSizeLimit))
       return 0;
 
    vcount_t oldVisitCount = c->getVisitCount();

@@ -798,7 +798,7 @@ public:
 
    J9VMThread *getSamplerThread() const { return _samplerThread; }
    void setSamplerThread(J9VMThread *thr) { _samplerThread = thr; }
-   // use jitConfig->samplerMonitor for the following two routines
+   // use TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor for the following two routines
    TR_SamplingThreadLifetimeStates getSamplingThreadLifetimeState() const { return _samplingThreadLifetimeState; }
    void setSamplingThreadLifetimeState(TR_SamplingThreadLifetimeStates s) { _samplingThreadLifetimeState = s; }
    int32_t getSamplingThreadWaitTimeInDeepIdleToNotifyVM() const { return _samplingThreadWaitTimeInDeepIdleToNotifyVM; }
@@ -972,7 +972,7 @@ private:
    J9VMThread            *_samplerThread; // The Os thread for this VM attached thread is stored at jitConfig->samplerThread
    TR_SamplerStates       _samplerState; // access is guarded by J9JavaVM->vmThreadListMutex
    TR_SamplerStates       _prevSamplerState; // previous state of the sampler thread
-   volatile TR_SamplingThreadLifetimeStates _samplingThreadLifetimeState; // access guarded by jitConfig->samplerMonitor (most of the time)
+   volatile TR_SamplingThreadLifetimeStates _samplingThreadLifetimeState; // access guarded by TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor (most of the time)
    int32_t                _samplingThreadWaitTimeInDeepIdleToNotifyVM;
    int32_t                _numMethodsFoundInSharedCache;
    int32_t                _numInvRequestsInCompQueue; // number of invalidation requests present in the compilation queue

@@ -96,7 +96,7 @@ J9::CodeCache::resizeCodeMemory(void *memoryBlock, size_t newSize)
    if (self()->OMR::CodeCache::resizeCodeMemory(memoryBlock, newSize))
       {
       J9JITConfig *jitConfig = _manager->jitConfig();
-      jitConfig->lastCodeAllocSize = (UDATA) newSize;
+      TR_J9VMBase::getPrivateConfig(jitConfig)->lastCodeAllocSize = (UDATA) newSize;
       return true;
       }
    return false;

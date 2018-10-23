@@ -2709,7 +2709,7 @@ void TR::CompilationInfo::stopCompilationThreads()
    static char * printCompMem = feGetEnv("TR_PrintCompMem");
    if (printCompMem)
       {
-      int32_t codeCacheAllocated = TR::CodeCacheManager::instance()->getCurrentNumberOfCodeCaches() * _jitConfig->codeCacheKB;
+      int32_t codeCacheAllocated = TR::CodeCacheManager::instance()->getCurrentNumberOfCodeCaches() * TR_J9VMBase::getPrivateConfig(_jitConfig)->codeCacheKB;
       fprintf(stderr, "Allocated memory for code cache = %d KB\tLimit = %d KB\n",
          codeCacheAllocated, _jitConfig->codeCacheTotalKB);
 
@@ -5182,7 +5182,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
             {
             TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,"t=%u <WARNING: JIT Compilations are suspended>", (uint32_t)getPersistentInfo()->getElapsedTime());
             }
-         _jitConfig->totalMethodsNotTranslated++;
+         TR_J9VMBase::getPrivateConfig(_jitConfig)->totalMethodsNotTranslated++;
 
          return startPC;
          }
@@ -6889,7 +6889,7 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
       {
       entry->_compErrCode = compilationFailure;
 
-      jitConfig->totalMethodsNotTranslated++;
+      TR_J9VMBase::getPrivateConfig(jitConfig)->totalMethodsNotTranslated++;
 
       if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerboseCompFailure, TR_VerbosePerformance))
          {
@@ -7014,7 +7014,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
          {
          that->_methodBeingCompiled->_compErrCode = compilationRestrictedMethod;
 
-         jitConfig->totalMethodsNotTranslated++;
+         TR_J9VMBase::getPrivateConfig(jitConfig)->totalMethodsNotTranslated++;
          TR::Options *options = TR::Options::getJITCmdLineOptions();
          if (that->_methodBeingCompiled->_useAotCompilation)
             options = TR::Options::getAOTCmdLineOptions();
@@ -7045,7 +7045,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
          if (jitConfig->runtimeFlags & J9JIT_DATA_CACHE_FULL)
             Trc_JIT_dataCacheFull(vmThread);
          that->_methodBeingCompiled->_compErrCode = compilationExcessiveSize;
-         jitConfig->totalMethodsNotTranslated++;
+         TR_J9VMBase::getPrivateConfig(jitConfig)->totalMethodsNotTranslated++;
          compilee = 0;
          }
       else
@@ -7556,7 +7556,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
       that->_methodBeingCompiled->_compErrCode = compilationFailure;
 
 
-      jitConfig->totalMethodsNotTranslated++;
+      TR_J9VMBase::getPrivateConfig(jitConfig)->totalMethodsNotTranslated++;
 
       if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerboseCompFailure, TR_VerbosePerformance))
          {
@@ -7791,9 +7791,9 @@ TR::CompilationInfoPerThreadBase::compile(
 
       // Prepare compilation
       //
-      if (_jitConfig->tracingHook)
+      if (TR_J9VMBase::getPrivateConfig(_jitConfig)->tracingHook)
          compiler->setDebug(
-            ((TR_CreateDebug_t)_jitConfig->tracingHook)(compiler)
+            ((TR_CreateDebug_t)TR_J9VMBase::getPrivateConfig(_jitConfig)->tracingHook)(compiler)
          );
 
       // Print compiling method
@@ -9517,7 +9517,7 @@ TR::CompilationInfoPerThreadBase::methodCanBeCompiled(TR_Memory *trMemory, TR_Fr
        methodNameLen == 8 && !J9OS_STRNCMP(methodName, "<clinit>", 8))
       return false;
 
-   if (_jitConfig->bcSizeLimit && (method->maxBytecodeIndex() > _jitConfig->bcSizeLimit))
+   if (TR_J9VMBase::getPrivateConfig(_jitConfig)->bcSizeLimit && (method->maxBytecodeIndex() > TR_J9VMBase::getPrivateConfig(_jitConfig)->bcSizeLimit))
       return false;
 
    // if we've translated something that has transformed a newInstanceImpl call to virtual call
@@ -9606,15 +9606,15 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
          cipt->setLastCompilationDuration(translationTime / 1000);
          }
 
-      UDATA codeBytes = (_jitConfig->lastCodeAllocSize - sizeof(OMR::CodeCacheMethodHeader));
-      UDATA gcDataBytes = _jitConfig->lastGCDataAllocSize;
-      UDATA atlasBytes = _jitConfig->lastExceptionTableAllocSize;
+      UDATA codeBytes = (TR_J9VMBase::getPrivateConfig(_jitConfig)->lastCodeAllocSize - sizeof(OMR::CodeCacheMethodHeader));
+      UDATA gcDataBytes = TR_J9VMBase::getPrivateConfig(_jitConfig)->lastGCDataAllocSize;
+      UDATA atlasBytes = TR_J9VMBase::getPrivateConfig(_jitConfig)->lastExceptionTableAllocSize;
 
-      _jitConfig->totalMethodsTranslated++;
-      _jitConfig->totalCodeBytesUsed += codeBytes;
-      _jitConfig->totalGCDataBytesUsed += gcDataBytes;
-      _jitConfig->totalAtlasDataBytesUsed += atlasBytes;
-      _jitConfig->totalDebugDataBytesUsed += (compilee->numberOfParameterSlots() + compilee->numberOfTemps());
+      TR_J9VMBase::getPrivateConfig(_jitConfig)->totalMethodsTranslated++;
+      TR_J9VMBase::getPrivateConfig(_jitConfig)->totalCodeBytesUsed += codeBytes;
+      TR_J9VMBase::getPrivateConfig(_jitConfig)->totalGCDataBytesUsed += gcDataBytes;
+      TR_J9VMBase::getPrivateConfig(_jitConfig)->totalAtlasDataBytesUsed += atlasBytes;
+      TR_J9VMBase::getPrivateConfig(_jitConfig)->totalDebugDataBytesUsed += (compilee->numberOfParameterSlots() + compilee->numberOfTemps());
 
       // Statistics for number of aoted methods that were recompiled
       //
@@ -9915,7 +9915,7 @@ TR::CompilationInfoPerThreadBase::processException(
          );
       }
 
-   _jitConfig->totalMethodsNotTranslated++;
+   TR_J9VMBase::getPrivateConfig(_jitConfig)->totalMethodsNotTranslated++;
 
    OMR::RuntimeAssumption **metadataAssumptionList = compiler->getMetadataAssumptionList();
    if (metadataAssumptionList && (*metadataAssumptionList))

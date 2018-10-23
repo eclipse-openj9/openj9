@@ -69,7 +69,7 @@ extern "C" {
 TR_UnloadedClassPicSite *createClassUnloadPicSite(void *classPointer, void *addressToBePatched, uint32_t size,
                                                   OMR::RuntimeAssumption **sentinel)
    {
-   TR_FrontEnd * fe = (TR_FrontEnd*)jitConfig->compilationInfo; // ugly, but codert cannot include VMJ9.h
+   TR_FrontEnd * fe = (TR_FrontEnd*)TR_J9VMBase::getPrivateConfig(jitConfig)->compilationInfo; // ugly, but codert cannot include VMJ9.h
    return TR_UnloadedClassPicSite::make(fe, trPersistentMemory, (uintptrj_t) classPointer,
       (uint8_t*)addressToBePatched, size, RuntimeAssumptionOnClassRedefinitionPIC, sentinel);
    }
@@ -91,7 +91,7 @@ void jitAddPicToPatchOnClassUnload(void *classPointer, void *addressToBePatched)
 
 void createJNICallSite(void *ramMethod, void *addressToBePatched, OMR::RuntimeAssumption **sentinel)
    {
-   TR_FrontEnd * fe = (TR_FrontEnd*)jitConfig->compilationInfo; // ugly, but codert cannot include VMJ9.h
+   TR_FrontEnd * fe = (TR_FrontEnd*)TR_J9VMBase::getPrivateConfig(jitConfig)->compilationInfo; // ugly, but codert cannot include VMJ9.h
 
    TR_PatchJNICallSite::make(fe, trPersistentMemory, (uintptrj_t) ramMethod, (uint8_t *) addressToBePatched, sentinel);
 
@@ -116,7 +116,7 @@ void jitAdd32BitPicToPatchOnClassUnload(void *classPointer, void *addressToBePat
 void createClassRedefinitionPicSite(void *classPointer, void *addressToBePatched, uint32_t size,
                                     bool unresolved, OMR::RuntimeAssumption **sentinel)
    {
-   TR_FrontEnd * fe = (TR_FrontEnd*)jitConfig->compilationInfo; // ugly, but codert cannot include VMJ9.h
+   TR_FrontEnd * fe = (TR_FrontEnd*)TR_J9VMBase::getPrivateConfig(jitConfig)->compilationInfo; // ugly, but codert cannot include VMJ9.h
    if (unresolved)
       {
       TR_RedefinedClassUPicSite::make(fe, trPersistentMemory, (uintptrj_t) classPointer,

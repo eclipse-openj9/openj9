@@ -591,7 +591,7 @@ TR_IProfiler::TR_IProfiler(J9JITConfig *jitConfig)
    _portLib = jitConfig->javaVM->portLibrary;
    _vm = TR_J9VMBase::get(jitConfig, 0);
    staticPortLib = _portLib;
-   _classLoadTimeStampGap = (int32_t)jitConfig->samplingFrequency * 30;
+   _classLoadTimeStampGap = (int32_t)TR_J9VMBase::getPrivateConfig(jitConfig)->samplingFrequency * 30;
 
    _compInfo = TR::CompilationInfo::get(jitConfig);
 

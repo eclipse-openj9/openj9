@@ -1080,8 +1080,8 @@ J9::Options::fePreProcess(void * base)
    if (jitConfig->runtimeFlags & J9JIT_CG_REGISTER_MAPS)
       self()->setOption(TR_RegisterMaps);
 
-   jitConfig->tLogFile     = -1;
-   jitConfig->tLogFileTemp = -1;
+   TR_J9VMBase::getPrivateConfig(jitConfig)->tLogFile     = -1;
+   TR_J9VMBase::getPrivateConfig(jitConfig)->tLogFileTemp = -1;
 
    TR_J9VMBase * fe = TR_J9VMBase::get(jitConfig, 0);
    TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
@@ -1288,7 +1288,7 @@ J9::Options::fePreProcess(void * base)
       UDATA ccSize;
       GET_MEMORY_VALUE(argIndex, ccOption, ccSize);
       ccSize >>= 10;
-      jitConfig->codeCacheKB = ccSize;
+      TR_J9VMBase::getPrivateConfig(jitConfig)->codeCacheKB = ccSize;
       }
 
    static bool doneWithJniAcc = false;
@@ -1351,9 +1351,9 @@ J9::Options::fePreProcess(void * base)
             if (jitConfig->codeCacheTotalKB < ccTotalSize)
                {
                // Restriction: total size must be a multiple of the size of one code cache
-               UDATA fragmentSize = ccTotalSize % jitConfig->codeCacheKB;
+               UDATA fragmentSize = ccTotalSize % TR_J9VMBase::getPrivateConfig(jitConfig)->codeCacheKB;
                if (fragmentSize > 0)   // TODO: do we want a message here?
-                  ccTotalSize += jitConfig->codeCacheKB - fragmentSize; // round-up
+                  ccTotalSize += TR_J9VMBase::getPrivateConfig(jitConfig)->codeCacheKB - fragmentSize; // round-up
 
                // Proportionally increase the data cache as well
                // Use 'double' to avoid truncation/overflow
@@ -1361,9 +1361,9 @@ J9::Options::fePreProcess(void * base)
                   (double)(jitConfig->dataCacheTotalKB);
 
                // Round up to a multiple of the data cache size
-               fragmentSize = dcTotalSize % jitConfig->dataCacheKB;
+               fragmentSize = dcTotalSize % TR_J9VMBase::getPrivateConfig(jitConfig)->dataCacheKB;
                if (fragmentSize > 0)
-                  dcTotalSize += jitConfig->dataCacheKB - fragmentSize;
+                  dcTotalSize += TR_J9VMBase::getPrivateConfig(jitConfig)->dataCacheKB - fragmentSize;
                // Now write the values in jitConfig
                jitConfig->codeCacheTotalKB = ccTotalSize;
                // Make sure that the new value for dataCacheTotal doesn't shrink the default
@@ -2034,11 +2034,11 @@ J9::Options::fePostProcessJIT(void * base)
    if (_samplingFrequency > MAX_SAMPLING_FREQUENCY/10000) // Cap the user specified sampling frequency to "max"/10000
       _samplingFrequency = MAX_SAMPLING_FREQUENCY/10000;  // Too large a value can make samplingPeriod
                                                           // negative when we multiply by loadFactor
-   jitConfig->samplingFrequency = _samplingFrequency;
+   TR_J9VMBase::getPrivateConfig(jitConfig)->samplingFrequency = _samplingFrequency;
 
    // grab vLogFileName from jitConfig and put into jitPrivateConfig, where it will be found henceforth
    TR_JitPrivateConfig *privateConfig = (TR_JitPrivateConfig*)jitConfig->privateConfig;
-   privateConfig->vLogFileName = jitConfig->vLogFileName;
+   privateConfig->vLogFileName = TR_J9VMBase::getPrivateConfig(jitConfig)->vLogFileName;
    self()->openLogFiles(jitConfig);
 
    if (self()->getOption(TR_OrderCompiles))
