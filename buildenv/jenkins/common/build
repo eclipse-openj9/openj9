@@ -43,7 +43,9 @@ def get_source() {
             OMR_BRANCH_OPTION = (OMR_BRANCH != "")? "-omr-branch=${OMR_BRANCH}" : ""
             OMR_SHA_OPTION = (OMR_SHA != "") ? "-omr-sha=${OMR_SHA}" : ""
 
-            if (USER_CREDENTIALS_ID != '') {
+            // use sshagent with Jenkins credentials ID for all platforms except zOS
+            // on zOS use the user's ssh key
+            if (!SPEC.startsWith('zos') && (USER_CREDENTIALS_ID != '')) {
                 get_sources_with_authentication()
             } else {
                 get_sources()
@@ -59,6 +61,14 @@ def get_sources_with_authentication() {
 }
 
 def get_sources() {
+    // use credentials ID for all platforms except zOS
+    // for zOS use ssh key
+
+    def remote_config_parameters = [url: "${OPENJDK_REPO}"]
+    if (!SPEC.startsWith('zos') && USER_CREDENTIALS_ID) {
+        remote_config_parameters.put(credentialsId: "${USER_CREDENTIALS_ID}")
+    }
+
     checkout changelog: false,
             poll: false,
             scm: [$class: 'GitSCM',
@@ -72,8 +82,7 @@ def get_sources() {
                                 shallow: false,
                                 timeout: 30]],
                 submoduleCfg: [],
-                userRemoteConfigs: [[credentialsId: "${USER_CREDENTIALS_ID}",
-                                    url: "${OPENJDK_REPO}"]]]
+                userRemoteConfigs: [remote_config_parameters]]
 
     // Check if this build is a PR
     if (params.ghprbGhRepository) {
@@ -246,8 +255,10 @@ def checkoutRef (REF) {
 def build() {
     stage('Compile') {
         timestamps {
+            // 'all' target dependencies broken for zos, use 'images'
+            def make_target = SPEC.startsWith('zos') ? 'images' : 'all'
             withEnv(BUILD_ENV_VARS_LIST) {
-                sh "${BUILD_ENV_CMD} bash configure --with-freemarker-jar='$FREEMARKER' --with-boot-jdk='$BOOT_JDK' $EXTRA_CONFIGURE_OPTIONS && make $EXTRA_MAKE_OPTIONS all"
+                sh "${BUILD_ENV_CMD} bash configure --with-freemarker-jar='$FREEMARKER' --with-boot-jdk='$BOOT_JDK' $EXTRA_CONFIGURE_OPTIONS && make $EXTRA_MAKE_OPTIONS ${make_target}"
             }
         }
     }
@@ -325,12 +336,12 @@ def build_all() {
             }
         } finally {
             try {
-		cleanWs()
-	    } catch(e) {
-		echo e.toString()
-		echo e.printStackTrace()
-		sh "ps -ef"
-	    }
+                cleanWs()
+            } catch(e) {
+                echo e.toString()
+                echo e.printStackTrace()
+                sh "ps -ef"
+            }
         }
     }
 }

@@ -36,25 +36,14 @@
 *              linux_ppc-64_cmprssptrs_le,
 *              linux_390-64_cmprssptrs,
 *              win_x86-64_cmprssptrs,
-*              win_x86 (Java 8 support only)
-*   Java8: Boolean
-*   Java9: Boolean 
-*   Java10: Boolean (at least one of the Java8, Java9, Java10 is required)
+*              win_x86 (Java 8 support only),
+*              zos_390-64_cmprssptrs (Java 11 support only)
 *   OPENJ9_REPO: String - the OpenJ9 git repository URL: e.g. https://github.com/eclipse/openj9.git (default)
 *   OPENJ9_BRANCH: String - the OpenJ9 branch to clone from: e.g. master (default)
 *   OPENJ9_SHA: String - the last commit SHA of the OpenJ9 repository
 *   OMR_REPO: String - the OMR git repository URL: e.g. https://github.com/eclipse/openj9-omr.git (default)
 *   OMR_BRANCH: String - the OMR branch to clone from: e.g. openj9 (default)
 *   OMR_SHA: the last commit SHA of the OMR repository
-*   OPENJDK8_REPO: String - the OpenJDK8 repository URL: e.g. https://github.com/ibmruntimes/openj9-openjdk-jdk8.git (default)
-*   OPENJDK8_BRANCH: String - the OpenJDK8 branch to clone from: e.g. openj9 (default)
-*   OPENJDK8_SHA: String - the OpenJDK8 last commit SHA
-*   OPENJDK9_REPO: String - the OpenJDK9 repository URL: e.g. https://github.com/ibmruntimes/openj9-openjdk-jdk9.git (default)
-*   OPENJDK9_BRANCH: String - the OpenJDK9 branch to clone from: e.g. openj9 (default)
-*   OPENJDK9_SHA: String - the OpenJDK9 last commit SHA 
-*   OPENJDK10_REPO: String - the OpenJDK10 repository URL: e.g. https://github.com/ibmruntimes/openj9-openjdk-jdk10.git (default)
-*   OPENJDK10_BRANCH: String - the OpenJDK10 branch to clone from: e.g. openj9 (default)
-*   OPENJDK10_SHA: String - the OpenJDK10 last commit SHA
 *   TESTS_TARGETS: String - The test targets to run. Expected values: _sanity, _extended, none
 *   VARIABLE_FILE: String - the custom variables file. Uses defaults.yml when no value is provided.
 *   VENDOR_REPO: String - the repository URL of a Git repository that stores a custom variables file
@@ -70,6 +59,16 @@
 *   Expected value for single platforms builds: label (no platform name required), e.g. csp70027
 *
 *   PERSONAL_BUILD: Choice: true, false - Indicates if is a personal build or not
+*
+*   Note: replicate the following parameters for each supported version, where supported version are: 8, 9, 10, 11, next
+*   Java<version>: Boolean (at least one of the following is required: Java8, Java9, Java10, etc)
+*   OPENJDK<version>_REPO: String - the OpenJDK<version> repository URL: e.g. https://github.com/ibmruntimes/openj9-openjdk-jdk<version>.git (default)
+*   OPENJDK<version>_BRANCH: String - the OpenJDK<version> branch to clone from: e.g. openj9 (default)
+*   OPENJDK<version>_SHA: String - the OpenJDK<version> last commit SHA
+*
+*   OPENJDK<version>_REPO_<platform>: String - the OpenJDK<version> repository URL for <platform>
+*   OPENJDK<version>_BRANCH_<platform>: String - the branch to clone from
+*   OPENJDK<version>_SHA_<platform>: String - the last commit SHA
 */
 
 RELEASES = ['8', '9', '10', '11', 'next']
@@ -82,7 +81,8 @@ SPECS = ['aix_ppc-64_cmprssptrs'      : CURRENT_RELEASES,
          'linux_x86-64_cmprssptrs'    : CURRENT_RELEASES,
          'linux_x86-64_cmprssptrs_cmake' : ['9'],
          'win_x86'                    : ['8'],
-         'win_x86-64_cmprssptrs'      : CURRENT_RELEASES]
+         'win_x86-64_cmprssptrs'      : CURRENT_RELEASES,
+         'zos_390-64_cmprssptrs'      : ['11']]
 
 LABEL = params.LABEL
 if (!LABEL) {
@@ -93,7 +93,7 @@ OPENJDK_REPO = [:]
 OPENJDK_BRANCH = [:]
 OPENJDK_SHA = [:]
 
-BUILD_RELEASES = []
+BUILD_SPECS = [:]
 builds = [:]
 
 timeout(time: 10, unit: 'HOURS') {
@@ -104,9 +104,7 @@ timeout(time: 10, unit: 'HOURS') {
                 def variableFile = load 'buildenv/jenkins/common/variables-functions'
                 buildFile = load 'buildenv/jenkins/common/pipeline-functions'
 
-                def BUILD_SPECS = get_specs(SPECS)
-                // find releases to build based on given specs
-                BUILD_RELEASES.addAll(get_build_releases(BUILD_SPECS))
+                BUILD_SPECS.putAll(get_specs(SPECS))
 
                 // parse variables file and initialize variables
                 variableFile.set_job_variables('wrapper')
@@ -128,8 +126,8 @@ timeout(time: 10, unit: 'HOURS') {
                 BUILD_SPECS.each { SPEC, SDK_VERSIONS ->
                     SDK_VERSIONS.each { SDK_VERSION ->
                         // set OpenJDK repos and branch for the downstream build
-                        def REPO = OPENJDK_REPO[SDK_VERSION]
-                        def BRANCH = OPENJDK_BRANCH[SDK_VERSION]
+                        def REPO = OPENJDK_REPO.get(SDK_VERSION).get(SPEC)
+                        def BRANCH = OPENJDK_BRANCH.get(SDK_VERSION).get(SPEC)
 
                         // set nodes for the downstream builds
                         def BUILD_NODE = ''
@@ -175,31 +173,31 @@ timeout(time: 10, unit: 'HOURS') {
 def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE) {
     def JOB_NAME = "Pipeline-Build-Test-JDK${SDK_VERSION}-${SPEC}"
 
-    TESTS_TARGETS = params.TESTS_TARGETS    
+    TESTS_TARGETS = params.TESTS_TARGETS
     if (!TESTS_TARGETS) {
         TESTS_TARGETS = ''
     }
-    VARIABLE_FILE = params.VARIABLE_FILE    
+    VARIABLE_FILE = params.VARIABLE_FILE
     if (!VARIABLE_FILE) {
         VARIABLE_FILE = ''
     }
-    VENDOR_REPO = params.VENDOR_REPO    
+    VENDOR_REPO = params.VENDOR_REPO
     if (!VENDOR_REPO) {
         VENDOR_REPO = ''
     }
-    VENDOR_BRANCH = params.VENDOR_BRANCH    
+    VENDOR_BRANCH = params.VENDOR_BRANCH
     if (!VENDOR_BRANCH) {
         VENDOR_BRANCH = ''
     }
-    VENDOR_CREDENTIALS_ID = params.VENDOR_CREDENTIALS_ID    
+    VENDOR_CREDENTIALS_ID = params.VENDOR_CREDENTIALS_ID
     if (!VENDOR_CREDENTIALS_ID) {
         VENDOR_CREDENTIALS_ID = ''
     }
-    PERSONAL_BUILD = params.PERSONAL_BUILD    
+    PERSONAL_BUILD = params.PERSONAL_BUILD
     if (!PERSONAL_BUILD) {
         PERSONAL_BUILD = ''
     }
-    SLACK_HANDLE = params.SLACK_HANDLE    
+    SLACK_HANDLE = params.SLACK_HANDLE
     if (!SLACK_HANDLE) {
         SLACK_HANDLE = ''
     }
@@ -208,7 +206,7 @@ def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_RE
                 parameters: [
                     string(name: 'OPENJDK_REPO', value: OPENJDK_REPO),
                     string(name: 'OPENJDK_BRANCH', value: OPENJDK_BRANCH),
-                    string(name: 'OPENJDK_SHA', value: SHAS['OPENJDK'].get(SDK_VERSION)),
+                    string(name: 'OPENJDK_SHA', value: SHAS.get('OPENJDK').get(SDK_VERSION).get(OPENJDK_REPO)),
                     string(name: 'OPENJ9_REPO', value: OPENJ9_REPO),
                     string(name: 'OPENJ9_BRANCH', value: OPENJ9_BRANCH),
                     string(name: 'OPENJ9_SHA', value: SHAS['OPENJ9']),
@@ -281,19 +279,6 @@ def get_specs(SUPPORTED_SPECS) {
     }
 
     return SPECS
-}
-
-/*
-* Returns a list of releases to build.
-*/
-def get_build_releases(BUILD_SPECS) {
-    def BUILD_RELEASES = []
-
-    BUILD_SPECS.values().each { SDK_VERSIONS ->
-        BUILD_RELEASES.addAll(SDK_VERSIONS)
-    }
-
-    return BUILD_RELEASES.unique()
 }
 
 /*

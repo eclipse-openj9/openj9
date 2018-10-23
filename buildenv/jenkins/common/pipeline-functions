@@ -34,14 +34,28 @@ def get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO,
             // fetch SHAs for all OpenJDK repositories
             def OPENJDK_SHAS_BY_RELEASES = [:]
 
-            OPENJDK_SHA.each { release, sha ->
-                if (!sha) {
-                    sha = get_repository_sha(OPENJDK_REPO[release], OPENJDK_BRANCH[release])
+            // e.g. OPENJDK_SHA = [ 8: [linux_x86-64: sha1, linux_x86-64_cmprssptrs: sha2, ...], 
+            //                     10: [linux_x86-64: sha1, linux_x86-64_cmprssptrs: sha2, ...],...]
+            OPENJDK_SHA.each { release, shas_by_specs ->
+                def unique_shas = [:]
+
+                shas_by_specs.each { spec, sha ->
+                    def repoUrl = OPENJDK_REPO.get(release).get(spec)
+
+                    if (!unique_shas.containsKey(repoUrl)) {
+                        if (!sha) {
+                            sha = get_repository_sha(repoUrl, OPENJDK_BRANCH.get(release).get(spec))
+                        }
+                        unique_shas.put(repoUrl, sha)
+
+                        def repo_short_name = repoUrl.substring(repoUrl.lastIndexOf('/') + 1, repoUrl.indexOf('.git'))
+                        description += "<br/>OpenJDK${release}: ${get_short_sha(sha)} - ${repo_short_name}"
+                        echo "OPENJDK${release}_SHA:${sha} - ${repo_short_name}"
+                    }
                 }
-                OPENJDK_SHAS_BY_RELEASES[release] = sha
-                description += "<br/>OpenJDK${release}: ${get_short_sha(sha)}"
-                echo "OPENJDK${release}_SHA:${sha}"
+                OPENJDK_SHAS_BY_RELEASES.put(release, unique_shas)
             }
+
             SHAS['OPENJDK'] = OPENJDK_SHAS_BY_RELEASES
         } else {
             // fetch SHA for an OpenJDK repository
