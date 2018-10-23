@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,14 +31,13 @@ import java.util.List;
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.GeneratedFieldAccessor;
 import com.ibm.j9ddr.GeneratedPointerClass;
+import com.ibm.j9ddr.NullPointerDereference;
 import com.ibm.j9ddr.StructureReader;
 import com.ibm.j9ddr.util.RuntimeTypeResolutionUtils;
 import com.ibm.j9ddr.vm29.j9.DataType;
 import com.ibm.j9ddr.vm29.types.I32;
 import com.ibm.j9ddr.vm29.types.Scalar;
 import com.ibm.j9ddr.vm29.types.U32;
-
-
 
 /**
  * Root of the hierarchy for VM C structures.
@@ -51,6 +50,10 @@ public abstract class StructurePointer extends AbstractPointer {
 		super(address);
 	}
 	
+	public final long nonNullFieldEA(long offset) throws NullPointerDereference {
+		return nonNullAddress() + offset;
+	}
+
 	public DataType at(long count) {
 		throw new UnsupportedOperationException("StructurePointers are implicitly dereferenced.  Use add(long count) instead.");
 	}

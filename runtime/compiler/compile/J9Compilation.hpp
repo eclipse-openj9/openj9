@@ -41,6 +41,7 @@ namespace J9 { typedef J9::Compilation CompilationConnector; }
 #include "env/CompilerEnv.hpp"
 #include "env/OMRMemory.hpp"
 #include "compile/AOTClassInfo.hpp"
+#include "runtime/SymbolValidationManager.hpp"
 
 class TR_AOTGuardSite;
 class TR_FrontEnd;
@@ -195,6 +196,25 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
 
    bool compilationShouldBeInterrupted(TR_CallingContext);
 
+   /* Heuristic Region APIs
+    *
+    * Heuristic Regions denotes regions where decisions
+    * within the region do not need to be remembered. In relocatable compiles,
+    * when the compiler requests some information via front end query,
+    * it's possible that the front end might walk a data structure,
+    * looking at several different possible answers before finally deciding
+    * on one. For a relocatable compile, only the final answer is important.
+    * Thus, a heuristic region is used to ignore all of the intermediate
+    * steps in determining the final answer.
+    */
+   void enterHeuristicRegion();
+   void exitHeuristicRegion();
+
+   /* Used to ensure that a implementer chosen for inlining is valid under
+    * AOT.
+    */
+   bool validateTargetToBeInlined(TR_ResolvedMethod *implementer);
+
    void reportILGeneratorPhase();
    void reportAnalysisPhase(uint8_t id);
    void reportOptimizationPhase(OMR::Optimizations);
@@ -287,6 +307,8 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    //
    bool supportsQuadOptimization();
 
+   TR::SymbolValidationManager *getSymbolValidationManager() { return _symbolValidationManager; }
+
 private:
 
    J9VMThread *_j9VMThread;
@@ -360,6 +382,8 @@ private:
    TR_AccessedProfileInfo *_profileInfo;
 
    bool _skippedJProfilingBlock;
+
+   TR::SymbolValidationManager *_symbolValidationManager;
    };
 
 }

@@ -1018,6 +1018,11 @@ fixStackForNewDecompilation(J9VMThread * currentThread, J9StackWalkState * walkS
 			Trc_Decomp_addDecompilation_atAllocate(currentThread);
 			*pcStoreAddress = (U_8 *) J9_BUILDER_SYMBOL(jitDecompileAfterAllocation);
 			break;
+		case J9_STACK_FLAGS_JIT_EXCEPTION_CATCH_RESOLVE:
+			/* Decompile during jitReportExceptionCatch */
+			Trc_Decomp_addDecompilation_atExceptionCatch(currentThread);
+			*pcStoreAddress = (U_8 *) J9_BUILDER_SYMBOL(jitDecompileAtExceptionCatch);
+			break;
 		default:
 			Trc_Decomp_addDecompilation_atCurrentPC(currentThread);
 			*pcStoreAddress = (U_8 *) J9_BUILDER_SYMBOL(jitDecompileAtCurrentPC);
@@ -1215,16 +1220,18 @@ c_jitDecompileAtExceptionCatch(J9VMThread * currentThread)
 
 	/* Determine in which inlined frame the exception is being caught */
 	UDATA newNumberOfFrames = 1;
+	void *stackMap = NULL;
+	void *inlineMap = NULL;
+	void *inlinedCallSite = NULL;
+	/* Note we need to add 1 to the JIT PC here in order to get the correct map at the exception handler
+	 * because jitGetMapsFromPC is expecting a return address, so it subtracts 1.  The value stored in the
+	 * decomp record is the start address of the compiled exception handler.
+	 */
+	jitGetMapsFromPC(vm, metaData, (UDATA)jitPC + 1, &stackMap, &inlineMap);
+	Assert_CodertVM_false(NULL == stackMap);
 	if (NULL != getJitInlinedCallInfo(metaData)) {
-		void *stackMap = NULL;
-		void *inlineMap = NULL;
-		/* Note we need to add 1 to the JIT PC here in order to get the correct map at the exception handler
-		 * because jitGetMapsFromPC is expecting a return address, so it subtracts 1.  The value stored in the
-		 * decomp record is the start address of the compiled exception handler.
-		 */
-		jitGetMapsFromPC(vm, metaData, (UDATA)jitPC + 1, &stackMap, &inlineMap);
 		if (NULL != inlineMap) {
-			void *inlinedCallSite = getFirstInlinedCallSite(metaData, inlineMap);
+			inlinedCallSite = getFirstInlinedCallSite(metaData, inlineMap);
 			if (inlinedCallSite != NULL) {
 				newNumberOfFrames = getJitInlineDepthFromCallSite(metaData, inlinedCallSite) + 1;
 			}
@@ -1248,7 +1255,7 @@ c_jitDecompileAtExceptionCatch(J9VMThread * currentThread)
 	/* Fix the OSR frame to resume at the catch point with an empty pending stack (the caught exception
 	 * is pushed after decompilation completes).
 	 */
-	osrFrame->bytecodePCOffset = getJitPCOffsetFromExceptionHandler(metaData, jitPC);
+	osrFrame->bytecodePCOffset = getCurrentByteCodeIndexAndIsSameReceiver(metaData, stackMap, inlinedCallSite, NULL);
 	Trc_Decomp_jitInterpreterPCFromWalkState_Entry(jitPC);
 	Trc_Decomp_jitInterpreterPCFromWalkState_exHandler(osrFrame->bytecodePCOffset);
 	osrFrame->pendingStackHeight = 0;

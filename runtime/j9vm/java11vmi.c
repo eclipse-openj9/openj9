@@ -1458,28 +1458,41 @@ JVM_GetVmArguments(JNIEnv *env) {
 	J9VMThread* currentThread = (J9VMThread*)env;
 	J9JavaVM* vm = currentThread->javaVM;
 	J9InternalVMFunctions* internalFunctions = vm->internalVMFunctions;
-	jclass vmJniClass = NULL;
 	jobjectArray result = NULL;
-	J9Class* vmClass = J9VMCOMIBMOTIVMVM_OR_NULL(vm);
+	J9Class* vmClass = NULL;
 
-	if (NULL == vmClass) {
-		internalFunctions->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
-	} else {
-		jclass vmJniClass = NULL;
-		jmethodID mid = NULL;
+	internalFunctions->internalEnterVMFromJNI(currentThread);
 
-		vmJniClass = (jclass)internalFunctions->j9jni_createLocalRef(env, vmClass->classObject);
+	vmClass = J9VMCOMIBMOTIVMVM_OR_NULL(vm);
 
-		mid = (*env)->GetStaticMethodID(env, vmJniClass, "getVMArgs", "()[Ljava/lang/String;");
-		if (NULL == mid) {
-			internalFunctions->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
-		} else {
-			result = (jobjectArray)((*env)->CallObjectMethod(env, vmJniClass, mid));
+	if (NULL != vmClass) {
+		J9Method* method = internalFunctions->findJNIMethod(currentThread, vmClass, "getVMArgs", "()[Ljava/lang/String;");
+
+		if (NULL != method) {
+			jmethodID mid = (jmethodID)internalFunctions->getJNIMethodID(currentThread, method);
+
+			if (NULL != mid) {
+				jclass vmJniClass = (jclass)internalFunctions->j9jni_createLocalRef(env, vmClass->classObject);
+
+				if (NULL != vmJniClass) {
+					/* exit vm before calling jni method */
+					internalFunctions->internalExitVMToJNI(currentThread);
+
+					result = (jobjectArray)((*env)->CallObjectMethod(env, vmJniClass, mid));
+
+					internalFunctions->internalEnterVMFromJNI(currentThread);
+					internalFunctions->j9jni_deleteLocalRef(env, (jobject)vmJniClass);
+					goto success;
+				}
+			}
 		}
 
-		internalFunctions->j9jni_deleteLocalRef(env, (jobject)vmJniClass);
 	}
+	/* if code reaches here, something went wrong */
+	internalFunctions->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
 
+success:
+	internalFunctions->internalExitVMToJNI(currentThread);
 	return result;
 }
 

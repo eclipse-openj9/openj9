@@ -240,13 +240,6 @@ public abstract class MethodHandle {
 	// Until the JIT can synthesize calls to virtual methods, we must synthesize calls to these static ones instead
 	/*[ENDIF]*/
 	private static MethodHandle asType(MethodHandle mh, MethodType newType) {
-		/*
-		 * JIT can easily propagate type information and fold the if when it can prove early return always happen.
-		 * The early return also saves the JIT from having to inline full asType call
-		 */
-		if (mh.type == newType) {
-			return mh;
-		}
 		return mh.asType(newType);
 	}
 	/*[IF Sidecar19-SE]*/
@@ -819,11 +812,6 @@ public abstract class MethodHandle {
 	 */
 	private static final native MethodHandle getCPMethodHandleAt(Object internalRamClass, int index);
 
-	/*
-	 * sun.reflect.ConstantPool doesn't have a getConstantDynamicAt method.  This is the 
-	 * equivalent for ConstantDynamic.
-	 */
-	private static final native Object getCPConstantDynamicAt(Object internalRamClass, int index);
 	
 	/**
 	 * Get the class name from a constant pool class element, which is located
@@ -847,6 +835,13 @@ public abstract class MethodHandle {
 	private static final int BSM_NAME_ARGUMENT_INDEX = 1;
 	private static final int BSM_TYPE_ARGUMENT_INDEX = 2;
 	private static final int BSM_OPTIONAL_ARGUMENTS_START_INDEX = 3;
+	
+/*[IF Java11]*/
+	/*
+	 * sun.reflect.ConstantPool doesn't have a getConstantDynamicAt method.  This is the 
+	 * equivalent for ConstantDynamic.
+	 */
+	private static final native Object getCPConstantDynamicAt(Object internalRamClass, int index);
 
 	@SuppressWarnings("unused")
 	private static final Object resolveConstantDynamic(long j9class, String name, String fieldDescriptor, long bsmData) throws Throwable {
@@ -893,6 +888,15 @@ public abstract class MethodHandle {
 		boolean treatLastArgAsVarargs = bsm.isVarargsCollector();
 		Class<?> varargsComponentType = bsm.type.lastParameterType().getComponentType();
 		int bsmTypeArgCount = bsm.type.parameterCount();
+
+		/* JVMS JDK11 5.4.3.6 Dynamically-Computed Constant and Call Site Resolution
+		 * requires the first parameter of the bootstrap method to be java.lang.invoke.MethodHandles.Lookup
+		 * else fail resolution with BootstrapMethodError
+		 */
+		if (bsmTypeArgCount < 1 || MethodHandles.Lookup.class != bsm.type.parameterType(0)) {
+			/*[MSG "K0A01", "Constant_Dynamic references bootstrap method '{0}' does not have java.lang.invoke.MethodHandles.Lookup as first parameter."]*/
+			throw new BootstrapMethodError(Msg.getString("K0A01", bsm.getMethodName())); //$NON-NLS-1$
+		}
 
 		for (int i = 0; i < bsmArgCount; i++) {
 			int staticArgIndex = BSM_OPTIONAL_ARGUMENTS_START_INDEX + i;
@@ -998,13 +1002,16 @@ public abstract class MethodHandle {
 		
 		return result;
 	}
+/*[ENDIF] Java11*/
 
 	@SuppressWarnings("unused")
 	private static final MethodHandle resolveInvokeDynamic(long j9class, String name, String methodDescriptor, long bsmData) throws Throwable {
 		MethodHandle result = null;
 		MethodType type = null;
 
+/*[IF !Java11]*/
 		try {
+/*[ENDIF]*/
 			VMLangAccess access = VM.getVMLangAccess();
 			Object internalRamClass = access.createInternalRamClass(j9class);
 			Class<?> classObject = null;
@@ -1104,9 +1111,11 @@ public abstract class MethodHandle {
 				case 14:
 					cpEntry = getCPMethodHandleAt(internalRamClass, index);
 					break;
+/*[IF Java11]*/
 				case 17:
 					cpEntry = getCPConstantDynamicAt(internalRamClass, index);
 					break;
+/*[ENDIF] Java11*/
 				default:
 					// Do nothing. The null check below will throw the appropriate exception.
 				}
@@ -1115,6 +1124,14 @@ public abstract class MethodHandle {
 				staticArgs[staticArgIndex] = cpEntry;
 			}
 
+/*[IF Java11]*/
+		/* JVMS JDK11 5.4.3.6 Dynamically-Computed Constant and Call Site Resolution
+		 * requires that exceptions from BSM invocation be wrapped in a BootstrapMethodError
+		 * unless the exception thrown is a sub-class of Error.
+		 * Exceptions thrown before invocation should be passed through unwrapped.
+		 */
+		try {
+/*[ENDIF]*/
 			/* Take advantage of the per-MH asType cache */
 			CallSite cs = null;
 			switch(staticArgs.length) {

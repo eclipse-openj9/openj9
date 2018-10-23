@@ -1890,7 +1890,8 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			argIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXUSECONTAINERSUPPORT, NULL);
 			argIndex2 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNOUSECONTAINERSUPPORT, NULL);
 
-			if (argIndex > argIndex2) {
+			/* Enable -XX:+UseContainerSupport by default */
+			if (argIndex >= argIndex2) {
 				OMRPORT_ACCESS_FROM_J9PORT(vm->portLibrary);
 				uint64_t subsystemsEnabled = omrsysinfo_cgroup_enable_subsystems(OMR_CGROUP_SUBSYSTEM_ALL);
 
@@ -2955,6 +2956,10 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 			vm->runtimeFlags |= J9_RUNTIME_ALWAYS_SPLIT_BYTECODES;
 		} else if (0 == strcmp(testString, VMOPT_XXDISABLEALWAYSSPLITBYTECODES)) {
 			vm->runtimeFlags &= ~(UDATA)J9_RUNTIME_ALWAYS_SPLIT_BYTECODES;
+		} else if (0 == strcmp(testString, VMOPT_XXENABLEPOSITIVEHASHCODE)) {
+			vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_POSITIVE_HASHCODE;
+		} else if (0 == strcmp(testString, VMOPT_XXDISABLEPOSITIVEHASHCODE)) {
+			vm->extendedRuntimeFlags &= ~(UDATA)J9_EXTENDED_RUNTIME_POSITIVE_HASHCODE;
 		}
 		/* -Xbootclasspath and -Xbootclasspath/p are not supported from Java 9 onwards */
 		if (J2SE_VERSION(vm) >= J2SE_19) {
@@ -3790,6 +3795,14 @@ registerVMCmdLineMappings(J9JavaVM* vm)
 	}
 	/* Map -XX:HeapDumpPath= to -Xdump:directory= */
 	if (registerCmdLineMapping(vm, MAPOPT_XXHEAPDUMPPATH_EQUALS, VMOPT_XDUMP_DIRECTORY_EQUALS, EXACT_MAP_WITH_OPTIONS) == RC_FAILED) {
+		return RC_FAILED;
+	}
+	/* Map -XX:MaxHeapSize= to -Xmx */
+	if (registerCmdLineMapping(vm, MAPOPT_XXMAXHEAPSIZE_EQUALS, VMOPT_XMX, EXACT_MAP_WITH_OPTIONS) == RC_FAILED) {
+		return RC_FAILED;
+	}
+	/* Map -XX:InitialHeapSize= to -Xms */
+	if (registerCmdLineMapping(vm, MAPOPT_XXINITIALHEAPSIZE_EQUALS, VMOPT_XMS, EXACT_MAP_WITH_OPTIONS) == RC_FAILED) {
 		return RC_FAILED;
 	}
 
@@ -5581,8 +5594,6 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	}
 
 	registerIgnoredOptions(PORTLIB, vm->vmArgsArray);				/* Tags -D java options and options in ignoredOptionTable as not consumable */
-
-	TOC_STORE_TOC(vm->vmTOC, &initializeJavaVM);
 
 #if !defined(J9VM_INTERP_MINIMAL_JNI)
 	vm->EsJNIFunctions = GLOBAL_TABLE(EsJNIFunctions);

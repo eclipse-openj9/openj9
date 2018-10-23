@@ -703,8 +703,6 @@ mapsAreIdentical(
 #ifdef TR_HOST_S390
        (mapCursor->getHighWordRegisterMap() == nextMapCursor->getHighWordRegisterMap()) &&
 #endif
-       (comp->getOption(TR_DisableShrinkWrapping) ||
-        (mapCursor->getRegisterSaveDescription() == nextMapCursor->getRegisterSaveDescription())) &&
        (comp->getOption(TR_DisableLiveMonitorMetadata) ||
         ((mapCursor->getLiveMonitorBits() != 0) == (nextMapCursor->getLiveMonitorBits() != 0) &&
          (mapCursor->getLiveMonitorBits() == 0 ||
@@ -1493,31 +1491,7 @@ createMethodMetaData(
          ((uint8_t *)data + exceptionTableSize + inlinedCallSize),
          sizeOfStackAtlasInBytes);
 
-   if (comp->cg()->getShrinkWrappingDone())
-      {
-      traceMsg(comp, "lowestSavedRegister %x\n", comp->cg()->getLowestSavedRegister());
-      data->registerSaveDescription = J9TR_SHRINK_WRAP;
-
-      // Stash the lowest register saved in the prologue in the last byte of the
-      // rsd hung off the method's metadata. this is consulted during the stackwalk
-      // so that the right stack slots are checked
-      //
-      // note: on x86, the preserved registers are not necessarily allocated in sequence,
-      // so the info looks like this:
-      // data->registerSaveDescription = 0x....| abcd
-      // the low 16bits are used to store a bitvector of registers that are shrinkwrapped
-      // in this method. this bitvector is consulted during the stackwalk to determine
-      // which stack slots need to be checked
-      //
-      // on ppc and s390, the registers are always allocated in sequence, so just store
-      // the lowest number in the low byte
-      //
-      data->registerSaveDescription |= (comp->cg()->getLowestSavedRegister() & 0xFFFF);
-      }
-   else
-      {
-      data->registerSaveDescription = comp->cg()->getRegisterSaveDescription();
-      }
+   data->registerSaveDescription = comp->cg()->getRegisterSaveDescription();
 
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
    if (vm->isAOT_DEPRECATED_DO_NOT_USE())

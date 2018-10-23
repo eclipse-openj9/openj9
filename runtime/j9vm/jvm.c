@@ -975,13 +975,16 @@ getj9bin()
 #endif
 
 /* We use forward slashes here because J9VM_LIB_ARCH_DIR is not used on Windows. */
-#if J9VM_JAVA9_BUILD >= 150
+#if (J9VM_JAVA9_BUILD >= 150) || defined(OSX)
+/* On OSX, <arch> doesn't exist. So, JVM_ARCH_DIR shouldn't be appended to
+ * J9VM_LIB_ARCH_DIR on OSX.
+ */
 #define J9VM_LIB_ARCH_DIR "/lib/"
-#elif defined(JVM_ARCH_DIR)
+#elif defined(JVM_ARCH_DIR) /* (J9VM_JAVA9_BUILD >= 150) || defined(OSX) */
 #define J9VM_LIB_ARCH_DIR "/lib/" JVM_ARCH_DIR "/"
-#else
+#else /* (J9VM_JAVA9_BUILD >= 150) || defined(OSX) */
 #error "No matching ARCH found"
-#endif /* J9VM_JAVA9_BUILD >= 150 */
+#endif /* (J9VM_JAVA9_BUILD >= 150) || defined(OSX) */
 
 #if J9VM_JAVA9_BUILD < 150
 /*
@@ -1096,10 +1099,15 @@ preloadLibraries(void)
 		jrebinBuffer = jvmBufferCat(NULL, jvmBufferData(j9binBuffer));
 	}
 	j9libBuffer = jvmBufferCat(NULL, jvmBufferData(jrebinBuffer));
-#if J9VM_JAVA9_BUILD < 150
+#if !defined(OSX)
+	/* <arch> directory doesn't exist on OSX so j9libBuffer shouldn't
+	 * be truncated on OSX for removing <arch>.
+	 */
+#if (J9VM_JAVA9_BUILD < 150)
 	/* Remove <arch> */
 	truncatePath(jvmBufferData(j9libBuffer));
-#endif /* J9VM_JAVA9_BUILD < 150 */
+#endif /* (J9VM_JAVA9_BUILD < 150) */
+#endif /* !defined(OSX) */
 	j9libvmBuffer = jvmBufferCat(NULL, jvmBufferData(j9binBuffer));
 	j9Buffer = jvmBufferCat(NULL, jvmBufferData(jrebinBuffer));
 	truncatePath(jvmBufferData(j9Buffer));

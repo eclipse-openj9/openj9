@@ -1,23 +1,23 @@
 ##############################################################################
-#  Copyright (c) 2016, 2018 IBM Corp. and others
+# Copyright (c) 2016, 2018 IBM Corp. and others
 #
-#  This program and the accompanying materials are made available under
-#  the terms of the Eclipse Public License 2.0 which accompanies this
-#  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
-#  or the Apache License, Version 2.0 which accompanies this distribution and
-#  is available at https://www.apache.org/licenses/LICENSE-2.0.
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
 #
-#  This Source Code may also be made available under the following
-#  Secondary Licenses when the conditions for such availability set
-#  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
-#  General Public License, version 2 with the GNU Classpath
-#  Exception [1] and GNU General Public License, version 2 with the
-#  OpenJDK Assembly Exception [2].
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
 #
-#  [1] https://www.gnu.org/software/classpath/license.html
-#  [2] http://openjdk.java.net/legal/assembly-exception.html
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
 #
-#  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ##############################################################################
 
 use Cwd;
@@ -35,7 +35,7 @@ my $projectRootDir = '';
 my $modesxml       = "../../resources/modes.xml";
 my $ottawacsv      = "../../resources/ottawa.csv";
 my $graphSpecs     = '';
-my $jdkVersion    = '';
+my $jdkVersion     = '';
 my $impl           = '';
 my $output         = '';
 my $buildList      = '';
@@ -45,51 +45,42 @@ my @allSubsets     = ( '8', '9', '10', '11', "Panama", "Valhalla" );
 my @allImpls       = ( "openj9", "ibm", "hotspot", "sap" );
 
 foreach my $argv (@ARGV) {
-	if ( $argv =~ /^\-\-graphSpecs=/ ) {
-		($graphSpecs) = $argv =~ /^\-\-graphSpecs=(.*)/;
-	}
-	elsif ( $argv =~ /^\-\-jdkVersion=/ ) {
-		($jdkVersion) = $argv =~ /^\-\-jdkVersion=(.*)/;
-	}
-	elsif ( $argv =~ /^\-\-impl=/ ) {
-		($impl) = $argv =~ /^\-\-impl=(.*)/;
-	}
-	elsif ( $argv =~ /^\-\-projectRootDir=/ ) {
-		($projectRootDir) = $argv =~ /^\-\-projectRootDir=(.*)/;
-	}
-	elsif ( $argv =~ /^\-\-output=/ ) {
-		($output) = $argv =~ /^\-\-output=(.*)/;
-	}
-	elsif ( $argv =~ /^\-\-modesXml=/) {
-		($modesxml) = $argv =~ /^\-\-modesXml=(.*)/;
-	}
-	elsif ( $argv =~ /^\-\-ottawaCsv=/) {
-		($ottawacsv) = $argv =~ /^\-\-ottawaCsv=(.*)/;
-	}
-	elsif ( $argv =~ /^\-\-buildList=/) {
-		($buildList) = $argv =~ /^\-\-buildList=(.*)/;
-	}
-	else {
-		print
-"This program will search projectRootDir provided and find/parse playlist.xml to generate \n"
-		  . "makefile (per project)\n"
-		  . "jvmTest.mk and specToPlat.mk - under TestConfig\n";
+	if ( $argv =~ /^--graphSpecs=(.*)/ ) {
+		$graphSpecs = $1;
+	} elsif ( $argv =~ /^--jdkVersion=(.*)/ ) {
+		$jdkVersion = $1;
+	} elsif ( $argv =~ /^--impl=(.*)/ ) {
+		$impl = $1;
+	} elsif ( $argv =~ /^--projectRootDir=(.*)/ ) {
+		$projectRootDir = $1;
+	} elsif ( $argv =~ /^--output=(.*)/ ) {
+		$output = $1;
+	} elsif ( $argv =~ /^--modesXml=(.*)/ ) {
+		$modesxml = $1; 
+	} elsif ( $argv =~ /^--ottawaCsv=(.*)/ ) {
+		$ottawacsv = $1;
+	} elsif ( $argv =~ /^--buildList=(.*)/ ) {
+		$buildList = $1;
+	} else {
+		print "This program will search projectRootDir provided and find/parse playlist.xml to generate\n"
+			. "makefile (per project)\n"
+			. "jvmTest.mk and specToPlat.mk - under TestConfig\n";
 		print "Usage:\n"
-		  . "  perl testKitGen.pl --graphSpecs=[linux_x86-64|linux_x86-64_cmprssptrs|...] --jdkVersion=[8|9|...] --impl=[openj9|ibm|hotspot|sap] [options]"
-		  . "Options:\n"
-		  . "  --graphSpecs=<specs>      Comma separated specs that the build will run on.\n"
-		  . "  --jdkVersion=<version>    Jdk version that the build will run on.\n"
-		  . "  --impl=<implementation>   Java Implementation, e.g., openj9, ibm, hotspot, sap.\n" 
-		  . "  --projectRootDir=<path>   Root path for searching playlist.xml.\n"
-		  . "                            The path defaults to openj9/test.\n"
-		  . "  --output=<path>           Path to output makefiles.\n"
-		  . "                            The path defaults to projectRootDir.\n"
-		  . "  --modesXml=<path>         Path to modes.xml file.\n"
-		  . "                            If the modesXml is not provided, the program will try to find modes.xml under projectRootDir/TestConfig/resources.\n"
-		  . "  --ottawaCsv=<path>        Path to ottawa.csv file.\n"
-		  . "                            If the ottawaCsv is not provided, the program will try to find ottawa.csv under projectRootDir/TestConfig/resources.\n"
-		  . "  --buildList=<paths>       Comma separated project paths to search playlist.xml. The paths are relative to projectRootDir.\n"
-		  . "                            If the buildList is not provided, the program will search all files under projectRootDir.\n";
+			. "  perl testKitGen.pl --graphSpecs=[linux_x86-64|linux_x86-64_cmprssptrs|...] --jdkVersion=[8|9|...] --impl=[openj9|ibm|hotspot|sap] [options]\n"
+			. "Options:\n"
+			. "  --graphSpecs=<specs>      Comma separated specs that the build will run on.\n"
+			. "  --jdkVersion=<version>    Jdk version that the build will run on.\n"
+			. "  --impl=<implementation>   Java Implementation, e.g., openj9, ibm, hotspot, sap.\n"
+			. "  --projectRootDir=<path>   Root path for searching playlist.xml.\n"
+			. "                            The path defaults to openj9/test.\n"
+			. "  --output=<path>           Path to output makefiles.\n"
+			. "                            The path defaults to projectRootDir.\n"
+			. "  --modesXml=<path>         Path to modes.xml file.\n"
+			. "                            If the modesXml is not provided, the program will try to find modes.xml under projectRootDir/TestConfig/resources.\n"
+			. "  --ottawaCsv=<path>        Path to ottawa.csv file.\n"
+			. "                            If the ottawaCsv is not provided, the program will try to find ottawa.csv under projectRootDir/TestConfig/resources.\n"
+			. "  --buildList=<paths>       Comma separated project paths to search playlist.xml. The paths are relative to projectRootDir.\n"
+			. "                            If the buildList is not provided, the program will search all files under projectRootDir.\n";
 		die "Please specify valid options!";
 	}
 }
@@ -97,12 +88,9 @@ foreach my $argv (@ARGV) {
 if ( !$projectRootDir ) {
 	$projectRootDir = getcwd . "/../../..";
 	if ( -e $projectRootDir ) {
-		print
-"projectRootDir is not provided. Using $projectRootDir\n";
-	}
-	else {
-		die
-"Please specify a valid project directory using option \"--projectRootDir=\".";
+		print "Using projectRootDir: $projectRootDir\n";
+	} else {
+		die "Please specify a valid project directory using option \"--projectRootDir=\".";
 	}
 }
 

@@ -22,8 +22,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 # Quick Start
 
-Below is an example to run all sanity.functional tests against
-Linux x86-64 cmprssptrs SDK:
+Below is an example to run all sanity.functional tests against a JDK8
+Linux x86-64 cmprssptrs OpenJ9 SDK:
 
 ```
     cd openj9/test/TestConfig
@@ -36,7 +36,8 @@ Linux x86-64 cmprssptrs SDK:
 ```
 
 Please read [OpenJ9 Test User Guide](./docs/OpenJ9TestUserGuide.md) for
-details and other examples.
+details and other examples.  For example, if you wish to test a JDK11 version, 
+you would export JDK_VERSION=11 (default JDK_VERSION=8).
 
 ## Prerequisites:
 Please read [Prerequisites.md](./docs/Prerequisites.md) for details on

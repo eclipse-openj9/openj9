@@ -73,6 +73,7 @@ private:
 	MM_GCExtensions *_extensions;
 
 	enum ScanReason {
+		SCAN_REASON_NONE = 0, /**< Indicates there is no item for scan */
 		SCAN_REASON_PACKET = 1, /**< Indicates the object being scanned came from a work packet */
 		SCAN_REASON_COPYSCANCACHE = 2,
 		SCAN_REASON_DIRTY_CARD = 3, /**< Indicates the object being scanned was found in a dirty card */
@@ -118,9 +119,13 @@ private:
 	MM_CopyScanCacheListVLHGC _cacheFreeList;  /**< Caches which are not bound to heap memory and available to be populated */
 	MM_CopyScanCacheListVLHGC *_cacheScanLists;  /**< An array of per-node caches which contains objects still to be scanned (1+node_count elements in array)*/
 	UDATA _scanCacheListSize;	/**< The number of entries in _cacheScanLists */
-	UDATA _scanCacheWaitCount;	/**< The number of threads currently sleeping on _scanCacheMonitor, awaiting scan cache work */
+	volatile UDATA _scanCacheWaitCount;	/**< The number of threads currently sleeping on _scanCacheMonitor, awaiting scan cache work */
 	omrthread_monitor_t _scanCacheMonitor;	/**< Used when waiting on work on any of the _cacheScanLists */
-	volatile UDATA _doneIndex;	/**< Incremented when _cacheScanLists are empty and we want all threads to fall out of _scanCacheMonitor */
+
+	volatile UDATA* _workQueueWaitCountPtr;	/**< The number of threads currently sleeping on *_workQueueMonitorPtr, awaiting scan cache work or work from packets*/
+	omrthread_monitor_t* _workQueueMonitorPtr;	/**< Used when waiting on work on any of the _cacheScanLists or workPackets*/
+
+	volatile UDATA _doneIndex;	/**< Incremented when _cacheScanLists are empty and we want all threads to fall out of *_workQueueMonitorPtr */
 
 	MM_MarkMap *_markMap;  /**< Cached reference to the previous mark map */
 
@@ -129,6 +134,8 @@ private:
 
 	volatile bool _abortFlag;  /**< Flag indicating whether the current copy forward cycle should be aborted due to insufficient heap to complete */
 	bool _abortInProgress;  /**< Flag indicating that the copy forward mechanism is now operating in abort mode, which is attempting to secure integrity of the heap to continue execution */
+
+	UDATA _regionCountCannotBeEvacuated; /**<The number of eden regions, which can not be copyforward */
 
 	UDATA _cacheLineAlignment; /**< The number of bytes per cache line which is used to determine which boundaries in memory represent the beginning of a cache line */
 
@@ -153,7 +160,6 @@ private:
 
 protected:
 public:
-
 private:
 
 	/* Temporary verification functions */
@@ -578,6 +584,13 @@ private:
 	bool isAnyScanCacheWorkAvailable();
 
 	/**
+	 * Checks to see if there is any scan work in any of scanCacheLists or workPackets
+	 * it is only for CopyForwardHybrid mode
+	 * @return True if there is any scan work
+	 */
+	bool isAnyScanWorkAvailable(MM_EnvironmentVLHGC *env);
+
+	/**
 	 * Return the next available survivor (destination) copy scan cache that has work available for scanning.
 	 * @param env GC thread.
 	 * @return a copy scan cache to be scanned, or NULL if none are available.
@@ -585,20 +598,26 @@ private:
 	MM_CopyScanCacheVLHGC *getSurvivorCacheForScan(MM_EnvironmentVLHGC *env);
 
 	/**
-	 * Returns a scan cache.  Tries to find one on preferredNumaNode first but will silently fall back and find one on another node to 
-	 * satisfy the request.  Returns NULL only when all threads have finished work and synchronized on realizing this fact.
+	 * Tries to find next scan work from both scanCache and workPackets
+	 * return SCAN_REASON_NONE if there is no scan work
 	 * @param env[in] The GC thread
 	 * @param preferredNumaNode[in] The NUMA node number where the caller would prefer to find a scan cache
-	 * @return A scan cache (most likely from preferredNumaNode) or NULL if all threads have finished work
+	 * @return possible return value(SCAN_REASON_NONE, SCAN_REASON_COPYSCANCACHE, SCAN_REASON_PACKET)
 	 */
-	MM_CopyScanCacheVLHGC *getNextScanCache(MM_EnvironmentVLHGC *env, UDATA preferredNumaNode);
+	ScanReason getNextWorkUnit(MM_EnvironmentVLHGC *env, UDATA preferredNumaNode);
+
 	/**
-	 * Returns a scan cache from the specified NUMA node or NULL if there was no work available on that node
 	 * @param env[in] The GC thread
-	 * @param numaNode[in] The node from which work is being requested
-	 * @return A scan cache from numaNode or NULL if there was no scan work on that node
+	 * @param preferredNumaNode[in] The NUMA node number where the caller would prefer to find a scan cache
+	 * @return possible return value(SCAN_REASON_NONE, SCAN_REASON_COPYSCANCACHE, SCAN_REASON_PACKET)
 	 */
-	MM_CopyScanCacheVLHGC *getNextScanCacheOnNode(MM_EnvironmentVLHGC *env, UDATA numaNode);
+	ScanReason getNextWorkUnitNoWait(MM_EnvironmentVLHGC *env, UDATA preferredNumaNode);
+
+	/**
+	 * Tries to find a scan cache from the specified NUMA node or return SCAN_REASON_NONE if there was no work available on that node
+	 * @return possible return value(SCAN_REASON_NONE, SCAN_REASON_COPYSCANCACHE)
+	 */
+	ScanReason getNextWorkUnitOnNode(MM_EnvironmentVLHGC *env, UDATA numaNode);
 
 	/**
 	 * Complete scanning in Copy-Forward fashion (consume&produce CopyScanCaches)
@@ -624,7 +643,18 @@ private:
 	 */
 	bool handleOverflow(MM_EnvironmentVLHGC *env);
 
+	/**
+	 * Check if Work Packets overflow
+	 * @return true if overflow flag is set
+	 */
+	bool isWorkPacketsOverflow(MM_EnvironmentVLHGC *env);
+
 	void completeScanCache(MM_EnvironmentVLHGC *env);
+	/**
+	 * complete scan works from _workStack
+	 * only for CopyForward Hybrid mode
+	 */
+	void completeScanWorkPacket(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Scans all the slots of the given object. Used only in copy-scan cache driven phase.
@@ -931,6 +961,13 @@ private:
 	 */
 	void setAllocationAgeForMergedRegion(MM_EnvironmentVLHGC* env, MM_HeapRegionDescriptorVLHGC *region);
 
+	/**
+	 * check if the Object in jni critical region
+	 */
+	bool isObjectInNoEvacuationRegions(MM_EnvironmentVLHGC *env, J9Object *objectPtr);
+
+	bool randomDecideForceNonEvacuatedRegion(UDATA ratio);
+
 protected:
 
 	MM_CopyForwardScheme(MM_EnvironmentVLHGC *env, MM_HeapRegionManager *manager);
@@ -1031,6 +1068,15 @@ public:
 	 * @return Flag indicating if the copy forward collection was succesful or not.
 	 */
 	bool copyForwardCollectionSet(MM_EnvironmentVLHGC *env);
+
+	/**
+	 * Return true if CopyForward is running under Hybrid mode
+	 */
+	bool isHybrid(MM_EnvironmentVLHGC *env)
+	{
+		return (0 != _regionCountCannotBeEvacuated);
+	}
+
 
 	friend class MM_CopyForwardGMPCardCleaner;
 	friend class MM_CopyForwardNoGMPCardCleaner;

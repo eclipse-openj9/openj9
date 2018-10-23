@@ -48,8 +48,6 @@ class AMD64PrivateLinkage : public TR::X86PrivateLinkage
 
    virtual TR::Instruction *savePreservedRegisters(TR::Instruction *cursor);
    virtual TR::Instruction *restorePreservedRegisters(TR::Instruction *cursor);
-   virtual TR::Instruction *savePreservedRegister(TR::Instruction *cursor, int32_t regIndex, int32_t offset);
-   virtual TR::Instruction *restorePreservedRegister(TR::Instruction *cursor, int32_t regIndex, int32_t offset);
 
    virtual int32_t buildCallArguments(
          TR::Node *callNode,

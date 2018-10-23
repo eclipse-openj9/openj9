@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -165,7 +165,7 @@ j9shmem_open  (struct J9PortLibrary *portLibrary, const char* cacheDirName, uint
 extern J9_CFUNC intptr_t
 j9shmem_openDeprecated  (struct J9PortLibrary *portLibrary, const char* cacheDirName, uintptr_t groupPerm, struct j9shmem_handle **handle, const char* rootname, uint32_t perm, uintptr_t cacheFileType, uint32_t category);
 extern J9_CFUNC intptr_t
-j9shmem_getDir (struct J9PortLibrary *portLibrary, const char* ctrlDirName, BOOLEAN appendBaseDir, char* buffer, uintptr_t length);
+j9shmem_getDir (struct J9PortLibrary *portLibrary, const char* ctrlDirName, uint32_t flags, char* buffer, uintptr_t length);
 extern J9_CFUNC intptr_t
 j9shmem_createDir (struct J9PortLibrary *portLibrary, char* cacheDirName, uintptr_t cacheDirPerm, BOOLEAN cleanMemorySegments);
 extern J9_CFUNC intptr_t

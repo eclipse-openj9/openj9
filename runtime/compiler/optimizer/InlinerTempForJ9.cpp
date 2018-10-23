@@ -303,8 +303,6 @@ TR_J9InlinerPolicy::mustBeInlinedEvenInDebug(TR_ResolvedMethod * calleeMethod, T
          // call to invokeExactTargetAddress are generated out of thin air by our JSR292
          // implementation, but we never want the VM or anyone else to know this so we must
          // always inlne the implementation
-         case TR::java_lang_invoke_MethodHandle_asType:
-            return true;
          case TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress:
             {
             TR::TreeTop *scanTT = callNodeTreeTop->getNextTreeTop();
@@ -356,9 +354,11 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
    if (calleeMethod->isDAAWrapperMethod())
       return true;
 
+   if (TR_J9MethodBase::isVarHandleOperationMethod(calleeMethod->convertToMethod()->getMandatoryRecognizedMethod()))
+      return true;
+
    switch (calleeMethod->convertToMethod()->getMandatoryRecognizedMethod())
       {
-      case TR::java_lang_invoke_MethodHandle_asType:
       case TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress:
          return true;
       default:
@@ -420,6 +420,14 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
       {
       return true;
       }
+
+   int32_t length = calleeMethod->classNameLength();
+   char* className = calleeMethod->classNameChars();
+
+   if (length == 24 && !strncmp(className, "jdk/internal/misc/Unsafe", 24))
+      return true;
+   else if (length == 15 && !strncmp(className, "sun/misc/Unsafe", 15))
+      return true;
 
    return false;
    }
@@ -932,7 +940,6 @@ TR_J9InlinerPolicy::genCodeForUnsafeGetPut(TR::Node* unsafeAddress,
       loadJavaLangClass->getByteCodeInfo().setInvalidCallerIndex();
       loadJavaLangClass->getByteCodeInfo().setZeroByteCodeIndex();
       loadJavaLangClass->setIsClassPointerConstant(true);
-
 
       TR::Node *isClassNode = TR::Node::createif(TR::ifacmpeq, vftLoad, loadJavaLangClass, NULL);
       isClassTreeTop = TR::TreeTop::create(comp(), isClassNode, NULL, NULL);
@@ -2004,6 +2011,8 @@ TR_J9InlinerPolicy::inlineUnsafeCall(TR::ResolvedMethodSymbol *calleeSymbol, TR:
       case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
       case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
       case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
+         if (callNode->isSafeForCGToFastPathUnsafeCall())
+            return false;
          switch (callerSymbol->castToMethodSymbol()->getRecognizedMethod())
             {
             case TR::java_util_concurrent_ConcurrentHashMap_addCount:
@@ -2066,10 +2075,13 @@ TR_J9InlinerPolicy::isInlineableJNI(TR_ResolvedMethod *method,TR::Node *callNode
         !comp->fej9()->traceableMethodsCanBeInlined()))
       return false;
 
-   if (method->convertToMethod()->isUnsafeWithObjectArg(comp))
+   if (method->convertToMethod()->isUnsafeWithObjectArg(comp) || method->convertToMethod()->isUnsafeCAS(comp))
       {
+      // In Java9 sun/misc/Unsafe methods are simple Java wrappers to JNI
+      // methods in jdk.internal, and the enum values above match both. Only
+      // return true for the methods that are native.
       if (!TR::Compiler->om.canGenerateArraylets() || (callNode && callNode->isUnsafeGetPutCASCallOnNonArray()))
-         return true;
+         return method->isNative();
       else
          return false;
       }
@@ -2116,14 +2128,6 @@ TR_J9InlinerPolicy::isInlineableJNI(TR_ResolvedMethod *method,TR::Node *callNode
       case TR::sun_misc_Unsafe_storeFence:
       case TR::sun_misc_Unsafe_fullFence:
          return true;
-
-      case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
-      case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
-      case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
-         // In Java9 sun/misc/Unsafe methods are simple Java wrappers to JNI
-         // methods in jdk.internal, and the enum values above match both. Only
-         // return true for the methods that are native.
-         return method->isNative();
 
       case TR::sun_misc_Unsafe_staticFieldBase:
          return false; // todo
@@ -3493,6 +3497,7 @@ bool TR_MultipleCallTargetInliner::inlineCallTargets(TR::ResolvedMethodSymbol *c
          tracer()->dumpInline(&_callTargets, "inline script");
          }
       }
+
    if (prevCallStack == 0)
       {
       TR_InlinerDelimiter delimiter(tracer(),"inlineTransformation");
@@ -4218,12 +4223,12 @@ TR_MultipleCallTargetInliner::exceedsSizeThreshold(TR_CallSite *callSite, int by
        && (!trustedInterfaceRegex || !TR::SimpleRegex::match(trustedInterfaceRegex, callSite->_interfaceMethod->signature(trMemory()), false)))
       {
       TR_PersistentJittedBodyInfo *bodyInfo = NULL;
-      if (!calleeResolvedMethod->isInterpreted() && !calleeResolvedMethod->isJITInternalNative())
+      if (!calleeResolvedMethod->isInterpretedForHeuristics() && !calleeResolvedMethod->isJITInternalNative())
          {
          void *startPC = (void *)calleeResolvedMethod->startAddressForInterpreterOfJittedMethod();
          bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(startPC);
          }
-      if (((!bodyInfo && !calleeResolvedMethod->isInterpreted() && !calleeResolvedMethod->isJITInternalNative()) //jitted method without bodyInfo must be scorching 
+      if (((!bodyInfo && !calleeResolvedMethod->isInterpretedForHeuristics() && !calleeResolvedMethod->isJITInternalNative()) //jitted method without bodyInfo must be scorching
          || (bodyInfo && bodyInfo->getHotness() == scorching)
          || comp()->fej9()->isQueuedForVeryHotOrScorching(calleeResolvedMethod, comp()))
          && (comp()->getMethodHotness() == scorching))
@@ -4926,15 +4931,11 @@ bool TR_J9InlinerUtil::needTargetedInlining(TR::ResolvedMethodSymbol *callee)
    // Trees from archetype specimens may not match the archetype method's bytecodes,
    // so there may be some calls things that inliner missed.
    //
-   // We also inline again if MethodHandle.asType has been inlined because VP might be able to
-   // prove invokeHandleGeneric is invoke exact
-   //
    // Tactically, we also inline again based on hasMethodHandleInvokes because EstimateCodeSize
    // doesn't yet cope with invokeHandle, invokeHandleGeneric, and invokeDynamic (but it should).
    //
    if (callee->getMethod()->isArchetypeSpecimen() ||
-       callee->hasMethodHandleInvokes() ||
-       callee->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_asType)
+       callee->hasMethodHandleInvokes())
       return true;
    return false;
    }

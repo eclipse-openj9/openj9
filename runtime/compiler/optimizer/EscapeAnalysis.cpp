@@ -2224,7 +2224,7 @@ bool TR_EscapeAnalysis::checkOtherDefsOfLoopAllocation(TR::Node *useNode, Candid
                         int32_t fieldNameLen = -1;
                         char *fieldName = NULL;
                         if (underlyingArray && underlyingArray->getOpCode().hasSymbolReference() &&
-                            (underlyingArray->getSymbolReference()->getSymbol()->isStatic()))
+                            underlyingArray->getSymbolReference()->getSymbol()->isStaticField())
                            {
                            fieldName = underlyingArray->getSymbolReference()->getOwningMethod(comp())->staticName(underlyingArray->getSymbolReference()->getCPIndex(), fieldNameLen, comp()->trMemory());
                            }

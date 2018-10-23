@@ -1778,7 +1778,7 @@ SH_OSCachesysv::getCacheStats(J9JavaVM* vm, const char* ctrlDirName, UDATA group
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	char cacheDirName[J9SH_MAXPATH];
 
-	SH_OSCache::getCacheDir(PORTLIB, ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_NONPERSISTENT);
+	SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_NONPERSISTENT);
 	if (SH_OSCachesysv::getCacheStatsHelper(vm, cacheDirName, groupPerm, cacheNameWithVGen, cacheInfo, reason) == 0) {
 		/* Using 'SH_OSCachesysv cacheStruct' breaks the pattern of calling getRequiredConstrBytes(), and then allocating memory.
 		 * However it is consistent with 'SH_OSCachemmap::getCacheStats'.
@@ -2665,7 +2665,7 @@ SH_OSCachesysv::restoreFromSnapshot(J9JavaVM* vm, const char* cacheName, UDATA n
 	setCurrentCacheVersion(vm, J2SE_VERSION(vm), &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_SNAPSHOT;
 
-	if (-1 == SH_OSCache::getCacheDir(PORTLIB, ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_SNAPSHOT)) {
+	if (-1 == SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_SNAPSHOT)) {
 		Trc_SHR_OSC_Sysv_restoreFromSnapshot_getCacheDirFailed();
 		OSC_ERR_TRACE(J9NLS_SHRC_GETSNAPSHOTDIR_FAILED);
 		rc = -1;

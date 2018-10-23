@@ -125,22 +125,18 @@ add_library(j9vm SHARED
 	${CMAKE_CURRENT_BINARY_DIR}/ut_j9vm.c
 )
 
-#hacks for M4 stuff
-#TODO we should be detecting m4 properly
-#also we probably need to fix up the path dir separators for windows
+
 if(OMR_ARCH_X86)
-	add_custom_command( OUTPUT xcinterp.s
-		DEPENDS xcinterp.m4 run_constgen
-		COMMAND m4 -I ${CMAKE_CURRENT_SOURCE_DIR}/../oti ${CMAKE_CURRENT_SOURCE_DIR}/xcinterp.m4 > xcinterp.s
-	)
-	add_custom_command(OUTPUT stackswap.s
-		DEPENDS xa64/stackswap.m4 run_constgen
-		COMMAND m4 -I ${CMAKE_CURRENT_SOURCE_DIR}/../oti ${CMAKE_CURRENT_SOURCE_DIR}/xa64/stackswap.m4 > stackswap.s
-	)
-	add_custom_command(OUTPUT unsafeHelper.s
-		DEPENDS xa64/unsafeHelper.m4 run_constgen
-		COMMAND m4 -I ${CMAKE_CURRENT_SOURCE_DIR}/../oti ${CMAKE_CURRENT_SOURCE_DIR}/xa64/unsafeHelper.m4 > unsafeHelper.s
-	)
+	j9vm_gen_asm(xcinterp.m4)
+
+	if(OMR_ENV_DATA64)
+		j9vm_gen_asm(
+			xa64/stackswap.m4
+			xa64/unsafeHelper.m4
+		)
+	else()
+		message(SEND_ERROR "x86-32 is not currently supported")
+	endif()
 	target_sources(j9vm
 		PRIVATE
 		unsafeHelper.s
@@ -148,10 +144,11 @@ if(OMR_ARCH_X86)
 		stackswap.s
 	)
 elseif(OMR_ARCH_POWER) #TODO check linux and 64bit
-	add_custom_command( OUTPUT pcinterp.s
-		DEPENDS pcinterp.m4 run_constgen
-		COMMAND m4 -I ${CMAKE_CURRENT_SOURCE_DIR}/../oti ${CMAKE_CURRENT_SOURCE_DIR}/pcinterp.m4 > pcinterp.s
-	)
+	j9vm_gen_asm(pcinterp.m4)
+
+	if(NOT (OMR_ENV_DATA64 AND OMR_ENV_LITTLE_ENDIAN))
+		message(SEND_ERROR "Only PPC64 LE is currently supported")
+	endif()
 	target_sources(j9vm
 		PRIVATE
 			xl64/unsafeHelper.s

@@ -307,6 +307,9 @@
    sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z,
    sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z,
    sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z,
+   sun_misc_Unsafe_compareAndExchangeInt_jlObjectJII_Z,
+   sun_misc_Unsafe_compareAndExchangeLong_jlObjectJJJ_Z,
+   sun_misc_Unsafe_compareAndExchangeObject_jlObjectJjlObjectjlObject_Z,
 
    sun_misc_Unsafe_putBoolean_jlObjectJZ_V,
    sun_misc_Unsafe_putByte_jlObjectJB_V,

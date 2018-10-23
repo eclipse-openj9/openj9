@@ -32,6 +32,11 @@
 			<class name="org.openj9.test.gpu.SortTest" />
 		</classes>
 	</test>
+	<test name="truncatedReturn">
+		<classes>
+			<class name="org.openj9.test.truncatedReturn.TestTruncatedReturn" />
+		</classes>
+	</test>
 	<test name="regression">
 		<classes>
 			<class name="org.openj9.test.fastresolve.FastresolveTest" />
@@ -200,6 +205,7 @@
 		<classes>
 			<class name="org.openj9.test.java.security.Test_AccessController"/>
 			<class name="org.openj9.test.java.security.Test_AccessControlContext"/>
+			<class name="org.openj9.test.java.security.Test_MHLoaderConstraints"/>
 		</classes>
 	</test>
 	<test name="JCL_TEST_IBM-VM">

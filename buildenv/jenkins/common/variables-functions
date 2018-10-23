@@ -341,6 +341,7 @@ def set_build_variables() {
     // fetch values per spec and Java version from the variables file
     BOOT_JDK = get_value(VARIABLES."${SPEC}".boot_jdk, SDK_VERSION)
     FREEMARKER = VARIABLES."${SPEC}".freemarker
+    EXTRA_GETSOURCE_OPTIONS = get_value(VARIABLES.extra_getsource_options, SDK_VERSION)
     EXTRA_CONFIGURE_OPTIONS = get_value(VARIABLES."${SPEC}".extra_configure_options, SDK_VERSION)
     EXTRA_MAKE_OPTIONS = get_value(VARIABLES."${SPEC}".extra_make_options, SDK_VERSION)
     OPENJDK_REFERENCE_REPO = VARIABLES."${SPEC}".openjdk_reference_repo
@@ -383,14 +384,19 @@ def set_build_variables() {
 }
 
 def set_sdk_variables() {
-    DATESTAMP = sh (
-        script: 'date +%Y%d%m%H%M',
-        returnStdout: true
-        ).trim()
+    DATESTAMP = get_date()
     SDK_FILENAME = "OpenJ9-JDK${SDK_VERSION}-${SPEC}-${DATESTAMP}.tar.gz"
     TEST_FILENAME = "native-test-libs.tar.gz"
     echo "Using SDK_FILENAME = ${SDK_FILENAME}"
     echo "Using TEST_FILENAME = ${TEST_FILENAME}"
+}
+
+def get_date() {
+    //Returns a string for the current date YYYYMMDD-HHMMSS
+    return sh (
+        script: 'date +%Y%m%d-%H%M%S',
+        returnStdout: true
+    ).trim()
 }
 
 /*
@@ -429,11 +435,12 @@ def set_slack_channel() {
 
 def set_artifactory_config() {
     ARTIFACTORY_SERVER = VARIABLES.artifactory_server
-    ARTIFACTORY_REPO = VARIABLES.artifactory_repo
-    // Set Creds to env so that the parent pipeline can retireve them.
-    env.ARTIFACTORY_CREDS = VARIABLES.artifactory_creds
-    ARTIFACTORY_NUM_ARTIFACTS = VARIABLES.artifactory_num_artifacts
     if (ARTIFACTORY_SERVER) {
+        env.ARTIFACTORY_SERVER = ARTIFACTORY_SERVER
+        env.ARTIFACTORY_REPO = VARIABLES.artifactory_repo
+        // Set Creds to env so that the parent pipeline can retireve them.
+        env.ARTIFACTORY_CREDS = VARIABLES.artifactory_creds
+        env.ARTIFACTORY_NUM_ARTIFACTS = VARIABLES.artifactory_num_artifacts
         echo "Using artifactory server/repo: ${ARTIFACTORY_SERVER} / ${ARTIFACTORY_REPO}"
         echo "Using artifactory credentials: ${ARTIFACTORY_CREDS}"
         echo "Keeping '${ARTIFACTORY_NUM_ARTIFACTS}' artifacts"

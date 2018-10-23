@@ -72,7 +72,7 @@ public final class SortTest {
 
 	private static final Logger logger = Logger.getLogger(SortTest.class);
 
-	private static final Pattern SeedPattern = makePattern("-srand", 6, "=(\\d+)");
+	private static final Pattern SeedPattern = makePattern("-srand", 6, "=(-?\\d+)");
 
 	private static final Pattern TypesPattern = makePattern("-types", 5, "=(\\S+)");
 

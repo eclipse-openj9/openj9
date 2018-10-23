@@ -74,13 +74,15 @@ createConstant(OMRPortLibrary *OMRPORTLIB, char const *name, UDATA value)
 	}
 #if defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_ARM)
 	return omrstr_printf(line, sizeof(line), "#define %s %zu\n", name, value);
-#elif defined(LINUX) || defined(OSX) /* J9VM_ARCH_POWER || J9VM_ARCH_ARM */
+#elif defined(LINUX) /* J9VM_ARCH_POWER || J9VM_ARCH_ARM */
 	return omrstr_printf(line, sizeof(line), "%s = %zu\n", name, value);
-#elif defined(WIN32) /* LINUX  || OSX */
+#elif defined(WIN32) /* LINUX */
 	return omrstr_printf(line, sizeof(line), "%s equ %zu\n", name, value);
 #elif defined(J9ZOS390) /* WIN32 */
 	return omrstr_printf(line, sizeof(line), "%s EQU %zu\n", name, value);
-#else /* J9ZOS390 */
+#elif defined(OSX) /* J9ZOS390 */
+	return omrstr_printf(line, sizeof(line), "%%define %s %zu\n", name, value);
+#else /* OSX */
 #error "Unknown constant format"
 #endif /* J9VM_ARCH_POWER || J9VM_ARCH_ARM */
 }
@@ -203,6 +205,54 @@ GlueHelper MACRO        	helperName\n\
 	   	       	JumpHelper &helperName\n\
 ENDM\n";
 #endif /* J9VM_ENV_DATA64 */
+#elif defined(OSX) /* LINUX */
+static char const *macroString = "\n\
+%macro MoveHelper 2 ; register, helperName\n\
+		lea %1, [rel %2]\n\
+%endmacro\n\
+\n\
+%macro CompareHelper 2 ; source,helperName\n\
+	   	cmp %1, %2\n\
+%endmacro\n\
+\n\
+%macro CompareHelperUseReg 3 ; source, helperName, register\n\
+		lea %3, [%2]\n\
+	   	cmp %1, %3\n\
+%endmacro\n\
+\n\
+%macro CallHelper 1 ; helperName\n\
+	   	call %1\n\
+%endmacro\n\
+\n\
+%macro CallHelperUseReg 2 ; helperName, register\n\
+	   	call %1\n\
+%endmacro\n\
+\n\
+%macro JumpTableHelper 3 ; temp, index, table\n\
+		lea %1,[%3]\n\
+		jmp qword [%1 + %2 * 8]\n\
+%endmacro\n\
+\n\
+%macro JumpTableStart 1 ;table\n\
+section _CONST32\n\
+align 16\n\
+%1:\n\
+%endmacro\n\
+\n\
+%macro JumpTableEnd 1 ; table\n\
+; NASM does not use ENDS or equivalent\n\
+%endmacro\n\
+\n\
+%macro ExternHelper 1 ; helperName\n\
+extern %1:near\n\
+%endmacro\n\
+\n\
+%macro GlueHelper 1 ;helperName\n\
+		test    byte [rdi+J9TR_MethodPCStartOffset], J9TR_MethodNotCompiledBit\n\
+	   	jnz     %1\n\
+	   	jmp     mergedStaticGlueCallFixer\n\
+%endmacro\n\
+\n";
 #else /* LINUX */
 #if defined(J9VM_ENV_DATA64)
 static char const *macroString = "\n\
@@ -521,13 +571,14 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_JavaVM_bytecodeLoop", offsetof(J9JavaVM, bytecodeLoop)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JavaVM_extendedRuntimeFlags", offsetof(J9JavaVM, extendedRuntimeFlags)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JavaVMInternalFunctionTable", offsetof(J9JavaVM, internalVMFunctions)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_JavaVM_memoryManagerFunctions", offsetof(J9JavaVM, memoryManagerFunctions)) |
 #if defined(OMR_GC_CONCURRENT_SCAVENGER) && defined(J9VM_ARCH_S390)
 			writeConstant(OMRPORTLIB, fd, "J9TR_JavaVM_invokeJ9ReadBarrier", offsetof(J9JavaVM, invokeJ9ReadBarrier)) |
 #endif
 #if defined(J9VM_ENV_SHARED_LIBS_USE_GLOBAL_TABLE)
 			writeConstant(OMRPORTLIB, fd, "J9TR_JavaVM_jitTOC", offsetof(J9JavaVM, jitTOC)) |
-			writeConstant(OMRPORTLIB, fd, "J9TR_JavaVM_vmTOC", offsetof(J9JavaVM, vmTOC)) |
 #endif /* J9VM_ENV_SHARED_LIBS_USE_GLOBAL_TABLE */
+			writeConstant(OMRPORTLIB, fd, "J9TR_J9MemoryManagerFunctions_J9ReadBarrier", offsetof(J9MemoryManagerFunctions, J9ReadBarrier)) |
 			/* J9VMEntryLocalStorage */
 			writeConstant(OMRPORTLIB, fd, "J9TR_ELS_jitGlobalStorageBase", offsetof(J9VMEntryLocalStorage, jitGlobalStorageBase)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_ELS_jitFPRegisterStorageBase", offsetof(J9VMEntryLocalStorage, jitFPRegisterStorageBase)) |

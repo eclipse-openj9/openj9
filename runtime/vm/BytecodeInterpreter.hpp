@@ -2427,8 +2427,9 @@ ffi_exit:
 			/* Drop the decompilation records for frames removed from the stack if FSD is enabled */
 			J9JITConfig *jitConfig = _vm->jitConfig;
 			if (NULL != jitConfig) {
-				if (jitConfig->fsdEnabled) {
-					jitConfig->jitExceptionCaught(_currentThread);
+				void (*jitExceptionCaught)(J9VMThread *currentThread) = jitConfig->jitExceptionCaught;
+				if (NULL != jitExceptionCaught) {
+					jitExceptionCaught(_currentThread);
 				}
 			}
 		}
@@ -5623,6 +5624,9 @@ done:
 				I_8 value = (I_8)*(I_32*)_sp;
 				_pc += 1;
 				_sp += 3;
+				if (J9OBJECT_CLAZZ(_currentThread, arrayref) == _vm->booleanArrayClass) {
+					value &= 1;
+				}
 				_objectAccessBarrier.inlineIndexableObjectStoreI8(_currentThread, arrayref, index, value);
 			}
 		}
@@ -6305,7 +6309,11 @@ retry:
 					_objectAccessBarrier.inlineStaticStoreU64(_currentThread, fieldClass, (U_64*)valueAddress, *(U_64*)_sp, isVolatile);
 					_sp += 2;
 				} else {
-					_objectAccessBarrier.inlineStaticStoreU32(_currentThread, fieldClass, (U_32*)valueAddress, *(U_32*)_sp, isVolatile);
+					U_32 value = *(U_32*)_sp;
+					if (J9_ARE_ALL_BITS_SET(classAndFlags, J9StaticFieldRefBoolean)) {
+						value &= 1;
+					}
+					_objectAccessBarrier.inlineStaticStoreU32(_currentThread, fieldClass, (U_32*)valueAddress, value, isVolatile);
 					_sp += 1;
 				}
 			} else {
@@ -6470,7 +6478,11 @@ retry:
 					rc = THROW_NPE;
 					goto done;
 				}
-				_objectAccessBarrier.inlineMixedObjectStoreU32(_currentThread, objectref, newValueOffset, *(U_32*)_sp, isVolatile);
+				U_32 value = *(U_32*)_sp;
+				if (J9FieldTypeBoolean == (flags & J9FieldTypeMask)) {
+					value &= 1;
+				}
+				_objectAccessBarrier.inlineMixedObjectStoreU32(_currentThread, objectref, newValueOffset, value, isVolatile);
 				_sp += 2;
 			}
 		}
@@ -7553,6 +7565,7 @@ done:
 		U_8 *sigData = NULL;
 		UDATA returnSlots = 0;
 		UDATA *bp = bpForCurrentBytecodedMethod(REGISTER_ARGS);
+		U_8 truncatedReturnBytecode = 0;
 		/* Check for synchronized */
 		if (romMethod->modifiers & J9AccSynchronized) {
 			IDATA monitorRC = exitObjectMonitor(REGISTER_ARGS, ((j9object_t*)bp)[1]);
@@ -7623,18 +7636,22 @@ done:
 			case 'B':
 				returnSlots = 1;
 				*(I_32*)_sp = (I_8)*(I_32*)_sp;
+				truncatedReturnBytecode = JBreturnB;
 				break;
 			case 'C':
 				returnSlots = 1;
 				*(I_32*)_sp = (U_16)*(I_32*)_sp;
+				truncatedReturnBytecode = JBreturnC;
 				break;
 			case 'S':
 				returnSlots = 1;
 				*(I_32*)_sp = (I_16)*(I_32*)_sp;
+				truncatedReturnBytecode = JBreturnS;
 				break;
 			case 'Z':
 				returnSlots = 1;
 				*(U_32*)_sp = 1 & *(U_32*)_sp;
+				truncatedReturnBytecode = JBreturnZ;
 				break;
 			default:
 				returnSlots = 1;
@@ -7652,13 +7669,22 @@ done:
 			if ((JBbreakpoint != *_pc) && (FALSE == isObjectConstructor)) {
 				/* Is this a clean return? */
 				if (returnSlots == (UDATA)(((UDATA*)j2iFrame) - _sp)) {
-					U_8 newBytecode = JBreturn0;
-					if (romMethod->modifiers & J9AccSynchronized) {
-						newBytecode = JBsyncReturn0;
-					} else if (isConstructor) {
-						newBytecode = JBreturnFromConstructor;
+					/* are we dealing with a case where we should use a truncated return bytecode? */
+					if (truncatedReturnBytecode != 0) {
+						/* we only want to update the bytecode for non-synchronized methods */
+						/* (synchronized returns will fall back to a generic return) */
+						if (!(romMethod->modifiers & J9AccSynchronized)) {
+							*_pc = truncatedReturnBytecode;
+						}
+					} else {
+						U_8 newBytecode = JBreturn0;
+						if (romMethod->modifiers & J9AccSynchronized) {
+							newBytecode = JBsyncReturn0;
+						} else if (isConstructor) {
+							newBytecode = JBreturnFromConstructor;
+						}
+						*_pc = (newBytecode + (U_8)returnSlots);
 					}
-					*_pc = (newBytecode + (U_8)returnSlots);
 				}
 			}
 			rc = j2iReturn(REGISTER_ARGS);
@@ -7671,13 +7697,22 @@ done:
 			if ((JBbreakpoint != *_pc) && (FALSE == isObjectConstructor)) {
 				/* Is this a clean return? */
 				if (returnSlots == (UDATA)(((UDATA*)frame) - _sp)) {
-					U_8 newBytecode = JBreturn0;
-					if (romMethod->modifiers & J9AccSynchronized) {
-						newBytecode = JBsyncReturn0;
-					} else if (isConstructor) {
-						newBytecode = JBreturnFromConstructor;
+					/* are we dealing with a case where we should use a truncated return bytecode? */
+					if (truncatedReturnBytecode != 0) {
+						/* we only want to update the bytecode for non-synchronized methods */
+						/* (synchronized returns will fall back to a generic return) */
+						if (!(romMethod->modifiers & J9AccSynchronized)) {
+							*_pc = truncatedReturnBytecode;
+						}
+					} else {
+						U_8 newBytecode = JBreturn0;
+						if (romMethod->modifiers & J9AccSynchronized) {
+							newBytecode = JBsyncReturn0;
+						} else if (isConstructor) {
+							newBytecode = JBreturnFromConstructor;
+						}
+						*_pc = (newBytecode + (U_8)returnSlots);
 					}
-					*_pc = (newBytecode + (U_8)returnSlots);
 				}
 			}
 			/* Collapse the frame and copy the return value */

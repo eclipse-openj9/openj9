@@ -28,7 +28,6 @@
 # For 64 bits, if SPEC contains _cmprssptrs, add -Xcompressedrefs.
 # If not, add -Xnocompressedrefs.
 #######################################
-RESERVED_OPTIONS=
 ifneq (,$(findstring bits.64,$(BITS)))
 	ifneq (,$(findstring _cmprssptrs,$(SPEC)))
 		RESERVED_OPTIONS+= -Xcompressedrefs
@@ -78,7 +77,7 @@ ifneq ($(filter 8 9 10, $(JDK_VERSION)),)
 	else
 		JAVA_SHARED_LIBRARIES_DIR:=$(JAVA_LIB_DIR)$(D)$(ARCH_DIR)$(D)$(VM_SUBDIR)
 	endif
-	ADD_JVM_LIB_DIR_TO_LIBPATH:=export LIBPATH=$(Q)$(JAVA_LIB_DIR)$(D)$(VM_SUBDIR)$(P)$(JAVA_SHARED_LIBRARIES_DIR)$(P)$(JAVA_BIN)$(D)j9vm$(P)$(LIBPATH)$(Q);
+	ADD_JVM_LIB_DIR_TO_LIBPATH:=export LIBPATH=$(Q)$(LIBPATH)$(P)$(JAVA_LIB_DIR)$(D)$(VM_SUBDIR)$(P)$(JAVA_SHARED_LIBRARIES_DIR)$(P)$(JAVA_BIN)$(D)j9vm$(Q);
 else
 	VM_SUBDIR_PATH=$(JAVA_LIB_DIR)$(D)$(VM_SUBDIR)
 	J9VM_PATH=$(JAVA_BIN)$(D)j9vm
@@ -98,9 +97,9 @@ else
 	ifneq (,$(findstring win,$(SPEC)))
 		TEST_LIB_PATH:=PATH=$(Q)$(TEST_LIB_PATH_VALUE)$(PS)$(PATH)$(Q)
 	else ifneq (,$(findstring aix,$(SPEC)))
-		TEST_LIB_PATH:=LIBPATH=$(Q)$(TEST_LIB_PATH_VALUE)$(PS)$(LIBPATH)$(Q)
+		TEST_LIB_PATH:=LIBPATH=$(Q)$(LIBPATH)$(PS)$(TEST_LIB_PATH_VALUE)$(Q)
 	else ifneq (,$(findstring zos,$(SPEC)))
-		TEST_LIB_PATH:=LIBPATH=$(Q)$(TEST_LIB_PATH_VALUE)$(PS)$(LIBPATH)$(Q)
+		TEST_LIB_PATH:=LIBPATH=$(Q)$(LIBPATH)$(PS)$(TEST_LIB_PATH_VALUE)$(Q)
 	else
 		TEST_LIB_PATH:=LD_LIBRARY_PATH=$(Q)$(TEST_LIB_PATH_VALUE)$(PS)$(LD_LIBRARY_PATH)$(Q)
 	endif
@@ -130,7 +129,7 @@ ifndef JAVATEST_ROOT
 $(error JAVATEST_ROOT is needed for uploading files to result store)
 endif
 AXXONRESULTSSERVER=vmfarm.ottawa.ibm.com:31
-TEST_STATUS=if [ $$? -eq 0 ] ; then $(ECHO) $(Q)$(Q); $(ECHO) $(Q)$@$(Q)$(Q)_PASSED$(Q); $(ECHO) $(Q)$(Q); else perl $(Q)-I$(JAVATEST_ROOT)$(D)lib$(D)perl$(Q) -mResultStore::Uploader -e $(Q)ResultStore::Uploader::upload('.',$(BUILD_ID),$(JOB_ID),'$(AXXONRESULTSSERVER)','results-$(JOB_ID)')$(Q); $(ECHO) $(Q)$(Q); $(ECHO) $(Q)$@$(Q)$(Q)_FAILED$(Q); $(ECHO) $(Q)$(Q); fi
+TEST_STATUS=if [ $$? -eq 0 ] ; then $(ECHO) $(Q)$(Q); $(ECHO) $(Q)$@$(Q)$(Q)_PASSED$(Q); $(ECHO) $(Q)$(Q); $(CD) $(TEST_ROOT); $(RM) -r $(REPORTDIR); else perl $(Q)-I$(JAVATEST_ROOT)$(D)lib$(D)perl$(Q) -mResultStore::Uploader -e $(Q)ResultStore::Uploader::upload('.',$(BUILD_ID),$(JOB_ID),'$(AXXONRESULTSSERVER)','results-$(JOB_ID)')$(Q); $(ECHO) $(Q)$(Q); $(ECHO) $(Q)$@$(Q)$(Q)_FAILED$(Q); $(ECHO) $(Q)$(Q); fi
 endif
 
 #######################################

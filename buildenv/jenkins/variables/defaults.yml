@@ -56,6 +56,8 @@ build_discarder:
     build: 10
     pipeline: 0
     pullRequest: 0
+extra_getsource_options:
+  8: '--openssl-version=1.1.1'
 #========================================#
 # Linux PPCLE 64bits Compressed Pointers
 #========================================#
@@ -87,6 +89,8 @@ linux_ppc-64_cmprssptrs_le:
       10: 'hw.arch.ppc64le && sw.os.ubuntu'
       11: 'hw.arch.ppc64le && sw.os.ubuntu'
       next: 'hw.arch.ppc64le && sw.os.ubuntu'
+  extra_configure_options:
+    8: '--with-openssl=fetched --enable-openssl-bundling'
   build_env:
     vars:
       11: 'CC=gcc-7 CXX=g++-7'
@@ -128,6 +132,8 @@ linux_390-64_cmprssptrs:
     vars:
       11: 'CC=gcc-7 CXX=g++-7'
       next: 'CC=gcc-7 CXX=g++-7'
+  extra_configure_options:
+    8: '--with-openssl=/home/jenkins/openssl-1.1.1 --enable-openssl-bundling'
 #========================================#
 # AIX PPC 64bits Compressed Pointers
 #========================================#
@@ -196,6 +202,8 @@ linux_x86-64_cmprssptrs:
       10: 'hw.arch.x86 && sw.os.ubuntu'
       11: 'hw.arch.x86 && sw.os.ubuntu'
       next: 'hw.arch.x86 && sw.os.ubuntu'
+  extra_configure_options:
+    8: '--with-openssl=fetched --enable-openssl-bundling'
   build_env:
     vars:
       11: 'CC=gcc-7 CXX=g++-7'
@@ -232,7 +240,7 @@ linux_x86-64_cmprssptrs_cmake:
       11: 'hw.arch.x86 && sw.os.ubuntu'
       next: 'hw.arch.x86 && sw.os.ubuntu'
   extra_configure_options:
-    8: '--with-cmake --disable-ddr'
+    8: '--with-cmake --disable-ddr --with-openssl=fetched --enable-openssl-bundling'
     9: '--with-cmake --disable-ddr'
     10: '--with-cmake --disable-ddr'
     11: '--with-cmake --disable-ddr'
@@ -279,7 +287,7 @@ linux_x86-64:
       11: 'hw.arch.x86 && sw.os.ubuntu'
       next: 'hw.arch.x86 && sw.os.ubuntu'
   extra_configure_options:
-    8: '--with-noncompressedrefs'
+    8: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
     9: '--with-noncompressedrefs'
     10: '--with-noncompressedrefs'
     11: '--with-noncompressedrefs'
@@ -307,7 +315,7 @@ win_x86-64_cmprssptrs:
   freemarker: '/cygdrive/c/openjdk/freemarker.jar'
   openjdk_reference_repo: 'C:\openjdk\openjdk_cache'
   extra_configure_options:
-    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --disable-ccache'
+    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --disable-ccache --with-openssl=/cygdrive/c/OpenSSL-1.1.1-x86_64 --enable-openssl-bundling'
     9: '--with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-toolchain-version=2013 --disable-ccache'
     10: '--with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-toolchain-version=2013 --disable-ccache'
     11: '--with-toolchain-version=2017 --disable-ccache'
@@ -338,7 +346,7 @@ win_x86:
   release:
     8: 'windows-x86-normal-server-release'
   extra_configure_options:
-    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib32 --with-target-bits=32 --disable-ccache'
+    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib32 --with-target-bits=32 --disable-ccache --with-openssl=/cygdrive/c/OpenSSL-1.1.1-x86_32 --enable-openssl-bundling'
   freemarker: '/cygdrive/c/openjdk/freemarker.jar'
   openjdk_reference_repo: 'C:\openjdk\openjdk_cache'
   node_labels:
@@ -346,3 +354,22 @@ win_x86:
       8: 'hw.arch.x86 && sw.os.windows'
     test:
       8: 'hw.arch.x86 && sw.os.windows'
+#========================================#
+# OSX x86 64bits Compressed Pointers
+#========================================#
+osx_x86-64_cmprssptrs:
+  boot_jdk:
+    8: '/Users/jenkins/bootjdks/openjdk-java-7'
+    11: '/Users/jenkins/bootjdks/adoptojdk-java-10'
+  release:
+    8: 'osx-x86_64-normal-server-release'
+    11: 'macosx-x86_64-normal-server-release'
+  freemarker: '/Users/jenkins/freemarker.jar'
+  openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
+  node_labels:
+    build:
+      8: 'hw.arch.x86 && sw.os.osx'
+      11: 'hw.arch.x86 && sw.os.osx'
+    test:
+      8: 'hw.arch.x86 && sw.os.osx'
+      11: 'hw.arch.x86 && sw.os.osx'

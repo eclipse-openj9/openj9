@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,7 +41,11 @@
 
 // To transfer control to VM during OSR
 extern "C" {
+#if defined(OSX)
+void prepareForOSR(uintptrj_t vmThreadArg, int32_t currentInlinedSiteIndex, int32_t slotData)
+#else
 void _prepareForOSR(uintptrj_t vmThreadArg, int32_t currentInlinedSiteIndex, int32_t slotData)
+#endif
    {
    const bool details = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseOSRDetails);
    const bool trace   = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseOSR) || details;

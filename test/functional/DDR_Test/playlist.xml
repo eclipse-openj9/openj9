@@ -25,9 +25,7 @@
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TestConfig/playlist.xsd">
 	<test>
 		<testCaseName>testDDRExt_General_ibm</testCaseName>
-		<command>$(MKTREE) $(REPORTDIR); \
-	cd $(REPORTDIR); \
-	ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DJDK_HOME=${JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+		<command>ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DJDK_HOME=${JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) \
 	-Dtest.list=$(Q)TestDDRExtensionGeneral$(Q) -DADDITIONALEXPORTS=-showversion -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
@@ -51,9 +49,7 @@
 
 	<test>
 		<testCaseName>testDDRExt_General_openj9</testCaseName>
-		<command>$(MKTREE) $(REPORTDIR); \
-	cd $(REPORTDIR); \
-	ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DJDK_HOME=${JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+		<command>ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DJDK_HOME=${JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) \
 	-Dtest.list=$(Q)TestDDRExtensionGeneral$(Q) -DADDITIONALEXPORTS=-showversion -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
@@ -78,9 +74,7 @@
 
 	<test>
 		<testCaseName>testDDRExt_General_win</testCaseName>
-		<command>$(MKTREE) $(REPORTDIR); \
-	cd $(REPORTDIR); \
-	ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DJDK_HOME=${JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+		<command>ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DJDK_HOME=${JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) \
 	-Dtest.list=$(Q)TestDDRExtensionGeneral$(Q) -DADDITIONALEXPORTS=-showversion -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>

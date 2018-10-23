@@ -46,8 +46,6 @@ class IA32PrivateLinkage : public TR::X86PrivateLinkage
    virtual TR::Instruction *restorePreservedRegisters(TR::Instruction *cursor);
    virtual int32_t buildCallArguments(TR::Node *callNode, TR::RegisterDependencyConditions *dependencies){ return buildArgs(callNode, dependencies); }
 
-   virtual TR::Instruction *savePreservedRegister(TR::Instruction *cursor, int32_t regIndex, int32_t offset);
-   virtual TR::Instruction *restorePreservedRegister(TR::Instruction *cursor, int32_t regIndex, int32_t offset);
    virtual int32_t buildArgs(TR::Node *callNode, TR::RegisterDependencyConditions *dependencies);
 
    virtual void buildVirtualOrComputedCall(TR::X86CallSite &site, TR::LabelSymbol *entryLabel, TR::LabelSymbol *doneLabel, uint8_t *thunk);

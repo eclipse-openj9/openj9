@@ -45,6 +45,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    {
    public:
 
+   static TR::Register *irdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *writeBarrierEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *monentEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -52,6 +53,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *asynccheckEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *newEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *multianewArrayEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *arraycopyEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *arraylengthEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *exceptionRangeFenceEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *NULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -65,7 +67,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *BNDCHKwithSpineCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *ArrayStoreCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *ArrayCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *reverseLoadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *barrierFenceEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *atccheckEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *ScopeCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);

@@ -1029,7 +1029,6 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
 #endif
    }
 
-// for shrinkwrapping
 bool TR::X86PrivateLinkage::needsFrameDeallocation()
    {
    // frame needs a deallocation if FrameSize == 0
@@ -1075,50 +1074,6 @@ void TR::X86PrivateLinkage::createEpilogue(TR::Instruction *cursor)
       {
       toIA32ImmInstruction(cursor->getNext())->setSourceImmediate(comp()->getJittedMethodSymbol()->getNumParameterSlots() << getProperties().getParmSlotShift());
       }
-   }
-
-bool TR::X86PrivateLinkage::mapPreservedRegistersToStackOffsets(
-      int32_t *mapRegsToStack,
-      int32_t &numPreserved,
-      TR_BitVector *&preservedRegsInLinkage)
-   {
-   // this routine provides a mapping between the preserved registers and
-   // their location on the stack ; so shrinkWrapping can use the right
-   // offsets when sinking the save/restores
-   //
-   TR::ResolvedMethodSymbol *bodySymbol  = comp()->getJittedMethodSymbol();
-   const int32_t          localSize   = getProperties().getOffsetToFirstLocal() - bodySymbol->getLocalMappingCursor();
-   const int32_t          pointerSize = getProperties().getPointerSize();
-   bool                   traceIt     = comp()->getOption(TR_TraceShrinkWrapping);
-
-   int32_t offsetCursor = -localSize - pointerSize;
-   numPreserved = getProperties().getMaxRegistersPreservedInPrologue();
-
-   if (traceIt)
-      traceMsg(comp(), "Preserved registers for this linkage: { ");
-
-   for (int32_t pindex = numPreserved-1;
-        pindex >= 0;
-        pindex--)
-      {
-      TR::RealRegister::RegNum idx = getProperties().getPreservedRegister((uint32_t)pindex);
-      if (traceIt)
-         traceMsg(comp(), "%s ", comp()->getDebug()->getRealRegisterName(idx-1));
-      preservedRegsInLinkage->set(idx);
-      TR::RealRegister *reg = machine()->getX86RealRegister(idx);
-      if (reg->getHasBeenAssignedInMethod() && reg->getState() != TR::RealRegister::Locked)
-         {
-         mapRegsToStack[idx] = offsetCursor;
-         offsetCursor -= pointerSize;
-         }
-      }
-
-   if (traceIt)
-      traceMsg(comp(), "}\n");
-   // return true or false depending on whether
-   // the linkage uses pushes for preserved regs
-   //
-   return false;
    }
 
 TR::Register *
@@ -1329,7 +1284,8 @@ void TR::X86CallSite::setupVirtualGuardInfo()
 
             TR::SymbolReference *methodSymRef = getSymbolReference();
             TR_PersistentCHTable * chTable = comp()->getPersistentInfo()->getPersistentCHTable();
-            if (thisClass && TR::Compiler->cls.isAbstractClass(comp(), thisClass))
+            /* Devirtualization is not currently supported for AOT compilations */
+            if (thisClass && TR::Compiler->cls.isAbstractClass(comp(), thisClass) && !comp()->compileRelocatableCode())
                {
                TR_ResolvedMethod * method = chTable->findSingleAbstractImplementer(thisClass, methodSymRef->getOffset(), methodSymRef->getOwningMethod(comp()), comp());
                if (method &&

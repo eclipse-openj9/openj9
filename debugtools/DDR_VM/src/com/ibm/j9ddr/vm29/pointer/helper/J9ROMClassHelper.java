@@ -24,12 +24,21 @@ package com.ibm.j9ddr.vm29.pointer.helper;
 import static com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags.*;
 
 import com.ibm.j9ddr.CorruptDataException;
+import com.ibm.j9ddr.vm29.pointer.U32Pointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMConstantPoolItemPointer;
 
 public class J9ROMClassHelper {
 	public static J9ROMConstantPoolItemPointer constantPool(J9ROMClassPointer romclass) {
 		return J9ROMConstantPoolItemPointer.cast(romclass.add(1));
+	}
+
+	public static U32Pointer cpShapeDescription(J9ROMClassPointer romClass) throws CorruptDataException {
+		return U32Pointer.cast(romClass.cpShapeDescription());
+	}
+
+	public static U32Pointer optionalInfo(J9ROMClassPointer romClass) throws CorruptDataException {
+		return U32Pointer.cast(romClass.optionalInfo());
 	}
 
 	public static boolean isPublic(J9ROMClassPointer romclass) throws CorruptDataException {

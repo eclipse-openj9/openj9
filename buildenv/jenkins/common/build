@@ -81,7 +81,7 @@ def get_sources() {
         checkout_pullrequest()
     } else {
         sh "git checkout ${OPENJDK_SHA}"
-        sh "bash ./get_source.sh ${OPENJ9_REPO_OPTION} ${OPENJ9_BRANCH_OPTION} ${OPENJ9_SHA_OPTION} ${OMR_REPO_OPTION} ${OMR_BRANCH_OPTION} ${OMR_SHA_OPTION}"
+        sh "bash ./get_source.sh ${EXTRA_GETSOURCE_OPTIONS} ${OPENJ9_REPO_OPTION} ${OPENJ9_BRANCH_OPTION} ${OPENJ9_SHA_OPTION} ${OMR_REPO_OPTION} ${OMR_BRANCH_OPTION} ${OMR_SHA_OPTION}"
     }
 }
 
@@ -186,7 +186,7 @@ def checkout_pullrequest() {
         checkout_pullrequest(OPENJDK_PR, "ibmruntimes/openj9-openjdk-jdk${REPO_SUFFIX}")
     }
 
-    sh "bash ./get_source.sh"
+    sh "bash ./get_source.sh ${EXTRA_GETSOURCE_OPTIONS}"
 
     // Checkout dependent PRs, if any were specified
     if (openj9_bool) {
@@ -291,15 +291,15 @@ def archive() {
                 server.publishBuildInfo buildInfo
                 // Write URL to env so that we can pull it from the upstream pipeline job
                 ARTIFACTORY_URL = server.getUrl()
-                env.CUSTOMIZED_SDK_URL = "${ARTIFACTORY_URL}/${artifactory_upload_dir}/${SDK_FILENAME}"
+                env.CUSTOMIZED_SDK_URL = "${ARTIFACTORY_URL}/${artifactory_upload_dir}${SDK_FILENAME}"
                 if (fileExists("${TEST_FILENAME}")) {
-                    env.CUSTOMIZED_SDK_URL += " ${ARTIFACTORY_URL}/${artifactory_upload_dir}/${TEST_FILENAME}"
+                    env.CUSTOMIZED_SDK_URL += " ${ARTIFACTORY_URL}/${artifactory_upload_dir}${TEST_FILENAME}"
                 }
                 echo "CUSTOMIZED_SDK_URL:'${CUSTOMIZED_SDK_URL}'"
                 echo "ARTIFACTORY_CREDS:'${ARTIFACTORY_CREDS}'"
             } else {
                 echo "ARTIFACTORY server is not set saving artifacts on jenkins."
-                archiveArtifacts artifacts: "**/${SDK_FILENAME},**/${TEST_FILENAME}", fingerprint: true, onlyIfSuccessful: true
+                archiveArtifacts artifacts: "**/${SDK_FILENAME},**/${TEST_FILENAME}", fingerprint: false, onlyIfSuccessful: true
             }
         }
     }

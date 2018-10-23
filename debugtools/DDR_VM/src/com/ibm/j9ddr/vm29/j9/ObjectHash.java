@@ -23,9 +23,11 @@ package com.ibm.j9ddr.vm29.j9;
 
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
+import com.ibm.j9ddr.vm29.structure.J9Consts;
 import com.ibm.j9ddr.vm29.pointer.generated.J9IdentityHashDataPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ObjectPointer;
+import com.ibm.j9ddr.vm29.pointer.helper.J9JavaVMHelper;
 import com.ibm.j9ddr.vm29.structure.J9IdentityHashData;
 import com.ibm.j9ddr.vm29.types.I32;
 import com.ibm.j9ddr.vm29.types.U32;
@@ -36,7 +38,7 @@ public class ObjectHash
 	private static U32 getSalt(J9JavaVMPointer vm, UDATA objectPointer) throws CorruptDataException
 	{
 		/* set up the default salt */
-		U32 salt = (new U32(1421595292)).bitXor(new U32(UDATA.cast(vm)));
+		UDATA salt = new U32(1421595292).bitXor(new U32(UDATA.cast(vm)));
 		J9IdentityHashDataPointer hashData = vm.identityHashData();
 		UDATA saltPolicy = hashData.hashSaltPolicy();
 		
@@ -85,7 +87,7 @@ public class ObjectHash
 			throw new CorruptDataException("Invalid salt policy");
 		}
 		
-		return salt;
+		return new U32(salt);
 	}
 	
 	static U32 rotateLeft(U32 value, int count)
@@ -134,6 +136,10 @@ public class ObjectHash
 		hashValue = hashValue.mult(MUL2);
 		hashValue = hashValue.bitXor(hashValue.rightShift(16));
 
+		/* If forcing positive hash codes, AND out the sign bit */
+		if (J9JavaVMHelper.extendedRuntimeFlagIsSet(vm, J9Consts.J9_EXTENDED_RUNTIME_POSITIVE_HASHCODE)) {
+			hashValue = hashValue.bitAnd(0x7FFFFFFF);
+		}
 
 		return new I32(hashValue);
 	}

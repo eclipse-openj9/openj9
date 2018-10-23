@@ -215,12 +215,9 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/optimizer/ReachingDefinitions.cpp \
     omr/compiler/optimizer/RedundantAsyncCheckRemoval.cpp \
     omr/compiler/optimizer/RegDepCopyRemoval.cpp \
-    omr/compiler/optimizer/RegisterAnticipatability.cpp \
-    omr/compiler/optimizer/RegisterAvailability.cpp \
     omr/compiler/optimizer/RegisterCandidate.cpp \
     omr/compiler/optimizer/RematTools.cpp \
     omr/compiler/optimizer/ReorderIndexExpr.cpp \
-    omr/compiler/optimizer/ShrinkWrapping.cpp \
     omr/compiler/optimizer/SinkStores.cpp \
     omr/compiler/optimizer/StripMiner.cpp \
     omr/compiler/optimizer/StructuralAnalysis.cpp \
@@ -323,6 +320,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/infra/J9Monitor.cpp \
     compiler/infra/J9MonitorTable.cpp \
     compiler/infra/RWMonitor.cpp \
+    compiler/optimizer/BoolArrayStoreTransformer.cpp \
     compiler/optimizer/EstimateCodeSize.cpp \
     compiler/optimizer/InlinerTempForJ9.cpp \
     compiler/optimizer/InterProceduralAnalyzer.cpp \
@@ -358,6 +356,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/runtime/Runtime.cpp \
     compiler/runtime/RuntimeAssumptions.cpp \
     compiler/runtime/SignalHandler.c \
+    compiler/runtime/SymbolValidationManager.cpp \
     compiler/runtime/Trampoline.cpp \
     compiler/runtime/ValueProfiler.cpp \
     compiler/runtime/codertinit.cpp \

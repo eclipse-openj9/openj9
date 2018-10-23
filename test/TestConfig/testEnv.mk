@@ -30,4 +30,6 @@ testEnvSetup:
 
 testEnvTeardown:
 	pkill -9 -xf "$(JAVA_BIN)$(D)java -XX:JITaaSServer"; true
+
+RESERVED_OPTIONS += -XX:JITaaSClient
 endif

@@ -111,6 +111,7 @@ set(REMOVED_OMR_FILES
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRVirtualMachineOperandArray.cpp
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRVirtualMachineOperandStack.cpp
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRVirtualMachineRegister.cpp
+	${omr_SOURCE_DIR}/compiler/ilgen/OMRVirtualMachineRegisterInStruct.cpp
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRVirtualMachineState.cpp
 )
 
@@ -214,8 +215,10 @@ target_link_libraries(j9jit
 		${CMAKE_DL_LIBS}
 )
 
-set_property(TARGET j9jit APPEND_STRING PROPERTY
-	LINK_FLAGS "  -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/build/scripts/j9jit.linux.exp")
+if(OMR_HOST_OS STREQUAL "linux")
+	set_property(TARGET j9jit APPEND_STRING PROPERTY
+		LINK_FLAGS "  -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/build/scripts/j9jit.linux.exp")
+endif()
 set_property(TARGET j9jit PROPERTY LINKER_LANGUAGE CXX)
 
 install(

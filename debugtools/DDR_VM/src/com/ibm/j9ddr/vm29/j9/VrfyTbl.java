@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2014 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -266,10 +266,10 @@ public class VrfyTbl
 			0x1100 /* JBinvokehandlegeneric - 233 */,
 			0x1100 /* JBinvokestaticsplit - 234 */,
 			0x1100 /* JBinvokespecialsplit - 235 */,
-			0x1700 /* JBunimplemented - 236 */,
-			0x1700 /* JBunimplemented - 237 */,
-			0x1700 /* JBunimplemented - 238 */,
-			0x1700 /* JBunimplemented - 239 */,
+			0x0F00 /* JBreturnC - 236 */,
+			0x0F00 /* JBreturnS - 237 */,
+			0x0F00 /* JBreturnB - 238 */,
+			0x0F00 /* JBreturnZ - 239 */,
 			0x1700 /* JBunimplemented - 240 */,
 			0x1700 /* JBunimplemented - 241 */,
 			0x1700 /* JBunimplemented - 242 */,

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -81,8 +81,6 @@ J9::GCStackAtlas::close(TR::CodeGenerator *cg)
           map->getRegisterMap() == nextMap->getRegisterMap() &&
           map->getHighWordRegisterMap() == nextMap->getHighWordRegisterMap() &&
           !memcmp(map->getMapBits(), nextMap->getMapBits(), mapBytes) &&
-          (comp->getOption(TR_DisableShrinkWrapping) ||
-           (map->getRegisterSaveDescription() == nextMap->getRegisterSaveDescription())) &&
           (comp->getOption(TR_DisableLiveMonitorMetadata) ||
            ((map->getLiveMonitorBits() != 0) == (nextMap->getLiveMonitorBits() != 0) &&
             (map->getLiveMonitorBits() == 0 ||

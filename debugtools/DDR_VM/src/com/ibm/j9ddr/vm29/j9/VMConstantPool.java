@@ -71,7 +71,7 @@ public final class VMConstantPool {
 			int constPoolCount = romClass.romConstantPoolCount().intValue();
 
 			_constantPool = new Object[constPoolCount];
-			_cpShapeDescription = romClass.cpShapeDescription();
+			_cpShapeDescription = J9ROMClassHelper.cpShapeDescription(romClass);
 			_romCPStart = J9ROMClassHelper.constantPool(romClass);
 			_ramCPStart = J9RAMConstantPoolItemPointer.cast(jclConstantPool);
 		} catch (CorruptDataException e) {

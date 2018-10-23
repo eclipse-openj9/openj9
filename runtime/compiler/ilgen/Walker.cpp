@@ -2767,8 +2767,7 @@ TR_J9ByteCodeIlGenerator::loadConstantValueIfPossible(TR::Node *topNode, uintptr
       bool canOptimizeFinalStatic = false;
       if (isResolved && symbol->isFinal() && !symRef->isUnresolved() &&
           classOfStatic != comp()->getSystemClassPointer() &&
-          isClassInitialized &&
-          !comp()->compileRelocatableCode())
+          isClassInitialized)
          {
        //if (symbol->getDataType() == TR::Address)
             {
@@ -3409,8 +3408,6 @@ TR_J9ByteCodeIlGenerator::genCompressedRefs(TR::Node * address, bool genTT, int3
 TR::Node *
 TR_J9ByteCodeIlGenerator::genNullCheck(TR::Node * first)
    {
-   // TODO : Can we get rid of the "value.getClass()" nullchecks in the Java code due to this function?
-
    // By default, NULLCHKs will be skipped on String.value fields.  A more general mechanism
    // is needed for skipping NULL/BNDCHKs on certain recognized fields...
    //
@@ -6137,8 +6134,7 @@ TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
    bool canOptimizeFinalStatic = false;
    if (isResolved && symbol->isFinal() && !symRef->isUnresolved() &&
        classOfStatic != comp()->getSystemClassPointer() &&
-       isClassInitialized &&
-       !comp()->compileRelocatableCode())
+       isClassInitialized)
       {
       //if (type == TR::Address)
          {
@@ -6201,7 +6197,7 @@ TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
    else
       {
       TR::Node * load;
-      if (cg()->getAccessStaticsIndirectly() && isResolved && type != TR::Address && !comp()->compileRelocatableCode())
+      if (cg()->getAccessStaticsIndirectly() && isResolved && type != TR::Address && (!comp()->compileRelocatableCode() || comp()->getOption(TR_UseSymbolValidationManager)))
          {
          TR::Node * statics = TR::Node::createWithSymRef(TR::loadaddr, 0, symRefTab()->findOrCreateClassStaticsSymbol(_methodSymbol, cpIndex));
          load = TR::Node::createWithSymRef(comp()->il.opCodeForIndirectLoad(type), 1, 1, statics, symRef);
@@ -7213,7 +7209,11 @@ TR_J9ByteCodeIlGenerator::storeInstance(int32_t cpIndex)
       node = TR::Node::createWithSymRef(TR::wrtbari, 3, 3, addressNode, value, parentObject, symRef);
       }
    else
+      {
+      if (type == TR::Int8 && symRefTab()->isFieldTypeBool(symRef))
+         value = TR::Node::create(TR::iand, 2, value, TR::Node::create(TR::iconst, 0, 1));
       node = TR::Node::createWithSymRef(comp()->il.opCodeForIndirectStore(type), 2, 2, addressNode, value, symRef);
+      }
 
    if (symbol->isPrivate() && _classInfo && comp()->getNeedsClassLookahead())
       {
@@ -7338,6 +7338,10 @@ TR_J9ByteCodeIlGenerator::storeStatic(int32_t cpIndex)
 
    TR::Node * node;
 
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)fe();
+   if (type == TR::Int8 && symRefTab()->isStaticTypeBool(symRef))
+      value = TR::Node::create(TR::iand, 2, value, TR::Node::create(TR::iconst, 0, 1));
+
    if (type == TR::Address && _generateWriteBarriers)
       {
       void * staticClass = method()->classOfStatic(cpIndex);
@@ -7361,7 +7365,7 @@ TR_J9ByteCodeIlGenerator::storeStatic(int32_t cpIndex)
 
       node = TR::Node::createWithSymRef(TR::call, 2, 2, value, statics, volatileLongSymRef);
       }
-   else if (!symRef->isUnresolved() && cg()->getAccessStaticsIndirectly() && type != TR::Address && !comp()->compileRelocatableCode())
+   else if (!symRef->isUnresolved() && cg()->getAccessStaticsIndirectly() && type != TR::Address && (!comp()->compileRelocatableCode() || comp()->getOption(TR_UseSymbolValidationManager)))
       {
       TR::Node * statics = TR::Node::createWithSymRef(TR::loadaddr, 0, symRefTab()->findOrCreateClassStaticsSymbol(_methodSymbol, cpIndex));
       node = TR::Node::createWithSymRef(comp()->il.opCodeForIndirectStore(type), 2, 2, statics, value, symRef);
@@ -7845,7 +7849,7 @@ void TR_J9ByteCodeIlGenerator::performClassLookahead(TR_PersistentClassInfo *cla
    if (comp()->getOption(TR_EnableHCR))
       return;
 
-   if (comp()->compileRelocatableCode())
+   if (comp()->compileRelocatableCode() && !comp()->getOption(TR_UseSymbolValidationManager))
       return;
 
    _classLookaheadSymRefTab = new (trStackMemory())TR::SymbolReferenceTable(method()->maxBytecodeIndex(), comp());

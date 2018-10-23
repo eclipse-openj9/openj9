@@ -22,6 +22,7 @@
 
 j9jit_files(
 	optimizer/AllocationSinking.cpp
+	optimizer/BoolArrayStoreTransformer.cpp
 	optimizer/DataAccessAccelerator.cpp
 	optimizer/DynamicLiteralPool.cpp
 	optimizer/EscapeAnalysis.cpp

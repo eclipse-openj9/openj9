@@ -632,6 +632,11 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 
 			continue;
 		}
+		if (try_scan(&scan_start, "tarokEnableCopyForwardMarkCompactHybrid")) {
+			extensions->tarokEnableCopyForwardHybrid = true;
+			continue;
+		}
+
 #endif /* defined (J9VM_GC_VLHGC) */
 
 		if(try_scan(&scan_start, "packetListLockSplit=")) {
@@ -786,11 +791,8 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			extensions->setDebugConcurrentScavengerPageAlignment(true);
 			continue;
 		}
-		if(try_scan(&scan_start, "softwareEvacuateReadBarrier")) {
-			/* Software read barriers are only implemented on s390 for now */
-#if defined(S390) || defined(J9ZOS390)
-			extensions->softwareEvacuateReadBarrier = true;
-#endif /* defined(S390) || defined(J9ZOS390) */
+		if(try_scan(&scan_start, "softwareRangeCheckReadBarrier")) {
+			extensions->softwareRangeCheckReadBarrier = true;
 			continue;
 		}
 #endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
@@ -1121,6 +1123,20 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 		if (try_scan(&scan_start, "fvtest_forceReferenceChainWalkerMarkMapCommitFailure")) {
 			extensions->fvtest_forceReferenceChainWalkerMarkMapCommitFailure = 1;
 			extensions->fvtest_forceReferenceChainWalkerMarkMapCommitFailureCounter = 0;
+			continue;
+		}
+
+		if (try_scan(&scan_start, "fvtest_forceCopyForwardHybridMarkCompactRatio=")) {
+			/* the percentage of the collectionSet regions would like to markCompact instead of copyForward */
+			if(!scan_udata_helper(vm, &scan_start, &(extensions->fvtest_forceCopyForwardHybridRatio), "fvtest_forceCopyForwardHybridMarkCompactRatio=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if ((extensions->fvtest_forceCopyForwardHybridRatio < 1) || (100 < extensions->fvtest_forceCopyForwardHybridRatio)) {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "fvtest_forceCopyForwardHybridMarkCompactRatio=", (UDATA)1, (UDATA)100);
+				returnValue = JNI_EINVAL;
+				break;
+			}
 			continue;
 		}
 

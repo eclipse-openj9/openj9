@@ -379,6 +379,12 @@ javaResolveInterfaceMethods(J9VMThread *currentThread, J9Class *targetClass, J9R
 			BOOLEAN shouldAdd = TRUE;
 			J9Class* newMethodClass = NULL;
 			newMethod = processMethod(currentThread, lookupOptions, foundMethod, interfaceClass, &data->exception, &data->exceptionClass, &data->errorType, nameAndSig, senderClass, targetClass);
+
+			/* Exit loop if exception have been directly set since direct exception must be from access control (Nestmates) */
+			if (NULL != currentThread->currentException) {
+				return NULL;
+			}
+
 			if (NULL == newMethod) {
 				iTable = iTable->next;
 				continue;
@@ -695,6 +701,9 @@ retry:
 
 			if (foundMethod != NULL) {
 				resultMethod = processMethod(currentThread, lookupOptions, foundMethod, lookupClass, &exception, &exceptionClass, &errorType, nameAndSig, senderClass, targetClass);
+				if (NULL != currentThread->currentException) {
+					goto end;
+				}
 
 				if (resultMethod == NULL) {
 					if (J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR == exception) {
@@ -745,6 +754,10 @@ nextClass:
 			data.elements = 0;
 
 			tempResultMethod = javaResolveInterfaceMethods(currentThread, targetClass, nameAndSig, senderClass, lookupOptions, &data);
+			if (NULL != currentThread->currentException) {
+				exceptionThrown = TRUE;
+				goto done;
+			}
 			if (NULL != tempResultMethod) {
 				resultMethod = tempResultMethod;
 			}

@@ -32,9 +32,7 @@
 			<variation>Mode301</variation>
 			<variation>Mode501</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	cd $(REPORTDIR); \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)junit4.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(P)$(TEST_RESROOT)$(D)Jsr335.jar$(P).$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames jsr335 \
 	-groups $(TEST_GROUP) \
@@ -60,9 +58,7 @@
 			<variation>Mode301</variation>
 			<variation>Mode501</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	cd $(REPORTDIR); \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) --add-opens=java.base/java.lang.invoke=ALL-UNNAMED \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) --add-opens=java.base/java.lang.invoke=ALL-UNNAMED \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)junit4.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(P)$(TEST_RESROOT)$(D)Jsr335.jar$(P).$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames jsr335 \
 	-groups $(TEST_GROUP) \

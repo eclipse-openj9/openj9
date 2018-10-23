@@ -29,7 +29,7 @@ define({BEGIN_HELPER},{
 	staddr r0,JIT_GPR_SAVE_SLOT(0)
 	SAVE_LR
 	SAVE_JIT_GOT_REGISTERS
-	INIT_GOT(jitTOC)
+	INIT_JIT_TOC
 })
 
 define({END_HELPER},{
@@ -202,7 +202,7 @@ define({NEW_DUAL_MODE_HELPER},{
 	START_PROC($1)
 	SAVE_LR
 	SAVE_JIT_GOT_REGISTERS
-	INIT_GOT(jitTOC)
+	INIT_JIT_TOC
 	CALL_DIRECT(fast_$1)
 	cmpliaddr r3,0
 	beq .L_done_$1
@@ -233,7 +233,7 @@ define({NEW_DUAL_MODE_HELPER_NO_RETURN_VALUE},{
 	START_PROC($1)
 	SAVE_LR
 	SAVE_JIT_GOT_REGISTERS
-	INIT_GOT(jitTOC)
+	INIT_JIT_TOC
 	CALL_DIRECT(fast_$1)
 	cmpliaddr r3,0
 	beq .L_done_$1
@@ -729,7 +729,7 @@ END_PROC(icallVMprJavaSendInvokeExactL)
 START_PROC(jitDecompileOnReturn0)
 	SWITCH_TO_C_STACK
 	SAVE_PRESERVED_REGS
-	INIT_GOT(jitTOC)
+	INIT_JIT_TOC
 	li r0,0
 	staddr r0,J9TR_VMThread_tempSlot(J9VMTHREAD)
 	CALL_C_WITH_VMTHREAD(c_jitDecompileOnReturn)
@@ -740,7 +740,7 @@ START_PROC(jitDecompileOnReturn1)
 	stw r3,J9TR_VMThread_returnValue(J9VMTHREAD)
 	SWITCH_TO_C_STACK
 	SAVE_PRESERVED_REGS
-	INIT_GOT(jitTOC)
+	INIT_JIT_TOC
 	li r0,1
 	staddr r0,J9TR_VMThread_tempSlot(J9VMTHREAD)
 	CALL_C_WITH_VMTHREAD(c_jitDecompileOnReturn)
@@ -751,7 +751,7 @@ START_PROC(jitDecompileOnReturnF)
 	stfs fp0,J9TR_VMThread_returnValue(J9VMTHREAD)
 	SWITCH_TO_C_STACK
 	SAVE_PRESERVED_REGS
-	INIT_GOT(jitTOC)
+	INIT_JIT_TOC
 	li r0,1
 	staddr r0,J9TR_VMThread_tempSlot(J9VMTHREAD)
 	CALL_C_WITH_VMTHREAD(c_jitDecompileOnReturn)
@@ -762,7 +762,7 @@ START_PROC(jitDecompileOnReturnD)
 	stfd fp0,J9TR_VMThread_returnValue(J9VMTHREAD)
 	SWITCH_TO_C_STACK
 	SAVE_PRESERVED_REGS
-	INIT_GOT(jitTOC)
+	INIT_JIT_TOC
 	li r0,2
 	staddr r0,J9TR_VMThread_tempSlot(J9VMTHREAD)
 	CALL_C_WITH_VMTHREAD(c_jitDecompileOnReturn)
@@ -772,7 +772,7 @@ END_PROC(jitDecompileOnReturnD)
 START_PROC(jitReportExceptionCatch)
 	SWITCH_TO_C_STACK
 	SAVE_PRESERVED_REGS
-	INIT_GOT(jitTOC)
+	INIT_JIT_TOC
 	CALL_C_WITH_VMTHREAD(c_jitReportExceptionCatch)
 	RESTORE_PRESERVED_REGS
 	SWITCH_TO_JAVA_STACK
@@ -782,42 +782,42 @@ END_PROC(jitReportExceptionCatch)
 START_PROC(jitDecompileAtExceptionCatch)
 	SWITCH_TO_C_STACK
 	SAVE_PRESERVED_REGS
-	INIT_GOT(jitTOC)
+	INIT_JIT_TOC
 	CALL_C_WITH_VMTHREAD(c_jitDecompileAtExceptionCatch)
 	BRANCH_VIA_VMTHREAD(J9TR_VMThread_tempSlot)
 END_PROC(jitDecompileAtExceptionCatch)
 
 START_PROC(jitDecompileAtCurrentPC)
 	SWITCH_TO_C_STACK
-	INIT_GOT(jitTOC)
+	INIT_JIT_TOC
 	CALL_C_WITH_VMTHREAD(c_jitDecompileAtCurrentPC)
 	BRANCH_VIA_VMTHREAD(J9TR_VMThread_tempSlot)
 END_PROC(jitDecompileAtCurrentPC)
 
 START_PROC(jitDecompileBeforeReportMethodEnter)
 	SWITCH_TO_C_STACK
-	INIT_GOT(jitTOC)
+	INIT_JIT_TOC
 	CALL_C_WITH_VMTHREAD(c_jitDecompileBeforeReportMethodEnter)
 	BRANCH_VIA_VMTHREAD(J9TR_VMThread_tempSlot)
 END_PROC(jitDecompileBeforeReportMethodEnter)
 
 START_PROC(jitDecompileBeforeMethodMonitorEnter)
 	SWITCH_TO_C_STACK
-	INIT_GOT(jitTOC)
+	INIT_JIT_TOC
 	CALL_C_WITH_VMTHREAD(c_jitDecompileBeforeMethodMonitorEnter)
 	BRANCH_VIA_VMTHREAD(J9TR_VMThread_tempSlot)
 END_PROC(jitDecompileBeforeMethodMonitorEnter)
 
 START_PROC(jitDecompileAfterAllocation)
 	SWITCH_TO_C_STACK
-	INIT_GOT(jitTOC)
+	INIT_JIT_TOC
 	CALL_C_WITH_VMTHREAD(c_jitDecompileAfterAllocation)
 	BRANCH_VIA_VMTHREAD(J9TR_VMThread_tempSlot)
 END_PROC(jitDecompileAfterAllocation)
 
 START_PROC(jitDecompileAfterMonitorEnter)
 	SWITCH_TO_C_STACK
-	INIT_GOT(jitTOC)
+	INIT_JIT_TOC
 	CALL_C_WITH_VMTHREAD(c_jitDecompileAfterMonitorEnter)
 	BRANCH_VIA_VMTHREAD(J9TR_VMThread_tempSlot)
 END_PROC(jitDecompileAfterMonitorEnter)
@@ -867,7 +867,7 @@ START_PROC(jitDecompileOnReturnJ)
 	std r3,J9TR_VMThread_returnValue(J9VMTHREAD)
 	SWITCH_TO_C_STACK
 	SAVE_PRESERVED_REGS
-	INIT_GOT(jitTOC)
+	INIT_JIT_TOC
 	li r0,2
 	staddr r0,J9TR_VMThread_tempSlot(J9VMTHREAD)
 	CALL_C_WITH_VMTHREAD(c_jitDecompileOnReturn)
@@ -884,7 +884,7 @@ START_PROC(jitDecompileOnReturnL)
 	std r3,J9TR_VMThread_returnValue(J9VMTHREAD)
 	SWITCH_TO_C_STACK
 	SAVE_PRESERVED_REGS
-	INIT_GOT(jitTOC)
+	INIT_JIT_TOC
 	li r0,1
 	staddr r0,J9TR_VMThread_tempSlot(J9VMTHREAD)
 	CALL_C_WITH_VMTHREAD(c_jitDecompileOnReturn)
@@ -910,7 +910,7 @@ START_PROC(jitDecompileOnReturnJ)
 	stw r4,J9TR_VMThread_returnValue2(J9VMTHREAD)
 	SWITCH_TO_C_STACK
 	SAVE_PRESERVED_REGS
-	INIT_GOT(jitTOC)
+	INIT_JIT_TOC
 	li r0,2
 	staddr r0,J9TR_VMThread_tempSlot(J9VMTHREAD)
 	CALL_C_WITH_VMTHREAD(c_jitDecompileOnReturn)

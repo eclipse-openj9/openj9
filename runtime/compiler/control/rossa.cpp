@@ -195,6 +195,7 @@ char *compilationErrorNames[]={
    "compilationFSDHasInvokeHandle", //47
    "compilationVirtualAddressExhaustion", //48
    "compilationEnforceProfiling", //49
+   "compilationSymbolValidationManagerFailure", //50
    "compilationMaxError"
 };
 

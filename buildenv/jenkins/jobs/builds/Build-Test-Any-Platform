@@ -26,9 +26,7 @@ timeout(time: 10, unit: 'HOURS') {
     timestamps {
         node('master') {
             try{
-                retry(5){
-                    checkout scm
-                }
+                checkout scm
 
                 variableFile = load 'buildenv/jenkins/common/variables-functions'
 

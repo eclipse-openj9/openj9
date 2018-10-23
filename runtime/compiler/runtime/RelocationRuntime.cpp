@@ -234,6 +234,12 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
          }
       }
 
+   // Check the flags related to the symbol validation manager
+   if (_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_UsesSymbolValidationManager)
+      {
+      comp->setOption(TR_UseSymbolValidationManager);
+      }
+
    _exceptionTableCacheEntry = (J9JITDataCacheHeader *)((uint8_t *)cacheEntry + _aotMethodHeaderEntry->offsetToExceptionTable);
 
    if (_exceptionTableCacheEntry->type == J9_JIT_DCE_EXCEPTION_INFO)

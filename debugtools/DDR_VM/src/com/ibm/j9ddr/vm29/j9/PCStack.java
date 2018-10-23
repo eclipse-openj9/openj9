@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2014 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -270,10 +270,10 @@ public class PCStack
 	0x03 /* JBinvokehandlegeneric = 233 */,
 	0x63 /* JBinvokestaticsplit = 234 */,
 	0x63 /* JBinvokespecialsplit = 235 */,
-	0x00 /* JBunimplemented = 236 */,
-	0x00 /* JBunimplemented = 237 */,
-	0x00 /* JBunimplemented = 238 */,
-	0x00 /* JBunimplemented = 239 */,
+	0x41 /* JBreturnC = 236 */,
+	0x41 /* JBreturnS = 237 */,
+	0x41 /* JBreturnB = 238 */,
+	0x41 /* JBreturnZ = 239 */,
 	0x00 /* JBunimplemented = 240 */,
 	0x00 /* JBunimplemented = 241 */,
 	0x00 /* JBunimplemented = 242 */,
@@ -529,10 +529,10 @@ public class PCStack
 	0x80 /* JBinvokehandlegeneric = 233  -- pops: 0 pushes: 0*/ ,
 	0x80 /* JBinvokestaticsplit = 234  -- pops: 0 pushes: 0*/ ,
 	0x80 /* JBinvokespecialsplit = 235  -- pops: 0 pushes: 0*/ ,
-	0x00 /* JBunimplemented = 236  -- pops: 0 pushes: 0*/ ,
-	0x00 /* JBunimplemented = 237  -- pops: 0 pushes: 0*/ ,
-	0x00 /* JBunimplemented = 238  -- pops: 0 pushes: 0*/ ,
-	0x00 /* JBunimplemented = 239  -- pops: 0 pushes: 0*/ ,
+	0x01 /* JBreturnC = 236  -- pops: 1 pushes: 0*/ ,
+	0x01 /* JBreturnS = 237  -- pops: 1 pushes: 0*/ ,
+	0x01 /* JBreturnB = 238  -- pops: 1 pushes: 0*/ ,
+	0x01 /* JBreturnZ = 239  -- pops: 1 pushes: 0*/ ,
 	0x00 /* JBunimplemented = 240  -- pops: 0 pushes: 0*/ ,
 	0x00 /* JBunimplemented = 241  -- pops: 0 pushes: 0*/ ,
 	0x00 /* JBunimplemented = 242  -- pops: 0 pushes: 0*/ ,
@@ -788,10 +788,10 @@ public class PCStack
 		0x0 /* JBinvokehandlegeneric (16rE9) */,
 		0x0 /* JBinvokestaticsplit (16rEA) */,
 		0x0 /* JBinvokespecialsplit (16rEB) */,
-		0x0 /* JBunimplemented (16rEC) */,
-		0x0 /* JBunimplemented (16rED) */,
-		0x0 /* JBunimplemented (16rEE) */,
-		0x0 /* JBunimplemented (16rEF) */,
+		0x0 /* JBreturnC (16rEC) */,
+		0x0 /* JBreturnS (16rED) */,
+		0x0 /* JBreturnB (16rEE) */,
+		0x0 /* JBreturnZ (16rEF) */,
 		0x0 /* JBunimplemented (16rF0) */,
 		0x0 /* JBunimplemented (16rF1) */,
 		0x0 /* JBunimplemented (16rF2) */,

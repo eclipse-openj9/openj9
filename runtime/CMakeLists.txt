@@ -52,6 +52,7 @@ include(OmrTracegen)
 
 include(cmake/build_tags.cmake)
 include(cmake/compiler_config.cmake)
+include(cmake/J9vmGenAsm.cmake)
 
 ###
 ### Various configuration
@@ -66,9 +67,18 @@ include(cmake/compiler_config.cmake)
 # to explicitly tag individual targets which seem tedious
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-set(CMAKE_INSTALL_RPATH "\$ORIGIN")
+if(OMR_HOST_OS STREQUAL "osx")
+	set(CMAKE_INSTALL_RPATH "@loader_path")
+else()
+	set(CMAKE_INSTALL_RPATH "\$ORIGIN")
+endif()
+
 set(OMR_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}" CACHE STRING "")
 set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}" CACHE STRING "" FORCE)
+
+set(OMR_INSTALL_BIN_DIR "${j9vm_SOURCE_DIR}" CACHE PATH "")
+set(OMR_INSTALL_LIB_DIR "${j9vm_SOURCE_DIR}" CACHE PATH "")
+set(OMR_INSTALL_ARCHIVE_DIR "${j9vm_SOURCE_DIR}/lib" CACHE PATH "")
 
 # Generic configuration for omr
 include(cmake/omr_config.cmake)
@@ -128,7 +138,6 @@ add_custom_target(j9vm_m4gen
 		"${CMAKE_CURRENT_BINARY_DIR}/redirector/generated.c"
 		"${CMAKE_CURRENT_BINARY_DIR}/j9vm/generated.h"
 )
-
 
 ###
 ### Helper interface libraries
@@ -393,12 +402,7 @@ if(J9VM_MODULE_THRTRACE)
 	add_subdirectory(thrtrace)
 endif()
 if(J9VM_INTERP_NATIVE_SUPPORT)
-	if(OMR_HOST_ARCH STREQUAL "x86" OR OMR_HOST_ARCH STREQUAL "ppc")
-		#jit only does x86/ppc at the moment, and only with GCC
-		if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-			add_subdirectory(compiler)
-		endif()
-	endif()
+	add_subdirectory(compiler)
 endif()
 if(J9VM_MODULE_UTIL)
 	add_subdirectory(util)
