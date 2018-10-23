@@ -67,16 +67,9 @@ J9::ClassEnv::isClassSpecialForStackAllocation(TR_OpaqueClassBlock * clazz)
 
    if (auto stream = TR::CompilationInfo::getStream())
       {
-         {
-         OMR::CriticalSection getRemoteROMClass(TR::compInfoPT->getClientData()->getROMMapMonitor());
-         auto it = TR::compInfoPT->getClientData()->getROMClassMap().find((J9Class*)clazz);
-         if (it != TR::compInfoPT->getClientData()->getROMClassMap().end())
-            {
-            return ((it->second.classDepthAndFlags & mask)?true:false);
-            }
-         }
-         stream->write(JITaaS::J9ServerMessageType::CompInfo_isClassSpecial, clazz);
-         return (std::get<0>(stream->read<bool>()));
+      uintptrj_t classDepthAndFlags = 0;
+      JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, TR::compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
+      return ((classDepthAndFlags & mask)?true:false);
       }
    else
       {
@@ -107,16 +100,10 @@ J9::ClassEnv::classDepthOf(TR_OpaqueClassBlock * clazzPointer)
    {
    if (auto stream = TR::CompilationInfo::getStream())
       {
-         {
-         OMR::CriticalSection getRemoteROMClass(TR::compInfoPT->getClientData()->getROMMapMonitor());
-         auto it = TR::compInfoPT->getClientData()->getROMClassMap().find((J9Class*)clazzPointer);
-         if (it != TR::compInfoPT->getClientData()->getROMClassMap().end())
-            {
-            return (it->second.classDepthAndFlags & J9_JAVA_CLASS_DEPTH_MASK);
-            }
-         }
-      stream->write(JITaaS::J9ServerMessageType::ClassEnv_classDepthOf, clazzPointer);
-      return std::get<0>(stream->read<uintptrj_t>());
+      uintptrj_t classDepthAndFlags = 0;
+      JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazzPointer, TR::compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
+
+      return (classDepthAndFlags & J9_JAVA_CLASS_DEPTH_MASK);
       }
    return J9CLASS_DEPTH(TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer));
    }
@@ -127,15 +114,9 @@ J9::ClassEnv::classInstanceSize(TR_OpaqueClassBlock * clazzPointer)
    {
    if (auto stream = TR::CompilationInfo::getStream())
       {
-         {
-         OMR::CriticalSection getRemoteROMClass(TR::compInfoPT->getClientData()->getROMMapMonitor());
-         auto it = TR::compInfoPT->getClientData()->getROMClassMap().find((J9Class*)clazzPointer);
-         if (it != TR::compInfoPT->getClientData()->getROMClassMap().end())
-            return (it->second.totalInstanceSize);
-         }
-
-         stream->write(JITaaS::J9ServerMessageType::ClassEnv_classInstanceSize, clazzPointer);
-         return std::get<0>(stream->read<uintptrj_t>());
+      uint32_t totalInstanceSize = 0;
+      JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazzPointer, TR::compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_TOTAL_INSTANCE_SIZE, (void *)&totalInstanceSize);
+      return totalInstanceSize;
       }
    return TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer)->totalInstanceSize;
    }
