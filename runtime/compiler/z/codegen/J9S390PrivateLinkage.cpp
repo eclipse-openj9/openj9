@@ -630,26 +630,14 @@ TR::S390PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
    // Pick an arbitrary large number that is less than
    // long disp (4K) to identify that we are no-where near
    // a large stack or a large lit-pool
-   //
-/*
-   bool longDispSlotNeeded = cg()->getExitPointsInMethod()              ||
-                             cg()->getEstimatedExtentOfLitLoop() > 256  ||
-                             stackIndex < -256;
-*/
-   if ( !comp()->getOption(TR_DisableLongDispStackSlot) /*&& longDispSlotNeeded */ )
-      {
-      //stackIndex -= pointerSize;
-      stackIndex -= 16;   // see defect 162458, 164661
+
+   //stackIndex -= pointerSize;
+   stackIndex -= 16;   // see defect 162458, 164661
 #ifdef DEBUG
-    //  origSize += pointerSize;
-      origSize += 16;
+   //  origSize += pointerSize;
+   origSize += 16;
 #endif
-      setOffsetToLongDispSlot((uint32_t) (-((int32_t)stackIndex)));
-      }
-   else
-      {
-      setOffsetToLongDispSlot(0);
-      }
+   setOffsetToLongDispSlot((uint32_t) (-((int32_t)stackIndex)));
 
 
    // msf - aligning the start of the parm list may not always
@@ -846,22 +834,9 @@ TR::S390PrivateLinkage::mapStack(TR::ResolvedMethodSymbol * method)
    // long disp (4K) to identify that we are no-where near
    // a large stack or a large lit-pool
    //
-/*
-   bool longDispSlotNeeded = cg()->getExitPointsInMethod()              ||
-                             cg()->getEstimatedExtentOfLitLoop() > 256  ||
-                             stackIndex < -256;
-*/
 
-   //  Map slot for Long Disp
-   if ( !comp()->getOption(TR_DisableLongDispStackSlot) /*&& longDispSlotNeeded */ )
-      {
-      stackIndex -= 16;   // see defect 162458, 164661
-      setOffsetToLongDispSlot((uint32_t) (-((int32_t)stackIndex)));
-      }
-   else
-      {
-      setOffsetToLongDispSlot(0);
-      }
+   stackIndex -= 16;   // see defect 162458, 164661
+   setOffsetToLongDispSlot((uint32_t) (-((int32_t)stackIndex)));
 
    method->setScalarTempSlots((lowGCOffset - stackIndex) / TR::Compiler->om.sizeofReferenceAddress());
    method->setLocalMappingCursor(stackIndex);
@@ -1190,14 +1165,12 @@ TR::S390PrivateLinkage::createPrologue(TR::Instruction * cursor)
 
    cg()->setFrameSizeInBytes(size + firstLocalOffset);
 
-   if ( !comp()->getOption(TR_DisableLongDispStackSlot) )
+
+   int32_t offsetToLongDisp = size - getOffsetToLongDispSlot();
+   setOffsetToLongDispSlot(offsetToLongDisp);
+   if (comp()->getOption(TR_TraceCG))
       {
-      int32_t offsetToLongDisp = size - getOffsetToLongDispSlot();
-      setOffsetToLongDispSlot(offsetToLongDisp);
-      if (comp()->getOption(TR_TraceCG))
-         {
-         traceMsg(comp(), "\n\nOffsetToLongDispSlot = %d\n", offsetToLongDisp);
-         }
+      traceMsg(comp(), "\n\nOffsetToLongDispSlot = %d\n", offsetToLongDisp);
       }
 
    // Is GPR14 ever used?  If not, we can avoid
