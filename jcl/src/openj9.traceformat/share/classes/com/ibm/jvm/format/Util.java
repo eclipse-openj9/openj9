@@ -27,7 +27,7 @@ import java.util.Hashtable;
 import java.util.Properties;
 import java.util.Vector;
 
-/** 
+/**
  * Provides various utility functions needed by the trace formatter
  *
  * @author Jonathon Lee
@@ -173,12 +173,12 @@ final public class Util {
         }
     }
 
-    /**  construct a BigInteger from an array of bytes.  BigIntgers are used to get around problems
-     *   caused by the lack of unsigned primitive type.
+    /**
+     * Construct a BigInteger from an array of bytes.  BigIntegers are used to get around problems
+     * caused by the lack of unsigned primitive type.
      *
      * @param  data      an array of bytes
      * @param  offset    offset to the first byte to use to create the BigInteger
-     * @param  numBytes  the length of this BigInteger in bytes
      * @return a positive BigInteger constructed from the byte array
      */
     final protected static BigInteger constructUnsignedLong(byte[] data, int offset)
@@ -186,34 +186,42 @@ final public class Util {
         return constructUnsignedLong(data, offset, Util.LONG);
     }
 
+    /**
+     * Construct a BigInteger from an array of bytes.  BigIntegers are used to get around problems
+     * caused by the lack of unsigned primitive type.
+     *
+     * @param  data      an array of bytes
+     * @param  offset    offset to the first byte to use to create the BigInteger
+     * @param  numBytes  the length of this BigInteger in bytes
+     * @return a positive BigInteger constructed from the byte array
+     */
     final protected static BigInteger constructUnsignedLong(byte[] data, int offset, int numBytes)
     {
         byte[] bytes = new byte[numBytes];
         try {
             System.arraycopy(data, offset, bytes, 0, numBytes);
-            if ( bigendian == false ) reverseByteOrder(bytes);
+            if (!bigendian) {
+                reverseByteOrder(bytes);
+            }
             BigInteger temp = new BigInteger(1, bytes); // 1 means positive
-            // Debug.println("Util.constructUnsignedLong() => " + temp.toString() + " = 0x" +temp.toString(16));
             return temp;
         } catch (Exception e) {
-            TraceFormat.outStream.println("******************* Exception: data.length "+
-                                          data.length+ " offset " +offset+ " numBytes " +numBytes);
-            return null;
+            TraceFormat.outStream.println("******************* Exception:"
+                    + " data.length " + data.length
+                    + " offset " + offset
+                    + " numBytes " + numBytes);
+            return BigInteger.ZERO;
         }
     }
 
     final protected static int constructTraceID(byte[] data, int offset)
     {
-
         return((((int) data[offset] << 16) & 0xff0000) | (((int) data[offset+1] << 8)  & 0xff00) | ((int) data[offset+2]  & 0xff));
-
-        // Debug.println("Util.constructTraceID() => " + Long.toString(temp) + " = 0x" +Long.toString(temp, 16));
     }
 
 
     final protected static long constructUnsignedInt(byte[] data, int offset)
     {
-
         return( bigendian == false )
         ? ((  ((long) data[offset+3] << 24) & 0xff000000L)
            | (((long) data[offset+2] << 16) & 0xff0000L)
@@ -223,14 +231,11 @@ final public class Util {
            | (((long) data[offset+1] << 16) & 0xff0000L)
            | (((long) data[offset+2] << 8)  & 0xff00L)
            | ((long) data[offset+3]         & 0xffL));
-        // Debug.println("Util.constructUnsignedInt() => " + Long.toString(temp) + " = 0x" +Long.toString(temp, 16));
     }
 
     final protected static int constructUnsignedByte(byte[] data, int offset)
     {
         return(int) data[offset] & 0xff;
-
-        // Debug.println("Util.constructUnsignedByte() => " + Long.toString(temp) + " = 0x" +Long.toString(temp, 16));
     }
 
     final static private int findNull(byte[] data, int index)
@@ -287,40 +292,71 @@ final public class Util {
             return true;
         } else {
             return false;
-        }        
+        }
     }
 
-    /**  Constructs a string from an array of bytes with a count, with the specified encoding (ASCII or EBCDIC?)
+    /**
+     * Escapes control characters in the given string.
      *
+     * @param string
+     */
+    public static final String escapeControlCharacters(String string) {
+        return escapeControlCharacters(string, getProperty("ENCODING", "ASCII"));
+    }
+
+    /**
+     * Escapes control characters in the given string.
+     *
+     * @param string
+     * @param encoding
+     */
+    public static final String escapeControlCharacters(String string, String encoding) {
+        if ("ASCII".equalsIgnoreCase(encoding)) { /* leave other encodings to fend for themselves */
+            int length = string.length();
+            StringBuffer escaped = null;
+
+            for (int i = 0; i < length; ++i) {
+                char ch = string.charAt(i);
+
+                if (charIsOneOfControlCharactersToRemove(ch)) {
+                    if (escaped == null) {
+                        escaped = new StringBuffer(length + 50); /* leave room for a few escapes */
+                        if (i > 0) {
+                            escaped.append(string.substring(0, i));
+                        }
+                    }
+                    escaped.append(String.format("\\u%04x", Integer.valueOf(ch)));
+                } else {
+                    if (escaped != null) {
+                        escaped.append(ch);
+                    }
+                }
+            }
+
+            if (escaped != null) {
+                return escaped.toString();
+            }
+        }
+
+        return string;
+    }
+
+    /**
+     * Constructs a string from an array of bytes with an offset and count,
+     * with the specified encoding (ASCII or EBCDIC).
      */
     final protected static String constructString(byte[] data, int offset, int count, String enc)
     {
         try {
-            if ( (offset + count) > data.length  ){
-		return "";
-	    }
-            StringBuffer tempString = new StringBuffer();
-            String beforeRemovingControlChars = new String(data, offset, count, enc);
+            String string = "";
 
-            if (enc.equalsIgnoreCase("ASCII")) {            
-                for (int i = 0; i < beforeRemovingControlChars.length(); i++) {
-                    char c = beforeRemovingControlChars.charAt(i);
-                                
-                    if ( charIsOneOfControlCharactersToRemove(c) ) {
-                        String octalRepresentation = Integer.toOctalString(c);
-                        String formattedOctalRepresentation = "\\u" + "0000".substring(octalRepresentation.length()) + octalRepresentation;
-                        tempString.append( formattedOctalRepresentation );
-                    } else {
-                        tempString.append( c );
-                    }
-                }
-            } else {
-                /* leave other encodings to fend for themselves */
-                tempString.append(beforeRemovingControlChars);
+            if ((offset + count) <= data.length) {
+                string = new String(data, offset, count, enc);
             }
-            return tempString.toString();
-        } catch ( Exception e ) {
-	    TraceFormat.outStream.println("Util.constructString (1) ****> offset: " + offset + ", count = " + count + " data = " + data);
+
+            return string;
+        } catch (Exception e) {
+            TraceFormat.outStream.println("Util.constructString (1) ****> offset: " + offset + ", count = " + count + " data = " + data);
             TraceFormat.outStream.println("Util.constructString (2) ****> " + e);
             return "";
         }
@@ -356,7 +392,7 @@ final public class Util {
      *  property is set the default value is returned
      *
      * @param   key
-     * @param   val
+     * @param   defaultValue
      * @return   a string
      */
     final protected static String getProperty(String key, String defaultValue)
@@ -431,15 +467,14 @@ final public class Util {
 
     /**
      * Formats a number as a hex string, prefixing the "0x"
-     * radix specifier so that it can be unambiguously 
+     * radix specifier so that it can be unambiguously
      * interpreted as a hex string.
      * @param number the number to format
      */
     final static public String formatAsHexString(long number)
     {
-    	return "0x" + Long.toHexString(number);
+        return "0x" + Long.toHexString(number);
     }
-    
 
     /**
      * Converts a byte to hex digit and writes to the supplied buffer
@@ -570,7 +605,7 @@ final public class Util {
         }
 
     }
-    
+
     static class Debug {
         static java.io.PrintStream out = TraceFormat.outStream;
 
@@ -582,9 +617,9 @@ final public class Util {
         }
         static void print(Object o)
         {
-        	if ( TraceArgs.debug ) {
-        		out.print(o);
-        	}
+            if ( TraceArgs.debug ) {
+                out.print(o);
+            }
         }
     }
 
@@ -712,6 +747,7 @@ final public class Util {
 
         default:
             eyeCatcherString = "eyecatcher is bad " + Util.formatAsHexString(eyecatcher) + " *********************************";
+            break;
         }
 
         return eyeCatcherString;
@@ -720,7 +756,6 @@ final public class Util {
     final protected static void setBigEndian(boolean endian)
     {
         bigendian = endian;
-        return ;
     }
 
 }

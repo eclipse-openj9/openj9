@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -183,9 +183,9 @@ final public class Message
                  offset += utf8Length;
              } else {
                  s = Util.constructString(buffer, offset);
-                 offset += (s.length() + 1) ;
+                 offset += (s.length() + 1);
              }
-
+             s = Util.escapeControlCharacters(s);
              result.append(format(s, fspec));
              str = str.substring(1, str.length());
              break;
@@ -211,15 +211,15 @@ final public class Message
              str = str.substring(1, str.length());
              break;
 
-         case 'f': 
-        	 /* CMVC 164940 All %f tracepoints were promoted to double in runtime trace code.
-        	  * Affects:
-        	  *  TraceFormat  com/ibm/jvm/format/Message.java
-        	  *  TraceFormat  com/ibm/jvm/trace/format/api/Message.java
-        	  *  runtime    ute/ut_trace.c
-        	  *  TraceGen     OldTrace.java
-        	  * Intentional fall through to next case.
-        	  */
+         case 'f':
+             /* CMVC 164940 All %f tracepoints were promoted to double in runtime trace code.
+              * Affects:
+              *  TraceFormat  com/ibm/jvm/format/Message.java
+              *  TraceFormat  com/ibm/jvm/trace/format/api/Message.java
+              *  runtime    ute/ut_trace.c
+              *  TraceGen     OldTrace.java
+              * Intentional fall through to next case.
+              */
          case 'g':
             l = Util.constructUnsignedLong(buffer, offset).longValue();
             offset += Util.LONG;
@@ -246,7 +246,8 @@ final public class Message
          case 'c':
             s = Util.constructString(buffer, offset, 1);
             offset += 1;
-            result.append(format(s,fspec));
+            s = Util.escapeControlCharacters(s);
+            result.append(format(s, fspec));
             str = str.substring(1, str.length());
             break;
 
@@ -538,9 +539,9 @@ final public class Message
    }
 
    protected String getFormattingTemplate(){
-	   return message;
+       return message;
    }
-   
+
    class FormatSpec
    {
       protected Integer width;         // this are object types to have
