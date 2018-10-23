@@ -7597,12 +7597,17 @@ J9::Z::TreeEvaluator::pdshlVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerat
    TR_ASSERT(shiftAmountNode->getOpCode().isLoadConst() && shiftAmountNode->getOpCode().getSize() <= 4,
                "expecting a <= 4 size integral constant PD shift amount\n");
 
-   // If this is a pdshlOverflow with i2pd under it, the i2pd vector instruction (VCVD/VCVDG) will
+   // If this is a pdshlOverflow with i2pd and other pd-arithmetic operations under it, these vector instructions will
    // truncate the resulting PD by the amount specified by 'decimalPrecision'. Therefore, we can
    // skip the shift and just return i2pd results.
    bool isSkipShift = node->getOpCodeValue() == TR::pdshlOverflow &&
            (firstChild->getOpCodeValue() == TR::i2pd ||
-            firstChild->getOpCodeValue() == TR::l2pd) &&
+            firstChild->getOpCodeValue() == TR::l2pd ||
+            firstChild->getOpCodeValue() == TR::pdadd ||
+            firstChild->getOpCodeValue() == TR::pdsub ||
+            firstChild->getOpCodeValue() == TR::pdmul ||
+            firstChild->getOpCodeValue() == TR::pddiv ||
+            firstChild->getOpCodeValue() == TR::pdrem) &&
            firstChild->isSingleRefUnevaluated();
 
    int32_t shiftAmount = (int32_t)shiftAmountNode->get64bitIntegralValue();
