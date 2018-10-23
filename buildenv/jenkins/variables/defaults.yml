@@ -347,8 +347,9 @@ win_x86-64_cmprssptrs:
       next: 'hw.arch.x86 && sw.os.windows'
   build_env:
     vars:
-      11: 'PATH+MINGW=/cygdrive/c/mingw-w64/x86_64-8.1.0-win32-seh-rt_v6-rev0/mingw64/bin/'
-      next: 'PATH+MINGW=/cygdrive/c/mingw-w64/x86_64-8.1.0-win32-seh-rt_v6-rev0/mingw64/bin/'
+      8: 'PATH+CLANG=/cygdrive/c/mingw-w64/x86_64-8.1.0-win32-seh-rt_v6-rev0/mingw64/bin/:/cygdrive/c/openjdk/LLVM64/bin/'
+      11: 'PATH+CLANG=/cygdrive/c/mingw-w64/x86_64-8.1.0-win32-seh-rt_v6-rev0/mingw64/bin/:/cygdrive/c/openjdk/LLVM64/bin/'
+      next: 'PATH+CLANG=/cygdrive/c/mingw-w64/x86_64-8.1.0-win32-seh-rt_v6-rev0/mingw64/bin/:/cygdrive/c/openjdk/LLVM64/bin/'
 #========================================#
 # Windows x86 32bits 
 #========================================#
@@ -366,6 +367,9 @@ win_x86:
       8: 'hw.arch.x86 && sw.os.windows'
     test:
       8: 'hw.arch.x86 && sw.os.windows'
+  build_env:
+    vars:
+      8: 'PATH+CLANG=/cygdrive/c/openjdk/LLVM32/bin/'
 #========================================#
 # OSX x86 64bits Compressed Pointers
 #========================================#
