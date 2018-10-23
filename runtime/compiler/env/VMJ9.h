@@ -186,13 +186,10 @@ typedef struct TR_JitPrivateConfig
    UDATA  samplingFrequency;
    UDATA  samplingTickCount;
    omrthread_monitor_t  samplerMonitor;
-   I_32  tLogFile; // is this field even used? it's just set to -1 in j9options
-   I_32  tLogFileTemp;  // same here
    void*  compilationInfo;
    void*  pseudoTOC;
    void*  methodsToDelete;
    void*  processorInfo;
-   void*  privateConfig;
    IDATA  sampleInterruptHandlerKey;
    } TR_JitPrivateConfig;
 

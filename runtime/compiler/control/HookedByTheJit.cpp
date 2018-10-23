@@ -1483,6 +1483,7 @@ static void jitHookLocalGCStart(J9HookInterface * * hookInterface, UDATA eventNu
    MM_LocalGCStartEvent * localGCStartEventData = (MM_LocalGCStartEvent *)eventData;
    J9VMThread * vmThread = (J9VMThread *)localGCStartEventData->currentThread->_language_vmthread;
    J9JITConfig * jitConfig = vmThread->javaVM->jitConfig;
+   TR_JitPrivateConfig * privateConfig = TR_J9VMBase::getPrivateConfig(jitConfig);
 
    if(TR::Options::getCmdLineOptions()->getStackPCDumpNumberOfBuffers() && TR::Options::getCmdLineOptions()->getStackPCDumpNumberOfFrames())
       initJitPrivateThreadData(vmThread);
@@ -1493,7 +1494,7 @@ static void jitHookLocalGCStart(J9HookInterface * * hookInterface, UDATA eventNu
    if (jitConfig->runtimeFlags & J9JIT_GC_NOTIFY)
       printf("\n{Scavenge");
 
-   if (TR_J9VMBase::getPrivateConfig(jitConfig)->gcTraceThreshold && jitConfig->gcCount == TR_J9VMBase::getPrivateConfig(jitConfig)->gcTraceThreshold)
+   if (privateConfig->gcTraceThreshold && jitConfig->gcCount == privateConfig->gcTraceThreshold)
       {
       printf("\n<jit: enabling stack tracing at gc %d>", jitConfig->gcCount);
       TR::Options::getCmdLineOptions()->setVerboseOption(TR_VerboseGc);
@@ -4413,6 +4414,7 @@ static void jitHookAboutToRunMain(J9HookInterface * * hook, UDATA eventNum, void
    J9VMThread * vmThread = event->currentThread;
    J9JavaVM * javaVM = vmThread->javaVM;
    J9JITConfig * jitConfig = javaVM->jitConfig;
+   TR_JitPrivateConfig * privateConfig = TR_J9VMBase::getPrivateConfig(jitConfig);
    if (jitConfig == 0)
       return; // if a hook gets called after freeJitConfig then not much else we can do
 
@@ -4444,74 +4446,75 @@ static void jitHookAboutToRunMain(J9HookInterface * * hook, UDATA eventNum, void
 static void dumpStats(J9JITConfig * jitConfig)
    {
 #ifdef DEBUG
+   TR_JitPrivateConfig *privateConfig = TR_J9VMBase::getPrivateConfig(jitConfig);
    UDATA gcOverhead = 0, atlasOverhead = 0, debugOverhead = 0;
 
    /* Avoid the divide by zero case */
-   if (TR_J9VMBase::getPrivateConfig(jitConfig)->totalCodeBytesUsed)
+   if (privateConfig->totalCodeBytesUsed)
       {
       gcOverhead = (UDATA)
-         (((SYS_FLOAT) TR_J9VMBase::getPrivateConfig(jitConfig)->totalGCDataBytesUsed / (SYS_FLOAT) TR_J9VMBase::getPrivateConfig(jitConfig)->totalCodeBytesUsed) * 100.0);
+         (((SYS_FLOAT) privateConfig->totalGCDataBytesUsed / (SYS_FLOAT) privateConfig->totalCodeBytesUsed) * 100.0);
       atlasOverhead = (UDATA)
-         (((SYS_FLOAT) TR_J9VMBase::getPrivateConfig(jitConfig)->totalAtlasDataBytesUsed / (SYS_FLOAT) TR_J9VMBase::getPrivateConfig(jitConfig)->totalCodeBytesUsed) * 100.0);
+         (((SYS_FLOAT) privateConfig->totalAtlasDataBytesUsed / (SYS_FLOAT) privateConfig->totalCodeBytesUsed) * 100.0);
       debugOverhead = (UDATA)
-         (((SYS_FLOAT) TR_J9VMBase::getPrivateConfig(jitConfig)->totalDebugDataBytesUsed / (SYS_FLOAT) TR_J9VMBase::getPrivateConfig(jitConfig)->totalCodeBytesUsed) * 100.0);
+         (((SYS_FLOAT) privateConfig->totalDebugDataBytesUsed / (SYS_FLOAT) privateConfig->totalCodeBytesUsed) * 100.0);
       }
 
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"JIT Statistics:");
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %9d methods translated", TR_J9VMBase::getPrivateConfig(jitConfig)->totalMethodsTranslated);
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %9d methods NOT translated", TR_J9VMBase::getPrivateConfig(jitConfig)->totalMethodsNotTranslated);
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %9d code bytes", TR_J9VMBase::getPrivateConfig(jitConfig)->totalCodeBytesUsed);
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %9d gcMap bytes (~%3d%% of code size)", TR_J9VMBase::getPrivateConfig(jitConfig)->totalGCDataBytesUsed,
+   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %9d methods translated", privateConfig->totalMethodsTranslated);
+   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %9d methods NOT translated", privateConfig->totalMethodsNotTranslated);
+   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %9d code bytes", privateConfig->totalCodeBytesUsed);
+   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %9d gcMap bytes (~%3d%% of code size)", privateConfig->totalGCDataBytesUsed,
                 (UDATA) gcOverhead);
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %9d atlas bytes (~%3d%% of code size)", TR_J9VMBase::getPrivateConfig(jitConfig)->totalAtlasDataBytesUsed,
+   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %9d atlas bytes (~%3d%% of code size)", privateConfig->totalAtlasDataBytesUsed,
                 (UDATA) atlasOverhead);
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %9d debug bytes (~%3d%% of code size)", TR_J9VMBase::getPrivateConfig(jitConfig)->totalDebugDataBytesUsed,
+   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %9d debug bytes (~%3d%% of code size)", privateConfig->totalDebugDataBytesUsed,
                 (UDATA) debugOverhead);
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %9d code + data bytes",
-                (TR_J9VMBase::getPrivateConfig(jitConfig)->totalCodeBytesUsed + TR_J9VMBase::getPrivateConfig(jitConfig)->totalGCDataBytesUsed +
-                 TR_J9VMBase::getPrivateConfig(jitConfig)->totalAtlasDataBytesUsed + TR_J9VMBase::getPrivateConfig(jitConfig)->totalDebugDataBytesUsed));
+                (privateConfig->totalCodeBytesUsed + privateConfig->totalGCDataBytesUsed +
+                 privateConfig->totalAtlasDataBytesUsed + privateConfig->totalDebugDataBytesUsed));
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"");
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"  Unresolved References:");
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %6d of %6d classes            (~%3d%%)", TR_J9VMBase::getPrivateConfig(jitConfig)->unresolvedClassRefs,
-                TR_J9VMBase::getPrivateConfig(jitConfig)->totalClassRefs,
-                (TR_J9VMBase::getPrivateConfig(jitConfig)->totalClassRefs ?
-                 (UDATA) (((SYS_FLOAT) TR_J9VMBase::getPrivateConfig(jitConfig)->unresolvedClassRefs / (SYS_FLOAT) TR_J9VMBase::getPrivateConfig(jitConfig)->totalClassRefs) *
+   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %6d of %6d classes            (~%3d%%)", privateConfig->unresolvedClassRefs,
+                privateConfig->totalClassRefs,
+                (privateConfig->totalClassRefs ?
+                 (UDATA) (((SYS_FLOAT) privateConfig->unresolvedClassRefs / (SYS_FLOAT) privateConfig->totalClassRefs) *
                           100.0) : 0));
 
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %6d of %6d static methods     (~%3d%%)",
-                TR_J9VMBase::getPrivateConfig(jitConfig)->unresolvedStaticMethodRefs, TR_J9VMBase::getPrivateConfig(jitConfig)->totalStaticMethodRefs,
-                (TR_J9VMBase::getPrivateConfig(jitConfig)->totalStaticMethodRefs ? (UDATA) (
-                                                             ((SYS_FLOAT) TR_J9VMBase::getPrivateConfig(jitConfig)->unresolvedStaticMethodRefs /
-                                                              (SYS_FLOAT) TR_J9VMBase::getPrivateConfig(jitConfig)->totalStaticMethodRefs) *
+                privateConfig->unresolvedStaticMethodRefs, privateConfig->totalStaticMethodRefs,
+                (privateConfig->totalStaticMethodRefs ? (UDATA) (
+                                                             ((SYS_FLOAT) privateConfig->unresolvedStaticMethodRefs /
+                                                              (SYS_FLOAT) privateConfig->totalStaticMethodRefs) *
                                                              100.0) : 0));
 
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %6d of %6d special methods    (~%3d%%)", TR_J9VMBase::getPrivateConfig(jitConfig)->unresolvedSpecialMethodRefs,
-                TR_J9VMBase::getPrivateConfig(jitConfig)->totalSpecialMethodRefs,
-                (TR_J9VMBase::getPrivateConfig(jitConfig)->totalSpecialMethodRefs ?
+   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %6d of %6d special methods    (~%3d%%)", privateConfig->unresolvedSpecialMethodRefs,
+                privateConfig->totalSpecialMethodRefs,
+                (privateConfig->totalSpecialMethodRefs ?
                  (UDATA) (
-                          ((SYS_FLOAT) TR_J9VMBase::getPrivateConfig(jitConfig)->unresolvedSpecialMethodRefs /
-                           (SYS_FLOAT) TR_J9VMBase::getPrivateConfig(jitConfig)->totalSpecialMethodRefs) * 100.0) : 0));
+                          ((SYS_FLOAT) privateConfig->unresolvedSpecialMethodRefs /
+                           (SYS_FLOAT) privateConfig->totalSpecialMethodRefs) * 100.0) : 0));
 
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %6d of %6d interface methods  (~%3d%%)", TR_J9VMBase::getPrivateConfig(jitConfig)->unresolvedInterfaceMethodRefs,
-                TR_J9VMBase::getPrivateConfig(jitConfig)->totalInterfaceMethodRefs,
-                (TR_J9VMBase::getPrivateConfig(jitConfig)->totalInterfaceMethodRefs ?
+   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %6d of %6d interface methods  (~%3d%%)", privateConfig->unresolvedInterfaceMethodRefs,
+                privateConfig->totalInterfaceMethodRefs,
+                (privateConfig->totalInterfaceMethodRefs ?
                  (UDATA) (
-                          ((SYS_FLOAT) TR_J9VMBase::getPrivateConfig(jitConfig)->unresolvedInterfaceMethodRefs /
-                           (SYS_FLOAT) TR_J9VMBase::getPrivateConfig(jitConfig)->totalInterfaceMethodRefs) * 100.0) : 0));
+                          ((SYS_FLOAT) privateConfig->unresolvedInterfaceMethodRefs /
+                           (SYS_FLOAT) privateConfig->totalInterfaceMethodRefs) * 100.0) : 0));
 
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %6d of %6d virtual methods    (~%3d%%)", TR_J9VMBase::getPrivateConfig(jitConfig)->unresolvedVirtualMethodRefs,
-                TR_J9VMBase::getPrivateConfig(jitConfig)->totalVirtualMethodRefs,
-                (TR_J9VMBase::getPrivateConfig(jitConfig)->totalVirtualMethodRefs ?
+   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %6d of %6d virtual methods    (~%3d%%)", privateConfig->unresolvedVirtualMethodRefs,
+                privateConfig->totalVirtualMethodRefs,
+                (privateConfig->totalVirtualMethodRefs ?
                  (UDATA) (
-                          ((SYS_FLOAT) TR_J9VMBase::getPrivateConfig(jitConfig)->unresolvedVirtualMethodRefs /
-                           (SYS_FLOAT) TR_J9VMBase::getPrivateConfig(jitConfig)->totalVirtualMethodRefs) * 100.0) : 0));
+                          ((SYS_FLOAT) privateConfig->unresolvedVirtualMethodRefs /
+                           (SYS_FLOAT) privateConfig->totalVirtualMethodRefs) * 100.0) : 0));
 
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %6d of %6d static variables   (~%3d%%)", TR_J9VMBase::getPrivateConfig(jitConfig)->unresolvedStaticVariableRefs,
-                TR_J9VMBase::getPrivateConfig(jitConfig)->totalStaticVariableRefs,
-                (TR_J9VMBase::getPrivateConfig(jitConfig)->totalStaticVariableRefs ?
+   TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %6d of %6d static variables   (~%3d%%)", privateConfig->unresolvedStaticVariableRefs,
+                privateConfig->totalStaticVariableRefs,
+                (privateConfig->totalStaticVariableRefs ?
                  (UDATA) (
-                          ((SYS_FLOAT) TR_J9VMBase::getPrivateConfig(jitConfig)->unresolvedStaticVariableRefs /
-                           (SYS_FLOAT) TR_J9VMBase::getPrivateConfig(jitConfig)->totalStaticVariableRefs) * 100.0) : 0));
+                          ((SYS_FLOAT) privateConfig->unresolvedStaticVariableRefs /
+                           (SYS_FLOAT) privateConfig->totalStaticVariableRefs) * 100.0) : 0));
 
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"  %6d of %6d instance variables (~%3d%%)", jitConfig->unresolvedInstanceFieldRefs,
                 jitConfig->totalInstanceFieldRefs,
@@ -4775,11 +4778,12 @@ void JitShutdown(J9JITConfig * jitConfig)
 
 static void samplingObservationsLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo)
    {
+   TR_JitPrivateConfig *privateConfig = TR_J9VMBase::getPrivateConfig(jitConfig);
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseHeartbeat))
       {
       TR_VerboseLog::vlogAcquire();
       TR_VerboseLog::writeLine(TR_Vlog_INFO,"<samplewindow intervalTicks=%u interpretedMethodSamples=%u",
-                   TR_J9VMBase::getPrivateConfig(jitConfig)->samplingTickCount + 1 - compInfo->_stats._windowStartTick, compInfo->_stats._interpretedMethodSamples);
+                   privateConfig->samplingTickCount + 1 - compInfo->_stats._windowStartTick, compInfo->_stats._interpretedMethodSamples);
       TR_VerboseLog::writeLine(TR_Vlog_INFO,"  compiledMethodSamples=%u compiledMethodSamplesIgnored=%u",
                    compInfo->_stats._compiledMethodSamples, compInfo->_stats._compiledMethodSamplesIgnored);
       TR_VerboseLog::writeLine(TR_Vlog_INFO,"  samplesSent=%u samplesReceived=%u ticksInIdleMode=%u",
@@ -4790,7 +4794,7 @@ static void samplingObservationsLogic(J9JITConfig * jitConfig, TR::CompilationIn
       }
 
    // sample tick is about to be incremented for the samples we're about to take
-   compInfo->_stats._windowStartTick = TR_J9VMBase::getPrivateConfig(jitConfig)->samplingTickCount + 1;
+   compInfo->_stats._windowStartTick = privateConfig->samplingTickCount + 1;
    compInfo->_stats._sampleMessagesSent = 0;
    compInfo->_stats._sampleMessagesReceived = 0;
    compInfo->_stats._ticksInIdleMode = 0;
@@ -6170,8 +6174,9 @@ void inlinerAggressivenessLogic(TR::CompilationInfo *compInfo)
 static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
    {
    J9JITConfig * jitConfig = (J9JITConfig *) entryarg;
+   TR_JitPrivateConfig *privateConfig = TR_J9VMBase::getPrivateConfig(jitConfig);
    J9JavaVM * vm           = jitConfig->javaVM;
-   UDATA samplingPeriod    = std::max(static_cast<UDATA>(TR::Options::_minSamplingPeriod), TR_J9VMBase::getPrivateConfig(jitConfig)->samplingFrequency);
+   UDATA samplingPeriod    = std::max(static_cast<UDATA>(TR::Options::_minSamplingPeriod), privateConfig->samplingFrequency);
    uint64_t lastProcNumCheck = 0;
    bool idleMode = false;
    uint64_t lastMinuteCheck = 0; // for activities that need to be done rarely (every minute)
@@ -6197,18 +6202,18 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
    if (rc != JNI_OK)
       {
       // attach failed
-      j9thread_monitor_enter(TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor);
+      j9thread_monitor_enter(privateConfig->samplerMonitor);
       compInfo->setSamplingThreadLifetimeState(TR::CompilationInfo::SAMPLE_THR_FAILED_TO_ATTACH);
-      j9thread_monitor_notify_all(TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor);
-      j9thread_exit(TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor);
+      j9thread_monitor_notify_all(privateConfig->samplerMonitor);
+      j9thread_exit(privateConfig->samplerMonitor);
       return JNI_ERR; // not reachable
       }
    // Inform the waiting thread that attach was successful
-   j9thread_monitor_enter(TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor);
+   j9thread_monitor_enter(privateConfig->samplerMonitor);
    compInfo->setSamplerThread(samplerThread);
    compInfo->setSamplingThreadLifetimeState(TR::CompilationInfo::SAMPLE_THR_ATTACHED);
-   j9thread_monitor_notify_all(TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor);
-   j9thread_monitor_exit(TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor);
+   j9thread_monitor_notify_all(privateConfig->samplerMonitor);
+   j9thread_monitor_exit(privateConfig->samplerMonitor);
 
    // Read some stats about SCC. This code could have stayed in aboutToBootstrap,
    // but here we execute it on a separate thread and hide its overhead
@@ -6439,7 +6444,7 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
                staticCounters->resetAll();
             }
 
-         TR_J9VMBase::getPrivateConfig(jitConfig)->samplingTickCount++;
+         privateConfig->samplingTickCount++;
          uint32_t numActiveThreads = 0;
 
          j9thread_monitor_enter(vm->vmThreadListMutex);
@@ -6452,7 +6457,7 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
             {
                if (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS)
                   {
-                  vm->internalVMFunctions->J9SignalAsyncEvent(vm, currentThread, TR_J9VMBase::getPrivateConfig(jitConfig)->sampleInterruptHandlerKey);
+                  vm->internalVMFunctions->J9SignalAsyncEvent(vm, currentThread, privateConfig->sampleInterruptHandlerKey);
                   currentThread->stackOverflowMark = (UDATA *) J9_EVENT_SOM_VALUE;
                   numActiveThreads++;
                   }
@@ -6527,7 +6532,7 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
          // Must be protected by vm->vmThreadListMutex
          samplerThreadStateLogic(compInfo, fe, numActiveThreads);
 
-         UDATA samplingFreq = TR_J9VMBase::getPrivateConfig(jitConfig)->samplingFrequency;
+         UDATA samplingFreq = privateConfig->samplingFrequency;
          // TODO: Should the sampling frequency types in TR::Options be changed to more closely match the J9JITConfig types?
          samplingPeriod = std::max(static_cast<UDATA>(TR::Options::_minSamplingPeriod), (samplingFreq == MAX_SAMPLING_FREQUENCY) ? samplingFreq : samplingFreq * loadFactor);
 
@@ -6576,7 +6581,7 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
 
             // determine whether we're in class-load phase
             classLoadPhaseLogic(jitConfig, compInfo, diffTime);
-            // fprintf(stderr, "samplingPeriod=%u numProcs=%u numActiveThreads=%u samplingFrequency=%d\n", samplingPeriod, compInfo->getNumTargetCPUs(), numActiveThreads, TR_J9VMBase::getPrivateConfig(jitConfig)->samplingFrequency);
+            // fprintf(stderr, "samplingPeriod=%u numProcs=%u numActiveThreads=%u samplingFrequency=%d\n", samplingPeriod, compInfo->getNumTargetCPUs(), numActiveThreads, privateConfig->samplingFrequency);
 
             // compute jit state
             jitStateLogic(jitConfig, compInfo, diffTime); // Update JIT state before going to sleep
@@ -6607,17 +6612,17 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
    compInfo->setSamplerState(TR::CompilationInfo::SAMPLER_STOPPED);
    j9thread_monitor_exit(vm->vmThreadListMutex);
 
-   j9thread_monitor_enter(TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor);
+   j9thread_monitor_enter(privateConfig->samplerMonitor);
    // Tell the application thread that samplerThread has finished executing
    compInfo->setSamplingThreadLifetimeState(TR::CompilationInfo::SAMPLE_THR_DESTROYED);
-   j9thread_monitor_notify_all(TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor);
+   j9thread_monitor_notify_all(privateConfig->samplerMonitor);
 
 #ifdef J9VM_OPT_JAVA_OFFLOAD_SUPPORT
    if (vm->javaOffloadSwitchOffNoEnvWithReasonFunc != 0)
       (*vm->javaOffloadSwitchOffNoEnvWithReasonFunc)(vm, j9thread_self(), J9_JNI_OFFLOAD_SWITCH_JIT_SAMPLER_THREAD);
 #endif
 
-   j9thread_exit(TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor);       /* exit the monitor and terminate the thread */
+   j9thread_exit(privateConfig->samplerMonitor);       /* exit the monitor and terminate the thread */
 
    /* NO GUARANTEED EXECUTION BEYOND THIS POINT */
 
@@ -6877,6 +6882,7 @@ static void jitHookReleaseCodeLocalGCEnd(J9HookInterface **hook, UDATA eventNum,
 /// setupHooks is used in ABOUT_TO_BOOTSTRAP stage (13)
 int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
    {
+   TR_JitPrivateConfig *privateConfig = TR_J9VMBase::getPrivateConfig(jitConfig);
    TR_J9VMBase *vmj9 = (TR_J9VMBase *)vm;
 
    J9HookInterface * * vmHooks = javaVM->internalVMFunctions->getVMHookInterface(javaVM);
@@ -6905,26 +6911,26 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
       }
 
    // sync the two places for sampling frequency
-   TR_J9VMBase::getPrivateConfig(jitConfig)->samplingFrequency = TR::Options::getSamplingFrequency();
+   privateConfig->samplingFrequency = TR::Options::getSamplingFrequency();
 
    if(TR::Options::getCmdLineOptions()->getOption(TR_RTGCMapCheck))
       initJitGCMapCheckAsyncHook(javaVM, javaVM->internalVMFunctions->J9RegisterAsyncEvent(javaVM, jitGCMapCheck, NULL), jitConfig);
 
-   TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor = NULL; // initialize this field just in case
+   privateConfig->samplerMonitor = NULL; // initialize this field just in case
    TR::CompilationInfo *compInfo = getCompilationInfo(jitConfig);
    compInfo->setSamplingThreadLifetimeState(TR::CompilationInfo::SAMPLE_THR_NOT_CREATED); // just in case
-   if (TR_J9VMBase::getPrivateConfig(jitConfig)->samplingFrequency && !vmj9->isAOT_DEPRECATED_DO_NOT_USE())
+   if (privateConfig->samplingFrequency && !vmj9->isAOT_DEPRECATED_DO_NOT_USE())
       {
-      if ((TR_J9VMBase::getPrivateConfig(jitConfig)->sampleInterruptHandlerKey = javaVM->internalVMFunctions->J9RegisterAsyncEvent(javaVM, jitMethodSampleInterrupt, NULL)) < 0)
+      if ((privateConfig->sampleInterruptHandlerKey = javaVM->internalVMFunctions->J9RegisterAsyncEvent(javaVM, jitMethodSampleInterrupt, NULL)) < 0)
          {
          j9tty_printf(PORTLIB, "Error: Unable to install method sample handler\n");
          return -1;
          }
 
-      j9thread_monitor_init_with_name(&(TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor), 0, "JIT sampling thread");
+      j9thread_monitor_init_with_name(&(privateConfig->samplerMonitor), 0, "JIT sampling thread");
 
 
-      if (TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor)
+      if (privateConfig->samplerMonitor)
          {
          UDATA priority;
 
@@ -6947,38 +6953,38 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
                                                                   J9THREAD_CATEGORY_SYSTEM_JIT_THREAD))
             {
             // cannot create the sampling thread; will continue without
-            j9thread_monitor_destroy(TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor);
-            TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor = 0;
+            j9thread_monitor_destroy(privateConfig->samplerMonitor);
+            privateConfig->samplerMonitor = 0;
             compInfo->setSamplerState(TR::CompilationInfo::SAMPLER_NOT_INITIALIZED);
             }
          else
             {
             // wait here until the samplingThread attaches to the VM
-            j9thread_monitor_enter(TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor);
+            j9thread_monitor_enter(privateConfig->samplerMonitor);
             while (compInfo->getSamplingThreadLifetimeState() == TR::CompilationInfo::SAMPLE_THR_NOT_CREATED)
-               j9thread_monitor_wait(TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor);
-            j9thread_monitor_exit(TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor);
+               j9thread_monitor_wait(privateConfig->samplerMonitor);
+            j9thread_monitor_exit(privateConfig->samplerMonitor);
 
             // At this point the sampling thread either attached successfully and changed the
             // state to SAMPLE_THR_ATTACHED, or failed to attach and exited after changing
             // the state to SAMPLE_THR_FAILED_TO_ATTACH
             if (compInfo->getSamplingThreadLifetimeState() == TR::CompilationInfo::SAMPLE_THR_FAILED_TO_ATTACH) // no monitor needed for this access
                {
-               j9thread_monitor_destroy(TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor);
-               TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor = 0;
+               j9thread_monitor_destroy(privateConfig->samplerMonitor);
+               privateConfig->samplerMonitor = 0;
                jitConfig->samplerThread = 0;
                compInfo->setSamplerState(TR::CompilationInfo::SAMPLER_NOT_INITIALIZED);
                }
             }
          }
 
-      if (!TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor)
+      if (!privateConfig->samplerMonitor)
          {
          j9tty_printf(PORTLIB, "\nJIT: Method sample thread failed to start -- disabling sampling.\n");
          }
       }
    // If we cannot start the sampling thread or don't want to, then enter NON_STARTUP mode directly
-   if (!TR_J9VMBase::getPrivateConfig(jitConfig)->samplerMonitor)
+   if (!privateConfig->samplerMonitor)
        javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_NOT_STARTUP);
 
    if (jitConfig->runtimeFlags & J9JIT_TOSS_CODE)

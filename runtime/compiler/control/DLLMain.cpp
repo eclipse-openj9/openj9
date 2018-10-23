@@ -609,10 +609,6 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
             ((TR_JitPrivateConfig*)jitConfig->privateConfig)->vLogFile = 0;
             j9jit_fclose(((TR_JitPrivateConfig*)jitConfig->privateConfig)->rtLogFile);
             ((TR_JitPrivateConfig*)jitConfig->privateConfig)->rtLogFile = 0;
-            j9jit_fcloseId(TR_J9VMBase::getPrivateConfig(jitConfig)->tLogFile);
-            TR_J9VMBase::getPrivateConfig(jitConfig)->tLogFile = -1;
-            j9jit_fcloseId(TR_J9VMBase::getPrivateConfig(jitConfig)->tLogFileTemp);
-            TR_J9VMBase::getPrivateConfig(jitConfig)->tLogFileTemp = -1;
 
             static char * printIPFanInStats = feGetEnv("TR_PrintIPFanInStats");
             if (printIPFanInStats)

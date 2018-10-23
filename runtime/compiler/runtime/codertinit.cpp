@@ -268,6 +268,7 @@ void codert_freeJITConfig(J9JavaVM * javaVM)
 
    if (jitConfig)
       {
+      TR_JitPrivateConfig *privateConfig = TR_J9VMBase::getPrivateConfig(jitConfig);
       PORT_ACCESS_FROM_JAVAVM(javaVM);
 
       j9ThunkTableFree(javaVM);
@@ -279,15 +280,15 @@ void codert_freeJITConfig(J9JavaVM * javaVM)
          javaVM->internalVMFunctions->freeMemorySegmentList(javaVM, jitConfig->codeCacheList);
 
 #if defined(TR_TARGET_S390)
-      if (TR_J9VMBase::getPrivateConfig(jitConfig)->pseudoTOC)
-         j9mem_free_memory(TR_J9VMBase::getPrivateConfig(jitConfig)->pseudoTOC);
+      if (privateConfig->pseudoTOC)
+         j9mem_free_memory(privateConfig->pseudoTOC);
 #endif
 
-      if (TR_J9VMBase::getPrivateConfig(jitConfig)->compilationInfo)
+      if (privateConfig->compilationInfo)
          {
-         TR_J9VMBase *fej9 = (TR_J9VMBase *)TR_J9VMBase::getPrivateConfig(jitConfig)->compilationInfo;
+         TR_J9VMBase *fej9 = (TR_J9VMBase *)privateConfig->compilationInfo;
          fej9->freeSharedCache();
-         TR_J9VMBase::getPrivateConfig(jitConfig)->compilationInfo = 0;
+         privateConfig->compilationInfo = 0;
          }
 
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
@@ -344,7 +345,7 @@ void codert_freeJITConfig(J9JavaVM * javaVM)
 
 
       // Destroy faint blocks
-      OMR::FaintCacheBlock *currentFaintBlock = (OMR::FaintCacheBlock *)TR_J9VMBase::getPrivateConfig(jitConfig)->methodsToDelete;
+      OMR::FaintCacheBlock *currentFaintBlock = (OMR::FaintCacheBlock *)privateConfig->methodsToDelete;
       while (currentFaintBlock)
          {
          PORT_ACCESS_FROM_JITCONFIG(jitConfig);
@@ -352,7 +353,7 @@ void codert_freeJITConfig(J9JavaVM * javaVM)
          j9mem_free_memory(currentFaintBlock);
          currentFaintBlock = nextFaintBlock;
          }
-      TR_J9VMBase::getPrivateConfig(jitConfig)->methodsToDelete = NULL;
+      privateConfig->methodsToDelete = NULL;
 
 
       J9HookInterface** hookInterface = J9_HOOK_INTERFACE(jitConfig->hookInterface);
