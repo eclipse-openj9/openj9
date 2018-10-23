@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -94,6 +94,7 @@ jvmtiGetJNIFunctionTable(jvmtiEnv* env,
 	J9JVMTIData * jvmtiData = J9JVMTI_DATA_FROM_VM(vm);
 	jvmtiError rc = JVMTI_ERROR_NONE;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	jniNativeInterface *rv_function_table = NULL;
 
 	Trc_JVMTI_jvmtiGetJNIFunctionTable_Entry(env);
 
@@ -103,8 +104,8 @@ jvmtiGetJNIFunctionTable(jvmtiEnv* env,
 
 	/* Copy the table into newly-allocated memory */
 
-	*function_table = j9mem_allocate_memory(sizeof(jniNativeInterface), J9MEM_CATEGORY_JVMTI_ALLOCATE);
-	if (*function_table == NULL) {
+	rv_function_table = j9mem_allocate_memory(sizeof(jniNativeInterface), J9MEM_CATEGORY_JVMTI_ALLOCATE);
+	if (rv_function_table == NULL) {
 		rc = JVMTI_ERROR_OUT_OF_MEMORY;
 	} else {
 		/* Get the JVMTI mutex to ensure this operation is atomic with SetJNIFunctionTable */
@@ -115,6 +116,9 @@ jvmtiGetJNIFunctionTable(jvmtiEnv* env,
 	}
 
 done:
+	if (NULL != function_table) {
+		*function_table = rv_function_table;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetJNIFunctionTable);
 }
 

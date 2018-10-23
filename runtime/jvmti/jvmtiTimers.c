@@ -30,6 +30,7 @@ jvmtiGetCurrentThreadCpuTimerInfo(jvmtiEnv* env,
 	jvmtiTimerInfo* info_ptr)
 {
 	jvmtiError rc;
+	jvmtiTimerInfo rv_info = {0};
 
 	Trc_JVMTI_jvmtiGetCurrentThreadCpuTimerInfo_Entry(env);
 
@@ -38,15 +39,16 @@ jvmtiGetCurrentThreadCpuTimerInfo(jvmtiEnv* env,
 
 	ENSURE_NON_NULL(info_ptr);
 
-	memset(info_ptr, 0, sizeof(jvmtiTimerInfo));
-
-	info_ptr->max_value = (jlong)-1;							/* according to JVMTI spec an unsigned value held as a jlong */
-	info_ptr->may_skip_forward = JNI_FALSE;
-	info_ptr->may_skip_backward = JNI_FALSE;
-	info_ptr->kind = JVMTI_TIMER_TOTAL_CPU;
+	rv_info.max_value = (jlong)-1;							/* according to JVMTI spec an unsigned value held as a jlong */
+	rv_info.may_skip_forward = JNI_FALSE;
+	rv_info.may_skip_backward = JNI_FALSE;
+	rv_info.kind = JVMTI_TIMER_TOTAL_CPU;
 	rc = JVMTI_ERROR_NONE;
 
 done:
+	if (NULL != info_ptr) {
+		*info_ptr = rv_info;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetCurrentThreadCpuTimerInfo);
 }
 
@@ -56,6 +58,7 @@ jvmtiGetCurrentThreadCpuTime(jvmtiEnv* env,
 	jlong* nanos_ptr)
 {
 	jvmtiError rc;
+	jlong rv_nanos = 0;
 
 	Trc_JVMTI_jvmtiGetCurrentThreadCpuTime_Entry(env);
 
@@ -64,10 +67,13 @@ jvmtiGetCurrentThreadCpuTime(jvmtiEnv* env,
 
 	ENSURE_NON_NULL(nanos_ptr);
 
-	*nanos_ptr = (jlong)omrthread_get_self_cpu_time(omrthread_self());
+	rv_nanos = (jlong)omrthread_get_self_cpu_time(omrthread_self());
 	rc = JVMTI_ERROR_NONE;
 
 done:
+	if (NULL != nanos_ptr) {
+		*nanos_ptr = rv_nanos;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetCurrentThreadCpuTime);
 }
 
@@ -77,6 +83,7 @@ jvmtiGetThreadCpuTimerInfo(jvmtiEnv* env,
 	jvmtiTimerInfo* info_ptr)
 {
 	jvmtiError rc;
+	jvmtiTimerInfo rv_info = {0};
 
 	Trc_JVMTI_jvmtiGetThreadCpuTimerInfo_Entry(env);
 
@@ -85,15 +92,16 @@ jvmtiGetThreadCpuTimerInfo(jvmtiEnv* env,
 
 	ENSURE_NON_NULL(info_ptr);
 
-	memset(info_ptr, 0, sizeof(jvmtiTimerInfo));
-
-	info_ptr->max_value = (jlong)-1;							/* according to JVMTI spec an unsigned value held as a jlong */
-	info_ptr->may_skip_forward = JNI_FALSE;
-	info_ptr->may_skip_backward = JNI_FALSE;
-	info_ptr->kind = JVMTI_TIMER_TOTAL_CPU;
+	rv_info.max_value = (jlong)-1;							/* according to JVMTI spec an unsigned value held as a jlong */
+	rv_info.may_skip_forward = JNI_FALSE;
+	rv_info.may_skip_backward = JNI_FALSE;
+	rv_info.kind = JVMTI_TIMER_TOTAL_CPU;
 	rc = JVMTI_ERROR_NONE;
 
 done:
+	if (NULL != info_ptr) {
+		*info_ptr = rv_info;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetThreadCpuTimerInfo);
 }
 
@@ -106,6 +114,7 @@ jvmtiGetThreadCpuTime(jvmtiEnv* env,
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	J9VMThread * currentThread;
 	jvmtiError rc;
+	jlong rv_nanos = 0;
 
 	Trc_JVMTI_jvmtiGetThreadCpuTime_Entry(env);
 
@@ -120,14 +129,14 @@ jvmtiGetThreadCpuTime(jvmtiEnv* env,
 
 		if (thread == NULL) {
 			ENSURE_NON_NULL(nanos_ptr);
-			*nanos_ptr = (jlong)omrthread_get_cpu_time(omrthread_self());
+			rv_nanos = (jlong)omrthread_get_cpu_time(omrthread_self());
 		} else {
 			rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
 			if (rc == JVMTI_ERROR_NONE) {
 				if (nanos_ptr == NULL) {
 					rc = JVMTI_ERROR_NULL_POINTER;
 				} else {
-					*nanos_ptr = (jlong)omrthread_get_cpu_time(targetThread->osThread);
+					rv_nanos = (jlong)omrthread_get_cpu_time(targetThread->osThread);
 				}
 				releaseVMThread(currentThread, targetThread);
 			}
@@ -136,6 +145,9 @@ done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != nanos_ptr) {
+		*nanos_ptr = rv_nanos;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetThreadCpuTime);
 }
 
@@ -145,20 +157,22 @@ jvmtiGetTimerInfo(jvmtiEnv* env,
 	jvmtiTimerInfo* info_ptr)
 {
 	jvmtiError rc;
+	jvmtiTimerInfo rv_info = {0};
 
 	Trc_JVMTI_jvmtiGetTimerInfo_Entry(env);
 
 	ENSURE_NON_NULL(info_ptr);
 
-	memset(info_ptr, 0, sizeof(jvmtiTimerInfo));
-
-	info_ptr->max_value = (jlong)-1;							/* according to JVMTI spec an unsigned value held as a jlong */
-	info_ptr->may_skip_forward = JNI_TRUE;
-	info_ptr->may_skip_backward = JNI_TRUE;
-	info_ptr->kind = JVMTI_TIMER_ELAPSED;
+	rv_info.max_value = (jlong)-1;							/* according to JVMTI spec an unsigned value held as a jlong */
+	rv_info.may_skip_forward = JNI_TRUE;
+	rv_info.may_skip_backward = JNI_TRUE;
+	rv_info.kind = JVMTI_TIMER_ELAPSED;
 	rc = JVMTI_ERROR_NONE;
 
 done:
+	if (NULL != info_ptr) {
+		*info_ptr = rv_info;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetTimerInfo);
 }
 
@@ -172,6 +186,7 @@ jvmtiGetTime(jvmtiEnv* env,
 	jvmtiError rc;
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	jlong rv_nanos = 0;
 
 	Trc_JVMTI_jvmtiGetTime_Entry(env);
 
@@ -182,15 +197,18 @@ jvmtiGetTime(jvmtiEnv* env,
 
 	/* freq is "ticks per s" */
 	if ( freq == J9JVMTI_NANO_TICKS ) {
-		*nanos_ptr = ticks;
+		rv_nanos = ticks;
 	} else if ( freq < J9JVMTI_NANO_TICKS ) {
-		*nanos_ptr = ticks * (J9JVMTI_NANO_TICKS / freq);
+		rv_nanos = ticks * (J9JVMTI_NANO_TICKS / freq);
 	} else {
-		*nanos_ptr = ticks / (freq / J9JVMTI_NANO_TICKS);
+		rv_nanos = ticks / (freq / J9JVMTI_NANO_TICKS);
 	}
 	rc = JVMTI_ERROR_NONE;
 
 done:
+	if (NULL != nanos_ptr) {
+		*nanos_ptr = rv_nanos;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetTime);
 }
 
@@ -203,6 +221,7 @@ jvmtiGetAvailableProcessors(jvmtiEnv* env,
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	UDATA cpuCount;
+	jint rv_processor_count = 0;
 
 	Trc_JVMTI_jvmtiGetAvailableProcessors_Entry(env);
 
@@ -210,10 +229,13 @@ jvmtiGetAvailableProcessors(jvmtiEnv* env,
 
 	/* This implementation should be kept consistent with JVM_ActiveProcessorCount */
 	cpuCount = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
-	*processor_count_ptr = ((cpuCount < 1) ? 1 : (jint) cpuCount);
+	rv_processor_count = ((cpuCount < 1) ? 1 : (jint) cpuCount);
 	rc = JVMTI_ERROR_NONE;
 
 done:
+	if (NULL != processor_count_ptr) {
+		*processor_count_ptr = rv_processor_count;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetAvailableProcessors);
 }
 

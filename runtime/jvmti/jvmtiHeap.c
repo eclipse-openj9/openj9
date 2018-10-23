@@ -167,6 +167,7 @@ jvmtiGetTag(jvmtiEnv* env,
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	J9VMThread * currentThread;
 	jvmtiError rc;
+	jlong rv_tag = 0;
 
 	Trc_JVMTI_jvmtiGetTag_Entry(env);
 
@@ -198,9 +199,7 @@ jvmtiGetTag(jvmtiEnv* env,
 
 			objectTag = hashTableFind(((J9JVMTIEnv *)env)->objectTagTable, &entry);
 			if (objectTag) {
-				*tag_ptr = objectTag->tag;
-			} else {
-				*tag_ptr = 0;
+				rv_tag = objectTag->tag;
 			}
 
 			omrthread_monitor_exit(((J9JVMTIEnv *)env)->mutex);
@@ -213,6 +212,9 @@ done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != tag_ptr) {
+		*tag_ptr = rv_tag;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetTag);
 }
 
@@ -325,6 +327,9 @@ jvmtiGetObjectsWithTags(jvmtiEnv* env,
 	J9VMThread * currentThread;
 	jvmtiError rc;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	jint rv_count = 0;
+	jobject *rv_object_result = NULL;
+	jlong *rv_tag_result = NULL;
 
 	Trc_JVMTI_jvmtiGetObjectsWithTags_Entry(env);
 
@@ -343,7 +348,6 @@ jvmtiGetObjectsWithTags(jvmtiEnv* env,
 		ENSURE_NON_NULL(count_ptr);
 
 		if ( tag_count == 0 ) {
-			*count_ptr = 0;
 			JVMTI_ERROR(JVMTI_ERROR_NONE);
 		}
 
@@ -382,13 +386,13 @@ jvmtiGetObjectsWithTags(jvmtiEnv* env,
 
 		if (rc == JVMTI_ERROR_NONE) {
 
-			*count_ptr = results.count;
+			rv_count = results.count;
 
 			if (object_result_ptr) {
-				*object_result_ptr = results.objects;
+				rv_object_result = results.objects;
 			}
 			if (tag_result_ptr) {
-				*tag_result_ptr = results.tags;
+				rv_tag_result = results.tags;
 			}
 
 			/* Fill in elements ... unwinds results.count */
@@ -408,6 +412,15 @@ done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != count_ptr) {
+		*count_ptr = rv_count;
+	}
+	if (NULL != object_result_ptr) {
+		*object_result_ptr = rv_object_result;
+	}
+	if (NULL != tag_result_ptr) {
+		*tag_result_ptr = rv_tag_result;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetObjectsWithTags);
 }
 
