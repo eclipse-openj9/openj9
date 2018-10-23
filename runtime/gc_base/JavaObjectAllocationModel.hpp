@@ -61,10 +61,11 @@ private:
 	 */
 private:
 
+	MMINLINE J9Class *getClass() { return J9_CURRENT_CLASS(_class); }
+
 protected:
 
 public:
-	MMINLINE J9Class *getClass() { return J9_CURRENT_CLASS(_class); }
 
 	/**
 	 * Initializer.
