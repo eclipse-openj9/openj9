@@ -134,18 +134,14 @@ generates records relating the array class to each of its (transitive)
 component classes until the leaf component class is reached, and then
 generates a class chain validation for the leaf component class.
 
-Some class records use a ROM class offset or a class chain offset in
-order to identify the class by name:
-- ClassByName and SystemClassByName use ROM class offsets.
-- ProfiledClass uses a class chain offset.
-
-Since array ROM classes are not in the shared class cache, these records
-are unable to name array classes directly. If an array class is found in
-any of these ways, the SVM finds the leaf component class, then creates
-a record for the leaf component instead of the array (and if necessary a
-class chain validation for it), followed by records relating each
-(transitive) component type to its corresponding array type, until the
-original array class is reached.
+Some class records (ClassByName, SystemClassByName, and ProfiledClass)
+use a class chain offset in order to identify the class by name. Since
+array ROM classes are not in the shared class cache, these records are
+unable to name array classes directly. If an array class is found in any
+of these ways, the SVM finds the leaf component class, then creates a
+record for the leaf component instead of the array, followed by records
+relating each (transitive) component type to its corresponding array
+type, until the original array class is reached.
 
 ### Primitive Classes
 

@@ -205,7 +205,7 @@ struct TR_RelocationRecordValidateClassByNameBinaryTemplate : public TR_Relocati
    {
    uint16_t _classID;
    uint16_t _beholderID;
-   UDATA _romClassOffsetInSCC;
+   UDATA _classChainOffsetInSCC;
    };
 
 struct TR_RelocationRecordValidateProfiledClassBinaryTemplate : public TR_RelocationRecordBinaryTemplate
@@ -268,7 +268,7 @@ struct TR_RelocationRecordValidateClassInstanceOfClassBinaryTemplate : public TR
 struct TR_RelocationRecordValidateSystemClassByNameBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
    uint16_t _systemClassID;
-   UDATA _romClassOffsetInSCC;
+   UDATA _classChainOffsetInSCC;
    };
 
 struct TR_RelocationRecordValidateClassFromITableIndexCPBinaryTemplate : public TR_RelocationRecordBinaryTemplate

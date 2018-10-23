@@ -1169,10 +1169,10 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateClassByNameBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate Class By Name: classID=%d beholderID=%d romClassOffsetInSCC=%p ",
+               traceMsg(self()->comp(), "\n Validate Class By Name: classID=%d beholderID=%d classChainOffsetInSCC=%p ",
                         (uint32_t)binaryTemplate->_classID,
                         (uint32_t)binaryTemplate->_beholderID,
-                        binaryTemplate->_romClassOffsetInSCC);
+                        binaryTemplate->_classChainOffsetInSCC);
                }
             cursor += sizeof(TR_RelocationRecordValidateClassByNameBinaryTemplate);
             self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
@@ -1368,9 +1368,9 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateSystemClassByNameBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate System Class By Name: systemClassID=%d romClassOffsetInSCC=%p ",
+               traceMsg(self()->comp(), "\n Validate System Class By Name: systemClassID=%d classChainOffsetInSCC=%p ",
                         (uint32_t)binaryTemplate->_systemClassID,
-                        binaryTemplate->_romClassOffsetInSCC);
+                        binaryTemplate->_classChainOffsetInSCC);
                }
             cursor += sizeof(TR_RelocationRecordValidateSystemClassByNameBinaryTemplate);
             self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
