@@ -282,6 +282,8 @@ def archive() {
             }
             if (ARTIFACTORY_SERVER) {
                 def server = Artifactory.server ARTIFACTORY_SERVER
+                // set connection timeout to 10 mins to avoid timeout on slow platforms
+                server.connection.timeout = 600
                 def artifactory_upload_dir = "${ARTIFACTORY_REPO}/${JOB_NAME}/${BUILD_ID}/"
                 def uploadSpec = """{
                     "files":[
