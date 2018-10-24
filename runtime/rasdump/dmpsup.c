@@ -1206,9 +1206,9 @@ JVM_OnUnload(JavaVM *vm, void *reserved)
 }
 
 /**
- * On Linux and OSX the first call to get a backtrace can cause some initialisation
+ * On Linux and OSX the first call to get a backtrace can cause some initialization
  * work. If this is called in a signal handler with other threads paused then one of
- * those can hold a lock required for the initialisation to complete. This causes
+ * those can hold a lock required for the initialization to complete. This causes
  * a hang. Therefore we do one redundant call to backtrace at startup to prevent
  * java dumps hanging the VM.
  * 
@@ -1291,7 +1291,7 @@ initSystemInfo(J9JavaVM *vm)
 }
 
 /**
- * We need to read the -Xdump:directory option before we start initialising the
+ * We need to read the -Xdump:directory option before we start initializing the
  * default dump agents.
  */
 static omr_error_t

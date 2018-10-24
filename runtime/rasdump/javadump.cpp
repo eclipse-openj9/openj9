@@ -1732,7 +1732,7 @@ JavaCoreDumpWriter::writeMonitorSection(void)
 		UDATA stateFault = stateClean;
 
 		if (i == 0) {
-			// The walk may have started or restarted which is why initialisation is in the loop.
+			// The walk may have started or restarted which is why initialization is in the loop.
 			memset(threadStore, 0, (_AllocatedVMThreadCount+1) * sizeof(blocked_thread_record));
 		}
 
