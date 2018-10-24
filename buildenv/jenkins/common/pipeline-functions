@@ -227,10 +227,10 @@ def get_causes_recursively(cause) {
     return cause_string
 }
 
-def build_with_slack(JOB_NAME, PARAMETERS) {
+def build_with_slack(DOWNSTREAM_JOB_NAME, PARAMETERS) {
     def DOWNSTREAM_JOB_NUMBER = ''
     def DOWNSTREAM_JOB_URL = ''
-    def JOB = build job: JOB_NAME, parameters: PARAMETERS, propagate: false
+    def JOB = build job: DOWNSTREAM_JOB_NAME, parameters: PARAMETERS, propagate: false
 
     if (JOB.resultIsWorseOrEqualTo('UNSTABLE')) {
         try {
@@ -248,16 +248,21 @@ def build_with_slack(JOB_NAME, PARAMETERS) {
         build_causes_string = get_causes(currentBuild)
 
         if (JOB.result == "UNSTABLE") {
-            echo "WARNING: Downstream job ${JOB_NAME} is unstable. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
+            echo "WARNING: Downstream job ${DOWNSTREAM_JOB_NAME} is unstable. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
             currentBuild.result = "UNSTABLE"
             if (SLACK_CHANNEL) {
-                slackSend channel: SLACK_CHANNEL, color: 'warning', message: "Unstable: ${JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)\nStarted by ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)\n${build_causes_string}"
+                slackSend channel: SLACK_CHANNEL, color: 'warning', message: "Unstable: ${DOWNSTREAM_JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)\nStarted by ${JOB_NAME} #${BUILD_NUMBER} (<${BUILD_URL}|Open>)\n${build_causes_string}"
             }
         } else {
             if (SLACK_CHANNEL) {
-                slackSend channel: SLACK_CHANNEL, color: 'danger', message: "Failure in: ${JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)\nStarted by ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)\n${build_causes_string}"
+                slackSend channel: SLACK_CHANNEL, color: 'danger', message: "Failure in: ${DOWNSTREAM_JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)\nStarted by ${JOB_NAME} #${BUILD_NUMBER} (<${BUILD_URL}|Open>)\n${build_causes_string}\nWould you like to restart the job? (<${RUN_DISPLAY_URL}|Open>)"
             }
-            error "Downstream job ${JOB_NAME} did not pass. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
+            timeout(time: RESTART_TIMEOUT, unit: RESTART_TIMEOUT_UNITS) {
+                input message: "Downstream job ${DOWNSTREAM_JOB_NAME} failed. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}\nRestart failed job '${DOWNSTREAM_JOB_NAME}'?", ok: 'Restart'
+                // If restart is aborted or is timed-out, an error is thrown
+            }
+            // If restart is approved, recursively call this function until we get a pass or a restart-rejection
+            return build_with_slack(DOWNSTREAM_JOB_NAME, PARAMETERS)
         }
     }
     return JOB
