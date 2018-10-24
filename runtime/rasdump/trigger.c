@@ -69,7 +69,7 @@ typedef enum J9RASdumpMatchResult
 static UDATA rasDumpSuspendKey = 0;
 static UDATA rasDumpFirstThread = 0;
 
-/* Postpone GC and thread event hooks until later phases of VM initialisation */
+/* Postpone GC and thread event hooks until later phases of VM initialization. */
 UDATA rasDumpPostponeHooks = \
 	J9RAS_DUMP_ON_CLASS_UNLOAD | \
 	J9RAS_DUMP_ON_GLOBAL_GC | \
@@ -1160,11 +1160,11 @@ rasDumpEnableHooks(J9JavaVM *vm, UDATA eventFlags)
 
 /**
  * rasDumpFlushHooks() - enable hooks for events that were postponed from the initial dump agent 
- * initialisation. There are now two phases: GC event hooks are enabled at TRACE_ENGINE_INITIALIZED,
+ * initialization. There are now two phases: GC event hooks are enabled at TRACE_ENGINE_INITIALIZED,
  * and thread event hooks are enabled at VM_INITIALIZATION_COMPLETE. See CMVC 199853 and CMVC 200360.
  * 
  * @param[in] vm - pointer to J9JavaVM structure
- * @param[in] stage - VM initialisation stage
+ * @param[in] stage - VM initialization stage
  * @return void
  */
 void 
