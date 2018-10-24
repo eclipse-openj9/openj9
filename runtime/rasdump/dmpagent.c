@@ -37,12 +37,12 @@
 #include <stdlib.h>
 #include <errno.h>
 #endif
-#ifdef LINUX
+#if defined(LINUX) || defined(OSX)
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#endif
+#endif /*  defined(LINUX) || defined(OSX) */
 
 #include "ut_j9dmp.h"
 
@@ -287,15 +287,17 @@ static const J9RASdumpSpec rasDumpSpecs[] =
 		  1, 1,
 #if defined(WIN32)
 		  "windbg -p %pid -c \".setdll %vmbin\\j9windbg\"",
-#elif defined(LINUX)
+#elif defined(LINUX) /* defined(WIN32) */
 		  "gdb -p %pid",
-#elif defined(AIXPPC)
+#elif defined(AIXPPC) /* defined(WIN32) */
 		  "dbx -a %pid",
-#elif defined(J9ZOS390)
+#elif defined(J9ZOS390) /* defined(WIN32) */
 		  "dbx -a %pid",
-#else
+#elif defined(OSX) /* defined(WIN32) */
+		  "lldb -p %pid",
+#else /* defined(WIN32) */
 		  NULL,
-#endif
+#endif /* defined(WIN32) */
 		  NULL,
 		  0,
 		  J9RAS_DUMP_DO_SUSPEND_OTHER_DUMPS,
@@ -677,7 +679,7 @@ doSystemDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 	const char* cacheDir = NULL;
 	J9RAS* rasStruct = vm->j9ras;
 
-#if defined(J9VM_OPT_SHARED_CLASSES) && defined(LINUX)
+#if defined(J9VM_OPT_SHARED_CLASSES) && (defined(LINUX) || defined(OSX))
 	J9SharedClassJavacoreDataDescriptor sharedClassData;
 	
 	/* set up cacheDir with the Shared Classes Cache file if it is in use. */
@@ -689,7 +691,7 @@ doSystemDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 			}
 		}
 	}
-#endif
+#endif /* defined(J9VM_OPT_SHARED_CLASSES) && (defined(LINUX) || defined(OSX)) */
 
 	reportDumpRequest(privatePortLibrary,context,"System",label);
 	
@@ -821,7 +823,7 @@ doToolDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 				j9mem_free_memory(unicodePath);
 			}
 		}
-#elif (defined(LINUX) && !defined(J9ZTPF)) || defined(AIXPPC)
+#elif (defined(LINUX) && !defined(J9ZTPF)) || defined(AIXPPC) || defined(OSX) /* defined(WIN32) */
 		{
 			IDATA retVal;
 
@@ -842,7 +844,7 @@ doToolDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 				omrthread_sleep(msec);
 			}
 		}
-#elif defined(J9ZOS390)
+#elif defined(J9ZOS390) /* defined(WIN32) */
 		{
 			const char *argv[] = {"/bin/sh", "-c", NULL, NULL};
 			extern const char **environ;
@@ -869,9 +871,9 @@ doToolDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 				omrthread_sleep(msec);
 			}
 		}
-#else
+#else /* defined(WIN32) */
 		j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_DUMP_NOT_AVAILABLE_STR, "Tool");
-#endif
+#endif /* defined(WIN32) */
 	} else {
 		j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_DMP_MISSING_EXECUTABLE_STR);
 	}
@@ -1339,16 +1341,16 @@ fixDumpLabel(J9JavaVM *vm, const J9RASdumpSpec *spec, char **labelPtr, IDATA new
 				int ok = 0;
 
 				/* Get absolute name */
-#if defined (WIN32)
+#if defined(WIN32)
 				ok = (GetCurrentDirectoryW(J9_MAX_DUMP_PATH, unicodeTemp) != 0);
 				if (ok) {
 					WideCharToMultiByte(OS_ENCODING_CODE_PAGE, OS_ENCODING_WC_FLAGS, unicodeTemp, -1,  prefix, J9_MAX_DUMP_PATH, NULL, NULL);
 				}
-#elif defined(LINUX) || defined(AIXPPC)
+#elif defined(LINUX) || defined(AIXPPC) || defined(OSX) /* defined(WIN32) */
 				ok = (getcwd(prefix, J9_MAX_DUMP_PATH) != 0);
-#elif defined(J9ZOS390)
+#elif defined(J9ZOS390) /* defined(WIN32) */
 				ok = (atoe_getcwd(prefix, J9_MAX_DUMP_PATH) != 0);
-#endif
+#endif /* defined(WIN32) */
 
 				if (ok) {
 					prefix[J9_MAX_DUMP_PATH-1] = '\0';
