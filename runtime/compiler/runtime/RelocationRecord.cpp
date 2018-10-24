@@ -1276,7 +1276,7 @@ TR_RelocationRecordHelperAddress::preparePrivateData(TR_RelocationRuntime *reloR
    TR_ASSERT(jitConfig != NULL, "Relocation runtime doesn't have a jitConfig!");
    J9JavaVM *javaVM = jitConfig->javaVM;
    reloPrivateData->_helperID = helperID(reloTarget);
-   reloPrivateData->_helper = (uint8_t *) (jitConfig->aotrt_getRuntimeHelper)(reloPrivateData->_helperID);
+   reloPrivateData->_helper = (uint8_t *) (TR_J9VMBase::getPrivateConfig(jitConfig)->aotrt_getRuntimeHelper)(reloPrivateData->_helperID);
    RELO_LOG(reloRuntime->reloLogger(), 6, "\tpreparePrivateData: helperAddress %p\n", reloPrivateData->_helper);
    }
 

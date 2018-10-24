@@ -178,19 +178,20 @@ typedef struct TR_JitPrivateConfig
    UDATA  totalInstanceFieldRefs;
    UDATA  totalVirtualMethodRefs;
    UDATA  totalInterfaceMethodRefs;
-   UDATA  codeCacheKB;
-   UDATA  dataCacheKB;
-   UDATA  codeCachePadKB;
    void*  tracingHook;
    UDATA  codeCacheAlignment;
    UDATA  samplingFrequency;
    UDATA  samplingTickCount;
    omrthread_monitor_t  samplerMonitor;
    void*  compilationInfo;
-   void*  pseudoTOC;
    void*  methodsToDelete;
    void*  processorInfo;
    IDATA  sampleInterruptHandlerKey;
+   void*  ( *jitGetStackMapFromPC)(struct J9JavaVM * javaVM, struct J9JITExceptionTable * exceptionTable, UDATA jitPC) ;
+   U_32  ( *getJitRegisterMap)(struct J9JITExceptionTable *metadata, void * stackMap) ;
+   void*  ( *aotrt_getRuntimeHelper)(int helperNumber) ;
+   UDATA  ( *aotrt_lookupSendTargetForThunk)(struct J9JavaVM * javaVM, int thunkNumber) ;
+
    } TR_JitPrivateConfig;
 
 

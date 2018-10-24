@@ -246,11 +246,6 @@ J9JITConfig * codert_onload(J9JavaVM * javaVM)
    jitConfig->runtimeFlags |=  J9JIT_PATCHING_FENCE_TYPE;
 #endif
 
-#if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT)
-   jitConfig->aotrt_getRuntimeHelper = getRuntimeHelperValue;
-   jitConfig->aotrt_lookupSendTargetForThunk = lookupSendTargetForThunk;
-#endif  /* J9VM_INTERP_AOT_RUNTIME_SUPPORT */
-
    jitConfig->osrFramesMaximumSize = (UDATA) 8192;
    jitConfig->osrScratchBufferMaximumSize = (UDATA) 1024;
    jitConfig->osrStackFrameMaximumSize = (UDATA) 8192;
@@ -452,19 +447,14 @@ void codert_init_helpers_and_targets(J9JITConfig * jitConfig, char isSMP)
 #endif
 
    jitConfig->jitGetExceptionTableFromPC = jitGetExceptionTableFromPC;
-   jitConfig->jitGetStackMapFromPC = getStackMapFromJitPC;
+   TR_J9VMBase::getPrivateConfig(jitConfig)->jitGetStackMapFromPC = getStackMapFromJitPC;
    jitConfig->jitGetInlinerMapFromPC = jitGetInlinerMapFromPC;
    jitConfig->getJitInlineDepthFromCallSite = getJitInlineDepthFromCallSite;
-   jitConfig->getJitInlinedCallInfo = getJitInlinedCallInfo;
-   jitConfig->getStackMapFromJitPC = getStackMapFromJitPC;
    jitConfig->getFirstInlinedCallSite = getFirstInlinedCallSite;
    jitConfig->getNextInlinedCallSite = getNextInlinedCallSite;
-   jitConfig->hasMoreInlinedMethods = hasMoreInlinedMethods;
    jitConfig->getInlinedMethod = getInlinedMethod;
-   jitConfig->getByteCodeIndex = getByteCodeIndex;
-   jitConfig->getByteCodeIndexFromStackMap = getByteCodeIndexFromStackMap;
    jitConfig->getCurrentByteCodeIndexAndIsSameReceiver = getCurrentByteCodeIndexAndIsSameReceiver;
-   jitConfig->getJitRegisterMap = getJitRegisterMap;
+   TR_J9VMBase::getPrivateConfig(jitConfig)->getJitRegisterMap = getJitRegisterMap;
    jitConfig->jitReportDynamicCodeLoadEvents = jitReportDynamicCodeLoadEvents;
 #if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
    jitConfig->jitClassesRedefined = jitClassesRedefined;
@@ -501,9 +491,9 @@ void codert_init_helpers_and_targets(J9JITConfig * jitConfig, char isSMP)
 #endif
 
    // OSR hooks
-   //jitConfig->jitOSRPatchMethod = preOSR;
-   //jitConfig->jitOSRUnpatchMethod = postOSR;
-   //jitConfig->jitCanResumeAtOSRPoint = jitCanResumeAtOSRPoint;
+   //TR_J9VMBase::getPrivateConfig(jitConfig)->jitOSRPatchMethod = preOSR;
+   //TR_J9VMBase::getPrivateConfig(jitConfig)->jitOSRUnpatchMethod = postOSR;
+   //TR_J9VMBase::getPrivateConfig(jitConfig)->jitCanResumeAtOSRPoint = jitCanResumeAtOSRPoint;
    //jitConfig->jitUsesOSR = usesOSR;
 
    /* Initialize the runtime helper table lookup */

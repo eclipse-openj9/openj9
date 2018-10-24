@@ -939,9 +939,9 @@ TR_DebugExt::J9JITConfig2FrontEnd()
    if (_localJITConfig == 0)
       return 0;
 
-   _dbgPrintf("(J9JITConfig*)->compilationInfo = (TR_J9VMBase*)0x%p\n", _localJITConfig->compilationInfo);
+   _dbgPrintf("(TR_JitPrivateConfig*)->compilationInfo = (TR_J9VMBase*)0x%p\n", TR_J9VMBase::getPrivateConfig(_localJITConfig)->compilationInfo);
 
-   return (TR_FrontEnd*) _localJITConfig->compilationInfo;
+   return (TR_FrontEnd*) TR_J9VMBase::getPrivateConfig(_localJITConfig)->compilationInfo;
    }
 
 /*

@@ -662,7 +662,7 @@ TR::OptionTable OMR::Options::_feOptions[] = {
    {"availableCPUPercentage=", "M<nnn>\tUse it when java process has a fraction of a CPU. Number 1..99 ",
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_availableCPUPercentage, 0, "F%d", NOT_IN_SUBSET},
    {"bcLimit=",           "C<nnn>\tbytecode size limit",
-        TR::Options::setJitConfigNumericValue, offsetof(J9JITConfig, bcSizeLimit), 0, "P%d"},
+        TR::Options::setJitConfigNumericValue, offsetof(TR_JitPrivateConfig, bcSizeLimit), 0, "P%d"},
    {"bcountForBootstrapMethods=", "M<nnn>\tcount for loopy methods belonging to bootstrap classes. "
                                    "Used in no AOT cases",
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_countForLoopyBootstrapMethods, 250, "F%d", NOT_IN_SUBSET },
@@ -984,7 +984,7 @@ TR::OptionTable OMR::Options::_feOptions[] = {
    {"veryHotSampleThreshold=",          "R<nnn>\tThe maximum number of global samples taken during a sample interval for which the method will be recompiled at hot with normal priority",
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_veryHotSampleThreshold, 0, " %d", NOT_IN_SUBSET},
    {"vlog=",              "L<filename>\twrite verbose output to filename",
-        TR::Options::setString,  offsetof(J9JITConfig,vLogFileName), 0, "F%s"},
+        TR::Options::setString,  offsetof(TR_JitPrivateConfig,vLogFileName), 0, "F%s"},
    {"vmState=",           "L<vmState>\tdecode a given vmState",
         TR::Options::vmStateOption, 0, 0},
    {"waitTimeToEnterDeepIdleMode=",  "M<nnn>\tTime spent in idle mode (ms) after which we enter deep idle mode sampling",
@@ -1287,7 +1287,7 @@ J9::Options::fePreProcess(void * base)
       UDATA ccSize;
       GET_MEMORY_VALUE(argIndex, ccOption, ccSize);
       ccSize >>= 10;
-      privateConfig->codeCacheKB = ccSize;
+      jitConfig->codeCacheKB = ccSize;
       }
 
    static bool doneWithJniAcc = false;
@@ -1350,9 +1350,9 @@ J9::Options::fePreProcess(void * base)
             if (jitConfig->codeCacheTotalKB < ccTotalSize)
                {
                // Restriction: total size must be a multiple of the size of one code cache
-               UDATA fragmentSize = ccTotalSize % privateConfig->codeCacheKB;
+               UDATA fragmentSize = ccTotalSize % jitConfig->codeCacheKB;
                if (fragmentSize > 0)   // TODO: do we want a message here?
-                  ccTotalSize += privateConfig->codeCacheKB - fragmentSize; // round-up
+                  ccTotalSize += jitConfig->codeCacheKB - fragmentSize; // round-up
 
                // Proportionally increase the data cache as well
                // Use 'double' to avoid truncation/overflow
@@ -1360,9 +1360,9 @@ J9::Options::fePreProcess(void * base)
                   (double)(jitConfig->dataCacheTotalKB);
 
                // Round up to a multiple of the data cache size
-               fragmentSize = dcTotalSize % privateConfig->dataCacheKB;
+               fragmentSize = dcTotalSize % jitConfig->dataCacheKB;
                if (fragmentSize > 0)
-                  dcTotalSize += privateConfig->dataCacheKB - fragmentSize;
+                  dcTotalSize += jitConfig->dataCacheKB - fragmentSize;
                // Now write the values in jitConfig
                jitConfig->codeCacheTotalKB = ccTotalSize;
                // Make sure that the new value for dataCacheTotal doesn't shrink the default

@@ -1031,23 +1031,26 @@ onLoadInternal(
 
    jitConfig->runtimeFlags |= initialFlags;  // assumes default of bestAvail if nothing set from cmdline
 
-   jitConfig->j9jit_printf = j9jit_printf;
-   ((TR_JitPrivateConfig*)jitConfig->privateConfig)->j9jitrt_printf = j9jitrt_printf;
-   ((TR_JitPrivateConfig*)jitConfig->privateConfig)->j9jitrt_lock_log = j9jitrt_lock_log;
-   ((TR_JitPrivateConfig*)jitConfig->privateConfig)->j9jitrt_unlock_log = j9jitrt_unlock_log;
-   ((TR_JitPrivateConfig*)jitConfig->privateConfig)->sampleInterruptHandlerKey = -1;
+   privateConfig->j9jitrt_printf = j9jitrt_printf;
+   privateConfig->j9jitrt_lock_log = j9jitrt_lock_log;
+   privateConfig->j9jitrt_unlock_log = j9jitrt_unlock_log;
+   privateConfig->sampleInterruptHandlerKey = -1;
 
    /* Should use portlib */
 #if defined(TR_HOST_X86)
-   ((TR_JitPrivateConfig*)jitConfig->privateConfig)->codeCacheAlignment = 32;
+   privateConfig->codeCacheAlignment = 32;
 #elif defined(TR_HOST_64BIT) || defined(TR_HOST_S390)
    // 390 31-bit may generate 64-bit instruction (i.e. CGRL) which requires
    // doubleword alignment for its operands
-   ((TR_JitPrivateConfig*)jitConfig->privateConfig)->codeCacheAlignment = 8;
+   privateConfig->codeCacheAlignment = 8;
 #else
-   ((TR_JitPrivateConfig*)jitConfig->privateConfig)->codeCacheAlignment = 4;
+   privateConfig->codeCacheAlignment = 4;
 #endif
 
+#if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT)
+   privateConfig->aotrt_getRuntimeHelper = getRuntimeHelperValue;
+   privateConfig->aotrt_lookupSendTargetForThunk = lookupSendTargetForThunk;
+#endif  /* J9VM_INTERP_AOT_RUNTIME_SUPPORT */
 
    #ifndef J9VM_ENV_DIRECT_FUNCTION_POINTERS
       jitConfig->jitTranslateMethod = jitTranslateMethod;
@@ -1086,10 +1089,10 @@ onLoadInternal(
    jitConfig->doSha512InHardware = doSha512InHardware;
 #endif
 
+
    //set up our vlog Manager
    TR_VerboseLog::initialize(jitConfig);
    initializePersistentMemory(jitConfig);
-
 
    TR_PersistentMemory * persistentMemory = (TR_PersistentMemory *)jitConfig->scratchSegment;
    if (persistentMemory == NULL)
@@ -1126,18 +1129,18 @@ onLoadInternal(
     J9JavaVM * vm = javaVM; //macro FIND_AND_CONSUME_ARG refers to javaVM as vm
     if (isQuickstart)
        {
-       privateConfig->codeCacheKB = 1024;
-       privateConfig->dataCacheKB = 1024;
+       jitConfig->codeCacheKB = 1024;
+       jitConfig->dataCacheKB = 1024;
        }
    else
        {
-       privateConfig->codeCacheKB = 2048;
-       privateConfig->dataCacheKB = 2048;
+       jitConfig->codeCacheKB = 2048;
+       jitConfig->dataCacheKB = 2048;
        }
 #else
 #if (defined(TR_HOST_POWER) || defined(TR_HOST_S390) || (defined(TR_HOST_X86) && defined(TR_HOST_64BIT)))
-      privateConfig->codeCacheKB = 2048;
-      privateConfig->dataCacheKB = 2048;
+      jitConfig->codeCacheKB = 2048;
+      jitConfig->dataCacheKB = 2048;
 
       //zOS will set the code cache to create at startup after options are enabled below
 #if !defined(J9ZOS390)	
@@ -1145,9 +1148,9 @@ onLoadInternal(
          numCodeCachesToCreateAtStartup = 4;
 #endif
 #else
-      privateConfig->codeCacheKB = 2048; // WAS-throughput guided change
-      //privateConfig->codeCacheKB = J9_JIT_CODE_CACHE_SIZE / 1024;  // bytes -> k
-      privateConfig->dataCacheKB = 512;  // bytes -> k
+      jitConfig->codeCacheKB = 2048; // WAS-throughput guided change
+      //jitConfig->codeCacheKB = J9_JIT_CODE_CACHE_SIZE / 1024;  // bytes -> k
+      jitConfig->dataCacheKB = 512;  // bytes -> k
 #endif
 #endif
 
@@ -1184,21 +1187,21 @@ onLoadInternal(
          /* Provide a 1MB floor and 256MB ceiling for the code cache size */
          if (physMemory <= 1)
             {
-            privateConfig->codeCacheKB = 1024;
+            jitConfig->codeCacheKB = 1024;
             jitConfig->codeCacheTotalKB = 1024;
             }
          else if (physMemory < 256)
             {
-            privateConfig->codeCacheKB = 2048;
+            jitConfig->codeCacheKB = 2048;
             jitConfig->codeCacheTotalKB = physMemory * 1024;
             }
          else
             {
-            privateConfig->codeCacheKB = 2048;
+            jitConfig->codeCacheKB = 2048;
             jitConfig->codeCacheTotalKB = 256 * 1024;
             }
 
-         privateConfig->dataCacheKB = 2048;
+         jitConfig->dataCacheKB = 2048;
          jitConfig->dataCacheTotalKB = 384 * 1024;
 #endif
       }
@@ -1281,7 +1284,7 @@ onLoadInternal(
 
    TR_AOTStats *aotStats = (TR_AOTStats *)j9mem_allocate_memory(sizeof(TR_AOTStats), J9MEM_CATEGORY_JIT);
    memset(aotStats, 0, sizeof(TR_AOTStats));
-   ((TR_JitPrivateConfig*)jitConfig->privateConfig)->aotStats = aotStats;
+   privateConfig->aotStats = aotStats;
 
    TR::CodeCacheManager *codeCacheManager = (TR::CodeCacheManager *) j9mem_allocate_memory(sizeof(TR::CodeCacheManager), J9MEM_CATEGORY_JIT);
    if (codeCacheManager == NULL)
@@ -1294,27 +1297,27 @@ onLoadInternal(
    TR::CodeCacheConfig &codeCacheConfig = codeCacheManager->codeCacheConfig();
 
    // Do not allow code caches smaller than 128KB
-   if (privateConfig->codeCacheKB < 128)
-      privateConfig->codeCacheKB = 128;
+   if (jitConfig->codeCacheKB < 128)
+      jitConfig->codeCacheKB = 128;
    if (!fe->isAOT_DEPRECATED_DO_NOT_USE())
       {
-      if (privateConfig->codeCacheKB > 32768)
-         privateConfig->codeCacheKB = 32768;
+      if (jitConfig->codeCacheKB > 32768)
+         jitConfig->codeCacheKB = 32768;
       }
 
-   if (privateConfig->codeCacheKB > jitConfig->codeCacheTotalKB)
+   if (jitConfig->codeCacheKB > jitConfig->codeCacheTotalKB)
       {
       /* Handle case where user has set codeCacheTotalKB smaller than codeCacheKB (e.g. -Xjit:codeTotal=256) by setting codeCacheKB = codeCacheTotalKB */
-      privateConfig->codeCacheKB = jitConfig->codeCacheTotalKB;
+      jitConfig->codeCacheKB = jitConfig->codeCacheTotalKB;
       }
 
-   if (privateConfig->dataCacheKB > jitConfig->dataCacheTotalKB)
+   if (jitConfig->dataCacheKB > jitConfig->dataCacheTotalKB)
       {
       /* Handle case where user has set dataCacheTotalKB smaller than dataCacheKB (e.g. -Xjit:dataTotal=256) by setting dataCacheKB = dataCacheTotalKB */
-      privateConfig->dataCacheKB = jitConfig->dataCacheTotalKB;
+      jitConfig->dataCacheKB = jitConfig->dataCacheTotalKB;
       }
 
-   I_32 maxNumberOfCodeCaches = jitConfig->codeCacheTotalKB / privateConfig->codeCacheKB;
+   I_32 maxNumberOfCodeCaches = jitConfig->codeCacheTotalKB / jitConfig->codeCacheKB;
    if (fe->isAOT_DEPRECATED_DO_NOT_USE())
       maxNumberOfCodeCaches = 1;
 
@@ -1331,8 +1334,8 @@ onLoadInternal(
    codeCacheConfig._verboseReclamation = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCodeCacheReclamation);
    codeCacheConfig._doSanityChecks = TR::Options::getCmdLineOptions()->getOption(TR_CodeCacheSanityCheck);
    codeCacheConfig._codeCacheTotalKB = jitConfig->codeCacheTotalKB;
-   codeCacheConfig._codeCacheKB = privateConfig->codeCacheKB;
-   codeCacheConfig._codeCachePadKB = privateConfig->codeCachePadKB;
+   codeCacheConfig._codeCacheKB = jitConfig->codeCacheKB;
+   codeCacheConfig._codeCachePadKB = jitConfig->codeCachePadKB;
    codeCacheConfig._codeCacheAlignment = privateConfig->codeCacheAlignment;
    codeCacheConfig._codeCacheFreeBlockRecylingEnabled = !TR::Options::getCmdLineOptions()->getOption(TR_DisableFreeCodeCacheBlockRecycling);
    codeCacheConfig._largeCodePageSize = jitConfig->largeCodePageSize;
@@ -1391,14 +1394,14 @@ onLoadInternal(
       }
 
    /* allocate the data cache */
-   if (privateConfig->dataCacheKB < 1)
+   if (jitConfig->dataCacheKB < 1)
       {
       printf("<JIT: fatal error, data cache size must be at least 1 Kb>\n");
       return -1;
       }
    if (!TR_DataCacheManager::initialize(jitConfig))
       {
-      printf("{JIT: fatal error, failed to allocate %d Kb data cache}\n", privateConfig->dataCacheKB);
+      printf("{JIT: fatal error, failed to allocate %d Kb data cache}\n", jitConfig->dataCacheKB);
       return -1;
       }
 

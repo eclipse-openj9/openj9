@@ -2709,7 +2709,7 @@ void TR::CompilationInfo::stopCompilationThreads()
    static char * printCompMem = feGetEnv("TR_PrintCompMem");
    if (printCompMem)
       {
-      int32_t codeCacheAllocated = TR::CodeCacheManager::instance()->getCurrentNumberOfCodeCaches() * TR_J9VMBase::getPrivateConfig(_jitConfig)->codeCacheKB;
+      int32_t codeCacheAllocated = TR::CodeCacheManager::instance()->getCurrentNumberOfCodeCaches() * _jitConfig->codeCacheKB;
       fprintf(stderr, "Allocated memory for code cache = %d KB\tLimit = %d KB\n",
          codeCacheAllocated, _jitConfig->codeCacheTotalKB);
 
