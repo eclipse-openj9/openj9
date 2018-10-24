@@ -1088,15 +1088,15 @@ redefineClassesCommon(jvmtiEnv* env,
 				/* Fix static refs */
 				fixStaticRefs(currentThread, classPairs, extensionsUsed);
  
-				/* Copy preserved values */
-				copyPreservedValues(currentThread, classPairs, extensionsUsed);
-
 				/* Update heap references */
 				fixHeapRefs(vm, classPairs);
 
 				/* Update method references in DirectHandles */
 				fixDirectHandles(currentThread, classPairs, methodPairs);
  
+				/* Copy preserved values */
+				copyPreservedValues(currentThread, classPairs, extensionsUsed);
+
 				/* Update the componentType and leafComponentType fields of array classes */
 				fixArrayClasses(currentThread, classPairs);
 
