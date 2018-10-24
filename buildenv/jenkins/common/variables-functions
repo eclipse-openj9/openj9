@@ -492,6 +492,17 @@ def set_artifactory_config() {
     }
 }
 
+def set_restart_timeout() {
+    RESTART_TIMEOUT = params.RESTART_TIMEOUT
+    if (!RESTART_TIMEOUT) {
+        RESTART_TIMEOUT = VARIABLES.restart_timeout.time
+    }
+    RESTART_TIMEOUT_UNITS = params.RESTART_TIMEOUT_UNITS
+    if (!RESTART_TIMEOUT_UNITS) {
+        RESTART_TIMEOUT_UNITS = VARIABLES.restart_timeout.units
+    }
+}
+
 def set_job_properties(JOB_TYPE) {
     /*************************
     * Setup Jenkins Properties
@@ -629,7 +640,9 @@ def set_job_properties(JOB_TYPE) {
                 'BUILD_NODE':'',
                 'TEST_NODE':'',
                 'PERSONAL_BUILD':'',
-                'SLACK_CHANNEL':''])
+                'SLACK_CHANNEL':'',
+                'RESTART_TIMEOUT':'',
+                'RESTART_TIMEOUT_UNITS':''])
         }
 
         /********************
@@ -713,10 +726,12 @@ def set_job_variables(job_type) {
             set_vendor_variables()
             set_test_targets()
             set_slack_channel()
+            set_restart_timeout()
             break
         case "wrapper":
             //set variable for pipeline all/personal
             set_repos_variables(BUILD_SPECS)
+            set_restart_timeout()
             break
         default:
             error("Unknown Jenkins job type!")
