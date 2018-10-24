@@ -3950,6 +3950,8 @@ extern TR::Register *inlineBigDecimalToPackedConverter(TR::Node * node, TR::Code
 extern TR::Register *toUpperIntrinsic(TR::Node * node, TR::CodeGenerator * cg, bool isCompressedString);
 extern TR::Register *toLowerIntrinsic(TR::Node * node, TR::CodeGenerator * cg, bool isCompressedString);
 
+extern TR::Register* inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isCompressed);
+
 extern TR::Register *intrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isCompressed);
 
 extern TR::Register *inlineDoubleMax(TR::Node *node, TR::CodeGenerator *cg);
@@ -4235,17 +4237,25 @@ J9::Z::CodeGenerator::inlineDirectCall(
 
    if (cg->getSupportsInlineStringIndexOf())
       {
-         switch (methodSymbol->getRecognizedMethod())
-            {
-            case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1:
-               resultReg = intrinsicIndexOf(node, cg, true);
+      switch (methodSymbol->getRecognizedMethod())
+         {
+         case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1:
+            resultReg = intrinsicIndexOf(node, cg, true);
+            return true;
+         case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
+            resultReg = intrinsicIndexOf(node, cg, false);
+            return true;
+         case TR::java_lang_StringLatin1_indexOf:
+         case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringLatin1:
+               resultReg = inlineVectorizedStringIndexOf(node, cg, false);
                return true;
-            case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
-               resultReg = intrinsicIndexOf(node, cg, false);
+         case TR::java_lang_StringUTF16_indexOf:
+         case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringUTF16:
+               resultReg = inlineVectorizedStringIndexOf(node, cg, true);
                return true;
-            default:
-               break;
-            }
+         default:
+            break;
+         }
       }
 
       if (!comp->getOption(TR_DisableSIMDDoubleMaxMin) && cg->getSupportsVectorRegisters())

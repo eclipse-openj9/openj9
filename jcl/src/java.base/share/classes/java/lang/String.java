@@ -2011,6 +2011,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * @see #lastIndexOf(String, int)
 	 */
 	public int indexOf(String subString, int start) {
+		if (subString.length() == 1) {
+			return indexOf(subString.charAtInternal(0), start);
+		}
+		
 		return indexOf(value, coder, lengthInternal(), subString, start);
 	}
 
@@ -6013,6 +6017,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * @see #lastIndexOf(String, int)
 	 */
 	public int indexOf(String subString, int start) {
+		if (subString.length() == 1) {
+			return indexOf(subString.charAtInternal(0), start);
+		}
+		
 		if (start < 0) {
 			start = 0;
 		}
@@ -6032,29 +6040,13 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			char[] s2Value = s2.value;
 
 			if (enableCompression && (null == compressionFlag || (s1.count | s2.count) >= 0)) {
-				char firstChar = helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(s2Value, 0));
-
-				while (true) {
-					int i = indexOf(firstChar, start);
-
-					// Handles subCount > count || start >= count
-					if (i == -1 || s2len + i > s1len) {
-						return -1;
-					}
-
-					int o1 = i;
-					int o2 = 0;
-
-					while (++o2 < s2len && helpers.getByteFromArrayByIndex(s1Value, ++o1) == helpers.getByteFromArrayByIndex(s2Value, o2))
-						;
-
-					if (o2 == s2len) {
-						return i;
-					}
-
-					start = i + 1;
-				}
+				// both s1 and s2 are compressed
+				return helpers.intrinsicIndexOfStringLatin1(s1Value, s1len, s2Value, s2len, start);
+			} else if (s1.count < 0 && s2.count < 0) {
+				// both s1 and s2 are decompressed
+				return helpers.intrinsicIndexOfStringUTF16(s1Value, s1len, s2Value, s2len, start);
 			} else {
+				// s1 decompressed and s2 compressed
 				char firstChar = s2.charAtInternal(0, s2Value);
 
 				while (true) {
