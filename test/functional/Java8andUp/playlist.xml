@@ -1909,7 +1909,33 @@
 			<subset>11</subset>
 		</subsets>
 	</test>
-
+	<test>
+		<testCaseName>testStringIndexOfString</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+			<variation>'-Xjit:disableAsyncCompilation,tryToInline={java/lang/String.indexOf*},limit={org/openj9/test/string/StringIndexOfString.doTest*},{org/openj9/test/string/StringIndexOfString.doTest*}(count=50)'</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames testStringIndexOfString \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
+		</subsets>
+	</test>
+	
 	<test>
 		<testCaseName>floatSanityTests</testCaseName>
 		<variations>

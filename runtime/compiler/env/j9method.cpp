@@ -3384,6 +3384,8 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {
       {x(TR::com_ibm_jit_JITHelpers_is32Bit,                                  "is32Bit", "()Z")},
       {x(TR::com_ibm_jit_JITHelpers_isArray,                                  "isArray", "(Ljava/lang/Object;)Z")},
+      {x(TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringLatin1,             "intrinsicIndexOfStringLatin1", "([CI[CII)I")},
+      {x(TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringUTF16,              "intrinsicIndexOfStringUTF16", "([CI[CII)I")},
       {x(TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1,                   "intrinsicIndexOfLatin1", "(Ljava/lang/Object;BII)I")},
       {x(TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16,                    "intrinsicIndexOfUTF16", "(Ljava/lang/Object;CII)I")},
 #ifdef TR_TARGET_32BIT
@@ -3477,10 +3479,17 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       { TR::unknownMethod}
       };
 
+   static X StringLatin1Methods[] =
+      {
+      { x(TR::java_lang_StringLatin1_indexOf,                                 "indexOf",       "([BI[BII)I")},
+      { TR::unknownMethod }
+      };
+
    static X StringUTF16Methods[] =
       {
-      { x(TR::java_lang_StringUTF16_getChar,                                  "getChar", "([BI)C")},
-      { x(TR::java_lang_StringUTF16_toBytes,                                  "toBytes", "([CII)[B")},
+      { x(TR::java_lang_StringUTF16_getChar,                                  "getChar",        "([BI)C")},
+      { x(TR::java_lang_StringUTF16_indexOf,                                  "indexOf",        "([BI[BII)I")},
+      { x(TR::java_lang_StringUTF16_toBytes,                                  "toBytes",        "([CII)[B")},
       { TR::unknownMethod }
       };
 
@@ -4331,6 +4340,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       { "java/text/NumberFormat", NumberFormatMethods },
       { "com/ibm/jit/JITHelpers", JITHelperMethods},
       { "java/lang/StringCoding", StringCodingMethods },
+      { "java/lang/StringLatin1", StringLatin1Methods },
       { 0 }
       };
 
