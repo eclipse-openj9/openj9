@@ -1,6 +1,6 @@
  
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -205,7 +205,7 @@ public:
 	virtual bool startUpThreads();
 	virtual void shutDownThreads();	
 	
-	virtual void prepareThreadsForTask(MM_EnvironmentBase *env, MM_Task *task);
+	virtual void prepareThreadsForTask(MM_EnvironmentBase *env, MM_Task *task, uintptr_t threadCount);
 	virtual void completeTask(MM_EnvironmentBase *env);
 
 	void checkStartGC(MM_EnvironmentRealtime *env);

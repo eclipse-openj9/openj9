@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -753,9 +753,9 @@ void MM_Scheduler::yieldFromGC(MM_EnvironmentRealtime *env, bool distanceChecked
 }
 
 void
-MM_Scheduler::prepareThreadsForTask(MM_EnvironmentBase *env, MM_Task *task)
+MM_Scheduler::prepareThreadsForTask(MM_EnvironmentBase *env, MM_Task *task, uintptr_t threadCount)
 {
-	MM_ParallelDispatcher::prepareThreadsForTask(env, task);
+	MM_ParallelDispatcher::prepareThreadsForTask(env, task, threadCount);
 	pushYieldCollaborator(((MM_IncrementalParallelTask *)task)->getYieldCollaborator());	
 }
 
