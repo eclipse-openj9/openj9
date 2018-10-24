@@ -1301,6 +1301,112 @@ J9::CodeGenerator::moveUpArrayLengthStores(TR::TreeTop *insertionPoint)
 
 
 void
+J9::CodeGenerator::zeroOutAutoOnEdge(
+      TR::SymbolReference *liveAutoSymRef,
+      TR::Block *block,
+      TR::Block *succBlock,
+      TR::list<TR::Block*> *newBlocks,
+      TR_ScratchList<TR::Node> *fsdStores)
+   {
+   TR::Block *storeBlock = NULL;
+   if ((succBlock->getPredecessors().size() == 1))
+      storeBlock = succBlock;
+   else
+      {
+      for (auto blocksIt = newBlocks->begin(); blocksIt != newBlocks->end(); ++blocksIt)
+         {
+         if ((*blocksIt)->getSuccessors().front()->getTo()->asBlock() == succBlock)
+            {
+            storeBlock = *blocksIt;
+            break;
+            }
+         }
+      }
+
+   if (!storeBlock)
+      {
+      TR::TreeTop * startTT = succBlock->getEntry();
+      TR::Node * startNode = startTT->getNode();
+      TR::Node * glRegDeps = NULL;
+      if (startNode->getNumChildren() > 0)
+         glRegDeps = startNode->getFirstChild();
+
+      TR::Block * newBlock = block->splitEdge(block, succBlock, self()->comp(), NULL, false);
+
+      if (debug("traceFSDSplit"))
+         diagnostic("\nSplitting edge, create new intermediate block_%d", newBlock->getNumber());
+
+      if (glRegDeps)
+         {
+         TR::Node *duplicateGlRegDeps = glRegDeps->duplicateTree();
+         TR::Node *origDuplicateGlRegDeps = duplicateGlRegDeps;
+         duplicateGlRegDeps = TR::Node::copy(duplicateGlRegDeps);
+         newBlock->getEntry()->getNode()->setNumChildren(1);
+         newBlock->getEntry()->getNode()->setAndIncChild(0, origDuplicateGlRegDeps);
+         for (int32_t i = origDuplicateGlRegDeps->getNumChildren() - 1; i >= 0; --i)
+            {
+            TR::Node * dep = origDuplicateGlRegDeps->getChild(i);
+            if(self()->comp()->getOption(TR_MimicInterpreterFrameShape) || self()->comp()->getOption(TR_PoisonDeadSlots))
+               dep->setRegister(NULL); // basically need to do prepareNodeForInstructionSelection
+            duplicateGlRegDeps->setAndIncChild(i, dep);
+            }
+         if(self()->comp()->getOption(TR_MimicInterpreterFrameShape) || self()->comp()->getOption(TR_PoisonDeadSlots))
+            {
+            TR::Node *glRegDepsParent;
+            if (  (newBlock->getSuccessors().size() == 1)
+               && newBlock->getSuccessors().front()->getTo()->asBlock()->getEntry() == newBlock->getExit()->getNextTreeTop())
+               {
+               glRegDepsParent = newBlock->getExit()->getNode();
+               }
+            else
+               {
+               glRegDepsParent = newBlock->getExit()->getPrevTreeTop()->getNode();
+               TR_ASSERT(glRegDepsParent->getOpCodeValue() == TR::Goto, "Expected block to fall through or end in goto; it ends with %s %s\n",
+                  self()->getDebug()->getName(glRegDepsParent->getOpCodeValue()), self()->getDebug()->getName(glRegDepsParent));
+               }
+            if (self()->comp()->getOption(TR_TraceCG))
+               traceMsg(self()->comp(), "zeroOutAutoOnEdge: glRegDepsParent is %s\n", self()->getDebug()->getName(glRegDepsParent));
+            glRegDepsParent->setNumChildren(1);
+            glRegDepsParent->setAndIncChild(0, duplicateGlRegDeps);
+            }
+         else           //original path
+            {
+            newBlock->getExit()->getNode()->setNumChildren(1);
+            newBlock->getExit()->getNode()->setAndIncChild(0, duplicateGlRegDeps);
+            }
+         }
+
+      newBlock->setLiveLocals(new (self()->trHeapMemory()) TR_BitVector(*succBlock->getLiveLocals()));
+      newBlock->getEntry()->getNode()->setLabel(generateLabelSymbol(self()));
+
+
+      if (self()->comp()->getOption(TR_PoisonDeadSlots))
+         {
+         if (self()->comp()->getOption(TR_TraceCG))
+            traceMsg(self()->comp(), "POISON DEAD SLOTS --- New Block Created %d\n", newBlock->getNumber());
+         newBlock->setIsCreatedAtCodeGen();
+         }
+
+      newBlocks->push_front(newBlock);
+      storeBlock = newBlock;
+      }
+   TR::Node *storeNode;
+
+   if (self()->comp()->getOption(TR_PoisonDeadSlots))
+      storeNode = generatePoisonNode(self()->comp(), block, liveAutoSymRef);
+   else
+      storeNode = TR::Node::createStore(liveAutoSymRef, TR::Node::aconst(block->getEntry()->getNode(), 0));
+
+   if (storeNode)
+      {
+      TR::TreeTop *storeTree = TR::TreeTop::create(self()->comp(), storeNode);
+      storeBlock->prepend(storeTree);
+      fsdStores->add(storeNode);
+      }
+   }
+
+
+void
 J9::CodeGenerator::doInstructionSelection()
    {
    self()->setNextAvailableBlockIndex(self()->comp()->getFlowGraph()->getNextNodeNumber() + 1);
