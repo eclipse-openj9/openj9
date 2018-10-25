@@ -137,15 +137,15 @@ TraceExit=Trc_SHR_CM_isStale_ExitNoItem NoEnv Overhead=1 Level=6 Template="CM is
 
 TraceException=Trc_SHR_CM_checkForCrash_Exception Overhead=1 Level=4 Template="CM checkForCrash: Crash/abnormal termination detected. Refreshing hashtables."
 
-TraceEntry=Trc_SHR_RMI_RcLinkedListImpl_newInstance_Entry Noenv Overhead=1 Level=6 Template="RMI RcLinkedListImpl::newInstance: Creating new RcLinkedListImpl for key %.*s and item 0x%p"
-TraceExit=Trc_SHR_RMI_RcLinkedListImpl_newInstance_Exit Noenv Overhead=1 Level=6 Template="RMI RcLinkedListImpl::newInstance: Done creating new RcLinkedListImpl at address 0x%p"
+TraceEntry=Trc_SHR_RMI_RcLinkedListImpl_newInstance_Entry Obsolete Noenv Overhead=1 Level=6 Template="RMI RcLinkedListImpl::newInstance: Creating new RcLinkedListImpl for key %.*s and item 0x%p"
+TraceExit=Trc_SHR_RMI_RcLinkedListImpl_newInstance_Exit Obsolete Noenv Overhead=1 Level=6 Template="RMI RcLinkedListImpl::newInstance: Done creating new RcLinkedListImpl at address 0x%p"
 
-TraceEntry=Trc_SHR_RMI_RcLinkedListImpl_initialize_Entry Noenv Overhead=1 Level=6 Template="RMI RcLinkedListImpl::initialize: Initializing RcLinkedListImpl"
-TraceExit=Trc_SHR_RMI_RcLinkedListImpl_initialize_Exit Noenv Overhead=1 Level=6 Template="RMI RcLinkedListImpl::initialize: Done initializing RcLinkedListImpl"
+TraceEntry=Trc_SHR_RMI_RcLinkedListImpl_initialize_Entry Obsolete Noenv Overhead=1 Level=6 Template="RMI RcLinkedListImpl::initialize: Initializing RcLinkedListImpl"
+TraceExit=Trc_SHR_RMI_RcLinkedListImpl_initialize_Exit Obsolete Noenv Overhead=1 Level=6 Template="RMI RcLinkedListImpl::initialize: Done initializing RcLinkedListImpl"
 
-TraceEntry=Trc_SHR_RMI_RcLinkedListImpl_createLink_Entry Noenv Overhead=1 Level=6 Template="RMI RcLinkedListImpl::createLink: Creating RcLinkedListImpl link for key %.*s and item 0x%p"
-TraceExit=Trc_SHR_RMI_RcLinkedListImpl_createLink_Exit1 Noenv Overhead=1 Level=6 Template="RMI RcLinkedListImpl::createLink: pool_newElement failed. Returning NULL"
-TraceExit=Trc_SHR_RMI_RcLinkedListImpl_createLink_Exit2 Noenv Overhead=1 Level=6 Template="RMI RcLinkedListImpl::createLink: Returning new link at 0x%p"
+TraceEntry=Trc_SHR_RMI_RcLinkedListImpl_createLink_Entry Obsolete Noenv Overhead=1 Level=6 Template="RMI RcLinkedListImpl::createLink: Creating RcLinkedListImpl link for key %.*s and item 0x%p"
+TraceExit=Trc_SHR_RMI_RcLinkedListImpl_createLink_Exit1 Obsolete Noenv Overhead=1 Level=6 Template="RMI RcLinkedListImpl::createLink: pool_newElement failed. Returning NULL"
+TraceExit=Trc_SHR_RMI_RcLinkedListImpl_createLink_Exit2 Obsolete Noenv Overhead=1 Level=6 Template="RMI RcLinkedListImpl::createLink: Returning new link at 0x%p"
 
 TraceEntry=Trc_SHR_RMI_localHashTableCreate_Entry Overhead=1 Level=1 Template="RMI localHashTableCreate: Creating new hashtable with %d initial entries"
 TraceExit=Trc_SHR_RMI_localHashTableCreate_Exit Overhead=1 Level=1 Template="RMI localHashTableCreate: Created hashtable at address 0x%p"
@@ -456,7 +456,7 @@ TraceExit=Trc_SHR_CC_CRASH6_commitUpdate_ExitObsolete Obsolete Overhead=1 Level=
 // Alloc and Free events
 
 TraceEvent=Trc_SHR_CM_createPathString_AllocateBuffer Overhead=1 Level=4 Template="CM createPathString: allocating string buffer of size %d at address 0x%p"
-TraceEvent=Trc_SHR_RMI_RcLinkedListImpl_createLink_PoolNew Noenv Overhead=1 Level=6 Template="RMI RcLinkedListImpl::createLink: creating new pool element from pool 0x%p"
+TraceEvent=Trc_SHR_RMI_RcLinkedListImpl_createLink_PoolNew Obsolete Noenv Overhead=1 Level=6 Template="RMI RcLinkedListImpl::createLink: creating new pool element from pool 0x%p"
 TraceEvent=Trc_SHR_RMI_rcTableAdd_HashtableAdd Overhead=1 Level=6 Template="RMI rcTableAdd: hashTableAdd succeeded with rc=0x%p"
 TraceEvent=Trc_SHR_RMI_prepareForCompare_AllocateTempBuf Overhead=1 Level=4 Template="RMI prepareForCompare: allocating temporary buffer for ROMClass comparison of size %d"
 TraceEvent=Trc_SHR_RMI_findExisting_FreeBuffer Overhead=1 Level=4 Template="RMI findExisting: freeing temporary buffer at address 0x%p"
@@ -1225,8 +1225,8 @@ TraceExit=Trc_SHR_RRM_rrmTableRemove_Exit2 Overhead=1 Level=4 Template="RRM rrmT
 TraceEntry=Trc_SHR_RRM_markStale_Entry Overhead=1 Level=3 Template="RRM markStale: Entering for key 0x%p and item 0x%p"
 TraceExit=Trc_SHR_RRM_markStale_Exit Overhead=1 Level=3 Template="RRM markStale: Returning with %d"
 
-TraceEntry=Trc_SHR_RMI_RcLinkedListImpl_localInit_Entry Noenv Overhead=1 Level=6 Template="RMI RcLinkedListImpl::initialize: Initializing RcLinkedListImpl"
-TraceExit=Trc_SHR_RMI_RcLinkedListImpl_localInit_Exit Noenv Overhead=1 Level=6 Template="RMI RcLinkedListImpl::initialize: Done initializing RcLinkedListImpl"
+TraceEntry=Trc_SHR_RMI_RcLinkedListImpl_localInit_Entry Obsolete Noenv Overhead=1 Level=6 Template="RMI RcLinkedListImpl::initialize: Initializing RcLinkedListImpl"
+TraceExit=Trc_SHR_RMI_RcLinkedListImpl_localInit_Exit Obsolete Noenv Overhead=1 Level=6 Template="RMI RcLinkedListImpl::initialize: Done initializing RcLinkedListImpl"
 
 TraceEntry=Trc_SHR_M_LinkListImpl_link_Entry Noenv Overhead=1 Level=6 Template="M LinkedListImpl::link: Adding link 0x%p to link 0x%p"
 TraceExit=Trc_SHR_M_LinkListImpl_link_Exit1 Noenv Overhead=1 Level=6 Template="M LinkedListImpl::link: Created new link 0x%p"
