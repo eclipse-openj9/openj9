@@ -257,7 +257,7 @@ def build_with_slack(DOWNSTREAM_JOB_NAME, PARAMETERS) {
             if (SLACK_CHANNEL) {
                 slackSend channel: SLACK_CHANNEL, color: 'danger', message: "Failure in: ${DOWNSTREAM_JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)\nStarted by ${JOB_NAME} #${BUILD_NUMBER} (<${BUILD_URL}|Open>)\n${build_causes_string}\nWould you like to restart the job? (<${RUN_DISPLAY_URL}|Open>)"
             }
-            timeout(time: RESTART_TIMEOUT, unit: RESTART_TIMEOUT_UNITS) {
+            timeout(time: RESTART_TIMEOUT.toInteger(), unit: RESTART_TIMEOUT_UNITS) {
                 input message: "Downstream job ${DOWNSTREAM_JOB_NAME} failed. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}\nRestart failed job '${DOWNSTREAM_JOB_NAME}'?", ok: 'Restart'
                 // If restart is aborted or is timed-out, an error is thrown
             }
