@@ -45,6 +45,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    {
    public:
 
+   static TR::Register *ardbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *irdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *writeBarrierEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *monentEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -116,6 +117,9 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
 
    class CaseConversionManager;
    static TR::Register *stringCaseConversionHelper(TR::Node *node, TR::CodeGenerator *cg, CaseConversionManager& manager);
+
+   private:
+   static TR::Register* performHeapLoadWithReadBarrier(TR::Node* node, TR::CodeGenerator* cg);
    };
 
 }

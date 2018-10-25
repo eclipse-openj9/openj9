@@ -1916,7 +1916,11 @@ UDATA TR_J9VMBase::thisThreadGetConcurrentScavengeActiveByteAddressOffset()
 UDATA TR_J9VMBase::thisThreadGetEvacuateBaseAddressOffset()
    {
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
+#if defined(J9VM_GC_COMPRESSED_POINTERS) && defined(TR_TARGET_X86)
+   return offsetof(J9VMThread, evacuateBaseCompressed);
+#else
    return offsetof(J9VMThread, evacuateBase);
+#endif /* defined(J9VM_GC_COMPRESSED_POINTERS) && defined(TR_TARGET_X86) */
 #else /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
    TR_ASSERT(0,"Field evacuateBase does not exists in J9VMThread.");
    return 0;
@@ -1929,7 +1933,11 @@ UDATA TR_J9VMBase::thisThreadGetEvacuateBaseAddressOffset()
 UDATA TR_J9VMBase::thisThreadGetEvacuateTopAddressOffset()
    {
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
+#if defined(J9VM_GC_COMPRESSED_POINTERS) && defined(TR_TARGET_X86)
+   return offsetof(J9VMThread, evacuateTopCompressed);
+#else
    return offsetof(J9VMThread, evacuateTop);
+#endif /* defined(J9VM_GC_COMPRESSED_POINTERS) && defined(TR_TARGET_X86) */
 #else /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
    TR_ASSERT(0,"Field evacuateTop does not exists in J9VMThread.");
    return 0;
