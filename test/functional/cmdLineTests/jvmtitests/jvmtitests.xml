@@ -315,7 +315,7 @@
 	</test>
 
 	<test id="vgc001">
-		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:vgc001 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<command>$EXE$ -Xmx512m $JVM_OPTS$ $AGENTLIB$=test:vgc001 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
 		<return type="success" value="0"/>
 	</test>
 
