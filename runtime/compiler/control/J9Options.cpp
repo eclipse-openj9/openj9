@@ -1346,35 +1346,30 @@ J9::Options::fePreProcess(void * base)
          if (OPTION_OK == returnCode)
             {
             ccTotalSize >>= 10; // convert to KB
-            // Restriction: total size can only grow
-            // The following check will also prevent us from doing the computation twice fro JIT and AOT
-            if (jitConfig->codeCacheTotalKB < ccTotalSize)
-               {
-               // Restriction: total size must be a multiple of the size of one code cache
-               UDATA fragmentSize = ccTotalSize % jitConfig->codeCacheKB;
-               if (fragmentSize > 0)   // TODO: do we want a message here?
-                  ccTotalSize += jitConfig->codeCacheKB - fragmentSize; // round-up
 
-               // Proportionally increase the data cache as well
-               // Use 'double' to avoid truncation/overflow
-               UDATA dcTotalSize = (double)ccTotalSize/(double)(jitConfig->codeCacheTotalKB) *
-                  (double)(jitConfig->dataCacheTotalKB);
+            // Impose a minimum value of 2 MB
+            if (ccTotalSize < 2048)
+               ccTotalSize = 2048;
 
-               // Round up to a multiple of the data cache size
-               fragmentSize = dcTotalSize % jitConfig->dataCacheKB;
-               if (fragmentSize > 0)
-                  dcTotalSize += jitConfig->dataCacheKB - fragmentSize;
-               // Now write the values in jitConfig
-               jitConfig->codeCacheTotalKB = ccTotalSize;
-               // Make sure that the new value for dataCacheTotal doesn't shrink the default
-               if (dcTotalSize > jitConfig->dataCacheTotalKB)
-                  jitConfig->dataCacheTotalKB = dcTotalSize;
-               }
-            else // codeCacheTotal is not allowed to shrink
-               {
-               // TODO: do we want a message here?
-               // If so, we need to avoid the message when the IF condition is evaluated a second time (for JIT and AOT)
-               }
+            // Restriction: total size must be a multiple of the size of one code cache
+            UDATA fragmentSize = ccTotalSize % jitConfig->codeCacheKB;
+            if (fragmentSize > 0)   // TODO: do we want a message here?
+               ccTotalSize += jitConfig->codeCacheKB - fragmentSize; // round-up
+
+            // Proportionally increase the data cache as well
+            // Use 'double' to avoid truncation/overflow
+            UDATA dcTotalSize = (double)ccTotalSize / (double)(jitConfig->codeCacheTotalKB) *
+               (double)(jitConfig->dataCacheTotalKB);
+
+            // Round up to a multiple of the data cache size
+            fragmentSize = dcTotalSize % jitConfig->dataCacheKB;
+            if (fragmentSize > 0)
+               dcTotalSize += jitConfig->dataCacheKB - fragmentSize;
+            // Now write the values in jitConfig
+            jitConfig->codeCacheTotalKB = ccTotalSize;
+            // Make sure that the new value for dataCacheTotal doesn't shrink the default
+            if (dcTotalSize > jitConfig->dataCacheTotalKB)
+               jitConfig->dataCacheTotalKB = dcTotalSize;
             }
          else // Error with the option
             {
