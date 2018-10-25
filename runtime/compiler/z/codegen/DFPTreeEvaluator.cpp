@@ -30,6 +30,7 @@
 #include "env/VMJ9.h"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/symbol/LabelSymbol.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "optimizer/Simplifier.hpp"
@@ -352,7 +353,7 @@ inlineBigDecimalConstructor(
 
    TR::LabelSymbol * OOLlabelEND = NULL;
    if (inBCDForm)
-      OOLlabelEND = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+      OOLlabelEND = generateLabelSymbol(cg);
 
    if (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit())
       {
@@ -378,14 +379,14 @@ inlineBigDecimalConstructor(
          {
          TR::Instruction * instr = generateRRInstruction(cg, TR::InstOpCode::CDUTR, node, dfpRegister, valRegister);
          bdInstr = instr;
-         TR::LabelSymbol * jump2callSymbol = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+         TR::LabelSymbol * jump2callSymbol = generateLabelSymbol(cg);
 
          instr->setNeedsGCMap(0x0000FFFF);
          //CDUTR only has 4byte length, so append 2bytes
          TR::Instruction * nop = new (cg->trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, node, cg);
 
          TR::S390RestoreGPR7Snippet * restoreSnippet = new (cg->trHeapMemory()) TR::S390RestoreGPR7Snippet(cg, node,
-                                                                                                         TR::LabelSymbol::create(cg->trHeapMemory(),cg),
+                                                                                                         generateLabelSymbol(cg),
                                                                                                          jump2callSymbol);
          cg->addSnippet(restoreSnippet);
          TR::Instruction * cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_NOP, node, restoreSnippet->getSnippetLabel());
@@ -437,11 +438,11 @@ inlineBigDecimalConstructor(
             TR::Instruction * instr = generateRRInstruction(cg, TR::InstOpCode::CDUTR, node, dfpRegister, valRegister);
             bdInstr = instr;
 
-            TR::LabelSymbol * jump2callSymbol = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+            TR::LabelSymbol * jump2callSymbol = generateLabelSymbol(cg);
 
             instr->setNeedsGCMap(0x0000FFFF);
             TR::S390RestoreGPR7Snippet * restoreSnippet = new (cg->trHeapMemory()) TR::S390RestoreGPR7Snippet(cg, node,
-                                                                                                            TR::LabelSymbol::create(cg->trHeapMemory(),cg),
+                                                                                                            generateLabelSymbol(cg),
                                                                                                             jump2callSymbol);
             cg->addSnippet(restoreSnippet);
             TR::Instruction * cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_NOP, node, restoreSnippet->getSnippetLabel());
@@ -494,11 +495,11 @@ inlineBigDecimalConstructor(
             TR::Instruction * instr = generateRRInstruction(cg, TR::InstOpCode::CDUTR, node, dfpRegister, valRegister->getHighOrder());
             bdInstr = instr;
 
-            TR::LabelSymbol * jump2callSymbol = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+            TR::LabelSymbol * jump2callSymbol = generateLabelSymbol(cg);
 
             instr->setNeedsGCMap(0x0000FFFF);
             TR::S390RestoreGPR7Snippet * restoreSnippet = new (cg->trHeapMemory()) TR::S390RestoreGPR7Snippet(cg, node,
-                                                                                                            TR::LabelSymbol::create(cg->trHeapMemory(),cg),
+                                                                                                            generateLabelSymbol(cg),
                                                                                                             jump2callSymbol);
             cg->addSnippet(restoreSnippet);
             TR::Instruction * cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_NOP, node, restoreSnippet->getSnippetLabel());
@@ -590,7 +591,7 @@ inlineBigDecimalConstructor(
       // Test the data group and branch instruction for non-extremes, and zero leading digit
       genTestDataGroup(node, cg, resRegister, tdgdtLaxTest);
 
-      TR::LabelSymbol * labelEND = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+      TR::LabelSymbol * labelEND = generateLabelSymbol(cg);
 
       // did we fail? - original non rounded value loaded earlier
       generateLoad32BitConstant(cg, node, 0, retRegister, false);
@@ -702,7 +703,7 @@ inlineBigDecimalBinaryOp(
       }
 
    TR::Register * retRegister = cg->allocateRegister();
-   TR::LabelSymbol * labelEND = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * labelEND = generateLabelSymbol(cg);
 
    // Perform the operation
    TR::Register * resFPRegister = cg->allocateRegister(TR_FPR);
@@ -888,7 +889,7 @@ inlineBigDecimalScaledDivide(
    TR::Instruction * instr = generateRRFInstruction(cg, TR::InstOpCode::DDTR, node, resFPRegister, rhsFPRegister, lhsFPRegister, USE_CURRENT_DFP_ROUNDING_MODE);
 
    TR::Register * retRegister = cg->allocateRegister();
-   TR::LabelSymbol * labelEND = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * labelEND = generateLabelSymbol(cg);
    cg->stopUsingRegister(lhsFPRegister); // can do this since longs end up in FPRs
    cg->stopUsingRegister(rhsFPRegister);
 
@@ -907,7 +908,7 @@ inlineBigDecimalScaledDivide(
    // Test data group and then branch
    genTestDataGroup(node, cg, resFPRegister, tdgdtScaledTest);
 
-   TR::LabelSymbol * labelScalesEQUAL = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * labelScalesEQUAL = generateLabelSymbol(cg);
 
    // did we TGDT fail the original divide?
    generateLoad32BitConstant(cg, node, -1, retRegister, false);
@@ -1070,7 +1071,7 @@ inlineBigDecimalDivide(
    // Perform the divide
    TR::Register * resFPRegister = cg->allocateRegister(TR_FPR);
    TR::Register * retRegister = cg->allocateRegister();
-   TR::LabelSymbol * labelEND = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * labelEND = generateLabelSymbol(cg);
 
    TR::Instruction * instr = generateRRFInstruction(cg, TR::InstOpCode::DDTR, node, resFPRegister, rhsFPRegister, lhsFPRegister, USE_CURRENT_DFP_ROUNDING_MODE);
    cg->stopUsingRegister(lhsFPRegister); // can do this since longs end up in FPRs
@@ -1176,7 +1177,7 @@ inlineBigDecimalRound(
    TR::Register * resRegister = cg->allocateRegister(TR_FPR);
 
    TR::Register * retRegister = cg->allocateRegister();
-   TR::LabelSymbol * labelEND = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * labelEND = generateLabelSymbol(cg);
 
    //TODO: RRDTR will throw exception
    TR::Instruction * instr = generateRRFInstruction(cg, TR::InstOpCode::RRDTR, node, resRegister, reqPrecRegister, dfpFPRegister, USE_CURRENT_DFP_ROUNDING_MODE);
@@ -1234,7 +1235,7 @@ inlineBigDecimalCompareTo(
    TR::Register * retRegister = cg->allocateRegister();
 
    //return label
-   TR::LabelSymbol * labelEND = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * labelEND = generateLabelSymbol(cg);
 
    // compare both values
    TR::Instruction * instr = generateRRInstruction(cg, TR::InstOpCode::CDTR, node, lhsFPRegister, rhsFPRegister);
@@ -1387,7 +1388,7 @@ inlineBigDecimalSetScale(
    cg->decReferenceCount(node->getChild(2));
    generateRRInstruction(cg, TR::InstOpCode::LGFR, node, expRegister, expRegister);
 
-   TR::LabelSymbol * labelEND = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * labelEND = generateLabelSymbol(cg);
    TR::Register * retRegister = cg->allocateRegister();
 
    // insert the biased exponent
@@ -1575,10 +1576,10 @@ inlineBigDecimalFromPackedConverter(
    //CDSTR/CDUTR only has 4byte length, so append 2bytes
    TR::Instruction * nop = new (cg->trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, node, cg);
 
-   TR::LabelSymbol * passThroughLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol * jump2callSymbol = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * passThroughLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol * jump2callSymbol = generateLabelSymbol(cg);
    TR::S390RestoreGPR7Snippet * restoreSnippet = new (cg->trHeapMemory()) TR::S390RestoreGPR7Snippet(cg, node,
-                                                                                                   TR::LabelSymbol::create(cg->trHeapMemory(),cg), jump2callSymbol);
+                                                                                                   generateLabelSymbol(cg), jump2callSymbol);
    cg->addSnippet(restoreSnippet);
    TR::Instruction * brcInstr = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_NOP, node, restoreSnippet->getSnippetLabel());
 
@@ -2798,10 +2799,10 @@ J9::Z::TreeEvaluator::dfdivEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    bool checkDivisorForZero = comp->getOption(TR_ForceIEEEDivideByZeroException);
    if (checkDivisorForZero)
       {
-      TR::LabelSymbol *oolEntryPoint = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-      TR::LabelSymbol *oolReturnPoint = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-      TR::LabelSymbol * cflowRegionStart   = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-      TR::LabelSymbol * cflowRegionEnd     = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+      TR::LabelSymbol *oolEntryPoint = generateLabelSymbol(cg);
+      TR::LabelSymbol *oolReturnPoint = generateLabelSymbol(cg);
+      TR::LabelSymbol * cflowRegionStart   = generateLabelSymbol(cg);
+      TR::LabelSymbol * cflowRegionEnd     = generateLabelSymbol(cg);
 
       TR::Register *IMzMaskReg = cg->allocate64bitRegister();
 

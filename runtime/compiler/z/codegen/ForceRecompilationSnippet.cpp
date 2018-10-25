@@ -29,6 +29,7 @@
 #include "env/VMJ9.h"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/symbol/LabelSymbol.hpp"
 
 uint8_t *
 TR::S390ForceRecompilationSnippet::emitSnippetBody()
@@ -73,7 +74,7 @@ TR::S390ForceRecompilationSnippet::emitSnippetBody()
    intptrj_t destAddr = (intptrj_t)(glueRef->getMethodAddress());
 
 #if defined(TR_TARGET_64BIT)
-#if defined(J9ZOS390) 
+#if defined(J9ZOS390)
    if (comp->getOption(TR_EnableRMODE64))
 #endif
       {
@@ -140,7 +141,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390ForceRecompilationSnippet * snippet)
 TR::S390ForceRecompilationDataSnippet::S390ForceRecompilationDataSnippet(TR::CodeGenerator *cg,
                                         TR::Node *node,
                                         TR::LabelSymbol *restartLabel):
-     TR::S390ConstantDataSnippet(cg,node,TR::LabelSymbol::create(cg->trHeapMemory(),cg),0),
+     TR::S390ConstantDataSnippet(cg,node,generateLabelSymbol(cg),0),
      _restartLabel(restartLabel)
    {
    }

@@ -604,12 +604,12 @@ TR::Register * caseConversionHelper(TR::Node* node, TR::CodeGenerator* cg, bool 
    TR::Register* invalidRangeVector = cg->allocateRegister(TR_VRF);
    TR::Register* invalidCondVector = cg->allocateRegister(TR_VRF);
 
-   TR::LabelSymbol* cFlowRegionStart = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
-   TR::LabelSymbol* fullVectorConversion = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
-   TR::LabelSymbol* cFlowRegionEnd = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
-   TR::LabelSymbol* success = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
-   TR::LabelSymbol* handleInvalidChars = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
-   TR::LabelSymbol* loop = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
+   TR::LabelSymbol* cFlowRegionStart = generateLabelSymbol( cg);
+   TR::LabelSymbol* fullVectorConversion = generateLabelSymbol( cg);
+   TR::LabelSymbol* cFlowRegionEnd = generateLabelSymbol( cg);
+   TR::LabelSymbol* success = generateLabelSymbol( cg);
+   TR::LabelSymbol* handleInvalidChars = generateLabelSymbol( cg);
+   TR::LabelSymbol* loop = generateLabelSymbol( cg);
 
    TR::Instruction* cursor;
 
@@ -817,14 +817,14 @@ intrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isCompressed)
    TR::Register* resultVector = cg->allocateRegister(TR_VRF);
    TR::Register* valueVector = cg->allocateRegister(TR_VRF);
 
-   TR::LabelSymbol* cFlowRegionStart = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
-   TR::LabelSymbol* loopLabel = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
-   TR::LabelSymbol* fullVectorLabel = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
-   TR::LabelSymbol* notFoundInResidue = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
-   TR::LabelSymbol* foundLabel = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
-   TR::LabelSymbol* foundLabelExtractedScratch = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
-   TR::LabelSymbol* failureLabel = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
-   TR::LabelSymbol* cFlowRegionEnd = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
+   TR::LabelSymbol* cFlowRegionStart = generateLabelSymbol( cg);
+   TR::LabelSymbol* loopLabel = generateLabelSymbol( cg);
+   TR::LabelSymbol* fullVectorLabel = generateLabelSymbol( cg);
+   TR::LabelSymbol* notFoundInResidue = generateLabelSymbol( cg);
+   TR::LabelSymbol* foundLabel = generateLabelSymbol( cg);
+   TR::LabelSymbol* foundLabelExtractedScratch = generateLabelSymbol( cg);
+   TR::LabelSymbol* failureLabel = generateLabelSymbol( cg);
+   TR::LabelSymbol* cFlowRegionEnd = generateLabelSymbol( cg);
 
    const int elementSizeMask = isCompressed ? 0x0 : 0x1;   // byte or halfword mask
    uintptrj_t headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
@@ -1100,7 +1100,7 @@ genTestIsSuper(TR::CodeGenerator * cg, TR::Node * node,
 #endif
    if (dynamicCastClass)
       {
-      TR::LabelSymbol * notInterfaceLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+      TR::LabelSymbol * notInterfaceLabel = generateLabelSymbol(cg);
       TR_ASSERT((node->getOpCodeValue() == TR::instanceof &&
             node->getSecondChild()->getOpCodeValue() != TR::loadaddr), "genTestIsSuper: castClassDepth == -1 is only supported for transformed isInstance calls.");
 
@@ -1576,7 +1576,7 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
    TR_ASSERT(doWrtBar == true,"VMnonNullSrcWrtBarCardCheckEvaluator: Invalid call to VMnonNullSrcWrtBarCardCheckEvaluator\n");
 
    TR::Node * wrtbarNode = NULL;
-   TR::LabelSymbol * helperSnippetLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * helperSnippetLabel = generateLabelSymbol(cg);
    if (node->getOpCodeValue() == TR::awrtbari || node->getOpCodeValue() == TR::awrtbar)
       wrtbarNode = node;
    else if (node->getOpCodeValue() == TR::ArrayStoreCHK)
@@ -1626,7 +1626,7 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
          generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BH, node, doneLabel);
          }
 
-      TR::LabelSymbol *noChkLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+      TR::LabelSymbol *noChkLabel = generateLabelSymbol(cg);
 
       if (!TR::Options::getCmdLineOptions()->realTimeGC())
          {
@@ -1638,7 +1638,7 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
             }
          if (doCrdMrk && !isDefinitelyNonHeapObj)
             {
-            TR::LabelSymbol *srcObjChkLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+            TR::LabelSymbol *srcObjChkLabel = generateLabelSymbol(cg);
             // CompileTime check for heap object
             // SRLG r2, rHeapAddr, cardSize
             // L    r1, cardTableVirtualStartOffset(metaData)
@@ -1857,7 +1857,7 @@ VMwrtbarEvaluator(
         ((node->getOpCodeValue() == TR::ArrayStoreCHK) && node->getFirstChild()->getOpCode().isWrtBar() && node->getFirstChild()->skipWrtBar() ) )
       return;
    TR::RegisterDependencyConditions * conditions;
-   TR::LabelSymbol * doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * doneLabel = generateLabelSymbol(cg);
    if (doWrtBar)
       conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 4, cg);
    else
@@ -2170,11 +2170,11 @@ J9::Z::TreeEvaluator::asynccheckEvaluator(TR::Node * node, TR::CodeGenerator * c
    TR_ASSERT( testNode->getOpCodeValue() == (TR::Compiler->target.is64Bit() ? TR::lcmpeq : TR::icmpeq), "asynccheck bad format");
    TR_ASSERT( secondChild->getOpCode().isLoadConst() && secondChild->getRegister() == NULL, "asynccheck bad format");
 
-   TR::LabelSymbol * snippetLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol * cFlowRegionStart = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * snippetLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol * cFlowRegionStart = generateLabelSymbol(cg);
    TR::Instruction * gcPoint;
 
-   TR::LabelSymbol * reStartLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * reStartLabel = generateLabelSymbol(cg);
 
    // (0)  asynccheck #4[0x004d7a88]Method[jitCheckAsyncMessages]
    // (1)    icmpeq
@@ -2395,7 +2395,7 @@ generateNullChkSnippet(
       TR::CodeGenerator *cg)
    {
    TR::Compilation *comp = cg->comp();
-   TR::LabelSymbol * snippetLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * snippetLabel = generateLabelSymbol(cg);
    TR::S390BranchInstruction * brInstr = (TR::S390BranchInstruction*) generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, snippetLabel);
    brInstr->setExceptBranchOp();
 
@@ -2603,8 +2603,8 @@ J9::Z::TreeEvaluator::arraylengthEvaluator(TR::Node *node, TR::CodeGenerator *cg
       }
    else
       {
-      TR::LabelSymbol * oolStartLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-      TR::LabelSymbol * oolReturnLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+      TR::LabelSymbol * oolStartLabel = generateLabelSymbol(cg);
+      TR::LabelSymbol * oolReturnLabel = generateLabelSymbol(cg);
 
       // Branch to OOL if contiguous array size is zero
       TR::Instruction * temp = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, oolStartLabel);
@@ -2690,7 +2690,7 @@ J9::Z::TreeEvaluator::DIVCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::DataType dtype = secondChild->getType();
    bool constDivisor = secondChild->getOpCode().isLoadConst();
    TR::Snippet * snippet;
-   TR::LabelSymbol * snippetLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * snippetLabel = generateLabelSymbol(cg);
    TR::Instruction * cursor = NULL;   // Point to instruction that will assign targetReg
    TR::MemoryReference * divisorMr = NULL;
 
@@ -2864,7 +2864,7 @@ J9::Z::TreeEvaluator::BNDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    PRINT_ME("BNDCHK", node, cg);
    TR::Node * firstChild = node->getFirstChild();
    TR::Node * secondChild = node->getSecondChild();
-   TR::LabelSymbol * boundCheckFailureLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * boundCheckFailureLabel = generateLabelSymbol(cg);
    TR::Snippet * snippet;
    bool swap;
    TR::Instruction* cursor = NULL;
@@ -3189,7 +3189,7 @@ J9::Z::TreeEvaluator::ArrayCopyBNDCHKEvaluator(TR::Node * node, TR::CodeGenerato
    //
    TR::Node * firstChild = node->getFirstChild();
    TR::Node * secondChild = node->getSecondChild();
-   TR::LabelSymbol * boundCheckFailureLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * boundCheckFailureLabel = generateLabelSymbol(cg);
    TR::Instruction * instr = NULL;
    bool useCIJ = false;
    TR::Compilation *comp = cg->comp();
@@ -3484,8 +3484,8 @@ J9::Z::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node, TR::CodeGenera
    TR::Register* loadOrStoreReg = NULL;
    TR_Debug * debugObj = cg->getDebug();
 
-   TR::LabelSymbol * oolStartLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol * oolReturnLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * oolStartLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol * oolReturnLabel = generateLabelSymbol(cg);
    TR::Register *indexReg = cg->evaluate(indexChild);
    TR::Register *valueReg = NULL;
 
@@ -3595,7 +3595,7 @@ J9::Z::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node, TR::CodeGenera
    // Generate BNDCHK code.
    if (needsBoundCheck)
       {
-      TR::LabelSymbol * boundCheckFailureLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+      TR::LabelSymbol * boundCheckFailureLabel = generateLabelSymbol(cg);
 
       // Check if contiguous arraysize is zero first.  If not, throw AIOB
       TR::MemoryReference* contiguousArraySizeMR2 = generateS390MemoryReference(*contiguousArraySizeMR, 0, cg);
@@ -3901,9 +3901,9 @@ VMarrayStoreCHKEvaluator(
       TR::RegisterDependencyConditions * conditions,
       TR::CodeGenerator * cg)
    {
-   TR::LabelSymbol * helperCallLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol * startOOLLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol * exitOOLLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * helperCallLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol * startOOLLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol * exitOOLLabel = generateLabelSymbol(cg);
    TR::LabelSymbol * exitPointLabel = wbLabel;
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
@@ -4160,10 +4160,10 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
    TR::Register * tempReg = NULL;
    TR::Instruction *cursor;
 
-   cFlowRegionStart = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   wbLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   cFlowRegionEnd = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   simpleStoreLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   cFlowRegionStart = generateLabelSymbol(cg);
+   wbLabel = generateLabelSymbol(cg);
+   cFlowRegionEnd = generateLabelSymbol(cg);
+   simpleStoreLabel = generateLabelSymbol(cg);
 
    txReg = cg->allocateRegister();
    tyReg = cg->allocateRegister();
@@ -4251,7 +4251,7 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
       // Speculatively NOP the array store check if VP is able to prove that the ASC
       // would always succeed given the current state of the class hierarchy.
       //
-      TR::LabelSymbol * oolASCLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+      TR::LabelSymbol * oolASCLabel = generateLabelSymbol(cg);
       TR_VirtualGuard *virtualGuard = TR_VirtualGuard::createArrayStoreCheckGuard(comp, node, node->getArrayStoreClassInNode());
       TR::Instruction *vgnopInstr = generateVirtualGuardNOPInstruction(cg, node, virtualGuard->addNOPSite(), NULL, oolASCLabel);
 
@@ -4427,8 +4427,8 @@ J9::Z::TreeEvaluator::conditionalHelperEvaluator(TR::Node * node, TR::CodeGenera
       generateRRInstruction(cg, TR::InstOpCode::CR, node, src1Reg, src2Reg);
       }
 
-   TR::LabelSymbol * cFlowRegionStart = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol * snippetLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * cFlowRegionStart = generateLabelSymbol(cg);
+   TR::LabelSymbol * snippetLabel = generateLabelSymbol(cg);
    TR::Instruction * gcPoint;
 
    TR::Register * tempReg1 = cg->allocateRegister();
@@ -4442,7 +4442,7 @@ J9::Z::TreeEvaluator::conditionalHelperEvaluator(TR::Node * node, TR::CodeGenera
    cFlowRegionStart->setStartInternalControlFlow();
    gcPoint = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, testNode->getOpCodeValue() == TR::icmpeq ?  TR::InstOpCode::COND_BE : TR::InstOpCode::COND_BNE, node, snippetLabel);
 
-   TR::LabelSymbol * reStartLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * reStartLabel = generateLabelSymbol(cg);
    TR::Snippet * snippet = new (cg->trHeapMemory()) TR::S390HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference(), reStartLabel);
    cg->addSnippet(snippet);
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, reStartLabel, dependencies);
@@ -4471,8 +4471,8 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
    {
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
-   TR::LabelSymbol * doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol * continueLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * doneLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol * continueLabel = generateLabelSymbol(cg);
    TR::Instruction * gcPoint = NULL;
 
    //Two DataSnippet is used in genTestIsSuper for secondaryCacheSites.
@@ -4526,7 +4526,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
    if (dynamicClassPointer)
       {
       testCache = true;
-      callHelper = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+      callHelper = generateLabelSymbol(cg);
       //callHelper = new (cg->trHeapMemory()) TR::LabelSymbol(cg);
       }
 
@@ -4729,7 +4729,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
       generateInlineTest(cg, node, castClassNode, objClassReg, resultReg, scratch1Reg, litPoolReg, needsResult, falseLabel, trueLabel, doneLabel, false);
       cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfStats/(%s)/ProfiledFail", comp->signature()),1,TR::DebugCounter::Undetermined);
 
-      TR::LabelSymbol * doneTestCacheLabel  = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+      TR::LabelSymbol * doneTestCacheLabel  = generateLabelSymbol(cg);
 
 #ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
       // For the memory reference below, we may need to convert the
@@ -4957,7 +4957,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
          * TestcallResultReg again to use in branch Instr
          * */
 
-         TR::LabelSymbol *doneUpdateSnippetLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+         TR::LabelSymbol *doneUpdateSnippetLabel = generateLabelSymbol(cg);
          generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, doneUpdateSnippetLabel);
          TR::Register * tempNeg1LoadedRegister = cg->allocateRegister();
          //we do not need post condtion since this code resides in OOL only.
@@ -6834,12 +6834,12 @@ J9::Z::TreeEvaluator::VMcheckcastEvaluator(TR::Node * node, TR::CodeGenerator * 
       return NULL;
       }
 
-   doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   callLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   startOOLLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   doneOOLLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   helperReturnOOLLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   continueLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   doneLabel = generateLabelSymbol(cg);
+   callLabel = generateLabelSymbol(cg);
+   startOOLLabel = generateLabelSymbol(cg);
+   doneOOLLabel = generateLabelSymbol(cg);
+   helperReturnOOLLabel = generateLabelSymbol(cg);
+   continueLabel = generateLabelSymbol(cg);
    resultLabel = doneLabel;
 
    if (needsNullTest && !isCheckcastAndNullChk)
@@ -8120,10 +8120,10 @@ genHeapAlloc(TR::Node * node, TR::Instruction *& iCursor, bool isVariableLen, TR
       else
          iCursor = generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, sizeReg,
                       generateS390MemoryReference(metaReg, offsetof(J9VMThread, heapAlloc), cg), iCursor);
-      TR::LabelSymbol * fillerRemLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-      TR::LabelSymbol * doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+      TR::LabelSymbol * fillerRemLabel = generateLabelSymbol(cg);
+      TR::LabelSymbol * doneLabel = generateLabelSymbol(cg);
 
-      TR::LabelSymbol * fillerLoopLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+      TR::LabelSymbol * fillerLoopLabel = generateLabelSymbol(cg);
 
       // do this clear, if disableBatchClear is on
       if (disableBatchClear && disableInitClear==NULL) //&& (node->getOpCodeValue() == TR::anewarray) && (node->getFirstChild()->getInt()>0) && (node->getFirstChild()->getInt()<6) )
@@ -8383,8 +8383,8 @@ genAlignDoubleArray(TR::Node * node, TR::Instruction *& iCursor, bool isVariable
    int32_t dataBegin, TR::Register * dataSizeReg, TR::Register * temp1Reg, TR::Register * temp2Reg, TR::Register * litPoolBaseReg,
    TR::RegisterDependencyConditions * conditions, TR::CodeGenerator * cg)
    {
-   TR::LabelSymbol * slotAtStart = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol * doneAlign = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * slotAtStart = generateLabelSymbol(cg);
+   TR::LabelSymbol * doneAlign = generateLabelSymbol(cg);
 
    iCursor = generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, temp1Reg, resReg, iCursor);
    iCursor = generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, temp2Reg, 3, iCursor);
@@ -8562,8 +8562,8 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       objectSize = comp->canAllocateInline(node, classAddress);
       isVariableLen = (objectSize == 0);
       allocateSize = objectSize;
-      callLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-      cFlowRegionEnd = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+      callLabel = generateLabelSymbol(cg);
+      cFlowRegionEnd = generateLabelSymbol(cg);
       conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(10, 13, cg);
       if (!comp->getOption(TR_DisableHeapAllocOOL))
          {
@@ -8778,8 +8778,8 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
                      node->getOpCodeValue() == TR::newarray))
             {
             TR_Debug * debugObj = cg->getDebug();
-            TR::LabelSymbol * startOOLLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-            exitOOLLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+            TR::LabelSymbol * startOOLLabel = generateLabelSymbol(cg);
+            exitOOLLabel = generateLabelSymbol(cg);
             TR_S390OutOfLineCodeSection *zeroSizeArrayChckOOL;
             if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z10) && TR::Compiler->target.is64Bit())
                {
@@ -8934,7 +8934,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          static bool bppoutline = (feGetEnv("TR_BPRP_Outline")!=NULL);
          if (bppoutline)
             {
-            TR::LabelSymbol * callLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+            TR::LabelSymbol * callLabel = generateLabelSymbol(cg);
             TR::Instruction * instr = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, callLabel);
 
             if (helper == TR_S390OutlinedNew && cg->_outlineCall._frequency == -1)
@@ -9123,8 +9123,8 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          {
          if (secondBRCToOOL)
             {
-            TR::LabelSymbol * cFlowRegionStart = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-            TR::LabelSymbol * cFlowRegionEnd = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+            TR::LabelSymbol * cFlowRegionStart = generateLabelSymbol(cg);
+            TR::LabelSymbol * cFlowRegionEnd = generateLabelSymbol(cg);
 
             generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionStart, firstBRCToOOL->getPrev());
             cFlowRegionStart->setStartInternalControlFlow();
@@ -9138,7 +9138,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          {
          // determine where internal control flow begins by looking for the first branch
          // instruction after where the label instruction would have been inserted
-         TR::LabelSymbol * cFlowRegionStart = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+         TR::LabelSymbol * cFlowRegionStart = generateLabelSymbol(cg);
 
          TR::Instruction *next = current->getNext();
          while(next != NULL && !next->isBranchOp())
@@ -9200,8 +9200,8 @@ J9::Z::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *c
    TR::Register *object1Reg = cg->evaluate(object1);
    TR::Register *object2Reg = cg->evaluate(object2);
 
-   TR::LabelSymbol *cFlowRegionStart  = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol *fallThrough  = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol *cFlowRegionStart  = generateLabelSymbol(cg);
+   TR::LabelSymbol *fallThrough  = generateLabelSymbol(cg);
    TR::LabelSymbol *snippetLabel = NULL;
    TR::Snippet     *snippet      = NULL;
    TR::Register    *tempReg      = cg->allocateRegister();
@@ -9245,7 +9245,7 @@ J9::Z::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *c
 
       if (!snippetLabel)
          {
-         snippetLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+         snippetLabel = generateLabelSymbol(cg);
          generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionStart);
          cFlowRegionStart->setStartInternalControlFlow();
          generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ,   node, snippetLabel);
@@ -9284,7 +9284,7 @@ J9::Z::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *c
       {
       if (!snippetLabel)
          {
-         snippetLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+         snippetLabel = generateLabelSymbol(cg);
          generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, snippetLabel);
 
          snippet      = new (cg->trHeapMemory()) TR::S390HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference());
@@ -9327,7 +9327,7 @@ J9::Z::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *c
 
         if (!snippetLabel)
             {
-            snippetLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+            snippetLabel = generateLabelSymbol(cg);
             generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CR, node, tempReg, tempClassReg, TR::InstOpCode::COND_BNZ, snippetLabel, false, false);
 
             snippet      = new (cg->trHeapMemory()) TR::S390HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference());
@@ -9359,7 +9359,7 @@ J9::Z::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *c
 #endif
          if (!snippetLabel)
             {
-            snippetLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+            snippetLabel = generateLabelSymbol(cg);
             generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ,   node, snippetLabel);
 
             snippet      = new (cg->trHeapMemory()) TR::S390HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference());
@@ -9662,9 +9662,9 @@ J9::Z::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node* node, TR::Register
 
    TR::RegisterDependencyConditions * deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(9, 9, cg);
    TR::LabelSymbol * doneLabel, * callLabel, * OKLabel;
-   doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   callLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   OKLabel   = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   doneLabel = generateLabelSymbol(cg);
+   callLabel = generateLabelSymbol(cg);
+   OKLabel   = generateLabelSymbol(cg);
    TR::Snippet * snippet;
    TR::Linkage * linkage = cg->getLinkage(node->getSymbol()->castToMethodSymbol()->getLinkageConvention());
    TR::SystemLinkage *sysLink = (TR::SystemLinkage *) cg->getLinkage(TR_System);
@@ -9780,7 +9780,7 @@ J9::Z::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node* node, TR::Register
    TR::LabelSymbol *exceptionSnippetLabel = cg->lookUpSnippet(TR::Snippet::IsHelperCall, throwSymRef);
    if (exceptionSnippetLabel == NULL)
       {
-      exceptionSnippetLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+      exceptionSnippetLabel = generateLabelSymbol(cg);
       cg->addSnippet(new (cg->trHeapMemory()) TR::S390HelperCallSnippet(cg, node, exceptionSnippetLabel, throwSymRef));
       }
 
@@ -9815,7 +9815,7 @@ void J9::Z::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Register *s
    bool doWrtBar = (gcMode == TR_WrtbarOldCheck || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarAlways);
    // Do not do card marking when gcMode is TR_WrtbarCardMarkAndOldCheck - we go through helper, which performs CM, so it is redundant.
    bool doCrdMrk = (gcMode == TR_WrtbarCardMark || gcMode == TR_WrtbarCardMarkIncremental);
-   TR::LabelSymbol * doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * doneLabel = generateLabelSymbol(cg);
 
    if (doWrtBar)
       {
@@ -9906,7 +9906,7 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mn
    TR::Register *scratchReg = NULL;
    TR::Register *objReg, *oldVReg, *newVReg;
    TR::Register *resultReg = cg->allocateRegister();
-   TR::LabelSymbol *doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
    TR::MemoryReference* casMemRef = NULL;
 
    TR::Compilation * comp = cg->comp();
@@ -10076,7 +10076,7 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mn
 
    if (isObj && (doWrtBar || doCrdMrk))
       {
-      TR::LabelSymbol *doneLabelWrtBar = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+      TR::LabelSymbol *doneLabelWrtBar = generateLabelSymbol(cg);
       TR::Register *epReg = cg->allocateRegister();
       TR::Register *raReg = cg->allocateRegister();
       TR::RegisterDependencyConditions* condWrtBar = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 5, cg);
@@ -10182,8 +10182,8 @@ J9::Z::TreeEvaluator::generateRuntimeInstrumentationOnOffSequence(TR::CodeGenera
    TR_ASSERT(op == TR::InstOpCode::RION || op == TR::InstOpCode::RIOFF, "Unexpected Runtime Instrumentation OpCode");
 
 #ifdef TR_HOST_S390
-   TR::LabelSymbol * OOLStartLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol * OOLReturnLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * OOLStartLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol * OOLReturnLabel = generateLabelSymbol(cg);
    TR_Debug * debugObj = cg->getDebug();
 
    // Test the last byte of vmThread->jitCurrentRIFlags
@@ -10699,8 +10699,8 @@ extern TR::Register *inlineAtomicOps(
       }
 
    TR::RegisterDependencyConditions * dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, numDeps, cg);
-   TR::LabelSymbol *cFlowRegionEnd = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol *loopLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol *cFlowRegionEnd = generateLabelSymbol(cg);
+   TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
 
 
    // If this is a getAndSet of a constant, load the constant outside the loop.
@@ -10876,8 +10876,8 @@ inlineAtomicFieldUpdater(
    TR::Register * tClassReg = cg->allocateRegister();
    TR::Register * objClassReg = cg->allocateRegister();
 
-   TR::LabelSymbol *doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol *callLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *callLabel = generateLabelSymbol(cg);
 
    // evaluate the delta node if it exists
    if (isArgConstant)
@@ -10981,7 +10981,7 @@ inlineKeepAlive(
    TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1, 1, cg);
    conditions->addPreCondition(paramReg, TR::RealRegister::AssignAny);
    conditions->addPostCondition(paramReg, TR::RealRegister::AssignAny);
-   TR::LabelSymbol *label = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol *label = generateLabelSymbol(cg);
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, label, conditions);
    cg->decReferenceCount(paramNode);
    return NULL;
@@ -11008,7 +11008,7 @@ genWrtBarForTM(
 
    if (doWrtBar || doCrdMrk)
       {
-      TR::LabelSymbol *doneLabelWrtBar = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+      TR::LabelSymbol *doneLabelWrtBar = generateLabelSymbol(cg);
       TR::Register *epReg = cg->allocateRegister();
       TR::Register *raReg = cg->allocateRegister();
 
@@ -11103,10 +11103,10 @@ inlineConcurrentHashMapTmPut(
    TR::Register * rIndex = cg->allocateRegister();
    TR::Register * rRetryCount = cg->allocateRegister();
 
-   TR::LabelSymbol * tstartLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol * endLabel =  TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol * failureLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol * returnLabel =  TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * tstartLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol * endLabel =  generateLabelSymbol(cg);
+   TR::LabelSymbol * failureLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol * returnLabel =  generateLabelSymbol(cg);
 
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 8, cg);
 
@@ -11364,11 +11364,11 @@ inlineConcurrentHashMapTmRemove(
    TR::Register * rIndex = cg->allocateRegister();
    TR::Register * rRetryCount = cg->allocateRegister();
 
-   TR::LabelSymbol * tstartLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol * endLabel =  TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol * failureLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol * removeLabel =  TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol * returnLabel =  TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * tstartLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol * endLabel =  generateLabelSymbol(cg);
+   TR::LabelSymbol * failureLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol * removeLabel =  generateLabelSymbol(cg);
+   TR::LabelSymbol * returnLabel =  generateLabelSymbol(cg);
 
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 9, cg);
 
@@ -11633,9 +11633,9 @@ inlineConcurrentLinkedQueueTMOffer(
    TR::Register * rQ = cg->allocateCollectedReferenceRegister();
    TR::Register * rN = cg->evaluate(node->getSecondChild());
    TR::Instruction * cursor = NULL;
-   TR::LabelSymbol * insertLabel =  TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol * doneLabel =  TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol * failLabel =  TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * insertLabel =  generateLabelSymbol(cg);
+   TR::LabelSymbol * doneLabel =  generateLabelSymbol(cg);
+   TR::LabelSymbol * failLabel =  generateLabelSymbol(cg);
 
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
@@ -11853,8 +11853,8 @@ inlineConcurrentLinkedQueueTMPoll(
    TR::Register * rThis = cg->evaluate(node->getFirstChild());
    TR::Register * rTmp = NULL;
    TR::Instruction * cursor = NULL;
-   TR::LabelSymbol * doneLabel =  TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol * failLabel =  TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * doneLabel =  generateLabelSymbol(cg);
+   TR::LabelSymbol * failLabel =  generateLabelSymbol(cg);
 
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 5, cg);
    deps->addPostCondition(rE, TR::RealRegister::AssignAny);
@@ -12126,9 +12126,9 @@ VMgenerateCatchBlockBBStartPrologue(
          }
 
       // Check counter and induce recompilation if counter = 0
-      TR::LabelSymbol * cFlowRegionStart = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-      TR::LabelSymbol * snippetLabel     = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-      TR::LabelSymbol * restartLabel     = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+      TR::LabelSymbol * cFlowRegionStart = generateLabelSymbol(cg);
+      TR::LabelSymbol * snippetLabel     = generateLabelSymbol(cg);
+      TR::LabelSymbol * restartLabel     = generateLabelSymbol(cg);
 
       snippetLabel->setEndInternalControlFlow();
 
@@ -12321,7 +12321,7 @@ J9::Z::TreeEvaluator::countDigitsEvaluator(TR::Node * node, TR::CodeGenerator * 
 
    TR::MemoryReference * work[18];
    TR::LabelSymbol * label[18];
-   TR::LabelSymbol * cFlowRegionEnd = TR::LabelSymbol::create(cg->trHeapMemory());
+   TR::LabelSymbol * cFlowRegionEnd = generateLabelSymbol(cg);
 
    // Get the negative input value (2's complement) - We treat all numbers as
    // negative to simplify the absolute comparison, and take advance of the
@@ -12331,7 +12331,7 @@ J9::Z::TreeEvaluator::countDigitsEvaluator(TR::Node * node, TR::CodeGenerator * 
    // If you want to use TR::InstOpCode::LNGR for a 32-bit value on 64-bit architecture, you'll need to additionally generate TR::InstOpCode::LGFR for the input.
    generateRRInstruction(cg, !isLong ? TR::InstOpCode::LNR : TR::InstOpCode::LNGR, node, inputReg, inputReg);
 
-   TR::LabelSymbol * cFloWRegionStart = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * cFloWRegionStart = generateLabelSymbol(cg);
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node,  cFloWRegionStart);
    cFloWRegionStart->setStartInternalControlFlow();
 
@@ -12340,7 +12340,7 @@ J9::Z::TreeEvaluator::countDigitsEvaluator(TR::Node * node, TR::CodeGenerator * 
       for (int32_t i = 0; i < 18; i++)
          {
          work[i] = generateS390MemoryReference(workReg, i*8, cg);
-         label[i] = TR::LabelSymbol::create(cg->trHeapMemory());
+         label[i] = generateLabelSymbol(cg);
          }
 
       generateRXYInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[7]);
@@ -12416,7 +12416,7 @@ J9::Z::TreeEvaluator::countDigitsEvaluator(TR::Node * node, TR::CodeGenerator * 
       for (int32_t i = 0; i < 9; i++)
          {
          work[i] = generateS390MemoryReference(workReg, i*8+4, cg);     // lower 32-bit
-         label[i] = TR::LabelSymbol::create(cg->trHeapMemory());
+         label[i] = generateLabelSymbol(cg);
          }
 
       // We already generate the label instruction, why would we generate it again?
@@ -12689,7 +12689,7 @@ J9::Z::TreeEvaluator::tabortEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
 #ifndef PUBLIC_BUILD
    TR::Instruction *cursor;
-   TR::LabelSymbol * labelDone = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol * labelDone = generateLabelSymbol(cg);
    TR::Register *codeReg = cg->allocateRegister();
    generateRIInstruction(cg, TR::Compiler->target.is64Bit() ? TR::InstOpCode::LGHI : TR::InstOpCode::LHI, node, codeReg, 0);
    //Get the nesting depth
