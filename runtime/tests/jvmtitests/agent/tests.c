@@ -61,7 +61,6 @@ static jvmtiTest jvmtiTestList[] =
 	{ "gaste001", gaste001, "com.ibm.jvmti.tests.getAllStackTracesExtended.gaste001", "GetAllStackTracesExtended" },
 	{ "gtlste001", gtlste001, "com.ibm.jvmti.tests.getThreadListStackTracesExtended.gtlste001", "GetThreadListStackTracesExtended" },
 	{ "gomsdi001", gomsdi001, "com.ibm.jvmti.tests.getOwnedMonitorStackDepthInfo.gomsdi001", "GetOwnedMonitorStackDepthInfo" },
-	{ "gomsdi002", gomsdi002, "com.ibm.jvmti.tests.getOwnedMonitorStackDepthInfo.gomsdi002", "GetOwnedMonitorStackDepthInfo" },
 	{ "gomi001", gomi001, "com.ibm.jvmti.tests.getOwnedMonitorInfo.gomi001", "GetOwnedMonitorInfo" },
 	{ "abcl001", abcl001, "com.ibm.jvmti.tests.addToBootstrapClassLoaderSearch.abcl001", "AddToBootstrapClassLoaderSearch during OnLoad" },
 	{ "abcl002", abcl002, "com.ibm.jvmti.tests.addToBootstrapClassLoaderSearch.abcl002", "AddToBootstrapClassLoaderSearch during live" },
