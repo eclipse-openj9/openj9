@@ -384,11 +384,26 @@ struct ClassChainRecord : public SymbolValidationRecord
    void *_classChain;
    };
 
-struct MethodFromClassRecord : public SymbolValidationRecord
+struct MethodValidationRecord : public SymbolValidationRecord
+   {
+   MethodValidationRecord(TR_ExternalRelocationTargetKind kind, TR_OpaqueMethodBlock *method)
+      : SymbolValidationRecord(kind),
+        _method(method)
+      {}
+
+   TR_OpaqueClassBlock *definingClass()
+      {
+      return reinterpret_cast<TR_OpaqueClassBlock *>(
+         J9_CLASS_FROM_METHOD(reinterpret_cast<J9Method *>(_method)));
+      }
+
+   TR_OpaqueMethodBlock *_method;
+   };
+
+struct MethodFromClassRecord : public MethodValidationRecord
    {
    MethodFromClassRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *beholder, uint32_t index)
-      : SymbolValidationRecord(TR_ValidateMethodFromClass),
-        _method(method),
+      : MethodValidationRecord(TR_ValidateMethodFromClass, method),
         _beholder(beholder),
         _index(index)
       {}
@@ -396,18 +411,16 @@ struct MethodFromClassRecord : public SymbolValidationRecord
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
-   TR_OpaqueMethodBlock *_method;
    TR_OpaqueClassBlock *_beholder;
    uint32_t _index;
    };
 
-struct StaticMethodFromCPRecord : public SymbolValidationRecord
+struct StaticMethodFromCPRecord : public MethodValidationRecord
    {
    StaticMethodFromCPRecord(TR_OpaqueMethodBlock *method,
                                TR_OpaqueClassBlock *beholder,
                                int32_t cpIndex)
-      : SymbolValidationRecord(TR_ValidateStaticMethodFromCP),
-        _method(method),
+      : MethodValidationRecord(TR_ValidateStaticMethodFromCP, method),
         _beholder(beholder),
         _cpIndex(cpIndex)
       {}
@@ -415,18 +428,16 @@ struct StaticMethodFromCPRecord : public SymbolValidationRecord
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
-   TR_OpaqueMethodBlock *_method;
    TR_OpaqueClassBlock *_beholder;
    int32_t _cpIndex;
    };
 
-struct SpecialMethodFromCPRecord : public SymbolValidationRecord
+struct SpecialMethodFromCPRecord : public MethodValidationRecord
    {
    SpecialMethodFromCPRecord(TR_OpaqueMethodBlock *method,
                              TR_OpaqueClassBlock *beholder,
                              int32_t cpIndex)
-      : SymbolValidationRecord(TR_ValidateSpecialMethodFromCP),
-        _method(method),
+      : MethodValidationRecord(TR_ValidateSpecialMethodFromCP, method),
         _beholder(beholder),
         _cpIndex(cpIndex)
       {}
@@ -434,18 +445,16 @@ struct SpecialMethodFromCPRecord : public SymbolValidationRecord
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
-   TR_OpaqueMethodBlock *_method;
    TR_OpaqueClassBlock *_beholder;
    int32_t _cpIndex;
    };
 
-struct VirtualMethodFromCPRecord : public SymbolValidationRecord
+struct VirtualMethodFromCPRecord : public MethodValidationRecord
    {
    VirtualMethodFromCPRecord(TR_OpaqueMethodBlock *method,
                              TR_OpaqueClassBlock *beholder,
                              int32_t cpIndex)
-      : SymbolValidationRecord(TR_ValidateVirtualMethodFromCP),
-        _method(method),
+      : MethodValidationRecord(TR_ValidateVirtualMethodFromCP, method),
         _beholder(beholder),
         _cpIndex(cpIndex)
       {}
@@ -453,19 +462,17 @@ struct VirtualMethodFromCPRecord : public SymbolValidationRecord
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
-   TR_OpaqueMethodBlock *_method;
    TR_OpaqueClassBlock *_beholder;
    int32_t _cpIndex;
    };
 
-struct VirtualMethodFromOffsetRecord : public SymbolValidationRecord
+struct VirtualMethodFromOffsetRecord : public MethodValidationRecord
    {
    VirtualMethodFromOffsetRecord(TR_OpaqueMethodBlock *method,
                                  TR_OpaqueClassBlock *beholder,
                                  int32_t virtualCallOffset,
                                  bool ignoreRtResolve)
-      : SymbolValidationRecord(TR_ValidateVirtualMethodFromOffset),
-        _method(method),
+      : MethodValidationRecord(TR_ValidateVirtualMethodFromOffset, method),
         _beholder(beholder),
         _virtualCallOffset(virtualCallOffset),
         _ignoreRtResolve(ignoreRtResolve)
@@ -474,20 +481,18 @@ struct VirtualMethodFromOffsetRecord : public SymbolValidationRecord
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
-   TR_OpaqueMethodBlock *_method;
    TR_OpaqueClassBlock *_beholder;
    int32_t _virtualCallOffset;
    bool _ignoreRtResolve;
    };
 
-struct InterfaceMethodFromCPRecord : public SymbolValidationRecord
+struct InterfaceMethodFromCPRecord : public MethodValidationRecord
    {
    InterfaceMethodFromCPRecord(TR_OpaqueMethodBlock *method,
                                TR_OpaqueClassBlock *beholder,
                                TR_OpaqueClassBlock *lookup,
                                int32_t cpIndex)
-      : SymbolValidationRecord(TR_ValidateInterfaceMethodFromCP),
-        _method(method),
+      : MethodValidationRecord(TR_ValidateInterfaceMethodFromCP, method),
         _beholder(beholder),
         _lookup(lookup),
         _cpIndex(cpIndex)
@@ -496,19 +501,17 @@ struct InterfaceMethodFromCPRecord : public SymbolValidationRecord
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
-   TR_OpaqueMethodBlock *_method;
    TR_OpaqueClassBlock *_beholder;
    TR_OpaqueClassBlock *_lookup;
    int32_t _cpIndex;
    };
 
-struct MethodFromClassAndSigRecord : public SymbolValidationRecord
+struct MethodFromClassAndSigRecord : public MethodValidationRecord
    {
    MethodFromClassAndSigRecord(TR_OpaqueMethodBlock *method,
                                TR_OpaqueClassBlock *methodClass,
                                TR_OpaqueClassBlock *beholder)
-      : SymbolValidationRecord(TR_ValidateMethodFromClassAndSig),
-        _method(method),
+      : MethodValidationRecord(TR_ValidateMethodFromClassAndSig, method),
         _methodClass(methodClass),
         _beholder(beholder)
       {}
@@ -516,7 +519,6 @@ struct MethodFromClassAndSigRecord : public SymbolValidationRecord
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
-   TR_OpaqueMethodBlock *_method;
    TR_OpaqueClassBlock *_methodClass;
    TR_OpaqueClassBlock *_beholder;
    };
@@ -555,15 +557,14 @@ struct ClassInfoIsInitialized : public SymbolValidationRecord
    bool _isInitialized;
    };
 
-struct MethodFromSingleImplementer : public SymbolValidationRecord
+struct MethodFromSingleImplementer : public MethodValidationRecord
    {
    MethodFromSingleImplementer(TR_OpaqueMethodBlock *method,
                                TR_OpaqueClassBlock *thisClass,
                                int32_t cpIndexOrVftSlot,
                                TR_OpaqueMethodBlock *callerMethod,
                                TR_YesNoMaybe useGetResolvedInterfaceMethod)
-      : SymbolValidationRecord(TR_ValidateMethodFromSingleImplementer),
-        _method(method),
+      : MethodValidationRecord(TR_ValidateMethodFromSingleImplementer, method),
         _thisClass(thisClass),
         _cpIndexOrVftSlot(cpIndexOrVftSlot),
         _callerMethod(callerMethod),
@@ -573,21 +574,19 @@ struct MethodFromSingleImplementer : public SymbolValidationRecord
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
-   TR_OpaqueMethodBlock *_method;
    TR_OpaqueClassBlock *_thisClass;
    int32_t _cpIndexOrVftSlot;
    TR_OpaqueMethodBlock *_callerMethod;
    TR_YesNoMaybe _useGetResolvedInterfaceMethod;
    };
 
-struct MethodFromSingleInterfaceImplementer : public SymbolValidationRecord
+struct MethodFromSingleInterfaceImplementer : public MethodValidationRecord
    {
    MethodFromSingleInterfaceImplementer(TR_OpaqueMethodBlock *method,
                                         TR_OpaqueClassBlock *thisClass,
                                         int32_t cpIndex,
                                         TR_OpaqueMethodBlock *callerMethod)
-      : SymbolValidationRecord(TR_ValidateMethodFromSingleInterfaceImplementer),
-        _method(method),
+      : MethodValidationRecord(TR_ValidateMethodFromSingleInterfaceImplementer, method),
         _thisClass(thisClass),
         _cpIndex(cpIndex),
         _callerMethod(callerMethod)
@@ -596,20 +595,18 @@ struct MethodFromSingleInterfaceImplementer : public SymbolValidationRecord
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
-   TR_OpaqueMethodBlock *_method;
    TR_OpaqueClassBlock *_thisClass;
    int32_t _cpIndex;
    TR_OpaqueMethodBlock *_callerMethod;
    };
 
-struct MethodFromSingleAbstractImplementer : public SymbolValidationRecord
+struct MethodFromSingleAbstractImplementer : public MethodValidationRecord
    {
    MethodFromSingleAbstractImplementer(TR_OpaqueMethodBlock *method,
                                        TR_OpaqueClassBlock *thisClass,
                                        int32_t vftSlot,
                                        TR_OpaqueMethodBlock *callerMethod)
-      : SymbolValidationRecord(TR_ValidateMethodFromSingleAbstractImplementer),
-        _method(method),
+      : MethodValidationRecord(TR_ValidateMethodFromSingleAbstractImplementer, method),
         _thisClass(thisClass),
         _vftSlot(vftSlot),
         _callerMethod(callerMethod)
@@ -618,19 +615,17 @@ struct MethodFromSingleAbstractImplementer : public SymbolValidationRecord
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
-   TR_OpaqueMethodBlock *_method;
    TR_OpaqueClassBlock *_thisClass;
    int32_t _vftSlot;
    TR_OpaqueMethodBlock *_callerMethod;
    };
 
-struct ImproperInterfaceMethodFromCPRecord : public SymbolValidationRecord
+struct ImproperInterfaceMethodFromCPRecord : public MethodValidationRecord
    {
    ImproperInterfaceMethodFromCPRecord(TR_OpaqueMethodBlock *method,
                                TR_OpaqueClassBlock *beholder,
                                int32_t cpIndex)
-      : SymbolValidationRecord(TR_ValidateImproperInterfaceMethodFromCP),
-        _method(method),
+      : MethodValidationRecord(TR_ValidateImproperInterfaceMethodFromCP, method),
         _beholder(beholder),
         _cpIndex(cpIndex)
       {}
@@ -638,7 +633,6 @@ struct ImproperInterfaceMethodFromCPRecord : public SymbolValidationRecord
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
-   TR_OpaqueMethodBlock *_method;
    TR_OpaqueClassBlock *_beholder;
    int32_t _cpIndex;
    };
@@ -798,7 +792,7 @@ private:
    bool addClassRecord(TR_OpaqueClassBlock *clazz, TR::ClassValidationRecord *record);
    bool addClassRecordWithRomClass(TR_OpaqueClassBlock *clazz, TR::ClassValidationRecord *record, int arrayDims);
    void addMultipleArrayRecords(TR_OpaqueClassBlock *clazz, int arrayDims);
-   bool addMethodRecord(TR_OpaqueMethodBlock *method, TR::SymbolValidationRecord *record);
+   bool addMethodRecord(TR::MethodValidationRecord *record);
 
    bool validateSymbol(uint16_t idToBeValidated, void *validSymbol, TR::SymbolType type);
    bool validateSymbol(uint16_t idToBeValidated, TR_OpaqueClassBlock *clazz);

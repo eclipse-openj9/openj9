@@ -346,9 +346,9 @@ TR::SymbolValidationManager::addMultipleArrayRecords(TR_OpaqueClassBlock *compon
    }
 
 bool
-TR::SymbolValidationManager::addMethodRecord(TR_OpaqueMethodBlock *method, SymbolValidationRecord *record)
+TR::SymbolValidationManager::addMethodRecord(TR::MethodValidationRecord *record)
    {
-   if (shouldNotDefineSymbol(method))
+   if (shouldNotDefineSymbol(record->_method))
       return abandonRecord(record);
 
    if (recordExists(record))
@@ -358,13 +358,9 @@ TR::SymbolValidationManager::addMethodRecord(TR_OpaqueMethodBlock *method, Symbo
       }
 
    uint16_t oldNextID = _symbolID;
-   appendNewRecord(method, record);
+   appendNewRecord(record->_method, record);
 
-   TR_OpaqueClassBlock *methodClass =
-      reinterpret_cast<TR_OpaqueClassBlock *>(
-         J9_CLASS_FROM_METHOD(reinterpret_cast<J9Method *>(method)));
-
-   if (addClassFromMethodRecord(methodClass, method))
+   if (addClassFromMethodRecord(record->definingClass(), record->_method))
       return true;
 
    // Failed. Clean up the method record.
@@ -386,9 +382,9 @@ TR::SymbolValidationManager::addMethodRecord(TR_OpaqueMethodBlock *method, Symbo
       // _symbolID, so there should be only one new ID (for method).
       SVM_ASSERT(_symbolID == oldNextID + 1, "unexpected increase in _symbolID");
 
-      auto it = _symbolToIdMap.find(method);
-      SVM_ASSERT(it != _symbolToIdMap.end(), "expected method %p to have an ID", method);
-      SVM_ASSERT(it->second == oldNextID, "expected method %p to have ID %d", method, oldNextID);
+      auto it = _symbolToIdMap.find(record->_method);
+      SVM_ASSERT(it != _symbolToIdMap.end(), "expected method %p to have an ID", record->_method);
+      SVM_ASSERT(it->second == oldNextID, "expected method %p to have ID %d", record->_method, oldNextID);
 
       _symbolToIdMap.erase(it);
       _symbolID = oldNextID;
@@ -569,7 +565,7 @@ TR::SymbolValidationManager::addStaticMethodFromCPRecord(TR_OpaqueMethodBlock *m
    {
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(cp));
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
-   return addMethodRecord(method, new (_region) StaticMethodFromCPRecord(method, beholder, cpIndex));
+   return addMethodRecord(new (_region) StaticMethodFromCPRecord(method, beholder, cpIndex));
    }
 
 bool
@@ -577,7 +573,7 @@ TR::SymbolValidationManager::addSpecialMethodFromCPRecord(TR_OpaqueMethodBlock *
    {
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(cp));
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
-   return addMethodRecord(method, new (_region) SpecialMethodFromCPRecord(method, beholder, cpIndex));
+   return addMethodRecord(new (_region) SpecialMethodFromCPRecord(method, beholder, cpIndex));
    }
 
 bool
@@ -585,14 +581,14 @@ TR::SymbolValidationManager::addVirtualMethodFromCPRecord(TR_OpaqueMethodBlock *
    {
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(cp));
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
-   return addMethodRecord(method, new (_region) VirtualMethodFromCPRecord(method, beholder, cpIndex));
+   return addMethodRecord(new (_region) VirtualMethodFromCPRecord(method, beholder, cpIndex));
    }
 
 bool
 TR::SymbolValidationManager::addVirtualMethodFromOffsetRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *beholder, int32_t virtualCallOffset, bool ignoreRtResolve)
    {
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
-   return addMethodRecord(method, new (_region) VirtualMethodFromOffsetRecord(method, beholder, virtualCallOffset, ignoreRtResolve));
+   return addMethodRecord(new (_region) VirtualMethodFromOffsetRecord(method, beholder, virtualCallOffset, ignoreRtResolve));
    }
 
 bool
@@ -600,7 +596,7 @@ TR::SymbolValidationManager::addInterfaceMethodFromCPRecord(TR_OpaqueMethodBlock
    {
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
    SVM_ASSERT_ALREADY_VALIDATED(this, lookup);
-   return addMethodRecord(method, new (_region) InterfaceMethodFromCPRecord(method, beholder, lookup, cpIndex));
+   return addMethodRecord(new (_region) InterfaceMethodFromCPRecord(method, beholder, lookup, cpIndex));
    }
 
 bool
@@ -608,7 +604,7 @@ TR::SymbolValidationManager::addImproperInterfaceMethodFromCPRecord(TR_OpaqueMet
    {
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(cp));
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
-   return addMethodRecord(method, new (_region) ImproperInterfaceMethodFromCPRecord(method, beholder, cpIndex));
+   return addMethodRecord(new (_region) ImproperInterfaceMethodFromCPRecord(method, beholder, cpIndex));
    }
 
 bool
@@ -621,7 +617,7 @@ TR::SymbolValidationManager::addMethodFromClassAndSignatureRecord(TR_OpaqueMetho
    SVM_ASSERT_ALREADY_VALIDATED(this, methodClass);
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
 
-   SymbolValidationRecord *record = new (_region) MethodFromClassAndSigRecord(method, methodClass, beholder);
+   MethodValidationRecord *record = new (_region) MethodFromClassAndSigRecord(method, methodClass, beholder);
 
    // getMethodFromClass() includes inherited methods, and so method could have
    // been found on a superclass. If so, use addMethodRecord() in order to pin
@@ -632,14 +628,10 @@ TR::SymbolValidationManager::addMethodFromClassAndSignatureRecord(TR_OpaqueMetho
    // won't have been inherited, so that this record itself is enough to
    // associate the method with its defining class.
 
-   TR_OpaqueClassBlock *definingClass =
-      reinterpret_cast<TR_OpaqueClassBlock *>(
-         J9_CLASS_FROM_METHOD(reinterpret_cast<J9Method*>(method)));
-
-   if (definingClass == methodClass)
+   if (record->definingClass() == methodClass)
       return addVanillaRecord(method, record);
    else
-      return addMethodRecord(method, record);
+      return addMethodRecord(record);
    }
 
 bool
@@ -651,7 +643,7 @@ TR::SymbolValidationManager::addMethodFromSingleImplementerRecord(TR_OpaqueMetho
    {
    SVM_ASSERT_ALREADY_VALIDATED(this, thisClass);
    SVM_ASSERT_ALREADY_VALIDATED(this, callerMethod);
-   return addMethodRecord(method, new (_region) MethodFromSingleImplementer(method, thisClass, cpIndexOrVftSlot, callerMethod, useGetResolvedInterfaceMethod));
+   return addMethodRecord(new (_region) MethodFromSingleImplementer(method, thisClass, cpIndexOrVftSlot, callerMethod, useGetResolvedInterfaceMethod));
    }
 
 bool
@@ -662,7 +654,7 @@ TR::SymbolValidationManager::addMethodFromSingleInterfaceImplementerRecord(TR_Op
    {
    SVM_ASSERT_ALREADY_VALIDATED(this, thisClass);
    SVM_ASSERT_ALREADY_VALIDATED(this, callerMethod);
-   return addMethodRecord(method, new (_region) MethodFromSingleInterfaceImplementer(method, thisClass, cpIndex, callerMethod));
+   return addMethodRecord(new (_region) MethodFromSingleInterfaceImplementer(method, thisClass, cpIndex, callerMethod));
    }
 
 bool
@@ -673,7 +665,7 @@ TR::SymbolValidationManager::addMethodFromSingleAbstractImplementerRecord(TR_Opa
    {
    SVM_ASSERT_ALREADY_VALIDATED(this, thisClass);
    SVM_ASSERT_ALREADY_VALIDATED(this, callerMethod);
-   return addMethodRecord(method, new (_region) MethodFromSingleAbstractImplementer(method, thisClass, vftSlot, callerMethod));
+   return addMethodRecord(new (_region) MethodFromSingleAbstractImplementer(method, thisClass, vftSlot, callerMethod));
    }
 
 bool
