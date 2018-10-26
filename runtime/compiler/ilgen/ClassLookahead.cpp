@@ -1016,7 +1016,7 @@ static bool isStoreToSameField(TR::Node *callNode, TR::Node *nextNode, TR::Node 
           nextNode->getOpCode().isNullCheck())
          nextNode = nextNode->getFirstChild();
 
-      if ((nextNode->getOpCodeValue() == TR::wrtbari) ||
+      if ((nextNode->getOpCodeValue() == TR::awrtbari) ||
           (nextNode->getOpCodeValue() == TR::astorei))
         {
         if (nextNode->getSymbolReference() == loadNode->getSymbolReference())
@@ -1032,7 +1032,7 @@ static bool isStoreToSameField(TR::Node *callNode, TR::Node *nextNode, TR::Node 
               }
            }
         }
-      else if ((nextNode->getOpCodeValue() == TR::wrtbar) ||
+      else if ((nextNode->getOpCodeValue() == TR::awrtbar) ||
                (nextNode->getOpCodeValue() == TR::astore))
         {
         if (nextNode->getSymbolReference() == loadNode->getSymbolReference())
@@ -1170,7 +1170,7 @@ void TR_ClassLookahead::invalidateIfEscapingLoad(TR::TreeTop *nextTree, TR::Node
               (!parent->getOpCode().isArrayLength()) &&
               (!parent->getOpCode().isAnchor()) &&
               (parent->getOpCodeValue() != TR::ArrayStoreCHK) &&
-              ((parent->getOpCodeValue() != TR::wrtbari) || (childNum != 2))))
+              ((parent->getOpCodeValue() != TR::awrtbari) || (childNum != 2))))
               {
               if (_traceIt)
                   traceMsg(comp(), "2Invalidating dimension and type info for symbol %x at node %x\n", sym, node);

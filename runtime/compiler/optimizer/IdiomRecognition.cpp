@@ -175,7 +175,7 @@ TR_CISCNode::isEqualOpc(TR_CISCNode *t)
          case TR_indload:
             return (t->_ilOpCode.isLoadIndirect());
          case TR_indstore:
-            return (t->_ilOpCode.isStoreIndirect() || tOpc == TR::wrtbari);
+            return (t->_ilOpCode.isStoreIndirect() || tOpc == TR::awrtbari);
          case TR_ibcload:
             return (t->_ilOpCode.isLoadIndirect() && (t->_ilOpCode.isByte() || (t->_ilOpCode.isShort() && t->_ilOpCode.isUnsigned())));
          case TR_ibcstore:
@@ -4461,7 +4461,7 @@ TR_CISCTransformer::analyzeConnectionOnePair(TR_CISCNode *const p, TR_CISCNode *
    if (p->getParents()->isEmpty() ||
        t->getParents()->isEmpty() ||
        t->getOpcode() == TR::Case ||
-       t->getOpcode() == TR::wrtbari) t->setIsParentSimplyConnected();
+       t->getOpcode() == TR::awrtbari) t->setIsParentSimplyConnected();
 
    // Analyze connectivities for children and parents
    if (num == 0)

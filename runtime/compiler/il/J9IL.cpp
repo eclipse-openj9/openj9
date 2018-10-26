@@ -351,6 +351,16 @@ J9::IL::opCodeForDirectStore(TR::DataType dt)
    return J9::IL::opCodesForDirectStore[dt - TR::FirstJ9Type];
    }
 
+TR::ILOpCodes
+J9::IL::opCodeForDirectWriteBarrier(TR::DataType dt)
+   {
+   if (dt == TR::Int8 || dt == TR::Int16)
+      {
+      return TR::iwrtbar;
+      }
+
+   return OMR::IL::opCodeForDirectWriteBarrier(dt);
+   }
 
 TR::ILOpCodes
 J9::IL::opCodeForIndirectReadBarrier(TR::DataType dt)
@@ -394,6 +404,18 @@ J9::IL::opCodeForIndirectStore(TR::DataType dt)
 
    return J9::IL::opCodesForIndirectStore[dt - TR::FirstJ9Type];
    }
+
+TR::ILOpCodes
+J9::IL::opCodeForIndirectWriteBarrier(TR::DataType dt)
+   {
+   if (dt == TR::Int8 || dt == TR::Int16)
+      {
+      return TR::iwrtbari;
+      }
+
+   return OMR::IL::opCodeForIndirectWriteBarrier(dt);
+   }
+
 
 TR::ILOpCodes
 J9::IL::opCodeForIndirectArrayLoad(TR::DataType dt)
