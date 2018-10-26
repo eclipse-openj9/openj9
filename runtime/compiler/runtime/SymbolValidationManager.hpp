@@ -781,6 +781,19 @@ private:
    void appendNewRecord(void *symbol, TR::SymbolValidationRecord *record);
    void appendRecordIfNew(void *symbol, TR::SymbolValidationRecord *record);
 
+   struct ClassChainInfo
+      {
+      ClassChainInfo()
+         : _baseComponent(NULL), _baseComponentClassChain(NULL), _arrayDims(0) {}
+
+      TR_OpaqueClassBlock *_baseComponent;
+      void *_baseComponentClassChain;
+      int32_t _arrayDims;
+      };
+
+   bool getClassChainInfo(TR_OpaqueClassBlock *clazz, TR::SymbolValidationRecord *record, ClassChainInfo &info);
+   void appendClassChainInfoRecords(TR_OpaqueClassBlock *clazz, const ClassChainInfo &info);
+
    bool addVanillaRecord(void *symbol, TR::SymbolValidationRecord *record);
    bool addClassRecord(TR_OpaqueClassBlock *clazz, TR::ClassValidationRecord *record);
    bool addClassRecordWithRomClass(TR_OpaqueClassBlock *clazz, TR::ClassValidationRecord *record, int arrayDims);

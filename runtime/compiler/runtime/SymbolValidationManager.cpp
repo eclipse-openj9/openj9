@@ -228,6 +228,61 @@ TR::SymbolValidationManager::appendRecordIfNew(void *symbol, TR::SymbolValidatio
    }
 
 bool
+TR::SymbolValidationManager::getClassChainInfo(
+   TR_OpaqueClassBlock *clazz,
+   TR::SymbolValidationRecord *record,
+   ClassChainInfo &info)
+   {
+   if (isAlreadyValidated(clazz))
+      return true;
+
+   // clazz is fresh, so a class chain validation may be necessary
+   info._baseComponent = getBaseComponentClass(clazz, info._arrayDims);
+   if (info._arrayDims == 0 || !isAlreadyValidated(info._baseComponent))
+      {
+      // info._baseComponent is a non-array reference type. It can't be a
+      // primitive because primitives always satisfy isAlreadyValidated().
+      info._baseComponentClassChain =
+         _fej9->sharedCache()->rememberClass(info._baseComponent);
+      if (info._baseComponentClassChain == NULL)
+         {
+         _region.deallocate(record);
+         return false;
+         }
+      }
+
+   return true;
+   }
+
+void
+TR::SymbolValidationManager::appendClassChainInfoRecords(
+   TR_OpaqueClassBlock *clazz,
+   const ClassChainInfo &info)
+   {
+   // If clazz is a fresh array class, relate it to each component type.
+   // Note that if clazz is not fresh, arrayDims is 0, which is fine because
+   // this part has already been done for an earlier record.
+   for (int i = 0; i < info._arrayDims; i++)
+      {
+      TR_OpaqueClassBlock *component = _fej9->getComponentClassFromArrayClass(clazz);
+      appendRecordIfNew(
+         component,
+         new (_region) ArrayClassFromComponentClassRecord(clazz, component));
+      clazz = component;
+      }
+
+   // If necessary, remember to validate the class chain of the base component type
+   if (info._baseComponentClassChain != NULL)
+      {
+      appendNewRecord(
+         info._baseComponent,
+         new (_region) ClassChainRecord(
+            info._baseComponent,
+            info._baseComponentClassChain));
+      }
+   }
+
+bool
 TR::SymbolValidationManager::addVanillaRecord(void *symbol, TR::SymbolValidationRecord *record)
    {
    if (shouldNotDefineSymbol(symbol))
@@ -249,51 +304,13 @@ TR::SymbolValidationManager::addClassRecord(TR_OpaqueClassBlock *clazz, TR::Clas
       return true;
       }
 
-   TR_OpaqueClassBlock *baseComponent = NULL;
-   void *baseComponentClassChain = NULL;
-   int32_t arrayDims = 0;
-   if (!isAlreadyValidated(clazz))
-      {
-      // clazz is fresh, so a class chain validation may be necessary
-      baseComponent = getBaseComponentClass(clazz, arrayDims);
-      if (arrayDims == 0 || !isAlreadyValidated(baseComponent))
-         {
-         // baseComponent is a non-array reference type. It can't be a
-         // primitive because primitives always satisfy isAlreadyValidated().
-         baseComponentClassChain = _fej9->sharedCache()->rememberClass(baseComponent);
-         if (baseComponentClassChain == NULL)
-            {
-            _region.deallocate(record);
-            return false;
-            }
-         }
-      }
+   ClassChainInfo chainInfo;
+   if (!getClassChainInfo(clazz, record, chainInfo))
+      return false;
 
    // From this point on, success is guaranteed (short of OOM, which throws)
-
-   // The class is defined by the original record
-   appendNewRecord(clazz, record);
-
-   // If clazz is a fresh array class, relate it to each component type.
-   // Note that if clazz is not fresh, arrayDims is 0, which is fine because
-   // this part has already been done for an earlier record.
-   for (int i = 0; i < arrayDims; i++)
-      {
-      TR_OpaqueClassBlock *component = _fej9->getComponentClassFromArrayClass(clazz);
-      appendRecordIfNew(
-         component,
-         new (_region) ArrayClassFromComponentClassRecord(clazz, component));
-      clazz = component;
-      }
-
-   // If necessary, remember to validate the class chain of the base component type
-   if (baseComponentClassChain != NULL)
-      {
-      appendNewRecord(
-         baseComponent,
-         new (_region) ClassChainRecord(baseComponent, baseComponentClassChain));
-      }
-
+   appendNewRecord(clazz, record); // The class is defined by the original record
+   appendClassChainInfoRecords(clazz, chainInfo);
    return true;
    }
 
