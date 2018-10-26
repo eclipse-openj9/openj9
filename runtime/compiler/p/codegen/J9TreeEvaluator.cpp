@@ -277,8 +277,8 @@ extern void TEMPORARY_initJ9PPCTreeEvaluatorTable(TR::CodeGenerator *cg)
    {
    TR_TreeEvaluatorFunctionPointer *tet = cg->getTreeEvaluatorTable();
 
-   tet[TR::wrtbar] = TR::TreeEvaluator::wrtbarEvaluator;
-   tet[TR::wrtbari] = TR::TreeEvaluator::iwrtbarEvaluator;
+   tet[TR::awrtbar] = TR::TreeEvaluator::awrtbarEvaluator;
+   tet[TR::awrtbari] = TR::TreeEvaluator::awrtbariEvaluator;
    tet[TR::monent] = TR::TreeEvaluator::monentEvaluator;
    tet[TR::monexit] = TR::TreeEvaluator::monexitEvaluator;
    tet[TR::monexitfence] = TR::TreeEvaluator::monexitfenceEvaluator;
@@ -497,7 +497,7 @@ static void VMnonNullSrcWrtBarCardCheckEvaluator(TR::Node *node, TR::Register *s
       addDependency(deps, temp3Reg, TR::RealRegister::NoReg, TR_GPR, cg);
       }
 
-   if (node->getOpCodeValue() == TR::wrtbari || node->getOpCodeValue() == TR::wrtbar)
+   if (node->getOpCodeValue() == TR::awrtbari || node->getOpCodeValue() == TR::awrtbar)
       wrtbarNode = node;
    else if (node->getOpCodeValue() == TR::ArrayStoreCHK)
       wrtbarNode = node->getFirstChild();
@@ -514,7 +514,7 @@ static void VMnonNullSrcWrtBarCardCheckEvaluator(TR::Node *node, TR::Register *s
       wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreGenerationalSymbolRef(comp->getMethodSymbol());
    else if (TR::Options::getCmdLineOptions()->realTimeGC())
       {
-      if (wrtbarNode->getOpCodeValue() == TR::wrtbar || wrtbarNode->isUnsafeStaticWrtBar())
+      if (wrtbarNode->getOpCodeValue() == TR::awrtbar || wrtbarNode->isUnsafeStaticWrtBar())
          wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierClassStoreRealTimeGCSymbolRef(comp->getMethodSymbol());
       else
          wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreRealTimeGCSymbolRef(comp->getMethodSymbol());
@@ -692,7 +692,7 @@ static void VMCardCheckEvaluator(TR::Node *node, TR::Register *dstReg, TR::Regis
    bool definitelyHeapObject = false, definitelyNonHeapObject = false;
    TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
 
-   if (node->getOpCodeValue() == TR::wrtbari || node->getOpCodeValue() == TR::wrtbar)
+   if (node->getOpCodeValue() == TR::awrtbari || node->getOpCodeValue() == TR::awrtbar)
       wrtbarNode = node;
    else if (node->getOpCodeValue() == TR::ArrayStoreCHK)
       wrtbarNode = node->getFirstChild();
@@ -897,7 +897,7 @@ static void VMwrtbarEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register
    cg->stopUsingRegister(temp2Reg);
    }
 
-TR::Register *J9::Power::TreeEvaluator::wrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+TR::Register *J9::Power::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Compilation * comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (comp->fe());
@@ -1014,7 +1014,7 @@ TR::Register *J9::Power::TreeEvaluator::wrtbarEvaluator(TR::Node *node, TR::Code
    return NULL;
    }
 
-TR::Register *J9::Power::TreeEvaluator::iwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+TR::Register *J9::Power::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Compilation * comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());

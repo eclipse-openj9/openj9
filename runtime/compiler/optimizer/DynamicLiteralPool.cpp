@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -503,11 +503,11 @@ bool TR_DynamicLiteralPool::transformStaticSymRefToIndirectLoad(TR::TreeTop * tt
 
       TR::Node * loadLiteralFromThePool = TR::Node::createWithSymRef(TR::aloadi, 1, 1, getAloadFromCurrentBlock(child), childSymRef);
       loadLiteralFromThePool->getSymbol()->setNotCollected();
-      if (childOpcodeValue==TR::wrtbar)
+      if (childOpcodeValue==TR::awrtbar)
          {
          child->getFirstChild()->decReferenceCount();
          child->getSecondChild()->decReferenceCount();
-         child = TR::Node::create(TR::wrtbari, 3, loadLiteralFromThePool, child->getFirstChild(), child->getSecondChild());
+         child = TR::Node::create(TR::awrtbari, 3, loadLiteralFromThePool, child->getFirstChild(), child->getSecondChild());
          if (parent)
             parent->setAndIncChild(0, child);
          else

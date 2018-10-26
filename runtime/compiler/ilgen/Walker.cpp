@@ -7206,7 +7206,7 @@ TR_J9ByteCodeIlGenerator::storeInstance(int32_t cpIndex)
    TR::Node * node;
    if (type == TR::Address && _generateWriteBarriers)
       {
-      node = TR::Node::createWithSymRef(TR::wrtbari, 3, 3, addressNode, value, parentObject, symRef);
+      node = TR::Node::createWithSymRef(TR::awrtbari, 3, 3, addressNode, value, parentObject, symRef);
       }
    else
       {
@@ -7354,7 +7354,7 @@ TR_J9ByteCodeIlGenerator::storeStatic(int32_t cpIndex)
          push(node);
          }
 
-      node = TR::Node::createWithSymRef(TR::wrtbar, 2, 2, value, pop(), symRef);
+      node = TR::Node::createWithSymRef(TR::awrtbar, 2, 2, value, pop(), symRef);
       }
    else if (symbol->isVolatile() && type == TR::Int64 && !symRef->isUnresolved() && TR::Compiler->target.is32Bit() &&
             !comp()->cg()->getSupportsInlinedAtomicLongVolatiles() && 0)
@@ -7556,7 +7556,7 @@ TR_J9ByteCodeIlGenerator::storeArrayElement(TR::DataType dataType, TR::ILOpCodes
    TR::Node * storeNode, * resultNode;
    if (generateWriteBarrier)
       {
-      storeNode = resultNode = TR::Node::createWithSymRef(TR::wrtbari, 3, 3, elementAddress, value, arrayBaseAddress, symRef);
+      storeNode = resultNode = TR::Node::createWithSymRef(TR::awrtbari, 3, 3, elementAddress, value, arrayBaseAddress, symRef);
       usedArrayBaseAddress = true;
       }
    else

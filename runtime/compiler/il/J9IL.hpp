@@ -65,9 +65,11 @@ class OMR_EXTENSIBLE IL : public OMR::ILConnector
    TR::ILOpCodes opCodeForDirectLoad(TR::DataType dt);
    TR::ILOpCodes opCodeForDirectReadBarrier(TR::DataType dt);
    TR::ILOpCodes opCodeForDirectStore(TR::DataType dt);
+   TR::ILOpCodes opCodeForDirectWriteBarrier(TR::DataType dt);
    TR::ILOpCodes opCodeForIndirectLoad(TR::DataType dt);
    TR::ILOpCodes opCodeForIndirectReadBarrier(TR::DataType dt);
    TR::ILOpCodes opCodeForIndirectStore(TR::DataType dt);
+   TR::ILOpCodes opCodeForIndirectWriteBarrier(TR::DataType dt);
    TR::ILOpCodes opCodeForIndirectArrayLoad(TR::DataType dt);
    TR::ILOpCodes opCodeForIndirectArrayStore(TR::DataType dt);
    TR::ILOpCodes opCodeForRegisterLoad(TR::DataType dt);

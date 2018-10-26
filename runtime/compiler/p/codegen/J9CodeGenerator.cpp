@@ -723,7 +723,7 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
             }
          }
       }
-   else if (node->getOpCodeValue() == TR::wrtbari &&
+   else if (node->getOpCodeValue() == TR::awrtbari &&
             comp()->getMethodHotness() >= scorching &&
             TR::Compiler->target.cpu.id() >= TR_PPCp6 &&
               (TR::Compiler->target.is32Bit() ||

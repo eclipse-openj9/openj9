@@ -1566,7 +1566,7 @@ TR::TreeTop *TR_StringPeepholes::detectBDPattern(TR::TreeTop *tt, TR::TreeTop *e
 
                      if (targetNode->getOpCode().hasSymbolReference() &&
                          targetNode->getSymbolReference() == sourceNode->getSymbolReference() &&
-                        (targetNode->getOpCodeValue() == TR::astorei || targetNode->getOpCodeValue() == TR::wrtbari))
+                        (targetNode->getOpCodeValue() == TR::astorei || targetNode->getOpCodeValue() == TR::awrtbari))
                         {
 
                         int32_t len;

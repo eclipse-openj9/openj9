@@ -729,7 +729,7 @@ int32_t TR_UnsafeFastPath::perform()
                   // This is a store
                   if (type == TR::Address && (comp()->getOptions()->getGcMode() != TR_WrtbarNone))
                      {
-                     node = TR::Node::recreateWithoutProperties(node, TR::wrtbari, 3, addrCalc, value, object, unsafeSymRef);
+                     node = TR::Node::recreateWithoutProperties(node, TR::awrtbari, 3, addrCalc, value, object, unsafeSymRef);
                      spineCHK->setAndIncChild(0, addrCalc);
                      }
                   else
@@ -795,7 +795,7 @@ int32_t TR_UnsafeFastPath::perform()
                   node = TR::Node::createCompressedRefsAnchor(node);
                   newTree = newTree->insertAfter(TR::TreeTop::create(comp(), node));
                   }
-               else if (node->getOpCodeValue() == TR::wrtbari)
+               else if (node->getOpCodeValue() == TR::awrtbari)
                   {
                   node = TR::Node::create(TR::treetop, 1, node);
                   newTree = newTree->insertAfter(TR::TreeTop::create(comp(), node));
@@ -820,7 +820,7 @@ int32_t TR_UnsafeFastPath::perform()
                   {
                   // This is a store
                   if (type == TR::Address && (comp()->getOptions()->getGcMode() != TR_WrtbarNone))
-                     node = TR::Node::recreateWithoutProperties(node, TR::wrtbari, 3, addrCalc, value, object, unsafeSymRef);
+                     node = TR::Node::recreateWithoutProperties(node, TR::awrtbari, 3, addrCalc, value, object, unsafeSymRef);
                   else
                      {
                      if (value->getDataType() != type)

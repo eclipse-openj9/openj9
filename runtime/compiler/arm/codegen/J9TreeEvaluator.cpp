@@ -68,7 +68,7 @@ static void VMCardCheckEvaluator(TR::Node *node, TR::Register *dstReg, TR::Regis
    bool definitelyHeapObject = false, definitelyNonHeapObject = false;
    TR_WriteBarrierKind gcMode = options->getGcMode();
 
-   if (node->getOpCodeValue() == TR::wrtbari || node->getOpCodeValue() == TR::wrtbar)
+   if (node->getOpCodeValue() == TR::awrtbari || node->getOpCodeValue() == TR::awrtbar)
       wrtbarNode = node;
    else if (node->getOpCodeValue() == TR::ArrayStoreCHK)
       wrtbarNode = node->getFirstChild();

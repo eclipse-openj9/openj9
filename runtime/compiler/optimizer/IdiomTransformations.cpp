@@ -5762,7 +5762,7 @@ CISCTransform2ArrayCopySub(TR_CISCTransformer *trans, TR::Node *indexRepNode, TR
 
    // Prepare the arraycopy node.
    bool needWriteBarrier = comp->getOptions()->needWriteBarriers() &&
-                           (inStoreNode->getOpCodeValue() == TR::wrtbari);
+                           (inStoreNode->getOpCodeValue() == TR::awrtbari);
 
    if (!comp->cg()->getSupportsReferenceArrayCopy() && needWriteBarrier)
       {

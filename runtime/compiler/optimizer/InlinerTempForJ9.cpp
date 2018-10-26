@@ -1172,7 +1172,7 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
                                                  1, valueWithoutConversion);
       valueWithConversion = conversionNode;
       unsafeNodeWithConversion = type == TR::Address && (comp()->getOptions()->getGcMode() != TR_WrtbarNone)
-         ? TR::Node::createWithSymRef(TR::wrtbari, 3, 3, unsafeAddress, valueWithConversion, unsafeCall->getChild(1), symRef)
+         ? TR::Node::createWithSymRef(TR::awrtbari, 3, 3, unsafeAddress, valueWithConversion, unsafeCall->getChild(1), symRef)
          : TR::Node::createWithSymRef(comp()->il.opCodeForIndirectArrayStore(type), 2, 2, unsafeAddress, valueWithConversion, symRef);
 
       if(comp()->getOption(TR_TraceUnsafeInlining))
@@ -1180,7 +1180,7 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
 
       }
    TR::Node * unsafeNode = type == TR::Address && (comp()->getOptions()->getGcMode() != TR_WrtbarNone)
-      ? TR::Node::createWithSymRef(TR::wrtbari, 3, 3, unsafeAddress, valueWithoutConversion, unsafeCall->getChild(1), symRef)
+      ? TR::Node::createWithSymRef(TR::awrtbari, 3, 3, unsafeAddress, valueWithoutConversion, unsafeCall->getChild(1), symRef)
       : TR::Node::createWithSymRef(comp()->il.opCodeForIndirectStore(type), 2, 2, unsafeAddress, valueWithoutConversion, symRef);
 
 
