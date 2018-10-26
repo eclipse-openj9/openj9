@@ -137,8 +137,6 @@ J9::Z::CodeGenerator::CodeGenerator() :
    // Invoke Class.newInstanceImpl() from the JIT directly
    cg->setSupportsNewInstanceImplOpt();
 
-   cg->setSupportsPostProcessArrayCopy();
-
    // Still being set in the S390CodeGenerator constructor, as zLinux sTR requires this.
    //cg->setSupportsJavaFloatSemantics();
 
