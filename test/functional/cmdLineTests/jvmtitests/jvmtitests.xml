@@ -224,6 +224,11 @@
 		<return type="success" value="0"/>
 	</test>
 
+ 	<test id="gomsdi002">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:gomsdi002 -Xint -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
  	<test id="gomi001">
 		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:gomi001 -Xint -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
 		<return type="success" value="0"/>
