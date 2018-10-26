@@ -2009,27 +2009,16 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::IProfiler_searchForMethodSample:
          {
-         auto recv = client->getRecvData<TR_OpaqueMethodBlock*, int32_t>();
+         auto recv = client->getRecvData<TR_OpaqueMethodBlock*>();
          auto method = std::get<0>(recv);
-         auto bucket = std::get<1>(recv);
-         TR_IProfiler *iProfiler = fe->getIProfiler();
+         TR_JITaaSClientIProfiler *iProfiler = (TR_JITaaSClientIProfiler *) fe->getIProfiler();
          if (!iProfiler)
             {
             // iProfiler is enabled on the server if we got here, but not enabled here on the client
             client->write(std::string());
             break;
             }
-         auto entry = iProfiler->searchForMethodSample(method, bucket);
-         if (entry)
-            {
-            auto serialEntry = TR_ContiguousIPMethodHashTableEntry::serialize(entry);
-            std::string entryStr((char *) &serialEntry, sizeof(TR_ContiguousIPMethodHashTableEntry));
-            client->write(entryStr);
-            }
-         else
-            {
-            client->write(std::string());
-            }
+         client->write(iProfiler->serializeIProfilerMethodEntry(method));
          }
          break;
       case J9ServerMessageType::IProfiler_profilingSample:
