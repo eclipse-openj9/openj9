@@ -509,17 +509,17 @@ struct InterfaceMethodFromCPRecord : public MethodValidationRecord
 struct MethodFromClassAndSigRecord : public MethodValidationRecord
    {
    MethodFromClassAndSigRecord(TR_OpaqueMethodBlock *method,
-                               TR_OpaqueClassBlock *methodClass,
+                               TR_OpaqueClassBlock *lookupClass,
                                TR_OpaqueClassBlock *beholder)
       : MethodValidationRecord(TR_ValidateMethodFromClassAndSig, method),
-        _methodClass(methodClass),
+        _lookupClass(lookupClass),
         _beholder(beholder)
       {}
 
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
-   TR_OpaqueClassBlock *_methodClass;
+   TR_OpaqueClassBlock *_lookupClass;
    TR_OpaqueClassBlock *_beholder;
    };
 
@@ -724,23 +724,26 @@ public:
    bool validateClassChainRecord(uint16_t classID, void *classChain);
 
    bool validateMethodFromClassRecord(uint16_t methodID, uint16_t beholderID, uint32_t index);
-   bool validateStaticMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex);
-   bool validateSpecialMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex);
-   bool validateVirtualMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex);
-   bool validateVirtualMethodFromOffsetRecord(uint16_t methodID, uint16_t beholderID, int32_t virtualCallOffset, bool ignoreRtResolve);
-   bool validateInterfaceMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, uint16_t lookupID, int32_t cpIndex);
-   bool validateImproperInterfaceMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex);
-   bool validateMethodFromClassAndSignatureRecord(uint16_t methodID, uint16_t methodClassID, uint16_t beholderID, J9ROMMethod *romMethod);
+   bool validateStaticMethodFromCPRecord(uint16_t methodID, uint16_t definingClassID, uint16_t beholderID, int32_t cpIndex);
+   bool validateSpecialMethodFromCPRecord(uint16_t methodID, uint16_t definingClassID, uint16_t beholderID, int32_t cpIndex);
+   bool validateVirtualMethodFromCPRecord(uint16_t methodID, uint16_t definingClassID, uint16_t beholderID, int32_t cpIndex);
+   bool validateVirtualMethodFromOffsetRecord(uint16_t methodID, uint16_t definingClassID, uint16_t beholderID, int32_t virtualCallOffset, bool ignoreRtResolve);
+   bool validateInterfaceMethodFromCPRecord(uint16_t methodID, uint16_t definingClassID, uint16_t beholderID, uint16_t lookupID, int32_t cpIndex);
+   bool validateImproperInterfaceMethodFromCPRecord(uint16_t methodID, uint16_t definingClassID, uint16_t beholderID, int32_t cpIndex);
+   bool validateMethodFromClassAndSignatureRecord(uint16_t methodID, uint16_t definingClassID, uint16_t lookupClassID, uint16_t beholderID, J9ROMMethod *romMethod);
    bool validateMethodFromSingleImplementerRecord(uint16_t methodID,
+                                                  uint16_t definingClassID,
                                                   uint16_t thisClassID,
                                                   int32_t cpIndexOrVftSlot,
                                                   uint16_t callerMethodID,
                                                   TR_YesNoMaybe useGetResolvedInterfaceMethod);
    bool validateMethodFromSingleInterfaceImplementerRecord(uint16_t methodID,
+                                                uint16_t definingClassID,
                                                 uint16_t thisClassID,
                                                 int32_t cpIndex,
                                                 uint16_t callerMethodID);
    bool validateMethodFromSingleAbstractImplementerRecord(uint16_t methodID,
+                                               uint16_t definingClassID,
                                                uint16_t thisClassID,
                                                int32_t vftSlot,
                                                uint16_t callerMethodID);
@@ -797,8 +800,8 @@ private:
    bool validateSymbol(uint16_t idToBeValidated, void *validSymbol, TR::SymbolType type);
    bool validateSymbol(uint16_t idToBeValidated, TR_OpaqueClassBlock *clazz);
    bool validateSymbol(uint16_t idToBeValidated, J9Class *clazz);
-   bool validateSymbol(uint16_t idToBeValidated, TR_OpaqueMethodBlock *method);
-   bool validateSymbol(uint16_t idToBeValidated, J9Method *method);
+   bool validateSymbol(uint16_t methodID, uint16_t definingClassID, TR_OpaqueMethodBlock *method);
+   bool validateSymbol(uint16_t methodID, uint16_t definingClassID, J9Method *method);
 
    bool isDefinedID(uint16_t id);
    void setSymbolOfID(uint16_t id, void *symbol, TR::SymbolType type);

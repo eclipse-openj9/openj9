@@ -299,11 +299,14 @@ struct TR_RelocationRecordValidateMethodFromClassBinaryTemplate : public TR_Relo
    uint32_t _index;
    };
 
+#define TR_VALIDATE_STATIC_OR_SPECIAL_METHOD_FROM_CP_IS_SPLIT 0x01
+
 struct TR_RelocationRecordValidateMethodFromCPBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
    uint16_t _methodID;
+   uint16_t _definingClassID;
    uint16_t _beholderID;
-   uint32_t _cpIndex;
+   uint16_t _cpIndex; // constrained to 16 bits by the class file format
    };
 
 typedef TR_RelocationRecordValidateMethodFromCPBinaryTemplate TR_RelocationRecordValidateStaticMethodFromCPBinaryTemplate;
@@ -313,24 +316,28 @@ typedef TR_RelocationRecordValidateMethodFromCPBinaryTemplate TR_RelocationRecor
 
 struct TR_RelocationRecordValidateVirtualMethodFromOffsetBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
-   bool _ignoreRtResolve;
    uint16_t _methodID;
+   uint16_t _definingClassID;
    uint16_t _beholderID;
-   uint32_t _virtualCallOffset;
+
+   // Value is (offset | ignoreRtResolve); offset must be even
+   uint16_t _virtualCallOffsetAndIgnoreRtResolve;
    };
 
 struct TR_RelocationRecordValidateInterfaceMethodFromCPBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
    uint16_t _methodID;
+   uint16_t _definingClassID;
    uint16_t _beholderID;
    uint16_t _lookupID;
-   uint32_t _cpIndex;
+   uint16_t _cpIndex; // constrained to 16 bits by the class file format
    };
 
 struct TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
    uint16_t _methodID;
-   uint16_t _methodClassID;
+   uint16_t _definingClassID;
+   uint16_t _lookupClassID;
    uint16_t _beholderID;
    UDATA _romMethodOffsetInSCC;
    };
@@ -338,6 +345,7 @@ struct TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate : public T
 struct TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
    uint16_t _methodID;
+   uint16_t _definingClassID;
    uint16_t _thisClassID;
    int32_t _cpIndexOrVftSlot;
    uint16_t _callerMethodID;
@@ -347,17 +355,19 @@ struct TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate : public TR
 struct TR_RelocationRecordValidateMethodFromSingleInterfaceImplBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
    uint16_t _methodID;
+   uint16_t _definingClassID;
    uint16_t _thisClassID;
-   int32_t _cpIndex;
    uint16_t _callerMethodID;
+   uint16_t _cpIndex; // constrained to 16 bits by the class file format
    };
 
 struct TR_RelocationRecordValidateMethodFromSingleAbstractImplBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
    uint16_t _methodID;
+   uint16_t _definingClassID;
    uint16_t _thisClassID;
-   int32_t _vftSlot;
    uint16_t _callerMethodID;
+   int32_t _vftSlot;
    };
 
 struct TR_RelocationRecordValidateStackWalkerMaySkipFramesBinaryTemplate : public TR_RelocationRecordBinaryTemplate

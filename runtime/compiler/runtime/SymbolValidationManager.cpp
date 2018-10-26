@@ -308,7 +308,6 @@ TR::SymbolValidationManager::addClassRecord(TR_OpaqueClassBlock *clazz, TR::Clas
    if (!getClassChainInfo(clazz, record, chainInfo))
       return false;
 
-   // From this point on, success is guaranteed (short of OOM, which throws)
    appendNewRecord(clazz, record); // The class is defined by the original record
    appendClassChainInfoRecords(clazz, chainInfo);
    return true;
@@ -357,40 +356,13 @@ TR::SymbolValidationManager::addMethodRecord(TR::MethodValidationRecord *record)
       return true;
       }
 
-   uint16_t oldNextID = _symbolID;
+   ClassChainInfo chainInfo;
+   if (!getClassChainInfo(record->definingClass(), record, chainInfo))
+      return false;
+
    appendNewRecord(record->_method, record);
-
-   if (addClassFromMethodRecord(record->definingClass(), record->_method))
-      return true;
-
-   // Failed. Clean up the method record.
-   // addClassFromMethodRecord() shouldn't have added anything.
-   SVM_ASSERT(
-      _symbolValidationRecords.front() == record,
-      "added an unexpected record %p instead of %p\n",
-      _symbolValidationRecords.front(),
-      record);
-
-   traceMsg(TR::comp(), "Forget the most recent record\n");
-   _symbolValidationRecords.pop_front();
-   _alreadyGeneratedRecords.erase(record);
-   _region.deallocate(record);
-
-   if (_symbolID != oldNextID)
-      {
-      // Since addClassFromMethodRecord() failed, it should not have modified
-      // _symbolID, so there should be only one new ID (for method).
-      SVM_ASSERT(_symbolID == oldNextID + 1, "unexpected increase in _symbolID");
-
-      auto it = _symbolToIdMap.find(record->_method);
-      SVM_ASSERT(it != _symbolToIdMap.end(), "expected method %p to have an ID", record->_method);
-      SVM_ASSERT(it->second == oldNextID, "expected method %p to have ID %d", record->_method, oldNextID);
-
-      _symbolToIdMap.erase(it);
-      _symbolID = oldNextID;
-      }
-
-   return false;
+   appendClassChainInfoRecords(record->definingClass(), chainInfo);
+   return true;
    }
 
 bool
@@ -588,6 +560,13 @@ bool
 TR::SymbolValidationManager::addVirtualMethodFromOffsetRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *beholder, int32_t virtualCallOffset, bool ignoreRtResolve)
    {
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
+
+   // Only need one bit, but it really should be a multiple of the pointer size
+   SVM_ASSERT((virtualCallOffset & 1) == 0, "virtualCallOffset must be even");
+
+   if (virtualCallOffset != (int32_t)(int16_t)virtualCallOffset)
+      return false; // not enough space in the record
+
    return addMethodRecord(new (_region) VirtualMethodFromOffsetRecord(method, beholder, virtualCallOffset, ignoreRtResolve));
    }
 
@@ -608,30 +587,15 @@ TR::SymbolValidationManager::addImproperInterfaceMethodFromCPRecord(TR_OpaqueMet
    }
 
 bool
-TR::SymbolValidationManager::addMethodFromClassAndSignatureRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass, TR_OpaqueClassBlock *beholder)
+TR::SymbolValidationManager::addMethodFromClassAndSignatureRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *lookupClass, TR_OpaqueClassBlock *beholder)
    {
    // Check that method is non-null up front, since we need its class.
    if (shouldNotDefineSymbol(method))
       return inHeuristicRegion();
 
-   SVM_ASSERT_ALREADY_VALIDATED(this, methodClass);
+   SVM_ASSERT_ALREADY_VALIDATED(this, lookupClass);
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
-
-   MethodValidationRecord *record = new (_region) MethodFromClassAndSigRecord(method, methodClass, beholder);
-
-   // getMethodFromClass() includes inherited methods, and so method could have
-   // been found on a superclass. If so, use addMethodRecord() in order to pin
-   // down the identity of that superclass.
-   //
-   // OTOH, if the method was not inherited, then then the class chain
-   // validation for methodClass should guarantee that on load the method also
-   // won't have been inherited, so that this record itself is enough to
-   // associate the method with its defining class.
-
-   if (record->definingClass() == methodClass)
-      return addVanillaRecord(method, record);
-   else
-      return addMethodRecord(record);
+   return addMethodRecord(new (_region) MethodFromClassAndSigRecord(method, lookupClass, beholder));
    }
 
 bool
@@ -727,15 +691,17 @@ TR::SymbolValidationManager::validateSymbol(uint16_t idToBeValidated, J9Class *c
    }
 
 bool
-TR::SymbolValidationManager::validateSymbol(uint16_t idToBeValidated, TR_OpaqueMethodBlock *method)
+TR::SymbolValidationManager::validateSymbol(uint16_t methodID, uint16_t definingClassID, TR_OpaqueMethodBlock *method)
    {
-   return validateSymbol(idToBeValidated, method, TR::SymbolType::typeMethod);
+   return validateSymbol(methodID, definingClassID, reinterpret_cast<J9Method*>(method));
    }
 
 bool
-TR::SymbolValidationManager::validateSymbol(uint16_t idToBeValidated, J9Method *method)
+TR::SymbolValidationManager::validateSymbol(uint16_t methodID, uint16_t definingClassID, J9Method *method)
    {
-   return validateSymbol(idToBeValidated, method, TR::SymbolType::typeMethod);
+   J9Class *definingClass = method == NULL ? NULL : J9_CLASS_FROM_METHOD(method);
+   return validateSymbol(methodID, method, TR::SymbolType::typeMethod)
+      && validateSymbol(definingClassID, definingClass);
    }
 
 bool
@@ -936,11 +902,12 @@ TR::SymbolValidationManager::validateMethodFromClassRecord(uint16_t methodID, ui
       method = &(methods[index]);
       }
 
-   return validateSymbol(methodID, method);
+   // The defining class is necessarily the same class we looked in
+   return validateSymbol(methodID, beholderID, method);
    }
 
 bool
-TR::SymbolValidationManager::validateStaticMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex)
+TR::SymbolValidationManager::validateStaticMethodFromCPRecord(uint16_t methodID, uint16_t definingClassID, uint16_t beholderID, int32_t cpIndex)
    {
    J9Class *beholder = getJ9ClassFromID(beholderID);
    J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
@@ -951,11 +918,11 @@ TR::SymbolValidationManager::validateStaticMethodFromCPRecord(uint16_t methodID,
       ramMethod = jitResolveStaticMethodRef(_vmThread, beholderCP, cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
       }
 
-   return validateSymbol(methodID, ramMethod);
+   return validateSymbol(methodID, definingClassID, ramMethod);
    }
 
 bool
-TR::SymbolValidationManager::validateSpecialMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex)
+TR::SymbolValidationManager::validateSpecialMethodFromCPRecord(uint16_t methodID, uint16_t definingClassID, uint16_t beholderID, int32_t cpIndex)
    {
    J9Class *beholder = getJ9ClassFromID(beholderID);
    J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
@@ -966,11 +933,11 @@ TR::SymbolValidationManager::validateSpecialMethodFromCPRecord(uint16_t methodID
       ramMethod = jitResolveSpecialMethodRef(_vmThread, beholderCP, cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
       }
 
-   return validateSymbol(methodID, ramMethod);
+   return validateSymbol(methodID, definingClassID, ramMethod);
    }
 
 bool
-TR::SymbolValidationManager::validateVirtualMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex)
+TR::SymbolValidationManager::validateVirtualMethodFromCPRecord(uint16_t methodID, uint16_t definingClassID, uint16_t beholderID, int32_t cpIndex)
    {
    J9Class *beholder = getJ9ClassFromID(beholderID);
    J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
@@ -979,21 +946,21 @@ TR::SymbolValidationManager::validateVirtualMethodFromCPRecord(uint16_t methodID
    bool unresolvedInCP;
    TR_OpaqueMethodBlock * ramMethod = TR_ResolvedJ9Method::getVirtualMethod(_fej9, beholderCP, cpIndex, &vTableOffset, &unresolvedInCP);
 
-   return validateSymbol(methodID, ramMethod);
+   return validateSymbol(methodID, definingClassID, ramMethod);
    }
 
 bool
-TR::SymbolValidationManager::validateVirtualMethodFromOffsetRecord(uint16_t methodID, uint16_t beholderID, int32_t virtualCallOffset, bool ignoreRtResolve)
+TR::SymbolValidationManager::validateVirtualMethodFromOffsetRecord(uint16_t methodID, uint16_t definingClassID, uint16_t beholderID, int32_t virtualCallOffset, bool ignoreRtResolve)
    {
    TR_OpaqueClassBlock *beholder = getClassFromID(beholderID);
 
    TR_OpaqueMethodBlock *ramMethod = _fej9->getResolvedVirtualMethod(beholder, virtualCallOffset, ignoreRtResolve);
 
-   return validateSymbol(methodID, ramMethod);
+   return validateSymbol(methodID, definingClassID, ramMethod);
    }
 
 bool
-TR::SymbolValidationManager::validateInterfaceMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, uint16_t lookupID, int32_t cpIndex)
+TR::SymbolValidationManager::validateInterfaceMethodFromCPRecord(uint16_t methodID, uint16_t definingClassID, uint16_t beholderID, uint16_t lookupID, int32_t cpIndex)
    {
    TR_OpaqueClassBlock *lookup = getClassFromID(lookupID);
 
@@ -1002,11 +969,11 @@ TR::SymbolValidationManager::validateInterfaceMethodFromCPRecord(uint16_t method
 
    TR_OpaqueMethodBlock *ramMethod = _fej9->getResolvedInterfaceMethod(beholderCP, lookup, cpIndex);
 
-   return validateSymbol(methodID, ramMethod);
+   return validateSymbol(methodID, definingClassID, ramMethod);
    }
 
 bool
-TR::SymbolValidationManager::validateImproperInterfaceMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex)
+TR::SymbolValidationManager::validateImproperInterfaceMethodFromCPRecord(uint16_t methodID, uint16_t definingClassID, uint16_t beholderID, int32_t cpIndex)
    {
    J9Class *beholder = getJ9ClassFromID(beholderID);
    J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
@@ -1017,13 +984,13 @@ TR::SymbolValidationManager::validateImproperInterfaceMethodFromCPRecord(uint16_
       ramMethod = jitGetImproperInterfaceMethodFromCP(_vmThread, beholderCP, cpIndex);
       }
 
-   return validateSymbol(methodID, ramMethod);
+   return validateSymbol(methodID, definingClassID, ramMethod);
    }
 
 bool
-TR::SymbolValidationManager::validateMethodFromClassAndSignatureRecord(uint16_t methodID, uint16_t methodClassID, uint16_t beholderID, J9ROMMethod *romMethod)
+TR::SymbolValidationManager::validateMethodFromClassAndSignatureRecord(uint16_t methodID, uint16_t definingClassID, uint16_t lookupClassID, uint16_t beholderID, J9ROMMethod *romMethod)
    {
-   TR_OpaqueClassBlock *methodClass = getClassFromID(methodClassID);
+   TR_OpaqueClassBlock *lookupClass = getClassFromID(lookupClassID);
    TR_OpaqueClassBlock *beholder = getClassFromID(beholderID, SymOptional);
 
    J9UTF8 *methodNameData = J9ROMMETHOD_NAME(romMethod);
@@ -1036,13 +1003,14 @@ TR::SymbolValidationManager::validateMethodFromClassAndSignatureRecord(uint16_t 
    strncpy(methodSig, reinterpret_cast<const char *>(J9UTF8_DATA(methodSigData)), J9UTF8_LENGTH(methodSigData));
    methodSig[J9UTF8_LENGTH(methodSigData)] = '\0';
 
-   TR_OpaqueMethodBlock *method = _fej9->getMethodFromClass(methodClass, methodName, methodSig, beholder);
+   TR_OpaqueMethodBlock *method = _fej9->getMethodFromClass(lookupClass, methodName, methodSig, beholder);
 
-   return validateSymbol(methodID, method);
+   return validateSymbol(methodID, definingClassID, method);
    }
 
 bool
 TR::SymbolValidationManager::validateMethodFromSingleImplementerRecord(uint16_t methodID,
+                                                                       uint16_t definingClassID,
                                                                        uint16_t thisClassID,
                                                                        int32_t cpIndexOrVftSlot,
                                                                        uint16_t callerMethodID,
@@ -1059,11 +1027,12 @@ TR::SymbolValidationManager::validateMethodFromSingleImplementerRecord(uint16_t 
 
    TR_OpaqueMethodBlock *method = calleeResolvedMethod->getPersistentIdentifier();
 
-   return validateSymbol(methodID, method);
+   return validateSymbol(methodID, definingClassID, method);
    }
 
 bool
 TR::SymbolValidationManager::validateMethodFromSingleInterfaceImplementerRecord(uint16_t methodID,
+                                                                                uint16_t definingClassID,
                                                                                 uint16_t thisClassID,
                                                                                 int32_t cpIndex,
                                                                                 uint16_t callerMethodID)
@@ -1079,11 +1048,12 @@ TR::SymbolValidationManager::validateMethodFromSingleInterfaceImplementerRecord(
 
    TR_OpaqueMethodBlock *method = calleeResolvedMethod->getPersistentIdentifier();
 
-   return validateSymbol(methodID, method);
+   return validateSymbol(methodID, definingClassID, method);
    }
 
 bool
 TR::SymbolValidationManager::validateMethodFromSingleAbstractImplementerRecord(uint16_t methodID,
+                                                                               uint16_t definingClassID,
                                                                                uint16_t thisClassID,
                                                                                int32_t vftSlot,
                                                                                uint16_t callerMethodID)
@@ -1099,7 +1069,7 @@ TR::SymbolValidationManager::validateMethodFromSingleAbstractImplementerRecord(u
 
    TR_OpaqueMethodBlock *method = calleeResolvedMethod->getPersistentIdentifier();
 
-   return validateSymbol(methodID, method);
+   return validateSymbol(methodID, definingClassID, method);
    }
 
 bool
@@ -1568,7 +1538,7 @@ bool TR::MethodFromClassAndSigRecord::isLessThanWithinKind(
    {
    TR::MethodFromClassAndSigRecord *rhs = downcast(this, other);
    return LexicalOrder::by(_method, rhs->_method)
-      .thenBy(_methodClass, rhs->_methodClass)
+      .thenBy(_lookupClass, rhs->_lookupClass)
       .thenBy(_beholder, rhs->_beholder).less();
    }
 
@@ -1576,8 +1546,8 @@ void TR::MethodFromClassAndSigRecord::printFields()
    {
    traceMsg(TR::comp(), "MethodFromClassAndSigRecord\n");
    traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
-   traceMsg(TR::comp(), "\t_methodClass=0x%p\n", _methodClass);
-   printClass(_methodClass);
+   traceMsg(TR::comp(), "\t_methodClass=0x%p\n", _lookupClass);
+   printClass(_lookupClass);
    traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
    }

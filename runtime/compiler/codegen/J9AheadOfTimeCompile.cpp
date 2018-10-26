@@ -1485,8 +1485,9 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateStaticMethodFromCPBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate Static Method From CP: methodID=%d, beholderID=%d, cpIndex=%d ",
+               traceMsg(self()->comp(), "\n Validate Static Method From CP: methodID=%d, definingClassID=%d, beholderID=%d, cpIndex=%d ",
                         (uint32_t)binaryTemplate->_methodID,
+                        (uint32_t)binaryTemplate->_definingClassID,
                         (uint32_t)binaryTemplate->_beholderID,
                         binaryTemplate->_cpIndex);
                }
@@ -1505,8 +1506,9 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateSpecialMethodFromCPBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate Special Method From CP: methodID=%d, beholderID=%d, cpIndex=%d ",
+               traceMsg(self()->comp(), "\n Validate Special Method From CP: methodID=%d, definingClassID=%d, beholderID=%d, cpIndex=%d ",
                         (uint32_t)binaryTemplate->_methodID,
+                        (uint32_t)binaryTemplate->_definingClassID,
                         (uint32_t)binaryTemplate->_beholderID,
                         binaryTemplate->_cpIndex);
                }
@@ -1525,8 +1527,9 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateVirtualMethodFromCPBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate Virtual Method From CP: methodID=%d, beholderID=%d, cpIndex=%d ",
+               traceMsg(self()->comp(), "\n Validate Virtual Method From CP: methodID=%d, definingClassID=%d, beholderID=%d, cpIndex=%d ",
                         (uint32_t)binaryTemplate->_methodID,
+                        (uint32_t)binaryTemplate->_definingClassID,
                         (uint32_t)binaryTemplate->_beholderID,
                         binaryTemplate->_cpIndex);
                }
@@ -1545,11 +1548,12 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateVirtualMethodFromOffsetBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate Virtual Method From Offset: methodID=%d, beholderID=%d, virtualCallOffset=%d, ignoreRtResolve=%s ",
+               traceMsg(self()->comp(), "\n Validate Virtual Method From Offset: methodID=%d, definingClassID=%d, beholderID=%d, virtualCallOffset=%d, ignoreRtResolve=%s ",
                         (uint32_t)binaryTemplate->_methodID,
+                        (uint32_t)binaryTemplate->_definingClassID,
                         (uint32_t)binaryTemplate->_beholderID,
-                        binaryTemplate->_virtualCallOffset,
-                        binaryTemplate->_ignoreRtResolve ? "true" : "false");
+                        binaryTemplate->_virtualCallOffsetAndIgnoreRtResolve & ~1,
+                        (binaryTemplate->_virtualCallOffsetAndIgnoreRtResolve & 1) ? "true" : "false");
                }
             cursor += sizeof(TR_RelocationRecordValidateVirtualMethodFromOffsetBinaryTemplate);
             self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
@@ -1566,8 +1570,9 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateInterfaceMethodFromCPBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate Interface Method From CP: methodID=%d, beholderID=%d, lookupID=%d, cpIndex=%d ",
+               traceMsg(self()->comp(), "\n Validate Interface Method From CP: methodID=%d, definingClassID=%d, beholderID=%d, lookupID=%d, cpIndex=%d ",
                         (uint32_t)binaryTemplate->_methodID,
+                        (uint32_t)binaryTemplate->_definingClassID,
                         (uint32_t)binaryTemplate->_beholderID,
                         (uint32_t)binaryTemplate->_lookupID,
                         binaryTemplate->_cpIndex);
@@ -1587,8 +1592,9 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateImproperInterfaceMethodFromCPBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate Improper Interface Method From CP: methodID=%d, beholderID=%d, cpIndex=%d ",
+               traceMsg(self()->comp(), "\n Validate Improper Interface Method From CP: methodID=%d, definingClassID=%d, beholderID=%d, cpIndex=%d ",
                         (uint32_t)binaryTemplate->_methodID,
+                        (uint32_t)binaryTemplate->_definingClassID,
                         (uint32_t)binaryTemplate->_beholderID,
                         binaryTemplate->_cpIndex);
                }
@@ -1607,9 +1613,10 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate Method From Class and Sig: methodID=%d, methodClassID=%d, beholderID=%d, romMethodOffsetInSCC=%p ",
+               traceMsg(self()->comp(), "\n Validate Method From Class and Sig: methodID=%d, definingClassID=%d, lookupClassID=%d, beholderID=%d, romMethodOffsetInSCC=%p ",
                         (uint32_t)binaryTemplate->_methodID,
-                        (uint32_t)binaryTemplate->_methodClassID,
+                        (uint32_t)binaryTemplate->_definingClassID,
+                        (uint32_t)binaryTemplate->_lookupClassID,
                         (uint32_t)binaryTemplate->_beholderID,
                         binaryTemplate->_romMethodOffsetInSCC);
                }
@@ -1667,8 +1674,9 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate Method From Single Implementor: methodID=%d, thisClassID=%d, cpIndexOrVftSlot=%d, callerMethodID=%d, useGetResolvedInterfaceMethod=%d ",
+               traceMsg(self()->comp(), "\n Validate Method From Single Implementor: methodID=%d, definingClassID=%d, thisClassID=%d, cpIndexOrVftSlot=%d, callerMethodID=%d, useGetResolvedInterfaceMethod=%d ",
                         (uint32_t)binaryTemplate->_methodID,
+                        (uint32_t)binaryTemplate->_definingClassID,
                         (uint32_t)binaryTemplate->_thisClassID,
                         binaryTemplate->_cpIndexOrVftSlot,
                         (uint32_t)binaryTemplate->_callerMethodID,
@@ -1689,8 +1697,9 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateMethodFromSingleInterfaceImplBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate Method From Single Interface Implementor: methodID=%d, thisClassID=%d, cpIndex=%d, callerMethodID=%d ",
+               traceMsg(self()->comp(), "\n Validate Method From Single Interface Implementor: methodID=%d, definingClassID=%d, thisClassID=%d, cpIndex=%d, callerMethodID=%d ",
                         (uint32_t)binaryTemplate->_methodID,
+                        (uint32_t)binaryTemplate->_definingClassID,
                         (uint32_t)binaryTemplate->_thisClassID,
                         binaryTemplate->_cpIndex,
                         (uint32_t)binaryTemplate->_callerMethodID);
@@ -1710,8 +1719,9 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                   reinterpret_cast<TR_RelocationRecordValidateMethodFromSingleAbstractImplBinaryTemplate *>(cursor);
             if (isVerbose)
                {
-               traceMsg(self()->comp(), "\n Validate Method From Single Interface Implementor: methodID=%d, thisClassID=%d, vftSlot=%d, callerMethodID=%d ",
+               traceMsg(self()->comp(), "\n Validate Method From Single Interface Implementor: methodID=%d, definingClassID=%d, thisClassID=%d, vftSlot=%d, callerMethodID=%d ",
                         (uint32_t)binaryTemplate->_methodID,
+                        (uint32_t)binaryTemplate->_definingClassID,
                         (uint32_t)binaryTemplate->_thisClassID,
                         binaryTemplate->_vftSlot,
                         (uint32_t)binaryTemplate->_callerMethodID);
