@@ -539,31 +539,6 @@ static TR::Instruction *generatePrefetchAfterHeaderAccess(TR::Node              
    return instr;
    }
 
-static void fixupHelperCall(bool              moveFPRegSpill,
-                            TR::Instruction   *startOfSequence)
-   {
-   // Find the call instruction and grab its dependencies
-   //
-   TR::Compilation *comp = TR::comp();
-   TR::Instruction  *instr = comp->cg()->getAppendInstruction();
-   while(instr->getOpCodeValue() == FENCE)
-      instr = instr->getPrev();
-
-   // Now find the FPREGSPILL instruction and move it to the start of this
-   // whole sequence
-   //
-   if (moveFPRegSpill)
-      {
-      while(instr->getOpCodeValue() != FPREGSPILL &&
-            instr != startOfSequence)
-         {
-         instr = instr->getPrev();
-         }
-      instr->move(startOfSequence);
-      }
-   }
-
-
 /*
  * J9 X86 specific tree evaluator table overrides
  */
@@ -1978,8 +1953,7 @@ TR::Register *J9::X86::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(
                                                                       appendTo);
 
          ((TR::X86CheckFailureSnippetWithResolve *)(snippet))->setNumLiveX87Registers(machine->fpGetNumberOfLiveFPRs());
-         if (cg->useSSEForDoublePrecision())
-            ((TR::X86CheckFailureSnippetWithResolve *)(snippet))->setHasLiveXMMRs();
+         ((TR::X86CheckFailureSnippetWithResolve *)(snippet))->setHasLiveXMMRs();
          }
 
       cg->addSnippet(snippet);
@@ -7378,13 +7352,6 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
    if (comp->suppressAllocationInlining())
       return NULL;
 
-   if (!cg->useSSEForDoublePrecision())
-      {
-      TR::RegisterDependencyConditions  *fpSpillDependency = generateRegisterDependencyConditions(1, 0, cg);
-      fpSpillDependency->addPreCondition(NULL, TR::RealRegister::AllFPRegisters, cg);
-      generateInstruction(FPREGSPILL, node, fpSpillDependency, cg);
-      }
-
    // If the helper does not preserve all the registers there will not be
    // enough registers to do the inline allocation.
    // Also, don't do the inline allocation if optimizing for space
@@ -8411,10 +8378,6 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
    TR_OutlinedInstructions* outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(helperCallNode, TR::call, NULL, helperCallLabel, helperReturnLabel, cg);
    cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
    generateLabelInstruction(LABEL, helperCallNode, helperReturnLabel, cg);
-   // TODO: This is gross and should be cleaned up.
-   //
-   if (TR::Compiler->target.is32Bit() && !cg->useSSEForDoublePrecision())
-      fixupHelperCall(true, prevInstr);
    cg->decReferenceCount(sourceChild);
    cg->decReferenceCount(destinationChild);
    }
@@ -8688,20 +8651,15 @@ addFPXMMDependencies(
       TR::CodeGenerator *cg,
       TR::RegisterDependencyConditions *dependencies)
    {
-   TR::Machine *machine = cg->machine();
-
-   if (cg->useSSEForSinglePrecision() || cg->useSSEForDoublePrecision())
+   TR_LiveRegisters *lr = cg->getLiveRegisters(TR_FPR);
+   if (!lr || lr->getNumberOfLiveRegisters() > 0)
       {
-      TR_LiveRegisters *lr = cg->getLiveRegisters(TR_FPR);
-      if (!lr || lr->getNumberOfLiveRegisters() > 0)
+      for (int regIndex = TR::RealRegister::FirstXMMR; regIndex <= TR::RealRegister::LastXMMR; regIndex++)
          {
-         for (int regIndex = TR::RealRegister::FirstXMMR; regIndex <= TR::RealRegister::LastXMMR; regIndex++)
-            {
-            TR::Register *dummy = cg->allocateRegister(TR_FPR);
-            dummy->setPlaceholderReg();
-            dependencies->addPostCondition(dummy, (TR::RealRegister::RegNum)regIndex, cg);
-            cg->stopUsingRegister(dummy);
-            }
+         TR::Register *dummy = cg->allocateRegister(TR_FPR);
+         dummy->setPlaceholderReg();
+         dependencies->addPostCondition(dummy, (TR::RealRegister::RegNum)regIndex, cg);
+         cg->stopUsingRegister(dummy);
          }
       }
    }
@@ -8830,15 +8788,6 @@ inlineNanoTime(
          resultAddress = espReal;
          }
 
-      // Force the FP register stack to be spilled.
-      //
-      if (!cg->useSSEForDoublePrecision())
-         {
-         TR::RegisterDependencyConditions  *fpSpillDependency = generateRegisterDependencyConditions(1, 0, cg);
-         fpSpillDependency->addPreCondition(NULL, TR::RealRegister::AllFPRegisters, cg);
-         generateInstruction(FPREGSPILL, node, fpSpillDependency, cg);
-         }
-
       // 64-bit issues on the call instructions below
 
       // Build register dependencies and call the method in the system library
@@ -8939,15 +8888,6 @@ inlineNanoTime(
       generateRegMemInstruction(L4RegMem, node, temp2, generateX86MemoryReference(temp2, offsetof(J9JavaVM, portLibrary), cg), cg);
       generateRegInstruction(PUSHReg, node, espReal, cg);
       generateRegInstruction(PUSHReg, node, temp2, cg);
-
-      if (!cg->useSSEForDoublePrecision())
-         {
-         // Force the FP register stack to be spilled.
-         //
-         TR::RegisterDependencyConditions  *fpSpillDependency = generateRegisterDependencyConditions(1, 0, cg);
-         fpSpillDependency->addPreCondition(NULL, TR::RealRegister::AllFPRegisters, cg);
-         generateInstruction(FPREGSPILL, node, fpSpillDependency, cg);
-         }
 
       int32_t extraFPDeps = (uint8_t)(TR::RealRegister::LastXMMR - TR::RealRegister::FirstXMMR+1);
 
@@ -9061,16 +9001,8 @@ inlineMathSQRT(
 
       auto cds = cg->findOrCreate8ByteConstant(operand, d.rawBits);
 
-      if (cg->useSSEForDoublePrecision())
-         {
-         targetRegister = cg->allocateRegister(TR_FPR);
-         generateRegMemInstruction(MOVSDRegMem, node, targetRegister, generateX86MemoryReference(cds, cg), cg);
-         }
-      else
-         {
-         targetRegister = cg->allocateRegister(TR_X87);
-         generateFPRegMemInstruction(DLDRegMem, node, targetRegister, generateX86MemoryReference(cds, cg), cg);
-         }
+      targetRegister = cg->allocateRegister(TR_FPR);
+      generateRegMemInstruction(MOVSDRegMem, node, targetRegister, generateX86MemoryReference(cds, cg), cg);
       }
    else
       {
