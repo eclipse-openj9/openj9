@@ -597,6 +597,8 @@ jvmtiGetOwnedMonitorStackDepthInfo(jvmtiEnv* env,
 			J9ObjectMonitorInfo * monitorEnterRecords = NULL;
 			jvmtiMonitorStackDepthInfo * resultArray = NULL;
 
+			vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
+
 			/* Get the count of owned monitors */
 
 			maxRecords = vm->internalVMFunctions->getOwnedObjectMonitors(currentThread, targetThread, NULL, 0);
@@ -660,6 +662,7 @@ doneRelease:
 				j9mem_free_memory(monitorEnterRecords);
 			}
 
+			vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
 			releaseVMThread(currentThread, targetThread);
 		}
 done:
