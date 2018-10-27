@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -437,9 +437,8 @@ TR_ResolvedMethod * TR_PersistentCHTable::findSingleImplementer(
                                                                  callerMethod->getPersistentIdentifier(),
                                                                  useGetResolvedInterfaceMethod);
       if (validated)
-         validated = svm->addClassFromMethodRecord(implementer->classOfMethod(), implementer->getPersistentIdentifier());
-
-      if (!validated)
+         SVM_ASSERT_ALREADY_VALIDATED(svm, implementer->classOfMethod());
+      else
          implementer = NULL;
       }
 
@@ -487,9 +486,8 @@ TR_PersistentCHTable::findSingleInterfaceImplementer(
                                                                           callerMethod->getPersistentIdentifier());
 
       if (validated)
-         validated = svm->addClassFromMethodRecord(implementer->classOfMethod(), implementer->getPersistentIdentifier());
-
-      if (!validated)
+         SVM_ASSERT_ALREADY_VALIDATED(svm, implementer->classOfMethod());
+      else
          implementer = NULL;
       }
 
@@ -594,9 +592,8 @@ TR_PersistentCHTable::findSingleAbstractImplementer(
                                                                          callerMethod->getPersistentIdentifier());
 
       if (validated)
-         validated = svm->addClassFromMethodRecord(implementer->classOfMethod(), implementer->getPersistentIdentifier());
-
-      if (!validated)
+         SVM_ASSERT_ALREADY_VALIDATED(svm, implementer->classOfMethod());
+      else
          implementer = NULL;
       }
 

@@ -8586,7 +8586,8 @@ TR_J9SharedCacheVM::getClassOfMethod(TR_OpaqueMethodBlock *method)
 
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      validated = comp->getSymbolValidationManager()->addClassFromMethodRecord(classPointer, method);
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
       }
    else
       {
@@ -8675,11 +8676,9 @@ TR_J9SharedCacheVM::getResolvedMethodForNameAndSignature(TR_Memory * trMemory, T
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
       TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *)((TR_ResolvedJ9Method *)resolvedMethod)->ramMethod();
-      /*
-       * TR_J9VM::getResolvedMethodForNameAndSignature will call getMatchingMethodFromNameAndSignature
-       * which adds a MethodFromClassRecord.
-       */
-      validated = comp->getSymbolValidationManager()->addClassFromMethodRecord(getClassFromMethodBlock(method), method);
+      TR_OpaqueClassBlock *clazz = getClassFromMethodBlock(method);
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), clazz);
+      validated = true;
       }
    else
       {
