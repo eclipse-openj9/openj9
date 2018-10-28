@@ -2616,7 +2616,7 @@ void TR::J9S390JNILinkage::releaseVMAccessMask(TR::Node * callNode,
    TR::LabelSymbol * loopHead = generateLabelSymbol(self()->cg());
    TR::LabelSymbol * longReleaseLabel = generateLabelSymbol(self()->cg());
    TR::LabelSymbol * longReleaseSnippetLabel = generateLabelSymbol(self()->cg());
-   TR::LabelSymbol * doneLabel = generateLabelSymbol(self()->cg());
+   TR::LabelSymbol * cFlowRegionEnd = generateLabelSymbol(self()->cg());
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(self()->fe());
 
    intptrj_t aValue = fej9->constReleaseVMAccessMask(); //0xfffffffffffdffdf
@@ -2627,8 +2627,8 @@ void TR::J9S390JNILinkage::releaseVMAccessMask(TR::Node * callNode,
        fej9->thisThreadGetPublicFlagsOffset(), self()->cg()));
 
 
-   TR::Instruction * label = generateS390LabelInstruction(self()->cg(), TR::InstOpCode::LABEL, callNode, loopHead);
-   label->setStartInternalControlFlow();
+   generateS390LabelInstruction(self()->cg(), TR::InstOpCode::LABEL, callNode, loopHead);
+   loopHead->setStartInternalControlFlow();
 
 
    aValue = fej9->constReleaseVMAccessOutOfLineMask(); //0x340001
@@ -2681,15 +2681,14 @@ void TR::J9S390JNILinkage::releaseVMAccessMask(TR::Node * callNode,
       postDeps->addPostCondition(javaLitOffsetReg, TR::RealRegister::AssignAny);
 
 
-   TR::Instruction * br = generateS390BranchInstruction(self()->cg(), TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, callNode, loopHead);
-   br->setEndInternalControlFlow();
-   br->setDependencyConditions(postDeps);
+   generateS390BranchInstruction(self()->cg(), TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, callNode, loopHead);
 
-   generateS390LabelInstruction(self()->cg(), TR::InstOpCode::LABEL, callNode, doneLabel);
+   generateS390LabelInstruction(self()->cg(), TR::InstOpCode::LABEL, callNode, cFlowRegionEnd, postDeps);
+   cFlowRegionEnd->setEndInternalControlFlow();
 
 
    self()->cg()->addSnippet(new (self()->trHeapMemory()) TR::S390HelperCallSnippet(self()->cg(), callNode, longReleaseSnippetLabel,
-                              self()->comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(self()->comp()->getJittedMethodSymbol()), doneLabel));
+                              self()->comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(self()->comp()->getJittedMethodSymbol()), cFlowRegionEnd));
    // end of release vm access (spin lock)
    }
 
@@ -3075,9 +3074,12 @@ TR::Register * TR::J9S390JNILinkage::buildDirectDispatch(TR::Node * callNode)
 
    if (isUnwrapAddressReturnValue)
      {
-     TR::LabelSymbol * tempLabel = generateLabelSymbol(codeGen);
-     TR::Instruction* start = generateS390CompareAndBranchInstruction(codeGen, TR::InstOpCode::getCmpOpCode(), callNode, javaReturnRegister, (signed char)0, TR::InstOpCode::COND_BE, tempLabel);
-     start->setStartInternalControlFlow();
+     TR::LabelSymbol * cFlowRegionStart = generateLabelSymbol(codeGen);
+     TR::LabelSymbol * cFlowRegionEnd = generateLabelSymbol(codeGen);
+
+     generateS390LabelInstruction(codeGen, TR::InstOpCode::LABEL, callNode, cFlowRegionStart);
+     cFlowRegionStart->setStartInternalControlFlow();
+     generateS390CompareAndBranchInstruction(codeGen, TR::InstOpCode::getCmpOpCode(), callNode, javaReturnRegister, (signed char)0, TR::InstOpCode::COND_BE, cFlowRegionEnd);
      generateRXInstruction(codeGen, TR::InstOpCode::getLoadOpCode(), callNode, javaReturnRegister,
                 generateS390MemoryReference(javaReturnRegister, 0, codeGen));
 
@@ -3087,9 +3089,8 @@ TR::Register * TR::J9S390JNILinkage::buildDirectDispatch(TR::Node * callNode)
      TR::RegisterDependencyConditions * postDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg());
      postDeps->addPostCondition(javaReturnRegister, realReg);
 
-     TR::Instruction* end =generateS390LabelInstruction(codeGen, TR::InstOpCode::LABEL, callNode, tempLabel);
-     end->setEndInternalControlFlow();
-     end->setDependencyConditions(postDeps);
+     generateS390LabelInstruction(codeGen, TR::InstOpCode::LABEL, callNode, cFlowRegionEnd, postDeps);
+     cFlowRegionEnd->setEndInternalControlFlow();
      }
 
    if (isCollapseJNIReferenceFrame)
