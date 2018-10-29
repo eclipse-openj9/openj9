@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2017 IBM Corp. and others
+ * Copyright (c) 2005, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -114,11 +114,6 @@ public interface OperatingSystemMXBean extends com.sun.management.OperatingSyste
 	 *         of an error. On the first call to the API,
 	 *         {@link com.ibm.lang.management.CpuLoadCalculationConstants}.ERROR_VALUE
 	 *         (-1.0) shall be returned.
-	 * <ul>
-	 * <li>Because this information is not available on z/OS, the call returns
-	 * {@link com.ibm.lang.management.CpuLoadCalculationConstants}.UNSUPPORTED_VALUE
-	 * (-3.0).
-	 * </ul>
 	 * @see CpuLoadCalculationConstants
 	 */
 	public double getSystemCpuLoad();

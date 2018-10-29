@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar16]*/
 /*******************************************************************************
- * Copyright (c) 2001, 2016 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,7 +64,12 @@ final class CpuUtilizationHelper implements CpuLoadCalculationConstants {
 
 		/* calculate using the most recent value in the history */
 		if ((latestTime.getTimestamp() - interimTime.getTimestamp()) >= MINIMUM_INTERVAL) {
-			cpuLoad = calculateCpuLoad(latestTime, interimTime);
+	            if (latestTime.getCpuLoad() == -1) {
+		        cpuLoad = calculateCpuLoad(latestTime, interimTime);
+                    } else {
+		        cpuLoad = (double)latestTime.getCpuLoad()/100;
+                    }
+
 			if (cpuLoad >= 0.0) { /* no errors detected in the statistics */
 				oldestTime = interimTime;
 				interimTime = latestTime; /* next time we'll use the oldestTime */
@@ -79,7 +84,13 @@ final class CpuUtilizationHelper implements CpuLoadCalculationConstants {
 		}
 
 		if ((latestTime.getTimestamp() - oldestTime.getTimestamp()) >= MINIMUM_INTERVAL) {
-			cpuLoad = calculateCpuLoad(latestTime, oldestTime);
+		
+		    if (latestTime.getCpuLoad() == -1) {
+		        cpuLoad = calculateCpuLoad(latestTime, interimTime);
+                    } else {
+		        cpuLoad = (double)latestTime.getCpuLoad()/100;
+                    }
+			
 			if (cpuLoad < 0) { /* the stats look bogus.  Discard them */
 				oldestTime = latestTime;
 			}

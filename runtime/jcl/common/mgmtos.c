@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2016 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -218,14 +218,14 @@ Java_com_ibm_lang_management_internal_SysinfoCpuTime_getCpuUtilizationImpl(JNIEn
 
 	if (NULL == tempMethod) {
 
-		tempMethod = (*env)->GetMethodID(env, clazz, "<init>", "(JJII)V");
+		tempMethod = (*env)->GetMethodID(env, clazz, "<init>", "(JJIII)V");
 		if (NULL == tempMethod) {
 			return NULL;
 		}
 
 		JCL_CACHE_SET(env, MID_com_ibm_lang_management_SysinfoCpuTime_getCpuUtilization_init, tempMethod);
 	}
-
+printf("Found tempMethod - getting time now\n");fflush(stdout);
 	portLibraryStatus = j9sysinfo_get_CPU_utilization(&cpuTime);
 	if (portLibraryStatus < 0) {
 		const IDATA ERROR_VALUE = -1;
@@ -245,8 +245,14 @@ Java_com_ibm_lang_management_internal_SysinfoCpuTime_getCpuUtilizationImpl(JNIEn
 			break;
 		}
 	}
+#if defined(J9ZOS390)
 	result = (*env)->NewObject(env, clazz, tempMethod,
-			cpuTime.timestamp, cpuTime.cpuTime, cpuTime.numberOfCpus, myStatus);
+			cpuTime.timestamp, cpuTime.cpuTime , cpuTime.numberOfCpus, myStatus, cpuTime.cpuLoad);
+#else
+printf("***in getCpuUtilizationImpl - setting -1 ***\n");fflush(stdout);
+	result = (*env)->NewObject(env, clazz, tempMethod,
+			cpuTime.timestamp, cpuTime.cpuTime, cpuTime.numberOfCpus, myStatus, -1);
+#endif
 	return result;
 }
 

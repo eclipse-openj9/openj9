@@ -46,7 +46,7 @@ public class TestGetSystemCpuLoad {
 	@BeforeMethod
 	protected void setUp() throws Exception {
 		String osName = System.getProperty("os.name");
-		if ((null == osName) || osName.equalsIgnoreCase("z/OS")) {
+		if (null == osName) {
 			supported = false;
 		} else {
 			supported = true;
