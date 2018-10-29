@@ -225,21 +225,6 @@ struct StaticClassFromCPRecord : public ClassValidationRecord
    uint32_t  _cpIndex;
    };
 
-struct ClassFromMethodRecord : public ClassValidationRecord
-   {
-   ClassFromMethodRecord(TR_OpaqueClassBlock *clazz, TR_OpaqueMethodBlock *method)
-      : ClassValidationRecord(TR_ValidateClassFromMethod),
-        _class(clazz),
-        _method(method)
-      {}
-
-   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
-   virtual void printFields();
-
-   TR_OpaqueClassBlock * _class;
-   TR_OpaqueMethodBlock *_method;
-   };
-
 struct ArrayClassFromComponentClassRecord : public ClassValidationRecord
    {
    ArrayClassFromComponentClassRecord(TR_OpaqueClassBlock *arrayClass, TR_OpaqueClassBlock *componentClass)
@@ -669,7 +654,6 @@ public:
    bool addClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, uint32_t cpIndex);
    bool addDefiningClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, uint32_t cpIndex, bool isStatic = false);
    bool addStaticClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, uint32_t cpIndex);
-   bool addClassFromMethodRecord(TR_OpaqueClassBlock *clazz, TR_OpaqueMethodBlock *method);
    bool addArrayClassFromComponentClassRecord(TR_OpaqueClassBlock *arrayClass, TR_OpaqueClassBlock *componentClass);
    bool addSuperClassFromClassRecord(TR_OpaqueClassBlock *superClass, TR_OpaqueClassBlock *childClass);
    bool addClassInstanceOfClassRecord(TR_OpaqueClassBlock *classOne, TR_OpaqueClassBlock *classTwo, bool objectTypeIsFixed, bool castTypeIsFixed, bool isInstanceOf);
@@ -711,7 +695,6 @@ public:
    bool validateClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex);
    bool validateDefiningClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex, bool isStatic);
    bool validateStaticClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex);
-   bool validateClassFromMethodRecord(uint16_t classID, uint16_t methodID);
    bool validateArrayClassFromComponentClassRecord(uint16_t arrayClassID, uint16_t componentClassID);
    bool validateSuperClassFromClassRecord(uint16_t superClassID, uint16_t childClassID);
    bool validateClassInstanceOfClassRecord(uint16_t classOneID, uint16_t classTwoID, bool objectTypeIsFixed, bool castTypeIsFixed, bool wasInstanceOf);

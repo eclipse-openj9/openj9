@@ -337,9 +337,6 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
       case TR_ValidateStaticClassFromCP:
          reloRecord = new (storage) TR_RelocationRecordValidateStaticClassFromCP(reloRuntime, record);
          break;
-      case TR_ValidateClassFromMethod:
-         reloRecord = new (storage) TR_RelocationRecordValidateClassFromMethod(reloRuntime, record);
-         break;
       case TR_ValidateArrayClassFromComponentClass:
          reloRecord = new (storage) TR_RelocationRecordValidateArrayClassFromComponentClass(reloRuntime, record);
          break;
@@ -3344,25 +3341,6 @@ TR_RelocationRecordValidateStaticClassFromCP::applyRelocation(TR_RelocationRunti
    }
 
 int32_t
-TR_RelocationRecordValidateClassFromMethod::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
-   {
-   uint16_t classID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateClassFromMethodBinaryTemplate *)_record)->_classID);
-   uint16_t methodID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateClassFromMethodBinaryTemplate *)_record)->_methodID);
-
-   if (reloRuntime->reloLogger()->logEnabled())
-      {
-      reloRuntime->reloLogger()->printf("%s\n", name());
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: classID %d\n", classID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: methodID %d\n", methodID);
-      }
-
-   if (reloRuntime->comp()->getSymbolValidationManager()->validateClassFromMethodRecord(classID, methodID))
-      return 0;
-   else
-      return compilationAotClassReloFailure;
-   }
-
-int32_t
 TR_RelocationRecordValidateArrayClassFromComponentClass::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
    uint16_t arrayClassID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateArrayFromCompBinaryTemplate *)_record)->_arrayClassID);
@@ -4578,7 +4556,7 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordValidateClassFromCPBinaryTemplate),                     // TR_ValidateClassFromCP                          = 66
    sizeof(TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate),             // TR_ValidateDefiningClassFromCP                  = 67
    sizeof(TR_RelocationRecordValidateStaticClassFromCPBinaryTemplate),               // TR_ValidateStaticClassFromCP                    = 68
-   sizeof(TR_RelocationRecordValidateClassFromMethodBinaryTemplate),                 // TR_ValidateClassFromMethod                      = 69
+   0,                                                                                // TR_ValidateClassFromMethod                      = 69
    0,                                                                                // TR_ValidateComponentClassFromArrayClass         = 70
    sizeof(TR_RelocationRecordValidateArrayFromCompBinaryTemplate),                   // TR_ValidateArrayClassFromComponentClass         = 71
    sizeof(TR_RelocationRecordValidateSuperClassFromClassBinaryTemplate),             // TR_ValidateSuperClassFromClass                  = 72

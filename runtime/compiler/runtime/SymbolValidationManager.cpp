@@ -422,13 +422,6 @@ TR::SymbolValidationManager::addStaticClassFromCPRecord(TR_OpaqueClassBlock *cla
    }
 
 bool
-TR::SymbolValidationManager::addClassFromMethodRecord(TR_OpaqueClassBlock *clazz, TR_OpaqueMethodBlock *method)
-   {
-   SVM_ASSERT_ALREADY_VALIDATED(this, method);
-   return addClassRecord(clazz, new (_region) ClassFromMethodRecord(clazz, method));
-   }
-
-bool
 TR::SymbolValidationManager::addArrayClassFromComponentClassRecord(TR_OpaqueClassBlock *arrayClass, TR_OpaqueClassBlock *componentClass)
    {
    // Class chain validation for the base component type is already taken care of
@@ -757,13 +750,6 @@ TR::SymbolValidationManager::validateStaticClassFromCPRecord(uint16_t classID, u
    J9Class *beholder = getJ9ClassFromID(beholderID);
    J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
    return validateSymbol(classID, TR_ResolvedJ9Method::getClassOfStaticFromCP(_fej9, beholderCP, cpIndex));
-   }
-
-bool
-TR::SymbolValidationManager::validateClassFromMethodRecord(uint16_t classID, uint16_t methodID)
-   {
-   J9Method *method = getJ9MethodFromID(methodID);
-   return validateSymbol(classID, J9_CLASS_FROM_METHOD(method));
    }
 
 bool
@@ -1248,22 +1234,6 @@ void TR::StaticClassFromCPRecord::printFields()
    traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
    traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
-   }
-
-bool TR::ClassFromMethodRecord::isLessThanWithinKind(
-   SymbolValidationRecord *other)
-   {
-   TR::ClassFromMethodRecord *rhs = downcast(this, other);
-   return LexicalOrder::by(_class, rhs->_class)
-      .thenBy(_method, rhs->_method).less();
-   }
-
-void TR::ClassFromMethodRecord::printFields()
-   {
-   traceMsg(TR::comp(), "ClassFromMethodRecord\n");
-   traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
-   printClass(_class);
-   traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
    }
 
 bool TR::ArrayClassFromComponentClassRecord::isLessThanWithinKind(

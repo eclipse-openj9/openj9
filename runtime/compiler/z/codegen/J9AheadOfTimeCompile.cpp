@@ -477,17 +477,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          cursor += sizeof(TR_RelocationRecordValidateStaticClassFromCPBinaryTemplate);
          }
          break;
-      case TR_ValidateClassFromMethod:
-         {
-         TR::ClassFromMethodRecord *record = reinterpret_cast<TR::ClassFromMethodRecord *>(relocation->getTargetAddress());
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-         TR_RelocationRecordValidateClassFromMethodBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordValidateClassFromMethodBinaryTemplate *>(cursor);
-         binaryTemplate->_classID = symValManager->getIDFromSymbol(static_cast<void *>(record->_class));
-         binaryTemplate->_methodID = symValManager->getIDFromSymbol(static_cast<void *>(record->_method));
-         cursor += sizeof(TR_RelocationRecordValidateClassFromMethodBinaryTemplate);
-         }
-         break;
       case TR_ValidateArrayClassFromComponentClass:
          {
          TR::ArrayClassFromComponentClassRecord *record = reinterpret_cast<TR::ArrayClassFromComponentClassRecord *>(relocation->getTargetAddress());
@@ -1468,7 +1457,7 @@ uint32_t J9::Z::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_NumE
    sizeof(TR_RelocationRecordValidateClassFromCPBinaryTemplate),       // TR_ValidateClassFromCP                 = 66,
    sizeof(TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate),//TR_ValidateDefiningClassFromCP         = 67,
    sizeof(TR_RelocationRecordValidateStaticClassFromCPBinaryTemplate), // TR_ValidateStaticClassFromCP           = 68,
-   sizeof(TR_RelocationRecordValidateClassFromMethodBinaryTemplate),   // TR_ValidateClassFromMethod             = 69,
+   0,                                                                  // TR_ValidateClassFromMethod             = 69,
    0,                                                                  // TR_ValidateComponentClassFromArrayClass= 70,
    sizeof(TR_RelocationRecordValidateArrayFromCompBinaryTemplate),     // TR_ValidateArrayClassFromComponentClass= 71,
    sizeof(TR_RelocationRecordValidateSuperClassFromClassBinaryTemplate),//TR_ValidateSuperClassFromClass         = 72,

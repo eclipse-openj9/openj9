@@ -1260,25 +1260,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
             }
             break;
 
-         case TR_ValidateClassFromMethod:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateClassFromMethodBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateClassFromMethodBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Class From Method: classID=%d, methodID=%d ",
-                        (uint32_t)binaryTemplate->_classID,
-                        (uint32_t)binaryTemplate->_methodID);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateClassFromMethodBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
          case TR_ValidateArrayClassFromComponentClass:
             {
             cursor++;
