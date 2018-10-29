@@ -41,18 +41,16 @@ TR_JITaaSServerPersistentCHTable::TR_JITaaSServerPersistentCHTable(TR_Persistent
    {
    }
 
-PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> &TR_JITaaSServerPersistentCHTable::getData(TR::Compilation *)
+PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> &TR_JITaaSServerPersistentCHTable::getData()
    {
    auto &data = TR::compInfoPT->getClientData()->getCHTableClassMap();
    return data;
    }
 
-void TR_JITaaSServerPersistentCHTable::initializeIfNeeded(TR::Compilation *comp)
+void 
+TR_JITaaSServerPersistentCHTable::initializeIfNeeded()
    {
-   if (comp->getOption(TR_DisableCHOpts))
-      return;
-
-   auto& data = getData(comp);
+   auto& data = getData();
    if (!data.empty())
       return;
 
@@ -67,14 +65,15 @@ void TR_JITaaSServerPersistentCHTable::initializeIfNeeded(TR::Compilation *comp)
    CHTABLE_UPDATE_COUNTER(_numClassesUpdated, infos.size());
    }
 
-void TR_JITaaSServerPersistentCHTable::doUpdate(TR::Compilation *comp)
+void 
+TR_JITaaSServerPersistentCHTable::doUpdate(TR::Compilation *comp)
    {
    if (comp->getOption(TR_DisableCHOpts))
       return;
 
       {
       TR::ClassTableCriticalSection doUpdate(comp->fe());
-      initializeIfNeeded(comp);
+      initializeIfNeeded();
       }
 
    auto stream = TR::CompilationInfo::getStream();
@@ -84,8 +83,8 @@ void TR_JITaaSServerPersistentCHTable::doUpdate(TR::Compilation *comp)
    std::string &modifyStr = std::get<1>(recv);
 
    TR::ClassTableCriticalSection doUpdate(comp->fe());
-   commitModifications(comp, modifyStr);
-   commitRemoves(comp, removeStr);
+   commitModifications(modifyStr);
+   commitRemoves(removeStr);
 
 #ifdef COLLECT_CHTABLE_STATS
    uint32_t nBytes = removeStr.size() + modifyStr.size();
@@ -98,9 +97,10 @@ void TR_JITaaSServerPersistentCHTable::doUpdate(TR::Compilation *comp)
       //fprintf(stderr, "CHTable updated with %d bytes\n", modifyStr.size() + removeStr.size());
    }
 
-void TR_JITaaSServerPersistentCHTable::commitRemoves(TR::Compilation *comp, std::string &rawData)
+void 
+TR_JITaaSServerPersistentCHTable::commitRemoves(std::string &rawData)
    {
-   auto &data = getData(comp);
+   auto &data = getData();
    TR_OpaqueClassBlock **ptr = (TR_OpaqueClassBlock**)&rawData[0];
    size_t num = rawData.size() / sizeof(TR_OpaqueClassBlock*);
    for (size_t i = 0; i < num; i++)
@@ -113,11 +113,14 @@ void TR_JITaaSServerPersistentCHTable::commitRemoves(TR::Compilation *comp, std:
    CHTABLE_UPDATE_COUNTER(_numClassesRemoved, num);
    }
 
-void TR_JITaaSServerPersistentCHTable::commitModifications(TR::Compilation *comp, std::string &rawData)
+void 
+TR_JITaaSServerPersistentCHTable::commitModifications(std::string &rawData)
    {
-   auto &data = getData(comp);
+   auto &data = getData();
    std::unordered_map<TR_OpaqueClassBlock*, std::pair<FlatPersistentClassInfo*, TR_PersistentClassInfo*>> infoMap;
 
+   // First, process all TR_PersistentClassInfo entries that have been
+   // modified at the client without worrying about subclasses
    size_t bytesRead = 0;
    size_t count = 0;
    while (bytesRead != rawData.length())
@@ -133,6 +136,8 @@ void TR_JITaaSServerPersistentCHTable::commitModifications(TR::Compilation *comp
          data.insert({classId, clazz});
          }
       infoMap.insert({classId, {info, clazz}});
+      // Overwrite existing TR_PersistentClassInfo entry with info from client
+      // Do not touch the subclasses list at this point
       bytesRead += FlatPersistentClassInfo::deserializeClassSimple(clazz, info);
       count++;
       }
@@ -163,8 +168,8 @@ TR_PersistentClassInfo *
 TR_JITaaSServerPersistentCHTable::findClassInfo(TR_OpaqueClassBlock * classId)
    {
    CHTABLE_UPDATE_COUNTER(_numQueries, 1);
-   initializeIfNeeded(TR::comp());
-   auto& data = getData(TR::comp());
+   TR_ASSERT(!data.empty(), "CHTable at the server should be initialized by now");
+   auto& data = getData();
    auto it = data.find(classId);
    if (it != data.end())
       return it->second;
@@ -236,7 +241,8 @@ TR_JITaaSClientPersistentCHTable::serializeModifications()
    return data;
    }
 
-std::pair<std::string, std::string> TR_JITaaSClientPersistentCHTable::serializeUpdates()
+std::pair<std::string, std::string> 
+TR_JITaaSClientPersistentCHTable::serializeUpdates()
    {
    TR::ClassTableCriticalSection serializeUpdates(TR::comp()->fe());
    std::string removes = serializeRemoves(); // must be called first
@@ -252,19 +258,23 @@ std::pair<std::string, std::string> TR_JITaaSClientPersistentCHTable::serializeU
    return {removes, mods};
    }
 
-void collectHierarchy(std::unordered_set<TR_PersistentClassInfo*> &out, TR_PersistentClassInfo *root)
+void 
+collectHierarchy(std::unordered_set<TR_PersistentClassInfo*> &out, TR_PersistentClassInfo *root)
    {
    out.insert(root);
    for (TR_SubClass *c = root->getFirstSubclass(); c; c = c->getNext())
       collectHierarchy(out, c->getClassInfo());
    }
 
-size_t FlatPersistentClassInfo::classSize(TR_PersistentClassInfo *clazz)
+size_t 
+FlatPersistentClassInfo::classSize(TR_PersistentClassInfo *clazz)
    {
    auto numSubClasses = clazz->_subClasses.getSize();
    return sizeof(FlatPersistentClassInfo) + numSubClasses * sizeof(TR_OpaqueClassBlock*);
    }
-size_t FlatPersistentClassInfo::serializeClass(TR_PersistentClassInfo *clazz, FlatPersistentClassInfo* info)
+
+size_t 
+FlatPersistentClassInfo::serializeClass(TR_PersistentClassInfo *clazz, FlatPersistentClassInfo* info)
    {
    info->_classId = clazz->_classId;
    info->_visitedStatus = clazz->_visitedStatus;
@@ -286,7 +296,8 @@ size_t FlatPersistentClassInfo::serializeClass(TR_PersistentClassInfo *clazz, Fl
    return sizeof(TR_OpaqueClassBlock*) * idx + sizeof(FlatPersistentClassInfo);
    }
 
-std::string FlatPersistentClassInfo::serializeHierarchy(TR_PersistentClassInfo *root)
+std::string 
+FlatPersistentClassInfo::serializeHierarchy(TR_PersistentClassInfo *root)
    {
    if (!root)
       return "";
@@ -316,7 +327,8 @@ std::string FlatPersistentClassInfo::serializeHierarchy(TR_PersistentClassInfo *
    }
 
 // NOTE: does not populate subclasses, but does include them in the returned size
-size_t FlatPersistentClassInfo::deserializeClassSimple(TR_PersistentClassInfo *clazz, FlatPersistentClassInfo *info)
+size_t 
+FlatPersistentClassInfo::deserializeClassSimple(TR_PersistentClassInfo *clazz, FlatPersistentClassInfo *info)
    {
    clazz->_classId = info->_classId;
    clazz->_visitedStatus = info->_visitedStatus;
@@ -329,7 +341,8 @@ size_t FlatPersistentClassInfo::deserializeClassSimple(TR_PersistentClassInfo *c
    return sizeof(FlatPersistentClassInfo) + info->_numSubClasses * sizeof(TR_OpaqueClassBlock*);
    }
 
-std::vector<TR_PersistentClassInfo*> FlatPersistentClassInfo::deserializeHierarchy(std::string& data)
+std::vector<TR_PersistentClassInfo*> 
+FlatPersistentClassInfo::deserializeHierarchy(std::string& data)
    {
    std::vector<TR_PersistentClassInfo*> out;
    std::unordered_map<TR_OpaqueClassBlock*, std::pair<FlatPersistentClassInfo*, TR_PersistentClassInfo*>> infoMap;
@@ -496,12 +509,15 @@ TR_JITaaSClientPersistentCHTable::classGotExtended(
 
 
 // these two tables should be mutually exclusive - we only keep the most recent entry.
-void TR_JITaaSClientPersistentCHTable::markForRemoval(TR_OpaqueClassBlock *clazz)
+void 
+TR_JITaaSClientPersistentCHTable::markForRemoval(TR_OpaqueClassBlock *clazz)
    {
    _remove.insert(clazz);
    _dirty.erase(clazz);
    }
-void TR_JITaaSClientPersistentCHTable::markDirty(TR_OpaqueClassBlock *clazz)
+
+void 
+TR_JITaaSClientPersistentCHTable::markDirty(TR_OpaqueClassBlock *clazz)
    {
    _dirty.insert(clazz);
    _remove.erase(clazz);
