@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar16]*/
 /*******************************************************************************
- * Copyright (c) 2001, 2016 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,19 +29,23 @@ final class SysinfoCpuTime {
 	private int numberOfCpus; /* should be at least 1 */
 	private int status;
 	private long processCpuTime; /* in ns. The process Cpu Time, used for getProcessCpuLoad() */
-
+	private int cpuLoad;
+	
 	/**
 	 * @param timestamp time in nanoseconds from a fixed but arbitrary point in time 
 	 * @param cpuTime time spent in user, nice, and system/privileged state by all CPUs.
 	 * @param numberOfCpus number of CPUs as reported by the operating system.
 	 * @param status status as reported by the JNI native
+	 * @param status cpuLoad ZOS system cpu utilization
 	 */
-	SysinfoCpuTime(long timestamp, long cpuTime, int numberOfCpus, int status) {
+	SysinfoCpuTime(long timestamp, long cpuTime, int numberOfCpus, int status, int cpuLoad) {
 		super();
 		this.timestamp = timestamp;
 		this.cpuTime = cpuTime;
 		this.numberOfCpus = numberOfCpus;
 		this.status = status;
+		this.cpuLoad = cpuLoad;
+
 	}
 	
 	/**
@@ -94,5 +98,13 @@ final class SysinfoCpuTime {
 	long getProcessCpuTime() {
 		return processCpuTime;
 	}
+	
+	/**
+         * @return cumulative CPU time in precentage (<1)
+         */
+        int getCpuLoad() {
+		return cpuLoad;
+	}
+
 
 }
