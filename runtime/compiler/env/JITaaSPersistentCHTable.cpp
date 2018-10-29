@@ -168,8 +168,8 @@ TR_PersistentClassInfo *
 TR_JITaaSServerPersistentCHTable::findClassInfo(TR_OpaqueClassBlock * classId)
    {
    CHTABLE_UPDATE_COUNTER(_numQueries, 1);
-   TR_ASSERT(!data.empty(), "CHTable at the server should be initialized by now");
    auto& data = getData();
+   TR_ASSERT(!data.empty(), "CHTable at the server should be initialized by now");
    auto it = data.find(classId);
    if (it != data.end())
       return it->second;
