@@ -45,7 +45,7 @@ public:
 
    TR_JITaaSServerPersistentCHTable(TR_PersistentMemory *);
 
-   void initializeIfNeeded(TR::Compilation *comp);
+   void initializeIfNeeded();
    void doUpdate(TR::Compilation *comp);
 
    virtual TR_PersistentClassInfo * findClassInfo(TR_OpaqueClassBlock * classId) override;
@@ -62,10 +62,10 @@ public:
 #endif
 
 private:
-   void commitRemoves(TR::Compilation *comp, std::string &data);
-   void commitModifications(TR::Compilation *comp, std::string &data);
+   void commitRemoves(std::string &data);
+   void commitModifications(std::string &data);
 
-   PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> &getData(TR::Compilation *comp);
+   PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> &getData();
    };
 
 class TR_JITaaSClientPersistentCHTable : public TR_PersistentCHTable
