@@ -9078,19 +9078,6 @@ TR_J9SharedCacheVM::isReferenceArray(TR_OpaqueClassBlock *classPointer)
       return false;
    }
 
-TR_OpaqueClassBlock *
-TR_J9SharedCacheVM::getClassClassPointer(TR_OpaqueClassBlock *objectClassPointer)
-   {
-   TR_OpaqueClassBlock *ccPointer = TR_J9VM::getClassClassPointer(objectClassPointer);
-   TR::Compilation *comp = TR::comp();
-   if (comp && comp->getOption(TR_UseSymbolValidationManager))
-      {
-      if (!comp->getSymbolValidationManager()->addClassClassRecord(ccPointer, objectClassPointer))
-         ccPointer = NULL;
-      }
-   return ccPointer;
-   }
-
 TR_OpaqueMethodBlock *
 TR_J9SharedCacheVM::getInlinedCallSiteMethod(TR_InlinedCallSite *ics)
    {

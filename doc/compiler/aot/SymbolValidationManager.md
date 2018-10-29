@@ -165,6 +165,46 @@ load, these symbols don't need to be validation records stored in
 the SCC. Therefore, the SVM, in its constructor, initializes the maps
 with these IDs and the associated symbols.
 
+### Well-known Classes
+
+Some system classes are loaded very early and are referred to by most
+JIT compilations. The SVM has a list of such classes, termed "well-known
+classes." It will store a single copy of their class chain offsets in
+the SCC. For each AOT-compiled method using the SVM, the emitted
+relocation data needs just one offset into the SCC in order to refer to
+the shared data. This not only deduplicates the offsets; it also allows
+many otherwise necessary records to be eliminated.
+
+In particular, well-known classes never need SystemClassByName,
+ClassByName, or ClassFromCP records. Because these latter two have
+beholders, eliminating them is a bit more difficult than eliminating
+SystemClassByName. In order to make them unnecessary, the SVM checks for
+every class it encounters that the class can see every well-known class,
+failing otherwise. Furthermore, the well-known classes must have names
+that only the bootstrap loader is allowed to define. Then any
+ClassByName or ClassFromCP record naming a well-known class is
+definitely redundant: its beholder can see a class with the given name,
+and that class must have been defined by the bootstrap loader, so it
+must be the same class whose class chain was validated at the beginning
+of the AOT load.
+
+In early compilations, it's possible that not all of the well-known
+classes are available. In order to avoid spurious compilation failures,
+the SVM permits some of the classes to be missing, in which case the
+array of class chain offsets represents only a subset of the possible
+well-known classes. The key under which it is stored specifies the
+subset using (the hexadecimal expansion of) a bit-set. Any classes that
+were missing at the beginning of a compilation are not considered
+well-known for the purpose of that compilation. When loading, the SVM
+finds the well-known classes in the particular subset used for the
+method being loaded.
+
+Each well-known class that is found is assigned the next available
+sequential ID after the guaranteed IDs at the beginning of compilation,
+as long as the well-known class is new (i.e. different from the root
+class). When loading, the well-known classes are assigned sequential IDs
+in the same way, to match the IDs assigned during compilation.
+
 ## Benefits
 
 1. Makes explicit the provenance of every symbol acquired by the compiler

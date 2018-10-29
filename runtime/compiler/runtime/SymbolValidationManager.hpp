@@ -642,6 +642,12 @@ public:
 
    SymbolValidationManager(TR::Region &region, TR_ResolvedMethod *compilee);
 
+   void populateWellKnownClasses();
+   bool validateWellKnownClasses(const uintptrj_t *wellKnownClassChainOffsets);
+   bool isWellKnownClass(TR_OpaqueClassBlock *clazz);
+   bool classCanSeeWellKnownClasses(TR_OpaqueClassBlock *clazz);
+   const void *wellKnownClassChainOffsets() { return _wellKnownClassChainOffsets; }
+
    enum Presence
       {
       SymRequired,
@@ -816,6 +822,9 @@ private:
    TR_Memory * const _trMemory;
    TR_PersistentCHTable * const _chTable;
 
+   TR_OpaqueClassBlock *_rootClass;
+   const void *_wellKnownClassChainOffsets;
+
    /* List of validation records to be written to the AOT buffer */
    SymbolValidationRecordList _symbolValidationRecords;
 
@@ -848,6 +857,14 @@ private:
    IdToSymbolTable _idToSymbolTable;
 
    SeenSymbolsSet _seenSymbolsSet;
+
+   typedef TR::typed_allocator<TR_OpaqueClassBlock*, TR::Region&> ClassAllocator;
+   typedef std::vector<TR_OpaqueClassBlock*, ClassAllocator> ClassVector;
+   ClassVector _wellKnownClasses;
+
+   typedef TR::typed_allocator<J9ClassLoader*, TR::Region&> LoaderAllocator;
+   typedef std::vector<J9ClassLoader*, LoaderAllocator> LoaderVector;
+   LoaderVector _loadersOkForWellKnownClasses;
    };
 
 }

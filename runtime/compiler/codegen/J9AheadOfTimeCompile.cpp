@@ -370,6 +370,15 @@ J9::AheadOfTimeCompile::dumpRelocationData()
          cursor += 4;
          }
 
+   if (self()->comp()->getOption(TR_UseSymbolValidationManager))
+      {
+      traceMsg(
+         self()->comp(),
+         "SCC offset of class chain offsets of well-known classes is: 0x%llx\n\n",
+         (unsigned long long)*(uintptrj_t *)cursor);
+      cursor += sizeof (uintptrj_t);
+      }
+
    traceMsg(self()->comp(), "Address           Size %-31s", "Type");
    traceMsg(self()->comp(), "Width EIP Index Offsets\n"); // Offsets from Code Start
 

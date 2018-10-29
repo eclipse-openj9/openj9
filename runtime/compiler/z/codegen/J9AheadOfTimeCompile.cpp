@@ -81,24 +81,32 @@ void J9::Z::AheadOfTimeCompile::processRelocations()
 
    // now allocate the memory  size of all iterated relocations + the header (total length field)
 
-   if (self()->getSizeOfAOTRelocations() != 0)
+   // Note that when using the SymbolValidationManager, the well-known classes
+   // must be checked even if no explicit records were generated, since they
+   // might be responsible for the lack of records.
+   bool useSVM = self()->comp()->getOption(TR_UseSymbolValidationManager);
+   if (self()->getSizeOfAOTRelocations() != 0 || useSVM)
       {
-      uint8_t *relocationDataCursor;
+      // It would be more straightforward to put the well-known classes offset
+      // in the AOT method header, but that would use space for AOT bodies that
+      // don't use the SVM. TODO: Move it once SVM takes over?
+      int wellKnownClassesOffsetSize = useSVM ? SIZEPOINTER : 0;
+      uintptrj_t reloBufferSize =
+         self()->getSizeOfAOTRelocations() + SIZEPOINTER + wellKnownClassesOffsetSize;
+      uint8_t *relocationDataCursor = self()->setRelocationData(
+         fej9->allocateRelocationData(self()->comp(), reloBufferSize));
+      // set up the size for the region
+      *(uintptrj_t *)relocationDataCursor = reloBufferSize;
+      relocationDataCursor += SIZEPOINTER;
 
-      if (TR::Compiler->target.is64Bit())
+      if (useSVM)
          {
-         relocationDataCursor = self()->setRelocationData(fej9->allocateRelocationData(self()->comp(), self()->getSizeOfAOTRelocations() + 8));
-
-         // set up the size for the region
-         *(uint64_t *)relocationDataCursor = self()->getSizeOfAOTRelocations() + 8;
-         relocationDataCursor += 8;
-         }
-      else
-         {
-         relocationDataCursor = self()->setRelocationData(fej9->allocateRelocationData(self()->comp(), self()->getSizeOfAOTRelocations() + 4));
-         // set up the size for the region
-         *(uint32_t *)relocationDataCursor = self()->getSizeOfAOTRelocations() + 4;
-         relocationDataCursor += 4;
+         TR::SymbolValidationManager *svm =
+            self()->comp()->getSymbolValidationManager();
+         void *offsets = const_cast<void*>(svm->wellKnownClassChainOffsets());
+         *(uintptrj_t *)relocationDataCursor = reinterpret_cast<uintptrj_t>(
+            fej9->sharedCache()->offsetInSharedCacheFromPointer(offsets));
+         relocationDataCursor += SIZEPOINTER;
          }
 
       // set up pointers for each iterated relocation and initialize header

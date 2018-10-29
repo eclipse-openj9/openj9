@@ -398,8 +398,9 @@ class TR_RelocationRecordGroup
       void setSize(TR_RelocationTarget *reloTarget, uintptr_t size);
       uintptr_t size(TR_RelocationTarget *reloTarget);
 
-      TR_RelocationRecordBinaryTemplate *firstRecord(TR_RelocationTarget *reloTarget);
+      TR_RelocationRecordBinaryTemplate *firstRecord(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
       TR_RelocationRecordBinaryTemplate *pastLastRecord(TR_RelocationTarget *reloTarget);
+      const uintptrj_t *wellKnownClassChainOffsets(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
 
       int32_t applyRelocations(TR_RelocationRuntime *reloRuntime,
                                TR_RelocationTarget *reloTarget,

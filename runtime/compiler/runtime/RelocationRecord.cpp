@@ -89,10 +89,16 @@ TR_RelocationRecordGroup::size(TR_RelocationTarget *reloTarget)
    }
 
 TR_RelocationRecordBinaryTemplate *
-TR_RelocationRecordGroup::firstRecord(TR_RelocationTarget *reloTarget)
+TR_RelocationRecordGroup::firstRecord(
+   TR_RelocationRuntime *reloRuntime,
+   TR_RelocationTarget *reloTarget)
    {
-   // first word of the group is a pointer size field for the entire group
-   return (TR_RelocationRecordBinaryTemplate *) (((uintptr_t *)_group)+1);
+   // The first word is the size of the group (itself pointer-sized).
+   // When using the SVM, the second is a pointer-sized SCC offset to the
+   // well-known classes' class chain offsets.
+   bool useSVM = reloRuntime->comp()->getOption(TR_UseSymbolValidationManager);
+   int offs = 1 + int(useSVM);
+   return (TR_RelocationRecordBinaryTemplate *) (((uintptrj_t *)_group)+offs);
    }
 
 TR_RelocationRecordBinaryTemplate *
@@ -101,12 +107,40 @@ TR_RelocationRecordGroup::pastLastRecord(TR_RelocationTarget *reloTarget)
    return (TR_RelocationRecordBinaryTemplate *) ((uint8_t *)_group + size(reloTarget));
    }
 
+const uintptrj_t *
+TR_RelocationRecordGroup::wellKnownClassChainOffsets(
+   TR_RelocationRuntime *reloRuntime,
+   TR_RelocationTarget *reloTarget)
+   {
+   if (!TR::comp()->getOption(TR_UseSymbolValidationManager))
+      return NULL;
+
+   // The first word is the size of the group (itself pointer-sized). Skip it
+   // to reach the SCC offset of the well-known classes' class chain offsets.
+   void *offset = reinterpret_cast<void*>(*((uintptrj_t *)_group + 1));
+   void *classChains =
+      reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache(offset);
+
+   return reinterpret_cast<const uintptrj_t*>(classChains);
+   }
+
 int32_t
 TR_RelocationRecordGroup::applyRelocations(TR_RelocationRuntime *reloRuntime,
                                            TR_RelocationTarget *reloTarget,
                                            uint8_t *reloOrigin)
    {
-   TR_RelocationRecordBinaryTemplate *recordPointer = firstRecord(reloTarget);
+   const uintptrj_t *wkClassChainOffsets =
+      wellKnownClassChainOffsets(reloRuntime, reloTarget);
+   if (wkClassChainOffsets != NULL)
+      {
+      TR::SymbolValidationManager *svm =
+         reloRuntime->comp()->getSymbolValidationManager();
+
+      if (!svm->validateWellKnownClasses(wkClassChainOffsets))
+         return compilationAotClassReloFailure;
+      }
+
+   TR_RelocationRecordBinaryTemplate *recordPointer = firstRecord(reloRuntime, reloTarget);
    TR_RelocationRecordBinaryTemplate *endOfRecords = pastLastRecord(reloTarget);
 
    TR_AOTStats *aotStats = reloRuntime->aotStats();

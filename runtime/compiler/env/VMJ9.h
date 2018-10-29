@@ -1152,8 +1152,6 @@ public:
    virtual bool               javaLangClassGetModifiersImpl(TR_OpaqueClassBlock * clazzPointer, int32_t &result);
    virtual TR_OpaqueClassBlock *             getSuperClass(TR_OpaqueClassBlock *classPointer);
 
-   virtual TR_OpaqueClassBlock * getClassClassPointer(TR_OpaqueClassBlock *);
-
    virtual bool               sameClassLoaders(TR_OpaqueClassBlock *, TR_OpaqueClassBlock *);
    virtual bool               isUnloadAssumptionRequired(TR_OpaqueClassBlock *, TR_ResolvedMethod *);
    virtual bool               classHasBeenExtended(TR_OpaqueClassBlock *);
