@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2014 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,7 +53,7 @@ public class VMRegMapHelper
 		ICore core = process.getAddressSpace().getCore();
 		Platform platform = core.getPlatform();
 		boolean is64BitPlatform = (process.bytesPerPointer() == 8) ? true : false;
-		
+
 		switch(platform) {
 		case AIX:
 			if (is64BitPlatform) {
@@ -62,7 +62,7 @@ public class VMRegMapHelper
 				printRegistersForAIX32BitPPC(level, out);
 			}
 			break;
-			
+
 		case LINUX:
 			String processorType = core.getProperties().getProperty(ICore.PROCESSOR_TYPE_PROPERTY);
 			if (is64BitPlatform) {
@@ -83,8 +83,11 @@ public class VMRegMapHelper
 				}
 			}
 			break;
-		
-		
+
+		case OSX:
+			printRegistersForLinux64BitAMD64(level, out);
+			break;
+
 		case WINDOWS:
 			if (is64BitPlatform) {
 				printRegistersForWindows64Bit(level, out);
@@ -92,7 +95,7 @@ public class VMRegMapHelper
 				printRegistersForWindows32Bit(level, out);
 			}
 			break;
-		
+
 		case ZOS:
 			if (is64BitPlatform) {
 				printRegistersForZOS64BitS390(level, out);
@@ -100,13 +103,13 @@ public class VMRegMapHelper
 				printRegistersForZOS32BitS390(level, out);
 			}
 			break;
-		
+
 		default:
 			throw new UnknownArchitectureException(process, "Could not determine platform of core file.");
 		}
-		
+
 	}
-	
+
 	/**
 	 * Prints registers for AIX 64 BIT 
 	 * @param level Level of registers to be printed.

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,6 +38,7 @@ import com.ibm.j9ddr.corereaders.ICoreFileReader.DumpTestResult;
 import com.ibm.j9ddr.corereaders.aix.AIXDumpReaderFactory;
 import com.ibm.j9ddr.corereaders.debugger.JniReader;
 import com.ibm.j9ddr.corereaders.elf.ELFDumpReaderFactory;
+import com.ibm.j9ddr.corereaders.macho.MachoDumpReaderFactory;
 import com.ibm.j9ddr.corereaders.minidump.MiniDumpReader;
 
 /**
@@ -61,6 +62,7 @@ public class CoreReader
 		localReaders.add(JniReader.class);
 		localReaders.add(MiniDumpReader.class);
 		localReaders.add(ELFDumpReaderFactory.class);
+		localReaders.add(MachoDumpReaderFactory.class);
 
 		// Use reflection to find TDumpReader: it is not available on all platforms.
 		try {
