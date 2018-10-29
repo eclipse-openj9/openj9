@@ -143,15 +143,7 @@ timeout(time: 12, unit: 'HOURS') {
                     }
                 }
             } finally {
-                try{
-                    cleanWs()
-                } catch(e) {
-                    if (variableFile) {
-                        printStackTrace(e)
-                    } else {
-                        echo e.toString()
-                    }
-                }
+                cleanWs notFailBuild: true, disableDeferredWipeout: true
             }
         }
 
