@@ -60,4 +60,4 @@ These are the steps to run the tests on your machine.
 
 ## DOCKER
 
-Follow the [README.md](buildenv/docker/jitaas/jdk8/x86_64/ubuntu18/README.md) here for building then testing JITaaS in Docker.
+Follow the [Docker.md](Docker.md) here for building then testing JITaaS in Docker.
