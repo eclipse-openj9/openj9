@@ -1917,12 +1917,12 @@ UDATA TR_J9VMBase::thisThreadGetEvacuateBaseAddressOffset()
    {
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 #if defined(J9VM_GC_COMPRESSED_POINTERS) && defined(TR_TARGET_X86)
-   return offsetof(J9VMThread, evacuateBaseCompressed);
+   return offsetof(J9VMThread, readBarrierRangeCheckBaseCompressed);
 #else
-   return offsetof(J9VMThread, evacuateBase);
+   return offsetof(J9VMThread, readBarrierRangeCheckBase);
 #endif /* defined(J9VM_GC_COMPRESSED_POINTERS) && defined(TR_TARGET_X86) */
 #else /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
-   TR_ASSERT(0,"Field evacuateBase does not exists in J9VMThread.");
+   TR_ASSERT(0,"Field readBarrierRangeCheckBase does not exists in J9VMThread.");
    return 0;
 #endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
    }
@@ -1934,12 +1934,12 @@ UDATA TR_J9VMBase::thisThreadGetEvacuateTopAddressOffset()
    {
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 #if defined(J9VM_GC_COMPRESSED_POINTERS) && defined(TR_TARGET_X86)
-   return offsetof(J9VMThread, evacuateTopCompressed);
+   return offsetof(J9VMThread, readBarrierRangeCheckTopCompressed);
 #else
-   return offsetof(J9VMThread, evacuateTop);
+   return offsetof(J9VMThread, readBarrierRangeCheckTop);
 #endif /* defined(J9VM_GC_COMPRESSED_POINTERS) && defined(TR_TARGET_X86) */
 #else /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
-   TR_ASSERT(0,"Field evacuateTop does not exists in J9VMThread.");
+   TR_ASSERT(0,"Field readBarrierRangeCheckTop does not exists in J9VMThread.");
    return 0;
 #endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
    }
