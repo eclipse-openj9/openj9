@@ -233,37 +233,32 @@ def build_with_slack(DOWNSTREAM_JOB_NAME, PARAMETERS) {
     def JOB = build job: DOWNSTREAM_JOB_NAME, parameters: PARAMETERS, propagate: false
 
     if (JOB.resultIsWorseOrEqualTo('UNSTABLE')) {
-        try {
-            DOWNSTREAM_JOB_NUMBER = JOB.getNumber()
-        } catch (er) {
-            echo "Couldn't retrieve downstream failed job number"
-        }
-        try {
-            DOWNSTREAM_JOB_URL = JOB.getAbsoluteUrl()
-        } catch (err) {
-            echo "Couldn't retrieve downstream failed job url"
-        }
+        DOWNSTREAM_JOB_NUMBER = JOB.getNumber()
+        DOWNSTREAM_JOB_URL = JOB.getAbsoluteUrl()
+        DOWNSTREAM_JOB_TIME = JOB.getDurationString()
 
         // Get build causes
         build_causes_string = get_causes(currentBuild)
 
         if (JOB.result == "UNSTABLE") {
-            echo "WARNING: Downstream job ${DOWNSTREAM_JOB_NAME} is unstable. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
+            echo "WARNING: Downstream job ${DOWNSTREAM_JOB_NAME} is unstable after ${DOWNSTREAM_JOB_TIME}. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
             currentBuild.result = "UNSTABLE"
             if (SLACK_CHANNEL) {
                 slackSend channel: SLACK_CHANNEL, color: 'warning', message: "Unstable: ${DOWNSTREAM_JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)\nStarted by ${JOB_NAME} #${BUILD_NUMBER} (<${BUILD_URL}|Open>)\n${build_causes_string}"
             }
         } else {
             if (SLACK_CHANNEL) {
-                slackSend channel: SLACK_CHANNEL, color: 'danger', message: "Failure in: ${DOWNSTREAM_JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)\nStarted by ${JOB_NAME} #${BUILD_NUMBER} (<${BUILD_URL}|Open>)\n${build_causes_string}\nWould you like to restart the job? (<${RUN_DISPLAY_URL}|Open>)"
+                slackSend channel: SLACK_CHANNEL, color: 'danger', message: "Failure: ${DOWNSTREAM_JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)\nStarted by ${JOB_NAME} #${BUILD_NUMBER} (<${BUILD_URL}|Open>)\n${build_causes_string}\nWould you like to restart the job? (<${RUN_DISPLAY_URL}|Open>)"
             }
             timeout(time: RESTART_TIMEOUT.toInteger(), unit: RESTART_TIMEOUT_UNITS) {
-                input message: "Downstream job ${DOWNSTREAM_JOB_NAME} failed. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}\nRestart failed job '${DOWNSTREAM_JOB_NAME}'?", ok: 'Restart'
+                input message: "Downstream job ${DOWNSTREAM_JOB_NAME} failed after ${DOWNSTREAM_JOB_TIME}. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}\nRestart failed job '${DOWNSTREAM_JOB_NAME}'?", ok: 'Restart'
                 // If restart is aborted or is timed-out, an error is thrown
             }
             // If restart is approved, recursively call this function until we get a pass or a restart-rejection
             return build_with_slack(DOWNSTREAM_JOB_NAME, PARAMETERS)
         }
+    } else {
+        echo "Downstream job ${DOWNSTREAM_JOB_NAME} PASSED after ${DOWNSTREAM_JOB_TIME}"
     }
     return JOB
 }
@@ -274,7 +269,6 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
     // compile the source and build the SDK
     def BUILD_JOB_NAME = "Build-JDK${SDK_VERSION}-${SPEC}"
     jobs["build"] = build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS['OPENJDK'], OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], OMR_REPO, OMR_BRANCH, SHAS['OMR'], params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.BUILD_NODE)
-    echo "JOB: ${BUILD_JOB_NAME} PASSED in: ${jobs['build'].getDurationString()}"
 
     if (TESTS_TARGETS.trim() != "none") {
         def testjobs = [:]
@@ -327,7 +321,6 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
                 } else {
                     jobs["${TEST_JOB_NAME}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, TEST_FLAG)
                 }
-                echo "JOB: ${TEST_JOB_NAME} PASSED in: ${jobs[TEST_JOB_NAME].getDurationString()}"
             }
         }
         parallel testjobs
