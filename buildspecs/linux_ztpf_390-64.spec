@@ -117,8 +117,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	</source>
 	<flags>
 		<flag id="interp_atomicFreeJni" value="true"/>
-		<flag id="interp_atomicFreeJniUsesFlush" value="true"/>
-		<flag id="interp_twoPassExclusive" value="true"/>
+		<flag id="interp_atomicFreeJniUsesFlush" value="false"/>
+		<flag id="interp_twoPassExclusive" value="false"/>
 		<flag id="arch_s390" value="true"/>
 		<flag id="build_SE6_package" value="true"/>
 		<flag id="build_autobuild" value="true"/>
