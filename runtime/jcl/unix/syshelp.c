@@ -257,60 +257,92 @@ char *getPlatformFileEncoding(JNIEnv * env, char *codepageProp, int propSize, in
 	char *codepage = NULL;
 	int i = 0;
 	int nameIndex = 0;
-#if defined(LINUX)
+#if defined(LINUX) || defined(OSX)
 	IDATA result = 0;
 	char langProp[24] = {0};
+#if defined(LINUX)
 	char *ctype = NULL;
-	PORT_ACCESS_FROM_ENV(env);
 #endif /* defined(LINUX) */
+	PORT_ACCESS_FROM_ENV(env);
+#endif /* defined(LINUX) || defined(OSX) */
 
 	/* Called with codepageProp == NULL to initialize the locale */
 	if (NULL == codepageProp) {
 		return NULL;
 	}
 
-#ifdef LINUX
+#if defined(LINUX)
 	/*[PR 104520] Return EUC_JP when LC_CTYPE is not set, and the LANG environment variable is "ja" */
-    ctype = setlocale(LC_CTYPE, NULL);
-    if (!ctype || !strcmp(ctype, "C") || !strcmp(ctype, "POSIX")) {
-        result = j9sysinfo_get_env("LANG", langProp, sizeof(langProp));
-        if (!result && !strcmp(langProp, "ja")) {
-            return "EUC-JP-LINUX";
-        }
-    }
+	ctype = setlocale(LC_CTYPE, NULL);
+	if ((NULL == ctype) 
+		|| (0 == strcmp(ctype, "C"))
+		|| (0 == strcmp(ctype, "POSIX"))
+	) {
+		result = j9sysinfo_get_env("LANG", langProp, sizeof(langProp));
+		if ((0 == result) && (0 == strcmp(langProp, "ja"))) {
+			return "EUC-JP-LINUX";
+		}
+	}
 	codepage = nl_langinfo(_NL_CTYPE_CODESET_NAME);
 #elif defined(ARM_EMULATED)	|| defined(CHORUS)
 	codepage = NULL;
+#elif defined(OSX)
+	/* LC_ALL overwrites LC_CTYPE or LANG;
+	 * LC_CTYPE applies to classification and conversion of characters, and to multibyte and wide characters;
+	 * LANG specifies the locale to use except as overridden by LC_CTYPE
+	 */
+	codepage = "UTF-8";
+	result = j9sysinfo_get_env("LC_ALL", langProp, sizeof(langProp));
+	if (result >= 0) {
+		if ((0 == result) && (0 == strcmp(langProp, "C"))) {
+			/* LC_ALL is C */
+			codepage = "US-ASCII";
+		}
+	} else {
+		/* LC_ALL is not set */
+		result = j9sysinfo_get_env("LC_CTYPE", langProp, sizeof(langProp));
+		if (result >= 0) {
+			if ((0 == result) && (0 == strcmp(langProp, "C"))) {
+				/* LC_CTYPE is C */
+				codepage = "US-ASCII";
+			}
+		} else {
+			/* LC_CTYPE is not set */
+			result = j9sysinfo_get_env("LANG", langProp, sizeof(langProp));
+			if ((0 == result) && (0 == strcmp(langProp, "C"))) {
+				/* LANG is C */
+				codepage = "US-ASCII";
+			}
+		}
+	}
+	return codepage;
 #else
 	codepage = nl_langinfo(CODESET);
-#endif /* LINUX */
+#endif /* defined(LINUX) */
 
 	if (codepage == NULL || codepage[0] == '\0') {
-		return "ISO8859_1";
+		codepage = "ISO8859_1";
 	} else {
 		if (!strcmp(codepage, "EUC-JP")) {
 			/*[PR CMVC 175994] file.encoding system property on ja_JP.eucjp */
-			return "EUC-JP-LINUX";
-		}
-
-		strncpy(codepageProp, codepage, propSize);
-		codepageProp[propSize - 1] = '\0';
-		/*[PR 96285]*/
-
-		codepage = codepageProp;
-		nameIndex = 0;
-		for (i = 1; i < sizeof(CodepageTable) / sizeof(char *); i++) {
-			if (CodepageTable[i] == NULL) {
-				nameIndex = ++i;
-				continue;
+			codepage = "EUC-JP-LINUX";
+		} else {
+			strncpy(codepageProp, codepage, propSize);
+			codepageProp[propSize - 1] = '\0';
+			/*[PR 96285]*/
+			codepage = codepageProp;
+			nameIndex = 0;
+			for (i = 1; i < sizeof(CodepageTable) / sizeof(char *); i++) {
+				if (CodepageTable[i] == NULL) {
+					nameIndex = ++i;
+					continue;
+				}
+				if (!strcmp(CodepageTable[i], codepageProp)) {
+					codepage = CodepageTable[nameIndex];
+					break;
+				}
 			}
-			if (!strcmp(CodepageTable[i], codepageProp)) {
-				codepage = CodepageTable[nameIndex];
-				break;
-			}
 		}
-		
-		return codepage;
 	}
+	return codepage;
 }
-
