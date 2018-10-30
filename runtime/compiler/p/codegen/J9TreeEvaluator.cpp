@@ -12174,7 +12174,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
       resultReg = inlineSinglePrecisionFP(node, TR::InstOpCode::fsqrts, cg);
       return true;
       }
-   else if (OMR::Power::CodeGenerator::inlineDirectCall(node, resultReg))
+   else if (OMR::CodeGeneratorConnector::inlineDirectCall(node, resultReg))
       {
       return true;
       }
