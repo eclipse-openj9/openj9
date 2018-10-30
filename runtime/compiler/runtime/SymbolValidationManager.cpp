@@ -688,13 +688,6 @@ TR::SymbolValidationManager::addDeclaringClassFromFieldOrStaticRecord(TR_OpaqueC
    }
 
 bool
-TR::SymbolValidationManager::addClassClassRecord(TR_OpaqueClassBlock *classClass, TR_OpaqueClassBlock *objectClass)
-   {
-   SVM_ASSERT_ALREADY_VALIDATED(this, objectClass);
-   return addClassRecord(classClass, new (_region) ClassClassRecord(classClass, objectClass));
-   }
-
-bool
 TR::SymbolValidationManager::addConcreteSubClassFromClassRecord(TR_OpaqueClassBlock *childClass, TR_OpaqueClassBlock *superClass)
    {
    SVM_ASSERT_ALREADY_VALIDATED(this, superClass);
@@ -1067,15 +1060,6 @@ TR::SymbolValidationManager::validateDeclaringClassFromFieldOrStaticRecord(uint1
       }
 
    return validateSymbol(definingClassID, definingClass);
-   }
-
-bool
-TR::SymbolValidationManager::validateClassClassRecord(uint16_t classClassID, uint16_t objectClassID)
-   {
-   TR_OpaqueClassBlock *objectClass = getClassFromID(objectClassID);
-   TR_OpaqueClassBlock *classClass = _fej9->getClassClassPointer(objectClass);
-
-   return validateSymbol(classClassID, classClass);
    }
 
 bool
@@ -1568,22 +1552,6 @@ void TR::DeclaringClassFromFieldOrStaticRecord::printFields()
    traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
    traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
-   }
-
-bool TR::ClassClassRecord::isLessThanWithinKind(SymbolValidationRecord *other)
-   {
-   TR::ClassClassRecord *rhs = downcast(this, other);
-   return LexicalOrder::by(_classClass, rhs->_classClass)
-      .thenBy(_objectClass, rhs->_objectClass).less();
-   }
-
-void TR::ClassClassRecord::printFields()
-   {
-   traceMsg(TR::comp(), "ClassClassRecord\n");
-   traceMsg(TR::comp(), "\t_classClass=0x%p\n", _classClass);
-   printClass(_classClass);
-   traceMsg(TR::comp(), "\t_objectClass=0x%p\n", _objectClass);
-   printClass(_objectClass);
    }
 
 bool TR::ConcreteSubClassFromClassRecord::isLessThanWithinKind(

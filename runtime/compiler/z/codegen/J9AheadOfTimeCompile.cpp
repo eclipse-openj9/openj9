@@ -559,17 +559,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          cursor += sizeof(TR_RelocationRecordValidateDeclaringClassFromFieldOrStaticBinaryTemplate);
          }
          break;
-      case TR_ValidateClassClass:
-         {
-         TR::ClassClassRecord *record = reinterpret_cast<TR::ClassClassRecord *>(relocation->getTargetAddress());
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-         TR_RelocationRecordValidateClassClassBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordValidateClassClassBinaryTemplate *>(cursor);
-         binaryTemplate->_classClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->_classClass));
-         binaryTemplate->_objectClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->_objectClass));
-         cursor += sizeof(TR_RelocationRecordValidateClassClassBinaryTemplate);
-         }
-         break;
       case TR_ValidateConcreteSubClassFromClass:
          {
          TR::ConcreteSubClassFromClassRecord *record = reinterpret_cast<TR::ConcreteSubClassFromClassRecord *>(relocation->getTargetAddress());
@@ -1473,7 +1462,7 @@ uint32_t J9::Z::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_NumE
    sizeof(TR_RelocationRecordValidateSystemClassByNameBinaryTemplate), //TR_ValidateSystemClassByName            = 74,
    sizeof(TR_RelocationRecordValidateClassFromITableIndexCPBinaryTemplate),//TR_ValidateClassFromITableIndexCP   = 75,
    sizeof(TR_RelocationRecordValidateDeclaringClassFromFieldOrStaticBinaryTemplate),//TR_ValidateDeclaringClassFromFieldOrStatic=76,
-   sizeof(TR_RelocationRecordValidateClassClassBinaryTemplate),        // TR_ValidateClassClass                  = 77,
+   0,                                                                  // TR_ValidateClassClass                  = 77,
    sizeof(TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate),//TR_ValidateConcreteSubClassFromClass  = 78,
    sizeof(TR_RelocationRecordValidateClassChainBinaryTemplate),        // TR_ValidateClassChain                  = 79,
    0,                                                                  // TR_ValidateRomClass                    = 80,

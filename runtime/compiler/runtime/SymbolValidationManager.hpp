@@ -337,21 +337,6 @@ struct DeclaringClassFromFieldOrStaticRecord : public ClassValidationRecord
    uint32_t  _cpIndex;
    };
 
-struct ClassClassRecord : public ClassValidationRecord
-   {
-   ClassClassRecord(TR_OpaqueClassBlock *classClass, TR_OpaqueClassBlock *objectClass)
-      : ClassValidationRecord(TR_ValidateClassClass),
-        _classClass(classClass),
-        _objectClass(objectClass)
-      {}
-
-   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
-   virtual void printFields();
-
-   TR_OpaqueClassBlock *_classClass;
-   TR_OpaqueClassBlock *_objectClass;
-   };
-
 struct ConcreteSubClassFromClassRecord : public ClassValidationRecord
    {
    ConcreteSubClassFromClassRecord(TR_OpaqueClassBlock *childClass, TR_OpaqueClassBlock *superClass)
@@ -679,7 +664,6 @@ public:
    bool addSystemClassByNameRecord(TR_OpaqueClassBlock *systemClass);
    bool addClassFromITableIndexCPRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, int32_t cpIndex);
    bool addDeclaringClassFromFieldOrStaticRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, int32_t cpIndex);
-   bool addClassClassRecord(TR_OpaqueClassBlock *classClass, TR_OpaqueClassBlock *objectClass);
    bool addConcreteSubClassFromClassRecord(TR_OpaqueClassBlock *childClass, TR_OpaqueClassBlock *superClass);
 
    bool addMethodFromClassRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *beholder, uint32_t index);
@@ -720,7 +704,6 @@ public:
    bool validateSystemClassByNameRecord(uint16_t systemClassID, uintptrj_t *classChain);
    bool validateClassFromITableIndexCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex);
    bool validateDeclaringClassFromFieldOrStaticRecord(uint16_t definingClassID, uint16_t beholderID, int32_t cpIndex);
-   bool validateClassClassRecord(uint16_t classClassID, uint16_t objectClassID);
    bool validateConcreteSubClassFromClassRecord(uint16_t childClassID, uint16_t superClassID);
 
    bool validateClassChainRecord(uint16_t classID, void *classChain);
