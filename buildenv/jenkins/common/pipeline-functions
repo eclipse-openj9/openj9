@@ -228,15 +228,12 @@ def get_causes_recursively(cause) {
 }
 
 def build_with_slack(DOWNSTREAM_JOB_NAME, PARAMETERS) {
-    def DOWNSTREAM_JOB_NUMBER = ''
-    def DOWNSTREAM_JOB_URL = ''
     def JOB = build job: DOWNSTREAM_JOB_NAME, parameters: PARAMETERS, propagate: false
+    def DOWNSTREAM_JOB_NUMBER = JOB.getNumber()
+    def DOWNSTREAM_JOB_URL = JOB.getAbsoluteUrl()
+    def DOWNSTREAM_JOB_TIME = JOB.getDurationString()
 
     if (JOB.resultIsWorseOrEqualTo('UNSTABLE')) {
-        DOWNSTREAM_JOB_NUMBER = JOB.getNumber()
-        DOWNSTREAM_JOB_URL = JOB.getAbsoluteUrl()
-        DOWNSTREAM_JOB_TIME = JOB.getDurationString()
-
         // Get build causes
         build_causes_string = get_causes(currentBuild)
 
