@@ -680,16 +680,16 @@ MM_CollectorLanguageInterfaceImpl::scavenger_switchConcurrentForThread(MM_Enviro
 		void* top = _extensions->scavenger->getEvacuateTop();
 
 		/*
-		 * vmThread->evacuateTop is defined as the last address possible in the evacuate region;
+		 * vmThread->readBarrierRangeCheckTop is defined as the last address possible in the evacuate region;
 		 * however, top is the first address above the evacuate region;
-		 * therefore, vmThread->evacuateTop = top - 1.
-		 * In short, the evacuate region is [vmThread->evacuateBase, vmThread->evacuateTop].
+		 * therefore, vmThread->readBarrierRangeCheckTop = top - 1.
+		 * In short, the evacuate region is [vmThread->readBarrierRangeCheckBase, vmThread->readBarrierRangeCheckTop].
 		 */
-		vmThread->evacuateBase = (UDATA)base;
-		vmThread->evacuateTop = (UDATA)top - 1;
+		vmThread->readBarrierRangeCheckBase = (UDATA)base;
+		vmThread->readBarrierRangeCheckTop = (UDATA)top - 1;
 #if defined(J9VM_GC_COMPRESSED_POINTERS)
-		vmThread->evacuateBaseCompressed = _extensions->accessBarrier->convertTokenFromPointer((mm_j9object_t)vmThread->evacuateBase);
-		vmThread->evacuateTopCompressed = _extensions->accessBarrier->convertTokenFromPointer((mm_j9object_t)vmThread->evacuateTop);
+		vmThread->readBarrierRangeCheckBaseCompressed = _extensions->accessBarrier->convertTokenFromPointer((mm_j9object_t)vmThread->readBarrierRangeCheckBase);
+		vmThread->readBarrierRangeCheckTopCompressed = _extensions->accessBarrier->convertTokenFromPointer((mm_j9object_t)vmThread->readBarrierRangeCheckTop);
 #endif /* J9VM_GC_COMPRESSED_POINTERS */
 		vmThread->privateFlags |= J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE;
 
@@ -721,17 +721,17 @@ MM_CollectorLanguageInterfaceImpl::scavenger_switchConcurrentForThread(MM_Enviro
 			j9gs_disable(&vmThread->gsParameters);
 		}
 		/*
-		 * By setting evacuateTop to NULL and evacuateBase to ~evacuateTop
+		 * By setting readBarrierRangeCheckTop to NULL and readBarrierRangeCheckBase to the highest possible address
 		 * it gives an empty range that contains no address. Therefore,
 		 * when decide whether to read barrier, a simple range is sufficient and
 		 * checking J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE can be skipped.
 		 */
 		vmThread->privateFlags &= ~J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE;
-		vmThread->evacuateBase = UDATA_MAX;
-		vmThread->evacuateTop = 0;
+		vmThread->readBarrierRangeCheckBase = UDATA_MAX;
+		vmThread->readBarrierRangeCheckTop = 0;
 #ifdef J9VM_GC_COMPRESSED_POINTERS
-		vmThread->evacuateBaseCompressed = U_32_MAX;
-		vmThread->evacuateTopCompressed = 0;
+		vmThread->readBarrierRangeCheckBaseCompressed = U_32_MAX;
+		vmThread->readBarrierRangeCheckTopCompressed = 0;
 #endif
     }
 }
