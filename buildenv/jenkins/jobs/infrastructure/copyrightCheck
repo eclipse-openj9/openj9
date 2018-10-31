@@ -20,10 +20,17 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-Boolean FAIL = false
-String SRC_REPO = 'https://github.com/${ghprbGhRepository}.git'
-def BAD_FILES = []
-String HASHES = '###################################'
+def FAIL = false
+def SRC_REPO = 'https://github.com/${ghprbGhRepository}.git'
+def BAD_FILES = [:]
+def CONFIG_EXTENSIONS = [".policy", ".security", ".plist"]
+def CONFIG_PATHS = ["/META-INF/", "/ChangeLog"]
+def NON_JDK_PATHS = ["/solaris/", "make/", "test/", "doc/"]
+def NON_JDK_EXTENSIONS = ["configure"]
+def HASHES = '###################################'
+def REGEXLIST = []
+def FILES = []
+def ignorefile = "${env.WORKSPACE}/.copyrightignore"
 
 timeout(time: 6, unit: 'HOURS') {
     stage('Copyright Check') {
@@ -60,28 +67,322 @@ timeout(time: 6, unit: 'HOURS') {
                     } else if (ghprbGhRepository ==~ "ibmruntimes.*") {
                         REGEX = "\'\\(c\\) Copyright IBM Corp. ([0-9]{4}), ${DATE_YEAR} All Rights Reserved\'"
                     } else {
-                        echo "ERROR: Unrecognized repository. Unable to determine correct Copyright regex"
-                        sh 'exit 1'
+                        error("Unrecognized repository. Unable to determine correct Copyright regex")
                     }
 
-                    FILES_LIST.each() {
-                        println "Checking file: '${it}'"
-                        RESULT = sh (
-                            script: "grep -qE ${REGEX} '${it}'",
-                            returnStatus: true)
-                        if(RESULT != 0) {
-                            echo "FAILURE - Copyright date in file: '${it}' appears to be incorrect"
-                            FAIL = true
-                            BAD_FILES << "${it}"
-                        } else {
-                            echo "Copyright date in file: appears to be correct"
+                    if (fileExists("${env.WORKSPACE}/.copyrightignore")) {
+                        def readinFiles = readFile("${env.WORKSPACE}/.copyrightignore")
+                        def READLIST = readinFiles.split("\\r?\\n")
+                        for (item in READLIST) {
+                            regexsElm = item
+
+                            if (item.contains("#")) {
+                                regexsElm = regexsElm.substring(0, regexsElm.indexOf("#"))
+                            }
+
+                            if (regexsElm != "") {
+                                if (item.contains("*")) {
+                                    regexsElm = regexsElm.replaceAll(/[*]/, /\.\*/)
+                                }
+
+                                if (item.startsWith("/") && item.lastIndexOf("/") == 0 ) {
+                                    regexsElm = regexsElm.replaceAll("[/]","");
+                                    if (item.contains("*.")) {
+                                        regexsElm = regexsElm.replaceAll("[*]","");
+                                        regexsElm =  "[A-Za-z0-9[^/]+]+" + regexsElm
+                                    }
+
+                                    if (!item.contains(".")){
+                                        regexsElm = regexsElm + /\// + ".*" + /|$/
+                                    }
+
+                                } else if (!item.startsWith("/") && item.lastIndexOf("/") != 0 && item.contains("/")) {
+                                    regexsElm = regexsElm.replaceAll(/\//,/\/+/)
+                                    if (!item.contains(".")){
+                                        regexsElm = regexsElm + ".*"
+                                    }
+                                } else {
+                                    regexsElm = regexsElm.replaceAll("[/]","");
+                                }
+                            }
+                            if (regexsElm.contains ("/+.*.*")) {
+                                regexsElm = regexsElm.replace("/+.*.*","/*.*.*");
+                            }
+                            
+                            if (regexsElm ==~ /.*.[A-Za-z0-9]/){
+                                print regexsElm;
+                                regexsElm = regexsElm.substring(0, regexsElm.lastIndexOf(".")) + /\./ + regexsElm.substring(regexsElm.lastIndexOf(".") + 1);
+                            }
+                            
+                            REGEXLIST << regexsElm
+                        }
+                        print REGEXLIST
+                        FILES_LIST.each { fileName ->
+                           for (regex in REGEXLIST) {
+                                if (fileName ==~ /${regex}/) {
+                                    FILES_LIST = FILES_LIST.collect { it.toString() } - "${fileName}"
+                                    echo "Ignoring File: '${fileName}', as it appears to match .copyrightignore regex " + /${regex}/
+                                    break
+                                }
+                            }
                         }
                     }
+
+                    FILES_LIST.each { file ->
+                        def checkCopyrightDate = true
+                        if (ghprbGhRepository ==~ "ibmruntimes.*") {
+                            println "Checking file: '${file}'"
+                            
+                            def lineCount = 0
+                            def foundOracleCopyright = -1
+                            def foundIBMCopyright = -1
+                            def foundIBMPortionsCopyright = -1
+                            def foundGPLv2 = -1
+                            def foundCPE = -1, foundIBMCPE = -1, foundOracleCPE = -1;
+                            def foundOracleDesignates = -1;
+                            def foundBSDorMITCopyright = -1
+                            def foundApacheCopyright = -1
+                            def foundCopyright = -1
+                            def errorStr
+                            def foundNonIBMCopyright = false
+                            def inJDK = true
+                            
+                            def theFile = readFile "${file}"
+                            
+                            if( theFile.length() <= 0 ) {
+                                println "File is empty"
+                            } else {
+                                String[] fileLines = theFile.split("\n")
+                                toLines = fileLines.size()
+                                if (toLines > 100) { toLines = 100 }
+                                for (lineCount = 0; lineCount < toLines; lineCount++) {
+                                    String line = fileLines[lineCount]
+                                    if (line.contains("Oracle designates")) {
+                                        foundOracleDesignates = lineCount; 
+                                        println "We have found the Oracle designates on line '${foundOracleDesignates}' in file: '${file}'"
+                                    }
+                                    
+                                    if (foundIBMCopyright < 0 && line.contains("Copyright IBM Corp") && line.contains("All Rights Reserved")) {
+                                        foundIBMCopyright = lineCount;
+                                        println "We have found the IBM Copyright on line '${foundIBMCopyright}' in file: '${file}'"
+                                        REGEX = "\'\\(c\\) Copyright IBM Corp. ([0-9]{4}), ${DATE_YEAR} All Rights Reserved\'"
+                                    }
+                                    if (line.contains("Portions Copyright") && line.contains("IBM Corporation")) {
+                                        foundIBMPortionsCopyright = lineCount;
+                                        println "We have found the IBM Portions Copyright on line '${foundIBMPortionsCopyright}' in file: '${file}'"
+                                        REGEX = "\'Portions Copyright ([0-9]{4}), ${DATE_YEAR} IBM Corporation.\'"
+                                    }
+                                    if (foundApacheCopyright < 0 && line.contains("Licensed to the Apache Software Foundation")) {
+                                        foundApacheCopyright = lineCount;
+                                        println "We have found the ASF copyright on line '${foundApacheCopyright}' in file: '${file}'"
+                                    }
+                                    if ((foundBSDorMITCopyright < 0 && line.contains("BSD license")) || line.contains("MIT license") || 
+                                        line.contains("Redistribution and use in source and binary forms") ||
+                                        (line.contains("PROVIDED") && line.contains("AS IS"))) {
+                                            foundBSDorMITCopyright = lineCount;
+                                            println "We have found a BSD, MIT or other Copyright on line '${foundBSDorMITCopyright}' in file: '${file}'"
+                                    }
+                                    if (line.contains("Copyright (C)") || line.contains("Copyright (c)")) {
+                                        println "${line} found Copyright"
+                                        if (line.contains("Oracle")) {
+                                            foundOracleCopyright = lineCount;
+                                            println "We have found the Oracle copyright on line '${foundOracleCopyright}' in file: '${file}'"
+                                        } else {
+                                            if (foundIBMCopyright < 0 && foundIBMPortionsCopyright < 0 && foundOracleCopyright < 0 && foundBSDorMITCopyright < 0) {
+                                               foundCopyright = lineCount;
+                                               println "We have found a different copyright on line '${foundCopyright}' in file: '${file}'"
+                                            }
+                                        }
+                                    }
+                                    if (line.contains("\"Classpath\" exception") || line.contains("GPL Classpath Exception")) {
+                                        foundCPE = lineCount;
+                                        println "We have found a CPE on line '${foundCPE}' in file: '${file}'"
+                                        if (line.contains("IBM designates")) {
+                                            foundIBMCPE = lineCount;
+                                            println "We have found the IBM CPE on line '${foundIBMCPE}' in file: '${file}'"
+                                        } else {
+                                            if (foundOracleDesignates >= 0) {
+                                                foundOracleCPE = lineCount
+                                                println "We have found the Oracle CPE on line '${foundOracleCPE}' in file: '${file}'"
+                                            }
+                                        }
+                                    }
+                                    if (foundGPLv2 < 0 && line.contains("GNU General Public License")) {
+                                        foundGPLv2 = lineCount
+                                        println "We have found the GPL on line '${foundGPLv2}' in file: '${file}'"
+                                    }
+                                }
+                            }
+                            // Check to see if we have a non IBM Copyright and set boolean
+                            if (foundOracleCopyright >= 0 || foundApacheCopyright >= 0 || 
+                                foundBSDorMITCopyright >= 0 || foundCopyright >= 0) {
+                                println "We have found a non IBM copyright"
+                                foundNonIBMCopyright = true
+                            }
+                            
+                            // Check to see whether the file is on the built JDK
+                            if (checkMatches("${file}", NON_JDK_EXTENSIONS, NON_JDK_PATHS)) {
+                                // The file is not in the IBM/Adopt built JDK
+                                inJDK = false
+                            }
+
+                            // We have pulled the info from the file, now do all the checks
+                            if ("${file}".startsWith("closed/")) {
+                                println "The file is in the closed directory"
+                                if (foundNonIBMCopyright && foundGPLv2 > 0 && foundCPE > 0) {
+                                    if (foundIBMCopyright >= 0) {
+                                        // We have an IBM copyright, so check its location
+                                        // it should be after any existing copyright
+                                        if (foundIBMCopyright < foundOracleCopyright ||
+                                            foundIBMCopyright < foundBSDorMITCopyright ||
+                                            foundIBMCopyright < foundApacheCopyright ||
+                                            foundIBMCopyright < foundCopyright) {
+                                                //The IBM Copyright is not after the existing copyright in the file
+                                                errorStr = "IBM Copyright is not after the existing copyright"
+                                                FAIL = addError(BAD_FILES, "${file}", errorStr)
+                                        }
+                                    } else {
+                                        errorStr = "IBM Copyright (basic) is missing from the file"
+                                        FAIL = addError(BAD_FILES, "${file}", errorStr)
+                                        checkCopyrightDate = false
+                                    }
+                                } else {
+                                    // The file is in the 'closed' directory and doesnt contain 
+                                    // Oracle copyright with GPLv2 and Classpath Exception so should
+                                    // have IBM copyright with GPLv2 and CE at the top of the file
+                                    if (foundIBMCopyright >= 3) {
+                                        errorStr = "IBM Copyright with GPLv2 and IBM Classpath Exception should be at the top of the file"
+                                        FAIL = addError(BAD_FILES, "${file}", errorStr)
+                                    }
+                                    if (foundGPLv2 < 0) {
+                                        errorStr = "IBM Copyright should contain the GPLv2 license"
+                                        FAIL = addError(BAD_FILES, "${file}", errorStr)
+                                    }
+                                    if (foundIBMCPE < 0) {
+                                        errorStr = "IBM Copyright should contain the IBM Classpath Exception"
+                                        FAIL = addError(BAD_FILES, "${file}", errorStr)
+                                    }
+                                    if (foundOracleCPE > 0) {
+                                        errorStr = "IBM Copyright should NOT contain the Oracle Classpath Exception"
+                                        FAIL = addError(BAD_FILES, "${file}", errorStr)
+                                    }
+                                }
+                            } else {
+                                println "The file is NOT in the closed directory"
+                                // We have updated the file so it should have an 
+                                // IBM copyright or an IBM Portions copyright
+                                
+                                // If we dont have some other copyright, ie Oracle, ASF, BSD, MIT etc
+                                if (!foundNonIBMCopyright) {
+                                    // and dont have a GPLv2 or CPE 
+                                    if (foundGPLv2 < 0) { 
+                                        if (foundCPE < 0) {
+                                            println "We have no GPLv2 with CE"
+                                            // and the file is a user config
+                                            if (checkMatches("${file}", CONFIG_EXTENSIONS, CONFIG_PATHS)) {
+                                                // The file is a user configuration file so shouldnt have a copyright
+                                                println "The file is a user configuration file"
+                                                checkCopyrightDate = false
+                                                if (foundIBMCopyright >= 0) {
+                                                    // if we have an IBM copyright then this is an error
+                                                    println "We have a IBM Copyright - so this is an error"
+                                                    errorStr = "IBM Copyright should NOT be used in this file as it is a user config file"
+                                                    FAIL = addError(BAD_FILES, "${file}", errorStr)
+                                                }
+                                            } else {
+                                                // The file is not a user configuration file - should have IBM portions
+                                                println "The file is not a user configuration file"
+                                                if (foundIBMPortionsCopyright <= 0) {
+                                                    errorStr = "IBM Portions Copyright should be used in this file"
+                                                    FAIL = addError(BAD_FILES, "${file}", errorStr)
+                                                    checkCopyrightDate = false
+                                                }
+                                                // Check to see if the IBM Portions copyright is at top of file
+                                                if (foundIBMPortionsCopyright >= 0) {
+                                                    // We have an IBM copyright, so check is location
+                                                    if (foundIBMPortionsCopyright > 3 ) {
+                                                        // The Portions Copyright should be at top of the file
+                                                        errorStr = "Portions Copyright is not at top of the file"
+                                                        FAIL = addError(BAD_FILES, "${file}", errorStr)
+                                                    }
+                                                } // foundIBMPortionsCopyright
+                                            } // check user config
+                                        } // foundCPE
+                                    } // foundGPLv2
+                                } else {
+                                    // We have found some nonIBM copyright
+                                    if (foundGPLv2 >= 0) {
+                                        // We have found GPLv2
+                                        if (foundCPE < 0) {
+                                            // We have not found Classpath Exception
+                                            if (inJDK) {
+                                                // The file is on the JDK binary
+                                                errorStr = "Does not contain a GPLv2 Classpath Exception"
+                                                FAIL = addError(BAD_FILES, "${file}", errorStr)
+                                                checkCopyrightDate = false
+                                            } else {
+                                                // The file is NOT in the JDK binary
+                                                if (foundIBMCopyright < 0) {
+                                                    errorStr = "IBM Copyright (basic) is missing from the file"
+                                                    FAIL = addError(BAD_FILES, "${file}", errorStr)
+                                                    checkCopyrightDate = false
+                                                }
+                                            }
+                                        } else {
+                                            // We have found GPLv2 and CPE, check if we have IBM copyright
+                                            if (foundIBMCopyright < 0 && foundIBMPortionsCopyright < 0) {
+                                                errorStr = "IBM Copyright (basic) is missing from the file"
+                                                FAIL = addError(BAD_FILES, "${file}", errorStr)
+                                                checkCopyrightDate = false
+                                            }
+                                        }
+                                    } else {
+                                        // We have not found GPLv2
+                                        if (foundIBMCopyright >= 0) {
+                                            // We have an IBM copyright, so check its location
+                                            // it should be after any existing copyright
+                                            if (foundIBMCopyright < foundOracleCopyright ||
+                                                foundIBMCopyright < foundBSDorMITCopyright ||
+                                                foundIBMCopyright < foundApacheCopyright ||
+                                                foundIBMCopyright < foundCopyright) {
+                                                    //The IBM Copyright is not after the existing copyright in the file
+                                                    errorStr = "IBM Copyright is not after the existing copyright"
+                                                    FAIL = addError(BAD_FILES, "${file}", errorStr)
+                                            }
+                                        } else {
+                                            errorStr = "IBM Copyright (basic) is missing from the file"
+                                            FAIL = addError(BAD_FILES, "${file}", errorStr)
+                                            checkCopyrightDate = false
+                                        }
+                                    }
+                                } // !foundNonIBMCopyright
+                            } // if closed
+                        } else {
+                            // must be an eclipse repository, so just 
+                            // check that the date is valid
+                            checkCopyrightDate = true
+                            println "Checking file: '${file}'"
+                        }
+                            
+                         // We need to check that the copyright update year is the current year 
+                        if (checkCopyrightDate) {
+                            RESULT = sh (
+                                script: "grep -qE ${REGEX} '${file}'",
+                                returnStatus: true)
+                            if(RESULT != 0) {
+                                errorStr = "IBM Copyright date appears to be incorrect"
+                                FAIL = addError(BAD_FILES, "${file}", errorStr)
+                            } else {
+                                echo "Copyright date in file: appears to be correct"
+                            }
+                        }
+                    }
+                    
                     if (FAIL) {
                         echo "${HASHES}"
                         echo "The following files were modified and have incorrect copyrights"
-                        BAD_FILES.each() {
-                            echo "${it}"
+                        BAD_FILES.keySet().each {badfile ->
+                            echo "${badfile}"+BAD_FILES.get("${badfile}")
                         }
                         echo "${HASHES}"
                         sh 'exit 1'
@@ -92,4 +393,28 @@ timeout(time: 6, unit: 'HOURS') {
             }
         }
     }
+}
+
+def addError(errorMap, errorfile, errorStr) {
+    echo errorStr
+    if (errorMap.containsKey(errorfile)) {
+        errorMap.put(errorfile, errorMap.get(errorfile) + ("\n\t"+errorStr))
+    } else {
+        errorMap.put(errorfile, "\n\t"+errorStr)
+    }
+    return true
+}
+
+def checkMatches(checkFile, fileExtensions, filePaths) {
+    for (filePath in filePaths) {
+        if (checkFile.matches("(.*)${filePath}(.*)")) {
+            return true
+        }
+    }
+    for (fileExtension in fileExtensions) {
+        if (checkFile.endsWith("${fileExtension}")) {
+            return true
+        }
+    }
+    return false;
 }
