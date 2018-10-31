@@ -130,6 +130,9 @@ public:
    static void createTempsForCall(TR::Optimization* opt, TR::TreeTop *callTree);
    static void createDiamondForCall(TR::Optimization* opt, TR::TreeTop *callTree, TR::TreeTop *compareTree, TR::TreeTop *ifTree, TR::TreeTop *elseTree, bool changeBlockExtensions = false, bool markCold = false);
 
+   static void prohibitOSROverRange(TR::Compilation* comp, TR::TreeTop* start, TR::TreeTop* end);
+   static void removePotentialOSRPointHelperCalls(TR::Compilation* comp, TR::TreeTop* start, TR::TreeTop* end);
+
 protected:
    /**
     * \brief
@@ -145,6 +148,7 @@ protected:
     *    True if the field is folded
     */
    static bool foldStaticFinalFieldImpl(TR::Compilation *, TR::Node *node);
+
    };
 
 }
