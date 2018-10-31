@@ -225,8 +225,8 @@ const unsigned char sunJavaInstructionSizeTable[] = {
 0x05 /* JBgotow = 200 = 0xC8 */,
 0x05 /* JBjsrw = 201 = 0xC9 */,
 0x01 /* JBbreakpoint = 202 = 0xCA */,
-0x00 /* JBunimplemented = 203 = 0xCB */,
-0x00 /* JBunimplemented = 204 = 0xCC */,
+0x01 /* JBdefaultvalue = 203 = 0xCB */ ,
+0x03 /* JBwithfield = 204 = 0xCC */ ,
 0x00 /* JBunimplemented = 205 = 0xCD */,
 0x00 /* JBunimplemented = 206 = 0xCE */,
 0x00 /* JBunimplemented = 207 = 0xCF */,
@@ -246,15 +246,9 @@ const unsigned char sunJavaInstructionSizeTable[] = {
 0x00 /* JBunimplemented = 221 = 0xDD */,
 0x00 /* JBunimplemented = 222 = 0xDE */,
 0x00 /* JBunimplemented = 223 = 0xDF */,
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-0x01 /* JBdefaultvalue = 224 = 0xE0 */ ,
-0x00 /* JBunimplemented = 225 = 0xE1 */,
-0x03 /* JBwithfield = 226 = 0xE2 */ ,
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 0x00 /* JBunimplemented = 224 = 0xE0 */,
 0x00 /* JBunimplemented = 225 = 0xE1 */,
 0x00 /* JBunimplemented = 226 = 0xE2 */,
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 0x00 /* JBunimplemented = 227 = 0xE3 */,
 0x00 /* JBunimplemented = 228 = 0xE4 */,
 0x00 /* JBunimplemented = 229 = 0xE5 */,
