@@ -1404,22 +1404,6 @@ ClassFileOracle::walkMethodCodeAttributeCode(U_16 methodIndex)
 	U_8 *code = codeAttribute->code;
 	for (U_32 codeIndex = 0; codeIndex < codeAttribute->codeLength; codeIndex += step) { /* NOTE codeIndex is modified below for CFR_BC_tableswitch and CFR_BC_lookupswitch */
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		/*
-		 * TODO: Remap Valhalla L-World value type opcodes. 
-		 *
-		 * The current proposal for L-World value types maps the new value type opcodes to opcodes
-		 * that are currently in use internally. This is a workaround that remaps the new opcodes to
-		 * opcodes that do not conflict. Once the new opcodes are given in an official
-		 * specification, the conflicting internal bytecodes should be remapped.
-		 */
-		if (204 == code[codeIndex]) {
-			code[codeIndex] = CFR_BC_defaultvalue;
-		} else if (203 == code[codeIndex]) {
-			code[codeIndex] = CFR_BC_withfield;
-		}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-
 		U_8 sunInstruction = code[codeIndex];
 
 		step = sunJavaInstructionSizeTable[sunInstruction];

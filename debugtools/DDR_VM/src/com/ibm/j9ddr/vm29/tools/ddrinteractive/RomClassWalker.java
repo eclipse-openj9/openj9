@@ -52,6 +52,7 @@ import com.ibm.j9ddr.corereaders.memory.MemoryFault;
 import com.ibm.j9ddr.tools.ddrinteractive.Context;
 import com.ibm.j9ddr.vm29.j9.AlgorithmVersion;
 import com.ibm.j9ddr.vm29.j9.BCNames;
+import static com.ibm.j9ddr.vm29.j9.BCNames.*;
 import com.ibm.j9ddr.vm29.j9.ConstantPoolHelpers;
 import com.ibm.j9ddr.vm29.j9.J9ROMFieldShapeIterator;
 import com.ibm.j9ddr.vm29.j9.OptInfo;
@@ -401,173 +402,158 @@ public class RomClassWalker extends ClassWalker {
 			I32 low;
 			I32 high;
 			long i;
-			switch (bc) {
+			if ((bc == JBbipush)
+				|| (bc == JBldc)
+				|| (bc == JBiload)
+				|| (bc == JBlload)
+				|| (bc == JBfload)
+				|| (bc == JBdload)
+				|| (bc == JBaload)
+				|| (bc == JBistore)
+				|| (bc == JBlstore)
+				|| (bc == JBfstore)
+				|| (bc == JBdstore)
+				|| (bc == JBastore)
+				|| (bc == JBnewarray)
+			) {
 				/* Single 8-bit argument, no flip. */
-				case BCNames.JBbipush:
-				case BCNames.JBldc:
-				case BCNames.JBiload:
-				case BCNames.JBlload:
-				case BCNames.JBfload:
-				case BCNames.JBdload:
-				case BCNames.JBaload:
-				case BCNames.JBistore:
-				case BCNames.JBlstore:
-				case BCNames.JBfstore:
-				case BCNames.JBdstore:
-				case BCNames.JBastore:
-				case BCNames.JBnewarray:
-					classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcArg8");
-					pc = pc.add(1);
-					break;
-					
+				classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcArg8");
+				pc = pc.add(1);
+			} else if (bc == JBinvokeinterface2) {
 				/* Single 16-bit argument */
-				case BCNames.JBinvokeinterface2:
-					classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcArg8");
-					pc = pc.add(1);
-					classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcArg8");
-					pc = pc.add(1);
-					/* Deliberate fall through */
-				case BCNames.JBsipush:
-				case BCNames.JBldcw:
-				case BCNames.JBldc2dw:
-				case BCNames.JBldc2lw:
-				case BCNames.JBiloadw:
-				case BCNames.JBlloadw:
-				case BCNames.JBfloadw:
-				case BCNames.JBdloadw:
-				case BCNames.JBaloadw:
-				case BCNames.JBistorew:
-				case BCNames.JBlstorew:
-				case BCNames.JBfstorew:
-				case BCNames.JBdstorew:
-				case BCNames.JBastorew:
-				case BCNames.JBifeq:
-				case BCNames.JBifne:
-				case BCNames.JBiflt:
-				case BCNames.JBifge:
-				case BCNames.JBifgt:
-				case BCNames.JBifle:
-				case BCNames.JBificmpeq:
-				case BCNames.JBificmpne:
-				case BCNames.JBificmplt:
-				case BCNames.JBificmpge:
-				case BCNames.JBificmpgt:
-				case BCNames.JBificmple:
-				case BCNames.JBifacmpeq:
-				case BCNames.JBifacmpne:
-				case BCNames.JBgoto:
-				case BCNames.JBifnull:
-				case BCNames.JBifnonnull:
-				case BCNames.JBgetstatic:
-				case BCNames.JBputstatic:
-				case BCNames.JBgetfield:
-				case BCNames.JBputfield:
-				case BCNames.JBinvokevirtual:
-				case BCNames.JBinvokespecial:
-				case BCNames.JBinvokestatic:
-				case BCNames.JBinvokehandle:
-				case BCNames.JBinvokehandlegeneric:
-				case BCNames.JBnew:
-				case BCNames.JBnewdup:
-				case BCNames.JBanewarray:
-				case BCNames.JBcheckcast:
-				case BCNames.JBinstanceof:
-				case BCNames.JBinvokestaticsplit:
-				case BCNames.JBinvokespecialsplit:
-					classWalkerCallback.addSlot(clazz, SlotType.J9_U16, pc, "bcArg16");
-					pc = pc.add(2);
-					break;
-
+				classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcArg8");
+				pc = pc.add(1);
+				classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcArg8");
+				pc = pc.add(1);
+				classWalkerCallback.addSlot(clazz, SlotType.J9_U16, pc, "bcArg16");
+				pc = pc.add(2);
+			} else if ((bc == JBsipush)
+				|| (bc == JBldcw)
+				|| (bc == JBldc2dw)
+				|| (bc == JBldc2lw)
+				|| (bc == JBiloadw)
+				|| (bc == JBlloadw)
+				|| (bc == JBfloadw)
+				|| (bc == JBdloadw)
+				|| (bc == JBaloadw)
+				|| (bc == JBistorew)
+				|| (bc == JBlstorew)
+				|| (bc == JBfstorew)
+				|| (bc == JBdstorew)
+				|| (bc == JBastorew)
+				|| (bc == JBifeq)
+				|| (bc == JBifne)
+				|| (bc == JBiflt)
+				|| (bc == JBifge)
+				|| (bc == JBifgt)
+				|| (bc == JBifle)
+				|| (bc == JBificmpeq)
+				|| (bc == JBificmpne)
+				|| (bc == JBificmplt)
+				|| (bc == JBificmpge)
+				|| (bc == JBificmpgt)
+				|| (bc == JBificmple)
+				|| (bc == JBifacmpeq)
+				|| (bc == JBifacmpne)
+				|| (bc == JBgoto)
+				|| (bc == JBifnull)
+				|| (bc == JBifnonnull)
+				|| (bc == JBgetstatic)
+				|| (bc == JBputstatic)
+				|| (bc == JBgetfield)
+				|| (bc == JBputfield)
+				|| (bc == JBwithfield)
+				|| (bc == JBinvokevirtual)
+				|| (bc == JBinvokespecial)
+				|| (bc == JBinvokestatic)
+				|| (bc == JBinvokehandle)
+				|| (bc == JBinvokehandlegeneric)
+				|| (bc == JBnew)
+				|| (bc == JBdefaultvalue)
+				|| (bc == JBnewdup)
+				|| (bc == JBanewarray)
+				|| (bc == JBcheckcast)
+				|| (bc == JBinstanceof)
+				|| (bc == JBinvokestaticsplit)
+				|| (bc == JBinvokespecialsplit)
+			) {
+				classWalkerCallback.addSlot(clazz, SlotType.J9_U16, pc, "bcArg16");
+				pc = pc.add(2);
+			} else if (bc == JBiinc) {
 				/* Two 8-bit arguments. */
-				case BCNames.JBiinc:
-					classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcArg8");
-					pc = pc.add(1);
-					classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcArg8");
-					pc = pc.add(1);
-					break;
-
+				classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcArg8");
+				pc = pc.add(1);
+				classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcArg8");
+				pc = pc.add(1);
+			} else if (bc == JBiincw) {
 				/* Two 16-bit arguments */
-				case BCNames.JBiincw:
-					classWalkerCallback.addSlot(clazz, SlotType.J9_U16, pc, "bcArg16");
-					pc = pc.add(2);
-					classWalkerCallback.addSlot(clazz, SlotType.J9_U16, pc, "bcArg16");
-					pc = pc.add(2);
-					break;
-
+				classWalkerCallback.addSlot(clazz, SlotType.J9_U16, pc, "bcArg16");
+				pc = pc.add(2);
+				classWalkerCallback.addSlot(clazz, SlotType.J9_U16, pc, "bcArg16");
+				pc = pc.add(2);
+			} else if (bc == JBmultianewarray) {
 				/* 16-bit argument followed by 8-bit argument */
-				case BCNames.JBmultianewarray:
-					classWalkerCallback.addSlot(clazz, SlotType.J9_U16, pc, "bcArg16");
-					pc = pc.add(2);
-					classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcArg8");
-					pc = pc.add(1);
-					break;
-
+				classWalkerCallback.addSlot(clazz, SlotType.J9_U16, pc, "bcArg16");
+				pc = pc.add(2);
+				classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcArg8");
+				pc = pc.add(1);
+			} else if (bc == JBgotow) {
 				/* Single 32-bit argument */
-				case BCNames.JBgotow:
+				classWalkerCallback.addSlot(clazz, SlotType.J9_U32, pc, "bcArg32");
+				pc = pc.add(4);
+			} else if (bc == JBtableswitch) {
+				int delta = (int) (pc.getAddress() - bytecodes.getAddress() - 1);
+				switch(delta % 4) {
+					case 0:
+						classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcPad");
+						pc = pc.add(1);
+					case 1:
+						classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcPad");
+						pc = pc.add(1);
+					case 2:
+						classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcPad");
+						pc = pc.add(1);
+					case 3:
+						break;
+				}
+				classWalkerCallback.addSlot(clazz, SlotType.J9_U32, pc, "bcArg32");
+				pc = pc.add(4);
+				classWalkerCallback.addSlot(clazz, SlotType.J9_U32, pc, "bcArg32");
+				low = I32Pointer.cast(pc).at(0);
+				pc = pc.add(4);
+				classWalkerCallback.addSlot(clazz, SlotType.J9_U32, pc, "bcArg32");
+				high = I32Pointer.cast(pc).at(0);
+				pc = pc.add(4);
+				for (i = 0; i <= high.sub(low).longValue(); ++i) {
 					classWalkerCallback.addSlot(clazz, SlotType.J9_U32, pc, "bcArg32");
 					pc = pc.add(4);
-					break;
-
-				case BCNames.JBtableswitch:
-					int delta = (int) (pc.getAddress() - bytecodes.getAddress() - 1);
-					switch(delta % 4) {
-						case 0:
-							classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcPad");
-							pc = pc.add(1);
-						case 1:
-							classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcPad");
-							pc = pc.add(1);
-						case 2:
-							classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcPad");
-							pc = pc.add(1);
-						case 3:
-							break;
-					}
+				}
+			} else if (bc == JBlookupswitch) {
+				int delta2 = (int) (pc.getAddress() - bytecodes.getAddress() - 1);
+				switch(delta2 % 4) {
+					case 0:
+						classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcArg8");
+						pc = pc.add(1);
+					case 1:
+						classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcArg8");
+						pc = pc.add(1);
+					case 2:
+						classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcArg8");
+						pc = pc.add(1);
+					case 3:
+						break;
+				}
+				classWalkerCallback.addSlot(clazz, SlotType.J9_U32, pc, "bcArg32");
+				pc = pc.add(4);
+				classWalkerCallback.addSlot(clazz, SlotType.J9_U32, pc, "bcArg32");
+				i = U32Pointer.cast(pc).at(0).longValue();
+				pc = pc.add(4);
+				while (i-- > 0) {
 					classWalkerCallback.addSlot(clazz, SlotType.J9_U32, pc, "bcArg32");
 					pc = pc.add(4);
 					classWalkerCallback.addSlot(clazz, SlotType.J9_U32, pc, "bcArg32");
-					low = I32Pointer.cast(pc).at(0);
 					pc = pc.add(4);
-					classWalkerCallback.addSlot(clazz, SlotType.J9_U32, pc, "bcArg32");
-					high = I32Pointer.cast(pc).at(0);
-					pc = pc.add(4);
-					for (i = 0; i <= high.sub(low).longValue(); ++i) {
-						classWalkerCallback.addSlot(clazz, SlotType.J9_U32, pc, "bcArg32");
-						pc = pc.add(4);
-					}
-					break;
-					
-
-				case BCNames.JBlookupswitch:
-					int delta2 = (int) (pc.getAddress() - bytecodes.getAddress() - 1);
-					switch(delta2 % 4) {
-						case 0:
-							classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcArg8");
-							pc = pc.add(1);
-						case 1:
-							classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcArg8");
-							pc = pc.add(1);
-						case 2:
-							classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcArg8");
-							pc = pc.add(1);
-						case 3:
-							break;
-					}
-					classWalkerCallback.addSlot(clazz, SlotType.J9_U32, pc, "bcArg32");
-					pc = pc.add(4);
-					classWalkerCallback.addSlot(clazz, SlotType.J9_U32, pc, "bcArg32");
-					i = U32Pointer.cast(pc).at(0).longValue();
-					pc = pc.add(4);
-					while (i-- > 0) {
-						classWalkerCallback.addSlot(clazz, SlotType.J9_U32, pc, "bcArg32");
-						pc = pc.add(4);
-						classWalkerCallback.addSlot(clazz, SlotType.J9_U32, pc, "bcArg32");
-						pc = pc.add(4);
-					}
-					break;
-
-				default:
-					break;
+				}
 			}
 		}
 
