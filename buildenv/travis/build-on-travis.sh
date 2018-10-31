@@ -53,7 +53,7 @@ if test "x$RUN_LINT" = "xyes"; then
   OM_JAR=$PWD/om.jar
 
   cd $J9SRC
-  git clone --depth 1 https://github.com/eclipse/openj9-omr.git omr
+  git clone --depth 1 --branch openj9 https://github.com/eclipse/openj9-omr.git omr
 
   # generate the nls headers
   java -cp $J9NLS_JAR com.ibm.oti.NLSTool.J9NLS -source $PWD
