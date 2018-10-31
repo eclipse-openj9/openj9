@@ -27,6 +27,8 @@
 #include "env/ClassTableCriticalSection.hpp"   // for ClassTableCriticalSection
 #include "control/CompilationThread.hpp"       // for TR::compInfoPT
 #include "control/JITaaSCompilationThread.hpp"   // for ClientSessionData
+#include "env/VerboseLog.hpp"
+#include "control/MethodToBeCompiled.hpp"
 
 
 // plan: send the whole table once,
@@ -78,9 +80,11 @@ TR_JITaaSServerPersistentCHTable::doUpdate(TR::Compilation *comp)
 
    auto stream = TR::CompilationInfo::getStream();
    stream->write(JITaaS::J9ServerMessageType::CHTable_getClassInfoUpdates, JITaaS::Void());
-   auto recv = stream->read<std::string, std::string>();
+   auto recv = stream->read<std::string, std::string, uint32_t>();
    std::string &removeStr = std::get<0>(recv);
    std::string &modifyStr = std::get<1>(recv);
+   auto commitNumber = std::get<2>(recv);
+   TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "clientUID=%llu commitNumber=%lu", ((TR_J9VM *) comp->fe())->_compInfoPT->getMethodBeingCompiled()->getClientUID(),commitNumber);
 
    TR::ClassTableCriticalSection doUpdate(comp->fe());
    commitModifications(modifyStr);
@@ -147,13 +151,15 @@ TR_JITaaSServerPersistentCHTable::commitModifications(std::string &rawData)
       {
       auto flat = it.second.first;
       auto persist = it.second.second;
+      if (flat->_addAll)
+         persist->removeSubClasses();
       for (size_t i = 0; i < flat->_numSubClasses; i++)
          {
          auto classInfo = findClassInfo(flat->_subClasses[i]);
 
          // For some reason the subclass info is still null sometimes. This may be indicative of a larger problem or it could be harmless.
          // JITaaS TODO: figure out why this is happening
-         //TR_ASSERT(classInfo, "subclass info cannot be null: ensure subclasses are loaded before superclass");
+         TR_ASSERT(classInfo, "subclass info cannot be null: ensure subclasses are loaded before superclass");
          if (classInfo)
             persist->addSubClass(classInfo);
          else
@@ -218,7 +224,7 @@ TR_JITaaSClientPersistentCHTable::serializeModifications()
       {
       auto clazz = findClassInfo(classId);
       if (!clazz) continue;
-      size_t size = FlatPersistentClassInfo::classSize(clazz, getNumAddedSubClasses(classId));
+      size_t size = FlatPersistentClassInfo::classSize(clazz);
       numBytes += size;
       }
 
@@ -232,7 +238,7 @@ TR_JITaaSClientPersistentCHTable::serializeModifications()
       if (!clazz) continue;
 
       FlatPersistentClassInfo* info = (FlatPersistentClassInfo*)&data[bytesWritten];
-      bytesWritten += FlatPersistentClassInfo::serializeClass(clazz, info, getNumAddedSubClasses(classId));
+      bytesWritten += FlatPersistentClassInfo::serializeClass(clazz, info, false, getAddedSubClasses(clazz->getClassId()));
       count++;
       }
    CHTABLE_UPDATE_COUNTER(_numClassesUpdated, count);
@@ -246,6 +252,8 @@ std::pair<std::string, std::string>
 TR_JITaaSClientPersistentCHTable::serializeUpdates()
    {
    TR::ClassTableCriticalSection serializeUpdates(TR::comp()->fe());
+   _commitNumber++;
+   TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "commitNumber=%lu", _commitNumber);
    std::string removes = serializeRemoves(); // must be called first
    std::string mods = serializeModifications();
 #ifdef COLLECT_CHTABLE_STATS
@@ -268,7 +276,7 @@ collectHierarchy(std::unordered_set<TR_PersistentClassInfo*> &out, TR_Persistent
    }
 
 size_t 
-FlatPersistentClassInfo::classSize(TR_PersistentClassInfo *clazz)
+FlatPersistentClassInfo::classSize(TR_PersistentClassInfo *clazz, int32_t numSubClasses)
    {
    // default case, serialize all subclasses
    if (numSubClasses == -1)
@@ -277,7 +285,7 @@ FlatPersistentClassInfo::classSize(TR_PersistentClassInfo *clazz)
    }
 
 size_t 
-FlatPersistentClassInfo::serializeClass(TR_PersistentClassInfo *clazz, FlatPersistentClassInfo* info)
+FlatPersistentClassInfo::serializeClass(TR_PersistentClassInfo *clazz, FlatPersistentClassInfo* info, bool addAll, std::vector<TR_OpaqueClassBlock *> *subClasses)
    {
    info->_classId = clazz->_classId;
    info->_visitedStatus = clazz->_visitedStatus;
@@ -290,15 +298,27 @@ FlatPersistentClassInfo::serializeClass(TR_PersistentClassInfo *clazz, FlatPersi
    info->_shouldNotBeNewlyExtended = clazz->_shouldNotBeNewlyExtended;
    int idx = 0;
 
-   // Since new subclasses are added at the beginning of the linked list, the first n entries
-   // correspond to n newest entries in a list. Thus, we only need to know the number of subclasses
-   // added to find them in a subclass list.
-   for (TR_SubClass *c = clazz->getFirstSubclass(); (idx < numSubClasses) || (numSubClasses == -1 && c); c = c->getNext())
+   // if there are any subclasses, serialize them now
+   info->_addAll = addAll;
+   if (!addAll && subClasses)
       {
-      TR_ASSERT(c, "Incorrect number of subclasses provided");
-      TR_ASSERT(c->getClassInfo(), "Subclass info cannot be null (on client)");
-      TR_ASSERT(c->getClassInfo()->getClassId(), "Subclass cannot be null (on client)");
-      info->_subClasses[idx++] = c->getClassInfo()->getClassId();
+      // send incremental update of subclasses, i.e. send only subclasses
+      // added since last commit
+      for (auto it = subClasses->begin(); it != subClasses->end(); it++)
+         {
+         info->_subClasses[idx++] = *it;
+         }
+      }
+   else
+      {
+      // send all subclasses. This case is triggered either during the first
+      // commit, or after a class is removed and then readded in-between commits
+      for (TR_SubClass *c = clazz->getFirstSubclass(); c; c = c->getNext())
+         {
+         TR_ASSERT(c->getClassInfo(), "Subclass info cannot be null (on client)");
+         TR_ASSERT(c->getClassInfo()->getClassId(), "Subclass cannot be null (on client)");
+         info->_subClasses[idx++] = c->getClassInfo()->getClassId();
+         }
       }
    info->_numSubClasses = idx;
    return sizeof(TR_OpaqueClassBlock*) * idx + sizeof(FlatPersistentClassInfo);
@@ -513,8 +533,10 @@ TR_JITaaSClientPersistentCHTable::classGotExtended(
       TR_OpaqueClassBlock *subClassId)
    {
    markDirty(superClassId);
-   markExtended(superClassId);
-   return TR_PersistentCHTable::classGotExtended(fe, persistentMemory, superClassId, subClassId);
+   bool subClassAdded = TR_PersistentCHTable::classGotExtended(fe, persistentMemory, superClassId, subClassId);
+   // if (subClassAdded)
+      // markExtended(superClassId, subClassId);
+   return subClassAdded;
    }
 
 
@@ -531,22 +553,46 @@ TR_JITaaSClientPersistentCHTable::markDirty(TR_OpaqueClassBlock *clazz)
    {
    _dirty.insert(clazz);
    _remove.erase(clazz);
+   // if ((auto it = _extended.find(clazz)) != _extended.end())
+      // {
+      // // class marked dirty after subclasses were added in-between CH table commits.
+      // // this can happen when a subclass gets added and then removed in-between commits.
+      // // in this case, send all of the subclasses
+      // it->second.clear();
+      // for (TR_SubClass *c = classInfo->getFirstSubclass(); c; c = c->getNext())
+         // {
+         // TR_ASSERT(c->getClassInfo(), "Subclass info cannot be null (on client)");
+         // TR_ASSERT(c->getClassInfo()->getClassId(), "Subclass cannot be null (on client)");
+         // markExtended(clazz, c->getClassInfo()->getClassId());
+         // }
+      // }
    }
 
 void 
-TR_JITaaSClientPersistentCHTable::markExtended(TR_OpaqueClassBlock *clazz)
+TR_JITaaSClientPersistentCHTable::markExtended(TR_OpaqueClassBlock *parentClass, TR_OpaqueClassBlock *subClass)
    {
    // increment the number of added subclasses
-   auto it = _extended.find(clazz);
+   auto it = _extended.find(parentClass);
    if (it == _extended.end())
-      _extended.insert({clazz, 1});
+      {
+      std::vector<TR_OpaqueClassBlock *> subClassList;
+      subClassList.push_back(subClass);
+      _extended.insert({parentClass, subClassList});
+      }
    else
-      it->second++;
+      it->second.push_back(subClass);
    }
 
 uint32_t
 TR_JITaaSClientPersistentCHTable::getNumAddedSubClasses(TR_OpaqueClassBlock *clazz)
    {
    auto it = _extended.find(clazz);
-   return it != _extended.end() ? it->second : 0;
+   return it != _extended.end() ? it->second.size() : 0;
+   }
+
+std::vector<TR_OpaqueClassBlock *> *
+TR_JITaaSClientPersistentCHTable::getAddedSubClasses(TR_OpaqueClassBlock *clazz)
+   {
+   auto it = _extended.find(clazz);
+   return it != _extended.end() ? &it->second : nullptr; 
    }

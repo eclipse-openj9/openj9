@@ -1996,7 +1996,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          client->getRecvData<JITaaS::Void>();
          auto table = (TR_JITaaSClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
          auto encoded = table->serializeUpdates();
-         client->write(encoded.first, encoded.second);
+         client->write(encoded.first, encoded.second, table->_commitNumber);
          }
          break;
       case J9ServerMessageType::CHTable_clearReservable:
