@@ -3572,8 +3572,8 @@ J9::Z::CodeGenerator::supportsPackedShiftRight(int32_t resultPrecision, TR::Node
 int32_t
 J9::Z::CodeGenerator::getPDDivEncodedPrecision(TR::Node *node)
    {
-   TR_ASSERT(node->getOpCodeValue() == TR::pddiv || node->getOpCodeValue() == TR::pdrem || node->getOpCodeValue() == TR::pddivrem,
-      "getPackedDividendPrecision only valid for pddiv/pdrem/pddivrem\n");
+   TR_ASSERT(node->getOpCodeValue() == TR::pddiv || node->getOpCodeValue() == TR::pdrem,
+      "getPackedDividendPrecision only valid for pddiv/pdrem\n");
    return self()->getPDDivEncodedPrecisionCommon(node,
                                          node->getFirstChild()->getDecimalPrecision(),
                                          node->getSecondChild()->getDecimalPrecision(),
@@ -3583,8 +3583,8 @@ J9::Z::CodeGenerator::getPDDivEncodedPrecision(TR::Node *node)
 int32_t
 J9::Z::CodeGenerator::getPDDivEncodedPrecision(TR::Node *node, TR_PseudoRegister *dividendReg, TR_PseudoRegister *divisorReg)
    {
-   TR_ASSERT(node->getOpCodeValue() == TR::pddiv || node->getOpCodeValue() == TR::pdrem || node->getOpCodeValue() == TR::pddivrem,
-      "getPackedDividendPrecision only valid for pddiv/pdrem/pddivrem\n");
+   TR_ASSERT(node->getOpCodeValue() == TR::pddiv || node->getOpCodeValue() == TR::pdrem,
+      "getPackedDividendPrecision only valid for pddiv/pdrem\n");
    return self()->getPDDivEncodedPrecisionCommon(node,
                                          dividendReg->getDecimalPrecision(),
                                          divisorReg->getDecimalPrecision(),
@@ -3605,16 +3605,16 @@ J9::Z::CodeGenerator::getPDDivEncodedPrecisionCommon(TR::Node *node, int32_t div
 uint32_t
 J9::Z::CodeGenerator::getPDDivEncodedSize(TR::Node *node)
    {
-   TR_ASSERT(node->getOpCodeValue() == TR::pddiv || node->getOpCodeValue() == TR::pdrem || node->getOpCodeValue() == TR::pddivrem,
-      "getPDDivEncodedSize only valid for pddiv/pdrem/pddivrem\n");
+   TR_ASSERT(node->getOpCodeValue() == TR::pddiv || node->getOpCodeValue() == TR::pdrem,
+      "getPDDivEncodedSize only valid for pddiv/pdrem\n");
    return TR::DataType::packedDecimalPrecisionToByteLength(self()->getPDDivEncodedPrecision(node));
    }
 
 uint32_t
 J9::Z::CodeGenerator::getPDDivEncodedSize(TR::Node *node, TR_PseudoRegister *dividendReg, TR_PseudoRegister *divisorReg)
    {
-   TR_ASSERT(node->getOpCodeValue() == TR::pddiv || node->getOpCodeValue() == TR::pdrem || node->getOpCodeValue() == TR::pddivrem,
-      "getPDDivEncodedSize only valid for pddiv/pdrem/pddivrem\n");
+   TR_ASSERT(node->getOpCodeValue() == TR::pddiv || node->getOpCodeValue() == TR::pdrem,
+      "getPDDivEncodedSize only valid for pddiv/pdrem\n");
    return TR::DataType::packedDecimalPrecisionToByteLength(self()->getPDDivEncodedPrecision(node, dividendReg, divisorReg));
    }
 

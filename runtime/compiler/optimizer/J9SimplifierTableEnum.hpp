@@ -416,12 +416,8 @@
 
    pdshrSetSignSimplifier,      // TR::pdshrSetSign
    pdshlSetSignSimplifier,      // TR::pdshlSetSign
-   dftSimplifier,               // TR::pdshrPreserveSign
-   dftSimplifier,               // TR::pdshlPreserveSign
    dftSimplifier,               // TR::pdshlOverflow
-//#if defined(TR_TARGET_S390)
    dftSimplifier,               // TR::pdchk
-//#endif
    pd2iSimplifier,              // TR::pd2i
    dftSimplifier,               // TR::pd2iOverflow
    dftSimplifier,               // TR::pd2iu
@@ -444,20 +440,11 @@
    dftSimplifier,               // TR::pdcmpgt
    dftSimplifier,               // TR::pdcmple
 
-   dftSimplifier,               // TR::pdcheck
-   dftSimplifier,               // TR::pdfix
-
    pdcleanSimplifier,           // TR::pdclean
-
-   pdexpSimplifier,             // TR::pdexp
-   pdexpSimplifier,             // TR::pduexp
-
    pdclearSimplifier,           // TR::pdclear
    pdclearSetSignSimplifier,    // TR::pdclearSetSign
 
    pdSetSignSimplifier,         // TR::pdSetSign
-
-   dftSimplifier,               // TR::pddivrem
 
    pdshlSimplifier,             // TR::pdModifyPrecision
 

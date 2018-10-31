@@ -50,7 +50,7 @@ namespace ILProp4
    {
    enum
       {
-      PreserveSign                     = 0x00000001,
+      // Available                     = 0x00000001,
       SetSign                          = 0x00000002,
       SetSignOnNode                    = 0x00000004, ///< the setSign value is tracked in a field on the node vs as a child (SetSign has the setSign value in a child)
       ModifyPrecision                  = 0x00000008,

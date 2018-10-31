@@ -1339,10 +1339,8 @@ static TR::Node *reduceShiftRightOverShiftLeft(TR::Node * node, TR::Block * bloc
       {
       TR::Node *child = node->getFirstChild();
 
-      // preserveSign and overflow not supported
-      if (node->getOpCodeValue() == TR::pdshrPreserveSign ||
-          child->getOpCodeValue() == TR::pdshlPreserveSign ||
-          child->getOpCodeValue() == TR::pdshlOverflow)
+      // overflow not supported
+      if (child->getOpCodeValue() == TR::pdshlOverflow)
          return node;
 
       int32_t parentAdjust = node->getDecimalAdjust();
@@ -2868,12 +2866,6 @@ TR::Node *pdcleanSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier *
       }
 
    node->setHasKnownCleanSign(true);
-   return node;
-   }
-
-TR::Node *pdexpSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
-   {
-   simplifyChildren(node, block, s);
    return node;
    }
 

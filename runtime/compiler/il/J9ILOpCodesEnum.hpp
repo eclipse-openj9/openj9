@@ -419,8 +419,6 @@
 
    pdshrSetSign,        // packed decimal shift right and set the sign code
    pdshlSetSign,        // packed decimal shift left and set the sign code
-   pdshrPreserveSign,   // packed decimal shift right and preserve the source sign code
-   pdshlPreserveSign,   // packed decimal shift left and preserve the source sign code
    pdshlOverflow,       // packed decimal shift left with overflow detection
    pdchk,               // packed decimal validity checking
 
@@ -446,20 +444,11 @@
    pdcmpgt,   // packed decimal compare if greater than
    pdcmple,   // packed decimal compare if less than or equal
 
-   pdcheck,    // check the validity of a packed decimal number's digits, sign code and top nibble
-   pdfix,      // set the sign code to the preferred sign code
-
    pdclean,       // set the sign code to the preferred sign code and force 0 to the positive sign code
-
-   pdexp,        // exponentiation of a packed decimal base to a packed decimal or signed integral exponent
-   pduexp,       // exponentiation of a packed decimal base to a packed decimal or unsigned integral exponent
-
    pdclear,          // clear the specified range of packed decimal digits
    pdclearSetSign,   // clear the specified range of packed decimal digits and set the sign to the specified value
 
    pdSetSign,      // packed decimal forced sign code setting
-
-   pddivrem,            // packed decimal fused divide and remainder
 
    pdModifyPrecision,      // packed decimal modify precision
 

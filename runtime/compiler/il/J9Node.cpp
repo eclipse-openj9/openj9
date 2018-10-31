@@ -870,7 +870,6 @@ J9::Node::getStorageReferenceSize()
             break;
          case TR::pddiv:
          case TR::pdrem:
-         case TR::pddivrem:
             size = comp->cg()->getPDDivEncodedSize(self());
             break;
          case TR::ud2pd:

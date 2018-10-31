@@ -6805,12 +6805,11 @@ J9::Z::TreeEvaluator::pdmulEvaluatorHelper(TR::Node * node, TR::CodeGenerator * 
    }
 
 /**
- * Handles pddiv, pdrem and pddivrem.
+ * Handles pddiv, and pdrem.
  */
 TR::Register *
 J9::Z::TreeEvaluator::pddivremEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   cg->traceBCDEntry("pddivrem",node);
    cg->generateDebugCounter(TR::DebugCounter::debugCounterName(cg->comp(), "PD-Op/%s", node->getOpCode().getName()),
                             1, TR::DebugCounter::Cheap);
    TR::Register * reg = NULL;
@@ -6825,12 +6824,11 @@ J9::Z::TreeEvaluator::pddivremEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       reg = pddivremEvaluatorHelper(node, cg);
       }
 
-   cg->traceBCDExit("pddivrem",node);
    return reg;
    }
 
 /**
- * Handles pddiv, pdrem and pddivrem. This is the vector evaluator helper function.
+ * Handles pddiv, and pdrem. This is the vector evaluator helper function.
  */
 TR::Register *
 J9::Z::TreeEvaluator::pddivremVectorEvaluatorHelper(TR::Node * node, TR::CodeGenerator * cg)
@@ -6845,12 +6843,8 @@ J9::Z::TreeEvaluator::pddivremVectorEvaluatorHelper(TR::Node * node, TR::CodeGen
       case TR::pdrem:
          opCode = TR::InstOpCode::VRP;
          break;
-      case TR::pddivrem:
-         // TR::divrem is not generated from DAA opetimization
-         TR_ASSERT(0, "Unexpected divrem opcode in pddivremVectorEvaluatorHelper");
-         break;
       default:
-         TR_ASSERT(0, "Unexpected opcode in pddivremVectorEvaluatorHelper");
+         TR_ASSERT(0, "Unexpected opcode in pddiv/remVectorEvaluatorHelper");
          break;
       }
 
@@ -6859,14 +6853,14 @@ J9::Z::TreeEvaluator::pddivremVectorEvaluatorHelper(TR::Node * node, TR::CodeGen
    }
 
 /**
- * Handles pddiv, pdrem and pddivrem. This is the non-vector evaluator helper function.
+ * Handles pddiv, and pdrem. This is the non-vector evaluator helper function.
  */
 TR::Register *
 J9::Z::TreeEvaluator::pddivremEvaluatorHelper(TR::Node * node, TR::CodeGenerator * cg)
    {
-   TR_ASSERT( node->getOpCodeValue() == TR::pddiv || node->getOpCodeValue() == TR::pdrem || node->getOpCodeValue() == TR::pddivrem,"pddivEvaluator only valid for pddiv/pdrem/pddivrem\n");
+   TR_ASSERT( node->getOpCodeValue() == TR::pddiv || node->getOpCodeValue() == TR::pdrem,
+              "pddivEvaluator only valid for pddiv/pdrem\n");
 
-   bool isFused = (node->getOpCodeValue() == TR::pddivrem);
    TR::Node *firstChild = node->getFirstChild();
    TR::Node *secondChild = node->getSecondChild();
    TR::Compilation *comp = cg->comp();
@@ -6894,26 +6888,11 @@ J9::Z::TreeEvaluator::pddivremEvaluatorHelper(TR::Node * node, TR::CodeGenerator
    int32_t divisorSize = 0;
    int32_t dividendSizeBumpForClear = 0;
    TR::MemoryReference *divisorMR = NULL;
-   if (isFused)
-      {
-      if (firstChild->getSize() > firstReg->getSize())
-         {
-         // if the first child is a pass through widening op then have to clear this range as well
-         dividendSizeBumpForClear = firstChild->getSize() - firstReg->getSize();
-         if (cg->traceBCDCodeGen())
-            traceMsg(cg->comp(),"\tfirstChildSize %d > firstRegSize %d in fused case : set dividendSizeBumpForClear = firstChildSize - firstRegSize = %d\n",
-               firstChild->getSize(),firstReg->getSize(),dividendSizeBumpForClear);
-         }
-      divisorMR = cg->materializeFullBCDValue(secondChild, secondReg, secondChild->getSize());
-      dividendPrecision = cg->getPDDivEncodedPrecision(node);
-      divisorSize = secondChild->getSize();
-      }
-   else
-      {
-      divisorMR = generateS390RightAlignedMemoryReference(secondChild, secondReg->getStorageReference(), cg);
-      dividendPrecision = cg->getPDDivEncodedPrecision(node, firstReg, secondReg);
-      divisorSize = secondReg->getSize();
-      }
+
+   divisorMR = generateS390RightAlignedMemoryReference(secondChild, secondReg->getStorageReference(), cg);
+   dividendPrecision = cg->getPDDivEncodedPrecision(node, firstReg, secondReg);
+   divisorSize = secondReg->getSize();
+
    targetReg->setDecimalPrecision(dividendPrecision);
    int32_t dividendSize = targetReg->getSize();
    TR_ASSERT( dividendSize <= node->getStorageReferenceSize(),"allocated symbol for pddiv/pdrem is too small\n");
@@ -6926,111 +6905,96 @@ J9::Z::TreeEvaluator::pddivremEvaluatorHelper(TR::Node * node, TR::CodeGenerator
    cg->correctBadSign(firstChild, firstReg, targetReg->getSize(), destMR);
    cg->correctBadSign(secondChild, secondReg, secondReg->getSize(), divisorMR);
 
-   TR::Instruction * cursor =
-      generateSS2Instruction(cg, TR::InstOpCode::DP, node,
-                             dividendSize-1,
-                             generateS390RightAlignedMemoryReference(*destMR, node, 0, cg),
-                             divisorSize-1,
-                             generateS390RightAlignedMemoryReference(*divisorMR, node, 0, cg));
+   generateSS2Instruction(cg, TR::InstOpCode::DP, node,
+                          dividendSize-1,
+                          generateS390RightAlignedMemoryReference(*destMR, node, 0, cg),
+                          divisorSize-1,
+                          generateS390RightAlignedMemoryReference(*divisorMR, node, 0, cg));
 
    targetReg->setHasKnownValidSignAndData();
 
-   if (isFused)
+   bool isRem = node->getOpCodeValue() == TR::pdrem;
+   int32_t deadBytes = 0;
+   bool isTruncation = false;
+   if (isRem)
       {
-      int32_t resultPrecision = TR::DataType::byteLengthToPackedDecimalPrecisionCeiling(dividendSize);
-      if (firstReg->isEvenPrecision())
-         {
-         if (cg->traceBCDCodeGen())
-            traceMsg(comp,"\tfirstRegPrec (%d) isEven=true so reduce resultPrecision %d->%d\n",firstReg->getDecimalPrecision(),resultPrecision,resultPrecision-1);
-         resultPrecision--;
-         }
-      targetReg->removeRangeOfZeroDigits(0, resultPrecision);
+      targetReg->setDecimalPrecision(secondReg->getDecimalPrecision());
+      isTruncation = node->getDecimalPrecision() < targetReg->getDecimalPrecision();
+      if (cg->traceBCDCodeGen())
+         traceMsg(comp,"\tpdrem: setting targetReg prec to divisor prec %d (node prec is %d), isTruncation=%s\n",
+            secondReg->getDecimalPrecision(),node->getDecimalPrecision(),isTruncation?"yes":"no");
+      targetReg->removeRangeOfZeroDigits(0, TR::DataType::byteLengthToPackedDecimalPrecisionCeiling(dividendSize));
       }
    else
       {
-      bool isRem = node->getOpCodeValue() == TR::pdrem;
-      int32_t deadBytes = 0;
-      bool isTruncation = false;
-      if (isRem)
+      deadBytes = divisorSize;
+      // computedQuotientPrecision is the size of the quotient as computed by the DP instruction.
+      // The actual returned node precision may be less.
+      int32_t computedQuotientPrecision = TR::DataType::byteLengthToPackedDecimalPrecisionCeiling(dividendSize - deadBytes);
+      if (firstReg->isEvenPrecision())
          {
-         targetReg->setDecimalPrecision(secondReg->getDecimalPrecision());
-         isTruncation = node->getDecimalPrecision() < targetReg->getDecimalPrecision();
          if (cg->traceBCDCodeGen())
-            traceMsg(comp,"\tpdrem: setting targetReg prec to divisor prec %d (node prec is %d), isTruncation=%s\n",
-               secondReg->getDecimalPrecision(),node->getDecimalPrecision(),isTruncation?"yes":"no");
-         targetReg->removeRangeOfZeroDigits(0, TR::DataType::byteLengthToPackedDecimalPrecisionCeiling(dividendSize));
+            traceMsg(comp,"\tfirstRegPrec (%d) isEven=true so reduce computedQuotientPrecision %d->%d\n",firstReg->getDecimalPrecision(),computedQuotientPrecision,computedQuotientPrecision-1);
+         computedQuotientPrecision--;
          }
-      else
+      isTruncation = node->getDecimalPrecision() < computedQuotientPrecision;
+      int32_t resultQuotientPrecision = std::min<int32_t>(computedQuotientPrecision, node->getDecimalPrecision());
+      targetReg->setDecimalPrecision(resultQuotientPrecision);
+      targetReg->addToRightAlignedDeadBytes(deadBytes);
+      if (cg->traceBCDCodeGen())
          {
-         deadBytes = divisorSize;
-         // computedQuotientPrecision is the size of the quotient as computed by the DP instruction.
-         // The actual returned node precision may be less.
-         int32_t computedQuotientPrecision = TR::DataType::byteLengthToPackedDecimalPrecisionCeiling(dividendSize - deadBytes);
-         if (firstReg->isEvenPrecision())
+         traceMsg(comp,"\tisDiv=true (pddivrem) : increment targetReg %s deadBytes %d -> %d (by the divisorSize)\n",
+            cg->getDebug()->getName(targetReg),targetReg->getRightAlignedDeadBytes()-deadBytes,targetReg->getRightAlignedDeadBytes());
+         traceMsg(comp,"\tsetting targetReg prec to min(computedQuotPrec, nodePrec) = min(%d, %d) = %d (size %d), isTruncation=%s\n",
+            computedQuotientPrecision,node->getDecimalPrecision(),resultQuotientPrecision,targetReg->getSize(),isTruncation?"yes":"no");
+         }
+      targetReg->removeRangeOfZeroDigits(0, computedQuotientPrecision);
+      }
+
+   if (!node->canSkipPadByteClearing() && targetReg->isEvenPrecision() && isTruncation)
+      {
+      TR_ASSERT( node->getStorageReferenceSize() >= dividendSize,"operand size should only shrink from original size\n");
+      int32_t leftMostByte = targetReg->getSize();
+      if (cg->traceBCDCodeGen())
+         traceMsg(comp,"\t%s: generating NI to clear top nibble with leftMostByte = targetReg->getSize() = %d\n",isRem ? "pdrem":"pddiv",targetReg->getSize());
+      cg->genZeroLeftMostPackedDigits(node, targetReg, leftMostByte, 1, generateS390RightAlignedMemoryReference(*destMR, node, -deadBytes, cg));
+      }
+
+   targetReg->setHasKnownPreferredSign();
+   if (isRem)
+      {
+      // sign of the remainder is the same as the sign of dividend (and then set to the preferred sign by the DP instruction)
+      if (firstReg->hasKnownOrAssumedSignCode())
+         {
+         targetReg->setKnownSignCode(firstReg->hasKnownOrAssumedPositiveSignCode() ? TR::DataType::getPreferredPlusCode() : TR::DataType::getPreferredMinusCode());
+         if (cg->traceBCDCodeGen())
+            traceMsg(comp,"\tpdrem: firstReg has the knownSignCode 0x%x so set targetReg sign code to the preferred sign 0x%x\n",
+               firstReg->getKnownOrAssumedSignCode(),targetReg->getKnownOrAssumedSignCode());
+         }
+      }
+   else
+      {
+      // when the sign of the divisor and divident are different then the quotient sign is negative otherwise if the signs are the same then the
+      // quotient sign is positive
+      if (firstReg->hasKnownOrAssumedSignCode() && secondReg->hasKnownOrAssumedSignCode())
+         {
+         bool dividendSignIsPositive = firstReg->hasKnownOrAssumedPositiveSignCode();
+         bool dividendSignIsNegative = !dividendSignIsPositive;
+         bool divisorSignIsPositive = secondReg->hasKnownOrAssumedPositiveSignCode();
+         bool divisorSignIsNegative = !divisorSignIsPositive;
+
+         if ((dividendSignIsPositive && divisorSignIsPositive) ||
+             (dividendSignIsNegative && divisorSignIsNegative))
             {
+            targetReg->setKnownSignCode(TR::DataType::getPreferredPlusCode());
             if (cg->traceBCDCodeGen())
-               traceMsg(comp,"\tfirstRegPrec (%d) isEven=true so reduce computedQuotientPrecision %d->%d\n",firstReg->getDecimalPrecision(),computedQuotientPrecision,computedQuotientPrecision-1);
-            computedQuotientPrecision--;
+               traceMsg(comp,"\tpddiv: dividendSign matches the divisorSign so set targetReg sign code to the preferred sign 0x%x\n", TR::DataType::getPreferredPlusCode());
             }
-         isTruncation = node->getDecimalPrecision() < computedQuotientPrecision;
-         int32_t resultQuotientPrecision = std::min<int32_t>(computedQuotientPrecision, node->getDecimalPrecision());
-         targetReg->setDecimalPrecision(resultQuotientPrecision);
-         targetReg->addToRightAlignedDeadBytes(deadBytes);
-         if (cg->traceBCDCodeGen())
+         else
             {
-            traceMsg(comp,"\tisDiv=true (pddivrem) : increment targetReg %s deadBytes %d -> %d (by the divisorSize)\n",
-               cg->getDebug()->getName(targetReg),targetReg->getRightAlignedDeadBytes()-deadBytes,targetReg->getRightAlignedDeadBytes());
-            traceMsg(comp,"\tsetting targetReg prec to min(computedQuotPrec, nodePrec) = min(%d, %d) = %d (size %d), isTruncation=%s\n",
-               computedQuotientPrecision,node->getDecimalPrecision(),resultQuotientPrecision,targetReg->getSize(),isTruncation?"yes":"no");
-            }
-         targetReg->removeRangeOfZeroDigits(0, computedQuotientPrecision);
-         }
-
-      if (!node->canSkipPadByteClearing() && targetReg->isEvenPrecision() && isTruncation)
-         {
-         TR_ASSERT( node->getStorageReferenceSize() >= dividendSize,"operand size should only shrink from original size\n");
-         int32_t leftMostByte = targetReg->getSize();
-         if (cg->traceBCDCodeGen())
-            traceMsg(comp,"\t%s: generating NI to clear top nibble with leftMostByte = targetReg->getSize() = %d\n",isRem ? "pdrem":"pddiv",targetReg->getSize());
-         cg->genZeroLeftMostPackedDigits(node, targetReg, leftMostByte, 1, generateS390RightAlignedMemoryReference(*destMR, node, -deadBytes, cg));
-         }
-
-      targetReg->setHasKnownPreferredSign();
-      if (isRem)
-         {
-         // sign of the remainder is the same as the sign of dividend (and then set to the preferred sign by the DP instruction)
-         if (firstReg->hasKnownOrAssumedSignCode())
-            {
-            targetReg->setKnownSignCode(firstReg->hasKnownOrAssumedPositiveSignCode() ? TR::DataType::getPreferredPlusCode() : TR::DataType::getPreferredMinusCode());
+            targetReg->setKnownSignCode(TR::DataType::getPreferredMinusCode());
             if (cg->traceBCDCodeGen())
-               traceMsg(comp,"\tpdrem: firstReg has the knownSignCode 0x%x so set targetReg sign code to the preferred sign 0x%x\n",
-                  firstReg->getKnownOrAssumedSignCode(),targetReg->getKnownOrAssumedSignCode());
-            }
-         }
-      else
-         {
-         // when the sign of the divisor and divident are different then the quotient sign is negative otherwise if the signs are the same then the
-         // quotient sign is positive
-         if (firstReg->hasKnownOrAssumedSignCode() && secondReg->hasKnownOrAssumedSignCode())
-            {
-            bool dividendSignIsPositive = firstReg->hasKnownOrAssumedPositiveSignCode();
-            bool dividendSignIsNegative = !dividendSignIsPositive;
-            bool divisorSignIsPositive = secondReg->hasKnownOrAssumedPositiveSignCode();
-            bool divisorSignIsNegative = !divisorSignIsPositive;
-
-            if ((dividendSignIsPositive && divisorSignIsPositive) ||
-                (dividendSignIsNegative && divisorSignIsNegative))
-               {
-               targetReg->setKnownSignCode(TR::DataType::getPreferredPlusCode());
-               if (cg->traceBCDCodeGen())
-                  traceMsg(comp,"\tpddiv: dividendSign matches the divisorSign so set targetReg sign code to the preferred sign 0x%x\n", TR::DataType::getPreferredPlusCode());
-               }
-            else
-               {
-               targetReg->setKnownSignCode(TR::DataType::getPreferredMinusCode());
-               if (cg->traceBCDCodeGen())
-                  traceMsg(comp,"\tpddiv: dividendSign does not match the divisorSign so set targetReg sign code to the preferred sign 0x%x\n", TR::DataType::getPreferredMinusCode());
-               }
+               traceMsg(comp,"\tpddiv: dividendSign does not match the divisorSign so set targetReg sign code to the preferred sign 0x%x\n", TR::DataType::getPreferredMinusCode());
             }
          }
       }

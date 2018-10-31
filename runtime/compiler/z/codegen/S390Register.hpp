@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -192,8 +192,7 @@ class TR_OpaquePseudoRegister : public TR::Register
                                              // that have no particular sign state (loads for example)
                                              // SignStateInitialized=true does not imply that any valid or known sign state has to be set so HasKnownBadSignCode=true
                                              // *does* imply SignStateInitialized=true
-      PreserveSign                  = 0x400, // set by TR::pdshrPreserveSign and TR::pdshlPreserveSign
-      HasTemporaryKnownSignCode     = 0x800, // to improve code generation for zoned leading separate sign to x conversions a zone value (0xf) can be temporarily set on the register
+      HasTemporaryKnownSignCode     = 0x400, // to improve code generation for zoned leading separate sign to x conversions a zone value (0xf) can be temporarily set on the register
 
       // NOTE: _flags is defined as flags16_t so this type must be widened if new flags are to be added
       };
@@ -613,12 +612,6 @@ class TR_PseudoRegister : public TR_OpaquePseudoRegister
       _flags.set(SignStateInitialized, true);
       }
 
-   bool preserveSign()                        { return _flags.testAny(PreserveSign); }
-   void setPreserveSign(bool b = true)
-      {
-      _flags.set(PreserveSign, b);
-      }
-
    bool hasTemporaryKnownSignCode()                        { return _flags.testAny(HasTemporaryKnownSignCode); }
    int32_t  getTemporaryKnownSignCode()
       {
@@ -657,10 +650,8 @@ class TR_PseudoRegister : public TR_OpaquePseudoRegister
       // and in the process clobbing a known unsigned sign code or an optimizer (e.g. PRE) generated load that
       // could contain some known unsigned sign code that must not be clobbered.
       //
-      // preserveSign is a special setting currently only used pdshxPreserveSign nodes
       return signStateInitialized() &&
-             !knownOrAssumedSignCodeIs(TR::DataType::getUnsignedCode()) &&
-             !preserveSign();
+             !knownOrAssumedSignCodeIs(TR::DataType::getUnsignedCode());
       }
 
    // Transfer Sign/Data -- start
@@ -672,9 +663,6 @@ class TR_PseudoRegister : public TR_OpaquePseudoRegister
 
       if (srcReg->hasKnownBadSignCode())
          _flags.set(HasKnownBadSignCode, true);
-
-      if (srcReg->preserveSign())
-         _flags.set(PreserveSign, true);
 
       if (srcReg->signStateInitialized())
          _flags.set(SignStateInitialized, true);
