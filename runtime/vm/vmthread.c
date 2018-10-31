@@ -212,11 +212,11 @@ allocateVMThread(J9JavaVM * vm, omrthread_t osThread, UDATA privateFlags, void *
 
 #ifdef OMR_GC_CONCURRENT_SCAVENGER
 	/* Initialize fields used by Concurrent Scavenger */
-	newThread->evacuateBase = UDATA_MAX;
-	newThread->evacuateTop = 0;
+	newThread->readBarrierRangeCheckBase = UDATA_MAX;
+	newThread->readBarrierRangeCheckTop = 0;
 #ifdef J9VM_GC_COMPRESSED_POINTERS
-	newThread->evacuateBaseCompressed = U_32_MAX;
-	newThread->evacuateTopCompressed = 0;
+	newThread->readBarrierRangeCheckBaseCompressed = U_32_MAX;
+	newThread->readBarrierRangeCheckTopCompressed = 0;
 #endif /* J9VM_GC_COMPRESSED_POINTERS */
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
