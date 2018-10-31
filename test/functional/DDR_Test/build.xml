@@ -99,14 +99,16 @@
 	</target>
 
 	<!-- Temporarily disable compilation on zos and aix until ddr is supported; github.com/eclipse/openj9/issues/1511 -->
+	<!-- Temporarily disable compilation osx until ddr is supported; github.com/eclipse/openj9/issues/3366 -->
 	<target name="build" >
+		<echo>os.name:	${os.name}</echo>
 		<if>
 			<and>
 				<not>
 					<equals arg1="${os.name}" arg2="z/OS" />
 				</not>
 				<not>
-					<matches string="${os.name}" pattern="AIX" />
+					<matches string="${os.name}" pattern="AIX|(Mac OS X)" />
 				</not>
 			</and>
 			<then>

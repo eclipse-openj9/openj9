@@ -54,7 +54,8 @@
 	-Dtest.list=$(Q)TestDDRExtensionGeneral$(Q) -DADDITIONALEXPORTS=-showversion -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
 		<!-- temporarily disable this test on AIX, z/OS; github.com/eclipse/openj9/issues/1511 -->
-		<platformRequirements>^os.aix,^os.zos,^os.win</platformRequirements>
+		<!-- temporarily disable this test on osx; github.com/eclipse/openj9/issues/3366 -->
+		<platformRequirements>^os.aix,^os.zos,^os.win,^os.osx</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
