@@ -39,6 +39,7 @@ jvmtiGetStackTrace(jvmtiEnv* env,
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc;
 	J9VMThread * currentThread;
+	jint rv_count = 0;
 
 	Trc_JVMTI_jvmtiGetStackTrace_Entry(env);
 
@@ -58,7 +59,7 @@ jvmtiGetStackTrace(jvmtiEnv* env,
 		if (rc == JVMTI_ERROR_NONE) {
 			vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
 
-			rc = jvmtiInternalGetStackTrace(env, currentThread, targetThread, start_depth, (UDATA) max_frame_count, frame_buffer, count_ptr);
+			rc = jvmtiInternalGetStackTrace(env, currentThread, targetThread, start_depth, (UDATA) max_frame_count, frame_buffer, &rv_count);
 
 			vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
 			releaseVMThread(currentThread, targetThread);
@@ -67,6 +68,9 @@ done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != count_ptr) {
+		*count_ptr = rv_count;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetStackTrace);
 }
 
@@ -81,6 +85,8 @@ jvmtiGetAllStackTraces(jvmtiEnv* env,
 	jvmtiError rc;
 	J9VMThread * currentThread;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	jvmtiStackInfo *rv_stack_info = NULL;
+	jint rv_thread_count = 0;
 
 	Trc_JVMTI_jvmtiGetAllStackTraces_Entry(env);
 
@@ -136,8 +142,8 @@ jvmtiGetAllStackTraces(jvmtiEnv* env,
 				}
 			} while ((targetThread = targetThread->linkNext) != vm->mainThread);
 
-			*stack_info_ptr = stackInfo;
-			*thread_count_ptr = (jint) threadCount;
+			rv_stack_info = stackInfo;
+			rv_thread_count = (jint) threadCount;
 		}
 fail:
 		vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
@@ -146,6 +152,12 @@ done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != stack_info_ptr) {
+		*stack_info_ptr = rv_stack_info;
+	}
+	if (NULL != thread_count_ptr) {
+		*thread_count_ptr = rv_thread_count;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetAllStackTraces);
 }
 
@@ -161,6 +173,7 @@ jvmtiGetThreadListStackTraces(jvmtiEnv* env,
 	jvmtiError rc;
 	J9VMThread * currentThread;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	jvmtiStackInfo *rv_stack_info = NULL;
 
 	Trc_JVMTI_jvmtiGetThreadListStackTraces_Entry(env);
 
@@ -229,7 +242,7 @@ deallocate:
 				currentFrameInfo += max_frame_count;
 			}
 
-			*stack_info_ptr = stackInfo;
+			rv_stack_info = stackInfo;
 		}
 fail:
 		vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
@@ -238,6 +251,9 @@ done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != stack_info_ptr) {
+		*stack_info_ptr = rv_stack_info;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetThreadListStackTraces);
 }
 
@@ -250,6 +266,7 @@ jvmtiGetFrameCount(jvmtiEnv* env,
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc;
 	J9VMThread * currentThread;
+	jint rv_count = 0;
 
 	Trc_JVMTI_jvmtiGetFrameCount_Entry(env);
 
@@ -273,7 +290,7 @@ jvmtiGetFrameCount(jvmtiEnv* env,
 			walkState.flags = J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_VISIBLE_ONLY;
 			walkState.skipCount = 0;
 			vm->walkStackFrames(currentThread, &walkState);
-			*count_ptr = (jint) walkState.framesWalked;
+			rv_count = (jint) walkState.framesWalked;
 
 			vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
 			releaseVMThread(currentThread, targetThread);
@@ -282,6 +299,9 @@ done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != count_ptr) {
+		*count_ptr = rv_count;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetFrameCount);
 }
 
@@ -355,6 +375,8 @@ jvmtiGetFrameLocation(jvmtiEnv* env,
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc;
 	J9VMThread * currentThread;
+	jmethodID rv_method = NULL;
+	jlocation rv_location = 0;
 
 	Trc_JVMTI_jvmtiGetFrameLocation_Entry(env);
 
@@ -387,9 +409,9 @@ jvmtiGetFrameLocation(jvmtiEnv* env,
 				if (methodID == NULL) {
 					rc = JVMTI_ERROR_OUT_OF_MEMORY;
 				} else {
-					*method_ptr = methodID;
+					rv_method = methodID;
 					/* The location = -1 for native method case is handled in the stack walker */
-					*location_ptr = (jlocation) walkState.bytecodePCOffset;
+					rv_location = (jlocation) walkState.bytecodePCOffset;
 				}
 			} else {
 				rc = JVMTI_ERROR_NO_MORE_FRAMES;
@@ -402,6 +424,12 @@ done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != method_ptr) {
+		*method_ptr = rv_method;
+	}
+	if (NULL != location_ptr) {
+		*location_ptr = rv_location;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetFrameLocation);
 }
 

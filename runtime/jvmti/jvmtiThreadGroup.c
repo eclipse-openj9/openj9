@@ -29,6 +29,8 @@ jvmtiGetTopThreadGroups(jvmtiEnv* env,
 	jthreadGroup** groups_ptr)
 {
 	jvmtiError rc;
+	jint rv_group_count = 0;
+	jthreadGroup *rv_groups = NULL;
 
 	Trc_JVMTI_jvmtiGetTopThreadGroups_Entry(env);
 
@@ -55,19 +57,25 @@ jvmtiGetTopThreadGroups(jvmtiEnv* env,
 				rc = JVMTI_ERROR_OUT_OF_MEMORY;
 			} else {
 				*groups = (jthreadGroup) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, *(vm->systemThreadGroupRef));
-				*group_count_ptr = 1;
-				*groups_ptr = groups;
+				rv_group_count = 1;
+				rv_groups = groups;
 			}
 done:
 			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 
 		}
 	} else {
-		*group_count_ptr = 0;
-		*groups_ptr = NULL;
+		rv_group_count = 0;
+		rv_groups = NULL;
 		rc = JVMTI_ERROR_NONE;
 	}
 
+	if (NULL != group_count_ptr) {
+		*group_count_ptr = rv_group_count;
+	}
+	if (NULL != groups_ptr) {
+		*groups_ptr = rv_groups;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetTopThreadGroups);
 }
 
@@ -78,8 +86,10 @@ jvmtiGetThreadGroupInfo(jvmtiEnv* env,
 	jvmtiThreadGroupInfo* info_ptr)
 {
 	jvmtiError rc = JVMTI_ERROR_INVALID_THREAD_GROUP;
-
-	Trc_JVMTI_jvmtiGetThreadGroupInfo_Entry(env);
+	jthreadGroup rv_parent = NULL;
+	char *rv_name = NULL;
+	jint rv_max_priority = 0;
+	jboolean rv_is_daemon = JNI_FALSE;
 
 	if (JAVAVM_FROM_ENV(env)->jclFlags & J9_JCL_FLAG_THREADGROUPS) {
 		J9JavaVM * vm = JAVAVM_FROM_ENV(env);
@@ -106,16 +116,22 @@ jvmtiGetThreadGroupInfo(jvmtiEnv* env,
 			if (NULL == name) {
 				rc = JVMTI_ERROR_OUT_OF_MEMORY;
 			} else {
-				info_ptr->name = name;
-				info_ptr->parent = (jthreadGroup) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, (j9object_t)J9VMJAVALANGTHREADGROUP_PARENT(currentThread, threadGroupObject));
-				info_ptr->max_priority = J9VMJAVALANGTHREADGROUP_MAXPRIORITY(currentThread, threadGroupObject);
-				info_ptr->is_daemon = (jboolean)J9VMJAVALANGTHREADGROUP_ISDAEMON(currentThread, threadGroupObject);
+				rv_name = name;
+				rv_parent = (jthreadGroup) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, (j9object_t)J9VMJAVALANGTHREADGROUP_PARENT(currentThread, threadGroupObject));
+				rv_max_priority = J9VMJAVALANGTHREADGROUP_MAXPRIORITY(currentThread, threadGroupObject);
+				rv_is_daemon = (jboolean)J9VMJAVALANGTHREADGROUP_ISDAEMON(currentThread, threadGroupObject);
 			}
 done:
 			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 		}
 	}
 
+	if (NULL != info_ptr) {
+		info_ptr->parent = rv_parent;
+		info_ptr->name = rv_name;
+		info_ptr->max_priority = rv_max_priority;
+		info_ptr->is_daemon = rv_is_daemon;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetThreadGroupInfo);
 }
 
@@ -129,6 +145,10 @@ jvmtiGetThreadGroupChildren(jvmtiEnv* env,
 	jthreadGroup** groups_ptr)
 {
 	jvmtiError rc = JVMTI_ERROR_INVALID_THREAD_GROUP;
+	jint rv_thread_count = 0;
+	jthread *rv_threads = NULL;
+	jint rv_group_count = 0;
+	jthreadGroup *rv_groups = NULL;
 
 	Trc_JVMTI_jvmtiGetThreadGroupChildren_Entry(env);
 
@@ -224,10 +244,10 @@ jvmtiGetThreadGroupChildren(jvmtiEnv* env,
 					}
 				}
 
-				*thread_count_ptr = numLiveThreads;
-				*threads_ptr = threads;
-				*group_count_ptr = numGroups;
-				*groups_ptr = groups; 
+				rv_thread_count = numLiveThreads;
+				rv_threads = threads;
+				rv_group_count = numGroups;
+				rv_groups = groups; 
 			}
 
 			currentThread->javaVM->internalVMFunctions->objectMonitorExit(currentThread, childrenThreadsLock);
@@ -237,6 +257,18 @@ done:
 		}
 	}
 
+	if (NULL != thread_count_ptr) {
+		*thread_count_ptr = rv_thread_count;
+	}
+	if (NULL != threads_ptr) {
+		*threads_ptr = rv_threads;
+	}
+	if (NULL != group_count_ptr) {
+		*group_count_ptr = rv_group_count;
+	}
+	if (NULL != groups_ptr) {
+		*groups_ptr = rv_groups;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetThreadGroupChildren);
 }
 
