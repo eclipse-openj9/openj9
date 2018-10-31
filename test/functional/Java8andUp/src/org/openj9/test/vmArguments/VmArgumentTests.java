@@ -49,7 +49,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import org.openj9.test.util.FileUtilities;
 import org.openj9.test.util.HelloWorld;
@@ -65,6 +64,8 @@ import org.testng.log4testng.Logger;
  */
 @Test(groups = { "level.extended" })
 public class VmArgumentTests {
+	private static final String SHOULD_COME_AFTER = " should come after "; //$NON-NLS-1$
+	private static final String MISSING_ARGUMENT = "missing argument: "; //$NON-NLS-1$
 	private static final String NOT_ALL_OOM_TYPES_ENABLED_WITH = "Not all OOM types enabled with "; //$NON-NLS-1$
 	private static final String SOME_OOM_TYPES_ENABLED_WITH = "Some OOM types enabled with "; //$NON-NLS-1$
 	private static final String XX_HEAP_DUMP_ON_OOM = "-XX:+HeapDumpOnOutOfMemoryError"; //$NON-NLS-1$
@@ -88,8 +89,9 @@ public class VmArgumentTests {
 	private static final String XPROD = "-Xprod";
 	private static final String HELLO_WORLD_SCRIPT = "#!/bin/sh\n"+ "echo hello, world\n";
 
-	private static final String IBM_JAVA_OPTIONS = "IBM_JAVA_OPTIONS";
-	private static final String JAVA_TOOL_OPTIONS = "JAVA_TOOL_OPTIONS";
+	private static final String IBM_JAVA_OPTIONS = "IBM_JAVA_OPTIONS"; //$NON-NLS-1$
+	private static final String JAVA_TOOL_OPTIONS = "JAVA_TOOL_OPTIONS"; //$NON-NLS-1$
+	private static final String OPENJ9_JAVA_OPTIONS = "OPENJ9_JAVA_OPTIONS"; //$NON-NLS-1$
 	private static final String ENV_LD_LIBRARY_PATH = "LD_LIBRARY_PATH";
 	private static final String ENV_LIBPATH = "LIBPATH";
 	private static final String DJAVA_HOME = "-Djava.home";
@@ -332,6 +334,21 @@ public class VmArgumentTests {
 		assertTrue(IBM_JAVA_OPTIONS+ " should come last", argumentPositions.get(ibmJavaOptionsArg).intValue() > argumentPositions.get(DJAVA_HOME).intValue());
 	}
 
+	/* test OPENJ9_JAVA_OPTIONS environment variableS */
+	@Test
+	public void testOpenJ9Options() {
+		ProcessBuilder pb = makeProcessBuilder(new String[] {}, CLASSPATH);
+		Map<String, String> env = pb.environment();
+		String openJ9JavaOptionsArg = "-Dtest.name=testOpenJ9Options"; //$NON-NLS-1$
+		env.put(OPENJ9_JAVA_OPTIONS, openJ9JavaOptionsArg);
+		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
+		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, new String[] {openJ9JavaOptionsArg});
+		assertTrue(MISSING_ARGUMENT+openJ9JavaOptionsArg, argumentPositions.containsKey(openJ9JavaOptionsArg));
+		/* environment variables should come after implicit arguments */
+		assertTrue(OPENJ9_JAVA_OPTIONS+ SHOULD_COME_AFTER+DJAVA_HOME, 
+				argumentPositions.get(openJ9JavaOptionsArg).intValue() > argumentPositions.get(DJAVA_HOME).intValue()); 
+	}
+
 
 	/* this test does not apply to OpenJ9 as OpenJ9 is default compressedrefs and nocompressedrefs is not available */
 	@Test
@@ -402,7 +419,6 @@ public class VmArgumentTests {
 		assertTrue(JAVA_TOOL_OPTIONS+ " should come last", argumentPositions.get(javaToolOptionsArg).intValue() > argumentPositions.get(DJAVA_HOME).intValue());
 	}
 
-	/* test JAVA_TOOL_OPTIONS environment variable */
 	@Test
 	public void testOptionsWithLeadingSpacesInEnvVars() {
 		ArrayList<String> actualArguments = null;
@@ -657,13 +673,23 @@ public class VmArgumentTests {
 		Map<String, String> env = pb.environment();
 		String javaToolOptionsArg = "-Dtest.name1=javaToolOptionsArg";
 		String ibmJavaOptionsArg = "-Dtest.name2=ibmJavaOptionsArg";
+		String openJ9JavaOptionsArg = "-Dtest.name2=openJ9JavaOptionsArg";
 		env.put(JAVA_TOOL_OPTIONS, javaToolOptionsArg);
 		env.put(IBM_JAVA_OPTIONS, ibmJavaOptionsArg);
+		env.put(OPENJ9_JAVA_OPTIONS, openJ9JavaOptionsArg);
 		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, new String[] {ibmJavaOptionsArg, javaToolOptionsArg});
-		assertTrue("missing argument: "+ibmJavaOptionsArg, argumentPositions.containsKey(ibmJavaOptionsArg));
-		assertTrue("missing argument: "+javaToolOptionsArg, argumentPositions.containsKey(javaToolOptionsArg));
-		assertTrue(IBM_JAVA_OPTIONS+ " should come after "+JAVA_TOOL_OPTIONS, argumentPositions.get(ibmJavaOptionsArg).intValue() > argumentPositions.get(javaToolOptionsArg).intValue());
+		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, 
+				new String[] {ibmJavaOptionsArg, javaToolOptionsArg, openJ9JavaOptionsArg});
+		assertTrue(MISSING_ARGUMENT+ibmJavaOptionsArg, 
+				argumentPositions.containsKey(ibmJavaOptionsArg));
+		assertTrue(MISSING_ARGUMENT+javaToolOptionsArg, 
+				argumentPositions.containsKey(javaToolOptionsArg));
+		assertTrue(MISSING_ARGUMENT+openJ9JavaOptionsArg, 
+				argumentPositions.containsKey(openJ9JavaOptionsArg));
+		assertTrue(IBM_JAVA_OPTIONS+ SHOULD_COME_AFTER+OPENJ9_JAVA_OPTIONS, 
+				argumentPositions.get(ibmJavaOptionsArg).intValue() > argumentPositions.get(openJ9JavaOptionsArg).intValue());
+		assertTrue(OPENJ9_JAVA_OPTIONS+ SHOULD_COME_AFTER+JAVA_TOOL_OPTIONS, 
+				argumentPositions.get(openJ9JavaOptionsArg).intValue() > argumentPositions.get(javaToolOptionsArg).intValue());
 	}
 
 	/*
