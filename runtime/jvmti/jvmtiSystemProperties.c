@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,6 +35,8 @@ jvmtiGetSystemProperties(jvmtiEnv* env,
 	char ** propertyList;
 	UDATA propertyCount;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	jint rv_count = 0;
+	char **rv_property = NULL;
 
 	Trc_JVMTI_jvmtiGetSystemProperties_Entry(env);
 
@@ -70,11 +72,17 @@ jvmtiGetSystemProperties(jvmtiEnv* env,
 			property = pool_nextDo(&walkState);
 		}
 
-		*count_ptr = (jint) propertyCount;
-		*property_ptr = propertyList;
+		rv_count = (jint) propertyCount;
+		rv_property = propertyList;
 	}
 
 done:
+	if (NULL != count_ptr) {
+		*count_ptr = rv_count;
+	}
+	if (NULL != property_ptr) {
+		*property_ptr = rv_property;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetSystemProperties);
 }
 
@@ -89,6 +97,7 @@ jvmtiGetSystemProperty(jvmtiEnv* env,
 	jvmtiError rc = JVMTI_ERROR_NONE;
 	char * value;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	char *rv_value = NULL;
 
 	Trc_JVMTI_jvmtiGetSystemProperty_Entry(env);
 
@@ -106,10 +115,13 @@ jvmtiGetSystemProperty(jvmtiEnv* env,
 		rc = JVMTI_ERROR_OUT_OF_MEMORY;
 	} else {
 		strcpy(value, systemProperty->value);
-		*value_ptr = value;
+		rv_value = value;
 	}
 
 done:
+	if (NULL != value_ptr) {
+		*value_ptr = rv_value;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetSystemProperty);
 }
 

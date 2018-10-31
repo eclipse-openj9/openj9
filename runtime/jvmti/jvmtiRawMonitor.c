@@ -32,6 +32,7 @@ jvmtiCreateRawMonitor(jvmtiEnv* env,
 	jrawMonitorID* monitor_ptr)
 {
 	jvmtiError rc;
+	jrawMonitorID rv_monitor = NULL;
 
 	Trc_JVMTI_jvmtiCreateRawMonitor_Entry(env, name);
 
@@ -40,14 +41,17 @@ jvmtiCreateRawMonitor(jvmtiEnv* env,
 	ENSURE_NON_NULL(name);
 	ENSURE_NON_NULL(monitor_ptr);
 
-	if (omrthread_monitor_init_with_name((omrthread_monitor_t *) monitor_ptr, J9THREAD_MONITOR_NAME_COPY, (char *)name) != 0) {
+	if (omrthread_monitor_init_with_name((omrthread_monitor_t *) &rv_monitor, J9THREAD_MONITOR_NAME_COPY, (char *)name) != 0) {
 		JVMTI_ERROR(JVMTI_ERROR_OUT_OF_MEMORY);
 	}
 	rc = JVMTI_ERROR_NONE;
 
-	Trc_JVMTI_rawMonitorCreated(*monitor_ptr);
+	Trc_JVMTI_rawMonitorCreated(rv_monitor);
 
 done:
+	if (NULL != monitor_ptr) {
+		*monitor_ptr = rv_monitor;
+	}
 	TRACE_JVMTI_RETURN(jvmtiCreateRawMonitor);
 }
 
