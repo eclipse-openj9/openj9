@@ -20,25 +20,25 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-package org.openj9.test.valhalla;
+package org.openj9.test.nestmates;
 
 import org.objectweb.asm.Attribute;
 import org.objectweb.asm.ByteVector;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 
-final class NestHostAttribute extends Attribute {
-	private String nestHost;
+final class NestMembersAttribute extends Attribute{
+	private String[] nestMembers;
 
 	public Label[] getLabels(){
 		return null;
 	}
-	
-	public NestHostAttribute(String nestTop){
-		super("NestHost");
-		this.nestHost = nestTop;
+
+	public NestMembersAttribute(String[] nestMembers){
+		super("NestMembers");
+		this.nestMembers = nestMembers;
 	}
-	
+
 	public boolean isCodeAttribute(){
 		return false;
 	}
@@ -46,14 +46,21 @@ final class NestHostAttribute extends Attribute {
 	public boolean isUnknown(){
 		return true;
 	}
-	
+
 	public ByteVector write(ClassWriter cw,
 			byte[] code, 	int len,
 			int maxStack, 	int maxLocals){
 
-		int topclass_index = cw.newClass(nestHost);		
 		ByteVector b = new ByteVector();
-		b.putShort(topclass_index);
+		
+		b.putShort(nestMembers.length);
+		
+		int nestMemberIndex;
+		for(int i = 0; i < nestMembers.length; i++){
+			nestMemberIndex = cw.newClass(nestMembers[i]);
+			b.putShort(nestMemberIndex);
+		}
+		
 		return b;
 	}
 }
