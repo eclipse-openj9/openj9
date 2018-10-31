@@ -52,7 +52,6 @@ public:
    bool isPackedMultiply()                  const { return isMul() && getType().isAnyPacked(); }
    bool isPackedDivide()                    const { return isDiv() && getType().isAnyPacked(); }
    bool isPackedRemainder()                 const { return isRem() && getType().isAnyPacked(); }
-   bool isPackedExponentiation()            const { return isExponentiation() && getType().isAnyPacked(); }
    bool isPackedShift()                     const { return isShift() && getType().isAnyPacked(); }
    bool isPackedRightShift()                const { return isRightShift() && getType().isAnyPacked(); }
    bool isPackedLeftShift()                 const { return isLeftShift() && getType().isAnyPacked(); }
@@ -61,7 +60,6 @@ public:
    /**
     * ILProp4
     */
-   bool isPreserveSign()                    const { return properties4().testAny(ILProp4::PreserveSign); }
    bool isSetSign()                         const { return properties4().testAny(ILProp4::SetSign); }
    bool isSetSignOnNode()                   const { return properties4().testAny(ILProp4::SetSignOnNode); }
    bool isModifyPrecision()                 const { return properties4().testAny(ILProp4::ModifyPrecision); }

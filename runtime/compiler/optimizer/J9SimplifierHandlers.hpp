@@ -55,7 +55,6 @@ TR::Node * pdshrSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
 TR::Node * pdloadSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
 TR::Node * pdSetSignSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
 TR::Node * pdcleanSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
-TR::Node * pdexpSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
 TR::Node * pdclearSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
 TR::Node * pdclearSetSignSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
 TR::Node * pdstoreSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
