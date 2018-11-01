@@ -33,6 +33,9 @@ import java.util.Formatter;
 import java.util.StringJoiner;
 import java.util.Iterator;
 import java.nio.charset.Charset;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.stream.StreamSupport;
 
 /*[IF Sidecar19-SE]*/
 import jdk.internal.misc.Unsafe;
@@ -3876,8 +3879,15 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	
 	@Override
 	public IntStream chars() {
-		/* Following generic CharSequence method invoking need to be updated with optimized implementation specifically for this class */
-		return CharSequence.super.chars();
+		final int len = lengthInternal();
+		char charBuff[] = new char[len];
+		getCharsNoBoundChecks(0, len, charBuff, 0);
+		int intBuff[] = new int[len];
+		for (int i = 0; i < len; ++i) {
+			intBuff[i] = charBuff[i];
+		}
+		return StreamSupport.intStream(Spliterators.spliterator(intBuff,Spliterator.IMMUTABLE | Spliterator.ORDERED),
+				false);
 	}
 	
 	@Override
