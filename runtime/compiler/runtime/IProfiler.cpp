@@ -3488,17 +3488,20 @@ void TR_IProfiler::checkMethodHashTable()
       }
    }
 
-void TR_IProfiler::getNumberofCallersAndTotalWeight(TR_OpaqueMethodBlock *calleeMethod, uint32_t *count, uint32_t *weight)
+void
+TR_IProfiler::getFaninInfo(TR_OpaqueMethodBlock *calleeMethod, uint32_t *count, uint32_t *weight, uint32_t *otherBucketWeight)
    {
    uint32_t i = 0;
    uint32_t w = 0;
+   uint32_t other = 0;
 
    // Search for the callee in the hashtable
-   int32_t bucket = methodHash((uintptrj_t)calleeMethod);
-   TR_IPMethodHashTableEntry *entry = searchForMethodSample((TR_OpaqueMethodBlock*)calleeMethod, bucket);
+   int32_t bucket = methodHash((uintptrj_t) calleeMethod);
+   TR_IPMethodHashTableEntry *entry = searchForMethodSample((TR_OpaqueMethodBlock*) calleeMethod, bucket);
    if (entry)
       {
-      w = entry->_otherBucket.getWeight();
+      other = entry->_otherBucket.getWeight();
+      w = other;
       // Iterate through all the callers and add their weight
       for (TR_IPMethodData* it = &entry->_caller; it; it = it->next)
          {
@@ -3508,22 +3511,10 @@ void TR_IProfiler::getNumberofCallersAndTotalWeight(TR_OpaqueMethodBlock *callee
       }
    *weight = w;
    *count = i;
+   if (otherBucketWeight)
+      *otherBucketWeight = other;
+   return;
    }
-
-uint32_t TR_IProfiler::getOtherBucketWeight(TR_OpaqueMethodBlock *calleeMethod)
-   {
-   int32_t bucket = methodHash((uintptrj_t)calleeMethod);
-
-   TR_IPMethodHashTableEntry *entry = searchForMethodSample((TR_OpaqueMethodBlock*)calleeMethod, bucket);
-
-   if(!entry)   // if there are no entries, we have no callers!
-      return 0;
-
-   return entry->_otherBucket.getWeight();
-
-
-   }
-
 
 bool TR_IProfiler::getCallerWeight(TR_OpaqueMethodBlock *calleeMethod,TR_OpaqueMethodBlock *callerMethod, uint32_t *weight, uint32_t pcIndex, TR::Compilation *comp)
 {
