@@ -21,6 +21,6 @@
 ################################################################################
 
 j9jit_files(
-	x/amd64/runtime/AMD64CompressString.asm 
-	x/amd64/runtime/AMD64Recompilation.asm
+	x/amd64/runtime/AMD64CompressString.nasm
+	x/amd64/runtime/AMD64Recompilation.nasm
 )
