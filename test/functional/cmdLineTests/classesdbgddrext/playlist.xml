@@ -71,8 +71,8 @@
 	-outputLimit 1000 -explainExcludes -xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) \
 	-xlist $(Q)$(TEST_RESROOT)$(D)dbgextddrtests_excludes.xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
-		<!-- j9ddr.jar is not supported on AIX or z/OS; OpenJ9 issue 1511 -->
-		<platformRequirements>^os.aix,^os.zos</platformRequirements>
+		<!-- j9ddr.jar is not supported on AIX, z/OS and osx; OpenJ9 issue 1511 -->
+		<platformRequirements>^os.aix,^os.zos,^os.osx</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
