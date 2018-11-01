@@ -40,8 +40,8 @@
 	-config $(Q)$(TEST_RESROOT)$(D)modularityddrtests.xml$(Q) \
 	-outputLimit 1000 -explainExcludes -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
-		<!-- Tests excluded on zos and aix because neither platform supports DDR yet. Please see https://github.com/eclipse/openj9/issues/1511 for updates -->
-		<platformRequirements>^os.zos,^os.aix</platformRequirements>
+		<!-- Tests excluded on zos, aix and osx because they do not support DDR yet. Please see https://github.com/eclipse/openj9/issues/1511 for updates -->
+		<platformRequirements>^os.zos,^os.aix,^os.osx</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
