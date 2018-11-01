@@ -55,7 +55,6 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9SFMethodTypeFramePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9SFSpecialFramePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9SFStackFramePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMEntryLocalStoragePointer;
-import com.ibm.j9ddr.vm29.pointer.generated.TRBuildFlags;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMMethodHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ThreadHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
@@ -256,17 +255,17 @@ public class StackWalker
 
 						/* fetch the Java stack for the platform directly from the register file */
 						String javaSPName = "";
-						if (TRBuildFlags.host_POWER) {
+						if (J9BuildFlags.J9VM_ARCH_POWER) {
 							/* AIX shows as POWER not PPC */
 							/* gpr14 */
 							javaSPName = "gpr14";
-						} else if (TRBuildFlags.host_S390) {
+						} else if (J9BuildFlags.arch_s390) {
 							/* r5 */
 							javaSPName = "r5";
-						} else if (TRBuildFlags.host_X86 && TRBuildFlags.host_64BIT) {
+						} else if (J9BuildFlags.J9VM_ARCH_X86 && J9BuildFlags.env_data64) {
 							/* esp */
 							javaSPName = "rsp";
-						} else if (TRBuildFlags.host_X86 && TRBuildFlags.host_32BIT) {
+						} else if (J9BuildFlags.J9VM_ARCH_X86) {
 							/* rsp */
 							javaSPName = "esp";
 						} else {
