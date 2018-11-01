@@ -93,8 +93,8 @@
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)callsiteddrtests.xml$(Q) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
-		<!-- temporarily disable this test on AIX, z/OS; github.com/eclipse/openj9/issues/1511 -->
-		<platformRequirements>^os.aix,^os.zos</platformRequirements>
+		<!-- temporarily disable this test on AIX, z/OS and osx; github.com/eclipse/openj9/issues/1511 -->
+		<platformRequirements>^os.aix,^os.zos,^os.osx</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
