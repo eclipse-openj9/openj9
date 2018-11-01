@@ -394,26 +394,28 @@ public class MethodMetaData
 		
 		private static UDATA getJitSlotsBeforeSavesInDataResolve()
 		{
-			if (J9BuildFlags.J9VM_ARCH_X86 && J9BuildFlags.env_data64) {
-				/* AMD64 data resolve shape
-				 16 slots of XMM registers
-				 16 slots of scalar registers
-				 1 slot flags
-				 1 slot call from snippet
-				 1 slot call from codecache to snippet
-				 */
-				return new UDATA(16);
-			} else if (J9BuildFlags.J9VM_ARCH_X86) {
-				/* IA32 data resolve shape
-				 20 slots FP saves
-				 7 slots integer registers
-				 1 slot saved flags
-				 1 slot return address in snippet
-				 1 slot literals
-				 1 slot cpIndex
-				 1 slot call from codecache to snippet
-				 */
-				return new UDATA(20);
+			if (J9BuildFlags.J9VM_ARCH_X86) {
+				if (J9BuildFlags.env_data64) {
+					/* AMD64 data resolve shape
+					 16 slots of XMM registers
+					 16 slots of scalar registers
+					 1 slot flags
+					 1 slot call from snippet
+					 1 slot call from codecache to snippet
+					 */
+					return new UDATA(16);
+				} else {
+					/* IA32 data resolve shape
+					 20 slots FP saves
+					 7 slots integer registers
+					 1 slot saved flags
+					 1 slot return address in snippet
+					 1 slot literals
+					 1 slot cpIndex
+					 1 slot call from codecache to snippet
+					 */
+					return new UDATA(20);
+				}
 			} else {
 				return new UDATA(0);
 			}
@@ -548,62 +550,62 @@ public class MethodMetaData
 			return md.objectTempSlots(); 
 		}
 		
-		public UDATA getJitDataResolvePushes() throws CorruptDataException
-		{
-			if (J9BuildFlags.J9VM_ARCH_X86 && J9BuildFlags.env_data64) {
-			/* AMD64 data resolve shape
-			   16 slots of XMM registers
-			   16 slots of integer registers
-			   1 slot flags
-			   1 slot call from snippet
-			   1 slot call from codecache to snippet
-			*/
-				return new UDATA(35);
-			} else if (J9BuildFlags.J9VM_ARCH_X86) {
-			/* IA32 data resolve shape
-			   20 slots FP saves
-			   7 slots integer registers
-			   1 slot saved flags
-			   1 slot return address in snippet
-			   1 slot literals
-			   1 slot cpIndex
-			   1 slot call from codecache to snippet
-			*/
-				return new UDATA(32);
+		public UDATA getJitDataResolvePushes() throws CorruptDataException {
+			if (J9BuildFlags.J9VM_ARCH_X86) {
+				if (J9BuildFlags.env_data64) {
+					/* AMD64 data resolve shape
+					   16 slots of XMM registers
+					   16 slots of integer registers
+					   1 slot flags
+					   1 slot call from snippet
+					   1 slot call from codecache to snippet
+					*/
+					return new UDATA(35);
+				} else {
+					/* IA32 data resolve shape
+					   20 slots FP saves
+					   7 slots integer registers
+					   1 slot saved flags
+					   1 slot return address in snippet
+					   1 slot literals
+					   1 slot cpIndex
+					   1 slot call from codecache to snippet
+					*/
+					return new UDATA(32);
+				}
 			} else if (J9BuildFlags.J9VM_ARCH_ARM) {
-			/* ARM data resolve shape
-			   12 slots saved integer registers
-			*/
+				/* ARM data resolve shape
+				   12 slots saved integer registers
+				*/
 				return new UDATA(12);
 			} else if (J9BuildFlags.arch_s390) {
-			/* 390 data resolve shape
-			   16 integer registers
-			*/
+				/* 390 data resolve shape
+				   16 integer registers
+				*/
 				if (J9BuildFlags.jit_32bitUses64bitRegisters) {
 					return new UDATA(32);
 				} else {
 					return new UDATA(16);
 				}
 			} else if (J9BuildFlags.J9VM_ARCH_POWER) {
-			/* PPC data resolve shape
-			   32 integer registers
-			   CR
-			*/
+				/* PPC data resolve shape
+				   32 integer registers
+				   CR
+				*/
 				return new UDATA(33);
 			} else if (TRBuildFlags.host_MIPS) {
-			/* MIPS data resolve shape
-			   32 integer registers
-			*/
+				/* MIPS data resolve shape
+				   32 integer registers
+				*/
 				return new UDATA(32);
 			} else if (TRBuildFlags.host_SH4) {
-			/* SH4 data resolve shape
-			   16 integer registers 
-			*/
+				/* SH4 data resolve shape
+				   16 integer registers 
+				*/
 				return new UDATA(16);
 			} else {
 				return new UDATA(0);
 			}
-
 		}
 
 		public VoidPointer getStackMapFromJitPC(J9JavaVMPointer javaVM,
@@ -1007,31 +1009,32 @@ public class MethodMetaData
 		   Include the slot for the pushed return address (if any) for the call from the codecache to the picbuilder.
 		   Do not include the slot for return address for call from picbuilder to resolve helper.
 		*/
-		public int getJitRecompilationResolvePushes()
-		{
-			if (J9BuildFlags.J9VM_ARCH_X86 && J9BuildFlags.env_data64) {
-				/* AMD64 recompilation resolve shape
-				0: rcx (arg register)
-				1: rdx (arg register)
-				2: rsi (arg register)
-				3: rax (arg register)
-				4: 8 XMMs (1 8-byte slot each)				<== unwindSP points here
-				12: return PC (caller of recompiled method)
-				13: <last argument to method>				<== unwindSP should point here"
-				 */
-				return 9;
-			} else if (J9BuildFlags.J9VM_ARCH_X86) {
-				/* IA32 recompilation resolve shape
-				0: return address (picbuilder)
-				1: return PC (caller of recompiled method)
-				2: old start address
-				3: method
-				4: EAX (contains receiver for virtual)	<== unwindSP points here
-				5: EDX
-				6: return PC (caller of recompiled method)
-				7: <last argument to method>				<== unwindSP should point here"
-				 */
-				return 3;
+		public int getJitRecompilationResolvePushes() {
+			if (J9BuildFlags.J9VM_ARCH_X86) {
+				if (J9BuildFlags.env_data64) {
+					/* AMD64 recompilation resolve shape
+					0: rcx (arg register)
+					1: rdx (arg register)
+					2: rsi (arg register)
+					3: rax (arg register)
+					4: 8 XMMs (1 8-byte slot each)				<== unwindSP points here
+					12: return PC (caller of recompiled method)
+					13: <last argument to method>				<== unwindSP should point here"
+					*/
+					return 9;
+				} else {
+					/* IA32 recompilation resolve shape
+					0: return address (picbuilder)
+					1: return PC (caller of recompiled method)
+					2: old start address
+					3: method
+					4: EAX (contains receiver for virtual)	<== unwindSP points here
+					5: EDX
+					6: return PC (caller of recompiled method)
+					7: <last argument to method>				<== unwindSP should point here"
+					*/
+					return 3;
+				}
 			} else if (J9BuildFlags.arch_s390) {
 				/* 390 recompilation resolve shape
 				0:		r3 (arg register)
@@ -1045,7 +1048,7 @@ public class MethodMetaData
 				8:		temp2
 				9:		temp3
 				XX:	<linkage area>							<== unwindSP should point here
-				 */
+				*/
 				return 7 + (64 / UDATA.SIZEOF);
 			} else if (J9BuildFlags.J9VM_ARCH_POWER) {
 				/* PPC recompilation resolve shape
@@ -1061,7 +1064,7 @@ public class MethodMetaData
 				9:	r12
 				10:	r12
 				XX:	<linkage area>						<== unwindSP should point here
-				 */
+				*/
 				return 3;
 			} else {
 				return 0;
@@ -1073,32 +1076,33 @@ public class MethodMetaData
 		   Include the slot for the pushed return address (if any) for the call from the codecache to the picbuilder.
 		   Do not include the slot for return address for call from picbuilder to resolve helper.
 		*/
-		public int getJitVirtualMethodResolvePushes()
-		{
-			if (J9BuildFlags.J9VM_ARCH_X86 && J9BuildFlags.env_data64) {
-				/* AMD64 virtual resolve shape
-				0: ret addr to picbuilder
-				1: arg3
-				2: arg2
-				3: arg1
-				4: arg0
-				5: saved RDI								<==== unwindSP points here
-				6: code cache return address
-				7: last arg									<==== unwindSP should point here
-				 */
-				return 2;
-			} else if (J9BuildFlags.J9VM_ARCH_X86) {
-				/* IA32 virtual resolve shape
-				0: return address (picbuilder)
-				1: indexAndLiteralsEA
-				2: jitEIP
-				3: saved eax									<== unwindSP points here
-				4: saved esi
-				5: saved edi
-				6: return address (code cache)
-				7: <last argument to method>			<== unwindSP should point here
-				 */
-				return 4;
+		public int getJitVirtualMethodResolvePushes() {
+			if (J9BuildFlags.J9VM_ARCH_X86) {
+				if (J9BuildFlags.env_data64) {
+					/* AMD64 virtual resolve shape
+					0: ret addr to picbuilder
+					1: arg3
+					2: arg2
+					3: arg1
+					4: arg0
+					5: saved RDI								<==== unwindSP points here
+					6: code cache return address
+					7: last arg									<==== unwindSP should point here
+					*/
+					return 2;
+				} else {
+					/* IA32 virtual resolve shape
+					0: return address (picbuilder)
+					1: indexAndLiteralsEA
+					2: jitEIP
+					3: saved eax									<== unwindSP points here
+					4: saved esi
+					5: saved edi
+					6: return address (code cache)
+					7: <last argument to method>			<== unwindSP should point here
+					 */
+					return 4;
+				}
 			} else if (J9BuildFlags.J9VM_ARCH_POWER) {
 				/* PPC doesn't save anything extra */
 				return 0;
@@ -1111,7 +1115,7 @@ public class MethodMetaData
 				4: return address                <== unwindSP points here    
 				5: saved resolved data
 				6: <last argument to method>     <== unwindSP should point here
-				 */
+				*/
 				return 2;
 			} else {
 				return 0;
@@ -1123,30 +1127,30 @@ public class MethodMetaData
 		   Include the slot for the pushed return address (if any) for the call from the codecache to the picbuilder.
 		   Do not include the slot for return address for call from picbuilder to resolve helper.
 		*/
-		public int getJitStaticMethodResolvePushes()
-		{
-			if (J9BuildFlags.J9VM_ARCH_X86 && J9BuildFlags.env_data64) {
-				/* AMD64 static resolve shape
-				0: ret addr to picbuilder
-				1: code cache return address		<==== unwindSP points here
-				2: last arg									<==== unwindSP should point here
-				 */
-				return 1;
-			} else if (J9BuildFlags.J9VM_ARCH_X86) {
-				/* IA32 static resolve shape
-				0: return address (picbuilder)
-				1: jitEIP
-				2: constant pool
-				3: cpIndex
-				4: return address (code cache)		<== unwindSP points here
-				5: <last argument to method>			<== unwindSP should point here
-				 */
-				return 1;
+		public int getJitStaticMethodResolvePushes() {
+			if (J9BuildFlags.J9VM_ARCH_X86) {
+				if (J9BuildFlags.env_data64) {
+					/* AMD64 static resolve shape
+					0: ret addr to picbuilder
+					1: code cache return address		<==== unwindSP points here
+					2: last arg									<==== unwindSP should point here
+					 */
+					return 1;
+				} else {
+					/* IA32 static resolve shape
+					0: return address (picbuilder)
+					1: jitEIP
+					2: constant pool
+					3: cpIndex
+					4: return address (code cache)		<== unwindSP points here
+					5: <last argument to method>			<== unwindSP should point here
+					 */
+					return 1;
+				}
 			} else {
 				return 0;
 			}
 		}
-
 
 		public void walkJITFrameSlotsForInternalPointers(WalkState walkState,  U8Pointer jitDescriptionCursor, UDATAPointer scanCursor, VoidPointer stackMap, J9JITStackAtlasPointer gcStackAtlas) throws CorruptDataException
 		{

@@ -262,16 +262,18 @@ public class StackWalker
 						} else if (J9BuildFlags.arch_s390) {
 							/* r5 */
 							javaSPName = "r5";
-						} else if (J9BuildFlags.J9VM_ARCH_X86 && J9BuildFlags.env_data64) {
-							/* esp */
-							javaSPName = "rsp";
 						} else if (J9BuildFlags.J9VM_ARCH_X86) {
-							/* rsp */
-							javaSPName = "esp";
+							if (J9BuildFlags.env_data64) {
+								/* rsp */
+								javaSPName = "rsp";
+							} else {
+								/* esp */
+								javaSPName = "esp";
+							}
 						} else {
 							throw new IllegalArgumentException("Unsupported platform");
 						}
-						
+
 						for (IRegister reg : nativeThread.getRegisters()) {
 							if (reg.getName().equalsIgnoreCase(javaSPName)) {
 								javaSp = UDATAPointer.cast(reg.getValue().longValue());
