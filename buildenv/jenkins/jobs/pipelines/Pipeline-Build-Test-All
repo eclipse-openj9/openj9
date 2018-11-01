@@ -143,7 +143,8 @@ timeout(time: 12, unit: 'HOURS') {
                     }
                 }
             } finally {
-                cleanWs notFailBuild: true, disableDeferredWipeout: true
+                // Temporarily turn off disableDeferredWipeout. See https://issues.jenkins-ci.org/browse/JENKINS-54225
+                cleanWs notFailBuild: true, disableDeferredWipeout: false
             }
         }
 
