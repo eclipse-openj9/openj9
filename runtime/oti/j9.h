@@ -320,4 +320,11 @@ static const struct { \
 #define J9RAMINTERFACEMETHODREF_RESOLVED(interfaceClass, methodIndexAndArgCount) \
 	((NULL != (interfaceClass)) && ((J9_ITABLE_INDEX_UNRESOLVED != ((methodIndexAndArgCount) & ~255))))
 
+/* Macros for ValueTypes */
+/* TODO this will have to be updated to look at the ramClass instead when further support is added */
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+#define J9_IS_J9CLASS_VALUETYPE(clazz) J9_ARE_ALL_BITS_SET(clazz->romClass->modifiers, J9AccValueType)
+#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#define J9_IS_J9CLASS_VALUETYPE(clazz) FALSE
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 #endif /* J9_H */

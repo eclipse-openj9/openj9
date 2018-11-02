@@ -1345,38 +1345,77 @@ MM_ObjectAccessBarrier::getLockwordAddress(J9VMThread *vmThread, J9Object *objec
  * The new object was just allocated inside the VM, so all fields are NULL.
  * @TODO This does not currently check if the fields that it is reading are volatile.
  */
-void 
+void
 MM_ObjectAccessBarrier::cloneObject(J9VMThread *vmThread, J9Object *srcObject, J9Object *destObject)
 {
+	copyObjectFields(vmThread, J9GC_J9OBJECT_CLAZZ(srcObject), srcObject, J9_OBJECT_HEADER_SIZE, destObject, J9_OBJECT_HEADER_SIZE);
+}
+
+/**
+ * Copy all of the fields of a value class instance to another value class instance.
+ * The source or destination may be a flattened value within another object, meaning
+ * srcOffset and destOffset need not be equal. This is based on cloneObject(...).
+ * @TODO This does not currently check if the fields that it is reading are volatile.
+ *
+ * @oaram objectClass The j9class.
+ * @param srcObject The object containing the value class instance fields being copied.
+ * @param srcOffset The offset of the value class instance fields in srcObject.
+ * @param destValue The object containing the value class instance fields being copied to.
+ * @param destOffset The offset of the value class instance fields in destObject.
+ */
+void
+MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectClass, J9Object *srcObject, UDATA srcOffset, J9Object *destObject, UDATA destOffset)
+{
+	/* For valueTypes we currently do not make a distinction between values that only contain
+	 * primitives and values that may contain a reference (ie. value vs mixed-value
+	 * in packedObject terminology). As a result, we will treat all values as if
+	 * they may contain references. In the future this may change.
+	 *
+	 * Value types have no need or lockwords, however, they are still present in the
+	 * current implementation. For now we will just skip over them by specifying
+	 * appropriate offsets. We will also skip over the bit in the instance description.
+	 */
+	bool isValueType = J9_IS_J9CLASS_VALUETYPE(objectClass);
+
 	j9objectmonitor_t *lockwordAddress = NULL;
-	bool isDestObjectPreHashed = _extensions->objectModel.hasBeenHashed(destObject);
 	I_32 hashCode = 0;
-	if (isDestObjectPreHashed) {
-		hashCode = _extensions->objectModel.getObjectHashCode(vmThread->javaVM, destObject);
-	}	
-	
-	J9Class *clazz = J9GC_J9OBJECT_CLAZZ(srcObject);
-	UDATA *descriptionPtr = (UDATA *)clazz->instanceDescription;
+	bool isDestObjectPreHashed = false;
+
+	if (!isValueType) {
+		isDestObjectPreHashed = _extensions->objectModel.hasBeenHashed(destObject);
+		if (isDestObjectPreHashed) {
+			hashCode = _extensions->objectModel.getObjectHashCode(vmThread->javaVM, destObject);
+		}
+	}
+
+	const UDATA *descriptionPtr = (UDATA *) objectClass->instanceDescription;
 	UDATA descriptionBits;
 	if(((UDATA)descriptionPtr) & 1) {
 		descriptionBits = ((UDATA)descriptionPtr) >> 1;
 	} else {
 		descriptionBits = *descriptionPtr++;
 	}
-	UDATA descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
 
-	UDATA offset = sizeof(J9Object);
-	UDATA limit = offset + _extensions->mixedObjectModel.getSizeInBytesWithoutHeader(srcObject);
+	UDATA descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
+	UDATA offset = 0;
+	UDATA limit = objectClass->totalInstanceSize;
+
+	if (isValueType) {
+		if (0 <= (IDATA)objectClass->lockOffset) {
+			/* skip lockword */
+			limit -= sizeof(j9objectmonitor_t);
+			descriptionBits >>= 1;
+			descriptionIndex -= 1;
+		}
+	}
+
 	while (offset < limit) {
 		/* Determine if the slot contains an object pointer or not */
 		if(descriptionBits & 1) {
-			J9Object *objectPtr = mixedObjectReadObject(vmThread, srcObject, offset, false);
-			mixedObjectStoreObject(vmThread, destObject, offset, objectPtr, false);
+			J9Object *objectPtr = mixedObjectReadObject(vmThread, srcObject, srcOffset + offset, false);
+			mixedObjectStoreObject(vmThread, destObject, destOffset + offset, objectPtr, false);
 		} else {
-			/* TODO: For non-object fields, just copy the memory directly. To be correct,
-			 * maybe this should do a type-specific copy
-			 */
-			*(fj9object_t *)((UDATA)destObject + offset) = *(fj9object_t *)((UDATA)srcObject + offset);
+			*(fj9object_t *)((UDATA)destObject + destOffset + offset) = *(fj9object_t *)((UDATA)srcObject + srcOffset + offset);
 		}
 		descriptionBits >>= 1;
 		if(descriptionIndex-- == 0) {
@@ -1386,28 +1425,28 @@ MM_ObjectAccessBarrier::cloneObject(J9VMThread *vmThread, J9Object *srcObject, J
 		offset += sizeof(fj9object_t);
 	}
 
-	/* If an object was pre-hashed and a hash was stored within the fields of the object restore it.*/
-	if (isDestObjectPreHashed) {
-		UDATA hashcodeOffset = _extensions->mixedObjectModel.getHashcodeOffset(destObject);
-		if (hashcodeOffset <= limit) {
-			I_32 *hashcodePointer = (I_32*)((U_8*)destObject + hashcodeOffset);
-			*hashcodePointer = hashCode;		
+	if (!isValueType) {
+		/* If an object was pre-hashed and a hash was stored within the fields of the object restore it.*/
+		if (isDestObjectPreHashed) {
+			UDATA hashcodeOffset = _extensions->mixedObjectModel.getHashcodeOffset(destObject);
+			if (hashcodeOffset <= limit) {
+				I_32 *hashcodePointer = (I_32*)((U_8*)destObject + hashcodeOffset);
+				*hashcodePointer = hashCode;
+			}
 		}
-	}
 
 #if defined(J9VM_THR_LOCK_NURSERY)
-	/* initialize lockword, if present */
-	lockwordAddress = getLockwordAddress(vmThread, destObject);
-	if (NULL != lockwordAddress) {
-		if (J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(clazz), J9ClassReservableLockWordInit)) {
-			*lockwordAddress = OBJECT_HEADER_LOCK_RESERVED;
-		} else {
-			*lockwordAddress = 0;
+		/* initialize lockword, if present */
+		lockwordAddress = getLockwordAddress(vmThread, destObject);
+		if (NULL != lockwordAddress) {
+			if (J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(objectClass), J9ClassReservableLockWordInit)) {
+				*lockwordAddress = OBJECT_HEADER_LOCK_RESERVED;
+			} else {
+				*lockwordAddress = 0;
+			}
 		}
-	}
 #endif /* J9VM_THR_LOCK_NURSERY */
-
-	return;
+	}
 }
 
 /**
