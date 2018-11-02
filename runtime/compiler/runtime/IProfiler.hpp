@@ -508,7 +508,7 @@ public:
    int32_t getMaxCallCount();
 
    //j9method.cpp
-   void getFaninInfo(TR_OpaqueMethodBlock *calleeMethod, uint32_t *count, uint32_t *weight, uint32_t *otherBucketWeight = nullptr);
+   void getFaninInfo(TR_OpaqueMethodBlock *calleeMethod, uint32_t *count, uint32_t *weight, uint32_t *otherBucketWeight = NULL);
    bool getCallerWeight(TR_OpaqueMethodBlock *calleeMethod, TR_OpaqueMethodBlock *callerMethod , uint32_t *weight, uint32_t pcIndex = ~0, TR::Compilation *comp = 0);
 
    //VMJ9.cpp
