@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,6 @@
 #include <limits.h>
 #include "j9ddr.h"
 #include "ddrtable.h"
-#include "env/defines.h" /* for TR_HOST_XXX */
 
 /* @ddr_namespace: map_to_type=TRBuildFlags */
 
@@ -35,13 +34,13 @@ J9DDRConstantTableBegin(TRBuildFlags)
 	#define host_ARM 0
 #endif
 J9DDRConstantTableEntryWithValue("host_ARM", host_ARM)
-
+	
 #if defined(TR_HOST_IA32)
 	#define host_IA32 1
 #else
 	#define host_IA32 0
 #endif
-J9DDRConstantTableEntryWithValue("host_IA32", host_IA32)
+J9DDRConstantTableEntryWithValue("host_IA32", host_IA32) 
 
 #if defined(TR_HOST_POWER)
 	#define host_POWER 1
@@ -84,7 +83,6 @@ J9DDRConstantTableEntryWithValue("host_32BIT", host_32BIT)
 	#define host_64BIT 0
 #endif
 J9DDRConstantTableEntryWithValue("host_64BIT", host_64BIT)
-
 J9DDRConstantTableEnd
 
 J9DDRConstantTableBegin(CLimits)
@@ -109,8 +107,9 @@ J9DDRStructTableBegin(JIT)
 	J9DDREmptyStruct(CLimits, NULL)
 J9DDRStructTableEnd
 
-const J9DDRStructDefinition *
-getJITStructTable()
+const J9DDRStructDefinition* getJITStructTable()
 {
 	return J9DDR_JIT_structs;
 }
+
+
