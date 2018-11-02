@@ -1072,6 +1072,7 @@ private:
 	VMINLINE void markClassAsUsedByMultiANewArray(U_16 classCPIndex);
 	VMINLINE void markClassAsUsedByANewArray(U_16 classCPIndex);
 	VMINLINE void markClassAsUsedByNew(U_16 classCPIndex);
+	VMINLINE void markClassAsUsedByDefaultValue(U_16 classCPIndex);
 
 	VMINLINE void markInvokeDynamicInfoAsUsedByInvokeDynamic(U_16 cpIndex);
 

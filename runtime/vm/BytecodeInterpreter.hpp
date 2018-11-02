@@ -8058,8 +8058,56 @@ done:
 	VMINLINE VM_BytecodeAction
 	defaultvalue(REGISTER_ARGS_LIST)
 	{
+retry:
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-		// TODO: Implement bytecode
+		const U_16 index = *(U_16*)(_pc + 1);
+		J9ConstantPool * const ramConstantPool = J9_CP_FROM_METHOD(_literals);
+		J9RAMClassRef * const ramCPEntry = ((J9RAMClassRef*)ramConstantPool) + index;
+		J9Class * volatile resolvedClass = ramCPEntry->value;
+
+		if ((NULL != resolvedClass) && J9_IS_J9CLASS_VALUETYPE(resolvedClass) && !VM_VMHelpers::classRequiresInitialization(_currentThread, resolvedClass)) {
+			j9object_t instance = _objectAllocate.inlineAllocateObject(_currentThread, resolvedClass);
+			if (NULL == instance) {
+				updateVMStruct(REGISTER_ARGS);
+				instance = _vm->memoryManagerFunctions->J9AllocateObject(_currentThread, resolvedClass, J9_GC_ALLOCATE_OBJECT_INSTRUMENTABLE);
+				VMStructHasBeenUpdated(REGISTER_ARGS);
+				if (J9_UNEXPECTED(NULL == instance)) {
+					rc = THROW_HEAP_OOM;
+					goto done;
+				}
+			}
+			_pc += 3;
+			*(j9object_t*)--_sp = instance;
+
+			goto done;
+		}
+
+		buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
+		updateVMStruct(REGISTER_ARGS);
+
+		if (NULL == resolvedClass) {
+			resolveClassRef(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_INIT_CLASS | J9_RESOLVE_FLAG_INSTANTIABLE | J9_RESOLVE_FLAG_CHECK_VALUE_CLASS);
+		} else if (!J9_IS_J9CLASS_VALUETYPE(resolvedClass)) {
+			J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(resolvedClass->romClass);
+			setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_CLASSREF_MUST_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
+		} else if (VM_VMHelpers::classRequiresInitialization(_currentThread, resolvedClass)) {
+			initializeClass(_currentThread, resolvedClass);
+		}
+
+		VMStructHasBeenUpdated(REGISTER_ARGS);
+
+		if (immediateAsyncPending()) {
+			rc = GOTO_ASYNC_CHECK;
+			goto done;
+		} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
+			rc = GOTO_THROW_CURRENT_EXCEPTION;
+			goto done;
+		}
+
+		restoreGenericSpecialStackFrame(REGISTER_ARGS);
+
+		goto retry;
+done:
 		return rc;
 	}
 
