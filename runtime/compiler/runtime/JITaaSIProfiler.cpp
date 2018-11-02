@@ -383,7 +383,7 @@ TR_JITaaSClientIProfiler::TR_JITaaSClientIProfiler(J9JITConfig *jitConfig)
  */
 uint32_t
 TR_JITaaSClientIProfiler::walkILTreeForIProfilingEntries(uintptrj_t *pcEntries, uint32_t &numEntries, TR_J9ByteCodeIterator *bcIterator,
-                                                       TR_OpaqueMethodBlock *method, TR_BitVector *BCvisit, bool &abort)
+                                                       TR_OpaqueMethodBlock *method, TR_BitVector *BCvisit, bool &abort, TR::Compilation *comp)
    {
    abort = false; // optimistic
    uint32_t bytesFootprint = 0;
@@ -395,7 +395,7 @@ TR_JITaaSClientIProfiler::walkILTreeForIProfilingEntries(uintptrj_t *pcEntries, 
          {
          uintptrj_t thisPC = getSearchPCFromMethodAndBCIndex(method, bci);
 
-         TR_IPBytecodeHashTableEntry *entry = profilingSample(thisPC, 0, false);
+         TR_IPBytecodeHashTableEntry *entry = profilingSample(method, bci, comp);
          BCvisit->set(bci);
          if (entry && !invalidateEntryIfInconsistent(entry))
             {
@@ -516,7 +516,7 @@ TR_JITaaSClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodB
       // numEntries will indicate how many entries have been populated
       // These profiling entries have been 'locked' so we must remember to unlock them
       bool abort = false;
-      bytesFootprint = walkILTreeForIProfilingEntries(pcEntries, numEntries, &bci, method, BCvisit, abort);
+      bytesFootprint = walkILTreeForIProfilingEntries(pcEntries, numEntries, &bci, method, BCvisit, abort, comp);
       if (numEntries && !abort)
          {
          // Serialize the entries
