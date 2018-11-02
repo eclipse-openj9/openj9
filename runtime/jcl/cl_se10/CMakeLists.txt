@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2018, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,84 +20,53 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-#re-enable version num suffix
-set(CMAKE_SHARED_LIBRARY_SUFFIX ${J9VM_SHARED_LIBRARY_SUFFIX})
-
-add_library(thread_cutest_harness STATIC
-	cuharness/CuTest.c
-	cuharness/parser.c
+set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/../ut_j9jcl.c PROPERTIES GENERATED TRUE)
+add_library(jclse10_ SHARED
+	../j9vmconstantpool_se10.c
+)
+target_include_directories(jclse10_
+	PRIVATE
+		${CMAKE_CURRENT_BINARY_DIR}
+		../
 )
 
-target_include_directories(thread_cutest_harness
-	PUBLIC
-		cuharness
+target_compile_definitions(jclse10_
+	PRIVATE
+		J9VM_JCL_SE10
 )
 
-target_link_libraries(thread_cutest_harness
+target_link_libraries(jclse10_
 	PRIVATE
 		j9vm_interface
+		j9vm_gc_includes
+		j9vm_jcl_includes
+		j9vm_jcl_trace
 
-		j9prt
+		omrsig
+		j9vm_jcl_se6_vm-side_lifecycle
+		j9vm_jcl_se6_vm-side_natives
+		j9vm_jcl_jithelpers
+        j9vm_jcl_sun_misc_Unsafe
+        #j9vm_jcl_se626_orb_ludcl
+		j9vm_jcl_attach
+		j9vm_jcl_se7
+		j9vm_jcl_se8
+        j9vm_jcl_se9
+
+		j9hookable
+		j9zlib
 		j9util
 		j9utilcore
+		j9avl
+		j9hashtable
+		j9pool
 		j9thr
+		j9vmi
+		sunvmi
 )
 
-
-add_library(j9thrtestnatives SHARED
-	testnatives/testnatives.c
-)
-
-target_include_directories(j9thrtestnatives
-	PRIVATE
-	testnatives
-)
-
-target_link_libraries(j9thrtestnatives
-	PRIVATE
-	j9vm_interface
-
-	j9util
-	j9utilcore
-	j9thr
-)
-
-add_library(j9thrnumanatives SHARED
-	thrnumanatives/thrnumanatives.c
-)
-
-target_link_libraries(j9thrnumanatives
-	PRIVATE
-	j9vm_interface
-)
-
-add_executable(thrstatetest
-	thrstate/runtest.c
-	thrstate/testcases1.c
-	thrstate/testcases2.c
-	thrstate/testcases3.c
-	thrstate/testcases4.c
-	thrstate/testcases5.c
-	thrstate/testcases6.c
-	thrstate/testsetup.c
-)
-
-target_link_libraries(thrstatetest
-	PRIVATE
-	j9vm_main_wrapper
-
-	j9prt
-	j9exelib
-	j9util
-	j9utilcore
-	j9hashtable
-	j9avl
-	j9thr
-	j9pool
-)
 
 install(
-	TARGETS j9thrtestnatives j9thrnumanatives thrstatetest
-	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
+	TARGETS jclse10_
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
 )
