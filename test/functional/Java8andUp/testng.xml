@@ -411,6 +411,11 @@
 			<class name="org.openj9.test.string.StringIndexOfString" />
 		</classes>
 	</test>
+	<test name="testStringStreams">
+		<classes>
+			<class name="org.openj9.test.string.StringStreams" />
+		</classes>
+	</test>
 	<test name="floatSanityTests">
 		<classes>
 			<class name="org.openj9.test.floatsanity.TestFactory" />

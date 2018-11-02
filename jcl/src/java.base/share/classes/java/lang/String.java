@@ -31,10 +31,12 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.Formatter;
 import java.util.StringJoiner;
+import java.util.function.IntConsumer;
+import java.util.function.IntFunction;
+import java.util.function.IntUnaryOperator;
 import java.util.Iterator;
 import java.nio.charset.Charset;
 import java.util.Spliterator;
-import java.util.Spliterators;
 import java.util.stream.StreamSupport;
 
 /*[IF Sidecar19-SE]*/
@@ -3877,23 +3879,60 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		throw newStringIndexOutOfBoundsException(begin, end, length);
 	}
 	
+	private static final class StringSpliteratorOfInt implements Spliterator.OfInt {
+		private final int start; // index of first character in the array
+		private int end; // index after the final character
+		private int cursor; // next character to read
+		private final IntUnaryOperator func;
+		
+		StringSpliteratorOfInt(int start, int end, IntUnaryOperator func) {
+			this.start = start;
+			this.end = end;
+			this.func = func;
+			cursor = start;
+		}
+
+		@Override
+		public long estimateSize() {
+			return end - start;
+		}
+
+		@Override
+		public int characteristics() {
+			return IMMUTABLE | ORDERED | SIZED | SUBSIZED;
+		}
+
+		@Override
+		public OfInt trySplit() {
+			int newEnd = cursor + (end - cursor + 1) / 2;
+			StringSpliteratorOfInt newSpliterator = null;
+			if (newEnd < end) {
+				newSpliterator = new StringSpliteratorOfInt(newEnd, end, func);
+				end = newEnd;
+			}
+			return newSpliterator;
+		}
+
+		@Override
+		public boolean tryAdvance(IntConsumer action) {
+			boolean result = false;
+			if (cursor < end) {
+				action.accept(func.applyAsInt(cursor));
+				result = true;
+				++cursor;
+			}
+			return result;
+		}
+	}
+	
 	@Override
 	public IntStream chars() {
-		final int len = lengthInternal();
-		char charBuff[] = new char[len];
-		getCharsNoBoundChecks(0, len, charBuff, 0);
-		int intBuff[] = new int[len];
-		for (int i = 0; i < len; ++i) {
-			intBuff[i] = charBuff[i];
-		}
-		return StreamSupport.intStream(Spliterators.spliterator(intBuff,Spliterator.IMMUTABLE | Spliterator.ORDERED),
-				false);
+		return StreamSupport.intStream(new StringSpliteratorOfInt(0, lengthInternal(), i -> charAt(i)), false);
 	}
 	
 	@Override
 	public IntStream codePoints() {
-		/* Following generic CharSequence method invoking need to be updated with optimized implementation specifically for this class */
-		return CharSequence.super.codePoints();
+		return StreamSupport.intStream(new StringSpliteratorOfInt(0, lengthInternal(), i -> codePointAt(i)), false);
 	}
 
 	/*
@@ -7395,7 +7434,7 @@ written authorization of the copyright holder.
 	/**
 	 * Replace any substrings within this String that match the supplied regular expression expr, with the String substitute.
 	 *
-	 * @param expr
+	 * @param regex
 	 *			  the regular expression to match
 	 * @param substitute
 	 *			  the string to replace the matching substring with
