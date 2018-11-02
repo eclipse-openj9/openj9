@@ -2625,3 +2625,19 @@ J9::Node::requiresRegisterPair(TR::Compilation *comp)
    {
    return self()->getType().isLongDouble() || OMR::NodeConnector::requiresRegisterPair(comp);
    }
+
+bool
+J9::Node::canGCandReturn()
+   {
+   TR::Compilation * comp = TR::comp();
+   if (comp->getOption(TR_EnableFieldWatch))
+      {
+      if (self()->getOpCodeValue() == TR::treetop || self()->getOpCode().isNullCheck() || self()->getOpCode().isAnchor())
+         {
+         TR::Node * node = self()->getFirstChild();
+         if (node->getOpCode().isReadBar() || node->getOpCode().isWrtBar())
+            return true;
+         }
+      }
+   return OMR::NodeConnector::canGCandReturn();
+   }
