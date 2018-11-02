@@ -235,7 +235,7 @@ size_t J9::Options::_scratchSpaceLimitKBWhenLowVirtualMemory = 64*1024; // 64MB;
 
 int32_t J9::Options::_scratchSpaceFactorWhenJSR292Workload = JSR292_SCRATCH_SPACE_FACTOR;
 int32_t J9::Options::_lowVirtualMemoryMBThreshold = 300; // Used on 32 bit Windows, Linux, 31 bit z/OS, Linux
-int32_t J9::Options::_safeReservePhysicalMemoryValue = 50 << 20;  // 50 MB
+int32_t J9::Options::_safeReservePhysicalMemoryValue = 32 << 20;  // 32 MB
 
 int32_t J9::Options::_numDLTBufferMatchesToEagerlyIssueCompReq = 8; //a value of 1 or less disables the DLT tracking mechanism
 int32_t J9::Options::_dltPostponeThreshold = 2;
@@ -1926,6 +1926,19 @@ J9::Options::fePreProcess(void * base)
    // Setting number of onsite cache slots for instanceOf node to 4 on IBM Z
    self()->setMaxOnsiteCacheSlotForInstanceOf(4);
 #endif
+   // Set a value for _safeReservePhysicalMemoryValue that is proportional
+   // to the amount of free physical memory at boot time
+   // The user can still override it with a command line option
+   bool incomplete = false;
+   uint64_t phMemAvail = compInfo->computeAndCacheFreePhysicalMemory(incomplete);
+   if (phMemAvail != OMRPORT_MEMINFO_NOT_AVAILABLE && !incomplete)
+      {
+      const uint64_t reserveLimit = 32 * 1024 * 1024;
+      uint64_t proposed = phMemAvail >> 6; // 64 times less
+      if (proposed > reserveLimit)
+         proposed = reserveLimit;
+      J9::Options::_safeReservePhysicalMemoryValue = (int32_t)proposed;
+      }
 
    // Process the deterministic mode
    if (TR::Options::_deterministicMode == -1) // not yet set
