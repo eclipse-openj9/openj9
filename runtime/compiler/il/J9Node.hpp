@@ -137,6 +137,7 @@ public:
    bool isTruncatingOrWideningAggrOrBCD();
 
    bool canRemoveArithmeticOperand();
+   bool canGCandReturn();
 
    static uint32_t hashOnBCDOrAggrLiteral(char *lit, size_t litSize);
 

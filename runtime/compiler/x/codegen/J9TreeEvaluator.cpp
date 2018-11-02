@@ -74,6 +74,7 @@
 #include "x/codegen/WriteBarrierSnippet.hpp"
 #include "x/codegen/X86Evaluator.hpp"
 #include "env/CompilerEnv.hpp"
+#include "runtime/Runtime.hpp"
 
 #ifdef TR_TARGET_64BIT
 #include "codegen/AMD64PrivateLinkage.hpp"
@@ -116,6 +117,55 @@ static uint32_t logBase2(uintptrj_t n)
    return result;
    }
 
+static TR_OpaqueMethodBlock *
+getMethodFromBCInfo(
+      TR_ByteCodeInfo &bcInfo,
+      TR::Compilation *comp)
+   {
+   TR_OpaqueMethodBlock *method = NULL;
+
+   if (bcInfo.getCallerIndex() >= 0)
+      method = (TR_OpaqueMethodBlock *)(comp->getInlinedCallSite(bcInfo.getCallerIndex())._vmMethodInfo);
+   else
+      method = (TR_OpaqueMethodBlock *)(comp->getCurrentMethod()->getPersistentIdentifier());
+
+   return method;
+   }
+
+// ----------------------------------------------------------------------------
+inline void generateLoadJ9Class(TR::Node* node, TR::Register* j9class, TR::Register* object, TR::CodeGenerator* cg)
+   {
+   bool needsNULLCHK = false;
+   TR::ILOpCodes opValue = node->getOpCodeValue();
+   switch (opValue)
+      {
+      case TR::checkcastAndNULLCHK:
+         needsNULLCHK = true;
+         break;
+      case TR::icall: // TR_checkAssignable
+         return; // j9class register already holds j9class
+      default:
+         TR_ASSERT(node->getOpCode().isReadBar() ||
+                   node->getOpCode().isWrtBar() ||
+                   opValue == TR::checkcast ||
+                   opValue == TR::instanceof,
+                   "Unexpected opCode for generateLoadJ9Class %s.", node->getOpCode().getName());
+         break;
+      }
+   auto use64BitClasses = TR::Compiler->target.is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
+   auto instr = generateRegMemInstruction(LRegMem(use64BitClasses), node, j9class, generateX86MemoryReference(object, TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
+   if (needsNULLCHK)
+      {
+      cg->setImplicitExceptionPoint(instr);
+      instr->setNeedsGCMap(0xFF00FFFF);
+      instr->setNode(cg->comp()->findNullChkInfo(node));
+      }
+   auto mask = TR::Compiler->om.maskOfObjectVftField();
+   if (~mask != 0)
+      {
+      generateRegImmInstruction(~mask <= 127 ? ANDRegImms(use64BitClasses) : ANDRegImm4(use64BitClasses), node, j9class, mask, cg);
+      }
+   }
 
 static TR_OutlinedInstructions *generateArrayletReference(
    TR::Node           *node,
@@ -759,7 +809,6 @@ TR::Register *J9::X86::i386::TreeEvaluator::conditionalHelperEvaluator(TR::Node 
    }
 #endif
 
-
 #ifdef TR_TARGET_64BIT
 // Hack markers
 #define JVMPI_HOOKS_WITHOUT_SNIPPETS (!debug("enableSnippetsForJVMPI")) // Snippets can't yet do the necessary linkage logic
@@ -1007,58 +1056,6 @@ TR::Register* J9::X86::TreeEvaluator::performHeapLoadWithReadBarrier(TR::Node* n
    cg->stopUsingRegister(address);
    return object;
 #endif
-   }
-
-TR::Register* J9::X86::TreeEvaluator::ardbarEvaluator(TR::Node* node, TR::CodeGenerator* cg)
-   {
-   TR::Register* object = TR::TreeEvaluator::performHeapLoadWithReadBarrier(node, cg);
-
-   if (!node->getSymbolReference()->isUnresolved() &&
-       (node->getSymbolReference()->getSymbol()->getKind() == TR::Symbol::IsShadow) &&
-       (node->getSymbolReference()->getCPIndex() >= 0) &&
-       (cg->comp()->getMethodHotness()>=scorching))
-      {
-      int32_t len;
-      const char *fieldName = node->getSymbolReference()->getOwningMethod(cg->comp())->fieldSignatureChars(
-            node->getSymbolReference()->getCPIndex(), len);
-
-      if (fieldName && strstr(fieldName, "Ljava/lang/String;"))
-         {
-         generateMemInstruction(PREFETCHT0, node, generateX86MemoryReference(object, 0, cg), cg);
-         }
-      }
-
-   object->setContainsCollectedReference();
-   node->setRegister(object);
-   return object;
-   }
-
-TR::Register* J9::X86::TreeEvaluator::irdbarEvaluator(TR::Node* node, TR::CodeGenerator* cg)
-   {
-   TR::Register* object = TR::TreeEvaluator::performHeapLoadWithReadBarrier(node, cg);
-
-   if (cg->comp()->useCompressedPointers() &&
-       (node->getOpCode().hasSymbolReference() &&
-        node->getSymbolReference()->getSymbol()->getDataType() == TR::Address))
-      {
-      if (!node->getSymbolReference()->isUnresolved() &&
-          (node->getSymbolReference()->getSymbol()->getKind() == TR::Symbol::IsShadow) &&
-          (node->getSymbolReference()->getCPIndex() >= 0) &&
-          (cg->comp()->getMethodHotness()>=scorching))
-         {
-         int32_t len;
-         const char *fieldName = node->getSymbolReference()->getOwningMethod(cg->comp())->fieldSignatureChars(
-                node->getSymbolReference()->getCPIndex(), len);
-
-         if (fieldName && strstr(fieldName, "Ljava/lang/String;"))
-            {
-            generateMemInstruction(PREFETCHT0, node, generateX86MemoryReference(object, 0, cg), cg);
-            }
-         }
-      }
-
-   node->setRegister(object);
-   return object;
    }
 
 // Should only be called for pure TR::awrtbar and TR::awrtbari nodes.
@@ -1355,7 +1352,7 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
 
    //First dim length not 0
    generateLabelInstruction(LABEL, node, nonZeroFirstDimLabel, cg);
-   
+
    generateRegMemInstruction(LRegMem(), node, componentClassReg,
              generateX86MemoryReference(classReg, offsetof(J9ArrayClass, componentType), cg), cg);
 
@@ -3695,39 +3692,6 @@ TR::Register *J9::X86::TreeEvaluator::longBitCount(TR::Node *node, TR::CodeGener
    }
 
 
-// ----------------------------------------------------------------------------
-inline void generateLoadJ9Class(TR::Node* node, TR::Register* j9class, TR::Register* object, TR::CodeGenerator* cg)
-   {
-   bool needsNULLCHK = false;
-   switch (node->getOpCodeValue())
-      {
-      case TR::checkcastAndNULLCHK:
-         needsNULLCHK = true;
-         break;
-      case TR::checkcast:
-      case TR::instanceof:
-         break;
-      case TR::icall: // TR_checkAssignable
-         return; // j9class register already holds j9class
-      default:
-         TR_ASSERT(false, "Incorrect Op Code %d.", node->getOpCodeValue());
-         break;
-      }
-   auto use64BitClasses = TR::Compiler->target.is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
-   auto instr = generateRegMemInstruction(LRegMem(use64BitClasses), node, j9class, generateX86MemoryReference(object, TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
-   if (needsNULLCHK)
-      {
-      cg->setImplicitExceptionPoint(instr);
-      instr->setNeedsGCMap(0xFF00FFFF);
-      instr->setNode(cg->comp()->findNullChkInfo(node));
-      }
-   auto mask = TR::Compiler->om.maskOfObjectVftField();
-   if (~mask != 0)
-      {
-      generateRegImmInstruction(~mask <= 127 ? ANDRegImms(use64BitClasses) : ANDRegImm4(use64BitClasses), node, j9class, mask, cg);
-      }
-   }
-
 inline void generateInlinedCheckCastOrInstanceOfForInterface(TR::Node* node, TR_OpaqueClassBlock* clazz, TR::CodeGenerator* cg, bool isCheckCast)
    {
    TR_ASSERT(clazz && TR::Compiler->cls.isInterfaceClass(cg->comp(), clazz), "Not a compile-time known Interface.");
@@ -4089,22 +4053,6 @@ extern "C"
    uint32_t totalUncontendedMonEnters = 0;
 }
 #endif
-
-
-static TR_OpaqueMethodBlock *
-getMethodFromBCInfo(
-      TR_ByteCodeInfo &bcInfo,
-      TR::Compilation *comp)
-   {
-   TR_OpaqueMethodBlock *method = NULL;
-
-   if (bcInfo.getCallerIndex() >= 0)
-      method = (TR_OpaqueMethodBlock *)(comp->getInlinedCallSite(bcInfo.getCallerIndex())._vmMethodInfo);
-   else
-      method = (TR_OpaqueMethodBlock *)(comp->getCurrentMethod()->getPersistentIdentifier());
-
-   return method;
-   }
 
 static bool comesFromClassLib(TR::Node *node, TR::Compilation *comp)
    {
@@ -9271,7 +9219,7 @@ static TR::Register* inlineStringHashCode(TR::Node* node, bool isCompressed, TR:
       generateLabelInstruction(JL4, node, loopLabel, cg);
       generateLabelInstruction(LABEL, node, endLabel, deps, cg);
       }
-      
+
       // Finalization
       {
       static uint32_t multiplier[] = { 31*31*31, 31*31, 31, 1 };
@@ -9281,7 +9229,7 @@ static TR::Register* inlineStringHashCode(TR::Node* node, bool isCompressed, TR:
       generateRegRegImmInstruction(PSHUFDRegRegImm1, node, tmpXMM, hashXMM, 0x01, cg);
       generateRegRegInstruction(PADDDRegReg, node, hashXMM, tmpXMM, cg);
       }
-      
+
       generateRegRegInstruction(MOVDReg4Reg, node, hash, hashXMM, cg);
 
       cg->stopUsingRegister(index);
@@ -12348,7 +12296,7 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
    TR_Debug *debug = cg->getDebug();
    TR::Instruction * cursor = NULL;
 
-   uint32_t strideSize = 16; 
+   uint32_t strideSize = 16;
    uintptrj_t headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
 
    static uint16_t MINUS1[] =
@@ -12384,7 +12332,7 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
 
    generateRegRegInstruction(MOVRegReg(), node, result, dstArray, cg);
 
-   // initialize the loop counter 
+   // initialize the loop counter
    cursor = generateRegRegInstruction(XORRegReg(), node, counter, counter, cg); iComment("initialize loop counter");
 
    //calculate the residueStartLength. Later instructions compare the counter with this length and decide when to jump to the residue handling sequence
@@ -12611,3 +12559,516 @@ J9::X86::TreeEvaluator::andORStringEvaluator(TR::Node *node, TR::CodeGenerator *
    node->setRegister(resultReg);
    return resultReg;
    }
+
+/*
+ * Fill in the J9JITWatchedStaticFieldData.fieldAddress, J9JITWatchedStaticFieldData.fieldClass for static field
+ * and J9JITWatchedInstanceFieldData.offset for instance field
+ *
+ * cmp J9JITWatchedStaticFieldData.fieldAddress / J9JITWatchedInstanceFieldData.offset,  -1
+ * je unresolvedLabel
+ * restart Label:
+ * ....
+ *
+ * unresolvedLabel:
+ * mov J9JITWatchedStaticFieldData.fieldClass J9Class (static field only)
+ * call helper
+ * mov J9JITWatchedStaticFieldData.fieldAddress / J9JITWatchedInstanceFieldData.offset  resultReg
+ * jmp restartLabel
+ */
+void generateFillInDataBlockSequenceForUnresolvedField(TR::Node *node, J9Method* owningMethod, TR::X86DataSnippet *dataSnippet, bool isWrite, TR::CodeGenerator *cg)
+   {
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
+   TR::SymbolReference *symRef = node->getSymbolReference();
+   bool is64Bit = TR::Compiler->target.is64Bit();
+   bool isStatic = symRef->getSymbol()->getKind() == TR::Symbol::IsStatic;
+   TR_RuntimeHelper helperIndex = isWrite? (isStatic ?  TR_jitResolveStaticFieldSetterDirect: TR_jitResolveFieldSetterDirect):
+                                           (isStatic ?  TR_jitResolveStaticFieldDirect: TR_jitResolveFieldDirect);
+   intptr_t offsetInDataBlock = isStatic ? offsetof(J9JITWatchedStaticFieldData, fieldAddress): offsetof(J9JITWatchedInstanceFieldData, offset);
+
+   /*
+    * cmp J9JITWatchedStaticFieldData.fieldAddress / J9JITWatchedInstanceFieldData.offset,  -1
+    * je unresolvedLabel
+    */
+   TR::LabelSymbol* startLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol* endLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *unresolvedLabel = generateLabelSymbol(cg);
+   startLabel->setStartInternalControlFlow();
+   endLabel->setEndInternalControlFlow();
+   generateLabelInstruction(LABEL, node, startLabel, cg);
+
+   TR::Register *dataBlockReg = cg->allocateRegister();
+   generateRegMemInstruction(LEARegMem(is64Bit), node, dataBlockReg, generateX86MemoryReference(dataSnippet, cg), cg);
+   generateMemImmInstruction(CMPMemImms(), node,  generateX86MemoryReference(dataBlockReg, offsetInDataBlock, cg), -1, cg);
+   generateLabelInstruction(JE4, node, unresolvedLabel, cg);
+
+   TR::RegisterDependencyConditions  *deps = generateRegisterDependencyConditions(1, 1, cg);
+   deps->addPreCondition(dataBlockReg, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(dataBlockReg, TR::RealRegister::NoReg, cg);
+   deps->stopAddingConditions();
+   generateLabelInstruction(LABEL, node, endLabel, deps, cg);
+
+      {
+      TR_OutlinedInstructionsGenerator og(unresolvedLabel, node ,cg);
+      if (isStatic)
+         {
+         // Fills in J9JITWatchedStaticFieldData.fieldClass
+         TR::Register *fieldClassReg = cg->evaluate(isWrite ? node->getSecondChild()->getFirstChild(): node->getFirstChild());
+         generateMemRegInstruction(SMemReg(is64Bit), node, generateX86MemoryReference(dataBlockReg, (intptrj_t)(offsetof(J9JITWatchedStaticFieldData, fieldClass)), cg), fieldClassReg, cg);
+         }
+
+      //call resolving helper
+      uintptrj_t cpAddress = fej9->getConstantPoolFromMethod((TR_OpaqueMethodBlock*) owningMethod);
+      TR::Node *cpAddressNode = TR::Node::aconst(cpAddress);
+      TR::Node *cpIndexNode = TR::Node::iconst(node, symRef->getCPIndex());
+      TR::Node *helperCallNode = TR::Node::createWithSymRef(TR::acall, 2, 2, cpIndexNode, cpAddressNode,
+            cg->comp()->getSymRefTab()->findOrCreateRuntimeHelper(helperIndex, true /* canGCandReturn */, true /*canGCandExcept*/, false /* preservesAllRegisters*/));
+      helperCallNode->incReferenceCount();
+      TR::Register *resultReg = TR::TreeEvaluator::performCall(helperCallNode, false /* isIndirect */, false /* spillFPRegs */, cg);
+
+      /*
+      for instance field offset, the result returned by the vmhelper includes header size.
+      subtract the header size to get the offset needed by field watch helpers
+      */
+      if (!isStatic)
+         generateRegImmInstruction(SubRegImm4(is64Bit, false /*isWithBorrow*/), node, resultReg, TR::Compiler->om.objectHeaderSizeInBytes(), cg);
+
+      //store result into J9JITWatchedStaticFieldData.fieldAddress / J9JITWatchedInstanceFieldData.offset
+      generateMemRegInstruction(SMemReg(is64Bit), node, generateX86MemoryReference(dataBlockReg, offsetInDataBlock, cg), resultReg, cg);
+      generateLabelInstruction(JMP4, node, endLabel, cg);
+      cg->decReferenceCount(helperCallNode);
+      }
+   cg->stopUsingRegister(dataBlockReg);
+   }
+
+/*
+ * Generate the reporting field access helper call with required arguments
+ *
+ * jitReportInstanceFieldRead
+ * arg1 pointer to static data block
+ * arg2 object being read
+ *
+ * jitReportInstanceFieldWrite
+ * arg1 pointer to static data block
+ * arg2 object being written to
+ * arg3 pointer to value being written
+ *
+ * jitReportStaticFieldRead
+ * arg1 pointer to static data block
+ *
+ * jitReportStaticFieldWrite
+ * arg1 pointer to static data block
+ * arg2 pointer to value being written
+ *
+ */
+void generateReportFieldAccessOutlinedInstructions(TR::Node *node, TR::LabelSymbol *endLabel, TR::X86DataSnippet *dataSnippet, bool isWrite, TR::CodeGenerator *cg)
+   {
+   bool is64Bit = TR::Compiler->target.is64Bit();
+   bool isResolved = !node->getSymbolReference()->isUnresolved();
+   bool isInstanceField = node->getSymbolReference()->getSymbol()->getKind() != TR::Symbol::IsStatic;
+   J9Method *owningMethod = (J9Method *)getMethodFromBCInfo(node->getByteCodeInfo(), cg->comp());
+
+   TR_RuntimeHelper helperIndex = isWrite ? (isInstanceField ? TR_jitReportInstanceFieldWrite: TR_jitReportStaticFieldWrite):
+                                            (isInstanceField ? TR_jitReportInstanceFieldRead: TR_jitReportStaticFieldRead);
+
+   TR::Linkage *linkage = cg->getLinkage(runtimeHelperLinkage(helperIndex));
+   auto linkageProperties = linkage->getProperties();
+
+   TR::Register *objectReg = isInstanceField ? cg->evaluate(node->getFirstChild()): NULL;
+   TR::Node *valueNode = isWrite? (isInstanceField ? node->getSecondChild(): node->getFirstChild()): NULL;
+   TR::Register *valueReg = isWrite? cg->evaluate(valueNode): NULL;
+   TR::Register *valueReferenceReg = isWrite? cg->allocateRegister(): NULL;
+   TR::Register *dataBlockReg = cg->allocateRegister();
+   TR::RegisterDependencyConditions  *dependencies = NULL;
+   int numOfConditions = 1; // 1st arg is always the data block
+   if (isInstanceField)
+      numOfConditions++; // Instance field report needs the base object
+   if (isWrite)
+      numOfConditions++; // field write report needs the value being written
+
+   if (isWrite)
+      {
+      /* TODO: this is the better way to pass pointer to value but the infrastructure doesn't fully support this yet
+      TR::SymbolReference *tempSymRef = cg->comp()->getSymRefTab()->createTemporary(cg->comp()->getMethodSymbol(), valueNode->getType());
+      TR::MemoryReference *mr = generateX86MemoryReference(tempSymRef, cg);
+      generateMemRegInstruction(SMemReg(), node, mr, valueReg, cg);
+      */
+      TR::RealRegister  *espReg = cg->machine()->getX86RealRegister(TR::RealRegister::esp);
+      generateRegInstruction(PUSHReg, node, valueReg, cg);
+      TR::MemoryReference *mr = generateX86MemoryReference(espReg, 0, cg);
+      generateRegMemInstruction(LEARegMem(), node, valueReferenceReg, mr, cg);
+      }
+
+   int numArgs = 0;
+   generateRegMemInstruction(LEARegMem(), node, dataBlockReg, generateX86MemoryReference(dataSnippet, cg), cg);
+   dependencies = generateRegisterDependencyConditions((uint8_t)0, numOfConditions, cg);
+   if (is64Bit)
+      {
+      dependencies->addPostCondition(dataBlockReg, linkageProperties.getArgumentRegister(numArgs, false /* isFloat */), cg);
+      numArgs++;
+
+      if (isInstanceField)
+         {
+         dependencies->addPostCondition(objectReg, linkageProperties.getArgumentRegister(numArgs, false /* isFloat */), cg);
+         numArgs++;
+         }
+
+      if (isWrite)
+         dependencies->addPostCondition(valueReferenceReg, linkageProperties.getArgumentRegister(numArgs, false /* isFloat */), cg);
+
+      dependencies->stopAddingConditions();
+      }
+   else
+      {
+      if (isWrite)
+         {
+         generateRegInstruction(PUSHReg, node, valueReferenceReg, cg);
+         dependencies->addPostCondition(valueReferenceReg, TR::RealRegister::NoReg, cg);
+         }
+      if (isInstanceField)
+         {
+         generateRegInstruction(PUSHReg, node, objectReg, cg);
+         dependencies->addPostCondition(objectReg, TR::RealRegister::NoReg, cg);
+         }
+      generateRegInstruction(PUSHReg, node, dataBlockReg, cg);
+      dependencies->addPostCondition(dataBlockReg, TR::RealRegister::NoReg, cg);
+      }
+
+   TR::Instruction *call = generateHelperCallInstruction(node, helperIndex, dependencies, cg);
+   call->setNeedsGCMap(0xFF00FFFF);
+   if (isWrite)
+      generateRegInstruction(POPReg, node, valueReg, cg);
+   generateLabelInstruction(JMP4, node, endLabel, cg);
+   cg->stopUsingRegister(dataBlockReg);
+   if (isWrite)
+      cg->stopUsingRegister(valueReferenceReg);
+   }
+
+/*
+ * Generate sequence for static field access report
+ */
+void directReadWriteBarrierHelperForFieldWatch(TR::Node *node, J9Method *owningMethod, int32_t bcIndex, bool isWrite, TR::CodeGenerator *cg)
+   {
+   TR::Compilation *comp = cg->comp();
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
+   TR::SymbolReference *symRef = node->getSymbolReference();
+   bool is64Bit = TR::Compiler->target.is64Bit();
+   bool isResolved = !node->getSymbolReference()->isUnresolved();
+
+   J9JITWatchedStaticFieldData staticFieldDataBlock;
+
+   //prepare data block
+   staticFieldDataBlock.method = owningMethod;
+   staticFieldDataBlock.location = bcIndex;
+
+   J9Class * fieldClass = NULL;
+   if (isResolved)
+      {
+      fieldClass = (J9Class *)symRef->getOwningMethod(comp)->getDeclaringClassFromFieldOrStatic(cg->comp(), symRef->getCPIndex());
+      TR_ASSERT(fieldClass, "valid field class is expected for resolved field reference" POINTER_PRINTF_FORMAT, node);
+      staticFieldDataBlock.fieldAddress = (void *)node->getSymbolReference()->getSymbol()->getStaticSymbol()->getStaticAddress();
+      staticFieldDataBlock.fieldClass = fieldClass;
+      }
+   else
+      staticFieldDataBlock.fieldAddress = (void *) -1;
+   auto dataSnippet = cg->createDataSnippet(node, &staticFieldDataBlock, sizeof(J9JITWatchedStaticFieldData));
+
+   if (!isResolved)
+      generateFillInDataBlockSequenceForUnresolvedField(node, owningMethod, dataSnippet, isWrite, cg);
+
+   /*
+    * test [j9class.flags] J9ClassHasWatchedFields
+    * jne fieldReportLabel
+    */
+   TR::LabelSymbol* startLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol* endLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol* fieldReportLabel = generateLabelSymbol(cg);
+   startLabel->setStartInternalControlFlow();
+   endLabel->setEndInternalControlFlow();
+
+   generateLabelInstruction(LABEL, node, startLabel, cg);
+
+   TR::MemoryReference *classFlagsMemRef = NULL;
+   if (isResolved)
+      classFlagsMemRef = generateX86MemoryReference((uintptrj_t)fieldClass + fej9->getOffsetOfClassFlags(), cg);
+   else
+      {
+      TR::Register *fieldClassReg = cg->evaluate(isWrite ? node->getSecondChild()->getFirstChild(): node->getFirstChild());
+      classFlagsMemRef = generateX86MemoryReference(fieldClassReg, fej9->getOffsetOfClassFlags(), cg);
+      }
+   TR_ASSERT(J9ClassHasWatchedFields >= SHRT_MIN  && J9ClassHasWatchedFields <= SHRT_MAX, "expect value of J9ClassHasWatchedFields to be with in 16 bits");
+   generateMemImmInstruction(TEST2MemImm2, node, classFlagsMemRef, J9ClassHasWatchedFields, cg);
+   generateLabelInstruction(JNE4, node, fieldReportLabel, cg);
+
+   TR::RegisterDependencyConditions  *deps = NULL;
+   if (!isResolved)
+      {
+      TR::Register *fieldClassReg = cg->evaluate(node->getFirstChild());
+      deps = generateRegisterDependencyConditions(1, 1, cg);
+      deps->addPreCondition(fieldClassReg, TR::RealRegister::NoReg, cg);
+      deps->addPostCondition(fieldClassReg, TR::RealRegister::NoReg, cg);
+      deps->stopAddingConditions();
+      }
+   generateLabelInstruction(LABEL, node, endLabel, deps, cg);
+
+      {
+      TR_OutlinedInstructionsGenerator og(fieldReportLabel, node ,cg);
+      generateReportFieldAccessOutlinedInstructions(node, endLabel, dataSnippet, isWrite, cg);
+      }
+   }
+
+/*
+ * Generate sequence for instance field access report
+ */
+void indirectReadWriteBarrierHelperForFieldWatch(TR::Node *node, J9Method *owningMethod, int32_t bcIndex, bool isWrite, TR::CodeGenerator *cg)
+   {
+   TR::Compilation *comp = cg->comp();
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
+   TR::SymbolReference *symRef = node->getSymbolReference();
+   bool is64Bit = TR::Compiler->target.is64Bit();
+   bool isResolved = !node->getSymbolReference()->isUnresolved();
+
+   J9JITWatchedInstanceFieldData instanceFieldDataBlock;
+
+   //prepare data block
+   instanceFieldDataBlock.method = owningMethod;
+   instanceFieldDataBlock.location = bcIndex;
+   if (isResolved)
+      instanceFieldDataBlock.offset = (UDATA) (node->getSymbolReference()->getOffset() - TR::Compiler->om.objectHeaderSizeInBytes());
+   else
+      instanceFieldDataBlock.offset = (UDATA) -1;
+   auto dataSnippet = cg->createDataSnippet(node, &instanceFieldDataBlock, sizeof(J9JITWatchedInstanceFieldData));
+
+   if (!isResolved)
+      generateFillInDataBlockSequenceForUnresolvedField(node, owningMethod, dataSnippet, isWrite, cg);
+
+   /*
+    * test [j9class.flags] J9ClassHasWatchedFields
+    * jne fieldReportLabel
+    */
+   TR::Register *objReg = cg->evaluate(node->getFirstChild());
+   TR::Register *j9classReg = cg->allocateRegister();
+   generateLoadJ9Class(node, j9classReg, objReg, cg);
+
+   TR::LabelSymbol* startLabel  = generateLabelSymbol(cg);
+   TR::LabelSymbol* endLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol* fieldReportLabel = generateLabelSymbol(cg);
+   startLabel->setStartInternalControlFlow();
+   endLabel->setEndInternalControlFlow();
+
+   generateLabelInstruction(LABEL, node, startLabel, cg);
+
+   TR_ASSERT(J9ClassHasWatchedFields >= SHRT_MIN  && J9ClassHasWatchedFields <= SHRT_MAX, "expect value of J9ClassHasWatchedFields to be with in 16 bits");
+   generateMemImmInstruction(TEST2MemImm2, node, generateX86MemoryReference(j9classReg, (uintptrj_t)(fej9->getOffsetOfClassFlags()), cg), J9ClassHasWatchedFields, cg);
+   generateLabelInstruction(JNE4, node, fieldReportLabel, cg);
+
+   TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)1, 1, cg);
+   deps->addPreCondition(j9classReg, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(j9classReg, TR::RealRegister::NoReg, cg);
+   generateLabelInstruction(LABEL, node, endLabel, deps, cg);
+
+      {
+      TR_OutlinedInstructionsGenerator og(fieldReportLabel, node ,cg);
+      generateReportFieldAccessOutlinedInstructions(node, endLabel, dataSnippet, isWrite, cg);
+      }
+   cg->stopUsingRegister(j9classReg);
+   }
+
+
+void J9::X86::TreeEvaluator::VMrdbarEvaluatorForFieldWatch(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   bool isStatic = node->getSymbolReference()->getSymbol()->getKind() == TR::Symbol::IsStatic;
+   J9Method *owningMethod = (J9Method *)getMethodFromBCInfo(node->getByteCodeInfo(), cg->comp());
+   int32_t bcIndex = node->getByteCodeInfo().getByteCodeIndex();
+   for (int i=0; i < node->getNumChildren(); i++) //evaluate children here to avoid first evaluation point in ICF
+      cg->evaluate(node->getChild(i));
+   if (isStatic)
+      directReadWriteBarrierHelperForFieldWatch(node, owningMethod, bcIndex, false /* isWrite */ , cg);
+   else indirectReadWriteBarrierHelperForFieldWatch(node, owningMethod, bcIndex, false /* isWrite */, cg);
+   }
+
+void J9::X86::TreeEvaluator::VMwrtbarEvaluatorForFieldWatch(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   bool isStatic = node->getSymbolReference()->getSymbol()->getKind() == TR::Symbol::IsStatic;
+   J9Method *owningMethod = (J9Method *)getMethodFromBCInfo(node->getByteCodeInfo(), cg->comp());
+   int32_t bcIndex = node->getByteCodeInfo().getByteCodeIndex();
+   for (int i=0; i < node->getNumChildren(); i++) //evaluate children here to avoid first evaluation point in ICF
+      cg->evaluate(node->getChild(i));
+   if (isStatic)
+      directReadWriteBarrierHelperForFieldWatch(node, owningMethod, bcIndex, true /* isWrite */ , cg);
+   else indirectReadWriteBarrierHelperForFieldWatch(node, owningMethod, bcIndex, true /* isWrite */, cg);
+   }
+
+void J9::X86::TreeEvaluator::rdbarSideEffectsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The child of rdbar for static field is for side affect
+   // and is not used by store evaluator
+   TR::Node *sideEffectNode = node->getSymbolReference()->getSymbol()->isStatic() ? node->getFirstChild(): NULL;
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::VMrdbarEvaluatorForFieldWatch(node, cg);
+      if (sideEffectNode)
+         cg->decReferenceCount(sideEffectNode);
+      }
+   else if (sideEffectNode)
+      cg->recursivelyDecReferenceCount(sideEffectNode);
+   }
+
+TR::Register *J9::X86::TreeEvaluator::irdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::TreeEvaluator::rdbarSideEffectsEvaluator(node, cg);
+   if (!TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+      return TR::TreeEvaluator::iloadEvaluator(node, cg);
+
+   //sequence for Concurrent Scavenge
+   TR::Register* object = TR::TreeEvaluator::performHeapLoadWithReadBarrier(node, cg);
+
+   if (cg->comp()->useCompressedPointers() &&
+       (node->getOpCode().hasSymbolReference() &&
+        node->getSymbolReference()->getSymbol()->getDataType() == TR::Address))
+      {
+      if (!node->getSymbolReference()->isUnresolved() &&
+          (node->getSymbolReference()->getSymbol()->getKind() == TR::Symbol::IsShadow) &&
+          (node->getSymbolReference()->getCPIndex() >= 0) &&
+          (cg->comp()->getMethodHotness()>=scorching))
+         {
+         int32_t len;
+         const char *fieldName = node->getSymbolReference()->getOwningMethod(cg->comp())->fieldSignatureChars(
+                node->getSymbolReference()->getCPIndex(), len);
+
+         if (fieldName && strstr(fieldName, "Ljava/lang/String;"))
+            {
+            generateMemInstruction(PREFETCHT0, node, generateX86MemoryReference(object, 0, cg), cg);
+            }
+         }
+      }
+
+   node->setRegister(object);
+   return object;
+   }
+
+TR::Register *J9::X86::TreeEvaluator::frdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::TreeEvaluator::rdbarSideEffectsEvaluator(node, cg);
+   return TR::TreeEvaluator::floadEvaluator(node, cg);
+   }
+
+TR::Register *J9::X86::TreeEvaluator::drdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::TreeEvaluator::rdbarSideEffectsEvaluator(node, cg);
+   return TR::TreeEvaluator::dloadEvaluator(node, cg);
+   }
+
+TR::Register *J9::X86::TreeEvaluator::ardbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::TreeEvaluator::rdbarSideEffectsEvaluator(node, cg);
+   if (!TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+      return TR::TreeEvaluator::aloadEvaluator(node, cg);
+
+   //sequence for Concurrent Scavenge
+   TR::Register* object = TR::TreeEvaluator::performHeapLoadWithReadBarrier(node, cg);
+
+   if (!node->getSymbolReference()->isUnresolved() &&
+       (node->getSymbolReference()->getSymbol()->getKind() == TR::Symbol::IsShadow) &&
+       (node->getSymbolReference()->getCPIndex() >= 0) &&
+       (cg->comp()->getMethodHotness()>=scorching))
+      {
+      int32_t len;
+      const char *fieldName = node->getSymbolReference()->getOwningMethod(cg->comp())->fieldSignatureChars(
+            node->getSymbolReference()->getCPIndex(), len);
+
+      if (fieldName && strstr(fieldName, "Ljava/lang/String;"))
+         {
+         generateMemInstruction(PREFETCHT0, node, generateX86MemoryReference(object, 0, cg), cg);
+         }
+      }
+
+   object->setContainsCollectedReference();
+   node->setRegister(object);
+   return object;
+   }
+
+TR::Register *J9::X86::TreeEvaluator::brdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::TreeEvaluator::rdbarSideEffectsEvaluator(node, cg);
+   return TR::TreeEvaluator::bloadEvaluator(node, cg);
+   }
+
+TR::Register *J9::X86::TreeEvaluator::srdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::TreeEvaluator::rdbarSideEffectsEvaluator(node, cg);
+   return TR::TreeEvaluator::sloadEvaluator(node, cg);
+   }
+
+TR::Register *J9::X86::TreeEvaluator::lrdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::TreeEvaluator::rdbarSideEffectsEvaluator(node, cg);
+   return TR::TreeEvaluator::lloadEvaluator(node, cg);
+   }
+
+void J9::X86::TreeEvaluator::wrtbarSideEffectsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The 2nd/3rd child of wrtbar for static/instance field is for side affect
+   // and is not used by store evaluator
+   TR::Node *sideEffectNode = node->getSymbolReference()->getSymbol()->isStatic() ? node->getSecondChild(): node->getThirdChild();
+   if (cg->comp()->getOption(TR_EnableFieldWatch))
+      {
+      TR::TreeEvaluator::VMwrtbarEvaluatorForFieldWatch(node, cg);
+      cg->decReferenceCount(sideEffectNode);
+      }
+   else
+      cg->recursivelyDecReferenceCount(sideEffectNode);
+   }
+
+TR::Register *J9::X86::TreeEvaluator::iwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   J9::X86::TreeEvaluator::wrtbarSideEffectsEvaluator(node, cg);
+   return TR::TreeEvaluator::istoreEvaluator(node, cg);
+   }
+
+TR::Register *J9::X86::TreeEvaluator::fwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   J9::X86::TreeEvaluator::wrtbarSideEffectsEvaluator(node, cg);
+   return TR::TreeEvaluator::floatingPointStoreEvaluator(node, cg);
+   }
+
+#ifdef TR_TARGET_32BIT
+TR::Register *J9::X86::i386::TreeEvaluator::dwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   J9::X86::TreeEvaluator::wrtbarSideEffectsEvaluator(node, cg);
+   return TR::TreeEvaluator::dstoreEvaluator(node, cg);
+   }
+#endif
+
+#ifdef TR_TARGET_64BIT
+TR::Register *J9::X86::AMD64::TreeEvaluator::dwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   J9::X86::TreeEvaluator::wrtbarSideEffectsEvaluator(node, cg);
+   return TR::TreeEvaluator::floatingPointStoreEvaluator(node, cg);
+   }
+#endif
+
+TR::Register *J9::X86::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   if (cg->comp()->getOption(TR_EnableFieldWatch) && !node->getSymbolReference()->getSymbol()->isArrayShadowSymbol())
+      TR::TreeEvaluator::VMwrtbarEvaluatorForFieldWatch(node, cg);
+   return TR::TreeEvaluator::writeBarrierEvaluator(node, cg);
+   }
+
+TR::Register *J9::X86::TreeEvaluator::bwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   J9::X86::TreeEvaluator::wrtbarSideEffectsEvaluator(node, cg);
+   return TR::TreeEvaluator::bstoreEvaluator(node, cg);
+   }
+
+TR::Register *J9::X86::TreeEvaluator::swrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   J9::X86::TreeEvaluator::wrtbarSideEffectsEvaluator(node, cg);
+   return TR::TreeEvaluator::sstoreEvaluator(node, cg);
+   }
+
+TR::Register *J9::X86::TreeEvaluator::lwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   J9::X86::TreeEvaluator::wrtbarSideEffectsEvaluator(node, cg);
+   return TR::TreeEvaluator::lstoreEvaluator(node, cg);
+   }
+
