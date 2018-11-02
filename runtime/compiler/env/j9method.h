@@ -304,6 +304,9 @@ public:
    virtual void *                startAddressForInterpreterOfJittedMethod();
    virtual bool                  isWarmCallGraphTooBig(uint32_t bcIndex,  TR::Compilation *);
    virtual void                  setWarmCallGraphTooBig(uint32_t bcIndex,  TR::Compilation *);
+   virtual void                  getFaninInfo(uint32_t *count, uint32_t *weight, uint32_t *otherBucketWeight=nullptr);
+   virtual bool                  getCallerWeight(TR_ResolvedJ9Method *caller, uint32_t *weight, uint32_t pcIndex=~0);
+
 
    virtual intptrj_t             getInvocationCount();
    virtual bool                  setInvocationCount(intptrj_t oldCount, intptrj_t newCount);

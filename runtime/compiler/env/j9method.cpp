@@ -5350,6 +5350,29 @@ void TR_ResolvedJ9Method::setWarmCallGraphTooBig(uint32_t bcIndex, TR::Compilati
       fej9()->getIProfiler()->setWarmCallGraphTooBig((TR_OpaqueMethodBlock *)ramMethod(), bcIndex, comp, true);
    }
 
+void
+TR_ResolvedJ9Method::getFaninInfo(uint32_t *count, uint32_t *weight, uint32_t *otherBucketWeight)
+   {
+   TR_IProfiler *profiler = fej9()->getIProfiler();
+
+   if (!profiler)
+      return;
+
+   TR_OpaqueMethodBlock *method = getPersistentIdentifier();
+   profiler->getFaninInfo(method, count, weight, otherBucketWeight);
+   }
+
+bool
+TR_ResolvedJ9Method::getCallerWeight(TR_ResolvedJ9Method *caller, uint32_t *weight, uint32_t pcIndex)
+   {
+   TR_IProfiler *profiler = fej9()->getIProfiler();
+
+   if (!profiler)
+      return false;
+
+   return profiler->getCallerWeight(getPersistentIdentifier(), caller->getPersistentIdentifier(), weight, pcIndex);
+   }
+
 void *
 TR_ResolvedJ9Method::startAddressForInterpreterOfJittedMethod()
    {
