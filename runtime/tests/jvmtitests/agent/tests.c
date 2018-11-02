@@ -63,6 +63,7 @@ static jvmtiTest jvmtiTestList[] =
 	{ "gomsdi001", gomsdi001, "com.ibm.jvmti.tests.getOwnedMonitorStackDepthInfo.gomsdi001", "GetOwnedMonitorStackDepthInfo" },
 	{ "gomsdi002", gomsdi002, "com.ibm.jvmti.tests.getOwnedMonitorStackDepthInfo.gomsdi002", "GetOwnedMonitorStackDepthInfo" },
 	{ "gomi001", gomi001, "com.ibm.jvmti.tests.getOwnedMonitorInfo.gomi001", "GetOwnedMonitorInfo" },
+	{ "gomi002", gomi002, "com.ibm.jvmti.tests.getOwnedMonitorInfo.gomi002", "GetOwnedMonitorInfo" },
 	{ "abcl001", abcl001, "com.ibm.jvmti.tests.addToBootstrapClassLoaderSearch.abcl001", "AddToBootstrapClassLoaderSearch during OnLoad" },
 	{ "abcl002", abcl002, "com.ibm.jvmti.tests.addToBootstrapClassLoaderSearch.abcl002", "AddToBootstrapClassLoaderSearch during live" },
 	{ "abcl003", abcl003, "com.ibm.jvmti.tests.addToBootstrapClassLoaderSearch.abcl003", "AddToBootstrapClassLoaderSearch reject bad jar during live" },

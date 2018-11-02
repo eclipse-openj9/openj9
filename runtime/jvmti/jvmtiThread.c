@@ -551,12 +551,12 @@ jvmtiGetOwnedMonitorInfo(jvmtiEnv* env,
 		ENSURE_NON_NULL(owned_monitor_count_ptr);
 		ENSURE_NON_NULL(owned_monitors_ptr);
 
-		vm->internalVMFunctions->acquireExclusiveVMAccess(currentThread);
-
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
 		if (rc == JVMTI_ERROR_NONE) {
 			jobject * locks;
 			jint count = 0;
+
+			vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
 
 			count = walkLocalMonitorRefs(currentThread, NULL, targetThread, UDATA_MAX);
 
@@ -572,11 +572,10 @@ jvmtiGetOwnedMonitorInfo(jvmtiEnv* env,
 			}
 			rv_owned_monitors = locks;
 			rv_owned_monitor_count = count;
+
+			vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
 			releaseVMThread(currentThread, targetThread);
 		}
-
-		vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
-
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
@@ -686,7 +685,6 @@ jvmtiGetOwnedMonitorStackDepthInfo(jvmtiEnv* env,
 					}
 				}
 			}
-
 
 			rv_monitor_info_count = (jint)maxRecords;
 			rv_monitor_info = resultArray; 

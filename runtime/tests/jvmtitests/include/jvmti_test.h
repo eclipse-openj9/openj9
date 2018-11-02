@@ -210,6 +210,7 @@ jint JNICALL gtgc002(agentEnv * env, char * args);
 jint JNICALL gomsdi001(agentEnv * env, char * args);
 jint JNICALL gomsdi002(agentEnv * env, char * args);
 jint JNICALL gomi001(agentEnv * env, char * args);
+jint JNICALL gomi002(agentEnv * env, char * args);
 jint JNICALL gts001(agentEnv * env, char * args);
 jint JNICALL ghftm001(agentEnv * env, char * args);
 jint JNICALL rat001(agentEnv * env, char * args);

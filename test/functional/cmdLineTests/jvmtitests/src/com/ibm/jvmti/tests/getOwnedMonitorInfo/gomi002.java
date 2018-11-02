@@ -19,43 +19,57 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-#include <stdlib.h>
-#include <string.h>
+package com.ibm.jvmti.tests.getOwnedMonitorInfo;
 
-#include "ibmjvmti.h"
-#include "jvmti_test.h"
+public class gomi002
+{	
+	static Object lock = new Object();
+	static boolean running = false;
+	static volatile boolean stop = false;
+	
+	native static void callGet(Thread t);
+	
+	public boolean testForeignThread() throws Throwable
+	{
+		Thread runner = new Thread() {
+			public long recurse(int i, long v) {
+				if (i > 0) {
+					v = System.currentTimeMillis() + recurse(i - 1, v);
+				}
+				return v;
+			}
+			public void run() {
+				synchronized(lock) {
+					running = true;
+					lock.notifyAll();
+				}
+				while (!stop) {
+					recurse(100, 0);
+				}
+			}
+		};		
 
-static agentEnv * env;                                                    
+		runner.start();
+		synchronized(lock) {
+			while(!running) {
+				lock.wait();
+			}
+		}
 
-jint JNICALL
-gomsdi002(agentEnv * agent_env, char * args)
-{
-	JVMTI_ACCESS_FROM_AGENT(agent_env);                                
-	jvmtiCapabilities capabilities;
-	jvmtiError err;                                
+		long start = System.currentTimeMillis();
+		while((System.currentTimeMillis() - start) < 5000) {
+			callGet(runner);
+			Thread.sleep(100);
+		}
 
-	env = agent_env;
-
-	memset(&capabilities, 0, sizeof(jvmtiCapabilities));
-	capabilities.can_get_owned_monitor_stack_depth_info = 1;
-	err = (*jvmti_env)->AddCapabilities(jvmti_env, &capabilities);
-	if (err != JVMTI_ERROR_NONE) {
-		error(env, err, "Failed to add capabilities");
-		return JNI_ERR;
-	}				
-			
-	return JNI_OK;
-}
-
-void JNICALL
-Java_com_ibm_jvmti_tests_getOwnedMonitorStackDepthInfo_gomsdi002_callGet(
-		JNIEnv *jni_env, 
-		jclass klass, 
-		jthread thread) 
-{
-	JVMTI_ACCESS_FROM_AGENT(env);
-	jint infoCount = 0;
-	jvmtiMonitorStackDepthInfo *info = NULL;
-	(*jvmti_env)->GetOwnedMonitorStackDepthInfo(jvmti_env, thread, &infoCount, &info);
-	(*jvmti_env)->Deallocate(jvmti_env, (unsigned char*)info);
+		stop = true;
+		runner.join();
+		
+		return true;
+	}
+		
+	public String helpForeignThread()
+	{
+		return "test GetOwnedMonitorInfo on non-current thread which is running";
+	}
 }

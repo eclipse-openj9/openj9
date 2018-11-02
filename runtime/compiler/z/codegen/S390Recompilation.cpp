@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -396,7 +396,7 @@ TR_S390Recompilation::generatePrologue(TR::Instruction* cursor)
    TR::MemoryReference* endOfPrologueSlotMemRef = generateS390MemoryReference(cg->getStackPointerRealRegister(), 0, cg);
 
    // Store GPR2 off to the stack so countingRecompileMethod can access it
-   cursor = generateRSInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, cg->machine()->getS390RealRegister(TR::RealRegister::GPR2), endOfPrologueSlotMemRef, cursor);
+   cursor = generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, cg->machine()->getS390RealRegister(TR::RealRegister::GPR2), endOfPrologueSlotMemRef, cursor);
 
    // Adjust GPR2 to point to the countingRecompileMethod address
    cursor = generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, cg->machine()->getS390RealRegister(TR::RealRegister::GPR2), 0, cursor);
@@ -457,7 +457,7 @@ TR_S390Recompilation::generatePrologue(TR::Instruction* cursor)
    TR::MemoryReference* epRegisterSlotMemRef = generateS390MemoryReference(cg->getStackPointerRealRegister(), 0, cg);
 
    // Save EP register
-   cursor = generateRSInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, cg->getEntryPointRealRegister(), epRegisterSlotMemRef, cursor);
+   cursor = generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, cg->getEntryPointRealRegister(), epRegisterSlotMemRef, cursor);
 
    // Save the return address in GPR0 so the patching assembly stub can access it
    cursor = generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, cg->machine()->getS390RealRegister(TR::RealRegister::GPR0), cg->getReturnAddressRealRegister(), cursor);

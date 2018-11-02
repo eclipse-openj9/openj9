@@ -9445,7 +9445,7 @@ inlineMathSQRT(TR::Node * node, TR::CodeGenerator * cg)
       if (firstChild->isSingleRefUnevaluated() && firstChild->getOpCodeValue() == TR::dloadi)
          {
          targetRegister = cg->allocateRegister(TR_FPR);
-         generateRXInstruction(cg, TR::InstOpCode::SQDB, node, targetRegister, generateS390MemoryReference(firstChild, cg));
+         generateRXEInstruction(cg, TR::InstOpCode::SQDB, node, targetRegister, generateS390MemoryReference(firstChild, cg), 0);
          }
       else
          {
