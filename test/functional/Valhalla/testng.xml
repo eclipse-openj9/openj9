@@ -26,10 +26,4 @@
 	<listeners>
 		<listener class-name="org.openj9.test.util.IncludeExcludeTestAnnotationTransformer"/>
 	</listeners>
-	<test name="NestAttributeTest">
-		<parameter name="path" value="${JVM_TEST_ROOT}/functional/Valhalla/Valhalla"/>
-		<classes>
-			<class name="org.openj9.test.valhalla.NestAttributeTest" />
-		</classes>
-	</test>
 </suite> <!-- Suite -->

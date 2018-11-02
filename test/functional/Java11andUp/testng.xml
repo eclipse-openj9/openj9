@@ -33,9 +33,9 @@
 		</classes>
 	</test>
 	
-	<test name="NestmateTest">
+	<test name="NestmatesTest">
 		<classes>
-			<class name="org.openj9.test.nestmate.NestmateTest" />
+			<class name="org.openj9.test.nestmates.NestmatesTest" />
 		</classes>
 	</test>
 
@@ -48,6 +48,11 @@
 	<test name="GarbageCollectionCondyTest">
 		<classes>
 			<class name="org.openj9.test.condy.GarbageCollectionCondyTest" />
+		</classes>
+	</test>
+	<test name="NestAttributeTest">
+		<classes>
+			<class name="org.openj9.test.nestmates.NestAttributeTest" />
 		</classes>
 	</test>
 </suite>
