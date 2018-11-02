@@ -1122,6 +1122,15 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_reportStaticMethodEnter,    (void *)jitReportStaticMethodEnter,    TR_Helper);
    SET(TR_reportMethodExit,           (void *)jitReportMethodExit,           TR_Helper);
    SET(TR_acquireVMAccess,            (void *)jitAcquireVMAccess,            TR_Helper);
+   SET(TR_jitReportInstanceFieldRead, (void *)jitReportInstanceFieldRead,    TR_Helper);
+   SET(TR_jitReportInstanceFieldWrite,(void *)jitReportInstanceFieldWrite,   TR_Helper);
+   SET(TR_jitReportStaticFieldRead,   (void *)jitReportStaticFieldRead,      TR_Helper);
+   SET(TR_jitReportStaticFieldWrite,  (void *)jitReportStaticFieldWrite,     TR_Helper);
+
+   SET(TR_jitResolveFieldDirect,              (void *)jitResolveFieldDirect,              TR_Helper);
+   SET(TR_jitResolveFieldSetterDirect,        (void *)jitResolveFieldSetterDirect,        TR_Helper);
+   SET(TR_jitResolveStaticFieldDirect,        (void *)jitResolveStaticFieldDirect,        TR_Helper);
+   SET(TR_jitResolveStaticFieldSetterDirect,  (void *)jitResolveStaticFieldSetterDirect,  TR_Helper);
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER)
    SET(TR_jitCheckIfFinalizeObject,   (void *)fast_jitCheckIfFinalizeObject, TR_CHelper);
 #else

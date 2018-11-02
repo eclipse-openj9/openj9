@@ -45,8 +45,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    {
    public:
 
-   static TR::Register *ardbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *irdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *writeBarrierEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *monentEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -104,7 +102,11 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static void VMwrtbarRealTimeWithoutStoreEvaluator(TR::Node *node, TR::MemoryReference *storeMRForRealTime, TR::Register *stoerAddressRegForRealTime, TR::Node *destOwningObject, TR::Node *sourceObject, TR::Register *srcReg, TR_X86ScratchRegisterManager *scratchRegisterManager, TR::CodeGenerator *cg);
    static void VMwrtbarWithoutStoreEvaluator(TR::Node *node, TR::Node *destOwningObject, TR::Node *sourceObject, TR::Register *srcReg, TR_X86ScratchRegisterManager *scratchRegisterManager, TR::CodeGenerator *cg);
    static void VMwrtbarWithStoreEvaluator(TR::Node *node, TR::MemoryReference  *storeMR, TR_X86ScratchRegisterManager *, TR::Node *destinationChild, TR::Node *sourceChild, bool isIndirect, TR::CodeGenerator *cg, bool nullAdjusted = false);
+   static void VMrdbarEvaluatorForFieldWatch(TR::Node *node, TR::CodeGenerator *cg);
+   static void VMwrtbarEvaluatorForFieldWatch(TR::Node *node, TR::CodeGenerator *cg);
 
+   static void rdbarSideEffectsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static void wrtbarSideEffectsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *directCallEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *encodeUTF16Evaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *compressStringEvaluator(TR::Node *node, TR::CodeGenerator *cg, bool japaneseMethod);
@@ -114,6 +116,21 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *toLowerIntrinsicUTF16Evaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *toUpperIntrinsicLatin1Evaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *toLowerIntrinsicLatin1Evaluator(TR::Node *node, TR::CodeGenerator *cg);
+
+   static TR::Register *irdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *frdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *drdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *ardbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *brdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *srdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *lrdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+
+   static TR::Register *iwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *fwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *bwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *swrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *lwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    class CaseConversionManager;
    static TR::Register *stringCaseConversionHelper(TR::Node *node, TR::CodeGenerator *cg, CaseConversionManager& manager);
