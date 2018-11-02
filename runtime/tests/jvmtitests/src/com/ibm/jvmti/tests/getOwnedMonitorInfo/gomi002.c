@@ -28,7 +28,7 @@
 static agentEnv * env;                                                    
 
 jint JNICALL
-gomsdi002(agentEnv * agent_env, char * args)
+gomi002(agentEnv * agent_env, char * args)
 {
 	JVMTI_ACCESS_FROM_AGENT(agent_env);                                
 	jvmtiCapabilities capabilities;
@@ -37,7 +37,7 @@ gomsdi002(agentEnv * agent_env, char * args)
 	env = agent_env;
 
 	memset(&capabilities, 0, sizeof(jvmtiCapabilities));
-	capabilities.can_get_owned_monitor_stack_depth_info = 1;
+	capabilities.can_get_owned_monitor_info = 1;
 	err = (*jvmti_env)->AddCapabilities(jvmti_env, &capabilities);
 	if (err != JVMTI_ERROR_NONE) {
 		error(env, err, "Failed to add capabilities");
@@ -48,14 +48,14 @@ gomsdi002(agentEnv * agent_env, char * args)
 }
 
 void JNICALL
-Java_com_ibm_jvmti_tests_getOwnedMonitorStackDepthInfo_gomsdi002_callGet(
+Java_com_ibm_jvmti_tests_getOwnedMonitorInfo_gomi002_callGet(
 		JNIEnv *jni_env, 
 		jclass klass, 
 		jthread thread) 
 {
 	JVMTI_ACCESS_FROM_AGENT(env);
 	jint infoCount = 0;
-	jvmtiMonitorStackDepthInfo *info = NULL;
-	(*jvmti_env)->GetOwnedMonitorStackDepthInfo(jvmti_env, thread, &infoCount, &info);
+	jobject *info = NULL;
+	(*jvmti_env)->GetOwnedMonitorInfo(jvmti_env, thread, &infoCount, &info);
 	(*jvmti_env)->Deallocate(jvmti_env, (unsigned char*)info);
 }

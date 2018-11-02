@@ -234,6 +234,11 @@
 		<return type="success" value="0"/>
 	</test>
 
+ 	<test id="gomi002">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:gomi002 -Xint -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
 	<test id="Destroy shared class cache created by previous test.">
  		<command>$EXE$ $JVM_OPTS$ -Xshareclasses:destroyAll</command>
 		<return type="success" value="1"/>
