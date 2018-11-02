@@ -508,8 +508,14 @@ TR_PersistentCHTable::removeAssumptionFromList(
 void
 TR_PersistentClassInfo::setShouldNotBeNewlyExtended(int32_t ID)
    {
-   auto classesThatShouldNotBeNewlyExtended = TR::compInfoPT->getClassesThatShouldNotBeNewlyExtended();
-   if (classesThatShouldNotBeNewlyExtended)
-      classesThatShouldNotBeNewlyExtended->insert(_classId);
-   _shouldNotBeNewlyExtended.set(1 << ID);
+   if (TR::compInfoPT->getStream())
+      {
+      auto classesThatShouldNotBeNewlyExtended = TR::compInfoPT->getClassesThatShouldNotBeNewlyExtended();
+      if (classesThatShouldNotBeNewlyExtended)
+         classesThatShouldNotBeNewlyExtended->insert(_classId);
+      }
+   else
+      {
+      _shouldNotBeNewlyExtended.set(1 << ID);
+      }
    }
