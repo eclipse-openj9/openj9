@@ -118,7 +118,8 @@ public class ModularityHelper {
 	 * @param    filterArg  A string that is to be used as additional data for filter.
 	 *                      Will be passed to filter everytime filter is called.
 	 */
-	public static void iterateModules(PrintStream out, ModuleIteratorFilter filter, ModuleOutput outputter, String filterArg) throws CorruptDataException {
+	public static int iterateModules(PrintStream out, ModuleIteratorFilter filter, ModuleOutput outputter, String filterArg) throws CorruptDataException {
+		int count = 0;
 		J9JavaVMPointer vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
 		if (JavaVersionHelper.ensureJava9AndUp(vm, out)) {
 			GCClassLoaderIterator iterator = GCClassLoaderIterator.from();
@@ -130,11 +131,13 @@ public class ModularityHelper {
 				while (slotIterator.hasNext()) {
 					J9ModulePointer modulePtr = slotIterator.next();
 					if (filter.filter(modulePtr, filterArg)) {
+						count++;
 						outputter.print(modulePtr, out);
 					}
 				}
 			}
 		}
+		return count;
 	}
 
 
@@ -152,7 +155,8 @@ public class ModularityHelper {
 	 * @param   filterArg   A string that is to be used as additional data for filter.
 	 *                      Will be passed to filter everytime filter is called.
 	 */
-	public static void iteratePackages(PrintStream out, PackageIteratorFilter filter, PackageOutput outputter, String filterArg) throws CorruptDataException {
+	public static int iteratePackages(PrintStream out, PackageIteratorFilter filter, PackageOutput outputter, String filterArg) throws CorruptDataException {
+		int count = 0;
 		J9JavaVMPointer vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
 		if (JavaVersionHelper.ensureJava9AndUp(vm, out)) {
 			GCClassLoaderIterator iterator = GCClassLoaderIterator.from();
@@ -164,10 +168,12 @@ public class ModularityHelper {
 				while (slotIterator.hasNext()) {
 					J9PackagePointer packagePtr = slotIterator.next();
 					if (filter.filter(packagePtr, filterArg)) {
+						count++;
 						outputter.print(packagePtr, out);
 					}
 				}
 			}
 		}
+		return count;
 	}
 }

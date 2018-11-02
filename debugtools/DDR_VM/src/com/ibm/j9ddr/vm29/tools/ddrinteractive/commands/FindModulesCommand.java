@@ -104,13 +104,17 @@ public class FindModulesCommand extends Command
 		}
 		
 		try {
+			int result;
 			switch (status) {
 			case MODULE:
-				ModularityHelper.iterateModules(out, moduleFilter, moduleOutput, filterArg);
+				result = ModularityHelper.iterateModules(out, moduleFilter, moduleOutput, filterArg);
+				out.printf("Found %d module%s\n", result, (1 == result ? "": "s"));
 				break;
 			case PACKAGE:
-				ModularityHelper.PackageOutput packageOutput = ModularityHelper::printPackageJ9Module; 
-				ModularityHelper.iteratePackages(out, packageFilter, packageOutput, filterArg);
+				/* Output the module(s) owning all packages matched by packageFilter */
+				ModularityHelper.PackageOutput packageOutput = ModularityHelper::printPackageJ9Module;
+				result = ModularityHelper.iteratePackages(out, packageFilter, packageOutput, filterArg);
+				out.printf("Found %d module%s\n", result, (1 == result ? "": "s"));
 				break;
 			case HELP:
 				printHelp(out);
