@@ -55,6 +55,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9SFMethodTypeFramePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9SFSpecialFramePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9SFStackFramePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMEntryLocalStoragePointer;
+import com.ibm.j9ddr.vm29.pointer.generated.TRBuildFlags;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMMethodHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ThreadHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
@@ -255,25 +256,23 @@ public class StackWalker
 
 						/* fetch the Java stack for the platform directly from the register file */
 						String javaSPName = "";
-						if (J9BuildFlags.J9VM_ARCH_POWER) {
+						if (TRBuildFlags.host_POWER) {
 							/* AIX shows as POWER not PPC */
 							/* gpr14 */
 							javaSPName = "gpr14";
-						} else if (J9BuildFlags.arch_s390) {
+						} else if (TRBuildFlags.host_S390) {
 							/* r5 */
 							javaSPName = "r5";
-						} else if (J9BuildFlags.J9VM_ARCH_X86) {
-							if (J9BuildFlags.env_data64) {
-								/* rsp */
-								javaSPName = "rsp";
-							} else {
-								/* esp */
-								javaSPName = "esp";
-							}
+						} else if (TRBuildFlags.host_X86 && TRBuildFlags.host_64BIT) {
+							/* esp */
+							javaSPName = "rsp";
+						} else if (TRBuildFlags.host_X86 && TRBuildFlags.host_32BIT) {
+							/* rsp */
+							javaSPName = "esp";
 						} else {
 							throw new IllegalArgumentException("Unsupported platform");
 						}
-
+						
 						for (IRegister reg : nativeThread.getRegisters()) {
 							if (reg.getName().equalsIgnoreCase(javaSPName)) {
 								javaSp = UDATAPointer.cast(reg.getValue().longValue());
