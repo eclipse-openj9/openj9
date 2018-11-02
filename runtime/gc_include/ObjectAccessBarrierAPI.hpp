@@ -387,9 +387,8 @@ public:
 #if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
 		vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_copyObjectFields(vmThread, objectClass, srcObject, srcOffset, destObject, destOffset);
 #else /* defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER) */
-		/* TODO implement HW barriers */
 		if (j9gc_modron_readbar_none != _readBarrierType) {	
-			if (j9gc_modron_readbar_evacuate == _readBarrierType) {
+			if (j9gc_modron_readbar_range_check == _readBarrierType) {
 				vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_copyObjectFields(vmThread, objectClass, srcObject, srcOffset, destObject, destOffset);
 			} else if (j9gc_modron_readbar_always == _readBarrierType) {
 				vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_copyObjectFields(vmThread, objectClass, srcObject, srcOffset, destObject, destOffset);

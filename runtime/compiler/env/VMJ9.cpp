@@ -5797,55 +5797,6 @@ TR_J9VMBase::getMaxCallGraphCallCount()
    return profiler->getMaxCallCount();
    }
 
-void
-TR_J9VMBase::getNumberofCallersAndTotalWeight(TR_OpaqueMethodBlock *method, uint32_t *count, uint32_t *weight)
-   {
-   TR_IProfiler *profiler = getIProfiler();
-
-   if (!profiler)
-      {
-      return;
-      }
-
-   profiler->getNumberofCallersAndTotalWeight(method,count,weight);
-   return;
-   }
-
-uint32_t
-TR_J9VMBase::getOtherBucketWeight(TR_OpaqueMethodBlock *method)
-   {
-   TR_IProfiler *profiler = getIProfiler();
-
-   if (!profiler)
-      {
-      return 0;
-      }
-
-   return profiler->getOtherBucketWeight(method);
-   }
-
-bool
-TR_J9VMBase::getCallerWeight(TR_OpaqueMethodBlock *calleeMethod, TR_OpaqueMethodBlock *callerMethod , uint32_t *weight)
-   {
-   TR_IProfiler *profiler = getIProfiler();
-
-   if (!profiler)
-      return 0;
-
-   return profiler->getCallerWeight(calleeMethod,callerMethod, weight);
-   }
-bool
-TR_J9VMBase::getCallerWeight(TR_OpaqueMethodBlock *calleeMethod, TR_OpaqueMethodBlock *callerMethod , uint32_t *weight, uint32_t pcIndex)
-   {
-   TR_IProfiler *profiler = getIProfiler();
-
-   if (!profiler)
-      return 0;
-
-   return profiler->getCallerWeight(calleeMethod,callerMethod, weight, pcIndex);
-   }
-
-
 int32_t
 TR_J9VMBase::getIProfilerCallCount(TR_OpaqueMethodBlock *caller, int32_t bcIndex, TR::Compilation * comp)
    {

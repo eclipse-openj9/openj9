@@ -845,11 +845,6 @@ public:
    virtual bool    isClassLibraryClass(TR_OpaqueClassBlock *clazz);
    virtual int32_t getMaxCallGraphCallCount();
 
-   virtual void getNumberofCallersAndTotalWeight(TR_OpaqueMethodBlock *method, uint32_t *count, uint32_t *weight);
-   virtual uint32_t getOtherBucketWeight(TR_OpaqueMethodBlock *method);
-   virtual bool getCallerWeight(TR_OpaqueMethodBlock *calleeMethod, TR_OpaqueMethodBlock *callerMethod , uint32_t *weight);
-   virtual bool getCallerWeight(TR_OpaqueMethodBlock *calleeMethod, TR_OpaqueMethodBlock *callerMethod , uint32_t *weight, uint32_t pcIndex);
-
    virtual bool    getSupportsRecognizedMethods();
 
    // Hardware profiling support
