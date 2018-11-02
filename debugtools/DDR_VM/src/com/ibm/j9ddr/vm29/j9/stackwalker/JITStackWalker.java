@@ -159,7 +159,7 @@ public class JITStackWalker
 		
 		private static U8Pointer MASK_PC(AbstractPointer ptr)
 		{
-			if (TRBuildFlags.host_S390 && TRBuildFlags.host_32BIT) {
+			if (J9BuildFlags.arch_s390 && !J9BuildFlags.env_data64) {
 				return U8Pointer.cast(UDATA.cast(ptr).bitAnd(0x7FFFFFFF));
 			} else {
 				return U8Pointer.cast(ptr);
