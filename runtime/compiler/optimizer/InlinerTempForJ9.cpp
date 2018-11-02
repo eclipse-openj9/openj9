@@ -61,6 +61,7 @@
 #include "runtime/J9Profiler.hpp"
 #include "ras/DebugCounter.hpp"
 #include "j9consts.h"
+#include "optimizer/TransformUtil.hpp"
 
 namespace TR { class SimpleRegex; }
 
@@ -1067,91 +1068,56 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
       printf("createUnsafePutWithOffset %d in %s\n", type.getDataType(), comp()->signature());
 
    if(comp()->getOption(TR_TraceUnsafeInlining))
-       traceMsg(comp(),"\tcreateUnsafePutWithOffset.  offset(datatype) %d isvolatile %d needNullCheck %d isOrdered %d\n",type.getDataType(),isVolatile,needNullCheck,isOrdered);
+       traceMsg(comp(),"\tcreateUnsafePutWithOffset.  call tree %p offset(datatype) %d isvolatile %d needNullCheck %d isOrdered %d\n", callNodeTreeTop, type.getDataType(),isVolatile,needNullCheck,isOrdered);
 
+   // Preserve null check on the unsafe object
+   if (callNodeTreeTop->getNode()->getOpCode().isNullCheck())
+      {
+      TR::Node *passthrough = TR::Node::create(unsafeCall, TR::PassThrough, 1);
+      passthrough->setAndIncChild(0, unsafeCall->getFirstChild());
+      TR::Node * checkNode = TR::Node::createWithSymRef(callNodeTreeTop->getNode(), TR::NULLCHK, 1, passthrough, callNodeTreeTop->getNode()->getSymbolReference());
+      callNodeTreeTop->insertBefore(TR::TreeTop::create(comp(), checkNode));
+      TR::Node::recreate(callNodeTreeTop->getNode(), TR::treetop);
+      if(comp()->getOption(TR_TraceUnsafeInlining))
+         traceMsg(comp(), "Created node %p to preserve NULLCHK on unsafe call %p\n", checkNode, unsafeCall);
+      }
 
-   TR::SymbolReference * symRef = comp()->getSymRefTab()->findOrCreateUnsafeSymbolRef(type, true, false, isVolatile);
-   if (isOrdered)
-      symRef->getSymbol()->setOrdered();
-   TR::Node *unsafeAddress = unsafeCall->getChild(1);
+   // Since the block has to be split, we need to create temps for the arguments to the call
+   for (int i = 0; i < unsafeCall->getNumChildren(); i++)
+      {
+      TR::Node* child = unsafeCall->getChild(i);
+      TR::Node* newChild = TR::TransformUtil::saveNodeToTempSlot(comp(), child, callNodeTreeTop);
+      unsafeCall->setAndIncChild(i, newChild);
+      child->recursivelyDecReferenceCount();
+      }
+
    TR::Node *offset = unsafeCall->getChild(2);
+   TR::TreeTop *prevTreeTop = callNodeTreeTop->getPrevTreeTop();
+   TR::SymbolReference *newSymbolReferenceForAddress = unsafeCall->getChild(1)->getSymbolReference();
+   TR::SymbolReference * symRef = comp()->getSymRefTab()->findOrCreateUnsafeSymbolRef(type, true, false, isVolatile);
    TR::Node *orderedCallNode = NULL;
-
-   if(comp()->getOption(TR_TraceUnsafeInlining))
-       traceMsg(comp(),"\tInitial Values:  unsafeCall = %p unsafeAddress = %p offset = %p\n",unsafeCall,unsafeAddress,offset);
-
 
    if (isOrdered)
       {
-      TR::Node *receiver = unsafeCall->getChild(0);
-      TR::DataType dataType = receiver->getDataType();
-
-      TR::SymbolReference *newSymbolReference = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), dataType);
-      TR::Node *storeNode = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(receiver->getDataType()), 1, 1, receiver, newSymbolReference);
-      TR::TreeTop *storeTree = TR::TreeTop::create(comp(), storeNode);
-      callNodeTreeTop->insertTreeTopsBeforeMe(storeTree);
-
-      // Replace the old child with a load of the new sym ref
-      //
-      TR::Node *oldReceiver = receiver;
-      receiver = TR::Node::createWithSymRef(receiver, comp()->il.opCodeForDirectLoad(receiver->getDataType()), 0, newSymbolReference);
-      unsafeCall->setAndIncChild(0, receiver);
-      oldReceiver->recursivelyDecReferenceCount();
+      symRef->getSymbol()->setOrdered();
+      orderedCallNode = callNodeTreeTop->getNode()->duplicateTree();
+      orderedCallNode->getFirstChild()->setDontInlinePutOrderedCall();
+      if (comp()->getOption(TR_TraceUnsafeInlining))
+         traceMsg(comp(),"\t Duplicate Tree for ordered call, orderedCallNode = %p\n",orderedCallNode);
       }
 
-   TR::TreeTop *prevTreeTop = callNodeTreeTop->getPrevTreeTop();
-   TR::SymbolReference *newSymbolReferenceForAddress = NULL;
+   static char *disableIllegalWriteReport = feGetEnv("TR_DisableIllegalWriteReport");
+   TR::TreeTop* callTreeForIllegalWriteReport = NULL;
+   // Keep the call for illegal write report
+   if (!disableIllegalWriteReport && !comp()->getOption(TR_DisableGuardedStaticFinalFieldFolding))
+      callTreeForIllegalWriteReport = callNodeTreeTop->duplicateTree();
 
-   // Since the block has to be split, we need to create temps for the arguments to the call
-   // so that the right values are picked up in the 2 blocks that are targets of the if block
-   // created for the inlining of the unsafe method
-   createTempsForUnsafePutGet(unsafeAddress, unsafeCall, callNodeTreeTop,
-                              offset, newSymbolReferenceForAddress, false);
-
-   if(comp()->getOption(TR_TraceUnsafeInlining))
-       {
-       traceMsg(comp(),"\t After createTempsForUnsafePutGet, callNodeTreeTop dump:\n");
-       comp()->getDebug()->print(comp()->getOutFile(),callNodeTreeTop);
-       }
-    TR::TreeTop *ttToTrace = 0;
-    if(comp()->getOption(TR_TraceUnsafeInlining) && callNodeTreeTop && callNodeTreeTop->getNode() && callNodeTreeTop->getNode()->getFirstChild() && callNodeTreeTop->getNode()->getFirstChild()->getThirdChild())
-       ttToTrace = TR::TreeTop::create(comp(),callNodeTreeTop->getNode()->getFirstChild()->getThirdChild());
-
-
-   unsafeAddress = createUnsafeAddressWithOffset(unsafeCall);
-
+   TR::Node * unsafeAddress = createUnsafeAddressWithOffset(unsafeCall);
    if(comp()->getOption(TR_TraceUnsafeInlining))
        {
        traceMsg(comp(),"\t After createUnsafeAddressWithOffset, unsafeAddress = %p : \n",unsafeAddress);
        TR::TreeTop *tmpUnsafeAddressTT = TR::TreeTop::create(comp(),unsafeAddress);
        comp()->getDebug()->print(comp()->getOutFile(),tmpUnsafeAddressTT);
-
-
-       if(ttToTrace)
-          {
-          traceMsg(comp(),"\tttToTrace:\n");
-          comp()->getDebug()->print(comp()->getOutFile(),ttToTrace);
-          }
-
-  //     comp()->getDebug()->print(comp()->getOutFile(),unsafeAddress);
-       }
-
-
-    if (isOrdered)
-       {
-       orderedCallNode = callNodeTreeTop->getNode()->duplicateTree();
-       orderedCallNode->getFirstChild()->setDontInlinePutOrderedCall();
-
-       if(comp()->getOption(TR_TraceUnsafeInlining))
-          {
-          traceMsg(comp(),"\t After duplicate Tree for orderedCallNode, orderedCallNode = %p\n",orderedCallNode);
-          if(ttToTrace)
-             {
-             traceMsg(comp(),"\tttToTrace:\n");
-             comp()->getDebug()->print(comp()->getOutFile(),ttToTrace);
-             }
- //         comp()->getDebug()->print(comp()->getOutFile(),orderedCallNode);
-          }
        }
 
 
@@ -1196,14 +1162,8 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
       comp()->getDebug()->print(comp()->getOutFile(),callNodeTreeTop);
       traceMsg(comp(),"\t After callNodeTreeTop setNode oldCallNodeTreeTop dump oldCallNodeTreeTop->getNode->getChild = %p:\n",oldCallNodeTreeTop->getNode() ? oldCallNodeTreeTop->getNode()->getFirstChild() : 0 );
       comp()->getDebug()->print(comp()->getOutFile(),oldCallNodeTreeTop);
-      if(ttToTrace)
-         {
-         traceMsg(comp(),"\tttToTrace:\n");
-         comp()->getDebug()->print(comp()->getOutFile(),ttToTrace);
-         }
       }
 
-   unsafeCall->recursivelyDecReferenceCount();
 
    TR::TreeTop* directAccessTreeTop = genDirectAccessCodeForUnsafeGetPut(unsafeNode, false, false);
 
@@ -1211,11 +1171,6 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
       {
       traceMsg(comp(),"\t After genDirectAccessCodeForUnsafeGetPut, directAccessTreeTop dump:\n");
       comp()->getDebug()->print(comp()->getOutFile(),directAccessTreeTop);
-      if(ttToTrace)
-         {
-         traceMsg(comp(),"\tttToTrace:\n");
-         comp()->getDebug()->print(comp()->getOutFile(),ttToTrace);
-         }
       }
 
    TR::TreeTop* arrayDirectAccessTreeTop = conversionNeeded
@@ -1274,6 +1229,31 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
                           directAccessTreeTop,
                           lowTagCmpTree, needNullCheck, false, conversionNeeded,
                           joinBlock, javaLangClass, orderedCallNode);
+
+
+   // Test for static final field
+   if (callTreeForIllegalWriteReport)
+      {
+      TR::Node* duplicatedCallNode = callTreeForIllegalWriteReport->getNode()->getFirstChild();
+      TR::Block* storeToStaticFieldBlock = indirectAccessTreeTop->getEnclosingBlock();
+      auto isFinalStaticNode = TR::Node::createif(TR::iflcmpeq,
+                                                     TR::Node::create(TR::land, 2, duplicatedCallNode->getChild(2)->duplicateTree(), TR::Node::lconst(J9_SUN_FINAL_FIELD_OFFSET_TAG)),
+                                                     TR::Node::lconst(J9_SUN_FINAL_FIELD_OFFSET_TAG),
+                                                     NULL /*branchTarget*/);
+      auto isFinalStaticTreeTop = TR::TreeTop::create(comp(), isFinalStaticNode);
+
+      TR_ASSERT(storeToStaticFieldBlock->getSuccessors().size() == 1, "storeToStaticFieldBlock should have only one successor");
+      TR::Block* mergeBlock = toBlock(storeToStaticFieldBlock->getSuccessors().front()->getTo());
+      TR::TransformUtil::createConditionalAlternatePath(comp(), isFinalStaticTreeTop, callTreeForIllegalWriteReport, storeToStaticFieldBlock, mergeBlock, comp()->getMethodSymbol()->getFlowGraph(), true /*markCold*/);
+
+      if (comp()->getOption(TR_TraceUnsafeInlining))
+         {
+         traceMsg(comp(), "Created isFinal test node n%dn whose branch target is Block_%d to report illegal write to static final field\n",
+                  isFinalStaticNode->getGlobalIndex(), callTreeForIllegalWriteReport->getEnclosingBlock()->getNumber());
+         }
+      }
+
+   unsafeCall->recursivelyDecReferenceCount();
    return true;
    }
 
