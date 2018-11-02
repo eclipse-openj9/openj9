@@ -1962,9 +1962,9 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 			}
 #endif
 
-			if (FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XDFPBD, NULL) >= 0) {
-				vm->runtimeFlags |= J9_RUNTIME_DFPBD;
-			}
+			/* The -Xdfpbd option is used by JIT, consuming it here to allow VM to continue */
+			FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XDFPBD, NULL);
+
 			if (FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XAGGRESSIVE, NULL) >= 0) {
 				vm->runtimeFlags |= J9_RUNTIME_AGGRESSIVE;
 			}
