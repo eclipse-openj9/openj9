@@ -3006,7 +3006,7 @@ triggerGCInitialized(J9VMThread* vmThread)
 		vmThread->omrVMThread,
 		j9time_hires_clock(),
 		j9gc_get_gcmodestring(vm),
-		(LOADED == (FIND_DLL_TABLE_ENTRY(J9_JIT_DLL_NAME)->loadFlags & LOADED)),
+		0, /* unused */
 		j9gc_get_maximum_heap_size(vm),
 		j9gc_get_initial_heap_size(vm),
 		j9sysinfo_get_physical_memory(),
