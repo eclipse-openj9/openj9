@@ -302,6 +302,7 @@ jvmtiAddCapabilities(jvmtiEnv* env,
 	jvmtiCapabilities newCapabilities;
 	UDATA i;
 	jvmtiError rc = JVMTI_ERROR_NOT_AVAILABLE;
+	J9VMThread *currentThread = NULL;
 
 	Trc_JVMTI_jvmtiAddCapabilities_Entry(env);
 
@@ -309,119 +310,89 @@ jvmtiAddCapabilities(jvmtiEnv* env,
 
 	ENSURE_NON_NULL(capabilities_ptr);
 
-	/* Handle can_tag_objects immediately as the requiredDebugAttributes check requires exclusive VM access
-	 * which must not occur while holding the JVMTI mutex.
-	 */
-	if (capabilities_ptr->can_tag_objects) {
-		J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
-		J9HookInterface ** vmHook = vmFuncs->getVMHookInterface(vm);
-		/* If J9HOOK_VM_REQUIRED_DEBUG_ATTRIBUTES has not been disabled yet (i.e. VM is starting up),
-		 * there's no need to handle can_tag_objects specially.
-		 */
-		if (0 == (*vmHook)->J9HookIsEnabled(vmHook, J9HOOK_VM_REQUIRED_DEBUG_ATTRIBUTES)) {
-			J9VMThread *currentThread = NULL;
-			jvmtiError tempRC = getCurrentVMThread(vm, &currentThread);
-			if (tempRC != JVMTI_ERROR_NONE) {
-				rc = tempRC;
+	rc = getCurrentVMThread(vm, &currentThread);
+	if (rc == JVMTI_ERROR_NONE) {
+		rc = JVMTI_ERROR_NOT_AVAILABLE;
+		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+
+		/* Get the JVMTI mutex to ensure to prevent multple agents acquiring capabilities that can only be held by one agent at a time */
+
+		omrthread_monitor_enter(jvmtiData->mutex);
+
+		/* Get the current set of potential capabilities */
+
+		jvmtiGetPotentialCapabilities(env, &potentialCapabilities);
+
+		/* Verify the requested capabilities */
+
+		for (i = 0; i < sizeof(jvmtiCapabilities); ++i) {
+			U_8 byte = ((U_8 *) capabilities_ptr)[i];
+
+			/* Mask out any currently-owned capabilities */
+
+			byte &= ~(((U_8 *) &(j9env->capabilities))[i]);
+
+			/* Make sure all of the requested capabilities are available */
+
+			if ((byte & ~(((U_8 *) &potentialCapabilities)[i])) != 0) {
 				goto fail;
 			}
-			vmFuncs->internalEnterVMFromJNI(currentThread);
-			vmFuncs->acquireExclusiveVMAccess(currentThread);
-			if (0 == (vm->requiredDebugAttributes & J9VM_DEBUG_ATTRIBUTE_ALLOW_USER_HEAP_WALK)) {
-				J9MemoryManagerFunctions const * const mmFuncs = vm->memoryManagerFunctions;
-				vm->requiredDebugAttributes |= J9VM_DEBUG_ATTRIBUTE_ALLOW_USER_HEAP_WALK;
-				/* J9MMCONSTANT_EXPLICIT_GC_RASDUMP_COMPACT allows the GC to run while the current thread is holding
-				 * exclusive VM access.
-				 */
-				mmFuncs->j9gc_modron_global_collect_with_overrides(currentThread, J9MMCONSTANT_EXPLICIT_GC_RASDUMP_COMPACT);
-				if (J9_GC_POLICY_METRONOME == vm->gcPolicy) {
-					/* In metronome, the previous GC call may have only finished the current cycle.
-					 * Call again to ensure a full GC takes place.
-					 */
-					mmFuncs->j9gc_modron_global_collect_with_overrides(currentThread, J9MMCONSTANT_EXPLICIT_GC_RASDUMP_COMPACT);
+
+			((U_8 *) &newCapabilities)[i] = byte;
+		}
+
+		/* can't request original method order after onLoad phase */
+
+		if (1 == newCapabilities.can_maintain_original_method_order) {
+			if (J9_ARE_NO_BITS_SET(vm->requiredDebugAttributes, J9VM_DEBUG_ATTRIBUTE_MAINTAIN_ORIGINAL_METHOD_ORDER)) {
+				if (JVMTI_PHASE_ONLOAD == jvmtiData->phase) {
+					/* turn off ROMClassMethodSorting */
+					Trc_JVMTI_jvmtiAddCapabilities_turnOfRomMethodSorting();
+					vm->romMethodSortThreshold = UDATA_MAX;
+					vm->requiredDebugAttributes |= J9VM_DEBUG_ATTRIBUTE_MAINTAIN_ORIGINAL_METHOD_ORDER;
+				} else {
+					rc = JVMTI_ERROR_NOT_AVAILABLE;
+					goto fail;
 				}
 			}
-			vmFuncs->releaseExclusiveVMAccess(currentThread);
-			vmFuncs->internalExitVMToJNI(currentThread);
 		}
-	}
 
-	/* Get the JVMTI mutex to ensure to prevent multple agents acquiring capabilities that can only be held by one agent at a time */
+		/* Always consider can_generate_compiled_method_load_events to be a newly-requested capability
+		 * so that hookNonEventCapabilities will fork the event thread if need be.
+		 */
+		if (capabilities_ptr->can_generate_compiled_method_load_events) {
+			newCapabilities.can_generate_compiled_method_load_events = 1;
+		}
 
-	omrthread_monitor_enter(jvmtiData->mutex);
+		/* Reserve hooks for any events now allowed by the new capabilities */
 
-	/* Get the current set of potential capabilities */
-
-	jvmtiGetPotentialCapabilities(env, &potentialCapabilities);
-
-	/* Verify the requested capabilities */
-
-	for (i = 0; i < sizeof(jvmtiCapabilities); ++i) {
-		U_8 byte = ((U_8 *) capabilities_ptr)[i];
-
-		/* Mask out any currently-owned capabilities */
-
-		byte &= ~(((U_8 *) &(j9env->capabilities))[i]);
-
-		/* Make sure all of the requested capabilities are available */
-
-		if ((byte & ~(((U_8 *) &potentialCapabilities)[i])) != 0) {
+		if (mapCapabilitiesToEvents(j9env, &newCapabilities, reserveEvent) != 0) {
 			goto fail;
 		}
 
-		((U_8 *) &newCapabilities)[i] = byte;
-	}
+		/* Handle non-event hooks */
 
-	/* can't request original method order after onLoad phase */
-
-	if (1 == newCapabilities.can_maintain_original_method_order) {
-		if (J9_ARE_NO_BITS_SET(vm->requiredDebugAttributes, J9VM_DEBUG_ATTRIBUTE_MAINTAIN_ORIGINAL_METHOD_ORDER)) {
-			if (JVMTI_PHASE_ONLOAD == jvmtiData->phase) {
-				/* turn off ROMClassMethodSorting */
-				Trc_JVMTI_jvmtiAddCapabilities_turnOfRomMethodSorting();
-				vm->romMethodSortThreshold = UDATA_MAX;
-				vm->requiredDebugAttributes |= J9VM_DEBUG_ATTRIBUTE_MAINTAIN_ORIGINAL_METHOD_ORDER;
-			} else {
-				rc = JVMTI_ERROR_NOT_AVAILABLE;
-				goto fail;
-			}
+		if (hookNonEventCapabilities(j9env, &newCapabilities) != 0) {
+			goto fail;
 		}
-	}
 
-	/* Always consider can_generate_compiled_method_load_events to be a newly-requested capability
-	 * so that hookNonEventCapabilities will fork the event thread if need be.
-	 */
-	if (capabilities_ptr->can_generate_compiled_method_load_events) {
-		newCapabilities.can_generate_compiled_method_load_events = 1;
-	}
+		/* All capabilities acquired successfully */
 
-	/* Reserve hooks for any events now allowed by the new capabilities */
-
-	if (mapCapabilitiesToEvents(j9env, &newCapabilities, reserveEvent) != 0) {
-		goto fail;
-	}
-
-	/* Handle non-event hooks */
-
-	if (hookNonEventCapabilities(j9env, &newCapabilities) != 0) {
-		goto fail;
-	}
-
-	/* All capabilities acquired successfully */
-
-	for (i = 0; i < sizeof(jvmtiCapabilities); ++i) {
-		((U_8 *) &(j9env->capabilities))[i] |= ((U_8 *) &newCapabilities)[i];
-	}
-	rc = JVMTI_ERROR_NONE;
+		for (i = 0; i < sizeof(jvmtiCapabilities); ++i) {
+			((U_8 *) &(j9env->capabilities))[i] |= ((U_8 *) &newCapabilities)[i];
+		}
+		rc = JVMTI_ERROR_NONE;
 
 fail:
 #ifdef DEBUG
-	if (rc != JVMTI_ERROR_NONE) {
-		dumpCapabilities(vm, capabilities_ptr, "Requested capabilities");
-		dumpCapabilities(vm, &potentialCapabilities, "Potential capabilities");
-	}
+		if (rc != JVMTI_ERROR_NONE) {
+			dumpCapabilities(vm, capabilities_ptr, "Requested capabilities");
+			dumpCapabilities(vm, &potentialCapabilities, "Potential capabilities");
+		}
 #endif
-	omrthread_monitor_exit(jvmtiData->mutex);
+		omrthread_monitor_exit(jvmtiData->mutex);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
+	}
 done:
 	/* If can_generate_compiled_method_load_events is being requested, the event reporting thread
 	 * has been started but may not be successfully attached to the VM yet.  Wait for the thread to
