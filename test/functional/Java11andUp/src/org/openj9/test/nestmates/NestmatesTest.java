@@ -19,7 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package org.openj9.test.nestmate;
+package org.openj9.test.nestmates;
 
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
@@ -28,7 +28,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.testng.log4testng.Logger;
 
-public class NestmateTest {
+public class NestmatesTest {
 
 	private static int LOOP_COUNT = 1000;
 
@@ -95,8 +95,8 @@ public class NestmateTest {
 	}
 
 	private void checkReturnAndAssert(int i, long l) {
-		if ((i == 0) && (l != NestmateTest.KEY1) || (i == 1) && (l != NestmateTest.KEY2)
-				|| (i == 2) && (l != NestmateTest.KEY3)) {
+		if ((i == 0) && (l != NestmatesTest.KEY1) || (i == 1) && (l != NestmatesTest.KEY2)
+				|| (i == 2) && (l != NestmatesTest.KEY3)) {
 			Assert.fail("Invalid return for " + i + " " + l);
 		}
 
@@ -132,13 +132,13 @@ public class NestmateTest {
 
 			switch (i) {
 			case 0:
-				retVal = NestmateTest.KEY1;
+				retVal = NestmatesTest.KEY1;
 				break;
 			case 1:
-				retVal = NestmateTest.KEY2;
+				retVal = NestmatesTest.KEY2;
 				break;
 			default:
-				retVal = NestmateTest.KEY3;
+				retVal = NestmatesTest.KEY3;
 				break;
 			}
 
@@ -159,13 +159,13 @@ public class NestmateTest {
 
 			switch (i) {
 			case 0:
-				retVal = NestmateTest.KEY1;
+				retVal = NestmatesTest.KEY1;
 				break;
 			case 1:
-				retVal = NestmateTest.KEY2;
+				retVal = NestmatesTest.KEY2;
 				break;
 			default:
-				retVal = NestmateTest.KEY3;
+				retVal = NestmatesTest.KEY3;
 				break;
 			}
 

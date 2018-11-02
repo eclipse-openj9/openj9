@@ -74,17 +74,17 @@
 		
 		<variations>
 		
-			<variation>'-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmate/NestmateTest.testVirtualUnresolvedInterpreted*},{org/openj9/test/nestmate/NestmateTest.testVirtualUnresolvedInterpreted*}(count=0)'</variation>
-			<variation>'-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmate/NestmateTest.testVirtualUnresolvedJitted*,org/openj9/test/nestmate/NestmateTest$InnerClass.innerPrivateMethod*},{org/openj9/test/nestmate/NestmateTest.testVirtualUnresolvedInterpreted*}(count=0),{org/openj9/test/nestmate/NestmateTest$InnerClass.innerPrivateMethod*}(count=100)'</variation>
+			<variation>'-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmates/NestmatesTest.testVirtualUnresolvedInterpreted*},{org/openj9/test/nestmates/NestmatesTest.testVirtualUnresolvedInterpreted*}(count=0)'</variation>
+			<variation>'-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmates/NestmatesTest.testVirtualUnresolvedJitted*,org/openj9/test/nestmates/NestmatesTest$InnerClass.innerPrivateMethod*},{org/openj9/test/nestmates/NestmatesTest.testVirtualUnresolvedInterpreted*}(count=0),{org/openj9/test/nestmates/NestmatesTest$InnerClass.innerPrivateMethod*}(count=100)'</variation>
 			
-			<variation>'-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmate/NestmateTest.testInterfaceUnresolvedInterpreted*},{org/openj9/test/nestmate/NestmateTest.testInterfaceUnresolvedInterpreted*}(count=0)'</variation>
-			<variation>'-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmate/NestmateTest.testInterfaceUnresolvedJitted*,org/openj9/test/nestmate/NestmateTest$InnerInterface.innerInterfacePrivateMethod*},{org/openj9/test/nestmate/NestmateTest.testInterfaceUnresolvedJitted*}(count=0),{org/openj9/test/nestmate/NestmateTest$InnerInterface.innerInterfacePrivateMethod*}(count=100)'</variation>
+			<variation>'-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmates/NestmatesTest.testInterfaceUnresolvedInterpreted*},{org/openj9/test/nestmates/NestmatesTest.testInterfaceUnresolvedInterpreted*}(count=0)'</variation>
+			<variation>'-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmates/NestmatesTest.testInterfaceUnresolvedJitted*,org/openj9/test/nestmates/NestmatesTest$InnerInterface.innerInterfacePrivateMethod*},{org/openj9/test/nestmates/NestmatesTest.testInterfaceUnresolvedJitted*}(count=0),{org/openj9/test/nestmates/NestmatesTest$InnerInterface.innerInterfacePrivateMethod*}(count=100)'</variation>
 	
 		</variations>
 			
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
-			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames NestmateTest \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames NestmatesTest \
 			-groups $(TEST_GROUP) \
 			-excludegroups $(DEFAULT_EXCLUDE); \
 			$(TEST_STATUS)
@@ -224,6 +224,24 @@
 			$(TEST_STATUS)
 		</command>
 		<platformRequirements>os.aix</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+	</test>
+	<test>
+		<testCaseName>NestAttributeTest</testCaseName>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(LIB_DIR)$(D)asm-all.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames NestAttributeTest \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
 		<levels>
 			<level>sanity</level>
 		</levels>

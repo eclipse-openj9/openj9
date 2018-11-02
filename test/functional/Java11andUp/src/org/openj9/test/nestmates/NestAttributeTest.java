@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-package org.openj9.test.valhalla;
+package org.openj9.test.nestmates;
 
 import java.lang.reflect.*;
 import org.objectweb.asm.*;
