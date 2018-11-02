@@ -73,8 +73,6 @@ public:
    static TR::Node* saveNodeToTempSlot(TR::Compilation* comp, TR::Node* node, TR::TreeTop* insertTreeTop);
    static void createTempsForCall(TR::Optimization* opt, TR::TreeTop *callTree);
    static void createDiamondForCall(TR::Optimization* opt, TR::TreeTop *callTree, TR::TreeTop *compareTree, TR::TreeTop *ifTree, TR::TreeTop *elseTree, bool changeBlockExtensions = false, bool markCold = false);
-
-   static TR::Node* calculateUnsafeAddress(TR::TreeTop* treetop, TR::Node* objectNode, TR::Node* offsetNode, TR::Compilation* comp, bool needsNullCheck, bool isNotStaticField);
    };
 
 }
