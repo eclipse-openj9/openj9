@@ -111,7 +111,7 @@ jvmtiGetJNIFunctionTable(jvmtiEnv* env,
 		/* Get the JVMTI mutex to ensure this operation is atomic with SetJNIFunctionTable */
 
 		omrthread_monitor_enter(jvmtiData->mutex);
-		memcpy(*function_table, vm->jniFunctionTable, sizeof(jniNativeInterface));
+		memcpy(rv_function_table, vm->jniFunctionTable, sizeof(jniNativeInterface));
 		omrthread_monitor_exit(jvmtiData->mutex);
 	}
 
