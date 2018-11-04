@@ -412,12 +412,9 @@ jstring getEncoding(JNIEnv *env, jint encodingType)
 #if defined(J9VM_JCL_SE11)
 		{
 			UDATA handle = 0;
-			J9JavaVM * const vm = ((J9VMThread*)env)->javaVM;
-			char dllPath[PATH_MAX];
 			PORT_ACCESS_FROM_ENV(env);
 			/* libjava.[so|dylib] is in the jdk/lib/ directory, one level up from the default/ & compressedrefs/ directories */
-			j9str_printf(PORTLIB, dllPath, sizeof(dllPath), "%s/../java", vm->j9libvmDirectory);
-			if (0 == j9sl_open_shared_library(dllPath, &handle, J9PORT_SLOPEN_DECORATE)) {
+			if (0 == j9sl_open_shared_library("../java", &handle, J9PORT_SLOPEN_DECORATE)) {
 				void (*nativeFuncAddrJNU)(JNIEnv *env, const char *str) = NULL;
 				if (0 == j9sl_lookup_name(handle, "InitializeEncoding", (UDATA*) &nativeFuncAddrJNU, "VLL")) {
 					/* invoke JCL native to initialize platform encoding explicitly */
