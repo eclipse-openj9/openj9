@@ -898,7 +898,6 @@ jvmtiIsMethodObsolete(jvmtiEnv* env,
 	Trc_JVMTI_jvmtiIsMethodObsolete_Entry(env);
 
 	ENSURE_PHASE_START_OR_LIVE(env);
-	ENSURE_CAPABILITY(env, can_redefine_classes);
 
 	ENSURE_JMETHODID_NON_NULL(method);
 	ENSURE_NON_NULL(is_obsolete_ptr);
