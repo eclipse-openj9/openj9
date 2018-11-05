@@ -32,6 +32,8 @@
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	'$(JAVA_SHARED_LIBRARIES_DIR)$(D)algotest' -avltest:$(TEST_RESROOT)$(D)..$(D)algotest$(D)avltest.lst -Xcheck:memory:ignoreUnfreedCallsite=zip/:dbgwrapper:unknown:wrapper; \
 	$(TEST_STATUS)</command>
+		<!-- Disable for issue https://github.com/ibmruntimes/openj9-openjdk-jdk8/issues/190 -->
+		<platformRequirements>^spec.linux_ppc-64_cmprssptrs_le</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -41,7 +43,6 @@
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
-			<subset>10</subset>
 			<subset>11</subset>
 		</subsets>
 	</test>
@@ -53,6 +54,8 @@
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	'$(JAVA_SHARED_LIBRARIES_DIR)$(D)ctest' ; \
 	$(TEST_STATUS)</command>
+		<!-- Disable for issue https://github.com/ibmruntimes/openj9-openjdk-jdk8/issues/190 -->
+		<platformRequirements>^spec.linux_ppc-64_cmprssptrs_le</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -62,7 +65,6 @@
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
-			<subset>10</subset>
 			<subset>11</subset>
 		</subsets>
 	</test>
@@ -71,7 +73,8 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \
 	-cp $(Q)$(TEST_RESROOT)$(D)jniargtests$(D)jniargtests.jar$(Q) JniArgTests ; \
 	$(TEST_STATUS)</command>
 		<levels>
@@ -83,7 +86,6 @@
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
-			<subset>10</subset>
 			<subset>11</subset>
 		</subsets>
 	</test>
@@ -95,6 +97,8 @@
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	'$(JAVA_SHARED_LIBRARIES_DIR)$(D)vmtest'  ; \
 	$(TEST_STATUS)</command>
+		<!-- Disable for issue https://github.com/ibmruntimes/openj9-openjdk-jdk8/issues/190 -->
+		<platformRequirements>^spec.linux_ppc-64_cmprssptrs_le</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -104,7 +108,6 @@
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
-			<subset>10</subset>
 			<subset>11</subset>
 		</subsets>
 	</test>
@@ -115,8 +118,10 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	'$(JAVA_SHARED_LIBRARIES_DIR)$(D)jsigjnitest' \
-	'$(JAVA_BIN)$(D)j9vm' $(JVM_OPTIONS) ; \
+	'$(J9VM_PATH)' $(JVM_OPTIONS) ; \
 	$(TEST_STATUS)</command>
+		<!-- temporarily disable this test on win; https://github.com/eclipse/openj9/issues/3212 -->
+		<platformRequirements>^os.win,^spec.linux_ppc-64_cmprssptrs_le</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -126,7 +131,6 @@
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
-			<subset>10</subset>
 			<subset>11</subset>
 		</subsets>
 	</test>
@@ -139,7 +143,8 @@
 	$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	'$(JAVA_SHARED_LIBRARIES_DIR)$(D)gc_rwlocktest' -verbose; \
 	$(TEST_STATUS)</command>
-		<platformRequirements>^os.win</platformRequirements>
+		<!-- Disable for ppc64le issue https://github.com/ibmruntimes/openj9-openjdk-jdk8/issues/190 -->
+		<platformRequirements>^os.win,^spec.linux_ppc-64_cmprssptrs_le</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -149,7 +154,6 @@
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
-			<subset>10</subset>
 			<subset>11</subset>
 		</subsets>
 	</test>
@@ -171,7 +175,6 @@
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
-			<subset>10</subset>
 			<subset>11</subset>
 		</subsets>
 	</test>
@@ -194,8 +197,7 @@
 		</groups>
 		<subsets>
 			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<!-- disable for 11 https://github.com/eclipse/openj9/issues/3516 -->
 		</subsets>
 	</test>
 	<test>
@@ -217,8 +219,7 @@
 		</groups>
 		<subsets>
 			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<!-- disable for 11 https://github.com/eclipse/openj9/issues/3516 -->
 		</subsets>
 	</test>
 	<test>
@@ -240,8 +241,7 @@
 		</groups>
 		<subsets>
 			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<!-- disable jdk11 issue: https://github.com/eclipse/openj9/issues/3516 -->
 		</subsets>
 	</test>
 	<test>
@@ -262,8 +262,7 @@
 		</groups>
 		<subsets>
 			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<!-- disable for 11 https://github.com/eclipse/openj9/issues/3516 -->
 		</subsets>
 	</test>
 	<test>
@@ -276,7 +275,8 @@
 	'$(JAVA_SHARED_LIBRARIES_DIR)$(D)shrtest' $(JVM_OPTIONS)  -Djava.home='$(JAVA_BIN)$(D)..$(D)' ; \
 	$(TEST_STATUS)
 	</command>
-		<platformRequirements>os.linux</platformRequirements>
+		<!-- Disable for issue https://github.com/ibmruntimes/openj9-openjdk-jdk8/issues/190 -->
+		<platformRequirements>os.linux,^spec.linux_ppc-64_cmprssptrs_le</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -358,6 +358,8 @@
 	'$(JAVA_SHARED_LIBRARIES_DIR)$(D)thrstatetest' $(JVM_OPTIONS)  -Djava.home='$(JAVA_BIN)$(D)..$(D)' -Dcom.ibm.tools.attach.enable=no -Dibm.java9.forceCommonCleanerShutdown=true ; \
 	$(TEST_STATUS)
 	</command>
+		<!-- Disable for issue https://github.com/ibmruntimes/openj9-openjdk-jdk8/issues/190 -->
+		<platformRequirements>^spec.linux_ppc-64_cmprssptrs_le</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -367,17 +369,16 @@
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
-			<subset>10</subset>
 			<subset>11</subset>
 		</subsets>
 	</test>
 	<test>
+	<!-- disable Mode351  https://github.com/eclipse/openj9/issues/3045 -->
 		<testCaseName>vmLifecyleTests</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 			<variation>Mode301</variation>
-			<variation>Mode351</variation>
 			<variation>Mode501</variation>
 			<variation>Mode551</variation>
 		</variations>
@@ -393,7 +394,6 @@
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
-			<subset>10</subset>
 			<subset>11</subset>
 		</subsets>
 	</test>
