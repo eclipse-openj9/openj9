@@ -2400,13 +2400,11 @@ bool isConditionCodeSetForCompare(TR::Node *node, bool *jumpOnOppositeCondition)
    // (and that hopefully does both)
    //
    TR::Instruction     *prevInstr;
-   TR::X86RegInstruction  *prevRegInstr;
    for (prevInstr = comp->cg()->getAppendInstruction();
         prevInstr;
         prevInstr = prevInstr->getPrev())
       {
-      prevRegInstr = prevInstr->getIA32RegInstruction();
-      if (prevRegInstr && (prevInstr->getOpCodeValue() == CMP4RegReg))
+      if (prevInstr->getOpCodeValue() == CMP4RegReg)
          {
          TR::Register *prevInstrTargetRegister = prevInstr->getTargetRegister();
          TR::Register *prevInstrSourceRegister = prevInstr->getSourceRegister();
