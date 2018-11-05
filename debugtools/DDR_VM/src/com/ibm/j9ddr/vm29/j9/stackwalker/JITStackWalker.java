@@ -32,6 +32,7 @@ import com.ibm.j9ddr.vm29.j9.AlgorithmPicker;
 import com.ibm.j9ddr.vm29.j9.AlgorithmVersion;
 import com.ibm.j9ddr.vm29.j9.BaseAlgorithm;
 import com.ibm.j9ddr.vm29.j9.IAlgorithm;
+import com.ibm.j9ddr.vm29.j9.J9ConfigFlags;
 import com.ibm.j9ddr.vm29.pointer.AbstractPointer;
 import com.ibm.j9ddr.vm29.pointer.ObjectReferencePointer;
 import com.ibm.j9ddr.vm29.pointer.PointerPointer;
@@ -159,7 +160,7 @@ public class JITStackWalker
 		
 		private static U8Pointer MASK_PC(AbstractPointer ptr)
 		{
-			if (J9BuildFlags.arch_s390 && !J9BuildFlags.env_data64) {
+			if (J9ConfigFlags.arch_s390 && !J9BuildFlags.env_data64) {
 				return U8Pointer.cast(UDATA.cast(ptr).bitAnd(0x7FFFFFFF));
 			} else {
 				return U8Pointer.cast(ptr);
@@ -646,7 +647,7 @@ public class JITStackWalker
 		{
 			U64Pointer base = U64Pointer.cast(walkState.walkedEntryLocalStorage.jitFPRegisterStorageBase());
 
-			if (J9BuildFlags.arch_s390) {
+			if (J9ConfigFlags.arch_s390) {
 				/* 390 uses FPR0/2/4/6 for arguments, so double fpParmNumber to get the right register */
 				fpParmNumber = fpParmNumber.add(fpParmNumber);
 				/* On 390, either vector or floating point registers are preserved in the ELS, not both.

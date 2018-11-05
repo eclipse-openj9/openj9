@@ -35,6 +35,7 @@ import java.util.List;
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.j9.AlgorithmPicker;
 import com.ibm.j9ddr.vm29.j9.AlgorithmVersion;
+import com.ibm.j9ddr.vm29.j9.J9ConfigFlags;
 import com.ibm.j9ddr.vm29.pointer.PointerPointer;
 import com.ibm.j9ddr.vm29.pointer.U16Pointer;
 import com.ibm.j9ddr.vm29.pointer.U32Pointer;
@@ -356,7 +357,7 @@ public class MethodMetaData
 	private static class MethodMetaData_29_V0 extends com.ibm.j9ddr.vm29.j9.BaseAlgorithm implements MethodMetaDataImpl
 	{
 
-		private static boolean alignStackMaps = J9BuildFlags.J9VM_ARCH_ARM || TRBuildFlags.host_SH4 || TRBuildFlags.host_MIPS;
+		private static boolean alignStackMaps = J9ConfigFlags.arch_arm || TRBuildFlags.host_SH4 || TRBuildFlags.host_MIPS;
 
 		protected MethodMetaData_29_V0() {
 			super(90,0);
@@ -394,7 +395,7 @@ public class MethodMetaData
 		
 		private static UDATA getJitSlotsBeforeSavesInDataResolve()
 		{
-			if (J9BuildFlags.J9VM_ARCH_X86) {
+			if (J9ConfigFlags.arch_x86) {
 				if (J9BuildFlags.env_data64) {
 					/* AMD64 data resolve shape
 					 16 slots of XMM registers
@@ -435,7 +436,7 @@ public class MethodMetaData
 			J9JITExceptionTablePointer md = walkState.jitInfo;
 			UDATA registerSaveDescription = walkState.jitInfo.registerSaveDescription();
 
-			if (J9BuildFlags.J9VM_ARCH_X86) {
+			if (J9ConfigFlags.arch_x86) {
 				UDATA prologuePushes = new UDATA(getJitProloguePushes(walkState.jitInfo));
 				U8 i = new U8(1); 
 
@@ -456,8 +457,8 @@ public class MethodMetaData
 					}
 					while (! registerSaveDescription.eq(0));
 				}
-			} else if (J9BuildFlags.J9VM_ARCH_POWER || TRBuildFlags.host_MIPS) {
-				if (J9BuildFlags.J9VM_ARCH_POWER) {
+			} else if (J9ConfigFlags.arch_power || TRBuildFlags.host_MIPS) {
+				if (J9ConfigFlags.arch_power) {
 					/*
 					 * see PPCLinkage for a description of the RSD 
 					 * the save offset is located from bits 18-32 
@@ -475,7 +476,7 @@ public class MethodMetaData
 				}
 				saveCursor = walkState.bp.subOffset(saveOffset);
 
-				if (J9BuildFlags.J9VM_ARCH_POWER) {
+				if (J9ConfigFlags.arch_power) {
 					mapCursor += lowestRegister.intValue(); /* access gpr15 in the vm register state */
 					U8 i = new U8(lowestRegister.add(1));
 					do 
@@ -499,7 +500,7 @@ public class MethodMetaData
 						savedGPRs = savedGPRs.sub(1);
 					}
 				}
-			} else if (J9BuildFlags.J9VM_ARCH_ARM || TRBuildFlags.host_SH4 || J9BuildFlags.arch_s390) {
+			} else if (J9ConfigFlags.arch_arm || TRBuildFlags.host_SH4 || J9ConfigFlags.arch_s390) {
 				savedGPRs = registerSaveDescription.bitAnd(new UDATA(0xFFFF));
 
 				if (! savedGPRs.eq(0))
@@ -528,7 +529,7 @@ public class MethodMetaData
 		
 		private U8Pointer GET_REGISTER_SAVE_DESCRIPTION_CURSOR(boolean fourByteOffset, VoidPointer stackMap)
 		{
-			if (J9BuildFlags.arch_s390) {
+			if (J9ConfigFlags.arch_s390) {
 				return U8Pointer.cast(stackMap).add(SIZEOF_MAP_OFFSET(fourByteOffset)).add(U32.SIZEOF * 2);
 			} else {
 				return U8Pointer.cast(stackMap).add(SIZEOF_MAP_OFFSET(fourByteOffset)).add(U32.SIZEOF);
@@ -551,7 +552,7 @@ public class MethodMetaData
 		}
 		
 		public UDATA getJitDataResolvePushes() throws CorruptDataException {
-			if (J9BuildFlags.J9VM_ARCH_X86) {
+			if (J9ConfigFlags.arch_x86) {
 				if (J9BuildFlags.env_data64) {
 					/* AMD64 data resolve shape
 					   16 slots of XMM registers
@@ -573,12 +574,12 @@ public class MethodMetaData
 					*/
 					return new UDATA(32);
 				}
-			} else if (J9BuildFlags.J9VM_ARCH_ARM) {
+			} else if (J9ConfigFlags.arch_arm) {
 				/* ARM data resolve shape
 				   12 slots saved integer registers
 				*/
 				return new UDATA(12);
-			} else if (J9BuildFlags.arch_s390) {
+			} else if (J9ConfigFlags.arch_s390) {
 				/* 390 data resolve shape
 				   16 integer registers
 				*/
@@ -587,7 +588,7 @@ public class MethodMetaData
 				} else {
 					return new UDATA(16);
 				}
-			} else if (J9BuildFlags.J9VM_ARCH_POWER) {
+			} else if (J9ConfigFlags.arch_power) {
 				/* PPC data resolve shape
 				   32 integer registers
 				   CR
@@ -729,7 +730,7 @@ public class MethodMetaData
 		@SuppressWarnings("unused")
 		private static U8Pointer ADDRESS_OF_REGISTERMAP(boolean fourByteOffset, U8Pointer stackMap)
 		{
-			if (J9BuildFlags.arch_s390) {
+			if (J9ConfigFlags.arch_s390) {
 				return stackMap.add(SIZEOF_MAP_OFFSET(fourByteOffset)).add(3 * U32.SIZEOF);
 			} else {
 				return stackMap.add(SIZEOF_MAP_OFFSET(fourByteOffset)).add(2 * U32.SIZEOF);
@@ -765,7 +766,7 @@ public class MethodMetaData
 		//#define GET_REGISTER_MAP_CURSOR(fourByteOffset, stackMap) ((U_8 *)stackMap + SIZEOF_MAP_OFFSET(fourByteOffset) + 2*sizeof(U_32))
 		private static U8Pointer GET_REGISTER_MAP_CURSOR(boolean fourByteOffset, U8Pointer stackMap)
 		{
-			if (J9BuildFlags.arch_s390) {
+			if (J9ConfigFlags.arch_s390) {
 				return stackMap.add(SIZEOF_MAP_OFFSET(fourByteOffset).add(3 * U32.SIZEOF));
 			} else {
 				return stackMap.add(SIZEOF_MAP_OFFSET(fourByteOffset).add(2 * U32.SIZEOF));
@@ -970,7 +971,7 @@ public class MethodMetaData
 
 		public U32 getJitHighWordRegisterMap(J9JITExceptionTablePointer methodMetaData, VoidPointer stackMap) throws CorruptDataException
 		{
-			if (J9BuildFlags.arch_s390) {
+			if (J9ConfigFlags.arch_s390) {
 				return U32Pointer.cast(GET_HIGHWORD_REGISTER_MAP_CURSOR(HAS_FOUR_BYTE_OFFSET(methodMetaData), stackMap)).at(0);
 			} else {
 				return new U32(0);	
@@ -1010,7 +1011,7 @@ public class MethodMetaData
 		   Do not include the slot for return address for call from picbuilder to resolve helper.
 		*/
 		public int getJitRecompilationResolvePushes() {
-			if (J9BuildFlags.J9VM_ARCH_X86) {
+			if (J9ConfigFlags.arch_x86) {
 				if (J9BuildFlags.env_data64) {
 					/* AMD64 recompilation resolve shape
 					0: rcx (arg register)
@@ -1035,7 +1036,7 @@ public class MethodMetaData
 					*/
 					return 3;
 				}
-			} else if (J9BuildFlags.arch_s390) {
+			} else if (J9ConfigFlags.arch_s390) {
 				/* 390 recompilation resolve shape
 				0:		r3 (arg register)
 				1:		r2 (arg register)
@@ -1050,7 +1051,7 @@ public class MethodMetaData
 				XX:	<linkage area>							<== unwindSP should point here
 				*/
 				return 7 + (64 / UDATA.SIZEOF);
-			} else if (J9BuildFlags.J9VM_ARCH_POWER) {
+			} else if (J9ConfigFlags.arch_power) {
 				/* PPC recompilation resolve shape
 				0:		r10 (arg register)
 				1:		r9 (arg register)
@@ -1077,7 +1078,7 @@ public class MethodMetaData
 		   Do not include the slot for return address for call from picbuilder to resolve helper.
 		*/
 		public int getJitVirtualMethodResolvePushes() {
-			if (J9BuildFlags.J9VM_ARCH_X86) {
+			if (J9ConfigFlags.arch_x86) {
 				if (J9BuildFlags.env_data64) {
 					/* AMD64 virtual resolve shape
 					0: ret addr to picbuilder
@@ -1103,7 +1104,7 @@ public class MethodMetaData
 					 */
 					return 4;
 				}
-			} else if (J9BuildFlags.J9VM_ARCH_POWER) {
+			} else if (J9ConfigFlags.arch_power) {
 				/* PPC doesn't save anything extra */
 				return 0;
 			} else if (TRBuildFlags.host_SH4) {
@@ -1128,7 +1129,7 @@ public class MethodMetaData
 		   Do not include the slot for return address for call from picbuilder to resolve helper.
 		*/
 		public int getJitStaticMethodResolvePushes() {
-			if (J9BuildFlags.J9VM_ARCH_X86) {
+			if (J9ConfigFlags.arch_x86) {
 				if (J9BuildFlags.env_data64) {
 					/* AMD64 static resolve shape
 					0: ret addr to picbuilder
@@ -1301,7 +1302,7 @@ public class MethodMetaData
 						swPrintf(walkState, 6, "\tJIT-RegisterMap = {0}", registerMap);
 						tempJitDescriptionCursorForRegs = U8Pointer.cast(stackMap);
 
-						if (J9BuildFlags.arch_s390) {
+						if (J9ConfigFlags.arch_s390) {
 							tempJitDescriptionCursorForRegs = tempJitDescriptionCursorForRegs.add(12); /*skip register map, register save description word and high word register map*/
 						} else {						
 							tempJitDescriptionCursorForRegs = tempJitDescriptionCursorForRegs.add(8); /*skip register map and register save description word */
@@ -1433,7 +1434,7 @@ public class MethodMetaData
 		
 		private U8Pointer GET_REGISTER_MAP_CURSOR(boolean fourByteOffset, VoidPointer stackMap) 
 		{
-			if (J9BuildFlags.arch_s390) {
+			if (J9ConfigFlags.arch_s390) {
 				return U8Pointer.cast(stackMap).add(SIZEOF_MAP_OFFSET(fourByteOffset).add(U32.SIZEOF * 3));
 			} else {
 				return U8Pointer.cast(stackMap).add(SIZEOF_MAP_OFFSET(fourByteOffset).add(U32.SIZEOF * 2));
@@ -1470,7 +1471,7 @@ public class MethodMetaData
 		
 		private boolean isPatchedValue(J9MethodPointer m)
 		{
-			if ((J9BuildFlags.J9VM_ARCH_POWER && m.anyBitsIn(0x1))   ||  UDATA.cast(m).bitNot().eq(0)) {
+			if ((J9ConfigFlags.arch_power && m.anyBitsIn(0x1))   ||  UDATA.cast(m).bitNot().eq(0)) {
 				return true;
 			}
 

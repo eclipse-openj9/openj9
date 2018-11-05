@@ -34,6 +34,7 @@ import com.ibm.j9ddr.vm29.j9.AlgorithmPicker;
 import com.ibm.j9ddr.vm29.j9.AlgorithmVersion;
 import com.ibm.j9ddr.vm29.j9.BaseAlgorithm;
 import com.ibm.j9ddr.vm29.j9.IAlgorithm;
+import com.ibm.j9ddr.vm29.j9.J9ConfigFlags;
 import com.ibm.j9ddr.vm29.pointer.PointerPointer;
 import com.ibm.j9ddr.vm29.pointer.U32Pointer;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
@@ -255,14 +256,14 @@ public class StackWalker
 
 						/* fetch the Java stack for the platform directly from the register file */
 						String javaSPName = "";
-						if (J9BuildFlags.J9VM_ARCH_POWER) {
+						if (J9ConfigFlags.arch_power) {
 							/* AIX shows as POWER not PPC */
 							/* gpr14 */
 							javaSPName = "gpr14";
-						} else if (J9BuildFlags.arch_s390) {
+						} else if (J9ConfigFlags.arch_s390) {
 							/* r5 */
 							javaSPName = "r5";
-						} else if (J9BuildFlags.J9VM_ARCH_X86) {
+						} else if (J9ConfigFlags.arch_x86) {
 							if (J9BuildFlags.env_data64) {
 								/* rsp */
 								javaSPName = "rsp";
