@@ -364,7 +364,12 @@ public class MethodHandles {
 				throw new IllegalAccessException(this.toString());
 			}
 
-			checkAccess(handle.getDefc(), handle.getMethodName(), handle.getModifiers(), handle, skipAccessCheckPara);
+			/* defc (defining class) may be a superclass of the references class.
+			 * Note that we need to check against the requested class, which may have inherited
+			 * the method from an inaccessible class. Protected members of a subclass are accessible to 
+			 * a superclass provided they are inherited from the superclass. 
+			 */
+			checkAccess(handle.getDefc(), handle.getReferenceClass(), handle.getMethodName(), handle.getModifiers(), handle, skipAccessCheckPara);
 		}
 		
 		/*[IF Sidecar19-SE]*/
@@ -378,7 +383,8 @@ public class MethodHandles {
 				throw new IllegalAccessException(this.toString());
 			}
 			
-			checkAccess(handle.getDefiningClass(), handle.getFieldName(), handle.getModifiers(), null, skipAccessCheckPara);
+			final Class<?> definingClass = handle.getDefiningClass();
+			checkAccess(definingClass, definingClass, handle.getFieldName(), handle.getModifiers(), null, skipAccessCheckPara);
 		}
 		
 		void checkAccess(Class<?> clazz) throws IllegalAccessException {
@@ -396,10 +402,11 @@ public class MethodHandles {
 		/*[ENDIF]*/
 						
 		/**
-		 * Checks whether {@link #accessClass} can access a specific member of the {@code targetClass}.
+		 * Checks whether {@link #accessClass} can access a specific member of the {@code referenceClass}.
 		 * Equivalent of visible.c checkVisibility();
 		 * 
-		 * @param targetClass The {@link Class} that owns the member being accessed.
+		 * @param definingClass The {@link Class} that defines the member being accessed.
+		 * @param referenceClass The {@link Class} class through which the the member is accessed, which may be a subtype of the defining class.
 		 * @param name The name of member being accessed.
 		 * @param memberModifiers The modifiers of the member being accessed.
 		 * @param handle A handle object (e.g. {@link MethodHandle} or {@link VarHandle}), if applicable.
@@ -410,8 +417,8 @@ public class MethodHandles {
 		 * @throws IllegalAccessException If the member is not accessible.
 		 * @throws IllegalAccessError If a handle argument or return type is not accessible.
 		 */
-		private void checkAccess(Class<?> targetClass, String name, int memberModifiers, MethodHandle handle, boolean skipAccessCheckPara) throws IllegalAccessException {
-			checkClassAccess(targetClass);
+		private void checkAccess(Class<?> definingClass, Class<?> referenceClass, String name, int memberModifiers, MethodHandle handle, boolean skipAccessCheckPara) throws IllegalAccessException {
+			checkClassAccess(referenceClass);
 
 			/*[IF Sidecar19-SE]*/
 			if (null != handle && !skipAccessCheckPara) {
@@ -434,9 +441,9 @@ public class MethodHandles {
 				/* checkClassAccess already determined that we have more than "no access" (public access) */
 				return;
 			} else if (Modifier.isPrivate(memberModifiers)) {
-				if (Modifier.isPrivate(accessMode) && ((targetClass == accessClass)
+				if (Modifier.isPrivate(accessMode) && ((definingClass == accessClass)
 /*[IF Java11]*/
-						|| targetClass.isNestmateOf(accessClass)
+						|| definingClass.isNestmateOf(accessClass)
 /*[ENDIF] Java11*/	
 				)) {
 					return;
@@ -444,12 +451,12 @@ public class MethodHandles {
 			} else if (Modifier.isProtected(memberModifiers)) {
 				/* Ensure that the accessMode is not restricted (public-only) */
 				if (PUBLIC != accessMode) {
-					if (targetClass.isArray()) {
+					if (definingClass.isArray()) {
 						/* The only methods array classes have are defined on Object and thus accessible */
 						return;
 					}
 					
-					if (isSamePackage(accessClass, targetClass)) {
+					if (isSamePackage(accessClass, referenceClass)) {
 						/* Package access is enough if the classes are in the same package */
 						return;
 					}
@@ -459,7 +466,9 @@ public class MethodHandles {
 					 * protected methods in java.lang.Object as subclasses.
 					 */
 					/*[ENDIF]*/
-					if (!accessClass.isInterface() && Modifier.isProtected(accessMode) && targetClass.isAssignableFrom(accessClass)) {
+					if (!accessClass.isInterface() && Modifier.isProtected(accessMode) 
+							&& definingClass.isAssignableFrom(accessClass)
+						) {
 						/* Special handling for MethodHandles */
 						if (null != handle) {
 							byte kind = handle.kind;
@@ -497,7 +506,7 @@ public class MethodHandles {
 				}
 			} else {
 				/* default (package access) */
-				if ((PACKAGE == (accessMode & PACKAGE)) && isSamePackage(accessClass, targetClass)){
+				if ((PACKAGE == (accessMode & PACKAGE)) && isSamePackage(accessClass, referenceClass)){
 					return;
 				}
 			}
@@ -509,7 +518,8 @@ public class MethodHandles {
 			} else {
 				extraInfo = "." + name;  //$NON-NLS-1$
 			}
-			String errorMessage = com.ibm.oti.util.Msg.getString("K0587", this.toString(), targetClass.getName() + extraInfo);  //$NON-NLS-1$
+			/*[MSG "K0587", "'{0}' no access to: '{1}'"]*/
+			String errorMessage = com.ibm.oti.util.Msg.getString("K0587", this.toString(), definingClass.getName() + extraInfo);  //$NON-NLS-1$
 			throw new IllegalAccessException(errorMessage);
 		}
 		
