@@ -1109,8 +1109,8 @@ createBreakpointedMethod(J9VMThread * currentThread, J9Method * ramMethod)
 	UDATA methodSize;
 	UDATA delta;
 	J9ExceptionInfo * originalExceptionInfo = NULL;
-	J9SRP * originalThrowNames = NULL;
 #ifdef J9VM_ENV_DATA64
+	J9SRP * originalThrowNames = NULL;
 	J9UTF8 * methodName;
 	J9UTF8 * methodSignature;
 	J9UTF8 * genericSignature;
@@ -1140,7 +1140,9 @@ createBreakpointedMethod(J9VMThread * currentThread, J9Method * ramMethod)
 
 	if (J9ROMMETHOD_HAS_EXCEPTION_INFO(originalROMMethod)) {
 		originalExceptionInfo = J9_EXCEPTION_DATA_FROM_ROM_METHOD(originalROMMethod);
+#ifdef J9VM_ENV_DATA64
 		originalThrowNames = J9EXCEPTIONINFO_THROWNAMES(originalExceptionInfo);
+#endif
 	}
 
 	/* Copy ROM method */
