@@ -9447,7 +9447,8 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, bool isLatin1, TR::C
  */
 static TR::Register* inlineCompareAndSwapObjectNative(TR::Node* node, TR::CodeGenerator* cg)
    {
-   TR_ASSERT(!TR::Compiler->om.canGenerateArraylets(), "This evaluator does not support arraylets.");
+   TR_ASSERT(!TR::Compiler->om.canGenerateArraylets() || node->isUnsafeGetPutCASCallOnNonArray(), "This evaluator does not support arraylets.");
+
    cg->recursivelyDecReferenceCount(node->getChild(0)); // The Unsafe
    TR::Node* objectNode   = node->getChild(1);
    TR::Node* offsetNode   = node->getChild(2);
