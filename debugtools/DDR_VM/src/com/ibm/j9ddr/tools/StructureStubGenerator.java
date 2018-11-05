@@ -109,10 +109,6 @@ public class StructureStubGenerator {
 	}
 
 	private void generateClass(StructureDescriptor structure) throws IOException {
-		String superClassName = structure.getSuperName();
-		if (superClassName == null || superClassName.isEmpty()) {
-			superClassName = "StructurePointer";
-		}
 		File javaFile = new File(outputDir, structure.getName() + ".java");
 		byte[] original = null;
 		int length = 0;
