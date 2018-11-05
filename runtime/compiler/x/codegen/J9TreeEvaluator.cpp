@@ -1191,10 +1191,11 @@ TR::Register *J9::X86::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::Co
       {
       TR::TreeEvaluator::asyncGCMapCheckPatching(node, cg, snippetLabel);
       }
-   else if (secondChild->getOpCode().isLoadConst())
+   else
       {
-      TR::MemoryReference *mr = generateX86MemoryReference(compareNode->getFirstChild(), cg);
+      TR_ASSERT_FATAL(secondChild->getOpCode().isLoadConst(), "unrecognized asynccheck test: special async check value is not a constant");
 
+      TR::MemoryReference *mr = generateX86MemoryReference(compareNode->getFirstChild(), cg);
       if ((secondChild->getRegister() != NULL) ||
           (TR::Compiler->target.is64Bit() && !IS_32BIT_SIGNED(secondChild->getLongInt())))
          {
@@ -1213,11 +1214,6 @@ TR::Register *J9::X86::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::Co
       mr->decNodeReferenceCounts(cg);
       cg->decReferenceCount(secondChild);
       }
-   else
-      {
-      TR_ASSERT(secondChild->getOpCode().isLoadConst(), "unrecognized asynccheck test: special async check value is not a constant");
-      return NULL;
-      }
 
    TR::LabelSymbol *startControlFlowLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *endControlFlowLabel = generateLabelSymbol(cg);
@@ -1229,13 +1225,23 @@ TR::Register *J9::X86::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::Co
    startControlFlowLabel->setStartInternalControlFlow();
    generateLabelInstruction(LABEL, node, startControlFlowLabel, cg);
 
-   generateLabelInstruction(testIsEqual ? JE4 : JNE4, node, snippetLabel, true, cg);
+   generateLabelInstruction(testIsEqual ? JE4 : JNE4, node, snippetLabel, cg);
 
-   TR::Snippet *snippet = new (cg->trHeapMemory()) TR::X86CheckAsyncMessagesSnippet(node, endControlFlowLabel, snippetLabel, cg);
-   cg->addSnippet(snippet);
+   static bool UseOldAsyncSnippet = (bool)feGetEnv("TR_UseOldAsyncSnippet");
+   if (UseOldAsyncSnippet)
+      {
+      TR::Snippet *snippet = new (cg->trHeapMemory()) TR::X86CheckAsyncMessagesSnippet(node, endControlFlowLabel, snippetLabel, cg);
+      cg->addSnippet(snippet);
+      }
+   else
+      {
+      TR_OutlinedInstructionsGenerator og(snippetLabel, node, cg);
+      generateImmSymInstruction(CALLImm4, node, (uintptrj_t)node->getSymbolReference()->getMethodAddress(), node->getSymbolReference(), cg)->setNeedsGCMap(0xFF00FFFF);
+      generateLabelInstruction(JMP4, node, endControlFlowLabel, cg);
+      }
 
    endControlFlowLabel->setEndInternalControlFlow();
-   generateLabelInstruction(LABEL, node, endControlFlowLabel, true, cg);
+   generateLabelInstruction(LABEL, node, endControlFlowLabel, cg);
 
    cg->decReferenceCount(compareNode);
 
