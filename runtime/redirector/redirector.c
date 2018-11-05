@@ -143,6 +143,7 @@ typedef enum gc_policy{
 #ifndef PATH_MAX
 #define PATH_MAX 1023
 #endif
+#define ENVVAR_OPENJ9_JAVA_OPTIONS "OPENJ9_JAVA_OPTIONS"
 #define ENVVAR_IBM_JAVA_OPTIONS "IBM_JAVA_OPTIONS"
 
 #if defined(AIXPPC)
@@ -535,8 +536,11 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 	char *xmxstr = NULL;
 	U_64 requestedHeapSize = 0;
 
-	/* the command line is handled below but look into the ENVVAR_IBM_JAVA_OPTIONS here, since it is a special case */
-	envOptions = getenv(ENVVAR_IBM_JAVA_OPTIONS);
+	/* the command line is handled below but look into the ENVVAR_OPENJ9_JAVA_OPTIONS here, since it is a special case */
+	envOptions = getenv(ENVVAR_OPENJ9_JAVA_OPTIONS);
+	if (NULL == envOptions) {
+		envOptions = getenv(ENVVAR_IBM_JAVA_OPTIONS);
+	}
 	if (NULL != envOptions) {
 		/* we need a non-zero index to point to where this occurs to use the first index we don't have - the number of arguments in the list */
 		int i = 0;
@@ -775,18 +779,23 @@ JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args)
 	memset(namedVM, 0, J9_VM_DIR_LENGTH);
 	chooseJVM(args, namedVM, J9_VM_DIR_LENGTH);
 
-	envOptions = getenv(ENVVAR_IBM_JAVA_OPTIONS);
-	if(NULL != envOptions && hasEnvOption(envOptions, "-locateVM")) {
+	envOptions = getenv(ENVVAR_OPENJ9_JAVA_OPTIONS);
+	if (NULL == envOptions) {
+		envOptions = getenv(ENVVAR_IBM_JAVA_OPTIONS);
+	}
+	if ((NULL != envOptions) && hasEnvOption(envOptions, "-locateVM")) {
 		J9StringBuffer *buffer = findDir(namedVM);
 		fprintf(stdout, "%s\n", jvmBufferData(buffer));
 		free(buffer);
 		exit(0);
-	} else for(i=0; i<args->nOptions; i++) {
-		if(0 == strcmp(args->options[i].optionString, "-locateVM")) {
-			J9StringBuffer *buffer = findDir(namedVM);
-			fprintf(stdout, "%s\n", jvmBufferData(buffer));
-			free(buffer);
-			exit(0);
+	} else {
+		for (i = 0; i < args->nOptions; i++) {
+			if (0 == strcmp(args->options[i].optionString, "-locateVM")) {
+				J9StringBuffer *buffer = findDir(namedVM);
+				fprintf(stdout, "%s\n", jvmBufferData(buffer));
+				free(buffer);
+				exit(0);
+			}
 		}
 	}
 
