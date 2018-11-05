@@ -131,7 +131,7 @@ sub generateOnDir {
 				$JCL_VERSION = "latest";
 			}
 			# temporarily exclude projects for CCM build (i.e., when JCL_VERSION is latest)
-			my $latestDisabledDir = "proxyFieldAccess dumpromtests jep178staticLinkingTest pltest Panama NativeTest";
+			my $latestDisabledDir = "proxyFieldAccess Panama";
 
 			# Temporarily exclude SVT_Modularity tests from integration build where we are still using b148 JCL level
 			my $currentDisableDir= "SVT_Modularity OpenJ9_Jsr_292_API";

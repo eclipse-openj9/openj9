@@ -33,7 +33,9 @@
 	-DEXE='$(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest $(_JVM_OPTIONS)' -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)pltest.xml$(Q) -verbose -explainExcludes \
 	-xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
-		<platformRequirements>^os.aix</platformRequirements>
+		<!-- temporarily disable this test on win; https://github.com/eclipse/openj9/issues/3212 -->
+		<!-- temporarily disable this test on ppc64le; https://github.com/ibmruntimes/openj9-openjdk-jdk8/issues/190 -->
+		<platformRequirements>^os.aix,^os.win,^spec.linux_ppc-64_cmprssptrs_le</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -43,7 +45,6 @@
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
-			<subset>10</subset>
 			<subset>11</subset>
 		</subsets>
 	</test>
@@ -67,8 +68,7 @@
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
+			<!--temporarily disabled for 11,  https://github.com/eclipse/openj9/issues/3221 -->
 		</subsets>
 	</test>
 	<test>
@@ -76,7 +76,8 @@
 		<variations>
 			<variation>-XCEEHDLR</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
 	-DEXE='$(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest $(_JVM_OPTIONS)' -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)pltest.xml$(Q) -verbose -explainExcludes \
 	-xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
@@ -90,7 +91,6 @@
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
-			<subset>10</subset>
 			<subset>11</subset>
 		</subsets>
 	</test>
@@ -99,7 +99,8 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
 	-DEXE='$(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest -include:tty_extended' -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)j9tty_extended.xml$(Q) -verbose -explainExcludes \
 	-xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
@@ -113,16 +114,18 @@
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
-			<subset>10</subset>
 			<subset>11</subset>
 		</subsets>
+	<!-- temporarily disable this test on win; https://github.com/eclipse/openj9/issues/3212 -->
+	<disabled>github.com/eclipse/openj9/issues/1511</disabled>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_pltest_numcpus_notBound</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
 	-DEXE='$(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest -include:j9numcpus $(_JVM_OPTIONS)' -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)pltest.xml$(Q) -verbose -explainExcludes \
 	-xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
@@ -136,22 +139,25 @@
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
-			<subset>10</subset>
 			<subset>11</subset>
 		</subsets>
+	<!-- temporarily disable this test on win; https://github.com/eclipse/openj9/issues/3212 -->
+	<disabled>github.com/eclipse/openj9/issues/1511</disabled>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_pltest_numcpus_bound_linux</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>export myCPU=`grep Cpus_allowed_list /proc/self/status | sed -e 's/[-,].*//;s/Cpus_allowed_list:[^0-9]*//'`; \
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	export myCPU=`grep Cpus_allowed_list /proc/self/status | sed -e 's/[-,].*//;s/Cpus_allowed_list:[^0-9]*//'`; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
 	-DEXE="taskset -c $$myCPU $(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest -include:j9numcpus -boundcpus:1 $(_JVM_OPTIONS)" -jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)pltest_numcpus_bound.xml$(Q) -verbose -explainExcludes \
 	-xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
-		<platformRequirements>os.linux</platformRequirements>
+		<!-- disable on ppc64le https://github.com/ibmruntimes/openj9-openjdk-jdk8/issues/190 -->
+		<platformRequirements>os.linux,^spec.linux_ppc-64_cmprssptrs_le</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -161,7 +167,6 @@
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
-			<subset>10</subset>
 			<subset>11</subset>
 		</subsets>
 	</test>
@@ -187,9 +192,10 @@
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
-			<subset>10</subset>
 			<subset>11</subset>
 		</subsets>
+		<!-- temporarily disable this test on win; https://github.com/eclipse/openj9/issues/3212 -->
+		<disabled>github.com/eclipse/openj9/issues/1511</disabled>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_pltest_numcpus_bound_aix</testCaseName>
@@ -212,7 +218,6 @@
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
-			<subset>10</subset>
 			<subset>11</subset>
 		</subsets>
 	</test>
@@ -238,7 +243,6 @@
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
-			<subset>10</subset>
 			<subset>11</subset>
 		</subsets>
 	</test>
@@ -264,7 +268,6 @@
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
-			<subset>10</subset>
 			<subset>11</subset>
 		</subsets>
 	</test>
