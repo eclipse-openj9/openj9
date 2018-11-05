@@ -64,11 +64,8 @@ final class CpuUtilizationHelper implements CpuLoadCalculationConstants {
 
 		/* calculate using the most recent value in the history */
 		if ((latestTime.getTimestamp() - interimTime.getTimestamp()) >= MINIMUM_INTERVAL) {
-	            if (latestTime.getCpuLoad() == -1) {
-		        cpuLoad = calculateCpuLoad(latestTime, interimTime);
-                    } else {
-		        cpuLoad = (double)latestTime.getCpuLoad()/100;
-                    }
+			
+			cpuLoad = calculateCpuLoad(latestTime, interimTime);
 
 			if (cpuLoad >= 0.0) { /* no errors detected in the statistics */
 				oldestTime = interimTime;
@@ -85,11 +82,7 @@ final class CpuUtilizationHelper implements CpuLoadCalculationConstants {
 
 		if ((latestTime.getTimestamp() - oldestTime.getTimestamp()) >= MINIMUM_INTERVAL) {
 		
-		    if (latestTime.getCpuLoad() == -1) {
 		        cpuLoad = calculateCpuLoad(latestTime, interimTime);
-                    } else {
-		        cpuLoad = (double)latestTime.getCpuLoad()/100;
-                    }
 			
 			if (cpuLoad < 0) { /* the stats look bogus.  Discard them */
 				oldestTime = latestTime;
@@ -108,6 +101,11 @@ final class CpuUtilizationHelper implements CpuLoadCalculationConstants {
 	 */
 	private static double calculateCpuLoad(SysinfoCpuTime endRecord, SysinfoCpuTime startRecord) {
 		double timestampDelta = endRecord.getTimestamp() - startRecord.getTimestamp();
+
+		if (endRecord.getCpuLoad() != -1) {
+			return (double)endRecord.getCpuLoad() / 100;
+		}
+		
 		double cpuDelta = endRecord.getCpuTime() - startRecord.getCpuTime();
 		if ((timestampDelta <= 0) || (cpuDelta < 0)) {
 			return ERROR_VALUE; /* the stats are invalid */
