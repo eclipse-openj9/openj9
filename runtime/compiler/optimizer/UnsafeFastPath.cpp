@@ -114,10 +114,23 @@ static bool isVarHandleOperationMethodOnArray(TR::RecognizedMethod rm)
    return false;
    }
 
+static bool isVarHandleOperationMethodOnNonStaticField(TR::RecognizedMethod rm)
+   {
+   switch (rm)
+      {
+      case TR::java_lang_invoke_InstanceFieldVarHandle_InstanceFieldVarHandleOperations_OpMethod:
+      case TR::java_lang_invoke_ArrayVarHandle_ArrayVarHandleOperations_OpMethod:
+      case TR::java_lang_invoke_ByteArrayViewVarHandle_ByteArrayViewVarHandleOperations_OpMethod:
+         return true;
+      default:
+         return false;
+      }
+   return false;
+   }
 
 /**
  * \brief
- *    Transform unsafe atomic method called from VarHandle to codegen intrinsic
+ *    Try transform unsafe atomic method called from VarHandle to codegen intrinsic
  *
  * \parm callTree
  *    Tree containing the call
@@ -128,41 +141,12 @@ static bool isVarHandleOperationMethodOnArray(TR::RecognizedMethod rm)
  * \parm calleeMethod
  *    The unsafe method
  *
+ * \return True if the call is transformed, otherwise false
+ *
  */
-void TR_UnsafeFastPath::transformUnsafeAtomicCallInVarHandleAccessMethod(TR::TreeTop* callTree, TR::RecognizedMethod callerMethod, TR::RecognizedMethod calleeMethod)
+bool TR_UnsafeFastPath::tryTransformUnsafeAtomicCallInVarHandleAccessMethod(TR::TreeTop* callTree, TR::RecognizedMethod callerMethod, TR::RecognizedMethod calleeMethod)
    {
    TR::Node* node = callTree->getNode()->getFirstChild();
-   if (!performTransformation(comp(), "%s turning the call [" POINTER_PRINTF_FORMAT "] into atomic intrinsic\n", optDetailString(), node))
-      return;
-
-    TR::MethodSymbol *symbol = node->getSymbol()->castToMethodSymbol();
-   // Codegen will inline the call with the flag
-   //
-   if (symbol->getMethod()->isUnsafeCAS(comp()))
-      {
-      // codegen doesn't optimize CAS on a static field
-      //
-      if (callerMethod != TR::java_lang_invoke_StaticFieldVarHandle_StaticFieldVarHandleOperations_OpMethod)
-         {
-         node->setIsSafeForCGToFastPathUnsafeCall(true);
-         if (trace())
-            {
-            traceMsg(comp(), "Found Unsafe CAS node %p n%dn on non-static field, set the flag\n", node, node->getGlobalIndex());
-            }
-         }
-
-      return;
-      }
-
-   TR::SymbolReferenceTable::CommonNonhelperSymbol helper = equivalentAtomicIntrinsic(calleeMethod);
-   if (!comp()->cg()->supportsNonHelper(helper))
-      {
-      if (trace())
-         {
-         traceMsg(comp(), "Equivalent atomic intrinsic is not supported on current platform, quit\n");
-         }
-      return;
-      }
 
    // Give up on arraylet
    //
@@ -173,8 +157,49 @@ void TR_UnsafeFastPath::transformUnsafeAtomicCallInVarHandleAccessMethod(TR::Tre
          {
          traceMsg(comp(), "Call %p n%dn is accessing an element from an array that might be arraylet, quit\n", node, node->getGlobalIndex());
          }
-      return;
+      return false;
       }
+
+    TR::MethodSymbol *symbol = node->getSymbol()->castToMethodSymbol();
+   // Codegen will inline the call with the flag
+   //
+   if (symbol->getMethod()->isUnsafeCAS(comp()))
+      {
+      // codegen doesn't optimize CAS on a static field
+      //
+      if (isVarHandleOperationMethodOnNonStaticField(callerMethod) &&
+         performTransformation(comp(), "%s transforming Unsafe.CAS [" POINTER_PRINTF_FORMAT "] into codegen inlineable\n", optDetailString(), node))
+         {
+         node->setIsSafeForCGToFastPathUnsafeCall(true);
+         if (!isVarHandleOperationMethodOnArray(callerMethod))
+            {
+            node->setUnsafeGetPutCASCallOnNonArray();
+            }
+
+         if (trace())
+            {
+            traceMsg(comp(), "Found Unsafe CAS node %p n%dn on non-static field, set the flag\n", node, node->getGlobalIndex());
+            }
+
+         return true;
+         }
+
+      // TODO (#3532): Remove special handling for CAS when atomic intrinsic symbol is available for CAS
+      return false;
+      }
+
+   TR::SymbolReferenceTable::CommonNonhelperSymbol helper = equivalentAtomicIntrinsic(calleeMethod);
+   if (!comp()->cg()->supportsNonHelper(helper))
+      {
+      if (trace())
+         {
+         traceMsg(comp(), "Equivalent atomic intrinsic is not supported on current platform, quit\n");
+         }
+      return false;
+      }
+
+   if (!performTransformation(comp(), "%s turning the call [" POINTER_PRINTF_FORMAT "] into atomic intrinsic\n", optDetailString(), node))
+      return false;
 
    TR::Node* unsafeAddress = NULL;
    if (callerMethod == TR::java_lang_invoke_StaticFieldVarHandle_StaticFieldVarHandleOperations_OpMethod)
@@ -227,6 +252,8 @@ void TR_UnsafeFastPath::transformUnsafeAtomicCallInVarHandleAccessMethod(TR::Tre
       {
       traceMsg(comp(), "Transformed the call %p n%dn to codegen inlineable intrinsic\n", node, node->getGlobalIndex());
       }
+
+   return true;
    }
 
 /**
@@ -257,9 +284,11 @@ int32_t TR_UnsafeFastPath::perform()
                 (isTransformableUnsafeAtomic(callee) ||
                  symbol->getMethod()->isUnsafeCAS(comp())))
                {
-               transformUnsafeAtomicCallInVarHandleAccessMethod(tt, caller, callee);
-               transformed.add(node);
-               continue;
+               if (tryTransformUnsafeAtomicCallInVarHandleAccessMethod(tt, caller, callee))
+                  {
+                  transformed.add(node);
+                  continue;
+                  }
                }
             }
 
