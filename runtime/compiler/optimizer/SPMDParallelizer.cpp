@@ -492,6 +492,12 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
                }
             }
 
+         TR::ILOpCode scalarOp = node->getOpCode();
+         TR::ILOpCodes vectorOpCode = TR::ILOpCode::convertScalarToVector(scalarOp.getOpCodeValue());
+
+         if (isCheckMode && vectorOpCode == TR::BadILOp)
+            return false;
+
          if (loop->isExprInvariant(node->getFirstChild()))
             {
             if (isCheckMode)
@@ -520,15 +526,10 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
             return false;
             }
 
-         TR::ILOpCode scalarOp = node->getOpCode();
-         TR::ILOpCodes vectorOpCode = TR::ILOpCode::convertScalarToVector(scalarOp.getOpCodeValue());
          TR::SymbolReference *symRef = node->getSymbolReference();
          TR::SymbolReference *vecSymRef = pSPMDInfo->getVectorSymRef(symRef);
 
-         if (isCheckMode && vectorOpCode == TR::BadILOp)
-            return false;
-
-         TR_ASSERT(vectorOpCode != TR::BadILOp, "BAD IL Opcode to be assigned during transformation");
+         TR_ASSERT_FATAL(vectorOpCode != TR::BadILOp, "BAD IL Opcode to be assigned during transformation");
 
          if (isCheckMode && !comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, node->getDataType()))
             return false;
