@@ -50,6 +50,7 @@ RUN apt-get update \
     curl \
     g++-4.8 \
     gcc-4.8 \
+    gdb \
     git \
     make \
     openssh-client \
