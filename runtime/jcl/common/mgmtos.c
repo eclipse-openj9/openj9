@@ -225,7 +225,6 @@ Java_com_ibm_lang_management_internal_SysinfoCpuTime_getCpuUtilizationImpl(JNIEn
 
 		JCL_CACHE_SET(env, MID_com_ibm_lang_management_SysinfoCpuTime_getCpuUtilization_init, tempMethod);
 	}
-printf("Found tempMethod - getting time now\n");fflush(stdout);
 	portLibraryStatus = j9sysinfo_get_CPU_utilization(&cpuTime);
 	if (portLibraryStatus < 0) {
 		const IDATA ERROR_VALUE = -1;
@@ -245,14 +244,8 @@ printf("Found tempMethod - getting time now\n");fflush(stdout);
 			break;
 		}
 	}
-#if defined(J9ZOS390)
 	result = (*env)->NewObject(env, clazz, tempMethod,
-			cpuTime.timestamp, cpuTime.cpuTime , cpuTime.numberOfCpus, myStatus, cpuTime.cpuLoad);
-#else
-printf("***in getCpuUtilizationImpl - setting -1 ***\n");fflush(stdout);
-	result = (*env)->NewObject(env, clazz, tempMethod,
-			cpuTime.timestamp, cpuTime.cpuTime, cpuTime.numberOfCpus, myStatus, -1);
-#endif
+		cpuTime.timestamp, cpuTime.cpuTime , cpuTime.numberOfCpus, myStatus, cpuTime.cpuLoad);
 	return result;
 }
 

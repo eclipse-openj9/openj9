@@ -30,13 +30,13 @@ final class SysinfoCpuTime {
 	private int status;
 	private long processCpuTime; /* in ns. The process Cpu Time, used for getProcessCpuLoad() */
 	private int cpuLoad;
-	
+
 	/**
 	 * @param timestamp time in nanoseconds from a fixed but arbitrary point in time 
 	 * @param cpuTime time spent in user, nice, and system/privileged state by all CPUs.
 	 * @param numberOfCpus number of CPUs as reported by the operating system.
 	 * @param status status as reported by the JNI native
-	 * @param status cpuLoad ZOS system cpu utilization
+	 * @param cpuLoad z/os system cpu utilization in % between 0 and 100. For z/os there is no system cpu time. Other platforms default to -1. 
 	 */
 	SysinfoCpuTime(long timestamp, long cpuTime, int numberOfCpus, int status, int cpuLoad) {
 		super();
@@ -45,7 +45,6 @@ final class SysinfoCpuTime {
 		this.numberOfCpus = numberOfCpus;
 		this.status = status;
 		this.cpuLoad = cpuLoad;
-
 	}
 	
 	/**
@@ -100,7 +99,7 @@ final class SysinfoCpuTime {
 	}
 	
 	/**
-         * @return cumulative CPU time in precentage (<1)
+         * @return cumulative CPU utilization in precentage (between 0 and 100)
          */
         int getCpuLoad() {
 		return cpuLoad;
