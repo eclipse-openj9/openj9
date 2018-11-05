@@ -414,9 +414,12 @@ jstring getEncoding(JNIEnv *env, jint encodingType)
 			UDATA handle = 0;
 			J9JavaVM * const vm = ((J9VMThread*)env)->javaVM;
 			char dllPath[EsMaxPath];
+			UDATA written = 0;
 			PORT_ACCESS_FROM_ENV(env);
 			/* libjava.[so|dylib] is in the jdk/lib/ directory, one level up from the default/ & compressedrefs/ directories */
-			j9str_printf(PORTLIB, dllPath, sizeof(dllPath), "%s/../java", vm->j9libvmDirectory);
+			written = j9str_printf(PORTLIB, dllPath, sizeof(dllPath), "%s/../java", vm->j9libvmDirectory);
+			/* Assert the number of characters written (not including the null) fit within the dllPath buffer */
+			Assert_JCL_true(written < (sizeof(dllPath) - 1));
 			if (0 == j9sl_open_shared_library(dllPath, &handle, J9PORT_SLOPEN_DECORATE)) {
 				void (*nativeFuncAddrJNU)(JNIEnv *env, const char *str) = NULL;
 				if (0 == j9sl_lookup_name(handle, "InitializeEncoding", (UDATA*) &nativeFuncAddrJNU, "VLL")) {
