@@ -902,6 +902,15 @@ jvmtiIterateOverReachableObjects(jvmtiEnv* env,
 /* ---------------- jvmtiHelpers.c ---------------- */
 
 /**
+* @brief Make the heap walkable, assume exclusive VM access is held
+* @param currentThread The current J9VMThread
+* @return void
+*/
+void
+ensureHeapWalkable(J9VMThread *currentThread);
+
+
+/**
 * @brief
 * @param state
 * @return J9JVMTIAgentBreakpoint *

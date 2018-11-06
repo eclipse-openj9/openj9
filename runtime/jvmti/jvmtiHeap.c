@@ -184,12 +184,6 @@ jvmtiGetTag(jvmtiEnv* env,
 		ENSURE_JOBJECT_NON_NULL(object);
 		ENSURE_NON_NULL(tag_ptr);
 
-		if (AUTOTAGGING_OBJECTS(env)) {
-			if ( !J9VM_IS_INITIALIZED_HEAPCLASS(currentThread, (*(j9object_t *)object)) ) {
-				JVMTI_ERROR(JVMTI_ERROR_INVALID_OBJECT);
-			}
-		}		
-		
 		entry.ref = *(j9object_t *)object;
 
 		if ( entry.ref ) {
@@ -241,12 +235,6 @@ jvmtiSetTag(jvmtiEnv* env,
 		ENSURE_CAPABILITY(env, can_tag_objects);
 
 		ENSURE_JOBJECT_NON_NULL(object);
-		
-		if (AUTOTAGGING_OBJECTS(env)) {
-			if ( !J9VM_IS_INITIALIZED_HEAPCLASS(currentThread, (*(j9object_t *)object)) ) {
-				JVMTI_ERROR(JVMTI_ERROR_INVALID_OBJECT);
-			}
-		}		
 
 		entry.ref = *(j9object_t *)object;
 		entry.tag = tag;
@@ -532,7 +520,8 @@ jvmtiFollowReferences(jvmtiEnv* env, jint heap_filter, jclass klass, jobject ini
 		}
 
 		vm->internalVMFunctions->acquireExclusiveVMAccess(currentThread);
-		
+		ensureHeapWalkable(currentThread);
+
 		/* Walk the heap */
 		if (initial_object) {
 			j9object_t object = *(j9object_t *) initial_object;
@@ -897,12 +886,7 @@ jvmtiHeapFollowRefs_getStackData(J9JVMTIHeapData * iteratorData, J9StackWalkStat
 	/* Find thread tag */
 	
 	search.ref = (j9object_t ) walkState->walkThread->threadObject;
-	if (!AUTOTAGGING_OBJECTS(iteratorData->env)) {
-		result = hashTableFind(iteratorData->env->objectTagTable, &search);
-	} else {
-		search.tag = (jlong)(UDATA)search.ref;
-		result = &search;
-	}	
+	result = hashTableFind(iteratorData->env->objectTagTable, &search);
 
 	/* Figure out the Thread ID */
 
@@ -1012,17 +996,12 @@ static void
 jvmtiFollowRefs_getTags(J9JVMTIHeapData * iteratorData, j9object_t  referrer, j9object_t  object) 
 {
 	J9JVMTIObjectTag entry, *result;
-	J9JavaVM *vm = JAVAVM_FROM_ENV(iteratorData->env);
 	J9Class *clazz;
 
 	/* get the object tag */
-	if (OBJECT_IS_TAGGABLE(iteratorData->env, vm, object)) {
-		entry.ref = object;
-		result = hashTableFind(iteratorData->env->objectTagTable, &entry);
-		iteratorData->tags.objectTag = (result == NULL) ? 0 : result->tag;
-	} else	{
-		iteratorData->tags.objectTag = (jlong)(UDATA)object;
-	}
+	entry.ref = object;
+	result = hashTableFind(iteratorData->env->objectTagTable, &entry);
+	iteratorData->tags.objectTag = (result == NULL) ? 0 : result->tag;
 	
 	/* get the class (of object) tag */
 	clazz = J9OBJECT_CLAZZ(iteratorData->currentThread, object);
@@ -1034,13 +1013,9 @@ jvmtiFollowRefs_getTags(J9JVMTIHeapData * iteratorData, j9object_t  referrer, j9
 	 * the usual j9object, ignore it here */   
 	if ((referrer != NULL) && (iteratorData->event.type != J9JVMTI_HEAP_EVENT_STACK)) {
 		/* get the referrer object tag */
-		if (OBJECT_IS_TAGGABLE(iteratorData->env, vm, referrer)) {
-			entry.ref = referrer;
-			result = hashTableFind(iteratorData->env->objectTagTable, &entry);
-			iteratorData->tags.referrerObjectTag = (result == NULL) ? 0 : result->tag;
-		} else {
-			iteratorData->tags.referrerObjectTag = (jlong)(UDATA)referrer;
-		}
+		entry.ref = referrer;
+		result = hashTableFind(iteratorData->env->objectTagTable, &entry);
+		iteratorData->tags.referrerObjectTag = (result == NULL) ? 0 : result->tag;
 
 		/* get the referrer object class tag */
 		clazz = J9OBJECT_CLAZZ(iteratorData->currentThread, referrer);
@@ -1349,7 +1324,8 @@ jvmtiError JNICALL jvmtiIterateThroughHeap(jvmtiEnv* env,
 		}
     
 		vmFuncs->acquireExclusiveVMAccess(currentThread);
-		
+		ensureHeapWalkable(currentThread);
+
 		/* Walk the heap */
 		vm->memoryManagerFunctions->j9mm_iterate_all_objects(vm, vm->portLibrary, 0, iterateThroughHeapCallback, &iteratorData);
 		rc = iteratorData.rc;
@@ -2028,12 +2004,6 @@ updateObjectTag(J9JVMTIHeapData * iteratorData, j9object_t object, jlong *origin
 {
 	J9JVMTIObjectTag entry;
 	J9JVMTIObjectTag *resultTag;
-	J9JavaVM *vm = JAVAVM_FROM_ENV(iteratorData->env);
-
-	/* Update the object tag only if not autotagging or if it is a class, i.e., if it is taggable */
-	if ( !OBJECT_IS_TAGGABLE(iteratorData->env, vm, object) ) {
-		return;
-	}
 	
 	/* The callback could have added or removed the tag. Modify the hashtable entry to
 	 * account for it */
