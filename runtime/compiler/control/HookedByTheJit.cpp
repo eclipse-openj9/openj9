@@ -2977,8 +2977,11 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
          staleMethod = methodList[j].oldMethod;
          freshMethod = methodList[j].newMethod;
          bool isSMP = 1; // conservative
-         reportHookDetail(currentThread, "jitClassesRedefined", "    Notify CHTable on method old=%p fresh=%p", oldMethod, freshMethod);
-         table->methodGotOverridden(fe, compInfo->persistentMemory(), (TR_OpaqueMethodBlock*)freshMethod, (TR_OpaqueMethodBlock*)oldMethod, isSMP);
+         if (table)
+            {
+            reportHookDetail(currentThread, "jitClassesRedefined", "    Notify CHTable on method old=%p fresh=%p", oldMethod, freshMethod);
+            table->methodGotOverridden(fe, compInfo->persistentMemory(), (TR_OpaqueMethodBlock*)freshMethod, (TR_OpaqueMethodBlock*)oldMethod, isSMP);
+            }
          // Step 4 patch modified J9Method
          if (oldMethod && newMethod && rat)
             {
