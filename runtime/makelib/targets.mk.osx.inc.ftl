@@ -31,6 +31,7 @@ $(UMA_DLLTARGET): $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
 		$(VMLINK) $(UMA_LINK_PATH) -o $(UMA_DLLTARGET)\
 		$(UMA_OBJECTS) \
 		$(UMA_DLL_LINK_POSTFLAGS)
+	dsymutil -f $(UMA_DLLTARGET) -o $(UMA_DLLTARGET).dbg
 </#assign>
 
 <#assign exe_target_rule>
