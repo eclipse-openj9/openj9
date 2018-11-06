@@ -38,6 +38,7 @@ import java.io.PrintStream;
 import java.text.MessageFormat;
 
 import com.ibm.j9ddr.CorruptDataException;
+import com.ibm.j9ddr.vm29.j9.J9ConfigFlags;
 import com.ibm.j9ddr.vm29.pointer.PointerPointer;
 import com.ibm.j9ddr.vm29.pointer.UDATAPointer;
 import com.ibm.j9ddr.vm29.pointer.VoidPointer;
@@ -46,7 +47,6 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ConstantPoolPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9MethodPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMMethodPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9UTF8Pointer;
-import com.ibm.j9ddr.vm29.pointer.generated.TRBuildFlags;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 import com.ibm.j9ddr.vm29.structure.J9Consts;
 import com.ibm.j9ddr.vm29.types.UDATA;
@@ -88,15 +88,19 @@ public class StackWalkerUtils
 	static final int jitArgumentRegisterNumbers[];
 	
 	static {
-		if (TRBuildFlags.host_X86 && TRBuildFlags.host_64BIT) {
-			jitArgumentRegisterNumbers = new int[]{ 0, 5, 3, 2};
-		} else if (TRBuildFlags.host_POWER) {
-			jitArgumentRegisterNumbers = new int[]{ 3, 4, 5, 6, 7, 8, 9, 10 };
-		} else if (TRBuildFlags.host_S390) {
-			jitArgumentRegisterNumbers = new int[]{ 1, 2, 3 };
+		if (J9ConfigFlags.arch_x86) {
+			if (J9BuildFlags.env_data64) {
+				jitArgumentRegisterNumbers = new int[] { 0, 5, 3, 2 };
+			} else {
+				// 32 bit X86 doesn't use jitArgumentRegisterNumbers
+				jitArgumentRegisterNumbers = new int[0];
+			}
+		} else if (J9ConfigFlags.arch_power) {
+			jitArgumentRegisterNumbers = new int[] { 3, 4, 5, 6, 7, 8, 9, 10 };
+		} else if (J9ConfigFlags.arch_s390) {
+			jitArgumentRegisterNumbers = new int[] { 1, 2, 3 };
 		} else {
-			//32 bit X86 doesn't use jitArgumentRegisterNumbers
-			jitArgumentRegisterNumbers = new int[0];
+			throw new IllegalArgumentException("Unsupported platform");
 		}
 	}
 	
@@ -260,7 +264,7 @@ public class StackWalkerUtils
 	
 	public static UDATA JIT_RESOLVE_PARM(WalkState walkState, int parmNumber) throws CorruptDataException
 	{
-		if (TRBuildFlags.host_X86 && TRBuildFlags.host_32BIT) {
+		if (J9ConfigFlags.arch_x86 && !J9BuildFlags.env_data64) {
 			return walkState.bp.at(parmNumber);
 		} else {
 			return walkState.walkedEntryLocalStorage.jitGlobalStorageBase().at(jitArgumentRegisterNumbers[parmNumber - 1]);
