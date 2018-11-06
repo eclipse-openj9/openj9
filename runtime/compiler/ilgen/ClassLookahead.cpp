@@ -771,7 +771,7 @@ TR_ClassLookahead::examineNode(TR::TreeTop *nextTree, TR::Node *grandParent, TR:
                char *sig = getFieldSignature(comp(), sym, storedSymRef, length);
 
                if (rhsOfStoreNode->getOpCode().isCall() &&
-                   !rhsOfStoreNode->getSymbolReference()->isUnresolved())
+                   rhsOfStoreNode->getSymbol()->getResolvedMethodSymbol())
                   {
                   if (rhsOfStoreNode->getSymbol()->getResolvedMethodSymbol()->getRecognizedMethod() == TR::java_math_BigDecimal_valueOf)
                      {
