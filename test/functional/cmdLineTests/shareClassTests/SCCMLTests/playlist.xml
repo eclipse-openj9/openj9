@@ -29,9 +29,7 @@
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	$(CD) $(REPORTDIR); \
-	cp $(Q)$(TEST_RESROOT)$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
+		<command>cp $(Q)$(TEST_RESROOT)$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
 	true URLHelperTests.jar ;\
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf URLHelperTests.jar; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -65,9 +63,7 @@
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	$(CD) $(REPORTDIR); \
-	cp $(Q)$(TEST_RESROOT)$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
+		<command>cp $(Q)$(TEST_RESROOT)$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
 	true URLHelperTests.jar ;\
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf URLHelperTests.jar; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -101,9 +97,7 @@
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	$(CD) $(REPORTDIR); \
-	cp $(Q)$(TEST_RESROOT)$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
+		<command>cp $(Q)$(TEST_RESROOT)$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
 	true URLHelperTests.jar ;\
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf URLHelperTests.jar; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -134,9 +128,7 @@
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 		</variations>
-		<command>$(MKDIR) -p $(REPORTDIR); \
-	$(CD) $(REPORTDIR); \
-	cp $(Q)$(TEST_RESROOT)$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
+		<command>cp $(Q)$(TEST_RESROOT)$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
 	true URLHelperTests.jar ;\
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf URLHelperTests.jar; \
 	cp $(Q)$(TEST_RESROOT)$(D)..$(D)TokenHelperTests$(D)TokenHelperTests.jar$(Q) .; \
@@ -182,9 +174,7 @@
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	$(CD) $(REPORTDIR); \
-	cp $(Q)$(TEST_RESROOT)$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
+		<command>cp $(Q)$(TEST_RESROOT)$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
 	true URLHelperTests.jar ;\
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf URLHelperTests.jar; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -216,9 +206,7 @@
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 		</variations>
-		<command>$(MKDIR) -p $(REPORTDIR); \
-	$(CD) $(REPORTDIR); \
-	cp $(Q)$(TEST_RESROOT)$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
+		<command>cp $(Q)$(TEST_RESROOT)$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
 	true URLHelperTests.jar ;\
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf URLHelperTests.jar; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -307,9 +295,7 @@
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 		</variations>
-		<command>$(MKDIR) -p $(REPORTDIR); \
-	$(CD) $(REPORTDIR); \
-	cp $(Q)$(TEST_RESROOT)$(D)..$(D)..$(D)..$(D)cmdline_options_testresources$(D)cmdlinetestresources.jar$(Q) .; \
+		<command>cp $(Q)$(TEST_RESROOT)$(D)..$(D)..$(D)..$(D)cmdline_options_testresources$(D)cmdlinetestresources.jar$(Q) .; \
 	true URLHelperTests.jar ;\
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf cmdlinetestresources.jar; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -369,9 +355,7 @@
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	$(CD) $(REPORTDIR); \
-	cp $(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) .; \
+		<command>cp $(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) .; \
 	true utils.jar ;\
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf utils.jar; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \

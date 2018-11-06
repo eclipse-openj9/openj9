@@ -46,14 +46,6 @@ public:
 	MM_YieldCollaborator *getYieldCollaborator() { return &_yieldCollaborator; }
 
 	virtual MM_Packet *getInputPacket(MM_EnvironmentBase *env);
-	
-	virtual bool inUsePacketsAvailable(MM_EnvironmentBase *env) { return !_inUseBarrierPacketList.isEmpty();}
-
-	virtual MM_Packet *getBarrierPacket(MM_EnvironmentBase *env);
-	virtual void putInUsePacket(MM_EnvironmentBase *env, MM_Packet *packet);
-	virtual void removePacketFromInUseList(MM_EnvironmentBase *env, MM_Packet *packet);
-	virtual void putFullPacket(MM_EnvironmentBase *env, MM_Packet *packet);
-	void moveInUseToNonEmpty(MM_EnvironmentBase *env);
 
 	/**
 	 * Create a MM_WorkPacketsRealtime object.
@@ -68,9 +60,6 @@ public:
 protected:
 	virtual MM_WorkPacketOverflow *createOverflowHandler(MM_EnvironmentBase *env, MM_WorkPackets *workPackets);
 	virtual void notifyWaitingThreads(MM_EnvironmentBase *env);
-	virtual MM_Packet *getPacketByOverflowing(MM_EnvironmentBase *env);
-	virtual float getHeapCapacityFactor(MM_EnvironmentBase *env);
-	virtual MM_Packet *getInputPacketFromOverflow(MM_EnvironmentBase *env);
 
 private:
 };

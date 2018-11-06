@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2006, 2017 IBM Corp. and others
+  Copyright (c) 2006, 2018 IBM Corp. and others
  
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,10 +29,5 @@
 	<source/>
 	<flags>
 		<flag id="module_dbgext" value="true"/>
-		<flag id="module_gc_api_dbgext" value="true"/>
-		<flag id="module_gc_base_dbgext" value="true"/>
-		<flag id="module_gc_check_dbgext" value="true"/>
-		<flag id="module_gc_modron_base_dbgext" value="true"/>
-		<flag id="module_gc_structs_dbgext" value="true"/>
 	</flags>
 </feature>

@@ -775,10 +775,11 @@ getModifiedSharedMemoryPathandFileName(struct J9PortLibrary* portLibrary, const 
 }
 
 intptr_t
-j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, BOOLEAN appendBaseDir, char* shmemdir, uintptr_t bufLength)
+j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint32_t flags, char* shmemdir, uintptr_t bufLength)
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 	int32_t rc;
+	BOOLEAN appendBaseDir = J9_ARE_ALL_BITS_SET(flags, J9SHMEM_GETDIR_APPEND_BASEDIR);
 
 	Trc_PRT_j9shmem_getDir_Entry();
 

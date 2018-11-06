@@ -842,9 +842,8 @@ public class PointerGenerator {
 		writeEAMethod(writer, "PointerPointer", structure, fieldDescriptor);
 	}
 
-	private static String getPointerType(String type) {
-		type = ConstPattern.matcher(type).replaceAll("");
-
+	private static String getPointerType(String pointerType) {
+		String type = ConstPattern.matcher(pointerType).replaceAll("").trim();
 		int firstStar = type.indexOf('*');
 
 		if (type.indexOf('*', firstStar + 1) > 0) {
@@ -854,7 +853,17 @@ public class PointerGenerator {
 
 		type = type.substring(0, firstStar).trim();
 
-		return type.substring(0, 1).toUpperCase() + type.substring(1) + "Pointer";
+		if (type.equals("bool")) {
+			return "BoolPointer";
+		} else if (type.equals("double")) {
+			return "DoublePointer";
+		} else if (type.equals("float")) {
+			return "FloatPointer";
+		} else if (type.equals("void")) {
+			return "VoidPointer";
+		} else {
+			return type + "Pointer";
+		}
 	}
 
 	private int errorCount = 0;
@@ -1178,7 +1187,7 @@ public class PointerGenerator {
 		String referencedTypeString = null;
 
 		if (typeString.startsWith(prefix) && typeString.startsWith("(", prefixLength)) {
-			referencedTypeString = typeString.substring(prefixLength + 1, typeString.length() - 1);
+			referencedTypeString = typeString.substring(prefixLength + 1, typeString.length() - 1).trim();
 		} else {
 			referencedTypeString = "void";
 		}
@@ -1201,7 +1210,7 @@ public class PointerGenerator {
 			break;
 		default:
 			if ((TYPE_SIMPLE_MIN <= type) && (type <= TYPE_SIMPLE_MAX)) {
-				pointerType = getPointerType(referencedTypeString + "*");
+				pointerType = referencedTypeString + "Pointer";
 			} else {
 				throw new RuntimeException("Unexpected SRP reference type: " + type + " from " + typeString);
 			}

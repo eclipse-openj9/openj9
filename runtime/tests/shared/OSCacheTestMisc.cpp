@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2014 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,9 +37,9 @@ extern "C" {
 
 
 IDATA
-SH_OSCacheTestMisc::testGetCacheDir(J9PortLibrary* portLibrary)
+SH_OSCacheTestMisc::testGetCacheDir(J9JavaVM* vm)
 {
-	PORT_ACCESS_FROM_PORT(portLibrary);
+	PORT_ACCESS_FROM_JAVAVM(vm);
 	IDATA rc = FAIL;
 	const char *testDirPaths[] = {
 		"c:\\Documents and Settings\\LocalService\\Local Settings\\Application Data\\javasharedresources",
@@ -62,7 +62,7 @@ SH_OSCacheTestMisc::testGetCacheDir(J9PortLibrary* portLibrary)
 
 		sharedConfig->ctrlDirName = testDirPaths[i];
 
-		if (0 != SH_OSCache::getCacheDir(portLibrary, sharedConfig->ctrlDirName, cacheDir, sizeof(cacheDir), TRUE)) {
+		if (0 != SH_OSCache::getCacheDir(vm, sharedConfig->ctrlDirName, cacheDir, sizeof(cacheDir), J9PORT_SHR_CACHE_TYPE_PERSISTENT)) {
 			j9tty_printf(PORTLIB, "testGetCacheDir: failed: SH_OSCache::getCacheDir() did not return 0\n");
 			goto done;
 		}
@@ -90,23 +90,23 @@ done:
 }
 
 IDATA
-SH_OSCacheTestMisc::runTests(J9PortLibrary* portLibrary, struct j9cmdlineOptions *arg, const char *cmdline)
+SH_OSCacheTestMisc::runTests(J9JavaVM* vm, struct j9cmdlineOptions *arg, const char *cmdline)
 {
-	PORT_ACCESS_FROM_PORT(portLibrary);
+	PORT_ACCESS_FROM_JAVAVM(vm);
 	IDATA rc = PASS;
 
 	/* Detect children */
 	if (NULL != cmdline) {
 		/* We are using strstr, so we need to put the longer string first */
 		if (NULL != strstr(cmdline, OSCACHETEST_GET_CACHE_DIR_NAME)) {
-			return testGetCacheDir(PORTLIB);
+			return testGetCacheDir(vm);
 		}
 	}
 
 	j9tty_printf(PORTLIB, "OSCacheTestMisc begin\n");
 
 	j9tty_printf(PORTLIB, "testGetCacheDir begin\n");
-	rc |= testGetCacheDir(PORTLIB);
+	rc |= testGetCacheDir(vm);
 
 	return rc;
 }

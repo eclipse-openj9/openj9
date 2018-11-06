@@ -192,13 +192,16 @@ static BOOLEAN parseGCPolicy(char *buffer, int *value);
 #define XMX	"-Xmx"
 
 /* We use forward slashes here because J9VM_LIB_ARCH_DIR is not used on Windows. */
-#if J9VM_JAVA9_BUILD >= 150
+#if (J9VM_JAVA9_BUILD >= 150) || defined(OSX)
+/* On OSX, <arch> doesn't exist. So, JVM_ARCH_DIR shouldn't be appended to
+ * J9VM_LIB_ARCH_DIR on OSX.
+ */
 #define J9VM_LIB_ARCH_DIR "/lib/"
-#elif defined(JVM_ARCH_DIR)
+#elif defined(JVM_ARCH_DIR) /* (J9VM_JAVA9_BUILD >= 150) || defined(OSX) */
 #define J9VM_LIB_ARCH_DIR "/lib/" JVM_ARCH_DIR "/"
-#else
+#else /* (J9VM_JAVA9_BUILD >= 150) || defined(OSX) */
 #error "No matching ARCH found"
-#endif /* J9VM_JAVA9_BUILD >= 150 */
+#endif /* (J9VM_JAVA9_BUILD >= 150) || defined(OSX) */
 
 #if defined(WIN32)
 #define DIR_SLASH_CHAR '\\'

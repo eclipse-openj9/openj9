@@ -87,6 +87,13 @@ export BUILD_CONFIG?=prod
 <#elseif uma.spec.id?starts_with("linux_arm_linaro")>
   export PLATFORM=arm-linux-gcc-cross
 </#if>
+<#if uma.spec.id?starts_with("osx_x86-64")>
+  ifeq ($(VERSION_MAJOR),8)
+    export PLATFORM=amd64-osx-gcc
+  else
+    export PLATFORM=amd64-osx-clang
+  endif
+</#if>
 
 <#if uma.spec.flags.uma_codeCoverage.enabled>
 export FE_CFLAGS+=-fprofile-arcs -ftest-coverage

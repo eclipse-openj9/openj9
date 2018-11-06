@@ -29,9 +29,7 @@
 		<variations>
 			<variation>Mode110</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	$(CD) $(REPORTDIR); \
-	cp $(Q)$(TEST_RESROOT)$(D)StoreFilterTests.jar$(Q) .; \
+		<command>cp $(Q)$(TEST_RESROOT)$(D)StoreFilterTests.jar$(Q) .; \
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar.exe$(Q) xf StoreFilterTests.jar; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_EXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DPD=$(Q)\\$(Q) -DJDK_HOME=$(Q)$(JDK_HOME)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(Q)cmd /c$(Q) -DSCRIPT_SUFFIX=.bat -DSCMODE=204 \
 	-jar $(CMDLINETESTER_JAR) \
@@ -58,9 +56,7 @@
 		<variations>
 			<variation>Mode110</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	$(CD) $(REPORTDIR); \
-	cp $(Q)$(TEST_RESROOT)$(D)StoreFilterTests.jar$(Q) .; \
+		<command>cp $(Q)$(TEST_RESROOT)$(D)StoreFilterTests.jar$(Q) .; \
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(Q) xf StoreFilterTests.jar; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_EXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DPD=$(Q)/$(Q) -DJDK_HOME=$(Q)$(JDK_HOME)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(Q)sh$(Q) -DSCRIPT_SUFFIX=.sh -DSCMODE=204 \
 	-jar $(CMDLINETESTER_JAR) \

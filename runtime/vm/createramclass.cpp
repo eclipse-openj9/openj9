@@ -34,6 +34,7 @@
 #undef UT_MODULE_UNLOADED
 #include "ut_j9vm.h"
 #include "j9bcvnls.h"
+#include "j9vmnls.h"
 #include "j2sever.h"
 #include "vm_internal.h"
 
@@ -144,6 +145,9 @@ static void setCurrentExceptionForBadClass(J9VMThread *vmThread, J9UTF8 *badClas
 static BOOLEAN verifyClassLoadingStack(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass);
 static void popFromClassLoadingStack(J9VMThread *vmThread);
 static VMINLINE BOOLEAN loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, J9Class *elementClass, UDATA packageID, BOOLEAN hotswapping, UDATA classPreloadFlags, J9Class **superclassOut, J9Module *module);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+static BOOLEAN loadFlattenableFieldValueClasses(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA classPreloadFlags, UDATA packageID, J9Module *module);
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 static J9Class* internalCreateRAMClassDropAndReturn(J9VMThread *vmThread, J9ROMClass *romClass, J9CreateRAMClassState *state);
 static J9Class* internalCreateRAMClassDoneNoMutex(J9VMThread *vmThread, J9ROMClass *romClass, UDATA options, J9CreateRAMClassState *state);
 static J9Class* internalCreateRAMClassDone(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA options, J9Class *elementClass,
@@ -1627,6 +1631,61 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 	return TRUE;
 }
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+/**
+ * Attempts to pre-load classes of fields with Q signatures and no static
+ * access modifier set.
+ *
+ * Caller should not hold the classTableMutex.
+ *
+ * Return TRUE on success. On failure, returns FALSE and sets the
+ * appropriate Java error on the VM.
+ */
+static BOOLEAN
+loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA classPreloadFlags, UDATA packageID, J9Module *module)
+{
+	J9ROMFieldWalkState fieldWalkState = {0};
+	J9ROMFieldShape *field = romFieldsStartDo(romClass, &fieldWalkState);
+	BOOLEAN result = TRUE;
+	/* iterate over fields and load classes of fields marked as QTypes */
+	while (NULL != field) {
+		const U_32 modifiers = field->modifiers;
+		J9UTF8 *signature = J9ROMFIELDSHAPE_SIGNATURE(field);
+		U_8 *signatureChars = J9UTF8_DATA(signature);
+		if (('Q' == signatureChars[0]) && J9_ARE_NO_BITS_SET(modifiers, J9AccStatic)) {
+			J9Class *valueClass = internalFindClassUTF8(currentThread, signatureChars + 1, J9UTF8_LENGTH(signature) - 2, classLoader, classPreloadFlags);
+			if (NULL == valueClass) {
+				result = FALSE;
+				goto done;
+			} else {
+				J9ROMClass *valueROMClass = valueClass->romClass;
+
+				if (J9_ARE_NO_BITS_SET(valueROMClass->modifiers, J9AccValueType)) {
+					J9UTF8 *badClass = NNSRP_GET(valueROMClass->className, J9UTF8*);
+					setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_ERROR_QTYPE_NOT_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(badClass), J9UTF8_DATA(badClass));
+					result = FALSE;
+					goto done;
+				}
+
+				bool classIsPublic = J9_ARE_ALL_BITS_SET(valueROMClass->modifiers, J9AccPublic);
+
+				if ((!classIsPublic && (packageID != valueClass->packageID))
+					|| (classIsPublic && (J9_VISIBILITY_ALLOWED != checkModuleAccess(currentThread, currentThread->javaVM, romClass, module, valueROMClass, valueClass->module, valueClass->packageID, 0)))
+				) {
+					Trc_VM_CreateRAMClassFromROMClass_nestedValueClassNotVisible(currentThread, valueClass, valueClass->classLoader, classLoader);
+					setCurrentExceptionForBadClass(currentThread, J9ROMCLASS_CLASSNAME(valueROMClass), J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR);
+					result = FALSE;
+					goto done;
+				}
+			}
+		}
+		field = romFieldsNextDo(&fieldWalkState);
+	}
+done:
+	return result;
+}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 static J9Class*
 internalCreateRAMClassDropAndReturn(J9VMThread *vmThread, J9ROMClass *romClass, J9CreateRAMClassState *state)
 {
@@ -2811,7 +2870,11 @@ retry:
 		}
 	}
 
-	if (!loadSuperClassAndInterfaces(vmThread, hostClassLoader, romClass, elementClass, packageID, hotswapping, classPreloadFlags, &superclass, module)) {
+	if (!loadSuperClassAndInterfaces(vmThread, hostClassLoader, romClass, elementClass, packageID, hotswapping, classPreloadFlags, &superclass, module)
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		|| !loadFlattenableFieldValueClasses(vmThread, hostClassLoader, romClass, classPreloadFlags, packageID, module)
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+	) {
 		omrthread_monitor_enter(javaVM->classTableMutex);
 		return internalCreateRAMClassDone(vmThread, classLoader, romClass, options, elementClass, className, &state);
 	}

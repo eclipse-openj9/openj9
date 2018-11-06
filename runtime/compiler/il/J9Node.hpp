@@ -81,7 +81,7 @@ public:
     * @return the signature of the node's type if applicable.
     * @note the signature's storage may have been created on the stack!
     */
-   const char * getTypeSignature(int32_t &, TR_AllocationKind = stackAlloc);
+   const char * getTypeSignature(int32_t &, TR_AllocationKind = stackAlloc, bool parmAsAuto = false);
 
 #if defined(TR_TARGET_S390)
    TR_PseudoRegister       *getPseudoRegister();
@@ -137,6 +137,7 @@ public:
    bool isTruncatingOrWideningAggrOrBCD();
 
    bool canRemoveArithmeticOperand();
+   bool canGCandReturn();
 
    static uint32_t hashOnBCDOrAggrLiteral(char *lit, size_t litSize);
 

@@ -93,15 +93,19 @@ jvmtiGetPhase(jvmtiEnv* env,
 	jvmtiPhase* phase_ptr)
 {
 	jvmtiError rc;
+	jvmtiPhase rv_phase = JVMTI_PHASE_DEAD;
 
 	Trc_JVMTI_jvmtiGetPhase_Entry(env);
 
 	ENSURE_NON_NULL(phase_ptr);
 
-	*phase_ptr = (jvmtiPhase) J9JVMTI_DATA_FROM_ENV(env)->phase;
+	rv_phase = (jvmtiPhase) J9JVMTI_DATA_FROM_ENV(env)->phase;
 	rc = JVMTI_ERROR_NONE;
 
 done:
+	if (NULL != phase_ptr) {
+		*phase_ptr = rv_phase;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetPhase);
 }
 
@@ -152,15 +156,19 @@ jvmtiGetEnvironmentLocalStorage(jvmtiEnv* env,
 	void** data_ptr)
 {
 	jvmtiError rc;
+	void *rv_data = NULL;
 
 	Trc_JVMTI_jvmtiGetEnvironmentLocalStorage_Entry(env);
 
 	ENSURE_NON_NULL(data_ptr);
 
-	*data_ptr = ((J9JVMTIEnv *) env)->environmentLocalStorage;
+	rv_data = ((J9JVMTIEnv *) env)->environmentLocalStorage;
 	rc = JVMTI_ERROR_NONE;
 
 done:
+	if (NULL != data_ptr) {
+		*data_ptr = rv_data;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetEnvironmentLocalStorage);
 }
 
@@ -171,20 +179,22 @@ jvmtiGetVersionNumber(jvmtiEnv* env,
 {
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc;
+	jint rv_version = JVMTI_1_2_3_SPEC_VERSION;
 
 	Trc_JVMTI_jvmtiGetVersionNumber_Entry(env);
 
 	ENSURE_NON_NULL(version_ptr);
 
-	*version_ptr = JVMTI_1_2_3_SPEC_VERSION;
-
 	if (J2SE_VERSION(vm) >= J2SE_19) {
-		*version_ptr = JVMTI_VERSION_9_0;
+		rv_version = JVMTI_VERSION_9_0;
 	}
 
 	rc = JVMTI_ERROR_NONE;
 
 done:
+	if (NULL != version_ptr) {
+		*version_ptr = rv_version;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetVersionNumber);
 }
 
@@ -197,6 +207,7 @@ jvmtiGetErrorName(jvmtiEnv* env,
 	const J9JvmtiErrorMapping *mapping = NULL;
 	jvmtiError rc = JVMTI_ERROR_ILLEGAL_ARGUMENT;
 	PORT_ACCESS_FROM_JVMTI(env);
+	char *rv_name = NULL;
 
 	Trc_JVMTI_jvmtiGetErrorName_Entry(env);
 
@@ -205,19 +216,22 @@ jvmtiGetErrorName(jvmtiEnv* env,
 	mapping = errorMap;
 	while (mapping->errorName != NULL) {
 		if (mapping->errorValue == error) {
-			*name_ptr = j9mem_allocate_memory(strlen(mapping->errorName) + 1, J9MEM_CATEGORY_JVMTI_ALLOCATE);
-			if (*name_ptr == NULL) {
+			rv_name = j9mem_allocate_memory(strlen(mapping->errorName) + 1, J9MEM_CATEGORY_JVMTI_ALLOCATE);
+			if (rv_name == NULL) {
 				rc = JVMTI_ERROR_OUT_OF_MEMORY;
 			} else {
-				strcpy(*name_ptr, mapping->errorName);
+				strcpy(rv_name, mapping->errorName);
 				rc = JVMTI_ERROR_NONE;
 			}
 			break;
 		}
 		++mapping;
 	}
-
 done:
+
+	if (NULL != name_ptr) {
+		*name_ptr = rv_name;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetErrorName);
 }
 
@@ -269,15 +283,18 @@ jvmtiGetJLocationFormat(jvmtiEnv* env,
 	jvmtiJlocationFormat* format_ptr)
 {
 	jvmtiError rc;
+	jint rv_format = JVMTI_JLOCATION_JVMBCI;
 
 	Trc_JVMTI_jvmtiGetJLocationFormat_Entry(env);
 
 	ENSURE_NON_NULL(format_ptr);
 
-	*format_ptr = JVMTI_JLOCATION_JVMBCI;
 	rc = JVMTI_ERROR_NONE;
 
 done:
+	if (NULL != format_ptr) {
+		*format_ptr = rv_format;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetJLocationFormat);
 }
 

@@ -8116,8 +8116,6 @@ F|thrMaxTryEnterSpins2BeforeBlocking|thrMaxTryEnterSpins2BeforeBlocking|UDATA|UD
 F|thrMaxTryEnterYieldsBeforeBlocking|thrMaxTryEnterYieldsBeforeBlocking|UDATA|UDATA
 S|J9Package|J9PackagePointer|
 F|packageName|packageName|struct J9UTF8*|struct J9UTF8*
-F|exportToAll|exportToAll|BOOLEAN|BOOLEAN
-F|exportToAllUnnamed|exportToAllUnnamed|BOOLEAN|BOOLEAN
 F|module|module|struct J9Module*|struct J9Module*
 F|exportsHashTable|exportsHashTable|struct J9HashTable*|struct J9HashTable*
 S|J9PackageIDTableEntry|J9PackageIDTableEntryPointer|

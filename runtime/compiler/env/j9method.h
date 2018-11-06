@@ -318,6 +318,7 @@ public:
    virtual bool                  isFinal();
    virtual bool                  isStrictFP();
    virtual bool                  isInterpreted();
+   virtual bool                  isInterpretedForHeuristics();
    virtual bool                  hasBackwardBranches();
    virtual bool                  isObjectConstructor();
    virtual bool                  isNonEmptyObjectConstructor();
@@ -330,6 +331,9 @@ public:
    virtual void *                startAddressForInterpreterOfJittedMethod();
    virtual bool                  isWarmCallGraphTooBig(uint32_t bcIndex,  TR::Compilation *);
    virtual void                  setWarmCallGraphTooBig(uint32_t bcIndex,  TR::Compilation *);
+   virtual void                  getFaninInfo(uint32_t *count, uint32_t *weight, uint32_t *otherBucketWeight = NULL);
+   virtual bool                  getCallerWeight(TR_ResolvedJ9Method *caller, uint32_t *weight, uint32_t pcIndex=~0);
+
 
    virtual intptrj_t             getInvocationCount();
    virtual bool                  setInvocationCount(intptrj_t oldCount, intptrj_t newCount);
@@ -344,6 +348,9 @@ public:
    virtual uint32_t              maxBytecodeIndex();
 
    virtual TR_OpaqueClassBlock * containingClass();
+
+   static TR_OpaqueClassBlock *  getClassFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, TR::Compilation *comp, uint32_t cpIndex);
+   static TR_OpaqueClassBlock *  getClassOfStaticFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, int32_t cpIndex);
 
    virtual void *                ramConstantPool();
    virtual void *                constantPool();
@@ -440,6 +447,9 @@ public:
    virtual uint32_t              vTableSlot(uint32_t);
 
    virtual bool                  isCompilable(TR_Memory *);
+
+   static TR_OpaqueMethodBlock * getVirtualMethod(TR_J9VMBase *fej9, J9ConstantPool *cp, I_32 cpIndex, UDATA *vTableOffset, bool *unresolvedInCP);
+   static TR_OpaqueClassBlock  * getInterfaceITableIndexFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, int32_t cpIndex, uintptrj_t *pITableIndex);
 
    virtual TR_ResolvedMethod *   getResolvedStaticMethod ( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP);
    virtual TR_ResolvedMethod *   getResolvedSpecialMethod( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP);
@@ -541,6 +551,7 @@ public:
    virtual bool                  isStrictFP();
 
    virtual bool                  isInterpreted();
+   virtual bool                  isInterpretedForHeuristics();
    virtual bool                  hasBackwardBranches();
    virtual bool                  isObjectConstructor();
    virtual bool                  isNonEmptyObjectConstructor();
@@ -583,6 +594,9 @@ public:
 
    virtual TR_OpaqueMethodBlock *getNonPersistentIdentifier();
    virtual uint8_t *             allocateException(uint32_t, TR::Compilation*);
+
+   virtual TR_OpaqueClassBlock  *getDeclaringClassFromFieldOrStatic( TR::Compilation *comp, int32_t cpIndex);
+
    virtual bool                  storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *constantPool, int32_t cpIndex, TR_ExternalRelocationTargetKind reloKind, J9Method *ramMethod, J9Class *definingClass=0);
 
 protected:

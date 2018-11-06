@@ -120,8 +120,10 @@
 		<export name="Java_com_ibm_jvmti_tests_getOwnedMonitorStackDepthInfo_gomsdi001_nDepth"/>
 		<export name="Java_com_ibm_jvmti_tests_getOwnedMonitorStackDepthInfo_ThreadNDepth_verify"/>
 		<export name="Java_com_ibm_jvmti_tests_getOwnedMonitorStackDepthInfo_ThreadNDepth_verifyDeeper"/>
+		<export name="Java_com_ibm_jvmti_tests_getOwnedMonitorStackDepthInfo_gomsdi002_callGet"/>
 		<export name="Java_com_ibm_jvmti_tests_getThreadState_gts001_getThreadStates"/>
 		<export name="Java_com_ibm_jvmti_tests_getOwnedMonitorInfo_ThreadMonitorInfoTest_verifyMonitors"/>
+		<export name="Java_com_ibm_jvmti_tests_getOwnedMonitorInfo_gomi002_callGet"/>
 		<export name="Java_com_ibm_jvmti_tests_getHeapFreeTotalMemory_ghftm001_getHeapFreeMemory"/>
 		<export name="Java_com_ibm_jvmti_tests_getHeapFreeTotalMemory_ghftm001_getHeapTotalMemory"/>
 		<export name="Java_com_ibm_jvmti_tests_getHeapFreeTotalMemory_ghftm001_getCycleStartCount"/>

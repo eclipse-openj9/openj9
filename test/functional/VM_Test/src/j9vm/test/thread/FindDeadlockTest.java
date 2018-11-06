@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2012 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -205,6 +205,14 @@ public class FindDeadlockTest {
 			ok = ok && testDeadlocks();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
+		} catch (Throwable t) {
+			/* Exceptions thrown while threads are deadlocked prevent VM shutdown.
+			 * https://github.com/eclipse/openj9/issues/3369
+			 * Force VM exit in this case.
+			 */
+			System.out.println("Unexpected exception:");
+			t.printStackTrace();
+			System.exit(-1);			
 		}
 
 		if (ok) {

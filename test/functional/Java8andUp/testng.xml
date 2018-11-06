@@ -32,6 +32,11 @@
 			<class name="org.openj9.test.gpu.SortTest" />
 		</classes>
 	</test>
+	<test name="truncatedReturn">
+		<classes>
+			<class name="org.openj9.test.truncatedReturn.TestTruncatedReturn" />
+		</classes>
+	</test>
 	<test name="regression">
 		<classes>
 			<class name="org.openj9.test.fastresolve.FastresolveTest" />
@@ -141,6 +146,7 @@
 			<class name="org.openj9.test.java.lang.Test_Compiler"/>
 			<class name="org.openj9.test.java.lang.Test_InstantiationError"/>
 			<class name="org.openj9.test.java.lang.Test_InstantiationException"/>
+			<class name="org.openj9.test.java.lang.Test_Math"/>
 			<class name="org.openj9.test.java.lang.Test_Object"/>
 			<class name="org.openj9.test.java.lang.Test_RuntimePermission"/>
 			<class name="org.openj9.test.java.lang.Test_String"/>
@@ -199,6 +205,7 @@
 		<classes>
 			<class name="org.openj9.test.java.security.Test_AccessController"/>
 			<class name="org.openj9.test.java.security.Test_AccessControlContext"/>
+			<class name="org.openj9.test.java.security.Test_MHLoaderConstraints"/>
 		</classes>
 	</test>
 	<test name="JCL_TEST_IBM-VM">
@@ -210,6 +217,11 @@
 	<test name="JCL_TEST_JITHelpers">
 		<classes>
 			<class name="org.openj9.test.com.ibm.jit.Test_JITHelpers"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_MathMethods">
+		<classes>
+			<class name="org.openj9.test.java.lang.Test_Math"/>
 		</classes>
 	</test>
 	<test name="JCL_TEST_Test-UnsafeFence">
@@ -392,6 +404,11 @@
 	<test name="testStringInterning">
 		<classes>
 			<class name="org.openj9.test.string.StringInterning" />
+		</classes>
+	</test>
+	<test name="testStringIndexOfString">
+		<classes>
+			<class name="org.openj9.test.string.StringIndexOfString" />
 		</classes>
 	</test>
 	<test name="floatSanityTests">

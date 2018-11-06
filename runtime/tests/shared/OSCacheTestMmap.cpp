@@ -57,7 +57,7 @@ SH_OSCacheTestMmap::testBasic(J9PortLibrary *portLibrary, J9JavaVM *vm)
 	setCurrentCacheVersion(vm, J2SE_LATEST, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;
 	
-	rc = j9shmem_getDir(NULL, TRUE, cacheDir, J9SH_MAXPATH);
+	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
 	if (rc == -1) {
 		rc = FAIL;
 		goto cleanup;
@@ -139,7 +139,7 @@ SH_OSCacheTestMmap::testConstructor(J9PortLibrary *portLibrary, J9JavaVM *vm)
 	setCurrentCacheVersion(vm, J2SE_LATEST, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;
 
-	rc = j9shmem_getDir(NULL, TRUE, cacheDir, J9SH_MAXPATH);
+	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
 	if (rc == -1) {
 		rc = FAIL;
 		goto cleanup;
@@ -211,7 +211,7 @@ SH_OSCacheTestMmap::testFailedConstructor(J9PortLibrary *portLibrary, J9JavaVM *
 		return FAIL;
 	}
 
-	rc = j9shmem_getDir(NULL, TRUE, cacheDir, J9SH_MAXPATH);
+	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
 	if (rc == -1) {
 		rc = FAIL;
 		goto cleanup;
@@ -310,7 +310,7 @@ SH_OSCacheTestMmap::testMultipleCreate(J9PortLibrary* portLibrary, J9JavaVM *vm,
 	piconfig->sharedClassDebugAreaBytes = -1;
 	piconfig->sharedClassCacheSize = SHM_REGIONSIZE;
 	
-	rc = j9shmem_getDir(NULL, TRUE, cacheDir, J9SH_MAXPATH);
+	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
 	if (rc == -1) {
 		return FAIL;
 	}
@@ -439,7 +439,7 @@ SH_OSCacheTestMmap::testGetAllCacheStatistics(J9JavaVM* vm)
 	}
 	piconfig->sharedClassDebugAreaBytes = -1;
 
-	ret = j9shmem_getDir(ctrlDirName, TRUE, cacheDirName, J9SH_MAXPATH);
+	ret = j9shmem_getDir(ctrlDirName, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDirName, J9SH_MAXPATH);
 	if (-1 == ret) {
 		j9tty_printf(PORTLIB, "testGetAllCacheStatistics: j9shmem_getDir() failed \n");
 		goto cleanup;
@@ -557,7 +557,7 @@ SH_OSCacheTestMmap::testMutex(J9PortLibrary *portLibrary, J9JavaVM *vm, struct j
 	}
 	piconfig->sharedClassDebugAreaBytes = -1;
 
-	rc = j9shmem_getDir(NULL, TRUE, cacheDir, J9SH_MAXPATH);
+	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
 	if (rc == -1) {
 		return FAIL;
 	}
@@ -642,7 +642,7 @@ SH_OSCacheTestMmap::testMutexHang(J9PortLibrary *portLibrary, J9JavaVM *vm, stru
 	}
 	piconfig->sharedClassDebugAreaBytes = -1;
 	
-	rc = j9shmem_getDir(NULL, TRUE, cacheDir, J9SH_MAXPATH);
+	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
 	if (rc == -1) {
 		return FAIL;
 	}
@@ -730,7 +730,7 @@ SH_OSCacheTestMmap::testDestroy (J9PortLibrary* portLibrary, J9JavaVM *vm, struc
 	}
 	piconfig->sharedClassDebugAreaBytes = -1;
 
-	ret = j9shmem_getDir(NULL, TRUE, cacheDir, J9SH_MAXPATH);
+	ret = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, cacheDir, J9SH_MAXPATH);
 	if (-1 == ret) {
 		j9tty_printf(PORTLIB, "testDestroy: j9shmem_getDir() failed \n");
 		goto cleanup;

@@ -180,7 +180,8 @@ TR_PersistentClassInfo *
 TR_JITaaSServerPersistentCHTable::findClassInfoAfterLocking(
       TR_OpaqueClassBlock *classId,
       TR::Compilation *comp,
-      bool returnClassInfoForAOT)
+      bool returnClassInfoForAOT,
+      bool validate)
    {
    if (comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE() && !returnClassInfoForAOT) // for AOT do not use the class hierarchy
       return nullptr;
@@ -395,9 +396,10 @@ TR_PersistentClassInfo *
 TR_JITaaSClientPersistentCHTable::findClassInfoAfterLocking(
       TR_OpaqueClassBlock *classId,
       TR::Compilation *comp,
-      bool returnClassInfoForAOT)
+      bool returnClassInfoForAOT,
+      bool validate)
    {
-   return TR_PersistentCHTable::findClassInfoAfterLocking(classId, comp, returnClassInfoForAOT);
+   return TR_PersistentCHTable::findClassInfoAfterLocking(classId, comp, returnClassInfoForAOT, validate);
    }
 
 void

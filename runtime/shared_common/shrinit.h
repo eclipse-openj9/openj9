@@ -109,6 +109,7 @@ typedef struct J9SharedClassesOptions {
 #define OPTION_TRACECOUNT "traceCount"
 #define OPTION_PRINTORPHANSTATS "printOrphanStats"
 #define OPTION_NONFATAL "nonfatal"
+#define OPTION_FATAL "fatal"
 #define OPTION_SILENT "silent"
 #define OPTION_NONE "none"
 #define OPTION_CONTROLDIR_EQUALS "controlDir="		/* purely for java5 compatability */
@@ -121,6 +122,7 @@ typedef struct J9SharedClassesOptions {
 #define OPTION_NO_ROUND_PAGES "noRoundPages"
 #define OPTION_CACHERETRANSFORMED "cacheRetransformed"
 #define OPTION_NOBOOTCLASSPATH "noBootclasspath"
+#define OPTION_BOOTCLASSESONLY "bootClassesOnly"
 #if !defined(WIN32)
 #define OPTION_SNAPSHOTCACHE "snapshotCache"
 #define OPTION_DESTROYSNAPSHOT "destroySnapshot"
@@ -250,6 +252,7 @@ typedef struct J9SharedClassesOptions {
 #define RESULT_DO_ADJUST_MAXAOT_EQUALS 46
 #define RESULT_DO_ADJUST_MINJITDATA_EQUALS 47
 #define RESULT_DO_ADJUST_MAXJITDATA_EQUALS 48
+#define RESULT_DO_BOOTCLASSESONLY 49
 
 
 #define PARSE_TYPE_EXACT 1

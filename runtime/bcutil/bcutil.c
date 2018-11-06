@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -127,7 +127,6 @@ bcutil_J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	VMI_ACCESS_FROM_JAVAVM((JavaVM*)vm);
 
-#define VERBOSE_DYNLOAD 8 																/* temp hack */
 #define BUFFERS_ALLOC_STAGE BYTECODE_TABLE_SET			/* defined separately to ensure dependencies below */
 
 	switch(stage) {

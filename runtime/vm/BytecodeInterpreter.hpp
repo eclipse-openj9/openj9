@@ -2427,8 +2427,9 @@ ffi_exit:
 			/* Drop the decompilation records for frames removed from the stack if FSD is enabled */
 			J9JITConfig *jitConfig = _vm->jitConfig;
 			if (NULL != jitConfig) {
-				if (jitConfig->fsdEnabled) {
-					jitConfig->jitExceptionCaught(_currentThread);
+				void (*jitExceptionCaught)(J9VMThread *currentThread) = jitConfig->jitExceptionCaught;
+				if (NULL != jitExceptionCaught) {
+					jitExceptionCaught(_currentThread);
 				}
 			}
 		}
@@ -2999,7 +3000,15 @@ done:
 			/* See if the class is visible to the sender */
 			if (NULL != senderClass) {
 				IDATA checkResult = checkVisibility(_currentThread, senderClass, j9clazz, j9clazz->romClass->modifiers, J9_LOOK_REFLECT_CALL);
+				VMStructHasBeenUpdated(REGISTER_ARGS);
 				if (checkResult < J9_VISIBILITY_ALLOWED) {
+					if (immediateAsyncPending()) {
+						rc = GOTO_ASYNC_CHECK;
+						goto done;
+					} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
+						rc = GOTO_THROW_CURRENT_EXCEPTION;
+						goto done;
+					}
 					char *nlsStr = illegalAccessMessage(_currentThread, -1, senderClass, j9clazz, checkResult);
 					/* VM struct is already up-to-date */
 					setCurrentExceptionUTF(_currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSEXCEPTION, nlsStr);
@@ -3014,7 +3023,6 @@ done:
 			if (J9_UNEXPECTED(EXECUTE_BYTECODE != rc)) {
 				goto done;
 			}
-		} else {
 		}
 		instance = allocateObject(REGISTER_ARGS, j9clazz);
 		if (J9_UNEXPECTED(NULL == instance)) {
@@ -5616,6 +5624,9 @@ done:
 				I_8 value = (I_8)*(I_32*)_sp;
 				_pc += 1;
 				_sp += 3;
+				if (J9OBJECT_CLAZZ(_currentThread, arrayref) == _vm->booleanArrayClass) {
+					value &= 1;
+				}
 				_objectAccessBarrier.inlineIndexableObjectStoreI8(_currentThread, arrayref, index, value);
 			}
 		}
@@ -6298,7 +6309,11 @@ retry:
 					_objectAccessBarrier.inlineStaticStoreU64(_currentThread, fieldClass, (U_64*)valueAddress, *(U_64*)_sp, isVolatile);
 					_sp += 2;
 				} else {
-					_objectAccessBarrier.inlineStaticStoreU32(_currentThread, fieldClass, (U_32*)valueAddress, *(U_32*)_sp, isVolatile);
+					U_32 value = *(U_32*)_sp;
+					if (J9_ARE_ALL_BITS_SET(classAndFlags, J9StaticFieldRefBoolean)) {
+						value &= 1;
+					}
+					_objectAccessBarrier.inlineStaticStoreU32(_currentThread, fieldClass, (U_32*)valueAddress, value, isVolatile);
 					_sp += 1;
 				}
 			} else {
@@ -6463,7 +6478,11 @@ retry:
 					rc = THROW_NPE;
 					goto done;
 				}
-				_objectAccessBarrier.inlineMixedObjectStoreU32(_currentThread, objectref, newValueOffset, *(U_32*)_sp, isVolatile);
+				U_32 value = *(U_32*)_sp;
+				if (J9FieldTypeBoolean == (flags & J9FieldTypeMask)) {
+					value &= 1;
+				}
+				_objectAccessBarrier.inlineMixedObjectStoreU32(_currentThread, objectref, newValueOffset, value, isVolatile);
 				_sp += 2;
 			}
 		}
@@ -7546,6 +7565,7 @@ done:
 		U_8 *sigData = NULL;
 		UDATA returnSlots = 0;
 		UDATA *bp = bpForCurrentBytecodedMethod(REGISTER_ARGS);
+		U_8 truncatedReturnBytecode = 0;
 		/* Check for synchronized */
 		if (romMethod->modifiers & J9AccSynchronized) {
 			IDATA monitorRC = exitObjectMonitor(REGISTER_ARGS, ((j9object_t*)bp)[1]);
@@ -7616,18 +7636,22 @@ done:
 			case 'B':
 				returnSlots = 1;
 				*(I_32*)_sp = (I_8)*(I_32*)_sp;
+				truncatedReturnBytecode = JBreturnB;
 				break;
 			case 'C':
 				returnSlots = 1;
 				*(I_32*)_sp = (U_16)*(I_32*)_sp;
+				truncatedReturnBytecode = JBreturnC;
 				break;
 			case 'S':
 				returnSlots = 1;
 				*(I_32*)_sp = (I_16)*(I_32*)_sp;
+				truncatedReturnBytecode = JBreturnS;
 				break;
 			case 'Z':
 				returnSlots = 1;
 				*(U_32*)_sp = 1 & *(U_32*)_sp;
+				truncatedReturnBytecode = JBreturnZ;
 				break;
 			default:
 				returnSlots = 1;
@@ -7645,13 +7669,22 @@ done:
 			if ((JBbreakpoint != *_pc) && (FALSE == isObjectConstructor)) {
 				/* Is this a clean return? */
 				if (returnSlots == (UDATA)(((UDATA*)j2iFrame) - _sp)) {
-					U_8 newBytecode = JBreturn0;
-					if (romMethod->modifiers & J9AccSynchronized) {
-						newBytecode = JBsyncReturn0;
-					} else if (isConstructor) {
-						newBytecode = JBreturnFromConstructor;
+					/* are we dealing with a case where we should use a truncated return bytecode? */
+					if (truncatedReturnBytecode != 0) {
+						/* we only want to update the bytecode for non-synchronized methods */
+						/* (synchronized returns will fall back to a generic return) */
+						if (!(romMethod->modifiers & J9AccSynchronized)) {
+							*_pc = truncatedReturnBytecode;
+						}
+					} else {
+						U_8 newBytecode = JBreturn0;
+						if (romMethod->modifiers & J9AccSynchronized) {
+							newBytecode = JBsyncReturn0;
+						} else if (isConstructor) {
+							newBytecode = JBreturnFromConstructor;
+						}
+						*_pc = (newBytecode + (U_8)returnSlots);
 					}
-					*_pc = (newBytecode + (U_8)returnSlots);
 				}
 			}
 			rc = j2iReturn(REGISTER_ARGS);
@@ -7664,13 +7697,22 @@ done:
 			if ((JBbreakpoint != *_pc) && (FALSE == isObjectConstructor)) {
 				/* Is this a clean return? */
 				if (returnSlots == (UDATA)(((UDATA*)frame) - _sp)) {
-					U_8 newBytecode = JBreturn0;
-					if (romMethod->modifiers & J9AccSynchronized) {
-						newBytecode = JBsyncReturn0;
-					} else if (isConstructor) {
-						newBytecode = JBreturnFromConstructor;
+					/* are we dealing with a case where we should use a truncated return bytecode? */
+					if (truncatedReturnBytecode != 0) {
+						/* we only want to update the bytecode for non-synchronized methods */
+						/* (synchronized returns will fall back to a generic return) */
+						if (!(romMethod->modifiers & J9AccSynchronized)) {
+							*_pc = truncatedReturnBytecode;
+						}
+					} else {
+						U_8 newBytecode = JBreturn0;
+						if (romMethod->modifiers & J9AccSynchronized) {
+							newBytecode = JBsyncReturn0;
+						} else if (isConstructor) {
+							newBytecode = JBreturnFromConstructor;
+						}
+						*_pc = (newBytecode + (U_8)returnSlots);
 					}
-					*_pc = (newBytecode + (U_8)returnSlots);
 				}
 			}
 			/* Collapse the frame and copy the return value */
@@ -8312,36 +8354,35 @@ public:
 #else /* DEBUG_VERSION */
 		JUMP_TABLE_ENTRY(JBunimplemented),
 #endif /* DEBUG_VERSION */
-		JUMP_TABLE_ENTRY(JBiloadw),
-		JUMP_TABLE_ENTRY(JBlloadw),
-		JUMP_TABLE_ENTRY(JBfloadw),
-		JUMP_TABLE_ENTRY(JBdloadw),
-		JUMP_TABLE_ENTRY(JBaloadw),
-		JUMP_TABLE_ENTRY(JBistorew),
-		JUMP_TABLE_ENTRY(JBlstorew),
-		JUMP_TABLE_ENTRY(JBfstorew),
-		JUMP_TABLE_ENTRY(JBdstorew),
-		JUMP_TABLE_ENTRY(JBastorew),
-		JUMP_TABLE_ENTRY(JBiincw),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBaload0getfield),
-		JUMP_TABLE_ENTRY(JBnewdup),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		JUMP_TABLE_ENTRY(JBdefaultvalue),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBwithfield),
+		JUMP_TABLE_ENTRY(JBdefaultvalue), /* 203 */
+		JUMP_TABLE_ENTRY(JBwithfield), /* 204 */
 #else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 203 */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 204 */
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 205 */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 206 */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 207 */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 208 */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 209 */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 210 */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 211 */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 212 */
+		JUMP_TABLE_ENTRY(JBiincw), /* 213 */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 214 */
+		JUMP_TABLE_ENTRY(JBaload0getfield), /* 215 */
+		JUMP_TABLE_ENTRY(JBnewdup), /* 216 */
+		JUMP_TABLE_ENTRY(JBiloadw), /* 217 */
+		JUMP_TABLE_ENTRY(JBlloadw), /* 218 */
+		JUMP_TABLE_ENTRY(JBfloadw), /* 219 */
+		JUMP_TABLE_ENTRY(JBdloadw), /* 220 */
+		JUMP_TABLE_ENTRY(JBaloadw), /* 221 */
+		JUMP_TABLE_ENTRY(JBistorew), /* 222 */
+		JUMP_TABLE_ENTRY(JBlstorew), /* 223 */
+		JUMP_TABLE_ENTRY(JBfstorew), /* 224 */
+		JUMP_TABLE_ENTRY(JBdstorew), /* 225 */
+		JUMP_TABLE_ENTRY(JBastorew), /* 226 */
 		JUMP_TABLE_ENTRY(JBunimplemented),
 		JUMP_TABLE_ENTRY(JBreturnFromConstructor),
 		JUMP_TABLE_ENTRY(JBgenericReturn),

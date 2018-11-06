@@ -277,7 +277,8 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 		case CFR_BC_ldc2_w:
 
 			NEXT_U16(index, bcIndex);
-			if ((!index) || (index >= cpCount - 1)) {
+			/* Only check single slot index since Constant_Dynamic doesn't require double slots in the constant pool */
+			if ((!index) || (index >= cpCount)) {
 				errorType = J9NLS_CFR_ERR_BAD_INDEX__ID;
 				/* Jazz 82615: Set the constant pool index to show up in the error message framework */
 				errorDataIndex = index;
@@ -297,6 +298,13 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 					errorDataIndex = index;
 					goto _verifyError;
 				}
+			} else if (index >= (cpCount - 1)) {
+				/* Not Constant_Dynamic entry, then must be a double slot constant,
+				 * first check if second slot is valid before checking constant tag
+				 */
+				errorType = J9NLS_CFR_ERR_BAD_INDEX__ID;
+				errorDataIndex = index;
+				goto _verifyError;
 			} else if ((CFR_CONSTANT_Double != tag) && (CFR_CONSTANT_Long != tag)) {
 				errorType = J9NLS_CFR_ERR_BC_LDC2W_NOT_CONSTANT_OR_CONSTANT_DYNAMIC__ID;
 				errorDataIndex = index;

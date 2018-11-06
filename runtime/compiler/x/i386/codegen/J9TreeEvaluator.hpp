@@ -51,6 +51,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::X86::TreeEvaluator
    public:
 
    static TR::Register *conditionalHelperEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *dwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    };
 

@@ -547,11 +547,11 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                   {
                   TR::KnownObjectTable::Index knownObjectIndex = knot->getIndexAt((uintptrj_t*)(arrayComponentClass + comp()->fej9()->getOffsetOfJavaLangClassFromClassField()));
                   addBlockOrGlobalConstraint(node,
-                     TR::VPClass::create(this,
-                        TR::VPKnownObject::createForJavaLangClass(this, knownObjectIndex),
-                        TR::VPNonNullObject::create(this), NULL, NULL,
-                        TR::VPObjectLocation::create(this, TR::VPObjectLocation::JavaLangClassObject)),
-                     classChildGlobal);
+                        TR::VPClass::create(this,
+                           TR::VPKnownObject::createForJavaLangClass(this, knownObjectIndex),
+                           TR::VPNonNullObject::create(this), NULL, NULL,
+                           TR::VPObjectLocation::create(this, TR::VPObjectLocation::JavaLangClassObject)),
+                        classChildGlobal);
                   }
 
                invalidateUseDefInfo();
@@ -624,11 +624,11 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                   {
                   TR::KnownObjectTable::Index knownObjectIndex = knot->getIndexAt((uintptrj_t*)(superClass + comp()->fej9()->getOffsetOfJavaLangClassFromClassField()));
                   addBlockOrGlobalConstraint(node,
-                     TR::VPClass::create(this,
-                        TR::VPKnownObject::createForJavaLangClass(this, knownObjectIndex),
-                        TR::VPNonNullObject::create(this), NULL, NULL,
-                        TR::VPObjectLocation::create(this, TR::VPObjectLocation::JavaLangClassObject)),
-                     classChildGlobal);
+                        TR::VPClass::create(this,
+                           TR::VPKnownObject::createForJavaLangClass(this, knownObjectIndex),
+                           TR::VPNonNullObject::create(this), NULL, NULL,
+                           TR::VPObjectLocation::create(this, TR::VPObjectLocation::JavaLangClassObject)),
+                        classChildGlobal);
                   }
 
                invalidateUseDefInfo();

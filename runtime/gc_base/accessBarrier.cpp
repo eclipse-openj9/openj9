@@ -609,6 +609,16 @@ j9gc_objaccess_cloneObject(J9VMThread *vmThread, J9Object *srcObject, J9Object *
 }
 
 /**
+ * Called by certain specs to copy objects
+ */
+void
+j9gc_objaccess_copyObjectFields(J9VMThread *vmThread, J9Class *valueClass, J9Object *srcObject, UDATA srcOffset, J9Object *destObject, UDATA destOffset)
+{
+	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread)->accessBarrier;
+	return barrier->copyObjectFields(vmThread, valueClass, srcObject, srcOffset, destObject, destOffset);
+}
+
+/**
  * Called by certain specs to clone objects. See J9VMObjectAccessBarrier#cloneArray:into:sizeInElements:class:
  */
 void

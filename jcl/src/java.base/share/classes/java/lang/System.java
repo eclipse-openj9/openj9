@@ -743,29 +743,42 @@ public static void setSecurityManager(final SecurityManager s) {
 	final SecurityManager currentSecurity = security;
 	
 	if (s != null) {
-		try {
-			/*[PR 95057] preload classes required for checkPackageAccess() */
-			// Preload classes used for checkPackageAccess(),
-			// otherwise we could go recursive 
-			s.checkPackageAccess("java.lang"); //$NON-NLS-1$
-		} catch (Exception e) {}
+		if (currentSecurity == null) {
+			// only preload classes when current security manager is null
+			// not adding an extra static field to preload only once
+			try {
+				/*[PR 95057] preload classes required for checkPackageAccess() */
+				// Preload classes used for checkPackageAccess(),
+				// otherwise we could go recursive 
+				s.checkPackageAccess("java.lang"); //$NON-NLS-1$
+			} catch (Exception e) {
+				// ignore any potential exceptions
+			}
+		}
+		
 		try {
 			/*[PR 97686] Preload the policy permission */
-			AccessController.doPrivileged(new PrivilegedAction() {
-				public Object run() {
+			AccessController.doPrivileged(new PrivilegedAction<Void>() {
+				@Override
+				public Void run() {
+					if (currentSecurity == null) {
+						// initialize external messages and 
+						// also load security sensitive classes 
+						com.ibm.oti.util.Msg.getString("K002c"); //$NON-NLS-1$
+					}
 					ProtectionDomain oldDomain = currentSecurity == null ?
 						System.class.getPDImpl() : currentSecurity.getClass().getPDImpl();
-						ProtectionDomain newDomain = s.getClass().getPDImpl();
+					ProtectionDomain newDomain = s.getClass().getPDImpl();
 					if (oldDomain != newDomain) {
-						// initialize external messages
-						com.ibm.oti.util.Msg.getString("K002c"); //$NON-NLS-1$
 						// initialize the protection domain, which may include preloading the
 						// dynamic permissions from the policy before installing
 						newDomain.implies(new AllPermission());
 					}
 					return null;
 				}});
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			// ignore any potential exceptions
+		}
 	}
 	if (currentSecurity != null) {
 		currentSecurity.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionSetSecurityManager);

@@ -44,6 +44,9 @@ jvmtiGetMethodName(jvmtiEnv* env,
 	char * signature = NULL;
 	char * generic = NULL;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	char *rv_name = NULL;
+	char *rv_signature = NULL;
+	char *rv_generic = NULL;
 
 	Trc_JVMTI_jvmtiGetMethodName_Entry(env);
 
@@ -64,7 +67,7 @@ jvmtiGetMethodName(jvmtiEnv* env,
 		}
 		memcpy(name, J9UTF8_DATA(utf), length);
 		name[length] = '\0';
-		*name_ptr = name; 
+		rv_name = name; 
 	}
 
 	if (signature_ptr != NULL) {
@@ -78,7 +81,7 @@ jvmtiGetMethodName(jvmtiEnv* env,
 		}
 		memcpy(signature, J9UTF8_DATA(utf), length);
 		signature[length] = '\0';
-		*signature_ptr = signature; 
+		rv_signature = signature; 
 	}
 
 	if (generic_ptr != NULL) {
@@ -96,7 +99,7 @@ jvmtiGetMethodName(jvmtiEnv* env,
 			generic[length] = '\0';
 		}
 	
-		*generic_ptr = generic;
+		rv_generic = generic;
 	}	
 
 done:
@@ -104,6 +107,15 @@ done:
 		j9mem_free_memory(name);
 		j9mem_free_memory(signature);
 		j9mem_free_memory(generic);
+	}
+	if (name_ptr != NULL) {
+		*name_ptr = rv_name;
+	}
+	if (signature_ptr != NULL) {
+		*signature_ptr = rv_signature;
+	}
+	if (generic_ptr != NULL) {
+		*generic_ptr = rv_generic;
 	}
 	TRACE_JVMTI_RETURN(jvmtiGetMethodName);
 }
@@ -117,6 +129,7 @@ jvmtiGetMethodDeclaringClass(jvmtiEnv* env,
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc;
 	J9VMThread * currentThread;
+	jclass rv_declaring_class = NULL;
 
 	Trc_JVMTI_jvmtiGetMethodDeclaringClass_Entry(env);
 
@@ -132,12 +145,15 @@ jvmtiGetMethodDeclaringClass(jvmtiEnv* env,
 		ENSURE_NON_NULL(declaring_class_ptr);
 
 		methodClass = getCurrentClass(J9_CLASS_FROM_METHOD(((J9JNIMethodID *) method)->method));
-		*declaring_class_ptr = (jclass) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, J9VM_J9CLASS_TO_HEAPCLASS(methodClass));
+		rv_declaring_class = (jclass) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, J9VM_J9CLASS_TO_HEAPCLASS(methodClass));
 
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != declaring_class_ptr) {		
+		*declaring_class_ptr = rv_declaring_class;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetMethodDeclaringClass);
 }
 
@@ -149,6 +165,7 @@ jvmtiGetMethodModifiers(jvmtiEnv* env,
 {
 	jvmtiError rc;
 	J9ROMMethod * romMethod;
+	jint rv_modifiers = 0;
 
 	Trc_JVMTI_jvmtiGetMethodModifiers_Entry(env);
 
@@ -158,11 +175,14 @@ jvmtiGetMethodModifiers(jvmtiEnv* env,
 	ENSURE_NON_NULL(modifiers_ptr);
 
 	romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(((J9JNIMethodID *) method)->method);
-	*modifiers_ptr = (jint) (romMethod->modifiers &
+	rv_modifiers = (jint) (romMethod->modifiers &
 			(J9AccPublic | J9AccPrivate | J9AccProtected | J9AccStatic | J9AccFinal | J9AccSynchronized | J9AccNative | J9AccAbstract | J9AccStrict | J9AccVarArgs | J9AccBridge));
 	rc = JVMTI_ERROR_NONE;
 
 done:
+	if (NULL != modifiers_ptr) {
+		*modifiers_ptr = rv_modifiers;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetMethodModifiers);
 }
 
@@ -174,6 +194,7 @@ jvmtiGetMaxLocals(jvmtiEnv* env,
 {
 	jvmtiError rc;
 	J9ROMMethod * romMethod;
+	jint rv_max = 0;
 
 	Trc_JVMTI_jvmtiGetMaxLocals_Entry(env);
 
@@ -190,13 +211,16 @@ jvmtiGetMaxLocals(jvmtiEnv* env,
 	/* Abstract methods have no code attribute in the .class file, so the max locals is 0 */
 
 	if (romMethod->modifiers & J9AccAbstract) {
-		*max_ptr = 0;
+		rv_max = 0;
 	} else {
-		*max_ptr = romMethod->argCount + romMethod->tempCount;
+		rv_max = romMethod->argCount + romMethod->tempCount;
 	}
 	rc = JVMTI_ERROR_NONE;
 
 done:
+	if (NULL != max_ptr) {
+		*max_ptr = rv_max;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetMaxLocals);
 }
 
@@ -208,6 +232,7 @@ jvmtiGetArgumentsSize(jvmtiEnv* env,
 {
 	jvmtiError rc;
 	J9ROMMethod * romMethod;
+	jint rv_size = 0;
 
 	Trc_JVMTI_jvmtiGetArgumentsSize_Entry(env);
 
@@ -220,10 +245,13 @@ jvmtiGetArgumentsSize(jvmtiEnv* env,
 	if (romMethod->modifiers & J9AccNative) {
 		JVMTI_ERROR(JVMTI_ERROR_NATIVE_METHOD);
 	}
-	*size_ptr = romMethod->argCount;
+	rv_size = romMethod->argCount;
 	rc = JVMTI_ERROR_NONE;
 
 done:
+	if (NULL != size_ptr) {
+		*size_ptr = rv_size;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetArgumentsSize);
 }
 
@@ -241,6 +269,8 @@ jvmtiGetLineNumberTable(jvmtiEnv* env,
 	J9ROMMethod * romMethod;
 	J9LineNumber lineNumber;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	jint rv_entry_count = 0;
+	jvmtiLineNumberEntry *rv_table = NULL;
 
 	Trc_JVMTI_jvmtiGetLineNumberTable_Entry(env);
 
@@ -292,8 +322,8 @@ jvmtiGetLineNumberTable(jvmtiEnv* env,
 					jvmtiLineTable[i].line_number = (jint) lineNumber.lineNumber;
 
 				}
-				*entry_count_ptr = lineTableSize;
-				*table_ptr = jvmtiLineTable;
+				rv_entry_count = lineTableSize;
+				rv_table = jvmtiLineTable;
 			}
 		}
 release:
@@ -301,6 +331,12 @@ release:
 	}
 
 done:
+	if (NULL != entry_count_ptr) {
+		*entry_count_ptr = rv_entry_count;
+	}
+	if (NULL != table_ptr) {
+		*table_ptr = rv_table;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetLineNumberTable);
 }
 
@@ -313,6 +349,8 @@ jvmtiGetMethodLocation(jvmtiEnv* env,
 {
 	jvmtiError rc;
 	J9ROMMethod * romMethod;
+	jlocation rv_start_location = 0;
+	jlocation rv_end_location = 0;
 
 	Trc_JVMTI_jvmtiGetMethodLocation_Entry(env);
 
@@ -327,15 +365,21 @@ jvmtiGetMethodLocation(jvmtiEnv* env,
 		JVMTI_ERROR(JVMTI_ERROR_NATIVE_METHOD);
 	}
 	if (romMethod->modifiers & J9AccAbstract) {
-		*start_location_ptr = -1;
-		*end_location_ptr = -1;
+		rv_start_location = -1;
+		rv_end_location = -1;
 	} else {
-		*start_location_ptr = 0;
-		*end_location_ptr = J9_BYTECODE_SIZE_FROM_ROM_METHOD(romMethod) - 1;
+		rv_start_location = 0;
+		rv_end_location = J9_BYTECODE_SIZE_FROM_ROM_METHOD(romMethod) - 1;
 	}
 	rc = JVMTI_ERROR_NONE;
 
 done:
+	if (NULL != start_location_ptr) {
+		*start_location_ptr = rv_start_location;
+	}
+	if (NULL != end_location_ptr) {
+		*end_location_ptr = rv_end_location;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetMethodLocation);
 }
 
@@ -352,6 +396,8 @@ jvmtiGetLocalVariableTable(jvmtiEnv* env,
 	J9Method * ramMethod;
 	J9ROMMethod * romMethod;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	jint rv_entry_count = 0;
+	jvmtiLocalVariableEntry *rv_table = NULL;
 
 	Trc_JVMTI_jvmtiGetLocalVariableTable_Entry(env);
 
@@ -413,8 +459,8 @@ jvmtiGetLocalVariableTable(jvmtiEnv* env,
 					values = variableInfoNextDo(&state);
 					i++;
 				}
-				*entry_count_ptr = variableCount;
-				*table_ptr = jvmtiVariableTable;
+				rv_entry_count = variableCount;
+				rv_table = jvmtiVariableTable;
 			}
 		}
 release:
@@ -422,6 +468,12 @@ release:
 	}
 
 done:
+	if (NULL != entry_count_ptr) {
+		*entry_count_ptr = rv_entry_count;
+	}
+	if (NULL != table_ptr) {
+		*table_ptr = rv_table;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetLocalVariableTable);
 }
 
@@ -457,6 +509,8 @@ jvmtiGetBytecodes(jvmtiEnv* env,
 	jvmtiError rc;
 	jvmtiGcp_translation translation;
 	PORT_ACCESS_FROM_JVMTI(env);
+	jint rv_bytecode_count = 0;
+	unsigned char *rv_bytecodes = NULL;
 	
 	Trc_JVMTI_jvmtiGetBytecodes_Entry(env);
 
@@ -757,14 +811,20 @@ readdWide:
 			index += bytecodeSize;
 		}
 
-		*bytecodes_ptr = bytecodes;
-		*bytecode_count_ptr = size;
+		rv_bytecodes = bytecodes;
+		rv_bytecode_count = size;
 	}
 
 done:
 	jvmtiGetConstantPool_free(PORTLIB, &translation);
 	if (rc != JVMTI_ERROR_NONE) {
 		j9mem_free_memory(bytecodes);
+	}
+	if (NULL != bytecode_count_ptr) {
+		*bytecode_count_ptr = rv_bytecode_count;
+	}
+	if (NULL != bytecodes_ptr) {
+		*bytecodes_ptr = rv_bytecodes;
 	}
 	TRACE_JVMTI_RETURN(jvmtiGetBytecodes);
 }
@@ -777,6 +837,7 @@ jvmtiIsMethodNative(jvmtiEnv* env,
 {
 	jvmtiError rc;
 	J9ROMMethod * romMethod;
+	jboolean rv_is_native = JNI_FALSE;
 
 	Trc_JVMTI_jvmtiIsMethodNative_Entry(env);
 
@@ -786,10 +847,13 @@ jvmtiIsMethodNative(jvmtiEnv* env,
 	ENSURE_NON_NULL(is_native_ptr);
 
 	romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(((J9JNIMethodID *) method)->method);
-	*is_native_ptr = (romMethod->modifiers & J9AccNative) ? JNI_TRUE : JNI_FALSE;
+	rv_is_native = (romMethod->modifiers & J9AccNative) ? JNI_TRUE : JNI_FALSE;
 	rc = JVMTI_ERROR_NONE;
 
 done:
+	if (NULL != is_native_ptr) {
+		*is_native_ptr = rv_is_native;
+	}
 	TRACE_JVMTI_RETURN(jvmtiIsMethodNative);
 }
 
@@ -801,6 +865,7 @@ jvmtiIsMethodSynthetic(jvmtiEnv* env,
 {
 	jvmtiError rc;
 	J9ROMMethod * romMethod;
+	jboolean rv_is_synthetic = JNI_FALSE;
 
 	Trc_JVMTI_jvmtiIsMethodSynthetic_Entry(env);
 
@@ -811,10 +876,13 @@ jvmtiIsMethodSynthetic(jvmtiEnv* env,
 	ENSURE_NON_NULL(is_synthetic_ptr);
 
 	romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(((J9JNIMethodID *) method)->method);
-	*is_synthetic_ptr = (romMethod->modifiers & J9AccSynthetic) ? JNI_TRUE : JNI_FALSE;
+	rv_is_synthetic = (romMethod->modifiers & J9AccSynthetic) ? JNI_TRUE : JNI_FALSE;
 	rc = JVMTI_ERROR_NONE;
 
 done:
+	if (NULL != is_synthetic_ptr) {
+		*is_synthetic_ptr = rv_is_synthetic;
+	}
 	TRACE_JVMTI_RETURN(jvmtiIsMethodSynthetic);
 }
 
@@ -825,19 +893,22 @@ jvmtiIsMethodObsolete(jvmtiEnv* env,
 	jboolean* is_obsolete_ptr)
 {
 	jvmtiError rc;
+	jboolean rv_is_obsolete = JNI_FALSE;
 
 	Trc_JVMTI_jvmtiIsMethodObsolete_Entry(env);
 
 	ENSURE_PHASE_START_OR_LIVE(env);
-	ENSURE_CAPABILITY(env, can_redefine_classes);
 
 	ENSURE_JMETHODID_NON_NULL(method);
 	ENSURE_NON_NULL(is_obsolete_ptr);
 
-	*is_obsolete_ptr = (J9CLASS_FLAGS(J9_CLASS_FROM_METHOD(((J9JNIMethodID *) method)->method)) & J9_JAVA_CLASS_HOT_SWAPPED_OUT) ? JNI_TRUE : JNI_FALSE;
+	rv_is_obsolete = (J9CLASS_FLAGS(J9_CLASS_FROM_METHOD(((J9JNIMethodID *) method)->method)) & J9_JAVA_CLASS_HOT_SWAPPED_OUT) ? JNI_TRUE : JNI_FALSE;
 	rc = JVMTI_ERROR_NONE;
 
 done:
+	if (NULL != is_obsolete_ptr) {
+		*is_obsolete_ptr = rv_is_obsolete;
+	}
 	TRACE_JVMTI_RETURN(jvmtiIsMethodObsolete);
 }
 

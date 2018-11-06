@@ -74,17 +74,17 @@
 		
 		<variations>
 		
-			<variation>'-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmate/NestmateTest.testVirtualUnresolvedInterpreted*},{org/openj9/test/nestmate/NestmateTest.testVirtualUnresolvedInterpreted*}(count=0)'</variation>
-			<variation>'-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmate/NestmateTest.testVirtualUnresolvedJitted*,org/openj9/test/nestmate/NestmateTest$InnerClass.innerPrivateMethod*},{org/openj9/test/nestmate/NestmateTest.testVirtualUnresolvedInterpreted*}(count=0),{org/openj9/test/nestmate/NestmateTest$InnerClass.innerPrivateMethod*}(count=100)'</variation>
+			<variation>'-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmates/NestmatesTest.testVirtualUnresolvedInterpreted*},{org/openj9/test/nestmates/NestmatesTest.testVirtualUnresolvedInterpreted*}(count=0)'</variation>
+			<variation>'-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmates/NestmatesTest.testVirtualUnresolvedJitted*,org/openj9/test/nestmates/NestmatesTest$InnerClass.innerPrivateMethod*},{org/openj9/test/nestmates/NestmatesTest.testVirtualUnresolvedInterpreted*}(count=0),{org/openj9/test/nestmates/NestmatesTest$InnerClass.innerPrivateMethod*}(count=100)'</variation>
 			
-			<variation>'-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmate/NestmateTest.testInterfaceUnresolvedInterpreted*},{org/openj9/test/nestmate/NestmateTest.testInterfaceUnresolvedInterpreted*}(count=0)'</variation>
-			<variation>'-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmate/NestmateTest.testInterfaceUnresolvedJitted*,org/openj9/test/nestmate/NestmateTest$InnerInterface.innerInterfacePrivateMethod*},{org/openj9/test/nestmate/NestmateTest.testInterfaceUnresolvedJitted*}(count=0),{org/openj9/test/nestmate/NestmateTest$InnerInterface.innerInterfacePrivateMethod*}(count=100)'</variation>
+			<variation>'-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmates/NestmatesTest.testInterfaceUnresolvedInterpreted*},{org/openj9/test/nestmates/NestmatesTest.testInterfaceUnresolvedInterpreted*}(count=0)'</variation>
+			<variation>'-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmates/NestmatesTest.testInterfaceUnresolvedJitted*,org/openj9/test/nestmates/NestmatesTest$InnerInterface.innerInterfacePrivateMethod*},{org/openj9/test/nestmates/NestmatesTest.testInterfaceUnresolvedJitted*}(count=0),{org/openj9/test/nestmates/NestmatesTest$InnerInterface.innerInterfacePrivateMethod*}(count=100)'</variation>
 	
 		</variations>
 			
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
-			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames NestmateTest \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames NestmatesTest \
 			-groups $(TEST_GROUP) \
 			-excludegroups $(DEFAULT_EXCLUDE); \
 			$(TEST_STATUS)
@@ -111,13 +111,22 @@
 		Variation 3:
 			This variation runs test under -Xjit:count=0 option means JIT faces unresolved constant dynamic and it needs to resolve them before
 			using it.
-		-->
+		Variation 4:
+			In addition to Variation 3 this test runs gc on resolving constant dynamic. This will test JIT to make sure it correctly prepares
+			GC map in code.
+		Variation 5:
+			This variation runs test under -XX:RecreateClassfileOnload option which means VM should first recreate an idential classfile with
+			classFileWriter and test with the recreated classfile. This should test if the classFileWriter is generating the correct classfile
+			output.
+	-->
 	<test>
 		<testCaseName>CondyPrimitive</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>'-Xjit:count=1,disableAsyncCompilation,rtResolve'</variation>
 			<variation>'-Xjit:count=0,disableAsyncCompilation'</variation>
+			<variation>'-Xjit:count=0,disableAsyncCompilation,gcOnResolve'</variation>
+			<variation>-XX:RecreateClassfileOnload</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -134,8 +143,113 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>SE110</subset>
+			<subset>11</subset>
 		</subsets>
 	</test>
 
+
+	<!--
+		Following test covers garbage collection of constant dynamics using several gc options.
+		Tests scenario for object, primitive and exception constant dynamics.
+	-->
+	<test>
+		<testCaseName>CondyGarbageCollection</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+			<variation>-Xgcpolicy:optthruput</variation>
+			<variation>-Xgcpolicy:gencon</variation>
+			<variation>-Xgcpolicy:balanced</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+			-cp $(Q)$(LIB_DIR)$(D)asm-7.0.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames GarbageCollectionCondyTest \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+	</test>
+
+	<!--
+		Following test covers metronome garbage collection tests on linux_x86.
+		Tests scenarios for object, primitive and exception constant dynamics.
+	-->
+	<test>
+		<testCaseName>CondyGarbageCollectionMetronomeLinux</testCaseName>
+		<variations>
+			<variation>-Xgcpolicy:metronome</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+			-cp $(Q)$(LIB_DIR)$(D)asm-7.0.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames GarbageCollectionCondyTest \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<platformRequirements>os.linux,arch.x86</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+	</test>
+
+	<!--
+		Following test covers metronome garbage collection tests on aix.
+		Tests scenarios for object, primitive and exception constant dynamics.
+	-->
+	<test>
+		<testCaseName>CondyGarbageCollectionMetronomeAIX</testCaseName>
+		<variations>
+			<variation>-Xgcpolicy:metronome</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+			-cp $(Q)$(LIB_DIR)$(D)asm-7.0.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames GarbageCollectionCondyTest \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<platformRequirements>os.aix</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+	</test>
+	<test>
+		<testCaseName>NestAttributeTest</testCaseName>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(LIB_DIR)$(D)asm-all.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames NestAttributeTest \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>11</subset>
+		</subsets>
+	</test>
 </playlist>

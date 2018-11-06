@@ -282,10 +282,8 @@ class X86PrivateLinkage : public TR::Linkage
 
    protected:
 
-   // for shrinkwrapping
    virtual TR::Instruction *savePreservedRegisters(TR::Instruction *cursor)=0;
    virtual TR::Instruction *restorePreservedRegisters(TR::Instruction *cursor)=0;
-   virtual bool mapPreservedRegistersToStackOffsets(int32_t *mapRegsToStack, int32_t &numPreserved, TR_BitVector *&);
    virtual bool needsFrameDeallocation();
    virtual TR::Instruction *deallocateFrameIfNeeded(TR::Instruction *cursor, int32_t size);
 

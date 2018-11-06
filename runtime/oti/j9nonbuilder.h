@@ -148,7 +148,7 @@
 #define J9StaticFieldRefBaseType 0x1
 #define J9StaticFieldRefDouble 0x2
 #define J9StaticFieldRefFlagBits 0x1F
-#define J9StaticFieldRefIsolated 0x8
+#define J9StaticFieldRefBoolean 0x8
 #define J9StaticFieldRefPutResolved 0x10
 #define J9StaticFieldRefVolatile 0x4
 
@@ -3742,7 +3742,7 @@ typedef struct J9JITConfig {
 	void* b_i2jTransition;
 	void  ( *promoteGPUCompile)(struct J9VMThread * currentThread) ;
 	void ( *jitDiscardPendingCompilationsOfNatives)(struct J9VMThread *currentThread, J9Class *clazz) ;
-	UDATA ( *jitGetExceptionCatcher)(struct J9VMThread *currentThread, void *handlerPC, struct J9JITExceptionTable *metaData, struct J9Method **method, IDATA *location) ;
+	J9Method* ( *jitGetExceptionCatcher)(struct J9VMThread *currentThread, void *handlerPC, struct J9JITExceptionTable *metaData, IDATA *location) ;
 	void ( *jitMethodBreakpointed)(struct J9VMThread *currentThread, struct J9Method *method) ;
 	void ( *jitMethodUnbreakpointed)(struct J9VMThread *currentThread, struct J9Method *method) ;
 	void ( *jitIllegalFinalFieldModification)(struct J9VMThread *currentThread, struct J9Class *fieldClass);
@@ -4107,7 +4107,7 @@ typedef struct J9AOTConfig {
 	void* b_i2jTransition;
 	void  ( *promoteGPUCompile)(struct J9VMThread * currentThread) ;
 	void ( *jitDiscardPendingCompilationsOfNatives)(struct J9VMThread *currentThread, J9Class *clazz) ;
-	UDATA ( *jitGetExceptionCatcher)(struct J9VMThread *currentThread, void *handlerPC, struct J9JITExceptionTable *metaData, struct J9Method **method, IDATA *location) ;
+	J9Method* ( *jitGetExceptionCatcher)(struct J9VMThread *currentThread, void *handlerPC, struct J9JITExceptionTable *metaData, IDATA *location) ;
 	void ( *jitMethodBreakpointed)(struct J9VMThread *currentThread, struct J9Method *method) ;
 	void ( *jitMethodUnbreakpointed)(struct J9VMThread *currentThread, struct J9Method *method) ;
 	struct J9AOTCallbackFunctionTable* callbackFunctionTable;
@@ -4389,6 +4389,7 @@ typedef struct J9MemoryManagerFunctions {
 	U_8*  ( *j9gc_objaccess_getArrayObjectDataAddress)(struct J9VMThread *vmThread, J9IndexableObject *arrayObject) ;
 	j9objectmonitor_t*  ( *j9gc_objaccess_getLockwordAddress)(struct J9VMThread *vmThread, j9object_t object) ;
 	void  ( *j9gc_objaccess_cloneObject)(struct J9VMThread *vmThread, j9object_t srcObject, j9object_t destObject) ;
+	void ( *j9gc_objaccess_copyObjectFields)(struct J9VMThread *vmThread, J9Class* valueClass, j9object_t srcObject, UDATA srcOffset, j9object_t destObject, UDATA destOffset) ;
 	void  ( *j9gc_objaccess_cloneIndexableObject)(struct J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject) ;
 	j9object_t  ( *j9gc_objaccess_asConstantPoolObject)(struct J9VMThread *vmThread, j9object_t toConvert, UDATA allocationFlags) ;
 #if defined(J9VM_GC_REALTIME)
@@ -4998,8 +4999,12 @@ typedef struct J9VMThread {
 #endif /* J9VM_JIT_TRANSACTION_DIAGNOSTIC_THREAD_BLOCK */
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	struct J9GSParameters gsParameters;
-	void* evacuateBase;
-	void* evacuateTop;
+	UDATA readBarrierRangeCheckBase;
+	UDATA readBarrierRangeCheckTop;
+#if defined(J9VM_GC_COMPRESSED_POINTERS)
+	U_32 readBarrierRangeCheckBaseCompressed;
+	U_32 readBarrierRangeCheckTopCompressed;
+#endif /* J9VM_GC_COMPRESSED_POINTERS */
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 	UDATA safePointCount;
 } J9VMThread;
@@ -5215,9 +5220,6 @@ typedef struct J9JavaVM {
 	UDATA aotDllHandle;
 	struct J9ROMImageHeader* arrayROMClasses;
 	struct J9BytecodeVerificationData* bytecodeVerificationData;
-#if defined(J9VM_ENV_SHARED_LIBS_USE_GLOBAL_TABLE) || defined(J9VM_ENV_CALL_VIA_TABLE)
-	UDATA vmTOC;
-#endif /* J9VM_ENV_SHARED_LIBS_USE_GLOBAL_TABLE || J9VM_ENV_CALL_VIA_TABLE */
 	char* jclDLLName;
 	UDATA defaultOSStackSize;
 #if defined(J9VM_ENV_SHARED_LIBS_USE_GLOBAL_TABLE) || defined(J9VM_ENV_CALL_VIA_TABLE)
@@ -5586,7 +5588,7 @@ typedef struct J9CInterpreterStackFrame {
 	UDATA backChain; /* caller SP */
 	UDATA preservedCR; /* callee saves in caller frame */
 	UDATA preservedLR; /* callee saves in caller frame */
-	UDATA currentTOC; /* callee saves incoming TOC in own frame */
+	UDATA currentTOC; /* callee saves own TOC in own frame */
 	UDATA outgoingArguments[J9_INLINE_JNI_MAX_ARG_COUNT];
 	UDATA jitGPRs[32]; /* r0-r31 */
 	U_8 jitFPRs[32 * 8]; /* fp0-fp31 */
@@ -5605,7 +5607,7 @@ typedef struct J9CInterpreterStackFrame {
 	UDATA preservedLR; /* callee saves in caller frame */
 	UDATA tocSave;
 	UDATA reserved;
-	UDATA currentTOC; /* callee saves incoming TOC in own frame */
+	UDATA currentTOC; /* callee saves own TOC in own frame */
 	UDATA outgoingArguments[J9_INLINE_JNI_MAX_ARG_COUNT];
 	UDATA jitGPRs[32]; /* r0-r31 */
 	U_8 jitFPRs[32 * 8]; /* fp0-fp31 */

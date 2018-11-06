@@ -699,6 +699,8 @@ public class AttachHandler extends Thread {
 				"sun.jvm.flags", //$NON-NLS-1$
 				"sun.java.command"			 //$NON-NLS-1$
 		};
+		Attachment.saveLocalConnectorAddress();
+		//If we don't have a local connector address, just continue and get the others
 		Properties agentProperties = new Properties();
 		for (String pName: agentPropertyNames) {
 			String pValue = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty(pName);

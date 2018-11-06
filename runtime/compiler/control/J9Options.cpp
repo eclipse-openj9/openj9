@@ -238,7 +238,7 @@ size_t J9::Options::_scratchSpaceLimitKBWhenLowVirtualMemory = 64*1024; // 64MB;
 
 int32_t J9::Options::_scratchSpaceFactorWhenJSR292Workload = JSR292_SCRATCH_SPACE_FACTOR;
 int32_t J9::Options::_lowVirtualMemoryMBThreshold = 300; // Used on 32 bit Windows, Linux, 31 bit z/OS, Linux
-int32_t J9::Options::_safeReservePhysicalMemoryValue = 50 << 20;  // 50 MB
+int32_t J9::Options::_safeReservePhysicalMemoryValue = 32 << 20;  // 32 MB
 
 int32_t J9::Options::_numDLTBufferMatchesToEagerlyIssueCompReq = 8; //a value of 1 or less disables the DLT tracking mechanism
 int32_t J9::Options::_dltPostponeThreshold = 2;
@@ -1187,6 +1187,8 @@ J9::Options::fePreProcess(void * base)
       self()->setOption(TR_DisableTraps);
    #endif
 
+   self()->setOption(TR_DisableGuardedStaticFinalFieldFolding);
+
    if (self()->getOption(TR_AggressiveOpts))
       self()->setOption(TR_DontDowngradeToCold, true);
 
@@ -2040,6 +2042,19 @@ J9::Options::fePreProcess(void * base)
    // Setting number of onsite cache slots for instanceOf node to 4 on IBM Z
    self()->setMaxOnsiteCacheSlotForInstanceOf(4);
 #endif
+   // Set a value for _safeReservePhysicalMemoryValue that is proportional
+   // to the amount of free physical memory at boot time
+   // The user can still override it with a command line option
+   bool incomplete = false;
+   uint64_t phMemAvail = compInfo->computeAndCacheFreePhysicalMemory(incomplete);
+   if (phMemAvail != OMRPORT_MEMINFO_NOT_AVAILABLE && !incomplete)
+      {
+      const uint64_t reserveLimit = 32 * 1024 * 1024;
+      uint64_t proposed = phMemAvail >> 6; // 64 times less
+      if (proposed > reserveLimit)
+         proposed = reserveLimit;
+      J9::Options::_safeReservePhysicalMemoryValue = (int32_t)proposed;
+      }
 
    // Process the deterministic mode
    if (TR::Options::_deterministicMode == -1) // not yet set
@@ -2129,6 +2144,10 @@ J9::Options::fePreProcess(void * base)
          }
       }
 
+#if defined(TR_HOST_X86) && defined(TR_TARGET_64BIT)
+   self()->setOption(TR_EnableSymbolValidationManager);
+#endif
+
    return true;
    }
 
@@ -2178,14 +2197,16 @@ J9::Options::fePostProcessJIT(void * base)
    //
    if (_numUsableCompilationThreads <= 0)
       {
-#ifdef LINUX
-      // For linux we may want to create more threads to overcome thread
-      // starvation due to lack of priorities
-      //
-      if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableRampupImprovements) &&
-          !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableRampupImprovements))
-         _numUsableCompilationThreads = MAX_USABLE_COMP_THREADS;
-#endif // LINUX
+      _useCPUsToDetermineMaxNumberOfCompThreadsToActivate = true;
+      if (TR::Compiler->target.isLinux())
+         {
+         // For linux we may want to create more threads to overcome thread
+         // starvation due to lack of priorities
+         //
+         if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableRampupImprovements) &&
+            !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableRampupImprovements))
+            _numUsableCompilationThreads = MAX_USABLE_COMP_THREADS;
+         }
       if (_numUsableCompilationThreads <= 0)
          {
          // Determine the number of compilation threads based on number of online processors
@@ -2193,7 +2214,6 @@ J9::Options::fePostProcessJIT(void * base)
          //
          uint32_t numOnlineCPUs = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_ONLINE);
          _numUsableCompilationThreads = numOnlineCPUs > 1 ? std::min((numOnlineCPUs - 1), static_cast<uint32_t>(MAX_USABLE_COMP_THREADS)) : 1;
-         _useCPUsToDetermineMaxNumberOfCompThreadsToActivate = true;
          }
       }
 

@@ -210,6 +210,16 @@ allocateVMThread(J9JavaVM * vm, omrthread_t osThread, UDATA privateFlags, void *
 	newThread->mgmtWaitedStart = JNI_FALSE;
 #endif
 
+#ifdef OMR_GC_CONCURRENT_SCAVENGER
+	/* Initialize fields used by Concurrent Scavenger */
+	newThread->readBarrierRangeCheckBase = UDATA_MAX;
+	newThread->readBarrierRangeCheckTop = 0;
+#ifdef J9VM_GC_COMPRESSED_POINTERS
+	newThread->readBarrierRangeCheckBaseCompressed = U_32_MAX;
+	newThread->readBarrierRangeCheckTopCompressed = 0;
+#endif /* J9VM_GC_COMPRESSED_POINTERS */
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+
 	/* Attach the thread to OMR */
 	if (JNI_OK != attachVMThreadToOMR(vm, newThread, osThread)) {
 		goto fail;

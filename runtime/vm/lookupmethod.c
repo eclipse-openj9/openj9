@@ -379,6 +379,12 @@ javaResolveInterfaceMethods(J9VMThread *currentThread, J9Class *targetClass, J9R
 			BOOLEAN shouldAdd = TRUE;
 			J9Class* newMethodClass = NULL;
 			newMethod = processMethod(currentThread, lookupOptions, foundMethod, interfaceClass, &data->exception, &data->exceptionClass, &data->errorType, nameAndSig, senderClass, targetClass);
+
+			/* Exit loop if exception have been directly set since direct exception must be from access control (Nestmates) */
+			if (NULL != currentThread->currentException) {
+				return NULL;
+			}
+
 			if (NULL == newMethod) {
 				iTable = iTable->next;
 				continue;
@@ -563,6 +569,7 @@ doneItableSearch:
  * 		J9_LOOK_NO_CLIMB						Search only the given class, no superclasses or superinterfaces
  * 		J9_LOOK_NO_INTERFACE					Do not search superinterfaces
  * 		J9_LOOK_NO_THROW						Do not set the exception if lookup fails
+ * 		J9_LOOK_NO_JAVA							Do not run java code for any reason (implies NO_THROW)
  * 		J9_LOOK_NEW_INSTANCE					Use newInstance behaviour (translate IllegalAccessError -> IllegalAccessException, all other errors -> InstantiationException)
  * 		J9_LOOK_DIRECT_NAS						NAS contains direct pointers to UTF8, not SRPs (this option is mutually exclusive with lookupOptionsJNI)
  * 		J9_LOOK_CLCONSTRAINTS					Check that the found method doesn't violate any class loading constraints between the found class and the sender class.
@@ -694,6 +701,9 @@ retry:
 
 			if (foundMethod != NULL) {
 				resultMethod = processMethod(currentThread, lookupOptions, foundMethod, lookupClass, &exception, &exceptionClass, &errorType, nameAndSig, senderClass, targetClass);
+				if (NULL != currentThread->currentException) {
+					goto end;
+				}
 
 				if (resultMethod == NULL) {
 					if (J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR == exception) {
@@ -744,6 +754,10 @@ nextClass:
 			data.elements = 0;
 
 			tempResultMethod = javaResolveInterfaceMethods(currentThread, targetClass, nameAndSig, senderClass, lookupOptions, &data);
+			if (NULL != currentThread->currentException) {
+				exceptionThrown = TRUE;
+				goto done;
+			}
 			if (NULL != tempResultMethod) {
 				resultMethod = tempResultMethod;
 			}
@@ -756,7 +770,7 @@ nextClass:
 				if (NULL != foundDefaultConflicts) {
 					*foundDefaultConflicts = TRUE;
 				}
-				if ((lookupOptions & J9_LOOK_NO_THROW) == 0) {
+				if ((lookupOptions & (J9_LOOK_NO_THROW | J9_LOOK_NO_JAVA)) == 0) {
 					PORT_ACCESS_FROM_VMC(currentThread);
 					char *buf = NULL;
 					if (J9_VISIBILITY_NON_MODULE_ACCESS_ERROR == data.errorType) {
@@ -797,7 +811,7 @@ done:
 		}
 #endif
 
-		if ((lookupOptions & J9_LOOK_NO_THROW) == 0) {
+		if ((lookupOptions & (J9_LOOK_NO_THROW | J9_LOOK_NO_JAVA)) == 0) {
 			j9object_t errorString = NULL;
 
 			/* JNI throws NoSuchMethodError in all error cases */

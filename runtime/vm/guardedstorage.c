@@ -50,10 +50,13 @@ j9gs_initializeThread(J9VMThread *vmThread)
 		success = 1;
 	} else {
 		BOOLEAN supportsGuardedStorageFacility = FALSE;
+		J9JavaVM *vm = vmThread->javaVM;
+		J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
 		J9ProcessorDesc  processorDesc;
 		j9sysinfo_get_processor_description(&processorDesc);
 		if (j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_GUARDED_STORAGE) &&
-				j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_SIDE_EFFECT_ACCESS)) {
+				j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_SIDE_EFFECT_ACCESS) &&
+				!mmFuncs->j9gc_software_read_barrier_enabled(vm)) {
 			supportsGuardedStorageFacility = TRUE;
 		}
 
@@ -103,10 +106,13 @@ j9gs_deinitializeThread(J9VMThread *vmThread)
 	PORT_ACCESS_FROM_VMC(vmThread);
 	int32_t success = 0;
 	BOOLEAN supportsGuardedStorageFacility = FALSE;
+	J9JavaVM *vm = vmThread->javaVM;
+	J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
 	J9ProcessorDesc  processorDesc;
 	j9sysinfo_get_processor_description(&processorDesc);
 	if (j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_GUARDED_STORAGE) &&
-			j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_SIDE_EFFECT_ACCESS)) {
+			j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_SIDE_EFFECT_ACCESS) &&
+			!mmFuncs->j9gc_software_read_barrier_enabled(vm)) {
 		supportsGuardedStorageFacility = TRUE;
 	}
 

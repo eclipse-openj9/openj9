@@ -31,7 +31,6 @@ import org.testng.AssertJUnit;
 import j9vm.test.softmx.MemoryExhauster;
 
 import java.lang.management.ManagementFactory;
-import java.lang.management.RuntimeMXBean;
 import java.util.Iterator;
 import java.util.List;
 
@@ -84,49 +83,16 @@ public class SoftmxAdvanceTest_GC_Only{
 		logger.debug("	Forcing Aggressive GC. Will wait a maximum of 5 minutes for heap shrink..." );
 		TestNatives.setAggressiveGCPolicy();
 
-		/* figure out DisclaimVirtualMemory setting from VM arguments.
-		 * The arguments will contain -Xsoftmx and -XX:+DisclaimVirtualMemory/-XX:-DisclaimVirtualMemory
-		 */
-		boolean enableDisclaimMemory = false;
-		boolean disableDisclaimMemory = false;
-		boolean softmxExist = false;
-
-		RuntimeMXBean RuntimemxBean = ManagementFactory.getRuntimeMXBean();
-		List<String> arguments = RuntimemxBean.getInputArguments();
-
-		Iterator it = arguments.iterator();
-
-		while (it.hasNext()){
-			String s = (String)it.next();
-			if (s.equalsIgnoreCase(DISCLAIM_MEMORY)){
-				enableDisclaimMemory = true;
-			}
-			if (s.equalsIgnoreCase(NOT_DISCLAIM_MEMORY)){
-				disableDisclaimMemory = true;
-			}
-			if (s.contains(SOFTMX)){
-				softmxExist = true;
-			}
-		}
-
 		long startTime = System.currentTimeMillis();
 		boolean isShrink = false;
 
 		//waiting for maximum 5 min (300000ms)
 		while((System.currentTimeMillis() - startTime) < 300000 ){
-			if ( ibmMemoryMBean.getHeapMemoryUsage().getCommitted() <= new_softmx_value ) {
-				if ( enableDisclaimMemory ) {
-					if ( ibmOSMBean.getFreePhysicalMemorySize() > preMemSize ) {
-						isShrink = true;
-					}
-				} else {
-					isShrink = true;
-				}
-				if ( isShrink == true ) {
-					logger.debug( "	PASS: Heap has shrunk to " + ibmMemoryMBean.getHeapMemoryUsage().getCommitted() + " bytes"
-					+ " in " + (System.currentTimeMillis() - startTime) + " mSeconds");
-					break;
-				}
+			if (ibmMemoryMBean.getHeapMemoryUsage().getCommitted() <= new_softmx_value) {
+				isShrink = true;
+				logger.debug( "	PASS: Heap has shrunk to " + ibmMemoryMBean.getHeapMemoryUsage().getCommitted() + " bytes"
+				+ " in " + (System.currentTimeMillis() - startTime) + " mSeconds");
+				break;
 			} else {
 				try {
 					Thread.sleep(2000);

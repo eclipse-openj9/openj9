@@ -199,7 +199,10 @@
    java_lang_String_getChars_charArray,
    java_lang_String_getChars_byteArray,
 
+   java_lang_StringLatin1_indexOf,
+
    java_lang_StringUTF16_getChar,
+   java_lang_StringUTF16_indexOf,
    java_lang_StringUTF16_toBytes,
 
    java_lang_StringBuffer_append,
@@ -307,6 +310,9 @@
    sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z,
    sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z,
    sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z,
+   sun_misc_Unsafe_compareAndExchangeInt_jlObjectJII_Z,
+   sun_misc_Unsafe_compareAndExchangeLong_jlObjectJJJ_Z,
+   sun_misc_Unsafe_compareAndExchangeObject_jlObjectJjlObjectjlObject_Z,
 
    sun_misc_Unsafe_putBoolean_jlObjectJZ_V,
    sun_misc_Unsafe_putByte_jlObjectJB_V,
@@ -669,6 +675,8 @@
 
    com_ibm_jit_JITHelpers_is32Bit,
    com_ibm_jit_JITHelpers_isArray,
+   com_ibm_jit_JITHelpers_intrinsicIndexOfStringLatin1,
+   com_ibm_jit_JITHelpers_intrinsicIndexOfStringUTF16,
    com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1,
    com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16,
    com_ibm_jit_JITHelpers_getJ9ClassFromObject32,

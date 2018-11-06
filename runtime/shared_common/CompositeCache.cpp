@@ -264,6 +264,7 @@ SH_CompositeCacheImpl::commonInit(J9JavaVM* vm)
 	_doMetaProtect = _doSegmentProtect = _doHeaderProtect = _doHeaderReadWriteProtect = _doReadWriteSync = _doPartialPagesProtect = false;
 	_useWriteHash = false;
 	_reduceStoreContentionDisabled = false;
+	_initializingNewCache = false;
 }
 
 #if defined(J9SHR_CACHELET_SUPPORT)
@@ -1325,7 +1326,6 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 				}
 			}
 			if (!isCacheCorrupt()) {
-				bool initializingNewCache = false;
 				IDATA retryCntr = 0;
 				
 				/* If we're running read-only, we have no write mutex. Resolve this race by waiting for ccInitComplete flag */
@@ -1355,9 +1355,11 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 				 *  - store information regarding -Xnolinenumbers
 				 */
 				if (isCacheInitComplete() == false) {
-					initializingNewCache = true;
+					_initializingNewCache = true;
 					UDATA extraFlags = 0;
 					
+					Trc_SHR_CC_startup_Event_InitializingNewCache(currentThread);
+
 					if (J9_ARE_NO_BITS_SET(currentThread->javaVM->requiredDebugAttributes, (J9VM_DEBUG_ATTRIBUTE_LINE_NUMBER_TABLE | J9VM_DEBUG_ATTRIBUTE_SOURCE_FILE))) {
 						extraFlags |= J9SHR_EXTRA_FLAGS_NO_LINE_NUMBERS;
 					}
@@ -1634,7 +1636,7 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 				 * used by shrtest which doesn't enable protection until after startup
 				 */
 				setRomClassProtectEnd(SEGUPDATEPTR(_theca));
-				if (initializingNewCache) {
+				if (_initializingNewCache) {
 					*cacheHasIntegrity = true;
 					_theca->ccInitComplete |= CC_STARTUP_COMPLETE;
 				}
@@ -6860,4 +6862,19 @@ SH_CompositeCacheImpl::increaseUnstoredBytes(U_32 blockBytes, U_32 aotBytes, U_3
 	}
 
 	Trc_SHR_CC_increaseUnstoredBytes_Exit();
+}
+
+/* Query whether the cache is being created by the current VM,
+ * which we assume to be in cold run.
+ *
+ * @return true if cache is being created, false otherwise
+ */
+bool
+SH_CompositeCacheImpl::isNewCache(void)
+{
+	if (!_started) {
+		Trc_SHR_Assert_ShouldNeverHappen();
+		return false;
+	}
+	return _initializingNewCache;
 }

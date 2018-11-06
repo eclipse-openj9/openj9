@@ -21,8 +21,7 @@
 ################################################################################
 
 #re-enable version num suffix
-#TODO: should parameterize the version number
-set(CMAKE_SHARED_LIBRARY_SUFFIX "29${CMAKE_SHARED_LIBRARY_SUFFIX}")
+set(CMAKE_SHARED_LIBRARY_SUFFIX ${J9VM_SHARED_LIBRARY_SUFFIX})
 
 add_library(thread_cutest_harness STATIC
 	cuharness/CuTest.c

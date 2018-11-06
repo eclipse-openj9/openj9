@@ -50,6 +50,8 @@ public class AlgorithmVersion {
 	public static final String STACK_WALKER_VERSION = "ALG_STACKWALKER_VERSION";
 	public static final String FOUR_BYTE_OFFSETS_VERSION = "FOUR_BYTE_OFFSETS_VERSION";
 	public static final String VTABLE_VERSION = "ALG_VM_VTABLE_VERSION";
+	public static final String ITABLE_VERSION = "ALG_VM_ITABLE_VERSION";
+	public static final String BYTECODE_VERSION = "ALG_VM_BYTECODE_VERSION";
 	
 	public static final String GC_ARRAYLET_OBJECT_MODEL_VERSION = "ALG_GC_ARRAYLET_OBJECT_MODEL_VERSION";
 	public static final String GC_CLASS_MODEL_VERSION = "ALG_GC_CLASS_MODEL_VERSION";

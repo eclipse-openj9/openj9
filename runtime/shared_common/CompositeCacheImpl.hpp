@@ -410,6 +410,8 @@ public:
 	
 	void increaseUnstoredBytes(U_32 blockBytes, U_32 aotBytes, U_32 jitBytes);
 
+	bool isNewCache(void);
+
 private:
 	J9SharedClassConfig* _sharedClassConfig;
 	SH_OSCache* _oscache;
@@ -494,6 +496,8 @@ private:
 	bool _canStoreClasspaths;
 
 	bool _reduceStoreContentionDisabled;
+
+	bool _initializingNewCache;
 
 #if defined(J9SHR_CACHELET_SUPPORT)
 	/**

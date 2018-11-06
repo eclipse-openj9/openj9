@@ -103,7 +103,7 @@ jvmtiGetPotentialCapabilities(jvmtiEnv* env, jvmtiCapabilities* capabilities_ptr
 	J9JVMTIEnv * j9env = (J9JVMTIEnv *) env;
 	J9JavaVM * vm = j9env->vm;
 	J9JVMTIData * jvmtiData = J9JVMTI_DATA_FROM_VM(vm);
-	jvmtiCapabilities capabilities;
+	jvmtiCapabilities rv_capabilities;
 	J9HookInterface ** vmHook = vm->internalVMFunctions->getVMHookInterface(vm);
 	jvmtiError rc;
 
@@ -113,144 +113,140 @@ jvmtiGetPotentialCapabilities(jvmtiEnv* env, jvmtiCapabilities* capabilities_ptr
 
 	ENSURE_NON_NULL(capabilities_ptr);
 
-	memset(&capabilities, 0, sizeof(jvmtiCapabilities));
+	memset(&rv_capabilities, 0, sizeof(jvmtiCapabilities));
 
 	/* Get the JVMTI mutex to ensure to prevent multple agents acquiring capabilities that can only be held by one agent at a time */
 
 	omrthread_monitor_enter(jvmtiData->mutex);
 
-/*
-	capabilities.can_redefine_any_class = 0;
-*/
-
 	if (J9_ARE_ALL_BITS_SET(vm->requiredDebugAttributes, J9VM_DEBUG_ATTRIBUTE_MAINTAIN_ORIGINAL_METHOD_ORDER)
 	|| (JVMTI_PHASE_ONLOAD == jvmtiData->phase)
 	) {
-		capabilities.can_maintain_original_method_order = 1;
+		rv_capabilities.can_maintain_original_method_order = 1;
 	}
 
-	capabilities.can_generate_all_class_hook_events = 1;
+	rv_capabilities.can_generate_all_class_hook_events = 1;
 
-	capabilities.can_get_bytecodes = 1;
+	rv_capabilities.can_get_bytecodes = 1;
 
-	capabilities.can_get_constant_pool = 1;
+	rv_capabilities.can_get_constant_pool = 1;
 
-	capabilities.can_get_synthetic_attribute = 1;
+	rv_capabilities.can_get_synthetic_attribute = 1;
 
-	capabilities.can_signal_thread = 1;
+	rv_capabilities.can_signal_thread = 1;
 
-	capabilities.can_suspend = 1;
+	rv_capabilities.can_suspend = 1;
 
 	if (isEventHookable(j9env, JVMTI_EVENT_METHOD_ENTRY)) {
-		capabilities.can_generate_method_entry_events = 1;
+		rv_capabilities.can_generate_method_entry_events = 1;
 	}
 
 	if (isEventHookable(j9env, JVMTI_EVENT_GARBAGE_COLLECTION_START) &&
 		isEventHookable(j9env, JVMTI_EVENT_GARBAGE_COLLECTION_FINISH)
 	) {
-		capabilities.can_generate_garbage_collection_events = 1;		
+		rv_capabilities.can_generate_garbage_collection_events = 1;		
 	}
 
 	if (isEventHookable(j9env, JVMTI_EVENT_OBJECT_FREE)) {
-		capabilities.can_generate_object_free_events = 1;
+		rv_capabilities.can_generate_object_free_events = 1;
 	}
 
 	if (isEventHookable(j9env, JVMTI_EVENT_SINGLE_STEP)) {
-		capabilities.can_generate_single_step_events = 1;
+		rv_capabilities.can_generate_single_step_events = 1;
 	}
 
 	if (isEventHookable(j9env, JVMTI_EVENT_FIELD_MODIFICATION)) {
-		capabilities.can_generate_field_modification_events = 1;
+		rv_capabilities.can_generate_field_modification_events = 1;
 	}
 
 	if (isEventHookable(j9env, JVMTI_EVENT_FIELD_ACCESS)) {
-		capabilities.can_generate_field_access_events = 1;
+		rv_capabilities.can_generate_field_access_events = 1;
 	}
 
 	if (isEventHookable(j9env, JVMTI_EVENT_VM_OBJECT_ALLOC)) {
-		capabilities.can_generate_vm_object_alloc_events = 1;
+		rv_capabilities.can_generate_vm_object_alloc_events = 1;
 	}
 
 	if (isEventHookable(j9env, JVMTI_EVENT_NATIVE_METHOD_BIND)) {
-		capabilities.can_generate_native_method_bind_events = 1;
+		rv_capabilities.can_generate_native_method_bind_events = 1;
 	}
 
 	if (isEventHookable(j9env, JVMTI_EVENT_COMPILED_METHOD_LOAD) &&
 		isEventHookable(j9env, JVMTI_EVENT_COMPILED_METHOD_UNLOAD)
 	) {
-		capabilities.can_generate_compiled_method_load_events = 1;
+		rv_capabilities.can_generate_compiled_method_load_events = 1;
 	}
 
 	if ((*vmHook)->J9HookIsEnabled(vmHook, J9HOOK_VM_POP_FRAMES_INTERRUPT)) {
-		capabilities.can_pop_frame = 1;
-		capabilities.can_force_early_return = 1;
+		rv_capabilities.can_pop_frame = 1;
+		rv_capabilities.can_force_early_return = 1;
 	}
 
 	if ((*vmHook)->J9HookIsEnabled(vmHook, J9HOOK_VM_REQUIRED_DEBUG_ATTRIBUTES) ||
 		(vm->requiredDebugAttributes & J9VM_DEBUG_ATTRIBUTE_CAN_REDEFINE_CLASSES)
 	) {
-		capabilities.can_redefine_classes = 1;
+		rv_capabilities.can_redefine_classes = 1;
 	}
 
 	if ((*vmHook)->J9HookIsEnabled(vmHook, J9HOOK_VM_REQUIRED_DEBUG_ATTRIBUTES) ||
 		(vm->requiredDebugAttributes & J9VM_DEBUG_ATTRIBUTE_LINE_NUMBER_TABLE)
 	) {
-		capabilities.can_get_line_numbers = 1;
+		rv_capabilities.can_get_line_numbers = 1;
 	}
 
 	if ((*vmHook)->J9HookIsEnabled(vmHook, J9HOOK_VM_REQUIRED_DEBUG_ATTRIBUTES) ||
 		(vm->requiredDebugAttributes & J9VM_DEBUG_ATTRIBUTE_SOURCE_FILE)
 	) {
-		capabilities.can_get_source_file_name = 1;
+		rv_capabilities.can_get_source_file_name = 1;
 	}
 
 	if ((*vmHook)->J9HookIsEnabled(vmHook, J9HOOK_VM_REQUIRED_DEBUG_ATTRIBUTES) ||
 		(vm->requiredDebugAttributes & J9VM_DEBUG_ATTRIBUTE_CAN_ACCESS_LOCALS)
 	) {
-		capabilities.can_access_local_variables = 1;
+		rv_capabilities.can_access_local_variables = 1;
 	}
 
-	capabilities.can_tag_objects = 1;
+	rv_capabilities.can_tag_objects = 1;
 
 #ifdef J9VM_OPT_DEBUG_JSR45_SUPPORT
 	if ((*vmHook)->J9HookIsEnabled(vmHook, J9HOOK_VM_REQUIRED_DEBUG_ATTRIBUTES) ||
 		(vm->requiredDebugAttributes & J9VM_DEBUG_ATTRIBUTE_SOURCE_DEBUG_EXTENSION)
 	) {
-		capabilities.can_get_source_debug_extension = 1;
+		rv_capabilities.can_get_source_debug_extension = 1;
 	}
 #endif
 
 	if (isEventHookable(j9env, JVMTI_EVENT_BREAKPOINT)) {
-		capabilities.can_generate_breakpoint_events = 1;
+		rv_capabilities.can_generate_breakpoint_events = 1;
 	}
 
 	if (isEventHookable(j9env, JVMTI_EVENT_EXCEPTION) &&
 		isEventHookable(j9env, JVMTI_EVENT_EXCEPTION_CATCH)
 	) {
-		capabilities.can_generate_exception_events = 1;
+		rv_capabilities.can_generate_exception_events = 1;
 	}
 
 	if (isEventHookable(j9env, JVMTI_EVENT_FRAME_POP)) {
-		capabilities.can_generate_frame_pop_events = 1;
+		rv_capabilities.can_generate_frame_pop_events = 1;
 	}
 
 	if (isEventHookable(j9env, JVMTI_EVENT_METHOD_EXIT)) {
-		capabilities.can_generate_method_exit_events = 1;
+		rv_capabilities.can_generate_method_exit_events = 1;
 	}
 
 	if (omrthread_get_self_cpu_time(omrthread_self()) != -1) {
-		capabilities.can_get_current_thread_cpu_time = 1;
+		rv_capabilities.can_get_current_thread_cpu_time = 1;
 	}
 
 	if (omrthread_get_cpu_time(omrthread_self()) != -1 ) {
-		capabilities.can_get_thread_cpu_time = 1;
+		rv_capabilities.can_get_thread_cpu_time = 1;
 	}
 
-	capabilities.can_get_owned_monitor_info = 1;
+	rv_capabilities.can_get_owned_monitor_info = 1;
 
-	capabilities.can_get_current_contended_monitor = 1;
+	rv_capabilities.can_get_current_contended_monitor = 1;
 
-	capabilities.can_get_monitor_info = 1;
+	rv_capabilities.can_get_monitor_info = 1;
 
 
 	if (isEventHookable(j9env, JVMTI_EVENT_MONITOR_CONTENDED_ENTER) &&
@@ -258,37 +254,39 @@ jvmtiGetPotentialCapabilities(jvmtiEnv* env, jvmtiCapabilities* capabilities_ptr
 		isEventHookable(j9env, JVMTI_EVENT_MONITOR_WAIT) &&
 		isEventHookable(j9env, JVMTI_EVENT_MONITOR_WAITED)
 	) {
-		capabilities.can_generate_monitor_events = 1;
+		rv_capabilities.can_generate_monitor_events = 1;
 	}
 
-	capabilities.can_get_owned_monitor_stack_depth_info = 1;
+	rv_capabilities.can_get_owned_monitor_stack_depth_info = 1;
 
 	if (((j9env->flags & (J9JVMTIENV_FLAG_CLASS_LOAD_HOOK_EVER_ENABLED | J9JVMTIENV_FLAG_RETRANSFORM_CAPABLE)) != J9JVMTIENV_FLAG_CLASS_LOAD_HOOK_EVER_ENABLED) &&
 		((*vmHook)->J9HookIsEnabled(vmHook, J9HOOK_VM_REQUIRED_DEBUG_ATTRIBUTES) || (vm->requiredDebugAttributes & J9VM_DEBUG_ATTRIBUTE_ALLOW_RETRANSFORM))
 	) {
-		capabilities.can_retransform_classes = 1;	
+		rv_capabilities.can_retransform_classes = 1;	
 	}
 
-	capabilities.can_set_native_method_prefix = 1;
+	rv_capabilities.can_set_native_method_prefix = 1;
 
 	if ((*vmHook)->J9HookIsEnabled(vmHook, J9HOOK_VM_RESOURCE_EXHAUSTED)) {
-		capabilities.can_generate_resource_exhaustion_threads_events = 1;
+		rv_capabilities.can_generate_resource_exhaustion_threads_events = 1;
 	}
 
 	if ((*vmHook)->J9HookIsEnabled(vmHook, J9HOOK_VM_RESOURCE_EXHAUSTED)) {
-		capabilities.can_generate_resource_exhaustion_heap_events = 1;
+		rv_capabilities.can_generate_resource_exhaustion_heap_events = 1;
 	}
 
 	if (JVMTI_PHASE_ONLOAD == jvmtiData->phase) {
-		capabilities.can_generate_early_vmstart = 1;
-		capabilities.can_generate_early_class_hook_events = 1;
+		rv_capabilities.can_generate_early_vmstart = 1;
+		rv_capabilities.can_generate_early_class_hook_events = 1;
 	}
 
-	*capabilities_ptr = capabilities;
 	rc = JVMTI_ERROR_NONE;
-
 	omrthread_monitor_exit(jvmtiData->mutex);
 done:
+
+	if (NULL != capabilities_ptr) {
+		*capabilities_ptr = rv_capabilities;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetPotentialCapabilities);
 }
 

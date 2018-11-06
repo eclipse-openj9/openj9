@@ -47,7 +47,7 @@ $(UMA_EXETARGET): $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
 UMA_BEGIN_DASH_L =
 UMA_END_DASH_L =
 
-UMA_EXE_POSTFIX_FLAGS += -lm -liconv -lc -ldl -lutil -Wl,-rpath,\$$ORIGIN
+UMA_EXE_POSTFIX_FLAGS += -lm -liconv -lc -ldl -lutil -Wl,-rpath,@loader_path
 
 <#if uma.spec.processor.amd64>
   UMA_MASM2GAS_FLAGS += --64
@@ -118,8 +118,8 @@ endif
 </#if>
 
 # https://stackoverflow.com/questions/21907504/how-to-compile-shared-lib-with-clang-on-osx
-UMA_DLL_LINK_FLAGS += -shared -undefined dynamic_lookup -install_name lib$(UMA_TARGET_NAME).dylib
-UMA_DLL_LINK_FLAGS += -Xlinker -rpath -Xlinker \$$ORIGIN
+UMA_DLL_LINK_FLAGS += -shared -undefined dynamic_lookup -install_name @rpath/lib$(UMA_LIB_NAME).dylib
+UMA_DLL_LINK_FLAGS += -Xlinker -rpath -Xlinker @loader_path
 
 UMA_DLL_LINK_POSTFLAGS += $(UMA_LINK_STATIC_LIBRARIES)
 UMA_DLL_LINK_POSTFLAGS += $(UMA_LINK_SHARED_LIBRARIES)

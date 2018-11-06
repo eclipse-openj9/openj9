@@ -1911,10 +1911,10 @@ String getPackageName() {
 }
 
 /**
- * Answers a read-only stream on the contents of the
+ * Answers a URL referring to the
  * resource specified by resName. The mapping between
- * the resource name and the stream is managed by the
- * class' class loader.
+ * the resource name and the URL is managed by the
+ * class's class loader.
  *
  * @param		resName 	the name of the resource.
  * @return		a stream on the resource.
@@ -1927,31 +1927,33 @@ String getPackageName() {
 public URL getResource(String resName) {
 	ClassLoader loader = this.getClassLoaderImpl();
 	String absoluteResName = this.toResourceName(resName);
-/*[IF Sidecar19-SE]*/
+	URL result = null;
+	/*[IF Sidecar19-SE]*/
 	Module thisModule = getModule();
-	
-	if (thisModule.isNamed() && (thisModule == System.getCallerClass().getModule())) {
+	if (useModularSearch(absoluteResName, thisModule, System.getCallerClass())) {
 		try {
-			return loader.findResource(thisModule.getName(), absoluteResName);
+			result = loader.findResource(thisModule.getName(), absoluteResName);
 		} catch (IOException e) {
 			return null;
 		}
-	} else
-/*[ENDIF] Sidecar19-SE */
+	}
+	if (null == result)
+		/*[ENDIF] Sidecar19-SE */
 	{
 		if (loader == ClassLoader.bootstrapClassLoader) {
-			return ClassLoader.getSystemResource(absoluteResName);
+			result =ClassLoader.getSystemResource(absoluteResName);
 		} else {
-			return loader.getResource(absoluteResName);
+			result =loader.getResource(absoluteResName);
 		}
 	}
+	return result;
 }
 
 /**
  * Answers a read-only stream on the contents of the
  * resource specified by resName. The mapping between
  * the resource name and the stream is managed by the
- * class' class loader.
+ * class's class loader.
  *
  * @param		resName		the name of the resource.
  * @return		a stream on the resource.
@@ -1964,25 +1966,65 @@ public URL getResource(String resName) {
 public InputStream getResourceAsStream(String resName) {
 	ClassLoader loader = this.getClassLoaderImpl();
 	String absoluteResName = this.toResourceName(resName);
+	InputStream result = null;
 /*[IF Sidecar19-SE]*/
 	Module thisModule = getModule();
 	
-	if (thisModule.isNamed() && (thisModule == System.getCallerClass().getModule())) {
+	if (useModularSearch(absoluteResName, thisModule, System.getCallerClass())) {
 		try {
-			return thisModule.getResourceAsStream(absoluteResName);
+			result = thisModule.getResourceAsStream(absoluteResName);
 		} catch (IOException e) {
 			return null;
 		}
-	} else
+	}
+	if (null == result)
 /*[ENDIF] Sidecar19-SE */
 	{
 		if (loader == ClassLoader.bootstrapClassLoader) {
-			return ClassLoader.getSystemResourceAsStream(absoluteResName);
+			result = ClassLoader.getSystemResourceAsStream(absoluteResName);
 		} else {
-			return loader.getResourceAsStream(absoluteResName);
+			result = loader.getResourceAsStream(absoluteResName);
 		}
 	}
+	return result;
 }
+
+/*[IF Sidecar19-SE]*/
+/**
+ * Indicate if the package should be looked up in a module or via the class path.
+ * Look up the resource in the module if the module is named 
+ * and is the same module as the caller or the package is open to the caller.
+ * The default package (i.e. resources at the root of the module) is considered open.
+ * 
+ * @param absoluteResName name of resource, including package
+ * @param thisModule module of the current class
+ * @param callerClass class of method calling getResource() or getResourceAsStream()
+ * @return true if modular lookup should be used.
+ */
+private boolean useModularSearch(String absoluteResName, Module thisModule, Class<?> callerClass) {
+	boolean visible = false;
+
+	if (thisModule.isNamed()) {
+		final Module callerModule = callerClass.getModule();
+		visible = (thisModule == callerModule);
+		if (!visible) {
+			visible = absoluteResName.endsWith(".class"); //$NON-NLS-1$
+			if (!visible) {
+				// extract the package name
+				int lastSlash = absoluteResName.lastIndexOf('/');
+				if (-1 == lastSlash) { // no package name
+					visible = true;
+				} else {
+					String result = absoluteResName.substring(0, lastSlash).replace('/', '.');
+					visible = thisModule.isOpen(result, callerModule);
+				}
+			}
+		}
+	}
+	return visible;
+}
+/*[ENDIF] Sidecar19-SE */
+
 
 /**
  * Answers a String object which represents the class's
@@ -2199,12 +2241,18 @@ public String toString() {
 /**
  * Returns a formatted string describing this Class. The string has
  * the following format:
- * modifier1 modifier2 ... kind name&#60;typeparam1, typeparam2, ...&#62;. 
- * kind is one of "class", "enum", "interface", "&#64;interface", or
- * empty string for primitive types. The type parameter list is
+ * <i>modifier1 modifier2 ... kind name&lt;typeparam1, typeparam2, ...&gt;</i>.
+ * kind is one of <code>class</code>, <code>enum</code>, <code>interface</code>,
+ * <code>&#64;interface</code>, or
+ * the empty string for primitive types. The type parameter list is
  * omitted if there are no type parameters.
- * 
- * @return		a formatted string describing this class.
+/*[IF Sidecar19-SE]
+ * For array classes, the string has the following format instead:
+ * <i>name&lt;typeparam1, typeparam2, ...&gt;</i> followed by a number of
+ * <code>[]</code> pairs, one pair for each dimension of the array.
+/*[ENDIF]
+ *
+ * @return a formatted string describing this class
  * @since 1.8
  */
 public String toGenericString() {
@@ -2236,6 +2284,26 @@ public String toGenericString() {
 	}
 	
 	// Build generic string
+/*[IF Sidecar19-SE]*/
+	if (isArray) {
+		int depth = 0;
+		Class inner = this;
+		Class component = this;
+		do {
+			inner = inner.getComponentType();
+			if (inner != null) {
+				component = inner;
+				depth += 1;
+			}
+		} while (inner != null);
+		result.append(component.getName());
+		component.appendTypeParameters(result);
+		for (int i = 0; i < depth; i++) {
+			result.append('[').append(']');
+		}
+		return result.toString();
+	}
+/*[ENDIF]*/
 	result.append(Modifier.toString(modifiers));
 	if (result.length() > 0) {
 		result.append(' ');
@@ -2243,20 +2311,23 @@ public String toGenericString() {
 	result.append(kindOfType);
 	result.append(getName());
 	
-	// Add type parameters if present
+	appendTypeParameters(result);
+	return result.toString();
+}
+
+// Add type parameters to stringbuilder if present
+private void appendTypeParameters(StringBuilder nameBuilder) {
 	TypeVariable<?>[] typeVariables = getTypeParameters();
 	if (0 != typeVariables.length) {
-		result.append('<');		
+		nameBuilder.append('<');
 		boolean comma = false;
 		for (TypeVariable<?> t : typeVariables) {
-			if (comma) result.append(',');
-			result.append(t);
+			if (comma) nameBuilder.append(',');
+			nameBuilder.append(t);
 			comma = true;
 		}
-		result.append('>');
+		nameBuilder.append('>');
 	}
-	
-	return result.toString();
 }
 
 /**

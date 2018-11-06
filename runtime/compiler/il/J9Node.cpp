@@ -870,7 +870,6 @@ J9::Node::getStorageReferenceSize()
             break;
          case TR::pddiv:
          case TR::pdrem:
-         case TR::pddivrem:
             size = comp->cg()->getPDDivEncodedSize(self());
             break;
          case TR::ud2pd:
@@ -962,8 +961,22 @@ J9::Node::pdshrRoundIsConstantZero()
    return false;
    }
 
+/*
+ * \brief
+ *    Get the node type signature
+ *
+ * \parm len
+ *
+ * \parm allocKind
+ *
+ * \parm parmAsAuto
+ *    For a node with parm symbol, the API is used in two different ways because the slot for dead
+ *    parm symbol can be reused for variables of any type. When \parm parmAsAuto is true, parm is
+ *    treated as other auto and the type signature is ignored. When \parm parmAsAuto is false, the
+ *    type signature of the parm symbol is returned.
+ */
 const char *
-J9::Node::getTypeSignature(int32_t & len, TR_AllocationKind allocKind)
+J9::Node::getTypeSignature(int32_t & len, TR_AllocationKind allocKind, bool parmAsAuto)
    {
    TR::Compilation * c = TR::comp();
    // todo: can do better for array element references
@@ -972,7 +985,10 @@ J9::Node::getTypeSignature(int32_t & len, TR_AllocationKind allocKind)
 
    TR::SymbolReference *symRef = self()->getSymbolReference();
    TR::Symbol *sym = symRef->getSymbol();
-   TR_PersistentClassInfo * classInfo = c->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(c->getCurrentMethod()->containingClass(), c);
+   if (parmAsAuto && sym->isParm())
+      return 0;
+   bool allowForAOT = c->getOption(TR_UseSymbolValidationManager);
+   TR_PersistentClassInfo * classInfo = c->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(c->getCurrentMethod()->containingClass(), c, allowForAOT);
    TR::Node * node = self();
    TR_PersistentFieldInfo * fieldInfo = classInfo && classInfo->getFieldInfo() ? classInfo->getFieldInfo()->findFieldInfo(c, node, false) : 0;
     if (fieldInfo && fieldInfo->isTypeInfoValid() && fieldInfo->getNumChars() > 0)
@@ -981,6 +997,8 @@ J9::Node::getTypeSignature(int32_t & len, TR_AllocationKind allocKind)
        return fieldInfo->getClassPointer();
        }
 
+   if (self()->getOpCodeValue() == TR::multianewarray)
+      symRef = self()->getChild(self()->getNumChildren()-1)->getSymbolReference();
    const char * sig = symRef->getTypeSignature( len, allocKind);
    if (sig)
       return sig;
@@ -995,14 +1013,11 @@ J9::Node::getTypeSignature(int32_t & len, TR_AllocationKind allocKind)
       if (child->isInternalPointer())
          {
          child = child->getFirstChild();
-         if (child->getOpCodeValue() == TR::aloadi)
+         sig = child->getTypeSignature(len, allocKind, parmAsAuto);
+         if (sig != NULL && *sig == '[')
             {
-            sig = child->getTypeSignature(len, allocKind);
-            if (sig != NULL && *sig == '[')
-               {
-               --len;
-               return sig+1;
-               }
+            --len;
+            return sig+1;
             }
          }
       }
@@ -2609,4 +2624,20 @@ bool
 J9::Node::requiresRegisterPair(TR::Compilation *comp)
    {
    return self()->getType().isLongDouble() || OMR::NodeConnector::requiresRegisterPair(comp);
+   }
+
+bool
+J9::Node::canGCandReturn()
+   {
+   TR::Compilation * comp = TR::comp();
+   if (comp->getOption(TR_EnableFieldWatch))
+      {
+      if (self()->getOpCodeValue() == TR::treetop || self()->getOpCode().isNullCheck() || self()->getOpCode().isAnchor())
+         {
+         TR::Node * node = self()->getFirstChild();
+         if (node->getOpCode().isReadBar() || node->getOpCode().isWrtBar())
+            return true;
+         }
+      }
+   return OMR::NodeConnector::canGCandReturn();
    }

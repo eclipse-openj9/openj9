@@ -224,8 +224,18 @@
 		<return type="success" value="0"/>
 	</test>
 
+ 	<test id="gomsdi002">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:gomsdi002 -Xint -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
  	<test id="gomi001">
 		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:gomi001 -Xint -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+ 	<test id="gomi002">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:gomi002 -Xint -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
 		<return type="success" value="0"/>
 	</test>
 
@@ -315,7 +325,7 @@
 	</test>
 
 	<test id="vgc001">
-		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:vgc001 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<command>$EXE$ -Xmx512m $JVM_OPTS$ $AGENTLIB$=test:vgc001 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
 		<return type="success" value="0"/>
 	</test>
 

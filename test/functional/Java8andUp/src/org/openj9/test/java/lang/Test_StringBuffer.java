@@ -1,11 +1,3 @@
-
-package org.openj9.test.java.lang;
-
-import org.testng.annotations.Test;
-import org.testng.annotations.BeforeMethod;
-import org.openj9.test.support.Support_15Help;
-import org.testng.AssertJUnit;
-
 /*******************************************************************************
  * Copyright (c) 1998, 2018 IBM Corp. and others
  *
@@ -27,6 +19,13 @@ import org.testng.AssertJUnit;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package org.openj9.test.java.lang;
+
+import org.testng.annotations.Test;
+import org.testng.annotations.BeforeMethod;
+import org.openj9.test.support.Support_15Help;
+import org.testng.AssertJUnit;
+
 @Test(groups = { "level.sanity" })
 public class Test_StringBuffer {
 

@@ -32,6 +32,7 @@
 #include "env/VMJ9.h"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/symbol/LabelSymbol.hpp"
 #include "z/codegen/TRSystemLinkage.hpp"
 
 uint8_t *
@@ -213,8 +214,8 @@ TR::S390J9CallSnippet::generateInvokeExactJ2IThunk(TR::Node * callNode, int32_t 
 
       TR::SymbolReference *helper = cg->symRefTab()->findOrCreateRuntimeHelper(TR_methodHandleJ2IGlue, false, false, false);
       uintptrj_t destAddr = (uintptrj_t)helper->getMethodAddress();
-#if defined(TR_TARGET_64BIT) 
-#if defined(J9ZOS390) 
+#if defined(TR_TARGET_64BIT)
+#if defined(J9ZOS390)
       if (comp->getOption(TR_EnableRMODE64))
 #endif
          {
@@ -417,11 +418,11 @@ TR::S390UnresolvedCallSnippet::emitSnippetBody()
    AOTcgDiag1(comp, "add TR_ConstantPool cursor=%x\n", cursor);
 
 #if defined(TR_TARGET_64BIT)
-#if defined(J9ZOS390) 
+#if defined(J9ZOS390)
    if (comp->getOption(TR_EnableRMODE64))
 #endif
       {
-      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, *(uint8_t **)cursor, getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, 
+      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, *(uint8_t **)cursor, getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
          TR_Trampolines, cg()),
          __FILE__, __LINE__,getNode());
       }
@@ -442,7 +443,7 @@ TR::S390UnresolvedCallSnippet::emitSnippetBody()
    // Constant Pool Index
    *(uint32_t *) cursor = (helperLookupOffset << 24) | methodSymRef->getCPIndexForVM();
 
-#if defined(TR_TARGET_64BIT) 
+#if defined(TR_TARGET_64BIT)
 #if defined(J9ZOS390)
    if (comp->getOption(TR_EnableRMODE64))
 #endif
@@ -934,7 +935,7 @@ TR::J9S390InterfaceCallDataSnippet::J9S390InterfaceCallDataSnippet(TR::CodeGener
                                                                  uint8_t n,
                                                                  void *thunkPtr,
                                                                  bool useCLFIandBRCL)
-   : TR::S390ConstantDataSnippet(cg,node,TR::LabelSymbol::create(cg->trHeapMemory(),cg),0),
+   : TR::S390ConstantDataSnippet(cg,node,generateLabelSymbol(cg),0),
      _numInterfaceCallCacheSlots(n),
      _codeRA(NULL),
      _thunkAddress(thunkPtr),

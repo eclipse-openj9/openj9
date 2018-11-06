@@ -172,11 +172,6 @@ TR::S390PrivateLinkage::S390PrivateLinkage(TR::CodeGenerator * codeGen,TR_S390Li
 
    setPreservedRegisterMapForGC(0x00001fc0);
    setLargestOutgoingArgumentAreaSize(0);
-
-   // shrink wrapping
-   setRegisterSaveSize(0);
-   _mapRegsToStack = (int32_t *) trMemory()->allocateHeapMemory(TR::RealRegister::NumRegisters*sizeof(int32_t));
-   memset(_mapRegsToStack, -1, (TR::RealRegister::NumRegisters*sizeof(int32_t)));
    }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -635,26 +630,14 @@ TR::S390PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
    // Pick an arbitrary large number that is less than
    // long disp (4K) to identify that we are no-where near
    // a large stack or a large lit-pool
-   //
-/*
-   bool longDispSlotNeeded = cg()->getExitPointsInMethod()              ||
-                             cg()->getEstimatedExtentOfLitLoop() > 256  ||
-                             stackIndex < -256;
-*/
-   if ( !comp()->getOption(TR_DisableLongDispStackSlot) /*&& longDispSlotNeeded */ )
-      {
-      //stackIndex -= pointerSize;
-      stackIndex -= 16;   // see defect 162458, 164661
+
+   //stackIndex -= pointerSize;
+   stackIndex -= 16;   // see defect 162458, 164661
 #ifdef DEBUG
-    //  origSize += pointerSize;
-      origSize += 16;
+   //  origSize += pointerSize;
+   origSize += 16;
 #endif
-      setOffsetToLongDispSlot((uint32_t) (-((int32_t)stackIndex)));
-      }
-   else
-      {
-      setOffsetToLongDispSlot(0);
-      }
+   setOffsetToLongDispSlot((uint32_t) (-((int32_t)stackIndex)));
 
 
    // msf - aligning the start of the parm list may not always
@@ -851,22 +834,9 @@ TR::S390PrivateLinkage::mapStack(TR::ResolvedMethodSymbol * method)
    // long disp (4K) to identify that we are no-where near
    // a large stack or a large lit-pool
    //
-/*
-   bool longDispSlotNeeded = cg()->getExitPointsInMethod()              ||
-                             cg()->getEstimatedExtentOfLitLoop() > 256  ||
-                             stackIndex < -256;
-*/
 
-   //  Map slot for Long Disp
-   if ( !comp()->getOption(TR_DisableLongDispStackSlot) /*&& longDispSlotNeeded */ )
-      {
-      stackIndex -= 16;   // see defect 162458, 164661
-      setOffsetToLongDispSlot((uint32_t) (-((int32_t)stackIndex)));
-      }
-   else
-      {
-      setOffsetToLongDispSlot(0);
-      }
+   stackIndex -= 16;   // see defect 162458, 164661
+   setOffsetToLongDispSlot((uint32_t) (-((int32_t)stackIndex)));
 
    method->setScalarTempSlots((lowGCOffset - stackIndex) / TR::Compiler->om.sizeofReferenceAddress());
    method->setLocalMappingCursor(stackIndex);
@@ -1024,141 +994,6 @@ initStg(TR::CodeGenerator * codeGen, TR::Node * node, TR::RealRegister * tmpReg,
    return op.generate(baseReg, baseReg, indexReg, itersReg, baseOffset, cursor);
    }
 
-
-bool
-TR::S390PrivateLinkage::mapPreservedRegistersToStackOffsets(int32_t *mapRegsToStack, int32_t &numPreserved, TR_BitVector *&preservedRegsInLinkage)
-   {
-   // this routine provides a mapping between the preserved registers and
-   // their location on the stack ; so shrinkWrapping can use the right
-   // offsets when sinking the save/restores
-   //
-   TR::ResolvedMethodSymbol *bodySymbol  = comp()->getJittedMethodSymbol();
-   // localSize also accounts for
-   // {collected + uncollected} locals + Return Address + longDispSlot
-   //
-   int32_t                localSize   = -1 * (int32_t) (bodySymbol->getLocalMappingCursor());  // Auto+Spill size
-   const int32_t          pointerSize = TR::Compiler->om.sizeofReferenceAddress();
-   bool                   traceIt     = comp()->getOption(TR_TraceShrinkWrapping);
-   int32_t offsetCursor = -localSize;
-   numPreserved = 0;
-   TR::RealRegister::RegNum firstUsedReg = getFirstSavedRegister(TR::RealRegister::GPR6,
-                                                              TR::RealRegister::GPR12);
-   TR::RealRegister::RegNum lastUsedReg  = getLastSavedRegister(TR::RealRegister::GPR6,
-                                                              TR::RealRegister::GPR12);
-
-
-   // HPR6-HPR12 are also preserved on 32-bit
-   TR::RealRegister::RegNum lastUsedHighWordReg  =  TR::RealRegister::NoReg;
-   TR::RealRegister::RegNum firstUsedHighWordReg =  TR::RealRegister::NoReg;
-   if (cg()->supportsHighWordFacility() &&  !comp()->getOption(TR_DisableHighWordRA) && TR::Compiler->target.is32Bit())
-      {
-      lastUsedHighWordReg  =  getLastSavedRegister(TR::RealRegister::HPR6, TR::RealRegister::HPR12);
-      firstUsedHighWordReg =  getFirstSavedRegister(TR::RealRegister::HPR6, TR::RealRegister::HPR12);
-      }
-
-   if (lastUsedReg == TR::RealRegister::NoReg)
-      return false;
-
-   int32_t argSize = cg()->getLargestOutgoingArgSize() + getOffsetToFirstParm();
-   int32_t numIntSaved = 0, numFloatSaved = 0, numHighWordRegSaved = 0, registerSaveDescription = 0;
-   int32_t regSaveSize = calculateRegisterSaveSize(firstUsedReg, lastUsedReg,
-                                                   firstUsedHighWordReg, lastUsedHighWordReg,
-                                                   registerSaveDescription,
-                                                   numIntSaved, numFloatSaved, numHighWordRegSaved);
-   // total frame size
-   int32_t size = regSaveSize + localSize + argSize;
-
-   if (1)
-      {
-      if (traceIt)
-         traceMsg(comp(), "Preserved registers for this linkage: { ");
-      for (int32_t pindex = TR::RealRegister::GPR6;
-            pindex <= TR::RealRegister::GPR12;
-            pindex++)
-         {
-         TR::RealRegister::RegNum idx = REGNUM(pindex);
-         preservedRegsInLinkage->set(idx);
-         if (traceIt)
-            traceMsg(comp(), "%s ", comp()->getDebug()->getRealRegisterName(idx-1));
-         }
-
-      if (traceIt)
-         traceMsg(comp(), "}\n");
-      }
-
-   // iterate in reverse order because createprologue will
-   // assign the stack indices in increasing order of register numbers
-   //
-   for (int32_t pindex = lastUsedReg;
-        pindex >= firstUsedReg;
-        pindex--)
-      {
-      TR::RealRegister::RegNum idx = REGNUM(pindex);
-      TR::RealRegister *reg = getS390RealRegister(idx);
-      if (reg->getHasBeenAssignedInMethod())
-         {
-         offsetCursor -= pointerSize;
-         traceMsg(comp(), "idx %d is assigned gets offsetcursor %d\n", idx, offsetCursor);
-         int32_t stackOffset = offsetCursor + size; // add the frame size to get the right offsets;
-         mapRegsToStack[idx] = stackOffset;
-         setStackOffsetForReg(idx, stackOffset);
-         }
-      }
-
-   // return true or false depending on whether
-   // the linkage uses pushes for preserved regs
-   //
-   return false;
-   }
-
-TR::Instruction *
-TR::S390PrivateLinkage::savePreservedRegister(TR::Instruction *cursor, int32_t regIndex, int32_t offset)
-   {
-   TR::Node *n = comp()->getStartTree()->getNode();
-   if (offset == -1)
-      offset = getStackOffsetForReg(regIndex);
-
-   TR::MemoryReference *rsa = generateS390MemoryReference(getStackPointerRealRegister(), offset, cg());
-   cursor = generateRXInstruction(cg(), TR::InstOpCode::getStoreOpCode(), n, getS390RealRegister(REGNUM(regIndex)), rsa, cursor);
-   return cursor;
-   }
-
-TR::Instruction *
-TR::S390PrivateLinkage::restorePreservedRegister(TR::Instruction *cursor, int32_t regIndex, int32_t offset)
-   {
-   TR::Node *n = comp()->getStartTree()->getNode();
-   if (offset == -1)
-      offset = getStackOffsetForReg(regIndex);
-
-   TR::MemoryReference *rsa = generateS390MemoryReference(getStackPointerRealRegister(), offset, cg());
-   cursor = generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), n, getS390RealRegister(REGNUM(regIndex)), rsa, cursor);
-   return cursor;
-   }
-
-TR::Instruction *
-TR::S390PrivateLinkage::composeSavesRestores(TR::Instruction *start,
-                                           int32_t firstReg,
-                                           int32_t lastReg,
-                                           int32_t offset,
-                                           int32_t numRegs, bool doSaves)
-   {
-   // first determine if we can use load/store multiple
-   // the registers have to be in sequence
-   //
-   if (offset == -1)
-      offset = getStackOffsetForReg(firstReg);
-
-   TR::MemoryReference *rsa = generateS390MemoryReference(getS390RealRegister(getStackPointerRegister()), offset, cg());
-   if (!doSaves)
-      start = generateRSInstruction(cg(), TR::InstOpCode::getLoadMultipleOpCode(), comp()->getStartTree()->getNode(),
-                                    getS390RealRegister(REGNUM(firstReg)), getS390RealRegister(REGNUM(lastReg)), rsa, start);
-   else
-      start = generateRSInstruction(cg(), TR::InstOpCode::getStoreMultipleOpCode(), comp()->getStartTree()->getNode(),
-                                    getS390RealRegister(REGNUM(firstReg)), getS390RealRegister(REGNUM(lastReg)), rsa, start);
-   return start;
-   }
-
-
 int32_t
 TR::S390PrivateLinkage::calculateRegisterSaveSize(TR::RealRegister::RegNum firstUsedReg,
                                                  TR::RealRegister::RegNum lastUsedReg,
@@ -1177,7 +1012,6 @@ TR::S390PrivateLinkage::calculateRegisterSaveSize(TR::RealRegister::RegNum first
    int32_t i;
    if (lastUsedReg != TR::RealRegister::NoReg)
       {
-      cg()->setLowestSavedRegister(firstUsedReg);
       for (i = firstUsedReg ; i <= lastUsedReg ; ++i)
          {
          registerSaveDescription |= 1 << (i - 1);
@@ -1210,10 +1044,6 @@ TR::S390PrivateLinkage::calculateRegisterSaveSize(TR::RealRegister::RegNum first
    int32_t firstLocalOffset = getOffsetToFirstLocal();
    int32_t localSize = -1 * (int32_t) (comp()->getJittedMethodSymbol()->getLocalMappingCursor());  // Auto+Spill size
 
-   // stash the info on the linkage so we can use it to emit the metadata
-   // for shrinkwrapping
-   //
-   setRegisterSaveSize(localSize + firstLocalOffset + regSaveSize);
    return regSaveSize;
    }
 
@@ -1335,14 +1165,12 @@ TR::S390PrivateLinkage::createPrologue(TR::Instruction * cursor)
 
    cg()->setFrameSizeInBytes(size + firstLocalOffset);
 
-   if ( !comp()->getOption(TR_DisableLongDispStackSlot) )
+
+   int32_t offsetToLongDisp = size - getOffsetToLongDispSlot();
+   setOffsetToLongDispSlot(offsetToLongDisp);
+   if (comp()->getOption(TR_TraceCG))
       {
-      int32_t offsetToLongDisp = size - getOffsetToLongDispSlot();
-      setOffsetToLongDispSlot(offsetToLongDisp);
-      if (comp()->getOption(TR_TraceCG))
-         {
-         traceMsg(comp(), "\n\nOffsetToLongDispSlot = %d\n", offsetToLongDisp);
-         }
+      traceMsg(comp(), "\n\nOffsetToLongDispSlot = %d\n", offsetToLongDisp);
       }
 
    // Is GPR14 ever used?  If not, we can avoid
@@ -1460,44 +1288,7 @@ TR::S390PrivateLinkage::createPrologue(TR::Instruction * cursor)
 
          if (firstUsedReg != lastUsedReg)
             {
-            TR_BitVector *p = cg()->getPreservedRegsInPrologue();
-            TR::RegisterDependencyConditions * STMDeps = NULL;
-            static char * stmThreshold = feGetEnv("TR_STMThreshold");
-            if (!p && !stmThreshold)
-               {
-               cursor = generateRSInstruction(cg(), TR::InstOpCode::getStoreMultipleOpCode(), firstNode, getS390RealRegister(firstUsedReg),
-                     getS390RealRegister(lastUsedReg), rsa, cursor);
-               }
-            else
-               {
-               int32_t numUsedRegs = lastUsedReg - firstUsedReg + 1;
-               int8_t threshold = stmThreshold ? atoi(stmThreshold) : -1;
-               TR_ASSERT( threshold > -2, "Can't use a value smaller than -1 for STMThreshold\n");
-               if (!p && (threshold == -1 || (threshold > 0 && numUsedRegs >= threshold))) // use STM
-                  {
-                  cursor = generateRSInstruction(cg(), TR::InstOpCode::getStoreMultipleOpCode(), firstNode, getS390RealRegister(firstUsedReg),
-                     getS390RealRegister(lastUsedReg), rsa, cursor);
-                  }
-               else //otherwise break it all down
-                  {
-                  if (comp()->getOption(TR_DisableShrinkWrapping))
-                     {
-                     int32_t numToIsolate = numUsedRegs;
-                     int32_t curReg = firstUsedReg;
-                     int32_t localStackDisp = disp;
-                     for (int32_t i = 0; i < numToIsolate; i++)
-                        {
-                        if (!p || p->get(curReg))
-                           cursor = generateRXInstruction(cg(), TR::InstOpCode::getStoreOpCode(), firstNode, getS390RealRegister(REGNUM(curReg)), rsa, cursor);
-                        localStackDisp += cg()->machine()->getGPRSize();
-                        rsa = generateS390MemoryReference(spReg, localStackDisp, cg());
-                        curReg++;
-                        }
-                     }
-                  else
-                     cursor = cg()->saveOrRestoreRegisters(p, cursor, true); // true for saves
-                  }
-               }
+            cursor = generateRSInstruction(cg(), TR::InstOpCode::getStoreMultipleOpCode(), firstNode, getS390RealRegister(firstUsedReg), getS390RealRegister(lastUsedReg), rsa, cursor);
             }
          else
             {
@@ -1675,8 +1466,7 @@ TR::S390PrivateLinkage::createEpilogue(TR::Instruction * cursor)
 
    static const char *disableRARestoreOpt = feGetEnv("TR_DisableRAOpt");
 
-   // Any one of these conditions will force us to restore RA - unless shrinkwrapping determined we have
-   // restored it already.
+   // Any one of these conditions will force us to restore RA
    bool restoreRA = disableRARestoreOpt                                                                  ||
                     !(performTransformation(comp(), "O^O No need to restore RAREG in epilog\n")) ||
                     getS390RealRegister(getReturnAddressRegister())->getHasBeenAssignedInMethod()                       ||
@@ -1721,42 +1511,7 @@ TR::S390PrivateLinkage::createEpilogue(TR::Instruction * cursor)
       {
       if (firstUsedReg != lastUsedReg)
          {
-         TR_BitVector *p = cg()->getPreservedRegsInPrologue();
-         static char * lmThreshold = feGetEnv("TR_LMThreshold");
-         if (!p && !lmThreshold)
-            {
-            cursor = restorePreservedRegs(firstUsedReg, lastUsedReg, blockNumber, cursor, nextNode, spReg, rsa, getStackPointerRegister());
-            }
-         else
-            {
-            int32_t numUsedRegs = lastUsedReg - firstUsedReg + 1;
-            int8_t threshold = lmThreshold ? atoi(lmThreshold) : -1;
-            TR_ASSERT( threshold > -2, "Can't use a value smaller than -1 for LMThreshold\n");
-            if (!p && (threshold == -1 || (threshold > 0 && numUsedRegs >= threshold))) // use LM
-               {
-               cursor = generateRSInstruction(cg(), TR::InstOpCode::getLoadMultipleOpCode(), nextNode,
-                  getS390RealRegister(firstUsedReg), getS390RealRegister(lastUsedReg), rsa, cursor);
-               }
-            else //otherwise break it all down
-               {
-               if (comp()->getOption(TR_DisableShrinkWrapping))
-                  {
-                  int32_t numToIsolate = numUsedRegs;
-                  int32_t curReg = firstUsedReg;
-                  int32_t localStackDisp = getOffsetToRegSaveArea();
-                  for (int32_t i = 0; i < numToIsolate; i++)
-                     {
-                     if (!p || p->get(curReg))
-                        cursor = generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), nextNode, getS390RealRegister(REGNUM(curReg)), rsa, cursor);
-                     localStackDisp += cg()->machine()->getGPRSize();
-                     rsa = generateS390MemoryReference(spReg, localStackDisp, cg());
-                     curReg++;
-                     }
-                  }
-               else
-                  cursor = cg()->saveOrRestoreRegisters(p, cursor, false); // false for restores
-               }
-            }
+         cursor = restorePreservedRegs(firstUsedReg, lastUsedReg, blockNumber, cursor, nextNode, spReg, rsa, getStackPointerRegister());
          }
       else
          {
@@ -2026,7 +1781,8 @@ TR::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDe
                      }
 
                   TR_PersistentCHTable * chTable = comp()->getPersistentInfo()->getPersistentCHTable();
-                  if (thisClass && TR::Compiler->cls.isAbstractClass(comp(), thisClass))
+                  /* Devirtualization is not currently supported for AOT compilations */
+                  if (thisClass && TR::Compiler->cls.isAbstractClass(comp(), thisClass) && !comp()->compileRelocatableCode())
                      {
                      TR_ResolvedMethod * method = chTable->findSingleAbstractImplementer(thisClass, methodSymRef->getOffset(),
                                                                 methodSymRef->getOwningMethod(comp()), comp());
@@ -2528,8 +2284,8 @@ TR::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDe
                         generateS390MemoryReference(snippetReg, slotOffset, cg()), cursor);
 
                   //load cached methodEP from current cache slot
-                  cursor = new (trHeapMemory()) TR::S390RXInstruction(TR::InstOpCode::getLoadOpCode(), callNode, methodRegister,
-                        generateS390MemoryReference(snippetReg, slotOffset+TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor, cg());
+                  cursor = generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), callNode, methodRegister,
+                        generateS390MemoryReference(snippetReg, slotOffset+TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor);
 
                   cursor = generateS390RegInstruction(cg(), TR::InstOpCode::BCR, callNode, methodRegister, cursor);
                   ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCode::COND_BER);
@@ -2860,7 +2616,7 @@ void TR::J9S390JNILinkage::releaseVMAccessMask(TR::Node * callNode,
    TR::LabelSymbol * loopHead = generateLabelSymbol(self()->cg());
    TR::LabelSymbol * longReleaseLabel = generateLabelSymbol(self()->cg());
    TR::LabelSymbol * longReleaseSnippetLabel = generateLabelSymbol(self()->cg());
-   TR::LabelSymbol * doneLabel = generateLabelSymbol(self()->cg());
+   TR::LabelSymbol * cFlowRegionEnd = generateLabelSymbol(self()->cg());
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(self()->fe());
 
    intptrj_t aValue = fej9->constReleaseVMAccessMask(); //0xfffffffffffdffdf
@@ -2871,8 +2627,8 @@ void TR::J9S390JNILinkage::releaseVMAccessMask(TR::Node * callNode,
        fej9->thisThreadGetPublicFlagsOffset(), self()->cg()));
 
 
-   TR::Instruction * label = generateS390LabelInstruction(self()->cg(), TR::InstOpCode::LABEL, callNode, loopHead);
-   label->setStartInternalControlFlow();
+   generateS390LabelInstruction(self()->cg(), TR::InstOpCode::LABEL, callNode, loopHead);
+   loopHead->setStartInternalControlFlow();
 
 
    aValue = fej9->constReleaseVMAccessOutOfLineMask(); //0x340001
@@ -2925,15 +2681,14 @@ void TR::J9S390JNILinkage::releaseVMAccessMask(TR::Node * callNode,
       postDeps->addPostCondition(javaLitOffsetReg, TR::RealRegister::AssignAny);
 
 
-   TR::Instruction * br = generateS390BranchInstruction(self()->cg(), TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, callNode, loopHead);
-   br->setEndInternalControlFlow();
-   br->setDependencyConditions(postDeps);
+   generateS390BranchInstruction(self()->cg(), TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, callNode, loopHead);
 
-   generateS390LabelInstruction(self()->cg(), TR::InstOpCode::LABEL, callNode, doneLabel);
+   generateS390LabelInstruction(self()->cg(), TR::InstOpCode::LABEL, callNode, cFlowRegionEnd, postDeps);
+   cFlowRegionEnd->setEndInternalControlFlow();
 
 
    self()->cg()->addSnippet(new (self()->trHeapMemory()) TR::S390HelperCallSnippet(self()->cg(), callNode, longReleaseSnippetLabel,
-                              self()->comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(self()->comp()->getJittedMethodSymbol()), doneLabel));
+                              self()->comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(self()->comp()->getJittedMethodSymbol()), cFlowRegionEnd));
    // end of release vm access (spin lock)
    }
 
@@ -3319,9 +3074,12 @@ TR::Register * TR::J9S390JNILinkage::buildDirectDispatch(TR::Node * callNode)
 
    if (isUnwrapAddressReturnValue)
      {
-     TR::LabelSymbol * tempLabel = generateLabelSymbol(codeGen);
-     TR::Instruction* start = generateS390CompareAndBranchInstruction(codeGen, TR::InstOpCode::getCmpOpCode(), callNode, javaReturnRegister, (signed char)0, TR::InstOpCode::COND_BE, tempLabel);
-     start->setStartInternalControlFlow();
+     TR::LabelSymbol * cFlowRegionStart = generateLabelSymbol(codeGen);
+     TR::LabelSymbol * cFlowRegionEnd = generateLabelSymbol(codeGen);
+
+     generateS390LabelInstruction(codeGen, TR::InstOpCode::LABEL, callNode, cFlowRegionStart);
+     cFlowRegionStart->setStartInternalControlFlow();
+     generateS390CompareAndBranchInstruction(codeGen, TR::InstOpCode::getCmpOpCode(), callNode, javaReturnRegister, (signed char)0, TR::InstOpCode::COND_BE, cFlowRegionEnd);
      generateRXInstruction(codeGen, TR::InstOpCode::getLoadOpCode(), callNode, javaReturnRegister,
                 generateS390MemoryReference(javaReturnRegister, 0, codeGen));
 
@@ -3331,9 +3089,8 @@ TR::Register * TR::J9S390JNILinkage::buildDirectDispatch(TR::Node * callNode)
      TR::RegisterDependencyConditions * postDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg());
      postDeps->addPostCondition(javaReturnRegister, realReg);
 
-     TR::Instruction* end =generateS390LabelInstruction(codeGen, TR::InstOpCode::LABEL, callNode, tempLabel);
-     end->setEndInternalControlFlow();
-     end->setDependencyConditions(postDeps);
+     generateS390LabelInstruction(codeGen, TR::InstOpCode::LABEL, callNode, cFlowRegionEnd, postDeps);
+     cFlowRegionEnd->setEndInternalControlFlow();
      }
 
    if (isCollapseJNIReferenceFrame)

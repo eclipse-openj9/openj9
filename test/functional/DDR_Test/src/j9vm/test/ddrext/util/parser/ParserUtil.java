@@ -25,38 +25,40 @@ import j9vm.test.ddrext.Constants;
 
 import java.math.BigInteger;
 import java.util.StringTokenizer;
+import java.util.regex.Pattern;
 
 import org.testng.log4testng.Logger;
 
 /**
- * This class offers utilities for parsing DDR extension outputs to extract info. 
- * @author fkaraman
+ * This class offers utilities for parsing DDR extension outputs to extract info.
  *
+ * @author fkaraman
  */
 public class ParserUtil {
+
 	private static Logger log = Logger.getLogger(FindVMOutputParser.class);
-	
+
 	/**
 	 * This method is being used to convert the given string into a BigInteger instance.
-	 * This method does not do check for value being null, 
+	 * This method does not do check for value being null,
 	 * it is callers responsibility to make it sure that it is not null.
-	 * 
+	 *
 	 * @param value String representation of a number
 	 * @throws NumberFormatException If the given string value is not a decimal or hexadecimal number
 	 */
 	public static BigInteger toBigInteger(String value) throws NumberFormatException {
 		BigInteger bigInt;
-		
-		/* get rid of the spaces at the beginning and end if there is any */
+
+		/* get rid of the spaces at the beginning and end if there are any */
 		value = value.trim();
-		
+
 		/* Check whether the value is hex or not */
-		if (value.startsWith(Constants.HEXADDRESS_HEADER)) {				
+		if (value.startsWith(Constants.HEXADDRESS_HEADER)) {
 			bigInt = new BigInteger(value.substring(Constants.HEXADDRESS_HEADER.length()), Constants.HEXADECIMAL_RADIX);
 		} else {
 			bigInt = new BigInteger(value, Constants.DECIMAL_RADIX);
 		}
-		
+
 		return bigInt;
 	}
 
@@ -65,60 +67,66 @@ public class ParserUtil {
 	 *	struct J9VMThread* mainThread = !j9vmthread 0x7cc8900
 	 *
 	 *	In the case where structureType is null, then it finds the value for the field with specified signature.
-	 *  UDATA parm->j2seVersion = 0x111700;
-	 * 
+	 *  UDATA parm->j2seVersion = 0x111700
+	 *
 	 * @param signature
 	 * @param structureType
 	 * @param extensionOutput !j9javavm output.
 	 * @return address or value for the field with specified signature
 	 */
-	public static String getFieldAddressOrValue(String signature, String structureType, String extensionOutput ) {
+	public static String getFieldAddressOrValue(String signature, String structureType, String extensionOutput) {
+		return getFieldAddressOrValue(Pattern.compile(signature, Pattern.LITERAL), structureType, extensionOutput);
+	}
+
+	/**
+	 * This method finds the address of the field with a signature matching the given pattern
+	 * and the specified structureType.
+	 * struct J9VMThread* mainThread = !j9vmthread 0x7cc8900
+	 *
+	 * In the case where structureType is null, then it finds the value for the field with specified signature.
+	 * UDATA parm->j2seVersion = 0x111700
+	 *
+	 * @param pattern
+	 * @param structureType
+	 * @param extensionOutput !j9javavm output
+	 * @return address or value for the field with specified signature
+	 */
+	public static String getFieldAddressOrValue(Pattern pattern, String structureType, String extensionOutput) {
 		if (null == extensionOutput) {
 			log.error("!j9javavm output is null");
 			return null;
 		}
-		
-		String [] lines = extensionOutput.split("\n");
-		for (int i = 0; i < lines.length; i++) {
-			String currentLine = lines[i];
-			/* The line for <signature> is found. */
-			if (currentLine.trim().indexOf(signature) != -1) {
-				StringTokenizer tokenizer = new StringTokenizer(currentLine);
-				while (tokenizer.hasMoreElements()) {
-					String token = tokenizer.nextToken();
-					if (null != structureType) {
-						/*
-						 * The next token after !<structureType> token is the address of the field with the specified signature.
-						 */
-						if (token.startsWith("!" + structureType)) {
-							if (tokenizer.hasMoreElements()) {
-								return tokenizer.nextToken();
-							} else {
-								/* Should never happen */
-								log.error("!" + structureType + " address is missing in !j9javavm output : " + currentLine);
-								return null;
-							}
-						}		
+
+		String prefixToken = (null == structureType) ? "=" : ("!" + structureType);
+		String[] lines = extensionOutput.split("\n");
+		for (String currentLine : lines) {
+			if (!pattern.matcher(currentLine.trim()).find()) {
+				continue;
+			}
+
+			/* The pattern has been found. */
+			StringTokenizer tokenizer = new StringTokenizer(currentLine);
+			while (tokenizer.hasMoreElements()) {
+				String token = tokenizer.nextToken();
+				/*
+				 * The value after the prefixToken is the value for the field with the specified signature.
+				 */
+				if (token.equals(prefixToken)) {
+					if (tokenizer.hasMoreElements()) {
+						return tokenizer.nextToken();
 					} else {
-						/*
-						 * The value after '=' is the value for the field with the specified signature
-						 */
-						if (token.equals("=")) {
-							if (tokenizer.hasMoreElements()) {
-								return tokenizer.nextToken();
-							} else {
-								/* Should never happen */
-								log.error("Value is missing after = in !j9javavm output : " + currentLine);
-								return null;
-							}
-						}		
+						/* Should never happen */
+						log.error("Value is missing after " + prefixToken + " in debug extension output: " + currentLine);
+						return null;
 					}
 				}
-				log.error("Unexpected info line in !j9javavm output. Missing string !" + structureType + "j9vmthread in : " + currentLine);
-				return null;
 			}
+			log.error("Unexpected info line in debug extension output. Missing string " + prefixToken + " in: " + currentLine);
+			return null;
 		}
-		log.error("ParserUtil: missing line " + signature + ", structure type " + structureType + ", in debug extension output:\n " + extensionOutput);
+
+		log.error("ParserUtil: missing line " + pattern + ", structure type " + structureType
+				+ ", in debug extension output:\n" + extensionOutput);
 		return null;
 	}
 
@@ -164,7 +172,7 @@ public class ParserUtil {
 
 		return null;
 	}
-	
+
 	/**
 	 * This method is used to remove leading zeroes in an address.
 	 * Eg input = 0x00007FECADCF23A0
@@ -180,4 +188,5 @@ public class ParserUtil {
 		}
 		return "0x" + address.substring(nonZeroIndex);
 	}
+
 }

@@ -81,7 +81,7 @@ static const char* StringBuilderClassName = "java/lang/StringBuilder";
  */
 int32_t TR_StringBuilderTransformer::perform()
    {
-   if (comp()->getOption(TR_DisableStringBuilderTransformer) || comp()->compileRelocatableCode())
+   if (comp()->getOption(TR_DisableStringBuilderTransformer) || (comp()->compileRelocatableCode() && !comp()->getOption(TR_UseSymbolValidationManager)))
       {
       return 0;
       }

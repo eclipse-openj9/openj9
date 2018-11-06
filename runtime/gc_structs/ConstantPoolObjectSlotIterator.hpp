@@ -36,10 +36,8 @@
 #include "j2sever.h"
 #include "ModronAssertions.h"
 
-typedef enum {
-	condy_slot_value,
-	condy_slot_exception
-} CondySlot;
+
+#include "ConstantDynamicSlotIterator.hpp"
 
 /**
  * Iterate over object references (but not class references) in the constant pool of a class.
@@ -57,42 +55,14 @@ class GC_ConstantPoolObjectSlotIterator
 	UDATA _cpDescriptionIndex;
 	bool _condyOnly;
 	bool _condyEnabled;
-	CondySlot _condySlotState;
-	
-
-private:
-	/**
-	 * Scan the current constant dynamic slot
-	 * @return slot value if it is not NULL
-	 * @return exception otherwise
-	 */
-	MMINLINE
-	j9object_t* scanCondySlot(j9object_t *slotPtr, bool *nextSlot) {
-		j9object_t *result;
-		switch (_condySlotState) {
-		case condy_slot_value:
-			result = &(((J9RAMConstantDynamicRef *) slotPtr)->value);
-			_condySlotState = condy_slot_exception;
-			*nextSlot = false;
-			break;
-		case condy_slot_exception:
-			result = &(((J9RAMConstantDynamicRef *) slotPtr)->exception);
-			_condySlotState = condy_slot_value;
-			*nextSlot = true;
-			break;
-		default:
-			Assert_MM_unreachable();
-			break;
-		}
-		return result;
-	}
+	GC_ConstantDynamicSlotIterator _constantDynamicSlotIterator;
 
 public:
 
 	GC_ConstantPoolObjectSlotIterator(J9JavaVM *vm, J9Class *clazz, bool condyOnly = false) :
 		_cpEntry((j9object_t *)J9_CP_FROM_CLASS(clazz)),
 		_cpEntryCount(clazz->romClass->ramConstantPoolCount),
-		_condySlotState(condy_slot_value)
+		_constantDynamicSlotIterator()
 	{
 		_condyOnly = condyOnly;
 		_cpEntryTotal = _cpEntryCount;

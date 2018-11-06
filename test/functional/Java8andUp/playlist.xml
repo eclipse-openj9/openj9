@@ -47,6 +47,28 @@
 	</test>
 
 	<test>
+		<testCaseName>truncatedReturnTest</testCaseName>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames truncatedReturn \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<subsets>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
+		</subsets>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+	</test>
+
+	<test>
 		<testCaseName>regressionFastresolve_mode110</testCaseName>
 		<variations>
 			<variation> Mode110 -Xfastresolve0</variation>
@@ -688,9 +710,7 @@
 			<variation>NoOptions</variation>
 			<variation>-XX:RecreateClassfileOnload</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	cd $(REPORTDIR); \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
 	--add-modules openj9.sharedclasses $(ADD_MODULE_JAVA_SE_EE) \
 	--add-exports java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
@@ -743,9 +763,7 @@
 			<variation>NoOptions</variation>
 			<variation>-XX:RecreateClassfileOnload</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	cd $(REPORTDIR); \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump:none -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump:none -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
 	--add-modules openj9.sharedclasses $(ADD_MODULE_JAVA_SE_EE) \
 	--add-exports java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
@@ -784,9 +802,7 @@
 			<variation>NoOptions</variation>
 			<variation>-XX:RecreateClassfileOnload</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	cd $(REPORTDIR); \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(TEST_RESROOT)$(D)TestResources.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	-Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
@@ -827,9 +843,7 @@
 			<variation>NoOptions</variation>
 			<variation>-XX:RecreateClassfileOnload</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	cd $(REPORTDIR); \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump:none -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump:none -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(TEST_RESROOT)$(D)TestResources.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	-Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
@@ -917,9 +931,7 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	cd $(REPORTDIR); \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace \
 	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)testacc.policy$(Q) \
 	-Xbootclasspath/a:$(TEST_RESROOT)$(D)TestResources.jar \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(TEST_RESROOT)$(D)TestResources.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
@@ -948,9 +960,7 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-	cd $(REPORTDIR); \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace \
 	--add-modules openj9.sharedclasses $(ADD_MODULE_JAVA_SE_EE) \
 	--add-exports java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
 	--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED \
@@ -1026,6 +1036,32 @@
 	</test>
 
 	<test>
+		<testCaseName>JCL_TEST_MathMethods</testCaseName>
+		<variations>
+			<variation>'-Xjit:disableAsyncCompilation,{*Test_Math*}(count=1)'</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	-Dcom.ibm.tools.attach.enable=yes \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames JCL_TEST_MathMethods \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
+		</subsets>
+	</test>
+
+	<test>
 		<testCaseName>VmArgumentTests</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -1060,7 +1096,7 @@
 			<variation>Mode351 -Xjit:noJitUntilMain,count=0,optlevel=warm</variation>
 			<variation>Mode610 -Xjit:noJitUntilMain,count=0,optlevel=warm</variation>
 		</variations>
-		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS)\
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames \
@@ -1091,7 +1127,7 @@
 			<variation>Mode351</variation>
 			<variation>Mode610</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS)\
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames \
@@ -1122,7 +1158,7 @@
 			<variation>Mode351 -Xthr:minimizeUserCPU</variation>
 			<variation>Mode610 -Xthr:minimizeUserCPU</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS)\
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames \
@@ -1153,7 +1189,7 @@
 			<variation>Mode351</variation>
 			<variation>Mode610</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS)\
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames \
@@ -1873,7 +1909,33 @@
 			<subset>11</subset>
 		</subsets>
 	</test>
-
+	<test>
+		<testCaseName>testStringIndexOfString</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+			<variation>'-Xjit:disableAsyncCompilation,tryToInline={java/lang/String.indexOf*},limit={org/openj9/test/string/StringIndexOfString.doTest*},{org/openj9/test/string/StringIndexOfString.doTest*}(count=50)'</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames testStringIndexOfString \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
+		</subsets>
+	</test>
+	
 	<test>
 		<testCaseName>floatSanityTests</testCaseName>
 		<variations>

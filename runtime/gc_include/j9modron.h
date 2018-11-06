@@ -60,7 +60,7 @@ typedef enum {
 typedef enum {
 	j9gc_modron_readbar_illegal = gc_modron_readbar_illegal,
 	j9gc_modron_readbar_none = gc_modron_readbar_none,
-	j9gc_modron_readbar_evacuate = gc_modron_readbar_evacuate,
+	j9gc_modron_readbar_range_check = gc_modron_readbar_range_check,
 	j9gc_modron_readbar_always = gc_modron_readbar_always,
 	j9gc_modron_readbar_count = gc_modron_readbar_count
 } J9ReadBarrierType;

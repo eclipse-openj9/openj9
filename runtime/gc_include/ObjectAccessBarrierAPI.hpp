@@ -304,8 +304,12 @@ public:
 	VMINLINE j9objectmonitor_t *
 	getLockwordAddress(J9Object *object)
 	{
+		J9Class *clazz = TMP_J9OBJECT_CLAZZ(object);
+		if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
+			return NULL;
+		}
 #if defined(J9VM_THR_LOCK_NURSERY)
-		UDATA lockOffset = TMP_J9OBJECT_CLAZZ(object)->lockOffset;
+		UDATA lockOffset = clazz->lockOffset;
 		if ((IDATA) lockOffset < 0) {
 			return NULL;
 		}
@@ -324,17 +328,7 @@ public:
 		bool copyLockword = true;
 		
 		if (OBJECT_HEADER_SHAPE_POINTERS == J9CLASS_SHAPE(objectClass)) {
-			if (j9gc_modron_readbar_none != _readBarrierType) {
-				copyLockword = false;
-				if (j9gc_modron_readbar_evacuate == _readBarrierType) {
-					/* TODO implement HW barriers */
-					currentThread->javaVM->memoryManagerFunctions->j9gc_objaccess_cloneIndexableObject(currentThread, (J9IndexableObject*)original, (J9IndexableObject*)copy);
-				} else {
-					currentThread->javaVM->memoryManagerFunctions->j9gc_objaccess_cloneIndexableObject(currentThread, (J9IndexableObject*)original, (J9IndexableObject*)copy);
-				}
-			} else {
-				VM_ArrayCopyHelpers::referenceArrayCopy(currentThread, original, 0, copy, 0, size);
-			}
+			VM_ArrayCopyHelpers::referenceArrayCopy(currentThread, original, 0, copy, 0, size);
 		} else {
 			VM_ArrayCopyHelpers::primitiveArrayCopy(currentThread, original, 0, copy, 0, size, (((J9ROMArrayClass*)objectClass->romClass)->arrayShape & 0x0000FFFF));
 		}
@@ -357,41 +351,67 @@ public:
 	}
 
 	VMINLINE UDATA
-	mixedObjectGetDataSize(J9Class *objectClass, j9object_t object)
+	mixedObjectGetDataSize(J9Class *objectClass, bool dontIncludeLockword)
 	{
-		return objectClass->totalInstanceSize;
+		UDATA size = objectClass->totalInstanceSize;
+		if (dontIncludeLockword) {
+			if ((0 <= (IDATA)objectClass->lockOffset)) {
+				size -= sizeof(j9objectmonitor_t);
+			}
+		}
+
+		return size;
 	}
 
 	VMINLINE void
 	cloneObject(J9VMThread *currentThread, j9object_t original, j9object_t copy, J9Class *objectClass)
 	{
-#if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER) 
-		currentThread->javaVM->memoryManagerFunctions->j9gc_objaccess_cloneObject(currentThread, original, copy);
+		copyObjectFields(currentThread, objectClass, original, mixedObjectGetHeaderSize(), copy, mixedObjectGetHeaderSize());
+	}
+
+
+	/**
+	 * Copy valueType from sourceObject to destObject
+	 * See MM_ObjectAccessBarrier::copyObjectFields for detailed description
+	 *
+	 * @param vmThread vmthread token
+	 * @param valueClass The valueType class
+	 * @param srcObject The object being used.
+	 * @param srcOffset The offset of the field.
+	 * @param destObject The object being used.
+	 * @param destOffset The offset of the field.
+	 */
+	VMINLINE void
+	copyObjectFields(J9VMThread *vmThread, J9Class *objectClass, j9object_t srcObject, UDATA srcOffset, j9object_t destObject, UDATA destOffset)
+	{
+#if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
+		vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_copyObjectFields(vmThread, objectClass, srcObject, srcOffset, destObject, destOffset);
 #else /* defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER) */
-		/* TODO implement HW barriers */
 		if (j9gc_modron_readbar_none != _readBarrierType) {	
-			if (j9gc_modron_readbar_evacuate == _readBarrierType) {
-				currentThread->javaVM->memoryManagerFunctions->j9gc_objaccess_cloneObject(currentThread, original, copy);
+			if (j9gc_modron_readbar_range_check == _readBarrierType) {
+				vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_copyObjectFields(vmThread, objectClass, srcObject, srcOffset, destObject, destOffset);
 			} else if (j9gc_modron_readbar_always == _readBarrierType) {
-				currentThread->javaVM->memoryManagerFunctions->j9gc_objaccess_cloneObject(currentThread, original, copy);
+				vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_copyObjectFields(vmThread, objectClass, srcObject, srcOffset, destObject, destOffset);
 			}
 		} else {
-			UDATA offset = mixedObjectGetHeaderSize();
-			UDATA limit = offset + mixedObjectGetDataSize(objectClass, original);
+			UDATA offset = 0;
+			bool isValueType = J9_IS_J9CLASS_VALUETYPE(objectClass);
+			UDATA limit = mixedObjectGetDataSize(objectClass, isValueType);
+			
 			while (offset < limit) {
-				/* No need for pre-store barrier as we are always overwriting 0's in the new object */
-				*(fj9object_t *)((UDATA)copy + offset) = *(fj9object_t *)((UDATA)original + offset);
+				*(fj9object_t *)((UDATA)destObject + offset + destOffset) = *(fj9object_t *)((UDATA)srcObject + offset + srcOffset);
 				offset += sizeof(fj9object_t);
 			}
 		
 #if defined(J9VM_THR_LOCK_NURSERY)
 			/* zero lockword, if present */
-			j9objectmonitor_t *lockwordAddress = getLockwordAddress(copy);
+			j9objectmonitor_t *lockwordAddress = getLockwordAddress(destObject);
 			if (NULL != lockwordAddress) {
 				*lockwordAddress = 0;
 			}
 #endif /* J9VM_THR_LOCK_NURSERY */
-			postBatchStoreObject(currentThread, copy);
+
+			postBatchStoreObject(vmThread, destObject);
 		}
 #endif /* defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER) */
 	}

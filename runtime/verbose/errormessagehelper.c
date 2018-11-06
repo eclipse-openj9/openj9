@@ -134,6 +134,10 @@ convertToOracleOpcodeString(U_8 j9Opcode, U_8 returnType)
 	case JBreturn0:					/* FALLTHROUGH */
 	case JBreturn1:					/* FALLTHROUGH */
 	case JBreturn2:					/* FALLTHROUGH */
+	case JBreturnC:					/* FALLTHROUGH */
+	case JBreturnS:					/* FALLTHROUGH */
+	case JBreturnB:					/* FALLTHROUGH */
+	case JBreturnZ:					/* FALLTHROUGH */
 	case JBsyncReturn0:				/* FALLTHROUGH */
 	case JBsyncReturn1:				/* FALLTHROUGH */
 	case JBsyncReturn2:

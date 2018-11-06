@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1720,7 +1720,7 @@ void TR_NewInitialization::modifyReferences(Candidate *candidate, Candidate *sta
    // If this is a write barrier store of one candidate into a field of another
    // the write barrier store can be changed into a simple indirect store.
    //
-   if (node->getOpCodeValue() == TR::wrtbari && firstChildIsCandidate && secondChildIsCandidate && !comp()->getOptions()->realTimeGC())
+   if (node->getOpCodeValue() == TR::awrtbari && firstChildIsCandidate && secondChildIsCandidate && !comp()->getOptions()->realTimeGC())
       {
       if (performTransformation(comp(), "%sChanging write barrier store into iastore [%p]\n", OPT_DETAILS, node))
          {

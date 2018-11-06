@@ -243,7 +243,11 @@ private static boolean checkPermissionHelper(Permission perm, AccessControlConte
 			if (pDomains != null) {
 				for (int i = 0; i < length ; ++i) {
 					// invoke PD within acc.context first
+					/*[IF Sidecar19-SE-OpenJ9]*/
+					if ((pDomains[length - i - 1] != null) && !pDomains[length - i - 1].impliesWithAltFilePerm(perm)) {
+					/*[ELSE]*/
 					if ((pDomains[length - i - 1] != null) && !pDomains[length - i - 1].implies(perm)) {
+					/*[ENDIF] Sidecar19-SE-OpenJ9*/
 						throwACE((debug & AccessControlContext.DEBUG_ACCESS_DENIED) != 0, perm, pDomains[length - i - 1], false);
 					}
 				}
@@ -469,6 +473,7 @@ private static AccessControlContext getContextHelper(boolean forDoPrivilegedWith
 	int frameNbr = domains.length / OBJS_ARRAY_SIZE;
 	AccessControlContext accContext = null;
 	AccessControlContext accLower = null;
+	DomainCombiner dc = null; // store a non-null domainCombiner from a closest frame or null
 	for (int j = 0; j < frameNbr; ++j) {
 		AccessControlContext acc = (AccessControlContext) domains[j * OBJS_ARRAY_SIZE];
 		/*[PR JAZZ 66930] j.s.AccessControlContext.checkPermission() invoke untrusted ProtectionDomain.implies */
@@ -486,6 +491,10 @@ private static AccessControlContext getContextHelper(boolean forDoPrivilegedWith
 		}
 		if (null != acc && null != acc.domainCombiner) {
 			accTmp.domainCombiner = acc.domainCombiner;
+			if (dc == null) {
+				// this dc will be set to accContext.domainCombiner
+				dc = acc.domainCombiner;
+			}
 		}
 		if (null != domains[j * OBJS_ARRAY_SIZE + OBJS_INDEX_PERMS_OR_CACHECHECKED]) {
 			// this is frame with limited permissions
@@ -500,7 +509,9 @@ private static AccessControlContext getContextHelper(boolean forDoPrivilegedWith
 		}
 		accLower = accTmp;
 	}
-
+	if ((accContext != null) && (accContext.domainCombiner == null) && (dc != null)) {
+		accContext.domainCombiner = dc;
+	}
 	return accContext;
 }
 

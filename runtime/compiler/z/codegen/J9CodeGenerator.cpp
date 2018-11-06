@@ -137,8 +137,6 @@ J9::Z::CodeGenerator::CodeGenerator() :
    // Invoke Class.newInstanceImpl() from the JIT directly
    cg->setSupportsNewInstanceImplOpt();
 
-   cg->setSupportsPostProcessArrayCopy();
-
    // Still being set in the S390CodeGenerator constructor, as zLinux sTR requires this.
    //cg->setSupportsJavaFloatSemantics();
 
@@ -3574,8 +3572,8 @@ J9::Z::CodeGenerator::supportsPackedShiftRight(int32_t resultPrecision, TR::Node
 int32_t
 J9::Z::CodeGenerator::getPDDivEncodedPrecision(TR::Node *node)
    {
-   TR_ASSERT(node->getOpCodeValue() == TR::pddiv || node->getOpCodeValue() == TR::pdrem || node->getOpCodeValue() == TR::pddivrem,
-      "getPackedDividendPrecision only valid for pddiv/pdrem/pddivrem\n");
+   TR_ASSERT(node->getOpCodeValue() == TR::pddiv || node->getOpCodeValue() == TR::pdrem,
+      "getPackedDividendPrecision only valid for pddiv/pdrem\n");
    return self()->getPDDivEncodedPrecisionCommon(node,
                                          node->getFirstChild()->getDecimalPrecision(),
                                          node->getSecondChild()->getDecimalPrecision(),
@@ -3585,8 +3583,8 @@ J9::Z::CodeGenerator::getPDDivEncodedPrecision(TR::Node *node)
 int32_t
 J9::Z::CodeGenerator::getPDDivEncodedPrecision(TR::Node *node, TR_PseudoRegister *dividendReg, TR_PseudoRegister *divisorReg)
    {
-   TR_ASSERT(node->getOpCodeValue() == TR::pddiv || node->getOpCodeValue() == TR::pdrem || node->getOpCodeValue() == TR::pddivrem,
-      "getPackedDividendPrecision only valid for pddiv/pdrem/pddivrem\n");
+   TR_ASSERT(node->getOpCodeValue() == TR::pddiv || node->getOpCodeValue() == TR::pdrem,
+      "getPackedDividendPrecision only valid for pddiv/pdrem\n");
    return self()->getPDDivEncodedPrecisionCommon(node,
                                          dividendReg->getDecimalPrecision(),
                                          divisorReg->getDecimalPrecision(),
@@ -3607,16 +3605,16 @@ J9::Z::CodeGenerator::getPDDivEncodedPrecisionCommon(TR::Node *node, int32_t div
 uint32_t
 J9::Z::CodeGenerator::getPDDivEncodedSize(TR::Node *node)
    {
-   TR_ASSERT(node->getOpCodeValue() == TR::pddiv || node->getOpCodeValue() == TR::pdrem || node->getOpCodeValue() == TR::pddivrem,
-      "getPDDivEncodedSize only valid for pddiv/pdrem/pddivrem\n");
+   TR_ASSERT(node->getOpCodeValue() == TR::pddiv || node->getOpCodeValue() == TR::pdrem,
+      "getPDDivEncodedSize only valid for pddiv/pdrem\n");
    return TR::DataType::packedDecimalPrecisionToByteLength(self()->getPDDivEncodedPrecision(node));
    }
 
 uint32_t
 J9::Z::CodeGenerator::getPDDivEncodedSize(TR::Node *node, TR_PseudoRegister *dividendReg, TR_PseudoRegister *divisorReg)
    {
-   TR_ASSERT(node->getOpCodeValue() == TR::pddiv || node->getOpCodeValue() == TR::pdrem || node->getOpCodeValue() == TR::pddivrem,
-      "getPDDivEncodedSize only valid for pddiv/pdrem/pddivrem\n");
+   TR_ASSERT(node->getOpCodeValue() == TR::pddiv || node->getOpCodeValue() == TR::pdrem,
+      "getPDDivEncodedSize only valid for pddiv/pdrem\n");
    return TR::DataType::packedDecimalPrecisionToByteLength(self()->getPDDivEncodedPrecision(node, dividendReg, divisorReg));
    }
 
@@ -3950,6 +3948,8 @@ extern TR::Register *inlineBigDecimalToPackedConverter(TR::Node * node, TR::Code
 extern TR::Register *toUpperIntrinsic(TR::Node * node, TR::CodeGenerator * cg, bool isCompressedString);
 extern TR::Register *toLowerIntrinsic(TR::Node * node, TR::CodeGenerator * cg, bool isCompressedString);
 
+extern TR::Register* inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isCompressed);
+
 extern TR::Register *intrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isCompressed);
 
 extern TR::Register *inlineDoubleMax(TR::Node *node, TR::CodeGenerator *cg);
@@ -4235,17 +4235,25 @@ J9::Z::CodeGenerator::inlineDirectCall(
 
    if (cg->getSupportsInlineStringIndexOf())
       {
-         switch (methodSymbol->getRecognizedMethod())
-            {
-            case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1:
-               resultReg = intrinsicIndexOf(node, cg, true);
+      switch (methodSymbol->getRecognizedMethod())
+         {
+         case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1:
+            resultReg = intrinsicIndexOf(node, cg, true);
+            return true;
+         case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
+            resultReg = intrinsicIndexOf(node, cg, false);
+            return true;
+         case TR::java_lang_StringLatin1_indexOf:
+         case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringLatin1:
+               resultReg = inlineVectorizedStringIndexOf(node, cg, false);
                return true;
-            case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
-               resultReg = intrinsicIndexOf(node, cg, false);
+         case TR::java_lang_StringUTF16_indexOf:
+         case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringUTF16:
+               resultReg = inlineVectorizedStringIndexOf(node, cg, true);
                return true;
-            default:
-               break;
-            }
+         default:
+            break;
+         }
       }
 
       if (!comp->getOption(TR_DisableSIMDDoubleMaxMin) && cg->getSupportsVectorRegisters())

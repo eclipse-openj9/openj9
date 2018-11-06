@@ -775,3 +775,5 @@ TraceException=Trc_VM_registerOSHandler_invalidPortlibSignalFlag NoEnv Overhead=
 
 TraceEntry=Trc_VM_sendResolveConstantDynamic_Entry Overhead=1 Level=2 Template="sendResolveConstantDynamic(ramCP=%p, cpIndex=%zu, nameAndSig=%p, bsmData=%p)"
 TraceExit=Trc_VM_sendResolveConstantDynamic_Exit Overhead=1 Level=2 Template="sendResolveConstantDynamic"
+
+TraceException=Trc_VM_CreateRAMClassFromROMClass_nestedValueClassNotVisible Overhead=1 Level=1 Template="Nested field (RAM class=%p, classloader=%p, this classloader=%p) is not visible. Throw IllegalAccessError"

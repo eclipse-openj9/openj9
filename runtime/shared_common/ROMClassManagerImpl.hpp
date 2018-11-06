@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -85,8 +85,7 @@ protected:
 	virtual U_32 getHashTableEntriesFromCacheSize(UDATA cacheSizeBytes);	
 
 	HashLinkedListImpl* localHLLNewInstance(HashLinkedListImpl* memForConstructor) {
-		RcLinkedListImpl* newRLL = (RcLinkedListImpl*)memForConstructor;
-		return (HashLinkedListImpl*) new(newRLL) RcLinkedListImpl();
+		return new(memForConstructor) HashLinkedListImpl();
 	}
 
 #if defined(J9SHR_CACHELET_SUPPORT)
@@ -97,26 +96,21 @@ protected:
 	
 private:
 	SH_TimestampManager* _tsm;
-	J9Pool* _linkedListImplPool;
-
+	
 	/**
 	 * Circular linked list for storing local ROMClass information.
 	 *
-	 * Local hashtable (_rcTable) has an entry for each known ROMClass name.
+	 * Local hashtable (_hashTable) has an entry for each known ROMClass name.
 	 * Key is the fully-qualified string name of the ROMClass
-	 * Value is a RcLinkedListImpl list of ROMClasses stored under that name
-	 * A RcLinkedListImpl is a reference to a ROMClass in the cache.
+	 * Value is a HashLinkedListImpl list of ROMClasses stored under that name
+	 * A HashLinkedListImpl is a reference to a ROMClass in the cache.
 	 * Thus, given a ROMClass name, it is quick and easy to walk all known
 	 * ROMClasses in the cache stored under that name.
 	 *
 	 * @ingroup Shared_Common
 	 */
-class RcLinkedListImpl : public SH_Manager::HashLinkedListImpl
-{
-	public:
-		bool _isOrphan;
+	J9Pool* _linkedListImplPool;
 
-	};
 
 	bool checkTimestamp(J9VMThread* currentThread, const char* path, UDATA pathLen, ROMClassWrapper* wrapper, const ShcItem* item);
 

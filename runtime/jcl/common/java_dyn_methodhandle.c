@@ -557,9 +557,9 @@ Java_java_lang_invoke_PrimitiveHandle_lookupField(JNIEnv *env, jobject handle, j
 {
 	J9UTF8 *signatureUTF8 = NULL;
 	char signatureUTF8Buffer[256];
-	J9Class *j9LookupClass;			/* J9Class for java.lang.Class lookupClass */
+	J9Class *j9LookupClass = NULL;			/* J9Class for java.lang.Class lookupClass */
 	J9Class *definingClass = NULL;	/* Returned by calls to find field */
-	UDATA field;
+	UDATA field = 0;
 	jclass result = NULL;
 	UDATA romField = 0;
 	J9VMThread *vmThread = (J9VMThread *) env;
@@ -589,6 +589,15 @@ Java_java_lang_invoke_PrimitiveHandle_lookupField(JNIEnv *env, jobject handle, j
 	if (!accessCheckFieldSignature(vmThread, j9LookupClass, romField, J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(vmThread, J9_JNI_UNWRAP_REFERENCE(handle)), signatureUTF8)) {
 		setClassLoadingConstraintLinkageError(vmThread, definingClass, signatureUTF8);
 		goto _cleanup;
+	}
+	if (NULL != accessClass) {
+		J9Class *j9AccessClass = J9VM_J9CLASS_FROM_JCLASS(vmThread, accessClass);
+		if ((j9AccessClass->classLoader != j9LookupClass->classLoader)
+			&& !accessCheckFieldSignature(vmThread, j9AccessClass, romField, J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(vmThread, J9_JNI_UNWRAP_REFERENCE(handle)), signatureUTF8)
+		) {
+			setClassLoadingConstraintLinkageError(vmThread, j9AccessClass, signatureUTF8);
+			goto _cleanup;
+		}
 	}
 
 	J9VMJAVALANGINVOKEPRIMITIVEHANDLE_SET_VMSLOT(vmThread, J9_JNI_UNWRAP_REFERENCE(handle), field);
