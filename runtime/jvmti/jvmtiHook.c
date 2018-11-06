@@ -789,12 +789,6 @@ hookNonEventCapabilities(J9JVMTIEnv * j9env, jvmtiCapabilities * capabilities)
 	}
 
 	if (capabilities->can_tag_objects) {
-		/* Heap iteration functions require the can_tag_objects capability, so use the capability to tell the GC to maintain heap walkability */
-
-		if (enableDebugAttribute(j9env, J9VM_DEBUG_ATTRIBUTE_ALLOW_USER_HEAP_WALK)) {
-			return 1;
-		}
-
 		if (hookRegister(gcOmrHook, J9HOOK_MM_OMR_GLOBAL_GC_END, jvmtiHookGCEnd, OMR_GET_CALLSITE(), j9env)) {
 			return 1;
 		}
