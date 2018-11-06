@@ -34,6 +34,7 @@ import com.ibm.j9ddr.vm29.j9.AlgorithmPicker;
 import com.ibm.j9ddr.vm29.j9.AlgorithmVersion;
 import com.ibm.j9ddr.vm29.j9.BaseAlgorithm;
 import com.ibm.j9ddr.vm29.j9.IAlgorithm;
+import com.ibm.j9ddr.vm29.j9.J9ConfigFlags;
 import com.ibm.j9ddr.vm29.pointer.PointerPointer;
 import com.ibm.j9ddr.vm29.pointer.U32Pointer;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
@@ -55,7 +56,6 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9SFMethodTypeFramePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9SFSpecialFramePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9SFStackFramePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMEntryLocalStoragePointer;
-import com.ibm.j9ddr.vm29.pointer.generated.TRBuildFlags;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMMethodHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ThreadHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
@@ -256,23 +256,25 @@ public class StackWalker
 
 						/* fetch the Java stack for the platform directly from the register file */
 						String javaSPName = "";
-						if (TRBuildFlags.host_POWER) {
+						if (J9ConfigFlags.arch_power) {
 							/* AIX shows as POWER not PPC */
 							/* gpr14 */
 							javaSPName = "gpr14";
-						} else if (TRBuildFlags.host_S390) {
+						} else if (J9ConfigFlags.arch_s390) {
 							/* r5 */
 							javaSPName = "r5";
-						} else if (TRBuildFlags.host_X86 && TRBuildFlags.host_64BIT) {
-							/* esp */
-							javaSPName = "rsp";
-						} else if (TRBuildFlags.host_X86 && TRBuildFlags.host_32BIT) {
-							/* rsp */
-							javaSPName = "esp";
+						} else if (J9ConfigFlags.arch_x86) {
+							if (J9BuildFlags.env_data64) {
+								/* rsp */
+								javaSPName = "rsp";
+							} else {
+								/* esp */
+								javaSPName = "esp";
+							}
 						} else {
 							throw new IllegalArgumentException("Unsupported platform");
 						}
-						
+
 						for (IRegister reg : nativeThread.getRegisters()) {
 							if (reg.getName().equalsIgnoreCase(javaSPName)) {
 								javaSp = UDATAPointer.cast(reg.getValue().longValue());
