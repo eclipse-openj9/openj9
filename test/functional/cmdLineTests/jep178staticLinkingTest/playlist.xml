@@ -34,7 +34,7 @@
 	-DTESTJEP178_DYNAMIC="$(JAVA_SHARED_LIBRARIES_DIR)$(D)testjep178_dynamic" \
 	-DAGENTLIBA=testjvmtiA \
 	-DAGENTLIBB=testjvmtiB \
-	-DJVMLIBPATH="$(JAVA_BIN)$(D)j9vm" \
+	-DJVMLIBPATH="$(J9VM_PATH)" \
 	-DJEPTESTCLASS="com/ibm/j9/tests/jeptests/StaticLinking" \
 	-DJVMTITESTCLASS="com/ibm/j9/tests/jeptests/StaticAgents" \
 	-DATTACHTOOLSJAR="$(JAVA_BIN)$(D)..$(D)..$(D)lib$(D)tools.jar" \
@@ -52,6 +52,7 @@
 		<subsets>
 			<subset>8</subset>
 		</subsets>
+		<disabled>https://github.com/eclipse/openj9/issues/3560</disabled>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_jep178_staticLinking</testCaseName>
@@ -64,7 +65,7 @@
 	-DTESTJEP178_DYNAMIC="$(JAVA_SHARED_LIBRARIES_DIR)$(D)testjep178_dynamic" \
 	-DAGENTLIBA=testjvmtiA \
 	-DAGENTLIBB=testjvmtiB \
-	-DJVMLIBPATH="$(JAVA_BIN)$(D)j9vm" \
+	-DJVMLIBPATH="$(J9VM_PATH)" \
 	-DJEPTESTCLASS="com/ibm/j9/tests/jeptests/StaticLinking" \
 	-DJVMTITESTCLASS="com/ibm/j9/tests/jeptests/StaticAgents" \
 	-DATTACHTOOLSJAR="$(JAVA_BIN)$(D)..$(D)lib$(D)tools.jar" \
@@ -83,5 +84,6 @@
 			<subset>9</subset>
 			<subset>11</subset>
 		</subsets>
+		<disabled>https://github.com/eclipse/openj9/issues/3560</disabled>
 	</test>
 </playlist>
