@@ -26,4 +26,9 @@
 	<listeners>
 		<listener class-name="org.openj9.test.util.IncludeExcludeTestAnnotationTransformer"/>
 	</listeners>
+	<test name="ValueTypeTests">
+		<classes>
+			<class name="org.openj9.test.lworld.ValueTypeTests" />
+		</classes>
+	</test>
 </suite> <!-- Suite -->
