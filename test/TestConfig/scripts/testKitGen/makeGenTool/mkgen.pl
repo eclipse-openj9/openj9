@@ -251,7 +251,7 @@ sub parseXML {
 			my $variations = getElementByTag( $testlines, 'variations' );
 			my $variation = getElementsByTag( $testlines, 'variation' );
 			if ( !@{$variation} ) {
-				$variation = [''];
+				$variation = ['NoOptions'];
 			}
 			$test{'variation'} = $variation;
 
@@ -411,9 +411,9 @@ sub writeTargets {
 			print $fhOut "$name: TEST_RESROOT=$jvmtestroot\n";
 
 			if ($jvmoptions) {
-				print $fhOut "$name: JVM_OPTIONS=\$(RESERVED_OPTIONS) $jvmoptions \$(EXTRA_OPTIONS)\n";
+				print $fhOut "$name: JVM_OPTIONS?=\$(RESERVED_OPTIONS) $jvmoptions \$(EXTRA_OPTIONS)\n";
 			} else {
-				print $fhOut "$name: JVM_OPTIONS=\$(RESERVED_OPTIONS) \$(EXTRA_OPTIONS)\n";
+				print $fhOut "$name: JVM_OPTIONS?=\$(RESERVED_OPTIONS) \$(EXTRA_OPTIONS)\n";
 			}
 
 			my $levelStr = '';
@@ -442,12 +442,9 @@ sub writeTargets {
 				}
 			}
 
-			if ($jvmoptions) {
-				print $fhOut "$indent\@echo \"test with $var\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
-			}
-			else {
-				print $fhOut "$indent\@echo \"test with NoOptions\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
-			}
+			print $fhOut "$indent\@echo \"variation: $var\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
+			print $fhOut "$indent\@echo \"JVM_OPTIONS: \$(JVM_OPTIONS)\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
+
 			my $command = $test->{'command'};
 			$command =~ s/^\s+//;
 			$command =~ s/\s+$//;
