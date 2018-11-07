@@ -65,6 +65,7 @@ struct TR_MethodToBeCompiled
    void setRemoteCompReq() { _remoteCompReq = true; }
    bool isOutOfProcessCompReq() const { return _stream != nullptr; } // at the server
    uint64_t getClientUID() const;
+   void cleanupJITaaS();
 
    TR_MethodToBeCompiled *_next;
    TR::IlGeneratorMethodDetails _methodDetailsStorage;
