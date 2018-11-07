@@ -905,14 +905,15 @@ addJavaLibraryPath(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList
 #endif /* defined(J9UNIX) || defined(J9ZOS390) */
 
 #if defined(J9UNIX)
-#if defined(J9VM_ENV_DATA64)
+	/* On OSX, /usr/lib64 doesn't exist. Only /usr/lib needs to be appended on OSX. */
+#if defined(J9VM_ENV_DATA64) && !defined(OSX)
 	/* JAZZ103 117105: 64-bit JDKs on Linux and AIX should add /usr/lib64 to java.library.path ahead of /usr/lib. */
 #define USRLIB64 ":/usr/lib64"
 	substringBuffer[substringIndex] = USRLIB64;
 	substringIndex += 1;
 	substringLength += (sizeof(USRLIB64) - 1) ;
 #undef USRLIB64
-#endif /* defined(J9VM_ENV_DATA64) */
+#endif /* defined(J9VM_ENV_DATA64) && !defined(OSX) */
 
 	substringBuffer[substringIndex] = ":/usr/lib";
 	substringIndex += 1;
