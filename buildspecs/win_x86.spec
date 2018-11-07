@@ -42,6 +42,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<property name="graph_commands.chroot" value=""/>
 		<property name="graph_commands.win.postamble" value="&quot;MACHINE_TYPE=win&quot;"/>
 		<property name="graph_datamines" value="commands.win.datamine,site-ottawa-win.datamine,use.local.datamine"/>
+		<property name="graph_enable_gcc7_cmd" value=""/>
 		<property name="graph_label.classlib" value="150"/>
 		<property name="graph_label.java5" value="j9vmwi3224"/>
 		<property name="graph_label.java6" value="pwi3260"/>
