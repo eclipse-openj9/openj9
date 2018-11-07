@@ -12089,10 +12089,6 @@ VMgenerateCatchBlockBBStartPrologue(
    {
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
-   if (comp->getOption(TR_FullSpeedDebug))
-      {
-      fenceInstruction->setNeedsGCMap(); // a catch entry is a gc point in FSD mode
-      }
 
    TR::Block *block = node->getBlock();
 

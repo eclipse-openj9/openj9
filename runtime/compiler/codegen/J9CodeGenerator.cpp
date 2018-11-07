@@ -4526,8 +4526,17 @@ J9::CodeGenerator::generateCatchBlockBBStartPrologue(
       TR::Node *node,
       TR::Instruction *fenceInstruction)
    {
+   if (self()->comp()->getOptions()->getReportByteCodeInfoAtCatchBlock())
+      {
+      // Note we should not use `fenceInstruction` here because it is not the first instruction in this BB. The first
+      // instruction is a label that incoming branches will target. We will use this label (first instruction in the
+      // block) in `createMethodMetaData` to populate a list of non-mergable GC maps so as to ensure the GC map at the
+      // catch block entry is always present if requested.
+      node->getBlock()->getFirstInstruction()->setNeedsGCMap();
+      }
+
    VMgenerateCatchBlockBBStartPrologue(node, fenceInstruction, self());
-}
+   }
 
 void
 J9::CodeGenerator::registerAssumptions()
