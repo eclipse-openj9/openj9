@@ -45,7 +45,7 @@ namespace J9
 namespace Z
 {
 
-class OMR_EXTENSIBLE MemoryReference : public OMR::MemoryReferenceConnector
+class /*OMR_EXTENSIBLE*/ MemoryReference : public OMR::MemoryReferenceConnector
    {
 public:
    MemoryReference(TR::CodeGenerator *cg) : OMR::MemoryReferenceConnector(cg) {}
