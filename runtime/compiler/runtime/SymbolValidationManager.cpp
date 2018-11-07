@@ -575,6 +575,8 @@ TR::SymbolValidationManager::addClassByNameRecord(TR_OpaqueClassBlock *clazz, TR
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
    if (isWellKnownClass(clazz))
       return true;
+   else if (clazz == beholder)
+      return true;
    else
       return addClassRecordWithChain(new (_region) ClassByNameRecord(clazz, beholder));
    }
@@ -606,6 +608,8 @@ TR::SymbolValidationManager::addClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
    if (isWellKnownClass(clazz))
+      return true;
+   else if (clazz == beholder)
       return true;
    else
       return addClassRecord(clazz, new (_region) ClassFromCPRecord(clazz, beholder, cpIndex));
