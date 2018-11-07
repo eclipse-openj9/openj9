@@ -907,7 +907,7 @@ addJavaLibraryPath(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList
 	}
 #endif /* defined(J9UNIX) || defined(J9ZOS390) */
 
-#ifdef J9UNIX
+#if defined(J9UNIX)
 #if defined(J9VM_ENV_DATA64)
 	/* JAZZ103 117105: 64-bit JDKs on Linux and AIX should add /usr/lib64 to java.library.path ahead of /usr/lib. */
 #define USRLIB64 ":/usr/lib64"
@@ -920,7 +920,7 @@ addJavaLibraryPath(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList
 	substringBuffer[substringIndex] = ":/usr/lib";
 	substringIndex += 1;
 	substringLength += strlen(":/usr/lib");
-#endif
+#endif /* defined(J9UNIX) */
 #ifdef WIN32
 	/* CMVC 177267, RTC 87362 : On windows, current directory is added at the end */
 	substringBuffer[substringIndex] = ";.";

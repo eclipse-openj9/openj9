@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2016 IBM Corp. and others
+ * Copyright (c) 2002, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,14 +61,14 @@ extern "C" {
 
 #endif /* WIN32 */
 
-#ifdef J9UNIX
+#if defined(J9UNIX)
 #ifndef __USE_LARGEFILE64
 #define __USE_LARGEFILE64
 #endif
 #include <unistd.h>
 #include <sys/param.h>
 #include <dirent.h>
-#endif /* J9UNIX */
+#endif /* defined(J9UNIX) */
 
 #ifdef J9ZOS390
 #include <ctype.h>
@@ -128,11 +128,11 @@ extern "C" {
 #define JVM_ZIP_HOOK_STATE_CLOSED 2
 #define JVM_ZIP_HOOK_STATE_RESET 3
 	
-#ifdef J9UNIX
+#if defined(J9UNIX)
 typedef sigjmp_buf* pre_block_t;
-#else
+#else /* defined(J9UNIX) */
 typedef void* pre_block_t;
-#endif
+#endif /* defined(J9UNIX) */
 
 struct sockaddr;                                                                               /* suppress warning messages */
 

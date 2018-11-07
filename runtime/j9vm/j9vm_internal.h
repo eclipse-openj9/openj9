@@ -56,7 +56,7 @@
 #define LAUNCHERS
 #include "jvm.h"
 
-#if defined(J9UNIX) || defined(OSX)
+#if defined(J9UNIX)
 #include <sys/socket.h>
 #include <dlfcn.h>
 #include <sys/ioctl.h>
@@ -67,7 +67,7 @@
 #else /* defined(J9ZTPF) */
 #define J9FSTAT fstat64
 #endif /* !defined(J9ZTPF) */
-#endif /* J9UNIX */
+#endif /* defined(J9UNIX) */
 
 
 /* required for poll support on some Unix platforms (called in JVM_Available) */
