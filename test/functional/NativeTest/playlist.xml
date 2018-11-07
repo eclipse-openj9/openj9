@@ -373,12 +373,12 @@
 		</subsets>
 	</test>
 	<test>
-	<!-- disable Mode351  https://github.com/eclipse/openj9/issues/3045 -->
 		<testCaseName>vmLifecyleTests</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 			<variation>Mode301</variation>
+			<variation>Mode351</variation>
 			<variation>Mode501</variation>
 			<variation>Mode551</variation>
 		</variations>
@@ -396,5 +396,6 @@
 			<subset>9</subset>
 			<subset>11</subset>
 		</subsets>
+		<disabled>https://github.com/eclipse/openj9/issues/3561</disabled>
 	</test>
 </playlist>
