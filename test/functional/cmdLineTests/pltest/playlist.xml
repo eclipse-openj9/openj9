@@ -1,27 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <!--
-  Copyright (c) 2016, 2018 IBM Corp. and others
+Copyright (c) 2016, 2018 IBM Corp. and others
 
-  This program and the accompanying materials are made available under
-  the terms of the Eclipse Public License 2.0 which accompanies this
-  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
-  or the Apache License, Version 2.0 which accompanies this distribution and
-  is available at https://www.apache.org/licenses/LICENSE-2.0.
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
 
-  This Source Code may also be made available under the following
-  Secondary Licenses when the conditions for such availability set
-  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
-  General Public License, version 2 with the GNU Classpath
-  Exception [1] and GNU General Public License, version 2 with the
-  OpenJDK Assembly Exception [2].
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
 
-  [1] https://www.gnu.org/software/classpath/license.html
-  [2] http://openjdk.java.net/legal/assembly-exception.html
+[1] https://www.gnu.org/software/classpath/license.html
+[2] http://openjdk.java.net/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
-
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TestConfig/playlist.xsd">
 	<test>
 		<testCaseName>cmdLineTester_pltest</testCaseName>
@@ -33,9 +31,8 @@
 	-DEXE='$(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest $(_JVM_OPTIONS)' -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)pltest.xml$(Q) -verbose -explainExcludes \
 	-xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
-		<!-- temporarily disable this test on win; https://github.com/eclipse/openj9/issues/3212 -->
-		<!-- temporarily disable this test on ppc64le; https://github.com/ibmruntimes/openj9-openjdk-jdk8/issues/190 -->
-		<platformRequirements>^os.aix,^os.win,^spec.linux_ppc-64_cmprssptrs_le</platformRequirements>
+		<!-- temporarily disable this test on windows; https://github.com/eclipse/openj9/issues/3212 -->
+		<platformRequirements>^os.aix,^os.win</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -68,7 +65,7 @@
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
-			<!--temporarily disabled for 11,  https://github.com/eclipse/openj9/issues/3221 -->
+			<!--temporarily disabled for 11, https://github.com/eclipse/openj9/issues/3221 -->
 		</subsets>
 	</test>
 	<test>
@@ -116,7 +113,7 @@
 			<subset>9</subset>
 			<subset>11</subset>
 		</subsets>
-	<!-- temporarily disable this test on win; https://github.com/eclipse/openj9/issues/3212 -->
+	<!-- temporarily disable this test on windows; https://github.com/eclipse/openj9/issues/3212 -->
 	<disabled>github.com/eclipse/openj9/issues/1511</disabled>
 	</test>
 	<test>
@@ -141,7 +138,7 @@
 			<subset>9</subset>
 			<subset>11</subset>
 		</subsets>
-	<!-- temporarily disable this test on win; https://github.com/eclipse/openj9/issues/3212 -->
+	<!-- temporarily disable this test on windows; https://github.com/eclipse/openj9/issues/3212 -->
 	<disabled>github.com/eclipse/openj9/issues/1511</disabled>
 	</test>
 	<test>
@@ -156,8 +153,7 @@
 	-config $(Q)$(TEST_RESROOT)$(D)pltest_numcpus_bound.xml$(Q) -verbose -explainExcludes \
 	-xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
-		<!-- disable on ppc64le https://github.com/ibmruntimes/openj9-openjdk-jdk8/issues/190 -->
-		<platformRequirements>os.linux,^spec.linux_ppc-64_cmprssptrs_le</platformRequirements>
+		<platformRequirements>os.linux</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -178,7 +174,7 @@
 		<command>echo $(Q)$(JAVA_SHARED_LIBRARIES_DIR)$(D)pltest -include:j9numcpus -boundcpus:1$(Q) > run_pltest.bat ; \
 	echo exit 0 >> run_pltest.bat; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
-	-DEXE='cmd /C start /B /wait /affinity 1 run_pltest.bat  > j9numcpus.txt 2>&1' -jar $(CMDLINETESTER_JAR) \
+	-DEXE='cmd /C start /B /wait /affinity 1 run_pltest.bat > j9numcpus.txt 2>&1' -jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)pltest_numcpus_bound.xml$(Q) -verbose -explainExcludes \
 	-xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
@@ -194,7 +190,7 @@
 			<subset>9</subset>
 			<subset>11</subset>
 		</subsets>
-		<!-- temporarily disable this test on win; https://github.com/eclipse/openj9/issues/3212 -->
+		<!-- temporarily disable this test on windows; https://github.com/eclipse/openj9/issues/3212 -->
 		<disabled>github.com/eclipse/openj9/issues/1511</disabled>
 	</test>
 	<test>
