@@ -34,7 +34,7 @@
 #include "pcstack.h"
 #include "ut_j9codertvm.h"
 #include "jitregmap.h"
-#include "bcsizes.h"
+#include "pcstack.h"
 #include "VMHelpers.hpp"
 
 extern "C" {
@@ -2330,7 +2330,7 @@ c_jitDecompileAfterAllocation(J9VMThread *currentThread)
 	UDATA *sp = currentThread->sp - 1;
 	*(j9object_t*)sp = obj;
 	currentThread->sp = sp;
-	currentThread->pc += (JavaByteCodeRelocation[*currentThread->pc] & 0x7);
+	currentThread->pc += (J9JavaInstructionSizeAndBranchActionTable[*currentThread->pc] & 0x7);
 	dumpStack(currentThread, "after jitDecompileAfterAllocation");
 	currentThread->tempSlot = (UDATA)J9_BUILDER_SYMBOL(executeCurrentBytecodeFromJIT);
 }
