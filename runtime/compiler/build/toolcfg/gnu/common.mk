@@ -420,7 +420,7 @@ ifeq ($(HOST_ARCH),x)
 
     SUPPORT_STATIC_LIBCXX = $(shell $(SOLINK_CMD) -static-libstdc++ 2>&1 | grep "unrecognized option" > /dev/null; echo $$?)
     ifneq ($(SUPPORT_STATIC_LIBCXX),0)
-        SOLINK_FLAGS+=-static-libstdc++
+        SOLINK_FLAGS+=-static-libgcc -static-libstdc++
     endif
 endif
 
@@ -437,7 +437,7 @@ ifeq ($(HOST_ARCH),p)
 
     SUPPORT_STATIC_LIBCXX = $(shell $(SOLINK_CMD) -static-libstdc++ 2>&1 | grep "unrecognized option" > /dev/null; echo $$?)
     ifneq ($(SUPPORT_STATIC_LIBCXX),0)
-        SOLINK_FLAGS+=-static-libstdc++
+        SOLINK_FLAGS+=-static-libgcc -static-libstdc++
     endif
 endif
 
@@ -448,7 +448,7 @@ ifeq ($(HOST_ARCH),z)
 
     SUPPORT_STATIC_LIBCXX = $(shell $(SOLINK_CMD) -static-libstdc++ 2>&1 | grep "unrecognized option" > /dev/null; echo $$?)
     ifneq ($(SUPPORT_STATIC_LIBCXX),0)
-        SOLINK_FLAGS+=-static-libstdc++
+        SOLINK_FLAGS+=-static-libgcc -static-libstdc++
     endif
 endif
 
