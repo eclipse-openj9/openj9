@@ -781,6 +781,7 @@ private:
    bool addClassRecordWithChain(TR::ClassValidationRecordWithChain *record);
    void addMultipleArrayRecords(TR_OpaqueClassBlock *clazz, int arrayDims);
    bool addMethodRecord(TR::MethodValidationRecord *record);
+   bool skipFieldRefClassRecord(TR_OpaqueClassBlock *definingClass, TR_OpaqueClassBlock *beholder, uint32_t cpIndex);
 
    bool validateSymbol(uint16_t idToBeValidated, void *validSymbol, TR::SymbolType type);
    bool validateSymbol(uint16_t idToBeValidated, TR_OpaqueClassBlock *clazz);

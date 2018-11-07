@@ -570,6 +570,39 @@ TR::SymbolValidationManager::addMethodRecord(TR::MethodValidationRecord *record)
    }
 
 bool
+TR::SymbolValidationManager::skipFieldRefClassRecord(
+   TR_OpaqueClassBlock *definingClass,
+   TR_OpaqueClassBlock *beholder,
+   uint32_t cpIndex)
+   {
+   // If the beholder refers to one of its own fields, or to a field of a
+   // well-known class, and if it does so by naming the class that declares the
+   // field (not a subclass), then no record is necessary.
+   if (definingClass == beholder || isWellKnownClass(definingClass))
+      {
+      J9Class *beholderJ9Class = reinterpret_cast<J9Class*>(beholder);
+      J9ConstantPool *ramCP = J9_CP_FROM_CLASS(beholderJ9Class);
+      J9ROMConstantPoolItem *romCP = ramCP->romConstantPool;
+      J9ROMFieldRef *romFieldRef = (J9ROMFieldRef *)&romCP[cpIndex];
+      J9ROMClassRef *romClassRef = (J9ROMClassRef *)&romCP[romFieldRef->classRefCPIndex];
+      J9UTF8 *classRefNameUtf8 = J9ROMCLASSREF_NAME(romClassRef);
+      int classRefLen = J9UTF8_LENGTH(classRefNameUtf8);
+      uint8_t *classRefName = J9UTF8_DATA(classRefNameUtf8);
+
+      J9Class *definingJ9Class = reinterpret_cast<J9Class*>(definingClass);
+      J9UTF8 *definingClassNameUtf8 = J9ROMCLASS_CLASSNAME(definingJ9Class->romClass);
+      int definingClassLen = J9UTF8_LENGTH(definingClassNameUtf8);
+      uint8_t *definingClassName = J9UTF8_DATA(definingClassNameUtf8);
+
+      if (classRefLen == definingClassLen
+          && !memcmp(classRefName, definingClassName, classRefLen))
+         return true;
+      }
+
+   return false;
+   }
+
+bool
 TR::SymbolValidationManager::addClassByNameRecord(TR_OpaqueClassBlock *clazz, TR_OpaqueClassBlock *beholder)
    {
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
@@ -616,7 +649,10 @@ TR::SymbolValidationManager::addDefiningClassFromCPRecord(TR_OpaqueClassBlock *c
    {
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
-   return addClassRecord(clazz, new (_region) DefiningClassFromCPRecord(clazz, beholder, cpIndex, isStatic));
+   if (skipFieldRefClassRecord(clazz, beholder, cpIndex))
+      return true;
+   else
+      return addClassRecord(clazz, new (_region) DefiningClassFromCPRecord(clazz, beholder, cpIndex, isStatic));
    }
 
 bool
@@ -624,7 +660,10 @@ TR::SymbolValidationManager::addStaticClassFromCPRecord(TR_OpaqueClassBlock *cla
    {
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
-   return addClassRecord(clazz, new (_region) StaticClassFromCPRecord(clazz, beholder, cpIndex));
+   if (skipFieldRefClassRecord(clazz, beholder, cpIndex))
+       return true;
+    else
+      return addClassRecord(clazz, new (_region) StaticClassFromCPRecord(clazz, beholder, cpIndex));
    }
 
 bool
@@ -684,7 +723,10 @@ TR::SymbolValidationManager::addDeclaringClassFromFieldOrStaticRecord(TR_OpaqueC
    {
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
-   return addClassRecord(clazz, new (_region) DeclaringClassFromFieldOrStaticRecord(clazz, beholder, cpIndex));
+   if (skipFieldRefClassRecord(clazz, beholder, cpIndex))
+      return true;
+   else
+      return addClassRecord(clazz, new (_region) DeclaringClassFromFieldOrStaticRecord(clazz, beholder, cpIndex));
    }
 
 bool
