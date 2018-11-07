@@ -60,6 +60,7 @@ bool enableCompiledMethodLoadHookOnly = false;
 // -----------------------------------------------------------------------------
 
 bool J9::Options::_doNotProcessEnvVars = false; // set through XX options in Java
+bool J9::Options::_reportByteCodeInfoAtCatchBlock = false;
 int32_t J9::Options::_samplingFrequencyInIdleMode = 1000; // ms
 int32_t J9::Options::_samplingFrequencyInDeepIdleMode = 100000; // ms
 int32_t J9::Options::_resetCountThreshold = 0; // Disable the feature
@@ -2315,6 +2316,7 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    //
    if (self()->getOption(TR_FullSpeedDebug))
       {
+      self()->setReportByteCodeInfoAtCatchBlock();
       self()->setOption(TR_DisableGuardedCountingRecompilations);
       self()->setOption(TR_EnableJProfiling, false);
       //might move around asyn checks and clone the OSRBlock which are not safe under the current OSR infrastructure
