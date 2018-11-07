@@ -22,96 +22,17 @@
 
 include $(CONFIG_INCL_DIR)/configure_common.mk
 
-# Override datasize for 31-bit specs.
-ifeq (,$(findstring -64,$(SPEC)))
-  TEMP_TARGET_DATASIZE := 31
-endif
+TEMP_TARGET_DATASIZE:=64
 
 CONFIGURE_ARGS += \
 	--enable-OMR_THR_THREE_TIER_LOCKING \
 	--enable-OMR_THR_YIELD_ALG \
-	--enable-OMR_THR_SPIN_WAKE_CONTROL
+	--enable-OMR_THR_SPIN_WAKE_CONTROL \
+	--enable-OMRTHREAD_LIB_UNIX \
+	--enable-OMR_ARCH_S390 \
+	--enable-OMR_ENV_DATA64 \
+	--enable-OMR_GC_CONCURRENT_SCAVENGER
 
-ifeq (linux_ztpf_390-64_cmprssptrs_codecov, $(SPEC))
-	CONFIGURE_ARGS += \
-		--enable-OMRTHREAD_LIB_UNIX \
-		--enable-OMR_ARCH_S390 \
-		--enable-OMR_ENV_DATA64 \
-		--enable-OMR_GC_COMPRESSED_POINTERS \
-		--enable-OMR_INTERP_COMPRESSED_OBJECT_HEADER \
-		--enable-OMR_INTERP_SMALL_MONITOR_SLOT
-#		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
-#               --enable-OMR_RTTI
-endif
-
-ifeq (linux_ztpf_390-64_cmprssptrs, $(SPEC))
-	CONFIGURE_ARGS += \
-		--enable-OMRTHREAD_LIB_UNIX \
-		--enable-OMR_ARCH_S390 \
-		--enable-OMR_ENV_DATA64 \
-		--enable-OMR_GC_COMPRESSED_POINTERS \
-		--enable-OMR_GC_CONCURRENT_SCAVENGER \
-		--enable-OMR_INTERP_COMPRESSED_OBJECT_HEADER \
-		--enable-OMR_INTERP_SMALL_MONITOR_SLOT
-#		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
-#               --enable-OMR_RTTI
-endif
-
-ifeq (linux_ztpf_390-64_cmprssptrs_purec, $(SPEC))
-	CONFIGURE_ARGS += \
-		--enable-OMRTHREAD_LIB_UNIX \
-		--enable-OMR_ARCH_S390 \
-		--enable-OMR_ENV_DATA64 \
-		--enable-OMR_GC_COMPRESSED_POINTERS \
-		--enable-OMR_INTERP_COMPRESSED_OBJECT_HEADER \
-		--enable-OMR_INTERP_SMALL_MONITOR_SLOT
-#		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
-#                --enable-OMR_RTTI
-endif
-
-ifeq (linux_ztpf_390-64_codecov, $(SPEC))
-	CONFIGURE_ARGS += \
-		--enable-OMRTHREAD_LIB_UNIX \
-		--enable-OMR_ARCH_S390 \
-		--enable-OMR_ENV_DATA64
-#		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
-#                --enable-OMR_RTTI
-endif
-
-ifeq (linux_ztpf_390-64, $(SPEC))
-	CONFIGURE_ARGS += \
-		--enable-OMRTHREAD_LIB_UNIX \
-		--enable-OMR_ARCH_S390 \
-		--enable-OMR_ENV_DATA64 \
-		--enable-OMR_GC_CONCURRENT_SCAVENGER
-#		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
-#                --enable-OMR_RTTI
-endif
-
-ifeq (linux_ztpf_390-64_purec, $(SPEC))
-	CONFIGURE_ARGS += \
-		--enable-OMRTHREAD_LIB_UNIX \
-		--enable-OMR_ARCH_S390 \
-		--enable-OMR_ENV_DATA64
-#		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
-#                --enable-OMR_RTTI
-endif
-
-ifeq (linux_ztpf_390, $(SPEC))
-	CONFIGURE_ARGS += \
-		--enable-OMRTHREAD_LIB_UNIX \
-		--enable-OMR_ARCH_S390
-#		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
-#                --enable-OMR_RTTI
-endif
-
-ifeq (linux_ztpf_390_purec, $(SPEC))
-	CONFIGURE_ARGS += \
-		--enable-OMRTHREAD_LIB_UNIX \
-		--enable-OMR_ARCH_S390
-#		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
-#                --enable-OMR_RTTI
-endif
 
 CONFIGURE_ARGS += libprefix=lib exeext= solibext=.so arlibext=.a objext=.o
 
@@ -136,4 +57,10 @@ CONFIGURE_ARGS += 'RM=$(RM)'
 CONFIGURE_ARGS += 'OMR_HOST_OS=linux_ztpf'
 CONFIGURE_ARGS += 'OMR_HOST_ARCH=s390'
 CONFIGURE_ARGS += 'OMR_TARGET_DATASIZE=$(TEMP_TARGET_DATASIZE)'
+CONFIGURE_ARGS += 'OMR_BUILD_DATASIZE=$(TEMP_TARGET_DATASIZE)'
+CONFIGURE_ARGS += 'OMR_ENV_DATA64=1'
 CONFIGURE_ARGS += 'OMR_TOOLCHAIN=gcc'
+CONFIGURE_ARGS += 'OMR_BUILD_TOOLCHAIN=gcc'
+CONFIGURE_ARGS += 'OMR_TOOLS_CC=gcc'
+CONFIGURE_ARGS += 'OMR_TOOLS_CXX=g++'
+
