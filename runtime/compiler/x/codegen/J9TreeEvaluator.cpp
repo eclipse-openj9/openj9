@@ -11506,11 +11506,6 @@ VMgenerateCatchBlockBBStartPrologue(
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
 
-   if (comp->getOption(TR_FullSpeedDebug))
-      {
-      fenceInstruction->setNeedsGCMap(); // a catch entry is a gc point in FSD mode
-      }
-
    if (comp->getJittedMethodSymbol()->usesSinglePrecisionMode() &&
        cg->enableSinglePrecisionMethods())
       {
