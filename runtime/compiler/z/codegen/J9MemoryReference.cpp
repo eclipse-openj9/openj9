@@ -292,7 +292,7 @@ J9::Z::MemoryReference::createUnresolvedDataSnippetForiaload(TR::Node * node, TR
       isStore = true;
       }
    
-   TR::UnresolvedDataSnippet * uds = self()->createUnresolvedDataSnippet(node, cg, symRef, tempReg, isStore);
+   TR::UnresolvedDataSnippet * uds = createUnresolvedDataSnippet(node, cg, symRef, tempReg, isStore);
    self()->getUnresolvedSnippet()->createUnresolvedData(cg, _baseNode);
    self()->getUnresolvedSnippet()->getUnresolvedData()->setUnresolvedDataSnippet(self()->getUnresolvedSnippet());
    return uds;
@@ -321,7 +321,7 @@ J9::Z::MemoryReference::createUnresolvedSnippetWithNodeRegister(TR::Node * node,
       tempReg = cg->allocateRegister(TR_VRF);
       }
 
-   self()->createUnresolvedDataSnippet(node, cg, symRef, tempReg, false);
+   createUnresolvedDataSnippet(node, cg, symRef, tempReg, false);
 
    if (node->getOpCodeValue() == TR::loadaddr)
       {
