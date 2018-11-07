@@ -3896,15 +3896,16 @@ JVM_SetLength(jint fd, jlong length)
 #if defined(WIN32_IBMC)
 	printf("_JVM_SetLength@12 called but not yet implemented. Exiting.");
 	exit(43);
-#elif defined(WIN32)
+#elif defined(WIN32) /* defined(WIN32_IBMC) */
 	result = _chsize(fd, (long)length);
-#elif defined(J9UNIX) && !defined(J9ZTPF)
+#elif defined(J9UNIX) && !defined(J9ZTPF) && !defined(OSX) /* defined(WIN32_IBMC) */
 	result = ftruncate64(fd, length);
-#elif defined(J9ZOS390) || defined(J9ZTPF) || defined(OSX)
+#elif defined(J9ZOS390) || defined(J9ZTPF) || defined(OSX) /* defined(WIN32_IBMC) */
+	/* ftruncate64 is unsupported on OSX. */
 	result = ftruncate(fd, length);
-#else 
+#else /* defined(WIN32_IBMC) */
 #error "Please provide an implementation of jvm.c:JVM_SetLength(jint fd, jlong length)"
-#endif
+#endif /* defined(WIN32_IBMC) */
 
 	Trc_SC_SetLength_Exit(result);
 
@@ -3996,15 +3997,18 @@ JVM_Close(jint descriptor)
 jint JNICALL
 JVM_Available(jint descriptor, jlong* bytes)
 {
-	jlong curr=0;
-	jlong end=0;
+	jlong curr = 0;
+	jlong end = 0;
 
-#if defined(J9UNIX) && !defined(J9ZTPF)
-		struct stat64 tempStat;
-#endif
+	/* On OSX, stat64 and fstat64 are deprecated.
+	 * Thus, stat and fstat are used on OSX.
+	 */
+#if defined(J9UNIX) && !defined(J9ZTPF) && !defined(OSX)
+	struct stat64 tempStat;
+#endif /* defined(J9UNIX) && !defined(J9ZTPF) && !defined(OSX) */
 #if defined(J9ZOS390) || defined(J9ZTPF) || defined(OSX)
-		struct stat tempStat;
-#endif
+	struct stat tempStat;
+#endif /* defined(J9ZOS390) || defined(J9ZTPF) || defined(OSX) */
 #if defined(LINUX)
 	loff_t longResult = 0;
 #endif
@@ -4241,15 +4245,20 @@ jint JNICALL
 JVM_Open(const char* filename, jint flags, jint mode)
 {
 	int errorVal = 0;
-	jint returnVal;
-#if defined(J9UNIX) && !defined(J9ZTPF)
+	jint returnVal = 0;
+
+	/* On OSX, stat64 and fstat64 are deprecated.
+	 * Thus, stat and fstat are used on OSX.
+	 */
+#if defined(J9UNIX) && !defined(J9ZTPF) && !defined(OSX)
 	struct stat64 tempStat;
-	int doUnlink;
-#endif
+	int doUnlink = 0;
+#endif /* defined(J9UNIX) && !defined(J9ZTPF) && !defined(OSX) */
 #if defined(J9ZOS390) || defined(J9ZTPF) || defined(OSX)
 	struct stat tempStat;
-	int doUnlink;
-#endif
+	int doUnlink = 0;
+#endif /* defined(J9ZOS390) || defined(J9ZTPF) || defined(OSX) */
+
 	Trc_SC_Open_Entry(filename, flags, mode);
 
 #define JVM_EEXIST -100

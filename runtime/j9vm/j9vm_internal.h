@@ -62,11 +62,13 @@
 #include <sys/ioctl.h>
 #include <setjmp.h>
 #include <sys/time.h>
+
+/* On OSX, fstat64 is deprecated. So, fstat is used on OSX. */
 #if defined(J9ZTPF) || defined(OSX)
 #define J9FSTAT fstat
-#else /* defined(J9ZTPF) */
+#else /* defined(J9ZTPF) || defined(OSX) */
 #define J9FSTAT fstat64
-#endif /* !defined(J9ZTPF) */
+#endif /* defined(J9ZTPF) || defined(OSX) */
 #endif /* defined(J9UNIX) */
 
 
