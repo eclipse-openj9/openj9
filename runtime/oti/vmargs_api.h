@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,7 +48,12 @@
 #define ARG_ENCODING_LATIN 3
 
 #define ENV_LIBPATH "LIBPATH"
+
+#if defined(OSX)
+#define ENV_LD_LIB_PATH "DYLD_LIBRARY_PATH"
+#else /* defined(OSX) */
 #define ENV_LD_LIB_PATH "LD_LIBRARY_PATH"
+#endif /* defined(OSX) */
 
 /**
  * Walks the j9vm_args to find the entry for a given argument. optionValue can be
