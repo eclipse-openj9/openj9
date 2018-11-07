@@ -766,9 +766,6 @@ addJavaLibraryPath(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList
 		UDATA argEncoding, BOOLEAN jvmInSubdir, char *j9binPath, char *jrebinPath,
 		const char *libpathValue, const char *ldLibraryPathValue)
 {
-#if defined(J9UNIX) || defined(J9ZOS390)
-	IDATA envVarSize = 0;
-#endif
 	char *substringBuffer[MAX_LIBPATH_SUBSTRINGS];
 	BOOLEAN allocated[MAX_LIBPATH_SUBSTRINGS] = {FALSE};
 	char *pathBuffer = NULL;
