@@ -51,9 +51,6 @@
 #if defined(J9ZOS390)
 #include "atoe.h"
 #endif
-#if defined(RS6000) || defined(LINUX)
-#define J9UNIX
-#endif
 
 #define MAP_TWO_COLONS_TO_ONE 8
 #define EXACT_MAP_NO_OPTIONS 16

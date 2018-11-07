@@ -28,9 +28,6 @@
 extern "C" {
 #endif
 
-#if defined(RS6000) || defined(LINUX)
-#define J9UNIX
-#endif
 #if defined(IBM_MVS)
 /* J2SE class libraries include jvm.h but don't define J9ZOS390. We do that here on their behalf. */
 #ifndef J9ZOS390
@@ -61,15 +58,6 @@ extern "C" {
 
 #endif /* WIN32 */
 
-#if defined(J9UNIX)
-#ifndef __USE_LARGEFILE64
-#define __USE_LARGEFILE64
-#endif
-#include <unistd.h>
-#include <sys/param.h>
-#include <dirent.h>
-#endif /* defined(J9UNIX) */
-
 #ifdef J9ZOS390
 #include <ctype.h>
 #include <unistd.h>
@@ -88,6 +76,15 @@ extern "C" {
 
 #include <jni.h>
 #include "j9comp.h"		/* for definition */
+
+#if defined(J9UNIX)
+#ifndef __USE_LARGEFILE64
+#define __USE_LARGEFILE64
+#endif
+#include <unistd.h>
+#include <sys/param.h>
+#include <dirent.h>
+#endif /* defined(J9UNIX) */
 
 /* AIX has a #define for MAXPATHLEN in /usr/include/param.h which defines MAXPATHLEN as PATH_MAX+1 */
 #ifndef MAXPATHLEN
