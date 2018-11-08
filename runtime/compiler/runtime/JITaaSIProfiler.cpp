@@ -229,10 +229,10 @@ TR_JITaaSIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
    if (ipdata.empty()) // client didn't send us anything
       {
       _statsIProfilerInfoIsEmpty++;
-      // FIXME: distinguish between no info and invalidated entry
       if (doCache)
          {
          // cache some empty data so that we don't ask again for this method
+         // this method contains empty data
          if (!clientSessionData->cacheIProfilerInfo(method, byteCodeIndex, nullptr))
             _statsIProfilerInfoCachingFailures++;
          }
@@ -494,7 +494,7 @@ TR_JITaaSClientIProfiler::serializeIProfilerMethodEntries(uintptrj_t *pcEntries,
    }
 
 // Code executed at the client to serialize IProfiler info for an entire method
-void
+bool
 TR_JITaaSClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock*method, TR::Compilation *comp, JITaaS::J9ClientStream *client)
    {
    TR::StackMemoryRegion stackMemoryRegion(*comp->trMemory());
@@ -504,6 +504,7 @@ TR_JITaaSClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodB
    uintptrj_t methodStart = (uintptrj_t)TR::Compiler->mtd.bytecodeStart(method);
 
    uintptrj_t * pcEntries = nullptr;
+   bool abort = false;
    try {
       TR_ResolvedJ9Method resolvedj9method = TR_ResolvedJ9Method(method, comp->fej9(), comp->trMemory());
       TR_J9ByteCodeIterator bci(nullptr, &resolvedj9method, static_cast<TR_J9VMBase *> (comp->fej9()), comp);
@@ -514,8 +515,8 @@ TR_JITaaSClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodB
       // Walk all bytecodes and populate the sorted array of interesting PCs (pcEntries)
       // numEntries will indicate how many entries have been populated
       // These profiling entries have been 'locked' so we must remember to unlock them
-      bool abort = false;
       bytesFootprint = walkILTreeForIProfilingEntries(pcEntries, numEntries, &bci, method, BCvisit, abort, comp);
+
       if (numEntries && !abort)
          {
          // Serialize the entries
@@ -525,10 +526,11 @@ TR_JITaaSClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodB
          // send the information to the server
          client->write(buffer, true);
          }
-      else
+      else if (!numEntries && !abort)// Empty IProfiler data for this method
          {
          client->write(std::string(), true);
          }
+
       // release any entry that has been locked by us
       for (uint32_t i = 0; i < numEntries; i++)
          {
@@ -548,6 +550,7 @@ TR_JITaaSClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodB
          }
       throw;
       }
+      return abort;
    }
 
 std::string
