@@ -61,16 +61,10 @@ TR::IA32PrivateLinkage::IA32PrivateLinkage(TR::CodeGenerator *cg)
 
    for (int i = 0; i <= 7; i++)
       {
-      if (cg->useSSEForSinglePrecision())
-         _properties._registerFlags[TR::RealRegister::xmmIndex(i)] = 0;
-      else
-         _properties._registerFlags[TR::RealRegister::xmmIndex(i)] = Preserved; // TODO: Safe assumption?
+      _properties._registerFlags[TR::RealRegister::xmmIndex(i)] = 0;
       }
 
-   if (cg->useSSEForSinglePrecision() || cg->useSSEForDoublePrecision())
-      _properties._registerFlags[TR::RealRegister::xmm0] = FloatReturn;
-   else
-      _properties._registerFlags[TR::RealRegister::st0]  = FloatReturn;
+   _properties._registerFlags[TR::RealRegister::xmm0] = FloatReturn;
 
    _properties._preservedRegisters[0] = TR::RealRegister::ebx;
    _properties._preservedRegisters[1] = TR::RealRegister::ecx;
@@ -88,12 +82,7 @@ TR::IA32PrivateLinkage::IA32PrivateLinkage(TR::CodeGenerator *cg)
    _properties._firstFloatArgumentRegister   = 0;
 
    _properties._returnRegisters[0] = TR::RealRegister::eax;
-
-   if (cg->useSSEForDoublePrecision())
-      _properties._returnRegisters[1] = TR::RealRegister::xmm0;
-   else
-      _properties._returnRegisters[1] = TR::RealRegister::st0;
-
+   _properties._returnRegisters[1] = TR::RealRegister::xmm0;
    _properties._returnRegisters[2] = TR::RealRegister::edx;
 
    _properties._scratchRegisters[0] = TR::RealRegister::edi;

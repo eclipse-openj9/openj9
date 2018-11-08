@@ -1118,15 +1118,6 @@ TR::X86PrivateLinkage::buildDirectDispatch(
    //
    buildCallArguments(site);
 
-   if (spillFPRegs && !cg()->useSSEForDoublePrecision())
-      {
-      // Force the FP register stack to be spilled.
-      //
-      TR::RegisterDependencyConditions *fpSpillDependency = generateRegisterDependencyConditions(1, 0, cg());
-      fpSpillDependency->addPreCondition(NULL, TR::RealRegister::AllFPRegisters, cg());
-      generateInstruction(FPREGSPILL, callNode, fpSpillDependency, cg());
-      }
-
    // Remember where internal control flow region should start,
    // and create labels
    //
@@ -1664,15 +1655,6 @@ TR::Register *TR::X86PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
    //
    buildCallArguments(site);
 
-   if (!cg()->useSSEForDoublePrecision())
-      {
-      // Force the FP register stack to be spilled.
-      //
-      TR::RegisterDependencyConditions *fpSpillDependency = generateRegisterDependencyConditions(1, 0, cg());
-      fpSpillDependency->addPreCondition(NULL, TR::RealRegister::AllFPRegisters, cg());
-      generateInstruction(FPREGSPILL, callNode, fpSpillDependency, cg());
-      }
-
    // If receiver could be NULL, must evaluate it before the call
    // so any exception occurs before the call.
    // Might as well do it outside the internal control flow.
@@ -2100,7 +2082,7 @@ bool TR::X86PrivateLinkage::buildVirtualGuard(TR::X86CallSite &site, TR::LabelSy
          {
          TR_VirtualGuard* HCRGuard = TR_VirtualGuard::createGuardedDevirtualizationGuard(TR_HCRGuard, comp(), callNode);
          TR::Instruction *HCRpatchable = generateVirtualGuardNOPInstruction(callNode, HCRGuard->addNOPSite(), NULL, revirtualizeLabel, cg());
-	      if (TR::Compiler->target.isSMP())
+         if (TR::Compiler->target.isSMP())
             generatePatchableCodeAlignmentInstruction(vgnopAtomicRegions, HCRpatchable, cg());
          }
       return true;
@@ -2309,7 +2291,7 @@ TR::Register *TR::X86PrivateLinkage::buildCallPostconditions(TR::X86CallSite &si
       case TR::Float:
       case TR::Double:
          returnRegIndex  = getProperties().getFloatReturnRegister();
-         returnKind      = cg()->useSSEFor(callNode->getDataType())? TR_FPR : TR_X87;
+         returnKind      = TR_FPR;
          break;
       }
 
@@ -2377,22 +2359,19 @@ TR::Register *TR::X86PrivateLinkage::buildCallPostconditions(TR::X86CallSite &si
             }
          }
 
-      if (cg()->useSSEForSinglePrecision() || cg()->useSSEForDoublePrecision())
+      TR_LiveRegisters *lr = cg()->getLiveRegisters(TR_FPR);
+      if(!lr || lr->getNumberOfLiveRegisters() > 0)
          {
-         TR_LiveRegisters *lr = cg()->getLiveRegisters(TR_FPR);
-         if(!lr || lr->getNumberOfLiveRegisters() > 0)
+         for (regIndex = TR::RealRegister::FirstXMMR; regIndex <= TR::RealRegister::LastXMMR; regIndex = (TR::RealRegister::RegNum)(regIndex + 1))
             {
-            for (regIndex = TR::RealRegister::FirstXMMR; regIndex <= TR::RealRegister::LastXMMR; regIndex = (TR::RealRegister::RegNum)(regIndex + 1))
+            TR_ASSERT(regIndex != highReturnRegIndex, "highReturnRegIndex should not be an XMM register.");
+            if ((regIndex != returnRegIndex) && !properties.isPreservedRegister(regIndex))
                {
-               TR_ASSERT(regIndex != highReturnRegIndex, "assertion failure");
-               if ((regIndex != returnRegIndex) && !properties.isPreservedRegister(regIndex))
-                  {
-                  TR::Register *dummy = cg()->allocateRegister(TR_FPR);
-                  dummy->setPlaceholderReg();
-                  dependencies->addPostCondition(dummy, regIndex, cg());
-                  cg()->stopUsingRegister(dummy);
-		            }
-		         }
+               TR::Register *dummy = cg()->allocateRegister(TR_FPR);
+               dummy->setPlaceholderReg();
+               dependencies->addPostCondition(dummy, regIndex, cg());
+               cg()->stopUsingRegister(dummy);
+               }
             }
          }
       }
