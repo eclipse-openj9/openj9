@@ -2168,8 +2168,7 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
        (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_PUT_FIELD) ||
        (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_GET_STATIC_FIELD) ||
        (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_PUT_STATIC_FIELD) ||
-       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_SINGLE_STEP) ||
-       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_EXCEPTION_CATCH))
+       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_SINGLE_STEP))
       {
         static bool TR_DisableFullSpeedDebug = feGetEnv("TR_DisableFullSpeedDebug")?1:0;
       #if defined(J9VM_JIT_FULL_SPEED_DEBUG)
@@ -2191,10 +2190,20 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
       #endif
       }
 
-   if ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_EXCEPTION_CATCH) ||
-       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_EXCEPTION_THROW))
+   bool exceptionEventHooked = false;
+   if ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_EXCEPTION_CATCH))
+      {
+      jitConfig->jitExceptionCaught = jitExceptionCaught;
+      exceptionEventHooked = true;
+      }
+   if ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_EXCEPTION_THROW))
+      {
+      exceptionEventHooked = true;
+      }
+   if (exceptionEventHooked)
       {
       self()->setOption(TR_DisableThrowToGoto);
+      self()->setReportByteCodeInfoAtCatchBlock();
       doAOT = false;
       }
 
