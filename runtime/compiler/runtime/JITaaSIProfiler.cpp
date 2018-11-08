@@ -44,14 +44,14 @@ TR_JITaaSIProfiler::TR_JITaaSIProfiler(J9JITConfig *jitConfig)
    }
 
 TR_IPMethodHashTableEntry *
-deserializeMethodEntry(TR_ContiguousIPMethodHashTableEntry *serialEntry)
+TR_JITaaSIProfiler::deserializeMethodEntry(TR_ContiguousIPMethodHashTableEntry *serialEntry, TR_Memory *trMemory)
    {
-   // TODO when caching don't use heap mem
-   TR_IPMethodHashTableEntry *entry = (TR_IPMethodHashTableEntry *)TR::comp()->trMemory()->allocateHeapMemory(sizeof(TR_IPMethodHashTableEntry));
+   // caching is done inside TR_ResolvedJ9JITaaSServerMethod so we need to use heap memory.
+   TR_IPMethodHashTableEntry *entry = (TR_IPMethodHashTableEntry *) trMemory->allocateHeapMemory(sizeof(TR_IPMethodHashTableEntry));
    if (entry)
       {
       memset(entry, 0, sizeof(TR_IPMethodHashTableEntry));
-      entry->_next = nullptr; // TODO: set this if caching locally
+      entry->_next = nullptr;
       entry->_method = serialEntry->_method;
       entry->_otherBucket = serialEntry->_otherBucket;
 
@@ -60,8 +60,7 @@ deserializeMethodEntry(TR_ContiguousIPMethodHashTableEntry *serialEntry)
          if (serialEntry->_callers[callerCount]._method == nullptr)
             break;
 
-      // TODO when caching don't use heap mem
-      TR_IPMethodData *callerStore = (TR_IPMethodData*)TR::comp()->trMemory()->allocateHeapMemory(callerCount * sizeof(TR_IPMethodData));
+      TR_IPMethodData *callerStore = (TR_IPMethodData*) trMemory->allocateHeapMemory(callerCount * sizeof(TR_IPMethodData));
       if (callerStore)
          {
          TR_IPMethodData *caller = &entry->_caller;
@@ -147,14 +146,14 @@ TR_JITaaSIProfiler::searchForMethodSample(TR_OpaqueMethodBlock *omb, int32_t buc
       {
       return nullptr;
       }
-   stream->write(JITaaS::J9ServerMessageType::IProfiler_searchForMethodSample, omb, bucket);
+   stream->write(JITaaS::J9ServerMessageType::IProfiler_searchForMethodSample, omb);
    const std::string entryStr = std::get<0>(stream->read<std::string>());
    if (entryStr.empty())
       {
       return nullptr;
       }
    const auto serialEntry = (TR_ContiguousIPMethodHashTableEntry*) &entryStr[0];
-   return deserializeMethodEntry(serialEntry);
+   return deserializeMethodEntry(serialEntry, TR::comp()->trMemory());
    }
 
 // This method is used to search only the hash table
@@ -548,6 +547,23 @@ TR_JITaaSClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodB
             cgEntry->releaseEntry();
          }
       throw;
+      }
+   }
+
+std::string
+TR_JITaaSClientIProfiler::serializeIProfilerMethodEntry(TR_OpaqueMethodBlock *omb)
+   {
+   // find entry in a hash table, if it exists
+   auto entry = findOrCreateMethodEntry(nullptr, (J9Method *) omb, false);
+   if (entry)
+      {
+      auto serialEntry = TR_ContiguousIPMethodHashTableEntry::serialize(entry);
+      std::string entryStr((char *) &serialEntry, sizeof(TR_ContiguousIPMethodHashTableEntry));
+      return entryStr;
+      }
+   else
+      {
+      return std::string();
       }
    }
 

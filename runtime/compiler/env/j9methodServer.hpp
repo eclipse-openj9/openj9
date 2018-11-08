@@ -26,6 +26,7 @@
 #include "env/j9method.h"
 #include "env/PersistentCollections.hpp"
 #include "control/JITaaSCompilationThread.hpp"
+#include "runtime/JITaaSIProfiler.hpp"
 
 struct
 TR_J9MethodFieldAttributes
@@ -64,8 +65,8 @@ TR_ResolvedJ9JITaaSServerMethodInfoStruct
    J9ClassLoader *classLoader;
    }; 
 
-// The last 2 strings are serialized versions of jittedBodyInfo and persistentMethodInfo
-using TR_ResolvedJ9JITaaSServerMethodInfo = std::tuple<TR_ResolvedJ9JITaaSServerMethodInfoStruct, std::string, std::string>;
+// The last 3 strings are serialized versions of jittedBodyInfo, persistentMethodInfo and TR_ContiguousIPMethodHashTableInfo
+using TR_ResolvedJ9JITaaSServerMethodInfo = std::tuple<TR_ResolvedJ9JITaaSServerMethodInfoStruct, std::string, std::string, std::string>;
 
 struct
 TR_RemoteROMStringKey
@@ -200,6 +201,8 @@ public:
    virtual void setClassForNewInstance(J9Class *c) override;
    virtual TR_OpaqueClassBlock * classOfMethod() override;
    virtual TR_PersistentJittedBodyInfo *getExistingJittedBodyInfo() override;
+   virtual void getFaninInfo(uint32_t *count, uint32_t *weight, uint32_t *otherBucketWeight = nullptr) override;
+   virtual bool getCallerWeight(TR_ResolvedJ9Method *caller, uint32_t *weight, uint32_t pcIndex=~0) override;
 
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
    bool inROMClass(void *address);
@@ -220,6 +223,10 @@ private:
    bool _virtualMethodIsOverridden; // cached information coming from client
    TR_PersistentJittedBodyInfo *_bodyInfo; // cached info coming from the client; uses heap memory
                                            // If method is not yet compiled this is null
+   UnorderedMap<uint32_t, TR_J9MethodFieldAttributes> _fieldAttributesCache; 
+   UnorderedMap<uint32_t, TR_J9MethodFieldAttributes> _staticAttributesCache; 
+   UnorderedMap<TR_ResolvedMethodKey, TR_ResolvedMethodCacheEntry> _resolvedMethodsCache;
+   TR_IPMethodHashTableEntry *_iProfilerMethodEntry;
 
    char* getROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
    char* getRemoteROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
@@ -227,9 +234,6 @@ private:
    void setAttributes(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, uint32_t vTableSlot, TR::CompilationInfoPerThread *threadCompInfo, const TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo);
    void cacheResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedMethod *resolvedMethod, bool *unresolvedInCP);
    bool getCachedResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedMethod **resolvedMethod, bool *unresolvedInCP);
-   UnorderedMap<uint32_t, TR_J9MethodFieldAttributes> _fieldAttributesCache; 
-   UnorderedMap<uint32_t, TR_J9MethodFieldAttributes> _staticAttributesCache; 
-   UnorderedMap<TR_ResolvedMethodKey, TR_ResolvedMethodCacheEntry> _resolvedMethodsCache;
    };
 
 #endif // J9METHODSERVER_H
