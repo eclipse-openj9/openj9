@@ -30,6 +30,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -40,12 +42,12 @@ import java.util.Objects;
 import org.openj9.test.util.StringPrintStream;
 import org.testng.log4testng.Logger;
 
-import com.ibm.tools.attach.target.AttachHandler;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 import com.sun.tools.attach.spi.AttachProvider;
 
 @SuppressWarnings("nls")
 class TargetManager {
+	static final String COM_IBM_TOOLS_ATTACH_TARGET_ATTACH_HANDLER = "com.ibm.tools.attach.target.AttachHandler";
 	private static Logger logger = Logger.getLogger(TargetManager.class);
 	public static final String PID_PREAMBLE = "pid=";
 	public static final String VMID_PREAMBLE = "vmid=";
@@ -70,7 +72,7 @@ class TargetManager {
 	private static final String DEFAULT_IPC_DIR = ".com_ibm_tools_attach";
 	public TargetStatus targetVmStatus;
 	private boolean active = true;
-
+	
 	public TargetStatus getTargetVmStatus() {
 		return targetVmStatus;
 	}
@@ -431,30 +433,36 @@ class TargetManager {
 	 * deleting
 	 */
 	public static void dumpLogs(boolean printLogs) {
-		logger.debug("Dumping attach API logs");
-		File pwd = new File(System.getProperty("user.dir"));
-		File[] logFiles = pwd.listFiles();
-		String myLog = AttachHandler.getVmId() + ".log";
-		for (File f : logFiles) {
-			String logName = f.getName();
-			if (logName.equalsIgnoreCase("smit.log")) {
-				continue; /* AIX system log */
-			}
-			if (logName.endsWith(".log")) {
-				if (printLogs) {
-					try {
-						logger.debug("Log file " + f.getName()+":\n" 
-								+ (new String(Files.readAllBytes(Paths.get(f.toURI())))));
-					} catch (IOException e) {
-						StringPrintStream.logStackTrace(e, logger);
+		try {
+			Class<?> attachHandlerClass = Class.forName(COM_IBM_TOOLS_ATTACH_TARGET_ATTACH_HANDLER);
+			logger.debug("Dumping attach API logs");
+			File pwd = new File(System.getProperty("user.dir"));
+			File[] logFiles = pwd.listFiles();
+			final Method getVmId = attachHandlerClass.getMethod("getVmId");
+			String myLog = getVmId.invoke(attachHandlerClass) + ".log";
+			for (File f : logFiles) {
+				String logName = f.getName();
+				if (logName.equalsIgnoreCase("smit.log")) {
+					continue; /* AIX system log */
+				}
+				if (logName.endsWith(".log")) {
+					if (printLogs) {
+						try {
+							logger.debug("Log file " + f.getName()+":\n" 
+									+ (new String(Files.readAllBytes(Paths.get(f.toURI())))));
+						} catch (IOException e) {
+							StringPrintStream.logStackTrace(e, logger);
+						}
+					}
+					if (!logName.equalsIgnoreCase(myLog)) {
+						if (!f.delete()) {
+							logger.error("could not delete " + f.getName());
+						}
 					}
 				}
-				if (!logName.equalsIgnoreCase(myLog)) {
-					if (!f.delete()) {
-						logger.error("could not delete " + f.getName());
-					}
-				}
 			}
+		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e1) {
+			logger.error("could not load or use " + COM_IBM_TOOLS_ATTACH_TARGET_ATTACH_HANDLER);
 		}
 	}
 

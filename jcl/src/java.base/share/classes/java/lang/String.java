@@ -1347,9 +1347,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		byte[] s1Value = s1.value;
 		byte[] s2Value = s2.value;
-		
-		s1Value.getClass(); // Implicit null check
-		s2Value.getClass(); // Implicit null check
 
 		if (enableCompression && (null == compressionFlag || (s1.coder | s2.coder) == LATIN1)) {
 			while (o1 < end) {
@@ -1416,9 +1413,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		
 		byte[] s1Value = s1.value;
 		byte[] s2Value = s2.value;
-		
-		s1Value.getClass(); // Implicit null check
-		s2Value.getClass(); // Implicit null check
 
 		if (enableCompression && (null == compressionFlag || (s1.coder | s2.coder) == LATIN1)) {
 			while (o1 < end) {
@@ -2017,6 +2011,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * @see #lastIndexOf(String, int)
 	 */
 	public int indexOf(String subString, int start) {
+		if (subString.length() == 1) {
+			return indexOf(subString.charAtInternal(0), start);
+		}
+		
 		return indexOf(value, coder, lengthInternal(), subString, start);
 	}
 
@@ -2105,8 +2103,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 			if (c >= 0 && c <= Character.MAX_VALUE) {
 				byte[] array = value;
-				
-				array.getClass(); // Implicit null check
 				
 				// Check if the String is compressed
 				if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
@@ -2842,8 +2838,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		int last = lengthInternal() - 1;
 		int end = last;
 
-		value.getClass(); // Implicit null check
-
 		// Check if the String is compressed
 		if (enableCompression &&  (null == compressionFlag || coder == LATIN1)) {
 			while ((start <= end) && (helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(value, start)) <= ' ')) {
@@ -3238,7 +3232,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 			final boolean compressed = enableCompression &&  (null == compressionFlag || coder == LATIN1);
 
-			chars.getClass();
 			int start = 0, current = 0, end = lengthInternal();
 			if (regex.lengthInternal() == 1) {
 				char splitChar = regex.charAtInternal(0);
@@ -3259,7 +3252,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				byte[]
 				splitChars = regex.value;
 
-				splitChars.getClass();
 				char firstChar = charAtInternal(0, regex.value);
 				while (current < end) {
 					if (charAtInternal(current, chars) == firstChar) {
@@ -5340,9 +5332,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		char[] s1Value = s1.value;
 		char[] s2Value = s2.value;
-		
-		s1Value.getClass(); // Implicit null check
-		s2Value.getClass(); // Implicit null check
 
 		if (enableCompression && (null == compressionFlag || (s1.count | s2.count) >= 0)) {
 			while (o1 < end) {
@@ -5404,9 +5393,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		
 		char[] s1Value = s1.value;
 		char[] s2Value = s2.value;
-		
-		s1Value.getClass(); // Implicit null check
-		s2Value.getClass(); // Implicit null check
 
 		if (enableCompression && (null == compressionFlag || (s1.count | s2.count) >= 0)) {
 			while (o1 < end) {
@@ -5964,8 +5950,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 			if (c >= 0 && c <= Character.MAX_VALUE) {
 				char[] array = value;
-				
-				array.getClass(); // Implicit null check
 
 				// Check if the String is compressed
 				if (enableCompression && (null == compressionFlag || count >= 0)) {
@@ -6033,6 +6017,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * @see #lastIndexOf(String, int)
 	 */
 	public int indexOf(String subString, int start) {
+		if (subString.length() == 1) {
+			return indexOf(subString.charAtInternal(0), start);
+		}
+		
 		if (start < 0) {
 			start = 0;
 		}
@@ -6051,33 +6039,14 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			char[] s1Value = s1.value;
 			char[] s2Value = s2.value;
 
-			s1Value.getClass(); // Implicit null check
-			s2Value.getClass(); // Implicit null check
-
 			if (enableCompression && (null == compressionFlag || (s1.count | s2.count) >= 0)) {
-				char firstChar = helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(s2Value, 0));
-
-				while (true) {
-					int i = indexOf(firstChar, start);
-
-					// Handles subCount > count || start >= count
-					if (i == -1 || s2len + i > s1len) {
-						return -1;
-					}
-
-					int o1 = i;
-					int o2 = 0;
-
-					while (++o2 < s2len && helpers.getByteFromArrayByIndex(s1Value, ++o1) == helpers.getByteFromArrayByIndex(s2Value, o2))
-						;
-
-					if (o2 == s2len) {
-						return i;
-					}
-
-					start = i + 1;
-				}
+				// both s1 and s2 are compressed
+				return helpers.intrinsicIndexOfStringLatin1(s1Value, s1len, s2Value, s2len, start);
+			} else if (s1.count < 0 && s2.count < 0) {
+				// both s1 and s2 are decompressed
+				return helpers.intrinsicIndexOfStringUTF16(s1Value, s1len, s2Value, s2len, start);
 			} else {
+				// s1 decompressed and s2 compressed
 				char firstChar = s2.charAtInternal(0, s2Value);
 
 				while (true) {
@@ -6156,8 +6125,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 			if (c >= 0 && c <= Character.MAX_VALUE) {
 				char[] array = value;
-				
-				array.getClass(); // Implicit null check
 				
 				// Check if the String is compressed
 				if (enableCompression && (null == compressionFlag || count >= 0)) {
@@ -6249,9 +6216,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 				char[] s1Value = s1.value;
 				char[] s2Value = s2.value;
-
-				s1Value.getClass(); // Implicit null check
-				s2Value.getClass(); // Implicit null check
 
 				if (enableCompression && (null == compressionFlag || (s1.count | s2.count) >= 0)) {
 					char firstChar = helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(s2Value, 0));
@@ -6456,9 +6420,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		char[] s1Value = s1.value;
 		char[] s2Value = s2.value;
-
-		s1Value.getClass(); // Implicit null check
-		s2Value.getClass(); // Implicit null check
 
 		if (enableCompression && (null == compressionFlag || (s1.count | s2.count) >= 0)) {
 			while (o1 < end) {
@@ -6803,8 +6764,6 @@ written authorization of the copyright holder.
 
 		StringBuilder builder = null;
 
-		value.getClass(); // Implicit null check
-
 		int len = lengthInternal();
 
 		for (int i = 0; i < len; i++) {
@@ -7139,8 +7098,6 @@ written authorization of the copyright holder.
 
 		StringBuilder builder = null;
 
-		value.getClass(); // Implicit null check
-
 		int len = lengthInternal();
 
 		for (int i = 0; i < len; i++) {
@@ -7219,8 +7176,6 @@ written authorization of the copyright holder.
 		int start = 0;
 		int last = lengthInternal() - 1;
 		int end = last;
-
-		value.getClass(); // Implicit null check
 
 		// Check if the String is compressed
 		if (enableCompression &&  (null == compressionFlag || count >= 0)) {
@@ -7579,12 +7534,10 @@ written authorization of the copyright holder.
 			}
 			java.util.ArrayList<String> parts = new java.util.ArrayList<String>((max > 0 && max < 100) ? max : 10);
 
-			char[]
-			chars = this.value;
+			char[] chars = this.value;
 
 			final boolean compressed = enableCompression &&  (null == compressionFlag || count >= 0);
 
-			chars.getClass();
 			int start = 0, current = 0, end = lengthInternal();
 			if (regex.lengthInternal() == 1) {
 				char splitChar = regex.charAtInternal(0);
@@ -7602,10 +7555,8 @@ written authorization of the copyright holder.
 			} else {
 				int rLength = regex.lengthInternal();
 
-				char[]
-				splitChars = regex.value;
+				char[] splitChars = regex.value;
 
-				splitChars.getClass();
 				char firstChar = charAtInternal(0, regex.value);
 				while (current < end) {
 					if (charAtInternal(current, chars) == firstChar) {

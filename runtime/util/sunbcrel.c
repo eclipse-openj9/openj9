@@ -225,8 +225,8 @@ const unsigned char sunJavaByteCodeRelocation[] = {
 0x0D /* JBgotow = 200 */ ,
 0x0D /* JBjsrw = 201 */ ,
 0x01 /* JBbreakpoint = 202 */ ,
-0x01 /* JBunimplemented = 203 */ ,
-0x01 /* JBunimplemented = 204 */ ,
+0x01 /* JBdefaultvalue = 203 */ ,
+0x0B /* JBwithfield = 204 */ ,
 0x01 /* JBunimplemented = 205 */ ,
 0x01 /* JBunimplemented = 206 */ ,
 0x01 /* JBunimplemented = 207 */ ,
@@ -246,15 +246,9 @@ const unsigned char sunJavaByteCodeRelocation[] = {
 0x01 /* JBunimplemented = 221 */ ,
 0x01 /* JBunimplemented = 222 */ ,
 0x01 /* JBunimplemented = 223 */ ,
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-0x01 /* JBdefaultvalue = 224 */ ,
-0x01 /* JBunimplemented = 225 */ ,
-0x0B /* JBwithfield = 226 */ ,
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 0x01 /* JBunimplemented = 224 */ ,
 0x01 /* JBunimplemented = 225 */ ,
 0x01 /* JBunimplemented = 226 */ ,
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 0x01 /* JBunimplemented = 227 */ ,
 0x01 /* JBunimplemented = 228 */ ,
 0x01 /* JBunimplemented = 229 */ ,

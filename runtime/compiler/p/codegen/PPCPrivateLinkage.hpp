@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -82,22 +82,9 @@ class PPCPrivateLinkage : public TR::Linkage
          TR::RegisterDependencyConditions *dependencies,
          uint32_t sizeOfArguments);
 
-   // shrinkwrapping
-   virtual bool mapPreservedRegistersToStackOffsets(int32_t *mapRegsToStack, int32_t &numPreserved, TR_BitVector *&);
-   virtual int32_t getRegisterSaveSize() { return _registerSaveSize; }
-   void setRegisterSaveSize(int32_t v) { _registerSaveSize = v; }
-   int32_t getStackOffsetForReg(int32_t regIndex) { return _mapRegsToStack[regIndex]; }
-   void setStackOffsetForReg(int32_t regIndex, int32_t offset) { _mapRegsToStack[regIndex] = offset; }
-   virtual TR::Instruction *savePreservedRegister(TR::Instruction *cursor, int32_t regIndex, int32_t offset);
-   virtual TR::Instruction *restorePreservedRegister(TR::Instruction *cursor, int32_t regIndex, int32_t offset);
-   virtual TR::Instruction *composeSavesRestores(TR::Instruction *start, int32_t firstReg, int32_t lastReg, int32_t offset, int32_t numRegs, bool doSaves);
-
    protected:
 
    TR::PPCLinkageProperties _properties;
-
-   int32_t _registerSaveSize;
-   int32_t *_mapRegsToStack;
 
    int32_t buildPrivateLinkageArgs(
          TR::Node *callNode,

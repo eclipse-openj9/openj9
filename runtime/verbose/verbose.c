@@ -20,11 +20,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-
 #include <string.h>
 
 #include "j9.h"
-#include "verbose.h"
+#include "verbose_api.h"
 #include "omrlinkedlist.h"
 #include "VerboseGCInterface.h"
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
@@ -360,7 +359,7 @@ printClassShape(J9VMThread* vmThread, J9Class* clazz)
 							J9UTF8_LENGTH(signature),
 							NULL, /* defining class return value */
 							NULL, /* romFieldShape return value */
-							J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
+							J9_LOOK_NO_JAVA);
 							
 						offset /= sizeof(U_32);
 							

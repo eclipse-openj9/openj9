@@ -246,7 +246,7 @@ printSharedCache(void* element, void* param)
 		if (state->printIntro) {
 			char cacheDir[J9SH_MAXPATH];
 
-			SH_OSCache::getCacheDir(PORTLIB, state->ctrlDirName, cacheDir, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_PERSISTENT);
+			SH_OSCache::getCacheDir(state->vm, state->ctrlDirName, cacheDir, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_PERSISTENT);
 			j9tty_printf(PORTLIB, "\n");
 			CLM_TRACE1_NOTAG(J9NLS_SHRC_INFO_LISTING_FOR_CACHEDIR, cacheDir);
 			j9tty_printf(PORTLIB, "\n");
@@ -605,7 +605,7 @@ j9shr_destroy_all_cache(struct J9JavaVM* vm, const char* ctrlDirName, UDATA grou
 		return -1;
 	}
 	
-	SH_OSCache::getCacheDir(PORTLIB, ctrlDirName, cacheDir, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_PERSISTENT);
+	SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDir, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_PERSISTENT);
 	j9tty_printf(PORTLIB, "\n");
 	CLM_TRACE1_NOTAG(J9NLS_SHRC_INFO_DESTROYING_FOR_CACHEDIR, cacheDir);
 	j9tty_printf(PORTLIB, "\n");
@@ -651,7 +651,7 @@ j9shr_destroy_all_snapshot(struct J9JavaVM* vm, const char* ctrlDirName, UDATA g
 		return -1;
 	}
 
-	if (-1 == SH_OSCache::getCacheDir(PORTLIB, ctrlDirName, cacheDir, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_SNAPSHOT)) {
+	if (-1 == SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDir, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_SNAPSHOT)) {
 		Trc_SHR_CLM_j9shr_destroy_all_snapshot_getCacheDirFailed();
 		CLM_TRACE(J9NLS_SHRC_GETSNAPSHOTDIR_FAILED);
 		return -1;
@@ -770,7 +770,7 @@ j9shr_destroy_cache(struct J9JavaVM* vm, const char* ctrlDirName, UDATA verboseF
 		return J9SH_DESTROYED_NONE;
 	}
 
-	if (SH_OSCache::getCacheDir(PORTLIB, ctrlDirName, cacheDirName, J9SH_MAXPATH, versionData->cacheType) == -1) {
+	if (SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDirName, J9SH_MAXPATH, versionData->cacheType) == -1) {
 		Trc_SHR_CLM_j9shr_destroy_cache_getCacheDirFailed();
 		CLM_TRACE1(J9NLS_SHRC_CLCM_FAILED_REMOVED, cacheName);
 		return J9SH_DESTROYED_NONE;
@@ -973,7 +973,7 @@ j9shr_destroy_snapshot(struct J9JavaVM* vm, const char* ctrlDirName, UDATA verbo
 	
 	Trc_SHR_CLM_j9shr_destroy_snapshot_Entry(verboseFlags, snapshotName, generationStart, generationEnd);
 
-	if (-1 == SH_OSCache::getCacheDir(PORTLIB, ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_SNAPSHOT)) {
+	if (-1 == SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_SNAPSHOT)) {
 		Trc_SHR_CLM_j9shr_destroy_snapshot_getCacheDirFailed();
 		CLM_TRACE(J9NLS_SHRC_GETSNAPSHOTDIR_FAILED);
 		returnVal = J9SH_DESTROYED_NONE;

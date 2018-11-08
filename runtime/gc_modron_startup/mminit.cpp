@@ -2648,7 +2648,7 @@ configurateGCWithPolicyAndOptionsStandard(MM_EnvironmentBase *env)
 			 * - select Concurrent Scavenger Page size based at estimated Nursery size: if should be rounded up to next power of 2 but not smaller then 32M
 			 * - select region size as a Concurrent Scavenger Page Section size
 			 */
-			if (extensions->isConcurrentScavengerEnabled()) {
+			if (extensions->isConcurrentScavengerHWSupported()) {
 				OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 				/* Default maximum Nursery size estimation in case of none of -Xmn* options is specified */
 				uintptr_t nurserySize = extensions->memoryMax / 4;
@@ -2853,15 +2853,19 @@ gcInitializeDefaults(J9JavaVM* vm)
 	if (gc_policy_gencon == extensions->configurationOptions._gcPolicy) {
 		/* after we parsed cmd line options, check if we can obey the request to run CS (valid for Gencon only) */
 		if (extensions->concurrentScavengerForced) {
+#if defined(J9VM_ARCH_X86)
+			extensions->softwareRangeCheckReadBarrier = true;
+#endif /* J9VM_ARCH_X86 */
 			if (LOADED == (FIND_DLL_TABLE_ENTRY(J9_JIT_DLL_NAME)->loadFlags & LOADED)) {
 				/* If running jitted, it must be on supported h/w */
 				J9ProcessorDesc  processorDesc;
 				j9sysinfo_get_processor_description(&processorDesc);
-				if ((j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_GUARDED_STORAGE) &&
-						j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_SIDE_EFFECT_ACCESS))
-						|| (extensions->softwareEvacuateReadBarrier)) {
-					extensions->concurrentScavenger = true;
-				}
+				bool hwSupported = j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_GUARDED_STORAGE) &&
+						j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_SIDE_EFFECT_ACCESS);
+
+				/* Software Barrier request overwrites HW usage */
+				extensions->concurrentScavengerHWSupport = hwSupported && !extensions->softwareRangeCheckReadBarrier;
+				extensions->concurrentScavenger = hwSupported || extensions->softwareRangeCheckReadBarrier;
 			} else {
 				/* running interpreted is ok on any h/w */
 				extensions->concurrentScavenger = true;
@@ -2970,9 +2974,9 @@ hookAcquireVMAccess(J9HookInterface** hook, UDATA eventNum, void* voidEventData,
 jint
 triggerGCInitialized(J9VMThread* vmThread)
 {
-	J9JavaVM* javaVM = vmThread->javaVM;
-	PORT_ACCESS_FROM_JAVAVM(javaVM);
-	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
+	J9JavaVM* vm = vmThread->javaVM;
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vm);
 
 	UDATA beatMicro = 0;
 	UDATA timeWindowMicro = 0;
@@ -2994,17 +2998,17 @@ triggerGCInitialized(J9VMThread* vmThread)
 
 	UDATA arrayletLeafSize = 0;
 #if defined(J9VM_GC_ARRAYLETS)
-	arrayletLeafSize = javaVM->arrayletLeafSize;
+	arrayletLeafSize = vm->arrayletLeafSize;
 #endif
 
 	TRIGGER_J9HOOK_MM_OMR_INITIALIZED(
 		extensions->omrHookInterface,
 		vmThread->omrVMThread,
 		j9time_hires_clock(),
-		j9gc_get_gcmodestring(javaVM),
-		extensions->isConcurrentScavengerEnabled(),
-		j9gc_get_maximum_heap_size(javaVM),
-		j9gc_get_initial_heap_size(javaVM),
+		j9gc_get_gcmodestring(vm),
+		0, /* unused */
+		j9gc_get_maximum_heap_size(vm),
+		j9gc_get_initial_heap_size(vm),
 		j9sysinfo_get_physical_memory(),
 		j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_ONLINE),
 		extensions->gcThreadCount,

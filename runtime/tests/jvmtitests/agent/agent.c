@@ -135,7 +135,7 @@ runTest(agentEnv *env, char * options)
 	test = getTest(env->testName);
 
 	if (NULL != test) {
-		rc = test->fn(env, NULL);
+		rc = test->fn(env, env->testArgs);
 	} else {
 		error(env, JVMTI_ERROR_ILLEGAL_ARGUMENT, "Unknown testcase: [%s]\n", env->testName);
 		rc = JNI_ERR;

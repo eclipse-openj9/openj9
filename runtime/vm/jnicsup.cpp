@@ -1643,7 +1643,7 @@ retry:
 				(U_8*)name, strlen(name),
 				(U_8*)signature, strlen(signature),
 				&declaringClass, &element,
-				J9_RESOLVE_FLAG_SEARCH_INTERFACES,
+				0,
 				NULL);
 
 			if (fieldAddress == NULL) {

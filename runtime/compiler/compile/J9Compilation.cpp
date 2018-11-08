@@ -179,12 +179,7 @@ J9::Compilation::Compilation(
    _outOfProcessCompilation(false),
    _remoteCompilation(false)
    {
-   _ObjectClassPointer   = fe->getClassFromSignature("Ljava/lang/Object;", 18, compilee);
-   _RunnableClassPointer = fe->getClassFromSignature("Ljava/lang/Runnable;", 20, compilee);
-   _StringClassPointer   = fe->getClassFromSignature("Ljava/lang/String;", 18, compilee);
-   _SystemClassPointer   = fe->getClassFromSignature("Ljava/lang/System;", 18, compilee);
-   _ReferenceClassPointer = fe->getClassFromSignature("Ljava/lang/ref/Reference;", 25, compilee);
-   _JITHelpersClassPointer = fe->getClassFromSignature("Lcom/ibm/jit/JITHelpers;", 24, compilee);
+   _symbolValidationManager = new (self()->region()) TR::SymbolValidationManager(self()->region(), compilee);
 
    _aotClassClassPointer = NULL;
    _aotClassClassPointerInitialized = false;
@@ -197,6 +192,13 @@ J9::Compilation::Compilation(
       _hiresTimeForPreviousCallingContext = TR::Compiler->vm.getHighResClock(self());
 
    _profileInfo = new (m->trHeapMemory()) TR_AccessedProfileInfo(heapMemoryRegion);
+
+   _ObjectClassPointer   = fe->getClassFromSignature("Ljava/lang/Object;", 18, compilee);
+   _RunnableClassPointer = fe->getClassFromSignature("Ljava/lang/Runnable;", 20, compilee);
+   _StringClassPointer   = fe->getClassFromSignature("Ljava/lang/String;", 18, compilee);
+   _SystemClassPointer   = fe->getClassFromSignature("Ljava/lang/System;", 18, compilee);
+   _ReferenceClassPointer = fe->getClassFromSignature("Ljava/lang/ref/Reference;", 25, compilee);
+   _JITHelpersClassPointer = fe->getClassFromSignature("Lcom/ibm/jit/JITHelpers;", 24, compilee);
    }
 
 J9::Compilation::~Compilation()
@@ -1074,6 +1076,39 @@ bool
 J9::Compilation::compilationShouldBeInterrupted(TR_CallingContext callingContext)
    {
    return self()->fej9()->compilationShouldBeInterrupted(self(), callingContext);
+   }
+
+void
+J9::Compilation::enterHeuristicRegion()
+   {
+   if (self()->getOption(TR_UseSymbolValidationManager)
+       && self()->compileRelocatableCode())
+      {
+      self()->getSymbolValidationManager()->enterHeuristicRegion();
+      }
+   }
+
+void
+J9::Compilation::exitHeuristicRegion()
+   {
+   if (self()->getOption(TR_UseSymbolValidationManager)
+       && self()->compileRelocatableCode())
+      {
+      self()->getSymbolValidationManager()->exitHeuristicRegion();
+      }
+   }
+
+bool
+J9::Compilation::validateTargetToBeInlined(TR_ResolvedMethod *implementer)
+   {
+   if (self()->getOption(TR_UseSymbolValidationManager)
+       && self()->compileRelocatableCode())
+      {
+      return self()->getSymbolValidationManager()->addMethodFromClassRecord(implementer->getPersistentIdentifier(),
+                                                                            implementer->classOfMethod(),
+                                                                            -1);
+      }
+   return true;
    }
 
 

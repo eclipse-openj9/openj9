@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,10 +61,11 @@ private:
 	 */
 private:
 
+	MMINLINE J9Class *getClass() { return J9_CURRENT_CLASS(_class); }
+
 protected:
 
 public:
-	MMINLINE J9Class *getClass() { return _class; }
 
 	/**
 	 * Initializer.
@@ -77,7 +78,7 @@ public:
 		if (NULL != objectPtr) {
 			/* Initialize class pointer in object header -- preserve flags set by base class */
 			MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-			extensions->objectModel.setObjectClass(objectPtr, _class);
+			extensions->objectModel.setObjectClass(objectPtr, getClass());
 
 			/* This might set the remembered bit in the header flags ... */
 			J9VMThread *vmThread = (J9VMThread *)env->getOmrVMThread()->_language_vmthread;

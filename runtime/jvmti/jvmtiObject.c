@@ -45,6 +45,7 @@ jvmtiGetObjectSize(jvmtiEnv* env,
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc;
 	J9VMThread * currentThread;
+	jlong rv_size = 0;
 
 	Trc_JVMTI_jvmtiGetObjectSize2_Entry(env, object, size_ptr);
 
@@ -57,13 +58,16 @@ jvmtiGetObjectSize(jvmtiEnv* env,
 		ENSURE_JOBJECT_NON_NULL(object);
 		ENSURE_NON_NULL(size_ptr);
 
-		*size_ptr = getObjectSize(vm, *(j9object_t*)object);
+		rv_size = getObjectSize(vm, *(j9object_t*)object);
 
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
-	TRACE_ONE_JVMTI_RETURN(jvmtiGetObjectSize2, *size_ptr);
+	if (NULL != size_ptr) {
+		*size_ptr = rv_size;
+	}
+	TRACE_ONE_JVMTI_RETURN(jvmtiGetObjectSize2, rv_size);
 }
 
 
@@ -75,6 +79,7 @@ jvmtiGetObjectHashCode(jvmtiEnv* env,
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc;
 	J9VMThread * currentThread;
+	jint rv_hash_code = 0;
 
 	Trc_JVMTI_jvmtiGetObjectHashCode2_Entry(env, object, hash_code_ptr);
 
@@ -90,12 +95,15 @@ jvmtiGetObjectHashCode(jvmtiEnv* env,
 		ENSURE_NON_NULL(hash_code_ptr);
 
 		obj = *((j9object_t*) object);
-		*hash_code_ptr = (jint)objectHashCode(vm, obj);
+		rv_hash_code = (jint)objectHashCode(vm, obj);
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
-	TRACE_ONE_JVMTI_RETURN(jvmtiGetObjectHashCode2, *hash_code_ptr);
+	if (NULL != hash_code_ptr) {
+		*hash_code_ptr = rv_hash_code;
+	}
+	TRACE_ONE_JVMTI_RETURN(jvmtiGetObjectHashCode2, rv_hash_code);
 }
 
 
@@ -108,6 +116,12 @@ jvmtiGetObjectMonitorUsage(jvmtiEnv* env,
 	jvmtiError rc;
 	J9VMThread * currentThread;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	jthread rv_owner = NULL;
+	jint rv_entry_count = 0;
+	jint rv_waiter_count = 0;
+	jthread *rv_waiters = NULL;
+	jint rv_notify_waiter_count = 0;
+	jthread *rv_notify_waiters = NULL;
 
 	Trc_JVMTI_jvmtiGetObjectMonitorUsage2_Entry(env, object, info_ptr);
 
@@ -138,8 +152,8 @@ jvmtiGetObjectMonitorUsage(jvmtiEnv* env,
 
 		if (owner && owner->threadObject) {
 			j9object_t target = (j9object_t)owner->threadObject;
-			info_ptr->owner = (jthread) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, target);
-			info_ptr->entry_count = (jint)count;
+			rv_owner = (jthread) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, target);
+			rv_entry_count = (jint)count;
 		}
 
 		memset(&stats, 0, sizeof(J9JVMTIMonitorStats));
@@ -164,8 +178,8 @@ jvmtiGetObjectMonitorUsage(jvmtiEnv* env,
 				j9mem_free_memory(stats.waiting);
 				rc = JVMTI_ERROR_OUT_OF_MEMORY;
 			} else {
-				info_ptr->notify_waiters = stats.waiting;
-				info_ptr->waiters = stats.blocked;
+				rv_notify_waiters = stats.waiting;
+				rv_waiters = stats.blocked;
 
 				/* Record blocked/waiting threads (wind down counts) */
 				walkThread = J9_LINKED_LIST_START_DO(vm->mainThread);
@@ -175,8 +189,8 @@ jvmtiGetObjectMonitorUsage(jvmtiEnv* env,
 				}
 
 				/* adjust count after filling the output buffer */
-				info_ptr->notify_waiter_count = (jint)stats.waitingCntr;
-				info_ptr->waiter_count = (jint)stats.blockedCntr;
+				rv_notify_waiter_count = (jint)stats.waitingCntr;
+				rv_waiter_count = (jint)stats.blockedCntr;
 			}
 		}
 
@@ -186,7 +200,15 @@ done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
-	TRACE_FOUR_JVMTI_RETURN(jvmtiGetObjectMonitorUsage2, info_ptr->owner, info_ptr->entry_count, info_ptr->notify_waiter_count, info_ptr->waiter_count);
+	if (NULL != info_ptr) {
+		info_ptr->owner = rv_owner;
+		info_ptr->entry_count = rv_entry_count;
+		info_ptr->waiter_count = rv_waiter_count;
+		info_ptr->waiters = rv_waiters;
+		info_ptr->notify_waiter_count = rv_notify_waiter_count;
+		info_ptr->notify_waiters = rv_notify_waiters;
+	}
+	TRACE_FOUR_JVMTI_RETURN(jvmtiGetObjectMonitorUsage2, rv_owner, rv_entry_count, rv_notify_waiter_count, rv_waiter_count);
 }
 
 

@@ -1255,7 +1255,6 @@ J9::SymbolReferenceTable::dynamicMethodSymrefsByCallSiteIndex(int32_t index)
    return _dynamicMethodSymrefsByCallSiteIndex[index];
    }
 
-
 bool
 J9::SymbolReferenceTable::isFieldClassObject(TR::SymbolReference *symRef)
    {
@@ -1265,6 +1264,28 @@ J9::SymbolReferenceTable::isFieldClassObject(TR::SymbolReference *symRef)
    return false;
    }
 
+static bool isSignatureTypeBool(const char *fieldSignature, int32_t len)
+   {
+   return len == 1 && fieldSignature[0] == 'Z';
+   }
+
+bool
+J9::SymbolReferenceTable::isFieldTypeBool(TR::SymbolReference *symRef)
+   {
+   int32_t len;
+   const char *fieldSignature = symRef->getOwningMethod(comp())->fieldSignatureChars(symRef->getCPIndex(), len);
+   dumpOptDetails(comp(), "got field signature as %s\n", fieldSignature);
+   return isSignatureTypeBool(fieldSignature, len);
+   }
+
+bool
+J9::SymbolReferenceTable::isStaticTypeBool(TR::SymbolReference *symRef)
+   {
+   int32_t len;
+   const char *fieldSignature = symRef->getOwningMethod(comp())->staticSignatureChars(symRef->getCPIndex(), len);
+   dumpOptDetails(comp(), "got static signature as %s\n", fieldSignature);
+   return isSignatureTypeBool(fieldSignature, len);
+   }
 
 static bool parmSlotCameFromExpandingAnArchetypeArgPlaceholder(int32_t slot, TR::ResolvedMethodSymbol *sym, TR_Memory *mem)
    {
@@ -1362,7 +1383,7 @@ J9::SymbolReferenceTable::findOrCreateStaticSymbol(TR::ResolvedMethodSymbol * ow
          TR_OpaqueClassBlock *declaringClass = owningMethod->getDeclaringClassFromFieldOrStatic(comp(), cpIndex);
          if (declaringClass && fej9->isClassInitialized(declaringClass))
             {
-            static const char *foldVarHandle = feGetEnv("TR_FoldVarHandle");
+            static const char *dontFoldVarHandle = feGetEnv("TR_DontFoldVarHandle");
             int32_t clazzNameLength = 0;
             char *clazzName = fej9->getClassNameChars(declaringClass, clazzNameLength);
             bool createKnownObject = false;
@@ -1371,7 +1392,7 @@ J9::SymbolReferenceTable::findOrCreateStaticSymbol(TR::ResolvedMethodSymbol * ow
                {
                createKnownObject = true;
                }
-            else if ((foldVarHandle || comp()->getOption(TR_AggressiveOpts))
+            else if (!dontFoldVarHandle
                      && (clazzNameLength != 16 || strncmp(clazzName, "java/lang/System", 16)))
                {
                TR_OpaqueClassBlock *varHandleClass =  fej9->getSystemClassFromClassName("java/lang/invoke/VarHandle", 26);
@@ -1912,8 +1933,7 @@ J9::SymbolReferenceTable::checkImmutable(TR::SymbolReference *symRef)
                isClassInitialized = true;
 
             if ((classOfStatic != comp()->getSystemClassPointer()) &&
-                isClassInitialized && TR::Compiler->cls.isClassFinal(comp(), classOfStatic) &&
-                !comp()->getOption(TR_AOT))
+                isClassInitialized && TR::Compiler->cls.isClassFinal(comp(), classOfStatic))
                {
                if (!classInfo->getFieldInfo() &&
                     (comp()->getMethodHotness() >= hot))

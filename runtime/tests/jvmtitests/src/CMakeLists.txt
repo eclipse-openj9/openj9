@@ -88,8 +88,10 @@ add_library(jvmti_test_src STATIC
 	com/ibm/jvmti/tests/getOrSetLocal/gosl001.c
 
 	com/ibm/jvmti/tests/getOwnedMonitorInfo/gomi001.c
+	com/ibm/jvmti/tests/getOwnedMonitorInfo/gomi002.c
 
 	com/ibm/jvmti/tests/getOwnedMonitorStackDepthInfo/gomsdi001.c
+	com/ibm/jvmti/tests/getOwnedMonitorStackDepthInfo/gomsdi002.c
 
 	com/ibm/jvmti/tests/getPotentialCapabilities/gpc001.c
 	com/ibm/jvmti/tests/getPotentialCapabilities/gpc002.c

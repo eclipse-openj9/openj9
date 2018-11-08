@@ -1662,6 +1662,20 @@ SH_CacheMap::allocateROMClass(J9VMThread* currentThread, const J9RomClassRequire
 	
 	pieces->romClass = (void *) allocateROMClassOnly(currentThread, romclassSizeToUse, classnameLength, classnameData, cpw, partitionInCache, modContextInCache, callerHelperID, modifiedNoContext, newItemInCache, cacheAreaForAllocate);
 
+	if ((NULL != newItemInCache) && _ccHead->isNewCache()) {
+		/* Update the min/max boundary with the stored metadata entry only when the cache is
+		 * being created by the current VM.
+		 */
+#if !defined(J9ZOS390) && !defined(AIXPPC)
+#if defined(LINUX)
+		if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE))
+#endif
+		{
+			updateAccessedShrCacheMetadataBounds(currentThread, (uintptr_t *) ITEMDATA(newItemInCache));
+		}
+#endif /* !defined(J9ZOS390) && !defined(AIXPPC) */
+	}
+
 	if ((true == allocatedDebugMem) && (NULL == pieces->romClass)) {
 		Trc_SHR_CM_allocateROMClass_FailedToRomClassRollbackDebug_Event(currentThread, classnameLength, classnameData, sizes->lineNumberTableSize, pieces->lineNumberTable, sizes->localVariableTableSize, pieces->localVariableTable);
 		this->rollbackClassDebugData(currentThread, classnameLength, classnameData);
@@ -2306,6 +2320,20 @@ SH_CacheMap::commitMetaDataROMClassIfRequired(J9VMThread* currentThread, Classpa
 		goto done;
 	}
 
+	/* Update the min/max boundary with the stored metadata entry only when the cache is
+	 * being created by the current VM.
+	 */
+	if (_ccHead->isNewCache()) {
+#if !defined(J9ZOS390) && !defined(AIXPPC)
+#if defined(LINUX)
+		if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE))
+#endif
+		{
+			updateAccessedShrCacheMetadataBounds(currentThread, (uintptr_t *) ITEMDATA(itemInCache));
+		}
+#endif /* !defined(J9ZOS390) && !defined(AIXPPC) */
+	}
+
 	retval = commitROMClass(currentThread, itemInCache, cacheAreaForAllocate, cpw, cpeIndex, partitionInCache, modContextInCache, romClassBuffer, false);
 	goto done_skipHashUpdate;
 
@@ -2789,6 +2817,24 @@ SH_CacheMap::storeROMClassResource(J9VMThread* currentThread, const void* romAdd
 		result = resourceDescriptor->unWrap(resourceWrapper);
 	}
 
+	/* Update the min/max boundary with the stored metadata entry only when the cache is
+	 * being created by the current VM.
+	 */
+	if ((NULL != result)
+	&& ((void*)J9SHR_RESOURCE_STORE_FULL != result)
+	&& ((void*)J9SHR_RESOURCE_STORE_ERROR != result)
+	&& _ccHead->isNewCache()
+	) {
+#if !defined(J9ZOS390) && !defined(AIXPPC)
+#if defined(LINUX)
+		if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE))
+#endif
+			{
+				updateAccessedShrCacheMetadataBounds(currentThread, (uintptr_t *) result);
+			}
+#endif /* !defined(J9ZOS390) && !defined(AIXPPC) */
+	}
+
 	_ccHead->exitWriteMutex(currentThread, fnName);
 	Trc_SHR_CM_storeROMClassResource_Exit4(currentThread, result);
 	return result;
@@ -3016,36 +3062,37 @@ SH_CacheMap::findCompiledMethod(J9VMThread* currentThread, const J9ROMMethod* ro
 	}
 
 	result = (const U_8*)findROMClassResource(currentThread, romMethod, localCMM, &descriptor, true, NULL, flags);
+	if (NULL != result) {
 #if !defined(J9ZOS390) && !defined(AIXPPC)
-	if (_metadataReleased
+		if (_metadataReleased
 #if defined(LINUX)
-			&& J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE)
+		&& J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE)
 #endif
-	) {
-		if (TrcEnabled_Trc_SHR_CM_findCompiledMethod_metadataAccess
-		                   && ((uintptr_t) result >= _minimumAccessedShrCacheMetadata)
-		                   && ((uintptr_t) result <= _maximumAccessedShrCacheMetadata)
 		) {
-			J9InternalVMFunctions* vmFunctions = currentThread->javaVM->internalVMFunctions;
-			J9ClassLoader* loader = NULL;
-			J9ROMClass* romClass = vmFunctions->findROMClassFromPC(currentThread, (UDATA)romMethod, &loader);
-			if (NULL != romClass) {
-				J9UTF8* romClassName = J9ROMCLASS_CLASSNAME(romClass);
-				J9UTF8* romMethodName = J9ROMMETHOD_NAME(romMethod);
-				J9UTF8* romMethodSig = J9ROMMETHOD_SIGNATURE(romMethod);
-				Trc_SHR_CM_findCompiledMethod_metadataAccess(
-						currentThread,
-						J9UTF8_LENGTH(romClassName),
-						J9UTF8_DATA(romClassName),
-						J9UTF8_LENGTH(romMethodName),
-						J9UTF8_DATA(romMethodName),
-						J9UTF8_LENGTH(romMethodSig),
-						J9UTF8_DATA(romMethodSig),
-						result
-				);
+			if (TrcEnabled_Trc_SHR_CM_findCompiledMethod_metadataAccess
+			&& ((uintptr_t) result >= _minimumAccessedShrCacheMetadata)
+			&& ((uintptr_t) result <= _maximumAccessedShrCacheMetadata)
+			) {
+				J9InternalVMFunctions* vmFunctions = currentThread->javaVM->internalVMFunctions;
+				J9ClassLoader* loader = NULL;
+				J9ROMClass* romClass = vmFunctions->findROMClassFromPC(currentThread, (UDATA)romMethod, &loader);
+				if (NULL != romClass) {
+					J9UTF8* romClassName = J9ROMCLASS_CLASSNAME(romClass);
+					J9UTF8* romMethodName = J9ROMMETHOD_NAME(romMethod);
+					J9UTF8* romMethodSig = J9ROMMETHOD_SIGNATURE(romMethod);
+					Trc_SHR_CM_findCompiledMethod_metadataAccess(
+							currentThread,
+							J9UTF8_LENGTH(romClassName),
+							J9UTF8_DATA(romClassName),
+							J9UTF8_LENGTH(romMethodName),
+							J9UTF8_DATA(romMethodName),
+							J9UTF8_LENGTH(romMethodSig),
+							J9UTF8_DATA(romMethodSig),
+							result
+							);
+				}
 			}
-		}
-	} else
+		} else
 #if defined(LINUX)
 		if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE))
 #endif
@@ -3053,6 +3100,8 @@ SH_CacheMap::findCompiledMethod(J9VMThread* currentThread, const J9ROMMethod* ro
 			updateAccessedShrCacheMetadataBounds(currentThread, (uintptr_t *) result);
 		}
 #endif /* !defined(J9ZOS390) && !defined(AIXPPC) */
+	}
+
 	return result;
 }
 

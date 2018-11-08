@@ -43,4 +43,7 @@ public class BootstrapMethods {
 	public static long bootstrap_constant_long(MethodHandles.Lookup l, String name, Class<?> c, long v) {
 		return v;
 	}
+	public static int bootstrap_constant_int_exception(MethodHandles.Lookup l, String name, Class<?> c, int v) throws Exception {
+		throw new Exception();
+	}
 }

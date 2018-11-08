@@ -26,9 +26,6 @@
  
 <suite id="J9 shared cache dbgext Tests" timeout="600">
 
- <variable name="NONREALTIMESPECS" value="aix.*,win.*,zos.*,linux(?!.*hrt).*" />
- <variable name="REALTIMESPECS" value=".*_hrt" />
- 
  <variable name="CP" value="-cp $UTILSJAR$" />
  <variable name="PROGRAM" value="org.openj9.test.ivj.Hanoi 2" />
  <variable name="PROGRAM1" value="SystemProperties" />
@@ -50,8 +47,7 @@
  <variable name="XDUMP" value="-Xdump:system:opts=IEATDUMP,dsn=%uid.J9CORE1.DMP,events=vmstop,request=exclusive+compact" platforms="zos.*" />
  <variable name="XDUMP2" value="-Xdump:system:opts=IEATDUMP,dsn=%uid.J9CORE2.DMP,events=vmstop,request=exclusive+compact" platforms="zos.*" />
 
- <variable name="SHARECLASSESOPTION" value="-Xshareclasses:name=$CACHENAME$,reset,modified=mod1" platforms="$NONREALTIMESPECS$" />
- <variable name="SHARECLASSESOPTION" value="-Xshareclasses:name=$CACHENAME$,grow,reset,modified=mod1" platforms="$REALTIMESPECS$" />
+ <variable name="SHARECLASSESOPTION" value="-Xshareclasses:name=$CACHENAME$,reset,modified=mod1"/>
  <variable name="JIT_OPTIONS" value="-Xjit:disableAsyncCompilation,disableInlining -Xaot:forceaot,count=1,disableAsyncCompilation,disableInlining" />
 
 
@@ -61,14 +57,14 @@
   <output regex="no" type="success">Puzzle solved!</output>
  </test>
  
- <test id="Add another class in the cache" platforms="$NONREALTIMESPECS$">
+ <test id="Add another class in the cache" >
   <command>$EXE$ $JIT_OPTIONS$ -Xshareclasses:name=$CACHENAME$ $PROGRAM1$</command>
   <output regex="no" type="success">OpenJ9</output>
  </test>
  
- <exec command="touch $PROGRAM1$.class" platforms="$NONREALTIMESPECS$"/>
+ <exec command="touch $PROGRAM1$.class" />
 
- <test id="Mark previous class entry as stale" platforms="$NONREALTIMESPECS$">
+ <test id="Mark previous class entry as stale" >
   <command>$EXE$ $JIT_OPTIONS$ -Xshareclasses:name=$CACHENAME$ $PROGRAM1$</command>
   <output regex="no" type="success">OpenJ9</output>
  </test>
@@ -142,13 +138,7 @@
                 <input>!shrc stats</input>
                 <input>quit</input>
         </command>
-  <output regex="no" type="success" platforms="$NONREALTIMESPECS$">4 orphans</output>
-  <output regex="no" type="success" platforms="$REALTIMESPECS$">3 orphans</output>
-  <output regex="no" type="required" platforms="$REALTIMESPECS$">Cachelet</output>
-  <output regex="no" type="required" platforms="$REALTIMESPECS$">CACHELET count</output>
-  <output regex="no" type="required" platforms="$REALTIMESPECS$">0 AOT</output>
-  <output regex="no" type="required" platforms="$REALTIMESPECS$">AOT data length 0</output>
-  <output regex="no" type="required" platforms="$REALTIMESPECS$">JITPROFILE data length 0</output>
+  <output regex="no" type="success" >4 orphans</output>
   <output regex="no" type="failure">no shared cache</output>
   <output regex="no" type="failure">unable to read</output>
   <output regex="no" type="failure">could not read</output>
@@ -165,7 +155,7 @@
         
   <output regex="no" type="success">SCOPE !</output>
   <output regex="no" type="required">ROMCLASS:</output>
-  <output regex="no" type="required" platforms="$NONREALTIMESPECS$">AOT data !</output>
+  <output regex="no" type="required" >AOT data !</output>
   <output regex="no" type="required">BYTEDATA Summary</output>
   <output regex="no" type="required">DEBUG Area Summary</output>
   <output regex="no" type="required">CLASSPATH</output>
@@ -189,7 +179,7 @@
         </command>
   <output regex="no" type="success">ROMCLASS: org/openj9/test/ivj/Disk</output>
   <!-- Expect a stale entry for ROMClass for $PROGRAM1$.class (which is SystemProperties.class) as we touched the class earlier -->
-  <output regex="yes" javaUtilPattern="yes" type="required" platforms="$NONREALTIMESPECS$">(.)*ROMCLASS: SystemProperties(.)* !STALE!</output>
+  <output regex="yes" javaUtilPattern="yes" type="required" >(.)*ROMCLASS: SystemProperties(.)* !STALE!</output>
   <output regex="no" type="failure">no shared cache</output>
   <output regex="no" type="failure">unable to read</output>
   <output regex="no" type="failure">could not read</output>
@@ -204,8 +194,8 @@
                 <input>quit</input>
         </command>
   <!-- Expect a stale entry for ROMClass for $PROGRAM1$.class (which is SystemProperties.class) as we touched the class earlier -->
-  <output regex="yes" javaUtilPattern="yes" type="success" platforms="$NONREALTIMESPECS$">(.)*ROMCLASS: SystemProperties(.)*!STALE!</output>
-  <output regex="no" type="required" platforms="$NONREALTIMESPECS$">stale bytes</output>
+  <output regex="yes" javaUtilPattern="yes" type="success" >(.)*ROMCLASS: SystemProperties(.)*!STALE!</output>
+  <output regex="no" type="required" >stale bytes</output>
 
   <output regex="no" type="failure">no shared cache</output>
   <output regex="no" type="failure">unable to read</output>
@@ -295,7 +285,7 @@
                 <input>quit</input>
         </command>
   <output regex="no" type="success">mod1</output>
-  <output regex="no" type="required" platforms="$NONREALTIMESPECS$">2:</output>
+  <output regex="no" type="required" >2:</output>
   <output regex="no" type="failure">no shared cache</output>
   <output regex="no" type="failure">unable to read</output>
   <output regex="no" type="failure">could not read</output>
@@ -323,8 +313,7 @@
                 <input>!shrc aotstats</input>
                 <input>quit</input>
         </command>
-  <output regex="no" type="success" platforms="$NONREALTIMESPECS$">AOT data !</output>
-  <output regex="no" type="success" platforms="$REALTIMESPECS$">No entry found in the cache</output>
+  <output regex="no" type="success" >AOT data !</output>
   <output regex="no" type="failure">no shared cache</output>
   <output regex="no" type="failure">unable to read</output>
   <output regex="no" type="failure">could not read</output>
@@ -339,8 +328,7 @@
                 <input>!shrc findaot solve</input>
                 <input>quit</input>
         </command>
-  <output regex="no" type="success" platforms="$NONREALTIMESPECS$">solve(ILorg/openj9/test/ivj/Post</output>
-  <output regex="no" type="success" platforms="$REALTIMESPECS$">No entry found in the cache</output>
+  <output regex="no" type="success" >solve(ILorg/openj9/test/ivj/Post</output>
   <output regex="no" type="failure">no shared cache</output>
   <output regex="no" type="failure">unable to read</output>
   <output regex="no" type="failure">could not read</output>
@@ -354,8 +342,7 @@
                 <input>!shrc findaotp sol</input>
                 <input>quit</input>
         </command>
-  <output regex="no" type="success" platforms="$NONREALTIMESPECS$">solve(ILorg/openj9/test/ivj/Post</output>
-  <output regex="no" type="success" platforms="$REALTIMESPECS$">No entry found in the cache</output>
+  <output regex="no" type="success" >solve(ILorg/openj9/test/ivj/Post</output>
   <output regex="no" type="failure">no shared cache</output>
   <output regex="no" type="failure">unable to read</output>
   <output regex="no" type="failure">could not read</output>
@@ -446,8 +433,7 @@
                 <input>!shrc jitpstats</input>
                 <input>quit</input>
         </command>
-  <output regex="no" type="success" platforms="$NONREALTIMESPECS$">JITPROFILE data !</output>
-  <output regex="no" type="success" platforms="$REALTIMESPECS$">No entry found in the cache</output>
+  <output regex="no" type="success" >JITPROFILE data !</output>
   <output regex="no" type="required">JITPROFILE data length</output>
   <output regex="no" type="failure">no shared cache</output>
   <output regex="no" type="failure">unable to read</output>

@@ -234,6 +234,12 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
          }
       }
 
+   // Check the flags related to the symbol validation manager
+   if (_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_UsesSymbolValidationManager)
+      {
+      comp->setOption(TR_UseSymbolValidationManager);
+      }
+
    _exceptionTableCacheEntry = (J9JITDataCacheHeader *)((uint8_t *)cacheEntry + _aotMethodHeaderEntry->offsetToExceptionTable);
 
    if (_exceptionTableCacheEntry->type == J9_JIT_DCE_EXCEPTION_INFO)
@@ -1422,25 +1428,20 @@ TR_SharedCacheRelocationRuntime::getClassFromCP(J9VMThread *vmThread, J9JavaVM *
    J9Class *classFromCP = J9_CLASS_FROM_CP(constantPool);
    J9ROMFieldShape *field;
    J9Class *definingClass;
-   UDATA findFieldFlags;
    J9ROMNameAndSignature *nameAndSig;
    J9UTF8 *name;
    J9UTF8 *signature;
-
-#if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT)
-   findFieldFlags = J9_RESOLVE_FLAG_AOT_LOAD_TIME | J9_RESOLVE_FLAG_NO_THROW_ON_FAIL;
-#endif
 
    nameAndSig = J9ROMFIELDREF_NAMEANDSIGNATURE(romFieldRef);
    name = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
    signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
    if (isStatic)
       {
-      void *staticAddress = javaVM()->internalVMFunctions->staticFieldAddress(vmThread, resolvedClass, J9UTF8_DATA(name), J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), &definingClass, (UDATA *)&field, findFieldFlags, classFromCP);
+      void *staticAddress = javaVM()->internalVMFunctions->staticFieldAddress(vmThread, resolvedClass, J9UTF8_DATA(name), J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), &definingClass, (UDATA *)&field, J9_LOOK_NO_JAVA, classFromCP);
       }
    else
       {
-      IDATA fieldOffset = javaVM()->internalVMFunctions->instanceFieldOffset(vmThread, resolvedClass, J9UTF8_DATA(name), J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), &definingClass, (UDATA *)&field, findFieldFlags);
+      IDATA fieldOffset = javaVM()->internalVMFunctions->instanceFieldOffset(vmThread, resolvedClass, J9UTF8_DATA(name), J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), &definingClass, (UDATA *)&field, J9_LOOK_NO_JAVA);
       }
    return (TR_OpaqueClassBlock *)definingClass;
    }

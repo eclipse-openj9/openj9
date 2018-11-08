@@ -1129,8 +1129,6 @@
 			<variation>Mode101</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-	$(MKTREE) $(REPORTDIR); \
-	cd $(REPORTDIR); \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-Xdump:dynamic \
 	-Dremote.server.option=$(Q)$(JVM_OPTIONS) -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false$(Q) \
@@ -1163,8 +1161,6 @@
 			<variation>Mode101</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-	$(MKTREE) $(REPORTDIR); \
-	cd $(REPORTDIR); \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-Xdump:dynamic \
 	-Dremote.server.option=$(Q)$(JVM_OPTIONS) -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false$(Q) \

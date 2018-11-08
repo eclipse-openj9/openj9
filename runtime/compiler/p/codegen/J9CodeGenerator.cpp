@@ -68,6 +68,12 @@ J9::Power::CodeGenerator::CodeGenerator() :
    cg->setSupportsPartialInlineOfMethodHooks();
    cg->setSupportsInliningOfTypeCoersionMethods();
 
+#if 0   
+   if (TR::Compiler->target.cpu.id() >= TR_PPCp8 && TR::Compiler->target.cpu.getPPCSupportsVSX() &&
+      !comp->getOption(TR_DisableFastStringIndexOf) && !TR::Compiler->om.canGenerateArraylets())
+      cg->setSupportsInlineStringIndexOf();
+#endif
+   
    if (!comp->getOption(TR_DisableReadMonitors))
       cg->setSupportsReadOnlyLocks();
 
@@ -717,7 +723,7 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
             }
          }
       }
-   else if (node->getOpCodeValue() == TR::wrtbari &&
+   else if (node->getOpCodeValue() == TR::awrtbari &&
             comp()->getMethodHotness() >= scorching &&
             TR::Compiler->target.cpu.id() >= TR_PPCp6 &&
               (TR::Compiler->target.is32Bit() ||

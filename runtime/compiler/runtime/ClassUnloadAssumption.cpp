@@ -1245,11 +1245,13 @@ J9::PersistentInfo::isUnloadedClass(
 bool
 J9::PersistentInfo::isObsoleteClass(void *v, TR_FrontEnd *fe)
    {
+   TR::Compilation *comp = TR::comp();
+   bool allowForAOT = comp && comp->getOption(TR_UseSymbolValidationManager);
    if (isUnloadedClass(v, true))
       return true;
    else if (!getPersistentCHTable())
       return false; // HCR TODO: Support fixed opt levels
-   else if (!getPersistentCHTable()->findClassInfoAfterLocking((TR_OpaqueClassBlock*)v, fe))
+   else if (!getPersistentCHTable()->findClassInfoAfterLocking((TR_OpaqueClassBlock*)v, fe, allowForAOT))
       return false; // It's not a class, so it can't be a replaced class
    else
       return fe->classHasBeenReplaced((TR_OpaqueClassBlock*)v);

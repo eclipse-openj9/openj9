@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 ##############################################################################
-#  Copyright (c) 2016, 2017 IBM Corp. and others
+#  Copyright (c) 2016, 2018 IBM Corp. and others
 #
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,23 +34,35 @@ if (@ARGV) {
 my $machineConfiguremk = $configuredir . "/machineConfigure.mk";
 unlink($machineConfiguremk);
 my $platform=`uname`;
-if ($platform !~ /Linux/i) {
-	exit;
-}
+
+my $ZOSR14=3906;
 my %capability_Hash;
 
-# virtual infor
-my $KVM_Image=`cat /proc/cpuinfo | grep -i QEMU`;
-my $VMWare_Image=`lspci 2>/dev/null | grep -i VMware` ;
-my $Virt_Sys="";
+if ($platform =~ /OS\/390/i) {
 
-if ($KVM_Image ne "" ) {
-	$Virt_Sys="KVM"
-} elsif ($VMWare_Image ne "") {
-	$Virt_Sys="VMWare";
+	my $hardware=`uname -m`;
+	if ($hardware >= $ZOSR14) {
+		$capability_Hash{guardedstorage} = 1;
+	}
 }
-$ENV{hypervisor} = $Virt_Sys;
-$capability_Hash{hypervisor} = $Virt_Sys;
+
+elsif ($platform =~ /Linux/i) {
+	# virtual infor
+	my $KVM_Image=`cat /proc/cpuinfo | grep -i QEMU`;
+	my $VMWare_Image=`lspci 2>/dev/null | grep -i VMware` ;
+	my $Virt_Sys="";
+
+	if ($KVM_Image ne "" ) {
+		 $Virt_Sys="KVM"
+	} elsif ($VMWare_Image ne "") {
+		$Virt_Sys="VMWare";
+	}
+	$ENV{hypervisor} = $Virt_Sys;
+	$capability_Hash{hypervisor} = $Virt_Sys;
+}
+else { 
+	exit;
+	}
 
 if (%capability_Hash) {
 	open( my $fhout,  '>>',  $machineConfiguremk )  or die "Cannot create file $machineConfiguremk $!";

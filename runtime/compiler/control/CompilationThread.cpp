@@ -22,7 +22,7 @@
 
 #define J9_EXTERNAL_TO_VM
 
-#if SOLARIS || AIXPPC || LINUX
+#if SOLARIS || AIXPPC || LINUX || OSX
 #include <strings.h>
 #define J9OS_STRNCMP strncasecmp
 #else
@@ -415,22 +415,23 @@ TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
    // determined based on the number of CPUs, then the upper bound of comp threads is _numTargetCPUs-1
    // However, if the compilation threads are starved (on Linux) we may want
    // to activate additional comp threads irrespective of the CPU entitlement
-   if (TR::Options::_useCPUsToDetermineMaxNumberOfCompThreadsToActivate ||
-       !_starvationDetected)
+   if (TR::Options::_useCPUsToDetermineMaxNumberOfCompThreadsToActivate)
       {
-      if (getNumCompThreadsActive() >= getNumTargetCPUs() - 1)
-         {
-         return TR_no;
-         }
-      else
+      if (getNumCompThreadsActive() < getNumTargetCPUs() - 1)
          {
          if (_queueWeight > compThreadActivationThresholds[getNumCompThreadsActive()])
             return TR_yes;
          }
+      else if (_starvationDetected)
+         {
+         // comp thread starvation; may activate threads beyond numCpu-1
+         if (_queueWeight > compThreadActivationThresholdsonStarvation[getNumCompThreadsActive()])
+            return TR_yes;
+         }
       }
-   else // comp thread starvation; may activate threads beyond numCpu-1
+   else // number of compilation threads indicated by the user
       {
-      if (_queueWeight > compThreadActivationThresholdsonStarvation[getNumCompThreadsActive()])
+      if (_queueWeight > compThreadActivationThresholds[getNumCompThreadsActive()])
          return TR_yes;
       }
 
@@ -528,10 +529,7 @@ bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
                  !TR::Options::getCmdLineOptions()->getOption(TR_DisableDowngradeToColdOnVMPhaseStartup))
                )
                {
-#if !defined(J9ZOS390)  // disable for zOS because we don't want to increase CPU time
-               if (!importantMethodForStartup(method))
-#endif
-                  doDowngrade = true;
+               doDowngrade = true;
                }
             // Downgrade if RI based recompilation is enabled
             else if (persistentInfo->isRuntimeInstrumentationRecompilationEnabled() && // RI and RI Recompilation is functional
@@ -1995,6 +1993,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
             case compilationAotValidateMethodEnterFailure:
             case compilationAotClassChainPersistenceFailure:
             case compilationAotValidateStringCompressionFailure:
+            case compilationSymbolValidationManagerFailure:
                // switch to JIT for these cases (we don't want to relocate again)
                entry->_doNotUseAotCodeFromSharedCache = true;
                // if this is a remote request, fail the compilation here so that it is retried on the client.
@@ -3036,6 +3035,8 @@ void TR::CompilationInfo::stopCompilationThreads()
       fprintf(stderr, "numVirtualMethodsValidationSucceeded: %d\n", aotStats->virtualMethods.numSucceededValidations);
       fprintf(stderr, "numInterfaceMethodsValidationFailed: %d\n", aotStats->interfaceMethods.numFailedValidations);
       fprintf(stderr, "numInterfaceMethodsValidationSucceeded: %d\n", aotStats->interfaceMethods.numSucceededValidations);
+      fprintf(stderr, "numAbstractMethodsValidationFailed: %d\n", aotStats->abstractMethods.numFailedValidations);
+      fprintf(stderr, "numAbstractMethodsValidationSucceeded: %d\n", aotStats->abstractMethods.numSucceededValidations);
 
       fprintf(stderr, "-------------------------\n");
       fprintf(stderr, "numProfiledClassGuardsValidationFailed: %d\n", aotStats->profiledClassGuards.numFailedValidations);
@@ -4946,7 +4947,11 @@ bool TR::CompilationInfo::isQueuedForCompilation(J9Method * method, void *oldSta
    return linkageInfo->isBeingCompiled();
    }
 
+#if defined(OSX)
+JIT_HELPER(initialInvokeExactThunkGlue);
+#else
 JIT_HELPER(_initialInvokeExactThunkGlue);
+#endif
 
 void *TR::CompilationInfo::startPCIfAlreadyCompiled(J9VMThread * vmThread, TR::IlGeneratorMethodDetails & details, void *oldStartPC)
    {
@@ -4976,6 +4981,8 @@ void *TR::CompilationInfo::startPCIfAlreadyCompiled(J9VMThread * vmThread, TR::I
          initialInvokeExactThunkGlueAddress = (void*)TOC_UNWRAP_ADDRESS(_initialInvokeExactThunkGlue);
 #elif defined(TR_HOST_POWER) && (defined(TR_HOST_64BIT) || defined(AIXPPC)) && !defined(__LITTLE_ENDIAN__)
          initialInvokeExactThunkGlueAddress = (*(void **)_initialInvokeExactThunkGlue);
+#elif defined(OSX)
+         initialInvokeExactThunkGlueAddress = (void*)initialInvokeExactThunkGlue;
 #else
          initialInvokeExactThunkGlueAddress = (void*)_initialInvokeExactThunkGlue;
 #endif
@@ -6823,7 +6830,8 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
    if (_vm->isAOT_DEPRECATED_DO_NOT_USE())
       {
       // In some circumstances AOT compilations are performed at warm
-      if (TR::Options::getCmdLineOptions()->getAggressivityLevel() == TR::Options::AGGRESSIVE_AOT &&
+      if ((TR::Options::getCmdLineOptions()->getAggressivityLevel() == TR::Options::AGGRESSIVE_AOT ||
+           getCompilationInfo()->importantMethodForStartup(method)) &&
           entry->_optimizationPlan->isOptLevelDowngraded() &&
           entry->_optimizationPlan->getOptLevel() == cold) // Is this test really needed?
          {
@@ -7543,6 +7551,12 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                   options->setOption(TR_EnableAnnotations,false);
                }
 
+            if (vm->canUseSymbolValidationManager() && options->getOption(TR_EnableSymbolValidationManager))
+               {
+               options->setOption(TR_UseSymbolValidationManager);
+               options->setOption(TR_DisableKnownObjectTable);
+               }
+
             // Set jitDump specific options
             TR::CompilationInfoPerThread *threadCompInfo = compInfo ? compInfo->getCompInfoForThread(vmThread) : NULL;
             if (threadCompInfo &&
@@ -7758,12 +7772,6 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                   options->setOption(TR_DisableGuardedCountingRecompilations);
                   }
 
-               // Shrink wrapping does not help at cold
-               if (options->getOptLevel() < warm && !options->getOption(TR_DisableJava8StartupHeuristics))
-                  {
-                  options->setOption(TR_DisableShrinkWrapping);
-                  }
-
                if (that->_methodBeingCompiled->_oldStartPC != 0)
                   {
                   TR_PersistentJittedBodyInfo *bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(that->_methodBeingCompiled->_oldStartPC);
@@ -7890,6 +7898,11 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                      options->setOption(TR_EnableGRACostBenefitModel, false);
                   }
 
+            if (jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP || options->getOptLevel() < warm)
+               {
+               options->setOption(TR_UseSymbolValidationManager, false);
+               }
+
 
                // See if we need to inset GCR trees
                if (!details.supportsInvalidation())
@@ -7904,7 +7917,6 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                // Disable some expensive optimizations
                if (options->getOptLevel() <= warm && !options->getOption(TR_EnableExpensiveOptsAtWarm))
                   {
-                  options->setOption(TR_DisableShrinkWrapping);
                   options->setOption(TR_DisableStoreSinking);
                   }
                } // end of compilation strategy tweaks for Java
@@ -10659,6 +10671,10 @@ TR::CompilationInfoPerThreadBase::processException(
    catch (const TR::GCRPatchFailure &e)
       {
       _methodBeingCompiled->_compErrCode = compilationGCRPatchFailure;
+      }
+   catch (const J9::AOTSymbolValidationManagerFailure &e)
+      {
+      _methodBeingCompiled->_compErrCode = compilationSymbolValidationManagerFailure;
       }
    catch (const J9::ClassChainPersistenceFailure &e)
       {

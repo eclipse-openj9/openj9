@@ -72,8 +72,6 @@ final class MemoryNotificationThread extends Thread {
      *            the start time of this GC in milliseconds since the Java virtual machine was started
      * @param endTime
      *            the end time of this GC in milliseconds since the Java virtual machine was started
-     * @param poolNames
-     *            the name of all memory pools (includes non-heap memory pools)
      * @param initialSize
      *            the initial amount of memory of all memory pools
      * @param preUsed
@@ -92,10 +90,10 @@ final class MemoryNotificationThread extends Thread {
      *            the sequence identifier of the current notification
      */
 	private void dispatchGCNotificationHelper(String gcName, String gcAction, String gcCause, long index,
-			long startTime, long endTime, String[] poolNames, long[] initialSize, long[] preUsed,
+			long startTime, long endTime, long[] initialSize, long[] preUsed,
 			long[] preCommitted, long[] preMax, long[] postUsed, long[] postCommitted, long[] postMax,
 			long sequenceNumber) {
-		GcInfo gcInfo = ExtendedGarbageCollectorMXBeanImpl.buildGcInfo(index, startTime, endTime, poolNames, initialSize, preUsed, preCommitted, preMax, postUsed, postCommitted, postMax);
+		GcInfo gcInfo = ExtendedGarbageCollectorMXBeanImpl.buildGcInfo(index, startTime, endTime, initialSize, preUsed, preCommitted, preMax, postUsed, postCommitted, postMax);
 		GarbageCollectionNotificationInfo info = new GarbageCollectionNotificationInfo(gcName, gcAction, gcCause, gcInfo);
 
 		for (MemoryManagerMXBean bean : memBean.getMemoryManagerMXBeans(false)) {

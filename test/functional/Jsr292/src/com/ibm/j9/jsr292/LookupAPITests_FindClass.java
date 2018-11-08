@@ -214,12 +214,7 @@ public class LookupAPITests_FindClass {
 	 */
 	@Test(groups = { "level.extended" })
 	public void test_FindNestClass_ProtectedAccess_InterfaceLookup_DiffPackage() throws Throwable {
-		try {
-			Helper_Interface.interfaceLookupObject.findClass(HELPER_PACKAGE + "Helper_LookupAPI_OtherPackage$ProtectedNestedClass");
-			Assert.fail("The class is not supposed to be found");
-		} catch (ClassNotFoundException | IllegalAccessException e) {
-			/* Success */
-		}
+		Helper_Interface.interfaceLookupObject.findClass(HELPER_PACKAGE + "Helper_LookupAPI_OtherPackage$ProtectedNestedClass");
 	}
 
 	/**

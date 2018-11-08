@@ -112,6 +112,8 @@ jvmtiGetLoadedClasses(jvmtiEnv* env,
 	jclass * classRefs = NULL;
 	jvmtiError rc;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	jclass *rv_classes = NULL;
+	jint rv_class_count = 0;
 
 	Trc_JVMTI_jvmtiGetLoadedClasses_Entry(env);
 
@@ -173,8 +175,8 @@ jvmtiGetLoadedClasses(jvmtiEnv* env,
 			vm->internalVMFunctions->allLiveClassesEndDo(&classWalkState);
 
 			jvmtiData->lastClassCount = (UDATA) i;
-			*class_count_ptr = i;
-			*classes_ptr = classRefs;
+			rv_class_count = i;
+			rv_classes = classRefs;
 		}
 
 		omrthread_monitor_exit(vm->classTableMutex);
@@ -183,6 +185,12 @@ done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != class_count_ptr) {
+		*class_count_ptr = rv_class_count;
+	}
+	if (NULL != classes_ptr) {
+		*classes_ptr = rv_classes;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetLoadedClasses);
 }
 
@@ -200,6 +208,8 @@ jvmtiGetClassLoaderClasses(jvmtiEnv* env,
 	J9HashTableState walkState;
 	J9Class* clazz;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	jint rv_class_count = 0;
+	jclass *rv_classes = NULL;
 
 	Trc_JVMTI_jvmtiGetClassLoaderClasses_Entry(env);
 
@@ -221,11 +231,6 @@ jvmtiGetClassLoaderClasses(jvmtiEnv* env,
 		} else {
 			loader = J9VMJAVALANGCLASSLOADER_VMREF(currentThread, J9_JNI_UNWRAP_REFERENCE(initiating_loader));
 			if (NULL == loader) {
-				*class_count_ptr = 0;
-				*classes_ptr = j9mem_allocate_memory(0, J9MEM_CATEGORY_JVMTI_ALLOCATE);
-				if (NULL == *classes_ptr) {
-					rc = JVMTI_ERROR_OUT_OF_MEMORY;
-				}
 				goto done;
 			}
 		}
@@ -250,8 +255,8 @@ jvmtiGetClassLoaderClasses(jvmtiEnv* env,
 		} else {
 
 			/* Save count before it gets modified below... */
-			*class_count_ptr = (jint) stats.classCount;
-			*classes_ptr = stats.classRefs;
+			rv_class_count = (jint) stats.classCount;
+			rv_classes = stats.classRefs;
 
 			/* Record classes who have this class loader as the initiating loader (wind down count) */
 			clazz = vm->internalVMFunctions->hashClassTableStartDo(loader, &walkState);
@@ -267,6 +272,12 @@ done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != class_count_ptr) {
+		*class_count_ptr = rv_class_count;
+	}
+	if (NULL != classes_ptr) {
+		*classes_ptr = rv_classes;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetClassLoaderClasses);
 }
 
@@ -283,6 +294,8 @@ jvmtiGetClassSignature(jvmtiEnv* env,
 	char * signature = NULL;
 	char * generic = NULL;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	char *rv_signature = NULL;
+	char *rv_generic = NULL;
 
 	Trc_JVMTI_jvmtiGetClassSignature_Entry(env);
 
@@ -371,12 +384,8 @@ jvmtiGetClassSignature(jvmtiEnv* env,
 			}
 		}
 
-		if (signature_ptr != NULL) {
-			*signature_ptr = signature; 
-		}
-		if (generic_ptr != NULL) {
-			*generic_ptr = generic;
-		}
+		rv_signature = signature;
+		rv_generic = generic;
 
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
@@ -385,6 +394,13 @@ done:
 	if (rc != JVMTI_ERROR_NONE) {
 		j9mem_free_memory(signature);
 		j9mem_free_memory(generic);
+	}
+
+	if (NULL != signature_ptr) {
+		*signature_ptr = rv_signature; 
+	}
+	if (NULL != generic_ptr) {
+		*generic_ptr = rv_generic;
 	}
 	TRACE_JVMTI_RETURN(jvmtiGetClassSignature);
 }
@@ -398,6 +414,7 @@ jvmtiGetClassStatus(jvmtiEnv* env,
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc;
 	J9VMThread * currentThread;
+	jint rv_status = JVMTI_CLASS_STATUS_ERROR;
 
 	Trc_JVMTI_jvmtiGetClassStatus_Entry(env);
 
@@ -413,12 +430,15 @@ jvmtiGetClassStatus(jvmtiEnv* env,
 		ENSURE_NON_NULL(status_ptr);
 
 		clazz = J9VM_J9CLASS_FROM_JCLASS(currentThread, klass);
-		*status_ptr = getClassStatus(clazz);
+		rv_status = getClassStatus(clazz);
 
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != status_ptr) {
+		*status_ptr = rv_status;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetClassStatus);
 }
 
@@ -431,6 +451,7 @@ jvmtiGetSourceFileName(jvmtiEnv* env,
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc;
 	J9VMThread * currentThread;
+	char *rv_source_name = NULL;
 
 	Trc_JVMTI_jvmtiGetSourceFileName_Entry(env);
 
@@ -453,13 +474,16 @@ jvmtiGetSourceFileName(jvmtiEnv* env,
 		rc = JVMTI_ERROR_ABSENT_INFORMATION;
 		sourceFileName = getSourceFileNameForROMClass(vm, clazz->classLoader, clazz->romClass);
 		if (sourceFileName != NULL) {
-			rc = cStringFromUTF(env, sourceFileName, source_name_ptr);
+			rc = cStringFromUTF(env, sourceFileName, &rv_source_name);
 			releaseOptInfoBuffer(vm, clazz->romClass);
 		}
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != source_name_ptr) {
+		*source_name_ptr = rv_source_name;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetSourceFileName);
 }
 
@@ -472,6 +496,7 @@ jvmtiGetClassModifiers(jvmtiEnv* env,
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc;
 	J9VMThread * currentThread;
+	jint rv_modifiers = 0;
 
 	Trc_JVMTI_jvmtiGetClassModifiers_Entry(env);
 
@@ -513,12 +538,15 @@ jvmtiGetClassModifiers(jvmtiEnv* env,
 
 		/* Only the low 16 bit of the modifiers are specified - the rest are J9 internal */
 
-		*modifiers_ptr = (jint) (modifiers & 0xFFFF);
+		rv_modifiers = (jint) (modifiers & 0xFFFF);
 
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != modifiers_ptr) {
+		*modifiers_ptr = rv_modifiers;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetClassModifiers);
 }
 
@@ -533,6 +561,8 @@ jvmtiGetClassMethods(jvmtiEnv* env,
 	jvmtiError rc;
 	J9VMThread * currentThread;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	jint rv_method_count = 0;
+	jmethodID *rv_methods = NULL;
 
 	Trc_JVMTI_jvmtiGetClassMethods_Entry(env);
 
@@ -574,13 +604,19 @@ jvmtiGetClassMethods(jvmtiEnv* env,
 				}
 				methodIDs[i] = (jmethodID) methodID;
 			}
-			*method_count_ptr = (jint) methodCount;
-			*methods_ptr = methodIDs;
+			rv_method_count = (jint) methodCount;
+			rv_methods = methodIDs;
 		}
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != method_count_ptr) {
+		*method_count_ptr = rv_method_count;
+	}
+	if (NULL != methods_ptr) {
+		*methods_ptr = rv_methods;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetClassMethods);
 }
 
@@ -595,6 +631,8 @@ jvmtiGetClassFields(jvmtiEnv* env,
 	jvmtiError rc;
 	J9VMThread * currentThread;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	jint rv_field_count = 0;
+	jfieldID *rv_fields = NULL;
 
 	Trc_JVMTI_jvmtiGetClassFields_Entry(env);
 
@@ -645,13 +683,15 @@ jvmtiGetClassFields(jvmtiEnv* env,
 				result = vmFuncs->fieldOffsetsNextDo(&state);
 			}
 
-			*field_count_ptr = (jint) fieldCount;
-			*fields_ptr = fieldIDs;
+			rv_field_count = (jint) fieldCount;
+			rv_fields = fieldIDs;
 		}
 done:
 		vmFuncs->internalExitVMToJNI(currentThread);
 	}
 
+	*field_count_ptr = rv_field_count;
+	*fields_ptr = rv_fields;
 	TRACE_JVMTI_RETURN(jvmtiGetClassFields);
 }
 
@@ -666,6 +706,8 @@ jvmtiGetImplementedInterfaces(jvmtiEnv* env,
 	jvmtiError rc;
 	J9VMThread * currentThread;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	jint rv_interface_count = 0;
+	jclass *rv_interfaces = NULL;
 
 	Trc_JVMTI_jvmtiGetImplementedInterfaces_Entry(env);
 
@@ -673,8 +715,8 @@ jvmtiGetImplementedInterfaces(jvmtiEnv* env,
 	if (rc == JVMTI_ERROR_NONE) {
 		J9Class * clazz;
 		J9ROMClass * romClass;
-		jint interfaceCount;
-		jclass * interfaces;
+		jint interfaceCount = 0;
+		jclass * interfaces = NULL;
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
@@ -691,11 +733,7 @@ jvmtiGetImplementedInterfaces(jvmtiEnv* env,
 
 		/* Array and primitive classes must return an empty list */
 
-		if (J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(romClass)) {
-			interfaceCount = 0;
-			interfaces = NULL;
-		} else {
-
+		if (!J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(romClass)) {
 			/* Must walk the interface names in the ROM class to be sure to get the whole list */
  
 			interfaceCount = (jint) romClass->interfaceCount;
@@ -719,12 +757,18 @@ jvmtiGetImplementedInterfaces(jvmtiEnv* env,
 			}
 		}
 
-		*interface_count_ptr = interfaceCount;
-		*interfaces_ptr = interfaces;
+		rv_interface_count = interfaceCount;
+		rv_interfaces = interfaces;
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != interface_count_ptr) {
+		*interface_count_ptr = rv_interface_count;
+	}
+	if (NULL != interfaces_ptr) {
+		*interfaces_ptr = rv_interfaces;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetImplementedInterfaces);
 }
 
@@ -737,6 +781,7 @@ jvmtiIsInterface(jvmtiEnv* env,
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc;
 	J9VMThread * currentThread;
+	jboolean rv_is_interface = JNI_FALSE;
 
 	Trc_JVMTI_jvmtiIsInterface_Entry(env);
 
@@ -752,12 +797,15 @@ jvmtiIsInterface(jvmtiEnv* env,
 		ENSURE_NON_NULL(is_interface_ptr);
 
 		clazz = J9VM_J9CLASS_FROM_JCLASS(currentThread, klass);
-		*is_interface_ptr = (clazz->romClass->modifiers & J9AccInterface) ? JNI_TRUE : JNI_FALSE;
+		rv_is_interface = (clazz->romClass->modifiers & J9AccInterface) ? JNI_TRUE : JNI_FALSE;
 
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != is_interface_ptr) {
+		*is_interface_ptr = rv_is_interface;
+	}
 	TRACE_JVMTI_RETURN(jvmtiIsInterface);
 }
 
@@ -770,6 +818,7 @@ jvmtiIsArrayClass(jvmtiEnv* env,
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc;
 	J9VMThread * currentThread;
+	jboolean rv_is_array_class = JNI_FALSE;
 
 	Trc_JVMTI_jvmtiIsArrayClass_Entry(env);
 
@@ -785,12 +834,15 @@ jvmtiIsArrayClass(jvmtiEnv* env,
 		ENSURE_NON_NULL(is_array_class_ptr);
 
 		clazz = J9VM_J9CLASS_FROM_JCLASS(currentThread, klass);
-		*is_array_class_ptr = (J9ROMCLASS_IS_ARRAY(clazz->romClass)) ? JNI_TRUE : JNI_FALSE;
+		rv_is_array_class = (J9ROMCLASS_IS_ARRAY(clazz->romClass)) ? JNI_TRUE : JNI_FALSE;
 
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != is_array_class_ptr) {
+		*is_array_class_ptr = rv_is_array_class;
+	}
 	TRACE_JVMTI_RETURN(jvmtiIsArrayClass);
 }
 
@@ -803,6 +855,7 @@ jvmtiGetClassLoader(jvmtiEnv* env,
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc;
 	J9VMThread * currentThread;
+	jobject rv_classloader = NULL;
 
 	Trc_JVMTI_jvmtiGetClassLoader_Entry(env);
 
@@ -821,14 +874,17 @@ jvmtiGetClassLoader(jvmtiEnv* env,
 		clazz = J9VM_J9CLASS_FROM_JCLASS(currentThread, klass);
 		classLoader = clazz->classLoader;
 		if (classLoader == vm->systemClassLoader) {
-			*classloader_ptr = NULL;
+			rv_classloader = NULL;
 		} else {
-			*classloader_ptr = vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *)currentThread, J9CLASSLOADER_CLASSLOADEROBJECT(currentThread, classLoader));
+			rv_classloader = vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *)currentThread, J9CLASSLOADER_CLASSLOADEROBJECT(currentThread, classLoader));
 		}
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != classloader_ptr) {
+		*classloader_ptr = rv_classloader;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetClassLoader);
 }
 
@@ -843,6 +899,7 @@ jvmtiGetSourceDebugExtension(jvmtiEnv* env,
 #if defined(J9VM_OPT_DEBUG_JSR45_SUPPORT)
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	J9VMThread * currentThread;
+	char *rv_source_debug_extension = NULL;
 
 	Trc_JVMTI_jvmtiGetSourceDebugExtension_Entry(env);
 
@@ -868,7 +925,7 @@ jvmtiGetSourceDebugExtension(jvmtiEnv* env,
 			U_32 length = sourceDebugExtension->size;
 
 			if (length != 0) {
-				rc = cStringFromUTFChars(env, (U_8 *) (sourceDebugExtension + 1), length, source_debug_extension_ptr);
+				rc = cStringFromUTFChars(env, (U_8 *) (sourceDebugExtension + 1), length, &rv_source_debug_extension);
 			}
 			releaseOptInfoBuffer(vm, clazz->romClass);
 		}
@@ -880,6 +937,9 @@ done:
 	rc = JVMTI_ERROR_MUST_POSSESS_CAPABILITY;
 #endif
 
+	if (NULL != source_debug_extension_ptr) {
+		*source_debug_extension_ptr = rv_source_debug_extension;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetSourceDebugExtension);
 }
 
@@ -1088,15 +1148,15 @@ redefineClassesCommon(jvmtiEnv* env,
 				/* Fix static refs */
 				fixStaticRefs(currentThread, classPairs, extensionsUsed);
  
-				/* Copy preserved values */
-				copyPreservedValues(currentThread, classPairs, extensionsUsed);
-
 				/* Update heap references */
 				fixHeapRefs(vm, classPairs);
 
 				/* Update method references in DirectHandles */
 				fixDirectHandles(currentThread, classPairs, methodPairs);
  
+				/* Copy preserved values */
+				copyPreservedValues(currentThread, classPairs, extensionsUsed);
+
 				/* Update the componentType and leafComponentType fields of array classes */
 				fixArrayClasses(currentThread, classPairs);
 
@@ -1458,13 +1518,13 @@ jvmtiIsModifiableClass(jvmtiEnv* env,
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc;
 	J9VMThread * currentThread;
+	jboolean rv_is_modifiable = JNI_FALSE;
 
 	Trc_JVMTI_jvmtiIsModifiableClass_Entry(env);
 
 	rc = getCurrentVMThread(vm, &currentThread);
 	if (rc == JVMTI_ERROR_NONE) {
 		J9Class * clazz;
-		jboolean modifiable = JNI_FALSE;
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
 		ENSURE_PHASE_START_OR_LIVE(env);
@@ -1478,21 +1538,23 @@ jvmtiIsModifiableClass(jvmtiEnv* env,
 			JVMTI_ERROR(JVMTI_ERROR_INVALID_CLASS);
 		}
 
-		modifiable = classIsModifiable(vm, clazz);
-		if (modifiable) {
+		rv_is_modifiable = classIsModifiable(vm, clazz);
+		if (rv_is_modifiable) {
 			if (((J9JVMTIEnv *) env)->capabilities.can_retransform_classes) {
 				J9MemorySegmentList * classSegments = vm->classMemorySegments;
 
 				omrthread_monitor_enter(classSegments->segmentMutex);
-				modifiable = (WSRP_GET(clazz->romClass->intermediateClassData, U_8*) != NULL);
+				rv_is_modifiable = (WSRP_GET(clazz->romClass->intermediateClassData, U_8*) != NULL);
 				omrthread_monitor_exit(classSegments->segmentMutex);
 			}
 		}
-		*is_modifiable_class_ptr = modifiable;
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != is_modifiable_class_ptr) {
+		*is_modifiable_class_ptr = rv_is_modifiable;
+	}
 	TRACE_JVMTI_RETURN(jvmtiIsModifiableClass);
 }
 
@@ -1506,6 +1568,8 @@ jvmtiGetClassVersionNumbers(jvmtiEnv* env,
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc;
 	J9VMThread * currentThread;
+	jint rv_minor_version = 0;
+	jint rv_major_version = 0;
 
 	Trc_JVMTI_jvmtiGetClassVersionNumbers_Entry(env);
 
@@ -1528,14 +1592,20 @@ jvmtiGetClassVersionNumbers(jvmtiEnv* env,
 		if (J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(romClass)) {
 			rc = JVMTI_ERROR_ABSENT_INFORMATION;
 		} else {
-			*minor_version_ptr = (jint) romClass->minorVersion;
-			*major_version_ptr = (jint) romClass->majorVersion;
+			rv_minor_version = (jint) romClass->minorVersion;
+			rv_major_version = (jint) romClass->majorVersion;
 		}
 
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != minor_version_ptr) {
+		*minor_version_ptr = rv_minor_version;
+	}
+	if (NULL != major_version_ptr) {
+		*major_version_ptr = rv_major_version;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetClassVersionNumbers);
 }
 
@@ -1620,7 +1690,10 @@ jvmtiGetConstantPool(jvmtiEnv* env,
 	J9VMThread * currentThread;
 	jvmtiGcp_translation translation;
 	unsigned char *constantPoolBuf;
-	
+	jint rv_constant_pool_count = 0;
+	jint rv_constant_pool_byte_count = 0;
+	unsigned char *rv_constant_pool_bytes = NULL;
+
 	Trc_JVMTI_jvmtiGetConstantPool_Entry(env);
 
     memset(&translation, 0x00, sizeof(jvmtiGcp_translation));
@@ -1671,16 +1744,25 @@ jvmtiGetConstantPool(jvmtiEnv* env,
 			JVMTI_ERROR(rc);
 		}
 
-		*constant_pool_count_ptr = translation.cpSize;
-		*constant_pool_byte_count_ptr = translation.totalSize;
-		*constant_pool_bytes_ptr = constantPoolBuf;
-		
+		rv_constant_pool_count = translation.cpSize;
+		rv_constant_pool_byte_count = translation.totalSize;
+		rv_constant_pool_bytes = constantPoolBuf;
+
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 
 		jvmtiGetConstantPool_free(PORTLIB, &translation);
 	}
 
+	if (NULL != constant_pool_count_ptr) {
+		*constant_pool_count_ptr = rv_constant_pool_count;
+	}
+	if (NULL != constant_pool_byte_count_ptr) {
+		*constant_pool_byte_count_ptr = rv_constant_pool_byte_count;
+	}
+	if (NULL != constant_pool_bytes_ptr) {
+		*constant_pool_bytes_ptr = rv_constant_pool_bytes;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetConstantPool);
 }
 

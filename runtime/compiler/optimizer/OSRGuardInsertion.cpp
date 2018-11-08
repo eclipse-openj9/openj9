@@ -137,6 +137,8 @@ TR_Structure *fakeRegion(TR::Compilation *comp)
       }
 
    region->setContainsImproperRegion(true);
+   if (comp->mayHaveLoops())
+      region->setContainsInternalCycles(true);
    region->setEntry((*blocks)[0]);
    return region;
    }

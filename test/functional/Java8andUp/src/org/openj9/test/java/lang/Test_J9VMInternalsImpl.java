@@ -1,20 +1,3 @@
-
-package org.openj9.test.java.lang;
-
-import java.lang.reflect.Method;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.security.AccessController;
-import java.security.AllPermission;
-import java.security.CodeSource;
-import java.security.PermissionCollection;
-import java.security.PrivilegedExceptionAction;
-
-import org.testng.Assert;
-import org.testng.annotations.Test;
-import org.testng.log4testng.Logger;
-
-
 /*******************************************************************************
  * Copyright (c) 2013, 2018 IBM Corp. and others
  *
@@ -36,6 +19,21 @@ import org.testng.log4testng.Logger;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package org.openj9.test.java.lang;
+
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.security.AccessController;
+import java.security.AllPermission;
+import java.security.CodeSource;
+import java.security.PermissionCollection;
+import java.security.PrivilegedExceptionAction;
+
+import org.testng.Assert;
+import org.testng.annotations.Test;
+import org.testng.log4testng.Logger;
+
 @Test(groups = { "level.sanity" })
 public class Test_J9VMInternalsImpl {
 

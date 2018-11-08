@@ -57,6 +57,7 @@ include(cmake/se6_vm-side_lifecycle.cmake)
 include(cmake/se7.cmake)
 include(cmake/se8.cmake)
 include(cmake/se9.cmake)
+
 include(cmake/sun_misc_unsafe.cmake)
 
 
@@ -69,4 +70,5 @@ if(J9VM_BUILD_JAVA7)
 	#TODO why is cl_se9 gated by BUILD_JAVA7?
 	add_subdirectory(cl_se9)
 	add_subdirectory(cl_se9_before_b165)
+	add_subdirectory(cl_se10)
 endif()

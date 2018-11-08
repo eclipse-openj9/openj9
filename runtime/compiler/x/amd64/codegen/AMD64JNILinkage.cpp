@@ -975,13 +975,24 @@ void TR::AMD64JNILinkage::releaseVMAccess(TR::Node *callNode)
       }
    generateLabelInstruction(JNE4, callNode, longReleaseSnippetLabel, cg());
 
-   cg()->addSnippet(
-      new (trHeapMemory()) TR::X86HelperCallSnippet(
-         cg(),
-         callNode,
-         longReleaseRestartLabel,
-         longReleaseSnippetLabel,
-         comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getMethodSymbol())));
+   static bool UseOldReleaseVMAccess = (bool)feGetEnv("TR_UseOldReleaseVMAccess");
+   if (UseOldReleaseVMAccess)
+      {
+      cg()->addSnippet(
+         new (trHeapMemory()) TR::X86HelperCallSnippet(
+            cg(),
+            callNode,
+            longReleaseRestartLabel,
+            longReleaseSnippetLabel,
+            comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getMethodSymbol())));
+      }
+   else
+      {
+      TR_OutlinedInstructionsGenerator og(longReleaseSnippetLabel, callNode, cg());
+      auto helper = comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getMethodSymbol());
+      generateImmSymInstruction(CALLImm4, callNode, (uintptrj_t)helper->getMethodAddress(), helper, cg());
+      generateLabelInstruction(JMP4, callNode, longReleaseRestartLabel, cg());
+      }
 
    mask = fej9->constReleaseVMAccessMask();
 
@@ -1073,14 +1084,24 @@ void TR::AMD64JNILinkage::acquireVMAccess(TR::Node *callNode)
    // If the return type is address something needs to be represented in the
    // register map for the snippet.
    //
-   cg()->addSnippet(
-      new (trHeapMemory()) TR::X86HelperCallSnippet(
-         cg(),
-         callNode,
-         longReacquireRestartLabel,
-         longReacquireSnippetLabel,
-         comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getMethodSymbol())));
-
+   static bool UseOldAcquireVMAccess = (bool)feGetEnv("TR_UseOldAcquireVMAccess");
+   if (UseOldAcquireVMAccess)
+      {
+      cg()->addSnippet(
+         new (trHeapMemory()) TR::X86HelperCallSnippet(
+            cg(),
+            callNode,
+            longReacquireRestartLabel,
+            longReacquireSnippetLabel,
+            comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getMethodSymbol())));
+      }
+   else
+      {
+      TR_OutlinedInstructionsGenerator og(longReacquireSnippetLabel, callNode, cg());
+      auto helper = comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getMethodSymbol());
+      generateImmSymInstruction(CALLImm4, callNode, (uintptrj_t)helper->getMethodAddress(), helper, cg());
+      generateLabelInstruction(JMP4, callNode, longReacquireRestartLabel, cg());
+      }
    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(2, 2, cg());
    deps->addPreCondition(scratchReg1, TR::RealRegister::eax, cg());
    deps->addPostCondition(scratchReg1, TR::RealRegister::eax, cg());
@@ -1126,14 +1147,24 @@ void TR::AMD64JNILinkage::releaseVMAccessAtomicFree(TR::Node *callNode)
                              cg());
    generateLabelInstruction(JNE4, callNode, longReleaseSnippetLabel, cg());
 
-   cg()->addSnippet(
-      new (trHeapMemory()) TR::X86HelperCallSnippet(
-         cg(),
-         callNode,
-         longReleaseRestartLabel,
-         longReleaseSnippetLabel,
-         comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getMethodSymbol())));
-
+   static bool UseOldReleaseVMAccess = (bool)feGetEnv("TR_UseOldReleaseVMAccess");
+   if (UseOldReleaseVMAccess)
+      {
+      cg()->addSnippet(
+         new (trHeapMemory()) TR::X86HelperCallSnippet(
+            cg(),
+            callNode,
+            longReleaseRestartLabel,
+            longReleaseSnippetLabel,
+            comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getMethodSymbol())));
+      }
+   else
+      {
+      TR_OutlinedInstructionsGenerator og(longReleaseSnippetLabel, callNode, cg());
+      auto helper = comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getMethodSymbol());
+      generateImmSymInstruction(CALLImm4, callNode, (uintptrj_t)helper->getMethodAddress(), helper, cg());
+      generateLabelInstruction(JMP4, callNode, longReleaseRestartLabel, cg());
+      }
    generateLabelInstruction(LABEL, callNode, longReleaseRestartLabel, cg());
    }
 
@@ -1167,14 +1198,24 @@ void TR::AMD64JNILinkage::acquireVMAccessAtomicFree(TR::Node *callNode)
                              cg());
    generateLabelInstruction(JNE4, callNode, longAcquireSnippetLabel, cg());
 
-   cg()->addSnippet(
-      new (trHeapMemory()) TR::X86HelperCallSnippet(
-         cg(),
-         callNode,
-         longAcquireRestartLabel,
-         longAcquireSnippetLabel,
-         comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getMethodSymbol())));
-
+   static bool UseOldAcquireVMAccess = (bool)feGetEnv("TR_UseOldAcquireVMAccess");
+   if (UseOldAcquireVMAccess)
+      {
+      cg()->addSnippet(
+         new (trHeapMemory()) TR::X86HelperCallSnippet(
+            cg(),
+            callNode,
+            longAcquireRestartLabel,
+            longAcquireSnippetLabel,
+            comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getMethodSymbol())));
+      }
+   else
+      {
+      TR_OutlinedInstructionsGenerator og(longAcquireSnippetLabel, callNode, cg());
+      auto helper = comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getMethodSymbol());
+      generateImmSymInstruction(CALLImm4, callNode, (uintptrj_t)helper->getMethodAddress(), helper, cg());
+      generateLabelInstruction(JMP4, callNode, longAcquireRestartLabel, cg());
+      }
    generateLabelInstruction(LABEL, callNode, longAcquireRestartLabel, cg());
    }
 
@@ -1309,15 +1350,25 @@ void TR::AMD64JNILinkage::cleanupJNIRefPool(TR::Node *callNode)
 
    generateLabelInstruction(JNE4, callNode, refPoolSnippetLabel, cg());
 
-   TR_RuntimeHelper helper = TR::Compiler->target.is64Bit() ? TR_AMD64jitCollapseJNIReferenceFrame : TR_IA32jitCollapseJNIReferenceFrame;
-   cg()->addSnippet(
-      new (trHeapMemory()) TR::X86HelperCallSnippet(
-         cg(),
-         callNode,
-         refPoolRestartLabel,
-         refPoolSnippetLabel,
-         cg()->symRefTab()->findOrCreateRuntimeHelper(helper, false, false, false)));
+   static bool UseOldCollapseJNIReferenceFrame = (bool)feGetEnv("TR_UseOldCollapseJNIReferenceFrame");
 
+   if (UseOldCollapseJNIReferenceFrame)
+      {
+      TR_RuntimeHelper helper = TR::Compiler->target.is64Bit() ? TR_AMD64jitCollapseJNIReferenceFrame : TR_IA32jitCollapseJNIReferenceFrame;
+      cg()->addSnippet(
+         new (trHeapMemory()) TR::X86HelperCallSnippet(
+            cg(),
+            callNode,
+            refPoolRestartLabel,
+            refPoolSnippetLabel,
+            cg()->symRefTab()->findOrCreateRuntimeHelper(helper, false, false, false)));
+      }
+   else
+      {
+      TR_OutlinedInstructionsGenerator og(refPoolSnippetLabel, callNode, cg());
+      generateHelperCallInstruction(callNode, TR_AMD64jitCollapseJNIReferenceFrame, NULL, cg());
+      generateLabelInstruction(JMP4, callNode, refPoolRestartLabel, cg());
+      }
    generateLabelInstruction(LABEL, callNode, refPoolRestartLabel, cg());
    }
 

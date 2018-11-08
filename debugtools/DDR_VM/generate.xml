@@ -563,7 +563,7 @@
 		<if>
 		  	<equals arg1="${product}" arg2="java8" />
 			<then>
-				<copy file="${output.dir}/libs/j9ddr.jar" todir="/bluebird/tools/ddr/" />
+				<copy file="${output.dir}/libs/j9ddr.jar" tofile="/bluebird/tools/ddr/j9ddr_jvm29.jar" />
 			</then>
 		</if>
 	</target>

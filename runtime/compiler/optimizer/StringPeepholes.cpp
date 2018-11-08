@@ -229,7 +229,7 @@ int32_t TR_StringPeepholes::perform()
    {
    static char *skipitAtWarm = feGetEnv("TR_noPeepholeAtWarm");
    if (comp()->getOption(TR_DisableStringPeepholes)
-       || !comp()->fej9()->doStringPeepholing()
+       || (!comp()->fej9()->doStringPeepholing() && !comp()->getOption(TR_UseSymbolValidationManager))
        || (skipitAtWarm && comp()->getMethodHotness()==warm))
       return 1;
 
@@ -1566,7 +1566,7 @@ TR::TreeTop *TR_StringPeepholes::detectBDPattern(TR::TreeTop *tt, TR::TreeTop *e
 
                      if (targetNode->getOpCode().hasSymbolReference() &&
                          targetNode->getSymbolReference() == sourceNode->getSymbolReference() &&
-                        (targetNode->getOpCodeValue() == TR::astorei || targetNode->getOpCodeValue() == TR::wrtbari))
+                        (targetNode->getOpCodeValue() == TR::astorei || targetNode->getOpCodeValue() == TR::awrtbari))
                         {
 
                         int32_t len;

@@ -36,6 +36,7 @@
 #include "infra/Checklist.hpp"
 #include "env/VMJ9.h"
 #include "ilgen/J9ByteCodeIlGenerator.hpp"
+#include "optimizer/BoolArrayStoreTransformer.hpp"
 #include "ras/DebugCounter.hpp"
 #include "optimizer/TransformUtil.hpp"
 
@@ -72,7 +73,8 @@ TR_J9ByteCodeIlGenerator::TR_J9ByteCodeIlGenerator(
          ((comp->getMethodHotness() >= scorching) ||
           (comp->couldBeRecompiled() && (comp->getMethodHotness() >= hot ))))))
       {
-      _classInfo = comp->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(method()->containingClass(), comp);
+      bool allowForAOT = comp->getOption(TR_UseSymbolValidationManager);
+      _classInfo = comp->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(method()->containingClass(), comp, allowForAOT);
       }
    else
       {
@@ -109,7 +111,7 @@ TR_J9ByteCodeIlGenerator::TR_J9ByteCodeIlGenerator(
       _argPlaceholderSignatureOffset = curArg - signatureChars;
       }
    for( int i=0 ; i < _numDecFormatRenames ; i++ )
-      { 
+      {
       _decFormatRenamesDstSymRef[i] = NULL;
       }
    if (comp->getOption(TR_EnableOSR)
@@ -483,11 +485,56 @@ TR_J9ByteCodeIlGenerator::genILFromByteCodes()
    TR_ScratchList<TR::TreeTop> unresolvedInstanceofTops(comp()->trMemory());
    TR_ScratchList<TR::TreeTop> invokeSpecialInterfaceTops(comp()->trMemory());
    TR::NodeChecklist evaluatedInvokeSpecialCalls(comp());
+   TR_BoolArrayStoreTransformer::NodeSet bstoreiUnknownArrayTypeNodes(std::less<TR::Node *>(), comp()->trMemory()->currentStackRegion());
+   TR_BoolArrayStoreTransformer::NodeSet bstoreiBoolArrayTypeNodes(std::less<TR::Node *>(), comp()->trMemory()->currentStackRegion());
+   TR_BoolArrayStoreTransformer boolArrayStoreTransformer(&bstoreiUnknownArrayTypeNodes, &bstoreiBoolArrayTypeNodes);
 
    for (; currTree != NULL; currTree = currTree->getNextTreeTop())
       {
       TR::Node *currNode = currTree->getNode();
       TR::ILOpCode opcode = currNode->getOpCode();
+
+      if ((opcode.isStoreDirect() && opcode.hasSymbolReference() && currNode->getSymbolReference()->getSymbol()->isAutoOrParm()) ||
+          opcode.isCheckCast())
+         {
+         TR::SymbolReference *symRef = currNode->getSymbolReference();
+         TR::Node *typeNode = NULL;
+         if (opcode.isStoreDirect())
+            typeNode = currNode->getFirstChild(); // store auto
+         else typeNode = currNode->getSecondChild(); // checkcast
+         if (boolArrayStoreTransformer.isAnyDimensionBoolArrayNode(typeNode))
+            boolArrayStoreTransformer.setHasBoolArrayAutoOrCheckCast();
+         else if (boolArrayStoreTransformer.isAnyDimensionByteArrayNode(typeNode))
+            boolArrayStoreTransformer.setHasByteArrayAutoOrCheckCast();
+
+         if (opcode.isStoreDirect() && symRef->getSymbol()->isParm() && currNode->getDataType() == TR::Address)
+            {
+            int lhsLength;
+            int rhsLength;
+            const char *lhsSig = currNode->getTypeSignature(lhsLength, stackAlloc, false /* parmAsAuto */);
+            const char *rhsSig = typeNode->getTypeSignature(rhsLength, stackAlloc, true /* parmAsAuto */);
+            if (!lhsSig || !rhsSig || lhsLength != rhsLength || strncmp(lhsSig, rhsSig, lhsLength))
+               boolArrayStoreTransformer.setHasVariantArgs();
+            }
+         }
+      else if (opcode.getOpCodeValue() == TR::bstorei && currNode->getSymbolReference()->getCPIndex() == -1
+            && currNode->getFirstChild()->isInternalPointer())
+         {
+         TR::Node *arrayBase = currNode->getFirstChild()->getFirstChild();
+         if (arrayBase->getOpCode().hasSymbolReference())
+            {
+            if (boolArrayStoreTransformer.isBoolArrayNode(arrayBase))
+               {
+               if (comp()->getOption(TR_TraceILGen))
+                  traceMsg(comp(), "bstorei node n%dn is bool array store\n", currNode->getGlobalIndex());
+               bstoreiBoolArrayTypeNodes.insert(currNode);
+               }
+            else if (!boolArrayStoreTransformer.isByteArrayNode(arrayBase))
+               bstoreiUnknownArrayTypeNodes.insert(currNode);
+            }
+         else
+            bstoreiUnknownArrayTypeNodes.insert(currNode);
+         }
 
       if (currNode->getOpCodeValue() == TR::checkcast
           && currNode->getSecondChild()->getOpCodeValue() == TR::loadaddr
@@ -524,7 +571,7 @@ TR_J9ByteCodeIlGenerator::genILFromByteCodes()
       if(opcode.isStoreDirect() && opcode.hasSymbolReference())
          {
             TR::SymbolReference *symRef = currNode->getSymbolReference();
-            if( symRef && symRef->getSymbol()->isAutoOrParm())
+            if (symRef && symRef->getSymbol()->isAutoOrParm())
                autoOrParmSymRefList.add(symRef);
          }
 
@@ -678,6 +725,9 @@ TR_J9ByteCodeIlGenerator::genILFromByteCodes()
       for (TR::TreeTop *tree = it.getCurrent(); tree != NULL; tree = it.getNext())
          expandInvokeSpecialInterface(tree);
       }
+
+   if (!bstoreiUnknownArrayTypeNodes.empty() || !bstoreiBoolArrayTypeNodes.empty())
+      boolArrayStoreTransformer.perform();
 
    return true;
    }
@@ -2161,7 +2211,7 @@ static bool matchFieldOrStaticName(TR::Compilation* comp, TR::Node* node, char* 
       int32_t index = symRef->getReferenceNumber();
       int32_t nonhelperIndex = comp->getSymRefTab()->getNonhelperIndex(comp->getSymRefTab()->getLastCommonNonhelperSymbol());
       int32_t numHelperSymbols = comp->getSymRefTab()->getNumHelperSymbols();
-      if ((index < numHelperSymbols) || (index < nonhelperIndex) || sym->isConstString()) return false;
+      if ((index < numHelperSymbols) || (index < nonhelperIndex) || !sym->isStaticField()) return false;
 
       const char * nodeName = method->staticName(symRef->getCPIndex(), comp->trMemory(), stackAlloc);
       return !strcmp(nodeName, staticOrFieldName);

@@ -2062,6 +2062,28 @@ old_slow_jitThrowArrayIndexOutOfBounds(J9VMThread *currentThread)
 }
 
 void* J9FASTCALL
+impl_jitReferenceArrayCopy(J9VMThread *currentThread, UDATA lengthInBytes)
+{
+	JIT_HELPER_PROLOGUE();
+	void* exception = NULL;
+	if (-1 != currentThread->javaVM->memoryManagerFunctions->referenceArrayCopy(
+		currentThread,
+		(J9IndexableObject*)currentThread->floatTemp1,
+		(J9IndexableObject*)currentThread->floatTemp2,
+		(fj9object_t*)currentThread->floatTemp3,
+		(fj9object_t*)currentThread->floatTemp4,
+#if defined(J9VM_GC_COMPRESSED_POINTERS) || !defined(J9VM_ENV_DATA64)
+		(I_32)(lengthInBytes >> 2)
+#else
+		(I_32)(lengthInBytes >> 3)
+#endif /* J9VM_INTERP_COMPRESSED_OBJECT_HEADER || !J9VM_ENV_DATA64 */
+	)) {
+		exception = (void*)-1;
+	}
+	return exception;
+}
+
+void* J9FASTCALL
 old_slow_jitThrowArrayStoreException(J9VMThread *currentThread)
 {
 	OLD_JIT_HELPER_PROLOGUE(0);
@@ -2448,50 +2470,70 @@ old_slow_jitNewInstanceImplAccessCheck(J9VMThread *currentThread)
 	DECLARE_JIT_PARM(J9Method*, defaultConstructor, 3);
 	J9Class *thisClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, thisClassObject);
 	J9Class *callerClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, callerClassObject);
-	J9ROMClass *thisROMClass = thisClass->romClass;
-	J9ROMClass *callerROMClass = callerClass->romClass;
-	/* Unsafe classes do no visibility checking */
-	if (!J9ROMCLASS_IS_UNSAFE(callerROMClass)) {
-		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(defaultConstructor);
-		/* See if thisClass is visible to callerClass - classes are either public, module or default */
-		if (!J9ROMCLASS_IS_PUBLIC(thisROMClass)) {
-			/* Default visbility means the method can be sent from anywhere in the method's package */
-			if (thisClass->packageID != callerClass->packageID) {
+ 	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(defaultConstructor);
+ 	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+	void *oldPC = buildJITResolveFrame(currentThread, J9_SSF_JIT_RESOLVE_RUNTIME_HELPER, parmCount);
+	IDATA checkResult = vmFuncs->checkVisibility(currentThread, callerClass, thisClass, thisClass->romClass->modifiers, J9_LOOK_REFLECT_CALL);
+	if (checkResult < J9_VISIBILITY_ALLOWED) {
 illegalAccess:
-				buildJITResolveFrame(currentThread, J9_SSF_JIT_RESOLVE_RUNTIME_HELPER, parmCount);
-				J9UTF8 *classNameUTF = J9ROMCLASS_CLASSNAME(thisROMClass);
-				J9UTF8 *nameUTF = J9ROMMETHOD_NAME(romMethod);
-				J9UTF8 *sigUTF = J9ROMMETHOD_SIGNATURE(romMethod);
-				j9object_t detailMessage = currentThread->javaVM->internalVMFunctions->catUtfToString4(
-						currentThread,
-						J9UTF8_DATA(classNameUTF),
-						J9UTF8_LENGTH(classNameUTF),
-						(U_8*)".",
-						1,
-						J9UTF8_DATA(nameUTF),
-						J9UTF8_LENGTH(nameUTF),
-						J9UTF8_DATA(sigUTF),
-						J9UTF8_LENGTH(sigUTF));
-				addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSEXCEPTION, detailMessage);
-				goto done;
-			}
+		if (VM_VMHelpers::immediateAsyncPending(currentThread)) {
+			goto done;
 		}
-		/* See if the method is visible */
-		if (!J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccPublic)) {
-			if (J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccPrivate)) {
-				/* Private methods are visible only within their declaring class */
+		if (VM_VMHelpers::exceptionPending(currentThread)) {
+			goto done;
+		}
+ 		J9UTF8 *classNameUTF = J9ROMCLASS_CLASSNAME(thisClass->romClass);
+		J9UTF8 *nameUTF = J9ROMMETHOD_NAME(romMethod);
+		J9UTF8 *sigUTF = J9ROMMETHOD_SIGNATURE(romMethod);
+		j9object_t detailMessage = currentThread->javaVM->internalVMFunctions->catUtfToString4(
+				currentThread,
+				J9UTF8_DATA(classNameUTF),
+				J9UTF8_LENGTH(classNameUTF),
+				(U_8*)".",
+				1,
+				J9UTF8_DATA(nameUTF),
+				J9UTF8_LENGTH(nameUTF),
+				J9UTF8_DATA(sigUTF),
+				J9UTF8_LENGTH(sigUTF));
+		setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSEXCEPTION, detailMessage);
+		goto done;
+	}
+
+	/* See if the method is visible - don't use checkVisibility here because newInstance
+	 * has different rules for protected method visibility.
+	 */
+	if (!J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccPublic)) {
+		if (J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccPrivate)) {
+			/* Private methods are visible only within their declaring class
+			 * unless the two classes are in the same nest (JDK11 and beyond).
+			 */
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+			if (NULL == thisClass->nestHost) {
+				if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, thisClass, 0)) {
+					goto illegalAccess;
+				}
+			}
+			if (NULL == callerClass->nestHost) {
+				if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, callerClass, 0)) {
+					goto illegalAccess;
+				}
+			}
+			if (thisClass->nestHost != callerClass->nestHost)
+#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+			{
 				if (thisClass != callerClass) {
 					goto illegalAccess;
 				}
-			} else {
-				/* Protected and default are treated the same when called from newInstance() */
-				if (thisClass->packageID != callerClass->packageID) {
-					goto illegalAccess;
-				}
+			}
+		} else {
+			/* Protected and default are treated the same when called from newInstance() */
+			if (thisClass->packageID != callerClass->packageID) {
+				goto illegalAccess;
 			}
 		}
 	}
 done:
+	addr = restoreJITResolveFrame(currentThread, oldPC);
 	SLOW_JIT_HELPER_EPILOGUE();
 #endif /* J9VM_JIT_NEW_INSTANCE_PROTOTYPE */
 	return addr;

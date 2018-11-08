@@ -343,15 +343,16 @@ J9::CodeGenerator::lowerCompressedRefs(
 
    if (loadOrStoreNode->getOpCode().isLoadIndirect() && shouldBeCompressed)
       {
-      if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+      if (TR::Compiler->target.cpu.isZ() && TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
          {
-         dumpOptDetails(self()->comp(), "compression sequence %p is not required for loads under concurrent scavenge\n", node);
+         dumpOptDetails(self()->comp(), "compression sequence %p is not required for loads under concurrent scavenge on Z.\n", node);
          return;
          }
 
       // base object
       address = loadOrStoreNode->getFirstChild();
-      loadOrStoreOp = self()->comp()->il.opCodeForIndirectLoad(TR::Int32);
+      loadOrStoreOp = TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() ? self()->comp()->il.opCodeForIndirectReadBarrier(TR::Int32) :
+                                                                                   self()->comp()->il.opCodeForIndirectLoad(TR::Int32);
       }
    else if ((loadOrStoreNode->getOpCode().isStoreIndirect() ||
               loadOrStoreNode->getOpCodeValue() == TR::arrayset) &&
@@ -666,7 +667,10 @@ J9::CodeGenerator::lowerTreesPreChildrenVisit(TR::Node *parent, TR::TreeTop *tre
       {
       // J9
       //
-      if (self()->comp()->useCompressedPointers())
+      // Hiding compressedref logic from CodeGen doesn't seem a good practise, the evaluator always need the uncompressedref node for write barrier,
+      // therefore, this part is deprecated. It'll be removed once P and Z update their corresponding evaluators.
+      static bool UseOldCompareAndSwapObject = (bool)feGetEnv("TR_UseOldCompareAndSwapObject");
+      if (self()->comp()->useCompressedPointers() && (UseOldCompareAndSwapObject || !TR::Compiler->target.cpu.isX86()))
          {
          TR::MethodSymbol *methodSymbol = parent->getSymbol()->castToMethodSymbol();
          // In Java9 Unsafe could be the jdk.internal JNI method or the sun.misc ordinary method wrapper,
@@ -719,6 +723,34 @@ J9::CodeGenerator::lowerTreesPreChildrenVisit(TR::Node *parent, TR::TreeTop *tre
       {
       if (parentOpCodeValue == TR::compressedRefs)
          self()->lowerCompressedRefs(treeTop, parent, visitCount, NULL);
+      }
+   else if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() && !TR::Compiler->target.cpu.isZ())
+      {
+      if (parentOpCodeValue == TR::aloadi)
+         {
+         TR::Symbol* symbol = parent->getSymbolReference()->getSymbol();
+         // isCollectedReference() responds false to generic int shadows because their type
+         // is int. However, address type generic int shadows refer to collected slots.
+         if (symbol == TR::comp()->getSymRefTab()->findGenericIntShadowSymbol() || symbol->isCollectedReference())
+            {
+            TR::Node::recreate(parent, TR::ardbari);
+            if (treeTop->getNode()->getOpCodeValue() == TR::NULLCHK                  &&
+                treeTop->getNode()->getChild(0)->getOpCodeValue() != TR::PassThrough &&
+                treeTop->getNode()->getChild(0)->getChild(0) == parent)
+               {
+               treeTop->insertBefore(TR::TreeTop::create(self()->comp(),
+                                                         TR::Node::createWithSymRef(TR::NULLCHK, 1, 1,
+                                                                                    TR::Node::create(TR::PassThrough, 1, parent),
+                                                                                    treeTop->getNode()->getSymbolReference())));
+               treeTop->getNode()->setSymbolReference(NULL);
+               TR::Node::recreate(treeTop->getNode(), TR::treetop);
+               }
+            else
+               {
+               treeTop->insertBefore(TR::TreeTop::create(self()->comp(), TR::Node::create(parent, TR::treetop, 1, parent)));
+               }
+            }
+         }
       }
 
    // J9
@@ -1136,7 +1168,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
          {
          if (!((methodSymbol && methodSymbol->getResolvedMethodSymbol() &&
                methodSymbol->getResolvedMethodSymbol()->getResolvedMethod() &&
-               methodSymbol->getResolvedMethodSymbol()->getResolvedMethod()->isInterpreted()) ||
+               methodSymbol->getResolvedMethodSymbol()->getResolvedMethod()->isInterpretedForHeuristics()) ||
                methodSymbol->isVMInternalNative()      ||
                methodSymbol->isHelper()                ||
                methodSymbol->isNative()                ||
@@ -1298,6 +1330,112 @@ J9::CodeGenerator::moveUpArrayLengthStores(TR::TreeTop *insertionPoint)
             insertionPoint = tt;
             }
          }
+      }
+   }
+
+
+void
+J9::CodeGenerator::zeroOutAutoOnEdge(
+      TR::SymbolReference *liveAutoSymRef,
+      TR::Block *block,
+      TR::Block *succBlock,
+      TR::list<TR::Block*> *newBlocks,
+      TR_ScratchList<TR::Node> *fsdStores)
+   {
+   TR::Block *storeBlock = NULL;
+   if ((succBlock->getPredecessors().size() == 1))
+      storeBlock = succBlock;
+   else
+      {
+      for (auto blocksIt = newBlocks->begin(); blocksIt != newBlocks->end(); ++blocksIt)
+         {
+         if ((*blocksIt)->getSuccessors().front()->getTo()->asBlock() == succBlock)
+            {
+            storeBlock = *blocksIt;
+            break;
+            }
+         }
+      }
+
+   if (!storeBlock)
+      {
+      TR::TreeTop * startTT = succBlock->getEntry();
+      TR::Node * startNode = startTT->getNode();
+      TR::Node * glRegDeps = NULL;
+      if (startNode->getNumChildren() > 0)
+         glRegDeps = startNode->getFirstChild();
+
+      TR::Block * newBlock = block->splitEdge(block, succBlock, self()->comp(), NULL, false);
+
+      if (debug("traceFSDSplit"))
+         diagnostic("\nSplitting edge, create new intermediate block_%d", newBlock->getNumber());
+
+      if (glRegDeps)
+         {
+         TR::Node *duplicateGlRegDeps = glRegDeps->duplicateTree();
+         TR::Node *origDuplicateGlRegDeps = duplicateGlRegDeps;
+         duplicateGlRegDeps = TR::Node::copy(duplicateGlRegDeps);
+         newBlock->getEntry()->getNode()->setNumChildren(1);
+         newBlock->getEntry()->getNode()->setAndIncChild(0, origDuplicateGlRegDeps);
+         for (int32_t i = origDuplicateGlRegDeps->getNumChildren() - 1; i >= 0; --i)
+            {
+            TR::Node * dep = origDuplicateGlRegDeps->getChild(i);
+            if(self()->comp()->getOption(TR_MimicInterpreterFrameShape) || self()->comp()->getOption(TR_PoisonDeadSlots))
+               dep->setRegister(NULL); // basically need to do prepareNodeForInstructionSelection
+            duplicateGlRegDeps->setAndIncChild(i, dep);
+            }
+         if(self()->comp()->getOption(TR_MimicInterpreterFrameShape) || self()->comp()->getOption(TR_PoisonDeadSlots))
+            {
+            TR::Node *glRegDepsParent;
+            if (  (newBlock->getSuccessors().size() == 1)
+               && newBlock->getSuccessors().front()->getTo()->asBlock()->getEntry() == newBlock->getExit()->getNextTreeTop())
+               {
+               glRegDepsParent = newBlock->getExit()->getNode();
+               }
+            else
+               {
+               glRegDepsParent = newBlock->getExit()->getPrevTreeTop()->getNode();
+               TR_ASSERT(glRegDepsParent->getOpCodeValue() == TR::Goto, "Expected block to fall through or end in goto; it ends with %s %s\n",
+                  self()->getDebug()->getName(glRegDepsParent->getOpCodeValue()), self()->getDebug()->getName(glRegDepsParent));
+               }
+            if (self()->comp()->getOption(TR_TraceCG))
+               traceMsg(self()->comp(), "zeroOutAutoOnEdge: glRegDepsParent is %s\n", self()->getDebug()->getName(glRegDepsParent));
+            glRegDepsParent->setNumChildren(1);
+            glRegDepsParent->setAndIncChild(0, duplicateGlRegDeps);
+            }
+         else           //original path
+            {
+            newBlock->getExit()->getNode()->setNumChildren(1);
+            newBlock->getExit()->getNode()->setAndIncChild(0, duplicateGlRegDeps);
+            }
+         }
+
+      newBlock->setLiveLocals(new (self()->trHeapMemory()) TR_BitVector(*succBlock->getLiveLocals()));
+      newBlock->getEntry()->getNode()->setLabel(generateLabelSymbol(self()));
+
+
+      if (self()->comp()->getOption(TR_PoisonDeadSlots))
+         {
+         if (self()->comp()->getOption(TR_TraceCG))
+            traceMsg(self()->comp(), "POISON DEAD SLOTS --- New Block Created %d\n", newBlock->getNumber());
+         newBlock->setIsCreatedAtCodeGen();
+         }
+
+      newBlocks->push_front(newBlock);
+      storeBlock = newBlock;
+      }
+   TR::Node *storeNode;
+
+   if (self()->comp()->getOption(TR_PoisonDeadSlots))
+      storeNode = generatePoisonNode(self()->comp(), block, liveAutoSymRef);
+   else
+      storeNode = TR::Node::createStore(liveAutoSymRef, TR::Node::aconst(block->getEntry()->getNode(), 0));
+
+   if (storeNode)
+      {
+      TR::TreeTop *storeTree = TR::TreeTop::create(self()->comp(), storeNode);
+      storeBlock->prepend(storeTree);
+      fsdStores->add(storeNode);
       }
    }
 
@@ -2521,6 +2659,10 @@ J9::CodeGenerator::processRelocations()
                   type = TR_InlinedInterfaceMethod;
                   break;
 
+               case TR_AbstractGuard:
+                  type = TR_InlinedAbstractMethodWithNopGuard;
+                  break;
+
                case TR_HCRGuard:
                   // devinmp: TODO/FIXME this should arrange to create an AOT
                   // relocation which, when loaded, creates a
@@ -2577,6 +2719,7 @@ J9::CodeGenerator::processRelocations()
                case TR_InlinedSpecialMethodWithNopGuard:
                case TR_InlinedVirtualMethodWithNopGuard:
                case TR_InlinedInterfaceMethodWithNopGuard:
+               case TR_InlinedAbstractMethodWithNopGuard:
                case TR_InlinedHCRMethod:
                case TR_ProfiledClassGuardRelocation:
                case TR_ProfiledMethodGuardRelocation:
@@ -2698,6 +2841,24 @@ J9::CodeGenerator::processRelocations()
             }
          }
 
+      TR::SymbolValidationManager::SymbolValidationRecordList &validationRecords = self()->comp()->getSymbolValidationManager()->getValidationRecordList();
+      if (!validationRecords.empty() && self()->comp()->getOption(TR_UseSymbolValidationManager))
+         {
+         // Add the flags in TR_AOTMethodHeader on the compile run
+         J9JITDataCacheHeader *aotMethodHeader = (J9JITDataCacheHeader *)self()->comp()->getAotMethodDataStart();
+         TR_AOTMethodHeader *aotMethodHeaderEntry = (TR_AOTMethodHeader *)(aotMethodHeader + 1);
+         aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_UsesSymbolValidationManager;
+
+         for (auto it = validationRecords.begin(); it != validationRecords.end(); it++)
+            {
+            self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(NULL,
+                                                                             (uint8_t *)(*it),
+                                                                             (*it)->_kind, self()),
+                                                                             __FILE__, __LINE__, NULL);
+            }
+         }
+
+//#endif
       // Now call the platform specific processing of relocations
       self()->getAheadOfTimeCompile()->processRelocations();
       }

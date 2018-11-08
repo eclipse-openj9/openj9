@@ -1189,16 +1189,8 @@ Only available on zOS</description>
 		<description>Enables compilation of the algorithm_test module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
-	<flag id="module_ams">
-		<description>Enables compilation of the ams module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
 	<flag id="module_aotrt_common">
 		<description>Enables compilation of the aotrt_common module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_asmutil">
-		<description>Enables compilation of the asmutil module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
 	<flag id="module_avl">
@@ -1217,16 +1209,8 @@ Only available on zOS</description>
 		<description>Enables compilation of the bcverify module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
-	<flag id="module_brewinl">
-		<description>Enables compilation of the brewinl module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
 	<flag id="module_buildtools">
 		<description>Enables compilation of the buildtools module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_callconv">
-		<description>Enables compilation of the callconv module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
 	<flag id="module_cassume">
@@ -1309,28 +1293,8 @@ Only available on zOS</description>
 		<description>Enables compilation of the codert_vm module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
-	<flag id="module_cpo_common">
-		<description>Enables compilation of the cpo_common module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_cpo_controller">
-		<description>Enables compilation of the cpo_controller module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_dbg">
-		<description>Enables compilation of the dbg module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
 	<flag id="module_dbgext">
 		<description>Enables compilation of the dbgext module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_dbginfoserv">
-		<description>Enables compilation of the dbginfoserv module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_dbgtspt">
-		<description>Enables compilation of the dbgtspt module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
 	<flag id="module_dbx">
@@ -1361,22 +1325,6 @@ Only available on zOS</description>
 		<description>Enables compilation of the ddr extensions module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
-	<flag id="module_demo">
-		<description>Enables compilation of the demo module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_exe">
-		<description>Enables compilation of the exe module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_exe.j9">
-		<description>Enables compilation of the exe.j9 module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_exe.j9w">
-		<description>Enables compilation of the exe.j9w module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
 	<flag id="module_exelib">
 		<description>Enables compilation of the exelib module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
@@ -1389,24 +1337,12 @@ Only available on zOS</description>
 		<description>Enables compilation of the gc_api module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
-	<flag id="module_gc_api_dbgext">
-		<description>Enables compilation of the gc_api_dbgext module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
 	<flag id="module_gc_base">
 		<description>Enables compilation of the gc_base module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
-	<flag id="module_gc_base_dbgext">
-		<description>Enables compilation of the gc_base_dbgext module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
 	<flag id="module_gc_check">
 		<description>Enables compilation of the gc_check module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_gc_check_dbgext">
-		<description>Enables compilation of the gc_check_dbgext module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
 	<flag id="module_gc_common">
@@ -1425,24 +1361,12 @@ Only available on zOS</description>
 		<description>Enables compilation of the gc_modron_base module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
-	<flag id="module_gc_modron_base_dbgext">
-		<description>Enables compilation of the gc_modron_base_dbgext module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_gc_modron_eprof">
-		<description>Enables compilation of the gc_modron_eprof module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
 	<flag id="module_gc_modron_standard">
 		<description>Enables compilation of the gc_modron_standard module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
 	<flag id="module_gc_modron_startup">
 		<description>Enables compilation of the gc_modron_startup module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_gc_port">
-		<description>Enables compilation of the gc_port module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
 	<flag id="module_gc_realtime">
@@ -1464,16 +1388,8 @@ Only available on zOS</description>
 		<description>Enables compilation of the gc_structs module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
-	<flag id="module_gc_structs_dbgext">
-		<description>Enables compilation of the gc_structs_dbgext module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
 	<flag id="module_gc_trace">
 		<description>Enables compilation of the gc_trace module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_gc_util">
-		<description>Enables compilation of the gc_util module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
 	<flag id="module_gcchk">
@@ -1500,10 +1416,6 @@ Only available on zOS</description>
 		<description>Enables compilation of the hookable module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
-	<flag id="module_http">
-		<description>Enables compilation of the http module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
 	<flag id="module_ifa">
 		<description>Enables compilation of the ifa module (permits use of z/OS application assist processors).</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
@@ -1511,36 +1423,8 @@ Only available on zOS</description>
 			<require flag="opt_javaOffloadSupport"/>
 		</requires>
 	</flag>
-	<flag id="module_imt">
-		<description>Enables compilation of the imt module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
 	<flag id="module_include">
 		<description>Enables compilation of the include module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_intfn">
-		<description>Enables compilation of the intfn module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_itpcom">
-		<description>Enables compilation of the itpcom module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_itron">
-		<description>Enables compilation of the itron module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_iverel">
-		<description>Enables compilation of the iverel module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_j2j">
-		<description>Enables compilation of the j2j module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_j2jexe">
-		<description>Enables compilation of the j2jexe module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
 	<flag id="module_j9vm">
@@ -1551,28 +1435,8 @@ Only available on zOS</description>
 		<description>Enables compilation of the j9vmtest module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
-	<flag id="module_japtjxe">
-		<description>Enables compilation of the japtjxe module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_javahjxe">
-		<description>Enables compilation of the javahjxe module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
 	<flag id="module_jcl">
 		<description>Enables compilation of the jcl module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_jcl.profile_scar">
-		<description>Enables compilation of the jcl.profile_scar module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_jcl.scar">
-		<description>Enables compilation of the jcl.scar module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_jdwpspy">
-		<description>Enables compilation of the jdwpspy module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
 	<flag id="module_jextractnatives">
@@ -1623,14 +1487,6 @@ Only available on zOS</description>
 		<description>Enables compilation of the jit_vm module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
-	<flag id="module_jitdebug_common">
-		<description>Enables compilation of the jitdebug_common module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_jitdebug_common_aot">
-		<description>Enables compilation of the jitdebug_common_aot module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
 	<flag id="module_jitrt_arm">
 		<description>Enables compilation of the jitrt_arm module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
@@ -1675,21 +1531,6 @@ Only available on zOS</description>
 		<description>Enables compilation of the jvmtitst module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
-	<flag id="module_jxe">
-		<description>Enables compilation of the jxe module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_launcher">
-		<description>Enables compilation of the launcher module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_lcdui">
-		<description>Enables compilation of the lcdui module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-		<precludes>
-			<preclude flag="gc_arraylets"/>
-		</precludes>
-	</flag>
 	<flag id="module_lifecycle_tests">
 		<description>Test creation and shutdown of the JVM using JNI functions</description>
 		<ifRemoved></ifRemoved>
@@ -1698,64 +1539,8 @@ Only available on zOS</description>
 		<description>Enables compilation of the masm2gas module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
-	<flag id="module_mjit_arm">
-		<description>Enables compilation of the mjit_arm module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_mjit_common">
-		<description>Enables compilation of the mjit_common module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_mjit_ia32">
-		<description>Enables compilation of the mjit_ia32 module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_mjit_ppc">
-		<description>Enables compilation of the mjit_ppc module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_mjit_vm">
-		<description>Enables compilation of the mjit_vm module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_mjitdebug_arm">
-		<description>Enables compilation of the mjitdebug_arm module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_mjitdebug_common">
-		<description>Enables compilation of the mjitdebug_common module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_mjitdebug_ia32">
-		<description>Enables compilation of the mjitdebug_ia32 module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_mjitdebug_ppc">
-		<description>Enables compilation of the mjitdebug_ppc module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_msp">
-		<description>Enables compilation of the msp module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_mvmtest">
-		<description>Enables compilation of the mvmtest module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_objprof">
-		<description>Enables compilation of the objprof module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
 	<flag id="module_omr">
 		<description>Enables compilation of the omr module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_omr_test">
-		<description>Enables compilation of the omr_test module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_os">
-		<description>Enables compilation of the os module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
 	<flag id="module_oti">
@@ -1770,16 +1555,8 @@ Only available on zOS</description>
 		<description>Enables compilation of the port module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
-	<flag id="module_porting_kit">
-		<description>Enables compilation of the porting_kit module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
 	<flag id="module_porttest">
 		<description>Enables compilation of the porttest module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_profiler">
-		<description>Enables compilation of the profiler module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
 	<flag id="module_rasdump">
@@ -1790,20 +1567,8 @@ Only available on zOS</description>
 		<description>Enables compilation of the rastrace module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
-	<flag id="module_rdbginfo">
-		<description>Enables compilation of the rdbginfo module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
 	<flag id="module_redirect">
 		<description>Enables compilation of the redirect module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_root">
-		<description>Enables compilation of the root module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_root.nls">
-		<description>Enables compilation of the root.nls module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
 	<flag id="module_shared">
@@ -1830,14 +1595,6 @@ Only available on zOS</description>
 		<description>Enables compilation of the simplepool module</description>
 		<ifRemoved>The module will not be compiled</ifRemoved>
 	</flag>
-	<flag id="module_slpjxe">
-		<description>Enables compilation of the slpjxe module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_slprof">
-		<description>Enables compilation of the slprof module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
 	<flag id="module_srphashtable">
 		<description>Enables compilation of the srphashtable module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
@@ -1858,38 +1615,6 @@ Only available on zOS</description>
 		<description>Enables compilation of the thrtrace module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
-	<flag id="module_tools">
-		<description>Enables compilation of the tools module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_tools.jadsigner">
-		<description>Enables compilation of the tools.jadsigner module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_tools.keytool">
-		<description>Enables compilation of the tools.keytool module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_tools.mekeytool">
-		<description>Enables compilation of the tools.mekeytool module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_tools.rmic">
-		<description>Enables compilation of the tools.rmic module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_tools.rmiregistry">
-		<description>Enables compilation of the tools.rmiregistry module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_ute">
-		<description>Enables compilation of the ute module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_utetst">
-		<description>Enables compilation of the utetst module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
 	<flag id="module_util">
 		<description>Enables compilation of the util module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
@@ -1908,10 +1633,6 @@ Only available on zOS</description>
 	</flag>
 	<flag id="module_vm">
 		<description>Enables compilation of the vm module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_vmall">
-		<description>Enables compilation of the vmall module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
 	<flag id="module_windbg">

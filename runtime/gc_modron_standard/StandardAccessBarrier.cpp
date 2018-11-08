@@ -603,6 +603,43 @@ MM_StandardAccessBarrier::getJNICriticalRegionCount(MM_GCExtensions *extensions)
 }
 
 #if defined(J9VM_GC_ARRAYLETS)
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+I_32
+MM_StandardAccessBarrier::doCopyContiguousBackwardWithReadBarrier(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots)
+{
+	srcIndex += lengthInSlots;
+	destIndex += lengthInSlots;
+
+	fj9object_t *srcSlot = (fj9object_t *)indexableEffectiveAddress(vmThread, srcObject, srcIndex, sizeof(fj9object_t));
+	fj9object_t *destSlot = (fj9object_t *)indexableEffectiveAddress(vmThread, destObject, destIndex, sizeof(fj9object_t));
+	fj9object_t *srcEndSlot = srcSlot - lengthInSlots;
+
+	while (srcSlot-- > srcEndSlot) {
+		preObjectRead(vmThread, (J9Object *)srcObject, srcSlot);
+
+		*--destSlot = *srcSlot;
+	}
+
+	return ARRAY_COPY_SUCCESSFUL;
+}
+
+I_32
+MM_StandardAccessBarrier::doCopyContiguousForwardWithReadBarrier(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots)
+{
+	fj9object_t *srcSlot = (fj9object_t *)indexableEffectiveAddress(vmThread, srcObject, srcIndex, sizeof(fj9object_t));
+	fj9object_t *destSlot = (fj9object_t *)indexableEffectiveAddress(vmThread, destObject, destIndex, sizeof(fj9object_t));
+	fj9object_t *srcEndSlot = srcSlot + lengthInSlots;
+
+	while (srcSlot < srcEndSlot) {
+		preObjectRead(vmThread, (J9Object *)srcObject, srcSlot);
+
+		*destSlot++ = *srcSlot++;
+	}
+
+	return ARRAY_COPY_SUCCESSFUL;
+}
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+
 /**
  * Finds opportunities for doing the copy without or partially executing writeBarrier.
  * @return ARRAY_COPY_SUCCESSFUL if copy was successful, ARRAY_COPY_NOT_DONE no copy is done
@@ -623,16 +660,23 @@ MM_StandardAccessBarrier::backwardReferenceArrayCopyIndex(J9VMThread *vmThread, 
 		Assert_MM_true(destObject == srcObject);
 		Assert_MM_true(_extensions->indexableObjectModel.isInlineContiguousArraylet(destObject));
 
-		if (!_extensions->isConcurrentScavengerEnabled()) {
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+		if (_extensions->isConcurrentScavengerInProgress()) {
+			/* During active CS cycle, we need a RB for every slot being copied.
+			 * For WB same rules apply - just need the final batch barrier.
+			 */
+			retValue = doCopyContiguousBackwardWithReadBarrier(vmThread, srcObject, destObject, srcIndex, destIndex, lengthInSlots);
+		} else
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+		{
 			retValue = doCopyContiguousBackward(vmThread, srcObject, destObject, srcIndex, destIndex, lengthInSlots);
-			Assert_MM_true(retValue == ARRAY_COPY_SUCCESSFUL);
-
-			preBatchObjectStoreImpl(vmThread, (J9Object *)destObject);
 		}
+		Assert_MM_true(retValue == ARRAY_COPY_SUCCESSFUL);
+
+		preBatchObjectStoreImpl(vmThread, (J9Object *)destObject);
 	}
 	return retValue;
 }
-
 
 /**
  * Finds opportunities for doing the copy without or partially executing writeBarrier.
@@ -654,14 +698,20 @@ MM_StandardAccessBarrier::forwardReferenceArrayCopyIndex(J9VMThread *vmThread, J
 		Assert_MM_true(_extensions->indexableObjectModel.isInlineContiguousArraylet(destObject));
 		Assert_MM_true(_extensions->indexableObjectModel.isInlineContiguousArraylet(srcObject));
 
-		if (!_extensions->isConcurrentScavengerEnabled()) {
-			/* todo: for Concurrent Scavenger, create a helper that will invoke load barrier on each source object slot,
-			 * but only one batchstore barrier on the destination object */
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+		if (_extensions->isConcurrentScavengerInProgress()) {
+			/* During active CS cycle, we need a RB for every slot being copied.
+			 * For WB same rules apply - just need the final batch barrier.
+			 */
+			retValue = doCopyContiguousForwardWithReadBarrier(vmThread, srcObject, destObject, srcIndex, destIndex, lengthInSlots);
+		} else
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+		{
 			retValue = doCopyContiguousForward(vmThread, srcObject, destObject, srcIndex, destIndex, lengthInSlots);
-			Assert_MM_true(retValue == ARRAY_COPY_SUCCESSFUL);
-
-			preBatchObjectStoreImpl(vmThread, (J9Object *)destObject);
 		}
+
+		Assert_MM_true(retValue == ARRAY_COPY_SUCCESSFUL);
+		preBatchObjectStoreImpl(vmThread, (J9Object *)destObject);
 	}
 	return retValue;
 }

@@ -88,19 +88,19 @@ def checkout_file() {
 * When no values are available as build parameters set them to the values
 * available with the variable file otherwise set them to empty strings.
 */
-def set_repos_variables(RELEASES=null) {
+def set_repos_variables(BUILD_SPECS=null) {
     // check if passed as Jenkins build parameters
     // if not set as params, check the variables file
 
-    if (!RELEASES) {
-        // set variables (as strings) for a single OpenJDK release
+    if (!BUILD_SPECS) {
+        // set variables (as strings) for a single OpenJDK release build
 
         // fetch OpenJDK repo and branch from variables file as a map
-        def OPENJDK_INFO = get_openjdk_info(SDK_VERSION)
+        def openjdk_info = get_openjdk_info(SDK_VERSION, [SPEC], false)
 
-        OPENJDK_REPO = OPENJDK_INFO['REPO']
-        OPENJDK_BRANCH = OPENJDK_INFO['BRANCH']
-        OPENJDK_SHA = OPENJDK_INFO['SHA']
+        OPENJDK_REPO = openjdk_info.get(SPEC).get('REPO')
+        OPENJDK_BRANCH = openjdk_info.get(SPEC).get('BRANCH')
+        OPENJDK_SHA = openjdk_info.get(SPEC).get('SHA')
 
         echo "Using OPENJDK_REPO = ${OPENJDK_REPO} OPENJDK_BRANCH = ${OPENJDK_BRANCH} OPENJDK_SHA = ${OPENJDK_SHA}"
 
@@ -108,14 +108,26 @@ def set_repos_variables(RELEASES=null) {
         set_extensions_variables()
 
      } else {
-        // set OpenJDK variables (as maps) for given releases
-        RELEASES.each { RELEASE ->
-            // fetch OpenJDK repo and branch from variables file as a map
-            def OPENJDK_INFO = get_openjdk_info(RELEASE, RELEASES)
+        // set OpenJDK variables (as maps) for a multiple releases build
 
-            OPENJDK_REPO[RELEASE] = OPENJDK_INFO['REPO']
-            OPENJDK_BRANCH[RELEASE] = OPENJDK_INFO['BRANCH']
-            OPENJDK_SHA[RELEASE] = OPENJDK_INFO['SHA']
+        def build_releases = get_build_releases(BUILD_SPECS)
+        build_releases.each { release ->
+            // fetch OpenJDK repo and branch from variables file as a map
+            def openjdk_info = get_openjdk_info(release, get_build_specs_by_release(release, BUILD_SPECS), true)
+
+            def repos = [:]
+            def branches = [:]
+            def shas = [:]
+
+            openjdk_info.each { build_spec, info_map ->
+                repos.put(build_spec, info_map['REPO'])
+                branches.put(build_spec, info_map['BRANCH'])
+                shas.put(build_spec, info_map['SHA'])
+            }
+
+            OPENJDK_REPO[release] = repos
+            OPENJDK_BRANCH[release] = branches
+            OPENJDK_SHA[release] = shas
         }
 
         echo "Using OPENJDK_REPO = ${OPENJDK_REPO.toString()} OPENJDK_BRANCH = ${OPENJDK_BRANCH.toString()} OPENJDK_SHA = ${OPENJDK_SHA.toString()}"
@@ -135,37 +147,65 @@ def set_repos_variables(RELEASES=null) {
 * Build parameters take precedence over custom variables (see variables file).
 * Throws an error if repository URL or branch are not provided. 
 */
-def get_openjdk_info(SDK_VERSION, RELEASES=null) {
-    // initialize OPENJDK_INFO map with values from variables file
-    def OPENJDK_INFO = ['REPO'  : convert_url(get_value(VARIABLES.openjdk_repo, SDK_VERSION)), 
-                        'BRANCH': get_value(VARIABLES.openjdk_branch, SDK_VERSION),
-                        'SHA'   : '']
+def get_openjdk_info(SDK_VERSION, SPECS, MULTI_RELEASE) {
+    // map to store git repository information by spec
+    def openjdk_info = [:]
 
-    def PARAM_NAME = "OPENJDK"
-    if (RELEASES) {
-        PARAM_NAME += SDK_VERSION
+    // fetch values from variables file
+    def default_openjdk_info = get_value(VARIABLES.openjdk, SDK_VERSION)
+
+    // the build expects the following parameters:
+    // OPENJDK*_REPO, OPENJDK*_BRANCH, OPENJDK*_SHA,
+    // OPENJDK*_REPO_<spec>, OPENJDK*_BRANCH_<spec>, OPENJDK*_SHA_<spec>
+    def param_name = "OPENJDK"
+    if (MULTI_RELEASE) {
+        // if a wrapper pipeline build, expect parameters names to be prefixed with "OPENJDK<version>_"
+        param_name += SDK_VERSION
     }
 
-    // check if any OPENJDK* build parameters are provided
-    // and override OPENJDK_INFO map with those values
-    OPENJDK_INFO.keySet().each { KEY ->
-        def VALUE = params."${PARAM_NAME}_${KEY}"
+    for (build_spec in SPECS) {
+        // default values from variables file
+        def repo = default_openjdk_info.get('default').get('repoUrl')
+        def branch = default_openjdk_info.get('default').get('branch')
 
-        if (VALUE) {
-            // build parameter provided, now override map value
-            if (KEY == 'REPO') { 
-                OPENJDK_INFO[KEY] = convert_url(VALUE)
-            } else {
-                OPENJDK_INFO[KEY] = VALUE
+        if (default_openjdk_info[build_spec]) {
+            repo = default_openjdk_info.get(build_spec).get('repoUrl')
+
+            if (params."${param_name}_REPO_${build_spec}") {
+                // got OPENJDK*_REPO_<spec> build parameter, overwrite repo
+                repo = params."${param_name}_REPO_${build_spec}"
             }
+
+            branch = default_openjdk_info.get(build_spec).get('branch')
+
+            if (params."${param_name}_BRANCH_${build_spec}") {
+                // got OPENJDK*_BRANCH_<spec> build parameter, overwrite branch
+                branch = params."${param_name}_BRANCH_${build_spec}"
+            }
+
+            sha = params."${param_name}_SHA_${build_spec}"
+        } else {
+            // check build parameters
+            if (params."${param_name}_REPO") {
+                repo = params."${param_name}_REPO"
+            }
+
+            if (params."${param_name}_BRANCH") {
+                branch = params."${param_name}_BRANCH"
+            }
+
+            sha = params."${param_name}_SHA"
         }
 
-        if ((KEY != 'SHA') && (!OPENJDK_INFO[KEY])) {
-            error("Missing ${PARAM_NAME}_${KEY}!")
+        if (!sha) {
+            sha = ''
         }
+
+        // populate the map
+        openjdk_info.put(build_spec, ['REPO': convert_url(repo), 'BRANCH': branch, 'SHA': sha])
     }
 
-    return OPENJDK_INFO
+    return openjdk_info
 }
 
 /*
@@ -251,7 +291,12 @@ def get_value(MAP, KEY) {
     if (MAP != null) {
         for (item in MAP) {
             if ("${item.key}" == "${KEY}") {
-                return "${item.value}"
+                if ((item.value instanceof Map) || (item.value instanceof java.util.List)) {
+                    return item.value
+                } else {
+                    // stringify value
+                    return "${item.value}"
+                }
             }
         }
     }
@@ -341,6 +386,7 @@ def set_build_variables() {
     // fetch values per spec and Java version from the variables file
     BOOT_JDK = get_value(VARIABLES."${SPEC}".boot_jdk, SDK_VERSION)
     FREEMARKER = VARIABLES."${SPEC}".freemarker
+    EXTRA_GETSOURCE_OPTIONS = get_value(VARIABLES.extra_getsource_options, SDK_VERSION)
     EXTRA_CONFIGURE_OPTIONS = get_value(VARIABLES."${SPEC}".extra_configure_options, SDK_VERSION)
     EXTRA_MAKE_OPTIONS = get_value(VARIABLES."${SPEC}".extra_make_options, SDK_VERSION)
     OPENJDK_REFERENCE_REPO = VARIABLES."${SPEC}".openjdk_reference_repo
@@ -383,14 +429,19 @@ def set_build_variables() {
 }
 
 def set_sdk_variables() {
-    DATESTAMP = sh (
-        script: 'date +%Y%d%m%H%M',
-        returnStdout: true
-        ).trim()
+    DATESTAMP = get_date()
     SDK_FILENAME = "OpenJ9-JDK${SDK_VERSION}-${SPEC}-${DATESTAMP}.tar.gz"
     TEST_FILENAME = "native-test-libs.tar.gz"
     echo "Using SDK_FILENAME = ${SDK_FILENAME}"
     echo "Using TEST_FILENAME = ${TEST_FILENAME}"
+}
+
+def get_date() {
+    //Returns a string for the current date YYYYMMDD-HHMMSS
+    return sh (
+        script: 'date +%Y%m%d-%H%M%S',
+        returnStdout: true
+    ).trim()
 }
 
 /*
@@ -429,14 +480,26 @@ def set_slack_channel() {
 
 def set_artifactory_config() {
     ARTIFACTORY_SERVER = VARIABLES.artifactory_server
-    ARTIFACTORY_REPO = VARIABLES.artifactory_repo
-    // Set Creds to env so that the parent pipeline can retireve them.
-    env.ARTIFACTORY_CREDS = VARIABLES.artifactory_creds
-    ARTIFACTORY_NUM_ARTIFACTS = VARIABLES.artifactory_num_artifacts
     if (ARTIFACTORY_SERVER) {
+        env.ARTIFACTORY_SERVER = ARTIFACTORY_SERVER
+        env.ARTIFACTORY_REPO = VARIABLES.artifactory_repo
+        // Set Creds to env so that the parent pipeline can retireve them.
+        env.ARTIFACTORY_CREDS = VARIABLES.artifactory_creds
+        env.ARTIFACTORY_NUM_ARTIFACTS = VARIABLES.artifactory_num_artifacts
         echo "Using artifactory server/repo: ${ARTIFACTORY_SERVER} / ${ARTIFACTORY_REPO}"
         echo "Using artifactory credentials: ${ARTIFACTORY_CREDS}"
         echo "Keeping '${ARTIFACTORY_NUM_ARTIFACTS}' artifacts"
+    }
+}
+
+def set_restart_timeout() {
+    RESTART_TIMEOUT = params.RESTART_TIMEOUT
+    if (!RESTART_TIMEOUT) {
+        RESTART_TIMEOUT = VARIABLES.restart_timeout.time
+    }
+    RESTART_TIMEOUT_UNITS = params.RESTART_TIMEOUT_UNITS
+    if (!RESTART_TIMEOUT_UNITS) {
+        RESTART_TIMEOUT_UNITS = VARIABLES.restart_timeout.units
     }
 }
 
@@ -568,10 +631,19 @@ def set_job_properties(JOB_TYPE) {
             add_string_params(['TESTS_TARGETS':''])
         }
 
-        // Build - Commented out as there are currently no params specific to only Build
-        //if (JOB_TYPE == 'build') {
+        if (JOB_TYPE == 'build') {
+            add_string_params(['NODE':''])
+        }
 
-        //}
+        if (JOB_TYPE == 'pipeline') {
+            add_string_params([
+                'BUILD_NODE':'',
+                'TEST_NODE':'',
+                'PERSONAL_BUILD':'',
+                'SLACK_CHANNEL':'',
+                'RESTART_TIMEOUT':'',
+                'RESTART_TIMEOUT_UNITS':''])
+        }
 
         /********************
         * TRIGGER
@@ -654,10 +726,12 @@ def set_job_variables(job_type) {
             set_vendor_variables()
             set_test_targets()
             set_slack_channel()
+            set_restart_timeout()
             break
         case "wrapper":
             //set variable for pipeline all/personal
-            set_repos_variables(BUILD_RELEASES)
+            set_repos_variables(BUILD_SPECS)
+            set_restart_timeout()
             break
         default:
             error("Unknown Jenkins job type!")
@@ -837,5 +911,35 @@ def set_vendor_variables() {
 def get_repo_name_from_url(URL) {
     return URL.substring(URL.lastIndexOf('/') + 1, URL.lastIndexOf('.git')).toUpperCase()
 }
+
+/*
+* Returns a list of releases to build.
+*/
+def get_build_releases(releases_by_specs) {
+    def build_releases = []
+    
+    // find releases to build based on given specs
+    releases_by_specs.values().each { versions ->
+        build_releases.addAll(versions)
+    }
+
+    return build_releases.unique()
+}
+
+/*
+* Returns a list of specs for a given version.
+*/
+def get_build_specs_by_release(version, specs) {
+    def specs_by_release = []
+
+    specs.each { build_spec, build_releases ->
+        if (build_releases.contains(version)) {
+            specs_by_release.add(build_spec)
+        }
+    }
+
+    return specs_by_release
+}
+
 
 return this

@@ -134,17 +134,10 @@ uint8_t *TR::X86PicDataSnippet::encodeConstantPoolInfo(uint8_t *cursor)
 uint8_t *TR::X86PicDataSnippet::encodeJ2IThunkPointer(uint8_t *cursor)
    {
    TR_ASSERT_FATAL(_hasJ2IThunkInPicData, "did not expect j2i thunk pointer");
-
-   // Find the j2i thunk for this method's signature
-   TR_J9VMBase *fej9 = (TR_J9VMBase*)(cg()->fe());
-   TR::Symbol *symbol = _methodSymRef->getSymbol();
-   TR_Method *method = symbol->getMethodSymbol()->getMethod();
-   void *j2iThunk = fej9->getJ2IThunk(method, comp());
-   TR_ASSERT_FATAL(j2iThunk != NULL, "null virtual j2i thunk");
+   TR_ASSERT_FATAL(_thunkAddress != NULL, "null virtual j2i thunk");
 
    // DD/DQ j2iThunk
-   // TODO: AOT relocation
-   *(uintptrj_t *)cursor = (uintptrj_t)j2iThunk;
+   *(uintptrj_t *)cursor = (uintptrj_t)_thunkAddress;
    cursor += sizeof(uintptrj_t);
 
    return cursor;
@@ -206,7 +199,7 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
          }
       else
          {
-         TR_ASSERT(0, "Can't handle resolved IPICs here yet!");
+         TR_ASSERT_FATAL(0, "Can't handle resolved IPICs here yet!");
          }
 
       // Reserve space for resolved interface class and itable offset.
@@ -319,7 +312,7 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
          }
       else
          {
-         TR_ASSERT(0, "Can't handle resolved VPICs here yet!");
+         TR_ASSERT_FATAL(0, "Can't handle resolved VPICs here yet!");
          }
 
       _dispatchSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_X86populateVPicVTableDispatch, false, false, false);
@@ -435,6 +428,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
    if (pOutFile == NULL)
       return;
 
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(_cg->fe());
+
    uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
 
    // Account for VPic data appearing before the actual entry label.
@@ -480,7 +475,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
       printLabelInstruction(pOutFile, "jmp", snippet->getDoneLabel());
       bufferPos += 5;
 
-      if (methodSymRef->isUnresolved())
+      if (methodSymRef->isUnresolved() || fej9->forceUnresolvedDispatch())
          {
          const char *op = (sizeof(uintptrj_t) == 4) ? "DD" : "DQ";
 
@@ -851,7 +846,11 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
          }
       }
 
-   if (methodSymRef->isUnresolved() || fej9->forceUnresolvedDispatch())
+   bool forceUnresolvedDispatch = fej9->forceUnresolvedDispatch();
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      forceUnresolvedDispatch = false;
+
+   if (methodSymRef->isUnresolved() || forceUnresolvedDispatch)
       {
       // Unresolved interpreted dispatch snippet shape:
       //
@@ -875,7 +874,7 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       // (4)   dd    cpIndex
       //
 
-      TR_ASSERT(!isJitInduceOSRCall || !fej9->forceUnresolvedDispatch(), "calling jitInduceOSR is not supported yet under AOT\n");
+      TR_ASSERT(!isJitInduceOSRCall || !forceUnresolvedDispatch, "calling jitInduceOSR is not supported yet under AOT\n");
       cursor = alignCursorForCodePatching(cursor, TR::Compiler->target.is64Bit());
 
       if (comp->getOption(TR_EnableHCR))
@@ -888,7 +887,7 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
          getSnippetLabel()->setCodeLocation(cursor);
          }
 
-      TR_ASSERT((methodSymbol->isStatic() || methodSymbol->isSpecial() || fej9->forceUnresolvedDispatch()), "Unexpected unresolved dispatch");
+      TR_ASSERT((methodSymbol->isStatic() || methodSymbol->isSpecial() || forceUnresolvedDispatch), "Unexpected unresolved dispatch");
 
       // CALL interpreterUnresolved{Static|Special}Glue
       //
@@ -1016,6 +1015,16 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
 
          *(intptrj_t *)cursor = ramMethod;
 
+         if (comp->getOption(TR_UseSymbolValidationManager))
+            {
+            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                  (uint8_t *)ramMethod,
+                                                                  (uint8_t *)TR::SymbolType::typeMethod,
+                                                                  TR_SymbolFromManager,
+                                                                  cg()),  __FILE__, __LINE__, getNode());
+            }
+
+
          // HCR in TR::X86CallSnippet::emitSnippetBody register the method address
          //
          if (comp->getOption(TR_EnableHCR))
@@ -1069,7 +1078,12 @@ uint32_t TR::X86CallSnippet::getLength(int32_t estimatedSnippetStart)
       length += codeSize;
       }
 
-   if (methodSymRef->isUnresolved() || fej9->forceUnresolvedDispatch())
+   TR::Compilation *comp = cg()->comp();
+   bool forceUnresolvedDispatch = fej9->forceUnresolvedDispatch();
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      forceUnresolvedDispatch = false;
+
+   if (methodSymRef->isUnresolved() || forceUnresolvedDispatch)
       {
       // +7 accounts for maximum length alignment padding.
       //

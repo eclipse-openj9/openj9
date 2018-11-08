@@ -33,15 +33,41 @@ add_library(ffi SHARED
 # We need this because ffi_common.h is in 'include' in the top directory.
 # once we fix that this can go away
 target_include_directories(ffi PRIVATE ${j9vm_SOURCE_DIR}/include)
+
+target_include_directories(ffi PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
 #platform specific stuff hacked in
 if(OMR_ARCH_X86)
+	if(NOT OMR_ENV_DATA64)
+		message(SEND_ERROR "Only x86-64 is currently supported")
+	endif()
+
+	target_include_directories(ffi PUBLIC x86)
+	if(OMR_HOST_OS STREQUAL "linux")
+		target_include_directories(ffi PUBLIC preconf/xa)
+	elseif(OMR_HOST_OS STREQUAL "osx")
+		target_include_directories(ffi PUBLIC preconf/oa)
+	else()
+		message(SEND_ERROR "Unsupported OS")
+	endif()
+
 	target_sources(ffi
 		PRIVATE
 		x86/ffi.c
 		x86/ffi64.c
 		x86/sysv.S
-		x86/unix64.S
 	)
+	if(OMR_HOST_OS STREQUAL "linux")
+		target_sources(ffi
+			PRIVATE
+			x86/unix64.S
+		)
+	elseif(OMR_HOST_OS STREQUAL "osx")
+		target_sources(ffi
+			PRIVATE
+			x86/darwin64.s
+		)
+	endif()
 elseif(OMR_ARCH_POWER)
 	if(CMAKE_CXX_COMPILER_ID STREQUAL "XL")
 		set(CMAKE_ASM_FLAGS "-qalias=noansi -qxflag=LTOL:LTOL0 -qxflag=selinux -qarch=ppc64 -q64")
@@ -64,17 +90,6 @@ elseif(OMR_ARCH_POWER)
 		PROPERTIES
 		LANGUAGE ASM
 	)
-endif()
-
-
-target_include_directories(ffi PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-if(OMR_ARCH_X86) #TODO check 64bit
-	target_include_directories(ffi
-		PUBLIC
-			preconf/xa
-			x86
-	)
-elseif(OMR_ARCH_POWER)
 	if(OMR_ENV_LITTLE_ENDIAN)
 		target_include_directories(ffi PUBLIC preconf/xl64)
 	else()

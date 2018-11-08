@@ -217,6 +217,8 @@ jvmtiGetAllModules(jvmtiEnv* jvmtiEnv, jint* module_count_ptr, jobject** modules
 	J9JavaVM *vm = JAVAVM_FROM_ENV(jvmtiEnv);
 	jvmtiError rc = JVMTI_ERROR_NONE;
 	J9VMThread *currentThread = NULL;
+	jint rv_module_count = 0;
+	jobject *rv_modules = NULL;
 
 	rc = getCurrentVMThread(vm, &currentThread);
 	if (JVMTI_ERROR_NONE == rc) {
@@ -283,8 +285,8 @@ jvmtiGetAllModules(jvmtiEnv* jvmtiEnv, jint* module_count_ptr, jobject** modules
 			vmFuncs->allClassLoadersEndDo(&walkState);
 			Assert_JVMTI_true(i == moduleCount);
 
-			*module_count_ptr = moduleCount;
-			*modules_ptr = modules;
+			rv_module_count = moduleCount;
+			rv_modules = modules;
 		}
 
 
@@ -294,6 +296,12 @@ jvmtiGetAllModules(jvmtiEnv* jvmtiEnv, jint* module_count_ptr, jobject** modules
 #endif
 done:
 		vmFuncs->internalExitVMToJNI(currentThread);
+	}
+	if (NULL != module_count_ptr) {
+		*module_count_ptr = rv_module_count;
+	}
+	if (NULL != modules_ptr) {
+		*modules_ptr = rv_modules;
 	}
 	return rc;
 }
@@ -315,6 +323,7 @@ jvmtiGetNamedModule(jvmtiEnv* jvmtiEnv, jobject class_loader, const char* packag
 	J9JavaVM *vm = JAVAVM_FROM_ENV(jvmtiEnv);
 	jvmtiError rc = JVMTI_ERROR_NONE;
 	J9VMThread *currentThread = NULL;
+	jobject rv_module = NULL;
 
 	rc = getCurrentVMThread(vm, &currentThread);
 	if (JVMTI_ERROR_NONE == rc) {
@@ -366,13 +375,16 @@ jvmtiGetNamedModule(jvmtiEnv* jvmtiEnv, jobject class_loader, const char* packag
 		J9UTF8_DATA(packageName)[packageNameLength] = '\0';
 		vmModule = vmFuncs->findModuleForPackageUTF8(currentThread, vmClassLoader, packageName);
 		if (NULL != vmModule) {
-			*module_ptr = (jobject)vmFuncs->j9jni_createLocalRef((JNIEnv *) currentThread, vmModule->moduleObject);
+			rv_module = (jobject)vmFuncs->j9jni_createLocalRef((JNIEnv *) currentThread, vmModule->moduleObject);
 		}
 		if (packageName != (J9UTF8 *) buf) {
 			j9mem_free_memory(packageName);
 		}
 done:
 		vmFuncs->internalExitVMToJNI(currentThread);
+	}
+	if (NULL != module_ptr) {
+		*module_ptr = rv_module;
 	}
 	return rc;
 }
@@ -692,11 +704,11 @@ jvmtiIsModifiableModule(jvmtiEnv* env,
 	J9VMThread *currentThread = NULL;
 	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc = JVMTI_ERROR_NONE;
+	jboolean rv_is_modifiable_module = JNI_FALSE;
+
 	ENSURE_PHASE_LIVE(env);
 	ENSURE_NON_NULL(module);
 	ENSURE_NON_NULL(is_modifiable_module_ptr);
-
-	*is_modifiable_module_ptr = JNI_FALSE;
 
 	rc = getCurrentVMThread(vm, &currentThread);
 	if (JVMTI_ERROR_NONE == rc) {
@@ -718,7 +730,7 @@ jvmtiIsModifiableModule(jvmtiEnv* env,
 		if (!isSameOrSuperClassOf(moduleJ9Class, J9OBJECT_CLAZZ(currentThread, moduleObject))) {
 			rc = JVMTI_ERROR_INVALID_MODULE;
 		} else if (J9_IS_J9MODULE_UNNAMED(vm, J9OBJECT_ADDRESS_LOAD(currentThread, moduleObject, vm->modulePointerOffset))) {
-			*is_modifiable_module_ptr = JNI_TRUE;
+			rv_is_modifiable_module = JNI_TRUE;
 		} else {
 			/* No criteria specified to tag modules as unmodifiable.
 			 * Assuming all modules are modifiable at this point.
@@ -726,12 +738,15 @@ jvmtiIsModifiableModule(jvmtiEnv* env,
 			 * REMINDER: Track future changes to the definition of jvmtiIsModifiableModule,
 			 * and appropriately update the implementation.
 			 */
-			*is_modifiable_module_ptr = JNI_TRUE;
+			rv_is_modifiable_module = JNI_TRUE;
 		}
 
 		vmFuncs->internalExitVMToJNI(currentThread);
 	}
 
 done:
+	if (NULL != is_modifiable_module_ptr) {
+		*is_modifiable_module_ptr = rv_is_modifiable_module;
+	}
 	return rc;
 }

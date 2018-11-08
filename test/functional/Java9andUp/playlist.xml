@@ -35,7 +35,7 @@
 		--module-path $(Q)$(TEST_RESROOT)$(D)module_bin$(Q) \
 		--add-modules org.openj9test.modularity.testerModule \
 		-Dorg.openj9.test.module.path=$(Q)$(TEST_RESROOT)$(D)module_bin$(Q) \
-		org.testng.TestNG methodvisibilitytests.xml \
+		org.testng.TestNG $(Q)$(TEST_RESROOT)$(D)methodvisibilitytests.xml$(Q) \
 		-testnames MethodVisibilityTests \
 		-groups $(TEST_GROUP) \
 		-excludegroups $(DEFAULT_EXCLUDE); \
@@ -62,7 +62,7 @@
 		--add-exports org.openj9test.modularity.testUnreflect/org.openj9.test.modularity.tests=ALL-UNNAMED \
 		--add-exports org.openj9test.modularity.dummy/org.openj9.test.modularity.dummy=ALL-UNNAMED \
 		--add-reads org.openj9test.modularity.testUnreflect=ALL-UNNAMED \
-		org.testng.TestNG testUnreflect.xml \
+		org.testng.TestNG $(Q)$(TEST_RESROOT)$(D)testUnreflect.xml$(Q) \
 		-testnames UnreflectTests \
 		-groups $(TEST_GROUP) \
 		-excludegroups $(DEFAULT_EXCLUDE); \

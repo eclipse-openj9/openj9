@@ -42,6 +42,7 @@ P=:
 PROPS_DIR=props_unix
 
 include $(TEST_ROOT)$(D)TestConfig$(D)utils.mk
+include $(TEST_ROOT)$(D)TestConfig$(D)testEnv.mk
 
 ifndef JAVA_BIN
 $(error Please provide JAVA_BIN value.)
@@ -77,14 +78,15 @@ endif
 
 # temporarily support both JAVA_IMPL and JDK_IMPL
 ifndef JDK_IMPL
-	JDK_IMPL=$(JAVA_IMPL)
-endif
-
-ifndef JDK_IMPL
-	export JDK_IMPL:=openj9
+	ifndef JAVA_IMPL
+		export JDK_IMPL:=openj9
+	else
+		export JDK_IMPL:=$(JAVA_IMPL)
+	endif
 else
 	export JDK_IMPL:=$(JDK_IMPL)
 endif
+
 
 ifndef JVM_VERSION
 ifeq ($(JDK_VERSION), 8)
@@ -204,7 +206,7 @@ REPORTDIR = $(Q)$(TESTOUTPUT)$(D)$@$(Q)
 #######################################
 # TEST_STATUS
 #######################################
-TEST_STATUS=if [ $$? -eq 0 ] ; then $(ECHO) $(Q)$(Q); $(ECHO) $(Q)$@$(Q)$(Q)_PASSED$(Q); $(ECHO) $(Q)$(Q); else $(ECHO) $(Q)$(Q); $(ECHO) $(Q)$@$(Q)$(Q)_FAILED$(Q); $(ECHO) $(Q)$(Q); fi
+TEST_STATUS=if [ $$? -eq 0 ] ; then $(ECHO) $(Q)$(Q); $(ECHO) $(Q)$@$(Q)$(Q)_PASSED$(Q); $(ECHO) $(Q)$(Q); $(CD) $(TEST_ROOT); $(RM) -r $(REPORTDIR); else $(ECHO) $(Q)$(Q); $(ECHO) $(Q)$@$(Q)$(Q)_FAILED$(Q); $(ECHO) $(Q)$(Q); fi
 ifneq ($(DEBUG),)
 $(info TEST_STATUS is $(TEST_STATUS))
 endif
@@ -241,7 +243,7 @@ $(SUBDIRS_TESTTARGET):
 
 $(TESTTARGET): $(SUBDIRS_TESTTARGET)
 
-_$(TESTTARGET): setup_$(TESTTARGET) rmResultFile $(TESTTARGET) resultsSummary
+_$(TESTTARGET): setup_$(TESTTARGET) rmResultFile $(TESTTARGET) resultsSummary teardown_$(TESTTARGET)
 	@$(ECHO) $@ done
 
 .PHONY: _$(TESTTARGET) $(TESTTARGET) $(SUBDIRS) $(SUBDIRS_TESTTARGET)
@@ -250,7 +252,7 @@ _$(TESTTARGET): setup_$(TESTTARGET) rmResultFile $(TESTTARGET) resultsSummary
 
 TOTALCOUNT := 0
 
-setup_%:
+setup_%: testEnvSetup
 	@$(ECHO)
 	@$(ECHO) Running make $(MAKE_VERSION)
 	@$(ECHO) set TEST_ROOT to $(TEST_ROOT)
@@ -260,11 +262,15 @@ setup_%:
 	@$(ECHO) set JCL_VERSION to $(JCL_VERSION)
 	@$(ECHO) set JAVA_BIN to $(JAVA_BIN)
 	@$(ECHO) set SPEC to $(SPEC)
+	@$(MKTREE) $(Q)$(TESTOUTPUT)$(Q)
 	@$(ECHO) Running $(TESTTARGET) ...
 	@if [ $(TOTALCOUNT) -ne 0 ]; then \
 		$(ECHO) There are $(TOTALCOUNT) test targets in $(TESTTARGET).; \
 	fi
 	$(JAVA_COMMAND) -version
+
+teardown_%: testEnvTeardown
+	@$(ECHO)
 
 ifndef JCL_VERSION
 export JCL_VERSION:=latest

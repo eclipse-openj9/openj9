@@ -44,6 +44,7 @@ jvmtiGetThreadState(jvmtiEnv* env,
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc;
 	J9VMThread * currentThread;
+	jint rv_thread_state = 0;
 
 	Trc_JVMTI_jvmtiGetThreadState_Entry(env);
 
@@ -98,15 +99,15 @@ jvmtiGetThreadState(jvmtiEnv* env,
 				 * unsuspended thread.
 				 */
 				if (threadStartedFlag) {
-					*thread_state_ptr = JVMTI_THREAD_STATE_TERMINATED;
+					rv_thread_state = JVMTI_THREAD_STATE_TERMINATED;
 				} else {
 					/* thread is new */
-					*thread_state_ptr = 0;
+					rv_thread_state = 0;
 				}
 			} else {
 				vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
 				/* The vmthread can't be recycled because getVMThread() prevented it from exiting. */
-				*thread_state_ptr = getThreadState(currentThread, targetThread->threadObject);
+				rv_thread_state = getThreadState(currentThread, targetThread->threadObject);
 				vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
 			}
 			releaseVMThread(currentThread, targetThread);
@@ -115,6 +116,9 @@ done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != thread_state_ptr) {
+		*thread_state_ptr = rv_thread_state; 
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetThreadState);
 }
 
@@ -128,6 +132,8 @@ jvmtiGetAllThreads(jvmtiEnv* env,
 	jvmtiError rc;
 	J9VMThread * currentThread;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	jint rv_threads_count = 0;
+	jthread *rv_threads = NULL;
 
 	Trc_JVMTI_jvmtiGetAllThreads_Entry(env);
 
@@ -166,8 +172,8 @@ jvmtiGetAllThreads(jvmtiEnv* env,
 				}
 			} while ((targetThread = targetThread->linkNext) != vm->mainThread);
 
-			*threads_ptr = threads;
-			*threads_count_ptr = threadCount;
+			rv_threads = threads;
+			rv_threads_count = threadCount;
 		}
 
 		vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
@@ -176,6 +182,12 @@ done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != threads_count_ptr) {
+		*threads_count_ptr = rv_threads_count;
+	}
+	if (NULL != threads_ptr) {
+		*threads_ptr = rv_threads;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetAllThreads);
 }
 
@@ -417,6 +429,11 @@ jvmtiGetThreadInfo(jvmtiEnv* env,
 	jvmtiError rc;
 	J9VMThread * currentThread;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	char *rv_name = NULL;
+	jint rv_priority = 0;
+	jboolean rv_is_daemon = JNI_FALSE;
+	jthreadGroup rv_thread_group = NULL;
+	jobject rv_context_class_loader = NULL;
 
 	Trc_JVMTI_jvmtiGetThreadInfo_Entry(env);
 
@@ -482,20 +499,27 @@ jvmtiGetThreadInfo(jvmtiEnv* env,
 
 			contextClassLoader = vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, J9VMJAVALANGTHREAD_CONTEXTCLASSLOADER(currentThread, threadObject));
 
-			info_ptr->name = name;
+			rv_name = name;
 			{
-				info_ptr->priority = J9VMJAVALANGTHREAD_PRIORITY(currentThread, threadObject);
+				rv_priority = J9VMJAVALANGTHREAD_PRIORITY(currentThread, threadObject);
 			}
 
-			info_ptr->is_daemon = J9VMJAVALANGTHREAD_ISDAEMON(currentThread, threadObject) ? JNI_TRUE : JNI_FALSE;
-			info_ptr->thread_group = (jthreadGroup) threadGroup;
-			info_ptr->context_class_loader = contextClassLoader;
+			rv_is_daemon = J9VMJAVALANGTHREAD_ISDAEMON(currentThread, threadObject) ? JNI_TRUE : JNI_FALSE;
+			rv_thread_group = (jthreadGroup) threadGroup;
+			rv_context_class_loader = contextClassLoader;
 		}
 done:
 		releaseVMThread(currentThread, targetThread);
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != info_ptr) {
+		info_ptr->name = rv_name;
+		info_ptr->priority = rv_priority;
+		info_ptr->is_daemon = rv_is_daemon;
+		info_ptr->thread_group = rv_thread_group;
+		info_ptr->context_class_loader = rv_context_class_loader;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetThreadInfo);
 }
 
@@ -510,6 +534,8 @@ jvmtiGetOwnedMonitorInfo(jvmtiEnv* env,
 	jvmtiError rc;
 	J9VMThread * currentThread;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	jint rv_owned_monitor_count = 0;
+	jobject *rv_owned_monitors = NULL;
 
 	Trc_JVMTI_jvmtiGetOwnedMonitorInfo_Entry(env);
 
@@ -525,12 +551,12 @@ jvmtiGetOwnedMonitorInfo(jvmtiEnv* env,
 		ENSURE_NON_NULL(owned_monitor_count_ptr);
 		ENSURE_NON_NULL(owned_monitors_ptr);
 
-		vm->internalVMFunctions->acquireExclusiveVMAccess(currentThread);
-
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
 		if (rc == JVMTI_ERROR_NONE) {
 			jobject * locks;
 			jint count = 0;
+
+			vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
 
 			count = walkLocalMonitorRefs(currentThread, NULL, targetThread, UDATA_MAX);
 
@@ -544,17 +570,22 @@ jvmtiGetOwnedMonitorInfo(jvmtiEnv* env,
 				 */
 				count = walkLocalMonitorRefs(currentThread, locks, targetThread, count);
 			}
-			*owned_monitors_ptr = locks;
-			*owned_monitor_count_ptr = count;
+			rv_owned_monitors = locks;
+			rv_owned_monitor_count = count;
+
+			vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
 			releaseVMThread(currentThread, targetThread);
 		}
-
-		vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
-
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != owned_monitor_count_ptr) {
+		*owned_monitor_count_ptr = rv_owned_monitor_count;
+	}
+	if (NULL != owned_monitors_ptr) {
+		*owned_monitors_ptr = rv_owned_monitors;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetOwnedMonitorInfo);
 }
 
@@ -569,6 +600,8 @@ jvmtiGetOwnedMonitorStackDepthInfo(jvmtiEnv* env,
 	jvmtiError rc;
 	J9VMThread * currentThread;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	jint rv_monitor_info_count = 0;
+	jvmtiMonitorStackDepthInfo *rv_monitor_info = NULL;
 
 	Trc_JVMTI_jvmtiGetOwnedMonitorStackDepthInfo_Entry(env);
 
@@ -589,13 +622,15 @@ jvmtiGetOwnedMonitorStackDepthInfo(jvmtiEnv* env,
 			ENSURE_JTHREAD(currentThread, thread);
 		}
 		
-		*monitor_info_count_ptr = 0;
+		rv_monitor_info_count = 0;
 		
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
 		if (rc == JVMTI_ERROR_NONE) {
 			IDATA maxRecords;
 			J9ObjectMonitorInfo * monitorEnterRecords = NULL;
 			jvmtiMonitorStackDepthInfo * resultArray = NULL;
+
+			vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
 
 			/* Get the count of owned monitors */
 
@@ -651,21 +686,27 @@ jvmtiGetOwnedMonitorStackDepthInfo(jvmtiEnv* env,
 				}
 			}
 
-
-			*monitor_info_count_ptr = (jint)maxRecords;
-			*monitor_info_ptr = resultArray; 
+			rv_monitor_info_count = (jint)maxRecords;
+			rv_monitor_info = resultArray; 
 
 doneRelease:
 			if (monitorEnterRecords) {
 				j9mem_free_memory(monitorEnterRecords);
 			}
 
+			vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
 			releaseVMThread(currentThread, targetThread);
 		}
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != monitor_info_count_ptr) {
+		*monitor_info_count_ptr = rv_monitor_info_count;
+	}
+	if (NULL != monitor_info_ptr) {
+		*monitor_info_ptr = rv_monitor_info;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetOwnedMonitorStackDepthInfo);
 }
 
@@ -677,6 +718,7 @@ jvmtiGetCurrentContendedMonitor(jvmtiEnv* env,
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	jvmtiError rc;
 	J9VMThread * currentThread;
+	jobject rv_monitor = NULL;
 
 	Trc_JVMTI_jvmtiGetCurrentContendedMonitor_Entry(env);
 
@@ -701,9 +743,9 @@ jvmtiGetCurrentContendedMonitor(jvmtiEnv* env,
 			vmstate = getVMThreadObjectStatesAll(targetThread, &lockObject, NULL, NULL);
 
 			if (lockObject && (0 == (vmstate & (J9VMTHREAD_STATE_PARKED | J9VMTHREAD_STATE_PARKED_TIMED)))) { 
-				*monitor_ptr = (jobject) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, lockObject);
+				rv_monitor = (jobject) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, lockObject);
 			} else {
-				*monitor_ptr = NULL;
+				rv_monitor = NULL;
 			}
 
 			vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
@@ -713,6 +755,9 @@ done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != monitor_ptr) {
+		*monitor_ptr = rv_monitor;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetCurrentContendedMonitor);
 }
 
@@ -819,6 +864,7 @@ jvmtiGetThreadLocalStorage(jvmtiEnv* env,
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	J9VMThread * currentThread;
 	jvmtiError rc;
+	void *rv_data = NULL;
 
 	Trc_JVMTI_jvmtiGetThreadLocalStorage_Entry(env);
 
@@ -834,13 +880,16 @@ jvmtiGetThreadLocalStorage(jvmtiEnv* env,
 
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, TRUE);
 		if (rc == JVMTI_ERROR_NONE) {
-			*data_ptr = THREAD_DATA_FOR_VMTHREAD((J9JVMTIEnv *) env, targetThread)->tls;
+			rv_data = THREAD_DATA_FOR_VMTHREAD((J9JVMTIEnv *) env, targetThread)->tls;
 			releaseVMThread(currentThread, targetThread);
 		}
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != data_ptr) {
+		*data_ptr = rv_data;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetThreadLocalStorage);
 }
 
@@ -1010,6 +1059,7 @@ jvmtiGetCurrentThread(jvmtiEnv* env,
 	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 	J9VMThread * currentThread;
 	jvmtiError rc;
+	jthread rv_thread = NULL;
 
 	Trc_JVMTI_jvmtiGetCurrentThread_Entry(env);
 
@@ -1021,11 +1071,14 @@ jvmtiGetCurrentThread(jvmtiEnv* env,
 
 		ENSURE_NON_NULL(thread_ptr);
 
-		*thread_ptr = (jthread) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, (j9object_t) currentThread->threadObject);
+		rv_thread = (jthread) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, (j9object_t) currentThread->threadObject);
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
+	if (NULL != thread_ptr) {
+		*thread_ptr = rv_thread;
+	}
 	TRACE_JVMTI_RETURN(jvmtiGetCurrentThread);
 }
 

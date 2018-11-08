@@ -28,9 +28,7 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-		cd $(REPORTDIR); \
-		perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl zos ; \
+		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl zos ; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xmx1G \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) \
 	-DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' \
@@ -62,9 +60,7 @@
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-		cd $(REPORTDIR); \
-		perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl all ; \
+		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl all ; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xmx1G \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) \
 	-DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' \
@@ -75,8 +71,8 @@
 	-outputLimit 1000 -explainExcludes -xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) \
 	-xlist $(Q)$(TEST_RESROOT)$(D)dbgextddrtests_excludes.xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
-		<!-- j9ddr.jar is not supported on AIX or z/OS; OpenJ9 issue 1511 -->
-		<platformRequirements>^os.aix,^os.zos</platformRequirements>
+		<!-- j9ddr.jar is not supported on AIX, z/OS and osx; OpenJ9 issue 1511 -->
+		<platformRequirements>^os.aix,^os.zos,^os.osx</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -96,9 +92,7 @@
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 		</variations>
-		<command>$(MKTREE) $(REPORTDIR); \
-		cd $(REPORTDIR); \
-		perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl aix ; \
+		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl aix ; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xmx1G \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) \
 	-DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' \

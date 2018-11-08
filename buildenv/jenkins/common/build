@@ -43,7 +43,9 @@ def get_source() {
             OMR_BRANCH_OPTION = (OMR_BRANCH != "")? "-omr-branch=${OMR_BRANCH}" : ""
             OMR_SHA_OPTION = (OMR_SHA != "") ? "-omr-sha=${OMR_SHA}" : ""
 
-            if (USER_CREDENTIALS_ID != '') {
+            // use sshagent with Jenkins credentials ID for all platforms except zOS
+            // on zOS use the user's ssh key
+            if (!SPEC.startsWith('zos') && (USER_CREDENTIALS_ID != '')) {
                 get_sources_with_authentication()
             } else {
                 get_sources()
@@ -59,6 +61,14 @@ def get_sources_with_authentication() {
 }
 
 def get_sources() {
+    // use credentials ID for all platforms except zOS
+    // for zOS use ssh key
+
+    def remote_config_parameters = [url: "${OPENJDK_REPO}"]
+    if (!SPEC.startsWith('zos') && USER_CREDENTIALS_ID) {
+        remote_config_parameters.put('credentialsId', "${USER_CREDENTIALS_ID}")
+    }
+
     checkout changelog: false,
             poll: false,
             scm: [$class: 'GitSCM',
@@ -72,8 +82,7 @@ def get_sources() {
                                 shallow: false,
                                 timeout: 30]],
                 submoduleCfg: [],
-                userRemoteConfigs: [[credentialsId: "${USER_CREDENTIALS_ID}",
-                                    url: "${OPENJDK_REPO}"]]]
+                userRemoteConfigs: [remote_config_parameters]]
 
     // Check if this build is a PR
     if (params.ghprbGhRepository) {
@@ -81,7 +90,7 @@ def get_sources() {
         checkout_pullrequest()
     } else {
         sh "git checkout ${OPENJDK_SHA}"
-        sh "bash ./get_source.sh ${OPENJ9_REPO_OPTION} ${OPENJ9_BRANCH_OPTION} ${OPENJ9_SHA_OPTION} ${OMR_REPO_OPTION} ${OMR_BRANCH_OPTION} ${OMR_SHA_OPTION}"
+        sh "bash ./get_source.sh ${EXTRA_GETSOURCE_OPTIONS} ${OPENJ9_REPO_OPTION} ${OPENJ9_BRANCH_OPTION} ${OPENJ9_SHA_OPTION} ${OMR_REPO_OPTION} ${OMR_BRANCH_OPTION} ${OMR_SHA_OPTION}"
     }
 }
 
@@ -186,7 +195,7 @@ def checkout_pullrequest() {
         checkout_pullrequest(OPENJDK_PR, "ibmruntimes/openj9-openjdk-jdk${REPO_SUFFIX}")
     }
 
-    sh "bash ./get_source.sh"
+    sh "bash ./get_source.sh ${EXTRA_GETSOURCE_OPTIONS}"
 
     // Checkout dependent PRs, if any were specified
     if (openj9_bool) {
@@ -246,8 +255,10 @@ def checkoutRef (REF) {
 def build() {
     stage('Compile') {
         timestamps {
+            // 'all' target dependencies broken for zos, use 'images'
+            def make_target = SPEC.startsWith('zos') ? 'images' : 'all'
             withEnv(BUILD_ENV_VARS_LIST) {
-                sh "${BUILD_ENV_CMD} bash configure --with-freemarker-jar='$FREEMARKER' --with-boot-jdk='$BOOT_JDK' $EXTRA_CONFIGURE_OPTIONS && make $EXTRA_MAKE_OPTIONS all"
+                sh "${BUILD_ENV_CMD} bash configure --with-freemarker-jar='$FREEMARKER' --with-boot-jdk='$BOOT_JDK' $EXTRA_CONFIGURE_OPTIONS && make $EXTRA_MAKE_OPTIONS ${make_target}"
             }
         }
     }
@@ -271,6 +282,8 @@ def archive() {
             }
             if (ARTIFACTORY_SERVER) {
                 def server = Artifactory.server ARTIFACTORY_SERVER
+                // set connection timeout to 10 mins to avoid timeout on slow platforms
+                server.connection.timeout = 600
                 def artifactory_upload_dir = "${ARTIFACTORY_REPO}/${JOB_NAME}/${BUILD_ID}/"
                 def uploadSpec = """{
                     "files":[
@@ -291,15 +304,15 @@ def archive() {
                 server.publishBuildInfo buildInfo
                 // Write URL to env so that we can pull it from the upstream pipeline job
                 ARTIFACTORY_URL = server.getUrl()
-                env.CUSTOMIZED_SDK_URL = "${ARTIFACTORY_URL}/${artifactory_upload_dir}/${SDK_FILENAME}"
+                env.CUSTOMIZED_SDK_URL = "${ARTIFACTORY_URL}/${artifactory_upload_dir}${SDK_FILENAME}"
                 if (fileExists("${TEST_FILENAME}")) {
-                    env.CUSTOMIZED_SDK_URL += " ${ARTIFACTORY_URL}/${artifactory_upload_dir}/${TEST_FILENAME}"
+                    env.CUSTOMIZED_SDK_URL += " ${ARTIFACTORY_URL}/${artifactory_upload_dir}${TEST_FILENAME}"
                 }
                 echo "CUSTOMIZED_SDK_URL:'${CUSTOMIZED_SDK_URL}'"
                 echo "ARTIFACTORY_CREDS:'${ARTIFACTORY_CREDS}'"
             } else {
                 echo "ARTIFACTORY server is not set saving artifacts on jenkins."
-                archiveArtifacts artifacts: "**/${SDK_FILENAME},**/${TEST_FILENAME}", fingerprint: true, onlyIfSuccessful: true
+                archiveArtifacts artifacts: "**/${SDK_FILENAME},**/${TEST_FILENAME}", fingerprint: false, onlyIfSuccessful: true
             }
         }
     }
@@ -324,13 +337,8 @@ def build_all() {
                 archive()
             }
         } finally {
-            try {
-		cleanWs()
-	    } catch(e) {
-		echo e.toString()
-		echo e.printStackTrace()
-		sh "ps -ef"
-	    }
+            // Temporarily turn off disableDeferredWipeout. See https://issues.jenkins-ci.org/browse/JENKINS-54225
+            cleanWs notFailBuild: true, disableDeferredWipeout: false
         }
     }
 }

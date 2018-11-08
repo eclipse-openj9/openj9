@@ -96,7 +96,7 @@ public:
 			javaVM->gcReadBarrierType = gc_modron_readbar_always;
 		} else {
 			if (extensions->isConcurrentScavengerEnabled()) {
-				javaVM->gcReadBarrierType = gc_modron_readbar_evacuate;
+				javaVM->gcReadBarrierType = gc_modron_readbar_range_check;
 			} else {
 				javaVM->gcReadBarrierType = gc_modron_readbar_none;
 			}

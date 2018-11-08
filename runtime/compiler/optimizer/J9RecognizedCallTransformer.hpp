@@ -82,15 +82,14 @@ class RecognizedCallTransformer : public OMR::RecognizedCallTransformer
     *
     *  \param treetop
     *     The treetop which anchors the call node.
-    
-    *  \param node
-    *     The call node representing the Unsafe call
     *
     *  \param helper
     *     The CodeGen inlined helper being transformed into
     *
+    *  \param needsNullCheck
+    *     Flag indicating if null check is needed on the first argument of the unsafe call
     */
-   void processUnsafeAtomicCall(TR::TreeTop* treetop, TR::Node* node, TR::SymbolReferenceTable::CommonNonhelperSymbol helper);
+   void processUnsafeAtomicCall(TR::TreeTop* treetop, TR::SymbolReferenceTable::CommonNonhelperSymbol helper, bool needsNullCheck = false);
    };
 
 }

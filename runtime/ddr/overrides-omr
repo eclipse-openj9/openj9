@@ -35,7 +35,7 @@ fieldoverride.CLimits.DDR_UINT_MAX=UINT_MAX
 fieldoverride.CLimits.DDR_ULONG_MAX=ULONG_MAX
 fieldoverride.CLimits.DDR_USHRT_MAX=USHRT_MAX
 
-#AIX perf objects
+# AIX perf objects
 fieldoverride.perfstat_cpu_t.wait=wait_field
 fieldoverride.perfstat_cpu_total_t.wait=wait_field
 
@@ -44,8 +44,4 @@ typeoverride.semun.buf=UDATA
 
 typeoverride._dbg_pdbPath.searchPath=U_16*
 typeoverride._GROUP_AFFINITY.Reserved=U_16[]
-typeoverride.J9PortNodeMask.mask=UDATA[]
-typeoverride.OMRPortPlatformGlobals.globalConverter=IDATA[]
 typeoverride.OMRPortPlatformGlobals.globalConverterMutex=U_8*
-typeoverride.OMRPortPlatformGlobals.numa_max_node_bits=UDATA
-typeoverride.PortlibPTBuffers_struct.converterCache=IDATA

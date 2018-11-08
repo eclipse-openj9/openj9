@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -107,7 +107,6 @@ Java_com_ibm_lang_management_internal_ExtendedGarbageCollectorMXBeanImpl_getLast
 	jclass gcBean = NULL;
 	jmethodID callBackID = NULL;
 
-	jclass stringClass = NULL;
 	U_32 idx = 0;
 	jlongArray initialArray = NULL;
 	jlongArray preUsedArray = NULL;
@@ -116,7 +115,14 @@ Java_com_ibm_lang_management_internal_ExtendedGarbageCollectorMXBeanImpl_getLast
 	jlongArray postUsedArray = NULL;
 	jlongArray postCommittedArray = NULL;
 	jlongArray postMaxArray = NULL;
-	jobjectArray poolNamesArray = NULL;
+
+	jlong* initialArrayElems = NULL;
+	jlong* preUsedArrayElems = NULL;
+	jlong* preCommittedArrayElems = NULL;
+	jlong* preMaxArrayElems = NULL;
+	jlong* postUsedArrayElems = NULL;
+	jlong* postCommittedArrayElems = NULL;
+	jlong* postMaxArrayElems = NULL;
 
 	/* collectionCount */
 	if (0 == gc->lastGcInfo.index) {
@@ -132,11 +138,10 @@ Java_com_ibm_lang_management_internal_ExtendedGarbageCollectorMXBeanImpl_getLast
 	if (!initializeJavaLangStringIDCache(env)) {
 		goto fail;
 	}
-	stringClass = JCL_CACHE_GET(env, CLS_java_lang_String);
 
 	callBackID = JCL_CACHE_GET(env, MID_com_ibm_lang_management_internal_ExtendedGarbageCollectorMXBeanImpl_buildGcInfo);
 	if (NULL == callBackID) {
-		callBackID = (*env)->GetStaticMethodID(env, gcBean, "buildGcInfo", "(JJJ[Ljava/lang/String;[J[J[J[J[J[J[J)Lcom/sun/management/GcInfo;");
+		callBackID = (*env)->GetStaticMethodID(env, gcBean, "buildGcInfo", "(JJJ[J[J[J[J[J[J[J)Lcom/sun/management/GcInfo;");
 		if (NULL == callBackID) {
 			goto fail;
 		}
@@ -171,64 +176,59 @@ Java_com_ibm_lang_management_internal_ExtendedGarbageCollectorMXBeanImpl_getLast
 	if (NULL == postMaxArray) {
 		goto fail;
 	}
-	poolNamesArray = (jobjectArray)(*env)->NewObjectArray(env, gcInfo->arraySize, stringClass, NULL);
-	if (NULL == poolNamesArray) {
-		goto fail;
-	}
 
-	omrthread_rwmutex_enter_read(mgmt->managementDataLock);
-
-	(*env)->SetLongArrayRegion(env, initialArray, 0, gcInfo->arraySize, (jlong *) &gcInfo->initialSize[0]);
-	if ((*env)->ExceptionCheck(env)) {
-		goto fail2;
-	}
-	(*env)->SetLongArrayRegion(env, preUsedArray, 0, gcInfo->arraySize, (jlong *) &gcInfo->preUsed[0]);
-	if ((*env)->ExceptionCheck(env)) {
-		goto fail2;
-	}
-	(*env)->SetLongArrayRegion(env, preCommittedArray, 0, gcInfo->arraySize, (jlong *) &gcInfo->preCommitted[0]);
-	if ((*env)->ExceptionCheck(env)) {
-		goto fail2;
-	}
-	(*env)->SetLongArrayRegion(env, preMaxArray, 0, gcInfo->arraySize, (jlong *) &gcInfo->preMax[0]);
-	if ((*env)->ExceptionCheck(env)) {
-		goto fail2;
-	}
-	(*env)->SetLongArrayRegion(env, postUsedArray, 0, gcInfo->arraySize, (jlong *) &gcInfo->postUsed[0]);
-	if ((*env)->ExceptionCheck(env)) {
-		goto fail2;
-	}
-	(*env)->SetLongArrayRegion(env, postCommittedArray, 0, gcInfo->arraySize, (jlong *) &gcInfo->postCommitted[0]);
-	if ((*env)->ExceptionCheck(env)) {
-		goto fail2;
-	}
-	(*env)->SetLongArrayRegion(env, postMaxArray, 0, gcInfo->arraySize, (jlong *) &gcInfo->postMax[0]);
-	if ((*env)->ExceptionCheck(env)) {
-		goto fail2;
-	}
-
-	for (idx = 0; idx < gcInfo->arraySize; ++idx) {
-		jstring poolName = NULL;
-		if (mgmt->supportedMemoryPools > idx) {
-			poolName = (*env)->NewStringUTF(env, mgmt->memoryPools[idx].name);
-		} else {
-			poolName = (*env)->NewStringUTF(env, mgmt->nonHeapMemoryPools[idx - mgmt->supportedMemoryPools].name);
-		}
-		if (NULL == poolName) {
+	{
+		jboolean isCopy = JNI_FALSE;
+		initialArrayElems = (jlong*) (*env)->GetPrimitiveArrayCritical(env, initialArray, &isCopy);
+		if (NULL == initialArrayElems) {
 			goto fail2;
 		}
-
-		(*env)->SetObjectArrayElement(env, poolNamesArray, idx, poolName);
-		if ((*env)->ExceptionCheck(env)) {
+		preUsedArrayElems = (jlong*) (*env)->GetPrimitiveArrayCritical(env, preUsedArray, &isCopy);
+		if (NULL == preUsedArrayElems) {
 			goto fail2;
 		}
-		(*env)->DeleteLocalRef(env, poolName);
+		preCommittedArrayElems = (jlong*) (*env)->GetPrimitiveArrayCritical(env, preCommittedArray, &isCopy);
+		if (NULL == preCommittedArrayElems) {
+			goto fail2;
+		}
+		preMaxArrayElems = (jlong*) (*env)->GetPrimitiveArrayCritical(env, preMaxArray, &isCopy);
+		if (NULL == preMaxArrayElems) {
+			goto fail2;
+		}
+		postUsedArrayElems = (jlong*) (*env)->GetPrimitiveArrayCritical(env, postUsedArray, &isCopy);
+		if (NULL == postUsedArrayElems) {
+			goto fail2;
+		}
+		postCommittedArrayElems = (jlong*) (*env)->GetPrimitiveArrayCritical(env, postCommittedArray, &isCopy);
+		if (NULL == postCommittedArrayElems) {
+			goto fail2;
+		}
+		postMaxArrayElems = (jlong*) (*env)->GetPrimitiveArrayCritical(env, postMaxArray, &isCopy);
+		if (NULL == postMaxArrayElems) {
+			goto fail2;
+		}
+		omrthread_rwmutex_enter_read(mgmt->managementDataLock);
+		for (idx = 0; idx < gcInfo->arraySize; idx++) {
+			initialArrayElems[idx] = gcInfo->initialSize[idx];
+			preUsedArrayElems[idx] = gcInfo->preUsed[idx];
+			preCommittedArrayElems[idx] = gcInfo->preCommitted[idx];
+			preMaxArrayElems[idx] = gcInfo->preMax[idx];
+			postUsedArrayElems[idx] = gcInfo->postUsed[idx];
+			postCommittedArrayElems[idx] = gcInfo->postCommitted[idx];
+			postMaxArrayElems[idx] = gcInfo->postMax[idx];
+		}
+		omrthread_rwmutex_exit_read(mgmt->managementDataLock);
+		(*env)->ReleasePrimitiveArrayCritical(env, initialArray, initialArrayElems, 0);
+		(*env)->ReleasePrimitiveArrayCritical(env, preUsedArray, preUsedArrayElems, 0);
+		(*env)->ReleasePrimitiveArrayCritical(env, preCommittedArray, preCommittedArrayElems, 0);
+		(*env)->ReleasePrimitiveArrayCritical(env, preMaxArray, preMaxArrayElems, 0);
+		(*env)->ReleasePrimitiveArrayCritical(env, postUsedArray, postUsedArrayElems, 0);
+		(*env)->ReleasePrimitiveArrayCritical(env, postCommittedArray, postCommittedArrayElems, 0);
+		(*env)->ReleasePrimitiveArrayCritical(env, postMaxArray, postMaxArrayElems, 0);
 	}
-	omrthread_rwmutex_exit_read(mgmt->managementDataLock);
 
 	return (*env)->CallStaticObjectMethod(env, gcBean, callBackID,
 			(jlong)gcInfo->index, (jlong)gcInfo->startTime, (jlong)gcInfo->endTime,
-			poolNamesArray,
 			initialArray,
 			preUsedArray,
 			preCommittedArray,
@@ -237,7 +237,27 @@ Java_com_ibm_lang_management_internal_ExtendedGarbageCollectorMXBeanImpl_getLast
 			postCommittedArray,
 			postMaxArray);
 fail2:
-	omrthread_rwmutex_exit_read(mgmt->managementDataLock);
+	if (NULL != initialArrayElems) {
+		(*env)->ReleasePrimitiveArrayCritical(env, initialArray, initialArrayElems, 0);
+	}
+	if (NULL != preUsedArrayElems) {
+		(*env)->ReleasePrimitiveArrayCritical(env, preUsedArray, preUsedArrayElems, 0);
+	}
+	if (NULL != preCommittedArrayElems) {
+		(*env)->ReleasePrimitiveArrayCritical(env, preCommittedArray, preCommittedArrayElems, 0);
+	}
+	if (NULL != preMaxArrayElems) {
+		(*env)->ReleasePrimitiveArrayCritical(env, preMaxArray, preMaxArrayElems, 0);
+	}
+	if (NULL != postUsedArrayElems) {
+		(*env)->ReleasePrimitiveArrayCritical(env, postUsedArray, postUsedArrayElems, 0);
+	}
+	if (NULL != postCommittedArrayElems) {
+		(*env)->ReleasePrimitiveArrayCritical(env, postCommittedArray, postCommittedArrayElems, 0);
+	}
+	if (NULL != postMaxArrayElems) {
+		(*env)->ReleasePrimitiveArrayCritical(env, postMaxArray, postMaxArrayElems, 0);
+	}
 fail:
 	return NULL;
 }

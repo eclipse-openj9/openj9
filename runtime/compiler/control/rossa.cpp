@@ -198,7 +198,8 @@ char *compilationErrorNames[]={
    "compilationFSDHasInvokeHandle", //47
    "compilationVirtualAddressExhaustion", //48
    "compilationEnforceProfiling", //49
-   "compilationStreamFailure", //50
+   "compilationSymbolValidationManagerFailure", //50
+   "compilationStreamFailure", //51
    "compilationMaxError"
 };
 
@@ -463,7 +464,7 @@ getNewInstancePrototype(J9VMThread * context)
             jlClass,
             (J9ROMNameAndSignature *) &newInstancePrototypeNameAndSig,
             0,
-            J9_LOOK_DIRECT_NAS | J9_LOOK_VIRTUAL | J9_LOOK_NO_THROW);
+            J9_LOOK_DIRECT_NAS | J9_LOOK_VIRTUAL | J9_LOOK_NO_JAVA);
       }
 
    return newInstanceProto;
