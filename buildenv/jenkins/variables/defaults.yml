@@ -166,17 +166,17 @@ aix_ppc-64_cmprssptrs:
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
     build:
-      8: 'hw.arch.ppc && sw.os.aix'
-      9: 'hw.arch.ppc && sw.os.aix'
-      10: 'hw.arch.ppc && sw.os.aix'
-      11: 'hw.arch.ppc && sw.os.aix'
-      next: 'hw.arch.ppc && sw.os.aix'
+      8: 'hw.arch.ppc64 && sw.os.aix'
+      9: 'hw.arch.ppc64 && sw.os.aix'
+      10: 'hw.arch.ppc64 && sw.os.aix'
+      11: 'hw.arch.ppc64 && sw.os.aix'
+      next: 'hw.arch.ppc64 && sw.os.aix'
     test:
-      8: 'hw.arch.ppc && sw.os.aix'
-      9: 'hw.arch.ppc && sw.os.aix'
-      10: 'hw.arch.ppc && sw.os.aix'
-      11: 'hw.arch.ppc && sw.os.aix'
-      next: 'hw.arch.ppc && sw.os.aix'
+      8: 'hw.arch.ppc64 && sw.os.aix'
+      9: 'hw.arch.ppc64 && sw.os.aix'
+      10: 'hw.arch.ppc64 && sw.os.aix'
+      11: 'hw.arch.ppc64 && sw.os.aix'
+      next: 'hw.arch.ppc64 && sw.os.aix'
   extra_configure_options:
     8: '--with-cups-include=/opt/freeware/include --disable-ccache --with-jobs=8'
     9: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8'
