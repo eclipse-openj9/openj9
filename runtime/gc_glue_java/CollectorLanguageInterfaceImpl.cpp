@@ -669,6 +669,11 @@ MM_CollectorLanguageInterfaceImpl::private_scavenger_shouldPercolateGarbageColle
 }
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
+bool
+MM_CollectorLanguageInterfaceImpl::scavenger_shouldYield() {
+	return (J9_XACCESS_PENDING == ((J9JavaVM*)_omrVM->_language_vm)->exclusiveAccessState);
+}
+
 void
 MM_CollectorLanguageInterfaceImpl::scavenger_switchConcurrentForThread(MM_EnvironmentBase *env)
 {
