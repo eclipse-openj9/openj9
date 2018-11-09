@@ -8817,11 +8817,10 @@ dlt:
 	PERFORM_ACTION(performDLT(REGISTER_ARGS));
 
 runMethod: {
-	void *methodRunAddress = _sendMethod->methodRunAddress;
 #if defined(USE_COMPUTED_GOTO)
-	EXECUTE_SEND_TARGET(J9_BCLOOP_DECODE_SEND_TARGET(methodRunAddress));
+	EXECUTE_SEND_TARGET(J9_BCLOOP_DECODE_SEND_TARGET(_sendMethod->methodRunAddress));
 #else
-	switch(J9_BCLOOP_DECODE_SEND_TARGET(methodRunAddress)) {
+	switch(J9_BCLOOP_DECODE_SEND_TARGET(_sendMethod->methodRunAddress)) {
 #endif
 
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INITIAL_STATIC):
