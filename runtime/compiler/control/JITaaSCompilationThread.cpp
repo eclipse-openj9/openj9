@@ -2714,30 +2714,47 @@ ClientSessionHT::printStats()
 void 
 JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple)
    {
+   ClientSessionData::ClassInfo classInfo;
    OMR::CriticalSection cacheRemoteROMClass(clientSessionData->getROMMapMonitor());
+   auto it = clientSessionData->getROMClassMap().find((J9Class*)clazz);
+   if (it == clientSessionData->getROMClassMap().end())
+      {
+      JITaaSHelpers::cacheRemoteROMClass(clientSessionData, clazz, romClass, classInfoTuple, classInfo);
+      }
+   }
+
+void
+JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple, ClientSessionData::ClassInfo &classInfoStruct)
+   {
    ClassInfoTuple &classInfo = *classInfoTuple;
-   J9Method *methods = std::get<1>(classInfo);
-   TR_OpaqueClassBlock *baseComponentClass = std::get<2>(classInfo);
-   int32_t numDims = std::get<3>(classInfo);
-   TR_OpaqueClassBlock *parentClass = std::get<4>(classInfo);
+
+   classInfoStruct.romClass = romClass;
+   classInfoStruct.methodsOfClass = std::get<1>(classInfo);
+   J9Method *methods = classInfoStruct.methodsOfClass;
+   classInfoStruct.baseComponentClass = std::get<2>(classInfo);
+   classInfoStruct.numDimensions = std::get<3>(classInfo);
+   classInfoStruct._remoteROMStringsCache = nullptr;
+   classInfoStruct._fieldOrStaticNameCache = nullptr;
+   classInfoStruct.parentClass = std::get<4>(classInfo);
    auto &tmpInterfaces = std::get<5>(classInfo);
-   auto interfaces = new (PERSISTENT_NEW) PersistentVector<TR_OpaqueClassBlock *>
+   classInfoStruct.interfaces = new (PERSISTENT_NEW) PersistentVector<TR_OpaqueClassBlock *>
       (tmpInterfaces.begin(), tmpInterfaces.end(),
        PersistentVector<TR_OpaqueClassBlock *>::allocator_type(TR::Compiler->persistentAllocator()));
    auto &methodTracingInfo = std::get<6>(classInfo);
-   bool classHasFinalFields = std::get<7>(classInfo);
-   uintptrj_t classDepthAndFlags = std::get<8>(classInfo);
-   bool classInitialized = std::get<9>(classInfo);
-   uint32_t byteOffsetToLockword = std::get<10>(classInfo);
-   TR_OpaqueClassBlock * leafComponentClass = std::get<11>(classInfo);
-   void *classLoader = std::get<12>(classInfo);
-   TR_OpaqueClassBlock * hostClass = std::get<13>(classInfo);
-   TR_OpaqueClassBlock * componentClass = std::get<14>(classInfo);
-   TR_OpaqueClassBlock * arrayClass = std::get<15>(classInfo);
-   uintptrj_t totalInstanceSize = std::get<16>(classInfo);
-   clientSessionData->getROMClassMap().insert({ clazz, { romClass, methods,
-      baseComponentClass, numDims,
-      nullptr, nullptr, parentClass, interfaces, classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword, leafComponentClass, classLoader, hostClass, componentClass, arrayClass, totalInstanceSize, nullptr} });
+   classInfoStruct.classHasFinalFields = std::get<7>(classInfo);
+   classInfoStruct.classDepthAndFlags = std::get<8>(classInfo);
+   classInfoStruct.classInitialized = std::get<9>(classInfo);
+   classInfoStruct.byteOffsetToLockword = std::get<10>(classInfo);
+   classInfoStruct.leafComponentClass = std::get<11>(classInfo);
+   classInfoStruct.classLoader = std::get<12>(classInfo);
+   classInfoStruct.hostClass = std::get<13>(classInfo);
+   classInfoStruct.componentClass = std::get<14>(classInfo);
+   classInfoStruct.arrayClass = std::get<15>(classInfo);
+   classInfoStruct.totalInstanceSize = std::get<16>(classInfo);
+   classInfoStruct._classOfStaticCache = nullptr;
+
+   clientSessionData->getROMClassMap().insert({ clazz, classInfoStruct});
+
    uint32_t numMethods = romClass->romMethodCount;
    J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
    for (uint32_t i = 0; i < numMethods; i++)
@@ -2804,4 +2821,169 @@ JITaaSHelpers::getRemoteROMClass(J9Class *clazz, JITaaS::J9ServerStream *stream,
    const auto &recv = stream->read<ClassInfoTuple>();
    *classInfoTuple = std::get<0>(recv);
    return romClassFromString(std::get<0>(*classInfoTuple), trMemory->trPersistentMemory());
+   }
+
+bool
+JITaaSHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITaaS::J9ServerStream *stream, ClassInfoDataType dataType, void *data)
+   {
+   JITaaSHelpers::ClassInfoTuple classInfoTuple;
+   ClientSessionData::ClassInfo classInfo;
+   if (!clazz)
+      {
+      return false;
+      }
+      {
+      OMR::CriticalSection getRemoteROMClass(clientSessionData->getROMMapMonitor());
+      auto it = clientSessionData->getROMClassMap().find((J9Class*)clazz);
+      if (it != clientSessionData->getROMClassMap().end())
+         {
+         JITaaSHelpers::getROMClassData(it->second, dataType, data);
+         return true;
+         }
+      }
+   stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getRemoteROMClassAndMethods, clazz);
+   const auto &recv = stream->read<ClassInfoTuple>();
+   classInfoTuple = std::get<0>(recv);
+
+   OMR::CriticalSection cacheRemoteROMClass(clientSessionData->getROMMapMonitor());
+   auto it = clientSessionData->getROMClassMap().find(clazz);
+   if (it == clientSessionData->getROMClassMap().end())
+      {
+      auto romClass = romClassFromString(std::get<0>(classInfoTuple), TR::comp()->trMemory()->trPersistentMemory());
+      JITaaSHelpers::cacheRemoteROMClass(clientSessionData, clazz, romClass, &classInfoTuple, classInfo);
+      JITaaSHelpers::getROMClassData(classInfo, dataType, data);
+      }
+   else
+      {
+      JITaaSHelpers::getROMClassData(it->second, dataType, data);
+      }
+   return true;
+   }
+
+bool
+JITaaSHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITaaS::J9ServerStream *stream, ClassInfoDataType dataType1, void *data1, ClassInfoDataType dataType2, void *data2)
+   {
+   JITaaSHelpers::ClassInfoTuple classInfoTuple;
+   ClientSessionData::ClassInfo classInfo;
+   if (!clazz)
+      {
+      return false;
+      }
+      {
+      OMR::CriticalSection getRemoteROMClass(clientSessionData->getROMMapMonitor());
+      auto it = clientSessionData->getROMClassMap().find((J9Class*)clazz);
+      if (it != clientSessionData->getROMClassMap().end())
+         {
+         JITaaSHelpers::getROMClassData(it->second, dataType1, data1);
+         JITaaSHelpers::getROMClassData(it->second, dataType2, data2);
+         return true;
+         }
+      }
+   stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getRemoteROMClassAndMethods, clazz);
+   const auto &recv = stream->read<ClassInfoTuple>();
+   classInfoTuple = std::get<0>(recv);
+
+   OMR::CriticalSection cacheRemoteROMClass(clientSessionData->getROMMapMonitor());
+   auto it = clientSessionData->getROMClassMap().find(clazz);
+   if (it == clientSessionData->getROMClassMap().end())
+      {
+      auto romClass = romClassFromString(std::get<0>(classInfoTuple), TR::comp()->trMemory()->trPersistentMemory());
+      JITaaSHelpers::cacheRemoteROMClass(clientSessionData, clazz, romClass, &classInfoTuple, classInfo);
+      JITaaSHelpers::getROMClassData(classInfo, dataType1, data1);
+      JITaaSHelpers::getROMClassData(classInfo, dataType2, data2);
+      }
+   else
+      {
+      JITaaSHelpers::getROMClassData(it->second, dataType1, data1);
+      JITaaSHelpers::getROMClassData(it->second, dataType2, data2);
+      }
+   return true;
+   }
+
+void
+JITaaSHelpers::getROMClassData(const ClientSessionData::ClassInfo &classInfo, ClassInfoDataType dataType, void *data)
+   {
+   switch (dataType)
+      {
+      case CLASSINFO_ROMCLASS_MODIFIERS :
+         {
+         *(uint32_t *)data = classInfo.romClass->modifiers;
+         }
+         break;
+      case CLASSINFO_ROMCLASS_EXTRAMODIFIERS :
+         {
+         *(uint32_t *)data = classInfo.romClass->extraModifiers;
+         }
+         break;
+      case CLASSINFO_BASE_COMPONENT_CLASS :
+         {
+         *(TR_OpaqueClassBlock **)data = classInfo.baseComponentClass;
+         }
+         break;
+      case CLASSINFO_NUMBER_DIMENSIONS :
+         {
+         *(int32_t *)data = classInfo.numDimensions;
+         }
+         break;
+      case CLASSINFO_PARENT_CLASS :
+         {
+         *(TR_OpaqueClassBlock **)data = classInfo.parentClass;
+         }
+         break;
+      case CLASSINFO_CLASS_HAS_FINAL_FIELDS :
+         {
+         *(bool *)data = classInfo.classHasFinalFields;
+         }
+         break;
+      case CLASSINFO_CLASS_DEPTH_AND_FLAGS :
+         {
+         *(uintptrj_t *)data = classInfo.classDepthAndFlags;
+         }
+         break;
+      case CLASSINFO_CLASS_INITIALIZED :
+         {
+         *(bool *)data = classInfo.classInitialized;
+         }
+         break;
+      case CLASSINFO_BYTE_OFFSET_TO_LOCKWORD :
+         {
+         *(uint32_t *)data = classInfo.byteOffsetToLockword;
+         }
+         break;
+      case CLASSINFO_LEAF_COMPONENT_CLASS :
+         {
+         *(TR_OpaqueClassBlock **)data = classInfo.leafComponentClass;
+         }
+         break;
+      case CLASSINFO_CLASS_LOADER :
+         {
+         *(void **)data = classInfo.classLoader;
+         }
+         break;
+      case CLASSINFO_HOST_CLASS :
+         {
+         *(TR_OpaqueClassBlock **)data = classInfo.hostClass;
+         }
+         break;
+      case CLASSINFO_COMPONENT_CLASS :
+         {
+         *(TR_OpaqueClassBlock **)data = classInfo.componentClass;
+         }
+         break;
+      case CLASSINFO_ARRAY_CLASS :
+         {
+         *(TR_OpaqueClassBlock **)data = classInfo.arrayClass;
+         }
+         break;
+      case CLASSINFO_TOTAL_INSTANCE_SIZE :
+         {
+         *(uintptrj_t *)data = classInfo.totalInstanceSize;
+         }
+         break;
+      default :
+         {
+         TR_ASSERT(0, "Class Info not supported %u \n", dataType);
+         }
+         break;
+      }
    }
