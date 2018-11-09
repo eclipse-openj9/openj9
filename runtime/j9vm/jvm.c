@@ -954,10 +954,14 @@ getj9bin()
 
 #if defined(RS6000) || defined(LINUXPPC)
 #ifdef PPC64
+#ifdef J9VM_ENV_LITTLE_ENDIAN
+#define JVM_ARCH_DIR "ppc64le"
+#else /* J9VM_ENV_LITTLE_ENDIAN */
 #define JVM_ARCH_DIR "ppc64"
+#endif /* J9VM_ENV_LITTLE_ENDIAN */
 #else
 #define JVM_ARCH_DIR "ppc"
-#endif /* PPC64*/
+#endif /* PPC64 */
 #elif defined(J9X86) || defined(WIN32)
 #define JVM_ARCH_DIR "i386"
 #elif defined(S390) || defined(J9ZOS390)
@@ -1422,7 +1426,7 @@ getVersionFromClasslibPropertiesFile(void)
 		shape = props_file_get(propsFile, "shape");
 		if (NULL == shape) {
 #ifdef DEBUG
-			printf("No 'shape' property in %s\n", propsFile);
+			printf("No 'shape' property in %s\n", jvmBufferData(propsPathBuffer));
 #endif
 			goto bail;
 		}
@@ -1430,7 +1434,7 @@ getVersionFromClasslibPropertiesFile(void)
 		version = props_file_get(propsFile, "version");
 		if (NULL == version) {
 #ifdef DEBUG
-			printf("No 'version' property in %s\n", propsFile);
+			printf("No 'version' property in %s\n", jvmBufferData(propsPathBuffer));
 #endif
 			goto bail;
 		}
@@ -1451,7 +1455,7 @@ bail:
 		props_file_close(propsFile);
 	} else {
 #ifdef DEBUG
-		printf("Could not open %s\n", propsFile);
+		printf("Could not open %s\n", jvmBufferData(propsPathBuffer));
 #endif
 	}
 	
@@ -2206,7 +2210,7 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 #endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY  */
 
 #ifdef DEBUG
-	fprintf(stdout,"Finished, result %d, env %x\n", result, *penv);
+	fprintf(stdout,"Finished, result %d, env %llx\n", result, (long long)*penv);
 	fflush(stdout);
 #endif
 	if (result == JNI_OK) {
