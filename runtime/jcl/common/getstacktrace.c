@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,6 +49,10 @@ getStackTraceForThread(J9VMThread *currentThread, J9VMThread *targetThread, UDAT
 	/* walk stack and cache PCs */
 	walkState.walkThread = targetThread;
 	walkState.flags = J9_STACKWALK_CACHE_PCS | J9_STACKWALK_WALK_TRANSLATE_PC | J9_STACKWALK_SKIP_INLINES | J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_VISIBLE_ONLY;
+	/* If -XX:+ShowHiddenFrames option has not been set, skip hidden method frames */
+	if (J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_SHOW_HIDDEN_FRAMES)) {
+		walkState.flags |= J9_STACKWALK_SKIP_HIDDEN_FRAMES;
+	}
 	walkState.skipCount = skipCount;
 	rc = vm->walkStackFrames(currentThread, &walkState);
 

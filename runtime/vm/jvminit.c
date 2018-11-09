@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3786,6 +3786,14 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		}
 	}
 #endif /* JAVA_SPEC_VERSION >= 18 */
+
+	{
+		IDATA showHiddenFrames = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXSHOWHIDDENFRAMES, NULL);
+		IDATA noshowHiddenFrames = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNOSHOWHIDDENFRAMES, NULL);
+		if (showHiddenFrames > noshowHiddenFrames) {
+			vm->runtimeFlags |= J9_RUNTIME_SHOW_HIDDEN_FRAMES;
+		}
+	}
 
 	return JNI_OK;
 }

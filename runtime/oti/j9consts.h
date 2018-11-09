@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -291,7 +291,7 @@ extern "C" {
 #define J9_RUNTIME_EXIT_STARTED 0x800000
 #define J9_RUNTIME_UNUSED_0x1000000 0x1000000
 #define J9_RUNTIME_NO_PRIORITIES 0x2000000
-#define J9_RUNTIME_UNUSED_0x4000000 0x4000000
+#define J9_RUNTIME_SHOW_HIDDEN_FRAMES 0x4000000
 #define J9_RUNTIME_DISABLE_VM_SHUTDOWN 0x8000000
 #define J9_RUNTIME_ALWAYS_SPLIT_BYTECODES 0x10000000
 #define J9_RUNTIME_OMIT_STACK_TRACES 0x20000000
@@ -391,6 +391,7 @@ extern "C" {
 #define J9_STACKWALK_CACHE_CPS 0x200
 #define J9_STACKWALK_CACHE_METHODS 0x400
 #define J9_STACKWALK_CACHE_MASK 0x700
+#define J9_STACKWALK_SKIP_HIDDEN_FRAMES 0x800
 #define J9_STACKWALK_INCLUDE_ARRAYLET_LEAVES 0x10000
 #define J9_STACKWALK_LINEAR 0x20000
 #define J9_STACKWALK_VISIBLE_ONLY 0x40000

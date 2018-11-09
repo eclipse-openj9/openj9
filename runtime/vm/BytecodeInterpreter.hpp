@@ -3025,6 +3025,10 @@ done:
 					walkFlags |= J9_STACKWALK_HIDE_EXCEPTION_FRAMES;
 					walkState->restartException = receiver;
 				}
+				/* If -XX:+ShowHiddenFrames option has not been set, skip hidden method frames */
+				if (J9_ARE_NO_BITS_SET(_vm->runtimeFlags, J9_RUNTIME_SHOW_HIDDEN_FRAMES)) {
+					walkFlags |= J9_STACKWALK_SKIP_HIDDEN_FRAMES;
+				}
 				walkState->flags = walkFlags;
 				walkState->skipCount = 1;	/* skip the INL frame */
 #if JAVA_SPEC_VERSION >= 15
