@@ -114,7 +114,7 @@ J9::ClassEnv::classInstanceSize(TR_OpaqueClassBlock * clazzPointer)
    {
    if (auto stream = TR::CompilationInfo::getStream())
       {
-      uint32_t totalInstanceSize = 0;
+      uintptrj_t totalInstanceSize = 0;
       JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazzPointer, TR::compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_TOTAL_INSTANCE_SIZE, (void *)&totalInstanceSize);
       return totalInstanceSize;
       }

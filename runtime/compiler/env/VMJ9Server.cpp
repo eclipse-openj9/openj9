@@ -603,12 +603,11 @@ TR_J9ServerVM::isPrimitiveArray(TR_OpaqueClassBlock *clazz)
 uint32_t
 TR_J9ServerVM::getAllocationSize(TR::StaticSymbol *classSym, TR_OpaqueClassBlock *clazz)
    {
-   uint32_t totalInstanceSize = 0;
-   uint32_t objectSize = sizeof(J9Object);
+   uintptrj_t totalInstanceSize = 0;
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_TOTAL_INSTANCE_SIZE, (void *)&totalInstanceSize);
 
-   objectSize += totalInstanceSize;
+   uint32_t objectSize = sizeof(J9Object) + (uint32_t)totalInstanceSize;
    return ((objectSize >= J9_GC_MINIMUM_OBJECT_SIZE) ? objectSize : J9_GC_MINIMUM_OBJECT_SIZE);
    }
 
