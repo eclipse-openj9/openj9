@@ -90,11 +90,11 @@ linux_ppc-64_cmprssptrs_le:
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
     build:
-      8: 'hw.arch.ppc64le && sw.os.ubuntu'
-      9: 'hw.arch.ppc64le && sw.os.ubuntu'
-      10: 'hw.arch.ppc64le && sw.os.ubuntu'
-      11: 'hw.arch.ppc64le && sw.os.ubuntu'
-      next: 'hw.arch.ppc64le && sw.os.ubuntu'
+      8: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
+      9: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
+      10: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
+      11: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
+      next: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
     test:
       8: 'hw.arch.ppc64le && sw.os.ubuntu'
       9: 'hw.arch.ppc64le && sw.os.ubuntu'
@@ -129,11 +129,11 @@ linux_390-64_cmprssptrs:
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
     build:
-      8: 'hw.arch.s390x && sw.os.ubuntu'
-      9: 'hw.arch.s390x && sw.os.ubuntu'
-      10: 'hw.arch.s390x && sw.os.ubuntu'
-      11: 'hw.arch.s390x && sw.os.ubuntu'
-      next: 'hw.arch.s390x && sw.os.ubuntu'
+      8: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
+      9: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
+      10: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
+      11: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
+      next: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
     test:
       8: 'hw.arch.s390x && sw.os.ubuntu'
       9: 'hw.arch.s390x && sw.os.ubuntu'
@@ -166,11 +166,11 @@ aix_ppc-64_cmprssptrs:
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
     build:
-      8: 'hw.arch.ppc64 && sw.os.aix'
-      9: 'hw.arch.ppc64 && sw.os.aix'
-      10: 'hw.arch.ppc64 && sw.os.aix'
-      11: 'hw.arch.ppc64 && sw.os.aix'
-      next: 'hw.arch.ppc64 && sw.os.aix'
+      8: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
+      9: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
+      10: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
+      11: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
+      next: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
     test:
       8: 'hw.arch.ppc64 && sw.os.aix'
       9: 'hw.arch.ppc64 && sw.os.aix'
@@ -203,11 +203,11 @@ linux_x86-64_cmprssptrs:
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
     build:
-      8: 'hw.arch.x86 && sw.os.ubuntu'
-      9: 'hw.arch.x86 && sw.os.ubuntu'
-      10: 'hw.arch.x86 && sw.os.ubuntu'
-      11: 'hw.arch.x86 && sw.os.ubuntu'
-      next: 'hw.arch.x86 && sw.os.ubuntu'
+      8: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
+      9: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
+      10: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
+      11: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
+      next: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
     test:
       8: 'hw.arch.x86 && sw.os.ubuntu'
       9: 'hw.arch.x86 && sw.os.ubuntu'
@@ -240,11 +240,11 @@ linux_x86-64_cmprssptrs_cmake:
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
     build:
-      8: 'hw.arch.x86 && sw.os.ubuntu'
-      9: 'hw.arch.x86 && sw.os.ubuntu'
-      10: 'hw.arch.x86 && sw.os.ubuntu'
-      11: 'hw.arch.x86 && sw.os.ubuntu'
-      next: 'hw.arch.x86 && sw.os.ubuntu'
+      8: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
+      9: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
+      10: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
+      11: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
+      next: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
     test:
       8: 'hw.arch.x86 && sw.os.ubuntu'
       9: 'hw.arch.x86 && sw.os.ubuntu'
@@ -287,11 +287,11 @@ linux_x86-64:
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
     build:
-      8: 'hw.arch.x86 && sw.os.ubuntu'
-      9: 'hw.arch.x86 && sw.os.ubuntu'
-      10: 'hw.arch.x86 && sw.os.ubuntu'
-      11: 'hw.arch.x86 && sw.os.ubuntu'
-      next: 'hw.arch.x86 && sw.os.ubuntu'
+      8: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
+      9: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
+      10: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
+      11: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
+      next: 'ci.role.build && hw.arch.x86 && sw.os.ubuntu'
     test:
       8: 'hw.arch.x86 && sw.os.ubuntu'
       9: 'hw.arch.x86 && sw.os.ubuntu'
@@ -334,11 +334,11 @@ win_x86-64_cmprssptrs:
     next: '--with-toolchain-version=2017 --disable-ccache'
   node_labels:
     build:
-      8: 'hw.arch.x86 && sw.os.windows'
-      9: 'hw.arch.x86 && sw.os.windows'
-      10: 'hw.arch.x86 && sw.os.windows'
-      11: 'hw.arch.x86 && sw.os.windows'
-      next: 'hw.arch.x86 && sw.os.windows'
+      8: 'ci.role.build && hw.arch.x86 && sw.os.windows'
+      9: 'ci.role.build && hw.arch.x86 && sw.os.windows'
+      10: 'ci.role.build && hw.arch.x86 && sw.os.windows'
+      11: 'ci.role.build && hw.arch.x86 && sw.os.windows'
+      next: 'ci.role.build && hw.arch.x86 && sw.os.windows'
     test:
       8: 'hw.arch.x86 && sw.os.windows'
       9: 'hw.arch.x86 && sw.os.windows'
@@ -364,7 +364,7 @@ win_x86:
   openjdk_reference_repo: 'C:\openjdk\openjdk_cache'
   node_labels:
     build:
-      8: 'hw.arch.x86 && sw.os.windows'
+      8: 'ci.role.build && hw.arch.x86 && sw.os.windows'
     test:
       8: 'hw.arch.x86 && sw.os.windows'
   build_env:
@@ -384,8 +384,8 @@ osx_x86-64_cmprssptrs:
   openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
   node_labels:
     build:
-      8: 'hw.arch.x86 && sw.os.osx'
-      11: 'hw.arch.x86 && sw.os.osx'
+      8: 'ci.role.build && hw.arch.x86 && sw.os.osx'
+      11: 'ci.role.build && hw.arch.x86 && sw.os.osx'
     test:
       8: 'hw.arch.x86 && sw.os.osx'
       11: 'hw.arch.x86 && sw.os.osx'
