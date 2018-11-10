@@ -106,6 +106,9 @@ ifndef UMA_DO_NOT_OPTIMIZE_CCODE
       UMA_OPTIMIZATION_CFLAGS += -g -O3 -fno-strict-aliasing $(ARM_ARCH_FLAGS) -Wno-unused-but-set-variable
     <#elseif uma.spec.processor.ppc>
       UMA_OPTIMIZATION_CFLAGS += -O3
+      <#if uma.spec.flags.env_gcc.enabled>
+        UMA_OPTIMIZATION_CFLAGS += -fno-strict-aliasing
+      </#if>
       <#if uma.spec.flags.env_littleEndian.enabled && uma.spec.type.linux>
         UMA_OPTIMIZATION_CFLAGS += -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1
         ifndef USE_PPC_GCC
@@ -129,6 +132,9 @@ ifndef UMA_DO_NOT_OPTIMIZE_CCODE
       UMA_OPTIMIZATION_CXXFLAGS += -g -O3 -fno-strict-aliasing $(ARM_ARCH_FLAGS) -Wno-unused-but-set-variable
     <#elseif uma.spec.processor.ppc>
       UMA_OPTIMIZATION_CXXFLAGS += -O3
+      <#if uma.spec.flags.env_gcc.enabled>
+        UMA_OPTIMIZATION_CXXFLAGS += -fno-strict-aliasing
+      </#if>
       <#if uma.spec.flags.env_littleEndian.enabled && uma.spec.type.linux>
         UMA_OPTIMIZATION_CXXFLAGS += -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1
       </#if>
