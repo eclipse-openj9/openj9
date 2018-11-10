@@ -84,6 +84,10 @@ def get_sources() {
                 submoduleCfg: [],
                 userRemoteConfigs: [remote_config_parameters]]
 
+    echo "Verify clone used ref repo by sniffing size of .git folder for the extensions repo"
+    sh "du -shc .git"
+    error('stop')
+
     // Check if this build is a PR
     if (params.ghprbGhRepository) {
         // Look for dependent changes and checkout PR(s)
