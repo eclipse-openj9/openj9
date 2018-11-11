@@ -337,7 +337,7 @@ win_x86-64_cmprssptrs:
       8: 'ci.role.build && hw.arch.x86 && sw.os.windows'
       9: 'ci.role.build && hw.arch.x86 && sw.os.windows'
       10: 'ci.role.build && hw.arch.x86 && sw.os.windows'
-      11: 'ci.role.build && hw.arch.x86 && sw.os.windows'
+      11: 'adam'
       next: 'ci.role.build && hw.arch.x86 && sw.os.windows'
     test:
       8: 'hw.arch.x86 && sw.os.windows'
