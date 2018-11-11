@@ -86,6 +86,8 @@ def get_sources() {
 
     echo "Verify clone used ref repo by sniffing size of .git folder for the extensions repo"
     sh "du -shc .git"
+    sh "ls -al .git/objects/info"
+    sh "cat .git/objects/info/alternates"
     error('stop')
 
     // Check if this build is a PR
