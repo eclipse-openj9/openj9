@@ -8233,15 +8233,22 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          J9Class *leafClass;
          UDATA arity;
          int32_t spreadPosition = -1;
+         char *leafClassNameChars;
+         int32_t leafClassNameLength;
+         bool isPrimitiveClass;
 
          if (auto stream = TR::CompilationInfo::getStream())
             {
-            // JITaaS TODO: Get more data from the client to avoid getClassNameChars and isPrimitiveClass calls
             stream->write(JITaaS::J9ServerMessageType::runFEMacro_invokeSpreadHandleArrayArg, thunkDetails->getHandleRef());
-            auto recv = stream->read<int32_t, UDATA, J9Class *>();
-            spreadPosition = std::get<0>(recv);
-            arity = std::get<1>(recv);
-            leafClass = std::get<2>(recv);
+            auto recv = stream->read<J9ArrayClass *, int32_t, UDATA, J9Class *, std::string, bool>();
+            arrayJ9Class = std::get<0>(recv);
+            spreadPosition = std::get<1>(recv);
+            arity = std::get<2>(recv);
+            leafClass = std::get<3>(recv);
+            const std::string &leafClassNameStr = std::get<4>(recv);
+            leafClassNameChars = (char *) &leafClassNameStr[0];
+            leafClassNameLength = leafClassNameStr.length();
+            isPrimitiveClass = std::get<5>(recv);
             }
          else
             {
@@ -8255,6 +8262,9 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             uint32_t spreadPositionOffset = fej9->getInstanceFieldOffset(fej9->getObjectClass(methodHandle), "spreadPosition", "I");
             if (spreadPositionOffset != ~0)
                spreadPosition = fej9->getInt32FieldAt(methodHandle, spreadPositionOffset);
+            
+            leafClassNameChars = fej9->getClassNameChars((TR_OpaqueClassBlock*)leafClass, leafClassNameLength); // eww, TR_FrontEnd downcast
+            isPrimitiveClass = TR::Compiler->cls.isPrimitiveClass(comp(), (TR_OpaqueClassBlock *) leafClass);
             }
 
          TR::Node *placeholder = genNodeAndPopChildren(TR::icall, 1, placeholderWithDummySignature());
@@ -8277,12 +8287,9 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          // Construct the signature string for the array class
          //
-         int32_t leafClassNameLength;
-         char *leafClassNameChars = fej9->getClassNameChars((TR_OpaqueClassBlock*)leafClass, leafClassNameLength); // eww, TR_FrontEnd downcast
-
          char *arrayClassSignature = (char*)alloca(arity + leafClassNameLength + 3); // 3 = 'L' + ';' + null terminator
          memset(arrayClassSignature, '[', arity);
-         if (TR::Compiler->cls.isPrimitiveClass(comp(), (TR_OpaqueClassBlock*)leafClass))
+         if (isPrimitiveClass)
             {
             // In this case, leafClassName is something like "int" rather than "I".
             // For an array like [[[[I, the rom arrayclass will think its name is [I.
