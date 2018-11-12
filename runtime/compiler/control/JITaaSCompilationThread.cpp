@@ -1795,7 +1795,11 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          int32_t spreadPosition = -1;
          if (spreadPositionOffset != ~0)
             spreadPosition = fe->getInt32FieldAt(methodHandle, spreadPositionOffset);
-         client->write(spreadPosition, arity, leafClass);
+
+         int32_t leafClassNameLength;
+         char *leafClassNameChars = fe->getClassNameChars((TR_OpaqueClassBlock*)leafClass, leafClassNameLength);
+         bool isPrimitive = TR::Compiler->cls.isPrimitiveClass(comp, (TR_OpaqueClassBlock*)leafClass);
+         client->write(arrayJ9Class, spreadPosition, arity, leafClass, std::string(leafClassNameChars, leafClassNameLength), isPrimitive);
          }
          break;
       case J9ServerMessageType::runFEMacro_invokeSpreadHandle:
