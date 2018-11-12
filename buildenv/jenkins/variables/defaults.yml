@@ -375,11 +375,13 @@ win_x86:
 #========================================#
 osx_x86-64_cmprssptrs:
   boot_jdk:
-    8: '/Users/jenkins/bootjdks/openjdk-java-7'
+    8: '/Users/jenkins/bootjdks/adoptojdk-java-8'
     11: '/Users/jenkins/bootjdks/adoptojdk-java-10'
   release:
-    8: 'osx-x86_64-normal-server-release'
+    8: 'macosx-x86_64-normal-server-release'
     11: 'macosx-x86_64-normal-server-release'
+  extra_configure_options:
+    8: '--with-xcode-path=/Users/jenkins/Xcode4/Xcode.app --with-openj9-cc=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --with-openj9-cxx=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ --with-openj9-developer-dir=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer'
   freemarker: '/Users/jenkins/freemarker.jar'
   openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
   node_labels:
