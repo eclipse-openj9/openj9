@@ -35,7 +35,6 @@ add_library(j9util STATIC
 	argcount.c
 	bcdump.c
 	bcnames.c
-	bcsizes.c
 	binarysup.c
 	checkcast.cpp
 	cphelp.c
