@@ -525,7 +525,6 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          }
          break;
 
-      case TR_InlinedStaticMethodWithNopGuard:
       case TR_InlinedSpecialMethodWithNopGuard:
       case TR_InlinedVirtualMethodWithNopGuard:
       case TR_InlinedAbstractMethodWithNopGuard:
