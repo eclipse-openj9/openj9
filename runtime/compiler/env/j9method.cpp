@@ -62,7 +62,7 @@
 #include "runtime/IProfiler.hpp"
 #include "ras/DebugCounter.hpp"
 #include "control/MethodToBeCompiled.hpp"
-
+#include "control/JITaaSCompilationThread.hpp"
 #if defined(_MSC_VER)
 #include <malloc.h>
 #endif
@@ -792,6 +792,15 @@ TR_J9MethodBase::osrFrameSize(J9Method* j9Method)
    {
    if (auto stream = TR::compInfoPT->getStream())
       {
+         {
+         ClientSessionData *clientSessionData = TR::compInfoPT->getClientData();
+         OMR::CriticalSection cacheRemoteROMClass(clientSessionData->getROMMapMonitor());
+         auto it = clientSessionData->getJ9MethodMap().find(j9Method);
+         if (it != clientSessionData->getJ9MethodMap().end())
+            {
+            return osrFrameSizeRomMethod(it->second._romMethod);
+            }
+         }
       stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_osrFrameSize, j9Method);
       return std::get<0>(stream->read<uintptr_t>());
       }

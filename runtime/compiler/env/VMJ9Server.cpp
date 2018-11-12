@@ -19,7 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
+#include "oti/jitprotos.h"
 #include "rpc/J9Server.hpp"
 #include "VMJ9Server.hpp"
 #include "j9methodServer.hpp"
@@ -519,6 +519,15 @@ TR_J9ServerVM::isClassInitialized(TR_OpaqueClassBlock * clazz)
 UDATA
 TR_J9ServerVM::getOSRFrameSizeInBytes(TR_OpaqueMethodBlock * method)
    {
+      {
+      ClientSessionData *clientSessionData = _compInfoPT->getClientData();
+      OMR::CriticalSection cacheRemoteROMClass(clientSessionData->getROMMapMonitor());
+      auto it = clientSessionData->getJ9MethodMap().find((J9Method*) method);
+      if (it != clientSessionData->getJ9MethodMap().end())
+         {
+         return osrFrameSizeRomMethod(it->second._romMethod);
+         }
+      }
    JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITaaS::J9ServerMessageType::VM_getOSRFrameSizeInBytes, method);
    return std::get<0>(stream->read<UDATA>());
