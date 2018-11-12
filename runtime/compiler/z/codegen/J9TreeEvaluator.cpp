@@ -9652,6 +9652,42 @@ J9::Z::TreeEvaluator::VMinlineCallEvaluator(TR::Node * node, bool indirect, TR::
    return callWasInlined;
    }
 
+void
+J9::Z::TreeEvaluator::genGuardedLoadOOL(TR::Node *node, TR::CodeGenerator *cg, TR::Register *byteSrcReg, TR::Register *byteDstReg, TR::Register *byteLenReg, TR::LabelSymbol *mergeLabel, TR_S390ScratchRegisterManager *srm, bool isForward)
+   {
+   TR_ASSERT_FATAL(J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE == 0x20000,
+               "GSCS: The OOL sequence branch is dependant on the flag being 0x20000");
+   TR_ASSERT_FATAL(TR::Compiler->target.is64Bit(),
+               "GSCS: Guarded Load OOL Path only defined in 64 bit mode");
+
+   TR::LabelSymbol* slowPathLabel = generateLabelSymbol(cg);
+
+   TR::Register *vmReg = cg->getMethodMetaDataRealRegister();
+   TR::MemoryReference *privFlagMR = generateS390MemoryReference(vmReg,
+   TR::Compiler->vm.thisThreadGetConcurrentScavengeActiveByteAddressOffset(cg->comp()), cg);
+
+   generateSIInstruction(cg, TR::InstOpCode::TM, node, privFlagMR, 0x00000002);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC3, node, slowPathLabel);
+   // Generate OOL Slow Path
+   TR_S390OutOfLineCodeSection* outOfLineCodeSection = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(slowPathLabel, mergeLabel, cg);
+   cg->getS390OutOfLineCodeSectionList().push_front(outOfLineCodeSection);
+   outOfLineCodeSection->swapInstructionListsWithCompilation();
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, slowPathLabel);
+   // Call to generateMemToMemElementCopy generates core Array Copy sequence and identify starting instuction in ICF.
+   TR::RegisterDependencyConditions *loopDeps = TR::TreeEvaluator::generateMemToMemElementCopy(node, cg, byteSrcReg, byteDstReg, byteLenReg, srm, isForward, true);
+
+   TR::LabelSymbol *doneOOLLabel = generateLabelSymbol(cg);
+   loopDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(loopDeps, 0, 3+srm->numAvailableRegisters(), cg);
+   loopDeps->addPostCondition(byteSrcReg, TR::RealRegister::AssignAny);
+   loopDeps->addPostCondition(byteDstReg, TR::RealRegister::AssignAny);
+   loopDeps->addPostCondition(byteLenReg, TR::RealRegister::AssignAny);
+   srm->addScratchRegistersToDependencyList(loopDeps);
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, doneOOLLabel, loopDeps);
+   doneOOLLabel->setEndInternalControlFlow();
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, mergeLabel);
+   outOfLineCodeSection->swapInstructionListsWithCompilation();
+   }
 
 void
 J9::Z::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node* node, TR::Register *srcObjReg, TR::Register *dstObjReg, TR::Register *srcAddrReg, TR::Register *dstAddrReg, TR::Register *lengthReg, TR::CodeGenerator *cg)
