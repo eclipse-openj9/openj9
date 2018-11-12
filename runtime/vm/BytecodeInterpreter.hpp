@@ -5803,7 +5803,7 @@ done:
 	aloadw(REGISTER_ARGS_LIST)
 	{
 		U_16 index = *(U_16*)(_pc + 1);
-		_pc += 3;
+		_pc += 4;
 		_sp -= 1;
 		*_sp = *(_arg0EA - index);
 		return EXECUTE_BYTECODE;
@@ -5814,7 +5814,7 @@ done:
 	lloadw(REGISTER_ARGS_LIST)
 	{
 		U_16 index = *(U_16*)(_pc + 1);
-		_pc += 3;
+		_pc += 4;
 		_sp -= 2;
 		_sp[0] = *(_arg0EA - index - 1);
 #if !defined(J9VM_ENV_DATA64)
@@ -5828,7 +5828,7 @@ done:
 	astorew(REGISTER_ARGS_LIST)
 	{
 		U_16 index = *(U_16*)(_pc + 1);
-		_pc += 3;
+		_pc += 4;
 		*(_arg0EA - index) = *_sp;
 		_sp += 1;
 		return EXECUTE_BYTECODE;
@@ -5839,7 +5839,7 @@ done:
 	lstorew(REGISTER_ARGS_LIST)
 	{
 		U_16 index = *(U_16*)(_pc + 1);
-		_pc += 3;
+		_pc += 4;
 		*(_arg0EA - index - 1) = _sp[0];
 #if !defined(J9VM_ENV_DATA64)
 		*(_arg0EA - index) = _sp[1];
