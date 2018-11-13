@@ -2901,6 +2901,13 @@ retry:
 			}
 			classFlags |= J9ClassIsAnonymous;
 		}
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (J9_ARE_ALL_BITS_SET(romClass->modifiers, J9AccValueType)) {
+			classFlags |= J9ClassIsValueType;
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 		result->classFlags = classFlags;
 	}
 

@@ -165,6 +165,7 @@
 #define J9ClassIsDerivedValueType 0x80
 #define J9ClassHasWatchedFields 0x100
 #define J9ClassReservableLockWordInit 0x200
+#define J9ClassIsValueType 0x400
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
 
