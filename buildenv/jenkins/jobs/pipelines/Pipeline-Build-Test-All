@@ -20,58 +20,58 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-/*
-* It builds and tests the Eclipse OpenJ9 extensions for OpenJDK for one or more
-* versions and platforms by launching Pipeline-Build-Test-JDK${SDK_VERSION}-${SPEC}
-* builds. Multiple pipelines are executed in parallel.
-* When TESTS_TARGETS=none, it only builds the Eclipse OpenJ9 extensions for OpenJDK.
-* VARIABLE_FILE allows to run it in a custom configuration on a different server.
-*
-* Parameters:
-*   PLATFORMS: String - Comma separated platforms to build.
-*              Expected values: all or any of the following: 
-*              aix_ppc-64_cmprssptrs,
-*              linux_x86-64,
-*              linux_x86-64_cmprssptrs,
-*              linux_ppc-64_cmprssptrs_le,
-*              linux_390-64_cmprssptrs,
-*              win_x86-64_cmprssptrs,
-*              win_x86 (Java 8 support only),
-*              zos_390-64_cmprssptrs (Java 11 support only),
-*              osx_x86-64 (Java 8 and Java 11 support only),
-*              osx_x86-64_cmprssptrs (Java 8 and Java 11 support only)
-*   OPENJ9_REPO: String - the OpenJ9 git repository URL: e.g. https://github.com/eclipse/openj9.git (default)
-*   OPENJ9_BRANCH: String - the OpenJ9 branch to clone from: e.g. master (default)
-*   OPENJ9_SHA: String - the last commit SHA of the OpenJ9 repository
-*   OMR_REPO: String - the OMR git repository URL: e.g. https://github.com/eclipse/openj9-omr.git (default)
-*   OMR_BRANCH: String - the OMR branch to clone from: e.g. openj9 (default)
-*   OMR_SHA: the last commit SHA of the OMR repository
-*   TESTS_TARGETS: String - The test targets to run. Expected values: _sanity, _extended, none
-*   VARIABLE_FILE: String - the custom variables file. Uses defaults.yml when no value is provided.
-*   VENDOR_REPO: String - the repository URL of a Git repository that stores a custom variables file
-*   VENDOR_BRANCH: String - the vendor branch to clone from
-*   VENDOR_CREDENTIALS_ID: String - the Jenkis credentials to connect to the vendor Git repository if VENDOR_REPO is a private repository
-*   LABEL: String - the node label(s) to run this job on; could be any node that has Git installed on it
-*   BUILD_NODE_LABELS: String - the labels of a node to compile and build the Eclipse OpenJ9 extensions for OpenJDK
-*   TEST_NODE_LABELS: String - the labels of a node to run tests on
-*
-*   Node labels could be a single label or node name or a boolean expression(e.g. hw.arch.x86 && sw.os.windows)
-*   Expected value for multiple platforms builds: platform.1=labels.1,platform.2=labels.2,...,etc
-*   e.g. aix_ppc-64_cmprssptrs=csp70027,linux_x86-64=(ci.project.openj9 && hw.arch.x86 && sw.os.ubuntu.14)
-*   Expected value for single platforms builds: label (no platform name required), e.g. csp70027
-*
-*   PERSONAL_BUILD: Choice: true, false - Indicates if is a personal build or not
-*
-*   Note: replicate the following parameters for each supported version, where supported version are: 8, 9, 10, 11, next
-*   Java<version>: Boolean (at least one of the following is required: Java8, Java9, Java10, etc)
-*   OPENJDK<version>_REPO: String - the OpenJDK<version> repository URL: e.g. https://github.com/ibmruntimes/openj9-openjdk-jdk<version>.git (default)
-*   OPENJDK<version>_BRANCH: String - the OpenJDK<version> branch to clone from: e.g. openj9 (default)
-*   OPENJDK<version>_SHA: String - the OpenJDK<version> last commit SHA
-*
-*   OPENJDK<version>_REPO_<platform>: String - the OpenJDK<version> repository URL for <platform>
-*   OPENJDK<version>_BRANCH_<platform>: String - the branch to clone from
-*   OPENJDK<version>_SHA_<platform>: String - the last commit SHA
-*/
+/**
+ * It builds and tests the Eclipse OpenJ9 extensions for OpenJDK for one or more
+ * versions and platforms by launching Pipeline-Build-Test-JDK${SDK_VERSION}-${SPEC}
+ * builds. Multiple pipelines are executed in parallel.
+ * When TESTS_TARGETS=none, it only builds the Eclipse OpenJ9 extensions for OpenJDK.
+ * VARIABLE_FILE allows to run it in a custom configuration on a different server.
+ *
+ * Parameters:
+ *   PLATFORMS: String - Comma separated platforms to build.
+ *              Expected values: all or any of the following: 
+ *              aix_ppc-64_cmprssptrs,
+ *              linux_x86-64,
+ *              linux_x86-64_cmprssptrs,
+ *              linux_ppc-64_cmprssptrs_le,
+ *              linux_390-64_cmprssptrs,
+ *              win_x86-64_cmprssptrs,
+ *              win_x86 (Java 8 support only),
+ *              zos_390-64_cmprssptrs (Java 11 support only),
+ *              osx_x86-64 (Java 8 and Java 11 support only),
+ *              osx_x86-64_cmprssptrs (Java 8 and Java 11 support only)
+ *   OPENJ9_REPO: String - the OpenJ9 git repository URL: e.g. https://github.com/eclipse/openj9.git (default)
+ *   OPENJ9_BRANCH: String - the OpenJ9 branch to clone from: e.g. master (default)
+ *   OPENJ9_SHA: String - the last commit SHA of the OpenJ9 repository
+ *   OMR_REPO: String - the OMR git repository URL: e.g. https://github.com/eclipse/openj9-omr.git (default)
+ *   OMR_BRANCH: String - the OMR branch to clone from: e.g. openj9 (default)
+ *   OMR_SHA: the last commit SHA of the OMR repository
+ *   TESTS_TARGETS: String - The test targets to run. Expected values: _sanity, _extended, none
+ *   VARIABLE_FILE: String - the custom variables file. Uses defaults.yml when no value is provided.
+ *   VENDOR_REPO: String - the repository URL of a Git repository that stores a custom variables file
+ *   VENDOR_BRANCH: String - the vendor branch to clone from
+ *   VENDOR_CREDENTIALS_ID: String - the Jenkis credentials to connect to the vendor Git repository if VENDOR_REPO is a private repository
+ *   LABEL: String - the node label(s) to run this job on; could be any node that has Git installed on it
+ *   BUILD_NODE_LABELS: String - the labels of a node to compile and build the Eclipse OpenJ9 extensions for OpenJDK
+ *   TEST_NODE_LABELS: String - the labels of a node to run tests on
+ *
+ *   Node labels could be a single label or node name or a boolean expression(e.g. hw.arch.x86 && sw.os.windows)
+ *   Expected value for multiple platforms builds: platform.1=labels.1,platform.2=labels.2,...,etc
+ *   e.g. aix_ppc-64_cmprssptrs=csp70027,linux_x86-64=(ci.project.openj9 && hw.arch.x86 && sw.os.ubuntu.14)
+ *   Expected value for single platforms builds: label (no platform name required), e.g. csp70027
+ *
+ *   PERSONAL_BUILD: Choice: true, false - Indicates if is a personal build or not
+ *
+ *   Note: replicate the following parameters for each supported version, where supported version are: 8, 9, 10, 11, next
+ *   Java<version>: Boolean (at least one of the following is required: Java8, Java9, Java10, etc)
+ *   OPENJDK<version>_REPO: String - the OpenJDK<version> repository URL: e.g. https://github.com/ibmruntimes/openj9-openjdk-jdk<version>.git (default)
+ *   OPENJDK<version>_BRANCH: String - the OpenJDK<version> branch to clone from: e.g. openj9 (default)
+ *   OPENJDK<version>_SHA: String - the OpenJDK<version> last commit SHA
+ *
+ *   OPENJDK<version>_REPO_<platform>: String - the OpenJDK<version> repository URL for <platform>
+ *   OPENJDK<version>_BRANCH_<platform>: String - the branch to clone from
+ *   OPENJDK<version>_SHA_<platform>: String - the last commit SHA
+ */
 
 RELEASES = ['8', '9', '10', '11', 'next']
 CURRENT_RELEASES = ['8', '10', '11', 'next']
@@ -225,10 +225,10 @@ def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_RE
     }
 }
 
-/*
-* Parses the build parameters to identify the specs and the releases to build
-* and test. Returns a map of releases by specs.
-*/
+/**
+ * Parses the build parameters to identify the specs and the releases to build
+ * and test. Returns a map of releases by specs.
+ */
 def get_specs(SUPPORTED_SPECS) {
     def RELEASES = []
     def PLATFORMS = []
@@ -280,17 +280,17 @@ def get_specs(SUPPORTED_SPECS) {
     return SPECS
 }
 
-/*
-* Returns a map containing node labels per platform.
-*
-* Labels can be single machine labels - e.g. ub14hcxrt2 or boolean expressions
-* of machine's labels - e.g. sw.os.linux && hw.arch.x66 && !sw.ubuntu14.
-* Multiple platform node labels can be specified as comma separated labels per
-* platform:
-* e.g. linux_x86-64=sw.os.linux && hw.arhc.x66 && !sw.ubuntu14,aix_ppc-64_cmprssptrs=csp700003.
-* For a single platform build, the platform is optional:
-* e.g. sw.os.linux && hw.arch.x66 && !sw.ubuntu14
-*/
+/**
+ * Returns a map containing node labels per platform.
+ *
+ * Labels can be single machine labels - e.g. ub14hcxrt2 or boolean expressions
+ * of machine's labels - e.g. sw.os.linux && hw.arch.x66 && !sw.ubuntu14.
+ * Multiple platform node labels can be specified as comma separated labels per
+ * platform:
+ * e.g. linux_x86-64=sw.os.linux && hw.arhc.x66 && !sw.ubuntu14,aix_ppc-64_cmprssptrs=csp700003.
+ * For a single platform build, the platform is optional:
+ * e.g. sw.os.linux && hw.arch.x66 && !sw.ubuntu14
+ */
 def get_node_labels(NODE_LABELS, SPECS) {
     def LABELS = [:]
 
