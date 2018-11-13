@@ -120,8 +120,7 @@ const char * callingContextNames[] = {
 };
 
 
-J9::Compilation::Compilation(
-      int32_t id,
+J9::Compilation::Compilation(int32_t id,
       J9VMThread *j9vmThread,
       TR_FrontEnd *fe,
       TR_ResolvedMethod *compilee,
@@ -129,7 +128,8 @@ J9::Compilation::Compilation(
       TR::Options &options,
       TR::Region &heapMemoryRegion,
       TR_Memory *m,
-      TR_OptimizationPlan *optimizationPlan)
+      TR_OptimizationPlan *optimizationPlan,
+      TR_RelocationRuntime *reloRuntime)
    : OMR::CompilationConnector(
       id,
       j9vmThread->omrVMThread,
@@ -168,7 +168,8 @@ J9::Compilation::Compilation(
    _classForOSRRedefinition(m),
    _classForStaticFinalFieldModification(m),
    _profileInfo(NULL),
-   _skippedJProfilingBlock(false)
+   _skippedJProfilingBlock(false),
+   _reloRuntime(reloRuntime)
    {
    _symbolValidationManager = new (self()->region()) TR::SymbolValidationManager(self()->region(), compilee);
 
