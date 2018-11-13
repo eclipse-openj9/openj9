@@ -391,3 +391,25 @@ osx_x86-64_cmprssptrs:
     test:
       8: 'hw.arch.x86 && sw.os.osx'
       11: 'hw.arch.x86 && sw.os.osx'
+#========================================#
+# OSX x86 64bits Large Heap
+#========================================#
+osx_x86-64:
+  boot_jdk:
+    8: '/Users/jenkins/bootjdks/adoptojdk-java-8'
+    11: '/Users/jenkins/bootjdks/adoptojdk-java-10'
+  release:
+    8: 'macosx-x86_64-normal-server-release'
+    11: 'macosx-x86_64-normal-server-release'
+  extra_configure_options:
+    8: '--with-noncompressedrefs --with-xcode-path=/Users/jenkins/Xcode4/Xcode.app --with-openj9-cc=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --with-openj9-cxx=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ --with-openj9-developer-dir=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer'
+    11: '--with-noncompressedrefs'
+  freemarker: '/Users/jenkins/freemarker.jar'
+  openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
+  node_labels:
+    build:
+      8: 'ci.role.build && hw.arch.x86 && sw.os.osx'
+      11: 'ci.role.build && hw.arch.x86 && sw.os.osx'
+    test:
+      8: 'hw.arch.x86 && sw.os.osx'
+      11: 'hw.arch.x86 && sw.os.osx'
