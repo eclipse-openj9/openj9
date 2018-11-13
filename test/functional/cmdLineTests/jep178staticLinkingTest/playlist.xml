@@ -43,6 +43,9 @@
 	-config $(Q)$(TEST_RESROOT)$(D)jep178.xml$(Q) \
 	-verbose -explainExcludes -xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
+	<!-- Disable for issue https://github.com/ibmruntimes/openj9-openjdk-jdk8/issues/190 -->
+	<!-- temporarily disable this test on win; https://github.com/eclipse/openj9/issues/3212 -->
+		<platformRequirements>^os.win,^spec.linux_ppc-64_cmprssptrs_le</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -52,7 +55,6 @@
 		<subsets>
 			<subset>8</subset>
 		</subsets>
-		<disabled>https://github.com/eclipse/openj9/issues/3560</disabled>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_jep178_staticLinking</testCaseName>
@@ -74,7 +76,9 @@
 	-config $(Q)$(TEST_RESROOT)$(D)jep178.xml$(Q) \
 	-verbose -explainExcludes -xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
-		<levels>
+		<!-- temporarily disable this test on win; https://github.com/eclipse/openj9/issues/3212 -->
+		<platformRequirements>^os.win</platformRequirements>
+ 		<levels>
 			<level>extended</level>
 		</levels>
 		<groups>
