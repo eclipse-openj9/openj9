@@ -4938,8 +4938,7 @@ break
        }
 
     if (comp()->cg()->getSupportsTMHashMapAndLinkedQueue() && (comp()->getOptions()->getGcMode() != TR_WrtbarRealTime) &&
-         ((symbol->getRecognizedMethod() == TR::java_util_concurrent_ConcurrentHashMap_tmEnabled)
-          || (symbol->getRecognizedMethod() == TR::java_util_concurrent_ConcurrentLinkedQueue_tmEnabled)))
+         (symbol->getRecognizedMethod() == TR::java_util_concurrent_ConcurrentLinkedQueue_tmEnabled))
        {
        loadConstant(TR::iconst, 1);
        return NULL;

@@ -3894,10 +3894,7 @@ J9::Z::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod me
    // Transactional Memory
    if (self()->getSupportsTM())
       {
-      if (method == TR::java_util_concurrent_ConcurrentHashMap_tmEnabled ||
-          method == TR::java_util_concurrent_ConcurrentHashMap_tmPut ||
-          method == TR::java_util_concurrent_ConcurrentHashMap_tmRemove ||
-          method == TR::java_util_concurrent_ConcurrentLinkedQueue_tmOffer ||
+      if (method == TR::java_util_concurrent_ConcurrentLinkedQueue_tmOffer ||
           method == TR::java_util_concurrent_ConcurrentLinkedQueue_tmPoll ||
           method == TR::java_util_concurrent_ConcurrentLinkedQueue_tmEnabled)
           {
@@ -3915,8 +3912,6 @@ extern TR::Register* VMinlineCompareAndSwap( TR::Node *node, TR::CodeGenerator *
 extern TR::Register* inlineAtomicOps(TR::Node *node, TR::CodeGenerator *cg, int8_t size, TR::MethodSymbol *method, bool isArray = false);
 extern TR::Register* inlineAtomicFieldUpdater(TR::Node *node, TR::CodeGenerator *cg, TR::MethodSymbol *method);
 extern TR::Register* inlineKeepAlive(TR::Node *node, TR::CodeGenerator *cg);
-extern TR::Register* inlineConcurrentHashMapTmPut(TR::Node *node, TR::CodeGenerator * cg);
-extern TR::Register* inlineConcurrentHashMapTmRemove(TR::Node *node, TR::CodeGenerator * cg);
 extern TR::Register* inlineConcurrentLinkedQueueTMOffer(TR::Node *node, TR::CodeGenerator *cg);
 extern TR::Register* inlineConcurrentLinkedQueueTMPoll(TR::Node *node, TR::CodeGenerator *cg);
 
@@ -4118,22 +4113,6 @@ J9::Z::CodeGenerator::inlineDirectCall(
       case TR::java_lang_ref_Reference_reachabilityFence:
          resultReg = inlineKeepAlive(node, cg);
          return true;
-
-      case TR::java_util_concurrent_ConcurrentHashMap_tmPut:
-         if (cg->getSupportsTM())
-            {
-            resultReg = inlineConcurrentHashMapTmPut(node, cg);
-            return true;
-            }
-         break;
-
-      case TR::java_util_concurrent_ConcurrentHashMap_tmRemove:
-         if (cg->getSupportsTM())
-            {
-            resultReg = inlineConcurrentHashMapTmRemove(node, cg);
-            return true;
-            }
-         break;
 
       case TR::java_util_concurrent_ConcurrentLinkedQueue_tmOffer:
          if (cg->getSupportsTM())

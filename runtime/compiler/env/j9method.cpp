@@ -3822,16 +3822,6 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       };
 
    // Transactional Memory
-   static X JavaUtilConcurrentConcurrentHashMapSegmentMethods[] =
-      {
-      {x(TR::java_util_concurrent_ConcurrentHashMap_tmPut,       "tmPut", "(ILjava/util/concurrent/ConcurrentHashMap$HashEntry;)I")},
-      {x(TR::java_util_concurrent_ConcurrentHashMap_tmRemove,    "tmRemove", "(Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;")},
-      {x(TR::java_util_concurrent_ConcurrentHashMap_tmEnabled,   "tmEnabled",  "()Z")},
-
-      {TR::unknownMethod}
-      };
-
-   // Transactional Memory
    static X JavaUtilConcurrentConcurrentLinkedQueueMethods[] =
       {
       {x(TR::java_util_concurrent_ConcurrentLinkedQueue_tmOffer,     "tmOffer", "(Ljava/util/concurrent/ConcurrentLinkedQueue$Node;)I")},
@@ -4536,7 +4526,6 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
    static Y class46[] =
       {
       { "java/util/concurrent/atomic/AtomicIntegerArray", JavaUtilConcurrentAtomicIntegerArrayMethods },
-      { "java/util/concurrent/ConcurrentHashMap$Segment", JavaUtilConcurrentConcurrentHashMapSegmentMethods },
       { "java/util/concurrent/ConcurrentHashMap$TreeBin", JavaUtilConcurrentConcurrentHashMapTreeBinMethods },
       { "java/io/ObjectInputStream$BlockDataInputStream", ObjectInputStream_BlockDataInputStreamMethods },
       { 0 }
