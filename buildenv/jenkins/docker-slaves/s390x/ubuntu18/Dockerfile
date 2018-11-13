@@ -27,7 +27,7 @@
 #   docker build -t openj9 -f Dockerfile .
 #   docker run -it openj9
 
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 
 # Install required OS tools
 
@@ -36,7 +36,6 @@ ENV USER="jenkins"
 RUN apt-get update \
   && apt-get install -qq -y --no-install-recommends \
     software-properties-common \
-    python-software-properties \
   && add-apt-repository ppa:ubuntu-toolchain-r/test \
   && apt-get update \
   && apt-get install -qq -y --no-install-recommends \
@@ -44,41 +43,18 @@ RUN apt-get update \
     ant-contrib \
     autoconf \
     build-essential \
-    ca-certificates \
-    cmake \
-    cpio \
     curl \
-    file \
     g++-4.8 \
     g++-7 \
     gcc-4.8 \
     gcc-7 \
     gdb \
     git \
-    git-core \
-    libasound2-dev \
-    libcups2-dev \
-    libdwarf-dev \
-    libelf-dev \
-    libfontconfig \
-    libfontconfig1-dev \
-    libfreetype6-dev \
-    libx11-dev \
-    libxext-dev \
-    libxrender-dev \
-    libxt-dev \
-    libxtst-dev \
-    make \
-    openjdk-8-jdk \
     openssh-client \
     openssh-server \
     perl \
-    pkg-config \
-    realpath \
     ssh \
-    unzip \
     wget \
-    zip \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Docker module to run test framework
@@ -101,32 +77,6 @@ RUN chown -R ${USER}:${USER} /home/${USER} \
   && chmod 644 /home/${USER}/.ssh/known_hosts \
   && chmod 700 /home/${USER}/.ssh
 
-# Download and setup freemarker.jar to /home/USER/freemarker.jar
-RUN cd /home/${USER} \
-  && wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz \
-  && tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2 \
-  && rm -f freemarker.tgz
-
-# Download and install boot JDK from AdoptOpenJDK for java 8
-RUN mkdir -p /usr/lib/jvm/adoptojdk-java-80 \
-  && cd /usr/lib/jvm/adoptojdk-java-80 \
-  && wget -O bootjdk8.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk8?openjdk_impl=openj9&os=linux&arch=s390x&release=latest&type=jdk" \
-  && tar -xzf bootjdk8.tar.gz \
-  && rm -f bootjdk8.tar.gz \
-  && mv $(ls | grep -i jdk8) bootjdk8 \
-  && mv bootjdk8/* /usr/lib/jvm/adoptojdk-java-80 \
-  && rm -rf bootjdk8
-
-# Download and install boot JDK from AdoptOpenJDK for java 11
-RUN mkdir -p /usr/lib/jvm/adoptojdk-java-10 \
-  && cd /usr/lib/jvm/adoptojdk-java-10 \
-  && wget -O bootjdk10.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk10?openjdk_impl=openj9&os=linux&arch=s390x&release=latest&type=jdk" \
-  && tar -xzf bootjdk10.tar.gz \
-  && rm -f bootjdk10.tar.gz \
-  && mv $(ls | grep -i jdk-10) bootjdk10 \
-  && mv bootjdk10/* /usr/lib/jvm/adoptojdk-java-10 \
-  && rm -rf bootjdk10
-
 # Set up sshd config
 RUN mkdir /var/run/sshd \
   && sed -i 's/#PermitRootLogin/PermitRootLogin/' /etc/ssh/sshd_config \
@@ -135,17 +85,6 @@ RUN mkdir /var/run/sshd \
 
 # SSH login fix. Otherwise user is kicked off after login
 RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
-
-# Setup a reference repository cache for faster clones in the container
-RUN mkdir /home/${USER}/openjdk_cache \
-  && cd /home/${USER}/openjdk_cache \
-  && git init --bare \
-  && git remote add jdk8 https://github.com/ibmruntimes/openj9-openjdk-jdk8.git \
-  && git remote add jdk11 https://github.com/ibmruntimes/openj9-openjdk-jdk11.git \
-  && git remote add jdk https://github.com/ibmruntimes/openj9-openjdk-jdk.git \
-  && git remote add openj9 https://github.com/eclipse/openj9.git \
-  && git remote add omr https://github.com/eclipse/openj9-omr.git \
-  && git fetch --all
 
 # Expose SSH port and run SSH
 EXPOSE 22
