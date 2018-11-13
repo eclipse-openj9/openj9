@@ -21,9 +21,8 @@
 ################################################################################
 
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/../ut_j9jcl.c PROPERTIES GENERATED TRUE)
-add_library(jclse10_ SHARED
-	../j9vmconstantpool_se10.c
-)
+add_jcl(se10)
+
 target_include_directories(jclse10_
 	PRIVATE
 		${CMAKE_CURRENT_BINARY_DIR}
