@@ -393,7 +393,7 @@ osx_x86-64_cmprssptrs:
       11: 'hw.arch.x86 && sw.os.osx'
   build_env:
     vars:
-      8: 'MACOSX_DEPLOYMENT_TARGET=10.9.0'
+      8: 'MACOSX_DEPLOYMENT_TARGET=10.9.0 SDKPATH=/Users/jenkins/Xcode4/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk'
 #========================================#
 # OSX x86 64bits Large Heap
 #========================================#
@@ -418,4 +418,4 @@ osx_x86-64:
       11: 'hw.arch.x86 && sw.os.osx'
   build_env:
     vars:
-      8: 'MACOSX_DEPLOYMENT_TARGET=10.9.0'
+      8: 'MACOSX_DEPLOYMENT_TARGET=10.9.0 SDKPATH=/Users/jenkins/Xcode4/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk'
