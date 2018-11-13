@@ -20,14 +20,13 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-add_library(ffi SHARED
+add_library(ffi STATIC
 	closures.c
 	debug.c
 	java_raw_api.c
 	prep_cif.c
 	raw_api.c
 	types.c
-
 )
 
 # We need this because ffi_common.h is in 'include' in the top directory.
@@ -97,8 +96,3 @@ elseif(OMR_ARCH_POWER)
 	endif()
 	target_include_directories(ffi PUBLIC powerpc)
 endif()
-
-install(
-	TARGETS ffi
-	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
-)
