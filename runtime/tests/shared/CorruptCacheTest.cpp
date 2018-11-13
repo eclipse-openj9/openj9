@@ -812,9 +812,14 @@ zeroOutCache(J9JavaVM *vm, I_32 cacheType)
 	I_64 cacheSize;
 	IDATA fd;
 	IDATA rc = PASS;
+	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, baseDir, J9SH_MAXPATH);
+	if (J2SE_VERSION(vm) >= J2SE_V11) {
+		flags |= J9SHMEM_GETDIR_USE_USERHOME;
+	}
+
+	rc = j9shmem_getDir(NULL, flags, baseDir, J9SH_MAXPATH);
 	if (rc == -1) {
 		ERRPRINTF("Cannot get a directory\n");
 	}
@@ -873,9 +878,14 @@ truncateCache(J9JavaVM *vm, I_32 cacheType)
 	J9PortShcVersion versionData;
 	IDATA fd;
 	IDATA rc = PASS;
+	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	rc = j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, baseDir, J9SH_MAXPATH);
+	if (J2SE_VERSION(vm) >= J2SE_V11) {
+		flags |= J9SHMEM_GETDIR_USE_USERHOME;
+	}
+
+	rc = j9shmem_getDir(NULL, flags, baseDir, J9SH_MAXPATH);
 	if (rc == -1) {
 		ERRPRINTF("Cannot get a directory\n");
 	}

@@ -52,23 +52,31 @@ public:
 	{
 	}
 
-	IDATA getTempCacheDir(I_32 cacheType, bool useDefaultDir);
+	IDATA getTempCacheDir(J9JavaVM *vm, I_32 cacheType, bool useDefaultDir);
 	IDATA createTempCacheDir(I_32 cacheType, bool useDefaultDir);
 	IDATA getCacheDirPerm(I_32 cacheType, bool isDefaultDir);
 	IDATA getParentDirPerm(void);
 };
 
 IDATA
-CacheDirPerm::getTempCacheDir(I_32 cacheType, bool useDefaultDir)
+CacheDirPerm::getTempCacheDir(J9JavaVM *vm, I_32 cacheType, bool useDefaultDir)
 {
 	IDATA rc = PASS;
 	char baseDir[J9SH_MAXPATH];
 	const char *testName = "getTempCacheDir";
+	U_32 flags = 0;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	if (useDefaultDir) {
+		flags |= J9SHMEM_GETDIR_APPEND_BASEDIR;
+		if (J2SE_VERSION(vm) >= J2SE_V11) {
+			flags |= J9SHMEM_GETDIR_USE_USERHOME;
+		}
+	}
 
 	memset(cacheDir, 0, J9SH_MAXPATH);
 	memset(parentDir, 0, J9SH_MAXPATH);
-	rc = j9shmem_getDir(NULL, useDefaultDir ? J9SHMEM_GETDIR_APPEND_BASEDIR : 0, baseDir, J9SH_MAXPATH);
+	rc = j9shmem_getDir(NULL, flags, baseDir, J9SH_MAXPATH);
 	if (-1 == rc) {
 		ERRPRINTF("Failed to get a temporary directory\n");
 		rc = FAIL;
@@ -434,7 +442,7 @@ testCacheDirPerm(J9JavaVM *vm)
 		if (0 != cacheType) {
 			INFOPRINTF6("Test %d: cacheType: %s, useExistingDir: %d, cacheDirPermStr: %s, expectedDirPerm: %d, useDefaultDir: %d\n", i, cacheTypeString, useExistingDir, cacheDirPermStr, expectedDirPerm, useDefaultDir);
 
-			rc = cdp.getTempCacheDir(cacheType, useDefaultDir);
+			rc = cdp.getTempCacheDir(vm, cacheType, useDefaultDir);
 			if (FAIL == rc) {
 				ERRPRINTF("createTempCacheDir failed\n");
 				goto _end;
