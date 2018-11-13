@@ -391,6 +391,9 @@ osx_x86-64_cmprssptrs:
     test:
       8: 'hw.arch.x86 && sw.os.osx'
       11: 'hw.arch.x86 && sw.os.osx'
+  build_env:
+    vars:
+      8: 'MACOSX_DEPLOYMENT_TARGET=10.9.0'
 #========================================#
 # OSX x86 64bits Large Heap
 #========================================#
@@ -413,3 +416,6 @@ osx_x86-64:
     test:
       8: 'hw.arch.x86 && sw.os.osx'
       11: 'hw.arch.x86 && sw.os.osx'
+  build_env:
+    vars:
+      8: 'MACOSX_DEPLOYMENT_TARGET=10.9.0'
