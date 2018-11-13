@@ -50,8 +50,6 @@
 #include "x/codegen/X86Instruction.hpp"
 #include "x/codegen/CallSnippet.hpp"
 #include "x/codegen/FPTreeEvaluator.hpp"
-#include "x/codegen/CheckFailureSnippet.hpp"
-#include "x/codegen/StackOverflowCheckSnippet.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9ValueProfiler.hpp"
 
@@ -95,59 +93,6 @@ const TR::X86LinkageProperties& TR::X86PrivateLinkage::getProperties()
    {
    return _properties;
    }
-
-// Create the test, branch, and snippet for the stack overflow check in a method's prologue.
-//
-TR::X86HelperCallSnippet  *
-TR::X86PrivateLinkage::createStackOverflowCheck(
-      TR::Instruction * &cursor,
-      TR::Register *cmpRegister,
-      int32_t stackSpaceAllocated,
-      int32_t stackPointerAdjustment)
-   {
-   TR::Register *vmThreadReg = machine()->getX86RealRegister(_properties.getMethodMetaDataRegister());
-   TR::MemoryReference *mr = generateX86MemoryReference(vmThreadReg, cg()->getStackLimitOffset(), cg());
-
-   TR::X86StackOverflowCheckInstruction *ins =
-      generateStackOverflowCheckInstruction(
-         cursor,
-         CMPRegMem(),
-         cmpRegister,
-         mr,
-         cg());
-
-   cursor = ins;
-
-   TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg());
-   TR::LabelSymbol *startLabel   = generateLabelSymbol(cg());
-   TR::LabelSymbol *reStartLabel = generateLabelSymbol(cg());
-
-   startLabel->setStartInternalControlFlow();
-   reStartLabel->setEndInternalControlFlow();
-   cursor = new (trHeapMemory()) TR::X86LabelInstruction(cursor, LABEL, startLabel, cg());
-
-   TR::SymbolReferenceTable *symRefTab = comp()->getSymRefTab();
-   TR::SymbolReference *helper = symRefTab->findOrCreateStackOverflowSymbolRef(comp()->getMethodSymbol());
-
-   cursor = new (trHeapMemory()) TR::X86LabelInstruction(cursor, JBE4, snippetLabel, cg());
-
-   TR::X86HelperCallSnippet  *snippet =
-      new (trHeapMemory()) TR::X86StackOverflowCheckSnippet(
-         cg(),
-         cursor->getNode(),
-         reStartLabel,
-         snippetLabel,
-         helper,
-         stackSpaceAllocated,
-         stackPointerAdjustment);
-
-   cg()->addSnippet(snippet);
-   cursor = new (trHeapMemory()) TR::X86LabelInstruction(cursor, LABEL, reStartLabel, cg());
-
-   return snippet;
-
-   }
-
 
 ////////////////////////////////////////////////
 //
@@ -799,48 +744,39 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
          minInstructionSize = 0; // The SUB satisfies the constraint
          }
 
-      TR::X86HelperCallSnippet *snippet = NULL;
       TR::Instruction* jitOverflowCheck = NULL;
       if (doOverflowCheck)
          {
-         static bool UseOldStackOverflowCheck = feGetEnv("TR_UseOldStackOverflowCheck");
-         if (UseOldStackOverflowCheck)
+         TR::X86VFPSaveInstruction* vfp = generateVFPSaveInstruction(cursor, cg());
+         cursor = generateStackOverflowCheckInstruction(vfp, CMPRegMem(), espReal, generateX86MemoryReference(metaDataReg, cg()->getStackLimitOffset(), cg()), cg());
+
+         TR::LabelSymbol* begLabel = generateLabelSymbol(cg());
+         TR::LabelSymbol* endLabel = generateLabelSymbol(cg());
+         TR::LabelSymbol* checkLabel = generateLabelSymbol(cg());
+         begLabel->setStartInternalControlFlow();
+         endLabel->setEndInternalControlFlow();
+         checkLabel->setStartOfColdInstructionStream();
+
+         cursor = generateLabelInstruction(cursor, LABEL, begLabel, cg());
+         cursor = generateLabelInstruction(cursor, JBE4, checkLabel, cg());
+         cursor = generateLabelInstruction(cursor, LABEL, endLabel, cg());
+
+         // At this point, cg()->getAppendInstruction() is already in the cold code section.
+         generateVFPRestoreInstruction(vfp, cursor->getNode(), cg());
+         generateLabelInstruction(LABEL, cursor->getNode(), checkLabel, cg());
+         generateRegImmInstruction(MOV4RegImm4, cursor->getNode(), machine()->getX86RealRegister(TR::RealRegister::edi), allocSize, cg());
+         if (doAllocateFrameSpeculatively)
             {
-            snippet = createStackOverflowCheck(cursor, espReal, allocSize, doAllocateFrameSpeculatively ? allocSize : 0);
+            generateRegImmInstruction(ADDRegImm4(), cursor->getNode(), espReal, allocSize, cg());
             }
-         else
+         TR::SymbolReference* helper = comp()->getSymRefTab()->findOrCreateStackOverflowSymbolRef(NULL);
+         jitOverflowCheck = generateImmSymInstruction(CALLImm4, cursor->getNode(), (uintptrj_t)helper->getMethodAddress(), helper, cg());
+         jitOverflowCheck->setNeedsGCMap(0xFF00FFFF);
+         if (doAllocateFrameSpeculatively)
             {
-            TR::X86VFPSaveInstruction* vfp = generateVFPSaveInstruction(cursor, cg());
-            cursor = generateStackOverflowCheckInstruction(vfp, CMPRegMem(), espReal, generateX86MemoryReference(metaDataReg, cg()->getStackLimitOffset(), cg()), cg());
-
-            TR::LabelSymbol* begLabel = generateLabelSymbol(cg());
-            TR::LabelSymbol* endLabel = generateLabelSymbol(cg());
-            TR::LabelSymbol* checkLabel = generateLabelSymbol(cg());
-            begLabel->setStartInternalControlFlow();
-            endLabel->setEndInternalControlFlow();
-            checkLabel->setStartOfColdInstructionStream();
-
-            cursor = generateLabelInstruction(cursor, LABEL, begLabel, cg());
-            cursor = generateLabelInstruction(cursor, JBE4, checkLabel, cg());
-            cursor = generateLabelInstruction(cursor, LABEL, endLabel, cg());
-
-            // At this point, cg()->getAppendInstruction() is already in the cold code section.
-            generateVFPRestoreInstruction(vfp, cursor->getNode(), cg());
-            generateLabelInstruction(LABEL, cursor->getNode(), checkLabel, cg());
-            generateRegImmInstruction(MOV4RegImm4, cursor->getNode(), machine()->getX86RealRegister(TR::RealRegister::edi), allocSize, cg());
-            if (doAllocateFrameSpeculatively)
-               {
-               generateRegImmInstruction(ADDRegImm4(), cursor->getNode(), espReal, allocSize, cg());
-               }
-            TR::SymbolReference* helper = comp()->getSymRefTab()->findOrCreateStackOverflowSymbolRef(NULL);
-            jitOverflowCheck = generateImmSymInstruction(CALLImm4, cursor->getNode(), (uintptrj_t)helper->getMethodAddress(), helper, cg());
-            jitOverflowCheck->setNeedsGCMap(0xFF00FFFF);
-            if (doAllocateFrameSpeculatively)
-               {
-               generateRegImmInstruction(SUBRegImm4(), cursor->getNode(), espReal, allocSize, cg());
-               }
-            generateLabelInstruction(JMP4, cursor->getNode(), endLabel, cg());
+            generateRegImmInstruction(SUBRegImm4(), cursor->getNode(), espReal, allocSize, cg());
             }
+         generateLabelInstruction(JMP4, cursor->getNode(), endLabel, cg());
          }
 
       if (atlas)
@@ -882,8 +818,6 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
                }
             }
 
-         if (snippet)
-            snippet->gcMap().setStackMap(map);
          if (jitOverflowCheck)
             jitOverflowCheck->setGCMap(map);
 
