@@ -55,6 +55,7 @@ class TR_MethodBranchProfileInfo;
 class TR_ExternalValueProfileInfo;
 class TR_J9VM;
 class TR_AccessedProfileInfo;
+class TR_RelocationRuntime;
 namespace TR { class IlGenRequest; }
 
 #define COMPILATION_AOT_HAS_INVOKEHANDLE -9
@@ -92,7 +93,8 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
          TR::Options &,
          TR::Region &heapMemoryRegion,
          TR_Memory *,
-         TR_OptimizationPlan *optimizationPlan);
+         TR_OptimizationPlan *optimizationPlan,
+         TR_RelocationRuntime *reloRuntime);
 
    ~Compilation();
 
@@ -307,6 +309,8 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    //
    bool supportsQuadOptimization();
 
+   TR_RelocationRuntime *reloRuntime() { return _reloRuntime; }
+
    TR::SymbolValidationManager *getSymbolValidationManager() { return _symbolValidationManager; }
 
 private:
@@ -382,6 +386,8 @@ private:
    TR_AccessedProfileInfo *_profileInfo;
 
    bool _skippedJProfilingBlock;
+
+   TR_RelocationRuntime *_reloRuntime;
 
    TR::SymbolValidationManager *_symbolValidationManager;
    };
