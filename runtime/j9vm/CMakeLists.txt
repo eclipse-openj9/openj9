@@ -37,9 +37,13 @@ target_sources(jvm_common INTERFACE
 	${CMAKE_CURRENT_SOURCE_DIR}/javanextvmi.c
 	${CMAKE_CURRENT_SOURCE_DIR}/jvm.c
 	${CMAKE_CURRENT_SOURCE_DIR}/vmi.c
-	#TODO this is gross
-	${CMAKE_CURRENT_SOURCE_DIR}/../hyvm/harmony_vm.c
 )
+
+if(J9VM_OPT_HARMONY)
+	target_sources(jvm_common INTERFACE
+		${j9vm_SOURCE_DIR}/hyvm/harmony_vm.c
+	)
+endif()
 
 target_link_libraries(jvm_common
 	INTERFACE
