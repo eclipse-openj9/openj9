@@ -384,7 +384,7 @@ setBooleanField(JNIEnv *env, jobject obj, jfieldID fieldID, jboolean value)
 
 	j9object_t object = J9_JNI_UNWRAP_REFERENCE(obj);
 	valueOffset += J9_OBJECT_HEADER_SIZE;
-	J9OBJECT_U32_STORE(currentThread, object, valueOffset, (U_32)value);
+	J9OBJECT_U32_STORE(currentThread, object, valueOffset, (U_32) (value & 1));
 
 	if (isVolatile) {
 		VM_AtomicSupport::readWriteBarrier();
