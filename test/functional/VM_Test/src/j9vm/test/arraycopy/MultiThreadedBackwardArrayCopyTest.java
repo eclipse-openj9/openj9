@@ -85,9 +85,9 @@ public class MultiThreadedBackwardArrayCopyTest implements Runnable {
 		for (int i=0; i < count; i++) {
 			rotateSource();
 			System.arraycopy(source, 0, dest, 0, dest.length);
-			for (int j=0; j<dest.length; j++){
+			for (int j=0; j < dest.length; j++){
 				if (!validHashSet.contains(dest[j])){
-					System.out.println("Error: Found unexpected object in array at "+j+" in "+name);
+					System.out.println("Error: Found unexpected object in array at " + j + " in " + name);
 				}
 			}
 		}
@@ -103,8 +103,8 @@ public class MultiThreadedBackwardArrayCopyTest implements Runnable {
 
 	// Rotate source right forcing it to do array copy in backward direction
 	public static void rotateSource() {
-		Object temp = source[source.length-1]; // Getting last element in temp
-		System.arraycopy(source, 1, source, 2, source.length-2);
+		Object temp = source[source.length - 1]; // Getting last element in temp
+		System.arraycopy(source, 1, source, 2, source.length - 2);
 		source[1] = source[0];
 		source[0] = temp;
 	}
