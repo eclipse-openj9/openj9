@@ -1765,6 +1765,20 @@ UDATA
 osrFrameSize(J9Method *method)
 {
 	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+	return osrFrameSizeRomMethod(romMethod);
+}
+
+
+/**
+ * Compute the number of bytes required for a single OSR frame.
+ *
+ * @param[in] *romMethod the J9ROMMethod for which to compute the OSR frame size
+ *
+ * @return byte size of the OSR frame
+ */
+UDATA
+osrFrameSizeRomMethod(J9ROMMethod *romMethod)
+{
 	U_32 numberOfLocals = J9_ARG_COUNT_FROM_ROM_METHOD(romMethod) + J9_TEMP_COUNT_FROM_ROM_METHOD(romMethod);
 	U_32 maxStack = J9_MAX_STACK_FROM_ROM_METHOD(romMethod);
 
