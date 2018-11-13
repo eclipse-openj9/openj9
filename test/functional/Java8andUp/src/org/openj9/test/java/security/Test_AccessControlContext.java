@@ -28,8 +28,10 @@ import org.testng.AssertJUnit;
 import java.lang.reflect.Field;
 import java.security.AccessControlContext;
 import java.security.AccessController;
+import java.security.DomainCombiner;
 import java.security.Permission;
 import java.security.PermissionCollection;
+import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.PropertyPermission;
 
@@ -122,5 +124,50 @@ public class Test_AccessControlContext {
 			Assert.fail("unexpected: " + e);
 		}
 
+	}
+	
+	/**
+	 * @tests
+	 *        java.security.AccessControlContext#AccessControlContext(
+	 *        java.security.AccessControlContext, java.security.DomainCombiner)
+	 */
+	@Test
+	public void test_DomainCombiner() {
+		ProtectionDomain pd = new ProtectionDomain(null, null) {
+			public boolean implies(Permission perm) {
+				CustomDC.testDC();
+				return true;
+			}
+		};
+		AccessControlContext acc = new AccessControlContext(new ProtectionDomain[] { pd });
+		AccessController.doPrivileged(new PrivilegedAction<Void>() {
+			public Void run() {
+				AccessController.checkPermission(PERM_READ_JAVA_VERSION);
+				return null;
+			}
+		}, acc, PERM_READ_JAVA_VERSION);
+	}
+	private static PropertyPermission PERM_READ_JAVA_VERSION = new PropertyPermission("java.version", "read");
+	private static ProtectionDomain PD_READ_JAVA_VERSION = new ProtectionDomain(null, null) {
+		public boolean implies(Permission perm) {
+			if (perm.implies(PERM_READ_JAVA_VERSION)) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+	};
+	final static class CustomDC implements DomainCombiner, PrivilegedAction<Void> {
+		public ProtectionDomain[] combine(ProtectionDomain[] currentDomains, ProtectionDomain[] assignedDomains) {
+			return new ProtectionDomain[] { PD_READ_JAVA_VERSION };
+		}
+		public Void run() {
+			AccessController.checkPermission(PERM_READ_JAVA_VERSION);
+			return null;
+		}
+		public static void testDC() {
+			CustomDC cdc = new CustomDC();
+			AccessController.doPrivileged(cdc, new AccessControlContext(AccessController.getContext(), cdc));
+		}
 	}
 }

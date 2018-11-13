@@ -190,6 +190,7 @@ private static void throwACE(boolean debug, Permission perm, ProtectionDomain pD
  * Assuming perm is not null.
  *
  * @param perm the permission to be checked
+ * @param activeDC the DomainCombiner to be invoked
  * @param acc the AccessControlContext to be checked
  * @param objects the object array returned from native getAccSnapshot
  * @param frame the doPrivileged frame are being checked
@@ -201,10 +202,10 @@ private static void throwACE(boolean debug, Permission perm, ProtectionDomain pD
  *
  * @return true if access is granted by a limited permission, otherwise return false
  */
-private static boolean checkPermissionHelper(Permission perm, AccessControlContext acc, Object[] objects, int frame, AccessCache checked, Object[] objPDomains, int debug, int startPos) {
+private static boolean checkPermissionHelper(Permission perm, AccessControlContext acc, DomainCombiner activeDC, Object[] objects, int frame, AccessCache checked, Object[] objPDomains, int debug, int startPos) {
 	boolean limitedPermImplied = false;
 	boolean debugEnabled = (debug & AccessControlContext.DEBUG_ENABLED) != 0;
-	ProtectionDomain[] pDomains = generatePDarray(acc, objPDomains, debugEnabled, startPos);
+	ProtectionDomain[] pDomains = generatePDarray(activeDC, acc, objPDomains, debugEnabled, startPos);
 	if (debugEnabled && (0 != (AccessControlContext.debugSetting() & AccessControlContext.DEBUG_ACCESS_DOMAIN))) {
 		DebugRecursionDetection.getTlDebug().set(""); //$NON-NLS-1$
 		AccessControlContext.debugPrintAccess();
@@ -238,7 +239,7 @@ private static boolean checkPermissionHelper(Permission perm, AccessControlConte
 	if (2 == startPos) { // Pre-JEP140 format
 		if (null != acc && (null != acc.doPrivilegedAcc || null != acc.nextStackAcc || acc.isLimitedContext)) {
 			checked = new AccessCache(); /* checked was null initially when Pre-JEP140 format */
-			return AccessControlContext.checkPermissionWithCache(perm, pDomains, debug, acc, false, null, null, checked);
+			return AccessControlContext.checkPermissionWithCache(perm, activeDC, pDomains, debug, acc, false, null, null, checked);
 		} else {
 			if (pDomains != null) {
 				for (int i = 0; i < length ; ++i) {
@@ -254,7 +255,7 @@ private static boolean checkPermissionHelper(Permission perm, AccessControlConte
 			}
 		}
 	} else {
-		if (AccessControlContext.checkPermissionWithCache(perm,
+		if (AccessControlContext.checkPermissionWithCache(perm, activeDC,
 				pDomains, debug, (AccessControlContext)objects[frame * OBJS_ARRAY_SIZE],
 				(null != objects[frame * OBJS_ARRAY_SIZE + OBJS_INDEX_PERMS_OR_CACHECHECKED]),
 				(Permission[])objects[frame * OBJS_ARRAY_SIZE + OBJS_INDEX_PERMS_OR_CACHECHECKED],
@@ -379,12 +380,23 @@ public static void checkPermission(Permission perm) throws AccessControlExceptio
 	Object[] objects = getAccSnapshot(1, false);
 	boolean isPreJEP140Format = (0 == objects.length % OBJS_ARRAY_SIZE) ? false : true;
 
+	DomainCombiner activeDC = null;
+	AccessControlContext topACC = (AccessControlContext) objects[0];
+	if ((topACC != null)
+		&& (topACC.domainCombiner != null)
+	) {
+		/* only AccessControlContext with STATE_AUTHORIZED authorizeState could have non-null domainCombiner
+		 * the domainCombiner from the closest doPrivileged is used for all later ProtectionDomain combine() calls
+		 */
+		activeDC = topACC.domainCombiner;
+	}
+	
 	if (isPreJEP140Format) {
 		if ((debug != AccessControlContext.DEBUG_DISABLED) && !debugHelperPreJEP140(objects, perm)) {
 			debug = AccessControlContext.DEBUG_ACCESS_DENIED; // Disable DEBUG_ENABLED
 		}
 
-		checkPermissionHelper(perm, (AccessControlContext) objects[0], null, 0, null, objects, debug, 2); // the actual ProtectionDomain element starts at index 2
+		checkPermissionHelper(perm, topACC, activeDC, null, 0, null, objects, debug, 2); // the actual ProtectionDomain element starts at index 2
 	} else {
 		int frameNbr = objects.length / OBJS_ARRAY_SIZE;
 
@@ -396,7 +408,7 @@ public static void checkPermission(Permission perm) throws AccessControlExceptio
 		for (int j = 0; j < frameNbr; ++j) {
 			AccessControlContext acc = (AccessControlContext) objects[j * OBJS_ARRAY_SIZE];
 			Object[] objPDomains = (Object[]) objects[j * OBJS_ARRAY_SIZE + OBJS_INDEX_PDS];
-			if (checkPermissionHelper(perm, acc, objects, j, checked, objPDomains, debug, 1)) { // the actual ProtectionDomain element starts at index 1
+			if (checkPermissionHelper(perm, acc, activeDC, objects, j, checked, objPDomains, debug, 1)) { // the actual ProtectionDomain element starts at index 1
 				break;
 			}
 		}
@@ -453,32 +465,40 @@ public static AccessControlContext getContext() {
 private static AccessControlContext getContextHelper(boolean forDoPrivilegedWithCombiner) {
 	Object[] domains = getAccSnapshot(2, forDoPrivilegedWithCombiner);
 	boolean isPreJEP140Format = (0 == domains.length % OBJS_ARRAY_SIZE) ? false : true;
+	DomainCombiner activeDC = null;
+	AccessControlContext topACC = (AccessControlContext) domains[0];
+	if ((topACC != null)
+		&& (topACC.domainCombiner != null)
+	) {
+		/* only AccessControlContext with STATE_AUTHORIZED authorizeState could have non-null domainCombiner
+		 * the domainCombiner from the closest doPrivileged is used for all later ProtectionDomain combine() calls
+		 */
+		activeDC = topACC.domainCombiner;
+	}
 	if (isPreJEP140Format) {
-		AccessControlContext acc = (AccessControlContext) domains[0];
 		/*[PR JAZZ 66930] j.s.AccessControlContext.checkPermission() invoke untrusted ProtectionDomain.implies */
 		// The actual ProtectionDomain element starts at index 2
-		ProtectionDomain[] pDomains = generatePDarray(acc, domains, false, 2);
+		ProtectionDomain[] pDomains = generatePDarray(activeDC, topACC, domains, false, 2);
 		AccessControlContext accTmp;
-		int newAuthorizedState = getNewAuthorizedState(acc, (ProtectionDomain) domains[1]);
-		if (null != acc && (null != acc.doPrivilegedAcc || null != acc.nextStackAcc || acc.isLimitedContext)) {
-			accTmp = new AccessControlContext(acc, pDomains, newAuthorizedState);
+		int newAuthorizedState = getNewAuthorizedState(topACC, (ProtectionDomain) domains[1]);
+		if ((topACC != null) && ((topACC.doPrivilegedAcc != null) || (topACC.nextStackAcc != null) || topACC.isLimitedContext)) {
+			accTmp = new AccessControlContext(topACC, pDomains, newAuthorizedState);
 		} else {
 			accTmp = new AccessControlContext(pDomains, newAuthorizedState);
 		}
-		if (null != acc && null != acc.domainCombiner) {
-			accTmp.domainCombiner = acc.domainCombiner;
+		if ((topACC != null) && (topACC.domainCombiner != null)) {
+			accTmp.domainCombiner = topACC.domainCombiner;
 		}
 		return accTmp;
 	}
 	int frameNbr = domains.length / OBJS_ARRAY_SIZE;
 	AccessControlContext accContext = null;
 	AccessControlContext accLower = null;
-	DomainCombiner dc = null; // store a non-null domainCombiner from a closest frame or null
 	for (int j = 0; j < frameNbr; ++j) {
 		AccessControlContext acc = (AccessControlContext) domains[j * OBJS_ARRAY_SIZE];
 		/*[PR JAZZ 66930] j.s.AccessControlContext.checkPermission() invoke untrusted ProtectionDomain.implies */
 		// the actual ProtectionDomain element starts at index 1
-		ProtectionDomain[] pDomains = generatePDarray(acc, (Object[]) domains[j * OBJS_ARRAY_SIZE + OBJS_INDEX_PDS], false, 1);
+		ProtectionDomain[] pDomains = generatePDarray(activeDC, acc, (Object[]) domains[j * OBJS_ARRAY_SIZE + OBJS_INDEX_PDS], false, 1);
 		AccessControlContext accTmp;
 		int newAuthorizedState = getNewAuthorizedState(acc, (ProtectionDomain)((Object[]) domains[j * OBJS_ARRAY_SIZE + OBJS_INDEX_PDS])[0]);
 		if (((null != acc) && acc.isLimitedContext) || (1 < frameNbr)) {
@@ -491,10 +511,6 @@ private static AccessControlContext getContextHelper(boolean forDoPrivilegedWith
 		}
 		if (null != acc && null != acc.domainCombiner) {
 			accTmp.domainCombiner = acc.domainCombiner;
-			if (dc == null) {
-				// this dc will be set to accContext.domainCombiner
-				dc = acc.domainCombiner;
-			}
 		}
 		if (null != domains[j * OBJS_ARRAY_SIZE + OBJS_INDEX_PERMS_OR_CACHECHECKED]) {
 			// this is frame with limited permissions
@@ -509,8 +525,9 @@ private static AccessControlContext getContextHelper(boolean forDoPrivilegedWith
 		}
 		accLower = accTmp;
 	}
-	if ((accContext != null) && (accContext.domainCombiner == null) && (dc != null)) {
-		accContext.domainCombiner = dc;
+	if ((accContext != null) && (accContext.domainCombiner == null) && (activeDC != null)) {
+		// the domainCombiner from the closest doPrivileged is set for returning AccessControlContext object, otherwise null is set.
+		accContext.domainCombiner = activeDC;
 	}
 	return accContext;
 }
@@ -518,6 +535,7 @@ private static AccessControlContext getContextHelper(boolean forDoPrivilegedWith
 /**
  * Helper method to generate ProtectionDomain array for a new AccessControlContext object
  *
+ * @param activeDC the DomainCombiner to be invoked
  * @param acc the AccessControlContext object to be checked
  * @param domains the incoming ProtectionDomain object array
  * @param debug the debug flag
@@ -525,20 +543,33 @@ private static AccessControlContext getContextHelper(boolean forDoPrivilegedWith
  *
  * @return a ProtectionDomain object array
  */
-private static ProtectionDomain[] generatePDarray(AccessControlContext acc, Object[] domains, boolean debug, int startPos) {
+private static ProtectionDomain[] generatePDarray(DomainCombiner activeDC, AccessControlContext acc, Object[] domains, boolean debug, int startPos) {
 	ProtectionDomain[] pDomains = null;
 	/*[PR JAZZ 66930] j.s.AccessControlContext.checkPermission() invoke untrusted ProtectionDomain.implies */
-	if (null != acc
-		&& null != acc.domainCombiner
-		&& ((AccessControlContext.STATE_AUTHORIZED == acc.authorizeState) || null == System.getSecurityManager())
-	) {
+	DomainCombiner actDC = null;
+	if (activeDC != null) {
+		actDC = activeDC;
+	} else {
+		if ((acc != null)
+			&& (acc.domainCombiner != null)
+		) {
+			// only AccessControlContext with STATE_AUTHORIZED authorizeState could have non-null domainCombiner
+			actDC = acc.domainCombiner;
+		}
+	}
+	
+	if (actDC != null) {
 		if (debug) {
 			DebugRecursionDetection.getTlDebug().set(""); //$NON-NLS-1$
 			AccessControlContext.debugPrintAccess();
 			System.err.println("AccessController invoking the Combiner"); //$NON-NLS-1$
 			DebugRecursionDetection.getTlDebug().remove();
 		}
-		pDomains = acc.domainCombiner.combine(toArrayOfProtectionDomains(domains, null, startPos), acc.context);
+		ProtectionDomain[] pds = null;
+		if (acc != null) {
+			pds = acc.context;
+		}
+		pDomains = actDC.combine(toArrayOfProtectionDomains(domains, null, startPos), pds);
 	} else {
 		pDomains = toArrayOfProtectionDomains(domains, acc, startPos);
 	}
