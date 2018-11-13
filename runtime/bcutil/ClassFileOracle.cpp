@@ -35,6 +35,10 @@
 #include "ut_j9bcu.h"
 #include "util_api.h"
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#define VALUE_TYPES_MAJOR_VERSION 55
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+
 /* The array entries must be in same order as the enums in ClassFileOracle.hpp */
 ClassFileOracle::KnownAnnotation ClassFileOracle::_knownAnnotations[] = {
 #define FRAMEITERATORSKIP_SIGNATURE "Ljava/lang/invoke/MethodHandle$FrameIteratorSkip;"
@@ -1739,6 +1743,16 @@ ClassFileOracle::walkMethodCodeAttributeCode(U_16 methodIndex)
 			break;
 		}
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case CFR_BC_defaultvalue:
+			if (_classFile->majorVersion >= VALUE_TYPES_MAJOR_VERSION) {
+				cpIndex = PARAM_U16();
+				addBytecodeFixupEntry(entry++, codeIndex + 1, cpIndex, ConstantPoolMap::DEFAULT_VALUE);
+				markClassAsUsedByDefaultValue(cpIndex);
+			}
+			break;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 		default:
 			/* Do nothing */
 			break;
@@ -2381,6 +2395,15 @@ ClassFileOracle::markClassAsUsedByNew(U_16 classCPIndex)
 	markClassAsReferenced(classCPIndex);
 	_constantPoolMap->markClassAsUsedByNew(classCPIndex);
 }
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+void
+ClassFileOracle::markClassAsUsedByDefaultValue(U_16 classCPIndex)
+{
+	markClassAsReferenced(classCPIndex);
+	_constantPoolMap->markClassAsUsedByDefaultValue(classCPIndex);
+}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 void
 ClassFileOracle::markFieldRefAsUsedByGetStatic(U_16 fieldRefCPIndex)

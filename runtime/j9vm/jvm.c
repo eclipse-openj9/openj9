@@ -2199,6 +2199,10 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 	createParams.globalJavaVM = &BFUjavaVM;
 
 	if (VERBOSE_INIT == localVerboseLevel) {
+		fprintf(stderr, "VM known paths\t- j9libvm directory: %s\n\t\t- j2seRoot directory: %s\n",
+			createParams.j9libvmDirectory,
+			createParams.j2seRootDirectory);
+
 		printVmArgumentsList(j9ArgList);
 	}
 	createParams.vm_args = j9ArgList;
