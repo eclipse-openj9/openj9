@@ -88,11 +88,7 @@ export BUILD_CONFIG?=prod
   export PLATFORM=arm-linux-gcc-cross
 </#if>
 <#if uma.spec.id?starts_with("osx_x86-64")>
-  ifeq ($(VERSION_MAJOR),8)
-    export PLATFORM=amd64-osx-gcc
-  else
-    export PLATFORM=amd64-osx-clang
-  endif
+  export PLATFORM=amd64-osx-clang
 </#if>
 
 <#if uma.spec.flags.uma_codeCoverage.enabled>
