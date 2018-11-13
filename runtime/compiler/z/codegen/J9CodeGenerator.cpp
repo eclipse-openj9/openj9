@@ -1990,11 +1990,11 @@ J9::Z::CodeGenerator::evaluateAggregateToGPR(size_t destSize, TR::Node *srcNode,
       case 2:
          if (targetReg->getKind() == TR_GPR64)
             {
-            generateRXYInstruction(cg, loadSize == 1 ? TR::InstOpCode::LLGC : TR::InstOpCode::LLGH, srcNode, targetReg, srcMR);
+            generateRXInstruction(cg, loadSize == 1 ? TR::InstOpCode::LLGC : TR::InstOpCode::LLGH, srcNode, targetReg, srcMR);
             }
          else
             {
-            generateRXYInstruction(cg, loadSize == 1 ? TR::InstOpCode::LLC : TR::InstOpCode::LLH, srcNode, targetReg, srcMR);
+            generateRXInstruction(cg, loadSize == 1 ? TR::InstOpCode::LLC : TR::InstOpCode::LLH, srcNode, targetReg, srcMR);
             }
          break;
       case 3:
@@ -2002,7 +2002,7 @@ J9::Z::CodeGenerator::evaluateAggregateToGPR(size_t destSize, TR::Node *srcNode,
          break;
       case 4:
          if (targetReg->getKind() == TR_GPR64)
-            generateRXYInstruction(cg, TR::InstOpCode::LLGF, srcNode, targetReg, srcMR);
+            generateRXInstruction(cg, TR::InstOpCode::LLGF, srcNode, targetReg, srcMR);
          else
             generateRXInstruction(cg, TR::InstOpCode::L, srcNode, targetReg, srcMR);
          break;
@@ -2022,8 +2022,8 @@ J9::Z::CodeGenerator::evaluateAggregateToGPR(size_t destSize, TR::Node *srcNode,
             {
             TR_ASSERT(targetReg->getKind() == TR_GPR64,"targetReg should be 64 bit on node %p\n",srcNode);
             generateRRInstruction(cg, TR::InstOpCode::XGR, srcNode, targetReg, targetReg);
-            generateRSYInstruction(cg, TR::InstOpCode::ICMH, srcNode, targetReg, mask, srcMR);
-            generateRXYInstruction(cg, TR::InstOpCode::L, srcNode, targetReg, generateS390MemoryReference(*srcMR, mrOffset, cg));
+            generateRSInstruction(cg, TR::InstOpCode::ICMH, srcNode, targetReg, mask, srcMR);
+            generateRXInstruction(cg, TR::InstOpCode::L, srcNode, targetReg, generateS390MemoryReference(*srcMR, mrOffset, cg));
             }
          }
          break;
@@ -2035,7 +2035,7 @@ J9::Z::CodeGenerator::evaluateAggregateToGPR(size_t destSize, TR::Node *srcNode,
             }
          else
             {
-            generateRXYInstruction(cg, TR::InstOpCode::LG, srcNode, targetReg, srcMR);
+            generateRXInstruction(cg, TR::InstOpCode::LG, srcNode, targetReg, srcMR);
             }
          break;
       case 9:
