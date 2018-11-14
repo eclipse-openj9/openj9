@@ -2991,3 +2991,229 @@ JITaaSHelpers::getROMClassData(const ClientSessionData::ClassInfo &classInfo, Cl
          break;
       }
    }
+
+
+void
+TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J9::J9SegmentProvider &scratchSegmentProvider)
+   {
+   bool abortCompilation = false;
+   TR::CompilationInfo *compInfo = getCompilationInfo();
+   J9VMThread *compThread = getCompilationThread();
+   JITaaS::J9ServerStream *stream = entry._stream;
+   setMethodBeingCompiled(&entry); // must have compilation monitor
+   // update the last time the compilation thread had to do something.
+   compInfo->setLastReqStartTime(compInfo->getPersistentInfo()->getElapsedTime());
+  
+   // Release compMonitor before doing the blocking read
+   compInfo->releaseCompMonitor(compThread);
+
+   char * clientOptions = NULL;
+   TR_OptimizationPlan *optPlan = NULL;
+   try
+      {
+      auto req = stream->read<uint64_t, uint32_t, J9Method *, J9Class*, TR_Hotness, std::string,
+         J9::IlGeneratorMethodDetailsType, std::vector<TR_OpaqueClassBlock*>,
+         JITaaSHelpers::ClassInfoTuple, std::string>();
+
+      uint64_t clientId        = std::get<0>(req);
+      uint32_t romMethodOffset = std::get<1>(req);
+      J9Method *ramMethod      = std::get<2>(req);
+      J9Class *clazz           = std::get<3>(req);
+      TR_Hotness optLevel      = std::get<4>(req);
+      std::string detailsStr   = std::get<5>(req);
+      auto detailsType         = std::get<6>(req);
+      auto &unloadedClasses    = std::get<7>(req);
+      auto &classInfoTuple     = std::get<8>(req);
+      std::string clientOptStr = std::get<9>(req);
+
+      stream->setClientId(clientId);
+
+      size_t clientOptSize = clientOptStr.size();
+      clientOptions = new (PERSISTENT_NEW) char[clientOptSize];
+      memcpy(clientOptions, clientOptStr.data(), clientOptSize);
+
+      J9ROMClass *romClass = NULL;
+      {
+      OMR::CriticalSection compilationMonitorLock(compInfo->getCompilationMonitor());
+      auto clientSession = compInfo->getClientSessionHT()->findOrCreateClientSession(clientId);
+      if (!clientSession)
+         throw std::bad_alloc();
+
+      // If new classes have been unloaded at the client, 
+      // delete relevant entries from the persistent caches we hold per client
+      // This could be an expensive operation and we are holding the compilation monitor
+      // Maybe we should create another monitor.
+      // 
+      // Redefined classes are marked as unloaded, since they need to be cleared
+      // from the ROM class cache.
+      if (unloadedClasses.size() != 0)
+         clientSession->processUnloadedClasses(unloadedClasses);
+      // Get the ROMClass for the method to be compiled if it is already cached
+      // Or read it from the compilation request and cache it otherwise
+     
+      if (!(romClass = JITaaSHelpers::getRemoteROMClassIfCached(clientSession, clazz)))
+         {
+         romClass = JITaaSHelpers::romClassFromString(std::get<0>(classInfoTuple), compInfo->persistentMemory());
+         JITaaSHelpers::cacheRemoteROMClass(clientSession, clazz, romClass, &classInfoTuple);
+         }
+
+      clientSession->decInUse();
+      }
+      J9ROMMethod *romMethod = (J9ROMMethod*)((uint8_t*)romClass + romMethodOffset);
+      J9Method *methodsOfClass = std::get<1>(classInfoTuple);
+
+      // Build my entry
+      if (!(optPlan = TR_OptimizationPlan::alloc(optLevel)))
+         throw std::bad_alloc();
+      TR::IlGeneratorMethodDetails *clientDetails = (TR::IlGeneratorMethodDetails*) &detailsStr[0];
+      *(uintptr_t*)clientDetails = 0; // smash remote vtable pointer to catch bugs early
+      TR::IlGeneratorMethodDetails details;
+      TR::IlGeneratorMethodDetails &remoteDetails = details.createRemoteMethodDetails(*clientDetails, detailsType, ramMethod, romClass, romMethod, clazz, methodsOfClass);
+
+      // All entries have the same priority for now. In the future we may want to give higher priority to sync requests
+      // Also, oldStartPC is always NULL for JITaaS server
+      entry._freeTag = ENTRY_IN_POOL_FREE; // pretend we just got it from the pool because we need to initialize it again
+      entry.initialize(remoteDetails, NULL, CP_SYNC_NORMAL, optPlan);
+      entry._jitStateWhenQueued = compInfo->getPersistentInfo()->getJitState();
+      entry._stream = stream; // Add the stream to the entry
+      entry._clientOptions = clientOptions;
+      entry._clientOptionsSize = clientOptSize;
+      entry._entryTime = compInfo->getPersistentInfo()->getElapsedTime(); // cheaper version
+      entry._methodIsInSharedCache = false; // no SCC for now in JITaaS
+      entry._compInfoPT = this; // need to know which comp thread is handling this request
+      entry._async = true; // all of requests at the server are async
+      // weight is irrelevant for JITaaS. 
+      // If we want something then we need to increaseQueueWeightBy(weight) while holding compilation monitor
+      entry._weight = 0;
+      }
+   catch (const JITaaS::StreamFailure &e)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Stream failed while server was reading the compilation request: %s", e.what());
+      stream->cancel();
+      abortCompilation = true;
+      }
+   catch (const std::bad_alloc &e)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Server out of memory in processEntry: %s", e.what());
+      stream->finishCompilation(compilationLowPhysicalMemory);
+      abortCompilation = true;
+      }
+
+   // Acquire VM access
+   //
+   acquireVMAccessNoSuspend(compThread);
+
+   if (abortCompilation)
+      {
+      if (clientOptions)
+         TR_Memory::jitPersistentFree(clientOptions);
+      if (optPlan)
+         TR_OptimizationPlan::freeOptimizationPlan(optPlan);
+
+      compInfo->acquireCompMonitor(compThread);
+      releaseVMAccess(compThread);
+      compInfo->decreaseQueueWeightBy(entry._weight);
+
+      // put the request back into the pool
+      //
+      setMethodBeingCompiled(NULL); // Must have the compQmonitor
+      compInfo->recycleCompilationEntry(&entry);
+
+      return;
+      }
+
+   _thunksToBeRelocated.clear();
+   _invokeExactThunksToBeRelocated.clear();
+
+
+   // Do the hack for newInstance thunks
+   // Also make the method appear as interpreted, otherwise we might want to access recompilation info
+   // JITaaS TODO: is this ever executed for JITaaS?
+   //if (entry.getMethodDetails().isNewInstanceThunk())
+   //   {
+   //   J9::NewInstanceThunkDetails &newInstanceDetails = static_cast<J9::NewInstanceThunkDetails &>(entry.getMethodDetails());
+   //   J9Class  *classForNewInstance = newInstanceDetails.classNeedingThunk();
+   //   TR::CompilationInfo::setJ9MethodExtra(ramMethod, (uintptrj_t)classForNewInstance | J9_STARTPC_NOT_TRANSLATED);
+   //   }
+#ifdef STATS
+   statQueueSize.update(compInfo->getMethodQueueSize());
+#endif
+   // The following call will return with compilation monitor in hand
+   //
+   void *startPC = compile(compThread, &entry, scratchSegmentProvider);
+
+   _customClassByNameMap.clear(); // reset before next compilation starts
+   entry._newStartPC = startPC;
+   // Update statistics regarding the compilation status (including compilationOK)
+   compInfo->updateCompilationErrorStats((TR_CompilationErrorCode)entry._compErrCode);
+
+   TR_OptimizationPlan::freeOptimizationPlan(entry._optimizationPlan); // we no longer need the optimization plan
+   // decrease the queue weight
+   compInfo->decreaseQueueWeightBy(entry._weight);
+   // Put the request back into the pool
+   setMethodBeingCompiled(NULL);
+   compInfo->recycleCompilationEntry(&entry);
+
+   compInfo->printQueue();
+
+   // Release the queue slot monitor
+   //
+   entry.releaseSlotMonitor(compThread);
+
+   // At this point we should always have VMAccess
+   // We should always have the compilation monitor
+   // we should never have classUnloadMonitor
+
+   // Release VM access
+   //
+   compInfo->debugPrint(compThread, "\tcompilation thread releasing VM access\n");
+   releaseVMAccess(compThread);
+   compInfo->debugPrint(compThread, "-VMacc\n");
+
+   // We can suspend this thread if too many are active
+   if (
+      !(isDiagnosticThread()) // must not be reserved for log
+      && compInfo->getNumCompThreadsActive() > 1 // we should have at least one active besides this one
+      && compilationThreadIsActive() // We haven't already been signaled to suspend or terminate
+      && (compInfo->getRampDownMCT() || compInfo->getSuspendThreadDueToLowPhysicalMemory())
+      )
+      {
+      // Suspend this thread
+      setCompilationThreadState(COMPTHREAD_SIGNAL_SUSPEND);
+      compInfo->decNumCompThreadsActive();
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u Suspend compThread %d Qweight=%d active=%d %s %s",
+            (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(),
+            getCompThreadId(),
+            compInfo->getQueueWeight(),
+            compInfo->getNumCompThreadsActive(),
+            compInfo->getRampDownMCT() ? "RampDownMCT" : "",
+            compInfo->getSuspendThreadDueToLowPhysicalMemory() ? "LowPhysicalMem" : "");
+         }
+      // If the other remaining active thread(s) are sleeping (maybe because
+      // we wanted to avoid two concurrent hot requests) we need to wake them
+      // now as a preventive measure. Worst case scenario they will go back to sleep
+      if (compInfo->getNumCompThreadsJobless() > 0)
+         {
+         compInfo->getCompilationMonitor()->notifyAll();
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u compThread %d notifying other sleeping comp threads. Jobless=%d",
+               (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(),
+               getCompThreadId(),
+               compInfo->getNumCompThreadsJobless());
+            }
+         }
+      }
+   else // We will not suspend this thread
+      {
+      // If the low memory flag was set but there was no additional comp thread
+      // to suspend, we must clear the flag now
+      if (compInfo->getSuspendThreadDueToLowPhysicalMemory() &&
+         compInfo->getNumCompThreadsActive() < 2)
+         compInfo->setSuspendThreadDueToLowPhysicalMemory(false);
+      }
+   }

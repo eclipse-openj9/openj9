@@ -620,8 +620,8 @@ public:
    TR_MethodToBeCompiled *requestExistsInCompilationQueue(TR::IlGeneratorMethodDetails & details, TR_FrontEnd *fe);
 
    TR_MethodToBeCompiled *addMethodToBeCompiled(TR::IlGeneratorMethodDetails &details, void *pc, CompilationPriority priority,
-      bool async, TR_OptimizationPlan *optPlan, bool *queued, TR_YesNoMaybe methodIsInSharedCache, void *extra = nullptr, char *clientOptions = nullptr, size_t clientOptionsSize = 0);
-
+      bool async, TR_OptimizationPlan *optPlan, bool *queued, TR_YesNoMaybe methodIsInSharedCache);
+   TR_MethodToBeCompiled *addRemoteMethodToBeCompiled(JITaaS::J9ServerStream *stream);
    void                   queueEntry(TR_MethodToBeCompiled *entry);
    void                   recycleCompilationEntry(TR_MethodToBeCompiled *cur);
    TR_MethodToBeCompiled *adjustCompilationEntryAndRequeue(TR::IlGeneratorMethodDetails &details,
@@ -650,10 +650,6 @@ public:
    void purgeMethodQueue(TR_CompilationErrorCode errorCode);
    void *compileMethod(J9VMThread * context, TR::IlGeneratorMethodDetails &details, void *oldStartPC,
       TR_YesNoMaybe async, TR_CompilationErrorCode *, bool *queued, TR_OptimizationPlan *optPlan);
-   void *compileRemoteMethod(J9VMThread * vmThread, TR::IlGeneratorMethodDetails & details,
-                             const J9ROMMethod *romMethod, const J9ROMClass* romClass,
-                             void *oldStartPC, TR_CompilationErrorCode *compErrCode,
-                             bool *queued, TR_OptimizationPlan * optimizationPlan, void *extra, char *clientOptions, size_t clientOptionsSize);
    void *compileOnApplicationThread(J9VMThread * context, TR::IlGeneratorMethodDetails &details, void *oldStartPC,
                                     TR_CompilationErrorCode *,
                                     TR_OptimizationPlan *optPlan);

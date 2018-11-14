@@ -371,7 +371,7 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    TR::Monitor *getCompThreadMonitor() { return _compThreadMonitor; }
    void                   run();
    void                   processEntries();
-   void                   processEntry(TR_MethodToBeCompiled &entry, J9::J9SegmentProvider &scratchSegmentProvider);
+   virtual void           processEntry(TR_MethodToBeCompiled &entry, J9::J9SegmentProvider &scratchSegmentProvider);
    bool                   shouldPerformCompilation(TR_MethodToBeCompiled &entry);
    void                   waitForWork();
    void                   doSuspend();
@@ -405,7 +405,7 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    uint32_t               getLastLocalGCCounter() { return _lastLocalGCCounter; }
    void                   updateLastLocalGCCounter(); 
 
-   private:
+   protected:
    J9::J9SegmentCache initializeSegmentCache(J9::J9SegmentProvider &segmentProvider);
 
    TR_J9ServerVM         *_serverVM;

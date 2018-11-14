@@ -2534,7 +2534,9 @@ TR::CompilationInfo::startCompilationThread(int32_t priority, int32_t threadId, 
    setCompBudget(TR::Options::_compilationBudget); // might do it several time, but it does not hurt
 
    // Create a compInfo for this thread
-   TR::CompilationInfoPerThread  *compInfoPT = new (persistentMemory()) TR::CompilationInfoPerThread(*this, _jitConfig, threadId, isDiagnosticThread);
+   TR::CompilationInfoPerThread  *compInfoPT = getPersistentInfo()->getJITaaSMode() == SERVER_MODE ?
+      new (persistentMemory()) TR::CompilationInfoPerThreadRemote(*this, _jitConfig, threadId, isDiagnosticThread) :
+      new (persistentMemory()) TR::CompilationInfoPerThread(*this, _jitConfig, threadId, isDiagnosticThread);
    if (!compInfoPT || !compInfoPT->initializationSucceeded() || !compInfoPT->getCompThreadMonitor())
       return 1; // TODO must deallocate some things in compInfoPT as well as the memory for it
 
@@ -4162,7 +4164,7 @@ TR_MethodToBeCompiled *
 TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & details, void *pc,
                                           CompilationPriority priority, bool async,
                                           TR_OptimizationPlan *optimizationPlan, bool *queued,
-                                          TR_YesNoMaybe methodIsInSharedCache, void *extra, char *clientOptions, size_t clientOptionsSize)
+                                          TR_YesNoMaybe methodIsInSharedCache)
    {
    // Make sure the entry is consistent
    //
@@ -4174,8 +4176,6 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
          TR_ASSERT(details.getMethod() == (J9Method *)methodInfo->getMethodInfo(), "assertion failure");
       }
 #endif
-
-   JITaaS::J9ServerStream *rpc = static_cast<JITaaS::J9ServerStream *>(extra);
 
    // Add this method to the queue of methods waiting to be compiled.
    TR_MethodToBeCompiled *cur = NULL, *prev = NULL;
@@ -4197,8 +4197,7 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
       if (compMethod)
          {
          queueWeight += compMethod->_weight; // QW
-         // JITaaS: Even if a method is already being compiled, we plan to recompile it for the new request
-         if (!rpc && compMethod->getMethodDetails().sameAs(details, fe))
+         if (compMethod->getMethodDetails().sameAs(details, fe))
             {
             if (!compMethod->_unloadedMethod) // Redefinition; see cmvc 192606 and RTC 36898
                {
@@ -4216,7 +4215,7 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
       {
       numEntries++;
       queueWeight += cur->_weight;
-      if (!rpc && cur->getMethodDetails().sameAs(details, fe))
+      if (cur->getMethodDetails().sameAs(details, fe))
          break;
       }
 
@@ -4225,8 +4224,7 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
    // after the compilation completes and we have updated the J9Method etc.
    // in which case the compilation is already done and we should not even try to enqueue
 
-   // JITaaS: Even if a method is already queued, we plan to recompile it for the new request
-   if (!rpc && cur)
+   if (cur)
       {
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileRequest))
          TR_VerboseLog::writeLineLocked(TR_Vlog_CR,"%p     Already present in compilation queue. OldPriority=%x NewPriority=%x entry=%p",
@@ -4291,13 +4289,6 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
       cur->initialize(details, pc, priority, optimizationPlan);
       cur->_jitStateWhenQueued = getPersistentInfo()->getJitState();
 
-      if (rpc)
-         {
-         cur->_stream = rpc; // Add the stream to the entry
-         cur->_clientOptions = clientOptions;
-         cur->_clientOptionsSize = clientOptionsSize;
-         }
-
       bool isJNINativeMethodRequest = false;
       if (pc)
          {
@@ -4329,16 +4320,13 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
          }
       else if (details.isOrdinaryMethod()) // ordinary interpreted methods
          {
-         if (!rpc) // If this is a remote compilation we don't need to modify the extra field
+         J9Method *method = details.getMethod();
+         isJNINativeMethodRequest = isJNINative(method);
+         if (method && async
+            && (getInvocationCount(method) == 0)           // this will filter out JNI natives
+            && !(details.getRomMethod()->modifiers & J9AccNative)) // Never change the extra field of a native method
             {
-            J9Method *method = details.getMethod();
-            isJNINativeMethodRequest = isJNINative(method);
-            if (method && async
-               && (getInvocationCount(method) == 0)           // this will filter out JNI natives
-               && !(details.getRomMethod()->modifiers & J9AccNative)) // Never change the extra field of a native method
-               {
-               setJ9MethodVMExtra(method, J9_JIT_QUEUED_FOR_COMPILATION);
-               }
+            setJ9MethodVMExtra(method, J9_JIT_QUEUED_FOR_COMPILATION);
             }
          _intervalStats._numFirstTimeCompilationsInInterval++;
          _numQueuedFirstTimeCompilations++;
@@ -5094,111 +5082,6 @@ static void deleteMethodHandleRef(J9::MethodHandleThunkDetails & details, J9VMTh
    if (details.getArgRef())
       vmThread->javaVM->internalVMFunctions->j9jni_deleteGlobalRef((JNIEnv*)vmThread, (jobject)details.getArgRef(), false);
    }
-
-
-void *TR::CompilationInfo::compileRemoteMethod(J9VMThread * vmThread, TR::IlGeneratorMethodDetails & details,
-                                               const J9ROMMethod *romMethod, const J9ROMClass* romClass,
-                                               void *oldStartPC, TR_CompilationErrorCode *compErrCode,
-                                               bool *queued, TR_OptimizationPlan * optimizationPlan, void *extra, char *clientOptions, size_t clientOptionsSize)
-   {
-   TR_ASSERT(details.isRemoteMethod(), "compileRemoteMethod can only compile remote methods (duh)");
-
-   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileRequest))
-      {
-      J9Method *method = details.getMethod();
-      TR_VerboseLog::vlogAcquire();
-      TR_VerboseLog::writeLine(TR_Vlog_CR, "%p   Compile request %s", vmThread, details.name());
-      if (details.isNewInstanceThunk())
-         {
-         J9Class *clazz = static_cast<J9::NewInstanceThunkDetails&>(details).classNeedingThunk();
-         TR_VerboseLog::write(" j9class=%p", clazz);
-         }
-      TR_VerboseLog::write(" j9method=%p ", method);
-      CompilationInfo::printMethodNameToVlog(romClass, romMethod);
-      TR_VerboseLog::write("  optLevel=%d", optimizationPlan->getOptLevel());
-      TR_VerboseLog::vlogRelease();
-      }
-
-   // Grab the compilation monitor
-   //
-   debugPrint(vmThread, "\tapplication thread acquiring compilation monitor\n");
-   acquireCompMonitor(vmThread);
-   debugPrint(vmThread, "+CM\n");
-   addCompilationTraceEntry(vmThread, OP_CompileOnSeparateThreadEnter);
-
-   debugPrint(vmThread, "\tQueuing ");
-
-   bool async = true;
-
-   TR_YesNoMaybe methodIsInSharedCache = TR_no;
-#if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
-   // Check to see if we find the method in the shared cache
-   // If yes, raise the priority to be processed ahead of other methods
-   //
-   if (TR::Options::sharedClassCache() && !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoLoadAOT) && details.isOrdinaryMethod())
-      {
-      if (!oldStartPC)
-         {
-         // If the method is in shared cache but we decide not to take it from there
-         // we must bump the count, because this is a method whose count was decreased to scount
-         // We can get the answer wrong if the method was not in the cache to start with, but other
-         // other JVM added the method to the cache meanwhile. The net effect is that the said
-         // method may have its count bumped up and compiled later
-         //
-         J9JavaVM *javaVM = vmThread->javaVM;
-         if (javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, romMethod))
-            {
-            TR_J9SharedCacheVM *fe = (TR_J9SharedCacheVM *)TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM);
-            if (
-               static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_yes
-               || (
-                  static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_maybe
-                  && _sharedCacheReloRuntime.validateAOTHeader(javaVM, fe, vmThread)
-                  )
-               )
-               {
-               methodIsInSharedCache = TR_yes;
-               }
-            }
-         }
-      }
-#endif // defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
-
-
-   CompilationPriority compPriority = CP_SYNC_NORMAL; // JITaaS TODO: priority should come from the client
-
-   TR_MethodToBeCompiled *entry =
-      addMethodToBeCompiled(details, oldStartPC, compPriority, async,
-         optimizationPlan, queued, methodIsInSharedCache, extra, clientOptions, clientOptionsSize);
-
-   if (entry == NULL)
-      {
-      if (compErrCode)
-         *compErrCode = compilationFailure;
-      return 0;  // We couldn't add a method entry to be compiled.
-      }
-
-   entry->_async = async;
-   printQueue();
-   debugPrint(vmThread, "\tnotifying the compilation thread of the compile request\n");
-   getCompilationMonitor()->notifyAll();
-   debugPrint(vmThread, "ntfy-CM\n");
-
-   // Release the compilation monitor
-   //
-   debugPrint(vmThread, "\tapplication thread releasing compilation monitor\n");
-   debugPrint(vmThread, "-CM\n");
-   releaseCompMonitor(vmThread);
-
-   if (compErrCode)
-      *compErrCode = compilationInProgress;
-
-   return 0;
-   }
-
-
-
-
 
 
 void *TR::CompilationInfo::compileMethod(J9VMThread * vmThread, TR::IlGeneratorMethodDetails & details, void *oldStartPC,
@@ -6632,7 +6515,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          setClientData(clientSession);
 
          if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Server cached clientSessionData=%p for clientUID=%llu compThreadID=%d",
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Server found cached clientSessionData=%p for clientUID=%llu compThreadID=%d",
                clientSession, (unsigned long long)clientUID, getCompThreadId());
          // Release the compilationMonitor before calling cacheRemoteClass
          }
@@ -12184,4 +12067,59 @@ void
 TR::CompilationInfoPerThread::updateLastLocalGCCounter()
    {
    _lastLocalGCCounter = getCompilationInfo()->getLocalGCCounter();
+   }
+
+// This method is executed by the JITaaS server to queue a placeholder for
+// a compilation request received form the client. At the time the new
+// entry is queued we do not know any details about the compilation request.
+// The method needs to be executed with compilation monitor in hand
+TR_MethodToBeCompiled *
+TR::CompilationInfo::addRemoteMethodToBeCompiled(JITaaS::J9ServerStream *stream)
+   {
+   TR_MethodToBeCompiled *entry = getCompilationQueueEntry(); // allocate a new entry
+   if (entry)
+      {
+      // Initialize the entry with defaults (some, like methodDetails, are bogus)
+      TR::IlGeneratorMethodDetails details;
+      entry->initialize(details, NULL, CP_SYNC_NORMAL, NULL);
+      entry->_entryTime = getPersistentInfo()->getElapsedTime(); // cheaper version
+      entry->_stream = stream; // Add the stream to the entry
+      incrementMethodQueueSize(); // one more method added to the queue
+      _numQueuedFirstTimeCompilations++; // otherwise an assert triggers when we dequeue
+      queueEntry(entry);
+
+     // Determine whether we need to activate another compilation thread from the pool
+      TR_YesNoMaybe activate = TR_maybe;
+      if (getNumCompThreadsActive() <= 0)
+         {
+         activate = TR_yes;
+         }
+      else if (getNumCompThreadsJobless() > 0)
+         {
+         activate = TR_no; // just wake the jobless one
+         }
+      else
+         {
+         int32_t numCompThreadsSuspended = getNumUsableCompilationThreads() - getNumCompThreadsActive();
+         TR_ASSERT(numCompThreadsSuspended >= 0, "Accounting error for suspendedCompThreads usable=%d active=%d\n", 
+            getNumUsableCompilationThreads(), getNumCompThreadsActive());
+         // Cannot activate if there is nothing to activate
+         activate = (numCompThreadsSuspended <= 0) ? TR_no : TR_yes;
+         }
+      if (activate == TR_yes)
+         {
+         // Must find one that is SUSPENDED/SUSPENDING
+         TR::CompilationInfoPerThread *compInfoPT = getFirstSuspendedCompilationThread();
+         if (compInfoPT)
+            {
+            compInfoPT->resumeCompilationThread();
+            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads))
+               {
+               TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u Activate compThread %d Qweight=%d active=%d",
+                  (uint32_t)getPersistentInfo()->getElapsedTime(), compInfoPT->getCompThreadId(), getQueueWeight(), getNumCompThreadsActive());
+               }
+            }
+         }
+      }
+   return entry;
    }

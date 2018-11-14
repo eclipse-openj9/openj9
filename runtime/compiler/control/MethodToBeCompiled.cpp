@@ -68,7 +68,8 @@ void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails & details, v
    _tryCompilingAgain = false;
    _compInfoPT = NULL;
    _aotCodeToBeRelocated = NULL;
-   _optimizationPlan->setIsAotLoad(false);
+   if (_optimizationPlan)
+      _optimizationPlan->setIsAotLoad(false); // FIXME: this should be done by the caller
    _async = false;
    _reqFromSecondaryQueue = TR_MethodToBeCompiled::REASON_NONE;
    _reqFromJProfilingQueue = false;
