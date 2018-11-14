@@ -1279,7 +1279,7 @@ TR_J9VMBase::getReferenceFieldAtAddress(uintptrj_t fieldAddress)
    TR::Compilation* comp = TR::comp();
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
    // Emit read barrier
-   if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+   if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none)
       vmThread()->javaVM->javaVM->memoryManagerFunctions->J9ReadBarrier(vmThread(), (fj9object_t *)fieldAddress);
 #endif
 

@@ -1114,7 +1114,7 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
       TR::Node* conversionNode = TR::Node::create(conversionOpCode,
                                                  1, valueWithoutConversion);
       valueWithConversion = conversionNode;
-      unsafeNodeWithConversion = type == TR::Address && (comp()->getOptions()->getGcMode() != TR_WrtbarNone)
+      unsafeNodeWithConversion = type == TR::Address && (TR::Compiler->om.writeBarrierType() != gc_modron_wrtbar_none)
          ? TR::Node::createWithSymRef(TR::awrtbari, 3, 3, unsafeAddress, valueWithConversion, unsafeCall->getChild(1), symRef)
          : TR::Node::createWithSymRef(comp()->il.opCodeForIndirectArrayStore(type), 2, 2, unsafeAddress, valueWithConversion, symRef);
 
@@ -1122,7 +1122,7 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
           traceMsg(comp(),"\tConversion is Needed, conversionNode = %p unsafeNodeWithConversion = %p valueWithConversion = %p\n",conversionNode,unsafeNodeWithConversion,valueWithConversion);
 
       }
-   TR::Node * unsafeNode = type == TR::Address && (comp()->getOptions()->getGcMode() != TR_WrtbarNone)
+   TR::Node * unsafeNode = type == TR::Address && (TR::Compiler->om.writeBarrierType() != gc_modron_wrtbar_none)
       ? TR::Node::createWithSymRef(TR::awrtbari, 3, 3, unsafeAddress, valueWithoutConversion, unsafeCall->getChild(1), symRef)
       : TR::Node::createWithSymRef(comp()->il.opCodeForIndirectStore(type), 2, 2, unsafeAddress, valueWithoutConversion, symRef);
 

@@ -3448,7 +3448,7 @@ TR_CISCTransformer::computeEmbeddedForData()
    uint8_t *const result = _embeddedForData;
    bool ret = false;
    bool skipScreening = false;
-   const bool enableWriteBarrierConversion = !comp()->getOptions()->generateWriteBarriers();
+   const bool enableWriteBarrierConversion = TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_none;
 
    memset(result, 0, _sizeResult);
    TR_CISCNode *p, *t;

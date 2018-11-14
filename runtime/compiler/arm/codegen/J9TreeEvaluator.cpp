@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,7 +66,7 @@ static void VMCardCheckEvaluator(TR::Node *node, TR::Register *dstReg, TR::Regis
    TR::Options *options = comp->getOptions();
    TR::Node *wrtbarNode = NULL;
    bool definitelyHeapObject = false, definitelyNonHeapObject = false;
-   TR_WriteBarrierKind gcMode = options->getGcMode();
+   auto gcMode = TR::Compiler->om.writeBarrierType();
 
    if (node->getOpCodeValue() == TR::awrtbari || node->getOpCodeValue() == TR::awrtbar)
       wrtbarNode = node;
@@ -79,7 +79,7 @@ static void VMCardCheckEvaluator(TR::Node *node, TR::Register *dstReg, TR::Regis
       definitelyNonHeapObject = wrtbarNode->isNonHeapObjectWrtBar();
       }
 
-   TR_ASSERT((gcMode == TR_WrtbarCardMark || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarCardMarkIncremental) && !definitelyNonHeapObject,
+   TR_ASSERT((gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_cardmark_incremental) && !definitelyNonHeapObject,
          "VMCardCheckEvaluator: Invalid call to cardCheckEvaluator\n");
 
    if (!definitelyNonHeapObject)
@@ -89,7 +89,7 @@ static void VMCardCheckEvaluator(TR::Node *node, TR::Register *dstReg, TR::Regis
 
       // Balanced policy must always dirty the card table.
       //
-      if (gcMode != TR_WrtbarCardMarkIncremental)
+      if (gcMode != gc_modron_wrtbar_cardmark_incremental)
          {
          uint32_t base, rotate;
 
@@ -150,10 +150,10 @@ void J9::ARM::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Register 
    TR::Compilation * comp = cg->comp();
    bool ageCheckIsNeeded = false;
    bool cardMarkIsNeeded = false;
-   TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
+   auto gcMode = TR::Compiler->om.writeBarrierType();
 
-   ageCheckIsNeeded = (gcMode == TR_WrtbarOldCheck || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarAlways);
-   cardMarkIsNeeded = (gcMode == TR_WrtbarCardMark || gcMode == TR_WrtbarCardMarkIncremental);
+   ageCheckIsNeeded = (gcMode == gc_modron_wrtbar_oldcheck || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_always);
+   cardMarkIsNeeded = (gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_incremental);
 
    if (!ageCheckIsNeeded && !cardMarkIsNeeded)
       {
@@ -169,7 +169,7 @@ void J9::ARM::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Register 
       TR::LabelSymbol *doneLabel;
       TR::SymbolReference *wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierBatchStoreSymbolRef(comp->getMethodSymbol());
 
-      if (gcMode != TR_WrtbarAlways)
+      if (gcMode != gc_modron_wrtbar_always)
          {
          temp1Reg = cg->allocateRegister();
          temp2Reg = cg->allocateRegister();
@@ -202,7 +202,7 @@ void J9::ARM::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Register 
       TR::Instruction *gcPoint = generateImmSymInstruction(cg, ARMOp_bl, node, (uintptr_t)wbRef->getSymbol()->castToMethodSymbol()->getMethodAddress(), NULL, wbRef);
       gcPoint->ARMNeedsGCMap(0xFFFFFFFF);
 
-      if (gcMode != TR_WrtbarAlways)
+      if (gcMode != gc_modron_wrtbar_always)
          {
          generateLabelInstruction(cg, ARMOp_label, node, doneLabel, conditions);
          }
@@ -210,7 +210,7 @@ void J9::ARM::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Register 
       cg->machine()->setLinkRegisterKilled(true);
       cg->setHasCall();
 
-      if (gcMode != TR_WrtbarAlways)
+      if (gcMode != gc_modron_wrtbar_always)
          {
          cg->stopUsingRegister(temp1Reg);
          cg->stopUsingRegister(temp2Reg);

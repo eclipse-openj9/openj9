@@ -4959,7 +4959,7 @@ break
 #endif
        }
 
-    if (comp()->cg()->getSupportsInlineConcurrentLinkedQueue() && (comp()->getOptions()->getGcMode() != TR_WrtbarRealTime) &&
+    if (comp()->cg()->getSupportsInlineConcurrentLinkedQueue() && (TR::Compiler->om.writeBarrierType() != gc_modron_wrtbar_satb) &&
          (symbol->getRecognizedMethod() == TR::java_util_concurrent_ConcurrentLinkedQueue_tmEnabled))
        {
        loadConstant(TR::iconst, 1);

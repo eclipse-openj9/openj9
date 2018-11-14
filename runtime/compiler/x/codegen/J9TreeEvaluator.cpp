@@ -995,7 +995,7 @@ TR::Register* J9::X86::TreeEvaluator::performHeapLoadWithReadBarrier(TR::Node* n
    TR_ASSERT_FATAL(0, "Concurrent Scavenger not supported.");
    return NULL;
 #else
-   TR_ASSERT(TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads(), "Concurrent Scavenger not enabled.");
+   TR_ASSERT(TR::Compiler->om.readBarrierType() != gc_modron_readbar_none, "Concurrent Scavenger not enabled.");
 
    bool use64BitClasses = TR::Compiler->target.is64Bit() && !cg->comp()->useCompressedPointers();
 
@@ -1670,7 +1670,7 @@ TR::Register *J9::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Cod
 
       generateLabelInstruction(LABEL, node, begLabel, cg);
 
-      if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+      if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none)
          {
          bool use64BitClasses = TR::Compiler->target.is64Bit() && !cg->comp()->useCompressedPointers();
 
@@ -2666,9 +2666,9 @@ TR::Register *J9::X86::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR:
    TR::Node *sourceChild = firstChild->getSecondChild();
 
    static bool isRealTimeGC = comp->getOptions()->realTimeGC();
-   TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
+   auto gcMode = TR::Compiler->om.writeBarrierType();
 
-   bool isNonRTWriteBarrierRequired = (gcMode != TR_WrtbarNone && !firstChild->skipWrtBar()) ? true : false;
+   bool isNonRTWriteBarrierRequired = (gcMode != gc_modron_wrtbar_none && !firstChild->skipWrtBar()) ? true : false;
    bool generateWriteBarrier = isRealTimeGC || isNonRTWriteBarrierRequired;
    bool nopASC = (node->getArrayStoreClassInNode() &&
                   comp->performVirtualGuardNOPing() &&
@@ -9420,7 +9420,7 @@ static TR::Register* inlineCompareAndSwapObjectNative(TR::Node* node, TR::CodeGe
       }
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
-   if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+   if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none)
       {
       generateRegMemInstruction(LRegMem(use64BitClasses), node, tmp, generateX86MemoryReference(object, offset, 0, cg), cg);
 
@@ -10067,15 +10067,15 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
  * Note that RealTimeGC is handled separately in a different method.
  */
 static void generateWriteBarrierCall(
-   TR_X86OpCodes        branchOp,
-   TR::Node*            node,
-   TR_WriteBarrierKind  gcMode,
-   TR::Register*        owningObjectReg,
-   TR::Register*        sourceReg,
-   TR::LabelSymbol*     doneLabel,
-   TR::CodeGenerator*   cg)
+   TR_X86OpCodes          branchOp,
+   TR::Node*              node,
+    MM_GCWriteBarrierType gcMode,
+   TR::Register*          owningObjectReg,
+   TR::Register*          sourceReg,
+   TR::LabelSymbol*       doneLabel,
+   TR::CodeGenerator*     cg)
    {
-   TR_ASSERT(gcMode != TR_WrtbarRealTime && !TR::Options::getCmdLineOptions()->realTimeGC(), "This helper is not for RealTimeGC.");
+   TR_ASSERT(gcMode != gc_modron_wrtbar_satb && !TR::Options::getCmdLineOptions()->realTimeGC(), "This helper is not for RealTimeGC.");
 
    TR::Compilation *comp = cg->comp();
    uint8_t helperArgCount = 0;  // Number of arguments passed on the runtime helper.
@@ -10086,12 +10086,12 @@ static void generateWriteBarrierCall(
       wrtBarSymRef = comp->getSymRefTab()->findOrCreateWriteBarrierBatchStoreSymbolRef();
       helperArgCount = 1;
       }
-   else if (gcMode == TR_WrtbarCardMarkAndOldCheck)
+   else if (gcMode == gc_modron_wrtbar_cardmark_and_oldcheck)
       {
       wrtBarSymRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreGenerationalAndConcurrentMarkSymbolRef();
       helperArgCount = 2;
       }
-   else if (gcMode == TR_WrtbarAlways)
+   else if (gcMode == gc_modron_wrtbar_always)
       {
       wrtBarSymRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef();
       helperArgCount = 2;
@@ -10163,14 +10163,14 @@ void J9::X86::TreeEvaluator::VMwrtbarRealTimeWithoutStoreEvaluator(
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
    TR_ASSERT(TR::Options::getCmdLineOptions()->realTimeGC(),"Call the non real-time barrier");
-   TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
+   auto gcMode = TR::Compiler->om.writeBarrierType();
 
    if (node->getOpCode().isWrtBar() && node->skipWrtBar())
-      gcMode = TR_WrtbarNone;
+      gcMode = gc_modron_wrtbar_none;
    else if ((node->getOpCodeValue() == TR::ArrayStoreCHK) &&
             node->getFirstChild()->getOpCode().isWrtBar() &&
             node->getFirstChild()->skipWrtBar())
-      gcMode = TR_WrtbarNone;
+      gcMode = gc_modron_wrtbar_none;
 
    // PR98283: it is not acceptable to emit a label symbol twice so always generate a new label here
    // we can clean up the API later in a less risky manner
@@ -10390,14 +10390,14 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
    TR_ASSERT(!(TR::Options::getCmdLineOptions()->realTimeGC()),"Call the real-time barrier");
-   TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
+   auto gcMode = TR::Compiler->om.writeBarrierType();
 
    if (node->getOpCode().isWrtBar() && node->skipWrtBar())
-      gcMode = TR_WrtbarNone;
+      gcMode = gc_modron_wrtbar_none;
    else if ((node->getOpCodeValue() == TR::ArrayStoreCHK) &&
             node->getFirstChild()->getOpCode().isWrtBar() &&
             node->getFirstChild()->skipWrtBar())
-      gcMode = TR_WrtbarNone;
+      gcMode = gc_modron_wrtbar_none;
 
    // PR98283: it is not acceptable to emit a label symbol twice so always generate a new label here
    // we can clean up the API later in a less risky manner
@@ -10453,9 +10453,9 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
    if (wrtbarNode)
       {
       TR_ASSERT(wrtbarNode->getOpCode().isWrtBar(), "Expected node " POINTER_PRINTF_FORMAT " to be a WrtBar", wrtbarNode);
-      // Note: for TR_WrtbarCardMarkAndOldCheck we let the helper do the card mark (ie. we don't inline it)
+      // Note: for gc_modron_wrtbar_cardmark_and_oldcheck we let the helper do the card mark (ie. we don't inline it)
       doInlineCardMarkingWithoutOldSpaceCheck =
-         (gcMode == TR_WrtbarCardMark || gcMode == TR_WrtbarCardMarkIncremental)
+         (gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_incremental)
          && !wrtbarNode->getSymbol()->isLocalObject()
          && !wrtbarNode->isNonHeapObjectWrtBar();
 
@@ -10468,11 +10468,11 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
       // Old space checks will be done out-of-line, and if a card mark policy requires an old space check
       // as well then both will be done out-of-line.
       //
-      doInlineCardMarkingWithoutOldSpaceCheck = doIsDestAHeapObjectCheck = (gcMode == TR_WrtbarCardMark || gcMode == TR_WrtbarCardMarkIncremental);
+      doInlineCardMarkingWithoutOldSpaceCheck = doIsDestAHeapObjectCheck = (gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_incremental);
       }
 
 
-// for Tarok  TR_WrtbarCardMarkAndRSM
+// for Tarok  gc_modron_wrtbar_cardmark
 //
 //   doIsDestAHeapObjectCheck = true (if req)   OK
 //   doIsDestInOldSpaceCheck = false            OK
@@ -10482,16 +10482,16 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
 
 
    bool doIsDestInOldSpaceCheck =
-         gcMode == TR_WrtbarOldCheck
-      || gcMode == TR_WrtbarCardMarkAndOldCheck
-      || gcMode == TR_WrtbarAlways
+         gcMode == gc_modron_wrtbar_oldcheck
+      || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck
+      || gcMode == gc_modron_wrtbar_always
       ;
 
    bool unsafeCallBarrier = false;
    if (doIsDestInOldSpaceCheck &&
-       (gcMode == TR_WrtbarCardMark
-       || gcMode == TR_WrtbarCardMarkAndOldCheck
-       || gcMode == TR_WrtbarCardMarkIncremental) &&
+       (gcMode == gc_modron_wrtbar_cardmark
+       || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck
+       || gcMode == gc_modron_wrtbar_cardmark_incremental) &&
        (node->getOpCodeValue()==TR::icall)) {
        TR::MethodSymbol *symbol = node->getSymbol()->castToMethodSymbol();
        if (symbol != NULL && symbol->getRecognizedMethod())
@@ -10499,16 +10499,16 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
    }
 
    bool doCheckConcurrentMarkActive =
-         (gcMode == TR_WrtbarCardMark
-       || gcMode == TR_WrtbarCardMarkAndOldCheck
-       || gcMode == TR_WrtbarCardMarkIncremental
+         (gcMode == gc_modron_wrtbar_cardmark
+       || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck
+       || gcMode == gc_modron_wrtbar_cardmark_incremental
        ) && (doInlineCardMarkingWithoutOldSpaceCheck || (doIsDestInOldSpaceCheck && wrtbarNode) || unsafeCallBarrier);
 
    // Use out-of-line instructions to dirty the card table.
    //
    bool dirtyCardTableOutOfLine = true;
 
-   if (gcMode == TR_WrtbarCardMarkIncremental)
+   if (gcMode == gc_modron_wrtbar_cardmark_incremental)
       {
       // Override these settings for policies that don't support concurrent mark.
       //
@@ -10806,7 +10806,7 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
       static char *disableWrtbarOpt = feGetEnv("TR_DisableWrtbarOpt");
 
       TR_X86OpCodes branchOp;
-      TR_WriteBarrierKind gcModeForSnippet = gcMode;
+      auto gcModeForSnippet = gcMode;
 
       bool skipSnippetIfSrcNotOld = false;
       bool skipSnippetIfDestOld = false;
@@ -10814,7 +10814,7 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
 
       TR::LabelSymbol *labelAfterBranchToSnippet = NULL;
 
-      if (gcMode == TR_WrtbarAlways)
+      if (gcMode == gc_modron_wrtbar_always)
          {
          // Always call the write barrier helper.
          //
@@ -10896,15 +10896,15 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
             generateMemImmInstruction(TEST4MemImm4, node, vmThreadPrivateFlagsMR, J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE, cg);
             }
 
-         generateWriteBarrierCall(JNE4, node, TR_WrtbarCardMarkAndOldCheck, owningObjectReg, srcReg, doneLabel, cg);
+         generateWriteBarrierCall(JNE4, node, gc_modron_wrtbar_cardmark_and_oldcheck, owningObjectReg, srcReg, doneLabel, cg);
 
          // If the destination object is old and not remembered then process the remembered
          // set update out-of-line with the generational helper.
          //
          skipSnippetIfDestRemembered = true;
-         gcModeForSnippet = TR_WrtbarOldCheck;
+         gcModeForSnippet = gc_modron_wrtbar_oldcheck;
          }
-      else if (gcMode == TR_WrtbarOldCheck)
+      else if (gcMode == gc_modron_wrtbar_oldcheck)
          {
          // For pure generational barriers if the object is old and remembered then the helper
          // can be skipped.
@@ -11059,7 +11059,7 @@ void J9::X86::TreeEvaluator::VMwrtbarWithStoreEvaluator(
    TR::Register *owningObjectRegister = cg->evaluate(destOwningObject);
    TR::Register *sourceRegister = cg->evaluate(sourceObject);
 
-   TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
+   auto gcMode = TR::Compiler->om.writeBarrierType();
    bool isRealTimeGC = (TR::Options::getCmdLineOptions()->realTimeGC())? true:false;
 
    bool usingCompressedPointers = false;
@@ -11164,7 +11164,7 @@ void J9::X86::TreeEvaluator::VMwrtbarWithStoreEvaluator(
       storeInstr = doReferenceStore(node, storeMR, translatedSourceReg, usingCompressedPointers, cg);
       }
 
-   if (comp->getOptions()->alwaysCallWriteBarrier() && !isRealTimeGC)
+   if (TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_always && !isRealTimeGC)
       {
       TR::RegisterDependencyConditions *deps = NULL;
       TR::LabelSymbol *doneWrtBarLabel = generateLabelSymbol(cg);
@@ -12788,7 +12788,7 @@ void J9::X86::TreeEvaluator::rdbarSideEffectsEvaluator(TR::Node *node, TR::CodeG
 TR::Register *J9::X86::TreeEvaluator::irdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::TreeEvaluator::rdbarSideEffectsEvaluator(node, cg);
-   if (!TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+   if (TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_none)
       return TR::TreeEvaluator::iloadEvaluator(node, cg);
 
    //sequence for Concurrent Scavenge
@@ -12833,7 +12833,7 @@ TR::Register *J9::X86::TreeEvaluator::drdbarEvaluator(TR::Node *node, TR::CodeGe
 TR::Register *J9::X86::TreeEvaluator::ardbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::TreeEvaluator::rdbarSideEffectsEvaluator(node, cg);
-   if (!TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+   if (TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_none)
       return TR::TreeEvaluator::aloadEvaluator(node, cg);
 
    //sequence for Concurrent Scavenge

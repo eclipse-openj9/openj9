@@ -88,7 +88,7 @@ J9::Z::CodeGenerator::CodeGenerator() :
       }
 
    // See comment in `handleHardwareReadBarrier` implementation as to why we cannot support CTX under CS
-   if (cg->getSupportsTM() && !TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+   if (cg->getSupportsTM() && TR::Compiler->om.readBarrierType() == gc_modron_readbar_none)
       {
       cg->setSupportsInlineConcurrentLinkedQueue();
       }
