@@ -37,11 +37,7 @@ getSendSlotsFromSignature(const U_8* signature)
 		case '[':
 			/* skip all '['s */
 			for (i++; signature[i] == '['; i++);
-			if ((signature[i] == 'L')
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				|| (signature[i] == 'Q')
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
-			) {
+			if (J9_IS_OBJECT_OR_VALUETYPE(signature[i])) {
 				/* FALL THRU */
 			} else {
 				sendArgs++;

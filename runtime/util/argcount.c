@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,13 +26,39 @@
 
 /* include '[' for arrays (character after 'Z') */
 const U_8 argCountCharConversion[] = {
-0,	1,	1,	2,
-0,	1,	0,	0,
-1,	2,	0,	1,
-0,	0,	0,	0,
-0,	0,	1,	0, 
-0,	0,	0,	0,
-0,	1,	1,	0}; 
+	0,  /* A */
+	1,  /* B */
+	1,  /* C */
+	2,  /* D */
+	0,  /* E */
+	1,  /* F */
+	0,  /* G */
+	0,  /* H */
+	1,  /* I */
+	2,  /* J */
+	0,  /* K */
+	1,  /* L */
+	0,  /* M */
+	0,  /* N */
+	0,  /* O */
+	0,  /* P */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	1,  /* Q */
+#else
+	0,  /* Q */
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+	0,  /* R */
+	1,  /* S */
+	0,  /* T */
+	0,  /* U */
+	0,  /* V */
+	0,  /* W */
+	0,  /* X */
+	0,  /* Y */
+	1,  /* Z */
+	1,  /* [ */
+	0   /* \ */
+}; 
 
 
 

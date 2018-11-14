@@ -231,11 +231,14 @@ computeArgCount(J9ROMMethod *method)
 			while ((index < count) && ('[' == bytes[index])) {
 				index += 1;
 			}
-			if ('L' != bytes[index]) {
+			if (J9_IS_NOT_OBJECT_AND_NOT_VALUETYPE(bytes[index])) {
 				break;
 			}
 			/* fall through */
 		case 'L':
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case 'Q':
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 			index += 1;
 			while ((index < count) && (';' != bytes[index])) {
 				index += 1;
@@ -454,6 +457,9 @@ classForSignature(struct J9VMThread *vmThread, U_8 **sigDataPtr, struct J9ClassL
 	/* Non-array case */
 	switch (c) {
 	case 'L': {
+		/* TODO: ValueTypes Once it is known if Q and L types share a ramClass, revisit this.
+		* See https://github.com/eclipse/openj9/issues/4083
+		*/
 		/* object case */
 		U_8 *tempData = sigData;
 		UDATA length = 0;
@@ -522,7 +528,7 @@ getArgCountFromSignature(J9UTF8* signature)
 			i++;
 		}
 		/* skip class name */
-		if ('L' == sigData[i]) {
+		if (J9_IS_OBJECT_OR_VALUETYPE(sigData[i])) {
 			while (';' != sigData[i]) {
 				i++;
 			}

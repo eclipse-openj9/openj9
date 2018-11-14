@@ -2547,11 +2547,11 @@ j9rtv_verifyArguments (J9BytecodeVerificationData *verifyData, J9UTF8 * utf8stri
 		}
 
 		/* Object or array */
-		if ((*signature == 'L') || arity) {
+		if (J9_IS_OBJECT_OR_VALUETYPE(*signature) || arity) {
 			IDATA reasonCode = 0;
 
 			/* Object array */
-			if (*signature == 'L') {
+			if (J9_IS_OBJECT_OR_VALUETYPE(*signature)) {
 				signature++;
 				string = signature;	/* remember the start of the string */
 				while (*signature++ != ';');

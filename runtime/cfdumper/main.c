@@ -1042,6 +1042,8 @@ static void printMethod(J9CfrClassFile* classfile, J9CfrMethod* method)
 			j9tty_printf( PORTLIB, "long");
 			break;
 
+		case 'Q':
+			j9tty_printf( PORTLIB, "flattenable "); /* fallthrough */
 		case 'L':
 			i++;
 			while(string[i] != ';')
@@ -1098,6 +1100,8 @@ static void printMethod(J9CfrClassFile* classfile, J9CfrMethod* method)
 				j9tty_printf( PORTLIB, "long");
 				break;
 
+			case 'Q':
+				j9tty_printf( PORTLIB, "flattenable "); /* fallthrough */
 			case 'L':
 				i++;
 				while(string[i] != ';')
@@ -1214,6 +1218,8 @@ static void printField(J9CfrClassFile* classfile, J9CfrField* field)
 			j9tty_printf( PORTLIB, "long");
 			break;
 
+		case 'Q':
+			j9tty_printf( PORTLIB, "flattenable "); /* fallthrough */
 		case 'L':
 			i++;
 			while(string[i] != ';')
@@ -1308,6 +1314,8 @@ static void printDisassembledMethod(J9CfrClassFile* classfile, J9CfrMethod* meth
 			j9tty_printf( PORTLIB, "long");
 			break;
 
+		case 'Q':
+			j9tty_printf( PORTLIB, "flattenable "); /* fallthrough */
 		case 'L':
 			i++;
 			while(string[i] != ';')
@@ -1364,6 +1372,8 @@ static void printDisassembledMethod(J9CfrClassFile* classfile, J9CfrMethod* meth
 				j9tty_printf( PORTLIB, "long");
 				break;
 
+			case 'Q':
+				j9tty_printf( PORTLIB, "flattenable "); /* fallthrough */
 			case 'L':
 				i++;
 				while(string[i] != ';')
@@ -4371,6 +4381,8 @@ static void sun_formatField(J9CfrClassFile* classfile, J9CfrField* field, char *
 						}
 						switch(string[j++])
 						{
+							case 'Q':
+								j9tty_printf( PORTLIB, "flattenable "); /* fallthrough */
 							case 'L':
 								while((ch2 = string[j++]) != ';')
 								{
@@ -4618,6 +4630,8 @@ static void sun_formatMethod(J9CfrClassFile* classfile, J9CfrMethod* method, cha
 						}
 						switch(string[j++])
 						{
+							case 'Q':
+								j9tty_printf( PORTLIB, "flattenable "); /* fallthrough */
 							case 'L':
 								while((ch2 = string[j++]) != ';')
 								{
@@ -4683,6 +4697,8 @@ static void sun_formatMethod(J9CfrClassFile* classfile, J9CfrMethod* method, cha
 							}
 							switch(string[j++])
 							{
+								case 'Q':
+									j9tty_printf( PORTLIB, "flattenable "); /* fallthrough */
 								case 'L':
 									while((ch2 = string[j++]) != ';')
 									{
@@ -5136,6 +5152,8 @@ static void j9_formatField(J9ROMClass* romClass, J9ROMFieldShape* field, char *f
 						}
 						switch(string[j++])
 						{
+							case 'Q':
+								j9tty_printf( PORTLIB, "flattenable "); /* fallthrough */
 							case 'L':
 								while((ch2 = string[j++]) != ';')
 								{
@@ -5408,6 +5426,8 @@ static void j9_formatMethod(J9ROMClass* romClass, J9ROMMethod* method, char *for
 						}
 						switch(string[j++])
 						{
+							case 'Q':
+								j9tty_printf( PORTLIB, "flattenable "); /* fallthrough */
 							case 'L':
 								while((ch2 = string[j++]) != ';')
 								{
@@ -5474,6 +5494,8 @@ static void j9_formatMethod(J9ROMClass* romClass, J9ROMMethod* method, char *for
 							}
 							switch(string[j++])
 							{
+								case 'Q':
+									j9tty_printf( PORTLIB, "flattenable "); /* fallthrough */
 								case 'L':
 									while((ch2 = string[j++]) != ';')
 									{

@@ -1065,11 +1065,14 @@ ClassFileWriter::computeArgsCount(U_16 methodRefIndex)
 			while ((index < count) && ('[' == sig[index])) {
 				index += 1;
 			}
-			if ('L' != sig[index]) {
+			if (J9_IS_NOT_OBJECT_AND_NOT_VALUETYPE(sig[index])) {
 				break;
 			}
 			/* fall through */
 		case 'L':
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case 'Q':
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 			index += 1;
 			while ((index < count) && (';' != sig[index])) {
 				index += 1;

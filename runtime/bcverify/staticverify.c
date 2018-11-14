@@ -812,7 +812,7 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 			break;
 
 		case CFR_BC_areturn:
-			if ((sigChar != 'L') && (sigChar != '[')) {
+			if (J9_IS_NOT_OBJECT_AND_NOT_VALUETYPE(sigChar) && ('[' != sigChar)) {
 				/* fail, modify the bytecode to be incompatible in the second pass of verification */
 				if (sigChar != 'V') {
 					*(bcIndex - 1) = CFR_BC_return;
@@ -1647,6 +1647,9 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 
 				switch (utf8->bytes[arity]) {
 				case 'L':		/* object array */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				case 'Q':
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 					if (utf8->bytes[--end] != ';') {
 						errorType = J9NLS_CFR_ERR_BAD_CLASS_NAME__ID;
 						goto _formatError;

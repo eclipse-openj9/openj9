@@ -299,7 +299,14 @@ ClassFileOracle::walkFields()
 					markStringAsReferenced(constantValueIndex);
 				}
 			}
-			if (('L' == fieldChar) || ('[' == fieldChar)) {
+			if (J9_IS_OBJECT_OR_VALUETYPE(fieldChar) || ('[' == fieldChar)) {
+				/* This code assumes that static fields of Q type are not flattened.  If static Q fields are flattened,
+ 				 * then this code is no longer correct.  This _objectStaticCount is eventually written to the 
+ 				 * J9ROMClass->objectStaticCount field which is used by:
+ 				 *  - openj9/runtime/gc_structs/ClassStaticsIterator.hpp 
+ 				 *  - fieldOffsetsFindNext() in openj9/runtime/vm/resolvefield.cpp
+ 				 *  See list of Q-type todos in https://github.com/eclipse/openj9/issues/4083
+ 				 */
 				_objectStaticCount++;
 			} else if (('D' == fieldChar) || ('J' == fieldChar)) {
 				_doubleScalarStaticCount++;
@@ -839,13 +846,7 @@ ClassFileOracle::computeSendSlotCount(U_16 methodIndex)
 			while ((index < count) && ('[' == bytes[index])) {
 				++index;
 			}
-			if ((index >= count)
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				|| (('L' != bytes[index]) && ('Q' != bytes[index]))
-#else
-				|| ('L' != bytes[index])
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
-			) {
+			if ((index >= count) || J9_IS_NOT_OBJECT_AND_NOT_VALUETYPE(bytes[index])) {
 				break;
 			}
 			/* fall through */
@@ -1371,13 +1372,36 @@ ClassFileOracle::walkMethodCodeAttributeCode(U_16 methodIndex)
 	J9CfrAttributeCode *codeAttribute = _classFile->methods[methodIndex].codeAttribute;
 
 	static const U_8 returnArgCharConversion[] = {
-			0,			PARAM_INT,		PARAM_INT,		PARAM_DOUBLE,
-			0,			PARAM_FLOAT,	0,				0,
-			PARAM_INT,	PARAM_LONG,		0,				PARAM_OBJECT,
-			0,			0,				0,				0,
-			0,			0,				PARAM_INT,		0,
-			0,			PARAM_VOID,		0,				0,
-			0,			PARAM_INT
+			0,              /* A */
+			PARAM_INT,      /* B */
+			PARAM_INT,      /* C */
+			PARAM_DOUBLE,   /* D */
+			0,              /* E */
+			PARAM_FLOAT,    /* F */
+			0,              /* G */
+			0,              /* H */
+			PARAM_INT,      /* I */
+			PARAM_LONG,     /* J */
+			0,              /* K */
+			PARAM_OBJECT,   /* L */
+			0,              /* M */
+			0,              /* N */
+			0,              /* O */
+			0,              /* P */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			PARAM_OBJECT,   /* Q */
+#else
+			0,              /* Q */
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+			0,              /* R */
+			PARAM_INT,      /* S */
+			0,              /* T */
+			0,              /* U */
+			PARAM_VOID,     /* V */
+			0,              /* W */
+			0,              /* X */
+			0,              /* Y */
+			PARAM_INT       /* Z */
 	};
 
 	static const U_8 returnBytecodeConversion[] = {

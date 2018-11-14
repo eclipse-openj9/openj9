@@ -1820,13 +1820,37 @@ ROMClassWriter::writeNativeSignature(Cursor *cursor, U_8 *methodDescriptor, U_8 
 {
 	/* mapping characters A..Z */
 	static const U_8 nativeArgCharConversion[] = {
-			0,			PARAM_BYTE,		PARAM_CHAR,		PARAM_DOUBLE,
-			0,			PARAM_FLOAT,	0,				0,
-			PARAM_INT,	PARAM_LONG,		0,				PARAM_OBJECT,
-			0,			0,				0,				0,
-			0,			0,				PARAM_SHORT,	0,
-			0,			PARAM_VOID,		0,				0,
-			0,			PARAM_BOOLEAN};
+			0,             /* A */
+			PARAM_BYTE,    /* B */
+			PARAM_CHAR,    /* C */
+			PARAM_DOUBLE,  /* D */
+			0,             /* E */
+			PARAM_FLOAT,   /* F */
+			0,             /* G */
+			0,             /* H */
+			PARAM_INT,     /* I */
+			PARAM_LONG,    /* J */
+			0,             /* K */
+			PARAM_OBJECT,  /* L */
+			0,             /* M */
+			0,             /* N */
+			0,             /* O */
+			0,             /* P */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			PARAM_OBJECT,  /* Q */
+#else
+			0,             /* Q */
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+			0,             /* R */
+			PARAM_SHORT,   /* S */
+			0,             /* T */
+			0,             /* U */
+			PARAM_VOID,    /* V */
+			0,             /* W */
+			0,             /* X */
+			0,             /* Y */
+			PARAM_BOOLEAN  /* Z */
+	};
 
 	UDATA index = 1;
 
@@ -1855,7 +1879,7 @@ ROMClassWriter::writeNativeSignature(Cursor *cursor, U_8 *methodDescriptor, U_8 
 		} else {
 			cursor->writeU8(nativeArgCharConversion[methodDescriptor[index] - 'A'], Cursor::GENERIC);
 		}
-		if ('L' == methodDescriptor[index]) {
+		if (J9_IS_OBJECT_OR_VALUETYPE(methodDescriptor[index])) {
 			while (';' != methodDescriptor[index]) {
 				++index;
 			}

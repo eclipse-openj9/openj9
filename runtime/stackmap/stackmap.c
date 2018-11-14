@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -436,7 +436,10 @@ mapStack(UDATA *scratch, UDATA totalStack, U_8 * map, J9ROMClass * romClass, J9R
 					J9ROMNAMEANDSIGNATURE_SIGNATURE(J9ROMFIELDREF_NAMEANDSIGNATURE
 													((J9ROMFieldRef *) (&(pool[index]))));
 				signature = (U_8) J9UTF8_DATA(utf8Signature)[0];
-				if ((signature == 'L') || (signature == '[')) {
+				if (J9_IS_OBJECT_OR_VALUETYPE(signature) || ('[' == signature)) {
+					/* Once flattenable Q Tpes are implemented, this will need to be revisited.
+					 * See https://github.com/eclipse/openj9/issues/4083.
+					 */
 					PUSH(OBJ);
 				} else {
 					PUSH(INT);

@@ -278,7 +278,16 @@ buildStackFromMethodSignature( J9BytecodeVerificationData *verifyData, UDATA **s
 			arity++;
 		}
 
-		if (args[i] == 'L') {
+		if (J9_IS_OBJECT_OR_VALUETYPE(args[i])) {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			if (args[i] == 'Q') {
+				/* There is no way to differentiate a Q and L type object once added
+				 * to the verifier's stack map. Until this is fixed, error
+				 * when a Q type would be added to the stack map.
+				 */
+				Assert_RTV_qTypeStackObjectUnimplemented();
+			}
+#endif
 			U_8 *string;
 			U_16 length = 0;
 
@@ -647,7 +656,16 @@ static UDATA *
 pushType(J9BytecodeVerificationData *verifyData, U_8 * signature, UDATA * stackTop)
 {
 	if (*signature != 'V') {
-		if ((*signature == '[') || (*signature == 'L')) {
+		if (('[' == *signature) || J9_IS_OBJECT_OR_VALUETYPE(*signature)) {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			if (*signature == 'Q') {
+				/* There is no way to differentiate a Q and L type object once added
+				 * to the verifier's stack map. Until this is fixed, error
+				 * when a Q type would be added to the stack map.
+				 */
+				Assert_RTV_qTypeStackObjectUnimplemented();
+			}
+#endif
 			PUSH(parseObjectOrArrayName(verifyData, signature));
 		} else {
 			UDATA baseType = (UDATA) argTypeCharConversion[*signature - 'A'];
@@ -1126,7 +1144,16 @@ parseObjectOrArrayName(J9BytecodeVerificationData *verifyData, U_8 *signature)
 		signature++;
 	}
 	arity = (UDATA) (signature - string);
-	if (*signature == 'L') {
+	if (J9_IS_OBJECT_OR_VALUETYPE(*signature)) {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (*signature == 'Q') {
+			/* There is no way to differentiate a Q and L type object once added
+			* to the verifier's stack map. Until this is fixed, error
+			* when a Q type would be added to the stack map.
+			*/
+				Assert_RTV_qTypeStackObjectUnimplemented();
+		}
+#endif
 		U_16 length = 0;
 		UDATA classIndex = 0;
 

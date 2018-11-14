@@ -217,7 +217,7 @@ findFieldSignatureClass(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA field
 	if ('[' == J9UTF8_DATA(signature)[0]) {
 		resolvedClass = internalFindClassUTF8(vmStruct, J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), classLoader, J9_FINDCLASS_FLAG_THROW_ON_FAIL);
 	} else {
-		Assert_VM_true('L' == J9UTF8_DATA(signature)[0]);
+		Assert_VM_true(J9_IS_OBJECT_OR_VALUETYPE(J9UTF8_DATA(signature)[0]));
 		/* skip fieldSignature's L and ; to have only CLASSNAME required for internalFindClassUTF8 */
 		resolvedClass = internalFindClassUTF8(vmStruct, &J9UTF8_DATA(signature)[1], J9UTF8_LENGTH(signature)-2, classLoader, J9_FINDCLASS_FLAG_THROW_ON_FAIL);
 	}

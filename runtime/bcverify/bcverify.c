@@ -1148,6 +1148,8 @@ printMethod (J9BytecodeVerificationData * verifyData)
 			printf( "long");
 			break;
 
+		case 'Q':
+			printf( "flattenable "); /* fallthrough*/
 		case 'L':
 			i++;
 			while(string[i] != ';')
@@ -1204,6 +1206,8 @@ printMethod (J9BytecodeVerificationData * verifyData)
 				printf( "long");
 				break;
 		
+			case 'Q':
+				printf("flattenable "); /* fallthrough*/
 			case 'L':
 				i++;
 				while(string[i] != ';')

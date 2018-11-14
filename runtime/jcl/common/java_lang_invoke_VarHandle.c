@@ -50,7 +50,7 @@ accessCheckFieldType(J9VMThread *currentThread, J9Class* lookupClass, J9Class* t
 	if (NULL != verifyData) {
 		U_8 *lookupSigData = J9UTF8_DATA(lookupSig);
 		/* Only check reference types (not primitive types) */
-		if ('L' == *lookupSigData) {
+		if (J9_IS_OBJECT_OR_VALUETYPE(*lookupSigData)) {
 			J9ClassLoader *lookupClassloader = lookupClass->classLoader;
 			J9ClassLoader *typeClassloader = type->classLoader;
 			if (typeClassloader != lookupClassloader) {

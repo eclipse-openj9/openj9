@@ -108,9 +108,9 @@ internalFindArrayClass(J9VMThread* vmThread, J9Module *j9module, UDATA arity, U_
 		/* the first level of arity is already present in the array class */
 		arity -= 1;
 
-	} else if (firstChar == 'L' && lastChar == ';') {
-
-		name += arity + 1; /* 1 for 'L' */
+	} else if ((';' == lastChar) && J9_IS_OBJECT_OR_VALUETYPE(firstChar)) {
+		/* TODO: ValueTypes This must be revisisted for flattenable arrays. See https://github.com/eclipse/openj9/issues/1389 */
+		name += arity + 1; /* 1 for 'L' or 'Q' */
 		length -= arity + 2; /* 2 for 'L and ';' */
 
 		arrayClass = internalFindClassInModule(vmThread, j9module, name, length, classLoader, options);

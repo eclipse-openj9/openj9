@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -85,15 +85,15 @@ j9bcv_checkClassLoadingConstraintsForSignature (J9VMThread* vmThread, J9ClassLoa
 
 	omrthread_monitor_enter(javaVM->classTableMutex);
 	for (;;) {
-		/* find a 'L', indicating the beginning of a class name */
-		while (index  < length && J9UTF8_DATA(sig1)[index] != 'L') {
+		/* find an 'L' or 'Q', indicating the beginning of a class name */
+		while ((index  < length) && J9_IS_NOT_OBJECT_AND_NOT_VALUETYPE(J9UTF8_DATA(sig1)[index])) {
 			index++;
 		}
 		if (index >= length) {
 			break;
 		}
 
-		/* skip the 'L'; */
+		/* skip the 'L' or 'Q'; */
 		index++;
 
 		/* find the ';' marking the end of the class name */

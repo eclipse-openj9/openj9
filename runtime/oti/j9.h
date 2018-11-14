@@ -323,8 +323,12 @@ static const struct { \
 /* Macros for ValueTypes */
 #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
 #define J9_IS_J9CLASS_VALUETYPE(clazz) J9_ARE_ALL_BITS_SET(clazz->classFlags, J9ClassIsValueType)
+#define J9_IS_OBJECT_OR_VALUETYPE(sigChar) (('L' == (sigChar)) || ('Q' == (sigChar)))
+#define J9_IS_NOT_OBJECT_AND_NOT_VALUETYPE(sigChar) (('L' != (sigChar)) && ('Q' != (sigChar)))
 #else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 #define J9_IS_J9CLASS_VALUETYPE(clazz) FALSE
+#define J9_IS_OBJECT_OR_VALUETYPE(sigChar) ('L' == (sigChar))
+#define J9_IS_NOT_OBJECT_AND_NOT_VALUETYPE(sigChar) ('L' != (sigChar))
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 #if defined(OPENJ9_BUILD)

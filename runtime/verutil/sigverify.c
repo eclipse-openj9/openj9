@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -195,10 +195,10 @@ checkSignatureInlined (U_8* signatureBytes, UDATA signatureLength, UDATA *curren
 		}
 	}
 
-	if (*cursor == 'L') {
+	if (J9_IS_OBJECT_OR_VALUETYPE(*cursor)) {
 		IDATA bytesConsumed = 0;
 
-		cursor += 1; /* skip the 'L' */
+		cursor += 1; /* skip the 'L' or 'Q'*/
 		bytesConsumed = verifyIdentifierUtf8Impl(cursor, signatureEnd, TRUE);
 
 		/* Identifier must end in a semicolon */

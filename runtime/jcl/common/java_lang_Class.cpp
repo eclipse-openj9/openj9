@@ -326,6 +326,9 @@ Java_com_ibm_oti_vm_VM_getClassNameImpl(JNIEnv *env, jclass recv, jclass jlClass
 				utfData[arity] = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(leafComponentType->arrayClass->romClass))[1];
 			} else {
 				/* The / to . conversion is done later, so just copy the RAW class name here */
+				/* TODO: ValueTypes Once there are more specs for Java API Q types, this will need to be updated.
+				 * See https://github.com/eclipse/openj9/issues/4083
+				 */
 				utfData[arity] = 'L';
 				memcpy(utfData + arity + 1, J9UTF8_DATA(leafName), J9UTF8_LENGTH(leafName));
 				utfData[utfLength - 1] = ';';
