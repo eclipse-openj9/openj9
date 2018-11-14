@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 IBM Corp. and others
+ * Copyright (c) 2012, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,19 +19,18 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package com.ibm.j9ddr.corereaders.minidump.unwind;
 
 public class RuntimeFunction implements Comparable<RuntimeFunction> {
 
 	private long startOffset, endOffset, unwindInfo;
-	
+
 	public RuntimeFunction(long startOffset, long endOffset, long unwindInfo) {
 		this.startOffset = startOffset;
 		this.endOffset = endOffset;
 		this.unwindInfo = unwindInfo;
 	}
-	
+
 	public String toString() {
 		return String.format("start: 0x%08X end: 0x%08X UnwindInfoAddress 0x%08X", startOffset, endOffset, unwindInfo);
 	}
@@ -39,14 +38,14 @@ public class RuntimeFunction implements Comparable<RuntimeFunction> {
 	public long getUnwindInfoAddress() {
 		return unwindInfo;
 	}
-	
+
 	public long getStartOffset() {
 		return this.startOffset;
 	}
 
 	public boolean contains(long address) {
 		// System.err.println(String.format("Checking 0x%08x <= 0x%08x < 0x%08x", startOffset, address, endOffset ));
-		if( address >= startOffset && address < endOffset) {
+		if (address >= startOffset && address < endOffset) {
 			return true;
 		}
 		return false;
@@ -54,15 +53,10 @@ public class RuntimeFunction implements Comparable<RuntimeFunction> {
 
 	/*
 	 * We assume that two areas don't overlap.
-	 * Offsets are long's so we can't just return (a - b)
 	 */
+	@Override
 	public int compareTo(RuntimeFunction rf) {
-		if( this.startOffset - rf.startOffset < 0 ) {
-			return -1;
-		} else if ( this.startOffset - rf.startOffset > 0 ) {
-			return 1;
-		}
-		return 0;
+		return Long.compare(this.startOffset, rf.startOffset);
 	}
 
 }
