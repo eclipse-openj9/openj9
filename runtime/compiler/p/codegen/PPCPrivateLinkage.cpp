@@ -1429,7 +1429,7 @@ int32_t TR::PPCPrivateLinkage::buildPrivateLinkageArgs(TR::Node                 
    bool isHelperCall = linkage == TR_Helper || linkage == TR_CHelper;
    bool rightToLeft = isHelperCall &&
                       //we want the arguments for induceOSR to be passed from left to right as in any other non-helper call
-                      callNode->getSymbolReference() != cg()->symRefTab()->element(TR_induceOSRAtCurrentPC);
+                      !callNode->getSymbolReference()->isOSRInductionHelper();
 
    if (rightToLeft)
       {
@@ -2669,7 +2669,7 @@ void TR::PPCPrivateLinkage::buildDirectCall(TR::Node *callNode,
                                                                   snippet);
 
       // Nop is necessary due to confusion when resolving shared slots at a transition
-      if (callSymRef == cg()->symRefTab()->element(TR_induceOSRAtCurrentPC))
+      if (callSymRef->isOSRInductionHelper())
          cg()->generateNop(callNode);
       }
 

@@ -2009,7 +2009,7 @@ void TR::X86PrivateLinkage::buildDirectCall(TR::SymbolReference *methodSymRef, T
       generateBoundaryAvoidanceInstruction(TR::X86BoundaryAvoidanceInstruction::unresolvedAtomicRegions, 8, 8, callInstr, cg());
 
       // Nop is necessary due to confusion when resolving shared slots at a transition
-      if (methodSymRef == cg()->symRefTab()->element(TR_induceOSRAtCurrentPC))
+      if (methodSymRef->isOSRInductionHelper())
          generatePaddingInstruction(1, callNode, cg());
       }
    else

@@ -339,7 +339,7 @@ TR::S390J9CallSnippet::emitSnippetBody()
 
    //induceOSRAtCurrentPC is implemented in the VM, and it knows, by looking at the current PC, what method it needs to
    //continue execution in interpreted mode. Therefore, it doesn't need the method pointer.
-   if (runtimeHelper != TR_induceOSRAtCurrentPC)
+   if (!glueRef->isOSRInductionHelper())
       {
       // Store the method pointer: it is NULL for unresolved
       // This field must be doubleword aligned for 64-bit and word aligned for 32-bit
