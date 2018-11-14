@@ -1381,7 +1381,7 @@ exit:
 			}
 			break;
 		case J9NtcBoolean:
-			*returnStorage = (UDATA)(U_8)*returnStorage;
+			*returnStorage = ((UDATA)(U_8)*returnStorage) & 1;
 			break;
 		case J9NtcByte:
 			*returnStorage = (UDATA)(IDATA)(I_8)*returnStorage;
