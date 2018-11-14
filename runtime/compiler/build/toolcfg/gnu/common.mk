@@ -418,9 +418,13 @@ ifeq ($(HOST_ARCH),x)
         SOLINK_SLINK+=dl m
     endif
 
-    SUPPORT_STATIC_LIBCXX = $(shell $(SOLINK_CMD) -static-libstdc++ 2>&1 | grep "unrecognized option" > /dev/null; echo $$?)
-    ifneq ($(SUPPORT_STATIC_LIBCXX),0)
-        SOLINK_FLAGS+=-static-libgcc -static-libstdc++
+    # Using the linker option -static-libgcc results in an error on OSX. The option -static-libstdc++ is unused. Therefore
+    # these options have been excluded from OSX
+    ifneq ($(OS),osx)
+        SUPPORT_STATIC_LIBCXX = $(shell $(SOLINK_CMD) -static-libstdc++ 2>&1 | grep "unrecognized option" > /dev/null; echo $$?)
+        ifneq ($(SUPPORT_STATIC_LIBCXX),0)
+            SOLINK_FLAGS+=-static-libgcc -static-libstdc++
+        endif
     endif
 endif
 
