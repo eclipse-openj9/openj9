@@ -1576,8 +1576,6 @@ TR_IProfiler::profilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIn
             int32_t persistentCount = getSamplingCount(persistentEntry, comp);
             if(currentCount >= persistentCount)
                {
-               _STATS_IPEntryChoosePersistent++;
-               currentEntry->copyFromEntry(persistentEntry, comp);
                return currentEntry;
                }
             else
