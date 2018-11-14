@@ -197,7 +197,7 @@
 		</groups>
 		<subsets>
 			<subset>9</subset>
-			<!-- disable for 11 https://github.com/eclipse/openj9/issues/3516 -->
+			<subset>11</subset>
 		</subsets>
 	</test>
 	<test>
@@ -219,7 +219,7 @@
 		</groups>
 		<subsets>
 			<subset>9</subset>
-			<!-- disable for 11 https://github.com/eclipse/openj9/issues/3516 -->
+			<subset>11</subset>
 		</subsets>
 	</test>
 	<test>
@@ -241,7 +241,7 @@
 		</groups>
 		<subsets>
 			<subset>9</subset>
-			<!-- disable jdk11 issue: https://github.com/eclipse/openj9/issues/3516 -->
+			<subset>11</subset>
 		</subsets>
 	</test>
 	<test>
@@ -262,7 +262,7 @@
 		</groups>
 		<subsets>
 			<subset>9</subset>
-			<!-- disable for 11 https://github.com/eclipse/openj9/issues/3516 -->
+			<subset>11</subset>
 		</subsets>
 	</test>
 	<test>

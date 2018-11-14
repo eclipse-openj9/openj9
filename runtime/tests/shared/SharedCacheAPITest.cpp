@@ -48,8 +48,13 @@ getCacheDir(J9JavaVM *vm, char *cacheDir)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	IDATA rc;
 	char cacheDirNoTestBasedir[J9SH_MAXPATH];
+	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 
-	rc = j9shmem_getDir(NULL, 0, cacheDirNoTestBasedir, J9SH_MAXPATH);
+	if (J2SE_VERSION(vm) >= J2SE_V11) {
+		flags |= J9SHMEM_GETDIR_USE_USERHOME;
+	}
+
+	rc = j9shmem_getDir(NULL, flags, cacheDirNoTestBasedir, J9SH_MAXPATH);
 	if (rc == -1) {
 		j9tty_printf(PORTLIB, "Cannot get a directory\n");
 	}
