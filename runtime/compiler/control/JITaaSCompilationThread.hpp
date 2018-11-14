@@ -168,6 +168,19 @@ void printJITaaSMsgStats(J9JITConfig *);
 void printJITaaSCHTableStats(J9JITConfig *, TR::CompilationInfo *);
 void printJITaaSCacheStats(J9JITConfig *, TR::CompilationInfo *);
 
+namespace TR
+{
+// Objects of this type are instantiated at JITaaS server
+class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
+   {
+   public:
+      friend class TR::CompilationInfo;
+      CompilationInfoPerThreadRemote(TR::CompilationInfo &compInfo, J9JITConfig *jitConfig, int32_t id, bool isDiagnosticThread)
+         :CompilationInfoPerThread(compInfo, jitConfig, id, isDiagnosticThread) {}
+      void processEntry(TR_MethodToBeCompiled &entry, J9::J9SegmentProvider &scratchSegmentProvider) override;
+   };
+}
+
 class JITaaSHelpers
    {
    public:

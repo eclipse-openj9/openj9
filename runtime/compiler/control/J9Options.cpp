@@ -2836,7 +2836,7 @@ J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR_Mem
    bool rtResolve = (bool) *((uint8_t *) options + clientOptionsSize - sizeof(bool));
    J9JITConfig *jitConfig = (J9JITConfig *) _feBase;
    if (rtResolve)
-      jitConfig->runtimeFlags |= J9JIT_RUNTIME_RESOLVE;
+      jitConfig->runtimeFlags |= J9JIT_RUNTIME_RESOLVE; // JITaaS FIXME: don't change global flags
 
    // disable caching of resolved methods if env variable TR_DisableResolvedMethodsCaching is set
    TR_ResolvedJ9JITaaSServerMethod::_useCaching = !feGetEnv("TR_DisableResolvedMethodsCaching");
