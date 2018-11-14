@@ -2367,13 +2367,13 @@ JVM_SocketShutdown(jint fd, jint howto)
 {
 	jint retVal = JNI_FALSE;
 
-#if defined(J9UNIX) || defined(OSX)
+#if defined(J9UNIX)
 	retVal = shutdown(fd, howto);
-#elif defined(WIN32) /* defined(J9UNIX) || defined(OSX) */
+#elif defined(WIN32) /* defined(J9UNIX) */
 	retVal = closesocket(fd);
-#else /* defined(J9UNIX) || defined(OSX) */
+#else /* defined(J9UNIX) */
 	assert(!"JVM_SocketShutdown() stubbed!");
-#endif /* defined(J9UNIX) || defined(OSX) */
+#endif /* defined(J9UNIX) */
 	
 	return retVal;
 }
