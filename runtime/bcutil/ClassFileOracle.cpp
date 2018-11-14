@@ -839,11 +839,20 @@ ClassFileOracle::computeSendSlotCount(U_16 methodIndex)
 			while ((index < count) && ('[' == bytes[index])) {
 				++index;
 			}
-			if ((index >= count) || ('L' != bytes[index])) {
+			if ((index >= count)
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				|| (('L' != bytes[index]) && ('Q' != bytes[index]))
+#else
+				|| ('L' != bytes[index])
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+			) {
 				break;
 			}
 			/* fall through */
 		case 'L':
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case 'Q':
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 			++index;
 			while ((index < count) && (';' != bytes[index])) {
 				++index;

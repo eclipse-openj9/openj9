@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,13 +37,20 @@ getSendSlotsFromSignature(const U_8* signature)
 		case '[':
 			/* skip all '['s */
 			for (i++; signature[i] == '['; i++);
-			if (signature[i] == 'L') {
+			if ((signature[i] == 'L')
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				|| (signature[i] == 'Q')
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+			) {
 				/* FALL THRU */
 			} else {
 				sendArgs++;
 				break;
 			}
 		case 'L':
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case 'Q':
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 			for (i++; signature[i] != ';'; i++);
 			sendArgs++;
 			break;
