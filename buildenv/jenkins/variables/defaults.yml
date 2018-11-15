@@ -81,7 +81,7 @@ linux_ppc-64_cmprssptrs_le:
     11: '/usr/lib/jvm/adoptojdk-java-10'
     next: '/usr/lib/jvm/adoptojdk-java-10'
   release:
-    8: 'linux-ppc64-normal-server-release'
+    8: 'linux-ppc64le-normal-server-release'
     9: 'linux-ppc64le-normal-server-release'
     10: 'linux-ppc64le-normal-server-release'
     11: 'linux-ppc64le-normal-server-release'
