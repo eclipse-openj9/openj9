@@ -512,16 +512,6 @@ MHInterpreter$(UMA_DOT_O) : MHInterpreter.cpp
 endif
 </#if>
 <#if uma.spec.processor.amd64>
-# special handling BytecodeInterpreter.cpp and DebugBytecodeInterpreter.cpp
-BytecodeInterpreter$(UMA_DOT_O) : BytecodeInterpreter.cpp
-	$(INTERP_GCC) $(CXXFLAGS) -c $<
-
-DebugBytecodeInterpreter$(UMA_DOT_O) : DebugBytecodeInterpreter.cpp
-	$(INTERP_GCC) $(CXXFLAGS) -c $<
-
-MHInterpreter$(UMA_DOT_O) : MHInterpreter.cpp
-	$(INTERP_GCC) $(CXXFLAGS) -c $<
-
 # Special handling for unused result warnings.
 closures$(UMA_DOT_O) : closures.c
 	$(CC) $(CFLAGS) -Wno-unused-result -c -o $@ $<
