@@ -625,7 +625,9 @@ def set_job_properties(JOB_TYPE) {
                 'VENDOR_BRANCH':"${VENDOR_BRANCH_DEFAULT}",
                 'VENDOR_CREDENTIALS_ID':"${VENDOR_CREDENTIALS_ID_DEFAULT}",
                 'SETUP_LABEL':'',
-                'BUILD_IDENTIFIER':''])
+                'BUILD_IDENTIFIER':'',
+                'ghprbGhRepository':'',
+                'ghprbActualCommit':''])
         }
 
         // Pipeline or PR
