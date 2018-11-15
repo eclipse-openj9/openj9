@@ -1340,6 +1340,15 @@ TR::CompilationInfo::getMethodBytecodeSize(J9Method* method)
    {
    if (auto stream = TR::CompilationInfo::getStream())
       {
+         {
+         ClientSessionData *clientSessionData = TR::compInfoPT->getClientData();
+         OMR::CriticalSection getRemoteROMClass(clientSessionData->getROMMapMonitor());
+         auto it = clientSessionData->getJ9MethodMap().find(method);
+         if (it != clientSessionData->getJ9MethodMap().end())
+            {
+            return getMethodBytecodeSize(it->second._romMethod);
+            }
+         }
       stream->write(JITaaS::J9ServerMessageType::CompInfo_getMethodBytecodeSize, method);
       return std::get<0>(stream->read<uint32_t>());
       }
@@ -1357,6 +1366,15 @@ TR::CompilationInfo::isJSR292(J9Method *j9method) // Check to see if the J9AccMe
    {
    if (auto stream = TR::CompilationInfo::getStream())
       {
+         {
+         ClientSessionData *clientSessionData = TR::compInfoPT->getClientData();
+         OMR::CriticalSection getRemoteROMClass(clientSessionData->getROMMapMonitor());
+         auto it = clientSessionData->getJ9MethodMap().find(j9method);
+         if (it != clientSessionData->getJ9MethodMap().end())
+            {
+            return isJSR292(it->second._romMethod);
+            }
+         }
       stream->write(JITaaS::J9ServerMessageType::CompInfo_isJSR292, j9method);
       return std::get<0>(stream->read<bool>());
       }
@@ -10248,7 +10266,7 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
          TR_Hotness h = compiler->getMethodHotness();
          if (h < numHotnessLevels)
             _compInfo._statsOptLevels[(int32_t)h]++;
-         if (_methodBeingCompiled->isJNINative())
+         if (compilee->isJNINative())
             _compInfo._statNumJNIMethodsCompiled++;
          const char * hotnessString = compiler->getHotnessName(h);
          TR_ASSERT(hotnessString, "expected to have a hotness string");
@@ -10313,7 +10331,7 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
          || (compiler->getOption(TR_CountOptTransformations) && compiler->getVerboseOptTransformationCount() >= 1))
             {
             const uint32_t bytecodeSize = TR::CompilationInfo::getMethodBytecodeSize(method);
-            const bool isJniNative = _methodBeingCompiled->isJNINative();
+            const bool isJniNative = compilee->isJNINative();
             TR_VerboseLog::vlogAcquire();
             TR_VerboseLog::writeLine(TR_Vlog_COMP,"(%s%s) %s @ " POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT,
                compilationTypeString,
@@ -10442,7 +10460,7 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
          snprintf(compilationAttributes, sizeof(compilationAttributes), "%s %s %s %s %s %s %s",
                       prexString,
                       (_compInfo.useSeparateCompilationThread() && !_methodBeingCompiled->_async) ? "sync" : "",
-                      TR::CompilationInfo::isJNINative(method) ? "JNI" : "",
+                      compilee->isJNINative()? "JNI" : "",
                       compiler->getOption(TR_EnableOSR) ? "OSR" : "",
                       (compiler->getRecompilationInfo() && compiler->getRecompilationInfo()->getJittedBodyInfo()->getUsesGCR()) ? "GCR" : "",
                       compiler->isDLT() ? "DLT" : "",
