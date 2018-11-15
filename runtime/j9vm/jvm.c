@@ -581,7 +581,7 @@ jint JNICALL DestroyJavaVM(JavaVM * javaVM)
 #if defined(J9UNIX) || defined(J9ZOS390)
 		j9vm_dllHandle = 0;
 		java_dllHandle = 0;
-#endif
+#endif /* defined(J9UNIX) || defined(J9ZOS390) */
 
 		BFUjavaVM = NULL;
 	} else {
@@ -1010,7 +1010,7 @@ removeSuffix(char *string, const char *suffix)
 }
 #endif /* J9VM_JAVA9_BUILD < 150 */
 
-#if defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
+#if defined(J9UNIX) || defined(J9ZOS390)
 static BOOLEAN 
 preloadLibraries(void)
 {
@@ -1221,7 +1221,7 @@ preloadLibraries(void)
 #endif /* J9VM_OPT_HARMONY */
 	return TRUE;
 }
-#endif  /* defined(J9UNIX) || defined(J9ZOS390) */
+#endif /* defined(J9UNIX) || defined(J9ZOS390) */
 
 
 
@@ -1886,7 +1886,7 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 		libpathValue = envTemp;
 	}
 #endif
-#if defined(J9UNIX) || defined(OSX)
+#if defined(J9UNIX)
 	ldLibraryPathValue = getenv(ENV_LD_LIB_PATH);
 	if (NULL != ldLibraryPathValue) {
 		size_t pathLength = strlen(ldLibraryPathValue) +1;
@@ -1898,7 +1898,7 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 		strcpy(envTemp, ldLibraryPathValue);
 		ldLibraryPathValue = envTemp;
 	}
-#endif
+#endif /* defined(J9UNIX) */
 
 	if (BFUjavaVM != NULL) {
 		result = JNI_ERR;
@@ -2076,11 +2076,11 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 		ibmMallocTraceSet = TRUE;
 	altJavaHomeSpecified = (GetEnvironmentVariableW(ALT_JAVA_HOME_DIR_STR, NULL, 0) > 0);
 #endif
-#if defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
+#if defined(J9UNIX) || defined(J9ZOS390)
 	if (getenv(IBM_MALLOCTRACE_STR)) {
 		ibmMallocTraceSet = TRUE;
 	}
-#endif
+#endif /* defined(J9UNIX) || defined(J9ZOS390) */
 
 	args = (JavaVMInitArgs *)vm_args;
 	launcherArgumentsSize = initialArgumentScan(args, &specialArgs);
@@ -2661,7 +2661,7 @@ preloadLibrary(char* dllName, BOOLEAN inJVMDir)
 		fprintf(stderr,"jvm.dll preloadLibrary: LoadLibrary(%s) error: %x\n", buffer->data, GetLastError());
 	}
 #endif
-#if defined(J9UNIX) || defined(OSX)
+#if defined(J9UNIX)
 	buffer = jvmBufferCat(buffer, "/lib");
 	buffer = jvmBufferCat(buffer, dllName);
 	buffer = jvmBufferCat(buffer, J9PORT_LIBRARY_SUFFIX);
@@ -2688,7 +2688,7 @@ preloadLibrary(char* dllName, BOOLEAN inJVMDir)
 	if (handle == NULL) {
 		fprintf(stderr,"libjvm.so preloadLibrary(%s): %s\n", buffer->data, dlerror());
 	}
-#endif /* J9UNIX || OSX */
+#endif /* defined(J9UNIX) */
 #ifdef J9ZOS390
 	buffer = jvmBufferCat(buffer, "/lib");
 	buffer = jvmBufferCat(buffer, dllName);
@@ -3718,7 +3718,7 @@ JVM_LoadSystemLibrary(const char *libName)
 
 #endif
 
-#if defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
+#if defined(J9UNIX) || defined(J9ZOS390)
 	void *dllHandle;
 
 	Trc_SC_LoadSystemLibrary_Entry(libName);
@@ -3742,7 +3742,7 @@ JVM_LoadSystemLibrary(const char *libName)
 		return dllHandle;
 	}
 
-#endif
+#endif /* defined(J9UNIX) || defined(J9ZOS390) */
 
 	/* We are here means we failed to load library. Throw java.lang.UnsatisfiedLinkError */
 	Trc_SC_LoadSystemLibrary_LoadFailed(libName);
@@ -3828,7 +3828,7 @@ _end:
 		Trc_SC_LoadLibrary_Exit(dllHandle);
 		return dllHandle;
 	}
-#endif
+#endif /* defined(J9UNIX) || defined(J9ZOS390) */
 
 	/* We are here means we failed to load library. Throw java.lang.UnsatisfiedLinkError */
  	(*vm)->GetEnv(vm, (void **) &env, JNI_VERSION_1_2);
@@ -3866,11 +3866,11 @@ JVM_FindLibraryEntry(void* handle, const char *functionName)
 
 #if defined(WIN32)
 	result = GetProcAddress ((HINSTANCE)handle, (LPCSTR)functionName);
-#elif defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
+#elif defined(J9UNIX) || defined(J9ZOS390) /* defined(WIN32) */
 	result = (void*)dlsym( (void*)handle, (char *)functionName );
-#else
+#else /* defined(WIN32) */
 #error "Please implemente jvm.c:JVM_FindLibraryEntry(void* handle, const char *functionName)"
-#endif
+#endif /* defined(WIN32) */
 
 	Trc_SC_FindLibraryEntry_Exit(result);
 
@@ -3896,15 +3896,16 @@ JVM_SetLength(jint fd, jlong length)
 #if defined(WIN32_IBMC)
 	printf("_JVM_SetLength@12 called but not yet implemented. Exiting.");
 	exit(43);
-#elif defined(WIN32)
+#elif defined(WIN32) /* defined(WIN32_IBMC) */
 	result = _chsize(fd, (long)length);
-#elif defined(J9UNIX) && !defined(J9ZTPF)
+#elif defined(J9UNIX) && !defined(J9ZTPF) && !defined(OSX) /* defined(WIN32_IBMC) */
 	result = ftruncate64(fd, length);
-#elif defined(J9ZOS390) || defined(J9ZTPF) || defined(OSX)
+#elif defined(J9ZOS390) || defined(J9ZTPF) || defined(OSX) /* defined(WIN32_IBMC) */
+	/* ftruncate64 is unsupported on OSX. */
 	result = ftruncate(fd, length);
-#else 
+#else /* defined(WIN32_IBMC) */
 #error "Please provide an implementation of jvm.c:JVM_SetLength(jint fd, jlong length)"
-#endif
+#endif /* defined(WIN32_IBMC) */
 
 	Trc_SC_SetLength_Exit(result);
 
@@ -3996,15 +3997,18 @@ JVM_Close(jint descriptor)
 jint JNICALL
 JVM_Available(jint descriptor, jlong* bytes)
 {
-	jlong curr=0;
-	jlong end=0;
+	jlong curr = 0;
+	jlong end = 0;
 
-#if defined(J9UNIX) && !defined(J9ZTPF)
-		struct stat64 tempStat;
-#endif
+	/* On OSX, stat64 and fstat64 are deprecated.
+	 * Thus, stat and fstat are used on OSX.
+	 */
+#if defined(J9UNIX) && !defined(J9ZTPF) && !defined(OSX)
+	struct stat64 tempStat;
+#endif /* defined(J9UNIX) && !defined(J9ZTPF) && !defined(OSX) */
 #if defined(J9ZOS390) || defined(J9ZTPF) || defined(OSX)
-		struct stat tempStat;
-#endif
+	struct stat tempStat;
+#endif /* defined(J9ZOS390) || defined(J9ZTPF) || defined(OSX) */
 #if defined(LINUX)
 	loff_t longResult = 0;
 #endif
@@ -4159,13 +4163,13 @@ JVM_Lseek(jint descriptor, jlong bytesToSeek, jint origin)
 		return JVM_IO_ERR;
 	}
 
-#ifdef WIN32
+#if defined(WIN32)
 #ifdef __IBMC__
 	result = lseek(descriptor, (long) bytesToSeek, origin);
 #else
 	result = _lseeki64(descriptor, bytesToSeek, origin);
 #endif
-#elif defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
+#elif defined(J9UNIX) || defined(J9ZOS390) /* defined(WIN32) */
 #if defined(LINUX) && !defined(J9VM_ENV_DATA64)
 
 #if __GLIBC_PREREQ(2,4)
@@ -4180,12 +4184,12 @@ JVM_Lseek(jint descriptor, jlong bytesToSeek, jint origin)
 	}
 #endif
 
-#else	/* defined(LINUX) && !defined(J9VM_ENV_DATA64) */
+#else /* defined(LINUX) && !defined(J9VM_ENV_DATA64) */
 	result = lseek(descriptor, (off_t) bytesToSeek, origin);
 #endif /* !defined(LINUX) ||defined(J9VM_ENV_DATA64) */
-#else
+#else /* defined(WIN32) */
 #error No JVM_Lseek provided
-#endif
+#endif /* defined(WIN32) */
 
 	Trc_SC_Lseek_Exit(result);
 
@@ -4241,15 +4245,20 @@ jint JNICALL
 JVM_Open(const char* filename, jint flags, jint mode)
 {
 	int errorVal = 0;
-	jint returnVal;
-#if defined(J9UNIX) && !defined(J9ZTPF)
+	jint returnVal = 0;
+
+	/* On OSX, stat64 and fstat64 are deprecated.
+	 * Thus, stat and fstat are used on OSX.
+	 */
+#if defined(J9UNIX) && !defined(J9ZTPF) && !defined(OSX)
 	struct stat64 tempStat;
-	int doUnlink;
-#endif
+	int doUnlink = 0;
+#endif /* defined(J9UNIX) && !defined(J9ZTPF) && !defined(OSX) */
 #if defined(J9ZOS390) || defined(J9ZTPF) || defined(OSX)
 	struct stat tempStat;
-	int doUnlink;
-#endif
+	int doUnlink = 0;
+#endif /* defined(J9ZOS390) || defined(J9ZTPF) || defined(OSX) */
+
 	Trc_SC_Open_Entry(filename, flags, mode);
 
 #define JVM_EEXIST -100
@@ -4262,7 +4271,7 @@ JVM_Open(const char* filename, jint flags, jint mode)
 #endif
 #endif
 
-#if defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
+#if defined(J9UNIX) || defined(J9ZOS390)
 #if defined(OSX)
 #define EXTRA_OPEN_FLAGS 0
 #else
@@ -4278,8 +4287,8 @@ JVM_Open(const char* filename, jint flags, jint mode)
     flags &= (O_CREAT | O_APPEND | O_RDONLY | O_RDWR | O_TRUNC | O_WRONLY | O_EXCL | O_NOCTTY | O_NONBLOCK | O_NDELAY | O_SYNC | O_DSYNC);
 #else /* !defined(J9ZTPF) */
     flags &= (O_CREAT | O_APPEND | O_RDONLY | O_RDWR | O_TRUNC | O_WRONLY | O_EXCL | O_NOCTTY | O_NONBLOCK | O_SYNC | O_DSYNC);
-#endif /* defined(J9ZTPF) */
-#endif /* defined(J9UNIX) || defined(J9ZOS390) || defined(OSX) */
+#endif /* !defined(J9ZTPF) */
+#endif /* defined(J9UNIX) || defined(J9ZOS390) */
 
 	/* For some reason, although JVM_NativePath is called on the filenames, some of them seem to
 		get mangled between JVM_NativePath being called and JVM_open being called */
@@ -4288,7 +4297,7 @@ JVM_Open(const char* filename, jint flags, jint mode)
 #if defined(J9UNIX) || defined(J9ZOS390)
 	do {
 		errorVal = 0;
-#endif
+#endif /* defined(J9UNIX) || defined(J9ZOS390) */
 
 #ifdef J9OS_I5
 	returnVal = Xj9Open_JDK6((char *)filename, (flags | EXTRA_OPEN_FLAGS), mode);
@@ -4325,7 +4334,7 @@ JVM_Open(const char* filename, jint flags, jint mode)
 	/* Unix does not have an O_TEMPORARY flag. Unlink if Sovereign O_TEMPORARY flag passed in. */
 	if ((returnVal>=0) && doUnlink)
 		unlink(filename);
-#endif
+#endif /* defined(J9UNIX) || defined(J9ZOS390) */
 
 	if (returnVal<0) {
 		Trc_SC_Open_error(filename, errorVal);
@@ -4357,18 +4366,18 @@ JVM_Sync(jint descriptor)
 		return -1;
 	}
 
-#ifdef WIN32
+#if defined(WIN32)
 #ifdef WIN32_IBMC
 	printf("_JVM_Sync@4 called but not yet implemented. Exiting.\n");
 	exit(44);
 #else
 	result = _commit(descriptor);
 #endif
-#elif defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
+#elif defined(J9UNIX) || defined(J9ZOS390) /* defined(WIN32) */
 	result = fsync(descriptor);
-#else
+#else /* defined(WIN32) */
 #error No JVM_Sync implementation
-#endif
+#endif /* defined(WIN32) */
 
 	Trc_SC_Sync_Exit(result);
 
@@ -5324,7 +5333,7 @@ JVM_SocketAvailable(jint descriptor, jint* result)
 	/* Windows JCL native doesn't invoke this JVM method */
 	Assert_SC_unreachable();
 #endif
-#if defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
+#if defined(J9UNIX) || defined(J9ZOS390)
 	if (0 <= descriptor) {
 		do {
 			retVal = ioctl(descriptor, FIONREAD, result);
@@ -5338,7 +5347,7 @@ JVM_SocketAvailable(jint descriptor, jint* result)
 			retVal = 0;
 		}
 	}
-#endif
+#endif /* defined(J9UNIX) || defined(J9ZOS390) */
 
 	Trc_SC_SocketAvailable_Exit(retVal, *result);
 
@@ -5389,11 +5398,11 @@ JVM_Timeout(jint descriptor, jint timeout)
 	struct fd_set fdset;
 #endif
 
-#if defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
+#if defined(J9UNIX) || defined(J9ZOS390)
 	jint returnVal = 0; 
 	jint crazyCntr = 10;
 	fd_set fdset;
-#endif
+#endif /* defined(J9UNIX) || defined(J9ZOS390) */
 
 	Trc_SC_Timeout_Entry(descriptor, timeout);
 
@@ -5401,15 +5410,15 @@ JVM_Timeout(jint descriptor, jint timeout)
 	tval.tv_usec = (timeout % 1000) * 1000;
 	FD_ZERO(&fdset);
 	FD_SET((u_int)descriptor, &fdset);
-#ifdef WIN32
+#if defined(WIN32)
 	result = select(0, &fdset, 0, 0, &tval);
-#elif defined(J9ZTPF)
+#elif defined(J9ZTPF) /* defined(WIN32) */
         if (-1 == timeout)  {
                 result = select(0, &fdset, 0, 0, NULL);
         } else  {
                 result = select(0, &fdset, 0, 0, &tval);
         }
-#elif defined(J9UNIX) || defined(J9ZOS390) || defined(OSX)
+#elif defined(J9UNIX) || defined(J9ZOS390) /* defined(WIN32) */
 	do {
 		crazyCntr--;
 		returnVal = select(descriptor+1, &fdset, 0, 0, &tval);
@@ -5422,7 +5431,7 @@ JVM_Timeout(jint descriptor, jint timeout)
 			break;
 		}
 	} while (crazyCntr);
-#endif
+#endif /* defined(WIN32) */
 
 	Trc_SC_Timeout_Exit(result);
 
