@@ -8223,8 +8223,10 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             arity = std::get<2>(recv);
             leafClass = std::get<3>(recv);
             const std::string &leafClassNameStr = std::get<4>(recv);
-            leafClassNameChars = (char *) &leafClassNameStr[0];
             leafClassNameLength = leafClassNameStr.length();
+            leafClassNameChars = (char *) alloca(leafClassNameLength + 1);
+            memcpy(leafClassNameChars, leafClassNameStr.data(), leafClassNameLength);
+            leafClassNameChars[leafClassNameLength] = 0;
             isPrimitiveClass = std::get<5>(recv);
             }
          else
@@ -8610,14 +8612,14 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          bool *haveFilter = NULL;
          bool knotEnabled = !comp()->getOption(TR_DisableKnownObjectTable);
          char *nextSignature;
-
-         if (auto stream = TR::CompilationInfo::getStream())
+         if (comp()->isOutOfProcessCompilation())
             {
+            auto stream = TR::CompilationInfo::getStream();
             stream->write(JITaaS::J9ServerMessageType::runFEMacro_invokeFilterArgumentsHandle, thunkDetails->getHandleRef());
-            auto recv = stream->read<int32_t, std::vector<TR::KnownObjectTable::Index>, std::string>();
+            auto recv = stream->read<int32_t, std::string, std::vector<uintptrj_t>>();
             startPos = std::get<0>(recv);
-            std::vector<TR::KnownObjectTable::Index> filterIndices = std::get<1>(recv);
-            std::string nextSigStr = std::get<2>(recv);
+            std::string nextSigStr = std::get<1>(recv);
+            std::vector<uintptrj_t> &filters = std::get<2>(recv);
 
             // copy the next signature
             intptrj_t methodDescriptorLength = nextSigStr.size();
@@ -8625,12 +8627,12 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             memcpy(nextSignature, &nextSigStr[0], methodDescriptorLength);
             nextSignature[methodDescriptorLength] = 0;
 
-            // copy the filter indices
-            int32_t numFilters = filterIndices.size();
-            filterIndexList = (TR::KnownObjectTable::Index *) comp()->trMemory()->allocateMemory(sizeof(TR::KnownObjectTable::Index) * numFilters, stackAlloc);
+            // copy the filters
+            int32_t numFilters = filters.size();
+            haveFilter = (bool *) comp()->trMemory()->allocateMemory(sizeof(bool) * numFilters, stackAlloc);
             for (int i = 0; i <numFilters; i++)
                {
-               filterIndexList[i] = filterIndices[i];
+               haveFilter[i] = filters[i] != NULL;
                }
             }
          else
@@ -8650,6 +8652,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                if (knotEnabled)
                   filterIndexList[i] = knot->getIndex(fej9->getReferenceElement(filters, i));
                }
+               
 
             startPos = (int32_t)fej9->getInt32Field(methodHandle, "startPos");
             uintptrj_t methodDescriptorRef = fej9->getReferenceField(fej9->getReferenceField(fej9->getReferenceField(

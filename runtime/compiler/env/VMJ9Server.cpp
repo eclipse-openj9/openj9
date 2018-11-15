@@ -1233,6 +1233,24 @@ TR_J9ServerVM::setInvokeExactJ2IThunk(void *thunkptr, TR::Compilation *comp)
    stream->read<JITaaS::Void>();
    }
 
+bool
+TR_J9ServerVM::needsInvokeExactJ2IThunk(TR::Node *callNode, TR::Compilation *comp)
+   {
+   TR_ASSERT(callNode->getOpCode().isCall(), "needsInvokeExactJ2IThunk expects call node; found %s", callNode->getOpCode().getName());
+
+   TR::MethodSymbol *methodSymbol = callNode->getSymbol()->castToMethodSymbol();
+   TR_Method       *method       = methodSymbol->getMethod();
+   if (  methodSymbol->isComputed()
+      && (  method->getMandatoryRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact
+         || method->isArchetypeSpecimen()))
+      {
+      // for JITaaS always need to regenerate a thunk, when it's needed
+      return true;
+      }
+   else
+      return false;
+   }
+
 TR_ResolvedMethod *
 TR_J9ServerVM::createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, uintptrj_t *methodHandleLocation, TR_ResolvedMethod *owningMethod)
    {

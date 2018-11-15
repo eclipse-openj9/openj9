@@ -1752,7 +1752,7 @@ TR::Register *TR::X86PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
                break;
             default:
                // in server mode, we always need to regenerate the thunk inside the code cache for this compilation
-               if (fej9->needsInvokeExactJ2IThunk(callNode, comp()) || comp()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+               if (fej9->needsInvokeExactJ2IThunk(callNode, comp()))
                   {
                   TR_J2IThunk *thunk = generateInvokeExactJ2IThunk(callNode, methodSymbol->getMethod()->signatureChars());
                   fej9->setInvokeExactJ2IThunk(thunk, comp());
