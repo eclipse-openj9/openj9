@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-# We dont want to suffix vm version to shared libs
+# We don't want to suffix vm version to shared libs.
 set(CMAKE_SHARED_LIBRARY_SUFFIX ${J9VM_OLD_SHARED_SUFFIX})
 
 add_tracegen(j9scar.tdf)
@@ -78,10 +78,6 @@ target_link_libraries(jvm
 		j9util
 )
 add_dependencies(jvm omrgc_hookgen)
-target_compile_definitions(jvm
-	PRIVATE
-		-DJ9VM_JAVA9_BUILD=148
-)
 
 install(
 	TARGETS jvm

@@ -68,18 +68,18 @@ JVM_LatestUserDefinedLoader(JNIEnv *env)
 
 
 jobject JNICALL
-#if J9VM_JCL_SE11
+#if JAVA_SPEC_VERSION >= 11
 JVM_GetCallerClass(JNIEnv *env)
-#else /* J9VM_JCL_SE11 */
+#else /* JAVA_SPEC_VERSION >= 11 */
 JVM_GetCallerClass(JNIEnv *env, jint depth)
-#endif /* J9VM_JCL_SE11 */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 {
 	ENSURE_VMI();
-#if J9VM_JCL_SE11
+#if JAVA_SPEC_VERSION >= 11
 	return g_VMI->JVM_GetCallerClass(env);
-#else /* J9VM_JCL_SE11 */
+#else /* JAVA_SPEC_VERSION >= 11 */
 	return g_VMI->JVM_GetCallerClass(env, depth);
-#endif /* J9VM_JCL_SE11 */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 }
 
 

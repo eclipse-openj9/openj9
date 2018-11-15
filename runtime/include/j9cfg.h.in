@@ -44,8 +44,17 @@ extern "C" {
 
 #define JAVA_SPEC_VERSION ${JAVA_SPEC_VERSION}
 
-/*  Note: The following defines record flags used to build VM.  */
-/*  Changing them here does not remove the feature and may cause linking problems. */
+#if defined(J9VM_JAVA9_BUILD)
+#  error J9VM_JAVA9_BUILD is already defined
+#elif JAVA_SPEC_VERSION >= 9
+/* Cmake-enabled builds only work with the latest of each Java version: For Java 9 that means b165. */
+#  define J9VM_JAVA9_BUILD 165
+#else
+#  define J9VM_JAVA9_BUILD 0
+#endif
+
+/* Note: The following defines record flags used to build the VM. */
+/* Changing them here does not remove the feature and may cause linking problems. */
 
 #cmakedefine J9VM_ARCH_ARM
 #cmakedefine J9VM_ARCH_POWER

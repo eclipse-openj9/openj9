@@ -20,7 +20,6 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/../ut_j9jcl.c PROPERTIES GENERATED TRUE)
 add_library(jclse7b_ SHARED
 	../j9vmconstantpool_se7_basic.c
@@ -29,11 +28,6 @@ target_include_directories(jclse7b_
 	PRIVATE
 		${CMAKE_CURRENT_BINARY_DIR}
 		../
-)
-
-target_compile_definitions(jclse7b_
-	PRIVATE
-		J9VM_JCL_SE7_BASIC
 )
 
 target_link_libraries(jclse7b_

@@ -27,10 +27,10 @@ include $(TOP_DIR)makelib/uma_macros.mk
 
 ifeq (8,$(VERSION_MAJOR))
   DDR_JCL_MODULE := jclse7b_
-else ifneq (,$(findstring $(VERSION_MAJOR),9 10 11))
+else ifneq (,$(findstring $(VERSION_MAJOR),9 10 11 12))
   DDR_JCL_MODULE := jclse$(VERSION_MAJOR)_
 else
-  DDR_JCL_MODULE := jclse11_
+  DDR_JCL_MODULE := jclse12_
 endif
 
 DDR_INPUT_MODULES := j9ddr_misc j9gc j9jvmti j9prt j9shr j9thr j9trc j9vm $(DDR_JCL_MODULE)
