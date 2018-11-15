@@ -41,25 +41,6 @@ ifndef UMA_TARGET_PATH
 endif
 
 # Define all the tool used for compilation and linking.
-<#if uma.spec.tools.interp_gcc.needed>
-ifneq (default,$(origin CC))
-  ifndef INTERP_GCC
-    # If the user has overridden CC we'll want to let them know that INTERP_GCC exists.
-    ifndef PRINT_ONCE_INTERP_GCC
-      $(info ****************)
-      $(info *)
-      $(info * CC=$(CC) (overridden), note that this build will also invoke another compiler that can be overridden: INTERP_GCC=${uma.spec.tools.interp_gcc.name})
-      $(info *)
-      $(info ****************)
-      export PRINT_ONCE_INTERP_GCC=1
-    endif
-  endif
-endif
-INTERP_GCC?=${uma.spec.tools.interp_gcc.name}
-<#else>
-#INTERP_GCC not used
-</#if>
-
 <#if uma.spec.type.windows>
 <#if uma.spec.flags.build_VS12AndHigher.enabled>
 VS12AndHigher:=1
