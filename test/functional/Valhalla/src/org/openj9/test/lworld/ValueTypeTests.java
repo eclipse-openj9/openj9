@@ -50,6 +50,7 @@ public class ValueTypeTests {
 	static Class point2DClass = null;
 	static Class line2DClass = null;
 	static MethodHandle makePoint2D = null;
+	static MethodHandle makeLine2D = null;
 	static MethodHandle getX = null;
 	static MethodHandle getY = null;
 
@@ -65,7 +66,7 @@ public class ValueTypeTests {
 	@Test(priority=1)
 	static public void testCreatePoint2D() throws Throwable {
 		String fields[] = {"x:I", "y:I"};
-		Class<?> point2DClass = ValueTypeGenerator.generateValueClass("Point2D", fields);
+		point2DClass = ValueTypeGenerator.generateValueClass("Point2D", fields);
 		
 		makePoint2D = lookup.findStatic(point2DClass, "makeValue", MethodType.methodType(point2DClass, int.class, int.class));
 		
@@ -73,23 +74,28 @@ public class ValueTypeTests {
 		MethodHandle setX = generateSetter(point2DClass, "x", int.class);
 		getY = generateGetter(point2DClass, "y", int.class);
 		MethodHandle setY = generateSetter(point2DClass, "y", int.class);
+
+		int x = 0xFFEEFFEE;
+		int y = 0xAABBAABB;
+		int xNew = 0x11223344;
+		int yNew = 0x99887766;
 		
-		Object point2D = makePoint2D.invoke(2, 4);
+		Object point2D = makePoint2D.invoke(x, y);
 		
-		assertEquals(getX.invoke(point2D), 2);
-		assertEquals(getY.invoke(point2D), 4);
+		assertEquals(getX.invoke(point2D), x);
+		assertEquals(getY.invoke(point2D), y);
 		
-		setX.invoke(point2D, 1);
-		setY.invoke(point2D, 3);
+		setX.invoke(point2D, xNew);
+		setY.invoke(point2D, yNew);
 		
-		assertEquals(getX.invoke(point2D), 1);
-		assertEquals(getY.invoke(point2D), 3);
+		assertEquals(getX.invoke(point2D), xNew);
+		assertEquals(getY.invoke(point2D), yNew);
 	}
 
 	/*
 	 * Test with nested values in reference type
 	 * 
-	 * class Line2D {
+	 * value Line2D {
 	 * 	Point2D st;
 	 * 	Point2D en;
 	 * }
@@ -97,18 +103,122 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=2)
 	static public void testCreateLine2D() throws Throwable {
-		String fields[] = {"st:QPoint2D;:value", "en:QPoint2D;:value"};
+		String fields[] = {"st:LPoint2D;:value", "en:LPoint2D;:value"};
 		line2DClass = ValueTypeGenerator.generateValueClass("Line2D", fields);
 		
-		//TODO need q signature support to do anything else with Line2D
+		makeLine2D = lookup.findStatic(line2DClass, "makeValue", MethodType.methodType(line2DClass, point2DClass, point2DClass));
+		
+		MethodHandle getSt = generateGetter(line2DClass, "st", point2DClass);
+ 		MethodHandle setSt = generateSetter(line2DClass, "st", point2DClass);
+ 		MethodHandle getEn = generateGetter(line2DClass, "en", point2DClass);
+ 		MethodHandle setEn = generateSetter(line2DClass, "en", point2DClass);
+ 		
+		int x = 0xFFEEFFEE;
+		int y = 0xAABBAABB;
+		int xNew = 0x11223344;
+		int yNew = 0x99887766;
+		int x2 = 0xCCDDCCDD;
+		int y2 = 0xAAFFAAFF;
+		int x2New = 0x55337799;
+		int y2New = 0x88662244;
+		
+		Object st = makePoint2D.invoke(x, y);
+		Object en = makePoint2D.invoke(x2, y2);
+		
+		assertEquals(getX.invoke(st), x);
+		assertEquals(getY.invoke(st), y);
+		assertEquals(getX.invoke(en), x2);
+		assertEquals(getY.invoke(en), y2);
+		
+		Object line2D = makeLine2D.invoke(st, en);
+		
+		assertEquals(getX.invoke(getSt.invoke(line2D)), x);
+		assertEquals(getY.invoke(getSt.invoke(line2D)), y);
+		assertEquals(getX.invoke(getEn.invoke(line2D)), x2);
+		assertEquals(getY.invoke(getEn.invoke(line2D)), y2);
+		
+		Object stNew = makePoint2D.invoke(xNew, yNew);
+		Object enNew = makePoint2D.invoke(x2New, y2New);
+		
+		setSt.invoke(line2D, stNew);
+		setEn.invoke(line2D, enNew);
+		
+		assertEquals(getX.invoke(getSt.invoke(line2D)), xNew);
+		assertEquals(getY.invoke(getSt.invoke(line2D)), yNew);
+		assertEquals(getX.invoke(getEn.invoke(line2D)), x2New);
+		assertEquals(getY.invoke(getEn.invoke(line2D)), y2New);
+	}
+	
+	/*
+	 * Test with nested values in reference type
+	 * 
+	 * value FlattenedLine2D {
+	 * 	flattened Point2D st;
+	 * 	flattened Point2D en;
+	 * }
+	 * 
+	 */
+	@Test(priority=2)
+	static public void testCreateFlattenedLine2D() throws Throwable {
+		String fields[] = {"st:QPoint2D;:value", "en:QPoint2D;:value"};
+		Class flattenedLine2DClass = ValueTypeGenerator.generateValueClass("FlattenedLine2D", fields);
+				
+		MethodHandle makeFlattenedLine2D = lookup.findStatic(flattenedLine2DClass, "makeValueGeneric", MethodType.methodType(flattenedLine2DClass, Object.class, Object.class));
+		
+		
+		/*
+ 		TODO need q signature support to do anything else with FalttenedLine2D
+		
+		MethodHandle getSt = generateGenericGetter(flattenedLine2DClass, "st");
+ 		MethodHandle setSt = generateGenericSetter(flattenedLine2DClass, "st");
+ 		MethodHandle getEn = generateGenericGetter(flattenedLine2DClass, "en");
+ 		MethodHandle setEn = generateGenericSetter(flattenedLine2DClass, "en");
+ 		
+		int x = 0xFFEEFFEE;
+		int y = 0xAABBAABB;
+		int xNew = 0x11223344;
+		int yNew = 0x99887766;
+		int x2 = 0xCCDDCCDD;
+		int y2 = 0xAAFFAAFF;
+		int x2New = 0x55337799;
+		int y2New = 0x88662244;
+		
+		Object st = makePoint2D.invoke(x, y);
+		Object en = makePoint2D.invoke(x2, y2);
+		
+		assertEquals(getX.invoke(st), x);
+		assertEquals(getY.invoke(st), y);
+		assertEquals(getX.invoke(en), x2);
+		assertEquals(getY.invoke(en), y2);
+		
+		Object line2D = makeFlattenedLine2D.invoke(st, en);
+		
+		assertEquals(getX.invoke(getSt.invoke(line2D)), x);
+		assertEquals(getY.invoke(getSt.invoke(line2D)), y);
+		assertEquals(getX.invoke(getEn.invoke(line2D)), x2);
+		assertEquals(getY.invoke(getEn.invoke(line2D)), y2);
+		
+		Object stNew = makePoint2D.invoke(xNew, yNew);
+		Object enNew = makePoint2D.invoke(x2New, y2New);
+				
+		setSt.invoke(line2D, stNew);
+		setEn.invoke(line2D, enNew);
+		
+		assertEquals(getX.invoke(getSt.invoke(line2D)), xNew);
+		assertEquals(getY.invoke(getSt.invoke(line2D)), yNew);
+		assertEquals(getX.invoke(getEn.invoke(line2D)), x2New);
+		assertEquals(getY.invoke(getEn.invoke(line2D)), y2New);
+		
+		*/
+
 	}
 
 	/*
 	 * Test with nested values
 	 * 
-	 * class InvalidField {
-	 * 	Point2D st;
-	 * 	Invalid x;
+	 * value InvalidField {
+	 * 	flattened Point2D st;
+	 * 	flattened Invalid x;
 	 * }
 	 * 
 	 */
@@ -125,18 +235,38 @@ public class ValueTypeTests {
 	/*
 	 * Test with none value Qtype
 	 * 
-	 * class NoneValueQType {
-	 * 	Point2D st;
-	 * 	Object o;
+	 * value NoneValueQType {
+	 * 	flattened Point2D st;
+	 * 	flattened Object o;
 	 * }
 	 * 
 	 */
 	@Test(priority=3)
 	static public void testNoneValueQTypeAsNestedField() throws Throwable {
-		String fields[] = {"st:QPoint2D;:value", "unsafe:Qjava/lang/Object;:value"};
+		String fields[] = {"st:QPoint2D;:value", "o:Qjava/lang/Object;:value"};
 		try {
 			Class<?> noneValueQType = ValueTypeGenerator.generateValueClass("NoneValueQType", fields);
 			Assert.fail("should throw error. j.l.Object is not a qtype!");
+		} catch (IncompatibleClassChangeError e) {}
+	}
+	
+	/*
+	 * Test defaultValue with ref type
+	 * 
+	 * class DefaultValueWithNoneValueQType {
+	 * 	Object f1;
+	 * 	Object f1;
+	 * }
+	 * 
+	 */
+	@Test(priority=3)
+	static public void testDefaultValueWithNoneValueQType() throws Throwable {
+		String fields[] = {"f1:Ljava/lang/Object;:value", "f2:Ljava/lang/Object;:value"};
+		Class<?> defaultValueWithNoneValueQType = ValueTypeGenerator.generateRefClass("DefaultValueWithNoneValueQType", fields);
+		MethodHandle makeDefaultValueWithNoneValueQType = lookup.findStatic(defaultValueWithNoneValueQType, "makeValue", MethodType.methodType(defaultValueWithNoneValueQType, Object.class, Object.class));
+		try {
+			makeDefaultValueWithNoneValueQType.invoke(null, null);
+			
 		} catch (IncompatibleClassChangeError e) {}
 	}
 	
