@@ -1398,3 +1398,9 @@ J9::Compilation::notYetRunMeansCold()
       return true;
    }
 
+bool
+J9::Compilation::incompleteOptimizerSupportForReadWriteBarriers()
+   {
+   return self()->getOption(TR_EnableFieldWatch);
+   }
+
