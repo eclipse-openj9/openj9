@@ -1030,7 +1030,7 @@ J9::Z::TreeEvaluator::genLoadForObjectHeadersMasked(TR::CodeGenerator *cg, TR::N
 #if defined(J9VM_INTERP_COMPRESSED_OBJECT_HEADER)
    if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z13) && !disabled)
       {
-      iCursor = generateRXYInstruction(cg, TR::InstOpCode::LLZRGF, node, reg, tempMR, iCursor);
+      iCursor = generateRXInstruction(cg, TR::InstOpCode::LLZRGF, node, reg, tempMR, iCursor);
       cg->generateDebugCounter("z13/LoadAndMask", 1, TR::DebugCounter::Free);
       }
    else
@@ -1044,7 +1044,7 @@ J9::Z::TreeEvaluator::genLoadForObjectHeadersMasked(TR::CodeGenerator *cg, TR::N
 #else
    if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z13))
       {
-      iCursor = generateRXYInstruction(cg, TR::InstOpCode::getLoadAndMaskOpCode(), node, reg, tempMR, iCursor);
+      iCursor = generateRXInstruction(cg, TR::InstOpCode::getLoadAndMaskOpCode(), node, reg, tempMR, iCursor);
       cg->generateDebugCounter("z13/LoadAndMask", 1, TR::DebugCounter::Free);
       }
    else
@@ -3088,7 +3088,7 @@ J9::Z::TreeEvaluator::BNDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
          TR::InstOpCode::Mnemonic opCode = (regChild->getDataType()==TR::Int64) ? TR::InstOpCode::CLGT :
                                                                                   TR::InstOpCode::CLT;
-         cursor = generateRSYInstruction(cg, opCode,
+         cursor = generateRSInstruction(cg, opCode,
                                          node, regChild->getRegister(),
                                          getMaskForBranchCondition(compareCondition),
                                          generateS390MemoryReference(memChild, cg));
@@ -4184,7 +4184,7 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
          {
             srcReg = cg->allocateCollectedReferenceRegister();
 
-            generateRXYInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), sourceChild, srcReg, generateS390MemoryReference(sourceChild, cg));
+            generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), sourceChild, srcReg, generateS390MemoryReference(sourceChild, cg));
 
             sourceChild->setRegister(srcReg);
          }
@@ -6776,7 +6776,7 @@ J9::Z::TreeEvaluator::VMcheckcastEvaluator(TR::Node * node, TR::CodeGenerator * 
 
          tempMR = generateS390MemoryReference(objNode, cg);
 
-         generateRXYInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), objNode, objReg, tempMR);
+         generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), objNode, objReg, tempMR);
 
          objNode->setRegister(objReg);
          nullCCSet = true;
@@ -7112,7 +7112,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       if (comp->getOption(TR_EnableMonitorCacheLookup))
          targetLabel = monitorLookupCacheLabel;
 
-      generateRXYInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, tempRegister, tempMR);
+      generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, tempRegister, tempMR);
 
       if (disableOOL)
          {
@@ -7191,7 +7191,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          generateRXInstruction(cg, TR::InstOpCode::LLGF, node, tempRegister, temp2MR, NULL);
          startICF = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, tempRegister, NULLVALUE, TR::InstOpCode::COND_BE, helperCallLabel, false, true);
 #else
-         generateRXYInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, tempRegister, temp2MR);
+         generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, tempRegister, temp2MR);
 
          startICF = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, helperCallLabel);
 #endif
@@ -7542,7 +7542,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
       if (comp->getOption(TR_EnableMonitorCacheLookup))
          targetLabel = monitorLookupCacheLabel;
 
-      generateRXYInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, tempRegister, tempMR);
+      generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, tempRegister, tempMR);
 
       if (disableOOL)
          {
@@ -7624,7 +7624,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
          generateRXInstruction(cg, TR::InstOpCode::LLGF, node, tempRegister, temp2MR, NULL);
          startICF = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, tempRegister, NULLVALUE, TR::InstOpCode::COND_BE, helperCallLabel, false, true);
 #else
-         generateRXYInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, tempRegister, temp2MR);
+         generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, tempRegister, temp2MR);
          startICF = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, helperCallLabel);
 #endif
 
@@ -10082,7 +10082,7 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mn
       // reads the existing value to be compared with a provided compare value, before the store itself), hence needs
       // a read barrier
       generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
-      generateRXYInstruction(cg, guardedLoadMnemonic, node, tempReadBarrier, generateS390MemoryReference(*casMemRef, 0, cg));
+      generateRXInstruction(cg, guardedLoadMnemonic, node, tempReadBarrier, generateS390MemoryReference(*casMemRef, 0, cg));
 
       cg->stopUsingRegister(tempReadBarrier);
       }
@@ -10333,10 +10333,10 @@ extern TR::Register* inlineCurrentTimeMaxPrecision(TR::CodeGenerator* cg, TR::No
       if (TR::Compiler->target.isZOS())
          {
          // Load FFCVT(R0)
-         generateRXYInstruction(cg, TR::InstOpCode::LLGT, node, tempRegister, generateS390MemoryReference(offsets[0], cg));
+         generateRXInstruction(cg, TR::InstOpCode::LLGT, node, tempRegister, generateS390MemoryReference(offsets[0], cg));
 
          // Load CVTEXT2 - CVT
-         generateRXYInstruction(cg, TR::InstOpCode::LLGT, node, tempRegister, generateS390MemoryReference(tempRegister, offsets[1], cg));
+         generateRXInstruction(cg, TR::InstOpCode::LLGT, node, tempRegister, generateS390MemoryReference(tempRegister, offsets[1], cg));
          }
 #endif
 
@@ -10349,7 +10349,7 @@ extern TR::Register* inlineCurrentTimeMaxPrecision(TR::CodeGenerator* cg, TR::No
       if (TR::Compiler->target.isZOS())
          {
          // Subtract the LSO offset
-         generateRXYInstruction(cg, TR::InstOpCode::SLG, node, targetRegister, generateS390MemoryReference(tempRegister, offsets[2],cg));
+         generateRXInstruction(cg, TR::InstOpCode::SLG, node, targetRegister, generateS390MemoryReference(tempRegister, offsets[2],cg));
          }
 
       cg->stopUsingRegister(tempRegister);
@@ -10374,10 +10374,10 @@ extern TR::Register* inlineCurrentTimeMaxPrecision(TR::CodeGenerator* cg, TR::No
       if (TR::Compiler->target.isZOS())
          {
          // Load FFCVT(r0)
-         generateRXYInstruction(cg, TR::InstOpCode::L, node, tempRegister1, generateS390MemoryReference(offsets[0], cg));
+         generateRXInstruction(cg, TR::InstOpCode::L, node, tempRegister1, generateS390MemoryReference(offsets[0], cg));
 
          // Load CVTEXT2 - CVT
-         generateRXYInstruction(cg, TR::InstOpCode::L, node, tempRegister1, generateS390MemoryReference(tempRegister1, offsets[1],cg));
+         generateRXInstruction(cg, TR::InstOpCode::L, node, tempRegister1, generateS390MemoryReference(tempRegister1, offsets[1],cg));
          }
 #endif
 
@@ -10394,8 +10394,8 @@ extern TR::Register* inlineCurrentTimeMaxPrecision(TR::CodeGenerator* cg, TR::No
       if (TR::Compiler->target.isZOS())
          {
          // Subtract the LSO offset
-         generateRXYInstruction(cg, TR::InstOpCode::SL, node, targetRegister->getLowOrder(), generateS390MemoryReference(tempRegister1, offsets[2] + 4, cg));
-         generateRXYInstruction(cg, TR::InstOpCode::SLB, node, targetRegister->getHighOrder(), generateS390MemoryReference(tempRegister1, offsets[2], cg));
+         generateRXInstruction(cg, TR::InstOpCode::SL, node, targetRegister->getLowOrder(), generateS390MemoryReference(tempRegister1, offsets[2] + 4, cg));
+         generateRXInstruction(cg, TR::InstOpCode::SLB, node, targetRegister->getHighOrder(), generateS390MemoryReference(tempRegister1, offsets[2], cg));
          }
 #endif
 
@@ -11190,7 +11190,7 @@ inlineConcurrentLinkedQueueTMOffer(
 
       if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
          {
-         cursor = generateRXYInstruction(cg, guardedLoadMnemonic, node, rP, generateS390MemoryReference(rThis, offsetTail, cg));
+         cursor = generateRXInstruction(cg, guardedLoadMnemonic, node, rP, generateS390MemoryReference(rThis, offsetTail, cg));
          }
       else
          {
@@ -11214,7 +11214,7 @@ inlineConcurrentLinkedQueueTMOffer(
 
       if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
          {
-         cursor = generateRXYInstruction(cg, guardedLoadMnemonic, node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
+         cursor = generateRXInstruction(cg, guardedLoadMnemonic, node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
 
          cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CLG, node, rQ, 0, TR::InstOpCode::COND_CC0, insertLabel, false, false);
          }
@@ -11245,7 +11245,7 @@ inlineConcurrentLinkedQueueTMOffer(
 
       if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
          {
-         cursor = generateRXYInstruction(cg, guardedLoadMnemonic, node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
+         cursor = generateRXInstruction(cg, guardedLoadMnemonic, node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
 
          cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CLG, node, rQ, 0, TR::InstOpCode::COND_CC0, insertLabel, false, false);
          }
@@ -11414,7 +11414,7 @@ inlineConcurrentLinkedQueueTMPoll(
 
       if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
          {
-         cursor = generateRXYInstruction(cg, guardedLoadMnemonic, node, rP, generateS390MemoryReference(rThis, offsetHead, cg));
+         cursor = generateRXInstruction(cg, guardedLoadMnemonic, node, rP, generateS390MemoryReference(rThis, offsetHead, cg));
          }
       else
          {
@@ -11438,7 +11438,7 @@ inlineConcurrentLinkedQueueTMPoll(
 
       if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
          {
-         cursor = generateRXYInstruction(cg, guardedLoadMnemonic, node, rE, generateS390MemoryReference(rP, offsetItem, cg));
+         cursor = generateRXInstruction(cg, guardedLoadMnemonic, node, rE, generateS390MemoryReference(rP, offsetItem, cg));
          }
       else
          {
@@ -11462,7 +11462,7 @@ inlineConcurrentLinkedQueueTMPoll(
 
       if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
          {
-         cursor = generateRXYInstruction(cg, guardedLoadMnemonic, node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
+         cursor = generateRXInstruction(cg, guardedLoadMnemonic, node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
 
          if (usesCompressedrefs)
             {
@@ -11582,7 +11582,7 @@ VMgenerateCatchBlockBBStartPrologue(
       if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z10))
          {
          TR::MemoryReference * recompMR = generateS390MemoryReference(biAddrReg, 0, cg);
-         generateSIYInstruction(cg, TR::InstOpCode::ASI, node, recompMR, -1);
+         generateSIInstruction(cg, TR::InstOpCode::ASI, node, recompMR, -1);
          recompMR->stopUsingMemRefRegister(cg);
          }
       else
@@ -11817,15 +11817,15 @@ J9::Z::TreeEvaluator::countDigitsEvaluator(TR::Node * node, TR::CodeGenerator * 
          label[i] = generateLabelSymbol(cg);
          }
 
-      generateRXYInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[7]);
+      generateRXInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[7]);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNH, node, label[11]);
 
       // LABEL 3
-      generateRXYInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[3]);
+      generateRXInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[3]);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNH, node, label[5]);
 
       // LABEL 1
-      generateRXYInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[1]);
+      generateRXInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[1]);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNH, node, label[2]);
 
       countDigitsHelper(node, cg, 0, work[0], inputReg, countReg, cFlowRegionEnd, isLong);           // 0 and 1
@@ -11835,7 +11835,7 @@ J9::Z::TreeEvaluator::countDigitsEvaluator(TR::Node * node, TR::CodeGenerator * 
 
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, label[5]);       // LABEL 5
 
-      generateRXYInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[5]);
+      generateRXInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[5]);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNH, node, label[6]);
 
       countDigitsHelper(node, cg, 4, work[4], inputReg, countReg, cFlowRegionEnd, isLong);           // 4 and 5
@@ -11845,11 +11845,11 @@ J9::Z::TreeEvaluator::countDigitsEvaluator(TR::Node * node, TR::CodeGenerator * 
 
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, label[11]);      // LABEL 11
 
-      generateRXYInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[11]);
+      generateRXInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[11]);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNH, node, label[14]);
 
       // LABEL 9
-      generateRXYInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[9]);
+      generateRXInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[9]);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNH, node, label[10]);
 
       countDigitsHelper(node, cg, 8, work[8], inputReg, countReg, cFlowRegionEnd, isLong);           // 8 and 9
@@ -11859,11 +11859,11 @@ J9::Z::TreeEvaluator::countDigitsEvaluator(TR::Node * node, TR::CodeGenerator * 
 
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, label[14]);      // LABEL 14
 
-      generateRXYInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[14]);
+      generateRXInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[14]);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNH, node, label[16]);
 
       // LABEL 12
-      generateRXYInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[12]); // 12
+      generateRXInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[12]); // 12
       generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, countReg, 12+1);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BH, node, cFlowRegionEnd);
 
@@ -11872,7 +11872,7 @@ J9::Z::TreeEvaluator::countDigitsEvaluator(TR::Node * node, TR::CodeGenerator * 
 
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, label[16]);      // LABEL 16
 
-      generateRXYInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[16]);
+      generateRXInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[16]);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNH, node, label[17]);
       // LABEL 15
       countDigitsHelper(node, cg, 15, work[15], inputReg, countReg, cFlowRegionEnd, isLong);  // 15 and 16

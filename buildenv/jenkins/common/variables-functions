@@ -657,6 +657,7 @@ def set_job_properties(JOB_TYPE) {
         ********************/
 
         properties([
+            compressBuildLog(),
             buildDiscarder(logRotator(
                 artifactDaysToKeepStr: '',
                 artifactNumToKeepStr: NUM_ARTIFACTS,

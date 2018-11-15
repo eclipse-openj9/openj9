@@ -129,7 +129,6 @@ TR::S390PrivateLinkage::S390PrivateLinkage(TR::CodeGenerator * codeGen,TR_S390Li
    setJ9MethodArgumentRegister    (TR::RealRegister::GPR1);
 
    setLitPoolRegister       (TR::RealRegister::GPR6  );
-   setExtCodeBaseRegister   (TR::RealRegister::GPR7  );
    setMethodMetaDataRegister(TR::RealRegister::GPR13 );
 
    setIntegerArgumentRegister(0, TR::RealRegister::GPR1);
@@ -1208,7 +1207,7 @@ TR::S390PrivateLinkage::createPrologue(TR::Instruction * cursor)
       {
       int32_t offset = cg()->machine()->getGPRSize() * -1;
       retAddrMemRef = generateS390MemoryReference(spReg, offset, cg());
-      cursor = generateRXYInstruction(cg(), TR::InstOpCode::getExtendedStoreOpCode(), firstNode, getS390RealRegister(getReturnAddressRegister()),
+      cursor = generateRXInstruction(cg(), TR::InstOpCode::getExtendedStoreOpCode(), firstNode, getS390RealRegister(getReturnAddressRegister()),
          retAddrMemRef, cursor);
       }
 
@@ -1221,7 +1220,7 @@ TR::S390PrivateLinkage::createPrologue(TR::Instruction * cursor)
    else
       {
       // Adjust stack pointer with LA (reduce AGI delay)
-      cursor = generateRXYInstruction(cg(), TR::InstOpCode::LAY, firstNode, spReg, generateS390MemoryReference(spReg,(size) * -1, cg()),cursor);
+      cursor = generateRXInstruction(cg(), TR::InstOpCode::LAY, firstNode, spReg, generateS390MemoryReference(spReg,(size) * -1, cg()),cursor);
       }
 
    if (!comp()->isDLT())
@@ -1418,7 +1417,7 @@ TR::S390PrivateLinkage::createPrologue(TR::Instruction * cursor)
 
       if (cg()->isPrefetchNextStackCacheLine() && prefetchStack)
          {
-         cursor = generateRXYbInstruction(cg(), TR::InstOpCode::PFD, firstNode, 2, generateS390MemoryReference(spReg, -256, cg()), cursor);
+         cursor = generateRXInstruction(cg(), TR::InstOpCode::PFD, firstNode, 2, generateS390MemoryReference(spReg, -256, cg()), cursor);
          }
       }
 
@@ -1480,7 +1479,7 @@ TR::S390PrivateLinkage::createEpilogue(TR::Instruction * cursor)
 
    if (getRaContextRestoreNeeded())
       {
-      cursor = generateRXYInstruction(cg(), TR::InstOpCode::getExtendedLoadOpCode(), nextNode,
+      cursor = generateRXInstruction(cg(), TR::InstOpCode::getExtendedLoadOpCode(), nextNode,
                                       getS390RealRegister(getReturnAddressRegister()),
                                       generateS390MemoryReference(spReg, frameSize, cg()), cursor);
       }
@@ -1555,7 +1554,7 @@ TR::S390PrivateLinkage::createEpilogue(TR::Instruction * cursor)
       }
    else if (adjustSize<MAXLONGDISP)
       {
-      cursor = generateRXYInstruction(cg(), TR::InstOpCode::LAY, nextNode, spReg, generateS390MemoryReference(spReg,adjustSize,cg()),cursor);
+      cursor = generateRXInstruction(cg(), TR::InstOpCode::LAY, nextNode, spReg, generateS390MemoryReference(spReg,adjustSize,cg()),cursor);
       }
    else
       {
@@ -1967,7 +1966,7 @@ TR::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDe
       else
          {
          cursor =
-            generateRXYInstruction(cg(), TR::InstOpCode::getExtendedLoadOpCode(), callNode, RegRA,
+            generateRXInstruction(cg(), TR::InstOpCode::getExtendedLoadOpCode(), callNode, RegRA,
                                    generateS390MemoryReference(classReg, offset, cg()));
 
          if (unresolvedSnippet)
@@ -2186,7 +2185,7 @@ TR::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDe
             cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, RegRA, returnLocationLabel, cursor, cg());
 
             if (TR::Compiler->target.is64Bit())
-               cursor = generateRXYInstruction(cg(), TR::InstOpCode::LPQ, callNode, classMethodEPPairRegister,
+               cursor = generateRXInstruction(cg(), TR::InstOpCode::LPQ, callNode, classMethodEPPairRegister,
                         generateS390MemoryReference(snippetReg, ifcSnippet->getDataConstantSnippet()->getSingleDynamicSlotOffset(), cg()), cursor);
             else
                cursor = generateRSInstruction(cg(), TR::InstOpCode::LM, callNode, classMethodEPPairRegister,
@@ -2544,7 +2543,7 @@ TR::S390PrivateLinkage::setupJNICallOutFrame(TR::Node * callNode,
 
    int32_t stackAdjust = (-5 * (int32_t)sizeof(intptrj_t));
 
-   cursor = generateRXYInstruction(codeGen, TR::InstOpCode::LAY, callNode, javaStackPointerRealRegister, generateS390MemoryReference(javaStackPointerRealRegister, stackAdjust, codeGen), cursor);
+   cursor = generateRXInstruction(codeGen, TR::InstOpCode::LAY, callNode, javaStackPointerRealRegister, generateS390MemoryReference(javaStackPointerRealRegister, stackAdjust, codeGen), cursor);
 
    setOffsetToLongDispSlot( getOffsetToLongDispSlot() - stackAdjust );
 
