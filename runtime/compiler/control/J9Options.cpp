@@ -2286,6 +2286,10 @@ J9::Options::fePostProcessJIT(void * base)
          // The server can compile with VM access in hand because GC is not a factor here
          // For the same reason we don't have to use TR_EnableYieldVMAccess
          self()->setOption(TR_DisableNoVMAccess); 
+
+         // IProfiler thread is not needed at JITaaS server because
+         // no IProfiler info is collected at the server itself
+         self()->setOption(TR_DisableIProfilerThread);
          }
       }
 
