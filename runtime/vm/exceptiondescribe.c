@@ -285,15 +285,15 @@ iterateStackTrace(J9VMThread * vmThread, j9object_t* exception, callback_func_t 
 			J9JITExceptionTable * metaData = NULL;
 			UDATA inlineDepth = 0;
 			void * inlinedCallSite = NULL;
-			void * stackMap = NULL;
+			void * inlineMap = NULL;
 			J9JITConfig * jitConfig = vm->jitConfig;
 
 			if (jitConfig) {
 				metaData = jitConfig->jitGetExceptionTableFromPC(vmThread, methodPC);
 				if (metaData) {
-					stackMap = jitConfig->jitGetInlinerMapFromPC(vm, metaData, methodPC);
-					if (stackMap) {
-						inlinedCallSite = jitConfig->getFirstInlinedCallSite(metaData, stackMap);
+					inlineMap = jitConfig->jitGetInlinerMapFromPC(vm, metaData, methodPC);
+					if (inlineMap) {
+						inlinedCallSite = jitConfig->getFirstInlinedCallSite(metaData, inlineMap);
 						if (inlinedCallSite) {
 							inlineDepth = jitConfig->getJitInlineDepthFromCallSite(metaData, inlinedCallSite);
 							totalEntries += inlineDepth;
@@ -318,15 +318,15 @@ inlinedEntry:
 						goto done;
 					}
 					if (inlineDepth == 0) {
-						if (stackMap == NULL) {
+						if (inlineMap == NULL) {
 							methodPC = -1;
 							isSameReceiver = FALSE;
 						} else {
-							methodPC = jitConfig->getCurrentByteCodeIndexAndIsSameReceiver(metaData, stackMap, NULL, &isSameReceiver);
+							methodPC = jitConfig->getCurrentByteCodeIndexAndIsSameReceiver(metaData, inlineMap, NULL, &isSameReceiver);
 						}
 						ramMethod = metaData->ramMethod;
 					} else {
-						methodPC = jitConfig->getCurrentByteCodeIndexAndIsSameReceiver(metaData, stackMap , inlinedCallSite, &isSameReceiver);
+						methodPC = jitConfig->getCurrentByteCodeIndexAndIsSameReceiver(metaData, inlineMap , inlinedCallSite, &isSameReceiver);
 						ramMethod = jitConfig->getInlinedMethod(inlinedCallSite);
 					}
 					if (pruneConstructors) {
