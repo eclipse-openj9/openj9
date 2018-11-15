@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2009, 2018 IBM Corp. and others
+Copyright (c) 2018, 2018 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<xi:include href="../uma/jithelpers_jni_exports.xml"></xi:include>
 	<xi:include href="../uma/se8_exports.xml"></xi:include>
 	<xi:include href="../uma/se829_exports.xml"></xi:include>
-	<xi:include href="../uma/se8only_exports.xml"></xi:include>
+	<xi:include href="../uma/se9_exports.xml"></xi:include>
+	<xi:include href="../uma/se11_exports.xml"></xi:include>
 
 	<xi:include href="../uma/vendor_jcl_exports.xml">
 		<xi:fallback/>
@@ -46,7 +47,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<xi:include href="../uma/se626_orb_ludcl_objects.xml"></xi:include>
 	<xi:include href="../uma/jithelpers_objects.xml"></xi:include>
 	<xi:include href="../uma/se8_objects.xml"></xi:include>
-	<xi:include href="../uma/se8only_objects.xml"></xi:include>
+	<xi:include href="../uma/se9_objects.xml"></xi:include>
 
 	<!-- vendor_jcl.xml can contain vendor specific configuration -->
 	<xi:include href="../uma/vendor_jcl.xml">
@@ -55,9 +56,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</xi:fallback>
 	</xi:include>
 
-	<artifact type="shared" name="jclse7b_" bundle="jvm" loadgroup="jcl">
+	<artifact type="shared" name="jclse12_" bundle="jvm" loadgroup="jcl">
 		<include-if condition="spec.flags.build_java7"/>
-		<exclude-if condition="spec.java9"/>
+		<exclude-if condition="not spec.java12"/>
 		<options>
 			<option name="isRequired">
 				<include-if condition="spec.jcl.Sidecar"/>
@@ -65,7 +66,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<option name="requiresPrimitiveTable"/>
 			<option name="prototypeHeaderFileNames" data="j9protos.h jclprots.h"/>
 			<option name="requiresLockFixups386"/>
-			<option name="dllDescription" data="Java SE 7 Basic"/>
+			<option name="dllDescription" data="Java SE 12"/>
 		</options>
 		<phase>core j2se</phase>
 
@@ -82,7 +83,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<group name="se626_orb_ludcl"/>
 			<group name="se8"/>
 			<group name="se829"/>
-			<group name="se8only"/>
+			<group name="se9" />
+			<group name="se11" />
 		</exports>
 
 		<includes>
@@ -127,13 +129,14 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			</group>
 			<group name="se7"/>
 			<group name="se626_orb_ludcl"/>
+
 			<group name="se8"/>
-			<group name="se8only"/>
+			<group name="se9"/>
 
 			<group name="vendor_jcl"/>
 
 			<!-- Groups must be before Objects -->
-			<object name="j9vmconstantpool_se7_basic" />
+			<object name="j9vmconstantpool_se12" />
 		</objects>
 
 		<libraries>
@@ -159,7 +162,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<library name="j9thr"/>
 			<library name="j9vmi"/>
 			<library name="socket" type="macro"/>
-			<library name="sunvmi"/>
+			<library name="sunvmi_jdk11"/>
 		</libraries>
 	</artifact>
 

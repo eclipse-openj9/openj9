@@ -43,6 +43,16 @@ extern "C" {
 
 #define JAVA_SPEC_VERSION ${uma.spec.properties.JAVA_SPEC_VERSION.value}
 
+#if defined(J9VM_JAVA9_BUILD)
+#  error J9VM_JAVA9_BUILD is already defined
+#elif (JAVA_SPEC_VERSION >= 10) || ((JAVA_SPEC_VERSION == 9) && defined(OPENJ9_BUILD))
+#  define J9VM_JAVA9_BUILD 181
+#elif JAVA_SPEC_VERSION == 9
+#  define J9VM_JAVA9_BUILD 148
+#else
+#  define J9VM_JAVA9_BUILD 0
+#endif
+
 /*  Note: The following defines record flags used to build VM.  */
 /*  Changing them here does not remove the feature and may cause linking problems. */
 

@@ -47,16 +47,18 @@
 #define JAVA_FONTS_STR "JAVA_FONTS"
 #define OFFLOAD_PREFIX "offload_"
 
-#if defined(J9VM_JCL_SE7_BASIC)
+#if JAVA_SPEC_VERSION == 8
 #define J9_DLL_NAME J9_JAVA_SE_7_BASIC_DLL_NAME
-#elif defined(J9VM_JCL_SE9)
+#elif JAVA_SPEC_VERSION == 9
 #define J9_DLL_NAME J9_JAVA_SE_9_DLL_NAME
-#elif defined(J9VM_JCL_SE10)
+#elif JAVA_SPEC_VERSION == 10
 #define J9_DLL_NAME J9_JAVA_SE_10_DLL_NAME
-#elif defined(J9VM_JCL_SE11)
+#elif JAVA_SPEC_VERSION == 11
 #define J9_DLL_NAME J9_JAVA_SE_11_DLL_NAME
+#elif JAVA_SPEC_VERSION == 12
+#define J9_DLL_NAME J9_JAVA_SE_12_DLL_NAME
 #else
-#error Unknown J9VM_JCL_SE
+#error Unsupported JAVA_SPEC_VERSION
 #endif
 
 /* this file is owned by the VM-team.  Please do not modify it without consulting the VM team */
@@ -71,7 +73,7 @@
 #define MAX_PROPSFILE_BOOTPATH_ENTRIES 64
 
 /* Reserved for entries added by addVMSpecificDirectories(). */
-#define NUM_RESERVED_BOOTPATH_ENTRIES 4
+#define NUM_RESERVED_BOOTPATH_ENTRIES 2
 
 /* Maximum entries on the bootpath. */
 #define MAX_BOOTPATH_ENTRIES (MAX_PROPSFILE_BOOTPATH_ENTRIES+NUM_RESERVED_BOOTPATH_ENTRIES)
@@ -276,16 +278,16 @@ jint
 scarInit(J9JavaVM * vm)
 {
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	UDATA handle;
-	jint result;
+	UDATA handle = 0;
+	jint result = 0;
 #if defined(WIN32)
 	char *dbgwrapperStr = NULL;
 	UDATA jclVersion = J2SE_VERSION(vm) & J2SE_VERSION_MASK;
 #endif
 
 	/* We need to overlay java.dll functions */
-	result = (jint)vmFuncs->registerBootstrapLibrary( vm->mainThread, J9_DLL_NAME, (J9NativeLibrary**)&handle, FALSE);
-	if( result != 0 ) {
+	result = (jint)vmFuncs->registerBootstrapLibrary(vm->mainThread, J9_DLL_NAME, (J9NativeLibrary **)&handle, FALSE);
+	if (0 != result) {
 		return result;
 	}
 	((J9NativeLibrary*)handle)->flags |= J9NATIVELIB_FLAG_ALLOW_INL;
@@ -316,7 +318,6 @@ scarInit(J9JavaVM * vm)
 		j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB, dbgwrapperStr, result);
 	}
 #endif /* defined(WIN32) && !defined(OPENJ9_BUILD) */
-
 	
 #if defined(J9VM_INTERP_MINIMAL_JCL)
 	result = standardInit(vm, J9_DLL_NAME);
@@ -454,7 +455,7 @@ J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 static void
 setFatalErrorStringInDLLTableEntry(J9JavaVM* vm, char *errorString)
 {
-	J9VMDllLoadInfo* loadInfo = FIND_DLL_TABLE_ENTRY( J9_DLL_NAME );
+	J9VMDllLoadInfo *loadInfo = FIND_DLL_TABLE_ENTRY(J9_DLL_NAME);
 	if (NULL != loadInfo) {
 		loadInfo->fatalErrorStr = errorString;
 	}

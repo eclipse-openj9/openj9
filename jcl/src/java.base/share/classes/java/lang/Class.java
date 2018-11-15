@@ -1,6 +1,4 @@
 /*[INCLUDE-IF Sidecar16]*/
-package java.lang;
-
 /*******************************************************************************
  * Copyright (c) 1998, 2018 IBM Corp. and others
  *
@@ -22,6 +20,7 @@ package java.lang;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package java.lang;
 
 import java.io.InputStream;
 import java.security.AccessControlContext;
@@ -762,7 +761,6 @@ public Constructor<?>[] getConstructors() throws SecurityException {
 	if (cachedConstructors != null) {
 		return cachedConstructors;
 	}
-
 
 	/*[PR CMVC 192714,194493] prepare the class before attempting to access members */
 	J9VMInternals.prepare(this);
@@ -3563,21 +3561,21 @@ static void setReflectCacheAppOnly(boolean cacheAppOnly) {
 }
 @SuppressWarnings("nls")
 static void doInitCacheIds() {
-	constructorParameterTypesField = getAccessibleField(Constructor.class, "parameterTypes");
-	methodParameterTypesField = getAccessibleField(Method.class, "parameterTypes");
+	/* prepare classes before attempting to access members */
+	J9VMInternals.prepare(Constructor.class);
+	J9VMInternals.prepare(Method.class);
+	try {
+		constructorParameterTypesField = Constructor.class.getDeclaredFieldImpl("parameterTypes");
+		methodParameterTypesField = Method.class.getDeclaredFieldImpl("parameterTypes");
+	} catch (NoSuchFieldException e) {
+		throw newInternalError(e);
+	}
+	constructorParameterTypesField.setAccessible(true);
+	methodParameterTypesField.setAccessible(true);
 	if (reflectCacheEnabled) {
 		copyConstructor = getAccessibleMethod(Constructor.class, "copy");
 		copyMethod = getAccessibleMethod(Method.class, "copy");
 		copyField = getAccessibleMethod(Field.class, "copy");
-	}
-}
-private static Field getAccessibleField(Class<?> cls, String name) {
-	try {
-		Field field = cls.getDeclaredField(name);
-		field.setAccessible(true);
-		return field;
-	} catch (NoSuchFieldException e) {
-		throw newInternalError(e);
 	}
 }
 private static Method getAccessibleMethod(Class<?> cls, String name) {
@@ -4021,9 +4019,7 @@ private ReflectCache peekReflectCache() {
 }
 
 static InternalError newInternalError(Exception cause) {
-	InternalError err = new InternalError(cause.toString());
-	err.setCause(cause);
-	return err;
+	return new InternalError(cause);
 }
 
 private Method lookupCachedMethod(String methodName, Class<?>[] parameters) {

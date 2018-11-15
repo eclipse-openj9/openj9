@@ -251,21 +251,21 @@ getCallerClassJEP176Iterator(J9VMThread * currentThread, J9StackWalkState * walk
  * JVM_GetCallerClass
  */
 JNIEXPORT jobject JNICALL
-#if J9VM_JCL_SE11
+#if JAVA_SPEC_VERSION >= 11
 JVM_GetCallerClass_Impl(JNIEnv *env)
-#else /* J9VM_JCL_SE11 */
+#else /* JAVA_SPEC_VERSION >= 11 */
 JVM_GetCallerClass_Impl(JNIEnv *env, jint depth)
-#endif /* J9VM_JCL_SE11 */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 {
 	J9VMThread * vmThread = (J9VMThread *) env;
 	J9JavaVM * vm = vmThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9StackWalkState walkState = {0};
 	jobject result = NULL;
-#if J9VM_JCL_SE11
+#if JAVA_SPEC_VERSION >= 11
 	/* Java 11 removed getCallerClass(depth), and getCallerClass() is equivalent to getCallerClass(-1) */
 	jint depth = -1;
-#endif /* J9VM_JCL_SE11 */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 	
 	Trc_SunVMI_GetCallerClass_Entry(env, depth);
 	
@@ -1350,4 +1350,3 @@ SunVMI_LifecycleEvent(J9JavaVM* vm, IDATA stage, void* reserved)
 	}
 	return returnVal;
 }
-
