@@ -643,7 +643,8 @@ def set_job_properties(JOB_TYPE) {
                 'PERSONAL_BUILD':'',
                 'SLACK_CHANNEL':'',
                 'RESTART_TIMEOUT':'',
-                'RESTART_TIMEOUT_UNITS':''])
+                'RESTART_TIMEOUT_UNITS':'',
+                'BUILD_LIST':''])
         }
 
         /********************
