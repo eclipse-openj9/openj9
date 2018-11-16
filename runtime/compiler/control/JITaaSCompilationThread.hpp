@@ -178,6 +178,9 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
       CompilationInfoPerThreadRemote(TR::CompilationInfo &compInfo, J9JITConfig *jitConfig, int32_t id, bool isDiagnosticThread)
          :CompilationInfoPerThread(compInfo, jitConfig, id, isDiagnosticThread) {}
       void processEntry(TR_MethodToBeCompiled &entry, J9::J9SegmentProvider &scratchSegmentProvider) override;
+      TR_PersistentMethodInfo *getRecompilationMethodInfo() { return _recompilationMethodInfo; }
+   private:
+      TR_PersistentMethodInfo *_recompilationMethodInfo;
    };
 }
 
