@@ -3561,7 +3561,14 @@ static void setReflectCacheAppOnly(boolean cacheAppOnly) {
 }
 @SuppressWarnings("nls")
 static void doInitCacheIds() {
-	/* prepare classes before attempting to access members */
+	/*
+	 * We cannot just call getDeclaredField() because that method includes a call
+	 * to Reflection.filterFields() which will remove the fields needed here.
+	 * The remaining required behavior of getDeclaredField() is inlined here.
+	 * The security checks are omitted (they would be redundant). Caching is
+	 * not done (we're in the process of initializing the caching mechanisms).
+	 * We must ensure the classes that own the fields of interest are prepared.
+	 */
 	J9VMInternals.prepare(Constructor.class);
 	J9VMInternals.prepare(Method.class);
 	try {
