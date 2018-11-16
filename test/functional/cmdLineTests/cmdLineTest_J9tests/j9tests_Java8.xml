@@ -519,6 +519,10 @@
   <output regex="no" type="success">arg1 = X</output>
   <output regex="no" type="success">arg2 = \X</output>
   </test>
-  
-</suite>
 
+<test id="Test option -verbose to verify JITaaS is started">
+  <command>$EXE$ -verbose -version</command>
+  <output regex="no" type="success"> remote </output>
+  <output regex="no" type="success">version</output>
+</test>
+</suite>
