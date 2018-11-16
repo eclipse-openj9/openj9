@@ -63,18 +63,17 @@ J9::Recompilation::setupMethodInfo()
    //
    TR_OptimizationPlan * optimizationPlan =  _compilation->getOptimizationPlan();
 
+   // NOTE: cannot use _compilation->isOutOfProcessCompilation here, because this
+   // method is called from within OMR::Compilation() constructor, before 
+   // _isOutOfProcessCompilation is set
    if (comp()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
       {
-      _methodInfo = new (PERSISTENT_NEW) TR_PersistentMethodInfo();
+      auto compInfoPT = static_cast<TR::CompilationInfoPerThreadRemote *>(TR::compInfoPT);
+      _methodInfo = compInfoPT->getRecompilationMethodInfo();
       if (!_methodInfo)
          {
          _compilation->failCompilation<std::bad_alloc>("Unable to allocate method info");
          }
-      auto curMethodRemoteMirror = static_cast<TR_ResolvedJ9JITaaSServerMethod *>(_compilation->getCurrentMethod())->getRemoteMirror();
-      auto stream = TR::CompilationInfo::getStream();
-      stream->write(JITaaS::J9ServerMessageType::Recompilation_getExistingMethodInfo, JITaaS::Void());
-      auto reply = stream->read<TR_PersistentMethodInfo>();
-      *_methodInfo = std::get<0>(reply);
       }
    else if (_firstCompile)
       {

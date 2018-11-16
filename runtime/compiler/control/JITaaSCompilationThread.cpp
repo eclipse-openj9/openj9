@@ -2104,6 +2104,7 @@ remoteCompile(
    compInfo->getUnloadedClassesTempList()->clear();
    auto classInfoTuple = JITaaSHelpers::packRemoteROMClassInfo(clazz, compiler->fej9vm(), compiler->trMemory());
    std::string optionsStr = TR::Options::packOptions(compiler->getOptions());
+   std::string recompMethodInfoStr = compiler->isRecompilationEnabled() ? std::string((char *) compiler->getRecompilationInfo()->getMethodInfo(), sizeof(TR_PersistentMethodInfo)) : std::string();
 
    JITaaS::J9ClientStream client(compInfo->getPersistentInfo());
 
@@ -2121,7 +2122,7 @@ remoteCompile(
 
       client.buildCompileRequest(TR::comp()->getPersistentInfo()->getJITaaSId(), romMethodOffset, 
                                  method, clazz, compiler->getMethodHotness(), detailsStr, details.getType(), 
-                                 unloadedClasses, classInfoTuple, optionsStr);
+                                 unloadedClasses, classInfoTuple, optionsStr, recompMethodInfoStr);
       // re-acquire VM access and check for possible class unloading
       acquireVMAccessNoSuspend(vmThread);
       if (compInfoPT->compilationShouldBeInterrupted())
@@ -3013,24 +3014,35 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       {
       auto req = stream->read<uint64_t, uint32_t, J9Method *, J9Class*, TR_Hotness, std::string,
          J9::IlGeneratorMethodDetailsType, std::vector<TR_OpaqueClassBlock*>,
-         JITaaSHelpers::ClassInfoTuple, std::string>();
+         JITaaSHelpers::ClassInfoTuple, std::string, std::string>();
 
-      uint64_t clientId        = std::get<0>(req);
-      uint32_t romMethodOffset = std::get<1>(req);
-      J9Method *ramMethod      = std::get<2>(req);
-      J9Class *clazz           = std::get<3>(req);
-      TR_Hotness optLevel      = std::get<4>(req);
-      std::string detailsStr   = std::get<5>(req);
-      auto detailsType         = std::get<6>(req);
-      auto &unloadedClasses    = std::get<7>(req);
-      auto &classInfoTuple     = std::get<8>(req);
-      std::string clientOptStr = std::get<9>(req);
+      uint64_t clientId         = std::get<0>(req);
+      uint32_t romMethodOffset  = std::get<1>(req);
+      J9Method *ramMethod       = std::get<2>(req);
+      J9Class *clazz            = std::get<3>(req);
+      TR_Hotness optLevel       = std::get<4>(req);
+      std::string detailsStr    = std::get<5>(req);
+      auto detailsType          = std::get<6>(req);
+      auto &unloadedClasses     = std::get<7>(req);
+      auto &classInfoTuple      = std::get<8>(req);
+      std::string clientOptStr  = std::get<9>(req);
+      std::string recompInfoStr = std::get<10>(req);
 
       stream->setClientId(clientId);
 
       size_t clientOptSize = clientOptStr.size();
       clientOptions = new (PERSISTENT_NEW) char[clientOptSize];
       memcpy(clientOptions, clientOptStr.data(), clientOptSize);
+
+      if (recompInfoStr.size() > 0)
+         {
+         _recompilationMethodInfo = new (PERSISTENT_NEW) TR_PersistentMethodInfo();
+         memcpy(_recompilationMethodInfo, recompInfoStr.data(), sizeof(TR_PersistentMethodInfo));
+         }
+      else
+         {
+         _recompilationMethodInfo = NULL;
+         }
 
       J9ROMClass *romClass = NULL;
       {
