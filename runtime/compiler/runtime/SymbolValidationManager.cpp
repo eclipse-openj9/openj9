@@ -153,19 +153,14 @@ TR::SymbolValidationManager::getBaseComponentClass(TR_OpaqueClassBlock *clazz, i
 
 
 void *
-TR::SymbolValidationManager::storeClassChain(TR_J9VMBase *fej9, TR_OpaqueClassBlock *clazz, bool isStatic)
+TR::SymbolValidationManager::storeClassChain(TR_J9VMBase *fej9, TR_OpaqueClassBlock *clazz)
    {
    void *classChain = NULL;
    bool validated = false;
 
    classChain = fej9->sharedCache()->rememberClass(clazz);
    if (classChain)
-      {
-      if (isStatic)
-         validated = addRomClassRecord(clazz);
-      else
-         validated = addClassChainRecord(clazz, classChain);
-      }
+      validated = addClassChainRecord(clazz, classChain);
 
    if (validated)
       return classChain;
@@ -192,7 +187,6 @@ bool
 TR::SymbolValidationManager::storeClassRecord(TR_OpaqueClassBlock *clazz,
                                               TR::ClassValidationRecord *record,
                                               int32_t arrayDimsToValidate,
-                                              bool isStatic,
                                               bool storeCurrentRecord)
    {
    bool validated = false;
@@ -218,7 +212,7 @@ TR::SymbolValidationManager::storeClassRecord(TR_OpaqueClassBlock *clazz,
          }
       else
          {
-         record->_classChain = storeClassChain(fej9, clazz, isStatic);
+         record->_classChain = storeClassChain(fej9, clazz);
          validated = (record->_classChain != NULL);
          }
 
@@ -259,8 +253,7 @@ TR::SymbolValidationManager::storeClassRecord(TR_OpaqueClassBlock *clazz,
 bool
 TR::SymbolValidationManager::storeValidationRecordIfNecessary(void *symbol,
                                                               TR::SymbolValidationRecord *record,
-                                                              int32_t arrayDimsToValidate,
-                                                              bool isStatic)
+                                                              int32_t arrayDimsToValidate)
    {
    bool existsInList = false;
    bool validated = false;
@@ -281,7 +274,6 @@ TR::SymbolValidationManager::storeValidationRecordIfNecessary(void *symbol,
          validated = storeClassRecord(static_cast<TR_OpaqueClassBlock *>(symbol),
                                       reinterpret_cast<TR::ClassValidationRecord *>(record),
                                       arrayDimsToValidate,
-                                      isStatic,
                                       !existsInList);
          }
       else
@@ -417,7 +409,7 @@ TR::SymbolValidationManager::addDefiningClassFromCPRecord(TR_OpaqueClassBlock *c
       }
 
    SymbolValidationRecord *record = new (_region) DefiningClassFromCPRecord(clazz, beholder, cpIndex, isStatic);
-   return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record, arrayDims, isStatic);
+   return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record, arrayDims);
    }
 
 bool

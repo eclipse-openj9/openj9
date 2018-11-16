@@ -1301,10 +1301,9 @@ private:
    bool storeClassRecord(TR_OpaqueClassBlock *clazz,
                          ClassValidationRecord *record,
                          int32_t arrayDimsToValidate,
-                         bool isStatic,
                          bool storeCurrentRecord);
-   bool storeValidationRecordIfNecessary(void *symbol, SymbolValidationRecord *record, int32_t arrayDimsToValidate = 0, bool isStatic = false);
-   void *storeClassChain(TR_J9VMBase *fej9, TR_OpaqueClassBlock *clazz, bool isStatic);
+   bool storeValidationRecordIfNecessary(void *symbol, SymbolValidationRecord *record, int32_t arrayDimsToValidate = 0);
+   void *storeClassChain(TR_J9VMBase *fej9, TR_OpaqueClassBlock *clazz);
 
    bool validateSymbol(uint16_t idToBeValidated, void *validSymbol);
 
