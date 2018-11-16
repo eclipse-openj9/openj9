@@ -22,9 +22,14 @@
 
 ARGS = ['SDK_VERSION', 'PLATFORM']
 
+SETUP_LABEL = params.SETUP_LABEL
+if (!SETUP_LABEL) {
+    SETUP_LABEL = 'worker'
+}
+
 timeout(time: 10, unit: 'HOURS') {
     timestamps {
-        node('master') {
+        node(SETUP_LABEL) {
             try{
                 checkout scm
 
