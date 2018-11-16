@@ -229,6 +229,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
       case TR_JNIVirtualTargetAddress:
       case TR_JNIStaticTargetAddress:
       case TR_StaticRamMethodConst:
+      case TR_SpecialRamMethodConst:
          {
          TR_RelocationRecordConstantPoolWithIndex *cpiRecord = reinterpret_cast<TR_RelocationRecordConstantPoolWithIndex *>(reloRecord);
          TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(relocation->getTargetAddress());
@@ -493,6 +494,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
       case TR_JNIVirtualTargetAddress:
       case TR_JNIStaticTargetAddress:
       case TR_StaticRamMethodConst:
+      case TR_SpecialRamMethodConst:
          {
          TR_RelocationRecordConstantPoolWithIndex *cpiRecord = reinterpret_cast<TR_RelocationRecordConstantPoolWithIndex *>(reloRecord);
 
@@ -1235,7 +1237,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
             break;
          case TR_JNISpecialTargetAddress:
          case TR_VirtualRamMethodConst:
-         case TR_SpecialRamMethodConst:
             cursor++;
             if (is64BitTarget)
                cursor += 4;     // padding
