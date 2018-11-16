@@ -2165,6 +2165,8 @@ void TR::ConcreteSubClassFromClassRecord::printFields()
 void TR::ClassChainRecord::printFields()
    {
    traceMsg(TR::comp(), "ClassChainRecord\n");
+   traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
+   printClass(_class);
    traceMsg(TR::comp(), "\t_classChain=0x%p\n", _classChain);
    }
 
