@@ -325,8 +325,9 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          break;
 
       case TR_InlinedStaticMethodWithNopGuard:
+      case TR_InlinedSpecialMethodWithNopGuard:
          {
-         TR_RelocationRecordInlinedStaticMethodWithNopGuard *inlinedStaticMethod = reinterpret_cast<TR_RelocationRecordInlinedStaticMethodWithNopGuard *>(reloRecord);
+         TR_RelocationRecordNopGuard *inlinedMethod = reinterpret_cast<TR_RelocationRecordNopGuard *>(reloRecord);
          uintptrj_t destinationAddress = reinterpret_cast<uintptrj_t>(relocation->getTargetAddress());
          TR_VirtualGuard *guard = reinterpret_cast<TR_VirtualGuard *>(relocation->getTargetAddress2());
 
@@ -334,6 +335,8 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          // Setup flags field with type of method that needs to be validated at relocation time
          if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isStatic())
             flags = inlinedMethodIsStatic;
+         else if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isSpecial())
+            flags = inlinedMethodIsSpecial;
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
 
          TR_ResolvedMethod *resolvedMethod = guard->getSymbolReference()->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod();
@@ -358,12 +361,12 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          void *romClass = reinterpret_cast<void *>(fej9->getPersistentClassPointerFromClassPointer(inlinedMethodClass));
          void *romClassOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(romClass);
 
-         inlinedStaticMethod->setReloFlags(reloTarget, flags);
-         inlinedStaticMethod->setInlinedSiteIndex(reloTarget, guard->getCurrentInlinedSiteIndex());
-         inlinedStaticMethod->setConstantPool(reloTarget, reinterpret_cast<uintptrj_t>(guard->getSymbolReference()->getOwningMethod(comp)->constantPool()));
-         inlinedStaticMethod->setCpIndex(reloTarget, cpIndexOrData);
-         inlinedStaticMethod->setRomClassOffsetInSharedCache(reloTarget, reinterpret_cast<uintptrj_t>(romClassOffsetInSharedCache));
-         inlinedStaticMethod->setDestinationAddress(reloTarget, destinationAddress);
+         inlinedMethod->setReloFlags(reloTarget, flags);
+         inlinedMethod->setInlinedSiteIndex(reloTarget, guard->getCurrentInlinedSiteIndex());
+         inlinedMethod->setConstantPool(reloTarget, reinterpret_cast<uintptrj_t>(guard->getSymbolReference()->getOwningMethod(comp)->constantPool()));
+         inlinedMethod->setCpIndex(reloTarget, cpIndexOrData);
+         inlinedMethod->setRomClassOffsetInSharedCache(reloTarget, reinterpret_cast<uintptrj_t>(romClassOffsetInSharedCache));
+         inlinedMethod->setDestinationAddress(reloTarget, destinationAddress);
          }
          break;
 
@@ -551,18 +554,19 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          break;
 
       case TR_InlinedStaticMethodWithNopGuard:
+      case TR_InlinedSpecialMethodWithNopGuard:
          {
-         TR_RelocationRecordInlinedStaticMethodWithNopGuard *inlinedStaticMethod = reinterpret_cast<TR_RelocationRecordInlinedStaticMethodWithNopGuard *>(reloRecord);
+         TR_RelocationRecordNopGuard *inlinedMethod = reinterpret_cast<TR_RelocationRecordNopGuard *>(reloRecord);
 
          self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
             traceMsg(self()->comp(), "\nInlined Method: Inlined site index = %d, Constant pool = %x, cpIndex = %x, romClassOffsetInSharedCache=%p, destinationAddress = %p",
-                                     inlinedStaticMethod->inlinedSiteIndex(reloTarget),
-                                     inlinedStaticMethod->constantPool(reloTarget),
-                                     inlinedStaticMethod->cpIndex(reloTarget),
-                                     inlinedStaticMethod->romClassOffsetInSharedCache(reloTarget),
-                                     inlinedStaticMethod->destinationAddress(reloTarget));
+                                     inlinedMethod->inlinedSiteIndex(reloTarget),
+                                     inlinedMethod->constantPool(reloTarget),
+                                     inlinedMethod->cpIndex(reloTarget),
+                                     inlinedMethod->romClassOffsetInSharedCache(reloTarget),
+                                     inlinedMethod->destinationAddress(reloTarget));
             }
          }
          break;
@@ -963,7 +967,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
                }
             break;
-         case TR_InlinedSpecialMethodWithNopGuard:
          case TR_InlinedVirtualMethodWithNopGuard:
          case TR_InlinedInterfaceMethodWithNopGuard:
          case TR_InlinedAbstractMethodWithNopGuard:
