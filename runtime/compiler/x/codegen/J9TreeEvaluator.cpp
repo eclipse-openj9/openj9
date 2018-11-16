@@ -1511,15 +1511,9 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
 
 TR::Register *J9::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   static bool UseOldReferenceArrayCopy = (bool)feGetEnv("TR_UseOldReferenceArrayCopy");
-   static bool UseOldReferenceArrayCopyPath = (bool)feGetEnv("TR_UseOldReferenceArrayCopyPath");
-   if (UseOldReferenceArrayCopyPath || !node->isReferenceArrayCopy())
+   if (!node->isReferenceArrayCopy())
       {
       return OMR::TreeEvaluatorConnector::arraycopyEvaluator(node, cg);
-      }
-   if (UseOldReferenceArrayCopy && !node->isNoArrayStoreCheckArrayCopy())
-      {
-      return TR::TreeEvaluator::VMarrayStoreCheckArrayCopyEvaluator(node, cg);
       }
 
    auto srcObjReg = cg->evaluate(node->getChild(0));
@@ -8334,82 +8328,6 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
    cg->decReferenceCount(destinationChild);
    }
 
-TR::Register *J9::X86::TreeEvaluator::VMarrayStoreCheckArrayCopyEvaluator(TR::Node * node, TR::CodeGenerator * cg)
-   {
-   TR_ASSERT(node->getNumChildren() == 5 && !node->isNoArrayStoreCheckArrayCopy(),
-      "Node %s is unsuitable for VMarrayStoreCheckArrayCopyEvaluator", cg->getDebug()->getName(node));
-
-   TR::Node *srcNode     = node->getChild(0);
-   TR::Node *dstNode     = node->getChild(1);
-   TR::Node *byteSrcNode = node->getChild(2);
-   TR::Node *byteDstNode = node->getChild(3);
-   TR::Node *byteLenNode = node->getChild(4);
-
-   // See if we can skip the bytes -> elements conversion
-   //
-   TR::Node *elementLenNode = NULL;
-   bool     skippedEvaluatingByteLenNode = false;
-   TR::Compilation *comp = cg->comp();
-   if (byteLenNode &&
-       byteLenNode->getRegister() == NULL &&
-       byteLenNode->getOpCode().isMul() &&
-       byteLenNode->getSecondChild()->getOpCode().isLoadConst() &&
-       TR::TreeEvaluator::integerConstNodeValue(byteLenNode->getSecondChild(), cg) == TR::Compiler->om.sizeofReferenceField())//TR::Compiler->om.sizeofReferenceAddress())
-      {
-      skippedEvaluatingByteLenNode = true;
-      elementLenNode = byteLenNode->getFirstChild();
-      }
-   else
-      {
-      TR::ILOpCodes xushr = TR::Compiler->target.is64Bit()? TR::lushr : TR::iushr;
-      int32_t shftSize = 2;
-      if (TR::Compiler->target.is64Bit() && !comp->useCompressedPointers()) shftSize = 3;
-      elementLenNode = TR::Node::create(xushr, 2, byteLenNode,
-         TR::Node::create(node, TR::iconst, 0, shftSize));
-      cg->decReferenceCount(byteLenNode);
-      }
-
-   // Create helper call node
-   //
-   TR::SymbolReference *helperSymRef = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_referenceArrayCopy, false, false, false);
-
-   TR::Node *callNode =
-      TR::Node::createWithSymRef(TR::icall, 6, 1,
-         TR::Node::createWithSymRef(node, TR::loadaddr, 0,
-             new (cg->trHeapMemory()) TR::SymbolReference(cg->getSymRefTab(), TR::RegisterMappedSymbol::createMethodMetaDataSymbol(cg->trHeapMemory(), "vmThread"))),
-             helperSymRef);
-
-   // icall's args 1-4 are same as arraycopy's args 0-3
-   for (uint16_t i=1; i<5; i++)
-      {
-      callNode->setChild(i, node->getChild(i-1));
-      }
-   callNode->setAndIncChild(5, elementLenNode);
-   callNode->incReferenceCount();
-   if (skippedEvaluatingByteLenNode)
-      cg->recursivelyDecReferenceCount(byteLenNode);
-
-   // Generate the call
-   //
-   TR::Register *checkFailureIndexReg = TR::TreeEvaluator::performCall(callNode, false, false, cg);
-
-   // Must throw an array store exception if helper returned anything other than -1
-   //
-   TR::Instruction *instr;
-   TR::Snippet *snippet;
-   TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
-
-   generateRegImmInstruction(CMP4RegImm4, node, checkFailureIndexReg, (uint32_t)-1, cg);
-   cg->decReferenceCount(callNode);
-   instr = generateLabelInstruction (JNE4, node, snippetLabel, true, cg);
-   snippet = new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg,
-      comp->getSymRefTab()->findOrCreateArrayStoreExceptionSymbolRef(comp->getJittedMethodSymbol()),
-      snippetLabel, instr, false);
-   cg->addSnippet(snippet);
-
-   return NULL;
-   }
-
 
 // Check that two objects are compatible for use in an arraycopy operation.
 // If not, an ArrayStoreException is thrown.
@@ -10221,26 +10139,6 @@ static void generateWriteBarrierCall(
       }
 
    generateLabelInstruction(JMP4, node, doneLabel, cg);
-   }
-
-void J9::X86::TreeEvaluator::generateWrtbarForArrayCopy(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   TR::Node *destOwningObject = node->getChild(1);
-
-   TR_X86ScratchRegisterManager *scratchRegisterManager = cg->generateScratchRegisterManager();
-
-   // srcReg is NULL because there is no one single pointer that's being stored
-   // into the destination object.
-   //
-   TR_ASSERT(!cg->comp()->getOptions()->realTimeGC(), "assertion failure");
-
-   TR::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
-      node,
-      destOwningObject,
-      NULL,
-      NULL,
-      scratchRegisterManager,
-      cg);
    }
 
 static void reportFlag(bool value, char *name, TR::CodeGenerator *cg)
