@@ -379,7 +379,6 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          break;
 
       case TR_InlinedVirtualMethod:
-      case TR_InlinedInterfaceMethodWithNopGuard:
       case TR_InlinedInterfaceMethod:
       case TR_InlinedHCRMethod:
          {
