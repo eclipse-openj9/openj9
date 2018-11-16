@@ -89,6 +89,8 @@ public:
    virtual bool classGotExtended(TR_FrontEnd *vm, TR_PersistentMemory *, TR_OpaqueClassBlock *superClassId, TR_OpaqueClassBlock *subClassId) override;
 
   
+   void markForRemoval(TR_OpaqueClassBlock *clazz);
+   void markDirty(TR_OpaqueClassBlock *clazz);
 #ifdef COLLECT_CHTABLE_STATS
    uint32_t _numUpdates; // aka numCompilations
    uint32_t _numCommitFailures;
@@ -99,9 +101,6 @@ public:
 #endif
 
 private:
-   void markSuperClassesAsDirty(TR_FrontEnd *fe, TR_OpaqueClassBlock *classId);
-   void markForRemoval(TR_OpaqueClassBlock *clazz);
-   void markDirty(TR_OpaqueClassBlock *clazz);
 
    std::string serializeRemoves();
    std::string serializeModifications();
@@ -134,6 +133,36 @@ public:
 
    uint32_t                            _numSubClasses;
    TR_OpaqueClassBlock                *_subClasses[0];
+   };
+
+class TR_JITaaSPersistentClassInfo : public TR_PersistentClassInfo
+   {
+public:
+   TR_PERSISTENT_ALLOC(TR_Memory::PersistentInfo);
+   TR_JITaaSPersistentClassInfo(TR_OpaqueClassBlock *id, TR_JITaaSClientPersistentCHTable *chTable);
+
+   // All of these methods mark the classInfo as dirty/removed and call a parent method
+   virtual void setInitialized(TR_PersistentMemory *) override;
+   virtual void setClassId(TR_OpaqueClassBlock *newClass) override;
+   virtual void setFirstSubClass(TR_SubClass *sc) override;
+   virtual void setFieldInfo(TR_PersistentClassInfoForFields *i) override;
+   virtual TR_SubClass *addSubClass(TR_PersistentClassInfo *subClass) override;
+   virtual void removeSubClasses() override;
+   virtual void removeASubClass(TR_PersistentClassInfo *subClass) override;
+   virtual void removeUnloadedSubClasses() override;
+   virtual void setUnloaded() override;
+   virtual void incNumPrexAssumptions() override;
+   virtual void setReservable(bool v = true) override;
+   virtual void setShouldNotBeNewlyExtended(int32_t ID) override;
+   virtual void resetShouldNotBeNewlyExtended(int32_t ID) override;
+   virtual void clearShouldNotBeNewlyExtended() override;
+   virtual void setHasRecognizedAnnotations(bool v = true) override;
+   virtual void setAlreadyCheckedForAnnotations(bool v = true) override;
+   virtual void setCannotTrustStaticFinal(bool v = true) override;
+   virtual void setClassHasBeenRedefined(bool v = true) override;
+   virtual void setNameLength(int32_t length) override;
+private:
+   static TR_JITaaSClientPersistentCHTable *_chTable;
    };
 
 #endif // JITaaS_PERSISTENT_CHTABLE_H

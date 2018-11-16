@@ -69,17 +69,17 @@ class TR_PersistentClassInfo : public TR_Link0<TR_PersistentClassInfo>
 
    TR_OpaqueClassBlock *getClassId() { return (TR_OpaqueClassBlock *) (((uintptr_t) _classId) & ~(uintptr_t)1); }
    bool isInitialized()  { return ((((uintptr_t) _classId) & 1) == 0); }
-   void setInitialized(TR_PersistentMemory *);
+   virtual void setInitialized(TR_PersistentMemory *);
 
    // HCR
-   void setClassId(TR_OpaqueClassBlock *newClass)
+   virtual void setClassId(TR_OpaqueClassBlock *newClass)
       {
       _classId = (TR_OpaqueClassBlock *) (((uintptrj_t)newClass) | (uintptrj_t)isInitialized());
       setClassHasBeenRedefined(true);
       }
 
    TR_SubClass *getFirstSubclass() { return _subClasses.getFirst(); }
-   void setFirstSubClass(TR_SubClass *sc) { _subClasses.setFirst(sc); }
+   virtual void setFirstSubClass(TR_SubClass *sc) { _subClasses.setFirst(sc); }
 
    void setVisited() {_visitedStatus |= 1; }
    void resetVisited() { _visitedStatus = _visitedStatus & ~(uintptrj_t)1; }
@@ -96,7 +96,7 @@ class TR_PersistentClassInfo : public TR_Link0<TR_PersistentClassInfo>
       fieldInfo = fieldInfo & ~(uintptrj_t)3;
       return (TR_PersistentClassInfoForFields *) fieldInfo;
       }
-   void setFieldInfo(TR_PersistentClassInfoForFields *i)
+   virtual void setFieldInfo(TR_PersistentClassInfoForFields *i)
       {
       uintptrj_t fieldInfo = (uintptrj_t) i;
       fieldInfo |= (((uintptrj_t) _fieldInfo) & (uintptrj_t)3);
@@ -105,11 +105,11 @@ class TR_PersistentClassInfo : public TR_Link0<TR_PersistentClassInfo>
 
    int32_t getSubClassesCount() { return _subClasses.getSize(); }
 
-   TR_SubClass *addSubClass(TR_PersistentClassInfo *subClass);
-   void removeSubClasses();
-   void removeASubClass(TR_PersistentClassInfo *subClass);
-   void removeUnloadedSubClasses();
-   void setUnloaded(){_visitedStatus |= 0x2;}
+   virtual TR_SubClass *addSubClass(TR_PersistentClassInfo *subClass);
+   virtual void removeSubClasses();
+   virtual void removeASubClass(TR_PersistentClassInfo *subClass);
+   virtual void removeUnloadedSubClasses();
+   virtual void setUnloaded(){_visitedStatus |= 0x2;}
    bool getUnloaded()
     {
     if (_visitedStatus & 0x2)
@@ -118,32 +118,32 @@ class TR_PersistentClassInfo : public TR_Link0<TR_PersistentClassInfo>
    }
    uint16_t getTimeStamp() { return _timeStamp; }
    int16_t getNumPrexAssumptions() { return _prexAssumptions; }
-   void incNumPrexAssumptions() { _prexAssumptions++; }
+   virtual void incNumPrexAssumptions() { _prexAssumptions++; }
 
-   void setReservable(bool v = true)              { _flags.set(_isReservable, v); }
+   virtual void setReservable(bool v = true)              { _flags.set(_isReservable, v); }
    bool isReservable()                            { return _flags.testAny(_isReservable); }
 
-   void setShouldNotBeNewlyExtended(int32_t ID);
-   void resetShouldNotBeNewlyExtended(int32_t ID){ _shouldNotBeNewlyExtended.reset(1 << ID); }
-   void clearShouldNotBeNewlyExtended()          { _shouldNotBeNewlyExtended.clear(); }
+   virtual void setShouldNotBeNewlyExtended(int32_t ID);
+   virtual void resetShouldNotBeNewlyExtended(int32_t ID){ _shouldNotBeNewlyExtended.reset(1 << ID); }
+   virtual void clearShouldNotBeNewlyExtended()          { _shouldNotBeNewlyExtended.clear(); }
    bool shouldNotBeNewlyExtended()               { return _shouldNotBeNewlyExtended.testAny(0xff); }
    bool shouldNotBeNewlyExtended(int32_t ID)     { return _shouldNotBeNewlyExtended.testAny(1 << ID); }
    flags8_t getShouldNotBeNewlyExtendedMask() const { return _shouldNotBeNewlyExtended; }
 
-   void setHasRecognizedAnnotations(bool v = true){ _flags.set(_containsRecognizedAnnotations, v); }
+   virtual void setHasRecognizedAnnotations(bool v = true){ _flags.set(_containsRecognizedAnnotations, v); }
    bool hasRecognizedAnnotations()                { return _flags.testAny(_containsRecognizedAnnotations); }
-   void setAlreadyCheckedForAnnotations(bool v = true){ _flags.set(_alreadyScannedForAnnotations, v); }
+   virtual void setAlreadyCheckedForAnnotations(bool v = true){ _flags.set(_alreadyScannedForAnnotations, v); }
    bool alreadyCheckedForAnnotations()            { return _flags.testAny(_alreadyScannedForAnnotations); }
 
-   void setCannotTrustStaticFinal(bool v = true)  { _flags.set(_cannotTrustStaticFinal, v); }
+   virtual void setCannotTrustStaticFinal(bool v = true)  { _flags.set(_cannotTrustStaticFinal, v); }
    bool cannotTrustStaticFinal()                  { return _flags.testAny(_cannotTrustStaticFinal); }
 
    // HCR
-   void setClassHasBeenRedefined(bool v = true)  { _flags.set(_classHasBeenRedefined, v); }
+   virtual void setClassHasBeenRedefined(bool v = true)  { _flags.set(_classHasBeenRedefined, v); }
    bool classHasBeenRedefined()                  { return _flags.testAny(_classHasBeenRedefined); }
 
    int32_t getNameLength()                       { return _nameLength; }
-   void setNameLength(int32_t length)            { _nameLength = length; }
+   virtual void setNameLength(int32_t length)            { _nameLength = length; }
 
    private:
 

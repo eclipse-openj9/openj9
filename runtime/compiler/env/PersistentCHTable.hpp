@@ -90,6 +90,7 @@ class TR_PersistentCHTable
 
    protected:
    void removeAssumptionFromList(OMR::RuntimeAssumption **list, OMR::RuntimeAssumption *assumption, OMR::RuntimeAssumption *prev);
+   TR_LinkHead<TR_PersistentClassInfo> *getClasses() { return _classes; }
 
    private:
    uint8_t _buffer[sizeof(TR_LinkHead<TR_PersistentClassInfo>) * (CLASSHASHTABLE_SIZE + 1)];
