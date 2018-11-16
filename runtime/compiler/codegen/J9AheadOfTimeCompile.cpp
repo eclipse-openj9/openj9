@@ -326,6 +326,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
       case TR_InlinedStaticMethodWithNopGuard:
       case TR_InlinedSpecialMethodWithNopGuard:
+      case TR_InlinedVirtualMethodWithNopGuard:
          {
          TR_RelocationRecordNopGuard *inlinedMethod = reinterpret_cast<TR_RelocationRecordNopGuard *>(reloRecord);
          uintptrj_t destinationAddress = reinterpret_cast<uintptrj_t>(relocation->getTargetAddress());
@@ -337,6 +338,8 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
             flags = inlinedMethodIsStatic;
          else if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isSpecial())
             flags = inlinedMethodIsSpecial;
+         else if (guard->getSymbolReference()->getSymbol()->getMethodSymbol()->isVirtual())
+            flags = inlinedMethodIsVirtual;
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
 
          TR_ResolvedMethod *resolvedMethod = guard->getSymbolReference()->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod();
@@ -555,6 +558,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
 
       case TR_InlinedStaticMethodWithNopGuard:
       case TR_InlinedSpecialMethodWithNopGuard:
+      case TR_InlinedVirtualMethodWithNopGuard:
          {
          TR_RelocationRecordNopGuard *inlinedMethod = reinterpret_cast<TR_RelocationRecordNopGuard *>(reloRecord);
 
@@ -967,7 +971,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
                }
             break;
-         case TR_InlinedVirtualMethodWithNopGuard:
          case TR_InlinedInterfaceMethodWithNopGuard:
          case TR_InlinedAbstractMethodWithNopGuard:
          case TR_InlinedHCRMethod:
