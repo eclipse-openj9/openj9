@@ -386,8 +386,8 @@ osx_x86-64_cmprssptrs:
   openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
   node_labels:
     build:
-      8: 'ci.role.build && hw.arch.x86 && sw.os.osx'
-      11: 'ci.role.build && hw.arch.x86 && sw.os.osx'
+      8: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_11'
+      11: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
     test:
       8: 'hw.arch.x86 && sw.os.osx'
       11: 'hw.arch.x86 && sw.os.osx'
@@ -411,8 +411,8 @@ osx_x86-64:
   openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
   node_labels:
     build:
-      8: 'ci.role.build && hw.arch.x86 && sw.os.osx'
-      11: 'ci.role.build && hw.arch.x86 && sw.os.osx'
+      8: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_11'
+      11: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
     test:
       8: 'hw.arch.x86 && sw.os.osx'
       11: 'hw.arch.x86 && sw.os.osx'
