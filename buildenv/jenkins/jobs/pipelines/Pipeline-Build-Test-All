@@ -102,7 +102,7 @@ builds = [:]
 
 timeout(time: 12, unit: 'HOURS') {
     timestamps {
-        node(LABEL) {
+        node(SETUP_LABEL) {
             try {
                 checkout scm
                 def variableFile = load 'buildenv/jenkins/common/variables-functions'

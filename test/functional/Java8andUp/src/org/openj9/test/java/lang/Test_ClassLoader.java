@@ -468,7 +468,7 @@ public class Test_ClassLoader {
 			 * not already loaded by another classloader. If it starts failing,
 			 * find another library to load.
 			 */
-			loader2.loadLibrary("attach");
+			loader2.loadLibrary("unpack");
 		} catch (UnsatisfiedLinkError e) {
 			e.printStackTrace();
 			Assert.fail("expected to find library");

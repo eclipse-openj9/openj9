@@ -158,7 +158,7 @@ def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO
             string(name: 'VENDOR_BRANCH', value: VENDOR_BRANCH),
             string(name: 'VENDOR_CREDENTIALS_ID', value: VENDOR_CREDENTIALS_ID),
             string(name: 'NODE', value: NODE),
-            string(name: 'SETUP_LABEL', value: SETUP_LABEL])
+            string(name: 'SETUP_LABEL', value: SETUP_LABEL)])
     }
 }
 
