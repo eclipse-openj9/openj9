@@ -23,7 +23,20 @@
 cmake_minimum_required(VERSION 3.4 FATAL_ERROR)
 
 project(openj9)
-include(FindJava)
+
+if(NOT $ENV{BOOT_JDK} STREQUAL "")
+    set(JAVA_HOME $ENV{BOOT_JDK})
+
+    # These variables are consumed when the "Java" language is enabled
+    set(CMAKE_Java_COMPILER ${JAVA_HOME}/bin/javac)
+    set(CMAKE_Java_RUNTIME ${JAVA_HOME}/bin/java)
+    set(CMAKE_Java_AR ${JAVA_HOME}/bin/jar)
+
+    set(Java_JAVA_EXECUTABLE ${JAVA_HOME}/bin/java)
+else()
+    message(STATUS "BOOT_JDK is not set, default jdk will be used")
+    include(FindJava)
+endif()
 
 # Note: these are temporary transition variables
 set(J9VM_GEN_NLS TRUE) # if true, generate nls headers from cmake

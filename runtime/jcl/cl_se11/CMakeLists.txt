@@ -44,12 +44,12 @@ target_link_libraries(jclse11_
 		j9vm_jcl_se6_vm-side_lifecycle
 		j9vm_jcl_se6_vm-side_natives
 		j9vm_jcl_jithelpers
-        j9vm_jcl_sun_misc_Unsafe
-        #j9vm_jcl_se626_orb_ludcl
+		j9vm_jcl_sun_misc_Unsafe
+		#j9vm_jcl_se626_orb_ludcl
 		j9vm_jcl_attach
 		j9vm_jcl_se7
 		j9vm_jcl_se8
-        j9vm_jcl_se9
+		j9vm_jcl_se9
 
 		j9hookable
 		j9zlib
