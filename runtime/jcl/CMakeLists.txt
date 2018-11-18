@@ -29,6 +29,7 @@ set(JCLS
 	se9_before_b165
 	se10
 	se11
+	se12
 )
 
 set(J9VM_JCL_BIN_DIR "${CMAKE_CURRENT_BINARY_DIR}")
@@ -134,4 +135,5 @@ if(J9VM_BUILD_JAVA7)
 	add_subdirectory(cl_se9_before_b165)
 	add_subdirectory(cl_se10)
 	add_subdirectory(cl_se11)
+	add_subdirectory(cl_se12)
 endif()
