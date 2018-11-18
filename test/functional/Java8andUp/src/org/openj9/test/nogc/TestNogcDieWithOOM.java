@@ -60,9 +60,11 @@ public class TestNogcDieWithOOM {
 		Random random = new Random();
 		String message = "Caught expected java/lang/OutOfMemoryError: Java heap space";
 		byte[] data = null;
+		data = allocateMemory(3 * 1024*1024);
 		try {
 			for (int cnt=0; cnt<1024; cnt++) {
-				data = allocateMemory(random.nextInt(10) * 1024*1024 + 9*1024*1024);
+				int multi = random.nextInt(10);
+				data = allocateMemory(((0 == multi)?1:multi) * 10 * 1024*1024);
 			}
 		} catch (OutOfMemoryError error) {
 			logger.info(message);
