@@ -37,52 +37,19 @@ if test "x$RUN_LINT" = "xyes"; then
 
   export J9SRC=$PWD/runtime
   export OMRCHECKER_DIR=$J9SRC/omr/tools/compiler/OMRChecker
+  export CMAKE_BUILD_DIR=$PWD/build
   export LLVM_CONFIG=llvm-config-3.8 CLANG=clang++-3.8 CXX_PATH=clang++-3.8 CXX=clang++-3.8
-
-  # This is a bit of a hack job since we need some generated headers for the linter to run properly
-  # Once this is all supported within cmake this should be cleaned up
-
-  # first we have to build nlstool and cptool, since these arent in the main cmake build yet
-  mkdir build_sourcetools
-  cd build_sourcetools
-  cmake ../sourcetools
-  make -j $MAKE_JOBS j9vmcp j9nls
-  # set up convenience vars to point to tool jars
-  J9NLS_JAR=$PWD/j9nls.jar
-  J9VMCP_JAR=$PWD/j9vmcp.jar
-  OM_JAR=$PWD/om.jar
 
   cd $J9SRC
   git clone --depth 1 --branch openj9 https://github.com/eclipse/openj9-omr.git omr
+  cd ..
 
-  # generate the nls headers
-  java -cp $J9NLS_JAR com.ibm.oti.NLSTool.J9NLS -source $PWD
-
-
-  # create stub const pool files so cmake wont complain
-  touch \
-    jcl/j9vmconstantpool_se7_basic.c \
-    jcl/j9vmconstantpool_se9.c \
-    jcl/j9vmconstantpool_se9_before_b165.c \
-    jcl/j9vmconstantpool_se10.c \
-    jcl/j9vmconstantpool_se11.c
-
-
-  # generate cmake buildsystem so that we can run trace/hookgen
-  # also the cachefile is needed for cptool
-  mkdir build
-  cd build
+  # We need some generated headers for the linter to run properly
+  # so we run cmake and build the targets we need
+  mkdir $CMAKE_BUILD_DIR
+  cd $CMAKE_BUILD_DIR
   cmake -C $J9SRC/cmake/caches/linux_x86-64_cmprssptrs.cmake ..
-  make -j $MAKE_JOBS omrgc_hookgen j9vm_hookgen j9jit_tracegen
-
-  # process the cmake cache into a format which can be parsed by cptool
-  # (ie strip comments, whitespace and advanced variables)
-  cmake -N -L > parsed_cache.txt
-
-  # run cptool
-  java -cp "$J9VMCP_JAR:$OM_JAR" com.ibm.oti.VMCPTool.Main \
-    -rootDir "${J9SRC}" -outputDir "$PWD" -cmakeCache "$PWD/parsed_cache.txt" \
-    -jcls se7_basic,se9,se9_before_b165,se10,se11
+  make -j $MAKE_JOBS run_cptool omrgc_hookgen j9vm_hookgen j9jit_tracegen j9vm_nlsgen
 
   # Now we can build the linter plugin
   cd $OMRCHECKER_DIR
