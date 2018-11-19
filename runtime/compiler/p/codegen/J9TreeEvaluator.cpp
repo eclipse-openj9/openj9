@@ -7956,7 +7956,7 @@ TR::Register *J9::Power::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR
    depIndex = 0;
    nonFixedDependency(conditions, obj1Reg, &depIndex, TR_GPR, true, cg);
    nonFixedDependency(conditions, obj2Reg, &depIndex, TR_GPR, true, cg);
-   tmp1Reg = nonFixedDependency(conditions, NULL, &depIndex, TR_GPR, false, cg);
+   tmp1Reg = nonFixedDependency(conditions, NULL, &depIndex, TR_GPR, true, cg);
    tmp2Reg = nonFixedDependency(conditions, NULL, &depIndex, TR_GPR, false, cg);
    cndReg = cg->allocateRegister(TR_CCR);
    addDependency(conditions, cndReg, TR::RealRegister::cr0, TR_CCR, cg);
