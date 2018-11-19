@@ -11688,7 +11688,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
          {
       case TR::java_util_concurrent_ConcurrentLinkedQueue_tmOffer:
          {
-         if (cg->getSupportsTM())
+         if (cg->getSupportsInlineConcurrentLinkedQueue())
             {
             resultReg = inlineConcurrentLinkedQueueTMOffer(node, cg);
             return true;
@@ -11698,7 +11698,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
 
       case TR::java_util_concurrent_ConcurrentLinkedQueue_tmPoll:
          {
-         if (cg->getSupportsTM())
+         if (cg->getSupportsInlineConcurrentLinkedQueue())
             {
             resultReg = inlineConcurrentLinkedQueueTMPoll(node, cg);
             return true;

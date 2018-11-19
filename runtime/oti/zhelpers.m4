@@ -435,13 +435,53 @@ dnl M1 = $1
 dnl D2 = $2
 dnl X2 = $3
 dnl B2 = $4
-define({BRANCH_INDIRECT_ON_CONDITION},{
+define({ENCODE_BIC},{
     BYTE(227)
     BYTE(eval((($1 % 16) * 16) + ($3 % 16)))
     BYTE(eval((($4 % 16) * 16) + (($2 / 256) % 16)))
     BYTE(eval($2 % 256))
     BYTE(eval(($2 / 4096) % 256))
     BYTE(71)
+})
+
+dnl Encodes the Add Immediate (AGSI) instruction with the following
+dnl format:
+dnl 
+dnl AGSI D1(B2),I2
+dnl
+dnl Where:
+dnl
+dnl D1 = $1
+dnl B1 = $2
+dnl I2 = $3
+define({ENCODE_AGSI},{
+    BYTE(235)
+    BYTE($3)
+    BYTE(eval((($2 % 16) * 16) + (($1 / 256) % 16)))
+    BYTE(eval($1 % 256))
+    BYTE(eval(($1 / 4096) % 256))
+    BYTE(122)
+})
+
+dnl Encodes the Rotate Then Insert Selected Bits (RISBGN) instruction
+dnl with the following format:
+dnl 
+dnl RISBGN R1,R2,I3,I4,I5
+dnl
+dnl Where:
+dnl
+dnl R1 = $1
+dnl R2 = $2
+dnl I3 = $3
+dnl I4 = $4
+dnl I5 = $5
+define({ENCODE_RISBGN},{
+    BYTE(236)
+    BYTE(eval((($1 % 16) * 16) + ($2 % 16)))
+    BYTE($3)
+    BYTE($4)
+    BYTE($5)
+    BYTE(89)
 })
 
 define({JIT_GPR_SAVE_OFFSET},{eval(STACK_BIAS+J9TR_cframe_jitGPRs+(($1)*J9TR_pointerSize))})

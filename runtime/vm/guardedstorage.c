@@ -28,8 +28,8 @@
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER) && defined(J9VM_ARCH_S390)
 
-J9_EXTERN_BUILDER_SYMBOL(handleReadBarrier);
-J9_EXTERN_BUILDER_SYMBOL(handleGuardedStorageEvent);
+J9_EXTERN_BUILDER_SYMBOL(handleSoftwareReadBarrier);
+J9_EXTERN_BUILDER_SYMBOL(handleHardwareReadBarrier);
 
 void
 invokeJ9ReadBarrier(J9VMThread *currentThread)
@@ -73,9 +73,9 @@ j9gs_initializeThread(J9VMThread *vmThread)
 			gsControlBlock->sectionMask = 0;
 			gsControlBlock->paramListAddr = (uint64_t) &vmThread->gsParameters;
 			if (1 == supportsGuardedStorageFacility) {
-				vmThread->gsParameters.handlerAddr = (uint64_t)(uintptr_t)J9_BUILDER_SYMBOL(handleGuardedStorageEvent);
+				vmThread->gsParameters.handlerAddr = (uint64_t)(uintptr_t)J9_BUILDER_SYMBOL(handleHardwareReadBarrier);
 			} else {
-				vmThread->gsParameters.handlerAddr = (uint64_t)(uintptr_t)J9_BUILDER_SYMBOL(handleReadBarrier);
+				vmThread->gsParameters.handlerAddr = (uint64_t)(uintptr_t)J9_BUILDER_SYMBOL(handleSoftwareReadBarrier);
 			}
 
 			/* Initialize the parameters */

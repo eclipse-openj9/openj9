@@ -121,6 +121,12 @@ J9::Z::CodeGenerator::CodeGenerator() :
       cg->setSupportsInlineStringHashCode();
       }
 
+   // See comment in `handleHardwareReadBarrier` implementation as to why we cannot support CTX under CS
+   if (cg->getSupportsTM() && !TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+      {
+      cg->setSupportsInlineConcurrentLinkedQueue();
+      }
+
    // Let's turn this on.  There is more work needed in the opt
    // to catch the case where the BNDSCHK is inserted after
    //
@@ -3892,7 +3898,7 @@ J9::Z::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod me
       }
 
    // Transactional Memory
-   if (self()->getSupportsTM())
+   if (self()->getSupportsInlineConcurrentLinkedQueue())
       {
       if (method == TR::java_util_concurrent_ConcurrentLinkedQueue_tmOffer ||
           method == TR::java_util_concurrent_ConcurrentLinkedQueue_tmPoll ||
@@ -4115,7 +4121,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
          return true;
 
       case TR::java_util_concurrent_ConcurrentLinkedQueue_tmOffer:
-         if (cg->getSupportsTM())
+         if (cg->getSupportsInlineConcurrentLinkedQueue())
             {
             resultReg = inlineConcurrentLinkedQueueTMOffer(node, cg);
             return true;
@@ -4123,7 +4129,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
          break;
 
       case TR::java_util_concurrent_ConcurrentLinkedQueue_tmPoll:
-         if (cg->getSupportsTM())
+         if (cg->getSupportsInlineConcurrentLinkedQueue())
             {
             resultReg = inlineConcurrentLinkedQueueTMPoll(node, cg);
             return true;

@@ -11185,89 +11185,59 @@ inlineConcurrentLinkedQueueTMOffer(
       if (!disableNIAI)
          cursor = generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
 
-      // We must make sure the hard-coded reference loads are guarded
-      auto guardedLoadMnemonic = usesCompressedrefs ? TR::InstOpCode::LLGFSG : TR::InstOpCode::LGG;
-
-      if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+      if (usesCompressedrefs)
          {
-         cursor = generateRXInstruction(cg, guardedLoadMnemonic, node, rP, generateS390MemoryReference(rThis, offsetTail, cg));
+         cursor = generateRXInstruction(cg, TR::InstOpCode::LLGF, node, rP, generateS390MemoryReference(rThis, offsetTail, cg));
+
+         if (shiftAmount != 0)
+            {
+            cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rP, rP, shiftAmount);
+            }
          }
       else
          {
-         if (usesCompressedrefs)
-            {
-            cursor = generateRXInstruction(cg, TR::InstOpCode::LLGF, node, rP, generateS390MemoryReference(rThis, offsetTail, cg));
-
-            if (shiftAmount != 0)
-               {
-               cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rP, rP, shiftAmount);
-               }
-            }
-         else
-            {
-            cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, rP, generateS390MemoryReference(rThis, offsetTail, cg));
-            }
+         cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, rP, generateS390MemoryReference(rThis, offsetTail, cg));
          }
 
       if (!disableNIAI)
          cursor = generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
 
-      if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+      if (usesCompressedrefs)
          {
-         cursor = generateRXInstruction(cg, guardedLoadMnemonic, node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
+         cursor = generateRXInstruction(cg, TR::InstOpCode::LT, node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
+         cursor = generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, rQ, rQ);
 
-         cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CLG, node, rQ, 0, TR::InstOpCode::COND_CC0, insertLabel, false, false);
+         if (shiftAmount != 0)
+            {
+            cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rQ, rQ, shiftAmount);
+            }
          }
       else
          {
-         if (usesCompressedrefs)
-            {
-            cursor = generateRXInstruction(cg, TR::InstOpCode::LT, node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
-            cursor = generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, rQ, rQ);
-
-            if (shiftAmount != 0)
-               {
-               cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rQ, rQ, shiftAmount);
-               }
-            }
-         else
-            {
-            cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
-            }
-
-         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, insertLabel);
+         cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
          }
 
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, insertLabel);
       cursor = generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, rP, rQ);
 
       if (!disableNIAI)
          cursor = generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
 
-      if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+      if (usesCompressedrefs)
          {
-         cursor = generateRXInstruction(cg, guardedLoadMnemonic, node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
-
-         cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CLG, node, rQ, 0, TR::InstOpCode::COND_CC0, insertLabel, false, false);
+         cursor = generateRXInstruction(cg, TR::InstOpCode::LT, node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
+         cursor = generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, rQ, rQ);
+         if (shiftAmount != 0)
+            {
+            cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rQ, rQ, shiftAmount);
+            }
          }
       else
          {
-         if (usesCompressedrefs)
-            {
-            cursor = generateRXInstruction(cg, TR::InstOpCode::LT, node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
-            cursor = generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, rQ, rQ);
-            if (shiftAmount != 0)
-               {
-               cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rQ, rQ, shiftAmount);
-               }
-            }
-         else
-            {
-            cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
-            }
-
-         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, insertLabel);
+         cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
          }
 
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, insertLabel);
       cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, doneLabel);
 
       cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, insertLabel);
@@ -11409,101 +11379,56 @@ inlineConcurrentLinkedQueueTMPoll(
       if (!disableNIAI)
          cursor = generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
 
-      // We must make sure the hard-coded reference loads are guarded
-      auto guardedLoadMnemonic = usesCompressedrefs ? TR::InstOpCode::LLGFSG : TR::InstOpCode::LGG;
-
-      if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+      if (usesCompressedrefs)
          {
-         cursor = generateRXInstruction(cg, guardedLoadMnemonic, node, rP, generateS390MemoryReference(rThis, offsetHead, cg));
+         cursor = generateRXInstruction(cg, TR::InstOpCode::LLGF, node, rP, generateS390MemoryReference(rThis, offsetHead, cg));
+
+         if (shiftAmount != 0)
+            {
+            cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rP, rP, shiftAmount);
+            }
          }
       else
          {
-         if (usesCompressedrefs)
-            {
-            cursor = generateRXInstruction(cg, TR::InstOpCode::LLGF, node, rP, generateS390MemoryReference(rThis, offsetHead, cg));
-
-            if (shiftAmount != 0)
-               {
-               cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rP, rP, shiftAmount);
-               }
-            }
-         else
-            {
-            cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, rP, generateS390MemoryReference(rThis, offsetHead, cg));
-            }
+         cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, rP, generateS390MemoryReference(rThis, offsetHead, cg));
          }
 
       if (!disableNIAI)
          cursor = generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
-
-      if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
-         {
-         cursor = generateRXInstruction(cg, guardedLoadMnemonic, node, rE, generateS390MemoryReference(rP, offsetItem, cg));
-         }
-      else
-         {
-         if (usesCompressedrefs)
-            {
-            cursor = generateRXInstruction(cg, TR::InstOpCode::LLGF, node, rE, generateS390MemoryReference(rP, offsetItem, cg));
-
-            if (shiftAmount != 0)
-               {
-               cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rE, rE, shiftAmount);
-               }
-            }
-         else
-            {
-            cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, rE, generateS390MemoryReference(rP, offsetItem, cg));
-            }
-         }
-
-      if (!disableNIAI)
-         cursor = generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
-
-      if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
-         {
-         cursor = generateRXInstruction(cg, guardedLoadMnemonic, node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
-
-         if (usesCompressedrefs)
-            {
-            cursor = generateSILInstruction(cg, TR::InstOpCode::MVHI, node, generateS390MemoryReference(rP, offsetItem, cg), 0);
-            }
-         else
-            {
-            cursor = generateSILInstruction(cg, TR::InstOpCode::getMoveHalfWordImmOpCode(), node, generateS390MemoryReference(rP, offsetItem, cg), 0);
-            }
-
-         cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CLG, node, rQ, 0, TR::InstOpCode::COND_CC0, doneLabel, false, false);
-         }
-      else
-         {
-         if (usesCompressedrefs)
-            {
-            cursor = generateRXInstruction(cg, TR::InstOpCode::LT, node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
-            cursor = generateSILInstruction(cg, TR::InstOpCode::MVHI, node, generateS390MemoryReference(rP, offsetItem, cg), 0);
-            }
-         else
-            {
-            cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
-            cursor = generateSILInstruction(cg, TR::InstOpCode::getMoveHalfWordImmOpCode(), node, generateS390MemoryReference(rP, offsetItem, cg), 0);
-            }
-
-         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, doneLabel);
-         }
 
       if (usesCompressedrefs)
          {
-         // Register rQ is implicitly shifted via guardedLoadMnemonic where as it is not when concurrent scavenger is
-         // not enabled. As such for concurrent scavenger we have to compress and then store using a temp register.
-         if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() && shiftAmount != 0)
+         cursor = generateRXInstruction(cg, TR::InstOpCode::LLGF, node, rE, generateS390MemoryReference(rP, offsetItem, cg));
+
+         if (shiftAmount != 0)
             {
-            cursor = generateRSInstruction(cg, TR::InstOpCode::SRLG, node, rTmp, rQ, shiftAmount);
-            cursor = generateRXInstruction(cg, TR::InstOpCode::ST, node, rTmp, generateS390MemoryReference(rThis, offsetHead, cg));
+            cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rE, rE, shiftAmount);
             }
-         else
-            {
-            cursor = generateRXInstruction(cg, TR::InstOpCode::ST, node, rQ, generateS390MemoryReference(rThis, offsetHead, cg));
-            }
+         }
+      else
+         {
+         cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, rE, generateS390MemoryReference(rP, offsetItem, cg));
+         }
+
+      if (!disableNIAI)
+         cursor = generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
+
+      if (usesCompressedrefs)
+         {
+         cursor = generateRXInstruction(cg, TR::InstOpCode::LT, node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
+         cursor = generateSILInstruction(cg, TR::InstOpCode::MVHI, node, generateS390MemoryReference(rP, offsetItem, cg), 0);
+         }
+      else
+         {
+         cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
+         cursor = generateSILInstruction(cg, TR::InstOpCode::getMoveHalfWordImmOpCode(), node, generateS390MemoryReference(rP, offsetItem, cg), 0);
+         }
+
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, doneLabel);
+
+      if (usesCompressedrefs)
+         {
+         cursor = generateRXInstruction(cg, TR::InstOpCode::ST, node, rQ, generateS390MemoryReference(rThis, offsetHead, cg));
 
          if (shiftAmount != 0)
             {
