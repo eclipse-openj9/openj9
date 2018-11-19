@@ -103,10 +103,7 @@ TR_ResolvedJ9JITaaSServerMethod::constantPoolHdr()
 bool
 TR_ResolvedJ9JITaaSServerMethod::isJNINative()
    {
-   if (supportsFastJNI(_fe))
-      return _jniTargetAddress != NULL;
-   _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_isJNINative, _remoteMirror);
-   return std::get<0>(_stream->read<bool>());
+   return _isJNINative;
    }
 
 
@@ -1224,6 +1221,7 @@ TR_ResolvedJ9JITaaSServerMethod::createResolvedJ9MethodMirror(TR_ResolvedJ9JITaa
    methodInfoStruct.jniProperties = resolvedMethod->getJNIProperties();
    methodInfoStruct.jniTargetAddress = resolvedMethod->getJNITargetAddress();
    methodInfoStruct.isInterpreted = resolvedMethod->isInterpreted();
+   methodInfoStruct.isJNINative = resolvedMethod->isJNINative();
    methodInfoStruct.isMethodInValidLibrary = resolvedMethod->isMethodInValidLibrary();
    methodInfoStruct.mandatoryRm = resolvedMethod->getMandatoryRecognizedMethod();
    methodInfoStruct.rm = ((TR_ResolvedMethod*)resolvedMethod)->getRecognizedMethod();
@@ -1277,6 +1275,7 @@ TR_ResolvedJ9JITaaSServerMethod::setAttributes(TR_OpaqueMethodBlock * aMethod, T
    _jniTargetAddress = methodInfoStruct.jniTargetAddress;
 
    _isInterpreted = methodInfoStruct.isInterpreted;
+   _isJNINative = methodInfoStruct.isJNINative;
    _isMethodInValidLibrary = methodInfoStruct.isMethodInValidLibrary;
    
    TR::RecognizedMethod mandatoryRm = methodInfoStruct.mandatoryRm;
