@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,11 @@
 
 /* USE_COMPUTED_GOTO on Windows is a performance improvement of 15% */
 /* USE_COMPUTED_GOTO on Linux amd64 has a performance improvement of 3% */
-#if (defined(WIN32) && defined(__GNUC__)) || (defined(LINUX) && defined(J9HAMMER))
+#if (defined(WIN32) && defined(__GNUC__))
+#define USE_COMPUTED_GOTO
+#elif (defined(LINUX) && defined(J9HAMMER))
+#define USE_COMPUTED_GOTO
+#elif defined(OSX)
 #define USE_COMPUTED_GOTO
 #else
 #undef USE_COMPUTED_GOTO
