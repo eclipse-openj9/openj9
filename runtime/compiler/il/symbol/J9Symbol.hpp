@@ -55,7 +55,7 @@ namespace TR { class Symbol; }
 
 namespace J9 {
 
-class OMR_EXTENSIBLE Symbol : public OMR::SymbolConnector
+class /*OMR_EXTENSIBLE*/ Symbol : public OMR::SymbolConnector
    {
 
 public:

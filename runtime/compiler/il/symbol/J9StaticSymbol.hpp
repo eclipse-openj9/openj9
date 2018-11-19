@@ -46,7 +46,7 @@ namespace J9
 /**
  * A symbol with an adress
  */
-class OMR_EXTENSIBLE StaticSymbol : public OMR::StaticSymbolConnector
+class /*OMR_EXTENSIBLE*/ StaticSymbol : public OMR::StaticSymbolConnector
    {
 
 protected:

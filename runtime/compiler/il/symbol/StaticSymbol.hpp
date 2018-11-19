@@ -34,7 +34,7 @@
 namespace TR
 {
 
-class OMR_EXTENSIBLE StaticSymbol : public J9::StaticSymbolConnector
+class /*OMR_EXTENSIBLE*/ StaticSymbol : public J9::StaticSymbolConnector
    {
 
 protected:

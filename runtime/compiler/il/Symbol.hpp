@@ -31,7 +31,7 @@
 namespace TR 
 {
 
-class OMR_EXTENSIBLE Symbol : public J9::SymbolConnector
+class /*OMR_EXTENSIBLE*/ Symbol : public J9::SymbolConnector
    {
 
 public:

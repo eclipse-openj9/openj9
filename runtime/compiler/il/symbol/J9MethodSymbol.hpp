@@ -48,7 +48,7 @@ namespace J9
 /**
  * Symbol for methods, along with information about the method
  */
-class OMR_EXTENSIBLE MethodSymbol : public OMR::MethodSymbolConnector
+class /*OMR_EXTENSIBLE*/ MethodSymbol : public OMR::MethodSymbolConnector
    {
 
 protected:
