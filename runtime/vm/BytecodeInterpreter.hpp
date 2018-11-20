@@ -8124,7 +8124,7 @@ protected:
 
 public:
 
-#if defined(J9VM_ARCH_X86) && defined(__GNUC__) && ((__GNUC__> 4) || (__GNUC__ == 4 && __GNUC_MINOR__ > 6))
+#if (defined(J9VM_ARCH_X86) || defined(S390)) && defined(__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ > 6)))
 	/*
 	 * This method can't be 'VMINLINE' because it declares local static data
 	 * triggering a warning with GCC compilers newer than 4.6.
