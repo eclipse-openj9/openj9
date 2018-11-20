@@ -21,16 +21,16 @@
  *******************************************************************************/
 
 #include "optimizer/BoolArrayStoreTransformer.hpp"
-#include "infra/Cfg.hpp"
-#include "il/Node.hpp"
+#include "compiler/il/OMRTreeTop_inlines.hpp"
 #include "il/Block.hpp"
+#include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/TreeTop.hpp"
-#include "omr/compiler/il/OMRTreeTop_inlines.hpp"
 #include "il/symbol/AutomaticSymbol.hpp"
+#include "infra/Cfg.hpp"
 #include "infra/ILWalk.hpp"
-#include <stack>
 #include <deque>
+#include <stack>
 
 /*
  * This transformer is used to make sure the behavior of bastore in JIT code
