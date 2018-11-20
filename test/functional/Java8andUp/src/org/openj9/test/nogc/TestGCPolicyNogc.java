@@ -226,7 +226,7 @@ public class TestGCPolicyNogc {
 		for (MemoryPoolMXBean pool : ManagementFactory.getMemoryPoolMXBeans()) {
 			if (MemoryType.HEAP == pool.getType()) {
 				long usagemax = pool.getUsage().getMax();
-				long threshold = (long) (usagemax * 0.5);
+				long threshold = (long) (usagemax * 0.3);
 				if (pool.isCollectionUsageThresholdSupported()) {
 					 pool.setCollectionUsageThreshold(threshold);
 				}
