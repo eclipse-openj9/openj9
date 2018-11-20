@@ -2802,7 +2802,7 @@ jvmtiHookSampledObjectAlloc(J9HookInterface** hook, UDATA eventNum, void* eventD
 
 		if (prepareForEvent(j9env, currentThread, currentThread, JVMTI_EVENT_SAMPLED_OBJECT_ALLOC, &threadRef, &hadVMAccess, TRUE, 2, &javaOffloadOldState)) {
 			j9object_t * objectRef = (j9object_t*) currentThread->arg0EA;
-			j9object_t * classRef = (j9object_t*) (objectRef - 1);
+			j9object_t * classRef = (j9object_t*) (currentThread->arg0EA - 1);
 			J9Class* clazz = NULL;
 			J9JavaVM * vm = currentThread->javaVM;
 
@@ -2812,7 +2812,6 @@ jvmtiHookSampledObjectAlloc(J9HookInterface** hook, UDATA eventNum, void* eventD
 			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 			callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, (jobject) objectRef, (jclass) classRef, (jlong) data->size);
 			currentThread->javaVM->internalVMFunctions->internalEnterVMFromJNI(currentThread);
-			data->object = J9_JNI_UNWRAP_REDIRECTED_REFERENCE(objectRef);
 			finishedEvent(currentThread, JVMTI_EVENT_SAMPLED_OBJECT_ALLOC, hadVMAccess, javaOffloadOldState);
 		}
 	}

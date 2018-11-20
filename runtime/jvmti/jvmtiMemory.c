@@ -89,6 +89,10 @@ jvmtiSetHeapSamplingInterval(jvmtiEnv *env,
 	
 	Trc_JVMTI_jvmtiSetHeapSamplingInterval_Entry(env, samplingInterval);
 	
+	ENSURE_PHASE_ONLOAD_OR_LIVE(env);
+	ENSURE_CAPABILITY(env, can_generate_sampled_object_alloc_events);
+	ENSURE_NON_NEGATIVE(samplingInterval);
+	
 	rc = getCurrentVMThread(((J9JVMTIEnv *)env)->vm, &currentThread);
 	if ((JVMTI_ERROR_NONE == rc) && (NULL != currentThread)) {
 		J9MemoryManagerFunctions *fns = currentThread->javaVM->memoryManagerFunctions;
@@ -96,5 +100,6 @@ jvmtiSetHeapSamplingInterval(jvmtiEnv *env,
 			fns->j9gc_set_allocation_sampling_interval(currentThread, samplingInterval);
 		}
 	}
+done:
 	TRACE_JVMTI_RETURN(jvmtiSetHeapSamplingInterval);
 }

@@ -113,12 +113,6 @@ J9AllocateObjectNoGC(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFla
 			objectPtr = OMR_GC_AllocateObject(vmThread->omrVMThread, &mixedOAM);
 			if (NULL != objectPtr) {
 				uintptr_t allocatedBytes = env->getExtensions()->objectModel.getConsumedSizeInBytesWithHeader(objectPtr);
-/*
-				printf("J9AllocateObjectNoGC allocatedBytes = %lu \n", allocatedBytes);
-				if (allocatedBytes >= 200) {
-					printf("J9AllocateObjectNoGC allocatedBytes = %lu \n", allocatedBytes);
-				}
-*/
 				Assert_MM_true(allocatedBytes == mixedOAM.getAllocateDescription()->getContiguousBytes());
 				if (J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(clazz), J9ClassReservableLockWordInit)) {
 					*J9OBJECT_MONITOR_EA(vmThread, objectPtr) = OBJECT_HEADER_LOCK_RESERVED;
@@ -313,12 +307,6 @@ J9AllocateIndexableObjectNoGC(J9VMThread *vmThread, J9Class *clazz, uint32_t num
 			objectPtr = OMR_GC_AllocateObject(vmThread->omrVMThread, &indexableOAM);
 			if (NULL != objectPtr) {
 				uintptr_t allocatedBytes = env->getExtensions()->objectModel.getConsumedSizeInBytesWithHeader(objectPtr);
-/*
-				printf("J9AllocateIndexableObjectNoGC allocatedBytes = %lu \n", allocatedBytes);
-				if (allocatedBytes >= 200) {
-					printf("J9AllocateIndexableObjectNoGC allocatedBytes = %lu \n", allocatedBytes);
-				}
-*/
 				Assert_MM_true(allocatedBytes == indexableOAM.getAllocateDescription()->getContiguousBytes());
 			}
 			env->_isInNoGCAllocationCall = false;
