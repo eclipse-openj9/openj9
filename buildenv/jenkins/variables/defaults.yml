@@ -42,7 +42,7 @@ openjdk:
   next:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk.git'
-      branch: 'openj9-jdk'
+      branch: 'openj9'
 #========================================#
 # Miscellaneous settings
 #========================================#
