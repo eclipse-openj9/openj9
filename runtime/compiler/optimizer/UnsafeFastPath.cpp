@@ -256,6 +256,21 @@ bool TR_UnsafeFastPath::tryTransformUnsafeAtomicCallInVarHandleAccessMethod(TR::
    return true;
    }
 
+
+static bool needUnsignedConversion(TR::RecognizedMethod methodToReduce)
+   {
+   switch (methodToReduce)
+      {
+      case TR::com_ibm_jit_JITHelpers_getCharFromArray:
+      case TR::com_ibm_jit_JITHelpers_getCharFromArrayByIndex:
+      case TR::com_ibm_jit_JITHelpers_getCharFromArrayVolatile:
+      case TR::java_lang_StringUTF16_getChar:
+         return true;
+      }
+
+   return false;
+   }
+
 /**
  * This replaces recognized unsafe calls to direct memory operations
  */
@@ -765,7 +780,7 @@ int32_t TR_UnsafeFastPath::perform()
                      {
                      if (value->getDataType() != type)
                         {
-                        TR::ILOpCodes conversionOpCode = TR::ILOpCode::getProperConversion(value->getDataType(), type, true);
+                        TR::ILOpCodes conversionOpCode = TR::ILOpCode::getProperConversion(value->getDataType(), type, needUnsignedConversion(symbol->getRecognizedMethod()));
 
                         // Sanity check for future modifications
                         TR_ASSERT(conversionOpCode != TR::BadILOp, "Could not get proper conversion on the value node %p n%dn for call %p n%dn.\n", value, value->getGlobalIndex(), node, node->getGlobalIndex());
@@ -787,7 +802,7 @@ int32_t TR_UnsafeFastPath::perform()
                   //This is a load
                   if (node->getDataType() != type)
                      {
-                     TR::ILOpCodes conversionOpCode = TR::ILOpCode::getProperConversion(type, node->getDataType(), true);
+                     TR::ILOpCodes conversionOpCode = TR::ILOpCode::getProperConversion(type, node->getDataType(), needUnsignedConversion(symbol->getRecognizedMethod()));
 
                      // Sanity check for future modifications
                      TR_ASSERT(conversionOpCode != TR::BadILOp, "Could not get proper conversion on the result of call %p n%dn.\n", node, node->getGlobalIndex());
@@ -854,7 +869,7 @@ int32_t TR_UnsafeFastPath::perform()
                      {
                      if (value->getDataType() != type)
                         {
-                        TR::ILOpCodes conversionOpCode = TR::ILOpCode::getProperConversion(value->getDataType(), type, true);
+                        TR::ILOpCodes conversionOpCode = TR::ILOpCode::getProperConversion(value->getDataType(), type, needUnsignedConversion(symbol->getRecognizedMethod()));
 
                         // Sanity check for future modifications
                         TR_ASSERT(conversionOpCode != TR::BadILOp, "Could not get proper conversion on the value node %p n%dn for call %p n%dn.\n", value, value->getGlobalIndex(), node, node->getGlobalIndex());
@@ -880,7 +895,7 @@ int32_t TR_UnsafeFastPath::perform()
                   // This is a load
                   if (node->getDataType() != type)
                      {
-                     TR::ILOpCodes conversionOpCode = TR::ILOpCode::getProperConversion(type, node->getDataType(), true);
+                     TR::ILOpCodes conversionOpCode = TR::ILOpCode::getProperConversion(type, node->getDataType(), needUnsignedConversion(symbol->getRecognizedMethod()));
 
                      // Sanity check for future modifications
                      TR_ASSERT(conversionOpCode != TR::BadILOp, "Could not get proper conversion on the result of call %p n%dn.\n", node, node->getGlobalIndex());
