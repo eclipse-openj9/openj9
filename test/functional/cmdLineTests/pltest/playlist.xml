@@ -32,7 +32,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	-xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
 		<!-- temporarily disable this test on windows; https://github.com/eclipse/openj9/issues/3212 -->
-		<platformRequirements>^os.aix,^os.win</platformRequirements>
+		<platformRequirements>^os.aix,^os.win,^os.osx</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
