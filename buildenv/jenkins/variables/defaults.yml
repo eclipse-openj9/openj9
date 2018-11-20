@@ -85,7 +85,7 @@ linux_ppc-64_cmprssptrs_le:
     9: 'linux-ppc64le-normal-server-release'
     10: 'linux-ppc64le-normal-server-release'
     11: 'linux-ppc64le-normal-server-release'
-    next: 'linux-ppc64le-normal-server-release'
+    next: 'linux-ppc64le-server-release'
   freemarker: '/home/jenkins/freemarker.jar'
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
@@ -124,7 +124,7 @@ linux_390-64_cmprssptrs:
     9: 'linux-s390x-normal-server-release'
     10: 'linux-s390x-normal-server-release'
     11: 'linux-s390x-normal-server-release'
-    next: 'linux-s390x-normal-server-release'
+    next: 'linux-s390x-server-release'
   freemarker: '/home/jenkins/freemarker.jar'
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
@@ -161,7 +161,7 @@ aix_ppc-64_cmprssptrs:
     9: 'aix-ppc64-normal-server-release'
     10: 'aix-ppc64-normal-server-release'
     11: 'aix-ppc64-normal-server-release'
-    next: 'aix-ppc64-normal-server-release'
+    next: 'aix-ppc64-server-release'
   freemarker: '/home/jenkins/freemarker.jar'
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
@@ -198,7 +198,7 @@ linux_x86-64_cmprssptrs:
     9: 'linux-x86_64-normal-server-release'
     10: 'linux-x86_64-normal-server-release'
     11: 'linux-x86_64-normal-server-release'
-    next: 'linux-x86_64-normal-server-release'
+    next: 'linux-x86_64-server-release'
   freemarker: '/home/jenkins/freemarker.jar'
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
@@ -235,7 +235,7 @@ linux_x86-64_cmprssptrs_cmake:
     9: 'linux-x86_64-normal-server-release'
     10: 'linux-x86_64-normal-server-release'
     11: 'linux-x86_64-normal-server-release'
-    next: 'linux-x86_64-normal-server-release'
+    next: 'linux-x86_64-server-release'
   freemarker: '/home/jenkins/freemarker.jar'
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
@@ -282,7 +282,7 @@ linux_x86-64:
     9: 'linux-x86_64-normal-server-release'
     10: 'linux-x86_64-normal-server-release'
     11: 'linux-x86_64-normal-server-release'
-    next: 'linux-x86_64-normal-server-release'
+    next: 'linux-x86_64-server-release'
   freemarker: '/home/jenkins/freemarker.jar'
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
@@ -323,7 +323,7 @@ win_x86-64_cmprssptrs:
     9: 'windows-x86_64-normal-server-release'
     10: 'windows-x86_64-normal-server-release'
     11: 'windows-x86_64-normal-server-release'
-    next: 'windows-x86_64-normal-server-release'
+    next: 'windows-x86_64-server-release'
   freemarker: '/cygdrive/c/openjdk/freemarker.jar'
   openjdk_reference_repo: '/cygdrive/c/openjdk/openjdk_cache'
   extra_configure_options:
