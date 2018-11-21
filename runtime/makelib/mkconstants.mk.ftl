@@ -45,27 +45,27 @@ endif
 <#if uma.spec.flags.build_VS12AndHigher.enabled>
 VS12AndHigher:=1
 </#if>
-ifndef NO_USE_MINGW
-USE_MINGW:=1
+ifndef NO_USE_CLANG
+USE_CLANG:=1
 endif
-ifdef USE_MINGW
-<#if uma.spec.tools.mingw_cxx.needed>
+ifdef USE_CLANG
+<#if uma.spec.tools.clang_cxx.needed>
 ifneq (default,$(origin CXX))
-  ifndef MINGW_CXX
-    # If the user has overridden CXX we'll want to let them know that MINGW_CXX exists.
-    ifndef PRINT_ONCE_MINGW_CXX
+  ifndef CLANG_CXX
+    # If the user has overridden CXX we'll want to let them know that CLANG_CXX exists.
+    ifndef PRINT_ONCE_CLANG_CXX
       $(info ****************)
       $(info *)
-      $(info * CXX=$(CXX) (overridden), note that this build will also invoke another compiler that can be overridden: MINGW_CXX=${uma.spec.tools.mingw_cxx.name})
+      $(info * CXX=$(CXX) (overridden), note that this build will also invoke another compiler that can be overridden: CLANG_CXX=${uma.spec.tools.clang_cxx.name})
       $(info *)
       $(info ****************)
-      export PRINT_ONCE_MINGW_CXX=1
+      export PRINT_ONCE_CLANG_CXX=1
     endif
   endif
 endif
-MINGW_CXX?=${uma.spec.tools.mingw_cxx.name}
+CLANG_CXX?=${uma.spec.tools.clang_cxx.name}
 <#else>
-# MINGW_CXX not used
+# CLANG_CXX not used
 </#if>
 endif
 </#if>

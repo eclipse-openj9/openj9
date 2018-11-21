@@ -20,10 +20,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "mingw_comp.h"
+#include "clang_comp.h"
 #include "j9.h"
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(__clang__)
 /* MSVC compiler hangs on this file at max opt (/Ox) */
 #pragma optimize( "g", off )
 #endif /* _MSC_VER */

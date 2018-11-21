@@ -354,6 +354,15 @@ OpenJ9 uses the mingw/GCC compiler during the build process. In the `Archive` ca
 - [Microsoft Visual Studio 2010 Service Pack 1](https://support.microsoft.com/en-us/help/983509/description-of-visual-studio-2010-service-pack-1)
 - [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download)
 - [Freetype2 V2.3 or newer](https://www.freetype.org/)
+- [LLVM/Clang 64bit](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe)
+- [LLVM/Clang 32bit](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win32.exe)
+
+Add the binary path of Clang to the `PATH` environment variable to override the older version of clang integrated in Cygwin. e.g.
+```
+export PATH="/cygdrive/c/LLVM/bin:$PATH" (in Cygwin for 64bit)
+or
+export PATH="/cygdrive/c/LLVM_32/bin:$PATH" (in Cygwin for 32bit)
+```
 
 Update your `LIB` and `INCLUDE` environment variables to provide a path to the Windows debugging tools with the following commands:
 

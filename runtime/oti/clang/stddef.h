@@ -14,7 +14,7 @@
  *		the first place, and hereby explicitly released to the Public Domain:
  *
  *		All public headers: include/<star>, arch/<star>/bits/<star>
- *		Startup files: crt/*
+ *		Startup files: crt/<star>
  */
 
 #ifndef _STDDEF_H
