@@ -2355,7 +2355,7 @@ TR::S390PrivateLinkage::buildDirectCall(TR::Node * callNode, TR::SymbolReference
    TR::ResolvedMethodSymbol * sym = callSymbol->getResolvedMethodSymbol();
    TR_ResolvedMethod * fem = (sym == NULL) ? NULL : sym->getResolvedMethod();
    bool myself;
-   bool isJitInduceOSR = callSymRef == cg()->symRefTab()->element(TR_induceOSRAtCurrentPC);
+   bool isJitInduceOSR = callSymRef->isOSRInductionHelper();
    myself = (fem != NULL && fem->isSameMethod(comp()->getCurrentMethod()) && !comp()->isDLT()) ? true : false;
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());

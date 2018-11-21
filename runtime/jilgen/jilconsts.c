@@ -714,6 +714,7 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_fast_jitPostJNICallOffloadCheck", offsetof(J9JITConfig, fast_jitPostJNICallOffloadCheck)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_fast_jitObjectHashCode", offsetof(J9JITConfig, old_fast_jitObjectHashCode)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitInduceOSRAtCurrentPC", offsetof(J9JITConfig, old_slow_jitInduceOSRAtCurrentPC)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitInduceOSRAtCurrentPCAndRecompile", offsetof(J9JITConfig, old_slow_jitInduceOSRAtCurrentPCAndRecompile)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitInterpretNewInstanceMethod", offsetof(J9JITConfig, old_slow_jitInterpretNewInstanceMethod)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitNewInstanceImplAccessCheck", offsetof(J9JITConfig, old_slow_jitNewInstanceImplAccessCheck)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitTranslateNewInstanceMethod", offsetof(J9JITConfig, old_slow_jitTranslateNewInstanceMethod)) |
