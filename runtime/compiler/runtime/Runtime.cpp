@@ -1055,11 +1055,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_MTUnresolvedDoubleStore,    (void *)MTUnresolvedDoubleStore,   TR_Helper);
    SET(TR_MTUnresolvedAddressStore,   (void *)MTUnresolvedAddressStore,  TR_Helper);
 #if defined(TR_HOST_X86)
-   static bool UseOldReferenceArrayCopy = (bool)feGetEnv("TR_UseOldReferenceArrayCopy");
-   if (UseOldReferenceArrayCopy)
-      SET(TR_referenceArrayCopy, (void *)jitConfig->javaVM->memoryManagerFunctions->referenceArrayCopy, TR_System);
-   else
-      SET(TR_referenceArrayCopy,         (void *)jitReferenceArrayCopy,     TR_Helper);
+   SET(TR_referenceArrayCopy,         (void *)jitReferenceArrayCopy,     TR_Helper);
 #endif
 
 #if !defined(TR_HOST_64BIT)
