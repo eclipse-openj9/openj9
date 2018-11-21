@@ -327,12 +327,11 @@ You must install a number of software dependencies to create a suitable build en
 - [Windows JDK 10](https://adoptopenjdk.net/releases.html?variant=openjdk10#x64_win), which is used as the boot JDK.
 - [Microsoft Visual Studio 2017]( https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community&rel=15), which is the default compiler level used by OpenJDK11; or [Microsoft Visual Studio 2013]( https://go.microsoft.com/fwlink/?LinkId=532495), which is chosen to compile if VS2017 isn't installed.
 - [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download)
-- [mingw-w64](https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/installer/mingw-w64-install.exe)
+- [LLVM/Clang](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe)
 
-Note:
-mingw-w64 must be installed if compiling with VS2017 in that the current version of cygwin has not yet integrated the latest changes of mingw-w64 for the moment. Meanwhile, add the binary path of mingw-w64 to the `PATH` environment variable. e.g.
+Add the binary path of Clang to the `PATH` environment variable to override the older version of clang integrated in Cygwin. e.g.
 ```
-export PATH="/cygdrive/c/mingw-w64/x86_64-8.1.0-win32-seh-rt_v6-rev0/mingw64/bin/:$PATH" (in Cygwin)
+export PATH="/cygdrive/c/LLVM/bin:$PATH" (in Cygwin)
 ```
 
 Update your `LIB` and `INCLUDE` environment variables to provide a path to the Windows debugging tools with the following commands:
