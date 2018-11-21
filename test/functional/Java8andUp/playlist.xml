@@ -220,7 +220,8 @@
 
 	<test>
 		<testCaseName>TestAttachAPI_SE80</testCaseName>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Dcom.ibm.tools.attach.timeout=15000 \
@@ -358,7 +359,8 @@
 
 	<test>
 		<testCaseName>TestSunAttachClasses_SE80</testCaseName>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Dcom.ibm.tools.attach.timeout=15000 \
