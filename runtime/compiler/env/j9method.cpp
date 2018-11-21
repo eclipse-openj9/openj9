@@ -8338,6 +8338,8 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          int32_t startPos;
          TR::KnownObjectTable::Index *filterIndexList;
+         bool *haveFilter = NULL;
+         bool knotEnabled = !comp()->getOption(TR_DisableKnownObjectTable);
          char *nextSignature;
 
             {
@@ -8345,11 +8347,16 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             uintptrj_t methodHandle = *thunkDetails->getHandleRef();
             uintptrj_t filters = fej9->getReferenceField(methodHandle, "filters", "[Ljava/lang/invoke/MethodHandle;");
             int32_t numFilters = fej9->getArrayLengthInElements(filters);
-            filterIndexList = (TR::KnownObjectTable::Index *) comp()->trMemory()->allocateMemory(sizeof(TR::KnownObjectTable::Index) * numFilters, stackAlloc);
-            TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
+            filterIndexList = knotEnabled ? (TR::KnownObjectTable::Index *) comp()->trMemory()->allocateMemory(sizeof(TR::KnownObjectTable::Index) * numFilters, stackAlloc) : NULL;
+            haveFilter = (bool *) comp()->trMemory()->allocateMemory(sizeof(bool) * numFilters, stackAlloc);
+            TR::KnownObjectTable *knot = knotEnabled ? comp()->getOrCreateKnownObjectTable() : NULL;
             for (int i = 0; i <numFilters; i++)
                {
-               filterIndexList[i] = knot->getIndex(fej9->getReferenceElement(filters, i));
+               // copy filters in a list, so that we don't have to use filterIndexList
+               // to determine if a filter is null later on
+               haveFilter[i] = fej9->getReferenceElement(filters, i) != NULL;
+               if (knotEnabled)
+                  filterIndexList[i] = knot->getIndex(fej9->getReferenceElement(filters, i));
                }
 
             startPos = (int32_t)fej9->getInt32Field(methodHandle, "startPos");
@@ -8379,7 +8386,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             {
             int32_t arrayIndex = childIndex - firstFilteredArgIndex;
             int32_t argumentIndex = arrayIndex + startPos;
-            if(filterIndexList[arrayIndex] != 0)
+            if(haveFilter[arrayIndex])
                {
                // First arg: receiver method handle comes from filterArray
                //
@@ -8392,9 +8399,10 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                TR::Node *receiverHandle = pop();
                if (receiverHandle->getOpCode().hasSymbolReference() && receiverHandle->getSymbolReference()->getSymbol()->isArrayShadowSymbol())
                   {
-                  if (thunkDetails->isShareable())
+                  if (!knotEnabled || thunkDetails->isShareable())
                      {
-                     // Can't set known object information for the filters.  That
+                     // First case: If Known Object Table is disabled, can't improve symbol reference.
+                     // Second case: Can't set known object information for the filters.  That
                      // would have the effect of hard-coding the object identities
                      // into the jitted code, which would make it unshareable.
                      }
