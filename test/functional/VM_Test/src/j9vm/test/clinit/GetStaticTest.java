@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,25 +21,49 @@
  *******************************************************************************/
 package j9vm.test.clinit;
 
+class GetStaticTestHelper {
+	public static String i;
 
-public class BlockDuringClinitTest {
+	static {
+		GetStaticTest.write("bad");
+		try {
+			Thread.sleep(5000);
+		} catch(Throwable t) {
+			throw new RuntimeException(t);
+		}
+		GetStaticTest.write("good");
+	}
+}
 
-	public void run() throws RuntimeException {
-		
-		System.out.println("<clinit> vs. new...");
-		NewDuringClinit.test();
+public class GetStaticTest {
+	public static boolean passed = false;
+	public static void write(String a) { GetStaticTestHelper.i = a; }
+	public static String read() { return GetStaticTestHelper.i; }
 
-		System.out.println("<clinit> vs. getstatic...");
-		GetStaticDuringClinit.test();
-
-		System.out.println("<clinit> vs. putstatic...");
-		PutStaticDuringClinit.test();
-
-		System.out.println("<clinit> vs. getstatic (new)...");
-		GetStaticTest.test();
-		
-		System.out.println("passed");
+	public static void test() {
+		Thread t = new Thread() {
+			public void run() {
+				try {
+					Thread.sleep(2000);
+				} catch(Throwable t) {
+					throw new RuntimeException(t);
+				}
+				String value = read();
+				passed = value.equals("good");
+			}
+		};
+		t.start();
+		// If running count=0, force read() to be compiled and GetStaticTestHelper to be initialized
+		read();
+		try {
+			t.join(); 
+		} catch (Throwable e) {
+			throw new RuntimeException(e);
+		}
+		if (!passed) {
+			throw new RuntimeException("TEST FAILED");
+		}
 	}
 
-public static void main(String[] args) { new BlockDuringClinitTest().run(); }
+	public static void main(String[] args) { GetStaticTest.test(); }
 }
