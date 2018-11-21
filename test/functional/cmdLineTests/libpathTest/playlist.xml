@@ -33,7 +33,7 @@
 	-xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
 	-nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
-		<platformRequirements>bits.64,vm.cmprssptrs</platformRequirements>
+		<platformRequirements>bits.64,vm.cmprssptrs,^os.osx</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -56,6 +56,7 @@
 	-xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)exclude_rtfchild.xml$(Q) \
 	-nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
+		<platformRequirements>^os.osx</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
