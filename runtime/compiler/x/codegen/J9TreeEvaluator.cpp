@@ -3691,7 +3691,7 @@ inline void generateInlinedCheckCastOrInstanceOfForInterface(TR::Node* node, TR_
    generateLabelInstruction(LABEL, node, begLabel, cg);
 
    // Null test
-   if (!node->getChild(0)->isNonNull())
+   if (!node->getChild(0)->isNonNull() && node->getOpCodeValue() != TR::checkcastAndNULLCHK)
       {
       // j9class contains the object at this point, reusing the register as object is no longer used after this point.
       generateRegRegInstruction(TESTRegReg(), node, j9class, j9class, cg);
