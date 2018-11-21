@@ -520,11 +520,6 @@
   <output regex="no" type="success">arg2 = \X</output>
   </test>
 
- <test id="Test option -Xjit:count=0,disableZ10">
-  <command>$EXE$ -Xjit:count=0,disableZ10 -version</command>
-  <output regex="no" type="success">version</output>
- </test>
-
  <test id="Test option -Xjit:count=0,disableZ196">
   <command>$EXE$ -Xjit:count=0,disableZ196 -version</command>
   <output regex="no" type="success">version</output>

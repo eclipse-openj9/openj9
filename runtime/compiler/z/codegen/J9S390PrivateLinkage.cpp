@@ -2734,10 +2734,22 @@ TR::J9S390JNILinkage::releaseVMAccessMaskAtomicFree(TR::Node * callNode,
    TR::CodeGenerator* cg = self()->cg();
    TR::Compilation* comp = self()->comp();
 
-   // Store a 1 into vmthread->inNative
-   generateSILInstruction(cg, TR::InstOpCode::getMoveHalfWordImmOpCode(), callNode,
-                          generateS390MemoryReference(methodMetaDataVirtualRegister, offsetof(J9VMThread, inNative), cg),
-                          1);
+   if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z10))
+      {
+      // Store a 1 into vmthread->inNative
+      generateSILInstruction(cg, TR::InstOpCode::getMoveHalfWordImmOpCode(), callNode,
+                           generateS390MemoryReference(methodMetaDataVirtualRegister, offsetof(J9VMThread, inNative), cg),
+                           1);
+      }
+   else
+      {
+      TR::Register* buffer = cg->allocateRegister();
+      generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), callNode, buffer, 1);
+      generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), callNode, buffer,
+                            generateS390MemoryReference(methodMetaDataVirtualRegister, offsetof(J9VMThread, inNative), cg));
+      cg->stopUsingRegister(buffer);
+      }
+
 
 #if !defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
    generateSerializationInstruction(cg, callNode, NULL);
@@ -2751,7 +2763,9 @@ TR::J9S390JNILinkage::releaseVMAccessMaskAtomicFree(TR::Node * callNode,
    TR::LabelSymbol * longReleaseRestartLabel = generateLabelSymbol(cg);
 
    TR_ASSERT_FATAL(J9_PUBLIC_FLAGS_VM_ACCESS >= MIN_IMMEDIATE_BYTE_VAL && J9_PUBLIC_FLAGS_VM_ACCESS <= MAX_IMMEDIATE_BYTE_VAL, "VM access bit must be immediate");
-   generateRIEInstruction(cg, TR::InstOpCode::getCmpImmBranchRelOpCode(), callNode, tempReg1, J9_PUBLIC_FLAGS_VM_ACCESS, longReleaseSnippetLabel, TR::InstOpCode::COND_BNE);
+
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), callNode, tempReg1, J9_PUBLIC_FLAGS_VM_ACCESS, TR::InstOpCode::COND_BNE, longReleaseSnippetLabel, false);
+
    cg->addSnippet(new (self()->trHeapMemory()) TR::S390HelperCallSnippet(cg,
                                                                          callNode, longReleaseSnippetLabel,
                                                                          comp->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp->getJittedMethodSymbol()),
@@ -2791,7 +2805,8 @@ TR::J9S390JNILinkage::acquireVMAccessMaskAtomicFree(TR::Node * callNode,
    TR::LabelSymbol * longAcquireRestartLabel = generateLabelSymbol(cg);
 
    TR_ASSERT_FATAL(J9_PUBLIC_FLAGS_VM_ACCESS >= MIN_IMMEDIATE_BYTE_VAL && J9_PUBLIC_FLAGS_VM_ACCESS <= MAX_IMMEDIATE_BYTE_VAL, "VM access bit must be immediate");
-   generateRIEInstruction(cg, TR::InstOpCode::getCmpImmBranchRelOpCode(), callNode, tempReg1, J9_PUBLIC_FLAGS_VM_ACCESS, longAcquireSnippetLabel, TR::InstOpCode::COND_BNE);
+
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), callNode, tempReg1, J9_PUBLIC_FLAGS_VM_ACCESS, TR::InstOpCode::COND_BNE, longAcquireSnippetLabel, false);
 
    cg->addSnippet(new (self()->trHeapMemory()) TR::S390HelperCallSnippet(cg,
                                                                          callNode, longAcquireSnippetLabel,
