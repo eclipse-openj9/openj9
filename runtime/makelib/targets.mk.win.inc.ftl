@@ -132,7 +132,7 @@ UMA_EXEFLAGS+=/INCREMENTAL:NO /NOLOGO /LARGEADDRESSAWARE
 #	/Gd Use C calls (i.e. prepend underscored to symbols)
 ASFLAGS+=/c /Cp /W3 /nologo /Zd /Zi -DWIN32 -D_WIN32 -DOMR_OS_WINDOWS
 <#if uma.spec.processor.x86>
-ASFLAGS+=/safeseh /coff /Zm /Gd -DWIN_X86_SEH
+ASFLAGS+=/safeseh /coff /Zm /Gd
 <#elseif uma.spec.processor.amd64>
 ASFLAGS+=-DWIN64 -D_WIN64 -DJ9HAMMER
 </#if>
