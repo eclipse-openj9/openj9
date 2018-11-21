@@ -302,6 +302,12 @@ J9::ObjectModel::compressedReferenceShiftOffset()
 int32_t
 J9::ObjectModel::compressedReferenceShift()
    {
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_compressedReferenceShift;
+      }
+
 #if defined(J9VM_GC_COMPRESSED_POINTERS)
    J9JavaVM *javaVM = TR::Compiler->javaVM;
    if (!javaVM)
