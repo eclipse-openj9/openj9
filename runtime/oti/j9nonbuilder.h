@@ -3527,6 +3527,7 @@ typedef struct J9JITConfig {
 	void *fast_jitPostJNICallOffloadCheck;
 	void *old_fast_jitObjectHashCode;
 	void *old_slow_jitInduceOSRAtCurrentPC;
+	void *old_slow_jitInduceOSRAtCurrentPCAndRecompile;
 	void *old_slow_jitInterpretNewInstanceMethod;
 	void *old_slow_jitNewInstanceImplAccessCheck;
 	void *old_slow_jitTranslateNewInstanceMethod;
@@ -3719,6 +3720,7 @@ typedef struct J9JITConfig {
 	void*  ( *jitOSRGetPatchPoint)(struct J9JITExceptionTable * metaData, void * stackMap) ;
 	IDATA  ( *jitCanResumeAtOSRPoint)(struct J9VMThread * currentThread, struct J9JITExceptionTable * metaData, U_8 * pc) ;
 	IDATA  ( *retranslateWithPreparation)(struct J9JITConfig *jitConfig, struct J9VMThread *vmStruct, J9Method *method, void *oldStartPC, UDATA reason) ;
+	IDATA  ( *retranslateWithPreparationForMethodRedefinition)(struct J9JITConfig *jitConfig, struct J9VMThread *vmStruct, J9Method *method, void *oldStartPC) ;
 	void* j2iInvokeWithArguments;
 	void*  ( *translateMethodHandle)(struct J9VMThread *currentThread, j9object_t methodHandle, j9object_t arg, U_32 flags) ;
 	void* i2jMHTransition;
@@ -3892,6 +3894,7 @@ typedef struct J9AOTConfig {
 	void *fast_jitPostJNICallOffloadCheck;
 	void *old_fast_jitObjectHashCode;
 	void *old_slow_jitInduceOSRAtCurrentPC;
+	void *old_slow_jitInduceOSRAtCurrentPCAndRecompile;
 	void *old_slow_jitInterpretNewInstanceMethod;
 	void *old_slow_jitNewInstanceImplAccessCheck;
 	void *old_slow_jitTranslateNewInstanceMethod;
@@ -4084,6 +4087,7 @@ typedef struct J9AOTConfig {
 	void*  ( *jitOSRGetPatchPoint)(struct J9JITExceptionTable * metaData, void * stackMap) ;
 	IDATA  ( *jitCanResumeAtOSRPoint)(struct J9VMThread * currentThread, struct J9JITExceptionTable * metaData, U_8 * pc) ;
 	IDATA  ( *retranslateWithPreparation)(struct J9JITConfig *jitConfig, struct J9VMThread *vmStruct, J9Method *method, void *oldStartPC, UDATA reason) ;
+	IDATA  ( *retranslateWithPreparationForMethodRedefinition)(struct J9JITConfig *jitConfig, struct J9VMThread *vmStruct, J9Method *method, void *oldStartPC) ;
 	void* j2iInvokeWithArguments;
 	void*  ( *translateMethodHandle)(struct J9VMThread *currentThread, j9object_t methodHandle, j9object_t arg, U_32 flags) ;
 	void* i2jMHTransition;

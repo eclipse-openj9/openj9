@@ -1016,6 +1016,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_instanceOf,                 (void *)jitInstanceOf,             TR_Helper);
 #endif
    SET(TR_induceOSRAtCurrentPC,       (void *)jitInduceOSRAtCurrentPC,   TR_Helper);
+   SET(TR_induceOSRAtCurrentPCAndRecompile,       (void *)jitInduceOSRAtCurrentPCAndRecompile,   TR_Helper);
 #if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390)) && defined(J9VM_JIT_NEW_DUAL_HELPERS)
    SET(TR_monitorEntry,               (void *)jitMonitorEntry,           TR_CHelper);
    SET(TR_methodMonitorEntry,         (void *)jitMethodMonitorEntry,     TR_CHelper);
@@ -1055,11 +1056,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_MTUnresolvedDoubleStore,    (void *)MTUnresolvedDoubleStore,   TR_Helper);
    SET(TR_MTUnresolvedAddressStore,   (void *)MTUnresolvedAddressStore,  TR_Helper);
 #if defined(TR_HOST_X86)
-   static bool UseOldReferenceArrayCopy = (bool)feGetEnv("TR_UseOldReferenceArrayCopy");
-   if (UseOldReferenceArrayCopy)
-      SET(TR_referenceArrayCopy, (void *)jitConfig->javaVM->memoryManagerFunctions->referenceArrayCopy, TR_System);
-   else
-      SET(TR_referenceArrayCopy,         (void *)jitReferenceArrayCopy,     TR_Helper);
+   SET(TR_referenceArrayCopy,         (void *)jitReferenceArrayCopy,     TR_Helper);
 #endif
 
 #if !defined(TR_HOST_64BIT)
