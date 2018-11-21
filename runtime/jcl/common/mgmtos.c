@@ -245,7 +245,7 @@ Java_com_ibm_lang_management_internal_SysinfoCpuTime_getCpuUtilizationImpl(JNIEn
 		}
 	}
 	result = (*env)->NewObject(env, clazz, tempMethod,
-		cpuTime.timestamp, cpuTime.cpuTime , cpuTime.numberOfCpus, myStatus, cpuTime.cpuLoad);
+		cpuTime.timestamp, cpuTime.cpuTime , cpuTime.numberOfCpus, myStatus, -1);
 	return result;
 }
 
