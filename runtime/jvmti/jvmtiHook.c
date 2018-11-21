@@ -2232,6 +2232,8 @@ canClassBeInstrumented(J9VMClassLoadHookEvent* classLoadData)
 		result = FALSE;
 	} else if (strcmp(classLoadData->className, "java/lang/invoke/VarHandleInternal") == 0) {
 		result = FALSE;
+	} else if (strcmp(classLoadData->className, "com/ibm/jit/JITHelpers") == 0) {
+		result = FALSE;
 	}
 
 	return result;

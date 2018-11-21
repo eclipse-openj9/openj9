@@ -3214,6 +3214,7 @@ verifyClassesCanBeReplaced(J9VMThread * currentThread, jint class_count, const j
  * - Object
  * - J9VMInternals
  * - sun.misc.Unsafe Anonymous classes
+ * - com.ibm.jit.JITHelpers class
  */
 jboolean
 classIsModifiable(J9JavaVM * vm, J9Class * clazz)
@@ -3229,6 +3230,20 @@ classIsModifiable(J9JavaVM * vm, J9Class * clazz)
 		rc = JNI_FALSE;
 	} else if ((J2SE_VERSION(vm) >= J2SE_19) && J9_ARE_ALL_BITS_SET(clazz->classFlags, J9ClassIsAnonymous)) {
 		rc = JNI_FALSE;
+	} else {
+		/* Handle name based matches */
+		U_8* className = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(clazz->romClass));
+		U_8 classNameLength = J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(clazz->romClass));
+
+		switch(classNameLength) {
+		case 22:
+			if (strncmp((char*)className, "com/ibm/jit/JITHelpers", 22) == 0) {
+				rc = JNI_FALSE;
+			}
+			break;
+		default:
+			rc = JNI_TRUE;
+ 		}
 	}
 
 	return rc;
