@@ -228,12 +228,6 @@ class X86PrivateLinkage : public TR::Linkage
 
    virtual const TR::X86LinkageProperties& getProperties();
 
-   TR::X86HelperCallSnippet *createStackOverflowCheck(
-         TR::Instruction *&cursor,
-         TR::Register *cmpRegister,
-         int32_t stackSpaceAllocated,
-         int32_t stackPointerAdjustment);
-
    virtual void createPrologue(TR::Instruction *cursor);
    virtual void createEpilogue(TR::Instruction *cursor);
    virtual TR::Register *buildDirectDispatch(TR::Node *callNode, bool spillFPRegs);
