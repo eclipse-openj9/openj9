@@ -30,7 +30,7 @@
 <variable name="NOHANDLE" value="-XX:-HandleSIGXFSZ" />
 
 <!-- Add -Xshareclasses:none to the command lines of this test suite to ensure that signal SIGXFSZ is triggered on test.txt creation rather than 
-	on shared cache file creation (if shared classes is enable by default). See issue: https://github.com/eclipse/openj9/issues/3333 -->
+	on shared cache file creation (if shared classes is enabled by default). See issue: https://github.com/eclipse/openj9/issues/3333 -->
  <test id="Default">
 	<command>$EXE$ -Xshareclasses:none $CP$ j9vm.test.sigxfsz.SignalXfszTest test.txt</command>
 	<output regex="no" type="required">Starting SignalXfszTest</output>
