@@ -1387,8 +1387,11 @@ _illegalPrimitiveReturn:
 
 			receiver = BCV_BASE_TYPE_NULL; /* makes class compare work with statics */
 
-			if (bc & 1) {
-				/* JBputfield/JBpustatic - odd bc's */
+			if ((bc & 1) /* JBputfield/JBputstatic - odd bc's */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				|| (bc == JBwithfield) /* Even bc, but puts a field */
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+			) {
 				type = POP;
 				if ((*J9UTF8_DATA(utf8string) == 'D') || (*J9UTF8_DATA(utf8string) == 'J')) {
 					inconsistentStack |= (type != BCV_BASE_TYPE_TOP);
@@ -1432,10 +1435,15 @@ _illegalPrimitiveReturn:
 					goto _inconsistentStack;
 				}
 
-				if (bc == JBputfield) {
+				if (bc != JBputstatic) { /* JBputfield, JBwithfield */
 					receiver = POP;
 					/* Jazz 82615: Save the location of receiver */
 					receiverPtr = stackTop;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+					if (bc == JBwithfield) {
+						PUSH(receiver);
+					}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 				}
 			} else {
 				/* JBgetfield/JBgetstatic - even bc's */
@@ -1786,6 +1794,15 @@ _illegalPrimitiveReturn:
 				/* put a uninitialized object of the correct type on the stack */
 				PUSH(BCV_SPECIAL_NEW | (start << BCV_CLASS_INDEX_SHIFT));
 				break;
+			
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			case JBdefaultvalue: /* TODO: ValueTypes perform actual verification */
+				index = PARAM_16(bcIndex, 1);
+				info = &constantPool[index];
+				utf8string = J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) info);
+				stackTop = pushClassType(verifyData, utf8string, stackTop);
+				break;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 			case JBnewarray:
 				POP_TOS_INTEGER;	/* pop the size of the array */

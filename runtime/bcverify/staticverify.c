@@ -122,7 +122,12 @@ buildInstructionMap (J9CfrClassFile * classfile, J9CfrAttributeCode * code, U_8 
 			break;
 
 		default:
-			if (bc > CFR_BC_jsr_w) {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			if ((CFR_BC_breakpoint == bc) || (bc > CFR_BC_withfield))
+#else
+			if (bc > CFR_BC_jsr_w)
+#endif
+			{
 				errorType = J9NLS_CFR_ERR_BC_UNKNOWN__ID;
 				goto _leaveProc;
 			}
@@ -833,6 +838,9 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 		case CFR_BC_putstatic:
 		case CFR_BC_getfield:
 		case CFR_BC_putfield:
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case CFR_BC_withfield:
+#endif
 			NEXT_U16(index, bcIndex);
 			if ((!index) || (index >= cpCount)) {
 				errorType = J9NLS_CFR_ERR_BAD_INDEX__ID;
@@ -964,6 +972,9 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 			break;
 
 		case CFR_BC_new:
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case CFR_BC_defaultvalue:
+#endif
 			NEXT_U16(index, bcIndex);
 			if ((!index) || (index >= cpCount)) {
 				errorType = J9NLS_CFR_ERR_BAD_INDEX__ID;

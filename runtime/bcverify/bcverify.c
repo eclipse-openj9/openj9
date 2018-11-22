@@ -1674,13 +1674,21 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 				DROP(1);
 			}
 			
-			if (bc & 1) {
-				/* JBputfield/JBpustatic - odd bc's */
+			if ((bc & 1) /* JBputfield/JBpustatic - odd bc's */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				|| (JBwithfield == bc) /* Even bc, but puts a field */
+#endif
+			) {
 				DROP(1);
 				if ((*J9UTF8_DATA(utf8string) == 'D') || (*J9UTF8_DATA(utf8string) == 'J')) {
 					DROP(1);
 				}
-
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				if (JBwithfield == bc) {
+					type = POP; /* field receiver */
+					PUSH(type);
+				}
+#endif
 			} else {
 				/* JBgetfield/JBgetstatic - even bc's */
 				stackTop = pushFieldType(verifyData, utf8string, stackTop);
@@ -1747,6 +1755,9 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 			switch (bc) {
 			case JBnew:
 			case JBnewdup:
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			case JBdefaultvalue: /* TODO: ValueTypes This should not be an uninitialized object */
+#endif
 				/* put a uninitialized object of the correct type on the stack */
 				PUSH(BCV_SPECIAL_NEW | (start << BCV_CLASS_INDEX_SHIFT));
 				break;
