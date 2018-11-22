@@ -1,3 +1,4 @@
+* Copyright (c) 2016, 2018 IBM Corp. and others
       ACONTROL AFPR,FLAG(CONT)
 
 FFISYS CELQPRLG DSASIZE=DSASZ,PSECT=ASP
@@ -11,23 +12,22 @@ FFISYS CELQPRLG DSASIZE=DSASZ,PSECT=ASP
 *@2132(,4) <- cif->nargs (+44)?
 *@2136(,4) <- cif->arg_types->size (+52)?
 
+         USING  CEEDSAHP,4
+         LG 14,0(,2)           ecif->cif
+         LG 14,8(,14)          cif->arg_types
 *What: Storing arguments in this routine's
 *      local storage for future use
-          USING  CEEDSAHP,4
-
 *Name:    ffi_prep_args_call
 *Input:   stack, extended_cif
 *Output:  void
 *Action:  Is an external call to C-XPLINK routine
 *         It saves function's arguments in this 
 *         routine's local storage
-*Returns: The parameter types in a array
-*         r3 points to the start of the array
          LA 1,LSTOR          
          LGR 13,1 
          CELQCALL   PREPARGS,WORKREG=10
 
-         LGR 5,3               Copy of parameter types
+         LGR 5,14              Copy of parameter types
 *Reset registers used in code gen
 *         SR  0,0              GPR counter
           LA  0,0
@@ -44,8 +44,8 @@ FFISYS CELQPRLG DSASIZE=DSASZ,PSECT=ASP
          L   9,(2176+(((DSASZ+31)/32)*32)+44)(,4) 
 
 *Place arguments passed to the foreign function based on type
-ARGLOOP  LA  11,0
-         LLC 11,0(10,5)       Get the next parameter type
+ARGLOOP  LG  11,0(10,5)       Get pointer to current ffi_type
+         LLGC 11,11(11)       ffi_type->type
          SLL 11,2             Find offset in branch tabel
          LA  15,ATABLE        
          L   15,0(11,15)      
@@ -469,7 +469,7 @@ BYTE12   DS 0H
          B CONT
 
 CONT     DS 0H                End of processing curr_param
-         AHI 10,1             Next parameter type 
+         AHI 10,8             Next parameter type
          AHI 6,4              Next parameter value stored 
          BCT 9,ARGLOOP        
   
@@ -546,6 +546,9 @@ ATABLE DC A(I)                Labels for parm types
  DC A(UI64)
  DC A(FLT)
  DC A(STRCT)
+ DC A(0)
+ DC A(I)
+ DC A(D)
 I32 DC A(IGPR1)               Labels for passing INT in gpr
  DC A(IGPR2)
  DC A(IGPR3)

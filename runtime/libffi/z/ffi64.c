@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
    ffi.c - Copyright (c) 2000, 2007 Software AG
            Copyright (c) 2008 Red Hat, Inc
-           Copyright (c) 2016, 2017 IBM Corp.
+           Copyright (c) 2016, 2018 IBM Corp.
  
    S390 Foreign Function Interface
  
@@ -68,7 +68,7 @@
  
 /*Making it extern to call this from sysvz.S*/
 #pragma map(ffi_prep_args, "PREPARGS")
-char* ffi_prep_args (unsigned char *, extended_cif *);
+void ffi_prep_args (unsigned char *, extended_cif *);
 void ffi_closure_helper_SYSV (ffi_closure *, unsigned long *, 
 			 unsigned long long *, unsigned long *);
 
@@ -146,7 +146,7 @@ ffi_check_struct_type (ffi_type *arg)
 /*                                                                    */
 /*====================================================================*/
  
-char*
+void
 ffi_prep_args (unsigned char *stack, extended_cif *ecif)
 {
   /* The stack space will be filled with these areas:
@@ -180,12 +180,11 @@ ffi_prep_args (unsigned char *stack, extended_cif *ecif)
      ------------------------------------ <- High Addresses
   */
 
-  int i, idx;
+  int i;
   ffi_type **type_ptr;
   void **p_argv = ecif->avalue;
   unsigned char* arg_ptr = stack;
-  unsigned char  _t[256]; 
-  
+
 #ifdef FFI_DEBUG
   printf("prep_args: stack=%x, extended_cif=%x\n",stack,ecif);
 #endif
@@ -201,9 +200,9 @@ ffi_prep_args (unsigned char *stack, extended_cif *ecif)
   }
    /*Now for the arguments.  */
  
-  for (type_ptr = ecif->cif->arg_types, i = ecif->cif->nargs, idx=0;
+  for (type_ptr = ecif->cif->arg_types, i = ecif->cif->nargs;
        i > 0;
-       i--, type_ptr++, p_argv++, idx++)
+       i--, type_ptr++, p_argv++)
     {
       void *arg = *p_argv;
       int type = (*type_ptr)->type;
@@ -222,68 +221,56 @@ ffi_prep_args (unsigned char *stack, extended_cif *ecif)
 #if FFI_TYPE_LONGDOUBLE != FFI_TYPE_DOUBLE 
 	  case FFI_TYPE_LONGDOUBLE: 
 	    *(long double *) arg_ptr = * (long double *) (*p_argv);
-	    _t[idx] = FFI_TYPE_LONGDOUBLE; 
 	    break;
 #endif
 
 	  case FFI_TYPE_DOUBLE:
 	  case FFI_TYPE_COMPLEX:
 	    *(double *) arg_ptr = * (double *) (*p_argv);
-	    _t[idx] = FFI_TYPE_DOUBLE;
 	    break;
 	
 	  case FFI_TYPE_FLOAT:
 	    *(float *) arg_ptr = * (float *) (*p_argv);
-	    _t[idx] = FFI_TYPE_FLOAT;
 	    break;
 
 	  case FFI_TYPE_POINTER:
 	    *(void **) arg_ptr = * (void**) (* p_argv); 
-	    _t[idx] = FFI_TYPE_POINTER;
 	    break;
  
 	  case FFI_TYPE_SINT64:
 	    *(signed long long *) arg_ptr = * (signed long long *) (* p_argv);
-	    _t[idx] = FFI_TYPE_SINT64;
 	    break;
 
 	  case FFI_TYPE_UINT64:
 	    *(unsigned long long *) arg_ptr = * (unsigned long long *) (* p_argv);
-	    _t[idx] = FFI_TYPE_UINT64;
 	    break;
  
 	  case FFI_TYPE_UINT32:
 	    *(unsigned int *) arg_ptr = * (unsigned int *) (*p_argv);
-	    _t[idx] = FFI_TYPE_UINT32;
 	    break;
  
 	  case FFI_TYPE_SINT32:
 	  case FFI_TYPE_INT:
 	    *(signed int *) arg_ptr = * (signed int *) (*p_argv);
-	    _t[idx] = FFI_TYPE_INT;
 	    break;
  
 	  case FFI_TYPE_UINT16:
 	    *(unsigned short *) arg_ptr = * (unsigned short *) (* p_argv);
-	    _t[idx] = FFI_TYPE_UINT16;
 			arg_ptr += 2;
 	    break;
  
 	  case FFI_TYPE_SINT16:
 	    *(signed short *) arg_ptr = * (signed short *) (* p_argv);
-	    _t[idx] = FFI_TYPE_SINT16;
 			arg_ptr += 2;
 	    break;
 
 	  case FFI_TYPE_UINT8:
 	    *(unsigned char *) arg_ptr = * (unsigned char *) (* p_argv);
-	    _t[idx] = FFI_TYPE_UINT8;
 		arg_ptr += 3;
 	    break;
  
 	  case FFI_TYPE_SINT8:
 	    *(signed char *) arg_ptr = * (signed char*) (* p_argv);
-	    _t[idx] = FFI_TYPE_SINT8;
 
 			arg_ptr += 3;
 	    break;
@@ -296,8 +283,6 @@ ffi_prep_args (unsigned char *stack, extended_cif *ecif)
 
     }
 
-  return _t;
-  
 }
 
 /*======================== End of Routine ============================*/
