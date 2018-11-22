@@ -1862,3 +1862,12 @@ J9NLS_VM_ERROR_BYTECODE_CLASSREF_MUST_BE_VALUE_TYPE.explanation=The class has sp
 J9NLS_VM_ERROR_BYTECODE_CLASSREF_MUST_BE_VALUE_TYPE.system_action=The JVM will throw a IncompatibleClassChangeError.
 J9NLS_VM_ERROR_BYTECODE_CLASSREF_MUST_BE_VALUE_TYPE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
+
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_MUST_BE_VALUE_TYPE=bad object type %2$.*1$s: object on stack is not a value type
+# START NON-TRANSLATABLE
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_MUST_BE_VALUE_TYPE.sample_input_1=3
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_MUST_BE_VALUE_TYPE.sample_input_2=Foo
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_MUST_BE_VALUE_TYPE.explanation=The class has specified a bytecode operation that can only be performed on a value type but the object on stack is not a value type.
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_MUST_BE_VALUE_TYPE.system_action=The JVM will throw a IncompatibleClassChangeError.
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_MUST_BE_VALUE_TYPE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE

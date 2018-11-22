@@ -939,7 +939,16 @@ illegalAccess:
 					}
 					goto done;
 				}
-				if (!finalFieldSetAllowed(vmStruct, false, method, definingClass, classFromCP, field, canRunJavaCode)) {
+			if (
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				/* The withfield bytecode is allowed to set a final field. However, the invoker of withfield must have private access
+				 * to the field (similar to a constructor setting a final field). The private access check is done above, so if we get
+				 * to this point we can skip the finalFieldSetAllowed() if we know its a withfield */
+				J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_WITH_FIELD) &&
+#endif
+				!finalFieldSetAllowed(vmStruct, false, method, definingClass, classFromCP, field, canRunJavaCode)
+			) {
+
 					fieldOffset = -1;
 					goto done;
 				}
