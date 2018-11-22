@@ -117,15 +117,15 @@ RUN mkdir -p /usr/lib/jvm/adoptojdk-java-80 \
   && mv bootjdk8/* /usr/lib/jvm/adoptojdk-java-80 \
   && rm -rf bootjdk8
 
-# Download and install boot JDK from AdoptOpenJDK for java 11
-RUN mkdir -p /usr/lib/jvm/adoptojdk-java-10 \
-  && cd /usr/lib/jvm/adoptojdk-java-10 \
-  && wget -O bootjdk10.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk10?openjdk_impl=openj9&os=linux&arch=s390x&release=latest&type=jdk" \
-  && tar -xzf bootjdk10.tar.gz \
-  && rm -f bootjdk10.tar.gz \
-  && mv $(ls | grep -i jdk-10) bootjdk10 \
-  && mv bootjdk10/* /usr/lib/jvm/adoptojdk-java-10 \
-  && rm -rf bootjdk10
+# Download and install boot JDK from AdoptOpenJDK for java 11 and 12
+RUN mkdir -p /usr/lib/jvm/adoptojdk-java-11 \
+  && cd /usr/lib/jvm/adoptojdk-java-11 \
+  && wget -O bootjdk11.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk11?openjdk_impl=openj9&os=linux&arch=s390x&release=latest&type=jdk" \
+  && tar -xzf bootjdk11.tar.gz \
+  && rm -f bootjdk11.tar.gz \
+  && mv $(ls | grep -i jdk-11) bootjdk11 \
+  && mv bootjdk11/* /usr/lib/jvm/adoptojdk-java-11 \
+  && rm -rf bootjdk11
 
 # Set up sshd config
 RUN mkdir /var/run/sshd \
