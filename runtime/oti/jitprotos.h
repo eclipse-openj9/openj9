@@ -41,6 +41,7 @@ void * setUpForDLT(J9VMThread * currentThread, J9StackWalkState * walkState);
 
 extern J9_CFUNC void   induceOSROnCurrentThread(J9VMThread * currentThread);
 extern J9_CFUNC UDATA osrFrameSize(J9Method *method);
+extern J9_CFUNC UDATA osrFrameSizeRomMethod(J9ROMMethod *romMethod);
 extern J9_CFUNC UDATA ensureOSRBufferSize(J9JavaVM *vm, UDATA osrFramesByteSize, UDATA osrScratchBufferByteSize, UDATA osrStackFrameByteSize);
 extern J9_CFUNC void jitStackLocalsModified (J9VMThread * currentThread, J9StackWalkState * walkState);
 #if (defined(J9VM_INTERP_HOT_CODE_REPLACEMENT)) /* priv. proto (autogen) */
