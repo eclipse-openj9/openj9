@@ -61,7 +61,8 @@ sub runmkgen {
 		$testRoot = $output;
 	}
 
-	my $includeModesService = 1;
+	# temporarily turn off mode service, as it is out of sync
+	my $includeModesService = 0;
 	eval qq{require "modesService.pl"; 1;} or $includeModesService = 0;
 	my $serviceResponse;
 	if ($includeModesService) {
@@ -72,7 +73,7 @@ sub runmkgen {
 	}
 
 	if (!(($serviceResponse) && (%{$modes_hs}) && (%{$sp_hs}))) {
-		print "Cannot get data from modes service! Getting data from modes.xml and ottawa.csv...\n";
+#		print "Cannot get data from modes service! Getting data from modes.xml and ottawa.csv...\n";
 		require "parseFiles.pl";
 		my $data = getFileData($modesxml, $ottawacsv);
 		$modes_hs = $data->{'modes'};
