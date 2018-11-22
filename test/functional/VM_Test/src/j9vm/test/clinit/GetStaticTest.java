@@ -65,5 +65,7 @@ public class GetStaticTest {
 		}
 	}
 
-	public static void main(String[] args) { GetStaticTest.test(); }
+	public static void main(String[] args) {
+		GetStaticTest.test();
+	}
 }
