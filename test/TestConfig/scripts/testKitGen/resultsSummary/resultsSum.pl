@@ -75,6 +75,8 @@ sub resultReporter {
 				my $endTime = 0;
 				while ( $result = <$fhIn> ) {
 					$output .= '        ' . $result;
+					# remove extra carriage return
+					$output =~ s/\r//g;
 					if ($result =~ /Running test (.*) \.\.\.\n/) {
 						$testName = $1;
 					} elsif ($result =~ /^\Q$testName\E Start Time: .* Epoch Time \(ms\): (.*)\n/) {
