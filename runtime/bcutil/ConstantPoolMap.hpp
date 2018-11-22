@@ -274,7 +274,8 @@ public:
 	void markClassAsUsedByANewArray(U_16 classCfrCPIndex)      { mark(classCfrCPIndex, ANEW_ARRAY); }
 	void markClassAsUsedByNew(U_16 classCfrCPIndex)            { mark(classCfrCPIndex, NEW); }
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	void markClassAsUsedByDefaultValue(U_16 classCfrCPIndex)   { mark(classCfrCPIndex, DEFAULT_VALUE); }
+	void markClassAsUsedByDefaultValue(U_16 classCfrCPIndex)    { mark(classCfrCPIndex, DEFAULT_VALUE); }
+	void markFieldRefAsUsedByWithField(U_16 fieldRefCfrCPIndex) { mark(fieldRefCfrCPIndex, WITH_FIELD); }
 #endif
 
 	void markFieldRefAsUsedByGetStatic(U_16 fieldRefCfrCPIndex) { mark(fieldRefCfrCPIndex, GET_STATIC); }
@@ -363,6 +364,7 @@ public:
 		GET_FIELD = SPLIT1,
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 		DEFAULT_VALUE = SPLIT1,
+		WITH_FIELD = SPLIT1,
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		NEW = SPLIT1,
 		INVOKE_HANDLEGENERIC = SPLIT5,
