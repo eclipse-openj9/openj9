@@ -479,28 +479,72 @@ TR::Node *
 J9::Simplifier::simplifyaCallMethods(TR::Node * node, TR::Block * block)
    {
    if ((node->getOpCode().isCallDirect()) && !node->getSymbolReference()->isUnresolved() &&
-       (node->getSymbol()->isResolvedMethod()) &&
-       ((node->getSymbol()->getResolvedMethodSymbol()->getRecognizedMethod() == TR::java_math_BigDecimal_valueOf) ||
-        (node->getSymbol()->getResolvedMethodSymbol()->getRecognizedMethod() == TR::java_math_BigDecimal_add) ||
-        (node->getSymbol()->getResolvedMethodSymbol()->getRecognizedMethod() == TR::java_math_BigDecimal_subtract) ||
-        (node->getSymbol()->getResolvedMethodSymbol()->getRecognizedMethod() == TR::java_math_BigDecimal_multiply) ||
-        (node->getSymbol()->getResolvedMethodSymbol()->getRecognizedMethod() == TR::java_math_BigInteger_add) ||
-        (node->getSymbol()->getResolvedMethodSymbol()->getRecognizedMethod() == TR::java_math_BigInteger_subtract) ||
-        (node->getSymbol()->getResolvedMethodSymbol()->getRecognizedMethod() == TR::java_math_BigInteger_multiply)) &&
-       (node->getReferenceCount() == 1) &&
-       performTransformation(comp(), "%sRemoved dead BigDecimal/BigInteger call node [" POINTER_PRINTF_FORMAT "]\n", optDetailString(), node))
+       (node->getSymbol()->isResolvedMethod()))
       {
-      TR::Node *firstChild = node->getFirstChild();
-      anchorChildren(node, _curTree);
+      bool isSimplifiableMethod = false;
+      // Will arg be NULLCHKed?  If so, preserve it even if call is simplified away
+      bool requiresArgNULLCHK = false;
 
-      firstChild->incReferenceCount();
+      switch (node->getSymbol()->getResolvedMethodSymbol()->getRecognizedMethod())
+         {
+         case TR::java_math_BigDecimal_valueOf:
+            {
+            isSimplifiableMethod = true;
+            break;
+            }
 
-      int i;
-      for (i = 0; i < node->getNumChildren(); i++)
-         node->getChild(i)->recursivelyDecReferenceCount();
+         case TR::java_math_BigDecimal_add:
+         case TR::java_math_BigDecimal_subtract:
+         case TR::java_math_BigDecimal_multiply:
+         case TR::java_math_BigInteger_add:
+         case TR::java_math_BigInteger_subtract:
+         case TR::java_math_BigInteger_multiply:
+            {
+            isSimplifiableMethod = true;
+            requiresArgNULLCHK = true;
+            break;
+            }
 
-      TR::Node::recreate(node, TR::PassThrough);
-      node->setNumChildren(1);
+         default:
+            {
+            isSimplifiableMethod = false;
+            break;
+            }
+         }
+
+      if (isSimplifiableMethod && (node->getReferenceCount() == 1) &&
+          performTransformation(comp(),
+                requiresArgNULLCHK ?
+                      ("%sReplaced dead BigDecimal/BigInteger call node [" POINTER_PRINTF_FORMAT "] with NULLCHK of argument\n") :
+                      ("%sRemoved dead BigDecimal/BigInteger call node [" POINTER_PRINTF_FORMAT "]\n"),
+                optDetailString(), node))
+         {
+         TR::Node *firstChild = node->getFirstChild();
+         anchorChildren(node, _curTree);
+
+         firstChild->incReferenceCount();
+
+         // Need to preserve NULLCHK for argument to
+         // Big{Integer|Decimal}.{add|multiply|subtract}
+         if (requiresArgNULLCHK)
+            {
+            TR::Node *secondChild = node->getSecondChild();
+            TR::SymbolReference * const nullCheckSR =
+                  comp()->getSymRefTab()->findOrCreateNullCheckSymbolRef(
+                                                comp()->getMethodSymbol());
+            TR::TreeTop::create(comp(), _curTree,
+                  TR::Node::createWithSymRef(node, TR::NULLCHK, 1,
+                        TR::Node::create(node, TR::PassThrough, 1, secondChild),
+                                         nullCheckSR));
+            _alteredBlock = true;
+            }
+
+         for (int i = 0; i < node->getNumChildren(); i++)
+            node->getChild(i)->recursivelyDecReferenceCount();
+
+         TR::Node::recreate(node, TR::PassThrough);
+         node->setNumChildren(1);
+         }
       }
 
    return node;
