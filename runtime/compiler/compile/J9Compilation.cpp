@@ -401,7 +401,7 @@ J9::Compilation::canTransformConverterMethod(TR::RecognizedMethod rm)
    if (self()->getOption(TR_DisableConverterReducer))
       return false;
 
-   bool aot = self()->compileRelocatableCode();
+   bool aot = compileRelocatableCode();
    bool genSIMD = self()->cg()->getSupportsVectorRegisters() && !self()->getOption(TR_DisableSIMDArrayTranslate);
    bool genTRxx = !aot && self()->cg()->getSupportsArrayTranslateTRxx();
 
@@ -453,7 +453,7 @@ J9::Compilation::useCompressedPointers()
 bool
 J9::Compilation::useAnchors()
    {
-   return (self()->useCompressedPointers());
+   return (useCompressedPointers());
    }
 
 
@@ -527,7 +527,7 @@ J9::Compilation::isJProfilingCompilation()
 int32_t
 J9::Compilation::canAllocateInlineOnStack(TR::Node* node, TR_OpaqueClassBlock* &classInfo)
    {
-   if (self()->compileRelocatableCode())
+   if (compileRelocatableCode())
       return -1;
 
    if (node->getOpCodeValue() == TR::New)
@@ -675,7 +675,7 @@ J9::Compilation::canAllocateInline(TR::Node* node, TR_OpaqueClassBlock* &classIn
 
       classInfo = self()->fej9vm()->getClassOffsetForAllocationInlining(clazz);
 
-      if (self()->useCompressedPointers())
+      if (useCompressedPointers())
          elementSize = TR::Compiler->om.sizeofReferenceField();
       else
          elementSize = (int32_t)(TR::Compiler->om.sizeofReferenceAddress());
@@ -714,7 +714,7 @@ J9::Compilation::canAllocateInline(TR::Node* node, TR_OpaqueClassBlock* &classIn
       size += TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
       }
 
-   if (node->getOpCodeValue() == TR::newarray || self()->useCompressedPointers())
+   if (node->getOpCodeValue() == TR::newarray || useCompressedPointers())
       {
       size = (int32_t)((size+(TR::Compiler->om.sizeofReferenceAddress()-1)) & ~(TR::Compiler->om.sizeofReferenceAddress()-1));
       }
@@ -1078,7 +1078,7 @@ void
 J9::Compilation::enterHeuristicRegion()
    {
    if (self()->getOption(TR_UseSymbolValidationManager)
-       && self()->compileRelocatableCode())
+       && compileRelocatableCode())
       {
       self()->getSymbolValidationManager()->enterHeuristicRegion();
       }
@@ -1088,7 +1088,7 @@ void
 J9::Compilation::exitHeuristicRegion()
    {
    if (self()->getOption(TR_UseSymbolValidationManager)
-       && self()->compileRelocatableCode())
+       && compileRelocatableCode())
       {
       self()->getSymbolValidationManager()->exitHeuristicRegion();
       }
@@ -1098,7 +1098,7 @@ bool
 J9::Compilation::validateTargetToBeInlined(TR_ResolvedMethod *implementer)
    {
    if (self()->getOption(TR_UseSymbolValidationManager)
-       && self()->compileRelocatableCode())
+       && compileRelocatableCode())
       {
       return self()->getSymbolValidationManager()->addMethodFromClassRecord(implementer->getPersistentIdentifier(),
                                                                             implementer->classOfMethod(),
