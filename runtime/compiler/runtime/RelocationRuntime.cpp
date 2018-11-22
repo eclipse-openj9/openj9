@@ -922,6 +922,10 @@ TR_SharedCacheRelocationRuntime::checkAOTHeaderFlags(TR_FrontEnd *fe, TR_AOTHead
       defaultMessage = generateError("AOT header validation failed: SIMD feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_AsyncCompilation) != (hdrInCache->featureFlags & TR_FeatureFlag_AsyncCompilation))
       defaultMessage = generateError("AOT header validation failed: AsyncCompilation feature mismatch.");
+   if ((featureFlags & TR_FeatureFlag_ConcurrentScavenge) != (hdrInCache->featureFlags & TR_FeatureFlag_ConcurrentScavenge))
+      defaultMessage = generateError("AOT header validation failed: Concurrent Scavenge feature mismatch.");
+   if ((featureFlags & TR_FeatureFlag_SoftwareReadBarrier) != (hdrInCache->featureFlags & TR_FeatureFlag_SoftwareReadBarrier))
+      defaultMessage = generateError("AOT header validation failed: Software Read Barrier feature mismatch.");
 
    if ((featureFlags & TR_FeatureFlag_SanityCheckEnd) != (hdrInCache->featureFlags & TR_FeatureFlag_SanityCheckEnd))
       defaultMessage = generateError("AOT header validation failed: Trailing sanity bit mismatch.");
@@ -1253,10 +1257,13 @@ TR_SharedCacheRelocationRuntime::generateFeatureFlags(TR_FrontEnd *fe)
 #ifdef TR_TARGET_S390
    if (TR::Compiler->target.cpu.getS390SupportsVectorFacility())
       featureFlags |= TR_FeatureFlag_SIMDEnabled;
+#endif
 
    if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
       featureFlags |= TR_FeatureFlag_ConcurrentScavenge;
-#endif
+
+   if (TR::Compiler->om.shouldReplaceGuardedLoadWithSoftwareReadBarrier())
+      featureFlags |= TR_FeatureFlag_SoftwareReadBarrier;
 
    if (fej9->isAsyncCompilation())
       featureFlags |= TR_FeatureFlag_AsyncCompilation;
