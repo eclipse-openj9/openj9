@@ -76,7 +76,7 @@ namespace TR { class IlGenRequest; }
 namespace J9
 {
 
-class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
+class /*OMR_EXTENSIBLE*/ Compilation : public OMR::CompilationConnector
    {
    friend class ::TR_DebugExt;
 

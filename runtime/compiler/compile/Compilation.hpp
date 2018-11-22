@@ -35,7 +35,7 @@ struct J9VMThread;
 
 namespace TR
 {
-class OMR_EXTENSIBLE Compilation : public J9::CompilationConnector
+class /*OMR_EXTENSIBLE*/ Compilation : public J9::CompilationConnector
    {
    public:
 
