@@ -790,13 +790,6 @@ TR_J9MethodBase::isBigDecimalConvertersMethod(TR::Compilation * comp)
    }
 
 
-uintptr_t
-TR_J9MethodBase::osrFrameSize(J9Method* j9Method)
-   {
-   return ::osrFrameSize(j9Method);
-   }
-
-
 J9ROMConstantPoolItem *
 TR_ResolvedJ9MethodBase::romLiterals()
    {
