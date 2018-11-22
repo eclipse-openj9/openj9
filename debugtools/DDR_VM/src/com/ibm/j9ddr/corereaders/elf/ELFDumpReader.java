@@ -1210,8 +1210,10 @@ public abstract class ELFDumpReader implements ILibraryDependentCore
 				instructionPointer = maskInstructionPointer(getLinkRegisterFrom(registers));
 			}
 
-			if (0 != instructionPointer && 0 != basePointer	&& isValidAddress(instructionPointer)
-					&& isValidAddress(stackPointer)) {
+			if ((0 != instructionPointer)
+				&& isValidAddress(instructionPointer)
+				&& isValidAddress(stackPointer)
+			) {
 				IMemoryRange range = _process.getRangeForAddress(stackPointer);
 				memoryRanges.add(new MemoryRange(_process.getAddressSpace(), range, "stack"));
 				UnwindTable unwindTable = null;
@@ -1267,7 +1269,7 @@ public abstract class ELFDumpReader implements ILibraryDependentCore
 							unwindTable = unwinder.getUnwindTableForInstructionAddress(instructionPointer);
 							// basePointer = newStackPointer;
 
-						} else {
+						} else if (basePointer != 0) {
 //							 System.err.printf("Using basic unwind for frame %d, ip: 0x%x\n", loops, instructionPointer);
 							// previousBasePointer = basePointer;
 							if( isValidAddress(instructionPointer) ) {
@@ -1279,6 +1281,8 @@ public abstract class ELFDumpReader implements ILibraryDependentCore
 							instructionPointer = maskInstructionPointer(_process.getPointerAt(ptr));
 							unwindTable = unwinder.getUnwindTableForInstructionAddress(instructionPointer);
 							// TODO - if we do tranistion back to unwinding with DWARF we need to get the registers right.
+						} else {
+							logger.log(Level.FINER, "Base pointer is zero");
 						}
 
 //						System.err.printf("Instruction pointer is 0x%x, unwind table is: %s\n", instructionPointer, unwindTable);
