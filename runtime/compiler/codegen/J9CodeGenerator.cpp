@@ -745,6 +745,16 @@ J9::CodeGenerator::lowerTreesPreChildrenVisit(TR::Node *parent, TR::TreeTop *tre
                treeTop->getNode()->setSymbolReference(NULL);
                TR::Node::recreate(treeTop->getNode(), TR::treetop);
                }
+            else if (treeTop->getNode()->getOpCodeValue() == TR::NULLCHK &&
+                     treeTop->getNode()->getChild(0) == parent)
+               {
+               treeTop->insertBefore(TR::TreeTop::create(self()->comp(),
+                                                         TR::Node::createWithSymRef(TR::NULLCHK, 1, 1,
+                                                                                    TR::Node::create(TR::PassThrough, 1, parent->getChild(0)),
+                                                                                    treeTop->getNode()->getSymbolReference())));
+               treeTop->getNode()->setSymbolReference(NULL);
+               TR::Node::recreate(treeTop->getNode(), TR::treetop);
+               }
             else
                {
                treeTop->insertBefore(TR::TreeTop::create(self()->comp(), TR::Node::create(parent, TR::treetop, 1, parent)));
