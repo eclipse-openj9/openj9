@@ -1501,7 +1501,12 @@ _nextBranch:
 			break;
 
 		default:
-			if (bc > CFR_BC_jsr_w) {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			if ((CFR_BC_breakpoint == bc) || (bc > CFR_BC_withfield))
+#else
+			if (bc > CFR_BC_jsr_w)
+#endif
+			{
 				inlineBuffers->errorCode = BCT_ERR_INVALID_BYTECODE;
 				inlineBuffers->verifyError = J9NLS_BCV_ERR_BC_UNKNOWN__ID;
 				inlineBuffers->verifyErrorPC = start;

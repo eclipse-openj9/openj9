@@ -1387,8 +1387,9 @@ _illegalPrimitiveReturn:
 
 			receiver = BCV_BASE_TYPE_NULL; /* makes class compare work with statics */
 
-			if (bc & 1) {
-				/* JBputfield/JBpustatic - odd bc's */
+			switch(bc) {
+			case JBputfield:
+			case JBputstatic:
 				type = POP;
 				if ((*J9UTF8_DATA(utf8string) == 'D') || (*J9UTF8_DATA(utf8string) == 'J')) {
 					inconsistentStack |= (type != BCV_BASE_TYPE_TOP);
@@ -1437,14 +1438,34 @@ _illegalPrimitiveReturn:
 					/* Jazz 82615: Save the location of receiver */
 					receiverPtr = stackTop;
 				}
-			} else {
-				/* JBgetfield/JBgetstatic - even bc's */
-				if (bc == JBgetfield) {
-					receiver = POP;
-					/* Jazz 82615: Save the location of receiver */
-					receiverPtr = stackTop;
+				break;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			case JBwithfield:
+				type = POP;
+				if ((*J9UTF8_DATA(utf8string) == 'D') || (*J9UTF8_DATA(utf8string) == 'J')) {
+					inconsistentStack |= (type != BCV_BASE_TYPE_TOP);
+					if (inconsistentStack) {
+						/* Jazz 82615: Set the expected long/double type and the location of wrong data type
+						 * on stack when the verification error occurs.
+						 */
+						errorTempData = ('J' == *J9UTF8_DATA(utf8string)) ? BCV_BASE_TYPE_LONG : BCV_BASE_TYPE_DOUBLE;
+						errorTargetType = BCV_BASE_TYPE_TOP;
+						errorStackIndex = stackTop - liveStack->stackElements;
+						goto _inconsistentStack;
+					}
+					type = POP;
 				}
+				type2 = POP;
+				PUSH(type2);
+				break;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+			case JBgetfield:
+				receiver = POP;
+				/* Jazz 82615: Save the location of receiver */
+				receiverPtr = stackTop; /* fallthrough */
+			case JBgetstatic:
 				stackTop = pushFieldType(verifyData, utf8string, stackTop);
+				break;
 			}
 
 			rc = isFieldAccessCompatible (verifyData, (J9ROMFieldRef *) info, bc, receiver, &reasonCode);
@@ -1786,6 +1807,16 @@ _illegalPrimitiveReturn:
 				/* put a uninitialized object of the correct type on the stack */
 				PUSH(BCV_SPECIAL_NEW | (start << BCV_CLASS_INDEX_SHIFT));
 				break;
+			
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			case JBdefaultvalue: /* TODO: ValueTypes perform actual verification */
+				index = PARAM_16(bcIndex, 1);
+				info = &constantPool[index];
+				utf8string = J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) info);
+				type = convertClassNameToStackMapType(verifyData, J9UTF8_DATA(utf8string), J9UTF8_LENGTH(utf8string), 0, 0);
+				PUSH(type);
+				break;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 			case JBnewarray:
 				POP_TOS_INTEGER;	/* pop the size of the array */

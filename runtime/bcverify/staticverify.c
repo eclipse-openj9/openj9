@@ -122,7 +122,12 @@ buildInstructionMap (J9CfrClassFile * classfile, J9CfrAttributeCode * code, U_8 
 			break;
 
 		default:
-			if (bc > CFR_BC_jsr_w) {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			if ((CFR_BC_breakpoint == bc) || (bc > CFR_BC_withfield))
+#else
+			if (bc > CFR_BC_jsr_w)
+#endif
+			{
 				errorType = J9NLS_CFR_ERR_BC_UNKNOWN__ID;
 				goto _leaveProc;
 			}
@@ -1183,6 +1188,14 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 				goto _verifyError;
 			}
 			break;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case CFR_BC_defaultvalue:
+			bcIndex += 2;
+			break; // TODO: ValueTypes Verify bytecode correctness
+		case CFR_BC_withfield:
+			bcIndex += 2;
+			break; // TODO: ValueTypes Verify bytecode correctness
+#endif
 
 		default:
 			errorType = J9NLS_CFR_ERR_BC_UNKNOWN__ID;
