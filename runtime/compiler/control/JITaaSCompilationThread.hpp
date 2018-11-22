@@ -81,6 +81,7 @@ class ClientSessionData
       bool _canMethodEnterEventBeHooked;
       bool _canMethodExitEventBeHooked;
       bool _usesDiscontiguousArraylets;
+      bool _isIProfilerEnabled;
       int32_t _arrayletLeafLogSize;
       int32_t _arrayletLeafSize;
       uint64_t _overflowSafeAllocSize;

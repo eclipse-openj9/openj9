@@ -162,6 +162,7 @@ public:
    virtual bool transformJlrMethodInvoke(J9Method *callerMethod, J9Class *callerClass) override;
    using TR_J9VM :: isAnonymousClass;
    virtual bool isAnonymousClass(TR_OpaqueClassBlock *j9clazz) override;
+   virtual TR_IProfiler *getIProfiler() override;
    };
 
 #endif // VMJ9SERVER_H

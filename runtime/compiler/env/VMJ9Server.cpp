@@ -1364,3 +1364,19 @@ TR_J9ServerVM::isAnonymousClass(TR_OpaqueClassBlock *j9clazz)
 
    return (J9_ARE_ALL_BITS_SET(extraModifiers, J9AccClassAnonClass));
    }
+
+TR_IProfiler *
+TR_J9ServerVM::getIProfiler()
+   {
+   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   auto * vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   if (!vmInfo->_isIProfilerEnabled)
+      return NULL;
+
+   if (!_iProfiler)
+      {
+      // This used to use a global variable called 'jitConfig' instead of the local object's '_jitConfig'.  In early out of memory scenarios, the global jitConfig may be NULL.
+      _iProfiler = ((TR_JitPrivateConfig*)(_jitConfig->privateConfig))->iProfiler;
+      }
+   return _iProfiler;
+   }
