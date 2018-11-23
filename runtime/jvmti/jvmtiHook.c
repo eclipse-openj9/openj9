@@ -139,6 +139,7 @@ static jfieldID findWatchedField (J9VMThread *currentThread, J9JVMTIEnv * j9env,
 static void jvmtiHookGetEnv (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static void jvmtiHookVmDumpStart (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static void jvmtiHookVmDumpEnd (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
+static void jvmtiHookPatchToJavaBase(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static UDATA methodExists(J9Class * methodClass, U_8 * nameData, UDATA nameLength, J9UTF8 * signature);
 
 static void
@@ -509,6 +510,9 @@ processEvent(J9JVMTIEnv* j9env, jint event, J9HookRedirectorFunction redirectorF
 			} else {
 				return 0;
 			}
+
+		case J9JVMTI_EVENT_COM_OPENJ9_PATCH_TO_JAVABASE:
+			return redirectorFunction(vmHook, J9HOOK_PATCH_TO_JAVABASE, jvmtiHookPatchToJavaBase, OMR_GET_CALLSITE(), j9env);
 	}
 
 	return 0;
@@ -3333,4 +3337,33 @@ jvmtiHookVmDumpEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void
 	}
 
 	TRACE_JVMTI_EVENT_RETURN(jvmtiHookVmDumpEnd);
+}
+
+static void
+jvmtiHookPatchToJavaBase(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
+{
+	J9VMPatchToJavaBaseEvent *data = eventData;
+	J9VMThread *currentThread = data->currentThread;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9JVMTIEnv *j9env = userData;
+	jvmtiExtensionEvent callback = J9JVMTI_EXTENSION_CALLBACK(j9env, J9JVMTI_EVENT_COM_OPENJ9_PATCH_TO_JAVABASE);
+	UDATA hadVMAccess;
+	UDATA javaOffloadOldState = 0;
+
+	Assert_JVMTI_true(J2SE_VERSION(vm) >= J2SE_19);
+
+	Trc_JVMTI_jvmtiHookPatchToJavaBase_Entry();
+
+	if (prepareForEvent(j9env, currentThread, currentThread, J9JVMTI_EVENT_COM_OPENJ9_PATCH_TO_JAVABASE, NULL, &hadVMAccess, TRUE, 0, &javaOffloadOldState)) {
+		if (callback == NULL) {
+			data->result = FALSE; /* default value should be false */
+		} else {
+			jboolean result = JNI_FALSE;
+			callback((jvmtiEnv *) j9env, data->className, &result);
+			data->result = (BOOLEAN)result;
+		}
+		finishedEvent(currentThread, J9JVMTI_EVENT_COM_OPENJ9_PATCH_TO_JAVABASE, hadVMAccess, javaOffloadOldState);
+	}
+
+	TRACE_JVMTI_EVENT_RETURN(jvmtiHookPatchToJavaBase);
 }

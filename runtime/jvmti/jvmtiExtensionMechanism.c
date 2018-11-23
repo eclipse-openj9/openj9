@@ -346,6 +346,12 @@ static const jvmtiParamInfo jvmtiDeregisterTracepointSubscriber_params[] = {
 	{ "subscriptionID", JVMTI_KIND_IN_PTR, JVMTI_TYPE_CVOID, JNI_FALSE }
 };
 
+/* (jvmtiEnv *env, char* className, jboolean* result) */
+static const jvmtiParamInfo jvmtiPatchToJavaBase_params[] = {
+	{ "className", JVMTI_KIND_IN_PTR, JVMTI_TYPE_CCHAR, JNI_FALSE },
+	{ "result", JVMTI_KIND_IN_PTR, JVMTI_TYPE_JBOOLEAN, JNI_FALSE}
+};
+
 /*
  * Error lists for extended functions
  */
@@ -776,6 +782,12 @@ static const J9JVMTIExtensionEventInfo J9JVMTIExtensionEventInfoTable[] = {
 		COM_IBM_GARBAGE_COLLECTION_CYCLE_FINISH,
 		J9NLS_JVMTI_COM_IBM_GARBAGE_COLLECTION_CYCLE_FINISH_DESCRIPTION,
 		EMPTY_SIZE_AND_TABLE,
+	},
+	{
+		J9JVMTI_EVENT_COM_OPENJ9_PATCH_TO_JAVABASE,
+		COM_OPENJ9_PATCH_TO_JAVABASE,
+		J9NLS_JVMTI_COM_OPENJ9_PATCH_TO_JAVABASE,
+		SIZE_AND_TABLE(jvmtiPatchToJavaBase_params),
 	},
 };
 

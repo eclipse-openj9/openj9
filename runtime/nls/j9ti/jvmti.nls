@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -609,4 +609,11 @@ J9NLS_JVMTI_COM_IBM_JVM_DEREGISTER_TRACEPOINT_SUBSCRIBER_DESCRIPTION=Cancel a su
 J9NLS_JVMTI_COM_IBM_JVM_DEREGISTER_TRACEPOINT_SUBSCRIBER_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
 J9NLS_JVMTI_COM_IBM_JVM_DEREGISTER_TRACEPOINT_SUBSCRIBER_DESCRIPTION.system_action=None
 J9NLS_JVMTI_COM_IBM_JVM_DEREGISTER_TRACEPOINT_SUBSCRIBER_DESCRIPTION.user_response=None
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_OPENJ9_PATCH_TO_JAVABASE=Asks JVMTI agent whether custom class should be loaded to java.base or unnamed module.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_OPENJ9_PATCH_TO_JAVABASE.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_OPENJ9_PATCH_TO_JAVABASE.system_action=None
+J9NLS_JVMTI_COM_OPENJ9_PATCH_TO_JAVABASE.user_response=None
 # END NON-TRANSLATABLE

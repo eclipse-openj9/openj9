@@ -2843,9 +2843,10 @@ retry:
 				 * Therefore J9Class.module should be NULL for classes loaded from classpath by non-bootloaders.
 				 * The call to findModuleForPackage() should correctly set J9Class.module as it would return
 				 * NULL for classes loaded from classpath.
-				 * For bootloader, unnamed module is represented by J9JavaVM.unamedModuleForSystemLoader.
-				 * Therefore for classes loaded by bootloader from boot classpath,
-				 * J9Class.module should be set to J9JavaVM.unamedModuleForSystemLoader.
+				 * For bootloader, unnamed module is represented by J9JavaVM.unamedModuleForSystemLoader and java.base
+				 * is represented as J9JavaVM.javaBaseModule. Classes loaded by bootloader from boot classpath should
+				 * by default have J9Class.module set to J9JavaVM.unamedModuleForSystemLoader. Alternatively the user can
+				 * indicate through a jvmti callback to assign these classes to the java.base module or J9JavaVM.javaBaseModule.
 				 */
 				if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
 					module = hostClass->module;
@@ -2859,7 +2860,15 @@ retry:
 					module = findModuleForPackage(vmThread, classLoader, J9UTF8_DATA(className), pkgNameLength);
 					omrthread_monitor_exit(javaVM->classLoaderModuleAndLocationMutex);
 				} else {
-					module = javaVM->unamedModuleForSystemLoader;
+					BOOLEAN returnVal = FALSE; /* default module is unnamed */
+					
+					TRIGGER_J9HOOK_PATCH_TO_JAVABASE(javaVM->hookInterface, vmThread, (char*)J9UTF8_DATA(className), returnVal);
+
+					if (TRUE == returnVal) {
+						module = javaVM->javaBaseModule;
+					} else {
+						module = javaVM->unamedModuleForSystemLoader;
+					}
 				}
 			} else {
 				/* Ignore locationType and assign all classes created before the java.base module is created to java.base.
