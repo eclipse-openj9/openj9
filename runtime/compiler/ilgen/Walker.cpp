@@ -1444,38 +1444,23 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
          case J9BCinvokespecialsplit:   genInvokeSpecial(next2Bytes() | J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG);   _bcIndex += 3; break;
          case J9BCinvokestaticsplit:    genInvokeStatic(next2Bytes() | J9_STATIC_SPLIT_TABLE_INDEX_FLAG);     _bcIndex += 3; break;
 
-         case J9BCifeq:      loadConstant(TR::iconst, 0); _bcIndex = genIf(TR::ificmpeq, true); break;
-         case J9BCifne:      loadConstant(TR::iconst, 0); _bcIndex = genIf(TR::ificmpne, true); break;
-         case J9BCiflt:      loadConstant(TR::iconst, 0); _bcIndex = genIf(TR::ificmplt, true); break;
-         case J9BCifge:      loadConstant(TR::iconst, 0); _bcIndex = genIf(TR::ificmpge, true); break;
-         case J9BCifgt:      loadConstant(TR::iconst, 0); _bcIndex = genIf(TR::ificmpgt, true); break;
-         case J9BCifle:      loadConstant(TR::iconst, 0); _bcIndex = genIf(TR::ificmple, true); break;
-         case J9BCifnull:
-             if (TR::Compiler->target.is64Bit())
-                loadConstant(TR::aconst, (int64_t)0);
-             else
-                loadConstant(TR::aconst, (int32_t)0);
+         case J9BCifeq:      _bcIndex = genIfOneOperand(TR::ificmpeq); break;
+         case J9BCifne:      _bcIndex = genIfOneOperand(TR::ificmpne); break;
+         case J9BCiflt:      _bcIndex = genIfOneOperand(TR::ificmplt); break;
+         case J9BCifge:      _bcIndex = genIfOneOperand(TR::ificmpge); break;
+         case J9BCifgt:      _bcIndex = genIfOneOperand(TR::ificmpgt); break;
+         case J9BCifle:      _bcIndex = genIfOneOperand(TR::ificmple); break;
+         case J9BCifnull:    _bcIndex = genIfOneOperand(TR::ifacmpeq); break;
+         case J9BCifnonnull: _bcIndex = genIfOneOperand(TR::ifacmpne); break;
 
-             _bcIndex = genIf(TR::ifacmpeq, true);
-             break;
-
-         case J9BCifnonnull:
-             if (TR::Compiler->target.is64Bit())
-                loadConstant(TR::aconst, (int64_t)0);
-             else
-                loadConstant(TR::aconst, (int32_t)0);
-
-             _bcIndex = genIf(TR::ifacmpne, true);
-             break;
-
-         case J9BCificmpeq: _bcIndex = genIf(TR::ificmpeq); break;
-         case J9BCificmpne: _bcIndex = genIf(TR::ificmpne); break;
-         case J9BCificmplt: _bcIndex = genIf(TR::ificmplt); break;
-         case J9BCificmpge: _bcIndex = genIf(TR::ificmpge); break;
-         case J9BCificmpgt: _bcIndex = genIf(TR::ificmpgt); break;
-         case J9BCificmple: _bcIndex = genIf(TR::ificmple); break;
-         case J9BCifacmpeq: _bcIndex = genIf(TR::ifacmpeq); break;
-         case J9BCifacmpne: _bcIndex = genIf(TR::ifacmpne); break;
+         case J9BCificmpeq:  _bcIndex = genIfTwoOperand(TR::ificmpeq); break;
+         case J9BCificmpne:  _bcIndex = genIfTwoOperand(TR::ificmpne); break;
+         case J9BCificmplt:  _bcIndex = genIfTwoOperand(TR::ificmplt); break;
+         case J9BCificmpge:  _bcIndex = genIfTwoOperand(TR::ificmpge); break;
+         case J9BCificmpgt:  _bcIndex = genIfTwoOperand(TR::ificmpgt); break;
+         case J9BCificmple:  _bcIndex = genIfTwoOperand(TR::ificmple); break;
+         case J9BCifacmpeq:  _bcIndex = genIfTwoOperand(TR::ifacmpeq); break;
+         case J9BCifacmpne:  _bcIndex = genIfTwoOperand(TR::ifacmpne); break;
 
          case J9BClcmp:  _bcIndex = cmp(TR::lcmp,  _lcmpOps,  lastIndex); break;
          case J9BCfcmpl: _bcIndex = cmp(TR::fcmpl, _fcmplOps, lastIndex); break;
@@ -1716,9 +1701,19 @@ TR_J9ByteCodeIlGenerator::cmp(TR::ILOpCodes cmpOpcode, TR::ILOpCodes * combinedO
 int32_t
 TR_J9ByteCodeIlGenerator::cmpFollowedByIf(uint8_t ifOpcode, TR::ILOpCodes combinedOpcode, int32_t & lastIndex)
    {
+   int32_t branchOffset = next2BytesSigned(2); // The 2 bytes after the compare bytecode is the branch offset
+
+   // If asynccheck is needed, generate it before incrementing _bcIndex such that it has the bytecode index of
+   // the compare bytecode.
+   if (branchOffset <= 0)
+      {
+      genAsyncCheck();
+      }
+
    if (++_bcIndex > lastIndex)
       lastIndex = _bcIndex;
-   return genIf(combinedOpcode);
+
+   return genIfImpl(combinedOpcode);
    }
 
 //----------------------------------------------
@@ -2449,7 +2444,7 @@ TR_J9ByteCodeIlGenerator::saveStack(int32_t targetIndex, bool anchorLoads)
 // Bad code results if code following saveStack generated stores
 // attempts to load from one of the saved PPS slots. Two obvious
 // examples arise. For the first example see the comment before
-// TR_J9ByteCodeIlGenerator::genIf. Second, consider a treetop preceeding a
+// TR_J9ByteCodeIlGenerator::genIfImp. Second, consider a treetop preceeding a
 // decompilation point. Nodes loaded from the PPS save region (i.e that
 // were live on entry to the block) may be referred to by treetops on
 // both sides of the decompilation point and thus may be killed by the
@@ -3489,8 +3484,79 @@ TR_J9ByteCodeIlGenerator::genGoto(int32_t target)
    return findNextByteCodeToGen();
    }
 
+
+
+/** \brief
+ *     Generates IL for an conditional branch bytecode that takes one operand.
+ *     Also generates an asynccheck if the bytecode branches backwards.
+ *
+ *  \param nodeop
+ *     The IL opcode to use.
+ *
+ *  \return
+ *     The index of the next bytecode to generate.
+ */
+int32_t
+TR_J9ByteCodeIlGenerator::genIfOneOperand(TR::ILOpCodes nodeop)
+   {
+   int32_t branchBC = _bcIndex + next2BytesSigned();
+
+   if (branchBC <= _bcIndex)
+      genAsyncCheck();
+
+   TR_J9ByteCode currentByteCode = current();
+   switch (currentByteCode)
+      {
+      case J9BCifeq:
+      case J9BCifne:
+      case J9BCiflt:
+      case J9BCifge:
+      case J9BCifgt:
+      case J9BCifle:
+         loadConstant(TR::iconst, 0);
+         break;
+      case J9BCifnull:
+         if (TR::Compiler->target.is64Bit())
+            loadConstant(TR::aconst, (int64_t)0);
+         else
+            loadConstant(TR::aconst, (int32_t)0);
+         break;
+      case J9BCifnonnull:
+         if (TR::Compiler->target.is64Bit())
+            loadConstant(TR::aconst, (int64_t)0);
+         else
+            loadConstant(TR::aconst, (int32_t)0);
+         break;
+      default:
+         TR_ASSERT(comp(), "Unexpected bytecode at bc index %d\n", _bcIndex);
+      }
+
+   return genIfImpl(nodeop);
+   }
+
+/** \brief
+ *     Generates IL for an conditional branch bytecode that takes two operands.
+ *     Also generates an asynccheck if the bytecode branches backwards.
+ *
+ *  \param nodeop
+ *     The IL opcode to use.
+ *
+ *  \return
+ *     The index of the next bytecode to generate.
+ */
+int32_t
+TR_J9ByteCodeIlGenerator::genIfTwoOperand(TR::ILOpCodes nodeop)
+   {
+   int32_t branchBC = _bcIndex + next2BytesSigned();
+
+   if (branchBC <= _bcIndex)
+      genAsyncCheck();
+
+   return genIfImpl(nodeop);
+   }
+
 //----------------------------------------------
-// genIf
+// genIfImpl
 //----------------------------------------------
 
 // The "if" family of bytecodes are composed of two operations: a
@@ -3507,26 +3573,17 @@ TR_J9ByteCodeIlGenerator::genGoto(int32_t target)
 // handlePendingPushSaveSideEffects is called to promote any such loads
 // to treetops preceding the saveStack generated stores.
 //
-// singleStackOp: If the op was only intended to pop one item off the
-// stack, this flag should be set to true. This is necessary to maintain
-// the stack representation with the VM.
+// This API does not generate asynccheck, it's the caller's responsiblity
+// to ensure one is generated for a backward branch.
 //
 int32_t
-TR_J9ByteCodeIlGenerator::genIf(TR::ILOpCodes nodeop, bool singleStackOp)
+TR_J9ByteCodeIlGenerator::genIfImpl(TR::ILOpCodes nodeop)
    {
    _methodSymbol->setHasBranches(true);
    int32_t branchBC = _bcIndex + next2BytesSigned();
    int32_t fallThruBC = _bcIndex + 3;
 
-   TR::Node * second;
-   if (singleStackOp)
-      second = pop();
-
-   if (branchBC <= _bcIndex)
-      genAsyncCheck();
-
-   if (!singleStackOp)
-      second = pop();
+   TR::Node * second = pop();
    TR::Node * first = pop();
 
    handlePendingPushSaveSideEffects(first);
