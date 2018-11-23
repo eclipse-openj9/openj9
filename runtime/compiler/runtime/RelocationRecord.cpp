@@ -1528,7 +1528,8 @@ TR_RelocationRecordDataAddress::findDataAddress(TR_RelocationRuntime *reloRuntim
          {
          ramMethod = reloRuntime->method();
          }
-      address = (uint8_t *)jitCTResolveStaticFieldRefWithMethod(vmThread, ramMethod, cpindex, false, &fieldShape);
+      if (ramMethod && (ramMethod != static_cast<J9Method *>(-1)))
+         address = (uint8_t *)jitCTResolveStaticFieldRefWithMethod(vmThread, ramMethod, cpindex, false, &fieldShape);
       }
 
    if (address == NULL)
