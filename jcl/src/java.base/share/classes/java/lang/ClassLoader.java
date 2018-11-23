@@ -32,12 +32,16 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.StreamSupport;
 import jdk.internal.module.ServicesCatalog;
+/*[IF Java12]*/
+import jdk.internal.access.SharedSecrets;
+/*[ELSE]
 import jdk.internal.misc.SharedSecrets;
+/*[ENDIF]*/
 import java.util.concurrent.ConcurrentHashMap;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.loader.ClassLoaders;
 import jdk.internal.loader.BootLoader;
-/*[ELSE]*/
+/*[ELSE]
 import sun.reflect.CallerSensitive;
 /*[ENDIF]*/
 
