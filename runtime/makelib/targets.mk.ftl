@@ -100,6 +100,14 @@ CXXFLAGS+=-DOPENJ9_BUILD
 CPPFLAGS+=-DOPENJ9_BUILD
 endif
 
+ifdef UMA_SP_CFLAGS
+CFLAGS += $(UMA_SP_CFLAGS)
+CXXFLAGS += $(UMA_SP_CFLAGS)
+<#if !uma.spec.type.windows>
+CPPFLAGS += $(UMA_SP_CFLAGS)
+</#if>
+endif
+
 # Declare the 'all' target
 
 TARGETS+=$(UMA_LIBTARGET) $(UMA_DLLTARGET) $(UMA_EXETARGET)

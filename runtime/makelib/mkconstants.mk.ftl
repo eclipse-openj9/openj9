@@ -250,3 +250,9 @@ UMA_OBJECTS+=$(patsubst %.mc,%.res,$(wildcard *.mc))
 <#if uma.spec.type.windows>
 UMA_WINDOWS_PARRALLEL_HACK=-j $(NUMBER_OF_PROCESSORS)
 </#if>
+
+<#if uma.spec.id?ends_with("_sp") && uma.spec.properties.uma_sp_cflags.defined>
+UMA_SP_CFLAGS=${uma.spec.properties.uma_sp_cflags.value}
+<#else>
+UMA_SP_CFLAGS=
+</#if>
