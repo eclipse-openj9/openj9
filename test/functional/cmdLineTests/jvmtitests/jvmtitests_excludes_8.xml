@@ -46,7 +46,7 @@
 	</exclude>
 
 	<exclude id="mt001" platform="all">
-		<reason>Mdoularity is not enable on 829</reason>
+		<reason>Modularity is not enable on 829</reason>
 	</exclude>
 
 	<!-- Windows IA32 New ROMClass Builder - the test requires retransform support, which will be implemented under JAZZ 19331 -->
@@ -56,6 +56,10 @@
 	
 	<exclude id="nmr001" platform="all">
 		<reason>Nestmates are not enabled on java8</reason>
+	</exclude>
+
+	<exclude id="ptjb001" platform="all">
+		<reason>Modularity is not enabled in Java 8</reason>
 	</exclude>
 </suite>
 

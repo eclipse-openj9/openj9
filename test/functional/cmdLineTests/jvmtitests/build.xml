@@ -119,6 +119,10 @@
 			<fileset dir="${src}" excludes="**/*.java, **/package.htm*" />
 			<fileset dir="${src}/../" includes="*.properties,*.xml" />
 		</jar>
+
+		<!-- Generate patchToJavaBase jar -->
+		<jar jarfile="${DEST}/jars/patchToJavaBase.jar" basedir="${build}" filesonly="true"
+			includes="com/ibm/jvmti/tests/patchToJavaBase/bootstrapClass/*.class"/>
 	</target>
 
 	<target name="clean" depends="dist" description="clean up">
