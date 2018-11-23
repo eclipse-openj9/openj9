@@ -146,7 +146,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="gc_tlhPrefetchFTA" value="true"/>
 		<flag id="graph_cmdLineTester" value="true"/>
 		<flag id="graph_compile" value="true"/>
-		<flag id="graph_enableTesting" value="true"/>
+		<flag id="graph_enableTesting" value="false"/>
 		<flag id="graph_enableTesting_Java8" value="true"/>
 		<flag id="graph_includeThrstatetest" value="true"/>
 		<flag id="graph_j2seSanity" value="true"/>

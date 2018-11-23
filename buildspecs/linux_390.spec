@@ -124,7 +124,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="build_dropToToronto" value="true"/>
 		<flag id="build_j2se" value="true"/>
 		<flag id="build_java8" value="true"/>
-		<flag id="build_java9" value="true"/>
+		<flag id="build_java9" value="false"/>
 		<flag id="build_product" value="true"/>
 		<flag id="env_hasFPU" value="true"/>
 		<flag id="env_sharedLibsCalleeGlobalTableSetup" value="true"/>
@@ -139,8 +139,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="graph_compile" value="true"/>
 		<flag id="graph_copyJ2SEToToronto" value="true"/>
 		<flag id="graph_copyJ2SEViaNovell" value="true"/>
-		<flag id="graph_enableModularityTesting" value="true"/>
-		<flag id="graph_enableTesting" value="true"/>
+		<flag id="graph_enableModularityTesting" value="false"/>
+		<flag id="graph_enableTesting" value="false"/>
 		<flag id="graph_enableTesting_Java8" value="true"/>
 		<flag id="graph_excludeUnzipTestSuite390" value="true"/>
 		<flag id="graph_includeThrstatetest" value="true"/>
