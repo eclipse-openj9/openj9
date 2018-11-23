@@ -281,7 +281,7 @@ eq_J9Monitor_CNTFLCClearMask  equ 0FFFFFFFFFFFFFF05h
     %ifdef UseFastCall
         mov  rcx, rbp               ; restore the first param - vmthread
     %endif
-    jmp %2                          ; call %2 wrt ..plt ;fallback
+    jmp %2                          ; fallback
 %endmacro
 
 segment .text
@@ -292,8 +292,13 @@ DECLARE_EXTERN jitMonitorExit
 DECLARE_EXTERN jitMethodMonitorExit
 
 %ifdef TR_HOST_64BIT
-    entryFallback equ jitMonitorEntry
-    methodEntryFallback equ jitMethodMonitorEntry
+    entryFallback:
+        jmp jitMonitorEntry
+        ret
+
+    methodEntryFallback:
+        jmp jitMethodMonitorEntry
+        ret
 %else
     entryFallback:
         ; jitMonitorEntry won't clean up the extra argument
