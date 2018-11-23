@@ -33,6 +33,8 @@
 #include "infra/CriticalSection.hpp"
 #include "runtime/J9RuntimeAssumptions.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
+#include "control/CompilationThread.hpp"       // for TR::compInfoPT
+#include "control/JITaaSCompilationThread.hpp" // for ClientSessionData
 
 extern TR::Monitor *assumptionTableMutex;
 
@@ -1216,7 +1218,8 @@ J9::PersistentInfo::ensureUnloadedAddressSetsAreInitialized()
       {
       return true;
       }
-   else
+   // In JITaaS server mode unloaded addresses are maintained per client
+   else if (getJITaaSMode() != SERVER_MODE)
       {
       int32_t maxUnloadedAddressRanges = TR::Options::getCmdLineOptions()->getMaxUnloadedAddressRanges();
       if (maxUnloadedAddressRanges < 1)
@@ -1226,6 +1229,8 @@ J9::PersistentInfo::ensureUnloadedAddressSetsAreInitialized()
 
       return _unloadedClassAddresses && _unloadedMethodAddresses;
       }
+   else
+      return false;
    }
 
 
@@ -1236,9 +1241,17 @@ J9::PersistentInfo::isUnloadedClass(
       void *v,
       bool yesIReallyDontCareAboutHCR)
    {
-   OMR::CriticalSection isUnloadedClass(assumptionTableMutex);
-   bool result = (_unloadedClassAddresses && _unloadedClassAddresses->mayContain((uintptrj_t)v));
-   return result;
+   if (getJITaaSMode() != SERVER_MODE)
+      {
+      OMR::CriticalSection isUnloadedClass(assumptionTableMutex);
+      return _unloadedClassAddresses && _unloadedClassAddresses->mayContain((uintptrj_t)v);
+      }
+   else
+      {
+      auto clientData = TR::compInfoPT->getClientData();
+      OMR::CriticalSection isUnloadedClass(clientData->getROMMapMonitor());
+      return clientData->getUnloadedClassAddresses().mayContain((uintptrj_t)v);
+      }
    }
 
 
@@ -1261,9 +1274,9 @@ J9::PersistentInfo::isObsoleteClass(void *v, TR_FrontEnd *fe)
 bool
 J9::PersistentInfo::isInUnloadedMethod(uintptrj_t address)
    {
+   TR_ASSERT(getJITaaSMode() != SERVER_MODE, "JITaaS server does not maintain unloaded method ranges, this method should not be called");
    OMR::CriticalSection isInUnloadedMethod(assumptionTableMutex);
-   bool result = (_unloadedMethodAddresses && _unloadedMethodAddresses->mayContain(address));
-   return result;
+   return _unloadedMethodAddresses && _unloadedMethodAddresses->mayContain(address);
    }
 
 
@@ -1279,6 +1292,23 @@ J9::PersistentInfo::addUnloadedClass(
    _unloadedMethodAddresses->add(startAddress, startAddress+size);
    }
 
+
+void TR_AddressSet::destroy()
+   {
+   jitPersistentFree(_addressRanges);
+   }
+
+void TR_AddressSet::getRanges(std::vector<TR_AddressRange> &ranges)
+   {
+   ranges.insert(ranges.begin(), _addressRanges, _addressRanges + _numAddressRanges);
+   }
+
+void TR_AddressSet::setRanges(const std::vector<TR_AddressRange> &ranges)
+   {
+   TR_ASSERT(ranges.size() <= _maxAddressRanges, "Setting too many ranges");
+   std::copy(ranges.begin(), ranges.end(), _addressRanges);
+   _numAddressRanges = ranges.size();
+   }
 
 void TR_AddressSet::trace(char *format, ...)
    {

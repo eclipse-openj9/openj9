@@ -159,6 +159,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    bool isUnloadedClass(void *v, bool yesIReallyDontCareAboutHCR); // You probably want isObsoleteClass
    bool isInUnloadedMethod(uintptrj_t address);
    int32_t getNumUnloadedClasses() const { return _numUnloadedClasses; }
+   TR_AddressSet* getUnloadedClassAddresses() { return _unloadedClassAddresses; }
 
    void incNumLoadedClasses() {_numLoadedClasses++;}
 

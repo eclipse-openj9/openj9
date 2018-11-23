@@ -68,10 +68,12 @@ public:
    virtual int32_t getMaxCallCount() override;
    virtual void setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, int32_t count, TR::Compilation *) override;
 
-
    TR_IPBytecodeHashTableEntry *ipBytecodeHashTableEntryFactory(TR_IPBCDataStorageHeader *storage, uintptrj_t pc, TR_Memory* mem, TR_AllocationKind allocKind);
    TR_IPMethodHashTableEntry *deserializeMethodEntry(TR_ContiguousIPMethodHashTableEntry *serialEntry, TR_Memory *trMemory);
    void printStats();
+
+protected:
+   virtual bool invalidateEntryIfInconsistent(TR_IPBytecodeHashTableEntry *entry) override;
 
 private:
    void validateCachedIPEntry(TR_IPBytecodeHashTableEntry *entry, TR_IPBCDataStorageHeader *clientData, uintptrj_t methodStart, bool isMethodBeingCompiled, TR_OpaqueMethodBlock *method);

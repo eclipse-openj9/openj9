@@ -229,6 +229,12 @@ class TR_AddressSet
       _maxAddressRanges(maxAddressRanges)
       {}
 
+   void destroy();
+   void getRanges(std::vector<TR_AddressRange> &ranges);
+   void setRanges(const std::vector<TR_AddressRange> &ranges);
+   int32_t getNumberOfRanges() { return _numAddressRanges; }
+   int32_t getMaxRanges() { return _maxAddressRanges; }
+
    void add        (uintptrj_t address){ add(address, address); }
    void add        (uintptrj_t start, uintptrj_t end);
    bool mayContain (uintptrj_t address)
