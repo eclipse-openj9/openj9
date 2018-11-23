@@ -402,12 +402,17 @@ private static void ensureProperties() {
 	
 	propertiesInitialized = true;
 	
+	/*[IF Java12]*/
+	/* java.lang.VersionProps.init() eventually calls into System.setProperty() where propertiesInitialized needs to be true */
+	java.lang.VersionProps.init(systemProperties);
+	/*[ELSE]
 	/*[IF Sidecar19-SE]*/
 	/* java.lang.VersionProps.init() eventually calls into System.setProperty() where propertiesInitialized needs to be true */
 	java.lang.VersionProps.init();
 	/*[ELSE]*/
 	sun.misc.Version.init();
 	/*[ENDIF] Sidecar19-SE */
+	/*[ENDIF] Java12 */
 
 	/*[IF !Sidecar19-SE]*/
 	StringBuffer.initFromSystemProperties(systemProperties);
