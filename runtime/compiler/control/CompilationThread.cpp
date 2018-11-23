@@ -1004,6 +1004,8 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    _interpSamplTrackingInfo = new (PERSISTENT_NEW) TR_InterpreterSamplingTracking(this);
    _clientSessionHT = nullptr; // This will be set later when options are processed
    _unloadedClassesTempList = nullptr;
+   _sequencingMonitor = TR::Monitor::create("JIT-SequencingMonitor");
+   _compReqSeqNo = 0;
    _newlyExtendedClasses = nullptr;
    _chTableUpdateFlags = 0;
    }
@@ -6512,33 +6514,6 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
                                                       bool &eligibleForRelocatableCompile,
                                                       TR_RelocationRuntime *reloRuntime)
    {
-   // For out-of-process compilations (at the JITaaS server) we
-   // must find and cache the session UID for the client
-   if (entry->isOutOfProcessCompReq())
-      {
-      uint64_t clientUID = entry->getClientUID();
-         {
-         // Get the compilation monitor RIIA style because we may throw bad_alloc 
-         // when tryimg to add a new entry in the unordered_map
-         OMR::CriticalSection compilationMonitorLock(_compInfo.getCompilationMonitor());
-
-         // Try to purge old data
-         _compInfo.getClientSessionHT()->purgeOldDataIfNeeded();
-         // Search the hashtable
-         ClientSessionData *clientSession = _compInfo.getClientSessionHT()->findClientSession(clientUID);
-         TR_ASSERT(clientSession, "client session should have been created earlier in CompileService.cpp");
-
-         // we should probably abort this compilation if we cannot get memory and clientSession==NULL
-         // Cache the session data in compInfoPTBase
-         setClientData(clientSession);
-
-         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Server found cached clientSessionData=%p for clientUID=%llu compThreadID=%d",
-               clientSession, (unsigned long long)clientUID, getCompThreadId());
-         // Release the compilationMonitor before calling cacheRemoteClass
-         }
-      }
-
    // Check to see if we find an AOT version in the shared cache
    //
    entry->setAotCodeToBeRelocated(NULL);  // make sure decision to load AOT comes from below and not previous compilation/relocation pass
@@ -7047,15 +7022,6 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
       _reservedDataCache = NULL;
       }
 
-#ifdef JITAAS_USE_RAW_SOCKETS
-   // Delete server stream
-   if (_compInfo.getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
-      {
-      entry->_stream->~J9ServerStream();
-      TR_Memory::jitPersistentFree(entry->_stream);
-      }
-#endif
-
    // The KOT needs to survive at least until we're done committing virtual guards
    //
    if (_compiler && _compiler->getKnownObjectTable())
@@ -7285,14 +7251,6 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
 
    vmThread->omrVMThread->vmState = oldState;
    vmThread->jitMethodToBeCompiled = NULL;
-
-   // Reset the pointer to the cached client session data
-   if (entry->isOutOfProcessCompReq() && getClientData())
-      {
-      // We have the compilation monitor so it's safe to access the inUse counter
-      getClientData()->decInUse();
-      setClientData(nullptr);
-      }
 
    return startPC;
    }
@@ -7871,7 +7829,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             if (details.isRemoteMethod() && !compiler->getOption(TR_DisableCHOpts))
                {
                auto table = (TR_JITaaSServerPersistentCHTable*)compiler->getPersistentInfo()->getPersistentCHTable();
-               table->doUpdate(compiler);
+               table->doUpdate((TR_J9VMBase*)compiler->fe());
                }
 
 
@@ -9874,7 +9832,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
          if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
             {
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
-                  "Server has failed to compile");
+                  "compThreadID=%d has failed to compile", entry->_compInfoPT->getCompThreadId());
             }
          static bool breakAfterFailedCompile = feGetEnv("TR_breakAfterFailedCompile") != NULL;
          if (breakAfterFailedCompile)
@@ -9901,7 +9859,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
          if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
             {
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
-                  "Server has failed to recompile");
+                  "compThreadID=%d has failed to recompile", entry->_compInfoPT->getCompThreadId());
             }
          entry->_stream->finishCompilation(compilationNotNeeded);
          }

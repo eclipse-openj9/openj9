@@ -50,6 +50,12 @@ namespace JITaaS
       virtual const char* what() const throw() { return "compilation canceled by client"; }
       };
 
+   class StreamOOO : public virtual std::exception
+      {
+      public:
+         virtual const char* what() const throw() { return "Messages arriving out-of-order"; }
+      };
+
    class StreamTypeMismatch: public virtual StreamFailure
       {
    public:

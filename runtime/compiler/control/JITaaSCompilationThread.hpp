@@ -40,7 +40,7 @@ class ClientSessionData
    struct ClassInfo
       {
       void freeClassInfo(); // this method is in place of a destructor. We can't have destructor
-      // becaues it would be called after inserting ClassInfo into the ROM map, freeing romClass
+      // because it would be called after inserting ClassInfo into the ROM map, freeing romClass
       J9ROMClass *romClass; // romClass content exists in persistentMemory at the server
       J9Method *methodsOfClass;
       // Fields meaningful for arrays
@@ -88,8 +88,9 @@ class ClientSessionData
       };
 
    TR_PERSISTENT_ALLOC(TR_Memory::ClientSessionData)
-   ClientSessionData(uint64_t clientUID);
+   ClientSessionData(uint64_t clientUID, uint32_t seqNo);
    ~ClientSessionData();
+   static void destroy(ClientSessionData *clientSession);
 
    void setJavaLangClassPtr(TR_OpaqueClassBlock* j9clazz) { _javaLangClassPtr = j9clazz; }
    TR_OpaqueClassBlock * getJavaLangClassPtr() const { return _javaLangClassPtr; }
@@ -103,21 +104,36 @@ class ClientSessionData
    TR_IPBytecodeHashTableEntry *getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *methodInfoPresent);
    bool cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry);
    VMInfo *getOrCacheVMInfo(JITaaS::J9ServerStream *stream);
+   void clearCaches(); // destroys _chTableClassMap, _romClassMap and _J9MethodMap
 
    void incInUse() { _inUse++; }
    void decInUse() { _inUse--; TR_ASSERT(_inUse >= 0, "_inUse=%d must be positive\n", _inUse); }
    bool getInUse() const { return _inUse; }
 
+   uint64_t getClientUID() const { return _clientUID; }
    void updateTimeOfLastAccess();
    int64_t getTimeOflastAccess() const { return _timeOfLastAccess; }
 
+   TR::Monitor *getSequencingMonitor() { return _sequencingMonitor; }
+   TR_MethodToBeCompiled *getOOSequenceEntryList() { return _OOSequenceEntryList; }
+   TR_MethodToBeCompiled *notifyAndDetachFirstWaitingThread();
+   void insertIntoOOSequenceEntryList(TR_MethodToBeCompiled *entry);
+   uint32_t getExpectedSeqNo() const { return _expectedSeqNo; }
+   void setExpectedSeqNo(uint32_t seqNo) { _expectedSeqNo = seqNo; }
+   uint32_t getMaxReceivedSeqNo() const { return _maxReceivedSeqNo; }
+   void updateMaxReceivedSeqNo(uint32_t seqNo);
+   int8_t getNumActiveThreads() const { return _numActiveThreads; }
+   void incNumActiveThreads() { ++_numActiveThreads; }
+   void decNumActiveThreads() { --_numActiveThreads;  }
    void printStats();
 
    private:
-   uint64_t _clientUID; // for RAS
+   const uint64_t _clientUID;
    int64_t  _timeOfLastAccess; // in ms
    TR_OpaqueClassBlock *_javaLangClassPtr; // nullptr means not set
-   PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> _chTableClassMap; // cache of persistent CHTable
+   // Server side cache of CHTable
+   PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> _chTableClassMap;
+   // Server side cache of j9classes and their properties; romClass is copied so it can be accessed by the server
    PersistentUnorderedMap<J9Class*, ClassInfo> _romClassMap;
    // Hashtable for information related to one J9Method
    PersistentUnorderedMap<J9Method*, J9MethodInfo> _J9MethodMap;
@@ -127,8 +143,19 @@ class ClientSessionData
  
    TR::Monitor *_romMapMonitor;
    TR::Monitor *_systemClassMapMonitor;
+   // The following monitor is used to protect access to _expectedSeqNo and 
+   // the list of out-of-sequence compilation requests (_OOSequenceEntryList)
+   TR::Monitor *_sequencingMonitor;
+   // Compilation requests that arrived out-of-sequence wait in 
+   // _OOSequenceEntryList for their turn to be processed
+   TR_MethodToBeCompiled *_OOSequenceEntryList;
+   uint32_t _expectedSeqNo; // used for ordering compilation requests from the same client
+   uint32_t _maxReceivedSeqNo; // the largest seqNo received from this client
    int8_t  _inUse;  // Number of concurrent compilations from the same client 
                     // Accessed with compilation monitor in hand
+   int8_t _numActiveThreads; // Number of threads working on compilations for this client
+                             // This is smaller or equal to _inUse because some threads
+                             // could be just starting or waiting in _OOSequenceEntryList
    VMInfo *_vmInfo; // info specific to a client VM that does not change, nullptr means not set
    }; // ClientSessionData
 
@@ -144,7 +171,7 @@ class ClientSessionHT
    ClientSessionHT();
    ~ClientSessionHT();
    static ClientSessionHT* allocate(); // allocates a new instance of this class
-   ClientSessionData * findOrCreateClientSession(uint64_t clientUID);
+   ClientSessionData * findOrCreateClientSession(uint64_t clientUID, uint32_t seqNo, bool *newSessionWasCreated);
    ClientSessionData * findClientSession(uint64_t clientUID);
    void purgeOldDataIfNeeded();
    void printStats();
@@ -177,11 +204,15 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
    public:
       friend class TR::CompilationInfo;
       CompilationInfoPerThreadRemote(TR::CompilationInfo &compInfo, J9JITConfig *jitConfig, int32_t id, bool isDiagnosticThread)
-         :CompilationInfoPerThread(compInfo, jitConfig, id, isDiagnosticThread) {}
-      void processEntry(TR_MethodToBeCompiled &entry, J9::J9SegmentProvider &scratchSegmentProvider) override;
+         :CompilationInfoPerThread(compInfo, jitConfig, id, isDiagnosticThread), _seqNo(0) {}
+      virtual void processEntry(TR_MethodToBeCompiled &entry, J9::J9SegmentProvider &scratchSegmentProvider) override;
       TR_PersistentMethodInfo *getRecompilationMethodInfo() { return _recompilationMethodInfo; }
+      uint32_t getSeqNo() const { return _seqNo; }; // for ordering requests at the server
+      void setSeqNo(uint32_t seqNo) { _seqNo = seqNo; }
+      void waitForMyTurn(ClientSessionData *clientSession, TR_MethodToBeCompiled &entry); // return false if timeout
    private:
       TR_PersistentMethodInfo *_recompilationMethodInfo;
+      uint32_t _seqNo;
    };
 }
 

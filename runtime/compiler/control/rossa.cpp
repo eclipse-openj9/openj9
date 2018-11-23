@@ -200,6 +200,7 @@ char *compilationErrorNames[]={
    "compilationEnforceProfiling", //49
    "compilationSymbolValidationManagerFailure", //50
    "compilationStreamFailure", //51
+   "compilationStreamLostMessage", // 52
    "compilationMaxError"
 };
 

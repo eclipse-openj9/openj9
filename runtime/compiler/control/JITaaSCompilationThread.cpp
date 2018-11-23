@@ -2073,6 +2073,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
    return done;
    }
 
+// Method executed by the JITaaS client to schedule a remote compilation
 TR_MethodMetaData *
 remoteCompile(
    J9VMThread * vmThread,
@@ -2084,15 +2085,6 @@ remoteCompile(
    )
    {
    TR_ASSERT(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS, "Client must work with VM access");
-   if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-      {
-      TR_VerboseLog::writeLineLocked(
-         TR_Vlog_JITaaS,
-         "Client sending compilation request to server for method %s @ %s.",
-         compiler->signature(),
-         compiler->getHotnessName()
-         );
-      }
 
    // Prepare the parameters for the compilation request
    J9Class *clazz = J9_CLASS_FROM_METHOD(method);
@@ -2101,12 +2093,27 @@ remoteCompile(
    uint32_t romMethodOffset = uint32_t((uint8_t*) romMethod - (uint8_t*) romClass);
    std::string detailsStr = std::string((char*) &details, sizeof(TR::IlGeneratorMethodDetails));
    TR::CompilationInfo *compInfo = compInfoPT->getCompilationInfo();
-   std::vector<TR_OpaqueClassBlock*> unloadedClasses(compInfo->getUnloadedClassesTempList()->begin(), compInfo->getUnloadedClassesTempList()->end());
-   compInfo->getUnloadedClassesTempList()->clear();
+
+
    auto classInfoTuple = JITaaSHelpers::packRemoteROMClassInfo(clazz, compiler->fej9vm(), compiler->trMemory());
    std::string optionsStr = TR::Options::packOptions(compiler->getOptions());
    std::string recompMethodInfoStr = compiler->isRecompilationEnabled() ? std::string((char *) compiler->getRecompilationInfo()->getMethodInfo(), sizeof(TR_PersistentMethodInfo)) : std::string();
 
+   
+   compInfo->getSequencingMonitor()->enter();
+   std::vector<TR_OpaqueClassBlock*> unloadedClasses(compInfo->getUnloadedClassesTempList()->begin(), compInfo->getUnloadedClassesTempList()->end());
+   compInfo->getUnloadedClassesTempList()->clear();
+   // Here we would need to collect the CHTable updates
+   // This will acquire CHTable mutex
+   // Must test disableCHTableOpts
+   //auto table = (TR_JITaaSClientPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
+   //auto encoded = table->serializeUpdates();
+   //client->write(encoded.first, encoded.second);
+   uint32_t seqNo = compInfo->getCompReqSeqNo();
+   compInfo->incCompReqSeqNo();
+   compInfo->getSequencingMonitor()->exit();
+
+ 
    JITaaS::J9ClientStream client(compInfo->getPersistentInfo());
 
    uint32_t statusCode = compilationFailure;
@@ -2118,12 +2125,18 @@ remoteCompile(
    try
       {
       // release VM access just before sending the compilation request
-      // message just in case we block in the wite operation   
+      // message just in case we block in the write operation   
       releaseVMAccess(vmThread);
 
+      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
+            "Client sending compReq seqNo=%u to server for method %s @ %s.",
+            seqNo, compiler->signature(), compiler->getHotnessName());
+         }
       client.buildCompileRequest(TR::comp()->getPersistentInfo()->getJITaaSId(), romMethodOffset, 
                                  method, clazz, compiler->getMethodHotness(), detailsStr, details.getType(), 
-                                 unloadedClasses, classInfoTuple, optionsStr, recompMethodInfoStr);
+                                 unloadedClasses, classInfoTuple, optionsStr, recompMethodInfoStr, seqNo);
       // re-acquire VM access and check for possible class unloading
       acquireVMAccessNoSuspend(vmThread);
       if (compInfoPT->compilationShouldBeInterrupted())
@@ -2310,8 +2323,8 @@ remoteCompilationEnd(
 
    if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
       {
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
-                                     "Server has successfully compiled %s", entry->_compInfoPT->getCompilation()->signature());
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "compThreadID=%d has successfully compiled %s", 
+         entry->_compInfoPT->getCompThreadId(), entry->_compInfoPT->getCompilation()->signature());
       }
    }
 
@@ -2377,8 +2390,8 @@ ClientSessionData::updateTimeOfLastAccess()
    _timeOfLastAccess = j9time_current_time_millis();
    }
 
-ClientSessionData::ClientSessionData(uint64_t clientUID) : 
-   _clientUID(clientUID),
+ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) : 
+   _clientUID(clientUID), _expectedSeqNo(seqNo), _maxReceivedSeqNo(seqNo), _OOSequenceEntryList(NULL),
    _chTableClassMap(decltype(_chTableClassMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _romClassMap(decltype(_romClassMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _J9MethodMap(decltype(_J9MethodMap)::allocator_type(TR::Compiler->persistentAllocator())),
@@ -2387,38 +2400,19 @@ ClientSessionData::ClientSessionData(uint64_t clientUID) :
    updateTimeOfLastAccess();
    _javaLangClassPtr = nullptr;
    _inUse = 1;
+   _numActiveThreads = 0;
    _romMapMonitor = TR::Monitor::create("JIT-JITaaSROMMapMonitor");
-   _systemClassMapMonitor = TR::Monitor::create("JIT-JITaaSystemClassMapMonitor");
+   _systemClassMapMonitor = TR::Monitor::create("JIT-JITaaSSystemClassMapMonitor");
+   _sequencingMonitor = TR::Monitor::create("JIT-JITaaSSequencingMonitor");
    _vmInfo = nullptr;
    }
 
 ClientSessionData::~ClientSessionData()
    {
+   clearCaches();
    _romMapMonitor->destroy();
    _systemClassMapMonitor->destroy();
-   // Free memory for all hashtables with IProfiler info
-   for (auto it : _J9MethodMap)
-      {
-      IPTable_t *ipDataHT = it.second._IPData;
-      // It it exists, walk the collection of <pc, TR_IPBytecodeHashTableEntry*> mappings
-      if (ipDataHT) 
-         {
-         for (auto entryIt : *ipDataHT)
-            {
-            auto entryPtr = entryIt.second;
-            if (entryPtr)
-               jitPersistentFree(entryPtr);
-            }
-         ipDataHT->~IPTable_t();
-         jitPersistentFree(ipDataHT);
-         it.second._IPData = nullptr;
-         }
-      }
-   for (auto it : _romClassMap)
-      {
-      it.second.freeClassInfo();
-      _romClassMap.erase(it.first);
-      }
+   _sequencingMonitor->destroy();
    jitPersistentFree(_vmInfo);
    }
 
@@ -2593,6 +2587,55 @@ ClientSessionData::getOrCacheVMInfo(JITaaS::J9ServerStream *stream)
    return _vmInfo;
    }
 
+
+void
+ClientSessionData::clearCaches()
+   {
+   OMR::CriticalSection getRemoteROMClass(getROMMapMonitor());
+   // Free memory for all hashtables with IProfiler info
+   for (auto it : _J9MethodMap)
+      {
+      IPTable_t *ipDataHT = it.second._IPData;
+      // It it exists, walk the collection of <pc, TR_IPBytecodeHashTableEntry*> mappings
+      if (ipDataHT)
+         {
+         for (auto entryIt : *ipDataHT)
+            {
+            auto entryPtr = entryIt.second;
+            if (entryPtr)
+               jitPersistentFree(entryPtr);
+            }
+         ipDataHT->~IPTable_t();
+         jitPersistentFree(ipDataHT);
+         it.second._IPData = nullptr;
+         }
+      }
+   _J9MethodMap.clear();
+   // Free memory for j9class info
+   for (auto it : _romClassMap)
+      {
+      it.second.freeClassInfo();
+      }
+   _romClassMap.clear();
+   // TODO: do we need another monitor here?
+
+   // Free CHTable 
+   for (auto it : _chTableClassMap)
+      {
+      TR_PersistentClassInfo *classInfo = it.second;
+      classInfo->removeSubClasses();
+      jitPersistentFree(classInfo);
+      }
+   _chTableClassMap.clear();
+   }
+
+void 
+ClientSessionData::destroy(ClientSessionData *clientSession)
+   {
+   clientSession->~ClientSessionData();
+   TR_PersistentMemory::jitPersistentFree(clientSession); 
+   }
+
 ClientSessionHT*
 ClientSessionHT::allocate()
    {
@@ -2603,19 +2646,22 @@ ClientSessionHT::allocate()
 // data corresponding to the client.
 // If the clientUID does not already exist in the HT, insert a new blank entry.
 // Must have compilation monitor in hand when calling this function.
-// Side effects: _inUse is incremented on the ClientSessionData and the
-// timeOflastAccess is updated with curent time.
+// Side effects: _inUse is incremented on the ClientSessionData
+//               _expectedSeqNo is populated if a new ClientSessionData is created
+//                timeOflastAccess is updated with curent time.
 ClientSessionData * 
-ClientSessionHT::findOrCreateClientSession(uint64_t clientUID)
+ClientSessionHT::findOrCreateClientSession(uint64_t clientUID, uint32_t seqNo, bool *newSessionWasCreated)
    {
+   *newSessionWasCreated = false;
    ClientSessionData *clientData = findClientSession(clientUID);
    if (!clientData)
       {
       // alocate a new ClientSessionData object and create a clientUID mapping
-      clientData = new (PERSISTENT_NEW) ClientSessionData(clientUID);
+      clientData = new (PERSISTENT_NEW) ClientSessionData(clientUID, seqNo);
       if (clientData)
          {
          _clientSessionMap[clientUID] = clientData;
+         *newSessionWasCreated = true;
          if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Server allocated data for a new clientUID %llu", (unsigned long long)clientUID);
          }
@@ -2623,6 +2669,7 @@ ClientSessionHT::findOrCreateClientSession(uint64_t clientUID)
          {
          if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "ERROR: Server could not allocate client session data");
+         // should we throw bad_alloc here?
          }
       }
    return clientData;
@@ -2648,6 +2695,7 @@ ClientSessionHT::findClientSession(uint64_t clientUID)
    return clientData;
    }
 
+
 ClientSessionHT::ClientSessionHT() : _clientSessionMap(decltype(_clientSessionMap)::allocator_type(TR::Compiler->persistentAllocator())),
                                      TIME_BETWEEN_PURGES(1000*60*30), // JITaaS TODO: this must come from options
                                      OLD_AGE(1000*60*1000) // 1000 minutes
@@ -2662,8 +2710,7 @@ ClientSessionHT::~ClientSessionHT()
    {
    for (auto iter = _clientSessionMap.begin(); iter != _clientSessionMap.end(); ++iter)
       {
-      iter->second->~ClientSessionData();
-      TR_PersistentMemory::jitPersistentFree(iter->second); // delete the client data
+      ClientSessionData::destroy(iter->second); // delete the client data
       _clientSessionMap.erase(iter); // delete the mapping from the hashtable
       }
    }
@@ -2690,8 +2737,7 @@ ClientSessionHT::purgeOldDataIfNeeded()
             {
             if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
                TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Server will purge session data for clientUID %llu", (unsigned long long)iter->first);
-            iter->second->~ClientSessionData();
-            TR_PersistentMemory::jitPersistentFree(iter->second); // delete the client data
+            ClientSessionData::destroy(iter->second); // delete the client data
             _clientSessionMap.erase(iter); // delete the mapping from the hashtable
             }
          }
@@ -2995,6 +3041,127 @@ JITaaSHelpers::getROMClassData(const ClientSessionData::ClassInfo &classInfo, Cl
    }
 
 
+// insertIntoOOSequenceEntryList needs to be executed with sequencingMonitor in hand
+void 
+ClientSessionData::insertIntoOOSequenceEntryList(TR_MethodToBeCompiled *entry)
+   {
+   uint32_t seqNo = ((TR::CompilationInfoPerThreadRemote*)(entry->_compInfoPT))->getSeqNo();
+   TR_MethodToBeCompiled *crtEntry = getOOSequenceEntryList();
+   TR_MethodToBeCompiled *prevEntry = NULL;
+   while (crtEntry && seqNo > ((TR::CompilationInfoPerThreadRemote*)(crtEntry->_compInfoPT))->getSeqNo())
+      {
+      prevEntry = crtEntry;
+      crtEntry = crtEntry->_next;
+      }
+   entry->_next = crtEntry;
+   if (prevEntry)
+      prevEntry->_next = entry;
+   else
+      _OOSequenceEntryList = entry;
+   }
+
+// notifyAndDetachFirstWaitingThread needs to be executed with sequencingMonitor in hand
+TR_MethodToBeCompiled *
+ClientSessionData::notifyAndDetachFirstWaitingThread()
+   {
+   TR_MethodToBeCompiled *entry = _OOSequenceEntryList;
+   if (entry)
+      {
+      entry->getMonitor()->enter();
+      entry->getMonitor()->notifyAll();
+      entry->getMonitor()->exit();
+      _OOSequenceEntryList = entry->_next;
+      }
+   return entry;
+   }
+
+// updateMaxReceivedSeqNo needs to be executed with sequencingMonitor in hand
+void 
+ClientSessionData::updateMaxReceivedSeqNo(uint32_t seqNo)
+   {
+   if (seqNo > _maxReceivedSeqNo)
+      _maxReceivedSeqNo = seqNo;
+   }
+
+
+// waitForMyTurn needs to be exeuted with sequencingMonitor in hand
+void
+TR::CompilationInfoPerThreadRemote::waitForMyTurn(ClientSessionData *clientSession, TR_MethodToBeCompiled &entry)
+   {
+   uint32_t seqNo = ((TR::CompilationInfoPerThreadRemote*)(entry._compInfoPT))->getSeqNo();
+
+   // Insert this thread into the list of out of sequence entries
+   clientSession->insertIntoOOSequenceEntryList(&entry);
+
+   do // Do a timed wait until the missing seqNo arrives
+      {
+      entry.getMonitor()->enter();
+      clientSession->getSequencingMonitor()->exit(); // release monitor before waiting
+      const int64_t waitTimeMillis = 1000; // TODO: create an option for this
+      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "compThreadID=%d (entry=%p) doing a timed wait for %d ms",
+         getCompThreadId(), &entry, (int32_t)waitTimeMillis);
+
+      intptr_t monitorStatus = entry.getMonitor()->wait_timed(waitTimeMillis, 0); // 0 or J9THREAD_TIMED_OUT
+      if (monitorStatus == 0) // thread was notified
+         {
+         entry.getMonitor()->exit();
+         clientSession->getSequencingMonitor()->enter();
+
+         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Parked compThreadID=%d (entry=%p) seqNo=%u was notified.",
+               getCompThreadId(), &entry, seqNo);
+         // will verify condition again to see if expectedSeqNo has advanced enough
+         }
+      else
+         {
+         entry.getMonitor()->exit();
+         TR_ASSERT(monitorStatus == J9THREAD_TIMED_OUT, "Unexpected monitor state");
+         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompFailure, TR_VerboseJITaaS, TR_VerbosePerformance))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "compThreadID=%d timed-out while waiting for seqNo=%d (entry=%p)", 
+               getCompThreadId(), clientSession->getExpectedSeqNo(), &entry);
+        
+         // The simplest thing is to delete the cached data for the session and start fresh
+         // However, we must wait for any active threads to drain out
+         clientSession->getSequencingMonitor()->enter(); 
+
+         // This thread could have been waiting, then timed-out and then waited
+         // to acquire the sequencing monitor. Check whether it can proceed.
+         if (seqNo == clientSession->getExpectedSeqNo())
+            {
+            // The entry cannot be in the list
+            TR_MethodToBeCompiled *headEntry = clientSession->getOOSequenceEntryList();
+            if (headEntry)
+               {
+               uint32_t headSeqNo = ((TR::CompilationInfoPerThreadRemote*)(headEntry->_compInfoPT))->getSeqNo();
+               TR_ASSERT_FATAL(seqNo < headSeqNo, "Next in line method cannot be in the waiting list: seqNo=%u >= headSeqNo=%u entry=%p headEntry=%p",
+                  seqNo, headSeqNo, &entry, headEntry);
+               }
+            break; // it's my turn, so proceed
+            }
+
+         if (clientSession->getNumActiveThreads() <= 0 && // wait for active threads to quiesce
+            &entry == clientSession->getOOSequenceEntryList()) // Allow only the smallest seqNo which is the head
+            {
+            clientSession->clearCaches();
+            TR_MethodToBeCompiled *detachedEntry = clientSession->notifyAndDetachFirstWaitingThread();
+            clientSession->setExpectedSeqNo(seqNo);// allow subsequent requests
+
+            if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
+                  "compThreadID=%d has cleared the session caches for clientUID=%llu expectedSeqNo=%u detachedEntry=%p",
+                  getCompThreadId(), clientSession->getClientUID(), clientSession->getExpectedSeqNo(), detachedEntry);
+            }
+         else
+            {
+            // Wait until all active threads have been drained
+            // and the head of the list has cleared the caches
+            }
+         }
+      } while (seqNo > clientSession->getExpectedSeqNo());
+   }
+
+
 void
 TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J9::J9SegmentProvider &scratchSegmentProvider)
    {
@@ -3003,6 +3170,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    J9VMThread *compThread = getCompilationThread();
    JITaaS::J9ServerStream *stream = entry._stream;
    setMethodBeingCompiled(&entry); // must have compilation monitor
+   entry._compInfoPT = this; // create the reverse link
+   _vm = TR_J9VMBase::get(_jitConfig, compThread, TR_J9VMBase::J9_SERVER_VM);
    // update the last time the compilation thread had to do something.
    compInfo->setLastReqStartTime(compInfo->getPersistentInfo()->getElapsedTime());
   
@@ -3015,7 +3184,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       {
       auto req = stream->read<uint64_t, uint32_t, J9Method *, J9Class*, TR_Hotness, std::string,
          J9::IlGeneratorMethodDetailsType, std::vector<TR_OpaqueClassBlock*>,
-         JITaaSHelpers::ClassInfoTuple, std::string, std::string>();
+         JITaaSHelpers::ClassInfoTuple, std::string, std::string, uint32_t>();
 
       uint64_t clientId         = std::get<0>(req);
       uint32_t romMethodOffset  = std::get<1>(req);
@@ -3028,9 +3197,114 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       auto &classInfoTuple      = std::get<8>(req);
       std::string clientOptStr  = std::get<9>(req);
       std::string recompInfoStr = std::get<10>(req);
+      uint32_t seqNo            = std::get<11>(req); // sequence number at the client
+
+      //if (seqNo == 100)
+      //   throw JITaaS::StreamFailure(); // stress testing
 
       stream->setClientId(clientId);
+      setSeqNo(seqNo); // memorize the sequence number of this request
 
+      bool sessionDataWasEmpty = false;
+      ClientSessionData *clientSession = NULL;
+      {
+      // Get a pointer to this client's session data
+      // Obtain monitor RAII style because creating a new hastable entry may throw bad_alloc
+      OMR::CriticalSection compilationMonitorLock(compInfo->getCompilationMonitor());
+      compInfo->getClientSessionHT()->purgeOldDataIfNeeded(); // Try to purge old data
+      if (!(clientSession = compInfo->getClientSessionHT()->findOrCreateClientSession(clientId, seqNo, &sessionDataWasEmpty)))
+         throw std::bad_alloc();
+
+      setClientData(clientSession); // Cache the session data into CompilationInfoPerThreadRemote object
+      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "compThreadID=%d %s clientSessionData=%p for clientUID=%llu seqNo=%u",
+            getCompThreadId(), sessionDataWasEmpty ? "created" : "found", clientSession, (unsigned long long)clientId, seqNo);
+      } // end critical section
+
+     
+      // We must process unloaded classes lists in the same order they were generated at the client
+      // Use a sequencing scheme to re-order compilation requests
+      //
+      clientSession->getSequencingMonitor()->enter();
+      clientSession->updateMaxReceivedSeqNo(seqNo);
+      if (seqNo > clientSession->getExpectedSeqNo()) // out of order messages
+         {
+         // park this request until the missing ones arrive
+         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Out-of-sequence msg detected for clientUID=%llu seqNo=%u > expectedSeqNo=%u. Parking compThreadID=%d (entry=%p)",
+            (unsigned long long)clientId, seqNo, clientSession->getExpectedSeqNo(), getCompThreadId(), &entry);
+
+         waitForMyTurn(clientSession, entry);
+         }
+      else if (seqNo < clientSession->getExpectedSeqNo())
+         {
+         // Note that it is possible for seqNo to be smaller than expectedSeqNo.
+         // This could happen for instance for the very first message that arrives late.
+         // In that case, the second message would have created the client session and 
+         // written its own seqNo into expectedSeqNo. We should avoid processing stale updates
+         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompFailure, TR_VerboseJITaaS, TR_VerbosePerformance))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Discarding older msg for clientUID=%llu seqNo=%u < expectedSeqNo=%u compThreadID=%d",
+            (unsigned long long)clientId, seqNo, clientSession->getExpectedSeqNo(), getCompThreadId());
+         clientSession->getSequencingMonitor()->exit();
+         throw JITaaS::StreamOOO();
+         }
+      // We can release the sequencing monitor now because nobody with a 
+      // larger sequence number can pass until I increment expectedSeqNo
+      clientSession->getSequencingMonitor()->exit();
+ 
+      // At this point I know that all preceeding requests have been processed
+      // Free data for all classes that were unloaded for this sequence number
+      // Redefined classes are marked as unloaded, since they need to be cleared
+      // from the ROM class cache.
+      if (unloadedClasses.size() != 0)
+         clientSession->processUnloadedClasses(unloadedClasses); // this locks getROMMapMonitor()
+
+      auto chTable = (TR_JITaaSServerPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
+      // TODO: is chTable always non-null?
+      // TODO: we could send JVM info that is global and does not change together with CHTable
+      // The following will acquire CHTable monitor and VMAccess, send a message and then release them
+      bool initialized = chTable->initializeIfNeeded(_vm);
+
+      // Any thread with a sequence number lower or equal to the seqNo that created
+      // the session and initialized the CHTable does not have to apply CHTable updates
+      if (!initialized)
+         {
+         // TODO: move the CHTable updates here
+         // Note that applying the updates will acquire the CHTable monitor and VMAccess
+         // Apply the CHTable updates in sequence
+         //auto table = (TR_JITaaSServerPersistentCHTable*)getPersistentInfo()->getPersistentCHTable();
+         //table->doUpdate(_vm);
+         }
+
+      clientSession->getSequencingMonitor()->enter();
+      // Update the expecting sequence number. This will allow subsequent
+      // threads to pass through once we've released the sequencing monitor.
+      TR_ASSERT(seqNo == clientSession->getExpectedSeqNo(), "Unexpected seqNo");
+      uint32_t newSeqNo = std::max(seqNo + 1, clientSession->getExpectedSeqNo());
+      clientSession->setExpectedSeqNo(newSeqNo);
+
+      // Notify a possible waiting thread that arrived out of sequence
+      // and take that entry out of the OOSequenceEntryList
+      TR_MethodToBeCompiled *nextEntry = clientSession->getOOSequenceEntryList();
+      if (nextEntry)
+         {
+         uint32_t nextWaitingSeqNo = ((CompilationInfoPerThreadRemote*)(nextEntry->_compInfoPT))->getSeqNo();
+         if (nextWaitingSeqNo == seqNo + 1)
+            {
+            clientSession->notifyAndDetachFirstWaitingThread();
+
+            if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "compThreadID=%d notifying out-of-sequence thread %d for clientUID=%llu seqNo=%u (entry=%p)",
+                  getCompThreadId(), nextEntry->_compInfoPT->getCompThreadId(), (unsigned long long)clientId, nextWaitingSeqNo, nextEntry);
+            }
+         }
+      // Increment the number of active threads before issuing the read for ramClass
+      clientSession->incNumActiveThreads();
+      // Finally, release the sequencing monitor so that other threads
+      // can process their lists of unloaded classes
+      clientSession->getSequencingMonitor()->exit();
+
+      // Copy the option strings
       size_t clientOptSize = clientOptStr.size();
       clientOptions = new (PERSISTENT_NEW) char[clientOptSize];
       memcpy(clientOptions, clientOptStr.data(), clientOptSize);
@@ -3045,33 +3319,15 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          _recompilationMethodInfo = NULL;
          }
 
-      J9ROMClass *romClass = NULL;
-      {
-      OMR::CriticalSection compilationMonitorLock(compInfo->getCompilationMonitor());
-      auto clientSession = compInfo->getClientSessionHT()->findOrCreateClientSession(clientId);
-      if (!clientSession)
-         throw std::bad_alloc();
-
-      // If new classes have been unloaded at the client, 
-      // delete relevant entries from the persistent caches we hold per client
-      // This could be an expensive operation and we are holding the compilation monitor
-      // Maybe we should create another monitor.
-      // 
-      // Redefined classes are marked as unloaded, since they need to be cleared
-      // from the ROM class cache.
-      if (unloadedClasses.size() != 0)
-         clientSession->processUnloadedClasses(unloadedClasses);
       // Get the ROMClass for the method to be compiled if it is already cached
       // Or read it from the compilation request and cache it otherwise
-     
+      J9ROMClass *romClass = NULL;
       if (!(romClass = JITaaSHelpers::getRemoteROMClassIfCached(clientSession, clazz)))
          {
          romClass = JITaaSHelpers::romClassFromString(std::get<0>(classInfoTuple), compInfo->persistentMemory());
-         JITaaSHelpers::cacheRemoteROMClass(clientSession, clazz, romClass, &classInfoTuple);
+         JITaaSHelpers::cacheRemoteROMClass(getClientData(), clazz, romClass, &classInfoTuple);
          }
 
-      clientSession->decInUse();
-      }
       J9ROMMethod *romMethod = (J9ROMMethod*)((uint8_t*)romClass + romMethodOffset);
       J9Method *methodsOfClass = std::get<1>(classInfoTuple);
 
@@ -3102,8 +3358,16 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    catch (const JITaaS::StreamFailure &e)
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Stream failed while server was reading the compilation request: %s", e.what());
-      stream->cancel();
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Stream failed while compThreadID=%d was reading the compilation request: %s", 
+            getCompThreadId(), e.what());
+      stream->cancel(); // This does nothing for raw sockets
+      abortCompilation = true;
+      }
+   catch (const JITaaS::StreamOOO &e)
+      {
+      // Error message was printed when the exception was thrown
+      // TODO: the client should handle this error code
+      stream->finishCompilation(compilationStreamLostMessage); // the client should recognize this code and retry
       abortCompilation = true;
       }
    catch (const std::bad_alloc &e)
@@ -3124,16 +3388,38 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          TR_Memory::jitPersistentFree(clientOptions);
       if (optPlan)
          TR_OptimizationPlan::freeOptimizationPlan(optPlan);
+      if (_recompilationMethodInfo)
+         TR_Memory::jitPersistentFree(_recompilationMethodInfo);
+
+      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         {
+         if (getClientData())
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "compThreadID=%d did an early abort for clientUID=%llu seqNo=%u",
+               getCompThreadId(), getClientData()->getClientUID(), getSeqNo());
+         else
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "compThreadID=%d did an early abort",
+               getCompThreadId());
+         }
 
       compInfo->acquireCompMonitor(compThread);
       releaseVMAccess(compThread);
       compInfo->decreaseQueueWeightBy(entry._weight);
 
-      // put the request back into the pool
-      //
+      // Put the request back into the pool
       setMethodBeingCompiled(NULL); // Must have the compQmonitor
       compInfo->recycleCompilationEntry(&entry);
-
+      
+      // Reset the pointer to the cached client session data
+      if (getClientData())
+         {
+         getClientData()->decInUse();  // We have the compilation monitor so it's safe to access the inUse counter
+         setClientData(nullptr);
+         }
+#ifdef JITAAS_USE_RAW_SOCKETS
+      // Delete server stream
+      stream->~J9ServerStream();
+      TR_Memory::jitPersistentFree(stream);
+#endif
       return;
       }
 
@@ -3156,6 +3442,11 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    // The following call will return with compilation monitor in hand
    //
    void *startPC = compile(compThread, &entry, scratchSegmentProvider);
+
+   // Decrement number of active threads before _inUse
+   getClientData()->decNumActiveThreads(); // We hold compMonitor so there is no accounting problem
+   getClientData()->decInUse();  // We have the compMonitor so it's safe to access the inUse counter
+   setClientData(nullptr); // Reset the pointer to the cached client session data
 
    _customClassByNameMap.clear(); // reset before next compilation starts
    entry._newStartPC = startPC;
@@ -3229,4 +3520,10 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          compInfo->getNumCompThreadsActive() < 2)
          compInfo->setSuspendThreadDueToLowPhysicalMemory(false);
       }
+
+#ifdef JITAAS_USE_RAW_SOCKETS
+   // Delete server stream
+   stream->~J9ServerStream();
+   TR_Memory::jitPersistentFree(stream);
+#endif
    }

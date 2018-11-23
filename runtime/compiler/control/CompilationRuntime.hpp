@@ -951,6 +951,9 @@ public:
    void setClientSessionHT(ClientSessionHT *ht) { _clientSessionHT = ht; }
    PersistentVector<TR_OpaqueClassBlock*> *getUnloadedClassesTempList() { return _unloadedClassesTempList; }
    void setUnloadedClassesTempList(PersistentVector<TR_OpaqueClassBlock*> *it) { _unloadedClassesTempList = it; }
+   TR::Monitor *getSequencingMonitor() { return _sequencingMonitor; }
+   uint32_t getCompReqSeqNo() const { return _compReqSeqNo; }
+   uint32_t incCompReqSeqNo() { return ++_compReqSeqNo; }
    PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t> *getNewlyExtendedClasses() { return _newlyExtendedClasses; }
    void classGotNewlyExtended(TR_OpaqueClassBlock* clazz)
       {
@@ -1150,6 +1153,8 @@ private:
    ClientSessionHT *_clientSessionHT;
    // JITaaS list of classes unloaded 
    PersistentVector<TR_OpaqueClassBlock*> *_unloadedClassesTempList;
+   TR::Monitor *_sequencingMonitor; // used for ordering outgoing messages at the client
+   uint32_t _compReqSeqNo; // seqNo for outgoing messages at the client
    // JITaaS table of newly extended classes
    PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t> *_newlyExtendedClasses;
    uint8_t _chTableUpdateFlags;
