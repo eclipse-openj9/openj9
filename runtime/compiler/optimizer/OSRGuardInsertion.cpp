@@ -72,7 +72,7 @@ int32_t TR_OSRGuardInsertion::perform()
       if (trace())
          traceMsg(comp(), "No HCR guards to be removed - skipping\n");
       return 0;
-      } 
+      }
 
    TR_BitVector fearGeneratingNodes(comp()->getNodeCount(), trMemory(), stackAlloc);
    removeHCRGuards(fearGeneratingNodes);
@@ -194,7 +194,7 @@ void TR_OSRGuardInsertion::removeHCRGuards(TR_BitVector &fearGeneratingNodes)
             cursor->removeBranch(comp());
 
             // Check whether there is another virtual guard, with the same branch destination
-            // Based on the inliner, this guard should be in the prior block and there should 
+            // Based on the inliner, this guard should be in the prior block and there should
             // be no other predecessors
             //
             TR::Node *potentialGuard = NULL;
@@ -278,7 +278,7 @@ int32_t TR_OSRGuardInsertion::insertOSRGuards(TR_BitVector &fearGeneratingNodes)
             cursor = block->getEntry();
             continue;
             }
-         
+
          // set the fearful state based on all successors - anyone who has an OSR edge is a source
          // of fear and we must add a patch point if we encounter a yield otherwise we are safe
          TR_SuccessorIterator sit(block);
@@ -325,7 +325,8 @@ int32_t TR_OSRGuardInsertion::insertOSRGuards(TR_BitVector &fearGeneratingNodes)
 
          // If something went wrong with bookkeeping, due to the nature of the implicit OSR point,
          // this will return false
-         bool induceOSR = comp()->getMethodSymbol()->induceOSRAfter(cursor, nodeBCI, guard, false, 0, &cfgEnd);
+         bool induceOSR = comp()->allowRecompilation() ? comp()->getMethodSymbol()->induceOSRAfterAndRecompile(cursor, nodeBCI, guard, false, 0, &cfgEnd):
+                                                         comp()->getMethodSymbol()->induceOSRAfter(cursor, nodeBCI, guard, false, 0, &cfgEnd);
 
          if (trace())
             {
@@ -426,7 +427,8 @@ int32_t TR_OSRGuardInsertion::insertOSRGuards(TR_BitVector &fearGeneratingNodes)
                guard->getNode()->getFirstChild()->setByteCodeInfo(guardBCI);
                guard->getNode()->getSecondChild()->setByteCodeInfo(guardBCI);
 
-               bool induceOSR = targetMethod->induceOSRAfter(inductionPoint, nodeBCI, guard, false, comp()->getOSRInductionOffset(cursor->getNode()), &cfgEnd);
+               bool induceOSR = comp()->allowRecompilation() ? targetMethod->induceOSRAfterAndRecompile(inductionPoint, nodeBCI, guard, false, comp()->getOSRInductionOffset(cursor->getNode()), &cfgEnd):
+                                                               targetMethod->induceOSRAfter(inductionPoint, nodeBCI, guard, false, comp()->getOSRInductionOffset(cursor->getNode()), &cfgEnd);
 
                if (trace() && induceOSR)
                   traceMsg(comp(), "  OSR induction added successfully\n");
@@ -497,7 +499,7 @@ void TR_OSRGuardInsertion::generateTriggeringRecompilationTrees(TR::TreeTop *osr
 void TR_OSRGuardInsertion::performRemat(TR::TreeTop *osrPoint, TR::TreeTop *osrGuard,
    TR::TreeTop *rematDest)
    {
-   static const char *p = feGetEnv("TR_OSRRematBlockLimit"); 
+   static const char *p = feGetEnv("TR_OSRRematBlockLimit");
    static uint32_t rematBlockLimit = p ? atoi(p) : defaultRematBlockLimit;
 
    // The block containing the OSR point and the guard
@@ -524,7 +526,7 @@ void TR_OSRGuardInsertion::performRemat(TR::TreeTop *osrPoint, TR::TreeTop *osrG
 
    // Collect remat candidates
    //
-   uint32_t rematBlocks = 1; 
+   uint32_t rematBlocks = 1;
    TR::SparseBitVector seen(comp()->allocator());
    for (TR::TreeTop *cursor = realStart; cursor; cursor = cursor->getPrevTreeTop())
       {
@@ -544,7 +546,7 @@ void TR_OSRGuardInsertion::performRemat(TR::TreeTop *osrPoint, TR::TreeTop *osrG
             {
             if (trace())
                traceMsg(comp(), "   remat block limit %d reached at block_%d, starting remat\n", rematBlockLimit, block->getNumber());
-            break; 
+            break;
             }
 
          TR::Block *next;
@@ -623,7 +625,7 @@ void TR_OSRGuardInsertion::performRemat(TR::TreeTop *osrPoint, TR::TreeTop *osrG
          // partially rematerialize the argument
          if (!*iter)
             continue;
-                        
+
          TR::TreeTop *storeTree = *iter;
          TR::Node *store = storeTree->getNode();
          if (trace())
