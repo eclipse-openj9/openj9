@@ -1444,8 +1444,10 @@ public class MethodHandles {
 			Class<?> declaringClass = field.getDeclaringClass();
 			Class<?> fieldType = field.getType();
 			String fieldName = field.getName();
-			
-			if (Modifier.isFinal(modifiers)) {
+			/* https://github.com/eclipse/openj9/issues/3175
+			 * Setters are allowed on instance final instance fields if they have been set accessible.
+			 */
+			if (Modifier.isFinal(modifiers) && (!field.isAccessible() || Modifier.isStatic(modifiers))) {
 				/*[MSG "K05cf", "illegal setter on final field"]*/
 				throw new IllegalAccessException(Msg.getString("K05cf")); //$NON-NLS-1$
 			}
@@ -2774,7 +2776,7 @@ public class MethodHandles {
 	 * In all cases, the preprocessor handle accepts a subset of the arguments for the handle.
 	 * 
 	 * @param handle - the handle to call after preprocessing
-	 * @param handle - the starting position to fold arguments
+	 * @param foldPosition - the starting position to fold arguments
 	 * @param preprocessor - a methodhandle that preprocesses some of the incoming arguments
 	 * @return a MethodHandle that preprocesses some of the arguments to the handle before calling the next handle, possibly with an additional first argument
 	 * @throws NullPointerException - if any of the arguments are null
