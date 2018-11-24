@@ -191,14 +191,14 @@ RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so
 RUN ln -s java-1.7.0 /usr/lib/jvm/java-1.7.0-openjdk
 
 # Setup boot JDK for building Java 11
-RUN mkdir -p /usr/lib/jvm/adoptojdk-java-10 \
-  && cd /usr/lib/jvm/adoptojdk-java-10 \
-  && wget -O bootjdk10.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk10?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk" \
-  && tar -xzf bootjdk10.tar.gz \
-  && rm -f bootjdk10.tar.gz \
-  && mv $(ls | grep -i jdk) bootjdk10 \
-  && mv bootjdk10/* /usr/lib/jvm/adoptojdk-java-10 \
-  && rm -rf bootjdk10
+RUN mkdir -p /usr/lib/jvm/adoptojdk-java-11 \
+  && cd /usr/lib/jvm/adoptojdk-java-11 \
+  && wget -O bootjdk11.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk11?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk&heap_size=normal" \
+  && tar -xzf bootjdk11.tar.gz \
+  && rm -f bootjdk11.tar.gz \
+  && mv $(ls | grep -i jdk-11) bootjdk11 \
+  && mv bootjdk11/* /usr/lib/jvm/adoptojdk-java-11 \
+  && rm -rf bootjdk11
 
 # Install Freemaker for building OpenJ9. Used in bash ./configure --with-freemarker-jar=<path-to-freemaker-jar>
 RUN cd /home/${USER} \
