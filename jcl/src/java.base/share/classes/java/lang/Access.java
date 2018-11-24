@@ -54,7 +54,11 @@ import java.nio.charset.CharacterCodingException;
 /*[ELSE]
 import java.lang.reflect.Module;
 /*[ENDIF]*/
+/*[IF Java12]*/
+import jdk.internal.access.JavaLangAccess;
+/*[ELSE]
 import jdk.internal.misc.JavaLangAccess;
+/*[ENDIF]*/
 import jdk.internal.module.ServicesCatalog;
 import jdk.internal.reflect.ConstantPool;
 import java.lang.module.ModuleDescriptor;

@@ -32,7 +32,11 @@ import java.lang.reflect.Method;
 
 /*[IF Sidecar19-SE]*/
 import jdk.internal.misc.Unsafe;
+/*[IF Java12]*/
+import jdk.internal.access.SharedSecrets;
+/*[ELSE]
 import jdk.internal.misc.SharedSecrets;
+/*[ENDIF]*/
 import jdk.internal.misc.VM;
 import java.lang.StackWalker.Option;
 /*[IF Sidecar19-SE-OpenJ9]
