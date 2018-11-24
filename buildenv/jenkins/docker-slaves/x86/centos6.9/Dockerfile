@@ -32,8 +32,8 @@ FROM centos:centos6.9
 
 ENV USER="jenkins"
 
-RUN yum -y install \
-    JSON \
+RUN yum -y update \
+  && yum -y install \
     alsa-lib-devel \
     bind-utils \
     bison \
@@ -58,6 +58,7 @@ RUN yum -y install \
     java-1.8.0-openjdk-devel \
     lbzip2 \
     libdwarf \
+    libstdc++-static \
     libX11-devel \
     libXext-devel \
     libXrender-devel \
@@ -66,6 +67,7 @@ RUN yum -y install \
     make \
     mesa-libGL-devel \
     mpfr-devel \
+    nasm \
     numactl-devel \
     ntp \
     openssl-devel \
@@ -82,9 +84,12 @@ RUN yum -y install \
     wget\
     xz \
     zip \
-    https://$(rpm -E '%{?centos:centos}%{!?centos:rhel}%{rhel}').iuscommunity.org/ius-release.rpm \
-    libdwarf-devel \
-  && rm -rf /var/lib/apt/lists/*
+  && yum clean all
+
+RUN yum -y update \
+  && yum -y install https://$(rpm -E '%{?centos:centos}%{!?centos:rhel}%{rhel}').iuscommunity.org/ius-release.rpm \
+  && yum -y install libdwarf-devel \
+  && yum clean all
 
 # Install autoconf version 2.69
 RUN cd /usr/src/ \
@@ -94,34 +99,53 @@ RUN cd /usr/src/ \
   && cd autoconf-2.69 \
   && ./configure \
   && make \
-  && make install
+  && make install \
+  && cd .. \
+  && rm -rf /usr/src/autoconf-2.69
 
 # Dependency required by test framework
-RUN /usr/bin/perl -MCPAN -e'install Text::CSV' \
-  && /usr/bin/perl -MCPAN -e'install JSON'
+RUN wget -O - http://cpanmin.us | perl - --self-upgrade \
+  && cpanm Text::CSV \
+  && cpanm JSON
 
-# install GCC-4.8
+# install GCC-4.8 and GCC-7.3
 RUN cd /etc/yum.repos.d \
   && wget http://people.centos.org/tru/devtools-2/devtools-2.repo -O /etc/yum.repos.d/devtools-2.repo \
+  && yum -y update \
   && yum -y install devtoolset-2-gcc devtoolset-2-binutils \
   && yum -y install devtoolset-2-gcc-c++ devtoolset-2-gcc-gfortran \
+  && yum clean all \
   && scl enable devtoolset-2 bash \
   && mv /opt/rh/devtoolset-2/root/usr/bin/gcc /opt/rh/devtoolset-2/root/usr/bin/gcc-4.8 \
   && mv /opt/rh/devtoolset-2/root/usr/bin/g++ /opt/rh/devtoolset-2/root/usr/bin/g++-4.8 \
   && ln -s /opt/rh/devtoolset-2/root/usr/bin/gcc-4.8 /usr/bin/gcc \
   && ln -s /opt/rh/devtoolset-2/root/usr/bin/g++-4.8 /usr/bin/g++ \
-  && ln -s /opt/rh/devtoolset-2/root/usr/bin/gcc-4.8 /usr/bin/cc
+  && ln -s /opt/rh/devtoolset-2/root/usr/bin/gcc-4.8 /usr/bin/cc \
+  && yum -y update \
+  && yum -y install centos-release-scl \
+  && yum -y install devtoolset-7-gcc devtoolset-7-binutils \
+  && yum -y install devtoolset-7-gcc-c++ devtoolset-2-gcc-gfortran \
+  && yum clean all
 
 #Building and setting up git version 2.5.3
-RUN yum -y install curl-devel expat-devel gettext-devel openssl-devel zlib-devel perl-ExtUtils-MakeMaker \
+RUN yum -y update \
+  && yum -y install \
+    curl-devel \
+    expat-devel \
+    gettext-devel \
+    openssl-devel \
+    perl-ExtUtils-MakeMaker \
+    zlib-devel \
+  && yum clean all \
   && cd /usr/src \
   && wget https://www.kernel.org/pub/software/scm/git/git-2.5.3.tar.gz \
   && tar xzf git-2.5.3.tar.gz \
   && rm git-2.5.3.tar.gz \
   && cd git-2.5.3 \
-  && make prefix=/usr/local/git all \
-  && make prefix=/usr/local/git install \
-  && ln -s /usr/local/git/bin/git /usr/bin/git
+  && make prefix=/usr/local all \
+  && make prefix=/usr/local install \
+  && cd .. \
+  && rm -rf /usr/src/git-2.5.3
 
 # Install ant version 1.10.5.
 RUN wget http://www.us.apache.org/dist/ant/binaries/apache-ant-1.10.5-bin.tar.gz \
@@ -142,7 +166,8 @@ RUN wget http://www.us.apache.org/dist/ant/binaries/apache-ant-1.10.5-bin.tar.gz
 RUN cd /usr/src/ \
   && wget http://developer.download.nvidia.com/compute/cuda/7.5/Prod/local_installers/cuda_7.5.18_linux.run \
   && chmod +x cuda_7.5.18_linux.run \
-  && /usr/src/cuda_7.5.18_linux.run --silent --toolkit --override
+  && /usr/src/cuda_7.5.18_linux.run --silent --toolkit --override \
+  && rm -f /usr/src/cuda_7.5.18_linux.run
 
 # add user home/jenkins
 RUN useradd -ms /bin/bash ${USER} \
@@ -150,7 +175,8 @@ RUN useradd -ms /bin/bash ${USER} \
 COPY authorized_keys /home/${USER}/.ssh/authorized_keys
 COPY known_hosts /home/${USER}/.ssh/known_hosts
 RUN chown -R ${USER}:${USER} /home/${USER} \
-  && chmod 644 /home/${USER}/.ssh/authorized_keys
+  && chmod 644 /home/${USER}/.ssh/authorized_keys \
+  && chmod 644 /home/${USER}/.ssh/known_hosts
 
 # set up sshd config
 RUN mkdir /var/run/sshd \
@@ -162,34 +188,17 @@ RUN mkdir /var/run/sshd \
 RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
 
 # Setup boot JDK for building Java 8
-RUN ln -s java-1.7.0 /usr/lib/jvm/java-7-openjdk-amd64
-
-# Setup boot JDK for building Java 9
-RUN mkdir /usr/lib/jvm/adoptojdk-java-80 \
-  && cd /usr/lib/jvm/adoptojdk-java-80 \
-  && wget -O bootjdk8.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk8?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk" \
-  && tar -xzf bootjdk8.tar.gz \
-  && rm -f bootjdk8.tar.gz \
-  && mv $(ls | grep -i jdk) bootjdk8 \
-  && mv bootjdk8/* /usr/lib/jvm/adoptojdk-java-80
-
-# Setup boot JDK for building Java 10
-RUN mkdir /usr/lib/jvm/adoptojdk-java-90 \
-  && cd /usr/lib/jvm/adoptojdk-java-90 \
-  && wget -O bootjdk9.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk9?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk" \
-  && tar -xzf bootjdk9.tar.gz \
-  && rm -f bootjdk9.tar.gz \
-  && mv $(ls | grep -i jdk) bootjdk9 \
-  && mv bootjdk9/* /usr/lib/jvm/adoptojdk-java-90
+RUN ln -s java-1.7.0 /usr/lib/jvm/java-1.7.0-openjdk
 
 # Setup boot JDK for building Java 11
-RUN mkdir /usr/lib/jvm/adoptojdk-java-10 \
+RUN mkdir -p /usr/lib/jvm/adoptojdk-java-10 \
   && cd /usr/lib/jvm/adoptojdk-java-10 \
   && wget -O bootjdk10.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk10?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk" \
   && tar -xzf bootjdk10.tar.gz \
   && rm -f bootjdk10.tar.gz \
   && mv $(ls | grep -i jdk) bootjdk10 \
-  && mv bootjdk10/* /usr/lib/jvm/adoptojdk-java-10
+  && mv bootjdk10/* /usr/lib/jvm/adoptojdk-java-10 \
+  && rm -rf bootjdk10
 
 # Install Freemaker for building OpenJ9. Used in bash ./configure --with-freemarker-jar=<path-to-freemaker-jar>
 RUN cd /home/${USER} \
@@ -203,17 +212,17 @@ RUN cd /usr/src \
   && tar xfj curl-7.24.0.tar.bz2 \
   && rm -f curl-7.24.0.tar.bz2 \
   && cd curl-7.24.0 \
-  && ./configure --prefix=/usr \
+  && ./configure --prefix=/usr/local \
   && make \
-  && make install 
+  && make install \
+  && cd .. \
+  && rm -rf /usr/src/curl-7.24.0
 
 # Setup a reference repository cache for faster clones in the container
 RUN mkdir /home/${USER}/openjdk_cache \
   && cd /home/${USER}/openjdk_cache \
   && git init --bare \
   && git remote add jdk8 https://github.com/ibmruntimes/openj9-openjdk-jdk8.git \
-  && git remote add jdk9 https://github.com/ibmruntimes/openj9-openjdk-jdk9.git \
-  && git remote add jdk10 https://github.com/ibmruntimes/openj9-openjdk-jdk10.git \
   && git remote add jdk11 https://github.com/ibmruntimes/openj9-openjdk-jdk11.git \
   && git remote add jdk https://github.com/ibmruntimes/openj9-openjdk-jdk.git \
   && git remote add openj9 https://github.com/eclipse/openj9.git \
@@ -227,5 +236,10 @@ EXPOSE 22
 RUN mkdir -p /var/run/sshd \
   && service sshd start \
   && service sshd stop
+
+# Adding bash profile so jenkins max user processes will be unlimited
+RUN echo >> /home/jenkins/.bashrc \
+  && echo "# Change max user processes in jenkins" >> /home/jenkins/.bashrc \
+  && echo "ulimit -u unlimited" >> /home/jenkins/.bashrc
 
 CMD ["/usr/sbin/sshd","-D"]
