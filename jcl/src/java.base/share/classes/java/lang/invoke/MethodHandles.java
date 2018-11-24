@@ -57,8 +57,13 @@ import jdk.internal.reflect.CallerSensitive;
 import java.lang.invoke.VarHandle.AccessMode;
 /*[IF Sidecar19-SE-OpenJ9]*/
 import java.lang.Module;
+/*[IF Java12]*/
+import jdk.internal.access.SharedSecrets;
+import jdk.internal.access.JavaLangAccess;
+/*[ELSE]
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.misc.JavaLangAccess;
+/*[ENDIF]*/
 import java.security.ProtectionDomain;
 import jdk.internal.org.objectweb.asm.ClassReader;
 /*[ELSE] Sidecar19-SE-OpenJ9

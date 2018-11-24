@@ -191,8 +191,8 @@ linux_x86-64_cmprssptrs:
     8: '/usr/lib/jvm/java-7-openjdk-amd64'
     9: '/usr/lib/jvm/adoptojdk-java-80'
     10: '/usr/lib/jvm/adoptojdk-java-90'
-    11: '/usr/lib/jvm/adoptojdk-java-10'
-    next: '/usr/lib/jvm/adoptojdk-java-10'
+    11: '/usr/lib/jvm/adoptojdk-java-11'
+    next: '/usr/lib/jvm/adoptojdk-java-11'
   release:
     8: 'linux-x86_64-normal-server-release'
     9: 'linux-x86_64-normal-server-release'
@@ -228,8 +228,8 @@ linux_x86-64_cmprssptrs_cmake:
     8: '/usr/lib/jvm/java-7-openjdk-amd64'
     9: '/usr/lib/jvm/adoptojdk-java-80'
     10: '/usr/lib/jvm/adoptojdk-java-90'
-    11: '/usr/lib/jvm/adoptojdk-java-10'
-    next: '/usr/lib/jvm/adoptojdk-java-10'
+    11: '/usr/lib/jvm/adoptojdk-java-11'
+    next: '/usr/lib/jvm/adoptojdk-java-11'
   release:
     8: 'linux-x86_64-normal-server-release'
     9: 'linux-x86_64-normal-server-release'
@@ -275,8 +275,8 @@ linux_x86-64:
     8: '/usr/lib/jvm/java-7-openjdk-amd64'
     9: '/usr/lib/jvm/adoptojdk-java-80'
     10: '/usr/lib/jvm/adoptojdk-java-90'
-    11: '/usr/lib/jvm/adoptojdk-java-10'
-    next: '/usr/lib/jvm/adoptojdk-java-10'
+    11: '/usr/lib/jvm/adoptojdk-java-11'
+    next: '/usr/lib/jvm/adoptojdk-java-11'
   release:
     8: 'linux-x86_64-normal-server-release'
     9: 'linux-x86_64-normal-server-release'
