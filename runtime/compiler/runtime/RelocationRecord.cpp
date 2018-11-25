@@ -904,10 +904,32 @@ TR_RelocationRecordWithInlinedSiteIndex::ignore(TR_RelocationRuntime *reloRuntim
    {
    J9Method *method = (J9Method *)getInlinedSiteMethod(reloRuntime);
 
-   // -1 means this inlined method isn't active, so can ignore relocations associated with it
-   if (method == (J9Method *)(-1))
-      return true;
+   if (method == reinterpret_cast<J9Method *>(-1))
+      {
+      if (reloRuntime->comp()->getOption(TR_UseSymbolValidationManager))
+         {
+         /* With the SVM, it isn't possible for the method to be equal to -1
+          * because:
+          *
+          * 1. The shape of the class of the method is guaranteed by the validation
+          *    records, which are processed first.
+          * 2. The inlined table will be populated regardless of whether the guard
+          *    for the inlined site has to be patched.
+          */
+         TR_ASSERT(false, "inlined site method should not be -1!\n");
+         reloRuntime->comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("getInlinedSiteMethod returned method == -1");
+         }
+      else
+         {
+         // -1 means this inlined method isn't active, so can ignore relocations associated with it
+         return true;
+         }
+      }
 
+   /* It is safe to return true here because if classes were unloaded, then
+    * the compilation will be aborted and the potentially unrelocated sections
+    * of code will never be executed.
+    */
    if (isUnloadedInlinedMethod(method))
       return true;
 
@@ -2160,6 +2182,12 @@ TR_RelocationRecordInlinedMethod::preparePrivateData(TR_RelocationRuntime *reloR
    TR_OpaqueMethodBlock *ramMethod = NULL;
    bool inlinedSiteIsValid = inlinedSiteValid(reloRuntime, reloTarget, &ramMethod);
 
+   if (reloRuntime->comp()->getOption(TR_UseSymbolValidationManager) && !ramMethod)
+      {
+      TR_ASSERT(false, "inlinedSiteValid should not return a NULL method when using the SVM!\n");
+      reloRuntime->comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("inlinedSiteValid returned NULL method");
+      }
+
    if (ramMethod)
       {
       // If validate passes, no patching needed since the fall-through path is the inlined code
@@ -2266,6 +2294,11 @@ TR_RelocationRecordInlinedMethod::inlinedSiteValid(TR_RelocationRuntime *reloRun
          else
             {
             inlinedSiteIsValid = false;
+            if (reloRuntime->comp()->getOption(TR_UseSymbolValidationManager))
+               {
+               TR_ASSERT(false, "compileRomClass and currentRomClass should not be different!\n");
+               reloRuntime->comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("compileRomClass and currentRomClass are different");
+               }
             }
          }
       }
