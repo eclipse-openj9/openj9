@@ -21,7 +21,7 @@
 ################################################################################
 
 # Various config options we apply to OMR
-
+set(OMR_DDR OFF CACHE INTERNAL "")
 set(OMR_EXAMPLE OFF CACHE INTERNAL "")
 set(OMR_FVTEST OFF CACHE INTERNAL "")
 set(OMR_GC ON CACHE INTERNAL "")
