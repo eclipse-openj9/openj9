@@ -37,7 +37,7 @@ public class ValueTypeGenerator {
 	
 	/* workaround till the new ASM is released */
 	public static final int DEFAULTVALUE = 203;
-	public static final int WITHFIELD = 181; //TODO update this when bytecode support is added
+	public static final int WITHFIELD = 204;
 	private static final int ACC_VALUE_TYPE = 0x100;
 	
 	static {
@@ -64,7 +64,7 @@ public class ValueTypeGenerator {
 		String makeValueGenericSig = "";
 		for (String s : fields) {
 			String nameAndSigValue[] = s.split(":");
-			int fieldModifiers = ACC_PUBLIC; //TODO this will be set to final once withfield support is enabled
+			int fieldModifiers = ACC_PUBLIC + ACC_FINAL;
 			fv = cw.visitField(fieldModifiers, nameAndSigValue[0], nameAndSigValue[1], null, null);
 			fv.visitEnd();
 			makeValueSig += nameAndSigValue[1];
@@ -130,6 +130,10 @@ public class ValueTypeGenerator {
 		
 		makeRefHelper(cw, className, makeValueSig, makeValueGenericSig, fields, makeMaxLocal);
 		
+		testWithFieldOnNonValueType(cw, className, fields);
+		testWithFieldOnNull(cw, className, fields);
+		testWithFieldOnNonExistentClass(cw, className, fields);
+		
 		cw.visitEnd();
 
 		return cw.toByteArray();
@@ -145,6 +149,55 @@ public class ValueTypeGenerator {
 		mv.visitEnd();
 	}
 	
+	/*
+	 * This function should only be called in the 
+	 * TestWithFieldOnNonValueType test
+	 */
+	private static void testWithFieldOnNonValueType(ClassWriter cw, String className, String[] fields) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testWithFieldOnNonValueType", "()Ljava/lang/Object;", null, null);
+		mv.visitCode();
+		mv.visitTypeInsn(NEW, className);
+		mv.visitInsn(DUP);
+		mv.visitMethodInsn(INVOKESPECIAL, className, "<init>", "()V", false);
+		mv.visitLdcInsn(new Long(123L));
+		mv.visitFieldInsn(WITHFIELD, className, "longField", "J");
+		mv.visitInsn(ARETURN);
+		mv.visitMaxs(1, 2);
+		mv.visitEnd();
+	}
+	
+	/*
+	 * This function should only be called in the 
+	 * TestWithFieldOnNull test
+	 */
+	private static void testWithFieldOnNull(ClassWriter cw, String className, String[] fields) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testWithFieldOnNull", "()Ljava/lang/Object;", null, null);
+		mv.visitCode();
+		mv.visitInsn(ACONST_NULL);
+		mv.visitLdcInsn(new Long(123L));
+		mv.visitFieldInsn(WITHFIELD, className, "longField", "J");
+		mv.visitInsn(ARETURN);
+		mv.visitMaxs(1, 2);
+		mv.visitEnd();
+	}
+	
+	/*
+	 * This function should only be called in the 
+	 * TestWithFieldOnNonExistentClass test
+	 */
+	private static void testWithFieldOnNonExistentClass(ClassWriter cw, String className, String[] fields) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testWithFieldOnNonExistentClass", "()Ljava/lang/Object;", null, null);
+		mv.visitCode();
+		mv.visitTypeInsn(NEW, className);
+		mv.visitInsn(DUP);
+		mv.visitMethodInsn(INVOKESPECIAL, className, "<init>", "()V", false);
+		mv.visitLdcInsn(new Long(123L));
+		mv.visitFieldInsn(WITHFIELD, "NonExistentClass", "longField", "J");
+		mv.visitInsn(ARETURN);
+		mv.visitMaxs(1, 2);
+		mv.visitEnd();
+	}
+	
 	private static void makeValueHelper(ClassWriter cw, String valueName, String makeValueSig, String makeValueGenericSig, String[] fields, int makeMaxLocal) {
 		makeGeneric(cw, valueName, "makeValueGeneric", "makeValue", makeValueSig, makeValueGenericSig, fields, makeMaxLocal);
 		
@@ -152,10 +205,8 @@ public class ValueTypeGenerator {
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "makeValue", "(" + makeValueSig + ")L" + valueName + ";", null, null);
 		mv.visitCode();
 		mv.visitTypeInsn(DEFAULTVALUE, valueName);
-		mv.visitVarInsn(ASTORE, fields.length);
 		for (int i = 0; i <  fields.length; i++) {
 			String nameAndSig[] = fields[i].split(":");
-			mv.visitVarInsn(ALOAD, fields.length);
 			switch (nameAndSig[1]) {
 			case "D":
 				doubleDetected = true;
@@ -181,11 +232,10 @@ public class ValueTypeGenerator {
 			}
 			mv.visitFieldInsn(WITHFIELD, valueName, nameAndSig[0], nameAndSig[1]);
 		}
-		mv.visitVarInsn(ALOAD, fields.length);
 		mv.visitInsn(ARETURN);
 		
 		int maxStackAndLocals = (doubleDetected) ? 3 : 2;
-		mv.visitMaxs(maxStackAndLocals, maxStackAndLocals + 1);
+		mv.visitMaxs(maxStackAndLocals, fields.length);
 		mv.visitEnd();
 	}
 	
@@ -241,7 +291,7 @@ public class ValueTypeGenerator {
 		
 		mv.visitMethodInsn(INVOKESTATIC, className, specificMethodName, "(" + makeValueSig + ")L"+ className + ";", false);
 		mv.visitInsn(ARETURN);
-		mv.visitMaxs(maxStack, makeMaxLocal + 1);
+		mv.visitMaxs(maxStack, fields.length);
 		mv.visitEnd();
 	}
 	
@@ -288,7 +338,7 @@ public class ValueTypeGenerator {
 		mv.visitInsn(ARETURN);
 		
 		int maxStack = (doubleDetected) ? 3 : 2;
-		mv.visitMaxs(maxStack, makeMaxLocal + 1);
+		mv.visitMaxs(maxStack, fields.length);
 		mv.visitEnd();
 	}
 

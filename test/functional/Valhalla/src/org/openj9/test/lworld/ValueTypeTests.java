@@ -253,21 +253,76 @@ public class ValueTypeTests {
 	/*
 	 * Test defaultValue with ref type
 	 * 
-	 * class DefaultValueWithNoneValueQType {
+	 * class DefaultValueWithNoneValueType {
 	 * 	Object f1;
 	 * 	Object f1;
 	 * }
 	 * 
 	 */
 	@Test(priority=3)
-	static public void testDefaultValueWithNoneValueQType() throws Throwable {
+	static public void testDefaultValueWithNonValueType() throws Throwable {
 		String fields[] = {"f1:Ljava/lang/Object;:value", "f2:Ljava/lang/Object;:value"};
-		Class<?> defaultValueWithNoneValueQType = ValueTypeGenerator.generateRefClass("DefaultValueWithNoneValueQType", fields);
-		MethodHandle makeDefaultValueWithNoneValueQType = lookup.findStatic(defaultValueWithNoneValueQType, "makeValue", MethodType.methodType(defaultValueWithNoneValueQType, Object.class, Object.class));
+		Class<?> defaultValueWithNonValueType = ValueTypeGenerator.generateRefClass("DefaultValueWithNonValueType", fields);
+		MethodHandle makeDefaultValueWithNonValueType = lookup.findStatic(defaultValueWithNonValueType, "makeValue", MethodType.methodType(defaultValueWithNonValueType, Object.class, Object.class));
 		try {
-			makeDefaultValueWithNoneValueQType.invoke(null, null);
-			
+			makeDefaultValueWithNonValueType.invoke(null, null);
+			Assert.fail("should throw error. Default value must be used with ValueType");
 		} catch (IncompatibleClassChangeError e) {}
+	}
+	
+	/*
+	 * Test withField on non Value Type
+	 * 
+	 * class TestWithFieldOnNonValueType {
+	 *  long longField
+	 * }
+	 */
+	@Test(priority=1)
+	static public void testWithFieldOnNonValueType() throws Throwable {
+		String fields[] = {"longField:J"};
+		Class<?> testWithFieldOnNonValueType = ValueTypeGenerator.generateRefClass("TestWithFieldOnNonValueType", fields);
+		MethodHandle withFieldOnNonValueType = lookup.findStatic(testWithFieldOnNonValueType, "testWithFieldOnNonValueType", MethodType.methodType(Object.class));
+		try {
+			withFieldOnNonValueType.invoke();
+			Assert.fail("should throw error. WithField must be used with ValueType");
+		} catch (IncompatibleClassChangeError e) {}
+	}
+	
+	/*
+	 * Test withField on non Null type
+	 * 
+	 * class TestWithFieldOnNull {
+	 *  long longField
+	 * }
+	 */
+	@Test(priority=1)
+	static public void testWithFieldOnNull() throws Throwable {
+		String fields[] = {"longField:J"};
+		Class<?> testWithFieldOnNull = ValueTypeGenerator.generateRefClass("TestWithFieldOnNull", fields);
+		
+		MethodHandle withFieldOnNull = lookup.findStatic(testWithFieldOnNull, "testWithFieldOnNull", MethodType.methodType(Object.class));
+		try {
+			withFieldOnNull.invoke();
+			Assert.fail("should throw error. Objectref cannot be null");
+		} catch (NullPointerException e) {}
+	}
+	
+	/*
+	 * Test withField on non existent class
+	 * 
+	 * class TestWithFieldOnNonExistentClass {
+	 *  long longField
+	 * }
+	 */
+	@Test(priority=1)
+	static public void testWithFieldOnNonExistentClass() throws Throwable {
+		String fields[] = {"longField:J"};
+		Class<?> testWithFieldOnNonExistentClass = ValueTypeGenerator.generateRefClass("TestWithFieldOnNonExistentClass", fields);
+		MethodHandle withFieldOnNonExistentClass = lookup.findStatic(testWithFieldOnNonExistentClass, "testWithFieldOnNonExistentClass", MethodType.methodType(Object.class));
+		try {
+			withFieldOnNonExistentClass.invoke();
+			Assert.fail("should throw error. Class does not exist");
+		} catch (NoClassDefFoundError e) {}
 	}
 	
 	static MethodHandle generateGetter(Class<?> clazz, String fieldName, Class<?> fieldType) {
