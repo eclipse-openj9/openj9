@@ -202,6 +202,11 @@ def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_RE
     if (!BUILD_LIST) {
         BUILD_LIST = ''
     }
+    BUILD_IDENTIFIER = params.BUILD_IDENTIFIER
+    if (!BUILD_IDENTIFIER) {
+        BUILD_IDENTIFIER = ''
+    }
+
     stage ("${JOB_NAME}") {
         JOB = build job: JOB_NAME,
                 parameters: [
@@ -226,7 +231,8 @@ def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_RE
                     string(name: 'RESTART_TIMEOUT', value: RESTART_TIMEOUT),
                     string(name: 'RESTART_TIMEOUT_UNITS', value: RESTART_TIMEOUT_UNITS),
                     string(name: 'SETUP_LABEL', value: SETUP_LABEL),
-                    string(name: 'BUILD_LIST', value: BUILD_LIST)]
+                    string(name: 'BUILD_LIST', value: BUILD_LIST),
+                    string(name: 'BUILD_IDENTIFIER', value: BUILD_IDENTIFIER)]
         return JOB
     }
 }
