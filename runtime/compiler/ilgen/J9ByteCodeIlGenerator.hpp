@@ -91,7 +91,9 @@ private:
    // GenBranch
    //
    int32_t      genGoto(int32_t);
-   int32_t      genIf(TR::ILOpCodes, bool singleStackOp = false);
+   int32_t      genIfOneOperand(TR::ILOpCodes);
+   int32_t      genIfTwoOperand(TR::ILOpCodes);
+   int32_t      genIfImpl(TR::ILOpCodes);
 
    /** \brief
     *     Generates IL for a return bytecode.
