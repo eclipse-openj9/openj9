@@ -69,14 +69,17 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
      _seenSymbolsSet((SeenSymbolsComparator()), _region)
    {
    TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
+   TR_J9VM *fej9 = comp->fej9vm();
    struct J9Class ** arrayClasses = &fej9->getJ9JITConfig()->javaVM->booleanArrayClass;
    uint16_t id;
    for (int32_t i = 4; i <= 11; i++)
       {
-      TR_OpaqueClassBlock *arrayClass = reinterpret_cast<TR_OpaqueClassBlock *>(arrayClasses[i - 4]);
+      TR_OpaqueClassBlock *arrayClass;
+      if (TR::CompilationInfo::getStream())
+         // JITaaS: shouldn't use array classes from the server VM, get them from client
+         arrayClass = fej9->getClassFromNewArrayType(i);
+      else
+         arrayClass = reinterpret_cast<TR_OpaqueClassBlock *>(arrayClasses[i - 4]);
       TR_OpaqueClassBlock *component = fej9->getComponentClassFromArrayClass(arrayClass);
 
       id = getNewSymbolID();
@@ -1534,11 +1537,19 @@ bool
 TR::SymbolValidationManager::validateArrayClassFromJavaVM(uint16_t arrayClassID, int32_t arrayClassIndex)
    {
    TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
+   TR_J9VM *fej9 = comp->fej9vm();
+   TR_OpaqueClassBlock *arrayClass;
+   if (TR::CompilationInfo::getStream())
+      {
+      // JITaaS: shouldn't use array classes from the server VM, get them from client
+      arrayClass = fej9->getClassFromNewArrayType(arrayClassIndex);
+      }
+   else
+      {
+      struct J9Class ** arrayClasses = &fej9->getJ9JITConfig()->javaVM->booleanArrayClass;
+      arrayClass = reinterpret_cast<TR_OpaqueClassBlock *>(arrayClasses[arrayClassIndex - 4]);
+      }
 
-   struct J9Class ** arrayClasses = &fej9->getJ9JITConfig()->javaVM->booleanArrayClass;
-   TR_OpaqueClassBlock *arrayClass = reinterpret_cast<TR_OpaqueClassBlock *>(arrayClasses[arrayClassIndex - 4]);
 
    int32_t arrayDims = 0;
    arrayClass = getBaseComponentClass(arrayClass, arrayDims);
