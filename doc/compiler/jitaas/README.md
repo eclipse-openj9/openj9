@@ -33,7 +33,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 - [Handling Options](OptionsDev.md)
 - [Sockets](Sockets.md)
 - [Serialization (protobuf)](Protobuf.md)
-- [Compilation Thread](CompilationThread.md)
 - [Resolved Method](ResolvedMethod.md)
 - [Frontend](Frontend.md)
 - [CHTable](CHTable.md)
