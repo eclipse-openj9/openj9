@@ -624,7 +624,8 @@ def set_job_properties(JOB_TYPE) {
                 'VENDOR_REPO':"${VENDOR_REPO_DEFAULT}",
                 'VENDOR_BRANCH':"${VENDOR_BRANCH_DEFAULT}",
                 'VENDOR_CREDENTIALS_ID':"${VENDOR_CREDENTIALS_ID_DEFAULT}",
-                'SETUP_LABEL':''])
+                'SETUP_LABEL':'',
+                'BUILD_IDENTIFIER':''])
         }
 
         // Pipeline or PR
@@ -669,6 +670,20 @@ def set_job_properties(JOB_TYPE) {
     }
 }
 
+def set_build_identifier() {
+    BUILD_IDENTIFIER = params.BUILD_IDENTIFIER
+    if (!BUILD_IDENTIFIER) {
+        BUILD_IDENTIFIER = ''
+        if (params.ghprbPullId && params.ghprbGhRepository) {
+            BUILD_IDENTIFIER = params.ghprbGhRepository + '#' + params.ghprbPullId
+        }
+    }
+    if (BUILD_IDENTIFIER) {
+        def TMP_DESC = (currentBuild.description) ? currentBuild.description + "<br>" : ""
+        currentBuild.description = TMP_DESC + BUILD_IDENTIFIER
+    }
+}
+
 /*
 * Adds a String type Parameter
 * Takes a Key-Value map which are used as the param name and default value
@@ -691,6 +706,9 @@ def set_job_variables(job_type) {
 
     // Setup Jenkins Job Parameters
     set_job_properties(job_type)
+
+    // Setup Build Identifier so we can determin whaere a build belongs
+    set_build_identifier()
 
     // check mandatory parameters if any
     try {
