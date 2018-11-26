@@ -1558,7 +1558,9 @@ combinationMemoryParameterVerification(J9JavaVM *javaVM, IDATA* memoryParameters
 	bool opt_XmosSet = (-1 != memoryParameters[opt_Xmos]);
 	bool opt_XmoxSet = (-1 != memoryParameters[opt_Xmox]);
 	bool opt_XsoftmxSet = (-1 != memoryParameters[opt_Xsoftmx]);
+#if defined(J9VM_GC_COMPRESSED_POINTERS)
 	bool opt_XmcrsSet = (-1 != memoryParameters[opt_Xmcrs]);
+#endif /* J9VM_GC_COMPRESSED_POINTERS */
 
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
@@ -2285,6 +2287,7 @@ combinationMemoryParameterVerification(J9JavaVM *javaVM, IDATA* memoryParameters
 	}
 #endif /* J9VM_GC_VLHGC */
 
+#if defined(J9VM_GC_COMPRESSED_POINTERS)
 	if (opt_XmcrsSet) {
 		/* Silently handle a size mismatch; don't report an error about undocumented options
 		 * if the user has specified the official one. */
@@ -2298,6 +2301,7 @@ combinationMemoryParameterVerification(J9JavaVM *javaVM, IDATA* memoryParameters
 			goto _combinationLargerThan;
 		}
 	}
+#endif /* J9VM_GC_COMPRESSED_POINTERS */
 
 	/* verify -Xsoftmx is set between -Xms and -Xmx */
 	if (opt_XsoftmxSet) {
