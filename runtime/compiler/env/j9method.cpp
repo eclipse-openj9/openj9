@@ -3853,6 +3853,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {  TR::java_lang_invoke_MethodHandle_invoke                   ,   13, "invokeGeneric",              (int16_t)-1, "*"}, // Older name from early versions of the jsr292 spec
       {  TR::java_lang_invoke_MethodHandle_invokeExact              ,   11, "invokeExact",                (int16_t)-1, "*"},
       {  TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress ,   24, "invokeExactTargetAddress",   (int16_t)-1, "*"},
+      {x(TR::java_lang_invoke_MethodHandle_type                     ,   "type",                       "()Ljava/lang/invoke/MethodType;")},
       {x(TR::java_lang_invoke_MethodHandle_invokeWithArgumentsHelper,   "invokeWithArgumentsHelper",  "(Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Ljava/lang/Object;")},
       {x(TR::java_lang_invoke_MethodHandle_asType, "asType", "(Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;")},
       {x(TR::java_lang_invoke_MethodHandle_asType_instance, "asType", "(Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;")},
@@ -3978,7 +3979,30 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
 
    static X ArgumentMoverHandleMethods[] =
       {
-      {x(TR::java_lang_invoke_ArgumentMoverHandle_permuteArgs,  "permuteArgs",   "(I)I")},
+      {x(TR::java_lang_invoke_ArgumentMoverHandle_permuteArgs,        "permuteArgs",   "(I)I")},
+      {  TR::java_lang_invoke_ArgumentMoverHandle_extra,           7, "extra_Z",       (int16_t)-1, "*"},
+      {  TR::java_lang_invoke_ArgumentMoverHandle_extra,           7, "extra_B",       (int16_t)-1, "*"},
+      {  TR::java_lang_invoke_ArgumentMoverHandle_extra,           7, "extra_C",       (int16_t)-1, "*"},
+      {  TR::java_lang_invoke_ArgumentMoverHandle_extra,           7, "extra_S",       (int16_t)-1, "*"},
+      {  TR::java_lang_invoke_ArgumentMoverHandle_extra,           7, "extra_I",       (int16_t)-1, "*"},
+      {  TR::java_lang_invoke_ArgumentMoverHandle_extra,           7, "extra_J",       (int16_t)-1, "*"},
+      {  TR::java_lang_invoke_ArgumentMoverHandle_extra,           7, "extra_F",       (int16_t)-1, "*"},
+      {  TR::java_lang_invoke_ArgumentMoverHandle_extra,           7, "extra_D",       (int16_t)-1, "*"},
+      {  TR::java_lang_invoke_ArgumentMoverHandle_extra,           7, "extra_L",       (int16_t)-1, "*"},
+      {  TR::unknownMethod}
+      };
+
+   static X BruteArgumentMoverHandleMethods[] =
+      {
+      {  TR::java_lang_invoke_ArgumentMoverHandle_extra,         7, "extra_Z",        (int16_t)-1, "*"},
+      {  TR::java_lang_invoke_ArgumentMoverHandle_extra,         7, "extra_B",        (int16_t)-1, "*"},
+      {  TR::java_lang_invoke_ArgumentMoverHandle_extra,         7, "extra_C",        (int16_t)-1, "*"},
+      {  TR::java_lang_invoke_ArgumentMoverHandle_extra,         7, "extra_S",        (int16_t)-1, "*"},
+      {  TR::java_lang_invoke_ArgumentMoverHandle_extra,         7, "extra_I",        (int16_t)-1, "*"},
+      {  TR::java_lang_invoke_ArgumentMoverHandle_extra,         7, "extra_J",        (int16_t)-1, "*"},
+      {  TR::java_lang_invoke_ArgumentMoverHandle_extra,         7, "extra_F",        (int16_t)-1, "*"},
+      {  TR::java_lang_invoke_ArgumentMoverHandle_extra,         7, "extra_D",        (int16_t)-1, "*"},
+      {  TR::java_lang_invoke_ArgumentMoverHandle_extra,         7, "extra_L",        (int16_t)-1, "*"},
       {  TR::unknownMethod}
       };
 
@@ -4505,6 +4529,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       { "org/apache/harmony/luni/platform/OSMemory", OSMemoryMethods },
       { "java/util/concurrent/atomic/AtomicBoolean", JavaUtilConcurrentAtomicBooleanMethods },
       { "java/util/concurrent/atomic/AtomicInteger", JavaUtilConcurrentAtomicIntegerMethods },
+      { "java/lang/invoke/BruteArgumentMoverHandle", BruteArgumentMoverHandleMethods },
       { 0 }
       };
 
@@ -7332,6 +7357,7 @@ getMethodHandleThunkDetails(TR_J9ByteCodeIlGenerator *ilgen, TR::Compilation *co
 bool
 TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
    {
+
    TR::MethodSymbol * symbol = symRef->getSymbol()->castToMethodSymbol();
    int32_t archetypeParmCount = symbol->getMethod()->numberOfExplicitParameters() + (symbol->isStatic() ? 0 : 1);
 

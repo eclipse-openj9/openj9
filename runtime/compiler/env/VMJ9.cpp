@@ -3099,79 +3099,12 @@ int TR_J9VMBase::checkInlineableWithoutInitialCalleeSymbol (TR_CallSite* callsit
    }
 
 
-int TR_J9VMBase::checkInlineableTarget (TR_CallTarget* target, TR_CallSite* callsite, TR::Compilation* comp, bool inJSR292InliningPasses)
+int TR_J9VMBase::checkInlineableTarget (TR_CallTarget* target, TR_CallSite* callsite)
    {
+   TR::Compilation *comp = TR::comp();
    TR_ResolvedMethod * resolvedMethod = target->_calleeSymbol ? target->_calleeSymbol->getResolvedMethod():target->_calleeMethod;
 
-   if (!comp->hasIntStreamForEach())
-      {
-      // This first if statement controls inlining of a large class of JSR292 methods, which we want to consider ONLY in certain cases in early rounds of inlining...
-      if ( resolvedMethod->convertToMethod()->isArchetypeSpecimen() ||
-         resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact ||
-         resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress ||
-         resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_MutableCallSite_getTarget ||
-         resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_DirectHandle_invokeExact ||
-         resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_InterfaceHandle_invokeExact ||
-         resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_VirtualHandle_invokeExact ||
-         TR_J9MethodBase::isVarHandleOperationMethod(resolvedMethod->getRecognizedMethod())
-         )
-         {
-         if ( resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress ||
-             resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_MutableCallSite_getTarget ||
-             TR_J9MethodBase::isVarHandleOperationMethod(resolvedMethod->getRecognizedMethod()) ||
-             resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_DirectHandle_invokeExact ||
-             resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_InterfaceHandle_invokeExact ||
-             resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_VirtualHandle_invokeExact
-            )
-            {
-            // Always choose to inline these methods; the first two are small getters, and the last three are single-level "leaf" handles
-            }
-         else if ( !inJSR292InliningPasses )
-            {
-            // Last round of inlining, no more JSR292 methods (other than the above two things, to which we always say yes)
-            return DontInline_Callee;
-            }
-         else if ( comp->getCurrentMethod()->convertToMethod()->isArchetypeSpecimen() || comp->getCurrentMethod()->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact )
-            {
-            // We're in JSR292 Inlining rounds, and we are ourselves an archetype specimen, so we can inline other archetype specimina whenever we see fit
-            }
-         else if ( comp->getMethodHotness() >= hot )
-            {
-            // We are a hot method that isn't an archetype specimen, and we're in JSR292 inlining,
-            // but because we're hot (or greater) we are allowed to inline JSR292 methods whenever we see fit
-            }
-         else
-            {
-            // We are in first rounds of inlining, we are warm or below, and we are not an archetype specimen ourselves... No inlining of JSR292 methods.
-            return DontInline_Callee;
-            }
-         }
-      else if ( inJSR292InliningPasses )
-         {
-         // If we aren't in the last round of inlining, don't inline anything that didn't fall into the above category
-         return DontInline_Callee;
-         }
-      else if (comp->compileRelocatableCode() && comp->getMethodHotness() <= cold)
-         {
-         // If we are an AOT cold compile, don't inline
-         return DontInline_Callee;
-         }
-      else if ( comp->ilGenRequest().details().isMethodHandleThunk() &&
-                static_cast<J9::MethodHandleThunkDetails &>(comp->ilGenRequest().details()).isShareable())
-         {
-         // We are trying to inline a non-JSR292 method, and we are in the last round of inlining, but we are a shareable thunk, so say NO
-         // Except for do and undo customization logic which we still want to inline...
-         //
-         if ( resolvedMethod->getRecognizedMethod() != TR::java_lang_invoke_MethodHandle_doCustomizationLogic &&
-              resolvedMethod->getRecognizedMethod() != TR::java_lang_invoke_MethodHandle_undoCustomizationLogic
-            )
-            {
-            return DontInline_Callee;
-            }
-         }
-      }
-
-   if (!TR_J9InlinerPolicy::isInlineableJNI(resolvedMethod,callsite->_callNode) || ( TR_J9InlinerPolicy::isInlineableJNI(resolvedMethod,callsite->_callNode) && callsite->isIndirectCall()) )
+   if (!TR_J9InlinerPolicy::isInlineableJNI(resolvedMethod,callsite->_callNode) || callsite->isIndirectCall())
       {
       if (!target->_calleeMethod->isCompilable(comp->trMemory()) || !target->_calleeMethod->isInlineable(comp))
          {
@@ -3184,7 +3117,7 @@ int TR_J9VMBase::checkInlineableTarget (TR_CallTarget* target, TR_CallSite* call
          }
       }
 
-   TR::RecognizedMethod rm = target->_calleeSymbol ? target->_calleeSymbol->getRecognizedMethod() : target->_calleeMethod->getRecognizedMethod();
+   TR::RecognizedMethod rm = resolvedMethod->getRecognizedMethod();
 
    // Don't inline methods that are going to be reduced in ilgen or UnsafeFastPath
    switch (rm)

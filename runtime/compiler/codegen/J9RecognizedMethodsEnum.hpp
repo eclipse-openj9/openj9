@@ -933,7 +933,9 @@
 
    // JSR292
    java_lang_invoke_ArgumentMoverHandle_permuteArgs,
+   java_lang_invoke_ArgumentMoverHandle_extra,
    java_lang_invoke_AsTypeHandle_convertArgs,
+   java_lang_invoke_BruteArgumentMoverHandle_extra,
    java_lang_invoke_CatchHandle_numCatchTargetArgsToPassThrough,
    java_lang_invoke_CollectHandle_numArgsToCollect,
    java_lang_invoke_CollectHandle_numArgsToPassThrough,
@@ -996,6 +998,7 @@
    java_lang_invoke_MethodHandle_invokeExactTargetAddress,
    java_lang_invoke_MethodHandle_invokeWithArgumentsHelper,
    java_lang_invoke_MethodHandles_getStackClass,
+   java_lang_invoke_MethodHandle_type,
    java_lang_invoke_MethodHandle_undoCustomizationLogic,
    java_lang_invoke_PrimitiveHandle_initializeClassIfRequired,
    java_lang_invoke_MutableCallSite_getTarget,
