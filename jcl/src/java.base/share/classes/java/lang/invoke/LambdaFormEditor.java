@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar18-SE-OpenJ9]*/
 
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,12 @@ package java.lang.invoke;
 
 class LambdaFormEditor {
 	
+/*[IF Java12]*/
+	LambdaForm filterRepeatedArgumentForm(LambdaForm.BasicType bt, int[] args) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+/*[ENDIF]*/
+
 	LambdaForm filterArgumentForm(int num, LambdaForm.BasicType by) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
