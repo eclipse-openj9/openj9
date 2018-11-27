@@ -72,11 +72,10 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
 
-   struct J9Class ** arrayClasses = &fej9->getJ9JITConfig()->javaVM->booleanArrayClass;
    uint16_t id;
    for (int32_t i = 4; i <= 11; i++)
       {
-      TR_OpaqueClassBlock *arrayClass = reinterpret_cast<TR_OpaqueClassBlock *>(arrayClasses[i - 4]);
+      TR_OpaqueClassBlock *arrayClass = fej9->getClassFromNewArrayType(i);
       TR_OpaqueClassBlock *component = fej9->getComponentClassFromArrayClass(arrayClass);
 
       id = getNewSymbolID();
@@ -1537,8 +1536,7 @@ TR::SymbolValidationManager::validateArrayClassFromJavaVM(uint16_t arrayClassID,
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
 
-   struct J9Class ** arrayClasses = &fej9->getJ9JITConfig()->javaVM->booleanArrayClass;
-   TR_OpaqueClassBlock *arrayClass = reinterpret_cast<TR_OpaqueClassBlock *>(arrayClasses[arrayClassIndex - 4]);
+   TR_OpaqueClassBlock *arrayClass = fej9->getClassFromNewArrayType(arrayClassIndex);
 
    int32_t arrayDims = 0;
    arrayClass = getBaseComponentClass(arrayClass, arrayDims);
