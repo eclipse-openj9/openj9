@@ -66,7 +66,8 @@
   <output regex="no" type="success">java/lang/Object</output>
   <output regex="yes" type="required" javaUtilPattern="yes" caseSensitive="yes" >(.)*intermediateClassData(.)*0x[0-9a-fA-F]*</output>
   <output regex="no" type="failure">DDRInteractiveCommandException</output>
-  <output regex="no" type="failure">unable to read</output>
+  <output regex="no" type="failure">Unable to read size of ROMClass at</output>
+  <output regex="no" type="failure">Unable to read object clazz at</output>
   <output regex="no" type="failure">could not read</output>
   <output regex="no" type="failure">dump event</output>
  </test>
