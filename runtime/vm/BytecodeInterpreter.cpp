@@ -34,11 +34,16 @@
 #define LOOP_NAME bytecodeLoop
 #endif
 
-/* USE_COMPUTED_GOTO on Windows is a performance improvement of 15% */
-/* USE_COMPUTED_GOTO on Linux amd64 has a performance improvement of 3% */
+/* USE_COMPUTED_GOTO on Windows has a performance improvement of 15%.
+ * USE_COMPUTED_GOTO on Linux amd64 has a performance improvement of 3%.
+ * USE_COMPUTED_GOTO is enabled on Linux s390 when compiling with gcc7+.
+ * USE_COMPUTED_GOTO improves startup performance by ~10% on Linux s390.
+ */
 #if (defined(WIN32) && defined(__GNUC__))
 #define USE_COMPUTED_GOTO
 #elif (defined(LINUX) && defined(J9HAMMER))
+#define USE_COMPUTED_GOTO
+#elif (defined(LINUX) && defined(S390) && (__GNUC__ > 7))
 #define USE_COMPUTED_GOTO
 #elif defined(OSX)
 #define USE_COMPUTED_GOTO
