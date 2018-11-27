@@ -404,6 +404,17 @@ public:
    */
    void setSupportsInlineStringHashCode() { return _j9Flags.set(SupportsInlineStringHashCode); }
 
+   /** \brief
+   *    Determines whether the code generator supports inlining of java_util_concurrent_ConcurrentLinkedQueue_tm*
+   *    methods
+   */
+   bool getSupportsInlineConcurrentLinkedQueue() { return _j9Flags.testAny(SupportsInlineConcurrentLinkedQueue); }
+
+   /** \brief
+   *    The code generator supports inlining of java_util_concurrent_ConcurrentLinkedQueue_tm* methods
+   */
+   void setSupportsInlineConcurrentLinkedQueue() { return _j9Flags.set(SupportsInlineConcurrentLinkedQueue); }
+
    /**
     * \brief
     *    The number of nodes between a monext and the next monent before
@@ -420,6 +431,7 @@ private:
       SupportsInlineStringCaseConversion  = 0x00000004, /*! codegen inlining of Java string case conversion */
       SupportsInlineStringIndexOf         = 0x00000008, /*! codegen inlining of Java string index of */
       SupportsInlineStringHashCode        = 0x00000010, /*! codegen inlining of Java string hash code */
+      SupportsInlineConcurrentLinkedQueue = 0x00000020,
       };
 
    flags32_t _j9Flags;
