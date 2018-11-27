@@ -45,8 +45,9 @@ public:
 
    TR_JITaaSServerPersistentCHTable(TR_PersistentMemory *);
 
-   void initializeIfNeeded();
-   void doUpdate(TR::Compilation *comp);
+   bool isInitialized() { return !getData().empty(); } // needs CHTable mutex in hand
+   bool initializeIfNeeded(TR_J9VMBase *fej9);
+   void doUpdate(TR_J9VMBase *fej9);
 
    virtual TR_PersistentClassInfo * findClassInfo(TR_OpaqueClassBlock * classId) override;
    virtual TR_PersistentClassInfo * findClassInfoAfterLocking(TR_OpaqueClassBlock * classId, TR::Compilation *, bool returnClassInfoForAOT = false, bool validate = true) override;

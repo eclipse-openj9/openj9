@@ -47,42 +47,43 @@ PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> &TR_JITaaS
    return data;
    }
 
-void 
-TR_JITaaSServerPersistentCHTable::initializeIfNeeded()
+bool
+TR_JITaaSServerPersistentCHTable::initializeIfNeeded(TR_J9VMBase *fej9)
    {
-   auto& data = getData();
-   if (!data.empty())
-      return;
-
+      {
+      TR::ClassTableCriticalSection doUpdate(fej9);
+      auto& data = getData();
+      if (!data.empty())
+         return false; // this is the most frequent path
+      }
    auto stream = TR::CompilationInfo::getStream();
    stream->write(JITaaS::J9ServerMessageType::CHTable_getAllClassInfo, JITaaS::Void());
    std::string rawData = std::get<0>(stream->read<std::string>());
    auto infos = FlatPersistentClassInfo::deserializeHierarchy(rawData);
-   for (auto clazz : infos)
       {
-      data.insert({clazz->getClassId(), clazz});
+      TR::ClassTableCriticalSection doUpdate(fej9);
+      auto& data = getData();
+      if (data.empty()) // check again to prevent races
+         {
+         for (auto clazz : infos)
+            data.insert({ clazz->getClassId(), clazz });
+         CHTABLE_UPDATE_COUNTER(_numClassesUpdated, infos.size());
+         return true;
+         }
       }
-   CHTABLE_UPDATE_COUNTER(_numClassesUpdated, infos.size());
+      return false;
    }
 
 void 
-TR_JITaaSServerPersistentCHTable::doUpdate(TR::Compilation *comp)
+TR_JITaaSServerPersistentCHTable::doUpdate(TR_J9VMBase *fej9)
    {
-   if (comp->getOption(TR_DisableCHOpts))
-      return;
-
-      {
-      TR::ClassTableCriticalSection doUpdate(comp->fe());
-      initializeIfNeeded();
-      }
-
    auto stream = TR::CompilationInfo::getStream();
    stream->write(JITaaS::J9ServerMessageType::CHTable_getClassInfoUpdates, JITaaS::Void());
    auto recv = stream->read<std::string, std::string>();
    std::string &removeStr = std::get<0>(recv);
    std::string &modifyStr = std::get<1>(recv);
 
-   TR::ClassTableCriticalSection doUpdate(comp->fe());
+   TR::ClassTableCriticalSection doUpdate(fej9);
    commitModifications(modifyStr);
    commitRemoves(removeStr);
 
