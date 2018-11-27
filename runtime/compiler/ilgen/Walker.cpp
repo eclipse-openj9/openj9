@@ -4994,7 +4994,7 @@ break
 #endif
        }
 
-    if (comp()->cg()->getSupportsTMHashMapAndLinkedQueue() && (comp()->getOptions()->getGcMode() != TR_WrtbarRealTime) &&
+    if (comp()->cg()->getSupportsInlineConcurrentLinkedQueue() && (comp()->getOptions()->getGcMode() != TR_WrtbarRealTime) &&
          (symbol->getRecognizedMethod() == TR::java_util_concurrent_ConcurrentLinkedQueue_tmEnabled))
        {
        loadConstant(TR::iconst, 1);
