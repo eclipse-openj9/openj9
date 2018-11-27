@@ -327,11 +327,11 @@ static const struct { \
 #define J9_IS_J9CLASS_VALUETYPE(clazz) FALSE
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
-#if defined(OSX)
+#if defined(OPENJ9_BUILD) && !defined(OSX)
+#define J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm) TRUE
+#else /* defined(OPENJ9_BUILD) && !defined(OSX) */
 /* Temporarily disable default class sharing on OSX due to https://github.com/eclipse/openj9/issues/3333 */
 #define J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm) FALSE
-#else /* defined(OSX) */
-#define J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm) (J2SE_VERSION(vm) >= J2SE_V11)
-#endif /* defined(OSX) */
+#endif /* defined(OPENJ9_BUILD) && !defined(OSX) */
 
 #endif /* J9_H */
