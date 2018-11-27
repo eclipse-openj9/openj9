@@ -28,16 +28,17 @@ import java.util.List;
 
 import javax.management.ObjectName;
 
-/*[IF Sidecar19-SE]*/
-import jdk.internal.misc.JavaNioAccess.BufferPool;
 /*[IF Java12]*/
+import jdk.internal.access.JavaNioAccess.BufferPool;
 import jdk.internal.access.SharedSecrets;
 /*[ELSE]
+/*[IF Sidecar19-SE]
+import jdk.internal.misc.JavaNioAccess.BufferPool;
 import jdk.internal.misc.SharedSecrets;
-/*[ENDIF]*/
 /*[ELSE]
 import sun.misc.JavaNioAccess.BufferPool;
 import sun.misc.SharedSecrets;
+/*[ENDIF]*/
 /*[ENDIF]*/
 
 /**
