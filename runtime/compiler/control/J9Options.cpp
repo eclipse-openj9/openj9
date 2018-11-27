@@ -64,6 +64,7 @@ bool enableCompiledMethodLoadHookOnly = false;
 
 bool J9::Options::_doNotProcessEnvVars = false; // set through XX options in Java
 int32_t J9::Options::_samplingFrequencyInIdleMode = 1000; // ms
+int32_t J9::Options::_statisticsFrequency = 0; // ms
 int32_t J9::Options::_samplingFrequencyInDeepIdleMode = 100000; // ms
 int32_t J9::Options::_resetCountThreshold = 0; // Disable the feature
 int32_t J9::Options::_scorchingSampleThreshold = 240;
@@ -955,6 +956,8 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_smallMethodBytecodeSizeThresholdForCold, 0, "F%d", NOT_IN_SUBSET},
    {"stack=",             "C<nnn>\tcompilation thread stack size in KB", 
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_stackSize, 0, " %d", NOT_IN_SUBSET},
+   {"statisticsFrequency=", "R<nnn>\tnumber of milliseconds between statistics print",
+        TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_statisticsFrequency, 0, "F%d", NOT_IN_SUBSET},
 #ifdef DEBUG
    {"stats",              "L\tdump statistics at end of run", SET_JITCONFIG_RUNTIME_FLAG(J9JIT_DUMP_STATS) },
 #endif

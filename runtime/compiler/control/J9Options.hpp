@@ -67,6 +67,9 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _samplingFrequencyInIdleMode;
    static int32_t getSamplingFrequencyInIdleMode() {return _samplingFrequencyInIdleMode;}
 
+   static int32_t _statisticsFrequency;
+   static int32_t getStatisticsFrequency() {return _statisticsFrequency;}
+
    static int32_t _samplingFrequencyInDeepIdleMode;
    static int32_t getSamplingFrequencyInDeepIdleMode() {return _samplingFrequencyInDeepIdleMode;}
    

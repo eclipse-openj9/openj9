@@ -78,6 +78,8 @@
 #include "env/SystemSegmentProvider.hpp"
 #include "control/JITaaSCompilationThread.hpp"
 #include "runtime/JITaaSIProfiler.hpp"
+#include "runtime/Listener.hpp"
+#include "runtime/StatisticsThread.hpp"
 
 extern "C" {
 struct J9JavaVM;
@@ -4766,6 +4768,12 @@ void JitShutdown(J9JITConfig * jitConfig)
    if (!vm->isAOT_DEPRECATED_DO_NOT_USE())
       stopSamplingThread(jitConfig);
 
+   TR_StatisticsThread *statisticsThread = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->statisticsThread;
+   if (statisticsThread)
+      {
+      statisticsThread->stopStatisticsThread(jitConfig);
+      }
+
    if (jitConfig->runtimeFlags & J9JIT_DUMP_STATS)
       dumpStats(jitConfig);
 
@@ -7098,11 +7106,17 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
    
    if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
       {
-      TR_Listener *listener = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener; 
+      TR_Listener *listener = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener;
       listener->startListenerThread(javaVM);
 
       if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Started JITaaSServer listener thread: %p ", listener->getListenerThread());
+
+      if (jitConfig->samplingFrequency != 0)
+         {
+         TR_StatisticsThread *statisticsThread = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->statisticsThread;
+         statisticsThread->startStatisticsThread(javaVM);
+         }
 
       // Give the JIT a chance to do stuff after the VM is initialized
       if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_INITIALIZED, jitHookVMInitialized, OMR_GET_CALLSITE(), NULL))
