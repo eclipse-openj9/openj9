@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -92,6 +92,7 @@
 #define PRINTSTATS_SHOW_JITHINT  0x100
 #define PRINTSTATS_SHOW_INVALIDATEDAOT 0x20000
 #define PRINTSTATS_SHOW_ALL_STALE 0x40000
+#define PRINTSTATS_SHOW_STARTUPHINT 0x80000
 
 /* Private filters */
 #define PRINTSTATS_SHOW_EXTRA (PRINTSTATS_SHOW_ALL|PRINTSTATS_SHOW_ORPHAN|PRINTSTATS_SHOW_AOTCH|PRINTSTATS_SHOW_AOTTHUNK|PRINTSTATS_SHOW_AOTDATA|PRINTSTATS_SHOW_JCL|PRINTSTATS_SHOW_BYTEDATA)

@@ -1187,6 +1187,27 @@ typedef struct J9SharedDataDescriptor {
 #define J9SHRDATA_USE_READWRITE  8
 #define J9SHRDATA_NOT_INDEXED  16
 #define J9SHRDATA_SINGLE_STORE_FOR_KEY_TYPE  32
+#define J9SHRDATA_SINGLE_STORE_FOR_KEY_TYPE_OVERWRITE  64
+
+typedef struct J9SharedStartupHintsDataDescriptor {
+	UDATA flags;
+	UDATA heapSize1;
+	UDATA heapSize2;
+	UDATA unused1;
+	UDATA unused2;
+	UDATA unused3;
+	UDATA unused4;
+	UDATA unused5;
+	UDATA unused6;
+	UDATA unused7;
+	UDATA unused8;
+	UDATA unused9;
+} J9SharedStartupHintsDataDescriptor;
+
+typedef struct J9SharedLocalStartupHints {
+	U_64 localStartupHintFlags;
+	struct J9SharedStartupHintsDataDescriptor hintsData;
+} J9SharedLocalStartupHints;
 
 typedef struct J9SharedClassJavacoreDataDescriptor {
 	void* romClassStart;
@@ -1249,6 +1270,8 @@ typedef struct J9SharedClassJavacoreDataDescriptor {
 	IDATA corruptionCode;
 	UDATA corruptValue;
 	UDATA softMaxBytes;
+	UDATA numStartupHints;
+	UDATA startupHintBytes;
 } J9SharedClassJavacoreDataDescriptor;
 
 typedef struct J9SharedStringFarm {
@@ -1415,6 +1438,8 @@ typedef struct J9SharedClassConfig {
 	UDATA  ( *isBCIEnabled)(struct J9JavaVM *vm) ;
 	void  ( *freeClasspathData)(struct J9JavaVM *vm, void *cpData) ;
 	void  ( *jvmPhaseChange)(struct J9VMThread *currentThread, UDATA phase);
+	void  (*storeGCHints)(struct J9VMThread* currentThread, UDATA heapSize1, UDATA heapSize2, BOOLEAN forceReplace);
+	IDATA  (*findGCHints)(struct J9VMThread* currentThread, UDATA *heapSize1, UDATA *heapSize2);
 	struct J9MemorySegment* metadataMemorySegment;
 	struct J9Pool* classnameFilterPool;
 	U_32 softMaxBytes;
@@ -1422,6 +1447,7 @@ typedef struct J9SharedClassConfig {
 	I_32 maxAOT;
 	I_32 minJIT;
 	I_32 maxJIT;
+	struct J9SharedLocalStartupHints localStartupHints;
 } J9SharedClassConfig;
 
 typedef struct J9SharedClassPreinitConfig {
