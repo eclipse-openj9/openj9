@@ -171,7 +171,10 @@ J9::Compilation::Compilation(int32_t id,
    _skippedJProfilingBlock(false),
    _reloRuntime(reloRuntime)
    {
-   _symbolValidationManager = new (self()->region()) TR::SymbolValidationManager(self()->region(), compilee);
+   if (((TR_J9VMBase *)fe)->canUseSymbolValidationManager() || optimizationPlan->getIsAotLoad())
+      _symbolValidationManager = new (self()->region()) TR::SymbolValidationManager(self()->region(), compilee);
+   else
+      _symbolValidationManager = NULL;
 
    _aotClassClassPointer = NULL;
    _aotClassClassPointerInitialized = false;

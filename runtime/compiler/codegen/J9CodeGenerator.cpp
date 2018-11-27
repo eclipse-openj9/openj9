@@ -2842,20 +2842,23 @@ J9::CodeGenerator::processRelocations()
             }
          }
 
-      TR::SymbolValidationManager::SymbolValidationRecordList &validationRecords = self()->comp()->getSymbolValidationManager()->getValidationRecordList();
-      if (!validationRecords.empty() && self()->comp()->getOption(TR_UseSymbolValidationManager))
+      if (self()->comp()->getOption(TR_UseSymbolValidationManager))
          {
-         // Add the flags in TR_AOTMethodHeader on the compile run
-         J9JITDataCacheHeader *aotMethodHeader = (J9JITDataCacheHeader *)self()->comp()->getAotMethodDataStart();
-         TR_AOTMethodHeader *aotMethodHeaderEntry = (TR_AOTMethodHeader *)(aotMethodHeader + 1);
-         aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_UsesSymbolValidationManager;
-
-         for (auto it = validationRecords.begin(); it != validationRecords.end(); it++)
+         TR::SymbolValidationManager::SymbolValidationRecordList &validationRecords = self()->comp()->getSymbolValidationManager()->getValidationRecordList();
+         if (!validationRecords.empty())
             {
-            self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(NULL,
-                                                                             (uint8_t *)(*it),
-                                                                             (*it)->_kind, self()),
-                                                                             __FILE__, __LINE__, NULL);
+            // Add the flags in TR_AOTMethodHeader on the compile run
+            J9JITDataCacheHeader *aotMethodHeader = (J9JITDataCacheHeader *)self()->comp()->getAotMethodDataStart();
+            TR_AOTMethodHeader *aotMethodHeaderEntry = (TR_AOTMethodHeader *)(aotMethodHeader + 1);
+            aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_UsesSymbolValidationManager;
+
+            for (auto it = validationRecords.begin(); it != validationRecords.end(); it++)
+               {
+               self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(NULL,
+                                                                                (uint8_t *)(*it),
+                                                                                (*it)->_kind, self()),
+                                                                                __FILE__, __LINE__, NULL);
+               }
             }
          }
 
