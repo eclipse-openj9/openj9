@@ -171,7 +171,9 @@ TR_CallSite* TR_CallSite::create(TR::TreeTop* callNodeTreeTop,
                               callNode->getOpCode().isCallIndirect(),
                               calleeSymbol->isInterface(),
                               callNode->getByteCodeInfo(),
-                              comp);
+                              comp,
+                              depth,
+                              allConsts);
          }
       else
          {
@@ -192,7 +194,9 @@ TR_CallSite* TR_CallSite::create(TR::TreeTop* callNodeTreeTop,
                      callNode->getOpCode().isCallIndirect(),
                      calleeSymbol->isInterface(),
                      callNode->getByteCodeInfo(),
-                     comp) ;
+                     comp,
+                     depth,
+                     allConsts) ;
             }
 
          if (calleeSymbol->getResolvedMethodSymbol() && calleeSymbol->getResolvedMethodSymbol()->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact)
@@ -210,7 +214,9 @@ TR_CallSite* TR_CallSite::create(TR::TreeTop* callNodeTreeTop,
                   callNode->getOpCode().isCallIndirect(),
                   calleeSymbol->isInterface(),
                   callNode->getByteCodeInfo(),
-                  comp) ;
+                  comp,
+                  depth,
+                  allConsts) ;
             }
 
          return new (trMemory, kind) TR_J9VirtualCallSite  (lCaller,
@@ -226,7 +232,9 @@ TR_CallSite* TR_CallSite::create(TR::TreeTop* callNodeTreeTop,
                               callNode->getOpCode().isCallIndirect(),
                               calleeSymbol->isInterface(),
                               callNode->getByteCodeInfo(),
-                              comp) ;
+                              comp,
+                              depth,
+                              allConsts) ;
 
          }
       }
@@ -236,7 +244,7 @@ TR_CallSite* TR_CallSite::create(TR::TreeTop* callNodeTreeTop,
                               parent,
                               callNode,
                               calleeSymbol->getMethod(),
-                              receiverClass,
+                              resolvedMethod && !resolvedMethod->isStatic() ? receiverClass : NULL,
                               (int32_t)symRef->getOffset(),
                               symRef->getCPIndex(),
                               resolvedMethod,
@@ -244,7 +252,9 @@ TR_CallSite* TR_CallSite::create(TR::TreeTop* callNodeTreeTop,
                               callNode->getOpCode().isCallIndirect(),
                               calleeSymbol->isInterface(),
                               callNode->getByteCodeInfo(),
-                              comp) ;
+                              comp,
+                              depth,
+                              allConsts) ;
 
    }
 

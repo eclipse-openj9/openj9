@@ -5655,12 +5655,6 @@ TR_J9ByteCodeIlGenerator::chopPlaceholder(TR::Node *placeholder, int32_t firstCh
 bool
 TR_J9ByteCodeIlGenerator::runMacro(TR::SymbolReference * symRef)
    {
-   if (comp()->isPeekingMethod())
-      {
-      // Not safe to run ILGen macros when peeking
-      return false;
-      }
-
    // Give FE first kick at the can
    //
    if (runFEMacro(symRef))
