@@ -1430,7 +1430,6 @@ static VMINLINE void*
 old_slow_jitResolveFieldImpl(J9VMThread *currentThread, UDATA parmCount, J9ConstantPool *ramConstantPool, UDATA cpIndex, void *jitEIP, bool isSetter, bool direct)
 {
 	void *addr = NULL;
-retry:
 	J9RAMFieldRef *ramFieldRef = (J9RAMFieldRef*)ramConstantPool + cpIndex;
 	UDATA valueOffset = ramFieldRef->valueOffset;
 	UDATA flags = ramFieldRef->flags;
@@ -1454,7 +1453,7 @@ retry:
 		if (NULL != addr) {
 			goto done;
 		}
-		goto retry;
+		valueOffset = ramFieldRef->valueOffset;
 	}
 	valueOffset += J9_OBJECT_HEADER_SIZE;
 	JIT_RETURN_UDATA(valueOffset);
