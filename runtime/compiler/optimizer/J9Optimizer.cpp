@@ -81,8 +81,8 @@ static const OptimizationStrategy J9EarlyGlobalOpts[] =
    {
    { OMR::stringBuilderTransformer             },
    { OMR::stringPeepholes                      }, // need stringpeepholes to catch bigdecimal patterns
-   { OMR::methodHandleInvokeInliningGroup,  OMR::IfMethodHandleInvokes },
    { OMR::inlining                             },
+   { OMR::methodHandleInvokeInliningGroup,  OMR::IfMethodHandleInvokes },
    { OMR::osrGuardInsertion,                OMR::IfVoluntaryOSR       },
    { OMR::osrExceptionEdgeRemoval                       }, // most inlining is done by now
    { OMR::jProfilingBlock                      },
@@ -297,8 +297,8 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::coldBlockOutlining                                                    },
    { OMR::stringBuilderTransformer                                              },
    { OMR::stringPeepholes                                                       }, // need stringpeepholes to catch bigdecimal patterns
-   { OMR::methodHandleInvokeInliningGroup,                OMR::IfMethodHandleInvokes },
    { OMR::inlining                                                              },
+   { OMR::methodHandleInvokeInliningGroup,                OMR::IfMethodHandleInvokes },
    { OMR::osrGuardInsertion,                         OMR::IfVoluntaryOSR       },
    { OMR::osrExceptionEdgeRemoval                       }, // most inlining is done by now
    { OMR::jProfilingBlock                                                       },
@@ -639,8 +639,8 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::coldBlockOutlining                                                    },
    { OMR::stringBuilderTransformer                                              },
    { OMR::stringPeepholes                                                       }, // need stringpeepholes to catch bigdecimal patterns
-   { OMR::methodHandleInvokeInliningGroup,           OMR::IfMethodHandleInvokes      },
    { OMR::inlining                                                              },
+   { OMR::methodHandleInvokeInliningGroup,           OMR::IfMethodHandleInvokes      },
    { OMR::osrGuardInsertion,                         OMR::IfVoluntaryOSR       },
    { OMR::osrExceptionEdgeRemoval                                               }, // most inlining is done by now
    { OMR::jProfilingBlock                                                       },
