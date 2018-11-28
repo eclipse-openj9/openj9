@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2012 IBM Corp. and others
+ * Copyright (c) 2018, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,69 +19,110 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-/*
- * Created on Sep 23, 2005
- *
- * To change the template for this generated file go to
- * Window>Preferences>Java>Code Generation>Code and Comments
- */
 package j9vm.test.clinit;
 
-public class PutStaticDuringClinit extends Thread {
-	public boolean started = false;
-	public boolean initialized = false;
-	public String error = null;
-	
-	public static PutStaticDuringClinit instance = new PutStaticDuringClinit();
-	
-	static {
-		
-		new Thread(instance).start();
-		
-		try {
-			synchronized (instance) {
-				while (instance.started == false) {
-					instance.wait();
-				}
-			}
-			Thread.sleep(5000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		instance.initialized = true;
-	}
-	
-	public void run() {
-		synchronized (this) {
-			started = true;
-			notifyAll();
-		}
-		
-		if (initialized) {
-			error = "Class was already initialized before putstatic was reached";
-			return;
-		}
-		
-		// use the putstatic bytecode
-		instance = this;
-		
-		if (!initialized) {
-			error = "Class was not initialized after putstatic was executed";
-			return;
-		}
+// Only methods named jit* need to be JIT-compiled for the test to fail on bad VMs,
+// i.e. "-Xjit:count=0,limit={*.jit*}"
 
+class PutStaticTestHelper {
+	public static String i;
+
+	static {
+		// Cause jitWrite to be compiled during <clinit>
+		PutStaticDuringClinit.jitWrite("value");
+		Object lock = PutStaticDuringClinit.lock;
+		synchronized(lock) {
+			PutStaticDuringClinit.runBlocker = true;
+			lock.notifyAll();
+		}
+		for (int i = 0; i < 100000; ++i) {
+			try {
+				Thread.sleep(1000000);
+			} catch(InterruptedException e) {
+			}
+		}
+	}
+}
+
+public class PutStaticDuringClinit {
+	public static Object lock = new Object();
+	public static boolean runBlocker = false;
+	public static boolean threadsReady = false;
+	public static boolean passed = true;
+
+	public static void jitWrite(String x) {
+		// https://github.com/eclipse/openj9/pull/2794
+		// The write to the static field causes jitResolveClassFromStaticField to be called on
+		// certain GC policies. On older VMs, this caused the CP entry to be resolved, meaning
+		// the call to jitResolveStaticField succeeds without the class init check.
+		PutStaticTestHelper.i = x;
 	}
 
 	public static void test() {
-		try {
-			instance.join();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+		Thread initializer = new Thread() {
+			public void run() {
+				// Initialize helper class
+				try {
+					Class.forName("j9vm.test.clinit.PutStaticTestHelper");
+				} catch(ClassNotFoundException t) {
+					passed = false;
+					throw new RuntimeException(t);
+				}
+			}
+		};
+		Thread blocker = new Thread() {
+			public void run() {
+				synchronized(lock) {
+					while (!runBlocker) {
+						try {
+							lock.wait();
+						} catch(InterruptedException e) {
+						}
+					}
+					threadsReady = true;
+					lock.notifyAll();
+				}
+				jitWrite("whatever");
+				// <clinit> for PutStaticTestHelper never returns, so if execution reaches
+				// here, the VM has allowed an invalid putstatic.
+				passed = false;
+			}
+		};
+		initializer.start();
+		blocker.start();
+		// Wait until the blocker is about to attempt the putstatic
+		synchronized(lock) {
+			while (!threadsReady) {
+				try {
+					lock.wait();
+				} catch(InterruptedException e) {
+				}
+			}
 		}
-		if (instance.error != null) {
-			System.out.println(instance.error);
-			throw new RuntimeException(instance.error);
+		// 5 seconds should be enough time for the blocker to perform the putstatic
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		}
+		initializer.stop();
+		blocker.stop();
+		try {
+			initializer.join(); 
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		}
+		try {
+			blocker.join(); 
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		}
+		if (!passed) {
+			throw new RuntimeException("TEST FAILED");
 		}
 	}
-	
+
+	public static void main(String[] args) {
+		PutStaticDuringClinit.test();
+	}
 }
