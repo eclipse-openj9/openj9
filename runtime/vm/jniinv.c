@@ -543,8 +543,8 @@ protectedDetachCurrentThread(J9PortLibrary* portLibrary, void * userData)
 jint JNICALL DetachCurrentThread(JavaVM * javaVM)
 {
 	J9JavaVM * vm = ((J9InvocationJavaVM *)javaVM)->j9vm;
-	J9VMThread * vmThread;
-	UDATA result;
+	J9VMThread * vmThread = NULL;
+	UDATA result = 0;
 	PORT_ACCESS_FROM_PORT(vm->portLibrary);
 
 	/* we should return here to avoid the detaching operations after the destroy call to avoid
