@@ -226,6 +226,10 @@ error:
 
 #ifdef J9VM_PROF_EVENT_REPORTING
 	if (env) {
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+		enterVMFromJNI(env);
+		releaseVMAccess(env);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 		TRIGGER_J9HOOK_VM_SHUTTING_DOWN(vm->hookInterface, env, result);
 	}
 #endif /* J9VM_PROF_EVENT_REPORTING */
