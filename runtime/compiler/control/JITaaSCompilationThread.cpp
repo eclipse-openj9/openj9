@@ -113,6 +113,7 @@ void handler_IProfiler_profilingSample(JITaaS::J9ClientStream *client, TR_J9VM *
    bool isCompiled = TR::CompilationInfo::isCompiled((J9Method*)method);
    bool isInProgress = comp->getMethodBeingCompiled()->getPersistentIdentifier() == method;
    bool wholeMethodInfo = (isCompiled || isInProgress) && (data == 0);
+   bool abort = false;
 
    if (!iProfiler)
       {
@@ -123,9 +124,9 @@ void handler_IProfiler_profilingSample(JITaaS::J9ClientStream *client, TR_J9VM *
    if (wholeMethodInfo)
       {
       // Serialize all the information related to this method
-      iProfiler->serializeAndSendIProfileInfoForMethod(method, comp, client);
+      abort = iProfiler->serializeAndSendIProfileInfoForMethod(method, comp, client);
       }
-   else  // Send information just for this entry
+   if (!wholeMethodInfo || abort) // Send information just for this entry
       {
       auto entry = iProfiler->profilingSample(method, bcIndex, comp, data, false);
       if (entry && !entry->isInvalid())
@@ -138,11 +139,11 @@ void handler_IProfiler_profilingSample(JITaaS::J9ClientStream *client, TR_J9VM *
             auto storage = (TR_IPBCDataStorageHeader*)&entryBytes[0];
             uintptrj_t methodStartAddress = (uintptrj_t)TR::Compiler->mtd.bytecodeStart(method);
             entry->serialize(methodStartAddress, storage, comp->getPersistentInfo());
-            client->write(entryBytes, wholeMethodInfo);
+            client->write(entryBytes, false);
             }
          else
             {
-            client->write(std::string(), wholeMethodInfo);
+            client->write(std::string(), false);
             }
          // unlock the entry
          if (auto callGraphEntry = entry->asIPBCDataCallGraph())
@@ -151,7 +152,7 @@ void handler_IProfiler_profilingSample(JITaaS::J9ClientStream *client, TR_J9VM *
          }
       else // no valid info for specified bytecode index
          {
-         client->write(std::string(), wholeMethodInfo);
+         client->write(std::string(), false);
          }
       }
    }
