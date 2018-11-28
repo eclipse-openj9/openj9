@@ -51,15 +51,15 @@ def parse_variables_file(){
 * Fetch the user provided variable file.
 */
 def get_variables_file() {
-    VARIABLE_FILE = params.VARIABLE_FILE
-    VENDOR_BRANCH = params.VENDOR_BRANCH
-    VENDOR_REPO = params.VENDOR_REPO
-    VENDOR_CREDENTIALS_ID = params.VENDOR_CREDENTIALS_ID
+    VARIABLE_FILE = (params.VARIABLE_FILE) ? params.VARIABLE_FILE : ""
+    echo "VARIABLE_FILE:'${VARIABLE_FILE}'"
+    VENDOR_REPO = (params.VENDOR_REPO) ? params.VENDOR_REPO : ""
+    echo "VENDOR_REPO:'${VENDOR_REPO}'"
+    VENDOR_BRANCH = (params.VENDOR_BRANCH) ? params.VENDOR_BRANCH : ""
+    echo "VENDOR_BRANCH:'${VENDOR_BRANCH}'"
+    VENDOR_CREDENTIALS_ID = (params.VENDOR_CREDENTIALS_ID) ? params.VENDOR_CREDENTIALS_ID : ""
+    echo "VENDOR_CREDENTIALS_ID:'${VENDOR_CREDENTIALS_ID}'"
     if (VARIABLE_FILE && VENDOR_REPO && VENDOR_BRANCH) {
-        echo "VARIABLE_FILE:${VARIABLE_FILE}"
-        echo "VENDOR_REPO:${VENDOR_REPO}"
-        echo "VENDOR_BRANCH:${VENDOR_BRANCH}"
-        echo "VENDOR_CREDENTIALS_ID:${VENDOR_CREDENTIALS_ID}"
         if (VENDOR_CREDENTIALS_ID) {
             sshagent(credentials:[VENDOR_CREDENTIALS_ID]) {
                 checkout_file()
@@ -675,12 +675,19 @@ def set_build_identifier() {
     if (!BUILD_IDENTIFIER) {
         BUILD_IDENTIFIER = ''
         if (params.ghprbPullId && params.ghprbGhRepository) {
+            // If Pull Request build
             BUILD_IDENTIFIER = params.ghprbGhRepository + '#' + params.ghprbPullId
+        } else if (PERSONAL_BUILD) {
+            // If Personal build
+            wrap([$class: 'BuildUser']) {
+                BUILD_IDENTIFIER = "${BUILD_USER_EMAIL}"
+            }
+        } else {
+            echo "WARNING: Can't determine appropriate BUILD_DENTIFIER automatically. Please add it as a build parameter if you would like it set."
         }
     }
     if (BUILD_IDENTIFIER) {
-        def TMP_DESC = (currentBuild.description) ? currentBuild.description + "<br>" : ""
-        currentBuild.description = TMP_DESC + BUILD_IDENTIFIER
+        currentBuild.displayName = "#${BUILD_NUMBER} - ${BUILD_IDENTIFIER}"
     }
 }
 
