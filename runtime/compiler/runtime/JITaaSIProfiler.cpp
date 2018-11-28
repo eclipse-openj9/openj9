@@ -178,14 +178,21 @@ TR_JITaaSIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
       return nullptr; // Server should not create any samples
 
    ClientSessionData *clientSessionData = comp->fej9()->_compInfoPT->getClientData();
+   auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) comp->fej9()->_compInfoPT;
    TR_IPBytecodeHashTableEntry *entry = nullptr;
 
    // Check the cache first, if allowed
    //
    if (_useCaching)
       {
+      // first, check persistent cache
       bool methodInfoPresent = false;
       entry = clientSessionData->getCachedIProfilerInfo(method, byteCodeIndex, &methodInfoPresent);
+      if (!methodInfoPresent)
+         {
+         // if no entry in persistent cache, check per-compilation cache
+         entry = compInfoPT->getCachedIProfilerInfo(method, byteCodeIndex, &methodInfoPresent);
+         }
       if (methodInfoPresent)
          {
          _statsIProfilerInfoFromCache++;
@@ -194,9 +201,10 @@ TR_JITaaSIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
          // Ask the client again and see if the two sources of information match
          auto stream = TR::CompilationInfo::getStream();
          stream->write(JITaaS::J9ServerMessageType::IProfiler_profilingSample, method, byteCodeIndex, (uintptrj_t)1);
-         auto recv = stream->read<std::string, bool>();
+         auto recv = stream->read<std::string, bool, bool>();
          const std::string ipdata = std::get<0>(recv);
          bool wholeMethod = std::get<1>(recv); // indicates whether the client has sent info for entire method
+         bool usePersistentCache = std::get<2>(recv);
          TR_ASSERT(!wholeMethod, "Client should not have sent whole method info");
          uintptrj_t methodStart = TR::Compiler->mtd.bytecodeStart(method);
          TR_IPBCDataStorageHeader *clientData = ipdata.empty() ? nullptr : (TR_IPBCDataStorageHeader *) &ipdata[0];
@@ -213,13 +221,15 @@ TR_JITaaSIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
          return entry; // could be NULL
          }
       }
+   
    // Now ask the client
    //
    auto stream = TR::CompilationInfo::getStream();
    stream->write(JITaaS::J9ServerMessageType::IProfiler_profilingSample, method, byteCodeIndex, (uintptrj_t)(_useCaching ? 0 : 1));
-   auto recv = stream->read<std::string, bool>();
+   auto recv = stream->read<std::string, bool, bool>();
    const std::string ipdata = std::get<0>(recv);
    bool wholeMethod = std::get<1>(recv); // indicates whether the client sent info for entire method
+   bool usePersistentCache = std::get<2>(recv); // indicates whether info can be saved in persistent memory, or only in heap memory
    _statsIProfilerInfoMsgToClient++;
 
    bool doCache = _useCaching && wholeMethod;
@@ -233,8 +243,10 @@ TR_JITaaSIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
          {
          // cache some empty data so that we don't ask again for this method
          // this method contains empty data
-         if (!clientSessionData->cacheIProfilerInfo(method, byteCodeIndex, nullptr))
-            _statsIProfilerInfoCachingFailures++;
+         if (usePersistentCache && !clientSessionData->cacheIProfilerInfo(method, byteCodeIndex, nullptr))
+               _statsIProfilerInfoCachingFailures++;
+         else if (!usePersistentCache && !compInfoPT->cacheIProfilerInfo(method, byteCodeIndex, nullptr))   
+               _statsIProfilerInfoCachingFailures++;
          }
       return nullptr;
       }
@@ -249,7 +261,10 @@ TR_JITaaSIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
       do {
          storage = (TR_IPBCDataStorageHeader *)bufferPtr;
          // allocate a new entry of the specified type
-         entry = ipBytecodeHashTableEntryFactory(storage, methodStart+storage->pc, comp->trMemory(), persistentAlloc);
+         if (usePersistentCache)
+            entry = ipBytecodeHashTableEntryFactory(storage, methodStart+storage->pc, comp->trMemory(), persistentAlloc);
+         else
+            entry = ipBytecodeHashTableEntryFactory(storage, methodStart+storage->pc, comp->trMemory(), heapAlloc);
          if (entry)
             {
             // fill the new entry with data sent by client
@@ -268,12 +283,18 @@ TR_JITaaSIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
                if ((*pc == JBinvokeinterface2) && (*(pc + 2) == JBinvokeinterface)) // FIXME: must test the length of the method
                   bci += 2;
                }
-            if (!clientSessionData->cacheIProfilerInfo(method, bci, entry))
+            if (usePersistentCache && !clientSessionData->cacheIProfilerInfo(method, bci, entry))
                {
                // If caching failed we must delete the entry allocated with persistent memory
                _statsIProfilerInfoCachingFailures++;
                jitPersistentFree(entry);
                // should we break here or keep going?
+               }
+            else if (!usePersistentCache && !compInfoPT->cacheIProfilerInfo(method, bci, entry))
+               {
+               // If caching failed delete the entry allocated with heap memory
+               _statsIProfilerInfoCachingFailures++;
+               comp->trMemory()->freeMemory(entry, heapAlloc);
                }
             }
          else
@@ -286,7 +307,10 @@ TR_JITaaSIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
          } while (storage->left != 0);
       // Now that all the entries are added to the cache, search the cache
       bool methodInfoPresent = false;
-      entry = clientSessionData->getCachedIProfilerInfo(method, byteCodeIndex, &methodInfoPresent);
+      if (usePersistentCache)
+         entry = clientSessionData->getCachedIProfilerInfo(method, byteCodeIndex, &methodInfoPresent);
+      else
+         entry = compInfoPT->getCachedIProfilerInfo(method, byteCodeIndex, &methodInfoPresent);
       } 
    else // No caching
       {
@@ -495,7 +519,7 @@ TR_JITaaSClientIProfiler::serializeIProfilerMethodEntries(uintptrj_t *pcEntries,
 
 // Code executed at the client to serialize IProfiler info for an entire method
 bool
-TR_JITaaSClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock*method, TR::Compilation *comp, JITaaS::J9ClientStream *client)
+TR_JITaaSClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock*method, TR::Compilation *comp, JITaaS::J9ClientStream *client, bool usePersistentCache)
    {
    TR::StackMemoryRegion stackMemoryRegion(*comp->trMemory());
    uint32_t numEntries = 0;
@@ -524,11 +548,11 @@ TR_JITaaSClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodB
          intptrj_t writtenBytes = serializeIProfilerMethodEntries(pcEntries, numEntries, (uintptr_t)&buffer[0], methodStart);
          TR_ASSERT(writtenBytes == bytesFootprint, "BST doesn't match expected footprint");
          // send the information to the server
-         client->write(buffer, true);
+         client->write(buffer, true, usePersistentCache);
          }
       else if (!numEntries && !abort)// Empty IProfiler data for this method
          {
-         client->write(std::string(), true);
+         client->write(std::string(), true, usePersistentCache);
          }
 
       // release any entry that has been locked by us
@@ -663,57 +687,47 @@ TR_JITaaSIProfiler::setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, 
       {
       OMR::CriticalSection getRemoteROMClass(clientData->getROMMapMonitor());
       auto & j9methodMap = clientData->getJ9MethodMap();
-      auto it = j9methodMap.find((J9Method*)method);
-      if (it != j9methodMap.end())
+      bool methodInfoPresentInPersistent = false, methodInfoPresentInHeap = false;
+      auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) TR::compInfoPT;
+      // Check persistent cache first, then per-compilation cache
+      TR_IPBytecodeHashTableEntry *entry = clientData->getCachedIProfilerInfo(method, bcIndex, &methodInfoPresentInPersistent);
+      if (!methodInfoPresentInPersistent)
+         compInfoPT->getCachedIProfilerInfo(method, bcIndex, &methodInfoPresentInHeap);
+
+      // Note that methodInfoPresent means that a profiled method is in the map of (J9Method *) to (IPTable_t *),
+      // it does not mean that an entry for a profiled bcIndex is cached.
+      if (methodInfoPresentInPersistent || methodInfoPresentInHeap)
          {
-         IPTable_t *iProfilerMap = it->second._IPData;
-         if (iProfilerMap)
+         if (entry && entry->asIPBCDataCallGraph())
             {
-            // Search for my entry, and if it exists, update the count
             // These types on entries are special, they may not have a j9class
             // pointer in the first slot, but they should have a weight
-            auto iter = iProfilerMap->find((uint32_t)bcIndex);
-            if (iter != iProfilerMap->end())
+            CallSiteProfileInfo *csInfo = entry->asIPBCDataCallGraph()->getCGData();
+            TR_ASSERT(csInfo->_weight[0] != 0, "weigth of first slot must be non-zero for direct calls");
+            if (csInfo->_weight[0] != count)
                {
-               TR_IPBytecodeHashTableEntry *entry = iter->second;
-               if (entry && entry->asIPBCDataCallGraph())
-                  {
-                  CallSiteProfileInfo *csInfo = entry->asIPBCDataCallGraph()->getCGData();
-                  TR_ASSERT(csInfo->_weight[0] != 0, "weigth of first slot must be non-zero for direct calls");
-                  if (csInfo->_weight[0] != count)
-                     {
-                     csInfo->_weight[0] = count; // update
-                     sendRemoteMessage = true;
-                     }
-                  else
-                     {
-                     // Nothing to do because the correct data is already in place
-                     }
-                  }
-               else
-                  {
-                  // This situation is really unexpected because the entry must exist
-                  // and at this index only a IPBCDataCallGraph can be present
-                  TR_ASSERT(false, "Wrong IPInfo");
-                  }
+               csInfo->_weight[0] = count; // update
+               sendRemoteMessage = true;
                }
             else
                {
-               // Info for this bcIndex is missing. 
-               // Create a new entry, add it to the cache and send a remote message as well
-               uintptrj_t methodStart = TR::Compiler->mtd.bytecodeStart(method);
-               TR_IPBCDataCallGraph *entry = new TR_IPBCDataCallGraph(methodStart + bcIndex);
-               CallSiteProfileInfo *csInfo = entry->getCGData();
-               csInfo->_weight[0] = count;
-               // TODO: we should probably add some class as well
-               clientData->cacheIProfilerInfo(method, bcIndex, entry);
-               sendRemoteMessage = true;
+               // Nothing to do because the correct data is already in place
                }
             }
          else
             {
-            // The server never asked for IProfiler info for this method
-            // Just send a remote setCallCount() to the client
+            // Info for this bcIndex is missing. 
+            // Create a new entry, add it to the cache and send a remote message as well
+            uintptrj_t methodStart = TR::Compiler->mtd.bytecodeStart(method);
+            TR_IPBCDataCallGraph *entry = new TR_IPBCDataCallGraph(methodStart + bcIndex);
+            CallSiteProfileInfo *csInfo = entry->getCGData();
+            csInfo->_weight[0] = count;
+            // TODO: we should probably add some class as well
+            if (methodInfoPresentInPersistent)
+               clientData->cacheIProfilerInfo(method, bcIndex, entry);
+            else
+               compInfoPT->cacheIProfilerInfo(method, bcIndex, entry);
+
             sendRemoteMessage = true;
             }
          }
