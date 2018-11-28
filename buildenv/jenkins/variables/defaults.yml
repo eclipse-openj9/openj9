@@ -75,8 +75,8 @@ restart_timeout:
 #========================================#
 linux_ppc-64_cmprssptrs_le:
   boot_jdk:
-    8: '/usr/lib/jvm/java-7-openjdk-ppc64el'
-    9: '/usr/lib/jvm/adoptojdk-java-ppc64le-80'
+    8: '/usr/lib/jvm/adoptojdk-java-80'
+    9: '/usr/lib/jvm/adoptojdk-java-80'
     10: '/usr/lib/jvm/adoptojdk-java-ppc64le-90'
     11: '/usr/lib/jvm/adoptojdk-java-10'
     next: '/usr/lib/jvm/adoptojdk-java-10'
