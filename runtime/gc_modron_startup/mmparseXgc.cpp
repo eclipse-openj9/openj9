@@ -200,11 +200,6 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 	
-	if(try_scan(scan_start, "debugLOAResize")) {
-		extensions->debugLOAResize = true;
-		goto _exit;
-	}
-	
 	if(try_scan(scan_start, "debugLOAFreelist")) {
 		extensions->debugLOAFreelist = true;
 		goto _exit;
