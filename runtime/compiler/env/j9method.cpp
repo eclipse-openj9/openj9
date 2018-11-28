@@ -61,17 +61,13 @@
 #include "ilgen/J9ByteCodeIlGenerator.hpp"
 #include "runtime/IProfiler.hpp"
 #include "ras/DebugCounter.hpp"
+#include "env/JSR292Methods.h"
 
 #if defined(_MSC_VER)
 #include <malloc.h>
 #endif
 
 #define J9VMBYTECODES
-
-#define JSR292_MethodHandle         "java/lang/invoke/MethodHandle"
-#define JSR292_invokeExact          "invokeExact"
-#define JSR292_invokeExactSig       "([Ljava/lang/Object;)Ljava/lang/Object;"
-#define JSR292_ArgumentMoverHandle  "java/lang/invoke/ArgumentMoverHandle"
 
 
 static TR::DataType J9ToTRMap[] =
@@ -7621,7 +7617,6 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          // Generate an invokeHandle using a symref with the proper return type
          //
-         push(methodHandleExpression); // genInvokeHandle needs this on top of stack
          TR_ResolvedMethod  *invokeExactMacro = symRef->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod();
          TR::SymbolReference *invokeExact = comp()->getSymRefTab()->methodSymRefFromName(_methodSymbol, JSR292_MethodHandle, JSR292_invokeExact, JSR292_invokeExactSig, TR::MethodSymbol::ComputedVirtual);
          TR::SymbolReference *invokeExactWithSig = symRefWithArtificialSignature(
@@ -7629,7 +7624,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             "(.*).?",
             invokeExactMacro->signatureChars(), 1, // skip explicit MethodHandle argument -- the real invokeExact has it as a receiver
             returnType);
-         TR::Node *invokeExactCall = genInvokeHandle(invokeExactWithSig);
+         TR::Node *invokeExactCall = genILGenMacroInvokeExact(invokeExactWithSig);
 
          // Edit the call opcode
          //
@@ -8420,8 +8415,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                   nextSignature, argumentIndex
                   );
 
-               push(receiverHandle);
-               genInvokeHandle(invokeExactWithSig);
+               genILGenMacroInvokeExact(invokeExactWithSig);
 
                // Replace placeholder child with the filtered child
                //

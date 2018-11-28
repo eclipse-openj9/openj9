@@ -51,6 +51,7 @@
 #include "optimizer/Optimization.hpp"          // for Optimization
 #include "optimizer/Optimization_inlines.hpp"  // for trace()
 #include "optimizer/J9TransformUtil.hpp"       // for calculateElementAddress
+#include "env/JSR292Methods.h"
 
 // All VarHandle Access methods
 /*
@@ -76,13 +77,6 @@ addAndGet
 */
 #define VarHandleParmLength 28
 #define VarHandleParam "Ljava/lang/invoke/VarHandle;"
-#define JSR292_MethodHandle   "java/lang/invoke/MethodHandle"
-#define JSR292_asType              "asType"
-#define JSR292_asTypeSig           "(Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;"
-#define JSR292_invokeExactTargetAddress    "invokeExactTargetAddress"
-#define JSR292_invokeExactTargetAddressSig "()J"
-#define JSR292_invokeExact    "invokeExact"
-#define JSR292_invokeExactSig "([Ljava/lang/Object;)Ljava/lang/Object;"
 
 
 struct X

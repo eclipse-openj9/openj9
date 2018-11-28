@@ -44,6 +44,7 @@
 #include "ilgen/J9ByteCode.hpp"
 #include "ilgen/J9ByteCodeIlGenerator.hpp"
 #include "infra/Bit.hpp"               //for trailingZeroes
+#include "env/JSR292Methods.h"
 
 #define BDCLASSLEN 20
 #define BDCLASS "java/math/BigDecimal"
@@ -1427,18 +1428,12 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
          case J9BCinvokestatic:         genInvokeStatic(next2Bytes());         _bcIndex += 3; break;
          case J9BCinvokeinterface:      genInvokeInterface(next2Bytes());      _bcIndex += 3; break;
          case J9BCinvokedynamic:
-            if (comp()->getOption(TR_EnableOSR) && !comp()->isPeekingMethod() && !comp()->getOption(TR_FullSpeedDebug))
-               _methodSymbol->setCannotAttemptOSR(_bcIndex);
             genInvokeDynamic(next2Bytes());
             _bcIndex += 3; break; // Could eventually need next3bytes
          case J9BCinvokehandle:
-            if (comp()->getOption(TR_EnableOSR) && !comp()->isPeekingMethod() && !comp()->getOption(TR_FullSpeedDebug))
-               _methodSymbol->setCannotAttemptOSR(_bcIndex);
             genInvokeHandle(next2Bytes());
             _bcIndex += 3; break;
          case J9BCinvokehandlegeneric:
-            if (comp()->getOption(TR_EnableOSR) && !comp()->isPeekingMethod() && !comp()->getOption(TR_FullSpeedDebug))
-               _methodSymbol->setCannotAttemptOSR(_bcIndex);
             genInvokeHandleGeneric(next2Bytes());
             _bcIndex += 3; break;
          case J9BCinvokespecialsplit:   genInvokeSpecial(next2Bytes() | J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG);   _bcIndex += 3; break;
@@ -4039,7 +4034,7 @@ TR_J9ByteCodeIlGenerator::genInvokeDynamic(int32_t callSiteIndex)
    // Compute the receiver handle
    //
    loadFromCallSiteTable(callSiteIndex);
-   TR::Node *receiver = top();
+   TR::Node *receiver = pop();
 
    if (comp()->getOption(TR_TraceILGen))
       printStack(comp(), _stack, "(Stack after load from callsite table)");
@@ -4054,19 +4049,11 @@ TR_J9ByteCodeIlGenerator::genInvokeDynamic(int32_t callSiteIndex)
          symRef = symRefTab()->findOrCreateMethodSymbol(_methodSymbol->getResolvedMethodIndex(), -1, specimen, TR::MethodSymbol::ComputedVirtual);
       }
 
-   if (comp()->getOption(TR_TraceILGen))
-      printStack(comp(), _stack, "(Stack before genInvokeHandle)");
-
-   if (comp()->getOption(TR_EnableMHCustomizationLogicCalls))
-      {
-      dup();
-      TR::SymbolReference *doCustomizationLogic = comp()->getSymRefTab()->methodSymRefFromName(_methodSymbol, JSR292_MethodHandle, "doCustomizationLogic", "()V", TR::MethodSymbol::Special);
-      genInvokeDirect(doCustomizationLogic);
-      }
-
    // Emit the call
    //
-   genInvokeHandle(symRef, receiver);
+   TR::Node* callNode = genInvokeHandle(symRef, receiver);
+
+   _invokeDynamicCalls->set(_bcIndex);
    }
 
 TR::Node *
@@ -4079,32 +4066,16 @@ TR_J9ByteCodeIlGenerator::genInvokeHandle(int32_t cpIndex)
 
    if (comp()->getOption(TR_FullSpeedDebug) && !isPeekingMethod())
       comp()->failCompilation<J9::FSDHasInvokeHandle>("FSD_HAS_INVOKEHANDLE 1");
-   // Locate the receiver handle
-   //
+
    TR::SymbolReference * invokeExactSymRef = symRefTab()->findOrCreateHandleMethodSymbol(_methodSymbol, cpIndex);
-   TR::Node *receiverHandle = getReceiverFor(invokeExactSymRef);
-
-   // Emit the MethodType check
-   //
-   if (fej9()->hasMethodTypesSideTable())
-      loadFromMethodTypeTable(cpIndex);
-   else
-      loadFromCP(TR::NoType, cpIndex);
-
-   TR::Node *callSiteType = pop();
-   genHandleTypeCheck(receiverHandle, callSiteType);
-
-   if (comp()->getOption(TR_EnableMHCustomizationLogicCalls))
-      {
-      push(receiverHandle);
-      TR::SymbolReference *doCustomizationLogic = comp()->getSymRefTab()->methodSymRefFromName(_methodSymbol, JSR292_MethodHandle, "doCustomizationLogic", "()V", TR::MethodSymbol::Special);
-      genInvokeDirect(doCustomizationLogic);
-      }
 
    // Emit the call
    //
-   push(receiverHandle);
-   return genInvokeHandle(invokeExactSymRef);
+   TR::Node* callNode = genInvokeHandle(invokeExactSymRef);
+
+   _invokeHandleCalls->set(_bcIndex);
+
+   return callNode;
    }
 
 TR::Node *
@@ -4113,11 +4084,11 @@ TR_J9ByteCodeIlGenerator::genInvokeHandle(TR::SymbolReference *invokeExactSymRef
    if (comp()->getOption(TR_TraceILGen))
       printStack(comp(), _stack, "(Stack before genInvokeHandle)");
 
-   TR::SymbolReference *invokeExactTargetAddress = comp()->getSymRefTab()->methodSymRefFromName(_methodSymbol, JSR292_MethodHandle, JSR292_invokeExactTargetAddress, JSR292_invokeExactTargetAddressSig, TR::MethodSymbol::Special);
-   genInvokeDirect(invokeExactTargetAddress);
-   TR::Node *callNode = genInvoke(invokeExactSymRef, pop(), invokedynamicReceiver);
+   TR::Node* tmpTargetAddress = TR::Node::lconst(0);
+   TR::Node *callNode = genInvoke(invokeExactSymRef, tmpTargetAddress, invokedynamicReceiver);
    _methodSymbol->setMayHaveIndirectCalls(true);
    _methodSymbol->setHasMethodHandleInvokes(true);
+
    if (!isPeekingMethod())
       {
       if (!comp()->getHasMethodHandleInvoke())
@@ -4132,6 +4103,20 @@ TR_J9ByteCodeIlGenerator::genInvokeHandle(TR::SymbolReference *invokeExactSymRef
          TR_VerboseLog::writeLineLocked(TR_Vlog_MHD, "Call to invokeExact%.*s from %s", callee->signatureLength(), callee->signatureChars(), comp()->signature());
          }
       }
+
+   _methodHandleInvokeCalls->set(_bcIndex);
+   return callNode;
+   }
+
+TR::Node *
+TR_J9ByteCodeIlGenerator::genILGenMacroInvokeExact(TR::SymbolReference *invokeExactSymRef)
+   {
+   TR_ASSERT(!comp()->compileRelocatableCode(), "Does not support ILGenMacro under AOT bci %d", _bcIndex);
+   TR_ASSERT(!comp()->getOption(TR_FullSpeedDebug) || isPeekingMethod(), "Does not support ILGenMacro under FSD bci %d", _bcIndex);
+   TR::Node* callNode = genInvokeHandle(invokeExactSymRef);
+
+   _ilGenMacroInvokeExactCalls->set(_bcIndex);
+
    return callNode;
    }
 
@@ -4160,46 +4145,16 @@ TR_J9ByteCodeIlGenerator::genInvokeHandleGeneric(int32_t cpIndex)
       comp()->failCompilation<J9::FSDHasInvokeHandle>("FSD_HAS_INVOKEHANDLE 2");
 
    TR::SymbolReference * invokeGenericSymRef = symRefTab()->findOrCreateHandleMethodSymbol(_methodSymbol, cpIndex);
-   TR::SymbolReference * methodTypeSymRef;
-   if (fej9()->hasMethodTypesSideTable())
-      methodTypeSymRef = symRefTab()->findOrCreateMethodTypeTableEntrySymbol(_methodSymbol, cpIndex);
-   else
-      methodTypeSymRef = symRefTab()->findOrCreateMethodTypeSymbol(_methodSymbol, cpIndex);
-
-   return genInvokeHandleGeneric(invokeGenericSymRef, methodTypeSymRef);
-   }
-
-TR::Node *
-TR_J9ByteCodeIlGenerator::genInvokeHandleGeneric(TR::SymbolReference *invokeGenericSymRef, TR::SymbolReference *methodTypeSymRef)
-   {
-   if (comp()->getOption(TR_TraceILGen))
-      printStack(comp(), _stack, "(Stack before genInvokeHandleGeneric)");
    TR_Method *invokeGeneric = invokeGenericSymRef->getSymbol()->castToMethodSymbol()->getMethod();
-
-   TR::Node *&receiver = _stack->element(_stack->topIndex() - invokeGeneric->numberOfExplicitParameters());
-   push(receiver);
-   loadSymbol(TR::aload, methodTypeSymRef);
-   genTreeTop(top());
-   TR::SymbolReference *typeConversion = comp()->getSymRefTab()->methodSymRefFromName(_methodSymbol, JSR292_MethodHandle, JSR292_asType, JSR292_asTypeSig, TR::MethodSymbol::Static);
-   if (comp()->getOption(TR_TraceILGen))
-      printStack(comp(), _stack, "(Stack before genTypeConversion in invokeHandleGeneric)");
-   genInvokeDirect(typeConversion);
-   receiver = _stack->top(); // put converted receiver where original receiver was
-   if (comp()->getOption(TR_TraceILGen))
-      printStack(comp(), _stack, "(Stack after genTypeConversion in invokeHandleGeneric)");
-
-   if (comp()->getOption(TR_EnableMHCustomizationLogicCalls))
-      {
-      dup();
-      TR::SymbolReference *doCustomizationLogic = comp()->getSymRefTab()->methodSymRefFromName(_methodSymbol, JSR292_MethodHandle, "doCustomizationLogic", "()V", TR::MethodSymbol::Special);
-      genInvokeDirect(doCustomizationLogic);
-      }
-
    TR::SymbolReference *invokeExactOriginal = symRefTab()->methodSymRefFromName(_methodSymbol,
       JSR292_MethodHandle, JSR292_invokeExact, JSR292_invokeExactSig, TR::MethodSymbol::ComputedVirtual, invokeGenericSymRef->getCPIndex());
    TR::SymbolReference *invokeExactSymRef = symRefTab()->methodSymRefWithSignature(
       invokeExactOriginal, invokeGeneric->signatureChars(), invokeGeneric->signatureLength());
-   return genInvokeHandle(invokeExactSymRef);
+
+   TR::Node* callNode = genInvokeHandle(invokeExactSymRef);
+
+   _invokeHandleGenericCalls->set(_bcIndex);
+   return callNode;
    }
 
 TR::Node*
@@ -5754,14 +5709,13 @@ TR_J9ByteCodeIlGenerator::runMacro(TR::SymbolReference * symRef)
          {
          if (!comp()->compileRelocatableCode())
             {
-            push(_stack->element(_stack->size() - archetypeParmCount)); // dup receiver
             TR_ResolvedMethod  *invokeExactMacro = symRef->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod();
             TR::SymbolReference *invokeExact = comp()->getSymRefTab()->methodSymRefFromName(_methodSymbol, JSR292_MethodHandle, JSR292_invokeExact, JSR292_invokeExactSig, TR::MethodSymbol::ComputedVirtual);
             TR::SymbolReference *invokeExactWithSig = symRefWithArtificialSignature(invokeExact,
                "(.*).$",
                invokeExactMacro->signatureChars(), 1, // skip explicit MethodHandle argument -- invokeExact has it as a receiver
                invokeExactMacro->signatureChars());
-            genInvokeHandle(invokeExactWithSig);
+            genILGenMacroInvokeExact(invokeExactWithSig);
             }
          return true;
          }
@@ -6643,20 +6597,6 @@ TR_J9ByteCodeIlGenerator::loadFromCallSiteTable(int32_t callSiteIndex)
    if (!symRef->isUnresolved())
       {
       if (_methodSymbol->getResolvedMethod()->callSiteTableEntryAddress(callSiteIndex))
-         load->setIsNonNull(true);
-      else
-         load->setIsNull(true);
-      }
-   }
-
-void
-TR_J9ByteCodeIlGenerator::loadFromMethodTypeTable(int32_t cpIndex)
-   {
-   TR::SymbolReference *symRef = symRefTab()->findOrCreateMethodTypeTableEntrySymbol(_methodSymbol, cpIndex);
-   TR::Node *load = loadSymbol(TR::aload, symRef);
-   if (!symRef->isUnresolved())
-      {
-      if (_methodSymbol->getResolvedMethod()->methodTypeTableEntryAddress(cpIndex))
          load->setIsNonNull(true);
       else
          load->setIsNull(true);

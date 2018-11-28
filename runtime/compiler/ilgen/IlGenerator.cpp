@@ -39,6 +39,7 @@
 #include "optimizer/BoolArrayStoreTransformer.hpp"
 #include "ras/DebugCounter.hpp"
 #include "optimizer/TransformUtil.hpp"
+#include "env/JSR292Methods.h"
 
 #define OPT_DETAILS "O^O ILGEN: "
 
@@ -62,7 +63,12 @@ TR_J9ByteCodeIlGenerator::TR_J9ByteCodeIlGenerator(
      _invokeSpecialInterfaceCalls(NULL),
      _invokeSpecialSeen(false),
      _couldOSRAtNextBC(false),
-     _processedOSRNodes(NULL)
+     _processedOSRNodes(NULL),
+     _invokeHandleCalls(NULL),
+     _invokeHandleGenericCalls(NULL),
+     _invokeDynamicCalls(NULL),
+     _ilGenMacroInvokeExactCalls(NULL),
+     _methodHandleInvokeCalls(NULL)
    {
    static const char *noLookahead = feGetEnv("TR_noLookahead");
    _noLookahead = (noLookahead || comp->getOption(TR_DisableLookahead)) ? true : false;
@@ -349,6 +355,15 @@ TR_J9ByteCodeIlGenerator::genILFromByteCodes()
    _staticFieldReferenceEncountered = false;
    _staticMethodInvokeEncountered = false;
 
+   // Allocate zero-length bit vectors before walker so that the bit vectors can grow on the right
+   // stack memory region
+   //
+   _methodHandleInvokeCalls = new (trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc, growable);
+   _invokeHandleCalls = new (trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc, growable);
+   _invokeHandleGenericCalls = new (trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc, growable);
+   _invokeDynamicCalls = new (trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc, growable);
+   _ilGenMacroInvokeExactCalls = new (trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc, growable);
+
    TR::Block * lastBlock = walker(0);
 
    if (hasExceptionHandlers())
@@ -483,6 +498,7 @@ TR_J9ByteCodeIlGenerator::genILFromByteCodes()
    TR_ScratchList<TR::TreeTop> unresolvedInstanceofTops(comp()->trMemory());
    TR_ScratchList<TR::TreeTop> invokeSpecialInterfaceTops(comp()->trMemory());
    TR::NodeChecklist evaluatedInvokeSpecialCalls(comp());
+   TR::NodeChecklist evaluatedMethodHandleInvokeCalls(comp());
    TR_BoolArrayStoreTransformer::NodeSet bstoreiUnknownArrayTypeNodes(std::less<TR::Node *>(), comp()->trMemory()->currentStackRegion());
    TR_BoolArrayStoreTransformer::NodeSet bstoreiBoolArrayTypeNodes(std::less<TR::Node *>(), comp()->trMemory()->currentStackRegion());
    TR_BoolArrayStoreTransformer boolArrayStoreTransformer(&bstoreiUnknownArrayTypeNodes, &bstoreiBoolArrayTypeNodes);
@@ -491,6 +507,17 @@ TR_J9ByteCodeIlGenerator::genILFromByteCodes()
       {
       TR::Node *currNode = currTree->getNode();
       TR::ILOpCode opcode = currNode->getOpCode();
+
+      if (currNode->getNumChildren() >= 1
+          && currNode->getFirstChild()->getOpCode().isCall()
+          && !currNode->getFirstChild()->getSymbol()->castToMethodSymbol()->isHelper()
+          && _methodHandleInvokeCalls->isSet(currNode->getFirstChild()->getByteCodeIndex())
+          && !evaluatedMethodHandleInvokeCalls.contains(currNode->getFirstChild()))
+         {
+         expandMethodHandleInvokeCall(currTree);
+         evaluatedMethodHandleInvokeCalls.add(currNode->getFirstChild());
+         continue;
+         }
 
       if ((opcode.isStoreDirect() && opcode.hasSymbolReference() && currNode->getSymbolReference()->getSymbol()->isAutoOrParm()) ||
           opcode.isCheckCast())
@@ -2893,5 +2920,407 @@ void TR_J9ByteCodeIlGenerator::separateNullCheck(TR::TreeTop *tree)
             symRefTab()->findOrCreateResolveCheckSymbolRef(_methodSymbol));
          TR::Node::recreate(nullCheck, TR::ResolveCHK);
          break;
+      }
+   }
+
+TR::Node*
+TR_J9ByteCodeIlGenerator::loadFromMethodTypeTable(TR::Node* methodHandleInvokeCall)
+   {
+   int32_t cpIndex = next2Bytes();
+   TR::SymbolReference *symRef = symRefTab()->findOrCreateMethodTypeTableEntrySymbol(_methodSymbol, cpIndex);
+   TR::Node *methodType = TR::Node::createWithSymRef(methodHandleInvokeCall, TR::aload, 0, symRef);
+   if (!symRef->isUnresolved())
+      {
+      if (_methodSymbol->getResolvedMethod()->methodTypeTableEntryAddress(cpIndex))
+         methodType->setIsNonNull(true);
+      else
+         methodType->setIsNull(true);
+      }
+
+   return methodType;
+   }
+
+
+TR::Node*
+TR_J9ByteCodeIlGenerator::loadCallSiteMethodTypeFromCP(TR::Node* methodHandleInvokeCall)
+   {
+   int32_t cpIndex = next2Bytes();
+   TR_ASSERT(method()->isMethodTypeConstant(cpIndex), "Address-type CP entry %d must be methodType", cpIndex);
+   TR::SymbolReference *symRef = symRefTab()->findOrCreateMethodTypeSymbol(_methodSymbol, cpIndex);
+   TR::Node* methodType = TR::Node::createWithSymRef(methodHandleInvokeCall, TR::aload, 0, symRef);
+   return methodType;
+   }
+
+TR::Node*
+TR_J9ByteCodeIlGenerator::loadCallSiteMethodType(TR::Node* methodHandleInvokeCall)
+   {
+   if (fej9()->hasMethodTypesSideTable())
+      return loadFromMethodTypeTable(methodHandleInvokeCall);
+   else
+      return loadCallSiteMethodTypeFromCP(methodHandleInvokeCall);
+   }
+
+void TR_J9ByteCodeIlGenerator::insertCustomizationLogicTreeIfEnabled(TR::TreeTop* tree, TR::Node* methodHandle)
+   {
+   if (comp()->getOption(TR_EnableMHCustomizationLogicCalls))
+      {
+      TR::SymbolReference *doCustomizationLogic = comp()->getSymRefTab()->methodSymRefFromName(_methodSymbol, JSR292_MethodHandle, "doCustomizationLogic", "()V", TR::MethodSymbol::Special);
+      TR::Node* customization = TR::Node::createWithSymRef(TR::call, 1, 1, methodHandle, doCustomizationLogic);
+      customization->getByteCodeInfo().setDoNotProfile(true);
+      tree->insertBefore(TR::TreeTop::create(comp(), TR::Node::create(TR::treetop, 1, customization)));
+
+      if (comp()->getOption(TR_TraceILGen))
+         {
+         traceMsg(comp(), "Inserted call to doCustomizationLogic n%dn %p\n", customization->getGlobalIndex(), customization);
+         }
+      }
+   }
+
+/** \brief
+ *     Expand a MethodHandle.invokeExact call generated from invokeHandle
+ *
+ *     Transforms the following tree
+ *
+   @verbatim
+     ... NULLCHK
+     n1n   xcalli MethodHandle.invokeExact
+     n2n     lconst 0
+     n3n     $receiver
+             ...args
+   @endverbatim
+ *
+ * into
+ *
+   @verbatim
+     ... NULLCHK
+     ...   PassThrough
+     n3n     $receiver
+     ... acall MethodHandle.getType
+            ==>$receiver
+     ... ZEROCHK
+            acmpeq
+               $callSiteMethodType
+               ==>acall MethodHandle.getType
+     ... lcall MethodHandle.invokeExactTargetAddress
+             ==>$receiver
+     n1n xcalli MethodHandle.invokeExact
+           ==>lcall MethodHandle.invokeExactTargetAddress
+           ==>$receiver
+             ...args
+   @endverbatim
+ *
+ *  \param tree
+ *     Tree of the invokeHandle call.
+ *
+ *  \note
+ *     A call to doCustomizationLogic will be inserted if customization
+ *     logic is enabled for invocations outside of thunk archetype.
+ */
+void TR_J9ByteCodeIlGenerator::expandInvokeHandle(TR::TreeTop *tree)
+   {
+   TR_ASSERT(!comp()->compileRelocatableCode(), "in expandInvokeHandle under AOT\n");
+
+   if (comp()->getOption(TR_TraceILGen))
+      {
+      traceMsg(comp(), "expanding invokehandle at n%dn\n", tree->getNode()->getGlobalIndex());
+      }
+
+   TR::Node * callNode = tree->getNode()->getChild(0);
+   TR::Node * receiverHandle = callNode->getArgument(0);
+   callNode->getByteCodeInfo().setDoNotProfile(true);
+
+   separateNullCheck(tree);
+
+   TR::SymbolReference *getTypeSymRef = comp()->getSymRefTab()->methodSymRefFromName(_methodSymbol, JSR292_MethodHandle, JSR292_getType, JSR292_getTypeSig, TR::MethodSymbol::Special); // TODO:JSR292: Too bad I can't do a more general lookup and let it optimize itself.  Virtual call doesn't seem to work
+   TR::Node* handleType = TR::Node::createWithSymRef(callNode, TR::acall, 1, receiverHandle, getTypeSymRef);
+   handleType->getByteCodeInfo().setDoNotProfile(true);
+   tree->insertBefore(TR::TreeTop::create(comp(), TR::Node::create(callNode, TR::treetop, 1, handleType)));
+
+   if (comp()->getOption(TR_TraceILGen))
+      {
+      traceMsg(comp(), "Inserted getType call n%dn %p\n", handleType->getGlobalIndex(), handleType);
+      }
+
+
+   TR::Node* callSiteMethodType = loadCallSiteMethodType(callNode);
+
+   if (callSiteMethodType->getSymbolReference()->isUnresolved())
+      {
+      TR::Node *resolveChkOnMethodType = TR::Node::createWithSymRef(callNode, TR::ResolveCHK, 1, callSiteMethodType, comp()->getSymRefTab()->findOrCreateResolveCheckSymbolRef(_methodSymbol));
+      tree->insertBefore(TR::TreeTop::create(comp(), resolveChkOnMethodType));
+      }
+
+   // Generate zerochk
+   TR::Node* zerochkNode = TR::Node::createWithSymRef(callNode, TR::ZEROCHK, 1,
+                                                      TR::Node::create(callNode, TR::acmpeq, 2, callSiteMethodType, handleType),
+                                                      symRefTab()->findOrCreateMethodTypeCheckSymbolRef(_methodSymbol));
+   tree->insertBefore(TR::TreeTop::create(comp(), zerochkNode));
+
+   if (comp()->getOption(TR_TraceILGen))
+      {
+      traceMsg(comp(), "Inserted ZEROCHK n%dn %p\n", zerochkNode->getGlobalIndex(), zerochkNode);
+      }
+
+   insertCustomizationLogicTreeIfEnabled(tree, receiverHandle);
+
+   expandInvokeExact(tree);
+   }
+
+/** \brief
+ *     Expand a MethodHandle.invokeExact call generated from invokeDynamic.
+ *
+ *     Transforms the following tree
+ *
+   @verbatim
+     ... NULLCHK
+     n1n   xcalli MethodHandle.invokeExact
+     n2n     lconst 0
+     n3n     $receiver
+             ...args
+   @endverbatim
+ *
+ * into
+ *
+   @verbatim
+     ... NULLCHK
+     ...   PassThrough
+     n3n     $receiver
+     ... lcall MethodHandle.invokeExactTargetAddress
+             ==>$receiver
+     n1n xcalli MethodHandle.invokeExact
+           ==>lcall MethodHandle.invokeExactTargetAddress
+           ==>$receiver
+             ...args
+   @endverbatim
+ *
+ *  \param tree
+ *     Tree of the invokeExact call.
+ *
+ *  \note
+ *     A call to doCustomizationLogic will be inserted if customization
+ *     logic is enabled for invocations outside of thunk archetype.
+ */
+void TR_J9ByteCodeIlGenerator::expandInvokeDynamic(TR::TreeTop *tree)
+   {
+   TR_ASSERT(!comp()->compileRelocatableCode(), "in expandInvokeDynamic under AOT\n");
+
+   if (comp()->getOption(TR_TraceILGen))
+      {
+      traceMsg(comp(), "expanding invokeDynamic at n%dn\n", tree->getNode()->getGlobalIndex());
+      }
+
+   TR::Node * callNode = tree->getNode()->getChild(0);
+   TR::Node * receiverHandle = callNode->getArgument(0);
+   callNode->getByteCodeInfo().setDoNotProfile(true);
+
+   separateNullCheck(tree);
+   insertCustomizationLogicTreeIfEnabled(tree, receiverHandle);
+   expandInvokeExact(tree);
+   }
+
+/** \brief
+ *     Expand a MethodHandle.invokeExact call generated from invokeHandleGeneric.
+ *
+ *     Transforms the following tree
+ *
+   @verbatim
+     ... NULLCHK
+     n1n   xcalli MethodHandle.invokeExact
+     n2n     lconst 0
+     n3n     $receiver
+             ...args
+   @endverbatim
+ *
+ * into
+ *
+   @verbatim
+     ... NULLCHK
+     ...   PassThrough
+     n3n     $receiver
+     ... acall MethodHandle.asType
+             ==>$receiver
+     ...     $callSiteMethodType
+     ... lcall MethodHandle.invokeExactTargetAddress
+             ==>acall MethodHandle.asType
+     n1n xcalli MethodHandle.invokeExact
+           ==>lcall MethodHandle.invokeExactTargetAddress
+           ==>acall MethodHandle.asType
+             ...args
+   @endverbatim
+ *
+ *  \param tree
+ *     Tree of the invokeExact call.
+ *
+ *  \note
+ *     A call to doCustomizationLogic will be inserted if customization
+ *     logic is enabled for invocations outside of thunk archetype.
+ *
+ */
+void TR_J9ByteCodeIlGenerator::expandInvokeHandleGeneric(TR::TreeTop *tree)
+   {
+   TR_ASSERT(!comp()->compileRelocatableCode(), "in expandInvokeHandleGeneric under AOT\n");
+
+   if (comp()->getOption(TR_TraceILGen))
+      {
+      traceMsg(comp(), "expanding invokeHandleGeneric at n%dn\n", tree->getNode()->getGlobalIndex());
+      }
+
+   TR::Node * callNode = tree->getNode()->getChild(0);
+   TR::Node * receiverHandle = callNode->getArgument(0);
+   callNode->getByteCodeInfo().setDoNotProfile(true);
+
+   separateNullCheck(tree);
+
+   TR::Node* callSiteMethodType = loadCallSiteMethodType(callNode);
+   if (callSiteMethodType->getSymbolReference()->isUnresolved())
+      {
+      TR::Node *resolveChkOnMethodType = TR::Node::createWithSymRef(callNode, TR::ResolveCHK, 1, callSiteMethodType, comp()->getSymRefTab()->findOrCreateResolveCheckSymbolRef(_methodSymbol));
+      tree->insertBefore(TR::TreeTop::create(comp(), resolveChkOnMethodType));
+      }
+
+   TR::SymbolReference *typeConversionSymRef = comp()->getSymRefTab()->methodSymRefFromName(_methodSymbol, JSR292_MethodHandle, JSR292_asType, JSR292_asTypeSig, TR::MethodSymbol::Static);
+   TR::Node* asType = TR::Node::createWithSymRef(callNode, TR::acall, 2, typeConversionSymRef);
+   asType->setAndIncChild(0, receiverHandle);
+   asType->setAndIncChild(1, callSiteMethodType);
+   asType->getByteCodeInfo().setDoNotProfile(true);
+   tree->insertBefore(TR::TreeTop::create(comp(), TR::Node::create(callNode, TR::treetop, 1, asType)));
+
+   if (comp()->getOption(TR_TraceILGen))
+      {
+      traceMsg(comp(), "Inserted asType call n%dn %p\n", asType->getGlobalIndex(), asType);
+      }
+
+   int32_t receiverChildIndex = callNode->getFirstArgumentIndex();
+   callNode->setAndIncChild(receiverChildIndex, asType);
+   receiverHandle->recursivelyDecReferenceCount();
+
+   insertCustomizationLogicTreeIfEnabled(tree, asType);
+
+   expandInvokeExact(tree);
+   }
+
+/** \brief
+ *     Expand a MethodHandle.invokeExact call.
+ *
+ *     Transforms the following tree
+ *
+   @verbatim
+     ... NULLCHK
+     n1n   xcalli MethodHandle.invokeExact
+     n2n     lconst 0
+     n3n     $receiver
+             ...args
+   @endverbatim
+ *
+ * into
+ *
+   @verbatim
+     ... NULLCHK
+     ...   PassThrough
+     n3n     $receiver
+     ... lcall MethodHandle.invokeExactTargetAddress
+             ==>$receiver
+     n1n xcalli MethodHandle.invokeExact
+           ==>lcall MethodHandle.invokeExactTargetAddress
+           ==>$receiver
+             ...args
+   @endverbatim
+ *
+ *  \param tree
+ *     Tree of the invokeExact call.
+ */
+void TR_J9ByteCodeIlGenerator::expandInvokeExact(TR::TreeTop *tree)
+   {
+   TR_ASSERT(!comp()->compileRelocatableCode(), "in expandInvokeExact under AOT\n");
+
+   if (comp()->getOption(TR_TraceILGen))
+      {
+      traceMsg(comp(), "expanding invokeExact at n%dn\n", tree->getNode()->getGlobalIndex());
+      }
+
+   TR::Node * callNode = tree->getNode()->getChild(0);
+   TR::Node * receiverHandle = callNode->getArgument(0);
+   callNode->getByteCodeInfo().setDoNotProfile(true);
+
+   separateNullCheck(tree);
+
+   // Get the method address
+   TR::SymbolReference *invokeExactTargetAddrSymRef = comp()->getSymRefTab()->methodSymRefFromName(_methodSymbol, JSR292_MethodHandle, JSR292_invokeExactTargetAddress, JSR292_invokeExactTargetAddressSig, TR::MethodSymbol::Special);
+   TR::Node *invokeExactTargetAddr = TR::Node::createWithSymRef(callNode, TR::lcall, 1, receiverHandle, invokeExactTargetAddrSymRef);
+   invokeExactTargetAddr->getByteCodeInfo().setDoNotProfile(true);
+   tree->insertBefore(TR::TreeTop::create(comp(), TR::Node::create(callNode, TR::treetop, 1, invokeExactTargetAddr)));
+
+   if (comp()->getOption(TR_TraceILGen))
+      {
+      traceMsg(comp(), "Replacing first child n%dn with invoke exact thunk address n%dn\n", callNode->getFirstChild()->getGlobalIndex(), invokeExactTargetAddr->getGlobalIndex());
+      }
+
+   // Replace the `lconst 0` node with the actual thunk address
+   TR::Node *lnode = callNode->getFirstChild();
+   callNode->setAndIncChild(0, invokeExactTargetAddr);
+   lnode->decReferenceCount();
+   }
+
+/** \brief
+ *     Expand MethodHandle.invokeExact calls generated from different bytecodes.
+ *
+ *  \param tree
+ *     Tree of the invokeExact call.
+ */
+void TR_J9ByteCodeIlGenerator::expandMethodHandleInvokeCall(TR::TreeTop *tree)
+   {
+   TR::Node *ttNode = tree->getNode();
+   TR::Node* callNode = ttNode->getFirstChild();
+   TR::TreeTop* prevTree = tree->getPrevTreeTop();
+   TR::TreeTop* nextTree = tree->getNextTreeTop();
+
+   if (comp()->getOption(TR_TraceILGen))
+      {
+      traceMsg(comp(), "Found MethodHandle invoke call n%dn %p to expand\n", callNode->getGlobalIndex(), callNode);
+      traceMsg(comp(), "   /--- Tree before expanding n%dn --------------------\n", callNode->getGlobalIndex());
+      comp()->getDebug()->printWithFixedPrefix(comp()->getOutFile(), ttNode, 1, true, true, "      ");
+      traceMsg(comp(), "\n");
+      }
+
+   int32_t oldBCIndex = _bcIndex;
+   _bcIndex = callNode->getByteCodeIndex();
+
+   if (_invokeHandleCalls &&
+       _invokeHandleCalls->isSet(_bcIndex))
+      {
+      expandInvokeHandle(tree);
+      }
+   else if (_invokeHandleGenericCalls &&
+            _invokeHandleGenericCalls->isSet(_bcIndex))
+      {
+      expandInvokeHandleGeneric(tree);
+      }
+   else if (_invokeDynamicCalls &&
+            _invokeDynamicCalls->isSet(_bcIndex))
+      {
+      expandInvokeDynamic(tree);
+      }
+   else if (_ilGenMacroInvokeExactCalls &&
+            _ilGenMacroInvokeExactCalls->isSet(_bcIndex))
+      {
+      expandInvokeExact(tree);
+      }
+   else
+      {
+      TR_ASSERT(comp(), "Unexpected MethodHandle invoke call at n%dn %p", callNode->getGlobalIndex(), callNode);
+      }
+
+   _bcIndex = oldBCIndex;
+
+   if (comp()->getOption(TR_TraceILGen))
+      {
+      traceMsg(comp(), "   /--- Trees after expanding n%dn --------------------\n", callNode->getGlobalIndex());
+      TR::TreeTop *tt = prevTree->getNextTreeTop();
+      do
+         {
+         comp()->getDebug()->printWithFixedPrefix(comp()->getOutFile(), tt->getNode(), 1, true, true, "      ");
+         traceMsg(comp(), "\n");
+         tt = tt->getNextTreeTop();
+         } while( tt != nextTree);
       }
    }
