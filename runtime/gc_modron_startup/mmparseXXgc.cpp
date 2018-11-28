@@ -785,6 +785,20 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 
 			continue;
 		}
+		if (try_scan(&scan_start, "aliasInhibitingThresholdPercentage=")) {
+			UDATA percentage = 0;
+			if(!scan_udata_helper(vm, &scan_start, &percentage, "aliasInhibitingThresholdPercentage=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if(percentage > 100) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			extensions->aliasInhibitingThresholdPercentage = ((double)percentage) / 100.0;
+
+			continue ;
+		}
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 		if (try_scan(&scan_start, "debugConcurrentScavengerPageAlignment")) {
