@@ -415,6 +415,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          vmInfo._canMethodEnterEventBeHooked = fe->canMethodEnterEventBeHooked();
          vmInfo._canMethodExitEventBeHooked = fe->canMethodExitEventBeHooked();
          vmInfo._usesDiscontiguousArraylets = TR::Compiler->om.usesDiscontiguousArraylets();
+         vmInfo._isIProfilerEnabled = fe->getIProfiler();
          vmInfo._arrayletLeafLogSize = TR::Compiler->om.arrayletLeafLogSize();
          vmInfo._arrayletLeafSize = TR::Compiler->om.arrayletLeafSize();
          vmInfo._overflowSafeAllocSize = static_cast<uint64_t>(fe->getOverflowSafeAllocSize());
