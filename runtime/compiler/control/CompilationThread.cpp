@@ -8655,11 +8655,6 @@ TR::CompilationInfoPerThreadBase::compile(
    try
       {
       InterruptibleOperation compilingMethodBody(*this);
-#if defined(J9VM_INTERP_PROFILING_BYTECODES)
-      TR_IProfiler *profiler = vm.getIProfiler();
-      if (profiler)
-         profiler->resetProfiler();
-#endif
 
       TR::IlGeneratorMethodDetails & details = _methodBeingCompiled->getMethodDetails();
       J9Method *method = details.getMethod();
