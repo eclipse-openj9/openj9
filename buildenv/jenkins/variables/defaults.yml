@@ -316,8 +316,8 @@ win_x86-64_cmprssptrs:
     8: '/cygdrive/c/openjdk/jdk7'
     9: '/cygdrive/c/openjdk/jdk8'
     10: '/cygdrive/c/openjdk/jdk9'
-    11: '/cygdrive/c/openjdk/jdk10'
-    next: '/cygdrive/c/openjdk/jdk10'
+    11: '/cygdrive/c/openjdk/jdk11'
+    next: '/cygdrive/c/openjdk/jdk11'
   release:
     8: 'windows-x86_64-normal-server-release'
     9: 'windows-x86_64-normal-server-release'
