@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -5855,6 +5855,9 @@ TR_J9ByteCodeIlGenerator::loadAuto(TR::DataType type, int32_t slot, bool isAdjun
 void
 TR_J9ByteCodeIlGenerator::loadInstance(int32_t cpIndex)
    {
+   if (_generateReadBarriersForFieldWatch && comp()->compileRelocatableCode())
+      comp()->failCompilation<J9::AOTNoSupportForOldAOTFailure>("NO support for old AOT in field watch");
+
    TR::SymbolReference * symRef = symRefTab()->findOrCreateShadowSymbol(_methodSymbol, cpIndex, false);
    TR::Symbol * symbol = symRef->getSymbol();
    TR::DataType type = symbol->getDataType();
@@ -5872,6 +5875,7 @@ TR_J9ByteCodeIlGenerator::loadInstance(int32_t cpIndex)
       }
 
    TR::Node * load, *dummyLoad;
+
    TR::ILOpCodes op = _generateReadBarriersForFieldWatch ? comp()->il.opCodeForIndirectReadBarrier(type): comp()->il.opCodeForIndirectLoad(type);
    dummyLoad = load = TR::Node::createWithSymRef(op, 1, 1, address, symRef);
 
@@ -5945,6 +5949,9 @@ TR_J9ByteCodeIlGenerator::loadInstance(int32_t cpIndex)
 void
 TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
    {
+   if (_generateReadBarriersForFieldWatch && comp()->compileRelocatableCode())
+      comp()->failCompilation<J9::AOTNoSupportForOldAOTFailure>("NO support for old AOT in field watch");
+
    _staticFieldReferenceEncountered = true;
    TR::SymbolReference * symRef = symRefTab()->findOrCreateStaticSymbol(_methodSymbol, cpIndex, false);
    if (comp()->getOption(TR_TraceILGen))
@@ -7213,6 +7220,9 @@ static bool storeCanBeRemovedForUnreadField(TR_PersistentFieldInfo * fieldInfo, 
 void
 TR_J9ByteCodeIlGenerator::storeInstance(int32_t cpIndex)
    {
+   if (_generateWriteBarriersForFieldWatch && comp()->compileRelocatableCode())
+      comp()->failCompilation<J9::AOTNoSupportForOldAOTFailure>("NO support for old AOT in field watch");
+
    TR::SymbolReference * symRef = symRefTab()->findOrCreateShadowSymbol(_methodSymbol, cpIndex, true);
    TR::Symbol * symbol = symRef->getSymbol();
    TR::DataType type = symbol->getDataType();
@@ -7350,6 +7360,9 @@ TR_J9ByteCodeIlGenerator::storeInstance(int32_t cpIndex)
 void
 TR_J9ByteCodeIlGenerator::storeStatic(int32_t cpIndex)
    {
+   if (_generateWriteBarriersForFieldWatch && comp()->compileRelocatableCode())
+      comp()->failCompilation<J9::AOTNoSupportForOldAOTFailure>("NO support for old AOT in field watch");
+
    _staticFieldReferenceEncountered = true;
    TR::Node * value = pop();
 

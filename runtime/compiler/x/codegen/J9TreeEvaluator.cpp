@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -12349,7 +12349,6 @@ void generateFillInDataBlockSequenceForUnresolvedField(TR::Node *node, J9Method*
 void generateReportFieldAccessOutlinedInstructions(TR::Node *node, TR::LabelSymbol *endLabel, TR::X86DataSnippet *dataSnippet, bool isWrite, TR::CodeGenerator *cg)
    {
    bool is64Bit = TR::Compiler->target.is64Bit();
-   bool isResolved = !node->getSymbolReference()->isUnresolved();
    bool isInstanceField = node->getSymbolReference()->getSymbol()->getKind() != TR::Symbol::IsStatic;
    J9Method *owningMethod = (J9Method *)getMethodFromBCInfo(node->getByteCodeInfo(), cg->comp());
 
@@ -12387,6 +12386,18 @@ void generateReportFieldAccessOutlinedInstructions(TR::Node *node, TR::LabelSymb
    int numArgs = 0;
    generateRegMemInstruction(LEARegMem(), node, dataBlockReg, generateX86MemoryReference(dataSnippet, cg), cg);
    dependencies = generateRegisterDependencyConditions((uint8_t)0, numOfConditions, cg);
+
+   if (cg->comp()->compileRelocatableCode())
+      {
+      TR::Register *owningMethodReg =  cg->allocateRegister();
+      TR_ExternalRelocationTargetKind reloKind = TR_MethodPointer;
+      if (is64Bit)
+         generateRegImm64Instruction(MOV8RegImm64, node, owningMethodReg, (uintptrj_t) owningMethod, cg, reloKind);
+      else
+         generateRegImmInstruction(MOV4RegImm4, node, owningMethodReg, (uintptrj_t) owningMethod, cg, reloKind);
+      generateMemRegInstruction(SMemReg(), node, generateX86MemoryReference(dataBlockReg, offsetof(J9JITWatchedStaticFieldData, method), cg), owningMethodReg, cg);
+      }
+
    if (is64Bit)
       {
       dependencies->addPostCondition(dataBlockReg, linkageProperties.getArgumentRegister(numArgs, false /* isFloat */), cg);
@@ -12438,7 +12449,7 @@ void directReadWriteBarrierHelperForFieldWatch(TR::Node *node, J9Method *owningM
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
    TR::SymbolReference *symRef = node->getSymbolReference();
    bool is64Bit = TR::Compiler->target.is64Bit();
-   bool isResolved = !node->getSymbolReference()->isUnresolved();
+   bool generateUnresolvedSequence = node->getSymbolReference()->isUnresolved() || cg->comp()->compileRelocatableCode();
 
    J9JITWatchedStaticFieldData staticFieldDataBlock;
 
@@ -12447,7 +12458,7 @@ void directReadWriteBarrierHelperForFieldWatch(TR::Node *node, J9Method *owningM
    staticFieldDataBlock.location = bcIndex;
 
    J9Class * fieldClass = NULL;
-   if (isResolved)
+   if (!generateUnresolvedSequence)
       {
       fieldClass = (J9Class *)symRef->getOwningMethod(comp)->getDeclaringClassFromFieldOrStatic(cg->comp(), symRef->getCPIndex());
       TR_ASSERT(fieldClass, "valid field class is expected for resolved field reference" POINTER_PRINTF_FORMAT, node);
@@ -12458,7 +12469,7 @@ void directReadWriteBarrierHelperForFieldWatch(TR::Node *node, J9Method *owningM
       staticFieldDataBlock.fieldAddress = (void *) -1;
    auto dataSnippet = cg->createDataSnippet(node, &staticFieldDataBlock, sizeof(J9JITWatchedStaticFieldData));
 
-   if (!isResolved)
+   if (generateUnresolvedSequence)
       generateFillInDataBlockSequenceForUnresolvedField(node, owningMethod, dataSnippet, isWrite, cg);
 
    /*
@@ -12474,19 +12485,20 @@ void directReadWriteBarrierHelperForFieldWatch(TR::Node *node, J9Method *owningM
    generateLabelInstruction(LABEL, node, startLabel, cg);
 
    TR::MemoryReference *classFlagsMemRef = NULL;
-   if (isResolved)
+   if (!generateUnresolvedSequence)
       classFlagsMemRef = generateX86MemoryReference((uintptrj_t)fieldClass + fej9->getOffsetOfClassFlags(), cg);
    else
       {
       TR::Register *fieldClassReg = cg->evaluate(isWrite ? node->getSecondChild()->getFirstChild(): node->getFirstChild());
       classFlagsMemRef = generateX86MemoryReference(fieldClassReg, fej9->getOffsetOfClassFlags(), cg);
       }
+
    TR_ASSERT(J9ClassHasWatchedFields >= SHRT_MIN  && J9ClassHasWatchedFields <= SHRT_MAX, "expect value of J9ClassHasWatchedFields to be with in 16 bits");
    generateMemImmInstruction(TEST2MemImm2, node, classFlagsMemRef, J9ClassHasWatchedFields, cg);
    generateLabelInstruction(JNE4, node, fieldReportLabel, cg);
 
    TR::RegisterDependencyConditions  *deps = NULL;
-   if (!isResolved)
+   if (generateUnresolvedSequence)
       {
       TR::Register *fieldClassReg = cg->evaluate(node->getFirstChild());
       deps = generateRegisterDependencyConditions(1, 1, cg);
@@ -12511,20 +12523,20 @@ void indirectReadWriteBarrierHelperForFieldWatch(TR::Node *node, J9Method *ownin
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
    TR::SymbolReference *symRef = node->getSymbolReference();
    bool is64Bit = TR::Compiler->target.is64Bit();
-   bool isResolved = !node->getSymbolReference()->isUnresolved();
+   bool generateUnresolvedSequence = node->getSymbolReference()->isUnresolved() || cg->comp()->compileRelocatableCode();
 
    J9JITWatchedInstanceFieldData instanceFieldDataBlock;
 
    //prepare data block
    instanceFieldDataBlock.method = owningMethod;
    instanceFieldDataBlock.location = bcIndex;
-   if (isResolved)
+   if (!generateUnresolvedSequence)
       instanceFieldDataBlock.offset = (UDATA) (node->getSymbolReference()->getOffset() - TR::Compiler->om.objectHeaderSizeInBytes());
    else
       instanceFieldDataBlock.offset = (UDATA) -1;
    auto dataSnippet = cg->createDataSnippet(node, &instanceFieldDataBlock, sizeof(J9JITWatchedInstanceFieldData));
 
-   if (!isResolved)
+   if (generateUnresolvedSequence)
       generateFillInDataBlockSequenceForUnresolvedField(node, owningMethod, dataSnippet, isWrite, cg);
 
    /*

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -78,6 +78,15 @@ class AOTRelocationFailed : public virtual RuntimeFailure
 class AOTSymbolValidationManagerFailure : public virtual TR::CompilationException
    {
    virtual const char* what() const throw() { return "AOT Symbol Validation Manager Failure"; }
+   };
+
+/**
+ * Thrown when certain code path would have worked under new AOT but not old AOT.
+ * This exception can be deleted when new AOT is completely enabled.
+ */
+class AOTNoSupportForOldAOTFailure : public virtual TR::CompilationException
+   {
+   virtual const char* what() const throw() { return "This code only works under new AOT"; }
    };
 
 }
