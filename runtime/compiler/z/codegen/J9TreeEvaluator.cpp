@@ -11457,7 +11457,7 @@ inlineConcurrentLinkedQueueTMPoll(
    if (useNonConstrainedTM || disableTMPoll)
       cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, failLabel, deps);
 
-   if (!TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() && usesCompressedrefs)
+   if (usesCompressedrefs)
       {
       generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, rQ, rQ);
 
