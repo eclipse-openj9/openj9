@@ -2753,7 +2753,38 @@ public class MethodHandles {
 		MethodHandle result = FilterArgumentsHandle.get(handle, startPosition, filters, newType);
 		return result;
 	}
-	
+
+/*[IF Java12]*/
+	/**
+	 * TODO
+	 */
+	static MethodHandle filterArgumentsWithCombiner(MethodHandle handle, int startPosition, MethodHandle preprocessor, int... argumentIndices) throws NullPointerException, IllegalArgumentException {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	/**
+	 * Produce a MethodHandle that preprocesses some of the arguments by calling the preprocessor handle.
+	 * 
+	 * If the preprocessor handle has a return type, it must be the same as the first argument type of the <i>handle</i>.
+	 * If the preprocessor returns void, it does not contribute the first argument to the <i>handle</i>.
+	 * In all cases, the preprocessor handle accepts a subset of the arguments for the handle.
+	 * 
+	 * @param handle - the handle to call after preprocessing
+	 * @param foldPosition - the starting position to fold arguments
+	 * @param preprocessor - a methodhandle that preprocesses some of the incoming arguments
+	 * @param argumentIndices - an array of indices of incoming arguments from the handle
+	 * @return a MethodHandle that preprocesses some of the arguments to the handle before calling the next handle, possibly with an additional first argument
+	 * @throws NullPointerException - if any of the arguments are null
+	 * @throws IllegalArgumentException - if the preprocessor's return type is not void and it differs from the first argument type of the handle,
+	 * 			or if the arguments taken by the preprocessor isn't a subset of the arguments to the handle
+	 * 			or if the element of argumentIndices is outside of the range of the handle's argument list
+	 * 			or if the arguments specified by argumentIndices from the handle doesn't exactly match the the arguments taken by the preprocessor
+	 */
+	static MethodHandle foldArgumentsWithCombiner(MethodHandle handle, int foldPosition, MethodHandle preprocessor, int... argumentIndices) throws NullPointerException, IllegalArgumentException {
+		return foldArguments(handle, foldPosition, preprocessor, argumentIndices);
+	}
+/*[ENDIF]*/
+
 	/**
 	 * Produce a MethodHandle that preprocesses some of the arguments by calling the preprocessor handle.
 	 * 
