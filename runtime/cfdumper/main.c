@@ -1437,12 +1437,22 @@ static void printDisassembledMethod(J9CfrClassFile* classfile, J9CfrMethod* meth
 			NEXT_U8_ENDIAN(bigEndian, bc, bcIndex);
 			if(wide)
 			{
-				j9tty_printf( PORTLIB, "%s ", sunJavaBCNames[bc]);
+				j9tty_printf( PORTLIB, "%s", sunJavaBCNames[bc]);
 			}
 			else
 			{
-				j9tty_printf( PORTLIB, "%5i %s ", pc, sunJavaBCNames[bc]);
+				j9tty_printf( PORTLIB, "%5i %s", pc, sunJavaBCNames[bc]);
 			}
+
+			if(0 == strcmp(sunJavaBCNames[bc], "JBunimplemented"))
+			{
+				j9tty_printf( PORTLIB, "_%d ", bc);
+			}
+			else
+			{
+				j9tty_printf( PORTLIB, " ", bc);
+			}
+
 			start = pc;
 			pc++;
 			switch(bc)
@@ -1660,6 +1670,9 @@ static void printDisassembledMethod(J9CfrClassFile* classfile, J9CfrMethod* meth
 				case CFR_BC_putstatic:
 				case CFR_BC_getfield:
 				case CFR_BC_putfield:
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				case CFR_BC_withfield:
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 					fieldFlag = TRUE;
 
 				case CFR_BC_invokevirtual:
@@ -1721,6 +1734,9 @@ static void printDisassembledMethod(J9CfrClassFile* classfile, J9CfrMethod* meth
 				case CFR_BC_anewarray:
 				case CFR_BC_checkcast:
 				case CFR_BC_instanceof:
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				case CFR_BC_defaultvalue:
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 					NEXT_U16_ENDIAN(bigEndian, index, bcIndex);
 					info = classfile->constantPool[index];
 					j9tty_printf( PORTLIB, "%i ", index);
@@ -6575,6 +6591,9 @@ static void j9_formatBytecodes(J9ROMClass* romClass, J9ROMMethod* method, U_8* b
 				case JBputstatic:
 				case JBgetfield:
 				case JBputfield:
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				case JBwithfield:
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 					j9_formatBytecode(romClass, method, bytecodes, bcIndex, bc, 3, CFR_DECODE_J9_FIELDREF, formatString, stringLength, flags);
 					pc += 2;
 					bcIndex += 3;
@@ -6597,6 +6616,9 @@ static void j9_formatBytecodes(J9ROMClass* romClass, J9ROMMethod* method, U_8* b
 				case JBanewarray:
 				case JBcheckcast:
 				case JBinstanceof:
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				case JBdefaultvalue:
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 					j9_formatBytecode(romClass, method, bytecodes, bcIndex, bc, 3, CFR_DECODE_J9_CLASSREF, formatString, stringLength, flags);
 					pc += 2;
 					bcIndex += 3;
