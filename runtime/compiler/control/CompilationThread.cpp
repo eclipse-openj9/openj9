@@ -601,7 +601,7 @@ void TR::CompilationInfo::freeCompilationInfo(J9JITConfig *jitConfig)
    TR::CompilationInfo * compilationRuntime = _compilationRuntime;
    _compilationRuntime = NULL;
    TR::RawAllocator rawAllocator(jitConfig->javaVM);
-   _compilationRuntime->~CompilationInfo();
+   compilationRuntime->~CompilationInfo();
    rawAllocator.deallocate(compilationRuntime);
    }
 
