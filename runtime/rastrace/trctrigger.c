@@ -453,22 +453,22 @@ processTriggerTpnidClause(OMR_VMThread *thr, char *clause, BOOLEAN atRuntime)
 {
 	OMRPORT_ACCESS_FROM_OMRVMTHREAD(thr);
 	omr_error_t rc = OMR_ERROR_NONE;
-	char *p;
-	int length;
-	const char *ptrName;
-	const char *ptrAction;
-	const char *ptrDelay;
-	const char *ptrMatch;
+	char *p = NULL;
+	int length = 0;
+	const char *ptrName = NULL;
+	const char *ptrAction = NULL;
+	const char *ptrDelay = NULL;
+	const char *ptrMatch = NULL;
 	char *ptrRangeStart = NULL;
 	char *ptrRangeEnd = NULL;
 	int32_t doneFirstParm = FALSE;
 	int tpidRangeStart = 0;
 	int tpidRangeEnd = 0;
-	uint32_t actionIndex;
+	uint32_t actionIndex = 0;
 	int delayCount = 0;
 	int matchCount = -1;
-	RasTriggerTpidRange *newTriggerRangeP;
-	char *compName;
+	RasTriggerTpidRange *newTriggerRangeP = NULL;
+	char *compName = NULL;
 
 	RAS_DBGOUT((stderr, "<RAS> Processing tpnid clause: \"%s\"\n", clause));
 
@@ -635,18 +635,18 @@ processTriggerGroupClause(OMR_VMThread *thr, char *clause, BOOLEAN atRuntime)
 	OMRPORT_ACCESS_FROM_OMRVMTHREAD(thr);
 	omr_error_t rc = OMR_ERROR_NONE;
 	int numParms = 0;
-	int length;
+	int length = 0;
 	unsigned int maxLength = 5;
-	const char *ptrGroupName;
-	const char *ptrAction;
-	const char *ptrDelay;
-	const char *ptrMatch;
-	uint32_t actionIndex;
+	const char *ptrGroupName = NULL;
+	const char *ptrAction = NULL;
+	const char *ptrDelay = NULL;
+	const char *ptrMatch = NULL;
+	uint32_t actionIndex = 0;
 	int delay = 0;
 	int match = -1;
-	char *p;
-	RasTriggerGroup *newTriggerGroupP;
-	char *copyOfNameP;
+	char *p = NULL;
+	RasTriggerGroup *newTriggerGroupP = NULL;
+	char *copyOfNameP = NULL;
 
 	RAS_DBGOUT((stderr, "<RAS> Processing GROUP clause: \"%s\"\n", clause));
 
