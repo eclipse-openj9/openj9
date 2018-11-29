@@ -54,7 +54,6 @@ public class ValueTypeTests {
 	static MethodHandle getX = null;
 	static MethodHandle getY = null;
 
-	
 	/*
 	 * Create a value type
 	 * 
@@ -71,9 +70,9 @@ public class ValueTypeTests {
 		makePoint2D = lookup.findStatic(point2DClass, "makeValue", MethodType.methodType(point2DClass, int.class, int.class));
 		
 		getX = generateGetter(point2DClass, "x", int.class);
-		MethodHandle withX = generateWither(point2DClass, "x", int.class, point2DClass);
+		MethodHandle withX = generateWither(point2DClass, "x", int.class);
 		getY = generateGetter(point2DClass, "y", int.class);
-		MethodHandle withY = generateWither(point2DClass, "y", int.class, point2DClass);
+		MethodHandle withY = generateWither(point2DClass, "y", int.class);
 
 		int x = 0xFFEEFFEE;
 		int y = 0xAABBAABB;
@@ -93,6 +92,52 @@ public class ValueTypeTests {
 	}
 
 	/*
+	 * Create a value type with double slot primative members
+	 * 
+	 * value Point2DComplex {
+	 * 	double d;
+	 * 	long j;
+	 * }
+	 */
+	@Test(priority=1)
+	static public void testCreatePoint2DComplex() throws Throwable {
+		String fields[] = {"d:D", "j:J"};
+		Class point2DComplexClass = ValueTypeGenerator.generateValueClass("Point2DComplex", fields);
+		
+		MethodHandle makePoint2DComplex = lookup.findStatic(point2DComplexClass, "makeValue", MethodType.methodType(point2DComplexClass, double.class, long.class));
+
+		MethodHandle getD = generateGetter(point2DComplexClass, "d", double.class);
+		MethodHandle withD = generateWither(point2DComplexClass, "d", double.class);
+		MethodHandle getJ = generateGetter(point2DComplexClass, "j", long.class);
+		MethodHandle withJ = generateWither(point2DComplexClass, "j", long.class);
+		
+		double d = Double.MAX_VALUE;
+		long j = Long.MAX_VALUE;
+		double dNew = Long.MIN_VALUE;
+		long jNew = Long.MIN_VALUE;
+		Object point2D = makePoint2DComplex.invoke(d, j);
+		
+		assertEquals(getD.invoke(point2D), d);
+		assertEquals(getJ.invoke(point2D), j);
+		
+		point2D = withD.invoke(point2D, dNew);
+		point2D = withJ.invoke(point2D, jNew);
+		assertEquals(getD.invoke(point2D), dNew);
+		assertEquals(getJ.invoke(point2D), jNew);
+
+
+		MethodHandle getDGeneric = generateGenericGetter(point2DComplexClass, "d");
+		MethodHandle withDGeneric = generateGenericWither(point2DComplexClass, "d");
+		MethodHandle getJGeneric = generateGenericGetter(point2DComplexClass, "j");
+		MethodHandle withJGeneric = generateGenericWither(point2DComplexClass, "j");
+		
+		point2D = withDGeneric.invoke(point2D, d);
+		point2D = withJGeneric.invoke(point2D, j);
+		assertEquals(getDGeneric.invoke(point2D), d);
+		assertEquals(getJGeneric.invoke(point2D), j);
+	}
+
+	/*
 	 * Test with nested values in reference type
 	 * 
 	 * value Line2D {
@@ -109,9 +154,9 @@ public class ValueTypeTests {
 		makeLine2D = lookup.findStatic(line2DClass, "makeValue", MethodType.methodType(line2DClass, point2DClass, point2DClass));
 		
 		MethodHandle getSt = generateGetter(line2DClass, "st", point2DClass);
- 		MethodHandle withSt = generateWither(line2DClass, "st", point2DClass, line2DClass);
+ 		MethodHandle withSt = generateWither(line2DClass, "st", point2DClass);
  		MethodHandle getEn = generateGetter(line2DClass, "en", point2DClass);
- 		MethodHandle withEn = generateWither(line2DClass, "en", point2DClass, line2DClass);
+ 		MethodHandle withEn = generateWither(line2DClass, "en", point2DClass);
  		
 		int x = 0xFFEEFFEE;
 		int y = 0xAABBAABB;
@@ -166,9 +211,9 @@ public class ValueTypeTests {
 		MethodHandle makeFlattenedLine2D = lookup.findStatic(flattenedLine2DClass, "makeValueGeneric", MethodType.methodType(flattenedLine2DClass, Object.class, Object.class));
 		
 		MethodHandle getSt = generateGenericGetter(flattenedLine2DClass, "st");
- 		MethodHandle withSt = generateGenericWither(flattenedLine2DClass, "st", flattenedLine2DClass);
+ 		MethodHandle withSt = generateGenericWither(flattenedLine2DClass, "st");
  		MethodHandle getEn = generateGenericGetter(flattenedLine2DClass, "en");
- 		MethodHandle withEn = generateGenericWither(flattenedLine2DClass, "en", flattenedLine2DClass);
+ 		MethodHandle withEn = generateGenericWither(flattenedLine2DClass, "en");
  		
 		int x = 0xFFEEFFEE;
 		int y = 0xAABBAABB;
@@ -354,18 +399,18 @@ public class ValueTypeTests {
 		return null;
 	}
 	
-	static MethodHandle generateWither(Class clazz, String fieldName, Class fieldType, Class returnType) {
+	static MethodHandle generateWither(Class clazz, String fieldName, Class fieldType) {
 		try {
-			return lookup.findVirtual(clazz, "with"+fieldName, MethodType.methodType(returnType, fieldType));
+			return lookup.findVirtual(clazz, "with"+fieldName, MethodType.methodType(clazz, fieldType));
 		} catch (IllegalAccessException | SecurityException | NullPointerException | NoSuchMethodException e) {
 			e.printStackTrace();
 		}
 		return null;
 	}
 
-	static MethodHandle generateGenericWither(Class clazz, String fieldName, Class returnType) {
+	static MethodHandle generateGenericWither(Class clazz, String fieldName) {
 		try {
-			return lookup.findVirtual(clazz, "withGeneric"+fieldName, MethodType.methodType(returnType, Object.class));
+			return lookup.findVirtual(clazz, "withGeneric"+fieldName, MethodType.methodType(clazz, Object.class));
 		} catch (IllegalAccessException | SecurityException | NullPointerException | NoSuchMethodException e) {
 			e.printStackTrace();
 		}
