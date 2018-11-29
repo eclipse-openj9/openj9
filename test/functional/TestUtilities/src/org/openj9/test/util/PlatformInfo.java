@@ -33,4 +33,13 @@ public class PlatformInfo {
 		return ((null != osName) && osName.startsWith("Mac OS"));
 	}
 
+	public static String getLibrarySuffix() {
+		String librarySuffix = ".so"; // default for Linux, AIX, and z/OS
+		if (isWindows()) {
+			librarySuffix = ".dll";
+		} else if (isMacOS()) {
+			librarySuffix = ".dylib";
+		}
+		return librarySuffix;
+	}
 }

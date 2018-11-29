@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.Properties;
 
 import static org.testng.Assert.fail;
+
+import static org.openj9.test.util.PlatformInfo.getLibrarySuffix;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -80,7 +82,7 @@ public class TestSunAttachClasses extends AttachApiTest {
 		String[] libDirs = lipPath.split(File.pathSeparator);
 		char fs = File.separatorChar;
 		String decoration = "lib";
-		String suffix = ".so";
+		String librarySuffix = getLibrarySuffix();
 		String errOutput = "";
 		String outOutput = "";
 		TargetManager target = new TargetManager(TestConstants.TARGET_VM_CLASS, null, vmArgs, null);
@@ -101,7 +103,7 @@ public class TestSunAttachClasses extends AttachApiTest {
 		}
 		for (String libElement: libDirs) {
 			try {
-				String libPath = libElement+fs+decoration+TestUtil.JVMTITST+suffix;
+				String libPath = libElement+fs+decoration+TestUtil.JVMTITST+librarySuffix;
 				logger.debug("trying to load "+ libPath);
 				File lib = new File(libPath);
 				if (!lib.exists()) {
