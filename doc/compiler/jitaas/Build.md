@@ -20,15 +20,103 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
+
 There are currently 3 supported build procedures. Select the one that best suits your needs.
 
-- [Building only the JIT](#jit). Choose this if you have no need to modify the VM or JCL. This only builds OMR and everything in the `runtime/compiler` directory. Output artifact is `libj9jit29.so`.
-- [Building the whole VM](#vm). The complete build process. Takes much longer but produces a complete JVM as output (including the JIT).
+- [Building the whole VM](#vm). The complete build process (Most correct and recommended). Produces a complete JVM as output (including the JIT).
+- [Building only the JIT](#jit). Choose this if you have an existing SDK and have no need to modify the VM or JCL. This only builds OMR and everything in the `runtime/compiler` directory. Output artifact is `libj9jit29.so`. (Fastest way to get JITaaS built)
 - [Building in Docker](#docker). Choose this if you don't want to deal with build dependencies. Takes the longest.
 
-Either way, you will need protobuf installed.
+For building the whole VM and building only the JIT, you will have to go through the [Prepare your system](#prerequisites) step.
+For building in Docker, you can skip [Prepare your system](#prerequisites).
 
 If you run into issues during this process, please document any solutions here.
+
+## PREREQUISITES
+- The following example is for Ubuntu18:
+
+```
+apt-get update \
+ && apt-get install -qq -y --no-install-recommends \
+	  autoconf \
+	  automake \
+	  build-essential \
+	  ca-certificates \
+	  ccache \
+	  cmake \
+	  cpio \
+	  file \
+	  git \
+	  libasound2-dev \
+	  libcups2-dev \
+	  libdwarf-dev \
+	  libelf-dev \
+	  libfreetype6-dev \
+	  libnuma-dev \
+	  libx11-dev \
+	  libxext-dev \
+	  libxrender-dev \
+	  libxt-dev \
+	  libxtst-dev \
+	  libssl-dev \
+	  libtool \
+	  make \
+	  nasm \
+	  pkg-config \
+	  software-properties-common \
+	  ssh \
+	  unzip \
+	  wget \
+	  zip \
+ && rm -rf /var/lib/apt/lists/*
+
+apt-get update \
+ && add-apt-repository ppa:ubuntu-toolchain-r/test -y \
+ && apt-get update \
+ && apt-get install -qq -y --no-install-recommends gcc-7 g++-7 \
+ && rm -rf /var/lib/apt/lists/*
+
+ln -sf /usr/bin/g++ /usr/bin/c++ \
+ && ln -sf /usr/bin/g++-7 /usr/bin/g++ \
+ && ln -sf /usr/bin/gcc /usr/bin/cc \
+ && ln -sf /usr/bin/gcc-7 /usr/bin/gcc
+
+cd /root \
+ && wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tar.gz \
+ && tar -xzf freemarker.tar.gz freemarker-2.3.8/lib/freemarker.jar --strip=2 \
+ && rm -f freemarker.tar.gz
+
+cd /root \
+ && wget https://api.adoptopenjdk.net/openjdk8-openj9/releases/x64_linux/latest/binary -O bootjdk8.tar.gz \
+ && tar -xzf bootjdk8.tar.gz \
+ && rm -f bootjdk8.tar.gz \
+ && mv $(ls | grep -i jdk) bootjdk8
+
+wget https://github.com/protocolbuffers/protobuf/releases/download/v3.5.1/protobuf-cpp-3.5.1.tar.gz \
+ && tar -xvzf protobuf-cpp-3.5.1.tar.gz \
+ && cd protobuf-3.5.1 \
+ && ./configure && make && make install && ldconfig \
+ && rm -rf /protobuf-3.5.1 && rm -rf /protobuf-cpp-3.5.1.tar.gz
+
+export JAVA_HOME=/root/bootjdk8
+export PATH="$JAVA_HOME/bin:$PATH"
+```
+
+## VM
+
+```
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk8.git
+
+cd openj9-openjdk-jdk8
+
+bash get_source.sh -openj9-repo=https://github.com/eclipse/openj9.git -openj9-branch=jitaas -omr-repo=https://github.com/eclipse/openj9-omr.git -omr-branch=jitaas
+
+bash configure --with-freemarker-jar=/root/freemarker.jar --with-boot-jdk=/root/bootjdk8
+
+make all
+```
+
+See https://www.eclipse.org/openj9/oj9_build.html for more detail. The only difference is you need to check out the JITaaS code instead of upstream OpenJ9.
 
 ## JIT
 
@@ -39,11 +127,6 @@ $ make -f compiler.mk -C . -j$(nproc) J9SRC=$JAVA_HOME/jre/lib/amd64/compressedr
 ```
 
 The only new addition to the build process for JITaaS is to protbuf schema files. These are supposed to be build automatically, but it keeps getting broken by upstream changes to openJ9. So, if you get errors about missing files named like `compile.pb.h`, try building the make target `proto` by adding the word `proto` to the end of the make command above.
-
-## VM
-
-See https://www.eclipse.org/openj9/oj9_build.html. The only difference is you need to check out the JITaaS code instead of upstream OpenJ9.
-
 
 ## DOCKER
 
