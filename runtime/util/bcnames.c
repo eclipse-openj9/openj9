@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include "j9comp.h"
+#include "j9.h"
 
 const char * const JavaBCNames[] = {
 "JBnop" /* 0 */,
@@ -485,8 +486,13 @@ const char * const sunJavaBCNames[] = {
 "JBgotow" /* 200 */,
 "JBjsrw" /* 201 */,
 "JBbreakpoint" /* 202 */,
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+"JBdefaultvalue" /* 203 */,
+"JBwithfield" /* 204 */,
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 "JBunimplemented" /* 203 */,
 "JBunimplemented" /* 204 */,
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 "JBunimplemented" /* 205 */,
 "JBunimplemented" /* 206 */,
 "JBunimplemented" /* 207 */,
@@ -506,15 +512,9 @@ const char * const sunJavaBCNames[] = {
 "JBunimplemented" /* 221 */,
 "JBunimplemented" /* 222 */,
 "JBunimplemented" /* 223 */,
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-"JBdefaultvalue" /* 224 */,
-"JBunimplemented" /* 225 */,
-"JBwithfield" /* 226 */,
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 "JBunimplemented" /* 224 */,
 "JBunimplemented" /* 225 */,
 "JBunimplemented" /* 226 */,
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 "JBunimplemented" /* 227 */,
 "JBunimplemented" /* 228 */,
 "JBunimplemented" /* 229 */,

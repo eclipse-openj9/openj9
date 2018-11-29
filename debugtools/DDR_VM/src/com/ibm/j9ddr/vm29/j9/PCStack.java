@@ -497,7 +497,7 @@ public class PCStack
 		0x25 /* JBgotow = 200 */,
 		0x00 /* JBunimplemented = 201 */,
 		0x71 /* JBbreakpoint = 202 */,
-		0x01 /* JBdefaultvalue = 203 */,
+		0x03 /* JBdefaultvalue = 203 */,
 		0x03 /* JBwithfield = 204 */,
 		0x00 /* JBunimplemented = 205 */,
 		0x00 /* JBunimplemented = 206 */,
