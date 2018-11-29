@@ -28,6 +28,20 @@
  */
 
 #include "testjep178.h"
+#ifdef LINUX
+/* kludge to work around known issue in glibc pre 2.25
+ * https://sourceware.org/bugzilla/show_bug.cgi?id=16628
+ * https://github.com/eclipse/openj9/issues/3672
+ * Add a dummy pthread call to force libpthread to initialize.
+ */
+#include <pthread.h>
+
+static  pthread_key_t key;
+void unused_function()
+{
+    pthread_key_create(&key, NULL);
+}
+#endif
 
 /* The JVM launcher. */
 int main(int argc, char ** argv, char ** envp)
