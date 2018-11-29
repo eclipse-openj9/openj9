@@ -23,17 +23,17 @@ package org.openj9.test.lworld;
 
 import org.objectweb.asm.*;
 
-import jdk.internal.misc.Unsafe;
-
 import static org.objectweb.asm.Opcodes.*;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ValueTypeGenerator {
-	private static Unsafe unsafe;
+public class ValueTypeGenerator extends ClassLoader {
+	private static ValueTypeGenerator generator;
 	
 	/* workaround till the new ASM is released */
 	public static final int DEFAULTVALUE = 203;
@@ -41,30 +41,33 @@ public class ValueTypeGenerator {
 	private static final int ACC_VALUE_TYPE = 0x100;
 	
 	static {
-		try {
-			Field f = Unsafe.class.getDeclaredField("theUnsafe");
-			f.setAccessible(true);
-			unsafe = (Unsafe) f.get(null);
-		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
-			e.printStackTrace();
-		}	
+		generator = new ValueTypeGenerator();
 	}
 	
-	private static byte[] generateValue(String valueName, String[] fields) {
+	private static byte[] generateClass(String className, String[] fields, boolean isVerifiable, boolean isRef) {
 		ClassWriter cw = new ClassWriter(0);
 		FieldVisitor fv;
 		MethodVisitor mv;
 
-		cw.visit(55, ACC_PUBLIC + ACC_FINAL + ACC_SUPER + ACC_VALUE_TYPE, valueName, null, "java/lang/Object", null);
+		if (isRef) {
+			cw.visit(55, ACC_PUBLIC + ACC_FINAL + ACC_SUPER, className, null, "java/lang/Object", null);
+		} else {
+			cw.visit(55, ACC_PUBLIC + ACC_FINAL + ACC_SUPER + ACC_VALUE_TYPE, className, null, "java/lang/Object", null);
+		}
 
-		cw.visitSource(valueName + ".java", null);
+		cw.visitSource(className + ".java", null);
 		
 		int makeMaxLocal = 0;
 		String makeValueSig = "";
 		String makeValueGenericSig = "";
 		for (String s : fields) {
 			String nameAndSigValue[] = s.split(":");
-			int fieldModifiers = ACC_PUBLIC + ACC_FINAL;
+			final int fieldModifiers;
+			if (isRef) {
+				fieldModifiers = ACC_PUBLIC;
+			} else {
+				fieldModifiers = ACC_PUBLIC + ACC_FINAL;
+			}
 			fv = cw.visitField(fieldModifiers, nameAndSigValue[0], nameAndSigValue[1], null, null);
 			fv.visitEnd();
 			makeValueSig += nameAndSigValue[1];
@@ -74,69 +77,43 @@ public class ValueTypeGenerator {
 			} else {
 				makeMaxLocal += 1;
 			}
-			generateGetter(cw, nameAndSigValue, valueName);
-			
-			generateSetter(cw, nameAndSigValue, valueName);
-			
-			generateWither(cw, nameAndSigValue, valueName);
-			
+			generateFieldMethods(cw, nameAndSigValue, className, isVerifiable, isRef);
 		}
-		
-		makeValueHelper(cw, valueName, makeValueSig, makeValueGenericSig, fields, makeMaxLocal);
 		
 		initHelper(cw);
 		
-		makeRefHelper(cw, valueName, makeValueSig, makeValueGenericSig, fields, makeMaxLocal);
-
-		cw.visitEnd();
-
-		return cw.toByteArray();
-	}
-	
-	private static byte[] generateRefObject(String className, String[] fields) {
-		ClassWriter cw = new ClassWriter(0);
-		FieldVisitor fv;
-		MethodVisitor mv;
-
-		cw.visit(55, ACC_PUBLIC + ACC_FINAL + ACC_SUPER, className, null, "java/lang/Object", null);
-
-		cw.visitSource("Value.java", null);
-
-		String makeValueGenericSig = "";
-		String makeValueSig = "";
-		int makeMaxLocal = 0;
-		for (String s : fields) {
-			String nameAndSigValue[] = s.split(":");
-			int fieldModifiers = ACC_PUBLIC;
-			fv = cw.visitField(fieldModifiers, nameAndSigValue[0], nameAndSigValue[1], null, null);
-			fv.visitEnd();
-			makeValueGenericSig += "Ljava/lang/Object;";
-			makeValueSig += nameAndSigValue[1];
-			if (nameAndSigValue[1].equals("J") || nameAndSigValue[1].equals("D")) {
-				makeMaxLocal += 2;
-			} else {
-				makeMaxLocal += 1;
+		if (isRef) {
+			makeRef(cw, className, makeValueSig, makeValueGenericSig, fields, makeMaxLocal);
+			if (!isVerifiable) {
+				makeGeneric(cw, className, "makeRefGeneric", "makeRef", makeValueSig, makeValueGenericSig, fields, makeMaxLocal);
+				/* makeValue is invalid on ref: Included to test if runtime error is (correctly) thrown */
+				makeValue(cw, className, makeValueSig, fields, makeMaxLocal);
 			}
-			
-			
-			generateGetter(cw, nameAndSigValue, className);
-			
-			generateSetter(cw, nameAndSigValue, className);
-		}
-		
-		makeValueHelper(cw, className, makeValueSig, makeValueGenericSig, fields, makeMaxLocal);
-		
-		initHelper(cw);
-		
-		makeRefHelper(cw, className, makeValueSig, makeValueGenericSig, fields, makeMaxLocal);
-		
-		testWithFieldOnNonValueType(cw, className, fields);
-		testWithFieldOnNull(cw, className, fields);
-		testWithFieldOnNonExistentClass(cw, className, fields);
-		
-		cw.visitEnd();
 
+			testWithFieldOnNonValueType(cw, className, fields);
+			testWithFieldOnNull(cw, className, fields);
+			testWithFieldOnNonExistentClass(cw, className, fields);
+		} else {
+			makeValue(cw, className, makeValueSig, fields, makeMaxLocal);
+			if (!isVerifiable) {
+				makeGeneric(cw, className, "makeValueGeneric", "makeValue", makeValueSig, makeValueGenericSig, fields, makeMaxLocal);
+			}
+		}
+
+		cw.visitEnd();
 		return cw.toByteArray();
+		
+	}
+
+	private static void generateFieldMethods(ClassWriter cw, String[] nameAndSigValue, String className, boolean isVerifiable, boolean isRef) {
+		generateGetter(cw, nameAndSigValue, className);
+		generateSetter(cw, nameAndSigValue, className);
+		generateWither(cw, nameAndSigValue, className);
+		if (!isVerifiable) {
+			generateGetterGeneric(cw, nameAndSigValue, className);
+			generateWitherGeneric(cw, nameAndSigValue, className);
+			generateSetterGeneric(cw, nameAndSigValue, className);
+		}
 	}
 	
 	private static void initHelper(ClassWriter cw) {
@@ -198,49 +175,50 @@ public class ValueTypeGenerator {
 		mv.visitEnd();
 	}
 	
-	private static void makeValueHelper(ClassWriter cw, String valueName, String makeValueSig, String makeValueGenericSig, String[] fields, int makeMaxLocal) {
-		makeGeneric(cw, valueName, "makeValueGeneric", "makeValue", makeValueSig, makeValueGenericSig, fields, makeMaxLocal);
-		
+	private static void makeValue(ClassWriter cw, String valueName, String makeValueSig, String[] fields, int makeMaxLocal) {
 		boolean doubleDetected = false;
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "makeValue", "(" + makeValueSig + ")L" + valueName + ";", null, null);
 		mv.visitCode();
 		mv.visitTypeInsn(DEFAULTVALUE, valueName);
-		for (int i = 0; i <  fields.length; i++) {
+		for (int i = 0, count = 0; i <  fields.length; i++) {
 			String nameAndSig[] = fields[i].split(":");
 			switch (nameAndSig[1]) {
 			case "D":
+				mv.visitVarInsn(DLOAD, count);
 				doubleDetected = true;
-				mv.visitVarInsn(DLOAD, i);
+				count += 2;
 				break;
 			case "I":
 			case "Z":
 			case "B":
 			case "C":
 			case "S":
-				mv.visitVarInsn(ILOAD, i);
+				mv.visitVarInsn(ILOAD, count);
+				count++;
 				break;
 			case "F":
-				mv.visitVarInsn(FLOAD, i);
+				mv.visitVarInsn(FLOAD, count);
+				count++;
 				break;
 			case "J":
+				mv.visitVarInsn(LLOAD, count);
 				doubleDetected = true;
-				mv.visitVarInsn(LLOAD, i);
+				count += 2;
 				break;
 			default:
-				mv.visitVarInsn(ALOAD, i);
+				mv.visitVarInsn(ALOAD, count);
+				count++;
 				break;
 			}
 			mv.visitFieldInsn(WITHFIELD, valueName, nameAndSig[0], nameAndSig[1]);
 		}
 		mv.visitInsn(ARETURN);
-		
-		int maxStackAndLocals = (doubleDetected) ? 3 : 2;
-		mv.visitMaxs(maxStackAndLocals, fields.length);
+		int maxStack = (doubleDetected) ? 3 : 2;
+		mv.visitMaxs(maxStack, makeMaxLocal);
 		mv.visitEnd();
 	}
 	
 	private static void makeGeneric(ClassWriter cw, String className, String methodName, String specificMethodName, String makeValueSig, String makeValueGenericSig, String[] fields, int makeMaxLocal) {
-		int maxStack = 0;
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, methodName, "(" + makeValueGenericSig + ")L" + className + ";", null, new String[] {"java/lang/Exception"});
 		mv.visitCode();
 		for (int i = 0; i <  fields.length; i++) {
@@ -248,88 +226,81 @@ public class ValueTypeGenerator {
 			String nameAndSigValue[] = fields[i].split(":");
 			switch (nameAndSigValue[1]) {
 			case "D":
-				maxStack += 2;
 				mv.visitTypeInsn(CHECKCAST, "java/lang/Double");
 				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Double", "doubleValue", "()D", false);
 				break;
 			case "I":
-				maxStack++;
 				mv.visitTypeInsn(CHECKCAST, "java/lang/Integer");
 				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
 			case "Z":
-				maxStack++;
 				mv.visitTypeInsn(CHECKCAST, "java/lang/Boolean");
 				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
 			case "B":
-				maxStack++;
 				mv.visitTypeInsn(CHECKCAST, "java/lang/Byte");
 				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Byte", "byteValue", "()B", false);
 			case "C":
-				maxStack++;
 				mv.visitTypeInsn(CHECKCAST, "java/lang/Character");
 				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Character", "charValue", "()C", false);
 			case "S":
-				maxStack++;
 				mv.visitTypeInsn(CHECKCAST, "java/lang/Short");
 				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Short", "shortValue", "()S", false);
 				break;
 			case "F":
-				maxStack++;
 				mv.visitTypeInsn(CHECKCAST, "java/lang/Float");
 				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Float", "floatValue", "()F", false);
 				break;
 			case "J":
-				maxStack += 2;
 				mv.visitTypeInsn(CHECKCAST, "java/lang/Double");
 				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Double", "doubleValue", "()J", false);
 				break;
 			default:
-				maxStack++;
 				break;
 			}
 		}
-		
 		mv.visitMethodInsn(INVOKESTATIC, className, specificMethodName, "(" + makeValueSig + ")L"+ className + ";", false);
 		mv.visitInsn(ARETURN);
-		mv.visitMaxs(maxStack, fields.length);
+
+		mv.visitMaxs(makeMaxLocal, makeMaxLocal);
 		mv.visitEnd();
 	}
 	
-	private static void makeRefHelper(ClassWriter cw, String className, String makeValueSig, String makeValueGenericSig, String[]fields, int makeMaxLocal) {
-		makeGeneric(cw, className, "makeRefGeneric", "makeRef", makeValueSig, makeValueGenericSig, fields, makeMaxLocal);
-
+	private static void makeRef(ClassWriter cw, String className, String makeValueSig, String makeValueGenericSig, String[]fields, int makeMaxLocal) {
 		boolean doubleDetected = false;
-		
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "makeRef", "(" + makeValueSig + ")L" + className + ";", null, null);
 		mv.visitCode();
 		mv.visitTypeInsn(NEW, className);
 		mv.visitInsn(DUP);
 		mv.visitMethodInsn(INVOKESPECIAL, className, "<init>", "()V", false);
 		mv.visitVarInsn(ASTORE, fields.length);
-		for (int i = 0; i <  fields.length; i++) {
+		for (int i = 0, count = 0; i < fields.length; i++) {
 			mv.visitVarInsn(ALOAD, fields.length);
 			String nameAndSigValue[] = fields[i].split(":");
 			switch (nameAndSigValue[1]) {
 			case "D":
+				mv.visitVarInsn(DLOAD, count);
 				doubleDetected = true;
-				mv.visitVarInsn(DLOAD, i);
+				count += 2;
 				break;
 			case "I":
 			case "Z":
 			case "B":
 			case "C":
 			case "S":
-				mv.visitVarInsn(ILOAD, i);
+				mv.visitVarInsn(ILOAD, count);
+				count++;
 				break;
 			case "F":
-				mv.visitVarInsn(FLOAD, i);
+				mv.visitVarInsn(FLOAD, count);
+				count++;
 				break;
 			case "J":
+				mv.visitVarInsn(LLOAD, count);
 				doubleDetected = true;
-				mv.visitVarInsn(LLOAD, i);
+				count += 2;
 				break;
 			default:
-				mv.visitVarInsn(ALOAD, i);
+				mv.visitVarInsn(ALOAD, count);
+				count++;
 				break;
 			}
 			mv.visitFieldInsn(PUTFIELD, className, nameAndSigValue[0], nameAndSigValue[1]);
@@ -338,18 +309,19 @@ public class ValueTypeGenerator {
 		mv.visitInsn(ARETURN);
 		
 		int maxStack = (doubleDetected) ? 3 : 2;
-		mv.visitMaxs(maxStack, fields.length);
+		mv.visitMaxs(maxStack, makeMaxLocal);
 		mv.visitEnd();
 	}
 
 	private static void generateSetter(ClassWriter cw, String[] nameAndSigValue, String className) {
-		/* generate setter */
+		boolean doubleDetected = false;
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "set" + nameAndSigValue[0], "(" + nameAndSigValue[1] + ")V", null, null);
 		mv.visitCode();
 		mv.visitVarInsn(ALOAD, 0);
 		switch (nameAndSigValue[1]) {
 		case "D":
 			mv.visitVarInsn(DLOAD, 1);
+			doubleDetected = true;
 			break;
 		case "I":
 		case "Z":
@@ -363,6 +335,7 @@ public class ValueTypeGenerator {
 			break;
 		case "J":
 			mv.visitVarInsn(LLOAD, 1);
+			doubleDetected = true;
 			break;
 		default:
 			mv.visitVarInsn(ALOAD, 1);
@@ -370,10 +343,14 @@ public class ValueTypeGenerator {
 		}
 		mv.visitFieldInsn(PUTFIELD, className, nameAndSigValue[0], nameAndSigValue[1]);
 		mv.visitInsn(RETURN);
-		mv.visitMaxs(2, 2);
+		int maxStackAndLocals = (doubleDetected ? 3 : 2);
+		mv.visitMaxs(maxStackAndLocals, maxStackAndLocals);
 		mv.visitEnd();
-		
-		mv = cw.visitMethod(ACC_PUBLIC, "setGeneric" + nameAndSigValue[0], "(Ljava/lang/Object;)V", null, null);
+	}
+	
+	private static void generateSetterGeneric(ClassWriter cw, String[] nameAndSigValue, String className) {
+		boolean doubleDetected = false;
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "setGeneric" + nameAndSigValue[0], "(Ljava/lang/Object;)V", null, null);
 		mv.visitCode();
 		mv.visitVarInsn(ALOAD, 0);
 		mv.visitVarInsn(ALOAD, 1);
@@ -381,10 +358,11 @@ public class ValueTypeGenerator {
 		case "D":
 			mv.visitTypeInsn(CHECKCAST, "java/lang/Double");
 			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Double", "doubleValue", "()D", false);
+			doubleDetected = true;
 			break;
 		case "I":
-			mv.visitTypeInsn(CHECKCAST, "java/lang/Interger");
-			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Interger", "intValue", "()I", false);
+			mv.visitTypeInsn(CHECKCAST, "java/lang/Integer");
+			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
 		case "Z":
 			mv.visitTypeInsn(CHECKCAST, "java/lang/Boolean");
 			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
@@ -403,27 +381,29 @@ public class ValueTypeGenerator {
 			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Float", "floatValue", "()F", false);
 			break;
 		case "J":
-			mv.visitTypeInsn(CHECKCAST, "java/lang/Double");
-			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Double", "doubleValue", "()J", false);
+			mv.visitTypeInsn(CHECKCAST, "java/lang/Long");
+			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Long", "longValue", "()J", false);
+			doubleDetected = true;
 			break;
 		default:
 			break;
 		}
-		
 		mv.visitMethodInsn(INVOKEVIRTUAL, className, "set" + nameAndSigValue[0], "(" + nameAndSigValue[1] + ")V", false);
 		mv.visitInsn(RETURN);
-		mv.visitMaxs(2, 2);
+		int maxStack = (doubleDetected ? 3 : 2);
+		mv.visitMaxs(maxStack, 2);
 		mv.visitEnd();
 	}
-	
+
 	private static void generateWither(ClassWriter cw, String[] nameAndSigValue, String className) {
-		/* generate setter */
+		boolean doubleDetected = false;
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "with" + nameAndSigValue[0], "(" + nameAndSigValue[1] + ")L" + className + ";", null, null);
 		mv.visitCode();
 		mv.visitVarInsn(ALOAD, 0);
 		switch (nameAndSigValue[1]) {
 		case "D":
 			mv.visitVarInsn(DLOAD, 1);
+			doubleDetected = true;
 			break;
 		case "I":
 		case "Z":
@@ -437,6 +417,7 @@ public class ValueTypeGenerator {
 			break;
 		case "J":
 			mv.visitVarInsn(LLOAD, 1);
+			doubleDetected = true;
 			break;
 		default:
 			mv.visitVarInsn(ALOAD, 1);
@@ -444,10 +425,14 @@ public class ValueTypeGenerator {
 		}
 		mv.visitFieldInsn(WITHFIELD, className, nameAndSigValue[0], nameAndSigValue[1]);
 		mv.visitInsn(ARETURN);
-		mv.visitMaxs(2, 2);
+		int maxStackAndLocals = (doubleDetected ? 3 : 2);
+		mv.visitMaxs(maxStackAndLocals, maxStackAndLocals);
 		mv.visitEnd();
+	}
 		
-		mv = cw.visitMethod(ACC_PUBLIC, "withGeneric" + nameAndSigValue[0], "(Ljava/lang/Object;)L" + className + ";", null, null);
+	private static void generateWitherGeneric(ClassWriter cw, String[] nameAndSigValue, String className) {
+		boolean doubleDetected = false;
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "withGeneric" + nameAndSigValue[0], "(Ljava/lang/Object;)L" + className + ";", null, null);
 		mv.visitCode();
 		mv.visitVarInsn(ALOAD, 0);
 		mv.visitVarInsn(ALOAD, 1);
@@ -455,10 +440,11 @@ public class ValueTypeGenerator {
 		case "D":
 			mv.visitTypeInsn(CHECKCAST, "java/lang/Double");
 			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Double", "doubleValue", "()D", false);
+			doubleDetected = true;
 			break;
 		case "I":
-			mv.visitTypeInsn(CHECKCAST, "java/lang/Interger");
-			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Interger", "intValue", "()I", false);
+			mv.visitTypeInsn(CHECKCAST, "java/lang/Integer");
+			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
 		case "Z":
 			mv.visitTypeInsn(CHECKCAST, "java/lang/Boolean");
 			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
@@ -477,20 +463,23 @@ public class ValueTypeGenerator {
 			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Float", "floatValue", "()F", false);
 			break;
 		case "J":
-			mv.visitTypeInsn(CHECKCAST, "java/lang/Double");
-			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Double", "doubleValue", "()J", false);
+			mv.visitTypeInsn(CHECKCAST, "java/lang/Long");
+			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Long", "longValue", "()J", false);
+			doubleDetected = true;
 			break;
 		default:
 			break;
 		}
-		
+
 		mv.visitMethodInsn(INVOKEVIRTUAL, className, "with" + nameAndSigValue[0], "(" + nameAndSigValue[1] + ")L" + className + ";", false);
 		mv.visitInsn(ARETURN);
-		mv.visitMaxs(2, 2);
+		int maxStack = (doubleDetected ? 3 : 2);
+		mv.visitMaxs(maxStack, 2);
 		mv.visitEnd();
 	}
 	
 	private static void generateGetter(ClassWriter cw, String[] nameAndSigValue, String className) {
+		boolean doubleDetected = false;
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "get" + nameAndSigValue[0], "()" + nameAndSigValue[1], null, null);
 		mv.visitCode();
 		mv.visitVarInsn(ALOAD, 0);
@@ -498,6 +487,7 @@ public class ValueTypeGenerator {
 		switch (nameAndSigValue[1]) {
 		case "D":
 			mv.visitInsn(DRETURN);
+			doubleDetected = true;
 			break;
 		case "I":
 		case "Z":
@@ -511,21 +501,27 @@ public class ValueTypeGenerator {
 			break;
 		case "J":
 			mv.visitInsn(LRETURN);
+			doubleDetected = true;
 			break;
 		default:
 			mv.visitInsn(ARETURN);
 			break;
 		}
-		mv.visitMaxs(1, 1);
+		int maxStack = (doubleDetected ? 2 : 1);
+		mv.visitMaxs(maxStack, 1);
 		mv.visitEnd();
-		
-		mv = cw.visitMethod(ACC_PUBLIC, "getGeneric" + nameAndSigValue[0], "()Ljava/lang/Object;", null, null);
+	}
+	
+	private static void generateGetterGeneric(ClassWriter cw, String[] nameAndSigValue, String className) {
+		boolean doubleDetected = false;
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "getGeneric" + nameAndSigValue[0], "()Ljava/lang/Object;", null, null);
 		mv.visitCode();
 		mv.visitVarInsn(ALOAD, 0);
 		mv.visitMethodInsn(INVOKEVIRTUAL, className, "get" + nameAndSigValue[0], "()" + nameAndSigValue[1], false);
 		switch (nameAndSigValue[1]) {
 		case "D":
 			mv.visitMethodInsn(INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
+			doubleDetected = true;
 			break;
 		case "I":
 			mv.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
@@ -547,25 +543,30 @@ public class ValueTypeGenerator {
 			break;
 		case "J":
 			mv.visitMethodInsn(INVOKESTATIC, "java/lang/Long", "valueOf", "(J)Ljava/lang/Long;", false);
+			doubleDetected = true;
 			break;
 		default:
 			break;
 		}
+
 		mv.visitInsn(ARETURN);
-		mv.visitMaxs(2, 1);
+		int maxStack = (doubleDetected ? 2 : 1);
+		mv.visitMaxs(maxStack, 1);
 		mv.visitEnd();
 	}
-	
-	private static Class<?> defineClass(String className, byte[] bytes, ClassLoader loader, ProtectionDomain pD) throws Throwable {
-		return unsafe.defineClass(className, bytes, 0, bytes.length, loader, pD);
-	}
-	
+
 	public static Class<?> generateValueClass(String name, String[] fields) throws Throwable {
-		return ValueTypeGenerator.defineClass(name, ValueTypeGenerator.generateValue(name, fields), ValueTypeGenerator.class.getClassLoader(), ValueTypeGenerator.class.getProtectionDomain());
+		byte[] bytes = generateClass(name, fields, false, false);
+		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
-	
+
+	public static Class<?> generateVerifiableValueClass(String name, String[] fields) throws Throwable {
+		byte[] bytes = generateClass(name, fields, true, false);
+		return generator.defineClass(name, bytes, 0, bytes.length);
+	}
+
 	public static Class<?> generateRefClass(String name, String[] fields) throws Throwable {
-		return ValueTypeGenerator.defineClass(name, ValueTypeGenerator.generateRefObject(name, fields), ValueTypeGenerator.class.getClassLoader(), ValueTypeGenerator.class.getProtectionDomain());
+		byte[] bytes = generateClass(name, fields, false, true);
+		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
-	
 }

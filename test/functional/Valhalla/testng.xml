@@ -31,4 +31,9 @@
 			<class name="org.openj9.test.lworld.ValueTypeTests" />
 		</classes>
 	</test>
+	<test name="ValueTypeVerifierTests">
+		<classes>
+			<class name="org.openj9.test.lworld.ValueTypeVerifierTests" />
+		</classes>
+	</test>
 </suite> <!-- Suite -->
