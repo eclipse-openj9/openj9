@@ -312,7 +312,7 @@ disabled.spec.<spec> (e.g. disabled.spec.linux_x86-64)
     java executable, adding any additional options, including those to
     attach a debugger.
 
-8. Move test into different make targets (layers):
+### 8. Move test into different make targets (layers):
 
   * from extended to sanity (or vice versa)
 
