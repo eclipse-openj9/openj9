@@ -147,10 +147,11 @@
 #define J9AccVolatile 0x40
 #define J9StaticFieldRefBaseType 0x1
 #define J9StaticFieldRefDouble 0x2
-#define J9StaticFieldRefFlagBits 0x1F
+#define J9StaticFieldRefVolatile 0x4
 #define J9StaticFieldRefBoolean 0x8
 #define J9StaticFieldRefPutResolved 0x10
-#define J9StaticFieldRefVolatile 0x4
+#define J9StaticFieldRefFinal 0x20
+#define J9StaticFieldRefFlagBits 0x3F
 
 /* @ddr_namespace: map_to_type=J9JavaClassFlags */
 
@@ -175,11 +176,10 @@
 #define J9FieldFlagHasGenericSignature 0x40000000
 #define J9FieldFlagHasTypeAnnotations 0x800000
 #define J9FieldFlagIsContended 0x10000000
-#define J9FieldFlagUnused_2000000 0x2000000
-#define J9FieldFlagUnused_4000000 0x4000000
 #define J9FieldFlagObject 0x20000
 #define J9FieldFlagUnused_1000000 0x1000000
-#define J9FieldFlagUnused_7000000 0x7000000
+#define J9FieldFlagUnused_2000000 0x2000000
+#define J9FieldFlagUnused_4000000 0x4000000
 #define J9FieldFlagPutResolved 0x8000000
 #define J9FieldFlagResolved 0x80000000
 #define J9FieldFlagsBaseTypeShift 0x3
