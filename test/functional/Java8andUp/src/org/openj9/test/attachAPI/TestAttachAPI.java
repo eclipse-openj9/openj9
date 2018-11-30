@@ -24,7 +24,7 @@ package org.openj9.test.attachAPI;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.openj9.test.util.FileUtilities.deleteRecursive;
 import static org.openj9.test.util.PlatformInfo.isWindows;
-import static org.openj9.test.util.PlatformInfo.isMacOS;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -35,6 +35,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
+import org.openj9.test.util.PlatformInfo;
 import org.openj9.test.util.StringPrintStream;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
@@ -215,15 +216,8 @@ public class TestAttachAPI extends AttachApiTest {
 		String lipPath = System.getProperty("java.library.path");
 		String[] libDirs = lipPath.split(File.pathSeparator);
 		char fs = File.separatorChar;
-		String decoration = "lib";
-		String suffix = ".so"; // default for Linux, AIX, and z/OS
-		if (isWindows()) {
-			/* kludgy test if we are on MS Windows */
-			decoration = "";
-			suffix = ".dll";
-		} else if (isMacOS()) {
-			suffix = ".dylib";
-		}
+		String decoration = isWindows()? "": "lib";
+		String librarySuffix = PlatformInfo.getLibrarySuffix();
 		int pIndex = 0;
 		String outOutput = null;
 		TargetManager target = launchTarget();
@@ -241,7 +235,7 @@ public class TestAttachAPI extends AttachApiTest {
 		do {
 			try {
 				String libPath = libDirs[pIndex] + fs + decoration + JVMTITST
-						+ suffix;
+						+ librarySuffix;
 				++pIndex;
 				logger.debug("trying to load " + libPath);
 				File lib = new File(libPath);
