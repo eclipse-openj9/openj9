@@ -115,7 +115,10 @@ bash configure --with-freemarker-jar=/root/freemarker.jar --with-boot-jdk=/root/
 
 make all
 ```
-
+Depending on where you want to fetch OpenJ9 sources from, you could use your own repository as shown below:
+```
+bash get_source.sh -openj9-repo=https://github.com/<Your GitHub UserID>/openj9.git -openj9-branch=jitaas -omr-repo=https://github.com/eclipse/openj9-omr.git -omr-branch=jitaas
+```
 See https://www.eclipse.org/openj9/oj9_build.html for more detail. The only difference is you need to check out the JITaaS code instead of upstream OpenJ9.
 
 ## JIT
