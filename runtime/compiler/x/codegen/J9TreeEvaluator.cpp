@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -12263,7 +12263,6 @@ J9::X86::TreeEvaluator::andORStringEvaluator(TR::Node *node, TR::CodeGenerator *
  */
 void generateFillInDataBlockSequenceForUnresolvedField(TR::Node *node, J9Method* owningMethod, TR::X86DataSnippet *dataSnippet, bool isWrite, TR::CodeGenerator *cg)
    {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
    TR::SymbolReference *symRef = node->getSymbolReference();
    bool is64Bit = TR::Compiler->target.is64Bit();
    bool isStatic = symRef->getSymbol()->getKind() == TR::Symbol::IsStatic;
@@ -12303,8 +12302,8 @@ void generateFillInDataBlockSequenceForUnresolvedField(TR::Node *node, J9Method*
          }
 
       //call resolving helper
-      uintptrj_t cpAddress = fej9->getConstantPoolFromMethod((TR_OpaqueMethodBlock*) owningMethod);
-      TR::Node *cpAddressNode = TR::Node::aconst(cpAddress);
+      TR::ResolvedMethodSymbol *methodSymbol = node->getByteCodeInfo().getCallerIndex() == -1 ? cg->comp()->getMethodSymbol(): cg->comp()->getInlinedResolvedMethodSymbol(node->getByteCodeInfo().getCallerIndex());
+      TR::Node *cpAddressNode = TR::Node::createWithSymRef(node, TR::loadaddr, 0, cg->comp()->getSymRefTab()->findOrCreateConstantPoolAddressSymbolRef(methodSymbol));
       TR::Node *cpIndexNode = TR::Node::iconst(node, symRef->getCPIndex());
       TR::Node *helperCallNode = TR::Node::createWithSymRef(TR::acall, 2, 2, cpIndexNode, cpAddressNode,
             cg->comp()->getSymRefTab()->findOrCreateRuntimeHelper(helperIndex, true /* canGCandReturn */, true /*canGCandExcept*/, false /* preservesAllRegisters*/));

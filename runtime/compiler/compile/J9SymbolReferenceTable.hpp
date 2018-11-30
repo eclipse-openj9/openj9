@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -83,6 +83,7 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
 
    TR::SymbolReference * findOrCreateWriteBarrierStoreSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol = 0);
    TR::SymbolReference * findOrCreateWriteBarrierStoreGenerationalSymbolRef(TR::ResolvedMethodSymbol *owningMethodSymbol = 0);
+   TR::SymbolReference * findOrCreateConstantPoolAddressSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
 
    // FE
    TR::SymbolReference * findOrCreateFloatSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex);
@@ -291,6 +292,7 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
 
    TR::Symbol                           *_currentThreadDebugEventDataSymbol;
    List<TR::SymbolReference>            _currentThreadDebugEventDataSymbolRefs;
+   List<TR::SymbolReference>            _constantPoolAddressSymbolRefs;
 
    private:
 
