@@ -421,7 +421,7 @@ public:
 	static VMINLINE void
 	putBoolean(J9VMThread *currentThread, MM_ObjectAccessBarrierAPI *objectAccessBarrier, j9object_t object, UDATA offset, bool isVolatile, U_8 value)
 	{
-		put32(currentThread, objectAccessBarrier, object, offset, isVolatile, 0, false, (I_32)(value & 1));
+		put32(currentThread, objectAccessBarrier, object, offset, isVolatile, 0, false, (I_32)(0 != value));
 	}
 
 	static VMINLINE I_16
