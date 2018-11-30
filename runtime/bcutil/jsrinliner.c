@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1842,6 +1842,8 @@ getCodeBlockParentInChainWithVar(J9JSRIJSRData * root, U_16 variable, U_32 curre
 			if (inlineBuffers->errorCode) {
 				inlineBuffers->errorCode = BCT_ERR_VERIFY_ERROR_INLINING;
 				inlineBuffers->verifyError = J9NLS_BCV_ERR_MULTIPLE_RET__ID;
+				/* Set the current PC value to show up in the error message framework */
+				inlineBuffers->verifyErrorPC = currentPC;
 #if J9JSRI_DEBUG
 				j9tty_printf(inlineBuffers->portLib, "[][][] Verify Error multiple rets\n");
 #endif
@@ -1852,7 +1854,7 @@ getCodeBlockParentInChainWithVar(J9JSRIJSRData * root, U_16 variable, U_32 curre
 	}
 	inlineBuffers->errorCode =	BCT_ERR_VERIFY_ERROR_INLINING;
 	inlineBuffers->verifyError = J9NLS_BCV_ERR_TEMP_NOT_RET_ADDRESS__ID;
-	/* Jazz 82615: Set the current PC value to show up in the error message framework */
+	/* Set the current PC value to show up in the error message framework */
 	inlineBuffers->verifyErrorPC = currentPC;
 #if J9JSRI_DEBUG
 	j9tty_printf(inlineBuffers->portLib, "[][][] Verify Error bad addr\n"); 
@@ -2354,6 +2356,8 @@ _tryOuterJsrData:
 		/* exception table too large - format limitation */
 		inlineBuffers->errorCode = BCT_ERR_VERIFY_ERROR_INLINING;
 		inlineBuffers->verifyError = J9NLS_BCV_ERR_TOO_MANY_JSRS__ID;
+		/* Set the current PC value to show up in the error message framework */
+		inlineBuffers->verifyErrorPC = 0;
 	}
 	inlineBuffers->bytesAddedByJSRInliner += ((U_16) exceptionCount - inlineBuffers->codeAttribute->exceptionTableLength) * sizeof(U_16) * 4;
 	inlineBuffers->codeAttribute->exceptionTableLength = (U_16) exceptionCount;
@@ -2582,6 +2586,8 @@ _inlineWide:
 	if (inlineBuffers->destBufferIndex > (16 * 1024 * 1024)) {
 		inlineBuffers->errorCode = BCT_ERR_VERIFY_ERROR_INLINING;
 		inlineBuffers->verifyError = J9NLS_BCV_ERR_TOO_MANY_JSRS__ID;
+		/* Set the current PC value to show up in the error message framework */
+		inlineBuffers->verifyErrorPC = 0;
 		return;
 	}
 
