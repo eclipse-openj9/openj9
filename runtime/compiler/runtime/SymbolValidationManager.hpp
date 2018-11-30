@@ -760,6 +760,7 @@ private:
    bool abandonRecord(TR::SymbolValidationRecord *record);
 
    bool recordExists(TR::SymbolValidationRecord *record);
+   bool anyClassFromCPRecordExists(TR_OpaqueClassBlock *clazz, TR_OpaqueClassBlock *beholder);
    void appendNewRecord(void *symbol, TR::SymbolValidationRecord *record);
    void appendRecordIfNew(void *symbol, TR::SymbolValidationRecord *record);
 
@@ -848,6 +849,37 @@ private:
    typedef TR::typed_allocator<J9ClassLoader*, TR::Region&> LoaderAllocator;
    typedef std::vector<J9ClassLoader*, LoaderAllocator> LoaderVector;
    LoaderVector _loadersOkForWellKnownClasses;
+
+   // Remember which classes have already been found in which beholders'
+   // constant pools, regardless of CP index. If a class C has already been
+   // found in the constant pool of class D (producing a ClassFromCP record),
+   // then ClassByName(C, D) is redundant.
+   struct ClassFromAnyCPIndex
+      {
+      TR_OpaqueClassBlock *clazz;
+      TR_OpaqueClassBlock *beholder;
+
+      ClassFromAnyCPIndex(TR_OpaqueClassBlock *clazz, TR_OpaqueClassBlock *beholder)
+         : clazz(clazz), beholder(beholder) { }
+      };
+
+   struct LessClassFromAnyCPIndex
+      {
+      bool operator()(const ClassFromAnyCPIndex &a, const ClassFromAnyCPIndex &b) const
+         {
+         std::less<TR_OpaqueClassBlock*> lt;
+         if (lt(a.clazz, b.clazz))
+            return true;
+         else if (lt(b.clazz, a.clazz))
+            return false;
+         else
+            return lt(a.beholder, b.beholder);
+         }
+      };
+
+   typedef TR::typed_allocator<ClassFromAnyCPIndex, TR::Region&> ClassFromAnyCPIndexAlloc;
+   typedef std::set<ClassFromAnyCPIndex, LessClassFromAnyCPIndex, ClassFromAnyCPIndexAlloc> ClassFromAnyCPIndexSet;
+   ClassFromAnyCPIndexSet _classesFromAnyCPIndex;
    };
 
 }
