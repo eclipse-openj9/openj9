@@ -22,15 +22,12 @@
 # First copy your public ssh key into a file named authorized_keys next to the Dockerfile
 # Then include a known_hosts file next to the Dockerfile, with github as a saved host
 # This can be done with "ssh-keyscan github.com >> path_to_dockerfile/known_hosts"
-# Make sure you are in the directory contianing the Dockerfile and authorized_keys file
+# Make sure you are in the directory contianing the Dockerfile, authorized_keys file, and known_hosts file
 # Then run:
 #   docker build -t openj9 -f Dockerfile .
 #   docker run -it openj9
 
-# This Dockerfile is for test purposes only,
-# and is not meant for compiling.
-
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 
 # Install required OS tools
 
@@ -39,7 +36,6 @@ ENV USER="jenkins"
 RUN apt-get update \
   && apt-get install -qq -y --no-install-recommends \
     software-properties-common \
-    python-software-properties \
   && add-apt-repository ppa:ubuntu-toolchain-r/test \
   && apt-get update \
   && apt-get install -qq -y --no-install-recommends \
@@ -49,10 +45,11 @@ RUN apt-get update \
     build-essential \
     curl \
     g++-4.8 \
+    g++-7 \
     gcc-4.8 \
+    gcc-7 \
     gdb \
     git \
-    make \
     openssh-client \
     openssh-server \
     perl \
@@ -70,18 +67,15 @@ RUN rm /usr/bin/c++ /usr/bin/g++ /usr/bin/cc /usr/bin/gcc \
   && ln -s gcc /usr/bin/cc \
   && ln -s gcc-4.8 /usr/bin/gcc
 
-# Install ccache
-RUN apt-get update \
-  && apt-get install -qq -y --no-install-recommends ccache
-
-# Add user home/USER
+# Add user home/USER and copy authorized_keys and known_hosts
 RUN useradd -ms /bin/bash ${USER} \
   && mkdir /home/${USER}/.ssh/
 COPY authorized_keys /home/${USER}/.ssh/authorized_keys
 COPY known_hosts /home/${USER}/.ssh/known_hosts
 RUN chown -R ${USER}:${USER} /home/${USER} \
   && chmod 644 /home/${USER}/.ssh/authorized_keys \
-  && chmod 644 /home/${USER}/.ssh/known_hosts
+  && chmod 644 /home/${USER}/.ssh/known_hosts \
+  && chmod 700 /home/${USER}/.ssh
 
 # Set up sshd config
 RUN mkdir /var/run/sshd \
@@ -91,11 +85,6 @@ RUN mkdir /var/run/sshd \
 
 # SSH login fix. Otherwise user is kicked off after login
 RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
-
-# Enable SSH daemon program to provide secure encrypted communications
-RUN mkdir -p /var/run/sshd \
-  && service ssh start \
-  && service ssh stop
 
 # Expose SSH port and run SSH
 EXPOSE 22
