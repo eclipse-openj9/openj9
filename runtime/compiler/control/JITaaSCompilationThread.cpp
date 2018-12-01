@@ -3090,13 +3090,19 @@ ClientSessionData::updateMaxReceivedSeqNo(uint32_t seqNo)
 void
 TR::CompilationInfoPerThreadRemote::waitForMyTurn(ClientSessionData *clientSession, TR_MethodToBeCompiled &entry)
    {
-   uint32_t seqNo = ((TR::CompilationInfoPerThreadRemote*)(entry._compInfoPT))->getSeqNo();
+   TR_ASSERT(getMethodBeingCompiled() == &entry, "Must have stored the entry to be compiled into compInfoPT");
+   TR_ASSERT(entry._compInfoPT == this, "Must have stored compInfoPT into the entry to be compiled");
+   uint32_t seqNo = getSeqNo();
 
    // Insert this thread into the list of out of sequence entries
    clientSession->insertIntoOOSequenceEntryList(&entry);
 
    do // Do a timed wait until the missing seqNo arrives
       {
+      // Always reset _waitToBeNotified before waiting on the monitor
+      // If a notification does not arrive, this request will timeout and possibly clear the caches
+      setWaitToBeNotified(false);
+
       entry.getMonitor()->enter();
       clientSession->getSequencingMonitor()->exit(); // release monitor before waiting
       const int64_t waitTimeMillis = 1000; // TODO: create an option for this
@@ -3143,12 +3149,19 @@ TR::CompilationInfoPerThreadRemote::waitForMyTurn(ClientSessionData *clientSessi
             }
 
          if (clientSession->getNumActiveThreads() <= 0 && // wait for active threads to quiesce
-            &entry == clientSession->getOOSequenceEntryList()) // Allow only the smallest seqNo which is the head
+            &entry == clientSession->getOOSequenceEntryList() && // Allow only the smallest seqNo which is the head
+            !getWaitToBeNotified()) // Avoid a cohort of threads clearing the caches
             {
             clientSession->clearCaches();
             TR_MethodToBeCompiled *detachedEntry = clientSession->notifyAndDetachFirstWaitingThread();
-            clientSession->setExpectedSeqNo(seqNo);// allow subsequent requests
-
+            clientSession->setExpectedSeqNo(seqNo);// allow myself to go through
+            // Mark the next request that it should not try to clear the caches
+            // but rather to sleep again waiting for my notification.
+            TR_MethodToBeCompiled *nextWaitingEntry = clientSession->getOOSequenceEntryList();
+            if (nextWaitingEntry)
+               {
+               ((TR::CompilationInfoPerThreadRemote*)(nextWaitingEntry->_compInfoPT))->setWaitToBeNotified(true);
+               }
             if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
                TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
                   "compThreadID=%d has cleared the session caches for clientUID=%llu expectedSeqNo=%u detachedEntry=%p",
@@ -3158,6 +3171,10 @@ TR::CompilationInfoPerThreadRemote::waitForMyTurn(ClientSessionData *clientSessi
             {
             // Wait until all active threads have been drained
             // and the head of the list has cleared the caches
+            if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
+                  "compThreadID=%d which previously timed-out will go to sleep again. Possible reasons numActiveThreads=%d waitToBeNotified=%d",
+                  getCompThreadId(), clientSession->getNumActiveThreads(), getWaitToBeNotified());
             }
          }
       } while (seqNo > clientSession->getExpectedSeqNo());
