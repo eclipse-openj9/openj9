@@ -221,21 +221,31 @@ class RealRegisterManager
       }
    // For the post dependency conditions we need return address register to be assigned to proper virtual register instead of the dummy virtual register
    TR::RegisterDependencyConditions* buildRegisterDependencyConditions(TR::RealRegister::RegNum returnAddressReg)
-   	{
+      {
+      uint32_t numDeps = numberOfRegistersInUse() - 1 + (_cg->use64BitRegsOn32Bit() ? 1 : 0);
+
       // Helper function to generate RegisterDependencyCondition adds one more to post deps for return address.
       // Hence asking one less post deps so this won't create a problem when combined with other dependency condition for ICF.
-   	TR::RegisterDependencyConditions* deps = generateRegisterDependencyConditions(0, numberOfRegistersInUse()-1, _cg);
-   	for (uint8_t i = (uint8_t)TR::RealRegister::NoReg; i < (uint8_t)TR::RealRegister::NumRegisters; i++)
-   		{
-   		if (_Registers[i] != NULL)
-   			{
-   			if (i != returnAddressReg)
-   				_Registers[i]->setPlaceholderReg();
-   			deps->addPostCondition(_Registers[i], (TR::RealRegister::RegNum)i, DefinesDependentRegister);
-   			}
-   		}
-   	return deps;
-   	}
+      TR::RegisterDependencyConditions* deps = generateRegisterDependencyConditions(0, numDeps, _cg);
+      for (uint8_t i = (uint8_t)TR::RealRegister::NoReg; i < (uint8_t)TR::RealRegister::NumRegisters; i++)
+        {
+        if (_Registers[i] != NULL)
+            {
+            if (i != returnAddressReg)
+                _Registers[i]->setPlaceholderReg();
+            deps->addPostCondition(_Registers[i], (TR::RealRegister::RegNum)i, DefinesDependentRegister);
+            }
+        }
+
+      // spill all high regs
+      //
+      if (_cg->use64BitRegsOn32Bit())
+         {
+         TR::Register *reg = _cg->allocateRegister();
+         deps->addPostCondition(reg, TR::RealRegister::KillVolHighRegs);
+         }
+      return deps;
+      }
    
    inline uint8_t numberOfRegistersInUse() const
       {
