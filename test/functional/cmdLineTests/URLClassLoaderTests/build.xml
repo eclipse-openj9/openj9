@@ -34,6 +34,14 @@
 	<property name="src" location="."/>
 	<property name="build.dir" location="./bin"/>
 	
+	<!-- on zos, ant <copy> does not keep file tag. Therefore, ant copied files 
+	cannot be read by javac. Preset javac with encoding="ISO-8859-1" so that files 
+	without proper tagging can be read.
+	-->
+	<presetdef name="javac">
+		<javac encoding="ISO-8859-1" />
+	</presetdef>
+	
 	<target name="init">
 		<mkdir dir="${DEST}" />
 		<mkdir dir="${build.dir}" />
