@@ -373,7 +373,7 @@ JNICALL throwNew(JNIEnv *env, jclass clazz, const char *message)
 
 static void JNICALL setStaticBooleanField(JNIEnv *env, jclass cls, jfieldID fieldID, jboolean value)
 {
-	setStaticIntField(env, cls, fieldID, (jint)(value != 0));
+	setStaticIntField(env, cls, fieldID, (jint)(value & 1));
 }
 
 
