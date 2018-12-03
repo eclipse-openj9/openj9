@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -201,7 +201,8 @@ MM_SchedulingDelegate::determineNextPGCType(MM_EnvironmentVLHGC *env)
 	}
 
 	/* Aborted CopyForward happened in near past. The rest of PGCs until GMP completes, should not try CopyForward. */
-	if (_disableCopyForwardDuringCurrentGlobalMarkPhase) {
+	/* try only mark partial nursery regions instead of mark all of collectionSet in CopyForwardHybrid mode */
+	if (_disableCopyForwardDuringCurrentGlobalMarkPhase && !_extensions->tarokEnableCopyForwardHybrid) {
 		env->_cycleState->_reasonForMarkCompactPGC = MM_CycleState::reason_recent_abort;
 		_nextPGCShouldCopyForward = false;
 	}
@@ -276,7 +277,7 @@ MM_SchedulingDelegate::partialGarbageCollectCompleted(MM_EnvironmentVLHGC *env, 
 			double thisSurvivalRate = (double)edenSurvivorCount / (double)edenCountBeforeCollect;
 			updateSurvivalRatesAfterCopyForward(thisSurvivalRate, nonEdenSurvivorCount);
 		}
-		
+
 		if (copyForwardStats->_aborted && (0 ==_remainingGMPIntermissionIntervals)) {
 			_disableCopyForwardDuringCurrentGlobalMarkPhase = true;
 		}
@@ -598,6 +599,10 @@ MM_SchedulingDelegate::estimatePartialGCsRemaining(MM_EnvironmentVLHGC *env) con
 
 			/* Calculate the number of regions that we need for copy forward destination */
 			double survivorRegions = _averageSurvivorSetRegionCount;
+			/* if _extensions->fvtest_forceCopyForwardHybridRatio is set(testing purpose), correct required survivor region count to avoid underestimating the remaining. */
+			if ((0 != _extensions->fvtest_forceCopyForwardHybridRatio) && (100 >= _extensions->fvtest_forceCopyForwardHybridRatio)) {
+				survivorRegions = survivorRegions * (100 - _extensions->fvtest_forceCopyForwardHybridRatio) / 100;
+			}
 			Trc_MM_SchedulingDelegate_estimatePartialGCsRemaining_survivorNeeds(env->getLanguageVMThread(), (UDATA)_averageSurvivorSetRegionCount, MM_GCExtensions::getExtensions(env)->tarokKickoffHeadroomInBytes, (UDATA)survivorRegions);
 
 			double freeRegions = (double)((MM_GlobalAllocationManagerTarok *)_extensions->globalAllocationManager)->getFreeRegionCount();
