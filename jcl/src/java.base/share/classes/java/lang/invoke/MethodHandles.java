@@ -747,32 +747,39 @@ public class MethodHandles {
 		 * @throws IllegalAccessException if the targetClass is not visible
 		 */
 		static void checkClassModuleVisibility(int accessMode, Module accessModule, Class<?> targetClass) throws IllegalAccessException {
-
 			if (INTERNAL_PRIVILEGED != accessMode) {
 				Module targetModule = targetClass.getModule();
-				String targetClassPackageName = targetClass.getPackageName();
-				if ((UNCONDITIONAL & accessMode) == UNCONDITIONAL) {
-					/* publicLookup objects can see all unconditionally exported packages. */
-					if (!targetModule.isExported(targetClassPackageName)) {
-						/*[MSG "K0676", "Module '{0}' no access to: package '{1}' which is not exported by module '{2}'"]*/
-						throw new IllegalAccessException(Msg.getString("K0587", getModuleName(accessModule), targetClassPackageName, getModuleName(targetModule))); //$NON-NLS-1$
+				// modules may be null during bootstrapping
+				if ((null != targetModule) && (null != accessModule)) {
+					String targetClassPackageName = targetClass.getPackageName();
+					if ((UNCONDITIONAL & accessMode) == UNCONDITIONAL) {
+						/* publicLookup objects can see all unconditionally exported packages. */
+						if (!targetModule.isExported(targetClassPackageName)) {
+							throw throwIllegalAccessException(accessModule, targetModule, targetClassPackageName, "K0676"); //$NON-NLS-1$
+						}
+					} else if (!accessModule.canRead(targetModule)) {
+						throw throwIllegalAccessException(accessModule, targetModule, targetClassPackageName, "K0679"); //$NON-NLS-1$
+					} else if (!targetModule.isExported(targetClassPackageName)) {
+						// Need MODULE access to see packages conditionally exported
+						if (((MODULE & accessMode) != MODULE) 
+							|| (!accessModule.equals(targetModule) 
+								&& !targetModule.isExported(targetClassPackageName, accessModule))) {
+							throw throwIllegalAccessException(accessModule, targetModule, targetClassPackageName, "K0677"); //$NON-NLS-1$
+						}
 					}
-				} else if (!(
-					Objects.equals(accessModule, targetModule)
-					|| (targetModule.isExported(targetClassPackageName, accessModule) && accessModule.canRead(targetModule)))
-				) {
-					if (!targetModule.isExported(targetClassPackageName, accessModule)) {
-						/*[MSG "K0677", "Module '{0}' no access to: package '{1}' which is not exported by module '{2}' to module '{0}'"]*/
-						throw new IllegalAccessException(Msg.getString("K0677", getModuleName(accessModule), targetClassPackageName, getModuleName(targetModule))); //$NON-NLS-1$
-					}
-					// here accessModule.canRead(targetModule) must be false
-					/*[MSG "K0679", "Module '{0}' no access to: package '{1}' because module '{0}' can't read module '{2}'"]*/
-					throw new IllegalAccessException(Msg.getString("K0679", getModuleName(accessModule), targetClassPackageName, getModuleName(targetModule))); //$NON-NLS-1$
 				}
 			}
 		}
-		/*[ENDIF]*/
+
+		private static IllegalAccessException throwIllegalAccessException(Module accessModule, Module targetModule, String targetClassPackageName, String msgId) throws IllegalAccessException {
+			/*[MSG "K0676", "Module '{0}' no access to: package '{1}' which is not exported by module '{2}'"]*/
+			/*[MSG "K0677", "Module '{0}' no access to: package '{1}' which is not exported by module '{2}' to module '{0}'"]*/
+			/*[MSG "K0679", "Module '{0}' no access to: package '{1}' because module '{0}' can't read module '{2}'"]*/
+			throw new IllegalAccessException(Msg.getString(msgId, getModuleName(accessModule), targetClassPackageName, getModuleName(targetModule)));
+		}
 		
+		/*[ENDIF]*/
+
 		/*[IF Panama]*/
 		/**
 		 * Return a MethodHandle to a native method.  The MethodHandle will have the same type as the
