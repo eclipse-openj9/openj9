@@ -288,10 +288,10 @@ def archive() {
             def buildDir = "build/${RELEASE}/images/"
             def testDir = "test/openj9"
 
-            sh "tar -C ${buildDir} -zcvf ${SDK_FILENAME} ${JDK_FOLDER}"
+            sh "tar -C ${buildDir} -zocvf ${SDK_FILENAME} ${JDK_FOLDER}"
             // test if the test natives directory is present, only in JDK11+
             if (fileExists("${buildDir}${testDir}")) {
-               sh "tar -C ${buildDir} -zcvf ${TEST_FILENAME} ${testDir} --transform 's,${testDir},native-test-libs,'"
+               sh "tar -C ${buildDir} -zocvf ${TEST_FILENAME} ${testDir} --transform 's,${testDir},native-test-libs,'"
             }
             if (ARTIFACTORY_SERVER) {
                 def server = Artifactory.server ARTIFACTORY_SERVER
