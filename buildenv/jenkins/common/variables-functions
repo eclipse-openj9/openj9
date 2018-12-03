@@ -627,7 +627,8 @@ def set_job_properties(JOB_TYPE) {
                 'SETUP_LABEL':'',
                 'BUILD_IDENTIFIER':'',
                 'ghprbGhRepository':'',
-                'ghprbActualCommit':''])
+                'ghprbActualCommit':'',
+                'PERSONAL_BUILD':''])
         }
 
         // Pipeline or PR
@@ -643,7 +644,6 @@ def set_job_properties(JOB_TYPE) {
             add_string_params([
                 'BUILD_NODE':'',
                 'TEST_NODE':'',
-                'PERSONAL_BUILD':'',
                 'SLACK_CHANNEL':'',
                 'RESTART_TIMEOUT':'',
                 'RESTART_TIMEOUT_UNITS':'',
