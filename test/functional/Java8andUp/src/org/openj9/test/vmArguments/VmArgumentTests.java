@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -666,7 +666,9 @@ public class VmArgumentTests {
 		}
 	}
 
-	/* IBM_JAVA_OPTIONS should take priority over JAVA_TOOL_OPTIONS */
+	/* 
+	 * OPENJ9_JAVA_OPTIONS should supplant IBM_JAVA_OPTIONS.
+	 * They should take priority over JAVA_TOOL_OPTIONS */
 	@Test
 	public void testEnvironmentVariableOrdering() {
 		ProcessBuilder pb = makeProcessBuilder(new String[] {}, CLASSPATH);
@@ -680,16 +682,36 @@ public class VmArgumentTests {
 		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
 		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, 
 				new String[] {ibmJavaOptionsArg, javaToolOptionsArg, openJ9JavaOptionsArg});
-		assertTrue(MISSING_ARGUMENT+ibmJavaOptionsArg, 
+		assertFalse(MISSING_ARGUMENT+ibmJavaOptionsArg, // OPENJ9_JAVA_OPTIONS causes the VM to ignore IBM_JAVA_OPTIONS
 				argumentPositions.containsKey(ibmJavaOptionsArg));
 		assertTrue(MISSING_ARGUMENT+javaToolOptionsArg, 
 				argumentPositions.containsKey(javaToolOptionsArg));
 		assertTrue(MISSING_ARGUMENT+openJ9JavaOptionsArg, 
 				argumentPositions.containsKey(openJ9JavaOptionsArg));
-		assertTrue(IBM_JAVA_OPTIONS+ SHOULD_COME_AFTER+OPENJ9_JAVA_OPTIONS, 
-				argumentPositions.get(ibmJavaOptionsArg).intValue() > argumentPositions.get(openJ9JavaOptionsArg).intValue());
 		assertTrue(OPENJ9_JAVA_OPTIONS+ SHOULD_COME_AFTER+JAVA_TOOL_OPTIONS, 
 				argumentPositions.get(openJ9JavaOptionsArg).intValue() > argumentPositions.get(javaToolOptionsArg).intValue());
+	}
+
+	/**
+	 * An empty OPENJ9_JAVA_OPTIONS will suppress IBM_JAVA_OPTIONS
+	 */
+	@Test
+	public void testZeroLengthOpenJ9Options() {
+		ProcessBuilder pb = makeProcessBuilder(new String[] {}, CLASSPATH);
+		Map<String, String> env = pb.environment();
+		String javaToolOptionsArg = "-Dtest.name1=javaToolOptionsArg";
+		String ibmJavaOptionsArg = "-Dtest.name2=ibmJavaOptionsArg";
+		String openJ9JavaOptionsArg = "";
+		env.put(JAVA_TOOL_OPTIONS, javaToolOptionsArg);
+		env.put(IBM_JAVA_OPTIONS, ibmJavaOptionsArg);
+		env.put(OPENJ9_JAVA_OPTIONS, openJ9JavaOptionsArg);
+		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
+		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, 
+				new String[] {ibmJavaOptionsArg, javaToolOptionsArg, openJ9JavaOptionsArg});
+		assertFalse(MISSING_ARGUMENT+ibmJavaOptionsArg, // OPENJ9_JAVA_OPTIONS causes the VM to ignore IBM_JAVA_OPTIONS
+				argumentPositions.containsKey(ibmJavaOptionsArg));
+		assertTrue(MISSING_ARGUMENT+javaToolOptionsArg, 
+				argumentPositions.containsKey(javaToolOptionsArg));
 	}
 
 	/*
