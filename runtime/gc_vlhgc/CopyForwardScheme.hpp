@@ -1087,7 +1087,7 @@ public:
 		return (0 != _regionCountCannotBeEvacuated);
 	}
 
-	void setReservedNonEvacuatedRegions(int regionCount)
+	void setReservedNonEvacuatedRegions(UDATA regionCount)
 	{
 		_regionCountReservedNonEvacuated = regionCount;
 	}
