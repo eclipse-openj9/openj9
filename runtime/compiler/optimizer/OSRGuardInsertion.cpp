@@ -30,63 +30,221 @@
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/FearPointAnalysis.hpp"
 #include "optimizer/RematTools.hpp"
-#include "optimizer/HCRGuardAnalysis.hpp"
 #include "optimizer/TransformUtil.hpp"
 #include "ras/DebugCounter.hpp"
+#include "infra/Checklist.hpp"             // for TR::NodeChecklist
+
+TR_Structure* fakeRegion(TR::Compilation *comp);
 
 static bool generatesFear(TR::Compilation *comp, TR_FearPointAnalysis &fearAnalysis, TR::Block *block)
    {
    return fearAnalysis._blockAnalysisInfo[block->getNumber()]->get(0);
    }
 
-int32_t TR_OSRGuardInsertion::perform()
+
+static bool hasHCRGuard(TR::Compilation *comp)
    {
+   TR::list<TR_VirtualGuard*> &virtualGuards = comp->getVirtualGuards();
+   for (auto itr = virtualGuards.begin(), end = virtualGuards.end(); itr != end; ++itr)
+      {
+      if ((*itr)->getKind() == TR_HCRGuard || (*itr)->mergedWithHCRGuard())
+         return true;
+      }
+
+   return false;
+   }
+
+static bool hasUnsupportedPotentialOSRPoint(TR::Compilation *comp, bool trace)
+   {
+   for (TR::TreeTop *treeTop = comp->getStartTree(); treeTop; treeTop = treeTop->getNextTreeTop())
+      {
+      TR::Node *ttNode = treeTop->getNode();
+
+      if (comp->isPotentialOSRPoint(ttNode) &&
+          !comp->isPotentialOSRPointWithSupport(treeTop))
+         {
+         if (trace)
+            traceMsg(comp, "Found an unsupported potential OSR point at n%dn\n", ttNode->getGlobalIndex());
+         return true;
+         }
+      }
+
+   return false;
+   }
+
+void TR_OSRGuardInsertion::cleanUpPotentialOSRPointHelperCalls()
+   {
+   for (TR::TreeTop *treeTop = comp()->getStartTree(); treeTop; treeTop = treeTop->getNextTreeTop())
+      {
+      TR::Node *ttNode = treeTop->getNode();
+      if (ttNode->getNumChildren() != 1)
+         continue;
+
+      TR::Node *node = ttNode->getFirstChild();
+      if (node->isPotentialOSRPointHelperCall())
+         {
+         TR::TreeTop* prevTreeTop = treeTop->getPrevTreeTop();
+         TR::TransformUtil::removeTree(comp(), treeTop);
+         treeTop = prevTreeTop;
+         }
+      }
+   }
+
+
+/** \brief
+ *     Remove redundant potentialOSRPointHelper calls using HCRGuardAnalysis.
+ *
+ *     A potentialOSRPointHelper call not reached by a gen is considered redundant.
+ *     The effect of a potentialOSRPointHelper call in data flow is to kill. If no
+ *     gen reaches it, it doesn't matter if we kill there. Thus removing the redundant
+ *     potentialOSRPoint helper calls will not change the result of HCRGuardAnalysis if
+ *     we were to repeat it after the removal.
+ *
+ *  \param guardAnalysis
+ *     Result of HCRGuardAnalysis used to determine which helper call is redundant.
+ *
+ */
+void TR_OSRGuardInsertion::removeRedundantPotentialOSRPointHelperCalls(TR_HCRGuardAnalysis* guardAnalysis)
+   {
+   bool protectedByOSRPoints = false;
+   TR::NodeChecklist visited(comp());
+
+   for (TR::TreeTop *treeTop = comp()->getStartTree();
+        treeTop;
+        treeTop = treeTop->getNextRealTreeTop())
+      {
+      TR::Node *ttNode = treeTop->getNode();
+
+      if (ttNode->getOpCodeValue() == TR::BBStart)
+         {
+         TR::Block* block = treeTop->getEnclosingBlock();
+         protectedByOSRPoints = !guardAnalysis || guardAnalysis->_blockAnalysisInfo[block->getNumber()]->isEmpty();
+         continue;
+         }
+
+      TR::Node *osrNode = NULL;
+      if (comp()->isPotentialOSRPoint(ttNode, &osrNode))
+         {
+         if (visited.contains(osrNode))
+            continue;
+
+         if (protectedByOSRPoints &&
+             osrNode->isPotentialOSRPointHelperCall())
+            {
+            dumpOptDetails(comp(), "Remove redundant potentialOSRPointHelper call n%dn %p\n", osrNode->getGlobalIndex(), osrNode);
+
+            TR::TreeTop* prevTree = treeTop->getPrevTreeTop();
+            TR::TransformUtil::removeTree(comp(), treeTop);
+            treeTop = prevTree;
+            }
+         else if (comp()->isPotentialOSRPointWithSupport(treeTop))
+            {
+            if (!protectedByOSRPoints && trace())
+               traceMsg(comp(), "treetop n%dn is an OSR point with support\n", ttNode->getGlobalIndex());
+
+            protectedByOSRPoints = true;
+            }
+         else
+            {
+            if (protectedByOSRPoints && trace())
+               traceMsg(comp(), "treetop n%dn is an OSR point without support\n", ttNode->getGlobalIndex());
+
+            protectedByOSRPoints = false;
+            }
+
+         visited.add(osrNode);
+         continue;
+         }
+      }
+   }
+
+static bool skipOSRGuardInsertion(TR::Compilation* comp)
+   {
+   // Use with caution. There can be fear points generated before OSRGuardInsertion,
+   // disabling it will leave those fear points unprotected.
+   //
    static char *disableOSRGuards = feGetEnv("TR_DisableOSRGuards");
 
    // Currently, OSR guard insertion is only needed when in the OSR HCR mode
-   if (disableOSRGuards || !comp()->isOSRTransitionTarget(TR::postExecutionOSR))
+   if (disableOSRGuards || !comp->isOSRTransitionTarget(TR::postExecutionOSR))
       {
-      if (trace())
-         traceMsg(comp(), "HCR Guards are only removed when in OSR HCR mode - skipping\n");
-      return 0;
+      return true;
       }
 
    // Even under NextGenHCR, OSR may have been disabled for this compilation at runtime
-   if (!comp()->supportsInduceOSR())
+   if (!comp->supportsInduceOSR())
       {
-      if (trace())
-         traceMsg(comp(), "OSR induce is not supported during this compilation - skipping\n");
-      return 0;
+      return true;
       }
 
-   // Detect if there are no HCR guards
-   TR::list<TR_VirtualGuard*> &virtualGuards = comp()->getVirtualGuards();
-   auto guard = virtualGuards.begin();
-   for (; guard != virtualGuards.end(); ++guard)
+   return false;
+   }
+
+int32_t TR_OSRGuardInsertion::perform()
+   {
+   bool needHCRGuardRemoval = hasHCRGuard(comp());
+   bool canInsertOSRGuards = !skipOSRGuardInsertion(comp());
+
+   if (canInsertOSRGuards && needHCRGuardRemoval)
       {
-      if ((*guard)->getKind() == TR_HCRGuard || (*guard)->mergedWithHCRGuard())
-         break;
-      }
-   if (guard == virtualGuards.end())
-      {
-      if (trace())
-         traceMsg(comp(), "No HCR guards to be removed - skipping\n");
-      return 0;
+      bool hasPotentialOSRPointWithoutSupport = hasUnsupportedPotentialOSRPoint(comp(), trace());
+      bool requiresAnalysis = hasPotentialOSRPointWithoutSupport;
+
+      static char *disableHCRGuardAnalysis = feGetEnv("TR_DisableHCRGuardAnalysis");
+      if (disableHCRGuardAnalysis != NULL)
+         requiresAnalysis = false;
+
+      if (requiresAnalysis)
+         TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "requiresAnalysis/(%s %s)", comp()->signature(), comp()->getHotnessName(comp()->getMethodHotness())));
+
+      // Create the fake region
+      //
+      TR_Structure *structure = requiresAnalysis ? fakeRegion(comp()) : NULL;
+      comp()->getFlowGraph()->setStructure(structure);
+
+      TR_HCRGuardAnalysis *guardAnalysis = requiresAnalysis ? new (comp()->allocator()) TR_HCRGuardAnalysis(comp(), optimizer(), structure) : NULL;
+      TR_BitVector fearGeneratingNodes(comp()->getNodeCount(), trMemory(), stackAlloc);
+
+      // Handle fear nodes for HCR guards, branch to slow path might be removed
+      //
+      removeHCRGuards(fearGeneratingNodes, guardAnalysis);
+
+
+      // Future fear generating optimizations
+      //
+      if (!fearGeneratingNodes.isEmpty())
+         {
+         // Redudant potentialOSRPointHelper calls may result in more OSR guards than needed
+         //
+         if (hasPotentialOSRPointWithoutSupport)
+            removeRedundantPotentialOSRPointHelperCalls(guardAnalysis);
+         else
+            {
+            // There is no gen, all helper calls are redundant.
+            //
+            cleanUpPotentialOSRPointHelperCalls();
+            }
+
+         if (trace())
+            {
+            comp()->dumpMethodTrees("Trees after redundant potentialOSRPointHelper call removal", comp()->getMethodSymbol());
+            }
+
+         insertOSRGuards(fearGeneratingNodes);
+         }
+      else
+         {
+         if (trace())
+            traceMsg(comp(), "No fear generating nodes - skipping\n");
+         comp()->getFlowGraph()->invalidateStructure();
+         }
       }
 
-   TR_BitVector fearGeneratingNodes(comp()->getNodeCount(), trMemory(), stackAlloc);
-   removeHCRGuards(fearGeneratingNodes);
-   // Future fear generating optimizations
+   // Must be done
+   //
+   cleanUpPotentialOSRPointHelperCalls();
 
-   if (fearGeneratingNodes.isEmpty())
-      {
-      if (trace())
-         traceMsg(comp(), "No fear generating nodes - skipping\n");
-      comp()->getFlowGraph()->invalidateStructure();
-      return 0;
-      }
-
-   return insertOSRGuards(fearGeneratingNodes);
+   return 0;
    }
 
 const char *
@@ -100,7 +258,7 @@ TR_OSRGuardInsertion::optDetailString() const throw()
  * This reduces the compile time overhead, as the structural analysis won't improve analysis times for
  * fear analysis and HCR guard removal due to the kills present in loops for asyncchecks.
  */
-TR_Structure *fakeRegion(TR::Compilation *comp)
+TR_Structure* fakeRegion(TR::Compilation *comp)
    {
    TR::CFG* cfg = comp->getFlowGraph();
    // This is the memory region into which we allocate structure nodes
@@ -143,22 +301,9 @@ TR_Structure *fakeRegion(TR::Compilation *comp)
    return region;
    }
 
-void TR_OSRGuardInsertion::removeHCRGuards(TR_BitVector &fearGeneratingNodes)
+
+void TR_OSRGuardInsertion::removeHCRGuards(TR_BitVector &fearGeneratingNodes, TR_HCRGuardAnalysis* guardAnalysis)
    {
-   bool requiresAnalysis = comp()->getMethodSymbol()->hasOSRProhibitions();
-   for (uint32_t i = 0; !requiresAnalysis && i < comp()->getNumInlinedCallSites(); ++i)
-       {
-       requiresAnalysis = comp()->getInlinedResolvedMethodSymbol(i)->hasOSRProhibitions();
-       }
-   static char *disableHCRGuardAnalysis = feGetEnv("TR_DisableHCRGuardAnalysis");
-   if (disableHCRGuardAnalysis != NULL)
-      requiresAnalysis = false;
-
-   // Create the fake region
-   TR_Structure *structure = requiresAnalysis ? fakeRegion(comp()) : NULL;
-   comp()->getFlowGraph()->setStructure(structure);
-   TR_HCRGuardAnalysis *guardAnalysis = requiresAnalysis ? new (comp()->allocator()) TR_HCRGuardAnalysis(comp(), optimizer(), structure) : NULL;
-
    for (TR::Block *cursor = comp()->getStartBlock(); cursor != NULL; cursor = cursor->getNextBlock())
       {
       TR::TreeTop *lastTree = cursor->getLastRealTreeTop();

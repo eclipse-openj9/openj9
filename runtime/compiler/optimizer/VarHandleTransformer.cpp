@@ -205,9 +205,6 @@ int32_t TR_VarHandleTransformer::perform()
                comp()->failCompilation<J9::FSDHasInvokeHandle>("A call to a VarHandle access method is not supported in FSD. Failing ilgen.");
                }
 
-            if (comp()->getOption(TR_EnableOSR) && !comp()->isPeekingMethod())
-               methodSymbol->setCannotAttemptOSR(node->getByteCodeInfo().getByteCodeIndex());
-
             // Anchoring all the children for varhandle
             anchorAllChildren(node, tt);
             performTransformation(comp(), "%sVarHandle access methods found, working on node %p\n", optDetailString(), node);

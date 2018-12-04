@@ -1900,3 +1900,85 @@ J9::TransformUtil::createDiamondForCall(TR::Optimization* opt, TR::TreeTop *call
          traceMsg(comp, "Two store nodes %p and %p are inserted in the diamond\n", ifStoreNode, elseStoreNode);
       }
    }
+
+/** \brief
+ *     Remove potentialOSRPointHelper calls from start to end inclusive.
+ *
+ *  \param comp
+ *     The compilation object.
+ *
+ *  \param start
+ *     The tree marking the start of the range.
+ *
+ *  \param end
+ *     The tree marking the end of the range.
+ */
+void J9::TransformUtil::removePotentialOSRPointHelperCalls(TR::Compilation* comp, TR::TreeTop* start, TR::TreeTop* end)
+   {
+   TR_ASSERT(start->getEnclosingBlock() == end->getEnclosingBlock(), "Does not support range across blocks");
+
+   TR::TreeTop* ttAfterEnd = end->getNextTreeTop();
+
+   if (comp->getOption(TR_EnableOSR) &&
+       comp->isOSRTransitionTarget(TR::postExecutionOSR) &&
+       comp->getOSRMode() == TR::voluntaryOSR)
+      {
+      TR::TreeTop *tt = start;
+      do
+         {
+         TR::Node *osrNode = NULL;
+         if (comp->isPotentialOSRPoint(tt->getNode(), &osrNode))
+            {
+            if (osrNode->isPotentialOSRPointHelperCall())
+               {
+               dumpOptDetails(comp, "Remove tt n%dn with potential osr point %p n%dn\n", tt->getNode()->getGlobalIndex(), osrNode, osrNode->getGlobalIndex());
+               TR::TreeTop* prevTT = tt->getPrevTreeTop();
+               TR::TransformUtil::removeTree(comp, tt);
+               tt = prevTT;
+               }
+            }
+         tt = tt->getNextTreeTop();
+         } while (tt != ttAfterEnd);
+      }
+   }
+
+/** \brief
+ *     Prohibit OSR over range between start and end inclusive.
+ *
+ *     Walk region and ensure all possible OSR transition points has doNotProfile set on their bci
+ *     as they will not be able to reconstruct their stacks due to the optimizations done on them
+ *     or on the surrounding trees.
+ *
+ *  \param comp
+ *     The compilation object.
+ *
+ *  \param start
+ *     The tree marking the start of the range.
+ *
+ *  \param end
+ *     The tree marking the end of the range.
+ */
+void J9::TransformUtil::prohibitOSROverRange(TR::Compilation* comp, TR::TreeTop* start, TR::TreeTop* end)
+   {
+   TR_ASSERT(start->getEnclosingBlock() == end->getEnclosingBlock(), "Does not support range across blocks");
+
+   TR::TreeTop* ttAfterEnd = end->getNextTreeTop();
+
+   if (comp->getOption(TR_EnableOSR) &&
+       comp->isOSRTransitionTarget(TR::postExecutionOSR) &&
+       comp->getOSRMode() == TR::voluntaryOSR)
+      {
+      TR::TreeTop *tt = start;
+      do
+         {
+         TR::Node *osrNode = NULL;
+         if (comp->isPotentialOSRPoint(tt->getNode(), &osrNode))
+            {
+            dumpOptDetails(comp, "Can no longer OSR at [%p] n%dn\n", osrNode, osrNode->getGlobalIndex());
+            osrNode->getByteCodeInfo().setDoNotProfile(true);
+            }
+         tt = tt->getNextTreeTop();
+         } while (tt != ttAfterEnd);
+      }
+   }
+
