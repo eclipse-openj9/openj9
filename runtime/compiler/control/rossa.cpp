@@ -108,6 +108,8 @@
 #include "j9port.h"
 #include "ras/DebugExt.hpp"
 #include "env/exports.h"
+#include "runtime/Listener.hpp"
+#include "runtime/StatisticsThread.hpp"
 
 extern "C" int32_t encodeCount(int32_t count);
 
@@ -1598,6 +1600,13 @@ onLoadInternal(
          // warn that Listener was not allocated
          j9tty_printf(PORTLIB, "JITaaS Listener not allocated, abort.\n");
          return -1; 
+         }
+      ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->statisticsThread = TR_StatisticsThread::allocate();
+      if (!((TR_JitPrivateConfig*)(jitConfig->privateConfig))->statisticsThread)
+         {
+         // warn that Statistics Thread was not allocated
+         j9tty_printf(PORTLIB, "JITaaS Statistics thread not allocated, abort.\n");
+         return -1;
          }
       }
    else if (compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)

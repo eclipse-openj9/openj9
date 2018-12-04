@@ -178,7 +178,7 @@ class ClientSessionHT
    ClientSessionData * findClientSession(uint64_t clientUID);
    void purgeOldDataIfNeeded();
    void printStats();
-
+   uint32_t size() const { return _clientSessionMap.size(); }
    private:
    PersistentUnorderedMap<uint64_t, ClientSessionData*> _clientSessionMap;
 

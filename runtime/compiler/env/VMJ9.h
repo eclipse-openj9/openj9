@@ -44,7 +44,6 @@
 #include "env/J9SharedCache.hpp"
 #include "infra/Array.hpp"
 #include "env/CompilerEnv.hpp"
-#include "runtime/Listener.hpp"
 #include "env/PersistentCollections.hpp"
 
 class TR_CallStack;
@@ -62,6 +61,8 @@ class TR_ExternalProfiler;
 class TR_JitPrivateConfig;
 class TR_DataCacheManager;
 class TR_EstimateCodeSize;
+class TR_Listener;
+class TR_StatisticsThread;
 struct TR_CallSite;
 struct TR_CallTarget;
 namespace J9 { class ObjectModel; }
@@ -139,6 +140,7 @@ typedef struct TR_JitPrivateConfig
    TR_HWProfiler *hwProfiler;
    TR_JProfilerThread  *jProfiler;
    TR_Listener   *listener;
+   TR_StatisticsThread   *statisticsThread;
    TR_LMGuardedStorage *lmGuardedStorage;
    TR::CodeCacheManager *codeCacheManager; // reachable from JitPrivateConfig for kca's benefit
    TR_DataCacheManager *dcManager;  // reachable from JitPrivateConfig for kca's benefit

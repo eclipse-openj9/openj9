@@ -373,6 +373,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     omr/compiler/runtime/OMRCodeCacheMemorySegment.cpp \
     omr/compiler/runtime/OMRRuntimeAssumptions.cpp \
     compiler/runtime/Listener.cpp \
+    compiler/runtime/StatisticsThread.cpp \
     compiler/env/VMJ9Server.cpp \
     compiler/env/j9methodServer.cpp \
     compiler/rpc/grpc/J9Server.cpp \
