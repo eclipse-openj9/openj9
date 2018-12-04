@@ -6188,7 +6188,7 @@ retry:
 		UDATA volatile classAndFlags = 0;
 		void* volatile valueAddress = NULL;
 
-		if (J9_UNEXPECTED(!VM_VMHelpers::staticFieldRefIsResolved(flagsAndClass, valueOffset, false))) {
+		if (J9_UNEXPECTED(!VM_VMHelpers::staticFieldRefIsResolved(flagsAndClass, valueOffset))) {
 			/* Unresolved */
 			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 			updateVMStruct(REGISTER_ARGS);
@@ -6261,37 +6261,46 @@ done:
 		void* volatile valueAddress = NULL;
 		void *resolveResult = NULL;
 
-		if (J9_UNEXPECTED(!VM_VMHelpers::staticFieldRefIsResolved(flagsAndClass, valueOffset, true))) {
-			/* The above test will fail if the ref has been resolved for put and the target
-			 * field is final. In this case, ensure that the current method is a constructor
-			 * if the class is enforcing the final field setting rules.
-			 *
-			 * If the check fails, run the resolve again to throw the exception.
-			 */
-			if (!J9_ARE_ALL_BITS_SET(flagsAndClass, (UDATA)(J9StaticFieldRefPutResolved | J9StaticFieldRefFinal) << (8 * sizeof(UDATA) - J9_REQUIRED_CLASS_SHIFT))
-				|| (VM_VMHelpers::romClassChecksFinalStores(ramConstantPool->ramClass->romClass)
-					&& !VM_VMHelpers::romMethodIsInitializer(J9_ROM_METHOD_FROM_RAM_METHOD(_literals), false)
-				   )
-			) {
-				/* Unresolved */
-				J9Method *method = _literals;
-				buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
-				updateVMStruct(REGISTER_ARGS);
-				resolveResult = resolveStaticFieldRef(_currentThread, method, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_FIELD_SETTER | J9_RESOLVE_FLAG_CHECK_CLINIT, NULL);
-				VMStructHasBeenUpdated(REGISTER_ARGS);
-				restoreGenericSpecialStackFrame(REGISTER_ARGS);
-				if (immediateAsyncPending()) {
-					rc = GOTO_ASYNC_CHECK;
-					goto done;
-				} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
-					rc = GOTO_THROW_CURRENT_EXCEPTION;
-					goto done;
+		if (J9_UNEXPECTED(!VM_VMHelpers::staticFieldRefIsResolved(flagsAndClass, valueOffset))) {
+			/* Unresolved */
+resolve:
+			J9Method *method = _literals;
+			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
+			updateVMStruct(REGISTER_ARGS);
+			resolveResult = resolveStaticFieldRef(_currentThread, method, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_FIELD_SETTER | J9_RESOLVE_FLAG_CHECK_CLINIT, NULL);
+			VMStructHasBeenUpdated(REGISTER_ARGS);
+			restoreGenericSpecialStackFrame(REGISTER_ARGS);
+			if (immediateAsyncPending()) {
+				rc = GOTO_ASYNC_CHECK;
+				goto done;
+			} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
+				rc = GOTO_THROW_CURRENT_EXCEPTION;
+				goto done;
+			}
+			if ((void*)-1 == resolveResult) {
+				ramStaticFieldRef = (J9RAMStaticFieldRef*)&_currentThread->floatTemp1;
+			}
+			valueOffset = ramStaticFieldRef->valueOffset;
+			flagsAndClass = ramStaticFieldRef->flagsAndClass;
+		} else {
+			/* Ref is resolved, see if it's fully resolved for put (put resolved and not a final field) */
+			UDATA const resolvedBit = (UDATA)J9StaticFieldRefPutResolved << (8 * sizeof(UDATA) - J9_REQUIRED_CLASS_SHIFT);
+			UDATA const finalBit = (UDATA)J9StaticFieldRefFinal << (8 * sizeof(UDATA) - J9_REQUIRED_CLASS_SHIFT);
+			UDATA const testBits = resolvedBit | finalBit;
+			UDATA const bits = flagsAndClass & testBits;
+			/* Put resolved for a non-final field means fully resolved */
+			if (J9_UNEXPECTED(resolvedBit != bits)) {
+				/* If not put resolved for a final field, resolve is necessary */
+				if (testBits != bits) {
+					goto resolve;
 				}
-				if ((void*)-1 == resolveResult) {
-					ramStaticFieldRef = (J9RAMStaticFieldRef*)&_currentThread->floatTemp1;
+				/* Final field - ensure the running method is allowed to store */
+				if (J9_UNEXPECTED(VM_VMHelpers::romClassChecksFinalStores(ramConstantPool->ramClass->romClass)
+					          && !VM_VMHelpers::romMethodIsInitializer(J9_ROM_METHOD_FROM_RAM_METHOD(_literals), true)
+				)) {
+					/* Store not allowed - run the resolve code to throw the exception */
+					goto resolve;
 				}
-				valueOffset = ramStaticFieldRef->valueOffset;
-				flagsAndClass = ramStaticFieldRef->flagsAndClass;
 			}
 		}
 		/* Swap flags and class subfield order. */
@@ -6347,7 +6356,7 @@ retry:
 		UDATA const flags = ramFieldRef->flags;
 		UDATA const valueOffset = ramFieldRef->valueOffset;
 
-		if (J9_UNEXPECTED(!VM_VMHelpers::instanceFieldRefIsResolved(flags, valueOffset, false))) {
+		if (J9_UNEXPECTED(!VM_VMHelpers::instanceFieldRefIsResolved(flags, valueOffset))) {
 			/* Unresolved */
 			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 			updateVMStruct(REGISTER_ARGS);
@@ -6429,34 +6438,43 @@ done:
 		UDATA flags = ramFieldRef->flags;
 		UDATA valueOffset = ramFieldRef->valueOffset;
 
-		if (J9_UNEXPECTED(!VM_VMHelpers::instanceFieldRefIsResolved(flags, valueOffset, true))) {
-			/* The above test will fail if the ref has been resolved for put and the target
-			 * field is final. In this case, ensure that the current method is a constructor
-			 * if the class is enforcing the final field setting rules.
-			 *
-			 * If the check fails, run the resolve again to throw the exception.
-			 */
-			if (!J9_ARE_ALL_BITS_SET(flags, J9FieldFlagPutResolved | J9AccFinal)
-				|| (VM_VMHelpers::romClassChecksFinalStores(ramConstantPool->ramClass->romClass)
-					&& !VM_VMHelpers::romMethodIsInitializer(J9_ROM_METHOD_FROM_RAM_METHOD(_literals), true)
-				   )
-			) {
-				/* Unresolved */
-				J9Method *method = _literals;
-				buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
-				updateVMStruct(REGISTER_ARGS);
-				resolveInstanceFieldRef(_currentThread, method, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_FIELD_SETTER, NULL);
-				VMStructHasBeenUpdated(REGISTER_ARGS);
-				restoreGenericSpecialStackFrame(REGISTER_ARGS);
-				if (immediateAsyncPending()) {
-					rc = GOTO_ASYNC_CHECK;
-					goto done;
-				} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
-					rc = GOTO_THROW_CURRENT_EXCEPTION;
-					goto done;
+		if (J9_UNEXPECTED(!VM_VMHelpers::instanceFieldRefIsResolved(flags, valueOffset))) {
+			/* Unresolved */
+resolve:
+			J9Method *method = _literals;
+			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
+			updateVMStruct(REGISTER_ARGS);
+			resolveInstanceFieldRef(_currentThread, method, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_FIELD_SETTER, NULL);
+			VMStructHasBeenUpdated(REGISTER_ARGS);
+			restoreGenericSpecialStackFrame(REGISTER_ARGS);
+			if (immediateAsyncPending()) {
+				rc = GOTO_ASYNC_CHECK;
+				goto done;
+			} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
+				rc = GOTO_THROW_CURRENT_EXCEPTION;
+				goto done;
+			}
+			flags = ramFieldRef->flags;
+			valueOffset = ramFieldRef->valueOffset;
+		} else {
+			/* Ref is resolved, see if it's fully resolved for put (put resolved and not a final field) */
+			UDATA const resolvedBit = J9FieldFlagPutResolved;
+			UDATA const finalBit = J9AccFinal;
+			UDATA const testBits = resolvedBit | finalBit;
+			UDATA const bits = flags & testBits;
+			/* Put resolved for a non-final field means fully resolved */
+			if (J9_UNEXPECTED(resolvedBit != bits)) {
+				/* If not put resolved for a final field, resolve is necessary */
+				if (testBits != bits) {
+					goto resolve;
 				}
-				flags = ramFieldRef->flags;
-				valueOffset = ramFieldRef->valueOffset;
+				/* Final field - ensure the running method is allowed to store */
+				if (J9_UNEXPECTED(VM_VMHelpers::romClassChecksFinalStores(ramConstantPool->ramClass->romClass)
+					          && !VM_VMHelpers::romMethodIsInitializer(J9_ROM_METHOD_FROM_RAM_METHOD(_literals), true)
+				)) {
+					/* Store not allowed - run the resolve code to throw the exception */
+					goto resolve;
+				}
 			}
 		}
 #if defined(DO_HOOKS)
