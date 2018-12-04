@@ -7825,14 +7825,6 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             {
             uint64_t proposedScratchMemoryLimit = (uint64_t)TR::Options::getScratchSpaceLimit();
 
-            // update our cached CHTable
-            if (details.isRemoteMethod() && !compiler->getOption(TR_DisableCHOpts))
-               {
-               auto table = (TR_JITaaSServerPersistentCHTable*)compiler->getPersistentInfo()->getPersistentCHTable();
-               table->doUpdate((TR_J9VMBase*)compiler->fe());
-               }
-
-
             bool isJSR292 = TR::CompilationInfo::isJSR292(details.getRomMethod());
 
             // Check if the the method to be compiled is a JSR292 method
