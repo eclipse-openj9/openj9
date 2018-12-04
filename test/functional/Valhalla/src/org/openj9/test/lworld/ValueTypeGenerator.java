@@ -418,7 +418,7 @@ public class ValueTypeGenerator {
 	
 	private static void generateWither(ClassWriter cw, String[] nameAndSigValue, String className) {
 		/* generate setter */
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "set" + nameAndSigValue[0], "(" + nameAndSigValue[1] + ")L" + className + ";", null, null);
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "with" + nameAndSigValue[0], "(" + nameAndSigValue[1] + ")L" + className + ";", null, null);
 		mv.visitCode();
 		mv.visitVarInsn(ALOAD, 0);
 		switch (nameAndSigValue[1]) {
@@ -443,7 +443,49 @@ public class ValueTypeGenerator {
 			break;
 		}
 		mv.visitFieldInsn(WITHFIELD, className, nameAndSigValue[0], nameAndSigValue[1]);
-		mv.visitInsn(RETURN);
+		mv.visitInsn(ARETURN);
+		mv.visitMaxs(2, 2);
+		mv.visitEnd();
+		
+		mv = cw.visitMethod(ACC_PUBLIC, "withGeneric" + nameAndSigValue[0], "(Ljava/lang/Object;)L" + className + ";", null, null);
+		mv.visitCode();
+		mv.visitVarInsn(ALOAD, 0);
+		mv.visitVarInsn(ALOAD, 1);
+		switch (nameAndSigValue[1]) {
+		case "D":
+			mv.visitTypeInsn(CHECKCAST, "java/lang/Double");
+			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Double", "doubleValue", "()D", false);
+			break;
+		case "I":
+			mv.visitTypeInsn(CHECKCAST, "java/lang/Interger");
+			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Interger", "intValue", "()I", false);
+		case "Z":
+			mv.visitTypeInsn(CHECKCAST, "java/lang/Boolean");
+			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
+		case "B":
+			mv.visitTypeInsn(CHECKCAST, "java/lang/Byte");
+			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Byte", "byteValue", "()B", false);
+		case "C":
+			mv.visitTypeInsn(CHECKCAST, "java/lang/Character");
+			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Character", "charValue", "()C", false);
+		case "S":
+			mv.visitTypeInsn(CHECKCAST, "java/lang/Short");
+			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Short", "shortValue", "()S", false);
+			break;
+		case "F":
+			mv.visitTypeInsn(CHECKCAST, "java/lang/Float");
+			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Float", "floatValue", "()F", false);
+			break;
+		case "J":
+			mv.visitTypeInsn(CHECKCAST, "java/lang/Double");
+			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Double", "doubleValue", "()J", false);
+			break;
+		default:
+			break;
+		}
+		
+		mv.visitMethodInsn(INVOKEVIRTUAL, className, "with" + nameAndSigValue[0], "(" + nameAndSigValue[1] + ")L" + className + ";", false);
+		mv.visitInsn(ARETURN);
 		mv.visitMaxs(2, 2);
 		mv.visitEnd();
 	}

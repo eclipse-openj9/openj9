@@ -71,9 +71,9 @@ public class ValueTypeTests {
 		makePoint2D = lookup.findStatic(point2DClass, "makeValue", MethodType.methodType(point2DClass, int.class, int.class));
 		
 		getX = generateGetter(point2DClass, "x", int.class);
-		MethodHandle setX = generateSetter(point2DClass, "x", int.class);
+		MethodHandle withX = generateWither(point2DClass, "x", int.class, point2DClass);
 		getY = generateGetter(point2DClass, "y", int.class);
-		MethodHandle setY = generateSetter(point2DClass, "y", int.class);
+		MethodHandle withY = generateWither(point2DClass, "y", int.class, point2DClass);
 
 		int x = 0xFFEEFFEE;
 		int y = 0xAABBAABB;
@@ -85,8 +85,8 @@ public class ValueTypeTests {
 		assertEquals(getX.invoke(point2D), x);
 		assertEquals(getY.invoke(point2D), y);
 		
-		setX.invoke(point2D, xNew);
-		setY.invoke(point2D, yNew);
+		point2D = withX.invoke(point2D, xNew);
+		point2D = withY.invoke(point2D, yNew);
 		
 		assertEquals(getX.invoke(point2D), xNew);
 		assertEquals(getY.invoke(point2D), yNew);
@@ -109,9 +109,9 @@ public class ValueTypeTests {
 		makeLine2D = lookup.findStatic(line2DClass, "makeValue", MethodType.methodType(line2DClass, point2DClass, point2DClass));
 		
 		MethodHandle getSt = generateGetter(line2DClass, "st", point2DClass);
- 		MethodHandle setSt = generateSetter(line2DClass, "st", point2DClass);
+ 		MethodHandle withSt = generateWither(line2DClass, "st", point2DClass, line2DClass);
  		MethodHandle getEn = generateGetter(line2DClass, "en", point2DClass);
- 		MethodHandle setEn = generateSetter(line2DClass, "en", point2DClass);
+ 		MethodHandle withEn = generateWither(line2DClass, "en", point2DClass, line2DClass);
  		
 		int x = 0xFFEEFFEE;
 		int y = 0xAABBAABB;
@@ -140,8 +140,8 @@ public class ValueTypeTests {
 		Object stNew = makePoint2D.invoke(xNew, yNew);
 		Object enNew = makePoint2D.invoke(x2New, y2New);
 		
-		setSt.invoke(line2D, stNew);
-		setEn.invoke(line2D, enNew);
+		line2D = withSt.invoke(line2D, stNew);
+		line2D = withEn.invoke(line2D, enNew);
 		
 		assertEquals(getX.invoke(getSt.invoke(line2D)), xNew);
 		assertEquals(getY.invoke(getSt.invoke(line2D)), yNew);
@@ -165,14 +165,10 @@ public class ValueTypeTests {
 				
 		MethodHandle makeFlattenedLine2D = lookup.findStatic(flattenedLine2DClass, "makeValueGeneric", MethodType.methodType(flattenedLine2DClass, Object.class, Object.class));
 		
-		
-		/*
- 		TODO need q signature support to do anything else with FalttenedLine2D
-		
 		MethodHandle getSt = generateGenericGetter(flattenedLine2DClass, "st");
- 		MethodHandle setSt = generateGenericSetter(flattenedLine2DClass, "st");
+ 		MethodHandle withSt = generateGenericWither(flattenedLine2DClass, "st", flattenedLine2DClass);
  		MethodHandle getEn = generateGenericGetter(flattenedLine2DClass, "en");
- 		MethodHandle setEn = generateGenericSetter(flattenedLine2DClass, "en");
+ 		MethodHandle withEn = generateGenericWither(flattenedLine2DClass, "en", flattenedLine2DClass);
  		
 		int x = 0xFFEEFFEE;
 		int y = 0xAABBAABB;
@@ -200,17 +196,14 @@ public class ValueTypeTests {
 		
 		Object stNew = makePoint2D.invoke(xNew, yNew);
 		Object enNew = makePoint2D.invoke(x2New, y2New);
-				
-		setSt.invoke(line2D, stNew);
-		setEn.invoke(line2D, enNew);
+		
+		line2D = withSt.invoke(line2D, stNew);
+		line2D = withEn.invoke(line2D, enNew);
 		
 		assertEquals(getX.invoke(getSt.invoke(line2D)), xNew);
 		assertEquals(getY.invoke(getSt.invoke(line2D)), yNew);
 		assertEquals(getX.invoke(getEn.invoke(line2D)), x2New);
 		assertEquals(getY.invoke(getEn.invoke(line2D)), y2New);
-		
-		*/
-
 	}
 
 	/*
@@ -355,6 +348,24 @@ public class ValueTypeTests {
 	static MethodHandle generateGenericSetter(Class clazz, String fieldName) {
 		try {
 			return lookup.findVirtual(clazz, "setGeneric"+fieldName, MethodType.methodType(void.class, Object.class));
+		} catch (IllegalAccessException | SecurityException | NullPointerException | NoSuchMethodException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	static MethodHandle generateWither(Class clazz, String fieldName, Class fieldType, Class returnType) {
+		try {
+			return lookup.findVirtual(clazz, "with"+fieldName, MethodType.methodType(returnType, fieldType));
+		} catch (IllegalAccessException | SecurityException | NullPointerException | NoSuchMethodException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	static MethodHandle generateGenericWither(Class clazz, String fieldName, Class returnType) {
+		try {
+			return lookup.findVirtual(clazz, "withGeneric"+fieldName, MethodType.methodType(returnType, Object.class));
 		} catch (IllegalAccessException | SecurityException | NullPointerException | NoSuchMethodException e) {
 			e.printStackTrace();
 		}
