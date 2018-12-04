@@ -5380,6 +5380,27 @@ break
          }
          _intrinsicErrorHandling = false;
       }
+
+   // The call may be transformed into a non-OSR point. Check if bookkeeping is needed
+   // before the transformation.
+   bool needOSRBookkeeping = false;
+   int32_t osrInductionOffset;
+
+   // callNodeTreeTop may be null if this call should not be placed in the trees
+   if (callNodeTreeTop
+       && comp()->getOption(TR_EnableOSR)
+       && !comp()->isPeekingMethod()
+       && comp()->isOSRTransitionTarget(TR::postExecutionOSR)
+       && comp()->isPotentialOSRPoint(callNodeTreeTop->getNode())
+       && !_methodSymbol->cannotAttemptOSRAt(callNode->getByteCodeInfo(), NULL, comp())
+       && !_cannotAttemptOSR)
+      {
+      needOSRBookkeeping = true;
+      // callNode may become a non-OSR point after the transformation, calling getOSRInductionOffset
+      // on a non-OSR point will trigger the assertion, thus get the induction offset here.
+      osrInductionOffset = comp()->getOSRInductionOffset(callNode);
+      }
+
    TR::Node * resultNode = 0;
 
    TR::ResolvedMethodSymbol * resolvedMethodSymbol = symbol->getResolvedMethodSymbol();
@@ -5535,17 +5556,15 @@ break
       push(resultNode);
       }
 
-   // callNodeTreeTop may be null if this call should not be placed in the trees
-   if (callNodeTreeTop
-       && comp()->getOption(TR_EnableOSR)
-       && !comp()->isPeekingMethod()
-       && comp()->isOSRTransitionTarget(TR::postExecutionOSR)
-       && comp()->isPotentialOSRPoint(callNodeTreeTop->getNode())
-       && !_methodSymbol->cannotAttemptOSRAt(callNode->getByteCodeInfo(), NULL, comp())
-       && !_cannotAttemptOSR)
+   if (needOSRBookkeeping)
       {
       saveStack(-1, !comp()->pendingPushLivenessDuringIlgen());
-      stashPendingPushLivenessForOSR(comp()->getOSRInductionOffset(callNode));
+      stashPendingPushLivenessForOSR(osrInductionOffset);
+      if (comp()->supportsInduceOSR() && comp()->getOSRMode() == TR::voluntaryOSR)
+         {
+         TR::Node* callToPotentialOSRPoint = TR::Node::createPotentialOSRPointHelperCallInILGen(callNodeTreeTop->getNode(), osrInductionOffset);
+         _block->append(TR::TreeTop::create(comp(), TR::Node::create(TR::treetop, 1, callToPotentialOSRPoint)));
+         }
       }
 
    if (cg()->getEnforceStoreOrder() && calledMethod->isConstructor())
