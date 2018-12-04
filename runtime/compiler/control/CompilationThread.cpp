@@ -9298,6 +9298,9 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
    TR_DataCache *dataCache = NULL;
    const J9JITDataCacheHeader *storedCompiledMethod = nullptr;
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
+   if (comp->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+      // end of compilation, clear per-compilation IProfiler cache
+      ((TR::CompilationInfoPerThreadRemote *) entry->_compInfoPT)->clearIProfilerMap(comp->trMemory());
 
    if (details.isNewInstanceThunk())
       {

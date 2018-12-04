@@ -33,6 +33,8 @@ class TR_IPBytecodeHashTableEntry;
 struct TR_RemoteROMStringKey;
 
 using IPTable_t = PersistentUnorderedMap<uint32_t, TR_IPBytecodeHashTableEntry*>;
+using IPTableHeapEntry = UnorderedMap<uint32_t, TR_IPBytecodeHashTableEntry*>;
+using IPTableHeap_t = UnorderedMap<J9Method *, IPTableHeapEntry *>;
 
 class ClientSessionData
    {
@@ -214,10 +216,14 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
       void waitForMyTurn(ClientSessionData *clientSession, TR_MethodToBeCompiled &entry); // return false if timeout
       bool getWaitToBeNotified() const { return _waitToBeNotified; }
       void setWaitToBeNotified(bool b) { _waitToBeNotified = b; }
+      void clearIProfilerMap(TR_Memory *trMemory);
+      bool cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry);
+      TR_IPBytecodeHashTableEntry *getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *methodInfoPresent);
    private:
       TR_PersistentMethodInfo *_recompilationMethodInfo;
       uint32_t _seqNo;
       bool _waitToBeNotified; // accessed with clientSession->_sequencingMonitor in hand
+      IPTableHeap_t *_methodIPDataPerComp;
    };
 }
 

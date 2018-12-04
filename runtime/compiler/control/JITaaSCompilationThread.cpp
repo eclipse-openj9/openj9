@@ -112,19 +112,21 @@ void handler_IProfiler_profilingSample(JITaaS::J9ClientStream *client, TR_J9VM *
 
    bool isCompiled = TR::CompilationInfo::isCompiled((J9Method*)method);
    bool isInProgress = comp->getMethodBeingCompiled()->getPersistentIdentifier() == method;
-   bool wholeMethodInfo = (isCompiled || isInProgress) && (data == 0);
    bool abort = false;
+   // used to tell the server if a profiled entry should be stored in persistent or heap memory
+   bool usePersistentCache = isCompiled || isInProgress;
+   bool wholeMethodInfo = data == 0;
 
    if (!iProfiler)
       {
       // iProfiler is enabled on the server if we got here, but not enabled here on the client
-      client->write(std::string(), wholeMethodInfo);
+      client->write(std::string(), wholeMethodInfo, usePersistentCache);
       return;
       }
    if (wholeMethodInfo)
       {
       // Serialize all the information related to this method
-      abort = iProfiler->serializeAndSendIProfileInfoForMethod(method, comp, client);
+      abort = iProfiler->serializeAndSendIProfileInfoForMethod(method, comp, client, usePersistentCache);
       }
    if (!wholeMethodInfo || abort) // Send information just for this entry
       {
@@ -139,11 +141,11 @@ void handler_IProfiler_profilingSample(JITaaS::J9ClientStream *client, TR_J9VM *
             auto storage = (TR_IPBCDataStorageHeader*)&entryBytes[0];
             uintptrj_t methodStartAddress = (uintptrj_t)TR::Compiler->mtd.bytecodeStart(method);
             entry->serialize(methodStartAddress, storage, comp->getPersistentInfo());
-            client->write(entryBytes, false);
+            client->write(entryBytes, false, usePersistentCache);
             }
          else
             {
-            client->write(std::string(), false);
+            client->write(std::string(), false, usePersistentCache);
             }
          // unlock the entry
          if (auto callGraphEntry = entry->asIPBCDataCallGraph())
@@ -152,7 +154,7 @@ void handler_IProfiler_profilingSample(JITaaS::J9ClientStream *client, TR_J9VM *
          }
       else // no valid info for specified bytecode index
          {
-         client->write(std::string(), false);
+         client->write(std::string(), false, usePersistentCache);
          }
       }
    }
@@ -3545,4 +3547,76 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    stream->~J9ServerStream();
    TR_Memory::jitPersistentFree(stream);
 #endif
+   }
+
+void
+TR::CompilationInfoPerThreadRemote::clearIProfilerMap(TR_Memory *trMemory)
+   {
+   if (_methodIPDataPerComp)
+      {
+      // the map and all of its values should be freed automatically at the end of compilation,
+      // since they were allocated on the compilation heap memory
+      _methodIPDataPerComp = NULL;
+      }
+   }
+
+bool
+TR::CompilationInfoPerThreadRemote::cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry)
+   {
+   TR_Memory *trMemory = getCompilation()->trMemory();
+   if (!_methodIPDataPerComp)
+      {
+      // first time cacheIProfilerInfo called during current compilation
+      _methodIPDataPerComp = new (trMemory->trHeapMemory()) IPTableHeap_t(IPTableHeap_t::allocator_type(trMemory->heapMemoryRegion()));
+
+      if (!_methodIPDataPerComp)
+         // could not allocate from heap memory
+         return false;
+      }
+
+   IPTableHeapEntry *entryMap = NULL;
+   auto it = _methodIPDataPerComp->find((J9Method *) method);
+   if (it == _methodIPDataPerComp->end())
+      {
+      // caching new method, initialize an entry map
+      entryMap = new (trMemory->trHeapMemory()) IPTableHeapEntry(IPTableHeapEntry::allocator_type(trMemory->heapMemoryRegion()));
+      if (!entryMap)
+         // could not allocate from heap memory
+         return false;
+      _methodIPDataPerComp->insert(std::make_pair((J9Method *) method, entryMap));
+      }
+   else
+      {
+      entryMap = it->second;
+      }
+
+   if (entry)
+      // entry could be NULL
+      // if all entries in a method are NULL, entryMap will be initialized but empty
+      entryMap->insert(std::make_pair(byteCodeIndex, entry));
+
+   return true;
+   }
+
+TR_IPBytecodeHashTableEntry*
+TR::CompilationInfoPerThreadRemote::getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *methodInfoPresent)
+   {
+   *methodInfoPresent = false;
+   if (!_methodIPDataPerComp)
+      // nothing has been cached during current compilation, so table is uninitialized
+      return NULL;
+
+   TR_IPBytecodeHashTableEntry *ipEntry = NULL;
+   auto it = _methodIPDataPerComp->find((J9Method *) method);
+   if (it != _methodIPDataPerComp->end())
+      {
+      // methodInfoPresent=true means that we cached info for this method,
+      // but entry for this bytecode might not exist, which means it's NULL
+      *methodInfoPresent = true;
+      IPTableHeapEntry *entryMap = it->second;
+      auto entryIt = entryMap->find(byteCodeIndex);
+      if (entryIt != entryMap->end())
+         ipEntry = entryIt->second;
+      }
+   return ipEntry;
    }
