@@ -60,6 +60,22 @@ ifeq (linux_x86-64_cmprssptrs_panama, $(SPEC))
 		--enable-OMR_JITBUILDER
 endif
 
+ifeq (linux_x86-64_cmprssptrs_sp, $(SPEC))
+	CONFIGURE_ARGS += \
+		--enable-OMRTHREAD_LIB_UNIX \
+		--enable-OMR_ARCH_X86 \
+		--enable-OMR_ENV_DATA64 \
+		--enable-OMR_ENV_LITTLE_ENDIAN \
+		--enable-OMR_GC_COMPRESSED_POINTERS \
+		--enable-OMR_GC_IDLE_HEAP_MANAGER \
+		--enable-OMR_GC_TLH_PREFETCH_FTA \
+		--enable-OMR_GC_CONCURRENT_SCAVENGER \
+		--enable-OMR_INTERP_COMPRESSED_OBJECT_HEADER \
+		--enable-OMR_INTERP_SMALL_MONITOR_SLOT \
+		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
+		--enable-OMR_PORT_NUMA_SUPPORT
+endif
+
 ifeq (linux_x86-64_codecov, $(SPEC))
 	CONFIGURE_ARGS += \
 		--enable-OMRTHREAD_LIB_UNIX \
@@ -94,7 +110,31 @@ ifeq (linux_x86_codecov, $(SPEC))
 		--enable-OMR_PORT_NUMA_SUPPORT
 endif
 
+ifeq (linux_x86-64_sp, $(SPEC))
+	CONFIGURE_ARGS += \
+		--enable-OMRTHREAD_LIB_UNIX \
+		--enable-OMR_ARCH_X86 \
+		--enable-OMR_ENV_DATA64 \
+		--enable-OMR_ENV_LITTLE_ENDIAN \
+		--enable-OMR_GC_IDLE_HEAP_MANAGER \
+		--enable-OMR_GC_TLH_PREFETCH_FTA \
+		--enable-OMR_GC_CONCURRENT_SCAVENGER \
+		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
+		--enable-OMR_PORT_NUMA_SUPPORT
+endif
+
 ifeq (linux_x86, $(SPEC))
+	CONFIGURE_ARGS += \
+		--enable-OMRTHREAD_LIB_UNIX \
+		--enable-OMR_ARCH_X86 \
+		--enable-OMR_ENV_LITTLE_ENDIAN \
+		--enable-OMR_GC_IDLE_HEAP_MANAGER \
+		--enable-OMR_GC_TLH_PREFETCH_FTA \
+		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
+		--enable-OMR_PORT_NUMA_SUPPORT
+endif
+
+ifeq (linux_x86_sp, $(SPEC))
 	CONFIGURE_ARGS += \
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_X86 \

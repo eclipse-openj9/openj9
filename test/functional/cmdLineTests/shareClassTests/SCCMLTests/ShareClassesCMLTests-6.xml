@@ -45,7 +45,7 @@
  	<variable name="CP_FIB" value="-cp $UTILSDIR$$PATHSEP$utilsBK.jar" />
  	<variable name="PROGRAM_FIB" value="VMBench/FibBench" />
  	
-	<variable name="NON_WINDOWS_PLATFORMS" value="aix.*,linux.*,zos.*" />
+	<variable name="NON_WINDOWS_PLATFORMS" value="aix.*,linux.*,zos.*,osx.*" />
 	<variable name="WINDOWS_PLATFORMS" value="win.*" />
 		
 	<if testVariable="SCMODE" testValue="204" resultVariable="currentMode" resultValue="$mode204$"/>
