@@ -20,19 +20,19 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "infra/Cfg.hpp"
-#include "codegen/CodeGenerator.hpp"
-#include "ilgen/J9ByteCodeIlGenerator.hpp"
-#include "ilgen/J9ByteCodeIterator.hpp"
 #include "ilgen/ClassLookahead.hpp"
-#include "env/PersistentCHTable.hpp"
-#include "env/ClassTableCriticalSection.hpp"
+#include "codegen/CodeGenerator.hpp"
 #include "compile/ResolvedMethod.hpp"
+#include "compiler/il/OMRTreeTop_inlines.hpp"
+#include "env/ClassTableCriticalSection.hpp"
+#include "env/IO.hpp"
+#include "env/PersistentCHTable.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/TreeTop.hpp"
-#include "omr/compiler/il/OMRTreeTop_inlines.hpp"
-#include "env/IO.hpp"
+#include "ilgen/J9ByteCodeIlGenerator.hpp"
+#include "ilgen/J9ByteCodeIterator.hpp"
+#include "infra/Cfg.hpp"
 
 TR_ClassLookahead::TR_ClassLookahead(
    TR_PersistentClassInfo * classInfo, TR_FrontEnd * fe, TR::Compilation * comp,
@@ -771,7 +771,7 @@ TR_ClassLookahead::examineNode(TR::TreeTop *nextTree, TR::Node *grandParent, TR:
                char *sig = getFieldSignature(comp(), sym, storedSymRef, length);
 
                if (rhsOfStoreNode->getOpCode().isCall() &&
-                   !rhsOfStoreNode->getSymbolReference()->isUnresolved())
+                   rhsOfStoreNode->getSymbol()->getResolvedMethodSymbol())
                   {
                   if (rhsOfStoreNode->getSymbol()->getResolvedMethodSymbol()->getRecognizedMethod() == TR::java_math_BigDecimal_valueOf)
                      {

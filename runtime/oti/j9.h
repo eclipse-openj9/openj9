@@ -154,7 +154,7 @@ typedef struct J9ClassLoaderWalkState {
 #define J9VMJAVALANGSTRING_LENGTH_VM(javaVM, object) \
 	(IS_STRING_COMPRESSION_ENABLED_VM(javaVM) ? \
 		(J2SE_VERSION(javaVM) >= J2SE_19 ? \
-			(J9INDEXABLEOBJECT_SIZE_VM(javaVM, J9VMJAVALANGSTRING_VALUE_VM(javaVM, object)) >> ((I_32) J9VMJAVALANGSTRING_CODER(javaVM, object))) : \
+			(J9INDEXABLEOBJECT_SIZE_VM(javaVM, J9VMJAVALANGSTRING_VALUE_VM(javaVM, object)) >> ((I_32) J9VMJAVALANGSTRING_CODER_VM(javaVM, object))) : \
 			(J9VMJAVALANGSTRING_COUNT_VM(javaVM, object) & 0x7FFFFFFF)) : \
 		(J2SE_VERSION(javaVM) >= J2SE_19 ? \
 			(J9INDEXABLEOBJECT_SIZE_VM(javaVM, J9VMJAVALANGSTRING_VALUE_VM(javaVM, object)) >> 1) : \
@@ -321,10 +321,17 @@ static const struct { \
 	((NULL != (interfaceClass)) && ((J9_ITABLE_INDEX_UNRESOLVED != ((methodIndexAndArgCount) & ~255))))
 
 /* Macros for ValueTypes */
-/* TODO this will have to be updated to look at the ramClass instead when further support is added */
 #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
-#define J9_IS_J9CLASS_VALUETYPE(clazz) J9_ARE_ALL_BITS_SET(clazz->romClass->modifiers, J9AccValueType)
+#define J9_IS_J9CLASS_VALUETYPE(clazz) J9_ARE_ALL_BITS_SET(clazz->classFlags, J9ClassIsValueType)
 #else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 #define J9_IS_J9CLASS_VALUETYPE(clazz) FALSE
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+
+#if defined(OSX)
+/* Temporarily disable default class sharing on OSX due to https://github.com/eclipse/openj9/issues/3333 */
+#define J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm) FALSE
+#else /* defined(OSX) */
+#define J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm) (J2SE_VERSION(vm) >= J2SE_V11)
+#endif /* defined(OSX) */
+
 #endif /* J9_H */

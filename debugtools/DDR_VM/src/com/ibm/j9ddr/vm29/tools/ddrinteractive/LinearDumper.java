@@ -58,9 +58,9 @@ import com.ibm.j9ddr.vm29.types.UDATA;
 
 public class LinearDumper implements IClassWalkCallbacks {
 	/**
-	 * private Class used to store the regions.
-	 * @author jeanpb
+	 * Private class used to store the regions.
 	 *
+	 * @author jeanpb
 	 */
 	public static class J9ClassRegion implements Comparable<J9ClassRegion> {
 		public J9ClassRegion(AbstractPointer slotPtr, SlotType type, String name,
@@ -82,52 +82,74 @@ public class LinearDumper implements IClassWalkCallbacks {
 		final long offset;
 		private final boolean computePadding;
 
-		/**
-		 * Allow to be sorted
-		 */
-		public int compareTo(J9ClassRegion region2) {
-			int delta = 0;
+		@Override
+		public int compareTo(final J9ClassRegion region2) {
 			final J9ClassRegion region1 = this;
-			try {
-				delta = (int) (region1.getSlotPtr().longValue() - region2.getSlotPtr().longValue());
-			} catch (CorruptDataException e) {
-			}
+			int delta;
 
+			{
+				/* compare slot pointers: lower addresses go first, and corrupt regions at the end */
+				boolean corrupt = false;
+				long slot1 = 0;
+				long slot2 = 0;
 
-			if (0 != delta) {
-				return delta;
-			}
-			if (SlotType.J9_SECTION_START == region1.getType()) {
-				if (SlotType.J9_SECTION_START == region2.getType()) {
-					/*
-					 * start of longest section first, if equal length, region
-					 * with longer name goes first e.g., fields over field
-					 */
-					if (region2.getLength() == region1.getLength()) {
-						return region2.getName().length() - region1.getName().length();
-					}
-					return (int) (region2.getLength() - region1.getLength());
-				} else if (SlotType.J9_SECTION_END == region2.getType()) {
-					/* previous section ends before next section starts */
-					return 1;
+				try {
+					slot1 = region1.getSlotPtr().longValue();
+				} catch (CorruptDataException e) {
+					corrupt = true;
 				}
-			} else if (SlotType.J9_SECTION_END == region1.getType()) {
-				if (SlotType.J9_SECTION_END == region2.getType()) {
-					/*
-					 * end of longest section last if equal length, region with
-					 * longer name goes last e.g., fields after field
-					 */
-					if (region2.getLength() == region1.getLength()) {
-						return region1.getName().length() - region2.getName().length();
+
+				try {
+					slot2 = region2.getSlotPtr().longValue();
+					if (corrupt) {
+						/* region1 is corrupt, but region2 is not */
+						return +1;
 					}
-					return (int) (region1.getLength() - region2.getLength());
-				} else if (SlotType.J9_SECTION_START == region2.getType()) {
-					/* previous section ends before next section starts */
-					return -1;
+				} catch (CorruptDataException e) {
+					if (corrupt) {
+						/* both regions are corrupt */
+						return 0;
+					} else {
+						/* region2 is corrupt, but region1 is not */
+						return -1;
+					}
+				}
+
+				delta = Long.compare(slot1, slot2);
+			}
+
+			if (0 == delta) {
+				SlotType type1 = region1.getType();
+				SlotType type2 = region2.getType();
+
+				/* compare types: one with a lower ordinal goes first */
+				delta = Integer.compare(type2.ordinal(), type1.ordinal());
+
+				if (0 == delta) {
+					switch (type1) {
+					case J9_SECTION_START:
+					case J9_SECTION_END:
+						/* compare section lengths: a longer section goes first */
+						delta = Long.compare(region2.getLength(), region1.getLength());
+
+						if (0 == delta) {
+							/* compare section names: a longer name goes first */
+							delta = Integer.compare(region2.getName().length(), region1.getName().length());
+						}
+
+						if (type1 == SlotType.J9_SECTION_END) {
+							/* reverse ordering for section ends */
+							delta = -delta;
+						}
+						break;
+
+					default:
+						break;
+					}
 				}
 			}
 
-			return region2.getType().ordinal() - region1.getType().ordinal();
+			return delta;
 		}
 
 		public String getName() {
@@ -151,26 +173,34 @@ public class LinearDumper implements IClassWalkCallbacks {
 		}
 	}
 
-	public static class J9ClassRegionNode implements Comparable<J9ClassRegionNode>{
+	public static class J9ClassRegionNode implements Comparable<J9ClassRegionNode> {
 		private J9ClassRegion nodeValue;
 		private LinkedList<J9ClassRegionNode> children;
+
 		public J9ClassRegionNode(J9ClassRegion nodeValue) {
 			this.nodeValue = nodeValue;
 			this.children = new LinkedList<J9ClassRegionNode>();
 		}
+
 		public J9ClassRegion getNodeValue() {
 			return nodeValue;
 		}
+
 		public List<J9ClassRegionNode> getChildren() {
 			return children;
 		}
+
 		public void addChild(J9ClassRegionNode child) {
 			this.children.addLast(child);
 		}
+
 		public int compareTo(J9ClassRegionNode region2) {
-			if (this.nodeValue.getSlotPtr().lt(region2.nodeValue.getSlotPtr())) {
+			AbstractPointer slot1 = this.nodeValue.getSlotPtr();
+			AbstractPointer slot2 = region2.nodeValue.getSlotPtr();
+
+			if (slot1.lt(slot2)) {
 				return -1;
-			} else if (this.nodeValue.getSlotPtr().gt(region2.nodeValue.getSlotPtr())) {
+			} else if (slot1.gt(slot2)) {
 				return 1;
 			} else {
 				return 0;

@@ -50,6 +50,7 @@ RUN apt-get update \
     libxt-dev \
     libxtst-dev \
     make \
+    nasm \
     pkg-config \
     realpath \
     ssh \

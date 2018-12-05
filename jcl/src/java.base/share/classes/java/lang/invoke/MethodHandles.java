@@ -57,8 +57,13 @@ import jdk.internal.reflect.CallerSensitive;
 import java.lang.invoke.VarHandle.AccessMode;
 /*[IF Sidecar19-SE-OpenJ9]*/
 import java.lang.Module;
+/*[IF Java12]*/
+import jdk.internal.access.SharedSecrets;
+import jdk.internal.access.JavaLangAccess;
+/*[ELSE]
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.misc.JavaLangAccess;
+/*[ENDIF]*/
 import java.security.ProtectionDomain;
 import jdk.internal.org.objectweb.asm.ClassReader;
 /*[ELSE] Sidecar19-SE-OpenJ9
@@ -741,6 +746,40 @@ public class MethodHandles {
 		 * @param targetClass Class which the referring class is accessing
 		 * @throws IllegalAccessException if the targetClass is not visible
 		 */
+
+		/*[IF Sidecar19-SE-OpenJ9]*/
+		static void checkClassModuleVisibility(int accessMode, Module accessModule, Class<?> targetClass) throws IllegalAccessException {
+			if (INTERNAL_PRIVILEGED != accessMode) {
+				Module targetModule = targetClass.getModule();
+				// modules may be null during bootstrapping
+				if ((null != targetModule) && (null != accessModule)) {
+					String targetClassPackageName = targetClass.getPackageName();
+					if ((UNCONDITIONAL & accessMode) == UNCONDITIONAL) {
+						/* publicLookup objects can see all unconditionally exported packages. */
+						if (!targetModule.isExported(targetClassPackageName)) {
+							throw throwIllegalAccessException(accessModule, targetModule, targetClassPackageName, "K0676"); //$NON-NLS-1$
+						}
+					} else if (!accessModule.canRead(targetModule)) {
+						throw throwIllegalAccessException(accessModule, targetModule, targetClassPackageName, "K0679"); //$NON-NLS-1$
+					} else if (!targetModule.isExported(targetClassPackageName)) {
+						// Need MODULE access to see packages conditionally exported
+						if (((MODULE & accessMode) != MODULE) 
+							|| (!accessModule.equals(targetModule) 
+								&& !targetModule.isExported(targetClassPackageName, accessModule))) {
+							throw throwIllegalAccessException(accessModule, targetModule, targetClassPackageName, "K0677"); //$NON-NLS-1$
+						}
+					}
+				}
+			}
+		}
+
+		private static IllegalAccessException throwIllegalAccessException(Module accessModule, Module targetModule, String targetClassPackageName, String msgId) throws IllegalAccessException {
+			/*[MSG "K0676", "Module '{0}' no access to: package '{1}' which is not exported by module '{2}'"]*/
+			/*[MSG "K0677", "Module '{0}' no access to: package '{1}' which is not exported by module '{2}' to module '{0}'"]*/
+			/*[MSG "K0679", "Module '{0}' no access to: package '{1}' because module '{0}' can't read module '{2}'"]*/
+			throw new IllegalAccessException(Msg.getString(msgId, getModuleName(accessModule), targetClassPackageName, getModuleName(targetModule)));
+		}
+		/*[ELSE] 
 		static void checkClassModuleVisibility(int accessMode, Module accessModule, Class<?> targetClass) throws IllegalAccessException {
 
 			if (INTERNAL_PRIVILEGED != accessMode) {
@@ -766,8 +805,10 @@ public class MethodHandles {
 				}
 			}
 		}
+
+		/*[ENDIF]*/  /* Sidecar19-SE-OpenJ9 */
 		/*[ENDIF]*/
-		
+
 		/*[IF Panama]*/
 		/**
 		 * Return a MethodHandle to a native method.  The MethodHandle will have the same type as the
@@ -1444,8 +1485,10 @@ public class MethodHandles {
 			Class<?> declaringClass = field.getDeclaringClass();
 			Class<?> fieldType = field.getType();
 			String fieldName = field.getName();
-			
-			if (Modifier.isFinal(modifiers)) {
+			/* https://github.com/eclipse/openj9/issues/3175
+			 * Setters are allowed on instance final instance fields if they have been set accessible.
+			 */
+			if (Modifier.isFinal(modifiers) && (!field.isAccessible() || Modifier.isStatic(modifiers))) {
 				/*[MSG "K05cf", "illegal setter on final field"]*/
 				throw new IllegalAccessException(Msg.getString("K05cf")); //$NON-NLS-1$
 			}
@@ -2774,7 +2817,7 @@ public class MethodHandles {
 	 * In all cases, the preprocessor handle accepts a subset of the arguments for the handle.
 	 * 
 	 * @param handle - the handle to call after preprocessing
-	 * @param handle - the starting position to fold arguments
+	 * @param foldPosition - the starting position to fold arguments
 	 * @param preprocessor - a methodhandle that preprocesses some of the incoming arguments
 	 * @return a MethodHandle that preprocesses some of the arguments to the handle before calling the next handle, possibly with an additional first argument
 	 * @throws NullPointerException - if any of the arguments are null

@@ -27,10 +27,10 @@ include $(TOP_DIR)makelib/uma_macros.mk
 
 ifeq (8,$(VERSION_MAJOR))
   DDR_JCL_MODULE := jclse7b_
-else ifneq (,$(findstring $(VERSION_MAJOR),9 10 11))
+else ifneq (,$(findstring $(VERSION_MAJOR),9 10 11 12))
   DDR_JCL_MODULE := jclse$(VERSION_MAJOR)_
 else
-  DDR_JCL_MODULE := jclse11_
+  DDR_JCL_MODULE := jclse12_
 endif
 
 DDR_INPUT_MODULES := j9ddr_misc j9gc j9jvmti j9prt j9shr j9thr j9trc j9vm $(DDR_JCL_MODULE)
@@ -40,6 +40,11 @@ DDR_INPUT_DEPENDS := $(addprefix $(TOP_DIR),$(foreach module,$(DDR_INPUT_MODULES
 DDR_INPUT_FILES := $(addprefix $(TOP_DIR),$(foreach module,$(DDR_INPUT_MODULES),$($(module)_pdb)))
 <#elseif uma.spec.flags.uma_gnuDebugSymbols.enabled>
 DDR_INPUT_FILES := $(addsuffix .dbg,$(DDR_INPUT_DEPENDS))
+<#if uma.spec.type.osx>
+# workaround for OSX not keeping anonymous enum symbols in shared library
+# so get it directly from object file instead
+DDR_INPUT_FILES += $(TOP_DIR)/omr/gc/base/standard/CompactScheme$(UMA_DOT_O)
+</#if>
 </#if>
 
 # The primary goals of this makefile.

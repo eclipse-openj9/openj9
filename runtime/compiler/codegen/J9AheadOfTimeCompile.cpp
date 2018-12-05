@@ -27,6 +27,7 @@
 #include "il/DataTypes.hpp"
 #include "env/VMJ9.h"
 #include "codegen/AheadOfTimeCompile.hpp"
+#include "runtime/RelocationRuntime.hpp"
 #include "runtime/RelocationRecord.hpp"
 
 extern bool isOrderedPair(uint8_t reloType);
@@ -149,6 +150,73 @@ static const char* getNameForMethodRelocation (int type)
    return NULL;
    }
 
+uint8_t *
+J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternalRelocation *relocation, TR_RelocationRecord *reloRecord)
+   {
+   uint8_t *cursor = relocation->getRelocationData();
+
+   TR::Compilation *comp = TR::comp();
+   TR_RelocationRuntime *reloRuntime = comp->reloRuntime();
+   TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
+   TR::SymbolValidationManager *symValManager = comp->getSymbolValidationManager();
+   TR_J9VMBase *fej9 = comp->fej9();
+   TR_SharedCache *sharedCache = fej9->sharedCache();
+
+   TR_ExternalRelocationTargetKind kind = relocation->getTargetKind();
+
+   // initializeCommonAOTRelocationHeader currently doesn't do anything; however, as more
+   // relocation records are consolidated, it will become the canonical place
+   // to initialize the platform agnostic relocation headers
+   switch (kind)
+      {
+      default:
+         return cursor;
+      }
+
+   reloRecord->setSize(reloTarget, relocation->getSizeOfRelocationData());
+   reloRecord->setType(reloTarget, kind);
+
+   uint8_t wideOffsets = relocation->needsWideOffsets() ? RELOCATION_TYPE_WIDE_OFFSET : 0;
+   reloRecord->setFlag(reloTarget, wideOffsets);
+
+   cursor += TR_RelocationRecord::getSizeOfAOTRelocationHeader(kind);
+
+   return cursor;
+   }
+
+uint8_t *
+J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose)
+   {
+   TR::Compilation *comp = TR::comp();
+   TR_RelocationRuntime *reloRuntime = comp->reloRuntime();
+   TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
+
+   TR_RelocationRecord storage;
+   TR_RelocationRecord *reloRecord = TR_RelocationRecord::create(&storage, reloRuntime, reloTarget, reinterpret_cast<TR_RelocationRecordBinaryTemplate *>(cursor));
+
+   TR_ExternalRelocationTargetKind kind = reloRecord->type(reloTarget);
+
+   int32_t offsetSize = reloRecord->wideOffsets(reloTarget) ? 4 : 2;
+
+   uint8_t *startOfOffsets = cursor + TR_RelocationRecord::getSizeOfAOTRelocationHeader(kind);
+   uint8_t *endOfCurrentRecord = cursor + reloRecord->size(reloTarget);
+
+   bool orderedPair = isOrderedPair(kind);
+
+   // dumpRelocationHeaderData currently doesn't do anything; however, as more
+   // relocation records are consolidated, it will become the canonical place
+   // to dump the relocation header data
+   switch (kind)
+      {
+      default:
+         return cursor;
+      }
+
+   traceMsg(self()->comp(), "\n");
+
+   return endOfCurrentRecord;
+   }
+
 void
 J9::AheadOfTimeCompile::dumpRelocationData()
    {
@@ -222,6 +290,8 @@ J9::AheadOfTimeCompile::dumpRelocationData()
       void *ep1, *ep2, *ep3, *ep4, *ep5, *ep6, *ep7;
       TR::SymbolReference *tempSR = NULL;
 
+      uint8_t *origCursor = cursor;
+
       traceMsg(self()->comp(), "%16x  ", cursor);
 
       // Relocation size
@@ -250,6 +320,16 @@ J9::AheadOfTimeCompile::dumpRelocationData()
          traceMsg(self()->comp(), "      ");
 
       cursor++;
+
+      // dumpRelocationHeaderData currently doesn't do anything; however, as more
+      // relocation records are consolidated, it will become the canonical place
+      // to dump the relocation header data
+      uint8_t *newCursor = self()->dumpRelocationHeaderData(origCursor, isVerbose);
+      if (origCursor != newCursor)
+         {
+         cursor = newCursor;
+         continue;
+         }
 
       switch (kind)
          {

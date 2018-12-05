@@ -1,36 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <!--
-  Copyright (c) 2006, 2018 IBM Corp. and others
- 
-  This program and the accompanying materials are made available under
-  the terms of the Eclipse Public License 2.0 which accompanies this
-  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
-  or the Apache License, Version 2.0 which accompanies this distribution and
-  is available at https://www.apache.org/licenses/LICENSE-2.0.
- 
-  This Source Code may also be made available under the following
-  Secondary Licenses when the conditions for such availability set
-  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
-  General Public License, version 2 with the GNU Classpath
-  Exception [1] and GNU General Public License, version 2 with the
-  OpenJDK Assembly Exception [2].
- 
-  [1] https://www.gnu.org/software/classpath/license.html
-  [2] http://openjdk.java.net/legal/assembly-exception.html
+Copyright (c) 2006, 2018 IBM Corp. and others
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
+
+[1] https://www.gnu.org/software/classpath/license.html
+[2] http://openjdk.java.net/legal/assembly-exception.html
+
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
-
 <module xmlns:xi="http://www.w3.org/2001/XInclude">
 	<xi:include href="j9vmnatives.xml"><xi:fallback/></xi:include>
 
-	<exports group="all">
-		<export name="JNI_CreateJavaVM" />
-		<export name="JNI_GetCreatedJavaVMs" />
-		<export name="JNI_GetDefaultJavaVMInitArgs" />
-		<export name="_JVM_GetCallerClass@8" />
-	</exports>
 	<artifact type="target" name="generated.h" all="false">
 		<dependencies>
 			<dependency name="generated.h.m4"/>
@@ -42,6 +34,7 @@
 			<command type="clean" line="$(RM) generated.h"/>
 		</commands>
 	</artifact>
+
 	<artifact type="target" name="generate_j9vm">
 		<commands>
 			<command type="all" line="$(MAKE) -C $(UMA_PATH_TO_ROOT)j9vm generated.h"/>
@@ -63,9 +56,6 @@
 			<group name="all"/>
 			<group name="j9vmnatives"/>
 		</exports>
-		<flags>
-			<flag name="J9VM_JAVA9_BUILD" value="148"/>
-		</flags>
 		<includes>
 			<include path="j9include"/>
 			<include path="j9oti"/>
@@ -97,12 +87,11 @@
 				<include-if condition="spec.flags.opt_harmony"/>
 			</object>
 		</objects>
-		
-		<!-- 
-		  WARNING: DO NOT LINK SHARED LIBRARIES AGAINST THIS SHARED LIBRARY 
+
+		<!--
+		  WARNING: DO NOT LINK SHARED LIBRARIES AGAINST THIS SHARED LIBRARY
 		           WE NEED TO BE ABLE TO LOAD IT WITHOUT ANYTHING ELSE ON THE
 		           LIBPATH.
-		           
 		           This is required because of sidecar configurations.
 		-->
 		<libraries>
@@ -120,5 +109,5 @@
 			</library>
 		</libraries>
 	</artifact>
-		
+
 </module>

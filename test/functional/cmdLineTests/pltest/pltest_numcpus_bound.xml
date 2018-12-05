@@ -26,7 +26,7 @@
 
 <suite id="J9 Command-Line Option Test for pltest" timeout="600">
 
- <variable name="NON_WINDOWS_PLATFORMS" value="aix.*,linux.*,zos.*" />
+ <variable name="NON_WINDOWS_PLATFORMS" value="aix.*,linux.*,zos.*,osx.*" />
  <variable name="WINDOWS_PLATFORMS" value="win.*" />
 
 

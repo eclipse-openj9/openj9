@@ -404,6 +404,9 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 #if defined(J9VM_INTERP_SMALL_MONITOR_SLOT)
 			writeConstant(OMRPORTLIB, fd, "ASM_J9VM_INTERP_SMALL_MONITOR_SLOT", 1) |
 #endif /* J9VM_INTERP_SMALL_MONITOR_SLOT */
+#if defined(J9VM_GC_COMPRESSED_POINTERS)
+			writeConstant(OMRPORTLIB, fd, "ASM_J9VM_GC_COMPRESSED_POINTERS", 1) |
+#endif /* J9VM_GC_COMPRESSED_POINTERS */
 #if defined(J9VM_GC_TLH_PREFETCH_FTA)
 			writeConstant(OMRPORTLIB, fd, "ASM_J9VM_GC_TLH_PREFETCH_FTA", 1) |
 #endif /* J9VM_GC_TLH_PREFETCH_FTA */
@@ -558,6 +561,8 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_VMThread_stackWalkState", offsetof(J9VMThread, stackWalkState)) |
 #if defined(OMR_GC_CONCURRENT_SCAVENGER) && defined(J9VM_ARCH_S390)
 			writeConstant(OMRPORTLIB, fd, "J9TR_VMThread_gsParameters_GSECI", offsetof(J9VMThread, gsParameters) + 2) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_VMThread_gsParameters_instructionAddr", offsetof(J9VMThread, gsParameters.instructionAddr)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_VMThread_gsParameters_operandAddr", offsetof(J9VMThread, gsParameters.operandAddr)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_VMThread_gsParameters_returnAddr", offsetof(J9VMThread, gsParameters.returnAddr)) |
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
@@ -578,6 +583,9 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 #if defined(J9VM_ENV_SHARED_LIBS_USE_GLOBAL_TABLE)
 			writeConstant(OMRPORTLIB, fd, "J9TR_JavaVM_jitTOC", offsetof(J9JavaVM, jitTOC)) |
 #endif /* J9VM_ENV_SHARED_LIBS_USE_GLOBAL_TABLE */
+#if defined(J9VM_GC_COMPRESSED_POINTERS)
+			writeConstant(OMRPORTLIB, fd, "J9TR_JavaVM_compressedPointersShift", offsetof(J9JavaVM, compressedPointersShift)) |
+#endif /* J9VM_GC_COMPRESSED_POINTERS */
 			writeConstant(OMRPORTLIB, fd, "J9TR_J9MemoryManagerFunctions_J9ReadBarrier", offsetof(J9MemoryManagerFunctions, J9ReadBarrier)) |
 			/* J9VMEntryLocalStorage */
 			writeConstant(OMRPORTLIB, fd, "J9TR_ELS_jitGlobalStorageBase", offsetof(J9VMEntryLocalStorage, jitGlobalStorageBase)) |
@@ -714,6 +722,7 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_fast_jitPostJNICallOffloadCheck", offsetof(J9JITConfig, fast_jitPostJNICallOffloadCheck)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_fast_jitObjectHashCode", offsetof(J9JITConfig, old_fast_jitObjectHashCode)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitInduceOSRAtCurrentPC", offsetof(J9JITConfig, old_slow_jitInduceOSRAtCurrentPC)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitInduceOSRAtCurrentPCAndRecompile", offsetof(J9JITConfig, old_slow_jitInduceOSRAtCurrentPCAndRecompile)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitInterpretNewInstanceMethod", offsetof(J9JITConfig, old_slow_jitInterpretNewInstanceMethod)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitNewInstanceImplAccessCheck", offsetof(J9JITConfig, old_slow_jitNewInstanceImplAccessCheck)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitTranslateNewInstanceMethod", offsetof(J9JITConfig, old_slow_jitTranslateNewInstanceMethod)) |

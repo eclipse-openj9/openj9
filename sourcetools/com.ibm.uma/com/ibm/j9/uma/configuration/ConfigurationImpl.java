@@ -396,6 +396,31 @@ public class ConfigurationImpl implements IConfiguration, ISinglePredicateEvalua
 					throw new UMAException("Error: Invalid flag used: " + predicate);
 				}
 				return isFlagSet(flag);
+			} else if (predicate.startsWith("java", "spec.".length())) {
+				// spec.javaNN -> JAVA_SPEC_VERSION >= NN
+				String testVersion = predicate.substring("spec.java".length());
+				int testVersionVal;
+
+				try {
+					testVersionVal = Integer.parseInt(testVersion);
+				} catch (NumberFormatException e) {
+					throw new UMAException("Error: Non-numeric spec.java: " + testVersion);
+				}
+
+				String specVersion = macroMap.get("JAVA_SPEC_VERSION");
+				int specVersionVal;
+
+				if (specVersion == null) {
+					throw new UMAException("Error: JAVA_SPEC_VERSION is not defined");
+				}
+
+				try {
+					specVersionVal = Integer.parseInt(specVersion);
+				} catch (NumberFormatException e) {
+					throw new UMAException("Error: Non-numeric JAVA_SPEC_VERSION: " + specVersion);
+				}
+
+				return specVersionVal >= testVersionVal;
 			} else if (predicate.startsWith("jcl.", "spec.".length())) {
 				String defaultJcl = predicate.substring("spec.jcl.".length());
 				if (!isValidJcl(defaultJcl)) {
@@ -404,15 +429,10 @@ public class ConfigurationImpl implements IConfiguration, ISinglePredicateEvalua
 
 				return defaultJcl.matches(getDefaultJcl());
 			} else {
-				String spec = predicate.substring("spec.".length());
 				// must be a platform identifier
-				if (getConfigurationName().equalsIgnoreCase(spec)) {
-					return true;
-				} else if (getConfigurationName().matches(spec)) {
-					return true;
-				} else {
-					return false;
-				}
+				String name = getConfigurationName();
+				String spec = predicate.substring("spec.".length());
+				return spec.equalsIgnoreCase(name) || name.matches(spec);
 			}
 		}
 

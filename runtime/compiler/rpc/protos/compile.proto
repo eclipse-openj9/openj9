@@ -90,7 +90,7 @@ enum J9ServerMessageType
    ResolvedMethod_isSameMethod = 135;
    ResolvedMethod_isBigDecimalMethod = 136;
    ResolvedMethod_isBigDecimalConvertersMethod = 137;
-   ResolvedMethod_osrFrameSize = 138;
+   // ResolvedMethod_osrFrameSize = 138;
    ResolvedMethod_isInlineable = 139;
    // ResolvedMethod_isWarmCallGraphTooBig = 140; 
    ResolvedMethod_setWarmCallGraphTooBig = 141;

@@ -147,10 +147,11 @@
 #define J9AccVolatile 0x40
 #define J9StaticFieldRefBaseType 0x1
 #define J9StaticFieldRefDouble 0x2
-#define J9StaticFieldRefFlagBits 0x1F
+#define J9StaticFieldRefVolatile 0x4
 #define J9StaticFieldRefBoolean 0x8
 #define J9StaticFieldRefPutResolved 0x10
-#define J9StaticFieldRefVolatile 0x4
+#define J9StaticFieldRefFinal 0x20
+#define J9StaticFieldRefFlagBits 0x3F
 
 /* @ddr_namespace: map_to_type=J9JavaClassFlags */
 
@@ -165,6 +166,7 @@
 #define J9ClassIsDerivedValueType 0x80
 #define J9ClassHasWatchedFields 0x100
 #define J9ClassReservableLockWordInit 0x200
+#define J9ClassIsValueType 0x400
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
 
@@ -174,11 +176,10 @@
 #define J9FieldFlagHasGenericSignature 0x40000000
 #define J9FieldFlagHasTypeAnnotations 0x800000
 #define J9FieldFlagIsContended 0x10000000
-#define J9FieldFlagUnused_2000000 0x2000000
-#define J9FieldFlagUnused_4000000 0x4000000
 #define J9FieldFlagObject 0x20000
 #define J9FieldFlagUnused_1000000 0x1000000
-#define J9FieldFlagUnused_7000000 0x7000000
+#define J9FieldFlagUnused_2000000 0x2000000
+#define J9FieldFlagUnused_4000000 0x4000000
 #define J9FieldFlagPutResolved 0x8000000
 #define J9FieldFlagResolved 0x80000000
 #define J9FieldFlagsBaseTypeShift 0x3
@@ -1366,6 +1367,8 @@ typedef struct J9SharedCacheAPI {
 	I_32 maxAOT;
 	I_32 minJIT;
 	I_32 maxJIT;
+	U_8 sharedCacheEnabled;
+	U_8 inContainer; /* It is TRUE only when xShareClassesPresent is FALSE and J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm) is TRUE and the JVM is running in container */
 } J9SharedCacheAPI;
 
 typedef struct J9SharedClassConfig {
@@ -3524,6 +3527,7 @@ typedef struct J9JITConfig {
 	void *fast_jitPostJNICallOffloadCheck;
 	void *old_fast_jitObjectHashCode;
 	void *old_slow_jitInduceOSRAtCurrentPC;
+	void *old_slow_jitInduceOSRAtCurrentPCAndRecompile;
 	void *old_slow_jitInterpretNewInstanceMethod;
 	void *old_slow_jitNewInstanceImplAccessCheck;
 	void *old_slow_jitTranslateNewInstanceMethod;
@@ -3716,6 +3720,7 @@ typedef struct J9JITConfig {
 	void*  ( *jitOSRGetPatchPoint)(struct J9JITExceptionTable * metaData, void * stackMap) ;
 	IDATA  ( *jitCanResumeAtOSRPoint)(struct J9VMThread * currentThread, struct J9JITExceptionTable * metaData, U_8 * pc) ;
 	IDATA  ( *retranslateWithPreparation)(struct J9JITConfig *jitConfig, struct J9VMThread *vmStruct, J9Method *method, void *oldStartPC, UDATA reason) ;
+	IDATA  ( *retranslateWithPreparationForMethodRedefinition)(struct J9JITConfig *jitConfig, struct J9VMThread *vmStruct, J9Method *method, void *oldStartPC) ;
 	void* j2iInvokeWithArguments;
 	void*  ( *translateMethodHandle)(struct J9VMThread *currentThread, j9object_t methodHandle, j9object_t arg, U_32 flags) ;
 	void* i2jMHTransition;
@@ -3889,6 +3894,7 @@ typedef struct J9AOTConfig {
 	void *fast_jitPostJNICallOffloadCheck;
 	void *old_fast_jitObjectHashCode;
 	void *old_slow_jitInduceOSRAtCurrentPC;
+	void *old_slow_jitInduceOSRAtCurrentPCAndRecompile;
 	void *old_slow_jitInterpretNewInstanceMethod;
 	void *old_slow_jitNewInstanceImplAccessCheck;
 	void *old_slow_jitTranslateNewInstanceMethod;
@@ -4081,6 +4087,7 @@ typedef struct J9AOTConfig {
 	void*  ( *jitOSRGetPatchPoint)(struct J9JITExceptionTable * metaData, void * stackMap) ;
 	IDATA  ( *jitCanResumeAtOSRPoint)(struct J9VMThread * currentThread, struct J9JITExceptionTable * metaData, U_8 * pc) ;
 	IDATA  ( *retranslateWithPreparation)(struct J9JITConfig *jitConfig, struct J9VMThread *vmStruct, J9Method *method, void *oldStartPC, UDATA reason) ;
+	IDATA  ( *retranslateWithPreparationForMethodRedefinition)(struct J9JITConfig *jitConfig, struct J9VMThread *vmStruct, J9Method *method, void *oldStartPC) ;
 	void* j2iInvokeWithArguments;
 	void*  ( *translateMethodHandle)(struct J9VMThread *currentThread, j9object_t methodHandle, j9object_t arg, U_32 flags) ;
 	void* i2jMHTransition;

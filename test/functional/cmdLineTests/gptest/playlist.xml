@@ -41,7 +41,8 @@
 	-Xint -jar $(CMDLINETESTER_JAR) \
 	-config  $(Q)$(TEST_RESROOT)$(D)gptests.xml$(Q) -verbose -explainExcludes -xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -xlist $(Q)$(TEST_RESROOT)$(D)cmdlineopttest_exclude.xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}	</command>
-		<platformRequirements>^os.win</platformRequirements>
+		<!-- temporarily disable this test on osx; https://github.com/eclipse/openj9/issues/3686 -->
+		<platformRequirements>^os.win,^os.osx</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>

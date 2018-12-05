@@ -63,6 +63,7 @@ bool enableCompiledMethodLoadHookOnly = false;
 // -----------------------------------------------------------------------------
 
 bool J9::Options::_doNotProcessEnvVars = false; // set through XX options in Java
+bool J9::Options::_reportByteCodeInfoAtCatchBlock = false;
 int32_t J9::Options::_samplingFrequencyInIdleMode = 1000; // ms
 int32_t J9::Options::_statisticsFrequency = 0; // ms
 int32_t J9::Options::_samplingFrequencyInDeepIdleMode = 100000; // ms
@@ -1467,35 +1468,30 @@ J9::Options::fePreProcess(void * base)
          if (OPTION_OK == returnCode)
             {
             ccTotalSize >>= 10; // convert to KB
-            // Restriction: total size can only grow
-            // The following check will also prevent us from doing the computation twice fro JIT and AOT
-            if (jitConfig->codeCacheTotalKB < ccTotalSize)
-               {
-               // Restriction: total size must be a multiple of the size of one code cache
-               UDATA fragmentSize = ccTotalSize % jitConfig->codeCacheKB;
-               if (fragmentSize > 0)   // TODO: do we want a message here?
-                  ccTotalSize += jitConfig->codeCacheKB - fragmentSize; // round-up
 
-               // Proportionally increase the data cache as well
-               // Use 'double' to avoid truncation/overflow
-               UDATA dcTotalSize = (double)ccTotalSize/(double)(jitConfig->codeCacheTotalKB) *
-                  (double)(jitConfig->dataCacheTotalKB);
+            // Impose a minimum value of 2 MB
+            if (ccTotalSize < 2048)
+               ccTotalSize = 2048;
 
-               // Round up to a multiple of the data cache size
-               fragmentSize = dcTotalSize % jitConfig->dataCacheKB;
-               if (fragmentSize > 0)
-                  dcTotalSize += jitConfig->dataCacheKB - fragmentSize;
-               // Now write the values in jitConfig
-               jitConfig->codeCacheTotalKB = ccTotalSize;
-               // Make sure that the new value for dataCacheTotal doesn't shrink the default
-               if (dcTotalSize > jitConfig->dataCacheTotalKB)
-                  jitConfig->dataCacheTotalKB = dcTotalSize;
-               }
-            else // codeCacheTotal is not allowed to shrink
-               {
-               // TODO: do we want a message here?
-               // If so, we need to avoid the message when the IF condition is evaluated a second time (for JIT and AOT)
-               }
+            // Restriction: total size must be a multiple of the size of one code cache
+            UDATA fragmentSize = ccTotalSize % jitConfig->codeCacheKB;
+            if (fragmentSize > 0)   // TODO: do we want a message here?
+               ccTotalSize += jitConfig->codeCacheKB - fragmentSize; // round-up
+
+            // Proportionally increase the data cache as well
+            // Use 'double' to avoid truncation/overflow
+            UDATA dcTotalSize = (double)ccTotalSize / (double)(jitConfig->codeCacheTotalKB) *
+               (double)(jitConfig->dataCacheTotalKB);
+
+            // Round up to a multiple of the data cache size
+            fragmentSize = dcTotalSize % jitConfig->dataCacheKB;
+            if (fragmentSize > 0)
+               dcTotalSize += jitConfig->dataCacheKB - fragmentSize;
+            // Now write the values in jitConfig
+            jitConfig->codeCacheTotalKB = ccTotalSize;
+            // Make sure that the new value for dataCacheTotal doesn't shrink the default
+            if (dcTotalSize > jitConfig->dataCacheTotalKB)
+               jitConfig->dataCacheTotalKB = dcTotalSize;
             }
          else // Error with the option
             {
@@ -2400,8 +2396,7 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
        (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_PUT_FIELD) ||
        (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_GET_STATIC_FIELD) ||
        (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_PUT_STATIC_FIELD) ||
-       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_SINGLE_STEP) ||
-       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_EXCEPTION_CATCH))
+       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_SINGLE_STEP))
       {
         static bool TR_DisableFullSpeedDebug = feGetEnv("TR_DisableFullSpeedDebug")?1:0;
       #if defined(J9VM_JIT_FULL_SPEED_DEBUG)
@@ -2423,10 +2418,20 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
       #endif
       }
 
-   if ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_EXCEPTION_CATCH) ||
-       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_EXCEPTION_THROW))
+   bool exceptionEventHooked = false;
+   if ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_EXCEPTION_CATCH))
+      {
+      jitConfig->jitExceptionCaught = jitExceptionCaught;
+      exceptionEventHooked = true;
+      }
+   if ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_EXCEPTION_THROW))
+      {
+      exceptionEventHooked = true;
+      }
+   if (exceptionEventHooked)
       {
       self()->setOption(TR_DisableThrowToGoto);
+      self()->setReportByteCodeInfoAtCatchBlock();
       doAOT = false;
       }
 
@@ -2548,6 +2553,7 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    //
    if (self()->getOption(TR_FullSpeedDebug))
       {
+      self()->setReportByteCodeInfoAtCatchBlock();
       self()->setOption(TR_DisableGuardedCountingRecompilations);
       self()->setOption(TR_EnableJProfiling, false);
       //might move around asyn checks and clone the OSRBlock which are not safe under the current OSR infrastructure

@@ -552,6 +552,7 @@ TR_J9ByteCodeIlGenerator::genILFromByteCodes()
       else if (_invokeSpecialInterfaceCalls != NULL
                && currNode->getNumChildren() >= 1
                && currNode->getFirstChild()->getOpCode().isCallDirect()
+               && !currNode->getFirstChild()->isPotentialOSRPointHelperCall()
                && _invokeSpecialInterfaceCalls->isSet(
                      currNode->getFirstChild()->getByteCodeIndex())
                && !evaluatedInvokeSpecialCalls.contains(currNode->getFirstChild()))

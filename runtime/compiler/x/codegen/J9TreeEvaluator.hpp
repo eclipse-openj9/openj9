@@ -84,8 +84,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *tfinishEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *tabortEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static void generateVFTMaskInstruction(TR::Node *node, TR::Register *reg, TR::CodeGenerator *cg);
-   static void generateWrtbarForArrayCopy(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *VMarrayStoreCheckArrayCopyEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static bool VMinlineCallEvaluator(TR::Node *node, bool isIndirect, TR::CodeGenerator *cg);
    static TR::Register *VMmonentEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *VMmonexitEvaluator(TR::Node *node, TR::CodeGenerator *cg);

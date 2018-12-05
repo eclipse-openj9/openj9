@@ -89,6 +89,7 @@ struct CompileParameters
          TR::CompilationInfoPerThreadBase *compilationInfo,
          TR_J9VMBase* vm,
          J9VMThread * vmThread,
+         TR_RelocationRuntime *reloRuntime,
          TR_OptimizationPlan * optimizationPlan,
          TR::SegmentAllocator &scratchSegmentProvider,
          TR::Region &dispatchRegion,
@@ -98,6 +99,7 @@ struct CompileParameters
       _compilationInfo(compilationInfo),
       _vm(vm),
       _vmThread(vmThread),
+      _reloRuntime(reloRuntime),
       _optimizationPlan(optimizationPlan),
       _scratchSegmentProvider(scratchSegmentProvider),
       _dispatchRegion(dispatchRegion),
@@ -110,6 +112,7 @@ struct CompileParameters
    TR::CompilationInfoPerThreadBase *_compilationInfo;
    TR_J9VMBase        *_vm;
    J9VMThread         *_vmThread;
+   TR_RelocationRuntime *_reloRuntime;
    TR_OptimizationPlan*_optimizationPlan;
    TR::SegmentAllocator &_scratchSegmentProvider;
    TR::Region           &_dispatchRegion;

@@ -64,6 +64,21 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
 
    static bool _doNotProcessEnvVars;
 
+   static bool _reportByteCodeInfoAtCatchBlock;
+   /** \brief
+    *     Returns the _reportByteCodeInfoAtCatchBlock
+    *
+    *  \details
+    *     reportByteCodeInfoAtCatchBlock defines whether Byte Code Information should be reported on a catch block.
+    *
+    */
+   static inline bool getReportByteCodeInfoAtCatchBlock() { return _reportByteCodeInfoAtCatchBlock; }
+   /** \brief
+    *     Setter for _reportByteCodeInfoAtCatchBlock
+    *
+    */
+   static inline bool setReportByteCodeInfoAtCatchBlock(bool b = true) { return _reportByteCodeInfoAtCatchBlock = b; }
+
    static int32_t _samplingFrequencyInIdleMode;
    static int32_t getSamplingFrequencyInIdleMode() {return _samplingFrequencyInIdleMode;}
 

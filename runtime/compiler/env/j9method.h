@@ -138,7 +138,6 @@ public:
 
    virtual bool                  isUnsafeWithObjectArg( TR::Compilation * comp = NULL);
    virtual bool                  isUnsafeCAS(TR::Compilation * = NULL);
-   static uintptr_t              osrFrameSize(J9Method* j9Method);
    virtual uint32_t              numberOfExplicitParameters();
    virtual TR::DataType         parmType(uint32_t parmNumber); // returns the type of the parmNumber'th parameter (0-based)
 

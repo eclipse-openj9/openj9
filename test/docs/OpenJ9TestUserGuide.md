@@ -42,7 +42,7 @@ tools should be installed on your test machine to run tests.
 
 # Tasks in OpenJ9 Test
 
-1. Configure environment:
+### 1. Configure environment:
 
   * environment variables
     ```
@@ -61,7 +61,7 @@ for possible SPEC values.
 
 Please read [DependentLibs.md](./DependentLibs.md) for details.
 
-2. Compile tests:
+## 2. Compile tests:
 
   * compile and run all tests
     ```
@@ -73,7 +73,7 @@ Please read [DependentLibs.md](./DependentLibs.md) for details.
     make compile
     ```
 
-3. Add more tests:
+### 3. Add more tests:
 
   * for Java8/Java9 functionality
 
@@ -105,7 +105,7 @@ Please read [DependentLibs.md](./DependentLibs.md) for details.
     level.sanity or level.extended group to be included in main
     OpenJ9 builds.
 
-4. Run tests:
+### 4. Run tests:
 
   * group of tests <br />
     make _group <br />
@@ -192,7 +192,7 @@ target
     - If you want to change test options, you can update playlist.xml
     in the corresponding test project.
 
-5. Exclude tests:
+### 5. Exclude tests:
 
   * exclude test target in playlist.xml
 
@@ -258,7 +258,7 @@ disabled.bits.<bits> (e.g. disabled.bits.64)
 disabled.spec.<spec> (e.g. disabled.spec.linux_x86-64)
 ```
 
-6. View results:
+### 6. View results:
 
   * in the console
 
@@ -303,7 +303,7 @@ disabled.spec.<spec> (e.g. disabled.spec.linux_x86-64)
 			No need to log any detailed information. Top level TAP test result
 			summary is enough 
 
-7. Attach a debugger:
+### 7. Attach a debugger:
 
   * to a particular test
 
@@ -313,7 +313,7 @@ disabled.spec.<spec> (e.g. disabled.spec.linux_x86-64)
     java executable, adding any additional options, including those to
     attach a debugger.
 
-8. Move test into different make targets (layers):
+### 8. Move test into different make targets (layers):
 
   * from extended to sanity (or vice versa)
 

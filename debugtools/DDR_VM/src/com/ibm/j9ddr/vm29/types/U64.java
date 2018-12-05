@@ -205,9 +205,9 @@ public class U64 extends UDATA {
 	
 	public boolean gt(Scalar parameter) {
 		checkComparisonValid(parameter);
-		
-		//If sign bit is set, result it reversed
-		if (((data ^ parameter.data) & 0x8000000000000000L) != 0) {
+
+		// if sign bits are different, result is reversed
+		if ((data ^ parameter.data) < 0) {
 			return data < parameter.data;
 		} else {
 			return data > parameter.data;
@@ -216,9 +216,9 @@ public class U64 extends UDATA {
 	
 	public boolean lt(Scalar parameter) {
 		checkComparisonValid(parameter);
-		
-		//If sign bit is set, result it reversed
-		if (((data ^ parameter.data) & 0x8000000000000000L) != 0) {
+
+		// if sign bits are different, result is reversed
+		if ((data ^ parameter.data) < 0) {
 			return data > parameter.data;
 		} else {
 			return data < parameter.data;
@@ -246,6 +246,11 @@ public class U64 extends UDATA {
 
 	public U64 mult(long parameter) {
 		return new U64(data * parameter);
+	}
+
+	@Override
+	public boolean eq(long parameter) {
+		return parameter == data;
 	}
 
 	@Override

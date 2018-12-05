@@ -48,12 +48,10 @@ import com.ibm.j9ddr.vm29.tools.ddrinteractive.ModularityHelper.ModuleOutput;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.ModularityHelper.PackageIteratorFilter;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.ModularityHelper.PackageOutput;
 
-import static com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.FindModulesCommand.Status.*;
-
 public class FindModulesCommand extends Command 
 {
-	enum Status {
-		MODULE, PACKAGE, HELP
+	private enum Subcommand {
+		MODULE, PACKAGE, HELP, INVALID
 	}
 	
 	public FindModulesCommand() 
@@ -63,7 +61,7 @@ public class FindModulesCommand extends Command
 	
 	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException 
 	{
-		Status status = HELP;
+		final Subcommand subcommand;
 		String filterArg = null;
 		ModuleIteratorFilter moduleFilter = null;
 		ModuleOutput moduleOutput = ModularityHelper::printJ9Module;
@@ -71,59 +69,72 @@ public class FindModulesCommand extends Command
 		switch (args.length) {
 		case 0:
 			moduleFilter = ModularityHelper::moduleFilterMatchAll;
-			status = MODULE;
+			subcommand = Subcommand.MODULE;
 			break;
 		case 1:
-			if (args[0].equalsIgnoreCase("all")) {
+			switch (args[0]) {
+			case "all":
 				moduleFilter = ModularityHelper::moduleFilterMatchAll;
-				status = MODULE;
-			} /* else stay status.HELP */
+				subcommand = Subcommand.MODULE;
+				break;
+			case "help":
+				subcommand = Subcommand.HELP;
+				break;
+			default:
+				subcommand = Subcommand.INVALID;
+				break;
+			}
 			break;
 		case 2:
-			filterArg = args[1]; /* use args[1] as a hex address */
+			filterArg = args[1];
 			switch (args[0]) {
 			case "name":
 				moduleFilter = FindModulesCommand::filterModuleName;
-				status = MODULE;
+				subcommand = Subcommand.MODULE;
 				break;
 			case "requires":
 				moduleFilter = FindModulesCommand::filterModuleName;
 				moduleOutput = FindModulesCommand::printModuleReads;
-				status = MODULE;
+				subcommand = Subcommand.MODULE;
 				break;
 			case "package":
 				packageFilter = FindModulesCommand::filterPackageName;
-				status = PACKAGE;
+				subcommand = Subcommand.PACKAGE;
 				break;
 			default:
-				break; /* default stay status.HELP */
+				subcommand = Subcommand.INVALID;
+				break;
 			}
 			break;
 		default:
-			break; /* default stay status.HELP */
+			subcommand = Subcommand.INVALID;
+			break;
 		}
 		
 		try {
-			switch (status) {
+			int result;
+			switch (subcommand) {
 			case MODULE:
-				ModularityHelper.iterateModules(out, moduleFilter, moduleOutput, filterArg);
+				result = ModularityHelper.iterateModules(out, moduleFilter, moduleOutput, filterArg);
+				out.printf("Found %d module%s%n", result, (1 == result ? "": "s"));
 				break;
 			case PACKAGE:
-				ModularityHelper.PackageOutput packageOutput = ModularityHelper::printPackageJ9Module; 
-				ModularityHelper.iteratePackages(out, packageFilter, packageOutput, filterArg);
+				/* Output the module(s) owning all packages matched by packageFilter */
+				ModularityHelper.PackageOutput packageOutput = ModularityHelper::printPackageJ9Module;
+				result = ModularityHelper.iteratePackages(out, packageFilter, packageOutput, filterArg);
+				out.printf("Found %d module%s%n", result, (1 == result ? "": "s"));
 				break;
 			case HELP:
 				printHelp(out);
 				break;
 			default:
-				CommandUtils.dbgError(out, "Argument failed to parse or was parsed to an unhandled option within !FindModulesCommand.\n");
+				out.println("Argument failed to parse or was parsed to an unhandled subcommand.");
 				printHelp(out);
 				break;
 			}
 		} catch (CorruptDataException e) {
 			throw new DDRInteractiveCommandException(e);
 		}
-		return;
 	}
 
 	private static void printModuleReads(J9ModulePointer modulePtr, PrintStream out) throws CorruptDataException {
@@ -170,20 +181,20 @@ public class FindModulesCommand extends Command
 	}
 
 	private static void printHelp(PrintStream out) {
-		out.append("Usage: \n");
-		out.append("  !findmodules\n");
-		out.append("      Returns !findmodules all\n");
-		out.append("  !findmodules all\n");
-		out.append("      Returns all loaded modules\n");
-		out.append("  !findmodules name <moduleName>\n");
-		out.append("      Returns all loaded modules with the same name as provided\n");
-		out.append("  !findmodules requires <moduleName>\n");
-		out.append("      Returns all loaded modules which require the provided module\n");
-		out.append("  !findmodules package <packageName>\n");
-		out.append("      Returns the loaded module which owns the provided package\n");
-		out.append("Output Format:\n");
-		out.append("  <module name>                  !j9module <module hexaddress>\n");
-		out.append("Output Example:\n");
-		out.append("  java.base                      !j9module 0x00007FAC2008EAC8\n");
+		out.println("Usage:");
+		out.println("  !findmodules");
+		out.println("      Returns !findmodules all");
+		out.println("  !findmodules all");
+		out.println("      Returns all loaded modules");
+		out.println("  !findmodules name <moduleName>");
+		out.println("      Returns all loaded modules with the same name as provided");
+		out.println("  !findmodules requires <moduleName>");
+		out.println("      Returns all loaded modules which require the provided module");
+		out.println("  !findmodules package <packageName>");
+		out.println("      Returns the loaded module which owns the provided package");
+		out.println("Output Format:");
+		out.println("  <module name>                  !j9module <module hexaddress>");
+		out.println("Output Example:");
+		out.println("  java.base                      !j9module 0x00007FAC2008EAC8");
 	}
 }

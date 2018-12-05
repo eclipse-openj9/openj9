@@ -1530,9 +1530,9 @@ JVM_InitProperties(JNIEnv* env, jobject properties)
 	 * This is only required by Java 11 raw builds.
 	 * This method is not invoked by other Java levels.
 	 */
-#if !defined(J9VM_JCL_SE11)
+#if JAVA_SPEC_VERSION < 11
 	assert(!"JVM_InitProperties should not be called!");
-#endif /* J9VM_JCL_SE11 */
+#endif /* JAVA_SPEC_VERSION < 11 */
 	return properties;
 }
 
@@ -2367,13 +2367,13 @@ JVM_SocketShutdown(jint fd, jint howto)
 {
 	jint retVal = JNI_FALSE;
 
-#if defined(J9UNIX) || defined(OSX)
+#if defined(J9UNIX)
 	retVal = shutdown(fd, howto);
-#elif defined(WIN32) /* defined(J9UNIX) || defined(OSX) */
+#elif defined(WIN32) /* defined(J9UNIX) */
 	retVal = closesocket(fd);
-#else /* defined(J9UNIX) || defined(OSX) */
+#else /* defined(J9UNIX) */
 	assert(!"JVM_SocketShutdown() stubbed!");
-#endif /* defined(J9UNIX) || defined(OSX) */
+#endif /* defined(J9UNIX) */
 	
 	return retVal;
 }

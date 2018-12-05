@@ -59,6 +59,11 @@ J9::Power::CodeGenerator::CodeGenerator() :
       cg->setSupportsBigDecimalLongLookasideVersioning();
       }
 
+   if (cg->getSupportsTM())
+      {
+      cg->setSupportsInlineConcurrentLinkedQueue();
+      }
+
    cg->setSupportsNewInstanceImplOpt();
 
    static char *disableMonitorCacheLookup = feGetEnv("TR_disableMonitorCacheLookup");
@@ -352,11 +357,9 @@ bool J9::Power::CodeGenerator::suppressInliningOfRecognizedMethod(TR::Recognized
       }
 
    // Transactional Memory
-   if (self()->getSupportsTM())
+   if (self()->getSupportsInlineConcurrentLinkedQueue())
       {
-      if (method == TR::java_util_concurrent_ConcurrentHashMap_tmEnabled ||
-          method == TR::java_util_concurrent_ConcurrentHashMap_tmPut ||
-          method == TR::java_util_concurrent_ConcurrentLinkedQueue_tmOffer ||
+      if (method == TR::java_util_concurrent_ConcurrentLinkedQueue_tmOffer ||
           method == TR::java_util_concurrent_ConcurrentLinkedQueue_tmPoll ||
           method == TR::java_util_concurrent_ConcurrentLinkedQueue_tmEnabled)
           {

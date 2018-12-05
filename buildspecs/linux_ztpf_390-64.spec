@@ -43,6 +43,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<property name="graph_commands.chroot" value=""/>
 		<property name="graph_commands.unix.remote_host" value=""/>
 		<property name="graph_datamines" value="commands.unix.datamine,site-ottawa.datamine,use.local.datamine"/>
+		<property name="graph_enable_gcc7_cmd" value=""/>
 		<property name="graph_label.java6" value="ptz6460"/>
 		<property name="graph_label.java60_26" value="ptz6460_26"/>
 		<property name="graph_label.java7" value="ptz6470"/>
@@ -116,14 +117,14 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	</source>
 	<flags>
 		<flag id="interp_atomicFreeJni" value="true"/>
-		<flag id="interp_atomicFreeJniUsesFlush" value="true"/>
-		<flag id="interp_twoPassExclusive" value="true"/>
+		<flag id="interp_atomicFreeJniUsesFlush" value="false"/>
+		<flag id="interp_twoPassExclusive" value="false"/>
 		<flag id="arch_s390" value="true"/>
 		<flag id="build_SE6_package" value="true"/>
 		<flag id="build_autobuild" value="true"/>
 		<flag id="build_j2se" value="true"/>
 		<flag id="build_java8" value="true"/>
-		<flag id="build_java9" value="true"/>
+		<flag id="build_java9" value="false"/>
 		<flag id="build_product" value="true"/>
 		<flag id="env_data64" value="true"/>
 		<flag id="env_hasFPU" value="true"/>

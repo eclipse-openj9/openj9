@@ -277,7 +277,7 @@ TR_RuntimeHelper TR::PPCCallSnippet::getInterpretedDispatchHelper(
    TR::MethodSymbol    *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
    bool isJitInduceOSRCall = false;
    if (methodSymbol->isHelper() &&
-       methodSymRef == cg->symRefTab()->element(TR_induceOSRAtCurrentPC))
+       methodSymRef->isOSRInductionHelper())
       {
       isJitInduceOSRCall = true;
       }
@@ -299,7 +299,7 @@ TR_RuntimeHelper TR::PPCCallSnippet::getInterpretedDispatchHelper(
       return TR_PPCnativeStaticHelper;
       }
    else if (isJitInduceOSRCall)
-      return TR_induceOSRAtCurrentPC;
+      return (TR_RuntimeHelper) methodSymRef->getReferenceNumber();
    else
       {
       switch (type)
@@ -360,7 +360,7 @@ uint8_t *TR::PPCCallSnippet::emitSnippetBody()
       }
    // 'b glueRef' for jitInduceOSRAtCurrentPC, 'bl glueRef' otherwise
    // we use "b" for induceOSR because we want the helper to think that it's been called from the mainline code and not from the snippet.
-   int32_t branchInstruction = (runtimeHelper == TR_induceOSRAtCurrentPC) ? 0x48000000 : 0x48000001;
+   int32_t branchInstruction = (glueRef->isOSRInductionHelper()) ? 0x48000000 : 0x48000001;
    *(int32_t *)cursor = branchInstruction | (distance & 0x03fffffc);
    cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,(uint8_t *)glueRef,TR_HelperAddress, cg()),
       __FILE__, __LINE__, callNode);
@@ -394,7 +394,7 @@ uint8_t *TR::PPCCallSnippet::emitSnippetBody()
       }
    //induceOSRAtCurrentPC is implemented in the VM, and it knows, by looking at the current PC, what method it needs to
    //continue execution in interpreted mode. Therefore, it doesn't need the method pointer.
-   if (runtimeHelper != TR_induceOSRAtCurrentPC)
+   if (!glueRef->isOSRInductionHelper())
       {
       // Store the method pointer: it is NULL for unresolved
       if (methodSymRef->isUnresolved() || comp->compileRelocatableCode())
@@ -1277,7 +1277,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCCallSnippet * snippet)
    bool                 isNativeStatic = false;
 
    if (methodSymbol->isHelper() &&
-       methodSymRef == _cg->symRefTab()->element(TR_induceOSRAtCurrentPC))
+       methodSymRef->isOSRInductionHelper())
       {
       labelString = "Induce OSR Call Snippet";
       glueRef = methodSymRef;

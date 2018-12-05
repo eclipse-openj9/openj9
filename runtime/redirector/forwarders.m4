@@ -58,9 +58,9 @@ _X(JVM_FreeMemory,JNICALL,true,jlong ,void)
 _X(JVM_GC,JNICALL,true,void ,void)
 _X(JVM_GCNoCompact,JNICALL,true,void ,void)
 _X(JVM_GetAllThreads,JNICALL,true,jobjectArray ,JNIEnv *env, jclass aClass)
-_IF([!defined(J9VM_JCL_SE11)],
+_IF([JAVA_SPEC_VERSION < 11],
 	[_X(JVM_GetCallerClass,JNICALL,true,jobject ,JNIEnv *env, jint depth)])
-_IF([defined(J9VM_JCL_SE11)],
+_IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_GetCallerClass,JNICALL,true,jobject ,JNIEnv *env)])
 _X(JVM_GetClassAccessFlags,JNICALL,true,jint ,JNIEnv * env, jclass clazzRef)
 _X(JVM_GetClassAnnotations,JNICALL,true,jbyteArray ,JNIEnv *env, jclass target)
@@ -265,29 +265,29 @@ _X(JVM_PrintStackTrace,JNICALL,true,jobject ,jint arg0, jint arg1, jint arg2)
 _X(JVM_SetField,JNICALL,true,jobject ,jint arg0, jint arg1, jint arg2, jint arg3)
 _X(JVM_SetPrimitiveField,JNICALL,true,jobject ,jint arg0, jint arg1, jint arg2, jint arg3, jint arg4, jint arg5)
 _X(JVM_SetNativeThreadName,JNICALL,true,void ,jint arg0, jobject arg1, jstring arg2)
-_IF([(!defined(J9VM_JAVA9_BUILD)) || (J9VM_JAVA9_BUILD < 148)],
+_IF([J9VM_JAVA9_BUILD < 148],
 	[_X(JVM_DefineModule,JNICALL,false,jobject ,JNIEnv arg0, jobject arg1, jstring arg2, jstring arg3, jobjectArray arg4)])
-_IF([defined(J9VM_JAVA9_BUILD) && (J9VM_JAVA9_BUILD >= 148) && (J9VM_JAVA9_BUILD < 156)],
+_IF([(148 <= J9VM_JAVA9_BUILD) && (J9VM_JAVA9_BUILD < 156)],
 	[_X(JVM_DefineModule,JNICALL,false,jobject ,JNIEnv arg0, jobject arg1, jboolean arg2, jstring arg3, jstring arg4, jobjectArray arg5)])
-_IF([defined(J9VM_JAVA9_BUILD) && (J9VM_JAVA9_BUILD >= 156)],
+_IF([J9VM_JAVA9_BUILD >= 156],
 	[_X(JVM_DefineModule,JNICALL,false,jobject ,JNIEnv arg0, jobject arg1, jboolean arg2, jstring arg3, jstring arg4, const char* const* arg5, jsize arg6)])
-_IF([(!defined(J9VM_JAVA9_BUILD)) || (J9VM_JAVA9_BUILD < 156)],
+_IF([J9VM_JAVA9_BUILD < 156],
 	[_X(JVM_AddModuleExports,JNICALL,false,void ,JNIEnv arg0, jobject arg1, jstring arg2, jobject arg3)])
-_IF([defined(J9VM_JAVA9_BUILD) && (J9VM_JAVA9_BUILD >= 156)],
+_IF([J9VM_JAVA9_BUILD >= 156],
 	[_X(JVM_AddModuleExports,JNICALL,false,void ,JNIEnv arg0, jobject arg1, const char *arg2, jobject arg3)])
-_IF([(!defined(J9VM_JAVA9_BUILD)) || (J9VM_JAVA9_BUILD < 156)],
+_IF([J9VM_JAVA9_BUILD < 156],
 	[_X(JVM_AddModuleExportsToAll,JNICALL,false,void ,JNIEnv arg0, jobject arg1, jstring arg2, jobject arg3)])
-_IF([defined(J9VM_JAVA9_BUILD) && (J9VM_JAVA9_BUILD >= 156)],
+_IF([J9VM_JAVA9_BUILD >= 156],
 	[_X(JVM_AddModuleExportsToAll,JNICALL,false,void ,JNIEnv arg0, jobject arg1, const char *arg2, jobject arg3)])
 _X(JVM_AddReadsModule,JNICALL,false,void ,JNIEnv arg0, jobject arg1, jobject arg2)
 _X(JVM_CanReadModule,JNICALL,false,jboolean ,JNIEnv arg0, jobject arg1, jobject arg2)
-_IF([(!defined(J9VM_JAVA9_BUILD)) || (J9VM_JAVA9_BUILD < 156)],
+_IF([J9VM_JAVA9_BUILD < 156],
 	[_X(JVM_AddModulePackage,JNICALL,false,void ,JNIEnv arg0, jobject arg1, jstring arg2)])
-_IF([defined(J9VM_JAVA9_BUILD) && (J9VM_JAVA9_BUILD >= 156)],
+_IF([J9VM_JAVA9_BUILD >= 156],
 	[_X(JVM_AddModulePackage,JNICALL,false,void ,JNIEnv arg0, jobject arg1, const char *arg2)])
-_IF([(!defined(J9VM_JAVA9_BUILD)) || (J9VM_JAVA9_BUILD < 156)],
+_IF([J9VM_JAVA9_BUILD < 156],
 	[_X(JVM_AddModuleExportsToAllUnnamed,JNICALL,false,void ,JNIEnv arg0, jobject arg1, jstring arg2)])
-_IF([defined(J9VM_JAVA9_BUILD) && (J9VM_JAVA9_BUILD >= 156)],
+_IF([J9VM_JAVA9_BUILD >= 156],
 	[_X(JVM_AddModuleExportsToAllUnnamed,JNICALL,false,void ,JNIEnv arg0, jobject arg1, const char *arg2)])
 _X(JVM_GetSimpleBinaryName,JNICALL,false,jstring ,JNIEnv arg0, jclass arg1)
 _X(JVM_SetMethodInfo,JNICALL,false,void ,JNIEnv arg0, jobject arg1)
@@ -310,13 +310,13 @@ _X(JVM_GetAndClearReferencePendingList,JNICALL,false,jobject ,JNIEnv *env)
 _X(JVM_HasReferencePendingList,JNICALL,false,jboolean ,JNIEnv *env)
 _X(JVM_WaitForReferencePendingList,JNICALL,false,void ,JNIEnv *env)
 _X(JVM_GetNanoTimeAdjustment,JNICALL,true,jlong ,JNIEnv *env, jclass clazz, jlong offsetSeconds)
-_IF([defined(J9VM_JCL_SE11)],
+_IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_BeforeHalt,JNICALL,false,void,void)])
-_IF([defined(J9VM_JCL_SE11)],
+_IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_GetNestHost,JNICALL,false,jclass,JNIEnv *env,jclass clz)])
-_IF([defined(J9VM_JCL_SE11)],
+_IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_GetNestMembers,JNICALL,false,jobjectArray,JNIEnv *env,jclass clz)])
-_IF([defined(J9VM_JCL_SE11)],
+_IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_AreNestMates,JNICALL,false,jboolean,JNIEnv *env,jclass clzOne, jclass clzTwo)])
-_IF([defined(J9VM_JCL_SE12)],
+_IF([JAVA_SPEC_VERSION >= 12],
 	[_X(JVM_InitializeFromArchive, JNICALL, false, void, JNIEnv *env, jclass clz)])

@@ -41,6 +41,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<property name="graph_commands.chroot" value=""/>
 		<property name="graph_commands.unix.remote_host" value=""/>
 		<property name="graph_datamines" value="commands.unix.datamine,site-zLinux.datamine,use.local.datamine"/>
+		<property name="graph_enable_gcc7_cmd" value=""/>
 		<property name="graph_label.classlib" value="150"/>
 		<property name="graph_label.java5" value="j9vmxz6424"/>
 		<property name="graph_label.java6" value="pxz6460"/>
@@ -124,7 +125,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="build_dropToToronto" value="true"/>
 		<flag id="build_j2se" value="true"/>
 		<flag id="build_java8" value="true"/>
-		<flag id="build_java9" value="true"/>
+		<flag id="build_java9" value="false"/>
 		<flag id="build_product" value="true"/>
 		<flag id="env_data64" value="true"/>
 		<flag id="env_hasFPU" value="true"/>
@@ -140,7 +141,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="graph_compile" value="true"/>
 		<flag id="graph_copyJ2SEToToronto" value="true"/>
 		<flag id="graph_copyJ2SEViaNovell" value="true"/>
-		<flag id="graph_enableTesting" value="true"/>
+		<flag id="graph_enableTesting" value="false"/>
 		<flag id="graph_enableTesting_Java8" value="true"/>
 		<flag id="graph_excludeUnzipTestSuite390" value="true"/>
 		<flag id="graph_j2seSanity" value="true"/>

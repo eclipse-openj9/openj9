@@ -303,7 +303,7 @@ j9jit_testarossa_err(
          // If PersistentJittedBody contains the profile Info and has BlockFrequencyInfo, it will set the 
          // isQueuedForRecompilation field which can be used by the jitted code at runtime to skip the profiling
          // code if it has made request to recompile this method. 
-         if (jbi->getProfileInfo() != NULL && jbi->getProfileInfo()->getBlockFrequencyInfo() != NULL)
+         if (jbi && jbi->getProfileInfo() != NULL && jbi->getProfileInfo()->getBlockFrequencyInfo() != NULL)
             jbi->getProfileInfo()->getBlockFrequencyInfo()->setIsQueuedForRecompilation();
 
          event._eventType = TR_MethodEvent::OtherRecompilationTrigger;
@@ -394,6 +394,15 @@ j9jit_testarossa_err(
    return result;
    }
 
+extern "C" IDATA
+retranslateWithPreparationForMethodRedefinition(
+      struct J9JITConfig *jitConfig,
+      J9VMThread *vmThread,
+      J9Method *method,
+      void *oldStartPC)
+   {
+   return retranslateWithPreparation(jitConfig, vmThread, method, oldStartPC, TR_PersistentMethodInfo::RecompDueToInlinedMethodRedefinition);
+   }
 
 extern "C" IDATA
 retranslateWithPreparation(
@@ -1051,6 +1060,7 @@ onLoadInternal(
    // java.lang.Compiler class.
    jitConfig->entryPoint = j9jit_testarossa;
    jitConfig->retranslateWithPreparation = retranslateWithPreparation;
+   jitConfig->retranslateWithPreparationForMethodRedefinition = retranslateWithPreparationForMethodRedefinition;
    jitConfig->entryPointForNewInstance = j9jit_createNewInstanceThunk;
 #if defined(TRANSLATE_METHODHANDLE_TAKES_FLAGS)
    jitConfig->translateMethodHandle = translateMethodHandle;

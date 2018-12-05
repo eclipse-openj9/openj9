@@ -31,6 +31,7 @@ $(UMA_DLLTARGET): $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
 		$(VMLINK) $(UMA_LINK_PATH) -o $(UMA_DLLTARGET)\
 		$(UMA_OBJECTS) \
 		$(UMA_DLL_LINK_POSTFLAGS)
+	dsymutil -f $(UMA_DLLTARGET) -o $(UMA_DLLTARGET).dbg
 </#assign>
 
 <#assign exe_target_rule>
@@ -46,6 +47,9 @@ $(UMA_EXETARGET): $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
 
 UMA_BEGIN_DASH_L =
 UMA_END_DASH_L =
+
+<#-- Reduce __PAGEZERO segment size from 4GB to 4KB to allocate memory below 4 GB. -->
+UMA_EXE_PREFIX_FLAGS += -pagezero_size 0x1000
 
 UMA_EXE_POSTFIX_FLAGS += -lm -liconv -lc -ldl -lutil -Wl,-rpath,@loader_path
 

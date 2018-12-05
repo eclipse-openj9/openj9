@@ -74,6 +74,8 @@ sub resultReporter {
 				my $startTime = 0;
 				my $endTime = 0;
 				while ( $result = <$fhIn> ) {
+					# remove extra carriage return
+					$result =~ s/\r//g;
 					$output .= '        ' . $result;
 					if ($result =~ /Running test (.*) \.\.\.\n/) {
 						$testName = $1;

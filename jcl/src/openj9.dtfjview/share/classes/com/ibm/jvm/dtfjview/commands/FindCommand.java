@@ -49,7 +49,7 @@ public class FindCommand extends BaseJdmpviewCommand{
 	ArrayList matches = new ArrayList();
 	
 	{
-		addCommand("find", "", "searches memory for a given string");	
+		addCommand("find", "", "searches memory for a given string. Please run \"help find\" for details.");	
 	}
 	
 	public void run(String command, String[] args, IContext context, PrintStream out) throws CommandException {
@@ -65,7 +65,7 @@ public class FindCommand extends BaseJdmpviewCommand{
 			String[] params = line.split(",");
 			doCommand(params);	
 		} else {
-			out.println("\"find\" takes a set comma separated parameters with no spaces");
+			out.println("\"find\" takes a set comma separated parameters with no spaces. Please run \"help find\" for details.");
 		}
 	}
 	
@@ -79,7 +79,7 @@ public class FindCommand extends BaseJdmpviewCommand{
 		
 		while(imageSections.hasNext()){
 			if (matches.size() > findAtt.numMatchesToDisplay) break;
-			ImageSection imageSection = (ImageSection)imageSections.next();				
+			ImageSection imageSection = (ImageSection)imageSections.next();
 			if (scanImageSection(imageSection)) break;
 		}
 		if (matches.size() > 0) 
@@ -263,7 +263,7 @@ public class FindCommand extends BaseJdmpviewCommand{
 			out.println("incorrect number of parameters");
 			return false;
 		}
-		findAtt.pattern = params[0]; 
+		findAtt.pattern = params[0];
 		if (findAtt.pattern.equals("")) {
 			out.println("missing search pattern string");
 			return false;

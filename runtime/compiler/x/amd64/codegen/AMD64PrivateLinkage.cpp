@@ -839,7 +839,7 @@ int32_t TR::AMD64PrivateLinkage::buildArgs(TR::Node                             
    TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
    bool passArgsOnStack;
    bool rightToLeft = methodSymbol && methodSymbol->isHelper()
-      && methodSymRef != cg()->symRefTab()->element(TR_induceOSRAtCurrentPC); //we want the arguments for induceOSR to be passed from left to right as in any other non-helper call
+      && !methodSymRef->isOSRInductionHelper(); //we want the arguments for induceOSR to be passed from left to right as in any other non-helper call
    if (callNode->getOpCode().isIndirect())
       {
       if (methodSymbol->isVirtual() &&

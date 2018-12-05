@@ -51,9 +51,6 @@
 #if defined(J9ZOS390)
 #include "atoe.h"
 #endif
-#if defined(RS6000) || defined(LINUX)
-#define J9UNIX
-#endif
 
 #define MAP_TWO_COLONS_TO_ONE 8
 #define EXACT_MAP_NO_OPTIONS 16
@@ -682,8 +679,11 @@ addXjcl(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA j2s
 	PORT_ACCESS_FROM_PORT(portLib);
 	if (J2SE_SHAPE_RAW == (j2seVersion & J2SE_SHAPE_MASK)) {
 		Assert_Util_unreachable();
-	} 
-	if (J2SE_V11 <= j2seReleaseValue) {
+	}
+	if (J2SE_V12 <= j2seReleaseValue) {
+		dllName = J9_JAVA_SE_12_DLL_NAME;
+		dllNameLength = sizeof(J9_JAVA_SE_12_DLL_NAME);
+	} else if (J2SE_V11 <= j2seReleaseValue) {
 		dllName = J9_JAVA_SE_11_DLL_NAME;
 		dllNameLength = sizeof(J9_JAVA_SE_11_DLL_NAME);
 	} else if (J2SE_V10 <= j2seReleaseValue) {
@@ -766,9 +766,6 @@ addJavaLibraryPath(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList
 		UDATA argEncoding, BOOLEAN jvmInSubdir, char *j9binPath, char *jrebinPath,
 		const char *libpathValue, const char *ldLibraryPathValue)
 {
-#if defined(J9UNIX) || defined(J9ZOS390)
-	IDATA envVarSize = 0;
-#endif
 	char *substringBuffer[MAX_LIBPATH_SUBSTRINGS];
 	BOOLEAN allocated[MAX_LIBPATH_SUBSTRINGS] = {FALSE};
 	char *pathBuffer = NULL;
@@ -910,20 +907,21 @@ addJavaLibraryPath(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList
 	}
 #endif /* defined(J9UNIX) || defined(J9ZOS390) */
 
-#ifdef J9UNIX
-#if defined(J9VM_ENV_DATA64)
+#if defined(J9UNIX)
+	/* On OSX, /usr/lib64 doesn't exist. Only /usr/lib needs to be appended on OSX. */
+#if defined(J9VM_ENV_DATA64) && !defined(OSX)
 	/* JAZZ103 117105: 64-bit JDKs on Linux and AIX should add /usr/lib64 to java.library.path ahead of /usr/lib. */
 #define USRLIB64 ":/usr/lib64"
 	substringBuffer[substringIndex] = USRLIB64;
 	substringIndex += 1;
 	substringLength += (sizeof(USRLIB64) - 1) ;
 #undef USRLIB64
-#endif /* defined(J9VM_ENV_DATA64) */
+#endif /* defined(J9VM_ENV_DATA64) && !defined(OSX) */
 
 	substringBuffer[substringIndex] = ":/usr/lib";
 	substringIndex += 1;
 	substringLength += strlen(":/usr/lib");
-#endif
+#endif /* defined(J9UNIX) */
 #ifdef WIN32
 	/* CMVC 177267, RTC 87362 : On windows, current directory is added at the end */
 	substringBuffer[substringIndex] = ";.";

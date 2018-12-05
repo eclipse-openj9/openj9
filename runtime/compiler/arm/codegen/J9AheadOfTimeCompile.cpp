@@ -40,6 +40,8 @@
 #include "il/SymbolReference.hpp"
 #include "il/symbol/LabelSymbol.hpp"
 #include "il/symbol/StaticSymbol.hpp"
+#include "runtime/RelocationRuntime.hpp"
+#include "runtime/RelocationRecord.hpp"
 
 #define  NON_HELPER         0
 
@@ -110,6 +112,10 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
    TR_ResolvedMethod *resolvedMethod;
 
    uint8_t *cursor = relocation->getRelocationData();
+
+   TR_RelocationRuntime *reloRuntime = comp->reloRuntime();
+   TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
+
    uint8_t * aotMethodCodeStart = (uint8_t *) comp->getRelocatableMethodCodeStart();
 
    // size of relocation goes first in all types
@@ -125,6 +131,10 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
    uint8_t *flagsCursor = cursor++;
    *flagsCursor = modifier;
    uint32_t *wordAfterHeader = (uint32_t*)cursor;
+
+   // This has to be created after the kind has been written into the header
+   TR_RelocationRecord storage;
+   TR_RelocationRecord *reloRecord = TR_RelocationRecord::create(&storage, reloRuntime, reloTarget, reinterpret_cast<TR_RelocationRecordBinaryTemplate *>(relocation->getRelocationData()));
 
    switch (relocation->getTargetKind())
       {
@@ -689,6 +699,12 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          cursor += SIZEPOINTER;
          }
          break;
+
+      default:
+         // initializeCommonAOTRelocationHeader currently doesn't do anything; however, as more
+         // relocation records are consolidated, it will become the canonical place
+         // to initialize the platform agnostic relocation headers
+         cursor = self()->initializeCommonAOTRelocationHeader(relocation, reloRecord);
 
       }
       return cursor;

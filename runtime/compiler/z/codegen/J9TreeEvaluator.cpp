@@ -1030,7 +1030,7 @@ J9::Z::TreeEvaluator::genLoadForObjectHeadersMasked(TR::CodeGenerator *cg, TR::N
 #if defined(J9VM_INTERP_COMPRESSED_OBJECT_HEADER)
    if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z13) && !disabled)
       {
-      iCursor = generateRXYInstruction(cg, TR::InstOpCode::LLZRGF, node, reg, tempMR, iCursor);
+      iCursor = generateRXInstruction(cg, TR::InstOpCode::LLZRGF, node, reg, tempMR, iCursor);
       cg->generateDebugCounter("z13/LoadAndMask", 1, TR::DebugCounter::Free);
       }
    else
@@ -1044,7 +1044,7 @@ J9::Z::TreeEvaluator::genLoadForObjectHeadersMasked(TR::CodeGenerator *cg, TR::N
 #else
    if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z13))
       {
-      iCursor = generateRXYInstruction(cg, TR::InstOpCode::getLoadAndMaskOpCode(), node, reg, tempMR, iCursor);
+      iCursor = generateRXInstruction(cg, TR::InstOpCode::getLoadAndMaskOpCode(), node, reg, tempMR, iCursor);
       cg->generateDebugCounter("z13/LoadAndMask", 1, TR::DebugCounter::Free);
       }
    else
@@ -3088,7 +3088,7 @@ J9::Z::TreeEvaluator::BNDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
          TR::InstOpCode::Mnemonic opCode = (regChild->getDataType()==TR::Int64) ? TR::InstOpCode::CLGT :
                                                                                   TR::InstOpCode::CLT;
-         cursor = generateRSYInstruction(cg, opCode,
+         cursor = generateRSInstruction(cg, opCode,
                                          node, regChild->getRegister(),
                                          getMaskForBranchCondition(compareCondition),
                                          generateS390MemoryReference(memChild, cg));
@@ -4184,7 +4184,7 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
          {
             srcReg = cg->allocateCollectedReferenceRegister();
 
-            generateRXYInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), sourceChild, srcReg, generateS390MemoryReference(sourceChild, cg));
+            generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), sourceChild, srcReg, generateS390MemoryReference(sourceChild, cg));
 
             sourceChild->setRegister(srcReg);
          }
@@ -6776,7 +6776,7 @@ J9::Z::TreeEvaluator::VMcheckcastEvaluator(TR::Node * node, TR::CodeGenerator * 
 
          tempMR = generateS390MemoryReference(objNode, cg);
 
-         generateRXYInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), objNode, objReg, tempMR);
+         generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), objNode, objReg, tempMR);
 
          objNode->setRegister(objReg);
          nullCCSet = true;
@@ -7112,7 +7112,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       if (comp->getOption(TR_EnableMonitorCacheLookup))
          targetLabel = monitorLookupCacheLabel;
 
-      generateRXYInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, tempRegister, tempMR);
+      generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, tempRegister, tempMR);
 
       if (disableOOL)
          {
@@ -7191,7 +7191,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          generateRXInstruction(cg, TR::InstOpCode::LLGF, node, tempRegister, temp2MR, NULL);
          startICF = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, tempRegister, NULLVALUE, TR::InstOpCode::COND_BE, helperCallLabel, false, true);
 #else
-         generateRXYInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, tempRegister, temp2MR);
+         generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, tempRegister, temp2MR);
 
          startICF = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, helperCallLabel);
 #endif
@@ -7542,7 +7542,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
       if (comp->getOption(TR_EnableMonitorCacheLookup))
          targetLabel = monitorLookupCacheLabel;
 
-      generateRXYInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, tempRegister, tempMR);
+      generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, tempRegister, tempMR);
 
       if (disableOOL)
          {
@@ -7624,7 +7624,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
          generateRXInstruction(cg, TR::InstOpCode::LLGF, node, tempRegister, temp2MR, NULL);
          startICF = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, tempRegister, NULLVALUE, TR::InstOpCode::COND_BE, helperCallLabel, false, true);
 #else
-         generateRXYInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, tempRegister, temp2MR);
+         generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, tempRegister, temp2MR);
          startICF = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, helperCallLabel);
 #endif
 
@@ -9652,6 +9652,42 @@ J9::Z::TreeEvaluator::VMinlineCallEvaluator(TR::Node * node, bool indirect, TR::
    return callWasInlined;
    }
 
+void
+J9::Z::TreeEvaluator::genGuardedLoadOOL(TR::Node *node, TR::CodeGenerator *cg, TR::Register *byteSrcReg, TR::Register *byteDstReg, TR::Register *byteLenReg, TR::LabelSymbol *mergeLabel, TR_S390ScratchRegisterManager *srm, bool isForward)
+   {
+   TR_ASSERT_FATAL(J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE == 0x20000,
+               "GSCS: The OOL sequence branch is dependant on the flag being 0x20000");
+   TR_ASSERT_FATAL(TR::Compiler->target.is64Bit(),
+               "GSCS: Guarded Load OOL Path only defined in 64 bit mode");
+
+   TR::LabelSymbol* slowPathLabel = generateLabelSymbol(cg);
+
+   TR::Register *vmReg = cg->getMethodMetaDataRealRegister();
+   TR::MemoryReference *privFlagMR = generateS390MemoryReference(vmReg,
+   TR::Compiler->vm.thisThreadGetConcurrentScavengeActiveByteAddressOffset(cg->comp()), cg);
+
+   generateSIInstruction(cg, TR::InstOpCode::TM, node, privFlagMR, 0x00000002);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC3, node, slowPathLabel);
+   // Generate OOL Slow Path
+   TR_S390OutOfLineCodeSection* outOfLineCodeSection = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(slowPathLabel, mergeLabel, cg);
+   cg->getS390OutOfLineCodeSectionList().push_front(outOfLineCodeSection);
+   outOfLineCodeSection->swapInstructionListsWithCompilation();
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, slowPathLabel);
+   // Call to generateMemToMemElementCopy generates core Array Copy sequence and identify starting instuction in ICF.
+   TR::RegisterDependencyConditions *loopDeps = TR::TreeEvaluator::generateMemToMemElementCopy(node, cg, byteSrcReg, byteDstReg, byteLenReg, srm, isForward, true);
+
+   TR::LabelSymbol *doneOOLLabel = generateLabelSymbol(cg);
+   loopDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(loopDeps, 0, 3+srm->numAvailableRegisters(), cg);
+   loopDeps->addPostCondition(byteSrcReg, TR::RealRegister::AssignAny);
+   loopDeps->addPostCondition(byteDstReg, TR::RealRegister::AssignAny);
+   loopDeps->addPostCondition(byteLenReg, TR::RealRegister::AssignAny);
+   srm->addScratchRegistersToDependencyList(loopDeps);
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, doneOOLLabel, loopDeps);
+   doneOOLLabel->setEndInternalControlFlow();
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, mergeLabel);
+   outOfLineCodeSection->swapInstructionListsWithCompilation();
+   }
 
 void
 J9::Z::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node* node, TR::Register *srcObjReg, TR::Register *dstObjReg, TR::Register *srcAddrReg, TR::Register *dstAddrReg, TR::Register *lengthReg, TR::CodeGenerator *cg)
@@ -10046,7 +10082,7 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mn
       // reads the existing value to be compared with a provided compare value, before the store itself), hence needs
       // a read barrier
       generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
-      generateRXYInstruction(cg, guardedLoadMnemonic, node, tempReadBarrier, generateS390MemoryReference(*casMemRef, 0, cg));
+      generateRXInstruction(cg, guardedLoadMnemonic, node, tempReadBarrier, generateS390MemoryReference(*casMemRef, 0, cg));
 
       cg->stopUsingRegister(tempReadBarrier);
       }
@@ -10297,10 +10333,10 @@ extern TR::Register* inlineCurrentTimeMaxPrecision(TR::CodeGenerator* cg, TR::No
       if (TR::Compiler->target.isZOS())
          {
          // Load FFCVT(R0)
-         generateRXYInstruction(cg, TR::InstOpCode::LLGT, node, tempRegister, generateS390MemoryReference(offsets[0], cg));
+         generateRXInstruction(cg, TR::InstOpCode::LLGT, node, tempRegister, generateS390MemoryReference(offsets[0], cg));
 
          // Load CVTEXT2 - CVT
-         generateRXYInstruction(cg, TR::InstOpCode::LLGT, node, tempRegister, generateS390MemoryReference(tempRegister, offsets[1], cg));
+         generateRXInstruction(cg, TR::InstOpCode::LLGT, node, tempRegister, generateS390MemoryReference(tempRegister, offsets[1], cg));
          }
 #endif
 
@@ -10313,7 +10349,7 @@ extern TR::Register* inlineCurrentTimeMaxPrecision(TR::CodeGenerator* cg, TR::No
       if (TR::Compiler->target.isZOS())
          {
          // Subtract the LSO offset
-         generateRXYInstruction(cg, TR::InstOpCode::SLG, node, targetRegister, generateS390MemoryReference(tempRegister, offsets[2],cg));
+         generateRXInstruction(cg, TR::InstOpCode::SLG, node, targetRegister, generateS390MemoryReference(tempRegister, offsets[2],cg));
          }
 
       cg->stopUsingRegister(tempRegister);
@@ -10338,10 +10374,10 @@ extern TR::Register* inlineCurrentTimeMaxPrecision(TR::CodeGenerator* cg, TR::No
       if (TR::Compiler->target.isZOS())
          {
          // Load FFCVT(r0)
-         generateRXYInstruction(cg, TR::InstOpCode::L, node, tempRegister1, generateS390MemoryReference(offsets[0], cg));
+         generateRXInstruction(cg, TR::InstOpCode::L, node, tempRegister1, generateS390MemoryReference(offsets[0], cg));
 
          // Load CVTEXT2 - CVT
-         generateRXYInstruction(cg, TR::InstOpCode::L, node, tempRegister1, generateS390MemoryReference(tempRegister1, offsets[1],cg));
+         generateRXInstruction(cg, TR::InstOpCode::L, node, tempRegister1, generateS390MemoryReference(tempRegister1, offsets[1],cg));
          }
 #endif
 
@@ -10358,8 +10394,8 @@ extern TR::Register* inlineCurrentTimeMaxPrecision(TR::CodeGenerator* cg, TR::No
       if (TR::Compiler->target.isZOS())
          {
          // Subtract the LSO offset
-         generateRXYInstruction(cg, TR::InstOpCode::SL, node, targetRegister->getLowOrder(), generateS390MemoryReference(tempRegister1, offsets[2] + 4, cg));
-         generateRXYInstruction(cg, TR::InstOpCode::SLB, node, targetRegister->getHighOrder(), generateS390MemoryReference(tempRegister1, offsets[2], cg));
+         generateRXInstruction(cg, TR::InstOpCode::SL, node, targetRegister->getLowOrder(), generateS390MemoryReference(tempRegister1, offsets[2] + 4, cg));
+         generateRXInstruction(cg, TR::InstOpCode::SLB, node, targetRegister->getHighOrder(), generateS390MemoryReference(tempRegister1, offsets[2], cg));
          }
 #endif
 
@@ -11061,564 +11097,6 @@ genWrtBarForTM(
    }
 
 extern TR::Register *
-inlineConcurrentHashMapTmPut(
-      TR::Node *node,
-      TR::CodeGenerator * cg)
-   {
-   TR::Compilation *comp = cg->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
-#ifndef PUBLIC_BUILD
-   int32_t offsetSyncObj = 0, offsetState = 0, offsetTable = 0, offsetThreshold = 0, offsetNext = 0, offsetCount = 0, offsetModCount = 0;
-   TR_OpaqueClassBlock * classBlock1 = NULL;
-   TR_OpaqueClassBlock * classBlock2 = NULL;
-   TR_OpaqueClassBlock * classBlock3 = NULL;
-
-   classBlock1 = fej9->getClassFromSignature("Ljava/util/concurrent/ConcurrentHashMap$Segment;", 48, comp->getCurrentMethod(), true);
-   classBlock2 = fej9->getClassFromSignature("java/util/concurrent/locks/AbstractQueuedSynchronizer", 53, comp->getCurrentMethod(), true);
-   classBlock3 = fej9->getClassFromSignature("Ljava/util/concurrent/ConcurrentHashMap$HashEntry;", 50, comp->getCurrentMethod(), true);
-
-
-   static char * disableTMPutenv = feGetEnv("TR_DisableTMPut");
-   bool disableTMPut = (disableTMPutenv != NULL);
-   if (classBlock1 && classBlock2 && classBlock3)
-      {
-      offsetSyncObj = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock1, "sync", 4, "Ljava/util/concurrent/locks/ReentrantLock$Sync;", 47);
-      offsetTable = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock1, "table", 5, "[Ljava/util/concurrent/ConcurrentHashMap$HashEntry;", 51);
-      offsetThreshold = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock1, "threshold", 9, "I", 1);
-      offsetCount = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock1, "count", 5, "I", 1);
-      offsetModCount = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock1, "modCount", 8, "I", 1);
-
-      offsetState = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock2, "state", 5, "I", 1);
-      offsetNext = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock3, "next", 4, "Ljava/util/concurrent/ConcurrentHashMap$HashEntry;", 50);
-      }
-   else
-      disableTMPut = true;
-
-   TR::Register * rReturn = cg->allocateRegister();
-   TR::Register * rThis = cg->evaluate(node->getFirstChild());
-   TR::Register * rHash = cg->evaluate(node->getSecondChild());
-   TR::Register * rNode = cg->evaluate(node->getChild(2));
-   TR::Register * rTmpObj = cg->allocateCollectedReferenceRegister();
-   TR::Register * rTmp = cg->allocateRegister();
-   TR::Register * rIndex = cg->allocateRegister();
-   TR::Register * rRetryCount = cg->allocateRegister();
-
-   TR::LabelSymbol * tstartLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol * endLabel =  generateLabelSymbol(cg);
-   TR::LabelSymbol * failureLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol * returnLabel =  generateLabelSymbol(cg);
-
-   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 8, cg);
-
-   deps->addPostCondition(rReturn, TR::RealRegister::AssignAny);
-   deps->addPostCondition(rThis, TR::RealRegister::AssignAny);
-   deps->addPostCondition(rHash, TR::RealRegister::AssignAny);
-   deps->addPostCondition(rNode, TR::RealRegister::AssignAny);
-   deps->addPostCondition(rTmpObj, TR::RealRegister::AssignAny);
-   deps->addPostCondition(rTmp, TR::RealRegister::AssignAny);
-   deps->addPostCondition(rIndex, TR::RealRegister::AssignAny);
-   deps->addPostCondition(rRetryCount, TR::RealRegister::AssignAny);
-
-   bool usesCompressedrefs = comp->useCompressedPointers();
-   int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
-   int32_t indexScale = TR::Compiler->target.is64Bit()? 3:2;
-   if (usesCompressedrefs)
-      {
-      indexScale=2;
-      }
-
-   TR::Instruction * cursor = NULL;
-
-   static char * debugTM= feGetEnv("TR_DebugTM");
-   static char * enableNIAI = feGetEnv("TR_TMUseNIAI");
-   // In theory, we only need to use OI to fetch exclusive the cache lines we are storing to.
-   // This option enables an experimental mode where we use OI to fetch all cache lines as exclusive
-   // in case there are some cache line aliasing issues.
-   static char * useOIForAllCacheLinesAccessed = feGetEnv("TR_TMOIAll");
-
-   if (disableTMPut)
-      {
-      generateRIInstruction(cg, TR::InstOpCode::LHI, node, rReturn, 3);   // tmPut() is disabled.
-      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, returnLabel);
-      }
-   else if (debugTM)
-      {
-      printf ("\nTM: use TM CHM.put in %s (%s)", comp->signature(), comp->getHotnessName(comp->getMethodHotness()));
-      fflush(stdout);
-      }
-
-   generateRIInstruction(cg, TR::InstOpCode::LHI, node, rReturn, 1);
-
-   static const char *s = feGetEnv("TR_TMPutRetry");
-   static uint32_t TMPutRetry = s ? atoi(s) : 5;
-   generateRIInstruction(cg, TR::InstOpCode::LHI, node, rRetryCount, TMPutRetry);
-
-   // Label used by the retry loop to retry transaction.
-   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, tstartLabel);
-
-   // the Transaction Diagnostic Block (TDB) is a memory location for the OS to write state info in the event of an abort
-   TR::MemoryReference* TDBmemRef = generateS390MemoryReference(cg->getMethodMetaDataRealRegister(), fej9->thisThreadGetTDBOffset(), cg);
-   // immediate field described in TR::TreeEvaluator::tstartEvaluator
-   cursor = generateSILInstruction(cg, TR::InstOpCode::TBEGIN, node, TDBmemRef, 0xFF02);
-
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK7, node, failureLabel);
-
-   if (!enableNIAI)
-      {
-      // For zEC12, a transaction will abort if a cache line is loaded within the transaction as read-only, only to have an XI induced
-      // by a promote-to-exclusive on the store.  Use OI instead of NIAI, as the NIAI will not cause an immediate fetch exclusive if the
-      // cache line is already loaded read-only.
-      generateSIInstruction(cg, TR::InstOpCode::OI, node, generateS390MemoryReference(rThis, offsetCount, cg), 0x0);
-      }
-   else
-      {
-      generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
-      }
-
-   // Load this.syncObj (which if of type ReentrantLock)
-   if (usesCompressedrefs)
-      {
-      generateRXInstruction(cg, TR::InstOpCode::LLGF, node, rTmpObj, generateS390MemoryReference(rThis, offsetSyncObj, cg));
-      if (shiftAmount != 0 )
-         generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rTmpObj, rTmpObj, shiftAmount);
-      }
-   else
-      {
-      generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, rTmpObj, generateS390MemoryReference(rThis, offsetSyncObj, cg));
-      }
-
-   if (useOIForAllCacheLinesAccessed)
-      generateSIInstruction(cg, TR::InstOpCode::OI, node, generateS390MemoryReference(rTmpObj, offsetState - 4, cg), 0x0);  // offsetState - 4 to avoid OSC penalties.
-
-   // Check if syncObj.state == 0.
-   generateRXInstruction(cg, TR::InstOpCode::LT, node, rTmp, generateS390MemoryReference(rTmpObj, offsetState, cg));
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, endLabel);
-
-   // Load this.table
-   if (usesCompressedrefs)
-      {
-      generateRXInstruction(cg, TR::InstOpCode::LLGF, node, rTmpObj, generateS390MemoryReference(rThis, offsetTable, cg));
-      if (shiftAmount != 0 )
-         generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rTmpObj, rTmpObj, shiftAmount);
-      }
-   else
-      {
-      generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, rTmpObj, generateS390MemoryReference(rThis, offsetTable, cg));
-      }
-
-   // Ensure that the table cache line is loaded as exclusive.  Depending on the index we later calculate, we might
-   // be writing to the same cache line as the array header.
-   if (!enableNIAI)
-      generateSIInstruction(cg, TR::InstOpCode::OI, node, generateS390MemoryReference(rTmpObj, 0, cg), 0x0);
-   else
-      generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
-
-   generateRSInstruction(cg, TR::InstOpCode::ICM, node, rIndex, (uint32_t) 0xF, generateS390MemoryReference(rTmpObj, fej9->getOffsetOfContiguousArraySizeField(), cg));
-
-   // Cond Load from discontiguousArraySize if contiguousArraySize is zero.
-   generateRSInstruction(cg, TR::InstOpCode::LOC, node, rIndex, 0x8, generateS390MemoryReference(rTmpObj, fej9->getOffsetOfDiscontiguousArraySizeField(), cg));
-
-   generateRIInstruction(cg, TR::InstOpCode::AHI, node, rIndex, -1);
-   generateRRInstruction(cg, TR::InstOpCode::NR, node, rIndex, rHash);
-
-   if (TR::Compiler->target.is64Bit())
-      {
-      // Zero extend rIndex and shift it left by indexScale.
-      //     Effectively, shift first, and write result into bits 32-indexScale to 63 - indexScale.
-      generateRIEInstruction(cg, TR::InstOpCode::RISBG, node, rIndex, rIndex, 32 - indexScale, 63 - indexScale + 0x80, indexScale);
-      }
-   else
-      {
-      generateRSInstruction(cg, TR::InstOpCode::SLL, node, rIndex, indexScale);
-      }
-
-   if (!enableNIAI)
-      {
-      // For zEC12, a transaction will abort if a cache line is loaded within the transaction as read-only, only to have an XI induced
-      // by a promote-to-exclusive on the store.  Use OI instead of NIAI, as the NIAI will not cause an immediate fetch exclusive if the
-      // cache line is already loaded read-only.
-      generateRXInstruction(cg, TR::InstOpCode::LA, node, rTmp, generateS390MemoryReference(rTmpObj, rIndex, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
-      generateSIInstruction(cg, TR::InstOpCode::OI, node, generateS390MemoryReference(rTmp, 0, cg), 0x0);
-
-      // We have to use rTmp in LT as well, otherwise, LT will get scheduled ahead of the OI.
-      generateRXInstruction(cg, (usesCompressedrefs)?TR::InstOpCode::LT:TR::InstOpCode::getLoadTestOpCode(), node, rTmp, generateS390MemoryReference(rTmp, 0, cg));
-      }
-   else
-      {
-      generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
-      generateRXInstruction(cg, (usesCompressedrefs)?TR::InstOpCode::LT:TR::InstOpCode::getLoadTestOpCode(), node, rTmp, generateS390MemoryReference(rTmpObj, rIndex, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
-      }
-
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, endLabel);
-
-   if (usesCompressedrefs)
-      {
-      if (shiftAmount != 0 )
-         {
-         generateRSInstruction(cg, TR::InstOpCode::SRLG, node, rTmp, rNode, shiftAmount);
-         generateRXInstruction(cg, TR::InstOpCode::ST, node, rTmp, generateS390MemoryReference(rTmpObj, rIndex, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
-         }
-      else
-         {
-         generateRXInstruction(cg, TR::InstOpCode::ST, node, rNode, generateS390MemoryReference(rTmpObj, rIndex, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
-         }
-      }
-   else
-      {
-      // need wrtbar for this store
-      generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, rNode, generateS390MemoryReference(rTmpObj, rIndex, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
-      }
-
-   generateSIYInstruction(cg, TR::InstOpCode::ASI, node, generateS390MemoryReference(rThis, offsetCount, cg), 1);
-   generateSIYInstruction(cg, TR::InstOpCode::ASI, node, generateS390MemoryReference(rThis, offsetModCount, cg), 1);
-
-   // Success.  Set return value to zero.
-   generateRIInstruction(cg, TR::InstOpCode::LHI, node, rReturn, 0);
-
-   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, endLabel);
-
-   cursor = generateSInstruction(cg, TR::InstOpCode::TEND, node, generateS390MemoryReference(cg->machine()->getS390RealRegister(TR::RealRegister::GPR0),0,cg));
-
-   // Jump to return label to exit.
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, returnLabel);
-
-   // ----------------------------------------------------------------------------------------------------
-   // The transaction aborted - Sequence to decrement retry count and loop back to transaction for retry.
-   // ----------------------------------------------------------------------------------------------------
-   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, failureLabel);
-   // Branch on Count - Decrements retryCount and jumps to transaction again if retryCount is still positive.
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRCT, node, rRetryCount, tstartLabel);
-
-   // Too many aborts and failed retries.  Set return value to 2.
-   generateRIInstruction(cg, TR::InstOpCode::LHI, node, rReturn, 2);
-
-   // ------------------------------------------------------------------------------------------------------
-   // Return point of inlined tmPut() code.  We'll add write barrier as well, which only exercises if
-   // rReturn is zero (Success).
-   // ------------------------------------------------------------------------------------------------------
-   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, returnLabel, deps);
-
-   genWrtBarForTM(node, cg, rTmpObj, rNode, rReturn, true);
-
-   cg->stopUsingRegister(rTmp);
-   cg->stopUsingRegister(rTmpObj);
-   cg->stopUsingRegister(rIndex);
-   cg->stopUsingRegister(rRetryCount);
-   cg->decReferenceCount(node->getFirstChild());
-   cg->decReferenceCount(node->getSecondChild());
-   cg->decReferenceCount(node->getChild(2));
-
-   node->setRegister(rReturn);
-   return rReturn;
-#endif
-   return NULL;
-   }
-
-extern TR::Register *
-inlineConcurrentHashMapTmRemove(
-      TR::Node *node,
-      TR::CodeGenerator * cg)
-   {
-#ifndef PUBLIC_BUILD
-   int32_t offsetSyncObj = 0, offsetState = 0, offsetTable = 0, offsetThreshold = 0, offsetNext = 0, offsetCount = 0, offsetModCount = 0, offsetHash = 0, offsetKey = 0, offsetValue = 0;
-   TR_OpaqueClassBlock * classBlock1 = NULL;
-   TR_OpaqueClassBlock * classBlock2 = NULL;
-   TR_OpaqueClassBlock * classBlock3 = NULL;
-
-   TR::Compilation *comp = cg->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
-
-   classBlock1 = fej9->getClassFromSignature("Ljava/util/concurrent/ConcurrentHashMap$Segment;", 48, comp->getCurrentMethod(), true);
-   classBlock2 = fej9->getClassFromSignature("java/util/concurrent/locks/AbstractQueuedSynchronizer", 53, comp->getCurrentMethod(), true);
-   classBlock3 = fej9->getClassFromSignature("Ljava/util/concurrent/ConcurrentHashMap$HashEntry;", 50, comp->getCurrentMethod(), true);
-
-
-   static char * disableTMRemoveenv = feGetEnv("TR_DisableTMRemove");
-   bool disableTMRemove = (disableTMRemoveenv != NULL);
-
-   if (classBlock1 && classBlock2 && classBlock3)
-      {
-      offsetSyncObj = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock1, "sync", 4, "Ljava/util/concurrent/locks/ReentrantLock$Sync;", 47);
-      offsetTable = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock1, "table", 5, "[Ljava/util/concurrent/ConcurrentHashMap$HashEntry;", 51);
-      offsetThreshold = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock1, "threshold", 9, "I", 1);
-      offsetCount = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock1, "count", 5, "I", 1);
-      offsetModCount = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock1, "modCount", 8, "I", 1);
-
-      offsetState = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock2, "state", 5, "I", 1);
-
-      offsetNext = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock3, "next", 4, "Ljava/util/concurrent/ConcurrentHashMap$HashEntry;", 50);
-      offsetHash = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock3, "hash", 4, "I", 1);
-      offsetKey = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock3, "key", 3, "Ljava/lang/Object;", 18);
-      offsetValue = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock3, "value", 5, "Ljava/lang/Object;", 18);
-      }
-   else
-      disableTMRemove = true;
-
-   TR::Register * rReturn = cg->allocateCollectedReferenceRegister();
-   TR::Register * rThis = cg->evaluate(node->getFirstChild());
-   TR::Register * rKey = cg->evaluate(node->getSecondChild());
-   TR::Register * rHash = cg->evaluate(node->getChild(2));
-   TR::Register * rValue = cg->evaluate(node->getChild(3));
-   TR::Register * rTmpObj = cg->allocateCollectedReferenceRegister();
-   TR::Register * rTmp = cg->allocateCollectedReferenceRegister();
-   TR::Register * rIndex = cg->allocateRegister();
-   TR::Register * rRetryCount = cg->allocateRegister();
-
-   TR::LabelSymbol * tstartLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol * endLabel =  generateLabelSymbol(cg);
-   TR::LabelSymbol * failureLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol * removeLabel =  generateLabelSymbol(cg);
-   TR::LabelSymbol * returnLabel =  generateLabelSymbol(cg);
-
-   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 9, cg);
-
-   deps->addPostCondition(rReturn, TR::RealRegister::AssignAny);
-   deps->addPostCondition(rThis, TR::RealRegister::AssignAny);
-   deps->addPostCondition(rHash, TR::RealRegister::AssignAny);
-   deps->addPostCondition(rKey, TR::RealRegister::AssignAny);
-   deps->addPostCondition(rValue, TR::RealRegister::AssignAny);
-   deps->addPostCondition(rTmpObj, TR::RealRegister::AssignAny);
-   deps->addPostCondition(rTmp, TR::RealRegister::AssignAny);
-   deps->addPostCondition(rIndex, TR::RealRegister::AssignAny);
-   deps->addPostCondition(rRetryCount, TR::RealRegister::AssignAny);
-
-   bool usesCompressedrefs = comp->useCompressedPointers();
-   int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
-   int32_t indexScale = TR::Compiler->target.is64Bit()? 3:2;
-   if (usesCompressedrefs)
-      {
-      indexScale=2;
-      }
-
-   TR::Instruction * cursor = NULL;
-
-   static char * debugTM= feGetEnv("TR_DebugTM");
-   static char * enableNIAI = feGetEnv("TR_TMUseNIAI");
-   // In theory, we only need to use OI to fetch exclusive the cache lines we are storing to.
-   // This option enables an experimental mode where we use OI to fetch all cache lines as exclusive
-   // in case there are some cache line aliasing issues.
-   static char * useOIForAllCacheLinesAccessed = feGetEnv("TR_TMOIAll");
-
-   // Retry counter.
-   static const char *s = feGetEnv("TR_TMRemoveRetry");
-   static uint32_t TMRemoveRetry = s ? atoi(s) : 5;
-   generateRIInstruction(cg, TR::InstOpCode::LHI, node, rRetryCount, TMRemoveRetry);
-
-   // Return value of CHM.remove is the value being removed, if successful.  NULL otherwise.
-   generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, rReturn, rReturn);
-
-   if (disableTMRemove)
-      {
-      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, returnLabel);
-      }
-   else if (debugTM)
-      {
-      printf ("\nTM: use TM CHM.remove in %s (%s)", comp->signature(), comp->getHotnessName(comp->getMethodHotness()));
-      fflush(stdout);
-      }
-
-   // Label used by the retry loop to retry transaction.
-   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, tstartLabel);
-
-   // the Transaction Diagnostic Block (TDB) is a memory location for the OS to write state info in the event of an abort
-   TR::MemoryReference* TDBmemRef = generateS390MemoryReference(cg->getMethodMetaDataRealRegister(), fej9->thisThreadGetTDBOffset(), cg);
-   /// immediate field described in TR::TreeEvaluator::tstartEvaluator
-   cursor = generateSILInstruction(cg, TR::InstOpCode::TBEGIN, node, TDBmemRef, 0xFF02);
-
-   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK7, node, failureLabel);
-
-   if (!enableNIAI)
-      {
-      // For zEC12, a transaction will abort if a cache line is loaded within the transaction as read-only, only to have an XI induced
-      // by a promote-to-exclusive on the store.  Use OI instead of NIAI, as the NIAI will not cause an immediate fetch exclusive if the
-      // cache line is already loaded read-only.
-      cursor = generateSIInstruction(cg, TR::InstOpCode::OI, node, generateS390MemoryReference(rThis, offsetCount, cg), 0x0);
-      }
-   else
-      {
-      cursor = generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
-      }
-
-   // Load this.syncObj (is of type Reentrant Lock).
-   if (usesCompressedrefs)
-      {
-      cursor = generateRXInstruction(cg, TR::InstOpCode::LLGF, node, rTmpObj, generateS390MemoryReference(rThis, offsetSyncObj, cg));
-      if (shiftAmount != 0 )
-         cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rTmpObj, rTmpObj, shiftAmount);
-      }
-   else
-      {
-      cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, rTmpObj, generateS390MemoryReference(rThis, offsetSyncObj, cg));
-      }
-
-   if (useOIForAllCacheLinesAccessed)
-      cursor = generateSIInstruction(cg, TR::InstOpCode::OI, node, generateS390MemoryReference(rTmpObj, offsetState - 4, cg), 0x0);  // offsetState - 4 to avoid OSC penalties.
-
-   // Check if syncObj.state == 0.
-   cursor = generateRXInstruction(cg, TR::InstOpCode::LT, node, rTmp, generateS390MemoryReference(rTmpObj, offsetState, cg));
-   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, endLabel);
-
-   if (usesCompressedrefs)
-      {
-      cursor = generateRXInstruction(cg, TR::InstOpCode::LLGF, node, rTmpObj, generateS390MemoryReference(rThis, offsetTable, cg));
-      if (shiftAmount != 0 )
-         cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rTmpObj, rTmpObj, shiftAmount);
-      }
-   else
-      {
-      cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, rTmpObj, generateS390MemoryReference(rThis, offsetTable, cg));
-      }
-
-   // Ensure that the table cache line is loaded as exclusive.  Depending on the index we later calculate, we might
-   // be writing to the same cache line as the array header.
-   if (!enableNIAI)
-      cursor = generateSIInstruction(cg, TR::InstOpCode::OI, node, generateS390MemoryReference(rTmpObj, 0, cg), 0x0);
-   else
-      cursor = generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
-
-   cursor = generateRSInstruction(cg, TR::InstOpCode::ICM, node, rIndex, (uint32_t) 0xF, generateS390MemoryReference(rTmpObj, fej9->getOffsetOfContiguousArraySizeField(), cg));
-
-   // Cond Load from discontiguousArraySize if contiguousArraySize is zero.
-   cursor = generateRSInstruction(cg, TR::InstOpCode::LOC, node, rIndex, 0x8, generateS390MemoryReference(rTmpObj, fej9->getOffsetOfDiscontiguousArraySizeField(), cg));
-
-   cursor = generateRIInstruction(cg, TR::InstOpCode::AHI, node, rIndex, -1);
-   cursor = generateRRInstruction(cg, TR::InstOpCode::NR, node, rIndex, rHash);
-
-   if (TR::Compiler->target.is64Bit())
-      {
-      // Zero extend rIndex and shift it left by indexScale.
-      //     Effectively, shift first, and write result into bits 32-indexScale to 63 - indexScale.
-      cursor = generateRIEInstruction(cg, TR::InstOpCode::RISBG, node, rIndex, rIndex, 32 - indexScale, 63 - indexScale + 0x80, indexScale);
-      }
-   else
-      {
-      cursor = generateRSInstruction(cg, TR::InstOpCode::SLL, node, rIndex, indexScale);
-      }
-
-   if (!enableNIAI)
-      {
-      // For zEC12, a transaction will abort if a cache line is loaded within the transaction as read-only, only to have an XI induced
-      // by a promote-to-exclusive on the store.  Use OI instead of NIAI, as the NIAI will not cause an immediate fetch exclusive if the
-      // cache line is already loaded read-only.
-      cursor = generateRXInstruction(cg, TR::InstOpCode::LA, node, rTmp, generateS390MemoryReference(rTmpObj, rIndex, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
-      cursor = generateSIInstruction(cg, TR::InstOpCode::OI, node, generateS390MemoryReference(rTmp, 0, cg), 0x0);
-
-      // We have to use rTmp in LT as well, otherwise, LT will get scheduled ahead of the OI.
-      cursor = generateRXInstruction(cg, (usesCompressedrefs)?TR::InstOpCode::LT:TR::InstOpCode::getLoadTestOpCode(), node, rTmp, generateS390MemoryReference(rTmp, 0, cg));
-      }
-   else
-      {
-      cursor = generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
-      cursor = generateRXInstruction(cg, (usesCompressedrefs)?TR::InstOpCode::LT:TR::InstOpCode::getLoadTestOpCode(), node, rTmp, generateS390MemoryReference(rTmpObj, rIndex, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
-      }
-
-   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, endLabel);
-
-   if (usesCompressedrefs)
-       {
-       cursor = generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, rTmp, rTmp);
-       if (shiftAmount != 0)
-          {
-          cursor = generateRSInstruction(cg, TR::InstOpCode::SRLG, node, rKey, rKey, shiftAmount);
-          cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rTmp, rTmp, shiftAmount);
-          }
-
-       if (useOIForAllCacheLinesAccessed)
-          cursor = generateSIInstruction(cg, TR::InstOpCode::OI, node, generateS390MemoryReference(rTmp, 0, cg), 0x0);
-
-       // Compare Key with object in table.
-       cursor = generateRXInstruction(cg, TR::InstOpCode::C, node, rKey, generateS390MemoryReference(rTmp, offsetKey, cg));
-       if (shiftAmount != 0)
-          cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rKey, rKey, shiftAmount);
-       cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, endLabel);
-       cursor = generateRRInstruction(cg, TR::InstOpCode::LTGR, node, rValue, rValue);
-       cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, removeLabel);
-       if (shiftAmount != 0)
-          cursor = generateRSInstruction(cg, TR::InstOpCode::SRLG, node, rValue, rValue, shiftAmount);
-
-       // Compare Value with object in table.
-       cursor = generateRXInstruction(cg, TR::InstOpCode::C, node, rValue, generateS390MemoryReference(rTmp, offsetValue, cg));
-       if (shiftAmount != 0)
-          cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rValue, rValue, shiftAmount);
-       }
-    else
-       {
-       if (useOIForAllCacheLinesAccessed)
-          cursor = generateSIInstruction(cg, TR::InstOpCode::OI, node, generateS390MemoryReference(rTmp, 0, cg), 0x0);
-
-       cursor = generateRXInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, rKey, generateS390MemoryReference(rTmp, offsetKey, cg));
-       cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, endLabel);
-       cursor = generateRRInstruction(cg, TR::InstOpCode::getLoadTestRegOpCode(), node, rValue, rValue);
-       cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, removeLabel);
-       cursor = generateRXInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, rValue, generateS390MemoryReference(rTmp, offsetValue, cg));
-       }
-    cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, endLabel);
-
-    cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, removeLabel);
-
-    if (usesCompressedrefs)
-       {
-       cursor = generateRXInstruction(cg, TR::InstOpCode::LLGF, node, rReturn, generateS390MemoryReference(rTmp, offsetValue, cg));
-       cursor = generateRXInstruction(cg, TR::InstOpCode::L, node, rTmp, generateS390MemoryReference(rTmp, offsetNext, cg));
-       cursor = generateRXInstruction(cg, TR::InstOpCode::ST, node, rTmp, generateS390MemoryReference(rTmpObj, rIndex, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
-       }
-    else
-       {
-       cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, rReturn, generateS390MemoryReference(rTmp, offsetValue, cg));
-       cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, rTmp, generateS390MemoryReference(rTmp, offsetNext, cg));
-       cursor = generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, rTmp, generateS390MemoryReference(rTmpObj, rIndex, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
-       }
-
-   cursor = generateSIYInstruction(cg, TR::InstOpCode::ASI, node, generateS390MemoryReference(rThis, offsetCount, cg), -1);
-   cursor = generateSIYInstruction(cg, TR::InstOpCode::ASI, node, generateS390MemoryReference(rThis, offsetModCount, cg), 1);
-
-   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, endLabel);
-
-   cursor = generateSInstruction(cg, TR::InstOpCode::TEND, node, generateS390MemoryReference(cg->machine()->getS390RealRegister(TR::RealRegister::GPR0),0,cg));
-
-   if (usesCompressedrefs)
-      {
-      cursor = generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, rTmp, rTmp);
-      if (shiftAmount != 0)
-        {
-        cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rTmp, rTmp, shiftAmount);
-        cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rReturn, rReturn, shiftAmount);
-        }
-      }
-
-   // Jump to return label to exit.
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, returnLabel);
-
-   // ----------------------------------------------------------------------------------------------------
-   // The transaction aborted - Sequence to decrement retry count and loop back to transaction for retry.
-   // ----------------------------------------------------------------------------------------------------
-   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, failureLabel);
-   // Branch on Count - Decrements retryCount and jumps to transaction again if retryCount is still positive.
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRCT, node, rRetryCount, tstartLabel);
-
-   // ----------------------------------------------------------------------------------------------------
-   // Merge point for the inlined sequences.
-   // ----------------------------------------------------------------------------------------------------
-   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, returnLabel, deps);
-
-   genWrtBarForTM(node, cg, rTmpObj, rTmp, rReturn, false);
-
-   cg->stopUsingRegister(rTmp);
-   cg->stopUsingRegister(rTmpObj);
-   cg->stopUsingRegister(rIndex);
-   cg->stopUsingRegister(rRetryCount);
-   cg->decReferenceCount(node->getFirstChild());
-   cg->decReferenceCount(node->getSecondChild());
-   cg->decReferenceCount(node->getChild(2));
-   cg->decReferenceCount(node->getChild(3));
-
-   node->setRegister(rReturn);
-   return rReturn;
-#endif
-   return NULL;
-   }
-
-extern TR::Register *
 inlineConcurrentLinkedQueueTMOffer(
       TR::Node *node,
       TR::CodeGenerator *cg)
@@ -11707,89 +11185,59 @@ inlineConcurrentLinkedQueueTMOffer(
       if (!disableNIAI)
          cursor = generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
 
-      // We must make sure the hard-coded reference loads are guarded
-      auto guardedLoadMnemonic = usesCompressedrefs ? TR::InstOpCode::LLGFSG : TR::InstOpCode::LGG;
-
-      if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+      if (usesCompressedrefs)
          {
-         cursor = generateRXYInstruction(cg, guardedLoadMnemonic, node, rP, generateS390MemoryReference(rThis, offsetTail, cg));
+         cursor = generateRXInstruction(cg, TR::InstOpCode::LLGF, node, rP, generateS390MemoryReference(rThis, offsetTail, cg));
+
+         if (shiftAmount != 0)
+            {
+            cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rP, rP, shiftAmount);
+            }
          }
       else
          {
-         if (usesCompressedrefs)
-            {
-            cursor = generateRXInstruction(cg, TR::InstOpCode::LLGF, node, rP, generateS390MemoryReference(rThis, offsetTail, cg));
-
-            if (shiftAmount != 0)
-               {
-               cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rP, rP, shiftAmount);
-               }
-            }
-         else
-            {
-            cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, rP, generateS390MemoryReference(rThis, offsetTail, cg));
-            }
+         cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, rP, generateS390MemoryReference(rThis, offsetTail, cg));
          }
 
       if (!disableNIAI)
          cursor = generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
 
-      if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+      if (usesCompressedrefs)
          {
-         cursor = generateRXYInstruction(cg, guardedLoadMnemonic, node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
+         cursor = generateRXInstruction(cg, TR::InstOpCode::LT, node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
+         cursor = generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, rQ, rQ);
 
-         cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CLG, node, rQ, 0, TR::InstOpCode::COND_CC0, insertLabel, false, false);
+         if (shiftAmount != 0)
+            {
+            cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rQ, rQ, shiftAmount);
+            }
          }
       else
          {
-         if (usesCompressedrefs)
-            {
-            cursor = generateRXInstruction(cg, TR::InstOpCode::LT, node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
-            cursor = generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, rQ, rQ);
-
-            if (shiftAmount != 0)
-               {
-               cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rQ, rQ, shiftAmount);
-               }
-            }
-         else
-            {
-            cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
-            }
-
-         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, insertLabel);
+         cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
          }
 
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, insertLabel);
       cursor = generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, rP, rQ);
 
       if (!disableNIAI)
          cursor = generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
 
-      if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+      if (usesCompressedrefs)
          {
-         cursor = generateRXYInstruction(cg, guardedLoadMnemonic, node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
-
-         cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CLG, node, rQ, 0, TR::InstOpCode::COND_CC0, insertLabel, false, false);
+         cursor = generateRXInstruction(cg, TR::InstOpCode::LT, node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
+         cursor = generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, rQ, rQ);
+         if (shiftAmount != 0)
+            {
+            cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rQ, rQ, shiftAmount);
+            }
          }
       else
          {
-         if (usesCompressedrefs)
-            {
-            cursor = generateRXInstruction(cg, TR::InstOpCode::LT, node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
-            cursor = generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, rQ, rQ);
-            if (shiftAmount != 0)
-               {
-               cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rQ, rQ, shiftAmount);
-               }
-            }
-         else
-            {
-            cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
-            }
-
-         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, insertLabel);
+         cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
          }
 
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, insertLabel);
       cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, doneLabel);
 
       cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, insertLabel);
@@ -11931,101 +11379,56 @@ inlineConcurrentLinkedQueueTMPoll(
       if (!disableNIAI)
          cursor = generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
 
-      // We must make sure the hard-coded reference loads are guarded
-      auto guardedLoadMnemonic = usesCompressedrefs ? TR::InstOpCode::LLGFSG : TR::InstOpCode::LGG;
-
-      if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+      if (usesCompressedrefs)
          {
-         cursor = generateRXYInstruction(cg, guardedLoadMnemonic, node, rP, generateS390MemoryReference(rThis, offsetHead, cg));
+         cursor = generateRXInstruction(cg, TR::InstOpCode::LLGF, node, rP, generateS390MemoryReference(rThis, offsetHead, cg));
+
+         if (shiftAmount != 0)
+            {
+            cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rP, rP, shiftAmount);
+            }
          }
       else
          {
-         if (usesCompressedrefs)
-            {
-            cursor = generateRXInstruction(cg, TR::InstOpCode::LLGF, node, rP, generateS390MemoryReference(rThis, offsetHead, cg));
-
-            if (shiftAmount != 0)
-               {
-               cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rP, rP, shiftAmount);
-               }
-            }
-         else
-            {
-            cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, rP, generateS390MemoryReference(rThis, offsetHead, cg));
-            }
+         cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, rP, generateS390MemoryReference(rThis, offsetHead, cg));
          }
 
       if (!disableNIAI)
          cursor = generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
-
-      if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
-         {
-         cursor = generateRXYInstruction(cg, guardedLoadMnemonic, node, rE, generateS390MemoryReference(rP, offsetItem, cg));
-         }
-      else
-         {
-         if (usesCompressedrefs)
-            {
-            cursor = generateRXInstruction(cg, TR::InstOpCode::LLGF, node, rE, generateS390MemoryReference(rP, offsetItem, cg));
-
-            if (shiftAmount != 0)
-               {
-               cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rE, rE, shiftAmount);
-               }
-            }
-         else
-            {
-            cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, rE, generateS390MemoryReference(rP, offsetItem, cg));
-            }
-         }
-
-      if (!disableNIAI)
-         cursor = generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
-
-      if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
-         {
-         cursor = generateRXYInstruction(cg, guardedLoadMnemonic, node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
-
-         if (usesCompressedrefs)
-            {
-            cursor = generateSILInstruction(cg, TR::InstOpCode::MVHI, node, generateS390MemoryReference(rP, offsetItem, cg), 0);
-            }
-         else
-            {
-            cursor = generateSILInstruction(cg, TR::InstOpCode::getMoveHalfWordImmOpCode(), node, generateS390MemoryReference(rP, offsetItem, cg), 0);
-            }
-
-         cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CLG, node, rQ, 0, TR::InstOpCode::COND_CC0, doneLabel, false, false);
-         }
-      else
-         {
-         if (usesCompressedrefs)
-            {
-            cursor = generateRXInstruction(cg, TR::InstOpCode::LT, node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
-            cursor = generateSILInstruction(cg, TR::InstOpCode::MVHI, node, generateS390MemoryReference(rP, offsetItem, cg), 0);
-            }
-         else
-            {
-            cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
-            cursor = generateSILInstruction(cg, TR::InstOpCode::getMoveHalfWordImmOpCode(), node, generateS390MemoryReference(rP, offsetItem, cg), 0);
-            }
-
-         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, doneLabel);
-         }
 
       if (usesCompressedrefs)
          {
-         // Register rQ is implicitly shifted via guardedLoadMnemonic where as it is not when concurrent scavenger is
-         // not enabled. As such for concurrent scavenger we have to compress and then store using a temp register.
-         if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() && shiftAmount != 0)
+         cursor = generateRXInstruction(cg, TR::InstOpCode::LLGF, node, rE, generateS390MemoryReference(rP, offsetItem, cg));
+
+         if (shiftAmount != 0)
             {
-            cursor = generateRSInstruction(cg, TR::InstOpCode::SRLG, node, rTmp, rQ, shiftAmount);
-            cursor = generateRXInstruction(cg, TR::InstOpCode::ST, node, rTmp, generateS390MemoryReference(rThis, offsetHead, cg));
+            cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, rE, rE, shiftAmount);
             }
-         else
-            {
-            cursor = generateRXInstruction(cg, TR::InstOpCode::ST, node, rQ, generateS390MemoryReference(rThis, offsetHead, cg));
-            }
+         }
+      else
+         {
+         cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, rE, generateS390MemoryReference(rP, offsetItem, cg));
+         }
+
+      if (!disableNIAI)
+         cursor = generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
+
+      if (usesCompressedrefs)
+         {
+         cursor = generateRXInstruction(cg, TR::InstOpCode::LT, node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
+         cursor = generateSILInstruction(cg, TR::InstOpCode::MVHI, node, generateS390MemoryReference(rP, offsetItem, cg), 0);
+         }
+      else
+         {
+         cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, rQ, generateS390MemoryReference(rP, offsetNext, cg));
+         cursor = generateSILInstruction(cg, TR::InstOpCode::getMoveHalfWordImmOpCode(), node, generateS390MemoryReference(rP, offsetItem, cg), 0);
+         }
+
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, doneLabel);
+
+      if (usesCompressedrefs)
+         {
+         cursor = generateRXInstruction(cg, TR::InstOpCode::ST, node, rQ, generateS390MemoryReference(rThis, offsetHead, cg));
 
          if (shiftAmount != 0)
             {
@@ -12054,7 +11457,7 @@ inlineConcurrentLinkedQueueTMPoll(
    if (useNonConstrainedTM || disableTMPoll)
       cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, failLabel, deps);
 
-   if (!TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() && usesCompressedrefs)
+   if (usesCompressedrefs)
       {
       generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, rQ, rQ);
 
@@ -12089,10 +11492,6 @@ VMgenerateCatchBlockBBStartPrologue(
    {
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
-   if (comp->getOption(TR_FullSpeedDebug))
-      {
-      fenceInstruction->setNeedsGCMap(); // a catch entry is a gc point in FSD mode
-      }
 
    TR::Block *block = node->getBlock();
 
@@ -12108,7 +11507,7 @@ VMgenerateCatchBlockBBStartPrologue(
       if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z10))
          {
          TR::MemoryReference * recompMR = generateS390MemoryReference(biAddrReg, 0, cg);
-         generateSIYInstruction(cg, TR::InstOpCode::ASI, node, recompMR, -1);
+         generateSIInstruction(cg, TR::InstOpCode::ASI, node, recompMR, -1);
          recompMR->stopUsingMemRefRegister(cg);
          }
       else
@@ -12343,15 +11742,15 @@ J9::Z::TreeEvaluator::countDigitsEvaluator(TR::Node * node, TR::CodeGenerator * 
          label[i] = generateLabelSymbol(cg);
          }
 
-      generateRXYInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[7]);
+      generateRXInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[7]);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNH, node, label[11]);
 
       // LABEL 3
-      generateRXYInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[3]);
+      generateRXInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[3]);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNH, node, label[5]);
 
       // LABEL 1
-      generateRXYInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[1]);
+      generateRXInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[1]);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNH, node, label[2]);
 
       countDigitsHelper(node, cg, 0, work[0], inputReg, countReg, cFlowRegionEnd, isLong);           // 0 and 1
@@ -12361,7 +11760,7 @@ J9::Z::TreeEvaluator::countDigitsEvaluator(TR::Node * node, TR::CodeGenerator * 
 
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, label[5]);       // LABEL 5
 
-      generateRXYInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[5]);
+      generateRXInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[5]);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNH, node, label[6]);
 
       countDigitsHelper(node, cg, 4, work[4], inputReg, countReg, cFlowRegionEnd, isLong);           // 4 and 5
@@ -12371,11 +11770,11 @@ J9::Z::TreeEvaluator::countDigitsEvaluator(TR::Node * node, TR::CodeGenerator * 
 
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, label[11]);      // LABEL 11
 
-      generateRXYInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[11]);
+      generateRXInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[11]);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNH, node, label[14]);
 
       // LABEL 9
-      generateRXYInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[9]);
+      generateRXInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[9]);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNH, node, label[10]);
 
       countDigitsHelper(node, cg, 8, work[8], inputReg, countReg, cFlowRegionEnd, isLong);           // 8 and 9
@@ -12385,11 +11784,11 @@ J9::Z::TreeEvaluator::countDigitsEvaluator(TR::Node * node, TR::CodeGenerator * 
 
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, label[14]);      // LABEL 14
 
-      generateRXYInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[14]);
+      generateRXInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[14]);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNH, node, label[16]);
 
       // LABEL 12
-      generateRXYInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[12]); // 12
+      generateRXInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[12]); // 12
       generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, countReg, 12+1);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BH, node, cFlowRegionEnd);
 
@@ -12398,7 +11797,7 @@ J9::Z::TreeEvaluator::countDigitsEvaluator(TR::Node * node, TR::CodeGenerator * 
 
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, label[16]);      // LABEL 16
 
-      generateRXYInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[16]);
+      generateRXInstruction(cg, TR::InstOpCode::CG, node, inputReg, work[16]);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNH, node, label[17]);
       // LABEL 15
       countDigitsHelper(node, cg, 15, work[15], inputReg, countReg, cFlowRegionEnd, isLong);  // 15 and 16

@@ -36,6 +36,14 @@
 	
 	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/shareClassTests/testClasses" />
 
+	<!-- on zos, ant <copy> does not keep file tag. Therefore, ant copied files 
+	cannot be read by javac. Preset javac with encoding="ISO-8859-1" so that files 
+	without proper tagging can be read.
+	-->
+	<presetdef name="javac">
+		<javac encoding="ISO-8859-1" />
+	</presetdef>
+
 	<target name="AddTestClassesToPackage">
 		<!-- create the folders -->
 		<mkdir dir="${build}/Alphabet" />

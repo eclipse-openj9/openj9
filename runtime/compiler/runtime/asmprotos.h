@@ -73,6 +73,7 @@ JIT_HELPER(jitHandleIntegerDivideByZeroTrap);  // asm calling-convention helper
 JIT_HELPER(jitHandleNullPointerExceptionTrap);  // asm calling-convention helper
 JIT_HELPER(jitHandleInternalErrorTrap);  // asm calling-convention helper
 JIT_HELPER(jitInduceOSRAtCurrentPC);  // asm calling-convention helper
+JIT_HELPER(jitInduceOSRAtCurrentPCAndRecompile);  // asm calling-convention helper
 JIT_HELPER(jitInstanceOf);  // asm calling-convention helper
 JIT_HELPER(jitInterpretNewInstanceMethod);  // asm calling-convention helper
 JIT_HELPER(jitLookupInterfaceMethod);  // asm calling-convention helper

@@ -31,8 +31,6 @@ A more complete set of build instructions are included here for multiple platfor
 - [Linux :penguin:](#linux)
 - [AIX :blue_book:](#aix)
 - [Windows :ledger:](#windows)
-- [MacOS :apple:](#macos)
-- [ARM :iphone:](#arm)
 
 ----------------------------------
 
@@ -419,19 +417,3 @@ OpenJDK  - 198304337b based on jdk-9+181)
 ```
 
 :ledger: *Congratulations!* :tada:
-
-----------------------------------
-
-## MacOS
-:apple:
-
-:construction:
-We haven't created a full build process for macOS yet? Watch this space!
-
-----------------------------------
-
-## ARM
-:iphone:
-
-:construction:
-We haven't created a full build process for ARM yet? Watch this space!

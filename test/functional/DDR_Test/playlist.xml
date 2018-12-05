@@ -97,4 +97,79 @@
 			<subset>11</subset>
 		</subsets>
 	</test>
+
+		<test>
+		<testCaseName>testDDRExt_Callsites_ibm</testCaseName>
+		<command>ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DJDK_HOME=${JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) \
+	-Dtest.list=$(Q)TestCallsites$(Q) -DADDITIONALEXPORTS=-showversion -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
+	$(TEST_STATUS)</command>
+		<platformRequirements>^os.win</platformRequirements>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>ibm</impl>
+		</impls>
+		<subsets>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
+		</subsets>
+	</test>
+
+	<test>
+		<testCaseName>testDDRExt_Callsites_openj9</testCaseName>
+		<command>ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DJDK_HOME=${JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) \
+	-Dtest.list=$(Q)TestCallsites$(Q) -DADDITIONALEXPORTS=-showversion -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
+	$(TEST_STATUS)</command>
+		<!-- temporarily disable this test on AIX, z/OS; github.com/eclipse/openj9/issues/1511 -->
+		<!-- temporarily disable this test on osx; github.com/eclipse/openj9/issues/3366 -->
+		<platformRequirements>^os.aix,^os.zos,^os.win,^os.osx</platformRequirements>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+		<subsets>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
+		</subsets>
+	</test>
+
+	<test>
+		<testCaseName>testDDRExt_Callsites_win</testCaseName>
+		<command>ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DJDK_HOME=${JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) \
+	-Dtest.list=$(Q)TestCallsites$(Q) -DADDITIONALEXPORTS=-showversion -f $(Q)$(TEST_RESROOT)$(D)tck_ddrext.xml$(Q); \
+	$(TEST_STATUS)</command>
+		<platformRequirements>os.win</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+		<subsets>
+			<subset>8</subset>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
+		</subsets>
+	</test>
 </playlist>

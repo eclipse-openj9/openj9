@@ -2095,7 +2095,7 @@ Java_com_ibm_oti_shared_SharedAbstractHelper_getIsVerboseImpl(JNIEnv* env, jobje
 
 	vm = ((J9VMThread*)env)->javaVM;
 	if (vm->sharedClassConfig != NULL) {
-		result = (jboolean)(vm->sharedClassConfig->verboseFlags & J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_HELPER);
+		result = (jboolean)J9_ARE_ALL_BITS_SET(vm->sharedClassConfig->verboseFlags, J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_HELPER);
 	}
 
 #if defined(J9SHR_UNIT_TEST)
@@ -2303,7 +2303,7 @@ exit:
 }
 
 jboolean JNICALL
-Java_com_ibm_oti_shared_Shared_isSharingEnabledImpl(JNIEnv* env, jclass clazz)
+Java_com_ibm_oti_shared_Shared_isNonBootSharingEnabledImpl(JNIEnv* env, jclass clazz)
 {
 	jboolean ret = JNI_FALSE;
 #if defined(J9VM_OPT_SHARED_CLASSES)

@@ -40,11 +40,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /*[IF Sidecar19-SE]
 import jdk.internal.misc.Unsafe;
+/*[IF Java12]*/
+import jdk.internal.access.SharedSecrets;
+/*[ELSE]
 import jdk.internal.misc.SharedSecrets;
-import jdk.internal.reflect.ConstantPool;
-/*[IF Sidecar18-SE-OpenJ9]
-import java.lang.invoke.LambdaForm;
 /*[ENDIF]*/
+import jdk.internal.reflect.ConstantPool;
 /*[ELSE]*/
 import sun.misc.Unsafe;
 import sun.misc.SharedSecrets;
