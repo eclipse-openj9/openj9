@@ -299,7 +299,7 @@ TR_RuntimeHelper TR::PPCCallSnippet::getInterpretedDispatchHelper(
       return TR_PPCnativeStaticHelper;
       }
    else if (isJitInduceOSRCall)
-      return TR_induceOSRAtCurrentPC;
+      return (TR_RuntimeHelper) methodSymRef->getReferenceNumber();
    else
       {
       switch (type)
