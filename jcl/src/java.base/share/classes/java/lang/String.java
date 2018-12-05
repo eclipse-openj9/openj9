@@ -3202,6 +3202,16 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		return false;
 	}
 
+	private static final boolean isSingleEscapeLiteral(String s) {
+		if ((s != null) && (s.lengthInternal() == 2) && (s.charAtInternal(0) == '\\')) {
+			char literal = s.charAtInternal(1);
+			for (int j = 0; j < regexMetaChars.length; ++j) {
+				if (literal == regexMetaChars[j]) return true;
+			}
+		}
+		return false;
+	}
+
 	/**
 	 * Splits this String using the given regular expression.
 	 *
@@ -3224,9 +3234,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * @since 1.4
 	 */
 	public String[] split(String regex, int max) {
-		// it is faster to handle simple splits inline (i.e. no fancy regex matching)
+		// it is faster to handle simple splits inline (i.e. no fancy regex matching),
+		// including single escaped literal character (e.g. \. \{),
 		// so we test for a suitable string and handle this here if we can
-		if (regex != null && regex.lengthInternal() > 0 && !hasMetaChars(regex)) {
+		boolean singleEscapeLiteral = isSingleEscapeLiteral(regex);
+		if ((regex != null) && (regex.lengthInternal() > 0) && (!hasMetaChars(regex) || singleEscapeLiteral)) {
 			if (max == 1) {
 				return new String[] { this };
 			}
@@ -3238,8 +3250,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			final boolean compressed = enableCompression &&  (null == compressionFlag || coder == LATIN1);
 
 			int start = 0, current = 0, end = lengthInternal();
-			if (regex.lengthInternal() == 1) {
-				char splitChar = regex.charAtInternal(0);
+			if (regex.lengthInternal() == 1 || singleEscapeLiteral) {
+				// if matching single escaped character, use the second char.
+				char splitChar = regex.charAtInternal(singleEscapeLiteral ? 1 : 0);
 				while (current < end) {
 					if (charAtInternal(current, chars) == splitChar) {
 						parts.add(new String(chars, start, current - start, compressed));
@@ -7553,6 +7566,16 @@ written authorization of the copyright holder.
 		return false;
 	}
 
+	private static final boolean isSingleEscapeLiteral(String s) {
+		if ((s != null) && (s.lengthInternal() == 2) && (s.charAtInternal(0) == '\\')) {
+			char literal = s.charAtInternal(1);
+			for (int j = 0; j < regexMetaChars.length; ++j) {
+				if (literal == regexMetaChars[j]) return true;
+			}
+		}
+		return false;
+	}
+
 	/**
 	 * Splits this String using the given regular expression.
 	 *
@@ -7575,9 +7598,11 @@ written authorization of the copyright holder.
 	 * @since 1.4
 	 */
 	public String[] split(String regex, int max) {
-		// it is faster to handle simple splits inline (i.e. no fancy regex matching)
+		// it is faster to handle simple splits inline (i.e. no fancy regex matching),
+		// including single escaped literal character (e.g. \. \{),
 		// so we test for a suitable string and handle this here if we can
-		if (regex != null && regex.lengthInternal() > 0 && !hasMetaChars(regex)) {
+		boolean singleEscapeLiteral = isSingleEscapeLiteral(regex);
+		if ((regex != null) && (regex.lengthInternal() > 0) && (!hasMetaChars(regex) || singleEscapeLiteral)) {
 			if (max == 1) {
 				return new String[] { this };
 			}
@@ -7588,8 +7613,9 @@ written authorization of the copyright holder.
 			final boolean compressed = enableCompression &&  (null == compressionFlag || count >= 0);
 
 			int start = 0, current = 0, end = lengthInternal();
-			if (regex.lengthInternal() == 1) {
-				char splitChar = regex.charAtInternal(0);
+			if (regex.lengthInternal() == 1 || singleEscapeLiteral) {
+				// if matching single escaped character, use the second char.
+				char splitChar = regex.charAtInternal(singleEscapeLiteral ? 1 : 0);
 				while (current < end) {
 					if (charAtInternal(current, chars) == splitChar) {
 						parts.add(new String(chars, start, current - start, compressed));
