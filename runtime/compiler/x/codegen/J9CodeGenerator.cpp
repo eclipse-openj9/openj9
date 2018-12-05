@@ -312,7 +312,7 @@ J9::X86::CodeGenerator::generateSwitchToInterpreterPrePrologue(
       }
 
    startLabel = generateLabelSymbol(self());
-   prev = generateLabelInstruction(prev, LABEL, startLabel, true, self());
+   prev = generateLabelInstruction(prev, LABEL, startLabel, self());
    self()->setSwitchToInterpreterLabel(startLabel);
 
    TR::RegisterDependencyConditions  *deps =
