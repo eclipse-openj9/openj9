@@ -37,6 +37,9 @@ com.ibm.jvmti.tests
 # Visual Studio
 /.vs
 
+# IntelliJ CLion
+/.idea
+
 # Default test directory (BUILD_ROOT)
 /jvmtest/
 /build/
