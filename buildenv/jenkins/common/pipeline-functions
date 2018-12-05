@@ -165,9 +165,9 @@ def set_build_status(REPO, CONTEXT, SHA, URL, STATE, MESSAGE) {
     ]);
 }
 
-def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE, SETUP_LABEL, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit) {
+def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE, SETUP_LABEL, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER) {
     stage ("${BUILD_JOB_NAME}") {
-        return build_with_slack(BUILD_JOB_NAME, ghprbGhRepository, ghprbActualCommit,
+        return build_with_slack(BUILD_JOB_NAME, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER,
             [string(name: 'OPENJDK_REPO', value: OPENJDK_REPO),
             string(name: 'OPENJDK_BRANCH', value: OPENJDK_BRANCH),
             string(name: 'OPENJDK_SHA', value: OPENJDK_SHA),
@@ -187,9 +187,9 @@ def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO
     }
 }
 
-def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit) {
+def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER) {
     stage ("${JOB_NAME}") {
-        return build_with_slack(JOB_NAME, ghprbGhRepository, ghprbActualCommit,
+        return build_with_slack(JOB_NAME, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER,
             [string(name: 'UPSTREAM_JOB_NAME', value: UPSTREAM_JOB_NAME),
             string(name: 'UPSTREAM_JOB_NUMBER', value: "${UPSTREAM_JOB_NUMBER}"),
             string(name: 'VARIABLE_FILE', value: VARIABLE_FILE),
@@ -213,9 +213,9 @@ def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, VA
     }
 }
 
-def build_with_artifactory(JOB_NAME, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, CUSTOMIZED_SDK_URL, ARTIFACTORY_SERVER, ARTIFACTORY_CREDS, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit) {
+def build_with_artifactory(JOB_NAME, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, CUSTOMIZED_SDK_URL, ARTIFACTORY_SERVER, ARTIFACTORY_CREDS, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER) {
     stage ("${JOB_NAME}") {
-        return build_with_slack(JOB_NAME, ghprbGhRepository, ghprbActualCommit,
+        return build_with_slack(JOB_NAME, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER,
             [string(name: 'VARIABLE_FILE', value: VARIABLE_FILE),
             string(name: 'VENDOR_REPO', value: VENDOR_REPO),
             string(name: 'VENDOR_BRANCH', value: VENDOR_BRANCH),
@@ -257,11 +257,12 @@ def get_causes_recursively(cause) {
     return cause_string
 }
 
-def build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, PARAMETERS) {
+def build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, PARAMETERS) {
+    GITHUB_REPO = "https://${GITHUB_SERVER}/${ghprbGhRepository}"
     // Set Github Commit Status
     if (ghprbActualCommit) {
         node('master') {
-            set_build_status("https://github.com/${ghprbGhRepository}", DOWNSTREAM_JOB_NAME, ghprbActualCommit, BUILD_URL, 'PENDING', "Build Started")
+            set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, BUILD_URL, 'PENDING', "Build Started")
         }
     }
 
@@ -283,7 +284,7 @@ def build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, 
             // Set Github Commit Status
             if (ghprbActualCommit) {
                 node('master') {
-                    set_build_status("https://github.com/${ghprbGhRepository}", DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'FAILURE', "Build UNSTABLE")
+                    set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'FAILURE', "Build UNSTABLE")
                 }
             }
         } else {
@@ -293,7 +294,7 @@ def build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, 
             // Set Github Commit Status
             if (ghprbActualCommit) {
                 node('master') {
-                    set_build_status("https://github.com/${ghprbGhRepository}", DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'FAILURE', "Build FAILED")
+                    set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'FAILURE', "Build FAILED")
                 }
             }
             timeout(time: RESTART_TIMEOUT.toInteger(), unit: RESTART_TIMEOUT_UNITS) {
@@ -308,7 +309,7 @@ def build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, 
         // Set Github Commit Status
         if (ghprbActualCommit) {
             node('master') {
-                set_build_status("https://github.com/${ghprbGhRepository}", DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'SUCCESS', "Build PASSED")
+                set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'SUCCESS', "Build PASSED")
             }
         }
     }
@@ -321,14 +322,16 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
     // Set ghprbGhRepository and ghprbActualCommit for the purposes of Github commit status updates
     // Only for Nightly build
     // PR build will already have them set
+    GITHUB_SERVER = OPENJ9_REPO.substring(OPENJ9_REPO.indexOf('github.'), OPENJ9_REPO.indexOf('.com') +4)
     if (BUILD_IDENTIFIER.toLowerCase() == "nightly") {
         ghprbGhRepository = OPENJ9_REPO.substring(OPENJ9_REPO.indexOf('.com') +5, OPENJ9_REPO.indexOf('.git'))
         ghprbActualCommit = SHAS['OPENJ9']
     }
+    echo "Repo:${ghprbGhRepository}, Commit:${ghprbActualCommit}, GITHUB_SERVER:${GITHUB_SERVER}"
 
     // compile the source and build the SDK
     def BUILD_JOB_NAME = "Build-JDK${SDK_VERSION}-${SPEC}"
-    jobs["build"] = build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS['OPENJDK'], OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], OMR_REPO, OMR_BRANCH, SHAS['OMR'], VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, BUILD_NODE, SETUP_LABEL, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit)
+    jobs["build"] = build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS['OPENJDK'], OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], OMR_REPO, OMR_BRANCH, SHAS['OMR'], VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, BUILD_NODE, SETUP_LABEL, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER)
 
     if (TESTS_TARGETS.trim() != "none") {
         def testjobs = [:]
@@ -377,9 +380,9 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             def TEST_JOB_NAME = "Test-${name}-JDK${SDK_VERSION}-${SPEC}"
             testjobs["${TEST_JOB_NAME}"] = {
                 if (ARTIFACTORY_CREDS) {
-                    jobs["${TEST_JOB_NAME}"] = build_with_artifactory(TEST_JOB_NAME, params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, CUSTOMIZED_SDK_URL, ARTIFACTORY_SERVER, ARTIFACTORY_CREDS, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit)
+                    jobs["${TEST_JOB_NAME}"] = build_with_artifactory(TEST_JOB_NAME, params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, CUSTOMIZED_SDK_URL, ARTIFACTORY_SERVER, ARTIFACTORY_CREDS, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER)
                 } else {
-                    jobs["${TEST_JOB_NAME}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit)
+                    jobs["${TEST_JOB_NAME}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER)
                 }
             }
         }
