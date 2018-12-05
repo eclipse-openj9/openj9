@@ -922,7 +922,7 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
       // Generate an inverted jump around the call.  This is necessary because we want to do the call inline rather
       // than through the snippet.
       //
-      generateLabelInstruction(testIsEQ? JNE4 : JE4, node, reStartLabel, true, cg);
+      generateLabelInstruction(testIsEQ ? JNE4 : JE4, node, reStartLabel, cg);
       TR::TreeEvaluator::performCall(callNode, false, false, cg);
 
       // Collect postconditions from the internal control flow region and put
@@ -966,7 +966,7 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
       }
    else
       {
-      generateLabelInstruction(testIsEQ? JE4 : JNE4, node, snippetLabel, true, cg);
+      generateLabelInstruction(testIsEQ? JE4 : JNE4, node, snippetLabel, cg);
 
       TR::Snippet *snippet;
       if (node->getNumChildren() == 2)
@@ -975,7 +975,7 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
          snippet = new (cg->trHeapMemory()) TR::X86HelperCallSnippet(cg, node, reStartLabel, snippetLabel, node->getSymbolReference());
 
       cg->addSnippet(snippet);
-      generateLabelInstruction(LABEL, node, reStartLabel, true, cg);
+      generateLabelInstruction(LABEL, node, reStartLabel, cg);
       }
 
    cg->decReferenceCount(testNode);
@@ -2423,7 +2423,7 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGe
       {
       if (secondChild->getOpCode().isLoadConst() && firstChild->getInt() <= secondChild->getInt())
          {
-         instr = generateLabelInstruction(JMP4, node, boundCheckFailureLabel, true, cg);
+         instr = generateLabelInstruction(JMP4, node, boundCheckFailureLabel, cg);
          cg->decReferenceCount(firstChild);
          cg->decReferenceCount(secondChild);
          }
@@ -2434,7 +2434,7 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGe
             node->swapChildren();
             TR::TreeEvaluator::compareIntegersForOrder(node, cg);
             node->swapChildren();
-            instr = generateLabelInstruction(JAE4, node, boundCheckFailureLabel, true, cg);
+            instr = generateLabelInstruction(JAE4, node, boundCheckFailureLabel, cg);
             }
          else
             skippedComparison = true;
@@ -2445,7 +2445,7 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGe
       if (!isConditionCodeSetForCompare(node, &jumpOnOppositeCondition))
          {
          TR::TreeEvaluator::compareIntegersForOrder(node, cg);
-         instr = generateLabelInstruction(JBE4, node, boundCheckFailureLabel, true, cg);
+         instr = generateLabelInstruction(JBE4, node, boundCheckFailureLabel, cg);
          }
       else
          skippedComparison = true;
@@ -2454,9 +2454,9 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGe
    if (skippedComparison)
       {
       if (jumpOnOppositeCondition)
-         instr = generateLabelInstruction(JAE4, node, boundCheckFailureLabel, true, cg);
+         instr = generateLabelInstruction(JAE4, node, boundCheckFailureLabel, cg);
       else
-         instr = generateLabelInstruction(JBE4, node, boundCheckFailureLabel, true, cg);
+         instr = generateLabelInstruction(JBE4, node, boundCheckFailureLabel, cg);
 
       cg->decReferenceCount(firstChild);
       cg->decReferenceCount(secondChild);
@@ -2509,7 +2509,7 @@ TR::Register *J9::X86::TreeEvaluator::ArrayCopyBNDCHKEvaluator(TR::Node *node, T
             {
             // Check will always fail, just jump to failure snippet
             //
-            instr = generateLabelInstruction(JMP4, node, boundCheckFailureLabel, true, cg);
+            instr = generateLabelInstruction(JMP4, node, boundCheckFailureLabel, cg);
             }
          else
             {
@@ -2525,13 +2525,13 @@ TR::Register *J9::X86::TreeEvaluator::ArrayCopyBNDCHKEvaluator(TR::Node *node, T
          node->swapChildren();
          TR::TreeEvaluator::compareIntegersForOrder(node, cg);
          node->swapChildren();
-         instr = generateLabelInstruction(JG4, node, boundCheckFailureLabel, true, cg);
+         instr = generateLabelInstruction(JG4, node, boundCheckFailureLabel, cg);
          }
       }
    else
       {
       TR::TreeEvaluator::compareIntegersForOrder(node, cg);
-      instr = generateLabelInstruction(JL4, node, boundCheckFailureLabel, true, cg);
+      instr = generateLabelInstruction(JL4, node, boundCheckFailureLabel, cg);
       }
 
    if (instr)
@@ -3032,7 +3032,7 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node
          branchOpCode = JMP4;
          }
 
-      checkInstr = generateLabelInstruction(branchOpCode, node, boundCheckFailureLabel, false, cg);
+      checkInstr = generateLabelInstruction(branchOpCode, node, boundCheckFailureLabel, cg);
       }
    else
       {
@@ -3241,7 +3241,7 @@ TR::Register *J9::X86::TreeEvaluator::readbarEvaluator(TR::Node *node, TR::CodeG
       startLabel = generateLabelSymbol(cg);
       doneLabel  = generateLabelSymbol(cg);
 
-      generateLabelInstruction(LABEL, node, startLabel, true, cg);
+      generateLabelInstruction(LABEL, node, startLabel, cg);
       startLabel->setStartInternalControlFlow();
       }
 
@@ -3299,13 +3299,13 @@ TR::Register *J9::X86::TreeEvaluator::atccheckEvaluator(TR::Node *node, TR::Code
    startLabel->setStartInternalControlFlow();
    doneLabel->setEndInternalControlFlow();
 
-   generateLabelInstruction(LABEL, node, startLabel, true, cg);
+   generateLabelInstruction(LABEL, node, startLabel, cg);
 
    // if there is no pending AIE, then just branch around the throw
    TR::Register *pendingAIERegister = cg->evaluate(pendingAIELoad);
 
    generateRegRegInstruction(TESTRegReg(), node, pendingAIERegister, pendingAIERegister, cg);
-   generateLabelInstruction(JE4, node, doneLabel, true, cg);
+   generateLabelInstruction(JE4, node, doneLabel, cg);
 
    // here, we've got a pending AIE so that means we're interruptible
    // so throw the pending AIE here
@@ -11119,7 +11119,7 @@ void J9::X86::TreeEvaluator::VMwrtbarWithStoreEvaluator(
       if (deps != NULL)
          generateLabelInstruction(LABEL, node, doneWrtBarLabel, deps, cg);
       else
-         generateLabelInstruction(LABEL, node, doneWrtBarLabel, true, cg);
+         generateLabelInstruction(LABEL, node, doneWrtBarLabel, cg);
       }
    else
       {

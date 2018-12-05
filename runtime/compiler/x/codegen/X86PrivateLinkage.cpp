@@ -1805,7 +1805,7 @@ TR::Register *TR::X86PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
 
             picSlot = i.getNext();
             if (picSlot)
-               generateLabelInstruction(LABEL, site.getCallNode(), picMismatchLabel, true, cg());
+               generateLabelInstruction(LABEL, site.getCallNode(), picMismatchLabel, cg());
             }
 
          site.setFirstPICSlotInstruction(NULL);
