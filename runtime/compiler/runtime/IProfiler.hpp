@@ -593,7 +593,7 @@ protected:
    bool isCompact(U_8 byteCode);
    bool isSwitch(U_8 byteCode);
    bool isNewOpCode(U_8 byteCode);
-   bool invalidateEntryIfInconsistent(TR_IPBytecodeHashTableEntry *entry);
+   virtual bool invalidateEntryIfInconsistent(TR_IPBytecodeHashTableEntry *entry);
    TR::CompilationInfo *getCompInfo() { return _compInfo; }
 
 private:

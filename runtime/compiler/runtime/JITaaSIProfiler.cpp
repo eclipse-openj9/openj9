@@ -376,6 +376,12 @@ TR_JITaaSIProfiler::printStats()
       }
    }
 
+bool
+TR_JITaaSIProfiler::invalidateEntryIfInconsistent(TR_IPBytecodeHashTableEntry *entry)
+   {
+   // Invalid entries are purged early in the compilation for JITaaS, we don't need to do anything here.
+   }
+
 TR_JITaaSClientIProfiler *
 TR_JITaaSClientIProfiler::allocate(J9JITConfig *jitConfig)
    {

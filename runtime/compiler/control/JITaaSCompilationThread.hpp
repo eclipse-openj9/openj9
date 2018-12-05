@@ -101,13 +101,18 @@ class ClientSessionData
    PersistentUnorderedMap<J9Class*, ClassInfo> & getROMClassMap() { return _romClassMap; }
    PersistentUnorderedMap<J9Method*, J9MethodInfo> & getJ9MethodMap() { return _J9MethodMap; }
    PersistentUnorderedMap<std::string, TR_OpaqueClassBlock*> & getSystemClassByNameMap() { return _systemClassByNameMap; }
-   void processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*> &classes);
+   void processUnloadedClasses(JITaaS::J9ServerStream *stream, const std::vector<TR_OpaqueClassBlock*> &classes);
    TR::Monitor *getROMMapMonitor() { return _romMapMonitor; }
    TR::Monitor *getSystemClassMapMonitor() { return _systemClassMapMonitor; }
    TR_IPBytecodeHashTableEntry *getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *methodInfoPresent);
    bool cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry);
    VMInfo *getOrCacheVMInfo(JITaaS::J9ServerStream *stream);
    void clearCaches(); // destroys _chTableClassMap, _romClassMap and _J9MethodMap
+   TR_AddressSet& getUnloadedClassAddresses()
+      {
+      TR_ASSERT(_unloadedClassAddresses, "Unloaded classes address set should exist by now");
+      return *_unloadedClassAddresses;
+      }
 
    void incInUse() { _inUse++; }
    void decInUse() { _inUse--; TR_ASSERT(_inUse >= 0, "_inUse=%d must be positive\n", _inUse); }
@@ -160,6 +165,9 @@ class ClientSessionData
                              // This is smaller or equal to _inUse because some threads
                              // could be just starting or waiting in _OOSequenceEntryList
    VMInfo *_vmInfo; // info specific to a client VM that does not change, nullptr means not set
+
+   TR_AddressSet *_unloadedClassAddresses; // Per-client versions of the unloaded class and method addresses kept in J9PersistentInfo
+   bool           _requestUnloadedClasses; // If true we need to request the current state of unloaded classes from the client
    }; // ClientSessionData
 
 // Hashtable that maps clientUID to a pointer that points to ClientSessionData

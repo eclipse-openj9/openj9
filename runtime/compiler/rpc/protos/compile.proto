@@ -49,6 +49,7 @@ enum J9ServerMessageType
    compilationCode = 0;
    mirrorResolvedJ9Method = 1;
    get_params_to_construct_TR_j9method = 2;
+   getUnloadedClassRanges = 3;
 
    // For TR_ResolvedJ9JITaaSServerMethod methods
    ResolvedMethod_isJNINative = 100;
@@ -222,7 +223,7 @@ enum J9ServerMessageType
    CompInfo_isClassSpecial = 409;
    CompInfo_getJ9MethodStartPC = 410;
 
-   // For J109::ClassEnv Methods
+   // For J9::ClassEnv Methods
    ClassEnv_classFlagsValue = 500;
    ClassEnv_classDepthOf = 501;
    ClassEnv_classInstanceSize = 502;

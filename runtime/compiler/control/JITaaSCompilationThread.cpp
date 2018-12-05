@@ -38,6 +38,8 @@
 #include "env/j9methodServer.hpp"
 #include "exceptions/AOTFailure.hpp" // for AOTFailure
 
+extern TR::Monitor *assumptionTableMutex;
+
 uint32_t serverMsgTypeCount[JITaaS::J9ServerMessageType_ARRAYSIZE] = {};
 
 size_t methodStringsLength(J9ROMMethod *method)
@@ -203,6 +205,18 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
       case J9ServerMessageType::compilationCode:
          done = true;
          break;
+
+      case J9ServerMessageType::getUnloadedClassRanges:
+         {
+         auto unloadedClasses = comp->getPersistentInfo()->getUnloadedClassAddresses();
+         std::vector<TR_AddressRange> ranges(unloadedClasses->getNumberOfRanges());
+            {
+            OMR::CriticalSection getAddressSetRanges(assumptionTableMutex);
+            unloadedClasses->getRanges(ranges);
+            }
+         client->write(ranges, unloadedClasses->getMaxRanges());
+         break;
+         }
 
       case J9ServerMessageType::VM_isClassLibraryClass:
          {
@@ -2399,7 +2413,9 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) :
    _chTableClassMap(decltype(_chTableClassMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _romClassMap(decltype(_romClassMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _J9MethodMap(decltype(_J9MethodMap)::allocator_type(TR::Compiler->persistentAllocator())),
-   _systemClassByNameMap(decltype(_systemClassByNameMap)::allocator_type(TR::Compiler->persistentAllocator()))
+   _systemClassByNameMap(decltype(_systemClassByNameMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _unloadedClassAddresses(NULL),
+   _requestUnloadedClasses(true)
    {
    updateTimeOfLastAccess();
    _javaLangClassPtr = nullptr;
@@ -2417,20 +2433,52 @@ ClientSessionData::~ClientSessionData()
    _romMapMonitor->destroy();
    _systemClassMapMonitor->destroy();
    _sequencingMonitor->destroy();
+   if (_unloadedClassAddresses)
+      {
+      _unloadedClassAddresses->destroy();
+      jitPersistentFree(_unloadedClassAddresses);
+      }
    jitPersistentFree(_vmInfo);
    }
 
 void
-ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*> &classes)
+ClientSessionData::processUnloadedClasses(JITaaS::J9ServerStream *stream, const std::vector<TR_OpaqueClassBlock*> &classes)
    {
    if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Server will process a list of %u unloaded classes for clientUID %llu", (unsigned)classes.size(), (unsigned long long)_clientUID);
-   OMR::CriticalSection processUnloadedClasses(getROMMapMonitor());
-   for (TR_OpaqueClassBlock *clazz : classes)
+
+   bool updateUnloadedClasses = true;
+   if (_requestUnloadedClasses)
       {
+      stream->write(JITaaS::J9ServerMessageType::getUnloadedClassRanges, JITaaS::Void());
+
+      auto response = stream->read<std::vector<TR_AddressRange>, int32_t>();
+      auto unloadedClassRanges = std::get<0>(response);
+      auto maxRanges = std::get<1>(response);
+
+         {
+         OMR::CriticalSection getUnloadedClasses(getROMMapMonitor());
+
+         if (!_unloadedClassAddresses)
+            _unloadedClassAddresses = new (PERSISTENT_NEW) TR_AddressSet(trPersistentMemory, maxRanges);
+         _unloadedClassAddresses->setRanges(unloadedClassRanges);
+         _requestUnloadedClasses = false;
+         }
+
+      updateUnloadedClasses = false;
+      }
+
+   OMR::CriticalSection processUnloadedClasses(getROMMapMonitor());
+
+   for (auto clazz : classes)
+      {
+      if (updateUnloadedClasses)
+         _unloadedClassAddresses->add((uintptrj_t)clazz);
+
       auto it = _romClassMap.find((J9Class*) clazz);
       if (it == _romClassMap.end())
          continue; // unloaded class was never cached
+
       J9ROMClass *romClass = it->second.romClass;
       J9Method *methods = it->second.methodsOfClass;
       // delete all the cached J9Methods belonging to this unloaded class
@@ -2631,6 +2679,7 @@ ClientSessionData::clearCaches()
       jitPersistentFree(classInfo);
       }
    _chTableClassMap.clear();
+   _requestUnloadedClasses = true;
    }
 
 void 
@@ -3277,8 +3326,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       // Free data for all classes that were unloaded for this sequence number
       // Redefined classes are marked as unloaded, since they need to be cleared
       // from the ROM class cache.
-      if (unloadedClasses.size() != 0)
-         clientSession->processUnloadedClasses(unloadedClasses); // this locks getROMMapMonitor()
+      clientSession->processUnloadedClasses(stream, unloadedClasses); // this locks getROMMapMonitor()
 
       auto chTable = (TR_JITaaSServerPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
       // TODO: is chTable always non-null?
