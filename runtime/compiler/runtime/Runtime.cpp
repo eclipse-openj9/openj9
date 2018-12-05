@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -475,6 +475,7 @@ JIT_HELPER(_interpreterUnresolvedInstanceDataGlue);
 JIT_HELPER(_interpreterUnresolvedInstanceDataStoreGlue);
 JIT_HELPER(_virtualUnresolvedHelper);
 JIT_HELPER(_interfaceCallHelper);
+JIT_HELPER(j2iTransition);
 JIT_HELPER(icallVMprJavaSendVirtual0);
 JIT_HELPER(icallVMprJavaSendVirtual1);
 JIT_HELPER(icallVMprJavaSendVirtualJ);
