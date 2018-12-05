@@ -75,17 +75,13 @@ TR_JITaaSServerPersistentCHTable::initializeIfNeeded(TR_J9VMBase *fej9)
    }
 
 void 
-TR_JITaaSServerPersistentCHTable::doUpdate(TR_J9VMBase *fej9)
+TR_JITaaSServerPersistentCHTable::doUpdate(TR_J9VMBase *fej9, const std::string &removeStr, const std::string &modifyStr)
    {
-   auto stream = TR::CompilationInfo::getStream();
-   stream->write(JITaaS::J9ServerMessageType::CHTable_getClassInfoUpdates, JITaaS::Void());
-   auto recv = stream->read<std::string, std::string>();
-   std::string &removeStr = std::get<0>(recv);
-   std::string &modifyStr = std::get<1>(recv);
-
    TR::ClassTableCriticalSection doUpdate(fej9);
-   commitModifications(modifyStr);
-   commitRemoves(removeStr);
+   if (!modifyStr.empty())
+      commitModifications(modifyStr);
+   if (!removeStr.empty())
+      commitRemoves(removeStr);
 
 #ifdef COLLECT_CHTABLE_STATS
    uint32_t nBytes = removeStr.size() + modifyStr.size();
@@ -99,7 +95,7 @@ TR_JITaaSServerPersistentCHTable::doUpdate(TR_J9VMBase *fej9)
    }
 
 void 
-TR_JITaaSServerPersistentCHTable::commitRemoves(std::string &rawData)
+TR_JITaaSServerPersistentCHTable::commitRemoves(const std::string &rawData)
    {
    auto &data = getData();
    TR_OpaqueClassBlock **ptr = (TR_OpaqueClassBlock**)&rawData[0];
@@ -115,7 +111,7 @@ TR_JITaaSServerPersistentCHTable::commitRemoves(std::string &rawData)
    }
 
 void 
-TR_JITaaSServerPersistentCHTable::commitModifications(std::string &rawData)
+TR_JITaaSServerPersistentCHTable::commitModifications(const std::string &rawData)
    {
    auto &data = getData();
    std::unordered_map<TR_OpaqueClassBlock*, std::pair<FlatPersistentClassInfo*, TR_PersistentClassInfo*>> infoMap;

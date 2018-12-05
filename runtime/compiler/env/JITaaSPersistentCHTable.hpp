@@ -47,7 +47,7 @@ public:
 
    bool isInitialized() { return !getData().empty(); } // needs CHTable mutex in hand
    bool initializeIfNeeded(TR_J9VMBase *fej9);
-   void doUpdate(TR_J9VMBase *fej9);
+   void doUpdate(TR_J9VMBase *fej9, const std::string &removeStr, const std::string &modifyStr);
 
    virtual TR_PersistentClassInfo * findClassInfo(TR_OpaqueClassBlock * classId) override;
    virtual TR_PersistentClassInfo * findClassInfoAfterLocking(TR_OpaqueClassBlock * classId, TR::Compilation *, bool returnClassInfoForAOT = false, bool validate = true) override;
@@ -63,8 +63,8 @@ public:
 #endif
 
 private:
-   void commitRemoves(std::string &data);
-   void commitModifications(std::string &data);
+   void commitRemoves(const std::string &data);
+   void commitModifications(const std::string &data);
 
    PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> &getData();
    };

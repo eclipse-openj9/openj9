@@ -2119,14 +2119,13 @@ remoteCompile(
 
    
    compInfo->getSequencingMonitor()->enter();
+   // Collect the list of unloaded classes
    std::vector<TR_OpaqueClassBlock*> unloadedClasses(compInfo->getUnloadedClassesTempList()->begin(), compInfo->getUnloadedClassesTempList()->end());
    compInfo->getUnloadedClassesTempList()->clear();
-   // Here we would need to collect the CHTable updates
-   // This will acquire CHTable mutex
-   // Must test disableCHTableOpts
-   //auto table = (TR_JITaaSClientPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
-   //auto encoded = table->serializeUpdates();
-   //client->write(encoded.first, encoded.second);
+   // Collect and encode the CHTable updates; this will acquire CHTable mutex
+   auto table = (TR_JITaaSClientPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
+   std::pair<std::string, std::string> chtableUpdates = table->serializeUpdates();
+   // Update the sequence number for these updates
    uint32_t seqNo = compInfo->getCompReqSeqNo();
    compInfo->incCompReqSeqNo();
    compInfo->getSequencingMonitor()->exit();
@@ -2154,7 +2153,8 @@ remoteCompile(
          }
       client.buildCompileRequest(TR::comp()->getPersistentInfo()->getJITaaSId(), romMethodOffset, 
                                  method, clazz, compiler->getMethodHotness(), detailsStr, details.getType(), 
-                                 unloadedClasses, classInfoTuple, optionsStr, recompMethodInfoStr, seqNo);
+                                 unloadedClasses, classInfoTuple, optionsStr, recompMethodInfoStr, seqNo, 
+                                 chtableUpdates.first, chtableUpdates.second);
       // re-acquire VM access and check for possible class unloading
       acquireVMAccessNoSuspend(vmThread);
       if (compInfoPT->compilationShouldBeInterrupted())
@@ -3254,7 +3254,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       {
       auto req = stream->read<uint64_t, uint32_t, J9Method *, J9Class*, TR_Hotness, std::string,
          J9::IlGeneratorMethodDetailsType, std::vector<TR_OpaqueClassBlock*>,
-         JITaaSHelpers::ClassInfoTuple, std::string, std::string, uint32_t>();
+         JITaaSHelpers::ClassInfoTuple, std::string, std::string, uint32_t, std::string, std::string>();
 
       uint64_t clientId         = std::get<0>(req);
       uint32_t romMethodOffset  = std::get<1>(req);
@@ -3268,6 +3268,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       std::string clientOptStr  = std::get<9>(req);
       std::string recompInfoStr = std::get<10>(req);
       uint32_t seqNo            = std::get<11>(req); // sequence number at the client
+      std::string chtableUnloads= std::get<12>(req);
+      std::string chtableMods   = std::get<13>(req);
 
       //if (seqNo == 100)
       //   throw JITaaS::StreamFailure(); // stress testing
@@ -3334,15 +3336,12 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       // The following will acquire CHTable monitor and VMAccess, send a message and then release them
       bool initialized = chTable->initializeIfNeeded(_vm);
 
-      // Any thread with a sequence number lower or equal to the seqNo that created
-      // the session and initialized the CHTable does not have to apply CHTable updates
+      // A thread that initialized the CHTable does not have to apply the incremental update
       if (!initialized)
          {
-         // TODO: move the CHTable updates here
+         // Process the CHTable updates in order
          // Note that applying the updates will acquire the CHTable monitor and VMAccess
-         // Apply the CHTable updates in sequence
-         //auto table = (TR_JITaaSServerPersistentCHTable*)getPersistentInfo()->getPersistentCHTable();
-         //table->doUpdate(_vm);
+         chTable->doUpdate(_vm, chtableUnloads, chtableMods);
          }
 
       clientSession->getSequencingMonitor()->enter();
