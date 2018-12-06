@@ -154,8 +154,8 @@ aix_ppc-64_cmprssptrs:
     8: '/usr/java7'
     9: '/usr/java8_64'
     10: '/usr/java9_64'
-    11: '/usr/java10_64'
-    next: '/usr/java10_64'
+    11: '/usr/java11_64'
+    next: '/usr/java11_64'
   release:
     8: 'aix-ppc64-normal-server-release'
     9: 'aix-ppc64-normal-server-release'
