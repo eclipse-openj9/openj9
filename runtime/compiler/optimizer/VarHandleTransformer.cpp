@@ -199,9 +199,6 @@ int32_t TR_VarHandleTransformer::perform()
                comp()->failCompilation<J9::FSDHasInvokeHandle>("A call to a VarHandle access method is not supported in FSD. Failing ilgen.");
                }
 
-            // Anchoring all the children for varhandle
-            anchorAllChildren(node, tt);
-            performTransformation(comp(), "%sVarHandle access methods found, working on node %p\n", optDetailString(), node);
             TR::Node *varHandle = node->getChild(1); // The first child is vft
             TR::TreeTop *newTreeTop = tt;
 
@@ -238,6 +235,11 @@ int32_t TR_VarHandleTransformer::perform()
                if (newOpCode != opCode)
                   TR::Node::recreate(callTree->getNode(), newOpCode);
                }
+
+
+            // Anchoring all the children for varhandle
+            anchorAllChildren(node, tt);
+            dumpOptDetails(comp(), "%sVarHandle access methods found, working on node %p\n", optDetailString(), node);
 
              // Get the index into the array
              // Question: should we just use varHandleAccessMethod - TR::java_lang_invoke_VarHandle_get as the index?
