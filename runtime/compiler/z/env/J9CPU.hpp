@@ -185,14 +185,8 @@ public:
    static bool TO_PORTLIB_get390_supportsZ6();
    static bool TO_PORTLIB_get390_supportsZGryphon();
    static bool TO_PORTLIB_get390_supportsZHelix();
-   static bool TO_PORTLIB_get390zOS_N3Support();
-   static bool TO_PORTLIB_get390zOS_ZArchSupport();
-   static bool TO_PORTLIB_get390zOS_TrexSupport();
-   static bool TO_PORTLIB_get390zOS_GoldenEagleSupport();
-   static bool TO_PORTLIB_get390zOS_supportsStoreExtendedFacilityList();
 
-   void initializeS390zLinuxProcessorFeatures();
-   void initializeS390zOSProcessorFeatures();
+   void initializeS390ProcessorFeatures();
 
    TR_ProcessorFeatureFlags getProcessorFeatureFlags();
    bool isCompatible(TR_Processor processorSignature, TR_ProcessorFeatureFlags processorFeatureFlags);
