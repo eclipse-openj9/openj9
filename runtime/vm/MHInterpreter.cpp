@@ -21,9 +21,6 @@
  *******************************************************************************/
 #include "clang_comp.h"
 
-#if defined(WIN32) && defined(__clang__)
-#include "../oti/clang/stddef.h"
-#endif /* defined(WIN32) && defined(__clang__) */
 #include "j9cfg.h"
 #include "VM_MethodHandleKinds.h"
 
