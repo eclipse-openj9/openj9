@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,7 @@ import java.util.Properties;
 import com.ibm.dtfj.image.CorruptData;
 import com.ibm.dtfj.image.CorruptDataException;
 import com.ibm.dtfj.image.DataUnavailable;
+import com.ibm.dtfj.java.JavaRuntime;
 import com.ibm.java.diagnostics.utils.IContext;
 import com.ibm.java.diagnostics.utils.commands.CommandException;
 import com.ibm.java.diagnostics.utils.plugins.DTFJPlugin;
@@ -124,48 +125,49 @@ public class InfoSystemCommand extends BaseJdmpviewCommand {
 		} catch (CorruptDataException cde) {
 			out.println("Dump creation time (nanoseconds): data corrupted");
 		}
-		
+
+		final JavaRuntime runtime = ctx.getRuntime();
 		out.println("\nJava version:");
-		if (ctx.getRuntime() != null) {
+		if (runtime == null) {
+			out.println("\tmissing, unknown or unsupported JRE");
+		} else {
 			try {
-				out.println(ctx.getRuntime().getVersion());
+				out.println(runtime.getVersion());
 			} catch (CorruptDataException e) {
 				out.println("version data corrupted");
 			}
-		} else {
-			out.println("\tmissing, unknown or unsupported JRE");
-		}
-		
-		// JVM start time - millisecond wall clock - added in DTFJ 1.12
-		try {
-			long startTimeMillis = ctx.getRuntime().getStartTime();
-			if (startTimeMillis != 0) {
-				DateFormat fmt = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss:SSS");
-				String createTimeStr = fmt.format(new Date(startTimeMillis));
-				out.println("\nJVM start time: " + createTimeStr);
-			} else {
+
+			// JVM start time - millisecond wall clock - added in DTFJ 1.12
+			try {
+				long startTimeMillis = runtime.getStartTime();
+				if (startTimeMillis != 0) {
+					DateFormat fmt = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss:SSS");
+					String createTimeStr = fmt.format(new Date(startTimeMillis));
+					out.println("\nJVM start time: " + createTimeStr);
+				} else {
+					out.println("\nJVM start time: data unavailable");
+				}
+			} catch (DataUnavailable d) {
 				out.println("\nJVM start time: data unavailable");
+			} catch (CorruptDataException cde) {
+				out.println("\nJVM start time (nanoseconds): data corrupted");
 			}
-		} catch (DataUnavailable d) {
-			out.println("\nJVM start time: data unavailable");
-		} catch (CorruptDataException cde) {
-			out.println("\nJVM start time (nanoseconds): data corrupted");
-		}
-		
-		// JVM start time - nanotime - added in DTFJ 1.12
-		try {
-			long startTimeNanos = ctx.getRuntime().getStartTimeNanos();
-			if (startTimeNanos != 0) {
-				out.println("JVM start time (nanoseconds): " + startTimeNanos);
-			} else {
+
+			// JVM start time - nanotime - added in DTFJ 1.12
+			try {
+				long startTimeNanos = runtime.getStartTimeNanos();
+				if (startTimeNanos != 0) {
+					out.println("JVM start time (nanoseconds): " + startTimeNanos);
+				} else {
+					out.println("JVM start time (nanoseconds): data unavailable");
+				}
+			} catch (DataUnavailable du) {
 				out.println("JVM start time (nanoseconds): data unavailable");
+			} catch (CorruptDataException cde) {
+				out.println("JVM start time (nanoseconds): data corrupted");
 			}
-		} catch (DataUnavailable du) {
-			out.println("JVM start time (nanoseconds): data unavailable");
-		} catch (CorruptDataException cde) {
-			out.println("JVM start time (nanoseconds): data corrupted");
 		}
-		
+
 		boolean kernelSettingPrinted = false;
 		for( String name: new String[] {"/proc/sys/kernel/sched_compat_yield", "/proc/sys/kernel/core_pattern", "/proc/sys/kernel/core_uses_pid"}) {
 			if (imageProperties.containsKey(name)) {
@@ -179,7 +181,6 @@ public class InfoSystemCommand extends BaseJdmpviewCommand {
 		
 		out.println();
 	}
-
 
 	@Override
 	public void printDetailedHelp(PrintStream out) {
