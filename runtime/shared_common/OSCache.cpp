@@ -196,15 +196,18 @@ SH_OSCache::getCacheDir(J9JavaVM* vm, const char* ctrlDirName, char* buffer, UDA
 	if (appendBaseDir) {
 		flags |= J9SHMEM_GETDIR_APPEND_BASEDIR;
 	}
-	if ((J2SE_VERSION(vm) >= J2SE_V11)
-		&& (NULL == ctrlDirName)
+
+#if defined(OPENJ9_BUILD)
+	if ((NULL == ctrlDirName)
 		&& J9_ARE_NO_BITS_SET(vm->sharedCacheAPI->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_GROUP_ACCESS)
 	) {
 		/* j9shmem_getDir() always tries the CSIDL_LOCAL_APPDATA directory (C:\Documents and Settings\username\Local Settings\Application Data)
 		 * first on Windows if ctrlDirName is NULL, regardless of whether J9SHMEM_GETDIR_USE_USERHOME is set or not. So J9SHMEM_GETDIR_USE_USERHOME is effective on UNIX only.
 		 */
+
 		flags |= J9SHMEM_GETDIR_USE_USERHOME;
 	}
+#endif /*defined(OPENJ9_BUILD) */
 
 	rc = j9shmem_getDir(ctrlDirName, flags, buffer, bufferSize);
 	if (rc == -1) {

@@ -50,9 +50,9 @@ getCacheDir(J9JavaVM *vm, char *cacheDir)
 	char cacheDirNoTestBasedir[J9SH_MAXPATH];
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 
-	if (J2SE_VERSION(vm) >= J2SE_V11) {
-		flags |= J9SHMEM_GETDIR_USE_USERHOME;
-	}
+#if defined(OPENJ9_BUILD)
+	flags |= J9SHMEM_GETDIR_USE_USERHOME;
+#endif /* defined(OPENJ9_BUILD) */
 
 	rc = j9shmem_getDir(NULL, flags, cacheDirNoTestBasedir, J9SH_MAXPATH);
 	if (rc == -1) {

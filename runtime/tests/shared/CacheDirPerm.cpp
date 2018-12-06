@@ -69,9 +69,9 @@ CacheDirPerm::getTempCacheDir(J9JavaVM *vm, I_32 cacheType, bool useDefaultDir)
 
 	if (useDefaultDir) {
 		flags |= J9SHMEM_GETDIR_APPEND_BASEDIR;
-		if (J2SE_VERSION(vm) >= J2SE_V11) {
-			flags |= J9SHMEM_GETDIR_USE_USERHOME;
-		}
+#if defined(OPENJ9_BUILD)
+		flags |= J9SHMEM_GETDIR_USE_USERHOME;
+#endif /* defined(OPENJ9_BUILD) */
 	}
 
 	memset(cacheDir, 0, J9SH_MAXPATH);

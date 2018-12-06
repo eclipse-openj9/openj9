@@ -406,6 +406,7 @@
 		</groups>
 		<subsets>
 			<subset>SE110</subset>
+			<subset>SE80</subset>
 		</subsets>
 		<impls>
 			<impl>openj9</impl>
