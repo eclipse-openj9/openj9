@@ -126,9 +126,8 @@ private:
    void         genHandleTypeCheck();
    void         genHandleTypeCheck(TR::Node *handle, TR::Node *expectedType) { push(handle); push(expectedType); genHandleTypeCheck(); }
 
-   // These expect receiver MethodHandle on top of stack, with method arguments (including the receiver MethodHandle) underneath
    TR::Node *    genInvokeHandle(TR::SymbolReference *invokeExactSymRef, TR::Node *invokedynamicReceiver = NULL);
-   TR::Node *    genInvokeHandleGeneric(TR::SymbolReference *invokeGenericSymRef, TR::SymbolReference *methodTypeSymRef);
+   TR::Node *    genILGenMacroInvokeExact(TR::SymbolReference *invokeExactSymRef);
 
    bool         runMacro(TR::SymbolReference *);
    bool         runFEMacro(TR::SymbolReference *);
@@ -169,7 +168,6 @@ private:
    void         loadConstant(TR::ILOpCodes, void *);
    void         loadFromCP(TR::DataType, int32_t);
    void         loadFromCallSiteTable(int32_t);
-   void         loadFromMethodTypeTable(int32_t);
 
    void         loadClassObjectAndIndirect(int32_t cpIndex);
 
@@ -300,6 +298,17 @@ private:
    void expandInvokeSpecialInterface(TR::TreeTop *tree);
    void separateNullCheck(TR::TreeTop *tree);
 
+   // Expand MethodHandle invoke
+   void expandInvokeHandle(TR::TreeTop *tree);
+   void expandInvokeExact(TR::TreeTop *tree);
+   void expandInvokeDynamic(TR::TreeTop *tree);
+   void expandInvokeHandleGeneric(TR::TreeTop *tree);
+   void expandMethodHandleInvokeCall(TR::TreeTop *tree);
+   void insertCustomizationLogicTreeIfEnabled(TR::TreeTop *tree, TR::Node* methodHandle);
+   TR::Node* loadCallSiteMethodTypeFromCP(TR::Node* methodHandleInvokeCall);
+   TR::Node* loadFromMethodTypeTable(TR::Node* methodHandleInvokeCall);
+   TR::Node* loadCallSiteMethodType(TR::Node* methodHandleInvokeCall);
+
    // inline functions
    //
    TR::SymbolReferenceTable * symRefTab()                      { return _symRefTab; }
@@ -379,6 +388,11 @@ private:
    // JSR292
    int32_t                           _argPlaceholderSlot;
    int32_t                           _argPlaceholderSignatureOffset;
+   TR_BitVector                     *_methodHandleInvokeCalls;
+   TR_BitVector                     *_invokeHandleCalls;
+   TR_BitVector                     *_invokeHandleGenericCalls;
+   TR_BitVector                     *_invokeDynamicCalls;
+   TR_BitVector                     *_ilGenMacroInvokeExactCalls;
 
    // TenantScope field support, set to 'true' if a get/put static is encountered
    // when option TR_DisableMultiTenancy is on and current method contains static
