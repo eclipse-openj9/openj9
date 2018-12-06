@@ -70,7 +70,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<property name="graph_se_classlib.java5" value="jcl_se.zip"/>
 		<property name="graph_se_classlib.java6" value="jcl_se.zip"/>
 		<property name="graph_tool_script.build" value="msvc140_amd64"/>
-		<property name="graph_tool_script.test" value="{$spec.property.graph_tool_script.build$}"/>
+		<property name="graph_tool_script.test" value="msvc100_amd64"/>
 		<property name="graph_variant.testing_suffix" value=""/>
 		<property name="graph_variant.trailingID" value=""/>
 		<property name="j2seRuntimeDir" value="jre/bin"/>
