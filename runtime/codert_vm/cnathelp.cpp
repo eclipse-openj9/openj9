@@ -1390,7 +1390,7 @@ old_slow_jitResolveClassFromStaticField(J9VMThread *currentThread)
 	J9RAMStaticFieldRef *ramStaticFieldRef = (J9RAMStaticFieldRef*)ramConstantPool + cpIndex;
 	IDATA flagsAndClass = ramStaticFieldRef->flagsAndClass;
 	UDATA valueOffset = ramStaticFieldRef->valueOffset;
-	if (J9_UNEXPECTED(!VM_VMHelpers::staticFieldRefIsResolved(flagsAndClass, valueOffset, false))) {
+	if (J9_UNEXPECTED(!VM_VMHelpers::staticFieldRefIsResolved(flagsAndClass, valueOffset))) {
 		buildJITResolveFrameWithPC(currentThread, J9_SSF_JIT_RESOLVE_DATA, parmCount, true, 0, jitEIP);
 		J9RAMStaticFieldRef localRef;
 		currentThread->javaVM->internalVMFunctions->resolveStaticFieldRefInto(currentThread, NULL, ramConstantPool, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE, NULL, &localRef);
@@ -1429,31 +1429,24 @@ old_fast_jitResolvedFieldIsVolatile(J9VMThread *currentThread)
 static VMINLINE void*
 old_slow_jitResolveFieldImpl(J9VMThread *currentThread, UDATA parmCount, J9ConstantPool *ramConstantPool, UDATA cpIndex, void *jitEIP, bool isSetter, bool direct)
 {
-	void *addr = NULL;
-	J9RAMFieldRef *ramFieldRef = (J9RAMFieldRef*)ramConstantPool + cpIndex;
-	UDATA valueOffset = ramFieldRef->valueOffset;
-	UDATA flags = ramFieldRef->flags;
-	if (J9_UNEXPECTED(!VM_VMHelpers::instanceFieldRefIsResolved(flags, valueOffset, isSetter))) {
-		J9Method *method = NULL;
-		UDATA resolveFlags = J9_RESOLVE_FLAG_RUNTIME_RESOLVE;
-		J9JavaVM *vm = currentThread->javaVM;
-		buildJITResolveFrameWithPC(currentThread, direct ? J9_SSF_JIT_RESOLVE : J9_SSF_JIT_RESOLVE_DATA, parmCount, true, 0, jitEIP);
-		if (isSetter) {
-			J9StackWalkState *walkState = currentThread->stackWalkState;
-			walkState->walkThread = currentThread;
-			walkState->skipCount = 0;
-			walkState->flags = J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_COUNT_SPECIFIED;
-			walkState->maxFrames = 1;
-			vm->walkStackFrames(currentThread, walkState);
-			method = walkState->method;
-			resolveFlags |= J9_RESOLVE_FLAG_FIELD_SETTER;
-		}
-		vm->internalVMFunctions->resolveInstanceFieldRef(currentThread, method, ramConstantPool, cpIndex, resolveFlags, NULL);
-		addr = restoreJITResolveFrame(currentThread, jitEIP);
-		if (NULL != addr) {
-			goto done;
-		}
-		valueOffset = ramFieldRef->valueOffset;
+	J9Method *method = NULL;
+	UDATA resolveFlags = J9_RESOLVE_FLAG_RUNTIME_RESOLVE;
+	J9JavaVM *vm = currentThread->javaVM;
+	buildJITResolveFrameWithPC(currentThread, direct ? J9_SSF_JIT_RESOLVE : J9_SSF_JIT_RESOLVE_DATA, parmCount, true, 0, jitEIP);
+	if (isSetter) {
+		J9StackWalkState *walkState = currentThread->stackWalkState;
+		walkState->walkThread = currentThread;
+		walkState->skipCount = 0;
+		walkState->flags = J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_COUNT_SPECIFIED;
+		walkState->maxFrames = 1;
+		vm->walkStackFrames(currentThread, walkState);
+		method = walkState->method;
+		resolveFlags |= J9_RESOLVE_FLAG_FIELD_SETTER;
+	}
+	UDATA valueOffset = vm->internalVMFunctions->resolveInstanceFieldRef(currentThread, method, ramConstantPool, cpIndex, resolveFlags, NULL);
+	void *addr = restoreJITResolveFrame(currentThread, jitEIP);
+	if (NULL != addr) {
+		goto done;
 	}
 	valueOffset += J9_OBJECT_HEADER_SIZE;
 	JIT_RETURN_UDATA(valueOffset);
@@ -1512,41 +1505,35 @@ old_slow_jitResolveFieldSetterDirect(J9VMThread *currentThread)
 static VMINLINE void*
 old_slow_jitResolveStaticFieldImpl(J9VMThread *currentThread, UDATA parmCount, J9ConstantPool *ramConstantPool, UDATA cpIndex, void *jitEIP, bool isSetter, bool direct)
 {
-	void *addr = NULL;
-	J9RAMStaticFieldRef *ramRef = (J9RAMStaticFieldRef*)ramConstantPool + cpIndex;
-	UDATA field = (UDATA)VM_VMHelpers::staticFieldAddressFromRef(ramRef, isSetter);
-	if (0 == field) {
-		J9JavaVM *vm = currentThread->javaVM;
-		J9Method *method = NULL;
-		UDATA resolveFlags = J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_CHECK_CLINIT;
-		buildJITResolveFrameWithPC(currentThread, direct ? J9_SSF_JIT_RESOLVE : J9_SSF_JIT_RESOLVE_DATA, parmCount, true, 0, jitEIP);
-		if (isSetter) {
-			J9StackWalkState *walkState = currentThread->stackWalkState;
-			walkState->walkThread = currentThread;
-			walkState->skipCount = 0;
-			walkState->flags = J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_COUNT_SPECIFIED;
-			walkState->maxFrames = 1;
-			vm->walkStackFrames(currentThread, walkState);
-			method = walkState->method;
-			resolveFlags |= J9_RESOLVE_FLAG_FIELD_SETTER;
-		}
-		field = (UDATA)vm->internalVMFunctions->resolveStaticFieldRef(currentThread, method, ramConstantPool, cpIndex, resolveFlags, NULL);
-		if ((UDATA)-1 == field) {
-			/* fetch result from floatTemp - stashed there in clinit case */
-			J9RAMStaticFieldRef *fakeRef = (J9RAMStaticFieldRef*)&currentThread->floatTemp1;
-			/* Resolve call indicated success - no need for extra putstatic checks, and the ref
-			 * must contain valid resolved information.
-			 */
-			field = (UDATA)VM_VMHelpers::staticFieldAddressFromRef(fakeRef, false);
-			Assert_CodertVM_false(0 == field);
-			/* Direct resolves do not patch the code cache, so do not need the clinit tag */
-			if (!direct) {
-				/* tag result as being from a clinit */
-				field |= J9_RESOLVE_STATIC_FIELD_TAG_FROM_CLINIT;
-			}
-		}
-		addr = restoreJITResolveFrame(currentThread, jitEIP);
+	J9JavaVM *vm = currentThread->javaVM;
+	J9Method *method = NULL;
+	UDATA resolveFlags = J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_CHECK_CLINIT;
+	buildJITResolveFrameWithPC(currentThread, direct ? J9_SSF_JIT_RESOLVE : J9_SSF_JIT_RESOLVE_DATA, parmCount, true, 0, jitEIP);
+	if (isSetter) {
+		J9StackWalkState *walkState = currentThread->stackWalkState;
+		walkState->walkThread = currentThread;
+		walkState->skipCount = 0;
+		walkState->flags = J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_COUNT_SPECIFIED;
+		walkState->maxFrames = 1;
+		vm->walkStackFrames(currentThread, walkState);
+		method = walkState->method;
+		resolveFlags |= J9_RESOLVE_FLAG_FIELD_SETTER;
 	}
+	UDATA field = (UDATA)vm->internalVMFunctions->resolveStaticFieldRef(currentThread, method, ramConstantPool, cpIndex, resolveFlags, NULL);
+	if ((UDATA)-1 == field) {
+		/* fetch result from floatTemp - stashed there in clinit case */
+		J9RAMStaticFieldRef *fakeRef = (J9RAMStaticFieldRef*)&currentThread->floatTemp1;
+		/* Resolve call indicated success - no need for extra putstatic checks, and the ref
+		 * must contain valid resolved information.
+		 */
+		field = (UDATA)VM_VMHelpers::staticFieldAddressFromResolvedRef(fakeRef->flagsAndClass, fakeRef->valueOffset);
+		/* Direct resolves do not patch the code cache, so do not need the clinit tag */
+		if (!direct) {
+			/* tag result as being from a clinit */
+			field |= J9_RESOLVE_STATIC_FIELD_TAG_FROM_CLINIT;
+		}
+	}
+	void *addr = restoreJITResolveFrame(currentThread, jitEIP);
 	if (NULL == addr) {
 		JIT_RETURN_UDATA(field);
 	}
