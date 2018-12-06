@@ -178,8 +178,7 @@ public:
    void setS390SupportsGuardedStorageFacility() { _flags.set(S390SupportsGuardedStorageFacility);
                                                   _flags.set(S390SupportsSideEffectAccessFacility);}
 
-   static TR_S390MachineType TO_PORTLIB_get390zLinuxMachineType();
-   static TR_S390MachineType TO_PORTLIB_get390zOSMachineType();
+   static int32_t TO_PORTLIB_get390MachineId();
    static bool TO_PORTLIB_get390_supportsZNext();
    static bool TO_PORTLIB_get390_supportsZ14();
    static bool TO_PORTLIB_get390_supportsZ13();

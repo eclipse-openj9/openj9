@@ -49,83 +49,24 @@ namespace J9
 namespace Z
 {
 
-////////////////////////////////////////////////////////////////////////////////
-// The following are the 2 versions of the /proc/cpuinfo file for Linux/390.
-//
-// When Gallileo (TREX) comes out, we will need to update this routine to support
-// TREX and not end up generating default 9672 code!
-// vendor_id       : IBM/S390
-// # processors    : 2
-// bogomips per cpu: 838.86
-// processor 0: version = FF,  identification = 100003,  machine = 2064
-// processor 1: version = FF,  identification = 200003,  machine = 2064
-//
-// vs.
-//
-// vendor_id       : IBM/S390
-// # processors    : 3
-// bogomips per cpu: 493.15
-// processor 0: version = FF,  identification = 100003,  machine = 9672
-// processor 1: version = FF,  identification = 200003,  machine = 9672
-// processor 2: version = FF,  identification = 300003,  machine = 9672
-////////////////////////////////////////////////////////////////////////////////
+int32_t
+CPU::TO_PORTLIB_get390MachineId()
+  {
+#if defined(J9ZTPF) || defined(J9ZOS390)
+   struct utsname info;
 
-/* Keep in sync with enum TR_S390MachineType in env/ProcessorInfo.hpp */
-static const int S390MachineTypes[] =
-   {
-   TR_FREEWAY, TR_Z800, TR_MIRAGE, TR_MIRAGE2, TR_TREX, TR_Z890, TR_GOLDEN_EAGLE, TR_DANU_GA2, TR_Z9BC,
-   TR_Z10, TR_Z10BC, TR_ZG, TR_ZGMR, TR_ZEC12, TR_ZEC12MR, TR_ZG_RESERVE, TR_ZEC12_RESERVE,
-   TR_Z13, TR_Z13s, TR_Z14, TR_Z14s, TR_ZNEXT, TR_ZNEXTs,
-   TR_ZH, TR_DATAPOWER, TR_ZH_RESERVE1, TR_ZH_RESERVE2
-   };
+   if (::uname(&info) >= 0)
+      {
+      return atoi(info.machine);
+      }
 
-static const int S390UnsupportedMachineTypes[] =
-   {
-   TR_G5, TR_MULTIPRISE7000
-   };
-
-TR_S390MachineType
-CPU::TO_PORTLIB_get390zLinuxMachineType()
-   {
+   return TR_Z10;
+#else
    char line[80];
    const int LINE_SIZE = sizeof(line) - 1;
    const char procHeader[] = "processor ";
    const int PROC_LINE_SIZE = 69;
    const int PROC_HEADER_SIZE = sizeof(procHeader) - 1;
-
-#if defined(J9ZTPF)
-   TR_S390MachineType ret_machine = TR_Z10;  /* return value, z/TPF default */
-
-   struct utsname info;
-   if (::uname(&info))
-      {
-      return ret_machine;
-      }
-
-   uint32_t machine = atoi(info.machine);
-
-   // Scan list of unsupported machines - We do not initialize the JIT for such hardware.
-   for (int i = 0; i < sizeof(S390UnsupportedMachineTypes) / sizeof(int); ++i)
-      {
-      if (machine == S390UnsupportedMachineTypes[i])
-         {
-         PORT_ACCESS_FROM_ENV(jitConfig->javaVM);
-         j9nls_printf(jitConfig->javaVM->portLibrary, J9NLS_ERROR, J9NLS_J9JIT_390_UNSUPPORTED_HARDWARE, machine);
-         TR_ASSERT_FATAL(0,"Hardware is not supported.");
-         }
-      }
-
-   // Scan list of supported machines.
-   for (int i = 0; i < sizeof(S390MachineTypes) / sizeof(int); ++i)
-      {
-      if (machine == S390MachineTypes[i])
-         {
-         ret_machine = (TR_S390MachineType)machine;
-         }
-      }
-
-#else
-   TR_S390MachineType ret_machine = TR_UNDEFINED_S390_MACHINE;  /* return value */
 
    FILE * fp = fopen("/proc/cpuinfo", "r");
    if (fp)
@@ -137,60 +78,22 @@ CPU::TO_PORTLIB_get390zLinuxMachineType()
             {
             if (len == PROC_LINE_SIZE)
                {
-               int i;
-               int machine;
-               sscanf(line, "%*s %*d%*c %*s %*c %*s %*s %*c %*s %*s %*c %d", &machine);
+               int32_t id;
 
-               // Scan list of unsupported machines - We do not initialize the JIT for such hardware.
-               for (i = 0; i < sizeof(S390UnsupportedMachineTypes) / sizeof(int); ++i)
-                  {
-                  if (machine == S390UnsupportedMachineTypes[i])
-                     {
-                     PORT_ACCESS_FROM_ENV(jitConfig->javaVM);
-                     j9nls_printf(jitConfig->javaVM->portLibrary, J9NLS_ERROR, J9NLS_J9JIT_390_UNSUPPORTED_HARDWARE, machine);
-                     TR_ASSERT_FATAL(0,"Hardware is not supported.");
-                     }
-                  }
+               // Match the following pattern to extract the machine id:
+               //
+               // processor 0: version = FF,  identification = 100003,  machine = 9672
+               sscanf(line, "%*s %*d%*c %*s %*c %*s %*s %*c %*s %*s %*c %d", &id);
 
-               // Scan list of supported machines.
-               for (i = 0; i < sizeof(S390MachineTypes) / sizeof(int); ++i)
-                  {
-                  if (machine == S390MachineTypes[i])
-                     {
-                     ret_machine = (TR_S390MachineType)machine;
-                     }
-                  }
+               return id;
                }
             }
          }
       fclose(fp);
       }
+
+   return TR_UNDEFINED_S390_MACHINE;
 #endif
-   return ret_machine;
-  }
-
-
-TR_S390MachineType
-CPU::TO_PORTLIB_get390zOSMachineType()
-   {
-   TR_S390MachineType ret_machine = TR_UNDEFINED_S390_MACHINE;
-#if defined(J9ZOS390)
-   struct utsname info;
-   if (::uname(&info))
-      return ret_machine;
-
-   uint32_t type = atoi(info.machine);
-   // Scan list of supported machines.
-   for (int32_t i = 0; i < sizeof(S390MachineTypes) / sizeof(int); ++i)
-      {
-      if (type == S390MachineTypes[i])
-         {
-         ret_machine = (TR_S390MachineType)type;
-         break;
-         }
-      }
-#endif
-   return ret_machine;
    }
 
 bool
@@ -460,7 +363,7 @@ CPU::initializeS390zLinuxProcessorFeatures()
    // Use machine model.
    if (!TR::Compiler->target.cpu.getS390SupportsZ10() || !j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_STFLE))
       {
-      TR_S390MachineType machineType = TR::Compiler->target.cpu.getS390MachineType();
+      int32_t machineType = TR::Compiler->target.cpu.getS390MachineType();
 
       if (machineType == TR_GOLDEN_EAGLE || machineType == TR_DANU_GA2 || machineType == TR_Z9BC)
          {

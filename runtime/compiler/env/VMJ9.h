@@ -1005,11 +1005,6 @@ public:
    virtual void *getLocationOfClassLoaderObjectPointer(TR_OpaqueClassBlock *classPointer);
    virtual bool isMethodBreakpointed(TR_OpaqueMethodBlock *method);
 
-   protected:
-#if defined(TR_TARGET_S390)
-   int32_t getS390MachineName(TR_S390MachineType machine, char* processorName, int32_t stringLength);
-#endif
-
    private:
 #if !defined(HINTS_IN_SHAREDCACHE_OBJECT)
    uint32_t     getSharedCacheHint(J9VMThread * vmThread, J9Method *romMethod, J9SharedClassConfig * scConfig);
