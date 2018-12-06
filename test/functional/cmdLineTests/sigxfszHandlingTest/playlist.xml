@@ -29,10 +29,14 @@
 			<variation>NoOptions</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-	ulimit -f 4000 && \
-	ulimit && \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DRESJAR=$(CMDLINETESTER_RESJAR) -jar $(CMDLINETESTER_JAR) \
+	-DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' \
+	-DRESJAR=$(CMDLINETESTER_RESJAR) \
+	-DTESTDIR=$(TEST_RESROOT) \
+	-DPATHSEP=$(Q)$(D)$(Q) \
+	-DRUN_SCRIPT=$(RUN_SCRIPT) \
+	-DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) \
+	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)sigxfszHandlingTest.xml$(Q) \
 	-plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError  ; \
 	${TEST_STATUS}</command>
