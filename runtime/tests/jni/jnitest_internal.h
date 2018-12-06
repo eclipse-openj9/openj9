@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2144,6 +2144,29 @@ Java_j9vm_test_jni_CriticalRegionTest_acquireAndCallIn(JNIEnv * env, jclass claz
 
 jboolean JNICALL
 Java_j9vm_test_jni_CriticalRegionTest_acquireDiscardAndGC(JNIEnv * env, jclass clazz, jbyteArray array, jlongArray addresses);
+
+/* ---------------- booleantest.c ---------------- */
+
+jboolean JNICALL
+Java_j9vm_test_booleans_BooleanTest_setUp(JNIEnv *env, jclass instanceClass);
+
+void JNICALL
+Java_j9vm_test_booleans_BooleanTest_tearDown(JNIEnv *env, jclass instanceClass);
+
+void JNICALL
+Java_j9vm_test_booleans_BooleanTest_putInstanceBoolean(JNIEnv *env, jclass clazz, jclass instanceClass, jobject instance, jobject reflectField, jint value);
+
+void JNICALL
+Java_j9vm_test_booleans_BooleanTest_putStaticBoolean(JNIEnv *env, jclass clazz, jclass instanceClass, jobject reflectField, jint value);
+
+jboolean JNICALL
+Java_j9vm_test_booleans_BooleanTest_getInstanceBoolean(JNIEnv *env, jclass clazz, jclass instanceClass, jobject instance, jobject reflectField);
+
+jboolean JNICALL
+Java_j9vm_test_booleans_BooleanTest_getStaticBoolean(JNIEnv *env, jclass clazz, jclass instanceClass, jobject reflectField);
+
+jboolean JNICALL
+Java_j9vm_test_booleans_BooleanTest_returnBooleanValue(JNIEnv *env, jclass clazz, jint value);
 
 
 #ifdef __cplusplus

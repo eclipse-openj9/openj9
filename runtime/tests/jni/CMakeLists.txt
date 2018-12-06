@@ -33,6 +33,7 @@ add_library(j9ben SHARED
 	objectfieldutils.c
 	reattach.c
 	threadtest.c
+	booleantest.c
 )
 
 target_link_libraries(j9ben

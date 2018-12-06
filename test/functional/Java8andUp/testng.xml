@@ -450,5 +450,10 @@
 			<class name="org.openj9.test.jdk.internal.agent.Test_FileSystem"/>
 		</classes>
 	</test>
+	<test name="BooleanTest">
+		<classes>
+			<class name="org.openj9.test.booleans.BooleanTest"/>
+		</classes>
+	</test>
 </suite>
 <!-- Suite -->
