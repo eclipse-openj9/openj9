@@ -324,85 +324,29 @@ CPU::initializeS390zLinuxProcessorFeatures()
    J9PortLibrary *privatePortLibrary = TR::Compiler->portLib;
 
    // The following conditionals are dependent on each other and must occur in this order
-
    TR::Compiler->target.cpu.setS390SupportsZ900();
 
-   // Check for Facility bits, which can detect z6/z10 or higher.
-   // If STFLE is supported, we must rely on these bits.
-   // zVM can spoof as a newer machine model, without really providing the support.
-   // However, the facility bits don't lie.
-   //
-   if (TR::Compiler->target.cpu.getS390SupportsZ900() &&
-       j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_STFLE))
-      {
-      // Check facility bits for support of hardware
+   // Check facility bits for support of hardware
+   if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZNext())
+      TR::Compiler->target.cpu.setS390SupportsZNext();
+   else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ14())
+      TR::Compiler->target.cpu.setS390SupportsZ14();
+   else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ13())
+      TR::Compiler->target.cpu.setS390SupportsZ13();
+   else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZHelix())
+      TR::Compiler->target.cpu.setS390SupportsZEC12();
+   else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZGryphon())
+      TR::Compiler->target.cpu.setS390SupportsZ196();
+   else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ6())
+      TR::Compiler->target.cpu.setS390SupportsZ10();
 
-      if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZNext())
-         TR::Compiler->target.cpu.setS390SupportsZNext();
-      else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ14())
-         TR::Compiler->target.cpu.setS390SupportsZ14();
-      else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ13())
-         TR::Compiler->target.cpu.setS390SupportsZ13();
-      else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZHelix())
-         TR::Compiler->target.cpu.setS390SupportsZEC12();
-      else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZGryphon())
-         TR::Compiler->target.cpu.setS390SupportsZ196();
-      else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ6())
-         TR::Compiler->target.cpu.setS390SupportsZ10();
+   // z9 (DANU) supports DFP in millicode - so do not check
+   // for DFP support unless z10 or higher.
+   if (TR::Compiler->target.cpu.getS390SupportsZ10() && j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_DFP))
+      TR::Compiler->target.cpu.setS390SupportsDFP();
 
-      // z9 (DANU) supports DFP in millicode - so do not check
-      // for DFP support unless z10 or higher.
-      if (TR::Compiler->target.cpu.getS390SupportsZ10() && j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_DFP))
-         TR::Compiler->target.cpu.setS390SupportsDFP();
-
-      if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_FPE))
-         TR::Compiler->target.cpu.setS390SupportsFPE();
-      }
-
-   // Either z6/z10 wasn't detected or STFLE is not supported.
-   // Use machine model.
-   if (!TR::Compiler->target.cpu.getS390SupportsZ10() || !j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_STFLE))
-      {
-      int32_t machineType = TR::Compiler->target.cpu.getS390MachineType();
-
-      if (machineType == TR_GOLDEN_EAGLE || machineType == TR_DANU_GA2 || machineType == TR_Z9BC)
-         {
-         TR::Compiler->target.cpu.setS390SupportsZ9();
-         }
-      else if (machineType == TR_TREX || machineType == TR_MIRAGE || machineType == TR_MIRAGE2 || machineType == TR_Z890)
-         {
-         TR::Compiler->target.cpu.setS390SupportsZ990();
-         }
-
-      // For z10+ only use machine model if STFLE is not supported. Otherwise, we should have detected it above.
-      if (!j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_STFLE))
-         {
-         if (machineType == TR_ZNEXT || machineType == TR_ZNEXTs)
-            {
-            TR::Compiler->target.cpu.setS390SupportsZNext();
-            }
-         else if (machineType == TR_Z14 || machineType == TR_Z14s)
-            {
-            TR::Compiler->target.cpu.setS390SupportsZ14();
-            }
-         else if (machineType == TR_Z13 || machineType == TR_Z13s)
-            {
-            TR::Compiler->target.cpu.setS390SupportsZ13();
-            }
-         else if (machineType == TR_ZEC12 || machineType == TR_ZEC12MR || machineType == TR_ZEC12_RESERVE)
-            {
-            TR::Compiler->target.cpu.setS390SupportsZEC12();
-            }
-         else if (machineType == TR_ZG || machineType == TR_ZGMR || machineType == TR_ZG_RESERVE)
-            {
-            TR::Compiler->target.cpu.setS390SupportsZ196();
-            }
-         else if (machineType == TR_Z10 || machineType == TR_Z10BC)
-            {
-            TR::Compiler->target.cpu.setS390SupportsZ10();
-            }
-         }
-      }
+   if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_FPE))
+      TR::Compiler->target.cpu.setS390SupportsFPE();
 
    // Only SLES11 SP1 supports HPR debugging facilities, which is
    // required for RAS support for HPR (ZGryphon or higher).
