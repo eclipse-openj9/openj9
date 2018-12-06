@@ -814,23 +814,15 @@ TR_J9VM::initializeProcessorType()
 
    if (TR::Compiler->target.cpu.isZ())
       {
-      #if defined(TR_HOST_S390)
-      if (TR::Compiler->target.isLinux())
-         {
-         TR::Compiler->target.cpu.setS390MachineType(TR::Compiler->target.cpu.TO_PORTLIB_get390zLinuxMachineType());
-         initializeS390zLinuxProcessorFeatures();
-         }
-      else
-         {
-         TR::Compiler->target.cpu.setS390MachineType(TR::Compiler->target.cpu.TO_PORTLIB_get390zOSMachineType());
-         initializeS390zOSProcessorFeatures();
+#if defined(TR_HOST_S390)
+         initializeS390ProcessorFeatures();
+
 #if defined(J9ZOS390)
          // Cache whether current process is running in Supervisor State (i.e. Control Region of WAS).
          if (!_isPSWInProblemState())
              _compInfo->setIsInZOSSupervisorState();
 #endif
-         }
-      #endif
+#endif
 
 #ifdef TR_TARGET_S390
       // For AOT shared classes cache processor compatibility purposes, the following
@@ -927,30 +919,13 @@ TR_J9VM::initializeProcessorType()
 
 #if defined(TR_TARGET_S390)
 void
-TR_J9VMBase::initializeS390zLinuxProcessorFeatures()
+TR_J9VMBase::initializeS390ProcessorFeatures()
    {
-   TR_ASSERT(TR::Compiler->target.cpu.isZ() && TR::Compiler->target.isLinux(), "Only valid for s390/zLinux\n");
-   TR::Compiler->target.cpu.initializeS390zLinuxProcessorFeatures();
+   TR::Compiler->target.cpu.initializeS390ProcessorFeatures();
    }
 
-
 void
-TR_J9VMBase::initializeS390zOSProcessorFeatures()
-   {
-   TR_ASSERT(TR::Compiler->target.cpu.isZ() && TR::Compiler->target.isZOS(), "Only valid for s390/zOS\n");
-   TR::Compiler->target.cpu.initializeS390zOSProcessorFeatures();
-   }
-
-
-void
-TR_J9SharedCacheVM::initializeS390zLinuxProcessorFeatures()
-   {
-   return;
-   }
-
-
-void
-TR_J9SharedCacheVM::initializeS390zOSProcessorFeatures()
+TR_J9SharedCacheVM::initializeS390ProcessorFeatures()
    {
    return;
    }

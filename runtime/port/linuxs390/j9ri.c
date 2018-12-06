@@ -104,7 +104,7 @@ j9ri_params_init(struct J9PortLibrary *portLibrary, struct J9RIParameters *riPar
 
 /**
  * Register a signalHandler for RI real-time signals
- * This is called once from the JIT during TR_J9VM::initializeS390zLinuxProcessorFeatures.
+ * This is called once from the JIT during TR_J9VM::initializeS390ProcessorFeatures.
  * If the registration fails, RI will not be used.
  */
 int32_t

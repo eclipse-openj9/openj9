@@ -228,8 +228,7 @@ public:
    virtual bool canUseSymbolValidationManager() { return false; }
 
 #if defined(TR_TARGET_S390)
-   virtual void initializeS390zLinuxProcessorFeatures();
-   virtual void initializeS390zOSProcessorFeatures();
+   virtual void initializeS390ProcessorFeatures();
 #endif
 
 /////
@@ -1144,8 +1143,7 @@ public:
    virtual TR_OpaqueMethodBlock *getResolvedInterfaceMethod(TR_OpaqueMethodBlock *ownerMethod, TR_OpaqueClassBlock * classObject, int32_t cpIndex);
 
 #if defined(TR_TARGET_S390)
-   virtual void               initializeS390zLinuxProcessorFeatures();
-   virtual void               initializeS390zOSProcessorFeatures();
+   virtual void               initializeS390ProcessorFeatures();
 #endif
 
    virtual int32_t            getJavaLangClassHashCode(TR::Compilation * comp, TR_OpaqueClassBlock * clazzPointer, bool &hashCodeComputed);

@@ -318,15 +318,15 @@ CPU::getS390SupportsGuardedStorageFacility()
 ////////////////////////////////////////////////////////////////////////////////
 
 void
-CPU::initializeS390zLinuxProcessorFeatures()
+CPU::initializeS390ProcessorFeatures()
    {
    J9ProcessorDesc *processorDesc = TR::Compiler->target.cpu.TO_PORTLIB_getJ9ProcessorDesc();
    J9PortLibrary *privatePortLibrary = TR::Compiler->portLib;
 
    // The following conditionals are dependent on each other and must occur in this order
-   TR::Compiler->target.cpu.setS390SupportsZ900();
+   TR::Compiler->target.cpu.setS390SupportsZ9();
 
-   // Check facility bits for support of hardware
+   // On z10 or higher architectures, we should check for facility bits.
    if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZNext())
       TR::Compiler->target.cpu.setS390SupportsZNext();
    else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ14())
@@ -339,138 +339,57 @@ CPU::initializeS390zLinuxProcessorFeatures()
       TR::Compiler->target.cpu.setS390SupportsZ196();
    else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ6())
       TR::Compiler->target.cpu.setS390SupportsZ10();
-
-   // z9 (DANU) supports DFP in millicode - so do not check
-   // for DFP support unless z10 or higher.
-   if (TR::Compiler->target.cpu.getS390SupportsZ10() && j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_DFP))
-      TR::Compiler->target.cpu.setS390SupportsDFP();
-
+   
    if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_FPE))
+      {
       TR::Compiler->target.cpu.setS390SupportsFPE();
+      }
 
-   // Only SLES11 SP1 supports HPR debugging facilities, which is
-   // required for RAS support for HPR (ZGryphon or higher).
-   if (TR::Compiler->target.cpu.getS390SupportsZ196() && j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_HIGH_GPRS))
+   // z9 supports DFP in millicode so do not check for DFP support unless we are z10+
+   if (TR::Compiler->target.cpu.getS390SupportsZ10() &&
+         j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_DFP))
+      {
+      TR::Compiler->target.cpu.setS390SupportsDFP();
+      }
+
+   if (TR::Compiler->target.cpu.getS390SupportsZ196() && 
+         j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_HIGH_GPRS))
+      {
       TR::Compiler->target.cpu.setS390SupportsHPRDebug();
+      }
 
-   // Check for OS support of TM.
-   if (TR::Compiler->target.cpu.getS390SupportsZEC12() && j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_TE))
-      TR::Compiler->target.cpu.setS390SupportsTM();
+   if (TR::Compiler->target.cpu.getS390SupportsZEC12())
+      {
+      if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_TE))
+         {
+         TR::Compiler->target.cpu.setS390SupportsTM();
+         }
 
-
-   if (TR::Compiler->target.cpu.getS390SupportsZEC12() && (0 == j9ri_enableRISupport()))
-      TR::Compiler->target.cpu.setS390SupportsRI();
+      if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_RI))
+         {
+#if defined(LINUX)
+         if (0 == j9ri_enableRISupport())
+#endif
+         TR::Compiler->target.cpu.setS390SupportsRI();
+         }
+      }
 
    if (TR::Compiler->target.cpu.getS390SupportsZ13() &&
-              j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_VECTOR_FACILITY))
+         j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_VECTOR_FACILITY))
+      {
       TR::Compiler->target.cpu.setS390SupportsVectorFacility();
+      }
 
    if (TR::Compiler->target.cpu.getS390SupportsZ14())
       {
-      // Check for vector packed decimal facility as indicated by bit 129 and 134.
-      if (TR::Compiler->target.cpu.getS390SupportsVectorFacility() &&
-              j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_VECTOR_PACKED_DECIMAL))
+      if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_VECTOR_PACKED_DECIMAL))
          {
          TR::Compiler->target.cpu.setS390SupportsVectorPackedDecimalFacility();
          }
 
-      // Check for guarded storage facility as indicated by bit 131 and 133
-      if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_GUARDED_STORAGE) &&
-              j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_SIDE_EFFECT_ACCESS))
+      if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_GUARDED_STORAGE))
          {
          TR::Compiler->target.cpu.setS390SupportsGuardedStorageFacility();
-         }
-      }
-   }
-
-
-void
-CPU::initializeS390zOSProcessorFeatures()
-   {
-   J9PortLibrary *privatePortLibrary = TR::Compiler->portLib;
-
-   if (!TR::Compiler->target.cpu.TO_PORTLIB_get390zOS_N3Support() || !TR::Compiler->target.cpu.TO_PORTLIB_get390zOS_ZArchSupport())
-      {
-      j9nls_printf(privatePortLibrary, J9NLS_ERROR, J9NLS_J9JIT_390_UNSUPPORTED_HARDWARE, TR_G5);
-      TR_ASSERT_FATAL(0,"Hardware is not supported.");
-      }
-
-    // JIT pre-req's zArchitecture (and N3).
-    TR::Compiler->target.cpu.setS390SupportsZ900();
-
-   if (TR::Compiler->target.cpu.TO_PORTLIB_get390zOS_GoldenEagleSupport())
-      TR::Compiler->target.cpu.setS390SupportsZ9();
-   else if(TR::Compiler->target.cpu.TO_PORTLIB_get390zOS_TrexSupport())
-      TR::Compiler->target.cpu.setS390SupportsZ990();
-
-   J9ProcessorDesc *processorDesc = TR::Compiler->target.cpu.TO_PORTLIB_getJ9ProcessorDesc();
-
-   // On z10 or higher architectures, we should check for facility bits.
-   if (TR::Compiler->target.cpu.getS390SupportsZ900() &&
-       TR::Compiler->target.cpu.TO_PORTLIB_get390zOS_supportsStoreExtendedFacilityList())
-      {
-      if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZNext())
-          TR::Compiler->target.cpu.setS390SupportsZNext();
-      else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ14())
-         TR::Compiler->target.cpu.setS390SupportsZ14();
-      else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ13())
-         TR::Compiler->target.cpu.setS390SupportsZ13();
-      else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZHelix())
-         TR::Compiler->target.cpu.setS390SupportsZEC12();
-      else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZGryphon())
-         TR::Compiler->target.cpu.setS390SupportsZ196();
-      else if (TR::Compiler->target.cpu.TO_PORTLIB_get390_supportsZ6())
-         TR::Compiler->target.cpu.setS390SupportsZ10();
-
-      // z9 (DANU) supports DFP in millicode - so do not check
-      // for DFP support unless z10 or higher.
-      if (TR::Compiler->target.cpu.getS390SupportsZ10() && j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_DFP))
-         TR::Compiler->target.cpu.setS390SupportsDFP();
-
-      if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_FPE))
-         TR::Compiler->target.cpu.setS390SupportsFPE();
-
-      // zOS supports HPR debugging facilities on ZGryphon or higher.
-      if (TR::Compiler->target.cpu.getS390SupportsZ196())
-         TR::Compiler->target.cpu.setS390SupportsHPRDebug();
-
-      if (TR::Compiler->target.cpu.getS390SupportsZEC12())
-         {
-         // check for zOS TM support
-         U_8 * cvtptr = (U_8 *)(*(uint32_t *)16);   // pointer to CVT is at offset +16 of PSA (at address 0)
-         U_8 cvttxj = *(cvtptr+0x17b);              // CVTTX and CVTTXC are at offset +0x17B of CVT, bits 8 and 4, indicating full support
-         if ((cvttxj & 0xc) == 0xc)
-            {
-            TR::Compiler->target.cpu.setS390SupportsTM();
-            }
-         // check for zOS RI support
-         if ((cvttxj & 0x2) == 0x2)                  // CVTRI bit is X'02' bit at byte X'17B' off CVT
-            {
-            TR::Compiler->target.cpu.setS390SupportsRI();
-            }
-         }
-
-      if (TR::Compiler->target.cpu.getS390SupportsZ13() &&
-              j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_VECTOR_FACILITY))
-         {
-         TR::Compiler->target.cpu.setS390SupportsVectorFacility();
-         }
-
-      if (TR::Compiler->target.cpu.getS390SupportsZ14())
-         {
-         // Check for vector packed decimal facility as indicated by bit 129 and 134.
-         if(TR::Compiler->target.cpu.getS390SupportsVectorFacility() &&
-                 j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_VECTOR_PACKED_DECIMAL))
-            {
-            TR::Compiler->target.cpu.setS390SupportsVectorPackedDecimalFacility();
-            }
-
-         // Check for guarded storage facility as indicated by bit 131 and 133
-         if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_GUARDED_STORAGE) &&
-                 j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_SIDE_EFFECT_ACCESS))
-            {
-            TR::Compiler->target.cpu.setS390SupportsGuardedStorageFacility();
-            }
          }
       }
    }
