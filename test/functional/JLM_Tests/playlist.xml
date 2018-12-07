@@ -45,8 +45,7 @@
 	TestMemoryPoolMXBean \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
-	$(TEST_STATUS); \
-	$(JAVA_COMMAND) -Xshareclasses:name=testJLM,destroy || echo "cache cleanup done"</command>
+	$(TEST_STATUS)</command>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -80,8 +79,7 @@
 	TestMemoryPoolMXBean \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
-	$(TEST_STATUS); \
-	$(JAVA_COMMAND) -Xshareclasses:name=testJLM,destroy || echo "cache cleanup done"</command>
+	$(TEST_STATUS)</command>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -108,8 +106,7 @@
 	-testnames JLM_Tests_class \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
-	$(TEST_STATUS); \
-	$(JAVA_COMMAND) -Xshareclasses:name=testJLM,destroy || echo "cache cleanup done"</command>
+	$(TEST_STATUS)</command>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -135,8 +132,7 @@
 	-testnames JLM_Tests_class \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
-	$(TEST_STATUS); \
-	$(JAVA_COMMAND) -Xshareclasses:name=testJLM,destroy || echo "cache cleanup done"</command>
+	$(TEST_STATUS)</command>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -163,8 +159,7 @@
 	-testnames JLM_Tests_IBMinternal \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
-	$(TEST_STATUS); \
-	$(JAVA_COMMAND) -Xshareclasses:name=testJLM,destroy || echo "cache cleanup done"</command>
+	$(TEST_STATUS)</command>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -190,8 +185,7 @@
 	-testnames JLM_Tests_IBMinternal \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
-	$(TEST_STATUS); \
-	$(JAVA_COMMAND) -Xshareclasses:name=testJLM,destroy || echo "cache cleanup done"</command>
+	$(TEST_STATUS)</command>
 		<levels>
 			<level>sanity</level>
 		</levels>
