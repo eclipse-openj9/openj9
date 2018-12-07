@@ -1067,7 +1067,10 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, I_32>();
          auto *method = std::get<0>(recv);
          int32_t cpIndex = std::get<1>(recv);
-         J9Method *ramMethod = nullptr;
+         bool unresolvedInCP;
+         J9Method *ramMethod = jitGetJ9MethodUsingIndex(fe->vmThread(), method->cp(), cpIndex);
+         unresolvedInCP = !ramMethod || !J9_BYTECODE_START_FROM_RAM_METHOD(ramMethod);
+
             {
             TR::VMAccessCriticalSection resolveStaticMethodRef(fe);
             ramMethod = jitResolveStaticMethodRef(fe->vmThread(), method->cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
@@ -1078,7 +1081,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          if (ramMethod)
             TR_ResolvedJ9JITaaSServerMethod::createResolvedJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, 0, method, fe, trMemory);
 
-         client->write(ramMethod, methodInfo);
+         client->write(ramMethod, methodInfo, unresolvedInCP);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_getResolvedSpecialMethodAndMirror:
