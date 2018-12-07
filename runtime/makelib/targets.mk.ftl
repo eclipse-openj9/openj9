@@ -206,7 +206,6 @@ UMA_LINK_PATH += $(foreach d,$(TPF_ROOT),-L$d/opensource/stdlib)
 <#if uma.spec.type.windows>
 ifdef USE_CLANG
   CLANG_CXXFLAGS+=$(UMA_C_INCLUDES)
-  CLANG_CXXFLAGS+=-I../oti/clang
   ifneq ($(OPENJ9_BUILD),true)
     CLANG_INCLUDES:="$(subst ;," -I",$(INCLUDE))"
     CLANG_CXXFLAGS+=$(UMA_C_INCLUDE_PREFIX)$(CLANG_INCLUDES)
