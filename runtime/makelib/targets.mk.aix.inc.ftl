@@ -78,6 +78,14 @@ ifdef j9vm_uma_supportsIpv6
   CPPFLAGS += -DIPv6_FUNCTION_SUPPORT
 endif
 
+ifdef j9vm_uma_gnuDebugSymbols
+  # compile most files with debug information
+  CFLAGS += -g
+  CXXFLAGS += -g
+  # except when compiling interpreters
+  FLAGS_TO_REMOVE += -g
+endif
+
 ifdef I5_VERSION
   CFLAGS += $(UMA_CC_MODE)
 else
