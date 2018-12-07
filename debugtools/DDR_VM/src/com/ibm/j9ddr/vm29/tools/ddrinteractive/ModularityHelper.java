@@ -176,18 +176,44 @@ public class ModularityHelper {
 		}
 	}
 
-	private static void printPackageExportTo(J9PackagePointer packagePtr, PrintStream out, String linePrefix) throws CorruptDataException {
+	/**
+	 * Prints the name and hex address of all
+	 * J9Modules the provided package is exported to.
+	 * Example:
+	 * moduleB    !j9module 0x00007FAC2008EAC8
+	 * 
+	 * @param    packagePtr The package which is to have the
+	 *                      modules it is exported to printed.
+	 * @param    out        The PrintStream that the result will
+	 *                      be output to.
+	 */
+	public static void printPackageExports(J9PackagePointer packagePtr, PrintStream out) throws CorruptDataException {
+		if (packagePtr.exportToAll().isZero()) {
+			int exportCount = printPackageExportTo(packagePtr, out, "");
+			if (0 == exportCount) {
+				out.println("Package is not exported");
+			}
+		} else {
+			out.println("Package is exported to all");
+		}
+	}
+
+	private static int printPackageExportTo(J9PackagePointer packagePtr, PrintStream out, String linePrefix) throws CorruptDataException {
+		int count = 0;
 		J9HashTablePointer exportsHashTable = packagePtr.exportsHashTable();
 		HashTable<J9ModulePointer> exportsModuleHashTable = ModuleHashTable.fromJ9HashTable(exportsHashTable);
 		SlotIterator<J9ModulePointer> exportsSlotIterator = exportsModuleHashTable.iterator();
 		while (exportsSlotIterator.hasNext()) {
+			count++;
 			J9ModulePointer modulePtr = exportsSlotIterator.next();
 			out.print(linePrefix);
 			ModularityHelper.printJ9Module(modulePtr, out);
 		}
 		if (!packagePtr.exportToAllUnnamed().isZero()) {
+			count++;
 			out.printf("%sALL-UNNAMED%n", linePrefix);
 		}
+		return count;
 	}
 
 	/**
