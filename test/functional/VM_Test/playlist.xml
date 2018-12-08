@@ -52,6 +52,24 @@
 			<subset>11</subset>
 		</subsets>
 	</test>
+	<test>
+		<testCaseName>jvmnativestest</testCaseName>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(P)$(LIB_DIR)$(D)junit4.jar$(Q) \
+	com.ibm.oti.jvmtests.AutoRun; \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>8</subset>
+			<subset>11</subset>
+		</subsets>
+	</test>
 
 	<test>
 		<testCaseName>ThreadRegressionTests</testCaseName>
