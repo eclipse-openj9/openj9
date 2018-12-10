@@ -47,9 +47,7 @@ timeout(time: 3, unit: 'HOURS') {
 
                 sh """git tag -a 'omr_merge_${MERGE_DATE}' \
                     -m 'OMR: ${OMR_COMMIT}' \
-                    -m 'OpenJ9: ${OPENJ9_COMMIT}' \
-                    -m 'OpenJDK8: ${OPENJDK8_COMMIT}' \
-                    -m 'OpenJDK10: ${OPENJDK10_COMMIT}'"""
+                    -m 'OpenJ9: ${OPENJ9_COMMIT}'"""
 
                 buildfile.git_push_auth(REPO, TARGET_BRANCH, CRED_ID)
                 buildfile.git_push_auth(REPO, '--tags', CRED_ID)
