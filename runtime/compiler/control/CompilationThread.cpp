@@ -6667,14 +6667,15 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       if (_compInfo.getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
          {
          bool doLocalCompilation = false;
-         if (TR::Options::canJITCompile()) /* TODO: && getOption->(TR_AllowLocalCompilationsInJITaaSClient)*/
+         if (TR::Options::canJITCompile())
             {
             static char *localColdCompilations = feGetEnv("TR_LocalColdCompilations");
             // We could perform JIT compilations locally or remotely
             // As a heuristic, cold compilations should be performed locally because
             // they are supposed to be cheap with respect to memory and CPU.
             //
-            if (entry->_optimizationPlan->getOptLevel() <= cold && localColdCompilations)
+            if (entry->_optimizationPlan->getOptLevel() <= cold && 
+               (TR::Options::getCmdLineOptions()->getOption(TR_EnableJITaaSHeuristics) || localColdCompilations))
                doLocalCompilation = true;
 
             // In another heuristic we could downgrade all first time compilations
