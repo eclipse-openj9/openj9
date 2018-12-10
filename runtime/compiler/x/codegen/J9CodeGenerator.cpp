@@ -125,20 +125,9 @@ J9::X86::CodeGenerator::CodeGenerator() :
       comp->setOption(TR_DisableWriteBarriersRangeCheck);
       }
 
-   // Enable copy propagation of floats if using SSE.
+   // Enable copy propagation of floats.
    //
-   if (cg->useSSEForDoublePrecision())
-      {
-      cg->setSupportsJavaFloatSemantics();
-      }
-   else
-      {
-      static char *commonFPAcrossBranches = feGetEnv("TR_commonFPAcrossBranches");
-      if (commonFPAcrossBranches)
-         {
-         cg->setSupportsJavaFloatSemantics();
-         }
-      }
+   cg->setSupportsJavaFloatSemantics();
 
    /*
     * "Statically" initialize the FE-specific tree evaluator functions.
@@ -170,10 +159,10 @@ J9::X86::CodeGenerator::CodeGenerator() :
          returnInfo = TR::Compiler->target.is64Bit() ? TR_ObjectReturn : TR_IntReturn;
          break;
       case TR::Float:
-         returnInfo = cg->useSSEForDoublePrecision() ? TR_FloatXMMReturn : TR_FloatReturn;
+         returnInfo = TR_FloatXMMReturn;
          break;
       case TR::Double:
-         returnInfo = cg->useSSEForDoublePrecision()? TR_DoubleXMMReturn : TR_DoubleReturn;
+         returnInfo = TR_DoubleXMMReturn;
          break;
       }
     comp->setReturnInfo(returnInfo);
@@ -323,7 +312,7 @@ J9::X86::CodeGenerator::generateSwitchToInterpreterPrePrologue(
       }
 
    startLabel = generateLabelSymbol(self());
-   prev = generateLabelInstruction(prev, LABEL, startLabel, true, self());
+   prev = generateLabelInstruction(prev, LABEL, startLabel, self());
    self()->setSwitchToInterpreterLabel(startLabel);
 
    TR::RegisterDependencyConditions  *deps =

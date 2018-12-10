@@ -332,16 +332,14 @@ jitGetExceptionCatcher(J9VMThread *currentThread, void *handlerPC, J9JITExceptio
 	 * the start address of the compiled exception handler.
 	 */
 	jitGetMapsFromPC(currentThread->javaVM, metaData, (UDATA)handlerPC + 1, &stackMap, &inlineMap);
-	Assert_CodertVM_false(NULL == stackMap);
+	Assert_CodertVM_false(NULL == inlineMap);
 	if (NULL != getJitInlinedCallInfo(metaData)) {
-		if (NULL != inlineMap) {
-			inlinedCallSite = getFirstInlinedCallSite(metaData, inlineMap);
-			if (NULL != inlinedCallSite) {
-				method = (J9Method*)getInlinedMethod(inlinedCallSite);
-			}
+		inlinedCallSite = getFirstInlinedCallSite(metaData, inlineMap);
+		if (NULL != inlinedCallSite) {
+			method = (J9Method*)getInlinedMethod(inlinedCallSite);
 		}
 	}
-	*location = (IDATA)getCurrentByteCodeIndexAndIsSameReceiver(metaData, stackMap, inlinedCallSite, NULL);
+	*location = (IDATA)getCurrentByteCodeIndexAndIsSameReceiver(metaData, inlineMap, inlinedCallSite, NULL);
 	return method;
 }
 

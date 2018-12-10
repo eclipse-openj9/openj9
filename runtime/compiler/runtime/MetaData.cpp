@@ -71,6 +71,8 @@
 
 TR_MetaDataStats metaDataStats;
 
+typedef std::set<TR_GCStackMap*, std::less<TR_GCStackMap*>, TR::typed_allocator<TR_GCStackMap*, TR::Region&>> GCStackMapSet;
+
 struct TR_StackAtlasStats
    {
 #if defined(DEBUG)
@@ -691,7 +693,8 @@ mapsAreIdentical(
       TR_GCStackMap *mapCursor,
       TR_GCStackMap *nextMapCursor,
       TR::GCStackAtlas *trStackAtlas,
-      TR::Compilation *comp)
+      TR::Compilation *comp,
+      const GCStackMapSet& nonmergeableBCI)
    {
    if (!comp->getOption(TR_FullSpeedDebug) && // Must keep maps with different bytecode info even if GC info is identical
        nextMapCursor &&
@@ -700,6 +703,7 @@ mapsAreIdentical(
        mapCursor->getMapSizeInBytes() == nextMapCursor->getMapSizeInBytes() &&
        mapCursor->getRegisterMap() == nextMapCursor->getRegisterMap() &&
        !memcmp(mapCursor->getMapBits(), nextMapCursor->getMapBits(), mapCursor->getMapSizeInBytes()) &&
+       (mapCursor->isByteCodeInfoIdenticalTo(nextMapCursor) || nonmergeableBCI.find(mapCursor) == nonmergeableBCI.end()) &&
 #ifdef TR_HOST_S390
        (mapCursor->getHighWordRegisterMap() == nextMapCursor->getHighWordRegisterMap()) &&
 #endif
@@ -724,7 +728,8 @@ calculateSizeOfStackAtlas(
       bool fourByteOffsets,
       uint32_t numberOfSlotsMapped,
       uint32_t numberOfMapBytes,
-      TR::Compilation *comp)
+      TR::Compilation *comp,
+      const GCStackMapSet& nonmergeableBCI)
    {
    TR::GCStackAtlas * trStackAtlas = cg->getStackAtlas();
 
@@ -777,7 +782,7 @@ calculateSizeOfStackAtlas(
          calculateMapSize(nextMapCursor->getInternalPointerMap(), comp);
          }
 
-      if (mapsAreIdentical(mapCursor, nextMapCursor, trStackAtlas, comp))
+      if (mapsAreIdentical(mapCursor, nextMapCursor, trStackAtlas, comp, nonmergeableBCI))
          {
          atlasSize += sizeOfByteCodeInfoMap;
          }
@@ -883,7 +888,8 @@ createStackAtlas(
       uint32_t numberOfMapBytes,
       TR::Compilation *comp,
       uint8_t *atlasBits,
-      uint32_t atlasSizeInBytes)
+      uint32_t atlasSizeInBytes,
+      const GCStackMapSet& nonmergeableBCI)
    {
    TR::GCStackAtlas * trStackAtlas = cg->getStackAtlas();
 
@@ -995,7 +1001,7 @@ createStackAtlas(
       /* Fill in gaps with bogus stack map for tagged information.
        * Also need to create more space for stack maps above */
 
-      if (mapsAreIdentical(mapCursor, nextMapCursor, trStackAtlas, comp))
+      if (mapsAreIdentical(mapCursor, nextMapCursor, trStackAtlas, comp, nonmergeableBCI))
          {
          cursor -= sizeOfByteCodeInfoMap; //GET_SIZEOF_BYTECODEINFO_MAP(fourByteOffsets);
          createByteCodeInfoRange(mapCursor, cursor, fourByteOffsets, trStackAtlas, comp);
@@ -1314,6 +1320,25 @@ createMethodMetaData(
       dbg->setSingleAllocMetaData(true);
       }
 
+   // --------------------------------------------------------------------------
+   // Find unmergeable GC maps
+   //
+   GCStackMapSet nonmergeableBCI(std::less<TR_GCStackMap*>(), cg->trMemory()->heapMemoryRegion());
+   if (comp->getOptions()->getReportByteCodeInfoAtCatchBlock())
+      {
+      for (TR::TreeTop* treetop = comp->getStartTree(); treetop; treetop = treetop->getNextTreeTop())
+         {
+         if (treetop->getNode()->getOpCodeValue() == TR::BBStart)
+            {
+            TR::Block* block = treetop->getNode()->getBlock();
+            if (block->getCatchBlockExtension())
+               {
+               nonmergeableBCI.insert(block->getFirstInstruction()->getGCMap());
+               }
+            }
+         }
+      }
+
    bool fourByteOffsets = RANGE_NEEDS_FOUR_BYTE_OFFSET(cg->getCodeLength());
 
    uint32_t tableSize = sizeof(TR_MethodMetaData);
@@ -1370,7 +1395,8 @@ createMethodMetaData(
          fourByteOffsets,
          numberOfSlotsMapped,
          numberOfMapBytes,
-         comp);
+         comp,
+         nonmergeableBCI);
 
    tableSize += sizeOfStackAtlasInBytes;
 
@@ -1489,7 +1515,8 @@ createMethodMetaData(
          numberOfMapBytes,
          comp,
          ((uint8_t *)data + exceptionTableSize + inlinedCallSize),
-         sizeOfStackAtlasInBytes);
+         sizeOfStackAtlasInBytes,
+         nonmergeableBCI);
 
    data->registerSaveDescription = comp->cg()->getRegisterSaveDescription();
 

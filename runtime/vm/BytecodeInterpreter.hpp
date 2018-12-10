@@ -5803,7 +5803,7 @@ done:
 	aloadw(REGISTER_ARGS_LIST)
 	{
 		U_16 index = *(U_16*)(_pc + 1);
-		_pc += 3;
+		_pc += 4;
 		_sp -= 1;
 		*_sp = *(_arg0EA - index);
 		return EXECUTE_BYTECODE;
@@ -5814,7 +5814,7 @@ done:
 	lloadw(REGISTER_ARGS_LIST)
 	{
 		U_16 index = *(U_16*)(_pc + 1);
-		_pc += 3;
+		_pc += 4;
 		_sp -= 2;
 		_sp[0] = *(_arg0EA - index - 1);
 #if !defined(J9VM_ENV_DATA64)
@@ -5828,7 +5828,7 @@ done:
 	astorew(REGISTER_ARGS_LIST)
 	{
 		U_16 index = *(U_16*)(_pc + 1);
-		_pc += 3;
+		_pc += 4;
 		*(_arg0EA - index) = *_sp;
 		_sp += 1;
 		return EXECUTE_BYTECODE;
@@ -5839,7 +5839,7 @@ done:
 	lstorew(REGISTER_ARGS_LIST)
 	{
 		U_16 index = *(U_16*)(_pc + 1);
-		_pc += 3;
+		_pc += 4;
 		*(_arg0EA - index - 1) = _sp[0];
 #if !defined(J9VM_ENV_DATA64)
 		*(_arg0EA - index) = _sp[1];
@@ -6251,7 +6251,6 @@ done:
 	VMINLINE VM_BytecodeAction
 	putstatic(REGISTER_ARGS_LIST)
 	{
-retry:
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 		U_16 index = *(U_16*)(_pc + 1);
 		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
@@ -6263,26 +6262,37 @@ retry:
 		void *resolveResult = NULL;
 
 		if (J9_UNEXPECTED(!VM_VMHelpers::staticFieldRefIsResolved(flagsAndClass, valueOffset, true))) {
-			/* Unresolved */
-			J9Method *method = _literals;
-			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
-			updateVMStruct(REGISTER_ARGS);
-			resolveResult = resolveStaticFieldRef(_currentThread, method, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_FIELD_SETTER | J9_RESOLVE_FLAG_CHECK_CLINIT, NULL);
-			VMStructHasBeenUpdated(REGISTER_ARGS);
-			restoreGenericSpecialStackFrame(REGISTER_ARGS);
-			if (immediateAsyncPending()) {
-				rc = GOTO_ASYNC_CHECK;
-				goto done;
-			} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
-				rc = GOTO_THROW_CURRENT_EXCEPTION;
-				goto done;
+			/* The above test will fail if the ref has been resolved for put and the target
+			 * field is final. In this case, ensure that the current method is a constructor
+			 * if the class is enforcing the final field setting rules.
+			 *
+			 * If the check fails, run the resolve again to throw the exception.
+			 */
+			if (!J9_ARE_ALL_BITS_SET(flagsAndClass, (UDATA)(J9StaticFieldRefPutResolved | J9StaticFieldRefFinal) << (8 * sizeof(UDATA) - J9_REQUIRED_CLASS_SHIFT))
+				|| (VM_VMHelpers::romClassChecksFinalStores(ramConstantPool->ramClass->romClass)
+					&& !VM_VMHelpers::romMethodIsInitializer(J9_ROM_METHOD_FROM_RAM_METHOD(_literals), false)
+				   )
+			) {
+				/* Unresolved */
+				J9Method *method = _literals;
+				buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
+				updateVMStruct(REGISTER_ARGS);
+				resolveResult = resolveStaticFieldRef(_currentThread, method, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_FIELD_SETTER | J9_RESOLVE_FLAG_CHECK_CLINIT, NULL);
+				VMStructHasBeenUpdated(REGISTER_ARGS);
+				restoreGenericSpecialStackFrame(REGISTER_ARGS);
+				if (immediateAsyncPending()) {
+					rc = GOTO_ASYNC_CHECK;
+					goto done;
+				} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
+					rc = GOTO_THROW_CURRENT_EXCEPTION;
+					goto done;
+				}
+				if ((void*)-1 == resolveResult) {
+					ramStaticFieldRef = (J9RAMStaticFieldRef*)&_currentThread->floatTemp1;
+				}
+				valueOffset = ramStaticFieldRef->valueOffset;
+				flagsAndClass = ramStaticFieldRef->flagsAndClass;
 			}
-			if ((void*)-1 != resolveResult) {
-				goto retry;
-			}
-			ramStaticFieldRef = (J9RAMStaticFieldRef*)&_currentThread->floatTemp1;
-			valueOffset = ramStaticFieldRef->valueOffset;
-			flagsAndClass = ramStaticFieldRef->flagsAndClass;
 		}
 		/* Swap flags and class subfield order. */
 		classAndFlags = J9CLASSANDFLAGS_FROM_FLAGSANDCLASS(flagsAndClass);
@@ -6412,30 +6422,42 @@ done:
 	VMINLINE VM_BytecodeAction
 	putfield(REGISTER_ARGS_LIST)
 	{
-retry:
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 		U_16 index = *(U_16*)(_pc + 1);
 		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
 		J9RAMFieldRef *ramFieldRef = ((J9RAMFieldRef*)ramConstantPool) + index;
-		UDATA const flags = ramFieldRef->flags;
-		UDATA const valueOffset = ramFieldRef->valueOffset;
+		UDATA flags = ramFieldRef->flags;
+		UDATA valueOffset = ramFieldRef->valueOffset;
 
 		if (J9_UNEXPECTED(!VM_VMHelpers::instanceFieldRefIsResolved(flags, valueOffset, true))) {
-			/* Unresolved */
-			J9Method *method = _literals;
-			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
-			updateVMStruct(REGISTER_ARGS);
-			resolveInstanceFieldRef(_currentThread, method, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_FIELD_SETTER, NULL);
-			VMStructHasBeenUpdated(REGISTER_ARGS);
-			restoreGenericSpecialStackFrame(REGISTER_ARGS);
-			if (immediateAsyncPending()) {
-				rc = GOTO_ASYNC_CHECK;
-				goto done;
-			} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
-				rc = GOTO_THROW_CURRENT_EXCEPTION;
-				goto done;
+			/* The above test will fail if the ref has been resolved for put and the target
+			 * field is final. In this case, ensure that the current method is a constructor
+			 * if the class is enforcing the final field setting rules.
+			 *
+			 * If the check fails, run the resolve again to throw the exception.
+			 */
+			if (!J9_ARE_ALL_BITS_SET(flags, J9FieldFlagPutResolved | J9AccFinal)
+				|| (VM_VMHelpers::romClassChecksFinalStores(ramConstantPool->ramClass->romClass)
+					&& !VM_VMHelpers::romMethodIsInitializer(J9_ROM_METHOD_FROM_RAM_METHOD(_literals), true)
+				   )
+			) {
+				/* Unresolved */
+				J9Method *method = _literals;
+				buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
+				updateVMStruct(REGISTER_ARGS);
+				resolveInstanceFieldRef(_currentThread, method, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_FIELD_SETTER, NULL);
+				VMStructHasBeenUpdated(REGISTER_ARGS);
+				restoreGenericSpecialStackFrame(REGISTER_ARGS);
+				if (immediateAsyncPending()) {
+					rc = GOTO_ASYNC_CHECK;
+					goto done;
+				} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
+					rc = GOTO_THROW_CURRENT_EXCEPTION;
+					goto done;
+				}
+				flags = ramFieldRef->flags;
+				valueOffset = ramFieldRef->valueOffset;
 			}
-			goto retry;
 		}
 #if defined(DO_HOOKS)
 		if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_PUT_FIELD)) {
@@ -8058,16 +8080,149 @@ done:
 	VMINLINE VM_BytecodeAction
 	defaultvalue(REGISTER_ARGS_LIST)
 	{
+retry:
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-		// TODO: Implement bytecode
+		const U_16 index = *(U_16*)(_pc + 1);
+		J9ConstantPool * const ramConstantPool = J9_CP_FROM_METHOD(_literals);
+		J9RAMClassRef * const ramCPEntry = ((J9RAMClassRef*)ramConstantPool) + index;
+		J9Class * volatile resolvedClass = ramCPEntry->value;
+
+		if ((NULL != resolvedClass) && J9_IS_J9CLASS_VALUETYPE(resolvedClass) && !VM_VMHelpers::classRequiresInitialization(_currentThread, resolvedClass)) {
+			j9object_t instance = _objectAllocate.inlineAllocateObject(_currentThread, resolvedClass);
+			if (NULL == instance) {
+				updateVMStruct(REGISTER_ARGS);
+				instance = _vm->memoryManagerFunctions->J9AllocateObject(_currentThread, resolvedClass, J9_GC_ALLOCATE_OBJECT_INSTRUMENTABLE);
+				VMStructHasBeenUpdated(REGISTER_ARGS);
+				if (J9_UNEXPECTED(NULL == instance)) {
+					rc = THROW_HEAP_OOM;
+					goto done;
+				}
+			}
+			_pc += 3;
+			*(j9object_t*)--_sp = instance;
+
+			goto done;
+		}
+
+		buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
+		updateVMStruct(REGISTER_ARGS);
+
+		if (NULL == resolvedClass) {
+			resolveClassRef(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_INIT_CLASS | J9_RESOLVE_FLAG_INSTANTIABLE);
+		} else if (!J9_IS_J9CLASS_VALUETYPE(resolvedClass)) {
+			J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(resolvedClass->romClass);
+			setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_CLASSREF_MUST_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
+		} else if (VM_VMHelpers::classRequiresInitialization(_currentThread, resolvedClass)) {
+			initializeClass(_currentThread, resolvedClass);
+		}
+
+		VMStructHasBeenUpdated(REGISTER_ARGS);
+
+		if (immediateAsyncPending()) {
+			rc = GOTO_ASYNC_CHECK;
+			goto done;
+		} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
+			rc = GOTO_THROW_CURRENT_EXCEPTION;
+			goto done;
+		}
+
+		restoreGenericSpecialStackFrame(REGISTER_ARGS);
+
+		goto retry;
+done:
 		return rc;
 	}
 
 	VMINLINE VM_BytecodeAction
 	withfield(REGISTER_ARGS_LIST)
 	{
+retry:
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-		// TODO: Implement bytecode
+		U_16 const index = *(U_16 *)(_pc + 1);
+		J9ConstantPool * const ramConstantPool = J9_CP_FROM_METHOD(_literals);
+		J9RAMFieldRef * const ramFieldRef = ((J9RAMFieldRef *)ramConstantPool) + index;
+		UDATA const flags = ramFieldRef->flags;
+		UDATA const valueOffset = ramFieldRef->valueOffset;
+		j9object_t copyObjectRef = NULL;
+
+		/* In a resolved field, flags will have the J9FieldFlagResolved bit set, thus
+		 * having a higher value than any valid valueOffset.
+		 *
+		 * This check avoids the need for a barrier, as it will only succeed if flags
+		 * and valueOffset have both been updated. It is crucial that we do not treat
+		 * a field ref as resolved if only one of the two values has been set (by
+		 * another thread that is in the middle of a resolve).
+		 */
+		if (J9_UNEXPECTED((flags <= valueOffset) || J9_ARE_NO_BITS_SET(flags, J9FieldFlagPutResolved))) {
+			/* Field is unresolved */
+			J9Method *method = _literals;
+			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
+			updateVMStruct(REGISTER_ARGS);
+			resolveInstanceFieldRef(_currentThread, method, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_FIELD_SETTER | J9_RESOLVE_FLAG_WITH_FIELD, NULL);
+			VMStructHasBeenUpdated(REGISTER_ARGS);
+			if (immediateAsyncPending()) {
+				rc = GOTO_ASYNC_CHECK;
+				goto done;
+			} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
+				rc = GOTO_THROW_CURRENT_EXCEPTION;
+				goto done;
+			}
+			restoreGenericSpecialStackFrame(REGISTER_ARGS);
+			goto retry;
+		}
+		{
+			j9object_t originalObjectRef = *(j9object_t *)(_sp + (J9_ARE_ALL_BITS_SET(flags, J9FieldSizeDouble) ? 2 : 1));
+			J9Class *objectRefClass = NULL;
+
+			if (NULL == originalObjectRef) {
+				rc = THROW_NPE;
+				goto done;
+			}
+
+			objectRefClass = J9OBJECT_CLAZZ(_currentThread, originalObjectRef);
+
+			if (!J9_IS_J9CLASS_VALUETYPE(objectRefClass)) {
+				J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(objectRefClass->romClass);
+				setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_MUST_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
+				rc = GOTO_THROW_CURRENT_EXCEPTION;
+				goto done;
+			}
+
+			copyObjectRef = _objectAllocate.inlineAllocateObject(_currentThread, objectRefClass, false, false);
+			if (NULL == copyObjectRef) {
+				buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
+				pushObjectInSpecialFrame(REGISTER_ARGS, originalObjectRef);
+				updateVMStruct(REGISTER_ARGS);
+				copyObjectRef = _vm->memoryManagerFunctions->J9AllocateObject(_currentThread, objectRefClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+				VMStructHasBeenUpdated(REGISTER_ARGS);
+				originalObjectRef = popObjectInSpecialFrame(REGISTER_ARGS);
+				if (J9_UNEXPECTED(NULL == copyObjectRef)) {
+					rc = THROW_HEAP_OOM;
+					goto done;
+				}
+				objectRefClass = VM_VMHelpers::currentClass(objectRefClass);
+			}
+			_objectAccessBarrier.cloneObject(_currentThread, originalObjectRef, copyObjectRef, objectRefClass);
+		}
+		{
+			bool const isVolatile = (0 != (flags & J9AccVolatile));
+			UDATA const newValueOffset = valueOffset + J9_OBJECT_HEADER_SIZE;
+
+			if (J9_ARE_ALL_BITS_SET(flags, J9FieldSizeDouble)) {
+				_objectAccessBarrier.inlineMixedObjectStoreU64(_currentThread, copyObjectRef, newValueOffset, *(U_64*)_sp, isVolatile);
+				_sp += 2;
+			} else if (J9_ARE_ALL_BITS_SET(flags, J9FieldFlagObject)) {
+				_objectAccessBarrier.inlineMixedObjectStoreObject(_currentThread, copyObjectRef, newValueOffset, *(j9object_t*)_sp, isVolatile);
+				_sp += 1;
+			} else {
+				_objectAccessBarrier.inlineMixedObjectStoreU32(_currentThread, copyObjectRef, newValueOffset, *(U_32*)_sp, isVolatile);
+				_sp += 1;
+			}
+		}
+
+		*(j9object_t *)_sp = copyObjectRef;
+		_pc += 3;
+done:
 		return rc;
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
@@ -8076,7 +8231,7 @@ protected:
 
 public:
 
-#if defined(J9VM_ARCH_X86) && defined(__GNUC__) && ((__GNUC__> 4) || (__GNUC__ == 4 && __GNUC_MINOR__ > 6))
+#if (defined(J9VM_ARCH_X86) || defined(S390)) && defined(__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ > 6)))
 	/*
 	 * This method can't be 'VMINLINE' because it declares local static data
 	 * triggering a warning with GCC compilers newer than 4.6.
@@ -8817,11 +8972,10 @@ dlt:
 	PERFORM_ACTION(performDLT(REGISTER_ARGS));
 
 runMethod: {
-	void *methodRunAddress = _sendMethod->methodRunAddress;
 #if defined(USE_COMPUTED_GOTO)
-	EXECUTE_SEND_TARGET(J9_BCLOOP_DECODE_SEND_TARGET(methodRunAddress));
+	EXECUTE_SEND_TARGET(J9_BCLOOP_DECODE_SEND_TARGET(_sendMethod->methodRunAddress));
 #else
-	switch(J9_BCLOOP_DECODE_SEND_TARGET(methodRunAddress)) {
+	switch(J9_BCLOOP_DECODE_SEND_TARGET(_sendMethod->methodRunAddress)) {
 #endif
 
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INITIAL_STATIC):

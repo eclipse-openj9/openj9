@@ -90,6 +90,7 @@ extern "C" {
    IDATA j9jit_testarossa(struct J9JITConfig *jitConfig, J9VMThread * context, J9Method * method, void *oldStartPC);
    IDATA j9jit_testarossa_err(struct J9JITConfig *jitConfig, J9VMThread * context, J9Method * method, void * oldStartPC, TR_CompilationErrorCode *compErrCode);
    IDATA retranslateWithPreparation(struct J9JITConfig * jitConfig, J9VMThread * vmThread, J9Method * method, void * oldStartPC, UDATA reason);
+   IDATA retranslateWithPreparationForMethodRedefinition(struct J9JITConfig * jitConfig, J9VMThread * vmThread, J9Method * method, void * oldStartPC);
    void* old_translateMethodHandle(J9VMThread *currentThread, j9object_t methodHandle);
    void* translateMethodHandle(J9VMThread *currentThread, j9object_t methodHandle, j9object_t arg, U_32 flags);
    void disableJit(J9JITConfig *jitConfig);

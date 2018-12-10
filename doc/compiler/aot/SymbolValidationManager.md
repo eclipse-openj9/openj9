@@ -166,7 +166,7 @@ with these IDs and the associated symbols.
 
 ## Benefits
 
-1. Makes explicit the providence of every symbol acquired by the compiler
+1. Makes explicit the provenance of every symbol acquired by the compiler
 2. Enables code paths previously disabled under AOT
 3. Allows relocations of classes/methods associated with cpIndex=-1
 4. Facilitates the enablement of Known Object Table under AOT

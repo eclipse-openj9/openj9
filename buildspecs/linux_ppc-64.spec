@@ -40,6 +40,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<property name="graph_commands.chroot" value=""/>
 		<property name="graph_commands.unix.remote_host" value=""/>
 		<property name="graph_datamines" value="commands.unix.datamine,site-ottawa.datamine,use.local.datamine"/>
+		<property name="graph_enable_gcc7_cmd" value="source {$buildinfo.fsroot.unixBin$}/platform/linux_ppc-64/set_gcc7_env &amp;&amp;"/>
 		<property name="graph_label.classlib" value="150"/>
 		<property name="graph_label.java5" value="j9vmxp6424"/>
 		<property name="graph_label.java6" value="pxp6460"/>
@@ -56,8 +57,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<property name="graph_req.arch1" value="arch:64bit"/>
 		<property name="graph_req.aux0" value=""/>
 		<property name="graph_req.aux1" value=""/>
-		<property name="graph_req.build" value="{$common.req.build.java9$}"/>
-		<property name="graph_req.build2" value="{$common.req.build.java8$}"/>
+		<property name="graph_req.build" value="build:java8sr5fp27+"/>
+		<property name="graph_req.build2" value="build:java8sr5fp27+"/>
 		<property name="graph_req.machine" value="{$machine_mapping.ppc64$}"/>
 		<property name="graph_req.machine.test" value="{$spec.property.graph_req.machine$}"/>
 		<property name="graph_req.os" value="{$machine_mapping.linux$}"/>
@@ -95,7 +96,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<property name="uma_make_cmd_cxx_exe_ld" value="$(CC)"/>
 		<property name="uma_make_cmd_dll_ld" value="$(CC)"/>
 		<property name="uma_make_cmd_exe_ld" value="$(CC)"/>
-		<property name="uma_make_cmd_ppc_gcc_cxx" value="gcc-4.6"/>
+		<property name="uma_make_cmd_ppc_gcc_cxx" value="gcc"/>
 		<property name="uma_make_cmd_ranlib" value="ranlib"/>
 		<property name="uma_processor" value="ppc,ppc64"/>
 		<property name="uma_type" value="unix,linux"/>

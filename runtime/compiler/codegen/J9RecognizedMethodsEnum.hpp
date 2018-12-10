@@ -913,11 +913,6 @@
    java_util_concurrent_ConcurrentHashMap_casTabAt,
    java_util_concurrent_ConcurrentHashMap_setTabAt,
 
-   // Transactional Memory
-   java_util_concurrent_ConcurrentHashMap_tmPut,
-   java_util_concurrent_ConcurrentHashMap_tmRemove,
-   java_util_concurrent_ConcurrentHashMap_tmEnabled,
-
    java_util_concurrent_ConcurrentHashMap_TreeBin_lockRoot,
    java_util_concurrent_ConcurrentHashMap_TreeBin_contendedLock,
    java_util_concurrent_ConcurrentHashMap_TreeBin_find,

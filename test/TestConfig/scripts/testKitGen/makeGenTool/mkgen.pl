@@ -61,7 +61,8 @@ sub runmkgen {
 		$testRoot = $output;
 	}
 
-	my $includeModesService = 1;
+	# temporarily turn off mode service, as it is out of sync
+	my $includeModesService = 0;
 	eval qq{require "modesService.pl"; 1;} or $includeModesService = 0;
 	my $serviceResponse;
 	if ($includeModesService) {
@@ -72,7 +73,7 @@ sub runmkgen {
 	}
 
 	if (!(($serviceResponse) && (%{$modes_hs}) && (%{$sp_hs}))) {
-		print "Cannot get data from modes service! Getting data from modes.xml and ottawa.csv...\n";
+#		print "Cannot get data from modes service! Getting data from modes.xml and ottawa.csv...\n";
 		require "parseFiles.pl";
 		my $data = getFileData($modesxml, $ottawacsv);
 		$modes_hs = $data->{'modes'};
@@ -131,7 +132,7 @@ sub generateOnDir {
 				$JCL_VERSION = "latest";
 			}
 			# temporarily exclude projects for CCM build (i.e., when JCL_VERSION is latest)
-			my $latestDisabledDir = "proxyFieldAccess dumpromtests jep178staticLinkingTest pltest Panama NativeTest";
+			my $latestDisabledDir = "proxyFieldAccess Panama";
 
 			# Temporarily exclude SVT_Modularity tests from integration build where we are still using b148 JCL level
 			my $currentDisableDir= "SVT_Modularity OpenJ9_Jsr_292_API";
@@ -251,7 +252,7 @@ sub parseXML {
 			my $variations = getElementByTag( $testlines, 'variations' );
 			my $variation = getElementsByTag( $testlines, 'variation' );
 			if ( !@{$variation} ) {
-				$variation = [''];
+				$variation = ['NoOptions'];
 			}
 			$test{'variation'} = $variation;
 
@@ -411,9 +412,9 @@ sub writeTargets {
 			print $fhOut "$name: TEST_RESROOT=$jvmtestroot\n";
 
 			if ($jvmoptions) {
-				print $fhOut "$name: JVM_OPTIONS=\$(RESERVED_OPTIONS) $jvmoptions \$(EXTRA_OPTIONS)\n";
+				print $fhOut "$name: JVM_OPTIONS?=\$(RESERVED_OPTIONS) $jvmoptions \$(EXTRA_OPTIONS)\n";
 			} else {
-				print $fhOut "$name: JVM_OPTIONS=\$(RESERVED_OPTIONS) \$(EXTRA_OPTIONS)\n";
+				print $fhOut "$name: JVM_OPTIONS?=\$(RESERVED_OPTIONS) \$(EXTRA_OPTIONS)\n";
 			}
 
 			my $levelStr = '';
@@ -442,12 +443,9 @@ sub writeTargets {
 				}
 			}
 
-			if ($jvmoptions) {
-				print $fhOut "$indent\@echo \"test with $var\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
-			}
-			else {
-				print $fhOut "$indent\@echo \"test with NoOptions\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
-			}
+			print $fhOut "$indent\@echo \"variation: $var\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
+			print $fhOut "$indent\@echo \"JVM_OPTIONS: \$(JVM_OPTIONS)\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
+
 			my $command = $test->{'command'};
 			$command =~ s/^\s+//;
 			$command =~ s/\s+$//;

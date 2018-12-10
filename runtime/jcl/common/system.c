@@ -398,7 +398,7 @@ jstring getEncoding(JNIEnv *env, jint encodingType)
 	char property[128];
 	jstring result = NULL;
 
-	switch(encodingType) {
+	switch (encodingType) {
 	case 0:		/* initialize the locale */
 		getPlatformFileEncoding(env, NULL, 0, encodingType);
 		break;
@@ -409,20 +409,26 @@ jstring getEncoding(JNIEnv *env, jint encodingType)
 #else
 		encoding = getPlatformFileEncoding(env, property, sizeof(property), encodingType);
 #endif /* defined(OSX) */
-#if defined(J9VM_JCL_SE11)
+#if JAVA_SPEC_VERSION >= 11
 		{
 			UDATA handle = 0;
+			J9JavaVM * const vm = ((J9VMThread*)env)->javaVM;
+			char dllPath[EsMaxPath];
+			UDATA written = 0;
 			PORT_ACCESS_FROM_ENV(env);
 			/* libjava.[so|dylib] is in the jdk/lib/ directory, one level up from the default/ & compressedrefs/ directories */
-			if (0 == j9sl_open_shared_library("../java", &handle, J9PORT_SLOPEN_DECORATE)) {
-				void (*nativeFuncAddrJNU)(JNIEnv *env, const char *str) = NULL;
+			written = j9str_printf(PORTLIB, dllPath, sizeof(dllPath), "%s/../java", vm->j2seRootDirectory);
+			/* Assert the number of characters written (not including the null) fit within the dllPath buffer */
+			Assert_JCL_true(written < (sizeof(dllPath) - 1));
+			if (0 == j9sl_open_shared_library(dllPath, &handle, J9PORT_SLOPEN_DECORATE)) {
+				void (JNICALL *nativeFuncAddrJNU)(JNIEnv *env, const char *str) = NULL;
 				if (0 == j9sl_lookup_name(handle, "InitializeEncoding", (UDATA*) &nativeFuncAddrJNU, "VLL")) {
 					/* invoke JCL native to initialize platform encoding explicitly */
 					nativeFuncAddrJNU(env, encoding);
 				}
 			}
 		}
-#endif /* defined(J9VM_JCL_SE11) */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 		break;
 
 	case 2:		/* file.encoding */

@@ -30,11 +30,6 @@ target_include_directories(jclse10_
 		../
 )
 
-target_compile_definitions(jclse10_
-	PRIVATE
-		J9VM_JCL_SE10
-)
-
 target_link_libraries(jclse10_
 	PRIVATE
 		j9vm_interface
@@ -64,7 +59,6 @@ target_link_libraries(jclse10_
 		j9vmi
 		sunvmi
 )
-
 
 install(
 	TARGETS jclse10_

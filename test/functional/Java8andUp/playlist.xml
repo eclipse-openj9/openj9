@@ -220,7 +220,8 @@
 
 	<test>
 		<testCaseName>TestAttachAPI_SE80</testCaseName>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Dcom.ibm.tools.attach.timeout=15000 \
@@ -358,7 +359,8 @@
 
 	<test>
 		<testCaseName>TestSunAttachClasses_SE80</testCaseName>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Dcom.ibm.tools.attach.timeout=15000 \
@@ -626,6 +628,53 @@
 	</test>
 
 	<test>
+		<testCaseName>gcPolicyNogcTest</testCaseName>
+		<variations>
+			<variation>-Xgcpolicy:nogc -Xms128m -Xmx1G -verbose:gc</variation>
+			<variation>-XX:+UseNoGC -Xms128m -Xmx1G</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames gcPolicyNogcTest \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		 </impls>
+	</test>
+	<test>
+		<testCaseName>gcPolicyNogcOOMTest</testCaseName>
+		<variations>
+			<variation>-Xgcpolicy:nogc -Xms128m -Xmx1G</variation>
+			<variation>-Xgcpolicy:nogc -Xms128m -Xmx1G -Xdump:none:events=systhrow,filter=java/lang/OutOfMemoryError</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames gcPolicyNogcOOMTest \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		 </impls>
+	</test>
+
+	<test>
 		<testCaseName>ContendedFieldsTests_80</testCaseName>
 		<variations>
 			<variation></variation>
@@ -641,6 +690,8 @@
 		-groups $(TEST_GROUP) \
 		-excludegroups $(DEFAULT_EXCLUDE); \
 		$(TEST_STATUS)</command>
+		<!-- temporarily disable this test on osx; https://github.com/eclipse/openj9/issues/3777 -->
+		<platformRequirements>^os.osx</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -669,6 +720,8 @@
 		-groups $(TEST_GROUP) \
 		-excludegroups $(DEFAULT_EXCLUDE); \
 		$(TEST_STATUS)</command>
+		<!-- temporarily disable this test on osx; https://github.com/eclipse/openj9/issues/3777 -->
+		<platformRequirements>^os.osx</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -1934,6 +1987,26 @@
 			<subset>10</subset>
 			<subset>11</subset>
 		</subsets>
+	</test>
+	
+	<test>
+		<testCaseName>testStringStreams</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames testStringStreams \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 	</test>
 	
 	<test>

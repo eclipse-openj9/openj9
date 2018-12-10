@@ -339,26 +339,6 @@ typedef struct jvmtiObjectRenameInfo {
     jlong newAutoTag;
 } jvmtiObjectRenameInfo;
 
-/**
- * Signature of callback function which may be provided to the jvmtiAutotaggedObjectAlloc callback.
- * This function is callback-safe and it has the same parameters as VMObjectAlloc, plus a pointer to userData.
- * 
- * JNIEnv - the JNI environment of the event (current) thread.
- * thread - thread allocating the object.
- * object - JNI local reference to the object that was allocated.
- * object_klass	- JNI local reference to the class of the object.
- * size	- size of the object (in bytes).
- * userData - pointer received in the jvmtiAutotaggedObjectAlloc callback
- */ 
-typedef void (JNICALL *jvmtiAutotaggedObjectAllocCallbackSafeFunction)(
-	jvmtiEnv *jvmti_env,
-	JNIEnv* jni_env,
-	jthread thread,
-	jobject object,
-	jclass object_klass,
-	jlong size,
-	void *userData);
-
 /*
  * Trace subscriber callback function. This function will be passed records containing trace
  * data as they are processed. This provides a mechanism for a user defined transport and is

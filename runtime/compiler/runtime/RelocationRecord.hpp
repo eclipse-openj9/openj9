@@ -572,7 +572,7 @@ class TR_RelocationRecord
 
       virtual bool isValidationRecord() { return false; }
 
-     
+
       static TR_RelocationRecord *create(TR_RelocationRecord *storage, TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, TR_RelocationRecordBinaryTemplate *recordPointer);
 
       virtual void clean(TR_RelocationTarget *reloTarget);
@@ -600,9 +600,20 @@ class TR_RelocationRecord
       void setEipRelative(TR_RelocationTarget *reloTarget);
       bool eipRelative(TR_RelocationTarget *reloTarget);
 
+      void setFlag(TR_RelocationTarget *reloTarget, uint8_t flag);
+      uint8_t flags(TR_RelocationTarget *reloTarget);
+
+      void setReloFlags(TR_RelocationTarget *reloTarget, uint8_t reloFlags);
+      uint8_t reloFlags(TR_RelocationTarget *reloTarget);
+
       TR_RelocationRuntime *_reloRuntime;
 
       virtual bool ignore(TR_RelocationRuntime *reloRuntime);
+
+      static uint32_t getSizeOfAOTRelocationHeader(TR_ExternalRelocationTargetKind k)
+         {
+         return _relocationRecordHeaderSizeTable[k];
+         }
 
    protected:
       OMR::RuntimeAssumption** getMetadataAssumptionList(J9JITExceptionTable *exceptionTable)
@@ -610,12 +621,6 @@ class TR_RelocationRecord
          return (OMR::RuntimeAssumption**)(&exceptionTable->runtimeAssumptionList);
          }
       uint8_t *computeHelperAddress(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *baseLocation);
-
-      void setFlag(TR_RelocationTarget *reloTarget, uint8_t flag);
-      uint8_t flags(TR_RelocationTarget *reloTarget);
-
-      void setReloFlags(TR_RelocationTarget *reloTarget, uint8_t reloFlags);
-      uint8_t reloFlags(TR_RelocationTarget *reloTarget);
 
       TR_RelocationRecordPrivateData *privateData()
          {
@@ -625,6 +630,8 @@ class TR_RelocationRecord
       TR_RelocationRecordBinaryTemplate *_record;
 
       TR_RelocationRecordPrivateData _privateData;
+
+      static uint32_t _relocationRecordHeaderSizeTable[TR_NumExternalRelocationKinds];
    };
 
 // No class that derives from TR_RelocationRecord should define any state: all state variables should be declared
@@ -1868,7 +1875,7 @@ class TR_RelocationRecordPointer : public TR_RelocationRecordWithInlinedSiteInde
    public:
       TR_RelocationRecordPointer() {}
       TR_RelocationRecordPointer(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordWithInlinedSiteIndex(reloRuntime, record) {}
- 
+
       virtual void print(TR_RelocationRuntime *reloRuntime);
 
       virtual int32_t bytesInHeaderAndPayload();

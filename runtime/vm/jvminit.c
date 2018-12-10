@@ -49,7 +49,6 @@
 #define stdout NULL
 #endif
 
-
 #if !defined(WIN32)
 /* Needed for JCL dependancy on JVM to set SIGPIPE to SIG_IGN */
 #include <signal.h>
@@ -1341,28 +1340,30 @@ _end:
 IDATA
 initializeClassPathEntry (J9JavaVM * javaVM, J9ClassPathEntry *cpEntry)
 {
-	I_32 rc = 0;
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
+	int32_t attr = 0;
 
 	/* If we know what it is, then go for it */
 	if (CPE_TYPE_UNKNOWN != cpEntry->type) {
-		return (IDATA) cpEntry->type;
+		return (IDATA)cpEntry->type;
 	}
 
 	/* clear the status field first if we have not init the CP entry */
 	cpEntry->status = 0;
 
 	/* Start guessing. Is it a directory? */
-	if( j9file_attr((char *) cpEntry->path)  == EsIsDir) {
+	attr = j9file_attr((char *)cpEntry->path);
+	if (EsIsDir == attr) {
 		cpEntry->type = CPE_TYPE_DIRECTORY;
 		return CPE_TYPE_DIRECTORY;
 	}
 
-	if (J2SE_VERSION(javaVM) >= J2SE_19) {
-		if (NULL != javaVM->jimageIntf) {
+	if ((EsIsFile == attr) && (J2SE_VERSION(javaVM) >= J2SE_19)) {
+		J9JImageIntf *jimageIntf = javaVM->jimageIntf;
+		if (NULL != jimageIntf) {
 			UDATA jimageHandle = 0;
+			I_32 rc = jimageIntf->jimageOpen(jimageIntf, (char *)cpEntry->path, &jimageHandle);
 
-			rc = javaVM->jimageIntf->jimageOpen(javaVM->jimageIntf, (char*)cpEntry->path, &jimageHandle);
 			if (J9JIMAGE_NO_ERROR == rc) {
 				cpEntry->type = CPE_TYPE_JIMAGE;
 				cpEntry->extraInfo = (void *)jimageHandle;
@@ -1374,16 +1375,18 @@ initializeClassPathEntry (J9JavaVM * javaVM, J9ClassPathEntry *cpEntry)
 	}
 
 #ifdef J9VM_OPT_ZIP_SUPPORT
-	{
-		VMI_ACCESS_FROM_JAVAVM((JavaVM*)javaVM);
-		VMIZipFunctionTable* zipFunctions = (*VMI)->GetZipFunctions(VMI);
+	if (EsIsFile == attr) {
+		VMI_ACCESS_FROM_JAVAVM((JavaVM *)javaVM);
+		VMIZipFunctionTable *zipFunctions = (*VMI)->GetZipFunctions(VMI);
 		VMIZipFile *zipFile = NULL;
 
 		cpEntry->extraInfo = NULL;
 		zipFile = j9mem_allocate_memory((UDATA) sizeof(*zipFile), J9MEM_CATEGORY_CLASSES);
 		if (NULL != zipFile) {
+			I_32 rc = 0;
+
 			memset(zipFile, 0, sizeof(*zipFile));
-			rc = zipFunctions->zip_openZipFile(VMI, (char *) cpEntry->path, zipFile, ZIP_FLAG_OPEN_CACHE | ZIP_FLAG_BOOTSTRAP);
+			rc = zipFunctions->zip_openZipFile(VMI, (char *)cpEntry->path, zipFile, ZIP_FLAG_OPEN_CACHE | ZIP_FLAG_BOOTSTRAP);
 
 			if (0 == rc) {
 				/* Save the zipFile */
@@ -1658,7 +1661,9 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				argIndex8 = FIND_AND_CONSUME_ARG(EXACT_MEMORY_MATCH, VMOPT_XSCMAXJITDATA, NULL);
 				argIndex9 = FIND_AND_CONSUME_ARG(EXACT_MEMORY_MATCH, VMOPT_XXSHARED_CACHE_HARD_LIMIT_EQUALS, NULL);
 
-				if (argIndex < 0) {
+				if ((!J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm))
+					&& (argIndex < 0)
+				) {
 					if (argIndex2>=0) {
 						/* If -Xscmx used without -Xshareclasses, don't bomb out with "unrecognised option" */
 						j9nls_printf(PORTLIB, J9NLS_INFO, J9NLS_VM_XSCMX_IGNORED);

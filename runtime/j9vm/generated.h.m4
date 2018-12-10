@@ -24,6 +24,8 @@ changequote(`[',`]')dnl
 #ifndef jvm_generated_h
 #define jvm_generated_h
 
+#include "j9cfg.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -34,7 +36,7 @@ extern "C" {
  * for Sun VM Interface (i.e. JVM_) functions.
  *
  * DO NOT ADD PROTOTYPES MANUALLY, instead modify the table in:
- * VM_Redirector/redirector/forwarders.m4
+ * redirector/forwarders.m4
  *
  * Generated prototypes for all forwarded functions, see
  * redirector/forwarders.m4 for source data.

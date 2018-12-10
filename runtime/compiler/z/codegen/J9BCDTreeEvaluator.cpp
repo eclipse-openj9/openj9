@@ -1505,7 +1505,7 @@ J9::Z::TreeEvaluator::zonedToPackedHelper(TR::Node *node, TR_PseudoRegister *tar
    processSign->setStartInternalControlFlow();
 
    // Load the sign byte of the Packed Decimal from memory
-   generateRXYInstruction(cg, TR::InstOpCode::LLC, node, signCode, generateS390LeftAlignedMemoryReference(*destMR, node, 0, cg, 1));
+   generateRXInstruction(cg, TR::InstOpCode::LLC, node, signCode, generateS390LeftAlignedMemoryReference(*destMR, node, 0, cg, 1));
 
    generateRRInstruction(cg, TR::InstOpCode::LR, node, signCode4Bit, signCode);
 
@@ -1650,7 +1650,7 @@ J9::Z::TreeEvaluator::pd2zdSignFixup(TR::Node *node,
    processSign->setStartInternalControlFlow();
 
    // Load the sign byte of the Zoned Decimal from memory
-   generateRXYInstruction(cg, TR::InstOpCode::LLC, node, signCode, generateS390LeftAlignedMemoryReference(*destMR, node, 0, cg, 1));
+   generateRXInstruction(cg, TR::InstOpCode::LLC, node, signCode, generateS390LeftAlignedMemoryReference(*destMR, node, 0, cg, 1));
 
    generateRRInstruction(cg, TR::InstOpCode::LR, node, signCode4Bit, signCode);
 
@@ -3033,27 +3033,27 @@ J9::Z::TreeEvaluator::pd2ddEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       switch (partialSize)
          {
          case 1:
-            generateRXYInstruction(cg, TR::InstOpCode::LLGC, srcNode, gpr64Partial, sourceMR);
+            generateRXInstruction(cg, TR::InstOpCode::LLGC, srcNode, gpr64Partial, sourceMR);
             break;
          case 2:
-            generateRXYInstruction(cg, TR::InstOpCode::LLGH, srcNode, gpr64Partial, sourceMR);
+            generateRXInstruction(cg, TR::InstOpCode::LLGH, srcNode, gpr64Partial, sourceMR);
             break;
          case 3:
             generateRRInstruction(cg, TR::InstOpCode::XGR, srcNode, gpr64Partial, gpr64Partial);
             generateRSInstruction(cg, TR::InstOpCode::ICM, srcNode, gpr64Partial, (uint32_t) 0x7, sourceMR);
             break;
          case 4:
-            generateRXYInstruction(cg, TR::InstOpCode::LLGF, srcNode, gpr64Partial, sourceMR);
+            generateRXInstruction(cg, TR::InstOpCode::LLGF, srcNode, gpr64Partial, sourceMR);
             break;
          case 5:
          case 6:
          case 7:
             generateRRInstruction(cg, TR::InstOpCode::XGR, srcNode, gpr64Partial, gpr64Partial);
-            generateRSYInstruction(cg, TR::InstOpCode::ICMH, node, gpr64Partial, (uint32_t)((1 << (partialSize-4)) - 1), sourceMR);  // 5->mask=1, 6->mask=3, 7->mask=7
-            generateRXYInstruction(cg, TR::InstOpCode::L, srcNode, gpr64Partial, generateS390LeftAlignedMemoryReference(*sourceMR, srcNode, partialSize-4, cg, sourceMR->getLeftMostByte(), enforceSSLimits));
+            generateRSInstruction(cg, TR::InstOpCode::ICMH, node, gpr64Partial, (uint32_t)((1 << (partialSize-4)) - 1), sourceMR);  // 5->mask=1, 6->mask=3, 7->mask=7
+            generateRXInstruction(cg, TR::InstOpCode::L, srcNode, gpr64Partial, generateS390LeftAlignedMemoryReference(*sourceMR, srcNode, partialSize-4, cg, sourceMR->getLeftMostByte(), enforceSSLimits));
             break;
          case 8:
-            generateRXYInstruction(cg, TR::InstOpCode::LG, srcNode, gpr64Partial, sourceMR);
+            generateRXInstruction(cg, TR::InstOpCode::LG, srcNode, gpr64Partial, sourceMR);
             break;
          default:
             TR_ASSERT(false,"unexpected partialSize %d\n",partialSize);
@@ -3062,7 +3062,7 @@ J9::Z::TreeEvaluator::pd2ddEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       if (isLongDouble)
          {
          if (srcRegSize > 8)
-            generateRXYInstruction(cg, TR::InstOpCode::LG, srcNode, gpr64Lo, generateS390LeftAlignedMemoryReference(*sourceMR, srcNode, partialSize, cg, sourceMR->getLeftMostByte(), enforceSSLimits));
+            generateRXInstruction(cg, TR::InstOpCode::LG, srcNode, gpr64Lo, generateS390LeftAlignedMemoryReference(*sourceMR, srcNode, partialSize, cg, sourceMR->getLeftMostByte(), enforceSSLimits));
          else
             generateRRInstruction(cg, TR::InstOpCode::XGR, srcNode, gpr64Hi, gpr64Hi);
          }
@@ -3620,7 +3620,7 @@ J9::Z::TreeEvaluator::df2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
          case 5:
          case 6:
          case 7:
-            generateRSYInstruction(cg, TR::InstOpCode::STCMH, node, gpr64Partial, (uint32_t)((1 << (partialSize-4)) - 1), destMR);
+            generateRSInstruction(cg, TR::InstOpCode::STCMH, node, gpr64Partial, (uint32_t)((1 << (partialSize-4)) - 1), destMR);
             generateRXInstruction(cg, TR::InstOpCode::ST, node, gpr64Partial, generateS390LeftAlignedMemoryReference(*destMR, node, partialSize-4, cg, destMR->getLeftMostByte(), enforceSSLimits));
             break;
          case 8:
@@ -3631,7 +3631,7 @@ J9::Z::TreeEvaluator::df2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
          }
 
       if (isLongDouble && remainingTargetBytes > 8)
-         generateRXYInstruction(cg, TR::InstOpCode::STG, node, gpr64Lo, generateS390LeftAlignedMemoryReference(*destMR, node, partialSize, cg, destMR->getLeftMostByte(), enforceSSLimits));
+         generateRXInstruction(cg, TR::InstOpCode::STG, node, gpr64Lo, generateS390LeftAlignedMemoryReference(*destMR, node, partialSize, cg, destMR->getLeftMostByte(), enforceSSLimits));
 
       if (deps)
          generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, generateLabelSymbol(cg), deps);
@@ -3917,7 +3917,7 @@ J9::Z::TreeEvaluator::pd2lVariableEvaluator(TR::Node* node, TR::CodeGenerator* c
          }
       else
          {
-         generateRXYInstruction(cg, TR::InstOpCode::CVBG, node, returnReg, generateS390MemoryReference(*ZAPtargetMR, 0, cg));
+         generateRXInstruction(cg, TR::InstOpCode::CVBG, node, returnReg, generateS390MemoryReference(*ZAPtargetMR, 0, cg));
          }
 
       tempSR->setTemporaryReferenceCount(0);
@@ -4032,7 +4032,7 @@ J9::Z::TreeEvaluator::generatePackedToBinaryConversion(TR::Node * node, TR::Inst
    if (op == TR::InstOpCode::CVB)
       inst = generateRXInstruction(cg, op, node, targetReg, sourceMR);
    else
-      inst = generateRXYInstruction(cg, op, node, targetReg, sourceMR);
+      inst = generateRXInstruction(cg, op, node, targetReg, sourceMR);
 
    if (sourceMR->getStorageReference() == firstStorageReference)
       firstReg->setHasKnownValidSignAndData();
@@ -4139,10 +4139,7 @@ J9::Z::TreeEvaluator::generateBinaryToPackedConversion(TR::Node * node,
       firstReg = tempReg;
       }
 
-   if (isI2PD)
-      generateRXInstruction(cg, op, node, firstReg, targetMR);
-   else
-      generateRXYInstruction(cg, op, node, firstReg, targetMR);
+   generateRXInstruction(cg, op, node, firstReg, targetMR);
 
    targetReg->setIsInitialized();
 

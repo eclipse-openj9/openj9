@@ -53,6 +53,7 @@ RUN apt-get update \
     g++-7 \
     gcc-4.8 \
     gcc-7 \
+    gdb \
     git \
     git-core \
     libasound2-dev \
@@ -96,7 +97,9 @@ RUN useradd -ms /bin/bash ${USER} \
 COPY authorized_keys /home/${USER}/.ssh/authorized_keys
 COPY known_hosts /home/${USER}/.ssh/known_hosts
 RUN chown -R ${USER}:${USER} /home/${USER} \
-  && chmod 644 /home/${USER}/.ssh/authorized_keys
+  && chmod 644 /home/${USER}/.ssh/authorized_keys \
+  && chmod 644 /home/${USER}/.ssh/known_hosts \
+  && chmod 700 /home/${USER}/.ssh
 
 # Download and setup freemarker.jar to /home/USER/freemarker.jar
 RUN cd /home/${USER} \
@@ -104,32 +107,25 @@ RUN cd /home/${USER} \
   && tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2 \
   && rm -f freemarker.tgz
 
-# Download and install boot JDK from AdoptOpenJDK for java 8 and 9
+# Download and install boot JDK from AdoptOpenJDK for java 8
 RUN mkdir -p /usr/lib/jvm/adoptojdk-java-80 \
   && cd /usr/lib/jvm/adoptojdk-java-80 \
-  && wget -O bootjdk8.tar.gz https://api.adoptopenjdk.net/openjdk8-openj9/releases/s390x_linux/latest/binary \
+  && wget -O bootjdk8.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk8?openjdk_impl=openj9&os=linux&arch=s390x&release=latest&type=jdk" \
   && tar -xzf bootjdk8.tar.gz \
   && rm -f bootjdk8.tar.gz \
   && mv $(ls | grep -i jdk8) bootjdk8 \
-  && mv bootjdk8/* /usr/lib/jvm/adoptojdk-java-80
+  && mv bootjdk8/* /usr/lib/jvm/adoptojdk-java-80 \
+  && rm -rf bootjdk8
 
-# Download and install boot JDK from AdoptOpenJDK for java 10
-RUN mkdir -p /usr/lib/jvm/adoptojdk-java-90 \
-  && cd /usr/lib/jvm/adoptojdk-java-90 \
-  && wget -O bootjdk9.tar.gz https://api.adoptopenjdk.net/openjdk9-openj9/releases/s390x_linux/latest/binary \
-  && tar -xzf bootjdk9.tar.gz \
-  && rm -f bootjdk9.tar.gz \
-  && mv $(ls | grep -i jdk-9) bootjdk9 \
-  && mv bootjdk9/* /usr/lib/jvm/adoptojdk-java-90
-
-# Download and install boot JDK from AdoptOpenJDK for java 11
-RUN mkdir -p /usr/lib/jvm/adoptojdk-java-10 \
-  && cd /usr/lib/jvm/adoptojdk-java-10 \
-  && wget -O bootjdk10.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk10?openjdk_impl=openj9&os=linux&arch=s390x&release=latest&type=jdk" \
-  && tar -xzf bootjdk10.tar.gz \
-  && rm -f bootjdk10.tar.gz \
-  && mv $(ls | grep -i jdk-10) bootjdk10 \
-  && mv bootjdk10/* /usr/lib/jvm/adoptojdk-java-10
+# Download and install boot JDK from AdoptOpenJDK for java 11 and 12
+RUN mkdir -p /usr/lib/jvm/adoptojdk-java-11 \
+  && cd /usr/lib/jvm/adoptojdk-java-11 \
+  && wget -O bootjdk11.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk11?openjdk_impl=openj9&os=linux&arch=s390x&release=latest&type=jdk" \
+  && tar -xzf bootjdk11.tar.gz \
+  && rm -f bootjdk11.tar.gz \
+  && mv $(ls | grep -i jdk-11) bootjdk11 \
+  && mv bootjdk11/* /usr/lib/jvm/adoptojdk-java-11 \
+  && rm -rf bootjdk11
 
 # Set up sshd config
 RUN mkdir /var/run/sshd \
@@ -145,8 +141,6 @@ RUN mkdir /home/${USER}/openjdk_cache \
   && cd /home/${USER}/openjdk_cache \
   && git init --bare \
   && git remote add jdk8 https://github.com/ibmruntimes/openj9-openjdk-jdk8.git \
-  && git remote add jdk9 https://github.com/ibmruntimes/openj9-openjdk-jdk9.git \
-  && git remote add jdk10 https://github.com/ibmruntimes/openj9-openjdk-jdk10.git \
   && git remote add jdk11 https://github.com/ibmruntimes/openj9-openjdk-jdk11.git \
   && git remote add jdk https://github.com/ibmruntimes/openj9-openjdk-jdk.git \
   && git remote add openj9 https://github.com/eclipse/openj9.git \

@@ -61,28 +61,41 @@ def get_sources_with_authentication() {
 }
 
 def get_sources() {
-    // use credentials ID for all platforms except zOS
-    // for zOS use ssh key
+    // Temp workaround for Windows clones
+    // See #3633 and JENKINS-54612
+    if (NODE_LABELS.contains("windows")) {
+        cleanWs()
+        CLONE_CMD = "git clone --reference ${OPENJDK_REFERENCE_REPO} -b ${OPENJDK_BRANCH} ${OPENJDK_REPO} ."
+        if (USER_CREDENTIALS_ID != '') {
+            sshagent(credentials:["${USER_CREDENTIALS_ID}"]) {
+                sh "${CLONE_CMD}"
+            }
+        } else {
+            sh "${CLONE_CMD}"
+        }
+    } else {
+        // use credentials ID for all platforms except zOS
+        // for zOS use ssh key
+        def remote_config_parameters = [url: "${OPENJDK_REPO}"]
+        if (!SPEC.startsWith('zos') && USER_CREDENTIALS_ID) {
+            remote_config_parameters.put('credentialsId', "${USER_CREDENTIALS_ID}")
+        }
 
-    def remote_config_parameters = [url: "${OPENJDK_REPO}"]
-    if (!SPEC.startsWith('zos') && USER_CREDENTIALS_ID) {
-        remote_config_parameters.put('credentialsId', "${USER_CREDENTIALS_ID}")
+        checkout changelog: false,
+                poll: false,
+                scm: [$class: 'GitSCM',
+                    branches: [[name: "${OPENJDK_BRANCH}"]],
+                    doGenerateSubmoduleConfigurations: false,
+                    extensions: [[$class: 'CheckoutOption', timeout: 30],
+                                [$class: 'CloneOption',
+                                    depth: 0,
+                                    noTags: false,
+                                    reference: "${OPENJDK_REFERENCE_REPO}",
+                                    shallow: false,
+                                    timeout: 30]],
+                    submoduleCfg: [],
+                    userRemoteConfigs: [remote_config_parameters]]
     }
-
-    checkout changelog: false,
-            poll: false,
-            scm: [$class: 'GitSCM',
-                branches: [[name: "${OPENJDK_BRANCH}"]],
-                doGenerateSubmoduleConfigurations: false,
-                extensions: [[$class: 'CheckoutOption', timeout: 30],
-                            [$class: 'CloneOption',
-                                depth: 0,
-                                noTags: false,
-                                reference: "${OPENJDK_REFERENCE_REPO}",
-                                shallow: false,
-                                timeout: 30]],
-                submoduleCfg: [],
-                userRemoteConfigs: [remote_config_parameters]]
 
     // Check if this build is a PR
     if (params.ghprbGhRepository) {

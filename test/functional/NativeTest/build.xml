@@ -37,14 +37,9 @@
 	</target>
 
 	<target name="build" depends="dist">
-		<if>
-			<not><equals arg1="${JCL_VERSION}" arg2="latest"/></not>
-			<then>
-				<subant target="">
-					<fileset dir="." includes="*/build.xml" />
-				</subant>
-			</then>
-		</if>
+		<subant target="">
+			<fileset dir="." includes="*/build.xml" />
+		</subant>
 	</target>
 
 	<target name="dist" depends="init,dist_functional">

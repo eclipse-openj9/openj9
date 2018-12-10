@@ -866,7 +866,18 @@ public final class MethodType implements Serializable {
 	public int parameterCount(){
 		return arguments.length;
 	}
-	
+
+/*[IF Java12]*/
+	/**
+	 * Method to return array of arguments
+	 *
+	 * @return array of arguments
+	 */
+	Class<?>[] ptypes() {
+		return arguments;
+	}
+/*[ENDIF]*/
+
 	/**
 	 * Helper method to return the parameter types in a List.
 	 * <br>  
@@ -1200,6 +1211,12 @@ public final class MethodType implements Serializable {
 		return invoker;
 	}
 	
+/*[IF Java12]*/
+	static MethodType makeImpl(Class<?> rtype, Class<?>[] ptypes, boolean arg) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+/*[ENDIF]*/
+
 /*[IF Sidecar18-SE-OpenJ9]*/	
 	MethodType basicType() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();

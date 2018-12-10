@@ -34,7 +34,7 @@
 #include "pcstack.h"
 #include "ut_j9codertvm.h"
 #include "jitregmap.h"
-#include "bcsizes.h"
+#include "pcstack.h"
 #include "VMHelpers.hpp"
 
 extern "C" {
@@ -1228,13 +1228,11 @@ c_jitDecompileAtExceptionCatch(J9VMThread * currentThread)
 	 * decomp record is the start address of the compiled exception handler.
 	 */
 	jitGetMapsFromPC(vm, metaData, (UDATA)jitPC + 1, &stackMap, &inlineMap);
-	Assert_CodertVM_false(NULL == stackMap);
+	Assert_CodertVM_false(NULL == inlineMap);
 	if (NULL != getJitInlinedCallInfo(metaData)) {
-		if (NULL != inlineMap) {
-			inlinedCallSite = getFirstInlinedCallSite(metaData, inlineMap);
-			if (inlinedCallSite != NULL) {
-				newNumberOfFrames = getJitInlineDepthFromCallSite(metaData, inlinedCallSite) + 1;
-			}
+		inlinedCallSite = getFirstInlinedCallSite(metaData, inlineMap);
+		if (inlinedCallSite != NULL) {
+			newNumberOfFrames = getJitInlineDepthFromCallSite(metaData, inlinedCallSite) + 1;
 		}
 	}
 	Assert_CodertVM_true(numberOfFrames >= newNumberOfFrames);
@@ -1255,7 +1253,7 @@ c_jitDecompileAtExceptionCatch(J9VMThread * currentThread)
 	/* Fix the OSR frame to resume at the catch point with an empty pending stack (the caught exception
 	 * is pushed after decompilation completes).
 	 */
-	osrFrame->bytecodePCOffset = getCurrentByteCodeIndexAndIsSameReceiver(metaData, stackMap, inlinedCallSite, NULL);
+	osrFrame->bytecodePCOffset = getCurrentByteCodeIndexAndIsSameReceiver(metaData, inlineMap, inlinedCallSite, NULL);
 	Trc_Decomp_jitInterpreterPCFromWalkState_Entry(jitPC);
 	Trc_Decomp_jitInterpreterPCFromWalkState_exHandler(osrFrame->bytecodePCOffset);
 	osrFrame->pendingStackHeight = 0;
@@ -1765,6 +1763,20 @@ UDATA
 osrFrameSize(J9Method *method)
 {
 	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+	return osrFrameSizeRomMethod(romMethod);
+}
+
+
+/**
+ * Compute the number of bytes required for a single OSR frame.
+ *
+ * @param[in] *romMethod the J9ROMMethod for which to compute the OSR frame size
+ *
+ * @return byte size of the OSR frame
+ */
+UDATA
+osrFrameSizeRomMethod(J9ROMMethod *romMethod)
+{
 	U_32 numberOfLocals = J9_ARG_COUNT_FROM_ROM_METHOD(romMethod) + J9_TEMP_COUNT_FROM_ROM_METHOD(romMethod);
 	U_32 maxStack = J9_MAX_STACK_FROM_ROM_METHOD(romMethod);
 
@@ -2330,7 +2342,7 @@ c_jitDecompileAfterAllocation(J9VMThread *currentThread)
 	UDATA *sp = currentThread->sp - 1;
 	*(j9object_t*)sp = obj;
 	currentThread->sp = sp;
-	currentThread->pc += (JavaByteCodeRelocation[*currentThread->pc] & 0x7);
+	currentThread->pc += (J9JavaInstructionSizeAndBranchActionTable[*currentThread->pc] & 0x7);
 	dumpStack(currentThread, "after jitDecompileAfterAllocation");
 	currentThread->tempSlot = (UDATA)J9_BUILDER_SYMBOL(executeCurrentBytecodeFromJIT);
 }

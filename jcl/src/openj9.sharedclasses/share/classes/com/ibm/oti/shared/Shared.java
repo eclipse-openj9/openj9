@@ -2,7 +2,7 @@
 package com.ibm.oti.shared;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,7 @@ public class Shared {
 	private static Object monitor;
 	private static SharedClassHelperFactory shcHelperFactory;
 	private static SharedDataHelperFactory shdHelperFactory;
-	private static boolean sharingEnabled;
+	private static boolean nonBootSharingEnabled;
 
 	/*[PR 122459] LIR646 - Remove use of generic object for synchronization */
 	private static final class Monitor {
@@ -44,10 +44,11 @@ public class Shared {
 
 	static {
 		monitor = new Monitor();
-		sharingEnabled = isSharingEnabledImpl();
+		/* Bootstrap class sharing is enabled by default in OpenJ9 Java 11 and up */
+		nonBootSharingEnabled = isNonBootSharingEnabledImpl();
 	}
 	
-	private static native boolean isSharingEnabledImpl();
+	private static native boolean isNonBootSharingEnabledImpl();
 
 	/**
 	 * Checks if sharing is enabled for this JVM.
@@ -55,7 +56,7 @@ public class Shared {
 	 * @return true if using -Xshareclasses on the command-line, false otherwise.
 	 */
 	public static boolean isSharingEnabled() {
-		return sharingEnabled;
+		return nonBootSharingEnabled;
 	}
 
 	/**

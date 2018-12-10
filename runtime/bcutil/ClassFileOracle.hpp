@@ -1073,6 +1073,11 @@ private:
 	VMINLINE void markClassAsUsedByANewArray(U_16 classCPIndex);
 	VMINLINE void markClassAsUsedByNew(U_16 classCPIndex);
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	VMINLINE void markClassAsUsedByDefaultValue(U_16 classCPIndex);
+	VMINLINE void markFieldRefAsUsedByWithField(U_16 fieldRefCPIndex);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 	VMINLINE void markInvokeDynamicInfoAsUsedByInvokeDynamic(U_16 cpIndex);
 
 	VMINLINE void markFieldRefAsUsedByGetStatic(U_16 fieldRefCPIndex);

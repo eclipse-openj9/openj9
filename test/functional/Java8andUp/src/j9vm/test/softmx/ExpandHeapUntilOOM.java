@@ -23,13 +23,9 @@
 package j9vm.test.softmx;
 
 import org.testng.annotations.Test;
-import org.testng.log4testng.Logger;
 
 @Test(groups = { "level.extended" })
 public class ExpandHeapUntilOOM {
-
-	private static final Logger logger = Logger.getLogger(ExpandHeapUntilOOM.class);
-
 	/**
 	 * maximum size we can force the heap size up to in MB
 	 */
@@ -44,13 +40,12 @@ public class ExpandHeapUntilOOM {
 		Object[] myObjects = new Object[MAX_OBJECTS];
 
 		// stop when we get an OOM
-		logger.debug("Starting Object allocation, we are intentionally going to force an OOM");
 		for (int i=0; i< MAX_OBJECTS; i++){
 			try {
 				myObjects[i] = new byte[OBJECT_SIZE];
 			} catch (OutOfMemoryError e){
 				// at this point we stop
-				logger.debug("Expected OOM at object allocation:" + i);
+				// avoid object allocation here
 				break;
 			}
 		}

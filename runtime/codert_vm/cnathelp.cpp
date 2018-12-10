@@ -1430,7 +1430,6 @@ static VMINLINE void*
 old_slow_jitResolveFieldImpl(J9VMThread *currentThread, UDATA parmCount, J9ConstantPool *ramConstantPool, UDATA cpIndex, void *jitEIP, bool isSetter, bool direct)
 {
 	void *addr = NULL;
-retry:
 	J9RAMFieldRef *ramFieldRef = (J9RAMFieldRef*)ramConstantPool + cpIndex;
 	UDATA valueOffset = ramFieldRef->valueOffset;
 	UDATA flags = ramFieldRef->flags;
@@ -1454,7 +1453,7 @@ retry:
 		if (NULL != addr) {
 			goto done;
 		}
-		goto retry;
+		valueOffset = ramFieldRef->valueOffset;
 	}
 	valueOffset += J9_OBJECT_HEADER_SIZE;
 	JIT_RETURN_UDATA(valueOffset);
@@ -1661,8 +1660,7 @@ old_slow_jitResolveSpecialMethod(J9VMThread *currentThread)
 	/* If cpIndex has the J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG bit set, it is an index into split table, otherwise it is an index in constant pool */
 	if (J9_ARE_ANY_BITS_SET(cpIndex, J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG)) {
 		method = currentThread->javaVM->internalVMFunctions->resolveSpecialSplitMethodRef(currentThread, ramConstantPool, cpIndex & J9_SPLIT_TABLE_INDEX_MASK, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
-	} else
-	{
+	} else {
 		method = currentThread->javaVM->internalVMFunctions->resolveSpecialMethodRef(currentThread, ramConstantPool, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
 	}
 	void *addr = restoreJITResolveFrame(currentThread, jitEIP);
@@ -1684,10 +1682,9 @@ old_slow_jitResolveStaticMethod(J9VMThread *currentThread)
 	buildJITResolveFrameWithPC(currentThread, J9_SSF_JIT_RESOLVE_STATIC_METHOD, parmCount, true, 0, jitEIP);
 	/* If cpIndex has the J9_STATIC_SPLIT_TABLE_INDEX_FLAG bit set, it is an index into split table, otherwise it is an index in constant pool */
 	if (J9_ARE_ANY_BITS_SET(cpIndex, J9_STATIC_SPLIT_TABLE_INDEX_FLAG)) {
-		method = (UDATA)currentThread->javaVM->internalVMFunctions->resolveStaticSplitMethodRef(currentThread, ramConstantPool, cpIndex & J9_SPLIT_TABLE_INDEX_MASK, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
-	} else
-	{
-		method = (UDATA)currentThread->javaVM->internalVMFunctions->resolveStaticMethodRef(currentThread, ramConstantPool, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
+		method = (UDATA)currentThread->javaVM->internalVMFunctions->resolveStaticSplitMethodRef(currentThread, ramConstantPool, cpIndex & J9_SPLIT_TABLE_INDEX_MASK, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_CHECK_CLINIT);
+	} else {
+		method = (UDATA)currentThread->javaVM->internalVMFunctions->resolveStaticMethodRef(currentThread, ramConstantPool, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_CHECK_CLINIT);
 	}
 	if ((UDATA)-1 == method) {
 		/* fetch result from floatTemp - stashed there in clinit case */
@@ -2407,11 +2404,9 @@ old_fast_jitObjectHashCode(J9VMThread *currentThread)
 	JIT_RETURN_UDATA((IDATA)vm->memoryManagerFunctions->j9gc_objaccess_getObjectHashCode(vm, (J9Object*)object));
 }
 
-void* J9FASTCALL
-old_slow_jitInduceOSRAtCurrentPC(J9VMThread *currentThread)
+static VMINLINE void*
+old_slow_jitInduceOSRAtCurrentPCImpl(J9VMThread *currentThread, void *oldPC)
 {
-	OLD_JIT_HELPER_PROLOGUE(0);
-	void *oldPC = buildJITResolveFrame(currentThread, J9_SSF_JIT_RESOLVE_INDUCE_OSR, parmCount);
 	induceOSROnCurrentThread(currentThread);
 	/* If the OSR was successful, a decompilation will have been added to the resolve frame */
 	J9SFJITResolveFrame *resolveFrame = (J9SFJITResolveFrame*)currentThread->sp;
@@ -2423,6 +2418,39 @@ old_slow_jitInduceOSRAtCurrentPC(J9VMThread *currentThread)
 		newPC = JIT_RUN_ON_JAVA_STACK(newPC);
 	}
 	return newPC;
+}
+
+void* J9FASTCALL
+old_slow_jitInduceOSRAtCurrentPCAndRecompile(J9VMThread *currentThread)
+{
+	OLD_JIT_HELPER_PROLOGUE(0);
+	void *oldPC = buildJITResolveFrame(currentThread, J9_SSF_JIT_RESOLVE_INDUCE_OSR, parmCount);
+
+	J9StackWalkState walkState;
+	/* The stack currently has a resolve frame on top, followed by the JIT frame we
+	 * wish to OSR.  Walk the stack down to the JIT frame to gather the data required
+	 * for decompilation.
+	 */
+	J9JavaVM *vm = currentThread->javaVM;
+	J9JITConfig *jitConfig = vm->jitConfig;
+	walkState.walkThread = currentThread;
+	walkState.maxFrames = 2;
+	walkState.flags = J9_STACKWALK_SKIP_INLINES | J9_STACKWALK_COUNT_SPECIFIED;
+	vm->walkStackFrames(currentThread, &walkState);
+	J9Method *method = walkState.method;
+	J9JITExceptionTable *metaData = walkState.jitInfo;
+	void *oldJITStartAddr = (void *) metaData->startPC;
+	jitConfig->retranslateWithPreparationForMethodRedefinition(jitConfig, currentThread, method, oldJITStartAddr);
+
+	return old_slow_jitInduceOSRAtCurrentPCImpl(currentThread, oldPC);
+}
+
+void* J9FASTCALL
+old_slow_jitInduceOSRAtCurrentPC(J9VMThread *currentThread)
+{
+	OLD_JIT_HELPER_PROLOGUE(0);
+	void *oldPC = buildJITResolveFrame(currentThread, J9_SSF_JIT_RESOLVE_INDUCE_OSR, parmCount);
+	return old_slow_jitInduceOSRAtCurrentPCImpl(currentThread, oldPC);
 }
 
 void J9FASTCALL
@@ -3228,6 +3256,7 @@ initPureCFunctionTable(J9JavaVM *vm)
 	jitConfig->fast_jitPostJNICallOffloadCheck = (void*)fast_jitPostJNICallOffloadCheck;
 	jitConfig->old_fast_jitObjectHashCode = (void*)old_fast_jitObjectHashCode;
 	jitConfig->old_slow_jitInduceOSRAtCurrentPC = (void*)old_slow_jitInduceOSRAtCurrentPC;
+	jitConfig->old_slow_jitInduceOSRAtCurrentPCAndRecompile = (void*)old_slow_jitInduceOSRAtCurrentPCAndRecompile;
 	jitConfig->old_slow_jitInterpretNewInstanceMethod = (void*)old_slow_jitInterpretNewInstanceMethod;
 	jitConfig->old_slow_jitNewInstanceImplAccessCheck = (void*)old_slow_jitNewInstanceImplAccessCheck;
 	jitConfig->old_slow_jitTranslateNewInstanceMethod = (void*)old_slow_jitTranslateNewInstanceMethod;

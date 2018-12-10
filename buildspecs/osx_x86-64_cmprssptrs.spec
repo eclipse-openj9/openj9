@@ -42,6 +42,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<property name="graph_commands.chroot" value=""/>
 		<property name="graph_commands.unix.remote_host" value=""/>
 		<property name="graph_datamines" value="commands.unix.datamine,site-ottawa.datamine,use.local.datamine"/>
+		<property name="graph_enable_gcc7_cmd" value=""/>
 		<property name="graph_label.classlib" value="150"/>
 		<property name="graph_label.java5" value="j9vmxa64cmprssptrs24"/>
 		<property name="graph_label.java6" value="pxa64cmprssptrs60"/>
@@ -123,7 +124,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="build_dropToToronto" value="true"/>
 		<flag id="build_j2se" value="true"/>
 		<flag id="build_java8" value="true"/>
-		<flag id="build_java9" value="true"/>
+		<flag id="build_java9" value="false"/>
 		<flag id="build_openj9" value="true"/>
 		<flag id="build_openj9JDK8" value="true"/>
 		<flag id="build_vmContinuous" value="true"/>
@@ -137,8 +138,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="gc_tlhPrefetchFTA" value="true"/>
 		<flag id="graph_cmdLineTester" value="true"/>
 		<flag id="graph_compile" value="true"/>
-		<flag id="graph_enableModularityTesting" value="true"/>
-		<flag id="graph_enableTesting" value="true"/>
+		<flag id="graph_enableModularityTesting" value="false"/>
+		<flag id="graph_enableTesting" value="false"/>
 		<flag id="graph_enableTesting_Java8" value="true"/>
 		<flag id="graph_j2seSanity" value="true"/>
 		<flag id="graph_jgrinder" value="true"/>

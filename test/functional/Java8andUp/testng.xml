@@ -95,6 +95,16 @@
 			<class name="org.openj9.test.management.GarbageCollectionNotificationTest"/>
 		</classes>
 	</test>
+	<test name="gcPolicyNogcTest">
+		<classes>
+			<class name="org.openj9.test.nogc.TestGCPolicyNogc"/>
+		</classes>
+	</test>
+	<test name="gcPolicyNogcOOMTest">
+		<classes>
+			<class name="org.openj9.test.nogc.TestNogcDieWithOOM"/>
+		</classes>
+	</test>	
 	<test name="ContendedFieldsTests">
 		<classes>
 			<class name="org.openj9.test.contendedfields.ContendedFieldsTests"/>
@@ -409,6 +419,11 @@
 	<test name="testStringIndexOfString">
 		<classes>
 			<class name="org.openj9.test.string.StringIndexOfString" />
+		</classes>
+	</test>
+	<test name="testStringStreams">
+		<classes>
+			<class name="org.openj9.test.string.StringStreams" />
 		</classes>
 	</test>
 	<test name="floatSanityTests">

@@ -41,50 +41,31 @@ ifndef UMA_TARGET_PATH
 endif
 
 # Define all the tool used for compilation and linking.
-<#if uma.spec.tools.interp_gcc.needed>
-ifneq (default,$(origin CC))
-  ifndef INTERP_GCC
-    # If the user has overridden CC we'll want to let them know that INTERP_GCC exists.
-    ifndef PRINT_ONCE_INTERP_GCC
-      $(info ****************)
-      $(info *)
-      $(info * CC=$(CC) (overridden), note that this build will also invoke another compiler that can be overridden: INTERP_GCC=${uma.spec.tools.interp_gcc.name})
-      $(info *)
-      $(info ****************)
-      export PRINT_ONCE_INTERP_GCC=1
-    endif
-  endif
-endif
-INTERP_GCC?=${uma.spec.tools.interp_gcc.name}
-<#else>
-#INTERP_GCC not used
-</#if>
-
 <#if uma.spec.type.windows>
 <#if uma.spec.flags.build_VS12AndHigher.enabled>
 VS12AndHigher:=1
 </#if>
-ifndef NO_USE_MINGW
-USE_MINGW:=1
+ifndef NO_USE_CLANG
+USE_CLANG:=1
 endif
-ifdef USE_MINGW
-<#if uma.spec.tools.mingw_cxx.needed>
+ifdef USE_CLANG
+<#if uma.spec.tools.clang_cxx.needed>
 ifneq (default,$(origin CXX))
-  ifndef MINGW_CXX
-    # If the user has overridden CXX we'll want to let them know that MINGW_CXX exists.
-    ifndef PRINT_ONCE_MINGW_CXX
+  ifndef CLANG_CXX
+    # If the user has overridden CXX we'll want to let them know that CLANG_CXX exists.
+    ifndef PRINT_ONCE_CLANG_CXX
       $(info ****************)
       $(info *)
-      $(info * CXX=$(CXX) (overridden), note that this build will also invoke another compiler that can be overridden: MINGW_CXX=${uma.spec.tools.mingw_cxx.name})
+      $(info * CXX=$(CXX) (overridden), note that this build will also invoke another compiler that can be overridden: CLANG_CXX=${uma.spec.tools.clang_cxx.name})
       $(info *)
       $(info ****************)
-      export PRINT_ONCE_MINGW_CXX=1
+      export PRINT_ONCE_CLANG_CXX=1
     endif
   endif
 endif
-MINGW_CXX?=${uma.spec.tools.mingw_cxx.name}
+CLANG_CXX?=${uma.spec.tools.clang_cxx.name}
 <#else>
-# MINGW_CXX not used
+# CLANG_CXX not used
 </#if>
 endif
 </#if>
@@ -268,4 +249,10 @@ UMA_OBJECTS+=$(patsubst %.mc,%.res,$(wildcard *.mc))
 
 <#if uma.spec.type.windows>
 UMA_WINDOWS_PARRALLEL_HACK=-j $(NUMBER_OF_PROCESSORS)
+</#if>
+
+<#if uma.spec.id?ends_with("_sp") && uma.spec.properties.uma_sp_cflags.defined>
+UMA_SP_CFLAGS=${uma.spec.properties.uma_sp_cflags.value}
+<#else>
+UMA_SP_CFLAGS=
 </#if>

@@ -19,10 +19,11 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-#include "mingw_comp.h"
-#if defined(__MINGW32__) || defined(__MINGW64__)
-#include "../oti/mingw/stddef.h"
-#endif /* defined(__MINGW32__) || defined(__MINGW64__) */
+#include "clang_comp.h"
+
+#if defined(WIN32) && defined(__clang__)
+#include "../oti/clang/stddef.h"
+#endif /* defined(WIN32) && defined(__clang__) */
 #include "j9cfg.h"
 #include "VM_MethodHandleKinds.h"
 

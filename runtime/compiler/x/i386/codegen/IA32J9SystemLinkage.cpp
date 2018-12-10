@@ -46,22 +46,19 @@ TR::IA32J9SystemLinkage::buildVolatileAndReturnDependencies(TR::Node *callNode, 
 
    deps->addPostCondition(cg()->getMethodMetaDataRegister(), TR::RealRegister::ebp, cg());
 
-   if (cg()->useSSEForSinglePrecision() || cg()->useSSEForDoublePrecision())
-      {
-      uint8_t numXmmRegs = 0;
-      TR_LiveRegisters *lr = cg()->getLiveRegisters(TR_FPR);
-      if (!lr || lr->getNumberOfLiveRegisters() > 0)
-         numXmmRegs = (uint8_t)(TR::RealRegister::LastXMMR - TR::RealRegister::FirstXMMR+1);
+   uint8_t numXmmRegs = 0;
+   TR_LiveRegisters *lr = cg()->getLiveRegisters(TR_FPR);
+   if (!lr || lr->getNumberOfLiveRegisters() > 0)
+      numXmmRegs = (uint8_t)(TR::RealRegister::LastXMMR - TR::RealRegister::FirstXMMR+1);
 
-      if (numXmmRegs > 0)
+   if (numXmmRegs > 0)
+      {
+      for (int regIndex = TR::RealRegister::FirstXMMR; regIndex <= TR::RealRegister::LastXMMR; regIndex++)
          {
-         for (int regIndex = TR::RealRegister::FirstXMMR; regIndex <= TR::RealRegister::LastXMMR; regIndex++)
-            {
-            TR::Register *dummy = cg()->allocateRegister(TR_FPR);
-            dummy->setPlaceholderReg();
-            deps->addPostCondition(dummy, (TR::RealRegister::RegNum)regIndex, cg());
-            cg()->stopUsingRegister(dummy);
-            }
+         TR::Register *dummy = cg()->allocateRegister(TR_FPR);
+         dummy->setPlaceholderReg();
+         deps->addPostCondition(dummy, (TR::RealRegister::RegNum)regIndex, cg());
+         cg()->stopUsingRegister(dummy);
          }
       }
 
@@ -104,27 +101,15 @@ TR::IA32J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, bool spillFPReg
    TR::J9LinkageUtils::switchToMachineCStack(callNode, cg());
 
    // check to see if we need to set XMM register dependencies
-   if (cg()->useSSEForSinglePrecision() || cg()->useSSEForDoublePrecision())
-      {
-      TR_LiveRegisters *lr = cg()->getLiveRegisters(TR_FPR);
-      if (!lr || lr->getNumberOfLiveRegisters() > 0)
-         numXmmRegs = (uint8_t)(TR::RealRegister::LastXMMR - TR::RealRegister::FirstXMMR+1);
-      }
+   TR_LiveRegisters *lr = cg()->getLiveRegisters(TR_FPR);
+   if (!lr || lr->getNumberOfLiveRegisters() > 0)
+      numXmmRegs = (uint8_t)(TR::RealRegister::LastXMMR - TR::RealRegister::FirstXMMR+1);
 
    TR::RegisterDependencyConditions  *deps;
    deps = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)6 + numXmmRegs, cg());
    TR::Register *returnReg = buildVolatileAndReturnDependencies(callNode, deps);
 
    TR::RegisterDependencyConditions  *dummy = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)0, cg());
-
-   // Force the FP register stack to be spilled.
-   //
-   if (!cg()->useSSEForDoublePrecision())
-      {
-      TR::RegisterDependencyConditions  *fpSpillDependency = generateRegisterDependencyConditions(1, 0, cg());
-      fpSpillDependency->addPreCondition(NULL, TR::RealRegister::AllFPRegisters, cg());
-      generateInstruction(FPREGSPILL, callNode, fpSpillDependency, cg());
-      }
 
    // Call-out
    generateRegImmInstruction(argSize >= -128 && argSize <= 127 ? SUB4RegImms : SUB4RegImm4, callNode, espReal, argSize, cg());
@@ -144,30 +129,21 @@ TR::IA32J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, bool spillFPReg
    if (deps)
       stopUsingKilledRegisters(deps, returnReg);
 
-   if (cg()->useSSEForSinglePrecision() && callNode->getOpCode().isFloat())
+   if (callNode->getOpCode().isFloat())
       {
-   TR::MemoryReference  *tempMR = machine()->getDummyLocalMR(TR::Float);
+      TR::MemoryReference  *tempMR = machine()->getDummyLocalMR(TR::Float);
       generateFPMemRegInstruction(FSTPMemReg, callNode, tempMR, returnReg, cg());
       cg()->stopUsingRegister(returnReg); // zhxingl: this is added by me
       returnReg = cg()->allocateSinglePrecisionRegister(TR_FPR);
       generateRegMemInstruction(MOVSSRegMem, callNode, returnReg, generateX86MemoryReference(*tempMR, 0, cg()), cg());
       }
-   else if (cg()->useSSEForDoublePrecision() && callNode->getOpCode().isDouble())
+   else if (callNode->getOpCode().isDouble())
       {
-   TR::MemoryReference  *tempMR = machine()->getDummyLocalMR(TR::Double);
+      TR::MemoryReference  *tempMR = machine()->getDummyLocalMR(TR::Double);
       generateFPMemRegInstruction(DSTPMemReg, callNode, tempMR, returnReg, cg());
       cg()->stopUsingRegister(returnReg); // zhxingl: this is added by me
       returnReg = cg()->allocateRegister(TR_FPR);
       generateRegMemInstruction(cg()->getXMMDoubleLoadOpCode(), callNode, returnReg, generateX86MemoryReference(*tempMR, 0, cg()), cg());
-      }
-   else
-      {
-      if ((callNode->getDataType() == TR::Float ||
-           callNode->getDataType() == TR::Double) &&
-          callNode->getReferenceCount() == 1)
-         {
-         generateFPSTiST0RegRegInstruction(FSTRegReg, callNode, returnReg, returnReg, cg());
-         }
       }
 
    if (cg()->enableRegisterAssociations())

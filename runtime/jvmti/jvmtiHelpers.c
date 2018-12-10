@@ -1109,8 +1109,8 @@ createBreakpointedMethod(J9VMThread * currentThread, J9Method * ramMethod)
 	UDATA methodSize;
 	UDATA delta;
 	J9ExceptionInfo * originalExceptionInfo = NULL;
-	J9SRP * originalThrowNames = NULL;
 #ifdef J9VM_ENV_DATA64
+	J9SRP * originalThrowNames = NULL;
 	J9UTF8 * methodName;
 	J9UTF8 * methodSignature;
 	J9UTF8 * genericSignature;
@@ -1140,7 +1140,9 @@ createBreakpointedMethod(J9VMThread * currentThread, J9Method * ramMethod)
 
 	if (J9ROMMETHOD_HAS_EXCEPTION_INFO(originalROMMethod)) {
 		originalExceptionInfo = J9_EXCEPTION_DATA_FROM_ROM_METHOD(originalROMMethod);
+#ifdef J9VM_ENV_DATA64
 		originalThrowNames = J9EXCEPTIONINFO_THROWNAMES(originalExceptionInfo);
+#endif
 	}
 
 	/* Copy ROM method */
@@ -1696,4 +1698,26 @@ findDecompileInfo(J9VMThread *currentThread, J9VMThread *targetThread, UDATA dep
 	walkState->frameWalkFunction = findDecompileInfoFrameIterator;
 	currentThread->javaVM->walkStackFrames(currentThread, walkState);
 	return (UDATA)walkState->userData1;
+}
+
+void
+ensureHeapWalkable(J9VMThread *currentThread)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	/* Must be called while holding exclusive */
+	Assert_JVMTI_true(currentThread->omrVMThread->exclusiveCount > 0);
+	/* If heap walk is already enabled, nothing need be done */
+	if (J9_ARE_NO_BITS_SET(vm->requiredDebugAttributes, J9VM_DEBUG_ATTRIBUTE_ALLOW_USER_HEAP_WALK)) {
+		J9MemoryManagerFunctions const * const mmFuncs = vm->memoryManagerFunctions;
+		vm->requiredDebugAttributes |= J9VM_DEBUG_ATTRIBUTE_ALLOW_USER_HEAP_WALK;
+		/* J9MMCONSTANT_EXPLICIT_GC_RASDUMP_COMPACT allows the GC to run while the current thread is holding
+		 * exclusive VM access.
+		 */
+		mmFuncs->j9gc_modron_global_collect_with_overrides(currentThread, J9MMCONSTANT_EXPLICIT_GC_RASDUMP_COMPACT);
+		if (J9_GC_POLICY_METRONOME == vm->gcPolicy) {
+			/* In metronome, the previous GC call may have only finished the current cycle.
+			 * Call again to ensure a full GC takes place.					 */
+			mmFuncs->j9gc_modron_global_collect_with_overrides(currentThread, J9MMCONSTANT_EXPLICIT_GC_RASDUMP_COMPACT);
+		}
+	}
 }

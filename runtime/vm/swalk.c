@@ -626,7 +626,7 @@ static void walkObjectPushes(J9StackWalkState * walkState)
 static void walkDescribedPushes(J9StackWalkState * walkState, UDATA * highestSlot, UDATA slotCount, U_32 * descriptionSlots, UDATA argCount)
 {
 	UDATA descriptionBitsRemaining = 0;
-	U_32 description;
+	U_32 description = 0;
 
 	while (slotCount) {
 		if (!descriptionBitsRemaining) {
@@ -1198,7 +1198,7 @@ static void walkPushedJNIRefs(J9StackWalkState * walkState)
 static void walkIndirectDescribedPushes(J9StackWalkState * walkState, UDATA * highestIndirectSlot, UDATA slotCount, U_32 * descriptionSlots)
 {
 	UDATA descriptionBitsRemaining = 0;
-	U_32 description;
+	U_32 description = 0;
 
 	while (slotCount) {
 		if (!descriptionBitsRemaining) {

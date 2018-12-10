@@ -57,7 +57,6 @@ RUN yum -y update \
     glibc-common \
     glibc-devel \
     gmp-devel \
-    java-1.8.0-openjdk-devel \
     lbzip2 \
     libdwarf \
     libstdc++-static \
@@ -110,27 +109,10 @@ RUN rm /usr/bin/c++ /usr/bin/cc \
   && ln -s gcc /usr/bin/cc
 
 # Install GCC-7.3.1
-RUN yum -y update \
-  && yum -y install environment-modules \
-  && yum clean all \
-  && source /etc/profile.d/modules.sh \
-  && wget ftp://ftp.unicamp.br/pub/linuxpatch/toolchain/at/redhat/RHEL7/gpg-pubkey-6976a827-5164221b \
-  && rpm --import gpg-pubkey-6976a827-5164221b \
-  && echo "# Begin of configuration file" >> /etc/yum.repos.d/at11.0.repo \
-  && echo "[at11.0]" >> /etc/yum.repos.d/at11.0.repo \
-  && echo "name=Advance Toolchain Unicamp FTP" >> /etc/yum.repos.d/at11.0.repo \
-  && echo "baseurl=ftp://ftp.unicamp.br/pub/linuxpatch/toolchain/at/redhat/RHEL7" >> /etc/yum.repos.d/at11.0.repo \
-  && echo "failovermethod=priority" >> /etc/yum.repos.d/at11.0.repo \
-  && echo "enabled=1" >> /etc/yum.repos.d/at11.0.repo \
-  && echo "gpgcheck=1" >> /etc/yum.repos.d/at11.0.repo \
-  && echo "gpgkey=ftp://ftp.unicamp.br/pub/linuxpatch/toolchain/at/redhat/RHEL7/gpg-pubkey-6976a827-5164221b" >> /etc/yum.repos.d/at11.0.repo \
-  && echo "# End of configuration file" >> /etc/yum.repos.d/at11.0.repo \
-  && yum -y update \
-  && yum -y install \
-    advance-toolchain-at11.0-runtime \
-    advance-toolchain-at11.0-devel \
-    advance-toolchain-at11.0-perf \
-  && yum clean all
+RUN cd /usr/local \
+  && wget -O gcc-7.tar.xz "https://ci.adoptopenjdk.net/userContent/gcc/gcc730+ccache.ppc64le.tar.xz" \
+  && tar -xJf gcc-7.tar.xz \
+  && rm -rf gcc-7.tar.xz
 
 #Building and setting up git version 2.5.3
 RUN yum -y update \
@@ -197,32 +179,28 @@ RUN cd /tmp \
   && cd .. \
   && rm -rf /tmp/make-4.1
 
-# Setup boot JDK for building Java 8 and 9
-RUN ln -s java-1.8.0 /usr/lib/jvm/adoptojdk-java-80
+# Setup boot JDK for building Java 8
+RUN mkdir -p /usr/lib/jvm/adoptojdk-java-80 \
+  && cd /usr/lib/jvm/adoptojdk-java-80 \
+  && wget -O bootjdk8.tar.gz "https://api.adoptopenjdk.net/v2/binary/nightly/openjdk8?openjdk_impl=openj9&os=linux&arch=ppc64le&release=latest&type=jdk" \
+  && tar -xzf bootjdk8.tar.gz \
+  && rm -f bootjdk8.tar.gz \
+  && mv $(ls | grep -i jdk8) bootjdk8 \
+  && mv bootjdk8/* /usr/lib/jvm/adoptojdk-java-80 \
+  && rm -rf bootjdk8
 
-# BootJDKs cannot be downloaded from adopt, as they were compiled on ubuntu
-# and use a newer version of GLIBC. Until this is resolved, the user must
-# supply their own bootjdk in order to compile java 10 or 11.
-
-# Setup boot JDK for building Java 10
-RUN mkdir -p /usr/lib/jvm/adoptojdk-java-90
-COPY bootjdk9.tar.gz /usr/lib/jvm/adoptojdk-java-90/bootjdk9.tar.gz
-RUN cd /usr/lib/jvm/adoptojdk-java-90 \
-  && tar -xzf bootjdk9.tar.gz \
-  && rm -f bootjdk9.tar.gz \
-  && mv $(ls | grep -i jdk) bootjdk9 \
-  && mv bootjdk9/* /usr/lib/jvm/adoptojdk-java-90 \
-  && rm -rf bootjdk9
+# Allow jenkins to find JDK8
+RUN ln -s /usr/lib/jvm/adoptojdk-java-80/bin/java /usr/bin/java
 
 # Setup boot JDK for building Java 11
-RUN mkdir -p /usr/lib/jvm/adoptojdk-java-10
-COPY bootjdk10.tar.gz /usr/lib/jvm/adoptojdk-java-10/bootjdk10.tar.gz
-RUN cd /usr/lib/jvm/adoptojdk-java-10 \
-  && tar -xzf bootjdk10.tar.gz \
-  && rm -f bootjdk10.tar.gz \
-  && mv $(ls | grep -i jdk) bootjdk10 \
-  && mv bootjdk10/* /usr/lib/jvm/adoptojdk-java-10 \
-  && rm -rf bootjdk10
+RUN mkdir -p /usr/lib/jvm/adoptojdk-java-11 \
+  && cd /usr/lib/jvm/adoptojdk-java-11 \
+  && wget -O bootjdk11.tar.gz "https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk11u-2018-11-26-07-41/OpenJDK11U-jdk_ppc64le_linux_openj9_2018-11-26-07-41.tar.gz" \
+  && tar -xzf bootjdk11.tar.gz \
+  && rm -f bootjdk11.tar.gz \
+  && mv $(ls | grep -i jdk-11) bootjdk11 \
+  && mv bootjdk11/* /usr/lib/jvm/adoptojdk-java-11 \
+  && rm -rf bootjdk11
 
 # Install Freemaker for building OpenJ9. Used in bash ./configure --with-freemarker-jar=<path-to-freemaker-jar>
 RUN cd /home/${USER} \
@@ -247,8 +225,6 @@ RUN mkdir /home/${USER}/openjdk_cache \
   && cd /home/${USER}/openjdk_cache \
   && git init --bare \
   && git remote add jdk8 https://github.com/ibmruntimes/openj9-openjdk-jdk8.git \
-  && git remote add jdk9 https://github.com/ibmruntimes/openj9-openjdk-jdk9.git \
-  && git remote add jdk10 https://github.com/ibmruntimes/openj9-openjdk-jdk10.git \
   && git remote add jdk11 https://github.com/ibmruntimes/openj9-openjdk-jdk11.git \
   && git remote add jdk https://github.com/ibmruntimes/openj9-openjdk-jdk.git \
   && git remote add openj9 https://github.com/eclipse/openj9.git \

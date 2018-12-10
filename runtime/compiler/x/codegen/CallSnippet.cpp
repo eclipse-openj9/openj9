@@ -755,9 +755,9 @@ TR_RuntimeHelper TR::X86CallSnippet::getInterpretedDispatchHelper(
       return TR_icallVMprJavaSendNativeStatic;
 
    if (methodSymbol->isHelper() &&
-       methodSymRef == cg->symRefTab()->element(TR_induceOSRAtCurrentPC))
+       methodSymRef->isOSRInductionHelper())
       {
-      return TR_induceOSRAtCurrentPC;
+      return (TR_RuntimeHelper) methodSymRef->getReferenceNumber();
       }
 
    TR_RuntimeHelper helper;
@@ -825,7 +825,7 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
 
    if (TR::Compiler->target.is64Bit() &&
        methodSymbol->isHelper() &&
-       methodSymRef == cg()->symRefTab()->element(TR_induceOSRAtCurrentPC))
+       methodSymRef->isOSRInductionHelper())
       {
       isJitInduceOSRCall = true;
       }

@@ -80,16 +80,11 @@ finalFieldSetAllowed(J9VMThread *currentThread, bool isStatic, J9Method *method,
 		 */
 		fieldClass = J9_CURRENT_CLASS(fieldClass);
 		callerClass = J9_CURRENT_CLASS(callerClass);
-		J9ROMClass *romClass = fieldClass->romClass;
-		if (romClass->majorVersion >= 53) {
+		if (VM_VMHelpers::romClassChecksFinalStores(callerClass->romClass)) {
 			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-			J9UTF8 *name = J9ROMMETHOD_NAME(romMethod);
-			if (('<' != J9UTF8_DATA(name)[0])
-			|| (J9UTF8_LENGTH(name) != strlen(isStatic ? "<clinit>" : "<init>"))
-			|| ((fieldClass != callerClass) && (!J9ROMCLASS_IS_UNSAFE(callerClass->romClass)))
-			) {
+			if ((fieldClass != callerClass) || !VM_VMHelpers::romMethodIsInitializer(romMethod, isStatic)) {
 				if (canRunJavaCode) {
-					setIllegalAccessErrorFinalFieldSet(currentThread, isStatic, romClass, field, romMethod);
+					setIllegalAccessErrorFinalFieldSet(currentThread, isStatic, fieldClass->romClass, field, romMethod);
 				}
 				legal = false;
 			}
@@ -792,12 +787,13 @@ illegalAccess:
 						localClassAndFlagsData |= J9StaticFieldRefBoolean;
 					}
 				}
-				/* Check if volatile and set the localClassAndFlags to have StaticFieldRefVolatile. */
+				/* Set the volatile, final and setter bits in the flags as needed */
 				if ((modifiers & J9AccVolatile) == J9AccVolatile) {
 					localClassAndFlagsData |= J9StaticFieldRefVolatile;
 				}
-
-
+				if ((modifiers & J9AccFinal) == J9AccFinal) {
+					localClassAndFlagsData |= J9StaticFieldRefFinal;
+				}
 				if (0 != (resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER)) {
 					localClassAndFlagsData |= J9StaticFieldRefPutResolved;
 				}
@@ -939,7 +935,16 @@ illegalAccess:
 					}
 					goto done;
 				}
-				if (!finalFieldSetAllowed(vmStruct, false, method, definingClass, classFromCP, field, canRunJavaCode)) {
+			if (
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				/* The withfield bytecode is allowed to set a final field. However, the invoker of withfield must have private access
+				 * to the field (similar to a constructor setting a final field). The private access check is done above, so if we get
+				 * to this point we can skip the finalFieldSetAllowed() if we know its a withfield */
+				J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_WITH_FIELD) &&
+#endif
+				!finalFieldSetAllowed(vmStruct, false, method, definingClass, classFromCP, field, canRunJavaCode)
+			) {
+
 					fieldOffset = -1;
 					goto done;
 				}

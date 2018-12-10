@@ -7118,6 +7118,7 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
          this,
          _vm,
          vmThread,
+         reloRuntime,
          entry->_optimizationPlan,
          regionSegmentProvider,
          dispatchRegion,
@@ -7267,6 +7268,8 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
    TR::CompilationInfoPerThreadBase *that = p->_compilationInfo; // static method, no this
    TR_J9VMBase        *vm   = p->_vm;
    J9VMThread         *vmThread = p->_vmThread;
+
+   TR_RelocationRuntime *reloRuntime = p->_reloRuntime;
 
    J9JITConfig *jitConfig = that->_jitConfig;
    bool reducedWarm = false;
@@ -7805,7 +7808,8 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                *options,
                p->_dispatchRegion,
                p->trMemory(),
-               p->_optimizationPlan);
+               p->_optimizationPlan,
+               reloRuntime);
 
          // JITaaS TODO: put info in optPlan so that compilation constructor can do this
          if (that->_methodBeingCompiled->isRemoteCompReq())

@@ -51,11 +51,6 @@
 #define INITIAL_INTERNAL_MODULE_HASHTABLE_SIZE      1
 #define INITIAL_INTERNAL_PACKAGE_HASHTABLE_SIZE		1
 
-/* Ensure J9VM_JAVA9_BUILD is always defined to simplify conditions. */
-#ifndef J9VM_JAVA9_BUILD
-#define J9VM_JAVA9_BUILD 0
-#endif /* J9VM_JAVA9_BUILD */
-
 /* All the helper functions below assume that:
  * a) If VMAccess is required, it assumes the caller has already done so
  * b) If performing a hash operation, it assumes the caller has already locked vm->classLoaderModuleAndLocationMutex
@@ -1756,7 +1751,7 @@ JVM_GetNanoTimeAdjustment(JNIEnv *env, jclass clazz, jlong offsetSeconds)
 	return result;
 }
 
-#if J9VM_JCL_SE11
+#if JAVA_SPEC_VERSION >= 11
 void JNICALL
 JVM_BeforeHalt()
 {
@@ -1831,4 +1826,4 @@ done:
 	return JNI_FALSE;
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 }
-#endif /* J9VM_JCL_SE11 */
+#endif /* JAVA_SPEC_VERSION >= 11 */

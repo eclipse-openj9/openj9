@@ -129,10 +129,10 @@
 	<test id="Test 4: Create a snapshot of the non-persistent cache without changing to non-persistent mode" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,snapshotCache</command>
 		<output type="success" caseSensitive="yes" regex="no" platforms="zos.*">Snapshot of non-persistent shared cache "ShareClassesCMLTests" has been created</output>
-		<output type="success" caseSensitive="yes" regex="no" platforms="aix.*,linux.*">To run the "snapshotCache" utility on a nonpersistent shared cache "ShareClassesCMLTests", you must also use the "nonpersistent" suboption</output>
+		<output type="success" caseSensitive="yes" regex="no" platforms="aix.*,linux.*,osx.*">To run the "snapshotCache" utility on a nonpersistent shared cache "ShareClassesCMLTests", you must also use the "nonpersistent" suboption</output>
 		<output type="failure" caseSensitive="yes" regex="no" platforms="zos.*">Failed to create</output>
 		<output type="failure" caseSensitive="yes" regex="no" platforms="zos.*">Cache does not exist</output>
-		<output type="failure" caseSensitive="yes" regex="no" platforms="aix.*,linux.*">has been created</output>
+		<output type="failure" caseSensitive="yes" regex="no" platforms="aix.*,linux.*,osx.*">has been created</output>
 		<output type="failure" caseSensitive="no" regex="no">error</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
@@ -204,9 +204,9 @@
 	<test id="Test 9: Restore a cache without switching to non-persistent mode" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,restoreFromSnapshot</command>
 		<output type="success" caseSensitive="yes" regex="no" platforms="zos.*">Non-persistent shared cache "ShareClassesCMLTests" has been restored successfully from the snapshot</output>
-		<output type="success" caseSensitive="yes" regex="no" platforms="aix.*,linux.*">To run the "restoreFromSnapshot" utility on a nonpersistent shared cache "ShareClassesCMLTests", you must also use the "nonpersistent" suboption</output>
+		<output type="success" caseSensitive="yes" regex="no" platforms="aix.*,linux.*,osx.*">To run the "restoreFromSnapshot" utility on a nonpersistent shared cache "ShareClassesCMLTests", you must also use the "nonpersistent" suboption</output>
 		<output type="failure" caseSensitive="no" regex="no">error</output>
-		<output type="failure" caseSensitive="yes" regex="no" platforms="aix.*,linux.*">has been restored successfully</output>
+		<output type="failure" caseSensitive="yes" regex="no" platforms="aix.*,linux.*,osx.*">has been restored successfully</output>
 		<output type="failure" caseSensitive="yes" regex="no" platforms="zos.*">Failed to restore</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
@@ -318,7 +318,7 @@
 	</test>
 	
 	<test id="Test 15: Restore a non-persistent cache from a corrupted snapshot" timeout="600" runPath=".">
-		<exec command="$JAVA_EXE$ $currentMode$C,printSnapshotFilename" captureStderr="FILENAME" platforms="aix.*,linux.*" />
+		<exec command="$JAVA_EXE$ $currentMode$C,printSnapshotFilename" captureStderr="FILENAME" platforms="aix.*,linux.*,osx.*" />
 		<exec command="$JAVA_EXE$ $currentMode$C,printSnapshotFilename -Xifa:off" captureStderr="FILENAME" platforms="zos.*" />
 		<exec command="touch $FILENAME$" />
 		

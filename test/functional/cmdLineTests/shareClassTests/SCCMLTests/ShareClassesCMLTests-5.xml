@@ -55,7 +55,7 @@
 	<!-- Override -Xdump option on z/OS -->
 	<variable name="SYSDUMP" value="-Xdump:system:opts=IEATDUMP,dsn=%uid.J9CORE.DMP" platforms="zos.*" />
 	
-	<variable name="NON_WINDOWS_PLATFORMS" value="aix.*,linux.*,zos.*" />
+	<variable name="NON_WINDOWS_PLATFORMS" value="aix.*,linux.*,zos.*,osx.*" />
 	<variable name="WINDOWS_PLATFORMS" value="win.*" />
 
 	<!-- 

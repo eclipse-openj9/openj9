@@ -39,6 +39,7 @@
 #include "ras/DebugCounter.hpp"
 #include "runtime/CodeCacheConfig.hpp"
 #include "runtime/CodeCacheManager.hpp"
+#include "runtime/RelocationRuntime.hpp"
 #include "runtime/RelocationRecord.hpp"
 #include "runtime/SymbolValidationManager.hpp"
 
@@ -104,6 +105,10 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
    TR_VirtualGuard *guard;
    uint8_t flags = 0;
    uint8_t *cursor = relocation->getRelocationData();
+
+   TR_RelocationRuntime *reloRuntime = comp->reloRuntime();
+   TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
+
    // size of relocation goes first in all types
    *(uint16_t *)cursor = relocation->getSizeOfRelocationData();
    cursor += 2;
@@ -115,6 +120,10 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
 #if defined(TR_HOST_64BIT)
    cursor += 4; // padding
 #endif
+
+   // This has to be created after the kind has been written into the header
+   TR_RelocationRecord storage;
+   TR_RelocationRecord *reloRecord = TR_RelocationRecord::create(&storage, reloRuntime, reloTarget, reinterpret_cast<TR_RelocationRecordBinaryTemplate *>(relocation->getRelocationData()));
 
    switch (relocation->getTargetKind())
       {
@@ -1331,7 +1340,10 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          break;
 
       default:
-         return cursor;
+         // initializeCommonAOTRelocationHeader currently doesn't do anything; however, as more
+         // relocation records are consolidated, it will become the canonical place
+         // to initialize the platform agnostic relocation headers
+         cursor = self()->initializeCommonAOTRelocationHeader(relocation, reloRecord);
       }
    return cursor;
    }

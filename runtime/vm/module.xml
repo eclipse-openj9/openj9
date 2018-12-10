@@ -75,9 +75,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<makefilestubs>
 			<makefilestub data="UMA_ENABLE_ALL_WARNINGS=1"/>
 			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
-			<makefilestub data="UMA_SAFESEH_NOT_ENABLED=1">
-				<include-if condition="spec.win_x86 or spec.win_x86_purec"/>
-			</makefilestub>
 			<makefilestub data="UMA_OBJECTS:=$(filter-out xcinterp%,$(UMA_OBJECTS))\n">
 				<exclude-if condition="spec.flags.arch_x86"/>
 			</makefilestub>
@@ -95,6 +92,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			</makefilestub>
 			<makefilestub data="UMA_OBJECTS:=$(filter-out inlineleconditionhandler$(UMA_DOT_O),$(UMA_OBJECTS))\n">
 				<exclude-if condition="spec.zos_390.* and not spec.flags.J9VM_ENV_DATA64"/>
+			</makefilestub>
+			<makefilestub data="UMA_OBJECTS:=$(filter-out safeseh$(UMA_DOT_O),$(UMA_OBJECTS))\n">
+				<exclude-if condition="spec.win_x86.* and not spec.flags.J9VM_ENV_DATA64"/>
 			</makefilestub>
 		</makefilestubs>
 		<vpaths>

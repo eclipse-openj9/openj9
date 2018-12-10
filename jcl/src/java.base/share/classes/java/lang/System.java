@@ -32,7 +32,11 @@ import java.lang.reflect.Method;
 
 /*[IF Sidecar19-SE]*/
 import jdk.internal.misc.Unsafe;
+/*[IF Java12]*/
+import jdk.internal.access.SharedSecrets;
+/*[ELSE]
 import jdk.internal.misc.SharedSecrets;
+/*[ENDIF]*/
 import jdk.internal.misc.VM;
 import java.lang.StackWalker.Option;
 /*[IF Sidecar19-SE-OpenJ9]
@@ -398,12 +402,17 @@ private static void ensureProperties() {
 	
 	propertiesInitialized = true;
 	
+	/*[IF Java12]*/
+	/* java.lang.VersionProps.init() eventually calls into System.setProperty() where propertiesInitialized needs to be true */
+	java.lang.VersionProps.init(systemProperties);
+	/*[ELSE]
 	/*[IF Sidecar19-SE]*/
 	/* java.lang.VersionProps.init() eventually calls into System.setProperty() where propertiesInitialized needs to be true */
 	java.lang.VersionProps.init();
 	/*[ELSE]*/
 	sun.misc.Version.init();
 	/*[ENDIF] Sidecar19-SE */
+	/*[ENDIF] Java12 */
 
 	/*[IF !Sidecar19-SE]*/
 	StringBuffer.initFromSystemProperties(systemProperties);
