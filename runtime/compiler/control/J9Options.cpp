@@ -2041,19 +2041,6 @@ J9::Options::fePreProcess(void * base)
    // Setting number of onsite cache slots for instanceOf node to 4 on IBM Z
    self()->setMaxOnsiteCacheSlotForInstanceOf(4);
 #endif
-   // Set a value for _safeReservePhysicalMemoryValue that is proportional
-   // to the amount of free physical memory at boot time
-   // The user can still override it with a command line option
-   bool incomplete = false;
-   uint64_t phMemAvail = compInfo->computeAndCacheFreePhysicalMemory(incomplete);
-   if (phMemAvail != OMRPORT_MEMINFO_NOT_AVAILABLE && !incomplete)
-      {
-      const uint64_t reserveLimit = 32 * 1024 * 1024;
-      uint64_t proposed = phMemAvail >> 6; // 64 times less
-      if (proposed > reserveLimit)
-         proposed = reserveLimit;
-      J9::Options::_safeReservePhysicalMemoryValue = (int32_t)proposed;
-      }
 
    // Process the deterministic mode
    if (TR::Options::_deterministicMode == -1) // not yet set
@@ -2140,6 +2127,27 @@ J9::Options::fePreProcess(void * base)
          std::mt19937_64 rng(rd());
          std::uniform_int_distribution<uint64_t> dist;
          compInfo->getPersistentInfo()->setJITaaSId(dist(rng));
+         }
+      }
+   // Set a value for _safeReservePhysicalMemoryValue that is proportional
+   // to the amount of free physical memory at boot time
+   // For JITaaS we can use a 0 value because compilations are done remotely
+   // The user can still override it with a command line option
+   if (compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+      {
+      J9::Options::_safeReservePhysicalMemoryValue = 0;
+      }
+   else
+      {
+      bool incomplete = false;
+      uint64_t phMemAvail = compInfo->computeAndCacheFreePhysicalMemory(incomplete);
+      if (phMemAvail != OMRPORT_MEMINFO_NOT_AVAILABLE && !incomplete)
+         {
+         const uint64_t reserveLimit = 32 * 1024 * 1024;
+         uint64_t proposed = phMemAvail >> 6; // 64 times less
+         if (proposed > reserveLimit)
+            proposed = reserveLimit;
+         J9::Options::_safeReservePhysicalMemoryValue = (int32_t)proposed;
          }
       }
 
