@@ -20,17 +20,11 @@
 #  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ##############################################################################
 
-testEnvSetup:
+TEST_ITERATIONS = 1
 
-testEnvTeardown:
-
-
-ifneq (,$(findstring JITAAS,$(TEST_FLAG)))
-testEnvSetup:
-	$(JAVA_BIN)$(D)java -XX:JITaaSServer &
-
-testEnvTeardown:
-	pkill -9 -xf "$(JAVA_BIN)$(D)java -XX:JITaaSServer"; true
-
-RESERVED_OPTIONS += -XX:JITaaSClient
+ifneq (,$(findstring AOT,$(TEST_FLAG)))
+export TR_Options=forceAOT
+export TR_OptionsAOT=forceAOT
+AOT_OPTIONS = -Xshareclasses:name=$@ -Xscmx400M -Xscmaxaot256m
+TEST_ITERATIONS = 2
 endif
