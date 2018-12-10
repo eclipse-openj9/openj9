@@ -193,8 +193,15 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 						return J9VMDLLMAIN_FAILED;
 					}
 				} else {
-					/* We are using platform default cache directory. It should be universally accessible */
+					/* We are using platform default cache directory. */
 					vm->sharedCacheAPI->cacheDirPerm = J9SH_DIRPERM_ABSENT;
+				}
+
+				if (J9SH_DIRPERM_ABSENT == vm->sharedCacheAPI->cacheDirPerm) {
+					if (J9_ARE_ALL_BITS_SET(runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_GROUP_ACCESS)) {
+						/* if groupAccess is set, change J9SH_DIRPERM_ABSENT to J9SH_DIRPERM_ABSENT_GROUPACCESS */
+						vm->sharedCacheAPI->cacheDirPerm = J9SH_DIRPERM_ABSENT_GROUPACCESS;
+					}
 				}
 #else
 				vm->sharedCacheAPI->cacheDirPerm = J9SH_DIRPERM_ABSENT;

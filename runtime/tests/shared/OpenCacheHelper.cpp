@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -110,6 +110,7 @@ OpenCacheHelper::openTestCache(I_32 cacheType, I_32 cacheSize, const char *cache
 
 	sharedClassConfig->runtimeFlags = getDefaultRuntimeFlags();
 	sharedClassConfig->runtimeFlags |= extraRunTimeFlag;
+	vm->sharedCacheAPI->runtimeFlags |= extraRunTimeFlag;
 	sharedClassConfig->runtimeFlags &= ~(unsetTheseRunTimeFlag);
 
 	sharedClassConfig->verboseFlags |= extraVerboseFlag;
@@ -188,6 +189,12 @@ OpenCacheHelper::openTestCache(I_32 cacheType, I_32 cacheSize, const char *cache
 			ERRPRINTF("Invalid cache dir permission\n");
 			rc = FAIL;
 			goto done;
+		}
+	}
+	
+	if (J9_ARE_ALL_BITS_SET(sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_GROUP_ACCESS)) {
+		if (J9SH_DIRPERM_ABSENT == cacheDirPerm) {
+			cacheDirPerm = J9SH_DIRPERM_ABSENT_GROUPACCESS;
 		}
 	}
 	rc = cacheMap->startup(vm->mainThread, piConfig, this->cacheName, this->cacheDir, cacheDirPerm, cacheMemory, &cacheHasIntegrity);

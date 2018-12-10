@@ -139,7 +139,9 @@ createDirectory(struct J9PortLibrary *portLibrary, char *pathname, uintptr_t per
 		
 	current = strchr(tempPath+1, DIR_SEPARATOR); /* skip the first '/' */
 
-	if (J9SH_DIRPERM_ABSENT == permission) {
+	if ((J9SH_DIRPERM_ABSENT == permission)
+		|| (J9SH_DIRPERM_ABSENT_GROUPACCESS == permission)
+	) {
 		permission = J9SH_PARENTDIRPERM;
 	}
 
