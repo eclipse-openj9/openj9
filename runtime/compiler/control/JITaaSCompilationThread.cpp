@@ -3425,6 +3425,13 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       stream->cancel(); // This does nothing for raw sockets
       abortCompilation = true;
       }
+   catch (const JITaaS::StreamCancel &e)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Stream cancelled by client while compThreadID=%d was reading the compilation request: %s",
+            getCompThreadId(), e.what());
+      abortCompilation = true;
+      }
    catch (const JITaaS::StreamOOO &e)
       {
       // Error message was printed when the exception was thrown
