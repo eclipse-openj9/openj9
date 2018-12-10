@@ -173,11 +173,9 @@ timeout(time: 12, unit: 'HOURS') {
                 ghprbGhRepository = OPENJ9_REPO.substring(OPENJ9_REPO.indexOf('.com') +5, OPENJ9_REPO.indexOf('.git'))
                 ghprbActualCommit = SHAS['OPENJ9']
                 GITHUB_SERVER = OPENJ9_REPO.substring(OPENJ9_REPO.indexOf('github.'), OPENJ9_REPO.indexOf('.com') +4)
-                PROMOTE_JOB = buildFile.build_with_slack('Promote-OpenJ9-OMR-master-to-openj9', ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER
+                PROMOTE_JOB = buildFile.build_with_slack('Promote-OpenJ9-OMR-master-to-openj9', ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER,
                                                         [string(name: 'OMR_COMMIT', value: "${SHAS['OMR']}"),
-                                                        string(name: 'OPENJ9_COMMIT', value: "${SHAS['OPENJ9']}"),
-                                                        string(name: 'OPENJDK8_COMMIT', value: "${SHAS['OPENJDK'].get(8)}"),
-                                                        string(name: 'OPENJDK10_COMMIT', value: "${SHAS['OPENJDK'].get(10)}")])
+                                                        string(name: 'OPENJ9_COMMIT', value: "${SHAS['OPENJ9']}")])
             }
         }
     }
