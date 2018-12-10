@@ -2791,7 +2791,99 @@ public class MethodHandles {
 		MethodHandle result = FilterArgumentsHandle.get(handle, startPosition, filters, newType);
 		return result;
 	}
+
+/*[IF Java12]*/
+	/**
+	 * Produce a MethodHandle that preprocesses some of the arguments by calling the preprocessor handle.
+	 * The preprocessor's return type must be the same as the argument in <i>handle</i> at the <i>filterPosition</i>.
+	 * In all cases, the preprocessor handle accepts a subset of the arguments for the handle.
+	 *
+  	 * @param handle - the handle to call after preprocessing
+ 	 * @param filterPosition - the starting position to filter arguments
+	 * @param preprocessor - a methodhandle that preprocesses some of the incoming arguments
+	 * @param argumentIndices - an array of indices of incoming arguments from the handle
+	 * @return a MethodHandle that preprocesses some of the arguments to the handle before calling the next handle
+	 * @throws NullPointerException - if any of the arguments are null
+	 * @throws IllegalArgumentException - if the preprocessor's return type differs from the first argument type of the handle,
+	 *                      or if the arguments taken by the preprocessor isn't a subset of the arguments to the handle
+	 *                      or if the element of argumentIndices is outside of the range of the handle's argument list
+	 *                      or if the arguments specified by argumentIndices from the handle doesn't exactly match the the arguments taken by the preprocessor
+	 */
+	static MethodHandle filterArgumentsWithCombiner(MethodHandle handle, int filterPosition, MethodHandle preprocessor, int... argumentIndices) throws NullPointerException, IllegalArgumentException {
+
+		MethodType handleType = handle.type; // implicit nullcheck
+		MethodType preprocessorType = preprocessor.type; // implicit nullcheck
+		Class<?> preprocessorReturnClass = preprocessorType.returnType;
+		final int handleTypeParamCount = handleType.parameterCount();
+		final int preprocessorTypeParamCount = preprocessorType.parameterCount();
+		final int argIndexCount = argumentIndices.length;
+		
+		if ((filterPosition < 0) || (filterPosition >= handleTypeParamCount)) {
+			/*[MSG "K0637", "The value of {0}: {1} must be in a range from 0 to {2}"]*/
+			throw new IllegalArgumentException(Msg.getString("K0637", new Object[] { //$NON-NLS-1$
+							"the filter position", Integer.toString(filterPosition), //$NON-NLS-1$
+							Integer.toString(handleTypeParamCount)}));
+		}
 	
+		if (preprocessorTypeParamCount != argIndexCount) {
+			/*[MSG "K0638", "The count of argument indices: {0} must be equal to the parameter count of the combiner: {1}"]*/
+			throw new IllegalArgumentException(Msg.getString("K0638", new Object[] { //$NON-NLS-1$
+							Integer.toString(argIndexCount),
+							Integer.toString(preprocessorTypeParamCount)}));
+		}
+		
+		for (int i = 0; i < argIndexCount; i++) {
+			if ((argumentIndices[i] < 0) || (argumentIndices[i] >= handleTypeParamCount)) {
+				/*[MSG "K0637", "The value of {0}: {1} must be in a range from 0 to {2}"]*/
+				throw new IllegalArgumentException(Msg.getString("K0637", new Object[] { //$NON-NLS-1$
+								"argument index", Integer.toString(argumentIndices[i]),  //$NON-NLS-1$
+								Integer.toString(handleTypeParamCount)}));
+			}
+		}
+
+		if (void.class == preprocessorReturnClass) {
+			/*[MSG "K063A2", "The return type of combiner should never be void."]*/
+			throw new IllegalArgumentException(Msg.getString("K063A2")); //$NON-NLS-1$
+		}
+
+		if (preprocessorReturnClass != handleType.arguments[filterPosition]) {
+			/*[MSG "K063A1", "The return type of combiner: {0} is inconsistent with the argument type of {1} handle: {2} at the {3} position: {4}"]*/
+			throw new IllegalArgumentException(Msg.getString("K063A1", new Object[] { //$NON-NLS-1$
+							preprocessorReturnClass.getSimpleName(), "filter",
+							handleType.arguments[filterPosition].getSimpleName(), "filter", 
+							Integer.toString(filterPosition)}));
+		}
+		
+		validateParametersOfCombiner(argIndexCount, preprocessorTypeParamCount, preprocessorType, handleType, argumentIndices, filterPosition, 1);
+
+		MethodHandle result = FilterArgumentsWithCombinerHandle.get(handle, filterPosition, preprocessor, argumentIndices);
+
+		return result;
+	}
+
+	/**
+	 * Produce a MethodHandle that preprocesses some of the arguments by calling the preprocessor handle.
+	 * 
+	 * If the preprocessor handle has a return type, it must be the same as the argument type at <i>foldPosition</i> of the <i>handle</i>.
+	 * If the preprocessor returns void, it does not contribute the first argument to the <i>handle</i>.
+	 * In all cases, the preprocessor handle accepts a subset of the arguments for the handle.
+	 * 
+	 * @param handle - the handle to call after preprocessing
+	 * @param foldPosition - the starting position to fold arguments
+	 * @param preprocessor - a methodhandle that preprocesses some of the incoming arguments
+	 * @param argumentIndices - an array of indices of incoming arguments from the handle
+	 * @return a MethodHandle that preprocesses some of the arguments to the handle before calling the next handle, possibly with an additional first argument
+	 * @throws NullPointerException - if any of the arguments are null
+	 * @throws IllegalArgumentException - if the preprocessor's return type is not void and it differs from the first argument type of the handle,
+	 * 			or if the arguments taken by the preprocessor isn't a subset of the arguments to the handle
+	 * 			or if the element of argumentIndices is outside of the range of the handle's argument list
+	 * 			or if the arguments specified by argumentIndices from the handle doesn't exactly match the the arguments taken by the preprocessor
+	 */
+	static MethodHandle foldArgumentsWithCombiner(MethodHandle handle, int foldPosition, MethodHandle preprocessor, int... argumentIndices) throws NullPointerException, IllegalArgumentException {
+		return foldArguments(handle, foldPosition, preprocessor, argumentIndices);
+	}
+/*[ENDIF]*/
+
 	/**
 	 * Produce a MethodHandle that preprocesses some of the arguments by calling the preprocessor handle.
 	 * 
@@ -2926,10 +3018,10 @@ public class MethodHandles {
 							"<", Integer.toString(handleTypeParamCount)})); //$NON-NLS-1$
 		}
 		if (preprocessorReturnClass != handleType.arguments[foldPosition]) {
-			/*[MSG "K063A", "The return type of combiner: {0} is inconsistent with the argument type of fold handle: {1} at the fold position: {2}"]*/
-			throw new IllegalArgumentException(Msg.getString("K063A", new Object[] { //$NON-NLS-1$
-							preprocessorReturnClass.getSimpleName(),  
-							handleType.arguments[foldPosition].getSimpleName(), 
+			/*[MSG "K063A1", "The return type of combiner: {0} is inconsistent with the argument type of {1} handle: {2} at the {3} position: {4}"]*/
+			throw new IllegalArgumentException(Msg.getString("K063A1", new Object[] { //$NON-NLS-1$
+							preprocessorReturnClass.getSimpleName(), "filter",
+							handleType.arguments[foldPosition].getSimpleName(), "filter",
 							Integer.toString(foldPosition)}));
 		}
 		validateParametersOfCombiner(argIndexCount, preprocessorTypeParamCount, preprocessorType, handleType, argumentIndices, foldPosition, 1);
@@ -2942,14 +3034,14 @@ public class MethodHandles {
 		if (0 == argIndexCount) {
 			for (int i = 0; i < preprocessorTypeParamCount; i++) {
 				if (preprocessorType.arguments[i]  != handleType.arguments[foldPosition + i + foldPlaceHolder]) {
-					/*[MSG "K05d0", "Can't apply fold of type: {0} to handle of type: {1} starting at {2} "]*/
+					/*[MSG "K05d0", "Can't apply preprocessor of type: {0} to handle of type: {1} starting at {2} "]*/
 					throw new IllegalArgumentException(Msg.getString("K05d0", preprocessorType.toString(), handleType.toString(), Integer.toString(foldPosition))); //$NON-NLS-1$
 				}
 			}
 		} else {
 			for (int i = 0; i < argIndexCount; i++) {
 				if (preprocessorType.arguments[i]  != handleType.arguments[argumentIndices[i]]) {
-					/*[MSG "K05d0", "Can't apply fold of type: {0} to handle of type: {1} starting at {2} "]*/
+					/*[MSG "K05d0", "Can't apply preprocessor of type: {0} to handle of type: {1} starting at {2} "]*/
 					throw new IllegalArgumentException(Msg.getString("K05d0", preprocessorType.toString(), handleType.toString(), Integer.toString(foldPosition))); //$NON-NLS-1$
 				}
 			}

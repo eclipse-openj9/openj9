@@ -64,6 +64,7 @@ static const char * names[] = {
 /* #ifdef J9VM_OPT_PANAMA */
 	"J9_METHOD_HANDLE_KIND_NATIVE",
 /* #endif J9VM_OPT_PANAMA */
+	"J9_METHOD_HANDLE_KIND_FILTER_ARGUMENTS_WITH_COMBINER",
 };
 #endif /* MH_TRACE */
 
@@ -270,6 +271,13 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 			if (VM_VMHelpers::exceptionPending(_currentThread)) {
 				goto throwCurrentException;
 			}
+			break;
+		}
+		case J9_METHOD_HANDLE_KIND_FILTER_ARGUMENTS_WITH_COMBINER: {
+			methodHandle = filterArgumentsWithCombiner(methodHandle);
+			if (VM_VMHelpers::exceptionPending(_currentThread)) {
+				goto throwCurrentException;
+			}	
 			break;
 		}
 		case J9_METHOD_HANDLE_KIND_GUARD_WITH_TEST: {
@@ -685,6 +693,9 @@ VM_MHInterpreter::impdep1()
 			}
 		}
 		_currentThread->tempSlot = (UDATA) filterHandle;
+	} else if (J9VMJAVALANGINVOKEMETHODHANDLE_FILTERARGUMENTSWITHCOMBINERPLACEHOLDER_METHOD(_vm) == _currentThread->literals) {
+		rc = GOTO_RUN_METHODHANDLE;
+		_currentThread->tempSlot = (UDATA) replaceReturnValueForFilterArgumentsWithCombiner();
 	} else if (J9VMJAVALANGINVOKEMETHODHANDLE_FOLDHANDLEPLACEHOLDER_METHOD(_vm) == _currentThread->literals) {
 		rc = GOTO_RUN_METHODHANDLE;
 		_currentThread->tempSlot = (UDATA) insertReturnValueForFoldArguments();
@@ -1354,6 +1365,127 @@ VM_MHInterpreter::getArgSlotsBeforePosition(j9object_t argumentTypes, U_32 argPo
 }
 
 j9object_t
+VM_MHInterpreter::filterArgumentsWithCombiner(j9object_t methodHandle)
+{
+	/* Get filterHandle.type and filterHandle.type.argSlots */
+	/* [... filterHandle args] */
+	j9object_t filterHandleType = getMethodHandleMethodType(methodHandle);
+	j9object_t argumentTypes = getMethodTypeArguments(filterHandleType);
+	U_32 filterArgSlots = getMethodTypeArgSlots(filterHandleType);
+	j9object_t argumentIndices = J9VMJAVALANGINVOKEFILTERARGUMENTSWITHCOMBINERHANDLE_ARGUMENTINDICES(_currentThread, methodHandle);
+	U_32 argumentIndicesCount = J9INDEXABLEOBJECT_SIZE(_currentThread, argumentIndices);
+	UDATA *spFirstFilterArgSlot = _currentThread->sp + filterArgSlots;
+
+	/* [... filterHandle args descriptionBytes MethodTypeFrame] */
+	UDATA *spPriorToFrameBuild = _currentThread->sp;
+	(void)buildMethodTypeFrame(_currentThread, filterHandleType);
+
+	/* [... filterHandle args descriptionBytes MethodTypeFrame filterHandle args] */
+	_currentThread->sp -= (filterArgSlots  + 1);
+	memcpy(_currentThread->sp, spPriorToFrameBuild, sizeof(UDATA) * (filterArgSlots+1));
+
+	/* [... filterHandle args descriptionBytes MethodTypeFrame filterHandle PlaceHolderFrame filterHandle args] */
+	insertPlaceHolderFrame(filterArgSlots, methodHandle, J9VMJAVALANGINVOKEMETHODHANDLE_FILTERARGUMENTSWITHCOMBINERPLACEHOLDER_METHOD(_vm));
+
+	/* Get combinerHandle */
+	j9object_t combinerHandle = getCombinerHandleForFilter(methodHandle);
+
+	/* Replace filterHandle with combinerHandle and adjust sp according to combinerHandle.type.argSlots */
+	/* [... filterHandle args descriptionBytes MethodTypeFrame filterHandle PlaceHolderFrame combinerHandle filterArgs] */
+	((j9object_t *)_currentThread->sp)[filterArgSlots] = combinerHandle;
+	UDATA *spCombinerSlot = _currentThread->sp + filterArgSlots;
+
+	/* Copy all arguments specified by argumentIndices from filterHandle to the stack slots used by combinerHandler */
+	U_32 arrayIndex = 0;
+	for (arrayIndex = 0; arrayIndex < argumentIndicesCount; arrayIndex++) {
+		U_32 argumentTypeIndex = (U_32)J9JAVAARRAYOFINT_LOAD(_currentThread, argumentIndices, arrayIndex);
+
+		/* Determine the slot index of each argument specified by the index in argumentIndices */
+		U_32 argumentTypeSlots = getArgSlotsBeforePosition(argumentTypes, argumentTypeIndex);
+
+		/* Determine the type of each argument specified by argumentIndices before copying.
+		* Note: long/double type takes 2 slots while other types take 1 slot.
+		*/
+		j9object_t argumentTypeAtIndex =
+			_objectAccessBarrier->inlineIndexableObjectReadObject(
+				_currentThread,
+				argumentTypes,
+				argumentTypeIndex);
+		J9Class *argumentClassAtIndex = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, argumentTypeAtIndex);
+
+		if ((_vm->doubleReflectClass == argumentClassAtIndex)
+			|| (_vm->longReflectClass == argumentClassAtIndex)
+		) {
+			spCombinerSlot -= 2;
+			*(U_64*)spCombinerSlot = *(U_64*)(spFirstFilterArgSlot - argumentTypeSlots - 2);
+		} else {
+			spCombinerSlot -= 1;
+			*spCombinerSlot = *(spFirstFilterArgSlot - argumentTypeSlots - 1);
+		}
+	}
+	_currentThread->sp = spCombinerSlot; /* after loop spCombinerSlot is at the top of the combiner arguments */
+
+	return combinerHandle;
+}
+
+j9object_t
+VM_MHInterpreter::replaceReturnValueForFilterArgumentsWithCombiner()
+{
+	UDATA *bp = _currentThread->arg0EA - (sizeof(J9SFStackFrame)/sizeof(UDATA*));
+	J9SFStackFrame *frame = (J9SFStackFrame*)(bp);
+
+	/* [... filterHandle args descriptionBytes MethodTypeFrame args filterHandle PlaceHolderFrame combinerReturnValue] */
+	j9object_t filterHandle = *(j9object_t*)_currentThread->arg0EA;
+	j9object_t filterType = getMethodHandleMethodType(filterHandle);
+	j9object_t argumentTypes = getMethodTypeArguments(filterType);
+	U_32 filterArgSlots = (U_32)getMethodTypeArgSlots(filterType);
+	U_32 filterPosition = getMethodHandleFilterPosition(filterHandle);
+
+	/* Count the slot number of all the arguments before the specified filter position */
+	U_32 argumentSlots = getArgSlotsBeforePosition(argumentTypes, filterPosition);
+
+	/* Locally store the return value from the combinerHandle and determine stackslots required by the return value */
+	j9object_t combinerHandle = getCombinerHandleForFilter(filterHandle);
+	j9object_t combinerType = getMethodHandleMethodType(combinerHandle);
+	j9object_t combinerReturnType = J9VMJAVALANGINVOKEMETHODTYPE_RETURNTYPE(_currentThread, combinerType);
+	J9Class *combinerReturnTypeClass = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, combinerReturnType);
+	UDATA combinerReturnSlots = 1;
+	UDATA combinerReturnValue0 = _currentThread->sp[0];
+	UDATA combinerReturnValue1 = 0;
+	if ((_vm->doubleReflectClass == combinerReturnTypeClass) || (_vm->longReflectClass == combinerReturnTypeClass)) {
+		combinerReturnSlots = 2;
+		combinerReturnValue1 = _currentThread->sp[1];
+	}
+
+	/* Determine the number of argument slots starting after the filterPosition */
+	U_32 remainingArgSlots = filterArgSlots - argumentSlots - combinerReturnSlots;
+
+	/* Set local variables to restore state of the _currentThread during updateVMStruct */
+	UDATA *mhPtr = UNTAGGED_A0(frame);
+
+	/* Advance past the frame and single argument (now filterHandle is at the top of the stack)) */
+	bp = (UDATA *)(((J9SFStackFrame*)(bp+1)) + 1);
+
+	J9SFMethodTypeFrame *mtFrame = (J9SFMethodTypeFrame*)(bp);
+	_currentThread->literals = mtFrame->savedCP;
+	_currentThread->pc = mtFrame->savedPC;
+	_currentThread->arg0EA = UNTAGGED_A0(mtFrame);
+	_currentThread->sp = mhPtr - filterArgSlots;
+
+	/* Overwrite initial filterHandle with fitlerHandle.handle */
+	j9object_t nextHandle = J9VMJAVALANGINVOKEFILTERARGUMENTSWITHCOMBINERHANDLE_HANDLE(_currentThread, filterHandle);
+	*(j9object_t*)(mhPtr) = nextHandle;
+
+	/* Add the combinerReturnValue at filterPosition */
+	_currentThread->sp[remainingArgSlots] = combinerReturnValue0;
+	if (2 == combinerReturnSlots) {
+		_currentThread->sp[remainingArgSlots + 1] = combinerReturnValue1;
+	}
+
+	return nextHandle;
+}
+
+j9object_t
 VM_MHInterpreter::foldForFoldArguments(j9object_t methodHandle)
 {
 	/* Get foldHandle.type and foldHandle.type.argSlots */
@@ -1383,7 +1515,7 @@ VM_MHInterpreter::foldForFoldArguments(j9object_t methodHandle)
 	insertPlaceHolderFrame(foldArgSlots, methodHandle, J9VMJAVALANGINVOKEMETHODHANDLE_FOLDHANDLEPLACEHOLDER_METHOD(_vm));
 
 	/* Get combinerHandle, combinerHandle.type and combinerHandle.type.argSlots */
-	j9object_t combinerHandle = getCombinerHandle(methodHandle);
+	j9object_t combinerHandle = getCombinerHandleForFold(methodHandle);
 	j9object_t combinerType = getMethodHandleMethodType(combinerHandle);
 	U_32 combinerArgSlots = getMethodTypeArgSlots(combinerType);
 
@@ -1489,7 +1621,7 @@ VM_MHInterpreter::insertReturnValueForFoldArguments()
 	U_32 remainingArgSlots = foldArgSlots - argumentSlots;
 
 	/* Locally store the return value from the combinerHandle and determine stackslots required by the return value */
-	j9object_t combinerHandle = getCombinerHandle(foldHandle);
+	j9object_t combinerHandle = getCombinerHandleForFold(foldHandle);
 	j9object_t combinerType = getMethodHandleMethodType(combinerHandle);
 	j9object_t combinerReturnType = J9VMJAVALANGINVOKEMETHODTYPE_RETURNTYPE(_currentThread, combinerType);
 	J9Class *argTypeClass = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, combinerReturnType);

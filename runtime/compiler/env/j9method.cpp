@@ -3861,7 +3861,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
 
    static X VarHandleMethods[] =
       {
-      // Recognized method only works for resovled methods
+      // Recognized method only works for resolved methods
       // Resolved VarHandle access methods are suffixed with _impl in their names
       // A list for unresolved VarHandle access methods is in VarHandleTransformer.cpp,
       // changes in the following list need to be reflected in the other
@@ -4019,6 +4019,14 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {x(TR::java_lang_invoke_FoldHandle_foldPosition,               "foldPosition",            "()I")},
       {x(TR::java_lang_invoke_FoldHandle_argIndices,                 "argIndices",               "()I")},
       {  TR::java_lang_invoke_FoldHandle_argumentsForCombiner,  20,  "argumentsForCombiner",    (int16_t)-1, "*"},
+      {  TR::unknownMethod}
+      };
+   static X FilterArgumentsWithCombinerHandleMethods[] =
+      {
+      {x(TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_filterPosition,               "filterPosition",            "()I")},
+      {x(TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_argumentIndices,               "argumentIndices",            "()I")},
+      {x(TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_numSuffixArgs,      "numSuffixArgs",     "()I")},
+      {  TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_argumentsForCombiner,  20,  "argumentsForCombiner",    (int16_t)-1, "*"},
       {  TR::unknownMethod}
       };
 
@@ -4241,6 +4249,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
 
    struct Y { const char * _class; X * _methods; };
 
+   /* classXX where XX is the number of characters in the class name */
    static Y class13[] =
       {
       { "java/nio/Bits", BitsMethods },
@@ -4535,6 +4544,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
    static Y class50[] =
       {
       { "java/util/concurrent/atomic/AtomicLongFieldUpdater", JavaUtilConcurrentAtomicLongFieldUpdaterMethods },
+      { "java/lang/invoke/FilterArgumentsWithCombinerHandle", FilterArgumentsWithCombinerHandleMethods },
       { 0 }
       };
 
@@ -8135,6 +8145,29 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             }
          return true;
          }
+      case TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_argumentIndices:
+         {
+         TR_ASSERT(archetypeParmCount == 0, "assertion failure"); // The number of arguments for argumentIndices()
+         J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
+         if (!thunkDetails)
+            return false;
+
+         uintptrj_t methodHandle;
+         uintptrj_t argumentIndices;
+            {
+            TR::VMAccessCriticalSection invokeFilterArgumentsWithCombinerHandle(fej9);
+            methodHandle = *thunkDetails->getHandleRef();
+            argumentIndices = fej9->getReferenceField(methodHandle, "argumentIndices", "[I");
+            int32_t arrayLength = (int32_t)fej9->getArrayLengthInElements(argumentIndices);
+            // Push the indices in reverse order
+            for (int i = arrayLength - 1; i >= 0; i--) {
+               int32_t index = fej9->getInt32Element(argumentIndices, i);
+               loadConstant(TR::iconst, index);
+            }
+            loadConstant(TR::iconst, arrayLength); // number of arguments
+            }
+         return true;
+         }
       case TR::java_lang_invoke_FoldHandle_foldPosition:
          {
          TR_ASSERT(archetypeParmCount == 0, "assertion failure"); // The number of arguments for foldPosition()
@@ -8154,7 +8187,27 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          loadConstant(TR::iconst, foldPosition);
          return true;
          }
+      case TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_filterPosition:
+         {
+         TR_ASSERT(archetypeParmCount == 0, "assertion failure"); // The number of arguments for filterPosition()
+
+         J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
+         if (!thunkDetails)
+            return false;
+
+         uintptrj_t methodHandle;
+         int32_t filterPosition;
+            {
+            TR::VMAccessCriticalSection invokeFilterArgumentsWithCombinerHandle(fej9);
+            methodHandle = *thunkDetails->getHandleRef();
+            filterPosition = fej9->getInt32Field(methodHandle, "filterPosition");
+            }
+
+         loadConstant(TR::iconst, filterPosition);
+         return true;
+         }
       case TR::java_lang_invoke_FoldHandle_argumentsForCombiner:
+      case TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_argumentsForCombiner:
          {
          TR::Node *placeholder = genNodeAndPopChildren(TR::icall, 1, placeholderWithDummySignature());
 
@@ -8220,7 +8273,30 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          loadConstant(TR::iconst, numArgsPassToFinallyTarget);
          return true;
          }
+      case TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_numSuffixArgs:
+         {
+         TR_ASSERT(archetypeParmCount == 0, "assertion failure");
 
+         J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
+         if (!thunkDetails)
+            return false;
+
+         uintptrj_t methodHandle;
+         uintptrj_t arguments;
+         int32_t numArguments;
+         int32_t filterPos;
+
+            {
+            TR::VMAccessCriticalSection invokeFilterArgumentsWithCombinerHandle(fej9);
+            methodHandle = *thunkDetails->getHandleRef();
+            arguments = fej9->getReferenceField(fej9->methodHandle_type(methodHandle), "arguments", "[Ljava/lang/Class;");
+            numArguments = (int32_t)fej9->getArrayLengthInElements(arguments);
+            filterPos     = (int32_t)fej9->getInt32Field(methodHandle, "filterPosition");
+            }
+
+         loadConstant(TR::iconst, numArguments - (filterPos + 1));
+         return true;
+         }
       case TR::java_lang_invoke_FilterArgumentsHandle_numPrefixArgs:
       case TR::java_lang_invoke_FilterArgumentsHandle_numSuffixArgs:
       case TR::java_lang_invoke_FilterArgumentsHandle_numArgsToFilter:
@@ -8239,7 +8315,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          int32_t numFilters;
 
             {
-            TR::VMAccessCriticalSection invokeFilderArgumentsHandle(fej9);
+            TR::VMAccessCriticalSection invokeFilterArgumentsHandle(fej9);
             methodHandle = *thunkDetails->getHandleRef();
             arguments = fej9->getReferenceField(fej9->methodHandle_type(methodHandle), "arguments", "[Ljava/lang/Class;");
             numArguments = (int32_t)fej9->getArrayLengthInElements(arguments);

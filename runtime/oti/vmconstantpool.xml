@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2006, 2018 IBM Corp. and others
+Copyright (c) 2006, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -100,6 +100,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<classref name="java/lang/invoke/FilterReturnHandle" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/FoldHandle" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/FilterArgumentsHandle" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/FilterArgumentsWithCombinerHandle" flags="opt_methodHandle" jcl="se12"/>
 	<classref name="java/lang/invoke/GuardWithTestHandle" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/VarargsCollectorHandle" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/InvokeExactHandle" flags="opt_methodHandle"/>
@@ -274,6 +275,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/invoke/ConvertHandle" name="next" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/FoldHandle" name="next" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/FoldHandle" name="combiner" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/FilterArgumentsWithCombinerHandle" name="handle" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle" jcl="se12"/>
+	<fieldref class="java/lang/invoke/FilterArgumentsWithCombinerHandle" name="combiner" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle" jcl="se12"/>
 	<fieldref class="java/lang/invoke/FilterArgumentsHandle" name="next" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/FilterArgumentsHandle" name="startPos" signature="I" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/FilterArgumentsHandle" name="filters" signature="[Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
@@ -319,10 +322,11 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/invoke/VarHandle" name="modifiers" signature="I" jcl="se9_before_b165,se9,se10,se11,se12"/>
 	<fieldref class="java/lang/invoke/FoldHandle" name="foldPosition" signature="I" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/FoldHandle" name="argumentIndices" signature="[I" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/FilterArgumentsWithCombinerHandle" name="filterPosition" signature="I" flags="opt_methodHandle" jcl="se12"/>
+	<fieldref class="java/lang/invoke/FilterArgumentsWithCombinerHandle" name="argumentIndices" signature="[I" flags="opt_methodHandle" jcl="se12"/>
 	<fieldref class="java/lang/invoke/MethodHandleCache" name="directHandlesHead" signature="Lcom/ibm/oti/util/WeakReferenceNode;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/VarHandleInvokeHandle" name="operation" signature="I" jcl="se9_before_b165,se9,se10,se11,se12"/>
 	<fieldref class="java/lang/invoke/VarHandleInvokeHandle" name="accessModeType" signature="Ljava/lang/invoke/MethodType;" jcl="se9_before_b165,se9,se10,se11,se12"/>
-
 	<fieldref class="java/lang/reflect/Module" name="loader" signature="Ljava/lang/ClassLoader;" jcl="se9_before_b165" flags="opt_module"/>
 	<fieldref class="java/lang/Module" name="loader" signature="Ljava/lang/ClassLoader;" jcl="se9,se10,se11,se12" flags="opt_module"/>
 	<fieldref class="java/lang/reflect/Module" name="name" signature="Ljava/lang/String;" jcl="se9_before_b165" flags="opt_module"/>
@@ -348,6 +352,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<specialmethodref class="java/lang/invoke/MethodHandle" name="foldHandlePlaceHolder" signature="()Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
 	<specialmethodref class="java/lang/invoke/MethodHandle" name="guardWithTestPlaceHolder" signature="()Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
 	<specialmethodref class="java/lang/invoke/MethodHandle" name="filterArgumentsPlaceHolder" signature="(III)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
+	<specialmethodref class="java/lang/invoke/MethodHandle" name="filterArgumentsWithCombinerPlaceHolder" signature="()Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle" jcl="se12"/>
 	<virtualmethodref class="java/lang/ClassLoader" name="loadClass" signature="(Ljava/lang/String;)Ljava/lang/Class;"/>
 	<specialmethodref class="java/lang/Thread" name="uncaughtException" signature="(Ljava/lang/Throwable;)V"/>
 	<specialmethodref class="java/lang/Thread" name="&lt;init>" signature="(Ljava/lang/String;Ljava/lang/Object;IZ)V"/>
