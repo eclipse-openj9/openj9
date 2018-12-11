@@ -92,6 +92,10 @@ internalFindArrayClass(J9VMThread* vmThread, J9Module *j9module, UDATA arity, U_
 
 	vmThread->privateFlags &= ~J9_PRIVATE_FLAGS_CLOAD_NO_MEM;
 
+	if (arity > 255) {
+		goto done;
+	}
+
 	if (length > arity) {
 		firstChar = name[arity];
 		lastChar = name[length-1];
@@ -112,7 +116,7 @@ internalFindArrayClass(J9VMThread* vmThread, J9Module *j9module, UDATA arity, U_
 		arrayClass = internalFindClassInModule(vmThread, j9module, name, length, classLoader, options);
 
 	} else {
-		return NULL;
+		goto done;
 	}
 
 	while (arrayClass && arity-- > 0) {
@@ -128,7 +132,7 @@ internalFindArrayClass(J9VMThread* vmThread, J9Module *j9module, UDATA arity, U_
 			}
 		}
 	}
-
+done:
 	return arrayClass;
 }
 
@@ -147,12 +151,11 @@ calculateArity(J9VMThread* vmThread, U_8* name, UDATA length)
 {
 	U_32 arity = 0;
 
-	while (length > 0 && *name == '[') {
+	while ((length > 0) && ('[' == *name)) {
 		name += 1;
 		length -= 1;
 		arity += 1;
 	}
-
 	return arity;
 }
 
