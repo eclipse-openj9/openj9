@@ -21,9 +21,8 @@
 ################################################################################
 
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/../ut_j9jcl.c PROPERTIES GENERATED TRUE)
-add_library(jclse10_ SHARED
-	../j9vmconstantpool_se10.c
-)
+add_jcl(se10)
+
 target_include_directories(jclse10_
 	PRIVATE
 		${CMAKE_CURRENT_BINARY_DIR}
@@ -41,12 +40,12 @@ target_link_libraries(jclse10_
 		j9vm_jcl_se6_vm-side_lifecycle
 		j9vm_jcl_se6_vm-side_natives
 		j9vm_jcl_jithelpers
-        j9vm_jcl_sun_misc_Unsafe
-        #j9vm_jcl_se626_orb_ludcl
+		j9vm_jcl_sun_misc_Unsafe
+		#j9vm_jcl_se626_orb_ludcl
 		j9vm_jcl_attach
 		j9vm_jcl_se7
 		j9vm_jcl_se8
-        j9vm_jcl_se9
+		j9vm_jcl_se9
 
 		j9hookable
 		j9zlib

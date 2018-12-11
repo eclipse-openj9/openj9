@@ -119,6 +119,22 @@ add_custom_target(j9vm_hookgen
 		${CMAKE_CURRENT_SOURCE_DIR}/include/mmhook.h
 )
 
+# Generate NLS headers
+if(J9VM_GEN_NLS)
+	add_custom_command(
+		OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/java.properties"
+		DEPENDS j9nls
+		COMMAND "${Java_JAVA_EXECUTABLE}" -cp "$<TARGET_PROPERTY:j9nls,JAR_FILE>" com.ibm.oti.NLSTool.J9NLS -source "${CMAKE_CURRENT_SOURCE_DIR}"
+	)
+	add_custom_target(j9vm_nlsgen
+		DEPENDS
+			"${CMAKE_CURRENT_BINARY_DIR}/java.properties"
+	)
+else()
+	# if we aren't generating nls headers, just create a dummy target
+	add_custom_target(j9vm_nlsgen)
+endif()
+
 # Note we do this here rather than in the redirector directory to work arround
 # issues in cmake. If we did it there each target which consumed generated.c has
 # its own rule to create it. Which causes a race condition when building in parallel
@@ -152,12 +168,19 @@ target_include_directories(j9vm_interface
 		${CMAKE_CURRENT_SOURCE_DIR}/include
 		${J9VM_OMR_DIR}/include_core
 		${CMAKE_CURRENT_BINARY_DIR}/omr
-		nls
 		${CMAKE_CURRENT_BINARY_DIR}
 )
+
+if(J9VM_GEN_NLS)
+	target_include_directories(j9vm_interface INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/nls)
+else()
+	target_include_directories(j9vm_interface INTERFACE nls)
+endif()
+
 add_dependencies(j9vm_interface
 	j9vm_hookgen
 	j9vm_m4gen
+	j9vm_nlsgen
 )
 
 # j9vm_gc_includes is used to track the include directories that are consumed by the various gc components

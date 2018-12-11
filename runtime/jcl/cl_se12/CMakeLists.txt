@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2018, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,17 +20,20 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-# TODO scope b165
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/../ut_j9jcl.c PROPERTIES GENERATED TRUE)
-add_jcl(se9_before_b165)
-
-target_include_directories(jclse9_before_b165_
+add_jcl(se12)
+target_include_directories(jclse12_
 	PRIVATE
 		${CMAKE_CURRENT_BINARY_DIR}
 		../
 )
 
-target_link_libraries(jclse9_before_b165_
+target_compile_definitions(jclse12_
+	PRIVATE
+		J9VM_JCL_SE12
+)
+
+target_link_libraries(jclse12_
 	PRIVATE
 		j9vm_interface
 		j9vm_gc_includes
@@ -42,10 +45,12 @@ target_link_libraries(jclse9_before_b165_
 		j9vm_jcl_se6_vm-side_natives
 		j9vm_jcl_jithelpers
 		j9vm_jcl_sun_misc_Unsafe
+		#j9vm_jcl_se626_orb_ludcl
 		j9vm_jcl_attach
 		j9vm_jcl_se7
 		j9vm_jcl_se8
 		j9vm_jcl_se9
+
 		j9hookable
 		j9zlib
 		j9util
@@ -58,8 +63,8 @@ target_link_libraries(jclse9_before_b165_
 		sunvmi
 )
 
-set_target_properties(jclse9_before_b165_ PROPERTIES LIBRARY_OUTPUT_NAME jclse9_)
+
 install(
-	TARGETS jclse9_before_b165_
+	TARGETS jclse12_
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
 )
