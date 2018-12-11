@@ -38,6 +38,17 @@ ifeq (aix_ppc-64_cmprssptrs, $(SPEC))
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
 endif
 
+ifeq (aix_ppc-64_cmprssptrs_sp, $(SPEC))
+	CONFIGURE_ARGS += \
+		--enable-OMRTHREAD_LIB_AIX \
+		--enable-OMR_ARCH_POWER \
+		--enable-OMR_ENV_DATA64 \
+		--enable-OMR_GC_COMPRESSED_POINTERS \
+		--enable-OMR_INTERP_COMPRESSED_OBJECT_HEADER \
+		--enable-OMR_INTERP_SMALL_MONITOR_SLOT \
+		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
+endif
+
 ifeq (aix_ppc-64_cmprssptrs_purec, $(SPEC))
 	CONFIGURE_ARGS += \
 		--enable-OMRTHREAD_LIB_AIX \
@@ -65,6 +76,14 @@ ifeq (aix_ppc-64, $(SPEC))
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
 endif
 
+ifeq (aix_ppc-64_sp, $(SPEC))
+	CONFIGURE_ARGS += \
+		--enable-OMRTHREAD_LIB_AIX \
+		--enable-OMR_ARCH_POWER \
+		--enable-OMR_ENV_DATA64 \
+		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
+endif
+
 ifeq (aix_ppc-64_purec, $(SPEC))
 	CONFIGURE_ARGS += \
 		--enable-OMRTHREAD_LIB_AIX \
@@ -81,6 +100,13 @@ ifeq (aix_ppc_codecov, $(SPEC))
 endif
 
 ifeq (aix_ppc, $(SPEC))
+	CONFIGURE_ARGS += \
+		--enable-OMRTHREAD_LIB_AIX \
+		--enable-OMR_ARCH_POWER \
+		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
+endif
+
+ifeq (aix_ppc_sp, $(SPEC))
 	CONFIGURE_ARGS += \
 		--enable-OMRTHREAD_LIB_AIX \
 		--enable-OMR_ARCH_POWER \
