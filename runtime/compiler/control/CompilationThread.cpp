@@ -3210,6 +3210,26 @@ void TR::CompilationInfo::stopCompilationThreads()
 #endif
 
    releaseCompMonitor(vmThread);
+   if (getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+      {
+      getSequencingMonitor()->enter();
+      uint32_t seqNo = getCompReqSeqNo();
+      incCompReqSeqNo();
+      getSequencingMonitor()->exit();
+      JITaaSHelpers::ClassInfoTuple classTuple;
+      std::vector<TR_OpaqueClassBlock*> unloadedClasses;
+      std::string optionsStr;
+      std::string recompMethodInfoStr;
+      std::string detailsStr;
+      J9Class *clazz = NULL;
+      J9Method *ramMethod = NULL;
+      uint32_t romMethodOffset = 0;
+      JITaaS::J9ClientStream client(getPersistentInfo());
+      client.buildCompileRequest(getPersistentInfo()->getJITaaSId(), romMethodOffset,
+                     ramMethod, clazz, cold, detailsStr, J9::EMPTY,
+                     unloadedClasses, classTuple, optionsStr, recompMethodInfoStr, seqNo);
+
+      }
    }
 
 IDATA J9THREAD_PROC compilationThreadProc(void *entryarg)

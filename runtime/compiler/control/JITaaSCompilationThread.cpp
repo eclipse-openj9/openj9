@@ -2428,6 +2428,7 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) :
    _sequencingMonitor = TR::Monitor::create("JIT-JITaaSSequencingMonitor");
    _vmInfo = nullptr;
    _staticMapMonitor = TR::Monitor::create("JIT-JITaaSStaticMapMonitor");
+   _markedForDeletion = false;
    }
 
 ClientSessionData::~ClientSessionData()
@@ -2730,6 +2731,30 @@ ClientSessionHT::findOrCreateClientSession(uint64_t clientUID, uint32_t seqNo, b
          }
       }
    return clientData;
+   }
+// Search the clientSessionHashtable for the given clientUID and delete  the
+// data corresponding to the client. Return true if client data found and deleted.
+// Must have compilation monitor in hand when calling this function.
+
+bool
+ClientSessionHT::deleteClientSession(uint64_t clientUID, bool forDeletion)
+   {
+   ClientSessionData *clientData = nullptr;
+   auto clientDataIt = _clientSessionMap.find(clientUID);
+   if (clientDataIt != _clientSessionMap.end())
+      {
+      clientData = clientDataIt->second;
+      if (forDeletion)
+         clientData->markForDeletion();
+
+      if ((clientData->getInUse() == 0) && clientData->isMarkedForDeletion())
+         {
+         ClientSessionData::destroy(clientData); // delete the client data
+         _clientSessionMap.erase(clientDataIt); // delete the mapping from the hashtable
+         return true;
+         }
+      }
+   return false;
    }
 
 // Search the clientSessionHashtable for the given clientUID and return the
@@ -3240,6 +3265,7 @@ void
 TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J9::J9SegmentProvider &scratchSegmentProvider)
    {
    bool abortCompilation = false;
+   uint64_t clientId = 0;
    TR::CompilationInfo *compInfo = getCompilationInfo();
    J9VMThread *compThread = getCompilationThread();
    JITaaS::J9ServerStream *stream = entry._stream;
@@ -3249,6 +3275,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    // update the last time the compilation thread had to do something.
    compInfo->setLastReqStartTime(compInfo->getPersistentInfo()->getElapsedTime());
   
+   _recompilationMethodInfo = NULL;
    // Release compMonitor before doing the blocking read
    compInfo->releaseCompMonitor(compThread);
 
@@ -3260,7 +3287,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          J9::IlGeneratorMethodDetailsType, std::vector<TR_OpaqueClassBlock*>,
          JITaaSHelpers::ClassInfoTuple, std::string, std::string, uint32_t>();
 
-      uint64_t clientId         = std::get<0>(req);
+      clientId                  = std::get<0>(req);
       uint32_t romMethodOffset  = std::get<1>(req);
       J9Method *ramMethod       = std::get<2>(req);
       J9Class *clazz            = std::get<3>(req);
@@ -3273,162 +3300,179 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       std::string recompInfoStr = std::get<10>(req);
       uint32_t seqNo            = std::get<11>(req); // sequence number at the client
 
-      //if (seqNo == 100)
-      //   throw JITaaS::StreamFailure(); // stress testing
-
-      stream->setClientId(clientId);
-      setSeqNo(seqNo); // memorize the sequence number of this request
-
-      bool sessionDataWasEmpty = false;
-      ClientSessionData *clientSession = NULL;
-      {
-      // Get a pointer to this client's session data
-      // Obtain monitor RAII style because creating a new hastable entry may throw bad_alloc
-      OMR::CriticalSection compilationMonitorLock(compInfo->getCompilationMonitor());
-      compInfo->getClientSessionHT()->purgeOldDataIfNeeded(); // Try to purge old data
-      if (!(clientSession = compInfo->getClientSessionHT()->findOrCreateClientSession(clientId, seqNo, &sessionDataWasEmpty)))
-         throw std::bad_alloc();
-
-      setClientData(clientSession); // Cache the session data into CompilationInfoPerThreadRemote object
-      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "compThreadID=%d %s clientSessionData=%p for clientUID=%llu seqNo=%u",
-            getCompThreadId(), sessionDataWasEmpty ? "created" : "found", clientSession, (unsigned long long)clientId, seqNo);
-      } // end critical section
-
-     
-      // We must process unloaded classes lists in the same order they were generated at the client
-      // Use a sequencing scheme to re-order compilation requests
-      //
-      clientSession->getSequencingMonitor()->enter();
-      clientSession->updateMaxReceivedSeqNo(seqNo);
-      if (seqNo > clientSession->getExpectedSeqNo()) // out of order messages
+      if (!ramMethod)
          {
-         // park this request until the missing ones arrive
+         compInfo->acquireCompMonitor(compThread); //need to acquire compilation monitor for both deleting the client data and the setting the thread state to COMPTHREAD_SIGNAL_SUSPEND.
+         bool result = compInfo->getClientSessionHT()->deleteClientSession(clientId, true);
          if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Out-of-sequence msg detected for clientUID=%llu seqNo=%u > expectedSeqNo=%u. Parking compThreadID=%d (entry=%p)",
-            (unsigned long long)clientId, seqNo, clientSession->getExpectedSeqNo(), getCompThreadId(), &entry);
-
-         waitForMyTurn(clientSession, entry);
-         }
-      else if (seqNo < clientSession->getExpectedSeqNo())
-         {
-         // Note that it is possible for seqNo to be smaller than expectedSeqNo.
-         // This could happen for instance for the very first message that arrives late.
-         // In that case, the second message would have created the client session and 
-         // written its own seqNo into expectedSeqNo. We should avoid processing stale updates
-         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompFailure, TR_VerboseJITaaS, TR_VerbosePerformance))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Discarding older msg for clientUID=%llu seqNo=%u < expectedSeqNo=%u compThreadID=%d",
-            (unsigned long long)clientId, seqNo, clientSession->getExpectedSeqNo(), getCompThreadId());
-         clientSession->getSequencingMonitor()->exit();
-         throw JITaaS::StreamOOO();
-         }
-      // We can release the sequencing monitor now because nobody with a 
-      // larger sequence number can pass until I increment expectedSeqNo
-      clientSession->getSequencingMonitor()->exit();
- 
-      // At this point I know that all preceeding requests have been processed
-      // Free data for all classes that were unloaded for this sequence number
-      // Redefined classes are marked as unloaded, since they need to be cleared
-      // from the ROM class cache.
-      clientSession->processUnloadedClasses(stream, unloadedClasses); // this locks getROMMapMonitor()
-
-      auto chTable = (TR_JITaaSServerPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
-      // TODO: is chTable always non-null?
-      // TODO: we could send JVM info that is global and does not change together with CHTable
-      // The following will acquire CHTable monitor and VMAccess, send a message and then release them
-      bool initialized = chTable->initializeIfNeeded(_vm);
-
-      // A thread that initialized the CHTable does not have to apply the incremental update
-      if (!initialized)
-         {
-         // Process the CHTable updates in order
-         stream->write(JITaaS::J9ServerMessageType::CHTable_getClassInfoUpdates, JITaaS::Void());
-         auto recv = stream->read<std::string, std::string>();
-         const std::string &chtableUnloads = std::get<0>(recv);
-         const std::string &chtableMods = std::get<1>(recv);
-         // Note that applying the updates will acquire the CHTable monitor and VMAccess
-         if (!chtableUnloads.empty() || !chtableMods.empty())
-            chTable->doUpdate(_vm, chtableUnloads, chtableMods);
-         }
-
-      clientSession->getSequencingMonitor()->enter();
-      // Update the expecting sequence number. This will allow subsequent
-      // threads to pass through once we've released the sequencing monitor.
-      TR_ASSERT(seqNo == clientSession->getExpectedSeqNo(), "Unexpected seqNo");
-      uint32_t newSeqNo = std::max(seqNo + 1, clientSession->getExpectedSeqNo());
-      clientSession->setExpectedSeqNo(newSeqNo);
-
-      // Notify a possible waiting thread that arrived out of sequence
-      // and take that entry out of the OOSequenceEntryList
-      TR_MethodToBeCompiled *nextEntry = clientSession->getOOSequenceEntryList();
-      if (nextEntry)
-         {
-         uint32_t nextWaitingSeqNo = ((CompilationInfoPerThreadRemote*)(nextEntry->_compInfoPT))->getSeqNo();
-         if (nextWaitingSeqNo == seqNo + 1)
             {
-            clientSession->notifyAndDetachFirstWaitingThread();
-
-            if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "compThreadID=%d notifying out-of-sequence thread %d for clientUID=%llu seqNo=%u (entry=%p)",
-                  getCompThreadId(), nextEntry->_compInfoPT->getCompThreadId(), (unsigned long long)clientId, nextWaitingSeqNo, nextEntry);
+            if (!result)
+               {
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,"Message to delete Client (%llu) received.Data for client not deleted", (unsigned long long)clientId);
+               }
+            else
+               {
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,"Message to delete Client (%llu) received.Data for client deleted", (unsigned long long)clientId);
+               }
             }
-         }
-      // Increment the number of active threads before issuing the read for ramClass
-      clientSession->incNumActiveThreads();
-      // Finally, release the sequencing monitor so that other threads
-      // can process their lists of unloaded classes
-      clientSession->getSequencingMonitor()->exit();
-
-      // Copy the option strings
-      size_t clientOptSize = clientOptStr.size();
-      clientOptions = new (PERSISTENT_NEW) char[clientOptSize];
-      memcpy(clientOptions, clientOptStr.data(), clientOptSize);
-
-      if (recompInfoStr.size() > 0)
-         {
-         _recompilationMethodInfo = new (PERSISTENT_NEW) TR_PersistentMethodInfo();
-         memcpy(_recompilationMethodInfo, recompInfoStr.data(), sizeof(TR_PersistentMethodInfo));
+         compInfo->releaseCompMonitor(compThread);
+         // This is a null message for termination so abort compilation.
+         abortCompilation = true;
          }
       else
          {
-         _recompilationMethodInfo = NULL;
-         }
+         //if (seqNo == 100)
+         //   throw JITaaS::StreamFailure(); // stress testing
 
-      // Get the ROMClass for the method to be compiled if it is already cached
-      // Or read it from the compilation request and cache it otherwise
-      J9ROMClass *romClass = NULL;
-      if (!(romClass = JITaaSHelpers::getRemoteROMClassIfCached(clientSession, clazz)))
+         stream->setClientId(clientId);
+         setSeqNo(seqNo); // memorize the sequence number of this request
+
+         bool sessionDataWasEmpty = false;
+         ClientSessionData *clientSession = NULL;
          {
-         romClass = JITaaSHelpers::romClassFromString(std::get<0>(classInfoTuple), compInfo->persistentMemory());
-         JITaaSHelpers::cacheRemoteROMClass(getClientData(), clazz, romClass, &classInfoTuple);
+         // Get a pointer to this client's session data
+         // Obtain monitor RAII style because creating a new hastable entry may throw bad_alloc
+         OMR::CriticalSection compilationMonitorLock(compInfo->getCompilationMonitor());
+         compInfo->getClientSessionHT()->purgeOldDataIfNeeded(); // Try to purge old data
+         if (!(clientSession = compInfo->getClientSessionHT()->findOrCreateClientSession(clientId, seqNo, &sessionDataWasEmpty)))
+            throw std::bad_alloc();
+
+         setClientData(clientSession); // Cache the session data into CompilationInfoPerThreadRemote object
+         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "compThreadID=%d %s clientSessionData=%p for clientUID=%llu seqNo=%u",
+               getCompThreadId(), sessionDataWasEmpty ? "created" : "found", clientSession, (unsigned long long)clientId, seqNo);
+         } // end critical section
+
+     
+         // We must process unloaded classes lists in the same order they were generated at the client
+         // Use a sequencing scheme to re-order compilation requests
+         //
+         clientSession->getSequencingMonitor()->enter();
+         clientSession->updateMaxReceivedSeqNo(seqNo);
+         if (seqNo > clientSession->getExpectedSeqNo()) // out of order messages
+            {
+            // park this request until the missing ones arrive
+            if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Out-of-sequence msg detected for clientUID=%llu seqNo=%u > expectedSeqNo=%u. Parking compThreadID=%d (entry=%p)",
+               (unsigned long long)clientId, seqNo, clientSession->getExpectedSeqNo(), getCompThreadId(), &entry);
+
+            waitForMyTurn(clientSession, entry);
+            }
+         else if (seqNo < clientSession->getExpectedSeqNo())
+            {
+            // Note that it is possible for seqNo to be smaller than expectedSeqNo.
+            // This could happen for instance for the very first message that arrives late.
+            // In that case, the second message would have created the client session and 
+            // written its own seqNo into expectedSeqNo. We should avoid processing stale updates
+            if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompFailure, TR_VerboseJITaaS, TR_VerbosePerformance))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Discarding older msg for clientUID=%llu seqNo=%u < expectedSeqNo=%u compThreadID=%d",
+               (unsigned long long)clientId, seqNo, clientSession->getExpectedSeqNo(), getCompThreadId());
+            clientSession->getSequencingMonitor()->exit();
+            throw JITaaS::StreamOOO();
+            }
+         // We can release the sequencing monitor now because nobody with a 
+         // larger sequence number can pass until I increment expectedSeqNo
+         clientSession->getSequencingMonitor()->exit();
+ 
+         // At this point I know that all preceeding requests have been processed
+         // Free data for all classes that were unloaded for this sequence number
+         // Redefined classes are marked as unloaded, since they need to be cleared
+         // from the ROM class cache.
+         clientSession->processUnloadedClasses(stream, unloadedClasses); // this locks getROMMapMonitor()
+
+         auto chTable = (TR_JITaaSServerPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
+         // TODO: is chTable always non-null?
+         // TODO: we could send JVM info that is global and does not change together with CHTable
+         // The following will acquire CHTable monitor and VMAccess, send a message and then release them
+         bool initialized = chTable->initializeIfNeeded(_vm);
+
+         // A thread that initialized the CHTable does not have to apply the incremental update
+         if (!initialized)
+            {
+            // Process the CHTable updates in order
+            stream->write(JITaaS::J9ServerMessageType::CHTable_getClassInfoUpdates, JITaaS::Void());
+            auto recv = stream->read<std::string, std::string>();
+            const std::string &chtableUnloads = std::get<0>(recv);
+            const std::string &chtableMods = std::get<1>(recv);
+            // Note that applying the updates will acquire the CHTable monitor and VMAccess
+            if (!chtableUnloads.empty() || !chtableMods.empty())
+               chTable->doUpdate(_vm, chtableUnloads, chtableMods);
+            }
+
+         clientSession->getSequencingMonitor()->enter();
+         // Update the expecting sequence number. This will allow subsequent
+         // threads to pass through once we've released the sequencing monitor.
+         TR_ASSERT(seqNo == clientSession->getExpectedSeqNo(), "Unexpected seqNo");
+         uint32_t newSeqNo = std::max(seqNo + 1, clientSession->getExpectedSeqNo());
+         clientSession->setExpectedSeqNo(newSeqNo);
+
+         // Notify a possible waiting thread that arrived out of sequence
+         // and take that entry out of the OOSequenceEntryList
+         TR_MethodToBeCompiled *nextEntry = clientSession->getOOSequenceEntryList();
+         if (nextEntry)
+            {
+            uint32_t nextWaitingSeqNo = ((CompilationInfoPerThreadRemote*)(nextEntry->_compInfoPT))->getSeqNo();
+            if (nextWaitingSeqNo == seqNo + 1)
+               {
+               clientSession->notifyAndDetachFirstWaitingThread();
+
+               if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "compThreadID=%d notifying out-of-sequence thread %d for clientUID=%llu seqNo=%u (entry=%p)",
+                     getCompThreadId(), nextEntry->_compInfoPT->getCompThreadId(), (unsigned long long)clientId, nextWaitingSeqNo, nextEntry);
+               }
+            }
+         // Increment the number of active threads before issuing the read for ramClass
+         clientSession->incNumActiveThreads();
+         // Finally, release the sequencing monitor so that other threads
+         // can process their lists of unloaded classes
+         clientSession->getSequencingMonitor()->exit();
+
+         // Copy the option strings
+         size_t clientOptSize = clientOptStr.size();
+         clientOptions = new (PERSISTENT_NEW) char[clientOptSize];
+         memcpy(clientOptions, clientOptStr.data(), clientOptSize);
+
+         if (recompInfoStr.size() > 0)
+            {
+            _recompilationMethodInfo = new (PERSISTENT_NEW) TR_PersistentMethodInfo();
+            memcpy(_recompilationMethodInfo, recompInfoStr.data(), sizeof(TR_PersistentMethodInfo));
+            }
+         // Get the ROMClass for the method to be compiled if it is already cached
+         // Or read it from the compilation request and cache it otherwise
+         J9ROMClass *romClass = NULL;
+         if (!(romClass = JITaaSHelpers::getRemoteROMClassIfCached(clientSession, clazz)))
+            {
+            romClass = JITaaSHelpers::romClassFromString(std::get<0>(classInfoTuple), compInfo->persistentMemory());
+            JITaaSHelpers::cacheRemoteROMClass(getClientData(), clazz, romClass, &classInfoTuple);
+            }
+
+         J9ROMMethod *romMethod = (J9ROMMethod*)((uint8_t*)romClass + romMethodOffset);
+         J9Method *methodsOfClass = std::get<1>(classInfoTuple);
+
+         // Build my entry
+         if (!(optPlan = TR_OptimizationPlan::alloc(optLevel)))
+            throw std::bad_alloc();
+         TR::IlGeneratorMethodDetails *clientDetails = (TR::IlGeneratorMethodDetails*) &detailsStr[0];
+         *(uintptr_t*)clientDetails = 0; // smash remote vtable pointer to catch bugs early
+         TR::IlGeneratorMethodDetails details;
+         TR::IlGeneratorMethodDetails &remoteDetails = details.createRemoteMethodDetails(*clientDetails, detailsType, ramMethod, romClass, romMethod, clazz, methodsOfClass);
+
+         // All entries have the same priority for now. In the future we may want to give higher priority to sync requests
+         // Also, oldStartPC is always NULL for JITaaS server
+         entry._freeTag = ENTRY_IN_POOL_FREE; // pretend we just got it from the pool because we need to initialize it again
+         entry.initialize(remoteDetails, NULL, CP_SYNC_NORMAL, optPlan);
+         entry._jitStateWhenQueued = compInfo->getPersistentInfo()->getJitState();
+         entry._stream = stream; // Add the stream to the entry
+         entry._clientOptions = clientOptions;
+         entry._clientOptionsSize = clientOptSize;
+         entry._entryTime = compInfo->getPersistentInfo()->getElapsedTime(); // cheaper version
+         entry._methodIsInSharedCache = false; // no SCC for now in JITaaS
+         entry._compInfoPT = this; // need to know which comp thread is handling this request
+         entry._async = true; // all of requests at the server are async
+         // weight is irrelevant for JITaaS. 
+         // If we want something then we need to increaseQueueWeightBy(weight) while holding compilation monitor
+         entry._weight = 0;
          }
-
-      J9ROMMethod *romMethod = (J9ROMMethod*)((uint8_t*)romClass + romMethodOffset);
-      J9Method *methodsOfClass = std::get<1>(classInfoTuple);
-
-      // Build my entry
-      if (!(optPlan = TR_OptimizationPlan::alloc(optLevel)))
-         throw std::bad_alloc();
-      TR::IlGeneratorMethodDetails *clientDetails = (TR::IlGeneratorMethodDetails*) &detailsStr[0];
-      *(uintptr_t*)clientDetails = 0; // smash remote vtable pointer to catch bugs early
-      TR::IlGeneratorMethodDetails details;
-      TR::IlGeneratorMethodDetails &remoteDetails = details.createRemoteMethodDetails(*clientDetails, detailsType, ramMethod, romClass, romMethod, clazz, methodsOfClass);
-
-      // All entries have the same priority for now. In the future we may want to give higher priority to sync requests
-      // Also, oldStartPC is always NULL for JITaaS server
-      entry._freeTag = ENTRY_IN_POOL_FREE; // pretend we just got it from the pool because we need to initialize it again
-      entry.initialize(remoteDetails, NULL, CP_SYNC_NORMAL, optPlan);
-      entry._jitStateWhenQueued = compInfo->getPersistentInfo()->getJitState();
-      entry._stream = stream; // Add the stream to the entry
-      entry._clientOptions = clientOptions;
-      entry._clientOptionsSize = clientOptSize;
-      entry._entryTime = compInfo->getPersistentInfo()->getElapsedTime(); // cheaper version
-      entry._methodIsInSharedCache = false; // no SCC for now in JITaaS
-      entry._compInfoPT = this; // need to know which comp thread is handling this request
-      entry._async = true; // all of requests at the server are async
-      // weight is irrelevant for JITaaS. 
-      // If we want something then we need to increaseQueueWeightBy(weight) while holding compilation monitor
-      entry._weight = 0;
       }
    catch (const JITaaS::StreamFailure &e)
       {
@@ -3490,11 +3534,20 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       // Put the request back into the pool
       setMethodBeingCompiled(NULL); // Must have the compQmonitor
       compInfo->recycleCompilationEntry(&entry);
-      
+
       // Reset the pointer to the cached client session data
       if (getClientData())
          {
          getClientData()->decInUse();  // We have the compilation monitor so it's safe to access the inUse counter
+         if (getClientData()->getInUse() == 0)
+            {
+            bool result = compInfo->getClientSessionHT()->deleteClientSession(clientId, false);
+            if (result)
+               {
+               if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,"client (%llu) deleted", (unsigned long long)clientId);
+               }
+            }
          setClientData(nullptr);
          }
 #ifdef JITAAS_USE_RAW_SOCKETS
@@ -3528,6 +3581,16 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    // Decrement number of active threads before _inUse
    getClientData()->decNumActiveThreads(); // We hold compMonitor so there is no accounting problem
    getClientData()->decInUse();  // We have the compMonitor so it's safe to access the inUse counter
+   if (getClientData()->getInUse() == 0)
+      {
+      bool result = compInfo->getClientSessionHT()->deleteClientSession(clientId, false);
+      if (result)
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,"client (%llu) deleted", (unsigned long long)clientId);
+         }
+      }
+
    setClientData(nullptr); // Reset the pointer to the cached client session data
 
    _customClassByNameMap.clear(); // reset before next compilation starts
