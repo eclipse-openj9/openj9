@@ -208,7 +208,7 @@ TR::SymbolValidationManager::storeClassRecord(TR_OpaqueClassBlock *clazz,
       {
       if (fej9->isPrimitiveClass(clazz))
          {
-         validated = addPrimitiveClassRecord(clazz);
+         validated = true; // primitive types have guaranteed IDs
          }
       else
          {
@@ -242,7 +242,7 @@ TR::SymbolValidationManager::storeClassRecord(TR_OpaqueClassBlock *clazz,
     * then it is because we failed to rememberClass;
     * therefore, the last element in the list
     * will be the one we added in this method and not
-    * the RomClassRecord or ClassChainRecord
+    * the ClassChainRecord
     */
    if (!validated)
       _symbolValidationRecords.pop_front();
@@ -289,21 +289,6 @@ TR::SymbolValidationManager::storeValidationRecordIfNecessary(void *symbol,
       }
 
    return (existsInList || validated);
-   }
-
-bool
-TR::SymbolValidationManager::addRootClassRecord(TR_OpaqueClassBlock *clazz)
-   {
-   if (!clazz)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
-   int32_t arrayDims = 0;
-   clazz = getBaseComponentClass(clazz, arrayDims);
-
-   SymbolValidationRecord *record = new (_region) RootClassRecord(clazz);
-   return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record, arrayDims);
    }
 
 bool
@@ -631,21 +616,6 @@ TR::SymbolValidationManager::addConcreteSubClassFromClassRecord(TR_OpaqueClassBl
    }
 
 bool
-TR::SymbolValidationManager::addArrayClassFromJavaVM(TR_OpaqueClassBlock *arrayClass, int32_t arrayClassIndex)
-   {
-   if (!arrayClass)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
-   int32_t arrayDims = 0;
-   arrayClass = getBaseComponentClass(arrayClass, arrayDims);
-
-   SymbolValidationRecord *record = new (_region) ArrayClassFromJavaVM(arrayClass, arrayClassIndex);
-   return storeValidationRecordIfNecessary(static_cast<void *>(arrayClass), record, arrayDims);
-   }
-
-bool
 TR::SymbolValidationManager::addClassChainRecord(TR_OpaqueClassBlock *clazz, void *classChain)
    {
    if (!clazz)
@@ -655,64 +625,6 @@ TR::SymbolValidationManager::addClassChainRecord(TR_OpaqueClassBlock *clazz, voi
 
    SymbolValidationRecord *record = new (_region) ClassChainRecord(clazz, classChain);
    return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record);
-   }
-
-bool
-TR::SymbolValidationManager::addRomClassRecord(TR_OpaqueClassBlock *clazz)
-   {
-   if (!clazz)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
-   SymbolValidationRecord *record = new (_region) RomClassRecord(clazz);
-   return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record);
-   }
-
-bool
-TR::SymbolValidationManager::addPrimitiveClassRecord(TR_OpaqueClassBlock *clazz)
-   {
-   if (!clazz)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
-   TR::Compilation* comp = TR::comp();
-
-   if (getIDFromSymbol(clazz) == 0)
-      {
-      TR_ASSERT(false, "clazz 0x%p should have already been validated\n", clazz);
-      comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addPrimitiveClassRecord");
-      }
-
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
-   J9ROMClass *romClass = reinterpret_cast<J9ROMClass *>(fej9->getPersistentClassPointerFromClassPointer(clazz));
-   J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
-   char primitiveType =getPrimitiveChar(className);
-
-   if (primitiveType == '\0')
-      {
-      TR_ASSERT(false, "clazz 0x%p is not primitive\n", clazz);
-      comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addPrimitiveClassRecord");
-      }
-
-   SymbolValidationRecord *record = new (_region) PrimitiveClassRecord(clazz, primitiveType);
-   return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record);
-   }
-
-bool
-TR::SymbolValidationManager::addMethodFromInlinedSiteRecord(TR_OpaqueMethodBlock *method,
-                                                            int32_t inlinedSiteIndex)
-   {
-   if (!method)
-      return false;
-   if (inHeuristicRegion())
-      return true;
-
-   SymbolValidationRecord *record = new (_region) MethodFromInlinedSiteRecord(method, inlinedSiteIndex);
-   return storeValidationRecordIfNecessary(static_cast<void *>(method), record);
    }
 
 bool
@@ -1122,19 +1034,6 @@ TR::SymbolValidationManager::validateSymbol(uint16_t idToBeValidated, void *vali
    }
 
 bool
-TR::SymbolValidationManager::validateRootClassRecord(uint16_t classID)
-   {
-   TR::Compilation *comp = TR::comp();
-   J9Class *rootClass = ((TR_ResolvedJ9Method *)comp->getMethodBeingCompiled())->constantPoolHdr();
-   TR_OpaqueClassBlock *opaqueRootClass = reinterpret_cast<TR_OpaqueClassBlock *>(rootClass);
-
-   int32_t arrayDims = 0;
-   opaqueRootClass = getBaseComponentClass(opaqueRootClass, arrayDims);
-
-   return validateSymbol(classID, static_cast<void *>(opaqueRootClass));
-   }
-
-bool
 TR::SymbolValidationManager::validateClassByNameRecord(uint16_t classID, uint16_t beholderID, J9ROMClass *romClass, char primitiveType)
    {
    if (getSymbolFromID(beholderID) == NULL)
@@ -1523,22 +1422,6 @@ TR::SymbolValidationManager::validateConcreteSubClassFromClassRecord(uint16_t ch
    }
 
 bool
-TR::SymbolValidationManager::validateArrayClassFromJavaVM(uint16_t arrayClassID, int32_t arrayClassIndex)
-   {
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
-   struct J9Class ** arrayClasses = &fej9->getJ9JITConfig()->javaVM->booleanArrayClass;
-   TR_OpaqueClassBlock *arrayClass = reinterpret_cast<TR_OpaqueClassBlock *>(arrayClasses[arrayClassIndex - 4]);
-
-   int32_t arrayDims = 0;
-   arrayClass = getBaseComponentClass(arrayClass, arrayDims);
-
-   return validateSymbol(arrayClassID, static_cast<void *>(arrayClass));
-   }
-
-bool
 TR::SymbolValidationManager::validateClassChainRecord(uint16_t classID, void *classChain)
    {
    if (getSymbolFromID(classID) == NULL)
@@ -1551,47 +1434,6 @@ TR::SymbolValidationManager::validateClassChainRecord(uint16_t classID, void *cl
    TR_OpaqueClassBlock *definingClass = static_cast<TR_OpaqueClassBlock *>(getSymbolFromID(classID));
 
    return comp->fej9()->sharedCache()->classMatchesCachedVersion(definingClass, (uintptrj_t *) classChain);
-   }
-
-bool
-TR::SymbolValidationManager::validateRomClassRecord(uint16_t classID, J9ROMClass *romClass)
-   {
-   if (getSymbolFromID(classID) == NULL)
-      {
-      TR_ASSERT(false, "classID %u should exist\n", classID);
-      return false;
-      }
-
-   J9Class *definingClass = static_cast<J9Class *>(getSymbolFromID(classID));
-
-   return (definingClass->romClass == romClass);
-   }
-
-bool
-TR::SymbolValidationManager::validatePrimitiveClassRecord(uint16_t classID, char primitiveType)
-   {
-   if (getSymbolFromID(classID) == NULL)
-      {
-      TR_ASSERT(false, "classID %u should exist\n", classID);
-      return false;
-      }
-
-   TR::Compilation* comp = TR::comp();
-   J9VMThread *vmThread = comp->j9VMThread();
-   TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
-   TR_OpaqueClassBlock *primitiveClass = static_cast<TR_OpaqueClassBlock *>(getSymbolFromID(classID));
-
-   J9ROMClass *romClass = reinterpret_cast<J9ROMClass *>(fej9->getPersistentClassPointerFromClassPointer(primitiveClass));
-   J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
-
-   return (primitiveType == getPrimitiveChar(className));
-   }
-
-bool
-TR::SymbolValidationManager::validateMethodFromInlinedSiteRecord(uint16_t methodID, TR_OpaqueMethodBlock *method)
-   {
-   return validateSymbol(methodID, static_cast<void *>(method));
    }
 
 bool
@@ -1993,14 +1835,6 @@ void TR::ClassValidationRecord::printFields()
    traceMsg(TR::comp(), "\t_classChain=0x%p\n", _classChain);
    }
 
-void TR::RootClassRecord::printFields()
-   {
-   traceMsg(TR::comp(), "RootClassRecord\n");
-   TR::ClassValidationRecord::printFields();
-   traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
-   printClass(_class);
-   }
-
 void TR::ClassByNameRecord::printFields()
    {
    traceMsg(TR::comp(), "ClassByNameRecord\n");
@@ -2162,26 +1996,6 @@ void TR::ClassChainRecord::printFields()
    traceMsg(TR::comp(), "\t_classChain=0x%p\n", _classChain);
    }
 
-void TR::RomClassRecord::printFields()
-   {
-   traceMsg(TR::comp(), "RomClassRecord\n");
-   traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
-   }
-
-void TR::PrimitiveClassRecord::printFields()
-   {
-   traceMsg(TR::comp(), "PrimitiveClassRecord\n");
-   traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
-   printClass(_class);
-   }
-
-void TR::MethodFromInlinedSiteRecord::printFields()
-   {
-   traceMsg(TR::comp(), "MethodFromInlinedSiteRecord\n");
-   traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
-   traceMsg(TR::comp(), "\t_inlinedSiteIndex=%d\n", _inlinedSiteIndex);
-   }
-
 void TR::MethodByNameRecord::printFields()
    {
    traceMsg(TR::comp(), "MethodByNameRecord\n");
@@ -2264,14 +2078,6 @@ void TR::StackWalkerMaySkipFramesRecord::printFields()
    traceMsg(TR::comp(), "\t_methodClass=0x%p\n", _methodClass);
    printClass(_methodClass);
    traceMsg(TR::comp(), "\t_skipFrames=%sp\n", _skipFrames ? "true" : "false");
-   }
-
-void TR::ArrayClassFromJavaVM::printFields()
-   {
-   traceMsg(TR::comp(), "ArrayClassFromJavaVM\n");
-   traceMsg(TR::comp(), "\t_arrayClass=0x%p\n", _arrayClass);
-   printClass(_arrayClass);
-   traceMsg(TR::comp(), "\t_arrayClassIndex=%d\n", _arrayClassIndex);
    }
 
 void TR::ClassInfoIsInitialized::printFields()

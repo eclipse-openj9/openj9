@@ -1161,23 +1161,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
             traceMsg(self()->comp(), "\n ClassUnloadAssumption \n");
             break;
 
-         case TR_ValidateRootClass:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateRootClassBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateRootClassBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Root Class: classID=%d ", (uint32_t)binaryTemplate->_classID);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateRootClassBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
          case TR_ValidateClassByName:
             {
             cursor++;
@@ -1495,63 +1478,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
             }
             break;
 
-         case TR_ValidateRomClass:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateRomClassBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateRomClassBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate RomClass: classID=%d romClassOffsetInSCC=%p ",
-                        (uint32_t)binaryTemplate->_classID,
-                        binaryTemplate->_romClassOffsetInSCC);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateRomClassBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
-         case TR_ValidatePrimitiveClass:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidatePrimitiveClassBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidatePrimitiveClassBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Primitive Class: classID=%d, primitiveType=%c ",
-                        (uint32_t)binaryTemplate->_classID,
-                        binaryTemplate->_primitiveType);
-               }
-            cursor += sizeof(TR_RelocationRecordValidatePrimitiveClassBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
-         case TR_ValidateMethodFromInlinedSite:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Method From Inlined Site: methodID=%d, inlinedSiteIndex=%d ",
-                        (uint32_t)binaryTemplate->_methodID,
-                        (int32_t)binaryTemplate->_inlinedSiteIndex);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
          case TR_ValidateMethodByName:
             {
             cursor++;
@@ -1752,25 +1678,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                         binaryTemplate->_skipFrames ? "true" : "false");
                }
             cursor += sizeof(TR_RelocationRecordValidateStackWalkerMaySkipFramesBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
-            break;
-
-         case TR_ValidateArrayClassFromJavaVM:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateArrayClassFromJavaVMBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateArrayClassFromJavaVMBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Array Class From JavaVM: arrayClassID=%d, arrayClassIndex=%d ",
-                        (uint32_t)binaryTemplate->_arrayClassID,
-                        binaryTemplate->_arrayClassIndex);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateArrayClassFromJavaVMBinaryTemplate);
             self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
             }
             break;

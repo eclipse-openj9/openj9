@@ -201,11 +201,6 @@ struct TR_RelocationRecordDebugCounterBinaryTemplate : public TR_RelocationRecor
 
 typedef TR_RelocationRecordBinaryTemplate TR_RelocationRecordClassUnloadAssumptionBinaryTemplate;
 
-struct TR_RelocationRecordValidateRootClassBinaryTemplate : public TR_RelocationRecordBinaryTemplate
-   {
-   uint16_t _classID;
-   };
-
 struct TR_RelocationRecordValidateClassByNameBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
    uint16_t _classID;
@@ -305,24 +300,6 @@ struct TR_RelocationRecordValidateClassChainBinaryTemplate : public TR_Relocatio
    UDATA _classChainOffsetInSCC;
    };
 
-struct TR_RelocationRecordValidateRomClassBinaryTemplate : public TR_RelocationRecordBinaryTemplate
-   {
-   uint16_t _classID;
-   UDATA _romClassOffsetInSCC;
-   };
-
-struct TR_RelocationRecordValidatePrimitiveClassBinaryTemplate : public TR_RelocationRecordBinaryTemplate
-   {
-   uint16_t _classID;
-   char _primitiveType;
-   };
-
-struct TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate : public TR_RelocationRecordBinaryTemplate
-   {
-   uint16_t _methodID;
-   uint32_t _inlinedSiteIndex;
-   };
-
 struct TR_RelocationRecordValidateMethodByNameBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
    uint16_t _methodID;
@@ -404,12 +381,6 @@ struct TR_RelocationRecordValidateStackWalkerMaySkipFramesBinaryTemplate : publi
    uint16_t _methodID;
    uint16_t _methodClassID;
    bool _skipFrames;
-   };
-
-struct TR_RelocationRecordValidateArrayClassFromJavaVMBinaryTemplate : public TR_RelocationRecordBinaryTemplate
-   {
-   uint16_t _arrayClassID;
-   int32_t _arrayClassIndex;
    };
 
 struct TR_RelocationRecordValidateClassInfoIsInitializedBinaryTemplate : public TR_RelocationRecordBinaryTemplate
@@ -1420,18 +1391,6 @@ class TR_RelocationRecordValidateArbitraryClass : public TR_RelocationRecord
 
 
 /* SYMBOL VALIDATION MANAGER */
-class TR_RelocationRecordValidateRootClass : public TR_RelocationRecord
-   {
-   public:
-      TR_RelocationRecordValidateRootClass() {}
-      TR_RelocationRecordValidateRootClass(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
-      virtual bool isValidationRecord() { return true; }
-      virtual char *name() { return "TR_RelocationRecordValidateRootClass"; }
-      virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateRootClassBinaryTemplate); }
-      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
-      virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
-   };
-
 class TR_RelocationRecordValidateClassByName : public TR_RelocationRecord
    {
    public:
@@ -1624,42 +1583,6 @@ class TR_RelocationRecordValidateClassChain : public TR_RelocationRecord
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
    };
 
-class TR_RelocationRecordValidateRomClass : public TR_RelocationRecord
-   {
-   public:
-      TR_RelocationRecordValidateRomClass() {}
-      TR_RelocationRecordValidateRomClass(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
-      virtual bool isValidationRecord() { return true; }
-      virtual char *name() { return "TR_RelocationRecordValidateRomClass"; }
-      virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateRomClassBinaryTemplate); }
-      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
-      virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
-   };
-
-class TR_RelocationRecordValidatePrimitiveClass : public TR_RelocationRecord
-   {
-   public:
-      TR_RelocationRecordValidatePrimitiveClass() {}
-      TR_RelocationRecordValidatePrimitiveClass(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
-      virtual bool isValidationRecord() { return true; }
-      virtual char *name() { return "TR_RelocationRecordValidatePrimitiveClass"; }
-      virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidatePrimitiveClassBinaryTemplate); }
-      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
-      virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
-   };
-
-class TR_RelocationRecordValidateMethodFromInlinedSite : public TR_RelocationRecord
-   {
-   public:
-      TR_RelocationRecordValidateMethodFromInlinedSite() {}
-      TR_RelocationRecordValidateMethodFromInlinedSite(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
-      virtual bool isValidationRecord() { return true; }
-      virtual char *name() { return "TR_RelocationRecordValidateMethodFromInlinedSite"; }
-      virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate); }
-      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
-      virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
-   };
-
 class TR_RelocationRecordValidateMethodByName : public TR_RelocationRecord
    {
    public:
@@ -1776,18 +1699,6 @@ class TR_RelocationRecordValidateStackWalkerMaySkipFrames : public TR_Relocation
       virtual bool isValidationRecord() { return true; }
       virtual char *name() { return "TR_RelocationRecordValidateStackWalkerMaySkipFrames"; }
       virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateStackWalkerMaySkipFramesBinaryTemplate); }
-      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
-      virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
-   };
-
-class TR_RelocationRecordValidateArrayClassFromJavaVM : public TR_RelocationRecord
-   {
-   public:
-      TR_RelocationRecordValidateArrayClassFromJavaVM() {}
-      TR_RelocationRecordValidateArrayClassFromJavaVM(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
-      virtual bool isValidationRecord() { return true; }
-      virtual char *name() { return "TR_RelocationRecordValidateArrayClassFromJavaVM"; }
-      virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateArrayClassFromJavaVMBinaryTemplate); }
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
    };
