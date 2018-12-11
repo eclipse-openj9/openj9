@@ -587,21 +587,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
       case TR_RamMethod:
          break;
 
-      case TR_ValidateRootClass:
-         {
-         TR::RootClassRecord *record = reinterpret_cast<TR::RootClassRecord *>(relocation->getTargetAddress());
-
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-
-         TR_RelocationRecordValidateRootClassBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordValidateRootClassBinaryTemplate *>(cursor);
-
-         binaryTemplate->_classID = symValManager->getIDFromSymbol(static_cast<void *>(record->_class));
-
-         cursor += sizeof(TR_RelocationRecordValidateRootClassBinaryTemplate);
-         }
-         break;
-
       case TR_ValidateClassByName:
          {
          TR::ClassByNameRecord *record = reinterpret_cast<TR::ClassByNameRecord *>(relocation->getTargetAddress());
@@ -906,59 +891,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_ValidateRomClass:
-         {
-         TR::RomClassRecord *record = reinterpret_cast<TR::RomClassRecord *>(relocation->getTargetAddress());
-
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-
-         TR_RelocationRecordValidateRomClassBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordValidateRomClassBinaryTemplate *>(cursor);
-
-         TR_OpaqueClassBlock *classToValidate = static_cast<TR_OpaqueClassBlock *>(record->_class);
-
-         void *romClass = reinterpret_cast<void *>(fej9->getPersistentClassPointerFromClassPointer(classToValidate));
-         void *romClassOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(romClass);
-
-         binaryTemplate->_classID = symValManager->getIDFromSymbol(static_cast<void *>(classToValidate));
-         binaryTemplate->_romClassOffsetInSCC = reinterpret_cast<uintptrj_t>(romClassOffsetInSharedCache);
-
-         cursor += sizeof(TR_RelocationRecordValidateRomClassBinaryTemplate);
-         }
-         break;
-
-      case TR_ValidatePrimitiveClass:
-         {
-         TR::PrimitiveClassRecord *record = reinterpret_cast<TR::PrimitiveClassRecord *>(relocation->getTargetAddress());
-
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-
-         TR_RelocationRecordValidatePrimitiveClassBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordValidatePrimitiveClassBinaryTemplate *>(cursor);
-
-         binaryTemplate->_classID = symValManager->getIDFromSymbol(static_cast<void *>(record->_class));
-         binaryTemplate->_primitiveType = record->_primitiveType;
-
-         cursor += sizeof(TR_RelocationRecordValidatePrimitiveClassBinaryTemplate);
-         }
-         break;
-
-      case TR_ValidateMethodFromInlinedSite:
-         {
-         TR::MethodFromInlinedSiteRecord *record = reinterpret_cast<TR::MethodFromInlinedSiteRecord *>(relocation->getTargetAddress());
-
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-
-         TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate *>(cursor);
-
-         binaryTemplate->_methodID = symValManager->getIDFromSymbol(static_cast<void *>(record->_method));
-         binaryTemplate->_inlinedSiteIndex = static_cast<uintptrj_t>(record->_inlinedSiteIndex);
-
-         cursor += sizeof(TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate);
-         }
-         break;
-
       case TR_ValidateMethodByName:
          {
          TR::MethodByNameRecord *record = reinterpret_cast<TR::MethodByNameRecord *>(relocation->getTargetAddress());
@@ -1206,22 +1138,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          }
          break;
 
-      case TR_ValidateArrayClassFromJavaVM:
-         {
-         TR::ArrayClassFromJavaVM *record = reinterpret_cast<TR::ArrayClassFromJavaVM *>(relocation->getTargetAddress());
-
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-
-         TR_RelocationRecordValidateArrayClassFromJavaVMBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordValidateArrayClassFromJavaVMBinaryTemplate *>(cursor);
-
-         binaryTemplate->_arrayClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->_arrayClass));
-         binaryTemplate->_arrayClassIndex = record->_arrayClassIndex;
-
-         cursor += sizeof(TR_RelocationRecordValidateArrayClassFromJavaVMBinaryTemplate);
-         }
-         break;
-
       case TR_ValidateClassInfoIsInitialized:
          {
          TR::ClassInfoIsInitialized *record = reinterpret_cast<TR::ClassInfoIsInitialized *>(relocation->getTargetAddress());
@@ -1425,7 +1341,7 @@ uint32_t J9::X86::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_Nu
    8,                                               // TR_ClassUnloadAssumption               = 60
    32,                                              // TR_J2IVirtualThunkPointer              = 61,
    48,                                              // TR_InlinedAbstractMethodWithNopGuard   = 62,
-   sizeof(TR_RelocationRecordValidateRootClassBinaryTemplate),         // TR_ValidateRootClass                   = 63,
+   0,                                                                  // TR_ValidateRootClass                   = 63,
    sizeof(TR_RelocationRecordValidateClassByNameBinaryTemplate),       // TR_ValidateClassByName                 = 64,
    sizeof(TR_RelocationRecordValidateProfiledClassBinaryTemplate),     // TR_ValidateProfiledClass               = 65,
    sizeof(TR_RelocationRecordValidateClassFromCPBinaryTemplate),       // TR_ValidateClassFromCP                 = 66,
@@ -1442,9 +1358,9 @@ uint32_t J9::X86::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_Nu
    sizeof(TR_RelocationRecordValidateClassClassBinaryTemplate),        // TR_ValidateClassClass                  = 77,
    sizeof(TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate),//TR_ValidateConcreteSubClassFromClass  = 78,
    sizeof(TR_RelocationRecordValidateClassChainBinaryTemplate),        // TR_ValidateClassChain                  = 79,
-   sizeof(TR_RelocationRecordValidateRomClassBinaryTemplate),          // TR_ValidateRomClass                    = 80,
-   sizeof(TR_RelocationRecordValidatePrimitiveClassBinaryTemplate),    // TR_ValidatePrimitiveClass              = 81,
-   sizeof(TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate), // TR_ValidateMethodFromInlinedSite       = 82,
+   0,                                                                  // TR_ValidateRomClass                    = 80,
+   0,                                                                  // TR_ValidatePrimitiveClass              = 81,
+   0,                                                                  // TR_ValidateMethodFromInlinedSite       = 82,
    sizeof(TR_RelocationRecordValidateMethodByNameBinaryTemplate),      // TR_ValidatedMethodByName               = 83,
    sizeof(TR_RelocationRecordValidateMethodFromClassBinaryTemplate),   // TR_ValidatedMethodFromClass            = 84,
    sizeof(TR_RelocationRecordValidateStaticMethodFromCPBinaryTemplate),// TR_ValidateStaticMethodFromCP          = 85,
@@ -1454,7 +1370,7 @@ uint32_t J9::X86::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_Nu
    sizeof(TR_RelocationRecordValidateInterfaceMethodFromCPBinaryTemplate),//TR_ValidateInterfaceMethodFromCP     = 89,
    sizeof(TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate),//TR_ValidateMethodFromClassAndSig     = 90,
    sizeof(TR_RelocationRecordValidateStackWalkerMaySkipFramesBinaryTemplate),//TR_ValidateStackWalkerMaySkipFramesRecord= 91,
-   sizeof(TR_RelocationRecordValidateArrayClassFromJavaVMBinaryTemplate), //TR_ValidateArrayClassFromJavaVM      = 92,
+   0,                                                                  // TR_ValidateArrayClassFromJavaVM        = 92,
    sizeof(TR_RelocationRecordValidateClassInfoIsInitializedBinaryTemplate),//TR_ValidateClassInfoIsInitialized   = 93,
    sizeof(TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate),//TR_ValidateMethodFromSingleImplementer= 94,
    sizeof(TR_RelocationRecordValidateMethodFromSingleInterfaceImplBinaryTemplate),//TR_ValidateMethodFromSingleInterfaceImplementer= 95,

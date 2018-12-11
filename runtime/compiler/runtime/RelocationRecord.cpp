@@ -316,9 +316,6 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
          break;
       case TR_ClassUnloadAssumption:
          reloRecord = new (storage) TR_RelocationRecordClassUnloadAssumption(reloRuntime, record);
-      case TR_ValidateRootClass:
-         reloRecord = new (storage) TR_RelocationRecordValidateRootClass(reloRuntime, record);
-         break;
       case TR_ValidateClassByName:
          reloRecord = new (storage) TR_RelocationRecordValidateClassByName(reloRuntime, record);
          break;
@@ -367,15 +364,6 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
       case TR_ValidateClassChain:
          reloRecord = new (storage) TR_RelocationRecordValidateClassChain(reloRuntime, record);
          break;
-      case TR_ValidateRomClass:
-         reloRecord = new (storage) TR_RelocationRecordValidateRomClass(reloRuntime, record);
-         break;
-      case TR_ValidatePrimitiveClass:
-         reloRecord = new (storage) TR_RelocationRecordValidatePrimitiveClass(reloRuntime, record);
-         break;
-      case TR_ValidateMethodFromInlinedSite:
-         reloRecord = new (storage) TR_RelocationRecordValidateMethodFromInlinedSite(reloRuntime, record);
-         break;
       case TR_ValidateMethodByName:
          reloRecord = new (storage) TR_RelocationRecordValidateMethodByName(reloRuntime, record);
          break;
@@ -405,9 +393,6 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
          break;
       case TR_ValidateStackWalkerMaySkipFramesRecord:
          reloRecord = new (storage) TR_RelocationRecordValidateStackWalkerMaySkipFrames(reloRuntime, record);
-         break;
-      case TR_ValidateArrayClassFromJavaVM:
-         reloRecord = new (storage) TR_RelocationRecordValidateArrayClassFromJavaVM(reloRuntime, record);
          break;
       case TR_ValidateClassInfoIsInitialized:
          reloRecord = new (storage) TR_RelocationRecordValidateClassInfoIsInitialized(reloRuntime, record);
@@ -3215,24 +3200,6 @@ TR_RelocationRecordValidateArbitraryClass::applyRelocation(TR_RelocationRuntime 
    return compilationAotClassReloFailure;
    }
 
-
-int32_t
-TR_RelocationRecordValidateRootClass::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
-   {
-   uint16_t classID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateRootClassBinaryTemplate *)_record)->_classID);
-
-   if (reloRuntime->reloLogger()->logEnabled())
-      {
-      reloRuntime->reloLogger()->printf("%s\n", name());
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: classID %d\n", classID);
-      }
-
-   if (reloRuntime->comp()->getSymbolValidationManager()->validateRootClassRecord(classID))
-      return 0;
-   else
-      return compilationAotClassReloFailure;
-   }
-
 int32_t
 TR_RelocationRecordValidateClassByName::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
@@ -3571,67 +3538,6 @@ TR_RelocationRecordValidateClassChain::applyRelocation(TR_RelocationRuntime *rel
    }
 
 int32_t
-TR_RelocationRecordValidateRomClass::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
-   {
-   uint16_t classID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateRomClassBinaryTemplate *)_record)->_classID);
-   void *romClassOffset = (void *)reloTarget->loadRelocationRecordValue((uintptrj_t *) &((TR_RelocationRecordValidateRomClassBinaryTemplate *)_record)->_romClassOffsetInSCC);
-   void *romClass = reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache(romClassOffset);
-
-   if (reloRuntime->reloLogger()->logEnabled())
-      {
-      reloRuntime->reloLogger()->printf("%s\n", name());
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: classID %d\n", classID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: romClass %p\n", romClass);
-      }
-
-   if (reloRuntime->comp()->getSymbolValidationManager()->validateRomClassRecord(classID, static_cast<J9ROMClass *>(romClass)))
-      return 0;
-   else
-      return compilationAotClassReloFailure;
-   }
-
-int32_t
-TR_RelocationRecordValidatePrimitiveClass::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
-   {
-   uint16_t classID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidatePrimitiveClassBinaryTemplate *)_record)->_classID);
-   char primitiveType = (char)reloTarget->loadUnsigned8b((uint8_t *) &((TR_RelocationRecordValidatePrimitiveClassBinaryTemplate *)_record)->_primitiveType);
-
-   if (reloRuntime->reloLogger()->logEnabled())
-      {
-      reloRuntime->reloLogger()->printf("%s\n", name());
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: classID %d\n", classID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: primitiveType %c\n", primitiveType);
-      }
-
-   if (reloRuntime->comp()->getSymbolValidationManager()->validatePrimitiveClassRecord(classID, primitiveType))
-      return 0;
-   else
-      return compilationAotClassReloFailure;
-   }
-
-int32_t
-TR_RelocationRecordValidateMethodFromInlinedSite::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
-   {
-   uint16_t methodID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate *)_record)->_methodID);
-   uint32_t inlinedSiteIndex = reloTarget->loadUnsigned32b((uint8_t *) &((TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate *)_record)->_inlinedSiteIndex);
-
-   if (reloRuntime->reloLogger()->logEnabled())
-      {
-      reloRuntime->reloLogger()->printf("%s\n", name());
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: methodID %d\n", methodID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: inlinedSiteIndex %d\n", inlinedSiteIndex);
-      }
-
-   TR_InlinedCallSite *inlinedCallSite = (TR_InlinedCallSite *)getInlinedCallSiteArrayElement(reloRuntime->exceptionTable(), inlinedSiteIndex);
-   TR_OpaqueMethodBlock *method = inlinedCallSite->_methodInfo;
-
-   if (reloRuntime->comp()->getSymbolValidationManager()->validateMethodFromInlinedSiteRecord(methodID, method))
-      return 0;
-   else
-      return compilationAotClassReloFailure;
-   }
-
-int32_t
 TR_RelocationRecordValidateMethodByName::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
    uint16_t methodID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateMethodByNameBinaryTemplate *)_record)->_methodID);
@@ -3850,25 +3756,6 @@ TR_RelocationRecordValidateStackWalkerMaySkipFrames::applyRelocation(TR_Relocati
       }
 
    if (reloRuntime->comp()->getSymbolValidationManager()->validateStackWalkerMaySkipFramesRecord(methodID, methodClassID, skipFrames))
-      return 0;
-   else
-      return compilationAotClassReloFailure;
-   }
-
-int32_t
-TR_RelocationRecordValidateArrayClassFromJavaVM::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
-   {
-   uint16_t arrayClassID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateArrayClassFromJavaVMBinaryTemplate *)_record)->_arrayClassID);
-   int32_t arrayClassIndex = reloTarget->loadSigned32b((uint8_t *) &((TR_RelocationRecordValidateArrayClassFromJavaVMBinaryTemplate *)_record)->_arrayClassIndex);
-
-   if (reloRuntime->reloLogger()->logEnabled())
-      {
-      reloRuntime->reloLogger()->printf("%s\n", name());
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: arrayClassID %d\n", arrayClassID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: arrayClassIndex %d\n", arrayClassIndex);
-      }
-
-   if (reloRuntime->comp()->getSymbolValidationManager()->validateArrayClassFromJavaVM(arrayClassID, arrayClassIndex))
       return 0;
    else
       return compilationAotClassReloFailure;
@@ -4629,7 +4516,7 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordClassUnloadAssumptionBinaryTemplate),                   // TR_ClassUnloadAssumption                        = 60
    sizeof(TR_RelocationRecordJ2IVirtualThunkPointerBinaryTemplate),                  // TR_J2IVirtualThunkPointer                       = 61
    sizeof(TR_RelocationRecordNopGuardBinaryTemplate),                                // TR_InlinedAbstractMethodWithNopGuard            = 62
-   sizeof(TR_RelocationRecordValidateRootClassBinaryTemplate),                       // TR_ValidateRootClass                            = 63
+   0,                                                                                // TR_ValidateRootClass                            = 63
    sizeof(TR_RelocationRecordValidateClassByNameBinaryTemplate),                     // TR_ValidateClassByName                          = 64
    sizeof(TR_RelocationRecordValidateProfiledClassBinaryTemplate),                   // TR_ValidateProfiledClass                        = 65
    sizeof(TR_RelocationRecordValidateClassFromCPBinaryTemplate),                     // TR_ValidateClassFromCP                          = 66
@@ -4646,9 +4533,9 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordValidateClassClassBinaryTemplate),                      // TR_ValidateClassClass                           = 77
    sizeof(TR_RelocationRecordValidateConcreteSubFromClassBinaryTemplate),            // TR_ValidateConcreteSubClassFromClass            = 78
    sizeof(TR_RelocationRecordValidateClassChainBinaryTemplate),                      // TR_ValidateClassChain                           = 79
-   sizeof(TR_RelocationRecordValidateRomClassBinaryTemplate),                        // TR_ValidateRomClass                             = 80
-   sizeof(TR_RelocationRecordValidatePrimitiveClassBinaryTemplate),                  // TR_ValidatePrimitiveClass                       = 81
-   sizeof(TR_RelocationRecordValidateMethodFromInlSiteBinaryTemplate),               // TR_ValidateMethodFromInlinedSite                = 82
+   0,                                                                                // TR_ValidateRomClass                             = 80
+   0,                                                                                // TR_ValidatePrimitiveClass                       = 81
+   0,                                                                                // TR_ValidateMethodFromInlinedSite                = 82
    sizeof(TR_RelocationRecordValidateMethodByNameBinaryTemplate),                    // TR_ValidatedMethodByName                        = 83
    sizeof(TR_RelocationRecordValidateMethodFromClassBinaryTemplate),                 // TR_ValidatedMethodFromClass                     = 84
    sizeof(TR_RelocationRecordValidateStaticMethodFromCPBinaryTemplate),              // TR_ValidateStaticMethodFromCP                   = 85
@@ -4658,7 +4545,7 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordValidateInterfaceMethodFromCPBinaryTemplate),           // TR_ValidateInterfaceMethodFromCP                = 89
    sizeof(TR_RelocationRecordValidateMethodFromClassAndSigBinaryTemplate),           // TR_ValidateMethodFromClassAndSig                = 90
    sizeof(TR_RelocationRecordValidateStackWalkerMaySkipFramesBinaryTemplate),        // TR_ValidateStackWalkerMaySkipFramesRecord       = 91
-   sizeof(TR_RelocationRecordValidateArrayClassFromJavaVMBinaryTemplate),            // TR_ValidateArrayClassFromJavaVM                 = 92
+   0,                                                                                // TR_ValidateArrayClassFromJavaVM                 = 92
    sizeof(TR_RelocationRecordValidateClassInfoIsInitializedBinaryTemplate),          // TR_ValidateClassInfoIsInitialized               = 93
    sizeof(TR_RelocationRecordValidateMethodFromSingleImplBinaryTemplate),            // TR_ValidateMethodFromSingleImplementer          = 94
    sizeof(TR_RelocationRecordValidateMethodFromSingleInterfaceImplBinaryTemplate),   // TR_ValidateMethodFromSingleInterfaceImplementer = 95

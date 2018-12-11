@@ -70,32 +70,6 @@ struct ClassValidationRecord : public SymbolValidationRecord
    void * _classChain;
    };
 
-struct RootClassRecord : public ClassValidationRecord
-   {
-   RootClassRecord(TR_OpaqueClassBlock *clazz)
-      : ClassValidationRecord(TR_ValidateRootClass),
-        _class(clazz)
-      {}
-
-   bool operator ==(const RootClassRecord &rhs)
-      {
-      if (_class == rhs._class)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<RootClassRecord *>(other));
-      }
-
-   virtual void printFields();
-
-   TR_OpaqueClassBlock * _class;
-   };
-
-
 struct ClassByNameRecord : public ClassValidationRecord
    {
    ClassByNameRecord(TR_OpaqueClassBlock *clazz,
@@ -575,88 +549,6 @@ struct ClassChainRecord : public SymbolValidationRecord
    void *_classChain;
    };
 
-struct RomClassRecord : public SymbolValidationRecord
-   {
-   RomClassRecord(TR_OpaqueClassBlock *clazz)
-      : SymbolValidationRecord(TR_ValidateRomClass),
-        _class(clazz)
-      {}
-
-   bool operator ==(const RomClassRecord &rhs)
-      {
-      if (_class == rhs._class)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<RomClassRecord *>(other));
-      }
-
-   virtual void printFields();
-
-   TR_OpaqueClassBlock *_class;
-   };
-
-struct PrimitiveClassRecord : public SymbolValidationRecord
-   {
-   PrimitiveClassRecord(TR_OpaqueClassBlock *clazz, char primitiveType)
-      : SymbolValidationRecord(TR_ValidatePrimitiveClass),
-        _class(clazz),
-        _primitiveType(primitiveType)
-      {}
-
-   bool operator ==(const PrimitiveClassRecord &rhs)
-      {
-      if (_class == rhs._class &&
-          _primitiveType == rhs._primitiveType)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<PrimitiveClassRecord *>(other));
-      }
-
-   virtual void printFields();
-
-   TR_OpaqueClassBlock *_class;
-   char _primitiveType;
-   };
-
-struct MethodFromInlinedSiteRecord : public SymbolValidationRecord
-   {
-   MethodFromInlinedSiteRecord(TR_OpaqueMethodBlock *method,
-                               int32_t inlinedSiteIndex)
-      : SymbolValidationRecord(TR_ValidateMethodFromInlinedSite),
-        _method(method),
-        _inlinedSiteIndex(inlinedSiteIndex)
-      {}
-
-   bool operator ==( const MethodFromInlinedSiteRecord &rhs)
-      {
-      if (_method == rhs._method &&
-          _inlinedSiteIndex == rhs._inlinedSiteIndex)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<MethodFromInlinedSiteRecord *>(other));
-      }
-
-   virtual void printFields();
-
-   TR_OpaqueMethodBlock *_method;
-   int32_t _inlinedSiteIndex;
-   };
-
 struct MethodByNameRecord : public SymbolValidationRecord
    {
    MethodByNameRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *beholder)
@@ -955,34 +847,6 @@ struct StackWalkerMaySkipFramesRecord : public SymbolValidationRecord
    bool _skipFrames;
    };
 
-struct ArrayClassFromJavaVM : public ClassValidationRecord
-   {
-   ArrayClassFromJavaVM(TR_OpaqueClassBlock *arrayClass, int32_t arrayClassIndex)
-      : ClassValidationRecord(TR_ValidateArrayClassFromJavaVM),
-        _arrayClass(arrayClass),
-        _arrayClassIndex(arrayClassIndex)
-      {}
-
-   bool operator ==(const ArrayClassFromJavaVM &rhs)
-      {
-      if (_arrayClass == rhs._arrayClass &&
-          _arrayClassIndex == rhs._arrayClassIndex)
-         return true;
-      else
-         return false;
-      }
-
-   virtual bool isEqual(SymbolValidationRecord *other)
-      {
-      return (*this == *static_cast<ArrayClassFromJavaVM *>(other));
-      }
-
-   virtual void printFields();
-
-   TR_OpaqueClassBlock *_arrayClass;
-   int32_t _arrayClassIndex;
-   };
-
 struct ClassInfoIsInitialized : public SymbolValidationRecord
    {
    ClassInfoIsInitialized(TR_OpaqueClassBlock *clazz, bool isInitialized)
@@ -1171,7 +1035,6 @@ public:
 
    bool isAlreadyValidated(void *symbol) { return (getIDFromSymbol(symbol) != 0); }
 
-   bool addRootClassRecord(TR_OpaqueClassBlock *clazz);
    bool addClassByNameRecord(TR_OpaqueClassBlock *clazz, TR_OpaqueClassBlock *beholder);
    bool addProfiledClassRecord(TR_OpaqueClassBlock *clazz);
    bool addClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, uint32_t cpIndex);
@@ -1187,13 +1050,9 @@ public:
    bool addDeclaringClassFromFieldOrStaticRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, int32_t cpIndex);
    bool addClassClassRecord(TR_OpaqueClassBlock *classClass, TR_OpaqueClassBlock *objectClass);
    bool addConcreteSubClassFromClassRecord(TR_OpaqueClassBlock *childClass, TR_OpaqueClassBlock *superClass);
-   bool addArrayClassFromJavaVM(TR_OpaqueClassBlock *arrayClass, int32_t arrayClassIndex);
 
    bool addClassChainRecord(TR_OpaqueClassBlock *clazz, void *classChain);
-   bool addRomClassRecord(TR_OpaqueClassBlock *clazz);
-   bool addPrimitiveClassRecord(TR_OpaqueClassBlock *clazz);
 
-   bool addMethodFromInlinedSiteRecord(TR_OpaqueMethodBlock *method, int32_t inlinedSiteIndex);
    bool addMethodByNameRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *beholder);
    bool addMethodFromClassRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *beholder, uint32_t index);
    bool addStaticMethodFromCPRecord(TR_OpaqueMethodBlock *method, J9ConstantPool *cp, int32_t cpIndex);
@@ -1222,7 +1081,6 @@ public:
 
 
 
-   bool validateRootClassRecord(uint16_t classID);
    bool validateClassByNameRecord(uint16_t classID, uint16_t beholderID, J9ROMClass *romClass, char primitiveType);
    bool validateProfiledClassRecord(uint16_t classID, char primitiveType, void *classChainIdentifyingLoader, void *classChainForClassBeingValidated);
    bool validateClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex);
@@ -1238,13 +1096,9 @@ public:
    bool validateDeclaringClassFromFieldOrStaticRecord(uint16_t definingClassID, uint16_t beholderID, int32_t cpIndex);
    bool validateClassClassRecord(uint16_t classClassID, uint16_t objectClassID);
    bool validateConcreteSubClassFromClassRecord(uint16_t childClassID, uint16_t superClassID);
-   bool validateArrayClassFromJavaVM(uint16_t arrayClassID, int32_t arrayClassIndex);
 
    bool validateClassChainRecord(uint16_t classID, void *classChain);
-   bool validateRomClassRecord(uint16_t classID, J9ROMClass *romClass);
-   bool validatePrimitiveClassRecord(uint16_t classID, char primitiveType);
 
-   bool validateMethodFromInlinedSiteRecord(uint16_t methodID, TR_OpaqueMethodBlock *method);
    bool validateMethodByNameRecord(uint16_t methodID, uint16_t beholderID, J9ROMClass *romClass, J9ROMMethod *romMethod);
    bool validateMethodFromClassRecord(uint16_t methodID, uint16_t beholderID, uint32_t index);
    bool validateStaticMethodFromCPRecord(uint16_t methodID, uint16_t beholderID, int32_t cpIndex);
