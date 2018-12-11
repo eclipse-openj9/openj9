@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2018, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,46 +20,27 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-# TODO scope b165
-set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/../ut_j9jcl.c PROPERTIES GENERATED TRUE)
-add_jcl(se9_before_b165)
+cmake_minimum_required(VERSION 3.4 FATAL_ERROR)
 
-target_include_directories(jclse9_before_b165_
-	PRIVATE
-		${CMAKE_CURRENT_BINARY_DIR}
-		../
-)
+project(openj9)
 
-target_link_libraries(jclse9_before_b165_
-	PRIVATE
-		j9vm_interface
-		j9vm_gc_includes
-		j9vm_jcl_includes
-		j9vm_jcl_trace
+if(NOT $ENV{BOOT_JDK} STREQUAL "")
+    set(JAVA_HOME $ENV{BOOT_JDK})
 
-		omrsig
-		j9vm_jcl_se6_vm-side_lifecycle
-		j9vm_jcl_se6_vm-side_natives
-		j9vm_jcl_jithelpers
-		j9vm_jcl_sun_misc_Unsafe
-		j9vm_jcl_attach
-		j9vm_jcl_se7
-		j9vm_jcl_se8
-		j9vm_jcl_se9
-		j9hookable
-		j9zlib
-		j9util
-		j9utilcore
-		j9avl
-		j9hashtable
-		j9pool
-		j9thr
-		j9vmi
-		sunvmi
-)
+    # These variables are consumed when the "Java" language is enabled
+    set(CMAKE_Java_COMPILER ${JAVA_HOME}/bin/javac)
+    set(CMAKE_Java_RUNTIME ${JAVA_HOME}/bin/java)
+    set(CMAKE_Java_AR ${JAVA_HOME}/bin/jar)
 
-set_target_properties(jclse9_before_b165_ PROPERTIES LIBRARY_OUTPUT_NAME jclse9_)
-install(
-	TARGETS jclse9_before_b165_
-	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
-)
+    set(Java_JAVA_EXECUTABLE ${JAVA_HOME}/bin/java)
+else()
+    message(STATUS "BOOT_JDK is not set, default jdk will be used")
+    include(FindJava)
+endif()
+
+# Note: these are temporary transition variables
+set(J9VM_GEN_NLS TRUE) # if true, generate nls headers from cmake
+set(J9VM_GEN_CP TRUE) # if true, generate constantpool files from cmake
+
+add_subdirectory(sourcetools)
+add_subdirectory(runtime)

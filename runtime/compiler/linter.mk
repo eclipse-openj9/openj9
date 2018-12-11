@@ -95,11 +95,9 @@ include $(JIT_MAKE_DIR)/toolcfg/common.mk
 # results in j9cfg.h and omrcfg.h to be in a location that
 # is different from an automake build.
 #
-
-ifneq ("$(wildcard $(J9SRC)/build/j9cfg.h)", "")
-CXX_INCLUDES+=$(J9SRC)/build $(J9SRC)/build/omr
+ifneq ("$(CMAKE_BUILD_DIR)","")
+CXX_INCLUDES+=$(CMAKE_BUILD_DIR)/runtime $(CMAKE_BUILD_DIR)/runtime/omr $(CMAKE_BUILD_DIR)/runtime/nls
 endif
-
 
 #
 # Add OMRChecker targets
