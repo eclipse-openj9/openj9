@@ -1858,7 +1858,8 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          int32_t numArgs = 0;
          if (arrayLength != 0)
             {
-            for (int i = arrayLength-1; i>=0; i--)
+            // put indices in the original order, reversal is done on the server
+            for (int i = 0; i < arrayLength; i++)
                {
                indices[i] = fe->getInt32Element(argIndices, i);
                }
@@ -1905,11 +1906,10 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
 
          uintptrj_t filters = fe->getReferenceField(methodHandle, "filters", "[Ljava/lang/invoke/MethodHandle;");
          int32_t numFilters = fe->getArrayLengthInElements(filters);
-         std::vector<TR::KnownObjectTable::Index> filterIndexList(numFilters);
-         TR::KnownObjectTable *knot = comp->getOrCreateKnownObjectTable();
-         for (int i = 0; i <numFilters; i++)
+         std::vector<uintptrj_t> filtersList(numFilters);
+         for (int i = 0; i < numFilters; i++)
             {
-            filterIndexList[i] = knot->getIndex(fe->getReferenceElement(filters, i));
+            filtersList[i] = fe->getReferenceElement(filters, i);
             }
 
          uintptrj_t methodDescriptorRef = fe->getReferenceField(fe->getReferenceField(fe->getReferenceField(
@@ -1921,7 +1921,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
          char *nextSignature = (char*)alloca(methodDescriptorLength+1);
          fe->getStringUTF8(methodDescriptorRef, nextSignature, methodDescriptorLength+1);
          std::string nextSignatureString(nextSignature, methodDescriptorLength);
-         client->write(startPos, filterIndexList, nextSignatureString);
+         client->write(startPos, nextSignatureString, filtersList);
          }
          break;
       case J9ServerMessageType::runFEMacro_invokeFilterArgumentsHandle2:

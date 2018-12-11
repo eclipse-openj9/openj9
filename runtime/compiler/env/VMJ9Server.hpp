@@ -153,6 +153,7 @@ public:
    virtual uintptrj_t getBytecodePC(TR_OpaqueMethodBlock *method, TR_ByteCodeInfo &bcInfo) override;
    virtual bool isClassLoadedBySystemClassLoader(TR_OpaqueClassBlock *clazz) override;
    virtual void setInvokeExactJ2IThunk(void *thunkptr, TR::Compilation *comp) override;
+   virtual bool needsInvokeExactJ2IThunk(TR::Node *node,  TR::Compilation *comp) override;
    virtual TR_ResolvedMethod *createMethodHandleArchetypeSpecimen(TR_Memory *, uintptrj_t *methodHandleLocation, TR_ResolvedMethod *owningMethod = 0) override;
    virtual bool getArrayLengthOfStaticAddress(void *ptr, int32_t &length) override;
    virtual intptrj_t getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset) override;
