@@ -1398,3 +1398,30 @@ TR_J9ServerVM::getIProfiler()
       }
    return _iProfiler;
    }
+
+TR_StaticFinalData
+TR_J9ServerVM::dereferenceStaticFinalAddress(void *staticAddress, TR::DataType addressType)
+   {
+   if (!staticAddress)
+      return {.dataAddress = 0};
+
+      {
+      // check if the value is cached
+      OMR::CriticalSection dereferenceStaticFinalAddress(_compInfoPT->getClientData()->getStaticMapMonitor());
+      auto &staticMap = _compInfoPT->getClientData()->getStaticFinalDataMap();
+      auto it = staticMap.find(staticAddress);
+      if (it != staticMap.end())
+         return it->second;
+      }
+
+   // value at the static address is not cached, ask the client
+   JITaaS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITaaS::J9ServerMessageType::VM_dereferenceStaticAddress, staticAddress, addressType);
+   auto data =  std::get<0>(stream->read<TR_StaticFinalData>());
+   // cache the result
+   OMR::CriticalSection dereferenceStaticFinalAddress(_compInfoPT->getClientData()->getStaticMapMonitor());
+   auto &staticMap = _compInfoPT->getClientData()->getStaticFinalDataMap();
+   auto it = staticMap.insert({staticAddress, data}).first;
+   return it->second;
+   }
+
