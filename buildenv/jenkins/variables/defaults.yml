@@ -394,6 +394,9 @@ osx_x86-64_cmprssptrs:
     test:
       8: 'hw.arch.x86 && sw.os.osx'
       11: 'hw.arch.x86 && sw.os.osx'
+  extra_configure_options:
+    8: '--with-openssl=fetched --enable-openssl-bundling'
+    11: '--with-openssl=fetched --enable-openssl-bundling'
   build_env:
     vars:
       8: 'MACOSX_DEPLOYMENT_TARGET=10.9.0 SDKPATH=/Users/jenkins/Xcode4/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk'
@@ -419,6 +422,9 @@ osx_x86-64:
     test:
       8: 'hw.arch.x86 && sw.os.osx'
       11: 'hw.arch.x86 && sw.os.osx'
+  extra_configure_options:
+    8: '--with-openssl=fetched --enable-openssl-bundling'
+    11: '--with-openssl=fetched --enable-openssl-bundling'
   build_env:
     vars:
       8: 'MACOSX_DEPLOYMENT_TARGET=10.9.0 SDKPATH=/Users/jenkins/Xcode4/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk'
