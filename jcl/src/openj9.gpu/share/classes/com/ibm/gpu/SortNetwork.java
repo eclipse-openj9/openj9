@@ -92,7 +92,7 @@ final class SortNetwork {
 				// for it to grow (all current variants are less than 48kB).
 				ByteArrayOutputStream ptxBuffer = new ByteArrayOutputStream(48 * 1024);
 
-				PtxKernelGenerator.writeTo(key.type, ptxBuffer);
+				PtxKernelGenerator.writeTo(capability, key.type, ptxBuffer);
 
 				// PTX code must be NUL-terminated.
 				ptxBuffer.write(0);
@@ -417,7 +417,7 @@ final class SortNetwork {
 	 *
 	 * @param deviceId
 	 * @param elementType
-	 * @throws CudaException 
+	 * @throws CudaException
 	 */
 	SortNetwork(CudaDevice device, CudaModule module) throws CudaException {
 		super();
@@ -438,12 +438,14 @@ final class SortNetwork {
 	}
 
 	private Dim3 makeGridDim(int blockCount) {
+		// This method maintains invariant: (blockDimX * blockDimY >= blockCount).
 		int blockDimX = Math.max(1, blockCount);
 		int blockDimY = 1;
 
-		// Even for devices with compute capability < 3.0 (with maxGridDimX=65535),
-		// this loop terminates with reasonable grid dimensions because
-		// 65535*65535 > Integer.MAX_INT.
+		// This loop is only entered for devices with compute capability < 3.0
+		// (where maxGridDimX is 0xFFFF).
+		// Because blockCount is at most 0x40_0000 (Integer.MAX_INT / 512 + 1),
+		// the loop body will execute at most 7 times leaving (blockDimY <= 0x80).
 		while (blockDimX > maxGridDimX) {
 			if ((blockDimX & 1) != 0) {
 				blockDimX += 1; // round up
