@@ -1597,7 +1597,21 @@ j9sysinfo_get_cache_info(struct J9PortLibrary *portLibrary, const J9CacheInfoQue
 	int32_t result = J9PORT_ERROR_SYSINFO_NOT_SUPPORTED;
 	Trc_PRT_sysinfo_get_cache_info_enter(query->cmd, query->cpu, query->level, query->cacheType);
 
-#if (defined(J9X86) || defined(J9HAMMER) || defined(AIXPPC))
+#if defined(OSX)
+	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
+	switch (query->cmd) {
+	case J9PORT_CACHEINFO_QUERY_LINESIZE:
+		/* ignore the cache type and level, since there is only one line size on MacOS */
+		omrcpu_get_cache_line_size(&result);
+		break;
+	case J9PORT_CACHEINFO_QUERY_CACHESIZE: /* FALLTHROUGH */
+	case J9PORT_CACHEINFO_QUERY_TYPES: /* FALLTHROUGH */
+	case J9PORT_CACHEINFO_QUERY_LEVELS: /* FALLTHROUGH */
+	default:
+		result = J9PORT_ERROR_SYSINFO_NOT_SUPPORTED;
+		break;
+	}
+#elif (defined(J9X86) || defined(J9HAMMER) || defined(AIXPPC))
 	switch (query->cmd) {
 	case J9PORT_CACHEINFO_QUERY_LINESIZE:
 	case J9PORT_CACHEINFO_QUERY_CACHESIZE:
