@@ -62,8 +62,8 @@
 #include "optimizer/Structure.hpp"                // for TR_RegionStructure, etc
 #include "optimizer/TransformUtil.hpp"            // for TransformUtil
 #include "optimizer/JProfilingValue.hpp"
-#include "runtime/Runtime.hpp"
 #include "runtime/ExternalProfiler.hpp"
+#include "runtime/J9Runtime.hpp"
 #include "runtime/J9ValueProfiler.hpp"
 
 //*************************************************************************

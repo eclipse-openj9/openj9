@@ -36,7 +36,7 @@
 #include "il/Symbol.hpp"
 #include "il/symbol/StaticSymbol.hpp"
 #include "il/symbol/StaticSymbol_inlines.hpp"
-#include "runtime/Runtime.hpp"
+#include "runtime/J9Runtime.hpp"
 #include "x/codegen/X86Instruction.hpp"
 #include "x/codegen/X86Ops.hpp"
 #include "x/codegen/X86Ops_inlines.hpp"

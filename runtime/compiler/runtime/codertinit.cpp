@@ -41,8 +41,8 @@
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/CodeRuntime.hpp"
 #include "runtime/DataCache.hpp"
+#include "runtime/J9Runtime.hpp"
 #include "runtime/MethodMetaData.h"
-#include "runtime/Runtime.hpp"
 #include "runtime/asmprotos.h"
 
 char * feGetEnv(const char * s);

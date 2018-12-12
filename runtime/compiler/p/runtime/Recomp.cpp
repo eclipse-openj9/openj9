@@ -28,7 +28,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "env/jittypes.h"
 #include "env/CompilerEnv.hpp"
-#include "runtime/Runtime.hpp"
+#include "runtime/J9Runtime.hpp"
 #include "env/VMJ9.h"
 
 extern "C" int32_t _tr_try_lock(int32_t *, int32_t, int32_t);

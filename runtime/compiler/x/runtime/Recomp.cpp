@@ -26,7 +26,7 @@
 #include <stdint.h>
 #include "env/jittypes.h"
 #include "runtime/CodeCacheManager.hpp"
-#include "runtime/Runtime.hpp"
+#include "runtime/J9Runtime.hpp"
 #include "x/runtime/X86Runtime.hpp"
 #include "env/VMJ9.h"
 

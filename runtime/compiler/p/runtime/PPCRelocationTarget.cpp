@@ -37,9 +37,9 @@
 #include "control/Options_inlines.hpp"
 #include "env/jittypes.h"
 #include "env/CompilerEnv.hpp"
+#include "runtime/J9Runtime.hpp"
 #include "runtime/MethodMetaData.h"
 #include "runtime/RelocationRuntime.hpp"
-#include "runtime/Runtime.hpp"
 
 void ppcCodeSync(unsigned char *codeStart, unsigned int codeSize);
 

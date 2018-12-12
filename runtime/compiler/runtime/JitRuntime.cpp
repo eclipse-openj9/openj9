@@ -40,35 +40,34 @@
 #include "compile/CompilationTypes.hpp"
 #include "compile/Method.hpp"
 #include "control/CompilationController.hpp"
+#include "control/CompilationRuntime.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "control/Recompilation.hpp"
-#include "env/IO.hpp"
-#include "env/TRMemory.hpp"
-#include "env/PersistentInfo.hpp"
-#include "env/jittypes.h"
 #include "env/CompilerEnv.hpp"
-#include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
-#include "runtime/CodeCacheManager.hpp"
-#include "runtime/Runtime.hpp"
-#include "runtime/asmprotos.h"
-#include "control/CompilationRuntime.hpp"
+#include "env/IO.hpp"
 #include "env/J2IThunk.hpp"
 #include "env/j9method.h"
+#include "env/jittypes.h"
+#include "env/PersistentInfo.hpp"
+#include "env/TRMemory.hpp"
 #include "env/ut_j9jit.h"
+#include "runtime/asmprotos.h"
+#include "runtime/CodeCacheManager.hpp"
+#include "runtime/J9Runtime.hpp"
+#include "runtime/J9ValueProfiler.hpp"
 #include "runtime/IProfiler.hpp"
+#include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM)
 #include "codegen/PicHelpers.hpp"
 #include "control/Recompilation.hpp"
-#include "runtime/Runtime.hpp"
 #endif
 
 #if defined(TR_HOST_X86)
 #include "x/runtime/X86Runtime.hpp"
 #endif
 
-#include "runtime/J9ValueProfiler.hpp"
 
 #if defined(J9ZOS390)
 static UDATA sliphandle=0;

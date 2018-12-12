@@ -51,7 +51,7 @@
 #include "infra/Assert.hpp"                         // for TR_ASSERT
 #include "p/codegen/PPCTableOfConstants.hpp"        // for PTOC_FULL_INDEX
 #include "ras/Debug.hpp"                            // for TR_Debug
-#include "runtime/Runtime.hpp"
+#include "runtime/J9Runtime.hpp"
 #include "env/CompilerEnv.hpp"
 
 J9::Power::UnresolvedDataSnippet::UnresolvedDataSnippet(

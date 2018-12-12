@@ -27,7 +27,7 @@
 #include "il/DataTypes.hpp"                    // for DataTypes, etc
 #include "il/symbol/MethodSymbol.hpp"          // for MethodSymbol, etc
 #include "infra/Assert.hpp"                    // for TR_ASSERT
-#include "runtime/Runtime.hpp"                 // for TR_RuntimeHelper, etc
+#include "runtime/J9Runtime.hpp"               // for TR_RuntimeHelper, etc
 
 /**
  * Return true if this method is pure ie no side-effects.

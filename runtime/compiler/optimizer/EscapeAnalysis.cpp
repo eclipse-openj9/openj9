@@ -89,8 +89,8 @@
 #include "optimizer/LocalOpts.hpp"
 #include "optimizer/MonitorElimination.hpp"
 #include "ras/Debug.hpp"                       // for TR_DebugBase, etc
-#include "runtime/Runtime.hpp"
 #include "runtime/J9Profiler.hpp"
+#include "runtime/J9Runtime.hpp"
 
 #define OPT_DETAILS "O^O ESCAPE ANALYSIS: "
 

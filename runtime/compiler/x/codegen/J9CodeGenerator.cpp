@@ -40,7 +40,7 @@
 #include "runtime/CodeCacheExceptions.hpp"
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/CodeCacheTypes.hpp"
-#include "runtime/Runtime.hpp"
+#include "runtime/J9Runtime.hpp"
 #include "x/codegen/CallSnippet.hpp"
 #include "x/codegen/X86Recompilation.hpp"
 #include "x/codegen/FPTreeEvaluator.hpp"
