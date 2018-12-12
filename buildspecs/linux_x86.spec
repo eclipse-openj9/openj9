@@ -90,7 +90,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<property name="j9dt.make" value="gmake"/>
 		<property name="j9dt.toolsTarget" value="buildtools.mk"/>
 		<property name="javatestPlatform" value="linux_x86-32"/>
-		<property name="jclMaxSecurityPolicyDefine" value=" &quot;-Djava.security.policy=http://jcl1.ottawa.ibm.com/testres/java.policy&quot;"/>
 		<property name="jclMemoryMax" value="-Xmx32m"/>
 		<property name="jclOSStackSizeMax" value=""/>
 		<property name="jdiTestsSupported" value="true"/>
