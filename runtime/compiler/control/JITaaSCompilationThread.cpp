@@ -2115,6 +2115,8 @@ remoteCompile(
    TR::CompilationInfo *compInfo = compInfoPT->getCompilationInfo();
 
 
+   if (compiler->isOptServer())
+      compiler->setOption(TR_Server);
    auto classInfoTuple = JITaaSHelpers::packRemoteROMClassInfo(clazz, compiler->fej9vm(), compiler->trMemory());
    std::string optionsStr = TR::Options::packOptions(compiler->getOptions());
    std::string recompMethodInfoStr = compiler->isRecompilationEnabled() ? std::string((char *) compiler->getRecompilationInfo()->getMethodInfo(), sizeof(TR_PersistentMethodInfo)) : std::string();
