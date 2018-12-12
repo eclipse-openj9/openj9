@@ -111,7 +111,7 @@ linux_ppc-64_cmprssptrs_le:
       next: 'CC=gcc-7 CXX=g++-7'
 #========================================#
 # Linux S390 64bits Compressed Pointers
-# Note: boot_jdk 8 must use an Adopt JDK8 build rather than an 
+# Note: boot_jdk 8 must use an Adopt JDK8 build rather than an
 # IBM 7 for the bootJDK or compiling corba will fail to find Object.
 #========================================#
 linux_390-64_cmprssptrs:
@@ -148,6 +148,7 @@ linux_390-64_cmprssptrs:
       next: 'CC=gcc-7 CXX=g++-7'
   extra_configure_options:
     8: '--with-openssl=/home/jenkins/openssl-1.1.1 --enable-openssl-bundling'
+    11: '--with-openssl=fetched --enable-openssl-bundling'
 #========================================#
 # AIX PPC 64bits Compressed Pointers
 #========================================#
@@ -354,7 +355,7 @@ win_x86-64_cmprssptrs:
       11: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
       next: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
 #========================================#
-# Windows x86 32bits 
+# Windows x86 32bits
 #========================================#
 win_x86:
   boot_jdk:
