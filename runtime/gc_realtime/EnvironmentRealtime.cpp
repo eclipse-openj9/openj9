@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,6 +31,7 @@
 #include "Metronome.hpp"
 #include "OSInterface.hpp"
 #include "RealtimeGC.hpp"
+#include "RealtimeRootScanner.hpp"
 #include "SegregatedAllocationTracker.hpp"
 #include "Timer.hpp"
 
@@ -115,4 +116,18 @@ void MM_EnvironmentRealtime::enableYield()
 {
 	_yieldDisableDepth--;
 	assert1(_yieldDisableDepth >= 0);
+}
+
+void
+MM_EnvironmentRealtime::reportScanningSuspended() {
+	if (NULL != _rootScanner) {
+		_rootScanner->reportScanningSuspended();
+	}
+}
+
+void
+MM_EnvironmentRealtime::reportScanningResumed() {
+	if (NULL != _rootScanner) {
+		_rootScanner->reportScanningResumed();
+	}
 }
