@@ -3,7 +3,7 @@
 package com.ibm.oti.vm;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,7 +56,6 @@ public abstract class AbstractClassLoader extends ClassLoader {
 	/*[PR JAZZ 88959] Use URLStreamHandler when creating bootstrap resource URLs */
 	private static URLStreamHandler	urlJarStreamHandler;
 	private static URLStreamHandler	urlFileStreamHandler;
-	private static URLStreamHandler	urlJrtStreamHandler;
 	
 public AbstractClassLoader(){
 }
@@ -177,9 +176,6 @@ public static void setBootstrapClassLoader(ClassLoader bootstrapClassLoader) {
 	systemClassLoader = bootstrapClassLoader;
 	urlJarStreamHandler = new sun.net.www.protocol.jar.Handler();
 	urlFileStreamHandler = new sun.net.www.protocol.file.Handler();
-/*[IF Sidecar19-SE]*/
-	urlJrtStreamHandler = new sun.net.www.protocol.jrt.Handler();
-/*[ENDIF] Sidecar19-SE */
 }
 
 Package definePackage(String packageName, final int cacheIndex) {
@@ -266,17 +262,6 @@ String getPackageName(Class theClass)
 	if((index = name.lastIndexOf('.')) == -1) return null;
 	return name.substring(0, index);
 }
-
-/*[IF Sidecar19-SE]*/
-/*[IF AnnotateOverride]*/
-@Override
-/*[ENDIF]*/
-protected URL findResource(String moduleName, final String res) throws IOException {
-	return jdk.internal.loader.BootLoader.findResource(moduleName, res);
-}
-/*[ENDIF] Sidecar19-SE*/
-
-/*[IF !Sidecar19-SE]*/
 
 /*[IF AnnotateOverride]*/
 @Override
@@ -477,7 +462,4 @@ private void setPermissionElement(int i, FilePermission value) {
 		permissions[i] = value;
 	}
 }
-
-/*[ENDIF]*/  /*  !Sidecar19-SE */
-
 }
