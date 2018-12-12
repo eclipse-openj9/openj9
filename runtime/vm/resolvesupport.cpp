@@ -1043,8 +1043,8 @@ resolveInterfaceMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA
 			J9UTF8 *className = J9ROMCLASS_CLASSNAME(interfaceClass->romClass);
 			j9object_t detailMessage = vm->memoryManagerFunctions->j9gc_createJavaLangString(vmStruct, J9UTF8_DATA(className), J9UTF8_LENGTH(className), J9_STR_XLAT);
 			setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, (UDATA *)detailMessage);
-			goto done;
 		}
+		goto done;
 	}
 	
 	nameAndSig = J9ROMFIELDREF_NAMEANDSIGNATURE(romMethodRef);
