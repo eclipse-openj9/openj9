@@ -115,7 +115,8 @@ CX_FLAGS+=\
     -fomit-frame-pointer \
     -fasynchronous-unwind-tables \
     -Wreturn-type \
-    -fno-dollars-in-identifiers
+    -fno-dollars-in-identifiers \
+    -fno-strict-aliasing
 
 CXX_FLAGS+=\
     -std=c++0x \
@@ -136,7 +137,7 @@ ifeq ($(HOST_ARCH),z)
     ifeq ($(HOST_BITS),64)
         CX_DEFINES+=S390 S39064 FULL_ANSI MAXMOVE J9VM_TIERED_CODE_CACHE
         CX_DEFINES+=_GNU_SOURCE IBM_ATOE _TPF_SOURCE ZTPF_POSIX_SOCKET J9ZTPF OMRZTPF
-        CX_FLAGS+=-fPIC -fno-strict-aliasing -march=$(ARCHLEVEL) -mtune=$(TUNELEVEL) -mzarch
+        CX_FLAGS+=-fPIC -march=$(ARCHLEVEL) -mtune=$(TUNELEVEL) -mzarch
     endif
 endif
 

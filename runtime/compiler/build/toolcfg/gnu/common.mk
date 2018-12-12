@@ -105,7 +105,8 @@ CX_FLAGS+=\
     -fomit-frame-pointer \
     -fasynchronous-unwind-tables \
     -Wreturn-type \
-    -fno-dollars-in-identifiers
+    -fno-dollars-in-identifiers \
+    -fno-strict-aliasing
 
 CXX_FLAGS+=\
     -std=c++0x \
@@ -124,7 +125,7 @@ CX_OPTFLAG?=$(CX_DEFAULTOPT)
 CX_FLAGS_PROD+=$(CX_OPTFLAG)
 
 ifeq ($(HOST_ARCH),x)
-    CX_FLAGS+=-mfpmath=sse -msse -msse2 -fno-strict-aliasing -fno-math-errno -fno-rounding-math -fno-trapping-math -fno-signaling-nans
+    CX_FLAGS+=-mfpmath=sse -msse -msse2 -fno-math-errno -fno-rounding-math -fno-trapping-math -fno-signaling-nans
 
     ifeq ($(HOST_BITS),32)
         CX_FLAGS+=-m32 -fpic
@@ -160,13 +161,13 @@ endif
 ifeq ($(HOST_ARCH),z)
     ifeq ($(HOST_BITS),32)
         CX_DEFINES+=J9VM_TIERED_CODE_CACHE MAXMOVE S390 FULL_ANSI
-        CX_FLAGS+=-m31 -fPIC -fno-strict-aliasing -march=$(ARCHLEVEL) -mtune=$(TUNELEVEL) -mzarch
+        CX_FLAGS+=-m31 -fPIC -march=$(ARCHLEVEL) -mtune=$(TUNELEVEL) -mzarch
         CX_FLAGS_DEBUG+=-gdwarf-2
     endif
 
     ifeq ($(HOST_BITS),64)
         CX_DEFINES+=S390 S39064 FULL_ANSI MAXMOVE J9VM_TIERED_CODE_CACHE
-        CX_FLAGS+=-fPIC -fno-strict-aliasing -march=$(ARCHLEVEL) -mtune=$(TUNELEVEL) -mzarch
+        CX_FLAGS+=-fPIC -march=$(ARCHLEVEL) -mtune=$(TUNELEVEL) -mzarch
     endif
 endif
 
