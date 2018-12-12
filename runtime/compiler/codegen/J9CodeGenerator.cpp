@@ -3354,9 +3354,10 @@ J9::CodeGenerator::rematerializeCompressedRefs(
       TR::Node *child = node->getChild(i);
       self()->rematerializeCompressedRefs(autoSymRef, tt, node, i, child, visitCount, rematerializedNodes);
       }
-
+   
+   static bool disableBranchlessPassThroughNULLCHK = feGetEnv("TR_disableBranchlessPassThroughNULLCHK") != NULL;
    if (node->getOpCode().isNullCheck() && reference &&
-          (!isLowMemHeap || self()->performsChecksExplicitly() || (node->getFirstChild()->getOpCodeValue() == TR::PassThrough)) &&
+          (!isLowMemHeap || self()->performsChecksExplicitly() || (disableBranchlessPassThroughNULLCHK && node->getFirstChild()->getOpCodeValue() == TR::PassThrough)) &&
           ((node->getFirstChild()->getOpCodeValue() == TR::l2a) ||
            (reference->getOpCodeValue() == TR::l2a)) &&
          performTransformation(self()->comp(), "%sTransforming null check reference %p in null check node %p to be checked explicitly\n", OPT_DETAILS, reference, node))
