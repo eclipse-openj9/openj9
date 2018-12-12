@@ -78,6 +78,20 @@ typedef enum {
 	VM_MAYBE
 } VM_YesNoMaybe;
 
+#if (defined(LINUX) && defined(J9HAMMER))
+#define REGISTER register
+#define REG0 asm("r13")
+#define REG1 asm("r14")
+#elif (defined(LINUX) && defined(S390))
+#define REGISTER register
+#define REG0 asm("r13")
+#define REG1 asm("r14")
+#else
+#define REGISTER
+#define REG0
+#define REG1
+#endif
+
 #define LOCAL_PC
 #define LOCAL_SP
 
@@ -94,11 +108,13 @@ typedef enum {
 #if defined(LOCAL_SP)
 #define SP UDATA * &_sp
 #define SP_PARAM _sp
+#define SP_REGISTER REG0
 #endif
 
 #if defined(LOCAL_PC)
 #define PC U_8 * &_pc
 #define PC_PARAM _pc
+#define PC_REGISTER REG1
 #endif
 
 #if defined(LOCAL_LITERALS)
@@ -8273,10 +8289,10 @@ public:
 		UDATA *_arg0EA = vmThread->arg0EA;
 #endif
 #if defined(LOCAL_SP)
-		UDATA *_sp = vmThread->sp;
+		REGISTER UDATA *_sp SP_REGISTER = vmThread->sp;
 #endif
 #if defined(LOCAL_PC)
-		U_8 *_pc = vmThread->pc;
+		REGISTER U_8 *_pc PC_REGISTER = vmThread->pc;
 #endif
 #if defined(LOCAL_LITERALS)
 		J9Method *_literals = vmThread->literals;
