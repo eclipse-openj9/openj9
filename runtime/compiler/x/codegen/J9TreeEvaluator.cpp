@@ -74,7 +74,7 @@
 #include "x/codegen/HelperCallSnippet.hpp"
 #include "x/codegen/X86Evaluator.hpp"
 #include "env/CompilerEnv.hpp"
-#include "runtime/Runtime.hpp"
+#include "runtime/J9Runtime.hpp"
 
 #ifdef TR_TARGET_64BIT
 #include "codegen/AMD64PrivateLinkage.hpp"

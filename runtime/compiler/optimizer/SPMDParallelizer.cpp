@@ -71,7 +71,7 @@
 #include "optimizer/Structure.hpp"
 #include "optimizer/UseDefInfo.hpp"                // for TR_UseDefInfo, etc
 #include "optimizer/ValueNumberInfo.hpp"
-#include "runtime/Runtime.hpp"
+#include "runtime/J9Runtime.hpp"
 #include "ras/DebugCounter.hpp"
 #include "env/annotations/GPUAnnotation.hpp"
 

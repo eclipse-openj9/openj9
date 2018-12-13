@@ -49,7 +49,7 @@
 #include "il/TreeTop_inlines.hpp"
 #include "infra/Assert.hpp"                    // for TR_ASSERT
 #include "p/codegen/PPCInstruction.hpp"
-#include "runtime/Runtime.hpp"
+#include "runtime/J9Runtime.hpp"
 
 TR::Instruction *generateVirtualGuardNOPInstruction(TR::CodeGenerator *cg,  TR::Node *n, TR_VirtualGuardSite *site,
    TR::RegisterDependencyConditions *cond, TR::LabelSymbol *sym, TR::Instruction *preced)

@@ -34,7 +34,7 @@
 #include "infra/TRlist.hpp"
 #include "env/TRMemory.hpp"
 #include "env/VMJ9.h"
-#include "runtime/Runtime.hpp"
+#include "runtime/J9Runtime.hpp"
 
 #define SVM_ASSERT(manager, condition, format, ...) \
    do { (manager->inHeuristicRegion() && condition) ? (void)0 : TR::fatal_assertion(__FILE__, __LINE__, #condition, format, ##__VA_ARGS__); } while(0)

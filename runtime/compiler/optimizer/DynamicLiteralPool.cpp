@@ -69,7 +69,7 @@
 #include "optimizer/Optimizer.hpp"             // for Optimizer
 #include "optimizer/Structure.hpp"             // for TR_RegionStructure, etc
 #include "ras/Debug.hpp"                       // for TR_DebugBase
-#include "runtime/Runtime.hpp"
+#include "runtime/J9Runtime.hpp"
 
 
 TR_DynamicLiteralPool::TR_DynamicLiteralPool(TR::OptimizationManager *manager)

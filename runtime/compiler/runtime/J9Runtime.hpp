@@ -23,7 +23,7 @@
 #ifndef J9RUNTIME_INCL
 #define J9RUNTIME_INCL
 
-#include "omr/compiler/runtime/Runtime.hpp"
+#include "runtime/Runtime.hpp"
 #include "codegen/PreprologueConst.hpp"
 
 

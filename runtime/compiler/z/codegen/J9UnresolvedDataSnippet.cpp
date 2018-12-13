@@ -55,7 +55,7 @@
 #include "il/symbol/StaticSymbol_inlines.hpp" // for StaticSymbol
 #include "infra/Assert.hpp"                   // for TR_ASSERT
 #include "ras/Debug.hpp"                      // for TR_Debug
-#include "runtime/Runtime.hpp"
+#include "runtime/J9Runtime.hpp"
 #include "env/CompilerEnv.hpp"
 
 namespace TR { class S390WritableDataSnippet; }

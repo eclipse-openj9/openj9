@@ -43,7 +43,7 @@
 #include "env/jittypes.h"
 #include "env/CompilerEnv.hpp"
 #include "runtime/MethodMetaData.h"
-#include "runtime/Runtime.hpp"
+#include "runtime/J9Runtime.hpp"
 #include "runtime/CodeCache.hpp"
 #include "runtime/CodeCacheConfig.hpp"
 #include "runtime/CodeCacheManager.hpp"

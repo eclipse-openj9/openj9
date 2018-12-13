@@ -41,7 +41,7 @@ namespace J9 { typedef J9::X86::UnresolvedDataSnippet UnresolvedDataSnippetConne
 #include "codegen/CodeGenerator.hpp"                // for CodeGenerator
 #include "il/Symbol.hpp"                            // for Symbol
 #include "il/SymbolReference.hpp"                   // for SymbolReference
-#include "runtime/Runtime.hpp"                      // for TR_RuntimeHelper
+#include "runtime/J9Runtime.hpp"                    // for TR_RuntimeHelper
 #include "infra/Flags.hpp"
 #include "env/CompilerEnv.hpp"
 
