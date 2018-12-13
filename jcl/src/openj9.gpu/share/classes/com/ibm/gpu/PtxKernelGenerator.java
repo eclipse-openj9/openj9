@@ -33,6 +33,8 @@ final class PtxKernelGenerator {
 	/**
 	 * Generate the PTX code for a collection of sort network kernels.
 	 *
+	 * @param capability the compute capability of the device where the kernel
+	 *     will be used
 	 * @param elementType the type of the elements in the array to be sorted;
 	 *     must be one of 'D', 'F', 'I' or 'J' (the Java encoding of primitive
 	 *     types double, float, int or long, respectively)
@@ -40,10 +42,10 @@ final class PtxKernelGenerator {
 	 * @throws IOException if a problem is encountered writing to the given output
 	 *     stream
 	 */
-	public static void writeTo(char elementType, OutputStream out) throws IOException {
+	public static void writeTo(int capability, char elementType, OutputStream out) throws IOException {
 		PtxKernelGenerator generator = new PtxKernelGenerator(out, elementType);
 
-		generator.generate();
+		generator.generate(capability);
 	}
 
 	/**
@@ -424,9 +426,9 @@ final class PtxKernelGenerator {
 		append("}");
 	}
 
-	private void emitPreamble() throws IOException {
+	private void emitPreamble(int capability) throws IOException {
 		append(".version 3.2");
-		append(".target sm_20");
+		format(".target sm_%d", (capability < 3) ? 20 : 30);
 		append(".address_size 64");
 	}
 
@@ -448,8 +450,8 @@ final class PtxKernelGenerator {
 		}
 	}
 
-	private void generate() throws IOException {
-		emitPreamble();
+	private void generate(int capability) throws IOException {
+		emitPreamble(capability);
 
 		final int MaxStepCount = 4;
 

@@ -737,7 +737,7 @@ public final class SortTest {
 
 	@Test(groups = { "level.sanity" })
 	public void testPowersOf2() {
-		main(new String[] { "-geometric=1,8388608,24" });
+		main(new String[] { "-geometric=1,16777216,25" });
 	}
 
 }
