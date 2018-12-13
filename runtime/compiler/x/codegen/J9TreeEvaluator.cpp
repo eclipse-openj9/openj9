@@ -7692,7 +7692,9 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
    // --------------------------------------------------------------------------------
    // Initialize the header
    // --------------------------------------------------------------------------------
-   if (fej9->inlinedAllocationsMustBeVerified() && node->getOpCodeValue() == TR::anewarray)
+   if (fej9->inlinedAllocationsMustBeVerified()
+       && !comp->getOption(TR_UseSymbolValidationManager)
+       && node->getOpCodeValue() == TR::anewarray)
       {
       genInitArrayHeader(
             node,
