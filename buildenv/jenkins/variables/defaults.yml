@@ -385,6 +385,7 @@ osx_x86-64_cmprssptrs:
     11: 'macosx-x86_64-normal-server-release'
   extra_configure_options:
     8: '--with-xcode-path=/Users/jenkins/Xcode4/Xcode.app --with-openj9-cc=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --with-openj9-cxx=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ --with-openj9-developer-dir=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer'
+    11: '--with-openssl=fetched --enable-openssl-bundling'
   freemarker: '/Users/jenkins/freemarker.jar'
   openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
   node_labels:
@@ -394,9 +395,6 @@ osx_x86-64_cmprssptrs:
     test:
       8: 'hw.arch.x86 && sw.os.osx'
       11: 'hw.arch.x86 && sw.os.osx'
-  extra_configure_options:
-    8: '--with-openssl=fetched --enable-openssl-bundling'
-    11: '--with-openssl=fetched --enable-openssl-bundling'
   build_env:
     vars:
       8: 'MACOSX_DEPLOYMENT_TARGET=10.9.0 SDKPATH=/Users/jenkins/Xcode4/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk'
@@ -412,7 +410,7 @@ osx_x86-64:
     11: 'macosx-x86_64-normal-server-release'
   extra_configure_options:
     8: '--with-noncompressedrefs --with-xcode-path=/Users/jenkins/Xcode4/Xcode.app --with-openj9-cc=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --with-openj9-cxx=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ --with-openj9-developer-dir=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer'
-    11: '--with-noncompressedrefs'
+    11: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
   freemarker: '/Users/jenkins/freemarker.jar'
   openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
   node_labels:
@@ -422,9 +420,6 @@ osx_x86-64:
     test:
       8: 'hw.arch.x86 && sw.os.osx'
       11: 'hw.arch.x86 && sw.os.osx'
-  extra_configure_options:
-    8: '--with-openssl=fetched --enable-openssl-bundling'
-    11: '--with-openssl=fetched --enable-openssl-bundling'
   build_env:
     vars:
       8: 'MACOSX_DEPLOYMENT_TARGET=10.9.0 SDKPATH=/Users/jenkins/Xcode4/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk'
