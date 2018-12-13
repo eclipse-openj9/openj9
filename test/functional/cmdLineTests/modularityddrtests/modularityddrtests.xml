@@ -969,7 +969,6 @@
 		<output regex="no" type="required">Exported to:</output>
 		<output regex="no" type="success">openj9.gpu</output>
 		<output regex="no" type="required">!j9module </output>
-		<output regex="no" type="required">ALL-UNNAMED</output>
 		<output regex="no" type="failure">DDRInteractiveCommandException</output>
 	</test>
 
