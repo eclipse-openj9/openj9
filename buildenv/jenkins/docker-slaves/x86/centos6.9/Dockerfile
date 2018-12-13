@@ -61,6 +61,8 @@ RUN yum -y update \
     libstdc++-static \
     libX11-devel \
     libXext-devel \
+    libXi-devel \
+    libXrandr-devel \
     libXrender-devel \
     libXt-devel \
     libXtst-devel \
