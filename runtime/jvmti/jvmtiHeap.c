@@ -474,8 +474,6 @@ countObjectTags(J9JVMTIObjectTag * entry, J9JVMTIObjectTagMatch * results)
  * @param callbacks       callbacks to be invoked for each reference type
  * @param user_data       user data to be passed back via the callbacks
  * @return                a jvmtiError value
- * 
- *	Full spec is available here: http://j9.ottawa.ibm.com/j9dt/specs/jvmti.html#FollowReferences
  */
 jvmtiError JNICALL
 jvmtiFollowReferences(jvmtiEnv* env, jint heap_filter, jclass klass, jobject initial_object, const jvmtiHeapCallbacks* callbacks,
@@ -1276,9 +1274,6 @@ mapEventType(J9JVMTIHeapData * data, IDATA type, jint index, j9object_t referrer
  * @param callbacks       callbacks to be invoked for each reference type
  * @param user_data       user data to be passed back via the callbacks
  * @return                a jvmtiError value
- * 
- *	Full spec is available here: http://j9.ottawa.ibm.com/j9dt/specs/jvmti.html#IterateThroughHeap
- *
  */
 jvmtiError JNICALL jvmtiIterateThroughHeap(jvmtiEnv* env,
 					   jint heap_filter,
@@ -1680,8 +1675,7 @@ wrap_primitiveFieldCallback(J9JavaVM * vm, J9JVMTIHeapData * iteratorData, IDATA
 			goto nextField; 
 		}
 
-		/* The field index must reflect the index order returned by jvmtiGetClassFields in addition to being offset
-		 * as per the details in http://j9.ottawa.ibm.com/j9dt/specs/jvmti.html#jvmtiHeapReferenceInfoField */
+		/* The field index must reflect the index order returned by jvmtiGetClassFields in addition to being offset */
 		fieldInfo.field.index = (jint)(state.fieldOffsetWalkState.result.index + state.classIndexAdjust + state.referenceIndexOffset - 1);
 
 		primitiveValue.j = (jlong) 0;

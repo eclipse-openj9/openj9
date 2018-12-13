@@ -29,7 +29,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<requiredProperty name="j9dt.compileTarget"/>
 		<requiredProperty name="j9dt.make"/>
 		<requiredProperty name="j9dt.toolsTarget"/>
-		<requiredProperty name="jclMaxSecurityPolicyDefine"/>
 		<requiredProperty name="jclMemoryMax"/>
 		<requiredProperty name="jclOSStackSizeMax"/>
 		<requiredProperty name="jitTestingOptLevel"/>
