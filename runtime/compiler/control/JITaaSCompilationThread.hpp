@@ -135,6 +135,9 @@ class ClientSessionData
    void decNumActiveThreads() { --_numActiveThreads;  }
    void printStats();
 
+   void markForDeletion() { _markedForDeletion = true;}
+   bool isMarkedForDeletion() const { return _markedForDeletion; }
+
    TR::Monitor *getStaticMapMonitor() { return _staticMapMonitor; }
    PersistentUnorderedMap<void *, TR_StaticFinalData> &getStaticFinalDataMap() { return _staticFinalDataMap; }
 
@@ -168,7 +171,7 @@ class ClientSessionData
                              // This is smaller or equal to _inUse because some threads
                              // could be just starting or waiting in _OOSequenceEntryList
    VMInfo *_vmInfo; // info specific to a client VM that does not change, nullptr means not set
-
+   bool _markedForDeletion; //Client Session is marked for deletion. When the inUse count will become zero this will be deleted.
    TR_AddressSet *_unloadedClassAddresses; // Per-client versions of the unloaded class and method addresses kept in J9PersistentInfo
    bool           _requestUnloadedClasses; // If true we need to request the current state of unloaded classes from the client
    TR::Monitor *_staticMapMonitor;
@@ -188,6 +191,7 @@ class ClientSessionHT
    ~ClientSessionHT();
    static ClientSessionHT* allocate(); // allocates a new instance of this class
    ClientSessionData * findOrCreateClientSession(uint64_t clientUID, uint32_t seqNo, bool *newSessionWasCreated);
+   bool deleteClientSession(uint64_t clientUID, bool forDeletion);
    ClientSessionData * findClientSession(uint64_t clientUID);
    void purgeOldDataIfNeeded();
    void printStats();
