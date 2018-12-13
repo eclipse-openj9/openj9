@@ -98,6 +98,24 @@ char *iniBootpath = NULL;
 
 const U_64 jclConfig = J9CONST64(0x7363617237306200);		/* 'scar70b' */
 
+#if defined(WIN32)
+#define J9_AWTPRINTERJOB_VALUE	"sun.awt.windows.WPrinterJob"
+#define J9_AWTTOOLKIT_VALUE	"sun.awt.windows.WToolkit"
+#define J9_AWTGRAPHICSENV_VALUE	"sun.awt.Win32GraphicsEnvironment"
+#elif defined(OSX) /* WIN32 */
+#define J9_AWTPRINTERJOB_VALUE	"sun.lwawt.macosx.CPrinterJob"
+#define J9_AWTTOOLKIT_VALUE	"sun.lwawt.macosx.LWCToolkit"
+#define J9_AWTGRAPHICSENV_VALUE	"sun.awt.CGraphicsEnvironment"
+#else /* OSX */
+/* defined(J9VM_UNIX) */
+#define J9_AWTPRINTERJOB_VALUE	"sun.print.PSPrinterJob"
+#define J9_AWTGRAPHICSENV_VALUE	"sun.awt.X11GraphicsEnvironment"
+#if defined(J9ZTPF)
+#define J9_AWTTOOLKIT_VALUE	"sun.awt.HToolkit"
+#else /* defined(J9ZTPF) */
+#define J9_AWTTOOLKIT_VALUE	"sun.awt.X11.XToolkit"
+#endif /* defined(J9ZTPF) */
+#endif /* WIN32 */
 
 jint scarInit(J9JavaVM *vm);
 jint scarPreconfigure(J9JavaVM *vm);
@@ -138,43 +156,36 @@ addBFUSystemProperties(J9JavaVM* javaVM)
 	}
 	
 #ifdef WIN32
-	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(javaVM, "java.awt.graphicsenv", NULL)) {
-		rc = vmfunc->addSystemProperty(javaVM, "java.awt.graphicsenv", "sun.awt.Win32GraphicsEnvironment", 0);
-		if (J9SYSPROP_ERROR_NONE != rc) {
-			return rc;
-		}
-	}
-
 	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(javaVM, "java.awt.fonts", NULL)) {
 		rc = vmfunc->addSystemProperty(javaVM, "java.awt.fonts", fontPathBuffer, 0);
 		if (J9SYSPROP_ERROR_NONE != rc) {
 			return rc;
 		}
 	}
-
-	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(javaVM, "awt.toolkit", NULL)) {
-		rc = vmfunc->addSystemProperty(javaVM, "awt.toolkit", "sun.awt.windows.WToolkit", 0);
-		if (J9SYSPROP_ERROR_NONE != rc) {
-			return rc;
-		}
-	}
-
-	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(javaVM, "java.awt.printerjob", NULL)) {
-		rc = vmfunc->addSystemProperty(javaVM, "java.awt.printerjob", "sun.awt.windows.WPrinterJob", 0);
-		if (J9SYSPROP_ERROR_NONE != rc) {
-			return rc;
-		}
-	}
 #endif /* WIN32 */
 
-#ifdef J9VM_UNIX
 	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(javaVM, "java.awt.graphicsenv", NULL)) {
-		rc = vmfunc->addSystemProperty(javaVM, "java.awt.graphicsenv", "sun.awt.X11GraphicsEnvironment", 0);
+		rc = vmfunc->addSystemProperty(javaVM, "java.awt.graphicsenv", J9_AWTGRAPHICSENV_VALUE, 0);
 		if (J9SYSPROP_ERROR_NONE != rc) {
 			return rc;
 		}
 	}
 
+	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(javaVM, "awt.toolkit", NULL)) {
+		rc = vmfunc->addSystemProperty(javaVM, "awt.toolkit", J9_AWTTOOLKIT_VALUE, 0);
+		if (J9SYSPROP_ERROR_NONE != rc) {
+			return rc;
+		}
+	}
+	
+	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(javaVM, "java.awt.printerjob", NULL)) {
+		rc = vmfunc->addSystemProperty(javaVM, "java.awt.printerjob", J9_AWTPRINTERJOB_VALUE, 0);
+		if (J9SYSPROP_ERROR_NONE != rc) {
+			return rc;
+		}
+	}
+
+#ifdef J9VM_UNIX
 	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(javaVM, "java.awt.fonts", NULL)) {
 		rc = vmfunc->addSystemProperty(javaVM, "java.awt.fonts", "", 0);
 		if (J9SYSPROP_ERROR_NONE != rc) {
@@ -191,23 +202,6 @@ addBFUSystemProperties(J9JavaVM* javaVM)
 	}
 #endif
 
-	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(javaVM, "awt.toolkit", NULL)) {
-#if defined(J9ZTPF)
-		rc = vmfunc->addSystemProperty(javaVM, "awt.toolkit", "sun.awt.HToolkit", 0);
-#else /* defined(J9ZTPF) */
-		rc = vmfunc->addSystemProperty(javaVM, "awt.toolkit", "sun.awt.X11.XToolkit", 0);
-#endif /* defined(J9ZTPF) */
-		if (J9SYSPROP_ERROR_NONE != rc) {
-			return rc;
-		}
-	}
-
-	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(javaVM, "java.awt.printerjob", NULL)) {
-		rc = vmfunc->addSystemProperty(javaVM, "java.awt.printerjob", "sun.print.PSPrinterJob", 0);
-		if (J9SYSPROP_ERROR_NONE != rc) {
-			return rc;
-		}
-	}
 	if (J9SYSPROP_ERROR_NOT_FOUND == vmfunc->getSystemProperty(javaVM, "java.util.prefs.PreferencesFactory", NULL)) {
 		rc = vmfunc->addSystemProperty(javaVM, "java.util.prefs.PreferencesFactory", "java.util.prefs.FileSystemPreferencesFactory", 0);
 		if (J9SYSPROP_ERROR_NONE != rc) {
