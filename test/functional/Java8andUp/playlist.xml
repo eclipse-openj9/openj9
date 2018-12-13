@@ -690,8 +690,6 @@
 		-groups $(TEST_GROUP) \
 		-excludegroups $(DEFAULT_EXCLUDE); \
 		$(TEST_STATUS)</command>
-		<!-- temporarily disable this test on osx; https://github.com/eclipse/openj9/issues/3777 -->
-		<platformRequirements>^os.osx</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -720,8 +718,6 @@
 		-groups $(TEST_GROUP) \
 		-excludegroups $(DEFAULT_EXCLUDE); \
 		$(TEST_STATUS)</command>
-		<!-- temporarily disable this test on osx; https://github.com/eclipse/openj9/issues/3777 -->
-		<platformRequirements>^os.osx</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
