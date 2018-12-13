@@ -82,7 +82,26 @@ target_include_directories(jvm_b156_redirect
 )
 set_target_properties(jvm_b156_redirect PROPERTIES LIBRARY_OUTPUT_NAME jvm_b156)
 
+################################################################################
+# Redirector jdk11
+################################################################################
+add_library(jvm_jdk11_redirect SHARED
+	"${CMAKE_CURRENT_BINARY_DIR}/generated.c"
+	redirector.c
+)
+target_link_libraries(jvm_jdk11_redirect
+	PRIVATE
+		j9vm_interface
+		dl
+)
+target_include_directories(jvm_jdk11_redirect
+	PRIVATE
+		"${j9vm_SOURCE_DIR}/j9vm"
+		"${j9vm_BINARY_DIR}/j9vm"
+)
+set_target_properties(jvm_jdk11_redirect PROPERTIES LIBRARY_OUTPUT_NAME jvm_jdk11)
+
 install(
-	TARGETS jvm_b150_redirect jvm_b156_redirect jvm_redirect
+	TARGETS jvm_b150_redirect jvm_b156_redirect jvm_redirect jvm_jdk11_redirect
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}/redirector
 )
