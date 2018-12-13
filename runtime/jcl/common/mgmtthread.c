@@ -969,14 +969,14 @@ getThreadUserTime(omrthread_t thread)
 	
 	userTime = omrthread_get_user_time(thread);
 	
-#if defined(J9ZOS390) || defined(LINUX)
+#if defined(J9ZOS390) || defined(LINUX) || defined(OSX)
 	if (-1 == userTime) {
-		/* For z/OS and Linux, user time is not available from the OS.
+		/* For z/OS, Linux and OSX, user time is not available from the OS.
 		 * So provide cpu time in its place.
 		 */
 		userTime = omrthread_get_cpu_time(thread);
 	}
-#endif /* ZOS or LINUX */
+#endif /* ZOS, LINUX or OSX */
 		
 	return userTime;
 }
