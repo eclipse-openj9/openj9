@@ -51,7 +51,7 @@ uint8_t *TR::PPCForceRecompilationSnippet::emitSnippetBody()
    getSnippetLabel()->setCodeLocation(buffer);
 
    TR::RegisterDependencyConditions *deps = _doneLabel->getInstruction()->getDependencyConditions();
-   TR::RealRegister *startPCReg  = cg()->machine()->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(0)->getRealRegister());
+   TR::RealRegister *startPCReg  = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(0)->getRealRegister());
 
    TR::InstOpCode opcode;
 
@@ -145,7 +145,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCForceRecompilationSnippet * snippet)
    uint8_t   *cursor = snippet->getSnippetLabel()->getCodeLocation();
 
    TR::RegisterDependencyConditions *deps = snippet->getDoneLabel()->getInstruction()->getDependencyConditions();
-   TR::RealRegister *startPCReg  = _cg->machine()->getPPCRealRegister(deps->getPostConditions()->getRegisterDependency(0)->getRealRegister());
+   TR::RealRegister *startPCReg  = _cg->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(0)->getRealRegister());
 
    printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, "EDO Recompilation Snippet");
 

@@ -90,7 +90,7 @@ uint8_t *TR::PPCStackCheckFailureSnippet::emitSnippetBody()
    TR::InstOpCode         addi_opCode(TR::InstOpCode::addi);
    TR::InstOpCode         subf_opCode(TR::InstOpCode::subf);
    TR::RealRegister  *stackPtr = cg()->getLinkage()->cg()->getStackPointerRegister();
-   TR::RealRegister  *gr12 = machine->getPPCRealRegister(TR::RealRegister::gr12);
+   TR::RealRegister  *gr12 = machine->getRealRegister(TR::RealRegister::gr12);
 
    getSnippetLabel()->setCodeLocation(buffer);
 

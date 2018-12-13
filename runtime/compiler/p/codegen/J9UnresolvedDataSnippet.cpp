@@ -231,7 +231,7 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
       toRealRegister(getMemoryReference()->getModBase())->setRegisterFieldRT((uint32_t *)cursor);
       if (getMemoryReference()->getBaseRegister() == NULL)
          {
-         cg()->machine()->getPPCRealRegister(TR::RealRegister::gr0)->setRegisterFieldRA((uint32_t *)cursor);
+         cg()->machine()->getRealRegister(TR::RealRegister::gr0)->setRegisterFieldRA((uint32_t *)cursor);
          }
       else
          {

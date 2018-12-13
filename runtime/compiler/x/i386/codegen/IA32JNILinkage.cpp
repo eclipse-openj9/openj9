@@ -100,7 +100,7 @@ TR::Register *TR::IA32JNILinkage::buildJNIDispatch(TR::Node *callNode)
       }
 
    TR::Register*     ebpReal = cg()->getVMThreadRegister();
-   TR::RealRegister* espReal = cg()->machine()->getX86RealRegister(TR::RealRegister::esp);
+   TR::RealRegister* espReal = cg()->machine()->getRealRegister(TR::RealRegister::esp);
    TR::LabelSymbol*           returnAddrLabel = NULL;
 
    // Build parameters
@@ -122,7 +122,7 @@ TR::Register *TR::IA32JNILinkage::buildJNIDispatch(TR::Node *callNode)
       {
       // Anchored frame pointer register.
       //
-      TR::RealRegister *ebxReal = cg()->machine()->getX86RealRegister(TR::RealRegister::ebx);
+      TR::RealRegister *ebxReal = cg()->machine()->getRealRegister(TR::RealRegister::ebx);
 
 
       // Begin: mask out the magic bit that indicates JIT frames below

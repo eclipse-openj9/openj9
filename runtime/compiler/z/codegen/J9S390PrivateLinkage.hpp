@@ -79,13 +79,13 @@ public:
 
    virtual TR::RealRegister::RegNum setMethodMetaDataRegister(TR::RealRegister::RegNum r) { return _methodMetaDataRegister = r; }
    virtual TR::RealRegister::RegNum getMethodMetaDataRegister() { return _methodMetaDataRegister; }
-   virtual TR::RealRegister *getMethodMetaDataRealRegister() {return getS390RealRegister(_methodMetaDataRegister);}
+   virtual TR::RealRegister *getMethodMetaDataRealRegister() {return getRealRegister(_methodMetaDataRegister);}
 
    virtual uint32_t setPreservedRegisterMapForGC(uint32_t m)  { return _preservedRegisterMapForGC = m; }
    virtual uint32_t getPreservedRegisterMapForGC()        { return _preservedRegisterMapForGC; }
 
    virtual TR::RealRegister::RegNum getSystemStackPointerRegister(){ return cg()->getLinkage(TR_System)->getStackPointerRegister(); }
-   virtual TR::RealRegister *getSystemStackPointerRealRegister() {return getS390RealRegister(getSystemStackPointerRegister());}
+   virtual TR::RealRegister *getSystemStackPointerRealRegister() {return getRealRegister(getSystemStackPointerRegister());}
 
    virtual int32_t setupLiteralPoolRegister(TR::Snippet *firstSnippet);
    

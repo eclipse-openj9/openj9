@@ -179,33 +179,33 @@ void TR::ARMPrivateLinkage::initARMRealRegisterLinkage()
 
    for (icount = TR::RealRegister::FirstGPR; icount <= TR::RealRegister::gr5; icount++)
       {
-      machine->getARMRealRegister((TR::RealRegister::RegNum)icount)->setWeight(icount);
+      machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(icount);
       }
 
    // mark all magic registers as locked and having a physical
    // register associated so the register assigner stays happy
    lockRegister(codeGen->getMethodMetaDataRegister());
    lockRegister(codeGen->getFrameRegister());
-   lockRegister(codeGen->machine()->getARMRealRegister(properties.getStackPointerRegister()));
-   lockRegister(machine->getARMRealRegister(TR::RealRegister::gr12)); // r12 is OS reserved
-   lockRegister(machine->getARMRealRegister(TR::RealRegister::gr13)); // r13 is OS SP
+   lockRegister(codeGen->machine()->getRealRegister(properties.getStackPointerRegister()));
+   lockRegister(machine->getRealRegister(TR::RealRegister::gr12)); // r12 is OS reserved
+   lockRegister(machine->getRealRegister(TR::RealRegister::gr13)); // r13 is OS SP
 #ifdef LOCK_R14
-   lockRegister(machine->getARMRealRegister(TR::RealRegister::gr14)); // r14 is LR
+   lockRegister(machine->getRealRegister(TR::RealRegister::gr14)); // r14 is LR
 #endif
-   lockRegister(machine->getARMRealRegister(TR::RealRegister::gr15)); // r15 is IP
+   lockRegister(machine->getRealRegister(TR::RealRegister::gr15)); // r15 is IP
 
    for (icount=TR::RealRegister::LastGPR; icount>=TR::RealRegister::gr6; icount--)
-      machine->getARMRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000-icount);
+      machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000-icount);
 
 #if defined(__VFP_FP__) && !defined(__SOFTFP__)
    for (icount=TR::RealRegister::FirstFPR; icount<=TR::RealRegister::LastFPR; icount++)
-      machine->getARMRealRegister((TR::RealRegister::RegNum)icount)->setWeight(icount);
+      machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(icount);
 #else
    for (icount=TR::RealRegister::FirstFPR; icount<=TR::RealRegister::fp3; icount++)
-      machine->getARMRealRegister((TR::RealRegister::RegNum)icount)->setWeight(icount);
+      machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(icount);
 
    for (icount=TR::RealRegister::LastFPR; icount>=TR::RealRegister::fp4; icount--)
-      machine->getARMRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000-icount);
+      machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000-icount);
 #endif
    }
 
@@ -368,7 +368,7 @@ uint16_t getAssignedRegisterList(TR::Machine *machine, const TR::ARMLinkagePrope
       assignedRegisters <<= 1;
       if(linkage->getPreserved((TR::RealRegister::RegNum)i))
          {
-         assignedRegisters |= machine->getARMRealRegister((TR::RealRegister::RegNum)i)->getHasBeenAssignedInMethod();
+         assignedRegisters |= machine->getRealRegister((TR::RealRegister::RegNum)i)->getHasBeenAssignedInMethod();
          }
       }
 
@@ -383,7 +383,7 @@ uint16_t getAssignedRegisterCount(TR::Machine *machine, const TR::ARMLinkageProp
       {
       if (linkage->getPreserved((TR::RealRegister::RegNum)i))
          {
-         assignedRegisters += machine->getARMRealRegister((TR::RealRegister::RegNum)i)->getHasBeenAssignedInMethod() ? 1 : 0;
+         assignedRegisters += machine->getRealRegister((TR::RealRegister::RegNum)i)->getHasBeenAssignedInMethod() ? 1 : 0;
          }
       }
 
@@ -394,7 +394,7 @@ TR::RealRegister::RegNum getSingleAssignedRegister(TR::Machine *machine, const T
    {
    for (int i = TR::RealRegister::LastGPR; i; i--)
       if (linkage->getPreserved((TR::RealRegister::RegNum)i) &&
-          machine->getARMRealRegister((TR::RealRegister::RegNum)i)->getHasBeenAssignedInMethod())
+          machine->getRealRegister((TR::RealRegister::RegNum)i)->getHasBeenAssignedInMethod())
          return (TR::RealRegister::RegNum) i;
    return (TR::RealRegister::RegNum) -1;
    }
@@ -419,7 +419,7 @@ void TR::ARMPrivateLinkage::createPrologue(TR::Instruction *cursor)
    TR::CodeGenerator   *codeGen    = cg();
    TR::Machine         *machine    = codeGen->machine();
    TR::ResolvedMethodSymbol *bodySymbol = comp()->getJittedMethodSymbol();
-   TR::RealRegister    *stackPtr   = machine->getARMRealRegister(properties.getStackPointerRegister());
+   TR::RealRegister    *stackPtr   = machine->getRealRegister(properties.getStackPointerRegister());
    TR::RealRegister    *metaBase   = codeGen->getMethodMetaDataRegister();
    TR::Node               *firstNode  = comp()->getStartTree()->getNode();
    int i;
@@ -432,7 +432,7 @@ void TR::ARMPrivateLinkage::createPrologue(TR::Instruction *cursor)
 
    TR::RealRegister::RegNum lastSavedFPR = TR::RealRegister::LastFPR;
    while (lastSavedFPR >= TR::RealRegister::fp8 &&
-          !machine->getARMRealRegister(lastSavedFPR)->getHasBeenAssignedInMethod())
+          !machine->getRealRegister(lastSavedFPR)->getHasBeenAssignedInMethod())
       {
       lastSavedFPR = (TR::RealRegister::RegNum)((uint32_t)lastSavedFPR - 1);
       }
@@ -472,10 +472,10 @@ void TR::ARMPrivateLinkage::createPrologue(TR::Instruction *cursor)
    //
    cursor = saveArguments(cursor);
 
-   TR::RealRegister    *gr4    = machine->getARMRealRegister(TR::RealRegister::gr4);
-   TR::RealRegister    *gr5    = machine->getARMRealRegister(TR::RealRegister::gr5);
-   TR::RealRegister    *gr11   = machine->getARMRealRegister(TR::RealRegister::gr11);
-   TR::RealRegister    *gr14   = machine->getARMRealRegister(TR::RealRegister::gr14);
+   TR::RealRegister    *gr4    = machine->getRealRegister(TR::RealRegister::gr4);
+   TR::RealRegister    *gr5    = machine->getRealRegister(TR::RealRegister::gr5);
+   TR::RealRegister    *gr11   = machine->getRealRegister(TR::RealRegister::gr11);
+   TR::RealRegister    *gr14   = machine->getRealRegister(TR::RealRegister::gr14);
    TR::MemoryReference *tempMR = NULL;
    uint32_t base, rotate;
 
@@ -524,7 +524,7 @@ void TR::ARMPrivateLinkage::createPrologue(TR::Instruction *cursor)
       {
       if (1 == intRegistersSaved)
          {
-         TR::Register *reg = machine->getARMRealRegister(getSingleAssignedRegister(machine, &linkage));
+         TR::Register *reg = machine->getRealRegister(getSingleAssignedRegister(machine, &linkage));
          tempMR = new (trHeapMemory()) TR::MemoryReference(stackPtr, outgoingArgSize, codeGen);
          cursor = generateMemSrc1Instruction(codeGen, ARMOp_str, firstNode, tempMR, reg, cursor);
          }
@@ -543,7 +543,7 @@ void TR::ARMPrivateLinkage::createPrologue(TR::Instruction *cursor)
       {
       if (1 == fpRegistersSaved)
          {
-         TR::Register *reg = machine->getARMRealRegister(lastSavedFPR);
+         TR::Register *reg = machine->getRealRegister(lastSavedFPR);
          if (constantIsImmed10(outgoingArgSize))
             {
             tempMR = new (trHeapMemory()) TR::MemoryReference(stackPtr, outgoingArgSize, codeGen);
@@ -718,7 +718,7 @@ void TR::ARMPrivateLinkage::createEpilogue(TR::Instruction *cursor)
    TR::CodeGenerator   *codeGen    = cg();
    TR::Machine         *machine    = codeGen->machine();
    TR::ResolvedMethodSymbol *bodySymbol = comp()->getJittedMethodSymbol();
-   TR::RealRegister    *stackPtr   = machine->getARMRealRegister(properties.getStackPointerRegister());
+   TR::RealRegister    *stackPtr   = machine->getRealRegister(properties.getStackPointerRegister());
    TR::Node               *lastNode   = cursor->getNode();
 
    const TR::ARMLinkageProperties &linkage = getProperties();
@@ -728,7 +728,7 @@ void TR::ARMPrivateLinkage::createEpilogue(TR::Instruction *cursor)
 
    TR::RealRegister::RegNum lastSavedFPR = TR::RealRegister::LastFPR;
    while (lastSavedFPR >= TR::RealRegister::fp8 &&
-          !machine->getARMRealRegister(lastSavedFPR)->getHasBeenAssignedInMethod())
+          !machine->getRealRegister(lastSavedFPR)->getHasBeenAssignedInMethod())
       {
       lastSavedFPR = (TR::RealRegister::RegNum)((uint32_t)lastSavedFPR - 1);
       }
@@ -752,13 +752,13 @@ void TR::ARMPrivateLinkage::createEpilogue(TR::Instruction *cursor)
       {
       if (1 == intRegistersSaved)
          {
-         TR::RealRegister *reg = machine->getARMRealRegister(getSingleAssignedRegister(machine, &linkage));
+         TR::RealRegister *reg = machine->getRealRegister(getSingleAssignedRegister(machine, &linkage));
          tempMR = new (trHeapMemory()) TR::MemoryReference(stackPtr, outgoingArgSize, codeGen);
          cursor = generateTrg1MemInstruction(codeGen, ARMOp_ldr, lastNode, reg, tempMR, cursor);
          }
       else
          {
-         TR::RealRegister *gr4 = machine->getARMRealRegister(TR::RealRegister::gr4);
+         TR::RealRegister *gr4 = machine->getRealRegister(TR::RealRegister::gr4);
          constantIsImmed8r(outgoingArgSize, &base, &rotate);
          cursor = generateTrg1Src1ImmInstruction(codeGen, ARMOp_add, lastNode, gr4, stackPtr, base, rotate, cursor);
          cursor = new (trHeapMemory()) TR::ARMMultipleMoveInstruction(cursor, ARMOp_ldm, lastNode, gr4, getAssignedRegisterList(machine, &linkage), codeGen);
@@ -768,10 +768,10 @@ void TR::ARMPrivateLinkage::createEpilogue(TR::Instruction *cursor)
    outgoingArgSize += intRegistersSaved * 4;
    if (fpRegistersSaved > 0)
       {
-      TR::RealRegister *gr4 = machine->getARMRealRegister(TR::RealRegister::gr4);
+      TR::RealRegister *gr4 = machine->getRealRegister(TR::RealRegister::gr4);
       if (1 == fpRegistersSaved)
          {
-         TR::Register *reg = machine->getARMRealRegister(lastSavedFPR);
+         TR::Register *reg = machine->getRealRegister(lastSavedFPR);
          if (constantIsImmed10(outgoingArgSize))
             {
             tempMR = new (trHeapMemory()) TR::MemoryReference(stackPtr, outgoingArgSize, codeGen);
@@ -803,8 +803,8 @@ void TR::ARMPrivateLinkage::createEpilogue(TR::Instruction *cursor)
       }
 
    // Reload return address.
-   TR::RealRegister *gr14 = machine->getARMRealRegister(TR::RealRegister::gr14);
-   TR::RealRegister *gr15 = machine->getARMRealRegister(TR::RealRegister::gr15);
+   TR::RealRegister *gr14 = machine->getRealRegister(TR::RealRegister::gr14);
+   TR::RealRegister *gr15 = machine->getRealRegister(TR::RealRegister::gr15);
 
    if (codeGen->getSnippetList().size() > 1 ||
        (comp()->isDLT() && !codeGen->getSnippetList().empty()) ||
@@ -822,7 +822,7 @@ void TR::ARMPrivateLinkage::createEpilogue(TR::Instruction *cursor)
       }
    else
       {
-      TR::RealRegister *gr4 = machine->getARMRealRegister(TR::RealRegister::gr4);
+      TR::RealRegister *gr4 = machine->getRealRegister(TR::RealRegister::gr4);
       cursor = armLoadConstant(lastNode, totalFrameSize, gr4, codeGen, cursor);
       cursor = generateTrg1Src2Instruction(codeGen, ARMOp_add, lastNode, stackPtr, stackPtr, gr4, cursor);
       }
@@ -841,7 +841,7 @@ printf("private: totalSize %d offset %d\n", totalSize, offset); fflush(stdout);
 #endif
 
    int32_t                spOffset = totalSize - offset - TR::Compiler->om.sizeofReferenceAddress();
-   TR::RealRegister    *sp       = cg()->machine()->getARMRealRegister(properties.getStackPointerRegister());
+   TR::RealRegister    *sp       = cg()->machine()->getRealRegister(properties.getStackPointerRegister());
    TR::MemoryReference *result   = new (trHeapMemory()) TR::MemoryReference(sp, spOffset, cg());
    memArg.argRegister = argReg;
    memArg.argMemory   = result;
@@ -871,14 +871,14 @@ void TR::ARMPrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
    TR::Register        *gr11 = dependencies->searchPreConditionRegister(TR::RealRegister::gr11);
    TR::Register        *gr0  = dependencies->searchPreConditionRegister(TR::RealRegister::gr0);
    TR::Register        *gr4  = dependencies->searchPreConditionRegister(TR::RealRegister::gr4);
-   TR::RealRegister *gr14 = machine->getARMRealRegister(TR::RealRegister::gr14);
-   TR::RealRegister *gr15 = machine->getARMRealRegister(TR::RealRegister::gr15);
+   TR::RealRegister *gr14 = machine->getRealRegister(TR::RealRegister::gr14);
+   TR::RealRegister *gr15 = machine->getRealRegister(TR::RealRegister::gr15);
 #else
    TR::Register        *gr11 = dependencies->searchPreConditionRegister(TR::RealRegister::gr11);
    TR::Register        *gr14 = dependencies->searchPreConditionRegister(TR::RealRegister::gr14);
    TR::Register        *gr0  = dependencies->searchPreConditionRegister(TR::RealRegister::gr0);
    TR::Register        *gr4  = dependencies->searchPreConditionRegister(TR::RealRegister::gr4);
-   TR::RealRegister *gr15 = machine->getARMRealRegister(TR::RealRegister::gr15);
+   TR::RealRegister *gr15 = machine->getRealRegister(TR::RealRegister::gr15);
 #endif
 
    TR::SymbolReference  *methodSymRef = callNode->getSymbolReference();
@@ -1083,13 +1083,13 @@ TR::Register *TR::ARMPrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
    /* Dependency #0 is for vftReg. */
    TR::Register        *gr11 = deps->searchPreConditionRegister(TR::RealRegister::gr11);
    TR::Register        *gr0  = deps->searchPreConditionRegister(TR::RealRegister::gr0);
-   TR::RealRegister *gr14 = machine->getARMRealRegister(TR::RealRegister::gr14);
-   TR::RealRegister *gr15 = machine->getARMRealRegister(TR::RealRegister::gr15);
+   TR::RealRegister *gr14 = machine->getRealRegister(TR::RealRegister::gr14);
+   TR::RealRegister *gr15 = machine->getRealRegister(TR::RealRegister::gr15);
 #else
    TR::Register        *gr11 = deps->searchPreConditionRegister(TR::RealRegister::gr11);
    TR::Register        *gr14 = deps->searchPreConditionRegister(TR::RealRegister::gr14);
    TR::Register        *gr0  = deps->searchPreConditionRegister(TR::RealRegister::gr0);
-   TR::RealRegister *gr15 = machine->getARMRealRegister(TR::RealRegister::gr15);
+   TR::RealRegister *gr15 = machine->getRealRegister(TR::RealRegister::gr15);
 #endif
 
    TR::Register        *returnRegister;

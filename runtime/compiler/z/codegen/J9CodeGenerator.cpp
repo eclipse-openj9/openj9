@@ -3703,7 +3703,7 @@ TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperSnippet(TR::Instructi
    cursor = static_cast<TR::Instruction*>(self()->getS390PrivateLinkage()->saveArguments(cursor, false, true));
 
    // Load the EP register with the address of the next instruction
-   cursor = generateRRInstruction(self(), TR::InstOpCode::BASR, node, self()->getEntryPointRealRegister(), self()->machine()->getS390RealRegister(TR::RealRegister::GPR0), cursor);
+   cursor = generateRRInstruction(self(), TR::InstOpCode::BASR, node, self()->getEntryPointRealRegister(), self()->machine()->getRealRegister(TR::RealRegister::GPR0), cursor);
 
    TR::Instruction* basrInstruction = cursor;
 
@@ -3711,7 +3711,7 @@ TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperSnippet(TR::Instructi
    TR::MemoryReference* j9MethodAddressMemRef = generateS390MemoryReference(self()->getEntryPointRealRegister(), 0, self());
 
    // Load the address of the J9Method corresponding to this JIT compilation
-   cursor = generateRXInstruction(self(), TR::InstOpCode::getLoadOpCode(), node, self()->machine()->getS390RealRegister(TR::RealRegister::GPR1), j9MethodAddressMemRef, cursor);
+   cursor = generateRXInstruction(self(), TR::InstOpCode::getLoadOpCode(), node, self()->machine()->getRealRegister(TR::RealRegister::GPR1), j9MethodAddressMemRef, cursor);
 
    // Displacement will be updated later once we know the offset
    TR::MemoryReference* vmCallHelperAddressMemRef = generateS390MemoryReference(self()->getEntryPointRealRegister(), 0, self());
