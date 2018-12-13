@@ -365,6 +365,7 @@ if(J9VM_MODULE_J9VM)
 	add_subdirectory(j9vm)
 	add_subdirectory(j9vm_b150)
 	add_subdirectory(j9vm_b156)
+	add_subdirectory(j9vm_jdk11)
 endif()
 #NOTE this is not conditional in the UMA module.xml
 add_subdirectory(jcl)
