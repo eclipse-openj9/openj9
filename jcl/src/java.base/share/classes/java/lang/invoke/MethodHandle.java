@@ -26,6 +26,10 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+/*[IF Java12]*/
+import java.lang.constant.Constable;
+import java.lang.constant.MethodHandleDesc;
+/*[ENDIF]*/
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.Modifier;
 import java.security.AccessController;
@@ -35,6 +39,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import java.util.Objects;
+/*[IF Java12]*/
+import java.util.Optional;
+/*[ENDIF]*/
 // {{{ JIT support
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -81,7 +88,11 @@ import com.ibm.oti.vm.VMLangAccess;
  * @since 1.7
  */
 @VMCONSTANTPOOL_CLASS
-public abstract class MethodHandle {
+public abstract class MethodHandle 
+/*[IF Java12]*/
+	implements Constable
+/*[ENDIF]*/
+{
 	/* Ensure that these stay in sync with the MethodHandleInfo constants and VM constants in VM_MethodHandleKinds.h */
 	/* Order matters here - static and special are direct pointers */
 	static final byte KIND_BOUND = 0;
@@ -724,6 +735,13 @@ public abstract class MethodHandle {
 		return this;
 	}
 	
+/*[IF Java12]*/
+	public Optional<MethodHandleDesc> describeConstable() {
+		/* Jep334 */
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+/*[ENDIF]*/
+
 	public MethodHandle bindTo(Object value) throws IllegalArgumentException, ClassCastException {
 		/*
 		 * Check whether the first parameter has a reference type assignable from value. Note that MethodType.parameterType(0) will
