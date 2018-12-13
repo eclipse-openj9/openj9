@@ -76,7 +76,7 @@
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/CodeCacheMemorySegment.hpp"
 #include "runtime/DataCache.hpp"
-#include "runtime/Runtime.hpp"
+#include "runtime/J9Runtime.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
 #include "env/j9method.h"

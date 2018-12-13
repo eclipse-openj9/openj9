@@ -26,7 +26,7 @@
 #endif
 #endif   // TR_HOST_X86
 
-#include "runtime/Runtime.hpp"
+#include "runtime/J9Runtime.hpp"
 
 #include <stdint.h>
 #include "j9.h"

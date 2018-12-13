@@ -29,8 +29,8 @@
 #include "compile/ResolvedMethod.hpp"
 #include "env/jittypes.h"
 #include "env/VMJ9.h"
-#include "runtime/Runtime.hpp"
 #include "runtime/asmprotos.h"
+#include "runtime/J9Runtime.hpp"
 #include "runtime/J9ValueProfiler.hpp"
 #include "AtomicSupport.hpp"
 

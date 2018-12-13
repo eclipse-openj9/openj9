@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,11 +37,11 @@
 #include "control/Options_inlines.hpp"
 #include "env/jittypes.h"
 #include "runtime/J9CodeCache.hpp"
+#include "runtime/J9Runtime.hpp"
 #include "runtime/MethodMetaData.h"
 #include "runtime/RelocationRecord.hpp"
 #include "runtime/RelocationRuntime.hpp"
 #include "runtime/RelocationRuntimeLogger.hpp"
-#include "runtime/Runtime.hpp"
 
 bool
 TR_RelocationTarget::isOrderedPairRelocation(TR_RelocationRecord *reloRecord, TR_RelocationTarget *reloTarget)
