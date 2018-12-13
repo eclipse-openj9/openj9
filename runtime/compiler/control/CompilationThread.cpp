@@ -356,14 +356,6 @@ int32_t TR::CompilationInfo::computeDynamicDumbInlinerBytecodeSizeCutoff(TR::Opt
    return cutoff;
    }
 
-// How to read it: the queueWeight has to be over 100 to activate second comp thread
-//                 the queueWeight has to be below 10 to suspend second comp thread
-int32_t compThreadActivationThresholds[MAX_TOTAL_COMP_THREADS+1] =       {-1, 100, 200, 300, 400, 500, 600, 700, 800};
-int32_t compThreadSuspensionThresholds[MAX_TOTAL_COMP_THREADS+1] = {-1,  -1,  10,  110, 210, 310, 410, 510, 610};
-
-
-int32_t compThreadActivationThresholdsonStarvation[MAX_TOTAL_COMP_THREADS + 1] = {-1, 800, 1600, 3200, 6400, 12800, 19200, 25600, 32000};
-
 // Examine if we need to activate a new thread
 // Must have compilation queue monitor in hand when calling this routine
 TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
@@ -420,19 +412,19 @@ TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
       {
       if (getNumCompThreadsActive() < getNumTargetCPUs() - 1)
          {
-         if (_queueWeight > compThreadActivationThresholds[getNumCompThreadsActive()])
+         if (_queueWeight > _compThreadActivationThresholds[getNumCompThreadsActive()])
             return TR_yes;
          }
       else if (_starvationDetected)
          {
          // comp thread starvation; may activate threads beyond numCpu-1
-         if (_queueWeight > compThreadActivationThresholdsonStarvation[getNumCompThreadsActive()])
+         if (_queueWeight > _compThreadActivationThresholdsonStarvation[getNumCompThreadsActive()])
             return TR_yes;
          }
       }
    else // number of compilation threads indicated by the user
       {
-      if (_queueWeight > compThreadActivationThresholds[getNumCompThreadsActive()])
+      if (_queueWeight > _compThreadActivationThresholds[getNumCompThreadsActive()])
          return TR_yes;
       }
 
@@ -628,6 +620,9 @@ void TR::CompilationInfo::freeCompilationInfo(J9JITConfig *jitConfig)
    TR_ASSERT(_compilationRuntime, "The global compilation info has already been freed.");
    TR::CompilationInfo * compilationRuntime = _compilationRuntime;
    _compilationRuntime = NULL;
+
+   compilationRuntime->freeAllCompilationThreads();
+
    TR::RawAllocator rawAllocator(jitConfig->javaVM);
    _compilationRuntime->~CompilationInfo();
    rawAllocator.deallocate(compilationRuntime);
@@ -825,7 +820,10 @@ TR::CompilationInfoPerThreadBase::CompilationInfoPerThreadBase(TR::CompilationIn
    _addToJProfilingQueue(false),
    _cachedClientDataPtr(nullptr)
    {
-   TR_ASSERT(_compThreadId < MAX_TOTAL_COMP_THREADS, "Cannot have a compId greater than MAX_TOTAL_COMP_THREADS");
+   // At this point, compilation threads have not been fully started yet. getNumTotalCompilationThreads()
+   // would not return a correct value. Need to use TR::Options::_numUsableCompilationThreads
+   TR_ASSERT(_compThreadId < (TR::Options::_numUsableCompilationThreads + TR::CompilationInfo::MAX_DIAGNOSTIC_COMP_THREADS),
+             "Cannot have a compId %d greater than %u", _compThreadId, (TR::Options::_numUsableCompilationThreads + TR::CompilationInfo::MAX_DIAGNOSTIC_COMP_THREADS));
    }
 
 TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &compInfo, J9JITConfig *jitConfig, int32_t id, bool isDiagnosticThread)
@@ -846,14 +844,14 @@ TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &comp
    // name the thread
    //
    // NOTE:
-   //      increasing MAX_TOTAL_COMP_THREADS past 9 requires an
+   //      increasing MAX_*_COMP_THREADS over 3 digits requires an
    //      increase in the length of _activeThreadName and _suspendedThreadName
 
    // constant thread name formats
-   static const char activeDiagnosticThreadName[]    = "JIT Diagnostic Compilation Thread-%d";
-   static const char suspendedDiagnosticThreadName[] = "JIT Diagnostic Compilation Thread-%d Suspended";
-   static const char activeThreadName[]              = "JIT Compilation Thread-%d";
-   static const char suspendedThreadName[]           = "JIT Compilation Thread-%d Suspended";
+   static const char activeDiagnosticThreadName[]    = "JIT Diagnostic Compilation Thread-%03d";
+   static const char suspendedDiagnosticThreadName[] = "JIT Diagnostic Compilation Thread-%03d Suspended";
+   static const char activeThreadName[]              = "JIT Compilation Thread-%03d";
+   static const char suspendedThreadName[]           = "JIT Compilation Thread-%03d Suspended";
 
    const char * selectedActiveThreadName;
    const char * selectedSuspendedThreadName;
@@ -915,7 +913,10 @@ TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &comp
 TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    _persistentMemory(pointer_cast<TR_PersistentMemory *>(jitConfig->scratchSegment)),
    _sharedCacheReloRuntime(jitConfig),
-   _samplingThreadWaitTimeInDeepIdleToNotifyVM(-1)
+   _samplingThreadWaitTimeInDeepIdleToNotifyVM(-1),
+   _numDiagnosticThreads(0),
+   _numCompThreads(0),
+   _arrayOfCompilationInfoPerThread(NULL)
    {
    // The object is zero-initialized before this method is called
    //
@@ -1019,7 +1020,7 @@ bool TR::CompilationInfo::initializeCompilationOnApplicationThread()
       {
       PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
 
-      // NOTE: _compThreadIndex is 0 now because it's not incremented in TR::CompilationInfoPerThreadBase constructor
+      // NOTE: _numCompThreads is 0 now because it's not incremented in TR::CompilationInfoPerThreadBase constructor
       _compInfoForCompOnAppThread = new (PERSISTENT_NEW) TR::CompilationInfoPerThreadBase(*this, _jitConfig, 0, false);
 
       if (!_compInfoForCompOnAppThread)
@@ -1141,7 +1142,7 @@ TR_YesNoMaybe TR::CompilationInfo::detectCompThreadStarvation()
    int32_t numActive = 0;
    TR_YesNoMaybe answer = TR_maybe;
    bool compCpuFunctional = true;
-   for (int32_t compId = 0; compId < _compThreadIndex; compId++)
+   for (int32_t compId = 0; compId < _numCompThreads; compId++)
       {
       // We must look at all active threads because we want to avoid the
       // case where they compete with each other (4 comp threads on a single procesor)
@@ -2522,6 +2523,140 @@ TR::CompilationInfoPerThread* TR::CompilationInfo::getCompInfoForThread(J9VMThre
    return NULL;
    }
 
+int32_t *TR::CompilationInfo::_compThreadActivationThresholds = NULL;
+int32_t *TR::CompilationInfo::_compThreadSuspensionThresholds = NULL;
+int32_t *TR::CompilationInfo::_compThreadActivationThresholdsonStarvation = NULL;
+
+void TR::CompilationInfo::updateNumUsableCompThreads(int32_t &numUsableCompThreads)
+   {
+   if (getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+      {
+      numUsableCompThreads = ((numUsableCompThreads < 0) ||
+                              (numUsableCompThreads > MAX_SERVER_USABLE_COMP_THREADS)) ?
+                               MAX_SERVER_USABLE_COMP_THREADS : numUsableCompThreads;
+      }
+   else
+      {
+      numUsableCompThreads = ((numUsableCompThreads < 0) ||
+                              (numUsableCompThreads > MAX_CLIENT_USABLE_COMP_THREADS)) ?
+                               MAX_CLIENT_USABLE_COMP_THREADS : numUsableCompThreads;
+      }
+   }
+
+bool
+TR::CompilationInfo::allocateCompilationThreads(int32_t numUsableCompThreads)
+   {
+   if (_compThreadActivationThresholds ||
+       _compThreadSuspensionThresholds ||
+       _compThreadActivationThresholdsonStarvation ||
+       _arrayOfCompilationInfoPerThread)
+      {
+      TR_ASSERT_FATAL(false, "Compilation threads have been allocated\n");
+      return false;
+      }
+
+   TR_ASSERT((numUsableCompThreads == TR::Options::_numUsableCompilationThreads),
+             "numUsableCompThreads %d is not equal to the Option value %d", numUsableCompThreads, TR::Options::_numUsableCompilationThreads);
+
+   if (getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+      {
+      TR_ASSERT((0 < numUsableCompThreads) && (numUsableCompThreads <= MAX_SERVER_USABLE_COMP_THREADS),
+               "numUsableCompThreads %d is greater than supported %d", numUsableCompThreads, MAX_SERVER_USABLE_COMP_THREADS);
+      }
+   else
+      {
+      TR_ASSERT((0 < numUsableCompThreads) && (numUsableCompThreads <= MAX_CLIENT_USABLE_COMP_THREADS),
+               "numUsableCompThreads %d is greater than supported %d", numUsableCompThreads, MAX_CLIENT_USABLE_COMP_THREADS);
+      }
+
+   uint32_t numTotalCompThreads = numUsableCompThreads + MAX_DIAGNOSTIC_COMP_THREADS;
+
+   TR::MonitorTable *table = TR::MonitorTable::get();
+   if ((!table) ||
+       (!table->allocInitClassUnloadMonitorHolders(numTotalCompThreads)))
+      {
+      return false;
+      }
+
+   _compThreadActivationThresholds = static_cast<int32_t *>(jitPersistentAlloc((numTotalCompThreads + 1) * sizeof(int32_t)));
+   _compThreadSuspensionThresholds = static_cast<int32_t *>(jitPersistentAlloc((numTotalCompThreads + 1) * sizeof(int32_t)));
+   _compThreadActivationThresholdsonStarvation = static_cast<int32_t *>(jitPersistentAlloc((numTotalCompThreads + 1) * sizeof(int32_t)));
+
+   _arrayOfCompilationInfoPerThread = static_cast<TR::CompilationInfoPerThread **>(jitPersistentAlloc(numTotalCompThreads * sizeof(TR::CompilationInfoPerThread *)));
+
+   if (_compThreadActivationThresholds &&
+       _compThreadSuspensionThresholds &&
+       _compThreadActivationThresholdsonStarvation &&
+       _arrayOfCompilationInfoPerThread)
+      {
+      // How to read it: the queueWeight has to be over 100 to activate second comp thread
+      //                 the queueWeight has to be below 10 to suspend second comp thread
+      // For example:
+      // compThreadActivationThresholds[MAX_TOTAL_COMP_THREADS+1] = {-1, 100, 200, 300, 400, 500, 600, 700, 800};
+      // compThreadSuspensionThresholds[MAX_TOTAL_COMP_THREADS+1] = {-1,  -1,  10,  110, 210, 310, 410, 510, 610};
+      // compThreadActivationThresholdsonStarvation[MAX_TOTAL_COMP_THREADS+1] = {-1, 800, 1600, 3200, 6400, 12800, 19200, 25600, 32000};
+      _compThreadActivationThresholds[0] = -1;
+      _compThreadActivationThresholds[1] = 100;
+      _compThreadActivationThresholds[2] = _compThreadSuspensionThresholds[1] + 100;
+
+      _compThreadSuspensionThresholds[0] = -1;
+      _compThreadSuspensionThresholds[1] = -1;
+      _compThreadSuspensionThresholds[2] = 10;
+
+      for (int32_t i=3; i<(numTotalCompThreads+1); ++i)
+         {
+         _compThreadActivationThresholds[i] = _compThreadActivationThresholds[i-1] + 100;
+         _compThreadSuspensionThresholds[i] = _compThreadSuspensionThresholds[i-1] + 100;
+         }
+
+      _compThreadActivationThresholdsonStarvation[0] = -1;
+      _compThreadActivationThresholdsonStarvation[1] = 800;
+
+      for (int32_t i=2; i<(numTotalCompThreads+1); ++i)
+         {
+         if (_compThreadActivationThresholdsonStarvation[i-1] < 12800)
+            {
+            _compThreadActivationThresholdsonStarvation[i] = _compThreadActivationThresholdsonStarvation[i-1] * 2;
+            }
+         else
+            {
+            _compThreadActivationThresholdsonStarvation[i] = _compThreadActivationThresholdsonStarvation[i-1] + 6400;
+            }
+         }
+
+      for (int32_t i=0; i<numTotalCompThreads; ++i)
+         {
+         _arrayOfCompilationInfoPerThread[i] = NULL;
+         }
+      return true;
+      }
+   return false;
+   }
+
+void
+TR::CompilationInfo::freeAllCompilationThreads()
+   {
+   if (_compThreadActivationThresholds)
+      {
+      jitPersistentFree(_compThreadActivationThresholds);
+      }
+
+   if (_compThreadSuspensionThresholds)
+      {
+      jitPersistentFree(_compThreadSuspensionThresholds);
+      }
+
+   if (_compThreadActivationThresholdsonStarvation)
+      {
+      jitPersistentFree(_compThreadActivationThresholdsonStarvation);
+      }
+
+   if (_arrayOfCompilationInfoPerThread)
+      {
+      jitPersistentFree(_arrayOfCompilationInfoPerThread);
+      }
+   }
+
 //-------------------------- startCompilationThread --------------------------
 // Start ONE compilation thread and initialize the associated
 // TR::CompilationInfoPerThread structure
@@ -2539,11 +2674,14 @@ TR::CompilationInfo::startCompilationThread(int32_t priority, int32_t threadId, 
 
    if (!isDiagnosticThread)
       {
-      if (getNumUsableCompilationThreads() >= MAX_USABLE_COMP_THREADS)
+      if (_numCompThreads >= TR::Options::_numUsableCompilationThreads)
          return 1;
       }
    else
       {
+      if (_numDiagnosticThreads >= MAX_DIAGNOSTIC_COMP_THREADS)
+         return 1;
+
       // _compInfoForDiagnosticCompilationThread should be NULL before creation
       if (_compInfoForDiagnosticCompilationThread)
          return 1;
@@ -2595,7 +2733,7 @@ TR::CompilationInfo::startCompilationThread(int32_t priority, int32_t threadId, 
    else
       {
       getCompilationMonitor()->enter();
-      _compThreadIndex++;
+      _numCompThreads++;
       getCompilationMonitor()->exit();
       }
 
@@ -4026,7 +4164,8 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
          || (
             !tryCompilingAgain
             /*&& compInfoPT->getCompThreadId() != 0*/
-            && TR::Options::getCmdLineOptions()->getOption(TR_SuspendEarly) && compInfo->getQueueWeight() < compThreadSuspensionThresholds[compInfo->getNumCompThreadsActive()]
+            && TR::Options::getCmdLineOptions()->getOption(TR_SuspendEarly)
+            && compInfo->getQueueWeight() < TR::CompilationInfo::getCompThreadSuspensionThreshold(compInfo->getNumCompThreadsActive())
             )
          )
       )
@@ -4461,7 +4600,7 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
             // remains active until the blocking request gets compiled
             //
             TR_MethodToBeCompiled *lowPriCompReq = lowPriCompThread->getMethodBeingCompiled();
-            uint8_t targetWeight = compThreadSuspensionThresholds[2] <= 0xff ? compThreadSuspensionThresholds[2] : 0xff;
+            uint8_t targetWeight = _compThreadSuspensionThresholds[2] <= 0xff ? _compThreadSuspensionThresholds[2] : 0xff;
             if (lowPriCompReq->_weight < targetWeight)
                {
                uint8_t diffWeight = targetWeight - lowPriCompReq->_weight;
