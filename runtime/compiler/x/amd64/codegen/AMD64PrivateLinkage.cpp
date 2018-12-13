@@ -280,7 +280,7 @@ static uint8_t *flushArgument(
    ModRM |= (offset >= -128 && offset <= 127) ? 0x40 : 0x80;
 
    *(cursor - 1) = ModRM;
-   cg->machine()->getX86RealRegister(regIndex)->setRegisterFieldInModRM(cursor - 1);
+   cg->machine()->getRealRegister(regIndex)->setRegisterFieldInModRM(cursor - 1);
 
    // Scale = 0x00, Index = none, Base = rsp
    //
@@ -739,17 +739,17 @@ TR::Instruction *TR::AMD64PrivateLinkage::savePreservedRegisters(TR::Instruction
         pindex >= 0;
         pindex--)
       {
-      TR::RealRegister *scratch = machine()->getX86RealRegister(getProperties().getIntegerScratchRegister(0));
+      TR::RealRegister *scratch = machine()->getRealRegister(getProperties().getIntegerScratchRegister(0));
       TR::RealRegister::RegNum idx = _properties.getPreservedRegister((uint32_t)pindex);
       TR::RealRegister::RegNum r8  = TR::RealRegister::r8;
-      TR::RealRegister *reg = machine()->getX86RealRegister(idx);
+      TR::RealRegister *reg = machine()->getRealRegister(idx);
       if (reg->getHasBeenAssignedInMethod() &&
             (reg->getState() != TR::RealRegister::Locked))
          {
          cursor = generateMemRegInstruction(
             cursor,
             TR::Linkage::movOpcodes(MemReg, fullRegisterMovType(reg)),
-            generateX86MemoryReference(machine()->getX86RealRegister(TR::RealRegister::vfp), offsetCursor, cg()),
+            generateX86MemoryReference(machine()->getRealRegister(TR::RealRegister::vfp), offsetCursor, cg()),
             reg,
             cg()
             );
@@ -775,14 +775,14 @@ TR::Instruction *TR::AMD64PrivateLinkage::restorePreservedRegisters(TR::Instruct
         pindex--)
       {
       TR::RealRegister::RegNum idx = _properties.getPreservedRegister((uint32_t)pindex);
-      TR::RealRegister *reg = machine()->getX86RealRegister(idx);
+      TR::RealRegister *reg = machine()->getRealRegister(idx);
       if (reg->getHasBeenAssignedInMethod())
          {
          cursor = generateRegMemInstruction(
             cursor,
             TR::Linkage::movOpcodes(RegMem, fullRegisterMovType(reg)),
             reg,
-            generateX86MemoryReference(machine()->getX86RealRegister(TR::RealRegister::vfp), offsetCursor, cg()),
+            generateX86MemoryReference(machine()->getRealRegister(TR::RealRegister::vfp), offsetCursor, cg()),
             cg()
             );
          offsetCursor -= _properties.getPointerSize();
@@ -900,7 +900,7 @@ int32_t TR::AMD64PrivateLinkage::buildPrivateLinkageArgs(TR::Node               
                                                         bool                                 passArgsOnStack)
    {
    TR::RealRegister::RegNum   noReg         = TR::RealRegister::NoReg;
-   TR::RealRegister          *stackPointer  = machine()->getX86RealRegister(TR::RealRegister::esp);
+   TR::RealRegister          *stackPointer  = machine()->getRealRegister(TR::RealRegister::esp);
    int32_t                    firstArgument = callNode->getFirstArgumentIndex();
    int32_t                    lastArgument  = callNode->getNumChildren() - 1;
    int32_t                    offset        = 0;

@@ -167,7 +167,7 @@ TR::Instruction *TR_X86Recompilation::generatePrologue(TR::Instruction *cursor)
          if (TR::Compiler->target.is64Bit())
             {
             TR_ASSERT(linkage->getMinimumFirstInstructionSize() <= 10, "Can't satisfy first instruction size constraint");
-            TR::RealRegister *scratchReg = machine->getX86RealRegister(TR::RealRegister::edi);
+            TR::RealRegister *scratchReg = machine->getRealRegister(TR::RealRegister::edi);
             cursor = new (trHeapMemory()) TR::AMD64RegImm64Instruction(cursor, MOV8RegImm64, scratchReg, (uintptrj_t)getCounterAddress(), cg());
             mRef = generateX86MemoryReference(scratchReg, 0, cg());
             }

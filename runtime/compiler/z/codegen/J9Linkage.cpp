@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,7 +56,7 @@ J9::Z::Linkage::loadUpArguments(TR::Instruction * cursor)
          case TR::Int32:
             if (hasToLoadFromStack && numIntArgs < self()->getNumIntegerArgumentRegisters())
                {
-               argRegister = self()->getS390RealRegister(self()->getIntegerArgumentRegister(numIntArgs));
+               argRegister = self()->getRealRegister(self()->getIntegerArgumentRegister(numIntArgs));
                TR::MemoryReference* memRef = generateS390MemoryReference(stackPtr, offset, self()->cg());
                cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::L, firstNode, argRegister,
                            memRef, cursor);
@@ -68,7 +68,7 @@ J9::Z::Linkage::loadUpArguments(TR::Instruction * cursor)
             if ((hasToLoadFromStack || isRecompilable) &&
                  numIntArgs < self()->getNumIntegerArgumentRegisters())
                {
-               argRegister = self()->getS390RealRegister(self()->getIntegerArgumentRegister(numIntArgs));
+               argRegister = self()->getRealRegister(self()->getIntegerArgumentRegister(numIntArgs));
                TR::MemoryReference* memRef = generateS390MemoryReference(stackPtr, offset, self()->cg());
                cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::getLoadOpCode(), firstNode, argRegister,
                            memRef, cursor);
@@ -79,14 +79,14 @@ J9::Z::Linkage::loadUpArguments(TR::Instruction * cursor)
          case TR::Int64:
             if (hasToLoadFromStack && numIntArgs < self()->getNumIntegerArgumentRegisters())
                {
-               argRegister = self()->getS390RealRegister(self()->getIntegerArgumentRegister(numIntArgs));
+               argRegister = self()->getRealRegister(self()->getIntegerArgumentRegister(numIntArgs));
                TR::MemoryReference* memRef = generateS390MemoryReference(stackPtr, offset, self()->cg());
                cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::getLoadOpCode(), firstNode, argRegister,
                            memRef, cursor);
                cursor->setBinLocalFreeRegs(binLocalRegs);
                if (TR::Compiler->target.is32Bit() && numIntArgs < self()->getNumIntegerArgumentRegisters() - 1)
                   {
-                  argRegister = self()->getS390RealRegister(self()->getIntegerArgumentRegister(numIntArgs + 1));
+                  argRegister = self()->getRealRegister(self()->getIntegerArgumentRegister(numIntArgs + 1));
                   cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::L, firstNode, argRegister,
                               generateS390MemoryReference(stackPtr, offset + 4, self()->cg()), cursor);
                   cursor->setBinLocalFreeRegs(binLocalRegs);
@@ -98,7 +98,7 @@ J9::Z::Linkage::loadUpArguments(TR::Instruction * cursor)
          case TR::DecimalFloat:
             if (hasToLoadFromStack && numFloatArgs < self()->getNumFloatArgumentRegisters())
                {
-               argRegister = self()->getS390RealRegister(self()->getFloatArgumentRegister(numFloatArgs));
+               argRegister = self()->getRealRegister(self()->getFloatArgumentRegister(numFloatArgs));
                TR::MemoryReference* memRef = generateS390MemoryReference(stackPtr, offset, self()->cg());
                cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::LE, firstNode, argRegister,
                            memRef, cursor);
@@ -110,7 +110,7 @@ J9::Z::Linkage::loadUpArguments(TR::Instruction * cursor)
          case TR::DecimalDouble:
             if (hasToLoadFromStack && numFloatArgs < self()->getNumFloatArgumentRegisters())
                {
-               argRegister = self()->getS390RealRegister(self()->getFloatArgumentRegister(numFloatArgs));
+               argRegister = self()->getRealRegister(self()->getFloatArgumentRegister(numFloatArgs));
                TR::MemoryReference* memRef = generateS390MemoryReference(stackPtr, offset, self()->cg());
                cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::LD, firstNode, argRegister,
                            memRef, cursor);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,17 +45,17 @@ class X86WriteBarrierSnippet : public TR::X86HelperCallSnippet
 
    TR::RealRegister *getDestOwningObjectRegister()
       {
-      return cg()->machine()->getX86RealRegister(_deps->getPostConditions()->getRegisterDependency(0)->getRealRegister());
+      return cg()->machine()->getRealRegister(_deps->getPostConditions()->getRegisterDependency(0)->getRealRegister());
       }
 
    TR::RealRegister *getSourceRegister()
       {
-      return cg()->machine()->getX86RealRegister(_deps->getPostConditions()->getRegisterDependency(1)->getRealRegister());
+      return cg()->machine()->getRealRegister(_deps->getPostConditions()->getRegisterDependency(1)->getRealRegister());
       }
 
    TR::RealRegister *getDestAddressRegister()
       {
-      return cg()->machine()->getX86RealRegister(_deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
+      return cg()->machine()->getRealRegister(_deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
       }
 
    int32_t getHelperArgCount() {return _helperArgCount;}

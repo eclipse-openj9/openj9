@@ -74,7 +74,7 @@ uint8_t *TR::ARMEDORecompilationSnippet::emitSnippetBody()
    getSnippetLabel()->setCodeLocation(buffer);
 
    TR_ARMRegisterDependencyConditions *deps = _doneLabel->getInstruction()->getDependencyConditions();
-   TR_ARMRealRegister *startPCReg  = getARMMachine(cg())->getARMRealRegister(deps->getPostConditions()->getRegisterDependency(0)->getRealRegister());
+   TR_ARMRealRegister *startPCReg  = getARMMachine(cg())->getRealRegister(deps->getPostConditions()->getRegisterDependency(0)->getRealRegister());
 
    TR_ARMOpCode opcode;
 

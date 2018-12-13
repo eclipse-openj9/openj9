@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,9 +72,9 @@ uint8_t *TR::ARMMonitorEnterSnippet::emitSnippetBody()
    TR::RegisterDependencyConditions *deps = getRestartLabel()->getInstruction()->getDependencyConditions();
 
    TR::RealRegister *metaReg  = cg()->getMethodMetaDataRegister();
-   TR::RealRegister *dataReg  = cg()->machine()->getARMRealRegister(deps->getPostConditions()->getRegisterDependency(1)->getRealRegister());
-   TR::RealRegister *addrReg  = cg()->machine()->getARMRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
-   TR::RealRegister *tempReg  = cg()->machine()->getARMRealRegister(deps->getPostConditions()->getRegisterDependency(3)->getRealRegister());
+   TR::RealRegister *dataReg  = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(1)->getRealRegister());
+   TR::RealRegister *addrReg  = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
+   TR::RealRegister *tempReg  = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(3)->getRealRegister());
 
    TR_ARMOpCode opcode;
    TR_ARMOpCodes opCodeValue;
@@ -146,9 +146,9 @@ TR::ARMMonitorEnterSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
    TR::RegisterDependencyConditions *deps = getRestartLabel()->getInstruction()->getDependencyConditions();
    TR::LabelSymbol *restartLabel = getRestartLabel();
    TR::RealRegister *metaReg  = cg()->getMethodMetaDataRegister();
-   TR::RealRegister *dataReg  = machine->getARMRealRegister(deps->getPostConditions()->getRegisterDependency(1)->getRealRegister());
-   TR::RealRegister *addrReg  = machine->getARMRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
-   TR::RealRegister *tempReg  = machine->getARMRealRegister(deps->getPostConditions()->getRegisterDependency(3)->getRealRegister());
+   TR::RealRegister *dataReg  = machine->getRealRegister(deps->getPostConditions()->getRegisterDependency(1)->getRealRegister());
+   TR::RealRegister *addrReg  = machine->getRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
+   TR::RealRegister *tempReg  = machine->getRealRegister(deps->getPostConditions()->getRegisterDependency(3)->getRealRegister());
 
    debug->printPrefix(pOutFile, NULL, bufferPos, 4);
    //    mvn     tempReg, (OBJECT_HEADER_LOCK_BITS_MASK - OBJECT_HEADER_LOCK_LAST_RECURSION_BIT) -> 0x7f
@@ -228,9 +228,9 @@ uint8_t *TR::ARMMonitorExitSnippet::emitSnippetBody()
    TR::RegisterDependencyConditions *deps = getRestartLabel()->getInstruction()->getDependencyConditions();
 
    TR::RealRegister *metaReg  = cg()->getMethodMetaDataRegister();
-   TR::RealRegister *objReg = cg()->machine()->getARMRealRegister(TR::RealRegister::gr0);
-   TR::RealRegister *monitorReg = cg()->machine()->getARMRealRegister(deps->getPostConditions()->getRegisterDependency(1)->getRealRegister());
-   TR::RealRegister *threadReg  = cg()->machine()->getARMRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
+   TR::RealRegister *objReg = cg()->machine()->getRealRegister(TR::RealRegister::gr0);
+   TR::RealRegister *monitorReg = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(1)->getRealRegister());
+   TR::RealRegister *threadReg  = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
 
    TR_ARMOpCode opcode;
    TR_ARMOpCodes opCodeValue;
@@ -251,7 +251,7 @@ uint8_t *TR::ARMMonitorExitSnippet::emitSnippetBody()
       //    bl   jitMonitorExit
       //    b    doneLabel;
 
-      TR::RealRegister *offsetReg = cg()->machine()->getARMRealRegister(TR::RealRegister::gr4);
+      TR::RealRegister *offsetReg = cg()->machine()->getRealRegister(TR::RealRegister::gr4);
       _decLabel->setCodeLocation(buffer);
 
       opcode.setOpCodeValue(ARMOp_andi_r);
@@ -458,9 +458,9 @@ TR::ARMMonitorExitSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
    TR::RegisterDependencyConditions *deps = getRestartLabel()->getInstruction()->getDependencyConditions();
    TR::LabelSymbol *restartLabel = getRestartLabel();
    TR::RealRegister *metaReg  = cg()->getMethodMetaDataRegister();
-   TR::RealRegister *objReg = machine->getARMRealRegister(TR::RealRegister::gr0);
-   TR::RealRegister *monitorReg = machine->getARMRealRegister(deps->getPostConditions()->getRegisterDependency(1)->getRealRegister());
-   TR::RealRegister *threadReg  = machine->getARMRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
+   TR::RealRegister *objReg = machine->getRealRegister(TR::RealRegister::gr0);
+   TR::RealRegister *monitorReg = machine->getRealRegister(deps->getPostConditions()->getRegisterDependency(1)->getRealRegister());
+   TR::RealRegister *threadReg  = machine->getRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
 
    debug->printPrefix(pOutFile, NULL, bufferPos, 4);
    //    mvn     threadReg, OBJECT_HEADER_LOCK_RECURSION_MASK  // mask out count field
