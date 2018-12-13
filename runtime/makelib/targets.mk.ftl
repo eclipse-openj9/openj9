@@ -548,10 +548,10 @@ SharedService$(UMA_DOT_O):SharedService.c
 <#if uma.spec.processor.ppc>
 ifndef USE_PPC_GCC
 # special handling BytecodeInterpreter.cpp and DebugBytecodeInterpreter.cpp
-FLAGS_TO_REMOVE=-O3
+FLAGS_TO_REMOVE += -O3
 NEW_OPTIMIZATION_FLAG=-O2 -qdebug=lincomm:ptranl:tfbagg
 <#if uma.spec.type.linux>
-FLAGS_TO_REMOVE+=-qpic=large
+FLAGS_TO_REMOVE += -qpic=large
 NEW_OPTIMIZATION_FLAG+=-qmaxmem=-1 -qpic
 </#if>
 SPECIALCXXFLAGS=$(filter-out $(FLAGS_TO_REMOVE),$(CXXFLAGS))
