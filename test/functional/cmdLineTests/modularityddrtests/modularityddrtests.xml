@@ -675,9 +675,8 @@
 			<input>!dumpmodule packages $javaBaseModuleAddr$</input>
 			<input>quit</input>
 		</command>
-		<saveoutput regex="no" type="success" saveName="nonExportedPackageAddr" splitIndex="1" splitBy="!j9package ">jdk/internal/platform </saveoutput>
+		<output regex="no" type="success">!j9package 0x</output>
 		<saveoutput regex="no" type="required" saveName="javaUtilPackageAddr" splitIndex="1" splitBy="!j9package ">java/util </saveoutput>
-		<output regex="no" type="required">!j9package 0x</output>
 		<output regex="no" type="failure">DDRInteractiveCommandException</output>
 	</test>
 
@@ -791,6 +790,7 @@
 		<output regex="no" type="required">to openj9.gpu</output>
 		<output regex="no" type="required">!j9module 0x</output>
 		<output regex="no" type="required">to ALL-UNNAMED</output>
+		<saveoutput regex="no" type="required" saveName="limitedExportPackage" splitIndex="1" splitBy="!j9package ">com/ibm/gpu/spi </saveoutput>
 		<output regex="no" type="failure">DDRInteractiveCommandException</output>
 	</test>
 
@@ -926,8 +926,200 @@
 			<input>!dumpmodule 0x0</input>
 			<input>quit</input>
 		</command>
-		<output regex="yes" type="success">Memory Fault reading 0x0+ :</output>
-		<output regex="no" type="success">Problem running command:</output>
+		<output regex="no" type="success">Memory Fault reading 0x</output>
+		<output regex="no" type="required">Problem running command:</output>
 		<output regex="no" type="required">The argument "0x0" is not the address of a valid J9Module.</output>
+	</test>
+
+	<!-- Test !dumppackage and all options-->
+	<test id="Run !dumppackage on a globally exported package">
+		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
+			<arg>-c</arg>
+			<arg>echo $$LOGNAME</arg>
+		</exec>
+		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
+		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
+		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
+		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!dumppackage $javaUtilPackageAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Package is exported to all</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Run !dumppackage on a package exported to specific modules">
+		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
+			<arg>-c</arg>
+			<arg>echo $$LOGNAME</arg>
+		</exec>
+		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
+		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
+		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
+		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!dumppackage $limitedExportPackage$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="required">Exported to:</output>
+		<output regex="no" type="success">openj9.gpu</output>
+		<output regex="no" type="required">!j9module </output>
+		<output regex="no" type="required">ALL-UNNAMED</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Run !dumppackage classes">
+		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
+			<arg>-c</arg>
+			<arg>echo $$LOGNAME</arg>
+		</exec>
+		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
+		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
+		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
+		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!dumppackage classes $javaUtilPackageAddr$</input>
+			<input>quit</input>
+		</command>
+		<saveoutput regex="no" type="success" saveName="queueClassAddr" splitIndex="1" splitBy="!j9class ">java/util/Queue</saveoutput>
+		<output regex="no" type="required">!j9class 0x</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Verify !dumppackage classes">
+		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
+			<arg>-c</arg>
+			<arg>echo $$LOGNAME</arg>
+		</exec>
+		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
+		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
+		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
+		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!j9class $queueClassAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">J9Class at 0x</output>
+		<output regex="no" type="required">Fields for J9Class:</output>
+		<output regex="no" type="required">Class name: java/util/Queue</output>
+		<output regex="no" type="required">packageID</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+		<output regex="no" type="failure">&lt;FAULT&gt;</output>
+	</test>
+
+	<test id="Run !dumppackage help">
+		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
+			<arg>-c</arg>
+			<arg>echo $$LOGNAME</arg>
+		</exec>
+		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
+		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
+		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
+		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!dumppackage help</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Usage:</output>
+		<output regex="no" type="required">!dumppackage all</output>
+		<output regex="no" type="required">!dumppackage exportsTo</output>
+		<output regex="no" type="required">!dumppackage classes</output>
+		<output regex="no" type="failure">Argument failed to parse or was parsed to an unhandled subcommand.</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Run !dumppackage with an invalid subcommand">
+		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
+			<arg>-c</arg>
+			<arg>echo $$LOGNAME</arg>
+		</exec>
+		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
+		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
+		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
+		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!dumppackage someInvalidOption $javaUtilPackageAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Argument failed to parse or was parsed to an unhandled subcommand.</output>
+		<output regex="no" type="required">Usage:</output>
+		<output regex="no" type="required">!dumppackage all</output>
+		<output regex="no" type="required">!dumppackage exportsTo</output>
+		<output regex="no" type="required">!dumppackage classes</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Run !dumppackage with too many arguments">
+		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
+			<arg>-c</arg>
+			<arg>echo $$LOGNAME</arg>
+		</exec>
+		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
+		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
+		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
+		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!dumppackage too many options</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Argument failed to parse or was parsed to an unhandled subcommand.</output>
+		<output regex="no" type="required">Usage:</output>
+		<output regex="no" type="required">!dumppackage all</output>
+		<output regex="no" type="required">!dumppackage exportsTo</output>
+		<output regex="no" type="required">!dumppackage classes</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
+	<test id="Run !dumppackage with a non-numeric package address">
+		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
+			<arg>-c</arg>
+			<arg>echo $$LOGNAME</arg>
+		</exec>
+		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
+		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
+		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
+		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!dumppackage NotANumber</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Problem running command:</output>
+		<output regex="no" type="required">The argument "NotANumber" is not a valid number. It should be the address of a J9Package.</output>
+	</test>
+
+	<test id="Run !dumppackage with an invalid package address">
+		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
+			<arg>-c</arg>
+			<arg>echo $$LOGNAME</arg>
+		</exec>
+		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
+		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
+		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
+		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE$</arg>
+			<input>!dumppackage 0x0</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Memory Fault reading 0x</output>
+		<output regex="no" type="required">Problem running command:</output>
 	</test>
 </suite>
