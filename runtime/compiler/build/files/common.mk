@@ -90,6 +90,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/codegen/OMRUnresolvedDataSnippet.cpp \
     omr/compiler/codegen/OutOfLineCodeSection.cpp \
     omr/compiler/codegen/PreInstructionSelection.cpp \
+    omr/compiler/codegen/RegisterIterator.cpp \
     omr/compiler/codegen/Relocation.cpp \
     omr/compiler/codegen/ScratchRegisterManager.cpp \
     omr/compiler/codegen/StorageInfo.cpp \
