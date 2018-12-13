@@ -43,6 +43,10 @@ public class ValueTypeGenerator extends ClassLoader {
 	static {
 		generator = new ValueTypeGenerator();
 	}
+
+	public static ValueTypeGenerator getClassLoaderInstance() {
+		return generator;
+	}
 	
 	private static byte[] generateClass(String className, String[] fields, boolean isVerifiable, boolean isRef) {
 		ClassWriter cw = new ClassWriter(0);
@@ -62,11 +66,14 @@ public class ValueTypeGenerator extends ClassLoader {
 		String makeValueGenericSig = "";
 		for (String s : fields) {
 			String nameAndSigValue[] = s.split(":");
-			final int fieldModifiers;
+			int fieldModifiers = 0;
 			if (isRef) {
 				fieldModifiers = ACC_PUBLIC;
 			} else {
 				fieldModifiers = ACC_PUBLIC + ACC_FINAL;
+			}
+			if (3 <= nameAndSigValue.length && "static".equals(nameAndSigValue[2])) {
+				fieldModifiers += ACC_STATIC;
 			}
 			fv = cw.visitField(fieldModifiers, nameAndSigValue[0], nameAndSigValue[1], null, null);
 			fv.visitEnd();

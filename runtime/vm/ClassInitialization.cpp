@@ -377,6 +377,42 @@ doVerify:
 						goto done;
 					}
 				}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				/* Verify subclasses of Q types */
+				J9ROMClass *romClass = clazz->romClass;
+				if (J9_ARE_ALL_BITS_SET(romClass->modifiers, J9AccValueType)) {
+					J9ROMFieldWalkState fieldWalkState;
+					J9ROMFieldShape *field = romFieldsStartDo(romClass, &fieldWalkState);
+					while (field != NULL) {
+						if ('Q' == J9UTF8_DATA(J9ROMFIELDSHAPE_SIGNATURE(field))[0]) {
+							J9UTF8 *signature = J9ROMFIELDSHAPE_SIGNATURE(field);
+							J9ClassLoader *classLoader = clazz -> classLoader;
+							if (classLoader == NULL) {
+								classLoader = currentThread->javaVM->systemClassLoader;
+							}
+							J9Class *resolvedClass = internalFindClassUTF8(currentThread, &J9UTF8_DATA(signature)[1], J9UTF8_LENGTH(signature)-2, classLoader, J9_FINDCLASS_FLAG_THROW_ON_FAIL);
+							if (NULL == resolvedClass) {
+								setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNOCLASSDEFFOUNDERROR, NULL);
+								goto done;
+							}
+							PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
+							classInitStateMachine(currentThread, resolvedClass, J9_CLASS_INIT_VERIFIED);
+							initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
+							clazz = VM_VMHelpers::currentClass(clazz);
+							if (VM_VMHelpers::exceptionPending(currentThread)) {
+								initializationLock = setInitStatus(currentThread, clazz, J9ClassInitUnverified, initializationLock);
+								clazz = VM_VMHelpers::currentClass(clazz);
+								goto done;
+							}
+							if (!J9_ARE_ALL_BITS_SET(resolvedClass->romClass->modifiers, J9AccValueType)) {
+								setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, NULL);
+								goto done;
+							}
+						}
+						field = romFieldsNextDo(&fieldWalkState);
+					}
+				}
+#endif
 				/* Verify this class */
 				PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
 				performVerification(currentThread, clazz);

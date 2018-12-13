@@ -148,7 +148,7 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=2)
 	static public void testCreateLine2D() throws Throwable {
-		String fields[] = {"st:LPoint2D;:value", "en:LPoint2D;:value"};
+		String fields[] = {"st:LPoint2D;", "en:LPoint2D;"};
 		line2DClass = ValueTypeGenerator.generateValueClass("Line2D", fields);
 		
 		makeLine2D = lookup.findStatic(line2DClass, "makeValue", MethodType.methodType(line2DClass, point2DClass, point2DClass));
@@ -205,7 +205,7 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=2)
 	static public void testCreateFlattenedLine2D() throws Throwable {
-		String fields[] = {"st:QPoint2D;:value", "en:QPoint2D;:value"};
+		String fields[] = {"st:QPoint2D;", "en:QPoint2D;"};
 		Class flattenedLine2DClass = ValueTypeGenerator.generateValueClass("FlattenedLine2D", fields);
 				
 		MethodHandle makeFlattenedLine2D = lookup.findStatic(flattenedLine2DClass, "makeValueGeneric", MethodType.methodType(flattenedLine2DClass, Object.class, Object.class));
@@ -262,7 +262,7 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=3)
 	static public void testInvalidNestedField() throws Throwable {
-		String fields[] = {"st:QPoint2D;:value", "x:QInvalid;:value"};
+		String fields[] = {"st:QPoint2D;", "x:QInvalid;"};
 
 		try {
 			Class<?> invalidField = ValueTypeGenerator.generateValueClass("InvalidField", fields);
@@ -280,8 +280,8 @@ public class ValueTypeTests {
 	 * 
 	 */
 	@Test(priority=3)
-	static public void testNoneValueQTypeAsNestedField() throws Throwable {
-		String fields[] = {"st:QPoint2D;:value", "o:Qjava/lang/Object;:value"};
+	static public void testNonValueQTypeAsNestedField() throws Throwable {
+		String fields[] = {"st:QPoint2D;", "o:Qjava/lang/Object;"};
 		try {
 			Class<?> noneValueQType = ValueTypeGenerator.generateValueClass("NoneValueQType", fields);
 			Assert.fail("should throw error. j.l.Object is not a qtype!");
@@ -299,7 +299,7 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=3)
 	static public void testDefaultValueWithNonValueType() throws Throwable {
-		String fields[] = {"f1:Ljava/lang/Object;:value", "f2:Ljava/lang/Object;:value"};
+		String fields[] = {"f1:Ljava/lang/Object;", "f2:Ljava/lang/Object;"};
 		Class<?> defaultValueWithNonValueType = ValueTypeGenerator.generateRefClass("DefaultValueWithNonValueType", fields);
 		MethodHandle makeDefaultValueWithNonValueType = lookup.findStatic(defaultValueWithNonValueType, "makeValue", MethodType.methodType(defaultValueWithNonValueType, Object.class, Object.class));
 		try {
@@ -362,6 +362,49 @@ public class ValueTypeTests {
 			Assert.fail("should throw error. Class does not exist");
 		} catch (NoClassDefFoundError e) {}
 	}
+	
+	/*
+	 * Test with non existant nested static value in reference type
+	 * 
+	 * value PreloadUndefinedQTypeTest {
+	 * 	static flattened QDoesntExist c;
+	 * }
+	 * 
+	 */
+	@Test(priority=2)
+	static public void testValueTypePreloadUndefinedQType() throws Throwable {
+		try {
+			String fields[] = {"c:QDoesntExist;:static"};
+			Class PreloadUndefinedQTypeTestClass = ValueTypeGenerator.generateValueClass("PreloadUndefinedQTypeTest", fields);
+			Class.forName("PreloadUndefinedQTypeTest", true, ValueTypeGenerator.getClassLoaderInstance());
+			Assert.fail("Should throw NoClassDefFoundError during preloading");
+		} catch (NoClassDefFoundError e) {}
+	}
+	
+	/*
+	 * Test with nested static non value type Q signature in reference type
+	 * 
+	 * value StaticTest2D {
+	 * 	static QValid x;
+	 * }
+	 * 
+	 */
+	/* Currently, objects with Q signatures cannot be generated.
+	 * As the Q signatures are explicitly checked, an L type will
+	 * not suffice for testing. Until a valid QSignature can be
+	 * generated, this test cannot be run.
+	 */
+	/* 
+	 * @Test(priority=2)
+	 * static public void testValueTypePreloadNonValueType() throws Throwable {
+	 * 	try {
+	 * 		String fields[] = {"x:QValid;:static"};
+	 * 		Class PreloadNonValueTypeTestClass = ValueTypeGenerator.generateValueClass("PreloadNonValueTypeTest", fields);
+	 * 		Class.forName("PreloadNonValueTypeTest", true, ValueTypeGenerator.getClassLoaderInstance());
+	 * 		Assert.fail("Should throw IncompatibleClassChangeError during preloading");
+	 * 	} catch (IncompatibleClassChangeError e) {}
+	 * }
+	 */
 	
 	static MethodHandle generateGetter(Class<?> clazz, String fieldName, Class<?> fieldType) {
 		try {
