@@ -68,6 +68,8 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
      _idToSymbolsMap((IdToSymbolComparator()), _region),
      _seenSymbolsSet((SeenSymbolsComparator()), _region)
    {
+   assertionsAreFatal(); // Acknowledge the env var whether or not assertions fail
+
    TR::Compilation* comp = TR::comp();
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
@@ -102,12 +104,8 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
 uint16_t
 TR::SymbolValidationManager::getNewSymbolID()
    {
-   if (_symbolID == 0xFFFF)
-      {
-      TR_ASSERT(false, "_symbolID overflow\n");
-      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed in getNewSymbolID");
-      }
-      return _symbolID++;
+   SVM_ASSERT_NONFATAL(_symbolID != 0xFFFF, "symbol ID overflow");
+   return _symbolID++;
    }
 
 void *
@@ -171,7 +169,8 @@ TR::SymbolValidationManager::storeClassChain(TR_J9VMBase *fej9, TR_OpaqueClassBl
 void
 TR::SymbolValidationManager::storeRecord(void *symbol, TR::SymbolValidationRecord *record)
    {
-   if (!getIDFromSymbol(symbol))
+   SVM_ASSERT(!inHeuristicRegion(), "Attempted to storeRecord in a heuristic region");
+   if (!isAlreadyValidated(symbol))
       {
       _symbolToIdMap.insert(std::make_pair(symbol, getNewSymbolID()));
       }
@@ -230,11 +229,10 @@ TR::SymbolValidationManager::storeClassRecord(TR_OpaqueClassBlock *clazz,
             arrayDims++;
             }
 
-         if (!(validated && (arrayDims == arrayDimsToValidate)))
-            {
-            TR_ASSERT(false, "Failed to validated clazz 0x%p\n", clazz);
-            comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in storeClassRecord");
-            }
+         SVM_ASSERT(
+            validated && arrayDims == arrayDimsToValidate,
+            "Failed to validate class %p",
+            clazz);
          }
       }
 
@@ -301,11 +299,7 @@ TR::SymbolValidationManager::addClassByNameRecord(TR_OpaqueClassBlock *clazz, TR
 
    TR::Compilation* comp = TR::comp();
 
-   if (getIDFromSymbol(beholder) == 0)
-      {
-      TR_ASSERT(false, "beholder 0x%p should have already been validated\n", beholder);
-      comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addClassByNameRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
 
    int32_t arrayDims = 0;
    clazz = getBaseComponentClass(clazz, arrayDims);
@@ -363,12 +357,7 @@ TR::SymbolValidationManager::addClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9
    clazz = getBaseComponentClass(clazz, arrayDims);
 
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
-
-   if (getIDFromSymbol(beholder) == 0)
-      {
-      TR_ASSERT(false, "beholder 0x%p should have already been validated\n", beholder);
-      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addClassFromCPRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
 
    SymbolValidationRecord *record = new (_region) ClassFromCPRecord(clazz, beholder, cpIndex);
    return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record, arrayDims);
@@ -386,12 +375,7 @@ TR::SymbolValidationManager::addDefiningClassFromCPRecord(TR_OpaqueClassBlock *c
    clazz = getBaseComponentClass(clazz, arrayDims);
 
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
-
-   if (getIDFromSymbol(beholder) == 0)
-      {
-      TR_ASSERT(false, "beholder 0x%p should have already been validated\n", beholder);
-      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addDefiningClassFromCPRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
 
    SymbolValidationRecord *record = new (_region) DefiningClassFromCPRecord(clazz, beholder, cpIndex, isStatic);
    return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record, arrayDims);
@@ -409,12 +393,7 @@ TR::SymbolValidationManager::addStaticClassFromCPRecord(TR_OpaqueClassBlock *cla
    clazz = getBaseComponentClass(clazz, arrayDims);
 
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
-
-   if (getIDFromSymbol(beholder) == 0)
-      {
-      TR_ASSERT(false, "beholder 0x%p should have already been validated\n", beholder);
-      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addStaticClassFromCPRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
 
    SymbolValidationRecord *record = new (_region) StaticClassFromCPRecord(clazz, beholder, cpIndex);
    return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record, arrayDims);
@@ -431,11 +410,7 @@ TR::SymbolValidationManager::addClassFromMethodRecord(TR_OpaqueClassBlock *clazz
    int32_t arrayDims = 0;
    clazz = getBaseComponentClass(clazz, arrayDims);
 
-   if (getIDFromSymbol(method) == 0)
-      {
-      TR_ASSERT(false, "method 0x%p should have already been validated\n", method);
-      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addClassFromMethodRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, method);
 
    SymbolValidationRecord *record = new (_region) ClassFromMethodRecord(clazz, method);
    return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record);
@@ -449,11 +424,7 @@ TR::SymbolValidationManager::addComponentClassFromArrayClassRecord(TR_OpaqueClas
    if (inHeuristicRegion())
       return true;
 
-   if (getIDFromSymbol(arrayClass) == 0)
-      {
-      TR_ASSERT(false, "arrayClass 0x%p should have already been validated\n", arrayClass);
-      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addComponentClassFromArrayClassRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, arrayClass);
 
    SymbolValidationRecord *record = new (_region) ComponentClassFromArrayClassRecord(componentClass, arrayClass);
    return storeValidationRecordIfNecessary(static_cast<void *>(componentClass), record);
@@ -467,11 +438,7 @@ TR::SymbolValidationManager::addArrayClassFromComponentClassRecord(TR_OpaqueClas
    if (inHeuristicRegion())
       return true;
 
-   if (getIDFromSymbol(componentClass) == 0)
-      {
-      TR_ASSERT(false, "componentClass 0x%p should have already been validated\n", componentClass);
-      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addArrayClassFromComponentClassRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, componentClass);
 
    SymbolValidationRecord *record = new (_region) ArrayClassFromComponentClassRecord(arrayClass, componentClass);
    return storeValidationRecordIfNecessary(static_cast<void *>(arrayClass), record);
@@ -488,11 +455,7 @@ TR::SymbolValidationManager::addSuperClassFromClassRecord(TR_OpaqueClassBlock *s
    int32_t arrayDims = 0;
    superClass = getBaseComponentClass(superClass, arrayDims);
 
-   if (getIDFromSymbol(childClass) == 0)
-      {
-      TR_ASSERT(false, "childClass 0x%p should have already been validated\n", childClass);
-      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addSuperClassFromClassRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, childClass);
 
    SymbolValidationRecord *record = new (_region) SuperClassFromClassRecord(superClass, childClass);
    return storeValidationRecordIfNecessary(static_cast<void *>(superClass), record, arrayDims);
@@ -504,12 +467,8 @@ TR::SymbolValidationManager::addClassInstanceOfClassRecord(TR_OpaqueClassBlock *
    if (inHeuristicRegion())
       return true;
 
-   if (getIDFromSymbol(classOne) == 0 || getIDFromSymbol(classTwo) == 0)
-      {
-      TR_ASSERT(getIDFromSymbol(classOne) != 0, "classOne 0x%p should have already been validated\n", classOne);
-      TR_ASSERT(getIDFromSymbol(classTwo) != 0, "classTwo 0x%p should have already been validated\n", classTwo);
-      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addClassInstanceOfClassRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, classOne);
+   SVM_ASSERT_ALREADY_VALIDATED(this, classTwo);
 
    SymbolValidationRecord *record = new (_region) ClassInstanceOfClassRecord(classOne, classTwo, objectTypeIsFixed, castTypeIsFixed, isInstanceOf);
    return storeValidationRecordIfNecessary(static_cast<void *>(classOne), record);
@@ -539,12 +498,7 @@ TR::SymbolValidationManager::addClassFromITableIndexCPRecord(TR_OpaqueClassBlock
       return true;
 
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
-
-   if (getIDFromSymbol(beholder) == 0)
-      {
-      TR_ASSERT(false, "beholder 0x%p should have already been validated\n", beholder);
-      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addClassFromITableIndexCPRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
 
    int32_t arrayDims = 0;
    clazz = getBaseComponentClass(clazz, arrayDims);
@@ -562,12 +516,7 @@ TR::SymbolValidationManager::addDeclaringClassFromFieldOrStaticRecord(TR_OpaqueC
       return true;
 
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(constantPoolOfBeholder));
-
-   if (getIDFromSymbol(beholder) == 0)
-      {
-      TR_ASSERT(false, "beholder 0x%p should have already been validated\n", beholder);
-      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addDeclaringClassFromFieldOrStaticRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
 
    int32_t arrayDims = 0;
    clazz = getBaseComponentClass(clazz, arrayDims);
@@ -584,11 +533,7 @@ TR::SymbolValidationManager::addClassClassRecord(TR_OpaqueClassBlock *classClass
    if (inHeuristicRegion())
       return true;
 
-   if (getIDFromSymbol(objectClass) == 0)
-      {
-      TR_ASSERT(false, "objectClass 0x%p should have already been validated\n", objectClass);
-      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addClassClassRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, objectClass);
 
    SymbolValidationRecord *record = new (_region) ClassClassRecord(classClass, objectClass);
    return storeValidationRecordIfNecessary(static_cast<void *>(classClass), record);
@@ -605,11 +550,7 @@ TR::SymbolValidationManager::addConcreteSubClassFromClassRecord(TR_OpaqueClassBl
    int32_t arrayDims = 0;
    childClass = getBaseComponentClass(childClass, arrayDims);
 
-   if (getIDFromSymbol(superClass) == 0)
-      {
-      TR_ASSERT(false, "superClass 0x%p should have already been validated\n", superClass);
-      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addConcreteSubClassFromClassRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, superClass);
 
    SymbolValidationRecord *record = new (_region) ConcreteSubClassFromClassRecord(childClass, superClass);
    return storeValidationRecordIfNecessary(static_cast<void *>(childClass), record, arrayDims);
@@ -635,11 +576,7 @@ TR::SymbolValidationManager::addMethodByNameRecord(TR_OpaqueMethodBlock *method,
    if (inHeuristicRegion())
       return true;
 
-   if (getIDFromSymbol(beholder) == 0)
-      {
-      TR_ASSERT(false, "beholder 0x%p should have already been validated\n", beholder);
-      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addMethodByNameRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
 
    SymbolValidationRecord *record = new (_region) MethodByNameRecord(method, beholder);
    bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -676,18 +613,14 @@ TR::SymbolValidationManager::addMethodFromClassRecord(TR_OpaqueMethodBlock *meth
             break;
          }
 
-      if (index == numMethods)
-         {
-         TR_ASSERT(false, "Method 0x%p not found in class 0x%p\n", method, beholder);
-         return false;
-         }
+      SVM_ASSERT(
+         index < numMethods,
+         "Method %p not found in class %p",
+         method,
+         beholder);
       }
 
-   if (getIDFromSymbol(beholder) == 0)
-      {
-      TR_ASSERT(false, "beholder 0x%p should have already been validated\n", beholder);
-      comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addMethodFromClassRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
 
    SymbolValidationRecord *record = new (_region) MethodFromClassRecord(method, beholder, index);
    return storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -702,12 +635,7 @@ TR::SymbolValidationManager::addStaticMethodFromCPRecord(TR_OpaqueMethodBlock *m
       return true;
 
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(cp));
-
-   if (getIDFromSymbol(beholder) == 0)
-      {
-      TR_ASSERT(false, "beholder 0x%p should have already been validated\n", beholder);
-      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addStaticMethodFromCPRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
 
    SymbolValidationRecord *record = new (_region) StaticMethodFromCPRecord(method, beholder, cpIndex);
    bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -730,12 +658,7 @@ TR::SymbolValidationManager::addSpecialMethodFromCPRecord(TR_OpaqueMethodBlock *
       return true;
 
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(cp));
-
-   if (getIDFromSymbol(beholder) == 0)
-      {
-      TR_ASSERT(false, "beholder 0x%p should have already been validated\n", beholder);
-      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addSpecialMethodFromCPRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
 
    SymbolValidationRecord *record = new (_region) SpecialMethodFromCPRecord(method, beholder, cpIndex);
    bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -758,12 +681,7 @@ TR::SymbolValidationManager::addVirtualMethodFromCPRecord(TR_OpaqueMethodBlock *
       return true;
 
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(cp));
-
-   if (getIDFromSymbol(beholder) == 0)
-      {
-      TR_ASSERT(false, "beholder 0x%p should have already been validated\n", beholder);
-      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addVirtualMethodFromCPRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
 
    SymbolValidationRecord *record = new (_region) VirtualMethodFromCPRecord(method, beholder, cpIndex);
    bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -785,11 +703,7 @@ TR::SymbolValidationManager::addVirtualMethodFromOffsetRecord(TR_OpaqueMethodBlo
    if (inHeuristicRegion())
       return true;
 
-   if (getIDFromSymbol(beholder) == 0)
-      {
-      TR_ASSERT(false, "beholder 0x%p should have already been validated\n", beholder);
-      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addVirtualMethodFromOffsetRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
 
    SymbolValidationRecord *record = new (_region) VirtualMethodFromOffsetRecord(method, beholder, virtualCallOffset, ignoreRtResolve);
    bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -811,12 +725,8 @@ TR::SymbolValidationManager::addInterfaceMethodFromCPRecord(TR_OpaqueMethodBlock
    if (inHeuristicRegion())
       return true;
 
-   if (getIDFromSymbol(beholder) == 0 || getIDFromSymbol(lookup) == 0)
-      {
-      TR_ASSERT(getIDFromSymbol(beholder) != 0, "beholder 0x%p should have already been validated\n", beholder);
-      TR_ASSERT(getIDFromSymbol(lookup) != 0, "lookup 0x%p should have already been validated\n", lookup);
-      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addInterfaceMethodFromCPRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
+   SVM_ASSERT_ALREADY_VALIDATED(this, lookup);
 
    SymbolValidationRecord *record = new (_region) InterfaceMethodFromCPRecord(method, beholder, lookup, cpIndex);
    bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -839,12 +749,7 @@ TR::SymbolValidationManager::addImproperInterfaceMethodFromCPRecord(TR_OpaqueMet
       return true;
 
    TR_OpaqueClassBlock *beholder = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_CP(cp));
-
-   if (getIDFromSymbol(beholder) == 0)
-      {
-      TR_ASSERT(false, "beholder 0x%p should have already been validated\n", beholder);
-      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addImproperInterfaceMethodFromCPRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
 
    SymbolValidationRecord *record = new (_region) ImproperInterfaceMethodFromCPRecord(method, beholder, cpIndex);
    bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -866,12 +771,8 @@ TR::SymbolValidationManager::addMethodFromClassAndSignatureRecord(TR_OpaqueMetho
    if (inHeuristicRegion())
       return true;
 
-   if (getIDFromSymbol(methodClass) == 0 || getIDFromSymbol(beholder) == 0)
-      {
-      TR_ASSERT(getIDFromSymbol(methodClass) != 0, "methodClass 0x%p should have already been validated\n", methodClass);
-      TR_ASSERT(getIDFromSymbol(beholder) != 0, "beholder 0x%p should have already been validated\n", beholder);
-      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addMethodFromClassAndSignatureRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, methodClass);
+   SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
 
    SymbolValidationRecord *record = new (_region) MethodFromClassAndSigRecord(method, methodClass, beholder);
    return storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -889,12 +790,8 @@ TR::SymbolValidationManager::addMethodFromSingleImplementerRecord(TR_OpaqueMetho
    if (inHeuristicRegion())
       return true;
 
-   if (getIDFromSymbol(thisClass) == 0 || getIDFromSymbol(callerMethod) == 0)
-      {
-      TR_ASSERT(getIDFromSymbol(thisClass) != 0, "thisClass 0x%p should have already been validated\n", thisClass);
-      TR_ASSERT(getIDFromSymbol(callerMethod) != 0, "callerMethod 0x%p should have already been validated\n", callerMethod);
-      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addMethodFromSingleImplementerRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, thisClass);
+   SVM_ASSERT_ALREADY_VALIDATED(this, callerMethod);
 
    SymbolValidationRecord *record = new (_region) MethodFromSingleImplementer(method, thisClass, cpIndexOrVftSlot, callerMethod, useGetResolvedInterfaceMethod);
    bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -919,12 +816,8 @@ TR::SymbolValidationManager::addMethodFromSingleInterfaceImplementerRecord(TR_Op
    if (inHeuristicRegion())
       return true;
 
-   if (getIDFromSymbol(thisClass) == 0 || getIDFromSymbol(callerMethod) == 0)
-      {
-      TR_ASSERT(getIDFromSymbol(thisClass) != 0, "thisClass 0x%p should have already been validated\n", thisClass);
-      TR_ASSERT(getIDFromSymbol(callerMethod) != 0, "callerMethod 0x%p should have already been validated\n", callerMethod);
-      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addMethodFromSingleInterfaceImplementerRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, thisClass);
+   SVM_ASSERT_ALREADY_VALIDATED(this, callerMethod);
 
    SymbolValidationRecord *record = new (_region) MethodFromSingleInterfaceImplementer(method, thisClass, cpIndex, callerMethod);
    bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -949,12 +842,8 @@ TR::SymbolValidationManager::addMethodFromSingleAbstractImplementerRecord(TR_Opa
    if (inHeuristicRegion())
       return true;
 
-   if (getIDFromSymbol(thisClass) == 0 || getIDFromSymbol(callerMethod) == 0)
-      {
-      TR_ASSERT(getIDFromSymbol(thisClass) != 0, "thisClass 0x%p should have already been validated\n", thisClass);
-      TR_ASSERT(getIDFromSymbol(callerMethod) != 0, "callerMethod 0x%p should have already been validated\n", callerMethod);
-      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addMethodFromSingleAbstractImplementerRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, thisClass);
+   SVM_ASSERT_ALREADY_VALIDATED(this, callerMethod);
 
    SymbolValidationRecord *record = new (_region) MethodFromSingleAbstractImplementer(method, thisClass, vftSlot, callerMethod);
    bool valid = storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -976,12 +865,8 @@ TR::SymbolValidationManager::addStackWalkerMaySkipFramesRecord(TR_OpaqueMethodBl
    if (inHeuristicRegion())
       return true;
 
-   if (getIDFromSymbol(method) == 0 || getIDFromSymbol(methodClass) == 0)
-      {
-      TR_ASSERT(getIDFromSymbol(method) != 0, "method 0x%p should have already been validated\n", method);
-      TR_ASSERT(getIDFromSymbol(methodClass) != 0, "methodClass 0x%p should have already been validated\n", methodClass);
-      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addStackWalkerMaySkipFramesRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, method);
+   SVM_ASSERT_ALREADY_VALIDATED(this, methodClass);
 
    SymbolValidationRecord *record = new (_region) StackWalkerMaySkipFramesRecord(method, methodClass, skipFrames);
    return storeValidationRecordIfNecessary(static_cast<void *>(method), record);
@@ -995,11 +880,7 @@ TR::SymbolValidationManager::addClassInfoIsInitializedRecord(TR_OpaqueClassBlock
    if (inHeuristicRegion())
       return true;
 
-   if (getIDFromSymbol(clazz) == 0)
-      {
-      TR_ASSERT(false, "clazz 0x%p should have already been validated\n", clazz);
-      TR::comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in addClassInfoIsInitializedRecord");
-      }
+   SVM_ASSERT_ALREADY_VALIDATED(this, clazz);
 
    SymbolValidationRecord *record = new (_region) ClassInfoIsInitialized(clazz, isInitialized);
    return storeValidationRecordIfNecessary(static_cast<void *>(clazz), record);
@@ -1492,11 +1373,7 @@ TR::SymbolValidationManager::validateMethodFromClassRecord(uint16_t methodID, ui
       TR::VMAccessCriticalSection getResolvedMethods(fej9); // Prevent HCR
       J9Method *methods = static_cast<J9Method *>(fej9->getMethods(beholder));
       uint32_t numMethods = fej9->getNumMethods(beholder);
-      if (index >= numMethods)
-         {
-         TR_ASSERT(false, "Index is not within the bounds of the ramMethods array\n");
-         return false;
-         }
+      SVM_ASSERT(index < numMethods, "Index is not within the bounds of the ramMethods array");
       method = &(methods[index]);
       }
 
@@ -1823,6 +1700,18 @@ TR::SymbolValidationManager::validateClassInfoIsInitializedRecord(uint16_t class
    return valid;
    }
 
+bool
+TR::SymbolValidationManager::assertionsAreFatal()
+   {
+   // Look for the env var even in debug builds so that it's always acknowledged.
+   static const bool fatal = feGetEnv("TR_svmAssertionsAreFatal") != NULL;
+
+#if defined(DEBUG) || defined(PROD_WITH_ASSUMES) || defined(SVM_ASSERTIONS_ARE_FATAL)
+   return true;
+#else
+   return fatal;
+#endif
+   }
 
 static void printClass(TR_OpaqueClassBlock *clazz)
    {
