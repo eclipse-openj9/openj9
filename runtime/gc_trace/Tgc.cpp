@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -295,6 +295,10 @@ tgcInitializeRequestedOptions(J9JavaVM *javaVM)
 		if (tgcExtensions->_heapRequested) {
 			result = result && tgcHeapInitialize(javaVM);
 		}
+
+		if (tgcExtensions->_rootScannerRequested) {
+			result = result && tgcRootScannerInitialize(javaVM);
+		}
 	}
 
 	/* StandardGC and VLHGC both options*/
@@ -321,10 +325,6 @@ tgcInitializeRequestedOptions(J9JavaVM *javaVM)
 
 		if (tgcExtensions->_parallelRequested) {
 			result = result && tgcParallelInitialize(javaVM);
-		}
-
-		if (tgcExtensions->_rootScannerRequested) {
-			result = result && tgcRootScannerInitialize(javaVM);
 		}
 
 		if (tgcExtensions->_terseRequested) {
