@@ -409,8 +409,10 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedStaticMethod(TR::Compilation * comp,
       return resolvedMethod;
 
    _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getResolvedStaticMethodAndMirror, _remoteMirror, cpIndex);
-   auto recv = _stream->read<J9Method *, TR_ResolvedJ9JITaaSServerMethodInfo>();
+   auto recv = _stream->read<J9Method *, TR_ResolvedJ9JITaaSServerMethodInfo, bool>();
    J9Method * ramMethod = std::get<0>(recv); 
+   if (unresolvedInCP)
+      *unresolvedInCP = std::get<2>(recv);
 
    bool skipForDebugging = false;
    if (isArchetypeSpecimen())
