@@ -201,6 +201,21 @@ protected:
 		}
 	}
 	
+	MMINLINE void updateScanStats(uint64_t endTime) {
+	
+		if (_entityIncrementStartTime >= endTime) {
+			/* overflow */
+ 			_env->_rootScannerStats._entityScanTime[_scanningEntity] += 1;
+ 		} else {
+			uint64_t duration = endTime - _entityIncrementStartTime;
+			_env->_rootScannerStats._entityScanTime[_scanningEntity] += duration;	
+			if ((duration > _env->_rootScannerStats._maxIncrementTime) && (RootScannerEntity_None != _scanningEntity)) {
+				_env->_rootScannerStats._maxIncrementTime = duration;
+				_env->_rootScannerStats._maxIncrementEntity = _scanningEntity;
+			}
+		}
+	}	
+	
 	/**
 	 * Sets the currently scanned root entity to None and sets the last scanned root
 	 * entity to scannedEntity. This is mainly for debug purposes.
@@ -221,16 +236,7 @@ protected:
 			_env->_rootScannerStats._statsUsed = true;
 			_extensions->rootScannerStatsUsed = true;
 							
- 			if (_entityStartScanTime >= entityEndScanTime) {
- 				_env->_rootScannerStats._entityScanTime[scannedEntity] += 1;
- 			} else {
-				uint64_t duration = entityEndScanTime - _entityIncrementStartTime;
-				_env->_rootScannerStats._entityScanTime[scannedEntity] += duration;	
-				if (duration > _env->_rootScannerStats._maxIncrementTime) {
-					_env->_rootScannerStats._maxIncrementTime = duration;
-					_env->_rootScannerStats._maxIncrementEntity = scannedEntity;
-				}
- 			}
+			updateScanStats(entityEndScanTime);
  			
  			_entityStartScanTime = 0;
 			_entityIncrementStartTime = 0;
@@ -256,12 +262,7 @@ public:
 			OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
 			_entityIncrementEndTime = omrtime_hires_clock();
 			
-			uint64_t duration = _entityIncrementEndTime - _entityIncrementStartTime;
-			_env->_rootScannerStats._entityScanTime[_scanningEntity] += duration;	
-			if ((duration > _env->_rootScannerStats._maxIncrementTime) && (RootScannerEntity_None != _scanningEntity)) {
-				_env->_rootScannerStats._maxIncrementTime = duration;
-				_env->_rootScannerStats._maxIncrementEntity = _scanningEntity;
-			}
+			updateScanStats(_entityIncrementEndTime);
 		}
 	}
 
