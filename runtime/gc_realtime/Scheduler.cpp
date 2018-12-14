@@ -712,7 +712,11 @@ MM_Scheduler::condYieldFromGC(MM_EnvironmentBase *envBase, U_64 timeSlack)
 	if (!internalShouldGCYield(env, timeSlack)) {
 		return false;
 	}
+
+	env->reportScanningSuspended();
 	yieldFromGC(env, true);
+	env->reportScanningResumed();
+
 	env->resetCurrentDistanceToYieldTimeCheck();
 
 	return true;
