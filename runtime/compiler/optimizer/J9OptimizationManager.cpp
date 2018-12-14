@@ -100,9 +100,6 @@ J9::OptimizationManager::OptimizationManager(TR::Optimizer *o, OptimizationFacto
       case OMR::samplingJProfiling:
          _flags.set(requiresStructure | checkStructure | dumpStructure);
          break;
-      case OMR::redundantBCDSignElimination:
-         _flags.set(requiresLocalsUseDefInfo | doesNotRequireLoadsAsDefs | maintainsUseDefInfo);
-         break;
       case OMR::SPMDKernelParallelization:
          _flags.set(requiresLocalsUseDefInfo | doesNotRequireLoadsAsDefs | requiresLocalsValueNumbering);
          break;

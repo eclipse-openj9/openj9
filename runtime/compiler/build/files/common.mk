@@ -52,7 +52,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     compiler/optimizer/OSRGuardInsertion.cpp \
     compiler/optimizer/OSRGuardRemoval.cpp \
     compiler/optimizer/ProfileGenerator.cpp \
-    compiler/optimizer/RedundantBCDSignElimination.cpp \
     compiler/optimizer/SequentialStoreSimplifier.cpp \
     compiler/optimizer/SignExtendLoads.cpp \
     compiler/optimizer/SPMDParallelizer.cpp \
