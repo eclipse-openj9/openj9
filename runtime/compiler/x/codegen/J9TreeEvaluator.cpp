@@ -7908,27 +7908,47 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
       // -------------------------------------------------------------------------
       //
       // If the component type is java.lang.Object then the store always succeeds.
+      // On AOT, only do this when using the SVM; otherwise, it's safer to just
+      // skip this check than 1) incorrectly relocate the java/lang/Object class
+      // or 2) crash while trying to relocate.
       //
       // -------------------------------------------------------------------------
-
-      TR_OpaqueClassBlock *objectClass = fej9->getSystemClassFromClassName("java/lang/Object", 16);
-      objectClass = fej9->getArrayClassFromComponentClass(objectClass);
-
-      if (TR::Compiler->target.is64Bit())
+      if (!cg->needClassAndMethodPointerRelocations() || comp->getOption(TR_UseSymbolValidationManager))
          {
-         TR_ASSERT((((uintptr_t)objectClass) >> 32) == 0, "TR_OpaqueClassBlock must fit on 32 bits when using class pointer compression");
-         instr = generateRegImmInstruction(CMP4RegImm4, node, destComponentClassReg, (uint32_t) ((uint64_t) objectClass), cg);
-         }
-      else
-         {
-         instr = generateRegImmInstruction(CMP4RegImm4, node, destComponentClassReg, (int32_t)(uintptr_t) objectClass, cg);
-         }
+         TR_OpaqueClassBlock *objectClass = fej9->getSystemClassFromClassName("java/lang/Object", 16);
+         objectClass = fej9->getArrayClassFromComponentClass(objectClass);
 
-      generateLabelInstruction(JE4, node, wrtbarLabel, cg);
+         if (TR::Compiler->target.is64Bit())
+            {
+            TR_ASSERT((((uintptr_t)objectClass) >> 32) == 0, "TR_OpaqueClassBlock must fit on 32 bits when using class pointer compression");
 
-      // HCR in VMarrayStoreCHKEvaluator
-      if (cg->wantToPatchClassPointer(objectClass, node))
-         comp->getStaticHCRPICSites()->push_front(instr);
+            if (cg->needClassAndMethodPointerRelocations())
+               {
+               TR::Register *objectClassReg = scratchRegisterManager->findOrCreateScratchRegister();
+               // MOV8RegImm64 because the relocation infrastructure can't currently relocate a 32-bit pointer
+               instr = generateRegImm64Instruction(MOV8RegImm64, node, objectClassReg, (uintptr_t) objectClass, cg, TR_ClassPointer);
+               generateRegRegInstruction(CMP4RegReg, node, destComponentClassReg, objectClassReg, cg);
+               scratchRegisterManager->reclaimScratchRegister(objectClassReg);
+               }
+            else
+               {
+               instr = generateRegImmInstruction(CMP4RegImm4, node, destComponentClassReg, (uint32_t) ((uint64_t) objectClass), cg);
+               }
+            }
+         else
+            {
+            if (cg->needClassAndMethodPointerRelocations())
+               instr = generateRegImmInstruction(CMP4RegImm4, node, destComponentClassReg, (int32_t)(uintptr_t) objectClass, cg, TR_ClassPointer);
+            else
+               instr = generateRegImmInstruction(CMP4RegImm4, node, destComponentClassReg, (int32_t)(uintptr_t) objectClass, cg);
+            }
+
+         generateLabelInstruction(JE4, node, wrtbarLabel, cg);
+
+         // HCR in VMarrayStoreCHKEvaluator
+         if (cg->wantToPatchClassPointer(objectClass, node))
+            comp->getStaticHCRPICSites()->push_front(instr);
+         }
 
       // here we may have to convert the TR_OpaqueClassBlock into a J9Class pointer
       // and store it in destComponentClassReg
