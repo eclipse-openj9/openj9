@@ -216,7 +216,7 @@ protected:
 		
 		if (_extensions->rootScannerStatsEnabled) {
  			OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
- 			U_64 entityEndScanTime = omrtime_hires_clock();
+ 			uint64_t entityEndScanTime = omrtime_hires_clock();
 			
 			_env->_rootScannerStats._statsUsed = true;
 			_extensions->rootScannerStatsUsed = true;
@@ -224,7 +224,7 @@ protected:
  			if (_entityStartScanTime >= entityEndScanTime) {
  				_env->_rootScannerStats._entityScanTime[scannedEntity] += 1;
  			} else {
-				uintptr_t duration = entityEndScanTime - _entityIncrementStartTime;
+				uint64_t duration = entityEndScanTime - _entityIncrementStartTime;
 				_env->_rootScannerStats._entityScanTime[scannedEntity] += duration;	
 				if (duration > _env->_rootScannerStats._maxIncrementTime) {
 					_env->_rootScannerStats._maxIncrementTime = duration;
@@ -256,7 +256,7 @@ public:
 			OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
 			_entityIncrementEndTime = omrtime_hires_clock();
 			
-			uintptr_t duration = _entityIncrementEndTime - _entityIncrementStartTime;
+			uint64_t duration = _entityIncrementEndTime - _entityIncrementStartTime;
 			_env->_rootScannerStats._entityScanTime[_scanningEntity] += duration;	
 			if ((duration > _env->_rootScannerStats._maxIncrementTime) && (RootScannerEntity_None != _scanningEntity)) {
 				_env->_rootScannerStats._maxIncrementTime = duration;

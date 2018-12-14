@@ -43,7 +43,8 @@ if("${OS}" == "unknown" || !(validArch.contains(ARCH))) {
         timestamps {
             node("sw.tool.docker&&hw.arch.${ARCH}") {
                 try{
-                    currentBuild.description = "<a href=https://ci.eclipse.org/openj9/computer/${NODE_NAME}>${NODE_NAME}</a><br>"
+                    def TEMP_DESC = (currentBuild.description) ? currentBuild.description + "<br>" : ""
+                    currentBuild.description = TEMP_DESC + "<a href=https://ci.eclipse.org/openj9/computer/${NODE_NAME}>${NODE_NAME}</a><br>"
                     currentBuild.description += "Docker image:<a href=https://hub.docker.com/r/${REPOSITORY}>${REPOSITORY}</a>"
                     stage("Clone") {
                         checkout scm
