@@ -229,7 +229,8 @@ TR_J9VMBase::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMe
          TR::Compilation *comp = TR::comp();
          if (comp && comp->getOption(TR_UseSymbolValidationManager))
             {
-            if (!comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(result->containingClass())))
+            TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
+            if (!svm->isAlreadyValidated(result->containingClass()))
                return NULL;
             }
          }
@@ -1360,12 +1361,9 @@ TR_ResolvedRelocatableJ9Method::TR_ResolvedRelocatableJ9Method(TR_OpaqueMethodBl
          {
          if (comp->getOption(TR_UseSymbolValidationManager))
             {
-            if (!comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(aMethod)))
-               {
-               TR_ASSERT(false, "aMethod 0x%p should already be validated\n", aMethod);
-               comp->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in TR_ResolvedRelocatableJ9Method");
-               }
-            comp->getSymbolValidationManager()->addClassFromMethodRecord(containingClass(), aMethod);
+            TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
+            SVM_ASSERT_ALREADY_VALIDATED(svm, aMethod);
+            svm->addClassFromMethodRecord(containingClass(), aMethod);
             }
          else
             {
@@ -2204,7 +2202,8 @@ TR_ResolvedRelocatableJ9Method::createResolvedMethodFromJ9Method(TR::Compilation
             resolvedMethod = new (comp->trHeapMemory()) TR_ResolvedRelocatableJ9Method((TR_OpaqueMethodBlock *) j9method, _fe, comp->trMemory(), this, vTableSlot);
             if (comp->getOption(TR_UseSymbolValidationManager))
                {
-               if (!comp->getSymbolValidationManager()->verifySymbolHasBeenValidated(static_cast<void *>(resolvedMethod->containingClass())))
+               TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
+               if (!svm->isAlreadyValidated(resolvedMethod->containingClass()))
                   {
                   return NULL;
                   }

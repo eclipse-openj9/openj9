@@ -34,10 +34,54 @@
 #include "infra/TRlist.hpp"
 #include "env/TRMemory.hpp"
 #include "env/VMJ9.h"
+#include "exceptions/AOTFailure.hpp"
 #include "runtime/J9Runtime.hpp"
 
-#define SVM_ASSERT(manager, condition, format, ...) \
-   do { (manager->inHeuristicRegion() && condition) ? (void)0 : TR::fatal_assertion(__FILE__, __LINE__, #condition, format, ##__VA_ARGS__); } while(0)
+#define SVM_ASSERT_LOCATION_INNER(line) __FILE__ ":" #line
+#define SVM_ASSERT_LOCATION(line) SVM_ASSERT_LOCATION_INNER(line)
+
+#define SVM_ASSERT_IMPL(assertName, nonfatal, condition, condStr, format, ...)                  \
+   do                                                                                           \
+      {                                                                                         \
+      if (!(condition))                                                                         \
+         {                                                                                      \
+         if (!(nonfatal) && ::TR::SymbolValidationManager::assertionsAreFatal())                \
+            ::TR::fatal_assertion(__FILE__, __LINE__, condStr, "" format "", ##__VA_ARGS__);    \
+         else                                                                                   \
+            traceMsg(::TR::comp(), "" format "\n", ##__VA_ARGS__);                              \
+                                                                                                \
+         ::TR::comp()->failCompilation< ::J9::AOTSymbolValidationManagerFailure>(               \
+            SVM_ASSERT_LOCATION(__LINE__) ": " assertName " failed: " condStr);                 \
+         }                                                                                      \
+      }                                                                                         \
+   while (false)
+
+// For logic errors. This is a fatal assertion in debug mode or when
+// TR_svmAssertionsAreFatal is set in the environment. Otherwise it fails safe
+// by bailing out of the current compilation or AOT load.
+#define SVM_ASSERT(condition, format, ...) \
+   SVM_ASSERT_IMPL("SVM_ASSERT", false, condition, #condition, format, ##__VA_ARGS__)
+
+// For unhandled situations that are not necessarily a logic error, e.g.
+// exceeding limits. This is never fatal; it always bails out of the current
+// compilation or AOT load. Failure should be possible but very rare.
+#define SVM_ASSERT_NONFATAL(condition, format, ...) \
+   SVM_ASSERT_IMPL("SVM_ASSERT_NONFATAL", true, condition, #condition, format, ##__VA_ARGS__)
+
+#define SVM_ASSERT_ALREADY_VALIDATED(svm, symbol)        \
+   do                                                    \
+      {                                                  \
+      void *_0symbol = (symbol);                         \
+      SVM_ASSERT_IMPL(                                   \
+         "SVM_ASSERT_ALREADY_VALIDATED",                 \
+         false,                                          \
+         (svm)->isAlreadyValidated(_0symbol),            \
+         "isAlreadyValidated(" #symbol ")",              \
+         "%s %p should have already been validated",     \
+         #symbol,                                        \
+         _0symbol);                                      \
+      }                                                  \
+   while (false);
 
 namespace TR {
 
@@ -1033,7 +1077,10 @@ public:
    void* getSymbolFromID(uint16_t id);
    uint16_t getIDFromSymbol(void *symbol);
 
-   bool isAlreadyValidated(void *symbol) { return (getIDFromSymbol(symbol) != 0); }
+   bool isAlreadyValidated(void *symbol)
+      {
+      return inHeuristicRegion() || getIDFromSymbol(symbol) != NO_ID;
+      }
 
    bool addClassByNameRecord(TR_OpaqueClassBlock *clazz, TR_OpaqueClassBlock *beholder);
    bool addProfiledClassRecord(TR_OpaqueClassBlock *clazz);
@@ -1136,13 +1183,7 @@ public:
    void exitHeuristicRegion() { _heuristicRegion--; }
    bool inHeuristicRegion() { return (_heuristicRegion > 0); }
 
-   bool verifySymbolHasBeenValidated(void *symbol)
-      {
-      if (inHeuristicRegion())
-         return true;
-      else
-         return (getIDFromSymbol(symbol) != 0);
-      }
+   static bool assertionsAreFatal();
 
 private:
 
@@ -1160,7 +1201,6 @@ private:
    void *storeClassChain(TR_J9VMBase *fej9, TR_OpaqueClassBlock *clazz);
 
    bool validateSymbol(uint16_t idToBeValidated, void *validSymbol);
-
 
    /* Monotonically increasing IDs */
    uint16_t _symbolID;

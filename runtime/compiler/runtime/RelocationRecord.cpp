@@ -3958,22 +3958,12 @@ TR_RelocationRecordSymbolFromManager::activatePointer(TR_RelocationRuntime *relo
 
    if (needsUnloadAssumptions(symbolType))
       {
-      if (!clazz)
-         {
-         TR_ASSERT(false, "clazz must exist to add Unload Assumptions!\n");
-         reloRuntime->comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in activatePointer");
-         }
-
+      SVM_ASSERT(clazz != NULL, "clazz must exist to add Unload Assumptions!");
       reloTarget->addPICtoPatchPtrOnClassUnload(clazz, reloLocation);
       }
    if (needsRedefinitionAssumption(reloRuntime, reloLocation, clazz, symbolType))
       {
-      if (!clazz)
-         {
-         TR_ASSERT(false, "clazz must exist to add Redefinition Assumptions!\n");
-         reloRuntime->comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("Failed to validate in activatePointer");
-         }
-
+      SVM_ASSERT(clazz != NULL, "clazz must exist to add Redefinition Assumptions!");
       createClassRedefinitionPicSite((void *)reloPrivateData->_symbol, (void *) reloLocation, sizeof(uintptrj_t), false, reloRuntime->comp()->getMetadataAssumptionList());
       reloRuntime->comp()->setHasClassRedefinitionAssumptions();
       }
