@@ -113,7 +113,7 @@ RUN rm /usr/bin/c++ /usr/bin/cc \
 # Install GCC-7.3.1
 RUN cd /usr/local \
   && wget -O gcc-7.tar.xz "https://ci.adoptopenjdk.net/userContent/gcc/gcc730+ccache.ppc64le.tar.xz" \
-  && tar -xJf gcc-7.tar.xz \
+  && tar -xJf gcc-7.tar.xz --strip-components=1 \
   && rm -rf gcc-7.tar.xz
 
 #Building and setting up git version 2.5.3
