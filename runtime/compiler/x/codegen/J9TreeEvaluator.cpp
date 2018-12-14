@@ -7912,27 +7912,12 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
       // -------------------------------------------------------------------------
 
       TR_OpaqueClassBlock *objectClass = fej9->getSystemClassFromClassName("java/lang/Object", 16);
+      objectClass = fej9->getArrayClassFromComponentClass(objectClass);
 
       if (TR::Compiler->target.is64Bit())
          {
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
          TR_ASSERT((((uintptr_t)objectClass) >> 32) == 0, "TR_OpaqueClassBlock must fit on 32 bits when using class pointer compression");
          instr = generateRegImmInstruction(CMP4RegImm4, node, destComponentClassReg, (uint32_t) ((uint64_t) objectClass), cg);
-
-#else // 64 bit but no class pointer compression
-
-         if ((uintptrj_t)objectClass <= (uintptrj_t)0x7fffffff)
-            {
-            instr = generateRegImmInstruction(CMP8RegImm4, node, destComponentClassReg, (uintptr_t) objectClass, cg);
-            }
-         else
-            {
-            TR::Register *objectClassReg = scratchRegisterManager->findOrCreateScratchRegister();
-            instr = generateRegImm64Instruction(MOV8RegImm64, node, objectClassReg, (uintptr_t) objectClass, cg);
-            generateRegRegInstruction(CMP8RegReg, node, destComponentClassReg, objectClassReg, cg);
-            scratchRegisterManager->reclaimScratchRegister(objectClassReg);
-            }
-#endif
          }
       else
          {
@@ -8006,51 +7991,6 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
       generateLabelInstruction(JE4, node, wrtbarLabel, cg);
 
       instr = NULL;
-      /*
-      TR::Instruction *instr;
-
-
-      // -------------------------------------------------------------------------
-      //
-      // If the component type is java.lang.Object then the store always succeeds.
-      //
-      // -------------------------------------------------------------------------
-
-      TR_OpaqueClassBlock *objectClass = fej9->getSystemClassFromClassName("java/lang/Object", 16);
-
-      if (TR::Compiler->target.is64Bit())
-         {
-#ifdef J9VM_INTERP_COMPRESSED_OBJECT_HEADER
-         TR_ASSERT((((uintptr_t)objectClass) >> 32) == 0, "TR_OpaqueClassBlock must fit on 32 bits when using class pointer compression");
-         instr = generateRegImmInstruction(CMP4RegImm4, node, destComponentClassReg, (uint32_t) ((uint64_t) objectClass), cg);
-
-#else // 64 bit but no class pointer compression
-
-         if ((uintptrj_t)objectClass <= (uintptrj_t)0x7fffffff)
-            {
-            instr = generateRegImmInstruction(CMP8RegImm4, node, destComponentClassReg, (uintptr_t) objectClass, cg);
-            }
-         else
-            {
-            TR::Register *objectClassReg = scratchRegisterManager->findOrCreateScratchRegister();
-            instr = generateRegImm64Instruction(MOV8RegImm64, node, objectClassReg, (uintptr_t) objectClass, cg);
-            generateRegRegInstruction(CMP8RegReg, node, destComponentClassReg, objectClassReg, cg);
-            scratchRegisterManager->reclaimScratchRegister(objectClassReg);
-            }
-#endif
-         }
-      else
-         {
-         instr = generateRegImmInstruction(CMP4RegImm4, node, destComponentClassReg, (int32_t)(uintptr_t) objectClass, cg);
-         }
-
-      generateLabelInstruction(JE4, node, wrtbarLabel, cg);
-
-      // HCR in VMarrayStoreCHKEvaluator
-      if (cg->wantToPatchClassPointer(objectClass, node))
-         comp->getStaticHCRPICSites()->push_front(instr);
-      */
-
 
       // ---------------------------------------------
       //
