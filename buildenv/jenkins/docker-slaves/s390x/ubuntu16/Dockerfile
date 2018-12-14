@@ -65,6 +65,7 @@ RUN apt-get update \
     libfreetype6-dev \
     libx11-dev \
     libxext-dev \
+    libxrandr-dev \
     libxrender-dev \
     libxt-dev \
     libxtst-dev \
