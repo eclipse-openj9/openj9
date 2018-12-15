@@ -380,10 +380,12 @@ win_x86:
 osx_x86-64_cmprssptrs:
   boot_jdk:
     8: '/Users/jenkins/bootjdks/adoptojdk-java-8'
-    11: '/Users/jenkins/bootjdks/adoptojdk-java-10'
+    11: '/Users/jenkins/bootjdks/adoptojdk-java-11'
+    next: '/Users/jenkins/bootjdks/adoptojdk-java-11'
   release:
     8: 'macosx-x86_64-normal-server-release'
     11: 'macosx-x86_64-normal-server-release'
+    next: 'macosx-x86_64-server-release'
   extra_configure_options:
     8: '--with-xcode-path=/Users/jenkins/Xcode4/Xcode.app --with-openj9-cc=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --with-openj9-cxx=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ --with-openj9-developer-dir=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer'
     11: '--with-openssl=fetched --enable-openssl-bundling'
@@ -393,9 +395,11 @@ osx_x86-64_cmprssptrs:
     build:
       8: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_11'
       11: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
+      next: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
     test:
       8: 'hw.arch.x86 && sw.os.osx'
       11: 'hw.arch.x86 && sw.os.osx'
+      next: 'hw.arch.x86 && sw.os.osx'
   build_env:
     vars:
       8: 'MACOSX_DEPLOYMENT_TARGET=10.9.0 SDKPATH=/Users/jenkins/Xcode4/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk'
@@ -405,19 +409,23 @@ osx_x86-64_cmprssptrs:
 osx_x86-64:
   boot_jdk:
     8: '/Users/jenkins/bootjdks/adoptojdk-java-8'
-    11: '/Users/jenkins/bootjdks/adoptojdk-java-10'
+    11: '/Users/jenkins/bootjdks/adoptojdk-java-11'
+    next: '/Users/jenkins/bootjdks/adoptojdk-java-11'
   release:
     8: 'macosx-x86_64-normal-server-release'
     11: 'macosx-x86_64-normal-server-release'
+    next: 'macosx-x86_64-server-release'
   extra_configure_options:
     8: '--with-noncompressedrefs --with-xcode-path=/Users/jenkins/Xcode4/Xcode.app --with-openj9-cc=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --with-openj9-cxx=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ --with-openj9-developer-dir=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer'
     11: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
+    next: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
   freemarker: '/Users/jenkins/freemarker.jar'
   openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
   node_labels:
     build:
       8: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_11'
       11: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
+      next: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
     test:
       8: 'hw.arch.x86 && sw.os.osx'
       11: 'hw.arch.x86 && sw.os.osx'
