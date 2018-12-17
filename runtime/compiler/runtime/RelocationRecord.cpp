@@ -889,10 +889,32 @@ TR_RelocationRecordWithInlinedSiteIndex::ignore(TR_RelocationRuntime *reloRuntim
    {
    J9Method *method = (J9Method *)getInlinedSiteMethod(reloRuntime);
 
-   // -1 means this inlined method isn't active, so can ignore relocations associated with it
-   if (method == (J9Method *)(-1))
-      return true;
+   if (method == reinterpret_cast<J9Method *>(-1))
+      {
+      if (reloRuntime->comp()->getOption(TR_UseSymbolValidationManager))
+         {
+         /* With the SVM, it isn't possible for the method to be equal to -1
+          * because:
+          *
+          * 1. The shape of the class of the method is guaranteed by the validation
+          *    records, which are processed first.
+          * 2. The inlined table will be populated regardless of whether the guard
+          *    for the inlined site has to be patched.
+          */
+         TR_ASSERT(false, "inlined site method should not be -1!\n");
+         reloRuntime->comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("getInlinedSiteMethod returned method == -1");
+         }
+      else
+         {
+         // -1 means this inlined method isn't active, so can ignore relocations associated with it
+         return true;
+         }
+      }
 
+   /* It is safe to return true here because if classes were unloaded, then
+    * the compilation will be aborted and the potentially unrelocated sections
+    * of code will never be executed.
+    */
    if (isUnloadedInlinedMethod(method))
       return true;
 
@@ -1513,7 +1535,8 @@ TR_RelocationRecordDataAddress::findDataAddress(TR_RelocationRuntime *reloRuntim
          {
          ramMethod = reloRuntime->method();
          }
-      address = (uint8_t *)jitCTResolveStaticFieldRefWithMethod(vmThread, ramMethod, cpindex, false, &fieldShape);
+      if (ramMethod && (ramMethod != reinterpret_cast<J9Method *>(-1)))
+         address = (uint8_t *)jitCTResolveStaticFieldRefWithMethod(vmThread, ramMethod, cpindex, false, &fieldShape);
       }
 
    if (address == NULL)
@@ -2141,31 +2164,37 @@ TR_RelocationRecordInlinedMethod::fixInlinedSiteInfo(TR_RelocationRuntime *reloR
 void
 TR_RelocationRecordInlinedMethod::preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget)
    {
-   J9Method *ramMethod = NULL;
-   bool failValidation = true;
+   TR_OpaqueMethodBlock *ramMethod = NULL;
+   bool inlinedSiteIsValid = inlinedSiteValid(reloRuntime, reloTarget, &ramMethod);
 
-   if (validateClassesSame(reloRuntime, reloTarget, ((TR_OpaqueMethodBlock **)&ramMethod)) &&
-       !reloRuntime->options()->getOption(TR_DisableCHOpts))
+   if (reloRuntime->comp()->getOption(TR_UseSymbolValidationManager) && !ramMethod)
+      {
+      TR_ASSERT(false, "inlinedSiteValid should not return a NULL method when using the SVM!\n");
+      reloRuntime->comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("inlinedSiteValid returned NULL method");
+      }
+
+   if (ramMethod)
       {
       // If validate passes, no patching needed since the fall-through path is the inlined code
-      fixInlinedSiteInfo(reloRuntime, reloTarget, (TR_OpaqueMethodBlock *) ramMethod);
-      failValidation = false;
+      fixInlinedSiteInfo(reloRuntime, reloTarget,ramMethod);
       }
 
    TR_RelocationRecordInlinedMethodPrivateData *reloPrivateData = &(privateData()->inlinedMethod);
-   reloPrivateData->_ramMethod = (TR_OpaqueMethodBlock *) ramMethod;
-   reloPrivateData->_failValidation = failValidation;
-   RELO_LOG(reloRuntime->reloLogger(), 5, "\tpreparePrivateData: ramMethod %p failValidation %d\n", ramMethod, failValidation);
+   reloPrivateData->_ramMethod = ramMethod;
+   reloPrivateData->_failValidation = !inlinedSiteIsValid;
+   RELO_LOG(reloRuntime->reloLogger(), 5, "\tpreparePrivateData: ramMethod %p inlinedSiteIsValid %d\n", ramMethod, inlinedSiteIsValid);
    }
 
 
 bool
-TR_RelocationRecordInlinedMethod::validateClassesSame(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, TR_OpaqueMethodBlock **theMethod)
+TR_RelocationRecordInlinedMethod::inlinedSiteValid(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, TR_OpaqueMethodBlock **theMethod)
    {
+   J9Method *currentMethod = NULL;
+   bool inlinedSiteIsValid = true;
    J9Method *callerMethod = (J9Method *) getInlinedSiteCallerMethod(reloRuntime);
    if (callerMethod == (J9Method *)-1)
       {
-      RELO_LOG(reloRuntime->reloLogger(), 6, "\tvalidateClassesSame: caller failed relocation so cannot validate inlined method\n");
+      RELO_LOG(reloRuntime->reloLogger(), 6, "\tinlinedSiteValid: caller failed relocation so cannot validate inlined method\n");
       *theMethod = NULL;
       return false;
       }
@@ -2174,30 +2203,22 @@ TR_RelocationRecordInlinedMethod::validateClassesSame(TR_RelocationRuntime *relo
    J9UTF8 *callerMethodName;
    J9UTF8 *callerMethodSignature;
    getClassNameSignatureFromMethod(callerMethod, callerClassName, callerMethodName, callerMethodSignature);
-   RELO_LOG(reloRuntime->reloLogger(), 6, "\tvalidateClassesSame: caller method %.*s.%.*s%.*s\n",
+   RELO_LOG(reloRuntime->reloLogger(), 6, "\tinlinedSiteValid: caller method %.*s.%.*s%.*s\n",
                                               callerClassName->length, callerClassName->data,
                                               callerMethodName->length, callerMethodName->data,
                                               callerMethodSignature->length, callerMethodSignature->data);
 
-   TR::SimpleRegex * regex = reloRuntime->options()->getDisabledInlineSites();
-   if (regex && TR::SimpleRegex::match(regex, inlinedSiteIndex(reloTarget)))
-      {
-      RELO_LOG(reloRuntime->reloLogger(), 6, "\tvalidateClassesSame: inlined site forcibly disabled by options\n");
-      *theMethod = NULL;
-      return false;
-      }
-
    J9ConstantPool *cp = NULL;
    if (!isUnloadedInlinedMethod(callerMethod))
       cp = J9_CP_FROM_METHOD(callerMethod);
-   RELO_LOG(reloRuntime->reloLogger(), 6, "\tvalidateClassesSame: cp %p\n", cp);
+   RELO_LOG(reloRuntime->reloLogger(), 6, "\tinlinedSiteValid: cp %p\n", cp);
 
-   if (cp)
+   if (!cp)
       {
-      J9JavaVM *javaVM = reloRuntime->jitConfig()->javaVM;
-      void *romClass = reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache((void *) romClassOffsetInSharedCache(reloTarget));
-      J9Method *currentMethod;
-
+      inlinedSiteIsValid = false;
+      }
+   else
+      {
       TR_RelocationRecordInlinedMethodPrivateData *reloPrivateData = &(privateData()->inlinedMethod);
 
       if (reloRuntime->comp()->getOption(TR_UseSymbolValidationManager))
@@ -2208,6 +2229,7 @@ TR_RelocationRecordInlinedMethod::validateClassesSame(TR_RelocationRuntime *relo
          uint16_t methodID = (uint16_t)(data & 0xFFFF);
          uint16_t receiverClassID = (uint16_t)((data >> 16) & 0xFFFF);
 
+         // currentMethod is guaranteed to not be NULL because of the SVM
          currentMethod = (J9Method *)reloRuntime->comp()->getSymbolValidationManager()->getSymbolFromID(methodID);
          reloPrivateData->_receiverClass = (TR_OpaqueClassBlock *)reloRuntime->comp()->getSymbolValidationManager()->getSymbolFromID(receiverClassID);
 
@@ -2217,67 +2239,70 @@ TR_RelocationRecordInlinedMethod::validateClassesSame(TR_RelocationRuntime *relo
                                                                                                 (TR_OpaqueMethodBlock *)currentMethod,
                                                                                                 NULL);
             if (calleeResolvedMethod->virtualMethodIsOverridden())
-               currentMethod = NULL;
+               inlinedSiteIsValid = false;
             }
          }
       else
          {
          currentMethod = (J9Method *) getMethodFromCP(reloRuntime, cp, cpIndex(reloTarget), (TR_OpaqueMethodBlock *) callerMethod);
+         if (!currentMethod)
+            inlinedSiteIsValid = false;
          }
 
-      if (currentMethod != NULL &&
+      if (inlinedSiteIsValid &&
           (reloRuntime->fej9()->isAnyMethodTracingEnabled((TR_OpaqueMethodBlock *) currentMethod) ||
            reloRuntime->fej9()->canMethodEnterEventBeHooked() ||
            reloRuntime->fej9()->canMethodExitEventBeHooked()))
          {
-         RELO_LOG(reloRuntime->reloLogger(), 6, "\tvalidateClassesSame: target may need enter/exit tracing so disabling inline site\n");
-         currentMethod = NULL;
+         RELO_LOG(reloRuntime->reloLogger(), 6, "\tinlinedSiteValid: target may need enter/exit tracing so disabling inline site\n");
+         inlinedSiteIsValid = false;
          }
 
-      if (currentMethod)
+      if (inlinedSiteIsValid)
          {
          /* Calculate the runtime rom class value from the code cache */
          void *compileRomClass = reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache((void *) romClassOffsetInSharedCache(reloTarget));
          void *currentRomClass = (void *)J9_CLASS_FROM_METHOD(currentMethod)->romClass;
 
-         RELO_LOG(reloRuntime->reloLogger(), 6, "\tvalidateClassesSame: compileRomClass %p currentRomClass %p\n", compileRomClass, currentRomClass);
+         RELO_LOG(reloRuntime->reloLogger(), 6, "\tinlinedSiteValid: compileRomClass %p currentRomClass %p\n", compileRomClass, currentRomClass);
          if (compileRomClass == currentRomClass)
             {
-            //unresolvedButStillHaveRightMethodCounter++;
-            *theMethod = (TR_OpaqueMethodBlock *)currentMethod;
             J9UTF8 *className;
             J9UTF8 *methodName;
             J9UTF8 *methodSignature;
             getClassNameSignatureFromMethod(currentMethod, className, methodName, methodSignature);
-            RELO_LOG(reloRuntime->reloLogger(), 6, "\tvalidateClassesSame: inlined method %.*s.%.*s%.*s\n",
+            RELO_LOG(reloRuntime->reloLogger(), 6, "\tinlinedSiteValid: inlined method %.*s.%.*s%.*s\n",
                                                        className->length, className->data,
                                                        methodName->length, methodName->data,
                                                        methodSignature->length, methodSignature->data);
-            //RELO_LOG(reloRuntime->reloLogger(), 6, "\tvalidateClassesSame: inlined method %.*s.%.*s%.*s\n",
-            //                                           J9UTF8_LENGTH(className), J9UTF8_DATA(className),
-            //                                           J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName),
-            //                                           J9UTF8_LENGTH(methodSignature), J9UTF8_DATA(methodSignature));
-            return true;
             }
          else
             {
-            //stillNoMatchingClassCounter++;
+            inlinedSiteIsValid = false;
+            if (reloRuntime->comp()->getOption(TR_UseSymbolValidationManager))
+               {
+               TR_ASSERT(false, "compileRomClass and currentRomClass should not be different!\n");
+               reloRuntime->comp()->failCompilation<J9::AOTSymbolValidationManagerFailure>("compileRomClass and currentRomClass are different");
+               }
             }
          }
-      else
-         {
-         //reallyUnresolvedCounter++;
-         }
-
       }
-   else
+
+   /* Even if the inlined site is disabled, the inlined site table in the metadata
+    * should still be populated
+    */
+   TR::SimpleRegex * regex = reloRuntime->options()->getDisabledInlineSites();
+   if (regex && TR::SimpleRegex::match(regex, inlinedSiteIndex(reloTarget)))
       {
-      //reallyUnresolvedCounter++;
+      RELO_LOG(reloRuntime->reloLogger(), 6, "\tinlinedSiteValid: inlined site forcibly disabled by options\n");
+      inlinedSiteIsValid = false;
       }
 
-   RELO_LOG(reloRuntime->reloLogger(), 6, "\tvalidateClassesSame: not same\n");
-   *theMethod = NULL;
-   return false;
+   if (!inlinedSiteIsValid)
+      RELO_LOG(reloRuntime->reloLogger(), 6, "\tinlinedSiteValid: not valid\n");
+
+   *theMethod = reinterpret_cast<TR_OpaqueMethodBlock *>(currentMethod);
+   return inlinedSiteIsValid;
    }
 
 int32_t
