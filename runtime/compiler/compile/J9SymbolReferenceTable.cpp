@@ -1269,6 +1269,13 @@ static bool isSignatureTypeBool(const char *fieldSignature, int32_t len)
    return len == 1 && fieldSignature[0] == 'Z';
    }
 
+static bool isSignatureReturnTypeBool(const char *methodSignature, int32_t len)
+   {
+   TR_ASSERT(len > 1, "Method signature is unexpectedly short %d", len);
+   // Method signature must end with ")Z" to have a boolean result type
+   return len > 1 && (')' == methodSignature[len-2]) && ('Z' == methodSignature[len-1]);
+   }
+
 bool
 J9::SymbolReferenceTable::isFieldTypeBool(TR::SymbolReference *symRef)
    {
@@ -1285,6 +1292,16 @@ J9::SymbolReferenceTable::isStaticTypeBool(TR::SymbolReference *symRef)
    const char *fieldSignature = symRef->getOwningMethod(comp())->staticSignatureChars(symRef->getCPIndex(), len);
    dumpOptDetails(comp(), "got static signature as %s\n", fieldSignature);
    return isSignatureTypeBool(fieldSignature, len);
+   }
+
+bool
+J9::SymbolReferenceTable::isReturnTypeBool(TR::SymbolReference *symRef)
+   {
+   TR_Method *method = symRef->getSymbol()->castToResolvedMethodSymbol()->getMethod();
+   char *methodSignature = method->signatureChars();
+   const int32_t len = method->signatureLength();
+   dumpOptDetails(comp(), "got method signature as %.*s\n", len, methodSignature);
+   return isSignatureReturnTypeBool(methodSignature, len);
    }
 
 static bool parmSlotCameFromExpandingAnArchetypeArgPlaceholder(int32_t slot, TR::ResolvedMethodSymbol *sym, TR_Memory *mem)
