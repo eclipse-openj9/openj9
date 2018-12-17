@@ -36,4 +36,3 @@
    TR::CodeGenPhase::performSplitWarmAndColdBlocksPhase,
    TR::CodeGenPhase::performIdentifyUnneededByteConvsPhase,                                  //IdentifyUnneededByteConvsPhase
    TR::CodeGenPhase::performLateSequentialConstantStoreSimplificationPhase,                  //LateSequentialConstantStoreSimplificationPhase
-   TR::CodeGenPhase::performFoldSignCleaningIntoStorePhase,                                  //FoldSignCleaningIntoStorePhase

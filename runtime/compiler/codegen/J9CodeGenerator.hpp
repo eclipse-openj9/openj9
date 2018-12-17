@@ -154,15 +154,10 @@ public:
    uint32_t getStackLimitOffset() {return _stackLimitOffsetInMetaData;}
    uint32_t setStackLimitOffset(uint32_t o) {return (_stackLimitOffsetInMetaData = o);}
 
-   // e.g. one or more pdclean nodes are present
-   bool hasSignCleans() { return _flags4.testAny(HasSignCleans);}
-   void setHasSignCleans() { _flags4.set(HasSignCleans);}
-
    bool alwaysGeneratesAKnownCleanSign(TR::Node *node) { return false; } // no virt
    bool alwaysGeneratesAKnownPositiveCleanSign(TR::Node *node) { return false; } // no virt
    TR_RawBCDSignCode alwaysGeneratedSign(TR::Node *node) { return raw_bcd_sign_unknown; } // no virt
 
-   void foldSignCleaningIntoStore();
    void swapChildrenIfNeeded(TR::Node *store, char *optDetails);
 
    TR::AutomaticSymbol *allocateVariableSizeSymbol(int32_t size);

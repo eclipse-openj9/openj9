@@ -58,7 +58,6 @@
 #include "optimizer/EscapeAnalysis.hpp"
 #include "optimizer/DataAccessAccelerator.hpp"
 #include "optimizer/IsolatedStoreElimination.hpp"
-#include "optimizer/RedundantBCDSignElimination.hpp"
 #include "optimizer/LoopAliasRefiner.hpp"
 #include "optimizer/MonitorElimination.hpp"
 #include "optimizer/NewInitialization.hpp"
@@ -687,11 +686,11 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // cleanup at the end
    { OMR::localCSE,                                  OMR::IfEnabled                  }, // common up expressions for sunk stores
    { OMR::treeSimplification,                        OMR::IfEnabledMarkLastRun       }, // cleanup the trees after sunk store and localCSE
-   
+
    /** \breif
     *      This optimization is performance critical on z Systems. On z Systems a literal pool register is blocked off
     *      by default at the start of the compilation since materializing this address could be expensive depending on
-    *      the architecture level we are executing on. This optimization pass validates support for dynamically 
+    *      the architecture level we are executing on. This optimization pass validates support for dynamically
     *      materializing the literal pool address and frees up the literal pool register for register allocation.
    */
    { OMR::dynamicLiteralPool,                        OMR::IfNotProfiling             },
@@ -793,8 +792,6 @@ J9::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *method
       new (comp->allocator()) TR::OptimizationManager(self(), TR_AllocationSinking::create, OMR::allocationSinking);
    _opts[OMR::samplingJProfiling] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_JitProfiler::create, OMR::samplingJProfiling);
-   _opts[OMR::redundantBCDSignElimination] =
-      new (comp->allocator()) TR::OptimizationManager(self(), TR_RedundantBCDSignElimination::create, OMR::redundantBCDSignElimination);
    _opts[OMR::SPMDKernelParallelization] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_SPMDKernelParallelizer::create, OMR::SPMDKernelParallelization);
    _opts[OMR::trivialDeadBlockRemover] =
