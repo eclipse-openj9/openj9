@@ -1181,14 +1181,25 @@ void TR::AMD64JNILinkage::cleanupReturnValue(
       // type so that we sign and zero extend the narrower integer return types properly.
       //
       TR_X86OpCodes op;
+      TR::SymbolReference      *callSymRef = callNode->getSymbolReference();
       TR::ResolvedMethodSymbol *callSymbol = callNode->getSymbol()->castToResolvedMethodSymbol();
       TR_ResolvedMethod *resolvedMethod = callSymbol->getResolvedMethod();
 
       bool isUnsigned = resolvedMethod->returnTypeIsUnsigned();
+
       switch (resolvedMethod->returnType())
          {
          case TR::Int8:
-            if (isUnsigned)
+            if (comp()->getSymRefTab()->isReturnTypeBool(callSymRef))
+               {
+               // For bool return type, must check whether value returned by
+               // JNI is zero (false) or non-zero (true) to yield Java result
+               generateRegRegInstruction(TEST1RegReg, callNode,
+                     linkageReturnReg, linkageReturnReg, cg());
+               generateRegInstruction(SETNE1Reg, callNode, linkageReturnReg, cg());
+               op = TR::Compiler->target.is64Bit() ? MOVZXReg8Reg1 : MOVZXReg4Reg1;
+               }
+            else if (isUnsigned)
                {
                op = TR::Compiler->target.is64Bit() ? MOVZXReg8Reg1 : MOVZXReg4Reg1;
                }
