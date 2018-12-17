@@ -5872,7 +5872,8 @@ TR_J9ByteCodeIlGenerator::loadInstance(int32_t cpIndex)
       }
 
    TR::Node * load, *dummyLoad;
-   dummyLoad = load = TR::Node::createWithSymRef(comp()->il.opCodeForIndirectLoad(type), 1, 1, address, symRef);
+   TR::ILOpCodes op = _generateReadBarriersForFieldWatch ? comp()->il.opCodeForIndirectReadBarrier(type): comp()->il.opCodeForIndirectLoad(type);
+   dummyLoad = load = TR::Node::createWithSymRef(op, 1, 1, address, symRef);
 
    // loading cleanroom BigDecimal long field?
    // performed only when DFP isn't disabled, and the target
@@ -5909,7 +5910,7 @@ TR_J9ByteCodeIlGenerator::loadInstance(int32_t cpIndex)
       }
    else if (!address->isNonNull())
       treeTopNode = genNullCheck(load);
-   else if (symbol->isVolatile())
+   else if (symbol->isVolatile() || _generateReadBarriersForFieldWatch)
       treeTopNode = load;
 
    if (treeTopNode)
@@ -6226,7 +6227,13 @@ TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
    else
       {
       TR::Node * load;
-      if (cg()->getAccessStaticsIndirectly() && isResolved && type != TR::Address && (!comp()->compileRelocatableCode() || comp()->getOption(TR_UseSymbolValidationManager)))
+      if (_generateReadBarriersForFieldWatch)
+         {
+         void * staticClass = method()->classOfStatic(cpIndex);
+         loadSymbol(TR::loadaddr, symRefTab()->findOrCreateClassSymbol(_methodSymbol, cpIndex, staticClass, true /* cpIndexOfStatic */));
+         load = TR::Node::createWithSymRef(comp()->il.opCodeForDirectReadBarrier(type), 1, pop(), NULL, symRef);
+         }
+      else if (cg()->getAccessStaticsIndirectly() && isResolved && type != TR::Address && (!comp()->compileRelocatableCode() || comp()->getOption(TR_UseSymbolValidationManager)))
          {
          TR::Node * statics = TR::Node::createWithSymRef(TR::loadaddr, 0, symRefTab()->findOrCreateClassStaticsSymbol(_methodSymbol, cpIndex));
          load = TR::Node::createWithSymRef(comp()->il.opCodeForIndirectLoad(type), 1, 1, statics, symRef);
@@ -6237,7 +6244,7 @@ TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
       TR::Node * treeTopNode = 0;
       if (symRef->isUnresolved())
          treeTopNode = genResolveCheck(load);
-      else if (symbol->isVolatile())
+      else if (symbol->isVolatile() || _generateReadBarriersForFieldWatch)
          treeTopNode = load;
 
       if (treeTopNode)
@@ -7219,9 +7226,9 @@ TR_J9ByteCodeIlGenerator::storeInstance(int32_t cpIndex)
    // code to handle volatiles moved to CodeGenPrep
    //
    TR::Node * node;
-   if (type == TR::Address && _generateWriteBarriers)
+   if ((type == TR::Address && _generateWriteBarriersForGC) || _generateWriteBarriersForFieldWatch)
       {
-      node = TR::Node::createWithSymRef(TR::awrtbari, 3, 3, addressNode, value, parentObject, symRef);
+      node = TR::Node::createWithSymRef(comp()->il.opCodeForIndirectWriteBarrier(type), 3, 3, addressNode, value, parentObject, symRef);
       }
    else
       {
@@ -7357,10 +7364,10 @@ TR_J9ByteCodeIlGenerator::storeStatic(int32_t cpIndex)
    if (type == TR::Int8 && symRefTab()->isStaticTypeBool(symRef))
       value = TR::Node::create(TR::iand, 2, value, TR::Node::create(TR::iconst, 0, 1));
 
-   if (type == TR::Address && _generateWriteBarriers)
+   if ((type == TR::Address && _generateWriteBarriersForGC) || _generateWriteBarriersForFieldWatch)
       {
       void * staticClass = method()->classOfStatic(cpIndex);
-      loadSymbol(TR::loadaddr, symRefTab()->findOrCreateClassSymbol(_methodSymbol, cpIndex, staticClass, true));
+      loadSymbol(TR::loadaddr, symRefTab()->findOrCreateClassSymbol(_methodSymbol, cpIndex, staticClass, true /* cpIndexOfStatic */));
 
       if (TR::Compiler->cls.classesOnHeap())
          {
@@ -7369,7 +7376,7 @@ TR_J9ByteCodeIlGenerator::storeStatic(int32_t cpIndex)
          push(node);
          }
 
-      node = TR::Node::createWithSymRef(TR::awrtbar, 2, 2, value, pop(), symRef);
+      node = TR::Node::createWithSymRef(comp()->il.opCodeForDirectWriteBarrier(type), 2, 2, value, pop(), symRef);
       }
    else if (symbol->isVolatile() && type == TR::Int64 && !symRef->isUnresolved() && TR::Compiler->target.is32Bit() &&
             !comp()->cg()->getSupportsInlinedAtomicLongVolatiles() && 0)
