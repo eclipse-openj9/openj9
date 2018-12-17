@@ -377,7 +377,9 @@ private:
    //
    bool                              _suppressSpineChecks;
 
-   bool                              _generateWriteBarriers;
+   bool                              _generateWriteBarriersForGC;
+   bool                              _generateWriteBarriersForFieldWatch;
+   bool                              _generateReadBarriersForFieldWatch;
    vcount_t                           _blockAddedVisitCount;
    bool                              _noLookahead;
    bool                              _thisChanged;
