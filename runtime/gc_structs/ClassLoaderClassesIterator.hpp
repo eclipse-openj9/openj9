@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,11 +56,12 @@ private:
 	J9HashTableState _walkState; /**< an opaque state structure used by VM helpers */
 	GC_ClassLoaderSegmentIterator _vmSegmentIterator; /**< used for finding anonymous classes for the anonymous loader */
 	GC_VMClassSlotIterator _vmClassSlotIterator; /**< used for finding system classes for the system loader */
-	enum {
+	enum ScanModes {
 		TABLE_CLASSES,
 		SYSTEM_CLASSES,
 		ANONYMOUS_CLASSES
-	} _mode; /**< are we iterating over the class table or system classes? */
+	};
+	ScanModes _mode; /**< indicate type of classes to be iterated */
 	
 protected:
 public:
