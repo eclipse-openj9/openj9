@@ -143,8 +143,6 @@ J9::CodeGenPhase::getName(TR::CodeGenPhase::PhaseValue phase)
          return "SplitWarmAndColdBlocks";
       case IdentifyUnneededByteConvsPhase:
 	      return "IdentifyUnneededByteConvsPhase";
-      case FoldSignCleaningIntoStorePhase:
-         return "FoldSignCleaningIntoStore";
       case LateSequentialConstantStoreSimplificationPhase:
          return "LateSequentialConstantStoreSimplification";
       default:
@@ -156,14 +154,6 @@ void
 J9::CodeGenPhase::performIdentifyUnneededByteConvsPhase(TR::CodeGenerator * cg, TR::CodeGenPhase * phase)
    {
    cg->identifyUnneededByteConvNodes();
-   }
-
-void
-J9::CodeGenPhase::performFoldSignCleaningIntoStorePhase(TR::CodeGenerator * cg, TR::CodeGenPhase * phase)
-   {
-   TR::Compilation *comp = cg->comp();
-   if (cg->hasSignCleans() && comp->getOptLevel() > noOpt && comp->getOption(TR_EnableLateCleanFolding))
-      cg->foldSignCleaningIntoStore();
    }
 
 void

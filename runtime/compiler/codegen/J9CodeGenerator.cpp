@@ -4028,37 +4028,6 @@ J9::CodeGenerator::allocateLinkageRegisters()
       }
    }
 
-#define OPT_DETAILS_CLEAN "O^O CLEAN FOLDING: "
-// Having the pdstore also do a clean results in better code as the sign cleaning instruction (on z at least) also moves data.
-// It is done late at > noOpt so a side-effect (the cleaning) is not added to the the store operation.
-// Having a side-effect like this means several optimizations, such as local and global copy propagation and value numbering,
-// need to handle this cleaning side-effect.
-// Cannot do this during lowerTrees because the pass in lowerTrees that adds skipCopyOnStore/skipCopyOnLoad flags is sensitive
-// to referenceCounts and foldSignCleaningIntoStore is changing the number of node references
-//
-void
-J9::CodeGenerator::foldSignCleaningIntoStore()
-   {
-   LexicalTimer foldTimer("foldSignCleaning", self()->comp()->phaseTimer());
-   for(TR::TreeTop * tt = self()->comp()->getStartTree(); tt; tt = tt->getNextTreeTop())
-      {
-      TR::Node *node = tt->getNode();
-      if (node->getOpCode().isPackedStore() &&
-          node->getValueChild()->getOpCode().isSimpleBCDClean() &&
-          node->getValueChild()->getDecimalPrecision() >= node->getValueChild()->getFirstChild()->getDecimalPrecision() && // don't lose truncation side effect
-          node->getDecimalPrecision() <= TR::DataType::getMaxPackedDecimalPrecision() &&
-          performTransformation(self()->comp(), "%sFold %s [%s] into store by setting CleanSignInPDStoreEvaluator flag on %s [%s]\n",
-            OPT_DETAILS_CLEAN,node->getValueChild()->getOpCode().getName(),node->getValueChild()->getName(self()->comp()->getDebug()),node->getOpCode().getName(),node->getName(self()->comp()->getDebug())))
-         {
-         node->setCleanSignInPDStoreEvaluator(true);
-         TR::Node *valueChild = node->getValueChild();
-         valueChild->getFirstChild()->incReferenceCount();
-         valueChild->recursivelyDecReferenceCount();
-         valueChild = node->setValueChild(valueChild->getFirstChild());
-         self()->swapChildrenIfNeeded(node, OPT_DETAILS_CLEAN);
-         }
-      }
-   }
 
 void
 J9::CodeGenerator::swapChildrenIfNeeded(TR::Node *store, char *optDetails)

@@ -55,7 +55,6 @@ class OMR_EXTENSIBLE CodeGenPhase: public OMR::CodeGenPhaseConnector
    static void performCompressedReferenceRematerializationPhase(TR::CodeGenerator * cg, TR::CodeGenPhase *);
    static void performSplitWarmAndColdBlocksPhase(TR::CodeGenerator * cg, TR::CodeGenPhase *);
    static void performIdentifyUnneededByteConvsPhase(TR::CodeGenerator * cg, TR::CodeGenPhase *);
-   static void performFoldSignCleaningIntoStorePhase(TR::CodeGenerator * cg, TR::CodeGenPhase *);
    static void performLateSequentialConstantStoreSimplificationPhase(TR::CodeGenerator * cg, TR::CodeGenPhase *);
 
 
