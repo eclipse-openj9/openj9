@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1073,8 +1073,9 @@ MM_AllocationContextBalanced::setNumaAffinityForThread(MM_EnvironmentBase *env)
 {
 	bool success = true;
 
-	bool hasPhysicalNUMASupport = MM_GCExtensions::getExtensions(env)->_numaManager.isPhysicalNUMASupported();
-	if (hasPhysicalNUMASupport && (0 != getNumaNode())) {
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	bool hasPhysicalNUMASupport = extensions->_numaManager.isPhysicalNUMASupported();
+	if (hasPhysicalNUMASupport && (0 != getNumaNode()) && extensions->_numaManager.shouldSetCPUAffinity()) {
 		/* TODO: should we try to read the affinity first and find the best node? */
 		success = env->setNumaAffinity(_freeProcessorNodes, _freeProcessorNodeCount);
 	}

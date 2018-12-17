@@ -504,6 +504,8 @@ enum INIT_STAGE {
 #define VMOPT_XXIDLETUNINGIGNOREUNRECOGNIZEDOPTIONSDISABLE "-XX:-IdleTuningIgnoreUnrecognizedOptions"
 #define VMOPT_XXIDLETUNINGIGNOREUNRECOGNIZEDOPTIONSENABLE "-XX:+IdleTuningIgnoreUnrecognizedOptions"
 
+#define VMOPT_XXDISABLECPUAFFINITY "-XX:DisableCPUAffinity"
+
 /* Modularity command line options */
 #define VMOPT_MODULE_UPGRADE_PATH "--upgrade-module-path"
 #define VMOPT_MODULE_PATH "--module-path"
