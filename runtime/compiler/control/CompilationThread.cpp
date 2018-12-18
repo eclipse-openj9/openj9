@@ -155,7 +155,7 @@ TR_RelocationRuntime*
 TR::CompilationInfoPerThreadBase::reloRuntime()
    {
    if (_methodBeingCompiled->isAotLoad() ||
-       _compInfo.getPersistentInfo()->getJITaaSMode() == NONJITaaS_MODE)
+       _compInfo.getPersistentInfo()->getJITaaSMode() != SERVER_MODE) // We do not allow AOT in SERVER_MODE yet
       return static_cast<TR_RelocationRuntime*>(&_sharedCacheReloRuntime);
    return static_cast<TR_RelocationRuntime*>(&_remoteCompileReloRuntime);
    }
@@ -6624,7 +6624,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       TR::IlGeneratorMethodDetails & details = entry->getMethodDetails();
 
       eligibleForRelocatableCompile =
-            _compInfo.getPersistentInfo()->getJITaaSMode() == NONJITaaS_MODE && // do not allow AOT compilations in JITaaS
+            _compInfo.getPersistentInfo()->getJITaaSMode() != SERVER_MODE && // we do not allow AOT compilations in JITaaS Server Mode yet
             TR::Options::sharedClassCache() &&
             !details.isNewInstanceThunk() &&
             !entry->isJNINative() &&
