@@ -73,8 +73,8 @@
  *   OPENJDK<version>_SHA_<platform>: String - the last commit SHA
  */
 
-RELEASES = ['8', '9', '10', '11', 'next']
-CURRENT_RELEASES = ['8', '10', '11', 'next']
+RELEASES = ['8', '9', '10', '11', '12', 'next']
+CURRENT_RELEASES = ['8', '11', '12', 'next']
 
 SPECS = ['aix_ppc-64_cmprssptrs'      : CURRENT_RELEASES,
          'linux_390-64_cmprssptrs'    : CURRENT_RELEASES,
@@ -85,8 +85,8 @@ SPECS = ['aix_ppc-64_cmprssptrs'      : CURRENT_RELEASES,
          'win_x86'                    : ['8'],
          'win_x86-64_cmprssptrs'      : CURRENT_RELEASES,
          'zos_390-64_cmprssptrs'      : ['11'],
-         'osx_x86-64'                 : ['8', '11'],
-         'osx_x86-64_cmprssptrs'      : ['8', '11']]
+         'osx_x86-64'                 : CURRENT_RELEASES,
+         'osx_x86-64_cmprssptrs'      : CURRENT_RELEASES]
 
 // Initialize all PARAMETERS (params) to Groovy Variables even if they are not passed
 echo "Initialize all PARAMETERS..."
