@@ -328,9 +328,10 @@ FlatPersistentClassInfo::serializeHierarchy(TR_PersistentClassInfo *root)
 size_t 
 FlatPersistentClassInfo::deserializeClassSimple(TR_PersistentClassInfo *clazz, FlatPersistentClassInfo *info)
    {
+   // we do not overwrite _prexAssumptions here because it's updated only by the server
+   // so the number of assumptions on the server is correct, but on the client it's always 0
    clazz->_classId = info->_classId;
    clazz->_visitedStatus = info->_visitedStatus;
-   clazz->_prexAssumptions = info->_prexAssumptions;
    clazz->_timeStamp = info->_timeStamp;
    clazz->_nameLength = info->_nameLength;
    clazz->_flags = info->_flags;
