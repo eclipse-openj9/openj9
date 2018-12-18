@@ -1187,7 +1187,7 @@ J9::Compilation::addAsMonitorAuto(TR::SymbolReference* symRef, bool dontAddIfDLT
 TR_OpaqueClassBlock *
 J9::Compilation::getClassClassPointer(bool isVettedForAOT)
    {
-   if (!isVettedForAOT)
+   if (!isVettedForAOT || self()->getOption(TR_UseSymbolValidationManager))
       return _ObjectClassPointer ? self()->fe()->getClassClassPointer(_ObjectClassPointer) : 0;
 
    if (_aotClassClassPointerInitialized)
