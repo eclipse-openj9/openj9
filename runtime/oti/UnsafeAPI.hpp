@@ -415,7 +415,8 @@ public:
 	static VMINLINE U_8
 	getBoolean(J9VMThread *currentThread, MM_ObjectAccessBarrierAPI *objectAccessBarrier, j9object_t object, UDATA offset, bool isVolatile)
 	{
-		return (U_8)get32(currentThread, objectAccessBarrier, object, offset, isVolatile, 0, false);
+		I_32 value = get32(currentThread, objectAccessBarrier, object, offset, isVolatile, 0, false);
+		return (U_8)(0 != value);
 	}
 
 	static VMINLINE void
