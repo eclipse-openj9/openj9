@@ -396,8 +396,6 @@
 	-nonZeroExitWhenError \
 	-outputLimit 300; \
 	$(TEST_STATUS)</command>
-	<!-- temporarily disable this test on OSX, see https://github.com/eclipse/openj9/issues/3333 -->
-	<platformRequirements>^os.osx</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
