@@ -1202,6 +1202,8 @@ private:
 
    bool validateSymbol(uint16_t idToBeValidated, void *validSymbol);
 
+   void defineGuaranteedID(void *symbol);
+
    /* Monotonically increasing IDs */
    uint16_t _symbolID;
 

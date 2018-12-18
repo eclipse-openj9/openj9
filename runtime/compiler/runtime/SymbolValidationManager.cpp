@@ -74,31 +74,25 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
    J9VMThread *vmThread = comp->j9VMThread();
    TR_J9VM *fej9 = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
 
+   defineGuaranteedID(compilee->classOfMethod());
+   defineGuaranteedID(compilee->getPersistentIdentifier());
+
    struct J9Class ** arrayClasses = &fej9->getJ9JITConfig()->javaVM->booleanArrayClass;
-   uint16_t id;
    for (int32_t i = 4; i <= 11; i++)
       {
       TR_OpaqueClassBlock *arrayClass = reinterpret_cast<TR_OpaqueClassBlock *>(arrayClasses[i - 4]);
       TR_OpaqueClassBlock *component = fej9->getComponentClassFromArrayClass(arrayClass);
-
-      id = getNewSymbolID();
-      _symbolToIdMap.insert(std::make_pair(static_cast<void *>(arrayClass), id));
-      _idToSymbolsMap.insert(std::make_pair(id, static_cast<void *>(arrayClass)));
-
-      id = getNewSymbolID();
-      _symbolToIdMap.insert(std::make_pair(static_cast<void *>(component), id));
-      _idToSymbolsMap.insert(std::make_pair(id, static_cast<void *>(component)));
+      defineGuaranteedID(arrayClass);
+      defineGuaranteedID(component);
       }
+   }
 
-   id = getNewSymbolID();
-   TR_OpaqueClassBlock *classOfMethod = compilee->classOfMethod();
-   _symbolToIdMap.insert(std::make_pair(static_cast<void *>(classOfMethod), id));
-   _idToSymbolsMap.insert(std::make_pair(id, static_cast<void *>(classOfMethod)));
-
-   id = getNewSymbolID();
-   TR_OpaqueMethodBlock *method = compilee->getPersistentIdentifier();
-   _symbolToIdMap.insert(std::make_pair(static_cast<void *>(method), id));
-   _idToSymbolsMap.insert(std::make_pair(id, static_cast<void *>(method)));
+void
+TR::SymbolValidationManager::defineGuaranteedID(void *symbol)
+   {
+   uint16_t id = getNewSymbolID();
+   _symbolToIdMap.insert(std::make_pair(symbol, id));
+   _idToSymbolsMap.insert(std::make_pair(id, symbol));
    }
 
 uint16_t
