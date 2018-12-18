@@ -828,8 +828,8 @@ struct InterfaceMethodFromCPRecord : public SymbolValidationRecord
 struct MethodFromClassAndSigRecord : public SymbolValidationRecord
    {
    MethodFromClassAndSigRecord(TR_OpaqueMethodBlock *method,
-                               TR_OpaqueClassBlock *beholder,
-                               TR_OpaqueClassBlock *methodClass)
+                               TR_OpaqueClassBlock *methodClass,
+                               TR_OpaqueClassBlock *beholder)
       : SymbolValidationRecord(TR_ValidateMethodFromClassAndSig),
         _method(method),
         _methodClass(methodClass),
@@ -1075,11 +1075,12 @@ public:
    SymbolValidationManager(TR::Region &region, TR_ResolvedMethod *compilee);
 
    void* getSymbolFromID(uint16_t id);
+   uint16_t tryGetIDFromSymbol(void *symbol);
    uint16_t getIDFromSymbol(void *symbol);
 
    bool isAlreadyValidated(void *symbol)
       {
-      return inHeuristicRegion() || getIDFromSymbol(symbol) != NO_ID;
+      return inHeuristicRegion() || tryGetIDFromSymbol(symbol) != NO_ID;
       }
 
    bool addClassByNameRecord(TR_OpaqueClassBlock *clazz, TR_OpaqueClassBlock *beholder);
@@ -1201,6 +1202,8 @@ private:
    void *storeClassChain(TR_J9VMBase *fej9, TR_OpaqueClassBlock *clazz);
 
    bool validateSymbol(uint16_t idToBeValidated, void *validSymbol);
+
+   void defineGuaranteedID(void *symbol);
 
    /* Monotonically increasing IDs */
    uint16_t _symbolID;
